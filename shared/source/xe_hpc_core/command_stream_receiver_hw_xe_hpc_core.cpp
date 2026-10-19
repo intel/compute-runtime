@@ -100,12 +100,8 @@ void BlitCommandsHelper<Family>::appendBlitCommandsMemCopy(const BlitProperties 
         }
     }
 
-    if (blitCmd.getDestinationCompressible() == MEM_COPY::DESTINATION_COMPRESSIBLE::DESTINATION_COMPRESSIBLE_COMPRESSIBLE &&
-        AuxTranslationDirection::auxToNonAux != blitProperties.auxTranslationDirection) {
-        blitCmd.setDestinationCompressionEnable(MEM_COPY::DESTINATION_COMPRESSION_ENABLE::DESTINATION_COMPRESSION_ENABLE_ENABLE);
-    } else {
-        blitCmd.setDestinationCompressionEnable(MEM_COPY::DESTINATION_COMPRESSION_ENABLE::DESTINATION_COMPRESSION_ENABLE_DISABLE);
-    }
+    blitCmd.setDestinationCompressionEnable(blitCmd.getDestinationCompressible() == MEM_COPY::DESTINATION_COMPRESSIBLE::DESTINATION_COMPRESSIBLE_COMPRESSIBLE &&
+                                            AuxTranslationDirection::auxToNonAux != blitProperties.auxTranslationDirection);
 
     DEBUG_BREAK_IF((AuxTranslationDirection::none != blitProperties.auxTranslationDirection) &&
                    (dstAllocation != srcAllocation || (dstAllocation && !dstAllocation->isCompressionEnabled())));
@@ -119,14 +115,10 @@ void BlitCommandsHelper<Family>::appendBlitMemSetCompressionFormat(void *blitCmd
 
     if (dstAlloc->isCompressionEnabled()) {
         memSetCmd->setDestinationCompressible(MEM_SET::DESTINATION_COMPRESSIBLE::DESTINATION_COMPRESSIBLE_COMPRESSIBLE);
-        memSetCmd->setCompressionFormat40(compressionFormat);
+        memSetCmd->setCompressionFormat(compressionFormat);
     }
 
-    if (memSetCmd->getDestinationCompressible() == MEM_SET::DESTINATION_COMPRESSIBLE::DESTINATION_COMPRESSIBLE_COMPRESSIBLE) {
-        memSetCmd->setDestinationCompressionEnable(MEM_SET::DESTINATION_COMPRESSION_ENABLE::DESTINATION_COMPRESSION_ENABLE_ENABLE);
-    } else {
-        memSetCmd->setDestinationCompressionEnable(MEM_SET::DESTINATION_COMPRESSION_ENABLE::DESTINATION_COMPRESSION_ENABLE_DISABLE);
-    }
+    memSetCmd->setDestinationCompressionEnable(memSetCmd->getDestinationCompressible() == MEM_SET::DESTINATION_COMPRESSIBLE::DESTINATION_COMPRESSIBLE_COMPRESSIBLE);
 }
 
 template <>

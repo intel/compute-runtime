@@ -157,7 +157,7 @@ HWTEST2_F(BlitTests, givenGmmWithEnabledCompresionWhenAppendBlitCommandsForFillB
 
         auto resourceFormat = gmm->gmmResourceInfo->getResourceFormat();
         auto compressionFormat = rootDeviceEnvironment.getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
-        EXPECT_EQ(compressionFormat, blitCmd->getCompressionFormat40());
+        EXPECT_EQ(compressionFormat, blitCmd->getCompressionFormat());
     }
 }
 

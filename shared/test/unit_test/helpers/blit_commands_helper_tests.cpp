@@ -1802,10 +1802,10 @@ HWTEST2_PRODUCT_F(BlitTests, givenPlatformWithBlitSyncPropertiesWithAndWithoutUs
     Vec3<size_t> dstOffsets{1, 0, 0};
     Vec3<size_t> copySize{(maxBlitWidth + 1), (maxBlitHeight + 1), 3};
 
-    size_t srcRowPitch = 0;
+    size_t srcRowPitch = copySize.x;
     size_t srcSlicePitch = 0;
 
-    size_t dstRowPitch = 0;
+    size_t dstRowPitch = copySize.x;
     size_t dstSlicePitch = 0;
 
     auto blitProperties = NEO::BlitProperties::constructPropertiesForCopy(dstAlloc.get(), 0, srcAlloc.get(), 0,
@@ -2055,8 +2055,8 @@ HWTEST2_F(BlitTests, givenSrcAndDstAllocationWithCompressionEnabledWhenAppendBli
 
     EXPECT_EQ(blitCmd.getDestinationTargetMemory(), XY_BLOCK_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_LOCAL_MEM);
     EXPECT_EQ(blitCmd.getSourceTargetMemory(), XY_BLOCK_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_LOCAL_MEM);
-    EXPECT_EQ(blitCmd.getDestinationCompressionEnable(), XY_BLOCK_COPY_BLT::COMPRESSION_ENABLE::COMPRESSION_ENABLE_COMPRESSION_ENABLE);
-    EXPECT_EQ(blitCmd.getSourceCompressionEnable(), XY_BLOCK_COPY_BLT::COMPRESSION_ENABLE::COMPRESSION_ENABLE_COMPRESSION_ENABLE);
+    EXPECT_TRUE(blitCmd.getDestinationCompressionEnable());
+    EXPECT_TRUE(blitCmd.getSourceCompressionEnable());
     EXPECT_EQ(blitCmd.getDestinationAuxiliarysurfacemode(), XY_BLOCK_COPY_BLT::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
     EXPECT_EQ(blitCmd.getSourceAuxiliarysurfacemode(), XY_BLOCK_COPY_BLT::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
 }
@@ -2087,8 +2087,8 @@ HWTEST2_F(BlitTests, givenSrcAndDstAllocationWithoutCompressionEnabledWhenAppend
 
     EXPECT_EQ(blitCmd.getDestinationTargetMemory(), XY_BLOCK_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_LOCAL_MEM);
     EXPECT_EQ(blitCmd.getSourceTargetMemory(), XY_BLOCK_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_LOCAL_MEM);
-    EXPECT_EQ(blitCmd.getDestinationCompressionEnable(), 0u);
-    EXPECT_EQ(blitCmd.getSourceCompressionEnable(), 0u);
+    EXPECT_FALSE(blitCmd.getDestinationCompressionEnable());
+    EXPECT_FALSE(blitCmd.getSourceCompressionEnable());
     EXPECT_EQ(blitCmd.getDestinationAuxiliarysurfacemode(), 0u);
     EXPECT_EQ(blitCmd.getSourceAuxiliarysurfacemode(), 0u);
 }
@@ -2111,8 +2111,8 @@ HWTEST2_F(BlitTests, givenNullAllocationsWhenAppendBlitCommandsBlockCopyThenSetS
 
     EXPECT_EQ(blitCmd.getDestinationTargetMemory(), XY_BLOCK_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_LOCAL_MEM);
     EXPECT_EQ(blitCmd.getSourceTargetMemory(), XY_BLOCK_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_LOCAL_MEM);
-    EXPECT_EQ(blitCmd.getDestinationCompressionEnable(), 0u);
-    EXPECT_EQ(blitCmd.getSourceCompressionEnable(), 0u);
+    EXPECT_FALSE(blitCmd.getDestinationCompressionEnable());
+    EXPECT_FALSE(blitCmd.getSourceCompressionEnable());
     EXPECT_EQ(blitCmd.getDestinationAuxiliarysurfacemode(), 0u);
     EXPECT_EQ(blitCmd.getSourceAuxiliarysurfacemode(), 0u);
 }
@@ -2125,8 +2125,8 @@ HWTEST2_F(BlitTests, givenNullAllocationsWhenAdjustControlSurfaceTypeThenSurface
     properties.srcAllocation = nullptr;
     properties.dstAllocation = nullptr;
 
-    constexpr auto initialSrcSurface = 0; // CONTROL_SURFACE_TYPE_3D
-    constexpr auto initialDstSurface = 0; // CONTROL_SURFACE_TYPE_3D
+    constexpr auto initialSrcSurface = 0; // CONTROL_SURFACE_TYPE_3D_CONTROL_SURFACE
+    constexpr auto initialDstSurface = 0; // CONTROL_SURFACE_TYPE_3D_CONTROL_SURFACE
 
     BlitCommandsHelper<FamilyType>::adjustControlSurfaceType(properties, blitCmd);
 

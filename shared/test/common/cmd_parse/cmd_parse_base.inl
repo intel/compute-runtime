@@ -175,7 +175,7 @@ MI_FLUSH_DW *genCmdCast<MI_FLUSH_DW *>(void *buffer) {
 template <>
 XY_COPY_BLT *genCmdCast<XY_COPY_BLT *>(void *buffer) {
     return matchCommandHeader<XY_COPY_BLT>(buffer, [](const XY_COPY_BLT &header) {
-        return XY_COPY_BLT::INSTRUCTIONTARGET_OPCODE_OPCODE == header.TheStructure.Common.InstructionTarget_Opcode &&
+        return XY_COPY_BLT::sInit().getInstructionTargetOpcode() == header.getInstructionTargetOpcode() &&
                XY_COPY_BLT::CLIENT_2D_PROCESSOR == header.TheStructure.Common.Client;
     });
 }
@@ -183,7 +183,7 @@ XY_COPY_BLT *genCmdCast<XY_COPY_BLT *>(void *buffer) {
 template <>
 XY_COLOR_BLT *genCmdCast<XY_COLOR_BLT *>(void *buffer) {
     return matchCommandHeader<XY_COLOR_BLT>(buffer, [](const XY_COLOR_BLT &header) {
-        return XY_COLOR_BLT::INSTRUCTIONTARGET_OPCODE_OPCODE == header.TheStructure.Common.InstructionTarget_Opcode &&
+        return XY_COLOR_BLT::sInit().getInstructionTargetOpcode() == header.getInstructionTargetOpcode() &&
                XY_COLOR_BLT::CLIENT_2D_PROCESSOR == header.TheStructure.Common.Client;
     });
 }

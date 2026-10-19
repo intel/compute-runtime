@@ -439,7 +439,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBuffersWhenCopyBufferRectCalledThenUseBc
     size_t region[] = {1, 2, 1};
 
     cmdQ->enqueueCopyBufferRect(bufferForBlt0.get(), bufferForBlt1.get(), bufferOrigin, hostOrigin, region,
-                                0, 0, 0, 0, 0, nullptr, nullptr);
+                                1, 2, 1, 2, 0, nullptr, nullptr);
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(bcsCsr->getCS(0));
     auto commandItor = find<XY_COPY_BLT *>(hwParser.cmdList.begin(), hwParser.cmdList.end());

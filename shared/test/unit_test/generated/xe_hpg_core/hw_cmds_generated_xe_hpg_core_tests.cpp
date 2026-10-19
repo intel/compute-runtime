@@ -3324,3 +3324,34 @@ XE_HPG_CORETEST_F(CommandsXeHpgCoreTest, GivenL3FlushAddressRangeWhenSetterUsedT
     cmd.setL3FlushEvictionPolicy(L3_FLUSH_ADDRESS_RANGE::L3_FLUSH_EVICTION_POLICY_DISCARD);
     EXPECT_EQ(L3_FLUSH_ADDRESS_RANGE::L3_FLUSH_EVICTION_POLICY_DISCARD, cmd.getL3FlushEvictionPolicy());
 }
+
+XE_HPG_CORETEST_F(CommandsXeHpgCoreTest, GivenXyBlockCopyBltWhenZeroPitchOrSurfaceWidthIsSetThenSetterThrows) {
+    using XY_BLOCK_COPY_BLT = NEO::XeHpgCoreFamily::XY_BLOCK_COPY_BLT;
+    XY_BLOCK_COPY_BLT cmd;
+    cmd.init();
+
+    EXPECT_THROW(cmd.setSourcePitch(0x0u), std::exception);
+    EXPECT_THROW(cmd.setDestinationPitch(0x0u), std::exception);
+    EXPECT_THROW(cmd.setSourceSurfaceWidth(0x0u), std::exception);
+    EXPECT_THROW(cmd.setDestinationSurfaceWidth(0x0u), std::exception);
+}
+
+XE_HPG_CORETEST_F(CommandsXeHpgCoreTest, GivenXyFastColorBltWhenZeroPitchOrSurfaceWidthIsSetThenSetterThrows) {
+    using XY_FAST_COLOR_BLT = NEO::XeHpgCoreFamily::XY_FAST_COLOR_BLT;
+    XY_FAST_COLOR_BLT cmd;
+    cmd.init();
+
+    EXPECT_THROW(cmd.setDestinationPitch(0x0u), std::exception);
+    EXPECT_THROW(cmd.setDestinationSurfaceWidth(0x0u), std::exception);
+}
+
+XE_HPG_CORETEST_F(CommandsXeHpgCoreTest, GivenXyFastColorBltWhenDestinationTargetMemoryIsSetThenGetterReturnsIt) {
+    using XY_FAST_COLOR_BLT = NEO::XeHpgCoreFamily::XY_FAST_COLOR_BLT;
+    XY_FAST_COLOR_BLT cmd;
+    cmd.init();
+
+    cmd.setDestinationTargetMemory(XY_FAST_COLOR_BLT::DESTINATION_TARGET_MEMORY_SYSTEM_MEM);
+    EXPECT_EQ(XY_FAST_COLOR_BLT::DESTINATION_TARGET_MEMORY_SYSTEM_MEM, cmd.getDestinationTargetMemory());
+    cmd.setDestinationTargetMemory(XY_FAST_COLOR_BLT::DESTINATION_TARGET_MEMORY_LOCAL_MEM);
+    EXPECT_EQ(XY_FAST_COLOR_BLT::DESTINATION_TARGET_MEMORY_LOCAL_MEM, cmd.getDestinationTargetMemory());
+}

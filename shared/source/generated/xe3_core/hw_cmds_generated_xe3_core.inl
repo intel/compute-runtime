@@ -55,12 +55,12 @@ typedef struct tagMEM_COPY {
             // DWORD 0
             uint32_t DwordLength : BITFIELD_RANGE(0, 7);
             uint32_t Reserved_8 : BITFIELD_RANGE(8, 8);
-            uint32_t CompressionFormat30 : BITFIELD_RANGE(9, 12);
+            uint32_t CompressionFormat : BITFIELD_RANGE(9, 12);
             uint32_t Reserved_13 : BITFIELD_RANGE(13, 16);
             uint32_t CopyType : BITFIELD_RANGE(17, 18);
             uint32_t Mode : BITFIELD_RANGE(19, 19);
             uint32_t Reserved_20 : BITFIELD_RANGE(20, 21);
-            uint32_t InstructionTarget_Opcode : BITFIELD_RANGE(22, 28);
+            uint32_t InstructionTargetOpcode : BITFIELD_RANGE(22, 28);
             uint32_t Client : BITFIELD_RANGE(29, 31);
             // DWORD 1
             uint32_t TransferWidth : BITFIELD_RANGE(0, 23);
@@ -74,14 +74,10 @@ typedef struct tagMEM_COPY {
             // DWORD 4
             uint32_t DestinationPitch : BITFIELD_RANGE(0, 17);
             uint32_t Reserved_146 : BITFIELD_RANGE(18, 31);
-            // DWORD 5
-            uint32_t SourceStartAddressLow;
-            // DWORD 6
-            uint32_t SourceStartAddressHigh;
-            // DWORD 7
-            uint32_t DestinationStartAddressLow;
-            // DWORD 8
-            uint32_t DestinationStartAddressHigh;
+            // DWORD 5-6
+            uint64_t SourceBaseAddress;
+            // DWORD 7-8
+            uint64_t DestinationBaseAddress;
             // DWORD 9
             uint32_t DestinationEncryptEn : BITFIELD_RANGE(0, 0);
             uint32_t Reserved_289 : BITFIELD_RANGE(1, 2);
@@ -96,21 +92,24 @@ typedef struct tagMEM_COPY {
     typedef enum tagDWORD_LENGTH {
         DWORD_LENGTH_EXCLUDES_DWORD_0_1 = 0x8,
     } DWORD_LENGTH;
-    typedef enum tagCOMPRESSION_FORMAT30 {
-        COMPRESSION_FORMAT30_CMF_R8 = 0x0,
-        COMPRESSION_FORMAT30_CMF_R8_G8 = 0x1,
-        COMPRESSION_FORMAT30_CMF_R8_G8_B8_A8 = 0x2,
-        COMPRESSION_FORMAT30_CMF_R10_G10_B10_A2 = 0x3,
-        COMPRESSION_FORMAT30_CMF_R11_G11_B10 = 0x4,
-        COMPRESSION_FORMAT30_CMF_R16 = 0x5,
-        COMPRESSION_FORMAT30_CMF_R16_G16 = 0x6,
-        COMPRESSION_FORMAT30_CMF_R16_G16_B16_A16 = 0x7,
-        COMPRESSION_FORMAT30_CMF_R32 = 0x8,
-        COMPRESSION_FORMAT30_CMF_R32_G32 = 0x9,
-        COMPRESSION_FORMAT30_CMF_R32_G32_B32_A32 = 0xa,
-        COMPRESSION_FORMAT30_CMF_Y16_U16_Y16_V16 = 0xb,
-        COMPRESSION_FORMAT30_CMF_ML8 = 0xf,
-    } COMPRESSION_FORMAT30;
+    typedef enum tagCOMPRESSION_FORMAT {
+        COMPRESSION_FORMAT_CMF_R8 = 0x0,
+        COMPRESSION_FORMAT_CMF_R8_G8 = 0x1,
+        COMPRESSION_FORMAT_CMF_R8_G8_B8_A8 = 0x2,
+        COMPRESSION_FORMAT_CMF_R10_G10_B10_A2 = 0x3,
+        COMPRESSION_FORMAT_CMF_R11_G11_B10 = 0x4,
+        COMPRESSION_FORMAT_CMF_R16 = 0x5,
+        COMPRESSION_FORMAT_CMF_R16_G16 = 0x6,
+        COMPRESSION_FORMAT_CMF_R16_G16_B16_A16 = 0x7,
+        COMPRESSION_FORMAT_CMF_R32 = 0x8,
+        COMPRESSION_FORMAT_CMF_R32_G32 = 0x9,
+        COMPRESSION_FORMAT_CMF_R32_G32_B32_A32 = 0xa,
+        COMPRESSION_FORMAT_CMF_Y16_U16_Y16_V16 = 0xb,
+        COMPRESSION_FORMAT_CMF_DISABLE_WRITE_COMPRESSION = 0xc,
+        COMPRESSION_FORMAT_CMF_USE_STATELESS_MODE = 0xd,
+        COMPRESSION_FORMAT_CMF_DISABLE_WRITE_COMPRESSION_II = 0xe,
+        COMPRESSION_FORMAT_CMF_ML8 = 0xf,
+    } COMPRESSION_FORMAT;
     typedef enum tagCOPY_TYPE {
         COPY_TYPE_LINEAR_COPY = 0x0,
         COPY_TYPE_MATRIX_COPY = 0x1,
@@ -120,29 +119,16 @@ typedef struct tagMEM_COPY {
         MODE_PAGE_COPY = 0x1,
     } MODE;
     typedef enum tagINSTRUCTION_TARGETOPCODE {
-        INSTRUCTIONTARGET_OPCODE_OPCODE = 0x5a,
+        INSTRUCTION_TARGETOPCODE_MEM_COPY = 0x5a,
     } INSTRUCTION_TARGETOPCODE;
     typedef enum tagCLIENT {
         CLIENT_2D_PROCESSOR = 0x2,
     } CLIENT;
-    typedef enum tagDESTINATION_ENCRYPT_EN {
-        DESTINATION_ENCRYPT_EN_DISABLE = 0x0,
-        DESTINATION_ENCRYPT_EN_ENABLE = 0x1,
-    } DESTINATION_ENCRYPT_EN;
-    typedef enum tagSOURCE_ENCRYPT_EN {
-        SOURCE_ENCRYPT_EN_DISABLE = 0x0,
-        SOURCE_ENCRYPT_EN_ENABLE = 0x1,
-    } SOURCE_ENCRYPT_EN;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_EXCLUDES_DWORD_0_1;
-        TheStructure.Common.CompressionFormat30 = COMPRESSION_FORMAT30_CMF_R8;
-        TheStructure.Common.CopyType = COPY_TYPE_LINEAR_COPY;
-        TheStructure.Common.Mode = MODE_BYTE_COPY;
-        TheStructure.Common.InstructionTarget_Opcode = INSTRUCTIONTARGET_OPCODE_OPCODE;
+        TheStructure.Common.InstructionTargetOpcode = INSTRUCTION_TARGETOPCODE_MEM_COPY;
         TheStructure.Common.Client = CLIENT_2D_PROCESSOR;
-        TheStructure.Common.DestinationEncryptEn = DESTINATION_ENCRYPT_EN_DISABLE;
-        TheStructure.Common.SourceEncryptEn = SOURCE_ENCRYPT_EN_DISABLE;
     }
     static tagMEM_COPY sInit() {
         MEM_COPY state;
@@ -153,11 +139,11 @@ typedef struct tagMEM_COPY {
         UNRECOVERABLE_IF(index >= 10);
         return TheStructure.RawData[index];
     }
-    inline void setCompressionFormat(const COMPRESSION_FORMAT30 value) {
-        TheStructure.Common.CompressionFormat30 = value;
+    inline void setCompressionFormat(const COMPRESSION_FORMAT value) {
+        TheStructure.Common.CompressionFormat = value;
     }
-    inline COMPRESSION_FORMAT30 getCompressionFormat() const {
-        return static_cast<COMPRESSION_FORMAT30>(TheStructure.Common.CompressionFormat30);
+    inline COMPRESSION_FORMAT getCompressionFormat() const {
+        return static_cast<COMPRESSION_FORMAT>(TheStructure.Common.CompressionFormat);
     }
     inline void setCopyType(const COPY_TYPE value) {
         TheStructure.Common.CopyType = value;
@@ -172,10 +158,10 @@ typedef struct tagMEM_COPY {
         return static_cast<MODE>(TheStructure.Common.Mode);
     }
     inline void setInstructionTargetOpcode(const INSTRUCTION_TARGETOPCODE value) {
-        TheStructure.Common.InstructionTarget_Opcode = value;
+        TheStructure.Common.InstructionTargetOpcode = value;
     }
     inline INSTRUCTION_TARGETOPCODE getInstructionTargetOpcode() const {
-        return static_cast<INSTRUCTION_TARGETOPCODE>(TheStructure.Common.InstructionTarget_Opcode);
+        return static_cast<INSTRUCTION_TARGETOPCODE>(TheStructure.Common.InstructionTargetOpcode);
     }
     inline void setClient(const CLIENT value) {
         TheStructure.Common.Client = value;
@@ -184,74 +170,74 @@ typedef struct tagMEM_COPY {
         return static_cast<CLIENT>(TheStructure.Common.Client);
     }
     inline void setDestinationX2CoordinateRight(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xffffff + 1);
-        TheStructure.Common.TransferWidth = value - 1; // patched
+        UNRECOVERABLE_IF(value < 1 || value > 0x1000000u);
+        TheStructure.Common.TransferWidth = value - 1;
     }
     inline uint32_t getDestinationX2CoordinateRight() const {
-        return TheStructure.Common.TransferWidth + 1; // patched
+        return TheStructure.Common.TransferWidth + 1;
     }
     inline void setDestinationY2CoordinateBottom(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x3ffff + 1);
+        UNRECOVERABLE_IF(value < 1 || value > 0x40000u);
         TheStructure.Common.TransferHeight = value - 1;
     }
     inline uint32_t getDestinationY2CoordinateBottom() const {
         return TheStructure.Common.TransferHeight + 1;
     }
     inline void setSourcePitch(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x3ffff + 1);
+        UNRECOVERABLE_IF(value < 1 || value > 0x40000u);
         TheStructure.Common.SourcePitch = value - 1;
     }
     inline uint32_t getSourcePitch() const {
         return TheStructure.Common.SourcePitch + 1;
     }
     inline void setDestinationPitch(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x3ffff + 1);
+        UNRECOVERABLE_IF(value < 1 || value > 0x40000u);
         TheStructure.Common.DestinationPitch = value - 1;
     }
     inline uint32_t getDestinationPitch() const {
         return TheStructure.Common.DestinationPitch + 1;
     }
-    inline void setSourceBaseAddress(const uint64_t value) { // patched
-        TheStructure.Common.SourceStartAddressLow = value & 0xffffffff;
-        TheStructure.Common.SourceStartAddressHigh = (value >> 32) & 0xffffffff;
+    inline void setSourceBaseAddress(const uint64_t value) {
+        TheStructure.Common.SourceBaseAddress = value;
     }
-    inline uint64_t getSourceBaseAddress() const { // patched
-        return (static_cast<uint64_t>(TheStructure.Common.SourceStartAddressHigh) << 32) | (TheStructure.Common.SourceStartAddressLow);
+    inline uint64_t getSourceBaseAddress() const {
+        return TheStructure.Common.SourceBaseAddress;
     }
-    inline void setDestinationBaseAddress(const uint64_t value) { // patched
-        TheStructure.Common.DestinationStartAddressLow = value & 0xffffffff;
-        TheStructure.Common.DestinationStartAddressHigh = (value >> 32) & 0xffffffff;
+    inline void setDestinationBaseAddress(const uint64_t value) {
+        TheStructure.Common.DestinationBaseAddress = value;
     }
-    inline uint64_t getDestinationBaseAddress() const { // patched
-        return (static_cast<uint64_t>(TheStructure.Common.DestinationStartAddressHigh) << 32) | (TheStructure.Common.DestinationStartAddressLow);
+    inline uint64_t getDestinationBaseAddress() const {
+        return TheStructure.Common.DestinationBaseAddress;
     }
-    inline void setDestinationEncryptEn(const DESTINATION_ENCRYPT_EN value) {
+    inline void setDestinationEncryptEn(const bool value) {
         TheStructure.Common.DestinationEncryptEn = value;
     }
-    inline DESTINATION_ENCRYPT_EN getDestinationEncryptEn() const {
-        return static_cast<DESTINATION_ENCRYPT_EN>(TheStructure.Common.DestinationEncryptEn);
+    inline bool getDestinationEncryptEn() const {
+        return TheStructure.Common.DestinationEncryptEn;
     }
-    inline void setDestinationMOCS(const uint32_t value) { // patched
-        setDestinationEncryptEn(static_cast<DESTINATION_ENCRYPT_EN>(value & 1));
-        UNRECOVERABLE_IF((value >> 1) > 0xf);
+    // Manual generator override: MOCS includes the encryption bit.
+    inline void setDestinationMOCS(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x1fu);
         TheStructure.Common.DestinationMocs = value >> 1;
+        TheStructure.Common.DestinationEncryptEn = value & 1;
     }
-    inline uint32_t getDestinationMOCS() const { // patched
-        return (TheStructure.Common.DestinationMocs << 1) | static_cast<uint32_t>(getDestinationEncryptEn());
+    inline uint32_t getDestinationMOCS() const {
+        return (TheStructure.Common.DestinationMocs << 1) | TheStructure.Common.DestinationEncryptEn;
     }
-    inline void setSourceEncryptEn(const SOURCE_ENCRYPT_EN value) {
+    inline void setSourceEncryptEn(const bool value) {
         TheStructure.Common.SourceEncryptEn = value;
     }
-    inline SOURCE_ENCRYPT_EN getSourceEncryptEn() const {
-        return static_cast<SOURCE_ENCRYPT_EN>(TheStructure.Common.SourceEncryptEn);
+    inline bool getSourceEncryptEn() const {
+        return TheStructure.Common.SourceEncryptEn;
     }
-    inline void setSourceMOCS(const uint32_t value) { // patched
-        setSourceEncryptEn(static_cast<SOURCE_ENCRYPT_EN>(value & 1));
-        UNRECOVERABLE_IF((value >> 1) > 0xf);
+    // Manual generator override: MOCS includes the encryption bit.
+    inline void setSourceMOCS(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x1fu);
         TheStructure.Common.SourceMocs = value >> 1;
+        TheStructure.Common.SourceEncryptEn = value & 1;
     }
-    inline uint32_t getSourceMOCS() const { // patched
-        return (TheStructure.Common.SourceMocs << 1) | static_cast<uint32_t>(getSourceEncryptEn());
+    inline uint32_t getSourceMOCS() const {
+        return (TheStructure.Common.SourceMocs << 1) | TheStructure.Common.SourceEncryptEn;
     }
 } MEM_COPY;
 STATIC_ASSERT(40 == sizeof(MEM_COPY));
@@ -3169,7 +3155,7 @@ typedef struct tagXY_BLOCK_COPY_BLT {
             uint32_t SpecialModeOfOperation : BITFIELD_RANGE(12, 13);
             uint32_t Reserved_14 : BITFIELD_RANGE(14, 18);
             uint32_t ColorDepth : BITFIELD_RANGE(19, 21);
-            uint32_t InstructionTarget_Opcode : BITFIELD_RANGE(22, 28);
+            uint32_t InstructionTargetOpcode : BITFIELD_RANGE(22, 28);
             uint32_t Client : BITFIELD_RANGE(29, 31);
             // DWORD 1
             uint32_t DestinationPitch : BITFIELD_RANGE(0, 17);
@@ -3180,12 +3166,12 @@ typedef struct tagXY_BLOCK_COPY_BLT {
             uint32_t Reserved_60 : BITFIELD_RANGE(28, 29);
             uint32_t DestinationTiling : BITFIELD_RANGE(30, 31);
             // DWORD 2
-            uint32_t DestinationX1Coordinate_Left : BITFIELD_RANGE(0, 15);
-            uint32_t DestinationY1Coordinate_Top : BITFIELD_RANGE(16, 31);
+            uint32_t DestinationX1CoordinateLeft : BITFIELD_RANGE(0, 15);
+            uint32_t DestinationY1CoordinateTop : BITFIELD_RANGE(16, 31);
             // DWORD 3
-            uint32_t DestinationX2Coordinate_Right : BITFIELD_RANGE(0, 15);
-            uint32_t DestinationY2Coordinate_Bottom : BITFIELD_RANGE(16, 31);
-            // DWORD 4
+            uint32_t DestinationX2CoordinateRight : BITFIELD_RANGE(0, 15);
+            uint32_t DestinationY2CoordinateBottom : BITFIELD_RANGE(16, 31);
+            // DWORD 4-5
             uint64_t DestinationBaseAddress;
             // DWORD 6
             uint32_t DestinationXOffset : BITFIELD_RANGE(0, 13);
@@ -3194,8 +3180,8 @@ typedef struct tagXY_BLOCK_COPY_BLT {
             uint32_t Reserved_222 : BITFIELD_RANGE(30, 30);
             uint32_t DestinationTargetMemory : BITFIELD_RANGE(31, 31);
             // DWORD 7
-            uint32_t SourceX1Coordinate_Left : BITFIELD_RANGE(0, 15);
-            uint32_t SourceY1Coordinate_Top : BITFIELD_RANGE(16, 31);
+            uint32_t SourceX1CoordinateLeft : BITFIELD_RANGE(0, 15);
+            uint32_t SourceY1CoordinateTop : BITFIELD_RANGE(16, 31);
             // DWORD 8
             uint32_t SourcePitch : BITFIELD_RANGE(0, 17);
             uint32_t Reserved_274 : BITFIELD_RANGE(18, 20);
@@ -3204,7 +3190,7 @@ typedef struct tagXY_BLOCK_COPY_BLT {
             uint32_t SourceMocs : BITFIELD_RANGE(24, 27);
             uint32_t Reserved_284 : BITFIELD_RANGE(28, 29);
             uint32_t SourceTiling : BITFIELD_RANGE(30, 31);
-            // DWORD 9
+            // DWORD 9-10
             uint64_t SourceBaseAddress;
             // DWORD 11
             uint32_t SourceXOffset : BITFIELD_RANGE(0, 13);
@@ -3285,53 +3271,21 @@ typedef struct tagXY_BLOCK_COPY_BLT {
         COLOR_DEPTH_128_BIT_COLOR = 0x5,
     } COLOR_DEPTH;
     typedef enum tagINSTRUCTION_TARGETOPCODE {
-        INSTRUCTIONTARGET_OPCODE_OPCODE = 0x41, // patched
+        INSTRUCTION_TARGETOPCODE_XY_BLOCK_COPY_BLT = 0x41,
     } INSTRUCTION_TARGETOPCODE;
     typedef enum tagCLIENT {
         CLIENT_2D_PROCESSOR = 0x2,
     } CLIENT;
-    typedef enum tagDESTINATION_ENCRYPT_EN {
-        DESTINATION_ENCRYPT_EN_DISABLE = 0x0,
-        DESTINATION_ENCRYPT_EN_ENABLE = 0x1,
-    } DESTINATION_ENCRYPT_EN;
-    typedef enum tagDESTINATION_TILING {
-        DESTINATION_TILING_LINEAR = 0x0,
-        DESTINATION_TILING_XMAJOR = 0x1,
-        DESTINATION_TILING_TILE4 = 0x2,
-        DESTINATION_TILING_TILE64 = 0x3,
-    } DESTINATION_TILING;
-    typedef enum tagDESTINATION_TARGET_MEMORY {
-        DESTINATION_TARGET_MEMORY_LOCAL_MEM = 0x0,
-        DESTINATION_TARGET_MEMORY_SYSTEM_MEM = 0x1,
-    } DESTINATION_TARGET_MEMORY;
-
-    typedef enum tagTARGET_MEMORY {
-        TARGET_MEMORY_LOCAL_MEM = 0,
-        TARGET_MEMORY_SYSTEM_MEM = 1,
-    } TARGET_MEMORY; // patched
-
-    typedef enum tagSOURCE_ENCRYPT_EN {
-        SOURCE_ENCRYPT_EN_DISABLE = 0x0,
-        SOURCE_ENCRYPT_EN_ENABLE = 0x1,
-    } SOURCE_ENCRYPT_EN;
-    typedef enum tagSOURCE_TILING {
-        SOURCE_TILING_LINEAR = 0x0,
-        SOURCE_TILING_XMAJOR = 0x1,
-        SOURCE_TILING_TILE4 = 0x2,
-        SOURCE_TILING_TILE64 = 0x3,
-    } SOURCE_TILING;
-
     typedef enum tagTILING {
         TILING_LINEAR = 0x0,
         TILING_XMAJOR = 0x1,
         TILING_TILE4 = 0x2,
         TILING_TILE64 = 0x3,
-    } TILING; // patched
-
-    typedef enum tagSOURCE_TARGET_MEMORY {
-        SOURCE_TARGET_MEMORY_LOCAL_MEM = 0x0,
-        SOURCE_TARGET_MEMORY_SYSTEM_MEM = 0x1,
-    } SOURCE_TARGET_MEMORY;
+    } TILING;
+    typedef enum tagTARGET_MEMORY {
+        TARGET_MEMORY_LOCAL_MEM = 0x0,
+        TARGET_MEMORY_SYSTEM_MEM = 0x1,
+    } TARGET_MEMORY;
     typedef enum tagSOURCE_COMPRESSION_FORMAT {
         SOURCE_COMPRESSION_FORMAT_CMF_R8 = 0x0,
         SOURCE_COMPRESSION_FORMAT_CMF_R8_G8 = 0x1,
@@ -3345,6 +3299,9 @@ typedef struct tagXY_BLOCK_COPY_BLT {
         SOURCE_COMPRESSION_FORMAT_CMF_R32_G32 = 0x9,
         SOURCE_COMPRESSION_FORMAT_CMF_R32_G32_B32_A32 = 0xa,
         SOURCE_COMPRESSION_FORMAT_CMF_Y16_U16_Y16_V16 = 0xb,
+        SOURCE_COMPRESSION_FORMAT_CMF_DISABLE_WRITE_COMPRESSION = 0xc,
+        SOURCE_COMPRESSION_FORMAT_CMF_USE_STATELESS_MODE = 0xd,
+        SOURCE_COMPRESSION_FORMAT_CMF_DISABLE_WRITE_COMPRESSION_II = 0xe,
         SOURCE_COMPRESSION_FORMAT_CMF_ML8 = 0xf,
     } SOURCE_COMPRESSION_FORMAT;
     typedef enum tagDESTINATION_COMPRESSION_FORMAT {
@@ -3360,44 +3317,22 @@ typedef struct tagXY_BLOCK_COPY_BLT {
         DESTINATION_COMPRESSION_FORMAT_CMF_R32_G32 = 0x9,
         DESTINATION_COMPRESSION_FORMAT_CMF_R32_G32_B32_A32 = 0xa,
         DESTINATION_COMPRESSION_FORMAT_CMF_Y16_U16_Y16_V16 = 0xb,
+        DESTINATION_COMPRESSION_FORMAT_CMF_DISABLE_WRITE_COMPRESSION = 0xc,
+        DESTINATION_COMPRESSION_FORMAT_CMF_USE_STATELESS_MODE = 0xd,
+        DESTINATION_COMPRESSION_FORMAT_CMF_DISABLE_WRITE_COMPRESSION_II = 0xe,
         DESTINATION_COMPRESSION_FORMAT_CMF_ML8 = 0xf,
     } DESTINATION_COMPRESSION_FORMAT;
-    typedef enum tagDESTINATION_SURFACE_TYPE {
-        DESTINATION_SURFACE_TYPE_SURFTYPE_1D = 0x0,
-        DESTINATION_SURFACE_TYPE_SURFTYPE_2D = 0x1,
-        DESTINATION_SURFACE_TYPE_SURFTYPE_3D = 0x2,
-        DESTINATION_SURFACE_TYPE_SURFTYPE_CUBE = 0x3,
-    } DESTINATION_SURFACE_TYPE;
-    typedef enum tagSOURCE_SURFACE_TYPE {
-        SOURCE_SURFACE_TYPE_SURFTYPE_1D = 0x0,
-        SOURCE_SURFACE_TYPE_SURFTYPE_2D = 0x1,
-        SOURCE_SURFACE_TYPE_SURFTYPE_3D = 0x2,
-        SOURCE_SURFACE_TYPE_SURFTYPE_CUBE = 0x3,
-    } SOURCE_SURFACE_TYPE;
     typedef enum tagSURFACE_TYPE {
         SURFACE_TYPE_SURFTYPE_1D = 0x0,
         SURFACE_TYPE_SURFTYPE_2D = 0x1,
         SURFACE_TYPE_SURFTYPE_3D = 0x2,
         SURFACE_TYPE_SURFTYPE_CUBE = 0x3,
-    } SURFACE_TYPE; // patched
+    } SURFACE_TYPE;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_EXCLUDES_DWORD_0_1;
-        TheStructure.Common.NumberOfMultisamples = NUMBER_OF_MULTISAMPLES_MULTISAMPLECOUNT_1;
-        TheStructure.Common.SpecialModeOfOperation = SPECIAL_MODE_OF_OPERATION_NONE;
-        TheStructure.Common.ColorDepth = COLOR_DEPTH_8_BIT_COLOR;
-        TheStructure.Common.InstructionTarget_Opcode = INSTRUCTIONTARGET_OPCODE_OPCODE;
+        TheStructure.Common.InstructionTargetOpcode = INSTRUCTION_TARGETOPCODE_XY_BLOCK_COPY_BLT;
         TheStructure.Common.Client = CLIENT_2D_PROCESSOR;
-        TheStructure.Common.DestinationEncryptEn = DESTINATION_ENCRYPT_EN_DISABLE;
-        TheStructure.Common.DestinationTiling = DESTINATION_TILING_LINEAR;
-        TheStructure.Common.DestinationTargetMemory = DESTINATION_TARGET_MEMORY_LOCAL_MEM;
-        TheStructure.Common.SourceEncryptEn = SOURCE_ENCRYPT_EN_DISABLE;
-        TheStructure.Common.SourceTiling = SOURCE_TILING_LINEAR;
-        TheStructure.Common.SourceTargetMemory = SOURCE_TARGET_MEMORY_LOCAL_MEM;
-        TheStructure.Common.SourceCompressionFormat = SOURCE_COMPRESSION_FORMAT_CMF_R8;
-        TheStructure.Common.DestinationCompressionFormat = DESTINATION_COMPRESSION_FORMAT_CMF_R8;
-        TheStructure.Common.DestinationSurfaceType = DESTINATION_SURFACE_TYPE_SURFTYPE_1D;
-        TheStructure.Common.SourceSurfaceType = SOURCE_SURFACE_TYPE_SURFTYPE_1D;
     }
     static tagXY_BLOCK_COPY_BLT sInit() {
         XY_BLOCK_COPY_BLT state;
@@ -3427,10 +3362,10 @@ typedef struct tagXY_BLOCK_COPY_BLT {
         return static_cast<COLOR_DEPTH>(TheStructure.Common.ColorDepth);
     }
     inline void setInstructionTargetOpcode(const INSTRUCTION_TARGETOPCODE value) {
-        TheStructure.Common.InstructionTarget_Opcode = value;
+        TheStructure.Common.InstructionTargetOpcode = value;
     }
     inline INSTRUCTION_TARGETOPCODE getInstructionTargetOpcode() const {
-        return static_cast<INSTRUCTION_TARGETOPCODE>(TheStructure.Common.InstructionTarget_Opcode);
+        return static_cast<INSTRUCTION_TARGETOPCODE>(TheStructure.Common.InstructionTargetOpcode);
     }
     inline void setClient(const CLIENT value) {
         TheStructure.Common.Client = value;
@@ -3439,60 +3374,60 @@ typedef struct tagXY_BLOCK_COPY_BLT {
         return static_cast<CLIENT>(TheStructure.Common.Client);
     }
     inline void setDestinationPitch(const uint32_t value) {
-        UNRECOVERABLE_IF(value - 1 > 0x3ffff);
+        UNRECOVERABLE_IF(value < 1 || value > 0x40000u);
         TheStructure.Common.DestinationPitch = value - 1;
     }
     inline uint32_t getDestinationPitch() const {
         return TheStructure.Common.DestinationPitch + 1;
     }
-    inline void setDestinationEncryptEn(const DESTINATION_ENCRYPT_EN value) {
+    inline void setDestinationEncryptEn(const bool value) {
         TheStructure.Common.DestinationEncryptEn = value;
     }
-    inline DESTINATION_ENCRYPT_EN getDestinationEncryptEn() const {
-        return static_cast<DESTINATION_ENCRYPT_EN>(TheStructure.Common.DestinationEncryptEn);
+    inline bool getDestinationEncryptEn() const {
+        return TheStructure.Common.DestinationEncryptEn;
     }
-    inline void setDestinationMOCS(const uint32_t value) { // patched
-        UNRECOVERABLE_IF(value > 0x1f);
-        setDestinationEncryptEn(static_cast<DESTINATION_ENCRYPT_EN>(value & 1));
+    // Manual generator override: MOCS includes the encryption bit.
+    inline void setDestinationMOCS(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x1fu);
         TheStructure.Common.DestinationMocs = value >> 1;
+        TheStructure.Common.DestinationEncryptEn = value & 1;
     }
-    inline uint32_t getDestinationMOCS() const { // patched
-        uint32_t mocs = static_cast<uint32_t>(getDestinationEncryptEn());
-        return mocs | (TheStructure.Common.DestinationMocs << 1);
+    inline uint32_t getDestinationMOCS() const {
+        return (TheStructure.Common.DestinationMocs << 1) | TheStructure.Common.DestinationEncryptEn;
     }
-    inline void setDestinationTiling(const TILING value) { // patched
+    inline void setDestinationTiling(const TILING value) {
         TheStructure.Common.DestinationTiling = value;
     }
-    inline TILING getDestinationTiling() const { // patched
+    inline TILING getDestinationTiling() const {
         return static_cast<TILING>(TheStructure.Common.DestinationTiling);
     }
     inline void setDestinationX1CoordinateLeft(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xffff);
-        TheStructure.Common.DestinationX1Coordinate_Left = value;
+        UNRECOVERABLE_IF(value > 0xffffu);
+        TheStructure.Common.DestinationX1CoordinateLeft = value;
     }
     inline uint32_t getDestinationX1CoordinateLeft() const {
-        return TheStructure.Common.DestinationX1Coordinate_Left;
+        return TheStructure.Common.DestinationX1CoordinateLeft;
     }
     inline void setDestinationY1CoordinateTop(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xffff);
-        TheStructure.Common.DestinationY1Coordinate_Top = value;
+        UNRECOVERABLE_IF(value > 0xffffu);
+        TheStructure.Common.DestinationY1CoordinateTop = value;
     }
     inline uint32_t getDestinationY1CoordinateTop() const {
-        return TheStructure.Common.DestinationY1Coordinate_Top;
+        return TheStructure.Common.DestinationY1CoordinateTop;
     }
     inline void setDestinationX2CoordinateRight(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xffff);
-        TheStructure.Common.DestinationX2Coordinate_Right = value;
+        UNRECOVERABLE_IF(value > 0xffffu);
+        TheStructure.Common.DestinationX2CoordinateRight = value;
     }
     inline uint32_t getDestinationX2CoordinateRight() const {
-        return TheStructure.Common.DestinationX2Coordinate_Right;
+        return TheStructure.Common.DestinationX2CoordinateRight;
     }
     inline void setDestinationY2CoordinateBottom(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xffff);
-        TheStructure.Common.DestinationY2Coordinate_Bottom = value;
+        UNRECOVERABLE_IF(value > 0xffffu);
+        TheStructure.Common.DestinationY2CoordinateBottom = value;
     }
     inline uint32_t getDestinationY2CoordinateBottom() const {
-        return TheStructure.Common.DestinationY2Coordinate_Bottom;
+        return TheStructure.Common.DestinationY2CoordinateBottom;
     }
     inline void setDestinationBaseAddress(const uint64_t value) {
         TheStructure.Common.DestinationBaseAddress = value;
@@ -3501,65 +3436,65 @@ typedef struct tagXY_BLOCK_COPY_BLT {
         return TheStructure.Common.DestinationBaseAddress;
     }
     inline void setDestinationXOffset(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x3fff);
+        UNRECOVERABLE_IF(value > 0x3fffu);
         TheStructure.Common.DestinationXOffset = value;
     }
     inline uint32_t getDestinationXOffset() const {
         return TheStructure.Common.DestinationXOffset;
     }
     inline void setDestinationYOffset(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x3fff);
+        UNRECOVERABLE_IF(value > 0x3fffu);
         TheStructure.Common.DestinationYOffset = value;
     }
     inline uint32_t getDestinationYOffset() const {
         return TheStructure.Common.DestinationYOffset;
     }
-    inline void setDestinationTargetMemory(const TARGET_MEMORY value) { // patched
+    inline void setDestinationTargetMemory(const TARGET_MEMORY value) {
         TheStructure.Common.DestinationTargetMemory = value;
     }
-    inline TARGET_MEMORY getDestinationTargetMemory() const { // patched
+    inline TARGET_MEMORY getDestinationTargetMemory() const {
         return static_cast<TARGET_MEMORY>(TheStructure.Common.DestinationTargetMemory);
     }
     inline void setSourceX1CoordinateLeft(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xffff);
-        TheStructure.Common.SourceX1Coordinate_Left = value;
+        UNRECOVERABLE_IF(value > 0xffffu);
+        TheStructure.Common.SourceX1CoordinateLeft = value;
     }
     inline uint32_t getSourceX1CoordinateLeft() const {
-        return TheStructure.Common.SourceX1Coordinate_Left;
+        return TheStructure.Common.SourceX1CoordinateLeft;
     }
     inline void setSourceY1CoordinateTop(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xffff);
-        TheStructure.Common.SourceY1Coordinate_Top = value;
+        UNRECOVERABLE_IF(value > 0xffffu);
+        TheStructure.Common.SourceY1CoordinateTop = value;
     }
     inline uint32_t getSourceY1CoordinateTop() const {
-        return TheStructure.Common.SourceY1Coordinate_Top;
+        return TheStructure.Common.SourceY1CoordinateTop;
     }
     inline void setSourcePitch(const uint32_t value) {
-        UNRECOVERABLE_IF(value - 1 > 0x3ffff);
+        UNRECOVERABLE_IF(value < 1 || value > 0x40000u);
         TheStructure.Common.SourcePitch = value - 1;
     }
     inline uint32_t getSourcePitch() const {
         return TheStructure.Common.SourcePitch + 1;
     }
-    inline void setSourceEncryptEn(const SOURCE_ENCRYPT_EN value) {
+    inline void setSourceEncryptEn(const bool value) {
         TheStructure.Common.SourceEncryptEn = value;
     }
-    inline SOURCE_ENCRYPT_EN getSourceEncryptEn() const {
-        return static_cast<SOURCE_ENCRYPT_EN>(TheStructure.Common.SourceEncryptEn);
+    inline bool getSourceEncryptEn() const {
+        return TheStructure.Common.SourceEncryptEn;
     }
-    inline void setSourceMOCS(const uint32_t value) { // patched
-        UNRECOVERABLE_IF(value > 0x1f);
-        setSourceEncryptEn(static_cast<SOURCE_ENCRYPT_EN>(value & 1));
+    // Manual generator override: MOCS includes the encryption bit.
+    inline void setSourceMOCS(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x1fu);
         TheStructure.Common.SourceMocs = value >> 1;
+        TheStructure.Common.SourceEncryptEn = value & 1;
     }
-    inline uint32_t getSourceMOCS() const { // patched
-        uint32_t mocs = static_cast<uint32_t>(getSourceEncryptEn());
-        return mocs | (TheStructure.Common.SourceMocs << 1);
+    inline uint32_t getSourceMOCS() const {
+        return (TheStructure.Common.SourceMocs << 1) | TheStructure.Common.SourceEncryptEn;
     }
-    inline void setSourceTiling(const TILING value) { // patched
+    inline void setSourceTiling(const TILING value) {
         TheStructure.Common.SourceTiling = value;
     }
-    inline TILING getSourceTiling() const { // patched
+    inline TILING getSourceTiling() const {
         return static_cast<TILING>(TheStructure.Common.SourceTiling);
     }
     inline void setSourceBaseAddress(const uint64_t value) {
@@ -3569,170 +3504,172 @@ typedef struct tagXY_BLOCK_COPY_BLT {
         return TheStructure.Common.SourceBaseAddress;
     }
     inline void setSourceXOffset(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x3fff);
+        UNRECOVERABLE_IF(value > 0x3fffu);
         TheStructure.Common.SourceXOffset = value;
     }
     inline uint32_t getSourceXOffset() const {
         return TheStructure.Common.SourceXOffset;
     }
     inline void setSourceYOffset(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x3fff);
+        UNRECOVERABLE_IF(value > 0x3fffu);
         TheStructure.Common.SourceYOffset = value;
     }
     inline uint32_t getSourceYOffset() const {
         return TheStructure.Common.SourceYOffset;
     }
-    inline void setSourceTargetMemory(const TARGET_MEMORY value) { // patched
+    inline void setSourceTargetMemory(const TARGET_MEMORY value) {
         TheStructure.Common.SourceTargetMemory = value;
     }
-    inline TARGET_MEMORY getSourceTargetMemory() const { // patched
+    inline TARGET_MEMORY getSourceTargetMemory() const {
         return static_cast<TARGET_MEMORY>(TheStructure.Common.SourceTargetMemory);
     }
-    inline void setSourceCompressionFormat(const uint32_t value) { // patched
+    inline void setSourceCompressionFormat(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0xfu);
         TheStructure.Common.SourceCompressionFormat = value;
     }
-    inline uint32_t getSourceCompressionFormat() const { // patched
+    inline uint32_t getSourceCompressionFormat() const {
         return TheStructure.Common.SourceCompressionFormat;
     }
-    inline void setDestinationCompressionFormat(const uint32_t value) { // patched
+    inline void setDestinationCompressionFormat(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0xfu);
         TheStructure.Common.DestinationCompressionFormat = value;
     }
-    inline uint32_t getDestinationCompressionFormat() const { // patched
+    inline uint32_t getDestinationCompressionFormat() const {
         return TheStructure.Common.DestinationCompressionFormat;
     }
     inline void setDestinationSurfaceHeight(const uint32_t value) {
-        UNRECOVERABLE_IF(value - 1 > 0x3fff);
+        UNRECOVERABLE_IF(value < 1 || value > 0x4000u);
         TheStructure.Common.DestinationSurfaceHeight = value - 1;
     }
     inline uint32_t getDestinationSurfaceHeight() const {
         return TheStructure.Common.DestinationSurfaceHeight + 1;
     }
     inline void setDestinationSurfaceWidth(const uint32_t value) {
-        UNRECOVERABLE_IF(value - 1 > 0x3fff);
+        UNRECOVERABLE_IF(value < 1 || value > 0x4000u);
         TheStructure.Common.DestinationSurfaceWidth = value - 1;
     }
     inline uint32_t getDestinationSurfaceWidth() const {
         return TheStructure.Common.DestinationSurfaceWidth + 1;
     }
-    inline void setDestinationSurfaceType(const SURFACE_TYPE value) { // patched
+    inline void setDestinationSurfaceType(const SURFACE_TYPE value) {
         TheStructure.Common.DestinationSurfaceType = value;
     }
-    inline SURFACE_TYPE getDestinationSurfaceType() const { // patched
+    inline SURFACE_TYPE getDestinationSurfaceType() const {
         return static_cast<SURFACE_TYPE>(TheStructure.Common.DestinationSurfaceType);
     }
     inline void setDestinationLod(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xf);
+        UNRECOVERABLE_IF(value > 0xfu);
         TheStructure.Common.DestinationLod = value;
     }
     inline uint32_t getDestinationLod() const {
         return TheStructure.Common.DestinationLod;
     }
     inline void setDestinationSurfaceQpitch(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x7fff);
+        UNRECOVERABLE_IF(value > 0x7fffu);
         TheStructure.Common.DestinationSurfaceQpitch = value;
     }
     inline uint32_t getDestinationSurfaceQpitch() const {
         return TheStructure.Common.DestinationSurfaceQpitch;
     }
     inline void setDestinationSurfaceDepth(const uint32_t value) {
-        UNRECOVERABLE_IF(value - 1 > 0x7ff);
+        UNRECOVERABLE_IF(value < 1 || value > 0x800u);
         TheStructure.Common.DestinationSurfaceDepth = value - 1;
     }
     inline uint32_t getDestinationSurfaceDepth() const {
         return TheStructure.Common.DestinationSurfaceDepth + 1;
     }
     inline void setDestinationHorizontalAlign(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x3);
+        UNRECOVERABLE_IF(value > 0x3u);
         TheStructure.Common.DestinationHorizontalAlign = value;
     }
     inline uint32_t getDestinationHorizontalAlign() const {
         return TheStructure.Common.DestinationHorizontalAlign;
     }
     inline void setDestinationVerticalAlign(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x3);
+        UNRECOVERABLE_IF(value > 0x3u);
         TheStructure.Common.DestinationVerticalAlign = value;
     }
     inline uint32_t getDestinationVerticalAlign() const {
         return TheStructure.Common.DestinationVerticalAlign;
     }
-    inline void setDestinationMipTailStartLOD(const uint32_t value) { // patched
-        UNRECOVERABLE_IF(value > 0xf);
+    inline void setDestinationMipTailStartLOD(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0xfu);
         TheStructure.Common.DestinationMipTailStartLod = value;
     }
-    inline uint32_t getDestinationMipTailStartLOD() const { // patched
+    inline uint32_t getDestinationMipTailStartLOD() const {
         return TheStructure.Common.DestinationMipTailStartLod;
     }
     inline void setDestinationArrayIndex(const uint32_t value) {
-        UNRECOVERABLE_IF(value - 1 > 0x7ff);
+        UNRECOVERABLE_IF(value < 1 || value > 0x800u);
         TheStructure.Common.DestinationArrayIndex = value - 1;
     }
     inline uint32_t getDestinationArrayIndex() const {
         return TheStructure.Common.DestinationArrayIndex + 1;
     }
     inline void setSourceSurfaceHeight(const uint32_t value) {
-        UNRECOVERABLE_IF(value - 1 > 0x3fff);
+        UNRECOVERABLE_IF(value < 1 || value > 0x4000u);
         TheStructure.Common.SourceSurfaceHeight = value - 1;
     }
     inline uint32_t getSourceSurfaceHeight() const {
         return TheStructure.Common.SourceSurfaceHeight + 1;
     }
     inline void setSourceSurfaceWidth(const uint32_t value) {
-        UNRECOVERABLE_IF(value - 1 > 0x3fff);
+        UNRECOVERABLE_IF(value < 1 || value > 0x4000u);
         TheStructure.Common.SourceSurfaceWidth = value - 1;
     }
     inline uint32_t getSourceSurfaceWidth() const {
         return TheStructure.Common.SourceSurfaceWidth + 1;
     }
-    inline void setSourceSurfaceType(const SURFACE_TYPE value) { // patched
+    inline void setSourceSurfaceType(const SURFACE_TYPE value) {
         TheStructure.Common.SourceSurfaceType = value;
     }
-    inline SURFACE_TYPE getSourceSurfaceType() const { // patched
+    inline SURFACE_TYPE getSourceSurfaceType() const {
         return static_cast<SURFACE_TYPE>(TheStructure.Common.SourceSurfaceType);
     }
     inline void setSourceLod(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xf);
+        UNRECOVERABLE_IF(value > 0xfu);
         TheStructure.Common.SourceLod = value;
     }
     inline uint32_t getSourceLod() const {
         return TheStructure.Common.SourceLod;
     }
     inline void setSourceSurfaceQpitch(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x7fff);
+        UNRECOVERABLE_IF(value > 0x7fffu);
         TheStructure.Common.SourceSurfaceQpitch = value;
     }
     inline uint32_t getSourceSurfaceQpitch() const {
         return TheStructure.Common.SourceSurfaceQpitch;
     }
     inline void setSourceSurfaceDepth(const uint32_t value) {
-        UNRECOVERABLE_IF(value - 1 > 0x7ff);
+        UNRECOVERABLE_IF(value < 1 || value > 0x800u);
         TheStructure.Common.SourceSurfaceDepth = value - 1;
     }
     inline uint32_t getSourceSurfaceDepth() const {
         return TheStructure.Common.SourceSurfaceDepth + 1;
     }
     inline void setSourceHorizontalAlign(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x3);
+        UNRECOVERABLE_IF(value > 0x3u);
         TheStructure.Common.SourceHorizontalAlign = value;
     }
     inline uint32_t getSourceHorizontalAlign() const {
         return TheStructure.Common.SourceHorizontalAlign;
     }
     inline void setSourceVerticalAlign(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x3);
+        UNRECOVERABLE_IF(value > 0x3u);
         TheStructure.Common.SourceVerticalAlign = value;
     }
     inline uint32_t getSourceVerticalAlign() const {
         return TheStructure.Common.SourceVerticalAlign;
     }
-    inline void setSourceMipTailStartLOD(const uint32_t value) { // patched
-        UNRECOVERABLE_IF(value > 0xf);
+    inline void setSourceMipTailStartLOD(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0xfu);
         TheStructure.Common.SourceMipTailStartLod = value;
     }
-    inline uint32_t getSourceMipTailStartLOD() const { // patched
+    inline uint32_t getSourceMipTailStartLOD() const {
         return TheStructure.Common.SourceMipTailStartLod;
     }
     inline void setSourceArrayIndex(const uint32_t value) {
-        UNRECOVERABLE_IF(value - 1 > 0x7ff);
+        UNRECOVERABLE_IF(value < 1 || value > 0x800u);
         TheStructure.Common.SourceArrayIndex = value - 1;
     }
     inline uint32_t getSourceArrayIndex() const {
@@ -3751,7 +3688,7 @@ typedef struct tagXY_FAST_COLOR_BLT {
             uint32_t SpecialModeOfOperation : BITFIELD_RANGE(12, 13);
             uint32_t Reserved_14 : BITFIELD_RANGE(14, 18);
             uint32_t ColorDepth : BITFIELD_RANGE(19, 21);
-            uint32_t InstructionTarget_Opcode : BITFIELD_RANGE(22, 28);
+            uint32_t InstructionTargetOpcode : BITFIELD_RANGE(22, 28);
             uint32_t Client : BITFIELD_RANGE(29, 31);
             // DWORD 1
             uint32_t DestinationPitch : BITFIELD_RANGE(0, 17);
@@ -3762,12 +3699,12 @@ typedef struct tagXY_FAST_COLOR_BLT {
             uint32_t Reserved_60 : BITFIELD_RANGE(28, 29);
             uint32_t DestinationTiling : BITFIELD_RANGE(30, 31);
             // DWORD 2
-            uint32_t DestinationX1Coordinate_Left : BITFIELD_RANGE(0, 15);
-            uint32_t DestinationY1Coordinate_Top : BITFIELD_RANGE(16, 31);
+            uint32_t DestinationX1CoordinateLeft : BITFIELD_RANGE(0, 15);
+            uint32_t DestinationY1CoordinateTop : BITFIELD_RANGE(16, 31);
             // DWORD 3
-            uint32_t DestinationX2Coordinate_Right : BITFIELD_RANGE(0, 15);
-            uint32_t DestinationY2Coordinate_Bottom : BITFIELD_RANGE(16, 31);
-            // DWORD 4
+            uint32_t DestinationX2CoordinateRight : BITFIELD_RANGE(0, 15);
+            uint32_t DestinationY2CoordinateBottom : BITFIELD_RANGE(16, 31);
+            // DWORD 4-5
             uint64_t DestinationBaseAddress;
             // DWORD 6
             uint32_t DestinationXOffset : BITFIELD_RANGE(0, 13);
@@ -3775,8 +3712,8 @@ typedef struct tagXY_FAST_COLOR_BLT {
             uint32_t DestinationYOffset : BITFIELD_RANGE(16, 29);
             uint32_t Reserved_222 : BITFIELD_RANGE(30, 30);
             uint32_t DestinationTargetMemory : BITFIELD_RANGE(31, 31);
-            // DWORD 7..10
-            uint32_t FillColorValue[4]; // patched
+            // DWORD 7
+            uint32_t FillColor[4];
             // DWORD 11
             uint32_t DestinationCompressionFormat : BITFIELD_RANGE(0, 3);
             uint32_t Reserved_356 : BITFIELD_RANGE(4, 31);
@@ -3830,15 +3767,11 @@ typedef struct tagXY_FAST_COLOR_BLT {
         COLOR_DEPTH_128_BIT_COLOR = 0x5,
     } COLOR_DEPTH;
     typedef enum tagINSTRUCTION_TARGETOPCODE {
-        INSTRUCTIONTARGET_OPCODE_OPCODE = 0x44,
+        INSTRUCTION_TARGETOPCODE_XY_FAST_COLOR_BLT = 0x44,
     } INSTRUCTION_TARGETOPCODE;
     typedef enum tagCLIENT {
         CLIENT_2D_PROCESSOR = 0x2,
     } CLIENT;
-    typedef enum tagDESTINATION_ENCRYPT_EN {
-        DESTINATION_ENCRYPT_EN_DISABLE = 0x0,
-        DESTINATION_ENCRYPT_EN_ENABLE = 0x1,
-    } DESTINATION_ENCRYPT_EN;
     typedef enum tagDESTINATION_TILING {
         DESTINATION_TILING_LINEAR = 0x0,
         DESTINATION_TILING_XMAJOR = 0x1,
@@ -3862,261 +3795,11 @@ typedef struct tagXY_FAST_COLOR_BLT {
         DESTINATION_COMPRESSION_FORMAT_CMF_R32_G32 = 0x9,
         DESTINATION_COMPRESSION_FORMAT_CMF_R32_G32_B32_A32 = 0xa,
         DESTINATION_COMPRESSION_FORMAT_CMF_Y16_U16_Y16_V16 = 0xb,
+        DESTINATION_COMPRESSION_FORMAT_CMF_DISABLE_WRITE_COMPRESSION = 0xc,
+        DESTINATION_COMPRESSION_FORMAT_CMF_USE_STATELESS_MODE = 0xd,
+        DESTINATION_COMPRESSION_FORMAT_CMF_DISABLE_WRITE_COMPRESSION_II = 0xe,
         DESTINATION_COMPRESSION_FORMAT_CMF_ML8 = 0xf,
     } DESTINATION_COMPRESSION_FORMAT;
-    typedef enum tagSURFACE_FORMAT {
-        SURFACE_FORMAT_R32G32B32A32_FLOAT = 0x0,
-        SURFACE_FORMAT_R32G32B32A32_SINT = 0x1,
-        SURFACE_FORMAT_R32G32B32A32_UINT = 0x2,
-        SURFACE_FORMAT_R32G32B32A32_UNORM = 0x3,
-        SURFACE_FORMAT_R32G32B32A32_SNORM = 0x4,
-        SURFACE_FORMAT_R64G64_FLOAT = 0x5,
-        SURFACE_FORMAT_R32G32B32X32_FLOAT = 0x6,
-        SURFACE_FORMAT_R32G32B32A32_SSCALED = 0x7,
-        SURFACE_FORMAT_R32G32B32A32_USCALED = 0x8,
-        SURFACE_FORMAT_PLANAR_422_8_P208 = 0xc,
-        SURFACE_FORMAT_PLANAR_420_8_SAMPLE_8X8 = 0xd,
-        SURFACE_FORMAT_PLANAR_411_8 = 0xe,
-        SURFACE_FORMAT_PLANAR_422_8 = 0xf,
-        SURFACE_FORMAT_R8G8B8A8_UNORM_VDI = 0x10,
-        SURFACE_FORMAT_YCRCB_NORMAL_SAMPLE_8X8 = 0x11,
-        SURFACE_FORMAT_YCRCB_SWAPUVY_SAMPLE_8X8 = 0x12,
-        SURFACE_FORMAT_YCRCB_SWAPUV_SAMPLE_8X8 = 0x13,
-        SURFACE_FORMAT_YCRCB_SWAPY_SAMPLE_8X8 = 0x14,
-        SURFACE_FORMAT_R32G32B32A32_FLOAT_LD = 0x15,
-        SURFACE_FORMAT_PLANAR_420_16_SAMPLE_8X8 = 0x16,
-        SURFACE_FORMAT_R16B16_UNORM_SAMPLE_8X8 = 0x17,
-        SURFACE_FORMAT_Y16_UNORM_SAMPLE_8X8 = 0x18,
-        SURFACE_FORMAT_PLANAR_Y32_UNORM = 0x19,
-        SURFACE_FORMAT_R32G32B32A32_SFIXED = 0x20,
-        SURFACE_FORMAT_R64G64_PASSTHRU = 0x21,
-        SURFACE_FORMAT_R32G32B32_FLOAT = 0x40,
-        SURFACE_FORMAT_R32G32B32_SINT = 0x41,
-        SURFACE_FORMAT_R32G32B32_UINT = 0x42,
-        SURFACE_FORMAT_R32G32B32_UNORM = 0x43,
-        SURFACE_FORMAT_R32G32B32_SNORM = 0x44,
-        SURFACE_FORMAT_R32G32B32_SSCALED = 0x45,
-        SURFACE_FORMAT_R32G32B32_USCALED = 0x46,
-        SURFACE_FORMAT_R32G32B32_FLOAT_LD = 0x47,
-        SURFACE_FORMAT_R32G32B32_SFIXED = 0x50,
-        SURFACE_FORMAT_R16G16B16A16_UNORM = 0x80,
-        SURFACE_FORMAT_R16G16B16A16_SNORM = 0x81,
-        SURFACE_FORMAT_R16G16B16A16_SINT = 0x82,
-        SURFACE_FORMAT_R16G16B16A16_UINT = 0x83,
-        SURFACE_FORMAT_R16G16B16A16_FLOAT = 0x84,
-        SURFACE_FORMAT_R32G32_FLOAT = 0x85,
-        SURFACE_FORMAT_R32G32_SINT = 0x86,
-        SURFACE_FORMAT_R32G32_UINT = 0x87,
-        SURFACE_FORMAT_R32_FLOAT_X8X24_TYPELESS = 0x88,
-        SURFACE_FORMAT_X32_TYPELESS_G8X24_UINT = 0x89,
-        SURFACE_FORMAT_L32A32_FLOAT = 0x8a,
-        SURFACE_FORMAT_R32G32_UNORM = 0x8b,
-        SURFACE_FORMAT_R32G32_SNORM = 0x8c,
-        SURFACE_FORMAT_R64_FLOAT = 0x8d,
-        SURFACE_FORMAT_R16G16B16X16_UNORM = 0x8e,
-        SURFACE_FORMAT_R16G16B16X16_FLOAT = 0x8f,
-        SURFACE_FORMAT_A32X32_FLOAT = 0x90,
-        SURFACE_FORMAT_L32X32_FLOAT = 0x91,
-        SURFACE_FORMAT_I32X32_FLOAT = 0x92,
-        SURFACE_FORMAT_R16G16B16A16_SSCALED = 0x93,
-        SURFACE_FORMAT_R16G16B16A16_USCALED = 0x94,
-        SURFACE_FORMAT_R32G32_SSCALED = 0x95,
-        SURFACE_FORMAT_R32G32_USCALED = 0x96,
-        SURFACE_FORMAT_R32G32_FLOAT_LD = 0x97,
-        SURFACE_FORMAT_R32_FLOAT_X8X24_TYPELESS_LD = 0x98,
-        SURFACE_FORMAT_R32G32_SFIXED = 0xa0,
-        SURFACE_FORMAT_R64_PASSTHRU = 0xa1,
-        SURFACE_FORMAT_B8G8R8A8_UNORM = 0xc0,
-        SURFACE_FORMAT_B8G8R8A8_UNORM_SRGB = 0xc1,
-        SURFACE_FORMAT_R10G10B10A2_UNORM = 0xc2,
-        SURFACE_FORMAT_R10G10B10A2_UNORM_SRGB = 0xc3,
-        SURFACE_FORMAT_R10G10B10A2_UINT = 0xc4,
-        SURFACE_FORMAT_R10G10B10_SNORM_A2_UNORM = 0xc5,
-        SURFACE_FORMAT_R10G10B10A2_UNORM_SAMPLE_8X8 = 0xc6,
-        SURFACE_FORMAT_R8G8B8A8_UNORM = 0xc7,
-        SURFACE_FORMAT_R8G8B8A8_UNORM_SRGB = 0xc8,
-        SURFACE_FORMAT_R8G8B8A8_SNORM = 0xc9,
-        SURFACE_FORMAT_R8G8B8A8_SINT = 0xca,
-        SURFACE_FORMAT_R8G8B8A8_UINT = 0xcb,
-        SURFACE_FORMAT_R16G16_UNORM = 0xcc,
-        SURFACE_FORMAT_R16G16_SNORM = 0xcd,
-        SURFACE_FORMAT_R16G16_SINT = 0xce,
-        SURFACE_FORMAT_R16G16_UINT = 0xcf,
-        SURFACE_FORMAT_R16G16_FLOAT = 0xd0,
-        SURFACE_FORMAT_B10G10R10A2_UNORM = 0xd1,
-        SURFACE_FORMAT_B10G10R10A2_UNORM_SRGB = 0xd2,
-        SURFACE_FORMAT_R11G11B10_FLOAT = 0xd3,
-        SURFACE_FORMAT_R10G10B10_FLOAT_A2_UNORM = 0xd5,
-        SURFACE_FORMAT_R32_SINT = 0xd6,
-        SURFACE_FORMAT_R32_UINT = 0xd7,
-        SURFACE_FORMAT_R32_FLOAT = 0xd8,
-        SURFACE_FORMAT_R24_UNORM_X8_TYPELESS = 0xd9,
-        SURFACE_FORMAT_X24_TYPELESS_G8_UINT = 0xda,
-        SURFACE_FORMAT_R32_FLOAT_LD = 0xdb,
-        SURFACE_FORMAT_R24_UNORM_X8_TYPELESS_LD = 0xdc,
-        SURFACE_FORMAT_L32_UNORM = 0xdd,
-        SURFACE_FORMAT_A32_UNORM = 0xde,
-        SURFACE_FORMAT_L16A16_UNORM = 0xdf,
-        SURFACE_FORMAT_I24X8_UNORM = 0xe0,
-        SURFACE_FORMAT_L24X8_UNORM = 0xe1,
-        SURFACE_FORMAT_A24X8_UNORM = 0xe2,
-        SURFACE_FORMAT_I32_FLOAT = 0xe3,
-        SURFACE_FORMAT_L32_FLOAT = 0xe4,
-        SURFACE_FORMAT_A32_FLOAT = 0xe5,
-        SURFACE_FORMAT_X8B8_UNORM_G8R8_SNORM = 0xe6,
-        SURFACE_FORMAT_A8X8_UNORM_G8R8_SNORM = 0xe7,
-        SURFACE_FORMAT_B8X8_UNORM_G8R8_SNORM = 0xe8,
-        SURFACE_FORMAT_B8G8R8X8_UNORM = 0xe9,
-        SURFACE_FORMAT_B8G8R8X8_UNORM_SRGB = 0xea,
-        SURFACE_FORMAT_R8G8B8X8_UNORM = 0xeb,
-        SURFACE_FORMAT_R8G8B8X8_UNORM_SRGB = 0xec,
-        SURFACE_FORMAT_R9G9B9E5_SHAREDEXP = 0xed,
-        SURFACE_FORMAT_B10G10R10X2_UNORM = 0xee,
-        SURFACE_FORMAT_L16A16_FLOAT = 0xf0,
-        SURFACE_FORMAT_R32_UNORM = 0xf1,
-        SURFACE_FORMAT_R32_SNORM = 0xf2,
-        SURFACE_FORMAT_R10G10B10X2_USCALED = 0xf3,
-        SURFACE_FORMAT_R8G8B8A8_SSCALED = 0xf4,
-        SURFACE_FORMAT_R8G8B8A8_USCALED = 0xf5,
-        SURFACE_FORMAT_R16G16_SSCALED = 0xf6,
-        SURFACE_FORMAT_R16G16_USCALED = 0xf7,
-        SURFACE_FORMAT_R32_SSCALED = 0xf8,
-        SURFACE_FORMAT_R32_USCALED = 0xf9,
-        SURFACE_FORMAT_R8B8G8A8_UNORM = 0xfa,
-        SURFACE_FORMAT_R8G8B8A8_SINT_NOA = 0xfb,
-        SURFACE_FORMAT_R8G8B8A8_UINT_NOA = 0xfc,
-        SURFACE_FORMAT_R8G8B8A8_UNORM_YUV = 0xfd,
-        SURFACE_FORMAT_R8G8B8A8_UNORM_SNCK = 0xfe,
-        SURFACE_FORMAT_R8G8B8A8_UNORM_NOA = 0xff,
-        SURFACE_FORMAT_B5G6R5_UNORM = 0x100,
-        SURFACE_FORMAT_B5G6R5_UNORM_SRGB = 0x101,
-        SURFACE_FORMAT_B5G5R5A1_UNORM = 0x102,
-        SURFACE_FORMAT_B5G5R5A1_UNORM_SRGB = 0x103,
-        SURFACE_FORMAT_B4G4R4A4_UNORM = 0x104,
-        SURFACE_FORMAT_B4G4R4A4_UNORM_SRGB = 0x105,
-        SURFACE_FORMAT_R8G8_UNORM = 0x106,
-        SURFACE_FORMAT_R8G8_SNORM = 0x107,
-        SURFACE_FORMAT_R8G8_SINT = 0x108,
-        SURFACE_FORMAT_R8G8_UINT = 0x109,
-        SURFACE_FORMAT_R16_UNORM = 0x10a,
-        SURFACE_FORMAT_R16_SNORM = 0x10b,
-        SURFACE_FORMAT_R16_SINT = 0x10c,
-        SURFACE_FORMAT_R16_UINT = 0x10d,
-        SURFACE_FORMAT_R16_FLOAT = 0x10e,
-        SURFACE_FORMAT_A8P8_UNORM_PALETTE0 = 0x10f,
-        SURFACE_FORMAT_A8P8_UNORM_PALETTE1 = 0x110,
-        SURFACE_FORMAT_I16_UNORM = 0x111,
-        SURFACE_FORMAT_L16_UNORM = 0x112,
-        SURFACE_FORMAT_A16_UNORM = 0x113,
-        SURFACE_FORMAT_L8A8_UNORM = 0x114,
-        SURFACE_FORMAT_I16_FLOAT = 0x115,
-        SURFACE_FORMAT_L16_FLOAT = 0x116,
-        SURFACE_FORMAT_A16_FLOAT = 0x117,
-        SURFACE_FORMAT_L8A8_UNORM_SRGB = 0x118,
-        SURFACE_FORMAT_R5G5_SNORM_B6_UNORM = 0x119,
-        SURFACE_FORMAT_B5G5R5X1_UNORM = 0x11a,
-        SURFACE_FORMAT_B5G5R5X1_UNORM_SRGB = 0x11b,
-        SURFACE_FORMAT_R8G8_SSCALED = 0x11c,
-        SURFACE_FORMAT_R8G8_USCALED = 0x11d,
-        SURFACE_FORMAT_R16_SSCALED = 0x11e,
-        SURFACE_FORMAT_R16_USCALED = 0x11f,
-        SURFACE_FORMAT_R8G8_SNORM_DX9 = 0x120,
-        SURFACE_FORMAT_R16_FLOAT_DX9 = 0x121,
-        SURFACE_FORMAT_P8A8_UNORM_PALETTE0 = 0x122,
-        SURFACE_FORMAT_P8A8_UNORM_PALETTE1 = 0x123,
-        SURFACE_FORMAT_A1B5G5R5_UNORM = 0x124,
-        SURFACE_FORMAT_A4B4G4R4_UNORM = 0x125,
-        SURFACE_FORMAT_L8A8_UINT = 0x126,
-        SURFACE_FORMAT_L8A8_SINT = 0x127,
-        SURFACE_FORMAT_R8_UNORM = 0x140,
-        SURFACE_FORMAT_R8_SNORM = 0x141,
-        SURFACE_FORMAT_R8_SINT = 0x142,
-        SURFACE_FORMAT_R8_UINT = 0x143,
-        SURFACE_FORMAT_A8_UNORM = 0x144,
-        SURFACE_FORMAT_I8_UNORM = 0x145,
-        SURFACE_FORMAT_L8_UNORM = 0x146,
-        SURFACE_FORMAT_P4A4_UNORM_PALETTE0 = 0x147,
-        SURFACE_FORMAT_A4P4_UNORM_PALETTE0 = 0x148,
-        SURFACE_FORMAT_R8_SSCALED = 0x149,
-        SURFACE_FORMAT_R8_USCALED = 0x14a,
-        SURFACE_FORMAT_P8_UNORM_PALETTE0 = 0x14b,
-        SURFACE_FORMAT_L8_UNORM_SRGB = 0x14c,
-        SURFACE_FORMAT_P8_UNORM_PALETTE1 = 0x14d,
-        SURFACE_FORMAT_P4A4_UNORM_PALETTE1 = 0x14e,
-        SURFACE_FORMAT_A4P4_UNORM_PALETTE1 = 0x14f,
-        SURFACE_FORMAT_Y8_UNORM = 0x150,
-        SURFACE_FORMAT_L8_UINT = 0x152,
-        SURFACE_FORMAT_L8_SINT = 0x153,
-        SURFACE_FORMAT_I8_UINT = 0x154,
-        SURFACE_FORMAT_I8_SINT = 0x155,
-        SURFACE_FORMAT_DXT1_RGB_SRGB = 0x180,
-        SURFACE_FORMAT_R1_UNORM = 0x181,
-        SURFACE_FORMAT_YCRCB_NORMAL = 0x182,
-        SURFACE_FORMAT_YCRCB_SWAPUVY = 0x183,
-        SURFACE_FORMAT_P2_UNORM_PALETTE0 = 0x184,
-        SURFACE_FORMAT_P2_UNORM_PALETTE1 = 0x185,
-        SURFACE_FORMAT_BC1_UNORM = 0x186,
-        SURFACE_FORMAT_BC2_UNORM = 0x187,
-        SURFACE_FORMAT_BC3_UNORM = 0x188,
-        SURFACE_FORMAT_BC4_UNORM = 0x189,
-        SURFACE_FORMAT_BC5_UNORM = 0x18a,
-        SURFACE_FORMAT_BC1_UNORM_SRGB = 0x18b,
-        SURFACE_FORMAT_BC2_UNORM_SRGB = 0x18c,
-        SURFACE_FORMAT_BC3_UNORM_SRGB = 0x18d,
-        SURFACE_FORMAT_MONO8 = 0x18e,
-        SURFACE_FORMAT_YCRCB_SWAPUV = 0x18f,
-        SURFACE_FORMAT_YCRCB_SWAPY = 0x190,
-        SURFACE_FORMAT_DXT1_RGB = 0x191,
-        SURFACE_FORMAT_R8G8B8_UNORM = 0x193,
-        SURFACE_FORMAT_R8G8B8_SNORM = 0x194,
-        SURFACE_FORMAT_R8G8B8_SSCALED = 0x195,
-        SURFACE_FORMAT_R8G8B8_USCALED = 0x196,
-        SURFACE_FORMAT_R64G64B64A64_FLOAT = 0x197,
-        SURFACE_FORMAT_R64G64B64_FLOAT = 0x198,
-        SURFACE_FORMAT_BC4_SNORM = 0x199,
-        SURFACE_FORMAT_BC5_SNORM = 0x19a,
-        SURFACE_FORMAT_R16G16B16_FLOAT = 0x19b,
-        SURFACE_FORMAT_R16G16B16_UNORM = 0x19c,
-        SURFACE_FORMAT_R16G16B16_SNORM = 0x19d,
-        SURFACE_FORMAT_R16G16B16_SSCALED = 0x19e,
-        SURFACE_FORMAT_R16G16B16_USCALED = 0x19f,
-        SURFACE_FORMAT_R8B8_UNORM = 0x1a0,
-        SURFACE_FORMAT_BC6H_SF16 = 0x1a1,
-        SURFACE_FORMAT_BC7_UNORM = 0x1a2,
-        SURFACE_FORMAT_BC7_UNORM_SRGB = 0x1a3,
-        SURFACE_FORMAT_BC6H_UF16 = 0x1a4,
-        SURFACE_FORMAT_PLANAR_420_8 = 0x1a5,
-        SURFACE_FORMAT_PLANAR_420_16 = 0x1a6,
-        SURFACE_FORMAT_R8G8B8_UNORM_SRGB = 0x1a8,
-        SURFACE_FORMAT_ETC1_RGB8 = 0x1a9,
-        SURFACE_FORMAT_ETC2_RGB8 = 0x1aa,
-        SURFACE_FORMAT_EAC_R11 = 0x1ab,
-        SURFACE_FORMAT_EAC_RG11 = 0x1ac,
-        SURFACE_FORMAT_EAC_SIGNED_R11 = 0x1ad,
-        SURFACE_FORMAT_EAC_SIGNED_RG11 = 0x1ae,
-        SURFACE_FORMAT_ETC2_SRGB8 = 0x1af,
-        SURFACE_FORMAT_R16G16B16_UINT = 0x1b0,
-        SURFACE_FORMAT_R16G16B16_SINT = 0x1b1,
-        SURFACE_FORMAT_R32_SFIXED = 0x1b2,
-        SURFACE_FORMAT_R10G10B10A2_SNORM = 0x1b3,
-        SURFACE_FORMAT_R10G10B10A2_USCALED = 0x1b4,
-        SURFACE_FORMAT_R10G10B10A2_SSCALED = 0x1b5,
-        SURFACE_FORMAT_R10G10B10A2_SINT = 0x1b6,
-        SURFACE_FORMAT_B10G10R10A2_SNORM = 0x1b7,
-        SURFACE_FORMAT_B10G10R10A2_USCALED = 0x1b8,
-        SURFACE_FORMAT_B10G10R10A2_SSCALED = 0x1b9,
-        SURFACE_FORMAT_B10G10R10A2_UINT = 0x1ba,
-        SURFACE_FORMAT_B10G10R10A2_SINT = 0x1bb,
-        SURFACE_FORMAT_R64G64B64A64_PASSTHRU = 0x1bc,
-        SURFACE_FORMAT_R64G64B64_PASSTHRU = 0x1bd,
-        SURFACE_FORMAT_ETC2_RGB8_PTA = 0x1c0,
-        SURFACE_FORMAT_ETC2_SRGB8_PTA = 0x1c1,
-        SURFACE_FORMAT_ETC2_EAC_RGBA8 = 0x1c2,
-        SURFACE_FORMAT_ETC2_EAC_SRGB8_A8 = 0x1c3,
-        SURFACE_FORMAT_R8G8B8_UINT = 0x1c8,
-        SURFACE_FORMAT_R8G8B8_SINT = 0x1c9,
-        SURFACE_FORMAT_RAW = 0x1ff,
-    } SURFACE_FORMAT;
     typedef enum tagAUX_SPECIAL_OPERATIONS_MODE {
         AUX_SPECIAL_OPERATIONS_MODE_FAST_CLEAR_HW_FORMAT_CONVERSION = 0x0,
         AUX_SPECIAL_OPERATIONS_MODE_FAST_CLEAR_BYPASS_HW_FORMAT_CONVERSION = 0x1,
@@ -4131,17 +3814,8 @@ typedef struct tagXY_FAST_COLOR_BLT {
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_EXCLUDES_DWORD_0_1;
-        TheStructure.Common.NumberOfMultisamples = NUMBER_OF_MULTISAMPLES_MULTISAMPLECOUNT_1;
-        TheStructure.Common.SpecialModeOfOperation = SPECIAL_MODE_OF_OPERATION_NONE;
-        TheStructure.Common.ColorDepth = COLOR_DEPTH_8_BIT_COLOR;
-        TheStructure.Common.InstructionTarget_Opcode = INSTRUCTIONTARGET_OPCODE_OPCODE;
+        TheStructure.Common.InstructionTargetOpcode = INSTRUCTION_TARGETOPCODE_XY_FAST_COLOR_BLT;
         TheStructure.Common.Client = CLIENT_2D_PROCESSOR;
-        TheStructure.Common.DestinationEncryptEn = DESTINATION_ENCRYPT_EN_DISABLE;
-        TheStructure.Common.DestinationTiling = DESTINATION_TILING_LINEAR;
-        TheStructure.Common.DestinationTargetMemory = DESTINATION_TARGET_MEMORY_LOCAL_MEM;
-        TheStructure.Common.DestinationCompressionFormat = DESTINATION_COMPRESSION_FORMAT_CMF_R8;
-        TheStructure.Common.AuxSpecialOperationsMode = AUX_SPECIAL_OPERATIONS_MODE_FAST_CLEAR_HW_FORMAT_CONVERSION;
-        TheStructure.Common.DestinationSurfaceType = DESTINATION_SURFACE_TYPE_SURFTYPE_1D;
     }
     static tagXY_FAST_COLOR_BLT sInit() {
         XY_FAST_COLOR_BLT state;
@@ -4171,10 +3845,10 @@ typedef struct tagXY_FAST_COLOR_BLT {
         return static_cast<COLOR_DEPTH>(TheStructure.Common.ColorDepth);
     }
     inline void setInstructionTargetOpcode(const INSTRUCTION_TARGETOPCODE value) {
-        TheStructure.Common.InstructionTarget_Opcode = value;
+        TheStructure.Common.InstructionTargetOpcode = value;
     }
     inline INSTRUCTION_TARGETOPCODE getInstructionTargetOpcode() const {
-        return static_cast<INSTRUCTION_TARGETOPCODE>(TheStructure.Common.InstructionTarget_Opcode);
+        return static_cast<INSTRUCTION_TARGETOPCODE>(TheStructure.Common.InstructionTargetOpcode);
     }
     inline void setClient(const CLIENT value) {
         TheStructure.Common.Client = value;
@@ -4183,26 +3857,26 @@ typedef struct tagXY_FAST_COLOR_BLT {
         return static_cast<CLIENT>(TheStructure.Common.Client);
     }
     inline void setDestinationPitch(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x3ffff + 1); // patched
+        UNRECOVERABLE_IF(value < 1 || value > 0x40000u);
         TheStructure.Common.DestinationPitch = value - 1;
     }
     inline uint32_t getDestinationPitch() const {
         return TheStructure.Common.DestinationPitch + 1;
     }
-    inline void setDestinationEncryptEn(const DESTINATION_ENCRYPT_EN value) {
+    inline void setDestinationEncryptEn(const bool value) {
         TheStructure.Common.DestinationEncryptEn = value;
     }
-    inline DESTINATION_ENCRYPT_EN getDestinationEncryptEn() const {
-        return static_cast<DESTINATION_ENCRYPT_EN>(TheStructure.Common.DestinationEncryptEn);
+    inline bool getDestinationEncryptEn() const {
+        return TheStructure.Common.DestinationEncryptEn;
     }
-    inline void setDestinationMOCS(const uint32_t value) { // patched
-        UNRECOVERABLE_IF(value > 0x1f);
-        setDestinationEncryptEn(static_cast<DESTINATION_ENCRYPT_EN>(value & 1));
+    // Manual generator override: MOCS includes the encryption bit.
+    inline void setDestinationMOCS(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x1fu);
         TheStructure.Common.DestinationMocs = value >> 1;
+        TheStructure.Common.DestinationEncryptEn = value & 1;
     }
-    inline uint32_t getDestinationMOCS() const { // patched
-        uint32_t mocs = static_cast<uint32_t>(getDestinationEncryptEn());
-        return mocs | (TheStructure.Common.DestinationMocs << 1);
+    inline uint32_t getDestinationMOCS() const {
+        return (TheStructure.Common.DestinationMocs << 1) | TheStructure.Common.DestinationEncryptEn;
     }
     inline void setDestinationTiling(const DESTINATION_TILING value) {
         TheStructure.Common.DestinationTiling = value;
@@ -4211,32 +3885,32 @@ typedef struct tagXY_FAST_COLOR_BLT {
         return static_cast<DESTINATION_TILING>(TheStructure.Common.DestinationTiling);
     }
     inline void setDestinationX1CoordinateLeft(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xffff);
-        TheStructure.Common.DestinationX1Coordinate_Left = value;
+        UNRECOVERABLE_IF(value > 0xffffu);
+        TheStructure.Common.DestinationX1CoordinateLeft = value;
     }
     inline uint32_t getDestinationX1CoordinateLeft() const {
-        return TheStructure.Common.DestinationX1Coordinate_Left;
+        return TheStructure.Common.DestinationX1CoordinateLeft;
     }
     inline void setDestinationY1CoordinateTop(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xffff);
-        TheStructure.Common.DestinationY1Coordinate_Top = value;
+        UNRECOVERABLE_IF(value > 0xffffu);
+        TheStructure.Common.DestinationY1CoordinateTop = value;
     }
     inline uint32_t getDestinationY1CoordinateTop() const {
-        return TheStructure.Common.DestinationY1Coordinate_Top;
+        return TheStructure.Common.DestinationY1CoordinateTop;
     }
     inline void setDestinationX2CoordinateRight(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xffff);
-        TheStructure.Common.DestinationX2Coordinate_Right = value;
+        UNRECOVERABLE_IF(value > 0xffffu);
+        TheStructure.Common.DestinationX2CoordinateRight = value;
     }
     inline uint32_t getDestinationX2CoordinateRight() const {
-        return TheStructure.Common.DestinationX2Coordinate_Right;
+        return TheStructure.Common.DestinationX2CoordinateRight;
     }
     inline void setDestinationY2CoordinateBottom(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xffff);
-        TheStructure.Common.DestinationY2Coordinate_Bottom = value;
+        UNRECOVERABLE_IF(value > 0xffffu);
+        TheStructure.Common.DestinationY2CoordinateBottom = value;
     }
     inline uint32_t getDestinationY2CoordinateBottom() const {
-        return TheStructure.Common.DestinationY2Coordinate_Bottom;
+        return TheStructure.Common.DestinationY2CoordinateBottom;
     }
     inline void setDestinationBaseAddress(const uint64_t value) {
         TheStructure.Common.DestinationBaseAddress = value;
@@ -4245,14 +3919,14 @@ typedef struct tagXY_FAST_COLOR_BLT {
         return TheStructure.Common.DestinationBaseAddress;
     }
     inline void setDestinationXOffset(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x3fff);
+        UNRECOVERABLE_IF(value > 0x3fffu);
         TheStructure.Common.DestinationXOffset = value;
     }
     inline uint32_t getDestinationXOffset() const {
         return TheStructure.Common.DestinationXOffset;
     }
     inline void setDestinationYOffset(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x3fff);
+        UNRECOVERABLE_IF(value > 0x3fffu);
         TheStructure.Common.DestinationYOffset = value;
     }
     inline uint32_t getDestinationYOffset() const {
@@ -4264,23 +3938,25 @@ typedef struct tagXY_FAST_COLOR_BLT {
     inline DESTINATION_TARGET_MEMORY getDestinationTargetMemory() const {
         return static_cast<DESTINATION_TARGET_MEMORY>(TheStructure.Common.DestinationTargetMemory);
     }
-    inline void setFillColor(const uint32_t *value) { // patched
-        TheStructure.Common.FillColorValue[0] = value[0];
-        TheStructure.Common.FillColorValue[1] = value[1];
-        TheStructure.Common.FillColorValue[2] = value[2];
-        TheStructure.Common.FillColorValue[3] = value[3];
+    inline void setFillColor(const uint32_t *value) {
+        TheStructure.Common.FillColor[0] = value[0];
+        TheStructure.Common.FillColor[1] = value[1];
+        TheStructure.Common.FillColor[2] = value[2];
+        TheStructure.Common.FillColor[3] = value[3];
     }
-    inline void setDestinationCompressionFormat(const uint32_t value) { // patched
+    inline void setDestinationCompressionFormat(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0xfu);
         TheStructure.Common.DestinationCompressionFormat = value;
     }
-    inline uint32_t getDestinationCompressionFormat() const { // patched
+    inline uint32_t getDestinationCompressionFormat() const {
         return TheStructure.Common.DestinationCompressionFormat;
     }
-    inline void setSurfaceFormat(const SURFACE_FORMAT value) {
+    inline void setSurfaceFormat(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x1ffu);
         TheStructure.Common.SurfaceFormat = value;
     }
-    inline SURFACE_FORMAT getSurfaceFormat() const {
-        return static_cast<SURFACE_FORMAT>(TheStructure.Common.SurfaceFormat);
+    inline uint32_t getSurfaceFormat() const {
+        return TheStructure.Common.SurfaceFormat;
     }
     inline void setAuxSpecialOperationsMode(const AUX_SPECIAL_OPERATIONS_MODE value) {
         TheStructure.Common.AuxSpecialOperationsMode = value;
@@ -4289,14 +3965,14 @@ typedef struct tagXY_FAST_COLOR_BLT {
         return static_cast<AUX_SPECIAL_OPERATIONS_MODE>(TheStructure.Common.AuxSpecialOperationsMode);
     }
     inline void setDestinationSurfaceHeight(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x3fff);
+        UNRECOVERABLE_IF(value < 1 || value > 0x4000u);
         TheStructure.Common.DestinationSurfaceHeight = value - 1;
     }
     inline uint32_t getDestinationSurfaceHeight() const {
         return TheStructure.Common.DestinationSurfaceHeight + 1;
     }
     inline void setDestinationSurfaceWidth(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x3fff);
+        UNRECOVERABLE_IF(value < 1 || value > 0x4000u);
         TheStructure.Common.DestinationSurfaceWidth = value - 1;
     }
     inline uint32_t getDestinationSurfaceWidth() const {
@@ -4309,42 +3985,42 @@ typedef struct tagXY_FAST_COLOR_BLT {
         return static_cast<DESTINATION_SURFACE_TYPE>(TheStructure.Common.DestinationSurfaceType);
     }
     inline void setDestinationLod(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xf);
+        UNRECOVERABLE_IF(value > 0xfu);
         TheStructure.Common.DestinationLod = value;
     }
     inline uint32_t getDestinationLod() const {
         return TheStructure.Common.DestinationLod;
     }
     inline void setDestinationSurfaceQpitch(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x7fff);
+        UNRECOVERABLE_IF(value > 0x7fffu);
         TheStructure.Common.DestinationSurfaceQpitch = value;
     }
     inline uint32_t getDestinationSurfaceQpitch() const {
         return TheStructure.Common.DestinationSurfaceQpitch;
     }
     inline void setDestinationSurfaceDepth(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x7ff);
+        UNRECOVERABLE_IF(value < 1 || value > 0x800u);
         TheStructure.Common.DestinationSurfaceDepth = value - 1;
     }
     inline uint32_t getDestinationSurfaceDepth() const {
         return TheStructure.Common.DestinationSurfaceDepth + 1;
     }
     inline void setDestinationHorizontalAlign(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x3);
+        UNRECOVERABLE_IF(value > 0x3u);
         TheStructure.Common.DestinationHorizontalAlign = value;
     }
     inline uint32_t getDestinationHorizontalAlign() const {
         return TheStructure.Common.DestinationHorizontalAlign;
     }
     inline void setDestinationVerticalAlign(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x3);
+        UNRECOVERABLE_IF(value > 0x3u);
         TheStructure.Common.DestinationVerticalAlign = value;
     }
     inline uint32_t getDestinationVerticalAlign() const {
         return TheStructure.Common.DestinationVerticalAlign;
     }
     inline void setDestinationMipTailStartLod(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xf);
+        UNRECOVERABLE_IF(value > 0xfu);
         TheStructure.Common.DestinationMipTailStartLod = value;
     }
     inline uint32_t getDestinationMipTailStartLod() const {
@@ -4357,7 +4033,7 @@ typedef struct tagXY_FAST_COLOR_BLT {
         return TheStructure.Common.DestinationDepthStencilResource;
     }
     inline void setDestinationArrayIndex(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x7ff);
+        UNRECOVERABLE_IF(value < 1 || value > 0x800u);
         TheStructure.Common.DestinationArrayIndex = value - 1;
     }
     inline uint32_t getDestinationArrayIndex() const {
@@ -7154,12 +6830,12 @@ typedef struct tagMEM_SET {
             // DWORD 0
             uint32_t DwordLength : BITFIELD_RANGE(0, 7);
             uint32_t Reserved_8 : BITFIELD_RANGE(8, 8);
-            uint32_t CompressionFormat30 : BITFIELD_RANGE(9, 12);
+            uint32_t CompressionFormat : BITFIELD_RANGE(9, 12);
             uint32_t Reserved_13 : BITFIELD_RANGE(13, 16);
             uint32_t FillType : BITFIELD_RANGE(17, 18);
             uint32_t Mode : BITFIELD_RANGE(19, 20);
             uint32_t Reserved_21 : BITFIELD_RANGE(21, 21);
-            uint32_t InstructionTarget_Opcode : BITFIELD_RANGE(22, 28);
+            uint32_t InstructionTargetOpcode : BITFIELD_RANGE(22, 28);
             uint32_t Client : BITFIELD_RANGE(29, 31);
             // DWORD 1
             uint32_t FillWidth : BITFIELD_RANGE(0, 23);
@@ -7170,10 +6846,8 @@ typedef struct tagMEM_SET {
             // DWORD 3
             uint32_t DestinationPitch : BITFIELD_RANGE(0, 17);
             uint32_t Reserved_114 : BITFIELD_RANGE(18, 31);
-            // DWORD 4
-            uint32_t DestinationStartAddressLow;
-            // DWORD 5
-            uint32_t DestinationStartAddressHigh;
+            // DWORD 4-5
+            uint64_t DestinationStartAddress;
             // DWORD 6
             uint32_t DestinationEncryptEn : BITFIELD_RANGE(0, 0);
             uint32_t Reserved_193 : BITFIELD_RANGE(1, 2);
@@ -7186,21 +6860,24 @@ typedef struct tagMEM_SET {
     typedef enum tagDWORD_LENGTH {
         DWORD_LENGTH_EXCLUDES_DWORD_0_1 = 0x5,
     } DWORD_LENGTH;
-    typedef enum tagCOMPRESSION_FORMAT30 {
-        COMPRESSION_FORMAT30_CMF_R8 = 0x0,
-        COMPRESSION_FORMAT30_CMF_R8_G8 = 0x1,
-        COMPRESSION_FORMAT30_CMF_R8_G8_B8_A8 = 0x2,
-        COMPRESSION_FORMAT30_CMF_R10_G10_B10_A2 = 0x3,
-        COMPRESSION_FORMAT30_CMF_R11_G11_B10 = 0x4,
-        COMPRESSION_FORMAT30_CMF_R16 = 0x5,
-        COMPRESSION_FORMAT30_CMF_R16_G16 = 0x6,
-        COMPRESSION_FORMAT30_CMF_R16_G16_B16_A16 = 0x7,
-        COMPRESSION_FORMAT30_CMF_R32 = 0x8,
-        COMPRESSION_FORMAT30_CMF_R32_G32 = 0x9,
-        COMPRESSION_FORMAT30_CMF_R32_G32_B32_A32 = 0xa,
-        COMPRESSION_FORMAT30_CMF_Y16_U16_Y16_V16 = 0xb,
-        COMPRESSION_FORMAT30_CMF_ML8 = 0xf,
-    } COMPRESSION_FORMAT30;
+    typedef enum tagCOMPRESSION_FORMAT {
+        COMPRESSION_FORMAT_CMF_R8 = 0x0,
+        COMPRESSION_FORMAT_CMF_R8_G8 = 0x1,
+        COMPRESSION_FORMAT_CMF_R8_G8_B8_A8 = 0x2,
+        COMPRESSION_FORMAT_CMF_R10_G10_B10_A2 = 0x3,
+        COMPRESSION_FORMAT_CMF_R11_G11_B10 = 0x4,
+        COMPRESSION_FORMAT_CMF_R16 = 0x5,
+        COMPRESSION_FORMAT_CMF_R16_G16 = 0x6,
+        COMPRESSION_FORMAT_CMF_R16_G16_B16_A16 = 0x7,
+        COMPRESSION_FORMAT_CMF_R32 = 0x8,
+        COMPRESSION_FORMAT_CMF_R32_G32 = 0x9,
+        COMPRESSION_FORMAT_CMF_R32_G32_B32_A32 = 0xa,
+        COMPRESSION_FORMAT_CMF_Y16_U16_Y16_V16 = 0xb,
+        COMPRESSION_FORMAT_CMF_DISABLE_WRITE_COMPRESSION = 0xc,
+        COMPRESSION_FORMAT_CMF_USE_STATELESS_MODE = 0xd,
+        COMPRESSION_FORMAT_CMF_DISABLE_WRITE_COMPRESSION_II = 0xe,
+        COMPRESSION_FORMAT_CMF_ML8 = 0xf,
+    } COMPRESSION_FORMAT;
     typedef enum tagFILL_TYPE {
         FILL_TYPE_LINEAR_FILL = 0x0,
         FILL_TYPE_MATRIX_FILL = 0x1,
@@ -7217,19 +6894,11 @@ typedef struct tagMEM_SET {
     typedef enum tagCLIENT {
         CLIENT_2D_PROCESSOR = 0x2,
     } CLIENT;
-    typedef enum tagDESTINATION_ENCRYPT_EN {
-        DESTINATION_ENCRYPT_EN_DISABLE = 0x0,
-        DESTINATION_ENCRYPT_EN_ENABLE = 0x1,
-    } DESTINATION_ENCRYPT_EN;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_EXCLUDES_DWORD_0_1;
-        TheStructure.Common.CompressionFormat30 = COMPRESSION_FORMAT30_CMF_R8;
-        TheStructure.Common.FillType = FILL_TYPE_LINEAR_FILL;
-        TheStructure.Common.Mode = MODE_FILL_MODE;
-        TheStructure.Common.InstructionTarget_Opcode = INSTRUCTION_TARGETOPCODE_MEM_SET;
+        TheStructure.Common.InstructionTargetOpcode = INSTRUCTION_TARGETOPCODE_MEM_SET;
         TheStructure.Common.Client = CLIENT_2D_PROCESSOR;
-        TheStructure.Common.DestinationEncryptEn = DESTINATION_ENCRYPT_EN_DISABLE;
     }
     static tagMEM_SET sInit() {
         MEM_SET state;
@@ -7241,10 +6910,11 @@ typedef struct tagMEM_SET {
         return TheStructure.RawData[index];
     }
     inline void setCompressionFormat(const uint32_t value) {
-        TheStructure.Common.CompressionFormat30 = value;
+        UNRECOVERABLE_IF(value > 0xfu);
+        TheStructure.Common.CompressionFormat = value;
     }
     inline uint32_t getCompressionFormat() const {
-        return TheStructure.Common.CompressionFormat30;
+        return TheStructure.Common.CompressionFormat;
     }
     inline void setFillType(const FILL_TYPE value) {
         TheStructure.Common.FillType = value;
@@ -7259,10 +6929,10 @@ typedef struct tagMEM_SET {
         return static_cast<MODE>(TheStructure.Common.Mode);
     }
     inline void setInstructionTargetOpcode(const INSTRUCTION_TARGETOPCODE value) {
-        TheStructure.Common.InstructionTarget_Opcode = value;
+        TheStructure.Common.InstructionTargetOpcode = value;
     }
     inline INSTRUCTION_TARGETOPCODE getInstructionTargetOpcode() const {
-        return static_cast<INSTRUCTION_TARGETOPCODE>(TheStructure.Common.InstructionTarget_Opcode);
+        return static_cast<INSTRUCTION_TARGETOPCODE>(TheStructure.Common.InstructionTargetOpcode);
     }
     inline void setClient(const CLIENT value) {
         TheStructure.Common.Client = value;
@@ -7271,49 +6941,49 @@ typedef struct tagMEM_SET {
         return static_cast<CLIENT>(TheStructure.Common.Client);
     }
     inline void setFillWidth(const uint32_t value) {
-        UNRECOVERABLE_IF(value - 1 > 0xffffff);
+        UNRECOVERABLE_IF(value < 1 || value > 0x1000000u);
         TheStructure.Common.FillWidth = value - 1;
     }
     inline uint32_t getFillWidth() const {
         return TheStructure.Common.FillWidth + 1;
     }
     inline void setFillHeight(const uint32_t value) {
-        UNRECOVERABLE_IF(value - 1 > 0x3ffff);
+        UNRECOVERABLE_IF(value < 1 || value > 0x40000u);
         TheStructure.Common.FillHeight = value - 1;
     }
     inline uint32_t getFillHeight() const {
         return TheStructure.Common.FillHeight + 1;
     }
     inline void setDestinationPitch(const uint32_t value) {
-        UNRECOVERABLE_IF(value - 1 > 0x3ffff);
+        UNRECOVERABLE_IF(value < 1 || value > 0x40000u);
         TheStructure.Common.DestinationPitch = value - 1;
     }
     inline uint32_t getDestinationPitch() const {
         return TheStructure.Common.DestinationPitch + 1;
     }
-    inline void setDestinationStartAddress(const uint64_t value) { // patched
-        TheStructure.Common.DestinationStartAddressLow = value & 0xffffffff;
-        TheStructure.Common.DestinationStartAddressHigh = (value >> 32) & 0xffffffff;
+    inline void setDestinationStartAddress(const uint64_t value) {
+        TheStructure.Common.DestinationStartAddress = value;
     }
-    inline uint64_t getDestinationStartAddress() const { // patched
-        return (static_cast<uint64_t>(TheStructure.Common.DestinationStartAddressHigh) << 32) | (TheStructure.Common.DestinationStartAddressLow);
+    inline uint64_t getDestinationStartAddress() const {
+        return TheStructure.Common.DestinationStartAddress;
     }
-    inline void setDestinationEncryptEn(const DESTINATION_ENCRYPT_EN value) {
+    inline void setDestinationEncryptEn(const bool value) {
         TheStructure.Common.DestinationEncryptEn = value;
     }
-    inline DESTINATION_ENCRYPT_EN getDestinationEncryptEn() const {
-        return static_cast<DESTINATION_ENCRYPT_EN>(TheStructure.Common.DestinationEncryptEn);
+    inline bool getDestinationEncryptEn() const {
+        return TheStructure.Common.DestinationEncryptEn;
     }
-    inline void setDestinationMOCS(const uint32_t value) { // patched
-        setDestinationEncryptEn(static_cast<DESTINATION_ENCRYPT_EN>(value & 1));
-        UNRECOVERABLE_IF((value >> 1) > 0xf);
+    // Manual generator override: MOCS includes the encryption bit.
+    inline void setDestinationMOCS(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x1fu);
         TheStructure.Common.DestinationMocs = value >> 1;
+        TheStructure.Common.DestinationEncryptEn = value & 1;
     }
-    inline uint32_t getDestinationMOCS() const { // patched
-        return (TheStructure.Common.DestinationMocs << 1) | static_cast<uint32_t>(getDestinationEncryptEn());
+    inline uint32_t getDestinationMOCS() const {
+        return (TheStructure.Common.DestinationMocs << 1) | TheStructure.Common.DestinationEncryptEn;
     }
     inline void setFillData(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xff);
+        UNRECOVERABLE_IF(value > 0xffu);
         TheStructure.Common.FillData = value;
     }
     inline uint32_t getFillData() const {

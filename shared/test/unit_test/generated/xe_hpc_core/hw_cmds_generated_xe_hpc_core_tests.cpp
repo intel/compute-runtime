@@ -2757,23 +2757,23 @@ XE_HPC_CORETEST_F(CommandsXeHpcCoreTest, GivenStateComputeModeWhenSetterUsedThen
     EXPECT_EQ(0xffffu, cmd.getMaskBits()); // patched
 }
 
-XE_HPC_CORETEST_F(CommandsXeHpcCoreTest, GivenMemSetWhenInitCalledThenFieldsSetToDefault) { // patched
+XE_HPC_CORETEST_F(CommandsXeHpcCoreTest, GivenMemSetWhenInitCalledThenFieldsSetToDefault) {
     using MEM_SET = NEO::XeHpcCoreFamily::MEM_SET;
     MEM_SET cmd;
     cmd.init();
 
     EXPECT_EQ(MEM_SET::DWORD_LENGTH_EXCLUDES_DWORD_0_1, cmd.TheStructure.Common.DwordLength);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.CompressionFormat40);
-    EXPECT_EQ(MEM_SET::DESTINATION_COMPRESSION_ENABLE_DISABLE, cmd.TheStructure.Common.DestinationCompressionEnable);
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.CompressionFormat);
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.DestinationCompressionEnable);
     EXPECT_EQ(MEM_SET::DESTINATION_COMPRESSIBLE_NOT_COMPRESSIBLE, cmd.TheStructure.Common.DestinationCompressible);
     EXPECT_EQ(MEM_SET::FILL_TYPE_LINEAR_FILL, cmd.TheStructure.Common.FillType);
-    EXPECT_EQ(MEM_SET::INSTRUCTION_TARGETOPCODE_MEM_SET, cmd.TheStructure.Common.InstructionTarget_Opcode); // patched
+    EXPECT_EQ(MEM_SET::INSTRUCTION_TARGET_OPCODE_MEM_SET, cmd.TheStructure.Common.InstructionTargetOpcode);
     EXPECT_EQ(MEM_SET::CLIENT_2D_PROCESSOR, cmd.TheStructure.Common.Client);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.FillWidth);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.FillHeight);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.DestinationPitch);
-    EXPECT_EQ_VAL(0x0u, cmd.TheStructure.Common.DestinationStartAddress); // patched
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.DestinationMOCS);             // patched
+    EXPECT_EQ_VAL(0x0u, cmd.TheStructure.Common.DestinationStartAddress);
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.DestinationMocs);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.FillData);
 }
 
@@ -2782,16 +2782,15 @@ XE_HPC_CORETEST_F(CommandsXeHpcCoreTest, GivenMemSetWhenSetterUsedThenGetterRetu
     MEM_SET cmd;
     cmd.init();
 
-    cmd.setCompressionFormat40(0x0u);
-    EXPECT_EQ(0x0u, cmd.getCompressionFormat40());
-    cmd.setCompressionFormat40(0x1fu);
-    EXPECT_EQ(0x1fu, cmd.getCompressionFormat40());
+    cmd.setCompressionFormat(0x0u);
+    EXPECT_EQ(0x0u, cmd.getCompressionFormat());
+    cmd.setCompressionFormat(0x1fu);
+    EXPECT_EQ(0x1fu, cmd.getCompressionFormat());
 
-    cmd.setDestinationCompressionEnable(MEM_SET::DESTINATION_COMPRESSION_ENABLE_DISABLE);
-    EXPECT_EQ(MEM_SET::DESTINATION_COMPRESSION_ENABLE_DISABLE, cmd.getDestinationCompressionEnable());
-
-    cmd.setDestinationCompressionEnable(MEM_SET::DESTINATION_COMPRESSION_ENABLE_ENABLE);
-    EXPECT_EQ(MEM_SET::DESTINATION_COMPRESSION_ENABLE_ENABLE, cmd.getDestinationCompressionEnable());
+    cmd.setDestinationCompressionEnable(false);
+    EXPECT_EQ(false, cmd.getDestinationCompressionEnable());
+    cmd.setDestinationCompressionEnable(true);
+    EXPECT_EQ(true, cmd.getDestinationCompressionEnable());
 
     cmd.setDestinationCompressible(MEM_SET::DESTINATION_COMPRESSIBLE_NOT_COMPRESSIBLE);
     EXPECT_EQ(MEM_SET::DESTINATION_COMPRESSIBLE_NOT_COMPRESSIBLE, cmd.getDestinationCompressible());
@@ -2805,10 +2804,8 @@ XE_HPC_CORETEST_F(CommandsXeHpcCoreTest, GivenMemSetWhenSetterUsedThenGetterRetu
     cmd.setFillType(MEM_SET::FILL_TYPE_MATRIX_FILL);
     EXPECT_EQ(MEM_SET::FILL_TYPE_MATRIX_FILL, cmd.getFillType());
 
-    cmd.setInstructionTargetOpcode(0x0u);
-    EXPECT_EQ(0x0u, cmd.getInstructionTargetOpcode());
-    cmd.setInstructionTargetOpcode(0x7fu);
-    EXPECT_EQ(0x7fu, cmd.getInstructionTargetOpcode());
+    cmd.setInstructionTargetOpcode(MEM_SET::INSTRUCTION_TARGET_OPCODE_MEM_SET);
+    EXPECT_EQ(MEM_SET::INSTRUCTION_TARGET_OPCODE_MEM_SET, cmd.getInstructionTargetOpcode());
 
     cmd.setClient(MEM_SET::CLIENT_2D_PROCESSOR);
     EXPECT_EQ(MEM_SET::CLIENT_2D_PROCESSOR, cmd.getClient());
@@ -2827,16 +2824,17 @@ XE_HPC_CORETEST_F(CommandsXeHpcCoreTest, GivenMemSetWhenSetterUsedThenGetterRetu
     EXPECT_EQ(0x1u, cmd.getDestinationPitch());
     cmd.setDestinationPitch(0x40000u);
     EXPECT_EQ(0x40000u, cmd.getDestinationPitch());
+    EXPECT_THROW(cmd.setDestinationPitch(0x0u), std::exception);
 
-    cmd.setDestinationStartAddress(0x0u);                     // patched
-    EXPECT_EQ(0x0u, cmd.getDestinationStartAddress());        // patched
-    cmd.setDestinationStartAddress(0xffffffffu);              // patched
-    EXPECT_EQ(0xffffffffu, cmd.getDestinationStartAddress()); // patched
+    cmd.setDestinationStartAddress(0x0u);
+    EXPECT_EQ(0x0u, cmd.getDestinationStartAddress());
+    cmd.setDestinationStartAddress(0xffffffffu);
+    EXPECT_EQ(0xffffffffu, cmd.getDestinationStartAddress());
 
-    cmd.setDestinationMOCS(0x0u);               // patched
-    EXPECT_EQ(0x0u, cmd.getDestinationMOCS());  // patched
-    cmd.setDestinationMOCS(0x7fu);              // patched
-    EXPECT_EQ(0x7fu, cmd.getDestinationMOCS()); // patched
+    cmd.setDestinationMOCS(0x0u);
+    EXPECT_EQ(0x0u, cmd.getDestinationMOCS());
+    cmd.setDestinationMOCS(0x7fu);
+    EXPECT_EQ(0x7fu, cmd.getDestinationMOCS());
 
     cmd.setFillData(0x0u);
     EXPECT_EQ(0x0u, cmd.getFillData());
@@ -2850,19 +2848,19 @@ XE_HPC_CORETEST_F(CommandsXeHpcCoreTest, GivenMemCopyWhenInitCalledThenFieldsSet
     cmd.init();
 
     EXPECT_EQ(MEM_COPY::DWORD_LENGTH_EXCLUDES_DWORD_0_1, cmd.TheStructure.Common.DwordLength);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.CompressionFormat); // patched
-    EXPECT_EQ(MEM_COPY::DESTINATION_COMPRESSION_ENABLE_DISABLE, cmd.TheStructure.Common.DestinationCompressionEnable);
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.CompressionFormat);
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.DestinationCompressionEnable);
     EXPECT_EQ(MEM_COPY::DESTINATION_COMPRESSIBLE_NOT_COMPRESSIBLE, cmd.TheStructure.Common.DestinationCompressible);
     EXPECT_EQ(MEM_COPY::SOURCE_COMPRESSIBLE_NOT_COMPRESSIBLE, cmd.TheStructure.Common.SourceCompressible);
     EXPECT_EQ(MEM_COPY::COPY_TYPE_LINEAR_COPY, cmd.TheStructure.Common.CopyType);
-    EXPECT_EQ(MEM_COPY::INSTRUCTIONTARGET_OPCODE_OPCODE, cmd.TheStructure.Common.InstructionTarget_Opcode); // patched
+    EXPECT_EQ(MEM_COPY::INSTRUCTION_TARGET_OPCODE_MEM_COPY, cmd.TheStructure.Common.InstructionTargetOpcode);
     EXPECT_EQ(MEM_COPY::CLIENT_2D_PROCESSOR, cmd.TheStructure.Common.Client);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.TransferWidth);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.TransferHeight);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.SourcePitch);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.DestinationPitch);
-    EXPECT_EQ_VAL(0x0u, cmd.TheStructure.Common.SourceBaseAddress);      // patched
-    EXPECT_EQ_VAL(0x0u, cmd.TheStructure.Common.DestinationBaseAddress); // patched
+    EXPECT_EQ_VAL(0x0u, cmd.TheStructure.Common.SourceBaseAddress);
+    EXPECT_EQ_VAL(0x0u, cmd.TheStructure.Common.DestinationBaseAddress);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.DestinationMocs);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.SourceMocs);
 }
@@ -2872,16 +2870,15 @@ XE_HPC_CORETEST_F(CommandsXeHpcCoreTest, GivenMemCopyWhenSetterUsedThenGetterRet
     MEM_COPY cmd;
     cmd.init();
 
-    cmd.setCompressionFormat(0x0u);               // patched
-    EXPECT_EQ(0x0u, cmd.getCompressionFormat());  // patched
-    cmd.setCompressionFormat(0x1fu);              // patched
-    EXPECT_EQ(0x1fu, cmd.getCompressionFormat()); // patched
+    cmd.setCompressionFormat(0x0u);
+    EXPECT_EQ(0x0u, cmd.getCompressionFormat());
+    cmd.setCompressionFormat(0x1fu);
+    EXPECT_EQ(0x1fu, cmd.getCompressionFormat());
 
-    cmd.setDestinationCompressionEnable(MEM_COPY::DESTINATION_COMPRESSION_ENABLE_DISABLE);
-    EXPECT_EQ(MEM_COPY::DESTINATION_COMPRESSION_ENABLE_DISABLE, cmd.getDestinationCompressionEnable());
-
-    cmd.setDestinationCompressionEnable(MEM_COPY::DESTINATION_COMPRESSION_ENABLE_ENABLE);
-    EXPECT_EQ(MEM_COPY::DESTINATION_COMPRESSION_ENABLE_ENABLE, cmd.getDestinationCompressionEnable());
+    cmd.setDestinationCompressionEnable(false);
+    EXPECT_EQ(false, cmd.getDestinationCompressionEnable());
+    cmd.setDestinationCompressionEnable(true);
+    EXPECT_EQ(true, cmd.getDestinationCompressionEnable());
 
     cmd.setDestinationCompressible(MEM_COPY::DESTINATION_COMPRESSIBLE_NOT_COMPRESSIBLE);
     EXPECT_EQ(MEM_COPY::DESTINATION_COMPRESSIBLE_NOT_COMPRESSIBLE, cmd.getDestinationCompressible());
@@ -2901,53 +2898,53 @@ XE_HPC_CORETEST_F(CommandsXeHpcCoreTest, GivenMemCopyWhenSetterUsedThenGetterRet
     cmd.setCopyType(MEM_COPY::COPY_TYPE_MATRIX_COPY);
     EXPECT_EQ(MEM_COPY::COPY_TYPE_MATRIX_COPY, cmd.getCopyType());
 
-    cmd.setInstructionTargetOpcode(0x0u);
-    EXPECT_EQ(0x0u, cmd.getInstructionTargetOpcode());
-    cmd.setInstructionTargetOpcode(0x7fu);
-    EXPECT_EQ(0x7fu, cmd.getInstructionTargetOpcode());
+    cmd.setInstructionTargetOpcode(MEM_COPY::INSTRUCTION_TARGET_OPCODE_MEM_COPY);
+    EXPECT_EQ(MEM_COPY::INSTRUCTION_TARGET_OPCODE_MEM_COPY, cmd.getInstructionTargetOpcode());
 
     cmd.setClient(MEM_COPY::CLIENT_2D_PROCESSOR);
     EXPECT_EQ(MEM_COPY::CLIENT_2D_PROCESSOR, cmd.getClient());
 
-    cmd.setDestinationX2CoordinateRight(0x1u);                  // patched
-    EXPECT_EQ(0x1u, cmd.getDestinationX2CoordinateRight());     // patched
-    cmd.setDestinationX2CoordinateRight(0x3ffffu);              // patched
-    EXPECT_EQ(0x3ffffu, cmd.getDestinationX2CoordinateRight()); // patched
+    cmd.setDestinationX2CoordinateRight(0x1u);
+    EXPECT_EQ(0x1u, cmd.getDestinationX2CoordinateRight());
+    cmd.setDestinationX2CoordinateRight(0x3ffffu);
+    EXPECT_EQ(0x3ffffu, cmd.getDestinationX2CoordinateRight());
 
-    cmd.setDestinationY2CoordinateBottom(0x1u);                  // patched
-    EXPECT_EQ(0x1u, cmd.getDestinationY2CoordinateBottom());     // patched
-    cmd.setDestinationY2CoordinateBottom(0x3ffffu);              // patched
-    EXPECT_EQ(0x3ffffu, cmd.getDestinationY2CoordinateBottom()); // patched
+    cmd.setDestinationY2CoordinateBottom(0x1u);
+    EXPECT_EQ(0x1u, cmd.getDestinationY2CoordinateBottom());
+    cmd.setDestinationY2CoordinateBottom(0x3ffffu);
+    EXPECT_EQ(0x3ffffu, cmd.getDestinationY2CoordinateBottom());
 
     cmd.setSourcePitch(0x1u);
     EXPECT_EQ(0x1u, cmd.getSourcePitch());
     cmd.setSourcePitch(0x3ffffu);
     EXPECT_EQ(0x3ffffu, cmd.getSourcePitch());
+    EXPECT_THROW(cmd.setSourcePitch(0x0u), std::exception);
 
     cmd.setDestinationPitch(0x1u);
     EXPECT_EQ(0x1u, cmd.getDestinationPitch());
     cmd.setDestinationPitch(0x3ffffu);
     EXPECT_EQ(0x3ffffu, cmd.getDestinationPitch());
+    EXPECT_THROW(cmd.setDestinationPitch(0x0u), std::exception);
 
-    cmd.setSourceBaseAddress(0x0u);                             // patched
-    EXPECT_EQ(0x0u, cmd.getSourceBaseAddress());                // patched
-    cmd.setSourceBaseAddress(0xffffffffffffffffu);              // patched
-    EXPECT_EQ(0xffffffffffffffffu, cmd.getSourceBaseAddress()); // patched
+    cmd.setSourceBaseAddress(0x0u);
+    EXPECT_EQ(0x0u, cmd.getSourceBaseAddress());
+    cmd.setSourceBaseAddress(0xffffffffffffffffu);
+    EXPECT_EQ(0xffffffffffffffffu, cmd.getSourceBaseAddress());
 
-    cmd.setDestinationBaseAddress(0x0u);                             // patched
-    EXPECT_EQ(0x0u, cmd.getDestinationBaseAddress());                // patched
-    cmd.setDestinationBaseAddress(0xffffffffffffffffu);              // patched
-    EXPECT_EQ(0xffffffffffffffffu, cmd.getDestinationBaseAddress()); // patched
+    cmd.setDestinationBaseAddress(0x0u);
+    EXPECT_EQ(0x0u, cmd.getDestinationBaseAddress());
+    cmd.setDestinationBaseAddress(0xffffffffffffffffu);
+    EXPECT_EQ(0xffffffffffffffffu, cmd.getDestinationBaseAddress());
 
-    cmd.setDestinationMOCS(0x0u);               // patched
-    EXPECT_EQ(0x0u, cmd.getDestinationMOCS());  // patched
-    cmd.setDestinationMOCS(0x7fu);              // patched
-    EXPECT_EQ(0x7fu, cmd.getDestinationMOCS()); // patched
+    cmd.setDestinationMOCS(0x0u);
+    EXPECT_EQ(0x0u, cmd.getDestinationMOCS());
+    cmd.setDestinationMOCS(0x7fu);
+    EXPECT_EQ(0x7fu, cmd.getDestinationMOCS());
 
-    cmd.setSourceMOCS(0x0u);               // patched
-    EXPECT_EQ(0x0u, cmd.getSourceMOCS());  // patched
-    cmd.setSourceMOCS(0x7fu);              // patched
-    EXPECT_EQ(0x7fu, cmd.getSourceMOCS()); // patched
+    cmd.setSourceMOCS(0x0u);
+    EXPECT_EQ(0x0u, cmd.getSourceMOCS());
+    cmd.setSourceMOCS(0x7fu);
+    EXPECT_EQ(0x7fu, cmd.getSourceMOCS());
 }
 
 XE_HPC_CORETEST_F(CommandsXeHpcCoreTest, Given3dstateBindingTablePoolAllocWhenInitCalledThenFieldsSetToDefault) {
@@ -3074,4 +3071,35 @@ XE_HPC_CORETEST_F(CommandsXeHpcCoreTest, GivenStateSipWhenSetterUsedThenGetterRe
     EXPECT_EQ(0x0ull, cmd.getSystemInstructionPointer());
     cmd.setSystemInstructionPointer(0xfffffffffffffff0ull);
     EXPECT_EQ(0xfffffffffffffff0ull, cmd.getSystemInstructionPointer());
+}
+
+XE_HPC_CORETEST_F(CommandsXeHpcCoreTest, GivenXyBlockCopyBltWhenZeroPitchOrSurfaceWidthIsSetThenSetterThrows) {
+    using XY_BLOCK_COPY_BLT = NEO::XeHpcCoreFamily::XY_BLOCK_COPY_BLT;
+    XY_BLOCK_COPY_BLT cmd;
+    cmd.init();
+
+    EXPECT_THROW(cmd.setSourcePitch(0x0u), std::exception);
+    EXPECT_THROW(cmd.setDestinationPitch(0x0u), std::exception);
+    EXPECT_THROW(cmd.setSourceSurfaceWidth(0x0u), std::exception);
+    EXPECT_THROW(cmd.setDestinationSurfaceWidth(0x0u), std::exception);
+}
+
+XE_HPC_CORETEST_F(CommandsXeHpcCoreTest, GivenXyFastColorBltWhenZeroPitchOrSurfaceWidthIsSetThenSetterThrows) {
+    using XY_FAST_COLOR_BLT = NEO::XeHpcCoreFamily::XY_FAST_COLOR_BLT;
+    XY_FAST_COLOR_BLT cmd;
+    cmd.init();
+
+    EXPECT_THROW(cmd.setDestinationPitch(0x0u), std::exception);
+    EXPECT_THROW(cmd.setDestinationSurfaceWidth(0x0u), std::exception);
+}
+
+XE_HPC_CORETEST_F(CommandsXeHpcCoreTest, GivenXyFastColorBltWhenDestinationTargetMemoryIsSetThenGetterReturnsIt) {
+    using XY_FAST_COLOR_BLT = NEO::XeHpcCoreFamily::XY_FAST_COLOR_BLT;
+    XY_FAST_COLOR_BLT cmd;
+    cmd.init();
+
+    cmd.setDestinationTargetMemory(XY_FAST_COLOR_BLT::DESTINATION_TARGET_MEMORY_SYSTEM_MEM);
+    EXPECT_EQ(XY_FAST_COLOR_BLT::DESTINATION_TARGET_MEMORY_SYSTEM_MEM, cmd.getDestinationTargetMemory());
+    cmd.setDestinationTargetMemory(XY_FAST_COLOR_BLT::DESTINATION_TARGET_MEMORY_LOCAL_MEM);
+    EXPECT_EQ(XY_FAST_COLOR_BLT::DESTINATION_TARGET_MEMORY_LOCAL_MEM, cmd.getDestinationTargetMemory());
 }

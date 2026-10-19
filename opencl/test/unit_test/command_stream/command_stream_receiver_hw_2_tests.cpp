@@ -1173,7 +1173,7 @@ HWTEST_F(BcsTests, givenBufferWhenBlitOperationCalledThenProgramCorrectGpuAddres
                                                                                   nullptr, hostPtr,
                                                                                   graphicsAllocation1->getGpuAddress() +
                                                                                       subBuffer1->getOffset(),
-                                                                                  0, {hostPtrOffset, 0, 0}, 0, copySize, 0, 0, 0, 0);
+                                                                                  0, {hostPtrOffset, 0, 0}, 0, copySize, copySize.x, copySize.x * copySize.y, copySize.x, copySize.x * copySize.y);
 
             flushBcsTask(&csr, blitProperties, true, *pDevice);
 
@@ -1198,7 +1198,7 @@ HWTEST_F(BcsTests, givenBufferWhenBlitOperationCalledThenProgramCorrectGpuAddres
                                                                                   nullptr, hostPtr,
                                                                                   graphicsAllocation1->getGpuAddress() +
                                                                                       subBuffer1->getOffset(),
-                                                                                  0, {hostPtrOffset, 0, 0}, 0, copySize, 0, 0, 0, 0);
+                                                                                  0, {hostPtrOffset, 0, 0}, 0, copySize, copySize.x, copySize.x * copySize.y, copySize.x, copySize.x * copySize.y);
 
             flushBcsTask(&csr, blitProperties, true, *pDevice);
 
@@ -1220,7 +1220,7 @@ HWTEST_F(BcsTests, givenBufferWhenBlitOperationCalledThenProgramCorrectGpuAddres
             HardwareParse hwParser;
             auto offset = csr.commandStream.getUsed();
             auto blitProperties = BlitProperties::constructPropertiesForCopy(graphicsAllocation1, 0,
-                                                                             graphicsAllocation2, 0, 0, 0, copySize, 0, 0, 0, 0, csr.getClearColorAllocation(), false);
+                                                                             graphicsAllocation2, 0, 0, 0, copySize, copySize.x, copySize.x * copySize.y, copySize.x, copySize.x * copySize.y, csr.getClearColorAllocation(), false);
 
             flushBcsTask(&csr, blitProperties, true, *pDevice);
 
@@ -1246,6 +1246,8 @@ HWTEST_F(BcsTests, givenBufferWhenBlitOperationCalledThenProgramCorrectGpuAddres
             builtinOpParams.srcMemObj = subBuffer1.get();
             builtinOpParams.size.x = copySize.x;
             builtinOpParams.size.y = copySize.y;
+            builtinOpParams.srcRowPitch = copySize.x;
+            builtinOpParams.dstRowPitch = copySize.x;
 
             auto blitProperties = ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::bufferToBuffer, csr, builtinOpParams);
 
@@ -1301,7 +1303,7 @@ HWTEST_F(BcsTests, givenMapAllocationWhenDispatchReadWriteOperationThenSetValidG
                                                                                   mapAllocation, mapPtr,
                                                                                   bufferGpuVa,
                                                                                   castToUint64(mapPtr),
-                                                                                  {hostPtrOffset, 0, 0}, 0, copySize, 0, 0, 0, 0);
+                                                                                  {hostPtrOffset, 0, 0}, 0, copySize, copySize.x, copySize.x * copySize.y, copySize.x, copySize.x * copySize.y);
 
             flushBcsTask(&csr, blitProperties, true, *pDevice);
             hwParser.parseCommands<FamilyType>(csr.commandStream);
@@ -1324,7 +1326,7 @@ HWTEST_F(BcsTests, givenMapAllocationWhenDispatchReadWriteOperationThenSetValidG
                                                                                   csr, graphicsAllocation,
                                                                                   mapAllocation, mapPtr,
                                                                                   bufferGpuVa,
-                                                                                  castToUint64(mapPtr), {hostPtrOffset, 0, 0}, 0, copySize, 0, 0, 0, 0);
+                                                                                  castToUint64(mapPtr), {hostPtrOffset, 0, 0}, 0, copySize, copySize.x, copySize.x * copySize.y, copySize.x, copySize.x * copySize.y);
             flushBcsTask(&csr, blitProperties, true, *pDevice);
             hwParser.parseCommands<FamilyType>(csr.commandStream, offset);
 
@@ -1348,7 +1350,7 @@ HWTEST_F(BcsTests, givenMapAllocationWhenDispatchReadWriteOperationThenSetValidG
                                                                                   csr, graphicsAllocation,
                                                                                   mapAllocation, mapPtr,
                                                                                   bufferGpuVa,
-                                                                                  castToUint64(mapPtr), {hostPtrOffset, 0, 0}, 0, copySize, 0, 0, 0, 0);
+                                                                                  castToUint64(mapPtr), {hostPtrOffset, 0, 0}, 0, copySize, copySize.x, copySize.x * copySize.y, copySize.x, copySize.x * copySize.y);
             flushBcsTask(&csr, blitProperties, true, *pDevice);
             hwParser.parseCommands<FamilyType>(csr.commandStream, offset);
 
@@ -1370,7 +1372,7 @@ HWTEST_F(BcsTests, givenMapAllocationWhenDispatchReadWriteOperationThenSetValidG
                                                                                   mapAllocation, mapPtr,
                                                                                   bufferGpuVa,
                                                                                   castToUint64(mapPtr),
-                                                                                  {hostPtrOffset, 0, 0}, 0, copySize, 0, 0, 0, 0);
+                                                                                  {hostPtrOffset, 0, 0}, 0, copySize, copySize.x, copySize.x * copySize.y, copySize.x, copySize.x * copySize.y);
             flushBcsTask(&csr, blitProperties, true, *pDevice);
             hwParser.parseCommands<FamilyType>(csr.commandStream);
 
@@ -1508,6 +1510,8 @@ HWTEST_F(BcsTests, givenSvmAllocationWhenBlitCalledThenUsePassedPointers) {
             builtinOpParams.srcPtr = reinterpret_cast<void *>(svmData->cpuAllocation->getGpuAddress() + srcOffset);
             builtinOpParams.dstPtr = reinterpret_cast<void *>(svmData->cpuAllocation->getGpuAddress() + dstOffset);
             builtinOpParams.size = copySize;
+            builtinOpParams.srcRowPitch = copySize.x;
+            builtinOpParams.dstRowPitch = copySize.x;
 
             auto blitProperties = ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::hostPtrToBuffer,
                                                                         csr, builtinOpParams);
@@ -1535,6 +1539,8 @@ HWTEST_F(BcsTests, givenSvmAllocationWhenBlitCalledThenUsePassedPointers) {
             builtinOpParams.dstPtr = reinterpret_cast<void *>(svmData->cpuAllocation + dstOffset);
             builtinOpParams.srcPtr = reinterpret_cast<void *>(gpuAllocation + srcOffset);
             builtinOpParams.size = copySize;
+            builtinOpParams.srcRowPitch = copySize.x;
+            builtinOpParams.dstRowPitch = copySize.x;
 
             auto blitProperties = ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::bufferToHostPtr,
                                                                         csr, builtinOpParams);
@@ -1631,7 +1637,7 @@ HWTEST_F(BcsTests, givenBufferWithOffsetWhenBlitOperationCalledThenProgramCorrec
                                                                                       csr, graphicsAllocation1,
                                                                                       nullptr, hostPtr,
                                                                                       graphicsAllocation1->getGpuAddress(),
-                                                                                      0, 0, {buffer1Offset, 0, 0}, copySize, 0, 0, 0, 0);
+                                                                                      0, 0, {buffer1Offset, 0, 0}, copySize, copySize.x, copySize.x * copySize.y, copySize.x, copySize.x * copySize.y);
 
                 flushBcsTask(&csr, blitProperties, true, *pDevice);
 
@@ -1655,7 +1661,7 @@ HWTEST_F(BcsTests, givenBufferWithOffsetWhenBlitOperationCalledThenProgramCorrec
                                                                                       csr, graphicsAllocation1, nullptr,
                                                                                       hostPtr,
                                                                                       graphicsAllocation1->getGpuAddress(),
-                                                                                      0, 0, {buffer1Offset, 0, 0}, copySize, 0, 0, 0, 0);
+                                                                                      0, 0, {buffer1Offset, 0, 0}, copySize, copySize.x, copySize.x * copySize.y, copySize.x, copySize.x * copySize.y);
 
                 flushBcsTask(&csr, blitProperties, true, *pDevice);
 
@@ -1677,7 +1683,7 @@ HWTEST_F(BcsTests, givenBufferWithOffsetWhenBlitOperationCalledThenProgramCorrec
                 auto offset = csr.commandStream.getUsed();
                 auto blitProperties = BlitProperties::constructPropertiesForCopy(graphicsAllocation1, 0,
                                                                                  graphicsAllocation2, 0,
-                                                                                 {buffer1Offset, 0, 0}, {buffer2Offset, 0, 0}, copySize, 0, 0, 0, 0, csr.getClearColorAllocation(), false);
+                                                                                 {buffer1Offset, 0, 0}, {buffer2Offset, 0, 0}, copySize, copySize.x, copySize.x * copySize.y, copySize.x, copySize.x * copySize.y, csr.getClearColorAllocation(), false);
 
                 flushBcsTask(&csr, blitProperties, true, *pDevice);
 

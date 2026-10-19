@@ -61,7 +61,7 @@ typedef struct tagMEM_COPY {
             uint32_t SourceCompressible : BITFIELD_RANGE(16, 16);
             uint32_t CopyType : BITFIELD_RANGE(17, 18);
             uint32_t Reserved_19 : BITFIELD_RANGE(19, 21);
-            uint32_t InstructionTarget_Opcode : BITFIELD_RANGE(22, 28);
+            uint32_t InstructionTargetOpcode : BITFIELD_RANGE(22, 28);
             uint32_t Client : BITFIELD_RANGE(29, 31);
             // DWORD 1
             uint32_t TransferWidth : BITFIELD_RANGE(0, 17);
@@ -75,9 +75,9 @@ typedef struct tagMEM_COPY {
             // DWORD 4
             uint32_t DestinationPitch : BITFIELD_RANGE(0, 17);
             uint32_t Reserved_146 : BITFIELD_RANGE(18, 31);
-            // DWORD 5..6
+            // DWORD 5-6
             uint64_t SourceBaseAddress;
-            // DWORD 7..8
+            // DWORD 7-8
             uint64_t DestinationBaseAddress;
             // DWORD 9
             uint32_t DestinationMocs : BITFIELD_RANGE(0, 6);
@@ -89,10 +89,6 @@ typedef struct tagMEM_COPY {
     typedef enum tagDWORD_LENGTH {
         DWORD_LENGTH_EXCLUDES_DWORD_0_1 = 0x8,
     } DWORD_LENGTH;
-    typedef enum tagDESTINATION_COMPRESSION_ENABLE {
-        DESTINATION_COMPRESSION_ENABLE_DISABLE = 0x0,
-        DESTINATION_COMPRESSION_ENABLE_ENABLE = 0x1,
-    } DESTINATION_COMPRESSION_ENABLE;
     typedef enum tagDESTINATION_COMPRESSIBLE {
         DESTINATION_COMPRESSIBLE_NOT_COMPRESSIBLE = 0x0,
         DESTINATION_COMPRESSIBLE_COMPRESSIBLE = 0x1,
@@ -105,20 +101,16 @@ typedef struct tagMEM_COPY {
         COPY_TYPE_LINEAR_COPY = 0x0,
         COPY_TYPE_MATRIX_COPY = 0x1,
     } COPY_TYPE;
-    typedef enum tagINSTRUCTIONTARGET_OPCODE {
-        INSTRUCTIONTARGET_OPCODE_OPCODE = 0x5A,
-    } INSTRUCTIONTARGET_OPCODE;
     typedef enum tagCLIENT {
         CLIENT_2D_PROCESSOR = 0x2,
     } CLIENT;
+    typedef enum tagINSTRUCTION_TARGET_OPCODE {
+        INSTRUCTION_TARGET_OPCODE_MEM_COPY = 0x5a,
+    } INSTRUCTION_TARGET_OPCODE;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_EXCLUDES_DWORD_0_1;
-        TheStructure.Common.DestinationCompressionEnable = DESTINATION_COMPRESSION_ENABLE_DISABLE;
-        TheStructure.Common.DestinationCompressible = DESTINATION_COMPRESSIBLE_NOT_COMPRESSIBLE;
-        TheStructure.Common.SourceCompressible = SOURCE_COMPRESSIBLE_NOT_COMPRESSIBLE;
-        TheStructure.Common.CopyType = COPY_TYPE_LINEAR_COPY;
-        TheStructure.Common.InstructionTarget_Opcode = INSTRUCTIONTARGET_OPCODE_OPCODE;
+        TheStructure.Common.InstructionTargetOpcode = INSTRUCTION_TARGET_OPCODE_MEM_COPY;
         TheStructure.Common.Client = CLIENT_2D_PROCESSOR;
     }
     static tagMEM_COPY sInit() {
@@ -131,17 +123,17 @@ typedef struct tagMEM_COPY {
         return TheStructure.RawData[index];
     }
     inline void setCompressionFormat(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x1f);
+        UNRECOVERABLE_IF(value > 0x1fu);
         TheStructure.Common.CompressionFormat = value;
     }
     inline uint32_t getCompressionFormat() const {
         return TheStructure.Common.CompressionFormat;
     }
-    inline void setDestinationCompressionEnable(const DESTINATION_COMPRESSION_ENABLE value) {
+    inline void setDestinationCompressionEnable(const bool value) {
         TheStructure.Common.DestinationCompressionEnable = value;
     }
-    inline DESTINATION_COMPRESSION_ENABLE getDestinationCompressionEnable() const {
-        return static_cast<DESTINATION_COMPRESSION_ENABLE>(TheStructure.Common.DestinationCompressionEnable);
+    inline bool getDestinationCompressionEnable() const {
+        return TheStructure.Common.DestinationCompressionEnable;
     }
     inline void setDestinationCompressible(const DESTINATION_COMPRESSIBLE value) {
         TheStructure.Common.DestinationCompressible = value;
@@ -161,12 +153,11 @@ typedef struct tagMEM_COPY {
     inline COPY_TYPE getCopyType() const {
         return static_cast<COPY_TYPE>(TheStructure.Common.CopyType);
     }
-    inline void setInstructionTargetOpcode(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x7f);
-        TheStructure.Common.InstructionTarget_Opcode = value;
+    inline void setInstructionTargetOpcode(const INSTRUCTION_TARGET_OPCODE value) {
+        TheStructure.Common.InstructionTargetOpcode = value;
     }
-    inline uint32_t getInstructionTargetOpcode() const {
-        return TheStructure.Common.InstructionTarget_Opcode;
+    inline INSTRUCTION_TARGET_OPCODE getInstructionTargetOpcode() const {
+        return static_cast<INSTRUCTION_TARGET_OPCODE>(TheStructure.Common.InstructionTargetOpcode);
     }
     inline void setClient(const CLIENT value) {
         TheStructure.Common.Client = value;
@@ -175,28 +166,28 @@ typedef struct tagMEM_COPY {
         return static_cast<CLIENT>(TheStructure.Common.Client);
     }
     inline void setDestinationX2CoordinateRight(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x3ffff + 1);
+        UNRECOVERABLE_IF(value < 1 || value > 0x40000u);
         TheStructure.Common.TransferWidth = value - 1;
     }
     inline uint32_t getDestinationX2CoordinateRight() const {
         return TheStructure.Common.TransferWidth + 1;
     }
     inline void setDestinationY2CoordinateBottom(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x3ffff + 1);
+        UNRECOVERABLE_IF(value < 1 || value > 0x40000u);
         TheStructure.Common.TransferHeight = value - 1;
     }
     inline uint32_t getDestinationY2CoordinateBottom() const {
         return TheStructure.Common.TransferHeight + 1;
     }
     inline void setSourcePitch(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x3ffff + 1);
+        UNRECOVERABLE_IF(value < 1 || value > 0x40000u);
         TheStructure.Common.SourcePitch = value - 1;
     }
     inline uint32_t getSourcePitch() const {
         return TheStructure.Common.SourcePitch + 1;
     }
     inline void setDestinationPitch(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x3ffff + 1);
+        UNRECOVERABLE_IF(value < 1 || value > 0x40000u);
         TheStructure.Common.DestinationPitch = value - 1;
     }
     inline uint32_t getDestinationPitch() const {
@@ -215,14 +206,14 @@ typedef struct tagMEM_COPY {
         return TheStructure.Common.DestinationBaseAddress;
     }
     inline void setDestinationMOCS(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x7f);
+        UNRECOVERABLE_IF(value > 0x7fu);
         TheStructure.Common.DestinationMocs = value;
     }
     inline uint32_t getDestinationMOCS() const {
         return TheStructure.Common.DestinationMocs;
     }
     inline void setSourceMOCS(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x7f);
+        UNRECOVERABLE_IF(value > 0x7fu);
         TheStructure.Common.SourceMocs = value;
     }
     inline uint32_t getSourceMOCS() const {
@@ -3079,1195 +3070,937 @@ typedef struct tagMI_CONDITIONAL_BATCH_BUFFER_END {
 } MI_CONDITIONAL_BATCH_BUFFER_END;
 STATIC_ASSERT(16 == sizeof(MI_CONDITIONAL_BATCH_BUFFER_END));
 
-struct XY_BLOCK_COPY_BLT {
+typedef struct tagXY_BLOCK_COPY_BLT {
     union tagTheStructure {
         struct tagCommon {
-            /// DWORD 0
+            // DWORD 0
             uint32_t DwordLength : BITFIELD_RANGE(0, 7);
             uint32_t Reserved_8 : BITFIELD_RANGE(8, 8);
-            uint32_t NumberofMultisamples : BITFIELD_RANGE(9, 11);
-            uint32_t SpecialModeofOperation : BITFIELD_RANGE(12, 13);
+            uint32_t NumberOfMultisamples : BITFIELD_RANGE(9, 11);
+            uint32_t SpecialModeOfOperation : BITFIELD_RANGE(12, 13);
             uint32_t Reserved_14 : BITFIELD_RANGE(14, 18);
             uint32_t ColorDepth : BITFIELD_RANGE(19, 21);
-            uint32_t InstructionTarget_Opcode : BITFIELD_RANGE(22, 28);
+            uint32_t InstructionTargetOpcode : BITFIELD_RANGE(22, 28);
             uint32_t Client : BITFIELD_RANGE(29, 31);
-
-            /// DWORD 1
+            // DWORD 1
             uint32_t DestinationPitch : BITFIELD_RANGE(0, 17);
-            uint32_t DestinationAuxiliarysurfacemode : BITFIELD_RANGE(18, 20);
-            uint32_t DestinationMOCS : BITFIELD_RANGE(21, 27);
-            uint32_t DestinationCompressionType : BITFIELD_RANGE(28, 28);
+            uint32_t DestinationAuxiliarySurfaceMode : BITFIELD_RANGE(18, 20);
+            uint32_t DestinationMocsValue : BITFIELD_RANGE(21, 27);
+            uint32_t DestinationControlSurfaceType : BITFIELD_RANGE(28, 28);
             uint32_t DestinationCompressionEnable : BITFIELD_RANGE(29, 29);
             uint32_t DestinationTiling : BITFIELD_RANGE(30, 31);
-
-            /// DWORD 2
-            uint32_t DestinationX1Coordinate_Left : BITFIELD_RANGE(0, 15);
-            uint32_t DestinationY1Coordinate_Top : BITFIELD_RANGE(16, 31);
-
-            /// DWORD 3
-            uint32_t DestinationX2Coordinate_Right : BITFIELD_RANGE(0, 15);
-            uint32_t DestinationY2Coordinate_Bottom : BITFIELD_RANGE(16, 31);
-
-            /// DWORD 4..5
+            // DWORD 2
+            uint32_t DestinationX1CoordinateLeft : BITFIELD_RANGE(0, 15);
+            uint32_t DestinationY1CoordinateTop : BITFIELD_RANGE(16, 31);
+            // DWORD 3
+            uint32_t DestinationX2CoordinateRight : BITFIELD_RANGE(0, 15);
+            uint32_t DestinationY2CoordinateBottom : BITFIELD_RANGE(16, 31);
+            // DWORD 4-5
             uint64_t DestinationBaseAddress;
-
-            /// DWORD 6
-            uint32_t DestinationXoffset : BITFIELD_RANGE(0, 13);
+            // DWORD 6
+            uint32_t DestinationXOffset : BITFIELD_RANGE(0, 13);
             uint32_t Reserved_206 : BITFIELD_RANGE(14, 15);
-            uint32_t DestinationYoffset : BITFIELD_RANGE(16, 29);
+            uint32_t DestinationYOffset : BITFIELD_RANGE(16, 29);
             uint32_t Reserved_222 : BITFIELD_RANGE(30, 30);
             uint32_t DestinationTargetMemory : BITFIELD_RANGE(31, 31);
-
-            /// DWORD 7
-            uint32_t SourceX1Coordinate_Left : BITFIELD_RANGE(0, 15);
-            uint32_t SourceY1Coordinate_Top : BITFIELD_RANGE(16, 31);
-
-            /// DWORD 8
+            // DWORD 7
+            uint32_t SourceX1CoordinateLeft : BITFIELD_RANGE(0, 15);
+            uint32_t SourceY1CoordinateTop : BITFIELD_RANGE(16, 31);
+            // DWORD 8
             uint32_t SourcePitch : BITFIELD_RANGE(0, 17);
-            uint32_t SourceAuxiliarysurfacemode : BITFIELD_RANGE(18, 20);
-            uint32_t SourceMOCS : BITFIELD_RANGE(21, 27);
-            uint32_t SourceCompressionType : BITFIELD_RANGE(28, 28);
+            uint32_t SourceAuxiliarySurfaceMode : BITFIELD_RANGE(18, 20);
+            uint32_t SourceMocs : BITFIELD_RANGE(21, 27);
+            uint32_t SourceControlSurfaceType : BITFIELD_RANGE(28, 28);
             uint32_t SourceCompressionEnable : BITFIELD_RANGE(29, 29);
             uint32_t SourceTiling : BITFIELD_RANGE(30, 31);
-
-            /// DWORD 9..10
+            // DWORD 9-10
             uint64_t SourceBaseAddress;
-
-            /// DWORD 11
-            uint32_t SourceXoffset : BITFIELD_RANGE(0, 13);
+            // DWORD 11
+            uint32_t SourceXOffset : BITFIELD_RANGE(0, 13);
             uint32_t Reserved_366 : BITFIELD_RANGE(14, 15);
-            uint32_t SourceYoffset : BITFIELD_RANGE(16, 29);
+            uint32_t SourceYOffset : BITFIELD_RANGE(16, 29);
             uint32_t Reserved_382 : BITFIELD_RANGE(30, 30);
             uint32_t SourceTargetMemory : BITFIELD_RANGE(31, 31);
-
-            /// DWORD 12
-            uint32_t SourceCompressionFormat : BITFIELD_RANGE(0, 4);
-            uint32_t SourceClearValueEnable : BITFIELD_RANGE(5, 5);
-            uint32_t SourceClearAddressLow : BITFIELD_RANGE(6, 31);
-
-            /// DWORD 13
-            uint32_t SourceClearAddressHigh : BITFIELD_RANGE(0, 15);
-            uint32_t Reserved_432 : BITFIELD_RANGE(16, 31);
-
-            /// DWORD 14
-            uint32_t DestinationCompressionFormat : BITFIELD_RANGE(0, 4);
-            uint32_t DestinationClearValueEnable : BITFIELD_RANGE(5, 5);
-            uint32_t DestinationClearAddressLow : BITFIELD_RANGE(6, 31);
-
-            /// DWORD 15
-            uint32_t DestinationClearAddressHigh : BITFIELD_RANGE(0, 15);
-            uint32_t Reserved_496 : BITFIELD_RANGE(16, 31);
-
-            /// DWORD 16
+            // DWORD 12-13
+            uint64_t SourceCompressionFormat : BITFIELD_RANGE(0, 4);
+            uint64_t SourceClearValueEnable : BITFIELD_RANGE(5, 5);
+            uint64_t SourceClearAddress : BITFIELD_RANGE(6, 56);
+            uint64_t Reserved_441 : BITFIELD_RANGE(57, 63);
+            // DWORD 14-15
+            uint64_t DestinationCompressionFormat : BITFIELD_RANGE(0, 4);
+            uint64_t DestinationClearValueEnable : BITFIELD_RANGE(5, 5);
+            uint64_t DestinationClearAddress : BITFIELD_RANGE(6, 56);
+            uint64_t Reserved_505 : BITFIELD_RANGE(57, 63);
+            // DWORD 16
             uint32_t DestinationSurfaceHeight : BITFIELD_RANGE(0, 13);
             uint32_t DestinationSurfaceWidth : BITFIELD_RANGE(14, 27);
             uint32_t Reserved_540 : BITFIELD_RANGE(28, 28);
             uint32_t DestinationSurfaceType : BITFIELD_RANGE(29, 31);
-
-            /// DWORD 17
-            uint32_t DestinationLOD : BITFIELD_RANGE(0, 3);
-            uint32_t DestinationSurfaceQpitch : BITFIELD_RANGE(4, 20);
+            // DWORD 17
+            uint32_t DestinationLod : BITFIELD_RANGE(0, 3);
+            uint32_t DestinationSurfaceQpitch : BITFIELD_RANGE(4, 18);
+            uint32_t Reserved_563 : BITFIELD_RANGE(19, 20);
             uint32_t DestinationSurfaceDepth : BITFIELD_RANGE(21, 31);
-
-            /// DWORD 18
+            // DWORD 18
             uint32_t DestinationHorizontalAlign : BITFIELD_RANGE(0, 1);
             uint32_t Reserved_578 : BITFIELD_RANGE(2, 2);
             uint32_t DestinationVerticalAlign : BITFIELD_RANGE(3, 4);
-            uint32_t DestinationSSID : BITFIELD_RANGE(5, 7);
-            uint32_t DestinationMipTailStartLOD : BITFIELD_RANGE(8, 11);
+            uint32_t Reserved_581 : BITFIELD_RANGE(5, 7);
+            uint32_t DestinationMipTailStartLod : BITFIELD_RANGE(8, 11);
             uint32_t Reserved_588 : BITFIELD_RANGE(12, 17);
             uint32_t DestinationDepthStencilResource : BITFIELD_RANGE(18, 18);
             uint32_t Reserved_595 : BITFIELD_RANGE(19, 20);
             uint32_t DestinationArrayIndex : BITFIELD_RANGE(21, 31);
-
-            /// DWORD 19
+            // DWORD 19
             uint32_t SourceSurfaceHeight : BITFIELD_RANGE(0, 13);
             uint32_t SourceSurfaceWidth : BITFIELD_RANGE(14, 27);
             uint32_t Reserved_636 : BITFIELD_RANGE(28, 28);
             uint32_t SourceSurfaceType : BITFIELD_RANGE(29, 31);
-
-            /// DWORD 20
-            uint32_t SourceLOD : BITFIELD_RANGE(0, 3);
-            uint32_t SourceSurfaceQpitch : BITFIELD_RANGE(4, 20);
+            // DWORD 20
+            uint32_t SourceLod : BITFIELD_RANGE(0, 3);
+            uint32_t SourceSurfaceQpitch : BITFIELD_RANGE(4, 18);
+            uint32_t Reserved_659 : BITFIELD_RANGE(19, 20);
             uint32_t SourceSurfaceDepth : BITFIELD_RANGE(21, 31);
-
-            /// DWORD 21
+            // DWORD 21
             uint32_t SourceHorizontalAlign : BITFIELD_RANGE(0, 1);
             uint32_t Reserved_674 : BITFIELD_RANGE(2, 2);
             uint32_t SourceVerticalAlign : BITFIELD_RANGE(3, 4);
-            uint32_t SourceSSID : BITFIELD_RANGE(5, 7);
-            uint32_t SourceMipTailStartLOD : BITFIELD_RANGE(8, 11);
+            uint32_t Reserved_677 : BITFIELD_RANGE(5, 7);
+            uint32_t SourceMipTailStartLod : BITFIELD_RANGE(8, 11);
             uint32_t Reserved_684 : BITFIELD_RANGE(12, 17);
             uint32_t SourceDepthStencilResource : BITFIELD_RANGE(18, 18);
             uint32_t Reserved_691 : BITFIELD_RANGE(19, 20);
             uint32_t SourceArrayIndex : BITFIELD_RANGE(21, 31);
-
         } Common;
         uint32_t RawData[22];
     } TheStructure;
-
-    enum DWORD_LENGTH {
-        DWORD_LENGTH_EXCLUDES_DWORD_0_1 = 20,
-    };
-
-    enum NUMBER_OF_MULTISAMPLES {
-        NUMBER_OF_MULTISAMPLES_MULTISAMPLECOUNT_1 = 0,
-        NUMBER_OF_MULTISAMPLES_MULTISAMPLECOUNT_2 = 1,
-        NUMBER_OF_MULTISAMPLES_MULTISAMPLECOUNT_4 = 2,
-        NUMBER_OF_MULTISAMPLES_MULTISAMPLECOUNT_8 = 3,
-        NUMBER_OF_MULTISAMPLES_MULTISAMPLECOUNT_16 = 4,
-    };
-
-    enum SPECIAL_MODE_OF_OPERATION {
-        SPECIAL_MODE_OF_OPERATION_NONE = 0,
-        SPECIAL_MODE_OF_OPERATION_FULL_RESOLVE = 1,
-        SPECIAL_MODE_OF_OPERATION_PARTIAL_RESOLVE = 2,
-    };
-
-    enum COLOR_DEPTH {
-        COLOR_DEPTH_8_BIT_COLOR = 0,
-        COLOR_DEPTH_16_BIT_COLOR = 1,
-        COLOR_DEPTH_32_BIT_COLOR = 2,
-        COLOR_DEPTH_64_BIT_COLOR = 3,
-        COLOR_DEPTH_96_BIT_COLOR_ONLY_LINEAR_CASE_IS_SUPPORTED = 4,
-        COLOR_DEPTH_128_BIT_COLOR = 5,
-    };
-
-    enum CLIENT {
-        CLIENT_2D_PROCESSOR = 2,
-    };
-
-    enum AUXILIARY_SURFACE_MODE {
-        AUXILIARY_SURFACE_MODE_AUX_NONE = 0,
-        AUXILIARY_SURFACE_MODE_AUX_CCS_E = 5,
-    };
-
-    enum COMPRESSION_TYPE {
-        COMPRESSION_TYPE_3D_COMPRESSION = 0,
-        COMPRESSION_TYPE_MEDIA_COMPRESSION = 1,
-    };
-
-    enum COMPRESSION_ENABLE {
-        COMPRESSION_ENABLE_COMPRESSION_DISABLE = 0,
-        COMPRESSION_ENABLE_COMPRESSION_ENABLE = 1,
-    };
-
-    enum TILING {
-        TILING_LINEAR = 0,
-        TILING_TILE4 = 2,
-        TILING_TILE64 = 3,
-    };
-
-    enum TARGET_MEMORY {
-        TARGET_MEMORY_LOCAL_MEM = 0,
-        TARGET_MEMORY_SYSTEM_MEM = 1,
-    };
-
-    enum CLEAR_VALUE_ENABLE {
-        CLEAR_VALUE_ENABLE_DISABLE = 0,
-        CLEAR_VALUE_ENABLE_ENABLE = 1,
-    };
-
-    enum SURFACE_TYPE {
-        SURFACE_TYPE_SURFTYPE_1D = 0,
-        SURFACE_TYPE_SURFTYPE_2D = 1,
-        SURFACE_TYPE_SURFTYPE_3D = 2,
-        SURFACE_TYPE_SURFTYPE_CUBE = 3,
-        SURFACE_TYPE_SURFTYPE_BUFFER = 4,
-        SURFACE_TYPE_SURFTYPE_STRBUF = 5,
-        SURFACE_TYPE_SURFTYPE_NULL = 7,
-    };
-
-    enum INSTRUCTIONTARGET_OPCODE {
-        INSTRUCTIONTARGET_OPCODE_OPCODE = 0x41,
-    };
-
+    typedef enum tagDWORD_LENGTH {
+        DWORD_LENGTH_EXCLUDES_DWORD_0_1 = 0x14,
+    } DWORD_LENGTH;
+    typedef enum tagNUMBER_OF_MULTISAMPLES {
+        NUMBER_OF_MULTISAMPLES_MULTISAMPLECOUNT_1 = 0x0,
+        NUMBER_OF_MULTISAMPLES_MULTISAMPLECOUNT_2 = 0x1,
+        NUMBER_OF_MULTISAMPLES_MULTISAMPLECOUNT_4 = 0x2,
+        NUMBER_OF_MULTISAMPLES_MULTISAMPLECOUNT_8 = 0x3,
+        NUMBER_OF_MULTISAMPLES_MULTISAMPLECOUNT_16 = 0x4,
+    } NUMBER_OF_MULTISAMPLES;
+    typedef enum tagSPECIAL_MODE_OF_OPERATION {
+        SPECIAL_MODE_OF_OPERATION_NONE = 0x0,
+        SPECIAL_MODE_OF_OPERATION_FULL_RESOLVE = 0x1,
+        SPECIAL_MODE_OF_OPERATION_PARTIAL_RESOLVE = 0x2,
+    } SPECIAL_MODE_OF_OPERATION;
+    typedef enum tagCOLOR_DEPTH {
+        COLOR_DEPTH_8_BIT_COLOR = 0x0,
+        COLOR_DEPTH_16_BIT_COLOR = 0x1,
+        COLOR_DEPTH_32_BIT_COLOR = 0x2,
+        COLOR_DEPTH_64_BIT_COLOR = 0x3,
+        COLOR_DEPTH_96_BIT_COLOR_ONLY_LINEAR_CASE_IS_SUPPORTED = 0x4,
+        COLOR_DEPTH_128_BIT_COLOR = 0x5,
+    } COLOR_DEPTH;
+    typedef enum tagINSTRUCTION_TARGETOPCODE {
+        INSTRUCTION_TARGETOPCODE_INSTRUCTION_TARGET_XY_BLOCK_COPY_BLT = 0x41,
+    } INSTRUCTION_TARGETOPCODE;
+    typedef enum tagCLIENT {
+        CLIENT_2D_PROCESSOR = 0x2,
+    } CLIENT;
+    typedef enum tagAUXILIARY_SURFACE_MODE {
+        AUXILIARY_SURFACE_MODE_AUX_NONE = 0x0,
+        AUXILIARY_SURFACE_MODE_AUX_CCS_E = 0x5,
+    } AUXILIARY_SURFACE_MODE;
+    typedef enum tagDESTINATION_CONTROL_SURFACE_TYPE {
+        DESTINATION_CONTROL_SURFACE_TYPE_3D_CONTROL_SURFACE = 0x0,
+        DESTINATION_CONTROL_SURFACE_TYPE_MEDIA_CONTROL_SURFACE = 0x1,
+    } DESTINATION_CONTROL_SURFACE_TYPE;
+    typedef enum tagTILING {
+        TILING_LINEAR = 0x0,
+        TILING_TILE4 = 0x2,
+        TILING_TILE64 = 0x3,
+    } TILING;
+    typedef enum tagTARGET_MEMORY {
+        TARGET_MEMORY_LOCAL_MEM = 0x0,
+        TARGET_MEMORY_SYSTEM_MEM = 0x1,
+    } TARGET_MEMORY;
+    typedef enum tagSOURCE_CONTROL_SURFACE_TYPE {
+        SOURCE_CONTROL_SURFACE_TYPE_3D_CONTROL_SURFACE = 0x0,
+        SOURCE_CONTROL_SURFACE_TYPE_MEDIA_CONTROL_SURFACE = 0x1,
+    } SOURCE_CONTROL_SURFACE_TYPE;
+    typedef enum tagSOURCECLEARADDRESS {
+        SOURCECLEARADDRESS_BIT_SHIFT = 0x6,
+        SOURCECLEARADDRESS_ALIGN_SIZE = 0x40,
+    } SOURCECLEARADDRESS;
+    typedef enum tagDESTINATIONCLEARADDRESS {
+        DESTINATIONCLEARADDRESS_BIT_SHIFT = 0x6,
+        DESTINATIONCLEARADDRESS_ALIGN_SIZE = 0x40,
+    } DESTINATIONCLEARADDRESS;
+    typedef enum tagSURFACE_TYPE {
+        SURFACE_TYPE_SURFTYPE_1D = 0x0,
+        SURFACE_TYPE_SURFTYPE_2D = 0x1,
+        SURFACE_TYPE_SURFTYPE_3D = 0x2,
+        SURFACE_TYPE_SURFTYPE_CUBE = 0x3,
+    } SURFACE_TYPE;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
-        TheStructure.Common.DwordLength = DWORD_LENGTH::DWORD_LENGTH_EXCLUDES_DWORD_0_1;
-        TheStructure.Common.InstructionTarget_Opcode = INSTRUCTIONTARGET_OPCODE_OPCODE;
-        TheStructure.Common.Client = CLIENT::CLIENT_2D_PROCESSOR;
+        TheStructure.Common.DwordLength = DWORD_LENGTH_EXCLUDES_DWORD_0_1;
+        TheStructure.Common.InstructionTargetOpcode = INSTRUCTION_TARGETOPCODE_INSTRUCTION_TARGET_XY_BLOCK_COPY_BLT;
+        TheStructure.Common.Client = CLIENT_2D_PROCESSOR;
     }
-
-    static XY_BLOCK_COPY_BLT sInit() {
+    static tagXY_BLOCK_COPY_BLT sInit() {
         XY_BLOCK_COPY_BLT state;
         state.init();
         return state;
     }
-
     inline uint32_t &getRawData(const uint32_t index) {
-        UNRECOVERABLE_IF(index < 22);
+        UNRECOVERABLE_IF(index >= 22);
         return TheStructure.RawData[index];
     }
-
     inline void setNumberofMultisamples(const NUMBER_OF_MULTISAMPLES value) {
-        TheStructure.Common.NumberofMultisamples = value;
+        TheStructure.Common.NumberOfMultisamples = value;
     }
-
     inline NUMBER_OF_MULTISAMPLES getNumberofMultisamples() const {
-        return static_cast<NUMBER_OF_MULTISAMPLES>(TheStructure.Common.NumberofMultisamples);
+        return static_cast<NUMBER_OF_MULTISAMPLES>(TheStructure.Common.NumberOfMultisamples);
     }
-
-    inline void setSpecialModeofOperation(const SPECIAL_MODE_OF_OPERATION value) {
-        TheStructure.Common.SpecialModeofOperation = value;
+    inline void setSpecialModeOfOperation(const SPECIAL_MODE_OF_OPERATION value) {
+        TheStructure.Common.SpecialModeOfOperation = value;
     }
-
     inline SPECIAL_MODE_OF_OPERATION getSpecialModeOfOperation() const {
-        return static_cast<SPECIAL_MODE_OF_OPERATION>(TheStructure.Common.SpecialModeofOperation);
+        return static_cast<SPECIAL_MODE_OF_OPERATION>(TheStructure.Common.SpecialModeOfOperation);
     }
-
     inline void setColorDepth(const COLOR_DEPTH value) {
         TheStructure.Common.ColorDepth = value;
     }
-
     inline COLOR_DEPTH getColorDepth() const {
         return static_cast<COLOR_DEPTH>(TheStructure.Common.ColorDepth);
     }
-
-    inline void setInstructionTargetOpcode(const uint32_t value) {
-        TheStructure.Common.InstructionTarget_Opcode = value;
+    inline void setInstructionTargetOpcode(const INSTRUCTION_TARGETOPCODE value) {
+        TheStructure.Common.InstructionTargetOpcode = value;
     }
-
-    inline uint32_t getInstructionTargetOpcode() const {
-        return (TheStructure.Common.InstructionTarget_Opcode);
+    inline INSTRUCTION_TARGETOPCODE getInstructionTargetOpcode() const {
+        return static_cast<INSTRUCTION_TARGETOPCODE>(TheStructure.Common.InstructionTargetOpcode);
     }
-
     inline void setClient(const CLIENT value) {
         TheStructure.Common.Client = value;
     }
-
     inline CLIENT getClient() const {
         return static_cast<CLIENT>(TheStructure.Common.Client);
     }
-
     inline void setDestinationPitch(const uint32_t value) {
+        UNRECOVERABLE_IF(value < 1 || value > 0x40000u);
         TheStructure.Common.DestinationPitch = value - 1;
     }
-
     inline uint32_t getDestinationPitch() const {
-        return (TheStructure.Common.DestinationPitch + 1);
+        return TheStructure.Common.DestinationPitch + 1;
     }
-
     inline void setDestinationAuxiliarysurfacemode(const AUXILIARY_SURFACE_MODE value) {
-        TheStructure.Common.DestinationAuxiliarysurfacemode = value;
+        TheStructure.Common.DestinationAuxiliarySurfaceMode = value;
     }
-
     inline AUXILIARY_SURFACE_MODE getDestinationAuxiliarysurfacemode() const {
-        return static_cast<AUXILIARY_SURFACE_MODE>(TheStructure.Common.DestinationAuxiliarysurfacemode);
+        return static_cast<AUXILIARY_SURFACE_MODE>(TheStructure.Common.DestinationAuxiliarySurfaceMode);
     }
-
     inline void setDestinationMOCS(const uint32_t value) {
-        TheStructure.Common.DestinationMOCS = value;
+        UNRECOVERABLE_IF(value > 0x7fu);
+        TheStructure.Common.DestinationMocsValue = value;
     }
-
     inline uint32_t getDestinationMOCS() const {
-        return (TheStructure.Common.DestinationMOCS);
+        return TheStructure.Common.DestinationMocsValue;
     }
-
-    inline void setDestinationCompressionType(const COMPRESSION_TYPE value) {
-        TheStructure.Common.DestinationCompressionType = value;
+    inline void setDestinationControlSurfaceType(const DESTINATION_CONTROL_SURFACE_TYPE value) {
+        TheStructure.Common.DestinationControlSurfaceType = value;
     }
-
-    inline COMPRESSION_TYPE getDestinationCompressionType() const {
-        return static_cast<COMPRESSION_TYPE>(TheStructure.Common.DestinationCompressionType);
+    inline DESTINATION_CONTROL_SURFACE_TYPE getDestinationControlSurfaceType() const {
+        return static_cast<DESTINATION_CONTROL_SURFACE_TYPE>(TheStructure.Common.DestinationControlSurfaceType);
     }
-
-    inline void setDestinationCompressionEnable(const COMPRESSION_ENABLE value) {
+    inline void setDestinationCompressionEnable(const bool value) {
         TheStructure.Common.DestinationCompressionEnable = value;
     }
-
-    inline COMPRESSION_ENABLE getDestinationCompressionEnable() const {
-        return static_cast<COMPRESSION_ENABLE>(TheStructure.Common.DestinationCompressionEnable);
+    inline bool getDestinationCompressionEnable() const {
+        return TheStructure.Common.DestinationCompressionEnable;
     }
-
     inline void setDestinationTiling(const TILING value) {
         TheStructure.Common.DestinationTiling = value;
     }
-
     inline TILING getDestinationTiling() const {
         return static_cast<TILING>(TheStructure.Common.DestinationTiling);
     }
-
     inline void setDestinationX1CoordinateLeft(const uint32_t value) {
-        TheStructure.Common.DestinationX1Coordinate_Left = value;
+        UNRECOVERABLE_IF(value > 0xffffu);
+        TheStructure.Common.DestinationX1CoordinateLeft = value;
     }
-
     inline uint32_t getDestinationX1CoordinateLeft() const {
-        return (TheStructure.Common.DestinationX1Coordinate_Left);
+        return TheStructure.Common.DestinationX1CoordinateLeft;
     }
-
     inline void setDestinationY1CoordinateTop(const uint32_t value) {
-        TheStructure.Common.DestinationY1Coordinate_Top = value;
+        UNRECOVERABLE_IF(value > 0xffffu);
+        TheStructure.Common.DestinationY1CoordinateTop = value;
     }
-
     inline uint32_t getDestinationY1CoordinateTop() const {
-        return (TheStructure.Common.DestinationY1Coordinate_Top);
+        return TheStructure.Common.DestinationY1CoordinateTop;
     }
-
     inline void setDestinationX2CoordinateRight(const uint32_t value) {
-        TheStructure.Common.DestinationX2Coordinate_Right = value;
+        UNRECOVERABLE_IF(value > 0xffffu);
+        TheStructure.Common.DestinationX2CoordinateRight = value;
     }
-
     inline uint32_t getDestinationX2CoordinateRight() const {
-        return (TheStructure.Common.DestinationX2Coordinate_Right);
+        return TheStructure.Common.DestinationX2CoordinateRight;
     }
-
     inline void setDestinationY2CoordinateBottom(const uint32_t value) {
-        TheStructure.Common.DestinationY2Coordinate_Bottom = value;
+        UNRECOVERABLE_IF(value > 0xffffu);
+        TheStructure.Common.DestinationY2CoordinateBottom = value;
     }
-
     inline uint32_t getDestinationY2CoordinateBottom() const {
-        return (TheStructure.Common.DestinationY2Coordinate_Bottom);
+        return TheStructure.Common.DestinationY2CoordinateBottom;
     }
-
     inline void setDestinationBaseAddress(const uint64_t value) {
         TheStructure.Common.DestinationBaseAddress = value;
     }
-
     inline uint64_t getDestinationBaseAddress() const {
-        return (TheStructure.Common.DestinationBaseAddress);
+        return TheStructure.Common.DestinationBaseAddress;
     }
-
     inline void setDestinationXOffset(const uint32_t value) {
-        TheStructure.Common.DestinationXoffset = value;
+        UNRECOVERABLE_IF(value > 0x3fffu);
+        TheStructure.Common.DestinationXOffset = value;
     }
-
     inline uint32_t getDestinationXOffset() const {
-        return (TheStructure.Common.DestinationXoffset);
+        return TheStructure.Common.DestinationXOffset;
     }
-
     inline void setDestinationYOffset(const uint32_t value) {
-        TheStructure.Common.DestinationYoffset = value;
+        UNRECOVERABLE_IF(value > 0x3fffu);
+        TheStructure.Common.DestinationYOffset = value;
     }
-
     inline uint32_t getDestinationYOffset() const {
-        return (TheStructure.Common.DestinationYoffset);
+        return TheStructure.Common.DestinationYOffset;
     }
-
     inline void setDestinationTargetMemory(const TARGET_MEMORY value) {
         TheStructure.Common.DestinationTargetMemory = value;
     }
-
     inline TARGET_MEMORY getDestinationTargetMemory() const {
         return static_cast<TARGET_MEMORY>(TheStructure.Common.DestinationTargetMemory);
     }
-
     inline void setSourceX1CoordinateLeft(const uint32_t value) {
-        TheStructure.Common.SourceX1Coordinate_Left = value;
+        UNRECOVERABLE_IF(value > 0xffffu);
+        TheStructure.Common.SourceX1CoordinateLeft = value;
     }
-
     inline uint32_t getSourceX1CoordinateLeft() const {
-        return (TheStructure.Common.SourceX1Coordinate_Left);
+        return TheStructure.Common.SourceX1CoordinateLeft;
     }
-
     inline void setSourceY1CoordinateTop(const uint32_t value) {
-        TheStructure.Common.SourceY1Coordinate_Top = value;
+        UNRECOVERABLE_IF(value > 0xffffu);
+        TheStructure.Common.SourceY1CoordinateTop = value;
     }
-
     inline uint32_t getSourceY1CoordinateTop() const {
-        return (TheStructure.Common.SourceY1Coordinate_Top);
+        return TheStructure.Common.SourceY1CoordinateTop;
     }
-
     inline void setSourcePitch(const uint32_t value) {
+        UNRECOVERABLE_IF(value < 1 || value > 0x40000u);
         TheStructure.Common.SourcePitch = value - 1;
     }
-
     inline uint32_t getSourcePitch() const {
-        return (TheStructure.Common.SourcePitch + 1);
+        return TheStructure.Common.SourcePitch + 1;
     }
-
     inline void setSourceAuxiliarysurfacemode(const AUXILIARY_SURFACE_MODE value) {
-        TheStructure.Common.SourceAuxiliarysurfacemode = value;
+        TheStructure.Common.SourceAuxiliarySurfaceMode = value;
     }
-
     inline AUXILIARY_SURFACE_MODE getSourceAuxiliarysurfacemode() const {
-        return static_cast<AUXILIARY_SURFACE_MODE>(TheStructure.Common.SourceAuxiliarysurfacemode);
+        return static_cast<AUXILIARY_SURFACE_MODE>(TheStructure.Common.SourceAuxiliarySurfaceMode);
     }
-
     inline void setSourceMOCS(const uint32_t value) {
-        TheStructure.Common.SourceMOCS = value;
+        UNRECOVERABLE_IF(value > 0x7fu);
+        TheStructure.Common.SourceMocs = value;
     }
-
     inline uint32_t getSourceMOCS() const {
-        return (TheStructure.Common.SourceMOCS);
+        return TheStructure.Common.SourceMocs;
     }
-
-    inline void setSourceCompressionType(const COMPRESSION_TYPE value) {
-        TheStructure.Common.SourceCompressionType = value;
+    inline void setSourceControlSurfaceType(const SOURCE_CONTROL_SURFACE_TYPE value) {
+        TheStructure.Common.SourceControlSurfaceType = value;
     }
-
-    inline COMPRESSION_TYPE getSourceCompressionType() const {
-        return static_cast<COMPRESSION_TYPE>(TheStructure.Common.SourceCompressionType);
+    inline SOURCE_CONTROL_SURFACE_TYPE getSourceControlSurfaceType() const {
+        return static_cast<SOURCE_CONTROL_SURFACE_TYPE>(TheStructure.Common.SourceControlSurfaceType);
     }
-
-    inline void setSourceCompressionEnable(const COMPRESSION_ENABLE value) {
+    inline void setSourceCompressionEnable(const bool value) {
         TheStructure.Common.SourceCompressionEnable = value;
     }
-
-    inline COMPRESSION_ENABLE getSourceCompressionEnable() const {
-        return static_cast<COMPRESSION_ENABLE>(TheStructure.Common.SourceCompressionEnable);
+    inline bool getSourceCompressionEnable() const {
+        return TheStructure.Common.SourceCompressionEnable;
     }
-
     inline void setSourceTiling(const TILING value) {
         TheStructure.Common.SourceTiling = value;
     }
-
     inline TILING getSourceTiling() const {
         return static_cast<TILING>(TheStructure.Common.SourceTiling);
     }
-
     inline void setSourceBaseAddress(const uint64_t value) {
         TheStructure.Common.SourceBaseAddress = value;
     }
-
     inline uint64_t getSourceBaseAddress() const {
-        return (TheStructure.Common.SourceBaseAddress);
+        return TheStructure.Common.SourceBaseAddress;
     }
-
     inline void setSourceXOffset(const uint32_t value) {
-        TheStructure.Common.SourceXoffset = value;
+        UNRECOVERABLE_IF(value > 0x3fffu);
+        TheStructure.Common.SourceXOffset = value;
     }
-
     inline uint32_t getSourceXOffset() const {
-        return (TheStructure.Common.SourceXoffset);
+        return TheStructure.Common.SourceXOffset;
     }
-
     inline void setSourceYOffset(const uint32_t value) {
-        TheStructure.Common.SourceYoffset = value;
+        UNRECOVERABLE_IF(value > 0x3fffu);
+        TheStructure.Common.SourceYOffset = value;
     }
-
     inline uint32_t getSourceYOffset() const {
-        return (TheStructure.Common.SourceYoffset);
+        return TheStructure.Common.SourceYOffset;
     }
-
     inline void setSourceTargetMemory(const TARGET_MEMORY value) {
         TheStructure.Common.SourceTargetMemory = value;
     }
-
     inline TARGET_MEMORY getSourceTargetMemory() const {
         return static_cast<TARGET_MEMORY>(TheStructure.Common.SourceTargetMemory);
     }
-
     inline void setSourceCompressionFormat(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x1fu);
         TheStructure.Common.SourceCompressionFormat = value;
     }
-
     inline uint32_t getSourceCompressionFormat() const {
-        return (TheStructure.Common.SourceCompressionFormat);
+        return TheStructure.Common.SourceCompressionFormat;
     }
-
-    inline void setSourceClearValueEnable(const CLEAR_VALUE_ENABLE value) {
+    inline void setSourceClearValueEnable(const bool value) {
         TheStructure.Common.SourceClearValueEnable = value;
     }
-
-    inline CLEAR_VALUE_ENABLE getSourceClearValueEnable() const {
-        return static_cast<CLEAR_VALUE_ENABLE>(TheStructure.Common.SourceClearValueEnable);
+    inline bool getSourceClearValueEnable() const {
+        return TheStructure.Common.SourceClearValueEnable;
     }
-
-    typedef enum tagCLEARADDRESSLOW {
-        CLEARADDRESSLOW_BIT_SHIFT = 6,
-        CLEARADDRESSLOW_ALIGN_SIZE = 64,
-    } CLEARADDRESSLOW;
-
-    inline void setSourceClearAddressLow(const uint32_t value) {
-        TheStructure.Common.SourceClearAddressLow = value >> CLEARADDRESSLOW_BIT_SHIFT;
+    inline void setSourceClearAddress(const uint64_t value) {
+        TheStructure.Common.SourceClearAddress = value >> SOURCECLEARADDRESS_BIT_SHIFT;
     }
-
-    inline uint32_t getSourceClearAddressLow() const {
-        return (TheStructure.Common.SourceClearAddressLow << CLEARADDRESSLOW_BIT_SHIFT);
+    inline uint64_t getSourceClearAddress() const {
+        return TheStructure.Common.SourceClearAddress << SOURCECLEARADDRESS_BIT_SHIFT;
     }
-
-    inline void setSourceClearAddressHigh(const uint32_t value) {
-        TheStructure.Common.SourceClearAddressHigh = value;
-    }
-
-    inline uint32_t getSourceClearAddressHigh() const {
-        return (TheStructure.Common.SourceClearAddressHigh);
-    }
-
     inline void setDestinationCompressionFormat(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x1fu);
         TheStructure.Common.DestinationCompressionFormat = value;
     }
-
     inline uint32_t getDestinationCompressionFormat() const {
-        return (TheStructure.Common.DestinationCompressionFormat);
+        return TheStructure.Common.DestinationCompressionFormat;
     }
-
-    inline void setDestinationClearValueEnable(const CLEAR_VALUE_ENABLE value) {
+    inline void setDestinationClearValueEnable(const bool value) {
         TheStructure.Common.DestinationClearValueEnable = value;
     }
-
-    inline CLEAR_VALUE_ENABLE getDestinationClearValueEnable() const {
-        return static_cast<CLEAR_VALUE_ENABLE>(TheStructure.Common.DestinationClearValueEnable);
+    inline bool getDestinationClearValueEnable() const {
+        return TheStructure.Common.DestinationClearValueEnable;
     }
-
-    inline void setDestinationClearAddressLow(const uint32_t value) {
-        TheStructure.Common.DestinationClearAddressLow = value >> CLEARADDRESSLOW_BIT_SHIFT;
+    inline void setDestinationClearAddress(const uint64_t value) {
+        TheStructure.Common.DestinationClearAddress = value >> DESTINATIONCLEARADDRESS_BIT_SHIFT;
     }
-
-    inline uint32_t getDestinationClearAddressLow() const {
-        return (TheStructure.Common.DestinationClearAddressLow << CLEARADDRESSLOW_BIT_SHIFT);
+    inline uint64_t getDestinationClearAddress() const {
+        return TheStructure.Common.DestinationClearAddress << DESTINATIONCLEARADDRESS_BIT_SHIFT;
     }
-
-    inline void setDestinationClearAddressHigh(const uint32_t value) {
-        TheStructure.Common.DestinationClearAddressHigh = value;
-    }
-
-    inline uint32_t getDestinationClearAddressHigh() const {
-        return (TheStructure.Common.DestinationClearAddressHigh);
-    }
-
     inline void setDestinationSurfaceHeight(const uint32_t value) {
-        UNRECOVERABLE_IF(value - 1 > 0x3fff);
+        UNRECOVERABLE_IF(value < 1 || value > 0x4000u);
         TheStructure.Common.DestinationSurfaceHeight = value - 1;
     }
-
     inline uint32_t getDestinationSurfaceHeight() const {
-        return (TheStructure.Common.DestinationSurfaceHeight + 1);
+        return TheStructure.Common.DestinationSurfaceHeight + 1;
     }
-
     inline void setDestinationSurfaceWidth(const uint32_t value) {
-        UNRECOVERABLE_IF(value - 1 > 0x3fff);
+        UNRECOVERABLE_IF(value < 1 || value > 0x4000u);
         TheStructure.Common.DestinationSurfaceWidth = value - 1;
     }
-
     inline uint32_t getDestinationSurfaceWidth() const {
-        return (TheStructure.Common.DestinationSurfaceWidth + 1);
+        return TheStructure.Common.DestinationSurfaceWidth + 1;
     }
-
     inline void setDestinationSurfaceType(const SURFACE_TYPE value) {
         TheStructure.Common.DestinationSurfaceType = value;
     }
-
     inline SURFACE_TYPE getDestinationSurfaceType() const {
         return static_cast<SURFACE_TYPE>(TheStructure.Common.DestinationSurfaceType);
     }
-
     inline void setDestinationLOD(const uint32_t value) {
-        TheStructure.Common.DestinationLOD = value;
+        UNRECOVERABLE_IF(value > 0xfu);
+        TheStructure.Common.DestinationLod = value;
     }
-
     inline uint32_t getDestinationLOD() const {
-        return (TheStructure.Common.DestinationLOD);
+        return TheStructure.Common.DestinationLod;
     }
-
     inline void setDestinationSurfaceQpitch(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x7fffu);
         TheStructure.Common.DestinationSurfaceQpitch = value;
     }
-
     inline uint32_t getDestinationSurfaceQpitch() const {
-        return (TheStructure.Common.DestinationSurfaceQpitch);
+        return TheStructure.Common.DestinationSurfaceQpitch;
     }
-
     inline void setDestinationSurfaceDepth(const uint32_t value) {
-        UNRECOVERABLE_IF(value - 1 > 0x7ff);
+        UNRECOVERABLE_IF(value < 1 || value > 0x800u);
         TheStructure.Common.DestinationSurfaceDepth = value - 1;
     }
-
     inline uint32_t getDestinationSurfaceDepth() const {
-        return (TheStructure.Common.DestinationSurfaceDepth + 1);
+        return TheStructure.Common.DestinationSurfaceDepth + 1;
     }
-
     inline void setDestinationHorizontalAlign(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x3u);
         TheStructure.Common.DestinationHorizontalAlign = value;
     }
-
     inline uint32_t getDestinationHorizontalAlign() const {
-        return (TheStructure.Common.DestinationHorizontalAlign);
+        return TheStructure.Common.DestinationHorizontalAlign;
     }
-
     inline void setDestinationVerticalAlign(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x3u);
         TheStructure.Common.DestinationVerticalAlign = value;
     }
-
     inline uint32_t getDestinationVerticalAlign() const {
-        return (TheStructure.Common.DestinationVerticalAlign);
+        return TheStructure.Common.DestinationVerticalAlign;
     }
-
-    inline void setDestinationSSID(const uint32_t value) {
-        TheStructure.Common.DestinationSSID = value;
-    }
-
-    inline uint32_t getDestinationSSID() const {
-        return (TheStructure.Common.DestinationSSID);
-    }
-
     inline void setDestinationMipTailStartLOD(const uint32_t value) {
-        TheStructure.Common.DestinationMipTailStartLOD = value;
+        UNRECOVERABLE_IF(value > 0xfu);
+        TheStructure.Common.DestinationMipTailStartLod = value;
     }
-
     inline uint32_t getDestinationMipTailStartLOD() const {
-        return (TheStructure.Common.DestinationMipTailStartLOD);
+        return TheStructure.Common.DestinationMipTailStartLod;
     }
-
-    inline void setDestinationDepthStencilResource(const uint32_t value) {
+    inline void setDestinationDepthStencilResource(const bool value) {
         TheStructure.Common.DestinationDepthStencilResource = value;
     }
-
-    inline uint32_t getDestinationDepthStencilResource() const {
-        return (TheStructure.Common.DestinationDepthStencilResource);
+    inline bool getDestinationDepthStencilResource() const {
+        return TheStructure.Common.DestinationDepthStencilResource;
     }
-
     inline void setDestinationArrayIndex(const uint32_t value) {
+        UNRECOVERABLE_IF(value < 1 || value > 0x800u);
         TheStructure.Common.DestinationArrayIndex = value - 1;
     }
-
     inline uint32_t getDestinationArrayIndex() const {
-        return (TheStructure.Common.DestinationArrayIndex + 1);
+        return TheStructure.Common.DestinationArrayIndex + 1;
     }
-
     inline void setSourceSurfaceHeight(const uint32_t value) {
-        UNRECOVERABLE_IF(value - 1 > 0x3fff);
+        UNRECOVERABLE_IF(value < 1 || value > 0x4000u);
         TheStructure.Common.SourceSurfaceHeight = value - 1;
     }
-
     inline uint32_t getSourceSurfaceHeight() const {
-        return (TheStructure.Common.SourceSurfaceHeight + 1);
+        return TheStructure.Common.SourceSurfaceHeight + 1;
     }
-
     inline void setSourceSurfaceWidth(const uint32_t value) {
-        UNRECOVERABLE_IF(value - 1 > 0x3fff);
+        UNRECOVERABLE_IF(value < 1 || value > 0x4000u);
         TheStructure.Common.SourceSurfaceWidth = value - 1;
     }
-
     inline uint32_t getSourceSurfaceWidth() const {
-        return (TheStructure.Common.SourceSurfaceWidth + 1);
+        return TheStructure.Common.SourceSurfaceWidth + 1;
     }
-
     inline void setSourceSurfaceType(const SURFACE_TYPE value) {
         TheStructure.Common.SourceSurfaceType = value;
     }
-
     inline SURFACE_TYPE getSourceSurfaceType() const {
         return static_cast<SURFACE_TYPE>(TheStructure.Common.SourceSurfaceType);
     }
-
     inline void setSourceLOD(const uint32_t value) {
-        TheStructure.Common.SourceLOD = value;
+        UNRECOVERABLE_IF(value > 0xfu);
+        TheStructure.Common.SourceLod = value;
     }
-
     inline uint32_t getSourceLOD() const {
-        return (TheStructure.Common.SourceLOD);
+        return TheStructure.Common.SourceLod;
     }
-
     inline void setSourceSurfaceQpitch(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x7fffu);
         TheStructure.Common.SourceSurfaceQpitch = value;
     }
-
     inline uint32_t getSourceSurfaceQpitch() const {
-        return (TheStructure.Common.SourceSurfaceQpitch);
+        return TheStructure.Common.SourceSurfaceQpitch;
     }
-
     inline void setSourceSurfaceDepth(const uint32_t value) {
-        UNRECOVERABLE_IF(value - 1 > 0x7ff);
+        UNRECOVERABLE_IF(value < 1 || value > 0x800u);
         TheStructure.Common.SourceSurfaceDepth = value - 1;
     }
-
     inline uint32_t getSourceSurfaceDepth() const {
-        return (TheStructure.Common.SourceSurfaceDepth + 1);
+        return TheStructure.Common.SourceSurfaceDepth + 1;
     }
-
     inline void setSourceHorizontalAlign(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x3u);
         TheStructure.Common.SourceHorizontalAlign = value;
     }
-
     inline uint32_t getSourceHorizontalAlign() const {
-        return (TheStructure.Common.SourceHorizontalAlign);
+        return TheStructure.Common.SourceHorizontalAlign;
     }
-
     inline void setSourceVerticalAlign(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x3u);
         TheStructure.Common.SourceVerticalAlign = value;
     }
-
     inline uint32_t getSourceVerticalAlign() const {
-        return (TheStructure.Common.SourceVerticalAlign);
+        return TheStructure.Common.SourceVerticalAlign;
     }
-
-    inline void setSourceSSID(const uint32_t value) {
-        TheStructure.Common.SourceSSID = value;
-    }
-
-    inline uint32_t getSourceSSID() const {
-        return (TheStructure.Common.SourceSSID);
-    }
-
     inline void setSourceMipTailStartLOD(const uint32_t value) {
-        TheStructure.Common.SourceMipTailStartLOD = value;
+        UNRECOVERABLE_IF(value > 0xfu);
+        TheStructure.Common.SourceMipTailStartLod = value;
     }
-
     inline uint32_t getSourceMipTailStartLOD() const {
-        return (TheStructure.Common.SourceMipTailStartLOD);
+        return TheStructure.Common.SourceMipTailStartLod;
     }
-
-    inline void setSourceDepthStencilResource(const uint32_t value) {
+    inline void setSourceDepthStencilResource(const bool value) {
         TheStructure.Common.SourceDepthStencilResource = value;
     }
-
-    inline uint32_t getSourceDepthStencilResource() const {
-        return (TheStructure.Common.SourceDepthStencilResource);
+    inline bool getSourceDepthStencilResource() const {
+        return TheStructure.Common.SourceDepthStencilResource;
     }
-
     inline void setSourceArrayIndex(const uint32_t value) {
+        UNRECOVERABLE_IF(value < 1 || value > 0x800u);
         TheStructure.Common.SourceArrayIndex = value - 1;
     }
-
     inline uint32_t getSourceArrayIndex() const {
-        return (TheStructure.Common.SourceArrayIndex + 1);
+        return TheStructure.Common.SourceArrayIndex + 1;
     }
-};
+} XY_BLOCK_COPY_BLT;
 STATIC_ASSERT(88 == sizeof(XY_BLOCK_COPY_BLT));
 
-struct XY_FAST_COLOR_BLT {
+typedef struct tagXY_FAST_COLOR_BLT {
     union tagTheStructure {
         struct tagCommon {
-            /// DWORD 0
+            // DWORD 0
             uint32_t DwordLength : BITFIELD_RANGE(0, 7);
             uint32_t Reserved_8 : BITFIELD_RANGE(8, 8);
-            uint32_t NumberofMultisamples : BITFIELD_RANGE(9, 11);
-            uint32_t SpecialModeofOperation : BITFIELD_RANGE(12, 13);
+            uint32_t NumberOfMultisamples : BITFIELD_RANGE(9, 11);
+            uint32_t SpecialModeOfOperation : BITFIELD_RANGE(12, 13);
             uint32_t Reserved_14 : BITFIELD_RANGE(14, 18);
             uint32_t ColorDepth : BITFIELD_RANGE(19, 21);
-            uint32_t InstructionTarget_Opcode : BITFIELD_RANGE(22, 28);
+            uint32_t InstructionTargetOpcode : BITFIELD_RANGE(22, 28);
             uint32_t Client : BITFIELD_RANGE(29, 31);
-
-            /// DWORD 1
+            // DWORD 1
             uint32_t DestinationPitch : BITFIELD_RANGE(0, 17);
-            uint32_t DestinationAuxiliarysurfacemode : BITFIELD_RANGE(18, 20);
-            uint32_t DestinationMOCS : BITFIELD_RANGE(21, 27);
-            uint32_t DestinationCompressionType : BITFIELD_RANGE(28, 28);
+            uint32_t DestinationAuxiliarySurfaceMode : BITFIELD_RANGE(18, 20);
+            uint32_t DestinationMocsValue : BITFIELD_RANGE(21, 27);
+            uint32_t DestinationControlSurfaceType : BITFIELD_RANGE(28, 28);
             uint32_t DestinationCompressionEnable : BITFIELD_RANGE(29, 29);
             uint32_t DestinationTiling : BITFIELD_RANGE(30, 31);
-
-            /// DWORD 2
-            uint32_t DestinationX1Coordinate_Left : BITFIELD_RANGE(0, 15);
-            uint32_t DestinationY1Coordinate_Top : BITFIELD_RANGE(16, 31);
-
-            /// DWORD 3
-            uint32_t DestinationX2Coordinate_Right : BITFIELD_RANGE(0, 15);
-            uint32_t DestinationY2Coordinate_Bottom : BITFIELD_RANGE(16, 31);
-
-            /// DWORD 4..5
+            // DWORD 2
+            uint32_t DestinationX1CoordinateLeft : BITFIELD_RANGE(0, 15);
+            uint32_t DestinationY1CoordinateTop : BITFIELD_RANGE(16, 31);
+            // DWORD 3
+            uint32_t DestinationX2CoordinateRight : BITFIELD_RANGE(0, 15);
+            uint32_t DestinationY2CoordinateBottom : BITFIELD_RANGE(16, 31);
+            // DWORD 4-5
             uint64_t DestinationBaseAddress;
-
-            /// DWORD 6
-            uint32_t DestinationXoffset : BITFIELD_RANGE(0, 13);
+            // DWORD 6
+            uint32_t DestinationXOffset : BITFIELD_RANGE(0, 13);
             uint32_t Reserved_206 : BITFIELD_RANGE(14, 15);
-            uint32_t DestinationYoffset : BITFIELD_RANGE(16, 29);
+            uint32_t DestinationYOffset : BITFIELD_RANGE(16, 29);
             uint32_t Reserved_222 : BITFIELD_RANGE(30, 30);
             uint32_t DestinationTargetMemory : BITFIELD_RANGE(31, 31);
-
-            /// DWORD 7 - 10
+            // DWORD 7
             uint32_t FillColor[4];
-
-            // DWORD 11
-            uint32_t DestinationCompressionFormat : BITFIELD_RANGE(0, 4);
-            uint32_t DestinationClearValueEnable : BITFIELD_RANGE(5, 5);
-            uint32_t DestinationClearAddressLow : BITFIELD_RANGE(6, 31);
-
-            // DWORD 12
-            uint32_t DestinationClearAddressHigh : BITFIELD_RANGE(0, 24);
-            uint32_t Reserved1 : BITFIELD_RANGE(25, 31);
-
+            // DWORD 11-12
+            uint64_t DestinationCompressionFormat : BITFIELD_RANGE(0, 4);
+            uint64_t DestinationClearValueEnable : BITFIELD_RANGE(5, 5);
+            uint64_t DestinationClearAddress : BITFIELD_RANGE(6, 56);
+            uint64_t Reserved_409 : BITFIELD_RANGE(57, 63);
             // DWORD 13
             uint32_t DestinationSurfaceHeight : BITFIELD_RANGE(0, 13);
             uint32_t DestinationSurfaceWidth : BITFIELD_RANGE(14, 27);
-            uint32_t Reserved2 : BITFIELD_RANGE(28, 28);
+            uint32_t Reserved_444 : BITFIELD_RANGE(28, 28);
             uint32_t DestinationSurfaceType : BITFIELD_RANGE(29, 31);
-
             // DWORD 14
-            uint32_t DestinationLOD : BITFIELD_RANGE(0, 3);
+            uint32_t DestinationLod : BITFIELD_RANGE(0, 3);
             uint32_t DestinationSurfaceQpitch : BITFIELD_RANGE(4, 18);
-            uint32_t Reserved3 : BITFIELD_RANGE(19, 20);
+            uint32_t Reserved_467 : BITFIELD_RANGE(19, 20);
             uint32_t DestinationSurfaceDepth : BITFIELD_RANGE(21, 31);
-
             // DWORD 15
             uint32_t DestinationHorizontalAlign : BITFIELD_RANGE(0, 1);
-            uint32_t Reserved4 : BITFIELD_RANGE(2, 2);
+            uint32_t Reserved_482 : BITFIELD_RANGE(2, 2);
             uint32_t DestinationVerticalAlign : BITFIELD_RANGE(3, 4);
-            uint32_t Reserved5 : BITFIELD_RANGE(5, 7);
-            uint32_t DestinationMipTailStartLOD : BITFIELD_RANGE(8, 11);
-            uint32_t Reserved6 : BITFIELD_RANGE(12, 17);
+            uint32_t Reserved_485 : BITFIELD_RANGE(5, 7);
+            uint32_t DestinationMipTailStartLod : BITFIELD_RANGE(8, 11);
+            uint32_t Reserved_492 : BITFIELD_RANGE(12, 17);
             uint32_t DestinationDepthStencilResource : BITFIELD_RANGE(18, 18);
-            uint32_t Reserved7 : BITFIELD_RANGE(19, 20);
+            uint32_t Reserved_499 : BITFIELD_RANGE(19, 20);
             uint32_t DestinationArrayIndex : BITFIELD_RANGE(21, 31);
         } Common;
-        uint32_t RawData[15];
+        uint32_t RawData[16];
     } TheStructure;
-
-    enum DWORD_LENGTH {
-        DWORD_LENGTH_EXCLUDES_DWORD_0_1 = 0xE,
-    };
-
-    enum NUMBER_OF_MULTISAMPLES {
-        NUMBER_OF_MULTISAMPLES_MULTISAMPLECOUNT_1 = 0,
-        NUMBER_OF_MULTISAMPLES_MULTISAMPLECOUNT_2 = 1,
-        NUMBER_OF_MULTISAMPLES_MULTISAMPLECOUNT_4 = 2,
-        NUMBER_OF_MULTISAMPLES_MULTISAMPLECOUNT_8 = 3,
-        NUMBER_OF_MULTISAMPLES_MULTISAMPLECOUNT_16 = 4,
-    };
-
-    enum SPECIAL_MODE_OF_OPERATION {
-        SPECIAL_MODE_OF_OPERATION_NONE = 0,
-        SPECIAL_MODE_OF_OPERATION_FULL_RESOLVE = 1,
-        SPECIAL_MODE_OF_OPERATION_PARTIAL_RESOLVE = 2,
-    };
-
-    enum COLOR_DEPTH {
-        COLOR_DEPTH_8_BIT_COLOR = 0,
-        COLOR_DEPTH_16_BIT_COLOR = 1,
-        COLOR_DEPTH_32_BIT_COLOR = 2,
-        COLOR_DEPTH_64_BIT_COLOR = 3,
-        COLOR_DEPTH_96_BIT_COLOR_ONLY_LINEAR_CASE_IS_SUPPORTED = 4,
-        COLOR_DEPTH_128_BIT_COLOR = 5,
-    };
-
-    enum CLIENT {
-        CLIENT_2D_PROCESSOR = 2,
-    };
-
-    enum DESTINATION_AUXILIARY_SURFACE_MODE {
-        DESTINATION_AUXILIARY_SURFACE_MODE_AUX_NONE = 0,
-        DESTINATION_AUXILIARY_SURFACE_MODE_AUX_CCS_E = 5,
-    };
-
-    enum DESTINATION_CLEAR_VALUE_ENABLE {
-        DESTINATION_CLEAR_VALUE_ENABLE_DISABLE = 0,
-        DESTINATION_CLEAR_VALUE_ENABLE_ENABLE = 1,
-    };
-
-    enum DESTINATION_COMPRESSION_TYPE {
-        DESTINATION_COMPRESSION_TYPE_3D_COMPRESSION = 0,
-        DESTINATION_COMPRESSION_TYPE_MEDIA_COMPRESSION = 1,
-    };
-
-    enum DESTINATION_COMPRESSION_ENABLE {
-        DESTINATION_COMPRESSION_ENABLE_COMPRESSION_DISABLE = 0,
-        DESTINATION_COMPRESSION_ENABLE_COMPRESSION_ENABLE = 1,
-    };
-
-    enum DESTINATION_TILING {
-        DESTINATION_TILING_LINEAR = 0,
-        DESTINATION_TILING_TILE4 = 2,
-        DESTINATION_TILING_TILE64 = 3,
-    };
-
-    enum DESTINATION_TARGET_MEMORY {
-        DESTINATION_TARGET_MEMORY_LOCAL_MEM = 0,
-        DESTINATION_TARGET_MEMORY_SYSTEM_MEM = 1,
-    };
-
-    enum DESTINATION_SURFACE_TYPE {
-        DESTINATION_SURFACE_TYPE_SURFTYPE_1D = 0,
-        DESTINATION_SURFACE_TYPE_SURFTYPE_2D = 1,
-        DESTINATION_SURFACE_TYPE_SURFTYPE_3D = 2,
-        DESTINATION_SURFACE_TYPE_SURFTYPE_CUBE = 3,
-    };
-    enum INSTRUCTIONTARGET_OPCODE {
-        INSTRUCTIONTARGET_OPCODE_OPCODE = 0x44,
-    };
-
+    typedef enum tagDWORD_LENGTH {
+        DWORD_LENGTH_EXCLUDES_DWORD_0_1 = 0xe,
+    } DWORD_LENGTH;
+    typedef enum tagNUMBER_OF_MULTISAMPLES {
+        NUMBER_OF_MULTISAMPLES_MULTISAMPLECOUNT_1 = 0x0,
+        NUMBER_OF_MULTISAMPLES_MULTISAMPLECOUNT_2 = 0x1,
+        NUMBER_OF_MULTISAMPLES_MULTISAMPLECOUNT_4 = 0x2,
+        NUMBER_OF_MULTISAMPLES_MULTISAMPLECOUNT_8 = 0x3,
+        NUMBER_OF_MULTISAMPLES_MULTISAMPLECOUNT_16 = 0x4,
+    } NUMBER_OF_MULTISAMPLES;
+    typedef enum tagSPECIAL_MODE_OF_OPERATION {
+        SPECIAL_MODE_OF_OPERATION_NONE = 0x0,
+        SPECIAL_MODE_OF_OPERATION_FAST_CLEAR_1 = 0x1,
+        SPECIAL_MODE_OF_OPERATION_FAST_CLEAR_0 = 0x2,
+    } SPECIAL_MODE_OF_OPERATION;
+    typedef enum tagCOLOR_DEPTH {
+        COLOR_DEPTH_8_BIT_COLOR = 0x0,
+        COLOR_DEPTH_16_BIT_COLOR = 0x1,
+        COLOR_DEPTH_32_BIT_COLOR = 0x2,
+        COLOR_DEPTH_64_BIT_COLOR = 0x3,
+        COLOR_DEPTH_96_BIT_COLOR_ONLY_SUPPORTED_FOR_LINEAR_CASE = 0x4,
+        COLOR_DEPTH_128_BIT_COLOR = 0x5,
+    } COLOR_DEPTH;
+    typedef enum tagINSTRUCTION_TARGETOPCODE {
+        INSTRUCTION_TARGETOPCODE_XY_FAST_COLOR_BLT = 0x44,
+    } INSTRUCTION_TARGETOPCODE;
+    typedef enum tagCLIENT {
+        CLIENT_2D_PROCESSOR = 0x2,
+    } CLIENT;
+    typedef enum tagDESTINATION_AUXILIARY_SURFACE_MODE {
+        DESTINATION_AUXILIARY_SURFACE_MODE_AUX_NONE = 0x0,
+        DESTINATION_AUXILIARY_SURFACE_MODE_AUX_CCS_E = 0x5,
+    } DESTINATION_AUXILIARY_SURFACE_MODE;
+    typedef enum tagDESTINATION_CONTROL_SURFACE_TYPE {
+        DESTINATION_CONTROL_SURFACE_TYPE_3D_CONTROL_SURFACE = 0x0,
+        DESTINATION_CONTROL_SURFACE_TYPE_MEDIA_CONTROL_SURFACE = 0x1,
+    } DESTINATION_CONTROL_SURFACE_TYPE;
+    typedef enum tagDESTINATION_TILING {
+        DESTINATION_TILING_LINEAR = 0x0,
+        DESTINATION_TILING_TILE4 = 0x2,
+        DESTINATION_TILING_TILE64 = 0x3,
+    } DESTINATION_TILING;
+    typedef enum tagDESTINATION_TARGET_MEMORY {
+        DESTINATION_TARGET_MEMORY_LOCAL_MEM = 0x0,
+        DESTINATION_TARGET_MEMORY_SYSTEM_MEM = 0x1,
+    } DESTINATION_TARGET_MEMORY;
+    typedef enum tagDESTINATIONCLEARADDRESS {
+        DESTINATIONCLEARADDRESS_BIT_SHIFT = 0x6,
+        DESTINATIONCLEARADDRESS_ALIGN_SIZE = 0x40,
+    } DESTINATIONCLEARADDRESS;
+    typedef enum tagDESTINATION_SURFACE_TYPE {
+        DESTINATION_SURFACE_TYPE_SURFTYPE_1D = 0x0,
+        DESTINATION_SURFACE_TYPE_SURFTYPE_2D = 0x1,
+        DESTINATION_SURFACE_TYPE_SURFTYPE_3D = 0x2,
+        DESTINATION_SURFACE_TYPE_SURFTYPE_CUBE = 0x3,
+    } DESTINATION_SURFACE_TYPE;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
-        TheStructure.Common.DwordLength = DWORD_LENGTH::DWORD_LENGTH_EXCLUDES_DWORD_0_1;
-        TheStructure.Common.InstructionTarget_Opcode = INSTRUCTIONTARGET_OPCODE::INSTRUCTIONTARGET_OPCODE_OPCODE;
-        TheStructure.Common.Client = CLIENT::CLIENT_2D_PROCESSOR;
+        TheStructure.Common.DwordLength = DWORD_LENGTH_EXCLUDES_DWORD_0_1;
+        TheStructure.Common.InstructionTargetOpcode = INSTRUCTION_TARGETOPCODE_XY_FAST_COLOR_BLT;
+        TheStructure.Common.Client = CLIENT_2D_PROCESSOR;
     }
-
-    static XY_FAST_COLOR_BLT sInit() {
+    static tagXY_FAST_COLOR_BLT sInit() {
         XY_FAST_COLOR_BLT state;
         state.init();
         return state;
     }
-
     inline uint32_t &getRawData(const uint32_t index) {
-        UNRECOVERABLE_IF(index < 22);
+        UNRECOVERABLE_IF(index >= 16);
         return TheStructure.RawData[index];
     }
-
     inline void setNumberofMultisamples(const NUMBER_OF_MULTISAMPLES value) {
-        TheStructure.Common.NumberofMultisamples = value;
+        TheStructure.Common.NumberOfMultisamples = value;
     }
-
     inline NUMBER_OF_MULTISAMPLES getNumberofMultisamples() const {
-        return static_cast<NUMBER_OF_MULTISAMPLES>(TheStructure.Common.NumberofMultisamples);
+        return static_cast<NUMBER_OF_MULTISAMPLES>(TheStructure.Common.NumberOfMultisamples);
     }
-
-    inline void setSpecialModeofOperation(const SPECIAL_MODE_OF_OPERATION value) {
-        TheStructure.Common.SpecialModeofOperation = value;
+    inline void setSpecialModeOfOperation(const SPECIAL_MODE_OF_OPERATION value) {
+        TheStructure.Common.SpecialModeOfOperation = value;
     }
-
     inline SPECIAL_MODE_OF_OPERATION getSpecialModeOfOperation() const {
-        return static_cast<SPECIAL_MODE_OF_OPERATION>(TheStructure.Common.SpecialModeofOperation);
+        return static_cast<SPECIAL_MODE_OF_OPERATION>(TheStructure.Common.SpecialModeOfOperation);
     }
-
     inline void setColorDepth(const COLOR_DEPTH value) {
         TheStructure.Common.ColorDepth = value;
     }
-
     inline COLOR_DEPTH getColorDepth() const {
         return static_cast<COLOR_DEPTH>(TheStructure.Common.ColorDepth);
     }
-
-    inline void setInstructionTargetOpcode(const uint32_t value) {
-        TheStructure.Common.InstructionTarget_Opcode = value;
+    inline void setInstructionTargetOpcode(const INSTRUCTION_TARGETOPCODE value) {
+        TheStructure.Common.InstructionTargetOpcode = value;
     }
-
-    inline uint32_t getInstructionTargetOpcode() const {
-        return (TheStructure.Common.InstructionTarget_Opcode);
+    inline INSTRUCTION_TARGETOPCODE getInstructionTargetOpcode() const {
+        return static_cast<INSTRUCTION_TARGETOPCODE>(TheStructure.Common.InstructionTargetOpcode);
     }
-
     inline void setClient(const CLIENT value) {
         TheStructure.Common.Client = value;
     }
-
     inline CLIENT getClient() const {
         return static_cast<CLIENT>(TheStructure.Common.Client);
     }
-
     inline void setDestinationPitch(const uint32_t value) {
+        UNRECOVERABLE_IF(value < 1 || value > 0x40000u);
         TheStructure.Common.DestinationPitch = value - 1;
     }
-
     inline uint32_t getDestinationPitch() const {
-        return (TheStructure.Common.DestinationPitch + 1);
+        return TheStructure.Common.DestinationPitch + 1;
     }
-
     inline void setDestinationAuxiliarysurfacemode(const DESTINATION_AUXILIARY_SURFACE_MODE value) {
-        TheStructure.Common.DestinationAuxiliarysurfacemode = value;
+        TheStructure.Common.DestinationAuxiliarySurfaceMode = value;
     }
-
     inline DESTINATION_AUXILIARY_SURFACE_MODE getDestinationAuxiliarysurfacemode() const {
-        return static_cast<DESTINATION_AUXILIARY_SURFACE_MODE>(TheStructure.Common.DestinationAuxiliarysurfacemode);
+        return static_cast<DESTINATION_AUXILIARY_SURFACE_MODE>(TheStructure.Common.DestinationAuxiliarySurfaceMode);
     }
-
     inline void setDestinationMOCS(const uint32_t value) {
-        TheStructure.Common.DestinationMOCS = value;
+        UNRECOVERABLE_IF(value > 0x7fu);
+        TheStructure.Common.DestinationMocsValue = value;
     }
-
     inline uint32_t getDestinationMOCS() const {
-        return (TheStructure.Common.DestinationMOCS);
+        return TheStructure.Common.DestinationMocsValue;
     }
-
-    inline void setDestinationCompressionType(const DESTINATION_COMPRESSION_TYPE value) {
-        TheStructure.Common.DestinationCompressionType = value;
+    inline void setDestinationControlSurfaceType(const DESTINATION_CONTROL_SURFACE_TYPE value) {
+        TheStructure.Common.DestinationControlSurfaceType = value;
     }
-
-    inline DESTINATION_COMPRESSION_TYPE getDestinationCompressionType() const {
-        return static_cast<DESTINATION_COMPRESSION_TYPE>(TheStructure.Common.DestinationCompressionType);
+    inline DESTINATION_CONTROL_SURFACE_TYPE getDestinationControlSurfaceType() const {
+        return static_cast<DESTINATION_CONTROL_SURFACE_TYPE>(TheStructure.Common.DestinationControlSurfaceType);
     }
-
-    inline void setDestinationCompressionEnable(const DESTINATION_COMPRESSION_ENABLE value) {
+    inline void setDestinationCompressionEnable(const bool value) {
         TheStructure.Common.DestinationCompressionEnable = value;
     }
-
-    inline DESTINATION_COMPRESSION_ENABLE getDestinationCompressionEnable() const {
-        return static_cast<DESTINATION_COMPRESSION_ENABLE>(TheStructure.Common.DestinationCompressionEnable);
+    inline bool getDestinationCompressionEnable() const {
+        return TheStructure.Common.DestinationCompressionEnable;
     }
-
     inline void setDestinationTiling(const DESTINATION_TILING value) {
         TheStructure.Common.DestinationTiling = value;
     }
-
     inline DESTINATION_TILING getDestinationTiling() const {
         return static_cast<DESTINATION_TILING>(TheStructure.Common.DestinationTiling);
     }
-
     inline void setDestinationX1CoordinateLeft(const uint32_t value) {
-        TheStructure.Common.DestinationX1Coordinate_Left = value;
+        UNRECOVERABLE_IF(value > 0xffffu);
+        TheStructure.Common.DestinationX1CoordinateLeft = value;
     }
-
     inline uint32_t getDestinationX1CoordinateLeft() const {
-        return (TheStructure.Common.DestinationX1Coordinate_Left);
+        return TheStructure.Common.DestinationX1CoordinateLeft;
     }
-
     inline void setDestinationY1CoordinateTop(const uint32_t value) {
-        TheStructure.Common.DestinationY1Coordinate_Top = value;
+        UNRECOVERABLE_IF(value > 0xffffu);
+        TheStructure.Common.DestinationY1CoordinateTop = value;
     }
-
     inline uint32_t getDestinationY1CoordinateTop() const {
-        return (TheStructure.Common.DestinationY1Coordinate_Top);
+        return TheStructure.Common.DestinationY1CoordinateTop;
     }
-
     inline void setDestinationX2CoordinateRight(const uint32_t value) {
-        TheStructure.Common.DestinationX2Coordinate_Right = value;
+        UNRECOVERABLE_IF(value > 0xffffu);
+        TheStructure.Common.DestinationX2CoordinateRight = value;
     }
-
     inline uint32_t getDestinationX2CoordinateRight() const {
-        return (TheStructure.Common.DestinationX2Coordinate_Right);
+        return TheStructure.Common.DestinationX2CoordinateRight;
     }
-
     inline void setDestinationY2CoordinateBottom(const uint32_t value) {
-        TheStructure.Common.DestinationY2Coordinate_Bottom = value;
+        UNRECOVERABLE_IF(value > 0xffffu);
+        TheStructure.Common.DestinationY2CoordinateBottom = value;
     }
-
     inline uint32_t getDestinationY2CoordinateBottom() const {
-        return (TheStructure.Common.DestinationY2Coordinate_Bottom);
+        return TheStructure.Common.DestinationY2CoordinateBottom;
     }
-
     inline void setDestinationBaseAddress(const uint64_t value) {
         TheStructure.Common.DestinationBaseAddress = value;
     }
-
     inline uint64_t getDestinationBaseAddress() const {
-        return (TheStructure.Common.DestinationBaseAddress);
+        return TheStructure.Common.DestinationBaseAddress;
     }
-
     inline void setDestinationXoffset(const uint32_t value) {
-        TheStructure.Common.DestinationXoffset = value;
+        UNRECOVERABLE_IF(value > 0x3fffu);
+        TheStructure.Common.DestinationXOffset = value;
     }
-
     inline uint32_t getDestinationXoffset() const {
-        return (TheStructure.Common.DestinationXoffset);
+        return TheStructure.Common.DestinationXOffset;
     }
-
     inline void setDestinationYoffset(const uint32_t value) {
-        TheStructure.Common.DestinationYoffset = value;
+        UNRECOVERABLE_IF(value > 0x3fffu);
+        TheStructure.Common.DestinationYOffset = value;
     }
-
     inline uint32_t getDestinationYoffset() const {
-        return (TheStructure.Common.DestinationYoffset);
+        return TheStructure.Common.DestinationYOffset;
     }
-
     inline void setDestinationTargetMemory(const DESTINATION_TARGET_MEMORY value) {
         TheStructure.Common.DestinationTargetMemory = value;
     }
-
     inline DESTINATION_TARGET_MEMORY getDestinationTargetMemory() const {
         return static_cast<DESTINATION_TARGET_MEMORY>(TheStructure.Common.DestinationTargetMemory);
     }
-
     inline void setFillColor(const uint32_t *value) {
         TheStructure.Common.FillColor[0] = value[0];
         TheStructure.Common.FillColor[1] = value[1];
         TheStructure.Common.FillColor[2] = value[2];
         TheStructure.Common.FillColor[3] = value[3];
     }
-
     inline void setDestinationCompressionFormat(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x1fu);
         TheStructure.Common.DestinationCompressionFormat = value;
     }
-
     inline uint32_t getDestinationCompressionFormat() const {
-        return (TheStructure.Common.DestinationCompressionFormat);
+        return TheStructure.Common.DestinationCompressionFormat;
     }
-
-    inline void setDestinationClearValueEnable(const DESTINATION_CLEAR_VALUE_ENABLE value) {
+    inline void setDestinationClearValueEnable(const bool value) {
         TheStructure.Common.DestinationClearValueEnable = value;
     }
-
-    inline DESTINATION_CLEAR_VALUE_ENABLE getDestinationClearValueEnable() const {
-        return static_cast<DESTINATION_CLEAR_VALUE_ENABLE>(TheStructure.Common.DestinationClearValueEnable);
+    inline bool getDestinationClearValueEnable() const {
+        return TheStructure.Common.DestinationClearValueEnable;
     }
-
-    typedef enum tagDESTINATIONCLEARADDRESSLOW {
-        DESTINATIONCLEARADDRESSLOW_BIT_SHIFT = 6,
-        DESTINATIONCLEARADDRESSLOW_ALIGN_SIZE = 64,
-    } DESTINATIONCLEARADDRESSLOW;
-
-    inline void setDestinationClearAddressLow(const uint32_t value) {
-        TheStructure.Common.DestinationClearAddressLow = value >> DESTINATIONCLEARADDRESSLOW_BIT_SHIFT;
+    inline void setDestinationClearAddress(const uint64_t value) {
+        TheStructure.Common.DestinationClearAddress = value >> DESTINATIONCLEARADDRESS_BIT_SHIFT;
     }
-
-    inline uint32_t getDestinationClearAddressLow() const {
-        return (TheStructure.Common.DestinationClearAddressLow << DESTINATIONCLEARADDRESSLOW_BIT_SHIFT);
+    inline uint64_t getDestinationClearAddress() const {
+        return TheStructure.Common.DestinationClearAddress << DESTINATIONCLEARADDRESS_BIT_SHIFT;
     }
-
-    inline void setDestinationClearAddressHigh(const uint32_t value) {
-        TheStructure.Common.DestinationClearAddressHigh = value;
-    }
-
-    inline uint32_t getDestinationClearAddressHigh() const {
-        return (TheStructure.Common.DestinationClearAddressHigh);
-    }
-
     inline void setDestinationSurfaceHeight(const uint32_t value) {
+        UNRECOVERABLE_IF(value < 1 || value > 0x4000u);
         TheStructure.Common.DestinationSurfaceHeight = value - 1;
     }
-
     inline uint32_t getDestinationSurfaceHeight() const {
-        return (TheStructure.Common.DestinationSurfaceHeight + 1);
+        return TheStructure.Common.DestinationSurfaceHeight + 1;
     }
-
     inline void setDestinationSurfaceWidth(const uint32_t value) {
+        UNRECOVERABLE_IF(value < 1 || value > 0x4000u);
         TheStructure.Common.DestinationSurfaceWidth = value - 1;
     }
-
     inline uint32_t getDestinationSurfaceWidth() const {
-        return (TheStructure.Common.DestinationSurfaceWidth + 1);
+        return TheStructure.Common.DestinationSurfaceWidth + 1;
     }
-
     inline void setDestinationSurfaceType(const DESTINATION_SURFACE_TYPE value) {
         TheStructure.Common.DestinationSurfaceType = value;
     }
-
     inline DESTINATION_SURFACE_TYPE getDestinationSurfaceType() const {
         return static_cast<DESTINATION_SURFACE_TYPE>(TheStructure.Common.DestinationSurfaceType);
     }
-
     inline void setDestinationLOD(const uint32_t value) {
-        TheStructure.Common.DestinationLOD = value;
+        UNRECOVERABLE_IF(value > 0xfu);
+        TheStructure.Common.DestinationLod = value;
     }
-
     inline uint32_t getDestinationLOD() const {
-        return (TheStructure.Common.DestinationLOD);
+        return TheStructure.Common.DestinationLod;
     }
-
     inline void setDestinationSurfaceQpitch(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x7fffu);
         TheStructure.Common.DestinationSurfaceQpitch = value;
     }
-
     inline uint32_t getDestinationSurfaceQpitch() const {
-        return (TheStructure.Common.DestinationSurfaceQpitch);
+        return TheStructure.Common.DestinationSurfaceQpitch;
     }
-
     inline void setDestinationSurfaceDepth(const uint32_t value) {
-        TheStructure.Common.DestinationSurfaceDepth = value;
+        UNRECOVERABLE_IF(value < 1 || value > 0x800u);
+        TheStructure.Common.DestinationSurfaceDepth = value - 1;
     }
-
     inline uint32_t getDestinationSurfaceDepth() const {
-        return (TheStructure.Common.DestinationSurfaceDepth);
+        return TheStructure.Common.DestinationSurfaceDepth + 1;
     }
-
     inline void setDestinationHorizontalAlign(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x3u);
         TheStructure.Common.DestinationHorizontalAlign = value;
     }
-
     inline uint32_t getDestinationHorizontalAlign() const {
-        return (TheStructure.Common.DestinationHorizontalAlign);
+        return TheStructure.Common.DestinationHorizontalAlign;
     }
-
     inline void setDestinationVerticalAlign(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x3u);
         TheStructure.Common.DestinationVerticalAlign = value;
     }
-
     inline uint32_t getDestinationVerticalAlign() const {
-        return (TheStructure.Common.DestinationVerticalAlign);
+        return TheStructure.Common.DestinationVerticalAlign;
     }
-
     inline void setDestinationMipTailStartLOD(const uint32_t value) {
-        TheStructure.Common.DestinationMipTailStartLOD = value;
+        UNRECOVERABLE_IF(value > 0xfu);
+        TheStructure.Common.DestinationMipTailStartLod = value;
     }
-
     inline uint32_t getDestinationMipTailStartLOD() const {
-        return (TheStructure.Common.DestinationMipTailStartLOD);
+        return TheStructure.Common.DestinationMipTailStartLod;
     }
-
-    inline void setDestinationDepthStencilResource(const uint32_t value) {
+    inline void setDestinationDepthStencilResource(const bool value) {
         TheStructure.Common.DestinationDepthStencilResource = value;
     }
-
-    inline uint32_t getDestinationDepthStencilResource() const {
-        return (TheStructure.Common.DestinationDepthStencilResource);
+    inline bool getDestinationDepthStencilResource() const {
+        return TheStructure.Common.DestinationDepthStencilResource;
     }
-
     inline void setDestinationArrayIndex(const uint32_t value) {
+        UNRECOVERABLE_IF(value < 1 || value > 0x800u);
         TheStructure.Common.DestinationArrayIndex = value - 1;
     }
-
     inline uint32_t getDestinationArrayIndex() const {
-        return (TheStructure.Common.DestinationArrayIndex + 1);
+        return TheStructure.Common.DestinationArrayIndex + 1;
     }
-};
+} XY_FAST_COLOR_BLT;
 STATIC_ASSERT(64 == sizeof(XY_FAST_COLOR_BLT));
 
 struct MI_FLUSH_DW {
@@ -6723,14 +6456,14 @@ typedef struct tagMEM_SET {
         struct tagCommon {
             // DWORD 0
             uint32_t DwordLength : BITFIELD_RANGE(0, 7);
-            uint32_t CompressionFormat40 : BITFIELD_RANGE(8, 12);
+            uint32_t CompressionFormat : BITFIELD_RANGE(8, 12);
             uint32_t DestinationCompressionEnable : BITFIELD_RANGE(13, 13);
             uint32_t Reserved_14 : BITFIELD_RANGE(14, 14);
             uint32_t DestinationCompressible : BITFIELD_RANGE(15, 15);
             uint32_t Reserved_16 : BITFIELD_RANGE(16, 16);
             uint32_t FillType : BITFIELD_RANGE(17, 18);
             uint32_t Reserved_19 : BITFIELD_RANGE(19, 21);
-            uint32_t InstructionTarget_Opcode : BITFIELD_RANGE(22, 28);
+            uint32_t InstructionTargetOpcode : BITFIELD_RANGE(22, 28);
             uint32_t Client : BITFIELD_RANGE(29, 31);
             // DWORD 1
             uint32_t FillWidth : BITFIELD_RANGE(0, 17);
@@ -6741,10 +6474,10 @@ typedef struct tagMEM_SET {
             // DWORD 3
             uint32_t DestinationPitch : BITFIELD_RANGE(0, 17);
             uint32_t Reserved_114 : BITFIELD_RANGE(18, 31);
-            // DWORD 4
+            // DWORD 4-5
             uint64_t DestinationStartAddress;
             // DWORD 6
-            uint32_t DestinationMOCS : BITFIELD_RANGE(0, 6);
+            uint32_t DestinationMocs : BITFIELD_RANGE(0, 6);
             uint32_t Reserved_199 : BITFIELD_RANGE(7, 23);
             uint32_t FillData : BITFIELD_RANGE(24, 31);
         } Common;
@@ -6753,10 +6486,6 @@ typedef struct tagMEM_SET {
     typedef enum tagDWORD_LENGTH {
         DWORD_LENGTH_EXCLUDES_DWORD_0_1 = 0x5,
     } DWORD_LENGTH;
-    typedef enum tagDESTINATION_COMPRESSION_ENABLE {
-        DESTINATION_COMPRESSION_ENABLE_DISABLE = 0x0,
-        DESTINATION_COMPRESSION_ENABLE_ENABLE = 0x1,
-    } DESTINATION_COMPRESSION_ENABLE;
     typedef enum tagDESTINATION_COMPRESSIBLE {
         DESTINATION_COMPRESSIBLE_NOT_COMPRESSIBLE = 0x0,
         DESTINATION_COMPRESSIBLE_COMPRESSIBLE = 0x1,
@@ -6768,17 +6497,14 @@ typedef struct tagMEM_SET {
     typedef enum tagCLIENT {
         CLIENT_2D_PROCESSOR = 0x2,
     } CLIENT;
-    typedef enum tagINSTRUCTION_TARGETOPCODE {
-        INSTRUCTION_TARGETOPCODE_MEM_SET = 0x5b,
-    } INSTRUCTION_TARGETOPCODE;
+    typedef enum tagINSTRUCTION_TARGET_OPCODE {
+        INSTRUCTION_TARGET_OPCODE_MEM_SET = 0x5b,
+    } INSTRUCTION_TARGET_OPCODE;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_EXCLUDES_DWORD_0_1;
-        TheStructure.Common.DestinationCompressionEnable = DESTINATION_COMPRESSION_ENABLE_DISABLE;
-        TheStructure.Common.DestinationCompressible = DESTINATION_COMPRESSIBLE_NOT_COMPRESSIBLE;
-        TheStructure.Common.FillType = FILL_TYPE_LINEAR_FILL;
+        TheStructure.Common.InstructionTargetOpcode = INSTRUCTION_TARGET_OPCODE_MEM_SET;
         TheStructure.Common.Client = CLIENT_2D_PROCESSOR;
-        TheStructure.Common.InstructionTarget_Opcode = INSTRUCTION_TARGETOPCODE::INSTRUCTION_TARGETOPCODE_MEM_SET;
     }
     static tagMEM_SET sInit() {
         MEM_SET state;
@@ -6789,18 +6515,18 @@ typedef struct tagMEM_SET {
         UNRECOVERABLE_IF(index >= 7);
         return TheStructure.RawData[index];
     }
-    inline void setCompressionFormat40(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x1f);
-        TheStructure.Common.CompressionFormat40 = value;
+    inline void setCompressionFormat(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x1fu);
+        TheStructure.Common.CompressionFormat = value;
     }
-    inline uint32_t getCompressionFormat40() const {
-        return TheStructure.Common.CompressionFormat40;
+    inline uint32_t getCompressionFormat() const {
+        return TheStructure.Common.CompressionFormat;
     }
-    inline void setDestinationCompressionEnable(const DESTINATION_COMPRESSION_ENABLE value) {
+    inline void setDestinationCompressionEnable(const bool value) {
         TheStructure.Common.DestinationCompressionEnable = value;
     }
-    inline DESTINATION_COMPRESSION_ENABLE getDestinationCompressionEnable() const {
-        return static_cast<DESTINATION_COMPRESSION_ENABLE>(TheStructure.Common.DestinationCompressionEnable);
+    inline bool getDestinationCompressionEnable() const {
+        return TheStructure.Common.DestinationCompressionEnable;
     }
     inline void setDestinationCompressible(const DESTINATION_COMPRESSIBLE value) {
         TheStructure.Common.DestinationCompressible = value;
@@ -6814,12 +6540,11 @@ typedef struct tagMEM_SET {
     inline FILL_TYPE getFillType() const {
         return static_cast<FILL_TYPE>(TheStructure.Common.FillType);
     }
-    inline void setInstructionTargetOpcode(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x7f);
-        TheStructure.Common.InstructionTarget_Opcode = value;
+    inline void setInstructionTargetOpcode(const INSTRUCTION_TARGET_OPCODE value) {
+        TheStructure.Common.InstructionTargetOpcode = value;
     }
-    inline uint32_t getInstructionTargetOpcode() const {
-        return TheStructure.Common.InstructionTarget_Opcode;
+    inline INSTRUCTION_TARGET_OPCODE getInstructionTargetOpcode() const {
+        return static_cast<INSTRUCTION_TARGET_OPCODE>(TheStructure.Common.InstructionTargetOpcode);
     }
     inline void setClient(const CLIENT value) {
         TheStructure.Common.Client = value;
@@ -6828,21 +6553,21 @@ typedef struct tagMEM_SET {
         return static_cast<CLIENT>(TheStructure.Common.Client);
     }
     inline void setFillWidth(const uint32_t value) {
-        UNRECOVERABLE_IF(value - 1 > 0x3ffff); // patched
+        UNRECOVERABLE_IF(value < 1 || value > 0x40000u);
         TheStructure.Common.FillWidth = value - 1;
     }
     inline uint32_t getFillWidth() const {
         return TheStructure.Common.FillWidth + 1;
     }
     inline void setFillHeight(const uint32_t value) {
-        UNRECOVERABLE_IF(value - 1 > 0x3ffff); // patched
+        UNRECOVERABLE_IF(value < 1 || value > 0x40000u);
         TheStructure.Common.FillHeight = value - 1;
     }
     inline uint32_t getFillHeight() const {
         return TheStructure.Common.FillHeight + 1;
     }
     inline void setDestinationPitch(const uint32_t value) {
-        UNRECOVERABLE_IF(value - 1 > 0x3ffff); // patched
+        UNRECOVERABLE_IF(value < 1 || value > 0x40000u);
         TheStructure.Common.DestinationPitch = value - 1;
     }
     inline uint32_t getDestinationPitch() const {
@@ -6855,14 +6580,14 @@ typedef struct tagMEM_SET {
         return TheStructure.Common.DestinationStartAddress;
     }
     inline void setDestinationMOCS(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x7f);
-        TheStructure.Common.DestinationMOCS = value;
+        UNRECOVERABLE_IF(value > 0x7fu);
+        TheStructure.Common.DestinationMocs = value;
     }
     inline uint32_t getDestinationMOCS() const {
-        return TheStructure.Common.DestinationMOCS;
+        return TheStructure.Common.DestinationMocs;
     }
     inline void setFillData(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xff);
+        UNRECOVERABLE_IF(value > 0xffu);
         TheStructure.Common.FillData = value;
     }
     inline uint32_t getFillData() const {

@@ -38,7 +38,7 @@ template <typename GfxFamily>
 void setCompressionParamsForFillOperation(typename GfxFamily::XY_COLOR_BLT &xyColorBlt) {
     using XY_COLOR_BLT = typename GfxFamily::XY_COLOR_BLT;
 
-    xyColorBlt.setDestinationCompressionEnable(XY_COLOR_BLT::DESTINATION_COMPRESSION_ENABLE::DESTINATION_COMPRESSION_ENABLE_COMPRESSION_ENABLE);
+    xyColorBlt.setDestinationCompressionEnable(true);
     xyColorBlt.setDestinationAuxiliarysurfacemode(XY_COLOR_BLT::DESTINATION_AUXILIARY_SURFACE_MODE::DESTINATION_AUXILIARY_SURFACE_MODE_AUX_CCS_E);
 }
 
@@ -56,7 +56,11 @@ void BlitCommandsHelper<GfxFamily>::appendBlitMemoryOptionsForFillBuffer(NEO::Gr
         blitCmd.setDestinationCompressionFormat(compressionFormat);
     }
 
-    blitCmd.setDestinationTargetMemory(XY_COLOR_BLT::DESTINATION_TARGET_MEMORY::DESTINATION_TARGET_MEMORY_LOCAL_MEM);
+    constexpr bool hasDestinationTargetMemory = requires { blitCmd.getDestinationTargetMemory(); };
+
+    if constexpr (hasDestinationTargetMemory) {
+        blitCmd.setDestinationTargetMemory(XY_COLOR_BLT::DESTINATION_TARGET_MEMORY::DESTINATION_TARGET_MEMORY_LOCAL_MEM);
+    }
 
     appendExtraMemoryProperties(blitCmd, rootDeviceEnvironment);
 
@@ -67,11 +71,13 @@ void BlitCommandsHelper<GfxFamily>::appendBlitMemoryOptionsForFillBuffer(NEO::Gr
 
     blitCmd.setDestinationMOCS(mocs);
 
-    if (debugManager.flags.OverrideBlitterTargetMemory.get() != -1) {
-        if (debugManager.flags.OverrideBlitterTargetMemory.get() == 0u) {
-            blitCmd.setDestinationTargetMemory(XY_COLOR_BLT::DESTINATION_TARGET_MEMORY::DESTINATION_TARGET_MEMORY_SYSTEM_MEM);
-        } else if (debugManager.flags.OverrideBlitterTargetMemory.get() == 1u) {
-            blitCmd.setDestinationTargetMemory(XY_COLOR_BLT::DESTINATION_TARGET_MEMORY::DESTINATION_TARGET_MEMORY_LOCAL_MEM);
+    if constexpr (hasDestinationTargetMemory) {
+        if (debugManager.flags.OverrideBlitterTargetMemory.get() != -1) {
+            if (debugManager.flags.OverrideBlitterTargetMemory.get() == 0u) {
+                blitCmd.setDestinationTargetMemory(XY_COLOR_BLT::DESTINATION_TARGET_MEMORY::DESTINATION_TARGET_MEMORY_SYSTEM_MEM);
+            } else if (debugManager.flags.OverrideBlitterTargetMemory.get() == 1u) {
+                blitCmd.setDestinationTargetMemory(XY_COLOR_BLT::DESTINATION_TARGET_MEMORY::DESTINATION_TARGET_MEMORY_LOCAL_MEM);
+            }
         }
     }
 }

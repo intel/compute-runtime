@@ -22,19 +22,17 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenMemCopyWhenInitCalledThenFieldsSetToD
     EXPECT_EQ(MEM_COPY::DWORD_LENGTH_EXCLUDES_DWORD_0_1, cmd.TheStructure.Common.DwordLength);
     EXPECT_EQ(MEM_COPY::COPY_TYPE_LINEAR_COPY, cmd.TheStructure.Common.CopyType);
     EXPECT_EQ(MEM_COPY::MODE_BYTE_COPY, cmd.TheStructure.Common.Mode);
-    EXPECT_EQ(MEM_COPY::INSTRUCTIONTARGET_OPCODE_OPCODE, cmd.TheStructure.Common.InstructionTarget_Opcode); // patched
+    EXPECT_EQ(MEM_COPY::INSTRUCTION_TARGETOPCODE_MEM_COPY, cmd.TheStructure.Common.InstructionTargetOpcode);
     EXPECT_EQ(MEM_COPY::CLIENT_2D_PROCESSOR, cmd.TheStructure.Common.Client);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.TransferWidth);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.TransferHeight);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.SourcePitch);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.DestinationPitch);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.SourceStartAddressLow);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.SourceStartAddressHigh);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.DestinationStartAddressLow);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.DestinationStartAddressHigh);
-    EXPECT_EQ(MEM_COPY::DESTINATION_ENCRYPT_EN_DISABLE, cmd.TheStructure.Common.DestinationEncryptEn);
+    EXPECT_EQ_VAL(0x0u, cmd.TheStructure.Common.SourceBaseAddress);
+    EXPECT_EQ_VAL(0x0u, cmd.TheStructure.Common.DestinationBaseAddress);
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.DestinationEncryptEn);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.DestinationMocs);
-    EXPECT_EQ(MEM_COPY::SOURCE_ENCRYPT_EN_DISABLE, cmd.TheStructure.Common.SourceEncryptEn);
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.SourceEncryptEn);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.SourceMocs);
 }
 
@@ -55,63 +53,63 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenMemCopyWhenSetterUsedThenGetterReturn
     cmd.setMode(MEM_COPY::MODE_PAGE_COPY);
     EXPECT_EQ(MEM_COPY::MODE_PAGE_COPY, cmd.getMode());
 
-    cmd.setInstructionTargetOpcode(MEM_COPY::INSTRUCTIONTARGET_OPCODE_OPCODE);              // patched
-    EXPECT_EQ(MEM_COPY::INSTRUCTIONTARGET_OPCODE_OPCODE, cmd.getInstructionTargetOpcode()); // patched
+    cmd.setInstructionTargetOpcode(MEM_COPY::INSTRUCTION_TARGETOPCODE_MEM_COPY);
+    EXPECT_EQ(MEM_COPY::INSTRUCTION_TARGETOPCODE_MEM_COPY, cmd.getInstructionTargetOpcode());
 
     cmd.setClient(MEM_COPY::CLIENT_2D_PROCESSOR);
     EXPECT_EQ(MEM_COPY::CLIENT_2D_PROCESSOR, cmd.getClient());
 
-    cmd.setDestinationX2CoordinateRight(0x1u);                   // patched
-    EXPECT_EQ(0x1u, cmd.getDestinationX2CoordinateRight());      // patched
-    cmd.setDestinationX2CoordinateRight(0xffffffu);              // patched
-    EXPECT_EQ(0xffffffu, cmd.getDestinationX2CoordinateRight()); // patched
+    cmd.setDestinationX2CoordinateRight(0x1u);
+    EXPECT_EQ(0x1u, cmd.getDestinationX2CoordinateRight());
+    cmd.setDestinationX2CoordinateRight(0xffffffu);
+    EXPECT_EQ(0xffffffu, cmd.getDestinationX2CoordinateRight());
 
-    cmd.setDestinationY2CoordinateBottom(0x1u);                  // patched
-    EXPECT_EQ(0x1u, cmd.getDestinationY2CoordinateBottom());     // patched
-    cmd.setDestinationY2CoordinateBottom(0x3ffffu);              // patched
-    EXPECT_EQ(0x3ffffu, cmd.getDestinationY2CoordinateBottom()); // patched
+    cmd.setDestinationY2CoordinateBottom(0x1u);
+    EXPECT_EQ(0x1u, cmd.getDestinationY2CoordinateBottom());
+    cmd.setDestinationY2CoordinateBottom(0x3ffffu);
+    EXPECT_EQ(0x3ffffu, cmd.getDestinationY2CoordinateBottom());
 
     cmd.setSourcePitch(0x1u);
     EXPECT_EQ(0x1u, cmd.getSourcePitch());
     cmd.setSourcePitch(0x3ffffu);
     EXPECT_EQ(0x3ffffu, cmd.getSourcePitch());
+    EXPECT_THROW(cmd.setSourcePitch(0x0u), std::exception);
 
     cmd.setDestinationPitch(0x1u);
     EXPECT_EQ(0x1u, cmd.getDestinationPitch());
     cmd.setDestinationPitch(0x3ffffu);
     EXPECT_EQ(0x3ffffu, cmd.getDestinationPitch());
+    EXPECT_THROW(cmd.setDestinationPitch(0x0u), std::exception);
 
-    cmd.setSourceBaseAddress(0x0u);                               // patched
-    EXPECT_EQ(0x0u, cmd.getSourceBaseAddress());                  // patched
-    cmd.setSourceBaseAddress(0xffffffffffffffffull);              // patched
-    EXPECT_EQ(0xffffffffffffffffull, cmd.getSourceBaseAddress()); // patched
+    cmd.setSourceBaseAddress(0x0u);
+    EXPECT_EQ(0x0u, cmd.getSourceBaseAddress());
+    cmd.setSourceBaseAddress(0xffffffffffffffffull);
+    EXPECT_EQ(0xffffffffffffffffull, cmd.getSourceBaseAddress());
 
-    cmd.setDestinationBaseAddress(0x0u);                               // patched
-    EXPECT_EQ(0x0u, cmd.getDestinationBaseAddress());                  // patched
-    cmd.setDestinationBaseAddress(0xffffffffffffffffull);              // patched
-    EXPECT_EQ(0xffffffffffffffffull, cmd.getDestinationBaseAddress()); // patched
+    cmd.setDestinationBaseAddress(0x0u);
+    EXPECT_EQ(0x0u, cmd.getDestinationBaseAddress());
+    cmd.setDestinationBaseAddress(0xffffffffffffffffull);
+    EXPECT_EQ(0xffffffffffffffffull, cmd.getDestinationBaseAddress());
 
-    cmd.setDestinationEncryptEn(MEM_COPY::DESTINATION_ENCRYPT_EN_DISABLE);
-    EXPECT_EQ(MEM_COPY::DESTINATION_ENCRYPT_EN_DISABLE, cmd.getDestinationEncryptEn());
+    cmd.setDestinationEncryptEn(false);
+    EXPECT_EQ(false, cmd.getDestinationEncryptEn());
+    cmd.setDestinationEncryptEn(true);
+    EXPECT_EQ(true, cmd.getDestinationEncryptEn());
 
-    cmd.setDestinationEncryptEn(MEM_COPY::DESTINATION_ENCRYPT_EN_ENABLE);
-    EXPECT_EQ(MEM_COPY::DESTINATION_ENCRYPT_EN_ENABLE, cmd.getDestinationEncryptEn());
+    cmd.setDestinationMOCS(0x0u);
+    EXPECT_EQ(0x0u, cmd.getDestinationMOCS());
+    cmd.setDestinationMOCS(0xfu);
+    EXPECT_EQ(0xfu, cmd.getDestinationMOCS());
 
-    cmd.setDestinationMOCS(0x0u);              // patched
-    EXPECT_EQ(0x0u, cmd.getDestinationMOCS()); // patched
-    cmd.setDestinationMOCS(0xfu);              // patched
-    EXPECT_EQ(0xfu, cmd.getDestinationMOCS()); // patched
+    cmd.setSourceEncryptEn(false);
+    EXPECT_EQ(false, cmd.getSourceEncryptEn());
+    cmd.setSourceEncryptEn(true);
+    EXPECT_EQ(true, cmd.getSourceEncryptEn());
 
-    cmd.setSourceEncryptEn(MEM_COPY::SOURCE_ENCRYPT_EN_DISABLE);
-    EXPECT_EQ(MEM_COPY::SOURCE_ENCRYPT_EN_DISABLE, cmd.getSourceEncryptEn());
-
-    cmd.setSourceEncryptEn(MEM_COPY::SOURCE_ENCRYPT_EN_ENABLE);
-    EXPECT_EQ(MEM_COPY::SOURCE_ENCRYPT_EN_ENABLE, cmd.getSourceEncryptEn());
-
-    cmd.setSourceMOCS(0x0u);              // patched
-    EXPECT_EQ(0x0u, cmd.getSourceMOCS()); // patched
-    cmd.setSourceMOCS(0xfu);              // patched
-    EXPECT_EQ(0xfu, cmd.getSourceMOCS()); // patched
+    cmd.setSourceMOCS(0x0u);
+    EXPECT_EQ(0x0u, cmd.getSourceMOCS());
+    cmd.setSourceMOCS(0xfu);
+    EXPECT_EQ(0xfu, cmd.getSourceMOCS());
 }
 
 XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenPipeControlWhenInitCalledThenFieldsSetToDefault) {
@@ -2295,33 +2293,33 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenXyBlockCopyBltWhenInitCalledThenField
     EXPECT_EQ(XY_BLOCK_COPY_BLT::NUMBER_OF_MULTISAMPLES_MULTISAMPLECOUNT_1, cmd.TheStructure.Common.NumberOfMultisamples);
     EXPECT_EQ(XY_BLOCK_COPY_BLT::SPECIAL_MODE_OF_OPERATION_NONE, cmd.TheStructure.Common.SpecialModeOfOperation);
     EXPECT_EQ(XY_BLOCK_COPY_BLT::COLOR_DEPTH_8_BIT_COLOR, cmd.TheStructure.Common.ColorDepth);
-    EXPECT_EQ(XY_BLOCK_COPY_BLT::INSTRUCTIONTARGET_OPCODE_OPCODE, cmd.TheStructure.Common.InstructionTarget_Opcode); // patched
+    EXPECT_EQ(XY_BLOCK_COPY_BLT::INSTRUCTION_TARGETOPCODE_XY_BLOCK_COPY_BLT, cmd.TheStructure.Common.InstructionTargetOpcode);
     EXPECT_EQ(XY_BLOCK_COPY_BLT::CLIENT_2D_PROCESSOR, cmd.TheStructure.Common.Client);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.DestinationPitch);
-    EXPECT_EQ(XY_BLOCK_COPY_BLT::DESTINATION_ENCRYPT_EN_DISABLE, cmd.TheStructure.Common.DestinationEncryptEn);
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.DestinationEncryptEn);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.DestinationMocs);
-    EXPECT_EQ(XY_BLOCK_COPY_BLT::DESTINATION_TILING_LINEAR, cmd.TheStructure.Common.DestinationTiling);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.DestinationX1Coordinate_Left);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.DestinationY1Coordinate_Top);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.DestinationX2Coordinate_Right);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.DestinationY2Coordinate_Bottom);
+    EXPECT_EQ(XY_BLOCK_COPY_BLT::TILING_LINEAR, cmd.TheStructure.Common.DestinationTiling);
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.DestinationX1CoordinateLeft);
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.DestinationY1CoordinateTop);
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.DestinationX2CoordinateRight);
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.DestinationY2CoordinateBottom);
     EXPECT_EQ(0x0ull, cmd.TheStructure.Common.DestinationBaseAddress);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.DestinationXOffset);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.DestinationYOffset);
-    EXPECT_EQ(XY_BLOCK_COPY_BLT::DESTINATION_TARGET_MEMORY_LOCAL_MEM, cmd.TheStructure.Common.DestinationTargetMemory);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.SourceX1Coordinate_Left);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.SourceY1Coordinate_Top);
+    EXPECT_EQ(XY_BLOCK_COPY_BLT::TARGET_MEMORY_LOCAL_MEM, cmd.TheStructure.Common.DestinationTargetMemory);
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.SourceX1CoordinateLeft);
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.SourceY1CoordinateTop);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.SourcePitch);
-    EXPECT_EQ(XY_BLOCK_COPY_BLT::SOURCE_ENCRYPT_EN_DISABLE, cmd.TheStructure.Common.SourceEncryptEn);
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.SourceEncryptEn);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.SourceMocs);
-    EXPECT_EQ(XY_BLOCK_COPY_BLT::SOURCE_TILING_LINEAR, cmd.TheStructure.Common.SourceTiling);
-    EXPECT_EQ_VAL(0x0ull, cmd.TheStructure.Common.SourceBaseAddress); // patched
+    EXPECT_EQ(XY_BLOCK_COPY_BLT::TILING_LINEAR, cmd.TheStructure.Common.SourceTiling);
+    EXPECT_EQ_VAL(0x0ull, cmd.TheStructure.Common.SourceBaseAddress);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.SourceXOffset);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.SourceYOffset);
-    EXPECT_EQ(XY_BLOCK_COPY_BLT::SOURCE_TARGET_MEMORY_LOCAL_MEM, cmd.TheStructure.Common.SourceTargetMemory);
+    EXPECT_EQ(XY_BLOCK_COPY_BLT::TARGET_MEMORY_LOCAL_MEM, cmd.TheStructure.Common.SourceTargetMemory);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.DestinationSurfaceHeight);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.DestinationSurfaceWidth);
-    EXPECT_EQ(XY_BLOCK_COPY_BLT::DESTINATION_SURFACE_TYPE_SURFTYPE_1D, cmd.TheStructure.Common.DestinationSurfaceType);
+    EXPECT_EQ(XY_BLOCK_COPY_BLT::SURFACE_TYPE_SURFTYPE_1D, cmd.TheStructure.Common.DestinationSurfaceType);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.DestinationLod);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.DestinationSurfaceQpitch);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.DestinationSurfaceDepth);
@@ -2331,7 +2329,7 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenXyBlockCopyBltWhenInitCalledThenField
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.DestinationArrayIndex);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.SourceSurfaceHeight);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.SourceSurfaceWidth);
-    EXPECT_EQ(XY_BLOCK_COPY_BLT::SOURCE_SURFACE_TYPE_SURFTYPE_1D, cmd.TheStructure.Common.SourceSurfaceType);
+    EXPECT_EQ(XY_BLOCK_COPY_BLT::SURFACE_TYPE_SURFTYPE_1D, cmd.TheStructure.Common.SourceSurfaceType);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.SourceLod);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.SourceSurfaceQpitch);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.SourceSurfaceDepth);
@@ -2388,8 +2386,8 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenXyBlockCopyBltWhenSetterUsedThenGette
     cmd.setColorDepth(XY_BLOCK_COPY_BLT::COLOR_DEPTH_128_BIT_COLOR);
     EXPECT_EQ(XY_BLOCK_COPY_BLT::COLOR_DEPTH_128_BIT_COLOR, cmd.getColorDepth());
 
-    cmd.setInstructionTargetOpcode(XY_BLOCK_COPY_BLT::INSTRUCTIONTARGET_OPCODE_OPCODE);              // patched
-    EXPECT_EQ(XY_BLOCK_COPY_BLT::INSTRUCTIONTARGET_OPCODE_OPCODE, cmd.getInstructionTargetOpcode()); // patched
+    cmd.setInstructionTargetOpcode(XY_BLOCK_COPY_BLT::INSTRUCTION_TARGETOPCODE_XY_BLOCK_COPY_BLT);
+    EXPECT_EQ(XY_BLOCK_COPY_BLT::INSTRUCTION_TARGETOPCODE_XY_BLOCK_COPY_BLT, cmd.getInstructionTargetOpcode());
 
     cmd.setClient(XY_BLOCK_COPY_BLT::CLIENT_2D_PROCESSOR);
     EXPECT_EQ(XY_BLOCK_COPY_BLT::CLIENT_2D_PROCESSOR, cmd.getClient());
@@ -2398,29 +2396,29 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenXyBlockCopyBltWhenSetterUsedThenGette
     EXPECT_EQ(0x1u, cmd.getDestinationPitch());
     cmd.setDestinationPitch(0x3ffffu);
     EXPECT_EQ(0x3ffffu, cmd.getDestinationPitch());
+    EXPECT_THROW(cmd.setDestinationPitch(0x0u), std::exception);
 
-    cmd.setDestinationEncryptEn(XY_BLOCK_COPY_BLT::DESTINATION_ENCRYPT_EN_DISABLE);
-    EXPECT_EQ(XY_BLOCK_COPY_BLT::DESTINATION_ENCRYPT_EN_DISABLE, cmd.getDestinationEncryptEn());
+    cmd.setDestinationEncryptEn(false);
+    EXPECT_EQ(false, cmd.getDestinationEncryptEn());
+    cmd.setDestinationEncryptEn(true);
+    EXPECT_EQ(true, cmd.getDestinationEncryptEn());
 
-    cmd.setDestinationEncryptEn(XY_BLOCK_COPY_BLT::DESTINATION_ENCRYPT_EN_ENABLE);
-    EXPECT_EQ(XY_BLOCK_COPY_BLT::DESTINATION_ENCRYPT_EN_ENABLE, cmd.getDestinationEncryptEn());
+    cmd.setDestinationMOCS(0x0u);
+    EXPECT_EQ(0x0u, cmd.getDestinationMOCS());
+    cmd.setDestinationMOCS(0xfu);
+    EXPECT_EQ(0xfu, cmd.getDestinationMOCS());
 
-    cmd.setDestinationMOCS(0x0u);              // patched
-    EXPECT_EQ(0x0u, cmd.getDestinationMOCS()); // patched
-    cmd.setDestinationMOCS(0xfu);              // patched
-    EXPECT_EQ(0xfu, cmd.getDestinationMOCS()); // patched
+    cmd.setDestinationTiling(XY_BLOCK_COPY_BLT::TILING_LINEAR);
+    EXPECT_EQ(XY_BLOCK_COPY_BLT::TILING_LINEAR, cmd.getDestinationTiling());
 
-    cmd.setDestinationTiling(XY_BLOCK_COPY_BLT::TILING_LINEAR);              // patched
-    EXPECT_EQ(XY_BLOCK_COPY_BLT::TILING_LINEAR, cmd.getDestinationTiling()); // patched
+    cmd.setDestinationTiling(XY_BLOCK_COPY_BLT::TILING_XMAJOR);
+    EXPECT_EQ(XY_BLOCK_COPY_BLT::TILING_XMAJOR, cmd.getDestinationTiling());
 
-    cmd.setDestinationTiling(XY_BLOCK_COPY_BLT::TILING_XMAJOR);              // patched
-    EXPECT_EQ(XY_BLOCK_COPY_BLT::TILING_XMAJOR, cmd.getDestinationTiling()); // patched
+    cmd.setDestinationTiling(XY_BLOCK_COPY_BLT::TILING_TILE4);
+    EXPECT_EQ(XY_BLOCK_COPY_BLT::TILING_TILE4, cmd.getDestinationTiling());
 
-    cmd.setDestinationTiling(XY_BLOCK_COPY_BLT::TILING_TILE4);              // patched
-    EXPECT_EQ(XY_BLOCK_COPY_BLT::TILING_TILE4, cmd.getDestinationTiling()); // patched
-
-    cmd.setDestinationTiling(XY_BLOCK_COPY_BLT::TILING_TILE64);              // patched
-    EXPECT_EQ(XY_BLOCK_COPY_BLT::TILING_TILE64, cmd.getDestinationTiling()); // patched
+    cmd.setDestinationTiling(XY_BLOCK_COPY_BLT::TILING_TILE64);
+    EXPECT_EQ(XY_BLOCK_COPY_BLT::TILING_TILE64, cmd.getDestinationTiling());
 
     cmd.setDestinationX1CoordinateLeft(0x0u);
     EXPECT_EQ(0x0u, cmd.getDestinationX1CoordinateLeft());
@@ -2457,11 +2455,11 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenXyBlockCopyBltWhenSetterUsedThenGette
     cmd.setDestinationYOffset(0x3fffu);
     EXPECT_EQ(0x3fffu, cmd.getDestinationYOffset());
 
-    cmd.setDestinationTargetMemory(XY_BLOCK_COPY_BLT::TARGET_MEMORY_LOCAL_MEM);              // patched
-    EXPECT_EQ(XY_BLOCK_COPY_BLT::TARGET_MEMORY_LOCAL_MEM, cmd.getDestinationTargetMemory()); // patched
+    cmd.setDestinationTargetMemory(XY_BLOCK_COPY_BLT::TARGET_MEMORY_LOCAL_MEM);
+    EXPECT_EQ(XY_BLOCK_COPY_BLT::TARGET_MEMORY_LOCAL_MEM, cmd.getDestinationTargetMemory());
 
-    cmd.setDestinationTargetMemory(XY_BLOCK_COPY_BLT::TARGET_MEMORY_SYSTEM_MEM);              // patched
-    EXPECT_EQ(XY_BLOCK_COPY_BLT::TARGET_MEMORY_SYSTEM_MEM, cmd.getDestinationTargetMemory()); // patched
+    cmd.setDestinationTargetMemory(XY_BLOCK_COPY_BLT::TARGET_MEMORY_SYSTEM_MEM);
+    EXPECT_EQ(XY_BLOCK_COPY_BLT::TARGET_MEMORY_SYSTEM_MEM, cmd.getDestinationTargetMemory());
 
     cmd.setSourceX1CoordinateLeft(0x0u);
     EXPECT_EQ(0x0u, cmd.getSourceX1CoordinateLeft());
@@ -2477,29 +2475,29 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenXyBlockCopyBltWhenSetterUsedThenGette
     EXPECT_EQ(0x1u, cmd.getSourcePitch());
     cmd.setSourcePitch(0x3ffffu);
     EXPECT_EQ(0x3ffffu, cmd.getSourcePitch());
+    EXPECT_THROW(cmd.setSourcePitch(0x0u), std::exception);
 
-    cmd.setSourceEncryptEn(XY_BLOCK_COPY_BLT::SOURCE_ENCRYPT_EN_DISABLE);
-    EXPECT_EQ(XY_BLOCK_COPY_BLT::SOURCE_ENCRYPT_EN_DISABLE, cmd.getSourceEncryptEn());
+    cmd.setSourceEncryptEn(false);
+    EXPECT_EQ(false, cmd.getSourceEncryptEn());
+    cmd.setSourceEncryptEn(true);
+    EXPECT_EQ(true, cmd.getSourceEncryptEn());
 
-    cmd.setSourceEncryptEn(XY_BLOCK_COPY_BLT::SOURCE_ENCRYPT_EN_ENABLE);
-    EXPECT_EQ(XY_BLOCK_COPY_BLT::SOURCE_ENCRYPT_EN_ENABLE, cmd.getSourceEncryptEn());
+    cmd.setSourceMOCS(0x0u);
+    EXPECT_EQ(0x0u, cmd.getSourceMOCS());
+    cmd.setSourceMOCS(0xfu);
+    EXPECT_EQ(0xfu, cmd.getSourceMOCS());
 
-    cmd.setSourceMOCS(0x0u);              // patched
-    EXPECT_EQ(0x0u, cmd.getSourceMOCS()); // patched
-    cmd.setSourceMOCS(0xfu);              // patched
-    EXPECT_EQ(0xfu, cmd.getSourceMOCS()); // patched
+    cmd.setSourceTiling(XY_BLOCK_COPY_BLT::TILING_LINEAR);
+    EXPECT_EQ(XY_BLOCK_COPY_BLT::TILING_LINEAR, cmd.getSourceTiling());
 
-    cmd.setSourceTiling(XY_BLOCK_COPY_BLT::TILING_LINEAR);              // patched
-    EXPECT_EQ(XY_BLOCK_COPY_BLT::TILING_LINEAR, cmd.getSourceTiling()); // patched
+    cmd.setSourceTiling(XY_BLOCK_COPY_BLT::TILING_XMAJOR);
+    EXPECT_EQ(XY_BLOCK_COPY_BLT::TILING_XMAJOR, cmd.getSourceTiling());
 
-    cmd.setSourceTiling(XY_BLOCK_COPY_BLT::TILING_XMAJOR);              // patched
-    EXPECT_EQ(XY_BLOCK_COPY_BLT::TILING_XMAJOR, cmd.getSourceTiling()); // patched
+    cmd.setSourceTiling(XY_BLOCK_COPY_BLT::TILING_TILE4);
+    EXPECT_EQ(XY_BLOCK_COPY_BLT::TILING_TILE4, cmd.getSourceTiling());
 
-    cmd.setSourceTiling(XY_BLOCK_COPY_BLT::TILING_TILE4);              // patched
-    EXPECT_EQ(XY_BLOCK_COPY_BLT::TILING_TILE4, cmd.getSourceTiling()); // patched
-
-    cmd.setSourceTiling(XY_BLOCK_COPY_BLT::TILING_TILE64);              // patched
-    EXPECT_EQ(XY_BLOCK_COPY_BLT::TILING_TILE64, cmd.getSourceTiling()); // patched
+    cmd.setSourceTiling(XY_BLOCK_COPY_BLT::TILING_TILE64);
+    EXPECT_EQ(XY_BLOCK_COPY_BLT::TILING_TILE64, cmd.getSourceTiling());
 
     cmd.setSourceBaseAddress(0x0ull);
     EXPECT_EQ(0x0ull, cmd.getSourceBaseAddress());
@@ -2516,11 +2514,11 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenXyBlockCopyBltWhenSetterUsedThenGette
     cmd.setSourceYOffset(0x3fffu);
     EXPECT_EQ(0x3fffu, cmd.getSourceYOffset());
 
-    cmd.setSourceTargetMemory(XY_BLOCK_COPY_BLT::TARGET_MEMORY_LOCAL_MEM);              // patched
-    EXPECT_EQ(XY_BLOCK_COPY_BLT::TARGET_MEMORY_LOCAL_MEM, cmd.getSourceTargetMemory()); // patched
+    cmd.setSourceTargetMemory(XY_BLOCK_COPY_BLT::TARGET_MEMORY_LOCAL_MEM);
+    EXPECT_EQ(XY_BLOCK_COPY_BLT::TARGET_MEMORY_LOCAL_MEM, cmd.getSourceTargetMemory());
 
-    cmd.setSourceTargetMemory(XY_BLOCK_COPY_BLT::TARGET_MEMORY_SYSTEM_MEM);              // patched
-    EXPECT_EQ(XY_BLOCK_COPY_BLT::TARGET_MEMORY_SYSTEM_MEM, cmd.getSourceTargetMemory()); // patched
+    cmd.setSourceTargetMemory(XY_BLOCK_COPY_BLT::TARGET_MEMORY_SYSTEM_MEM);
+    EXPECT_EQ(XY_BLOCK_COPY_BLT::TARGET_MEMORY_SYSTEM_MEM, cmd.getSourceTargetMemory());
 
     cmd.setDestinationSurfaceHeight(0x1u);
     EXPECT_EQ(0x1u, cmd.getDestinationSurfaceHeight());
@@ -2531,18 +2529,19 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenXyBlockCopyBltWhenSetterUsedThenGette
     EXPECT_EQ(0x1u, cmd.getDestinationSurfaceWidth());
     cmd.setDestinationSurfaceWidth(0x3fffu);
     EXPECT_EQ(0x3fffu, cmd.getDestinationSurfaceWidth());
+    EXPECT_THROW(cmd.setDestinationSurfaceWidth(0x0u), std::exception);
 
-    cmd.setDestinationSurfaceType(XY_BLOCK_COPY_BLT::SURFACE_TYPE_SURFTYPE_1D);              // patched
-    EXPECT_EQ(XY_BLOCK_COPY_BLT::SURFACE_TYPE_SURFTYPE_1D, cmd.getDestinationSurfaceType()); // patched
+    cmd.setDestinationSurfaceType(XY_BLOCK_COPY_BLT::SURFACE_TYPE_SURFTYPE_1D);
+    EXPECT_EQ(XY_BLOCK_COPY_BLT::SURFACE_TYPE_SURFTYPE_1D, cmd.getDestinationSurfaceType());
 
-    cmd.setDestinationSurfaceType(XY_BLOCK_COPY_BLT::SURFACE_TYPE_SURFTYPE_2D);              // patched
-    EXPECT_EQ(XY_BLOCK_COPY_BLT::SURFACE_TYPE_SURFTYPE_2D, cmd.getDestinationSurfaceType()); // patched
+    cmd.setDestinationSurfaceType(XY_BLOCK_COPY_BLT::SURFACE_TYPE_SURFTYPE_2D);
+    EXPECT_EQ(XY_BLOCK_COPY_BLT::SURFACE_TYPE_SURFTYPE_2D, cmd.getDestinationSurfaceType());
 
-    cmd.setDestinationSurfaceType(XY_BLOCK_COPY_BLT::SURFACE_TYPE_SURFTYPE_3D);              // patched
-    EXPECT_EQ(XY_BLOCK_COPY_BLT::SURFACE_TYPE_SURFTYPE_3D, cmd.getDestinationSurfaceType()); // patched
+    cmd.setDestinationSurfaceType(XY_BLOCK_COPY_BLT::SURFACE_TYPE_SURFTYPE_3D);
+    EXPECT_EQ(XY_BLOCK_COPY_BLT::SURFACE_TYPE_SURFTYPE_3D, cmd.getDestinationSurfaceType());
 
-    cmd.setDestinationSurfaceType(XY_BLOCK_COPY_BLT::SURFACE_TYPE_SURFTYPE_CUBE);              // patched
-    EXPECT_EQ(XY_BLOCK_COPY_BLT::SURFACE_TYPE_SURFTYPE_CUBE, cmd.getDestinationSurfaceType()); // patched
+    cmd.setDestinationSurfaceType(XY_BLOCK_COPY_BLT::SURFACE_TYPE_SURFTYPE_CUBE);
+    EXPECT_EQ(XY_BLOCK_COPY_BLT::SURFACE_TYPE_SURFTYPE_CUBE, cmd.getDestinationSurfaceType());
 
     cmd.setDestinationLod(0x0u);
     EXPECT_EQ(0x0u, cmd.getDestinationLod());
@@ -2569,10 +2568,10 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenXyBlockCopyBltWhenSetterUsedThenGette
     cmd.setDestinationVerticalAlign(0x3u);
     EXPECT_EQ(0x3u, cmd.getDestinationVerticalAlign());
 
-    cmd.setDestinationMipTailStartLOD(0x0u);              // patched
-    EXPECT_EQ(0x0u, cmd.getDestinationMipTailStartLOD()); // patched
-    cmd.setDestinationMipTailStartLOD(0xfu);              // patched
-    EXPECT_EQ(0xfu, cmd.getDestinationMipTailStartLOD()); // patched
+    cmd.setDestinationMipTailStartLOD(0x0u);
+    EXPECT_EQ(0x0u, cmd.getDestinationMipTailStartLOD());
+    cmd.setDestinationMipTailStartLOD(0xfu);
+    EXPECT_EQ(0xfu, cmd.getDestinationMipTailStartLOD());
 
     cmd.setDestinationArrayIndex(0x1u);
     EXPECT_EQ(0x1u, cmd.getDestinationArrayIndex());
@@ -2588,18 +2587,19 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenXyBlockCopyBltWhenSetterUsedThenGette
     EXPECT_EQ(0x1u, cmd.getSourceSurfaceWidth());
     cmd.setSourceSurfaceWidth(0x3fffu);
     EXPECT_EQ(0x3fffu, cmd.getSourceSurfaceWidth());
+    EXPECT_THROW(cmd.setSourceSurfaceWidth(0x0u), std::exception);
 
-    cmd.setSourceSurfaceType(XY_BLOCK_COPY_BLT::SURFACE_TYPE_SURFTYPE_1D);              // patched
-    EXPECT_EQ(XY_BLOCK_COPY_BLT::SURFACE_TYPE_SURFTYPE_1D, cmd.getSourceSurfaceType()); // patched
+    cmd.setSourceSurfaceType(XY_BLOCK_COPY_BLT::SURFACE_TYPE_SURFTYPE_1D);
+    EXPECT_EQ(XY_BLOCK_COPY_BLT::SURFACE_TYPE_SURFTYPE_1D, cmd.getSourceSurfaceType());
 
-    cmd.setSourceSurfaceType(XY_BLOCK_COPY_BLT::SURFACE_TYPE_SURFTYPE_2D);              // patched
-    EXPECT_EQ(XY_BLOCK_COPY_BLT::SURFACE_TYPE_SURFTYPE_2D, cmd.getSourceSurfaceType()); // patched
+    cmd.setSourceSurfaceType(XY_BLOCK_COPY_BLT::SURFACE_TYPE_SURFTYPE_2D);
+    EXPECT_EQ(XY_BLOCK_COPY_BLT::SURFACE_TYPE_SURFTYPE_2D, cmd.getSourceSurfaceType());
 
-    cmd.setSourceSurfaceType(XY_BLOCK_COPY_BLT::SURFACE_TYPE_SURFTYPE_3D);              // patched
-    EXPECT_EQ(XY_BLOCK_COPY_BLT::SURFACE_TYPE_SURFTYPE_3D, cmd.getSourceSurfaceType()); // patched
+    cmd.setSourceSurfaceType(XY_BLOCK_COPY_BLT::SURFACE_TYPE_SURFTYPE_3D);
+    EXPECT_EQ(XY_BLOCK_COPY_BLT::SURFACE_TYPE_SURFTYPE_3D, cmd.getSourceSurfaceType());
 
-    cmd.setSourceSurfaceType(XY_BLOCK_COPY_BLT::SURFACE_TYPE_SURFTYPE_CUBE);              // patched
-    EXPECT_EQ(XY_BLOCK_COPY_BLT::SURFACE_TYPE_SURFTYPE_CUBE, cmd.getSourceSurfaceType()); // patched
+    cmd.setSourceSurfaceType(XY_BLOCK_COPY_BLT::SURFACE_TYPE_SURFTYPE_CUBE);
+    EXPECT_EQ(XY_BLOCK_COPY_BLT::SURFACE_TYPE_SURFTYPE_CUBE, cmd.getSourceSurfaceType());
 
     cmd.setSourceLod(0x0u);
     EXPECT_EQ(0x0u, cmd.getSourceLod());
@@ -2626,10 +2626,10 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenXyBlockCopyBltWhenSetterUsedThenGette
     cmd.setSourceVerticalAlign(0x3u);
     EXPECT_EQ(0x3u, cmd.getSourceVerticalAlign());
 
-    cmd.setSourceMipTailStartLOD(0x0u);              // patched
-    EXPECT_EQ(0x0u, cmd.getSourceMipTailStartLOD()); // patched
-    cmd.setSourceMipTailStartLOD(0xfu);              // patched
-    EXPECT_EQ(0xfu, cmd.getSourceMipTailStartLOD()); // patched
+    cmd.setSourceMipTailStartLOD(0x0u);
+    EXPECT_EQ(0x0u, cmd.getSourceMipTailStartLOD());
+    cmd.setSourceMipTailStartLOD(0xfu);
+    EXPECT_EQ(0xfu, cmd.getSourceMipTailStartLOD());
 
     cmd.setSourceArrayIndex(0x1u);
     EXPECT_EQ(0x1u, cmd.getSourceArrayIndex());
@@ -2637,7 +2637,7 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenXyBlockCopyBltWhenSetterUsedThenGette
     EXPECT_EQ(0x7ffu, cmd.getSourceArrayIndex());
 }
 
-XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenXyFastColorBltWhenInitCalledThenFieldsSetToDefault) { // patched
+XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenXyFastColorBltWhenInitCalledThenFieldsSetToDefault) {
     using XY_FAST_COLOR_BLT = NEO::Xe3pCoreFamily::XY_FAST_COLOR_BLT;
     XY_FAST_COLOR_BLT cmd;
     cmd.init();
@@ -2646,16 +2646,16 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenXyFastColorBltWhenInitCalledThenField
     EXPECT_EQ(XY_FAST_COLOR_BLT::NUMBER_OF_MULTISAMPLES_MULTISAMPLECOUNT_1, cmd.TheStructure.Common.NumberOfMultisamples);
     EXPECT_EQ(XY_FAST_COLOR_BLT::SPECIAL_MODE_OF_OPERATION_NONE, cmd.TheStructure.Common.SpecialModeOfOperation);
     EXPECT_EQ(XY_FAST_COLOR_BLT::COLOR_DEPTH_8_BIT_COLOR, cmd.TheStructure.Common.ColorDepth);
-    EXPECT_EQ(XY_FAST_COLOR_BLT::INSTRUCTIONTARGET_OPCODE_OPCODE, cmd.TheStructure.Common.InstructionTarget_Opcode); // patched
+    EXPECT_EQ(XY_FAST_COLOR_BLT::INSTRUCTION_TARGETOPCODE_XY_FAST_COLOR_BLT, cmd.TheStructure.Common.InstructionTargetOpcode);
     EXPECT_EQ(XY_FAST_COLOR_BLT::CLIENT_2D_PROCESSOR, cmd.TheStructure.Common.Client);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.DestinationPitch);
-    EXPECT_EQ(XY_FAST_COLOR_BLT::DESTINATION_ENCRYPT_EN_DISABLE, cmd.TheStructure.Common.DestinationEncryptEn);
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.DestinationEncryptEn);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.DestinationMocs);
     EXPECT_EQ(XY_FAST_COLOR_BLT::DESTINATION_TILING_LINEAR, cmd.TheStructure.Common.DestinationTiling);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.DestinationX1Coordinate_Left);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.DestinationY1Coordinate_Top);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.DestinationX2Coordinate_Right);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.DestinationY2Coordinate_Bottom);
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.DestinationX1CoordinateLeft);
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.DestinationY1CoordinateTop);
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.DestinationX2CoordinateRight);
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.DestinationY2CoordinateBottom);
     EXPECT_EQ(0x0ull, cmd.TheStructure.Common.DestinationBaseAddress);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.DestinationXOffset);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.DestinationYOffset);
@@ -2720,8 +2720,8 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenXyFastColorBltWhenSetterUsedThenGette
     cmd.setColorDepth(XY_FAST_COLOR_BLT::COLOR_DEPTH_128_BIT_COLOR);
     EXPECT_EQ(XY_FAST_COLOR_BLT::COLOR_DEPTH_128_BIT_COLOR, cmd.getColorDepth());
 
-    cmd.setInstructionTargetOpcode(XY_FAST_COLOR_BLT::INSTRUCTIONTARGET_OPCODE_OPCODE);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::INSTRUCTIONTARGET_OPCODE_OPCODE, cmd.getInstructionTargetOpcode()); // patched
+    cmd.setInstructionTargetOpcode(XY_FAST_COLOR_BLT::INSTRUCTION_TARGETOPCODE_XY_FAST_COLOR_BLT);
+    EXPECT_EQ(XY_FAST_COLOR_BLT::INSTRUCTION_TARGETOPCODE_XY_FAST_COLOR_BLT, cmd.getInstructionTargetOpcode());
 
     cmd.setClient(XY_FAST_COLOR_BLT::CLIENT_2D_PROCESSOR);
     EXPECT_EQ(XY_FAST_COLOR_BLT::CLIENT_2D_PROCESSOR, cmd.getClient());
@@ -2730,17 +2730,17 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenXyFastColorBltWhenSetterUsedThenGette
     EXPECT_EQ(0x1u, cmd.getDestinationPitch());
     cmd.setDestinationPitch(0x3ffffu);
     EXPECT_EQ(0x3ffffu, cmd.getDestinationPitch());
+    EXPECT_THROW(cmd.setDestinationPitch(0x0u), std::exception);
 
-    cmd.setDestinationEncryptEn(XY_FAST_COLOR_BLT::DESTINATION_ENCRYPT_EN_DISABLE);
-    EXPECT_EQ(XY_FAST_COLOR_BLT::DESTINATION_ENCRYPT_EN_DISABLE, cmd.getDestinationEncryptEn());
+    cmd.setDestinationEncryptEn(false);
+    EXPECT_EQ(false, cmd.getDestinationEncryptEn());
+    cmd.setDestinationEncryptEn(true);
+    EXPECT_EQ(true, cmd.getDestinationEncryptEn());
 
-    cmd.setDestinationEncryptEn(XY_FAST_COLOR_BLT::DESTINATION_ENCRYPT_EN_ENABLE);
-    EXPECT_EQ(XY_FAST_COLOR_BLT::DESTINATION_ENCRYPT_EN_ENABLE, cmd.getDestinationEncryptEn());
-
-    cmd.setDestinationMOCS(0x0u);              // patched
-    EXPECT_EQ(0x0u, cmd.getDestinationMOCS()); // patched
-    cmd.setDestinationMOCS(0xfu);              // patched
-    EXPECT_EQ(0xfu, cmd.getDestinationMOCS()); // patched
+    cmd.setDestinationMOCS(0x0u);
+    EXPECT_EQ(0x0u, cmd.getDestinationMOCS());
+    cmd.setDestinationMOCS(0xfu);
+    EXPECT_EQ(0xfu, cmd.getDestinationMOCS());
 
     cmd.setDestinationTiling(XY_FAST_COLOR_BLT::DESTINATION_TILING_LINEAR);
     EXPECT_EQ(XY_FAST_COLOR_BLT::DESTINATION_TILING_LINEAR, cmd.getDestinationTiling());
@@ -2795,777 +2795,29 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenXyFastColorBltWhenSetterUsedThenGette
     cmd.setDestinationTargetMemory(XY_FAST_COLOR_BLT::DESTINATION_TARGET_MEMORY_SYSTEM_MEM);
     EXPECT_EQ(XY_FAST_COLOR_BLT::DESTINATION_TARGET_MEMORY_SYSTEM_MEM, cmd.getDestinationTargetMemory());
 
-    uint32_t fillColorValueMin[4] = {0x0u, 0x0u, 0x0u, 0x0u};   // patched
-    cmd.setFillColor(fillColorValueMin);                        // patched
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.FillColorValue[0]); // patched
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.FillColorValue[1]); // patched
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.FillColorValue[2]); // patched
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.FillColorValue[3]); // patched
+    uint32_t fillColorValueMin[4] = {0x0u, 0x0u, 0x0u, 0x0u};
+    cmd.setFillColor(fillColorValueMin);
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.FillColor[0]);
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.FillColor[1]);
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.FillColor[2]);
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.FillColor[3]);
 
-    uint32_t fillColorValueMax[4] = {0xffffffffu, 0xffffffffu, 0xffffffffu, 0xffffffffu}; // patched
-    cmd.setFillColor(fillColorValueMax);                                                  // patched
-    EXPECT_EQ(0xffffffffu, cmd.TheStructure.Common.FillColorValue[0]);                    // patched
-    EXPECT_EQ(0xffffffffu, cmd.TheStructure.Common.FillColorValue[1]);                    // patched
-    EXPECT_EQ(0xffffffffu, cmd.TheStructure.Common.FillColorValue[2]);                    // patched
-    EXPECT_EQ(0xffffffffu, cmd.TheStructure.Common.FillColorValue[3]);                    // patched
+    uint32_t fillColorValueMax[4] = {0xffffffffu, 0xffffffffu, 0xffffffffu, 0xffffffffu};
+    cmd.setFillColor(fillColorValueMax);
+    EXPECT_EQ(0xffffffffu, cmd.TheStructure.Common.FillColor[0]);
+    EXPECT_EQ(0xffffffffu, cmd.TheStructure.Common.FillColor[1]);
+    EXPECT_EQ(0xffffffffu, cmd.TheStructure.Common.FillColor[2]);
+    EXPECT_EQ(0xffffffffu, cmd.TheStructure.Common.FillColor[3]);
 
     cmd.setDestinationCompressionFormat(0x0u);
     EXPECT_EQ(0x0u, cmd.getDestinationCompressionFormat());
     cmd.setDestinationCompressionFormat(0xfu);
     EXPECT_EQ(0xfu, cmd.getDestinationCompressionFormat());
 
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32B32A32_FLOAT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32B32A32_FLOAT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32B32A32_SINT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32B32A32_SINT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32B32A32_UINT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32B32A32_UINT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32B32A32_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32B32A32_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32B32A32_SNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32B32A32_SNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R64G64_FLOAT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R64G64_FLOAT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32B32X32_FLOAT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32B32X32_FLOAT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32B32A32_SSCALED);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32B32A32_SSCALED, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32B32A32_USCALED);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32B32A32_USCALED, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_PLANAR_422_8_P208);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_PLANAR_422_8_P208, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_PLANAR_420_8_SAMPLE_8X8);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_PLANAR_420_8_SAMPLE_8X8, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_PLANAR_411_8);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_PLANAR_411_8, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_PLANAR_422_8);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_PLANAR_422_8, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8B8A8_UNORM_VDI);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8B8A8_UNORM_VDI, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_YCRCB_NORMAL_SAMPLE_8X8);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_YCRCB_NORMAL_SAMPLE_8X8, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_YCRCB_SWAPUVY_SAMPLE_8X8);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_YCRCB_SWAPUVY_SAMPLE_8X8, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_YCRCB_SWAPUV_SAMPLE_8X8);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_YCRCB_SWAPUV_SAMPLE_8X8, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_YCRCB_SWAPY_SAMPLE_8X8);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_YCRCB_SWAPY_SAMPLE_8X8, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32B32A32_FLOAT_LD);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32B32A32_FLOAT_LD, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_PLANAR_420_16_SAMPLE_8X8);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_PLANAR_420_16_SAMPLE_8X8, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16B16_UNORM_SAMPLE_8X8);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16B16_UNORM_SAMPLE_8X8, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_Y16_UNORM_SAMPLE_8X8);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_Y16_UNORM_SAMPLE_8X8, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_PLANAR_Y32_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_PLANAR_Y32_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32B32A32_SFIXED);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32B32A32_SFIXED, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R64G64_PASSTHRU);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R64G64_PASSTHRU, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32B32_FLOAT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32B32_FLOAT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32B32_SINT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32B32_SINT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32B32_UINT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32B32_UINT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32B32_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32B32_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32B32_SNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32B32_SNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32B32_SSCALED);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32B32_SSCALED, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32B32_USCALED);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32B32_USCALED, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32B32_FLOAT_LD);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32B32_FLOAT_LD, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32B32_SFIXED);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32B32_SFIXED, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16G16B16A16_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16G16B16A16_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16G16B16A16_SNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16G16B16A16_SNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16G16B16A16_SINT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16G16B16A16_SINT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16G16B16A16_UINT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16G16B16A16_UINT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16G16B16A16_FLOAT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16G16B16A16_FLOAT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32_FLOAT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32_FLOAT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32_SINT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32_SINT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32_UINT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32_UINT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32_FLOAT_X8X24_TYPELESS);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32_FLOAT_X8X24_TYPELESS, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_X32_TYPELESS_G8X24_UINT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_X32_TYPELESS_G8X24_UINT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_L32A32_FLOAT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_L32A32_FLOAT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32_SNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32_SNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R64_FLOAT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R64_FLOAT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16G16B16X16_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16G16B16X16_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16G16B16X16_FLOAT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16G16B16X16_FLOAT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_A32X32_FLOAT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_A32X32_FLOAT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_L32X32_FLOAT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_L32X32_FLOAT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_I32X32_FLOAT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_I32X32_FLOAT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16G16B16A16_SSCALED);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16G16B16A16_SSCALED, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16G16B16A16_USCALED);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16G16B16A16_USCALED, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32_SSCALED);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32_SSCALED, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32_USCALED);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32_USCALED, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32_FLOAT_LD);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32_FLOAT_LD, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32_FLOAT_X8X24_TYPELESS_LD);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32_FLOAT_X8X24_TYPELESS_LD, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32_SFIXED);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32G32_SFIXED, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R64_PASSTHRU);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R64_PASSTHRU, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_B8G8R8A8_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_B8G8R8A8_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_B8G8R8A8_UNORM_SRGB);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_B8G8R8A8_UNORM_SRGB, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R10G10B10A2_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R10G10B10A2_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R10G10B10A2_UNORM_SRGB);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R10G10B10A2_UNORM_SRGB, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R10G10B10A2_UINT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R10G10B10A2_UINT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R10G10B10_SNORM_A2_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R10G10B10_SNORM_A2_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R10G10B10A2_UNORM_SAMPLE_8X8);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R10G10B10A2_UNORM_SAMPLE_8X8, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8B8A8_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8B8A8_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8B8A8_UNORM_SRGB);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8B8A8_UNORM_SRGB, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8B8A8_SNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8B8A8_SNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8B8A8_SINT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8B8A8_SINT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8B8A8_UINT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8B8A8_UINT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16G16_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16G16_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16G16_SNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16G16_SNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16G16_SINT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16G16_SINT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16G16_UINT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16G16_UINT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16G16_FLOAT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16G16_FLOAT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_B10G10R10A2_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_B10G10R10A2_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_B10G10R10A2_UNORM_SRGB);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_B10G10R10A2_UNORM_SRGB, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R11G11B10_FLOAT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R11G11B10_FLOAT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R10G10B10_FLOAT_A2_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R10G10B10_FLOAT_A2_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32_SINT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32_SINT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32_UINT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32_UINT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32_FLOAT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32_FLOAT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R24_UNORM_X8_TYPELESS);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R24_UNORM_X8_TYPELESS, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_X24_TYPELESS_G8_UINT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_X24_TYPELESS_G8_UINT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32_FLOAT_LD);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32_FLOAT_LD, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R24_UNORM_X8_TYPELESS_LD);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R24_UNORM_X8_TYPELESS_LD, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_L32_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_L32_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_A32_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_A32_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_L16A16_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_L16A16_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_I24X8_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_I24X8_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_L24X8_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_L24X8_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_A24X8_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_A24X8_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_I32_FLOAT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_I32_FLOAT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_L32_FLOAT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_L32_FLOAT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_A32_FLOAT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_A32_FLOAT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_X8B8_UNORM_G8R8_SNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_X8B8_UNORM_G8R8_SNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_A8X8_UNORM_G8R8_SNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_A8X8_UNORM_G8R8_SNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_B8X8_UNORM_G8R8_SNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_B8X8_UNORM_G8R8_SNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_B8G8R8X8_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_B8G8R8X8_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_B8G8R8X8_UNORM_SRGB);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_B8G8R8X8_UNORM_SRGB, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8B8X8_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8B8X8_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8B8X8_UNORM_SRGB);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8B8X8_UNORM_SRGB, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R9G9B9E5_SHAREDEXP);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R9G9B9E5_SHAREDEXP, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_B10G10R10X2_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_B10G10R10X2_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_L16A16_FLOAT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_L16A16_FLOAT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32_SNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32_SNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R10G10B10X2_USCALED);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R10G10B10X2_USCALED, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8B8A8_SSCALED);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8B8A8_SSCALED, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8B8A8_USCALED);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8B8A8_USCALED, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16G16_SSCALED);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16G16_SSCALED, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16G16_USCALED);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16G16_USCALED, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32_SSCALED);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32_SSCALED, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32_USCALED);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32_USCALED, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8B8G8A8_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8B8G8A8_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8B8A8_SINT_NOA);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8B8A8_SINT_NOA, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8B8A8_UINT_NOA);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8B8A8_UINT_NOA, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8B8A8_UNORM_YUV);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8B8A8_UNORM_YUV, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8B8A8_UNORM_SNCK);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8B8A8_UNORM_SNCK, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8B8A8_UNORM_NOA);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8B8A8_UNORM_NOA, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_B5G6R5_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_B5G6R5_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_B5G6R5_UNORM_SRGB);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_B5G6R5_UNORM_SRGB, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_B5G5R5A1_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_B5G5R5A1_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_B5G5R5A1_UNORM_SRGB);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_B5G5R5A1_UNORM_SRGB, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_B4G4R4A4_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_B4G4R4A4_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_B4G4R4A4_UNORM_SRGB);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_B4G4R4A4_UNORM_SRGB, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8_SNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8_SNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8_SINT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8_SINT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8_UINT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8_UINT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16_SNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16_SNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16_SINT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16_SINT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16_UINT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16_UINT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16_FLOAT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16_FLOAT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_A8P8_UNORM_PALETTE0);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_A8P8_UNORM_PALETTE0, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_A8P8_UNORM_PALETTE1);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_A8P8_UNORM_PALETTE1, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_I16_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_I16_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_L16_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_L16_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_A16_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_A16_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_L8A8_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_L8A8_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_I16_FLOAT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_I16_FLOAT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_L16_FLOAT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_L16_FLOAT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_A16_FLOAT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_A16_FLOAT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_L8A8_UNORM_SRGB);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_L8A8_UNORM_SRGB, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R5G5_SNORM_B6_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R5G5_SNORM_B6_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_B5G5R5X1_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_B5G5R5X1_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_B5G5R5X1_UNORM_SRGB);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_B5G5R5X1_UNORM_SRGB, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8_SSCALED);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8_SSCALED, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8_USCALED);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8_USCALED, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16_SSCALED);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16_SSCALED, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16_USCALED);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16_USCALED, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8_SNORM_DX9);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8_SNORM_DX9, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16_FLOAT_DX9);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16_FLOAT_DX9, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_P8A8_UNORM_PALETTE0);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_P8A8_UNORM_PALETTE0, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_P8A8_UNORM_PALETTE1);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_P8A8_UNORM_PALETTE1, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_A1B5G5R5_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_A1B5G5R5_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_A4B4G4R4_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_A4B4G4R4_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_L8A8_UINT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_L8A8_UINT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_L8A8_SINT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_L8A8_SINT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8_SNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8_SNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8_SINT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8_SINT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8_UINT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8_UINT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_A8_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_A8_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_I8_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_I8_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_L8_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_L8_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_P4A4_UNORM_PALETTE0);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_P4A4_UNORM_PALETTE0, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_A4P4_UNORM_PALETTE0);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_A4P4_UNORM_PALETTE0, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8_SSCALED);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8_SSCALED, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8_USCALED);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8_USCALED, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_P8_UNORM_PALETTE0);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_P8_UNORM_PALETTE0, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_L8_UNORM_SRGB);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_L8_UNORM_SRGB, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_P8_UNORM_PALETTE1);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_P8_UNORM_PALETTE1, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_P4A4_UNORM_PALETTE1);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_P4A4_UNORM_PALETTE1, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_A4P4_UNORM_PALETTE1);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_A4P4_UNORM_PALETTE1, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_Y8_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_Y8_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_L8_UINT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_L8_UINT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_L8_SINT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_L8_SINT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_I8_UINT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_I8_UINT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_I8_SINT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_I8_SINT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_DXT1_RGB_SRGB);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_DXT1_RGB_SRGB, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R1_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R1_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_YCRCB_NORMAL);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_YCRCB_NORMAL, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_YCRCB_SWAPUVY);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_YCRCB_SWAPUVY, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_P2_UNORM_PALETTE0);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_P2_UNORM_PALETTE0, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_P2_UNORM_PALETTE1);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_P2_UNORM_PALETTE1, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_BC1_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_BC1_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_BC2_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_BC2_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_BC3_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_BC3_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_BC4_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_BC4_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_BC5_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_BC5_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_BC1_UNORM_SRGB);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_BC1_UNORM_SRGB, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_BC2_UNORM_SRGB);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_BC2_UNORM_SRGB, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_BC3_UNORM_SRGB);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_BC3_UNORM_SRGB, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_MONO8);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_MONO8, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_YCRCB_SWAPUV);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_YCRCB_SWAPUV, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_YCRCB_SWAPY);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_YCRCB_SWAPY, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_DXT1_RGB);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_DXT1_RGB, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8B8_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8B8_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8B8_SNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8B8_SNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8B8_SSCALED);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8B8_SSCALED, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8B8_USCALED);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8B8_USCALED, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R64G64B64A64_FLOAT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R64G64B64A64_FLOAT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R64G64B64_FLOAT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R64G64B64_FLOAT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_BC4_SNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_BC4_SNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_BC5_SNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_BC5_SNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16G16B16_FLOAT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16G16B16_FLOAT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16G16B16_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16G16B16_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16G16B16_SNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16G16B16_SNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16G16B16_SSCALED);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16G16B16_SSCALED, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16G16B16_USCALED);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16G16B16_USCALED, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8B8_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8B8_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_BC6H_SF16);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_BC6H_SF16, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_BC7_UNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_BC7_UNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_BC7_UNORM_SRGB);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_BC7_UNORM_SRGB, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_BC6H_UF16);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_BC6H_UF16, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_PLANAR_420_8);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_PLANAR_420_8, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_PLANAR_420_16);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_PLANAR_420_16, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8B8_UNORM_SRGB);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8B8_UNORM_SRGB, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_ETC1_RGB8);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_ETC1_RGB8, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_ETC2_RGB8);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_ETC2_RGB8, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_EAC_R11);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_EAC_R11, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_EAC_RG11);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_EAC_RG11, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_EAC_SIGNED_R11);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_EAC_SIGNED_R11, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_EAC_SIGNED_RG11);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_EAC_SIGNED_RG11, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_ETC2_SRGB8);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_ETC2_SRGB8, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16G16B16_UINT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16G16B16_UINT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16G16B16_SINT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R16G16B16_SINT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32_SFIXED);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R32_SFIXED, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R10G10B10A2_SNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R10G10B10A2_SNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R10G10B10A2_USCALED);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R10G10B10A2_USCALED, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R10G10B10A2_SSCALED);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R10G10B10A2_SSCALED, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R10G10B10A2_SINT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R10G10B10A2_SINT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_B10G10R10A2_SNORM);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_B10G10R10A2_SNORM, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_B10G10R10A2_USCALED);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_B10G10R10A2_USCALED, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_B10G10R10A2_SSCALED);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_B10G10R10A2_SSCALED, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_B10G10R10A2_UINT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_B10G10R10A2_UINT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_B10G10R10A2_SINT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_B10G10R10A2_SINT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R64G64B64A64_PASSTHRU);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R64G64B64A64_PASSTHRU, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R64G64B64_PASSTHRU);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R64G64B64_PASSTHRU, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_ETC2_RGB8_PTA);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_ETC2_RGB8_PTA, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_ETC2_SRGB8_PTA);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_ETC2_SRGB8_PTA, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_ETC2_EAC_RGBA8);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_ETC2_EAC_RGBA8, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_ETC2_EAC_SRGB8_A8);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_ETC2_EAC_SRGB8_A8, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8B8_UINT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8B8_UINT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8B8_SINT);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_R8G8B8_SINT, cmd.getSurfaceFormat()); // patched
-
-    cmd.setSurfaceFormat(XY_FAST_COLOR_BLT::SURFACE_FORMAT_RAW);              // patched
-    EXPECT_EQ(XY_FAST_COLOR_BLT::SURFACE_FORMAT_RAW, cmd.getSurfaceFormat()); // patched
+    cmd.setSurfaceFormat(0x0u);
+    EXPECT_EQ(0x0u, cmd.getSurfaceFormat());
+    cmd.setSurfaceFormat(0x1ffu);
+    EXPECT_EQ(0x1ffu, cmd.getSurfaceFormat());
 
     cmd.setAuxSpecialOperationsMode(XY_FAST_COLOR_BLT::AUX_SPECIAL_OPERATIONS_MODE_FAST_CLEAR_HW_FORMAT_CONVERSION);
     EXPECT_EQ(XY_FAST_COLOR_BLT::AUX_SPECIAL_OPERATIONS_MODE_FAST_CLEAR_HW_FORMAT_CONVERSION, cmd.getAuxSpecialOperationsMode());
@@ -3585,6 +2837,7 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenXyFastColorBltWhenSetterUsedThenGette
     EXPECT_EQ(0x1u, cmd.getDestinationSurfaceWidth());
     cmd.setDestinationSurfaceWidth(0x3fffu);
     EXPECT_EQ(0x3fffu, cmd.getDestinationSurfaceWidth());
+    EXPECT_THROW(cmd.setDestinationSurfaceWidth(0x0u), std::exception);
 
     cmd.setDestinationSurfaceType(XY_FAST_COLOR_BLT::DESTINATION_SURFACE_TYPE_SURFTYPE_1D);
     EXPECT_EQ(XY_FAST_COLOR_BLT::DESTINATION_SURFACE_TYPE_SURFTYPE_1D, cmd.getDestinationSurfaceType());
@@ -5561,14 +4814,13 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenMemSetWhenInitCalledThenFieldsSetToDe
     EXPECT_EQ(MEM_SET::DWORD_LENGTH_EXCLUDES_DWORD_0_1, cmd.TheStructure.Common.DwordLength);
     EXPECT_EQ(MEM_SET::FILL_TYPE_LINEAR_FILL, cmd.TheStructure.Common.FillType);
     EXPECT_EQ(MEM_SET::MODE_FILL_MODE, cmd.TheStructure.Common.Mode);
-    EXPECT_EQ(MEM_SET::INSTRUCTION_TARGETOPCODE_MEM_SET, cmd.TheStructure.Common.InstructionTarget_Opcode);
+    EXPECT_EQ(MEM_SET::INSTRUCTION_TARGETOPCODE_MEM_SET, cmd.TheStructure.Common.InstructionTargetOpcode);
     EXPECT_EQ(MEM_SET::CLIENT_2D_PROCESSOR, cmd.TheStructure.Common.Client);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.FillWidth);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.FillHeight);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.DestinationPitch);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.DestinationStartAddressLow);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.DestinationStartAddressHigh);
-    EXPECT_EQ(MEM_SET::DESTINATION_ENCRYPT_EN_DISABLE, cmd.TheStructure.Common.DestinationEncryptEn);
+    EXPECT_EQ_VAL(0x0u, cmd.TheStructure.Common.DestinationStartAddress);
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.DestinationEncryptEn);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.DestinationMocs);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.FillData);
 }
@@ -5616,22 +4868,22 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenMemSetWhenSetterUsedThenGetterReturns
     EXPECT_EQ(0x1u, cmd.getDestinationPitch());
     cmd.setDestinationPitch(0x3ffffu);
     EXPECT_EQ(0x3ffffu, cmd.getDestinationPitch());
+    EXPECT_THROW(cmd.setDestinationPitch(0x0u), std::exception);
 
-    cmd.setDestinationStartAddress(0x0ull);                             // patched
-    EXPECT_EQ(0x0ull, cmd.getDestinationStartAddress());                // patched
-    cmd.setDestinationStartAddress(0xfffffffffffffffcull);              // patched
-    EXPECT_EQ(0xfffffffffffffffcull, cmd.getDestinationStartAddress()); // patched
+    cmd.setDestinationStartAddress(0x0ull);
+    EXPECT_EQ(0x0ull, cmd.getDestinationStartAddress());
+    cmd.setDestinationStartAddress(0xfffffffffffffffcull);
+    EXPECT_EQ(0xfffffffffffffffcull, cmd.getDestinationStartAddress());
 
-    cmd.setDestinationEncryptEn(MEM_SET::DESTINATION_ENCRYPT_EN_DISABLE);
-    EXPECT_EQ(MEM_SET::DESTINATION_ENCRYPT_EN_DISABLE, cmd.getDestinationEncryptEn());
+    cmd.setDestinationEncryptEn(false);
+    EXPECT_EQ(false, cmd.getDestinationEncryptEn());
+    cmd.setDestinationEncryptEn(true);
+    EXPECT_EQ(true, cmd.getDestinationEncryptEn());
 
-    cmd.setDestinationEncryptEn(MEM_SET::DESTINATION_ENCRYPT_EN_ENABLE);
-    EXPECT_EQ(MEM_SET::DESTINATION_ENCRYPT_EN_ENABLE, cmd.getDestinationEncryptEn());
-
-    cmd.setDestinationMOCS(0x0u);              // patched
-    EXPECT_EQ(0x0u, cmd.getDestinationMOCS()); // patched
-    cmd.setDestinationMOCS(0xfu);              // patched
-    EXPECT_EQ(0xfu, cmd.getDestinationMOCS()); // patched
+    cmd.setDestinationMOCS(0x0u);
+    EXPECT_EQ(0x0u, cmd.getDestinationMOCS());
+    cmd.setDestinationMOCS(0xfu);
+    EXPECT_EQ(0xfu, cmd.getDestinationMOCS());
 
     cmd.setFillData(0x0u);
     EXPECT_EQ(0x0u, cmd.getFillData());

@@ -46,6 +46,24 @@ struct CompressionParamsSupportedMatcher {
     }
 };
 
+struct XyColorBltTargetMemorySupportedMatcher {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        if constexpr (BlitPlatforms::isMatched<productFamily>()) {
+            using XY_COLOR_BLT = typename HwMapper<productFamily>::GfxFamily::XY_COLOR_BLT;
+            return requires(XY_COLOR_BLT &blitCmd) { blitCmd.getDestinationTargetMemory(); };
+        }
+        return false;
+    }
+};
+
+struct XyColorBltTargetMemoryUnsupportedMatcher {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return BlitPlatforms::isMatched<productFamily>() && !XyColorBltTargetMemorySupportedMatcher::isMatched<productFamily>();
+    }
+};
+
 HWTEST2_F(BlitTests, givenDeviceWithoutDefaultGmmWhenAppendBlitCommandsForFillBufferThenDstCompressionDisabled, CompressionParamsSupportedMatcher) {
     using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
     auto blitCmd = FamilyType::cmdInitXyColorBlt;
@@ -53,7 +71,7 @@ HWTEST2_F(BlitTests, givenDeviceWithoutDefaultGmmWhenAppendBlitCommandsForFillBu
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                           MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
     BlitCommandsHelper<FamilyType>::appendBlitMemoryOptionsForFillBuffer(&mockAllocation, blitCmd, *pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]);
-    EXPECT_EQ(blitCmd.getDestinationCompressionEnable(), XY_COLOR_BLT::DESTINATION_COMPRESSION_ENABLE::DESTINATION_COMPRESSION_ENABLE_COMPRESSION_DISABLE);
+    EXPECT_FALSE(blitCmd.getDestinationCompressionEnable());
     EXPECT_EQ(blitCmd.getDestinationAuxiliarysurfacemode(), XY_COLOR_BLT::DESTINATION_AUXILIARY_SURFACE_MODE::DESTINATION_AUXILIARY_SURFACE_MODE_AUX_NONE);
 }
 
@@ -67,7 +85,7 @@ HWTEST2_F(BlitTests, givenGmmWithDisabledCompresionWhenAppendBlitCommandsForFill
                                           MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
     mockAllocation.setGmm(gmm.get(), 0);
     BlitCommandsHelper<FamilyType>::appendBlitMemoryOptionsForFillBuffer(&mockAllocation, blitCmd, *pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]);
-    EXPECT_EQ(blitCmd.getDestinationCompressionEnable(), XY_COLOR_BLT::DESTINATION_COMPRESSION_ENABLE::DESTINATION_COMPRESSION_ENABLE_COMPRESSION_DISABLE);
+    EXPECT_FALSE(blitCmd.getDestinationCompressionEnable());
     EXPECT_EQ(blitCmd.getDestinationAuxiliarysurfacemode(), XY_COLOR_BLT::DESTINATION_AUXILIARY_SURFACE_MODE::DESTINATION_AUXILIARY_SURFACE_MODE_AUX_NONE);
 }
 
@@ -81,7 +99,7 @@ HWTEST2_F(BlitTests, givenGmmWithEnabledCompresionWhenAppendBlitCommandsForFillB
                                           MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
     mockAllocation.setGmm(gmm.get(), 0);
     BlitCommandsHelper<FamilyType>::appendBlitMemoryOptionsForFillBuffer(&mockAllocation, blitCmd, *pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]);
-    EXPECT_EQ(blitCmd.getDestinationCompressionEnable(), XY_COLOR_BLT::DESTINATION_COMPRESSION_ENABLE::DESTINATION_COMPRESSION_ENABLE_COMPRESSION_ENABLE);
+    EXPECT_TRUE(blitCmd.getDestinationCompressionEnable());
     EXPECT_EQ(blitCmd.getDestinationAuxiliarysurfacemode(), XY_COLOR_BLT::DESTINATION_AUXILIARY_SURFACE_MODE::DESTINATION_AUXILIARY_SURFACE_MODE_AUX_CCS_E);
 }
 
@@ -132,7 +150,7 @@ HWTEST2_F(BlitTests, givenOverridedMocksValueWhenAppendBlitCommandsForFillBuffer
     EXPECT_EQ(blitCmd.getDestinationMOCS(), mockValue);
 }
 
-HWTEST2_F(BlitTests, givenOverridedBliterTargetToZeroWhenAppendBlitCommandsForFillBufferThenUseSystemMem, BlitPlatforms) {
+HWTEST2_F(BlitTests, givenOverridedBliterTargetToZeroWhenAppendBlitCommandsForFillBufferThenUseSystemMem, XyColorBltTargetMemorySupportedMatcher) {
     using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.OverrideBlitterTargetMemory.set(0);
@@ -146,7 +164,7 @@ HWTEST2_F(BlitTests, givenOverridedBliterTargetToZeroWhenAppendBlitCommandsForFi
     EXPECT_EQ(blitCmd.getDestinationTargetMemory(), XY_COLOR_BLT::DESTINATION_TARGET_MEMORY::DESTINATION_TARGET_MEMORY_SYSTEM_MEM);
 }
 
-HWTEST2_F(BlitTests, givenOverridedBliterTargetToOneWhenAppendBlitCommandsForFillBufferThenUseLocalMem, BlitPlatforms) {
+HWTEST2_F(BlitTests, givenOverridedBliterTargetToOneWhenAppendBlitCommandsForFillBufferThenUseLocalMem, XyColorBltTargetMemorySupportedMatcher) {
     using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.OverrideBlitterTargetMemory.set(1);
@@ -160,7 +178,7 @@ HWTEST2_F(BlitTests, givenOverridedBliterTargetToOneWhenAppendBlitCommandsForFil
     EXPECT_EQ(blitCmd.getDestinationTargetMemory(), XY_COLOR_BLT::DESTINATION_TARGET_MEMORY::DESTINATION_TARGET_MEMORY_LOCAL_MEM);
 }
 
-HWTEST2_F(BlitTests, givenOverridedBliterTargetToTwoWhenAppendBlitCommandsForFillBufferThenUseDefaultMem, BlitPlatforms) {
+HWTEST2_F(BlitTests, givenOverridedBliterTargetToTwoWhenAppendBlitCommandsForFillBufferThenUseDefaultMem, XyColorBltTargetMemorySupportedMatcher) {
     using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.OverrideBlitterTargetMemory.set(2);
@@ -172,6 +190,26 @@ HWTEST2_F(BlitTests, givenOverridedBliterTargetToTwoWhenAppendBlitCommandsForFil
     BlitCommandsHelper<FamilyType>::appendBlitMemoryOptionsForFillBuffer(&mockAllocation, blitCmd, *pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]);
 
     EXPECT_EQ(blitCmd.getDestinationTargetMemory(), XY_COLOR_BLT::DESTINATION_TARGET_MEMORY::DESTINATION_TARGET_MEMORY_LOCAL_MEM);
+}
+
+HWTEST2_F(BlitTests, givenXyColorBltWithoutTargetMemoryWhenBlitterTargetMemoryIsOverriddenThenFillBufferCommandIsNotChanged, XyColorBltTargetMemoryUnsupportedMatcher) {
+    MockGraphicsAllocation mockAllocation(0, 1u /*num gmms*/, AllocationType::internalHostMemory,
+                                          reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
+                                          MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
+    auto &rootDeviceEnvironment = *pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()];
+
+    auto expectedCmd = FamilyType::cmdInitXyColorBlt;
+    BlitCommandsHelper<FamilyType>::appendBlitMemoryOptionsForFillBuffer(&mockAllocation, expectedCmd, rootDeviceEnvironment);
+
+    DebugManagerStateRestore dbgRestore;
+    for (const int32_t targetMemory : {0, 1}) {
+        debugManager.flags.OverrideBlitterTargetMemory.set(targetMemory);
+
+        auto blitCmd = FamilyType::cmdInitXyColorBlt;
+        BlitCommandsHelper<FamilyType>::appendBlitMemoryOptionsForFillBuffer(&mockAllocation, blitCmd, rootDeviceEnvironment);
+
+        EXPECT_EQ(0, memcmp(&expectedCmd, &blitCmd, sizeof(blitCmd)));
+    }
 }
 
 HWTEST2_F(BlitTests, GivenCpuAccessToLocalMemoryWhenGettingMaxBlitSizeThenValuesAreOverridden, BlitPlatforms) {
@@ -305,7 +343,6 @@ struct MyMockResourecInfo : public GmmResourceInfo {
 };
 
 HWTEST2_F(BlitTests, givenCompressionInfoWhenAppendImageCommandsThenCorrectPropertiesAreSet, IsXeHpgCore) {
-    using COMPRESSION_ENABLE = typename FamilyType::XY_BLOCK_COPY_BLT::COMPRESSION_ENABLE;
     auto verifyCompressionFormat = [](bool mediaCompressed, bool renderCompressed, uint32_t compressionFormat) {
         if (mediaCompressed || renderCompressed) {
             EXPECT_GT(compressionFormat, 0u);
@@ -316,8 +353,8 @@ HWTEST2_F(BlitTests, givenCompressionInfoWhenAppendImageCommandsThenCorrectPrope
 
     auto verifyControlSurfaceType = [](bool mediaCompressed, bool renderCompressed, uint32_t controlSurfaceType) {
         using CONTROL_SURFACE_TYPE = typename FamilyType::XY_BLOCK_COPY_BLT::CONTROL_SURFACE_TYPE;
-        constexpr auto mediaControlSurfaceType = static_cast<uint32_t>(CONTROL_SURFACE_TYPE::CONTROL_SURFACE_TYPE_MEDIA);
-        constexpr auto renderControlSurfaceType = static_cast<uint32_t>(CONTROL_SURFACE_TYPE::CONTROL_SURFACE_TYPE_3D);
+        constexpr auto mediaControlSurfaceType = static_cast<uint32_t>(CONTROL_SURFACE_TYPE::CONTROL_SURFACE_TYPE_MEDIA_CONTROL_SURFACE);
+        constexpr auto renderControlSurfaceType = static_cast<uint32_t>(CONTROL_SURFACE_TYPE::CONTROL_SURFACE_TYPE_3D_CONTROL_SURFACE);
         if (mediaCompressed) {
             EXPECT_EQ(controlSurfaceType, mediaControlSurfaceType);
         } else if (renderCompressed) {
@@ -362,8 +399,8 @@ HWTEST2_F(BlitTests, givenCompressionInfoWhenAppendImageCommandsThenCorrectPrope
             mockAllocationDst.setGmm(gmmDst.get(), 0);
             properties.dstAllocation = &mockAllocationDst;
             auto bltCmd = FamilyType::cmdInitXyBlockCopyBlt;
-            bltCmd.setDestinationCompressionEnable(COMPRESSION_ENABLE::COMPRESSION_ENABLE_COMPRESSION_ENABLE);
-            bltCmd.setSourceCompressionEnable(COMPRESSION_ENABLE::COMPRESSION_ENABLE_COMPRESSION_ENABLE);
+            bltCmd.setDestinationCompressionEnable(true);
+            bltCmd.setSourceCompressionEnable(true);
             BlitCommandsHelper<FamilyType>::appendBlitCommandsForImages(properties, bltCmd, pDevice->getRootDeviceEnvironment(),
                                                                         srcSlicePitch, dstSlicePitch);
 
@@ -372,11 +409,11 @@ HWTEST2_F(BlitTests, givenCompressionInfoWhenAppendImageCommandsThenCorrectPrope
 
             verifyControlSurfaceType(mediaCompressedSrc, renderCompressedSrc, bltCmd.getSourceControlSurfaceType());
             verifyControlSurfaceType(mediaCompressedDst, renderCompressedDst, bltCmd.getDestinationControlSurfaceType());
-            EXPECT_EQ(bltCmd.getSourceCompressionEnable(), COMPRESSION_ENABLE::COMPRESSION_ENABLE_COMPRESSION_ENABLE);
+            EXPECT_TRUE(bltCmd.getSourceCompressionEnable());
             if (mediaCompressedDst) {
-                EXPECT_EQ(bltCmd.getDestinationCompressionEnable(), COMPRESSION_ENABLE::COMPRESSION_ENABLE_COMPRESSION_DISABLE);
+                EXPECT_FALSE(bltCmd.getDestinationCompressionEnable());
             } else {
-                EXPECT_EQ(bltCmd.getDestinationCompressionEnable(), COMPRESSION_ENABLE::COMPRESSION_ENABLE_COMPRESSION_ENABLE);
+                EXPECT_TRUE(bltCmd.getDestinationCompressionEnable());
             }
         }
     }

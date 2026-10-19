@@ -7,6 +7,7 @@
 
 #include "shared/source/xe3p_core/hw_cmds_base.h"
 #include "shared/source/xe3p_core/hw_info_xe3p_core.h"
+#include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "per_product_test_definitions.h"
@@ -83,10 +84,10 @@ XE3P_CORETEST_F(Xe3pCoreHwCmdTest, givenXyColorBltkWhenSetFillColorThenProperVal
     uint32_t fillColor[4] = {0x1234, 0x5678, 0x9ABC, 0xDEF0};
 
     xyColorBlt.setFillColor(fillColor);
-    EXPECT_EQ(0x1234u, xyColorBlt.TheStructure.Common.FillColorValue[0]);
-    EXPECT_EQ(0x5678u, xyColorBlt.TheStructure.Common.FillColorValue[1]);
-    EXPECT_EQ(0x9ABCu, xyColorBlt.TheStructure.Common.FillColorValue[2]);
-    EXPECT_EQ(0xDEF0u, xyColorBlt.TheStructure.Common.FillColorValue[3]);
+    EXPECT_EQ(0x1234u, xyColorBlt.TheStructure.Common.FillColor[0]);
+    EXPECT_EQ(0x5678u, xyColorBlt.TheStructure.Common.FillColor[1]);
+    EXPECT_EQ(0x9ABCu, xyColorBlt.TheStructure.Common.FillColor[2]);
+    EXPECT_EQ(0xDEF0u, xyColorBlt.TheStructure.Common.FillColor[3]);
 }
 
 XE3P_CORETEST_F(Xe3pCoreHwCmdTest, givenXyColorBltkWhenSettingDestinationMocsThenProperValuesAreSet) {
@@ -138,10 +139,7 @@ XE3P_CORETEST_F(Xe3pCoreHwCmdTest, givenMemSetWhenSettingDestinationMocsThenProp
 XE3P_CORETEST_F(Xe3pCoreHwCmdTest, givenMemSetWhenSettingDestinationStartAddressThenProperValuesAreSet) {
     auto memSet = FamilyType::cmdInitMemSet;
     uint64_t address = 0x12345678ABCD;
-    uint32_t expectedAddressLow = 0x5678ABCD;
-    uint32_t expectedAddressHigh = 0x1234;
     memSet.setDestinationStartAddress(address);
     EXPECT_EQ(address, memSet.getDestinationStartAddress());
-    EXPECT_EQ(expectedAddressLow, memSet.TheStructure.Common.DestinationStartAddressLow);
-    EXPECT_EQ(expectedAddressHigh, memSet.TheStructure.Common.DestinationStartAddressHigh);
+    EXPECT_EQ_VAL(address, memSet.TheStructure.Common.DestinationStartAddress);
 }

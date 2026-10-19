@@ -219,7 +219,7 @@ template <>
 void BlitCommandsHelper<Family>::appendBlitCommandsMemCopy(const BlitProperties &blitProperties, typename Family::XY_COPY_BLT &blitCmd,
                                                            const RootDeviceEnvironment &rootDeviceEnvironment) {
     using MEM_COPY = typename Family::MEM_COPY;
-    using COMPRESSION_FORMAT30 = typename MEM_COPY::COMPRESSION_FORMAT30;
+    using COMPRESSION_FORMAT = typename MEM_COPY::COMPRESSION_FORMAT;
 
     auto dstAllocation = blitProperties.dstAllocation;
     auto srcAllocation = blitProperties.srcAllocation;
@@ -265,7 +265,7 @@ void BlitCommandsHelper<Family>::appendBlitCommandsMemCopy(const BlitProperties 
         compressionFormat = static_cast<uint8_t>(debugManager.flags.BcsCompressionFormatForXe2Plus.get());
     }
 
-    blitCmd.setCompressionFormat(static_cast<COMPRESSION_FORMAT30>(compressionFormat));
+    blitCmd.setCompressionFormat(static_cast<COMPRESSION_FORMAT>(compressionFormat));
 
     DEBUG_BREAK_IF(AuxTranslationDirection::none != blitProperties.auxTranslationDirection);
 }

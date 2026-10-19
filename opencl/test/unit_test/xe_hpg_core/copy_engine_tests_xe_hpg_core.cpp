@@ -403,7 +403,7 @@ XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenCompressedBufferWhenNonAuxToAuxBlitIs
     auto bltCmd = genCmdCast<XY_COPY_BLT *>(*(hwParser.cmdList.begin()));
     EXPECT_NE(nullptr, bltCmd);
 
-    EXPECT_EQ(XY_COPY_BLT::COMPRESSION_ENABLE::COMPRESSION_ENABLE_COMPRESSION_DISABLE, bltCmd->getSourceCompressionEnable());
+    EXPECT_FALSE(bltCmd->getSourceCompressionEnable());
 }
 
 XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenCompressedBufferWhenProgrammingBltCommandThenSetCompressionFields) {
@@ -439,10 +439,10 @@ XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenCompressedBufferWhenProgrammingBltCom
         auto bltCmd = genCmdCast<XY_COPY_BLT *>(*(hwParser.cmdList.begin()));
         EXPECT_NE(nullptr, bltCmd);
 
-        EXPECT_EQ(bltCmd->getDestinationCompressionEnable(), XY_COPY_BLT::COMPRESSION_ENABLE::COMPRESSION_ENABLE_COMPRESSION_DISABLE);
+        EXPECT_FALSE(bltCmd->getDestinationCompressionEnable());
         EXPECT_EQ(bltCmd->getDestinationAuxiliarysurfacemode(), XY_COPY_BLT::AUXILIARY_SURFACE_MODE_AUX_NONE);
         EXPECT_EQ(bltCmd->getDestinationCompressionFormat(), 0u);
-        EXPECT_EQ(bltCmd->getSourceCompressionEnable(), XY_COPY_BLT::COMPRESSION_ENABLE::COMPRESSION_ENABLE_COMPRESSION_ENABLE);
+        EXPECT_TRUE(bltCmd->getSourceCompressionEnable());
         EXPECT_EQ(bltCmd->getSourceAuxiliarysurfacemode(), XY_COPY_BLT::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
         EXPECT_EQ(bltCmd->getSourceCompressionFormat(), compressionFormat);
     }
@@ -461,10 +461,10 @@ XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenCompressedBufferWhenProgrammingBltCom
         auto bltCmd = genCmdCast<XY_COPY_BLT *>(*(hwParser.cmdList.begin()));
         EXPECT_NE(nullptr, bltCmd);
 
-        EXPECT_EQ(bltCmd->getDestinationCompressionEnable(), XY_COPY_BLT::COMPRESSION_ENABLE::COMPRESSION_ENABLE_COMPRESSION_ENABLE);
+        EXPECT_TRUE(bltCmd->getDestinationCompressionEnable());
         EXPECT_EQ(bltCmd->getDestinationAuxiliarysurfacemode(), XY_COPY_BLT::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
         EXPECT_EQ(bltCmd->getDestinationCompressionFormat(), compressionFormat);
-        EXPECT_EQ(bltCmd->getSourceCompressionEnable(), XY_COPY_BLT::COMPRESSION_ENABLE::COMPRESSION_ENABLE_COMPRESSION_DISABLE);
+        EXPECT_FALSE(bltCmd->getSourceCompressionEnable());
         EXPECT_EQ(bltCmd->getSourceAuxiliarysurfacemode(), XY_COPY_BLT::AUXILIARY_SURFACE_MODE_AUX_NONE);
         EXPECT_EQ(bltCmd->getSourceCompressionFormat(), 0u);
     }
@@ -503,10 +503,10 @@ XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenDebugFlagSetWhenCompressionEnabledThe
         auto bltCmd = genCmdCast<XY_COPY_BLT *>(*(hwParser.cmdList.begin()));
         EXPECT_NE(nullptr, bltCmd);
 
-        EXPECT_EQ(bltCmd->getDestinationCompressionEnable(), XY_COPY_BLT::COMPRESSION_ENABLE::COMPRESSION_ENABLE_COMPRESSION_DISABLE);
+        EXPECT_FALSE(bltCmd->getDestinationCompressionEnable());
         EXPECT_EQ(bltCmd->getDestinationAuxiliarysurfacemode(), XY_COPY_BLT::AUXILIARY_SURFACE_MODE_AUX_NONE);
         EXPECT_EQ(bltCmd->getDestinationCompressionFormat(), 0u);
-        EXPECT_EQ(bltCmd->getSourceCompressionEnable(), XY_COPY_BLT::COMPRESSION_ENABLE::COMPRESSION_ENABLE_COMPRESSION_ENABLE);
+        EXPECT_TRUE(bltCmd->getSourceCompressionEnable());
         EXPECT_EQ(bltCmd->getSourceAuxiliarysurfacemode(), XY_COPY_BLT::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
         EXPECT_EQ(bltCmd->getSourceCompressionFormat(), compressionFormat);
     }
@@ -525,10 +525,10 @@ XE_HPG_CORETEST_F(BlitXeHpgCoreTests, givenDebugFlagSetWhenCompressionEnabledThe
         auto bltCmd = genCmdCast<XY_COPY_BLT *>(*(hwParser.cmdList.begin()));
         EXPECT_NE(nullptr, bltCmd);
 
-        EXPECT_EQ(bltCmd->getDestinationCompressionEnable(), XY_COPY_BLT::COMPRESSION_ENABLE::COMPRESSION_ENABLE_COMPRESSION_ENABLE);
+        EXPECT_TRUE(bltCmd->getDestinationCompressionEnable());
         EXPECT_EQ(bltCmd->getDestinationAuxiliarysurfacemode(), XY_COPY_BLT::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
         EXPECT_EQ(bltCmd->getDestinationCompressionFormat(), compressionFormat);
-        EXPECT_EQ(bltCmd->getSourceCompressionEnable(), XY_COPY_BLT::COMPRESSION_ENABLE::COMPRESSION_ENABLE_COMPRESSION_DISABLE);
+        EXPECT_FALSE(bltCmd->getSourceCompressionEnable());
         EXPECT_EQ(bltCmd->getSourceAuxiliarysurfacemode(), XY_COPY_BLT::AUXILIARY_SURFACE_MODE_AUX_NONE);
         EXPECT_EQ(bltCmd->getSourceCompressionFormat(), 0u);
     }
