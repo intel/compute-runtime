@@ -10,7 +10,6 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/test/common/helpers/default_hw_info.h"
-#include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
@@ -24,8 +23,6 @@ bool MockPlatform::initializeWithNewDevices() {
     for (auto i = 0u; i < executionEnvironment.rootDeviceEnvironments.size(); i++) {
 
         executionEnvironment.rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(NEO::defaultHwInfo.get());
-
-        UnitTestSetter::setCcsExposure(*executionEnvironment.rootDeviceEnvironments[i]);
     }
 
     executionEnvironment.calculateMaxOsContextCount();

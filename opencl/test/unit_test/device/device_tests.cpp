@@ -365,8 +365,6 @@ TEST(DeviceCreation, givenMultiRootDeviceWhenTheyAreCreatedThenEachDeviceHasSepa
 HWTEST_F(DeviceTest, givenDeviceWhenAskingForDefaultEngineThenReturnValidValue) {
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     executionEnvironment->prepareRootDeviceEnvironments(1u);
-
-    UnitTestSetter::setCcsExposure(*executionEnvironment->rootDeviceEnvironments[0]);
     executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->caps.rcsExposureDisabled = false;
     EngineHelpers::setupDefaultEngineType(*executionEnvironment->rootDeviceEnvironments[0]);
 

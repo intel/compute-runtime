@@ -9,6 +9,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/options.h"
 #include "shared/source/os_interface/product_helper.h"
@@ -29,7 +30,7 @@ void adjustHwInfoForTests(HardwareInfo &hwInfoForTests, uint32_t euPerSubSlice, 
     // Reflect the release's semaphore64 availability explicitly so a device derives deviceInfo.semaphore64bCmdSupport
     // per its real default rather than defaulting the whole gen to the legacy command.
     hwInfoForTests.featureTable.flags.ftrHwSemaphore64 = hwInfoForTests.caps.availableSemaphore64;
-    if (hwInfoForTests.platform.eRenderCoreFamily >= IGFX_XE_HPG_CORE) {
+    if (EngineHelpers::isCcs(hwInfoForTests.capabilityTable.defaultEngineType)) {
         hwInfoForTests.featureTable.flags.ftrCCSNode = hwInfoForTests.gtSystemInfo.CCSInfo.NumberOfCCSEnabled > 0;
     }
 

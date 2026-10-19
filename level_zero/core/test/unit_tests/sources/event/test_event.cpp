@@ -5010,7 +5010,6 @@ struct EventPoolCreateNegativeTest : public ::testing::Test {
         for (uint32_t i = 0; i < numRootDevices; i++) {
             executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(NEO::defaultHwInfo.get());
             executionEnvironment->rootDeviceEnvironments[i]->initGmm();
-            UnitTestSetter::setCcsExposure(*executionEnvironment->rootDeviceEnvironments[i]);
         }
         executionEnvironment->calculateMaxOsContextCount();
 

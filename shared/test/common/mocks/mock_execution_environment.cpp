@@ -10,7 +10,6 @@
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/test/common/fixtures/mock_aub_center_fixture.h"
 #include "shared/test/common/helpers/default_hw_info.h"
-#include "shared/test/common/helpers/unit_test_helper.h"
 
 #include "gtest/gtest.h"
 
@@ -78,8 +77,6 @@ MockExecutionEnvironment::MockExecutionEnvironment(const HardwareInfo *hwInfo, b
         if (useMockGmm) {
             rootDeviceEnvironments[rootDeviceIndex]->initGmm();
         }
-
-        UnitTestSetter::setCcsExposure(*rootDeviceEnvironments[rootDeviceIndex]);
     }
 
     calculateMaxOsContextCount();

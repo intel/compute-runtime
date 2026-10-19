@@ -36,20 +36,6 @@ XE3P_CORETEST_F(DeviceXe3pCoreTest, whenCallingGetMemoryPropertiesWithNonNullPtr
 
 using CommandQueueGroupTest = Test<DeviceFixture>;
 
-XE3P_CORETEST_F(CommandQueueGroupTest, givenNoBlitterSupportAndNoCCSThenOneQueueGroupIsReturned) {
-    const uint32_t rootDeviceIndex = 0u;
-    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
-    hwInfo.featureTable.flags.ftrCCSNode = false;
-    hwInfo.capabilityTable.blitterOperationsSupported = false;
-    auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, rootDeviceIndex);
-    MockDeviceImp mockDevice(neoMockDevice);
-
-    uint32_t count = 0;
-    ze_result_t res = mockDevice.getCommandQueueGroupProperties(&count, nullptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    EXPECT_GE(count, 1u);
-}
-
 XE3P_CORETEST_F(CommandQueueGroupTest, givenNoBlitterSupportAndCCSThenOneQueueGroupIsReturned) {
     const uint32_t rootDeviceIndex = 0u;
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();

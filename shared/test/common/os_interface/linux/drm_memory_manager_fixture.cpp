@@ -13,7 +13,6 @@ void DrmMemoryManagerBasic::SetUp() {
     for (auto i = 0u; i < numRootDevices; i++) {
         executionEnvironment.rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(defaultHwInfo.get());
         executionEnvironment.rootDeviceEnvironments[i]->osInterface = std::make_unique<OSInterface>();
-        UnitTestSetter::setCcsExposure(*executionEnvironment.rootDeviceEnvironments[i]);
 
         auto drm = Drm::create(nullptr, *executionEnvironment.rootDeviceEnvironments[i]);
         executionEnvironment.rootDeviceEnvironments[i]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));

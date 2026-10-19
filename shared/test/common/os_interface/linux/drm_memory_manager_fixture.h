@@ -68,7 +68,6 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
         for (auto i = 0u; i < numRootDevices; i++) {
             auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[i].get();
             rootDeviceEnvironment->setHwInfoAndInitHelpers(defaultHwInfo.get());
-            UnitTestSetter::setCcsExposure(*executionEnvironment->rootDeviceEnvironments[i]);
 
             rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
             rootDeviceEnvironment->osInterface->setDriverModel(DrmMockCustom::create(*rootDeviceEnvironment));

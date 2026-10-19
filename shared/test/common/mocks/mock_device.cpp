@@ -14,7 +14,6 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/performance_counters.h"
 #include "shared/test/common/fixtures/mock_aub_center_fixture.h"
-#include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_ostime.h"
@@ -59,7 +58,6 @@ MockDevice::MockDevice(ExecutionEnvironment *executionEnvironment, uint32_t root
     }
     this->deferredImmediateCmdListEnabled = false;
     executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfoAndInitHelpers(&hwInfo);
-    UnitTestSetter::setCcsExposure(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
     executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->initGmm();
     executionEnvironment->calculateMaxOsContextCount();
 
@@ -138,8 +136,6 @@ ExecutionEnvironment *MockDevice::prepareExecutionEnvironment(const HardwareInfo
     pHwInfo = pHwInfo ? pHwInfo : defaultHwInfo.get();
     for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
         executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(pHwInfo);
-
-        UnitTestSetter::setCcsExposure(*executionEnvironment->rootDeviceEnvironments[i]);
         executionEnvironment->rootDeviceEnvironments[i]->initGmm();
     }
     executionEnvironment->setDeviceHierarchyMode(executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>());
@@ -179,7 +175,6 @@ ExecutionEnvironment *MockDevice::prepareExecutionEnvironment(const HardwareInfo
     auto hwInfo = pHwInfo ? pHwInfo : defaultHwInfo.get();
 
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(hwInfo);
-    UnitTestSetter::setCcsExposure(*executionEnvironment->rootDeviceEnvironments[0]);
 
     executionEnvironment->setDeviceHierarchyMode(executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>());
 

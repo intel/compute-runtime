@@ -6349,8 +6349,6 @@ TEST(MemoryBitfieldTests, givenDeviceWithValidBitfieldWhenAllocatingSharedMemory
         executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(defaultHwInfo.get());
         executionEnvironment->rootDeviceEnvironments[i]->initGmm();
         executionEnvironment->rootDeviceEnvironments[i]->memoryOperationsInterface = std::make_unique<MockMemoryOperations>();
-
-        UnitTestSetter::setCcsExposure(*executionEnvironment->rootDeviceEnvironments[i]);
     }
     executionEnvironment->calculateMaxOsContextCount();
 
