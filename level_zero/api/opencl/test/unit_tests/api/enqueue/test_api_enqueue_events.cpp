@@ -527,6 +527,34 @@ TEST_F(EnqueueImageEventPlumbingFixture, givenUserEventNotSetButNotADependencyWh
     EXPECT_TRUE(capturingCmdList.stagingCopiesAllowedAtImageCopy[0]);
 }
 
+TEST_F(EnqueueImageEventPlumbingFixture, givenCommandListReturningErrorWhenBlockingReadImageEnqueuedThenErrorMappedAndQueueIsNotSynchronized) {
+    capturingCmdList.appendImageCopyToMemoryExtResult = ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, clEnqueueReadImage(getCommandQueue(), image, CL_TRUE, origin.data(), region.data(), 0, 0, imageHostData.data(), 0, nullptr, nullptr));
+    EXPECT_EQ(1u, capturingCmdList.stagingCopiesAllowedAtImageCopy.size());
+    EXPECT_FALSE(capturingCmdList.hostSynchronizeArgs.wasCalled());
+}
+
+TEST_F(EnqueueImageEventPlumbingFixture, givenCommandListReturningErrorWhenBlockingWriteImageEnqueuedThenErrorMappedAndQueueIsNotSynchronized) {
+    capturingCmdList.appendImageCopyFromMemoryExtResult = ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, clEnqueueWriteImage(getCommandQueue(), image, CL_TRUE, origin.data(), region.data(), 0, 0, imageHostData.data(), 0, nullptr, nullptr));
+    EXPECT_EQ(1u, capturingCmdList.appendImageCopyFromMemoryExtArgs.count());
+    EXPECT_FALSE(capturingCmdList.hostSynchronizeArgs.wasCalled());
+}
+
+TEST_F(EnqueueImageEventPlumbingFixture, givenBlockingReadImageWhenEnqueuedThenHostSynchronizeFollowsTheCopy) {
+    EXPECT_EQ(CL_SUCCESS, clEnqueueReadImage(getCommandQueue(), image, CL_TRUE, origin.data(), region.data(), 0, 0, imageHostData.data(), 0, nullptr, nullptr));
+    EXPECT_EQ(1u, capturingCmdList.stagingCopiesAllowedAtImageCopy.size());
+    EXPECT_EQ(1u, capturingCmdList.hostSynchronizeArgs.count());
+}
+
+TEST_F(EnqueueImageEventPlumbingFixture, givenBlockingWriteImageWhenEnqueuedThenHostSynchronizeFollowsTheCopy) {
+    EXPECT_EQ(CL_SUCCESS, clEnqueueWriteImage(getCommandQueue(), image, CL_TRUE, origin.data(), region.data(), 0, 0, imageHostData.data(), 0, nullptr, nullptr));
+    EXPECT_EQ(1u, capturingCmdList.appendImageCopyFromMemoryExtArgs.count());
+    EXPECT_EQ(1u, capturingCmdList.hostSynchronizeArgs.count());
+}
+
 } // namespace ult
 } // namespace LEO
 } // namespace NEO

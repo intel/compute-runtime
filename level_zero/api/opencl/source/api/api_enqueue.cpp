@@ -160,7 +160,7 @@ cl_int CL_API_CALL clEnqueueReadBuffer(cl_command_queue commandQueue,
                                                           hSignalEvent,
                                                           waitEvents.size(),
                                                           waitEvents.data());
-    if (blockingRead) {
+    if (blockingRead && ret == ZE_RESULT_SUCCESS) {
         lock.unlock();
         ret = pCommandQueue->hostSynchronize(std::numeric_limits<uint64_t>::max());
     }
@@ -223,7 +223,7 @@ cl_int CL_API_CALL clEnqueueReadBufferRect(cl_command_queue commandQueue,
                                                           hSignalEvent,
                                                           waitEvents.size(),
                                                           waitEvents.data());
-    if (blockingRead) {
+    if (blockingRead && ret == ZE_RESULT_SUCCESS) {
         lock.unlock();
         ret = pCommandQueue->hostSynchronize(std::numeric_limits<uint64_t>::max());
     }
@@ -266,7 +266,7 @@ cl_int CL_API_CALL clEnqueueWriteBuffer(cl_command_queue commandQueue,
                                                           hSignalEvent,
                                                           waitEvents.size(),
                                                           waitEvents.data());
-    if (blockingWrite) {
+    if (blockingWrite && ret == ZE_RESULT_SUCCESS) {
         lock.unlock();
         ret = pCommandQueue->hostSynchronize(std::numeric_limits<uint64_t>::max());
     }
@@ -329,7 +329,7 @@ cl_int CL_API_CALL clEnqueueWriteBufferRect(cl_command_queue commandQueue,
                                                           hSignalEvent,
                                                           waitEvents.size(),
                                                           waitEvents.data());
-    if (blockingWrite) {
+    if (blockingWrite && ret == ZE_RESULT_SUCCESS) {
         lock.unlock();
         ret = pCommandQueue->hostSynchronize(std::numeric_limits<uint64_t>::max());
     }
@@ -509,7 +509,7 @@ cl_int CL_API_CALL clEnqueueReadImage(cl_command_queue commandQueue,
                                                                  hSignalEvent,
                                                                  waitEvents.size(),
                                                                  waitEvents.data());
-    if (blockingRead) {
+    if (blockingRead && ret == ZE_RESULT_SUCCESS) {
         lock.unlock();
         ret = pCommandQueue->hostSynchronize(std::numeric_limits<uint64_t>::max());
     }
@@ -572,7 +572,7 @@ cl_int CL_API_CALL clEnqueueWriteImage(cl_command_queue commandQueue,
                                                                    hSignalEvent,
                                                                    waitEvents.size(),
                                                                    waitEvents.data());
-    if (blockingWrite) {
+    if (blockingWrite && ret == ZE_RESULT_SUCCESS) {
         lock.unlock();
         ret = pCommandQueue->hostSynchronize(std::numeric_limits<uint64_t>::max());
     }
@@ -1537,7 +1537,7 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueMemcpyINTEL(
                                                           hSignalEvent,
                                                           waitEvents.size(),
                                                           waitEvents.data());
-    if (blocking) {
+    if (blocking && ret == ZE_RESULT_SUCCESS) {
         lock.unlock();
         ret = pCommandQueue->hostSynchronize(std::numeric_limits<uint64_t>::max());
     }

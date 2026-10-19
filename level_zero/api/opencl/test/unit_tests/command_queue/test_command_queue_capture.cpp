@@ -354,6 +354,77 @@ TEST_F(LeoCommandQueueCaptureTest, givenCommandListReturningErrorWhenWriteBuffer
     clReleaseMemObject(buffer);
 }
 
+TEST_F(LeoCommandQueueCaptureTest, givenCommandListReturningErrorWhenBlockingReadAndWriteBufferEnqueuedThenErrorMappedAndQueueIsNotSynchronized) {
+    constexpr size_t bufferSize = 64u;
+    auto buffer = createBuffer(bufferSize);
+    std::array<uint8_t, bufferSize> hostData{};
+
+    capturingCmdList.appendMemoryCopyResult = ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, clEnqueueReadBuffer(getCommandQueue(), buffer, CL_TRUE, 0, bufferSize, hostData.data(), 0, nullptr, nullptr));
+    EXPECT_EQ(1u, capturingCmdList.appendMemoryCopyArgs.count());
+    EXPECT_FALSE(capturingCmdList.hostSynchronizeArgs.wasCalled());
+
+    capturingCmdList.clearCaptures();
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, clEnqueueWriteBuffer(getCommandQueue(), buffer, CL_TRUE, 0, bufferSize, hostData.data(), 0, nullptr, nullptr));
+    EXPECT_EQ(1u, capturingCmdList.appendMemoryCopyArgs.count());
+    EXPECT_FALSE(capturingCmdList.hostSynchronizeArgs.wasCalled());
+
+    clReleaseMemObject(buffer);
+}
+
+TEST_F(LeoCommandQueueCaptureTest, givenCommandListReturningErrorWhenBlockingReadAndWriteBufferRectEnqueuedThenErrorMappedAndQueueIsNotSynchronized) {
+    constexpr size_t rowBytes = 16u;
+    constexpr size_t numRows = 4u;
+    auto buffer = createBuffer(rowBytes * numRows);
+    std::array<uint8_t, rowBytes * numRows> hostData{};
+
+    const size_t origin[3] = {0u, 0u, 0u};
+    const size_t region[3] = {rowBytes, numRows, 1u};
+
+    capturingCmdList.appendMemoryCopyRegionResult = ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, clEnqueueReadBufferRect(getCommandQueue(), buffer, CL_TRUE, origin, origin, region,
+                                                           0u, 0u, 0u, 0u, hostData.data(), 0, nullptr, nullptr));
+    EXPECT_EQ(1u, capturingCmdList.appendMemoryCopyRegionArgs.count());
+    EXPECT_FALSE(capturingCmdList.hostSynchronizeArgs.wasCalled());
+
+    capturingCmdList.clearCaptures();
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, clEnqueueWriteBufferRect(getCommandQueue(), buffer, CL_TRUE, origin, origin, region,
+                                                            0u, 0u, 0u, 0u, hostData.data(), 0, nullptr, nullptr));
+    EXPECT_EQ(1u, capturingCmdList.appendMemoryCopyRegionArgs.count());
+    EXPECT_FALSE(capturingCmdList.hostSynchronizeArgs.wasCalled());
+
+    clReleaseMemObject(buffer);
+}
+
+TEST_F(LeoCommandQueueCaptureTest, givenCommandListReturningErrorWhenBlockingMemcpyIntelEnqueuedThenErrorMappedAndQueueIsNotSynchronized) {
+    constexpr size_t copySize = 64u;
+    std::array<uint8_t, copySize> srcData{};
+    std::array<uint8_t, copySize> dstData{};
+
+    capturingCmdList.appendMemoryCopyResult = ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, clEnqueueMemcpyINTEL(getCommandQueue(), CL_TRUE, dstData.data(), srcData.data(), copySize, 0, nullptr, nullptr));
+    EXPECT_EQ(1u, capturingCmdList.appendMemoryCopyArgs.count());
+    EXPECT_FALSE(capturingCmdList.hostSynchronizeArgs.wasCalled());
+}
+
+TEST_F(LeoCommandQueueCaptureTest, givenBlockingReadBufferWhenHostSynchronizeFailsThenErrorIsReturned) {
+    constexpr size_t bufferSize = 64u;
+    auto buffer = createBuffer(bufferSize);
+    std::array<uint8_t, bufferSize> hostData{};
+
+    capturingCmdList.hostSynchronizeResult = ZE_RESULT_ERROR_DEVICE_LOST;
+
+    EXPECT_EQ(CL_DEVICE_NOT_AVAILABLE, clEnqueueReadBuffer(getCommandQueue(), buffer, CL_TRUE, 0, bufferSize, hostData.data(), 0, nullptr, nullptr));
+    EXPECT_EQ(1u, capturingCmdList.appendMemoryCopyArgs.count());
+    EXPECT_EQ(1u, capturingCmdList.hostSynchronizeArgs.count());
+
+    capturingCmdList.hostSynchronizeResult = ZE_RESULT_SUCCESS;
+    clReleaseMemObject(buffer);
+}
+
 } // namespace ult
 } // namespace LEO
 } // namespace NEO
