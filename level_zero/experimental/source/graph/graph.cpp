@@ -9,6 +9,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/utilities/tag_allocator.h"
 
 #include "level_zero/api/internal/l0_cmdlist.h"
 #include "level_zero/core/source/cmdlist/cmdlist.h"
@@ -625,6 +626,7 @@ InstantiationEventParams getEffectiveEventParams(const typename Closure<api>::Ap
     if (signalEventHandle) {
         auto effectiveSignalEvent = cbEventsContext.internalEvents->getInternal(signalEventHandle);
         if (L0::Event::fromHandle(effectiveSignalEvent)->isExternalEvent() || eventProperties.signalEventExternal) {
+            UNRECOVERABLE_IF(nullptr == cbEventsContext.cbEventInfoContainer);
             cbEventsContext.storedCbEventState.storeFromEvent(L0::Event::fromHandle(signalEventHandle));
         }
     }
@@ -635,30 +637,94 @@ InstantiationEventParams getEffectiveEventParams(const typename Closure<api>::Ap
             cbEventsContext.internalEvents, eventProperties};
 }
 
+static auto hasSameTimestampNodes(const NEO::InOrderExecEventHelper &eventHelper,
+                                  const NEO::InOrderExecEventHelper &graphHelper) -> bool {
+    if (eventHelper.getTimestampNodesCount() != graphHelper.getTimestampNodesCount() ||
+        eventHelper.getAdditionalTimestampNodesCount() != graphHelper.getAdditionalTimestampNodesCount()) {
+        return false;
+    }
+    for (size_t i = 0; i < graphHelper.getTimestampNodesCount(); ++i) {
+        if (eventHelper.getTimestampNode(i) != graphHelper.getTimestampNode(i)) {
+            return false;
+        }
+    }
+    for (size_t i = 0; i < graphHelper.getAdditionalTimestampNodesCount(); ++i) {
+        if (eventHelper.getAdditionalTimestampNode(i) != graphHelper.getAdditionalTimestampNode(i)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+static auto attachGraphTimestampNodes(NEO::InOrderExecEventHelper &eventHelper,
+                                      const NEO::InOrderExecEventHelper &graphHelper) -> void {
+    // graph keeps its own reference for its whole lifetime, event gets an additional one
+    // which is dropped when the event is re-signaled (node moved to release list -> returnTag)
+    for (size_t i = 0; i < graphHelper.getTimestampNodesCount(); ++i) {
+        auto node = graphHelper.getTimestampNode(i);
+        node->incRefCount();
+        eventHelper.addTimestampNode(node);
+    }
+    for (size_t i = 0; i < graphHelper.getAdditionalTimestampNodesCount(); ++i) {
+        auto node = graphHelper.getAdditionalTimestampNode(i);
+        node->incRefCount();
+        eventHelper.addAdditionalTimestampNode(node);
+    }
+}
+
+ExternalCbEventInfoContainer::~ExternalCbEventInfoContainer() {
+    for (auto &info : signalEventStorage) {
+        info.inOrderExecEventHelper.takeTimestampNodes(info.previousAppendInstantiationNodes);
+        for (auto node : info.previousAppendInstantiationNodes) {
+            node->returnTag(); // drops graph's reference only, event's reference (if attached) is dropped on its re-signal/destroy
+        }
+        info.previousAppendInstantiationNodes.clear();
+    }
+}
+
 void ExternalCbEventInfoContainer::attachExternalCbSignalEventsToExecutableGraph() {
     for (auto &info : signalEventStorage) {
+        auto &eventHelper = info.event->getInOrderExecEventHelper();
+        // attach graph timestamp nodes, but only if the event changed its ownership from the graph
+        if (false == hasSameTimestampNodes(eventHelper, info.inOrderExecEventHelper)) {
+            info.event->resetInOrderTimestampNode(nullptr, 0);
+            info.event->resetAdditionalTimestampNode(nullptr, 0, true);
+            attachGraphTimestampNodes(eventHelper, info.inOrderExecEventHelper);
+        }
         // attach to internal command lists (mcl) references
         info.event->updateInOrdeState(info.inOrderExecEventHelper);
         // attach to icl/queue patch preamble which is a part of external event
         auto &currentPreambleData = getPreambleData(info.executorCommandList);
-        info.event->getInOrderExecEventHelper().assignPatchPreambleData(currentPreambleData.counter(),
-                                                                        currentPreambleData.hostAddress(),
-                                                                        currentPreambleData.hostGpuAddress(),
-                                                                        currentPreambleData.hostAllocation(),
-                                                                        currentPreambleData.deviceGpuAddress(),
-                                                                        currentPreambleData.deviceAllocation());
+        eventHelper.assignPatchPreambleData(currentPreambleData.counter(),
+                                            currentPreambleData.hostAddress(),
+                                            currentPreambleData.hostGpuAddress(),
+                                            currentPreambleData.hostAllocation(),
+                                            currentPreambleData.deviceGpuAddress(),
+                                            currentPreambleData.deviceAllocation());
         info.event->setApiRequiredGraphExternalEvent(info.apiRequiredSignalEvent);
-        PRINT_STRING(NEO::debugManager.flags.PrintGraphData.get(), stderr, "GRAPH attach signal event %p devGpuAddr: %" PRIx64 " devCounter: %" PRIu64 " patchDevGpuAddr: %" PRIx64 " patchCounter: %" PRIu64 " patch host addr %p external create %d, external flag %d\n",
+        info.event->setCbEventWithProfiling(info.cbEventWithProfiling);
+        PRINT_STRING(NEO::debugManager.flags.PrintGraphData.get(), stderr,
+                     "GRAPH attach signal event %p"
+                     " cb devGpuAddr: %" PRIx64
+                     " cb counter: %" PRIu64
+                     " patch devGpuAddr: %" PRIx64
+                     " patch counter: %" PRIu64
+                     " patch host addr %p"
+                     " external create %d,"
+                     " external flag %d"
+                     " cbEventWithProfiling %d\n",
                      info.event,
-                     (info.event->getInOrderExecEventHelper().getBaseDeviceAddress() + info.event->getInOrderAllocationOffset()),
-                     info.event->getInOrderExecEventHelper().getEventData()->counterValue,
+                     (eventHelper.getBaseDeviceAddress() + info.event->getInOrderAllocationOffset()),
+                     eventHelper.getEventData()->counterValue,
                      currentPreambleData.deviceGpuAddress(),
                      currentPreambleData.counter(),
                      currentPreambleData.hostAddress(),
                      info.event->isExternalEvent(),
-                     info.apiRequiredSignalEvent);
+                     info.apiRequiredSignalEvent,
+                     info.cbEventWithProfiling);
     }
 }
+
 void ExternalCbEventInfoContainer::finalizeExecutorContainer() {
     // this function prepares patch preamble storage for patch preamble data for a given signal event
     // later it is filled by updateExecutorContainer() and event is initialized in attachExternalCbSignalEventsToExecutableGraph()

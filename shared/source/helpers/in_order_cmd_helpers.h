@@ -337,6 +337,18 @@ class InOrderExecEventHelper : public NonCopyableClass {
     bool containsImportedIpcAllocs() const { return hasImportedIpcAllocs; }
     void setHasImportedIpcAllocs(bool hasImported) { hasImportedIpcAllocs = hasImported; }
 
+    void swapTimestampNodes(InOrderExecEventHelper &other) {
+        timestampNodes.swap(other.timestampNodes);
+        additionalTimestampNodes.swap(other.additionalTimestampNodes);
+    }
+
+    void takeTimestampNodes(std::vector<NEO::TagNodeBase *> &output) {
+        output.insert(output.end(), timestampNodes.begin(), timestampNodes.end());
+        output.insert(output.end(), additionalTimestampNodes.begin(), additionalTimestampNodes.end());
+        timestampNodes.clear();
+        additionalTimestampNodes.clear();
+    }
+
   protected:
     void assignInOrderExecInfo(std::shared_ptr<InOrderExecInfo> &newInOrderExecInfo);
     void moveTimestampNodesToReleaseList(std::vector<NEO::TagNodeBase *> &nodes);

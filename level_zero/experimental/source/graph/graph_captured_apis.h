@@ -142,6 +142,10 @@ struct ExternalSignalCbEventInfo {
     L0::CommandList *executorCommandList = nullptr;
     NEO::InOrderExecEventHelper inOrderExecEventHelper;
     bool apiRequiredSignalEvent = false;
+    bool cbEventWithProfiling = false;
+    // TS nodes from previous append instantiations signaling this event within the graph,
+    // still used by the graph, not attached to the event, released at graph destruction
+    std::vector<NEO::TagNodeBase *> previousAppendInstantiationNodes;
 };
 
 using PatchPreambleData = std::tuple<PatchPreambleCounter, PatchPreambleHostAddress, PatchPreambleHostGpuAddress, PatchPreambleHostGraphicsAllocation, PatchPreambleDeviceGpuAddress, PatchPreambleDeviceGraphicsAllocation>;
@@ -180,19 +184,30 @@ struct ExternalWaitCbEventsInfo {
 };
 
 struct ExternalCbEventInfoContainer {
+    ~ExternalCbEventInfoContainer();
+
     void addSignalCbEventInfo(L0::Event *event, L0::CommandList *executorCommandList, bool apiRequiredSignalEvent) {
         auto it = std::find_if(signalEventStorage.begin(),
                                signalEventStorage.end(),
                                [event](const ExternalSignalCbEventInfo &info) { return info.event == event; });
 
+        auto &eventHelper = event->getInOrderExecEventHelper();
         if (it != signalEventStorage.end()) {
-            event->getInOrderExecEventHelper().copyData(it->inOrderExecEventHelper);
+            eventHelper.copyData(it->inOrderExecEventHelper);
             it->executorCommandList = executorCommandList;
+            // event signaled again within the graph - latest append defines the TS nodes attached to the event,
+            // nodes from previous append instantiations are still used by the graph, store them away
+            it->inOrderExecEventHelper.takeTimestampNodes(it->previousAppendInstantiationNodes);
+            eventHelper.swapTimestampNodes(it->inOrderExecEventHelper);
+            it->apiRequiredSignalEvent = apiRequiredSignalEvent;
+            it->cbEventWithProfiling = event->isCbEventWithProfiling();
         } else {
             ExternalSignalCbEventInfo &info = signalEventStorage.emplace_back(event, executorCommandList);
             info.inOrderExecEventHelper.initializeLocalTempStorage();
-            event->getInOrderExecEventHelper().copyData(info.inOrderExecEventHelper);
+            eventHelper.copyData(info.inOrderExecEventHelper);
+            eventHelper.swapTimestampNodes(info.inOrderExecEventHelper);
             info.apiRequiredSignalEvent = apiRequiredSignalEvent;
+            info.cbEventWithProfiling = event->isCbEventWithProfiling();
         }
     }
     bool externalCbSignalEventsPresent() const {
@@ -351,45 +366,50 @@ using SubstitutedWaitEvents = StackVec<ze_event_handle_t, 8>;
 
 struct StoredCbEventState {
     StoredCbEventState() {
-        inOrderExecEventHelper.initializeLocalTempStorage();
+        storedExecEventHelper.initializeLocalTempStorage();
     }
 
     void storeFromEvent(L0::Event *event) {
         auto &eventInOrderHelper = event->getInOrderExecEventHelper();
 
         if (eventInOrderHelper.isDataAssigned()) {
-            eventInOrderHelper.copyData(this->inOrderExecEventHelper);
-            this->inOrderExecEventHelper.assignPatchPreambleData(eventInOrderHelper.getPatchPreambleCounter(),
-                                                                 eventInOrderHelper.getPatchPreambleHostAddress(),
-                                                                 eventInOrderHelper.getPatchPreambleHostGpuAddress(),
-                                                                 eventInOrderHelper.getPatchPreambleHostAllocation(),
-                                                                 eventInOrderHelper.getPatchPreambleDeviceGpuAddress(),
-                                                                 eventInOrderHelper.getPatchPreambleDeviceAllocation());
+            eventInOrderHelper.copyData(this->storedExecEventHelper);
+            this->storedExecEventHelper.assignPatchPreambleData(eventInOrderHelper.getPatchPreambleCounter(),
+                                                                eventInOrderHelper.getPatchPreambleHostAddress(),
+                                                                eventInOrderHelper.getPatchPreambleHostGpuAddress(),
+                                                                eventInOrderHelper.getPatchPreambleHostAllocation(),
+                                                                eventInOrderHelper.getPatchPreambleDeviceGpuAddress(),
+                                                                eventInOrderHelper.getPatchPreambleDeviceAllocation());
         } else {
-            this->inOrderExecEventHelper.unsetInOrderExecInfo();
+            this->storedExecEventHelper.unsetInOrderExecInfo();
         }
+        this->storedExecEventHelper.swapTimestampNodes(eventInOrderHelper);
         this->apiRequiredSignalEvent = event->getApiRequiredGraphExternalEvent();
+        this->cbEventWithProfiling = event->isCbEventWithProfiling();
     }
 
     void restoreToEvent(L0::Event *event) {
         auto &eventInOrderHelper = event->getInOrderExecEventHelper();
 
-        if (this->inOrderExecEventHelper.isDataAssigned()) {
-            this->inOrderExecEventHelper.copyData(eventInOrderHelper);
-            eventInOrderHelper.assignPatchPreambleData(this->inOrderExecEventHelper.getPatchPreambleCounter(),
-                                                       this->inOrderExecEventHelper.getPatchPreambleHostAddress(),
-                                                       this->inOrderExecEventHelper.getPatchPreambleHostGpuAddress(),
-                                                       this->inOrderExecEventHelper.getPatchPreambleHostAllocation(),
-                                                       this->inOrderExecEventHelper.getPatchPreambleDeviceGpuAddress(),
-                                                       this->inOrderExecEventHelper.getPatchPreambleDeviceAllocation());
+        if (this->storedExecEventHelper.isDataAssigned()) {
+            this->storedExecEventHelper.copyData(eventInOrderHelper);
+            eventInOrderHelper.assignPatchPreambleData(this->storedExecEventHelper.getPatchPreambleCounter(),
+                                                       this->storedExecEventHelper.getPatchPreambleHostAddress(),
+                                                       this->storedExecEventHelper.getPatchPreambleHostGpuAddress(),
+                                                       this->storedExecEventHelper.getPatchPreambleHostAllocation(),
+                                                       this->storedExecEventHelper.getPatchPreambleDeviceGpuAddress(),
+                                                       this->storedExecEventHelper.getPatchPreambleDeviceAllocation());
         } else {
             eventInOrderHelper.unsetInOrderExecInfo();
         }
+        eventInOrderHelper.swapTimestampNodes(this->storedExecEventHelper);
         event->setApiRequiredGraphExternalEvent(this->apiRequiredSignalEvent);
+        event->setCbEventWithProfiling(this->cbEventWithProfiling);
     }
 
-    NEO::InOrderExecEventHelper inOrderExecEventHelper;
+    NEO::InOrderExecEventHelper storedExecEventHelper;
     bool apiRequiredSignalEvent = false;
+    bool cbEventWithProfiling = false;
 };
 
 struct CbExternalEventInstantiateContext {

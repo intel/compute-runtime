@@ -3166,6 +3166,117 @@ TEST_F(GraphTestInstantiationTest, givenInOrderCmdListAndExternalCbEventWhenInst
     event->destroy();
 }
 
+TEST_F(GraphTestInstantiationTest,
+       givenInOrderCmdListAndTimestampExternalCbEventWhenInstantiateToGraphThenRecordExternalCbEvent) {
+    GraphsCleanupGuard graphCleanup;
+
+    ze_result_t returnValue;
+    ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    queueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
+    commandList->setOrdinal(0);
+    auto commandListHandle = commandList->toHandle();
+
+    ze_event_handle_t eventHandle = nullptr;
+    ze_event_counter_based_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+    eventDesc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_GRAPH_EXTERNAL;
+    eventDesc.flags |= ZE_EVENT_COUNTER_BASED_FLAG_HOST_TIMESTAMP;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context->toHandle(), device->toHandle(), &eventDesc, &eventHandle));
+
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    ze_graph_handle_t graphHandle = srcGraph->toHandle();
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(commandListHandle, graphHandle, nullptr));
+
+    Mock<Module> module(this->device, nullptr);
+    Mock<KernelImp> kernel;
+    kernel.module = &module;
+    ze_kernel_handle_t kernelHandle = kernel.toHandle();
+    ze_group_count_t groupCount = {1, 1, 1};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernel(commandListHandle, kernelHandle, &groupCount, eventHandle, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernel(commandListHandle, kernelHandle, &groupCount, eventHandle, 0, nullptr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(commandListHandle, &graphHandle, nullptr));
+
+    ExecutableGraph execGraph;
+    execGraph.instantiateFrom(*(srcGraph.get()));
+
+    auto event = L0::Event::fromHandle(eventHandle);
+    auto &externalCbSignalEventContainer = execGraph.getExternalCbEventInfoContainer()->getCbSignalEventInfos();
+    // event used twice in the graph, but should be recorded only once
+    EXPECT_EQ(1u, externalCbSignalEventContainer.size());
+    bool externalCbEventFound = false;
+    bool hasSavedTimestampNodes = false;
+    const std::vector<NEO::TagNodeBase *> *previousAppendInstantiationNodes = nullptr;
+    const NEO::InOrderExecEventHelper *graphInOrderExecEventHelper = nullptr;
+    for (const auto &entry : externalCbSignalEventContainer) {
+        EXPECT_EQ(nullptr, entry.executorCommandList);
+        if (event == entry.event) {
+            externalCbEventFound = true;
+            hasSavedTimestampNodes = entry.inOrderExecEventHelper.getAdditionalTimestampNodesCount() > 0 ||
+                                     entry.inOrderExecEventHelper.getTimestampNodesCount() > 0;
+            previousAppendInstantiationNodes = &entry.previousAppendInstantiationNodes;
+            graphInOrderExecEventHelper = &entry.inOrderExecEventHelper;
+            break;
+        }
+    }
+    EXPECT_TRUE(externalCbEventFound);
+    EXPECT_TRUE(hasSavedTimestampNodes);
+    // event used twice, check if 1st append nodes were put away
+    ASSERT_NE(nullptr, previousAppendInstantiationNodes);
+    EXPECT_NE(0u, previousAppendInstantiationNodes->size());
+    ASSERT_NE(nullptr, graphInOrderExecEventHelper);
+
+    // use event on immediate - switch TS nodes to immediate command list
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernel(commandListHandle, kernelHandle, &groupCount, eventHandle, 0, nullptr));
+
+    // execute a graph - check if event is attached to the state of the graph after execution
+    execGraph.execute(commandList.get(), nullptr, nullptr, 0, nullptr);
+    auto &eventHelper = event->getInOrderExecEventHelper();
+
+    EXPECT_EQ(graphInOrderExecEventHelper->getTimestampNodesCount(), eventHelper.getTimestampNodesCount());
+    EXPECT_EQ(graphInOrderExecEventHelper->getAdditionalTimestampNodesCount(), eventHelper.getAdditionalTimestampNodesCount());
+
+    // if not ts is availble, then consider found, as search is not needed
+    bool tsFound = graphInOrderExecEventHelper->getTimestampNodesCount() == 0;
+    for (size_t i = 0; i < graphInOrderExecEventHelper->getTimestampNodesCount(); ++i) {
+        if (eventHelper.getTimestampNode(i) == graphInOrderExecEventHelper->getTimestampNode(i)) {
+            tsFound = true;
+        }
+    }
+    EXPECT_EQ(true, tsFound);
+
+    bool additionalTsFound = graphInOrderExecEventHelper->getAdditionalTimestampNodesCount() == 0;
+    for (size_t i = 0; i < graphInOrderExecEventHelper->getAdditionalTimestampNodesCount(); ++i) {
+        if (eventHelper.getAdditionalTimestampNode(i) == graphInOrderExecEventHelper->getAdditionalTimestampNode(i)) {
+            additionalTsFound = true;
+        }
+    }
+    EXPECT_EQ(true, additionalTsFound);
+
+    // execute a graph again - check if event is attached to the state of the graph after execution
+    execGraph.execute(commandList.get(), nullptr, nullptr, 0, nullptr);
+
+    tsFound = graphInOrderExecEventHelper->getTimestampNodesCount() == 0;
+    for (size_t i = 0; i < graphInOrderExecEventHelper->getTimestampNodesCount(); ++i) {
+        if (eventHelper.getTimestampNode(i) == graphInOrderExecEventHelper->getTimestampNode(i)) {
+            tsFound = true;
+        }
+    }
+    EXPECT_EQ(true, tsFound);
+
+    additionalTsFound = graphInOrderExecEventHelper->getAdditionalTimestampNodesCount() == 0;
+    for (size_t i = 0; i < graphInOrderExecEventHelper->getAdditionalTimestampNodesCount(); ++i) {
+        if (eventHelper.getAdditionalTimestampNode(i) == graphInOrderExecEventHelper->getAdditionalTimestampNode(i)) {
+            additionalTsFound = true;
+        }
+    }
+    EXPECT_EQ(true, additionalTsFound);
+
+    srcGraph.reset();
+    event->destroy();
+}
+
 TEST_F(GraphTestInstantiationTest, givenInOrderCmdListAndExternalCbEventWhenExecuteTwoGraphsThenRecordedExternalCbEventAttachedToStateBeforeInstantiationOfDataUnassignedAndGraphStateAfterExecution) {
     GraphsCleanupGuard graphCleanup;
 
@@ -3318,6 +3429,102 @@ TEST_F(GraphTestInstantiationTest,
     auto graphEventCounterValue = graphExecHelper->getEventData()->counterValue;
     EXPECT_EQ(graphEventDeviceAddress, currentEventInOrderExecHelper->getBaseDeviceAddress() + event->getInOrderAllocationOffset());
     EXPECT_EQ(graphEventCounterValue, currentEventInOrderExecHelper->getEventData()->counterValue);
+
+    srcGraph.reset();
+    event->destroy();
+}
+
+TEST_F(GraphTestInstantiationTest,
+       givenTimestampExternalCreatedCbEventUsedOnImmediateCommandListWhenInstantiatedOnExecutableGraphThenAfterInstantiationAttachedStatePointsToImmediateCommandList) {
+    GraphsCleanupGuard graphCleanup;
+
+    ze_result_t returnValue;
+    ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    queueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
+    commandList->setOrdinal(0);
+    auto commandListHandle = commandList->toHandle();
+
+    ze_event_handle_t eventHandle = nullptr;
+    ze_event_counter_based_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+    eventDesc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_GRAPH_EXTERNAL;
+    eventDesc.flags |= ZE_EVENT_COUNTER_BASED_FLAG_DEVICE_TIMESTAMP;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context->toHandle(), device->toHandle(), &eventDesc, &eventHandle));
+    auto event = L0::Event::fromHandle(eventHandle);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(commandListHandle, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(commandListHandle, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(commandListHandle, eventHandle, 0, nullptr));
+
+    auto immediateEventInOrderExecHelper = &event->getInOrderExecEventHelper();
+    auto immediateEventDeviceAddress = immediateEventInOrderExecHelper->getBaseDeviceAddress() + event->getInOrderAllocationOffset();
+    auto immediateEventCounterValue = immediateEventInOrderExecHelper->getEventData()->counterValue;
+
+    std::vector<NEO::TagNodeBase *> immediateTimestampNodes(immediateEventInOrderExecHelper->getTimestampNodesCount());
+    for (uint32_t i = 0; i < immediateEventInOrderExecHelper->getTimestampNodesCount(); ++i) {
+        immediateTimestampNodes[i] = immediateEventInOrderExecHelper->getTimestampNode(i);
+    }
+    std::vector<NEO::TagNodeBase *> immediateAdditionalTimestampNodes(immediateEventInOrderExecHelper->getAdditionalTimestampNodesCount());
+    for (uint32_t i = 0; i < immediateEventInOrderExecHelper->getAdditionalTimestampNodesCount(); ++i) {
+        immediateAdditionalTimestampNodes[i] = immediateEventInOrderExecHelper->getAdditionalTimestampNode(i);
+    }
+
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    ze_graph_handle_t graphHandle = srcGraph->toHandle();
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(commandListHandle, graphHandle, nullptr));
+
+    Mock<Module> module(this->device, nullptr);
+    Mock<KernelImp> kernel;
+    kernel.module = &module;
+    ze_kernel_handle_t kernelHandle = kernel.toHandle();
+    ze_group_count_t groupCount = {1, 1, 1};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernel(commandListHandle, kernelHandle, &groupCount, eventHandle, 0, nullptr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(commandListHandle, &graphHandle, nullptr));
+
+    ExecutableGraph execGraph;
+    execGraph.instantiateFrom(*(srcGraph.get()));
+
+    NEO::InOrderExecEventHelper *currentEventInOrderExecHelper = &event->getInOrderExecEventHelper();
+    EXPECT_EQ(immediateEventDeviceAddress, currentEventInOrderExecHelper->getBaseDeviceAddress() + event->getInOrderAllocationOffset());
+    EXPECT_EQ(immediateEventCounterValue, currentEventInOrderExecHelper->getEventData()->counterValue);
+    ASSERT_EQ(immediateTimestampNodes.size(), currentEventInOrderExecHelper->getTimestampNodesCount());
+    for (uint32_t i = 0; i < immediateTimestampNodes.size(); ++i) {
+        EXPECT_EQ(immediateTimestampNodes[i], currentEventInOrderExecHelper->getTimestampNode(i));
+    }
+    ASSERT_EQ(immediateAdditionalTimestampNodes.size(), currentEventInOrderExecHelper->getAdditionalTimestampNodesCount());
+    for (uint32_t i = 0; i < immediateAdditionalTimestampNodes.size(); ++i) {
+        EXPECT_EQ(immediateAdditionalTimestampNodes[i], currentEventInOrderExecHelper->getAdditionalTimestampNode(i));
+    }
+
+    auto res = execGraph.execute(commandList.get(), nullptr, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    currentEventInOrderExecHelper = &event->getInOrderExecEventHelper();
+
+    const NEO::InOrderExecEventHelper *graphExecHelper = nullptr;
+    auto &externalCbSignalEventContainer = execGraph.getExternalCbEventInfoContainer()->getCbSignalEventInfos();
+    for (const auto &entry : externalCbSignalEventContainer) {
+        if (event == entry.event) {
+            graphExecHelper = &entry.inOrderExecEventHelper;
+            break;
+        }
+    }
+    ASSERT_NE(nullptr, graphExecHelper);
+    auto graphEventDeviceAddress = graphExecHelper->getBaseDeviceAddress() + event->getInOrderAllocationOffset();
+    auto graphEventCounterValue = graphExecHelper->getEventData()->counterValue;
+    EXPECT_EQ(graphEventDeviceAddress, currentEventInOrderExecHelper->getBaseDeviceAddress() + event->getInOrderAllocationOffset());
+    EXPECT_EQ(graphEventCounterValue, currentEventInOrderExecHelper->getEventData()->counterValue);
+    ASSERT_EQ(graphExecHelper->getTimestampNodesCount(), currentEventInOrderExecHelper->getTimestampNodesCount());
+    for (uint32_t i = 0; i < graphExecHelper->getTimestampNodesCount(); ++i) {
+        EXPECT_EQ(graphExecHelper->getTimestampNode(i), currentEventInOrderExecHelper->getTimestampNode(i));
+    }
+    ASSERT_EQ(graphExecHelper->getAdditionalTimestampNodesCount(), currentEventInOrderExecHelper->getAdditionalTimestampNodesCount());
+    for (uint32_t i = 0; i < graphExecHelper->getAdditionalTimestampNodesCount(); ++i) {
+        EXPECT_EQ(graphExecHelper->getAdditionalTimestampNode(i), currentEventInOrderExecHelper->getAdditionalTimestampNode(i));
+    }
 
     srcGraph.reset();
     event->destroy();
