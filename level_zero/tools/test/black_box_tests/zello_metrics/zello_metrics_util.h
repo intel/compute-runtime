@@ -58,10 +58,6 @@ class TestSettings {
     TestParameter<uint32_t> eventNReportCount{1};
     TestParameter<bool> showSystemInfo{false};
     TestParameter<uint32_t> programmableLimit{0};
-    TestParameter<std::string> saveDataPrefix{""};
-    TestParameter<uint64_t> timeAggregationWindow{UINT64_MAX};
-    TestParameter<std::string> decodeMode{"full"};
-    TestParameter<std::string> decodedBufferPath{""};
     void readMetricNames(char *optArg);
 
   private:
@@ -103,8 +99,6 @@ ze_event_pool_handle_t createHostVisibleEventPool(ze_context_handle_t contextHan
 ze_event_handle_t createHostVisibleEvent(ze_event_pool_handle_t hostVisibleEventPool);
 void obtainCalculatedMetrics(zet_metric_group_handle_t metricGroup, uint8_t *rawData, uint32_t rawDataSize);
 void showMetricsExportData(uint8_t *pExportData, size_t exportDataSize);
-bool saveDataToFile(const std::string &filepath, const uint8_t *data, size_t size);
-bool loadDataFromFile(const std::string &filepath, std::vector<uint8_t> &data);
 
 typedef ze_result_t (*pfzetIntelMetricScopesGetExp)(
     zet_context_handle_t, zet_device_handle_t, uint32_t *, zet_intel_metric_scope_exp_handle_t *);

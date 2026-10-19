@@ -769,7 +769,7 @@ bool metricGetTimestampTest() {
             std::make_unique<SingleDeviceSingleQueueExecutionCtxt>(deviceId, subDeviceId);
 
         auto metricGroup = zmu::findMetricGroup(metricGroupName.c_str(),
-                                                static_cast<zet_metric_group_sampling_type_flags_t>(ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED | ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED | ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EXP_TRACER_BASED),
+                                                static_cast<zet_metric_group_sampling_type_flags_t>(ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED | ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED),
                                                 executionCtxt->getDeviceHandle(0));
 
         ze_result_t status;
@@ -991,7 +991,7 @@ bool metricSupportedScopesTest() {
             std::make_unique<SingleDeviceSingleQueueExecutionCtxt>(deviceId, subDeviceId);
 
         auto metricGroup = zmu::findMetricGroup(metricGroupName.c_str(),
-                                                static_cast<zet_metric_group_sampling_type_flags_t>(ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED | ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED | ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EXP_TRACER_BASED),
+                                                static_cast<zet_metric_group_sampling_type_flags_t>(ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED | ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED),
                                                 executionCtxt->getDeviceHandle(0));
 
         // Get Function Address for Experimental API's

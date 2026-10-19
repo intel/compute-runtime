@@ -10,7 +10,6 @@
 #include "level_zero/tools/test/black_box_tests/zello_metrics/zello_metrics.h"
 
 #include <cstring>
-#include <fstream>
 #include <iomanip>
 #include <mutex>
 #include <thread>
@@ -555,14 +554,6 @@ void TestSettings::parseArguments(int argc, char *argv[]) {
                      "\n  -y,   --showSystemInfo                capture and show system info like frequency and power"
                      "\n                                        (requires ZES_ENABLE_SYSMAN=1)"
                      "\n  -p,   --programmableLimit <count>     max number of programmables to iterate (0 = no limit)"
-                     "\n  -w,   --writeFile <prefix>            save raw and export data with prefix (creates prefix_d#_s#_raw.bin and prefix_d#_s#_export.bin)"
-                     "\n  -A,   --aggregationWindow <ns>        time aggregation window in nanoseconds for calculation operations"
-                     "\n                                        (default: UINT64_MAX = all data in a single window)"
-                     "\n  -D,   --decodeMode <full|save|calc>   decode-to-binary workflow mode for traceDecodeToBinaryAndCalculateTest:"
-                     "\n                                        full (default): decode and calculate in one run"
-                     "\n                                        save: decode raw data to a binary buffer and write it to --decodedBufferPath"
-                     "\n                                        calc: load a previously decoded binary buffer from --decodedBufferPath and calculate"
-                     "\n  -B,   --decodedBufferPath <prefix>    path prefix for the decoded binary buffer (creates prefix_d#_s#_decoded.bin)"
                      "\n  -h,   --help                          display help message"
                      "\n";
     };
@@ -612,22 +603,6 @@ void TestSettings::parseArguments(int argc, char *argv[]) {
     if (isParamEnabled(argc, argv, "-p", "--programmableLimit", &optind)) {
         programmableLimit.set(static_cast<uint32_t>(std::atoi(copyArg(argc, argv, optind).c_str())));
     }
-
-    if (isParamEnabled(argc, argv, "-w", "--writeFile", &optind)) {
-        saveDataPrefix.set(copyArg(argc, argv, optind));
-    }
-
-    if (isParamEnabled(argc, argv, "-A", "--aggregationWindow", &optind)) {
-        timeAggregationWindow.set(static_cast<uint64_t>(std::strtoull(copyArg(argc, argv, optind).c_str(), nullptr, 10)));
-    }
-
-    if (isParamEnabled(argc, argv, "-D", "--decodeMode", &optind)) {
-        decodeMode.set(copyArg(argc, argv, optind));
-    }
-
-    if (isParamEnabled(argc, argv, "-B", "--decodedBufferPath", &optind)) {
-        decodedBufferPath.set(copyArg(argc, argv, optind));
-    }
 }
 
 TestSettings *TestSettings::get() {
@@ -667,51 +642,5 @@ ZetIntelMetricExtensions::ZetIntelMetricExtensions(ze_driver_handle_t driverHand
 class DummyStreamBuf : public std::streambuf {};
 DummyStreamBuf emptyStreamBuf;
 std::ostream emptyCout(&emptyStreamBuf);
-
-bool saveDataToFile(const std::string &filepath, const uint8_t *data, size_t size) {
-    if (filepath.empty()) {
-        return true;
-    }
-
-    std::ofstream outFile(filepath, std::ios::binary);
-    if (outFile.is_open()) {
-        outFile.write(reinterpret_cast<const char *>(data), size);
-        outFile.close();
-        LOG(LogLevel::INFO) << "Data saved to: " << filepath << " (" << size << " bytes)\n";
-        return true;
-    } else {
-        LOG(LogLevel::ERROR) << "Failed to open file: " << filepath << "\n";
-        return false;
-    }
-}
-
-bool loadDataFromFile(const std::string &filepath, std::vector<uint8_t> &data) {
-    if (filepath.empty()) {
-        LOG(LogLevel::ERROR) << "Cannot load data: empty file path\n";
-        return false;
-    }
-
-    std::ifstream inFile(filepath, std::ios::binary | std::ios::ate);
-    if (!inFile.is_open()) {
-        LOG(LogLevel::ERROR) << "Failed to open file: " << filepath << "\n";
-        return false;
-    }
-
-    std::streamsize size = inFile.tellg();
-    if (size <= 0) {
-        LOG(LogLevel::ERROR) << "File is empty or unreadable: " << filepath << "\n";
-        return false;
-    }
-
-    inFile.seekg(0, std::ios::beg);
-    data.resize(static_cast<size_t>(size));
-    if (!inFile.read(reinterpret_cast<char *>(data.data()), size)) {
-        LOG(LogLevel::ERROR) << "Failed to read file: " << filepath << "\n";
-        return false;
-    }
-
-    LOG(LogLevel::INFO) << "Data loaded from: " << filepath << " (" << size << " bytes)\n";
-    return true;
-}
 
 } // namespace ZelloMetricsUtility
