@@ -420,6 +420,11 @@ bool ProductHelperHw<IGFX_UNKNOWN>::is48bResourceNeededForRayTracing() const {
 }
 
 template <>
+bool ProductHelperHw<IGFX_UNKNOWN>::isGraphPatchPreambleBarrierSupported() const {
+    return false;
+}
+
+template <>
 bool ProductHelperHw<IGFX_UNKNOWN>::isCompressionForbidden(const HardwareInfo &hwInfo) const {
     return false;
 }

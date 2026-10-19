@@ -23,6 +23,8 @@ class ScratchSpaceController;
 
 namespace L0 {
 struct CommandListExecutionContext;
+struct CountersCrossSyncContainer;
+struct PatchPreambleBarrier;
 struct CommandList;
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -46,6 +48,7 @@ struct CommandQueueHw : public CommandQueue {
         size_t waitSize = estimateSingleSynchronizationCommandSize(numberCrossSyncs * partitions, numberCrossSyncs);
         return waitSize;
     }
+    size_t estimatePatchPreambleBarrierSize(const CountersCrossSyncContainer &countersCrossSyncContainer);
     MOCKABLE_VIRTUAL void programFrontEnd(uint64_t scratchAddress, uint32_t perThreadScratchSpaceSlot0Size, NEO::LinearStream &commandStream, NEO::StreamProperties &streamProperties);
 
     size_t estimateFrontEndCmdSize();
@@ -113,7 +116,7 @@ struct CommandQueueHw : public CommandQueue {
     inline size_t estimateLinearStreamSizeSharedInitial(CommandListExecutionContext &ctx);
     inline size_t estimateCommandListSecondaryStart(CommandList *commandList);
     inline size_t estimateCommandListPrimaryStart(bool required);
-    size_t estimateCommandListPatchPreambleWaitSyncSize(CommandListExecutionContext &ctx, CommandList *commandList);
+    size_t estimateCommandListPatchPreambleWaitSyncSize(CommandListExecutionContext &ctx, ze_command_list_handle_t *commandListHandles, uint32_t numCommandLists);
     size_t estimateSingleSynchronizationCommandSize(size_t semaphoreCount, size_t indirectLoadCount);
     inline void dispatchSingleSynchronizationCommand(void *&inputCommandBuffer, uint64_t waitAddress, uint64_t waitValue, size_t semaphoreCount, uint32_t offset, NEO::GraphicsAllocation *waitAllocation);
     inline void dispatchSingleSynchronizationCommand(NEO::LinearStream &commandStream, uint64_t waitAddress, uint64_t waitValue, size_t semaphoreCount, uint32_t offset, NEO::GraphicsAllocation *waitAllocation);
@@ -124,8 +127,8 @@ struct CommandQueueHw : public CommandQueue {
     inline void dispatchPatchPreambleEnding(CommandListExecutionContext &ctx);
     inline void dispatchPatchPreambleInOrderNoop(CommandListExecutionContext &ctx, CommandList *commandList);
     inline void dispatchPatchPreambleAsyncPatchElems(CommandListExecutionContext &ctx, CommandList *commandList);
-    inline void dispatchPatchPreambleCommandListWaitSync(CommandListExecutionContext &ctx, CommandList *commandList);
     inline void dispatchPatchPreambleCrossSync(CommandListExecutionContext &ctx, CommandList *commandList, NEO::LinearStream &commandStream);
+    inline void dispatchPatchPreambleBarrierSignalAndWait(const PatchPreambleBarrier &barrier, uint64_t waitValue, NEO::LinearStream &commandStream);
     inline void ensurePatchPreambleCounterForCopyOffload(CommandListExecutionContext &ctx, ze_command_list_handle_t *phCommandLists, uint32_t numCommandLists);
     inline size_t estimateCommandListResidencySize(CommandList *commandList);
     inline void setFrontEndStateProperties(CommandListExecutionContext &ctx);

@@ -91,6 +91,7 @@ struct CommandQueue : _ze_command_queue_handle_t {
     ze_command_queue_handle_t toHandle() { return this; }
 
     bool peekIsCopyOnlyCommandQueue() const { return this->isCopyOnlyCommandQueue; }
+    uint32_t getPartitionCount() const { return this->partitionCount; }
 
     void unregisterCsrClient();
     void registerCsrClient();

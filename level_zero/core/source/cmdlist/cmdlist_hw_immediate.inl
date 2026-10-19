@@ -2494,6 +2494,8 @@ size_t CommandListCoreFamilyImmediate<gfxCoreFamily>::estimateAdditionalSizeAppe
 
             // for immediate command list driver needs high-level estimate immediate completion cross-sync
             additionalSize += cmdQHw->estimateSingleImmediateCompletionCrossSyncSize(internalOptions.countersCrossSyncContainer->immediateCompletionCrossSyncList.size(), this->partitionCount);
+
+            additionalSize += cmdQHw->estimatePatchPreambleBarrierSize(*internalOptions.countersCrossSyncContainer);
         }
     }
 

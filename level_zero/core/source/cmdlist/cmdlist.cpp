@@ -1061,6 +1061,16 @@ void CommandList::getPatchPreambleFullData(uint64_t &outCounterValue,
     cmdQImmediate->getPatchPreambleFullData(outCounterValue, outHostAddress, outHostGpuAddress, outHostNodeGraphicsAllocation, outDeviceGpuAddress, outDeviceNodeGraphicsAllocation);
 }
 
+uint32_t CommandList::getImmediateQueuePartitionCount() const {
+    UNRECOVERABLE_IF(cmdQImmediate == nullptr);
+    return cmdQImmediate->getPartitionCount();
+}
+
+bool CommandList::isImmediateQueueWaitForPreambleSaved() const {
+    UNRECOVERABLE_IF(cmdQImmediate == nullptr);
+    return cmdQImmediate->getSaveWaitForPreamble();
+}
+
 ze_result_t CommandList::cloneAppendEventExtensions(const ze_base_desc_t *desc, void *&outPnext) {
     while (desc) {
         if (desc->stype == ZE_STRUCTURE_TYPE_EVENT_EXP_FLAGS_DESC) {

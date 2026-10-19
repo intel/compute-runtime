@@ -80,6 +80,10 @@ CommandListExecutionContext::CommandListExecutionContext(
     if (this->countersCrossSyncContainer) {
         this->spaceForResidency += this->countersCrossSyncContainer->patchPreambleCrossSyncList.size();
         this->spaceForResidency += this->countersCrossSyncContainer->immediateCompletionCrossSyncList.size();
+        this->patchPreambleBarrierRequired = this->countersCrossSyncContainer->isBarrierRequired();
+        if (this->patchPreambleBarrierRequired) {
+            this->spaceForResidency += 1;
+        }
     }
 }
 

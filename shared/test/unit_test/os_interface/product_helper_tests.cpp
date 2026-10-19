@@ -1263,6 +1263,18 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingForRegularCmdListDualStr
     EXPECT_TRUE(productHelper->isDualStreamCopyOffloadForRegularCmdListSupported());
 }
 
+HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingForGraphPatchPreambleBarrierSupportThenReturnValueBasedOnDebugFlagAndQwordInOrderCounterSupport) {
+    DebugManagerStateRestore restorer;
+
+    EXPECT_FALSE(productHelper->isGraphPatchPreambleBarrierSupported());
+
+    debugManager.flags.OverrideGraphPatchPreambleBarrierSupport.set(0);
+    EXPECT_FALSE(productHelper->isGraphPatchPreambleBarrierSupported());
+
+    debugManager.flags.OverrideGraphPatchPreambleBarrierSupport.set(1);
+    EXPECT_EQ(FamilyType::isQwordInOrderCounter, productHelper->isGraphPatchPreambleBarrierSupported());
+}
+
 HWTEST_F(ProductHelperTest, givenProductHelperWhenCallingUseAdditionalBlitPropertiesWithBlitPropertiesThenFalseReturned) {
     BlitProperties blitProperties{};
     EXPECT_FALSE(productHelper->useAdditionalBlitProperties(blitProperties));

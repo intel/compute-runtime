@@ -738,6 +738,8 @@ struct CommandList : _ze_command_list_handle_t {
                                   NEO::GraphicsAllocation *&outHostNodeGraphicsAllocation,
                                   uint64_t &outDeviceGpuAddress,
                                   NEO::GraphicsAllocation *&outDeviceNodeGraphicsAllocation);
+    uint32_t getImmediateQueuePartitionCount() const;
+    bool isImmediateQueueWaitForPreambleSaved() const;
 
     virtual void handlePostSyncPrintfAndAssert(bool hangDetected) {};
 

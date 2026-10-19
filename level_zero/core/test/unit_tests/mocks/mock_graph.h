@@ -27,8 +27,12 @@ struct MockGraph : Graph {
 struct MockExecutableGraph : ExecutableGraph {
     using ExecutableGraph::ExecutableGraph;
     using ExecutableGraph::executionTarget;
+    using ExecutableGraph::graphWideImmediateCountersCrossSyncs;
+    using ExecutableGraph::graphWidePatchPreambleCrossSync;
     using ExecutableGraph::myCommandLists;
     using ExecutableGraph::myOrderedSegments;
+    using ExecutableGraph::patchPreambleBarrierCounter;
+    using ExecutableGraph::segmentsCrossSync;
     using ExecutableGraph::subGraphs;
     using ExecutableGraph::usePatchingPreamble;
 };

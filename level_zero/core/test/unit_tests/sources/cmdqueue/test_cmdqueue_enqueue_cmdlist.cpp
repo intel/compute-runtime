@@ -1879,5 +1879,232 @@ HWTEST_F(CommandQueueExecuteDefaultCommandLists, givenPatchPreambleInOrderCrossS
     commandQueue->destroy();
 }
 
+template <typename FamilyType>
+uint64_t getSemaphoreWaitValueForTest(GenCmdList::iterator begin, GenCmdList::iterator semaphoreIt, bool qwordIndirect) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    if (qwordIndirect) {
+        auto lriCmds = findAll<MI_LOAD_REGISTER_IMM *>(begin, semaphoreIt);
+        if (lriCmds.size() < 2u) {
+            ADD_FAILURE();
+            return 0;
+        }
+        auto lriLower = genCmdCast<MI_LOAD_REGISTER_IMM *>(*lriCmds[lriCmds.size() - 2]);
+        auto lriHigher = genCmdCast<MI_LOAD_REGISTER_IMM *>(*lriCmds[lriCmds.size() - 1]);
+        return (static_cast<uint64_t>(lriHigher->getDataDword()) << 32) | lriLower->getDataDword();
+    }
+    return NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreIt));
+}
+
+template <typename FamilyType>
+void testPatchPreambleBarrierDispatch(L0::Device *device, NEO::Device *neoDevice, bool copyEngine) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_ARB_CHECK = typename FamilyType::MI_ARB_CHECK;
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+
+    const bool useSemaphore64bCmd = neoDevice->getDeviceInfo().semaphore64bCmdSupport;
+    const bool qwordIndirect = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(FamilyType::isQwordInOrderCounter, useSemaphore64bCmd);
+
+    ze_result_t returnValue;
+    ze_command_queue_desc_t queueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+
+    WhiteBox<L0::CommandQueue> *commandQueue = whiteboxCast(CommandQueue::create(device,
+                                                                                 neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                                                 &queueDesc,
+                                                                                 copyEngine,
+                                                                                 false,
+                                                                                 false,
+                                                                                 returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(commandQueue->getCsr());
+    ultCsr->storeMakeResidentAllocations = true;
+
+    auto engineType = copyEngine ? NEO::EngineGroupType::copy : NEO::EngineGroupType::compute;
+    auto commandList1 = CommandList::create(device, engineType, 0u, returnValue, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    commandList1->close();
+    auto commandList2 = CommandList::create(device, engineType, 0u, returnValue, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    commandList2->close();
+
+    constexpr uint64_t barrierGpuAddress = 0xABC000;
+    constexpr uint64_t arriveValue = 0x1'0000'0003;
+    constexpr uint64_t releaseValue = 0x1'0000'0006;
+    MockGraphicsAllocation barrierAllocation(nullptr, barrierGpuAddress, 0x200);
+
+    CountersCrossSyncContainer crossSyncContainer;
+    crossSyncContainer.barrier.counterGpuAddress = barrierGpuAddress;
+    crossSyncContainer.barrier.counterAllocation = &barrierAllocation;
+    crossSyncContainer.barrier.arriveValue = arriveValue;
+    crossSyncContainer.barrier.releaseValue = releaseValue;
+    EXPECT_TRUE(crossSyncContainer.isBarrierRequired());
+
+    commandQueue->setPatchingPreamble(true);
+
+    CommandListExecutionInternalOptions internalOptions = {};
+    internalOptions.countersCrossSyncContainer = &crossSyncContainer;
+
+    ze_command_list_handle_t cmdLists[] = {commandList1->toHandle(), commandList2->toHandle()};
+    auto usedSpaceBefore = commandQueue->commandStream.getUsed();
+    returnValue = commandQueue->executeCommandLists(2, cmdLists, nullptr, internalOptions);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto usedSpaceAfter = commandQueue->commandStream.getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    EXPECT_TRUE(ultCsr->isMadeResident(&barrierAllocation));
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList,
+        ptrOffset(commandQueue->commandStream.getCpuBase(), usedSpaceBefore),
+        usedSpaceAfter - usedSpaceBefore));
+
+    auto arbCheckCmds = findAll<MI_ARB_CHECK *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(2u, arbCheckCmds.size());
+
+    // barrier increments counter twice - arrive before and release after the patch preamble
+    auto atomicCmds = findAll<MI_ATOMIC *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(2u, atomicCmds.size());
+    for (auto &atomicIt : atomicCmds) {
+        auto atomic = genCmdCast<MI_ATOMIC *>(*atomicIt);
+        EXPECT_EQ(barrierGpuAddress, NEO::UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*atomic));
+        EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_8B_INCREMENT, atomic->getAtomicOpcode());
+        EXPECT_EQ(MI_ATOMIC::DATA_SIZE::DATA_SIZE_QWORD, atomic->getDataSize());
+    }
+
+    // arrive is dispatched before the patch preamble
+    auto arriveIt = atomicCmds[0];
+    EXPECT_EQ(arbCheckCmds[0], find<MI_ARB_CHECK *>(arriveIt, cmdList.end()));
+    auto arriveSemWaitCmds = findAll<MI_SEMAPHORE_WAIT *>(arriveIt, arbCheckCmds[0]);
+    ASSERT_EQ(1u, arriveSemWaitCmds.size());
+    EXPECT_EQ(barrierGpuAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(genCmdCast<MI_SEMAPHORE_WAIT *>(*arriveSemWaitCmds[0])));
+    EXPECT_EQ(arriveValue, getSemaphoreWaitValueForTest<FamilyType>(arriveIt, arriveSemWaitCmds[0], qwordIndirect));
+
+    // release is dispatched after the patch preamble, before jumping into the first command list only
+    auto releaseIt = atomicCmds[1];
+    EXPECT_EQ(releaseIt, find<MI_ATOMIC *>(arbCheckCmds[1], cmdList.end()));
+    auto bbStartIt = find<MI_BATCH_BUFFER_START *>(releaseIt, cmdList.end());
+    ASSERT_NE(cmdList.end(), bbStartIt);
+    auto bbStart = genCmdCast<MI_BATCH_BUFFER_START *>(*bbStartIt);
+    EXPECT_EQ(commandList1->getCmdContainer().getCmdBufferAllocations()[0]->getGpuAddress(), bbStart->getBatchBufferStartAddress());
+
+    auto releaseSemWaitCmds = findAll<MI_SEMAPHORE_WAIT *>(releaseIt, bbStartIt);
+    ASSERT_EQ(1u, releaseSemWaitCmds.size());
+    EXPECT_EQ(barrierGpuAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(genCmdCast<MI_SEMAPHORE_WAIT *>(*releaseSemWaitCmds[0])));
+    EXPECT_EQ(releaseValue, getSemaphoreWaitValueForTest<FamilyType>(releaseIt, releaseSemWaitCmds[0], qwordIndirect));
+
+    auto semWaitCmdsAfterRelease = findAll<MI_SEMAPHORE_WAIT *>(releaseSemWaitCmds[0], cmdList.end());
+    EXPECT_EQ(1u, semWaitCmdsAfterRelease.size());
+
+    commandList1->destroy();
+    commandList2->destroy();
+    commandQueue->destroy();
+}
+
+HWTEST2_F(CommandQueueExecuteDefaultCommandLists, givenPatchPreambleBarrierWhenExecutingOnComputeQueueThenArriveIsDispatchedBeforeAndReleaseAfterPatchPreamble, IsAtLeastXe3pCore) {
+    testPatchPreambleBarrierDispatch<FamilyType>(device, neoDevice, false);
+}
+
+HWTEST2_F(CommandQueueExecuteDefaultCommandLists, givenPatchPreambleBarrierWhenExecutingOnCopyQueueThenArriveIsDispatchedBeforeAndReleaseAfterPatchPreamble, IsAtLeastXe3pCore) {
+    testPatchPreambleBarrierDispatch<FamilyType>(device, neoDevice, true);
+}
+
+HWTEST_F(CommandQueueExecuteDefaultCommandLists, givenPatchPreambleBarrierAndCommandListPreviouslySubmittedOnOtherCsrWhenExecutingThenWaitForPreviousSubmissionIsDispatchedBeforeArrive) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_ARB_CHECK = typename FamilyType::MI_ARB_CHECK;
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
+
+    const bool qwordIndirect = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(FamilyType::isQwordInOrderCounter, neoDevice->getDeviceInfo().semaphore64bCmdSupport);
+
+    ze_result_t returnValue;
+    ze_command_queue_desc_t queueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    WhiteBox<L0::CommandQueue> *commandQueue = whiteboxCast(CommandQueue::create(device,
+                                                                                 neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                                                 &queueDesc,
+                                                                                 false,
+                                                                                 false,
+                                                                                 false,
+                                                                                 returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    commandQueue->saveWaitForPreamble = true;
+    commandQueue->setPatchingPreamble(true);
+
+    auto commandList = CommandList::create(device, NEO::EngineGroupType::compute, 0u, returnValue, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    commandList->close();
+    constexpr uint64_t otherCsrTagGpuAddress = 0xDEF000;
+    constexpr TaskCountType previousTaskCount = 0x7;
+    MockGraphicsAllocation otherCsrTagAllocation(nullptr, otherCsrTagGpuAddress, 0x100);
+    commandList->saveLatestTagAndTaskCount(&otherCsrTagAllocation, previousTaskCount);
+
+    constexpr uint64_t barrierGpuAddress = 0xABC000;
+    MockGraphicsAllocation barrierAllocation(nullptr, barrierGpuAddress, 0x200);
+    CountersCrossSyncContainer crossSyncContainer;
+    crossSyncContainer.barrier.counterGpuAddress = barrierGpuAddress;
+    crossSyncContainer.barrier.counterAllocation = &barrierAllocation;
+    crossSyncContainer.barrier.arriveValue = 1;
+    crossSyncContainer.barrier.releaseValue = 2;
+
+    CommandListExecutionInternalOptions internalOptions = {};
+    internalOptions.countersCrossSyncContainer = &crossSyncContainer;
+
+    ze_command_list_handle_t cmdListHandle = commandList->toHandle();
+    auto usedSpaceBefore = commandQueue->commandStream.getUsed();
+    returnValue = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList,
+        ptrOffset(commandQueue->commandStream.getCpuBase(), usedSpaceBefore),
+        commandQueue->commandStream.getUsed() - usedSpaceBefore));
+    auto arbCheckCmds = findAll<MI_ARB_CHECK *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(2u, arbCheckCmds.size());
+    auto atomicCmds = findAll<MI_ATOMIC *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(2u, atomicCmds.size());
+
+    auto semWaitsBeforeArrive = findAll<MI_SEMAPHORE_WAIT *>(cmdList.begin(), atomicCmds[0]);
+    ASSERT_EQ(1u, semWaitsBeforeArrive.size());
+    EXPECT_EQ(otherCsrTagGpuAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(genCmdCast<MI_SEMAPHORE_WAIT *>(*semWaitsBeforeArrive[0])));
+    EXPECT_EQ(previousTaskCount, getSemaphoreWaitValueForTest<FamilyType>(cmdList.begin(), semWaitsBeforeArrive[0], qwordIndirect));
+
+    auto semWaitsInPatchPreamble = findAll<MI_SEMAPHORE_WAIT *>(arbCheckCmds[0], arbCheckCmds[1]);
+    EXPECT_EQ(0u, semWaitsInPatchPreamble.size());
+
+    commandList->destroy();
+    commandQueue->destroy();
+}
+
+HWTEST_F(CommandQueueExecuteDefaultCommandLists, givenPatchPreambleBarrierWhenPatchPreambleIsDisabledThenUnrecoverableIsCalled) {
+    ze_result_t returnValue;
+    ze_command_queue_desc_t queueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    WhiteBox<L0::CommandQueue> *commandQueue = whiteboxCast(CommandQueue::create(device,
+                                                                                 neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                                                 &queueDesc,
+                                                                                 false,
+                                                                                 false,
+                                                                                 false,
+                                                                                 returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    MockGraphicsAllocation barrierAllocation(nullptr, 0xABC000, 0x200);
+    CountersCrossSyncContainer crossSyncContainer;
+    crossSyncContainer.barrier.counterGpuAddress = 0xABC000;
+    crossSyncContainer.barrier.counterAllocation = &barrierAllocation;
+    crossSyncContainer.barrier.arriveValue = 1;
+    crossSyncContainer.barrier.releaseValue = 2;
+
+    CommandListExecutionInternalOptions internalOptions = {};
+    internalOptions.countersCrossSyncContainer = &crossSyncContainer;
+
+    EXPECT_THROW(commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, internalOptions), std::exception);
+
+    commandQueue->destroy();
+}
+
 } // namespace ult
 } // namespace L0

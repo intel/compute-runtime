@@ -9,6 +9,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/tag_allocator.h"
 
 #include "level_zero/api/internal/l0_cmdlist.h"
@@ -25,6 +26,7 @@
 #include "level_zero/experimental/source/graph/graph_export.h"
 #include "level_zero/tools/source/metrics/metric.h"
 
+#include <cstring>
 #include <type_traits>
 #include <unordered_map>
 #include <unordered_set>
@@ -1728,6 +1730,7 @@ void ExecGraphBuilder::finalize(const GraphInstatiateSettings &settings) {
 
 ze_result_t ExecutableGraph::instantiateFrom(Graph &rootSrc, const GraphInstatiateSettings &settings) {
     this->src = &rootSrc;
+    this->patchPreambleBarrierSupported = L0::Device::fromHandle(rootSrc.getCaptureTargetDesc().hDevice)->getProductHelper().isGraphPatchPreambleBarrierSupported();
     rootSrc.getInternalEvents().unbindInternalEvents();
     ExecGraphBuilder builder{rootSrc, *this};
     const auto &allCommands = rootSrc.getOrderedCommands();
@@ -1841,32 +1844,21 @@ ze_result_t ExecutableGraph::execute(L0::CommandList *executionTarget, const voi
     graphWidePatchPreambleCrossSync.clear();
 
     bool multipleSegmentInOrderGraph = this->getSourceGraph()->getPatchPreambleCrossSync() && this->getSourceGraph()->isInOrderGraph() && this->getOrderedCommands()->size() > 1;
+    GraphSegmentsCrossSync *segmentsCrossSyncForExecution = nullptr;
     if (multipleSegmentInOrderGraph) {
-        auto &rootPatchPreambleCrossSyncItem = graphWidePatchPreambleCrossSync.emplace_back();
-        executionTarget->getPatchPreambleFullData(rootPatchPreambleCrossSyncItem.counter(), rootPatchPreambleCrossSyncItem.hostAddress(),
-                                                  rootPatchPreambleCrossSyncItem.hostGpuAddress(), rootPatchPreambleCrossSyncItem.hostAllocation(),
-                                                  rootPatchPreambleCrossSyncItem.deviceGpuAddress(), rootPatchPreambleCrossSyncItem.deviceAllocation());
-        rootPatchPreambleCrossSyncItem.key = executionTarget;
-
-        // we will use internal queues before executing segments, ensure initialized and retrieve patch preamble counters
-        // into graph wide storage to use it for external signal events and cross sync between segments
-        auto segmentIt = this->getOrderedCommands()->begin();
-        auto lastSegment = this->getOrderedCommands()->end();
-        while (segmentIt != lastSegment) {
-            auto executionCmdList = segmentIt->dst->getExecutionTarget();
+        // we will use internal queues before executing segments, ensure initialized
+        for (const auto &segment : *this->getOrderedCommands()) {
+            auto executionCmdList = segment.dst->getExecutionTarget();
             if (executionCmdList != nullptr) {
                 result = executionCmdList->ensureImmediateResourcesInitialized();
                 if (result != ZE_RESULT_SUCCESS) {
                     return result;
                 }
-                auto &forkPatchPreambleCrossSyncItem = graphWidePatchPreambleCrossSync.emplace_back();
-                executionCmdList->getPatchPreambleFullData(forkPatchPreambleCrossSyncItem.counter(), forkPatchPreambleCrossSyncItem.hostAddress(),
-                                                           forkPatchPreambleCrossSyncItem.hostGpuAddress(), forkPatchPreambleCrossSyncItem.hostAllocation(),
-                                                           forkPatchPreambleCrossSyncItem.deviceGpuAddress(), forkPatchPreambleCrossSyncItem.deviceAllocation());
-                forkPatchPreambleCrossSyncItem.key = executionCmdList;
             }
-            ++segmentIt;
         }
+
+        segmentsCrossSyncForExecution = &this->segmentsCrossSync;
+        prepareSegmentsCrossSync(executionTarget);
     }
 
     // first the driver needs to perform refresh of external wait events (mutate),
@@ -1887,18 +1879,18 @@ ze_result_t ExecutableGraph::execute(L0::CommandList *executionTarget, const voi
     auto segmentIt = this->getOrderedCommands()->begin();
     auto lastSegment = this->getOrderedCommands()->end() - 1;
     if (this->orderedCommands->size() == 1) {
-        return segmentIt->dst->executeSegment(executionTarget, segmentIt->segmentStart, hSignalEvent, numWaitEvents, phWaitEvents, nullptr, nullptr);
+        return segmentIt->dst->executeSegment(executionTarget, segmentIt->segmentStart, hSignalEvent, numWaitEvents, phWaitEvents, nullptr);
     }
 
     result = segmentIt->dst->executeSegment(executionTarget, segmentIt->segmentStart,
                                             monolithicMode ? hSignalEvent : nullptr,
-                                            numWaitEvents, phWaitEvents, &graphWidePatchPreambleCrossSync, &graphWideImmediateCountersCrossSyncs);
+                                            numWaitEvents, phWaitEvents, segmentsCrossSyncForExecution);
     if (result != ZE_RESULT_SUCCESS) {
         return result;
     }
     ++segmentIt;
     while (segmentIt != lastSegment) {
-        result = segmentIt->dst->executeSegment(executionTarget, segmentIt->segmentStart, nullptr, 0, nullptr, &graphWidePatchPreambleCrossSync, &graphWideImmediateCountersCrossSyncs);
+        result = segmentIt->dst->executeSegment(executionTarget, segmentIt->segmentStart, nullptr, 0, nullptr, segmentsCrossSyncForExecution);
         if (result != ZE_RESULT_SUCCESS) {
             return result;
         }
@@ -1907,14 +1899,18 @@ ze_result_t ExecutableGraph::execute(L0::CommandList *executionTarget, const voi
     DEBUG_BREAK_IF(segmentIt != lastSegment);
     result = segmentIt->dst->executeSegment(executionTarget, segmentIt->segmentStart,
                                             splitMode ? hSignalEvent : nullptr,
-                                            0, nullptr, &graphWidePatchPreambleCrossSync, &graphWideImmediateCountersCrossSyncs);
+                                            0, nullptr, segmentsCrossSyncForExecution);
     if (result != ZE_RESULT_SUCCESS) {
         return result;
     }
 
+    if (multipleSegmentInOrderGraph && this->segmentsCrossSync.barrier.counterAllocation != nullptr) {
+        this->patchPreambleBarrierCounter.commitExecution(this->segmentsCrossSync.barrier);
+    }
+
     // add new (1st execution) or replace previous immediate command list completions for a given executable graph (root/branch segment)
     // and save fresh ones of recent from executeSegment
-    if (multipleSegmentInOrderGraph) {
+    if (multipleSegmentInOrderGraph && this->segmentsCrossSync.useBarrier == false) {
         segmentIt = this->getOrderedCommands()->begin();
         lastSegment = this->getOrderedCommands()->end();
         while (segmentIt != lastSegment) {
@@ -1946,8 +1942,85 @@ ze_result_t ExecutableGraph::execute(L0::CommandList *executionTarget, const voi
     return result;
 }
 
+void ExecutableGraph::prepareSegmentsCrossSync(L0::CommandList *executionTarget) {
+    auto &crossSync = this->segmentsCrossSync;
+    crossSync.patchPreambleCounters = &this->graphWidePatchPreambleCrossSync;
+    crossSync.previousCompletions = &this->graphWideImmediateCountersCrossSyncs;
+    crossSync.barrier = {};
+    crossSync.useBarrier = this->patchPreambleBarrierSupported &&
+                           executionTarget->isImmediateQueueWaitForPreambleSaved();
+
+    // without patch preamble counters are not reset, so no synchronization is required
+    if (this->usePatchingPreamble == false) {
+        return;
+    }
+
+    if (crossSync.useBarrier == false) {
+        collectPatchPreambleCounters(executionTarget);
+        return;
+    }
+
+    uint32_t participantsWeight = 0;
+    for (const auto &segment : *this->getOrderedCommands()) {
+        // every partition of the executor increments barrier counter
+        participantsWeight += getSegmentExecutor(segment, executionTarget)->getImmediateQueuePartitionCount();
+    }
+    this->patchPreambleBarrierCounter.prepareExecution(*executionTarget->getDevice(), participantsWeight, crossSync.barrier);
+}
+
+L0::CommandList *ExecutableGraph::getSegmentExecutor(const OrderedCommandsExecutableSegment &segment, L0::CommandList *executionTarget) {
+    auto executor = segment.dst->getExecutionTarget();
+    return executor != nullptr ? executor : executionTarget;
+}
+
+void ExecutableGraph::collectPatchPreambleCounters(L0::CommandList *executionTarget) {
+    // retrieve patch preamble counters into graph wide storage to use it for external signal events and cross sync between segments
+    auto &rootPatchPreambleCrossSyncItem = this->graphWidePatchPreambleCrossSync.emplace_back();
+    executionTarget->getPatchPreambleFullData(rootPatchPreambleCrossSyncItem.counter(), rootPatchPreambleCrossSyncItem.hostAddress(),
+                                              rootPatchPreambleCrossSyncItem.hostGpuAddress(), rootPatchPreambleCrossSyncItem.hostAllocation(),
+                                              rootPatchPreambleCrossSyncItem.deviceGpuAddress(), rootPatchPreambleCrossSyncItem.deviceAllocation());
+    rootPatchPreambleCrossSyncItem.key = executionTarget;
+
+    for (const auto &segment : *this->getOrderedCommands()) {
+        auto executionCmdList = segment.dst->getExecutionTarget();
+        if (executionCmdList != nullptr) {
+            auto &forkPatchPreambleCrossSyncItem = this->graphWidePatchPreambleCrossSync.emplace_back();
+            executionCmdList->getPatchPreambleFullData(forkPatchPreambleCrossSyncItem.counter(), forkPatchPreambleCrossSyncItem.hostAddress(),
+                                                       forkPatchPreambleCrossSyncItem.hostGpuAddress(), forkPatchPreambleCrossSyncItem.hostAllocation(),
+                                                       forkPatchPreambleCrossSyncItem.deviceGpuAddress(), forkPatchPreambleCrossSyncItem.deviceAllocation());
+            forkPatchPreambleCrossSyncItem.key = executionCmdList;
+        }
+    }
+}
+
+GraphPatchPreambleBarrierCounter::~GraphPatchPreambleBarrierCounter() {
+    if (this->counterNode != nullptr) {
+        this->counterNode->returnTag();
+    }
+}
+
+void GraphPatchPreambleBarrierCounter::prepareExecution(L0::Device &device, uint32_t participantsWeight, PatchPreambleBarrier &outBarrier) {
+    UNRECOVERABLE_IF(participantsWeight == 0);
+
+    if (this->counterNode == nullptr) {
+        this->counterNode = device.getDeviceInOrderCounterAllocator()->getTag();
+        this->counterAllocation = this->counterNode->getBaseGraphicsAllocation()->getGraphicsAllocation(device.getRootDeviceIndex());
+        memset(this->counterNode->getCpuBase(), 0x0, sizeof(uint64_t));
+        this->counterGpuAddress = this->counterNode->getGpuAddress();
+    }
+
+    outBarrier.counterGpuAddress = this->counterGpuAddress;
+    outBarrier.counterAllocation = this->counterAllocation;
+    outBarrier.arriveValue = this->counterValue + participantsWeight;
+    outBarrier.releaseValue = this->counterValue + 2 * participantsWeight;
+}
+
+void GraphPatchPreambleBarrierCounter::commitExecution(const PatchPreambleBarrier &barrier) {
+    this->counterValue = barrier.releaseValue;
+}
+
 ze_result_t ExecutableGraph::executeSegment(L0::CommandList *executionTarget, GraphCommandId segmentStart, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
-                                            PatchPreambleDataContainer *patchPreambleCrossSyncs, ExecutionSegmentImmediateCountersCrossSyncList *immediateCountersCrossSyncs) {
+                                            GraphSegmentsCrossSync *segmentsCrossSync) {
     if (nullptr != this->executionTarget) {
         executionTarget = this->executionTarget;
     }
@@ -1963,11 +2036,19 @@ ze_result_t ExecutableGraph::executeSegment(L0::CommandList *executionTarget, Gr
 
     this->internalCountersCrossSyncs.patchPreambleCrossSyncList.clear();
     this->internalCountersCrossSyncs.immediateCompletionCrossSyncList.clear();
+    this->internalCountersCrossSyncs.barrier = {};
     CommandListExecutionInternalOptions internalOptions = {};
 
-    if (patchPreambleCrossSyncs != nullptr) {
-        for (auto &patchPreambleCrossSyncData : *patchPreambleCrossSyncs) {
+    bool countersCrossSyncRequired = false;
+    if (segmentsCrossSync != nullptr && segmentsCrossSync->useBarrier) {
+        if (segmentsCrossSync->barrier.counterAllocation != nullptr) {
+            this->internalCountersCrossSyncs.barrier = segmentsCrossSync->barrier;
+            internalOptions.countersCrossSyncContainer = &this->internalCountersCrossSyncs;
+        }
+    } else if (segmentsCrossSync != nullptr) {
+        for (auto &patchPreambleCrossSyncData : *segmentsCrossSync->patchPreambleCounters) {
             if (patchPreambleCrossSyncData.key != executionTarget) {
+                countersCrossSyncRequired = true;
                 // other command list should be added to sync list
                 this->internalCountersCrossSyncs.patchPreambleCrossSyncList.emplace_back(patchPreambleCrossSyncData.counter(),
                                                                                          patchPreambleCrossSyncData.deviceGpuAddress(),
@@ -1979,26 +2060,25 @@ ze_result_t ExecutableGraph::executeSegment(L0::CommandList *executionTarget, Gr
                 internalOptions.patchPreambleRequiredDevicePostSyncGpuAddress = patchPreambleCrossSyncData.deviceGpuAddress();
             }
         }
-    }
-    if (immediateCountersCrossSyncs != nullptr) {
-        for (auto &immediateCrossSyncData : *immediateCountersCrossSyncs) {
-            // no need to add current segment to the immediate completions
-            // these are guarded either by pipe control (same engine) or by "ctx.patchPreambleWaitSyncNeeded" operation in a queue
-            if (immediateCrossSyncData.segmentIdentifier != this) {
-                this->internalCountersCrossSyncs.immediateCompletionCrossSyncList.emplace_back(immediateCrossSyncData.counter,
-                                                                                               immediateCrossSyncData.deviceGpuAddress,
-                                                                                               immediateCrossSyncData.deviceGraphicsAllocation,
-                                                                                               immediateCrossSyncData.devicePartitionCount);
+
+        if (countersCrossSyncRequired) {
+            for (auto &immediateCrossSyncData : *segmentsCrossSync->previousCompletions) {
+                // no need to add current segment to the immediate completions
+                // these are guarded either by pipe control (same engine) or by patch preamble wait sync operation in a queue
+                if (immediateCrossSyncData.segmentIdentifier != this) {
+                    this->internalCountersCrossSyncs.immediateCompletionCrossSyncList.emplace_back(immediateCrossSyncData.counter,
+                                                                                                   immediateCrossSyncData.deviceGpuAddress,
+                                                                                                   immediateCrossSyncData.deviceGraphicsAllocation,
+                                                                                                   immediateCrossSyncData.devicePartitionCount);
+                }
             }
+            internalOptions.countersCrossSyncContainer = &this->internalCountersCrossSyncs;
+            UNRECOVERABLE_IF(internalOptions.patchPreambleRequiredCounter == 0 || internalOptions.patchPreambleRequiredDevicePostSyncGpuAddress == 0);
         }
     }
-    if (this->internalCountersCrossSyncs.patchPreambleCrossSyncList.size() > 0) {
-        internalOptions.countersCrossSyncContainer = &this->internalCountersCrossSyncs;
-        UNRECOVERABLE_IF(internalOptions.patchPreambleRequiredCounter == 0 || internalOptions.patchPreambleRequiredDevicePostSyncGpuAddress == 0);
-    }
-    if (this->externalCbEventStorage->externalCbSignalEventsPresent() && this->internalCountersCrossSyncs.patchPreambleCrossSyncList.size() == 0) {
+    if (this->externalCbEventStorage->externalCbSignalEventsPresent() && countersCrossSyncRequired == false) {
         // here read patch preamble counter from attached signal cb events into immediate command list execution parameters -> passing to actual patch preamble post sync ops
-        // no need to get the patch preamble counter if it is already in the internalCountersCrossSyncs.patchPreambleCrossSyncList - it is already being passed to the command list execution
+        // no need to get the patch preamble counter if counters cross sync is used - it is already being passed to the command list execution
         this->externalCbEventStorage->getPreambleCounterAndDeviceGpuAddress(this->executionTarget,
                                                                             internalOptions.patchPreambleRequiredCounter,
                                                                             internalOptions.patchPreambleRequiredDevicePostSyncGpuAddress);

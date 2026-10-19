@@ -233,8 +233,6 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegularHeapless(
 
         ctx.childGpuAddressPositionBeforeDynamicPreamble = (*streamForDispatch).getCurrentGpuAddressPosition();
 
-        this->dispatchPatchPreambleCommandListWaitSync(ctx, commandList);
-
         if (i == 0 && ctx.debugPauses.beforeWorkload) [[unlikely]] {
             this->programDebugPause(*streamForDispatch, this->isCopyOnlyCommandQueue, true);
         }
@@ -380,8 +378,6 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
             }
         }
 
-        this->dispatchPatchPreambleCommandListWaitSync(ctx, commandList);
-
         if (i == 0 && ctx.debugPauses.beforeWorkload) [[unlikely]] {
             this->programDebugPause(*streamForDispatch, this->isCopyOnlyCommandQueue, true);
         }
@@ -462,8 +458,6 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsCopyOnly(
     for (auto i = 0u; i < numCommandLists; ++i) {
         auto commandList = CommandList::fromHandle(phCommandLists[i]);
         ctx.childGpuAddressPositionBeforeDynamicPreamble = (*streamForDispatch).getCurrentGpuAddressPosition();
-
-        this->dispatchPatchPreambleCommandListWaitSync(ctx, commandList);
 
         if (i == 0 && ctx.debugPauses.beforeWorkload) [[unlikely]] {
             this->programDebugPause(*streamForDispatch, this->isCopyOnlyCommandQueue, true);
@@ -815,6 +809,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeTotal(CommandListE
         }
     }
 
+    linearStreamSizeEstimate += estimateCommandListPatchPreambleWaitSyncSize(ctx, commandListHandles, numCommandLists);
     linearStreamSizeEstimate += estimateLinearStreamSizeSharedPostCmdList(ctx, numCommandLists);
 
     if (ctx.debugPauses.beforeWorkload || ctx.debugPauses.afterWorkload) [[unlikely]] {
@@ -832,7 +827,6 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeSharedPerCmdList(C
     linearStreamSizeEstimate += estimateCommandListSecondaryStart(commandList);
 
     // per command list patch preamble
-    linearStreamSizeEstimate += estimateCommandListPatchPreambleWaitSyncSize(ctx, commandList);
     linearStreamSizeEstimate += estimateCommandListPatchPreambleRequiredSize(ctx, commandList);
 
     return linearStreamSizeEstimate;
@@ -912,17 +906,20 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPrimaryStart(bool requi
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPatchPreambleWaitSyncSize(CommandListExecutionContext &ctx, CommandList *commandList) {
-    size_t waitSize = 0;
+size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListPatchPreambleWaitSyncSize(CommandListExecutionContext &ctx, ze_command_list_handle_t *commandListHandles, uint32_t numCommandLists) {
     if (ctx.patchPreambleEnabled && this->saveWaitForPreamble) {
-        uint64_t tagGpuAddress = commandList->getLatestTagGpuAddress();
-        ctx.patchPreambleWaitSyncNeeded = (tagGpuAddress != 0) && (getCsr()->getTagAllocation()->getGpuAddress() != tagGpuAddress);
-        if (ctx.patchPreambleWaitSyncNeeded) {
-            waitSize += estimateSingleSynchronizationCommandSize(this->partitionCount, 1);
+        const uint64_t queueTagGpuAddress = getCsr()->getTagAllocation()->getGpuAddress();
+        auto commandListHandlesEnd = commandListHandles + numCommandLists;
+        auto waitSyncCommandListIt = std::find_if(commandListHandles, commandListHandlesEnd, [queueTagGpuAddress](ze_command_list_handle_t commandListHandle) {
+            uint64_t tagGpuAddress = CommandList::fromHandle(commandListHandle)->getLatestTagGpuAddress();
+            return (tagGpuAddress != 0) && (queueTagGpuAddress != tagGpuAddress);
+        });
+        if (waitSyncCommandListIt != commandListHandlesEnd) {
+            ctx.patchPreambleWaitSyncCommandList = CommandList::fromHandle(*waitSyncCommandListIt);
+            return estimateSingleSynchronizationCommandSize(this->partitionCount, 1);
         }
-        ctx.bufferSpaceForPatchPreamble += waitSize;
     }
-    return waitSize;
+    return 0;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -986,6 +983,12 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListCrossSyncCommands(Comma
     // (no adding to ctx.bufferSpaceForPatchPreamble), but before bb start jumps to command lists and including these bb start commands too
     // this is needed only in queue direct mode, for immediate command list high level estimation is enough
     if (ctx.countersCrossSyncContainer != nullptr && ctx.containsParentImmediateStream == false) {
+        // barrier is dispatched outside of the patch preamble - arrive before and release after it
+        if (ctx.patchPreambleBarrierRequired) {
+            encodeSize += estimatePatchPreambleBarrierSize(*ctx.countersCrossSyncContainer);
+            return encodeSize;
+        }
+
         // here estimate the sem waits only
         encodeSize += estimatePatchPreambleCrossSyncSize(ctx.countersCrossSyncContainer->patchPreambleCrossSyncList.size());
 
@@ -1025,16 +1028,28 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListCrossSyncCommands(Comma
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::retrivePatchPreambleSpace(CommandListExecutionContext &ctx, NEO::LinearStream &commandStream) {
+    UNRECOVERABLE_IF(ctx.patchPreambleBarrierRequired && !ctx.patchPreambleEnabled);
+    if (ctx.patchPreambleWaitSyncCommandList != nullptr) {
+        auto commandList = ctx.patchPreambleWaitSyncCommandList;
+        this->dispatchSingleSynchronizationCommand(commandStream, commandList->getLatestTagGpuAddress(), commandList->getLatestTaskCount(),
+                                                   this->partitionCount, this->csr->getImmWritePostSyncWriteOffset(), commandList->getLatestTagGpuAllocation());
+    }
     if (ctx.countersCrossSyncContainer != nullptr) {
-        // immediate cross-syncs must be dispatch before the patch preamble begins
-        const uint32_t immWriteOffset = device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset();
-        for (auto &immediateCrossSyncItem : ctx.countersCrossSyncContainer->immediateCompletionCrossSyncList) {
-            this->dispatchSingleSynchronizationCommand(commandStream,
-                                                       immediateCrossSyncItem.deviceGpuAddress,
-                                                       immediateCrossSyncItem.counter,
-                                                       immediateCrossSyncItem.devicePartitionCount,
-                                                       immWriteOffset,
-                                                       immediateCrossSyncItem.deviceGraphicsAllocation);
+        // barrier arrive or immediate cross-syncs must be dispatched before the patch preamble begins
+        if (ctx.patchPreambleBarrierRequired) {
+            // no stall before arrive - previous submission of the executor ends with tag update post sync, which completes its work
+            const auto &barrier = ctx.countersCrossSyncContainer->barrier;
+            this->dispatchPatchPreambleBarrierSignalAndWait(barrier, barrier.arriveValue, commandStream);
+        } else {
+            const uint32_t immWriteOffset = device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset();
+            for (auto &immediateCrossSyncItem : ctx.countersCrossSyncContainer->immediateCompletionCrossSyncList) {
+                this->dispatchSingleSynchronizationCommand(commandStream,
+                                                           immediateCrossSyncItem.deviceGpuAddress,
+                                                           immediateCrossSyncItem.counter,
+                                                           immediateCrossSyncItem.devicePartitionCount,
+                                                           immWriteOffset,
+                                                           immediateCrossSyncItem.deviceGraphicsAllocation);
+            }
         }
     }
     if (ctx.patchPreambleEnabled) {
@@ -1183,6 +1198,14 @@ void CommandQueueHw<gfxCoreFamily>::dispatchPatchPreambleAsyncPatchElems(Command
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::dispatchPatchPreambleCrossSync(CommandListExecutionContext &ctx, CommandList *commandList, NEO::LinearStream &commandStream) {
     if (ctx.patchPreambleEnabled && ctx.countersCrossSyncContainer) {
+        if (ctx.patchPreambleBarrierRequired) {
+            // barrier release is dispatched once, after the patch preamble is completed and before the first command list starts
+            if (commandList == ctx.firstCommandList) {
+                const auto &barrier = ctx.countersCrossSyncContainer->barrier;
+                dispatchPatchPreambleBarrierSignalAndWait(barrier, barrier.releaseValue, commandStream);
+            }
+            return;
+        }
         for (auto &item : ctx.countersCrossSyncContainer->patchPreambleCrossSyncList) {
             if (item.appendedCommandListToSyncBefore != commandList) {
                 continue;
@@ -1193,15 +1216,22 @@ void CommandQueueHw<gfxCoreFamily>::dispatchPatchPreambleCrossSync(CommandListEx
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandQueueHw<gfxCoreFamily>::dispatchPatchPreambleCommandListWaitSync(CommandListExecutionContext &ctx, CommandList *commandList) {
-    if (ctx.patchPreambleEnabled) {
-        if (ctx.patchPreambleWaitSyncNeeded) {
-            auto waitAddress = commandList->getLatestTagGpuAddress();
-            auto waitValue = commandList->getLatestTaskCount();
-
-            dispatchSingleSynchronizationCommand(ctx.currentPatchPreambleBuffer, waitAddress, waitValue, this->partitionCount, this->csr->getImmWritePostSyncWriteOffset(), commandList->getLatestTagGpuAllocation());
-        }
+size_t CommandQueueHw<gfxCoreFamily>::estimatePatchPreambleBarrierSize(const CountersCrossSyncContainer &countersCrossSyncContainer) {
+    if (!countersCrossSyncContainer.isBarrierRequired()) {
+        return 0;
     }
+    // arrive and release: increment and wait
+    return 2 * (sizeof(typename GfxFamily::MI_ATOMIC) + estimateSingleSynchronizationCommandSize(1, 1));
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::dispatchPatchPreambleBarrierSignalAndWait(const PatchPreambleBarrier &barrier, uint64_t waitValue, NEO::LinearStream &commandStream) {
+    using ATOMIC_OPCODES = typename GfxFamily::MI_ATOMIC::ATOMIC_OPCODES;
+    using DATA_SIZE = typename GfxFamily::MI_ATOMIC::DATA_SIZE;
+
+    NEO::EncodeAtomic<GfxFamily>::programMiAtomic(commandStream, barrier.counterGpuAddress, ATOMIC_OPCODES::ATOMIC_8B_INCREMENT,
+                                                  DATA_SIZE::DATA_SIZE_QWORD, 0, 0, 0, 0);
+    dispatchSingleSynchronizationCommand(commandStream, barrier.counterGpuAddress, waitValue, 1, 0, barrier.counterAllocation);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

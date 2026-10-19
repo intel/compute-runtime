@@ -56,6 +56,7 @@ struct CommandListExecutionContext {
     size_t spaceForResidency = 10;
     size_t bufferSpaceForPatchPreamble = 0;
     CommandList *firstCommandList = nullptr;
+    CommandList *patchPreambleWaitSyncCommandList = nullptr;
     CommandList *lastCommandList = nullptr;
     void *currentPatchForChainedBbStart = nullptr;
     void *currentPatchPreambleBuffer = nullptr;
@@ -97,7 +98,7 @@ struct CommandListExecutionContext {
     bool cmdListScratchAddressPatchingEnabled = false;
     bool containsParentImmediateStream = false;
     bool patchPreambleEnabled = false;
-    bool patchPreambleWaitSyncNeeded = false;
+    bool patchPreambleBarrierRequired = false;
     bool regularHeapful = false;
     bool stateCacheFlushRequired = false;
     bool instructionCacheFlushRequired = false;

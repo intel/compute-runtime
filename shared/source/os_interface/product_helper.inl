@@ -1021,6 +1021,12 @@ bool ProductHelperHw<gfxProduct>::isDualStreamCopyOffloadForRegularCmdListSuppor
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isGraphPatchPreambleBarrierSupported() const {
+    using GfxFamily = typename HwMapper<gfxProduct>::GfxFamily;
+    return GfxFamily::isQwordInOrderCounter && (debugManager.flags.OverrideGraphPatchPreambleBarrierSupport.get() == 1);
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::useAdditionalBlitProperties(const BlitProperties &blitProperties) const {
     return false;
 }

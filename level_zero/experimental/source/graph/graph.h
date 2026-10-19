@@ -34,7 +34,12 @@ static_assert(IsCompliantWithDdiHandlesExt<_ze_executable_graph_handle_t>);
 
 typedef void(ZE_CALLBACK *zex_mem_graph_free_callback_fn_t)(void *pUserData);
 
+namespace NEO {
+class TagNodeBase;
+} // namespace NEO
+
 namespace L0 {
+struct Device;
 
 enum class GraphExportStyle : std::uint8_t {
     detailed,
@@ -681,6 +686,29 @@ struct ExecGraphBuilder final {
     std::vector<ze_event_handle_t> trailingEvents;
 };
 
+struct GraphPatchPreambleBarrierCounter {
+    GraphPatchPreambleBarrierCounter() = default;
+    GraphPatchPreambleBarrierCounter(const GraphPatchPreambleBarrierCounter &) = delete;
+    GraphPatchPreambleBarrierCounter &operator=(const GraphPatchPreambleBarrierCounter &) = delete;
+    ~GraphPatchPreambleBarrierCounter();
+
+    void prepareExecution(L0::Device &device, uint32_t participantsWeight, PatchPreambleBarrier &outBarrier);
+    void commitExecution(const PatchPreambleBarrier &barrier);
+
+    NEO::TagNodeBase *counterNode = nullptr;
+    NEO::GraphicsAllocation *counterAllocation = nullptr;
+    uint64_t counterGpuAddress = 0;
+    uint64_t counterValue = 0;
+};
+
+// Synchronization data of a single execution, shared by all segments of an executable graph
+struct GraphSegmentsCrossSync {
+    PatchPreambleDataContainer *patchPreambleCounters = nullptr;                   // patch preamble counters of all executors, used when barrier is not used
+    ExecutionSegmentImmediateCountersCrossSyncList *previousCompletions = nullptr; // previous execution completions of all segments, used when barrier is not used
+    PatchPreambleBarrier barrier;
+    bool useBarrier = false;
+};
+
 struct ExecutableGraph : _ze_executable_graph_handle_t {
     ExecutableGraph(WeaklyShared<OrderedExecutableSegmentsList> &&orderedSegments,
                     WeaklyShared<ExternalCbEventInfoContainer> &&externalCbEvent);
@@ -722,7 +750,7 @@ struct ExecutableGraph : _ze_executable_graph_handle_t {
 
     ze_result_t execute(L0::CommandList *executionTarget, const void *pNext, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
     ze_result_t executeSegment(L0::CommandList *executionTarget, GraphCommandId segmentStart, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
-                               PatchPreambleDataContainer *patchPreambleCrossSyncs, ExecutionSegmentImmediateCountersCrossSyncList *immediateCountersCrossSyncs);
+                               GraphSegmentsCrossSync *segmentsCrossSync);
 
     WeaklyShared<ExternalCbEventInfoContainer> getExternalCbEventInfoContainer() {
         return externalCbEventStorage;
@@ -750,6 +778,9 @@ struct ExecutableGraph : _ze_executable_graph_handle_t {
 
   protected:
     ze_result_t instantiateFrom(const OrderedCommandsSegment &segment, ExecGraphBuilder &builder, const GraphInstatiateSettings &settings);
+    void prepareSegmentsCrossSync(L0::CommandList *executionTarget);
+    void collectPatchPreambleCounters(L0::CommandList *executionTarget);
+    static L0::CommandList *getSegmentExecutor(const OrderedCommandsExecutableSegment &segment, L0::CommandList *executionTarget);
 
     L0::CommandList *allocateAndAddCommandListSubmissionNode(uint32_t estimatedNumberOfCommands);
 
@@ -768,8 +799,11 @@ struct ExecutableGraph : _ze_executable_graph_handle_t {
     CountersCrossSyncContainer internalCountersCrossSyncs;
     PatchPreambleDataContainer graphWidePatchPreambleCrossSync;
     ExecutionSegmentImmediateCountersCrossSyncList graphWideImmediateCountersCrossSyncs;
+    GraphPatchPreambleBarrierCounter patchPreambleBarrierCounter;
+    GraphSegmentsCrossSync segmentsCrossSync;
 
     bool usePatchingPreamble = true;
+    bool patchPreambleBarrierSupported = false;
     bool mutableExecGraph = false;
 };
 

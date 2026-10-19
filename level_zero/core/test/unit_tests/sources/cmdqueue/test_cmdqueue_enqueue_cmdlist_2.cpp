@@ -1876,30 +1876,26 @@ HWTEST_F(CommandQueueExecuteCommandListsSimpleTest, givenPatchPreambleAndSavingW
     EXPECT_EQ(0u, commandList->getLatestTagGpuAddress());
     EXPECT_EQ(0u, commandList->getLatestTaskCount());
 
-    EXPECT_EQ(0u, mockCmdQHw->estimateCommandListPatchPreambleWaitSyncSize(ctx, commandList));
-    EXPECT_FALSE(ctx.patchPreambleWaitSyncNeeded);
+    EXPECT_EQ(0u, mockCmdQHw->estimateCommandListPatchPreambleWaitSyncSize(ctx, &commandListHandle, 1));
 
     mockCmdQHw->setPatchingPreamble(true);
     EXPECT_TRUE(mockCmdQHw->getPatchingPreamble());
     mockCmdQHw->saveWaitForPreamble = true;
     EXPECT_TRUE(mockCmdQHw->getSaveWaitForPreamble());
 
-    EXPECT_EQ(0u, mockCmdQHw->estimateCommandListPatchPreambleWaitSyncSize(ctx, commandList));
-    EXPECT_FALSE(ctx.patchPreambleWaitSyncNeeded);
+    EXPECT_EQ(0u, mockCmdQHw->estimateCommandListPatchPreambleWaitSyncSize(ctx, &commandListHandle, 1));
 
     mockCmdQHw->saveTagAndTaskCountForCommandLists(1, &commandListHandle, expectedGpuAllocation, expectedTaskCount);
     // save and wait is now enabled
     EXPECT_EQ(expectedGpuAddress, commandList->getLatestTagGpuAddress());
     EXPECT_EQ(expectedTaskCount, commandList->getLatestTaskCount());
 
-    EXPECT_EQ(0u, mockCmdQHw->estimateCommandListPatchPreambleWaitSyncSize(ctx, commandList));
-    EXPECT_FALSE(ctx.patchPreambleWaitSyncNeeded);
+    EXPECT_EQ(0u, mockCmdQHw->estimateCommandListPatchPreambleWaitSyncSize(ctx, &commandListHandle, 1));
 
     MockGraphicsAllocation otherTagAllocation(nullptr, expectedGpuAddress + 0x1000, 1);
 
     mockCmdQHw->saveTagAndTaskCountForCommandLists(1, &commandListHandle, &otherTagAllocation, expectedTaskCount);
-    EXPECT_EQ(expectedSize, mockCmdQHw->estimateCommandListPatchPreambleWaitSyncSize(ctx, commandList));
-    EXPECT_TRUE(ctx.patchPreambleWaitSyncNeeded);
+    EXPECT_EQ(expectedSize, mockCmdQHw->estimateCommandListPatchPreambleWaitSyncSize(ctx, &commandListHandle, 1));
 
     commandList->reset();
     EXPECT_EQ(0u, commandList->getLatestTagGpuAddress());
