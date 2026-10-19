@@ -82,10 +82,6 @@ ze_result_t KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device 
     this->kernelInfo = kernelInfo;
     this->kernelDescriptor = &kernelInfo->kernelDescriptor;
 
-    if (kernelInfo->kernelDescriptor.kernelAttributes.flags.requiresSubgroupIndependentForwardProgress) {
-        kernelInfo->kernelDescriptor.kernelAttributes.threadArbitrationPolicy = NEO::ThreadArbitrationPolicy::RoundRobin;
-    }
-
     auto neoDevice = device->getActiveDevice();
 
     if (neoDevice->getDebugger() && kernelInfo->kernelDescriptor.external.debugData.get()) {
