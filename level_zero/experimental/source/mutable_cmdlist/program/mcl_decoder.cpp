@@ -448,8 +448,8 @@ void MclDecoder::parseDispatchSymbol(NEO::ConstStringRef symbolName, Symbols::Sy
         dispatchInfos.resize(dSymVal.dispatchId + 1);
     }
     auto &di = dispatchInfos[dSymVal.dispatchId];
-    di.groupSizeVarId = dSymVal.groupCountVarId;
-    di.groupCountVarId = dSymVal.groupSizeVarId;
+    di.groupSizeVarId = dSymVal.groupSizeVarId;
+    di.groupCountVarId = dSymVal.groupCountVarId;
     di.kernelDataId = dSymVal.kernelDataId;
 }
 
