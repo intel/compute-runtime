@@ -280,6 +280,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     virtual WaitStatus waitForCompletionWithTimeout(const WaitParams &params, TaskCountType taskCountToWait);
     WaitStatus baseWaitFunction(volatile TagAddressType *pollAddress, const WaitParams &params, TaskCountType taskCountToWait);
     MOCKABLE_VIRTUAL bool testTaskCountReady(volatile TagAddressType *pollAddress, TaskCountType taskCountToWait, bool blockOnMiss);
+    MOCKABLE_VIRTUAL bool isTagReached(volatile TagAddressType *pollAddress, TaskCountType taskCountToWait, bool blockOnMiss);
     bool testTaskCountReady(volatile TagAddressType *pollAddress, TaskCountType taskCountToWait) {
         return testTaskCountReady(pollAddress, taskCountToWait, false);
     }
@@ -571,6 +572,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     uint32_t getOwningQueueCount() const {
         return owningQueueCount.load();
     }
+    TaskCountType getOutstandingWorkCount();
 
     bool getDcFlushSupport() const {
         return dcFlushSupport;

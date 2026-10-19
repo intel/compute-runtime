@@ -1960,7 +1960,12 @@ HWTEST_F(DeviceTests, givenCCSEnginesAndContextGroupSizeEnabledWhenDeviceIsCreat
 
                 EXPECT_EQ(contextId + 1, secondaryEngines.regularCounter.load());
                 if (contextId == regularContextCount) {
-                    EXPECT_EQ(&secondaryEngines.engines[0], engine);
+                    auto lowestTaskCountInPool = engine->commandStreamReceiver->peekTaskCount();
+                    for (auto poolIndex : secondaryEngines.npIndices) {
+                        lowestTaskCountInPool = std::min(lowestTaskCountInPool, secondaryEngines.engines[poolIndex].commandStreamReceiver->peekTaskCount());
+                    }
+                    EXPECT_EQ(lowestTaskCountInPool, engine->commandStreamReceiver->peekTaskCount());
+                    EXPECT_EQ(0u, engine->commandStreamReceiver->getOutstandingWorkCount());
                 }
             }
 
@@ -2532,7 +2537,12 @@ HWTEST_F(DeviceTests, givenRootDeviceWithCCSEngineAndContextGroupSizeEnabledWhen
 
                 EXPECT_EQ(contextId + 1, secondaryEngines.regularCounter.load());
                 if (contextId == regularContextCount) {
-                    EXPECT_EQ(&secondaryEngines.engines[0], engine);
+                    auto lowestTaskCountInPool = engine->commandStreamReceiver->peekTaskCount();
+                    for (auto poolIndex : secondaryEngines.npIndices) {
+                        lowestTaskCountInPool = std::min(lowestTaskCountInPool, secondaryEngines.engines[poolIndex].commandStreamReceiver->peekTaskCount());
+                    }
+                    EXPECT_EQ(lowestTaskCountInPool, engine->commandStreamReceiver->peekTaskCount());
+                    EXPECT_EQ(0u, engine->commandStreamReceiver->getOutstandingWorkCount());
                 }
             }
 
@@ -2753,7 +2763,12 @@ HWTEST_F(DeviceTests, givenDeviceWithCCSEngineAndAggregatedProcessesWhenDeviceIs
                 ASSERT_NE(nullptr, engine);
 
                 if (contextId == regularContextCount) {
-                    EXPECT_EQ(&secondaryEngines.engines[0], engine);
+                    auto lowestTaskCountInPool = engine->commandStreamReceiver->peekTaskCount();
+                    for (auto poolIndex : secondaryEngines.npIndices) {
+                        lowestTaskCountInPool = std::min(lowestTaskCountInPool, secondaryEngines.engines[poolIndex].commandStreamReceiver->peekTaskCount());
+                    }
+                    EXPECT_EQ(lowestTaskCountInPool, engine->commandStreamReceiver->peekTaskCount());
+                    EXPECT_EQ(0u, engine->commandStreamReceiver->getOutstandingWorkCount());
                 }
             }
 
@@ -3072,6 +3087,250 @@ HWTEST_F(DeviceTests, givenPriorityChangeSupportedWhenReusingFreeSecondaryContex
         EXPECT_EQ(defaultPriority.value(), reusedWithoutPriority->osContext->getPriorityLevel());
         reusedWithoutPriority->commandStreamReceiver->releaseQueueOwnership();
     }
+}
+
+HWTEST_F(DeviceTests, givenAllSecondaryContextsInUseWhenSelectingEngineThenPreferLeastLoadedAndThenLeastUsed) {
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
+    debugManager.flags.ContextGroupSize.set(4);
+    debugManager.flags.OverrideNumHighPriorityContexts.set(1);
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.featureTable.ftrBcsInfo = 0;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+    auto &contexts = device->secondaryEngines[aub_stream::ENGINE_CCS];
+    ASSERT_GT(contexts.regularEnginesTotal, 2u);
+
+    for (uint32_t i = 0; i < contexts.regularEnginesTotal; i++) {
+        ASSERT_NE(nullptr, device->getSecondaryEngineCsr({aub_stream::ENGINE_CCS, EngineUsage::regular}, std::nullopt));
+    }
+    ASSERT_EQ(contexts.regularEnginesTotal, contexts.npIndices.size());
+
+    std::vector<TagAddressType> initialTags;
+    std::vector<TaskCountType> initialTaskCounts;
+    for (auto index : contexts.npIndices) {
+        auto csr = contexts.engines[index].commandStreamReceiver;
+        ASSERT_NE(nullptr, csr->getTagAddress());
+        initialTags.push_back(static_cast<TagAddressType>(*csr->getTagAddress()));
+        initialTaskCounts.push_back(csr->peekTaskCount());
+        *csr->getTagAddress() = 0u;
+        static_cast<UltCommandStreamReceiver<FamilyType> *>(csr)->taskCount = 8u;
+        static_cast<UltCommandStreamReceiver<FamilyType> *>(csr)->latestFlushedTaskCount = 8u;
+    }
+
+    auto leastLoadedIndex = contexts.npIndices[1];
+    auto leastLoadedCsr = contexts.engines[leastLoadedIndex].commandStreamReceiver;
+    *leastLoadedCsr->getTagAddress() = 6u;
+
+    auto selected = contexts.getEngine(EngineUsage::regular, std::nullopt);
+    ASSERT_NE(nullptr, selected);
+    EXPECT_EQ(&contexts.engines[leastLoadedIndex], selected);
+    selected->commandStreamReceiver->releaseQueueOwnership();
+
+    for (auto index : contexts.npIndices) {
+        auto csr = contexts.engines[index].commandStreamReceiver;
+        *csr->getTagAddress() = 4u;
+        static_cast<UltCommandStreamReceiver<FamilyType> *>(csr)->taskCount = 8u;
+        static_cast<UltCommandStreamReceiver<FamilyType> *>(csr)->latestFlushedTaskCount = 8u;
+    }
+    auto leastUsedIndex = contexts.npIndices[2];
+    auto leastUsedCsr = contexts.engines[leastUsedIndex].commandStreamReceiver;
+    *leastUsedCsr->getTagAddress() = 1u;
+    static_cast<UltCommandStreamReceiver<FamilyType> *>(leastUsedCsr)->taskCount = 5u;
+    static_cast<UltCommandStreamReceiver<FamilyType> *>(leastUsedCsr)->latestFlushedTaskCount = 5u;
+
+    auto selectedByTaskCount = contexts.getEngine(EngineUsage::regular, std::nullopt);
+    ASSERT_NE(nullptr, selectedByTaskCount);
+    EXPECT_EQ(&contexts.engines[leastUsedIndex], selectedByTaskCount);
+    selectedByTaskCount->commandStreamReceiver->releaseQueueOwnership();
+
+    for (size_t i = 0; i < contexts.npIndices.size(); i++) {
+        auto csr = contexts.engines[contexts.npIndices[i]].commandStreamReceiver;
+        *csr->getTagAddress() = initialTags[i];
+        static_cast<UltCommandStreamReceiver<FamilyType> *>(csr)->taskCount = initialTaskCounts[i];
+        static_cast<UltCommandStreamReceiver<FamilyType> *>(csr)->latestFlushedTaskCount = initialTaskCounts[i];
+    }
+}
+
+HWTEST_F(DeviceTests, givenAllSecondaryContextsInUseWithEqualLoadWhenSelectingEnginesInRowThenContextWithFewestOwningQueuesIsPreferredOverLeastUsed) {
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
+    debugManager.flags.ContextGroupSize.set(4);
+    debugManager.flags.OverrideNumHighPriorityContexts.set(1);
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.featureTable.ftrBcsInfo = 0;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+    auto &contexts = device->secondaryEngines[aub_stream::ENGINE_CCS];
+    ASSERT_GT(contexts.regularEnginesTotal, 2u);
+
+    for (uint32_t i = 0; i < contexts.regularEnginesTotal; i++) {
+        ASSERT_NE(nullptr, device->getSecondaryEngineCsr({aub_stream::ENGINE_CCS, EngineUsage::regular}, std::nullopt));
+    }
+    ASSERT_EQ(contexts.regularEnginesTotal, contexts.npIndices.size());
+
+    std::vector<TagAddressType> initialTags;
+    std::vector<TaskCountType> initialTaskCounts;
+    for (size_t i = 0; i < contexts.npIndices.size(); i++) {
+        auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(contexts.engines[contexts.npIndices[i]].commandStreamReceiver);
+        ASSERT_NE(nullptr, csr->getTagAddress());
+        ASSERT_EQ(1u, csr->getOwningQueueCount());
+        initialTags.push_back(static_cast<TagAddressType>(*csr->getTagAddress()));
+        initialTaskCounts.push_back(csr->peekTaskCount());
+        const auto leastUsedFirstTaskCount = static_cast<TaskCountType>(10u + i);
+        *csr->getTagAddress() = static_cast<TagAddressType>(leastUsedFirstTaskCount);
+        csr->taskCount = leastUsedFirstTaskCount;
+        csr->latestFlushedTaskCount = leastUsedFirstTaskCount;
+    }
+
+    std::vector<EngineControl *> selectedEngines;
+    for (size_t i = 0; i < contexts.npIndices.size(); i++) {
+        auto selected = contexts.getEngine(EngineUsage::regular, std::nullopt);
+        ASSERT_NE(nullptr, selected);
+        EXPECT_EQ(&contexts.engines[contexts.npIndices[i]], selected);
+        EXPECT_EQ(2u, selected->commandStreamReceiver->getOwningQueueCount());
+        selectedEngines.push_back(selected);
+    }
+
+    for (auto selected : selectedEngines) {
+        selected->commandStreamReceiver->releaseQueueOwnership();
+    }
+
+    for (size_t i = 0; i < contexts.npIndices.size(); i++) {
+        auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(contexts.engines[contexts.npIndices[i]].commandStreamReceiver);
+        *csr->getTagAddress() = initialTags[i];
+        csr->taskCount = initialTaskCounts[i];
+        csr->latestFlushedTaskCount = initialTaskCounts[i];
+    }
+}
+
+HWTEST_F(DeviceTests, givenAllSecondaryContextsInUseAndNoContextWithRequestedPriorityWhenSelectingEngineWithoutSharedContextPriorityOverrideThenNoEngineIsReturned) {
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
+    debugManager.flags.ContextGroupSize.set(4);
+    debugManager.flags.OverrideNumHighPriorityContexts.set(1);
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.featureTable.ftrBcsInfo = 0;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+    auto &contexts = device->secondaryEngines[aub_stream::ENGINE_CCS];
+    ASSERT_GT(contexts.regularEnginesTotal, 1u);
+    ASSERT_EQ(1u, contexts.highPriorityEnginesTotal);
+
+    ASSERT_NE(nullptr, device->getSecondaryEngineCsr({aub_stream::ENGINE_CCS, EngineUsage::highPriority}, std::nullopt));
+    for (uint32_t i = 0; i < contexts.regularEnginesTotal; i++) {
+        ASSERT_NE(nullptr, device->getSecondaryEngineCsr({aub_stream::ENGINE_CCS, EngineUsage::regular}, std::nullopt));
+    }
+    ASSERT_EQ(contexts.regularEnginesTotal, contexts.npIndices.size());
+    ASSERT_EQ(contexts.highPriorityEnginesTotal, contexts.hpIndices.size());
+
+    constexpr uint32_t assignedPriority = 2u;
+    constexpr uint32_t unavailablePriority = 1000u;
+    for (auto &engine : contexts.engines) {
+        engine.osContext->overridePriority(assignedPriority);
+        ASSERT_FALSE(engine.osContext->isPriorityChangeSupported());
+    }
+    ASSERT_FALSE(contexts.selectLeastLoadedIndex(contexts.npIndices, unavailablePriority, false, 0u).has_value());
+    ASSERT_FALSE(contexts.selectLeastLoadedIndex(contexts.hpIndices, unavailablePriority, false, 0u).has_value());
+
+    std::vector<uint32_t> owningQueueCounts;
+    for (auto &engine : contexts.engines) {
+        owningQueueCounts.push_back(engine.commandStreamReceiver->getOwningQueueCount());
+    }
+
+    for (auto usage : {EngineUsage::regular, EngineUsage::highPriority}) {
+        EXPECT_EQ(nullptr, contexts.getEngineWithoutSharedContextPriorityOverride(usage, unavailablePriority));
+        EXPECT_EQ(nullptr, device->getSecondaryEngineCsrWithoutSharedContextPriorityOverride({aub_stream::ENGINE_CCS, usage}, unavailablePriority));
+        for (size_t i = 0; i < contexts.engines.size(); i++) {
+            EXPECT_EQ(owningQueueCounts[i], contexts.engines[i].commandStreamReceiver->getOwningQueueCount());
+        }
+
+        auto fallbackEngine = contexts.getEngine(usage, unavailablePriority);
+        ASSERT_NE(nullptr, fallbackEngine);
+        fallbackEngine->commandStreamReceiver->releaseQueueOwnership();
+
+        const auto &poolIndices = (usage == EngineUsage::highPriority) ? contexts.hpIndices : contexts.npIndices;
+        const auto poolPriority = contexts.engines[poolIndices[0]].osContext->getPriorityLevel();
+        auto matchingEngine = contexts.getEngineWithoutSharedContextPriorityOverride(usage, poolPriority);
+        ASSERT_NE(nullptr, matchingEngine);
+        EXPECT_EQ(poolPriority, matchingEngine->osContext->getPriorityLevel());
+        matchingEngine->commandStreamReceiver->releaseQueueOwnership();
+    }
+}
+
+HWTEST_F(DeviceTests, givenOwnedContextsWithDifferentPrioritiesWhenSelectingLeastLoadedOwnedContextThenMatchingPriorityIsPreferredOverLowerLoad) {
+    struct PriorityChangeOsContext : OsContext {
+        using OsContext::OsContext;
+        bool isPriorityChangeSupported() const override { return true; }
+    };
+
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.ContextGroupSize.set(4);
+    debugManager.flags.OverrideNumHighPriorityContexts.set(1);
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.featureTable.ftrBcsInfo = 0;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+    auto &contexts = device->secondaryEngines[aub_stream::ENGINE_CCS];
+    ASSERT_GE(contexts.engines.size(), 2u);
+
+    constexpr uint32_t requestedPriority = 1u;
+    constexpr uint32_t otherPriority = 2u;
+    const EngineDescriptor engineDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}, device->getDeviceBitfield(), PreemptionMode::Disabled, false);
+    PriorityChangeOsContext matchingPriorityContext(0, 0, engineDescriptor);
+    PriorityChangeOsContext otherPriorityContext(0, 0, engineDescriptor);
+    matchingPriorityContext.overridePriority(requestedPriority);
+    otherPriorityContext.overridePriority(otherPriority);
+
+    for (uint32_t engineIndex = 0; engineIndex < 2; engineIndex++) {
+        auto commandStreamReceiver = contexts.engines[engineIndex].commandStreamReceiver;
+        if (commandStreamReceiver->getTagAllocation() == nullptr) {
+            ASSERT_TRUE(commandStreamReceiver->initializeTagAllocation());
+        }
+    }
+
+    auto originalMatchingOsContext = contexts.engines[0].osContext;
+    auto originalOtherOsContext = contexts.engines[1].osContext;
+    contexts.engines[0].osContext = &matchingPriorityContext;
+    contexts.engines[1].osContext = &otherPriorityContext;
+
+    auto matchingCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(contexts.engines[0].commandStreamReceiver);
+    auto otherCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(contexts.engines[1].commandStreamReceiver);
+    const auto matchingTag = *matchingCsr->getTagAddress();
+    const auto otherTag = *otherCsr->getTagAddress();
+    *matchingCsr->getTagAddress() = 0u;
+    matchingCsr->latestFlushedTaskCount = 3u;
+    *otherCsr->getTagAddress() = 0u;
+    otherCsr->latestFlushedTaskCount = 1u;
+
+    const std::vector<int32_t> candidates = {0, 1};
+    EXPECT_EQ(0, contexts.selectLeastLoadedIndex(candidates, requestedPriority, false, 0u));
+
+    constexpr uint32_t unusedPriority = 3u;
+    EXPECT_EQ(1, contexts.selectLeastLoadedIndex(candidates, unusedPriority, false, 0u));
+
+    contexts.engines[0].osContext = originalMatchingOsContext;
+    contexts.engines[1].osContext = originalOtherOsContext;
+    *matchingCsr->getTagAddress() = matchingTag;
+    *otherCsr->getTagAddress() = otherTag;
+    matchingCsr->latestFlushedTaskCount = 0u;
+    otherCsr->latestFlushedTaskCount = 0u;
 }
 
 HWTEST_F(DeviceTests, givenNonDefaultPriorityLevelWhenGetEngineThenReturnNotPrimaryEngine) {

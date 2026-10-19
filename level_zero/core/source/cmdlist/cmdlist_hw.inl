@@ -3830,6 +3830,7 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleInOrderImplicitDependencies(boo
     if (hasInOrderDependencies()) {
         if (inOrderExecInfo->isCounterAlreadyDone(inOrderExecInfo->getCounterValue(), inOrderExecInfo->getAllocationOffset())) {
             this->latestOperationHasCbEventWithProfiling = false;
+            this->implicitDependencyOnPreviousCsrPending = false;
             return false;
         }
 
@@ -3846,10 +3847,12 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleInOrderImplicitDependencies(boo
         }
 
         this->latestOperationHasCbEventWithProfiling = false;
+        this->implicitDependencyOnPreviousCsrPending = false;
         return true;
     }
 
     this->latestOperationHasCbEventWithProfiling = false;
+    this->implicitDependencyOnPreviousCsrPending = false;
     return false;
 }
 
@@ -3968,12 +3971,12 @@ bool CommandListCoreFamily<gfxCoreFamily>::isResolveIoqDependencyWithBarrier(boo
     if (this->isImmediateType() && !isBarrierRequired) {
         // Use semaphore to avoid serialization if different cmd list submitted workload between previous and current submission.
         // Semaphore is not allowed if previous submission used HP event or post sync was skipped.
-        const bool noInterleavingSinceLastSubmit = (this->cmdQImmediate->getTaskCount() == this->getCsr(false)->peekTaskCount());
+        const bool noInterleavingSinceLastSubmit = !this->implicitDependencyOnPreviousCsrPending && (this->cmdQImmediate->getTaskCount() == this->getCsr(false)->peekTaskCount());
         resolveIoqDependencyWithBarrier = noInterleavingSinceLastSubmit;
     }
     DEBUG_BREAK_IF(!resolveIoqDependencyWithBarrier && isBarrierRequired);
 
-    if (!isBarrierRequired && NEO::debugManager.flags.ResolveDependenciesViaPipeControls.get() != -1) {
+    if (!isBarrierRequired && !this->implicitDependencyOnPreviousCsrPending && NEO::debugManager.flags.ResolveDependenciesViaPipeControls.get() != -1) {
         resolveIoqDependencyWithBarrier = NEO::debugManager.flags.ResolveDependenciesViaPipeControls.get();
     }
     return resolveIoqDependencyWithBarrier;

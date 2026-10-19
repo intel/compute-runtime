@@ -34,6 +34,7 @@ struct WhiteBox<::L0::Event> : public ::L0::Event {
     using BaseClass::inOrderExecHelper;
     using BaseClass::isFromIpcPool;
     using BaseClass::maxPacketCount;
+    using BaseClass::signalerPreviousContexts;
     using BaseClass::signalScope;
     using BaseClass::totalEventSize;
     using BaseClass::waitScope;
@@ -60,6 +61,7 @@ struct WhiteBox<::L0::EventImp<TagSizeT>> : public L0::EventImp<TagSizeT> {
     using BaseClass::isDualCopyOffloadEvent;
     using BaseClass::isFromIpcPool;
     using BaseClass::maxPacketCount;
+    using BaseClass::signalerPreviousContexts;
     using BaseClass::signalScope;
     using BaseClass::totalEventSize;
     using BaseClass::waitScope;
@@ -139,6 +141,7 @@ class MockEvent : public ::L0::Event {
     using ::L0::Event::isCompleted;
     using ::L0::Event::isFromIpcPool;
     using ::L0::Event::maxPacketCount;
+    using ::L0::Event::signalerPreviousContexts;
     using ::L0::Event::signalScope;
     using ::L0::Event::waitScope;
 

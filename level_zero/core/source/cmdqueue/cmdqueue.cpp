@@ -70,6 +70,43 @@ CommandQueue::CommandQueue(Device *device, NEO::CommandStreamReceiver *csr, cons
     }
 }
 
+bool CommandQueue::isCsrReassignmentEnabled() const {
+    return this->csrReassignmentEnabled && this->csrQueueOwnershipTaken;
+}
+
+bool CommandQueue::isCsrOversubscribed() const {
+    return (this->csr->getOwningQueueCount() > 1) && (this->csr->peekLatestFlushedTaskCount() > this->taskCount) &&
+           (this->csr->getOutstandingWorkCount() > csrReassignmentLoadThreshold);
+}
+
+bool CommandQueue::isSubmittedWorkCompleted() const {
+    return this->csr->isTagReached(this->csr->getTagAddress(), this->taskCount, false);
+}
+
+bool CommandQueue::reassignCsr() {
+    NEO::CommandStreamReceiver *candidateCsr = nullptr;
+    bool candidateOwnershipTaken = false;
+    const auto result = this->device->getCsrForReassignment(&candidateCsr, this->desc.ordinal, this->desc.index, this->desc.priority,
+                                                            this->csrSelectionPriorityLevel, this->csrSelectionPowerHint, &candidateOwnershipTaken);
+    if (result != ZE_RESULT_SUCCESS || !candidateOwnershipTaken) {
+        return false;
+    }
+
+    if (candidateCsr == this->csr) {
+        candidateCsr->releaseQueueOwnership();
+        return false;
+    }
+
+    unregisterCsrClient();
+    this->csr->releaseQueueOwnership();
+
+    this->csr = candidateCsr;
+    this->taskCount = 0u;
+    initializeCsrResources();
+
+    return true;
+}
+
 ze_result_t CommandQueue::destroy() {
     if (copyOffloadQueue) {
         if (const auto copyOffloadTaskCount = copyOffloadQueue->getTaskCount(); copyOffloadTaskCount != 0) {
@@ -130,6 +167,7 @@ ze_result_t CommandQueue::initialize(bool copyOnly, bool isInternal, bool immedi
         this->dispatchCmdListBatchBufferAsPrimary = L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary(true);
         auto &compilerProductHelper = rootDeviceEnvironment.getHelper<NEO::CompilerProductHelper>();
         this->heaplessModeEnabled = compilerProductHelper.isHeaplessModeEnabled(hwInfo);
+        this->csrReassignmentEnabled = NEO::debugManager.flags.EnableDynamicQueueReassignment.get() == 1;
         this->saveWaitForPreamble = device->getGfxCoreHelper().getContextGroupContextsCount() > 1;
     }
     return returnValue;
@@ -163,7 +201,7 @@ ze_result_t CommandQueue::createCopyOffloadQueue() {
         return returnValue;
     }
     if (queueOwnershipTaken) {
-        newCopyOffloadQueue->takeCsrQueueOwnership();
+        newCopyOffloadQueue->takeCsrQueueOwnership(std::nullopt, 0u);
     }
     this->copyOffloadQueue = newCopyOffloadQueue;
     return ZE_RESULT_SUCCESS;
@@ -392,12 +430,16 @@ CommandQueue *CommandQueue::create(Device *device, NEO::CommandStreamReceiver *c
         return nullptr;
     }
 
-    csr->initializeResourcesAndDirectSubmission(device->getDevicePreemptionMode());
-    if (commandQueue->cmdListHeapAddressModel == NEO::HeapAddressModel::globalStateless) {
-        csr->createGlobalStatelessHeap();
-    }
+    commandQueue->initializeCsrResources();
 
     return commandQueue;
+}
+
+void CommandQueue::initializeCsrResources() {
+    this->csr->initializeResourcesAndDirectSubmission(this->device->getDevicePreemptionMode());
+    if (this->cmdListHeapAddressModel == NEO::HeapAddressModel::globalStateless) {
+        this->csr->createGlobalStatelessHeap();
+    }
 }
 
 void CommandQueue::unregisterCsrClient() {

@@ -8202,6 +8202,90 @@ TEST_F(CommandStreamReceiverTest, givenForceExternalSemaphoreHostFunctionWaitAnd
     EXPECT_FALSE(csr.isExternalSemaphoreGpuWaitAllowed());
 }
 
+HWTEST_F(CommandStreamReceiverTest, givenSubmittedAndCompletedTaskCountsWhenQueryingOutstandingWorkCountThenDifferenceIsReturned) {
+    auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    ASSERT_NE(nullptr, ultCsr.getTagAddress());
+
+    *ultCsr.getTagAddress() = 4u;
+    ultCsr.taskCount = 4u;
+    ultCsr.latestFlushedTaskCount = 4u;
+    EXPECT_EQ(0u, ultCsr.getOutstandingWorkCount());
+
+    ultCsr.taskCount = 7u;
+    ultCsr.latestFlushedTaskCount = 7u;
+    EXPECT_EQ(3u, ultCsr.getOutstandingWorkCount());
+
+    *ultCsr.getTagAddress() = 9u;
+    EXPECT_EQ(0u, ultCsr.getOutstandingWorkCount());
+
+    *ultCsr.getTagAddress() = ultCsr.peekTaskCount();
+}
+
+TEST_F(CommandStreamReceiverTest, givenCsrWithoutTagAllocationWhenQueryingOutstandingWorkCountThenZeroIsReturned) {
+    MockCommandStreamReceiver csr(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    csr.tagAddress = nullptr;
+    csr.taskCount = 5u;
+
+    EXPECT_EQ(0u, csr.getOutstandingWorkCount());
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenTagUpdatedOnlyInSimulationWhenQueryingOutstandingWorkCountThenTagIsDownloadedBeforeItIsRead) {
+    auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    constexpr TagAddressType completedInSimulationTaskCount = 5u;
+    uint32_t tagDownloadCount = 0u;
+    ultCsr.downloadAllocationImpl = [&](GraphicsAllocation &allocation, uint64_t, size_t) {
+        if (&allocation == ultCsr.getTagAllocation()) {
+            tagDownloadCount++;
+            *ultCsr.getTagAddress() = completedInSimulationTaskCount;
+        }
+    };
+
+    *ultCsr.getTagAddress() = 0u;
+    ultCsr.taskCount = completedInSimulationTaskCount;
+    ultCsr.latestFlushedTaskCount = completedInSimulationTaskCount;
+    EXPECT_EQ(0u, ultCsr.getOutstandingWorkCount());
+    EXPECT_EQ(1u, tagDownloadCount);
+
+    *ultCsr.getTagAddress() = 0u;
+    ultCsr.latestFlushedTaskCount = 0u;
+    EXPECT_EQ(0u, ultCsr.getOutstandingWorkCount());
+    EXPECT_EQ(1u, tagDownloadCount);
+
+    ultCsr.downloadAllocationImpl = nullptr;
+    *ultCsr.getTagAddress() = ultCsr.peekTaskCount();
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenSubmissionsWithoutTaskCountUpdateWhenQueryingOutstandingWorkCountThenOnlyWorkWithTaskCountUpdateIsCounted) {
+    auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    constexpr TaskCountType taskCountWithTagUpdate = 3u;
+    constexpr TaskCountType submissionsWithoutTagUpdate = 4u;
+
+    *ultCsr.getTagAddress() = 1u;
+    ultCsr.latestFlushedTaskCount = taskCountWithTagUpdate;
+    ultCsr.taskCount = taskCountWithTagUpdate + submissionsWithoutTagUpdate;
+
+    EXPECT_EQ(taskCountWithTagUpdate - 1u, ultCsr.getOutstandingWorkCount());
+
+    *ultCsr.getTagAddress() = ultCsr.peekTaskCount();
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenTagReachedWhenCheckingTagThenTrueIsReturnedWithoutDownloadingAllocations) {
+    auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    *ultCsr.getTagAddress() = 5u;
+    const auto downloadsBefore = ultCsr.downloadAllocationsCalledCount.load();
+
+    EXPECT_TRUE(ultCsr.isTagReached(ultCsr.getTagAddress(), 5u, false));
+    EXPECT_FALSE(ultCsr.isTagReached(ultCsr.getTagAddress(), 6u, false));
+    EXPECT_EQ(downloadsBefore, ultCsr.downloadAllocationsCalledCount.load());
+
+    EXPECT_TRUE(ultCsr.testTaskCountReady(ultCsr.getTagAddress(), 5u));
+    EXPECT_EQ(downloadsBefore + 1, ultCsr.downloadAllocationsCalledCount.load());
+    EXPECT_FALSE(ultCsr.testTaskCountReady(ultCsr.getTagAddress(), 6u));
+    EXPECT_EQ(downloadsBefore + 1, ultCsr.downloadAllocationsCalledCount.load());
+
+    *ultCsr.getTagAddress() = ultCsr.peekTaskCount();
+}
+
 HWTEST_F(CommandStreamReceiverTest, givenLaterSubmissionPendingWhenTestingTaskCountReadyThenAllocationsAreDownloadedOnlyUpToTestedTaskCount) {
     auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     constexpr TaskCountType testedTaskCount = 5u;

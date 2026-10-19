@@ -945,6 +945,7 @@ struct CommandList : _ze_command_list_handle_t {
     uint32_t activeScratchSizePatchElements = 0;
     uint32_t hostFunctionWithMemorySynchronizationCount = 0;
     uint32_t hostFunctionWithoutMemorySynchronizationCount = 0;
+    uint32_t openMetricQueryCount = 0;
     uint32_t syncDispatchQueueId = std::numeric_limits<uint32_t>::max();
     uint32_t estimatedNumberOfCommands = 0;
     NEO::BuiltIn::AddressingMode defaultBuiltInMode;
@@ -954,6 +955,7 @@ struct CommandList : _ze_command_list_handle_t {
     uint8_t powerHint = 0u;
     bool isSyncModeQueue = false;
     bool isTbxMode = false;
+    bool csrReassignmentAllowed = false;
     bool commandListSLMEnabled = false;
     bool requiresQueueUncachedMocs = false;
     bool immediateCmdListHeapSharing = false;

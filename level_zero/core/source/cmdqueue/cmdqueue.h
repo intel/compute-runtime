@@ -23,6 +23,7 @@
 #include <atomic>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <vector>
 
 struct _ze_command_queue_handle_t : BaseHandle {};
@@ -51,6 +52,7 @@ struct CommandQueue : _ze_command_queue_handle_t {
         defaultQueueCmdBufferSize +
         MemoryConstants::cacheLineSize +
         NEO::CSRequirements::csOverfetchSize;
+    static constexpr TaskCountType csrReassignmentLoadThreshold = 0;
 
     template <typename Type>
     struct Allocator {
@@ -97,7 +99,15 @@ struct CommandQueue : _ze_command_queue_handle_t {
     void unregisterCsrClient();
     void registerCsrClient();
     void setCsrClientRegistered(bool registered) { csrClientRegistered = registered; }
-    void takeCsrQueueOwnership() { csrQueueOwnershipTaken = true; }
+    void takeCsrQueueOwnership(std::optional<int> priorityLevel, uint8_t powerHint) {
+        csrQueueOwnershipTaken = true;
+        csrSelectionPriorityLevel = priorityLevel;
+        csrSelectionPowerHint = powerHint;
+    }
+    bool isCsrReassignmentEnabled() const;
+    bool isCsrOversubscribed() const;
+    bool isSubmittedWorkCompleted() const;
+    bool reassignCsr();
 
     TaskCountType getTaskCount() const { return taskCount; }
     void setTaskCount(TaskCountType newTaskCount) { taskCount = newTaskCount; }
@@ -173,6 +183,7 @@ struct CommandQueue : _ze_command_queue_handle_t {
 
   protected:
     bool frontEndTrackingEnabled() const;
+    void initializeCsrResources();
 
     MOCKABLE_VIRTUAL NEO::SubmissionStatus submitBatchBuffer(size_t offset, void *endingCmdPtr,
                                                              bool isCooperative);
@@ -230,6 +241,9 @@ struct CommandQueue : _ze_command_queue_handle_t {
     bool useSemaphore64Cmd = false;
     bool isQwordSemaphore = false;
     bool isQwordIndirect = false;
+    bool csrReassignmentEnabled = false;
+    std::optional<int> csrSelectionPriorityLevel = std::nullopt;
+    uint8_t csrSelectionPowerHint = 0;
 };
 
 using CommandQueueAllocatorFn = CommandQueue *(*)(Device * device, NEO::CommandStreamReceiver *csr,

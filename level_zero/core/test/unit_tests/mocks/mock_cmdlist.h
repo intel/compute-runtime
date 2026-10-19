@@ -253,6 +253,9 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::copyOffloadMode;
     using BaseClass::copyOffloadTagUpdateRequired;
     using BaseClass::copyOperationFenceSupported;
+    using BaseClass::csrBeforeReassignment;
+    using BaseClass::csrReassignmentAllowed;
+    using BaseClass::csrReassignmentSuspended;
     using BaseClass::dcFlushSupport;
     using BaseClass::dependenciesPresent;
     using BaseClass::device;
@@ -271,10 +274,12 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::getDcFlushRequired;
     using BaseClass::getHostPtrAlloc;
     using BaseClass::getInOrderIncrementValue;
+    using BaseClass::handleInOrderImplicitDependencies;
     using BaseClass::heaplessModeEnabled;
     using BaseClass::hostSynchronize;
     using BaseClass::immediateCmdListHeapSharing;
     using BaseClass::implicitCounterBasedEventPromotionAllowed;
+    using BaseClass::implicitDependencyOnPreviousCsrPending;
     using BaseClass::inOrderAtomicSignalingEnabled;
     using BaseClass::inOrderExecInfo;
     using BaseClass::internalUsage;
@@ -287,17 +292,22 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::isSyncModeQueue;
     using BaseClass::isTbxMode;
     using BaseClass::isWalkerPostSyncSkipEnabled;
+    using BaseClass::lastBarrierTaskCounts;
+    using BaseClass::lastHostSynchronizeTaskCounts;
     using BaseClass::latestFlushIsDualCopyOffload;
     using BaseClass::latestFlushIsHostVisible;
     using BaseClass::latestOperationHasCbEventWithProfiling;
     using BaseClass::latestOperationRequiredNonWalkerInOrderCmdsChaining;
     using BaseClass::maxFillPatternSizeForCopyEngine;
     using BaseClass::minimalSizeForBcsSplit;
+    using BaseClass::openMetricQueryCount;
     using BaseClass::partitionCount;
     using BaseClass::pendingSubmissionPauses;
     using BaseClass::pipelineSelectStateTracking;
+    using BaseClass::previousCsrsAwaitingCompletion;
     using BaseClass::programPauseOnEnqueueCommands;
     using BaseClass::relaxedOrderingCounter;
+    using BaseClass::releasePreviousCsrCompletionTarget;
     using BaseClass::requiredStreamState;
     using BaseClass::requiresQueueUncachedMocs;
     using BaseClass::resolveImagePitchesAndBufferSize;
@@ -308,7 +318,9 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::synchronizedDispatchMode;
     using BaseClass::synchronizeInOrderExecution;
     using BaseClass::transferDirectionRequiresBcsSplit;
+    using BaseClass::tryReassignCsrAtSafeTransitionPoint;
     using BaseClass::useAdditionalBlitProperties;
+    using typename BaseClass::SynchronizationTaskCounts;
 
     WhiteBox() : BaseClass(BaseClass::defaultNumIddsPerBlock) {}
 
@@ -357,6 +369,7 @@ struct WhiteBox<::L0::CommandList> : public ::L0::CommandList {
     using BaseClass::compactL3FlushEventPacket;
     using BaseClass::copyOffloadMode;
     using BaseClass::copyThroughLockedPtrEnabled;
+    using BaseClass::csrReassignmentAllowed;
     using BaseClass::currentBindingTablePoolBaseAddress;
     using BaseClass::currentDynamicStateBaseAddress;
     using BaseClass::currentIndirectObjectBaseAddress;
@@ -382,6 +395,7 @@ struct WhiteBox<::L0::CommandList> : public ::L0::CommandList {
     using BaseClass::l3FlushAfterPostSyncEnabled;
     using BaseClass::midThreadPreemptionKernelAppended;
     using BaseClass::minimalSizeForBcsSplit;
+    using BaseClass::openMetricQueryCount;
     using BaseClass::partitionCount;
     using BaseClass::pipelineSelectStateTracking;
     using BaseClass::queueThrottle;

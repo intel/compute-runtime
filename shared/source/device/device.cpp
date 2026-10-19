@@ -41,6 +41,7 @@
 #include "shared/source/utilities/software_tags_manager.h"
 
 #include <sstream>
+#include <tuple>
 
 namespace NEO {
 
@@ -716,6 +717,14 @@ bool Device::createSecondaryEngine(CommandStreamReceiver *primaryCsr, EngineType
 }
 
 EngineControl *Device::getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, std::optional<uint32_t> hwPriority) {
+    return acquireSecondaryEngineCsr(engineTypeUsage, hwPriority, true);
+}
+
+EngineControl *Device::getSecondaryEngineCsrWithoutSharedContextPriorityOverride(EngineTypeUsage engineTypeUsage, std::optional<uint32_t> hwPriority) {
+    return acquireSecondaryEngineCsr(engineTypeUsage, hwPriority, false);
+}
+
+EngineControl *Device::acquireSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, std::optional<uint32_t> hwPriority, bool sharedContextPriorityOverrideAllowed) {
     auto secondaryEnginesIt = secondaryEngines.find(engineTypeUsage.first);
     if (secondaryEnginesIt == secondaryEngines.end()) {
         return nullptr;
@@ -723,7 +732,7 @@ EngineControl *Device::getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, st
 
     auto &secondaryEnginesForType = secondaryEnginesIt->second;
 
-    auto engineControl = secondaryEnginesForType.getEngine(engineTypeUsage.second, hwPriority);
+    auto engineControl = secondaryEnginesForType.selectEngine(engineTypeUsage.second, hwPriority, sharedContextPriorityOverrideAllowed);
 
     if (engineControl == nullptr) {
         return nullptr;
@@ -1410,36 +1419,87 @@ static bool isPriorityLevelUsable(const OsContext &osContext, std::optional<uint
     return requestedPriority.has_value() && osContext.getPriorityLevel() == requestedPriority.value();
 }
 
-EngineControl *SecondaryContexts::getEngine(EngineUsage usage, std::optional<uint32_t> hwPriority) {
-    auto secondaryEngineIndex = 0;
+static bool isPriorityLevelMatching(const OsContext &osContext, std::optional<uint32_t> hwPriority) {
+    const auto requestedPriority = hwPriority.has_value() ? hwPriority : osContext.getDefaultPriorityLevel();
+    if (!requestedPriority.has_value()) {
+        return !osContext.hasPriorityLevel();
+    }
+    return osContext.hasPriorityLevel() && (osContext.getPriorityLevel() == requestedPriority.value());
+}
 
-    std::lock_guard<std::mutex> guard(mutex);
-
-    std::optional<int32_t> reusableIndex;
-    if (usage == EngineUsage::regular || usage == EngineUsage::highPriority) {
-        const auto &assignedIndices = usage == EngineUsage::highPriority ? hpIndices : npIndices;
-        for (auto index : assignedIndices) {
-            auto &engine = engines[index];
-            if (engine.commandStreamReceiver->getOwningQueueCount() > 0 || !engine.commandStreamReceiver->isInitialized()) {
-                continue;
-            }
-            if (isPriorityLevelUsable(*engine.osContext, hwPriority)) {
-                reusableIndex = index;
-                break;
-            }
+namespace {
+struct LeastLoadedCandidate {
+    void consider(int32_t candidateIndex, TaskCountType candidateLoad, uint32_t candidateOwningQueueCount, TaskCountType candidateTaskCount) {
+        const auto candidateRank = std::make_tuple(candidateLoad, candidateOwningQueueCount, candidateTaskCount);
+        if (!this->index.has_value() || (candidateRank < std::make_tuple(this->load, this->owningQueueCount, this->taskCount))) {
+            this->index = candidateIndex;
+            this->load = candidateLoad;
+            this->owningQueueCount = candidateOwningQueueCount;
+            this->taskCount = candidateTaskCount;
         }
     }
 
-    auto findMatchingPriority = [&](const std::vector<int32_t> &indices, uint32_t requested, int fallback) -> uint32_t {
-        for (uint32_t i = 0; i < indices.size(); i++) {
-            uint32_t matching = indices[i];
-            if (engines[matching].osContext->hasPriorityLevel() &&
-                engines[matching].osContext->getPriorityLevel() == requested) {
-                return matching;
-            }
+    std::optional<int32_t> index;
+    TaskCountType load = 0;
+    uint32_t owningQueueCount = 0;
+    TaskCountType taskCount = 0;
+};
+} // namespace
+
+std::optional<int32_t> SecondaryContexts::selectLeastLoadedIndex(const std::vector<int32_t> &candidateIndices, std::optional<uint32_t> hwPriority,
+                                                                 bool requireFreeAndInitialized, size_t scanStartOffset) const {
+    if (candidateIndices.empty()) {
+        return std::nullopt;
+    }
+
+    LeastLoadedCandidate usableCandidate;
+    LeastLoadedCandidate matchingPriorityCandidate;
+
+    for (size_t i = 0; i < candidateIndices.size(); i++) {
+        const auto index = candidateIndices[(scanStartOffset + i) % candidateIndices.size()];
+        auto &engine = engines[index];
+        auto commandStreamReceiver = engine.commandStreamReceiver;
+
+        if (requireFreeAndInitialized && (commandStreamReceiver->getOwningQueueCount() > 0 || !commandStreamReceiver->isInitialized())) {
+            continue;
         }
-        return fallback;
-    };
+        if (!isPriorityLevelUsable(*engine.osContext, hwPriority)) {
+            continue;
+        }
+
+        const auto load = commandStreamReceiver->getOutstandingWorkCount();
+        const auto owningQueueCount = commandStreamReceiver->getOwningQueueCount();
+        const auto taskCount = commandStreamReceiver->peekTaskCount();
+        usableCandidate.consider(index, load, owningQueueCount, taskCount);
+        if (!requireFreeAndInitialized && isPriorityLevelMatching(*engine.osContext, hwPriority)) {
+            matchingPriorityCandidate.consider(index, load, owningQueueCount, taskCount);
+        }
+    }
+
+    return matchingPriorityCandidate.index.has_value() ? matchingPriorityCandidate.index : usableCandidate.index;
+}
+
+EngineControl *SecondaryContexts::getEngine(EngineUsage usage, std::optional<uint32_t> hwPriority) {
+    return selectEngine(usage, hwPriority, true);
+}
+
+EngineControl *SecondaryContexts::getEngineWithoutSharedContextPriorityOverride(EngineUsage usage, std::optional<uint32_t> hwPriority) {
+    return selectEngine(usage, hwPriority, false);
+}
+
+EngineControl *SecondaryContexts::selectEngine(EngineUsage usage, std::optional<uint32_t> hwPriority, bool sharedContextPriorityOverrideAllowed) {
+    auto secondaryEngineIndex = 0;
+    bool sharedContextSelected = false;
+
+    std::lock_guard<std::mutex> guard(mutex);
+
+    const bool poolSelectionSupported = (usage == EngineUsage::regular || usage == EngineUsage::highPriority);
+    const auto &assignedIndices = usage == EngineUsage::highPriority ? hpIndices : npIndices;
+
+    std::optional<int32_t> reusableIndex;
+    if (poolSelectionSupported) {
+        reusableIndex = selectLeastLoadedIndex(assignedIndices, hwPriority, true, 0u);
+    }
 
     if (reusableIndex.has_value()) {
         secondaryEngineIndex = reusableIndex.value();
@@ -1461,13 +1521,10 @@ EngineControl *SecondaryContexts::getEngine(EngineUsage usage, std::optional<uin
         }
         // Assign from existing indices
         else {
-            auto index = (highPriorityCounter.fetch_add(1)) % (hpIndices.size());
-            secondaryEngineIndex = hpIndices[index];
-            // Prefer matching priority when reusing an initialized HP context
-            if (hwPriority.has_value()) {
-                const int requested = hwPriority.value();
-                secondaryEngineIndex = findMatchingPriority(hpIndices, requested, secondaryEngineIndex);
-            }
+            const auto scanStartOffset = (highPriorityCounter.fetch_add(1)) % (hpIndices.size());
+            auto leastLoadedIndex = selectLeastLoadedIndex(hpIndices, hwPriority, false, scanStartOffset);
+            secondaryEngineIndex = leastLoadedIndex.has_value() ? leastLoadedIndex.value() : hpIndices[scanStartOffset];
+            sharedContextSelected = true;
         }
 
         if (engines[secondaryEngineIndex].osContext->getEngineUsage() != EngineUsage::highPriority) {
@@ -1498,13 +1555,10 @@ EngineControl *SecondaryContexts::getEngine(EngineUsage usage, std::optional<uin
         }
         // Assign from existing indices
         else {
-            auto index = (regularCounter.fetch_add(1)) % (npIndices.size());
-            secondaryEngineIndex = npIndices[index];
-            // Prefer matching priority when reusing an initialized regular context
-            if (hwPriority.has_value()) {
-                const int requested = hwPriority.value();
-                secondaryEngineIndex = findMatchingPriority(npIndices, requested, secondaryEngineIndex);
-            }
+            const auto scanStartOffset = (regularCounter.fetch_add(1)) % (npIndices.size());
+            auto leastLoadedIndex = selectLeastLoadedIndex(npIndices, hwPriority, false, scanStartOffset);
+            secondaryEngineIndex = leastLoadedIndex.has_value() ? leastLoadedIndex.value() : npIndices[scanStartOffset];
+            sharedContextSelected = true;
         }
     } else {
         DEBUG_BREAK_IF(true);
@@ -1512,6 +1566,9 @@ EngineControl *SecondaryContexts::getEngine(EngineUsage usage, std::optional<uin
 
     DEBUG_BREAK_IF(internalEngineIndex != 0 && static_cast<uint32_t>(secondaryEngineIndex) == internalEngineIndex);
     auto &selectedEngine = engines[secondaryEngineIndex];
+    if (sharedContextSelected && !sharedContextPriorityOverrideAllowed && hwPriority.has_value() && !isPriorityLevelMatching(*selectedEngine.osContext, hwPriority)) {
+        return nullptr;
+    }
     if (hwPriority.has_value()) {
         selectedEngine.osContext->overridePriority(hwPriority.value());
     } else if (reusableIndex.has_value() && selectedEngine.osContext->getDefaultPriorityLevel().has_value()) {

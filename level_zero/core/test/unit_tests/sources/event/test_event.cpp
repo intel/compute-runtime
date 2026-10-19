@@ -6295,6 +6295,173 @@ HWTEST_F(EventTests, givenInOrderEventWhenHostSynchronizeIsCalledThenAllocationI
     EXPECT_EQ(1u, ultCsr->downloadAllocationsCalledCount);
 }
 
+struct EventSignalerPreviousContextsTests : public EventTests {
+    template <typename FamilyType>
+    NEO::UltCommandStreamReceiver<FamilyType> *findPreviousContextCsr() {
+        auto defaultCsr = this->neoDevice->getDefaultEngine().commandStreamReceiver;
+        for (auto &engine : this->neoDevice->getAllEngines()) {
+            if (engine.commandStreamReceiver != defaultCsr) {
+                return static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(engine.commandStreamReceiver);
+            }
+        }
+        return nullptr;
+    }
+
+    static constexpr TaskCountType previousContextTaskCount = 7u;
+};
+
+HWTEST_F(EventSignalerPreviousContextsTests, givenRegularEventWithSignalerPreviousContextsWhenHostSynchronizeSucceedsThenAllocationsOfPreviousContextsAreDownloadedOnlyInTbxMode) {
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+    auto previousContextCsr = findPreviousContextCsr<FamilyType>();
+    ASSERT_NE(nullptr, previousContextCsr);
+
+    for (const auto csrType : {CommandStreamReceiverType::hardware, CommandStreamReceiverType::tbx}) {
+        neoDevice->getUltCommandStreamReceiver<FamilyType>().commandStreamReceiverType = csrType;
+        ze_result_t result;
+        auto event = zeUniquePtr(whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device, result)));
+        ASSERT_NE(nullptr, event);
+
+        size_t completionOffset = event->isEventTimestampFlagSet() ? event->getContextEndOffset() : event->getContextStartOffset();
+        *static_cast<TagAddressType *>(ptrOffset(event->getHostAddress(), completionOffset)) = Event::STATE_SIGNALED;
+
+        event->setSignalerPreviousContexts({{previousContextCsr, previousContextTaskCount}});
+        previousContextCsr->downloadAllocationsCalledCount = 0;
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, event->hostSynchronize(std::numeric_limits<uint64_t>::max()));
+
+        if (csrType == CommandStreamReceiverType::tbx) {
+            EXPECT_EQ(1u, previousContextCsr->downloadAllocationsCalledCount);
+            EXPECT_TRUE(previousContextCsr->latestDownloadAllocationsBlocking);
+            EXPECT_EQ(previousContextTaskCount, previousContextCsr->latestDownloadAllocationsTaskCount);
+        } else {
+            EXPECT_EQ(0u, previousContextCsr->downloadAllocationsCalledCount);
+        }
+    }
+}
+
+HWTEST_F(EventSignalerPreviousContextsTests, givenCounterBasedEventWithSignalerPreviousContextsWhenHostSynchronizeSucceedsThenAllocationsOfPreviousContextsAreDownloadedOnlyInTbxMode) {
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+    MockTagAllocator<DeviceAllocNodeType<true>> tagAllocator(0, neoDevice->getMemoryManager());
+    auto previousContextCsr = findPreviousContextCsr<FamilyType>();
+    ASSERT_NE(nullptr, previousContextCsr);
+
+    for (const auto csrType : {CommandStreamReceiverType::hardware, CommandStreamReceiverType::tbx}) {
+        neoDevice->getUltCommandStreamReceiver<FamilyType>().commandStreamReceiverType = csrType;
+        ze_result_t result;
+        auto event = zeUniquePtr(whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device, result)));
+        ASSERT_NE(nullptr, event);
+
+        auto inOrderExecInfo = std::make_shared<NEO::InOrderExecInfo>(tagAllocator.getTag(), nullptr, *neoDevice, 1, false);
+        *inOrderExecInfo->getBaseHostAddress() = 1;
+        event->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
+        event->getInOrderExecEventHelper().initializeLocalTempStorage();
+        event->updateInOrderExecState(inOrderExecInfo, 1, 0);
+
+        event->setSignalerPreviousContexts({{previousContextCsr, previousContextTaskCount}});
+        previousContextCsr->downloadAllocationsCalledCount = 0;
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, event->hostSynchronize(std::numeric_limits<uint64_t>::max()));
+
+        if (csrType == CommandStreamReceiverType::tbx) {
+            EXPECT_EQ(1u, previousContextCsr->downloadAllocationsCalledCount);
+            EXPECT_TRUE(previousContextCsr->latestDownloadAllocationsBlocking);
+            EXPECT_EQ(previousContextTaskCount, previousContextCsr->latestDownloadAllocationsTaskCount);
+        } else {
+            EXPECT_EQ(0u, previousContextCsr->downloadAllocationsCalledCount);
+        }
+    }
+}
+
+HWTEST_F(EventSignalerPreviousContextsTests, givenEventWithSignalerPreviousContextsWhenEventIsResetThenPreviousContextsAreCleared) {
+    auto previousContextCsr = findPreviousContextCsr<FamilyType>();
+    ASSERT_NE(nullptr, previousContextCsr);
+    ze_result_t result;
+    auto event = zeUniquePtr(whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device, result)));
+    ASSERT_NE(nullptr, event);
+
+    event->setSignalerPreviousContexts({{previousContextCsr, previousContextTaskCount}});
+    ASSERT_EQ(1u, event->signalerPreviousContexts.size());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, event->reset());
+    EXPECT_TRUE(event->signalerPreviousContexts.empty());
+}
+
+HWTEST_F(EventSignalerPreviousContextsTests, givenNotSignaledRegularEventWhenHostSynchronizeChecksForGpuHangThenDeviceLostIsReturnedOnlyWhenSignalerPreviousContextIsHung) {
+    auto previousContextCsr = findPreviousContextCsr<FamilyType>();
+    ASSERT_NE(nullptr, previousContextCsr);
+    neoDevice->getUltCommandStreamReceiver<FamilyType>().isGpuHangDetectedReturnValue = false;
+
+    for (const bool previousContextAttached : {false, true}) {
+        for (const bool previousContextHung : {false, true}) {
+            ze_result_t result;
+            auto event = zeUniquePtr(whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device, result)));
+            ASSERT_NE(nullptr, event);
+            event->gpuHangCheckPeriod = 0ms;
+            if (previousContextAttached) {
+                event->setSignalerPreviousContexts({{previousContextCsr, previousContextTaskCount}});
+            }
+            previousContextCsr->isGpuHangDetectedReturnValue = previousContextHung;
+
+            const auto expectedResult = (previousContextAttached && previousContextHung) ? ZE_RESULT_ERROR_DEVICE_LOST : ZE_RESULT_NOT_READY;
+            EXPECT_EQ(expectedResult, event->hostSynchronize(0));
+        }
+    }
+}
+
+HWTEST_F(EventSignalerPreviousContextsTests, givenNotCompletedCounterBasedEventWhenHostSynchronizeChecksForGpuHangThenDeviceLostIsReturnedOnlyWhenSignalerPreviousContextIsHung) {
+    MockTagAllocator<DeviceAllocNodeType<true>> tagAllocator(0, neoDevice->getMemoryManager());
+    auto previousContextCsr = findPreviousContextCsr<FamilyType>();
+    ASSERT_NE(nullptr, previousContextCsr);
+    neoDevice->getUltCommandStreamReceiver<FamilyType>().isGpuHangDetectedReturnValue = false;
+
+    for (const bool previousContextAttached : {false, true}) {
+        for (const bool previousContextHung : {false, true}) {
+            ze_result_t result;
+            auto event = zeUniquePtr(whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device, result)));
+            ASSERT_NE(nullptr, event);
+            event->gpuHangCheckPeriod = 0ms;
+
+            auto inOrderExecInfo = std::make_shared<NEO::InOrderExecInfo>(tagAllocator.getTag(), nullptr, *neoDevice, 1, false);
+            *inOrderExecInfo->getBaseHostAddress() = 0;
+            event->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
+            event->getInOrderExecEventHelper().initializeLocalTempStorage();
+            event->updateInOrderExecState(inOrderExecInfo, 1, 0);
+
+            if (previousContextAttached) {
+                event->setSignalerPreviousContexts({{previousContextCsr, previousContextTaskCount}});
+            }
+            previousContextCsr->isGpuHangDetectedReturnValue = previousContextHung;
+
+            const auto expectedResult = (previousContextAttached && previousContextHung) ? ZE_RESULT_ERROR_DEVICE_LOST : ZE_RESULT_NOT_READY;
+            EXPECT_EQ(expectedResult, event->hostSynchronize(0));
+        }
+    }
+}
+
+HWTEST_F(EventSignalerPreviousContextsTests, givenSignaledEventAndForcedGpuStatusCheckWhenHostSynchronizingThenDeviceLostIsReturnedOnlyWhenSignalerPreviousContextIsHung) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.ForceGpuStatusCheckOnSuccessfulEventHostSynchronize.set(1);
+    auto previousContextCsr = findPreviousContextCsr<FamilyType>();
+    ASSERT_NE(nullptr, previousContextCsr);
+    neoDevice->getUltCommandStreamReceiver<FamilyType>().isGpuHangDetectedReturnValue = false;
+
+    for (const bool previousContextHung : {false, true}) {
+        ze_result_t result;
+        auto event = zeUniquePtr(whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device, result)));
+        ASSERT_NE(nullptr, event);
+        size_t completionOffset = event->isEventTimestampFlagSet() ? event->getContextEndOffset() : event->getContextStartOffset();
+        *static_cast<TagAddressType *>(ptrOffset(event->getHostAddress(), completionOffset)) = Event::STATE_SIGNALED;
+
+        event->setSignalerPreviousContexts({{previousContextCsr, previousContextTaskCount}});
+        previousContextCsr->isGpuHangDetectedReturnValue = previousContextHung;
+
+        const auto expectedResult = previousContextHung ? ZE_RESULT_ERROR_DEVICE_LOST : ZE_RESULT_SUCCESS;
+        EXPECT_EQ(expectedResult, event->hostSynchronize(0));
+    }
+}
+
 HWTEST_F(EventTests, givenExternalCbEventWhenHostSynchronizeIsCalledThenPreambleAllocationIsDonwloadedAndCounterIsSignaled) {
     VariableBackup<volatile TagAddressType *> backupPauseAddress(&CpuIntrinsicsTests::pauseAddress);
     VariableBackup<TaskCountType> backupPauseValue(&CpuIntrinsicsTests::pauseValue, Event::STATE_SIGNALED);

@@ -49,6 +49,7 @@
 
 #include "encode_surface_state_args.h"
 
+#include <algorithm>
 #include <cmath>
 #include <functional>
 
@@ -60,11 +61,74 @@ CommandListCoreFamilyImmediate<gfxCoreFamily>::CommandListCoreFamilyImmediate(ui
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamilyImmediate<gfxCoreFamily>::tryReassignCsrAtSafeTransitionPoint() {
+    if (!this->csrReassignmentAllowed || this->csrReassignmentSuspended || (this->openMetricQueryCount > 0) || (this->getCsr(false)->getActivePartitions() > 1)) {
+        return;
+    }
+
+    if (!this->cmdQImmediate->isCsrOversubscribed() || !isCsrReassignmentSafe()) {
+        return;
+    }
+
+    auto previousCsr = this->cmdQImmediate->getCsr();
+    const auto previousTaskCount = this->cmdQImmediate->getTaskCount();
+    if (!this->cmdQImmediate->reassignCsr()) {
+        return;
+    }
+
+    if (!this->isInOrderExecutionEnabled()) {
+        previousCsr->downloadAllocations(true, previousTaskCount);
+    }
+
+    auto reassignedCsr = this->cmdQImmediate->getCsr();
+    this->commandContainer.setImmediateCmdListCsr(reassignedCsr);
+    this->lastHostSynchronizeTaskCounts.invalidate();
+    this->lastBarrierTaskCounts.invalidate();
+    if (this->inOrderExecInfo) {
+        // non-walker in-order signaling waits for completion on the previous context's ring only, so it is not validated with dynamic context reassignment
+        DEBUG_BREAK_IF(!this->duplicatedInOrderCounterStorageEnabled || (this->compactL3FlushEventPacket && this->dcFlushSupport));
+        this->inOrderExecInfo->setSimulationUploadCsr(reassignedCsr);
+        this->implicitDependencyOnPreviousCsrPending = true;
+        this->latestOperationRequiredNonWalkerInOrderCmdsChaining = false;
+        this->csrBeforeReassignment = previousCsr;
+        this->taskCountBeforeReassignment = previousTaskCount;
+        auto trackedTarget = std::find_if(this->previousCsrsAwaitingCompletion.begin(), this->previousCsrsAwaitingCompletion.end(),
+                                          [previousCsr](const auto &target) { return target.first == previousCsr; });
+        if (trackedTarget == this->previousCsrsAwaitingCompletion.end()) {
+            this->previousCsrsAwaitingCompletion.push_back({previousCsr, previousTaskCount});
+        } else {
+            trackedTarget->second = previousTaskCount;
+        }
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamilyImmediate<gfxCoreFamily>::releasePreviousCsrCompletionTarget() {
+    if (!this->implicitDependencyOnPreviousCsrPending) {
+        this->csrBeforeReassignment = nullptr;
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isCsrReassignmentSafe() const {
+    if (this->isInOrderExecutionEnabled()) {
+        return !this->isInOrderCounterSignalPending() && !this->latestOperationHasCbEventWithProfiling && (this->csrBeforeReassignment == nullptr);
+    }
+
+    if (!this->cmdQImmediate->isSubmittedWorkCompleted()) {
+        return false;
+    }
+    return (this->cmdQImmediateCopyOffload == nullptr) || this->cmdQImmediateCopyOffload->isSubmittedWorkCompleted();
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::checkAvailableSpace(uint32_t numEvents, bool hasRelaxedOrderingDependencies, size_t commandSize, bool requestCommandBufferInLocalMem) {
     auto immediateInitStatus = this->ensureImmediateResourcesInitialized();
     if (immediateInitStatus != ZE_RESULT_SUCCESS) {
         return immediateInitStatus;
     }
+
+    this->tryReassignCsrAtSafeTransitionPoint();
 
     this->commandContainer.fillReusableAllocationLists();
 
@@ -613,6 +677,9 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
         this->device->getNEODevice()->debugExecutionCounter++;
     }
 
+    if (cmdQ == this->cmdQImmediate) {
+        this->releasePreviousCsrCompletionTarget();
+    }
     lockCSR.unlock();
     ze_result_t status = ZE_RESULT_SUCCESS;
     cmdQ->setTaskCount(completionStamp.taskCount);
@@ -841,7 +908,9 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrierWithCopy
     this->dependenciesPresent = true;
     ret = flushImmediate(ret, true, isStallingOperation, waitEventsParameters.relaxedOrderingAllowed, NEO::AppendOperations::nonKernel, false, nullptr, true, nullptr, nullptr);
 
+    this->csrReassignmentSuspended = true;
     spaceCheckStatus = checkAvailableSpace(numWaitEvents, false, commonImmediateCommandSize, false);
+    this->csrReassignmentSuspended = false;
     if (spaceCheckStatus != ZE_RESULT_SUCCESS) {
         return spaceCheckStatus;
     }
@@ -1552,7 +1621,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWaitExternalSem
         const auto fenceValue = semaphore->neoExternalSemaphore->acquireWaitFenceValue(params[i].value);
         operationData.add(*semaphore, fenceValue);
     }
-    if (!csr->submitExternalSemaphoreWaits(operationData.operations)) {
+    if (!this->getCsr(copyOffload)->submitExternalSemaphoreWaits(operationData.operations)) {
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
@@ -1648,24 +1717,36 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
             return csrToWait->waitForCompletionWithTimeout(NEO::WaitParams{indefiniteWait, !indefiniteWait, false, timeoutInMicroSeconds}, taskCountToWait);
         };
 
-        auto waitStatus = NEO::WaitStatus::notReady;
+        auto waitStatus = NEO::WaitStatus::ready;
 
         const bool waitOnBothQueues = dualStreamCopyOffload && (this->latestFlushIsDualCopyOffload || !isInOrderExecutionEnabled());
 
-        if (waitOnBothQueues) {
-            uint64_t remainingTimeoutNs = timeout;
-            const auto startTime = std::chrono::steady_clock::now();
-            mainQueueCsr->flushTagUpdateIfRequired(mainQueueTaskCount);
-            waitStatus = waitOnQueue(this->cmdQImmediateCopyOffload, copyOffloadTaskCount, copyOffloadCsr, remainingTimeoutNs);
+        uint64_t remainingTimeoutNs = timeout;
+        auto consumeTimeout = [&](std::chrono::steady_clock::time_point waitStartTime) {
             if (!indefinitelyPoll) {
-                const auto elapsedNs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - startTime).count());
-                remainingTimeoutNs = (elapsedNs >= timeout) ? 0u : (timeout - elapsedNs);
+                const auto elapsedNs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - waitStartTime).count());
+                remainingTimeoutNs = (elapsedNs >= remainingTimeoutNs) ? 0u : (remainingTimeoutNs - elapsedNs);
             }
-            if (waitStatus == NEO::WaitStatus::ready) {
-                waitStatus = waitOnQueue(this->cmdQImmediate, mainQueueTaskCount, mainQueueCsr, remainingTimeoutNs);
+        };
+
+        if (this->csrBeforeReassignment != nullptr) {
+            const auto previousCsrWaitStartTime = std::chrono::steady_clock::now();
+            waitStatus = waitOnQueue(this->cmdQImmediate, this->taskCountBeforeReassignment, this->csrBeforeReassignment, remainingTimeoutNs);
+            consumeTimeout(previousCsrWaitStartTime);
+        }
+
+        if (waitStatus == NEO::WaitStatus::ready) {
+            if (waitOnBothQueues) {
+                const auto copyOffloadWaitStartTime = std::chrono::steady_clock::now();
+                mainQueueCsr->flushTagUpdateIfRequired(mainQueueTaskCount);
+                waitStatus = waitOnQueue(this->cmdQImmediateCopyOffload, copyOffloadTaskCount, copyOffloadCsr, remainingTimeoutNs);
+                consumeTimeout(copyOffloadWaitStartTime);
+                if (waitStatus == NEO::WaitStatus::ready) {
+                    waitStatus = waitOnQueue(this->cmdQImmediate, mainQueueTaskCount, mainQueueCsr, remainingTimeoutNs);
+                }
+            } else {
+                waitStatus = waitOnQueue(waitQueue, waitTaskCount, waitCsr, remainingTimeoutNs);
             }
-        } else {
-            waitStatus = waitOnQueue(waitQueue, waitTaskCount, waitCsr, timeout);
         }
 
         if (waitStatus == NEO::WaitStatus::gpuHang) {
@@ -1677,6 +1758,9 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
 
     if (status != ZE_RESULT_NOT_READY) {
         if (this->isTbxMode && (status == ZE_RESULT_SUCCESS)) {
+            for (const auto &[previousCsr, previousTaskCount] : this->previousCsrsAwaitingCompletion) {
+                previousCsr->downloadAllocations(true, previousTaskCount);
+            }
             this->cmdQImmediate->downloadAllocations();
             if (dualStreamCopyOffload) {
                 copyOffloadCsr->downloadAllocations(true);
@@ -1713,6 +1797,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
         if (isInOrderExecutionEnabled() && (status == ZE_RESULT_SUCCESS)) {
             // on hang the counter was never reached, marking it waited would make later waits succeed immediately
             inOrderExecInfo->setLastWaitedCounterValue(inOrderSyncValue, inOrderExecInfo->getAllocationOffset());
+            this->csrBeforeReassignment = nullptr;
+            this->previousCsrsAwaitingCompletion.clear();
 
             if (handlePostWaitOperations) {
                 inOrderExecInfo->releaseNotUsedTempTimestampNodes(false);
@@ -1772,6 +1858,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_res
     if (signalEvent) {
         signalEvent->setCsr(queue->getCsr(), isInOrderExecutionEnabled());
         signalEvent->setCsrForCacheFlush(this->getCsr(false));
+        signalEvent->setSignalerPreviousContexts(this->previousCsrsAwaitingCompletion);
 
         if (!this->latestFlushIsDualCopyOffload) {
             this->latestFlushIsHostVisible |= signalEvent->isFlushRequiredForSignal() || (this->isHeaplessModeEnabled() && signalEvent->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST));
@@ -2184,6 +2271,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::synchronizeInOrderExe
     waitStartTime = lastHangCheckTime;
 
     auto csr = getCsr(copyOffloadSync);
+    std::vector<NEO::CommandStreamReceiver::TimeType> previousCsrsLastHangCheckTimes(this->previousCsrsAwaitingCompletion.size(), lastHangCheckTime);
 
     do {
         if (inOrderExecInfo->getHostCounterAllocation()) {
@@ -2205,7 +2293,12 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::synchronizeInOrderExe
             break;
         }
 
-        if (csr->checkGpuHangDetected(std::chrono::high_resolution_clock::now(), lastHangCheckTime)) {
+        const auto hangCheckTime = std::chrono::high_resolution_clock::now();
+        bool gpuHangDetected = csr->checkGpuHangDetected(hangCheckTime, lastHangCheckTime);
+        for (size_t previousCsrIndex = 0; !gpuHangDetected && (previousCsrIndex < this->previousCsrsAwaitingCompletion.size()); previousCsrIndex++) {
+            gpuHangDetected = this->previousCsrsAwaitingCompletion[previousCsrIndex].first->checkGpuHangDetected(hangCheckTime, previousCsrsLastHangCheckTimes[previousCsrIndex]);
+        }
+        if (gpuHangDetected) {
             status = ZE_RESULT_ERROR_DEVICE_LOST;
             break;
         }
@@ -2428,11 +2521,13 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendStagingMemoryCo
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
     auto stagingBufferManager = this->getDevice()->getDriverHandle()->getStagingBufferManager();
+    this->csrReassignmentSuspended = true;
     auto ret = stagingStatusToL0(stagingBufferManager->performCopy(cpuMemCopyInfo.dstPtr, cpuMemCopyInfo.srcPtr, cpuMemCopyInfo.size, chunkCopy, getCsr(memoryCopyParams.copyOffloadAllowed), isRead));
-    if (ret != ZE_RESULT_SUCCESS) {
-        return ret;
+    if (ret == ZE_RESULT_SUCCESS) {
+        ret = handlePostStagingTransferSync(event, isSingleTransfer, hSignalEvent, relaxedOrdering);
     }
-    return handlePostStagingTransferSync(event, isSingleTransfer, hSignalEvent, relaxedOrdering);
+    this->csrReassignmentSuspended = false;
+    return ret;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -2592,11 +2687,13 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendStagingImageTra
     }
 
     auto stagingBufferManager = this->getDevice()->getDriverHandle()->getStagingBufferManager();
+    this->csrReassignmentSuspended = true;
     auto ret = stagingStatusToL0(stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, rowPitch, slicePitch, bytesPerPixel, false, chunkTransfer, getCsr(memoryCopyParams.copyOffloadAllowed), isRead));
-    if (ret != ZE_RESULT_SUCCESS) {
-        return ret;
+    if (ret == ZE_RESULT_SUCCESS) {
+        ret = handlePostStagingTransferSync(event, isSingleTransfer, hSignalEvent, relaxedOrdering);
     }
-    return handlePostStagingTransferSync(event, isSingleTransfer, hSignalEvent, relaxedOrdering);
+    this->csrReassignmentSuspended = false;
+    return ret;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

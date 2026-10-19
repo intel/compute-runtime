@@ -98,6 +98,7 @@ struct EventImp : public Event {
     void synchronizeTimestampCompletionWithTimeout();
     bool isCacheFlushRequiredForHostSync() const;
     TaskCountType flushTagUpdateForHostSync(NEO::CommandStreamReceiver &csrForCacheFlush) const;
+    bool isGpuHangDetectedOnSignalingContexts(const NEO::CommandStreamReceiver &csrForCacheFlush) const;
     bool isPatchPreambleCounterCompleted(int64_t timeSinceWait, bool blockOnMiss) override;
 };
 

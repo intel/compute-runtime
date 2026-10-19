@@ -79,6 +79,10 @@ struct SecondaryContexts : NEO::NonCopyableAndNonMovableClass {
     SecondaryContexts &operator=(SecondaryContexts &&other) noexcept = delete;
 
     EngineControl *getEngine(const EngineUsage usage, std::optional<uint32_t> priority);
+    EngineControl *getEngineWithoutSharedContextPriorityOverride(const EngineUsage usage, std::optional<uint32_t> priority);
+    EngineControl *selectEngine(const EngineUsage usage, std::optional<uint32_t> priority, bool sharedContextPriorityOverrideAllowed);
+    std::optional<int32_t> selectLeastLoadedIndex(const std::vector<int32_t> &candidateIndices, std::optional<uint32_t> hwPriority,
+                                                  bool requireFreeAndInitialized, size_t scanStartOffset) const;
 
     EnginesT engines;                                 // vector of secondary EngineControls
     std::atomic<uint8_t> regularCounter = 0;          // Counter used to assign next regular EngineControl
@@ -253,6 +257,7 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     }
 
     MOCKABLE_VIRTUAL EngineControl *getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, std::optional<uint32_t> hwPriority);
+    EngineControl *getSecondaryEngineCsrWithoutSharedContextPriorityOverride(EngineTypeUsage engineTypeUsage, std::optional<uint32_t> hwPriority);
     bool isSecondaryContextEngineType(aub_stream::EngineType type) {
         return EngineHelpers::isCcs(type) || EngineHelpers::isBcs(type);
     }
@@ -324,6 +329,7 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     Device(ExecutionEnvironment *executionEnvironment, const uint32_t rootDeviceIndex);
 
     MOCKABLE_VIRTUAL void initializeCaps();
+    EngineControl *acquireSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, std::optional<uint32_t> hwPriority, bool sharedContextPriorityOverrideAllowed);
 
     template <typename T>
     static T *createDeviceInternals(T *device) {

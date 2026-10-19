@@ -201,6 +201,7 @@ struct Device : _ze_device_handle_t, NEO::NonCopyableAndNonMovableClass {
         return getCsrForOrdinalAndIndex(csr, ordinal, index, priority, priorityLevel, powerHint, &queueOwnershipTaken);
     }
     MOCKABLE_VIRTUAL ze_result_t getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index, ze_command_queue_priority_t priority, std::optional<int> priorityLevel, uint8_t powerHint, bool *queueOwnershipTaken);
+    ze_result_t getCsrForReassignment(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index, ze_command_queue_priority_t priority, std::optional<int> priorityLevel, uint8_t powerHint, bool *queueOwnershipTaken);
     MOCKABLE_VIRTUAL ze_result_t getCsrForLowPriority(NEO::CommandStreamReceiver **csr, bool copyOnly);
     ze_result_t getCsrForHighPriority(NEO::CommandStreamReceiver **csr, bool copyOnly);
     ze_result_t getCsrForPowerHint(NEO::CommandStreamReceiver **csr, bool copyOnly);
@@ -299,7 +300,9 @@ struct Device : _ze_device_handle_t, NEO::NonCopyableAndNonMovableClass {
     void getP2PPropertiesDirectFabricConnection(Device *peerDevice,
                                                 ze_device_p2p_bandwidth_exp_properties_t *bandwidthPropertiesDesc);
     bool fabricEdgeModelSupportsBandwidthAndLatency(const char *model);
-    bool tryAssignSecondaryContext(aub_stream::EngineType engineType, NEO::EngineUsage engineUsage, std::optional<uint32_t> priorityLevel, NEO::CommandStreamReceiver **csr);
+    ze_result_t selectCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index, ze_command_queue_priority_t priority, std::optional<int> priorityLevel, uint8_t powerHint,
+                                            bool sharedContextPriorityOverrideAllowed, bool *queueOwnershipTaken);
+    bool tryAssignSecondaryContext(aub_stream::EngineType engineType, NEO::EngineUsage engineUsage, std::optional<uint32_t> priorityLevel, bool sharedContextPriorityOverrideAllowed, NEO::CommandStreamReceiver **csr);
     void getIntelXeDeviceProperties(ze_base_properties_t *extendedProperties) const;
     void getReadonlyMemoryExtProperties(ze_base_properties_t *extendedProperties);
     ze_result_t getIgcaTargetExtProperties(ze_base_desc_t *extendedProperties) const;

@@ -16,7 +16,10 @@
 #include "level_zero/core/source/cmdlist/cmdlist_memory_copy_params.h"
 
 #include <atomic>
+#include <limits>
 #include <mutex>
+#include <utility>
+#include <vector>
 
 namespace NEO {
 struct SvmAllocationData;
@@ -276,6 +279,9 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     ze_result_t flushInOrderCounterSignal() override;
     MOCKABLE_VIRTUAL ze_result_t synchronizeInOrderExecution(uint64_t timeout, bool copyOffloadSync) const;
     ze_result_t hostSynchronize(uint64_t timeout, bool handlePostWaitOperations);
+    void tryReassignCsrAtSafeTransitionPoint();
+    bool isCsrReassignmentSafe() const;
+    void releasePreviousCsrCompletionTarget();
     bool hasStallingCmdsForRelaxedOrdering(uint32_t numWaitEvents, bool relaxedOrderingDispatch) const;
     void setupFlushMethod(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) override;
     void allocateOrReuseKernelPrivateMemoryIfNeeded(Kernel *kernel, uint32_t sizePerHwThread) override;
@@ -311,11 +317,20 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
             copyOffload.store(copyOffloadTaskCount);
         }
 
+        void invalidate() {
+            store(invalidTaskCount, invalidTaskCount);
+        }
+
+        static constexpr TaskCountType invalidTaskCount = std::numeric_limits<TaskCountType>::max();
         std::atomic<TaskCountType> main{0};
         std::atomic<TaskCountType> copyOffload{0};
     };
     SynchronizationTaskCounts lastBarrierTaskCounts;
     SynchronizationTaskCounts lastHostSynchronizeTaskCounts;
+    NEO::CommandStreamReceiver *csrBeforeReassignment = nullptr;
+    std::vector<std::pair<NEO::CommandStreamReceiver *, TaskCountType>> previousCsrsAwaitingCompletion;
+    TaskCountType taskCountBeforeReassignment = 0;
+    bool csrReassignmentSuspended = false;
     bool latestFlushIsHostVisible = false;
     bool keepRelaxedOrderingEnabled = false;
     bool copyOffloadTagUpdateRequired = false;

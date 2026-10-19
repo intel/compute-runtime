@@ -276,7 +276,7 @@ ze_result_t Device::createCommandQueue(const ze_command_queue_desc_t *desc,
     *commandQueue = CommandQueue::create(this, csr, &commandQueueDesc, isCopyOnly, false, false, returnValue);
     if (queueOwnershipTaken) {
         if (*commandQueue != nullptr) {
-            CommandQueue::fromHandle(*commandQueue)->takeCsrQueueOwnership();
+            CommandQueue::fromHandle(*commandQueue)->takeCsrQueueOwnership(queueProperties.priorityLevel, powerHint);
         } else {
             csr->releaseQueueOwnership();
         }
@@ -1975,6 +1975,15 @@ ze_command_queue_priority_t Device::getEffectiveQueuePriority(ze_command_queue_p
 }
 
 ze_result_t Device::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index, ze_command_queue_priority_t priority, std::optional<int> priorityLevel, uint8_t powerHint, bool *queueOwnershipTaken) {
+    return selectCsrForOrdinalAndIndex(csr, ordinal, index, priority, priorityLevel, powerHint, true, queueOwnershipTaken);
+}
+
+ze_result_t Device::getCsrForReassignment(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index, ze_command_queue_priority_t priority, std::optional<int> priorityLevel, uint8_t powerHint, bool *queueOwnershipTaken) {
+    return selectCsrForOrdinalAndIndex(csr, ordinal, index, priority, priorityLevel, powerHint, false, queueOwnershipTaken);
+}
+
+ze_result_t Device::selectCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index, ze_command_queue_priority_t priority, std::optional<int> priorityLevel, uint8_t powerHint,
+                                                bool sharedContextPriorityOverrideAllowed, bool *queueOwnershipTaken) {
     *queueOwnershipTaken = false;
     auto &engineGroups = getActiveDevice()->getRegularEngineGroups();
     uint32_t numEngineGroups = static_cast<uint32_t>(engineGroups.size());
@@ -2053,7 +2062,7 @@ ze_result_t Device::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, u
         if (priorityLevel.has_value()) {
             hwPriority = gfxCoreHelper.getHwQueuePriority(priorityLevel.value());
         }
-        if (!selectedDevice->tryAssignSecondaryContext(osContext.getEngineType(), contextPriority, hwPriority, csr)) {
+        if (!selectedDevice->tryAssignSecondaryContext(osContext.getEngineType(), contextPriority, hwPriority, sharedContextPriorityOverrideAllowed, csr)) {
             return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
         }
         *queueOwnershipTaken = true;
@@ -2062,12 +2071,13 @@ ze_result_t Device::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, u
     return ZE_RESULT_SUCCESS;
 }
 
-bool Device::tryAssignSecondaryContext(aub_stream::EngineType engineType, NEO::EngineUsage engineUsage, std::optional<uint32_t> hwPriority, NEO::CommandStreamReceiver **csr) {
+bool Device::tryAssignSecondaryContext(aub_stream::EngineType engineType, NEO::EngineUsage engineUsage, std::optional<uint32_t> hwPriority, bool sharedContextPriorityOverrideAllowed, NEO::CommandStreamReceiver **csr) {
 
     NEO::EngineTypeUsage engineTypeUsage;
     engineTypeUsage.first = engineType;
     engineTypeUsage.second = engineUsage;
-    auto engine = neoDevice->getSecondaryEngineCsr(engineTypeUsage, hwPriority);
+    auto engine = sharedContextPriorityOverrideAllowed ? neoDevice->getSecondaryEngineCsr(engineTypeUsage, hwPriority)
+                                                       : neoDevice->getSecondaryEngineCsrWithoutSharedContextPriorityOverride(engineTypeUsage, hwPriority);
     if (engine) {
         *csr = engine->commandStreamReceiver;
         return true;

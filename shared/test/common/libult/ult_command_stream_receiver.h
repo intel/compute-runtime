@@ -302,7 +302,11 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
         recordedImmediateDispatchFlags = dispatchFlags;
         this->lastFlushedCommandStream = &commandStream;
         this->lastFlushedImmediateCommandStream = &immediateCommandStream;
-        return BaseClass::flushImmediateTask(immediateCommandStream, immediateCommandStreamStart, dispatchFlags, device);
+        auto completionStamp = BaseClass::flushImmediateTask(immediateCommandStream, immediateCommandStreamStart, dispatchFlags, device);
+        if (onFlushImmediateTask) {
+            onFlushImmediateTask();
+        }
+        return completionStamp;
     }
 
     CompletionStamp flushImmediateTaskHeapless(LinearStream &immediateCommandStream,
@@ -312,7 +316,11 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
         recordedImmediateDispatchFlags = dispatchFlags;
         this->lastFlushedCommandStream = &commandStream;
         this->lastFlushedImmediateCommandStream = &immediateCommandStream;
-        return BaseClass::flushImmediateTaskHeapless(immediateCommandStream, immediateCommandStreamStart, dispatchFlags, device);
+        auto completionStamp = BaseClass::flushImmediateTaskHeapless(immediateCommandStream, immediateCommandStreamStart, dispatchFlags, device);
+        if (onFlushImmediateTask) {
+            onFlushImmediateTask();
+        }
+        return completionStamp;
     }
 
     CompletionStamp flushBcsTask(LinearStream &commandStreamTask, size_t commandStreamTaskStart,
@@ -745,6 +753,13 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
         }
         return BaseClass::testTaskCountReady(pollAddress, taskCountToWait, blockOnMiss);
     }
+    using BaseClass::isTagReached;
+    bool isTagReached(volatile TagAddressType *pollAddress, TaskCountType taskCountToWait, bool blockOnMiss) override {
+        if (isTagReachedReturnValue.has_value()) {
+            return *isTagReachedReturnValue;
+        }
+        return BaseClass::isTagReached(pollAddress, taskCountToWait, blockOnMiss);
+    }
 
     bool isGpuHangDetected() const override {
         if (isGpuHangDetectedReturnValue.has_value()) {
@@ -828,12 +843,14 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     std::optional<SubmissionStatus> flushReturnValue{};
     std::optional<bool> isGpuHangDetectedReturnValue{};
     std::optional<bool> testTaskCountReadyReturnValue{};
+    std::optional<bool> isTagReachedReturnValue{};
     CommandStreamReceiverType commandStreamReceiverType = CommandStreamReceiverType::hardware;
     std::atomic<uint32_t> downloadAllocationsCalledCount = 0;
     std::atomic<bool> latestDownloadAllocationsBlocking = false;
     std::atomic<TaskCountType> latestDownloadAllocationsTaskCount = 0;
     std::function<void()> onDownloadAllocations;
     std::function<void()> onWaitForCompletionWithTimeout;
+    std::function<void()> onFlushImmediateTask;
     OsContext *initialOsContext = nullptr;
 
     bool renderStateCacheFlushed = false;

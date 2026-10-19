@@ -534,7 +534,11 @@ ze_result_t CommandList::appendMetricQueryBegin(zet_metric_query_handle_t hMetri
         this->device->activateMetricGroups();
     }
 
-    return MetricQuery::fromHandle(hMetricQuery)->appendBegin(*this);
+    returnValue = MetricQuery::fromHandle(hMetricQuery)->appendBegin(*this);
+    if (returnValue == ZE_RESULT_SUCCESS) {
+        this->openMetricQueryCount++;
+    }
+    return returnValue;
 }
 
 ze_result_t CommandList::appendMetricQueryEnd(zet_metric_query_handle_t hMetricQuery, ze_event_handle_t hSignalEvent,
@@ -546,7 +550,11 @@ ze_result_t CommandList::appendMetricQueryEnd(zet_metric_query_handle_t hMetricQ
     if (returnValue != ZE_RESULT_SUCCESS) {
         return returnValue;
     }
-    return MetricQuery::fromHandle(hMetricQuery)->appendEnd(*this, hSignalEvent, numWaitEvents, phWaitEvents);
+    returnValue = MetricQuery::fromHandle(hMetricQuery)->appendEnd(*this, hSignalEvent, numWaitEvents, phWaitEvents);
+    if ((returnValue == ZE_RESULT_SUCCESS) && (this->openMetricQueryCount > 0)) {
+        this->openMetricQueryCount--;
+    }
+    return returnValue;
 }
 
 CommandList *CommandList::create(Device *device, NEO::EngineGroupType engineGroupType,
@@ -815,7 +823,7 @@ ze_result_t CommandList::initializeImmediateResources() {
                                              isCopyOnly(false), this->internalUsage, true, returnValue);
     if (queueOwnershipTaken) {
         if (commandQueue != nullptr) {
-            commandQueue->takeCsrQueueOwnership();
+            commandQueue->takeCsrQueueOwnership(this->immediateQueuePriorityLevel, this->powerHint);
         } else {
             csr->releaseQueueOwnership();
         }
@@ -837,6 +845,7 @@ ze_result_t CommandList::initializeImmediateResources() {
     }
 
     this->isTbxMode = csr->isTbxMode();
+    this->csrReassignmentAllowed = this->isHeaplessModeEnabled() && commandQueue->isCsrReassignmentEnabled();
 
     if (this->copyOffloadHintRequested) {
         enableCopyOperationOffload();
@@ -913,7 +922,7 @@ void CommandList::enableCopyOperationOffload() {
     auto offloadCommandQueue = CommandQueue::create(device, copyCsr, &copyQueueDesc, true, false, true, returnValue);
     UNRECOVERABLE_IF(!offloadCommandQueue);
     if (queueOwnershipTaken) {
-        offloadCommandQueue->takeCsrQueueOwnership();
+        offloadCommandQueue->takeCsrQueueOwnership(std::nullopt, this->powerHint);
     }
 
     this->cmdQImmediateCopyOffload = offloadCommandQueue;

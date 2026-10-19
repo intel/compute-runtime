@@ -559,6 +559,10 @@ void EventImp<TagSizeT>::downloadAllTbxAllocations() {
         csr->downloadAllocations(false, taskCount);
     }
 
+    for (const auto &[previousContextCsr, previousContextTaskCount] : this->signalerPreviousContexts) {
+        previousContextCsr->downloadAllocations(true, previousContextTaskCount);
+    }
+
     for (auto &engine : this->device->getNEODevice()->getMemoryManager()->getRegisteredEngines()[this->device->getRootDeviceIndex()]) {
         if (!engine.commandStreamReceiver->isInitialized()) {
             continue;
@@ -1075,7 +1079,7 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
                 assertHndlr->printAssertAndAbort();
             }
             if (NEO::debugManager.flags.ForceGpuStatusCheckOnSuccessfulEventHostSynchronize.get() == 1) {
-                const bool hangDetected = csrForCacheFlush->isGpuHangDetected();
+                const bool hangDetected = this->isGpuHangDetectedOnSignalingContexts(*csrForCacheFlush);
                 if (hangDetected) {
                     return ZE_RESULT_ERROR_DEVICE_LOST;
                 }
@@ -1095,7 +1099,7 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
 
         if (elapsedTimeSinceGpuHangCheck.count() >= this->gpuHangCheckPeriod.count()) {
             lastHangCheckTime = currentTime;
-            if (csrForCacheFlush->isGpuHangDetected()) {
+            if (this->isGpuHangDetectedOnSignalingContexts(*csrForCacheFlush)) {
                 if (assertHndlr) {
                     assertHndlr->printAssertAndAbort();
                 }
@@ -1490,6 +1494,15 @@ TaskCountType EventImp<TagSizeT>::flushTagUpdateForHostSync(NEO::CommandStreamRe
     // the signal task count the signal submission is flushed, without waiting for later work.
     csrForCacheFlush.flushTagUpdateIfRequired(signalTaskCount);
     return signalTaskCount;
+}
+
+template <typename TagSizeT>
+bool EventImp<TagSizeT>::isGpuHangDetectedOnSignalingContexts(const NEO::CommandStreamReceiver &csrForCacheFlush) const {
+    if (csrForCacheFlush.isGpuHangDetected()) {
+        return true;
+    }
+    return std::any_of(this->signalerPreviousContexts.begin(), this->signalerPreviousContexts.end(),
+                       [](const auto &previousContext) { return previousContext.first->isGpuHangDetected(); });
 }
 
 template <typename TagSizeT>

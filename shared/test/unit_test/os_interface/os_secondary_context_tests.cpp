@@ -16,6 +16,8 @@
 
 #include "gtest/gtest.h"
 
+#include <tuple>
+
 namespace ContextGroup {
 extern uint32_t maxContextCount;
 }
@@ -58,7 +60,7 @@ struct SecondaryContextsTest : ::testing::Test {
     }
 };
 
-TEST_F(SecondaryContextsTest, givenRegularContextsWhenRotatingThenPrimaryEngineIsIncluded) {
+TEST_F(SecondaryContextsTest, givenRegularContextsWhenRotatingThenPrimaryEngineIsPartOfPoolAndLeastUsedIsSelected) {
     SecondaryContexts *secondary = nullptr;
     ASSERT_TRUE(getRegularSecondary(EngineGroupType::compute, secondary));
     ASSERT_GT(secondary->regularEnginesTotal, 0u);
@@ -69,18 +71,34 @@ TEST_F(SecondaryContextsTest, givenRegularContextsWhenRotatingThenPrimaryEngineI
         ASSERT_NE(nullptr, ec);
     }
 
-    // Reuse path should eventually return primary
-    auto contextsCount = device->getGfxCoreHelper().getContextGroupContextsCount();
     bool primaryIncluded = false;
-    for (uint32_t i = 0; i < contextsCount; i++) {
-        auto ec = secondary->getEngine(EngineUsage::regular, std::nullopt);
-        ASSERT_NE(nullptr, ec);
-        if (ec->osContext->getIsPrimaryEngine()) {
+    for (auto index : secondary->npIndices) {
+        if (secondary->engines[index].osContext->getIsPrimaryEngine()) {
             primaryIncluded = true;
             break;
         }
     }
     EXPECT_TRUE(primaryIncluded);
+
+    // All contexts are owned, so selection falls back to the least loaded, then the least owned and then the least used one
+    auto contextsCount = device->getGfxCoreHelper().getContextGroupContextsCount();
+    for (uint32_t i = 0; i < contextsCount; i++) {
+        auto selected = secondary->getEngine(EngineUsage::regular, std::nullopt);
+        ASSERT_NE(nullptr, selected);
+
+        auto selectedCsr = selected->commandStreamReceiver;
+        const auto selectedOwningQueueCountBeforeSelection = selectedCsr->getOwningQueueCount() - 1;
+        const auto selectedRank = std::make_tuple(selectedCsr->getOutstandingWorkCount(), selectedOwningQueueCountBeforeSelection, selectedCsr->peekTaskCount());
+
+        for (auto index : secondary->npIndices) {
+            auto candidateCsr = secondary->engines[index].commandStreamReceiver;
+            if (candidateCsr == selectedCsr) {
+                continue;
+            }
+            const auto candidateRank = std::make_tuple(candidateCsr->getOutstandingWorkCount(), candidateCsr->getOwningQueueCount(), candidateCsr->peekTaskCount());
+            EXPECT_FALSE(candidateRank < selectedRank);
+        }
+    }
 }
 
 TEST_F(SecondaryContextsTest, givenMatchingPriorityContextWhenReusingThenItIsPreferred) {

@@ -583,6 +583,7 @@ struct CommandListCoreFamily : public CommandList {
     bool isPostImageWriteFlushRequired = false;
     bool isPreImageReadFlushRequired = false;
     bool latestFlushIsDualCopyOffload = false;
+    bool implicitDependencyOnPreviousCsrPending = false;
     bool isWalkerPostSyncSkipEnabled = false;
 };
 

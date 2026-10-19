@@ -1141,6 +1141,7 @@ void Event::resetPackets(bool resetAllPackets) {
     this->csrs.clear();
     this->csrs.push_back(this->device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
     this->csrForCacheFlush = nullptr;
+    this->signalerPreviousContexts.clear();
 }
 
 void Event::setIsCompleted() {

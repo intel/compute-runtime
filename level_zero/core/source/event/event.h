@@ -283,6 +283,9 @@ struct Event : _ze_event_handle_t {
     void setCsrForCacheFlush(NEO::CommandStreamReceiver *csr) {
         this->csrForCacheFlush = csr;
     }
+    void setSignalerPreviousContexts(const std::vector<std::pair<NEO::CommandStreamReceiver *, TaskCountType>> &previousContexts) {
+        this->signalerPreviousContexts = previousContexts;
+    }
     NEO::CommandStreamReceiver *getCsrForCacheFlush() const {
         return this->csrForCacheFlush;
     }
@@ -526,6 +529,7 @@ struct Event : _ze_event_handle_t {
     TaskCountType cleanupTaskCount = 0;
     NEO::FlushStamp signalFlushStamp = 0;
     NEO::CommandStreamReceiver *csrForCacheFlush = nullptr;
+    std::vector<std::pair<NEO::CommandStreamReceiver *, TaskCountType>> signalerPreviousContexts;
     StackVec<uint64_t, 3> exportedIpcServerHandles;
     void *hostAddressFromPool = nullptr;
     Device *device = nullptr;

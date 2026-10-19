@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_mapper.h"
 #include "shared/source/utilities/stackvec.h"
@@ -23,7 +24,9 @@
 #include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_event.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
+#include "level_zero/tools/source/metrics/metric.h"
 #include "level_zero/ze_api.h"
 
 #include "igfxfmid.h"
@@ -31,6 +34,7 @@
 #include <cstdint>
 #include <memory>
 #include <new>
+#include <thread>
 #include <utility>
 #include <vector>
 
@@ -2017,8 +2021,14 @@ TEST_F(CommandListCsrReuseTests, givenAllRegularCsrsInUseWhenQueuesAreReleasedTh
             }
         }
     }
-    auto sharedCsr = queues.front()->getCsr();
-    EXPECT_EQ(sharedCsr, queues.back()->getCsr());
+    auto sharedCsr = queues.back()->getCsr();
+    uint32_t queuesSharingCsr = 0;
+    for (auto queue : queues) {
+        if (queue->getCsr() == sharedCsr) {
+            queuesSharingCsr++;
+        }
+    }
+    EXPECT_EQ(2u, queuesSharingCsr);
     EXPECT_EQ(2u, sharedCsr->getOwningQueueCount());
     queues.back()->destroy();
     queues.pop_back();
@@ -2070,6 +2080,1313 @@ TEST_F(CommandListCsrReuseTests, givenInternalImmediateCommandListWhenDestroyedT
 
     commandList->destroy();
     EXPECT_EQ(0u, internalCsr->getOwningQueueCount());
+}
+
+TEST_F(CommandListCsrReuseTests, givenDynamicQueueReassignmentEnabledWhenCreatingImmediateCommandListsThenCsrReassignmentIsAllowedOnlyInHeaplessModeForListsOwningQueue) {
+    const bool heaplessModeEnabled = neoDevice->getCompilerProductHelper().isHeaplessModeEnabled(neoDevice->getHardwareInfo());
+    auto createImmediateCommandList = [&](ze_command_queue_priority_t priority) {
+        ze_command_queue_desc_t desc = {};
+        desc.priority = priority;
+        ze_command_list_handle_t handle = nullptr;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, device->createCommandListImmediate(&desc, &handle));
+        auto commandList = CommandList::whiteboxCast(L0::CommandList::fromHandle(handle));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->ensureImmediateResourcesInitialized());
+        return commandList;
+    };
+
+    auto commandListWithReassignmentDisabled = createImmediateCommandList(ZE_COMMAND_QUEUE_PRIORITY_NORMAL);
+    EXPECT_FALSE(commandListWithReassignmentDisabled->csrReassignmentAllowed);
+    commandListWithReassignmentDisabled->destroy();
+
+    debugManager.flags.EnableDynamicQueueReassignment.set(1);
+    auto commandListOwningQueue = createImmediateCommandList(ZE_COMMAND_QUEUE_PRIORITY_NORMAL);
+    EXPECT_EQ(heaplessModeEnabled, commandListOwningQueue->csrReassignmentAllowed);
+
+    auto lowPriorityCommandList = createImmediateCommandList(ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW);
+    EXPECT_FALSE(lowPriorityCommandList->csrReassignmentAllowed);
+
+    lowPriorityCommandList->destroy();
+    commandListOwningQueue->destroy();
+}
+
+struct CommandListCsrReassignmentTests : public CommandListCsrReuseTests {
+    void SetUp() override {
+        debugManager.flags.EnableDynamicQueueReassignment.set(1);
+        CommandListCsrReuseTests::SetUp();
+        if (IsSkipped()) {
+            return;
+        }
+        if (!neoDevice->getCompilerProductHelper().isHeaplessModeEnabled(neoDevice->getHardwareInfo())) {
+            GTEST_SKIP();
+        }
+    }
+
+    CommandList *createInitializedImmediateCommandList(const ze_command_queue_desc_t &desc) {
+        ze_command_list_handle_t handle = nullptr;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, device->createCommandListImmediate(&desc, &handle));
+        auto commandList = CommandList::whiteboxCast(L0::CommandList::fromHandle(handle));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->ensureImmediateResourcesInitialized());
+        return commandList;
+    }
+
+    static WhiteBox<::L0::CommandQueue> *getImmediateQueue(CommandList *commandList) {
+        return static_cast<WhiteBox<::L0::CommandQueue> *>(commandList->cmdQImmediate);
+    }
+
+    template <typename FamilyType>
+    static void setCsrProgress(NEO::CommandStreamReceiver *csr, TaskCountType submittedTaskCount, TagAddressType completedTaskCount) {
+        static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(csr)->taskCount = submittedTaskCount;
+        static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(csr)->latestFlushedTaskCount = submittedTaskCount;
+        *csr->getTagAddress() = completedTaskCount;
+    }
+
+    static void setInOrderCounterMemory(CommandList *commandList, uint64_t counterValue) {
+        auto &inOrderExecInfo = commandList->inOrderExecInfo;
+        *ptrOffset(inOrderExecInfo->getBaseHostAddress(), inOrderExecInfo->getAllocationOffset()) = counterValue;
+    }
+
+    static void markCsrIdle(NEO::CommandStreamReceiver *csr) {
+        *csr->getTagAddress() = csr->peekTaskCount();
+    }
+
+    static ze_result_t appendBarrier(CommandList *commandList) {
+        CmdListWaitEventParameters waitEventParameters{};
+        waitEventParameters.apiRequest = true;
+        CmdListSignalEventParameters signalEventParameters{};
+        return commandList->appendBarrier(nullptr, 0, nullptr, waitEventParameters, signalEventParameters);
+    }
+
+    static constexpr TaskCountType loadedCsrSubmittedTaskCount = 4u;
+};
+
+HWTEST_F(CommandListCsrReassignmentTests, givenReassignmentNotEnabledWhenAppendingToSharedAndLoadedCsrThenCsrIsKept) {
+    debugManager.flags.EnableDynamicQueueReassignment.set(-1);
+    ze_command_queue_desc_t desc = {};
+    auto commandList = createInitializedImmediateCommandList(desc);
+    auto initialCsr = commandList->getCsr(false);
+
+    initialCsr->retainQueueOwnership();
+    setCsrProgress<FamilyType>(initialCsr, loadedCsrSubmittedTaskCount, 0u);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, appendBarrier(commandList));
+    EXPECT_EQ(initialCsr, commandList->getCsr(false));
+    EXPECT_EQ(2u, initialCsr->getOwningQueueCount());
+
+    initialCsr->releaseQueueOwnership();
+    markCsrIdle(initialCsr);
+    commandList->destroy();
+}
+
+HWTEST_F(CommandListCsrReassignmentTests, givenCsrWithMultipleActivePartitionsWhenAppendingToSharedAndLoadedCsrThenCsrIsKept) {
+    ze_command_queue_desc_t desc = {};
+    auto commandList = createInitializedImmediateCommandList(desc);
+    auto initialCsr = commandList->getCsr(false);
+    const auto initialActivePartitions = initialCsr->getActivePartitions();
+
+    initialCsr->retainQueueOwnership();
+    setCsrProgress<FamilyType>(initialCsr, loadedCsrSubmittedTaskCount, 0u);
+    initialCsr->setActivePartitions(2u);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, appendBarrier(commandList));
+    EXPECT_EQ(initialCsr, commandList->getCsr(false));
+    EXPECT_EQ(2u, initialCsr->getOwningQueueCount());
+
+    initialCsr->setActivePartitions(initialActivePartitions);
+    initialCsr->releaseQueueOwnership();
+    markCsrIdle(initialCsr);
+    commandList->destroy();
+}
+
+HWTEST_F(CommandListCsrReassignmentTests, givenCsrReassignmentNotAllowedForCommandListWhenTryingReassignmentOnSharedAndLoadedCsrThenCsrIsKept) {
+    ze_command_queue_desc_t desc = {};
+    auto commandList = createInitializedImmediateCommandList(desc);
+    auto immediateCommandList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(static_cast<L0::CommandList *>(commandList));
+    auto initialCsr = commandList->getCsr(false);
+    ASSERT_TRUE(immediateCommandList->csrReassignmentAllowed);
+
+    initialCsr->retainQueueOwnership();
+    setCsrProgress<FamilyType>(initialCsr, loadedCsrSubmittedTaskCount, 0u);
+    immediateCommandList->csrReassignmentAllowed = false;
+
+    immediateCommandList->tryReassignCsrAtSafeTransitionPoint();
+    EXPECT_EQ(initialCsr, commandList->getCsr(false));
+
+    immediateCommandList->csrReassignmentAllowed = true;
+    initialCsr->releaseQueueOwnership();
+    markCsrIdle(initialCsr);
+    commandList->destroy();
+}
+
+HWTEST_F(CommandListCsrReassignmentTests, givenCsrReassignmentSuspendedWhenTryingReassignmentOnSharedAndLoadedCsrThenCsrIsKept) {
+    ze_command_queue_desc_t desc = {};
+    auto commandList = createInitializedImmediateCommandList(desc);
+    auto immediateCommandList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(static_cast<L0::CommandList *>(commandList));
+    auto initialCsr = commandList->getCsr(false);
+
+    initialCsr->retainQueueOwnership();
+    setCsrProgress<FamilyType>(initialCsr, loadedCsrSubmittedTaskCount, 0u);
+    immediateCommandList->csrReassignmentSuspended = true;
+
+    immediateCommandList->tryReassignCsrAtSafeTransitionPoint();
+    EXPECT_EQ(initialCsr, commandList->getCsr(false));
+
+    immediateCommandList->csrReassignmentSuspended = false;
+    immediateCommandList->tryReassignCsrAtSafeTransitionPoint();
+    EXPECT_NE(initialCsr, commandList->getCsr(false));
+
+    initialCsr->releaseQueueOwnership();
+    markCsrIdle(initialCsr);
+    commandList->destroy();
+}
+
+HWTEST_F(CommandListCsrReassignmentTests, givenSynchronizationTaskCountsStoredWhenCsrIsReassignedThenHostSynchronizeAndBarrierCachesAreInvalidated) {
+    using SynchronizationTaskCounts = typename WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>::SynchronizationTaskCounts;
+    ze_command_queue_desc_t desc = {};
+    auto commandList = createInitializedImmediateCommandList(desc);
+    auto immediateCommandList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(static_cast<L0::CommandList *>(commandList));
+    auto initialCsr = commandList->getCsr(false);
+    const auto queueTaskCount = commandList->cmdQImmediate->getTaskCount();
+
+    immediateCommandList->lastHostSynchronizeTaskCounts.store(queueTaskCount, 0u);
+    immediateCommandList->lastBarrierTaskCounts.store(queueTaskCount, 0u);
+    initialCsr->retainQueueOwnership();
+    setCsrProgress<FamilyType>(initialCsr, loadedCsrSubmittedTaskCount, 0u);
+
+    immediateCommandList->tryReassignCsrAtSafeTransitionPoint();
+    ASSERT_NE(initialCsr, commandList->getCsr(false));
+
+    constexpr auto invalidTaskCount = SynchronizationTaskCounts::invalidTaskCount;
+    EXPECT_TRUE(immediateCommandList->lastHostSynchronizeTaskCounts.matches(invalidTaskCount, invalidTaskCount));
+    EXPECT_TRUE(immediateCommandList->lastBarrierTaskCounts.matches(invalidTaskCount, invalidTaskCount));
+
+    initialCsr->releaseQueueOwnership();
+    markCsrIdle(initialCsr);
+    commandList->destroy();
+}
+
+HWTEST_F(CommandListCsrReassignmentTests, givenInOrderCommandListReassignedBeforeDependencyIsDispatchedWhenHostSynchronizingWithTaskCountWaitThenPreviousCsrIsWaited) {
+    ze_command_queue_desc_t desc = {};
+    desc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    auto commandList = createInitializedImmediateCommandList(desc);
+    auto immediateCommandList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(static_cast<L0::CommandList *>(commandList));
+    auto queue = getImmediateQueue(commandList);
+    auto &inOrderExecInfo = commandList->inOrderExecInfo;
+    auto initialCsr = commandList->getCsr(false);
+    auto initialUltCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(initialCsr);
+
+    initialCsr->retainQueueOwnership();
+    setCsrProgress<FamilyType>(initialCsr, loadedCsrSubmittedTaskCount + 1, 0u);
+    queue->taskCount = loadedCsrSubmittedTaskCount;
+    inOrderExecInfo->addCounterValue(1u);
+    inOrderExecInfo->setProgrammedCounterValue(inOrderExecInfo->getCounterValue());
+    initialUltCsr->callBaseWaitForCompletionWithTimeout = false;
+
+    immediateCommandList->tryReassignCsrAtSafeTransitionPoint();
+    ASSERT_NE(initialCsr, commandList->getCsr(false));
+    ASSERT_TRUE(immediateCommandList->implicitDependencyOnPreviousCsrPending);
+    immediateCommandList->latestFlushIsHostVisible = false;
+
+    immediateCommandList->releasePreviousCsrCompletionTarget();
+    EXPECT_EQ(initialCsr, immediateCommandList->csrBeforeReassignment);
+
+    EXPECT_TRUE(immediateCommandList->handleInOrderImplicitDependencies(false, false));
+    ASSERT_FALSE(immediateCommandList->implicitDependencyOnPreviousCsrPending);
+
+    const auto previousCsrWaitsBefore = initialUltCsr->waitForCompletionWithTimeoutTaskCountCalled.load();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->hostSynchronize(std::numeric_limits<uint64_t>::max()));
+    EXPECT_EQ(previousCsrWaitsBefore + 1, initialUltCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
+    EXPECT_EQ(loadedCsrSubmittedTaskCount, initialUltCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
+    EXPECT_EQ(nullptr, immediateCommandList->csrBeforeReassignment);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->hostSynchronize(std::numeric_limits<uint64_t>::max()));
+    EXPECT_EQ(previousCsrWaitsBefore + 1, initialUltCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
+
+    initialUltCsr->callBaseWaitForCompletionWithTimeout = true;
+    setInOrderCounterMemory(commandList, inOrderExecInfo->getCounterValue());
+    initialCsr->releaseQueueOwnership();
+    markCsrIdle(initialCsr);
+    commandList->destroy();
+}
+
+HWTEST_F(CommandListCsrReassignmentTests, givenInOrderCommandListReassignedWithHangOnPreviousCsrWhenHostSynchronizingWithTaskCountWaitThenDeviceLostIsReturnedWithoutWaitingOnNewCsr) {
+    ze_command_queue_desc_t desc = {};
+    desc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    auto commandList = createInitializedImmediateCommandList(desc);
+    auto immediateCommandList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(static_cast<L0::CommandList *>(commandList));
+    auto queue = getImmediateQueue(commandList);
+    auto &inOrderExecInfo = commandList->inOrderExecInfo;
+    auto initialCsr = commandList->getCsr(false);
+    auto initialUltCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(initialCsr);
+
+    initialCsr->retainQueueOwnership();
+    setCsrProgress<FamilyType>(initialCsr, loadedCsrSubmittedTaskCount + 1, 0u);
+    queue->taskCount = loadedCsrSubmittedTaskCount;
+    inOrderExecInfo->addCounterValue(1u);
+    inOrderExecInfo->setProgrammedCounterValue(inOrderExecInfo->getCounterValue());
+    initialUltCsr->callBaseWaitForCompletionWithTimeout = false;
+    initialUltCsr->returnWaitForCompletionWithTimeout = NEO::WaitStatus::gpuHang;
+
+    immediateCommandList->tryReassignCsrAtSafeTransitionPoint();
+    auto reassignedUltCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(commandList->getCsr(false));
+    ASSERT_NE(initialCsr, reassignedUltCsr);
+    immediateCommandList->latestFlushIsHostVisible = false;
+
+    const auto newCsrWaitsBefore = reassignedUltCsr->waitForCompletionWithTimeoutTaskCountCalled.load();
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, commandList->hostSynchronize(std::numeric_limits<uint64_t>::max()));
+    EXPECT_EQ(newCsrWaitsBefore, reassignedUltCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
+
+    initialUltCsr->returnWaitForCompletionWithTimeout = NEO::WaitStatus::ready;
+    initialUltCsr->callBaseWaitForCompletionWithTimeout = true;
+    immediateCommandList->implicitDependencyOnPreviousCsrPending = false;
+    immediateCommandList->releasePreviousCsrCompletionTarget();
+    setInOrderCounterMemory(commandList, inOrderExecInfo->getCounterValue());
+    initialCsr->releaseQueueOwnership();
+    markCsrIdle(initialCsr);
+    commandList->destroy();
+}
+
+HWTEST_F(CommandListCsrReassignmentTests, givenInOrderCommandListWithNonWalkerInOrderCmdsChainingWhenCsrIsReassignedThenChainingIsClearedAndImplicitDependencyIsResolvedWithSemaphore) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    ze_command_queue_desc_t desc = {};
+    desc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    auto commandList = createInitializedImmediateCommandList(desc);
+    auto immediateCommandList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(static_cast<L0::CommandList *>(commandList));
+    auto &inOrderExecInfo = commandList->inOrderExecInfo;
+    auto initialCsr = commandList->getCsr(false);
+
+    initialCsr->retainQueueOwnership();
+    setCsrProgress<FamilyType>(initialCsr, loadedCsrSubmittedTaskCount, 0u);
+    inOrderExecInfo->addCounterValue(1u);
+    inOrderExecInfo->setProgrammedCounterValue(inOrderExecInfo->getCounterValue());
+    immediateCommandList->latestOperationRequiredNonWalkerInOrderCmdsChaining = true;
+
+    immediateCommandList->tryReassignCsrAtSafeTransitionPoint();
+    ASSERT_NE(initialCsr, commandList->getCsr(false));
+    EXPECT_FALSE(immediateCommandList->latestOperationRequiredNonWalkerInOrderCmdsChaining);
+
+    auto cmdStream = commandList->commandContainer.getCommandStream();
+    const auto offset = cmdStream->getUsed();
+    CmdListWaitEventParameters waitEventParameters{};
+    waitEventParameters.waitForImplicitInOrderDependency = true;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immediateCommandList->addEventsToCmdList(0, nullptr, waitEventParameters));
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), cmdStream->getUsed() - offset));
+    EXPECT_EQ(1u, findAll<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end()).size());
+    EXPECT_FALSE(immediateCommandList->implicitDependencyOnPreviousCsrPending);
+
+    setInOrderCounterMemory(commandList, inOrderExecInfo->getCounterValue());
+    initialCsr->releaseQueueOwnership();
+    markCsrIdle(initialCsr);
+    commandList->destroy();
+}
+
+HWTEST_F(CommandListCsrReassignmentTests, givenInOrderSignalingConfigurationsFlaggedForReassignmentWhenCsrIsReassignedThenSwitchIsStillPerformedWithPendingDependency) {
+    struct SignalingConfiguration {
+        int32_t duplicatedCounterStorage;
+        int32_t compactL3FlushEventPacket;
+        bool dcFlushSupport;
+    };
+    for (const auto &configuration : {SignalingConfiguration{0, -1, false}, SignalingConfiguration{-1, 1, true}, SignalingConfiguration{-1, 1, false}}) {
+        debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(configuration.duplicatedCounterStorage);
+        debugManager.flags.CompactL3FlushEventPacket.set(configuration.compactL3FlushEventPacket);
+
+        ze_command_queue_desc_t desc = {};
+        desc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+        auto commandList = createInitializedImmediateCommandList(desc);
+        auto immediateCommandList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(static_cast<L0::CommandList *>(commandList));
+        ASSERT_TRUE(!immediateCommandList->duplicatedInOrderCounterStorageEnabled || immediateCommandList->compactL3FlushEventPacket);
+        immediateCommandList->dcFlushSupport = configuration.dcFlushSupport;
+        auto initialCsr = commandList->getCsr(false);
+
+        initialCsr->retainQueueOwnership();
+        setCsrProgress<FamilyType>(initialCsr, loadedCsrSubmittedTaskCount, 0u);
+
+        immediateCommandList->tryReassignCsrAtSafeTransitionPoint();
+        EXPECT_NE(initialCsr, commandList->getCsr(false));
+        EXPECT_TRUE(immediateCommandList->implicitDependencyOnPreviousCsrPending);
+
+        initialCsr->releaseQueueOwnership();
+        markCsrIdle(initialCsr);
+        commandList->destroy();
+    }
+}
+
+HWTEST_F(CommandListCsrReassignmentTests, givenInOrderCommandListWithPreviousCsrCompletionPendingWhenTryingReassignmentAgainThenCsrIsKept) {
+    ze_command_queue_desc_t desc = {};
+    desc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    auto commandList = createInitializedImmediateCommandList(desc);
+    auto immediateCommandList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(static_cast<L0::CommandList *>(commandList));
+    auto &inOrderExecInfo = commandList->inOrderExecInfo;
+    auto initialCsr = commandList->getCsr(false);
+
+    initialCsr->retainQueueOwnership();
+    setCsrProgress<FamilyType>(initialCsr, loadedCsrSubmittedTaskCount, 0u);
+    inOrderExecInfo->addCounterValue(1u);
+    inOrderExecInfo->setProgrammedCounterValue(inOrderExecInfo->getCounterValue());
+
+    immediateCommandList->tryReassignCsrAtSafeTransitionPoint();
+    auto reassignedCsr = commandList->getCsr(false);
+    ASSERT_NE(initialCsr, reassignedCsr);
+    ASSERT_EQ(initialCsr, immediateCommandList->csrBeforeReassignment);
+
+    reassignedCsr->retainQueueOwnership();
+    setCsrProgress<FamilyType>(reassignedCsr, reassignedCsr->peekTaskCount() + loadedCsrSubmittedTaskCount, static_cast<TagAddressType>(reassignedCsr->peekTaskCount()));
+    ASSERT_TRUE(getImmediateQueue(commandList)->isCsrOversubscribed());
+
+    immediateCommandList->tryReassignCsrAtSafeTransitionPoint();
+    EXPECT_EQ(reassignedCsr, commandList->getCsr(false));
+    EXPECT_EQ(initialCsr, immediateCommandList->csrBeforeReassignment);
+
+    reassignedCsr->releaseQueueOwnership();
+    markCsrIdle(reassignedCsr);
+    immediateCommandList->implicitDependencyOnPreviousCsrPending = false;
+    immediateCommandList->releasePreviousCsrCompletionTarget();
+    setInOrderCounterMemory(commandList, inOrderExecInfo->getCounterValue());
+    initialCsr->releaseQueueOwnership();
+    markCsrIdle(initialCsr);
+    commandList->destroy();
+}
+
+HWTEST_F(CommandListCsrReassignmentTests, givenFiniteTimeoutWhenHostSynchronizingAfterReassignmentThenTimeSpentOnPreviousCsrIsSubtractedFromRemainingWait) {
+    ze_command_queue_desc_t desc = {};
+    desc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    auto commandList = createInitializedImmediateCommandList(desc);
+    auto immediateCommandList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(static_cast<L0::CommandList *>(commandList));
+    auto queue = getImmediateQueue(commandList);
+    auto &inOrderExecInfo = commandList->inOrderExecInfo;
+    auto initialCsr = commandList->getCsr(false);
+    auto initialUltCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(initialCsr);
+
+    initialCsr->retainQueueOwnership();
+    setCsrProgress<FamilyType>(initialCsr, loadedCsrSubmittedTaskCount + 1, 0u);
+    queue->taskCount = loadedCsrSubmittedTaskCount;
+    inOrderExecInfo->addCounterValue(1u);
+    inOrderExecInfo->setProgrammedCounterValue(inOrderExecInfo->getCounterValue());
+    initialUltCsr->callBaseWaitForCompletionWithTimeout = false;
+
+    constexpr uint64_t timeoutNs = 1000u;
+    initialUltCsr->onWaitForCompletionWithTimeout = []() {
+        std::this_thread::sleep_for(std::chrono::microseconds(2));
+    };
+
+    immediateCommandList->tryReassignCsrAtSafeTransitionPoint();
+    auto reassignedUltCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(commandList->getCsr(false));
+    ASSERT_NE(initialUltCsr, reassignedUltCsr);
+    immediateCommandList->latestFlushIsHostVisible = false;
+    reassignedUltCsr->callBaseWaitForCompletionWithTimeout = false;
+
+    const auto newCsrWaitsBefore = reassignedUltCsr->waitForCompletionWithTimeoutTaskCountCalled.load();
+    commandList->hostSynchronize(timeoutNs);
+    EXPECT_EQ(timeoutNs / 1000u, static_cast<uint64_t>(initialUltCsr->latestWaitForCompletionWithTimeoutWaitParams.waitTimeout));
+    ASSERT_EQ(newCsrWaitsBefore + 1, reassignedUltCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
+    EXPECT_TRUE(reassignedUltCsr->latestWaitForCompletionWithTimeoutWaitParams.enableTimeout);
+    EXPECT_EQ(0, reassignedUltCsr->latestWaitForCompletionWithTimeoutWaitParams.waitTimeout);
+
+    initialUltCsr->onWaitForCompletionWithTimeout = nullptr;
+    initialUltCsr->callBaseWaitForCompletionWithTimeout = true;
+    reassignedUltCsr->callBaseWaitForCompletionWithTimeout = true;
+    immediateCommandList->implicitDependencyOnPreviousCsrPending = false;
+    immediateCommandList->releasePreviousCsrCompletionTarget();
+    setInOrderCounterMemory(commandList, inOrderExecInfo->getCounterValue());
+    initialCsr->releaseQueueOwnership();
+    markCsrIdle(initialCsr);
+    commandList->destroy();
+}
+
+HWTEST_F(CommandListCsrReassignmentTests, givenInOrderCommandListReassignedWhenAppendingCommandListsFailsToFlushThenPreviousCsrCompletionTargetIsKept) {
+    ze_command_queue_desc_t desc = {};
+    desc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    auto commandList = createInitializedImmediateCommandList(desc);
+    auto immediateCommandList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(static_cast<L0::CommandList *>(commandList));
+    auto &inOrderExecInfo = commandList->inOrderExecInfo;
+    auto initialCsr = commandList->getCsr(false);
+
+    initialCsr->retainQueueOwnership();
+    setCsrProgress<FamilyType>(initialCsr, loadedCsrSubmittedTaskCount, 0u);
+    inOrderExecInfo->addCounterValue(1u);
+    inOrderExecInfo->setProgrammedCounterValue(inOrderExecInfo->getCounterValue());
+
+    immediateCommandList->tryReassignCsrAtSafeTransitionPoint();
+    auto reassignedUltCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(commandList->getCsr(false));
+    ASSERT_NE(initialCsr, reassignedUltCsr);
+    ASSERT_EQ(initialCsr, immediateCommandList->csrBeforeReassignment);
+
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    auto regularCommandList = L0::CommandList::create(device, NEO::EngineGroupType::compute, 0u, returnValue, false);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    regularCommandList->close();
+    ze_command_list_handle_t regularCommandListHandle = regularCommandList->toHandle();
+
+    reassignedUltCsr->flushReturnValue = NEO::SubmissionStatus::failed;
+    CommandListExecutionInternalOptions internalOptions = {};
+    EXPECT_NE(ZE_RESULT_SUCCESS, commandList->appendCommandLists(1, &regularCommandListHandle, nullptr, 0, nullptr, internalOptions));
+    EXPECT_FALSE(immediateCommandList->implicitDependencyOnPreviousCsrPending);
+    EXPECT_EQ(initialCsr, immediateCommandList->csrBeforeReassignment);
+
+    reassignedUltCsr->flushReturnValue.reset();
+    regularCommandList->destroy();
+    immediateCommandList->releasePreviousCsrCompletionTarget();
+    setInOrderCounterMemory(commandList, inOrderExecInfo->getCounterValue());
+    initialCsr->releaseQueueOwnership();
+    markCsrIdle(initialCsr);
+    commandList->destroy();
+}
+
+HWTEST_F(CommandListCsrReassignmentTests, givenCommandListReassignedWhenSwitchingCsrThenAllocationsOfCompletedWorkAreDownloadedFromPreviousCsrOnlyForNonInOrderCommandList) {
+    for (const bool inOrder : {false, true}) {
+        ze_command_queue_desc_t desc = {};
+        desc.flags = inOrder ? static_cast<ze_command_queue_flags_t>(ZE_COMMAND_QUEUE_FLAG_IN_ORDER) : 0u;
+        auto commandList = createInitializedImmediateCommandList(desc);
+        auto immediateCommandList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(static_cast<L0::CommandList *>(commandList));
+        auto queue = getImmediateQueue(commandList);
+        auto initialCsr = commandList->getCsr(false);
+        auto initialUltCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(initialCsr);
+
+        initialCsr->retainQueueOwnership();
+        setCsrProgress<FamilyType>(initialCsr, loadedCsrSubmittedTaskCount, 0u);
+        constexpr TaskCountType previousQueueTaskCount = 0u;
+        queue->taskCount = previousQueueTaskCount;
+        const auto downloadsBefore = initialUltCsr->downloadAllocationsCalledCount.load();
+
+        immediateCommandList->tryReassignCsrAtSafeTransitionPoint();
+        ASSERT_NE(initialCsr, commandList->getCsr(false));
+
+        if (inOrder) {
+            EXPECT_EQ(downloadsBefore, initialUltCsr->downloadAllocationsCalledCount.load());
+            immediateCommandList->implicitDependencyOnPreviousCsrPending = false;
+            immediateCommandList->releasePreviousCsrCompletionTarget();
+        } else {
+            EXPECT_EQ(downloadsBefore + 1, initialUltCsr->downloadAllocationsCalledCount.load());
+            EXPECT_TRUE(initialUltCsr->latestDownloadAllocationsBlocking);
+            EXPECT_EQ(previousQueueTaskCount, initialUltCsr->latestDownloadAllocationsTaskCount);
+        }
+
+        initialCsr->releaseQueueOwnership();
+        markCsrIdle(initialCsr);
+        commandList->destroy();
+    }
+}
+
+HWTEST_F(CommandListCsrReassignmentTests, givenBarrierWithCopyOffloadSynchronizationWhenCsrBecomesSharedAndLoadedAfterFirstFlushThenCsrIsNotReassignedWithinOperation) {
+    ze_command_queue_desc_t desc = {};
+    auto commandList = createInitializedImmediateCommandList(desc);
+    auto immediateCommandList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(static_cast<L0::CommandList *>(commandList));
+    auto initialCsr = commandList->getCsr(false);
+    auto initialUltCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(initialCsr);
+
+    ze_command_queue_handle_t copyOffloadQueueHandle = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, device->createCommandQueue(&desc, &copyOffloadQueueHandle));
+    auto copyOffloadQueue = static_cast<WhiteBox<::L0::CommandQueue> *>(L0::CommandQueue::fromHandle(copyOffloadQueueHandle));
+    commandList->cmdQImmediateCopyOffload = copyOffloadQueue;
+    immediateCommandList->copyOffloadMode = CopyOffloadModes::dualStream;
+
+    initialCsr->retainQueueOwnership();
+    initialUltCsr->isTagReachedReturnValue = false;
+    initialUltCsr->onFlushImmediateTask = [&]() {
+        initialUltCsr->isTagReachedReturnValue = true;
+        setCsrProgress<FamilyType>(initialCsr, initialCsr->peekTaskCount() + loadedCsrSubmittedTaskCount, 0u);
+    };
+
+    CmdListWaitEventParameters waitEventParameters{};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immediateCommandList->appendBarrierWithCopyOffloadSynchronization(nullptr, 0, nullptr, waitEventParameters, false));
+    EXPECT_EQ(initialCsr, commandList->getCsr(false));
+    EXPECT_FALSE(immediateCommandList->csrReassignmentSuspended);
+
+    initialUltCsr->onFlushImmediateTask = nullptr;
+    initialUltCsr->isTagReachedReturnValue.reset();
+    immediateCommandList->copyOffloadMode = CopyOffloadModes::disabled;
+    commandList->cmdQImmediateCopyOffload = nullptr;
+    copyOffloadQueue->destroy();
+    initialCsr->releaseQueueOwnership();
+    markCsrIdle(initialCsr);
+    commandList->destroy();
+}
+
+HWTEST_F(CommandListCsrReassignmentTests, givenCsrReassignedWithoutSubmissionWhenHostSynchronizingThenWorkOfOtherQueuesOnNewCsrIsNotWaitedFor) {
+    ze_command_queue_desc_t desc = {};
+    auto commandList = createInitializedImmediateCommandList(desc);
+    auto immediateCommandList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(static_cast<L0::CommandList *>(commandList));
+    auto initialCsr = commandList->getCsr(false);
+
+    initialCsr->retainQueueOwnership();
+    setCsrProgress<FamilyType>(initialCsr, loadedCsrSubmittedTaskCount, 0u);
+
+    immediateCommandList->tryReassignCsrAtSafeTransitionPoint();
+    auto reassignedUltCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(commandList->getCsr(false));
+    ASSERT_NE(initialCsr, reassignedUltCsr);
+    EXPECT_EQ(0u, commandList->cmdQImmediate->getTaskCount());
+
+    reassignedUltCsr->callBaseWaitForCompletionWithTimeout = false;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->hostSynchronize(std::numeric_limits<uint64_t>::max()));
+    EXPECT_EQ(0u, reassignedUltCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
+
+    reassignedUltCsr->callBaseWaitForCompletionWithTimeout = true;
+    initialCsr->releaseQueueOwnership();
+    markCsrIdle(initialCsr);
+    commandList->destroy();
+}
+
+HWTEST_F(CommandListCsrReassignmentTests, givenInOrderCommandListReassignedWhenHostSynchronizingWithCounterWaitThenPreviousCsrCompletionTargetIsReleasedOnlyOnSuccess) {
+    ze_command_queue_desc_t desc = {};
+    desc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    auto commandList = createInitializedImmediateCommandList(desc);
+    auto immediateCommandList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(static_cast<L0::CommandList *>(commandList));
+    auto &inOrderExecInfo = commandList->inOrderExecInfo;
+    auto initialCsr = commandList->getCsr(false);
+
+    initialCsr->retainQueueOwnership();
+    setCsrProgress<FamilyType>(initialCsr, loadedCsrSubmittedTaskCount, 0u);
+    inOrderExecInfo->addCounterValue(1u);
+    inOrderExecInfo->setProgrammedCounterValue(inOrderExecInfo->getCounterValue());
+
+    immediateCommandList->tryReassignCsrAtSafeTransitionPoint();
+    ASSERT_NE(initialCsr, commandList->getCsr(false));
+    ASSERT_EQ(initialCsr, immediateCommandList->csrBeforeReassignment);
+    immediateCommandList->latestFlushIsHostVisible = true;
+
+    EXPECT_EQ(ZE_RESULT_NOT_READY, commandList->hostSynchronize(0u));
+    EXPECT_EQ(initialCsr, immediateCommandList->csrBeforeReassignment);
+
+    setInOrderCounterMemory(commandList, inOrderExecInfo->getCounterValue());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->hostSynchronize(std::numeric_limits<uint64_t>::max()));
+    EXPECT_EQ(nullptr, immediateCommandList->csrBeforeReassignment);
+
+    immediateCommandList->implicitDependencyOnPreviousCsrPending = false;
+    initialCsr->releaseQueueOwnership();
+    markCsrIdle(initialCsr);
+    commandList->destroy();
+}
+
+HWTEST_F(CommandListCsrReassignmentTests, givenResolveDependenciesViaPipeControlsWhenImplicitDependencyOnPreviousCsrIsPendingThenDebugKeyIsNotAppliedAndSemaphoreIsKept) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ResolveDependenciesViaPipeControls.set(1);
+    ze_command_queue_desc_t desc = {};
+    desc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    auto commandList = createInitializedImmediateCommandList(desc);
+    auto immediateCommandList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(static_cast<L0::CommandList *>(commandList));
+    ASSERT_FALSE(immediateCommandList->isInOrderCounterSignalPending());
+    ASSERT_FALSE(immediateCommandList->latestOperationHasCbEventWithProfiling);
+
+    immediateCommandList->implicitDependencyOnPreviousCsrPending = true;
+    EXPECT_FALSE(immediateCommandList->isResolveIoqDependencyWithBarrier(true, false, false));
+
+    immediateCommandList->implicitDependencyOnPreviousCsrPending = false;
+    EXPECT_TRUE(immediateCommandList->isResolveIoqDependencyWithBarrier(true, false, false));
+
+    commandList->destroy();
+}
+
+HWTEST_F(CommandListCsrReassignmentTests, givenSharedAndLoadedCsrWithoutWorkSubmittedByOtherQueuesAfterOwnWorkWhenTryingReassignmentThenCsrIsKept) {
+    ze_command_queue_desc_t desc = {};
+    desc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    auto commandList = createInitializedImmediateCommandList(desc);
+    auto immediateCommandList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(static_cast<L0::CommandList *>(commandList));
+    auto queue = getImmediateQueue(commandList);
+    auto initialCsr = commandList->getCsr(false);
+
+    initialCsr->retainQueueOwnership();
+    setCsrProgress<FamilyType>(initialCsr, loadedCsrSubmittedTaskCount, 0u);
+    queue->taskCount = loadedCsrSubmittedTaskCount;
+    EXPECT_FALSE(queue->isCsrOversubscribed());
+
+    immediateCommandList->tryReassignCsrAtSafeTransitionPoint();
+    EXPECT_EQ(initialCsr, commandList->getCsr(false));
+
+    queue->taskCount = loadedCsrSubmittedTaskCount - 1;
+    EXPECT_TRUE(queue->isCsrOversubscribed());
+
+    immediateCommandList->tryReassignCsrAtSafeTransitionPoint();
+    EXPECT_NE(initialCsr, commandList->getCsr(false));
+
+    immediateCommandList->implicitDependencyOnPreviousCsrPending = false;
+    immediateCommandList->releasePreviousCsrCompletionTarget();
+    initialCsr->releaseQueueOwnership();
+    markCsrIdle(initialCsr);
+    commandList->destroy();
+}
+
+HWTEST_F(CommandListCsrReassignmentTests, givenCsrWithMultipleActivePartitionsWhenTryingReassignmentOnSharedAndLoadedCsrThenCsrIsKeptUntilSinglePartitionIsActive) {
+    ze_command_queue_desc_t desc = {};
+    auto commandList = createInitializedImmediateCommandList(desc);
+    auto immediateCommandList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(static_cast<L0::CommandList *>(commandList));
+    auto initialCsr = commandList->getCsr(false);
+    const auto initialActivePartitions = initialCsr->getActivePartitions();
+
+    initialCsr->retainQueueOwnership();
+    setCsrProgress<FamilyType>(initialCsr, loadedCsrSubmittedTaskCount, 0u);
+    initialCsr->setActivePartitions(2u);
+
+    immediateCommandList->tryReassignCsrAtSafeTransitionPoint();
+    EXPECT_EQ(initialCsr, commandList->getCsr(false));
+
+    initialCsr->setActivePartitions(1u);
+    immediateCommandList->tryReassignCsrAtSafeTransitionPoint();
+    EXPECT_NE(initialCsr, commandList->getCsr(false));
+
+    initialCsr->setActivePartitions(initialActivePartitions);
+    initialCsr->releaseQueueOwnership();
+    markCsrIdle(initialCsr);
+    commandList->destroy();
+}
+
+HWTEST_F(CommandListCsrReassignmentTests, givenInOrderCommandListReassignedWhenFlushingToCopyOffloadQueueThenPreviousCsrCompletionTargetIsKept) {
+    ze_command_queue_desc_t desc = {};
+    desc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    auto commandList = createInitializedImmediateCommandList(desc);
+    auto immediateCommandList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(static_cast<L0::CommandList *>(commandList));
+    auto &inOrderExecInfo = commandList->inOrderExecInfo;
+    auto initialCsr = commandList->getCsr(false);
+
+    ze_command_queue_desc_t copyOffloadQueueDesc = {};
+    ze_command_queue_handle_t copyOffloadQueueHandle = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, device->createCommandQueue(&copyOffloadQueueDesc, &copyOffloadQueueHandle));
+    auto copyOffloadQueue = L0::CommandQueue::fromHandle(copyOffloadQueueHandle);
+
+    initialCsr->retainQueueOwnership();
+    setCsrProgress<FamilyType>(initialCsr, loadedCsrSubmittedTaskCount, 0u);
+    inOrderExecInfo->addCounterValue(1u);
+    inOrderExecInfo->setProgrammedCounterValue(inOrderExecInfo->getCounterValue());
+
+    immediateCommandList->tryReassignCsrAtSafeTransitionPoint();
+    ASSERT_NE(initialCsr, commandList->getCsr(false));
+    ASSERT_EQ(initialCsr, immediateCommandList->csrBeforeReassignment);
+    immediateCommandList->implicitDependencyOnPreviousCsrPending = false;
+
+    commandList->cmdQImmediateCopyOffload = copyOffloadQueue;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immediateCommandList->executeCommandListImmediateWithFlushTaskImpl(false, false, false, NEO::AppendOperations::nonKernel, false, copyOffloadQueue, nullptr, nullptr));
+    EXPECT_EQ(initialCsr, immediateCommandList->csrBeforeReassignment);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immediateCommandList->executeCommandListImmediateWithFlushTaskImpl(false, false, false, NEO::AppendOperations::nonKernel, false, commandList->cmdQImmediate, nullptr, nullptr));
+    EXPECT_EQ(nullptr, immediateCommandList->csrBeforeReassignment);
+
+    commandList->cmdQImmediateCopyOffload = nullptr;
+    copyOffloadQueue->destroy();
+    setInOrderCounterMemory(commandList, inOrderExecInfo->getCounterValue());
+    initialCsr->releaseQueueOwnership();
+    markCsrIdle(initialCsr);
+    commandList->destroy();
+}
+
+struct CsrReassignmentMetricQuery : public L0::MetricQuery {
+    ze_result_t appendBegin(L0::CommandList &commandList) override { return appendBeginResult; }
+    ze_result_t appendEnd(L0::CommandList &commandList, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override { return appendEndResult; }
+    ze_result_t getData(size_t *pRawDataSize, uint8_t *pRawData) override { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; }
+    ze_result_t reset() override { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; }
+    ze_result_t destroy() override { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; }
+
+    ze_result_t appendBeginResult = ZE_RESULT_SUCCESS;
+    ze_result_t appendEndResult = ZE_RESULT_SUCCESS;
+};
+
+HWTEST_F(CommandListCsrReassignmentTests, givenMetricQueryOpenWhenTryingReassignmentOnSharedAndLoadedCsrThenCsrIsKeptUntilQueryIsEnded) {
+    ze_command_queue_desc_t desc = {};
+    auto commandList = createInitializedImmediateCommandList(desc);
+    auto immediateCommandList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(static_cast<L0::CommandList *>(commandList));
+    auto initialCsr = commandList->getCsr(false);
+    CsrReassignmentMetricQuery metricQuery;
+    auto loadInitialCsrWithOtherQueueWork = [initialCsr]() {
+        setCsrProgress<FamilyType>(initialCsr, initialCsr->peekTaskCount() + loadedCsrSubmittedTaskCount, static_cast<TagAddressType>(initialCsr->peekTaskCount()));
+    };
+
+    initialCsr->retainQueueOwnership();
+
+    metricQuery.appendBeginResult = ZE_RESULT_ERROR_UNKNOWN;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, commandList->appendMetricQueryBegin(metricQuery.toHandle()));
+    EXPECT_EQ(0u, immediateCommandList->openMetricQueryCount);
+
+    metricQuery.appendBeginResult = ZE_RESULT_SUCCESS;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendMetricQueryBegin(metricQuery.toHandle()));
+    EXPECT_EQ(1u, immediateCommandList->openMetricQueryCount);
+    ASSERT_EQ(initialCsr, commandList->getCsr(false));
+
+    loadInitialCsrWithOtherQueueWork();
+
+    immediateCommandList->tryReassignCsrAtSafeTransitionPoint();
+    EXPECT_EQ(initialCsr, commandList->getCsr(false));
+
+    metricQuery.appendEndResult = ZE_RESULT_ERROR_UNKNOWN;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, commandList->appendMetricQueryEnd(metricQuery.toHandle(), nullptr, 0, nullptr));
+    EXPECT_EQ(1u, immediateCommandList->openMetricQueryCount);
+    EXPECT_EQ(initialCsr, commandList->getCsr(false));
+
+    loadInitialCsrWithOtherQueueWork();
+    metricQuery.appendEndResult = ZE_RESULT_SUCCESS;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendMetricQueryEnd(metricQuery.toHandle(), nullptr, 0, nullptr));
+    EXPECT_EQ(0u, immediateCommandList->openMetricQueryCount);
+    EXPECT_EQ(initialCsr, commandList->getCsr(false));
+
+    loadInitialCsrWithOtherQueueWork();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendMetricQueryEnd(metricQuery.toHandle(), nullptr, 0, nullptr));
+    EXPECT_EQ(0u, immediateCommandList->openMetricQueryCount);
+    EXPECT_NE(initialCsr, commandList->getCsr(false));
+
+    initialCsr->releaseQueueOwnership();
+    markCsrIdle(initialCsr);
+    commandList->destroy();
+}
+
+HWTEST_F(CommandListCsrReassignmentTests, givenInOrderCommandListReassignedTwiceWhenHangOccursOnContextSwitchedAwayFromThenCounterWaitReturnsDeviceLostUntilSuccessfulSynchronization) {
+    ze_command_queue_desc_t desc = {};
+    desc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    auto commandList = createInitializedImmediateCommandList(desc);
+    auto immediateCommandList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(static_cast<L0::CommandList *>(commandList));
+    auto &inOrderExecInfo = commandList->inOrderExecInfo;
+    auto initialCsr = commandList->getCsr(false);
+    auto initialUltCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(initialCsr);
+
+    initialCsr->retainQueueOwnership();
+    setCsrProgress<FamilyType>(initialCsr, loadedCsrSubmittedTaskCount, 0u);
+    inOrderExecInfo->addCounterValue(1u);
+    inOrderExecInfo->setProgrammedCounterValue(inOrderExecInfo->getCounterValue());
+
+    immediateCommandList->tryReassignCsrAtSafeTransitionPoint();
+    auto firstReassignedCsr = commandList->getCsr(false);
+    ASSERT_NE(initialCsr, firstReassignedCsr);
+    immediateCommandList->implicitDependencyOnPreviousCsrPending = false;
+    immediateCommandList->releasePreviousCsrCompletionTarget();
+    ASSERT_EQ(nullptr, immediateCommandList->csrBeforeReassignment);
+
+    firstReassignedCsr->retainQueueOwnership();
+    setCsrProgress<FamilyType>(firstReassignedCsr, firstReassignedCsr->peekTaskCount() + loadedCsrSubmittedTaskCount, static_cast<TagAddressType>(firstReassignedCsr->peekTaskCount()));
+    immediateCommandList->tryReassignCsrAtSafeTransitionPoint();
+    auto secondReassignedCsr = commandList->getCsr(false);
+    ASSERT_NE(firstReassignedCsr, secondReassignedCsr);
+    ASSERT_NE(initialCsr, secondReassignedCsr);
+    immediateCommandList->implicitDependencyOnPreviousCsrPending = false;
+    immediateCommandList->releasePreviousCsrCompletionTarget();
+
+    ASSERT_EQ(2u, immediateCommandList->previousCsrsAwaitingCompletion.size());
+    EXPECT_EQ(initialCsr, immediateCommandList->previousCsrsAwaitingCompletion[0].first);
+    EXPECT_EQ(firstReassignedCsr, immediateCommandList->previousCsrsAwaitingCompletion[1].first);
+
+    immediateCommandList->latestFlushIsHostVisible = true;
+    initialUltCsr->isGpuHangDetectedReturnValue = true;
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, commandList->hostSynchronize(std::numeric_limits<uint64_t>::max()));
+    EXPECT_EQ(2u, immediateCommandList->previousCsrsAwaitingCompletion.size());
+
+    initialUltCsr->isGpuHangDetectedReturnValue = false;
+    setInOrderCounterMemory(commandList, inOrderExecInfo->getCounterValue());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->hostSynchronize(std::numeric_limits<uint64_t>::max()));
+    EXPECT_TRUE(immediateCommandList->previousCsrsAwaitingCompletion.empty());
+
+    initialUltCsr->isGpuHangDetectedReturnValue.reset();
+    firstReassignedCsr->releaseQueueOwnership();
+    markCsrIdle(firstReassignedCsr);
+    initialCsr->releaseQueueOwnership();
+    markCsrIdle(initialCsr);
+    commandList->destroy();
+}
+
+HWTEST_F(CommandListCsrReassignmentTests, givenContextAlreadyAwaitingCompletionWhenInOrderCommandListSwitchesAwayFromItAgainThenContextIsTrackedOnce) {
+    ze_command_queue_desc_t desc = {};
+    desc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    auto commandList = createInitializedImmediateCommandList(desc);
+    auto immediateCommandList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(static_cast<L0::CommandList *>(commandList));
+    auto queue = getImmediateQueue(commandList);
+    auto initialCsr = commandList->getCsr(false);
+
+    constexpr TaskCountType staleTaskCount = 1u;
+    constexpr TaskCountType taskCountAtSwitch = 3u;
+    immediateCommandList->previousCsrsAwaitingCompletion.push_back({initialCsr, staleTaskCount});
+    initialCsr->retainQueueOwnership();
+    setCsrProgress<FamilyType>(initialCsr, loadedCsrSubmittedTaskCount, 0u);
+    queue->taskCount = taskCountAtSwitch;
+
+    immediateCommandList->tryReassignCsrAtSafeTransitionPoint();
+    ASSERT_NE(initialCsr, commandList->getCsr(false));
+    ASSERT_EQ(1u, immediateCommandList->previousCsrsAwaitingCompletion.size());
+    EXPECT_EQ(initialCsr, immediateCommandList->previousCsrsAwaitingCompletion[0].first);
+    EXPECT_EQ(taskCountAtSwitch, immediateCommandList->previousCsrsAwaitingCompletion[0].second);
+
+    immediateCommandList->implicitDependencyOnPreviousCsrPending = false;
+    immediateCommandList->releasePreviousCsrCompletionTarget();
+    initialCsr->releaseQueueOwnership();
+    markCsrIdle(initialCsr);
+    commandList->destroy();
+}
+
+HWTEST_F(CommandListCsrReassignmentTests, givenInOrderCommandListReassignedInTbxModeWhenHostSynchronizeSucceedsThenCompletedAllocationsAreDownloadedFromPreviousContext) {
+    ze_command_queue_desc_t desc = {};
+    desc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    auto commandList = createInitializedImmediateCommandList(desc);
+    auto immediateCommandList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(static_cast<L0::CommandList *>(commandList));
+    auto &inOrderExecInfo = commandList->inOrderExecInfo;
+    auto queue = getImmediateQueue(commandList);
+    auto initialCsr = commandList->getCsr(false);
+    auto initialUltCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(initialCsr);
+
+    initialCsr->retainQueueOwnership();
+    setCsrProgress<FamilyType>(initialCsr, loadedCsrSubmittedTaskCount, 0u);
+    constexpr TaskCountType taskCountAtSwitch = 2u;
+    queue->taskCount = taskCountAtSwitch;
+    inOrderExecInfo->addCounterValue(1u);
+    inOrderExecInfo->setProgrammedCounterValue(inOrderExecInfo->getCounterValue());
+
+    immediateCommandList->tryReassignCsrAtSafeTransitionPoint();
+    ASSERT_NE(initialCsr, commandList->getCsr(false));
+    immediateCommandList->implicitDependencyOnPreviousCsrPending = false;
+    immediateCommandList->releasePreviousCsrCompletionTarget();
+    ASSERT_EQ(nullptr, immediateCommandList->csrBeforeReassignment);
+    ASSERT_EQ(1u, immediateCommandList->previousCsrsAwaitingCompletion.size());
+
+    immediateCommandList->isTbxMode = true;
+    immediateCommandList->latestFlushIsHostVisible = true;
+    setInOrderCounterMemory(commandList, inOrderExecInfo->getCounterValue());
+    const auto downloadsBefore = initialUltCsr->downloadAllocationsCalledCount.load();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->hostSynchronize(std::numeric_limits<uint64_t>::max()));
+    EXPECT_EQ(downloadsBefore + 1, initialUltCsr->downloadAllocationsCalledCount.load());
+    EXPECT_TRUE(initialUltCsr->latestDownloadAllocationsBlocking);
+    EXPECT_EQ(taskCountAtSwitch, initialUltCsr->latestDownloadAllocationsTaskCount);
+    EXPECT_TRUE(immediateCommandList->previousCsrsAwaitingCompletion.empty());
+
+    immediateCommandList->isTbxMode = false;
+    initialCsr->releaseQueueOwnership();
+    markCsrIdle(initialCsr);
+    commandList->destroy();
+}
+
+HWTEST_F(CommandListCsrReassignmentTests, givenInOrderCommandListWithPreviousContextsWhenFlushingWithSignalEventThenPreviousContextsArePassedToEventAndClearedOnFlushWithoutPreviousContexts) {
+    ze_command_queue_desc_t desc = {};
+    desc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    auto commandList = createInitializedImmediateCommandList(desc);
+    auto immediateCommandList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(static_cast<L0::CommandList *>(commandList));
+    auto previousContextCsr = commandList->getCsr(false);
+    constexpr TaskCountType previousContextTaskCount = 5u;
+
+    for (const bool tbxMode : {false, true}) {
+        MockEvent signalEvent;
+        immediateCommandList->isTbxMode = tbxMode;
+        immediateCommandList->previousCsrsAwaitingCompletion.push_back({previousContextCsr, previousContextTaskCount});
+
+        EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, immediateCommandList->flushImmediate(ZE_RESULT_ERROR_INVALID_ARGUMENT, false, false, false, NEO::AppendOperations::nonKernel, false,
+                                                                                         signalEvent.toHandle(), false, nullptr, nullptr));
+
+        ASSERT_EQ(1u, signalEvent.signalerPreviousContexts.size());
+        EXPECT_EQ(previousContextCsr, signalEvent.signalerPreviousContexts[0].first);
+        EXPECT_EQ(previousContextTaskCount, signalEvent.signalerPreviousContexts[0].second);
+
+        immediateCommandList->previousCsrsAwaitingCompletion.clear();
+        EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, immediateCommandList->flushImmediate(ZE_RESULT_ERROR_INVALID_ARGUMENT, false, false, false, NEO::AppendOperations::nonKernel, false,
+                                                                                         signalEvent.toHandle(), false, nullptr, nullptr));
+
+        EXPECT_TRUE(signalEvent.signalerPreviousContexts.empty());
+    }
+
+    immediateCommandList->isTbxMode = false;
+    commandList->destroy();
+}
+
+HWTEST_F(CommandListCsrReassignmentTests, givenOutOfOrderCommandListReassignedWhenSwitchingCsrThenPreviousContextIsNotTrackedForHangDetection) {
+    ze_command_queue_desc_t desc = {};
+    auto commandList = createInitializedImmediateCommandList(desc);
+    auto immediateCommandList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(static_cast<L0::CommandList *>(commandList));
+    auto initialCsr = commandList->getCsr(false);
+
+    initialCsr->retainQueueOwnership();
+    setCsrProgress<FamilyType>(initialCsr, loadedCsrSubmittedTaskCount, 0u);
+    immediateCommandList->tryReassignCsrAtSafeTransitionPoint();
+    ASSERT_NE(initialCsr, commandList->getCsr(false));
+    EXPECT_TRUE(immediateCommandList->previousCsrsAwaitingCompletion.empty());
+
+    initialCsr->releaseQueueOwnership();
+    markCsrIdle(initialCsr);
+    commandList->destroy();
+}
+
+HWTEST_F(CommandListCsrReassignmentTests, givenCsrOwnedByOneQueueWhenAppendingWithLoadedCsrThenCsrIsKept) {
+    ze_command_queue_desc_t desc = {};
+    auto commandList = createInitializedImmediateCommandList(desc);
+    auto initialCsr = commandList->getCsr(false);
+    ASSERT_EQ(1u, initialCsr->getOwningQueueCount());
+
+    setCsrProgress<FamilyType>(initialCsr, loadedCsrSubmittedTaskCount, 0u);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, appendBarrier(commandList));
+    EXPECT_EQ(initialCsr, commandList->getCsr(false));
+
+    markCsrIdle(initialCsr);
+    commandList->destroy();
+}
+
+HWTEST_F(CommandListCsrReassignmentTests, givenSharedCsrWithLoadNotAboveThresholdWhenAppendingThenCsrIsKept) {
+    ze_command_queue_desc_t desc = {};
+    auto commandList = createInitializedImmediateCommandList(desc);
+    auto initialCsr = commandList->getCsr(false);
+
+    initialCsr->retainQueueOwnership();
+    const auto completedTaskCount = static_cast<TagAddressType>(initialCsr->peekTaskCount());
+    setCsrProgress<FamilyType>(initialCsr, completedTaskCount + L0::CommandQueue::csrReassignmentLoadThreshold, completedTaskCount);
+    ASSERT_EQ(L0::CommandQueue::csrReassignmentLoadThreshold, initialCsr->getOutstandingWorkCount());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, appendBarrier(commandList));
+    EXPECT_EQ(initialCsr, commandList->getCsr(false));
+
+    initialCsr->releaseQueueOwnership();
+    markCsrIdle(initialCsr);
+    commandList->destroy();
+}
+
+HWTEST_F(CommandListCsrReassignmentTests, givenSharedCsrWithSinglePendingSubmissionWhenAppendingThenCsrIsReassigned) {
+    ze_command_queue_desc_t desc = {};
+    auto commandList = createInitializedImmediateCommandList(desc);
+    auto initialCsr = commandList->getCsr(false);
+
+    initialCsr->retainQueueOwnership();
+    setCsrProgress<FamilyType>(initialCsr, L0::CommandQueue::csrReassignmentLoadThreshold + 1, 0u);
+    ASSERT_EQ(1u, initialCsr->getOutstandingWorkCount());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, appendBarrier(commandList));
+    EXPECT_NE(initialCsr, commandList->getCsr(false));
+
+    initialCsr->releaseQueueOwnership();
+    markCsrIdle(initialCsr);
+    commandList->destroy();
+}
+
+HWTEST_F(CommandListCsrReassignmentTests, givenSharedAndLoadedCsrWithIncompleteQueueWorkWhenAppendingThenCsrIsKept) {
+    ze_command_queue_desc_t desc = {};
+    auto commandList = createInitializedImmediateCommandList(desc);
+    auto initialCsr = commandList->getCsr(false);
+    auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(initialCsr);
+
+    initialCsr->retainQueueOwnership();
+    setCsrProgress<FamilyType>(initialCsr, loadedCsrSubmittedTaskCount, 0u);
+    ultCsr->isTagReachedReturnValue = false;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, appendBarrier(commandList));
+    EXPECT_EQ(initialCsr, commandList->getCsr(false));
+
+    ultCsr->isTagReachedReturnValue.reset();
+    initialCsr->releaseQueueOwnership();
+    markCsrIdle(initialCsr);
+    commandList->destroy();
+}
+
+HWTEST_F(CommandListCsrReassignmentTests, givenOutOfOrderCommandListWithSharedAndLoadedCsrWhenAppendingThenCsrIsReassignedAndOwnershipIsMoved) {
+    ze_command_queue_desc_t desc = {};
+    auto commandList = createInitializedImmediateCommandList(desc);
+    ASSERT_FALSE(commandList->isInOrderExecutionEnabled());
+    auto initialCsr = commandList->getCsr(false);
+
+    initialCsr->retainQueueOwnership();
+    setCsrProgress<FamilyType>(initialCsr, loadedCsrSubmittedTaskCount, 0u);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, appendBarrier(commandList));
+
+    auto reassignedCsr = commandList->getCsr(false);
+    EXPECT_NE(initialCsr, reassignedCsr);
+    EXPECT_TRUE(reassignedCsr->isInitialized());
+    EXPECT_EQ(reassignedCsr, commandList->commandContainer.getImmediateCmdListCsr());
+    EXPECT_EQ(1u, initialCsr->getOwningQueueCount());
+    EXPECT_EQ(1u, reassignedCsr->getOwningQueueCount());
+    EXPECT_EQ(reassignedCsr->peekTaskCount(), getImmediateQueue(commandList)->getTaskCount());
+    EXPECT_EQ(loadedCsrSubmittedTaskCount, initialCsr->peekTaskCount());
+
+    initialCsr->releaseQueueOwnership();
+    markCsrIdle(initialCsr);
+    commandList->destroy();
+    EXPECT_EQ(0u, reassignedCsr->getOwningQueueCount());
+}
+
+HWTEST_F(CommandListCsrReassignmentTests, givenInOrderCommandListWithPendingWorkWhenAppendingToSharedAndLoadedCsrThenCsrIsReassignedAndDependencyOnPreviousCsrIsResolvedWithSemaphore) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    ze_command_queue_desc_t desc = {};
+    desc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    auto commandList = createInitializedImmediateCommandList(desc);
+    ASSERT_TRUE(commandList->isInOrderExecutionEnabled());
+    auto immediateCommandList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(static_cast<L0::CommandList *>(commandList));
+    auto &inOrderExecInfo = commandList->inOrderExecInfo;
+    auto initialCsr = commandList->getCsr(false);
+
+    initialCsr->retainQueueOwnership();
+    setCsrProgress<FamilyType>(initialCsr, loadedCsrSubmittedTaskCount, 0u);
+    inOrderExecInfo->addCounterValue(1u);
+    inOrderExecInfo->setProgrammedCounterValue(inOrderExecInfo->getCounterValue());
+    setInOrderCounterMemory(commandList, inOrderExecInfo->getCounterValue() - 1);
+    ASSERT_FALSE(inOrderExecInfo->isCounterSignalPending());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, appendBarrier(commandList));
+    auto reassignedCsr = commandList->getCsr(false);
+    EXPECT_NE(initialCsr, reassignedCsr);
+    EXPECT_EQ(reassignedCsr, commandList->commandContainer.getImmediateCmdListCsr());
+    EXPECT_EQ(1u, initialCsr->getOwningQueueCount());
+    ASSERT_EQ(commandList->cmdQImmediate->getTaskCount(), reassignedCsr->peekTaskCount());
+    EXPECT_TRUE(immediateCommandList->implicitDependencyOnPreviousCsrPending);
+    EXPECT_FALSE(immediateCommandList->isResolveIoqDependencyWithBarrier(true, false, false));
+
+    auto cmdStream = commandList->commandContainer.getCommandStream();
+    const auto offset = cmdStream->getUsed();
+    EXPECT_TRUE(immediateCommandList->handleInOrderImplicitDependencies(false, false));
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), cmdStream->getUsed() - offset));
+    EXPECT_EQ(1u, findAll<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end()).size());
+    EXPECT_EQ(cmdList.end(), find<typename FamilyType::StallingBarrierType *>(cmdList.begin(), cmdList.end()));
+    EXPECT_FALSE(immediateCommandList->implicitDependencyOnPreviousCsrPending);
+
+    setInOrderCounterMemory(commandList, inOrderExecInfo->getCounterValue());
+    initialCsr->releaseQueueOwnership();
+    markCsrIdle(initialCsr);
+    commandList->destroy();
+}
+
+HWTEST_F(CommandListCsrReassignmentTests, givenInOrderCommandListReassignedWithAlreadyWaitedCounterWhenHandlingImplicitDependencyThenNoWaitIsProgrammedAndPendingDependencyIsCleared) {
+    ze_command_queue_desc_t desc = {};
+    desc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    auto commandList = createInitializedImmediateCommandList(desc);
+    auto immediateCommandList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(static_cast<L0::CommandList *>(commandList));
+    auto &inOrderExecInfo = commandList->inOrderExecInfo;
+    auto initialCsr = commandList->getCsr(false);
+
+    initialCsr->retainQueueOwnership();
+    setCsrProgress<FamilyType>(initialCsr, loadedCsrSubmittedTaskCount, 0u);
+    inOrderExecInfo->addCounterValue(1u);
+    inOrderExecInfo->setProgrammedCounterValue(inOrderExecInfo->getCounterValue());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, appendBarrier(commandList));
+    ASSERT_NE(initialCsr, commandList->getCsr(false));
+    ASSERT_TRUE(immediateCommandList->implicitDependencyOnPreviousCsrPending);
+
+    inOrderExecInfo->setLastWaitedCounterValue(inOrderExecInfo->getCounterValue(), inOrderExecInfo->getAllocationOffset());
+    auto cmdStream = commandList->commandContainer.getCommandStream();
+    const auto usedBefore = cmdStream->getUsed();
+    EXPECT_FALSE(immediateCommandList->handleInOrderImplicitDependencies(false, false));
+    EXPECT_EQ(usedBefore, cmdStream->getUsed());
+    EXPECT_FALSE(immediateCommandList->implicitDependencyOnPreviousCsrPending);
+
+    setInOrderCounterMemory(commandList, inOrderExecInfo->getCounterValue());
+    initialCsr->releaseQueueOwnership();
+    markCsrIdle(initialCsr);
+    commandList->destroy();
+}
+
+HWTEST_F(CommandListCsrReassignmentTests, givenInOrderCommandListReassignedWithoutPreviousWorkWhenHandlingImplicitDependencyThenPendingDependencyIsCleared) {
+    ze_command_queue_desc_t desc = {};
+    desc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    auto commandList = createInitializedImmediateCommandList(desc);
+    auto immediateCommandList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(static_cast<L0::CommandList *>(commandList));
+    auto initialCsr = commandList->getCsr(false);
+    auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(initialCsr);
+
+    initialCsr->retainQueueOwnership();
+    setCsrProgress<FamilyType>(initialCsr, loadedCsrSubmittedTaskCount, 0u);
+    ultCsr->isTagReachedReturnValue = false;
+    ASSERT_EQ(0u, commandList->inOrderExecInfo->getCounterValue());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, appendBarrier(commandList));
+    EXPECT_NE(initialCsr, commandList->getCsr(false));
+    ASSERT_TRUE(immediateCommandList->implicitDependencyOnPreviousCsrPending);
+
+    EXPECT_FALSE(immediateCommandList->handleInOrderImplicitDependencies(false, false));
+    EXPECT_FALSE(immediateCommandList->implicitDependencyOnPreviousCsrPending);
+
+    ultCsr->isTagReachedReturnValue.reset();
+    initialCsr->releaseQueueOwnership();
+    markCsrIdle(initialCsr);
+    commandList->destroy();
+}
+
+HWTEST_F(CommandListCsrReassignmentTests, givenInOrderCommandListWithPendingCounterSignalWhenAppendingToSharedAndLoadedCsrThenCsrIsKept) {
+    ze_command_queue_desc_t desc = {};
+    desc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    auto commandList = createInitializedImmediateCommandList(desc);
+    auto &inOrderExecInfo = commandList->inOrderExecInfo;
+    auto initialCsr = commandList->getCsr(false);
+
+    initialCsr->retainQueueOwnership();
+    setCsrProgress<FamilyType>(initialCsr, loadedCsrSubmittedTaskCount, 0u);
+    inOrderExecInfo->addCounterValue(1u);
+    setInOrderCounterMemory(commandList, inOrderExecInfo->getCounterValue());
+    ASSERT_TRUE(inOrderExecInfo->isCounterSignalPending());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, appendBarrier(commandList));
+    EXPECT_EQ(initialCsr, commandList->getCsr(false));
+
+    setInOrderCounterMemory(commandList, inOrderExecInfo->getCounterValue());
+    initialCsr->releaseQueueOwnership();
+    markCsrIdle(initialCsr);
+    commandList->destroy();
+}
+
+HWTEST_F(CommandListCsrReassignmentTests, givenInOrderCommandListWithLatestOperationUsingProfilingCounterBasedEventWhenAppendingToSharedAndLoadedCsrThenCsrIsKept) {
+    ze_command_queue_desc_t desc = {};
+    desc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    auto commandList = createInitializedImmediateCommandList(desc);
+    auto immediateCommandList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(static_cast<L0::CommandList *>(commandList));
+    auto initialCsr = commandList->getCsr(false);
+
+    initialCsr->retainQueueOwnership();
+    setCsrProgress<FamilyType>(initialCsr, loadedCsrSubmittedTaskCount, 0u);
+    immediateCommandList->latestOperationHasCbEventWithProfiling = true;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, appendBarrier(commandList));
+    EXPECT_EQ(initialCsr, commandList->getCsr(false));
+    EXPECT_FALSE(immediateCommandList->implicitDependencyOnPreviousCsrPending);
+
+    immediateCommandList->latestOperationHasCbEventWithProfiling = false;
+    initialCsr->releaseQueueOwnership();
+    markCsrIdle(initialCsr);
+    commandList->destroy();
+}
+
+HWTEST_F(CommandListCsrReassignmentTests, givenInOrderCommandListWithIncompleteTaskCountWhenAppendingToSharedAndLoadedCsrThenCsrIsReassigned) {
+    ze_command_queue_desc_t desc = {};
+    desc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    auto commandList = createInitializedImmediateCommandList(desc);
+    auto initialCsr = commandList->getCsr(false);
+    auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(initialCsr);
+
+    initialCsr->retainQueueOwnership();
+    setCsrProgress<FamilyType>(initialCsr, loadedCsrSubmittedTaskCount, 0u);
+    ultCsr->isTagReachedReturnValue = false;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, appendBarrier(commandList));
+    EXPECT_NE(initialCsr, commandList->getCsr(false));
+
+    ultCsr->isTagReachedReturnValue.reset();
+    setInOrderCounterMemory(commandList, commandList->inOrderExecInfo->getCounterValue());
+    initialCsr->releaseQueueOwnership();
+    markCsrIdle(initialCsr);
+    commandList->destroy();
+}
+
+HWTEST_F(CommandListCsrReassignmentTests, givenCopyOffloadQueueWithIncompleteWorkWhenAppendingToSharedAndLoadedCsrThenCsrIsReassignedOnlyAfterCopyOffloadCompletes) {
+    ze_command_queue_desc_t desc = {};
+    auto commandList = createInitializedImmediateCommandList(desc);
+    auto initialCsr = commandList->getCsr(false);
+
+    ze_command_queue_handle_t copyOffloadQueueHandle = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, device->createCommandQueue(&desc, &copyOffloadQueueHandle));
+    auto copyOffloadQueue = static_cast<WhiteBox<::L0::CommandQueue> *>(L0::CommandQueue::fromHandle(copyOffloadQueueHandle));
+    copyOffloadQueue->taskCount = std::numeric_limits<TagAddressType>::max();
+    commandList->cmdQImmediateCopyOffload = copyOffloadQueue;
+
+    initialCsr->retainQueueOwnership();
+    setCsrProgress<FamilyType>(initialCsr, loadedCsrSubmittedTaskCount, 0u);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, appendBarrier(commandList));
+    EXPECT_EQ(initialCsr, commandList->getCsr(false));
+
+    copyOffloadQueue->taskCount = 0u;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, appendBarrier(commandList));
+    EXPECT_NE(initialCsr, commandList->getCsr(false));
+
+    commandList->cmdQImmediateCopyOffload = nullptr;
+    copyOffloadQueue->destroy();
+    initialCsr->releaseQueueOwnership();
+    markCsrIdle(initialCsr);
+    commandList->destroy();
+}
+
+HWTEST_F(CommandListCsrReassignmentTests, givenCsrSelectionFailingWhenAppendingToSharedAndLoadedCsrThenCsrIsKept) {
+    ze_command_queue_desc_t desc = {};
+    auto commandList = createInitializedImmediateCommandList(desc);
+    auto queue = getImmediateQueue(commandList);
+    auto initialCsr = commandList->getCsr(false);
+
+    initialCsr->retainQueueOwnership();
+    setCsrProgress<FamilyType>(initialCsr, loadedCsrSubmittedTaskCount, 0u);
+    const auto validOrdinal = queue->desc.ordinal;
+    queue->desc.ordinal = std::numeric_limits<uint32_t>::max();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, appendBarrier(commandList));
+    EXPECT_EQ(initialCsr, commandList->getCsr(false));
+    EXPECT_EQ(2u, initialCsr->getOwningQueueCount());
+
+    queue->desc.ordinal = validOrdinal;
+    initialCsr->releaseQueueOwnership();
+    markCsrIdle(initialCsr);
+    commandList->destroy();
+}
+
+HWTEST_F(CommandListCsrReassignmentTests, givenCsrSelectionNotTakingOwnershipWhenAppendingToSharedAndLoadedCsrThenCsrIsKept) {
+    ze_command_queue_desc_t desc = {};
+    auto commandList = createInitializedImmediateCommandList(desc);
+    auto queue = getImmediateQueue(commandList);
+    auto initialCsr = commandList->getCsr(false);
+
+    initialCsr->retainQueueOwnership();
+    setCsrProgress<FamilyType>(initialCsr, loadedCsrSubmittedTaskCount, 0u);
+    const auto requestedPriority = queue->desc.priority;
+    queue->desc.priority = ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, appendBarrier(commandList));
+    EXPECT_EQ(initialCsr, commandList->getCsr(false));
+    EXPECT_EQ(2u, initialCsr->getOwningQueueCount());
+
+    queue->desc.priority = requestedPriority;
+    initialCsr->releaseQueueOwnership();
+    markCsrIdle(initialCsr);
+    commandList->destroy();
+}
+
+HWTEST_F(CommandListCsrReassignmentTests, givenAllCsrsOwnedAndCurrentCsrLeastLoadedWhenAppendingThenCsrAndOwnershipAreKept) {
+    ze_command_queue_desc_t desc = {};
+    auto &contexts = neoDevice->secondaryEngines[aub_stream::ENGINE_CCS];
+    std::vector<CommandList *> commandLists;
+    for (uint32_t i = 0; i < contexts.regularEnginesTotal; i++) {
+        commandLists.push_back(createInitializedImmediateCommandList(desc));
+    }
+    ASSERT_EQ(contexts.regularEnginesTotal, contexts.npIndices.size());
+
+    constexpr TaskCountType highlyLoadedSubmittedTaskCount = 10u;
+    for (auto index : contexts.npIndices) {
+        setCsrProgress<FamilyType>(contexts.engines[index].commandStreamReceiver, highlyLoadedSubmittedTaskCount, 0u);
+    }
+    auto commandList = commandLists.front();
+    auto initialCsr = commandList->getCsr(false);
+    initialCsr->retainQueueOwnership();
+    setCsrProgress<FamilyType>(initialCsr, L0::CommandQueue::csrReassignmentLoadThreshold + 1, 0u);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, appendBarrier(commandList));
+    EXPECT_EQ(initialCsr, commandList->getCsr(false));
+    EXPECT_EQ(2u, initialCsr->getOwningQueueCount());
+
+    initialCsr->releaseQueueOwnership();
+    for (auto index : contexts.npIndices) {
+        markCsrIdle(contexts.engines[index].commandStreamReceiver);
+    }
+    for (auto list : commandLists) {
+        list->destroy();
+    }
+}
+
+HWTEST_F(CommandListCsrReassignmentTests, givenRegularCommandListAppendedToReassignedImmediateCommandListThenSavedTagAndTaskCountReferToNewCsr) {
+    ze_command_queue_desc_t desc = {};
+    auto commandList = createInitializedImmediateCommandList(desc);
+    auto queue = getImmediateQueue(commandList);
+    auto initialCsr = commandList->getCsr(false);
+    ASSERT_TRUE(queue->getSaveWaitForPreamble());
+
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    auto regularCommandList = L0::CommandList::create(device, NEO::EngineGroupType::compute, 0u, returnValue, false);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    regularCommandList->close();
+    ze_command_list_handle_t regularCommandListHandle = regularCommandList->toHandle();
+    commandList->setPatchingPreamble(true);
+
+    CommandListExecutionInternalOptions internalOptions = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendCommandLists(1, &regularCommandListHandle, nullptr, 0, nullptr, internalOptions));
+    EXPECT_EQ(initialCsr->getTagAllocation()->getGpuAddress(), regularCommandList->getLatestTagGpuAddress());
+    EXPECT_EQ(initialCsr->peekTaskCount(), regularCommandList->getLatestTaskCount());
+
+    initialCsr->retainQueueOwnership();
+    setCsrProgress<FamilyType>(initialCsr, initialCsr->peekTaskCount() + loadedCsrSubmittedTaskCount, 0u);
+    queue->taskCount = 0u;
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendCommandLists(1, &regularCommandListHandle, nullptr, 0, nullptr, internalOptions));
+    auto reassignedCsr = commandList->getCsr(false);
+    ASSERT_NE(initialCsr, reassignedCsr);
+    EXPECT_EQ(reassignedCsr->peekTaskCount(), queue->getTaskCount());
+    EXPECT_EQ(reassignedCsr->getTagAllocation()->getGpuAddress(), regularCommandList->getLatestTagGpuAddress());
+    EXPECT_EQ(reassignedCsr->peekTaskCount(), regularCommandList->getLatestTaskCount());
+
+    regularCommandList->destroy();
+    initialCsr->releaseQueueOwnership();
+    markCsrIdle(initialCsr);
+    commandList->destroy();
 }
 
 struct DeferredFirstSubmissionCmdListTests : public Test<ModuleFixture> {

@@ -1462,7 +1462,17 @@ void CommandStreamReceiver::downloadTagAllocation(TaskCountType taskCountToWait)
     }
 }
 
-bool CommandStreamReceiver::testTaskCountReady(volatile TagAddressType *pollAddress, TaskCountType taskCountToWait, bool blockOnMiss) {
+TaskCountType CommandStreamReceiver::getOutstandingWorkCount() {
+    if (this->tagAddress == nullptr) {
+        return 0u;
+    }
+    const auto submittedTaskCount = peekLatestFlushedTaskCount();
+    this->downloadTagAllocation(submittedTaskCount);
+    const TaskCountType completedTaskCount = *this->tagAddress;
+    return (submittedTaskCount > completedTaskCount) ? (submittedTaskCount - completedTaskCount) : 0u;
+}
+
+bool CommandStreamReceiver::isTagReached(volatile TagAddressType *pollAddress, TaskCountType taskCountToWait, bool blockOnMiss) {
     this->downloadTagAllocation(taskCountToWait);
     for (uint32_t i = 0; i < activePartitions; i++) {
         if (!WaitUtils::pollFunction(pollAddress, taskCountToWait, 0, blockOnMiss)) {
@@ -1470,6 +1480,13 @@ bool CommandStreamReceiver::testTaskCountReady(volatile TagAddressType *pollAddr
         }
 
         pollAddress = ptrOffset(pollAddress, this->immWritePostSyncWriteOffset);
+    }
+    return true;
+}
+
+bool CommandStreamReceiver::testTaskCountReady(volatile TagAddressType *pollAddress, TaskCountType taskCountToWait, bool blockOnMiss) {
+    if (!isTagReached(pollAddress, taskCountToWait, blockOnMiss)) {
+        return false;
     }
 
     downloadAllocations(true, taskCountToWait);
