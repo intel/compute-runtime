@@ -7,6 +7,7 @@
 
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/test/common/mocks/linux/mock_ioctl_helper.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "level_zero/tools/source/sysman/linux/pmt/pmt_xml_offsets.h"

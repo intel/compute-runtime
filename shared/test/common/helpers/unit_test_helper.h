@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/helpers/aux_translation.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/helpers/unit_test_setter.h"
 
 #include <cstddef>
 #include <vector>
@@ -25,11 +26,6 @@ class LinearStream;
 struct DeviceInfo;
 struct KernelDescriptor;
 struct HardwareInfo;
-struct RootDeviceEnvironment;
-
-struct UnitTestSetter {
-    static void setCcsExposure(RootDeviceEnvironment &rootDeviceEnvironment);
-};
 
 template <typename GfxFamily>
 struct UnitTestHelperWithHeap {

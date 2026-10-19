@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,8 @@
 #include "level_zero/tools/source/sysman/performance/linux/os_performance_imp_prelim.h"
 #include "level_zero/tools/source/sysman/performance/performance.h"
 #include "level_zero/tools/source/sysman/performance/performance_imp.h"
+
+#include <list>
 
 namespace L0 {
 namespace ult {

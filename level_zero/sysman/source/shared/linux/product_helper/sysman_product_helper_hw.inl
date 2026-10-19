@@ -7,7 +7,6 @@
 
 #include "shared/source/helpers/preprocessor.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
-#include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/linux/system_info.h"
 
 #include "level_zero/sysman/source/api/global_operations/linux/sysman_os_global_operations_imp.h"
