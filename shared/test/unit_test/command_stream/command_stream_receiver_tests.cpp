@@ -7953,3 +7953,20 @@ TEST_F(CommandStreamReceiverTest, givenForceExternalSemaphoreHostFunctionWaitAnd
 
     EXPECT_FALSE(csr.isExternalSemaphoreGpuWaitAllowed());
 }
+
+HWTEST_F(CommandStreamReceiverTest, givenLaterSubmissionPendingWhenTestingTaskCountReadyThenAllocationsAreDownloadedOnlyUpToTestedTaskCount) {
+    auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    constexpr TaskCountType testedTaskCount = 5u;
+    constexpr TaskCountType pendingSubmissionsCount = 3u;
+    ultCsr.taskCount = testedTaskCount + pendingSubmissionsCount;
+    ultCsr.latestFlushedTaskCount = testedTaskCount + pendingSubmissionsCount;
+    *ultCsr.getTagAddress() = testedTaskCount;
+    const auto downloadsBefore = ultCsr.downloadAllocationsCalledCount.load();
+
+    EXPECT_TRUE(ultCsr.testTaskCountReady(ultCsr.getTagAddress(), testedTaskCount));
+    EXPECT_EQ(downloadsBefore + 1, ultCsr.downloadAllocationsCalledCount.load());
+    EXPECT_TRUE(ultCsr.latestDownloadAllocationsBlocking);
+    EXPECT_EQ(testedTaskCount, ultCsr.latestDownloadAllocationsTaskCount);
+
+    *ultCsr.getTagAddress() = ultCsr.peekTaskCount();
+}
