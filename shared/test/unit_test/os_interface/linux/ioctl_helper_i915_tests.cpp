@@ -82,6 +82,10 @@ HWTEST2_F(IoctlHelperI915Test, whenGettingIfSmallBarConfigIsAllowedThenTrueIsRet
     EXPECT_TRUE(ioctlHelper.isSmallBarConfigAllowed());
 }
 
+TEST_F(IoctlHelperI915Test, whenCheckingIfLocalMemorySizeIsNetOfKmdReservationsThenFalseIsReturned) {
+    EXPECT_FALSE(ioctlHelper.isLocalMemorySizeNetOfKmdReservations());
+}
+
 HWTEST2_F(IoctlHelperI915Test, whenGettingEuStallMaxReportsThenZeroIsReturned, IsAtMostXeCore) {
     EXPECT_EQ(0, ioctlHelper.getEuStallMaxReportsPerXeCore());
 }

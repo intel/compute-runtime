@@ -7353,16 +7353,29 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenCustomAlignmentWhenWddmMemoryManag
     }
 }
 
-HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmManagerWithLocalMemoryAndI915IoctlHelperWhenGettingGlobalMemoryPercentThenCorrectValueIsReturned) {
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmManagerWithLocalMemoryWhenGettingGlobalMemoryPercentThenValueDependsOnWhetherLocalMemorySizeIsNetOfKmdReservations) {
+    auto mockIoctlHelper = new MockIoctlHelper(*mock);
+    mock->ioctlHelper.reset(mockIoctlHelper);
+
     TestedDrmMemoryManager memoryManager(true, false, false, *executionEnvironment);
-    uint32_t rootDeviceIndex = 0u;
-    EXPECT_EQ(memoryManager.getPercentOfGlobalMemoryAvailable(rootDeviceIndex), 0.95);
+
+    mockIoctlHelper->isLocalMemorySizeNetOfKmdReservationsResult = true;
+    EXPECT_EQ(0.98, memoryManager.getPercentOfGlobalMemoryAvailable(rootDeviceIndex));
+
+    mockIoctlHelper->isLocalMemorySizeNetOfKmdReservationsResult = false;
+    EXPECT_EQ(0.95, memoryManager.getPercentOfGlobalMemoryAvailable(rootDeviceIndex));
 }
 
-HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmManagerWithoutLocalMemoryWhenGettingGlobalMemoryPercentThenCorrectValueIsReturned) {
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmManagerWithoutLocalMemoryWhenGettingGlobalMemoryPercentThenValueDoesNotDependOnWhetherLocalMemorySizeIsNetOfKmdReservations) {
+    auto mockIoctlHelper = new MockIoctlHelper(*mock);
+    mock->ioctlHelper.reset(mockIoctlHelper);
+
     TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
-    uint32_t rootDeviceIndex = 0u;
-    EXPECT_EQ(memoryManager.getPercentOfGlobalMemoryAvailable(rootDeviceIndex), 0.94);
+
+    for (bool localMemorySizeNetOfKmdReservations : {true, false}) {
+        mockIoctlHelper->isLocalMemorySizeNetOfKmdReservationsResult = localMemorySizeNetOfKmdReservations;
+        EXPECT_EQ(0.94, memoryManager.getPercentOfGlobalMemoryAvailable(rootDeviceIndex));
+    }
 }
 
 struct DrmMemoryManagerToTestLockInLocalMemory : public TestedDrmMemoryManager {

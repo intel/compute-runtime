@@ -82,6 +82,14 @@ TEST_F(IoctlHelperXeTest, whenGettingIfSmallBarConfigIsAllowedThenFalseIsReturne
     EXPECT_FALSE(ioctlHelper.isSmallBarConfigAllowed());
 }
 
+TEST_F(IoctlHelperXeTest, whenCheckingIfLocalMemorySizeIsNetOfKmdReservationsThenTrueIsReturned) {
+    MockExecutionEnvironment executionEnvironment{};
+    std::unique_ptr<Drm> drm{Drm::create(std::make_unique<HwDeviceIdDrm>(0, ""), *executionEnvironment.rootDeviceEnvironments[0])};
+    IoctlHelperXe ioctlHelper{*drm};
+
+    EXPECT_TRUE(ioctlHelper.isLocalMemorySizeNetOfKmdReservations());
+}
+
 TEST_F(IoctlHelperXeTest, givenXeDrmWhenGetPciBarrierMmapThenReturnsSuccess) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
@@ -2176,26 +2184,6 @@ TEST_F(IoctlHelperXeTest, givenXeDrmMemoryManagerWhenGetLocalMemorySizeIsCalledT
     EXPECT_EQ(memoryManager.getLocalMemorySize(0, tileMask), lmemSizes[0]);
     tileMask = static_cast<uint32_t>(0b100);
     EXPECT_EQ(memoryManager.getLocalMemorySize(0, tileMask), lmemSizes[1]);
-}
-
-TEST_F(IoctlHelperXeTest, givenXeDrmMemoryManagerWithLocalMemoryWhenGettingGlobalMemoryPercentThenCorrectValueIsReturned) {
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[0];
-    rootDeviceEnvironment.osInterface = std::make_unique<OSInterface>();
-    rootDeviceEnvironment.osInterface->setDriverModel(DrmMockXe::create(rootDeviceEnvironment));
-
-    TestedDrmMemoryManager memoryManager(true, false, false, *executionEnvironment);
-    EXPECT_EQ(0.98, memoryManager.getPercentOfGlobalMemoryAvailable(0u));
-}
-
-TEST_F(IoctlHelperXeTest, givenXeDrmMemoryManagerWithoutLocalMemoryWhenGettingGlobalMemoryPercentThenCorrectValueIsReturned) {
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[0];
-    rootDeviceEnvironment.osInterface = std::make_unique<OSInterface>();
-    rootDeviceEnvironment.osInterface->setDriverModel(DrmMockXe::create(rootDeviceEnvironment));
-
-    TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
-    EXPECT_EQ(0.94, memoryManager.getPercentOfGlobalMemoryAvailable(0u));
 }
 
 TEST_F(IoctlHelperXeTest, givenIoctlFailureWhenCreatingMemoryInfoThenNoMemoryBanksAreDiscovered) {

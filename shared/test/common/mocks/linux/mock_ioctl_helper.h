@@ -34,6 +34,7 @@ class MockIoctlHelper : public IoctlHelperPrelim20 {
     ADDMETHOD_CONST_NOBASE(isDeferBackingEnabledForSize, bool, false, (size_t allocationSize));
     ADDMETHOD_CONST_NOBASE(isDrmFabricSupported, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isMmapWindowRelocationSupported, bool, false, ());
+    ADDMETHOD_CONST_NOBASE(isLocalMemorySizeNetOfKmdReservations, bool, false, ());
 
     ADDMETHOD_NOBASE(vmBind, int, 0, (const VmBindParams &));
     ADDMETHOD_NOBASE(vmUnbind, int, 0, (const VmBindParams &));
