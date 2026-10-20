@@ -190,6 +190,9 @@ Image *D3DTexture<D3D>::create2d(Context *context, D3DTexture2d *d3dTexture, cl_
     bool ntHandle = textureDesc.MiscFlags & D3DResourceFlags::MISC_SHARED_NTHANDLE;
     ntHandle ? sharingFcns->getSharedNTHandle(textureStaging, &sharedHandle) : sharingFcns->getSharedHandle(textureStaging, &sharedHandle);
 
+    D3DTexture2dDesc subresourceDesc = {};
+    sharingFcns->fillCreateTexture2dDesc(subresourceDesc, &textureDesc, subresource);
+
     ze_external_memory_import_win32_handle_t l0imageHandleDesc{ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_WIN32};
     l0imageHandleDesc.handle = sharedHandle;
     l0imageHandleDesc.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
@@ -202,8 +205,8 @@ Image *D3DTexture<D3D>::create2d(Context *context, D3DTexture2d *d3dTexture, cl_
     l0imageDesc.miplevels = 0;
     l0imageDesc.pNext = &l0d3dTextureExtDesc;
     l0imageDesc.type = ze_image_type_t::ZE_IMAGE_TYPE_2D;
-    l0imageDesc.width = textureDesc.Width;
-    l0imageDesc.height = textureDesc.Height;
+    l0imageDesc.width = subresourceDesc.Width;
+    l0imageDesc.height = subresourceDesc.Height;
     l0imageDesc.depth = 1;
     l0imageDesc.arraylevels = 0;
 
@@ -309,6 +312,9 @@ Image *D3DTexture<D3D>::create3d(Context *context, D3DTexture3d *d3dTexture, cl_
     bool ntHandle = textureDesc.MiscFlags & D3DResourceFlags::MISC_SHARED_NTHANDLE;
     ntHandle ? sharingFcns->getSharedNTHandle(textureStaging, &sharedHandle) : sharingFcns->getSharedHandle(textureStaging, &sharedHandle);
 
+    D3DTexture3dDesc subresourceDesc = {};
+    sharingFcns->fillCreateTexture3dDesc(subresourceDesc, &textureDesc, subresource);
+
     ze_external_memory_import_win32_handle_t l0imageHandleDesc{ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_WIN32};
     l0imageHandleDesc.handle = sharedHandle;
     l0imageHandleDesc.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
@@ -317,9 +323,9 @@ Image *D3DTexture<D3D>::create3d(Context *context, D3DTexture3d *d3dTexture, cl_
     l0imageDesc.miplevels = 0;
     l0imageDesc.pNext = &l0imageHandleDesc;
     l0imageDesc.type = ze_image_type_t::ZE_IMAGE_TYPE_3D;
-    l0imageDesc.width = textureDesc.Width;
-    l0imageDesc.height = textureDesc.Height;
-    l0imageDesc.depth = textureDesc.Depth;
+    l0imageDesc.width = subresourceDesc.Width;
+    l0imageDesc.height = subresourceDesc.Height;
+    l0imageDesc.depth = subresourceDesc.Depth;
     l0imageDesc.arraylevels = 0;
 
     auto [clChannelOrder, clChannelType] = dxgiToOpenCLImageFormat(textureDesc.Format, ImagePlane::noPlane);
