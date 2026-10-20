@@ -411,9 +411,10 @@ std::unique_ptr<HwDeviceIdWddm> createHwDeviceIdFromAdapterLuid(OsEnvironmentWin
         return nullptr;
     }
 
-    std::unique_ptr<UmKmDataTranslator> umKmDataTranslator = createUmKmDataTranslator(*osEnvironment.gdi, openAdapterData.hAdapter);
+    const uint32_t adapterNodeMask = 1 << adapterNodeOrdinal;
+    auto hwDeviceId = std::make_unique<HwDeviceIdWddm>(openAdapterData.hAdapter, adapterLuid, adapterNodeMask, &osEnvironment, createUmKmDataTranslator(*osEnvironment.gdi, openAdapterData.hAdapter));
     const bool isGdiOverridden = debugManager.flags.OverrideGdiPath.get() != "unk";
-    if (false == umKmDataTranslator->enabled() && !debugManager.flags.DoNotValidateDriverPath.get() && !isGdiOverridden) {
+    if (false == hwDeviceId->getUmKmDataTranslator()->enabled() && !debugManager.flags.DoNotValidateDriverPath.get() && !isGdiOverridden) {
         if (false == isCompatibleDriverStore(*osEnvironment.gdi, openAdapterData.hAdapter)) {
             PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "Driver path is not a valid DriverStore path. Try running with debug key: DoNotValidateDriverPath=1.\n");
             return nullptr;
@@ -434,8 +435,7 @@ std::unique_ptr<HwDeviceIdWddm> createHwDeviceIdFromAdapterLuid(OsEnvironmentWin
     if (0 == queryAdapterType.RenderSupported) {
         return nullptr;
     }
-    uint32_t adapterNodeMask = 1 << adapterNodeOrdinal;
-    return std::make_unique<HwDeviceIdWddm>(openAdapterData.hAdapter, adapterLuid, adapterNodeMask, &osEnvironment, std::move(umKmDataTranslator));
+    return hwDeviceId;
 }
 
 std::vector<std::unique_ptr<HwDeviceId>> Wddm::discoverDevices(ExecutionEnvironment &executionEnvironment) {

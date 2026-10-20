@@ -36,6 +36,7 @@ const wchar_t *queryRegistryDriverStorePath = mockAdapterDriverStorePath;
 const wchar_t *queryRegistryComputeRuntimePath = mockComputeRuntimePath;
 const wchar_t *queryRegistryOpenClDriverName = mockOpenClDriverName;
 uint32_t queryAdapterInfoUmDriverPrivateCallCount = 0;
+uint32_t closeAdapterCallCount = 0;
 
 NTSTATUS __stdcall mockD3DKMTEscape(IN CONST D3DKMT_ESCAPE *pData) {
     static int perfTicks = 0;
@@ -695,6 +696,7 @@ NTSTATUS __stdcall mockD3DKMTDestroyAllocation(IN CONST D3DKMT_DESTROYALLOCATION
 }
 
 NTSTATUS __stdcall mockD3DKMTCloseAdapter(IN CONST D3DKMT_CLOSEADAPTER *) {
+    ++closeAdapterCallCount;
     return STATUS_SUCCESS;
 }
 

@@ -127,6 +127,7 @@ extern const wchar_t *queryRegistryDriverStorePath;
 extern const wchar_t *queryRegistryComputeRuntimePath;
 extern const wchar_t *queryRegistryOpenClDriverName;
 extern uint32_t queryAdapterInfoUmDriverPrivateCallCount;
+extern uint32_t closeAdapterCallCount;
 inline const wchar_t *mockAdapterDriverStorePath = L"\\SystemRoot\\System32\\DriverStore\\FileRepository\\iigd_dch.inf_amd64_0x8086";
 inline const wchar_t *mockLibraryFromAdapterDriverStore = L"C:\\Windows\\System32\\DriverStore\\FileRepository\\iigd_dch.inf_amd64_0x8086\\igdrcl64.dll";
 inline const wchar_t *mockLibraryFromOtherDriverStore = L"C:\\Windows\\System32\\DriverStore\\FileRepository\\iigd_dch.inf_amd64_0x1234\\igdrcl64.dll";

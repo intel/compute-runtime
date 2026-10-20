@@ -2044,6 +2044,18 @@ TEST(VerifyAdapterType, whenAdapterDoesntSupportRenderThenDontCreateHwDeviceId) 
     EXPECT_EQ(nullptr, hwDeviceId.get());
 }
 
+TEST(VerifyAdapterType, whenAdapterDoesntSupportRenderThenAdapterIsClosed) {
+    VariableBackup<uint32_t> closeAdapterCallCountBackup{&closeAdapterCallCount, 0u};
+    auto gdi = std::make_unique<MockGdi>();
+    auto osEnv = std::make_unique<OsEnvironmentWin>();
+    osEnv->gdi.reset(gdi.release());
+
+    LUID shadowAdapterLuid = {0xdd, 0xdd};
+    auto hwDeviceId = createHwDeviceIdFromAdapterLuid(*osEnv, shadowAdapterLuid, 1u);
+    EXPECT_EQ(nullptr, hwDeviceId.get());
+    EXPECT_EQ(1u, closeAdapterCallCount);
+}
+
 TEST(VerifyAdapterType, whenAdapterSupportsRenderThenCreateHwDeviceId) {
     auto gdi = std::make_unique<MockGdi>();
     auto osEnv = std::make_unique<OsEnvironmentWin>();

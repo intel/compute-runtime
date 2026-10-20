@@ -322,6 +322,16 @@ TEST(DiscoverDevices, givenAdapterFromOtherDriverStoreWhenDiscoveringDevicesThen
     EXPECT_EQ(0u, queryAdapterInfoUmDriverPrivateCallCount);
 }
 
+TEST(DiscoverDevices, givenAdapterFromOtherDriverStoreWhenDiscoveringDevicesThenAdapterIsClosed) {
+    VariableBackup<const wchar_t *> driverStorePathBackup{&queryRegistryDriverStorePath, mockAdapterDriverStorePath};
+    VariableBackup<const wchar_t *> currentLibraryPathBackup{&SysCalls::currentLibraryPath, mockLibraryFromOtherDriverStore};
+    VariableBackup<uint32_t> closeAdapterCallCountBackup{&closeAdapterCallCount, 0u};
+    ExecutionEnvironment executionEnvironment;
+    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
+    EXPECT_TRUE(hwDeviceIds.empty());
+    EXPECT_EQ(1u, closeAdapterCallCount);
+}
+
 TEST(DiscoverDevices, givenLibOutsideOfAdapterDriverStoreAndComputeRuntimePathPointingToLibDirectoryWhenDiscoveringDevicesThenHwDeviceIdIsCreatedAndPrivateDriverDataIsNotQueried) {
     VariableBackup<const wchar_t *> driverStorePathBackup{&queryRegistryDriverStorePath, mockAdapterDriverStorePath};
     VariableBackup<const wchar_t *> computeRuntimePathBackup{&queryRegistryComputeRuntimePath, L"C:\\local\\neo\\bin"};
