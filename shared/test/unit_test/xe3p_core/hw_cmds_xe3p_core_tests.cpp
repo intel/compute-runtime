@@ -79,6 +79,21 @@ XE3P_CORETEST_F(Xe3pCoreHwCmdTest, givenArbCheckWhenProgrammingPreParserDisableT
     }
 }
 
+XE3P_CORETEST_F(Xe3pCoreHwCmdTest, givenArbCheckWhenProgrammingDisableMultiQSwitchingThenMaskBitIsSet) {
+    {
+        auto arbCheck = FamilyType::cmdInitArbCheck;
+        EXPECT_EQ(0u, arbCheck.TheStructure.Common.MaskBits);
+        arbCheck.setDisableMultiQSwitching(true);
+        EXPECT_EQ(2u, arbCheck.TheStructure.Common.MaskBits);
+    }
+    {
+        auto arbCheck = FamilyType::cmdInitArbCheck;
+        EXPECT_EQ(0u, arbCheck.TheStructure.Common.MaskBits);
+        arbCheck.setDisableMultiQSwitching(false);
+        EXPECT_EQ(2u, arbCheck.TheStructure.Common.MaskBits);
+    }
+}
+
 XE3P_CORETEST_F(Xe3pCoreHwCmdTest, givenXyColorBltkWhenSetFillColorThenProperValuesAreSet) {
     auto xyColorBlt = FamilyType::cmdInitXyColorBlt;
     uint32_t fillColor[4] = {0x1234, 0x5678, 0x9ABC, 0xDEF0};

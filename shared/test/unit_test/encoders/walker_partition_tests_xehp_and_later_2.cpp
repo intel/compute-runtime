@@ -410,8 +410,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenProgramBatchBufferStartC
     ASSERT_NE(nullptr, batchBufferStart);
     EXPECT_EQ(expectedUsedSize, totalBytesProgrammed);
 
-    // bits 48-63 are zeroed
-    EXPECT_EQ((gpuAddress & 0xFFFFFFFFFFFF), batchBufferStart->getBatchBufferStartAddress());
+    EXPECT_EQ(gpuAddress, batchBufferStart->getBatchBufferStartAddress());
 
     EXPECT_TRUE(batchBufferStart->getPredicationEnable());
     EXPECT_FALSE(batchBufferStart->getEnableCommandCache());

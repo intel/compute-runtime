@@ -848,7 +848,6 @@ typedef struct tagMI_BATCH_BUFFER_END {
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.MiCommandOpcode = MI_COMMAND_OPCODE_MI_BATCH_BUFFER_END;
-        TheStructure.Common.CommandType = COMMAND_TYPE_MI_COMMAND;
     }
     static tagMI_BATCH_BUFFER_END sInit() {
         MI_BATCH_BUFFER_END state;
@@ -871,6 +870,18 @@ typedef struct tagMI_BATCH_BUFFER_END {
     inline bool getPredicateEnable() const {
         return TheStructure.Common.PredicateEnable;
     }
+    inline void setMiCommandOpcode(const MI_COMMAND_OPCODE value) {
+        TheStructure.Common.MiCommandOpcode = value;
+    }
+    inline MI_COMMAND_OPCODE getMiCommandOpcode() const {
+        return static_cast<MI_COMMAND_OPCODE>(TheStructure.Common.MiCommandOpcode);
+    }
+    inline void setCommandType(const COMMAND_TYPE value) {
+        TheStructure.Common.CommandType = value;
+    }
+    inline COMMAND_TYPE getCommandType() const {
+        return static_cast<COMMAND_TYPE>(TheStructure.Common.CommandType);
+    }
 } MI_BATCH_BUFFER_END;
 STATIC_ASSERT(4 == sizeof(MI_BATCH_BUFFER_END));
 
@@ -889,11 +900,11 @@ typedef struct tagMI_LOAD_REGISTER_IMM {
             uint32_t MiCommandOpcode : BITFIELD_RANGE(23, 28);
             uint32_t CommandType : BITFIELD_RANGE(29, 31);
             // DWORD 1
-            uint32_t Reserved_32 : BITFIELD_RANGE(0, 1);     // patched
-            uint32_t RegisterOffset : BITFIELD_RANGE(2, 22); // patched
-            uint32_t Reserved_55 : BITFIELD_RANGE(23, 31);   // patched
+            uint32_t Reserved_32 : BITFIELD_RANGE(0, 1);
+            uint32_t RegisterOffset : BITFIELD_RANGE(2, 22);
+            uint32_t Reserved_55 : BITFIELD_RANGE(23, 31);
             // DWORD 2
-            uint32_t DataDword; // patched
+            uint32_t DataDword;
         } Common;
         uint32_t RawData[3];
     } TheStructure;
@@ -906,11 +917,14 @@ typedef struct tagMI_LOAD_REGISTER_IMM {
     typedef enum tagCOMMAND_TYPE {
         COMMAND_TYPE_MI_COMMAND = 0x0,
     } COMMAND_TYPE;
+    typedef enum tagREGISTEROFFSET {
+        REGISTEROFFSET_BIT_SHIFT = 0x2,
+        REGISTEROFFSET_ALIGN_SIZE = 0x4,
+    } REGISTEROFFSET;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_EXCLUDES_DWORD_0_1;
         TheStructure.Common.MiCommandOpcode = MI_COMMAND_OPCODE_MI_LOAD_REGISTER_IMM;
-        TheStructure.Common.CommandType = COMMAND_TYPE_MI_COMMAND;
     }
     static tagMI_LOAD_REGISTER_IMM sInit() {
         MI_LOAD_REGISTER_IMM state;
@@ -922,7 +936,7 @@ typedef struct tagMI_LOAD_REGISTER_IMM {
         return TheStructure.RawData[index];
     }
     inline void setByteWriteDisables(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xf);
+        UNRECOVERABLE_IF(value > 0xfu);
         TheStructure.Common.ByteWriteDisables = value;
     }
     inline uint32_t getByteWriteDisables() const {
@@ -946,12 +960,20 @@ typedef struct tagMI_LOAD_REGISTER_IMM {
     inline bool getAddCsMmioStartOffset() const {
         return TheStructure.Common.AddCsMmioStartOffset;
     }
-    typedef enum tagREGISTEROFFSET {
-        REGISTEROFFSET_BIT_SHIFT = 0x2,
-        REGISTEROFFSET_ALIGN_SIZE = 0x4,
-    } REGISTEROFFSET;
+    inline void setMiCommandOpcode(const MI_COMMAND_OPCODE value) {
+        TheStructure.Common.MiCommandOpcode = value;
+    }
+    inline MI_COMMAND_OPCODE getMiCommandOpcode() const {
+        return static_cast<MI_COMMAND_OPCODE>(TheStructure.Common.MiCommandOpcode);
+    }
+    inline void setCommandType(const COMMAND_TYPE value) {
+        TheStructure.Common.CommandType = value;
+    }
+    inline COMMAND_TYPE getCommandType() const {
+        return static_cast<COMMAND_TYPE>(TheStructure.Common.CommandType);
+    }
     inline void setRegisterOffset(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x7fffffL);
+        UNRECOVERABLE_IF(value > 0x7fffffu);
         TheStructure.Common.RegisterOffset = value >> REGISTEROFFSET_BIT_SHIFT;
     }
     inline uint32_t getRegisterOffset() const {
@@ -985,8 +1007,6 @@ typedef struct tagMI_NOOP {
     } COMMAND_TYPE;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
-        TheStructure.Common.MiCommandOpcode = MI_COMMAND_OPCODE_MI_NOOP;
-        TheStructure.Common.CommandType = COMMAND_TYPE_MI_COMMAND;
     }
     static tagMI_NOOP sInit() {
         MI_NOOP state;
@@ -998,7 +1018,7 @@ typedef struct tagMI_NOOP {
         return TheStructure.RawData[index];
     }
     inline void setIdentificationNumber(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x3fffff);
+        UNRECOVERABLE_IF(value > 0x3fffffu);
         TheStructure.Common.IdentificationNumber = value;
     }
     inline uint32_t getIdentificationNumber() const {
@@ -1009,6 +1029,18 @@ typedef struct tagMI_NOOP {
     }
     inline bool getIdentificationNumberRegisterWriteEnable() const {
         return TheStructure.Common.IdentificationNumberRegisterWriteEnable;
+    }
+    inline void setMiCommandOpcode(const MI_COMMAND_OPCODE value) {
+        TheStructure.Common.MiCommandOpcode = value;
+    }
+    inline MI_COMMAND_OPCODE getMiCommandOpcode() const {
+        return static_cast<MI_COMMAND_OPCODE>(TheStructure.Common.MiCommandOpcode);
+    }
+    inline void setCommandType(const COMMAND_TYPE value) {
+        TheStructure.Common.CommandType = value;
+    }
+    inline COMMAND_TYPE getCommandType() const {
+        return static_cast<COMMAND_TYPE>(TheStructure.Common.CommandType);
     }
 } MI_NOOP;
 STATIC_ASSERT(4 == sizeof(MI_NOOP));
@@ -2945,7 +2977,6 @@ typedef struct tagMI_USER_INTERRUPT {
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.MiCommandOpcode = MI_COMMAND_OPCODE_MI_USER_INTERRUPT;
-        TheStructure.Common.CommandType = COMMAND_TYPE_MI_COMMAND;
     }
     static tagMI_USER_INTERRUPT sInit() {
         MI_USER_INTERRUPT state;
@@ -2955,6 +2986,18 @@ typedef struct tagMI_USER_INTERRUPT {
     inline uint32_t &getRawData(const uint32_t index) {
         UNRECOVERABLE_IF(index >= 1);
         return TheStructure.RawData[index];
+    }
+    inline void setMiCommandOpcode(const MI_COMMAND_OPCODE value) {
+        TheStructure.Common.MiCommandOpcode = value;
+    }
+    inline MI_COMMAND_OPCODE getMiCommandOpcode() const {
+        return static_cast<MI_COMMAND_OPCODE>(TheStructure.Common.MiCommandOpcode);
+    }
+    inline void setCommandType(const COMMAND_TYPE value) {
+        TheStructure.Common.CommandType = value;
+    }
+    inline COMMAND_TYPE getCommandType() const {
+        return static_cast<COMMAND_TYPE>(TheStructure.Common.CommandType);
     }
 } MI_USER_INTERRUPT;
 STATIC_ASSERT(4 == sizeof(MI_USER_INTERRUPT));
@@ -2972,7 +3015,7 @@ typedef struct tagMI_SET_PREDICATE {
         uint32_t RawData[1];
     } TheStructure;
     typedef enum tagPREDICATE_ENABLE {
-        PREDICATE_ENABLE_PREDICATE_DISABLE = 0x0, // patched PREDICATE_ENABLE_NOOP_NEVER
+        PREDICATE_ENABLE_PREDICATE_DISABLE = 0x0,
         PREDICATE_ENABLE_NOOP_ON_RESULT2_CLEAR = 0x1,
         PREDICATE_ENABLE_NOOP_ON_RESULT2_SET = 0x2,
         PREDICATE_ENABLE_NOOP_ON_RESULT_CLEAR = 0x3,
@@ -2992,10 +3035,7 @@ typedef struct tagMI_SET_PREDICATE {
     } COMMAND_TYPE;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
-        TheStructure.Common.PredicateEnable = PREDICATE_ENABLE_PREDICATE_DISABLE;
-        TheStructure.Common.PredicateEnableWparid = PREDICATE_ENABLE_WPARID_NOOP_NEVER;
         TheStructure.Common.MiCommandOpcode = MI_COMMAND_OPCODE_MI_SET_PREDICATE;
-        TheStructure.Common.CommandType = COMMAND_TYPE_MI_COMMAND;
     }
     static tagMI_SET_PREDICATE sInit() {
         MI_SET_PREDICATE state;
@@ -3018,6 +3058,18 @@ typedef struct tagMI_SET_PREDICATE {
     inline PREDICATE_ENABLE_WPARID getPredicateEnableWparid() const {
         return static_cast<PREDICATE_ENABLE_WPARID>(TheStructure.Common.PredicateEnableWparid);
     }
+    inline void setMiCommandOpcode(const MI_COMMAND_OPCODE value) {
+        TheStructure.Common.MiCommandOpcode = value;
+    }
+    inline MI_COMMAND_OPCODE getMiCommandOpcode() const {
+        return static_cast<MI_COMMAND_OPCODE>(TheStructure.Common.MiCommandOpcode);
+    }
+    inline void setCommandType(const COMMAND_TYPE value) {
+        TheStructure.Common.CommandType = value;
+    }
+    inline COMMAND_TYPE getCommandType() const {
+        return static_cast<COMMAND_TYPE>(TheStructure.Common.CommandType);
+    }
 } MI_SET_PREDICATE;
 STATIC_ASSERT(4 == sizeof(MI_SET_PREDICATE));
 
@@ -3039,7 +3091,7 @@ typedef struct tagMI_CONDITIONAL_BATCH_BUFFER_END {
             uint32_t CommandType : BITFIELD_RANGE(29, 31);
             // DWORD 1
             uint32_t CompareDataDword;
-            // DWORD 2
+            // DWORD 2-3
             uint64_t Reserved_64 : BITFIELD_RANGE(0, 2);
             uint64_t CompareAddress : BITFIELD_RANGE(3, 63);
         } Common;
@@ -3066,13 +3118,14 @@ typedef struct tagMI_CONDITIONAL_BATCH_BUFFER_END {
     typedef enum tagCOMMAND_TYPE {
         COMMAND_TYPE_MI_COMMAND = 0x0,
     } COMMAND_TYPE;
+    typedef enum tagCOMPAREADDRESS {
+        COMPAREADDRESS_BIT_SHIFT = 0x3,
+        COMPAREADDRESS_ALIGN_SIZE = 0x8,
+    } COMPAREADDRESS;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_EXCLUDES_DWORD_0_1;
-        TheStructure.Common.CompareOperation = COMPARE_OPERATION_MAD_GREATER_THAN_IDD;
-        TheStructure.Common.CompareMaskMode = COMPARE_MASK_MODE_COMPARE_MASK_MODE_DISABLED;
         TheStructure.Common.MiCommandOpcode = MI_COMMAND_OPCODE_MI_CONDITIONAL_BATCH_BUFFER_END;
-        TheStructure.Common.CommandType = COMMAND_TYPE_MI_COMMAND;
     }
     static tagMI_CONDITIONAL_BATCH_BUFFER_END sInit() {
         MI_CONDITIONAL_BATCH_BUFFER_END state;
@@ -3125,18 +3178,25 @@ typedef struct tagMI_CONDITIONAL_BATCH_BUFFER_END {
     inline bool getUseGlobalGtt() const {
         return TheStructure.Common.UseGlobalGtt;
     }
+    inline void setMiCommandOpcode(const MI_COMMAND_OPCODE value) {
+        TheStructure.Common.MiCommandOpcode = value;
+    }
+    inline MI_COMMAND_OPCODE getMiCommandOpcode() const {
+        return static_cast<MI_COMMAND_OPCODE>(TheStructure.Common.MiCommandOpcode);
+    }
+    inline void setCommandType(const COMMAND_TYPE value) {
+        TheStructure.Common.CommandType = value;
+    }
+    inline COMMAND_TYPE getCommandType() const {
+        return static_cast<COMMAND_TYPE>(TheStructure.Common.CommandType);
+    }
     inline void setCompareDataDword(const uint32_t value) {
         TheStructure.Common.CompareDataDword = value;
     }
     inline uint32_t getCompareDataDword() const {
         return TheStructure.Common.CompareDataDword;
     }
-    typedef enum tagCOMPAREADDRESS {
-        COMPAREADDRESS_BIT_SHIFT = 0x3,
-        COMPAREADDRESS_ALIGN_SIZE = 0x8,
-    } COMPAREADDRESS;
     inline void setCompareAddress(const uint64_t value) {
-        UNRECOVERABLE_IF((value >> COMPAREADDRESS_BIT_SHIFT) > 0xffffffffffffffffL);
         TheStructure.Common.CompareAddress = value >> COMPAREADDRESS_BIT_SHIFT;
     }
     inline uint64_t getCompareAddress() const {
@@ -4060,17 +4120,18 @@ typedef struct tagMI_FLUSH_DW {
             uint32_t Reserved_22 : BITFIELD_RANGE(22, 22);
             uint32_t MiCommandOpcode : BITFIELD_RANGE(23, 28);
             uint32_t CommandType : BITFIELD_RANGE(29, 31);
-            // DWORD 1..2
+            // DWORD 1-2
             uint64_t Reserved_32 : BITFIELD_RANGE(0, 1);
             uint64_t DestinationAddressType : BITFIELD_RANGE(2, 2);
             uint64_t DestinationAddress : BITFIELD_RANGE(3, 63);
-            // DWORD 3..4
+            // DWORD 3-4
             uint64_t ImmediateData;
         } Common;
         uint32_t RawData[5];
     } TheStructure;
     typedef enum tagDWORD_LENGTH {
-        DWORD_LENGTH_EXCLUDES_DWORD_0_1_ = 0x3,
+        DWORD_LENGTH_DWORD = 0x2,
+        DWORD_LENGTH_QWORD = 0x3,
     } DWORD_LENGTH;
     typedef enum tagPOST_SYNC_OPERATION {
         POST_SYNC_OPERATION_NO_WRITE = 0x0,
@@ -4087,13 +4148,14 @@ typedef struct tagMI_FLUSH_DW {
         DESTINATION_ADDRESS_TYPE_PPGTT = 0x0,
         DESTINATION_ADDRESS_TYPE_GGTT = 0x1,
     } DESTINATION_ADDRESS_TYPE;
+    typedef enum tagDESTINATIONADDRESS {
+        DESTINATIONADDRESS_BIT_SHIFT = 0x3,
+        DESTINATIONADDRESS_ALIGN_SIZE = 0x8,
+    } DESTINATIONADDRESS;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
-        TheStructure.Common.DwordLength = DWORD_LENGTH_EXCLUDES_DWORD_0_1_;
-        TheStructure.Common.PostSyncOperation = POST_SYNC_OPERATION_NO_WRITE;
+        TheStructure.Common.DwordLength = DWORD_LENGTH_QWORD;
         TheStructure.Common.MiCommandOpcode = MI_COMMAND_OPCODE_MI_FLUSH_DW;
-        TheStructure.Common.CommandType = COMMAND_TYPE_MI_COMMAND;
-        TheStructure.Common.DestinationAddressType = DESTINATION_ADDRESS_TYPE_PPGTT;
     }
     static tagMI_FLUSH_DW sInit() {
         MI_FLUSH_DW state;
@@ -4140,16 +4202,24 @@ typedef struct tagMI_FLUSH_DW {
     inline bool getStoreDataIndex() const {
         return TheStructure.Common.StoreDataIndex;
     }
+    inline void setMiCommandOpcode(const MI_COMMAND_OPCODE value) {
+        TheStructure.Common.MiCommandOpcode = value;
+    }
+    inline MI_COMMAND_OPCODE getMiCommandOpcode() const {
+        return static_cast<MI_COMMAND_OPCODE>(TheStructure.Common.MiCommandOpcode);
+    }
+    inline void setCommandType(const COMMAND_TYPE value) {
+        TheStructure.Common.CommandType = value;
+    }
+    inline COMMAND_TYPE getCommandType() const {
+        return static_cast<COMMAND_TYPE>(TheStructure.Common.CommandType);
+    }
     inline void setDestinationAddressType(const DESTINATION_ADDRESS_TYPE value) {
         TheStructure.Common.DestinationAddressType = value;
     }
     inline DESTINATION_ADDRESS_TYPE getDestinationAddressType() const {
         return static_cast<DESTINATION_ADDRESS_TYPE>(TheStructure.Common.DestinationAddressType);
     }
-    typedef enum tagDESTINATIONADDRESS {
-        DESTINATIONADDRESS_BIT_SHIFT = 0x3,
-        DESTINATIONADDRESS_ALIGN_SIZE = 0x8,
-    } DESTINATIONADDRESS;
     inline void setDestinationAddress(const uint64_t value) {
         TheStructure.Common.DestinationAddress = value >> DESTINATIONADDRESS_BIT_SHIFT;
     }
@@ -5496,7 +5566,6 @@ typedef struct tagMI_ARB_CHECK {
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.MiCommandOpcode = MI_COMMAND_OPCODE_MI_ARB_CHECK;
-        TheStructure.Common.CommandType = COMMAND_TYPE_MI_COMMAND;
     }
     static tagMI_ARB_CHECK sInit() {
         MI_ARB_CHECK state;
@@ -5507,19 +5576,31 @@ typedef struct tagMI_ARB_CHECK {
         UNRECOVERABLE_IF(index >= 1);
         return TheStructure.RawData[index];
     }
-    inline void setPreParserDisable(const bool value) { // patched
-        TheStructure.Common.MaskBits |= 0x1;            // PreParserDisable is at bit0, so set bit0 of mask to 1
+    inline void setPreParserDisable(const bool value) {
         TheStructure.Common.PreParserDisable = value;
+        TheStructure.Common.MaskBits |= 0x1; // Manual generator override
     }
     inline bool getPreParserDisable() const {
         return TheStructure.Common.PreParserDisable;
     }
     inline void setMaskBits(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xff);
+        UNRECOVERABLE_IF(value > 0xffu);
         TheStructure.Common.MaskBits = value;
     }
     inline uint32_t getMaskBits() const {
         return TheStructure.Common.MaskBits;
+    }
+    inline void setMiCommandOpcode(const MI_COMMAND_OPCODE value) {
+        TheStructure.Common.MiCommandOpcode = value;
+    }
+    inline MI_COMMAND_OPCODE getMiCommandOpcode() const {
+        return static_cast<MI_COMMAND_OPCODE>(TheStructure.Common.MiCommandOpcode);
+    }
+    inline void setCommandType(const COMMAND_TYPE value) {
+        TheStructure.Common.CommandType = value;
+    }
+    inline COMMAND_TYPE getCommandType() const {
+        return static_cast<COMMAND_TYPE>(TheStructure.Common.CommandType);
     }
 } MI_ARB_CHECK;
 STATIC_ASSERT(4 == sizeof(MI_ARB_CHECK));
@@ -5538,29 +5619,30 @@ typedef struct tagMI_BATCH_BUFFER_START {
             uint32_t Reserved_20 : BITFIELD_RANGE(20, 22);
             uint32_t MiCommandOpcode : BITFIELD_RANGE(23, 28);
             uint32_t CommandType : BITFIELD_RANGE(29, 31);
-            // DWORD 1
+            // DWORD 1-2
             uint64_t Reserved_32 : BITFIELD_RANGE(0, 1);
-            uint64_t BatchBufferStartAddress : BITFIELD_RANGE(2, 47);
-            uint64_t Reserved_80 : BITFIELD_RANGE(48, 63);
+            uint64_t BatchBufferStartAddress : BITFIELD_RANGE(2, 63);
         } Common;
-        struct tagMi_Mode_Nestedbatchbufferenableis0 {
+        struct tagMI_MODE_NestedBatchBufferEnableIs0 {
             // DWORD 0
             uint32_t Reserved_0 : BITFIELD_RANGE(0, 21);
             uint32_t SecondLevelBatchBuffer : BITFIELD_RANGE(22, 22);
             uint32_t Reserved_23 : BITFIELD_RANGE(23, 31);
             // DWORD 1
-            uint64_t Reserved_32 : BITFIELD_RANGE(0, 47);
-            uint64_t Reserved_80 : BITFIELD_RANGE(48, 63);
-        } Mi_Mode_Nestedbatchbufferenableis0;
-        struct tagMi_Mode_Nestedbatchbufferenableis1 {
+            uint32_t Reserved_32;
+            // DWORD 2
+            uint32_t Reserved_64;
+        } MI_MODE_NestedBatchBufferEnableIs0;
+        struct tagMI_MODE_NestedBatchBufferEnableIs1 {
             // DWORD 0
             uint32_t Reserved_0 : BITFIELD_RANGE(0, 21);
             uint32_t NestedLevelBatchBuffer : BITFIELD_RANGE(22, 22);
             uint32_t Reserved_23 : BITFIELD_RANGE(23, 31);
             // DWORD 1
-            uint64_t Reserved_32 : BITFIELD_RANGE(0, 47);
-            uint64_t Reserved_80 : BITFIELD_RANGE(48, 63);
-        } Mi_Mode_Nestedbatchbufferenableis1;
+            uint32_t Reserved_32;
+            // DWORD 2
+            uint32_t Reserved_64;
+        } MI_MODE_NestedBatchBufferEnableIs1;
         uint32_t RawData[3];
     } TheStructure;
     typedef enum tagDWORD_LENGTH {
@@ -5570,6 +5652,10 @@ typedef struct tagMI_BATCH_BUFFER_START {
         ADDRESS_SPACE_INDICATOR_GGTT = 0x0,
         ADDRESS_SPACE_INDICATOR_PPGTT = 0x1,
     } ADDRESS_SPACE_INDICATOR;
+    typedef enum tagINDIRECT_ADDRESS_ENABLE {
+        INDIRECT_ADDRESS_ENABLE_USE_INLINE_ADDRESS = 0x0,
+        INDIRECT_ADDRESS_ENABLE_USE_GPR0 = 0x1,
+    } INDIRECT_ADDRESS_ENABLE;
     typedef enum tagNESTED_LEVEL_BATCH_BUFFER {
         NESTED_LEVEL_BATCH_BUFFER_CHAIN = 0x0,
         NESTED_LEVEL_BATCH_BUFFER_NESTED = 0x1,
@@ -5584,14 +5670,14 @@ typedef struct tagMI_BATCH_BUFFER_START {
     typedef enum tagCOMMAND_TYPE {
         COMMAND_TYPE_MI_COMMAND = 0x0,
     } COMMAND_TYPE;
+    typedef enum tagBATCHBUFFERSTARTADDRESS {
+        BATCHBUFFERSTARTADDRESS_BIT_SHIFT = 0x2,
+        BATCHBUFFERSTARTADDRESS_ALIGN_SIZE = 0x4,
+    } BATCHBUFFERSTARTADDRESS;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_EXCLUDES_DWORD_0_1;
-        TheStructure.Common.AddressSpaceIndicator = ADDRESS_SPACE_INDICATOR_GGTT;
         TheStructure.Common.MiCommandOpcode = MI_COMMAND_OPCODE_MI_BATCH_BUFFER_START;
-        TheStructure.Common.CommandType = COMMAND_TYPE_MI_COMMAND;
-        TheStructure.Mi_Mode_Nestedbatchbufferenableis0.SecondLevelBatchBuffer = SECOND_LEVEL_BATCH_BUFFER_FIRST_LEVEL_BATCH;
-        TheStructure.Mi_Mode_Nestedbatchbufferenableis1.NestedLevelBatchBuffer = NESTED_LEVEL_BATCH_BUFFER_CHAIN;
     }
     static tagMI_BATCH_BUFFER_START sInit() {
         MI_BATCH_BUFFER_START state;
@@ -5626,27 +5712,35 @@ typedef struct tagMI_BATCH_BUFFER_START {
     inline bool getEnableCommandCache() const {
         return TheStructure.Common.EnableCommandCache;
     }
-    typedef enum tagBATCHBUFFERSTARTADDRESS {
-        BATCHBUFFERSTARTADDRESS_BIT_SHIFT = 0x2,
-        BATCHBUFFERSTARTADDRESS_ALIGN_SIZE = 0x4,
-    } BATCHBUFFERSTARTADDRESS;
+    inline void setNestedLevelBatchBuffer(const NESTED_LEVEL_BATCH_BUFFER value) {
+        TheStructure.MI_MODE_NestedBatchBufferEnableIs1.NestedLevelBatchBuffer = value;
+    }
+    inline NESTED_LEVEL_BATCH_BUFFER getNestedLevelBatchBuffer() const {
+        return static_cast<NESTED_LEVEL_BATCH_BUFFER>(TheStructure.MI_MODE_NestedBatchBufferEnableIs1.NestedLevelBatchBuffer);
+    }
+    inline void setSecondLevelBatchBuffer(const SECOND_LEVEL_BATCH_BUFFER value) {
+        TheStructure.MI_MODE_NestedBatchBufferEnableIs0.SecondLevelBatchBuffer = value;
+    }
+    inline SECOND_LEVEL_BATCH_BUFFER getSecondLevelBatchBuffer() const {
+        return static_cast<SECOND_LEVEL_BATCH_BUFFER>(TheStructure.MI_MODE_NestedBatchBufferEnableIs0.SecondLevelBatchBuffer);
+    }
+    inline void setMiCommandOpcode(const MI_COMMAND_OPCODE value) {
+        TheStructure.Common.MiCommandOpcode = value;
+    }
+    inline MI_COMMAND_OPCODE getMiCommandOpcode() const {
+        return static_cast<MI_COMMAND_OPCODE>(TheStructure.Common.MiCommandOpcode);
+    }
+    inline void setCommandType(const COMMAND_TYPE value) {
+        TheStructure.Common.CommandType = value;
+    }
+    inline COMMAND_TYPE getCommandType() const {
+        return static_cast<COMMAND_TYPE>(TheStructure.Common.CommandType);
+    }
     inline void setBatchBufferStartAddress(const uint64_t value) {
         TheStructure.Common.BatchBufferStartAddress = value >> BATCHBUFFERSTARTADDRESS_BIT_SHIFT;
     }
     inline uint64_t getBatchBufferStartAddress() const {
         return TheStructure.Common.BatchBufferStartAddress << BATCHBUFFERSTARTADDRESS_BIT_SHIFT;
-    }
-    inline void setSecondLevelBatchBuffer(const SECOND_LEVEL_BATCH_BUFFER value) {
-        TheStructure.Mi_Mode_Nestedbatchbufferenableis0.SecondLevelBatchBuffer = value;
-    }
-    inline SECOND_LEVEL_BATCH_BUFFER getSecondLevelBatchBuffer() const {
-        return static_cast<SECOND_LEVEL_BATCH_BUFFER>(TheStructure.Mi_Mode_Nestedbatchbufferenableis0.SecondLevelBatchBuffer);
-    }
-    inline void setNestedLevelBatchBuffer(const NESTED_LEVEL_BATCH_BUFFER value) {
-        TheStructure.Mi_Mode_Nestedbatchbufferenableis1.NestedLevelBatchBuffer = value;
-    }
-    inline NESTED_LEVEL_BATCH_BUFFER getNestedLevelBatchBuffer() const {
-        return static_cast<NESTED_LEVEL_BATCH_BUFFER>(TheStructure.Mi_Mode_Nestedbatchbufferenableis1.NestedLevelBatchBuffer);
     }
 } MI_BATCH_BUFFER_START;
 STATIC_ASSERT(12 == sizeof(MI_BATCH_BUFFER_START));
@@ -5670,7 +5764,7 @@ typedef struct tagMI_LOAD_REGISTER_MEM {
             uint32_t Reserved_32 : BITFIELD_RANGE(0, 1);
             uint32_t RegisterAddress : BITFIELD_RANGE(2, 22);
             uint32_t Reserved_55 : BITFIELD_RANGE(23, 31);
-            // DWORD 2
+            // DWORD 2-3
             uint64_t Reserved_64 : BITFIELD_RANGE(0, 1);
             uint64_t MemoryAddress : BITFIELD_RANGE(2, 63);
         } Common;
@@ -5685,11 +5779,18 @@ typedef struct tagMI_LOAD_REGISTER_MEM {
     typedef enum tagCOMMAND_TYPE {
         COMMAND_TYPE_MI_COMMAND = 0x0,
     } COMMAND_TYPE;
+    typedef enum tagREGISTERADDRESS {
+        REGISTERADDRESS_BIT_SHIFT = 0x2,
+        REGISTERADDRESS_ALIGN_SIZE = 0x4,
+    } REGISTERADDRESS;
+    typedef enum tagMEMORYADDRESS {
+        MEMORYADDRESS_BIT_SHIFT = 0x2,
+        MEMORYADDRESS_ALIGN_SIZE = 0x4,
+    } MEMORYADDRESS;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_EXCLUDES_DWORD_0_1;
         TheStructure.Common.MiCommandOpcode = MI_COMMAND_OPCODE_MI_LOAD_REGISTER_MEM;
-        TheStructure.Common.CommandType = COMMAND_TYPE_MI_COMMAND;
     }
     static tagMI_LOAD_REGISTER_MEM sInit() {
         MI_LOAD_REGISTER_MEM state;
@@ -5730,23 +5831,26 @@ typedef struct tagMI_LOAD_REGISTER_MEM {
     inline bool getUseGlobalGtt() const {
         return TheStructure.Common.UseGlobalGtt;
     }
-    typedef enum tagREGISTERADDRESS {
-        REGISTERADDRESS_BIT_SHIFT = 0x2,
-        REGISTERADDRESS_ALIGN_SIZE = 0x4,
-    } REGISTERADDRESS;
+    inline void setMiCommandOpcode(const MI_COMMAND_OPCODE value) {
+        TheStructure.Common.MiCommandOpcode = value;
+    }
+    inline MI_COMMAND_OPCODE getMiCommandOpcode() const {
+        return static_cast<MI_COMMAND_OPCODE>(TheStructure.Common.MiCommandOpcode);
+    }
+    inline void setCommandType(const COMMAND_TYPE value) {
+        TheStructure.Common.CommandType = value;
+    }
+    inline COMMAND_TYPE getCommandType() const {
+        return static_cast<COMMAND_TYPE>(TheStructure.Common.CommandType);
+    }
     inline void setRegisterAddress(const uint32_t value) {
-        UNRECOVERABLE_IF((value >> REGISTERADDRESS_BIT_SHIFT) > 0x7fffff);
+        UNRECOVERABLE_IF(value > 0x7fffffu);
         TheStructure.Common.RegisterAddress = value >> REGISTERADDRESS_BIT_SHIFT;
     }
     inline uint32_t getRegisterAddress() const {
         return TheStructure.Common.RegisterAddress << REGISTERADDRESS_BIT_SHIFT;
     }
-    typedef enum tagMEMORYADDRESS {
-        MEMORYADDRESS_BIT_SHIFT = 0x2,
-        MEMORYADDRESS_ALIGN_SIZE = 0x4,
-    } MEMORYADDRESS;
     inline void setMemoryAddress(const uint64_t value) {
-        UNRECOVERABLE_IF((value >> MEMORYADDRESS_BIT_SHIFT) > 0xffffffffffffffffL);
         TheStructure.Common.MemoryAddress = value >> MEMORYADDRESS_BIT_SHIFT;
     }
     inline uint64_t getMemoryAddress() const {
@@ -5788,11 +5892,18 @@ typedef struct tagMI_LOAD_REGISTER_REG {
     typedef enum tagCOMMAND_TYPE {
         COMMAND_TYPE_MI_COMMAND = 0x0,
     } COMMAND_TYPE;
+    typedef enum tagSOURCEREGISTERADDRESS {
+        SOURCEREGISTERADDRESS_BIT_SHIFT = 0x2,
+        SOURCEREGISTERADDRESS_ALIGN_SIZE = 0x4,
+    } SOURCEREGISTERADDRESS;
+    typedef enum tagDESTINATIONREGISTERADDRESS {
+        DESTINATIONREGISTERADDRESS_BIT_SHIFT = 0x2,
+        DESTINATIONREGISTERADDRESS_ALIGN_SIZE = 0x4,
+    } DESTINATIONREGISTERADDRESS;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_EXCLUDES_DWORD_0_1;
         TheStructure.Common.MiCommandOpcode = MI_COMMAND_OPCODE_MI_LOAD_REGISTER_REG;
-        TheStructure.Common.CommandType = COMMAND_TYPE_MI_COMMAND;
     }
     static tagMI_LOAD_REGISTER_REG sInit() {
         MI_LOAD_REGISTER_REG state;
@@ -5827,23 +5938,27 @@ typedef struct tagMI_LOAD_REGISTER_REG {
     inline bool getAddCsMmioStartOffsetDestination() const {
         return TheStructure.Common.AddCsMmioStartOffsetDestination;
     }
-    typedef enum tagSOURCEREGISTERADDRESS {
-        SOURCEREGISTERADDRESS_BIT_SHIFT = 0x2,
-        SOURCEREGISTERADDRESS_ALIGN_SIZE = 0x4,
-    } SOURCEREGISTERADDRESS;
+    inline void setMiCommandOpcode(const MI_COMMAND_OPCODE value) {
+        TheStructure.Common.MiCommandOpcode = value;
+    }
+    inline MI_COMMAND_OPCODE getMiCommandOpcode() const {
+        return static_cast<MI_COMMAND_OPCODE>(TheStructure.Common.MiCommandOpcode);
+    }
+    inline void setCommandType(const COMMAND_TYPE value) {
+        TheStructure.Common.CommandType = value;
+    }
+    inline COMMAND_TYPE getCommandType() const {
+        return static_cast<COMMAND_TYPE>(TheStructure.Common.CommandType);
+    }
     inline void setSourceRegisterAddress(const uint32_t value) {
-        UNRECOVERABLE_IF((value >> SOURCEREGISTERADDRESS_BIT_SHIFT) > 0x7fffff);
+        UNRECOVERABLE_IF(value > 0x7fffffu);
         TheStructure.Common.SourceRegisterAddress = value >> SOURCEREGISTERADDRESS_BIT_SHIFT;
     }
     inline uint32_t getSourceRegisterAddress() const {
         return TheStructure.Common.SourceRegisterAddress << SOURCEREGISTERADDRESS_BIT_SHIFT;
     }
-    typedef enum tagDESTINATIONREGISTERADDRESS {
-        DESTINATIONREGISTERADDRESS_BIT_SHIFT = 0x2,
-        DESTINATIONREGISTERADDRESS_ALIGN_SIZE = 0x4,
-    } DESTINATIONREGISTERADDRESS;
     inline void setDestinationRegisterAddress(const uint32_t value) {
-        UNRECOVERABLE_IF((value >> DESTINATIONREGISTERADDRESS_BIT_SHIFT) > 0x7fffff);
+        UNRECOVERABLE_IF(value > 0x7fffffu);
         TheStructure.Common.DestinationRegisterAddress = value >> DESTINATIONREGISTERADDRESS_BIT_SHIFT;
     }
     inline uint32_t getDestinationRegisterAddress() const {
@@ -6002,7 +6117,7 @@ typedef struct tagMI_STORE_DATA_IMM {
             uint32_t UseGlobalGtt : BITFIELD_RANGE(22, 22);
             uint32_t MiCommandOpcode : BITFIELD_RANGE(23, 28);
             uint32_t CommandType : BITFIELD_RANGE(29, 31);
-            // DWORD 1
+            // DWORD 1-2
             uint64_t CoreModeEnable : BITFIELD_RANGE(0, 0);
             uint64_t Reserved_33 : BITFIELD_RANGE(1, 1);
             uint64_t Address : BITFIELD_RANGE(2, 63);
@@ -6013,21 +6128,24 @@ typedef struct tagMI_STORE_DATA_IMM {
         } Common;
         uint32_t RawData[5];
     } TheStructure;
-    typedef enum tagDWORD_LENGTH {
-        DWORD_LENGTH_STORE_DWORD = 0x2,
-        DWORD_LENGTH_STORE_QWORD = 0x3,
-    } DWORD_LENGTH;
     typedef enum tagMI_COMMAND_OPCODE {
         MI_COMMAND_OPCODE_MI_STORE_DATA_IMM = 0x20,
     } MI_COMMAND_OPCODE;
     typedef enum tagCOMMAND_TYPE {
         COMMAND_TYPE_MI_COMMAND = 0x0,
     } COMMAND_TYPE;
+    typedef enum tagADDRESS {
+        ADDRESS_BIT_SHIFT = 0x2,
+        ADDRESS_ALIGN_SIZE = 0x4,
+    } ADDRESS;
+    typedef enum tagDWORD_LENGTH {
+        DWORD_LENGTH_STORE_DWORD = 0x2,
+        DWORD_LENGTH_STORE_QWORD = 0x3,
+    } DWORD_LENGTH;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
-        TheStructure.Common.DwordLength = DWORD_LENGTH_STORE_DWORD;
+        TheStructure.Common.DwordLength = DWORD_LENGTH_STORE_DWORD; // Manual generator override
         TheStructure.Common.MiCommandOpcode = MI_COMMAND_OPCODE_MI_STORE_DATA_IMM;
-        TheStructure.Common.CommandType = COMMAND_TYPE_MI_COMMAND;
     }
     static tagMI_STORE_DATA_IMM sInit() {
         MI_STORE_DATA_IMM state;
@@ -6068,18 +6186,25 @@ typedef struct tagMI_STORE_DATA_IMM {
     inline bool getUseGlobalGtt() const {
         return TheStructure.Common.UseGlobalGtt;
     }
+    inline void setMiCommandOpcode(const MI_COMMAND_OPCODE value) {
+        TheStructure.Common.MiCommandOpcode = value;
+    }
+    inline MI_COMMAND_OPCODE getMiCommandOpcode() const {
+        return static_cast<MI_COMMAND_OPCODE>(TheStructure.Common.MiCommandOpcode);
+    }
+    inline void setCommandType(const COMMAND_TYPE value) {
+        TheStructure.Common.CommandType = value;
+    }
+    inline COMMAND_TYPE getCommandType() const {
+        return static_cast<COMMAND_TYPE>(TheStructure.Common.CommandType);
+    }
     inline void setCoreModeEnable(const bool value) {
         TheStructure.Common.CoreModeEnable = value;
     }
     inline bool getCoreModeEnable() const {
         return TheStructure.Common.CoreModeEnable;
     }
-    typedef enum tagADDRESS {
-        ADDRESS_BIT_SHIFT = 0x2,
-        ADDRESS_ALIGN_SIZE = 0x4,
-    } ADDRESS;
     inline void setAddress(const uint64_t value) {
-        UNRECOVERABLE_IF((value >> ADDRESS_BIT_SHIFT) > 0xffffffffffffffffL);
         TheStructure.Common.Address = value >> ADDRESS_BIT_SHIFT;
     }
     inline uint64_t getAddress() const {
@@ -6119,7 +6244,7 @@ typedef struct tagMI_STORE_REGISTER_MEM {
             uint32_t Reserved_32 : BITFIELD_RANGE(0, 1);
             uint32_t RegisterAddress : BITFIELD_RANGE(2, 22);
             uint32_t Reserved_55 : BITFIELD_RANGE(23, 31);
-            // DWORD 2
+            // DWORD 2-3
             uint64_t Reserved_64 : BITFIELD_RANGE(0, 1);
             uint64_t MemoryAddress : BITFIELD_RANGE(2, 63);
         } Common;
@@ -6134,11 +6259,18 @@ typedef struct tagMI_STORE_REGISTER_MEM {
     typedef enum tagCOMMAND_TYPE {
         COMMAND_TYPE_MI_COMMAND = 0x0,
     } COMMAND_TYPE;
+    typedef enum tagREGISTERADDRESS {
+        REGISTERADDRESS_BIT_SHIFT = 0x2,
+        REGISTERADDRESS_ALIGN_SIZE = 0x4,
+    } REGISTERADDRESS;
+    typedef enum tagMEMORYADDRESS {
+        MEMORYADDRESS_BIT_SHIFT = 0x2,
+        MEMORYADDRESS_ALIGN_SIZE = 0x4,
+    } MEMORYADDRESS;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_EXCLUDES_DWORD_0_1;
         TheStructure.Common.MiCommandOpcode = MI_COMMAND_OPCODE_MI_STORE_REGISTER_MEM;
-        TheStructure.Common.CommandType = COMMAND_TYPE_MI_COMMAND;
     }
     static tagMI_STORE_REGISTER_MEM sInit() {
         MI_STORE_REGISTER_MEM state;
@@ -6179,23 +6311,26 @@ typedef struct tagMI_STORE_REGISTER_MEM {
     inline bool getUseGlobalGtt() const {
         return TheStructure.Common.UseGlobalGtt;
     }
-    typedef enum tagREGISTERADDRESS {
-        REGISTERADDRESS_BIT_SHIFT = 0x2,
-        REGISTERADDRESS_ALIGN_SIZE = 0x4,
-    } REGISTERADDRESS;
+    inline void setMiCommandOpcode(const MI_COMMAND_OPCODE value) {
+        TheStructure.Common.MiCommandOpcode = value;
+    }
+    inline MI_COMMAND_OPCODE getMiCommandOpcode() const {
+        return static_cast<MI_COMMAND_OPCODE>(TheStructure.Common.MiCommandOpcode);
+    }
+    inline void setCommandType(const COMMAND_TYPE value) {
+        TheStructure.Common.CommandType = value;
+    }
+    inline COMMAND_TYPE getCommandType() const {
+        return static_cast<COMMAND_TYPE>(TheStructure.Common.CommandType);
+    }
     inline void setRegisterAddress(const uint32_t value) {
-        UNRECOVERABLE_IF((value >> REGISTERADDRESS_BIT_SHIFT) > 0x7fffff);
+        UNRECOVERABLE_IF(value > 0x7fffffu);
         TheStructure.Common.RegisterAddress = value >> REGISTERADDRESS_BIT_SHIFT;
     }
     inline uint32_t getRegisterAddress() const {
         return TheStructure.Common.RegisterAddress << REGISTERADDRESS_BIT_SHIFT;
     }
-    typedef enum tagMEMORYADDRESS {
-        MEMORYADDRESS_BIT_SHIFT = 0x2,
-        MEMORYADDRESS_ALIGN_SIZE = 0x4,
-    } MEMORYADDRESS;
     inline void setMemoryAddress(const uint64_t value) {
-        UNRECOVERABLE_IF((value >> MEMORYADDRESS_BIT_SHIFT) > 0xffffffffffffffffL);
         TheStructure.Common.MemoryAddress = value >> MEMORYADDRESS_BIT_SHIFT;
     }
     inline uint64_t getMemoryAddress() const {

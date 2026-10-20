@@ -421,6 +421,11 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenMiBatchBufferEndWhenSetterUsedThenGet
     MI_BATCH_BUFFER_END cmd;
     cmd.init();
 
+    cmd.setEndContext(0x0u);
+    EXPECT_EQ(0x0u, cmd.getEndContext());
+    cmd.setEndContext(0x1u);
+    EXPECT_EQ(0x1u, cmd.getEndContext());
+
     cmd.setPredicateEnable(0x0u);
     EXPECT_EQ(0x0u, cmd.getPredicateEnable());
     cmd.setPredicateEnable(0x1u);
@@ -451,6 +456,11 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenMiLoadRegisterImmWhenSetterUsedThenGe
     EXPECT_EQ(0x0u, cmd.getByteWriteDisables());
     cmd.setByteWriteDisables(0xfu);
     EXPECT_EQ(0xfu, cmd.getByteWriteDisables());
+
+    cmd.setForcePosted(0x0u);
+    EXPECT_EQ(0x0u, cmd.getForcePosted());
+    cmd.setForcePosted(0x1u);
+    EXPECT_EQ(0x1u, cmd.getForcePosted());
 
     cmd.setMmioRemapEnable(0x0u);
     EXPECT_EQ(0x0u, cmd.getMmioRemapEnable());
@@ -492,6 +502,11 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenMiNoopWhenSetterUsedThenGetterReturns
     EXPECT_EQ(0x0u, cmd.getIdentificationNumber());
     cmd.setIdentificationNumber(0x3fffffu);
     EXPECT_EQ(0x3fffffu, cmd.getIdentificationNumber());
+
+    cmd.setIdentificationNumberRegisterWriteEnable(0x0u);
+    EXPECT_EQ(0x0u, cmd.getIdentificationNumberRegisterWriteEnable());
+    cmd.setIdentificationNumberRegisterWriteEnable(0x1u);
+    EXPECT_EQ(0x1u, cmd.getIdentificationNumberRegisterWriteEnable());
 }
 
 XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenRenderSurfaceStateWhenInitCalledThenFieldsSetToDefault) {
@@ -2185,7 +2200,7 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenMiSetPredicateWhenInitCalledThenField
     MI_SET_PREDICATE cmd;
     cmd.init();
 
-    EXPECT_EQ(MI_SET_PREDICATE::PREDICATE_ENABLE_PREDICATE_DISABLE, cmd.TheStructure.Common.PredicateEnable); // patched
+    EXPECT_EQ(MI_SET_PREDICATE::PREDICATE_ENABLE_PREDICATE_DISABLE, cmd.TheStructure.Common.PredicateEnable);
     EXPECT_EQ(MI_SET_PREDICATE::PREDICATE_ENABLE_WPARID_NOOP_NEVER, cmd.TheStructure.Common.PredicateEnableWparid);
     EXPECT_EQ(MI_SET_PREDICATE::MI_COMMAND_OPCODE_MI_SET_PREDICATE, cmd.TheStructure.Common.MiCommandOpcode);
     EXPECT_EQ(MI_SET_PREDICATE::COMMAND_TYPE_MI_COMMAND, cmd.TheStructure.Common.CommandType);
@@ -2204,6 +2219,12 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenMiSetPredicateWhenSetterUsedThenGette
 
     cmd.setPredicateEnable(MI_SET_PREDICATE::PREDICATE_ENABLE_NOOP_ON_RESULT2_SET);
     EXPECT_EQ(MI_SET_PREDICATE::PREDICATE_ENABLE_NOOP_ON_RESULT2_SET, cmd.getPredicateEnable());
+
+    cmd.setPredicateEnable(MI_SET_PREDICATE::PREDICATE_ENABLE_NOOP_ON_RESULT_CLEAR);
+    EXPECT_EQ(MI_SET_PREDICATE::PREDICATE_ENABLE_NOOP_ON_RESULT_CLEAR, cmd.getPredicateEnable());
+
+    cmd.setPredicateEnable(MI_SET_PREDICATE::PREDICATE_ENABLE_NOOP_ON_RESULT_SET);
+    EXPECT_EQ(MI_SET_PREDICATE::PREDICATE_ENABLE_NOOP_ON_RESULT_SET, cmd.getPredicateEnable());
 
     cmd.setPredicateEnable(MI_SET_PREDICATE::PREDICATE_ENABLE_NOOP_ALWAYS);
     EXPECT_EQ(MI_SET_PREDICATE::PREDICATE_ENABLE_NOOP_ALWAYS, cmd.getPredicateEnable());
@@ -2272,6 +2293,21 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenMiConditionalBatchBufferEndWhenSetter
 
     cmd.setCompareMaskMode(MI_CONDITIONAL_BATCH_BUFFER_END::COMPARE_MASK_MODE_COMPARE_MASK_MODE_ENABLED);
     EXPECT_EQ(MI_CONDITIONAL_BATCH_BUFFER_END::COMPARE_MASK_MODE_COMPARE_MASK_MODE_ENABLED, cmd.getCompareMaskMode());
+
+    cmd.setCompareBufferEncryptedMemoryReadEnable(0x0u);
+    EXPECT_EQ(0x0u, cmd.getCompareBufferEncryptedMemoryReadEnable());
+    cmd.setCompareBufferEncryptedMemoryReadEnable(0x1u);
+    EXPECT_EQ(0x1u, cmd.getCompareBufferEncryptedMemoryReadEnable());
+
+    cmd.setCompareSemaphore(0x0u);
+    EXPECT_EQ(0x0u, cmd.getCompareSemaphore());
+    cmd.setCompareSemaphore(0x1u);
+    EXPECT_EQ(0x1u, cmd.getCompareSemaphore());
+
+    cmd.setUseGlobalGtt(0x0u);
+    EXPECT_EQ(0x0u, cmd.getUseGlobalGtt());
+    cmd.setUseGlobalGtt(0x1u);
+    EXPECT_EQ(0x1u, cmd.getUseGlobalGtt());
 
     cmd.setCompareDataDword(0x0u);
     EXPECT_EQ(0x0u, cmd.getCompareDataDword());
@@ -2905,8 +2941,8 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenMiFlushDwWhenInitCalledThenFieldsSetT
     EXPECT_EQ(MI_FLUSH_DW::MI_COMMAND_OPCODE_MI_FLUSH_DW, cmd.TheStructure.Common.MiCommandOpcode);
     EXPECT_EQ(MI_FLUSH_DW::COMMAND_TYPE_MI_COMMAND, cmd.TheStructure.Common.CommandType);
     EXPECT_EQ(MI_FLUSH_DW::DESTINATION_ADDRESS_TYPE_PPGTT, cmd.TheStructure.Common.DestinationAddressType);
-    EXPECT_EQ_VAL(0x0ull, cmd.TheStructure.Common.DestinationAddress); // patched
-    EXPECT_EQ_VAL(0x0ull, cmd.TheStructure.Common.ImmediateData);      // patched
+    EXPECT_EQ_VAL(0x0ull, cmd.TheStructure.Common.DestinationAddress);
+    EXPECT_EQ_VAL(0x0ull, cmd.TheStructure.Common.ImmediateData);
 }
 
 XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenMiFlushDwWhenSetterUsedThenGetterReturnsValidValue) {
@@ -2919,6 +2955,11 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenMiFlushDwWhenSetterUsedThenGetterRetu
     cmd.setNotifyEnable(0x1u);
     EXPECT_EQ(0x1u, cmd.getNotifyEnable());
 
+    cmd.setFlushLlc(0x0u);
+    EXPECT_EQ(0x0u, cmd.getFlushLlc());
+    cmd.setFlushLlc(0x1u);
+    EXPECT_EQ(0x1u, cmd.getFlushLlc());
+
     cmd.setPostSyncOperation(MI_FLUSH_DW::POST_SYNC_OPERATION_NO_WRITE);
     EXPECT_EQ(MI_FLUSH_DW::POST_SYNC_OPERATION_NO_WRITE, cmd.getPostSyncOperation());
 
@@ -2927,6 +2968,11 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenMiFlushDwWhenSetterUsedThenGetterRetu
 
     cmd.setPostSyncOperation(MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_TIMESTAMP_REGISTER);
     EXPECT_EQ(MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_TIMESTAMP_REGISTER, cmd.getPostSyncOperation());
+
+    cmd.setFlushCcs(0x0u);
+    EXPECT_EQ(0x0u, cmd.getFlushCcs());
+    cmd.setFlushCcs(0x1u);
+    EXPECT_EQ(0x1u, cmd.getFlushCcs());
 
     cmd.setTlbInvalidate(0x0u);
     EXPECT_EQ(0x0u, cmd.getTlbInvalidate());
@@ -4025,7 +4071,7 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenMiArbCheckWhenInitCalledThenFieldsSet
     cmd.init();
 
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.PreParserDisable);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.DisableMultiQSwitching); // patched
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.DisableMultiqSwitching);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.MaskBits);
     EXPECT_EQ(MI_ARB_CHECK::MI_COMMAND_OPCODE_MI_ARB_CHECK, cmd.TheStructure.Common.MiCommandOpcode);
     EXPECT_EQ(MI_ARB_CHECK::COMMAND_TYPE_MI_COMMAND, cmd.TheStructure.Common.CommandType);
@@ -4041,10 +4087,10 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenMiArbCheckWhenSetterUsedThenGetterRet
     cmd.setPreParserDisable(0x1u);
     EXPECT_EQ(0x1u, cmd.getPreParserDisable());
 
-    cmd.setDisableMultiQSwitching(false);              // patched
-    EXPECT_EQ(false, cmd.getDisableMultiQSwitching()); // patched
-    cmd.setDisableMultiQSwitching(true);               // patched
-    EXPECT_EQ(true, cmd.getDisableMultiQSwitching());  // patched
+    cmd.setDisableMultiQSwitching(false);
+    EXPECT_EQ(false, cmd.getDisableMultiQSwitching());
+    cmd.setDisableMultiQSwitching(true);
+    EXPECT_EQ(true, cmd.getDisableMultiQSwitching());
 
     cmd.setMaskBits(0x0u);
     EXPECT_EQ(0x0u, cmd.getMaskBits());
@@ -4064,8 +4110,8 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenMiBatchBufferStartWhenInitCalledThenF
     EXPECT_EQ(MI_BATCH_BUFFER_START::MI_COMMAND_OPCODE_MI_BATCH_BUFFER_START, cmd.TheStructure.Common.MiCommandOpcode);
     EXPECT_EQ(MI_BATCH_BUFFER_START::COMMAND_TYPE_MI_COMMAND, cmd.TheStructure.Common.CommandType);
     EXPECT_EQ(0x0ull, cmd.TheStructure.Common.BatchBufferStartAddress);
-    EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER_FIRST_LEVEL_BATCH, cmd.TheStructure.Mi_Mode_NestedbatchbufferenableIs0.SecondLevelBatchBuffer);
-    EXPECT_EQ(MI_BATCH_BUFFER_START::NESTED_LEVEL_BATCH_BUFFER_CHAIN, cmd.TheStructure.Mi_Mode_NestedbatchbufferenableIs1.NestedLevelBatchBuffer);
+    EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER_FIRST_LEVEL_BATCH, cmd.TheStructure.MI_MODE_NestedBatchBufferEnableIs0.SecondLevelBatchBuffer);
+    EXPECT_EQ(MI_BATCH_BUFFER_START::NESTED_LEVEL_BATCH_BUFFER_CHAIN, cmd.TheStructure.MI_MODE_NestedBatchBufferEnableIs1.NestedLevelBatchBuffer);
 }
 
 XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenMiBatchBufferStartWhenSetterUsedThenGetterReturnsValidValue) {
@@ -4083,6 +4129,11 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenMiBatchBufferStartWhenSetterUsedThenG
     EXPECT_EQ(0x0u, cmd.getPredicationEnable());
     cmd.setPredicationEnable(0x1u);
     EXPECT_EQ(0x1u, cmd.getPredicationEnable());
+
+    cmd.setIndirectAddressEnable(0x0u);
+    EXPECT_EQ(0x0u, cmd.getIndirectAddressEnable());
+    cmd.setIndirectAddressEnable(0x1u);
+    EXPECT_EQ(0x1u, cmd.getIndirectAddressEnable());
 
     cmd.setEnableCommandCache(0x0u);
     EXPECT_EQ(0x0u, cmd.getEnableCommandCache());
@@ -4141,6 +4192,16 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenMiLoadRegisterMemWhenSetterUsedThenGe
     EXPECT_EQ(0x0u, cmd.getAddCsMmioStartOffset());
     cmd.setAddCsMmioStartOffset(0x1u);
     EXPECT_EQ(0x1u, cmd.getAddCsMmioStartOffset());
+
+    cmd.setAsyncModeEnable(0x0u);
+    EXPECT_EQ(0x0u, cmd.getAsyncModeEnable());
+    cmd.setAsyncModeEnable(0x1u);
+    EXPECT_EQ(0x1u, cmd.getAsyncModeEnable());
+
+    cmd.setUseGlobalGtt(0x0u);
+    EXPECT_EQ(0x0u, cmd.getUseGlobalGtt());
+    cmd.setUseGlobalGtt(0x1u);
+    EXPECT_EQ(0x1u, cmd.getUseGlobalGtt());
 
     cmd.setRegisterAddress(0x0u);
     EXPECT_EQ(0x0u, cmd.getRegisterAddress());
@@ -4424,7 +4485,7 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenMiStoreDataImmWhenInitCalledThenField
     MI_STORE_DATA_IMM cmd;
     cmd.init();
 
-    EXPECT_EQ(MI_STORE_DATA_IMM::DWORD_LENGTH_STORE_DWORD, cmd.TheStructure.Common.DwordLength); // patched
+    EXPECT_EQ(MI_STORE_DATA_IMM::DWORD_LENGTH_STORE_DWORD, cmd.TheStructure.Common.DwordLength);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.ForceWriteCompletionCheck);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.WorkloadPartitionIdOffsetEnable);
     EXPECT_EQ(MI_STORE_DATA_IMM::MI_COMMAND_OPCODE_MI_STORE_DATA_IMM, cmd.TheStructure.Common.MiCommandOpcode);
@@ -4440,10 +4501,10 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenMiStoreDataImmWhenSetterUsedThenGette
     MI_STORE_DATA_IMM cmd;
     cmd.init();
 
-    cmd.setDwordLength(MI_STORE_DATA_IMM::DWORD_LENGTH_STORE_DWORD);              // patched
-    EXPECT_EQ(MI_STORE_DATA_IMM::DWORD_LENGTH_STORE_DWORD, cmd.getDwordLength()); // patched
-    cmd.setDwordLength(MI_STORE_DATA_IMM::DWORD_LENGTH_STORE_QWORD);              // patched
-    EXPECT_EQ(MI_STORE_DATA_IMM::DWORD_LENGTH_STORE_QWORD, cmd.getDwordLength()); // patched
+    cmd.setDwordLength(MI_STORE_DATA_IMM::DWORD_LENGTH_STORE_DWORD);
+    EXPECT_EQ(MI_STORE_DATA_IMM::DWORD_LENGTH_STORE_DWORD, cmd.getDwordLength());
+    cmd.setDwordLength(MI_STORE_DATA_IMM::DWORD_LENGTH_STORE_QWORD);
+    EXPECT_EQ(MI_STORE_DATA_IMM::DWORD_LENGTH_STORE_QWORD, cmd.getDwordLength());
 
     cmd.setForceWriteCompletionCheck(0x0u);
     EXPECT_EQ(0x0u, cmd.getForceWriteCompletionCheck());
@@ -4454,6 +4515,16 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenMiStoreDataImmWhenSetterUsedThenGette
     EXPECT_EQ(0x0u, cmd.getWorkloadPartitionIdOffsetEnable());
     cmd.setWorkloadPartitionIdOffsetEnable(0x1u);
     EXPECT_EQ(0x1u, cmd.getWorkloadPartitionIdOffsetEnable());
+
+    cmd.setStoreQword(0x0u);
+    EXPECT_EQ(0x0u, cmd.getStoreQword());
+    cmd.setStoreQword(0x1u);
+    EXPECT_EQ(0x1u, cmd.getStoreQword());
+
+    cmd.setUseGlobalGtt(0x0u);
+    EXPECT_EQ(0x0u, cmd.getUseGlobalGtt());
+    cmd.setUseGlobalGtt(0x1u);
+    EXPECT_EQ(0x1u, cmd.getUseGlobalGtt());
 
     cmd.setCoreModeEnable(0x0u);
     EXPECT_EQ(0x0u, cmd.getCoreModeEnable());
@@ -4516,6 +4587,11 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenMiStoreRegisterMemWhenSetterUsedThenG
     EXPECT_EQ(0x0u, cmd.getPredicateEnable());
     cmd.setPredicateEnable(0x1u);
     EXPECT_EQ(0x1u, cmd.getPredicateEnable());
+
+    cmd.setUseGlobalGtt(0x0u);
+    EXPECT_EQ(0x0u, cmd.getUseGlobalGtt());
+    cmd.setUseGlobalGtt(0x1u);
+    EXPECT_EQ(0x1u, cmd.getUseGlobalGtt());
 
     cmd.setRegisterAddress(0x0u);
     EXPECT_EQ(0x0u, cmd.getRegisterAddress());

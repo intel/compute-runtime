@@ -69,28 +69,19 @@ XE_HPG_CORETEST_F(XeHpgCoreHwCmdTest, givenPostSyncDataWhenProgrammingMocsThenMo
     EXPECT_EQ(expectedMocsIndex, postSyncData.TheStructure.Common.IndexToMocsTables);
 }
 
-XE_HPG_CORETEST_F(XeHpgCoreHwCmdTest, givenLoadRegisterMemWhenProgrammingMocsThenMocsIndexIsSetProperly) {
-    auto loadRegisterMem = FamilyType::cmdInitLoadRegisterMem;
-    uint32_t mocs = 4u;
-    uint32_t expectedMocsIndex = (mocs >> 1);
-    loadRegisterMem.setMemoryObjectControlState(mocs);
-    EXPECT_EQ(expectedMocsIndex, loadRegisterMem.TheStructure.Common.MemoryObjectControlStateIndexToMocsTables);
-}
-
-XE_HPG_CORETEST_F(XeHpgCoreHwCmdTest, givenStoreRegisterMemWhenProgrammingMocsThenMocsIndexIsSetProperly) {
-    auto storeRegisterMem = FamilyType::cmdInitStoreRegisterMem;
-    uint32_t mocs = 4u;
-    uint32_t expectedMocsIndex = (mocs >> 1);
-    storeRegisterMem.setMemoryObjectControlState(mocs);
-    EXPECT_EQ(expectedMocsIndex, storeRegisterMem.TheStructure.Common.MemoryObjectControlStateIndexToMocsTables);
-}
-
-XE_HPG_CORETEST_F(XeHpgCoreHwCmdTest, givenStoreDataImmWhenProgrammingMocsThenMocsIndexIsSetProperly) {
-    auto storeDataImm = FamilyType::cmdInitStoreDataImm;
-    uint32_t mocs = 4u;
-    uint32_t expectedMocsIndex = (mocs >> 1);
-    storeDataImm.setMemoryObjectControlState(mocs);
-    EXPECT_EQ(expectedMocsIndex, storeDataImm.TheStructure.Common.MemoryObjectControlStateIndexToMocsTables);
+XE_HPG_CORETEST_F(XeHpgCoreHwCmdTest, givenArbCheckWhenProgrammingPreParserDisableThenMaskBitIsSet) {
+    {
+        auto arbCheck = FamilyType::cmdInitArbCheck;
+        EXPECT_EQ(0u, arbCheck.TheStructure.Common.MaskBits);
+        arbCheck.setPreParserDisable(true);
+        EXPECT_EQ(1u, arbCheck.TheStructure.Common.MaskBits);
+    }
+    {
+        auto arbCheck = FamilyType::cmdInitArbCheck;
+        EXPECT_EQ(0u, arbCheck.TheStructure.Common.MaskBits);
+        arbCheck.setPreParserDisable(false);
+        EXPECT_EQ(1u, arbCheck.TheStructure.Common.MaskBits);
+    }
 }
 
 using XeHpgSbaTest = SbaTest;
