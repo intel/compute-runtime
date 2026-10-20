@@ -599,6 +599,13 @@ ze_result_t Device::getRootDevice(ze_device_handle_t *phRootDevice) {
     return ZE_RESULT_SUCCESS;
 }
 
+Device *Device::getPeerAllocationsOwner() {
+    if (this->isSubdevice && this->rootDevice != nullptr) {
+        return this->rootDevice;
+    }
+    return this;
+}
+
 ze_result_t Device::getPciProperties(ze_pci_ext_properties_t *pPciProperties) {
     if (!driverInfo) {
         return ZE_RESULT_ERROR_UNINITIALIZED;

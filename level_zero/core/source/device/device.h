@@ -120,6 +120,7 @@ struct Device : _ze_device_handle_t, NEO::NonCopyableAndNonMovableClass {
     MOCKABLE_VIRTUAL ze_result_t getKernelProperties(ze_device_module_properties_t *pKernelProperties);
     MOCKABLE_VIRTUAL ze_result_t getPciProperties(ze_pci_ext_properties_t *pPciProperties);
     MOCKABLE_VIRTUAL ze_result_t getRootDevice(ze_device_handle_t *phRootDevice);
+    Device *getPeerAllocationsOwner();
     MOCKABLE_VIRTUAL ze_result_t getMemoryProperties(uint32_t *pCount, ze_device_memory_properties_t *pMemProperties);
     uint32_t getEnabledSubDeviceCount() const;
     uint64_t getDeviceMemoryPhysicalSizeInBytes() const;

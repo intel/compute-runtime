@@ -402,6 +402,9 @@ void collectPeerAllocations(DriverHandle &driverHandle, Device *device, const vo
         peerAllocations.push_back(peerAllocation);
     }
     for (auto &subDevice : device->subDevices) {
+        if (subDevice->getPeerAllocationsOwner() != subDevice) {
+            continue;
+        }
         collectPeerAllocations(driverHandle, subDevice, ptr, peerAllocations);
     }
 }
@@ -780,14 +783,16 @@ NEO::GraphicsAllocation *DriverHandle::getPeerAllocation(Device *device,
                                                          uintptr_t *peerGpuAddress,
                                                          NEO::SvmAllocationData **peerAllocData,
                                                          bool decompressP2PAllocation) {
-    return getPeerAllocation(device, device->peerAllocations, allocData, basePtr, peerGpuAddress, peerAllocData, decompressP2PAllocation);
+    auto peerAllocationsOwner = device->getPeerAllocationsOwner();
+    return getPeerAllocation(peerAllocationsOwner, peerAllocationsOwner->peerAllocations, allocData, basePtr, peerGpuAddress, peerAllocData, decompressP2PAllocation);
 }
 
 NEO::GraphicsAllocation *DriverHandle::getCounterPeerAllocation(Device *device, NEO::GraphicsAllocation &graphicsAllocation) {
     NEO::SvmAllocationData allocData(graphicsAllocation.getRootDeviceIndex());
     allocData.gpuAllocations.addAllocation(&graphicsAllocation);
 
-    return getPeerAllocation(device, device->peerCounterAllocations, &allocData, reinterpret_cast<void *>(graphicsAllocation.getGpuAddress()), nullptr, nullptr, false);
+    auto peerAllocationsOwner = device->getPeerAllocationsOwner();
+    return getPeerAllocation(peerAllocationsOwner, peerAllocationsOwner->peerCounterAllocations, &allocData, reinterpret_cast<void *>(graphicsAllocation.getGpuAddress()), nullptr, nullptr, false);
 }
 
 NEO::GraphicsAllocation *DriverHandle::getPeerAllocation(Device *device,
@@ -847,9 +852,10 @@ NEO::GraphicsAllocation *DriverHandle::getPeerAllocation(Device *device,
 }
 
 NEO::GraphicsAllocation *DriverHandle::findPeerAllocation(Device *device, const void *ptr) {
-    std::unique_lock<NEO::SpinLock> lock(device->peerAllocations.mutex);
-    auto peerAllocationIt = device->peerAllocations.allocations.find(ptr);
-    if (peerAllocationIt == device->peerAllocations.allocations.end()) {
+    auto peerAllocationsOwner = device->getPeerAllocationsOwner();
+    std::unique_lock<NEO::SpinLock> lock(peerAllocationsOwner->peerAllocations.mutex);
+    auto peerAllocationIt = peerAllocationsOwner->peerAllocations.allocations.find(ptr);
+    if (peerAllocationIt == peerAllocationsOwner->peerAllocations.allocations.end()) {
         return nullptr;
     }
     return peerAllocationIt->second.gpuAllocations.getDefaultGraphicsAllocation();

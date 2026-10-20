@@ -246,6 +246,112 @@ TEST_F(MultiDeviceContextTests,
 }
 
 TEST_F(MultiDeviceContextTests,
+       givenDeviceMemoryOfRootDeviceWhenMakeMemoryResidentCalledOnPeerRootDeviceAndThenOnItsSubDeviceThenSubDeviceReusesPeerAllocationOfItsRootDevice) {
+    auto &rootDeviceEnvironments = driverHandle->devices[0]->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments;
+    rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<NEO::MockMemoryOperations>();
+    rootDeviceEnvironments[1]->memoryOperationsInterface = std::make_unique<NEO::MockMemoryOperations>();
+
+    L0::Device *ownerRootDevice = driverHandle->devices[0];
+    L0::Device *peerRootDevice = driverHandle->devices[1];
+    ASSERT_EQ(numSubDevices, ownerRootDevice->subDevices.size());
+    ASSERT_EQ(numSubDevices, peerRootDevice->subDevices.size());
+    L0::Device *ownerSubDevice = ownerRootDevice->subDevices[0];
+    L0::Device *peerSubDevice = peerRootDevice->subDevices[0];
+    const size_t size = 4096;
+
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t res = context->allocDeviceMem(ownerRootDevice->toHandle(), &deviceDesc, size, 0, &ptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+    auto ownerAllocation = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr)->gpuAllocations.getGraphicsAllocation(ownerRootDevice->getRootDeviceIndex());
+    ASSERT_NE(nullptr, ownerAllocation);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->makeMemoryResident(ownerSubDevice->toHandle(), ptr, size));
+    EXPECT_EQ(0u, ownerRootDevice->peerAllocations.allocations.count(ptr));
+    EXPECT_EQ(0u, ownerSubDevice->peerAllocations.allocations.count(ptr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->makeMemoryResident(peerRootDevice->toHandle(), ptr, size));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->makeMemoryResident(peerSubDevice->toHandle(), ptr, size));
+
+    ASSERT_EQ(1u, peerRootDevice->peerAllocations.allocations.count(ptr));
+    auto rootPeerAllocation = peerRootDevice->peerAllocations.allocations.at(ptr).gpuAllocations.getDefaultGraphicsAllocation();
+    ASSERT_NE(nullptr, rootPeerAllocation);
+    EXPECT_NE(ownerAllocation, rootPeerAllocation);
+    EXPECT_EQ(peerRootDevice->getRootDeviceIndex(), rootPeerAllocation->getRootDeviceIndex());
+
+    EXPECT_EQ(0u, peerSubDevice->peerAllocations.allocations.count(ptr));
+    EXPECT_EQ(rootPeerAllocation, driverHandle->resolveMemoryAllocation(peerSubDevice, ptr, size, false));
+
+    res = context->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(0u, peerRootDevice->peerAllocations.allocations.count(ptr));
+    EXPECT_EQ(0u, peerSubDevice->peerAllocations.allocations.count(ptr));
+}
+
+TEST_F(MultiDeviceContextTests,
+       givenDeviceMemoryOfRootDeviceWhenMakeMemoryResidentCalledOnSubDevicesOfPeerRootDeviceBeforePeerRootDeviceThenAllShareOneImport) {
+    auto &rootDeviceEnvironments = driverHandle->devices[0]->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments;
+    rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<NEO::MockMemoryOperations>();
+    rootDeviceEnvironments[1]->memoryOperationsInterface = std::make_unique<NEO::MockMemoryOperations>();
+
+    L0::Device *ownerRootDevice = driverHandle->devices[0];
+    L0::Device *peerRootDevice = driverHandle->devices[1];
+    ASSERT_EQ(numSubDevices, peerRootDevice->subDevices.size());
+    L0::Device *peerSubDevice0 = peerRootDevice->subDevices[0];
+    L0::Device *peerSubDevice1 = peerRootDevice->subDevices[1];
+    const size_t size = 4096;
+
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t res = context->allocDeviceMem(ownerRootDevice->toHandle(), &deviceDesc, size, 0, &ptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->makeMemoryResident(peerSubDevice0->toHandle(), ptr, size));
+    EXPECT_EQ(1u, peerRootDevice->peerAllocations.allocations.count(ptr));
+    EXPECT_EQ(0u, peerSubDevice0->peerAllocations.allocations.count(ptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->makeMemoryResident(peerSubDevice1->toHandle(), ptr, size));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->makeMemoryResident(peerRootDevice->toHandle(), ptr, size));
+
+    auto rootAllocation = driverHandle->resolveMemoryAllocation(peerRootDevice, ptr, size, false);
+    ASSERT_NE(nullptr, rootAllocation);
+    EXPECT_EQ(rootAllocation, driverHandle->resolveMemoryAllocation(peerSubDevice0, ptr, size, false));
+    EXPECT_EQ(rootAllocation, driverHandle->resolveMemoryAllocation(peerSubDevice1, ptr, size, false));
+    EXPECT_EQ(1u, peerRootDevice->peerAllocations.allocations.count(ptr));
+    EXPECT_EQ(0u, peerSubDevice0->peerAllocations.allocations.count(ptr));
+    EXPECT_EQ(0u, peerSubDevice1->peerAllocations.allocations.count(ptr));
+
+    res = context->freeMem(ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(0u, peerRootDevice->peerAllocations.allocations.count(ptr));
+    EXPECT_EQ(0u, peerSubDevice0->peerAllocations.allocations.count(ptr));
+    EXPECT_EQ(0u, peerSubDevice1->peerAllocations.allocations.count(ptr));
+}
+
+TEST_F(MultiDeviceContextTests,
+       givenCounterAllocationOfRootDeviceWhenCounterPeerAllocationIsRequestedForPeerRootDeviceAndItsSubDeviceThenSubDeviceReusesIt) {
+    L0::Device *ownerRootDevice = driverHandle->devices[0];
+    L0::Device *peerRootDevice = driverHandle->devices[1];
+    ASSERT_EQ(numSubDevices, peerRootDevice->subDevices.size());
+    L0::Device *peerSubDevice = peerRootDevice->subDevices[0];
+
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_result_t res = context->allocDeviceMem(ownerRootDevice->toHandle(), &deviceDesc, 4096, 0, &ptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+    auto counterAllocation = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr)->gpuAllocations.getGraphicsAllocation(ownerRootDevice->getRootDeviceIndex());
+    ASSERT_NE(nullptr, counterAllocation);
+    auto counterKey = reinterpret_cast<const void *>(counterAllocation->getGpuAddress());
+
+    auto rootCounterPeerAllocation = driverHandle->getCounterPeerAllocation(peerRootDevice, *counterAllocation);
+    ASSERT_NE(nullptr, rootCounterPeerAllocation);
+    EXPECT_EQ(rootCounterPeerAllocation, driverHandle->getCounterPeerAllocation(peerSubDevice, *counterAllocation));
+    EXPECT_EQ(1u, peerRootDevice->peerCounterAllocations.allocations.count(counterKey));
+    EXPECT_EQ(0u, peerSubDevice->peerCounterAllocations.allocations.count(counterKey));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+}
+
+TEST_F(MultiDeviceContextTests,
        GivenDeviceMemoryMadeResidentOnPeerDeviceWhenEvictMemoryCalledThenSuccessReturned) {
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};

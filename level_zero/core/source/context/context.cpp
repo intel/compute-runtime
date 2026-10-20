@@ -498,10 +498,11 @@ ze_result_t Context::allocSharedMem(ze_device_handle_t hDevice,
 }
 
 void Context::freePeerAllocations(const void *ptr, bool blocking, Device *device) {
-    std::unique_lock<NEO::SpinLock> lock(device->peerAllocations.mutex);
+    auto peerAllocationsOwner = device->getPeerAllocationsOwner();
+    std::unique_lock<NEO::SpinLock> lock(peerAllocationsOwner->peerAllocations.mutex);
 
-    auto iter = device->peerAllocations.allocations.find(ptr);
-    if (iter != device->peerAllocations.allocations.end()) {
+    auto iter = peerAllocationsOwner->peerAllocations.allocations.find(ptr);
+    if (iter != peerAllocationsOwner->peerAllocations.allocations.end()) {
         auto peerAllocData = &iter->second;
         auto peerAlloc = peerAllocData->gpuAllocations.getDefaultGraphicsAllocation();
         auto peerPtr = reinterpret_cast<void *>(peerAlloc->getGpuAddress());
@@ -513,10 +514,13 @@ void Context::freePeerAllocations(const void *ptr, bool blocking, Device *device
         } else {
             this->driverHandle->svmAllocsManager->freeSVMAlloc(peerPtr, blocking);
         }
-        device->peerAllocations.allocations.erase(iter);
+        peerAllocationsOwner->peerAllocations.allocations.erase(iter);
     }
 
     for (auto &subDevice : device->subDevices) {
+        if (subDevice->getPeerAllocationsOwner() != subDevice) {
+            continue;
+        }
         this->freePeerAllocations(ptr, blocking, subDevice);
     }
 }

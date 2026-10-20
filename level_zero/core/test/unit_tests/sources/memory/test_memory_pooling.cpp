@@ -716,6 +716,21 @@ TEST_F(PeerAccessedDevicePoolWithSubDevicesMemoryTest, givenChunkAccessedFromPee
     mockMemoryManager->waitAllocations.reset();
 }
 
+TEST_F(PeerAccessedDevicePoolWithSubDevicesMemoryTest, givenChunkAccessedFromPeerRootDeviceAndItsSubDevicesWhenCollectingPoolPeerAllocationsThenSharedPeerAllocationIsCollectedOnce) {
+    ASSERT_EQ(2u, l0Devices[1]->subDevices.size());
+    auto ptr = allocatePooledChunk();
+    auto peerAllocation = accessFromPeer(l0Devices[1], ptr);
+    ASSERT_NE(nullptr, peerAllocation);
+    EXPECT_EQ(peerAllocation, accessFromPeer(l0Devices[1]->subDevices[0], ptr));
+    EXPECT_EQ(peerAllocation, accessFromPeer(l0Devices[1]->subDevices[1], ptr));
+
+    auto peerAllocations = driverHandle->getPoolPeerAllocationsFn()(getDevicePool()->pool);
+    ASSERT_EQ(1u, peerAllocations.size());
+    EXPECT_EQ(peerAllocation, peerAllocations[0]);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+}
+
 using AllocUsmDeviceDisabledSinglePoolMemoryTest = AllocUsmPoolMemoryTest<-1, 0, 0>;
 
 TEST_F(AllocUsmDeviceDisabledSinglePoolMemoryTest, givenDeviceWhenCallingAllocDeviceMemThenDoNotUsePool) {
