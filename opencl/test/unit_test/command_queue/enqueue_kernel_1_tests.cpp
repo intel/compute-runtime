@@ -1745,7 +1745,7 @@ TEST_F(EnqueueKernelTest, givenEnqueueCommandWithWorkDimLargerThanAllowedWhenEnq
     EXPECT_EQ(CL_INVALID_WORK_DIMENSION, status);
 }
 
-TEST_F(EnqueueKernelTest, givenEnqueueCommandWithWorkDimsResultingInMoreThan32BitMaxGroupsWhenEnqueueNDRangeKernelIsCalledThenInvalidGlobalSizeIsReturned) {
+TEST_F(EnqueueKernelTest, givenEnqueueCommandWithWorkDimsResultingInMoreThan32BitMaxGroupsWhenEnqueueNDRangeKernelIsCalledThenOutOfResourcesIsReturned) {
 
     if (sizeof(size_t) < 8) {
         GTEST_SKIP();
@@ -1762,22 +1762,22 @@ TEST_F(EnqueueKernelTest, givenEnqueueCommandWithWorkDimsResultingInMoreThan32Bi
 
     globalWorkSize[0] = max32Bit * 4 + 4;
     status = clEnqueueNDRangeKernel(pCmdQ, mockKernel.mockMultiDeviceKernel, testedWorkDim, nullptr, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
-    EXPECT_EQ(CL_INVALID_GLOBAL_WORK_SIZE, status);
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, status);
 
     globalWorkSize[0] = 4;
     globalWorkSize[1] = max32Bit * 4 + 4;
 
     status = clEnqueueNDRangeKernel(pCmdQ, mockKernel.mockMultiDeviceKernel, testedWorkDim, nullptr, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
-    EXPECT_EQ(CL_INVALID_GLOBAL_WORK_SIZE, status);
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, status);
 
     globalWorkSize[1] = 4;
     globalWorkSize[2] = max32Bit * 4 + 4;
 
     status = clEnqueueNDRangeKernel(pCmdQ, mockKernel.mockMultiDeviceKernel, testedWorkDim, nullptr, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
-    EXPECT_EQ(CL_INVALID_GLOBAL_WORK_SIZE, status);
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, status);
 }
 
-TEST_F(EnqueueKernelTest, givenEnqueueCommandWithNullLwsAndWorkDimsResultingInMoreThan32BitMaxGroupsWhenEnqueueNDRangeKernelIsCalledThenInvalidGlobalSizeIsReturned) {
+TEST_F(EnqueueKernelTest, givenEnqueueCommandWithNullLwsAndWorkDimsResultingInMoreThan32BitMaxGroupsWhenEnqueueNDRangeKernelIsCalledThenOutOfResourcesIsReturned) {
 
     if (sizeof(size_t) < 8) {
         GTEST_SKIP();
@@ -1791,23 +1791,23 @@ TEST_F(EnqueueKernelTest, givenEnqueueCommandWithNullLwsAndWorkDimsResultingInMo
     auto testedWorkDim = 3;
 
     auto status = clEnqueueNDRangeKernel(pCmdQ, mockKernel.mockMultiDeviceKernel, testedWorkDim, nullptr, globalWorkSize, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(CL_INVALID_GLOBAL_WORK_SIZE, status);
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, status);
 
     globalWorkSize[0] = (max32Bit + 1) * maxWgSize + 3;
     status = clEnqueueNDRangeKernel(pCmdQ, mockKernel.mockMultiDeviceKernel, testedWorkDim, nullptr, globalWorkSize, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(CL_INVALID_GLOBAL_WORK_SIZE, status);
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, status);
 
     globalWorkSize[0] = 4;
     globalWorkSize[1] = (max32Bit + 1) * maxWgSize;
 
     status = clEnqueueNDRangeKernel(pCmdQ, mockKernel.mockMultiDeviceKernel, testedWorkDim, nullptr, globalWorkSize, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(CL_INVALID_GLOBAL_WORK_SIZE, status);
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, status);
 
     globalWorkSize[1] = 4;
     globalWorkSize[2] = (max32Bit + 1) * maxWgSize * 2 + 3;
 
     status = clEnqueueNDRangeKernel(pCmdQ, mockKernel.mockMultiDeviceKernel, testedWorkDim, nullptr, globalWorkSize, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(CL_INVALID_GLOBAL_WORK_SIZE, status);
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, status);
 }
 
 TEST_F(EnqueueKernelTest, givenEnqueueCommandWithNullLwsAndWorkDimsResultingInLessThan32BitMaxGroupsWhenEnqueueNDRangeKernelIsCalledThenSuccessIsReturned) {

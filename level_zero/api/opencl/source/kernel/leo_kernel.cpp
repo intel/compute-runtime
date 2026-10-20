@@ -452,7 +452,7 @@ cl_int Kernel::setupDispatch(const ClDevice &clDevice, cl_uint workDim, const si
         }
         // ze_group_count_t is 32 bit, so a group count that does not fit cannot be dispatched
         if (!NEO::LEO::fitsInUint32(globalWorkSize[i] / lws[i])) [[unlikely]] {
-            return CL_INVALID_GLOBAL_WORK_SIZE;
+            return CL_OUT_OF_RESOURCES;
         }
     }
     return CL_SUCCESS;

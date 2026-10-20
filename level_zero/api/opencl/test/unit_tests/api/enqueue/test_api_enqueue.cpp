@@ -251,7 +251,7 @@ struct EnqueueKernelEventFixture : public Test<LeoCaptureFixture> {
     std::unique_ptr<Kernel> kernel;
 };
 
-TEST_F(EnqueueKernelEventFixture, givenGroupCountAboveUint32WhenEnqueueNDRangeKernelThenInvalidGlobalWorkSizeIsReturnedAndOutputEventIsUntouched) {
+TEST_F(EnqueueKernelEventFixture, givenGroupCountAboveUint32WhenEnqueueNDRangeKernelThenOutOfResourcesIsReturnedAndOutputEventIsUntouched) {
     constexpr uint32_t groupSize = 2u;
     l0Kernel->privateState.groupSize[0] = groupSize;
     l0Kernel->privateState.groupSize[1] = 1u;
@@ -269,7 +269,7 @@ TEST_F(EnqueueKernelEventFixture, givenGroupCountAboveUint32WhenEnqueueNDRangeKe
     size_t globalWorkSize[3] = {groupSize * (static_cast<size_t>(std::numeric_limits<uint32_t>::max()) + 1u), 1, 1};
     size_t localWorkSize[3] = {groupSize, 1, 1};
 
-    EXPECT_EQ(CL_INVALID_GLOBAL_WORK_SIZE, clEnqueueNDRangeKernel(getCommandQueue(), kernel.get(), 1, nullptr, globalWorkSize, localWorkSize, 1, &waitEvent, &event));
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, clEnqueueNDRangeKernel(getCommandQueue(), kernel.get(), 1, nullptr, globalWorkSize, localWorkSize, 1, &waitEvent, &event));
     EXPECT_EQ(notAnEvent, event);
     EXPECT_EQ(waitEventRefCount, castToObject<Event>(waitEvent)->getRefInternalCount());
     EXPECT_EQ(0u, capturingCmdList.totalCalls());

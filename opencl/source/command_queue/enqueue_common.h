@@ -103,7 +103,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCou
                 for (auto i = 0u; i < workDim; i++) {
                     uint64_t dimension = static_cast<uint64_t>(nwgs[i]);
                     if (dimension > std::numeric_limits<uint32_t>::max()) {
-                        return CL_INVALID_GLOBAL_WORK_SIZE;
+                        return CL_OUT_OF_RESOURCES;
                     }
                 }
             }
