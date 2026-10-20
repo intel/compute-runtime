@@ -184,7 +184,13 @@ struct ExternalWaitCbEventsInfo {
 };
 
 struct ExternalCbEventInfoContainer {
+    ExternalCbEventInfoContainer() = default;
     ~ExternalCbEventInfoContainer();
+
+    ExternalCbEventInfoContainer(const ExternalCbEventInfoContainer &) = delete;
+    ExternalCbEventInfoContainer &operator=(const ExternalCbEventInfoContainer &) = delete;
+    ExternalCbEventInfoContainer(ExternalCbEventInfoContainer &&) = delete;
+    ExternalCbEventInfoContainer &operator=(ExternalCbEventInfoContainer &&) = delete;
 
     void addSignalCbEventInfo(L0::Event *event, L0::CommandList *executorCommandList, bool apiRequiredSignalEvent) {
         auto it = std::find_if(signalEventStorage.begin(),
