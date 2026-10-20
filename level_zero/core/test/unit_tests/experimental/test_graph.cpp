@@ -2455,6 +2455,79 @@ TEST_F(GraphInternalEventTest, givenCounterBasedEventWhenGraphIsInstantiatedThen
     }
 }
 
+TEST_F(GraphInternalEventTest, givenTimestampedCbEventWhenGraphIsInstantiatedTwiceThenFirstExecutableGraphKeepsItsTimestampNodeUntilDestroyed) {
+    GraphsCleanupGuard graphCleanup;
+    auto hEvent = createCounterBasedEvent(context, device, false, ZE_EVENT_COUNTER_BASED_FLAG_DEVICE_TIMESTAMP);
+    auto *event = L0::Event::fromHandle(hEvent);
+
+    auto srcGraph = std::make_unique<L0::Graph>(context, true);
+    auto hGraph = srcGraph->toHandle();
+    captureKernelSignalling(hGraph, hEvent);
+
+    auto firstExecGraph = std::make_unique<MockExecutableGraph>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, firstExecGraph->instantiateFrom(*srcGraph));
+    auto *internalEvent = srcGraph->getInternalEvents().getInternal(event);
+    ASSERT_NE(nullptr, internalEvent);
+    ASSERT_EQ(1u, internalEvent->getInOrderExecEventHelper().getTimestampNodesCount());
+    auto *firstNode = internalEvent->getInOrderExecEventHelper().getTimestampNode(0);
+
+    ExecutableGraph secondExecGraph;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, secondExecGraph.instantiateFrom(*srcGraph));
+    ASSERT_EQ(1u, internalEvent->getInOrderExecEventHelper().getTimestampNodesCount());
+    EXPECT_NE(firstNode, internalEvent->getInOrderExecEventHelper().getTimestampNode(0));
+
+    for (auto &cmdList : firstExecGraph->myCommandLists) {
+        cmdList->getInOrderExecInfo()->releaseNotUsedTempTimestampNodes(true);
+    }
+    auto *allocator = device->getInOrderTimestampAllocator();
+    auto *nextNode = allocator->getTag();
+    EXPECT_NE(firstNode, nextNode);
+    nextNode->returnTag();
+
+    firstExecGraph.reset();
+    nextNode = allocator->getTag();
+    EXPECT_EQ(firstNode, nextNode);
+    nextNode->returnTag();
+
+    srcGraph.reset();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, event->destroy());
+}
+
+TEST_F(GraphInternalEventTest, givenTimestampedCbEventSignalledTwiceInGraphWhenInstantiatedThenFirstSignalTimestampNodeIsKeptByExecutableGraph) {
+    GraphsCleanupGuard graphCleanup;
+    auto hEvent = createCounterBasedEvent(context, device, false, ZE_EVENT_COUNTER_BASED_FLAG_DEVICE_TIMESTAMP);
+    auto *event = L0::Event::fromHandle(hEvent);
+
+    auto srcGraph = std::make_unique<L0::Graph>(context, true);
+    auto hGraph = srcGraph->toHandle();
+    auto hCmdList = inOrderCmdList->toHandle();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(hCmdList, hGraph, nullptr));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendKernelSignalling(hEvent));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendKernelSignalling(hEvent));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(hCmdList, &hGraph, nullptr));
+
+    auto *allocator = device->getInOrderTimestampAllocator();
+    auto *firstNode = allocator->getTag();
+    firstNode->returnTag();
+
+    MockExecutableGraph execGraph;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, execGraph.instantiateFrom(*srcGraph));
+    auto *internalEvent = srcGraph->getInternalEvents().getInternal(event);
+    ASSERT_NE(nullptr, internalEvent);
+    ASSERT_EQ(1u, internalEvent->getInOrderExecEventHelper().getTimestampNodesCount());
+    EXPECT_NE(firstNode, internalEvent->getInOrderExecEventHelper().getTimestampNode(0));
+
+    for (auto &cmdList : execGraph.myCommandLists) {
+        cmdList->getInOrderExecInfo()->releaseNotUsedTempTimestampNodes(true);
+    }
+    auto *nextNode = allocator->getTag();
+    EXPECT_NE(firstNode, nextNode);
+    nextNode->returnTag();
+
+    srcGraph.reset();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, event->destroy());
+}
+
 TEST_F(GraphInternalEventTest, givenPoolCounterBasedEventWhenClonedThenInternalEventPreservesTimestampMode) {
     constexpr ze_event_pool_flags_t timestampModes[] = {0, ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP, ZE_EVENT_POOL_FLAG_KERNEL_MAPPED_TIMESTAMP};
     for (auto timestampMode : timestampModes) {

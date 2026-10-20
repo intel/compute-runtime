@@ -555,9 +555,15 @@ ze_result_t GraphInternalEvents::addInternalEvent(L0::Event *originalEvent, ze_c
 }
 
 void handleExternalCbSignalEvent(L0::Event *event, CbExternalEventInstantiateContext &cbEventContext) {
-    if (cbEventContext.cbEventInfoContainer && event && (event->isExternalEvent() || event->getApiRequiredGraphExternalEvent())) {
+    if ((nullptr == cbEventContext.cbEventInfoContainer) || (nullptr == event)) {
+        return;
+    }
+
+    if (event->isExternalEvent() || event->getApiRequiredGraphExternalEvent()) {
         cbEventContext.cbEventInfoContainer->addSignalCbEventInfo(event, cbEventContext.executorCommandList, event->getApiRequiredGraphExternalEvent());
         cbEventContext.storedCbEventState.restoreToEvent(event);
+    } else {
+        cbEventContext.cbEventInfoContainer->retainTimestampNodes(event->getInOrderExecEventHelper());
     }
 }
 
@@ -681,6 +687,22 @@ ExternalCbEventInfoContainer::~ExternalCbEventInfoContainer() {
             node->returnTag(); // drops graph's reference only, event's reference (if attached) is dropped on its re-signal/destroy
         }
         info.previousAppendInstantiationNodes.clear();
+    }
+    for (auto node : retainedTimestampNodes) {
+        node->returnTag();
+    }
+}
+
+void ExternalCbEventInfoContainer::retainTimestampNodes(const NEO::InOrderExecEventHelper &eventHelper) {
+    for (size_t i = 0; i < eventHelper.getTimestampNodesCount(); i++) {
+        auto node = eventHelper.getTimestampNode(i);
+        node->incRefCount();
+        retainedTimestampNodes.push_back(node);
+    }
+    for (size_t i = 0; i < eventHelper.getAdditionalTimestampNodesCount(); i++) {
+        auto node = eventHelper.getAdditionalTimestampNode(i);
+        node->incRefCount();
+        retainedTimestampNodes.push_back(node);
     }
 }
 

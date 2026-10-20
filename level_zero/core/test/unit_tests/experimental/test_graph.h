@@ -31,16 +31,20 @@ struct GraphsCleanupGuard {
     }
 };
 
-inline ze_event_handle_t createCounterBasedEvent(L0::Context *context, L0::Device *device, bool graphExternal) {
+inline ze_event_handle_t createCounterBasedEvent(L0::Context *context, L0::Device *device, bool graphExternal, ze_event_counter_based_flags_t extraFlags) {
     ze_event_handle_t eventHandle = nullptr;
     ze_event_counter_based_desc_t eventDesc = {
         .stype = ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC,
-        .flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE};
+        .flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE | ZE_EVENT_COUNTER_BASED_FLAG_NON_IMMEDIATE | extraFlags};
     if (graphExternal) {
         eventDesc.flags |= ZE_EVENT_COUNTER_BASED_FLAG_GRAPH_EXTERNAL;
     }
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context->toHandle(), device->toHandle(), &eventDesc, &eventHandle));
     return eventHandle;
+}
+
+inline ze_event_handle_t createCounterBasedEvent(L0::Context *context, L0::Device *device, bool graphExternal) {
+    return createCounterBasedEvent(context, device, graphExternal, 0);
 }
 
 struct MockGraphCmdListWithContext : Mock<CommandList> {

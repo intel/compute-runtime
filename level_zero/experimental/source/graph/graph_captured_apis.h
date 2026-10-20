@@ -274,12 +274,14 @@ struct ExternalCbEventInfoContainer {
     }
     void refreshExternalCbWaitEvents();
     void commitMclForExternalCbWaitEvents();
+    void retainTimestampNodes(const NEO::InOrderExecEventHelper &eventHelper);
 
   protected:
     std::vector<ExternalSignalCbEventInfo> signalEventStorage;
     std::vector<ExternalWaitCbEventsInfo> waitEventsContainer;
     std::vector<L0::CommandList *> waitEventMclContainer;
     PatchPreambleDataContainer executorStorage;
+    std::vector<NEO::TagNodeBase *> retainedTimestampNodes;
 };
 
 struct GraphInternalEventEntry {
