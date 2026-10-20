@@ -1273,6 +1273,70 @@ TEST_F(SvmDeviceAllocationCacheTest, givenAllocationInUsageWhenAllocatingAfterFr
     svmManager->cleanupUSMAllocCaches();
 }
 
+struct SvmDeviceAllocationCacheIndirectAccessTest : public SvmDeviceAllocationCacheTest {
+    void SetUp() override {
+        SvmDeviceAllocationCacheTest::SetUp();
+        debugManager.flags.ExperimentalEnableDeviceAllocationCache.set(1);
+        deviceFactory = std::make_unique<UltDeviceFactory>(1, 1);
+        device = deviceFactory->rootDevices[0];
+        svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager());
+        device->usmReuseInfo.init(1 * MemoryConstants::gigaByte, UsmReuseInfo::notLimited);
+        svmManager->initUsmAllocationsCaches(*device);
+        static_cast<MockMemoryManager *>(device->getMemoryManager())->callBaseAllocInUse = true;
+
+        unifiedMemoryProperties = std::make_unique<UnifiedMemoryProperties>(createMemoryProperties(InternalMemoryType::deviceUnifiedMemory, device));
+        ptr = svmManager->createUnifiedMemoryAllocation(allocationSize, *unifiedMemoryProperties);
+        auto svmData = svmManager->getSVMAlloc(ptr);
+        gpuAllocation = svmData->gpuAllocations.getDefaultGraphicsAllocation();
+        csr = device->getDefaultEngine().commandStreamReceiver;
+        contextId = csr->getOsContext().getContextId();
+
+        gpuAllocation->updateTaskCount(packedTaskCount, contextId);
+        gpuAllocation->updateResidencyTaskCount(GraphicsAllocation::objectAlwaysResident, contextId);
+        svmManager->indirectAllocationsResidency.emplace(csr, SVMAllocsManager::InternalAllocationsTracker{.latestSentTaskCount = latestIndirectTaskCount, .latestResidentObjectId = svmData->getAllocId()});
+    }
+
+    void TearDown() override {
+        *csr->getTagAddress() = latestIndirectTaskCount;
+        svmManager->indirectAllocationsResidency.clear();
+        svmManager->cleanupUSMAllocCaches();
+        SvmDeviceAllocationCacheTest::TearDown();
+    }
+
+    static constexpr size_t allocationSize = 10u;
+    static constexpr TaskCountType packedTaskCount = 1u;
+    static constexpr TaskCountType latestIndirectTaskCount = 5u;
+    DebugManagerStateRestore restore;
+    std::unique_ptr<UltDeviceFactory> deviceFactory;
+    Device *device = nullptr;
+    std::unique_ptr<MockSVMAllocsManager> svmManager;
+    std::unique_ptr<UnifiedMemoryProperties> unifiedMemoryProperties;
+    void *ptr = nullptr;
+    GraphicsAllocation *gpuAllocation = nullptr;
+    CommandStreamReceiver *csr = nullptr;
+    uint32_t contextId = 0u;
+};
+
+TEST_F(SvmDeviceAllocationCacheIndirectAccessTest, givenAllocationKeptResidentForIndirectAccessWithPendingIndirectWorkWhenFreedDeferredThenItIsNotReusedBeforeThatWorkCompletes) {
+    *csr->getTagAddress() = packedTaskCount + 1;
+    svmManager->freeSVMAllocDefer(ptr);
+    EXPECT_EQ(1u, svmManager->usmDeviceAllocationsCache->allocations.size());
+
+    auto newAllocation = svmManager->createUnifiedMemoryAllocation(allocationSize, *unifiedMemoryProperties);
+    EXPECT_NE(ptr, newAllocation);
+    EXPECT_EQ(1u, svmManager->usmDeviceAllocationsCache->allocations.size());
+
+    svmManager->freeSVMAlloc(newAllocation);
+}
+
+TEST_F(SvmDeviceAllocationCacheIndirectAccessTest, givenAllocationKeptResidentForIndirectAccessWhenFreedBlockingThenItWaitsForTheLatestIndirectSubmission) {
+    *csr->getTagAddress() = latestIndirectTaskCount;
+    svmManager->freeSVMAlloc(ptr, true);
+    EXPECT_EQ(1u, svmManager->usmDeviceAllocationsCache->allocations.size());
+
+    EXPECT_EQ(latestIndirectTaskCount, gpuAllocation->getTaskCount(contextId));
+}
+
 TEST_F(SvmDeviceAllocationCacheTest, givenUsmReuseCleanerWhenTrimOldInCachesCalledThenOldAllocationsAreRemovedIfDeferredDeleterHasNoWork) {
     auto deviceFactory = std::make_unique<UltDeviceFactory>(1, 1);
     DebugManagerStateRestore restore;

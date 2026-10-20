@@ -108,6 +108,7 @@ bool SVMAllocsManager::SvmAllocationCache::insert(size_t size, void *ptr, SvmAll
         }
     }
     if (isSuccess) {
+        svmAllocsManager->applyIndirectAccessTaskCountFloor(svmData);
         if (completionPolicy == CompletionCheckPolicy::waitOnFree) {
             svmAllocsManager->waitForEnginesCompletion(svmData);
         }

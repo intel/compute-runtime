@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/mocks/mock_svm_manager.h"
 #include "shared/test/common/mocks/mock_usm_memory_reuse_cleaner.h"
 #include "shared/test/common/test_macros/test.h"
 namespace NEO {
@@ -34,11 +35,13 @@ TEST(UnifiedMemoryReuseCleanerTestsMt, givenUnifiedMemoryReuseCleanerWhenCachesA
     EXPECT_TRUE(cleaner.isEmpty());
     EXPECT_FALSE(cleaner.trimOldInCachesCalled);
 
+    MockSVMAllocsManager svmAllocsManager(&mockMemoryManager);
     auto svmAllocCache = std::make_unique<SVMAllocsManager::SvmAllocationCache>();
 
     constexpr size_t svmAllocSize = 1024;
     mockMemoryManager.usmReuseInfo.init(svmAllocSize, svmAllocSize);
     svmAllocCache->memoryManager = &mockMemoryManager;
+    svmAllocCache->svmAllocsManager = &svmAllocsManager;
     cleaner.registerSvmAllocationCache(svmAllocCache.get());
 
     // Caches are empty, ensure cleaner thread is still waiting on condition var
