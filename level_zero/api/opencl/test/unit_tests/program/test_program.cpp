@@ -6,6 +6,9 @@
  */
 
 #include "shared/source/compiler_interface/compiler_options.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/device_binary_format/zebin/zebin_elf.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -693,6 +696,172 @@ TEST_F(ClProgramCompileLinkTests, givenUndecodableDeviceBinaryWhenCreateProgramW
 
     clReleaseProgram(program);
     clReleaseContext(clContext);
+}
+
+struct MockZebinCompilerInterface : public L0::ult::MockCompilerInterface {
+    explicit MockZebinCompilerInterface(const NEO::HardwareInfo &hwInfo) : zebin(hwInfo) {}
+
+    NEO::TranslationErrorCode build(const NEO::Device &device,
+                                    const NEO::TranslationInput &input,
+                                    NEO::TranslationOutput &output) override {
+        return emitZebin(output);
+    }
+    NEO::TranslationErrorCode link(const NEO::Device &device,
+                                   const NEO::TranslationInput &input,
+                                   NEO::TranslationOutput &output) override {
+        return emitZebin(output);
+    }
+
+    NEO::TranslationErrorCode emitZebin(NEO::TranslationOutput &output) {
+        output.deviceBinary.mem = makeCopy(zebin.storage.data(), zebin.storage.size());
+        output.deviceBinary.size = zebin.storage.size();
+        return NEO::TranslationErrorCode::success;
+    }
+
+    ZebinTestData::ZebinWithL0TestCommonModule zebin;
+};
+
+struct ClProgramNonUniformWorkGroupTests : public ClProgramCompileLinkTests {
+    void SetUp() override {
+        debugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
+        ClProgramCompileLinkTests::SetUp();
+        neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->compilerInterface.reset(new MockZebinCompilerInterface(device->getHwInfo()));
+        clContext = createOclContext(platform, clDeviceId);
+    }
+
+    void TearDown() override {
+        clReleaseContext(clContext);
+        ClProgramCompileLinkTests::TearDown();
+    }
+
+    cl_program createIlProgram() {
+        cl_int errcode = CL_INVALID_VALUE;
+        auto program = clCreateProgramWithIL(clContext, spirvBlob, sizeof(spirvBlob), &errcode);
+        EXPECT_EQ(CL_SUCCESS, errcode);
+        return program;
+    }
+
+    static bool allowsNonUniform(cl_program program) {
+        return castToObject<Program>(program)->getAllowNonUniform();
+    }
+
+    struct OptionsCase {
+        const char *options;
+        bool expectedAllowNonUniform;
+    };
+    static constexpr OptionsCase optionsCases[] = {
+        {nullptr, false},
+        {"-cl-std=CL1.2", false},
+        {"-cl-std=CL2.0", true},
+        {"-cl-std=CL3.0", true},
+        {"-cl-std=CL3.0 -cl-uniform-work-group-size", false}};
+
+    DebugManagerStateRestore restorer;
+    cl_device_id clDeviceId = nullptr;
+    cl_context clContext = nullptr;
+};
+
+TEST_F(ClProgramNonUniformWorkGroupTests, givenIlProgramWhenBuildProgramThenAllowNonUniformFollowsClStdAndUniformWorkGroupSizeOptions) {
+    for (const auto &optionsCase : optionsCases) {
+        auto program = createIlProgram();
+        ASSERT_NE(nullptr, program);
+        EXPECT_FALSE(allowsNonUniform(program));
+
+        EXPECT_EQ(CL_SUCCESS, clBuildProgram(program, 1, &clDeviceId, optionsCase.options, nullptr, nullptr));
+        EXPECT_EQ(optionsCase.expectedAllowNonUniform, allowsNonUniform(program)) << (optionsCase.options ? optionsCase.options : "nullptr");
+
+        clReleaseProgram(program);
+    }
+}
+
+TEST_F(ClProgramNonUniformWorkGroupTests, givenIlProgramWhenCompileProgramThenAllowNonUniformFollowsClStdAndUniformWorkGroupSizeOptions) {
+    for (const auto &optionsCase : optionsCases) {
+        auto program = createIlProgram();
+        ASSERT_NE(nullptr, program);
+
+        EXPECT_EQ(CL_SUCCESS, clCompileProgram(program, 1, &clDeviceId, optionsCase.options, 0, nullptr, nullptr, nullptr, nullptr));
+        EXPECT_EQ(optionsCase.expectedAllowNonUniform, allowsNonUniform(program)) << (optionsCase.options ? optionsCase.options : "nullptr");
+
+        clReleaseProgram(program);
+    }
+}
+
+TEST_F(ClProgramNonUniformWorkGroupTests, givenProgramBuiltWithClStd20WhenRebuiltWithUniformWorkGroupSizeThenNonUniformIsNoLongerAllowed) {
+    auto program = createIlProgram();
+    ASSERT_NE(nullptr, program);
+
+    EXPECT_EQ(CL_SUCCESS, clBuildProgram(program, 1, &clDeviceId, "-cl-std=CL2.0", nullptr, nullptr));
+    EXPECT_TRUE(allowsNonUniform(program));
+
+    EXPECT_EQ(CL_SUCCESS, clBuildProgram(program, 1, &clDeviceId, "-cl-std=CL2.0 -cl-uniform-work-group-size", nullptr, nullptr));
+    EXPECT_FALSE(allowsNonUniform(program));
+
+    clReleaseProgram(program);
+}
+
+TEST_F(ClProgramNonUniformWorkGroupTests, givenInputProgramsWhenLinkProgramThenNonUniformIsAllowedOnlyWhenEveryInputAllowsIt) {
+    auto nonUniformProgram1 = createIlProgram();
+    auto nonUniformProgram2 = createIlProgram();
+    auto uniformProgram = createIlProgram();
+    ASSERT_NE(nullptr, nonUniformProgram1);
+    ASSERT_NE(nullptr, nonUniformProgram2);
+    ASSERT_NE(nullptr, uniformProgram);
+    EXPECT_EQ(CL_SUCCESS, clCompileProgram(nonUniformProgram1, 1, &clDeviceId, "-cl-std=CL2.0", 0, nullptr, nullptr, nullptr, nullptr));
+    EXPECT_EQ(CL_SUCCESS, clCompileProgram(nonUniformProgram2, 1, &clDeviceId, "-cl-std=CL3.0", 0, nullptr, nullptr, nullptr, nullptr));
+    EXPECT_EQ(CL_SUCCESS, clCompileProgram(uniformProgram, 1, &clDeviceId, "-cl-std=CL1.2", 0, nullptr, nullptr, nullptr, nullptr));
+
+    cl_int errcode = CL_INVALID_VALUE;
+    cl_program allNonUniformInputs[] = {nonUniformProgram1, nonUniformProgram2};
+    auto linkedNonUniform = clLinkProgram(clContext, 1, &clDeviceId, nullptr, 2, allNonUniformInputs, nullptr, nullptr, &errcode);
+    EXPECT_EQ(CL_SUCCESS, errcode);
+    ASSERT_NE(nullptr, linkedNonUniform);
+    EXPECT_TRUE(allowsNonUniform(linkedNonUniform));
+
+    cl_program mixedInputs[] = {nonUniformProgram1, uniformProgram};
+    auto linkedMixed = clLinkProgram(clContext, 1, &clDeviceId, "-cl-std=CL3.0", 2, mixedInputs, nullptr, nullptr, &errcode);
+    EXPECT_EQ(CL_SUCCESS, errcode);
+    ASSERT_NE(nullptr, linkedMixed);
+    EXPECT_FALSE(allowsNonUniform(linkedMixed));
+
+    clReleaseProgram(linkedMixed);
+    clReleaseProgram(linkedNonUniform);
+    clReleaseProgram(uniformProgram);
+    clReleaseProgram(nonUniformProgram2);
+    clReleaseProgram(nonUniformProgram1);
+}
+
+TEST_F(ClProgramNonUniformWorkGroupTests, givenNativeBinaryWhenCreateProgramWithBinaryThenAllowNonUniformFollowsBuildOptionsStoredInBinary) {
+    struct BinaryCase {
+        const char *storedBuildOptions;
+        bool expectedAllowNonUniform;
+    };
+    constexpr BinaryCase binaryCases[] = {
+        {nullptr, false},
+        {"-cl-std=CL1.2", false},
+        {"-cl-std=CL2.0", true},
+        {"-cl-std=CL2.0 -cl-uniform-work-group-size", false}};
+
+    for (const auto &binaryCase : binaryCases) {
+        ZebinTestData::ValidEmptyProgram<> zebin;
+        if (binaryCase.storedBuildOptions) {
+            const NEO::ConstStringRef buildOptions = binaryCase.storedBuildOptions;
+            zebin.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_MISC, NEO::Zebin::Elf::SectionNames::buildOptions,
+                                {reinterpret_cast<const uint8_t *>(buildOptions.data()), buildOptions.size()});
+        }
+        const size_t length = zebin.storage.size();
+        const unsigned char *binary = zebin.storage.data();
+
+        cl_int errcode = CL_INVALID_VALUE;
+        auto program = clCreateProgramWithBinary(clContext, 1, &clDeviceId, &length, &binary, nullptr, &errcode);
+        ASSERT_EQ(CL_SUCCESS, errcode);
+        ASSERT_NE(nullptr, program);
+        EXPECT_EQ(binaryCase.expectedAllowNonUniform, allowsNonUniform(program)) << (binaryCase.storedBuildOptions ? binaryCase.storedBuildOptions : "nullptr");
+
+        EXPECT_EQ(CL_SUCCESS, clBuildProgram(program, 1, &clDeviceId, "-cl-std=CL2.0", nullptr, nullptr));
+        EXPECT_EQ(binaryCase.expectedAllowNonUniform, allowsNonUniform(program)) << (binaryCase.storedBuildOptions ? binaryCase.storedBuildOptions : "nullptr");
+
+        clReleaseProgram(program);
+    }
 }
 
 } // namespace ult

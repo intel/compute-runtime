@@ -652,20 +652,10 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchKernel(
     bool stallingCmdsForRelaxedOrdering = hasStallingCmdsForRelaxedOrdering(numWaitEvents, relaxedOrderingDispatch);
 
     size_t perfCountersCommandsSize = 0;
-    auto *signalEvent = hSignalEvent ? Event::fromHandle(hSignalEvent) : nullptr;
-    if (signalEvent && signalEvent->getPerfCounterNode() != nullptr && !launchParams.makeKernelCommandView) {
-        auto perfCounters = this->device->getNEODevice()->getPerformanceCounters();
-        if (perfCounters) {
-            ze_result_t initializationResult = ZE_RESULT_SUCCESS;
-            auto perfCountersCsr = this->getCsr(false, initializationResult);
-            if (!perfCountersCsr) {
-                return initializationResult;
-            }
-            auto commandBufferType = NEO::EngineHelpers::isCcs(perfCountersCsr->getOsContext().getEngineType())
-                                         ? MetricsLibraryApi::GpuCommandBufferType::Compute
-                                         : MetricsLibraryApi::GpuCommandBufferType::Render;
-            perfCountersCommandsSize = perfCounters->getGpuCommandsSize(commandBufferType, true) +
-                                       perfCounters->getGpuCommandsSize(commandBufferType, false);
+    if (!launchParams.makeKernelCommandView) {
+        auto perfCountersStatus = estimatePerfCountersCommandsSize(hSignalEvent ? Event::fromHandle(hSignalEvent) : nullptr, perfCountersCommandsSize);
+        if (perfCountersStatus != ZE_RESULT_SUCCESS) {
+            return perfCountersStatus;
         }
     }
 
@@ -679,6 +669,53 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchKernel(
                                                                         launchParams);
 
     return flushImmediate(ret, true, stallingCmdsForRelaxedOrdering, relaxedOrderingDispatch, NEO::AppendOperations::kernel, false, hSignalEvent, false, nullptr, nullptr);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::estimatePerfCountersCommandsSize(Event *signalEvent, size_t &perfCountersCommandsSize) {
+    perfCountersCommandsSize = 0;
+    if (signalEvent == nullptr || signalEvent->getPerfCounterNode() == nullptr) {
+        return ZE_RESULT_SUCCESS;
+    }
+    auto perfCounters = this->device->getNEODevice()->getPerformanceCounters();
+    if (perfCounters == nullptr) {
+        return ZE_RESULT_SUCCESS;
+    }
+    ze_result_t initializationResult = ZE_RESULT_SUCCESS;
+    auto perfCountersCsr = this->getCsr(false, initializationResult);
+    if (!perfCountersCsr) {
+        return initializationResult;
+    }
+    auto commandBufferType = NEO::EngineHelpers::isCcs(perfCountersCsr->getOsContext().getEngineType())
+                                 ? MetricsLibraryApi::GpuCommandBufferType::Compute
+                                 : MetricsLibraryApi::GpuCommandBufferType::Render;
+    perfCountersCommandsSize = perfCounters->getGpuCommandsSize(commandBufferType, true) +
+                               perfCounters->getGpuCommandsSize(commandBufferType, false);
+    return ZE_RESULT_SUCCESS;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchKernelNonUniform(
+    ze_kernel_handle_t kernelHandle, const CmdListNonUniformLaunchArgs &launchArgs,
+    ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
+    tryResetKernelWithAssertFlag();
+    relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(numWaitEvents, false);
+
+    size_t perfCountersCommandsSize = 0;
+    auto perfCountersStatus = estimatePerfCountersCommandsSize(hSignalEvent ? Event::fromHandle(hSignalEvent) : nullptr, perfCountersCommandsSize);
+    if (perfCountersStatus != ZE_RESULT_SUCCESS) {
+        return perfCountersStatus;
+    }
+
+    auto spaceCheckStatus = checkAvailableSpace(numWaitEvents, relaxedOrderingDispatch, commonImmediateCommandSize + perfCountersCommandsSize, false);
+    if (spaceCheckStatus != ZE_RESULT_SUCCESS) {
+        return spaceCheckStatus;
+    }
+
+    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelNonUniform(kernelHandle, launchArgs,
+                                                                                  hSignalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
+
+    return flushImmediate(ret, true, hasStallingCmdsForRelaxedOrdering(numWaitEvents, relaxedOrderingDispatch), relaxedOrderingDispatch, NEO::AppendOperations::kernel, false, hSignalEvent, false, nullptr, nullptr);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

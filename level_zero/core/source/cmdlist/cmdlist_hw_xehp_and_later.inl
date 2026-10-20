@@ -375,6 +375,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         .surfaceStateHeap = ssh,
         .dynamicStateHeap = dsh,
         .threadGroupDimensions = reinterpret_cast<const void *>(&threadGroupDimensions),
+        .threadGroupStart = launchParams.nonUniformLaunchRegion ? launchParams.nonUniformLaunchRegion->groupStart : nullptr,
         .outWalkerPtr = nullptr,
         .outWalkerGpuVa = 0,
         .cpuWalkerBuffer = launchParams.cmdWalkerBuffer,
@@ -427,34 +428,15 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     setAdditionalDispatchKernelArgsFromLaunchParams(dispatchKernelArgs, launchParams);
     setAdditionalDispatchKernelArgsFromKernel(dispatchKernelArgs, kernel);
 
-    MetricsLibraryApi::GpuCommandBufferType perfCounterCmdBufferType = MetricsLibraryApi::GpuCommandBufferType::Render;
     if (dispatchPerfCounters) {
-        bool isCcs = false;
-        if (isImmediateType()) {
-            isCcs = NEO::EngineHelpers::isCcs(this->getCsr(false)->getOsContext().getEngineType());
-        } else {
-            isCcs = engineGroupType != NEO::EngineGroupType::renderCompute;
-        }
-        perfCounterCmdBufferType = isCcs ? MetricsLibraryApi::GpuCommandBufferType::Compute
-                                         : MetricsLibraryApi::GpuCommandBufferType::Render;
-        commandContainer.addToResidencyContainer(perfCounterNode->getBaseGraphicsAllocation()->getGraphicsAllocation(neoDevice->getRootDeviceIndex()));
-
-        auto beginSize = perfCounters->getGpuCommandsSize(perfCounterCmdBufferType, true);
-        if (beginSize > 0) {
-            auto beginBuffer = commandContainer.getCommandStream()->getSpace(beginSize);
-            perfCounters->getGpuCommands(perfCounterCmdBufferType, *perfCounterNode, true, beginSize, beginBuffer);
-        }
+        appendPerfCountersCommands(*perfCounters, *perfCounterNode, true);
     }
 
     NEO::EncodeDispatchKernel<GfxFamily>::encodeCommon(commandContainer, dispatchKernelArgs);
     launchParams.outWalker = dispatchKernelArgs.outWalkerPtr;
 
     if (dispatchPerfCounters) {
-        auto endSize = perfCounters->getGpuCommandsSize(perfCounterCmdBufferType, false);
-        if (endSize > 0) {
-            auto endBuffer = commandContainer.getCommandStream()->getSpace(endSize);
-            perfCounters->getGpuCommands(perfCounterCmdBufferType, *perfCounterNode, false, endSize, endBuffer);
-        }
+        appendPerfCountersCommands(*perfCounters, *perfCounterNode, false);
 
         if (inOrderExecSignalRequired && signalCounterAfterPerfCountersQueryEnd) {
             appendSignalInOrderDependencyCounter(event, false, true, false, false);

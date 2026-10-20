@@ -471,6 +471,35 @@ TEST_F(ClDeviceInfoTest, givenDeviceVersionWhenGetDeviceInfoThenLeoMarkerIsRepor
     EXPECT_NE(nullptr, strstr(version.data(), "LEO"));
 }
 
+template <int32_t leoEnableNonUniformWorkGroups>
+struct ClDeviceNonUniformWorkGroupInfoTest : public ClDeviceInfoTest {
+    void SetUp() override {
+        debugManager.flags.LeoEnableNonUniformWorkGroups.set(leoEnableNonUniformWorkGroups);
+        ClDeviceInfoTest::SetUp();
+    }
+
+    cl_bool queryNonUniformWorkGroupSupport() {
+        cl_bool support = CL_TRUE;
+        size_t retSize = 0;
+        EXPECT_EQ(CL_SUCCESS, clDevice->getDeviceInfo(CL_DEVICE_NON_UNIFORM_WORK_GROUP_SUPPORT, sizeof(support), &support, &retSize));
+        EXPECT_EQ(sizeof(cl_bool), retSize);
+        return support;
+    }
+
+    DebugManagerStateRestore restorer;
+};
+
+using ClDeviceDefaultNonUniformWorkGroupInfoTest = ClDeviceNonUniformWorkGroupInfoTest<-1>;
+using ClDeviceEnabledNonUniformWorkGroupInfoTest = ClDeviceNonUniformWorkGroupInfoTest<1>;
+
+TEST_F(ClDeviceDefaultNonUniformWorkGroupInfoTest, givenDefaultLeoEnableNonUniformWorkGroupsWhenQueryingNonUniformWorkGroupSupportThenFalseIsReturned) {
+    EXPECT_EQ(static_cast<cl_bool>(CL_FALSE), queryNonUniformWorkGroupSupport());
+}
+
+TEST_F(ClDeviceEnabledNonUniformWorkGroupInfoTest, givenLeoEnableNonUniformWorkGroupsEnabledWhenQueryingNonUniformWorkGroupSupportThenFalseIsStillReturned) {
+    EXPECT_EQ(static_cast<cl_bool>(CL_FALSE), queryNonUniformWorkGroupSupport());
+}
+
 } // namespace ult
 } // namespace LEO
 } // namespace NEO

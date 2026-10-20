@@ -42,6 +42,13 @@ bool requiresAdditionalExtensions(const std::string &compileOptions) {
     return (getMajorMinorVersion(compileOptions).first == 2);
 }
 
+bool isNonUniformWorkGroupAllowed(const std::string &compileOptions) {
+    constexpr uint32_t minimalVersionWithNonUniformWorkGroups = 20u;
+    auto [majorVersion, minorVersion] = getMajorMinorVersion(compileOptions);
+    return (majorVersion * 10u + minorVersion >= minimalVersionWithNonUniformWorkGroups) &&
+           !CompilerOptions::contains(compileOptions, CompilerOptions::uniformWorkgroupSize);
+}
+
 bool isOclVersionBelow12(const std::string &compileOptions) {
     auto [majorVersion, minorVersion] = getMajorMinorVersion(compileOptions);
     return majorVersion == 1 && minorVersion < 2;

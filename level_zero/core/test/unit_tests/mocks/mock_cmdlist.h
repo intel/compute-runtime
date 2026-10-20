@@ -437,6 +437,13 @@ struct Mock<CommandList> : public CommandList {
                       uint32_t numWaitEvents,
                       ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch));
 
+    ADDMETHOD_NOBASE(appendLaunchKernelNonUniform, ze_result_t, ZE_RESULT_SUCCESS,
+                     (ze_kernel_handle_t kernelHandle,
+                      const CmdListNonUniformLaunchArgs &launchArgs,
+                      ze_event_handle_t hEvent,
+                      uint32_t numWaitEvents,
+                      ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch));
+
     ADDMETHOD_NOBASE(appendLaunchMultipleKernelsIndirect, ze_result_t, ZE_RESULT_SUCCESS,
                      (uint32_t numKernels,
                       const ze_kernel_handle_t *kernelHandles,

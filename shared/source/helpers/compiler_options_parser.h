@@ -20,6 +20,7 @@ struct HardwareInfo;
 
 bool requiresOpenClCFeatures(const std::string &compileOptions);
 bool requiresAdditionalExtensions(const std::string &compileOptions);
+bool isNonUniformWorkGroupAllowed(const std::string &compileOptions);
 
 bool requiresL1PolicyMissmatchCheck();
 bool replaceL1CachePolicyInBuildOptions(std::string &buildOptions, const char *currentCachePolicy);

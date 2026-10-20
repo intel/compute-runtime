@@ -32,6 +32,7 @@
 
 #include "level_zero/api/core/ze_module_api_entrypoints.h"
 #include "level_zero/api/internal/l0_module.h"
+#include "level_zero/core/source/cmdlist/cmdlist_launch_params.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/image/image_format_desc_helper.h"
 #include "level_zero/core/source/image/image_hw.h"
@@ -5236,6 +5237,44 @@ TEST_F(KernelImplicitArgTests, givenKernelWithImplicitArgsWhenSettingKernelParam
     kernel->setGlobalOffsetExp(1, 2, 3);
     kernel->patchGlobalOffset();
     EXPECT_EQ(0, memcmp(pImplicitArgs, &expectedImplicitArgs, ImplicitArgsV0::getSize()));
+}
+
+TEST_F(KernelImplicitArgTests, givenKernelWithImplicitArgsWhenPatchingNonUniformLaunchParamsThenImplicitArgsHoldEnqueuedRange) {
+    std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(0u);
+    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.requiresImplicitArgs = true;
+
+    createModuleFromMockBinary(0u, false, mockKernelImmData.get());
+
+    auto kernel = std::make_unique<MockKernel>(module.get());
+
+    ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
+    kernel->initialize(&kernelDesc);
+
+    auto pImplicitArgs = kernel->getImplicitArgs();
+    ASSERT_NE(nullptr, pImplicitArgs);
+
+    CmdListNonUniformLaunchArgs launchArgs{};
+    launchArgs.globalWorkSize[0] = 10u;
+    launchArgs.globalWorkSize[1] = 7u;
+    launchArgs.enqueuedGroupSize[0] = 4u;
+    launchArgs.enqueuedGroupSize[1] = 3u;
+    launchArgs.workDim = 2u;
+    const CmdListNonUniformLaunch nonUniformLaunch(launchArgs);
+
+    kernel->setGroupSize(2, 3, 1);
+    kernel->setGroupCount(1, 2, 1);
+    kernel->patchNonUniformLaunchParams(nonUniformLaunch);
+
+    EXPECT_EQ(2u, pImplicitArgs->v0.numWorkDim);
+    EXPECT_EQ(2u, pImplicitArgs->v0.localSizeX);
+    EXPECT_EQ(3u, pImplicitArgs->v0.localSizeY);
+    EXPECT_EQ(1u, pImplicitArgs->v0.localSizeZ);
+    EXPECT_EQ(10u, pImplicitArgs->v0.globalSizeX);
+    EXPECT_EQ(7u, pImplicitArgs->v0.globalSizeY);
+    EXPECT_EQ(1u, pImplicitArgs->v0.globalSizeZ);
+    EXPECT_EQ(3u, pImplicitArgs->v0.groupCountX);
+    EXPECT_EQ(3u, pImplicitArgs->v0.groupCountY);
+    EXPECT_EQ(1u, pImplicitArgs->v0.groupCountZ);
 }
 
 TEST_F(KernelImplicitArgTests, givenModuleWithImplicitArgsVersionWhenCreatingKernelThenImplicitArgsVersionFromModuleIsUsed) {

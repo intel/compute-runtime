@@ -178,6 +178,7 @@ cl_int Program::createFromBinaryOrIl(cl_device_id device, size_t length, const u
     if (ZE_RESULT_SUCCESS == ret) {
         this->moduleHandles[rootDeviceIndex] = moduleHandle;
         this->programBinaryType = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
+        this->allowNonUniform = NEO::isNonUniformWorkGroupAllowed(this->getL0Object(rootDeviceIndex)->getTranslationUnit()->options);
         this->setBuildStatus(CL_BUILD_SUCCESS);
     } else {
         this->programBinaryType = CL_PROGRAM_BINARY_TYPE_NONE;
@@ -346,6 +347,7 @@ cl_int Program::build(const char *options,
         retVal = this->buildFromIL(options);
     }
     if (CL_SUCCESS == retVal) {
+        this->allowNonUniform = NEO::isNonUniformWorkGroupAllowed(options ? options : "");
         this->setBuildStatus(CL_BUILD_SUCCESS);
     }
     this->invokeCallback(funcNotify, userData);
@@ -372,6 +374,7 @@ cl_int Program::compile(const char *options, cl_uint numInputHeaders,
         retVal = CL_SUCCESS;
     }
     if (CL_SUCCESS == retVal) {
+        this->allowNonUniform = NEO::isNonUniformWorkGroupAllowed(options ? options : "");
         this->setBuildStatus(CL_BUILD_SUCCESS);
     }
     this->invokeCallback(funcNotify, userData);
@@ -396,11 +399,13 @@ cl_int Program::link(const char *options, cl_uint numInputPrograms, const cl_pro
     std::vector<ModuleConstants> spirvModuleConstants;
     std::vector<const uint8_t *> llvmbcBinaries;
     std::vector<size_t> llvmbcBinariesSizes;
+    bool allInputsAllowNonUniform = true;
     for (uint32_t i = 0; i < numInputPrograms; ++i) {
         auto inProgram = NEO::LEO::castToObject<NEO::LEO::Program>(inputPrograms[i]);
         if (nullptr == inProgram) {
             return CL_INVALID_PROGRAM;
         }
+        allInputsAllowNonUniform = allInputsAllowNonUniform && inProgram->getAllowNonUniform();
         auto irBinary = reinterpret_cast<const uint8_t *>(inProgram->getIrBinary());
         auto irBinarySize = inProgram->getIrBinarySize();
         if (nullptr == irBinary || 0u == irBinarySize) [[unlikely]] {
@@ -449,6 +454,7 @@ cl_int Program::link(const char *options, cl_uint numInputPrograms, const cl_pro
     if (CL_SUCCESS != ret) {
         return ret;
     }
+    this->allowNonUniform = allInputsAllowNonUniform;
 
     if (options && NEO::CompilerOptions::contains(options, NEO::CompilerOptions::createLibrary)) {
         // A library output (LLVM BC) can itself be a link input later; copy its IR into the

@@ -525,7 +525,7 @@ CL_API_ENTRY cl_int CL_API_CALL clCommandNDRangeKernelKHR(
         result = pCommandBuffer->appendSyncPointBarrier(numSyncPointsInWaitList);
     } else {
         ze_group_count_t wgc{};
-        retVal = pKernel->setupDispatch(*pDevice, workDim, globalWorkOffset, globalWorkSize, localWorkSize, wgc);
+        retVal = pKernel->setupDispatch(*pDevice, workDim, globalWorkOffset, globalWorkSize, localWorkSize, wgc, nullptr);
         if (retVal != CL_SUCCESS) {
             return retVal;
         }

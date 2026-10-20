@@ -5,8 +5,10 @@
  *
  */
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/kernel/kernel_execution_type.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/api/opencl/source/api/leo_api.h"
@@ -276,6 +278,104 @@ TEST_F(EnqueueKernelEventFixture, givenGroupCountAboveUint32WhenEnqueueNDRangeKe
     EXPECT_EQ(0u, capturingCmdList.totalCalls());
 
     EXPECT_EQ(CL_SUCCESS, clReleaseEvent(waitEvent));
+}
+
+struct WhiteBoxNonUniformProgram : public Program {
+    using Program::allowNonUniform;
+    using Program::Program;
+};
+
+template <int32_t leoEnableNonUniformWorkGroups>
+struct EnqueueNonUniformKernelFixture : public Test<LeoCaptureFixture> {
+    void SetUp() override {
+        debugManager.flags.LeoEnableNonUniformWorkGroups.set(leoEnableNonUniformWorkGroups);
+        Test<LeoCaptureFixture>::SetUp();
+        l0Kernel = std::make_unique<L0::ult::Mock<L0::KernelImp>>();
+        l0Kernel->privateState.groupSize[0] = enqueuedGroupSize[0];
+        l0Kernel->privateState.groupSize[1] = enqueuedGroupSize[1];
+        l0Kernel->privateState.groupSize[2] = enqueuedGroupSize[2];
+        program = std::make_unique<WhiteBoxNonUniformProgram>(context);
+        program->allowNonUniform = true;
+        std::map<uint32_t, ze_kernel_handle_t> kernelHandles{{0u, l0Kernel->toHandle()}};
+        kernel = std::make_unique<Kernel>(std::move(kernelHandles), program.get());
+    }
+
+    void TearDown() override {
+        kernel.reset();
+        program.reset();
+        l0Kernel.release();
+        Test<LeoCaptureFixture>::TearDown();
+    }
+
+    cl_int enqueue(const size_t *globalWorkSize) {
+        return clEnqueueNDRangeKernel(getCommandQueue(), kernel.get(), 2, nullptr, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
+    }
+
+    static constexpr uint32_t enqueuedGroupSize[3] = {4u, 3u, 1u};
+    const size_t localWorkSize[3] = {enqueuedGroupSize[0], enqueuedGroupSize[1], enqueuedGroupSize[2]};
+    const size_t nonUniformGlobalWorkSize[3] = {10u, 7u, 1u};
+    const size_t uniformGlobalWorkSize[3] = {8u, 6u, 1u};
+
+    DebugManagerStateRestore restorer;
+    std::unique_ptr<L0::ult::Mock<L0::KernelImp>> l0Kernel;
+    std::unique_ptr<WhiteBoxNonUniformProgram> program;
+    std::unique_ptr<Kernel> kernel;
+};
+
+using EnqueueNonUniformKernelDefaultFixture = EnqueueNonUniformKernelFixture<-1>;
+using EnqueueNonUniformKernelEnabledFixture = EnqueueNonUniformKernelFixture<1>;
+
+TEST_F(EnqueueNonUniformKernelDefaultFixture, givenDefaultLeoEnableNonUniformWorkGroupsWhenEnqueueNDRangeKernelWithNonUniformRangeThenInvalidWorkGroupSizeIsReturned) {
+    EXPECT_EQ(CL_INVALID_WORK_GROUP_SIZE, enqueue(nonUniformGlobalWorkSize));
+    EXPECT_EQ(0u, capturingCmdList.totalCalls());
+}
+
+TEST_F(EnqueueNonUniformKernelEnabledFixture, givenProgramNotAllowingNonUniformWhenEnqueueNDRangeKernelWithNonUniformRangeThenInvalidWorkGroupSizeIsReturned) {
+    program->allowNonUniform = false;
+    EXPECT_EQ(CL_INVALID_WORK_GROUP_SIZE, enqueue(nonUniformGlobalWorkSize));
+    EXPECT_EQ(0u, capturingCmdList.totalCalls());
+}
+
+TEST_F(EnqueueNonUniformKernelEnabledFixture, givenKernelWithRequiredWorkGroupSizeWhenEnqueueNDRangeKernelWithNonUniformRangeThenNonUniformLaunchWithRequiredGroupSizeIsAppended) {
+    l0Kernel->getDescriptor().kernelAttributes.requiredWorkgroupSize[0] = static_cast<uint16_t>(enqueuedGroupSize[0]);
+    l0Kernel->getDescriptor().kernelAttributes.requiredWorkgroupSize[1] = static_cast<uint16_t>(enqueuedGroupSize[1]);
+    l0Kernel->getDescriptor().kernelAttributes.requiredWorkgroupSize[2] = static_cast<uint16_t>(enqueuedGroupSize[2]);
+    EXPECT_EQ(CL_SUCCESS, clEnqueueNDRangeKernel(getCommandQueue(), kernel.get(), 2, nullptr, nonUniformGlobalWorkSize, nullptr, 0, nullptr, nullptr));
+
+    ASSERT_EQ(1u, capturingCmdList.appendLaunchKernelNonUniformArgs.count());
+    const auto &captured = capturingCmdList.appendLaunchKernelNonUniformArgs[0];
+    for (uint32_t dim = 0u; dim < 3u; dim++) {
+        EXPECT_EQ(enqueuedGroupSize[dim], captured.launchArgs.enqueuedGroupSize[dim]);
+    }
+}
+
+TEST_F(EnqueueNonUniformKernelEnabledFixture, givenGlobalWorkSizeAboveUint32WhenEnqueueNDRangeKernelWithNonUniformRangeThenInvalidGlobalWorkSizeIsReturned) {
+    const size_t globalWorkSize[3] = {static_cast<size_t>(std::numeric_limits<uint32_t>::max()) + 2u, 7u, 1u};
+    EXPECT_EQ(CL_INVALID_GLOBAL_WORK_SIZE, enqueue(globalWorkSize));
+    EXPECT_EQ(0u, capturingCmdList.totalCalls());
+}
+
+TEST_F(EnqueueNonUniformKernelEnabledFixture, givenLeoEnableNonUniformWorkGroupsWhenEnqueueNDRangeKernelWithNonUniformRangeThenNonUniformLaunchIsAppended) {
+    EXPECT_EQ(CL_SUCCESS, enqueue(nonUniformGlobalWorkSize));
+
+    EXPECT_FALSE(capturingCmdList.appendLaunchKernelArgs.wasCalled());
+    ASSERT_EQ(1u, capturingCmdList.appendLaunchKernelNonUniformArgs.count());
+    const auto &captured = capturingCmdList.appendLaunchKernelNonUniformArgs[0];
+    EXPECT_EQ(l0Kernel->toHandle(), captured.kernel);
+    EXPECT_EQ(2u, captured.launchArgs.workDim);
+    for (uint32_t dim = 0u; dim < 3u; dim++) {
+        EXPECT_EQ(nonUniformGlobalWorkSize[dim], captured.launchArgs.globalWorkSize[dim]);
+        EXPECT_EQ(enqueuedGroupSize[dim], captured.launchArgs.enqueuedGroupSize[dim]);
+    }
+}
+
+TEST_F(EnqueueNonUniformKernelEnabledFixture, givenLeoEnableNonUniformWorkGroupsWhenEnqueueNDRangeKernelWithUniformRangeThenRegularLaunchIsAppended) {
+    EXPECT_EQ(CL_SUCCESS, enqueue(uniformGlobalWorkSize));
+
+    EXPECT_FALSE(capturingCmdList.appendLaunchKernelNonUniformArgs.wasCalled());
+    ASSERT_EQ(1u, capturingCmdList.appendLaunchKernelArgs.count());
+    EXPECT_EQ(2u, capturingCmdList.appendLaunchKernelArgs[0].groupCount.groupCountX);
+    EXPECT_EQ(2u, capturingCmdList.appendLaunchKernelArgs[0].groupCount.groupCountY);
 }
 
 struct EnqueueSvmFixture : public Test<LeoCaptureFixture> {

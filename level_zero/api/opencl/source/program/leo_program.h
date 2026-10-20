@@ -86,6 +86,7 @@ class Program : public BaseObject<_cl_program> {
     const char *getIrBinary() const;
     size_t getIrBinarySize() const;
     bool getIsSpirv() const;
+    bool getAllowNonUniform() const { return this->allowNonUniform; }
     ze_module_handle_t getModuleHandle() const;
     ze_module_handle_t getModuleHandle(uint32_t rootDeviceIndex) const;
     const std::map<uint32_t, ze_module_handle_t> &getModuleHandles() const { return this->moduleHandles; }
@@ -143,6 +144,7 @@ class Program : public BaseObject<_cl_program> {
     CreatedFrom createdFrom = CreatedFrom::unknown;
     cl_build_status buildStatus = CL_BUILD_NONE;
     bool isSpirv = false;
+    bool allowNonUniform = false;
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<Program>);

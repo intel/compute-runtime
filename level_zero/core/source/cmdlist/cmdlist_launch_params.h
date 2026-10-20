@@ -10,13 +10,38 @@
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 
 #include "level_zero/core/source/cmdlist/command_to_patch.h"
+#include <level_zero/ze_api.h>
 
 #include "cmdlist_launch_params_ext.h"
 
+#include <array>
 #include <cstddef>
 #include <cstdint>
 
 namespace L0 {
+
+struct CmdListNonUniformLaunchArgs {
+    uint32_t globalWorkSize[3] = {1u, 1u, 1u};
+    uint32_t enqueuedGroupSize[3] = {1u, 1u, 1u};
+    uint32_t workDim = 1u;
+};
+
+struct CmdListNonUniformLaunchRegion {
+    uint32_t groupSize[3] = {1u, 1u, 1u};
+    uint32_t groupStart[3] = {0u, 0u, 0u};
+    ze_group_count_t groupCount = {1u, 1u, 1u};
+};
+
+struct CmdListNonUniformLaunch {
+    static constexpr uint32_t maxRegionCount = 8u;
+
+    explicit CmdListNonUniformLaunch(const CmdListNonUniformLaunchArgs &launchArgs);
+
+    CmdListNonUniformLaunchArgs args;
+    std::array<CmdListNonUniformLaunchRegion, maxRegionCount> regions{};
+    uint32_t regionCount = 0u;
+    uint32_t totalGroupCount[3] = {1u, 1u, 1u};
+};
 
 struct CmdListKernelLaunchParams {
     void *outWalker = nullptr;
@@ -25,6 +50,8 @@ struct CmdListKernelLaunchParams {
     CommandToPatchInCmdList *outSyncCommand = nullptr;
     CommandToPatchContainer *outListCommands = nullptr;
     CmdListKernelLaunchParamsExt launchParamsExt{};
+    const CmdListNonUniformLaunch *nonUniformLaunch = nullptr;
+    const CmdListNonUniformLaunchRegion *nonUniformLaunchRegion = nullptr;
     size_t syncBufferPatchIndex = std::numeric_limits<size_t>::max();
     size_t scratchAddressPatchIndex = std::numeric_limits<size_t>::max();
     uint32_t externalPerThreadScratchSize[2] = {0U, 0U};

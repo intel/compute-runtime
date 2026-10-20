@@ -643,7 +643,7 @@ void Program::updateNonUniformFlag() {
         programOptionVersion = majorV * 10u + minorV;
     }
 
-    if (programOptionVersion >= 20u && (false == CompilerOptions::contains(options, CompilerOptions::uniformWorkgroupSize))) {
+    if (isNonUniformWorkGroupAllowed(options)) {
         allowNonUniform = true;
     }
 }

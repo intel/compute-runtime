@@ -11,10 +11,12 @@
 #include "level_zero/api/opencl/source/api/leo_cl_types.h"
 #include "level_zero/api/opencl/source/helpers/leo_base_object.h"
 #include "level_zero/api/opencl/source/program/leo_program.h"
+#include "level_zero/core/source/cmdlist/cmdlist_launch_params.h"
 #include "level_zero/core/source/kernel/kernel.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
 
 #include <map>
+#include <optional>
 
 namespace NEO {
 namespace LEO {
@@ -57,7 +59,8 @@ class Kernel : public BaseObject<_cl_kernel> {
     cl_int getSuggestedLocalWorkSize(const ClDevice &clDevice, cl_uint workDim, const size_t *globalWorkSize,
                                      size_t *suggestedLocalWorkSize);
     cl_int setupDispatch(const ClDevice &clDevice, cl_uint workDim, const size_t *globalWorkOffset,
-                         const size_t *globalWorkSize, const size_t *localWorkSize, ze_group_count_t &groupCount);
+                         const size_t *globalWorkSize, const size_t *localWorkSize, ze_group_count_t &groupCount,
+                         std::optional<L0::CmdListNonUniformLaunchArgs> *nonUniformLaunchArgs);
     cl_int getMaxConcurrentWorkGroupCount(cl_uint workDim, const size_t *localWorkSize, size_t *suggestedWorkGroupCount);
     Context *getContext() const { return this->program->getContext(); }
 
@@ -94,6 +97,9 @@ class Kernel : public BaseObject<_cl_kernel> {
     const std::map<uint32_t, ze_kernel_handle_t> &getKernelHandles() const { return this->kernelHandles; };
 
   protected:
+    cl_int setupNonUniformDispatch(cl_uint workDim, const size_t *globalWorkSize, const uint32_t *groupSize,
+                                   std::optional<L0::CmdListNonUniformLaunchArgs> &nonUniformLaunchArgs) const;
+
     Kernel *clonedFromKernel = nullptr;
 
     std::vector<bool> argsSet{};

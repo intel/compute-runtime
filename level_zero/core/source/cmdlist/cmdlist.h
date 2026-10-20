@@ -61,6 +61,7 @@ class TagNodeBase;
 struct EncodeDispatchKernelArgs;
 class CommandStreamReceiver;
 class GraphicsAllocation;
+class PerformanceCounters;
 struct HostFunction;
 enum class TransferDirection;
 } // namespace NEO
@@ -74,6 +75,7 @@ struct KernelImp;
 struct CommandListExecutionInternalOptions;
 struct CommandQueue;
 struct CmdListKernelLaunchParams;
+struct CmdListNonUniformLaunchArgs;
 struct CmdListMemoryCopyParams;
 struct CmdListHostFunctionParameters;
 struct CmdListCustomOperationParams;
@@ -181,6 +183,10 @@ struct CommandList : _ze_command_list_handle_t {
                                                    const ze_group_count_t &pDispatchArgumentsBuffer,
                                                    ze_event_handle_t hEvent, uint32_t numWaitEvents,
                                                    ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) = 0;
+    virtual ze_result_t appendLaunchKernelNonUniform(ze_kernel_handle_t kernelHandle,
+                                                     const CmdListNonUniformLaunchArgs &launchArgs,
+                                                     ze_event_handle_t hEvent, uint32_t numWaitEvents,
+                                                     ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) = 0;
     virtual ze_result_t appendLaunchMultipleKernelsIndirect(uint32_t numKernels, const ze_kernel_handle_t *kernelHandles,
                                                             const uint32_t *pNumLaunchArguments,
                                                             const ze_group_count_t *pLaunchArgumentsBuffer, ze_event_handle_t hEvent,

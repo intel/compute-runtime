@@ -24,6 +24,7 @@
 #include "shared/test/common/mocks/mock_sync_buffer_handler.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/core/source/cmdlist/cmdlist_launch_params.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/event/event.h"
@@ -1419,6 +1420,65 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenEventWithPerfCounterNodeWhenAppend
     auto perfConsumed = perfCmdList->getCmdContainer().getCommandStream()->getUsed() - perfUsedBefore;
 
     EXPECT_GT(perfConsumed, baselineConsumed);
+
+    event->setPerfCounterNode(nullptr);
+    perfCounterNode->returnTag();
+}
+
+HWTEST2_F(CommandListAppendLaunchKernel, givenEventWithPerfCounterNodeWhenAppendLaunchKernelNonUniformThenPerfCountersQueryWrapsAllRegionWalkersOnce, IsAtLeastXeCore) {
+    neoDevice->setPerfCounters(std::make_unique<MockPerformanceCounters>());
+    auto perfCounters = neoDevice->getPerformanceCounters();
+
+    createKernel();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, kernel->setGroupSize(4u, 3u, 1u));
+
+    CmdListNonUniformLaunchArgs launchArgs{};
+    launchArgs.globalWorkSize[0] = 10u;
+    launchArgs.globalWorkSize[1] = 7u;
+    launchArgs.enqueuedGroupSize[0] = 4u;
+    launchArgs.enqueuedGroupSize[1] = 3u;
+    launchArgs.workDim = 2u;
+
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+    eventPoolDesc.count = 1;
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, returnValue));
+    ASSERT_NE(nullptr, event.get());
+
+    auto appendAndMeasure = [&](L0::CommandList &commandList) {
+        auto commandStream = commandList.getCmdContainer().getCommandStream();
+        auto usedBefore = commandStream->getUsed();
+        EXPECT_EQ(ZE_RESULT_SUCCESS, commandList.appendLaunchKernelNonUniform(kernel->toHandle(), launchArgs, event->toHandle(), 0u, nullptr, false));
+        return commandStream->getUsed() - usedBefore;
+    };
+
+    auto baselineCmdList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, baselineCmdList->initialize(device, NEO::EngineGroupType::compute, 0u));
+    const auto baselineConsumed = appendAndMeasure(*baselineCmdList);
+
+    const uint32_t gpuReportSize = NEO::HwPerfCounter::getSize(*perfCounters);
+    auto perfCounterNode = neoDevice->getDefaultEngine().commandStreamReceiver->getEventPerfCountAllocator(gpuReportSize)->getTag();
+    event->setPerfCounterNode(perfCounterNode);
+
+    auto perfCmdList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, perfCmdList->initialize(device, NEO::EngineGroupType::compute, 0u));
+    const auto perfConsumed = appendAndMeasure(*perfCmdList);
+
+    const auto perfQuerySize = perfCounters->getGpuCommandsSize(MetricsLibraryApi::GpuCommandBufferType::Compute, true) +
+                               perfCounters->getGpuCommandsSize(MetricsLibraryApi::GpuCommandBufferType::Compute, false);
+    EXPECT_NE(0u, perfQuerySize);
+    EXPECT_EQ(baselineConsumed + perfQuerySize, perfConsumed);
+
+    ze_command_queue_desc_t queueDesc = {};
+    queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    std::unique_ptr<L0::CommandList> immediateCmdList(CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immediateCmdList->appendLaunchKernelNonUniform(kernel->toHandle(), launchArgs, event->toHandle(), 0u, nullptr, false));
 
     event->setPerfCounterNode(nullptr);
     perfCounterNode->returnTag();

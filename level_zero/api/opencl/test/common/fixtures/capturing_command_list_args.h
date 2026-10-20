@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "level_zero/core/source/cmdlist/cmdlist_launch_params.h"
 #include "level_zero/core/source/cmdlist/cmdlist_signal_event_parameters.h"
 #include "level_zero/core/source/cmdlist/cmdlist_wait_event_parameters.h"
 #include "level_zero/driver_experimental/zex_cmdlist.h"
@@ -110,6 +111,18 @@ struct AppendLaunchKernelArgs {
     AppendLaunchKernelArgs(ze_kernel_handle_t kernel, const ze_group_count_t &groupCount, ze_event_handle_t signalEvent,
                            uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents)
         : kernel(kernel), groupCount(groupCount), signalEvent(signalEvent),
+          waitEvents(copyWaitEvents(numWaitEvents, phWaitEvents)) {}
+};
+
+struct AppendLaunchKernelNonUniformArgs {
+    ze_kernel_handle_t kernel;
+    L0::CmdListNonUniformLaunchArgs launchArgs;
+    ze_event_handle_t signalEvent;
+    EventHandles waitEvents;
+
+    AppendLaunchKernelNonUniformArgs(ze_kernel_handle_t kernel, const L0::CmdListNonUniformLaunchArgs &launchArgs, ze_event_handle_t signalEvent,
+                                     uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents)
+        : kernel(kernel), launchArgs(launchArgs), signalEvent(signalEvent),
           waitEvents(copyWaitEvents(numWaitEvents, phWaitEvents)) {}
 };
 

@@ -59,9 +59,12 @@ struct KernelImp : Kernel {
 
     void setGroupCount(uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ) override;
     void patchRegionParams(const CmdListKernelLaunchParams &launchParams, const ze_group_count_t &threadGroupDimensions) override;
+    void patchNonUniformLaunchParams(const CmdListNonUniformLaunch &nonUniformLaunch) override;
 
     ze_result_t setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
                              uint32_t groupSizeZ) override;
+    ze_result_t setNonUniformRegionGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
+                                             uint32_t groupSizeZ) override;
 
     ze_result_t suggestGroupSize(uint32_t globalSizeX, uint32_t globalSizeY, uint32_t globalSizeZ,
                                  uint32_t *groupSizeX, uint32_t *groupSizeY,
@@ -253,6 +256,7 @@ struct KernelImp : Kernel {
     void *patchBindlessSurfaceState(NEO::GraphicsAllocation *alloc, uint32_t bindless);
     uint32_t getSurfaceStateIndexForBindlessOffset(NEO::CrossThreadDataOffset bindlessOffset) const;
     ze_result_t validateWorkgroupSize() const;
+    ze_result_t applyGroupSize(uint32_t groupSizeX, uint32_t groupSizeY, uint32_t groupSizeZ, bool validateRequiredWorkgroupSize);
     ArrayRef<uint8_t> getCrossThreadDataSpan() { return ArrayRef<uint8_t>(privateState.crossThreadData.data(), privateState.crossThreadData.size()); }
     ArrayRef<uint8_t> getSurfaceStateHeapDataSpan() { return ArrayRef<uint8_t>(privateState.surfaceStateHeapData.data(), privateState.surfaceStateHeapData.size()); }
     ArrayRef<uint8_t> getDynamicStateHeapDataSpan() { return ArrayRef<uint8_t>(privateState.dynamicStateHeapData.data(), privateState.dynamicStateHeapData.size()); }

@@ -23,6 +23,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 
+#include "level_zero/core/source/cmdlist/cmdlist_launch_params.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/kernel/kernel_shared_state.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
@@ -322,6 +323,52 @@ TEST_F(KernelImpTest, GivenCrossThreadDataThenIsCorrectlyPatchedWithGlobalWorkSi
     EXPECT_EQ(7U, numGroups[0]);
     EXPECT_EQ(11U, numGroups[1]);
     EXPECT_EQ(13U, numGroups[2]);
+
+    kernel.privateState.crossThreadData.clear();
+}
+
+TEST_F(KernelImpTest, givenNonUniformLaunchWhenPatchingNonUniformLaunchParamsThenCrossThreadDataHoldsEnqueuedRange) {
+    WhiteBox<::L0::KernelImmutableData> kernelInfo = {};
+    NEO::KernelDescriptor descriptor;
+    kernelInfo.kernelDescriptor = &descriptor;
+    auto &dispatchTraits = kernelInfo.kernelDescriptor->payloadMappings.dispatchTraits;
+    for (uint32_t dim = 0u; dim < 3u; dim++) {
+        dispatchTraits.globalWorkSize[dim] = static_cast<NEO::CrossThreadDataOffset>((0u + dim) * sizeof(uint32_t));
+        dispatchTraits.numWorkGroups[dim] = static_cast<NEO::CrossThreadDataOffset>((3u + dim) * sizeof(uint32_t));
+        dispatchTraits.enqueuedLocalWorkSize[dim] = static_cast<NEO::CrossThreadDataOffset>((6u + dim) * sizeof(uint32_t));
+    }
+    dispatchTraits.workDim = 9u * sizeof(uint32_t);
+
+    Mock<KernelImp> kernel;
+    kernel.sharedState->kernelImmData = &kernelInfo;
+    kernel.privateState.crossThreadData.resize(sizeof(uint32_t[10]));
+    kernel.privateState.groupSize[0] = 2;
+    kernel.privateState.groupSize[1] = 3;
+    kernel.privateState.groupSize[2] = 1;
+
+    CmdListNonUniformLaunchArgs launchArgs{};
+    launchArgs.globalWorkSize[0] = 10u;
+    launchArgs.globalWorkSize[1] = 7u;
+    launchArgs.enqueuedGroupSize[0] = 4u;
+    launchArgs.enqueuedGroupSize[1] = 3u;
+    launchArgs.workDim = 2u;
+    const CmdListNonUniformLaunch nonUniformLaunch(launchArgs);
+
+    kernel.KernelImp::setGroupCount(1, 2, 1);
+    kernel.KernelImp::patchNonUniformLaunchParams(nonUniformLaunch);
+
+    const uint32_t *crossThread = reinterpret_cast<const uint32_t *>(kernel.KernelImp::getCrossThreadData());
+    ASSERT_NE(nullptr, crossThread);
+    EXPECT_EQ(10u, crossThread[0]);
+    EXPECT_EQ(7u, crossThread[1]);
+    EXPECT_EQ(1u, crossThread[2]);
+    EXPECT_EQ(3u, crossThread[3]);
+    EXPECT_EQ(3u, crossThread[4]);
+    EXPECT_EQ(1u, crossThread[5]);
+    EXPECT_EQ(4u, crossThread[6]);
+    EXPECT_EQ(3u, crossThread[7]);
+    EXPECT_EQ(1u, crossThread[8]);
+    EXPECT_EQ(2u, crossThread[9]);
 
     kernel.privateState.crossThreadData.clear();
 }

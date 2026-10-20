@@ -77,6 +77,10 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
                                            const ze_group_count_t &pDispatchArgumentsBuffer,
                                            ze_event_handle_t hEvent, uint32_t numWaitEvents,
                                            ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override;
+    ze_result_t appendLaunchKernelNonUniform(ze_kernel_handle_t kernelHandle,
+                                             const CmdListNonUniformLaunchArgs &launchArgs,
+                                             ze_event_handle_t hEvent, uint32_t numWaitEvents,
+                                             ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override;
 
     ze_result_t appendBarrier(ze_event_handle_t hSignalEvent,
                               uint32_t numWaitEvents,
@@ -277,6 +281,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     ze_result_t stagingStatusToL0(const NEO::StagingTransferStatus &status) const;
     size_t estimateAdditionalSizeAppendRegularCommandLists(uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists, CommandListExecutionInternalOptions &internalOptions);
     void tryResetKernelWithAssertFlag();
+    ze_result_t estimatePerfCountersCommandsSize(Event *signalEvent, size_t &perfCountersCommandsSize);
     void obtainAllocData(CpuMemCopyInfo &cpuMemCopyInfo, bool copyOffload);
     size_t estimateCommandSizeForImageCopyBlit(ze_image_handle_t hImage, const ze_image_region_t *pRegion) const;
     size_t estimateCopyBlitCommandsSize(size_t nBlits, size_t sizePerBlit, bool isDstSystemOrRemoteMemory) const;

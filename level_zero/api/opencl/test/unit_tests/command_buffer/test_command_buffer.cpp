@@ -1329,7 +1329,7 @@ TEST_F(LeoCommandBufferKernelTest, givenKernelUsingPrintfWhenRecordingNDRangeKer
 
 TEST_F(LeoCommandBufferKernelTest, givenWorkDimAboveThreeWhenSettingUpDispatchThenAbortIsRaised) {
     ze_group_count_t groupCount{};
-    EXPECT_THROW(kernel->setupDispatch(*clDevice, 4u, nullptr, globalWorkSize, localWorkSize, groupCount), std::exception);
+    EXPECT_THROW(kernel->setupDispatch(*clDevice, 4u, nullptr, globalWorkSize, localWorkSize, groupCount, nullptr), std::exception);
 }
 
 TEST_F(LeoCommandBufferKernelTest, givenGroupCountAboveUint32WhenRecordingNDRangeKernelThenOutOfResourcesIsReturned) {

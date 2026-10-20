@@ -40,6 +40,7 @@
 #include "shared/source/utilities/logger.h"
 #include "shared/source/utilities/shared_pool_allocation.h"
 
+#include "level_zero/core/source/cmdlist/cmdlist_launch_params.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
@@ -482,6 +483,16 @@ void KernelImp::setGroupCount(uint32_t groupCountX, uint32_t groupCountY, uint32
 
 ze_result_t KernelImp::setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
                                     uint32_t groupSizeZ) {
+    return applyGroupSize(groupSizeX, groupSizeY, groupSizeZ, true);
+}
+
+ze_result_t KernelImp::setNonUniformRegionGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
+                                                    uint32_t groupSizeZ) {
+    return applyGroupSize(groupSizeX, groupSizeY, groupSizeZ, false);
+}
+
+ze_result_t KernelImp::applyGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
+                                      uint32_t groupSizeZ, bool validateRequiredWorkgroupSize) {
     if ((0 == groupSizeX) || (0 == groupSizeY) || (0 == groupSizeZ)) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -508,7 +519,7 @@ ze_result_t KernelImp::setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
     this->privateState.groupSize[0] = groupSizeX;
     this->privateState.groupSize[1] = groupSizeY;
     this->privateState.groupSize[2] = groupSizeZ;
-    for (uint32_t i = 0u; i < 3u; i++) {
+    for (uint32_t i = 0u; i < 3u && validateRequiredWorkgroupSize; i++) {
         if (kernelDescriptor.kernelAttributes.requiredWorkgroupSize[i] != 0 &&
             kernelDescriptor.kernelAttributes.requiredWorkgroupSize[i] != this->privateState.groupSize[i]) {
             PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
@@ -1517,6 +1528,24 @@ void KernelImp::patchWorkgroupSizeInCrossThreadData(uint32_t x, uint32_t y, uint
     if (privateState.pImplicitArgs) {
         privateState.pImplicitArgs->setLocalSize(x, y, z);
         privateState.pImplicitArgs->setEnqueuedLocalSize(x, y, z);
+    }
+}
+
+void KernelImp::patchNonUniformLaunchParams(const CmdListNonUniformLaunch &nonUniformLaunch) {
+    const auto &dispatchTraits = getImmutableData()->getDescriptor().payloadMappings.dispatchTraits;
+    const auto &args = nonUniformLaunch.args;
+    auto dst = getCrossThreadDataSpan();
+    NEO::patchVecNonPointer(dst, dispatchTraits.globalWorkSize, args.globalWorkSize);
+    NEO::patchVecNonPointer(dst, dispatchTraits.numWorkGroups, nonUniformLaunch.totalGroupCount);
+    NEO::patchVecNonPointer(dst, dispatchTraits.enqueuedLocalWorkSize, args.enqueuedGroupSize);
+    if (NEO::isValidOffset(dispatchTraits.workDim)) {
+        NEO::patchNonPointer<uint32_t, uint32_t>(dst, dispatchTraits.workDim, args.workDim);
+    }
+    if (privateState.pImplicitArgs) {
+        privateState.pImplicitArgs->setNumWorkDim(args.workDim);
+        privateState.pImplicitArgs->setGlobalSize(args.globalWorkSize[0], args.globalWorkSize[1], args.globalWorkSize[2]);
+        privateState.pImplicitArgs->setGroupCount(nonUniformLaunch.totalGroupCount[0], nonUniformLaunch.totalGroupCount[1], nonUniformLaunch.totalGroupCount[2]);
+        privateState.pImplicitArgs->setEnqueuedLocalSize(args.enqueuedGroupSize[0], args.enqueuedGroupSize[1], args.enqueuedGroupSize[2]);
     }
 }
 

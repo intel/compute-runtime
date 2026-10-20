@@ -36,6 +36,7 @@ namespace L0 {
 struct Device;
 struct Module;
 struct CmdListKernelLaunchParams;
+struct CmdListNonUniformLaunch;
 
 struct KernelImmutableData {
     KernelImmutableData(L0::Device *l0device = nullptr);
@@ -137,6 +138,8 @@ struct Kernel : _ze_kernel_handle_t, virtual NEO::DispatchKernelEncoderI, NEO::N
     virtual ze_result_t setArgRedescribedImage(uint32_t argIndex, ze_image_handle_t argVal, bool isPacked, uint32_t mipLevel) = 0;
     virtual ze_result_t setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
                                      uint32_t groupSizeZ) = 0;
+    virtual ze_result_t setNonUniformRegionGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
+                                                     uint32_t groupSizeZ) = 0;
     virtual ze_result_t suggestGroupSize(uint32_t globalSizeX, uint32_t globalSizeY,
                                          uint32_t globalSizeZ, uint32_t *groupSizeX,
                                          uint32_t *groupSizeY, uint32_t *groupSizeZ) = 0;
@@ -148,6 +151,7 @@ struct Kernel : _ze_kernel_handle_t, virtual NEO::DispatchKernelEncoderI, NEO::N
     virtual ze_result_t setGlobalOffsetExp(uint32_t offsetX, uint32_t offsetY, uint32_t offsetZ) = 0;
     virtual void patchGlobalOffset() = 0;
     virtual void patchRegionParams(const CmdListKernelLaunchParams &launchParams, const ze_group_count_t &threadGroupDimensions) = 0;
+    virtual void patchNonUniformLaunchParams(const CmdListNonUniformLaunch &nonUniformLaunch) = 0;
 
     virtual uint32_t suggestMaxCooperativeGroupCount(NEO::EngineGroupType engineGroupType, bool forceSingleTileQuery) = 0;
     virtual ze_result_t setCacheConfig(ze_cache_config_flags_t flags) = 0;

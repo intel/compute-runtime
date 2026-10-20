@@ -24,6 +24,7 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
+#include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/image_helper.h"
@@ -46,6 +47,7 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/source/os_interface/performance_counters.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 #include "shared/source/utilities/logger.h"
 #include "shared/source/utilities/stackvec.h"
@@ -689,6 +691,134 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelIndirect(ze_
     appendSynchronizedDispatchCleanupSection();
 
     return ret;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::appendPerfCountersCommands(NEO::PerformanceCounters &perfCounters, NEO::TagNodeBase &perfCounterNode, bool begin) {
+    const bool isCcs = isImmediateType() ? NEO::EngineHelpers::isCcs(this->getCsr(false)->getOsContext().getEngineType())
+                                         : (engineGroupType != NEO::EngineGroupType::renderCompute);
+    const auto commandBufferType = isCcs ? MetricsLibraryApi::GpuCommandBufferType::Compute
+                                         : MetricsLibraryApi::GpuCommandBufferType::Render;
+    if (begin) {
+        commandContainer.addToResidencyContainer(perfCounterNode.getBaseGraphicsAllocation()->getGraphicsAllocation(device->getNEODevice()->getRootDeviceIndex()));
+    }
+    const auto commandsSize = perfCounters.getGpuCommandsSize(commandBufferType, begin);
+    if (commandsSize > 0) {
+        auto commandsBuffer = commandContainer.getCommandStream()->getSpace(commandsSize);
+        perfCounters.getGpuCommands(commandBufferType, perfCounterNode, begin, commandsSize, commandsBuffer);
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelNonUniform(ze_kernel_handle_t kernelHandle,
+                                                                               const CmdListNonUniformLaunchArgs &launchArgs,
+                                                                               ze_event_handle_t hEvent,
+                                                                               uint32_t numWaitEvents,
+                                                                               ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
+    auto swTagScope = emplaceSWTagScope("zeCommandListAppendLaunchKernel", NEO::SWTags::CounterType::dispatch);
+
+    auto kernel = Kernel::fromHandle(kernelHandle);
+    const CmdListNonUniformLaunch nonUniformLaunch(launchArgs);
+
+    CmdListKernelLaunchParams launchParams = {};
+    launchParams.relaxedOrderingDispatch = relaxedOrderingDispatch;
+    launchParams.isKernelSplitOperation = true;
+    launchParams.numKernelsInSplitLaunch = nonUniformLaunch.regionCount;
+    launchParams.nonUniformLaunch = &nonUniformLaunch;
+
+    auto restoreEnqueuedGroupSize = [&]() {
+        kernel->setGroupSize(launchArgs.enqueuedGroupSize[0], launchArgs.enqueuedGroupSize[1], launchArgs.enqueuedGroupSize[2]);
+    };
+    for (uint32_t regionIndex = 0u; regionIndex < nonUniformLaunch.regionCount; regionIndex++) {
+        const auto &region = nonUniformLaunch.regions[regionIndex];
+        auto validationRet = kernel->setNonUniformRegionGroupSize(region.groupSize[0], region.groupSize[1], region.groupSize[2]);
+        if (validationRet == ZE_RESULT_SUCCESS) {
+            validationRet = validateLaunchParams(*kernel, launchParams, region.groupCount);
+        }
+        if (validationRet != ZE_RESULT_SUCCESS) {
+            restoreEnqueuedGroupSize();
+            return validationRet;
+        }
+    }
+    restoreEnqueuedGroupSize();
+
+    Event *event = nullptr;
+    bool dcFlush = false;
+    if (hEvent) {
+        event = Event::fromHandle(hEvent);
+        if (kernel->getPrintfBufferAllocation() != nullptr) {
+            auto module = static_cast<const ModuleImp *>(&static_cast<KernelImp *>(kernel)->getParentModule());
+            event->setKernelForPrintf(module->getPrintfKernelWeakPtr(kernelHandle));
+            event->setKernelWithPrintfDeviceMutex(kernel->getDevicePrintfKernelMutex());
+        }
+        launchParams.isHostSignalScopeEvent = event->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST);
+        dcFlush = getDcFlushRequired(event->isFlushRequiredForSignal());
+        registerWalkerWithProfilingEnqueued(event);
+    }
+
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = relaxedOrderingDispatch,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    ze_result_t ret = addEventsToCmdList(numWaitEvents, phWaitEvents, waitEventsParameters);
+    if (ret) {
+        return ret;
+    }
+
+    appendSynchronizedDispatchInitializationSection();
+
+    if (!handleCounterBasedEventOperations(event, false)) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    launchParams.pipeControlSignalling = (event != nullptr);
+    appendEventForProfilingAllWalkers(event, nullptr, nullptr, true, true, false, false);
+
+    auto perfCounterNode = event ? event->getPerfCounterNode() : nullptr;
+    auto perfCounters = perfCounterNode ? device->getNEODevice()->getPerformanceCounters() : nullptr;
+    if (perfCounters) {
+        appendPerfCountersCommands(*perfCounters, *perfCounterNode, true);
+    }
+
+    for (uint32_t regionIndex = 0u; regionIndex < nonUniformLaunch.regionCount; regionIndex++) {
+        const auto &region = nonUniformLaunch.regions[regionIndex];
+        [[maybe_unused]] auto regionRet = kernel->setNonUniformRegionGroupSize(region.groupSize[0], region.groupSize[1], region.groupSize[2]);
+        DEBUG_BREAK_IF(regionRet != ZE_RESULT_SUCCESS);
+        launchParams.nonUniformLaunchRegion = &region;
+        launchParams.isKernelPatched = false;
+        ret = appendLaunchKernelSplit(kernel, region.groupCount, event, launchParams);
+        if (ret) {
+            restoreEnqueuedGroupSize();
+            return ret;
+        }
+        launchParams.numKernelsExecutedInSplitLaunch++;
+    }
+    restoreEnqueuedGroupSize();
+
+    if (perfCounters) {
+        appendPerfCountersCommands(*perfCounters, *perfCounterNode, false);
+    }
+
+    addToMappedEventList(event);
+    appendEventForProfilingAllWalkers(event, nullptr, nullptr, false, true, false, false);
+
+    if (this->isInOrderExecutionEnabled()) {
+        dispatchInOrderPostOperationBarrier(event, dcFlush, false);
+        appendSignalInOrderDependencyCounter(event, false, false, false, false);
+    }
+    CmdListHandleInOrderDependencyParams inOrderDependencyParams{
+        .nonWalkerInOrderCmdsChaining = false,
+        .copyOffloadOperation = false,
+        .apiRequiredExternalGraphEvent = false};
+    handleInOrderDependencyCounter(event, inOrderDependencyParams);
+
+    appendSynchronizedDispatchCleanupSection();
+
+    return ZE_RESULT_SUCCESS;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -5888,6 +6018,9 @@ void CommandListCoreFamily<gfxCoreFamily>::patchKernelProperties(CmdListKernelLa
             kernel.setGroupCount(threadGroupDimensions.groupCountX,
                                  threadGroupDimensions.groupCountY,
                                  threadGroupDimensions.groupCountZ);
+            if (launchParams.nonUniformLaunch) [[unlikely]] {
+                kernel.patchNonUniformLaunchParams(*launchParams.nonUniformLaunch);
+            }
         }
         launchParams.isKernelPatched = true;
     }

@@ -29,6 +29,7 @@ namespace ult {
     MACRO(appendImageCopyFromMemoryExt, AppendImageCopyFromMemoryExtArgs) \
     MACRO(appendImageCopyToMemoryExt, AppendImageCopyToMemoryExtArgs)     \
     MACRO(appendLaunchKernel, AppendLaunchKernelArgs)                     \
+    MACRO(appendLaunchKernelNonUniform, AppendLaunchKernelNonUniformArgs) \
     MACRO(appendBarrier, AppendBarrierArgs)                               \
     MACRO(appendHostFunction, AppendHostFunctionArgs)                     \
     MACRO(appendCommandLists, AppendCommandListsArgs)                     \
@@ -147,6 +148,14 @@ struct CapturingCommandList : public L0::ult::Mock<L0::ult::CommandList> {
         auto result = BaseClass::appendLaunchKernel(kernelHandle, threadGroupDimensions, hEvent, numWaitEvents, phWaitEvents, launchParams);
         return record(this->appendLaunchKernelArgs, ApiId::appendLaunchKernel,
                       AppendLaunchKernelArgs{kernelHandle, threadGroupDimensions, hEvent, numWaitEvents, phWaitEvents}, result);
+    }
+
+    ze_result_t appendLaunchKernelNonUniform(ze_kernel_handle_t kernelHandle, const L0::CmdListNonUniformLaunchArgs &launchArgs,
+                                             ze_event_handle_t hEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
+                                             bool relaxedOrderingDispatch) override {
+        auto result = BaseClass::appendLaunchKernelNonUniform(kernelHandle, launchArgs, hEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
+        return record(this->appendLaunchKernelNonUniformArgs, ApiId::appendLaunchKernelNonUniform,
+                      AppendLaunchKernelNonUniformArgs{kernelHandle, launchArgs, hEvent, numWaitEvents, phWaitEvents}, result);
     }
 
     bool completeSignalEventOnAppendBarrier = false;

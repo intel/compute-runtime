@@ -1216,7 +1216,8 @@ cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
     auto lock = pCommandQueue->takeOwnership();
 
     ze_group_count_t wgc{};
-    cl_int setupRetVal = pKernel->setupDispatch(*pCommandQueue->getDevice(), workDim, globalWorkOffset, globalWorkSize, localWorkSize, wgc);
+    std::optional<L0::CmdListNonUniformLaunchArgs> nonUniformLaunchArgs;
+    cl_int setupRetVal = pKernel->setupDispatch(*pCommandQueue->getDevice(), workDim, globalWorkOffset, globalWorkSize, localWorkSize, wgc, &nonUniformLaunchArgs);
     if (setupRetVal != CL_SUCCESS) {
         TRACING_EXIT(ClEnqueueNdRangeKernel, &setupRetVal);
         return setupRetVal;
@@ -1241,7 +1242,11 @@ cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
         pImage->migrateTo(cmdlistHandle, queueRootDeviceIndex, outOfOrder, static_cast<uint32_t>(waitEvents.size()), waitEvents.data());
     }
 
-    ret = zeCommandListAppendLaunchKernel(cmdlistHandle, kernelHandle, &wgc, hSignalEvent, waitEvents.size(), waitEvents.data());
+    if (nonUniformLaunchArgs.has_value()) [[unlikely]] {
+        ret = pCommandQueue->getL0Object()->appendLaunchKernelNonUniform(kernelHandle, *nonUniformLaunchArgs, hSignalEvent, static_cast<uint32_t>(waitEvents.size()), waitEvents.data(), false);
+    } else {
+        ret = zeCommandListAppendLaunchKernel(cmdlistHandle, kernelHandle, &wgc, hSignalEvent, waitEvents.size(), waitEvents.data());
+    }
     cl_int tracingRetVal = L0ToClResultMapper(ret);
     TRACING_EXIT(ClEnqueueNdRangeKernel, &tracingRetVal);
     return tracingRetVal;

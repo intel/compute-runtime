@@ -159,6 +159,10 @@ struct CommandListCoreFamily : public CommandList {
                                            const ze_group_count_t &pDispatchArgumentsBuffer,
                                            ze_event_handle_t hEvent, uint32_t numWaitEvents,
                                            ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override;
+    ze_result_t appendLaunchKernelNonUniform(ze_kernel_handle_t kernelHandle,
+                                             const CmdListNonUniformLaunchArgs &launchArgs,
+                                             ze_event_handle_t hEvent, uint32_t numWaitEvents,
+                                             ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override;
     ze_result_t appendLaunchMultipleKernelsIndirect(uint32_t numKernels,
                                                     const ze_kernel_handle_t *kernelHandles,
                                                     const uint32_t *pNumLaunchArguments,
@@ -274,6 +278,7 @@ struct CommandListCoreFamily : public CommandList {
     void appendMultiPartitionPrologue(uint32_t partitionDataSize) override;
     void appendMultiPartitionEpilogue() override;
     void appendEventForProfilingAllWalkers(Event *event, void **syncCmdBuffer, CommandToPatchContainer *outTimeStampSyncCmds, bool beforeWalker, bool singlePacketEvent, bool skipAddingEventToResidency, bool copyOperation);
+    void appendPerfCountersCommands(NEO::PerformanceCounters &perfCounters, NEO::TagNodeBase &perfCounterNode, bool begin);
     ze_result_t addEventsToCmdList(uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, CmdListWaitEventParameters &waitEventsParameters);
 
     MOCKABLE_VIRTUAL void appendSynchronizedDispatchInitializationSection();

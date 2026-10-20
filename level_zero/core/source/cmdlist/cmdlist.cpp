@@ -26,6 +26,7 @@
 #include "shared/source/os_interface/os_time.h"
 #include "shared/source/utilities/tag_allocator.h"
 
+#include "level_zero/core/source/cmdlist/cmdlist_launch_params.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
 #include "level_zero/core/source/device/bcs_split.h"
 #include "level_zero/core/source/device/device.h"
@@ -39,6 +40,44 @@
 #include "level_zero/tools/source/metrics/metric.h"
 
 namespace L0 {
+
+CmdListNonUniformLaunch::CmdListNonUniformLaunch(const CmdListNonUniformLaunchArgs &launchArgs) : args(launchArgs) {
+    struct DimensionSegment {
+        uint32_t groupSize;
+        uint32_t groupStart;
+        uint32_t groupCount;
+    };
+    constexpr uint32_t maxSegmentsPerDimension = 2u;
+    std::array<std::array<DimensionSegment, maxSegmentsPerDimension>, 3> segments{};
+    std::array<uint32_t, 3> segmentCount{};
+
+    for (uint32_t dim = 0u; dim < 3u; dim++) {
+        const auto groupSize = this->args.enqueuedGroupSize[dim];
+        const auto fullGroupCount = this->args.globalWorkSize[dim] / groupSize;
+        const auto remainder = this->args.globalWorkSize[dim] % groupSize;
+        if (fullGroupCount > 0u) {
+            segments[dim][segmentCount[dim]++] = {groupSize, 0u, fullGroupCount};
+        }
+        if (remainder > 0u) {
+            segments[dim][segmentCount[dim]++] = {remainder, fullGroupCount, 1u};
+        }
+        this->totalGroupCount[dim] = fullGroupCount + (remainder > 0u ? 1u : 0u);
+    }
+
+    for (uint32_t z = 0u; z < segmentCount[2]; z++) {
+        for (uint32_t y = 0u; y < segmentCount[1]; y++) {
+            for (uint32_t x = 0u; x < segmentCount[0]; x++) {
+                const auto &segmentX = segments[0][x];
+                const auto &segmentY = segments[1][y];
+                const auto &segmentZ = segments[2][z];
+                this->regions[this->regionCount++] = {
+                    .groupSize = {segmentX.groupSize, segmentY.groupSize, segmentZ.groupSize},
+                    .groupStart = {segmentX.groupStart, segmentY.groupStart, segmentZ.groupStart},
+                    .groupCount = {segmentX.groupCount, segmentY.groupCount, segmentZ.groupCount}};
+            }
+        }
+    }
+}
 
 CommandList::CommandList(uint32_t numIddsPerBlock) : commandContainer(numIddsPerBlock) {}
 

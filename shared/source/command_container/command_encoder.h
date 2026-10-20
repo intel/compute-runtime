@@ -101,6 +101,7 @@ struct EncodeDispatchKernelArgs {
     IndirectHeap *surfaceStateHeap = nullptr;
     IndirectHeap *dynamicStateHeap = nullptr;
     const void *threadGroupDimensions = nullptr;
+    const uint32_t *threadGroupStart = nullptr;
     void *outWalkerPtr = nullptr;
     uint64_t outWalkerGpuVa = 0;
     void *cpuWalkerBuffer = nullptr;
@@ -134,6 +135,17 @@ struct EncodeDispatchKernelArgs {
     bool kernelUsesRayTracing = false;
     bool threadDataCacheHitOnPrefetch = false;
 };
+
+inline const uint32_t *getWalkerThreadGroupDimensions(const EncodeDispatchKernelArgs &args, uint32_t (&threadGroupEnd)[3]) {
+    auto threadGroupDims = static_cast<const uint32_t *>(args.threadGroupDimensions);
+    if (args.threadGroupStart == nullptr) [[likely]] {
+        return threadGroupDims;
+    }
+    for (uint32_t dim = 0u; dim < 3u; dim++) {
+        threadGroupEnd[dim] = args.threadGroupStart[dim] + threadGroupDims[dim];
+    }
+    return threadGroupEnd;
+}
 
 struct EncodeStoreMMIOParams {
     uint64_t address;

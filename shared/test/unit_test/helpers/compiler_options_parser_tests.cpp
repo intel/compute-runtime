@@ -78,6 +78,19 @@ TEST(CompilerOptionsParser, GivenClStdOptionWithVariousVersionsWhenRequiresAddit
     EXPECT_FALSE(requiresAdditionalExtensions("-cl-std=CL3.0"));
 }
 
+TEST(CompilerOptionsParser, GivenClStdOptionWithVariousVersionsWhenCheckingIsNonUniformWorkGroupAllowedThenOnlyVersion20AndLaterAllowIt) {
+    EXPECT_FALSE(isNonUniformWorkGroupAllowed(""));
+    EXPECT_FALSE(isNonUniformWorkGroupAllowed("-cl-std=CL1.2"));
+    EXPECT_TRUE(isNonUniformWorkGroupAllowed("-cl-std=CL2.0"));
+    EXPECT_TRUE(isNonUniformWorkGroupAllowed("-cl-std=CL2.1"));
+    EXPECT_TRUE(isNonUniformWorkGroupAllowed("-cl-std=CL3.0"));
+}
+
+TEST(CompilerOptionsParser, GivenUniformWorkGroupSizeOptionWhenCheckingIsNonUniformWorkGroupAllowedThenFalseIsReturned) {
+    EXPECT_FALSE(isNonUniformWorkGroupAllowed("-cl-std=CL2.0 -cl-uniform-work-group-size"));
+    EXPECT_FALSE(isNonUniformWorkGroupAllowed("-cl-uniform-work-group-size -cl-std=CL3.0"));
+}
+
 TEST(CompilerOptionsParser, GivenExtensionsAndCompileOptionsWhenAppendAdditionalExtensionsThenCorrectlyAppends) {
     std::string extensions = "ext1 ";
     std::string compileOptions = "-cl-std=CL2.0";

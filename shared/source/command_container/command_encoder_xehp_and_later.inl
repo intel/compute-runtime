@@ -84,6 +84,8 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         threadDimsVec[1] = threadGroupDims[1];
         threadDimsVec[2] = threadGroupDims[2];
     }
+    uint32_t threadGroupEnd[3] = {};
+    const uint32_t *walkerThreadGroupDims = getWalkerThreadGroupDimensions(args, threadGroupEnd);
 
     if (!args.makeCommandView) {
         bool systolicModeRequired = kernelDescriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode;
@@ -408,8 +410,8 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     container.getIndirectHeap(HeapType::indirectObject)->align(NEO::EncodeDispatchKernel<Family>::getDefaultIOHAlignment(container.isIndirectHeapInLocalMemory(), hwInfo));
 
     EncodeDispatchKernel<Family>::encodeThreadData(walkerCmd,
-                                                   nullptr,
-                                                   threadGroupDims,
+                                                   args.threadGroupStart,
+                                                   walkerThreadGroupDims,
                                                    args.dispatchInterface->getGroupSize(),
                                                    kernelDescriptor.kernelAttributes.simdSize,
                                                    kernelDescriptor.kernelAttributes.numLocalIdChannels,
@@ -437,7 +439,8 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
 
     walkerCmd.setPredicateEnable(args.isPredicate);
 
-    auto threadGroupCount = walkerCmd.getThreadGroupIdXDimension() * walkerCmd.getThreadGroupIdYDimension() * walkerCmd.getThreadGroupIdZDimension();
+    auto threadGroupCount = args.threadGroupStart ? threadDimsVec[0] * threadDimsVec[1] * threadDimsVec[2]
+                                                  : walkerCmd.getThreadGroupIdXDimension() * walkerCmd.getThreadGroupIdYDimension() * walkerCmd.getThreadGroupIdZDimension();
     EncodeDispatchKernel<Family>::encodeThreadGroupDispatch(idd, *args.device, hwInfo, threadDimsVec, threadGroupCount,
                                                             kernelDescriptor.kernelMetadata.requiredThreadGroupDispatchSize, kernelDescriptor.kernelAttributes.numGrfRequired, threadsPerThreadGroup, walkerCmd);
     PRINT_STRING(debugManager.flags.PrintKernelDispatchParameters.get(), stdout,

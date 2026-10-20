@@ -8,6 +8,7 @@
 #include "level_zero/api/opencl/source/kernel/leo_kernel.h"
 
 #include "shared/source/command_container/implicit_scaling.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/get_info.h"
@@ -402,7 +403,8 @@ cl_int Kernel::getSuggestedLocalWorkSize(const ClDevice &clDevice, cl_uint workD
 }
 
 cl_int Kernel::setupDispatch(const ClDevice &clDevice, cl_uint workDim, const size_t *globalWorkOffset,
-                             const size_t *globalWorkSize, const size_t *localWorkSize, ze_group_count_t &groupCount) {
+                             const size_t *globalWorkSize, const size_t *localWorkSize, ze_group_count_t &groupCount,
+                             std::optional<L0::CmdListNonUniformLaunchArgs> *nonUniformLaunchArgs) {
     UNRECOVERABLE_IF(workDim > 3u);
     const auto rootDeviceIndex = clDevice.getRootDeviceIndex();
     auto kernelHandle = this->getL0Handle(rootDeviceIndex);
@@ -448,13 +450,32 @@ cl_int Kernel::setupDispatch(const ClDevice &clDevice, cl_uint workDim, const si
 
     for (cl_uint i = 0; i < workDim; ++i) {
         if (globalWorkSize[i] % lws[i] != 0) [[unlikely]] {
-            return CL_INVALID_WORK_GROUP_SIZE;
+            return nonUniformLaunchArgs ? this->setupNonUniformDispatch(workDim, globalWorkSize, lws, *nonUniformLaunchArgs) : CL_INVALID_WORK_GROUP_SIZE;
         }
         // ze_group_count_t is 32 bit, so a group count that does not fit cannot be dispatched
         if (!NEO::LEO::fitsInUint32(globalWorkSize[i] / lws[i])) [[unlikely]] {
             return CL_OUT_OF_RESOURCES;
         }
     }
+    return CL_SUCCESS;
+}
+
+cl_int Kernel::setupNonUniformDispatch(cl_uint workDim, const size_t *globalWorkSize, const uint32_t *groupSize,
+                                       std::optional<L0::CmdListNonUniformLaunchArgs> &nonUniformLaunchArgs) const {
+    if (NEO::debugManager.flags.LeoEnableNonUniformWorkGroups.get() != 1 || !this->program->getAllowNonUniform()) {
+        return CL_INVALID_WORK_GROUP_SIZE;
+    }
+
+    L0::CmdListNonUniformLaunchArgs launchArgs{};
+    launchArgs.workDim = workDim;
+    for (cl_uint i = 0; i < workDim; ++i) {
+        if (!NEO::LEO::fitsInUint32(globalWorkSize[i])) {
+            return CL_INVALID_GLOBAL_WORK_SIZE;
+        }
+        launchArgs.globalWorkSize[i] = static_cast<uint32_t>(globalWorkSize[i]);
+        launchArgs.enqueuedGroupSize[i] = groupSize[i];
+    }
+    nonUniformLaunchArgs = launchArgs;
     return CL_SUCCESS;
 }
 
