@@ -125,13 +125,5 @@ XE_HPG_CORETEST_F(L0GfxCoreHelperTestXeHpg, GivenL0GfxCoreHelperWhenCheckingMetr
     EXPECT_FALSE(l0GfxCoreHelper.supportMetricsAggregation());
 }
 
-XE_HPG_CORETEST_F(L0GfxCoreHelperTestXeHpg, GivenL0GfxCoreHelperWhenCheckingMetricsTracerSupportThenReturnFalse) {
-    MockExecutionEnvironment executionEnvironment;
-    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0].get();
-    auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
-
-    EXPECT_FALSE(l0GfxCoreHelper.isMetricTracerSupported());
-}
-
 } // namespace ult
 } // namespace L0

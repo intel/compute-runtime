@@ -139,13 +139,10 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
     RETURN_FUNC_PTR_IF_EXIST(zetIntelMetricCalculationOperationDestroyExp);
     RETURN_FUNC_PTR_IF_EXIST(zetIntelMetricCalculationOperationGetExcludedMetricsExp);
     RETURN_FUNC_PTR_IF_EXIST(zetIntelMetricCalculationOperationGetReportFormatExp);
-    RETURN_FUNC_PTR_IF_EXIST(zetIntelMetricTracerDecodeCalculateValuesExp);
     RETURN_FUNC_PTR_IF_EXIST(zetIntelMetricCalculateValuesExp);
-    RETURN_FUNC_PTR_IF_EXIST(zetIntelMetricTracerDecodeExp2);
     RETURN_FUNC_PTR_IF_EXIST(zetIntelMetricScopesGetExp);
     RETURN_FUNC_PTR_IF_EXIST(zetIntelMetricScopeGetPropertiesExp);
     RETURN_FUNC_PTR_IF_EXIST(zetIntelMetricSupportedScopesGetExp);
-    RETURN_FUNC_PTR_IF_EXIST(zetIntelMetricTracerExportExp);
 
 #undef RETURN_FUNC_PTR_IF_EXIST
 #undef RETURN_L0_FUNC_PTR_IF_EXIST

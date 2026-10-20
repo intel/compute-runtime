@@ -601,36 +601,6 @@ ze_result_t metricCreateFromProgrammable(zet_metric_programmable_exp_handle_t hM
                                          const char name[ZET_MAX_METRIC_NAME], const char description[ZET_MAX_METRIC_DESCRIPTION],
                                          uint32_t *pMetricHandleCount, zet_metric_handle_t *phMetricHandles);
 
-ze_result_t metricTracerCreate(zet_context_handle_t hContext, zet_device_handle_t hDevice, uint32_t metricGroupCount,
-                               zet_metric_group_handle_t *phMetricGroups, zet_metric_tracer_exp_desc_t *desc, ze_event_handle_t hNotificationEvent,
-                               zet_metric_tracer_exp_handle_t *phMetricTracer);
-
-ze_result_t metricTracerDestroy(zet_metric_tracer_exp_handle_t hMetricTracer);
-
-ze_result_t metricTracerEnable(zet_metric_tracer_exp_handle_t hMetricTracer, ze_bool_t synchronous);
-
-ze_result_t metricTracerDisable(zet_metric_tracer_exp_handle_t hMetricTracer, ze_bool_t synchronous);
-
-ze_result_t metricTracerReadData(zet_metric_tracer_exp_handle_t hMetricTracer, size_t *pRawDataSize, uint8_t *pRawData);
-
-ze_result_t metricTracerExport(zet_metric_tracer_exp_handle_t hMetricTracer, zet_intel_metric_export_format_t exportFormat,
-                               size_t *pSizeOfExportInBytes, void *pExportData);
-
-ze_result_t metricDecoderCreate(zet_metric_tracer_exp_handle_t hMetricTracer, zet_metric_decoder_exp_handle_t *phMetricDecoder);
-
-ze_result_t metricDecoderDestroy(zet_metric_decoder_exp_handle_t hMetricDecoder);
-
-ze_result_t metricDecoderGetDecodableMetrics(zet_metric_decoder_exp_handle_t hMetricDecoder, uint32_t *pCount, zet_metric_handle_t *phMetrics);
-
-ze_result_t metricTracerDecode(zet_metric_decoder_exp_handle_t hMetricDecoder, size_t *pRawDataSize, uint8_t *pRawData,
-                               uint32_t metricsCount, zet_metric_handle_t *phMetrics, uint32_t *pSetCount, uint32_t *pMetricEntriesCountPerSet,
-                               uint32_t *pMetricEntriesCount, zet_metric_entry_exp_t *pMetricEntries);
-
-ze_result_t metricTracerDecode2(zet_metric_decoder_exp_handle_t phMetricDecoder, const size_t rawDataSize, const uint8_t *pRawData,
-                                uint32_t metricCount, zet_metric_handle_t *phMetric, uint32_t metricScopeCount,
-                                zet_intel_metric_scope_exp_handle_t *phMetricScopes, size_t *usedDataSize,
-                                uint32_t *pTotalMetricEntriesCount, zet_metric_entry_exp2_t *phMetricEntries);
-
 ze_result_t metricCalculationOperationCreate(zet_context_handle_t hContext, zet_device_handle_t hDevice, zet_intel_metric_calculation_exp_desc_t *pCalculationDesc,
                                              zet_intel_metric_calculation_operation_exp_handle_t *phCalculationOperation);
 
@@ -652,11 +622,6 @@ ze_result_t metricCalculateMultipleValues(const size_t rawDataSize, size_t *offs
                                           zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation,
                                           uint32_t *pSetCount, uint32_t *pMetricsReportCountPerSet,
                                           uint32_t *pTotalMetricReportCount, zet_intel_metric_result_exp_t *pMetricResults);
-
-ze_result_t metricTracerDecodeCalculateValues(zet_metric_decoder_exp_handle_t hMetricDecoder,
-                                              const size_t rawDataSize, size_t *usedDataSize, const uint8_t *pRawData,
-                                              zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation,
-                                              uint32_t *pTotalMetricReportCount, zet_intel_metric_result_exp_t *pMetricResults);
 
 ze_result_t metricsEnable(zet_device_handle_t hDevice);
 ze_result_t metricsDisable(zet_device_handle_t hDevice);

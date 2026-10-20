@@ -132,11 +132,6 @@ uint64_t L0GfxCoreHelperHw<Family>::getSupportedCustomOperations2() const {
 }
 
 template <typename Family>
-bool L0GfxCoreHelperHw<Family>::isMetricTracerSupported() const {
-    return false;
-}
-
-template <typename Family>
 void L0GfxCoreHelperHw<Family>::adjustBuiltInImageModeToBindful(NEO::BuiltIn::AddressingMode &mode) const {
 }
 

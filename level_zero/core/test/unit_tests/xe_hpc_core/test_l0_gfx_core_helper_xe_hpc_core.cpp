@@ -119,10 +119,5 @@ XE_HPC_CORETEST_F(L0GfxCoreHelperTestXeHpc, GivenL0GfxCoreHelperWhenCheckingMetr
     EXPECT_FALSE(l0GfxCoreHelper.supportMetricsAggregation());
 }
 
-XE_HPC_CORETEST_F(L0GfxCoreHelperTestXeHpc, GivenL0GfxCoreHelperWhenCheckingMetricsTracerSupportThenReturnFalse) {
-    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
-    EXPECT_FALSE(l0GfxCoreHelper.isMetricTracerSupported());
-}
-
 } // namespace ult
 } // namespace L0

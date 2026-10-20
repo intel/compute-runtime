@@ -227,48 +227,6 @@ ze_result_t ZE_APICALL zetIntelMetricCalculationOperationGetExcludedMetricsExp(
     zet_metric_handle_t *phMetrics);                                            ///< [out][optional] [range(0, pMetricsCount)] array of metrics handles
                                                                                 ///< excluded from the output report of calculation operations
 ze_result_t ZE_APICALL
-zetIntelMetricTracerDecodeCalculateValuesExp(
-    zet_metric_decoder_exp_handle_t hMetricDecoder,                            ///< [in] handle of the metric decoder object
-    const size_t rawDataSize,                                                  ///< [in] size in bytes of raw data buffer.
-    size_t *usedDataSize,                                                      ///< [out] the number raw bytes processed. User is expected to advance pRawData pointer
-                                                                               ///< by this amount if calling this function subsequently with the same data.
-                                                                               ///< Note that appending new data to existing is allowed.
-    const uint8_t *pRawData,                                                   ///< [in,out][range(0, *rawDataSize)] buffer containing tracer
-                                                                               ///< data in raw format
-    zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation, ///< [in] Calculation operation handle
-    uint32_t *pTotalMetricReportsCount,                                        ///< [in,out] [optional] pointer to the total number of metric reports decoded and
-                                                                               ///< calculated, for all metric sets. If count is zero, then the driver shall update
-                                                                               ///< the value with the total number of metric reports to be decoded and calculated.
-                                                                               ///< If count is greater than zero but less than the total number of reports available
-                                                                               ///< in the raw data, then only that number of reports will be decoded and calculated.
-                                                                               ///< If count is greater than the number of reports available in the raw data buffer,
-                                                                               ///< then the driver shall update the value with the actual number of metric reports
-                                                                               ///< decoded and calculated.
-    zet_intel_metric_result_exp_t *pMetricResults);                            ///< [in,out][optional][range(0, *pTotalMetricResultsCount)] buffer of decoded and
-                                                                               ///< calculated metrics results.
-
-ze_result_t ZE_APICALL
-zetIntelMetricTracerDecodeToBinaryBufferExp(
-    zet_metric_decoder_exp_handle_t hMetricDecoder,                             ///< [in] handle of the metric decoder object
-    size_t *pRawDataSize,                                                       ///< [in,out] size in bytes of raw data buffer. If pDecodedBufferSize is greater
-                                                                                ///< than 0 but smaller than the total number of bytes required for decoding
-                                                                                ///< the entire input raw data, then driver shall update this value with
-                                                                                ///< actual number of raw data bytes processed
-    const uint8_t *pRawData,                                                    ///< [in,out][range(0, *pRawDataSize)] buffer containing tracer
-                                                                                ///< data in raw format
-    zet_intel_metric_calculation_operation_exp_handle_t phCalculationOperation, ///< [in] Calculation operation handle, to filter metrics to decode
-    zet_intel_metric_decoded_buffer_exp_properties_t *pProperties,              ///< [in] Properties of the decoded buffer.
-    size_t *pDecodedBufferSize,                                                 ///< [in] Pointer to the size of the decoded binary buffer. If set to 0,
-                                                                                ///< [in,out] Then driver shall update this value with total size in bytes required
-                                                                                ///< for the decoded binary buffer. If size is greater than 0 but smaller
-                                                                                ///< than the total number of bytes required for decoding entire input
-                                                                                ///< raw data, then driver shall only decode an approximate to that number
-                                                                                ///< of bytes. If size is greater than the total number of bytes required
-                                                                                ///< for decoding entire input raw data, then the driver shall update the
-                                                                                ///< value with the actual number of bytes decoded.
-    uint8_t *pDecodedBuffer);                                                   ///< [in,out][optional] binary buffer containing decoded raw data.
-
-ze_result_t ZE_APICALL
 zetIntelMetricCalculateValuesExp(
     const size_t rawDataSize,                                                  ///< [in] size in bytes of raw data buffer.
     const uint8_t *pRawData,                                                   ///< [in,out][range(0, *rawDataSize)] buffer containing tracer
@@ -315,38 +273,6 @@ typedef enum _zet_intel_metric_tracer_decode_exp2_version_t {
     ZET_INTEL_METRIC_TRACER_DECODE_EXP2_VERSION_CURRENT = ZET_INTEL_METRIC_TRACER_DECODE_EXP2_VERSION_1_0, ///< latest known version
     ZET_INTEL_METRIC_TRACER_DECODE_EXP2_VERSION_FORCE_UINT32 = 0x7fffffff
 } zet_intel_metric_tracer_decode_exp2_version_t;
-
-ze_result_t ZE_APICALL
-zetIntelMetricTracerDecodeExp2(
-    zet_metric_decoder_exp_handle_t phMetricDecoder,     ///< [in] handle of the metric decoder object
-    const size_t rawDataSize,                            ///< [in] size in bytes of raw data buffer.
-    const uint8_t *pRawData,                             ///< [in][range(0, *rawDataSize)] buffer containing tracer data in raw format
-    uint32_t metricCount,                                ///< [in] number of decodable metrics in the tracer for which the
-                                                         ///< phMetricDecoder handle was provided. See
-                                                         ///< ::zetMetricDecoderGetDecodableMetricsExp(). If metricCount is greater
-                                                         ///< than zero but less than the number decodable metrics available in the raw data buffer,
-                                                         ///< then driver shall only decode those.
-    zet_metric_handle_t *phMetric,                       ///< [in] [range(0, metricsCount)] array of handles of decodable metrics in
-                                                         ///< the decoder for which the phMetricDecoder handle was
-                                                         ///< provided. Metrics handles are expected to be for decodable metrics,
-                                                         ///< see ::zetMetricDecoderGetDecodableMetricsExp()
-                                                         ///< If a reduced list of decodable metrics is provided, only entries
-                                                         ///< for those decodable metrics will be present in the output.
-    uint32_t metricScopeCount,                           ///< [in] number of metric scopes in metric scopes in phMetricScopes. See ::zetMetricScopesGet()
-    zet_intel_metric_scope_exp_handle_t *phMetricScopes, ///< [in] [range (0, metricScopeCount)] array of metric scopes handles.
-                                                         ///< If a reduced list of metric scopes is provided,
-                                                         ///< only entries for those metrics scopes will be present in the output.
-    size_t *usedDataSize,                                ///< [out] The number raw bytes processed. User is expected to advance pRawData
-                                                         ///< pointer by this amount if calling this function subsequently with the same data.
-                                                         ///< Note that appending new data to existing is allowed.
-    uint32_t *pTotalMetricEntriesCount,                  ///< [in,out]  pointer to the total number of metric entries decoded. If count is zero, then the
-                                                         ///< driver shall update the value with the total number of metric entries to be decoded.
-                                                         ///< If count is greater than zero but less than the total number of metric entries available
-                                                         ///< in the raw data, then only that number of entries will be decoded. If count is greater
-                                                         ///< than the number available in the raw data buffer, then the driver shall update the value
-                                                         ///< with the actual number of decodable metric entries decoded.
-    zet_metric_entry_exp2_t *phMetricEntries);           ///< [in,out][optional][range(0, *pTotalMetricEntriesCount)] buffer containing
-                                                         ///< decoded metric entries
 
 #ifndef ZET_INTEL_METRICS_RUNTIME_ENABLE_DISABLE_EXP_NAME
 /// @brief Extension name for enabling and disabling Intel Metrics collection
@@ -424,30 +350,6 @@ typedef enum _zet_intel_metric_export_format_t {
     ZET_INTEL_METRIC_EXPORT_FORMAT_RAW = 0, ///< Raw binary format
     ZET_INTEL_METRIC_EXPORT_FORMAT_FORCE_UINT32 = 0x7fffffff
 } zet_intel_metric_export_format_t;
-
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Export metric tracer data
-///
-/// @details
-///     - All metric groups enabled for the tracer handle will be exported.
-///     - If sizeOfExportInBytes is 0, the API returns the number of bytes necessary
-///       to hold the export data in sizeOfExportInBytes.
-///     - It is an error if the application passes in a value less than what was
-///       returned by the API when querying the size.
-///     - The implementation will write the export data into pExportData buffer.
-///
-/// @returns
-///     - ::ZE_RESULT_ERROR_INVALID_ARGUMENT
-///         + The provided buffer size is less than required
-ze_result_t ZE_APICALL zetIntelMetricTracerExportExp(
-    zet_metric_tracer_exp_handle_t hTracer,        ///< [in] input Tracer handle. All metric groups enabled for this tracer handle will be exported.
-    zet_intel_metric_export_format_t exportFormat, ///< [in] format of the exported data.
-    size_t *pSizeOfExportInBytes,                  ///< [in,out] size of export data in bytes. If 0 is passed in, then the API returns
-                                                   ///< the number of bytes necessary to hold the export data. It is an error if the
-                                                   ///< application passes in a value less than what was returned by zetIntelMetricTracerExportExp API.
-    void *pExportData                              ///< [in,out][optional][range(0, *pSizeOfExportInBytes)] buffer to hold the exported data.
-                                                   ///< Implementation will write the export data into this buffer.
-);
 
 #if defined(__cplusplus)
 } // extern "C"

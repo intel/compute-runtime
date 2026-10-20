@@ -18,13 +18,6 @@ ze_result_t ZE_APICALL zetIntelDeviceDisableMetricsExp(zet_device_handle_t hDevi
     return L0::metricsDisable(hDevice);
 }
 
-ze_result_t ZE_APICALL zetIntelMetricTracerExportExp(zet_metric_tracer_exp_handle_t hMetricTracer,
-                                                     zet_intel_metric_export_format_t exportFormat,
-                                                     size_t *pSizeOfExportInBytes,
-                                                     void *pExportData) {
-    return L0::metricTracerExport(hMetricTracer, exportFormat, pSizeOfExportInBytes, pExportData);
-}
-
 ze_result_t ZE_APICALL zetIntelMetricCalculationOperationCreateExp(zet_context_handle_t hContext, zet_device_handle_t hDevice,
                                                                    zet_intel_metric_calculation_exp_desc_t *pCalculationDesc,
                                                                    zet_intel_metric_calculation_operation_exp_handle_t *phCalculationOperation) {
@@ -59,35 +52,12 @@ ze_result_t ZE_APICALL zetIntelMetricCalculateValuesExp(const size_t rawDataSize
                                      pTotalMetricReportsCount, pMetricResults);
 }
 
-ze_result_t ZE_APICALL zetIntelMetricTracerDecodeCalculateValuesExp(zet_metric_decoder_exp_handle_t hMetricDecoder,
-                                                                    const size_t rawDataSize, size_t *usedDataSize, const uint8_t *pRawData,
-                                                                    zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation,
-                                                                    uint32_t *pTotalMetricReportsCount, zet_intel_metric_result_exp_t *pMetricResults) {
-    return L0::metricTracerDecodeCalculateValues(hMetricDecoder, rawDataSize, usedDataSize, pRawData, hCalculationOperation,
-                                                 pTotalMetricReportsCount, pMetricResults);
-}
-
 ze_result_t ZE_APICALL zetIntelMetricScopesGetExp(zet_context_handle_t hContext, zet_device_handle_t hDevice, uint32_t *pMetricScopesCount, zet_intel_metric_scope_exp_handle_t *phMetricScopes) {
     return L0::metricScopesGet(hContext, hDevice, pMetricScopesCount, phMetricScopes);
 }
 
 ze_result_t ZE_APICALL zetIntelMetricScopeGetPropertiesExp(zet_intel_metric_scope_exp_handle_t hMetricScope, zet_intel_metric_scope_properties_exp_t *pMetricScopeProperties) {
     return L0::metricScopeGetProperties(hMetricScope, pMetricScopeProperties);
-}
-
-ze_result_t ZE_APICALL
-zetIntelMetricTracerDecodeExp2(
-    zet_metric_decoder_exp_handle_t phMetricDecoder,
-    const size_t rawDataSize,
-    const uint8_t *pRawData,
-    uint32_t metricCount,
-    zet_metric_handle_t *phMetric,
-    uint32_t metricScopeCount,
-    zet_intel_metric_scope_exp_handle_t *phMetricScopes,
-    size_t *usedDataSize,
-    uint32_t *pTotalMetricEntriesCount,
-    zet_metric_entry_exp2_t *phMetricEntries) {
-    return L0::metricTracerDecode2(phMetricDecoder, rawDataSize, pRawData, metricCount, phMetric, metricScopeCount, phMetricScopes, usedDataSize, pTotalMetricEntriesCount, phMetricEntries);
 }
 
 ze_result_t ZE_APICALL zetIntelMetricSupportedScopesGetExp(zet_metric_handle_t hMetric, uint32_t *pCount, zet_intel_metric_scope_exp_handle_t *phScopes) {
@@ -104,14 +74,6 @@ ze_result_t ZE_APICALL zetIntelDeviceEnableMetricsExp(zet_device_handle_t hDevic
 
 ze_result_t ZE_APICALL zetIntelDeviceDisableMetricsExp(zet_device_handle_t hDevice) {
     return L0::zetIntelDeviceDisableMetricsExp(hDevice);
-}
-
-ze_result_t ZE_APICALL zetIntelMetricTracerExportExp(
-    zet_metric_tracer_exp_handle_t hMetricTracer,
-    zet_intel_metric_export_format_t exportFormat,
-    size_t *pSizeOfExportInBytes,
-    void *pExportData) {
-    return L0::zetIntelMetricTracerExportExp(hMetricTracer, exportFormat, pSizeOfExportInBytes, pExportData);
 }
 
 ze_result_t ZE_APICALL zetIntelMetricCalculationOperationCreateExp(
@@ -153,44 +115,12 @@ ze_result_t ZE_APICALL zetIntelMetricCalculateValuesExp(const size_t rawDataSize
                                                 pTotalMetricReportsCount, pMetricResults);
 }
 
-ze_result_t ZE_APICALL zetIntelMetricTracerDecodeCalculateValuesExp(zet_metric_decoder_exp_handle_t hMetricDecoder, const size_t rawDataSize,
-                                                                    size_t *usedDataSize, const uint8_t *pRawData, zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation,
-                                                                    uint32_t *pTotalMetricReportsCount, zet_intel_metric_result_exp_t *pMetricResults) {
-    return L0::zetIntelMetricTracerDecodeCalculateValuesExp(
-        hMetricDecoder, rawDataSize, usedDataSize, pRawData, hCalculationOperation, pTotalMetricReportsCount, pMetricResults);
-}
-
 ze_result_t ZE_APICALL zetIntelMetricScopesGetExp(zet_context_handle_t hContext, zet_device_handle_t hDevice, uint32_t *pMetricScopesCount, zet_intel_metric_scope_exp_handle_t *phMetricScopes) {
     return L0::zetIntelMetricScopesGetExp(hContext, hDevice, pMetricScopesCount, phMetricScopes);
 }
 
 ze_result_t ZE_APICALL zetIntelMetricScopeGetPropertiesExp(zet_intel_metric_scope_exp_handle_t hMetricScope, zet_intel_metric_scope_properties_exp_t *pMetricScopeProperties) {
     return L0::zetIntelMetricScopeGetPropertiesExp(hMetricScope, pMetricScopeProperties);
-}
-
-ze_result_t ZE_APICALL
-zetIntelMetricTracerDecodeExp2(
-    zet_metric_decoder_exp_handle_t phMetricDecoder,
-    const size_t rawDataSize,
-    const uint8_t *pRawData,
-    uint32_t metricCount,
-    zet_metric_handle_t *phMetric,
-    uint32_t metricScopeCount,
-    zet_intel_metric_scope_exp_handle_t *phMetricScopes,
-    size_t *usedDataSize,
-    uint32_t *pTotalMetricEntriesCount,
-    zet_metric_entry_exp2_t *phMetricEntries) {
-    return L0::zetIntelMetricTracerDecodeExp2(
-        phMetricDecoder,
-        rawDataSize,
-        pRawData,
-        metricCount,
-        phMetric,
-        metricScopeCount,
-        phMetricScopes,
-        usedDataSize,
-        pTotalMetricEntriesCount,
-        phMetricEntries);
 }
 
 ze_result_t ZE_APICALL zetIntelMetricSupportedScopesGetExp(zet_metric_handle_t hMetric, uint32_t *pCount, zet_intel_metric_scope_exp_handle_t *phScopes) {
