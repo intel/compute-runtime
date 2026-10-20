@@ -43,7 +43,7 @@ TEST(CapsXe3pTest, givenCriReleaseWhenMaterializingCapsThenCapabilitiesAreCorrec
     EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps | FpAtomicExtFlags::addAtomicCaps, capsCri.kernelFp16AtomicCapabilities);
     EXPECT_EQ(0u, capsCri.maxNumSamplers);
     EXPECT_EQ(16128u, capsCri.planarYuvMaxHeight);
-    EXPECT_EQ(4u, capsCri.preferredWorkgroupCountPerSubslice);
+    EXPECT_EQ(0u, capsCri.preferredWorkgroupCountPerSubslice);
     EXPECT_EQ(0u, capsCri.rtasFormat);
     EXPECT_EQ(64u, capsCri.stackSizePerRay);
     EXPECT_EQ(16384u, capsCri.max3dImageWidthOrHeight);

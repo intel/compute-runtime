@@ -45,8 +45,6 @@ struct CapsXe3pCore {
 };
 
 struct CapsCri : CapsXe3pCore {
-    static constexpr uint32_t preferredWorkgroupCountPerSubslice = 4u;
-
     static constexpr bool deviceConfigStringXeCuSegmentIncluded = true;
 };
 struct CapsNvlP : CapsXe3pCore {
