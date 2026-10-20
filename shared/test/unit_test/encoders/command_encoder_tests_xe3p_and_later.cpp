@@ -1549,9 +1549,9 @@ HWTEST2_F(Walker2DispatchTestsXe3pAndLater, givenDebugFlagSetWhenProgrammingAddi
 
     EncodeDispatchKernel<FamilyType>::overrideDefaultValues(walkerCmd, idd);
 
-    EXPECT_EQ(THREAD_ARBITRATION_POLICY::THREAD_ARBITRATION_POLICY_ALWAYS_ROUND_ROBIN, walkerCmd.getThreadArbitrationPolicy());
+    EXPECT_EQ(THREAD_ARBITRATION_POLICY::THREAD_ARBITRATION_POLICY_ARBITRATION_SWITCH_AT_100, walkerCmd.getThreadArbitrationPolicy());
 
-    THREAD_ARBITRATION_POLICY expectedValue = THREAD_ARBITRATION_POLICY::THREAD_ARBITRATION_POLICY_ABRITRATION_SWITCH_AT_50;
+    THREAD_ARBITRATION_POLICY expectedValue = THREAD_ARBITRATION_POLICY::THREAD_ARBITRATION_POLICY_ARBITRATION_SWITCH_AT_50;
     debugManager.flags.OverrideComputeWalker2ThreadArbitrationPolicy.set(static_cast<int32_t>(expectedValue));
 
     EncodeDispatchKernel<FamilyType>::overrideDefaultValues(walkerCmd, idd);

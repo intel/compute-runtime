@@ -48,3 +48,10 @@ GEN12LPTEST_F(Gen12lpHwCmdTest, givenStateBaseAddressWhenProgrammingMocsThenMocs
     stateBaseAddress.setBindlessSamplerStateMemoryObjectControlState(mocs);
     EXPECT_EQ(expectedMocsIndex, stateBaseAddress.TheStructure.Common.BindlessSamplerStateMemoryObjectControlState_IndexToMocsTables);
 }
+
+GEN12LPTEST_F(Gen12lpHwCmdTest, givenInterfaceDescriptorDataWhenSettingKernelStartPointerAbove4GbThenHighBitsAreKept) {
+    auto idd = FamilyType::cmdInitInterfaceDescriptorData;
+    constexpr uint64_t kernelStartPointer = 0x1'2345'6780ull;
+    idd.setKernelStartPointer(kernelStartPointer);
+    EXPECT_EQ(kernelStartPointer, idd.getKernelStartPointer());
+}

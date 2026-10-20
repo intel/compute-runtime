@@ -59,7 +59,7 @@ XE3_CORETEST_F(Xe3CoreHwCmdTest, givenPostSyncDataWhenProgrammingMocsThenMocsInd
     uint32_t mocs = 4u;
     uint32_t expectedMocsIndex = (mocs >> 1);
     postSyncData.setMocs(mocs);
-    EXPECT_EQ(expectedMocsIndex, postSyncData.TheStructure.Common.MocsIndexToMocsTables);
+    EXPECT_EQ(expectedMocsIndex, postSyncData.TheStructure.Common.IndexToMocsTables);
 }
 
 XE3_CORETEST_F(Xe3CoreHwCmdTest, givenArbCheckWhenProgrammingPreParserDisableThenMaskBitIsSet) {

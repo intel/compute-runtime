@@ -150,7 +150,7 @@ HWTEST2_F(EnqueueCopyBufferToImageTest, WhenCopyingBufferToImageThenInterfaceDes
     auto &interfaceDescriptorData = *(INTERFACE_DESCRIPTOR_DATA *)cmdInterfaceDescriptorData;
 
     // Validate the kernel start pointer.  Technically, a kernel can start at address 0 but let's force a value.
-    auto kernelStartPointer = ((uint64_t)interfaceDescriptorData.getKernelStartPointerHigh() << 32) + interfaceDescriptorData.getKernelStartPointer();
+    auto kernelStartPointer = interfaceDescriptorData.getKernelStartPointer();
     EXPECT_LE(kernelStartPointer, cmdSBA->getInstructionBufferSize() * MemoryConstants::pageSize);
 
     size_t maxLocalSize = 256u;

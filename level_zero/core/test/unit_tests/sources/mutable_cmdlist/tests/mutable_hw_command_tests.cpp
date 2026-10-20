@@ -499,7 +499,9 @@ HWTEST2_F(MutableHwCommandTest,
     auto iddCpu = walkerCmdCpu->getInterfaceDescriptor();
 
     EXPECT_EQ(controlIdd.getThreadGroupDispatchSize(), iddCpu.getThreadGroupDispatchSize());
-    EXPECT_EQ(controlWalker->getComputeDispatchAllWalkerEnable(), walkerCmdCpu->getComputeDispatchAllWalkerEnable());
+    if constexpr (requires { &WalkerType::getComputeDispatchAllWalkerEnable; }) {
+        EXPECT_EQ(controlWalker->getComputeDispatchAllWalkerEnable(), walkerCmdCpu->getComputeDispatchAllWalkerEnable());
+    }
 
     this->stageCommit = false;
     walkerArgs.updateGroupCount = false;
@@ -512,7 +514,9 @@ HWTEST2_F(MutableHwCommandTest,
     auto iddGpu = walkerCmdGpu->getInterfaceDescriptor();
 
     EXPECT_EQ(controlIdd.getThreadGroupDispatchSize(), iddGpu.getThreadGroupDispatchSize());
-    EXPECT_EQ(controlWalker->getComputeDispatchAllWalkerEnable(), walkerCmdGpu->getComputeDispatchAllWalkerEnable());
+    if constexpr (requires { &WalkerType::getComputeDispatchAllWalkerEnable; }) {
+        EXPECT_EQ(controlWalker->getComputeDispatchAllWalkerEnable(), walkerCmdGpu->getComputeDispatchAllWalkerEnable());
+    }
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,

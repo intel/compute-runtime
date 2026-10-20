@@ -4125,14 +4125,14 @@ typedef struct tagPOSTSYNC_DATA {
             uint32_t Operation : BITFIELD_RANGE(0, 1);
             uint32_t DataportPipelineFlush : BITFIELD_RANGE(2, 2);
             uint32_t Reserved_3 : BITFIELD_RANGE(3, 3);
-            uint32_t MocsReserved_4 : BITFIELD_RANGE(4, 4);
-            uint32_t MocsIndexToMocsTables : BITFIELD_RANGE(5, 10);
+            uint32_t EncryptedData : BITFIELD_RANGE(4, 4);
+            uint32_t IndexToMocsTables : BITFIELD_RANGE(5, 10);
             uint32_t SystemMemoryFenceRequest : BITFIELD_RANGE(11, 11);
             uint32_t DataportSubsliceCacheFlush : BITFIELD_RANGE(12, 12);
             uint32_t Reserved_13 : BITFIELD_RANGE(13, 31);
-            // DWORD 1
+            // DWORD 1-2
             uint64_t DestinationAddress;
-            // DWORD 3
+            // DWORD 3-4
             uint64_t ImmediateData;
         } Common;
         uint32_t RawData[5];
@@ -4144,7 +4144,6 @@ typedef struct tagPOSTSYNC_DATA {
     } OPERATION;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
-        TheStructure.Common.Operation = OPERATION_NO_WRITE;
     }
     static tagPOSTSYNC_DATA sInit() {
         POSTSYNC_DATA state;
@@ -4167,13 +4166,14 @@ typedef struct tagPOSTSYNC_DATA {
     inline bool getDataportPipelineFlush() const {
         return TheStructure.Common.DataportPipelineFlush;
     }
-    inline void setMocs(const uint32_t value) { // patched
-        UNRECOVERABLE_IF(value > 0x7f);
-        TheStructure.Common.MocsReserved_4 = value;
-        TheStructure.Common.MocsIndexToMocsTables = value >> 1;
+    // Manual generator override: MOCS includes the encryption bit.
+    inline void setMocs(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x7fu);
+        TheStructure.Common.IndexToMocsTables = value >> 1;
+        TheStructure.Common.EncryptedData = value & 1;
     }
-    inline uint32_t getMocs() const { // patched
-        return (TheStructure.Common.MocsIndexToMocsTables << 1) | TheStructure.Common.MocsReserved_4;
+    inline uint32_t getMocs() const {
+        return (TheStructure.Common.IndexToMocsTables << 1) | TheStructure.Common.EncryptedData;
     }
     inline void setSystemMemoryFenceRequest(const bool value) {
         TheStructure.Common.SystemMemoryFenceRequest = value;
@@ -4206,16 +4206,14 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
     union tagTheStructure {
         struct tagCommon {
             // DWORD 0
-            uint64_t Reserved_0 : BITFIELD_RANGE(0, 5);
-            uint64_t KernelStartPointer : BITFIELD_RANGE(6, 31);
+            uint32_t Reserved_0 : BITFIELD_RANGE(0, 5);
+            uint32_t KernelStartPointer : BITFIELD_RANGE(6, 31);
             // DWORD 1
-            uint64_t Reserved_32 : BITFIELD_RANGE(32, 63);
+            uint32_t Reserved_32;
             // DWORD 2
             uint32_t Reserved_64 : BITFIELD_RANGE(0, 6);
             uint32_t SoftwareExceptionEnable : BITFIELD_RANGE(7, 7);
-            uint32_t Reserved_72 : BITFIELD_RANGE(8, 10);
-            uint32_t MaskStackExceptionEnable : BITFIELD_RANGE(11, 11);
-            uint32_t Reserved_76 : BITFIELD_RANGE(12, 12);
+            uint32_t Reserved_72 : BITFIELD_RANGE(8, 12);
             uint32_t IllegalOpcodeExceptionEnable : BITFIELD_RANGE(13, 13);
             uint32_t Reserved_78 : BITFIELD_RANGE(14, 15);
             uint32_t FloatingPointMode : BITFIELD_RANGE(16, 16);
@@ -4250,6 +4248,10 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
         } Common;
         uint32_t RawData[8];
     } TheStructure;
+    typedef enum tagKERNELSTARTPOINTER {
+        KERNELSTARTPOINTER_BIT_SHIFT = 0x6,
+        KERNELSTARTPOINTER_ALIGN_SIZE = 0x40,
+    } KERNELSTARTPOINTER;
     typedef enum tagFLOATING_POINT_MODE {
         FLOATING_POINT_MODE_IEEE_754 = 0x0,
         FLOATING_POINT_MODE_ALTERNATE = 0x1,
@@ -4262,10 +4264,6 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
         DENORM_MODE_FTZ = 0x0,
         DENORM_MODE_SETBYKERNEL = 0x1,
     } DENORM_MODE;
-    typedef enum tagTHREAD_PREEMPTION_DISABLE {
-        THREAD_PREEMPTION_DISABLE_DISABLE = 0x0,
-        THREAD_PREEMPTION_DISABLE_ENABLE = 0x1,
-    } THREAD_PREEMPTION_DISABLE;
     typedef enum tagSAMPLER_COUNT {
         SAMPLER_COUNT_NO_SAMPLERS_USED = 0x0,
         SAMPLER_COUNT_BETWEEN_1_AND_4_SAMPLERS_USED = 0x1,
@@ -4273,12 +4271,20 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
         SAMPLER_COUNT_BETWEEN_9_AND_12_SAMPLERS_USED = 0x3,
         SAMPLER_COUNT_BETWEEN_13_AND_16_SAMPLERS_USED = 0x4,
     } SAMPLER_COUNT;
+    typedef enum tagSAMPLERSTATEPOINTER {
+        SAMPLERSTATEPOINTER_BIT_SHIFT = 0x5,
+        SAMPLERSTATEPOINTER_ALIGN_SIZE = 0x20,
+    } SAMPLERSTATEPOINTER;
     typedef enum tagBINDING_TABLE_ENTRY_COUNT {
         BINDING_TABLE_ENTRY_COUNT_PREFETCH_DISABLED = 0x0,
         BINDING_TABLE_ENTRY_COUNT_PREFETCH_COUNT_MIN = 0x1,
         BINDING_TABLE_ENTRY_COUNT_PREFETCH_COUNT_MAX = 0x1f,
     } BINDING_TABLE_ENTRY_COUNT;
-    typedef enum tagSHARED_LOCAL_MEMORY_SIZE { // patched
+    typedef enum tagBINDINGTABLEPOINTER {
+        BINDINGTABLEPOINTER_BIT_SHIFT = 0x5,
+        BINDINGTABLEPOINTER_ALIGN_SIZE = 0x20,
+    } BINDINGTABLEPOINTER;
+    typedef enum tagSHARED_LOCAL_MEMORY_SIZE {
         SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_0K = 0x0,
         SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_1K = 0x1,
         SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_2K = 0x2,
@@ -4304,10 +4310,6 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
         NUMBER_OF_BARRIERS_NONE = 0x0,
         NUMBER_OF_BARRIERS_B1 = 0x1,
     } NUMBER_OF_BARRIERS;
-    typedef enum tagBTD_MODE {
-        BTD_MODE_DISABLE = 0x0,
-        BTD_MODE_ENABLE = 0x1,
-    } BTD_MODE;
     typedef enum tagPREFERRED_SLM_ALLOCATION_SIZE {
         PREFERRED_SLM_ALLOCATION_SIZE_MAX = 0x0,
         PREFERRED_SLM_ALLOCATION_SIZE_0KB = 0x8,
@@ -4319,18 +4321,6 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
     } PREFERRED_SLM_ALLOCATION_SIZE;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
-        TheStructure.Common.FloatingPointMode = FLOATING_POINT_MODE_IEEE_754;
-        TheStructure.Common.SingleProgramFlow = SINGLE_PROGRAM_FLOW_MULTIPLE;
-        TheStructure.Common.DenormMode = DENORM_MODE_FTZ;
-        TheStructure.Common.ThreadPreemptionDisable = THREAD_PREEMPTION_DISABLE_DISABLE;
-        TheStructure.Common.SamplerCount = SAMPLER_COUNT_NO_SAMPLERS_USED;
-        TheStructure.Common.BindingTableEntryCount = BINDING_TABLE_ENTRY_COUNT_PREFETCH_DISABLED;
-        TheStructure.Common.SharedLocalMemorySize = SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_0K; // patched
-        TheStructure.Common.RoundingMode = ROUNDING_MODE_RTNE;
-        TheStructure.Common.ThreadGroupDispatchSize = THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_8;
-        TheStructure.Common.NumberOfBarriers = NUMBER_OF_BARRIERS_NONE;
-        TheStructure.Common.BtdMode = BTD_MODE_DISABLE;
-        TheStructure.Common.PreferredSlmAllocationSize = PREFERRED_SLM_ALLOCATION_SIZE_MAX;
     }
     static tagINTERFACE_DESCRIPTOR_DATA sInit() {
         INTERFACE_DESCRIPTOR_DATA state;
@@ -4341,27 +4331,18 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
         UNRECOVERABLE_IF(index >= 8);
         return TheStructure.RawData[index];
     }
-    typedef enum tagKERNELSTARTPOINTER {
-        KERNELSTARTPOINTER_BIT_SHIFT = 0x6,
-        KERNELSTARTPOINTER_ALIGN_SIZE = 0x40,
-    } KERNELSTARTPOINTER;
     inline void setKernelStartPointer(const uint64_t value) {
-        TheStructure.Common.KernelStartPointer = static_cast<uint32_t>(value) >> KERNELSTARTPOINTER_BIT_SHIFT;
+        UNRECOVERABLE_IF(value > 0xffffffffull);
+        TheStructure.Common.KernelStartPointer = static_cast<uint32_t>(value >> KERNELSTARTPOINTER_BIT_SHIFT);
     }
     inline uint64_t getKernelStartPointer() const {
-        return static_cast<uint64_t>(TheStructure.Common.KernelStartPointer) << KERNELSTARTPOINTER_BIT_SHIFT; // patched
+        return static_cast<uint64_t>(TheStructure.Common.KernelStartPointer) << KERNELSTARTPOINTER_BIT_SHIFT;
     }
     inline void setSoftwareExceptionEnable(const bool value) {
         TheStructure.Common.SoftwareExceptionEnable = value;
     }
     inline bool getSoftwareExceptionEnable() const {
         return TheStructure.Common.SoftwareExceptionEnable;
-    }
-    inline void setMaskStackExceptionEnable(const bool value) {
-        TheStructure.Common.MaskStackExceptionEnable = value;
-    }
-    inline bool getMaskStackExceptionEnable() const {
-        return TheStructure.Common.MaskStackExceptionEnable;
     }
     inline void setIllegalOpcodeExceptionEnable(const bool value) {
         TheStructure.Common.IllegalOpcodeExceptionEnable = value;
@@ -4387,13 +4368,12 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
     inline DENORM_MODE getDenormMode() const {
         return static_cast<DENORM_MODE>(TheStructure.Common.DenormMode);
     }
-    inline void setThreadPreemptionDisable(const THREAD_PREEMPTION_DISABLE value) {
-        UNRECOVERABLE_IF(true); // patched
+    inline void setThreadPreemptionDisable(const bool value) {
+        UNRECOVERABLE_IF(true);
         TheStructure.Common.ThreadPreemptionDisable = value;
     }
-    inline THREAD_PREEMPTION_DISABLE getThreadPreemptionDisable() const {
-        UNRECOVERABLE_IF(true); // patched
-        return static_cast<THREAD_PREEMPTION_DISABLE>(TheStructure.Common.ThreadPreemptionDisable);
+    inline bool getThreadPreemptionDisable() const {
+        return TheStructure.Common.ThreadPreemptionDisable;
     }
     inline void setSamplerCount(const SAMPLER_COUNT value) {
         TheStructure.Common.SamplerCount = value;
@@ -4401,44 +4381,38 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
     inline SAMPLER_COUNT getSamplerCount() const {
         return static_cast<SAMPLER_COUNT>(TheStructure.Common.SamplerCount);
     }
-    typedef enum tagSAMPLERSTATEPOINTER {
-        SAMPLERSTATEPOINTER_BIT_SHIFT = 0x5,
-        SAMPLERSTATEPOINTER_ALIGN_SIZE = 0x20,
-    } SAMPLERSTATEPOINTER;
     inline void setSamplerStatePointer(const uint32_t value) {
-        TheStructure.Common.SamplerStatePointer = static_cast<uint32_t>(value) >> SAMPLERSTATEPOINTER_BIT_SHIFT;
+        TheStructure.Common.SamplerStatePointer = value >> SAMPLERSTATEPOINTER_BIT_SHIFT;
     }
     inline uint32_t getSamplerStatePointer() const {
-        return TheStructure.Common.SamplerStatePointer << SAMPLERSTATEPOINTER_BIT_SHIFT;
+        return static_cast<uint32_t>(TheStructure.Common.SamplerStatePointer) << SAMPLERSTATEPOINTER_BIT_SHIFT;
     }
     inline void setBindingTableEntryCount(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x1fu);
         TheStructure.Common.BindingTableEntryCount = value;
     }
     inline uint32_t getBindingTableEntryCount() const {
         return TheStructure.Common.BindingTableEntryCount;
     }
-    typedef enum tagBINDINGTABLEPOINTER {
-        BINDINGTABLEPOINTER_BIT_SHIFT = 0x5,
-        BINDINGTABLEPOINTER_ALIGN_SIZE = 0x20,
-    } BINDINGTABLEPOINTER;
     inline void setBindingTablePointer(const uint32_t value) {
-        TheStructure.Common.BindingTablePointer = static_cast<uint32_t>(value) >> BINDINGTABLEPOINTER_BIT_SHIFT;
+        TheStructure.Common.BindingTablePointer = value >> BINDINGTABLEPOINTER_BIT_SHIFT;
     }
     inline uint32_t getBindingTablePointer() const {
         return TheStructure.Common.BindingTablePointer << BINDINGTABLEPOINTER_BIT_SHIFT;
     }
     inline void setNumberOfThreadsInGpgpuThreadGroup(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x3ff);
+        UNRECOVERABLE_IF(value > 0x3ffu);
         TheStructure.Common.NumberOfThreadsInGpgpuThreadGroup = value;
     }
     inline uint32_t getNumberOfThreadsInGpgpuThreadGroup() const {
         return TheStructure.Common.NumberOfThreadsInGpgpuThreadGroup;
     }
-    inline void setSharedLocalMemorySize(const uint32_t value) { // patched
+    inline void setSharedLocalMemorySize(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x1fu);
         TheStructure.Common.SharedLocalMemorySize = value;
     }
-    inline uint32_t getSharedLocalMemorySize() const { // patched
-        return static_cast<uint32_t>(TheStructure.Common.SharedLocalMemorySize);
+    inline uint32_t getSharedLocalMemorySize() const {
+        return TheStructure.Common.SharedLocalMemorySize;
     }
     inline void setRoundingMode(const ROUNDING_MODE value) {
         TheStructure.Common.RoundingMode = value;
@@ -4458,11 +4432,11 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
     inline NUMBER_OF_BARRIERS getNumberOfBarriers() const {
         return static_cast<NUMBER_OF_BARRIERS>(TheStructure.Common.NumberOfBarriers);
     }
-    inline void setBtdMode(const BTD_MODE value) {
+    inline void setBtdMode(const bool value) {
         TheStructure.Common.BtdMode = value;
     }
-    inline BTD_MODE getBtdMode() const {
-        return static_cast<BTD_MODE>(TheStructure.Common.BtdMode);
+    inline bool getBtdMode() const {
+        return TheStructure.Common.BtdMode;
     }
     inline void setPreferredSlmAllocationSize(const PREFERRED_SLM_ALLOCATION_SIZE value) {
         TheStructure.Common.PreferredSlmAllocationSize = value;
@@ -4531,9 +4505,9 @@ typedef struct tagCOMPUTE_WALKER {
             // DWORD 12
             uint32_t ThreadGroupIdStartingZ;
             // DWORD 13
-            uint64_t PartitionId : BITFIELD_RANGE(0, 31);
+            uint32_t PartitionId;
             // DWORD 14
-            uint64_t PartitionSize : BITFIELD_RANGE(32, 63);
+            uint32_t PartitionSize;
             // DWORD 15
             uint32_t PreemptX;
             // DWORD 16
@@ -4574,6 +4548,14 @@ typedef struct tagCOMPUTE_WALKER {
         PARTITION_TYPE_Y = 0x2,
         PARTITION_TYPE_Z = 0x3,
     } PARTITION_TYPE;
+    typedef enum tagINDIRECTDATASTARTADDRESS {
+        INDIRECTDATASTARTADDRESS_BIT_SHIFT = 0x6,
+        INDIRECTDATASTARTADDRESS_ALIGN_SIZE = 0x40,
+    } INDIRECTDATASTARTADDRESS;
+    typedef enum tagDISPATCH_WALK_ORDER {
+        DISPATCH_WALK_ORDER_LINEAR_WALK = 0x0,
+        DISPATCH_WALK_ORDER_Y_ORDER_WALK = 0x1,
+    } DISPATCH_WALK_ORDER;
     typedef enum tagMESSAGE_SIMD {
         MESSAGE_SIMD_SIMD8 = 0x0,
         MESSAGE_SIMD_SIMD16 = 0x1,
@@ -4608,29 +4590,15 @@ typedef struct tagCOMPUTE_WALKER {
         PARTITION_ID_SUPPORTED_MIN = 0x0,
         PARTITION_ID_SUPPORTED_MAX = 0xf,
     } PARTITION_ID;
-    typedef enum tagDISPATCH_WALK_ORDER { // patched
-        DISPATCH_WALK_ORDER_LINEAR_WALK = 0x0,
-        DISPATCH_WALK_ORDER_Y_ORDER_WALK = 0x1,
-    } DISPATCH_WALK_ORDER;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_FIXED_SIZE;
-        TheStructure.Common.CfeSubopcodeVariant = CFE_SUBOPCODE_VARIANT_STANDARD;
         TheStructure.Common.CfeSubopcode = CFE_SUBOPCODE_COMPUTE_WALKER;
         TheStructure.Common.ComputeCommandOpcode = COMPUTE_COMMAND_OPCODE_NEW_CFE_COMMAND;
         TheStructure.Common.Pipeline = PIPELINE_COMPUTE;
         TheStructure.Common.CommandType = COMMAND_TYPE_GFXPIPE;
-        TheStructure.Common.PartitionType = PARTITION_TYPE_DISABLED;
-        TheStructure.Common.MessageSimd = MESSAGE_SIMD_SIMD8;
-        TheStructure.Common.TileLayout = TILE_LAYOUT_LINEAR;
-        TheStructure.Common.WalkOrder = WALK_ORDER_WALK_012;
-        TheStructure.Common.EmitLocal = EMIT_LOCAL_EMIT_NONE;
-        TheStructure.Common.SimdSize = SIMD_SIZE_SIMD8;
         TheStructure.Common.InterfaceDescriptor.init();
         TheStructure.Common.PostSync.init();
-        for (uint32_t i = 0; i < 8; i++) {
-            TheStructure.Common.InlineData[i] = 0;
-        }
     }
     static tagCOMPUTE_WALKER sInit() {
         COMPUTE_WALKER state;
@@ -4641,10 +4609,10 @@ typedef struct tagCOMPUTE_WALKER {
         UNRECOVERABLE_IF(index >= 39);
         return TheStructure.RawData[index];
     }
-    inline void setDwordLength(const DWORD_LENGTH value) { // patched
+    inline void setDwordLength(const DWORD_LENGTH value) {
         TheStructure.Common.DwordLength = value;
     }
-    inline DWORD_LENGTH getDwordLength() const { // patched
+    inline DWORD_LENGTH getDwordLength() const {
         return static_cast<DWORD_LENGTH>(TheStructure.Common.DwordLength);
     }
     inline void setPredicateEnable(const bool value) {
@@ -4689,15 +4657,27 @@ typedef struct tagCOMPUTE_WALKER {
     inline COMPUTE_COMMAND_OPCODE getComputeCommandOpcode() const {
         return static_cast<COMPUTE_COMMAND_OPCODE>(TheStructure.Common.ComputeCommandOpcode);
     }
+    inline void setPipeline(const PIPELINE value) {
+        TheStructure.Common.Pipeline = value;
+    }
+    inline PIPELINE getPipeline() const {
+        return static_cast<PIPELINE>(TheStructure.Common.Pipeline);
+    }
+    inline void setCommandType(const COMMAND_TYPE value) {
+        TheStructure.Common.CommandType = value;
+    }
+    inline COMMAND_TYPE getCommandType() const {
+        return static_cast<COMMAND_TYPE>(TheStructure.Common.CommandType);
+    }
     inline void setDebugObjectId(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xffffff);
+        UNRECOVERABLE_IF(value > 0xffffffu);
         TheStructure.Common.DebugObjectId = value;
     }
     inline uint32_t getDebugObjectId() const {
         return TheStructure.Common.DebugObjectId;
     }
     inline void setIndirectDataLength(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x1ffff);
+        UNRECOVERABLE_IF(value > 0x1ffffu);
         TheStructure.Common.IndirectDataLength = value;
     }
     inline uint32_t getIndirectDataLength() const {
@@ -4710,7 +4690,7 @@ typedef struct tagCOMPUTE_WALKER {
         return TheStructure.Common.L3PrefetchDisable;
     }
     inline void setPartitionDispatchParameter(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xfff);
+        UNRECOVERABLE_IF(value > 0xfffu);
         TheStructure.Common.PartitionDispatchParameter = value;
     }
     inline uint32_t getPartitionDispatchParameter() const {
@@ -4722,39 +4702,37 @@ typedef struct tagCOMPUTE_WALKER {
     inline PARTITION_TYPE getPartitionType() const {
         return static_cast<PARTITION_TYPE>(TheStructure.Common.PartitionType);
     }
-    inline void setDispatchWalkOrder(const DISPATCH_WALK_ORDER value) { // patched
-        TheStructure.Common.DispatchWalkOrder = value;
-    }
-    inline DISPATCH_WALK_ORDER getDispatchWalkOrder() const { // patched
-        return static_cast<DISPATCH_WALK_ORDER>(TheStructure.Common.DispatchWalkOrder);
-    }
-    typedef enum tagINDIRECTDATASTARTADDRESS {
-        INDIRECTDATASTARTADDRESS_BIT_SHIFT = 0x6,
-        INDIRECTDATASTARTADDRESS_ALIGN_SIZE = 0x40,
-    } INDIRECTDATASTARTADDRESS;
     inline void setIndirectDataStartAddress(const uint32_t value) {
         TheStructure.Common.IndirectDataStartAddress = value >> INDIRECTDATASTARTADDRESS_BIT_SHIFT;
     }
     inline uint32_t getIndirectDataStartAddress() const {
-        return TheStructure.Common.IndirectDataStartAddress << INDIRECTDATASTARTADDRESS_BIT_SHIFT;
+        return static_cast<uint32_t>(TheStructure.Common.IndirectDataStartAddress) << INDIRECTDATASTARTADDRESS_BIT_SHIFT;
     }
-    inline void setMessageSimd(const uint32_t value) { // patched
+    inline void setDispatchWalkOrder(const DISPATCH_WALK_ORDER value) {
+        TheStructure.Common.DispatchWalkOrder = value;
+    }
+    inline DISPATCH_WALK_ORDER getDispatchWalkOrder() const {
+        return static_cast<DISPATCH_WALK_ORDER>(TheStructure.Common.DispatchWalkOrder);
+    }
+    inline void setMessageSimd(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x3u);
         TheStructure.Common.MessageSimd = value;
     }
-    inline uint32_t getMessageSimd() const { // patched
-        return (TheStructure.Common.MessageSimd);
+    inline uint32_t getMessageSimd() const {
+        return TheStructure.Common.MessageSimd;
     }
-    inline void setTileLayout(const uint32_t value) { // patched
+    inline void setTileLayout(const TILE_LAYOUT value) {
         TheStructure.Common.TileLayout = value;
     }
-    inline uint32_t getTileLayout() const { // patched
-        return (TheStructure.Common.TileLayout);
+    inline TILE_LAYOUT getTileLayout() const {
+        return static_cast<TILE_LAYOUT>(TheStructure.Common.TileLayout);
     }
-    inline void setWalkOrder(const uint32_t value) { // patched
+    inline void setWalkOrder(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x7u);
         TheStructure.Common.WalkOrder = value;
     }
-    inline uint32_t getWalkOrder() const { // patched
-        return (TheStructure.Common.WalkOrder);
+    inline uint32_t getWalkOrder() const {
+        return TheStructure.Common.WalkOrder;
     }
     inline void setEmitInlineParameter(const bool value) {
         TheStructure.Common.EmitInlineParameter = value;
@@ -4762,10 +4740,11 @@ typedef struct tagCOMPUTE_WALKER {
     inline bool getEmitInlineParameter() const {
         return TheStructure.Common.EmitInlineParameter;
     }
-    inline void setEmitLocalId(const uint32_t value) { // patched
+    inline void setEmitLocalId(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x7u);
         TheStructure.Common.EmitLocal = value;
     }
-    inline uint32_t getEmitLocalId() const { // patched
+    inline uint32_t getEmitLocalId() const {
         return TheStructure.Common.EmitLocal;
     }
     inline void setGenerateLocalId(const bool value) {
@@ -4787,21 +4766,21 @@ typedef struct tagCOMPUTE_WALKER {
         return TheStructure.Common.ExecutionMask;
     }
     inline void setLocalXMaximum(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x3ff);
+        UNRECOVERABLE_IF(value > 0x3ffu);
         TheStructure.Common.LocalXMaximum = value;
     }
     inline uint32_t getLocalXMaximum() const {
         return TheStructure.Common.LocalXMaximum;
     }
     inline void setLocalYMaximum(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x3ff);
+        UNRECOVERABLE_IF(value > 0x3ffu);
         TheStructure.Common.LocalYMaximum = value;
     }
     inline uint32_t getLocalYMaximum() const {
         return TheStructure.Common.LocalYMaximum;
     }
     inline void setLocalZMaximum(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x3ff);
+        UNRECOVERABLE_IF(value > 0x3ffu);
         TheStructure.Common.LocalZMaximum = value;
     }
     inline uint32_t getLocalZMaximum() const {
@@ -4843,16 +4822,16 @@ typedef struct tagCOMPUTE_WALKER {
     inline uint32_t getThreadGroupIdStartingZ() const {
         return TheStructure.Common.ThreadGroupIdStartingZ;
     }
-    inline void setPartitionId(const uint64_t value) {
+    inline void setPartitionId(const uint32_t value) {
         TheStructure.Common.PartitionId = value;
     }
-    inline uint64_t getPartitionId() const {
+    inline uint32_t getPartitionId() const {
         return TheStructure.Common.PartitionId;
     }
-    inline void setPartitionSize(const uint64_t value) {
+    inline void setPartitionSize(const uint32_t value) {
         TheStructure.Common.PartitionSize = value;
     }
-    inline uint64_t getPartitionSize() const {
+    inline uint32_t getPartitionSize() const {
         return TheStructure.Common.PartitionSize;
     }
     inline void setPreemptX(const uint32_t value) {
@@ -4891,7 +4870,7 @@ typedef struct tagCOMPUTE_WALKER {
     static constexpr uint32_t getInlineDataSize() {
         return sizeof(TheStructure.Common.InlineData);
     }
-    using InterfaceDescriptorType = std::decay_t<decltype(TheStructure.Common.InterfaceDescriptor)>; // patched
+    using InterfaceDescriptorType = INTERFACE_DESCRIPTOR_DATA;
 } COMPUTE_WALKER;
 STATIC_ASSERT(156 == sizeof(COMPUTE_WALKER));
 

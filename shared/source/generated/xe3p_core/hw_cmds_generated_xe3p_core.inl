@@ -4503,24 +4503,24 @@ typedef struct tagPOSTSYNC_DATA_2 {
             uint32_t Reserved_0 : BITFIELD_RANGE(0, 1);
             uint32_t DataportPipelineFlush : BITFIELD_RANGE(2, 2);
             uint32_t InterruptSignalEnable : BITFIELD_RANGE(3, 3);
-            uint32_t MocsEncryptedData : BITFIELD_RANGE(4, 4);
-            uint32_t MocsIndexToMocsTables : BITFIELD_RANGE(5, 10);
+            uint32_t EncryptedData : BITFIELD_RANGE(4, 4);
+            uint32_t IndexToMocsTables : BITFIELD_RANGE(5, 10);
             uint32_t SystemMemoryFenceRequest : BITFIELD_RANGE(11, 11);
             uint32_t DataportSubsliceCacheFlush : BITFIELD_RANGE(12, 12);
             uint32_t L2Flush : BITFIELD_RANGE(13, 13);
             uint32_t L2TransientFlush : BITFIELD_RANGE(14, 14);
             uint32_t Reserved_15 : BITFIELD_RANGE(15, 15);
             uint32_t Operation : BITFIELD_RANGE(16, 17);
-            uint32_t ReservedForFuturePostsyncOp_18 : BITFIELD_RANGE(18, 18);
+            uint32_t Reserved_18 : BITFIELD_RANGE(18, 18);
             uint32_t SerializePostsyncOps : BITFIELD_RANGE(19, 19);
             uint32_t AtomicDataSize : BITFIELD_RANGE(20, 20);
             uint32_t ImmediateDataSize : BITFIELD_RANGE(21, 21);
             uint32_t Reserved_22 : BITFIELD_RANGE(22, 23);
             uint32_t AtomicOpcode : BITFIELD_RANGE(24, 31);
-            // DWORD 1
+            // DWORD 1-2
             uint64_t DestinationAddress;
-            // DWORD 3
-            uint64_t Data;
+            // DWORD 3-4
+            uint64_t ImmediateData;
         } Common;
         uint32_t RawData[5];
     } TheStructure;
@@ -4534,6 +4534,10 @@ typedef struct tagPOSTSYNC_DATA_2 {
         ATOMIC_DATA_SIZE_DWORD = 0x0,
         ATOMIC_DATA_SIZE_QWORD = 0x1,
     } ATOMIC_DATA_SIZE;
+    typedef enum tagIMMEDIATE_DATA_SIZE {
+        IMMEDIATE_DATA_SIZE_QWORD = 0x0,
+        IMMEDIATE_DATA_SIZE_DWORD = 0x1,
+    } IMMEDIATE_DATA_SIZE;
     typedef enum tagATOMIC_OPCODE {
         ATOMIC_OPCODE_ATOMIC_AND = 0x1,
         ATOMIC_OPCODE_ATOMIC_OR = 0x2,
@@ -4569,8 +4573,6 @@ typedef struct tagPOSTSYNC_DATA_2 {
     } ATOMIC_OPCODE;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
-        TheStructure.Common.Operation = OPERATION_NO_WRITE;
-        TheStructure.Common.AtomicDataSize = ATOMIC_DATA_SIZE_DWORD;
     }
     static tagPOSTSYNC_DATA_2 sInit() {
         POSTSYNC_DATA_2 state;
@@ -4593,20 +4595,14 @@ typedef struct tagPOSTSYNC_DATA_2 {
     inline bool getInterruptSignalEnable() const {
         return TheStructure.Common.InterruptSignalEnable;
     }
-    inline void setMocsEncryptedData(const bool value) {
-        TheStructure.Common.MocsEncryptedData = value;
+    // Manual generator override: MOCS includes the encryption bit.
+    inline void setMocs(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x7fu);
+        TheStructure.Common.IndexToMocsTables = value >> 1;
+        TheStructure.Common.EncryptedData = value & 1;
     }
-    inline bool getMocsEncryptedData() const {
-        return TheStructure.Common.MocsEncryptedData;
-    }
-    inline void setMocs(const uint32_t value) { // patched
-        UNRECOVERABLE_IF(value > 0x3f);
-        setMocsEncryptedData(value & 1);
-        TheStructure.Common.MocsIndexToMocsTables = value >> 1;
-    }
-    inline uint32_t getMocs() const { // patched
-        uint32_t mocs = getMocsEncryptedData();
-        return mocs | TheStructure.Common.MocsIndexToMocsTables << 1;
+    inline uint32_t getMocs() const {
+        return (TheStructure.Common.IndexToMocsTables << 1) | TheStructure.Common.EncryptedData;
     }
     inline void setSystemMemoryFenceRequest(const bool value) {
         TheStructure.Common.SystemMemoryFenceRequest = value;
@@ -4650,6 +4646,12 @@ typedef struct tagPOSTSYNC_DATA_2 {
     inline ATOMIC_DATA_SIZE getAtomicDataSize() const {
         return static_cast<ATOMIC_DATA_SIZE>(TheStructure.Common.AtomicDataSize);
     }
+    inline void setImmediateDataSize(const IMMEDIATE_DATA_SIZE value) {
+        TheStructure.Common.ImmediateDataSize = value;
+    }
+    inline IMMEDIATE_DATA_SIZE getImmediateDataSize() const {
+        return static_cast<IMMEDIATE_DATA_SIZE>(TheStructure.Common.ImmediateDataSize);
+    }
     inline void setAtomicOpcode(const ATOMIC_OPCODE value) {
         TheStructure.Common.AtomicOpcode = value;
     }
@@ -4662,11 +4664,11 @@ typedef struct tagPOSTSYNC_DATA_2 {
     inline uint64_t getDestinationAddress() const {
         return TheStructure.Common.DestinationAddress;
     }
-    inline void setImmediateData(const uint64_t value) { // patched
-        TheStructure.Common.Data = value;
+    inline void setImmediateData(const uint64_t value) {
+        TheStructure.Common.ImmediateData = value;
     }
-    inline uint64_t getImmediateData() const { // patched
-        return TheStructure.Common.Data;
+    inline uint64_t getImmediateData() const {
+        return TheStructure.Common.ImmediateData;
     }
 } POSTSYNC_DATA_2;
 STATIC_ASSERT(20 == sizeof(POSTSYNC_DATA_2));
@@ -4674,7 +4676,7 @@ STATIC_ASSERT(20 == sizeof(POSTSYNC_DATA_2));
 typedef struct tagINTERFACE_DESCRIPTOR_DATA_2 {
     union tagTheStructure {
         struct tagCommon {
-            // DWORD 0
+            // DWORD 0-1
             uint64_t Reserved_0 : BITFIELD_RANGE(0, 5);
             uint64_t KernelStartPointer : BITFIELD_RANGE(6, 63);
             // DWORD 2
@@ -4698,12 +4700,11 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA_2 {
             uint32_t Reserved_128;
             // DWORD 5
             uint32_t NumberOfThreadsInGpgpuThreadGroup : BITFIELD_RANGE(0, 7);
-            uint32_t Reserved_168 : BITFIELD_RANGE(8, 12);
+            uint32_t Reserved_168 : BITFIELD_RANGE(8, 11);
+            uint32_t BtdMode : BITFIELD_RANGE(12, 12);
             uint32_t ThreadGroupForwardProgressGuarantee : BITFIELD_RANGE(13, 13);
-            uint32_t Reserved_174 : BITFIELD_RANGE(14, 14);
-            uint32_t BtdMode : BITFIELD_RANGE(15, 15);
-            uint32_t SharedLocalMemorySize : BITFIELD_RANGE(16, 20);
-            uint32_t Reserved_181 : BITFIELD_RANGE(21, 21);
+            uint32_t Reserved_174 : BITFIELD_RANGE(14, 15);
+            uint32_t SharedLocalMemorySize : BITFIELD_RANGE(16, 21);
             uint32_t RoundingMode : BITFIELD_RANGE(22, 23);
             uint32_t Reserved_184 : BITFIELD_RANGE(24, 24);
             uint32_t ThreadGroupDispatchSize : BITFIELD_RANGE(25, 27);
@@ -4724,6 +4725,10 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA_2 {
         } Common;
         uint32_t RawData[8];
     } TheStructure;
+    typedef enum tagKERNELSTARTPOINTER {
+        KERNELSTARTPOINTER_BIT_SHIFT = 0x6,
+        KERNELSTARTPOINTER_ALIGN_SIZE = 0x40,
+    } KERNELSTARTPOINTER;
     typedef enum tagEU_THREAD_SCHEDULING_MODE_OVERRIDE {
         EU_THREAD_SCHEDULING_MODE_OVERRIDE_HW_DEFAULT = 0x0,
         EU_THREAD_SCHEDULING_MODE_OVERRIDE_OLDEST_FIRST = 0x1,
@@ -4750,12 +4755,10 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA_2 {
         REGISTERS_PER_THREAD_REGISTERS_160 = 0x4,
         REGISTERS_PER_THREAD_REGISTERS_192 = 0x5,
         REGISTERS_PER_THREAD_REGISTERS_256 = 0x7,
+        REGISTERS_PER_THREAD_REGISTERS_320 = 0x9,
+        REGISTERS_PER_THREAD_REGISTERS_448 = 0xd,
         REGISTERS_PER_THREAD_REGISTERS_512 = 0xf,
     } REGISTERS_PER_THREAD;
-    typedef enum tagBTD_MODE {
-        BTD_MODE_DISABLE = 0x0,
-        BTD_MODE_ENABLE = 0x1,
-    } BTD_MODE;
     typedef enum tagSHARED_LOCAL_MEMORY_SIZE {
         SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_0K = 0x0,
         SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_1K = 0x1,
@@ -4773,17 +4776,17 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA_2 {
         SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_256K = 0xd,
         SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_320K = 0xe,
         SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_384K = 0xf,
-        SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_3K = 0x10,  // patched
-        SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_5K = 0x11,  // patched
-        SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_6K = 0x12,  // patched
-        SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_7K = 0x13,  // patched
-        SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_9K = 0x14,  // patched
-        SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_10K = 0x15, // patched
-        SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_11K = 0x16, // patched
-        SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_12K = 0x17, // patched
-        SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_13K = 0x18, // patched
-        SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_14K = 0x19, // patched
-        SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_15K = 0x1a, // patched
+        SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_3K = 0x10,
+        SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_5K = 0x11,
+        SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_6K = 0x12,
+        SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_7K = 0x13,
+        SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_9K = 0x14,
+        SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_10K = 0x15,
+        SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_11K = 0x16,
+        SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_12K = 0x17,
+        SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_13K = 0x18,
+        SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_14K = 0x19,
+        SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_15K = 0x1a,
     } SHARED_LOCAL_MEMORY_SIZE;
     typedef enum tagROUNDING_MODE {
         ROUNDING_MODE_RTNE = 0x0,
@@ -4852,20 +4855,7 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA_2 {
     } DYNAMIC_PREF_SLM_INCREASE;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
-        TheStructure.Common.EuThreadSchedulingModeOverride = EU_THREAD_SCHEDULING_MODE_OVERRIDE_STALL_BASED_ROUND_ROBIN; // patched
-        TheStructure.Common.FloatingPointMode = FLOATING_POINT_MODE_IEEE_754;
-        TheStructure.Common.SingleProgramFlow = SINGLE_PROGRAM_FLOW_MULTIPLE;
-        TheStructure.Common.DenormMode = DENORM_MODE_FTZ;
-        TheStructure.Common.RegistersPerThread = REGISTERS_PER_THREAD_REGISTERS_32;
-        TheStructure.Common.BtdMode = BTD_MODE_DISABLE;
-        TheStructure.Common.SharedLocalMemorySize = SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_0K;
-        TheStructure.Common.RoundingMode = ROUNDING_MODE_RTNE;
-        TheStructure.Common.ThreadGroupDispatchSize = THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_8;
-        TheStructure.Common.NumberOfBarriers = NUMBER_OF_BARRIERS_NONE;
-        TheStructure.Common.ZPassAsyncComputeThreadLimit = Z_PASS_ASYNC_COMPUTE_THREAD_LIMIT_MAX_60;
-        TheStructure.Common.PsAsyncThreadLimit = PS_ASYNC_THREAD_LIMIT_DISABLED;
-        TheStructure.Common.PreferredSlmAllocationSize = PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_0K;
-        TheStructure.Common.DynamicPrefSlmIncrease = DYNAMIC_PREF_SLM_INCREASE_DISABLE;
+        TheStructure.Common.EuThreadSchedulingModeOverride = EU_THREAD_SCHEDULING_MODE_OVERRIDE_STALL_BASED_ROUND_ROBIN; // Manual generator override
     }
     static tagINTERFACE_DESCRIPTOR_DATA_2 sInit() {
         INTERFACE_DESCRIPTOR_DATA_2 state;
@@ -4876,10 +4866,6 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA_2 {
         UNRECOVERABLE_IF(index >= 8);
         return TheStructure.RawData[index];
     }
-    typedef enum tagKERNELSTARTPOINTER {
-        KERNELSTARTPOINTER_BIT_SHIFT = 0x6,
-        KERNELSTARTPOINTER_ALIGN_SIZE = 0x40,
-    } KERNELSTARTPOINTER;
     inline void setKernelStartPointer(const uint64_t value) {
         TheStructure.Common.KernelStartPointer = value >> KERNELSTARTPOINTER_BIT_SHIFT;
     }
@@ -4935,11 +4921,17 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA_2 {
         return static_cast<REGISTERS_PER_THREAD>(TheStructure.Common.RegistersPerThread);
     }
     inline void setNumberOfThreadsInGpgpuThreadGroup(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xff);
+        UNRECOVERABLE_IF(value > 0xffu);
         TheStructure.Common.NumberOfThreadsInGpgpuThreadGroup = value;
     }
     inline uint32_t getNumberOfThreadsInGpgpuThreadGroup() const {
         return TheStructure.Common.NumberOfThreadsInGpgpuThreadGroup;
+    }
+    inline void setBtdMode(const bool value) {
+        TheStructure.Common.BtdMode = value;
+    }
+    inline bool getBtdMode() const {
+        return TheStructure.Common.BtdMode;
     }
     inline void setThreadGroupForwardProgressGuarantee(const bool value) {
         TheStructure.Common.ThreadGroupForwardProgressGuarantee = value;
@@ -4947,16 +4939,11 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA_2 {
     inline bool getThreadGroupForwardProgressGuarantee() const {
         return TheStructure.Common.ThreadGroupForwardProgressGuarantee;
     }
-    inline void setBtdMode(const BTD_MODE value) {
-        TheStructure.Common.BtdMode = value;
-    }
-    inline BTD_MODE getBtdMode() const {
-        return static_cast<BTD_MODE>(TheStructure.Common.BtdMode);
-    }
-    inline void setSharedLocalMemorySize(const uint32_t value) { // patched
+    inline void setSharedLocalMemorySize(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x3fu);
         TheStructure.Common.SharedLocalMemorySize = value;
     }
-    inline uint32_t getSharedLocalMemorySize() const { // patched
+    inline uint32_t getSharedLocalMemorySize() const {
         return TheStructure.Common.SharedLocalMemorySize;
     }
     inline void setRoundingMode(const ROUNDING_MODE value) {
@@ -5027,30 +5014,32 @@ typedef struct tagCOMPUTE_WALKER_2 {
             uint32_t ComputeCommandOpcode : BITFIELD_RANGE(24, 26);
             uint32_t Pipeline : BITFIELD_RANGE(27, 28);
             uint32_t CommandType : BITFIELD_RANGE(29, 31);
-            // DWORD 1 of COMPUTE WALKER = DWORD 0 of COMPUTE_WALKER_BODY
-            uint32_t Reserved_32;
             // DWORD 1
-            uint32_t Reserved_64;
+            uint32_t Reserved_32 : BITFIELD_RANGE(0, 7);
+            uint32_t DebugObjectId : BITFIELD_RANGE(8, 31);
             // DWORD 2
+            uint32_t Reserved_64;
+            // DWORD 3
             uint32_t ThreadDispatchPolicy : BITFIELD_RANGE(0, 0);
             uint32_t Reserved_97 : BITFIELD_RANGE(1, 1);
-            uint32_t StackIdControl : BITFIELD_RANGE(2, 3);
-            uint32_t Reserved_100 : BITFIELD_RANGE(4, 4);
+            uint32_t StackIdControl : BITFIELD_RANGE(2, 4);
             uint32_t DynamicStackIdControl : BITFIELD_RANGE(5, 5);
             uint32_t Reserved_102 : BITFIELD_RANGE(6, 6);
             uint32_t ComputeOverdispatchDisable : BITFIELD_RANGE(7, 7);
-            uint32_t Reserved_103 : BITFIELD_RANGE(8, 8);
+            uint32_t Reserved_104 : BITFIELD_RANGE(8, 8);
             uint32_t OverDispatchControl : BITFIELD_RANGE(9, 10);
             uint32_t Reserved_107 : BITFIELD_RANGE(11, 11);
             uint32_t ThreadArbitrationPolicy : BITFIELD_RANGE(12, 13);
             uint32_t Reserved_110 : BITFIELD_RANGE(14, 15);
             uint32_t MaximumNumberOfThreads : BITFIELD_RANGE(16, 31);
-            // DWORD 3
+            // DWORD 4
             uint32_t ComputeDispatchAllWalkerEnable : BITFIELD_RANGE(0, 0);
             uint32_t Reserved_129 : BITFIELD_RANGE(1, 2);
             uint32_t ThreadGroupBatchSize : BITFIELD_RANGE(3, 4);
             uint32_t DispatchWalkOrder : BITFIELD_RANGE(5, 7);
-            uint32_t Reserved_136 : BITFIELD_RANGE(8, 16);
+            uint32_t Reserved_136 : BITFIELD_RANGE(8, 14);
+            uint32_t StatCountDisable : BITFIELD_RANGE(15, 15);
+            uint32_t Reserved_144 : BITFIELD_RANGE(16, 16);
             uint32_t MessageSimd : BITFIELD_RANGE(17, 18);
             uint32_t TileLayout : BITFIELD_RANGE(19, 21);
             uint32_t WalkOrder : BITFIELD_RANGE(22, 24);
@@ -5058,62 +5047,62 @@ typedef struct tagCOMPUTE_WALKER_2 {
             uint32_t EmitLocal : BITFIELD_RANGE(26, 28);
             uint32_t GenerateLocalId : BITFIELD_RANGE(29, 29);
             uint32_t SimdSize : BITFIELD_RANGE(30, 31);
-            // DWORD 4
-            uint32_t ExecutionMask;
             // DWORD 5
+            uint32_t ExecutionMask;
+            // DWORD 6
             uint32_t LocalXMaximum : BITFIELD_RANGE(0, 9);
             uint32_t LocalYMaximum : BITFIELD_RANGE(10, 19);
             uint32_t LocalZMaximum : BITFIELD_RANGE(20, 29);
-            uint32_t Reserved_190 : BITFIELD_RANGE(30, 31);
-            // DWORD 6
-            uint32_t ThreadGroupIdXDimension;
+            uint32_t Reserved_222 : BITFIELD_RANGE(30, 31);
             // DWORD 7
-            uint32_t ThreadGroupIdYDimension;
+            uint32_t ThreadGroupIdXDimension;
             // DWORD 8
-            uint32_t ThreadGroupIdZDimension;
+            uint32_t ThreadGroupIdYDimension;
             // DWORD 9
-            uint32_t ThreadGroupIdStartingX;
+            uint32_t ThreadGroupIdZDimension;
             // DWORD 10
-            uint32_t ThreadGroupIdStartingY;
+            uint32_t ThreadGroupIdStartingX;
             // DWORD 11
-            uint32_t ThreadGroupIdStartingZ;
+            uint32_t ThreadGroupIdStartingY;
             // DWORD 12
-            uint64_t PartitionId : BITFIELD_RANGE(0, 7);
-            uint64_t PartitionType : BITFIELD_RANGE(8, 9);
-            uint64_t Reserved_426 : BITFIELD_RANGE(10, 11);
-            uint64_t DispatchAllModValue : BITFIELD_RANGE(12, 13);
-            uint64_t Reserved_430 : BITFIELD_RANGE(14, 15);
-            uint64_t Quantumsize : BITFIELD_RANGE(16, 19);
-            uint64_t Reserved_436 : BITFIELD_RANGE(20, 22);
-            uint64_t QuantumLocalityCheckEnable : BITFIELD_RANGE(23, 23);
-            uint64_t XecuFullEmptyCheckEnable : BITFIELD_RANGE(24, 24);
-            uint64_t Reserved_441 : BITFIELD_RANGE(25, 31);
+            uint32_t ThreadGroupIdStartingZ;
             // DWORD 13
-            uint64_t PartitionSize : BITFIELD_RANGE(32, 63);
+            uint32_t PartitionId : BITFIELD_RANGE(0, 7);
+            uint32_t PartitionType : BITFIELD_RANGE(8, 9);
+            uint32_t Reserved_426 : BITFIELD_RANGE(10, 11);
+            uint32_t DispatchAllModValue : BITFIELD_RANGE(12, 13);
+            uint32_t Reserved_430 : BITFIELD_RANGE(14, 15);
+            uint32_t QuantumSize : BITFIELD_RANGE(16, 19);
+            uint32_t Reserved_436 : BITFIELD_RANGE(20, 22);
+            uint32_t QuantumLocalityCheckEnable : BITFIELD_RANGE(23, 23);
+            uint32_t XecuFullEmptyCheckEnable : BITFIELD_RANGE(24, 24);
+            uint32_t Reserved_441 : BITFIELD_RANGE(25, 31);
             // DWORD 14
-            uint32_t PreemptX;
+            uint32_t PartitionSize;
             // DWORD 15
-            uint32_t PreemptY;
+            uint32_t PreemptX;
             // DWORD 16
-            uint32_t PreemptZ;
+            uint32_t PreemptY;
             // DWORD 17
+            uint32_t PreemptZ;
+            // DWORD 18
             uint32_t WalkerId : BITFIELD_RANGE(0, 4);
             uint32_t OverDispatchTgCount : BITFIELD_RANGE(5, 18);
             uint32_t PostsyncId : BITFIELD_RANGE(19, 25);
-            uint32_t Apqid : BITFIELD_RANGE(26, 31);
-            // DWORD 18
+            uint32_t APQID : BITFIELD_RANGE(26, 31);
+            // DWORD 19
             INTERFACE_DESCRIPTOR_DATA_2 InterfaceDescriptor;
-            // DWORD 26
-            POSTSYNC_DATA_2 PostSync; // patched
-            // DWORD 31
+            // DWORD 27
+            POSTSYNC_DATA_2 PostSync;
+            // DWORD 32
             uint32_t InlineData[16];
-            // DWORD 47
+            // DWORD 48
             POSTSYNC_DATA_2 PostSyncOpn1;
-            // DWORD 52
+            // DWORD 53
             POSTSYNC_DATA_2 PostSyncOpn2;
-            // DWORD 57
+            // DWORD 58
             POSTSYNC_DATA_2 PostSyncOpn3;
-            // DWORD 62
+            // DWORD 63
             uint32_t PreemptCsInterruptVector : BITFIELD_RANGE(0, 9);
             uint32_t Reserved_2026 : BITFIELD_RANGE(10, 31);
         } Common;
@@ -5127,7 +5116,6 @@ typedef struct tagCOMPUTE_WALKER_2 {
         CFE_SUBOPCODE_VARIANT_PASS1_RESUME = 0x1,
         CFE_SUBOPCODE_VARIANT_PASS2_RESUME = 0x2,
         CFE_SUBOPCODE_VARIANT_BTD_PASS2 = 0x3,
-        CFE_SUBOPCODE_VARIANT_PASS1_PASS2_RESUME = 0x4,
         CFE_SUBOPCODE_VARIANT_TG_RESUME = 0x5,
         CFE_SUBOPCODE_VARIANT_W_DONE = 0x7,
     } CFE_SUBOPCODE_VARIANT;
@@ -5152,11 +5140,11 @@ typedef struct tagCOMPUTE_WALKER_2 {
         STACK_ID_CONTROL_1K = 0x1,
         STACK_ID_CONTROL_512 = 0x2,
         STACK_ID_CONTROL_256 = 0x3,
+        STACK_ID_CONTROL_1792 = 0x4,
+        STACK_ID_CONTROL_1536 = 0x5,
+        STACK_ID_CONTROL_1280 = 0x6,
+        STACK_ID_CONTROL_768 = 0x7,
     } STACK_ID_CONTROL;
-    typedef enum tagDYNAMIC_STACK_ID_CONTROL {
-        DYNAMIC_STACK_ID_CONTROL_DISABLED = 0x0,
-        DYNAMIC_STACK_ID_CONTROL_ENABLED = 0x1,
-    } DYNAMIC_STACK_ID_CONTROL;
     typedef enum tagOVER_DISPATCH_CONTROL {
         OVER_DISPATCH_CONTROL_NONE = 0x0,
         OVER_DISPATCH_CONTROL_LOW = 0x1,
@@ -5164,23 +5152,22 @@ typedef struct tagCOMPUTE_WALKER_2 {
         OVER_DISPATCH_CONTROL_HIGH = 0x3,
     } OVER_DISPATCH_CONTROL;
     typedef enum tagTHREAD_ARBITRATION_POLICY {
-        THREAD_ARBITRATION_POLICY_ALWAYS_ROUND_ROBIN = 0x0,
-        THREAD_ARBITRATION_POLICY_ABRITRATION_SWITCH_AT_50 = 0x1,
-        THREAD_ARBITRATION_POLICY_ABRITRATION_SWITCH_AT_25 = 0x2,
-        THREAD_ARBITRATION_POLICY_ABRITRATION_SWITCH_AT_75 = 0x3,
+        THREAD_ARBITRATION_POLICY_ARBITRATION_SWITCH_AT_100 = 0x0,
+        THREAD_ARBITRATION_POLICY_ARBITRATION_SWITCH_AT_50 = 0x1,
+        THREAD_ARBITRATION_POLICY_ARBITRATION_SWITCH_AT_25 = 0x2,
+        THREAD_ARBITRATION_POLICY_ARBITRATION_SWITCH_AT_75 = 0x3,
     } THREAD_ARBITRATION_POLICY;
-    typedef enum tagDISPATCH_WALK_ORDER {
-        DISPATCH_WALK_ORDER_LINEAR_WALK = 0x0,
-        DISPATCH_WALK_ORDER_Y_ORDER_WALK = 0x1,
-        DISPATCH_WALK_ORDER_MORTON_2X2_XY_WALK = 0x2,
-        DISPATCH_WALK_ORDER_MORTON_WALK = 0x2, // patched
-    } DISPATCH_WALK_ORDER;
     typedef enum tagTHREAD_GROUP_BATCH_SIZE {
         THREAD_GROUP_BATCH_SIZE_TG_BATCH_1 = 0x0,
         THREAD_GROUP_BATCH_SIZE_TG_BATCH_2 = 0x1,
         THREAD_GROUP_BATCH_SIZE_TG_BATCH_4 = 0x2,
         THREAD_GROUP_BATCH_SIZE_TG_BATCH_8 = 0x3,
     } THREAD_GROUP_BATCH_SIZE;
+    typedef enum tagDISPATCH_WALK_ORDER {
+        DISPATCH_WALK_ORDER_LINEAR_WALK = 0x0,
+        DISPATCH_WALK_ORDER_Y_ORDER_WALK = 0x1,
+        DISPATCH_WALK_ORDER_MORTON_WALK = 0x2,
+    } DISPATCH_WALK_ORDER;
     typedef enum tagMESSAGE_SIMD {
         MESSAGE_SIMD_SIMT16 = 0x1,
         MESSAGE_SIMD_SIMT32 = 0x2,
@@ -5224,45 +5211,33 @@ typedef struct tagCOMPUTE_WALKER_2 {
         DISPATCH_ALL_MOD_VALUE_MOD2 = 0x1,
         DISPATCH_ALL_MOD_VALUE_MOD4 = 0x2,
     } DISPATCH_ALL_MOD_VALUE;
-    typedef enum tagQUANTUMSIZE {
-        QUANTUMSIZE_QUANTUM_DISPATCH_DISABLED = 0x0,
-        QUANTUMSIZE_QUANTUM_SIZE_4 = 0x1,
-        QUANTUMSIZE_QUANTUM_SIZE_8 = 0x2,
-        QUANTUMSIZE_QUANTUM_SIZE_14 = 0x3,
-        QUANTUMSIZE_QUANTUM_SIZE_16 = 0x4,
-        QUANTUMSIZE_QUANTUM_SIZE_20 = 0x5,
-        QUANTUMSIZE_QUANTUM_SIZE_24 = 0x6,
-        QUANTUMSIZE_QUANTUM_SIZE_28 = 0x7,
-    } QUANTUMSIZE;
-    inline void init() { // patched
+    typedef enum tagQUANTUM_SIZE {
+        QUANTUM_SIZE_QUANTUM_DISPATCH_DISABLED = 0x0,
+        QUANTUM_SIZE_QUANTUM_SIZE_4 = 0x1,
+        QUANTUM_SIZE_QUANTUM_SIZE_8 = 0x2,
+        QUANTUM_SIZE_QUANTUM_SIZE_14 = 0x3,
+        QUANTUM_SIZE_QUANTUM_SIZE_16 = 0x4,
+        QUANTUM_SIZE_QUANTUM_SIZE_20 = 0x5,
+        QUANTUM_SIZE_QUANTUM_SIZE_24 = 0x6,
+        QUANTUM_SIZE_QUANTUM_SIZE_28 = 0x7,
+    } QUANTUM_SIZE;
+    inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_FIXED_SIZE;
-        TheStructure.Common.CfeSubopcodeVariant = CFE_SUBOPCODE_VARIANT_STANDARD;
         TheStructure.Common.CfeSubopcode = CFE_SUBOPCODE_COMPUTE_WALKER_2;
         TheStructure.Common.ComputeCommandOpcode = COMPUTE_COMMAND_OPCODE_NEW_CFE_COMMAND;
         TheStructure.Common.Pipeline = PIPELINE_COMPUTE;
         TheStructure.Common.CommandType = COMMAND_TYPE_GFXPIPE;
-        TheStructure.Common.ThreadDispatchPolicy = THREAD_DISPATCH_POLICY_BREADTH_WISE;
-        TheStructure.Common.StackIdControl = STACK_ID_CONTROL_2K;
-        TheStructure.Common.DynamicStackIdControl = DYNAMIC_STACK_ID_CONTROL_ENABLED;
+        TheStructure.Common.DynamicStackIdControl = true;
         TheStructure.Common.OverDispatchControl = OVER_DISPATCH_CONTROL_NORMAL;
-        TheStructure.Common.ThreadArbitrationPolicy = THREAD_ARBITRATION_POLICY_ALWAYS_ROUND_ROBIN;
-        TheStructure.Common.ThreadGroupBatchSize = THREAD_GROUP_BATCH_SIZE_TG_BATCH_1;
-        TheStructure.Common.DispatchWalkOrder = DISPATCH_WALK_ORDER_LINEAR_WALK;
-        TheStructure.Common.TileLayout = TILE_LAYOUT_LINEAR;
-        TheStructure.Common.WalkOrder = WALK_ORDER_WALK_012;
-        TheStructure.Common.EmitLocal = EMIT_LOCAL_EMIT_NONE;
-        TheStructure.Common.PartitionType = PARTITION_TYPE_DISABLED;
-        TheStructure.Common.DispatchAllModValue = DISPATCH_ALL_MOD_VALUE_MOD1;
-        TheStructure.Common.Quantumsize = QUANTUMSIZE_QUANTUM_DISPATCH_DISABLED;
         TheStructure.Common.InterfaceDescriptor.init();
-        TheStructure.Common.PostSync.init(); // patched
+        TheStructure.Common.PostSync.init();
         TheStructure.Common.PostSyncOpn1.init();
         TheStructure.Common.PostSyncOpn2.init();
         TheStructure.Common.PostSyncOpn3.init();
     }
     static tagCOMPUTE_WALKER_2 sInit() {
-        COMPUTE_WALKER_2 state{};
+        COMPUTE_WALKER_2 state;
         state.init();
         return state;
     }
@@ -5330,6 +5305,25 @@ typedef struct tagCOMPUTE_WALKER_2 {
     inline COMPUTE_COMMAND_OPCODE getComputeCommandOpcode() const {
         return static_cast<COMPUTE_COMMAND_OPCODE>(TheStructure.Common.ComputeCommandOpcode);
     }
+    inline void setPipeline(const PIPELINE value) {
+        TheStructure.Common.Pipeline = value;
+    }
+    inline PIPELINE getPipeline() const {
+        return static_cast<PIPELINE>(TheStructure.Common.Pipeline);
+    }
+    inline void setCommandType(const COMMAND_TYPE value) {
+        TheStructure.Common.CommandType = value;
+    }
+    inline COMMAND_TYPE getCommandType() const {
+        return static_cast<COMMAND_TYPE>(TheStructure.Common.CommandType);
+    }
+    inline void setDebugObjectId(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0xffffffu);
+        TheStructure.Common.DebugObjectId = value;
+    }
+    inline uint32_t getDebugObjectId() const {
+        return TheStructure.Common.DebugObjectId;
+    }
     inline void setThreadDispatchPolicy(const THREAD_DISPATCH_POLICY value) {
         TheStructure.Common.ThreadDispatchPolicy = value;
     }
@@ -5342,11 +5336,11 @@ typedef struct tagCOMPUTE_WALKER_2 {
     inline STACK_ID_CONTROL getStackIdControl() const {
         return static_cast<STACK_ID_CONTROL>(TheStructure.Common.StackIdControl);
     }
-    inline void setDynamicStackIdControl(const DYNAMIC_STACK_ID_CONTROL value) {
+    inline void setDynamicStackIdControl(const bool value) {
         TheStructure.Common.DynamicStackIdControl = value;
     }
-    inline DYNAMIC_STACK_ID_CONTROL getDynamicStackIdControl() const {
-        return static_cast<DYNAMIC_STACK_ID_CONTROL>(TheStructure.Common.DynamicStackIdControl);
+    inline bool getDynamicStackIdControl() const {
+        return TheStructure.Common.DynamicStackIdControl;
     }
     inline void setComputeOverdispatchDisable(const bool value) {
         TheStructure.Common.ComputeOverdispatchDisable = value;
@@ -5367,7 +5361,7 @@ typedef struct tagCOMPUTE_WALKER_2 {
         return static_cast<THREAD_ARBITRATION_POLICY>(TheStructure.Common.ThreadArbitrationPolicy);
     }
     inline void setMaximumNumberOfThreads(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xffff);
+        UNRECOVERABLE_IF(value > 0xffffu);
         TheStructure.Common.MaximumNumberOfThreads = value;
     }
     inline uint32_t getMaximumNumberOfThreads() const {
@@ -5391,11 +5385,18 @@ typedef struct tagCOMPUTE_WALKER_2 {
     inline DISPATCH_WALK_ORDER getDispatchWalkOrder() const {
         return static_cast<DISPATCH_WALK_ORDER>(TheStructure.Common.DispatchWalkOrder);
     }
-    inline void setMessageSimd(const uint32_t value) { // patched
+    inline void setStatCountDisable(const bool value) {
+        TheStructure.Common.StatCountDisable = value;
+    }
+    inline bool getStatCountDisable() const {
+        return TheStructure.Common.StatCountDisable;
+    }
+    inline void setMessageSimd(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x3u);
         TheStructure.Common.MessageSimd = value;
     }
-    inline uint32_t getMessageSimd() const { // patched
-        return static_cast<uint32_t>(TheStructure.Common.MessageSimd);
+    inline uint32_t getMessageSimd() const {
+        return TheStructure.Common.MessageSimd;
     }
     inline void setTileLayout(const TILE_LAYOUT value) {
         TheStructure.Common.TileLayout = value;
@@ -5403,11 +5404,12 @@ typedef struct tagCOMPUTE_WALKER_2 {
     inline TILE_LAYOUT getTileLayout() const {
         return static_cast<TILE_LAYOUT>(TheStructure.Common.TileLayout);
     }
-    inline void setWalkOrder(const uint32_t value) { // patched
+    inline void setWalkOrder(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x7u);
         TheStructure.Common.WalkOrder = value;
     }
-    inline uint32_t getWalkOrder() const { // patched
-        return static_cast<uint32_t>(TheStructure.Common.WalkOrder);
+    inline uint32_t getWalkOrder() const {
+        return TheStructure.Common.WalkOrder;
     }
     inline void setEmitInlineParameter(const bool value) {
         TheStructure.Common.EmitInlineParameter = value;
@@ -5415,11 +5417,12 @@ typedef struct tagCOMPUTE_WALKER_2 {
     inline bool getEmitInlineParameter() const {
         return TheStructure.Common.EmitInlineParameter;
     }
-    inline void setEmitLocalId(const uint32_t value) { // patched
+    inline void setEmitLocalId(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x7u);
         TheStructure.Common.EmitLocal = value;
     }
-    inline uint32_t getEmitLocalId() const { // patched
-        return static_cast<uint32_t>(TheStructure.Common.EmitLocal);
+    inline uint32_t getEmitLocalId() const {
+        return TheStructure.Common.EmitLocal;
     }
     inline void setGenerateLocalId(const bool value) {
         TheStructure.Common.GenerateLocalId = value;
@@ -5440,21 +5443,21 @@ typedef struct tagCOMPUTE_WALKER_2 {
         return TheStructure.Common.ExecutionMask;
     }
     inline void setLocalXMaximum(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x3ff);
+        UNRECOVERABLE_IF(value > 0x3ffu);
         TheStructure.Common.LocalXMaximum = value;
     }
     inline uint32_t getLocalXMaximum() const {
         return TheStructure.Common.LocalXMaximum;
     }
     inline void setLocalYMaximum(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x3ff);
+        UNRECOVERABLE_IF(value > 0x3ffu);
         TheStructure.Common.LocalYMaximum = value;
     }
     inline uint32_t getLocalYMaximum() const {
         return TheStructure.Common.LocalYMaximum;
     }
     inline void setLocalZMaximum(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x3ff);
+        UNRECOVERABLE_IF(value > 0x3ffu);
         TheStructure.Common.LocalZMaximum = value;
     }
     inline uint32_t getLocalZMaximum() const {
@@ -5496,11 +5499,11 @@ typedef struct tagCOMPUTE_WALKER_2 {
     inline uint32_t getThreadGroupIdStartingZ() const {
         return TheStructure.Common.ThreadGroupIdStartingZ;
     }
-    inline void setPartitionId(const uint64_t value) {
-        UNRECOVERABLE_IF(value > 0xffL);
+    inline void setPartitionId(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0xffu);
         TheStructure.Common.PartitionId = value;
     }
-    inline uint64_t getPartitionId() const {
+    inline uint32_t getPartitionId() const {
         return TheStructure.Common.PartitionId;
     }
     inline void setPartitionType(const PARTITION_TYPE value) {
@@ -5515,11 +5518,11 @@ typedef struct tagCOMPUTE_WALKER_2 {
     inline DISPATCH_ALL_MOD_VALUE getDispatchAllModValue() const {
         return static_cast<DISPATCH_ALL_MOD_VALUE>(TheStructure.Common.DispatchAllModValue);
     }
-    inline void setQuantumsize(const QUANTUMSIZE value) {
-        TheStructure.Common.Quantumsize = value;
+    inline void setQuantumSize(const QUANTUM_SIZE value) {
+        TheStructure.Common.QuantumSize = value;
     }
-    inline QUANTUMSIZE getQuantumsize() const {
-        return static_cast<QUANTUMSIZE>(TheStructure.Common.Quantumsize);
+    inline QUANTUM_SIZE getQuantumSize() const {
+        return static_cast<QUANTUM_SIZE>(TheStructure.Common.QuantumSize);
     }
     inline void setQuantumLocalityCheckEnable(const bool value) {
         TheStructure.Common.QuantumLocalityCheckEnable = value;
@@ -5533,10 +5536,10 @@ typedef struct tagCOMPUTE_WALKER_2 {
     inline bool getXecuFullEmptyCheckEnable() const {
         return TheStructure.Common.XecuFullEmptyCheckEnable;
     }
-    inline void setPartitionSize(const uint64_t value) {
+    inline void setPartitionSize(const uint32_t value) {
         TheStructure.Common.PartitionSize = value;
     }
-    inline uint64_t getPartitionSize() const {
+    inline uint32_t getPartitionSize() const {
         return TheStructure.Common.PartitionSize;
     }
     inline void setPreemptX(const uint32_t value) {
@@ -5558,32 +5561,32 @@ typedef struct tagCOMPUTE_WALKER_2 {
         return TheStructure.Common.PreemptZ;
     }
     inline void setWalkerId(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x1f);
+        UNRECOVERABLE_IF(value > 0x1fu);
         TheStructure.Common.WalkerId = value;
     }
     inline uint32_t getWalkerId() const {
         return TheStructure.Common.WalkerId;
     }
     inline void setOverDispatchTgCount(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x3fff);
+        UNRECOVERABLE_IF(value > 0x3fffu);
         TheStructure.Common.OverDispatchTgCount = value;
     }
     inline uint32_t getOverDispatchTgCount() const {
         return TheStructure.Common.OverDispatchTgCount;
     }
     inline void setPostsyncId(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x7f);
+        UNRECOVERABLE_IF(value > 0x7fu);
         TheStructure.Common.PostsyncId = value;
     }
     inline uint32_t getPostsyncId() const {
         return TheStructure.Common.PostsyncId;
     }
     inline void setApqid(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x3f);
-        TheStructure.Common.Apqid = value;
+        UNRECOVERABLE_IF(value > 0x3fu);
+        TheStructure.Common.APQID = value;
     }
     inline uint32_t getApqid() const {
-        return TheStructure.Common.Apqid;
+        return TheStructure.Common.APQID;
     }
     inline void setInterfaceDescriptor(const INTERFACE_DESCRIPTOR_DATA_2 &value) {
         TheStructure.Common.InterfaceDescriptor = value;
@@ -5591,11 +5594,17 @@ typedef struct tagCOMPUTE_WALKER_2 {
     inline INTERFACE_DESCRIPTOR_DATA_2 &getInterfaceDescriptor() {
         return TheStructure.Common.InterfaceDescriptor;
     }
-    inline void setPostSync(const POSTSYNC_DATA_2 &value) { // patched
+    inline void setPostSync(const POSTSYNC_DATA_2 &value) {
         TheStructure.Common.PostSync = value;
     }
-    inline POSTSYNC_DATA_2 &getPostSync() { // patched
+    inline POSTSYNC_DATA_2 &getPostSync() {
         return TheStructure.Common.PostSync;
+    }
+    inline uint32_t *getInlineDataPointer() {
+        return reinterpret_cast<uint32_t *>(&TheStructure.Common.InlineData);
+    }
+    static constexpr uint32_t getInlineDataSize() {
+        return sizeof(TheStructure.Common.InlineData);
     }
     inline void setPostSyncOpn1(const POSTSYNC_DATA_2 &value) {
         TheStructure.Common.PostSyncOpn1 = value;
@@ -5616,20 +5625,13 @@ typedef struct tagCOMPUTE_WALKER_2 {
         return TheStructure.Common.PostSyncOpn3;
     }
     inline void setPreemptCsInterruptVector(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x3ff);
+        UNRECOVERABLE_IF(value > 0x3ffu);
         TheStructure.Common.PreemptCsInterruptVector = value;
     }
     inline uint32_t getPreemptCsInterruptVector() const {
         return TheStructure.Common.PreemptCsInterruptVector;
     }
-    inline uint32_t *getInlineDataPointer() { // patched
-        return reinterpret_cast<uint32_t *>(&TheStructure.Common.InlineData);
-    }
-
-    static constexpr uint32_t getInlineDataSize() { // patched
-        return sizeof(TheStructure.Common.InlineData);
-    }
-    using InterfaceDescriptorType = std::decay_t<decltype(TheStructure.Common.InterfaceDescriptor)>; // patched
+    using InterfaceDescriptorType = INTERFACE_DESCRIPTOR_DATA_2;
 } COMPUTE_WALKER_2;
 STATIC_ASSERT(256 == sizeof(COMPUTE_WALKER_2));
 

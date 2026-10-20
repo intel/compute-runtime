@@ -2150,11 +2150,11 @@ XE2_HPG_CORETEST_F(CommandsXe2HpgCoreTest, GivenPostsyncDataWhenInitCalledThenFi
     cmd.init();
 
     EXPECT_EQ(POSTSYNC_DATA::OPERATION_NO_WRITE, cmd.TheStructure.Common.Operation);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.MocsIndexToMocsTables);
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.IndexToMocsTables);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.SystemMemoryFenceRequest);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.DataportSubsliceCacheFlush);
-    EXPECT_EQ_VAL(0x0ull, cmd.TheStructure.Common.DestinationAddress); // patched
-    EXPECT_EQ_VAL(0x0ull, cmd.TheStructure.Common.ImmediateData);      // patched
+    EXPECT_EQ_VAL(0x0ull, cmd.TheStructure.Common.DestinationAddress);
+    EXPECT_EQ_VAL(0x0ull, cmd.TheStructure.Common.ImmediateData);
 }
 
 XE2_HPG_CORETEST_F(CommandsXe2HpgCoreTest, GivenPostsyncDataWhenSetterUsedThenGetterReturnsValidValue) {
@@ -2171,10 +2171,10 @@ XE2_HPG_CORETEST_F(CommandsXe2HpgCoreTest, GivenPostsyncDataWhenSetterUsedThenGe
     cmd.setOperation(POSTSYNC_DATA::OPERATION_WRITE_TIMESTAMP);
     EXPECT_EQ(POSTSYNC_DATA::OPERATION_WRITE_TIMESTAMP, cmd.getOperation());
 
-    cmd.setMocs(0x0u);               // patched
-    EXPECT_EQ(0x0u, cmd.getMocs());  // patched
-    cmd.setMocs(0x3fu);              // patched
-    EXPECT_EQ(0x3fu, cmd.getMocs()); // patched
+    cmd.setMocs(0x0u);
+    EXPECT_EQ(0x0u, cmd.getMocs());
+    cmd.setMocs(0x3fu);
+    EXPECT_EQ(0x3fu, cmd.getMocs());
 
     cmd.setSystemMemoryFenceRequest(0x0u);
     EXPECT_EQ(0x0u, cmd.getSystemMemoryFenceRequest());
@@ -2212,7 +2212,7 @@ XE2_HPG_CORETEST_F(CommandsXe2HpgCoreTest, GivenInterfaceDescriptorDataWhenInitC
     EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::ROUNDING_MODE_RTNE, cmd.TheStructure.Common.RoundingMode);
     EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_8, cmd.TheStructure.Common.ThreadGroupDispatchSize);
     EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::NUMBER_OF_BARRIERS_NONE, cmd.TheStructure.Common.NumberOfBarriers);
-    EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::BTD_MODE_DISABLE, cmd.TheStructure.Common.BtdMode);
+    EXPECT_FALSE(cmd.TheStructure.Common.BtdMode);
     EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_0K, cmd.TheStructure.Common.PreferredSlmAllocationSize);
 }
 
@@ -2361,11 +2361,10 @@ XE2_HPG_CORETEST_F(CommandsXe2HpgCoreTest, GivenInterfaceDescriptorDataWhenSette
     cmd.setNumberOfBarriers(INTERFACE_DESCRIPTOR_DATA::NUMBER_OF_BARRIERS_B32);
     EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::NUMBER_OF_BARRIERS_B32, cmd.getNumberOfBarriers());
 
-    cmd.setBtdMode(INTERFACE_DESCRIPTOR_DATA::BTD_MODE_DISABLE);
-    EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::BTD_MODE_DISABLE, cmd.getBtdMode());
-
-    cmd.setBtdMode(INTERFACE_DESCRIPTOR_DATA::BTD_MODE_ENABLE);
-    EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::BTD_MODE_ENABLE, cmd.getBtdMode());
+    cmd.setBtdMode(false);
+    EXPECT_FALSE(cmd.getBtdMode());
+    cmd.setBtdMode(true);
+    EXPECT_TRUE(cmd.getBtdMode());
 
     cmd.setPreferredSlmAllocationSize(INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_0K);
     EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_0K, cmd.getPreferredSlmAllocationSize());
@@ -2554,17 +2553,17 @@ XE2_HPG_CORETEST_F(CommandsXe2HpgCoreTest, GivenComputeWalkerWhenSetterUsedThenG
     cmd.setWalkOrder(COMPUTE_WALKER::WALK_ORDER_WALK_210);
     EXPECT_EQ(COMPUTE_WALKER::WALK_ORDER_WALK_210, cmd.getWalkOrder());
 
-    cmd.setEmitLocalId(COMPUTE_WALKER::EMIT_LOCAL_EMIT_NONE);              // patched
-    EXPECT_EQ(COMPUTE_WALKER::EMIT_LOCAL_EMIT_NONE, cmd.getEmitLocalId()); // patched
+    cmd.setEmitLocalId(COMPUTE_WALKER::EMIT_LOCAL_EMIT_NONE);
+    EXPECT_EQ(COMPUTE_WALKER::EMIT_LOCAL_EMIT_NONE, cmd.getEmitLocalId());
 
-    cmd.setEmitLocalId(COMPUTE_WALKER::EMIT_LOCAL_EMIT_X);              // patched
-    EXPECT_EQ(COMPUTE_WALKER::EMIT_LOCAL_EMIT_X, cmd.getEmitLocalId()); // patched
+    cmd.setEmitLocalId(COMPUTE_WALKER::EMIT_LOCAL_EMIT_X);
+    EXPECT_EQ(COMPUTE_WALKER::EMIT_LOCAL_EMIT_X, cmd.getEmitLocalId());
 
-    cmd.setEmitLocalId(COMPUTE_WALKER::EMIT_LOCAL_EMIT_XY);              // patched
-    EXPECT_EQ(COMPUTE_WALKER::EMIT_LOCAL_EMIT_XY, cmd.getEmitLocalId()); // patched
+    cmd.setEmitLocalId(COMPUTE_WALKER::EMIT_LOCAL_EMIT_XY);
+    EXPECT_EQ(COMPUTE_WALKER::EMIT_LOCAL_EMIT_XY, cmd.getEmitLocalId());
 
-    cmd.setEmitLocalId(COMPUTE_WALKER::EMIT_LOCAL_EMIT_XYZ);              // patched
-    EXPECT_EQ(COMPUTE_WALKER::EMIT_LOCAL_EMIT_XYZ, cmd.getEmitLocalId()); // patched
+    cmd.setEmitLocalId(COMPUTE_WALKER::EMIT_LOCAL_EMIT_XYZ);
+    EXPECT_EQ(COMPUTE_WALKER::EMIT_LOCAL_EMIT_XYZ, cmd.getEmitLocalId());
 
     cmd.setSimdSize(COMPUTE_WALKER::SIMD_SIZE_SIMT16);
     EXPECT_EQ(COMPUTE_WALKER::SIMD_SIZE_SIMT16, cmd.getSimdSize());

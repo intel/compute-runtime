@@ -58,5 +58,5 @@ XE_HPC_CORETEST_F(XeHpcCoreHwCmdTest, givenPostSyncDataWhenProgrammingMocsThenMo
     uint32_t mocs = 4u;
     uint32_t expectedMocsIndex = (mocs >> 1);
     postSyncData.setMocs(mocs);
-    EXPECT_EQ(expectedMocsIndex, postSyncData.TheStructure.Common.MocsIndexToMocsTables);
+    EXPECT_EQ(expectedMocsIndex, postSyncData.TheStructure.Common.IndexToMocsTables);
 }

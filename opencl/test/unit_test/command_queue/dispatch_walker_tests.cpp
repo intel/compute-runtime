@@ -899,18 +899,12 @@ HWTEST2_F(DispatchWalkerTest, GivenMultipleKernelsWhenDispatchingWalkerThenInter
     INTERFACE_DESCRIPTOR_DATA *pID = reinterpret_cast<INTERFACE_DESCRIPTOR_DATA *>(ptrOffset(indirectHeap.getCpuBase(), dshBeforeMultiDisptach));
 
     for (uint32_t index = 0; index < multiDispatchInfo.size(); index++) {
-        uint32_t addressLow = pID[index].getKernelStartPointer();
-        uint32_t addressHigh = pID[index].getKernelStartPointerHigh();
-        uint64_t fullAddress = ((uint64_t)addressHigh << 32) | addressLow;
+        uint64_t fullAddress = pID[index].getKernelStartPointer();
 
         if (index > 0) {
-            uint32_t addressLowOfPrevious = pID[index - 1].getKernelStartPointer();
-            uint32_t addressHighOfPrevious = pID[index - 1].getKernelStartPointerHigh();
+            uint64_t addressPrevious = pID[index - 1].getKernelStartPointer();
 
-            uint64_t addressPrevious = ((uint64_t)addressHighOfPrevious << 32) | addressLowOfPrevious;
-            uint64_t address = ((uint64_t)addressHigh << 32) | addressLow;
-
-            EXPECT_NE(addressPrevious, address);
+            EXPECT_NE(addressPrevious, fullAddress);
         }
 
         if (index == 0) {

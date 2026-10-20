@@ -276,7 +276,7 @@ HWTEST2_F(EnqueueWriteBufferTypeTest, WhenWritingBufferThenInterfaceDescriptorDa
     auto &idd = *(INTERFACE_DESCRIPTOR_DATA *)cmdInterfaceDescriptorData;
 
     // Validate the kernel start pointer.  Technically, a kernel can start at address 0 but let's force a value.
-    auto kernelStartPointer = ((uint64_t)idd.getKernelStartPointerHigh() << 32) + idd.getKernelStartPointer();
+    auto kernelStartPointer = idd.getKernelStartPointer();
     EXPECT_LE(kernelStartPointer, cmdSBA->getInstructionBufferSize() * MemoryConstants::pageSize);
 
     EXPECT_NE(0u, idd.getNumberOfThreadsInGpgpuThreadGroup());

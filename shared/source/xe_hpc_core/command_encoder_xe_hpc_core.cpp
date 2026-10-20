@@ -101,12 +101,7 @@ void EncodeDispatchKernelWithHeap<Family>::adjustBindingTablePrefetch(InterfaceD
 
 template <>
 template <typename WalkerType, typename InterfaceDescriptorType>
-void EncodeDispatchKernel<Family>::encodeComputeDispatchAllWalker(WalkerType &walkerCmd, const InterfaceDescriptorType *idd, const RootDeviceEnvironment &rootDeviceEnvironment, const EncodeWalkerArgs &walkerArgs) {
-    int32_t overrideDispatchAllWalkerEnableInComputeWalker = debugManager.flags.ComputeDispatchAllWalkerEnableInComputeWalker.get();
-    if (overrideDispatchAllWalkerEnableInComputeWalker != -1) {
-        walkerCmd.setComputeDispatchAllWalkerEnable(overrideDispatchAllWalkerEnableInComputeWalker);
-    }
-}
+void EncodeDispatchKernel<Family>::encodeComputeDispatchAllWalker(WalkerType &walkerCmd, const InterfaceDescriptorType *idd, const RootDeviceEnvironment &rootDeviceEnvironment, const EncodeWalkerArgs &walkerArgs) {}
 
 template <>
 template <typename WalkerType>

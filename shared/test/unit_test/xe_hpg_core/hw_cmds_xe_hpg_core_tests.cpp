@@ -66,7 +66,7 @@ XE_HPG_CORETEST_F(XeHpgCoreHwCmdTest, givenPostSyncDataWhenProgrammingMocsThenMo
     uint32_t mocs = 4u;
     uint32_t expectedMocsIndex = (mocs >> 1);
     postSyncData.setMocs(mocs);
-    EXPECT_EQ(expectedMocsIndex, postSyncData.TheStructure.Common.MocsIndexToMocsTables);
+    EXPECT_EQ(expectedMocsIndex, postSyncData.TheStructure.Common.IndexToMocsTables);
 }
 
 XE_HPG_CORETEST_F(XeHpgCoreHwCmdTest, givenLoadRegisterMemWhenProgrammingMocsThenMocsIndexIsSetProperly) {

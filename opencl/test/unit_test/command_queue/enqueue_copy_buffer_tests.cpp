@@ -375,7 +375,7 @@ HWTEST2_F(EnqueueCopyBufferTest, WhenCopyingBufferThenInterfaceDescriptorDataIsC
     auto cmdSBA = (STATE_BASE_ADDRESS *)cmdStateBaseAddress;
 
     // Validate the kernel start pointer.  Technically, a kernel can start at address 0 but let's force a value.
-    auto kernelStartPointer = ((uint64_t)cmdIDD->getKernelStartPointerHigh() << 32) + cmdIDD->getKernelStartPointer();
+    auto kernelStartPointer = cmdIDD->getKernelStartPointer();
     EXPECT_LE(kernelStartPointer, cmdSBA->getInstructionBufferSize() * MemoryConstants::pageSize);
 
     EXPECT_NE(0u, cmdIDD->getNumberOfThreadsInGpgpuThreadGroup());

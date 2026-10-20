@@ -90,7 +90,6 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         UNRECOVERABLE_IF(nullptr == alloc);
         auto offset = alloc->getGpuAddressToPatch() + args.dispatchInterface->getIsaOffsetInParentAllocation();
         idd.setKernelStartPointer(offset);
-        idd.setKernelStartPointerHigh(0u);
     }
 
     if (args.dispatchInterface->getKernelDescriptor().kernelAttributes.flags.usesAssert && args.device->getL0Debugger() != nullptr) {

@@ -523,7 +523,7 @@ void *programPartitionedWalker(void *&inputAddress, uint32_t &totalBytesProgramm
         if (args.forceExecutionOnSingleTile) {
             inputWalker->setPartitionSize(workgroupCount);
         } else {
-            inputWalker->setPartitionSize(Math::divideAndRoundUp(workgroupCount, args.partitionCount));
+            inputWalker->setPartitionSize(static_cast<uint32_t>(Math::divideAndRoundUp(workgroupCount, args.partitionCount)));
         }
 
         appendWalkerFields<GfxFamily, WalkerType>(*inputWalker, args.tileCount, workgroupCount);

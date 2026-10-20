@@ -60,7 +60,7 @@ XE2_HPG_CORETEST_F(Xe2HpgCoreHwCmdTest, givenPostSyncDataWhenProgrammingMocsThen
     uint32_t mocs = 4u;
     uint32_t expectedMocsIndex = (mocs >> 1);
     postSyncData.setMocs(mocs);
-    EXPECT_EQ(expectedMocsIndex, postSyncData.TheStructure.Common.MocsIndexToMocsTables);
+    EXPECT_EQ(expectedMocsIndex, postSyncData.TheStructure.Common.IndexToMocsTables);
 }
 
 XE2_HPG_CORETEST_F(Xe2HpgCoreHwCmdTest, givenArbCheckWhenProgrammingPreParserDisableThenMaskBitIsSet) {
