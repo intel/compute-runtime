@@ -13,7 +13,6 @@
 #include "level_zero/api/opencl/source/command_queue/leo_command_queue.h"
 #include "level_zero/api/opencl/source/helpers/leo_base_object.h"
 #include "level_zero/api/opencl/source/sharings/gl/leo_gl_arb_sync_event.h"
-#include "level_zero/core/source/event/event.h"
 
 #include <array>
 #include <atomic>
@@ -22,6 +21,10 @@
 #include <span>
 #include <variant>
 #include <vector>
+
+namespace L0 {
+struct Event;
+} // namespace L0
 
 namespace NEO {
 class TagNodeBase;
@@ -144,7 +147,7 @@ class Event : public BaseObject<_cl_event> {
     void setGlArbSyncEvent(GlArbSyncEvent *arbEvent) { this->arbEvent.reset(arbEvent); };
 
     ze_event_handle_t getL0Handle() const { return this->eventHandle; };
-    L0::Event *getL0Object() const { return L0::Event::fromHandle(this->eventHandle); };
+    L0::Event *getL0Object() const;
 
     bool isPerfCountersEnabled() const { return perfCountersEnabled; };
     TagNodeBase *getHwPerfCounterNode();

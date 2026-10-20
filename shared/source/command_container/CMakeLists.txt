@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2025 Intel Corporation
+# Copyright (C) 2019-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -14,6 +14,8 @@ set(NEO_CORE_COMMAND_CONTAINER
     ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_enablers.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_tgllp_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/encode_alu_helper.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/encode_indirect_params.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/encode_post_sync_args.h
     ${CMAKE_CURRENT_SOURCE_DIR}/encode_surface_state.h
     ${CMAKE_CURRENT_SOURCE_DIR}/implicit_scaling.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/implicit_scaling.h

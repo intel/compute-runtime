@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "shared/source/command_container/command_encoder.h"
+#include "shared/source/command_container/encode_post_sync_args.h"
 #include "shared/source/command_stream/csr_deps.h"
 #include "shared/source/helpers/aux_translation.h"
 #include "shared/source/helpers/blit_properties_container.h"

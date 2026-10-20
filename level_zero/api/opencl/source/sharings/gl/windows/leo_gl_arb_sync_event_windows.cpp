@@ -20,6 +20,8 @@
 #include "level_zero/api/opencl/source/helpers/leo_base_object.h"
 #include "level_zero/api/opencl/source/sharings/gl/leo_gl_arb_sync_event.h"
 #include "level_zero/api/opencl/source/sharings/gl/windows/leo_gl_sharing_windows.h"
+#include "level_zero/core/source/device/device.h"
+#include "level_zero/core/source/event/event.h"
 
 #include <GL/gl.h>
 

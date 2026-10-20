@@ -21,7 +21,6 @@
 #include <cstdint>
 #include <cstdio>
 #include <optional>
-#include <queue>
 #include <vector>
 
 extern const int mockFd;

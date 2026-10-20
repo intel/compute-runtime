@@ -11,6 +11,7 @@
 #include "shared/source/command_container/command_encoder_gen12lp_and_xe_hpg.inl"
 #include "shared/source/command_container/command_encoder_pre_xe2_hpg_core.inl"
 #include "shared/source/command_container/command_encoder_tgllp_and_later.inl"
+#include "shared/source/command_container/encode_indirect_params.h"
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/memory_compression_state.h"

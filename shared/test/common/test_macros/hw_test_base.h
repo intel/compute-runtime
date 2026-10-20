@@ -6,7 +6,6 @@
  */
 
 #pragma once
-#include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/common/test_macros/test_base.h"
 #include "shared/test/common/test_macros/test_excludes.h"

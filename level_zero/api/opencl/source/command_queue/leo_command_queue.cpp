@@ -24,6 +24,7 @@
 #include "level_zero/api/opencl/source/helpers/leo_get_info_status_mapper.h"
 #include "level_zero/api/opencl/source/l0_dispatch/leo_l0_dispatch.h"
 #include "level_zero/api/opencl/source/mem_obj/leo_mem_obj.h"
+#include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/cmdqueue/internal_queue_throttle_ext.h"
 
 #include <algorithm>
@@ -515,6 +516,10 @@ ze_result_t CommandQueue::hostSynchronize(uint64_t timeout) {
     }
     return result;
 }
+
+bool CommandQueue::isOutOfOrder() const { return !this->getL0Object()->isInOrderExecutionRequested(); }
+
+L0::CommandList *CommandQueue::getL0Object() const { return L0::CommandList::fromHandle(this->cmdListHandle); }
 
 } // namespace LEO
 } // namespace NEO

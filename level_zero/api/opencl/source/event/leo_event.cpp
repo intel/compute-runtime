@@ -25,7 +25,9 @@
 #include "level_zero/api/opencl/source/helpers/leo_get_info_status_mapper.h"
 #include "level_zero/api/opencl/source/l0_dispatch/leo_l0_dispatch.h"
 #include "level_zero/api/opencl/source/platform/leo_platform.h"
+#include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/device/device.h"
+#include "level_zero/core/source/event/event.h"
 
 namespace NEO {
 namespace LEO {
@@ -389,6 +391,8 @@ TagNodeBase *Event::getHwPerfCounterNode() {
     }
     return perfCounterNode;
 }
+
+L0::Event *Event::getL0Object() const { return L0::Event::fromHandle(this->eventHandle); }
 
 } // namespace LEO
 } // namespace NEO

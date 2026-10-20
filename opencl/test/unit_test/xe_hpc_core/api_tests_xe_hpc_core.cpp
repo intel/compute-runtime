@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/xe_hpc_core/hw_info_xe_hpc_core.h"
 #include "shared/test/common/helpers/default_hw_info.h"

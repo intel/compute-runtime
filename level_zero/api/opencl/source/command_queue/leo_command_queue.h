@@ -9,9 +9,12 @@
 #include "level_zero/api/opencl/source/api/leo_cl_types.h"
 #include "level_zero/api/opencl/source/context/leo_context.h"
 #include "level_zero/api/opencl/source/helpers/leo_base_object.h"
-#include "level_zero/core/source/cmdlist/cmdlist.h"
 
 #include <vector>
+
+namespace L0 {
+struct CommandList;
+} // namespace L0
 
 namespace NEO {
 class PerformanceCounters;
@@ -64,7 +67,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     }
 
     bool isProfilingEnabled() { return NEO::LEO::CommandQueue::getCmdQueueProperties<cl_command_queue_properties>(this->queueProperties.data()) & static_cast<cl_command_queue_properties>(CL_QUEUE_PROFILING_ENABLE); };
-    bool isOutOfOrder() const { return !this->getL0Object()->isInOrderExecutionRequested(); };
+    bool isOutOfOrder() const;
     bool isPerfCountersEnabled() const { return perfCountersEnabled; };
     bool setPerfCountersEnabled();
     PerformanceCounters *getPerfCounters();
@@ -72,7 +75,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     ClDevice *getDevice() const { return this->clDevice; };
 
     ze_command_list_handle_t getL0Handle() const { return this->cmdListHandle; };
-    L0::CommandList *getL0Object() const { return L0::CommandList::fromHandle(this->cmdListHandle); };
+    L0::CommandList *getL0Object() const;
 
     cl_int enqueueAcquireSharedObjects(cl_uint numObjects,
                                        const cl_mem *memObjects,

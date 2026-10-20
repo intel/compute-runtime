@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/command_container/encode_alu_helper.h"
+#include "shared/source/command_container/encode_post_sync_args.h"
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/source/debugger/debugger.h"
@@ -15,7 +16,6 @@
 #include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/helpers/state_base_address_helper.h"
-#include "shared/source/kernel/kernel_arg_descriptor.h"
 #include "shared/source/kernel/kernel_execution_type.h"
 
 #include <list>
@@ -26,15 +26,12 @@ enum class SlmPolicy;
 
 class BindlessHeapsHelper;
 class CommandContainer;
-class Device;
 class Gmm;
 class GmmHelper;
 class GraphicsAllocation;
 class IndirectHeap;
-class InOrderExecInfo;
 class ProductHelper;
 class ReleaseHelper;
-class TagNodeBase;
 
 struct DeviceInfo;
 struct DispatchKernelEncoderI;
@@ -61,38 +58,6 @@ struct EncodeCaptureCommandData {
 
     bool makeCommandView = false;
     bool noopSpace = false;
-};
-
-struct EncodePostSyncArgs {
-    size_t eventPacketSize = 0;
-    uint32_t eventPacketsCount = 0;
-    uint64_t eventAddress = 0;
-    uint64_t postSyncImmValue = 0;
-    uint64_t inOrderCounterValue = 0;
-    uint64_t inOrderAtomicSignallingValue = 1;
-    uint64_t inOrderIncrementGpuAddress = 0;
-    uint64_t inOrderIncrementValue = 0;
-    Device *device = nullptr;
-    NEO::InOrderExecInfo *inOrderExecInfo = nullptr;
-    NEO::TagNodeBase *tsNode = nullptr;
-    bool dcFlushEnable = false;
-    bool interruptEvent = false;
-    bool isCounterBasedEvent = false;
-    bool isFlushL3ForExternalAllocationRequired = false;
-    bool isFlushL3ForHostUsmRequired = false;
-    bool isHostScopeSignalEvent = false;
-    bool isTimestampEvent = false;
-    bool isUsingSystemAllocation = false;
-
-    bool requiresSystemMemoryFence() const;
-
-    bool isRegularEvent() const {
-        return (eventAddress != 0) && (inOrderExecInfo == nullptr);
-    }
-
-    bool hasHostWaitablePostSync() const {
-        return (isHostScopeSignalEvent && (eventAddress != 0)) || (inOrderExecInfo != nullptr);
-    }
 };
 
 template <typename GfxFamily>
@@ -457,24 +422,6 @@ struct IndirectParamsInInlineDataArgs {
     bool storeGroupCountInInlineData[3];
     bool storeGlobalWorkSizeInInlineData[3];
     bool storeWorkDimInInlineData;
-};
-
-template <typename GfxFamily>
-struct EncodeIndirectParams {
-    using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
-    using MI_LOAD_REGISTER_MEM = typename GfxFamily::MI_LOAD_REGISTER_MEM;
-    using MI_LOAD_REGISTER_REG = typename GfxFamily::MI_LOAD_REGISTER_REG;
-    using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
-    using MI_MATH = typename GfxFamily::MI_MATH;
-    using MI_MATH_ALU_INST_INLINE = typename GfxFamily::MI_MATH_ALU_INST_INLINE;
-
-    static void encode(CommandContainer &container, uint64_t crossThreadDataGpuVa, DispatchKernelEncoderI *dispatchInterface, uint64_t implicitArgsGpuPtr, IndirectParamsInInlineDataArgs *outArgs);
-    static void setGroupCountIndirect(CommandContainer &container, const NEO::CrossThreadDataOffset offsets[3], uint64_t crossThreadAddress, IndirectParamsInInlineDataArgs *outArgs);
-    static void setWorkDimIndirect(CommandContainer &container, const NEO::CrossThreadDataOffset offset, uint64_t crossThreadAddress, const uint32_t *groupSize, IndirectParamsInInlineDataArgs *outArgs);
-    static void setGlobalWorkSizeIndirect(CommandContainer &container, const NEO::CrossThreadDataOffset offsets[3], uint64_t crossThreadAddress, const uint32_t *lws, IndirectParamsInInlineDataArgs *outArgs);
-    static void applyInlineDataGpuVA(IndirectParamsInInlineDataArgs &args, uint64_t inlineDataGpuVa);
-
-    static size_t getCmdsSizeForSetWorkDimIndirect(const uint32_t *groupSize, bool misalignedPtr);
 };
 
 template <typename GfxFamily>

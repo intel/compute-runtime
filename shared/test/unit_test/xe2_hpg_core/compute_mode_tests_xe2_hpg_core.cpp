@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/bit_helpers.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/kernel/grf_config.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/xe2_hpg_core/hw_cmds_base.h"
