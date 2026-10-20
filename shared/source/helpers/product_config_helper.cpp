@@ -411,7 +411,7 @@ std::vector<std::string> ProductConfigHelper::getCompatibilityFallbackProductAbb
                         name = name.substr(0, pos);
                     }
                     if (std::find(result.begin(), result.end(), name) == result.end()) {
-                        result.push_back(name);
+                        result.push_back(std::move(name));
                     }
                     break;
                 }
