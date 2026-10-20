@@ -97,6 +97,7 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
     case AllocationType::commandBuffer:
     case AllocationType::internalHeap:
     case AllocationType::linearStream:
+    case AllocationType::bindlessHeap:
     case AllocationType::syncBuffer:
         storageInfo.cloningOfPageTables = properties.flags.multiOsContextCapable;
         if (!properties.flags.multiOsContextCapable) {
@@ -232,6 +233,7 @@ DeviceBitfield MemoryManager::computeStorageInfoMemoryBanks(const AllocationProp
     case AllocationType::commandBuffer:
     case AllocationType::internalHeap:
     case AllocationType::linearStream:
+    case AllocationType::bindlessHeap:
         memoryBanks = preferredBank;
         break;
     case AllocationType::scratchSurface:

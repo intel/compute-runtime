@@ -51,6 +51,7 @@ class AppResourceClassification {
         case AllocationType::kernelArgsBuffer:
         case AllocationType::kernelIsaInternal:
         case AllocationType::linearStream:
+        case AllocationType::bindlessHeap:
         case AllocationType::mcs:
         case AllocationType::preemption:
         case AllocationType::profilingTagBuffer:

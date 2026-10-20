@@ -6,9 +6,11 @@
  */
 
 #include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/compression_selector.h"
-#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/ult_device_factory.h"
 
 #include "opencl/source/os_interface/ocl_reg_path.h"
 
@@ -57,4 +59,19 @@ TEST(ApiSpecificConfigOclTests, WhenCheckingIfDeviceUsmPoolingIsEnabledThenRetur
     EXPECT_TRUE(ApiSpecificConfig::isDeviceUsmPoolingEnabled());
 }
 
+TEST(ApiSpecificConfigOclTests, WhenGettingGlobalBindlessHeapConfigurationThenReturnFalse) {
+    UltDeviceFactory deviceFactory{1, 0};
+    auto *device = deviceFactory.rootDevices[0];
+    auto &hwInfo = device->getHardwareInfo();
+
+    EXPECT_FALSE(ApiSpecificConfig::getGlobalBindlessHeapConfiguration(hwInfo));
+}
+
+TEST(ApiSpecificConfigOclTests, WhenCreatingBindlessHeapsHelperThenReturnFalse) {
+    UltDeviceFactory deviceFactory{1, 0};
+    auto *device = deviceFactory.rootDevices[0];
+
+    auto result = ApiSpecificConfig::createBindlessHeapsHelper(*device);
+    EXPECT_FALSE(result);
+}
 } // namespace NEO

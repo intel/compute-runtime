@@ -937,6 +937,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         isDcFlushRequiredOnStallingCommandsOnNextFlush()                        // isDcFlushRequiredOnStallingCommandsOnNextFlush
     );
 
+    dispatchFlags.useBindlessImages = kernel->usesBindlessImages(); 
     dispatchFlags.isWalkerWithProfilingEnqueued = getAndClearIsWalkerWithProfilingEnqueued();
     dispatchFlags.pipelineSelectArgs.systolicPipelineSelectMode = systolicPipelineSelectMode;
     uint32_t lws[3] = {static_cast<uint32_t>(multiDispatchInfo.begin()->getLocalWorkgroupSize().x), static_cast<uint32_t>(multiDispatchInfo.begin()->getLocalWorkgroupSize().y), static_cast<uint32_t>(multiDispatchInfo.begin()->getLocalWorkgroupSize().z)};

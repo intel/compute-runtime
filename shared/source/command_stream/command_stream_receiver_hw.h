@@ -283,7 +283,8 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
                                               LinearStream &csrCommandStream,
                                               bool dispatchBindingTableCommand,
                                               bool areMultipleSubDevicesInContext,
-                                              bool setGeneralStateBaseAddress);
+                                              bool setGeneralStateBaseAddress,
+                                              bool useBindlessImages);
 
     inline void emitTagUpdateWithoutDCFlush(LinearStream &commandStream);
 
@@ -374,6 +375,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     CsrSizeRequestFlags csrSizeRequestFlags = {};
 
     bool wasSubmittedToSingleSubdevice = false;
+    bool lastUseGlobalImageDescriptors = false;
 
     std::unique_ptr<DirectSubmissionHw<GfxFamily, RenderDispatcher<GfxFamily>>> directSubmission;
     std::unique_ptr<DirectSubmissionHw<GfxFamily, BlitterDispatcher<GfxFamily>>> blitterDirectSubmission;

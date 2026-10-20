@@ -30,6 +30,9 @@ HeapIndex HeapAssigner::get32BitHeapIndex(AllocationType allocType, bool useLoca
     return useFrontWindow ? mapExternalWindowIndex(MemoryManager::selectExternalHeap(useLocalMem)) : MemoryManager::selectExternalHeap(useLocalMem);
 }
 bool HeapAssigner::useExternal32BitHeap(AllocationType allocType) {
+    if (allocType == AllocationType::bindlessHeap) {
+        return true;
+    }
     if (apiAllowExternalHeapForSshAndDsh) {
         return allocType == AllocationType::linearStream;
     }

@@ -44,6 +44,7 @@ TEST(AppResourceClassificationTest, givenInternalAllocationTypesWhenCheckingIsAp
     EXPECT_FALSE(AppResourceClassification::isApplicationResource(AllocationType::kernelArgsBuffer));
     EXPECT_FALSE(AppResourceClassification::isApplicationResource(AllocationType::kernelIsaInternal));
     EXPECT_FALSE(AppResourceClassification::isApplicationResource(AllocationType::linearStream));
+    EXPECT_FALSE(AppResourceClassification::isApplicationResource(AllocationType::bindlessHeap));
     EXPECT_FALSE(AppResourceClassification::isApplicationResource(AllocationType::mcs));
     EXPECT_FALSE(AppResourceClassification::isApplicationResource(AllocationType::preemption));
     EXPECT_FALSE(AppResourceClassification::isApplicationResource(AllocationType::profilingTagBuffer));
@@ -68,7 +69,7 @@ TEST(AppResourceClassificationTest, givenInternalAllocationTypesWhenCheckingIsAp
 
 TEST(AppResourceClassificationTest, givenAllAllocationTypesWhenCheckingIsApplicationResourceThenAllTypesAreCovered) {
     constexpr int expectedApplicationTypes = 20;
-    constexpr int expectedDriverTypes = 29;
+    constexpr int expectedDriverTypes = 30;
 
     int applicationTypesCount = 0;
     int driverTypesCount = 0;
