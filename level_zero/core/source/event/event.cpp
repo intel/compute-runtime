@@ -1369,11 +1369,12 @@ ze_result_t Event::enableExtensions(const EventDescriptor &eventDescriptor) {
 
 CommandList *Event::getRecordedSignalFrom() const {
     auto entry = this->recordedSignalEntry.lock();
-    return entry ? entry->signalFrom : nullptr;
+    return (entry && (false == entry->paused)) ? entry->signalFrom : nullptr;
 }
 
 bool Event::isBeingUsedInActiveGraphRecording(const Event *event) {
-    return nullptr != event->getRecordedSignalFrom();
+    auto entry = event->recordedSignalEntry.lock();
+    return entry && (nullptr != entry->signalFrom);
 }
 
 NEO::InOrderExecEventHelper &Event::getInOrderExecEventHelper() { return inOrderExecHelper; }

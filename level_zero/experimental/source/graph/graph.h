@@ -513,6 +513,7 @@ struct Graph : _ze_graph_handle_t {
 
 void recordHandleWaitEventsFromNextCommand(L0::CommandList &srcCmdList, Graph *&captureTarget, std::span<ze_event_handle_t> events);
 void recordHandleSignalEventFromPreviousCommand(L0::CommandList &srcCmdList, Graph &captureTarget, ze_event_handle_t event);
+void releaseRecordedSignalForEagerCommand(ze_event_handle_t event);
 
 bool isGraphCapturingAllowed(const L0::CommandList &srcCmdList);
 bool isGraphInstantiationTarget(const L0::CommandList &srcCmdList);
@@ -546,6 +547,7 @@ ze_result_t captureCommand(L0::CommandList &srcCmdList, Graph *&graphCaptureTarg
         if (usesGraphInternalEvents(eventsWaitList, signalEvent)) {
             return ZE_RESULT_ERROR_GRAPH_INTERNAL_EVENT;
         }
+        releaseRecordedSignalForEagerCommand(signalEvent);
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     } else if ((false == eventsWaitList.empty()) && (nullptr != graphCaptureTarget)) {
         // it's an error to merge two capture sessions by waiting on an event recorded by a different one
@@ -565,6 +567,7 @@ ze_result_t captureCommand(L0::CommandList &srcCmdList, Graph *&graphCaptureTarg
         if (usesGraphInternalEvents(eventsWaitList, signalEvent)) {
             return ZE_RESULT_ERROR_GRAPH_INTERNAL_EVENT;
         }
+        releaseRecordedSignalForEagerCommand(signalEvent);
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 

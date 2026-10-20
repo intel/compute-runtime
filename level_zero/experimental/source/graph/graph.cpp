@@ -280,10 +280,9 @@ void Graph::setCaptureTargetRecursively(bool attach) {
 }
 
 void Graph::setRecordedSignalsRecursively(bool attach) {
-    auto *recordedSignalFrom = attach ? this->captureSrc : nullptr;
     auto &internalEvents = this->getInternalEvents();
     for (const auto &recordedSignal : this->recordedSignals) {
-        internalEvents.setSignalFrom(recordedSignal.first, recordedSignalFrom);
+        internalEvents.setPaused(recordedSignal.first, this->captureSrc, false == attach);
     }
 
     for (auto &subGraph : this->subGraphs) {
@@ -493,6 +492,7 @@ void Graph::registerSignallingEventFromPreviousCommand(L0::Event &event) {
     const auto &rootInternalEvents = this->getRootGraph()->internalEvents;
     auto &entry = rootInternalEvents->getEntry(event.toHandle());
     entry.signalFrom = this->captureSrc;
+    entry.paused = false;
     event.setRecordedSignalEntry(std::shared_ptr<const GraphInternalEventEntry>(rootInternalEvents, &entry));
     event.setIsSignalledAsGraphInternalEvent(true);
     this->recordedSignals[event.toHandle()] = static_cast<CapturedCommandId>(this->recordedApiCommands.size() - 1);
@@ -2122,6 +2122,14 @@ void recordHandleSignalEventFromPreviousCommand(L0::CommandList &srcCmdList, Gra
     }
 
     captureTarget.registerSignallingEventFromPreviousCommand(*L0::Event::fromHandle(event));
+}
+
+void releaseRecordedSignalForEagerCommand(ze_event_handle_t event) {
+    if (nullptr == event) {
+        return;
+    }
+
+    L0::Event::fromHandle(event)->setRecordedSignalEntry({});
 }
 
 bool isGraphCapturingAllowed(const L0::CommandList &srcCmdList) {

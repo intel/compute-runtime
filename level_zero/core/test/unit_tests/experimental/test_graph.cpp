@@ -3019,6 +3019,75 @@ TEST_F(GraphInternalEventTest, givenNonExternalCbEventSignalledOnlyInEndedGraphW
     L0::Event::fromHandle(hEvent)->destroy();
 }
 
+TEST_F(GraphInternalEventTest, givenCbEventsSignalledInCaptureAndCapturePausedWhenHostSynchronizeCalledThenGraphCaptureUnsupportedReturnedUntilCaptureEnds) {
+    GraphsCleanupGuard graphCleanup;
+
+    auto hInternalEvent = createCounterBasedEvent(context, device, false);
+    auto hExternalEvent = createCounterBasedEvent(context, device, true);
+    auto *internalEvent = L0::Event::fromHandle(hInternalEvent);
+    auto *externalEvent = L0::Event::fromHandle(hExternalEvent);
+
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    ze_graph_handle_t hGraph = srcGraph->toHandle();
+    auto hCmdList = inOrderCmdList->toHandle();
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(hCmdList, hGraph, nullptr));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendKernelSignalling(hInternalEvent));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendKernelSignalling(hExternalEvent));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeGraphPauseCaptureExt(hGraph));
+
+    EXPECT_EQ(nullptr, externalEvent->getRecordedSignalFrom());
+    EXPECT_EQ(ZE_RESULT_ERROR_GRAPH_CAPTURE_UNSUPPORTED, internalEvent->hostSynchronize(0));
+    EXPECT_EQ(ZE_RESULT_ERROR_GRAPH_CAPTURE_UNSUPPORTED, externalEvent->hostSynchronize(0));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeGraphResumeCaptureExt(hGraph));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(hCmdList, &hGraph, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, externalEvent->hostSynchronize(0));
+
+    srcGraph.reset();
+    internalEvent->destroy();
+    externalEvent->destroy();
+}
+
+TEST_F(GraphInternalEventTest, givenCbEventsSignalledInCaptureWhenReSignalledOutsideWhileCaptureIsPausedThenHostSynchronizeIsNotRestricted) {
+    GraphsCleanupGuard graphCleanup;
+
+    auto hInternalEvent = createCounterBasedEvent(context, device, false);
+    auto hExternalEvent = createCounterBasedEvent(context, device, true);
+    auto *internalEvent = L0::Event::fromHandle(hInternalEvent);
+    auto *externalEvent = L0::Event::fromHandle(hExternalEvent);
+
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    ze_graph_handle_t hGraph = srcGraph->toHandle();
+    auto hCmdList = inOrderCmdList->toHandle();
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(hCmdList, hGraph, nullptr));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendKernelSignalling(hInternalEvent));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendKernelSignalling(hExternalEvent));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeGraphPauseCaptureExt(hGraph));
+
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    std::unique_ptr<L0::CommandList> regularCmdList(CommandList::create(device, NEO::EngineGroupType::compute, ZE_COMMAND_LIST_FLAG_IN_ORDER, returnValue, false));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    ze_group_count_t groupCount = {1, 1, 1};
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, appendKernelSignalling(hInternalEvent));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernel(regularCmdList->toHandle(), kernel->toHandle(), &groupCount, hExternalEvent, 0, nullptr));
+
+    for (auto *event : {internalEvent, externalEvent}) {
+        auto result = event->hostSynchronize(0);
+        EXPECT_NE(ZE_RESULT_ERROR_GRAPH_CAPTURE_UNSUPPORTED, result);
+        EXPECT_NE(ZE_RESULT_ERROR_GRAPH_INTERNAL_EVENT, result);
+    }
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeGraphResumeCaptureExt(hGraph));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(hCmdList, &hGraph, nullptr));
+
+    srcGraph.reset();
+    internalEvent->destroy();
+    externalEvent->destroy();
+}
+
 TEST_F(GraphInternalEventTest, givenNeverSignalledCbEventWhenWaitedOnDuringCaptureThenCaptureAndInstantiationSucceed) {
     GraphsCleanupGuard graphCleanup;
 
@@ -8057,6 +8126,48 @@ TEST_F(GraphTestApiPauseResume, GivenRootGraphWithSubgraphWhenPausingRootThenAll
     EXPECT_EQ(subGraph, childCmdlist.getGraphCaptureTarget());
     EXPECT_EQ(&rootCmdlist, forkEvent.getRecordedSignalFrom());
     EXPECT_EQ(&childCmdlist, subGraphSignalEvent.getRecordedSignalFrom());
+
+    rootCmdlist.setGraphCaptureTarget(nullptr);
+    childCmdlist.setGraphCaptureTarget(nullptr);
+}
+
+TEST_F(GraphTestApiPauseResume, GivenRootGraphWithSubgraphWhenPausingSubgraphOnlyThenOnlySubgraphSignalsArePaused) {
+    GraphsCleanupGuard graphCleanup;
+
+    ContextStubMock ctx;
+    MockCommandList rootCmdlist;
+    rootCmdlist.device = this->device;
+    MockCommandList childCmdlist;
+    childCmdlist.device = this->device;
+
+    Graph rootGraph{&ctx, true};
+    rootGraph.startCapturingFrom(rootCmdlist, false);
+
+    Mock<Event> forkEvent;
+    rootGraph.capture<CaptureApi::zeCommandListAppendBarrier>(rootCmdlist.toHandle(), forkEvent.toHandle(), 0U, nullptr);
+    rootGraph.registerSignallingEventFromPreviousCommand(forkEvent);
+
+    Graph *subGraph = nullptr;
+    rootGraph.forkTo(childCmdlist, subGraph, forkEvent);
+    ASSERT_NE(nullptr, subGraph);
+
+    Mock<Event> subGraphSignalEvent;
+    subGraph->capture<CaptureApi::zeCommandListAppendBarrier>(childCmdlist.toHandle(), subGraphSignalEvent.toHandle(), 0U, nullptr);
+    subGraph->registerSignallingEventFromPreviousCommand(subGraphSignalEvent);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeGraphPauseCaptureExt(subGraph->toHandle()));
+    EXPECT_EQ(&rootGraph, rootCmdlist.getGraphCaptureTarget());
+    EXPECT_EQ(nullptr, childCmdlist.getGraphCaptureTarget());
+    EXPECT_EQ(&rootCmdlist, forkEvent.getRecordedSignalFrom());
+    EXPECT_EQ(nullptr, subGraphSignalEvent.getRecordedSignalFrom());
+
+    rootGraph.capture<CaptureApi::zeCommandListAppendBarrier>(rootCmdlist.toHandle(), subGraphSignalEvent.toHandle(), 0U, nullptr);
+    rootGraph.registerSignallingEventFromPreviousCommand(subGraphSignalEvent);
+    EXPECT_EQ(&rootCmdlist, subGraphSignalEvent.getRecordedSignalFrom());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeGraphResumeCaptureExt(subGraph->toHandle()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeGraphPauseCaptureExt(subGraph->toHandle()));
+    EXPECT_EQ(&rootCmdlist, subGraphSignalEvent.getRecordedSignalFrom());
 
     rootCmdlist.setGraphCaptureTarget(nullptr);
     childCmdlist.setGraphCaptureTarget(nullptr);

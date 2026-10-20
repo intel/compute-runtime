@@ -285,6 +285,7 @@ struct ExternalCbEventInfoContainer {
 struct GraphInternalEventEntry {
     L0::Event *internalEvent = nullptr;
     L0::CommandList *signalFrom = nullptr;
+    bool paused = false;
 };
 
 class GraphInternalEvents {
@@ -336,6 +337,14 @@ class GraphInternalEvents {
         auto it = entries.find(hOriginalEvent);
         if (it != entries.end()) {
             it->second.signalFrom = signalFrom;
+        }
+    }
+
+    void setPaused(ze_event_handle_t hOriginalEvent, const L0::CommandList *signalFrom, bool paused) {
+        std::lock_guard lock(entriesMutex);
+        auto it = entries.find(hOriginalEvent);
+        if ((it != entries.end()) && (it->second.signalFrom == signalFrom)) {
+            it->second.paused = paused;
         }
     }
 
