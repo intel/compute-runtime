@@ -91,6 +91,8 @@ lint:
         - ci
         'manifests/ci*.yml':
         - ci
+        'manifests/dependencies.yml':
+        - ci
         'manifests/*/ci*.yml':
         - ci
         '.lint-revision':
