@@ -56,6 +56,22 @@ TEST_F(WddmFixtureLuid, givenDoNotValidateDriverPathWhenCreatingHwDeviceThenDriv
     EXPECT_NE(nullptr, wddm->hwDeviceId);
 }
 
+TEST_F(WddmFixtureLuid, givenOverriddenGdiPathWhenCreatingHwDeviceThenDriverStorePathIsNotValidated) {
+    DebugManagerStateRestore debugSettingsRestore;
+
+    VariableBackup<const wchar_t *> driverStorePathBackup{&queryRegistryDriverStorePath, mockAdapterDriverStorePath};
+    VariableBackup<const wchar_t *> currentLibraryPathBackup{&SysCalls::currentLibraryPath, mockLibraryFromOtherDriverStore};
+
+    LUID adapterLuid = {0x1, 0x1};
+    wddm->hwDeviceId = NEO::createHwDeviceIdFromAdapterLuid(*osEnvironment, adapterLuid, 2u);
+    EXPECT_EQ(nullptr, wddm->hwDeviceId);
+
+    debugManager.flags.OverrideGdiPath.set("customGdi.dll");
+
+    wddm->hwDeviceId = NEO::createHwDeviceIdFromAdapterLuid(*osEnvironment, adapterLuid, 2u);
+    EXPECT_NE(nullptr, wddm->hwDeviceId);
+}
+
 TEST_F(WddmFixtureLuid, givenAdapterFromSameDriverStoreWhenCreatingHwDeviceThenHwDeviceIsCreatedWithoutQueryingPrivateDriverData) {
     VariableBackup<const wchar_t *> driverStorePathBackup{&queryRegistryDriverStorePath, mockAdapterDriverStorePath};
     VariableBackup<const wchar_t *> currentLibraryPathBackup{&SysCalls::currentLibraryPath, mockLibraryFromAdapterDriverStore};
