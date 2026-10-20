@@ -141,6 +141,22 @@ struct AppendImageCopyFromMemoryExtArgs {
           srcSlicePitch(srcSlicePitch), signalEvent(signalEvent), waitEvents(copyWaitEvents(numWaitEvents, phWaitEvents)) {}
 };
 
+struct AppendImageCopyToMemoryExtArgs {
+    void *dstptr;
+    ze_image_handle_t srcImage;
+    std::optional<ze_image_region_t> srcRegion;
+    uint32_t destRowPitch;
+    uint32_t destSlicePitch;
+    ze_event_handle_t signalEvent;
+    EventHandles waitEvents;
+
+    AppendImageCopyToMemoryExtArgs(void *dstptr, ze_image_handle_t srcImage, const ze_image_region_t *srcRegion,
+                                   uint32_t destRowPitch, uint32_t destSlicePitch, ze_event_handle_t signalEvent,
+                                   uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents)
+        : dstptr(dstptr), srcImage(srcImage), srcRegion(copyValue(srcRegion)), destRowPitch(destRowPitch),
+          destSlicePitch(destSlicePitch), signalEvent(signalEvent), waitEvents(copyWaitEvents(numWaitEvents, phWaitEvents)) {}
+};
+
 struct AppendHostFunctionArgs {
     ze_host_function_callback_t hostFunction;
     void *userData;

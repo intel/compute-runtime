@@ -26,6 +26,7 @@ namespace ult {
     MACRO(appendMemoryCopyRegion, AppendMemoryCopyRegionArgs)             \
     MACRO(appendMemoryFill, AppendMemoryFillArgs)                         \
     MACRO(appendImageCopyFromMemoryExt, AppendImageCopyFromMemoryExtArgs) \
+    MACRO(appendImageCopyToMemoryExt, AppendImageCopyToMemoryExtArgs)     \
     MACRO(appendLaunchKernel, AppendLaunchKernelArgs)                     \
     MACRO(appendBarrier, AppendBarrierArgs)                               \
     MACRO(appendHostFunction, AppendHostFunctionArgs)                     \
@@ -127,8 +128,11 @@ struct CapturingCommandList : public L0::ult::Mock<L0::ult::CommandList> {
                                            L0::CmdListMemoryCopyParams &memoryCopyParams) override {
         stagingCopiesAllowedAtImageCopy.push_back(this->stagingCopiesAllowed);
         imageCopyOffloadAllowedAtImageCopy.push_back(this->imageCopyOffloadAllowed);
-        return BaseClass::appendImageCopyToMemoryExt(dstptr, hSrcImage, pSrcRegion, destRowPitch, destSlicePitch, hEvent,
-                                                     numWaitEvents, phWaitEvents, memoryCopyParams);
+        auto result = BaseClass::appendImageCopyToMemoryExt(dstptr, hSrcImage, pSrcRegion, destRowPitch, destSlicePitch, hEvent,
+                                                            numWaitEvents, phWaitEvents, memoryCopyParams);
+        return record(this->appendImageCopyToMemoryExtArgs, ApiId::appendImageCopyToMemoryExt,
+                      AppendImageCopyToMemoryExtArgs{dstptr, hSrcImage, pSrcRegion, destRowPitch, destSlicePitch, hEvent, numWaitEvents, phWaitEvents},
+                      result);
     }
 
     ze_result_t appendImageCopyFromMemory(ze_image_handle_t hDstImage, const void *srcptr, const ze_image_region_t *pDstRegion,

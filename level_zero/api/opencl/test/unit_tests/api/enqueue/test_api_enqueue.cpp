@@ -29,6 +29,7 @@
 #include <array>
 #include <cstdint>
 #include <limits>
+#include <memory>
 #include <vector>
 
 namespace NEO {
@@ -499,6 +500,136 @@ TEST_F(EnqueueMapHostBackedImageFixture, givenMappedHostBackedImageWithUnaligned
     const auto &writeBack = capturingCmdList.appendImageCopyFromMemoryExtArgs[0];
     EXPECT_EQ(hostStorage.data(), writeBack.srcptr);
     EXPECT_EQ(unalignedWidth * elementSize, writeBack.srcRowPitch);
+}
+
+struct WhiteBoxMapImageContext : public Context {
+    using Context::Context;
+    using Context::internalCopyCmdLists;
+};
+
+struct EnqueueMapUseHostPtrImageFixture : public Test<OclFixture> {
+    void SetUp() override {
+        Test<OclFixture>::SetUp();
+        clDevice = platform->getDevices()[0].get();
+        if (!clDevice->getHardwareInfo().capabilityTable.supportsImages) {
+            GTEST_SKIP() << "Product does not support images";
+        }
+
+        cl_device_id clDeviceId = clDevice;
+        whiteBoxContext = std::make_unique<WhiteBoxMapImageContext>(nullptr, context->toHandle(), 1, &clDeviceId, true);
+        capturingCmdList.setCmdListContext(whiteBoxContext->getL0ContextHandle());
+        whiteBoxContext->internalCopyCmdLists[clDevice->getRootDeviceIndex()] = capturingCmdList.toHandle();
+        commandQueue = new CommandQueue(whiteBoxContext.get(), clDevice, nullptr, capturingCmdList.toHandle());
+    }
+
+    void TearDown() override {
+        if (image != nullptr) {
+            EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(image));
+        }
+        if (commandQueue != nullptr) {
+            commandQueue->decRefApi();
+        }
+        if (whiteBoxContext != nullptr) {
+            whiteBoxContext->internalCopyCmdLists.clear();
+            whiteBoxContext.reset();
+        }
+        Test<OclFixture>::TearDown();
+    }
+
+    CommandQueue *getCommandQueue() const { return commandQueue; }
+
+    void createUseHostPtrImage(const cl_image_desc &desc) {
+        cl_image_format format{CL_RGBA, CL_FLOAT};
+        cl_int errcode = CL_INVALID_VALUE;
+        image = clCreateImage(whiteBoxContext.get(), CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, &format, &desc, hostMemory.data(), &errcode);
+        ASSERT_EQ(CL_SUCCESS, errcode);
+        ASSERT_NE(nullptr, image);
+    }
+
+    void mapAndUnmapWithExpectedHostLayout(const size_t *origin, const size_t *region, size_t expectedRowPitch, size_t expectedSlicePitch, size_t expectedOffset) {
+        size_t rowPitch = 0;
+        size_t slicePitch = std::numeric_limits<size_t>::max();
+        cl_int retVal = CL_INVALID_VALUE;
+
+        auto mappedPtr = clEnqueueMapImage(getCommandQueue(), image, CL_FALSE, CL_MAP_READ | CL_MAP_WRITE, origin, region,
+                                           &rowPitch, &slicePitch, 0, nullptr, nullptr, &retVal);
+        ASSERT_EQ(CL_SUCCESS, retVal);
+
+        EXPECT_EQ(expectedRowPitch, rowPitch);
+        EXPECT_EQ(expectedSlicePitch, slicePitch);
+        EXPECT_EQ(ptrOffset(static_cast<void *>(hostMemory.data()), expectedOffset), mappedPtr);
+
+        const auto &readArgs = capturingCmdList.appendImageCopyToMemoryExtArgs;
+        ASSERT_EQ(1u, readArgs.count());
+        EXPECT_EQ(mappedPtr, readArgs[0].dstptr);
+        EXPECT_EQ(expectedRowPitch, readArgs[0].destRowPitch);
+        EXPECT_EQ(expectedSlicePitch, readArgs[0].destSlicePitch);
+
+        EXPECT_EQ(CL_SUCCESS, clEnqueueUnmapMemObject(getCommandQueue(), image, mappedPtr, 0, nullptr, nullptr));
+
+        const auto &copyArgs = capturingCmdList.appendImageCopyFromMemoryExtArgs;
+        ASSERT_TRUE(copyArgs.wasCalled());
+        const auto &unmapWrite = copyArgs[copyArgs.count() - 1];
+        EXPECT_EQ(static_cast<const void *>(mappedPtr), unmapWrite.srcptr);
+        EXPECT_EQ(expectedRowPitch, unmapWrite.srcRowPitch);
+        EXPECT_EQ(expectedSlicePitch, unmapWrite.srcSlicePitch);
+    }
+
+    static constexpr size_t width = 21;
+    static constexpr size_t height = 8;
+    static constexpr size_t depth = 4;
+    static constexpr size_t elementSize = 4 * sizeof(float);
+    static constexpr size_t hostRowPitch = width * elementSize;
+    std::vector<uint8_t> hostMemory = std::vector<uint8_t>(width * height * depth * elementSize, 0);
+    ClDevice *clDevice = nullptr;
+    std::unique_ptr<WhiteBoxMapImageContext> whiteBoxContext;
+    CapturingCommandList capturingCmdList{};
+    CommandQueue *commandQueue = nullptr;
+    cl_mem image = nullptr;
+};
+
+TEST_F(EnqueueMapUseHostPtrImageFixture, given3dImageWithUseHostPtrWhenClEnqueueMapImageThenHostPtrPackedLayoutIsUsed) {
+    cl_image_desc desc{};
+    desc.image_type = CL_MEM_OBJECT_IMAGE3D;
+    desc.image_width = width;
+    desc.image_height = height;
+    desc.image_depth = depth;
+    createUseHostPtrImage(desc);
+
+    const size_t hostSlicePitch = hostRowPitch * height;
+    const size_t origin[3] = {1, 2, 3};
+    const size_t region[3] = {width - 1, height - 2, 1};
+    const size_t expectedOffset = origin[2] * hostSlicePitch + origin[1] * hostRowPitch + origin[0] * elementSize;
+
+    mapAndUnmapWithExpectedHostLayout(origin, region, hostRowPitch, hostSlicePitch, expectedOffset);
+}
+
+TEST_F(EnqueueMapUseHostPtrImageFixture, given2dImageWithUseHostPtrWhenClEnqueueMapImageThenHostPtrPackedLayoutWithZeroSlicePitchIsUsed) {
+    cl_image_desc desc{};
+    desc.image_type = CL_MEM_OBJECT_IMAGE2D;
+    desc.image_width = width;
+    desc.image_height = height;
+    createUseHostPtrImage(desc);
+
+    const size_t origin[3] = {3, 5, 0};
+    const size_t region[3] = {width - 3, height - 5, 1};
+    const size_t expectedOffset = origin[1] * hostRowPitch + origin[0] * elementSize;
+
+    mapAndUnmapWithExpectedHostLayout(origin, region, hostRowPitch, 0u, expectedOffset);
+}
+
+TEST_F(EnqueueMapUseHostPtrImageFixture, given1dImageArrayWithUseHostPtrWhenClEnqueueMapImageThenSlicePitchEqualsHostRowPitch) {
+    cl_image_desc desc{};
+    desc.image_type = CL_MEM_OBJECT_IMAGE1D_ARRAY;
+    desc.image_width = width;
+    desc.image_array_size = height;
+    createUseHostPtrImage(desc);
+
+    const size_t origin[3] = {2, 6, 0};
+    const size_t region[3] = {width - 2, height - 6, 1};
+    const size_t expectedOffset = origin[1] * hostRowPitch + origin[0] * elementSize;
+
+    mapAndUnmapWithExpectedHostLayout(origin, region, hostRowPitch, hostRowPitch, expectedOffset);
 }
 
 } // namespace ult
