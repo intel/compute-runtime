@@ -308,6 +308,8 @@ HWTEST_F(AUBAppendQueryKernelTimestampsImmediateL0, whenAppendQueryKernelTimesta
     auto timestampResult = static_cast<ze_kernel_timestamp_result_t *>(
         driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(sizeof(ze_kernel_timestamp_result_t), unifiedMemoryProperties));
     memset(timestampResult, 0, sizeof(ze_kernel_timestamp_result_t));
+    const uint64_t notExpectedEndTimestamp = 1;
+    timestampResult->global.kernelStart = notExpectedEndTimestamp;
 
     ze_module_handle_t moduleHandle = createModuleFromFile("test_kernel", context, device, "");
     ASSERT_NE(nullptr, moduleHandle);
@@ -326,8 +328,7 @@ HWTEST_F(AUBAppendQueryKernelTimestampsImmediateL0, whenAppendQueryKernelTimesta
 
     EXPECT_TRUE(csr->expectMemory(kernelOutput, expectedGlobalWorkSize, sizeof(expectedGlobalWorkSize), aub_stream::CompareOperationValues::CompareEqual));
 
-    uint64_t zeroTimestamp = 0;
-    EXPECT_TRUE(csr->expectMemory(&timestampResult->global.kernelStart, &zeroTimestamp, sizeof(uint64_t), aub_stream::CompareOperationValues::CompareNotEqual));
+    EXPECT_TRUE(csr->expectMemory(&timestampResult->global.kernelStart, &notExpectedEndTimestamp, sizeof(uint64_t), aub_stream::CompareOperationValues::CompareNotEqual));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelDestroy(kernel));
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeModuleDestroy(moduleHandle));

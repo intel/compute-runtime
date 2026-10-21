@@ -115,15 +115,15 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, PostSyncWriteXeHPTests, givenTwoBatchedEnqueuesWhen
 
     expectMemory<FamilyType>(reinterpret_cast<void *>(buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress() + buffer->getOffset()), writePattern2, bufferSize);
 
-    typename FamilyType::TimestampPacketType expectedEndTimestamp = 1;
+    typename FamilyType::TimestampPacketType notExpectedEndTimestamp = 1;
     auto endTimestampAddress1 = TimestampPacketHelper::getContextEndGpuAddress(*node1);
     auto endTimestampAddress2 = TimestampPacketHelper::getGlobalEndGpuAddress(*node1);
     auto endTimestampAddress3 = TimestampPacketHelper::getContextEndGpuAddress(*node2);
     auto endTimestampAddress4 = TimestampPacketHelper::getGlobalEndGpuAddress(*node2);
-    expectNotEqualMemory<FamilyType>(reinterpret_cast<void *>(endTimestampAddress1), &expectedEndTimestamp, sizeof(typename FamilyType::TimestampPacketType));
-    expectNotEqualMemory<FamilyType>(reinterpret_cast<void *>(endTimestampAddress2), &expectedEndTimestamp, sizeof(typename FamilyType::TimestampPacketType));
-    expectNotEqualMemory<FamilyType>(reinterpret_cast<void *>(endTimestampAddress3), &expectedEndTimestamp, sizeof(typename FamilyType::TimestampPacketType));
-    expectNotEqualMemory<FamilyType>(reinterpret_cast<void *>(endTimestampAddress4), &expectedEndTimestamp, sizeof(typename FamilyType::TimestampPacketType));
+    expectNotEqualMemory<FamilyType>(reinterpret_cast<void *>(endTimestampAddress1), &notExpectedEndTimestamp, sizeof(typename FamilyType::TimestampPacketType));
+    expectNotEqualMemory<FamilyType>(reinterpret_cast<void *>(endTimestampAddress2), &notExpectedEndTimestamp, sizeof(typename FamilyType::TimestampPacketType));
+    expectNotEqualMemory<FamilyType>(reinterpret_cast<void *>(endTimestampAddress3), &notExpectedEndTimestamp, sizeof(typename FamilyType::TimestampPacketType));
+    expectNotEqualMemory<FamilyType>(reinterpret_cast<void *>(endTimestampAddress4), &notExpectedEndTimestamp, sizeof(typename FamilyType::TimestampPacketType));
 
     clReleaseEvent(outEvent1);
     clReleaseEvent(outEvent2);
@@ -146,15 +146,15 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, PostSyncWriteXeHPTests, givenMultipleWalkersWhenEnq
 
     EXPECT_EQ(2u, timestampNodes.size());
 
-    typename FamilyType::TimestampPacketType expectedEndTimestamp = 1;
+    typename FamilyType::TimestampPacketType notExpectedEndTimestamp = 1;
     auto endTimestampAddress1 = TimestampPacketHelper::getContextEndGpuAddress(*timestampNodes[0]);
     auto endTimestampAddress2 = TimestampPacketHelper::getGlobalEndGpuAddress(*timestampNodes[0]);
     auto endTimestampAddress3 = TimestampPacketHelper::getContextEndGpuAddress(*timestampNodes[1]);
     auto endTimestampAddress4 = TimestampPacketHelper::getGlobalEndGpuAddress(*timestampNodes[1]);
-    expectNotEqualMemory<FamilyType>(reinterpret_cast<void *>(endTimestampAddress1), &expectedEndTimestamp, sizeof(typename FamilyType::TimestampPacketType));
-    expectNotEqualMemory<FamilyType>(reinterpret_cast<void *>(endTimestampAddress2), &expectedEndTimestamp, sizeof(typename FamilyType::TimestampPacketType));
-    expectNotEqualMemory<FamilyType>(reinterpret_cast<void *>(endTimestampAddress3), &expectedEndTimestamp, sizeof(typename FamilyType::TimestampPacketType));
-    expectNotEqualMemory<FamilyType>(reinterpret_cast<void *>(endTimestampAddress4), &expectedEndTimestamp, sizeof(typename FamilyType::TimestampPacketType));
+    expectNotEqualMemory<FamilyType>(reinterpret_cast<void *>(endTimestampAddress1), &notExpectedEndTimestamp, sizeof(typename FamilyType::TimestampPacketType));
+    expectNotEqualMemory<FamilyType>(reinterpret_cast<void *>(endTimestampAddress2), &notExpectedEndTimestamp, sizeof(typename FamilyType::TimestampPacketType));
+    expectNotEqualMemory<FamilyType>(reinterpret_cast<void *>(endTimestampAddress3), &notExpectedEndTimestamp, sizeof(typename FamilyType::TimestampPacketType));
+    expectNotEqualMemory<FamilyType>(reinterpret_cast<void *>(endTimestampAddress4), &notExpectedEndTimestamp, sizeof(typename FamilyType::TimestampPacketType));
 
     clReleaseEvent(outEvent);
 }
