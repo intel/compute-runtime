@@ -125,7 +125,8 @@ int DrmAllocation::peekInternalHandle(MemoryManager *memoryManager, uint32_t han
     if (handles[handleId] != std::numeric_limits<uint64_t>::max()) {
         handle = handles[handleId];
         if (reservedHandleData) {
-            int reservedHandleRet = static_cast<DrmMemoryManager *>(memoryManager)->obtainReservedHandleData(static_cast<int>(handle), this->getRootDeviceIndex(), reservedHandleData);
+            auto boHandle = static_cast<uint32_t>(getBufferObjectToModify(handleId)->peekHandle());
+            int reservedHandleRet = static_cast<DrmMemoryManager *>(memoryManager)->obtainReservedHandleData(static_cast<int>(handle), boHandle, this->getRootDeviceIndex(), reservedHandleData);
             if (reservedHandleRet != 0) {
                 return -1;
             }
@@ -137,13 +138,16 @@ int DrmAllocation::peekInternalHandle(MemoryManager *memoryManager, uint32_t han
     if (bufferObject == nullptr) {
         return -1;
     }
-    int64_t ret = static_cast<int64_t>((static_cast<DrmMemoryManager *>(memoryManager))->obtainFdFromHandle(bufferObject->peekHandle(), this->rootDeviceIndex));
+    auto boHandle = bufferObject->peekHandle();
+    int64_t ret = static_cast<int64_t>((static_cast<DrmMemoryManager *>(memoryManager))->obtainFdFromHandle(boHandle, this->rootDeviceIndex));
     if (ret < 0) {
         return -1;
     }
     if (reservedHandleData) {
-        int reservedHandleRet = static_cast<DrmMemoryManager *>(memoryManager)->obtainReservedHandleData(static_cast<int>(ret), this->getRootDeviceIndex(), reservedHandleData);
+        int reservedHandleRet = static_cast<DrmMemoryManager *>(memoryManager)->obtainReservedHandleData(static_cast<int>(ret), static_cast<uint32_t>(boHandle), this->getRootDeviceIndex(), reservedHandleData);
         if (reservedHandleRet != 0) {
+            uint64_t dmabufFd = static_cast<uint64_t>(ret);
+            memoryManager->closeInternalHandle(dmabufFd, handleId, nullptr);
             return -1;
         }
     }

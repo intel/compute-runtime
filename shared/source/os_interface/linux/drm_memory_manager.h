@@ -85,7 +85,7 @@ class DrmMemoryManager : public MemoryManager {
 
     MOCKABLE_VIRTUAL int obtainFdFromHandle(int boHandle, uint32_t rootDeviceindex);
     int obtainDmaBufFd(GraphicsAllocation &graphicsAllocation) override;
-    MOCKABLE_VIRTUAL int obtainReservedHandleData(int fd, uint32_t rootDeviceindex, void *reservedHandleData);
+    MOCKABLE_VIRTUAL int obtainReservedHandleData(int fd, uint32_t boHandle, uint32_t rootDeviceindex, void *reservedHandleData);
     int getImportHandleFromReservedHandleData(void *reservedHandleData, uint32_t rootDeviceIndex) override;
     AddressRange reserveGpuAddress(const uint64_t requiredStartAddress, size_t size, const RootDeviceIndicesContainer &rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex) override;
     AddressRange reserveGpuAddressOnHeap(const uint64_t requiredStartAddress, size_t size, const RootDeviceIndicesContainer &rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex, HeapIndex heap, size_t alignment) override;

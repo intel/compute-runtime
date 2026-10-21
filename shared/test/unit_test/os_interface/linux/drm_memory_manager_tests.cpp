@@ -1180,11 +1180,41 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, whenPeekInternalHandleIsCalledWithReser
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-HWTEST_TEMPLATED_F(DrmMemoryManagerTest, whenPeekInternalHandleIsCalledWithReservedHandleDataAndObtainReservedHandleDataFailsThenErrorIsReturned) {
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, whenPeekInternalHandleIsCalledWithReservedHandleDataThenDmabufFdAndBoHandleArePassedToObtainReservedHandleData) {
     mock->ioctlExpected.gemUserptr = 1;
     mock->ioctlExpected.gemWait = 1;
     mock->ioctlExpected.gemClose = 1;
     mock->ioctlExpected.handleToPrimeFd = 1;
+    mock->outputFd = 1337;
+    memoryManager->mockObtainReservedHandleData = true;
+    auto allocation = static_cast<DrmAllocation *>(this->memoryManager->allocateGraphicsMemoryWithProperties(createAllocationProperties(rootDeviceIndex, 10 * MemoryConstants::pageSize, true)));
+    ASSERT_NE(allocation->getBO(), nullptr);
+    auto expectedBoHandle = static_cast<uint32_t>(allocation->getBO()->peekHandle());
+
+    uint8_t reservedHandleData[32] = {0};
+    uint64_t handle = 0;
+    int ret = allocation->peekInternalHandle(this->memoryManager, handle, reservedHandleData);
+    ASSERT_EQ(ret, 0);
+    EXPECT_EQ(1337, memoryManager->obtainReservedHandleDataLastFd);
+    EXPECT_EQ(expectedBoHandle, memoryManager->obtainReservedHandleDataLastBoHandle);
+
+    memoryManager->obtainReservedHandleDataLastFd = -1;
+    memoryManager->obtainReservedHandleDataLastBoHandle = 0;
+
+    uint64_t cachedHandle = 0;
+    ret = allocation->peekInternalHandle(this->memoryManager, cachedHandle, reservedHandleData);
+    ASSERT_EQ(ret, 0);
+    EXPECT_EQ(1337, memoryManager->obtainReservedHandleDataLastFd);
+    EXPECT_EQ(expectedBoHandle, memoryManager->obtainReservedHandleDataLastBoHandle);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, whenPeekInternalHandleIsCalledWithReservedHandleDataAndObtainReservedHandleDataFailsThenErrorIsReturnedAndDmabufFdIsClosed) {
+    mock->ioctlExpected.gemUserptr = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
+    mock->ioctlExpected.handleToPrimeFd = 2;
     mock->outputFd = 1337;
     memoryManager->mockObtainReservedHandleData = true;
     memoryManager->mockObtainReservedHandleDataResult = -1;
@@ -1194,6 +1224,14 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, whenPeekInternalHandleIsCalledWithReser
     uint64_t handle = 0;
     int ret = allocation->peekInternalHandle(this->memoryManager, handle, reservedHandleData);
     ASSERT_EQ(ret, -1);
+    EXPECT_EQ(1, closeCalledCount);
+    EXPECT_EQ(1337, closeInputFd);
+
+    closeCalledCount = 0;
+    uint64_t retryHandle = 0;
+    ret = allocation->peekInternalHandle(this->memoryManager, retryHandle, reservedHandleData);
+    ASSERT_EQ(ret, -1);
+    EXPECT_EQ(1, closeCalledCount);
 
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -14287,9 +14325,11 @@ struct MockDrmFabric : public DrmFabric {
 
     bool isAvailable() const override { return true; }
 
-    int fdToHandle(int32_t dmabufFd, void *reservedHandleData) override {
-        fdToHandleCalled++;
-        return -1;
+    int exportHandle(int32_t dmabufFd, uint32_t boHandle, void *reservedHandleData) override {
+        exportHandleCalled++;
+        lastDmabufFd = dmabufFd;
+        lastBoHandle = boHandle;
+        return exportHandleReturnValue;
     }
 
     int handleClose(const void *reservedHandleData) override {
@@ -14305,7 +14345,10 @@ struct MockDrmFabric : public DrmFabric {
         return handleToFdReturnValue;
     }
 
-    uint32_t fdToHandleCalled = 0;
+    uint32_t exportHandleCalled = 0;
+    int32_t lastDmabufFd = -1;
+    uint32_t lastBoHandle = 0;
+    int exportHandleReturnValue = -1;
     uint32_t handleCloseCalled = 0;
     uint32_t handleToFdCalled = 0;
     int handleToFdReturnValue = -1;
@@ -14336,9 +14379,32 @@ TEST(DrmMemoryManagerReservedHandleDataTest, givenFabricNotAvailableWhenObtainRe
     TestedDrmMemoryManager memoryManager(executionEnvironment);
     uint8_t reservedData[32] = {0};
 
-    int result = memoryManager.obtainReservedHandleData(123, 0, reservedData);
+    int result = memoryManager.obtainReservedHandleData(123, 0, 0, reservedData);
 
     EXPECT_NE(0, result);
+}
+
+TEST(DrmMemoryManagerReservedHandleDataTest, givenAvailableFabricWhenObtainReservedHandleDataThenFdAndBoHandleArePassedToExportHandle) {
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
+    auto drm = new DrmMock(*executionEnvironment.rootDeviceEnvironments[0]);
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
+
+    auto mockIoctlHelper = new MockIoctlHelper(*drm);
+    drm->ioctlHelper.reset(mockIoctlHelper);
+    auto mockFabric = new MockDrmFabric();
+    mockFabric->exportHandleReturnValue = 0;
+    drm->drmFabric.reset(mockFabric);
+
+    TestedDrmMemoryManager memoryManager(executionEnvironment);
+    uint8_t reservedData[32] = {0};
+
+    int result = memoryManager.obtainReservedHandleData(123, 456, 0, reservedData);
+
+    EXPECT_EQ(0, result);
+    EXPECT_EQ(1u, mockFabric->exportHandleCalled);
+    EXPECT_EQ(123, mockFabric->lastDmabufFd);
+    EXPECT_EQ(456u, mockFabric->lastBoHandle);
 }
 
 TEST(DrmMemoryManagerReservedHandleDataTest, givenNullReservedHandleDataWhenCloseInternalHandleWithReservedDataThenClosesInternalHandleButNotFabricHandle) {

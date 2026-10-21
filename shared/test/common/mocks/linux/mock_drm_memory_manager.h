@@ -186,12 +186,16 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
 
     bool mockObtainReservedHandleData = false;
     int mockObtainReservedHandleDataResult = 0;
+    int obtainReservedHandleDataLastFd = -1;
+    uint32_t obtainReservedHandleDataLastBoHandle = 0;
 
-    int obtainReservedHandleData(int fd, uint32_t rootDeviceIndex, void *reservedHandleData) override {
+    int obtainReservedHandleData(int fd, uint32_t boHandle, uint32_t rootDeviceIndex, void *reservedHandleData) override {
+        obtainReservedHandleDataLastFd = fd;
+        obtainReservedHandleDataLastBoHandle = boHandle;
         if (mockObtainReservedHandleData) {
             return mockObtainReservedHandleDataResult;
         }
-        return DrmMemoryManager::obtainReservedHandleData(fd, rootDeviceIndex, reservedHandleData);
+        return DrmMemoryManager::obtainReservedHandleData(fd, boHandle, rootDeviceIndex, reservedHandleData);
     }
     uint64_t acquireGpuRange(size_t &size, uint32_t rootDeviceIndex, HeapIndex heapIndex) override {
         acquireGpuRangeCalledTimes++;

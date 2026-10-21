@@ -17,11 +17,11 @@ TEST(DrmFabricStubTest, givenDrmFabricStubWhenIsAvailableCalledThenReturnsFalse)
     EXPECT_FALSE(fabricStub.isAvailable());
 }
 
-TEST(DrmFabricStubTest, givenDrmFabricStubWhenFdToHandleCalledThenReturnsMinusOne) {
+TEST(DrmFabricStubTest, givenDrmFabricStubWhenExportHandleCalledThenReturnsMinusOne) {
     DrmFabricStub fabricStub;
     uint8_t handleData[32] = {0};
 
-    int result = fabricStub.fdToHandle(123, handleData);
+    int result = fabricStub.exportHandle(123, 456u, handleData);
 
     EXPECT_EQ(-1, result);
 }

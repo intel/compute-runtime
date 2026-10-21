@@ -538,13 +538,16 @@ class MemoryManagerEventPoolIpcReleaseMock : public MemoryManagerEventPoolIpcMoc
     GraphicsAllocation *lastGraphicsAllocation = nullptr;
 };
 
-class MemoryManagerEventPoolIpcReservedHandleMock : public MemoryManagerEventPoolIpcMock {
+class MemoryManagerEventPoolIpcReservedHandleMock : public MemoryManagerEventPoolIpcReleaseMock {
   public:
-    using MemoryManagerEventPoolIpcMock::MemoryManagerEventPoolIpcMock;
+    using MemoryManagerEventPoolIpcReleaseMock::MemoryManagerEventPoolIpcReleaseMock;
 
     GraphicsAllocation *createGraphicsAllocationFromSharedHandle(const OsHandleData &osHandleData, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) override {
         createFromSharedHandleCalled++;
         if (failPrimaryImport && createFromSharedHandleCalled == 1) {
+            return nullptr;
+        }
+        if (failFallbackImport && createFromSharedHandleCalled == 2) {
             return nullptr;
         }
         return MemoryManagerEventPoolIpcMock::createGraphicsAllocationFromSharedHandle(osHandleData, properties, requireSpecificBitness, isHostIpcAllocation, reuseSharedAllocation, mapPointer);
@@ -558,6 +561,7 @@ class MemoryManagerEventPoolIpcReservedHandleMock : public MemoryManagerEventPoo
     }
 
     bool failPrimaryImport = false;
+    bool failFallbackImport = false;
     uint32_t createFromSharedHandleCalled = 0;
     uint32_t getImportHandleFromReservedHandleDataCalled = 0;
     void *lastReservedHandleData = nullptr;
@@ -1379,6 +1383,92 @@ TEST_F(EventPoolIpcFabricAccessTests, whenOpeningOpaqueIpcEventPoolHandleAndPrim
 
     auto ipcPool = L0::EventPool::fromHandle(ipcPoolHandle);
     EXPECT_EQ(ipcPool->closeIpcHandle(), ZE_RESULT_SUCCESS);
+
+    EXPECT_EQ(eventPool->destroy(), ZE_RESULT_SUCCESS);
+}
+
+TEST_F(EventPoolIpcFabricAccessTests, whenOpeningOpaqueIpcDeviceEventPoolHandleAndReservedHandleDataFallbackImportFailsThenFallbackFdIsClosed) {
+    uint32_t numEvents = 4;
+    ze_event_pool_desc_t poolDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
+        nullptr,
+        ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_IPC | ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP,
+        numEvents};
+
+    context->settings.useOpaqueHandle = OpaqueHandlingType::pidfd;
+    driverHandle.isFabricAccessSupportedResult = true;
+
+    auto deviceHandle = device->toHandle();
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    MemoryManagerEventPoolIpcReservedHandleMock memManager(*neoDevice->getExecutionEnvironment());
+    memManager.callParentAllocateGraphicsMemoryWithProperties = false;
+    VariableBackup<NEO::MemoryManager *> memoryManagerBackup(&driverHandle.memoryManager, &memManager);
+    auto eventPool = EventPool::create(&driverHandle, context, 1, &deviceHandle, &poolDesc, result);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_NE(nullptr, eventPool);
+
+    ze_ipc_event_pool_handle_t ipcHandle = {};
+    ze_result_t res = eventPool->getIpcHandle(&ipcHandle);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+
+    auto &ipcData = *reinterpret_cast<IpcOpaqueEventPoolData *>(ipcHandle.data);
+    ipcData.isHostVisibleEventPoolAllocation = false;
+
+    memManager.failPrimaryImport = true;
+    memManager.failFallbackImport = true;
+    memManager.importHandleFromReservedHandleDataResult = 123;
+
+    ze_event_pool_handle_t ipcPoolHandle = {};
+    res = context->openEventPoolIpcHandle(ipcHandle, &ipcPoolHandle);
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, res);
+
+    EXPECT_EQ(2u, memManager.createFromSharedHandleCalled);
+    EXPECT_EQ(1u, memManager.getImportHandleFromReservedHandleDataCalled);
+    EXPECT_EQ(1u, memManager.closeInternalHandleCalled);
+    EXPECT_EQ(123u, memManager.lastClosedHandle);
+    EXPECT_EQ(nullptr, memManager.lastGraphicsAllocation);
+
+    EXPECT_EQ(eventPool->destroy(), ZE_RESULT_SUCCESS);
+}
+
+TEST_F(EventPoolIpcFabricAccessTests, whenOpeningOpaqueIpcHostVisibleEventPoolHandleAndReservedHandleDataFallbackImportFailsThenFallbackFdIsNotClosedAgain) {
+    uint32_t numEvents = 4;
+    ze_event_pool_desc_t poolDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
+        nullptr,
+        ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_IPC | ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP,
+        numEvents};
+
+    context->settings.useOpaqueHandle = OpaqueHandlingType::pidfd;
+    driverHandle.isFabricAccessSupportedResult = true;
+
+    auto deviceHandle = device->toHandle();
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    MemoryManagerEventPoolIpcReservedHandleMock memManager(*neoDevice->getExecutionEnvironment());
+    memManager.callParentAllocateGraphicsMemoryWithProperties = false;
+    VariableBackup<NEO::MemoryManager *> memoryManagerBackup(&driverHandle.memoryManager, &memManager);
+    auto eventPool = EventPool::create(&driverHandle, context, 1, &deviceHandle, &poolDesc, result);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_NE(nullptr, eventPool);
+
+    ze_ipc_event_pool_handle_t ipcHandle = {};
+    ze_result_t res = eventPool->getIpcHandle(&ipcHandle);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+
+    auto &ipcData = *reinterpret_cast<IpcOpaqueEventPoolData *>(ipcHandle.data);
+    ipcData.isHostVisibleEventPoolAllocation = true;
+
+    memManager.failPrimaryImport = true;
+    memManager.failFallbackImport = true;
+    memManager.importHandleFromReservedHandleDataResult = 123;
+
+    ze_event_pool_handle_t ipcPoolHandle = {};
+    res = context->openEventPoolIpcHandle(ipcHandle, &ipcPoolHandle);
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, res);
+
+    EXPECT_EQ(2u, memManager.createFromSharedHandleCalled);
+    EXPECT_EQ(1u, memManager.getImportHandleFromReservedHandleDataCalled);
+    EXPECT_EQ(0u, memManager.closeInternalHandleCalled);
 
     EXPECT_EQ(eventPool->destroy(), ZE_RESULT_SUCCESS);
 }

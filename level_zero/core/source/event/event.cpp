@@ -913,6 +913,11 @@ ze_result_t EventPool::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &
                                                                             eventPool->isHostVisibleEventPoolAllocation,
                                                                             false,
                                                                             nullptr);
+            // Host IPC imports consume the fd; a failed device import leaves it owned by us.
+            if (alloc == nullptr && !eventPool->isHostVisibleEventPoolAllocation) {
+                uint64_t fallbackHandle = static_cast<uint64_t>(fallbackFd);
+                memoryManager->closeInternalHandle(fallbackHandle, 0u, nullptr);
+            }
         }
     }
 
