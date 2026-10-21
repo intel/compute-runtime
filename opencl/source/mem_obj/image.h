@@ -202,6 +202,7 @@ class Image : public MemObj {
     bool hasValidParentImageFormat(const cl_image_format &imageFormat) const;
 
     bool isImageFromBuffer() const { return castToObject<Buffer>(static_cast<cl_mem>(associatedMemObject)) ? true : false; }
+    bool isImage1dBufferFromBuffer() const { return imageDesc.image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER && isImageFromBuffer(); }
     bool isImageFromImage() const { return castToObject<Image>(static_cast<cl_mem>(associatedMemObject)) ? true : false; }
 
     static cl_int checkIfDeviceSupportsImages(cl_context context);

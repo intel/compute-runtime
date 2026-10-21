@@ -139,9 +139,13 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteImageImpl(
 
     auto builtInMode = this->defaultBuiltInMode;
     builtInMode.adjustToWideStatelessIfRequired(hostPtrSize);
+    BuiltIn::BuiltInId builtIn{BuiltIn::BaseKernel::copyBufferToImage3d, builtInMode};
+    if (!isBcs && dstImage->isImage1dBufferFromBuffer()) {
+        overrideBuiltinForImage1dBufferWithParentBuffer(dc, builtIn, false);
+    }
     MultiDispatchInfo dispatchInfo(dc);
 
-    const auto dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_IMAGE>(dispatchInfo, surfaces, {BuiltIn::BaseKernel::copyBufferToImage3d, builtInMode}, numEventsInWaitList, eventWaitList, event, blockingWrite == CL_TRUE, csr);
+    const auto dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_IMAGE>(dispatchInfo, surfaces, builtIn, numEventsInWaitList, eventWaitList, event, blockingWrite == CL_TRUE, csr);
 
     if (dispatchResult != CL_SUCCESS) {
         return dispatchResult;

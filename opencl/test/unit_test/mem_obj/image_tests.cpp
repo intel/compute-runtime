@@ -31,6 +31,7 @@
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
+#include "opencl/test/unit_test/fixtures/buffer_fixture.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/mem_obj/image_compression_fixture.h"
@@ -1224,6 +1225,26 @@ TEST(ImageTest, givenImageWhenAskedForMcsInfoThenDefaultValuesAreReturned) {
     EXPECT_EQ(0u, mcsInfo.multisampleCount);
     EXPECT_EQ(0u, mcsInfo.qPitch);
     EXPECT_EQ(0u, mcsInfo.pitch);
+}
+
+TEST(ImageTest, givenImagesWhenCheckingIfImage1dBufferFromBufferThenOnlyImage1dBufferCreatedFromBufferReturnsTrue) {
+    MockContext ctx;
+    std::unique_ptr<Buffer> buffer(BufferHelper<>::create(&ctx));
+    cl_image_format imageFormat = {CL_RGBA, CL_UNSIGNED_INT8};
+    cl_image_desc imageDesc = Image1dBufferDefaults::imageDesc;
+    imageDesc.mem_object = buffer.get();
+
+    std::unique_ptr<Image> image1dBufferFromBuffer(Image1dBufferHelperUlt<>::create(&ctx, &imageDesc, &imageFormat));
+    ASSERT_NE(nullptr, image1dBufferFromBuffer);
+    EXPECT_TRUE(image1dBufferFromBuffer->isImage1dBufferFromBuffer());
+
+    std::unique_ptr<Image> image1dBufferWithoutBuffer(Image1dBufferHelperUlt<>::create(&ctx));
+    ASSERT_NE(nullptr, image1dBufferWithoutBuffer);
+    EXPECT_FALSE(image1dBufferWithoutBuffer->isImage1dBufferFromBuffer());
+
+    std::unique_ptr<Image> image1d(Image1dHelperUlt<>::create(&ctx));
+    ASSERT_NE(nullptr, image1d);
+    EXPECT_FALSE(image1d->isImage1dBufferFromBuffer());
 }
 
 TEST(ImageTest, givenImageWhenAskedForPtrOffsetForCpuMappingThenReturnCorrectValue) {

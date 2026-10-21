@@ -1036,3 +1036,39 @@ HWTEST_F(EnqueueWriteImageTest, given4gbBufferAndIsForceStatelessIsFalseWhenEnqu
                                                                std::move(oldBuilder));
     EXPECT_EQ(mockBuilder, newBuilder.get());
 }
+
+HWTEST_F(EnqueueWriteImageTest, givenImage1dBufferWhenWriteImageIsEnqueuedOnGpgpuThenParentBufferIsCopiedWithCopyBufferToBufferBuiltin) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableBlitterForEnqueueOperations.set(0);
+
+    std::unique_ptr<Buffer> buffer(BufferHelper<>::create(context));
+    cl_image_format imageFormat = {CL_RGBA, CL_UNSIGNED_INT8};
+    cl_image_desc imageDesc = Image1dBufferDefaults::imageDesc;
+    imageDesc.mem_object = buffer.get();
+    std::unique_ptr<Image> image(Image1dHelperUlt<>::create(context, &imageDesc, &imageFormat));
+    ASSERT_NE(nullptr, image);
+    const size_t bytesPerPixel = image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
+
+    auto builtIns = new MockBuiltins();
+    MockRootDeviceEnvironment::resetBuiltins(pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()].get(), builtIns);
+    auto &origBuilder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::copyBufferToBuffer, pCmdQ->getDefaultBuiltInMode(), pCmdQ->getClDevice());
+    auto oldBuilder = pClDevice->setBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::copyBufferToBuffer, pCmdQ->getDefaultBuiltInMode(),
+                                                               std::unique_ptr<NEO::BuiltIn::DispatchInfoBuilder>(new MockBuiltInDispatchInfoBuilder(*builtIns, pCmdQ->getClDevice(), &origBuilder)));
+
+    size_t origin[] = {1, 0, 0};
+    size_t region[] = {2, 1, 1};
+    auto retVal = EnqueueWriteImageHelper<>::enqueueWriteImage(pCmdQ, image.get(), CL_FALSE, origin, region);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto &mockBuilder = static_cast<MockBuiltInDispatchInfoBuilder &>(BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::copyBufferToBuffer, pCmdQ->getDefaultBuiltInMode(), pCmdQ->getClDevice()));
+    auto params = mockBuilder.getBuiltinOpParams();
+    EXPECT_EQ(nullptr, params->srcMemObj);
+    EXPECT_NE(nullptr, params->srcPtr);
+    EXPECT_EQ(buffer.get(), params->dstMemObj);
+    EXPECT_EQ(origin[0] * bytesPerPixel, params->dstOffset.x);
+    EXPECT_EQ(region[0] * bytesPerPixel, params->size.x);
+
+    auto newBuilder = pClDevice->setBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::copyBufferToBuffer, pCmdQ->getDefaultBuiltInMode(), std::move(oldBuilder));
+    EXPECT_EQ(&mockBuilder, newBuilder.get());
+    pCmdQ->finish(false);
+}

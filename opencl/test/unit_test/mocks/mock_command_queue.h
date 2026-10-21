@@ -66,6 +66,7 @@ class MockCommandQueue : public CommandQueue {
     using CommandQueue::isTextureCacheFlushNeeded;
     using CommandQueue::migrateMultiGraphicsAllocationsIfRequired;
     using CommandQueue::obtainNewTimestampPacketNodes;
+    using CommandQueue::overrideBuiltinForImage1dBufferWithParentBuffer;
     using CommandQueue::overrideEngine;
     using CommandQueue::priority;
     using CommandQueue::queueCapabilities;

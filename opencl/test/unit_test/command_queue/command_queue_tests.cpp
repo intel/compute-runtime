@@ -1930,6 +1930,61 @@ TEST(CommandQueue, givenCopyImageWithSingleImage1DBufferWhenCallingBlitEnqueueAl
     EXPECT_TRUE(isBlitAllowed(image, image));
 }
 
+TEST(CommandQueue, givenOperationParamsWhenOverrideBuiltinForImage1dBufferWithParentBufferIsCalledThenImageOnGivenSideIsReplacedByParentBuffer) {
+    MockContext context{};
+    std::unique_ptr<Buffer> buffer(BufferHelper<>::create(&context));
+    cl_image_format imageFormat = {CL_RGBA, CL_UNSIGNED_INT8};
+    cl_image_desc imageDesc = Image1dBufferDefaults::imageDesc;
+    imageDesc.mem_object = buffer.get();
+    std::unique_ptr<Image> image1dBuffer(Image1dHelperUlt<>::create(&context, &imageDesc, &imageFormat));
+    ASSERT_NE(nullptr, image1dBuffer);
+    const size_t bytesPerPixel = image1dBuffer->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
+    ASSERT_LT(1u, bytesPerPixel);
+
+    const BuiltIn::OpParams initialParams = [] {
+        BuiltIn::OpParams params{};
+        params.srcOffset = {1, 0, 0};
+        params.dstOffset = {3, 0, 0};
+        params.size = {2, 1, 1};
+        return params;
+    }();
+    const BuiltIn::BuiltInId initialBuiltIn{BuiltIn::BaseKernel::copyImage3dToBuffer, BuiltIn::AddressingMode{}};
+    const Vec3<size_t> expectedSize{initialParams.size.x * bytesPerPixel, 1, 1};
+
+    BuiltIn::OpParams params{};
+    BuiltIn::BuiltInId builtIn = initialBuiltIn;
+    auto overrideBuiltin = [&](MemObj *srcMemObj, MemObj *dstMemObj, bool imageIsSource) {
+        params = initialParams;
+        params.srcMemObj = srcMemObj;
+        params.dstMemObj = dstMemObj;
+        builtIn = initialBuiltIn;
+        MockCommandQueue::overrideBuiltinForImage1dBufferWithParentBuffer(params, builtIn, imageIsSource);
+    };
+
+    overrideBuiltin(image1dBuffer.get(), nullptr, true);
+    EXPECT_EQ(buffer.get(), params.srcMemObj);
+    EXPECT_EQ(nullptr, params.dstMemObj);
+    EXPECT_EQ((Vec3<size_t>{initialParams.srcOffset.x * bytesPerPixel, 0, 0}), params.srcOffset);
+    EXPECT_EQ(initialParams.dstOffset, params.dstOffset);
+    EXPECT_EQ(expectedSize, params.size);
+    EXPECT_EQ(BuiltIn::BaseKernel::copyBufferToBuffer, builtIn.kernel);
+    EXPECT_EQ(initialBuiltIn.mode, builtIn.mode);
+
+    overrideBuiltin(buffer.get(), image1dBuffer.get(), false);
+    EXPECT_EQ(buffer.get(), params.srcMemObj);
+    EXPECT_EQ(buffer.get(), params.dstMemObj);
+    EXPECT_EQ(initialParams.srcOffset, params.srcOffset);
+    EXPECT_EQ((Vec3<size_t>{initialParams.dstOffset.x * bytesPerPixel, 0, 0}), params.dstOffset);
+    EXPECT_EQ(expectedSize, params.size);
+    EXPECT_EQ(BuiltIn::BaseKernel::copyBufferToBuffer, builtIn.kernel);
+
+    overrideBuiltin(image1dBuffer.get(), image1dBuffer.get(), true);
+    EXPECT_EQ(buffer.get(), params.srcMemObj);
+    EXPECT_EQ(image1dBuffer.get(), params.dstMemObj);
+    EXPECT_EQ(initialParams.dstOffset, params.dstOffset);
+    EXPECT_EQ(expectedSize, params.size);
+}
+
 TEST(CommandQueue, givenImageToBufferClCommandWhenCallingBlitEnqueueAllowedThenReturnCorrectValue) {
     MockContext context{};
     MockCommandQueue queue(&context, context.getDevice(0), 0, false);

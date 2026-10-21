@@ -26,6 +26,8 @@
 #include "opencl/source/context/context.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/helpers/cl_blit_properties.h"
+#include "opencl/source/mem_obj/image.h"
+#include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device_factory.h"
@@ -694,6 +696,74 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenMapAllocationWhenEnqueueingReadOrWriteBu
     retVal = clEnqueueUnmapMemObject(mockCmdQ, bufferForBlt.get(), mapPtr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(mapAllocation, mockCmdQ->kernelParams.transferAllocation);
+}
+
+HWTEST_TEMPLATED_F(BcsBufferTests, givenImage1dBufferWhenReadImageIsEnqueuedOnBcsThenBlitGetsImageAndCopiesBytesOfParentBuffer) {
+    debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+    debugManager.flags.EnableBlitterForEnqueueImageOperations.set(1);
+    resetCopyEngineSelector();
+
+    auto mockCmdQ = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
+    auto ultBcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(mockCmdQ->bcsEngines[bcsIndex]->commandStreamReceiver);
+
+    auto buffer = clUniquePtr(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, MemoryConstants::pageSize, nullptr, retVal));
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    cl_image_format imageFormat = {CL_RGBA, CL_UNSIGNED_INT8};
+    cl_image_desc imageDesc = Image1dBufferDefaults::imageDesc;
+    imageDesc.mem_object = buffer.get();
+    auto image = clUniquePtr(Image1dHelperUlt<>::create(bcsMockContext.get(), &imageDesc, &imageFormat));
+    ASSERT_NE(nullptr, image);
+    const size_t bytesPerPixel = image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
+    ASSERT_LT(1u, bytesPerPixel);
+
+    size_t origin[] = {1, 0, 0};
+    size_t region[] = {2, 1, 1};
+    uint8_t hostData[64] = {};
+    retVal = mockCmdQ->enqueueReadImage(image.get(), CL_TRUE, origin, region, 0, 0, hostData, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    ASSERT_EQ(1u, ultBcsCsr->blitBufferCalled);
+    ASSERT_EQ(1u, ultBcsCsr->receivedBlitProperties.size());
+    const auto &blitProperties = ultBcsCsr->receivedBlitProperties[0];
+    EXPECT_EQ(BlitterConstants::BlitDirection::bufferToHostPtr, blitProperties.blitDirection);
+    EXPECT_EQ(buffer->getGraphicsAllocation(device->getRootDeviceIndex()), blitProperties.srcAllocation);
+    EXPECT_EQ(origin[0] * bytesPerPixel, blitProperties.srcOffset.x);
+    EXPECT_EQ(region[0] * bytesPerPixel, blitProperties.copySize.x);
+    EXPECT_EQ(1u, blitProperties.bytesPerPixel);
+}
+
+HWTEST_TEMPLATED_F(BcsBufferTests, givenImage1dBufferWhenWriteImageIsEnqueuedOnBcsThenBlitGetsImageAndCopiesBytesToParentBuffer) {
+    debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+    debugManager.flags.EnableBlitterForEnqueueImageOperations.set(1);
+    resetCopyEngineSelector();
+
+    auto mockCmdQ = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
+    auto ultBcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(mockCmdQ->bcsEngines[bcsIndex]->commandStreamReceiver);
+
+    auto buffer = clUniquePtr(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, MemoryConstants::pageSize, nullptr, retVal));
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    cl_image_format imageFormat = {CL_RGBA, CL_UNSIGNED_INT8};
+    cl_image_desc imageDesc = Image1dBufferDefaults::imageDesc;
+    imageDesc.mem_object = buffer.get();
+    auto image = clUniquePtr(Image1dHelperUlt<>::create(bcsMockContext.get(), &imageDesc, &imageFormat));
+    ASSERT_NE(nullptr, image);
+    const size_t bytesPerPixel = image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
+    ASSERT_LT(1u, bytesPerPixel);
+
+    size_t origin[] = {1, 0, 0};
+    size_t region[] = {2, 1, 1};
+    uint8_t hostData[64] = {};
+    retVal = mockCmdQ->enqueueWriteImage(image.get(), CL_TRUE, origin, region, 0, 0, hostData, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    ASSERT_EQ(1u, ultBcsCsr->blitBufferCalled);
+    ASSERT_EQ(1u, ultBcsCsr->receivedBlitProperties.size());
+    const auto &blitProperties = ultBcsCsr->receivedBlitProperties[0];
+    EXPECT_EQ(BlitterConstants::BlitDirection::hostPtrToBuffer, blitProperties.blitDirection);
+    EXPECT_EQ(buffer->getGraphicsAllocation(device->getRootDeviceIndex()), blitProperties.dstAllocation);
+    EXPECT_EQ(origin[0] * bytesPerPixel, blitProperties.dstOffset.x);
+    EXPECT_EQ(region[0] * bytesPerPixel, blitProperties.copySize.x);
+    EXPECT_EQ(1u, blitProperties.bytesPerPixel);
 }
 
 HWTEST_TEMPLATED_F(BcsBufferTests, givenWriteBufferEnqueueWithGpgpuSubmissionWhenProgrammingCommandStreamThenDoNotAddSemaphoreWaitOnGpgpu) {

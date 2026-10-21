@@ -489,6 +489,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     }
 
     MOCKABLE_VIRTUAL bool blitEnqueueImageAllowed(const size_t *origin, const size_t *region, const Image &image) const;
+    static void overrideBuiltinForImage1dBufferWithParentBuffer(BuiltIn::OpParams &operationParams, BuiltIn::BuiltInId &builtIn, bool imageIsSource);
     void aubCaptureHook(bool &blocking, bool &clearAllDependencies, const MultiDispatchInfo &multiDispatchInfo);
     void assignDataToOverwrittenBcsNode(TagNodeBase *node);
 

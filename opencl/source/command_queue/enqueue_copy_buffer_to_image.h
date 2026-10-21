@@ -33,14 +33,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyBufferToImage(
     builtInMode.adjustToWideStatelessIfRequired(srcBuffer->getSize());
     BuiltIn::BuiltInId builtIn{BuiltIn::BaseKernel::copyBufferToImage3d, builtInMode};
 
-    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtIn,
-                                                                              this->getClDevice());
-    BuiltIn::OwnershipWrapper builtInLock(builder, this->context);
-
-    MemObjSurface srcBufferSurf(srcBuffer);
-    MemObjSurface dstImgSurf(dstImage);
-    Surface *surfaces[] = {&srcBufferSurf, &dstImgSurf};
-
     BuiltIn::OpParams dc;
     dc.srcMemObj = srcBuffer;
     dc.dstMemObj = dstImage;
@@ -50,6 +42,17 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyBufferToImage(
     if (isMipMapped(dstImage->getImageDesc())) {
         dc.dstMipLevel = findMipLevel(dstImage->getImageDesc().image_type, dstOrigin);
     }
+    if (dstImage->isImage1dBufferFromBuffer()) {
+        overrideBuiltinForImage1dBufferWithParentBuffer(dc, builtIn, false);
+    }
+
+    auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtIn,
+                                                                              this->getClDevice());
+    BuiltIn::OwnershipWrapper builtInLock(builder, this->context);
+
+    MemObjSurface srcBufferSurf(srcBuffer);
+    MemObjSurface dstImgSurf(dstImage);
+    Surface *surfaces[] = {&srcBufferSurf, &dstImgSurf};
 
     MultiDispatchInfo dispatchInfo(dc);
     builder.buildDispatchInfos(dispatchInfo);

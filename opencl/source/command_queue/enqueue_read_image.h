@@ -152,9 +152,13 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImageImpl(
 
     auto builtInMode = this->defaultBuiltInMode;
     builtInMode.adjustToWideStatelessIfRequired(std::max(srcImage->getSize(), hostPtrSize));
+    BuiltIn::BuiltInId builtIn{BuiltIn::BaseKernel::copyImage3dToBuffer, builtInMode};
+    if (!isBcs && srcImage->isImage1dBufferFromBuffer()) {
+        overrideBuiltinForImage1dBufferWithParentBuffer(dc, builtIn, true);
+    }
     MultiDispatchInfo dispatchInfo(dc);
 
-    const auto dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_IMAGE>(dispatchInfo, surfaces, {BuiltIn::BaseKernel::copyImage3dToBuffer, builtInMode}, numEventsInWaitList, eventWaitList, event, blockingRead == CL_TRUE, csr);
+    const auto dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_IMAGE>(dispatchInfo, surfaces, builtIn, numEventsInWaitList, eventWaitList, event, blockingRead == CL_TRUE, csr);
     if (dispatchResult != CL_SUCCESS) {
         return dispatchResult;
     }

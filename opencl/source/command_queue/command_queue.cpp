@@ -42,6 +42,7 @@
 #include "shared/source/utilities/staging_buffer_manager.h"
 #include "shared/source/utilities/tag_allocator.h"
 
+#include "opencl/source/built_ins/builtin_op_params.h"
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/csr_selection_args.h"
@@ -1206,6 +1207,21 @@ bool CommandQueue::blitEnqueueImageAllowed(const size_t *origin, const size_t *r
     }
 
     return blitEnqueueImageAllowed;
+}
+
+void CommandQueue::overrideBuiltinForImage1dBufferWithParentBuffer(BuiltIn::OpParams &operationParams, BuiltIn::BuiltInId &builtIn, bool imageIsSource) {
+    // image builtins access 1D image buffer surface as 3D image, so copy bytes of its parent buffer instead
+    auto &memObj = imageIsSource ? operationParams.srcMemObj : operationParams.dstMemObj;
+    auto &offset = imageIsSource ? operationParams.srcOffset : operationParams.dstOffset;
+
+    auto image = castToObjectOrAbort<Image>(memObj);
+    auto parentBuffer = castToObjectOrAbort<Buffer>(image->getAssociatedMemObject());
+    const size_t bytesPerPixel = image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
+    memObj = parentBuffer;
+    offset = {offset.x * bytesPerPixel, 0, 0};
+    operationParams.size = {operationParams.size.x * bytesPerPixel, 1, 1};
+    builtIn.kernel = BuiltIn::BaseKernel::copyBufferToBuffer;
+    builtIn.mode.adjustToWideStatelessIfRequired(parentBuffer->getSize());
 }
 
 bool CommandQueue::isBlockedCommandStreamRequired(uint32_t commandType, const EventsRequest &eventsRequest, bool blockedQueue, bool isMarkerWithProfiling) const {
