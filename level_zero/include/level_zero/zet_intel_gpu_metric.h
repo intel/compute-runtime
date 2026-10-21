@@ -331,26 +331,6 @@ typedef struct _zet_intel_metric_hw_buffer_size_exp_desc_t {
                                     ///< The actual size used by the HW will be updated in "sizeInBytes" member by the implementation.
 } zet_intel_metric_hw_buffer_size_exp_desc_t;
 
-#ifndef ZET_INTEL_METRIC_TRACER_EXPORT_EXP_NAME
-/// @brief Extension name for metric tracer export
-#define ZET_INTEL_METRIC_TRACER_EXPORT_EXP_NAME "ZET_intel_metric_tracer_export"
-#endif // ZET_INTEL_METRIC_TRACER_EXPORT_EXP_NAME
-
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Metric Tracer Export extension Version(s)
-typedef enum _zet_intel_metric_tracer_export_exp_version_t {
-    ZET_INTEL_METRIC_TRACER_EXPORT_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),                              ///< version 1.0
-    ZET_INTEL_METRIC_TRACER_EXPORT_EXP_VERSION_CURRENT = ZET_INTEL_METRIC_TRACER_EXPORT_EXP_VERSION_1_0, ///< latest known version
-    ZET_INTEL_METRIC_TRACER_EXPORT_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
-} zet_intel_metric_tracer_export_exp_version_t;
-
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Metric export format
-typedef enum _zet_intel_metric_export_format_t {
-    ZET_INTEL_METRIC_EXPORT_FORMAT_RAW = 0, ///< Raw binary format
-    ZET_INTEL_METRIC_EXPORT_FORMAT_FORCE_UINT32 = 0x7fffffff
-} zet_intel_metric_export_format_t;
-
 #if defined(__cplusplus)
 } // extern "C"
 #endif

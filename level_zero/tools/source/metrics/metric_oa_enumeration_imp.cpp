@@ -873,10 +873,11 @@ ze_result_t OaMetricGroupImp::calculateMetricValues(const zet_metric_group_calcu
     return result;
 }
 
-ze_result_t OaMetricGroupImp::calculateMetricValuesImpl(const zet_metric_group_calculation_type_t type, size_t rawDataSize,
-                                                        const uint8_t *pRawData, uint32_t *pSetCount,
-                                                        uint32_t *pTotalMetricValueCount, uint32_t *pMetricCounts,
-                                                        zet_typed_value_t *pMetricValues) {
+ze_result_t OaMetricGroupImp::calculateMetricValuesExp(const zet_metric_group_calculation_type_t type, size_t rawDataSize,
+                                                       const uint8_t *pRawData, uint32_t *pSetCount,
+                                                       uint32_t *pTotalMetricValueCount, uint32_t *pMetricCounts,
+                                                       zet_typed_value_t *pMetricValues) {
+
     const OaMetricGroupCalculateHeader *pRawHeader = reinterpret_cast<const OaMetricGroupCalculateHeader *>(pRawData);
     ze_result_t result = ZE_RESULT_SUCCESS;
 

@@ -33,6 +33,5 @@ target_sources(${L0_STATIC_LIB_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/metric_multidevice_programmable.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/os_metric_oa_enumeration_${DRIVER_MODEL}.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/${BRANCH_DIR_SUFFIX}/metric_device_context_create.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/${BRANCH_DIR_SUFFIX}/metric_oa_calculation.cpp
 )
 add_subdirectories()

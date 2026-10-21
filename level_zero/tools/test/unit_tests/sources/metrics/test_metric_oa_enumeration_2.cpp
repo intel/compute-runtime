@@ -120,6 +120,11 @@ TEST_F(MetricEnumerationTest, GivenValidOASourceComputeMetricScopesAreEnumerated
     EXPECT_EQ(metricScopesCount, 0u);
 }
 
+TEST_F(MetricEnumerationTest, givenMetricEnumerationWhenGetMetricSourceIsCalledThenOwningOaMetricSourceIsReturned) {
+    auto &metricSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+    EXPECT_EQ(&metricSource, &mockMetricEnumeration->getMetricSource());
+}
+
 using MetricEnumerationMultiDeviceTest = Test<MetricMultiDeviceFixture>;
 
 TEST_F(MetricEnumerationMultiDeviceTest, givenRootDeviceWhenLoadDependenciesIsCalledThenOpenMetricsSubDeviceWillBeCalled) {
@@ -689,6 +694,76 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenInvalidQueryReportSizeWhenZetMetri
     uint32_t dataCount = 0;
     uint32_t totalMetricCount = 0;
     EXPECT_NE(metricsSetParams.QueryReportSize, rawResultsSize);
+    EXPECT_EQ(L0::zetMetricGroupCalculateMultipleMetricValuesExp(metricGroupHandle, ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawResultsSize, rawResults, &dataCount, &totalMetricCount, nullptr, nullptr), ZE_RESULT_ERROR_INVALID_SIZE);
+    EXPECT_EQ(dataCount, 0u);
+    EXPECT_EQ(totalMetricCount, 0u);
+}
+
+TEST_F(MetricEnumerationMultiDeviceTest, givenSubDeviceRawDataSizeNotMultipleOfReportSizeWhenZetMetricGroupCalculateMultipleMetricValuesExpIsCalledForCountThenErrorInvalidSizeIsReturnedAndCountsAreZero) {
+
+    auto &l0Device = *static_cast<Device *>(devices[0]);
+    const uint32_t subDeviceCount = static_cast<uint32_t>(l0Device.subDevices.size());
+
+    metricsDeviceParams.ConcurrentGroupsCount = 1;
+
+    Mock<IConcurrentGroup_1_13> metricsConcurrentGroup;
+    TConcurrentGroupParams_1_13 metricsConcurrentGroupParams = {};
+    metricsConcurrentGroupParams.MetricSetsCount = 1;
+    metricsConcurrentGroupParams.SymbolName = "OA";
+    metricsConcurrentGroupParams.IoMeasurementInformationCount = 1;
+
+    Mock<MetricsDiscovery::IEquation_1_0> ioReadEquation;
+    MetricsDiscovery::TEquationElement_1_0 ioEquationElement = {};
+    ioEquationElement.Type = MetricsDiscovery::EQUATION_ELEM_IMM_UINT64;
+    ioReadEquation.getEquationElement.push_back(&ioEquationElement);
+
+    Mock<MetricsDiscovery::IInformation_1_0> ioMeasurement;
+    MetricsDiscovery::TInformationParams_1_0 oaInformation = {};
+    oaInformation.SymbolName = "BufferOverflow";
+    oaInformation.IoReadEquation = &ioReadEquation;
+    ioMeasurement.GetParamsResult = &oaInformation;
+
+    Mock<IMetricSet_1_13> metricsSet;
+    MetricsDiscovery::TMetricSetParams_1_11 metricsSetParams = {};
+    metricsSetParams.ApiMask = MetricsDiscovery::API_TYPE_OCL;
+    metricsSetParams.QueryReportSize = 256;
+    metricsSetParams.MetricsCount = 11;
+
+    Mock<IMetric_1_13> metric;
+    MetricsDiscovery::TMetricParams_1_13 metricParams = {};
+    metric.GetParamsResult = &metricParams;
+
+    openMetricsAdapter();
+    setupDefaultMocksForMetricDevice(metricsDevice);
+
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
+    metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
+    metricsConcurrentGroup.getMetricSetResult = &metricsSet;
+    metricsConcurrentGroup.GetIoMeasurementInformationResult = &ioMeasurement;
+    metricsSet.GetParamsResult = &metricsSetParams;
+    metricsSet.GetMetricResult = &metric;
+
+    zet_metric_group_handle_t metricGroupHandle = {};
+    uint32_t metricGroupCount = 1;
+    EXPECT_EQ(zetMetricGroupGet(devices[0]->toHandle(), &metricGroupCount, &metricGroupHandle), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricGroupCount, 1u);
+
+    const size_t rawResultsSize = 560;
+    uint8_t rawResults[rawResultsSize] = {};
+    OaMetricGroupCalculateHeader *pRawHeader = reinterpret_cast<OaMetricGroupCalculateHeader *>(rawResults);
+
+    pRawHeader->magic = OaMetricGroupCalculateHeader::magicValue;
+    pRawHeader->dataCount = subDeviceCount;
+    pRawHeader->rawDataOffsets = sizeof(OaMetricGroupCalculateHeader);
+    pRawHeader->rawDataSizes = pRawHeader->rawDataOffsets + sizeof(uint32_t) * pRawHeader->dataCount;
+    pRawHeader->rawDataOffset = pRawHeader->rawDataSizes + sizeof(uint32_t) * pRawHeader->dataCount;
+
+    uint32_t *pRawDataSizes = reinterpret_cast<uint32_t *>(rawResults + pRawHeader->rawDataSizes);
+    pRawDataSizes[0] = metricsSetParams.QueryReportSize;
+    pRawDataSizes[1] = metricsSetParams.QueryReportSize - 1;
+
+    uint32_t dataCount = 0;
+    uint32_t totalMetricCount = 0;
     EXPECT_EQ(L0::zetMetricGroupCalculateMultipleMetricValuesExp(metricGroupHandle, ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawResultsSize, rawResults, &dataCount, &totalMetricCount, nullptr, nullptr), ZE_RESULT_ERROR_INVALID_SIZE);
     EXPECT_EQ(dataCount, 0u);
     EXPECT_EQ(totalMetricCount, 0u);
