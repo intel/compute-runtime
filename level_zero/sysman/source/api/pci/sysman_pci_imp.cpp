@@ -123,8 +123,10 @@ ze_result_t PciImp::pciStaticProperties(zes_pci_properties_t *pProperties) {
     }
 
     initPci();
+    const auto stype = pProperties->stype;
     void *pNext = pProperties->pNext;
     *pProperties = pciProperties;
+    pProperties->stype = stype;
     pProperties->pNext = pNext;
 
     return pOsPci->getExtensionProperties(pNext);

@@ -735,6 +735,14 @@ TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenGettingPciConfigPropert
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pPciImp->pOsPci->getPciConfigProperties(&configProps));
 }
 
+TEST_F(SysmanDevicePciFixture, GivenPciPropertiesStypeSetWhenCallingZesDevicePciGetPropertiesThenStypeIsPreserved) {
+    zes_pci_properties_t properties = {};
+    properties.stype = ZES_STRUCTURE_TYPE_PCI_PROPERTIES;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDevicePciGetProperties(pSysmanDevice->toHandle(), &properties));
+    EXPECT_EQ(ZES_STRUCTURE_TYPE_PCI_PROPERTIES, properties.stype);
+}
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

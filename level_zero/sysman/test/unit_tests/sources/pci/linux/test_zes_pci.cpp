@@ -741,6 +741,14 @@ TEST_F(ZesPciFixture, GivenValidSysmanHandleWhenCallingZesDevicePciGetProperties
     EXPECT_EQ(extProps.maxPciGenSupported, -1);
 }
 
+TEST_F(ZesPciFixture, GivenPciPropertiesStypeSetWhenCallingZesDevicePciGetPropertiesThenStypeIsPreserved) {
+    zes_pci_properties_t properties = {};
+    properties.stype = ZES_STRUCTURE_TYPE_PCI_PROPERTIES;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDevicePciGetProperties(device, &properties));
+    EXPECT_EQ(ZES_STRUCTURE_TYPE_PCI_PROPERTIES, properties.stype);
+}
+
 namespace PciConfigExpMock {
 constexpr int deviceConfigFd = 1;
 constexpr int cardBusConfigFd = 2;
