@@ -53,6 +53,7 @@ set(CLOC_LIB_SRCS_LIB
     ${NEO_SHARED_DIRECTORY}/dll/devices${BRANCH_DIR_SUFFIX}/product_config.inl
     ${NEO_SHARED_DIRECTORY}/dll/devices/product_config_base.inl
     ${NEO_SHARED_DIRECTORY}/helpers/abort.cpp
+    ${NEO_SHARED_DIRECTORY}/helpers/aligned_memory.cpp
     ${NEO_SHARED_DIRECTORY}/helpers/compiler_product_helper.h
     ${NEO_SHARED_DIRECTORY}/helpers/compiler_product_helper.cpp
     ${NEO_SHARED_DIRECTORY}/helpers/compiler_product_helper_base.inl

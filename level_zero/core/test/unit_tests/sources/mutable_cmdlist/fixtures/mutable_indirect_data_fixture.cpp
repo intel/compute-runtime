@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,8 @@
 #include "level_zero/core/test/unit_tests/sources/mutable_cmdlist/fixtures/mutable_indirect_data_fixture.h"
 
 #include "shared/source/helpers/aligned_memory.h"
+
+#include <cstring>
 
 namespace L0 {
 namespace ult {

@@ -47,6 +47,7 @@
 #include "shared/source/os_interface/windows/wddm_residency_allocations_container.h"
 #include "shared/source/release_helpers/caps/caps_setup.h"
 #include "shared/source/sku_info/operations/windows/sku_info_receiver.h"
+#include "shared/source/utilities/logger.h"
 
 #include <algorithm>
 

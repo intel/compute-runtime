@@ -52,6 +52,7 @@
 #include "shared/source/program/program_initialization.h"
 #include "shared/source/utilities/const_stringref.h"
 #include "shared/source/utilities/isa_pool_allocator.h"
+#include "shared/source/utilities/logger.h"
 #include "shared/source/utilities/stackvec.h"
 
 #include "level_zero/core/source/device/device.h"

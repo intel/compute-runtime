@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/string.h"
 
 struct PatchStoreOperation {
     template <typename T>

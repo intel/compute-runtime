@@ -37,6 +37,7 @@
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/utilities/arrayref.h"
+#include "shared/source/utilities/logger.h"
 #include "shared/source/utilities/shared_pool_allocation.h"
 
 #include "level_zero/core/source/context/context.h"

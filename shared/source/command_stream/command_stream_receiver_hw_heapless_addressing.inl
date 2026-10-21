@@ -19,6 +19,7 @@
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/utilities/logger.h"
 #include "shared/source/utilities/software_tags_manager.h"
 
 namespace NEO {

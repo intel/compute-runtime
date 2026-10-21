@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/os_interface/windows/wddm_memory_manager.h"
 
 namespace NEO {

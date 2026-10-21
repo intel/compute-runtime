@@ -12,6 +12,7 @@
 #include "shared/source/device_binary_format/zebin/zeinfo.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/helpers/string.h"
 #include "shared/test/common/mocks/mock_elf.h"
 
 namespace ZebinTestData {

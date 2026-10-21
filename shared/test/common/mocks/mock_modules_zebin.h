@@ -17,6 +17,7 @@
 #include "neo_igfxfmid.h"
 
 #include <map>
+#include <sstream>
 #include <string>
 #include <vector>
 

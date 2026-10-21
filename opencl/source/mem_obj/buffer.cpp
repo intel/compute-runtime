@@ -28,6 +28,7 @@
 #include "shared/source/memory_manager/migration_sync_data.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/utilities/allocation_logger.h"
+#include "shared/source/utilities/logger.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/command_queue.h"

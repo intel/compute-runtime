@@ -7,6 +7,7 @@
 
 #include "level_zero/sysman/source/shared/windows/zes_os_sysman_imp.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/driver_info.h"

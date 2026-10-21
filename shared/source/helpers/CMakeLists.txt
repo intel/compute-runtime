@@ -11,6 +11,7 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/addressing_mode_helper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/addressing_mode_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/affinity_mask.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/aligned_memory.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/aligned_memory.h
     ${CMAKE_CURRENT_SOURCE_DIR}/api_gfx_core_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/api_specific_config.h

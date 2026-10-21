@@ -9,9 +9,10 @@
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/debug_helpers.h"
-#include "shared/source/utilities/logger.h"
 
+#include <algorithm>
 #include <functional>
+#include <memory>
 #include <new>
 #include <type_traits>
 #include <utility>
@@ -55,6 +56,9 @@ constexpr inline T *alignDown(T *ptrBefore, size_t alignment) {
     return reinterpret_cast<T *>(alignDown(reinterpret_cast<uintptr_t>(ptrBefore), alignment));
 }
 
+void logAlignedMalloc(const char *function, void *originalPtr, size_t size);
+void logAlignedFree(const char *function, void *originalPtr);
+
 inline void *alignedMalloc(size_t bytes, size_t alignment) {
     DEBUG_BREAK_IF(alignment <= 0);
 
@@ -79,7 +83,7 @@ inline void *alignedMalloc(size_t bytes, size_t alignment) {
         reinterpret_cast<void **>(pAlignedMemory)[-1] = pOriginalMemory;
     }
 
-    DBG_LOG(LogAlignedAllocations, NEO_FUNCTION_NAME, "Pointer:", reinterpret_cast<void *>(pOriginalMemory), "size:", sizeToAlloc);
+    logAlignedMalloc(NEO_FUNCTION_NAME, reinterpret_cast<void *>(pOriginalMemory), sizeToAlloc);
     // Return result
     return reinterpret_cast<void *>(pAlignedMemory); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
 }
@@ -87,7 +91,7 @@ inline void *alignedMalloc(size_t bytes, size_t alignment) {
 inline void alignedFree(void *ptr) {
     if (ptr) {
         auto originalPtr = reinterpret_cast<char **>(ptr)[-1];
-        DBG_LOG(LogAlignedAllocations, NEO_FUNCTION_NAME, "Pointer:", reinterpret_cast<void *>(originalPtr));
+        logAlignedFree(NEO_FUNCTION_NAME, reinterpret_cast<void *>(originalPtr));
         delete[] originalPtr;
     }
 }

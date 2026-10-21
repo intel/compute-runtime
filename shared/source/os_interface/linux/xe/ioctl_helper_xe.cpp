@@ -33,6 +33,7 @@
 #include "shared/source/os_interface/os_time.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/directory.h"
+#include "shared/source/utilities/logger.h"
 
 #include <algorithm>
 #include <iostream>
