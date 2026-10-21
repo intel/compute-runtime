@@ -21,6 +21,7 @@ class DrmMemoryOperationsHandlerBind : public DrmMemoryOperationsHandler {
     MemoryOperationsStatus decompress(Device *device, GraphicsAllocation &gfxAllocation) override;
     MemoryOperationsStatus lock(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) override;
     MemoryOperationsStatus evict(Device *device, GraphicsAllocation &gfxAllocation) override;
+    MemoryOperationsStatus releaseExplicitResidency(Device *device, GraphicsAllocation &gfxAllocation) override;
     MemoryOperationsStatus evictWithinOsContext(OsContext *osContext, GraphicsAllocation &gfxAllocation) override;
     MemoryOperationsStatus isResident(Device *device, GraphicsAllocation &gfxAllocation) override;
 

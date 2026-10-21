@@ -151,6 +151,11 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::evict(Device *device, Gra
     return MemoryOperationsStatus::success;
 }
 
+MemoryOperationsStatus DrmMemoryOperationsHandlerBind::releaseExplicitResidency(Device *device, GraphicsAllocation &gfxAllocation) {
+    // the always-resident mark is shared with indirect and creation residency, so an unbind faults in-flight work that relies on them
+    return MemoryOperationsStatus::success;
+}
+
 MemoryOperationsStatus DrmMemoryOperationsHandlerBind::evictWithinOsContext(OsContext *osContext, GraphicsAllocation &gfxAllocation) {
     std::lock_guard<std::mutex> lock(mutex);
     int retVal = evictImpl(osContext, gfxAllocation, osContext->getDeviceBitfield());

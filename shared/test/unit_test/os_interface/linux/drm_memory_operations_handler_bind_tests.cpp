@@ -620,6 +620,19 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenDrmMemoryOperationBindWhenMakeRe
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+TEST_F(DrmMemoryOperationsHandlerBindTest, givenExplicitlyResidentAllocationWhenReleasingExplicitResidencyThenItStaysBoundAndAlwaysResident) {
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
+    ASSERT_EQ(MemoryOperationsStatus::success, operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&allocation, 1), false, false));
+    const auto vmUnbindCalledBefore = mock->getMockIoctlHelper()->vmUnbindCalled;
+
+    EXPECT_EQ(MemoryOperationsStatus::success, operationHandler->releaseExplicitResidency(device, *allocation));
+
+    EXPECT_EQ(vmUnbindCalledBefore, mock->getMockIoctlHelper()->vmUnbindCalled);
+    EXPECT_EQ(MemoryOperationsStatus::success, operationHandler->isResident(device, *allocation));
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
 TEST_F(DrmMemoryOperationsHandlerBindTest, givenDrmMemoryOperationBindWhenMakeResidentWithChunkingWithinOsContextEvictableAllocationThenAllocationIsNotMarkedAsAlwaysResident) {
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
     allocation->storageInfo.isChunked = true;

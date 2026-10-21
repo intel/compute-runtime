@@ -757,20 +757,39 @@ ze_result_t Context::evictMemory(ze_device_handle_t hDevice, void *ptr, size_t s
     return changeMemoryOperationStatusToL0ResultType(success);
 }
 
+void *Context::getPooledImagePtr(Device *device, Image &image) {
+    auto imagePtr = addrToPtr(image.getAllocation()->getGpuAddress() + image.getImageInfo().offset);
+    auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(imagePtr);
+    if (allocData && this->getUsmPoolOwningPtr(imagePtr, allocData).pool) {
+        return imagePtr;
+    }
+    return nullptr;
+}
+
 ze_result_t Context::makeImageResident(ze_device_handle_t hDevice, ze_image_handle_t hImage) {
-    auto alloc = Image::fromHandle(hImage)->getAllocation();
-    auto implicitArgsAlloc = Image::fromHandle(hImage)->getImplicitArgsAllocation();
+    auto image = Image::fromHandle(hImage);
+    auto alloc = image->getAllocation();
+    auto implicitArgsAlloc = image->getImplicitArgsAllocation();
 
     NEO::Device *neoDevice = L0::Device::fromHandle(hDevice)->getNEODevice();
     NEO::MemoryOperationsHandler *memoryOperationsIface = neoDevice->getRootDeviceEnvironment().memoryOperationsInterface.get();
-    auto success = memoryOperationsIface->makeResident(neoDevice, ArrayRef<NEO::GraphicsAllocation *>(&alloc, 1), true, true);
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    if (auto pooledImagePtr = this->getPooledImagePtr(L0::Device::fromHandle(hDevice), *image)) {
+        result = this->makeMemoryResident(hDevice, pooledImagePtr, image->getImageInfo().size);
+    } else {
+        result = changeMemoryOperationStatusToL0ResultType(memoryOperationsIface->makeResident(neoDevice, ArrayRef<NEO::GraphicsAllocation *>(&alloc, 1), true, true));
+    }
     if (implicitArgsAlloc) {
         memoryOperationsIface->makeResident(neoDevice, ArrayRef<NEO::GraphicsAllocation *>(&implicitArgsAlloc, 1), true, true);
     }
-    return changeMemoryOperationStatusToL0ResultType(success);
+    return result;
 }
 ze_result_t Context::evictImage(ze_device_handle_t hDevice, ze_image_handle_t hImage) {
-    auto alloc = Image::fromHandle(hImage)->getAllocation();
+    auto image = Image::fromHandle(hImage);
+    if (auto pooledImagePtr = this->getPooledImagePtr(L0::Device::fromHandle(hDevice), *image)) {
+        return this->evictMemory(hDevice, pooledImagePtr, image->getImageInfo().size);
+    }
+    auto alloc = image->getAllocation();
 
     NEO::Device *neoDevice = L0::Device::fromHandle(hDevice)->getNEODevice();
     NEO::MemoryOperationsHandler *memoryOperationsIface = neoDevice->getRootDeviceEnvironment().memoryOperationsInterface.get();

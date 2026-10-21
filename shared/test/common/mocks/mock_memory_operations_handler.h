@@ -84,6 +84,10 @@ class MockMemoryOperations : public MemoryOperationsHandler {
         }
         return MemoryOperationsStatus::success;
     }
+    MemoryOperationsStatus releaseExplicitResidency(Device *device, GraphicsAllocation &gfxAllocation) override {
+        releaseExplicitResidencyCalledCount++;
+        return MemoryOperationsHandler::releaseExplicitResidency(device, gfxAllocation);
+    }
     MemoryOperationsStatus isResident(Device *device, GraphicsAllocation &gfxAllocation) override {
         isResidentCalledCount++;
         if (captureGfxAllocationsForMakeResident) {
@@ -130,6 +134,7 @@ class MockMemoryOperations : public MemoryOperationsHandler {
     std::atomic<int> makeResidentCalledCount{0};
     bool makeResidentForcePagingFenceValue = false;
     std::atomic<int> evictCalledCount{0};
+    std::atomic<int> releaseExplicitResidencyCalledCount{0};
     std::atomic<int> freeCalledCount{0};
     std::atomic<uint32_t> isResidentCalledCount{0};
     std::atomic<uint32_t> lockCalledCount{0};

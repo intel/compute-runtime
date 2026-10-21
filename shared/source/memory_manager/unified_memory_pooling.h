@@ -115,7 +115,7 @@ class UsmMemAllocPool : NEO::NonCopyableAndNonMovableClass {
     static constexpr auto poolAlignment = MemoryConstants::pageSize2M;
 
   protected:
-    MemoryOperationsStatus evictPool(Device *targetDevice, GraphicsAllocation *targetAllocation);
+    MemoryOperationsStatus releasePoolResidency(Device *targetDevice, GraphicsAllocation *targetAllocation);
     MemoryOperationsStatus makePoolResident(Device *targetDevice, GraphicsAllocation *targetAllocation);
     // Caller must hold mtx.
     MemoryOperationsStatus dropPoolResidency(Device *targetDevice);

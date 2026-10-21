@@ -366,6 +366,7 @@ MemoryOperationsStatus UsmMemAllocPool::makeChunkResident(const void *ptr, Devic
     }
 
     auto &residencyCount = this->residencyCounts[targetDevice];
+    DEBUG_BREAK_IF(0u != residencyCount && MemoryOperationsStatus::success != targetDevice->getRootDeviceEnvironment().memoryOperationsInterface->isResident(targetDevice, *targetAllocation));
     if (0u == residencyCount) {
         auto status = makePoolResident(targetDevice, targetAllocation);
         if (MemoryOperationsStatus::success != status) {
@@ -399,10 +400,10 @@ MemoryOperationsStatus UsmMemAllocPool::evictChunk(const void *ptr, Device *targ
     return dropPoolResidency(targetDevice);
 }
 
-MemoryOperationsStatus UsmMemAllocPool::evictPool(Device *targetDevice, GraphicsAllocation *targetAllocation) {
+MemoryOperationsStatus UsmMemAllocPool::releasePoolResidency(Device *targetDevice, GraphicsAllocation *targetAllocation) {
     OPTIONAL_UNRECOVERABLE_IF(targetAllocation->getRootDeviceIndex() != targetDevice->getRootDeviceIndex());
     auto memoryOperationsIface = targetDevice->getRootDeviceEnvironment().memoryOperationsInterface.get();
-    return memoryOperationsIface->evict(targetDevice, *targetAllocation);
+    return memoryOperationsIface->releaseExplicitResidency(targetDevice, *targetAllocation);
 }
 
 MemoryOperationsStatus UsmMemAllocPool::makePoolResident(Device *targetDevice, GraphicsAllocation *targetAllocation) {
@@ -420,7 +421,7 @@ MemoryOperationsStatus UsmMemAllocPool::dropPoolResidency(Device *targetDevice) 
     OPTIONAL_UNRECOVERABLE_IF(residentPoolAllocationIt == this->residentPoolAllocations.end());
     auto targetAllocation = residentPoolAllocationIt->second;
     this->residentPoolAllocations.erase(residentPoolAllocationIt);
-    return evictPool(targetDevice, targetAllocation);
+    return releasePoolResidency(targetDevice, targetAllocation);
 }
 
 const std::array<const PoolInfo, 3> UsmMemAllocPoolsManager::getPoolInfos() {

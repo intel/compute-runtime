@@ -23,6 +23,7 @@
 #include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
+#include "shared/test/common/mocks/mock_memory_operations_handler.h"
 #include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/common/mocks/mock_usm_memory_pool.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -3382,6 +3383,53 @@ HWTEST2_P(ImageCreateUsmPool, GivenBindlessImageWhenImageViewCreatedWithTheSameF
 
     Image::fromHandle(imageView)->destroy();
     ret = context->freeMem(ptr);
+}
+
+HWTEST2_P(ImageCreateUsmPool, givenImageWithPitchedPtrWhenMakingItResidentAndEvictingThenPooledImageResidencyGoesThroughPool, ImageSupport) {
+    const size_t width = 256;
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device, &deviceDesc, width * sizeof(uint32_t), 0, &ptr));
+    auto pool = reinterpret_cast<MockUsmMemAllocPool *>(neoDevice->getDeviceUsmMemAllocPoolFacade().getPoolContainingAlloc(ptr).pool);
+    const bool isPooled = nullptr != pool;
+    EXPECT_EQ(GetParam() > 0, isPooled);
+
+    ze_image_pitched_exp_desc_t pitchedDesc = {};
+    pitchedDesc.stype = ZE_STRUCTURE_TYPE_PITCHED_IMAGE_EXP_DESC;
+    pitchedDesc.ptr = ptr;
+    ze_image_desc_t srcImgDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                                  &pitchedDesc,
+                                  ZE_IMAGE_FLAG_KERNEL_WRITE,
+                                  ZE_IMAGE_TYPE_BUFFER,
+                                  {ZE_IMAGE_FORMAT_LAYOUT_32, ZE_IMAGE_FORMAT_TYPE_UINT,
+                                   ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                                   ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A},
+                                  width,
+                                  1,
+                                  1,
+                                  0,
+                                  0};
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, imageHW->initialize(device, &srcImgDesc));
+
+    auto mockMemoryOperations = new NEO::MockMemoryOperations();
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->memoryOperationsInterface.reset(mockMemoryOperations);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->makeImageResident(device->toHandle(), imageHW->toHandle()));
+    if (isPooled) {
+        ASSERT_TRUE(pool->trackResidency);
+        EXPECT_EQ(1u, pool->residencyCounts[neoDevice]);
+    }
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->evictImage(device->toHandle(), imageHW->toHandle()));
+    EXPECT_EQ(1, mockMemoryOperations->evictCalledCount);
+    EXPECT_EQ(isPooled ? 1 : 0, mockMemoryOperations->releaseExplicitResidencyCalledCount);
+    if (isPooled) {
+        EXPECT_EQ(0u, pool->residencyCounts[neoDevice]);
+    }
+
+    imageHW.reset(nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
 }
 
 INSTANTIATE_TEST_SUITE_P(UsmPoolDisabledEnabled, ImageCreateUsmPool, ::testing::Values(0, 2));

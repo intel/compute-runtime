@@ -89,6 +89,17 @@ TEST_F(WddmMemoryOperationsHandlerTest, givenRegularAllocationWhenEvictingReside
     EXPECT_EQ(wddmMemoryOperationsHandler->isResident(nullptr, *wddmAllocation), MemoryOperationsStatus::memoryNotFound);
 }
 
+TEST_F(WddmMemoryOperationsHandlerTest, givenExplicitlyResidentAllocationWhenReleasingExplicitResidencyThenItIsEvicted) {
+    wddm->callBaseEvict = true;
+    allocationPtr->setExplicitlyMadeResident(false);
+    EXPECT_EQ(wddmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1), false, false), MemoryOperationsStatus::success);
+
+    EXPECT_EQ(wddmMemoryOperationsHandler->releaseExplicitResidency(nullptr, *wddmAllocation), MemoryOperationsStatus::success);
+
+    EXPECT_FALSE(allocationPtr->isExplicitlyMadeResident());
+    EXPECT_EQ(wddmMemoryOperationsHandler->isResident(nullptr, *wddmAllocation), MemoryOperationsStatus::memoryNotFound);
+}
+
 TEST_F(WddmMemoryOperationsHandlerTest, givenFragmentedAllocationWhenEvictingResidentAllocationThenEvictCalled) {
     allocationPtr = wddmFragmentedAllocation.get();
     allocationPtr->setExplicitlyMadeResident(false);
