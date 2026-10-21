@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "level_zero/api/opencl/test/common/fixtures/capturing_command_list.h"
+#include "level_zero/api/opencl/test/common/fixtures/captured_api.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_context.h"
 #include <level_zero/ze_api.h>
 

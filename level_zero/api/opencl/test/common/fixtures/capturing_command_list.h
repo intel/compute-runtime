@@ -9,6 +9,7 @@
 
 #include "shared/source/helpers/debug_helpers.h"
 
+#include "level_zero/api/opencl/test/common/fixtures/captured_api.h"
 #include "level_zero/api/opencl/test/common/fixtures/capturing_command_list_args.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
@@ -39,15 +40,6 @@ enum class ApiId : uint32_t {
 #undef LEO_CAPTURED_API_ID
 };
 
-template <typename Args>
-struct CapturedApi {
-    size_t count() const { return records.size(); }
-    bool wasCalled() const { return records.empty() == false; }
-
-    const Args &operator[](size_t index) const { return records.at(index); }
-
-    std::vector<Args> records{};
-};
 struct CapturingCommandList : public L0::ult::Mock<L0::ult::CommandList> {
     using BaseClass = L0::ult::Mock<L0::ult::CommandList>;
     using BaseClass::imageCopyOffloadAllowed;

@@ -15,6 +15,7 @@
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
+#include "opencl/test/unit_test/mocks/mock_program.h"
 
 namespace NEO {
 class Program;
@@ -85,4 +86,13 @@ void ApiFixtureUsingAlignedMemoryManager::tearDown() {
     program->release();
     delete device;
 }
+
+void ApiFixture::tearDown() {
+    pMultiDeviceKernel->release();
+    pCommandQueue->release();
+    pContext->release();
+    pProgram->release();
+    NEO::cleanupPlatform(executionEnvironment);
+}
+
 } // namespace NEO

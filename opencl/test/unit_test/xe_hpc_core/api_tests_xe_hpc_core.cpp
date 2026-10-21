@@ -14,6 +14,7 @@
 
 #include "opencl/source/api/api.h"
 #include "opencl/test/unit_test/api/cl_api_tests.h"
+#include "opencl/test/unit_test/mocks/mock_program.h"
 
 using namespace NEO;
 

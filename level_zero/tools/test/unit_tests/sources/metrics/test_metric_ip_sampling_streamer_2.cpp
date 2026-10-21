@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/test/common/test_macros/hw_test.h"
+
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/metric_ip_sampling_fixture.h"

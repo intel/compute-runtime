@@ -13,6 +13,7 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_pooling.h"
 
+#include "level_zero/core/source/driver/base_driver.h"
 #include "level_zero/core/source/helpers/api_handle_helper.h"
 
 #include <map>
@@ -23,7 +24,6 @@
 #include <unordered_map>
 #include <vector>
 
-struct _ze_driver_handle_t : BaseHandle {};
 static_assert(IsCompliantWithDdiHandlesExt<_ze_driver_handle_t>);
 
 namespace NEO {
@@ -50,12 +50,6 @@ struct FabricVertex;
 struct FabricEdge;
 struct Image;
 struct IpcHandleTracking;
-
-struct BaseDriver : _ze_driver_handle_t {
-    virtual ~BaseDriver() = default;
-    virtual ze_result_t getExtensionFunctionAddress(const char *pFuncName, void **pfunc) = 0;
-    static BaseDriver *fromHandle(ze_driver_handle_t handle) { return static_cast<BaseDriver *>(handle); }
-};
 
 class DriverHandle : public BaseDriver, public NEO::NonCopyableAndNonMovableClass {
   public:

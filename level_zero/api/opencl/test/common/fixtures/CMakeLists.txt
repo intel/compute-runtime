@@ -5,6 +5,7 @@
 #
 
 set_property(GLOBAL APPEND PROPERTY LEO_TEST_SOURCES
+             ${CMAKE_CURRENT_SOURCE_DIR}/captured_api.h
              ${CMAKE_CURRENT_SOURCE_DIR}/capturing_command_list.h
              ${CMAKE_CURRENT_SOURCE_DIR}/capturing_command_list_args.h
              ${CMAKE_CURRENT_SOURCE_DIR}/capturing_context.h

@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/memory_manager/external_memory_type.h"
 

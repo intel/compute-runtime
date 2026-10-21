@@ -7,12 +7,13 @@
 
 #pragma once
 
-#include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/tools/source/metrics/metric.h"
 
 #include <unordered_set>
 
 namespace L0 {
+struct CommandList;
+
 namespace ult {
 
 class MockMetric : public L0::MetricImp {

@@ -8,6 +8,7 @@
 #include "level_zero/tools/test/unit_tests/sources/metrics/metric_ip_sampling_fixture.h"
 
 #include "shared/test/common/helpers/mock_product_helper_hw.h"
+#include "shared/test/common/test_macros/test_base.h"
 
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/device/device.h"

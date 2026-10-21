@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,6 @@
 #include "shared/source/utilities/const_stringref.h"
 #include "shared/source/utilities/stackvec.h"
 
-#include <queue>
 #include <string>
 #include <unordered_map>
 #include <vector>

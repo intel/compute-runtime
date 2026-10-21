@@ -17,7 +17,6 @@
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
-#include "opencl/test/unit_test/mocks/mock_program.h"
 
 #include "gtest/gtest.h"
 
@@ -26,18 +25,13 @@
 namespace NEO {
 class CommandQueue;
 class MockKernel;
+class MockProgram;
 
 struct ApiFixture {
 
     void setUp();
 
-    void tearDown() {
-        pMultiDeviceKernel->release();
-        pCommandQueue->release();
-        pContext->release();
-        pProgram->release();
-        NEO::cleanupPlatform(executionEnvironment);
-    }
+    void tearDown();
 
     void disableQueueCapabilities(cl_command_queue_capabilities_intel capabilities) {
         if (pCommandQueue->queueCapabilities == CL_QUEUE_DEFAULT_CAPABILITIES_INTEL) {

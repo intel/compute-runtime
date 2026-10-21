@@ -7,6 +7,7 @@
 target_sources(${L0_STATIC_LIB_NAME}
                PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+               ${CMAKE_CURRENT_SOURCE_DIR}/base_driver.h
                ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}additional_extension_function_address.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}additional_extensions_support.h
                ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}additional_extensions_support.inl

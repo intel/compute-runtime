@@ -9,7 +9,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
-#include "level_zero/core/source/driver/driver_handle.h"
+#include "level_zero/core/source/driver/base_driver.h"
 #include "level_zero/zes_intel_gpu_sysman.h"
 #include <level_zero/ze_api.h>
 #include <level_zero/zes_api.h>

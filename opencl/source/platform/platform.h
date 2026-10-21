@@ -10,7 +10,6 @@
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/memory_manager/unified_memory_pooling.h"
 #include "shared/source/utilities/reference_tracked_object.h"
-#include "shared/source/utilities/staging_buffer_manager.h"
 
 #include "opencl/source/api/cl_types.h"
 #include "opencl/source/cl_device/cl_device_vector.h"

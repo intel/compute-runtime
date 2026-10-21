@@ -22,6 +22,7 @@
 #include "shared/source/memory_manager/usm_pool_params.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/pin/pin.h"
+#include "shared/source/utilities/staging_buffer_manager.h"
 
 #include "opencl/source/api/api.h"
 #include "opencl/source/cl_device/cl_device.h"

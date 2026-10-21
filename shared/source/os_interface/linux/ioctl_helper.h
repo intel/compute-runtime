@@ -11,7 +11,6 @@
 #include "shared/source/os_interface/linux/drm_allocation.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_debug.h"
-#include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/os_interface/linux/xe/eudebug/eudebug_interface.h"
 #include "shared/source/os_interface/os_time.h"
