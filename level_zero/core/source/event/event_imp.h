@@ -96,6 +96,7 @@ struct EventImp : public Event {
     bool isTimestampPopulated() const { return (contextEndTS != Event::STATE_CLEARED || globalEndTS != Event::STATE_CLEARED); }
     void synchronizeTimestampCompletionWithTimeout();
     bool isCacheFlushRequiredForHostSync() const;
+    TaskCountType flushTagUpdateForHostSync(NEO::CommandStreamReceiver &csrForCacheFlush) const;
     bool isPatchPreambleCounterCompleted(int64_t timeSinceWait, bool blockOnMiss) override;
 };
 

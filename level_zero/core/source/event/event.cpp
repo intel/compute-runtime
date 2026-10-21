@@ -1134,6 +1134,7 @@ void Event::setIsCompleted() {
 
 void Event::updateInOrderExecState(std::shared_ptr<NEO::InOrderExecInfo> &newInOrderExecInfo, uint64_t signalValue, uint32_t allocationOffset) {
     resetCompletionStatus();
+    clearCleanupTaskCounts();
 
     const bool ipcExportUpdateNeeded = isCbIpcCommunicationUpdateNeeded(newInOrderExecInfo->getBaseDeviceAddress());
 
@@ -1152,6 +1153,7 @@ void Event::updateInOrderExecState(std::shared_ptr<NEO::InOrderExecInfo> &newInO
 
 void Event::updateInOrdeState(NEO::InOrderExecEventHelper &input) {
     resetCompletionStatus();
+    clearCleanupTaskCounts();
 
     input.copyData(this->inOrderExecHelper);
 }

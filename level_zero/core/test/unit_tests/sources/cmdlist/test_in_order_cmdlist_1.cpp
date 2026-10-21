@@ -7349,6 +7349,94 @@ HWTEST_F(InOrderCmdListTests, givenMitigateHostVisibleSignalWhenCallingSynchroni
     context->freeMem(hostAddress);
 }
 
+HWTEST_F(InOrderCmdListTests, givenCbEventsSignaledByImmCmdListWhenOtherWorkIsSubmittedBeforeHostSynchronizeThenCacheFlushWaitsOnlyForEventSubmission) {
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+    if (!device->getProductHelper().isDcFlushAllowed() || immCmdList->isHeaplessModeEnabled()) {
+        GTEST_SKIP();
+    }
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
+    ultCsr->waitForTaskCountReturnValue = WaitStatus::ready;
+    auto eventPool = createEvents<FamilyType>(2, false);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams));
+    const auto firstEventSubmissionTaskCount = ultCsr->peekTaskCount();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[1]->toHandle(), 0, nullptr, launchParams));
+    const auto secondEventSubmissionTaskCount = ultCsr->peekTaskCount();
+    EXPECT_LT(firstEventSubmissionTaskCount, secondEventSubmissionTaskCount);
+
+    auto hostAddress = static_cast<uint64_t *>(immCmdList->inOrderExecInfo->getBaseHostAddress());
+    *hostAddress = immCmdList->inOrderExecInfo->getCounterValue();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, events[1]->hostSynchronize(std::numeric_limits<uint64_t>::max()));
+    EXPECT_TRUE(ultCsr->waitForTaskCountCalled);
+    EXPECT_EQ(secondEventSubmissionTaskCount, ultCsr->latestWaitForTaskCountValue);
+
+    ultCsr->taskCount += 4;
+    ultCsr->flushTagUpdateCalled = false;
+    ultCsr->waitForTaskCountCalled = false;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, events[0]->hostSynchronize(std::numeric_limits<uint64_t>::max()));
+    EXPECT_FALSE(ultCsr->flushTagUpdateCalled);
+    EXPECT_TRUE(ultCsr->waitForTaskCountCalled);
+    EXPECT_EQ(firstEventSubmissionTaskCount, ultCsr->latestWaitForTaskCountValue);
+}
+
+HWTEST_F(InOrderCmdListTests, givenCbEventSignaledByImmCmdListAndThenByRegularCmdListWhenHostSynchronizingThenCacheFlushWaitsForLatestCsrTaskCount) {
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+    if (!device->getProductHelper().isDcFlushAllowed() || immCmdList->isHeaplessModeEnabled()) {
+        GTEST_SKIP();
+    }
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
+    ultCsr->waitForTaskCountReturnValue = WaitStatus::ready;
+    auto eventPool = createEvents<FamilyType>(1, false);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams));
+
+    auto regularCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, regularCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams));
+    regularCmdList->close();
+
+    auto hostAddress = static_cast<uint64_t *>(regularCmdList->inOrderExecInfo->getBaseHostAddress());
+    *hostAddress = regularCmdList->inOrderExecInfo->getCounterValue();
+
+    ultCsr->taskCount += 4;
+    ultCsr->flushTagUpdateCalled = false;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, events[0]->hostSynchronize(std::numeric_limits<uint64_t>::max()));
+    EXPECT_TRUE(ultCsr->flushTagUpdateCalled);
+    EXPECT_TRUE(ultCsr->waitForTaskCountCalled);
+    EXPECT_EQ(ultCsr->peekLatestFlushedTaskCount(), ultCsr->latestWaitForTaskCountValue);
+}
+
+HWTEST_F(InOrderCmdListTests, givenCbEventSignaledByImmCmdListWhenInOrderStateIsReattachedThenHostSynchronizeFlushesCacheForLatestCsrTaskCount) {
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+    if (!device->getProductHelper().isDcFlushAllowed() || immCmdList->isHeaplessModeEnabled()) {
+        GTEST_SKIP();
+    }
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
+    ultCsr->waitForTaskCountReturnValue = WaitStatus::ready;
+    auto eventPool = createEvents<FamilyType>(2, false);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams));
+
+    auto regularCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, regularCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[1]->toHandle(), 0, nullptr, launchParams));
+    regularCmdList->close();
+
+    events[0]->updateInOrdeState(events[1]->getInOrderExecEventHelper());
+
+    auto hostAddress = static_cast<uint64_t *>(regularCmdList->inOrderExecInfo->getBaseHostAddress());
+    *hostAddress = regularCmdList->inOrderExecInfo->getCounterValue();
+
+    ultCsr->taskCount += 4;
+    ultCsr->flushTagUpdateCalled = false;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, events[0]->hostSynchronize(std::numeric_limits<uint64_t>::max()));
+    EXPECT_TRUE(ultCsr->flushTagUpdateCalled);
+    EXPECT_TRUE(ultCsr->waitForTaskCountCalled);
+    EXPECT_EQ(ultCsr->peekLatestFlushedTaskCount(), ultCsr->latestWaitForTaskCountValue);
+}
+
 HWTEST_F(InOrderCmdListTests, givenCounterBasedTimestampHostVisibleSignalWhenCallingSynchronizeOnCbEventThenFlushDcIfSupported) {
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
 

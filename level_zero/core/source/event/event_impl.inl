@@ -412,7 +412,7 @@ NEO::WaitStatus EventImp<TagSizeT>::tryKmdWaitForHostSynchronize(NEO::CommandStr
 
     if (cacheFlushRequiredForHostSync) {
         if (!isUsableTaskCount(taskCountToWaitForCacheFlush)) {
-            taskCountToWaitForCacheFlush = csrForCacheFlush.flushTagUpdateIfRequired();
+            taskCountToWaitForCacheFlush = flushTagUpdateForHostSync(csrForCacheFlush);
         }
         if (isUsableTaskCount(taskCountToWaitForCacheFlush)) {
             csrForTaskCountWait = &csrForCacheFlush;
@@ -1023,7 +1023,7 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
     };
 
     if (cacheFlushRequiredForHostSync && !secondaryContextsSupported) {
-        taskCountToWaitForCacheFlush = csrForCacheFlush->flushTagUpdateIfRequired();
+        taskCountToWaitForCacheFlush = flushTagUpdateForHostSync(*csrForCacheFlush);
     }
 
     waitStartTime = std::chrono::high_resolution_clock::now();
@@ -1059,7 +1059,7 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
         if (ret == ZE_RESULT_SUCCESS) {
             if (cacheFlushRequiredForHostSync && !taskCountWaitedForCacheFlush) {
                 if (secondaryContextsSupported || !isUsableTaskCount(taskCountToWaitForCacheFlush)) {
-                    taskCountToWaitForCacheFlush = csrForCacheFlush->flushTagUpdateIfRequired();
+                    taskCountToWaitForCacheFlush = flushTagUpdateForHostSync(*csrForCacheFlush);
                 }
             }
             if (this->getKernelWithPrintfDeviceMutex() != nullptr) {
@@ -1476,6 +1476,19 @@ void EventImp<TagSizeT>::setRemainingPackets(TagSizeT eventVal, uint64_t nextPac
             nextPacketGpuVa = ptrOffset(nextPacketGpuVa, this->singlePacketSize);
         }
     }
+}
+
+template <typename TagSizeT>
+TaskCountType EventImp<TagSizeT>::flushTagUpdateForHostSync(NEO::CommandStreamReceiver &csrForCacheFlush) const {
+    TaskCountType signalTaskCount = 0;
+    if (!this->getCleanupTaskCount(&csrForCacheFlush, signalTaskCount)) {
+        return csrForCacheFlush.flushTagUpdateIfRequired();
+    }
+
+    // Tag is written only by submissions with a cache flushing tag update, so once it reaches
+    // the signal task count the signal submission is flushed, without waiting for later work.
+    csrForCacheFlush.flushTagUpdateIfRequired(signalTaskCount);
+    return signalTaskCount;
 }
 
 template <typename TagSizeT>
