@@ -42,7 +42,7 @@ HWTEST_F(ImageHelperFixture, whenImagesCheckedForPackageFormatThenFalseIsReturne
     zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
     imageHWSrc->initialize(device, &zeDesc);
     imageHWDst->initialize(device, &zeDesc);
-    EXPECT_FALSE(ImageHelper::areImagesCompatibleWithPackedFormat(device->getProductHelper(), imageHWSrc->getImageInfo(), imageHWDst->getImageInfo(), imageHWSrc->getAllocation(), imageHWDst->getAllocation(), 5));
+    EXPECT_FALSE(ImageHelper::areImagesCompatibleWithPackedFormat(device->getNEODevice()->getRootDeviceEnvironment(), imageHWSrc->getImageInfo(), imageHWDst->getImageInfo(), imageHWSrc->getAllocation(), imageHWDst->getAllocation(), 5));
 }
 
 HWTEST_F(ImageHelperFixture, givenPackedSurfaceStateWhenCopyingImageThenSurfaceStateIsNotModified) {

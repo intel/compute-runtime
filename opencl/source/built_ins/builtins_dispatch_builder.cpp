@@ -631,7 +631,7 @@ class CopyImageToImage3dOp : public BuiltIn::DispatchInfoBuilder {
         const auto *srcAllocation = srcImage->getGraphicsAllocation(clDevice.getRootDeviceIndex());
         const auto *dstAllocation = dstImage->getGraphicsAllocation(clDevice.getRootDeviceIndex());
 
-        if (ImageHelper::areImagesCompatibleWithPackedFormat(clDevice.getProductHelper(), srcImgInfo, dstImgInfo, srcAllocation, dstAllocation, operationParams.size.x)) {
+        if (ImageHelper::areImagesCompatibleWithPackedFormat(clDevice.getRootDeviceEnvironment(), srcImgInfo, dstImgInfo, srcAllocation, dstAllocation, operationParams.size.x)) {
             srcImageRedescribed->setIsPackedFormat(true);
             dstImageRedescribed->setIsPackedFormat(true);
         }

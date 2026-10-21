@@ -43,7 +43,7 @@ HWTEST_F(EnqueueCopyImageTest, whenImagesCheckedForPackageFormatThenFalseIsRetur
     dstImgInfo1.surfaceFormat = &dstSurfaceFormatInfo1.surfaceFormat;
     dstImgInfo1.xOffset = dstSurfaceOffsets1.xOffset;
 
-    EXPECT_FALSE(ImageHelper::areImagesCompatibleWithPackedFormat(context->getDevice(0)->getProductHelper(), srcImgInfo1, dstImgInfo1, srcAllocation1, dstAllocation1, 4));
+    EXPECT_FALSE(ImageHelper::areImagesCompatibleWithPackedFormat(context->getDevice(0)->getRootDeviceEnvironment(), srcImgInfo1, dstImgInfo1, srcAllocation1, dstAllocation1, 4));
 }
 
 HWTEST_F(EnqueueCopyImageTest, givenPackedSurfaceStateWhenCopyingImageThenSurfaceStateIsNotModified) {

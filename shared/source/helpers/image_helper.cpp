@@ -9,7 +9,7 @@
 
 namespace NEO {
 
-bool ImageHelper::areImagesCompatibleWithPackedFormat(const ProductHelper &productHelper, const ImageInfo &srcImageInfo, const ImageInfo &dstImageInfo, const GraphicsAllocation *srcAllocation, const GraphicsAllocation *dstAllocation, size_t copyWidth) {
+bool ImageHelper::areImagesCompatibleWithPackedFormat(const RootDeviceEnvironment &rootDeviceEnvironment, const ImageInfo &srcImageInfo, const ImageInfo &dstImageInfo, const GraphicsAllocation *srcAllocation, const GraphicsAllocation *dstAllocation, size_t copyWidth) {
     return false;
 }
 

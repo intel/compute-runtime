@@ -1528,7 +1528,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
     ze_group_count_t kernelArgs{srcRegion.width / groupSizeX, srcRegion.height / groupSizeY,
                                 srcRegion.depth / groupSizeZ};
 
-    const bool isPackedFormat = NEO::ImageHelper::areImagesCompatibleWithPackedFormat(device->getProductHelper(), srcImgInfo, dstImgInfo, srcImage->getAllocation(), dstImage->getAllocation(), srcRegion.width);
+    const bool isPackedFormat = NEO::ImageHelper::areImagesCompatibleWithPackedFormat(device->getNEODevice()->getRootDeviceEnvironment(), srcImgInfo, dstImgInfo, srcImage->getAllocation(), dstImage->getAllocation(), srcRegion.width);
 
     kernel->setArgRedescribedImage(0, srcImage->toHandle(), isPackedFormat, getRegionMipLevel(pSrcRegion, srcImgInfo.imgDesc.numMipLevels));
     kernel->setArgRedescribedImage(1, dstImage->toHandle(), isPackedFormat, getRegionMipLevel(pDstRegion, dstImgInfo.imgDesc.numMipLevels));
