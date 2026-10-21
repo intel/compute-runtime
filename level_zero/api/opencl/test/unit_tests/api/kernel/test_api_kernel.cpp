@@ -112,6 +112,7 @@ struct MockModule : public L0::Module {
     }
 
     bool isModulesPackage() const override { return false; }
+    bool isLinkedFully() const override { return true; }
 
     std::vector<std::unique_ptr<L0::KernelImmutableData>> emptyKernelImmData;
     NEO::KernelDescriptor *descriptorForMetadata = nullptr;

@@ -36,6 +36,7 @@ const uint8_t emptyArArchiveBlob[] = {'!', '<', 'a', 'r', 'c', 'h', '>', '\n'};
 // so it is safe to route zeModuleDestroy at it from a stack object.
 struct MockTrackedModule : public L0::Module {
     uint32_t destroyCalled = 0u;
+    bool linkedFully = true;
 
     ze_result_t destroy() override {
         ++destroyCalled;
@@ -62,6 +63,7 @@ struct MockTrackedModule : public L0::Module {
     void populateZebinExtendedArgsMetadata() override {}
     void generateDefaultExtendedArgsMetadata() override {}
     bool isModulesPackage() const override { return false; }
+    bool isLinkedFully() const override { return linkedFully; }
 
     std::vector<std::unique_ptr<L0::KernelImmutableData>> emptyKernelImmData;
 };
@@ -98,6 +100,7 @@ struct MockEmptyContext : public Context {
 
 struct WhiteBoxProgram : public Program {
     using Program::buildModulesForContextDevices;
+    using Program::linkModulesFully;
     using Program::mapModuleBuildResult;
     using Program::moduleHandles;
     using Program::populateIrBinaryFromModule;
@@ -303,6 +306,10 @@ TEST_F(ClProgramCompileLinkTests, givenInputProgramWithoutIrWhenLinkProgramThenR
     // failure the program object is still returned so the caller can query the build log.
     ASSERT_NE(nullptr, linked);
 
+    cl_build_status buildStatus = CL_BUILD_NONE;
+    EXPECT_EQ(CL_SUCCESS, clGetProgramBuildInfo(linked, clDeviceId, CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, nullptr));
+    EXPECT_EQ(static_cast<cl_build_status>(CL_BUILD_ERROR), buildStatus);
+
     clReleaseProgram(linked);
     clReleaseProgram(srcProgram);
     clReleaseContext(clContext);
@@ -436,6 +443,29 @@ TEST(ProgramRebuildTests, givenSourceCompileWhenIrCaptureFailsThenBinaryTypeStay
     auto result = program.compileFromSourceWithHeaders(nullptr, 0, nullptr, nullptr);
 
     EXPECT_EQ(CL_INVALID_OPERATION, result);
+    EXPECT_EQ(static_cast<cl_program_binary_type>(CL_PROGRAM_BINARY_TYPE_NONE), program.programBinaryType);
+}
+
+TEST(ProgramLinkModulesTests, givenFullyLinkedModulesWhenLinkModulesFullyThenProgramIsExecutable) {
+    MockTrackedModule firstModule;
+    MockTrackedModule secondModule;
+    MockEmptyContext context;
+    WhiteBoxProgram program(&context);
+    program.setModuleHandle(0u, firstModule.toHandle());
+    program.setModuleHandle(1u, secondModule.toHandle());
+
+    EXPECT_EQ(CL_SUCCESS, program.linkModulesFully());
+    EXPECT_EQ(static_cast<cl_program_binary_type>(CL_PROGRAM_BINARY_TYPE_EXECUTABLE), program.programBinaryType);
+}
+
+TEST(ProgramLinkModulesTests, givenModuleWithUnresolvedImportsWhenLinkModulesFullyThenReturnsLinkFailureAndBinaryTypeIsNone) {
+    MockTrackedModule module;
+    module.linkedFully = false;
+    MockEmptyContext context;
+    WhiteBoxProgram program(&context);
+    program.setModuleHandle(0u, module.toHandle());
+
+    EXPECT_EQ(CL_LINK_PROGRAM_FAILURE, program.linkModulesFully());
     EXPECT_EQ(static_cast<cl_program_binary_type>(CL_PROGRAM_BINARY_TYPE_NONE), program.programBinaryType);
 }
 

@@ -769,6 +769,27 @@ TEST_F(ModulesPackageForwarding, WhenGetPropertiesIsCalledThenAccumulatesFromEac
     EXPECT_EQ(1U, moduleProperties.flags);
 }
 
+TEST_F(ModulesPackageForwarding, WhenIsLinkedFullyIsCalledThenReturnsTrueOnlyIfAllModulesAreFullyLinked) {
+    MockModulesPackage<> mp{this->device};
+
+    struct ModuleWithLinkState : MockModule {
+        using MockModule::isFullyLinked;
+        using MockModule::MockModule;
+    };
+
+    EXPECT_TRUE(mp.isLinkedFully());
+
+    auto linkedModule = std::make_unique<ModuleWithLinkState>(this->device, nullptr, L0::ModuleType::user);
+    linkedModule->isFullyLinked = true;
+    mp.modules.push_back(std::move(linkedModule));
+    EXPECT_TRUE(mp.isLinkedFully());
+
+    auto partiallyLinkedModule = std::make_unique<ModuleWithLinkState>(this->device, nullptr, L0::ModuleType::user);
+    partiallyLinkedModule->isFullyLinked = false;
+    mp.modules.push_back(std::move(partiallyLinkedModule));
+    EXPECT_FALSE(mp.isLinkedFully());
+}
+
 TEST(ModulesPackageManifestLoad, GivenInvalidManifestThenFailsToLoad) {
     std::pair<std::string_view, std::string_view> invalidManifests[] = {
         {R"YML(

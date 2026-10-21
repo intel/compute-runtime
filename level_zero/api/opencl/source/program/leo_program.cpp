@@ -460,8 +460,20 @@ cl_int Program::link(const char *options, cl_uint numInputPrograms, const cl_pro
         }
         this->programBinaryType = CL_PROGRAM_BINARY_TYPE_LIBRARY;
     } else {
-        this->programBinaryType = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
+        return this->linkModulesFully();
     }
+    return CL_SUCCESS;
+}
+
+// zeModuleCreate accepts modules with unresolved imports
+cl_int Program::linkModulesFully() {
+    this->programBinaryType = CL_PROGRAM_BINARY_TYPE_NONE;
+    for (auto &[rootDeviceIndex, moduleHandle] : this->moduleHandles) {
+        if (false == L0::Module::fromHandle(moduleHandle)->isLinkedFully()) {
+            return CL_LINK_PROGRAM_FAILURE;
+        }
+    }
+    this->programBinaryType = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
     return CL_SUCCESS;
 }
 

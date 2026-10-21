@@ -69,6 +69,7 @@ struct Module : _ze_module_handle_t, NEO::NonCopyableAndNonMovableClass {
     virtual void populateZebinExtendedArgsMetadata() = 0;
     virtual void generateDefaultExtendedArgsMetadata() = 0;
     virtual bool isModulesPackage() const = 0;
+    virtual bool isLinkedFully() const = 0;
 
     static Module *fromHandle(ze_module_handle_t handle) { return static_cast<Module *>(handle); }
 

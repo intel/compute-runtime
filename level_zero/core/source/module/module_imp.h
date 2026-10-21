@@ -17,6 +17,7 @@
 #include "neo_igfxfmid.h"
 #include "ocl_igc_interface/code_type.h"
 
+#include <algorithm>
 #include <memory>
 #include <optional>
 #include <set>
@@ -172,6 +173,8 @@ struct ModuleImp : public Module {
                                uint32_t numModules,
                                ze_module_handle_t *phModules,
                                ze_module_build_log_handle_t *phLog) override;
+
+    bool isLinkedFully() const override { return isFullyLinked; }
 
     ze_result_t getDebugInfo(size_t *pDebugDataSize, uint8_t *pDebugData) override;
 
@@ -434,6 +437,10 @@ struct ModulesPackage : public Module {
 
     bool isModulesPackage() const override {
         return true;
+    }
+
+    bool isLinkedFully() const override {
+        return std::ranges::all_of(this->modules, [](const auto &mod) { return mod->isLinkedFully(); });
     }
 
     void getAllUnderlyingModuleHandles(std::vector<ze_module_handle_t> &out) {

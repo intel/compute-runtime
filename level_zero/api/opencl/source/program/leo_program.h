@@ -122,6 +122,7 @@ class Program : public BaseObject<_cl_program> {
     std::string computeOclCContractInternalOptions(const std::string &buildOptions) const;
     static cl_int mapModuleBuildResult(ze_result_t ret, cl_int buildFailureCode);
     cl_int populateIrBinaryFromModule();
+    cl_int linkModulesFully();
     // Reads the per-device program binary (native gen binary for EXECUTABLE, IR otherwise).
     // outSize always receives the size; when outBinary is non-null the bytes are copied out.
     cl_int getDeviceBinary(uint32_t rootDeviceIndex, size_t *outSize, unsigned char *outBinary);
