@@ -1608,6 +1608,13 @@ PhysicalDevicePciSpeedInfo Wddm::getPciSpeedInfo() const {
     return speedInfo;
 }
 
+void Wddm::adjustProductFamily() {
+    auto gfxCoreHelper = GfxCoreHelper::create(gfxPlatform->eRenderCoreFamily);
+    if (gfxCoreHelper) {
+        gfxPlatform->eProductFamily = gfxCoreHelper->adjustProductFamily(gfxPlatform->eProductFamily);
+    }
+}
+
 void Wddm::populateIpVersion(HardwareInfo &hwInfo) {
     if (debugManager.flags.OverrideHwIpVersion.get() != -1) {
         hwInfo.ipVersion.value = static_cast<uint32_t>(debugManager.flags.OverrideHwIpVersion.get());

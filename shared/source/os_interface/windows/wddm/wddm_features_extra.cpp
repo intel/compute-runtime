@@ -17,7 +17,4 @@ bool Wddm::isNativeFenceAvailable() {
 void Wddm::setAdditionalEngines() {
 }
 
-void Wddm::adjustProductFamily() {
-}
-
 } // namespace NEO

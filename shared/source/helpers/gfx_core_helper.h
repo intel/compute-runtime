@@ -213,6 +213,7 @@ class GfxCoreHelper {
     virtual bool isPerContextDebugSipRequired() const = 0;
     virtual void initCommandLevelMocsDefaults(GmmHelper &gmmHelper) const = 0;
     virtual void adjustRTDispatchGlobals(RTDispatchGlobals &rtDispatchGlobals, uint32_t rtStacksPerDss) const = 0;
+    virtual PRODUCT_FAMILY adjustProductFamily(PRODUCT_FAMILY productFamily) const = 0;
 
     virtual ~GfxCoreHelper() = default;
 
@@ -457,6 +458,8 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     void initCommandLevelMocsDefaults(GmmHelper &gmmHelper) const override;
 
     void adjustRTDispatchGlobals(RTDispatchGlobals &rtDispatchGlobals, uint32_t rtStacksPerDss) const override;
+
+    PRODUCT_FAMILY adjustProductFamily(PRODUCT_FAMILY productFamily) const override;
 
     ~GfxCoreHelperHw() override = default;
 

@@ -39,6 +39,20 @@ TEST_F(WddmTests, givenNonZeroRenderBlockIdAndOverrideHwIpVersionWhenPopulatingI
     EXPECT_EQ(static_cast<uint32_t>(overrideHwIpVersion), hwInfo.ipVersion.value);
 }
 
+TEST_F(WddmTests, givenUnknownCoreFamilyWhenAdjustingProductFamilyThenProductFamilyIsNotChanged) {
+    wddm->gfxPlatform->eRenderCoreFamily = IGFX_UNKNOWN_CORE;
+    wddm->gfxPlatform->eProductFamily = defaultHwInfo->platform.eProductFamily;
+    wddm->adjustProductFamily();
+    EXPECT_EQ(defaultHwInfo->platform.eProductFamily, wddm->gfxPlatform->eProductFamily);
+}
+
+TEST_F(WddmTests, givenDefaultPlatformWhenAdjustingProductFamilyThenProductFamilyIsNotChanged) {
+    wddm->gfxPlatform->eRenderCoreFamily = defaultHwInfo->platform.eRenderCoreFamily;
+    wddm->gfxPlatform->eProductFamily = defaultHwInfo->platform.eProductFamily;
+    wddm->adjustProductFamily();
+    EXPECT_EQ(defaultHwInfo->platform.eProductFamily, wddm->gfxPlatform->eProductFamily);
+}
+
 TEST_F(WddmTests, whenCreatingAllocation64kThenDoNotCreateResource) {
     init();
 
