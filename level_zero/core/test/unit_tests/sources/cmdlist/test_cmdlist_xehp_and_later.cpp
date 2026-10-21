@@ -344,7 +344,7 @@ struct CommandListAppendLaunchKernelCompactL3FlushEventFixture : public ModuleFi
         } else {
             arg.expectDcFlush = 1;
         }
-        ModuleFixture::setUp();
+        ModuleFixture::setUp(true);
 
         input.driver = driverHandle.get();
         input.context = context;
@@ -521,7 +521,7 @@ struct CommandListCompactL3FlushEventPacketFixture : public ModuleFixture {
             debugManager.flags.CreateMultipleSubDevices.set(2);
             debugManager.flags.EnableImplicitScaling.set(1);
         }
-        ModuleFixture::setUp();
+        ModuleFixture::setUp(true);
 
         this->module = std::make_unique<Mock<Module>>(device, nullptr);
         this->kernel.module = this->module.get();
