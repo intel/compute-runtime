@@ -558,13 +558,16 @@ void CommandQueueHw<GfxFamily>::processDispatchForKernels(const MultiDispatchInf
         printfHandler->prepareDispatch(multiDispatchInfo);
     }
 
-    if (multiDispatchInfo.peekMainKernel()->usesSyncBuffer()) {
+    auto mainKernel = multiDispatchInfo.peekMainKernel();
+    if (mainKernel->requiresSyncBufferSlot()) {
         auto &gws = multiDispatchInfo.begin()->getGWS();
         auto &lws = multiDispatchInfo.begin()->getLocalWorkgroupSize();
         size_t workGroupsCount = (gws.x * gws.y * gws.z) /
                                  (lws.x * lws.y * lws.z);
         auto patchData = KernelHelper::getSyncBufferAllocationOffset(device->getDevice(), workGroupsCount);
-        multiDispatchInfo.peekMainKernel()->patchSyncBuffer(patchData.first, patchData.second);
+        mainKernel->patchSyncBuffer(patchData.first, patchData.second);
+    } else if (mainKernel->usesSyncBuffer()) {
+        mainKernel->resetSyncBuffer();
     }
 
     if (event && this->isProfilingEnabled()) {
@@ -838,7 +841,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         printfHandler->makeResident(csr);
     }
 
-    if (multiDispatchInfo.peekMainKernel()->usesSyncBuffer()) {
+    if (multiDispatchInfo.peekMainKernel()->requiresSyncBufferSlot()) {
         device->getDevice().syncBufferHandler->makeResident(csr);
     }
 

@@ -1260,6 +1260,28 @@ TEST_F(LeoCommandBufferKernelTest, givenKernelWithUnsetArgsWhenRecordingNDRangeK
     EXPECT_EQ(0u, recordedCmdList.totalCalls());
 }
 
+TEST_F(LeoCommandBufferKernelTest, givenNonCooperativeSyncBufferDispatchAllowedAndKernelUsingSyncBufferWhenEnqueuedOrRecordedThenKernelIsLaunchedAsNonCooperative) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.AllowNonCooperativeSyncBufferDispatch.set(1);
+    l0Kernel->getDescriptor().kernelAttributes.flags.usesSyncBuffer = true;
+    const size_t workgroupCount[3] = {4u, 2u, 1u};
+
+    EXPECT_EQ(CL_SUCCESS, clEnqueueNDRangeKernel(getCommandQueue(), kernel.get(), 2u, nullptr, globalWorkSize, localWorkSize, 0u, nullptr, nullptr));
+    ASSERT_EQ(1u, capturingCmdList.appendLaunchKernelArgs.count());
+    EXPECT_EQ(l0Kernel->toHandle(), capturingCmdList.appendLaunchKernelArgs[0].kernel);
+    EXPECT_FALSE(capturingCmdList.appendLaunchKernelArgs[0].launchParams.isCooperative);
+
+    EXPECT_EQ(CL_SUCCESS, clEnqueueNDCountKernelINTEL(getCommandQueue(), kernel.get(), 2u, nullptr, workgroupCount, localWorkSize, 0u, nullptr, nullptr));
+    ASSERT_EQ(2u, capturingCmdList.appendLaunchKernelArgs.count());
+    EXPECT_EQ(l0Kernel->toHandle(), capturingCmdList.appendLaunchKernelArgs[1].kernel);
+    EXPECT_FALSE(capturingCmdList.appendLaunchKernelArgs[1].launchParams.isCooperative);
+
+    EXPECT_EQ(CL_SUCCESS, clCommandNDRangeKernelKHR(commandBuffer, nullptr, nullptr, kernel.get(), 2u, nullptr, globalWorkSize, localWorkSize, 0u, nullptr, nullptr, nullptr));
+    ASSERT_EQ(1u, recordedCmdList.appendLaunchKernelArgs.count());
+    EXPECT_EQ(l0Kernel->toHandle(), recordedCmdList.appendLaunchKernelArgs[0].kernel);
+    EXPECT_FALSE(recordedCmdList.appendLaunchKernelArgs[0].launchParams.isCooperative);
+}
+
 TEST_F(LeoCommandBufferKernelTest, givenUnsupportedKernelWhenRecordingNDRangeKernelThenInvalidKernelIsReturned) {
     l0Kernel->getDescriptor().kernelAttributes.flags.usesSyncBuffer = true;
     EXPECT_EQ(CL_INVALID_KERNEL, recordKernel(globalWorkSize, localWorkSize, nullptr));

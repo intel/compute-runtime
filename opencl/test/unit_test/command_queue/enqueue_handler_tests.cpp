@@ -755,7 +755,7 @@ HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenImageUsedInKernelThenGetTota
     EXPECT_EQ(defaultBcsCacheFlushSize + cacheFlushCmdSize, sizeForBcsCacheFlush);
 }
 
-HWTEST2_F(EnqueueHandlerTest, givenKernelUsingSyncBufferWhenEnqueuingKernelThenSshIsCorrectlyProgrammed, IsHeapfulRequired) {
+HWTEST2_F(EnqueueHandlerTest, givenConcurrentKernelUsingSyncBufferWhenEnqueuingKernelThenSshIsCorrectlyProgrammed, IsHeapfulRequired) {
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
@@ -790,6 +790,7 @@ HWTEST2_F(EnqueueHandlerTest, givenKernelUsingSyncBufferWhenEnqueuingKernelThenS
         kernelInternals.kernelInfo.heapInfo.surfaceStateHeapSize = sizeof(RENDER_SURFACE_STATE) + sizeof(BINDING_TABLE_STATE);
         auto kernel = kernelInternals.mockKernel;
         kernel->initialize();
+        kernel->executionType = KernelExecutionType::concurrent;
 
         auto bindingTableState = reinterpret_cast<BINDING_TABLE_STATE *>(
             ptrOffset(kernel->getSurfaceStateHeap(), bindingTableOffset));

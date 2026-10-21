@@ -7,6 +7,8 @@
 
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_sync_buffer_handler.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -158,6 +160,70 @@ HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenDefaultKernelUsingSyncBufferWhenE
     auto retVal = enqueueNDCount();
     EXPECT_EQ(CL_INVALID_KERNEL, retVal);
     EXPECT_EQ(nullptr, getSyncBufferHandler());
+}
+
+HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenNonCooperativeSyncBufferDispatchAllowedAndDefaultKernelUsingSyncBufferWhenEnqueuingKernelThenSyncBufferIsNotCreatedAndNullPointerIsPatched) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.AllowNonCooperativeSyncBufferDispatch.set(1);
+    patchAllocateSyncBuffer();
+    kernel->executionType = KernelExecutionType::defaultType;
+
+    const auto &syncBufferAddress = kernel->getKernelInfo().kernelDescriptor.payloadMappings.implicitArgs.syncBufferAddress;
+    auto patchedSyncBufferAddress = reinterpret_cast<uint32_t *>(ptrOffset(kernel->getCrossThreadData(), syncBufferAddress.stateless));
+    constexpr uint32_t staleSyncBufferAddress = 0x1000u;
+    *patchedSyncBufferAddress = staleSyncBufferAddress;
+
+    auto retVal = enqueueNDCount();
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(nullptr, getSyncBufferHandler());
+    EXPECT_EQ(0u, *patchedSyncBufferAddress);
+}
+
+HWTEST2_TEMPLATED_F(SyncBufferHandlerTest, GivenNonCooperativeSyncBufferDispatchAllowedAndDefaultKernelUsingBindfulSyncBufferWhenEnqueuingKernelThenNullSurfaceStateIsProgrammed, SupportsLegacyRenderSurfaceState) {
+    using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
+    DebugManagerStateRestore restorer;
+    debugManager.flags.AllowNonCooperativeSyncBufferDispatch.set(1);
+
+    kernelInternals->kernelInfo.setBufferAddressingMode(KernelDescriptor::BindfulAndStateless);
+    patchAllocateSyncBuffer();
+    kernel->executionType = KernelExecutionType::defaultType;
+
+    auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(kernel->getSurfaceStateHeap(),
+                                                                           kernel->getKernelInfo().kernelDescriptor.payloadMappings.implicitArgs.syncBufferAddress.bindful));
+    constexpr uint64_t staleSyncBufferAddress = 0x1000u;
+    surfaceState->setSurfaceBaseAddress(staleSyncBufferAddress);
+    surfaceState->setSurfaceType(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER);
+
+    auto retVal = enqueueNDCount();
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(nullptr, getSyncBufferHandler());
+    EXPECT_EQ(0u, surfaceState->getSurfaceBaseAddress());
+    EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_NULL, surfaceState->getSurfaceType());
+}
+
+HWTEST2_TEMPLATED_F(SyncBufferHandlerTest, GivenNonCooperativeSyncBufferDispatchAllowedAndSyncBufferKernelWithImplicitArgsEnqueuedAsConcurrentWhenEnqueuedAgainAsDefaultThenSyncBufferPointersAreCleared, HasDispatchAllSupport) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.AllowNonCooperativeSyncBufferDispatch.set(1);
+    kernelInternals->kernelInfo.setSyncBuffer(sizeof(uint32_t), 0);
+    UnitTestHelper<FamilyType>::adjustKernelDescriptorForImplicitArgs(kernelInternals->kernelInfo.kernelDescriptor);
+    kernel->pImplicitArgs = std::make_unique<ImplicitArgs>();
+    kernel->pImplicitArgs->initializeHeader(1);
+
+    const auto &syncBufferAddress = kernel->getKernelInfo().kernelDescriptor.payloadMappings.implicitArgs.syncBufferAddress;
+    auto patchedSyncBufferAddress = reinterpret_cast<uint32_t *>(ptrOffset(kernel->getCrossThreadData(), syncBufferAddress.stateless));
+
+    EXPECT_EQ(CL_SUCCESS, enqueueNDCount());
+    auto syncBufferHandler = getSyncBufferHandler();
+    ASSERT_NE(nullptr, syncBufferHandler);
+    auto expectedSyncBufferAddress = syncBufferHandler->graphicsAllocation->getGpuAddressToPatch();
+    EXPECT_EQ(expectedSyncBufferAddress, kernel->pImplicitArgs->v1.syncBufferPtr);
+    EXPECT_EQ(static_cast<uint32_t>(expectedSyncBufferAddress), *patchedSyncBufferAddress);
+
+    kernel->executionType = KernelExecutionType::defaultType;
+    EXPECT_EQ(CL_SUCCESS, enqueueNDCount());
+
+    EXPECT_EQ(0u, kernel->pImplicitArgs->v1.syncBufferPtr);
+    EXPECT_EQ(0u, *patchedSyncBufferAddress);
 }
 
 HWTEST2_TEMPLATED_F(SyncBufferHandlerTest, GivenConcurrentKernelWithAllocateSyncBufferPatchWhenEnqueuingConcurrentKernelThenSyncBufferIsCreated, HasDispatchAllSupport) {

@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/ptr_math.h"
@@ -505,7 +506,8 @@ CL_API_ENTRY cl_int CL_API_CALL clCommandNDRangeKernelKHR(
     }
 
     if (pKernel->getExecutionType() != NEO::KernelExecutionType::defaultType ||
-        pKernel->getL0Object()->getKernelDescriptor().kernelAttributes.flags.usesSyncBuffer) [[unlikely]] {
+        (pKernel->getL0Object()->getKernelDescriptor().kernelAttributes.flags.usesSyncBuffer &&
+         NEO::debugManager.flags.AllowNonCooperativeSyncBufferDispatch.get() != 1)) [[unlikely]] {
         return CL_INVALID_KERNEL;
     }
 

@@ -107,11 +107,12 @@ struct AppendLaunchKernelArgs {
     ze_group_count_t groupCount;
     ze_event_handle_t signalEvent;
     EventHandles waitEvents;
+    L0::CmdListKernelLaunchParams launchParams;
 
     AppendLaunchKernelArgs(ze_kernel_handle_t kernel, const ze_group_count_t &groupCount, ze_event_handle_t signalEvent,
-                           uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents)
+                           uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, const L0::CmdListKernelLaunchParams &launchParams)
         : kernel(kernel), groupCount(groupCount), signalEvent(signalEvent),
-          waitEvents(copyWaitEvents(numWaitEvents, phWaitEvents)) {}
+          waitEvents(copyWaitEvents(numWaitEvents, phWaitEvents)), launchParams(launchParams) {}
 };
 
 struct AppendLaunchKernelNonUniformArgs {

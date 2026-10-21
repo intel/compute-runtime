@@ -427,9 +427,14 @@ TEST_F(KernelTests, WhenIsSingleSubdevicePreferredIsCalledThenCorrectValuesAreRe
     std::unique_ptr<MockKernel> kernel{MockKernel::create<MockKernel>(pClDevice->getDevice(), pProgram)};
     for (auto usesSyncBuffer : ::testing::Bool()) {
         kernel->getAllocatedKernelInfo()->kernelDescriptor.kernelAttributes.flags.usesSyncBuffer = usesSyncBuffer;
-
         EXPECT_EQ(usesSyncBuffer, kernel->usesSyncBuffer());
-        EXPECT_EQ(helper.singleTileExecImplicitScalingRequired(usesSyncBuffer), kernel->isSingleSubdevicePreferred());
+
+        for (auto executionType : {KernelExecutionType::defaultType, KernelExecutionType::concurrent}) {
+            kernel->executionType = executionType;
+            auto cooperativeKernel = usesSyncBuffer && (executionType == KernelExecutionType::concurrent);
+            EXPECT_EQ(cooperativeKernel, kernel->requiresSyncBufferSlot());
+            EXPECT_EQ(helper.singleTileExecImplicitScalingRequired(cooperativeKernel), kernel->isSingleSubdevicePreferred());
+        }
     }
 }
 

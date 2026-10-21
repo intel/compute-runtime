@@ -147,7 +147,7 @@ struct CapturingCommandList : public L0::ult::Mock<L0::ult::CommandList> {
                                    L0::CmdListKernelLaunchParams &launchParams) override {
         auto result = BaseClass::appendLaunchKernel(kernelHandle, threadGroupDimensions, hEvent, numWaitEvents, phWaitEvents, launchParams);
         return record(this->appendLaunchKernelArgs, ApiId::appendLaunchKernel,
-                      AppendLaunchKernelArgs{kernelHandle, threadGroupDimensions, hEvent, numWaitEvents, phWaitEvents}, result);
+                      AppendLaunchKernelArgs{kernelHandle, threadGroupDimensions, hEvent, numWaitEvents, phWaitEvents, launchParams}, result);
     }
 
     ze_result_t appendLaunchKernelNonUniform(ze_kernel_handle_t kernelHandle, const L0::CmdListNonUniformLaunchArgs &launchArgs,

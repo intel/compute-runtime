@@ -3696,7 +3696,7 @@ cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
     }
 
     if ((pKernel->getExecutionType() != KernelExecutionType::defaultType) ||
-        pKernel->usesSyncBuffer()) {
+        (pKernel->usesSyncBuffer() && debugManager.flags.AllowNonCooperativeSyncBufferDispatch.get() != 1)) {
         retVal = CL_INVALID_KERNEL;
         TRACING_EXIT(ClEnqueueNdRangeKernel, &retVal);
         return retVal;
@@ -6382,13 +6382,14 @@ cl_int CL_API_CALL clEnqueueNDCountKernelINTEL(cl_command_queue commandQueue,
         globalWorkSize[i] = workgroupCount[i] * localWorkSize[i];
     }
 
-    if (pKernel->usesSyncBuffer()) {
-        if (pKernel->getExecutionType() != KernelExecutionType::concurrent) {
-            retVal = CL_INVALID_KERNEL;
-            TRACING_EXIT(ClEnqueueNDCountKernelINTEL, &retVal);
-            return retVal;
-        }
+    if (pKernel->usesSyncBuffer() && (pKernel->getExecutionType() != KernelExecutionType::concurrent) &&
+        (debugManager.flags.AllowNonCooperativeSyncBufferDispatch.get() != 1)) {
+        retVal = CL_INVALID_KERNEL;
+        TRACING_EXIT(ClEnqueueNDCountKernelINTEL, &retVal);
+        return retVal;
+    }
 
+    if (pKernel->requiresSyncBufferSlot()) {
         auto &hardwareInfo = device.getHardwareInfo();
         auto &gfxCoreHelper = device.getGfxCoreHelper();
         auto engineGroupType = gfxCoreHelper.getEngineGroupType(pCommandQueue->getGpgpuEngine().getEngineType(),
@@ -6419,7 +6420,7 @@ cl_int CL_API_CALL clEnqueueNDCountKernelINTEL(cl_command_queue commandQueue,
         return retVal;
     }
 
-    if (pKernel->usesSyncBuffer()) {
+    if (pKernel->requiresSyncBufferSlot()) {
         device.getDevice().allocateSyncBufferHandler();
     }
 

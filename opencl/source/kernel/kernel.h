@@ -193,7 +193,9 @@ class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMova
     }
 
     bool usesSyncBuffer() const;
+    bool requiresSyncBufferSlot() const;
     void patchSyncBuffer(GraphicsAllocation *gfxAllocation, size_t bufferOffset);
+    void resetSyncBuffer();
     void *patchBindlessSurfaceState(NEO::GraphicsAllocation *alloc, uint32_t bindless);
     uint32_t getSurfaceStateIndexForBindlessOffset(NEO::CrossThreadDataOffset bindlessOffset) const;
 

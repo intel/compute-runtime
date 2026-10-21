@@ -1185,7 +1185,7 @@ inline void Kernel::makeArgsResident(CommandStreamReceiver &commandStreamReceive
 bool Kernel::isSingleSubdevicePreferred() const {
     auto &gfxCoreHelper = this->getGfxCoreHelper();
 
-    return gfxCoreHelper.singleTileExecImplicitScalingRequired(this->usesSyncBuffer());
+    return gfxCoreHelper.singleTileExecImplicitScalingRequired(this->requiresSyncBufferSlot());
 }
 
 void Kernel::setInlineSamplers() {
@@ -1860,6 +1860,10 @@ bool Kernel::usesSyncBuffer() const {
     return kernelInfo.kernelDescriptor.kernelAttributes.flags.usesSyncBuffer;
 }
 
+bool Kernel::requiresSyncBufferSlot() const {
+    return usesSyncBuffer() && (executionType == KernelExecutionType::concurrent);
+}
+
 void Kernel::patchSyncBuffer(GraphicsAllocation *gfxAllocation, size_t bufferOffset) {
     const auto &syncBuffer = kernelInfo.kernelDescriptor.payloadMappings.implicitArgs.syncBufferAddress;
     auto bufferPatchAddress = ptrOffset(crossThreadData, syncBuffer.stateless);
@@ -1875,6 +1879,21 @@ void Kernel::patchSyncBuffer(GraphicsAllocation *gfxAllocation, size_t bufferOff
     }
     if (pImplicitArgs) {
         pImplicitArgs->setSyncBufferPtr(ptrOffset(gfxAllocation->getGpuAddressToPatch(), bufferOffset));
+    }
+}
+
+void Kernel::resetSyncBuffer() {
+    const auto &syncBuffer = kernelInfo.kernelDescriptor.payloadMappings.implicitArgs.syncBufferAddress;
+    auto bufferPatchAddress = ptrOffset(crossThreadData, syncBuffer.stateless);
+    patchWithRequiredSize(bufferPatchAddress, syncBuffer.pointerSize, 0u);
+
+    if (isValidOffset(syncBuffer.bindful)) {
+        auto surfaceState = ptrOffset(reinterpret_cast<uintptr_t *>(getSurfaceStateHeap()), syncBuffer.bindful);
+        Buffer::setSurfaceState(&clDevice.getDevice(), surfaceState, false, false, 0, nullptr, 0, nullptr, 0, 0,
+                                areMultipleSubDevicesInContext());
+    }
+    if (pImplicitArgs) {
+        pImplicitArgs->setSyncBufferPtr(0u);
     }
 }
 
