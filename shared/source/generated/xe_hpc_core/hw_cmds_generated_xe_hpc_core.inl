@@ -6365,84 +6365,131 @@ struct STATE_SYSTEM_MEM_FENCE_ADDRESS {
 };
 STATIC_ASSERT(12 == sizeof(STATE_SYSTEM_MEM_FENCE_ADDRESS));
 
-struct STATE_PREFETCH {
+typedef struct tagSTATE_PREFETCH {
     union tagTheStructure {
         struct tagCommon {
             // DWORD 0
             uint32_t DwordLength : BITFIELD_RANGE(0, 7);
-            uint32_t Reserved814 : BITFIELD_RANGE(8, 15);
+            uint32_t Reserved_8 : BITFIELD_RANGE(8, 15);
             uint32_t _3DCommandSubOpcode : BITFIELD_RANGE(16, 23);
             uint32_t _3DCommandOpcode : BITFIELD_RANGE(24, 26);
             uint32_t CommandSubtype : BITFIELD_RANGE(27, 28);
             uint32_t CommandType : BITFIELD_RANGE(29, 31);
             // DWORD 1
             uint32_t PrefetchSize : BITFIELD_RANGE(0, 9);
-            uint32_t Reserved1015 : BITFIELD_RANGE(10, 15);
+            uint32_t Reserved_42 : BITFIELD_RANGE(10, 15);
             uint32_t KernelInstructionPrefetch : BITFIELD_RANGE(16, 16);
-            uint32_t Reserved1719 : BITFIELD_RANGE(17, 19);
+            uint32_t Reserved_49 : BITFIELD_RANGE(17, 19);
             uint32_t ParserStall : BITFIELD_RANGE(20, 20);
-            uint32_t Reserved2123 : BITFIELD_RANGE(21, 23);
-            uint32_t MemoryObjectControlState : BITFIELD_RANGE(24, 30);
-            uint32_t Reserved31 : BITFIELD_RANGE(31, 31);
+            uint32_t Reserved_53 : BITFIELD_RANGE(21, 23);
+            uint32_t EncryptedData : BITFIELD_RANGE(24, 24);
+            uint32_t IndexToMocsTables : BITFIELD_RANGE(25, 30);
+            uint32_t Reserved_63 : BITFIELD_RANGE(31, 31);
             // DWORD 2-3
-            uint64_t Reserved05 : BITFIELD_RANGE(0, 5);
+            uint64_t Reserved_64 : BITFIELD_RANGE(0, 5);
             uint64_t Address : BITFIELD_RANGE(6, 63);
         } Common;
         uint32_t RawData[4];
     } TheStructure;
-
+    typedef enum tagDWORD_LENGTH {
+        DWORD_LENGTH_DWORD_COUNT_N = 0x2,
+    } DWORD_LENGTH;
+    typedef enum tag_3D_COMMAND_SUB_OPCODE {
+        _3D_COMMAND_SUB_OPCODE_STATE_PREFETCH = 0x3,
+    } _3D_COMMAND_SUB_OPCODE;
+    typedef enum tag_3D_COMMAND_OPCODE {
+        _3D_COMMAND_OPCODE_GFXPIPE_PIPELINED = 0x0,
+    } _3D_COMMAND_OPCODE;
+    typedef enum tagCOMMAND_SUBTYPE {
+        COMMAND_SUBTYPE_GFXPIPE_COMMON = 0x0,
+    } COMMAND_SUBTYPE;
+    typedef enum tagCOMMAND_TYPE {
+        COMMAND_TYPE_GFXPIPE = 0x3,
+    } COMMAND_TYPE;
     typedef enum tagADDRESS {
         ADDRESS_BIT_SHIFT = 0x6,
+        ADDRESS_ALIGN_SIZE = 0x40,
     } ADDRESS;
-
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
-        TheStructure.Common.DwordLength = 0x2;
-        TheStructure.Common._3DCommandSubOpcode = 0x3;
-        TheStructure.Common.CommandType = 0x3;
+        TheStructure.Common.DwordLength = DWORD_LENGTH_DWORD_COUNT_N;
+        TheStructure.Common._3DCommandSubOpcode = _3D_COMMAND_SUB_OPCODE_STATE_PREFETCH;
+        TheStructure.Common.CommandType = COMMAND_TYPE_GFXPIPE;
     }
-
-    static STATE_PREFETCH sInit() {
+    static tagSTATE_PREFETCH sInit() {
         STATE_PREFETCH state;
         state.init();
         return state;
     }
-
+    inline uint32_t &getRawData(const uint32_t index) {
+        UNRECOVERABLE_IF(index >= 4);
+        return TheStructure.RawData[index];
+    }
+    inline void setDwordLength(const DWORD_LENGTH value) {
+        TheStructure.Common.DwordLength = value;
+    }
+    inline DWORD_LENGTH getDwordLength() const {
+        return static_cast<DWORD_LENGTH>(TheStructure.Common.DwordLength);
+    }
+    inline void set3DCommandSubOpcode(const _3D_COMMAND_SUB_OPCODE value) {
+        TheStructure.Common._3DCommandSubOpcode = value;
+    }
+    inline _3D_COMMAND_SUB_OPCODE get3DCommandSubOpcode() const {
+        return static_cast<_3D_COMMAND_SUB_OPCODE>(TheStructure.Common._3DCommandSubOpcode);
+    }
+    inline void set3DCommandOpcode(const _3D_COMMAND_OPCODE value) {
+        TheStructure.Common._3DCommandOpcode = value;
+    }
+    inline _3D_COMMAND_OPCODE get3DCommandOpcode() const {
+        return static_cast<_3D_COMMAND_OPCODE>(TheStructure.Common._3DCommandOpcode);
+    }
+    inline void setCommandSubtype(const COMMAND_SUBTYPE value) {
+        TheStructure.Common.CommandSubtype = value;
+    }
+    inline COMMAND_SUBTYPE getCommandSubtype() const {
+        return static_cast<COMMAND_SUBTYPE>(TheStructure.Common.CommandSubtype);
+    }
+    inline void setCommandType(const COMMAND_TYPE value) {
+        TheStructure.Common.CommandType = value;
+    }
+    inline COMMAND_TYPE getCommandType() const {
+        return static_cast<COMMAND_TYPE>(TheStructure.Common.CommandType);
+    }
     inline void setPrefetchSize(const uint32_t value) {
-        TheStructure.Common.PrefetchSize = value - 1; // patched
+        UNRECOVERABLE_IF(value < 1 || value > 0x400u);
+        TheStructure.Common.PrefetchSize = value - 1;
     }
     inline uint32_t getPrefetchSize() const {
-        return TheStructure.Common.PrefetchSize + 1; // patched
+        return TheStructure.Common.PrefetchSize + 1;
     }
-
     inline void setKernelInstructionPrefetch(const bool value) {
         TheStructure.Common.KernelInstructionPrefetch = value;
     }
     inline bool getKernelInstructionPrefetch() const {
         return TheStructure.Common.KernelInstructionPrefetch;
     }
-
     inline void setParserStall(const bool value) {
         TheStructure.Common.ParserStall = value;
     }
     inline bool getParserStall() const {
         return TheStructure.Common.ParserStall;
     }
-
+    // Manual generator override: MOCS includes the encryption bit.
     inline void setMemoryObjectControlState(const uint32_t value) {
-        TheStructure.Common.MemoryObjectControlState = value;
+        UNRECOVERABLE_IF(value > 0x7fu);
+        TheStructure.Common.IndexToMocsTables = value >> 1;
+        TheStructure.Common.EncryptedData = value & 1;
     }
     inline uint32_t getMemoryObjectControlState() const {
-        return TheStructure.Common.MemoryObjectControlState;
+        return (TheStructure.Common.IndexToMocsTables << 1) | TheStructure.Common.EncryptedData;
     }
-
     inline void setAddress(const uint64_t value) {
-        TheStructure.Common.Address = (value >> ADDRESS_BIT_SHIFT);
+        TheStructure.Common.Address = value >> ADDRESS_BIT_SHIFT;
     }
     inline uint64_t getAddress() const {
-        return (TheStructure.Common.Address << ADDRESS_BIT_SHIFT);
+        return TheStructure.Common.Address << ADDRESS_BIT_SHIFT;
     }
-};
+} STATE_PREFETCH;
 STATIC_ASSERT(16 == sizeof(STATE_PREFETCH));
 
 typedef struct tagMEM_SET {

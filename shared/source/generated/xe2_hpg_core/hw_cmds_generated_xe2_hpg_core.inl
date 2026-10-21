@@ -6540,10 +6540,10 @@ typedef struct tagSTATE_PREFETCH {
             uint32_t Reserved_49 : BITFIELD_RANGE(17, 19);
             uint32_t ParserStall : BITFIELD_RANGE(20, 20);
             uint32_t Reserved_53 : BITFIELD_RANGE(21, 23);
-            uint32_t MemoryObjectControlStateEncryptedData : BITFIELD_RANGE(24, 24);
-            uint32_t MemoryObjectControlStateIndexToMocsTables : BITFIELD_RANGE(25, 30);
+            uint32_t EncryptedData : BITFIELD_RANGE(24, 24);
+            uint32_t IndexToMocsTables : BITFIELD_RANGE(25, 30);
             uint32_t Reserved_63 : BITFIELD_RANGE(31, 31);
-            // DWORD 2
+            // DWORD 2-3
             uint64_t Reserved_64 : BITFIELD_RANGE(0, 5);
             uint64_t Address : BITFIELD_RANGE(6, 63);
         } Common;
@@ -6553,7 +6553,7 @@ typedef struct tagSTATE_PREFETCH {
         DWORD_LENGTH_DWORD_COUNT_N = 0x2,
     } DWORD_LENGTH;
     typedef enum tag_3D_COMMAND_SUB_OPCODE {
-        _3D_COMMAND_SUB_OPCODE_STATE_PREFETCH = 0x3,
+        _3D_COMMAND_SUB_OPCODE_PREFETCH = 0x3,
     } _3D_COMMAND_SUB_OPCODE;
     typedef enum tag_3D_COMMAND_OPCODE {
         _3D_COMMAND_OPCODE_GFXPIPE_PIPELINED = 0x0,
@@ -6564,12 +6564,14 @@ typedef struct tagSTATE_PREFETCH {
     typedef enum tagCOMMAND_TYPE {
         COMMAND_TYPE_GFXPIPE = 0x3,
     } COMMAND_TYPE;
+    typedef enum tagADDRESS {
+        ADDRESS_BIT_SHIFT = 0x6,
+        ADDRESS_ALIGN_SIZE = 0x40,
+    } ADDRESS;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_DWORD_COUNT_N;
-        TheStructure.Common._3DCommandSubOpcode = _3D_COMMAND_SUB_OPCODE_STATE_PREFETCH;
-        TheStructure.Common._3DCommandOpcode = _3D_COMMAND_OPCODE_GFXPIPE_PIPELINED;
-        TheStructure.Common.CommandSubtype = COMMAND_SUBTYPE_GFXPIPE_COMMON;
+        TheStructure.Common._3DCommandSubOpcode = _3D_COMMAND_SUB_OPCODE_PREFETCH;
         TheStructure.Common.CommandType = COMMAND_TYPE_GFXPIPE;
     }
     static tagSTATE_PREFETCH sInit() {
@@ -6581,8 +6583,32 @@ typedef struct tagSTATE_PREFETCH {
         UNRECOVERABLE_IF(index >= 4);
         return TheStructure.RawData[index];
     }
+    inline void set3DCommandSubOpcode(const _3D_COMMAND_SUB_OPCODE value) {
+        TheStructure.Common._3DCommandSubOpcode = value;
+    }
+    inline _3D_COMMAND_SUB_OPCODE get3DCommandSubOpcode() const {
+        return static_cast<_3D_COMMAND_SUB_OPCODE>(TheStructure.Common._3DCommandSubOpcode);
+    }
+    inline void set3DCommandOpcode(const _3D_COMMAND_OPCODE value) {
+        TheStructure.Common._3DCommandOpcode = value;
+    }
+    inline _3D_COMMAND_OPCODE get3DCommandOpcode() const {
+        return static_cast<_3D_COMMAND_OPCODE>(TheStructure.Common._3DCommandOpcode);
+    }
+    inline void setCommandSubtype(const COMMAND_SUBTYPE value) {
+        TheStructure.Common.CommandSubtype = value;
+    }
+    inline COMMAND_SUBTYPE getCommandSubtype() const {
+        return static_cast<COMMAND_SUBTYPE>(TheStructure.Common.CommandSubtype);
+    }
+    inline void setCommandType(const COMMAND_TYPE value) {
+        TheStructure.Common.CommandType = value;
+    }
+    inline COMMAND_TYPE getCommandType() const {
+        return static_cast<COMMAND_TYPE>(TheStructure.Common.CommandType);
+    }
     inline void setPrefetchSize(const uint32_t value) {
-        UNRECOVERABLE_IF(value - 1 > 0x3ff);
+        UNRECOVERABLE_IF(value < 1 || value > 0x400u);
         TheStructure.Common.PrefetchSize = value - 1;
     }
     inline uint32_t getPrefetchSize() const {
@@ -6600,27 +6626,16 @@ typedef struct tagSTATE_PREFETCH {
     inline bool getParserStall() const {
         return TheStructure.Common.ParserStall;
     }
-    inline void setMemoryObjectControlStateEncryptedData(const bool value) {
-        TheStructure.Common.MemoryObjectControlStateEncryptedData = value;
-    }
-    inline bool getMemoryObjectControlStateEncryptedData() const {
-        return TheStructure.Common.MemoryObjectControlStateEncryptedData;
-    }
+    // Manual generator override: MOCS includes the encryption bit.
     inline void setMemoryObjectControlState(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x7f);
-        setMemoryObjectControlStateEncryptedData(value & 1);
-        TheStructure.Common.MemoryObjectControlStateIndexToMocsTables = value >> 1;
+        UNRECOVERABLE_IF(value > 0x7fu);
+        TheStructure.Common.IndexToMocsTables = value >> 1;
+        TheStructure.Common.EncryptedData = value & 1;
     }
     inline uint32_t getMemoryObjectControlState() const {
-        uint32_t mocs = getMemoryObjectControlStateEncryptedData();
-        return mocs | (TheStructure.Common.MemoryObjectControlStateIndexToMocsTables << 1);
+        return (TheStructure.Common.IndexToMocsTables << 1) | TheStructure.Common.EncryptedData;
     }
-    typedef enum tagADDRESS {
-        ADDRESS_BIT_SHIFT = 0x6,
-        ADDRESS_ALIGN_SIZE = 0x40,
-    } ADDRESS;
     inline void setAddress(const uint64_t value) {
-        UNRECOVERABLE_IF((value >> ADDRESS_BIT_SHIFT) > 0xffffffffffffffffL);
         TheStructure.Common.Address = value >> ADDRESS_BIT_SHIFT;
     }
     inline uint64_t getAddress() const {

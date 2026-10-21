@@ -124,7 +124,7 @@ XE2_HPG_CORETEST_F(Xe2HpgCoreHwCmdTest, givenStatePrefetchWhenSettingMocsThenPro
     uint32_t mocs = 4u;
     uint32_t expectedMocsIndex = (mocs >> 1);
     statePrefetch.setMemoryObjectControlState(mocs);
-    EXPECT_EQ(expectedMocsIndex, statePrefetch.TheStructure.Common.MemoryObjectControlStateIndexToMocsTables);
+    EXPECT_EQ(expectedMocsIndex, statePrefetch.TheStructure.Common.IndexToMocsTables);
 }
 
 XE2_HPG_CORETEST_F(Xe2HpgCoreHwCmdTest, givenMemSetWhenSettingDestinationMocsThenProperValuesAreSet) {

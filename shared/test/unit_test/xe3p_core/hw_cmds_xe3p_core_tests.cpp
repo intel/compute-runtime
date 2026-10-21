@@ -125,7 +125,7 @@ XE3P_CORETEST_F(Xe3pCoreHwCmdTest, givenStatePrefetchWhenSettingMocsThenProperVa
     uint32_t mocs = 4u;
     uint32_t expectedMocsIndex = (mocs >> 1);
     statePrefetch.setMemoryObjectControlState(mocs);
-    EXPECT_EQ(expectedMocsIndex, statePrefetch.TheStructure.Common.MemoryObjectControlStateIndexToMocsTables);
+    EXPECT_EQ(expectedMocsIndex, statePrefetch.TheStructure.Common.IndexToMocsTables);
 }
 
 XE3P_CORETEST_F(Xe3pCoreHwCmdTest, givenMemSetWhenSettingDestinationMocsThenProperValuesAreSet) {
