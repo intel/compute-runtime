@@ -157,7 +157,7 @@ class DrmMemoryManager : public MemoryManager {
     decltype(&SysCalls::mmapFixedNoReplace) mmapFixedNoReplaceFunction = SysCalls::mmapFixedNoReplace;
 
   protected:
-    bool restoreVirtualMemoryReservationPlaceholder(void *address, size_t size);
+    bool releaseVirtualMemoryReservationRange(void *address, size_t size, bool keepReservationPlaceholder);
     void registerSharedBoHandleAllocation(DrmAllocation *drmAllocation);
     BufferObjectHandleWrapper tryToGetBoHandleWrapperWithSharedOwnership(int boHandle, uint32_t rootDeviceIndex);
     void eraseSharedBoHandleWrapper(int boHandle, uint32_t rootDeviceIndex);
@@ -194,7 +194,7 @@ class DrmMemoryManager : public MemoryManager {
     GraphicsAllocation *allocatePhysicalLocalDeviceMemory(const AllocationData &allocationData, AllocationStatus &status) override;
     GraphicsAllocation *allocatePhysicalHostMemory(const AllocationData &allocationData, AllocationStatus &status) override;
     bool mapPhysicalDeviceMemoryToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryflags, size_t offset) override;
-    bool mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, size_t offset) override;
+    bool mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, size_t offset, bool keepReservationPlaceholder) override;
     bool unMapPhysicalDeviceMemoryFromVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, OsContext *osContext, uint32_t rootDeviceIndex) override;
     bool unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, bool keepReservationPlaceholder) override;
     GraphicsAllocation *allocateGraphicsMemoryForImageImpl(const AllocationData &allocationData, std::unique_ptr<Gmm> gmm) override;

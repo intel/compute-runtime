@@ -168,7 +168,11 @@ bool WddmMemoryManager::mapPhysicalDeviceMemoryToVirtualMemory(GraphicsAllocatio
     return wddmAllocation->isMappedPhysicalMemoryReservation();
 }
 
-bool WddmMemoryManager::mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, size_t offset) {
+bool WddmMemoryManager::appliesVirtualMemoryAccessFlags(const GraphicsAllocation &physicalAllocation) {
+    return physicalAllocation.getAllocationType() == AllocationType::buffer;
+}
+
+bool WddmMemoryManager::mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, size_t offset, bool keepReservationPlaceholder) {
     auto wddmPhysical = static_cast<WddmAllocation *>(physicalAllocation);
     D3DKMT_HANDLE physicalHandle = wddmPhysical->getDefaultHandle();
     Gmm *physicalGmm = wddmPhysical->getDefaultGmm();
@@ -1242,7 +1246,10 @@ bool WddmMemoryManager::mapGpuVaForOneHandleAllocation(WddmAllocation *allocatio
         if (allocation->getReservedGpuVirtualAddress()) {
             getWddm(allocation->getRootDeviceIndex()).freeGpuVirtualAddress(allocation->getReservedGpuVirtualAddressToModify(), allocation->getReservedSizeForGpuVirtualAddress());
         }
-        getWddm(allocation->getRootDeviceIndex()).destroyAllocations(&allocation->getHandles()[0], allocation->getNumGmms(), allocation->getResourceHandle());
+        // A physical allocation outlives a failed map and keeps owning its handles.
+        if (!allocation->isPhysicalMemoryReservation()) {
+            getWddm(allocation->getRootDeviceIndex()).destroyAllocations(&allocation->getHandles()[0], allocation->getNumGmms(), allocation->getResourceHandle());
+        }
         return false;
     }
 
@@ -1292,7 +1299,9 @@ bool WddmMemoryManager::mapMultiHandleAllocationWithRetry(WddmAllocation *alloca
             if (allocation->getReservedGpuVirtualAddress()) {
                 wddm.freeGpuVirtualAddress(allocation->getReservedGpuVirtualAddressToModify(), allocation->getReservedSizeForGpuVirtualAddress());
             }
-            wddm.destroyAllocations(&allocation->getHandles()[0], allocation->getNumGmms(), allocation->getResourceHandle());
+            if (!allocation->isPhysicalMemoryReservation()) {
+                wddm.destroyAllocations(&allocation->getHandles()[0], allocation->getNumGmms(), allocation->getResourceHandle());
+            }
             return false;
         }
         gpuAddress = getGmmHelper(allocation->getRootDeviceIndex())->decanonize(gpuAddress);

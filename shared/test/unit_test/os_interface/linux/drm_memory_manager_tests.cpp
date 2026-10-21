@@ -9753,7 +9753,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDeviceBitfieldWithHole
     rootDeviceIndices.pushUnique(1);
     rootDeviceIndices.pushUnique(2);
     MultiGraphicsAllocation multiGraphicsAllocation{static_cast<uint32_t>(rootDeviceIndices.size())};
-    EXPECT_TRUE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuAddress, allocData.size, 0u));
+    EXPECT_TRUE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuAddress, allocData.size, 0u, true));
     for (uint32_t i = 0; i < static_cast<uint32_t>(rootDeviceIndices.size()); i++) {
         EXPECT_NE(nullptr, multiGraphicsAllocation.getGraphicsAllocation(i));
     }
@@ -9790,7 +9790,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenMultipleRootDevicesWhe
     rootDeviceIndices.pushUnique(1);
     rootDeviceIndices.pushUnique(2);
     MultiGraphicsAllocation multiGraphicsAllocation{static_cast<uint32_t>(rootDeviceIndices.size())};
-    EXPECT_TRUE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuAddress, mappingSize, offset));
+    EXPECT_TRUE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuAddress, mappingSize, offset, true));
 
     auto gmmHelper = device->getGmmHelper();
     for (uint32_t i = 0; i < static_cast<uint32_t>(rootDeviceIndices.size()); i++) {
@@ -9835,7 +9835,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenVmBindAvailableAndZero
     RootDeviceIndicesContainer rootDeviceIndices;
     rootDeviceIndices.pushUnique(rootDeviceIndex);
     MultiGraphicsAllocation multiGraphicsAllocation{numRootDevices};
-    EXPECT_FALSE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuAddress, mappingSize, 0u));
+    EXPECT_FALSE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuAddress, mappingSize, 0u, true));
 
     EXPECT_EQ(0u, capturedMremapCalls);
     EXPECT_EQ(nullptr, multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex));
@@ -9871,7 +9871,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenMmapFailsForOffsetWind
     RootDeviceIndicesContainer rootDeviceIndices;
     rootDeviceIndices.pushUnique(rootDeviceIndex);
     MultiGraphicsAllocation multiGraphicsAllocation{numRootDevices};
-    EXPECT_FALSE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuAddress, mappingSize, offset));
+    EXPECT_FALSE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuAddress, mappingSize, offset, true));
 
     memoryManager->mmapFunction = originalMmap;
     mock->isVmBindAvailableCall.callParent = true;
@@ -9908,7 +9908,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenVmBindUnavailableWhenM
     RootDeviceIndicesContainer rootDeviceIndices;
     rootDeviceIndices.pushUnique(rootDeviceIndex);
     MultiGraphicsAllocation multiGraphicsAllocation{numRootDevices};
-    EXPECT_TRUE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuAddress, mappingSize, offset));
+    EXPECT_TRUE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuAddress, mappingSize, offset, true));
 
     EXPECT_EQ(static_cast<off_t>(token), capturedHostMmapOffset);
     EXPECT_EQ(reinterpret_cast<void *>(gpuAddress - offset), capturedHostMmapAddr);
@@ -9961,13 +9961,56 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenPrimeFdToHandleFailing
     capturedHostMmapFlags = 0;
     mock->failOnPrimeFdToHandle = true;
 
-    EXPECT_FALSE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuAddress, mappingSize, 0u));
+    EXPECT_FALSE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuAddress, mappingSize, 0u, true));
 
     EXPECT_EQ(reinterpret_cast<void *>(gpuAddress), capturedHostMmapAddr);
     EXPECT_EQ(mappingSize, capturedHostMmapLen);
     EXPECT_EQ(PROT_NONE, capturedHostMmapProt);
     EXPECT_NE(0, capturedHostMmapFlags & MAP_ANONYMOUS);
     EXPECT_NE(0, capturedHostMmapFlags & MAP_FIXED);
+
+    mock->failOnPrimeFdToHandle = false;
+    memoryManager->mmapFunction = originalMmap;
+    mock->isVmBindAvailableCall.callParent = true;
+    memoryManager->freeGraphicsMemory(physicalAllocation);
+}
+
+TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenNonSvmReservationAndPrimeFdToHandleFailingWhenMappingPhysicalHostMemoryThenRangeIsReleasedInsteadOfLeavingAPlaceholder) {
+    mock->isVmBindAvailableCall.callParent = false;
+    mock->isVmBindAvailableCall.returnValue = true;
+
+    auto originalMmap = memoryManager->mmapFunction;
+    memoryManager->mmapFunction = capturingHostMmap;
+
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
+    AllocationData allocData;
+    allocData.allFlags = 0;
+    allocData.size = 2 * MemoryConstants::pageSize;
+    allocData.flags.allocateMemory = true;
+    allocData.flags.isUSMHostAllocation = true;
+    allocData.type = AllocationType::bufferHostMemory;
+    allocData.storageInfo.multiStorage = false;
+    allocData.rootDeviceIndex = rootDeviceIndex;
+    uint64_t gpuAddress = 0x100000;
+    size_t mappingSize = MemoryConstants::pageSize;
+
+    auto physicalAllocation = static_cast<DrmAllocation *>(memoryManager->allocatePhysicalHostMemory(allocData, status));
+    ASSERT_NE(nullptr, physicalAllocation);
+
+    RootDeviceIndicesContainer rootDeviceIndices;
+    rootDeviceIndices.pushUnique(0);
+    rootDeviceIndices.pushUnique(1);
+    rootDeviceIndices.pushUnique(2);
+    MultiGraphicsAllocation multiGraphicsAllocation{static_cast<uint32_t>(rootDeviceIndices.size())};
+
+    capturedHostMmapProt = -1;
+    mock->failOnPrimeFdToHandle = true;
+    auto munmapCallsBefore = SysCalls::munmapFuncCalled;
+
+    EXPECT_FALSE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuAddress, mappingSize, 0u, false));
+
+    EXPECT_EQ(munmapCallsBefore + 1u, SysCalls::munmapFuncCalled);
+    EXPECT_EQ(PROT_READ | PROT_WRITE, capturedHostMmapProt);
 
     mock->failOnPrimeFdToHandle = false;
     memoryManager->mmapFunction = originalMmap;
@@ -10005,7 +10048,7 @@ TEST_F(PhysicalHostOffsetMapFixture, givenNonSvmReservationWhenUnmappingPhysical
     RootDeviceIndicesContainer rootDeviceIndices;
     rootDeviceIndices.pushUnique(rootDeviceIndex);
     MultiGraphicsAllocation multiGraphicsAllocation{numRootDevices};
-    ASSERT_TRUE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuAddress, mappingSize, 0u));
+    ASSERT_TRUE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuAddress, mappingSize, 0u, true));
 
     capturedHostMmapAddr = nullptr;
     capturedHostMmapProt = -1;
@@ -10037,7 +10080,7 @@ TEST_F(PhysicalHostOffsetMapFixture, givenWholeObjectMmapFailingWhenRelocatingWi
     RootDeviceIndicesContainer rootDeviceIndices;
     rootDeviceIndices.pushUnique(rootDeviceIndex);
     MultiGraphicsAllocation multiGraphicsAllocation{numRootDevices};
-    EXPECT_FALSE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuAddress, mappingSize, offset));
+    EXPECT_FALSE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuAddress, mappingSize, offset, true));
 
     EXPECT_EQ(0u, capturedMremapCalls);
     EXPECT_EQ(nullptr, multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex));
@@ -10110,7 +10153,7 @@ TEST_F(PhysicalHostOffsetMapFixture, givenVmBindAvailableButWindowRelocationUnsu
     RootDeviceIndicesContainer rootDeviceIndices;
     rootDeviceIndices.pushUnique(rootDeviceIndex);
     MultiGraphicsAllocation multiGraphicsAllocation{numRootDevices};
-    EXPECT_TRUE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuAddress, mappingSize, offset));
+    EXPECT_TRUE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuAddress, mappingSize, offset, true));
 
     EXPECT_EQ(0u, capturedMremapCalls);
     EXPECT_EQ(static_cast<off_t>(token), capturedHostMmapOffset);
@@ -10156,7 +10199,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenPhysicalHostMemoryMapp
     RootDeviceIndicesContainer rootDeviceIndices;
     rootDeviceIndices.pushUnique(rootDeviceIndex);
     MultiGraphicsAllocation multiGraphicsAllocation{numRootDevices};
-    ASSERT_TRUE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuAddress, mappingSize, offset));
+    ASSERT_TRUE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuAddress, mappingSize, offset, true));
 
     capturedHostMmapAddr = nullptr;
     capturedHostMmapLen = 0u;
@@ -10213,8 +10256,8 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenVmBindUnavailableWhenM
     MultiGraphicsAllocation multiGraphicsAllocation0{numRootDevices};
     MultiGraphicsAllocation multiGraphicsAllocation1{numRootDevices};
 
-    EXPECT_TRUE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation0, physicalAllocation, gpuAddress0, allocData.size, 0u));
-    EXPECT_TRUE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation1, physicalAllocation, gpuAddress1, allocData.size, 0u));
+    EXPECT_TRUE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation0, physicalAllocation, gpuAddress0, allocData.size, 0u, true));
+    EXPECT_TRUE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation1, physicalAllocation, gpuAddress1, allocData.size, 0u, true));
 
     auto mappedAllocation0 = multiGraphicsAllocation0.getGraphicsAllocation(rootDeviceIndex);
     auto mappedAllocation1 = multiGraphicsAllocation1.getGraphicsAllocation(rootDeviceIndex);
@@ -10254,7 +10297,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDeviceBitfieldWithHole
     rootDeviceIndices.pushUnique(1);
     rootDeviceIndices.pushUnique(2);
     MultiGraphicsAllocation multiGraphicsAllocation{static_cast<uint32_t>(rootDeviceIndices.size())};
-    EXPECT_FALSE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuAddress, allocData.size, 0u));
+    EXPECT_FALSE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuAddress, allocData.size, 0u, true));
 
     for (uint32_t i = 0; i < static_cast<uint32_t>(rootDeviceIndices.size()); i++) {
         EXPECT_EQ(nullptr, multiGraphicsAllocation.getGraphicsAllocation(i));
@@ -10285,7 +10328,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDeviceBitfieldWithHole
     rootDeviceIndices.pushUnique(1);
     rootDeviceIndices.pushUnique(2);
     MultiGraphicsAllocation multiGraphicsAllocation{static_cast<uint32_t>(rootDeviceIndices.size())};
-    EXPECT_FALSE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuAddress, allocData.size, 0u));
+    EXPECT_FALSE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuAddress, allocData.size, 0u, true));
 
     for (uint32_t i = 0; i < static_cast<uint32_t>(rootDeviceIndices.size()); i++) {
         EXPECT_EQ(nullptr, multiGraphicsAllocation.getGraphicsAllocation(i));
@@ -10316,7 +10359,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDeviceBitfieldWithHole
     rootDeviceIndices.pushUnique(1);
     rootDeviceIndices.pushUnique(2);
     MultiGraphicsAllocation multiGraphicsAllocation{static_cast<uint32_t>(rootDeviceIndices.size())};
-    EXPECT_FALSE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuAddress, allocData.size, 0u));
+    EXPECT_FALSE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuAddress, allocData.size, 0u, true));
 
     for (uint32_t i = 0; i < static_cast<uint32_t>(rootDeviceIndices.size()); i++) {
         EXPECT_EQ(nullptr, multiGraphicsAllocation.getGraphicsAllocation(i));
@@ -10343,7 +10386,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenSingleRootDeviceWhenMa
     RootDeviceIndicesContainer rootDeviceIndices;
     rootDeviceIndices.pushUnique(rootDeviceIndex);
     MultiGraphicsAllocation multiGraphicsAllocation{1u};
-    EXPECT_TRUE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuAddress, allocData.size, 0u));
+    EXPECT_TRUE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuAddress, allocData.size, 0u, true));
     EXPECT_NE(nullptr, multiGraphicsAllocation.getDefaultGraphicsAllocation());
     EXPECT_NE(nullptr, multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex));
 
@@ -10379,7 +10422,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenSingleRootDeviceWhenMa
     RootDeviceIndicesContainer rootDeviceIndices;
     rootDeviceIndices.pushUnique(rootDeviceIndex);
     MultiGraphicsAllocation multiGraphicsAllocation{1u};
-    EXPECT_TRUE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuAddress, mappingSize, offset));
+    EXPECT_TRUE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuAddress, mappingSize, offset, true));
 
     auto mappedAllocation = static_cast<DrmAllocation *>(multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex));
     ASSERT_NE(nullptr, mappedAllocation);
@@ -10447,7 +10490,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenMremapFailingWhenMappi
     RootDeviceIndicesContainer rootDeviceIndices;
     rootDeviceIndices.pushUnique(rootDeviceIndex);
     MultiGraphicsAllocation multiGraphicsAllocation{1u};
-    EXPECT_FALSE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuAddress, mappingSize, offset));
+    EXPECT_FALSE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuAddress, mappingSize, offset, true));
 
     EXPECT_EQ(1u, capturedMremapCalls);
     EXPECT_EQ(munmapCallsBefore + 1u, SysCalls::munmapFuncCalled);
@@ -10477,7 +10520,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenSingleRootDeviceWhenMa
     RootDeviceIndicesContainer rootDeviceIndices;
     rootDeviceIndices.pushUnique(rootDeviceIndex);
     MultiGraphicsAllocation multiGraphicsAllocation{1u};
-    EXPECT_TRUE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuAddress, allocData.size, 0u));
+    EXPECT_TRUE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuAddress, allocData.size, 0u, true));
     EXPECT_NE(nullptr, multiGraphicsAllocation.getDefaultGraphicsAllocation());
     EXPECT_NE(nullptr, multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex));
     multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex)->lock(addrToPtr(gpuAddress));
@@ -10506,7 +10549,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenSingleRootDeviceAndPri
     RootDeviceIndicesContainer rootDeviceIndices;
     rootDeviceIndices.pushUnique(rootDeviceIndex);
     MultiGraphicsAllocation multiGraphicsAllocation{1u};
-    EXPECT_TRUE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuAddress, allocData.size, 0u));
+    EXPECT_TRUE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuAddress, allocData.size, 0u, true));
     EXPECT_NE(nullptr, multiGraphicsAllocation.getDefaultGraphicsAllocation());
     EXPECT_NE(nullptr, multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex));
 

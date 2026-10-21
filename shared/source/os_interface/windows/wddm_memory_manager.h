@@ -75,6 +75,7 @@ class WddmMemoryManager : public MemoryManager, NEO::NonCopyableAndNonMovableCla
     void freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) override;
     AddressRange reserveCpuAddress(const uint64_t requiredStartAddress, size_t size) override;
     void freeCpuAddress(AddressRange addressRange) override;
+    bool appliesVirtualMemoryAccessFlags(const GraphicsAllocation &physicalAllocation) override;
     bool verifyHandle(osHandle handle, uint32_t rootDeviceIndex, bool ntHandle) override;
     bool isNTHandle(osHandle handle, uint32_t rootDeviceIndex) override;
     void releaseDeviceSpecificMemResources(uint32_t rootDeviceIndex) override {};
@@ -97,7 +98,7 @@ class WddmMemoryManager : public MemoryManager, NEO::NonCopyableAndNonMovableCla
     bool unMapPhysicalDeviceMemoryFromVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, OsContext *osContext, uint32_t rootDeviceIndex) override;
     bool unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, bool keepReservationPlaceholder) override;
     bool mapPhysicalDeviceMemoryToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryflags, size_t offset) override;
-    bool mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, size_t offset) override;
+    bool mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, size_t offset, bool keepReservationPlaceholder) override;
     GraphicsAllocation *allocateGraphicsMemoryForImageImpl(const AllocationData &allocationData, std::unique_ptr<Gmm> gmm) override;
     GraphicsAllocation *allocateGraphicsMemoryWithGpuVa(const AllocationData &allocationData) override { return nullptr; }
 

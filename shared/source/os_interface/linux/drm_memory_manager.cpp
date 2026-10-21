@@ -877,14 +877,14 @@ bool DrmMemoryManager::unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAll
             delete allocation;
         }
     }
-    // Only an SVM reservation releases this range later, so anywhere else the placeholder would never be reclaimed.
-    if (!keepReservationPlaceholder) {
-        return this->munmapFunction(addressToUnmap, sizeToUnmap) == 0;
-    }
-    return restoreVirtualMemoryReservationPlaceholder(addressToUnmap, sizeToUnmap);
+    return releaseVirtualMemoryReservationRange(addressToUnmap, sizeToUnmap, keepReservationPlaceholder);
 }
 
-bool DrmMemoryManager::restoreVirtualMemoryReservationPlaceholder(void *address, size_t size) {
+bool DrmMemoryManager::releaseVirtualMemoryReservationRange(void *address, size_t size, bool keepReservationPlaceholder) {
+    // Only an SVM reservation releases this range later, so anywhere else the placeholder would never be reclaimed.
+    if (!keepReservationPlaceholder) {
+        return this->munmapFunction(address, size) == 0;
+    }
     return this->mmapFunction(address, size, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED | MAP_NORESERVE, -1, 0) == address;
 }
 
@@ -949,7 +949,7 @@ bool DrmMemoryManager::mapPhysicalDeviceMemoryToVirtualMemory(GraphicsAllocation
     return true;
 }
 
-bool DrmMemoryManager::mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, size_t offset) {
+bool DrmMemoryManager::mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, size_t offset, bool keepReservationPlaceholder) {
     auto drmPhysicalAllocation = static_cast<DrmAllocation *>(physicalAllocation);
     auto &drm = this->getDrm(drmPhysicalAllocation->getRootDeviceIndex());
     BufferObject *physicalBo = drmPhysicalAllocation->getBO();
@@ -1044,7 +1044,7 @@ bool DrmMemoryManager::mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesCon
                     freeGraphicsMemory(allocation);
                 }
             }
-            restoreVirtualMemoryReservationPlaceholder(addrToPtr(cpuMapAddress), cpuMapSize);
+            releaseVirtualMemoryReservationRange(addrToPtr(cpuMapAddress), cpuMapSize, keepReservationPlaceholder);
             return false;
         }
 

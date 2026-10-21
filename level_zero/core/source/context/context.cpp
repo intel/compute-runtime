@@ -2565,7 +2565,7 @@ ze_result_t Context::mapVirtualMem(const void *ptr,
                 virtualMemoryReservation->foldPrefixSize = offset;
             }
         }
-        if (!memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, allocData.gpuAllocations, allocationNode->allocation, castToUint64(ptr), size, offset)) {
+        if (!memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, allocData.gpuAllocations, allocationNode->allocation, castToUint64(ptr), size, offset, virtualMemoryReservation->isSvmReservation)) {
             if (virtualMemoryReservation->foldPrefixSize != previousFoldPrefix) {
                 const uint64_t claimedBase = castToUint64(ptr) - virtualMemoryReservation->foldPrefixSize;
                 memoryManager->freeCpuAddress({claimedBase, virtualMemoryReservation->foldPrefixSize - previousFoldPrefix});
@@ -2724,16 +2724,37 @@ ze_result_t Context::setVirtualMemAccessAttribute(const void *ptr,
             virtualMemoryReservation->mappedAllocations.size() > 0) {
             std::map<void *, NEO::MemoryMappedRange *>::iterator physicalMapIt;
             physicalMapIt = virtualMemoryReservation->mappedAllocations.find(const_cast<void *>(ptr));
-            if (physicalMapIt != virtualMemoryReservation->mappedAllocations.end()) {
-                // mappedAllocation.allocation is the mapped allocation on the host path, not the key of the physical map.
+            // A map that ignores access flags would be rebuilt identically, so only remap where they are applied.
+            if (physicalMapIt != virtualMemoryReservation->mappedAllocations.end() &&
+                this->driverHandle->getMemoryManager()->appliesVirtualMemoryAccessFlags(*physicalMapIt->second->mappedAllocation.allocation)) {
                 auto physicalHandle = reinterpret_cast<ze_physical_mem_handle_t>(physicalMapIt->second->physicalHandle);
                 auto mappedOffset = static_cast<size_t>(physicalMapIt->second->mappedPhysicalOffset);
+                auto accessBefore = flagsBefore.readWrite  ? ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE
+                                    : flagsBefore.readOnly ? ZE_MEMORY_ACCESS_ATTRIBUTE_READONLY
+                                                           : ZE_MEMORY_ACCESS_ATTRIBUTE_NONE;
                 lockVirtual.unlock();
                 auto result = unMapVirtualMem(ptr, size);
                 if (result != ZE_RESULT_SUCCESS) {
+                    lockVirtual.lock();
+                    if (auto reservation = findSupportedVirtualReservation(ptr, size)) {
+                        reservation->flags = flagsBefore;
+                    }
                     return result;
                 }
-                return mapVirtualMem(ptr, size, physicalHandle, mappedOffset, access);
+                result = mapVirtualMem(ptr, size, physicalHandle, mappedOffset, access);
+                if (result != ZE_RESULT_SUCCESS) {
+                    unMapVirtualMem(ptr, size);
+                    if (mapVirtualMem(ptr, size, physicalHandle, mappedOffset, accessBefore) != ZE_RESULT_SUCCESS) {
+                        lockVirtual.lock();
+                        auto reservation = findSupportedVirtualReservation(ptr, size);
+                        if (reservation && reservation->mappedAllocations.find(const_cast<void *>(ptr)) == reservation->mappedAllocations.end()) {
+                            reservation->flags.readWrite = false;
+                            reservation->flags.readOnly = false;
+                            reservation->flags.noAccess = true;
+                        }
+                    }
+                }
+                return result;
             }
         }
         return ZE_RESULT_SUCCESS;
