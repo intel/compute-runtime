@@ -133,7 +133,7 @@ ze_result_t Driver::driverHandleGet(uint32_t *pCount, ze_driver_handle_t *phDriv
 }
 
 void Driver::tryInitGtpin() {
-    if (!this->gtPinInitializationNeeded) {
+    if (!this->gtPinInitializationNeeded || this->gtpinInitSkipped) {
         return;
     }
     std::unique_lock<std::mutex> mtx{this->gtpinInitMtx};

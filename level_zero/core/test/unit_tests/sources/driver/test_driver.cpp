@@ -2169,6 +2169,25 @@ TEST_F(GtPinInitTest, givenRequirementForGtpinWhenCallingZeDriverGetMultipleTime
     EXPECT_EQ(1u, gtpinInitTimesCalled);
 }
 
+TEST_F(GtPinInitTest, givenGtpinInitSkippedWhenCallingZeDriverGetThenGtPinIsInitializedOnlyAfterSkipIsCleared) {
+    driver.setGtpinInitSkipped(true);
+    auto result = zeInit(ZE_INIT_FLAG_GPU_ONLY);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    uint32_t driverCount = 1;
+    ze_driver_handle_t driverHandle{};
+    result = zeDriverGet(&driverCount, &driverHandle);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(0u, gtpinInitTimesCalled);
+    EXPECT_TRUE(driver.gtPinInitializationNeeded.load());
+
+    driver.setGtpinInitSkipped(false);
+    driverCount = 1;
+    result = zeDriverGet(&driverCount, &driverHandle);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, gtpinInitTimesCalled);
+    EXPECT_FALSE(driver.gtPinInitializationNeeded.load());
+}
+
 TEST_F(GtPinInitTest, givenFailureWhenInitializingGtpinThenTheErrorIsNotExposedInZeDriverGetFunction) {
 
     uint32_t (*gtPinInit)(void *) = [](void *arg) -> uint32_t {

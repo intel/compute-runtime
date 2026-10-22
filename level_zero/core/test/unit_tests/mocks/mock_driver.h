@@ -20,6 +20,7 @@ namespace ult {
 template <>
 struct WhiteBox<::L0::Driver> : public ::L0::Driver {
     using ::L0::Driver::gtPinInitializationNeeded;
+    using ::L0::Driver::gtpinInitSkipped;
     using ::L0::Driver::pid;
 };
 

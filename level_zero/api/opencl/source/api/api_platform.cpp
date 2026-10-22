@@ -16,6 +16,7 @@
 #include "level_zero/api/opencl/source/sharings/leo_sharing_factory.h"
 #include "level_zero/api/opencl/source/tracing/leo_tracing_api.h"
 #include "level_zero/api/opencl/source/tracing/leo_tracing_notify.h"
+#include "level_zero/core/source/driver/driver.h"
 #include <level_zero/ze_api.h>
 
 #include "CL/cl.h"
@@ -57,6 +58,7 @@ cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
             uint32_t driverCount = 0;
             ze_init_driver_type_desc_t desc{ZE_STRUCTURE_TYPE_INIT_DRIVER_TYPE_DESC, nullptr, ZE_INIT_DRIVER_TYPE_FLAG_GPU};
 
+            L0::Driver::get()->setGtpinInitSkipped(true);
             initL0Dispatch();
 
             initResult = zeInitDrivers(&driverCount, nullptr, &desc);
@@ -74,6 +76,7 @@ cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
                     }
                 }
             }
+            L0::Driver::get()->setGtpinInitSkipped(false);
         }
     }
 

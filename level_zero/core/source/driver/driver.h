@@ -22,6 +22,9 @@ class Driver {
     static Driver *get() { return driver; }
     virtual ~Driver() = default;
     void tryInitGtpin();
+    void setGtpinInitSkipped(bool skipped) {
+        this->gtpinInitSkipped = skipped;
+    }
     MOCKABLE_VIRTUAL ze_result_t driverHandleGet(uint32_t *pCount, ze_driver_handle_t *phDrivers);
     unsigned int getPid() const {
         return pid;
@@ -33,6 +36,7 @@ class Driver {
     std::once_flag initDriverOnce;
     static ze_result_t initStatus;
     std::atomic<bool> gtPinInitializationNeeded{false};
+    std::atomic<bool> gtpinInitSkipped{false};
     std::mutex gtpinInitMtx;
 };
 
