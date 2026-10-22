@@ -115,7 +115,8 @@ HWTEST_F(EnqueueWriteImageTest, WhenWritingImageWithDirectSubmissionThenInvalida
     ultCsr.directSubmissionAvailable = true;
     ultCsr.directSubmission.reset(directSubmission);
     EnqueueWriteImageHelper<>::enqueueWriteImage(pCmdQ, dstImage, EnqueueWriteImageTraits::blocking);
-    EXPECT_TRUE(ultCsr.recordedDispatchFlags.textureCacheFlush);
+    EXPECT_EQ(!pCmdQ->getHeaplessModeEnabled(), ultCsr.recordedDispatchFlags.textureCacheFlush);
+    EXPECT_TRUE(ultCsr.recordedDispatchFlags.dcFlush);
 
     ultCsr.directSubmissionAvailable = false;
     ultCsr.directSubmission.reset(nullptr);

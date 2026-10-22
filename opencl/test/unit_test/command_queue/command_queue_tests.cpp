@@ -469,32 +469,78 @@ HWTEST_F(CommandQueueCommandStreamTest, givenCommandQueueThatWaitsOnAbortedUserE
     EXPECT_EQ(100u, cmdQ.taskLevel);
 }
 
-HWTEST_F(CommandQueueCommandStreamTest, WhenCheckIsTextureCacheFlushNeededThenReturnProperValue) {
+HWTEST_F(CommandQueueCommandStreamTest, WhenCheckIsDirectSubmissionImageCacheFlushNeededThenReturnProperValueRegardlessOfHeaplessMode) {
+    MockContext context;
+    auto mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    MockCommandQueue cmdQ(&context, mockDevice.get(), 0, false);
+    auto &commandStreamReceiver = mockDevice->getUltCommandStreamReceiver<FamilyType>();
+    const auto &hwInfo = mockDevice->getHardwareInfo();
+
+    std::set<cl_command_type> imageWriteTypes = {CL_COMMAND_COPY_IMAGE, CL_COMMAND_WRITE_IMAGE, CL_COMMAND_FILL_IMAGE, CL_COMMAND_COPY_BUFFER_TO_IMAGE};
+    std::set<cl_command_type> imageReadTypes = {CL_COMMAND_READ_IMAGE, CL_COMMAND_COPY_IMAGE_TO_BUFFER};
+    for (auto heaplessModeEnabled : {false, true}) {
+        cmdQ.heaplessModeEnabled = heaplessModeEnabled;
+        for (auto operation = CL_COMMAND_NDRANGE_KERNEL; operation < CL_COMMAND_SVM_MIGRATE_MEM; operation++) {
+            commandStreamReceiver.directSubmissionAvailable = true;
+            if (imageWriteTypes.contains(operation)) {
+                EXPECT_TRUE(cmdQ.isDirectSubmissionImageCacheFlushNeeded(operation));
+            } else if (imageReadTypes.contains(operation)) {
+                EXPECT_EQ(hwInfo.caps.cacheFlushPriorToImageReadRequired, cmdQ.isDirectSubmissionImageCacheFlushNeeded(operation));
+            } else {
+                EXPECT_FALSE(cmdQ.isDirectSubmissionImageCacheFlushNeeded(operation));
+            }
+
+            commandStreamReceiver.directSubmissionAvailable = false;
+            EXPECT_FALSE(cmdQ.isDirectSubmissionImageCacheFlushNeeded(operation));
+        }
+    }
+}
+
+HWTEST_F(CommandQueueCommandStreamTest, givenHeaplessModeDisabledWhenCheckIsTextureCacheFlushNeededThenReturnDirectSubmissionImageCacheFlushNeed) {
+    MockContext context;
+    auto mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    MockCommandQueue cmdQ(&context, mockDevice.get(), 0, false);
+    cmdQ.heaplessModeEnabled = false;
+    auto &commandStreamReceiver = mockDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    for (auto directSubmissionAvailable : {false, true}) {
+        commandStreamReceiver.directSubmissionAvailable = directSubmissionAvailable;
+        for (auto operation = CL_COMMAND_NDRANGE_KERNEL; operation < CL_COMMAND_SVM_MIGRATE_MEM; operation++) {
+            EXPECT_EQ(cmdQ.isDirectSubmissionImageCacheFlushNeeded(operation), cmdQ.isTextureCacheFlushNeeded(operation));
+        }
+    }
+    commandStreamReceiver.directSubmissionAvailable = true;
+    EXPECT_TRUE(cmdQ.isTextureCacheFlushNeeded(CL_COMMAND_WRITE_IMAGE));
+}
+
+HWTEST_F(CommandQueueCommandStreamTest, givenHeaplessModeEnabledWhenCheckIsTextureCacheFlushNeededThenReturnFalse) {
+    MockContext context;
+    auto mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    MockCommandQueue cmdQ(&context, mockDevice.get(), 0, false);
+    cmdQ.heaplessModeEnabled = true;
+    auto &commandStreamReceiver = mockDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    for (auto operation = CL_COMMAND_NDRANGE_KERNEL; operation < CL_COMMAND_SVM_MIGRATE_MEM; operation++) {
+        commandStreamReceiver.directSubmissionAvailable = true;
+        EXPECT_FALSE(cmdQ.isTextureCacheFlushNeeded(operation));
+        commandStreamReceiver.directSubmissionAvailable = false;
+        EXPECT_FALSE(cmdQ.isTextureCacheFlushNeeded(operation));
+    }
+}
+
+HWTEST_F(CommandQueueCommandStreamTest, givenImageWriteOperationWhenCheckShouldFlushDcThenDcFlushIsRequiredWithDirectSubmissionRegardlessOfHeaplessMode) {
     MockContext context;
     auto mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockCommandQueue cmdQ(&context, mockDevice.get(), 0, false);
     auto &commandStreamReceiver = mockDevice->getUltCommandStreamReceiver<FamilyType>();
 
-    std::set<cl_command_type> typesToFlush = {CL_COMMAND_COPY_IMAGE, CL_COMMAND_WRITE_IMAGE, CL_COMMAND_FILL_IMAGE, CL_COMMAND_COPY_BUFFER_TO_IMAGE,
-                                              CL_COMMAND_READ_IMAGE, CL_COMMAND_COPY_IMAGE_TO_BUFFER};
-    for (auto operation = CL_COMMAND_NDRANGE_KERNEL; operation < CL_COMMAND_SVM_MIGRATE_MEM; operation++) {
-        if (typesToFlush.contains(operation)) {
+    for (auto heaplessModeEnabled : {false, true}) {
+        cmdQ.heaplessModeEnabled = heaplessModeEnabled;
+        for (auto operation : {CL_COMMAND_COPY_IMAGE, CL_COMMAND_WRITE_IMAGE, CL_COMMAND_FILL_IMAGE, CL_COMMAND_COPY_BUFFER_TO_IMAGE}) {
             commandStreamReceiver.directSubmissionAvailable = true;
-
-            if (operation == CL_COMMAND_READ_IMAGE || operation == CL_COMMAND_COPY_IMAGE_TO_BUFFER) {
-                const auto &hwInfo = mockDevice->getHardwareInfo();
-                EXPECT_EQ(hwInfo.caps.cacheFlushPriorToImageReadRequired, cmdQ.isTextureCacheFlushNeeded(operation));
-            } else {
-                EXPECT_TRUE(cmdQ.isTextureCacheFlushNeeded(operation));
-            }
-
+            EXPECT_TRUE(cmdQ.shouldFlushDC(operation, nullptr));
             commandStreamReceiver.directSubmissionAvailable = false;
-            EXPECT_FALSE(cmdQ.isTextureCacheFlushNeeded(operation));
-        } else {
-            commandStreamReceiver.directSubmissionAvailable = true;
-            EXPECT_FALSE(cmdQ.isTextureCacheFlushNeeded(operation));
-            commandStreamReceiver.directSubmissionAvailable = false;
-            EXPECT_FALSE(cmdQ.isTextureCacheFlushNeeded(operation));
+            EXPECT_FALSE(cmdQ.shouldFlushDC(operation, nullptr));
         }
     }
 }
