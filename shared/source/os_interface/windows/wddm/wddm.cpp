@@ -14,7 +14,6 @@
 #include "shared/source/gmm_helper/client_context/gmm_handle_allocator.h"
 #include "shared/source/gmm_helper/client_context/map_gpu_va_gmm.h"
 #include "shared/source/gmm_helper/gmm.h"
-#include "shared/source/gmm_helper/gmm_callbacks.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/page_table_mngr.h"
 #include "shared/source/gmm_helper/resource_info.h"
@@ -32,7 +31,6 @@
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/os_interface/sys_calls_common.h"
 #include "shared/source/os_interface/windows/driver_info_windows.h"
-#include "shared/source/os_interface/windows/dxcore_wrapper.h"
 #include "shared/source/os_interface/windows/gdi_interface.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
 #include "shared/source/os_interface/windows/os_environment_win.h"
@@ -99,14 +97,15 @@ bool Wddm::init() {
     if (!queryAdapterInfo()) {
         return false;
     }
+    auto hardwareInfo = rootDeviceEnvironment.getMutableHardwareInfo();
+    hardwareInfo->platform = *gfxPlatform;
+    translateFromKmd(hardwareInfo->platform);
 
-    auto productFamily = gfxPlatform->eProductFamily;
+    auto productFamily = hardwareInfo->platform.eProductFamily;
     if (!hardwareInfoTable[productFamily]) {
         return false;
     }
 
-    auto hardwareInfo = rootDeviceEnvironment.getMutableHardwareInfo();
-    hardwareInfo->platform = *gfxPlatform;
     hardwareInfo->featureTable = *featureTable;
     hardwareInfo->workaroundTable = *workaroundTable;
     hardwareInfo->gtSystemInfo = *gtSystemInfo;
@@ -125,7 +124,6 @@ bool Wddm::init() {
     rootDeviceEnvironment.initProductHelper();
     rootDeviceEnvironment.initCompilerProductHelper();
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
-    productHelper.adjustPlatformForProductFamily(hardwareInfo);
     rootDeviceEnvironment.initApiGfxCoreHelper();
     rootDeviceEnvironment.initGfxCoreHelper();
     bool hwQueuesSupported = featureTable->flags.ftrWddmHwQueues;
@@ -311,16 +309,6 @@ bool Wddm::queryAdapterInfo() {
         memcpy_s(gfxFeatureTable.get(), sizeof(SKU_FEATURE_TABLE_KMD), &adapterInfo.SkuTable, sizeof(SKU_FEATURE_TABLE_KMD));
         memcpy_s(gfxWorkaroundTable.get(), sizeof(WA_TABLE_KMD), &adapterInfo.WaTable, sizeof(WA_TABLE_KMD));
 
-        if (debugManager.flags.ForceDeviceId.get() != "unk") {
-            gfxPlatform->usDeviceID = static_cast<unsigned short>(std::stoi(debugManager.flags.ForceDeviceId.get(), nullptr, 16));
-        }
-        if (debugManager.flags.ForceProductFamily.get() != "unk") {
-            gfxPlatform->eProductFamily = static_cast<PRODUCT_FAMILY>(std::stoi(debugManager.flags.ForceProductFamily.get(), nullptr, 0));
-        }
-        if (debugManager.flags.ForceCoreFamily.get() != "unk") {
-            gfxPlatform->eRenderCoreFamily = static_cast<GFXCORE_FAMILY>(std::stoi(debugManager.flags.ForceCoreFamily.get(), nullptr, 0));
-        }
-
         SkuInfoReceiver::receiveFtrTableFromAdapterInfo(featureTable.get(), &adapterInfo);
         SkuInfoReceiver::receiveWaTableFromAdapterInfo(workaroundTable.get(), &adapterInfo);
 
@@ -337,7 +325,6 @@ bool Wddm::queryAdapterInfo() {
         timestampFrequency = adapterInfo.GfxTimeStampFreq;
         instrumentationEnabled = adapterInfo.Caps.InstrumentationIsEnabled != 0;
 
-        adjustProductFamily();
         populateAdditionalAdapterInfoOptions(adapterInfo);
     }
 
@@ -1607,13 +1594,6 @@ PhysicalDevicePciBusInfo Wddm::getPciBusInfo() const {
 PhysicalDevicePciSpeedInfo Wddm::getPciSpeedInfo() const {
     PhysicalDevicePciSpeedInfo speedInfo{};
     return speedInfo;
-}
-
-void Wddm::adjustProductFamily() {
-    auto gfxCoreHelper = GfxCoreHelper::create(gfxPlatform->eRenderCoreFamily);
-    if (gfxCoreHelper) {
-        gfxPlatform->eProductFamily = gfxCoreHelper->adjustProductFamily(gfxPlatform->eProductFamily);
-    }
 }
 
 void Wddm::populateIpVersion(HardwareInfo &hwInfo) {

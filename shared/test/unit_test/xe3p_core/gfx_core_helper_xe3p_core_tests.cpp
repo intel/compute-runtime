@@ -471,16 +471,6 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenDontProgramGlobalFenceAsMiMemFe
 
 using ProductHelperTestXe3pCore = Test<DeviceFixture>;
 
-XE3P_CORETEST_F(ProductHelperTestXe3pCore, givenXe3pProductWhenAdjustPlatformForProductFamilyCalledThenOverrideWithCorrectFamily) {
-    auto &productHelper = getHelper<ProductHelper>();
-
-    auto hwInfo = *defaultHwInfo;
-    hwInfo.platform.eRenderCoreFamily = IGFX_UNKNOWN_CORE;
-    productHelper.adjustPlatformForProductFamily(&hwInfo);
-
-    EXPECT_EQ(IGFX_XE3P_CORE, hwInfo.platform.eRenderCoreFamily);
-}
-
 XE3P_CORETEST_F(ProductHelperTestXe3pCore, givenProductHelperWhenCheckTimestampWaitForQueuesSupportThenResultsIsCorrect) {
     auto &productHelper = getHelper<ProductHelper>();
     EXPECT_EQ(productHelper.isDcFlushAllowed(), productHelper.isTimestampWaitSupportedForQueues());

@@ -15,11 +15,6 @@
 namespace NEO {
 
 template <>
-void ProductHelperHw<gfxProduct>::adjustPlatformForProductFamily(HardwareInfo *hwInfo) {
-    hwInfo->platform.eRenderCoreFamily = IGFX_XE3P_CORE;
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::isBlitterForImagesSupported() const {
     return true;
 }

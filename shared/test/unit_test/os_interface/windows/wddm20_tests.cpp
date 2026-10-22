@@ -851,34 +851,6 @@ TEST_F(Wddm20Tests, givenWddmCreatedWhenInitedThenMinAddressValid) {
     EXPECT_EQ(expected, actual);
 }
 
-TEST_F(Wddm20InstrumentationTest, GivenNoAdapterWhenConfiguringDeviceAddressSpaceThenFalseIsReturned) {
-    auto gdi = std::make_unique<Gdi>();
-    wddm->resetGdi(gdi.release());
-
-    auto ret = wddm->configureDeviceAddressSpace();
-
-    EXPECT_FALSE(ret);
-    EXPECT_EQ(0u, gmmMem->configureDeviceAddressSpaceCalled);
-}
-
-TEST_F(Wddm20InstrumentationTest, GivenNoDeviceWhenConfiguringDeviceAddressSpaceThenFalseIsReturned) {
-    wddm->device = static_cast<D3DKMT_HANDLE>(0);
-
-    auto ret = wddm->configureDeviceAddressSpace();
-
-    EXPECT_FALSE(ret);
-    EXPECT_EQ(0u, gmmMem->configureDeviceAddressSpaceCalled);
-}
-
-TEST_F(Wddm20InstrumentationTest, GivenNoEscFuncWhenConfiguringDeviceAddressSpaceThenFalseIsReturned) {
-    wddm->getGdi()->escape = static_cast<PFND3DKMT_ESCAPE>(nullptr);
-
-    auto ret = wddm->configureDeviceAddressSpace();
-
-    EXPECT_FALSE(ret);
-    EXPECT_EQ(0u, gmmMem->configureDeviceAddressSpaceCalled);
-}
-
 TEST_F(Wddm20Tests, WhenGettingMaxApplicationAddressThen32Or64BitIsCorrectlyReturned) {
     uint64_t maxAddr = wddm->getMaxApplicationAddress();
     if (is32bit) {
@@ -2118,41 +2090,56 @@ TEST_F(WddmTestWithMockGdiDll, givenQueryAdapterInfoCallReturnsInvalidAdapterBDF
     EXPECT_EQ(pciBusInfo.pciFunction, PhysicalDevicePciBusInfo::invalidValue);
 }
 
-TEST_F(WddmTestWithMockGdiDll, givenForceDeviceIdWhenQueryAdapterInfoThenProperDeviceID) {
+TEST_F(WddmTestWithMockGdiDll, givenForceDeviceIdWhenTranslatingFromKmdThenProperDeviceID) {
     DebugManagerStateRestore restorer{};
     debugManager.flags.ForceDeviceId.set("0x1234");
 
-    EXPECT_TRUE(wddm->queryAdapterInfo());
+    auto platform = defaultHwInfo->platform;
+    wddm->translateFromKmd(platform);
     uint16_t expectedDeviceId = 0x1234u;
-    EXPECT_EQ(expectedDeviceId, wddm->gfxPlatform->usDeviceID);
+    EXPECT_EQ(expectedDeviceId, platform.usDeviceID);
 }
 
-TEST_F(WddmTestWithMockGdiDll, givenForceProductFamilyWhenQueryAdapterInfoThenProperProductFamily) {
+TEST_F(WddmTestWithMockGdiDll, givenForceProductFamilyWhenTranslatingFromKmdThenProperProductFamily) {
     DebugManagerStateRestore restorer{};
+    auto platform = defaultHwInfo->platform;
 
     debugManager.flags.ForceProductFamily.set("1234");
-    EXPECT_TRUE(wddm->queryAdapterInfo());
+    wddm->translateFromKmd(platform);
     auto expectedProductFamily = static_cast<PRODUCT_FAMILY>(1234);
-    EXPECT_EQ(expectedProductFamily, wddm->gfxPlatform->eProductFamily);
+    EXPECT_EQ(expectedProductFamily, platform.eProductFamily);
 
     debugManager.flags.ForceProductFamily.set("0x1234");
-    EXPECT_TRUE(wddm->queryAdapterInfo());
+    wddm->translateFromKmd(platform);
     expectedProductFamily = static_cast<PRODUCT_FAMILY>(0x1234);
-    EXPECT_EQ(expectedProductFamily, wddm->gfxPlatform->eProductFamily);
+    EXPECT_EQ(expectedProductFamily, platform.eProductFamily);
 }
 
-TEST_F(WddmTestWithMockGdiDll, givenForceCoreFamilyWhenQueryAdapterInfoThenProperCoreFamily) {
+TEST_F(WddmTestWithMockGdiDll, givenForceCoreFamilyWhenTranslatingFromKmdThenProperCoreFamily) {
     DebugManagerStateRestore restorer{};
+    auto platform = defaultHwInfo->platform;
 
     debugManager.flags.ForceCoreFamily.set("1234");
-    EXPECT_TRUE(wddm->queryAdapterInfo());
+    wddm->translateFromKmd(platform);
     auto expectedCoreFamily = static_cast<GFXCORE_FAMILY>(1234);
-    EXPECT_EQ(expectedCoreFamily, wddm->gfxPlatform->eRenderCoreFamily);
+    EXPECT_EQ(expectedCoreFamily, platform.eRenderCoreFamily);
 
     debugManager.flags.ForceCoreFamily.set("0x1234");
-    EXPECT_TRUE(wddm->queryAdapterInfo());
+    wddm->translateFromKmd(platform);
     expectedCoreFamily = static_cast<GFXCORE_FAMILY>(0x1234);
-    EXPECT_EQ(expectedCoreFamily, wddm->gfxPlatform->eRenderCoreFamily);
+    EXPECT_EQ(expectedCoreFamily, platform.eRenderCoreFamily);
+}
+
+TEST_F(WddmTestWithMockGdiDll, givenForceDeviceIdWhenInitializingWddmThenDeviceIdIsOverriddenInHwInfoButNotInGfxPlatform) {
+    DebugManagerStateRestore restorer{};
+    constexpr uint16_t forcedDeviceId = 0x1234u;
+    ASSERT_NE(forcedDeviceId, defaultHwInfo->platform.usDeviceID);
+    debugManager.flags.ForceDeviceId.set("0x1234");
+
+    init();
+
+    EXPECT_EQ(forcedDeviceId, rootDeviceEnvironment->getHardwareInfo()->platform.usDeviceID);
+    EXPECT_EQ(defaultHwInfo->platform.usDeviceID, wddm->gfxPlatform->usDeviceID);
 }
 
 TEST_F(WddmTestWithMockGdiDll, givenNoMaxDualSubSlicesSupportedWhenQueryAdapterInfoThenMaxDualSubSliceIsNotSet) {

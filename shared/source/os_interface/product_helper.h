@@ -89,7 +89,6 @@ class ProductHelper {
     virtual std::unique_ptr<DeviceCapsReader> getDeviceCapsReader(aub_stream::AubManager &aubManager) const = 0;
     virtual bool setupHardwareInfo(HardwareInfo &hwInfo, const DeviceCapsReader &capsReader) const = 0;
     virtual int configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const = 0;
-    virtual void adjustPlatformForProductFamily(HardwareInfo *hwInfo) = 0;
     virtual void adjustSamplerState(void *sampler, const HardwareInfo &hwInfo) const = 0;
     virtual uint64_t getHostMemCapabilities(const HardwareInfo *hwInfo) const = 0;
     virtual uint64_t getDeviceMemCapabilities() const = 0;

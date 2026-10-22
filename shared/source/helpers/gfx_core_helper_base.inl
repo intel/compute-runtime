@@ -878,11 +878,6 @@ bool GfxCoreHelperHw<Family>::getSipBinaryFromExternalLib() const {
 }
 
 template <typename Family>
-PRODUCT_FAMILY GfxCoreHelperHw<Family>::adjustProductFamily(PRODUCT_FAMILY productFamily) const {
-    return productFamily;
-}
-
-template <typename Family>
 uint32_t GfxCoreHelperHw<Family>::getImplicitArgsVersion() const {
     return 0;
 }

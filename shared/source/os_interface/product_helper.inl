@@ -66,9 +66,6 @@ std::vector<int32_t> ProductHelperHw<gfxProduct>::getKernelSupportedThreadArbitr
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-void ProductHelperHw<gfxProduct>::adjustPlatformForProductFamily(HardwareInfo *hwInfo) {}
-
-template <PRODUCT_FAMILY gfxProduct>
 void ProductHelperHw<gfxProduct>::adjustSamplerState(void *sampler, const HardwareInfo &hwInfo) const {
     using SAMPLER_STATE = typename HwMapper<gfxProduct>::GfxFamily::SAMPLER_STATE;
     auto samplerState = reinterpret_cast<SAMPLER_STATE *>(sampler);

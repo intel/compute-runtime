@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -180,12 +180,7 @@ bool Wddm::configureDeviceAddressSpace() {
         return false;
     }
 
-    auto productFamily = gfxPlatform->eProductFamily;
-    if (!hardwareInfoTable[productFamily]) {
-        DEBUG_BREAK_IF(true);
-        return false;
-    }
-
+    auto productFamily = rootDeviceEnvironment.getHardwareInfo()->platform.eProductFamily;
     auto gpuAddressSpace = hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace;
     maximumApplicationAddress = MemoryConstants::max64BitAppAddress;
 
@@ -198,7 +193,7 @@ bool Wddm::configureDeviceAddressSpace() {
     }
 
     if (maxUsmSize > 0) {
-        if (false == adjustGfxPartitionLayout(this->gfxPartition, gpuAddressSpace, usmBase, *this, gfxPlatform->eProductFamily)) {
+        if (false == adjustGfxPartitionLayout(this->gfxPartition, gpuAddressSpace, usmBase, *this, productFamily)) {
             return false;
         }
         if (gfxPartition.Standard64KB.Limit <= maxUsmSize) {

@@ -39,18 +39,22 @@ TEST_F(WddmTests, givenNonZeroRenderBlockIdAndOverrideHwIpVersionWhenPopulatingI
     EXPECT_EQ(static_cast<uint32_t>(overrideHwIpVersion), hwInfo.ipVersion.value);
 }
 
-TEST_F(WddmTests, givenUnknownCoreFamilyWhenAdjustingProductFamilyThenProductFamilyIsNotChanged) {
-    wddm->gfxPlatform->eRenderCoreFamily = IGFX_UNKNOWN_CORE;
-    wddm->gfxPlatform->eProductFamily = defaultHwInfo->platform.eProductFamily;
-    wddm->adjustProductFamily();
-    EXPECT_EQ(defaultHwInfo->platform.eProductFamily, wddm->gfxPlatform->eProductFamily);
+TEST_F(WddmTests, givenDefaultPlatformWhenTranslatingFromKmdThenProductFamilyIsNotChanged) {
+    auto platform = defaultHwInfo->platform;
+    platform.eProductFamily = defaultHwInfo->platform.eProductFamily;
+    wddm->translateFromKmd(platform);
+    EXPECT_EQ(defaultHwInfo->platform.eProductFamily, platform.eProductFamily);
 }
 
-TEST_F(WddmTests, givenDefaultPlatformWhenAdjustingProductFamilyThenProductFamilyIsNotChanged) {
-    wddm->gfxPlatform->eRenderCoreFamily = defaultHwInfo->platform.eRenderCoreFamily;
-    wddm->gfxPlatform->eProductFamily = defaultHwInfo->platform.eProductFamily;
-    wddm->adjustProductFamily();
-    EXPECT_EQ(defaultHwInfo->platform.eProductFamily, wddm->gfxPlatform->eProductFamily);
+TEST_F(WddmTests, givenNotMappedProductWhenTranslatingFromKmdThenPlatformIsNotChanged) {
+    auto platform = defaultHwInfo->platform;
+    platform.eProductFamily = IGFX_DG2;
+    platform.eRenderCoreFamily = IGFX_UNKNOWN_CORE;
+    platform.usDeviceID = 0x1234u;
+    wddm->translateFromKmd(platform);
+    EXPECT_EQ(IGFX_DG2, platform.eProductFamily);
+    EXPECT_EQ(IGFX_UNKNOWN_CORE, platform.eRenderCoreFamily);
+    EXPECT_EQ(0x1234u, platform.usDeviceID);
 }
 
 TEST_F(WddmTests, whenCreatingAllocation64kThenDoNotCreateResource) {

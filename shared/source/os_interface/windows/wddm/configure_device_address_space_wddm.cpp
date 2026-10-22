@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -54,10 +54,7 @@ bool Wddm::configureDeviceAddressSpace() {
     SYSTEM_INFO sysInfo;
     Wddm::getSystemInfo(&sysInfo);
     maximumApplicationAddress = reinterpret_cast<uintptr_t>(sysInfo.lpMaximumApplicationAddress);
-    auto productFamily = gfxPlatform->eProductFamily;
-    if (!hardwareInfoTable[productFamily]) {
-        return false;
-    }
+    auto productFamily = hwInfo->platform.eProductFamily;
     minAddress = windowsMinAddress;
     auto svmSize = hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace >= MemoryConstants::max64BitAppAddress
                        ? maximumApplicationAddress + 1u

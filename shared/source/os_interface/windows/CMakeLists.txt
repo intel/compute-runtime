@@ -103,6 +103,7 @@ set(NEO_CORE_OS_INTERFACE_WDDM
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/wddm.h
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/wddm_defs.h
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/wddm_residency_logger.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/wddm/wddm_translate_from_kmd.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm_memory_manager_${DRIVER_MODEL}.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm_memory_manager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm_memory_manager.h

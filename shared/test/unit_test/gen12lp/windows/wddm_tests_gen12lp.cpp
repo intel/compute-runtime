@@ -11,42 +11,11 @@
 #include "shared/source/os_interface/windows/gdi_interface.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_wddm.h"
-#include "shared/test/common/mocks/windows/mock_gmm_memory.h"
 #include "shared/test/common/os_interface/windows/gdi_dll_fixture.h"
+#include "shared/test/common/os_interface/windows/wddm_fixture.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 using namespace NEO;
-struct Gen12LpWddmTest : public ::testing::Test {
-    void SetUp() override {
-        executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-        rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
-        rootDeviceEnvironment->initGmm();
-        wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *rootDeviceEnvironment));
-        gmmMemory = new MockGmmMemoryBase(rootDeviceEnvironment->getGmmClientContext());
-        wddm->gmmMemory.reset(gmmMemory);
-    }
-
-    void TearDown() override {
-    }
-
-    std::unique_ptr<MockExecutionEnvironment> executionEnvironment;
-    RootDeviceEnvironment *rootDeviceEnvironment = nullptr;
-    WddmMock *wddm = nullptr;
-    MockGmmMemoryBase *gmmMemory = nullptr;
-};
-
-GEN12LPTEST_F(Gen12LpWddmTest, whenConfigureDeviceAddressSpaceThenObtainMinAddress) {
-    uintptr_t minAddress = 0x12345u;
-
-    EXPECT_NE(NEO::windowsMinAddress, minAddress);
-
-    gmmMemory->getInternalGpuVaRangeLimitResult = minAddress;
-
-    wddm->init();
-
-    EXPECT_EQ(minAddress, wddm->getWddmMinAddress());
-    EXPECT_EQ(1u, gmmMemory->getInternalGpuVaRangeLimitCalled);
-}
 
 using Gen12LpWddmHwInfoTest = ::testing::Test;
 
@@ -54,7 +23,6 @@ GEN12LPTEST_F(Gen12LpWddmHwInfoTest, givenIncorrectProductFamiliyWhenInitCalledT
     HardwareInfo localHwInfo = *defaultHwInfo;
 
     localHwInfo.platform.eRenderCoreFamily = GFXCORE_FAMILY::IGFX_UNKNOWN_CORE;
-    localHwInfo.platform.eDisplayCoreFamily = GFXCORE_FAMILY::IGFX_UNKNOWN_CORE;
 
     setAdapterInfo(&localHwInfo);
 
@@ -68,9 +36,21 @@ GEN12LPTEST_F(Gen12LpWddmHwInfoTest, givenIncorrectProductFamiliyWhenInitCalledT
     auto newHwInfo = rootDeviceEnvironment->getHardwareInfo();
 
     EXPECT_EQ(GFXCORE_FAMILY::IGFX_GEN12LP_CORE, newHwInfo->platform.eRenderCoreFamily);
-    EXPECT_EQ(GFXCORE_FAMILY::IGFX_GEN12LP_CORE, newHwInfo->platform.eDisplayCoreFamily);
 
     // reset mock gdi globals
     localHwInfo = *defaultHwInfo;
     setAdapterInfo(&localHwInfo);
+}
+
+using Gen12LpWddmTranslateFromKmdTest = WddmTestWithMockGdiDll;
+
+GEN12LPTEST_F(Gen12LpWddmTranslateFromKmdTest, givenGen12lpProductWhenTranslatingFromKmdThenRenderCoreFamilyIsSetToGen12lp) {
+    auto platform = defaultHwInfo->platform;
+    for (auto productFamily : {IGFX_TIGERLAKE_LP, IGFX_ROCKETLAKE, IGFX_ALDERLAKE_S, IGFX_ALDERLAKE_P, IGFX_ALDERLAKE_N, IGFX_DG1}) {
+        platform.eProductFamily = productFamily;
+        platform.eRenderCoreFamily = IGFX_GEN11_CORE;
+        wddm->translateFromKmd(platform);
+        EXPECT_EQ(productFamily, platform.eProductFamily);
+        EXPECT_EQ(IGFX_GEN12LP_CORE, platform.eRenderCoreFamily);
+    }
 }

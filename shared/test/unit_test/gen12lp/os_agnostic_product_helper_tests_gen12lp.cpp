@@ -14,17 +14,6 @@ using namespace NEO;
 
 using Gen12lpProductHelper = ProductHelperTest;
 
-GEN12LPTEST_F(Gen12lpProductHelper, givenGen12LpProductWhenAdjustPlatformForProductFamilyCalledThenOverrideWithCorrectFamily) {
-
-    PLATFORM *testPlatform = &outHwInfo.platform;
-    testPlatform->eDisplayCoreFamily = IGFX_GEN11_CORE;
-    testPlatform->eRenderCoreFamily = IGFX_GEN11_CORE;
-    productHelper->adjustPlatformForProductFamily(&outHwInfo);
-
-    EXPECT_EQ(IGFX_GEN12LP_CORE, testPlatform->eRenderCoreFamily);
-    EXPECT_EQ(IGFX_GEN12LP_CORE, testPlatform->eDisplayCoreFamily);
-}
-
 GEN12LPTEST_F(Gen12lpProductHelper, givenCompressionFtrEnabledWhenAskingForPageTableManagerThenReturnCorrectValue) {
 
     outHwInfo.capabilityTable.ftrRenderCompressedBuffers = false;
