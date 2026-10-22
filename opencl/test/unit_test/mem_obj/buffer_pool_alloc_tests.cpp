@@ -811,6 +811,27 @@ TEST_F(AggregatedSmallBuffersEnabledApiTest, givenCopyHostPointerWhenCreatingBuf
     EXPECT_EQ(clReleaseContext(context), CL_SUCCESS);
 }
 
+TEST_F(AggregatedSmallBuffersEnabledApiTest, givenPoolStorageAlreadyWrittenToSimulationWhenCreatingBufferWithCopyHostPointerThenPoolStorageIsWritableAgain) {
+    auto poolAllocation = poolAllocator->bufferPools[0].mainStorage->getGraphicsAllocation(0u);
+    ASSERT_FALSE(poolAllocation->isAllocatedInLocalMemoryPool());
+    poolAllocation->setAubWritable(false, GraphicsAllocation::defaultBank);
+    poolAllocation->setTbxWritable(false, GraphicsAllocation::defaultBank);
+
+    flags |= CL_MEM_COPY_HOST_PTR;
+    auto dataToCopy = std::unique_ptr<unsigned char[]>(new unsigned char[size]);
+    dataToCopy[0] = 123;
+    cl_mem smallBuffer = clCreateBuffer(clContext, flags, size, dataToCopy.get(), &retVal);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    ASSERT_NE(smallBuffer, nullptr);
+    EXPECT_EQ(poolAllocator->bufferPools[0].mainStorage.get(), static_cast<MockBuffer *>(smallBuffer)->associatedMemObject);
+
+    EXPECT_TRUE(poolAllocation->isAubWritable(GraphicsAllocation::defaultBank));
+    EXPECT_TRUE(poolAllocation->isTbxWritable(GraphicsAllocation::defaultBank));
+
+    EXPECT_EQ(clReleaseMemObject(smallBuffer), CL_SUCCESS);
+    EXPECT_EQ(clReleaseContext(context), CL_SUCCESS);
+}
+
 using AggregatedSmallBuffersSubBufferApiTest = AggregatedSmallBuffersEnabledApiTest;
 
 TEST_F(AggregatedSmallBuffersSubBufferApiTest, givenBufferFromPoolWhenCreateSubBufferCalledThenItSucceeds) {

@@ -287,6 +287,8 @@ bool inline copyHostPointer(Buffer *buffer,
             return true;
         }
     } else {
+        memory->setAubWritable(true, GraphicsAllocation::defaultBank);
+        memory->setTbxWritable(true, GraphicsAllocation::defaultBank);
         memcpy_s(ptrOffset(memory->getUnderlyingBuffer(), buffer->getOffset()), size, hostPtr, size);
         return true;
     }
