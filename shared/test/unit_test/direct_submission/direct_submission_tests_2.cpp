@@ -171,8 +171,8 @@ HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenMiMemFenceSupportedWhenSys
 }
 
 HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenPciBarrierPtrSetWhenUnblockGpuThenWriteZero) {
-    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
     uint32_t pciBarrierMock = 1;
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
     directSubmission.pciBarrierPtr = &pciBarrierMock;
     EXPECT_TRUE(directSubmission.initialize(false));
 
@@ -182,8 +182,8 @@ HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenPciBarrierPtrSetWhenUnbloc
 }
 
 HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenMemoryFenceOverPciBarrierActiveWhenUnblockGpuThenPciBarrierIsNotWritten) {
-    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
     uint32_t pciBarrierMock = 0x1234u;
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
     directSubmission.pciBarrierPtr = &pciBarrierMock;
     EXPECT_TRUE(directSubmission.initialize(false));
 
@@ -210,9 +210,9 @@ HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenMemoryFenceOverPciBarrierA
     if (!miMemFenceSupported) {
         GTEST_SKIP();
     }
+    uint32_t pciBarrierMock = 0u;
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
     EXPECT_TRUE(directSubmission.initialize(false));
-    uint32_t pciBarrierMock = 0u;
     directSubmission.pciBarrierPtr = &pciBarrierMock;
     directSubmission.miMemFenceRequired = true;
     directSubmission.gpuVaForAdditionalSynchronizationWA = 0xDEADBEE0u;
@@ -231,9 +231,9 @@ HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenMemoryFenceOverPciBarrierA
 }
 
 HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenPciBarrierPtrAndAsyncRingBufferInFlightWhenDispatchCommandBufferThenMemoryFenceOverPciBarrierIsSelected) {
+    uint32_t pciBarrierMock = 0u;
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
     FlushStampTracker flushStamp(true);
-    uint32_t pciBarrierMock = 0u;
     directSubmission.pciBarrierPtr = &pciBarrierMock;
     directSubmission.gpuVaForAdditionalSynchronizationWA = 0xDEADBEE0u;
     EXPECT_TRUE(directSubmission.initialize(false));
@@ -252,9 +252,9 @@ HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenPciBarrierPtrAndAsyncRingB
 }
 
 HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenPciBarrierPtrAndAsyncRingBufferReadyWhenDispatchCommandBufferThenMemoryFenceOverPciBarrierIsDisabled) {
+    uint32_t pciBarrierMock = 0u;
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
     FlushStampTracker flushStamp(true);
-    uint32_t pciBarrierMock = 0u;
     directSubmission.pciBarrierPtr = &pciBarrierMock;
     directSubmission.gpuVaForAdditionalSynchronizationWA = 0xDEADBEE0u;
     EXPECT_TRUE(directSubmission.initialize(false));
@@ -284,8 +284,8 @@ HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenDebugFlagForcingMemoryFenc
 }
 
 HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenStaleMemoryFenceOverPciBarrierAndAsyncInFlightWhenStopRingBufferThenPciBarrierSkipped) {
-    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
     uint32_t pciBarrierMock = 0x1234u;
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
     directSubmission.pciBarrierPtr = &pciBarrierMock;
     directSubmission.gpuVaForAdditionalSynchronizationWA = 0xDEADBEE0u;
     EXPECT_TRUE(directSubmission.initialize(false));
@@ -304,8 +304,8 @@ HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenStaleMemoryFenceOverPciBar
 }
 
 HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenStaleMemoryFenceOverPciBarrierAndAsyncReadyWhenStopRingBufferThenPciBarrierNotWritten) {
-    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
     uint32_t pciBarrierMock = 0x1234u;
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
     directSubmission.pciBarrierPtr = &pciBarrierMock;
     directSubmission.gpuVaForAdditionalSynchronizationWA = 0xDEADBEE0u;
     EXPECT_TRUE(directSubmission.initialize(false));
@@ -319,9 +319,9 @@ HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenStaleMemoryFenceOverPciBar
 }
 
 HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenOverflowingQueueWorkCountAndAsyncInFlightWhenDispatchCommandBufferThenMemoryFenceOverPciBarrierIsAppliedDuringOverflowHandling) {
+    uint32_t pciBarrierMock = 0x1234u;
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
     FlushStampTracker flushStamp(true);
-    uint32_t pciBarrierMock = 0x1234u;
     directSubmission.pciBarrierPtr = &pciBarrierMock;
     directSubmission.gpuVaForAdditionalSynchronizationWA = 0xDEADBEE0u;
     EXPECT_TRUE(directSubmission.initialize(false));
@@ -343,9 +343,9 @@ HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenAsyncRingBufferBecomesInFl
     if (!miMemFenceSupported) {
         GTEST_SKIP();
     }
+    uint32_t pciBarrierMock = 0u;
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
     FlushStampTracker flushStamp(true);
-    uint32_t pciBarrierMock = 0u;
     directSubmission.pciBarrierPtr = &pciBarrierMock;
     directSubmission.gpuVaForAdditionalSynchronizationWA = 0xDEADBEE0u;
     EXPECT_TRUE(directSubmission.initialize(false));
