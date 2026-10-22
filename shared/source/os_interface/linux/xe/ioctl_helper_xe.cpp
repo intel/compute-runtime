@@ -2083,7 +2083,7 @@ bool IoctlHelperXe::isDeferBackingEnabledForSize(size_t allocationSize) const {
 
     auto memoryManager = static_cast<DrmMemoryManager *>(drm.getRootDeviceEnvironment().executionEnvironment.memoryManager.get());
     UNRECOVERABLE_IF(memoryManager == nullptr);
-    const uint32_t rootDeviceIndex = drm.getRootDeviceEnvironment().getRootDeviceIndex();
+    const uint32_t rootDeviceIndex = memoryManager->getRootDeviceIndex(&drm);
     return memoryManager->isDeferBackingMemoryPressureReached(rootDeviceIndex, allocationSize, thresholdPercent);
 }
 
