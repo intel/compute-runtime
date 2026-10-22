@@ -234,7 +234,6 @@ class SVMAllocsManager {
         SVMAllocsManager *svmAllocsManager = nullptr;
         MemoryManager *memoryManager = nullptr;
         bool enablePerformanceLogging = false;
-        bool requireUpdatingAllocsForIndirectAccess = false;
         bool usesSharedUsmReuseInfo = false;
         size_t allocationSizeAlignment = 1u;
         std::atomic_bool empty = true;

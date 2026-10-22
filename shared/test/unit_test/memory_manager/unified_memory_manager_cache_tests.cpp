@@ -235,7 +235,7 @@ TEST(SvmAllocationCacheSimpleTest, givenExportedAllocationWhenInsertingAllocatio
     EXPECT_TRUE(allocationCache.allocations.empty());
 }
 
-TEST(SvmAllocationCacheSimpleTest, givenAllocationsWhenGettingAllocationThenUpdateAllocIdIfBoolIsSet) {
+TEST(SvmAllocationCacheSimpleTest, givenAllocationsWhenGettingAllocationThenAllocIdIsUpdatedAndOnlyNewIdIsInAllocationsMap) {
     SVMAllocsManager::SvmAllocationCache allocationCache;
     MockMemoryManager memoryManager;
     MockSVMAllocsManager svmAllocsManager(&memoryManager);
@@ -255,41 +255,20 @@ TEST(SvmAllocationCacheSimpleTest, givenAllocationsWhenGettingAllocationThenUpda
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
     UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
-    {
-        allocationCache.requireUpdatingAllocsForIndirectAccess = false;
-        EXPECT_EQ(1u, svmAllocsManager.internalAllocationsMap.count(1u));
-        EXPECT_TRUE(allocationCache.insert(1u, ptr, &svmAllocData, SVMAllocsManager::SvmAllocationCache::CompletionCheckPolicy::notRequired));
-        EXPECT_EQ(1u, svmAllocsManager.internalAllocationsMap.count(1u));
-        auto reusedPtr = allocationCache.get(1u, unifiedMemoryProperties);
-        EXPECT_EQ(ptr, reusedPtr);
-        EXPECT_EQ(1u, svmAllocData.getAllocId());
-        EXPECT_EQ(1u, svmAllocsManager.allocationsCounter.load());
-        EXPECT_EQ(1u, svmAllocsManager.internalAllocationsMap.count(1u));
-        auto allocMapEntry = svmAllocsManager.internalAllocationsMap.find(1u);
-        EXPECT_EQ(&gpuGfxAllocation, allocMapEntry->second);
-        EXPECT_EQ(0u, svmAllocsManager.internalAllocationsMap.count(2u));
-        allocationCache.allocations.clear();
-        svmAllocsManager.internalAllocationsMap.clear();
-    }
 
-    {
-        svmAllocsManager.internalAllocationsMap.insert({svmAllocData.getAllocId(), &gpuGfxAllocation});
-        EXPECT_EQ(1u, svmAllocsManager.internalAllocationsMap.count(1u));
-        EXPECT_EQ(0u, svmAllocsManager.internalAllocationsMap.count(2u));
-        allocationCache.requireUpdatingAllocsForIndirectAccess = true;
-        EXPECT_TRUE(allocationCache.insert(1u, ptr, &svmAllocData, SVMAllocsManager::SvmAllocationCache::CompletionCheckPolicy::notRequired));
-        EXPECT_EQ(0u, svmAllocsManager.internalAllocationsMap.count(1u));
-        EXPECT_EQ(0u, svmAllocsManager.internalAllocationsMap.count(2u));
-        auto reusedPtr = allocationCache.get(1u, unifiedMemoryProperties);
-        EXPECT_EQ(ptr, reusedPtr);
-        EXPECT_EQ(2u, svmAllocData.getAllocId());
-        EXPECT_EQ(2u, svmAllocsManager.allocationsCounter.load());
-        EXPECT_EQ(0u, svmAllocsManager.internalAllocationsMap.count(1u));
-        EXPECT_EQ(1u, svmAllocsManager.internalAllocationsMap.count(2u));
-        auto allocMapEntry = svmAllocsManager.internalAllocationsMap.find(2u);
-        EXPECT_EQ(&gpuGfxAllocation, allocMapEntry->second);
-        allocationCache.allocations.clear();
-    }
+    EXPECT_EQ(1u, svmAllocsManager.internalAllocationsMap.count(1u));
+    EXPECT_TRUE(allocationCache.insert(1u, ptr, &svmAllocData, SVMAllocsManager::SvmAllocationCache::CompletionCheckPolicy::notRequired));
+    EXPECT_EQ(0u, svmAllocsManager.internalAllocationsMap.count(1u));
+    EXPECT_EQ(0u, svmAllocsManager.internalAllocationsMap.count(2u));
+    auto reusedPtr = allocationCache.get(1u, unifiedMemoryProperties);
+    EXPECT_EQ(ptr, reusedPtr);
+    EXPECT_EQ(2u, svmAllocData.getAllocId());
+    EXPECT_EQ(2u, svmAllocsManager.allocationsCounter.load());
+    EXPECT_EQ(0u, svmAllocsManager.internalAllocationsMap.count(1u));
+    EXPECT_EQ(1u, svmAllocsManager.internalAllocationsMap.count(2u));
+    auto allocMapEntry = svmAllocsManager.internalAllocationsMap.find(2u);
+    EXPECT_EQ(&gpuGfxAllocation, allocMapEntry->second);
+    allocationCache.allocations.clear();
 }
 
 TEST(SvmAllocationCacheSimpleTest, givenAllocationsInCacheWhenCallingTrimThenUseBlockingFreePolicy) {
@@ -510,7 +489,6 @@ HWTEST_F(SvmDeviceAllocationCacheTest, givenOclApiSpecificConfigAndProductHelper
         EXPECT_EQ(nullptr, svmManager->usmDeviceAllocationsCache);
         svmManager->initUsmAllocationsCaches(*device);
         ASSERT_NE(nullptr, svmManager->usmDeviceAllocationsCache);
-        EXPECT_EQ(csrType != 0, svmManager->usmDeviceAllocationsCache->requireUpdatingAllocsForIndirectAccess);
     }
 
     for (int32_t csrType = 0;
@@ -1337,6 +1315,21 @@ TEST_F(SvmDeviceAllocationCacheIndirectAccessTest, givenAllocationKeptResidentFo
     EXPECT_EQ(latestIndirectTaskCount, gpuAllocation->getTaskCount(contextId));
 }
 
+TEST_F(SvmDeviceAllocationCacheIndirectAccessTest, givenAllocationNoLongerResidentForIndirectAccessWhenReusedFromCacheThenNextIndirectSubmissionMakesItResident) {
+    gpuAllocation->updateResidencyTaskCount(GraphicsAllocation::objectNotResident, contextId);
+    *csr->getTagAddress() = latestIndirectTaskCount;
+    svmManager->freeSVMAlloc(ptr);
+    EXPECT_EQ(1u, svmManager->usmDeviceAllocationsCache->allocations.size());
+
+    auto reusedAllocation = svmManager->createUnifiedMemoryAllocation(allocationSize, *unifiedMemoryProperties);
+    EXPECT_EQ(ptr, reusedAllocation);
+
+    svmManager->makeIndirectAllocationsResident(*csr, latestIndirectTaskCount);
+    EXPECT_TRUE(gpuAllocation->isAlwaysResident(contextId));
+
+    svmManager->freeSVMAlloc(reusedAllocation);
+}
+
 TEST_F(SvmDeviceAllocationCacheTest, givenUsmReuseCleanerWhenTrimOldInCachesCalledThenOldAllocationsAreRemovedIfDeferredDeleterHasNoWork) {
     auto deviceFactory = std::make_unique<UltDeviceFactory>(1, 1);
     DebugManagerStateRestore restore;
@@ -1597,7 +1590,6 @@ HWTEST_F(SvmHostAllocationCacheTest, givenOclApiSpecificConfigAndProductHelperAn
         EXPECT_EQ(nullptr, svmManager->usmHostAllocationsCache);
         svmManager->initUsmAllocationsCaches(*device);
         ASSERT_NE(nullptr, svmManager->usmHostAllocationsCache);
-        EXPECT_EQ(csrType != 0, svmManager->usmHostAllocationsCache->requireUpdatingAllocsForIndirectAccess);
     }
 
     for (int32_t csrType = 0;
@@ -3053,7 +3045,7 @@ TEST_F(SvmSharedAllocationCacheTest, givenSharedReuseBudgetExceededWhenFreeingDe
     svmManager->cleanupUSMAllocCaches();
 }
 
-TEST_F(SvmSharedAllocationCacheTest, givenSharedAllocationCacheEnabledWhenSettingCommandStreamReceiverThenIndirectAccessFlagSetCorrectly) {
+TEST_F(SvmSharedAllocationCacheTest, givenSharedAllocationCacheEnabledWhenSettingCommandStreamReceiverThenCacheIsCreated) {
     auto deviceFactory = std::make_unique<UltDeviceFactory>(1, 1);
     auto device = deviceFactory->rootDevices[0];
 
@@ -3067,7 +3059,6 @@ TEST_F(SvmSharedAllocationCacheTest, givenSharedAllocationCacheEnabledWhenSettin
         auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager());
         svmManager->initUsmAllocationsCaches(*device);
         ASSERT_NE(nullptr, svmManager->usmSharedAllocationsCache);
-        EXPECT_EQ(csrType != 0, svmManager->usmSharedAllocationsCache->requireUpdatingAllocsForIndirectAccess);
     }
 }
 
