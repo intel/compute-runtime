@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -73,7 +73,7 @@ struct GlArbSyncEventTest : public ::testing::Test {
         executionEnvironment = platform()->peekExecutionEnvironment();
         executionEnvironment->memoryManager = std::make_unique<OsAgnosticMemoryManager>(*executionEnvironment);
         device = std::make_unique<MockClDevice>(MockDevice::create<MockDevice>(executionEnvironment, 0u));
-        ctx.reset(new MockContext);
+        ctx.reset(new MockContext(device.get()));
         cmdQ.reset(new MockCommandQueue(ctx.get(), device.get(), nullptr, false));
         sharing = new GlSharingFunctionsMock();
         ctx->setSharingFunctions(sharing);

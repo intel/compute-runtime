@@ -12,6 +12,7 @@
 
 #include "opencl/test/unit_test/command_queue/command_enqueue_fixture.h"
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
 namespace NEO {
@@ -21,7 +22,7 @@ struct EnqueueFillBufferFixture : public CommandEnqueueFixture {
     void setUp() {
         CommandEnqueueFixture::setUp();
 
-        BufferDefaults::context = new MockContext;
+        BufferDefaults::context = new MockContext(pClDevice);
 
         buffer = BufferHelper<>::create();
 
@@ -45,7 +46,6 @@ struct EnqueueFillBufferFixture : public CommandEnqueueFixture {
         parseCommands<FamilyType>(*pCmdQ);
     }
 
-    MockContext context;
     Buffer *buffer = nullptr;
     bool isHeaplessEnabled = false;
 };

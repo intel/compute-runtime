@@ -30,7 +30,7 @@ struct GetSizeRequiredBufferTest : public CommandEnqueueFixture,
 
     void SetUp() override {
         CommandEnqueueFixture::setUp();
-        BufferDefaults::context = new MockContext;
+        BufferDefaults::context = new MockContext(pClDevice);
         srcBuffer = BufferHelper<>::create();
         dstBuffer = BufferHelper<>::create();
         patternAllocation = context->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), EnqueueFillBufferTraits::patternSize});

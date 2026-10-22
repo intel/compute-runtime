@@ -48,7 +48,7 @@ struct EnqueueMapBufferTest : public ClDeviceFixture,
     void SetUp() override {
         ClDeviceFixture::setUp();
         CommandQueueFixture::setUp(pClDevice, 0);
-        BufferDefaults::context = new MockContext;
+        BufferDefaults::context = new MockContext(pClDevice);
 
         buffer = BufferHelper<BufferUseHostPtr<>>::create();
 

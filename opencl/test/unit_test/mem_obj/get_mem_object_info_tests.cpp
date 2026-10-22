@@ -32,7 +32,7 @@ class GetMemObjectInfo : public ::testing::Test, public PlatformFixture, public 
     void SetUp() override {
         PlatformFixture::setUp();
         ClDeviceFixture::setUp();
-        BufferDefaults::context = new MockContext;
+        BufferDefaults::context = new MockContext(pClDevice);
     }
 
     void TearDown() override {

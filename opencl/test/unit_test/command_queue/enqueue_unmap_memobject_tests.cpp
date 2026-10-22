@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,7 +34,7 @@ struct EnqueueUnmapMemObjTest : public ClDeviceFixture,
     void SetUp() override {
         ClDeviceFixture::setUp();
         CommandQueueFixture::setUp(pClDevice, 0);
-        BufferDefaults::context = new MockContext;
+        BufferDefaults::context = new MockContext(pClDevice);
         buffer = BufferHelper<BufferUseHostPtr<>>::create();
         mappedPtr = pCmdQ->enqueueMapBuffer(buffer, CL_TRUE, CL_MAP_READ, 0, 8, 0, nullptr, nullptr, retVal);
     }

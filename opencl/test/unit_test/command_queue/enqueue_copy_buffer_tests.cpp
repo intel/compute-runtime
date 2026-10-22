@@ -194,7 +194,7 @@ HWTEST_F(EnqueueCopyBufferTest, GivenGpuHangAndBlockingCallWhenCopyingBufferThen
     std::unique_ptr<ClDevice> device(new MockClDevice{MockClDeviceFactory::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
     cl_queue_properties props = {};
 
-    MockCommandQueueHw<FamilyType> mockCommandQueueHw(&context, device.get(), &props);
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
     mockCommandQueueHw.waitForAllEnginesReturnValue = WaitStatus::gpuHang;
 
     const auto enqueueResult = EnqueueCopyBufferHelper::enqueueCopyBuffer(

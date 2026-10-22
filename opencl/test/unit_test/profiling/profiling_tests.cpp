@@ -44,7 +44,7 @@ struct ProfilingTests : public CommandEnqueueFixture,
         CommandEnqueueFixture::setUp(CL_QUEUE_PROFILING_ENABLE);
 
         program = ReleaseableObjectPtr<MockProgram>(new MockProgram(toClDeviceVector(*pClDevice)));
-        program->setContext(&ctx);
+        program->setContext(context);
 
         kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 32;
         kernelInfo.setCrossThreadDataSize(sizeof(crossThreadData));
@@ -63,7 +63,6 @@ struct ProfilingTests : public CommandEnqueueFixture,
     ReleaseableObjectPtr<MockProgram> program;
 
     MockKernelInfo kernelInfo;
-    MockContext ctx;
 
     uint32_t kernelIsa[32];
     uint32_t crossThreadData[32];

@@ -35,16 +35,18 @@ struct EventTest
 
     void SetUp() override {
         ClDeviceFixture::setUp();
-        CommandQueueFixture::setUp(&mockContext, pClDevice, 0);
+        mockContext = std::make_unique<MockContext>(pClDevice);
+        CommandQueueFixture::setUp(mockContext.get(), pClDevice, 0);
         CommandStreamFixture::setUp(pCmdQ);
     }
 
     void TearDown() override {
         CommandStreamFixture::tearDown();
         CommandQueueFixture::tearDown();
+        mockContext.reset();
         ClDeviceFixture::tearDown();
     }
-    MockContext mockContext;
+    std::unique_ptr<MockContext> mockContext;
 };
 
 template <typename GfxFamily>

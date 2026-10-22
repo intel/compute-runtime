@@ -420,7 +420,7 @@ TEST_F(EventTest, WhenGettingClEventContextThenCorrectValueIsReturned) {
     ASSERT_EQ(CL_SUCCESS, result);
     EXPECT_EQ(sizeof(context), sizeReturned);
 
-    cl_context qCtx = (cl_context)&mockContext;
+    cl_context qCtx = mockContext.get();
     EXPECT_EQ(qCtx, context);
 
     delete pEvent;
@@ -1278,7 +1278,7 @@ HWTEST_F(EventTest, givenVirtualEventWhenCommandSubmittedThenLockCsrOccurs) {
                                                                             taskLevel, taskCount) {}
     };
 
-    MockKernelWithInternals kernel(mockContext);
+    MockKernelWithInternals kernel(*mockContext);
 
     IndirectHeap *ih1 = nullptr, *ih2 = nullptr, *ih3 = nullptr;
     pCmdQ->allocateHeapMemory(IndirectHeap::Type::dynamicState, 1, ih1);
@@ -1646,7 +1646,7 @@ TEST_F(EventTest, givenCmdQueueWithoutProfilingWhenIsCpuProfilingIsCalledThenFal
 }
 
 TEST_F(EventTest, givenOutEventWhenBlockingEnqueueHandledOnCpuThenUpdateTaskCountAndFlushStampFromCmdQ) {
-    std::unique_ptr<Image> image(ImageHelperUlt<Image1dDefaults>::create(&mockContext));
+    std::unique_ptr<Image> image(ImageHelperUlt<Image1dDefaults>::create(mockContext.get()));
     EXPECT_TRUE(image->mappingOnCpuAllowed());
 
     pCmdQ->flushStamp->setStamp(10);
@@ -1667,7 +1667,7 @@ TEST_F(EventTest, givenOutEventWhenBlockingEnqueueHandledOnCpuThenUpdateTaskCoun
 
 TEST_F(EventTest, givenCmdQueueWithProfilingWhenIsCpuProfilingIsCalledThenTrueIsReturned) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
-    std::unique_ptr<MockCommandQueue> pCmdQ(new MockCommandQueue(&mockContext, pClDevice, props, false));
+    std::unique_ptr<MockCommandQueue> pCmdQ(new MockCommandQueue(mockContext.get(), pClDevice, props, false));
 
     MockEvent<Event> ev(pCmdQ.get(), CL_COMMAND_MAP_IMAGE, CompletionStamp::notReady, CompletionStamp::notReady);
     bool cpuProfiling = ev.isCPUProfilingPath() != 0;
@@ -1746,7 +1746,7 @@ TEST(EventCallback, GivenEventWithCallbacksOnWhenPeekingHasCallbacksThenReturnTr
 }
 
 TEST_F(EventTest, GivenNotCompletedEventWhenAddingChildThenNumEventsBlockingThisIsGreaterThanZero) {
-    VirtualEvent virtualEvent(pCmdQ, &mockContext);
+    VirtualEvent virtualEvent(pCmdQ, mockContext.get());
     {
         Event event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
         event.addChild(virtualEvent);
@@ -1790,7 +1790,7 @@ HWTEST_F(EventTest, givenEventWithNotReadyTaskLevelWhenUnblockedThenGetTaskLevel
 }
 
 TEST_F(EventTest, GivenCompletedEventWhenAddingChildThenNumEventsBlockingThisIsZero) {
-    VirtualEvent virtualEvent(pCmdQ, &mockContext);
+    VirtualEvent virtualEvent(pCmdQ, mockContext.get());
     {
         Event event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
         event.setStatus(CL_COMPLETE);

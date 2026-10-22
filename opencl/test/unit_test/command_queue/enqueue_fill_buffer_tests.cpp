@@ -95,7 +95,7 @@ HWTEST2_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenGpgpuWalkerIsCorrect, 
 }
 
 HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenIndirectDataGetsAdded) {
-    auto patternAllocation = context.getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{context.getDevice(0)->getRootDeviceIndex(), EnqueueFillBufferTraits::patternSize});
+    auto patternAllocation = context->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{context->getDevice(0)->getRootDeviceIndex(), EnqueueFillBufferTraits::patternSize});
 
     auto dshBefore = pDSH->getUsed();
     auto iohBefore = pIOH->getUsed();
@@ -108,7 +108,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenIndirectDataGetsAdded) 
     ASSERT_NE(nullptr, &builder);
 
     BuiltIn::OpParams dc;
-    MemObj patternMemObj(&this->context, 0, {}, 0, 0, alignUp(EnqueueFillBufferTraits::patternSize, 4), patternAllocation->getUnderlyingBuffer(),
+    MemObj patternMemObj(this->context, 0, {}, 0, 0, alignUp(EnqueueFillBufferTraits::patternSize, 4), patternAllocation->getUnderlyingBuffer(),
                          patternAllocation->getUnderlyingBuffer(), GraphicsAllocationHelper::toMultiGraphicsAllocation(patternAllocation), false, false, true);
     dc.srcMemObj = &patternMemObj;
     dc.dstMemObj = buffer;
@@ -139,11 +139,11 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenIndirectDataGetsAdded) 
         EXPECT_NE(sshBefore, pSSH->getUsed());
     }
 
-    context.getMemoryManager()->freeGraphicsMemory(patternAllocation);
+    context->getMemoryManager()->freeGraphicsMemory(patternAllocation);
 }
 
 HWTEST_F(EnqueueFillBufferCmdTests, GivenRightLeftoverWhenFillingBufferThenFillBufferRightLeftoverKernelUsed) {
-    auto patternAllocation = context.getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{context.getDevice(0)->getRootDeviceIndex(), EnqueueFillBufferTraits::patternSize});
+    auto patternAllocation = context->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{context->getDevice(0)->getRootDeviceIndex(), EnqueueFillBufferTraits::patternSize});
 
     EnqueueFillBufferHelper<>::enqueueFillBuffer(pCmdQ, buffer);
 
@@ -152,7 +152,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, GivenRightLeftoverWhenFillingBufferThenFillB
     ASSERT_NE(nullptr, &builder);
 
     BuiltIn::OpParams dc;
-    MemObj patternMemObj(&this->context, 0, {}, 0, 0, alignUp(EnqueueFillBufferTraits::patternSize, 4), patternAllocation->getUnderlyingBuffer(),
+    MemObj patternMemObj(this->context, 0, {}, 0, 0, alignUp(EnqueueFillBufferTraits::patternSize, 4), patternAllocation->getUnderlyingBuffer(),
                          patternAllocation->getUnderlyingBuffer(), GraphicsAllocationHelper::toMultiGraphicsAllocation(patternAllocation), false, false, true);
     dc.srcMemObj = &patternMemObj;
     dc.dstMemObj = buffer;
@@ -166,11 +166,11 @@ HWTEST_F(EnqueueFillBufferCmdTests, GivenRightLeftoverWhenFillingBufferThenFillB
     auto kernel = mdi.begin()->getKernel();
     EXPECT_STREQ("FillBufferRightLeftover", kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str());
 
-    context.getMemoryManager()->freeGraphicsMemory(patternAllocation);
+    context->getMemoryManager()->freeGraphicsMemory(patternAllocation);
 }
 
 HWTEST_F(EnqueueFillBufferCmdTests, GivenMiddleWhenFillingBufferThenFillBufferMiddleKernelUsed) {
-    auto patternAllocation = context.getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{context.getDevice(0)->getRootDeviceIndex(), EnqueueFillBufferTraits::patternSize});
+    auto patternAllocation = context->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{context->getDevice(0)->getRootDeviceIndex(), EnqueueFillBufferTraits::patternSize});
 
     EnqueueFillBufferHelper<>::enqueueFillBuffer(pCmdQ, buffer);
 
@@ -179,7 +179,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, GivenMiddleWhenFillingBufferThenFillBufferMi
     ASSERT_NE(nullptr, &builder);
 
     BuiltIn::OpParams dc;
-    MemObj patternMemObj(&this->context, 0, {}, 0, 0, alignUp(EnqueueFillBufferTraits::patternSize, 4), patternAllocation->getUnderlyingBuffer(),
+    MemObj patternMemObj(this->context, 0, {}, 0, 0, alignUp(EnqueueFillBufferTraits::patternSize, 4), patternAllocation->getUnderlyingBuffer(),
                          patternAllocation->getUnderlyingBuffer(), GraphicsAllocationHelper::toMultiGraphicsAllocation(patternAllocation), false, false, true);
     dc.srcMemObj = &patternMemObj;
     dc.dstMemObj = buffer;
@@ -193,11 +193,11 @@ HWTEST_F(EnqueueFillBufferCmdTests, GivenMiddleWhenFillingBufferThenFillBufferMi
     auto kernel = mdi.begin()->getKernel();
     EXPECT_STREQ("FillBufferMiddle", kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str());
 
-    context.getMemoryManager()->freeGraphicsMemory(patternAllocation);
+    context->getMemoryManager()->freeGraphicsMemory(patternAllocation);
 }
 
 HWTEST_F(EnqueueFillBufferCmdTests, GivenLeftLeftoverWhenFillingBufferThenFillBufferLeftLeftoverKernelUsed) {
-    auto patternAllocation = context.getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{context.getDevice(0)->getRootDeviceIndex(), EnqueueFillBufferTraits::patternSize});
+    auto patternAllocation = context->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{context->getDevice(0)->getRootDeviceIndex(), EnqueueFillBufferTraits::patternSize});
 
     EnqueueFillBufferHelper<>::enqueueFillBuffer(pCmdQ, buffer);
 
@@ -206,7 +206,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, GivenLeftLeftoverWhenFillingBufferThenFillBu
     ASSERT_NE(nullptr, &builder);
 
     BuiltIn::OpParams dc;
-    MemObj patternMemObj(&this->context, 0, {}, 0, 0, alignUp(EnqueueFillBufferTraits::patternSize, 4), patternAllocation->getUnderlyingBuffer(),
+    MemObj patternMemObj(this->context, 0, {}, 0, 0, alignUp(EnqueueFillBufferTraits::patternSize, 4), patternAllocation->getUnderlyingBuffer(),
                          patternAllocation->getUnderlyingBuffer(), GraphicsAllocationHelper::toMultiGraphicsAllocation(patternAllocation), false, false, true);
     dc.srcMemObj = &patternMemObj;
     dc.dstMemObj = buffer;
@@ -220,7 +220,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, GivenLeftLeftoverWhenFillingBufferThenFillBu
     auto kernel = mdi.begin()->getKernel();
     EXPECT_STREQ("FillBufferLeftLeftover", kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str());
 
-    context.getMemoryManager()->freeGraphicsMemory(patternAllocation);
+    context->getMemoryManager()->freeGraphicsMemory(patternAllocation);
 }
 
 HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenL3ProgrammingIsCorrect) {
@@ -294,7 +294,7 @@ HWTEST2_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenMediaVfeStateIsSetCorr
 }
 
 HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenArgumentZeroShouldMatchDestAddress) {
-    auto patternAllocation = context.getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{context.getDevice(0)->getRootDeviceIndex(), EnqueueFillBufferTraits::patternSize});
+    auto patternAllocation = context->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{context->getDevice(0)->getRootDeviceIndex(), EnqueueFillBufferTraits::patternSize});
 
     enqueueFillBuffer<FamilyType>();
 
@@ -305,7 +305,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenArgumentZeroShouldMatch
     ASSERT_NE(nullptr, &builder);
 
     BuiltIn::OpParams dc;
-    MemObj patternMemObj(&this->context, 0, {}, 0, 0, alignUp(EnqueueFillBufferTraits::patternSize, 4), patternAllocation->getUnderlyingBuffer(),
+    MemObj patternMemObj(this->context, 0, {}, 0, 0, alignUp(EnqueueFillBufferTraits::patternSize, 4), patternAllocation->getUnderlyingBuffer(),
                          patternAllocation->getUnderlyingBuffer(), GraphicsAllocationHelper::toMultiGraphicsAllocation(patternAllocation), false, false, true);
     dc.srcMemObj = &patternMemObj;
     dc.dstMemObj = buffer;
@@ -326,11 +326,11 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenArgumentZeroShouldMatch
         EXPECT_TRUE(memoryEqualsPointer(pArgument, static_cast<uintptr_t>(ptrOffset(buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress(), buffer->getOffset()))));
     }
 
-    context.getMemoryManager()->freeGraphicsMemory(patternAllocation);
+    context->getMemoryManager()->freeGraphicsMemory(patternAllocation);
 }
 
 HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenArgumentTwoShouldMatchPatternPtr) {
-    auto patternAllocation = context.getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{context.getDevice(0)->getRootDeviceIndex(), EnqueueFillBufferTraits::patternSize});
+    auto patternAllocation = context->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{context->getDevice(0)->getRootDeviceIndex(), EnqueueFillBufferTraits::patternSize});
 
     enqueueFillBuffer<FamilyType>();
 
@@ -340,7 +340,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenArgumentTwoShouldMatchP
     ASSERT_NE(nullptr, &builder);
 
     BuiltIn::OpParams dc;
-    MemObj patternMemObj(&this->context, 0, {}, 0, 0, alignUp(EnqueueFillBufferTraits::patternSize, 4), patternAllocation->getUnderlyingBuffer(),
+    MemObj patternMemObj(this->context, 0, {}, 0, 0, alignUp(EnqueueFillBufferTraits::patternSize, 4), patternAllocation->getUnderlyingBuffer(),
                          patternAllocation->getUnderlyingBuffer(), GraphicsAllocationHelper::toMultiGraphicsAllocation(patternAllocation), false, false, true);
     dc.srcMemObj = &patternMemObj;
     dc.dstMemObj = buffer;
@@ -361,7 +361,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenArgumentTwoShouldMatchP
         EXPECT_FALSE(memoryZeroed(pArgument, sizeof(void *)));
     }
 
-    context.getMemoryManager()->freeGraphicsMemory(patternAllocation);
+    context->getMemoryManager()->freeGraphicsMemory(patternAllocation);
 }
 
 HWTEST2_F(EnqueueFillBufferCmdTests, WhenFillingBufferStatelessHeaplessThenCorrectKernelIsUsed, HeaplessSupport) {
@@ -369,7 +369,7 @@ HWTEST2_F(EnqueueFillBufferCmdTests, WhenFillingBufferStatelessHeaplessThenCorre
         GTEST_SKIP();
     }
 
-    auto patternAllocation = context.getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{context.getDevice(0)->getRootDeviceIndex(), EnqueueFillBufferTraits::patternSize});
+    auto patternAllocation = context->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{context->getDevice(0)->getRootDeviceIndex(), EnqueueFillBufferTraits::patternSize});
 
     // Extract the kernel used
     auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::fillBuffer, BuiltIn::bindlessImageStatelessBuffer,
@@ -377,7 +377,7 @@ HWTEST2_F(EnqueueFillBufferCmdTests, WhenFillingBufferStatelessHeaplessThenCorre
     ASSERT_NE(nullptr, &builder);
 
     BuiltIn::OpParams dc;
-    MemObj patternMemObj(&this->context, 0, {}, 0, 0, alignUp(EnqueueFillBufferTraits::patternSize, 4), patternAllocation->getUnderlyingBuffer(),
+    MemObj patternMemObj(this->context, 0, {}, 0, 0, alignUp(EnqueueFillBufferTraits::patternSize, 4), patternAllocation->getUnderlyingBuffer(),
                          patternAllocation->getUnderlyingBuffer(), GraphicsAllocationHelper::toMultiGraphicsAllocation(patternAllocation), false, false, true);
     dc.srcMemObj = &patternMemObj;
     dc.dstMemObj = buffer;
@@ -407,11 +407,11 @@ HWTEST2_F(EnqueueFillBufferCmdTests, WhenFillingBufferStatelessHeaplessThenCorre
         EXPECT_EQ(8u, scratchPointerAddress.pointerSize);
     }
 
-    context.getMemoryManager()->freeGraphicsMemory(patternAllocation);
+    context->getMemoryManager()->freeGraphicsMemory(patternAllocation);
 }
 
 HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferStatelessThenStatelessKernelIsUsed) {
-    auto patternAllocation = context.getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{context.getDevice(0)->getRootDeviceIndex(), EnqueueFillBufferTraits::patternSize});
+    auto patternAllocation = context->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{context->getDevice(0)->getRootDeviceIndex(), EnqueueFillBufferTraits::patternSize});
 
     // Extract the kernel used
     auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::fillBuffer,
@@ -420,7 +420,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferStatelessThenStatelessKerne
     ASSERT_NE(nullptr, &builder);
 
     BuiltIn::OpParams dc;
-    MemObj patternMemObj(&this->context, 0, {}, 0, 0, alignUp(EnqueueFillBufferTraits::patternSize, 4), patternAllocation->getUnderlyingBuffer(),
+    MemObj patternMemObj(this->context, 0, {}, 0, 0, alignUp(EnqueueFillBufferTraits::patternSize, 4), patternAllocation->getUnderlyingBuffer(),
                          patternAllocation->getUnderlyingBuffer(), GraphicsAllocationHelper::toMultiGraphicsAllocation(patternAllocation), false, false, true);
     dc.srcMemObj = &patternMemObj;
     dc.dstMemObj = buffer;
@@ -436,7 +436,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferStatelessThenStatelessKerne
     EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelAttributes.supportsBuffersBiggerThan4Gb());
     EXPECT_FALSE(kernel->getKernelInfo().getArgDescriptorAt(0).as<ArgDescPointer>().isPureStateful());
 
-    context.getMemoryManager()->freeGraphicsMemory(patternAllocation);
+    context->getMemoryManager()->freeGraphicsMemory(patternAllocation);
 }
 
 HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenPatternShouldBeCopied) {
@@ -607,7 +607,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, givenEnqueueFillBufferWhenPatternAllocationI
 }
 
 HWTEST_F(EnqueueFillBufferCmdTests, whenFillingBufferThenUseGpuAddressForPatchingOfPatternAllocation) {
-    auto patternAllocation = context.getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{context.getDevice(0)->getRootDeviceIndex(), EnqueueFillBufferTraits::patternSize});
+    auto patternAllocation = context->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{context->getDevice(0)->getRootDeviceIndex(), EnqueueFillBufferTraits::patternSize});
 
     // Set gpuBaseAddress and offset so gpuAddress != gpuAddressToPatch
     if (0u == patternAllocation->getGpuBaseAddress()) {
@@ -620,7 +620,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, whenFillingBufferThenUseGpuAddressForPatchin
     ASSERT_NE(nullptr, &builder);
 
     BuiltIn::OpParams dc;
-    MemObj patternMemObj(&this->context, 0, {}, 0, 0, alignUp(EnqueueFillBufferTraits::patternSize, 4), patternAllocation->getUnderlyingBuffer(),
+    MemObj patternMemObj(this->context, 0, {}, 0, 0, alignUp(EnqueueFillBufferTraits::patternSize, 4), patternAllocation->getUnderlyingBuffer(),
                          patternAllocation->getUnderlyingBuffer(), GraphicsAllocationHelper::toMultiGraphicsAllocation(patternAllocation), false, false, true);
     dc.srcMemObj = &patternMemObj;
     dc.dstMemObj = buffer;
@@ -636,7 +636,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, whenFillingBufferThenUseGpuAddressForPatchin
     const auto &patternArg = kernel->getKernelArguments().at(patternArgIndex);
     EXPECT_EQ(patternAllocation->getGpuAddressToPatch(), reinterpret_cast<uint64_t>(patternArg.value));
 
-    context.getMemoryManager()->freeGraphicsMemory(patternAllocation);
+    context->getMemoryManager()->freeGraphicsMemory(patternAllocation);
 }
 
 struct EnqueueFillBufferHw : public ::testing::Test {
