@@ -268,3 +268,7 @@ CRITEST_F(CriProductHelper, givenCriWhenAskingForRegularCmdListDualStreamCopyOff
     debugManager.flags.OverrideDualStreamCopyOffloadForRegularSupport.set(1);
     EXPECT_TRUE(productHelper->isDualStreamCopyOffloadForRegularCmdListSupported());
 }
+
+CRITEST_F(CriProductHelper, givenCriWhenAskingIfDirectSubmissionContextGroupIdleDetectionIsEnabledThenFalseReturned) {
+    EXPECT_FALSE(productHelper->isDirectSubmissionContextGroupIdleDetectionEnabled());
+}

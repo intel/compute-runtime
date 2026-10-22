@@ -53,6 +53,11 @@ void DirectSubmissionController::registerDirectSubmission(CommandStreamReceiver 
     std::lock_guard<std::mutex> lock(directSubmissionsMutex);
     directSubmissions.emplace(csr, DirectSubmissionState());
     this->overrideDirectSubmissionTimeouts(csr->getProductHelper());
+
+    if (debugManager.flags.DirectSubmissionControllerContextGroupIdleDetection.get() == -1 &&
+        !csr->getProductHelper().isDirectSubmissionContextGroupIdleDetectionEnabled()) {
+        isCsrsContextGroupIdleDetectionEnabled = false;
+    }
 }
 
 void DirectSubmissionController::overrideDirectSubmissionTimeouts(const ProductHelper &productHelper) {

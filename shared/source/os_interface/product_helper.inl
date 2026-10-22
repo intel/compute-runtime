@@ -1064,6 +1064,11 @@ bool ProductHelperHw<gfxProduct>::checkBcsForDirectSubmissionStop() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isDirectSubmissionContextGroupIdleDetectionEnabled() const {
+    return true;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::shouldRegisterEnqueuedWalkerWithProfiling() const {
     return false;
 }

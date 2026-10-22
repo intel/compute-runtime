@@ -266,6 +266,7 @@ class ProductHelper {
     virtual bool isNonCoherentTimestampsModeEnabled() const = 0;
     virtual bool isPackedCopyFormatSupported() const = 0;
     virtual bool checkBcsForDirectSubmissionStop() const = 0;
+    virtual bool isDirectSubmissionContextGroupIdleDetectionEnabled() const = 0;
     virtual bool shouldRegisterEnqueuedWalkerWithProfiling() const = 0;
     virtual bool isInterruptSupported(const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual bool isDeviceCapsReaderSupported() const = 0;

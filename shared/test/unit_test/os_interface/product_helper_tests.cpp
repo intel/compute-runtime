@@ -1368,6 +1368,10 @@ HWTEST2_F(ProductHelperTest, givenIsaSizeExceedingDefaultLimitWhenGettingIsaPref
     EXPECT_EQ(static_cast<uint32_t>(MemoryConstants::kiloByte), productHelper->getIsaPrefetchSize(isaSize));
 }
 
+HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingIfDirectSubmissionContextGroupIdleDetectionIsEnabledThenTrueReturned) {
+    EXPECT_TRUE(productHelper->isDirectSubmissionContextGroupIdleDetectionEnabled());
+}
+
 HWTEST_F(ProductHelperTest, givenIsaSizeSmallerThanDefaultLimitWhenGettingIsaPrefetchSizeThenIsaSizeIsReturned) {
     constexpr uint32_t isaSize = MemoryConstants::kiloByte / 2;
 

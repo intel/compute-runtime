@@ -15,6 +15,7 @@
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_ostime.h"
+#include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/direct_submission/direct_submission_controller_mock.h"
 
@@ -1005,6 +1006,40 @@ TEST(DirectSubmissionIdleDetectionWithContextGroupTest, givenDirectSubmissionCon
             EXPECT_TRUE(controller.isCsrsContextGroupIdleDetectionEnabled);
         }
     }
+}
+
+TEST(DirectSubmissionIdleDetectionWithContextGroupTest, givenProductHelperDisablingContextGroupIdleDetectionWhenRegisteringCsrThenDebugFlagOverridesProductDefault) {
+    DebugManagerStateRestore restorer;
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+    executionEnvironment.initializeMemoryManager();
+    auto productHelper = new MockProductHelper();
+    productHelper->isDirectSubmissionContextGroupIdleDetectionEnabledResult = false;
+    executionEnvironment.rootDeviceEnvironments[0]->productHelper.reset(productHelper);
+    MockCommandStreamReceiver csr(executionEnvironment, 0, DeviceBitfield(1));
+
+    for (auto contextGroupIdleDetectionState : {-1, 0, 1}) {
+        debugManager.flags.DirectSubmissionControllerContextGroupIdleDetection.set(contextGroupIdleDetectionState);
+
+        DirectSubmissionControllerMock controller;
+        controller.registerDirectSubmission(&csr);
+        EXPECT_EQ(1 == contextGroupIdleDetectionState, controller.isCsrsContextGroupIdleDetectionEnabled);
+        controller.unregisterDirectSubmission(&csr);
+    }
+}
+
+TEST(DirectSubmissionIdleDetectionWithContextGroupTest, givenProductHelperEnablingContextGroupIdleDetectionWhenRegisteringCsrThenContextGroupIdleDetectionStaysEnabled) {
+    DebugManagerStateRestore restorer;
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+    executionEnvironment.initializeMemoryManager();
+    executionEnvironment.rootDeviceEnvironments[0]->productHelper.reset(new MockProductHelper());
+    MockCommandStreamReceiver csr(executionEnvironment, 0, DeviceBitfield(1));
+
+    DirectSubmissionControllerMock controller;
+    controller.registerDirectSubmission(&csr);
+    EXPECT_TRUE(controller.isCsrsContextGroupIdleDetectionEnabled);
+    controller.unregisterDirectSubmission(&csr);
 }
 
 class MockContextGroupIdleDetectionCsr : public MockCommandStreamReceiver {

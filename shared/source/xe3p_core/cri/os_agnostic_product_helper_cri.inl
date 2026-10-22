@@ -186,4 +186,9 @@ bool ProductHelperHw<gfxProduct>::isWriteSplitRequired(bool isDstSystemOrRemoteM
     }
 }
 
+template <>
+bool ProductHelperHw<gfxProduct>::isDirectSubmissionContextGroupIdleDetectionEnabled() const {
+    return false;
+}
+
 } // namespace NEO
