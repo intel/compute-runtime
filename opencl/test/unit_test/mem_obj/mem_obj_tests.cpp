@@ -11,6 +11,7 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
@@ -201,7 +202,7 @@ TEST(MemObj, givenNotUsedGraphicsAllocationWhenMemObjDestroysAllocationAsyncThen
     MockContext context;
     MockMemoryManager memoryManager(*context.getDevice(0)->getExecutionEnvironment());
 
-    context.memoryManager = &memoryManager;
+    VariableBackup<MemoryManager *> memoryManagerBackup(&context.memoryManager, &memoryManager);
 
     auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{context.getDevice(0)->getRootDeviceIndex(), MemoryConstants::pageSize});
     auto memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_COPY_HOST_PTR, 0, 0, &context.getDevice(0)->getDevice());
@@ -219,7 +220,7 @@ TEST(MemObj, givenMemoryManagerWithoutDeviceWhenMemObjDestroysAllocationAsyncThe
     MockContext context;
     MockMemoryManager memoryManager(*context.getDevice(0)->getExecutionEnvironment());
 
-    context.memoryManager = &memoryManager;
+    VariableBackup<MemoryManager *> memoryManagerBackup(&context.memoryManager, &memoryManager);
 
     auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{context.getDevice(0)->getRootDeviceIndex(), MemoryConstants::pageSize});
     auto memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_COPY_HOST_PTR, 0, 0, &context.getDevice(0)->getDevice());
@@ -237,7 +238,7 @@ TEST(MemObj, givenMemObjAndPointerToObjStorageWithProperCommandWhenCheckIfMemTra
     MockContext context;
     MockMemoryManager memoryManager(*context.getDevice(0)->getExecutionEnvironment());
 
-    context.memoryManager = &memoryManager;
+    VariableBackup<MemoryManager *> memoryManagerBackup(&context.memoryManager, &memoryManager);
     auto memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_COPY_HOST_PTR, 0, 0, &context.getDevice(0)->getDevice());
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_COPY_HOST_PTR, 0,
                   MemoryConstants::pageSize, nullptr, nullptr, 0, true, false, false);
@@ -265,7 +266,7 @@ TEST(MemObj, givenMemObjAndPointerToObjStorageBadCommandWhenCheckIfMemTransferRe
     MockContext context;
     MockMemoryManager memoryManager(*context.getDevice(0)->getExecutionEnvironment());
 
-    context.memoryManager = &memoryManager;
+    VariableBackup<MemoryManager *> memoryManagerBackup(&context.memoryManager, &memoryManager);
     auto memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_COPY_HOST_PTR, 0, 0, &context.getDevice(0)->getDevice());
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_COPY_HOST_PTR, 0,
                   MemoryConstants::pageSize, nullptr, nullptr, 0, true, false, false);
@@ -278,7 +279,7 @@ TEST(MemObj, givenMemObjAndPointerToDifferentStorageAndProperCommandWhenCheckIfM
     MockContext context;
     MockMemoryManager memoryManager(*context.getDevice(0)->getExecutionEnvironment());
 
-    context.memoryManager = &memoryManager;
+    VariableBackup<MemoryManager *> memoryManagerBackup(&context.memoryManager, &memoryManager);
     auto memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_COPY_HOST_PTR, 0, 0, &context.getDevice(0)->getDevice());
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_COPY_HOST_PTR, 0,
                   MemoryConstants::pageSize, nullptr, nullptr, 0, true, false, false);
@@ -318,7 +319,7 @@ TEST(MemObj, givenCompressedGmmWhenAskingForMappingOnCpuThenDisallow) {
     MockContext context;
     MockMemoryManager memoryManager(*context.getDevice(0)->getExecutionEnvironment());
 
-    context.memoryManager = &memoryManager;
+    VariableBackup<MemoryManager *> memoryManagerBackup(&context.memoryManager, &memoryManager);
 
     auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{context.getDevice(0)->getRootDeviceIndex(), MemoryConstants::pageSize});
     GmmRequirements gmmRequirements{};
@@ -342,7 +343,7 @@ TEST(MemObj, givenDefaultWhenAskedForCpuMappingThenReturnTrue) {
     MockContext context;
     MockMemoryManager memoryManager(*context.getDevice(0)->getExecutionEnvironment());
 
-    context.memoryManager = &memoryManager;
+    VariableBackup<MemoryManager *> memoryManagerBackup(&context.memoryManager, &memoryManager);
 
     auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{context.getDevice(0)->getRootDeviceIndex(), MemoryConstants::pageSize});
     auto memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_COPY_HOST_PTR, 0, 0, &context.getDevice(0)->getDevice());
@@ -365,7 +366,7 @@ TEST(MemObj, givenCpuAccessNotAllowedWhenAskedForCpuMappingThenReturnFalse) {
     MockContext context;
     MockMemoryManager memoryManager(*context.getDevice(0)->getExecutionEnvironment());
 
-    context.memoryManager = &memoryManager;
+    VariableBackup<MemoryManager *> memoryManagerBackup(&context.memoryManager, &memoryManager);
 
     auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{context.getDevice(0)->getRootDeviceIndex(), MemoryConstants::pageSize});
     auto memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_COPY_HOST_PTR, 0, 0, &context.getDevice(0)->getDevice());
@@ -388,7 +389,7 @@ TEST(MemObj, givenNonCpuAccessibleMemoryWhenAskingForMappingOnCpuThenDisallow) {
     MockContext context;
     MockMemoryManager memoryManager(*context.getDevice(0)->getExecutionEnvironment());
 
-    context.memoryManager = &memoryManager;
+    VariableBackup<MemoryManager *> memoryManagerBackup(&context.memoryManager, &memoryManager);
 
     auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{context.getDevice(0)->getRootDeviceIndex(), MemoryConstants::pageSize});
     GmmRequirements gmmRequirements{};
@@ -407,7 +408,7 @@ TEST(MemObj, givenNonCpuAccessibleMemoryWhenAskingForMappingOnCpuThenDisallow) {
 TEST(MemObj, givenMultipleMemObjectsWithReusedGraphicsAllocationWhenDestroyedThenFreeAllocationOnce) {
     MockContext context;
     MockMemoryManager memoryManager(*context.getDevice(0)->getExecutionEnvironment());
-    context.memoryManager = &memoryManager;
+    VariableBackup<MemoryManager *> memoryManagerBackup(&context.memoryManager, &memoryManager);
 
     auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{context.getDevice(0)->getRootDeviceIndex(), MemoryConstants::pageSize});
 
@@ -443,7 +444,7 @@ TEST(MemObj, givenMemObjectWhenContextIsNotNullThenContextOutlivesMemobjects) {
 TEST(MemObj, givenSharedMemObjectWithNullGfxAllocationWhenSettingGfxAllocationThenSucceed) {
     MockContext context;
     MockMemoryManager memoryManager(*context.getDevice(0)->getExecutionEnvironment());
-    context.memoryManager = &memoryManager;
+    VariableBackup<MemoryManager *> memoryManagerBackup(&context.memoryManager, &memoryManager);
     MockGraphicsAllocation *gfxAllocation = new MockGraphicsAllocation(nullptr, 0);
     auto memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, &context.getDevice(0)->getDevice());
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_USE_HOST_PTR, 0,
@@ -460,7 +461,7 @@ TEST(MemObj, givenSharedMemObjectWithNullGfxAllocationWhenSettingGfxAllocationTh
 TEST(MemObj, givenSharedMemObjectAndGfxAllocationWhenGraphicsAllocationIsRemovedThenTheAllocationIsNotAvailable) {
     MockContext context;
     MockMemoryManager memoryManager(*context.getDevice(0)->getExecutionEnvironment());
-    context.memoryManager = &memoryManager;
+    VariableBackup<MemoryManager *> memoryManagerBackup(&context.memoryManager, &memoryManager);
     MockGraphicsAllocation *graphicsAllocation = new MockGraphicsAllocation(nullptr, 0);
     auto memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, &context.getDevice(0)->getDevice());
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_USE_HOST_PTR, 0,
@@ -476,7 +477,7 @@ TEST(MemObj, givenSharedMemObjectAndGfxAllocationWhenGraphicsAllocationIsRemoved
 TEST(MemObj, givenSharedMemObjectAndZeroReuseCountWhenChangingGfxAllocationThenOldAllocationIsDestroyed) {
     MockContext context;
     MockMemoryManager memoryManager(*context.getDevice(0)->getExecutionEnvironment());
-    context.memoryManager = &memoryManager;
+    VariableBackup<MemoryManager *> memoryManagerBackup(&context.memoryManager, &memoryManager);
     MockGraphicsAllocation *oldGfxAllocation = new MockGraphicsAllocation(nullptr, 0);
     MockGraphicsAllocation *newGfxAllocation = new MockGraphicsAllocation(nullptr, 0);
     auto memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, &context.getDevice(0)->getDevice());
@@ -495,7 +496,7 @@ TEST(MemObj, givenSharedMemObjectAndZeroReuseCountWhenChangingGfxAllocationThenO
 TEST(MemObj, givenSharedMemObjectAndNonZeroReuseCountWhenChangingGfxAllocationThenOldAllocationIsNotDestroyed) {
     MockContext context;
     MockMemoryManager memoryManager(*context.getDevice(0)->getExecutionEnvironment());
-    context.memoryManager = &memoryManager;
+    VariableBackup<MemoryManager *> memoryManagerBackup(&context.memoryManager, &memoryManager);
     MockGraphicsAllocation *oldGfxAllocation = new MockGraphicsAllocation(nullptr, 0);
     MockGraphicsAllocation *newGfxAllocation = new MockGraphicsAllocation(nullptr, 0);
     auto memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, &context.getDevice(0)->getDevice());
@@ -514,7 +515,7 @@ TEST(MemObj, givenSharedMemObjectAndNonZeroReuseCountWhenChangingGfxAllocationTh
 TEST(MemObj, givenNotSharedMemObjectWhenChangingGfxAllocationThenOldAllocationIsDestroyed) {
     MockContext context;
     MockMemoryManager memoryManager(*context.getDevice(0)->getExecutionEnvironment());
-    context.memoryManager = &memoryManager;
+    VariableBackup<MemoryManager *> memoryManagerBackup(&context.memoryManager, &memoryManager);
     MockGraphicsAllocation *oldGfxAllocation = new MockGraphicsAllocation(nullptr, 0);
     MockGraphicsAllocation *newGfxAllocation = new MockGraphicsAllocation(nullptr, 0);
     auto memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, &context.getDevice(0)->getDevice());
