@@ -381,8 +381,6 @@ HWTEST2_F(ProductHelperTestLinux, givenSuccessfulDrmQueryWhenGettingDeviceMemory
 
 HWTEST2_F(ProductHelperTestLinux, givenProductHelperWhenOverrideDirectSubmissionTimeoutsThenTimeoutsAreNotChanged, IsNotLNL) {
     uint64_t timeoutUs{5000};
-    uint64_t maxTimeoutUs{5000};
-    productHelper->overrideDirectSubmissionTimeouts(timeoutUs, maxTimeoutUs);
+    productHelper->overrideDirectSubmissionTimeouts(timeoutUs);
     EXPECT_EQ(5000ull, timeoutUs);
-    EXPECT_EQ(5000ull, maxTimeoutUs);
 }

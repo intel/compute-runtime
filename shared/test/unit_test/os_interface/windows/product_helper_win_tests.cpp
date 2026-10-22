@@ -144,16 +144,12 @@ HWTEST2_F(ProductHelperTestWindows, givenProductHelperWhenOverrideDirectSubmissi
     DebugManagerStateRestore restorer;
 
     uint64_t timeoutUs{5000};
-    uint64_t maxTimeoutUs{5000};
-    productHelper->overrideDirectSubmissionTimeouts(timeoutUs, maxTimeoutUs);
+    productHelper->overrideDirectSubmissionTimeouts(timeoutUs);
     EXPECT_EQ(1000ull, timeoutUs);
-    EXPECT_EQ(1000ull, maxTimeoutUs);
 
     debugManager.flags.DirectSubmissionControllerTimeout.set(10000);
-    debugManager.flags.DirectSubmissionControllerMaxTimeout.set(10000);
-    productHelper->overrideDirectSubmissionTimeouts(timeoutUs, maxTimeoutUs);
+    productHelper->overrideDirectSubmissionTimeouts(timeoutUs);
     EXPECT_EQ(10000ull, timeoutUs);
-    EXPECT_EQ(10000ull, maxTimeoutUs);
 }
 
 } // namespace NEO

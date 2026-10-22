@@ -32,9 +32,6 @@ DirectSubmissionController::DirectSubmissionController() {
         bcsTimeoutDivisor = debugManager.flags.DirectSubmissionControllerBcsTimeoutDivisor.get();
     }
 
-    if (debugManager.flags.DirectSubmissionControllerMaxTimeout.get() != -1) {
-        maxTimeout = std::chrono::microseconds{debugManager.flags.DirectSubmissionControllerMaxTimeout.get()};
-    }
     isCsrIdleDetectionEnabled = true;
     if (debugManager.flags.DirectSubmissionControllerIdleDetection.get() != -1) {
         isCsrIdleDetectionEnabled = debugManager.flags.DirectSubmissionControllerIdleDetection.get();
@@ -62,10 +59,8 @@ void DirectSubmissionController::registerDirectSubmission(CommandStreamReceiver 
 
 void DirectSubmissionController::overrideDirectSubmissionTimeouts(const ProductHelper &productHelper) {
     uint64_t timeoutUs = this->timeout.count();
-    uint64_t maxTimeoutUs = this->maxTimeout.count();
-    productHelper.overrideDirectSubmissionTimeouts(timeoutUs, maxTimeoutUs);
+    productHelper.overrideDirectSubmissionTimeouts(timeoutUs);
     this->timeout = std::chrono::microseconds(timeoutUs);
-    this->maxTimeout = std::chrono::microseconds(maxTimeoutUs);
 }
 
 void DirectSubmissionController::unregisterDirectSubmission(CommandStreamReceiver *csr) {
@@ -122,7 +117,6 @@ void DirectSubmissionController::checkNewSubmissions() {
     }
 
     std::lock_guard<std::mutex> lock(this->directSubmissionsMutex);
-    bool shouldRecalculateTimeout = false;
     std::optional<TaskCountType> bcsTaskCount{};
 
     const auto now = getCpuTimestamp();
@@ -166,7 +160,6 @@ void DirectSubmissionController::checkNewSubmissions() {
                     state.isActive = false;
                     state.isStopped = true;
                     state.idleSince.reset();
-                    shouldRecalculateTimeout = true;
                     --activeSubmissionsCount;
                 }
             } else {
@@ -183,10 +176,6 @@ void DirectSubmissionController::checkNewSubmissions() {
             state.taskCount = taskCount;
         }
     }
-    if (shouldRecalculateTimeout) {
-        this->recalculateTimeout();
-    }
-
     if (timeoutMode != TimeoutElapsedMode::bcsOnly) {
         this->timeSinceLastCheck = getCpuTimestamp();
     }
@@ -310,18 +299,6 @@ bool DirectSubmissionController::isCopyEngineOnDeviceIdle(uint32_t rootDeviceInd
 
 SteadyClock::time_point DirectSubmissionController::getCpuTimestamp() {
     return SteadyClock::now();
-}
-
-void DirectSubmissionController::recalculateTimeout() {
-    const auto now = this->getCpuTimestamp();
-    const auto timeSinceLastTerminate = std::chrono::duration_cast<std::chrono::microseconds>(now - this->lastTerminateCpuTimestamp);
-    DEBUG_BREAK_IF(timeSinceLastTerminate.count() < 0);
-    if (timeSinceLastTerminate.count() > this->timeout.count() &&
-        timeSinceLastTerminate.count() <= this->maxTimeout.count()) {
-        const auto newTimeout = std::chrono::duration_cast<std::chrono::microseconds>(timeSinceLastTerminate * 1.5);
-        this->timeout = newTimeout.count() < this->maxTimeout.count() ? newTimeout : this->maxTimeout;
-    }
-    this->lastTerminateCpuTimestamp = now;
 }
 
 void DirectSubmissionController::enqueueWaitForPagingFence(CommandStreamReceiver *csr, uint64_t pagingFenceValue) {

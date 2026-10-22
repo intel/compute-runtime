@@ -149,7 +149,6 @@ HWTEST2_F(DrmDirectSubmissionTest, givenProductRequiringTimeoutOverrideOnLinuxWh
     DirectSubmissionControllerMock controller;
     controller.registerDirectSubmission(csr);
     EXPECT_EQ(1000, controller.timeout.count());
-    EXPECT_EQ(1000, controller.maxTimeout.count());
     controller.unregisterDirectSubmission(csr);
 }
 
@@ -158,7 +157,6 @@ HWTEST2_F(DrmDirectSubmissionTest, givenProductNotRequiringTimeoutOverrideOnLinu
     DirectSubmissionControllerMock controller;
     controller.registerDirectSubmission(csr);
     EXPECT_EQ(5000, controller.timeout.count());
-    EXPECT_EQ(5000, controller.maxTimeout.count());
     controller.unregisterDirectSubmission(csr);
 }
 

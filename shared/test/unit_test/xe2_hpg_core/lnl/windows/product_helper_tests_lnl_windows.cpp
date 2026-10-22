@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,18 +22,14 @@ LNLTEST_F(LnlProductHelperWindows, givenProductHelperWhenCheckIsCopyBufferRectSp
 
 LNLTEST_F(LnlProductHelperWindows, givenOverrideDirectSubmissionTimeoutsCalledThenTimeoutsAreOverridden) {
     uint64_t timeoutUs{5'000};
-    uint64_t maxTimeoutUs = timeoutUs;
-    productHelper->overrideDirectSubmissionTimeouts(timeoutUs, maxTimeoutUs);
+    productHelper->overrideDirectSubmissionTimeouts(timeoutUs);
     EXPECT_EQ(timeoutUs, 1'000ull);
-    EXPECT_EQ(maxTimeoutUs, 1'000ull);
 
     DebugManagerStateRestore restorer{};
     debugManager.flags.DirectSubmissionControllerTimeout.set(2'000);
-    debugManager.flags.DirectSubmissionControllerMaxTimeout.set(3'000);
 
-    productHelper->overrideDirectSubmissionTimeouts(timeoutUs, maxTimeoutUs);
+    productHelper->overrideDirectSubmissionTimeouts(timeoutUs);
     EXPECT_EQ(timeoutUs, 2'000ull);
-    EXPECT_EQ(maxTimeoutUs, 3'000ull);
 }
 
 LNLTEST_F(LnlProductHelperWindows, givenProductHelperWhenCallDeferMOCSToPatOnWSLThenTrueIsReturned) {

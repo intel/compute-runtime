@@ -1233,10 +1233,8 @@ HWTEST2_F(ProductHelperTest, givenProductHelperBeforeXe2WhenOverrideDirectSubmis
     DebugManagerStateRestore restorer;
 
     uint64_t timeoutUs{5000};
-    uint64_t maxTimeoutUs{5000};
-    productHelper->overrideDirectSubmissionTimeouts(timeoutUs, maxTimeoutUs);
+    productHelper->overrideDirectSubmissionTimeouts(timeoutUs);
     EXPECT_EQ(5000ull, timeoutUs);
-    EXPECT_EQ(5000ull, maxTimeoutUs);
 }
 
 HWTEST_F(ProductHelperTest, givenProductHelperWhenIsExposingSubdevicesAllowedThenTrueIsReturned) {

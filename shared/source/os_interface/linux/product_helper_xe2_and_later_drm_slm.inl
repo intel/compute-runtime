@@ -16,6 +16,6 @@ uint32_t ProductHelperHw<gfxProduct>::getAvailableSlmSizePerSubslice(const RootD
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-void ProductHelperHw<gfxProduct>::overrideDirectSubmissionTimeouts(uint64_t &timeoutUs, uint64_t &maxTimeoutUs) const {
+void ProductHelperHw<gfxProduct>::overrideDirectSubmissionTimeouts(uint64_t &timeoutUs) const {
 }
 } // namespace NEO

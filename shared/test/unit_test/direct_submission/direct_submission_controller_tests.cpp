@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_stream/queue_throttle.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_thread.h"
 #include "shared/source/os_interface/os_time.h"
@@ -315,98 +316,6 @@ TEST(DirectSubmissionControllerTests, givenDebugFlagSetWhenCheckingNewSubmission
 
     controller.unregisterDirectSubmission(&bcsCsr);
     controller.unregisterDirectSubmission(&ccsCsr);
-}
-
-TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenIncreaseTimeoutEnabledThenTimeoutIsIncreased) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.DirectSubmissionControllerTimeout.set(5'000);
-    debugManager.flags.DirectSubmissionControllerMaxTimeout.set(200'000);
-    MockExecutionEnvironment executionEnvironment;
-    executionEnvironment.prepareRootDeviceEnvironments(1);
-    executionEnvironment.initializeMemoryManager();
-    executionEnvironment.rootDeviceEnvironments[0]->initOsTime();
-
-    DeviceBitfield deviceBitfield(1);
-    MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
-    std::unique_ptr<OsContext> osContext(OsContext::create(nullptr, 0, 0,
-                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular},
-                                                                                                        PreemptionMode::ThreadGroup, deviceBitfield)));
-    csr.setupContext(*osContext.get());
-
-    DirectSubmissionControllerMock controller;
-    controller.timeoutElapsedReturnValue.store(TimeoutElapsedMode::fullyElapsed);
-    controller.registerDirectSubmission(&csr);
-    {
-        csr.taskCount.store(1u);
-        controller.notifyNewSubmission(&csr);
-        controller.checkNewSubmissions();
-        EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
-        EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 1u);
-
-        controller.checkNewSubmissions();
-
-        auto previousTimestamp = controller.lastTerminateCpuTimestamp;
-        controller.cpuTimestamp += std::chrono::microseconds(5'000);
-        controller.checkNewSubmissions();
-        EXPECT_EQ(std::chrono::duration_cast<std::chrono::microseconds>(controller.lastTerminateCpuTimestamp - previousTimestamp).count(), 5'000);
-        EXPECT_TRUE(controller.directSubmissions[&csr].isStopped);
-        EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 1u);
-        EXPECT_EQ(controller.timeout.count(), 5'000);
-        EXPECT_EQ(controller.maxTimeout.count(), 200'000);
-    }
-    {
-        csr.taskCount.store(2u);
-        controller.notifyNewSubmission(&csr);
-        controller.checkNewSubmissions();
-        EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
-        EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 2u);
-
-        controller.checkNewSubmissions();
-
-        auto previousTimestamp = controller.lastTerminateCpuTimestamp;
-        controller.cpuTimestamp += std::chrono::microseconds(5'500);
-        controller.checkNewSubmissions();
-        EXPECT_EQ(std::chrono::duration_cast<std::chrono::microseconds>(controller.lastTerminateCpuTimestamp - previousTimestamp).count(), 5'500);
-        EXPECT_TRUE(controller.directSubmissions[&csr].isStopped);
-        EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 2u);
-        EXPECT_EQ(controller.timeout.count(), 8'250);
-    }
-    {
-        csr.taskCount.store(3u);
-        controller.notifyNewSubmission(&csr);
-        controller.checkNewSubmissions();
-        EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
-        EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 3u);
-
-        controller.checkNewSubmissions();
-
-        auto previousTimestamp = controller.lastTerminateCpuTimestamp;
-        controller.cpuTimestamp += controller.maxTimeout;
-        controller.checkNewSubmissions();
-        EXPECT_EQ(std::chrono::duration_cast<std::chrono::microseconds>(controller.lastTerminateCpuTimestamp - previousTimestamp).count(), controller.maxTimeout.count());
-        EXPECT_TRUE(controller.directSubmissions[&csr].isStopped);
-        EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 3u);
-        EXPECT_EQ(controller.timeout.count(), controller.maxTimeout.count());
-    }
-    {
-        controller.timeout = std::chrono::microseconds(5'000);
-        csr.taskCount.store(4u);
-        controller.notifyNewSubmission(&csr);
-        controller.checkNewSubmissions();
-        EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
-        EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 4u);
-
-        controller.checkNewSubmissions();
-
-        auto previousTimestamp = controller.lastTerminateCpuTimestamp;
-        controller.cpuTimestamp += controller.maxTimeout * 2;
-        controller.checkNewSubmissions();
-        EXPECT_EQ(std::chrono::duration_cast<std::chrono::microseconds>(controller.lastTerminateCpuTimestamp - previousTimestamp).count(), controller.maxTimeout.count() * 2);
-        EXPECT_TRUE(controller.directSubmissions[&csr].isStopped);
-        EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 4u);
-        EXPECT_EQ(controller.timeout.count(), 5'000);
-    }
-    controller.unregisterDirectSubmission(&csr);
 }
 
 TEST(DirectSubmissionControllerTests, givenPowerSavingUintWhenCallingGetThrottleFromPowerSavingUintThenCorrectValueIsReturned) {

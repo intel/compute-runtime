@@ -25,12 +25,8 @@ struct DirectSubmissionControllerMock : public DirectSubmissionController {
     using DirectSubmissionController::isCsrsContextGroupIdleDetectionEnabled;
     using DirectSubmissionController::isDirectSubmissionIdle;
     using DirectSubmissionController::keepControlling;
-    using DirectSubmissionController::lastTerminateCpuTimestamp;
-    using DirectSubmissionController::lowestThrottleSubmitted;
-    using DirectSubmissionController::maxTimeout;
     using DirectSubmissionController::pagingFenceRequests;
     using DirectSubmissionController::timeout;
-    using DirectSubmissionController::timeoutDivisor;
     using DirectSubmissionController::timeSinceLastCheck;
 
     void wait(std::unique_lock<std::mutex> &lock) override {

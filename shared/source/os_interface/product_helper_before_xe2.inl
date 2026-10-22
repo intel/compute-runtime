@@ -56,7 +56,7 @@ bool ProductHelperHw<gfxProduct>::isNonCoherentTimestampsModeEnabled() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-void ProductHelperHw<gfxProduct>::overrideDirectSubmissionTimeouts(uint64_t &timeoutUs, uint64_t &maxTimeoutUs) const {
+void ProductHelperHw<gfxProduct>::overrideDirectSubmissionTimeouts(uint64_t &timeoutUs) const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>

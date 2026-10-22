@@ -39,7 +39,6 @@ void AILConfigurationHw<gfxProduct>::applyExt(HardwareInfo &hwInfo) {
                 break;
             case AILEnumeration::directSubmissionControllerConfig:
                 debugManager.flags.DirectSubmissionControllerTimeout.set(1000);
-                debugManager.flags.DirectSubmissionControllerMaxTimeout.set(1000);
             default:
                 break;
             }

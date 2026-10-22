@@ -1159,7 +1159,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenDirectSubmissionControllerWhenRegisterCs
     uint64_t timeoutUs{5'000};
     EXPECT_EQ(static_cast<uint64_t>(controller.timeout.count()), timeoutUs);
     controller.registerDirectSubmission(csr);
-    csr->getProductHelper().overrideDirectSubmissionTimeouts(timeoutUs, timeoutUs);
+    csr->getProductHelper().overrideDirectSubmissionTimeouts(timeoutUs);
     EXPECT_EQ(static_cast<uint64_t>(controller.timeout.count()), timeoutUs);
 
     controller.unregisterDirectSubmission(csr);

@@ -443,7 +443,7 @@ bool ProductHelperHw<IGFX_UNKNOWN>::isNonCoherentTimestampsModeEnabled() const {
 }
 
 template <>
-void ProductHelperHw<IGFX_UNKNOWN>::overrideDirectSubmissionTimeouts(uint64_t &timeoutUs, uint64_t &maxTimeoutUs) const {
+void ProductHelperHw<IGFX_UNKNOWN>::overrideDirectSubmissionTimeouts(uint64_t &timeoutUs) const {
 }
 
 template <>

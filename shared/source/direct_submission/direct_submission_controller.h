@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include "shared/source/command_stream/queue_throttle.h"
 #include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/helpers/device_bitfield.h"
 
@@ -104,11 +103,6 @@ class DirectSubmissionController {
     MOCKABLE_VIRTUAL SteadyClock::time_point getCpuTimestamp();
     MOCKABLE_VIRTUAL void overrideDirectSubmissionTimeouts(const ProductHelper &productHelper);
 
-    void recalculateTimeout();
-    void applyTimeoutForAcLineStatusAndThrottle(bool acLineConnected);
-    void updateLastSubmittedThrottle(QueueThrottle throttle);
-    size_t getTimeoutParamsMapKey(QueueThrottle throttle, bool acLineStatus);
-
     MOCKABLE_VIRTUAL void handlePagingFenceRequests(std::unique_lock<std::mutex> &lock);
     MOCKABLE_VIRTUAL TimeoutElapsedMode timeoutElapsed();
     std::chrono::microseconds getSleepValue() const { return std::chrono::microseconds(this->timeout / this->bcsTimeoutDivisor); }
@@ -124,14 +118,10 @@ class DirectSubmissionController {
     std::atomic_uint activeSubmissionsCount = 0;
 
     SteadyClock::time_point timeSinceLastCheck{};
-    SteadyClock::time_point lastTerminateCpuTimestamp{};
     HighResolutionClock::time_point lastHangCheckTime{};
-    std::chrono::microseconds maxTimeout{defaultTimeout};
     std::chrono::microseconds timeout{defaultTimeout};
-    int32_t timeoutDivisor = 1;
     std::chrono::microseconds contextGroupTimeout{defaultContextGroupTimeout};
     int32_t bcsTimeoutDivisor = 1;
-    QueueThrottle lowestThrottleSubmitted = QueueThrottle::HIGH;
     bool isCsrIdleDetectionEnabled = false;
     bool isCsrsContextGroupIdleDetectionEnabled = false;
 

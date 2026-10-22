@@ -51,14 +51,10 @@ bool ProductHelperHw<gfxProduct>::useSharedSystemUsm() const {
 }
 
 template <>
-void ProductHelperHw<gfxProduct>::overrideDirectSubmissionTimeouts(uint64_t &timeoutUs, uint64_t &maxTimeoutUs) const {
+void ProductHelperHw<gfxProduct>::overrideDirectSubmissionTimeouts(uint64_t &timeoutUs) const {
     timeoutUs = 1'000;
-    maxTimeoutUs = 1'000;
     if (debugManager.flags.DirectSubmissionControllerTimeout.get() != -1) {
         timeoutUs = debugManager.flags.DirectSubmissionControllerTimeout.get();
-    }
-    if (debugManager.flags.DirectSubmissionControllerMaxTimeout.get() != -1) {
-        maxTimeoutUs = debugManager.flags.DirectSubmissionControllerMaxTimeout.get();
     }
 }
 
