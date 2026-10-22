@@ -32,7 +32,7 @@ MockBufferStorage::MockBufferStorage(bool unaligned) : mockGfxAllocation(unalign
 
 void MockBufferStorage::initDevice() {
     VariableBackup<uint32_t> maxOsContextCountBackup(&MemoryManager::maxOsContextCount);
-    device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    device = std::make_unique<MockDevice>();
 }
 
 MockBufferStorage::~MockBufferStorage() {
