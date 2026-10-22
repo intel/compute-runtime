@@ -27,10 +27,10 @@
 #include "shared/source/helpers/preprocessor.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/gfx_partition.h"
+#include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/external_semaphore.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/os_interface/sys_calls_common.h"
-#include "shared/source/os_interface/windows/driver_info_windows.h"
 #include "shared/source/os_interface/windows/gdi_interface.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
 #include "shared/source/os_interface/windows/os_environment_win.h"
@@ -401,12 +401,8 @@ std::unique_ptr<HwDeviceIdWddm> createHwDeviceIdFromAdapterLuid(OsEnvironmentWin
 
     const uint32_t adapterNodeMask = 1 << adapterNodeOrdinal;
     auto hwDeviceId = std::make_unique<HwDeviceIdWddm>(openAdapterData.hAdapter, adapterLuid, adapterNodeMask, &osEnvironment, createUmKmDataTranslator(*osEnvironment.gdi, openAdapterData.hAdapter));
-    const bool isGdiOverridden = debugManager.flags.OverrideGdiPath.get() != "unk";
-    if (false == hwDeviceId->getUmKmDataTranslator()->enabled() && !debugManager.flags.DoNotValidateDriverPath.get() && !isGdiOverridden) {
-        if (false == isCompatibleDriverStore(*osEnvironment.gdi, openAdapterData.hAdapter)) {
-            PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "Driver path is not a valid DriverStore path. Try running with debug key: DoNotValidateDriverPath=1.\n");
-            return nullptr;
-        }
+    if (false == hwDeviceId->isDriverStoreValid()) {
+        return nullptr;
     }
 
     D3DKMT_QUERYADAPTERINFO queryAdapterInfo = {};

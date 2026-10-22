@@ -6,6 +6,7 @@
 
 set(NEO_CORE_OS_INTERFACE_WINDOWS
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/compatible_driver_store.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/debug_registry_reader.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/debug_registry_reader.h
     ${CMAKE_CURRENT_SOURCE_DIR}/device_command_stream.inl

@@ -46,6 +46,7 @@ bool isShutdownInProgressRetVal = false;
 BOOL systemPowerStatusRetVal = 1;
 BYTE systemPowerStatusACLineStatusOverride = 1;
 const wchar_t *currentLibraryPath = mockLibraryFromAdapterDriverStore.data();
+DWORD getModuleFileNameResult = TRUE;
 uint32_t regOpenKeySuccessCount = 0u;
 uint32_t regQueryValueSuccessCount = 0u;
 uint64_t regQueryValueExpectedData = 0ull;
@@ -322,7 +323,7 @@ BOOL getModuleHandle(DWORD dwFlags, LPCWSTR lpModuleName, HMODULE *phModule) {
 
 DWORD getModuleFileName(HMODULE hModule, LPWSTR lpFilename, DWORD nSize) {
     lstrcpyW(lpFilename, currentLibraryPath);
-    return TRUE;
+    return getModuleFileNameResult;
 }
 
 UINT getTempFileNameA(LPCSTR lpPathName, LPCSTR lpPrefixString, UINT uUnique, LPSTR lpTempFileName) {

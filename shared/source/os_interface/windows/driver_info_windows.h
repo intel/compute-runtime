@@ -13,14 +13,9 @@
 #include <memory>
 #include <string>
 
-typedef unsigned int D3DKMT_HANDLE;
-
 namespace NEO {
 
-class Gdi;
 class SettingsReader;
-
-bool isCompatibleDriverStore(const Gdi &gdi, D3DKMT_HANDLE adapter);
 
 class DriverInfoWindows : public DriverInfo {
   public:

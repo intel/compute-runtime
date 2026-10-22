@@ -5,16 +5,13 @@
  *
  */
 
-#include <string>
-
-typedef unsigned int D3DKMT_HANDLE;
+#include "shared/source/os_interface/windows/hw_device_id.h"
+#include "shared/source/os_interface/windows/wddm/um_km_data_translator.h"
 
 namespace NEO {
 
-class Gdi;
-
-bool isCompatibleDriverStore(const Gdi &gdi, D3DKMT_HANDLE adapter) {
-    return false;
+bool HwDeviceIdWddm::isDriverStoreValid() const {
+    return this->umKmDataTranslator->enabled();
 }
 
 } // namespace NEO

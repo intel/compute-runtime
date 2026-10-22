@@ -18,7 +18,8 @@
 #include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
-#include "shared/source/os_interface/windows/driver_info_windows.h"
+#include "shared/source/os_interface/windows/hw_device_id.h"
+#include "shared/source/os_interface/windows/wddm/um_km_data_translator.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
@@ -41,6 +42,7 @@
 namespace NEO {
 namespace SysCalls {
 extern const wchar_t *currentLibraryPath;
+extern DWORD getModuleFileNameResult;
 extern size_t setProcessPowerThrottlingStateCalled;
 extern SysCalls::ProcessPowerThrottlingState setProcessPowerThrottlingStateLastValue;
 extern size_t setThreadPriorityCalled;
@@ -425,7 +427,38 @@ bool isCompatibleDriverStoreWithRegistryPaths(std::wstring_view adapterDriverSto
     VariableBackup<const wchar_t *> driverStorePathBackup{&queryRegistryDriverStorePath, adapterDriverStorePathInRegistry.data()};
     VariableBackup<const wchar_t *> computeRuntimePathBackup{&queryRegistryComputeRuntimePath, computeRuntimePathInRegistry.data()};
     OsEnvironmentWin osEnvironment;
-    return isCompatibleDriverStore(*osEnvironment.gdi, ADAPTER_HANDLE);
+    HwDeviceIdWddm hwDeviceId(ADAPTER_HANDLE, LUID{}, 1u, &osEnvironment, std::make_unique<UmKmDataTranslator>());
+    return hwDeviceId.isDriverStoreValid();
+}
+
+TEST(DriverStoreCompatibility, givenEnabledUmKmDataTranslatorAndLibraryFromOtherDriverStoreWhenCheckingDriverStoreThenItIsValid) {
+    struct EnabledUmKmDataTranslator : UmKmDataTranslator {
+        EnabledUmKmDataTranslator() {
+            this->isEnabled = true;
+        }
+    };
+    VariableBackup<const wchar_t *> currentLibraryPathBackup{&SysCalls::currentLibraryPath, mockLibraryFromOtherDriverStore.data()};
+    OsEnvironmentWin osEnvironment;
+    HwDeviceIdWddm hwDeviceId(ADAPTER_HANDLE, LUID{}, 1u, &osEnvironment, std::make_unique<EnabledUmKmDataTranslator>());
+
+    EXPECT_TRUE(hwDeviceId.isDriverStoreValid());
+}
+
+TEST(DriverStoreCompatibility, givenOverriddenGdiPathAndLibraryFromOtherDriverStoreWhenCheckingDriverStoreThenItIsValid) {
+    DebugManagerStateRestore restorer;
+    VariableBackup<const wchar_t *> currentLibraryPathBackup{&SysCalls::currentLibraryPath, mockLibraryFromOtherDriverStore.data()};
+    OsEnvironmentWin osEnvironment;
+    HwDeviceIdWddm hwDeviceId(ADAPTER_HANDLE, LUID{}, 1u, &osEnvironment, std::make_unique<UmKmDataTranslator>());
+    EXPECT_FALSE(hwDeviceId.isDriverStoreValid());
+
+    debugManager.flags.OverrideGdiPath.set("customGdi.dll");
+    EXPECT_TRUE(hwDeviceId.isDriverStoreValid());
+}
+
+TEST(DriverStoreCompatibility, givenCurrentLibraryPathQueryFailsWhenCheckingDriverStoreThenItIsNotValid) {
+    VariableBackup<DWORD> getModuleFileNameResultBackup{&SysCalls::getModuleFileNameResult, FALSE};
+
+    EXPECT_FALSE(isCompatibleDriverStoreWithRegistryPaths(mockAdapterDriverStorePath, mockComputeRuntimePath));
 }
 
 TEST(DriverStoreCompatibility, givenCurrentLibraryLoadedFromAdapterDriverStoreWhenCheckingDriverStoreCompatibilityThenItIsCompatible) {
