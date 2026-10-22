@@ -999,7 +999,6 @@ TEST_F(GraphDotExporterSimpleStyleTest, GivenKernelCommandWhenGetCommandNodeLabe
     MockDeviceImp l0Device(neoDevice);
     std::unique_ptr<L0::ult::Module> mockModule = std::make_unique<L0::ult::Module>(&l0Device, nullptr, ModuleType::user);
 
-    Mock<KernelImp> kernel;
     NEO::KernelInfo kernelInfo{};
     kernelInfo.kernelDescriptor.kernelMetadata.kernelName = "test";
     uint8_t kernelHeap[10]{};
@@ -1013,6 +1012,7 @@ TEST_F(GraphDotExporterSimpleStyleTest, GivenKernelCommandWhenGetCommandNodeLabe
     kernelImmutableData->initialize(&kernelInfo, &l0Device, 0, nullptr, nullptr, false);
     mockModule->kernelImmData.push_back(std::move(kernelImmutableData));
 
+    Mock<KernelImp> kernel;
     kernel.setModule(mockModule.get());
 
     ze_kernel_desc_t kernelDesc = {};

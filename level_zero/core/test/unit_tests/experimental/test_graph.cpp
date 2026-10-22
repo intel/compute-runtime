@@ -6921,6 +6921,9 @@ TEST_F(GraphTestCaptureRestrictions, GivenEventFromOtherCaptureSessionWhenCaptur
     EXPECT_EQ(1U, graphB.getCapturedCommands().size()); // nor into the signalling one
     EXPECT_TRUE(graphA.getSubgraphs().empty());         // and neither session was forked into the other
     EXPECT_TRUE(graphB.getSubgraphs().empty());
+
+    cmdlistA.setGraphCaptureTarget(nullptr);
+    cmdlistB.setGraphCaptureTarget(nullptr);
 }
 
 TEST_F(GraphTestCaptureRestrictions, GivenEventsFromOwnAndOtherCaptureSessionWhenCapturingCommandListWaitsOnThemThenMergeAttemptErrorIsReturned) {
@@ -6960,6 +6963,9 @@ TEST_F(GraphTestCaptureRestrictions, GivenEventsFromOwnAndOtherCaptureSessionWhe
     EXPECT_EQ(ZE_RESULT_ERROR_GRAPH_CAPTURE_MERGE_ATTEMPT, L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(cmdlistA, captureTargetA, nullptr, cmdlistAHandle, nullptr, 2U, foreignEventFirst));
 
     EXPECT_EQ(1U, graphA.getCapturedCommands().size()); // only the initial signalling barrier was recorded
+
+    cmdlistA.setGraphCaptureTarget(nullptr);
+    cmdlistB.setGraphCaptureTarget(nullptr);
 }
 
 TEST_F(GraphTestCaptureRestrictions, GivenEventFromSameCaptureSessionWhenChildCommandListWaitsOnItThenCaptureIsContinued) {
@@ -7866,6 +7872,34 @@ TEST(GraphTestZeGraphSetDestructionCallbackExp, GivenValidCallbacksThenInvokesTh
     EXPECT_EQ(3U, userData);
 }
 
+TEST(GraphTestCommandListDestruction, GivenPreallocatedCaptureTargetWhenCommandListIsDestroyedThenGraphIsNotDestroyed) {
+    GraphsCleanupGuard graphCleanup;
+    ContextStubMock ctx;
+    bool graphDestroyed = false;
+    zex_mem_graph_free_callback_fn_t markGraphDestroyed = +[](void *userData) { *static_cast<bool *>(userData) = true; };
+    Graph graph{&ctx, true};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeGraphSetDestructionCallbackExp(&graph, markGraphDestroyed, &graphDestroyed, nullptr));
+    {
+        MockCommandList cmdlist;
+        cmdlist.setGraphCaptureTarget(&graph);
+    }
+    EXPECT_FALSE(graphDestroyed);
+}
+
+TEST(GraphTestCommandListDestruction, GivenNotPreallocatedCaptureTargetWhenCommandListIsDestroyedThenGraphIsDestroyed) {
+    GraphsCleanupGuard graphCleanup;
+    ContextStubMock ctx;
+    bool graphDestroyed = false;
+    zex_mem_graph_free_callback_fn_t markGraphDestroyed = +[](void *userData) { *static_cast<bool *>(userData) = true; };
+    auto graph = std::make_unique<Graph>(&ctx, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeGraphSetDestructionCallbackExp(graph.get(), markGraphDestroyed, &graphDestroyed, nullptr));
+    {
+        MockCommandList cmdlist;
+        cmdlist.setGraphCaptureTarget(graph.release());
+    }
+    EXPECT_TRUE(graphDestroyed);
+}
+
 TEST(CaptureTestMclIdMapping, GivenGetNextCommandIdFollowedByAppendBarrierWhenGettingCommandByMclIdThenReturnsMappedFollowingCommand) {
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
@@ -8157,6 +8191,8 @@ TEST_F(GraphTestApiPauseResume, GivenActiveCaptureWhenPausingAndResumingThenComm
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeGraphResumeCaptureExt(hGraph));
     EXPECT_EQ(&graph, cmdList.getGraphCaptureTarget());
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, L0::zeGraphResumeCaptureExt(hGraph));
+
+    cmdList.setGraphCaptureTarget(nullptr);
 }
 
 TEST_F(GraphTestApiPauseResume, GivenRootGraphWithSubgraphWhenPausingRootThenAllCapturesArePaused) {
