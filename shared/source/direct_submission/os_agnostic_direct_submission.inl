@@ -79,6 +79,7 @@ bool OsAgnosticDirectSubmission<GfxFamily, Dispatcher>::handleResidency(const Re
     if (allocationsForResidency) {
         auto *csrSimulatedHw = reinterpret_cast<const CommandStreamReceiverSimulatedHw<GfxFamily> *>(&this->csr);
         csrSimulatedHw->uploadRingAndCommandBuffers(*this->ringCommandStream.getGraphicsAllocation(), this->ringCommandStream.getGraphicsAllocation()->getGpuAddress(), this->ringCommandStream.getUsed(), allocationsForResidency);
+        csrSimulatedHw->resubmitInactiveHardwareContexts();
     }
     return true;
 }

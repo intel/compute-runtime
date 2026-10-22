@@ -57,6 +57,14 @@ void HardwareContextController::pollForCompletion() {
     }
 }
 
+void HardwareContextController::resubmitInactiveContexts() {
+    for (auto &hardwareContext : hardwareContexts) {
+        if (!hardwareContext->isActive()) {
+            hardwareContext->resubmit();
+        }
+    }
+}
+
 void HardwareContextController::expectMemory(uint64_t gfxAddress, const void *srcAddress, size_t length, uint32_t compareOperation) {
     for (auto &hardwareContext : hardwareContexts) {
         hardwareContext->expectMemory(gfxAddress, srcAddress, length, compareOperation);

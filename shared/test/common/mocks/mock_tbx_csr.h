@@ -13,6 +13,8 @@
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 #include "shared/source/page_fault_manager/tbx_page_fault_manager.h"
 
+#include <vector>
+
 namespace NEO {
 
 template <typename GfxFamily>
@@ -48,6 +50,9 @@ class MockTbxCsr : public TbxCommandStreamReceiverHw<GfxFamily> {
     void writeMemoryWithAubManager(GraphicsAllocation &graphicsAllocation, bool isChunkCopy, uint64_t gpuVaChunkOffset, size_t chunkSize) const override {
         CommandStreamReceiverSimulatedHw<GfxFamily>::writeMemoryWithAubManager(graphicsAllocation, isChunkCopy, gpuVaChunkOffset, chunkSize);
         *writeMemoryWithAubManagerCalled = true;
+        if (isChunkCopy) {
+            allocationTypesWrittenInChunksWithAubManager.push_back(graphicsAllocation.getAllocationType());
+        }
     }
 
     void writeMemory(uint64_t gpuAddress, void *cpuAddress, size_t size, uint32_t memoryBank, uint64_t entryBits) override {
@@ -91,6 +96,7 @@ class MockTbxCsr : public TbxCommandStreamReceiverHw<GfxFamily> {
     size_t writeMemoryChunkCallCount = 0u;
     bool initializeEngineCalled = false;
     std::unique_ptr<bool> writeMemoryWithAubManagerCalled;
+    mutable std::vector<AllocationType> allocationTypesWrittenInChunksWithAubManager;
     bool writeMemoryCalled = false;
     bool writeMemoryGfxAllocCalled = false;
     bool submitBatchBufferCalled = false;

@@ -235,10 +235,9 @@ SubmissionStatus TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batch
         }
     }
 
+    batchBuffer.allocationsForResidency = &allocationsForResidency;
+
     if (this->directSubmission.get()) {
-
-        batchBuffer.allocationsForResidency = &allocationsForResidency;
-
         bool ret = this->directSubmission->dispatchCommandBuffer(batchBuffer, *this->flushStamp.get());
         if (ret == false) {
             return SubmissionStatus::failed;

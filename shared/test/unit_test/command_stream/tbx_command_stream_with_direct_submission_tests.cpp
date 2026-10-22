@@ -26,6 +26,7 @@
 #include "shared/test/common/mocks/mock_tbx_csr.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include <algorithm>
 #include <cstdint>
 
 using namespace NEO;
@@ -35,6 +36,12 @@ struct TbxDirectSubmissionFixture : public DeviceFixture {
 
     template <typename FamilyType>
     void setUpT() {
+        setUpForEngine<FamilyType>(getChosenEngineType(*defaultHwInfo));
+        ASSERT_TRUE(commandStreamReceiver->isDirectSubmissionEnabled());
+    }
+
+    template <typename FamilyType>
+    void setUpForEngine(aub_stream::EngineType engineType) {
         debugManager.flags.EnableDirectSubmission.set(true);
         debugManager.flags.EnableDirectSubmissionInSimulationMode.set(true);
 
@@ -53,7 +60,7 @@ struct TbxDirectSubmissionFixture : public DeviceFixture {
 
         pDevice->getExecutionEnvironment()->memoryManager->reInitLatestContextId();
         auto osContext = pDevice->getExecutionEnvironment()->memoryManager->createAndRegisterOsContext(commandStreamReceiver.get(),
-                                                                                                       EngineDescriptorHelper::getDefaultDescriptor({getChosenEngineType(*defaultHwInfo), EngineUsage::regular},
+                                                                                                       EngineDescriptorHelper::getDefaultDescriptor({engineType, EngineUsage::regular},
                                                                                                                                                     PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
         osContext->setDefaultContext(true);
         commandStreamReceiver->setupContext(*osContext);
@@ -62,7 +69,6 @@ struct TbxDirectSubmissionFixture : public DeviceFixture {
 
         commandStreamReceiver->initDirectSubmission();
         ASSERT_TRUE(osContext->isDirectSubmissionActive());
-        ASSERT_TRUE(commandStreamReceiver->isDirectSubmissionEnabled());
     }
 
     template <typename FamilyType>
@@ -85,7 +91,62 @@ struct TbxDirectSubmissionFixture : public DeviceFixture {
     std::unique_ptr<CommandStreamReceiver> commandStreamReceiver;
 };
 
+struct TbxBlitterDirectSubmissionFixture : public TbxDirectSubmissionFixture {
+    template <typename FamilyType>
+    void setUpT() {
+        debugManager.flags.DirectSubmissionOverrideBlitterSupport.set(2);
+        setUpForEngine<FamilyType>(aub_stream::ENGINE_BCS);
+        ASSERT_TRUE(commandStreamReceiver->isBlitterDirectSubmissionEnabled());
+    }
+};
+
+template <typename FamilyType>
+void flushAppendOnStartedDirectSubmission(MockTbxCsr<FamilyType> &tbxCsr, MemoryManager &memoryManager, const DeviceBitfield deviceBitfield) {
+    auto commandBuffer = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{tbxCsr.getRootDeviceIndex(), MemoryConstants::pageSize, deviceBitfield});
+
+    LinearStream commandStream(commandBuffer);
+    BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(commandStream.getGraphicsAllocation(), &commandStream, commandStream.getUsed());
+    batchBuffer.endCmdPtr = commandStream.getCpuBase();
+    ResidencyContainer allocationsForResidency;
+    tbxCsr.flush(batchBuffer, allocationsForResidency);
+
+    auto mockHardwareContext = static_cast<MockHardwareContext *>(tbxCsr.hardwareContextController->hardwareContexts[0].get());
+    mockHardwareContext->submitCalled = false;
+    mockHardwareContext->resubmitCalled = false;
+    tbxCsr.allocationTypesWrittenInChunksWithAubManager.clear();
+    allocationsForResidency.clear();
+    commandStream.getSpace(256);
+    batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(commandStream.getGraphicsAllocation(), &commandStream, commandStream.getUsed());
+    batchBuffer.endCmdPtr = ptrOffset(commandStream.getCpuBase(), 128);
+    tbxCsr.flush(batchBuffer, allocationsForResidency);
+
+    memoryManager.freeGraphicsMemory(commandBuffer);
+}
+
+template <typename FamilyType>
+bool isRingBufferChunkUploaded(const MockTbxCsr<FamilyType> &tbxCsr) {
+    const auto &writtenAllocationTypes = tbxCsr.allocationTypesWrittenInChunksWithAubManager;
+    return std::find(writtenAllocationTypes.begin(), writtenAllocationTypes.end(), AllocationType::ringBuffer) != writtenAllocationTypes.end();
+}
+
 using TbxCommandStreamDirectSubmissionTests = Test<TbxDirectSubmissionFixture>;
+using TbxCommandStreamBlitterDirectSubmissionTests = Test<TbxBlitterDirectSubmissionFixture>;
+
+HWTEST_TEMPLATED_F(TbxCommandStreamDirectSubmissionTests, givenStartedDirectSubmissionWhenFlushIsCalledThenRingBufferChunkIsUploaded) {
+    auto *tbxCsr = getCsr<FamilyType>();
+
+    flushAppendOnStartedDirectSubmission(*tbxCsr, *pDevice->executionEnvironment->memoryManager, pDevice->getDeviceBitfield());
+
+    EXPECT_TRUE(isRingBufferChunkUploaded(*tbxCsr));
+}
+
+HWTEST_TEMPLATED_F(TbxCommandStreamBlitterDirectSubmissionTests, givenStartedBlitterDirectSubmissionWhenFlushIsCalledThenRingBufferChunkIsUploaded) {
+    auto *tbxCsr = getCsr<FamilyType>();
+
+    flushAppendOnStartedDirectSubmission(*tbxCsr, *pDevice->executionEnvironment->memoryManager, pDevice->getDeviceBitfield());
+
+    EXPECT_TRUE(isRingBufferChunkUploaded(*tbxCsr));
+}
 
 HWTEST_TEMPLATED_F(TbxCommandStreamDirectSubmissionTests, givenTbxCommandStreamReceiverWhenFlushIsCalledThenItShouldProcessAllocationsForResidency) {
     auto *tbxCsr = getCsr<FamilyType>();
@@ -204,4 +265,50 @@ HWTEST_TEMPLATED_F(TbxCommandStreamDirectSubmissionTests, givenStartedDirectSubm
     EXPECT_FALSE(mockHardwareContext->submitCalled);
 
     pDevice->executionEnvironment->memoryManager->freeGraphicsMemory(commandBuffer);
+}
+
+HWTEST_TEMPLATED_F(TbxCommandStreamDirectSubmissionTests, givenStartedDirectSubmissionAndInactiveHwContextWhenFlushIsCalledThenHwContextIsResubmittedWithoutNewSubmission) {
+    auto *tbxCsr = getCsr<FamilyType>();
+    auto mockHardwareContext = static_cast<MockHardwareContext *>(tbxCsr->hardwareContextController->hardwareContexts[0].get());
+    mockHardwareContext->isActiveReturnValue = false;
+
+    flushAppendOnStartedDirectSubmission(*tbxCsr, *pDevice->executionEnvironment->memoryManager, pDevice->getDeviceBitfield());
+
+    EXPECT_TRUE(mockHardwareContext->resubmitCalled);
+    EXPECT_FALSE(mockHardwareContext->submitCalled);
+}
+
+HWTEST_TEMPLATED_F(TbxCommandStreamDirectSubmissionTests, givenStartedDirectSubmissionAndActiveHwContextWhenFlushIsCalledThenHwContextIsNotResubmitted) {
+    auto *tbxCsr = getCsr<FamilyType>();
+    auto mockHardwareContext = static_cast<MockHardwareContext *>(tbxCsr->hardwareContextController->hardwareContexts[0].get());
+    mockHardwareContext->isActiveReturnValue = true;
+
+    flushAppendOnStartedDirectSubmission(*tbxCsr, *pDevice->executionEnvironment->memoryManager, pDevice->getDeviceBitfield());
+
+    EXPECT_FALSE(mockHardwareContext->resubmitCalled);
+    EXPECT_FALSE(mockHardwareContext->submitCalled);
+}
+
+HWTEST_TEMPLATED_F(TbxCommandStreamBlitterDirectSubmissionTests, givenStartedBlitterDirectSubmissionAndInactiveHwContextWhenFlushIsCalledThenHwContextIsResubmittedWithoutNewSubmission) {
+    auto *tbxCsr = getCsr<FamilyType>();
+    auto mockHardwareContext = static_cast<MockHardwareContext *>(tbxCsr->hardwareContextController->hardwareContexts[0].get());
+    mockHardwareContext->isActiveReturnValue = false;
+
+    flushAppendOnStartedDirectSubmission(*tbxCsr, *pDevice->executionEnvironment->memoryManager, pDevice->getDeviceBitfield());
+
+    EXPECT_TRUE(mockHardwareContext->resubmitCalled);
+    EXPECT_FALSE(mockHardwareContext->submitCalled);
+}
+
+HWTEST_TEMPLATED_F(TbxCommandStreamDirectSubmissionTests, givenStartedDirectSubmissionAndInactiveHwContextWhenDirectSubmissionIsStoppedThenHwContextIsNotResubmitted) {
+    auto *tbxCsr = getCsr<FamilyType>();
+    flushAppendOnStartedDirectSubmission(*tbxCsr, *pDevice->executionEnvironment->memoryManager, pDevice->getDeviceBitfield());
+
+    auto mockHardwareContext = static_cast<MockHardwareContext *>(tbxCsr->hardwareContextController->hardwareContexts[0].get());
+    mockHardwareContext->isActiveReturnValue = false;
+    mockHardwareContext->resubmitCalled = false;
+
+    tbxCsr->stopDirectSubmission(false, false);
+
+    EXPECT_FALSE(mockHardwareContext->resubmitCalled);
 }

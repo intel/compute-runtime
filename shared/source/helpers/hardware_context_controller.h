@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,6 +22,7 @@ class HardwareContextController {
 
     void initialize();
     void pollForCompletion();
+    void resubmitInactiveContexts();
     void expectMemory(uint64_t gfxAddress, const void *srcAddress, size_t length, uint32_t compareOperation);
     void submit(uint64_t batchBufferGpuAddress, const void *batchBuffer, size_t batchBufferSize, uint32_t memoryBank, uint64_t entryBits, bool overrideRingHead);
     void writeMemory(aub_stream::AllocationParams &allocationParams);

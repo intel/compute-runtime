@@ -50,12 +50,16 @@ struct MockHardwareContext : public aub_stream::HardwareContext {
     void dumpBufferBIN(uint64_t gfxAddress, size_t size) override { dumpBufferBINCalled = true; }
     void dumpSurface(const SurfaceInfo &surfaceInfo) override { dumpSurfaceCalled = true; }
     void pollForFenceCompletion() override {}
+    bool isActive() override { return isActiveReturnValue; }
+    void resubmit() override { resubmitCalled = true; }
 
     std::vector<aub_stream::AllocationParams> storedAllocationParams;
     uint64_t latestGpuVaForMemoryRead = 0;
     bool storeAllocationParams = false;
     bool initializeCalled = false;
     bool pollForCompletionCalled = false;
+    bool isActiveReturnValue = false;
+    bool resubmitCalled = false;
     bool writeAndSubmitCalled = false;
     bool submitCalled = false;
     bool writeMemory2Called = false;

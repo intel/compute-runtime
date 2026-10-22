@@ -258,6 +258,24 @@ TEST_F(HardwareContextContainerTests, givenMultipleHwContextWhenSingleMethodIsCa
     EXPECT_EQ(2u, mockHwContext1->memoryBanksPassed);
 }
 
+TEST_F(HardwareContextContainerTests, givenActiveAndInactiveHwContextsWhenResubmitInactiveContextsIsCalledThenOnlyInactiveContextIsResubmitted) {
+    MockAubManager aubManager;
+    MockOsContext osContext(1, EngineDescriptorHelper::getDefaultDescriptor(0b11));
+    HardwareContextController hwContextContainer(aubManager, osContext, 0);
+    hwContextContainer.createHardwareContexts(aubManager);
+    ASSERT_EQ(2u, hwContextContainer.hardwareContexts.size());
+
+    auto activeHwContext = static_cast<MockHardwareContext *>(hwContextContainer.hardwareContexts[0].get());
+    auto inactiveHwContext = static_cast<MockHardwareContext *>(hwContextContainer.hardwareContexts[1].get());
+    activeHwContext->isActiveReturnValue = true;
+    inactiveHwContext->isActiveReturnValue = false;
+
+    hwContextContainer.resubmitInactiveContexts();
+
+    EXPECT_FALSE(activeHwContext->resubmitCalled);
+    EXPECT_TRUE(inactiveHwContext->resubmitCalled);
+}
+
 TEST_F(HardwareContextContainerTests, givenHwContextWhenWriteMMIOIsCalledThenUseFirstContext) {
     MockAubManager aubManager;
     MockOsContext osContext(1, EngineDescriptorHelper::getDefaultDescriptor());

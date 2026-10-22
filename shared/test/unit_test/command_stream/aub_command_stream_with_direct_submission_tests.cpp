@@ -126,6 +126,7 @@ HWTEST_TEMPLATED_F(AubCommandStreamDirectSubmissionTests, givenStartedDirectSubm
 
     // Unlike live TBX, pure AUB must record execution of each appended ring section.
     EXPECT_TRUE(mockHardwareContext->submitCalled);
+    EXPECT_FALSE(mockHardwareContext->resubmitCalled);
 
     pDevice->executionEnvironment->memoryManager->freeGraphicsMemory(commandBuffer);
 }

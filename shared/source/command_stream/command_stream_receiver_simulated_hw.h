@@ -169,5 +169,10 @@ class CommandStreamReceiverSimulatedHw : public CommandStreamReceiverSimulatedCo
         hardwareContextController->submit(batchBufferGpuAddress, batchBuffer, batchBufferSize,
                                           memoryBank, entryBits, overrideRingHead);
     }
+
+    void resubmitInactiveHardwareContexts() const {
+        UNRECOVERABLE_IF(nullptr == hardwareContextController);
+        hardwareContextController->resubmitInactiveContexts();
+    }
 };
 } // namespace NEO
