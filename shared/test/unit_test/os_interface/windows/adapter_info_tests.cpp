@@ -231,8 +231,8 @@ TEST(DxCoreAdapterFactory, whenSupportedThenGiveAccessToUnderlyingAdapterDesc) {
     EXPECT_TRUE(retrievedAdapterDesc);
     EXPECT_EQ(NEO::AdapterFactory::AdapterDesc::Type::hardware, adapterDesc.type);
     EXPECT_EQ(0x1234U, adapterDesc.deviceId);
-    EXPECT_EQ(0x1234, adapterDesc.luid.HighPart);
-    EXPECT_EQ(0U, adapterDesc.luid.LowPart);
+    EXPECT_EQ(NEO::UltAdapterLuid::dxCoreFactoryId, adapterDesc.luid.HighPart);
+    EXPECT_EQ(NEO::UltAdapterLuid::adapterIndexBase, adapterDesc.luid.LowPart);
     EXPECT_STREQ("Intel", adapterDesc.driverDescription.c_str());
 }
 
@@ -273,8 +273,8 @@ TEST(DxgiAdapterFactory, whenSupportedThenGiveAccessToUnderlyingAdapterDesc) {
     EXPECT_TRUE(retrievedAdapterDesc);
     EXPECT_EQ(NEO::AdapterFactory::AdapterDesc::Type::unknown, adapterDesc.type);
     EXPECT_EQ(0x1234U, adapterDesc.deviceId);
-    EXPECT_EQ(0x1234, adapterDesc.luid.HighPart);
-    EXPECT_EQ(0U, adapterDesc.luid.LowPart);
+    EXPECT_EQ(NEO::UltAdapterLuid::dxgiFactoryId, adapterDesc.luid.HighPart);
+    EXPECT_EQ(NEO::UltAdapterLuid::adapterIndexBase, adapterDesc.luid.LowPart);
     EXPECT_STREQ("Intel", adapterDesc.driverDescription.c_str());
 }
 

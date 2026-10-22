@@ -10,6 +10,7 @@
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/windows/dxgi_wrapper.h"
+#include "shared/test/common/os_interface/windows/ult_adapter_luid.h"
 
 #include "dxcore_interface.h"
 
@@ -27,7 +28,7 @@ class UltDxCoreAdapter : public IDXCoreAdapter {
     virtual ~UltDxCoreAdapter() = default;
 
     const static char *description;
-    LUID luid = {0u, 0x1234u};
+    LUID luid = {};
     bool STDMETHODCALLTYPE IsValid() override {
         return true;
     }
@@ -156,6 +157,7 @@ class UltDXCoreAdapterList : public IDXCoreAdapterList {
     static bool firstInvalid;
     HRESULT STDMETHODCALLTYPE GetAdapter(uint32_t index, REFIID riid, _COM_Outptr_ void **ppvAdapter) override {
         auto adapter = new UltDxCoreAdapter;
+        adapter->luid = UltAdapterLuid::create(UltAdapterLuid::dxCoreFactoryId, index);
         if (firstInvalid && 0 == index) {
             adapter->luid.HighPart = 0u;
             adapter->luid.LowPart = 0u;

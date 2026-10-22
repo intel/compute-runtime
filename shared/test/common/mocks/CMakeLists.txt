@@ -135,6 +135,7 @@ if(WIN32 OR NOT DISABLE_WDDM_LINUX)
        ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_residency_allocations_container.h
        ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_residency_logger.h
        ${CMAKE_CURRENT_SOURCE_DIR}/wddm_mock_helpers.h
+       ${NEO_SHARED_TEST_DIRECTORY}/common/mock_gdi/mock_driver_store_paths.h
        ${NEO_SHARED_TEST_DIRECTORY}/common/mock_gdi/mock_gdi.cpp
        ${NEO_SHARED_TEST_DIRECTORY}/common/mock_gdi/mock_gdi.h
        ${NEO_SHARED_TEST_DIRECTORY}/common/mock_gdi/mock_gdi_gfx_partition.cpp

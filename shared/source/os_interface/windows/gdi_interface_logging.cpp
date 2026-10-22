@@ -40,6 +40,11 @@ void getEnterString<CONST D3DKMT_CLOSEADAPTER *>(CONST D3DKMT_CLOSEADAPTER *para
 }
 
 template <>
+void getEnterString<D3DKMT_ENUMADAPTERS3 *>(D3DKMT_ENUMADAPTERS3 *param, char *input, size_t size) {
+    snprintf_s(input, size, size, "D3DKMT_ENUMADAPTERS3 Filter 0x%llx NumAdapters %u", static_cast<unsigned long long>(param->Filter.Value), param->NumAdapters);
+}
+
+template <>
 void getEnterString<CONST D3DKMT_QUERYADAPTERINFO *>(CONST D3DKMT_QUERYADAPTERINFO *param, char *input, size_t size) {
     strcpy_s(input, size, "D3DKMT_QUERYADAPTERINFO");
 }
@@ -343,6 +348,9 @@ template void logExit<CONST D3DKMT_OPENADAPTERFROMLUID *>(NTSTATUS status, CONST
 
 template void logEnter<CONST D3DKMT_CLOSEADAPTER *>(CONST D3DKMT_CLOSEADAPTER *param);
 template void logExit<CONST D3DKMT_CLOSEADAPTER *>(NTSTATUS status, CONST D3DKMT_CLOSEADAPTER *param);
+
+template void logEnter<D3DKMT_ENUMADAPTERS3 *>(D3DKMT_ENUMADAPTERS3 *param);
+template void logExit<D3DKMT_ENUMADAPTERS3 *>(NTSTATUS status, D3DKMT_ENUMADAPTERS3 *param);
 
 template void logEnter<CONST D3DKMT_QUERYADAPTERINFO *>(CONST D3DKMT_QUERYADAPTERINFO *param);
 template void logExit<CONST D3DKMT_QUERYADAPTERINFO *>(NTSTATUS status, CONST D3DKMT_QUERYADAPTERINFO *param);

@@ -149,6 +149,33 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingCloseAdapterTh
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }
 
+TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingEnumAdapters3ThenExpectCorrectStrings) {
+    D3DKMT_ENUMADAPTERS3 param = {};
+    param.Filter.IncludeComputeOnly = 1;
+    param.NumAdapters = 3;
+
+    std::stringstream expectedOutput;
+    expectedOutput << logEnterBegin
+                   << "D3DKMT_ENUMADAPTERS3 Filter 0x1 NumAdapters 3"
+                   << std::endl;
+
+    StreamCapture capture;
+    capture.captureStdout();
+    GdiLogging::logEnter<D3DKMT_ENUMADAPTERS3 *>(&param);
+    std::string logEnterStr = capture.getCapturedStdout();
+    EXPECT_STREQ(expectedOutput.str().c_str(), logEnterStr.c_str());
+
+    expectedOutput.str(std::string());
+    expectedOutput << logExitBegin
+                   << std::hex << status
+                   << " " << std::endl;
+
+    capture.captureStdout();
+    GdiLogging::logExit<D3DKMT_ENUMADAPTERS3 *>(status, &param);
+    std::string logExitStr = capture.getCapturedStdout();
+    EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
+}
+
 TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingQueryAdapterInfoThenExpectCorrectStrings) {
     D3DKMT_QUERYADAPTERINFO param = {};
 

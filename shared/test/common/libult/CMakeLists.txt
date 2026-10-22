@@ -185,6 +185,7 @@ target_sources(neo_libult_common PRIVATE
 
 set(neo_libult_common_SRCS_LIB_ULT_WIN
     ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/windows/memory_allocator_multi_device_fixture_windows.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/ult_adapter_luid.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/ult_dxgi_factory.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/ult_dxgi_factory.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/ult_dxcore_factory.cpp
@@ -274,6 +275,7 @@ if(UNIX AND NOT DISABLE_WDDM_LINUX)
   list(APPEND neo_libult_SRCS
        ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/linux/mock_dxcore.h
        ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/sys_calls_win.cpp
+       ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/ult_adapter_luid.h
        ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/ult_dxcore_factory.cpp
        ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/ult_dxcore_factory.h
   )

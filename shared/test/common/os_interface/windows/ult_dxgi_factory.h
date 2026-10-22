@@ -9,6 +9,7 @@
 
 #include "shared/source/helpers/constants.h"
 #include "shared/source/os_interface/windows/dxgi_wrapper.h"
+#include "shared/test/common/os_interface/windows/ult_adapter_luid.h"
 
 #include <cwchar>
 
@@ -17,6 +18,7 @@ class UltIDXGIAdapter1 : public IDXGIAdapter1 {
   public:
     virtual ~UltIDXGIAdapter1() = default;
     const static wchar_t *description;
+    uint32_t adapterIndex = 0u;
     // IDXGIAdapter1
     HRESULT STDMETHODCALLTYPE GetDesc1(
         _Out_ DXGI_ADAPTER_DESC1 *pDesc) {
@@ -25,7 +27,7 @@ class UltIDXGIAdapter1 : public IDXGIAdapter1 {
             return S_FALSE;
         }
         swprintf(pDesc->Description, 128, description);
-        pDesc->AdapterLuid.HighPart = 0x1234;
+        pDesc->AdapterLuid = UltAdapterLuid::create(UltAdapterLuid::dxgiFactoryId, adapterIndex);
         pDesc->DeviceId = 0x1234;
         return S_OK;
     }
@@ -105,7 +107,9 @@ class UltIDXGIFactory1 : public IDXGIFactory1 {
             *(IDXGIAdapter1 **)ppAdapter = nullptr;
             return DXGI_ERROR_NOT_FOUND;
         }
-        *(IDXGIAdapter1 **)ppAdapter = new UltIDXGIAdapter1;
+        auto adapter = new UltIDXGIAdapter1;
+        adapter->adapterIndex = Adapter;
+        *reinterpret_cast<IDXGIAdapter1 **>(ppAdapter) = adapter;
         return S_OK;
     }
 

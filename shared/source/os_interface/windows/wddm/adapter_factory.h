@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -48,7 +48,8 @@ class AdapterFactory {
     virtual bool getAdapterDesc(uint32_t ordinal, AdapterDesc &outAdapter) = 0;
     virtual bool isSupported() = 0;
 
-    static std::unique_ptr<AdapterFactory> create(AdapterFactory::CreateAdapterFactoryFcn dxCoreCreateAdapterFactoryF,
+    static std::unique_ptr<AdapterFactory> create(const Gdi &gdi,
+                                                  AdapterFactory::CreateAdapterFactoryFcn dxCoreCreateAdapterFactoryF,
                                                   AdapterFactory::CreateAdapterFactoryFcn dxgiCreateAdapterFactoryF);
 };
 

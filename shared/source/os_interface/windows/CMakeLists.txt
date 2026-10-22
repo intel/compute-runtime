@@ -41,7 +41,7 @@ set(NEO_CORE_OS_INTERFACE_WINDOWS
     ${CMAKE_CURRENT_SOURCE_DIR}/trim_callback.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm_device_command_stream.h
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm_device_command_stream.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/wddm/adapter_factory_create_with_fallback.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/wddm/adapter_factory_create_win.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/adapter_factory_dxgi.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/adapter_factory_dxgi.h
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/definitions/gdi_interface_logging.inl
@@ -152,7 +152,9 @@ endif()
 if(NOT WIN32 AND NOT DISABLE_WDDM_LINUX)
   list(APPEND NEO_CORE_OS_INTERFACE_WDDM
        ${CMAKE_CURRENT_SOURCE_DIR}/pdh_interface_drm_or_wddm.cpp
-       ${CMAKE_CURRENT_SOURCE_DIR}/wddm/adapter_factory_create_dxcore.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/wddm/adapter_factory_create_drm_or_wddm.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/wddm/adapter_factory_kmt.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/wddm/adapter_factory_kmt.h
        ${CMAKE_CURRENT_SOURCE_DIR}/power_settings_stub.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/trim_callback_stub.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/sys_calls_wrapper_drm_or_wddm.cpp

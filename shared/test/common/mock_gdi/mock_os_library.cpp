@@ -217,6 +217,9 @@ void *MockOsLibrary::getProcAddress(const std::string &procName) {
     if (procName == "D3DKMTCloseAdapter") {
         return reinterpret_cast<void *>(mockD3DKMTCloseAdapter);
     }
+    if (procName == "D3DKMTEnumAdapters3") {
+        return reinterpret_cast<void *>(mockD3DKMTEnumAdapters3);
+    }
     if (procName == "D3DKMTLock") {
         return reinterpret_cast<void *>(mockD3DKMTLock);
     }

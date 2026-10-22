@@ -48,6 +48,7 @@ bool Gdi::getAllProcAddresses() {
     destroyAllocation2 = gdiDll->getProcAddress("D3DKMTDestroyAllocation2");
     queryAdapterInfo = gdiDll->getProcAddress("D3DKMTQueryAdapterInfo");
     closeAdapter = gdiDll->getProcAddress("D3DKMTCloseAdapter");
+    enumAdapters3 = gdiDll->getProcAddress("D3DKMTEnumAdapters3");
     createDevice = gdiDll->getProcAddress("D3DKMTCreateDevice");
     destroyDevice = gdiDll->getProcAddress("D3DKMTDestroyDevice");
     escape = gdiDll->getProcAddress("D3DKMTEscape");

@@ -11,6 +11,10 @@
 #include "shared/source/os_interface/windows/device_time_wddm.h"
 #include "shared/source/os_interface/windows/sharedata_wrapper.h"
 #include "shared/source/os_interface/windows/windows_wrapper.h"
+#include "shared/test/common/mock_gdi/mock_driver_store_paths.h"
+
+#include <optional>
+#include <string_view>
 
 #define ADAPTER_HANDLE (static_cast<D3DKMT_HANDLE>(0x40001234))
 #define SHADOW_ADAPTER_HANDLE (static_cast<D3DKMT_HANDLE>(0x30001234))
@@ -67,6 +71,7 @@ NTSTATUS __stdcall mockD3DKMTDestroyHwQueue(IN CONST D3DKMT_DESTROYHWQUEUE *dest
 NTSTATUS __stdcall mockD3DKMTOpenAdapterFromHdc(IN OUT D3DKMT_OPENADAPTERFROMHDC *);
 NTSTATUS __stdcall mockD3DKMTDestroyAllocation(IN CONST D3DKMT_DESTROYALLOCATION *);
 NTSTATUS __stdcall mockD3DKMTCloseAdapter(IN CONST D3DKMT_CLOSEADAPTER *);
+NTSTATUS __stdcall mockD3DKMTEnumAdapters3(IN OUT D3DKMT_ENUMADAPTERS3 *enumAdapters);
 NTSTATUS __stdcall mockD3DKMTLock(IN OUT D3DKMT_LOCK *);
 NTSTATUS __stdcall mockD3DKMTUnlock(IN CONST D3DKMT_UNLOCK *);
 NTSTATUS __stdcall mockD3DKMTRender(IN OUT D3DKMT_RENDER *);
@@ -128,10 +133,13 @@ extern const wchar_t *queryRegistryComputeRuntimePath;
 extern const wchar_t *queryRegistryOpenClDriverName;
 extern uint32_t queryAdapterInfoUmDriverPrivateCallCount;
 extern uint32_t closeAdapterCallCount;
-inline const wchar_t *mockAdapterDriverStorePath = L"\\SystemRoot\\System32\\DriverStore\\FileRepository\\iigd_dch.inf_amd64_0x8086";
-inline const wchar_t *mockLibraryFromAdapterDriverStore = L"C:\\Windows\\System32\\DriverStore\\FileRepository\\iigd_dch.inf_amd64_0x8086\\igdrcl64.dll";
-inline const wchar_t *mockLibraryFromOtherDriverStore = L"C:\\Windows\\System32\\DriverStore\\FileRepository\\iigd_dch.inf_amd64_0x1234\\igdrcl64.dll";
-inline const wchar_t *mockComputeRuntimePath = L"C:\\Windows\\System32\\DriverStore\\FileRepository\\iigd_dch.inf_amd64_0x8086";
-inline const wchar_t *mockOpenClDriverName = L"C:\\Windows\\System32\\DriverStore\\FileRepository\\iigd_dch.inf_amd64_0x8086\\igdrcl64.dll";
+extern uint32_t enumAdapters3CallCount;
+extern uint32_t failEnumAdapters3OnCall;
+extern uint32_t mockEnumAdapters3Count;
+extern std::optional<uint32_t> mockSoftwareEnumeratedAdapterIndex;
+extern std::optional<KMTQUERYADAPTERINFOTYPE> failingEnumeratedAdapterQueryType;
+inline constexpr uint32_t mockEnumeratedAdapterDeviceIdBase = 0x1234u;
+inline constexpr std::string_view mockEnumeratedAdapterDescription = "Intel";
+extern LUID mockOtherDriverStoreAdapterLuid;
 extern D3DKMT_DESTROYSYNCHRONIZATIONOBJECT destroySynchronizationObjectData;
 extern uint32_t destroySynchronizationObjectCallCount;

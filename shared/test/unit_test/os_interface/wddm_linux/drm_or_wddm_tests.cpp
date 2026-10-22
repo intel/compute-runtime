@@ -22,6 +22,7 @@
 #include "shared/test/common/mocks/mock_wddm.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 #include "shared/test/common/os_interface/windows/mock_wddm_memory_manager.h"
+#include "shared/test/common/os_interface/windows/ult_adapter_luid.h"
 
 #include "gtest/gtest.h"
 
@@ -30,6 +31,7 @@
 using namespace NEO;
 
 namespace NEO {
+extern const char *wslComputeHelperLibNameToLoad;
 extern bool returnEmptyFilesVector;
 extern int setErrno;
 extern std::map<std::string, std::vector<std::string>> directoryFilesMap;
@@ -171,6 +173,71 @@ TEST(DrmOrWddmTest, GivenInufficientPermissionsForDirectoryWhenDiscoveringDevice
     EXPECT_FALSE(executionEnvironment->isDevicePermissionError());
     EXPECT_FALSE(devices.empty());
     EXPECT_NE(0u, SysCalls::openFuncCalled);
+}
+
+class DrmOrWddmGdiDeviceDiscoveryTest : public ::testing::Test {
+  public:
+    static int openDrmDeviceFails(const char *pathname, int flags) {
+        errno = ENOENT;
+        return -1;
+    }
+
+    static OsLibrary *loadWslComputeHelperMissingInOtherDriverStore(const OsLibraryCreateProperties &properties) {
+        const std::string &libraryName = properties.libraryName;
+        if (!libraryName.ends_with(mockWslComputeHelperLibName)) {
+            return originalLoadFunc(properties);
+        }
+        if (libraryName.starts_with(std::string(mockOtherAdapterDriverStorePath.begin(), mockOtherAdapterDriverStorePath.end()))) {
+            return nullptr;
+        }
+        return originalLoadFunc(OsLibraryCreateProperties(""));
+    }
+
+    static constexpr const char *mockWslComputeHelperLibName = "mock_wsl_compute_helper";
+    static inline decltype(OsLibrary::loadFunc) originalLoadFunc = OsLibrary::loadFunc;
+
+    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen{&SysCalls::sysCallsOpen, openDrmDeviceFails};
+    VariableBackup<bool> emptyDir{&NEO::returnEmptyFilesVector, true};
+    VariableBackup<uint32_t> enumAdapters3CallCountBackup{&enumAdapters3CallCount, 0u};
+    VariableBackup<uint32_t> failEnumAdapters3OnCallBackup{&failEnumAdapters3OnCall, 0u};
+    VariableBackup<uint32_t> enumAdapters3CountBackup{&mockEnumAdapters3Count, 1u};
+    VariableBackup<LUID> otherDriverStoreAdapterLuidBackup{&mockOtherDriverStoreAdapterLuid, LUID{}};
+    VariableBackup<const char *> wslComputeHelperLibNameBackup{&NEO::wslComputeHelperLibNameToLoad, static_cast<const char *>(mockWslComputeHelperLibName)};
+    VariableBackup<decltype(OsLibrary::loadFunc)> loadFuncBackup{&OsLibrary::loadFunc, loadWslComputeHelperMissingInOtherDriverStore};
+    std::unique_ptr<MockExecutionEnvironment> executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+};
+
+TEST_F(DrmOrWddmGdiDeviceDiscoveryTest, givenGdiWithEnumAdapters3WhenDiscoveringDevicesThenAdapterEnumeratedWithEnumAdapters3IsReturned) {
+    auto devices = OSInterface::discoverDevices(*executionEnvironment);
+
+    EXPECT_EQ(2u, enumAdapters3CallCount);
+    ASSERT_EQ(1u, devices.size());
+    auto adapterLuid = devices[0]->as<HwDeviceIdWddm>()->getAdapterLuid();
+    auto expectedLuid = UltAdapterLuid::create(UltAdapterLuid::kmtFactoryId, 0u);
+    EXPECT_EQ(expectedLuid.LowPart, adapterLuid.LowPart);
+    EXPECT_EQ(expectedLuid.HighPart, adapterLuid.HighPart);
+}
+
+TEST_F(DrmOrWddmGdiDeviceDiscoveryTest, givenFailingEnumAdapters3WhenDiscoveringDevicesThenNoDevicesAreReturned) {
+    failEnumAdapters3OnCall = 1u;
+
+    auto devices = OSInterface::discoverDevices(*executionEnvironment);
+
+    EXPECT_EQ(1u, enumAdapters3CallCount);
+    EXPECT_TRUE(devices.empty());
+}
+
+TEST_F(DrmOrWddmGdiDeviceDiscoveryTest, givenTwoAdaptersAndOneWithoutWslComputeHelperInDriverStoreWhenDiscoveringDevicesThenOnlyAdapterWithWslComputeHelperIsReturned) {
+    mockEnumAdapters3Count = 2u;
+    mockOtherDriverStoreAdapterLuid = UltAdapterLuid::create(UltAdapterLuid::kmtFactoryId, 0u);
+
+    auto devices = OSInterface::discoverDevices(*executionEnvironment);
+
+    ASSERT_EQ(1u, devices.size());
+    auto adapterLuid = devices[0]->as<HwDeviceIdWddm>()->getAdapterLuid();
+    auto expectedLuid = UltAdapterLuid::create(UltAdapterLuid::kmtFactoryId, 1u);
+    EXPECT_EQ(expectedLuid.LowPart, adapterLuid.LowPart);
+    EXPECT_EQ(expectedLuid.HighPart, adapterLuid.HighPart);
 }
 
 TEST(DrmOrWddmTest, givenWddmWhenSetGmmInputArgsThenFileDescriptorIsSetToAdapterBdfData) {

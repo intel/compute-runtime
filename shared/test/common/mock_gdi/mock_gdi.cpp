@@ -14,10 +14,22 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/sku_info/operations/sku_info_transfer.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/os_interface/windows/ult_adapter_luid.h"
 
+#include <algorithm>
 #include <cwchar>
 #include <iterator>
 #include <map>
+
+constexpr D3DKMT_HANDLE otherDriverStoreAdapterHandle = 0x40001235;
+constexpr D3DKMT_HANDLE mockEnumeratedAdapterHandleBase = 0x40002000;
+static bool isEnumeratedAdapterHandle(D3DKMT_HANDLE adapter) {
+    return (adapter >= mockEnumeratedAdapterHandleBase) && (adapter - mockEnumeratedAdapterHandleBase < mockEnumAdapters3Count);
+}
+
+static bool isValidEnumeratedAdapterQuery(const D3DKMT_QUERYADAPTERINFO *queryAdapterInfo, size_t privateDriverDataSize) {
+    return isEnumeratedAdapterHandle(queryAdapterInfo->hAdapter) && (nullptr != queryAdapterInfo->pPrivateDriverData) && (privateDriverDataSize == queryAdapterInfo->PrivateDriverDataSize);
+}
 
 ADAPTER_INFO_KMD gAdapterInfo{};
 D3DDDI_MAPGPUVIRTUALADDRESS gLastCallMapGpuVaArg{};
@@ -32,11 +44,17 @@ NTSTATUS gGetDeviceStateExecutionReturnValue = STATUS_SUCCESS;
 NTSTATUS gGetDeviceStatePageFaultReturnValue = STATUS_SUCCESS;
 bool failCreateDevice = false;
 bool failCreatePagingQueue = false;
-const wchar_t *queryRegistryDriverStorePath = mockAdapterDriverStorePath;
-const wchar_t *queryRegistryComputeRuntimePath = mockComputeRuntimePath;
-const wchar_t *queryRegistryOpenClDriverName = mockOpenClDriverName;
+const wchar_t *queryRegistryDriverStorePath = mockAdapterDriverStorePath.data();
+const wchar_t *queryRegistryComputeRuntimePath = mockComputeRuntimePath.data();
+const wchar_t *queryRegistryOpenClDriverName = mockLibraryFromAdapterDriverStore.data();
 uint32_t queryAdapterInfoUmDriverPrivateCallCount = 0;
 uint32_t closeAdapterCallCount = 0;
+uint32_t enumAdapters3CallCount = 0;
+uint32_t failEnumAdapters3OnCall = 0;
+uint32_t mockEnumAdapters3Count = 1u;
+std::optional<uint32_t> mockSoftwareEnumeratedAdapterIndex;
+std::optional<KMTQUERYADAPTERINFOTYPE> failingEnumeratedAdapterQueryType;
+LUID mockOtherDriverStoreAdapterLuid = {};
 
 NTSTATUS __stdcall mockD3DKMTEscape(IN CONST D3DKMT_ESCAPE *pData) {
     static int perfTicks = 0;
@@ -69,7 +87,9 @@ NTSTATUS __stdcall mockD3DKMTOpenAdapterFromLuid(IN OUT CONST D3DKMT_OPENADAPTER
         return STATUS_INVALID_PARAMETER;
     }
     D3DKMT_OPENADAPTERFROMLUID *openAdapterNonConst = const_cast<D3DKMT_OPENADAPTERFROMLUID *>(openAdapter);
-    if (openAdapter->AdapterLuid.HighPart == 0xdd) {
+    if ((openAdapter->AdapterLuid.HighPart == mockOtherDriverStoreAdapterLuid.HighPart) && (openAdapter->AdapterLuid.LowPart == mockOtherDriverStoreAdapterLuid.LowPart)) {
+        openAdapterNonConst->hAdapter = otherDriverStoreAdapterHandle;
+    } else if (openAdapter->AdapterLuid.HighPart == 0xdd) {
         openAdapterNonConst->hAdapter = SHADOW_ADAPTER_HANDLE;
     } else {
         openAdapterNonConst->hAdapter = ADAPTER_HANDLE;
@@ -378,9 +398,18 @@ NTSTATUS __stdcall mockD3DKMTQueryAdapterInfo(IN CONST D3DKMT_QUERYADAPTERINFO *
         }
     }
 
+    const bool isEnumeratedAdapter = isEnumeratedAdapterHandle(queryAdapterInfo->hAdapter);
+    const uint32_t enumeratedAdapterIndex = queryAdapterInfo->hAdapter - mockEnumeratedAdapterHandleBase;
+    if (isEnumeratedAdapter && (failingEnumeratedAdapterQueryType == queryAdapterInfo->Type)) {
+        return STATUS_UNSUCCESSFUL;
+    }
+
     if (queryAdapterInfo->Type == KMTQAITYPE_ADAPTERTYPE) {
         D3DKMT_ADAPTERTYPE *adapterType = reinterpret_cast<D3DKMT_ADAPTERTYPE *>(queryAdapterInfo->pPrivateDriverData);
-        if (queryAdapterInfo->hAdapter == ADAPTER_HANDLE) {
+        if (isEnumeratedAdapter) {
+            adapterType->RenderSupported = 1;
+            adapterType->SoftwareDevice = (mockSoftwareEnumeratedAdapterIndex == enumeratedAdapterIndex) ? 1 : 0;
+        } else if (queryAdapterInfo->hAdapter == ADAPTER_HANDLE) {
             adapterType->RenderSupported = 1;
         } else if (queryAdapterInfo->hAdapter == SHADOW_ADAPTER_HANDLE) {
             adapterType->RenderSupported = 0;
@@ -436,6 +465,24 @@ NTSTATUS __stdcall mockD3DKMTQueryAdapterInfo(IN CONST D3DKMT_QUERYADAPTERINFO *
         return STATUS_SUCCESS;
     }
 
+    if (KMTQAITYPE_PHYSICALADAPTERDEVICEIDS == queryAdapterInfo->Type) {
+        if (!isValidEnumeratedAdapterQuery(queryAdapterInfo, sizeof(D3DKMT_QUERY_DEVICE_IDS))) {
+            return STATUS_INVALID_PARAMETER;
+        }
+        reinterpret_cast<D3DKMT_QUERY_DEVICE_IDS *>(queryAdapterInfo->pPrivateDriverData)->DeviceIds.DeviceID = mockEnumeratedAdapterDeviceIdBase + enumeratedAdapterIndex;
+        return STATUS_SUCCESS;
+    }
+
+    if (KMTQAITYPE_DRIVER_DESCRIPTION == queryAdapterInfo->Type) {
+        if (!isValidEnumeratedAdapterQuery(queryAdapterInfo, sizeof(D3DKMT_DRIVER_DESCRIPTION))) {
+            return STATUS_INVALID_PARAMETER;
+        }
+        auto driverDescription = reinterpret_cast<D3DKMT_DRIVER_DESCRIPTION *>(queryAdapterInfo->pPrivateDriverData);
+        auto descriptionEnd = std::copy(mockEnumeratedAdapterDescription.begin(), mockEnumeratedAdapterDescription.end(), driverDescription->DriverDescription);
+        *descriptionEnd = L'\0';
+        return STATUS_SUCCESS;
+    }
+
     if (KMTQAITYPE_QUERYREGISTRY == queryAdapterInfo->Type) {
         if ((nullptr == queryAdapterInfo->pPrivateDriverData) || (sizeof(D3DDDI_QUERYREGISTRY_INFO) > queryAdapterInfo->PrivateDriverDataSize)) {
             return STATUS_INVALID_PARAMETER;
@@ -455,7 +502,7 @@ NTSTATUS __stdcall mockD3DKMTQueryAdapterInfo(IN CONST D3DKMT_QUERYADAPTERINFO *
             if (!valueName.empty() || (0U != queryRegistryInfo->ValueType)) {
                 return STATUS_INVALID_PARAMETER;
             }
-            driverStorePathStr = queryRegistryDriverStorePath;
+            driverStorePathStr = (queryAdapterInfo->hAdapter == otherDriverStoreAdapterHandle) ? mockOtherAdapterDriverStorePath.data() : queryRegistryDriverStorePath;
         } else if (D3DDDI_QUERYREGISTRY_ADAPTERKEY == queryRegistryInfo->QueryType) {
             constexpr ULONG regSzValueType = 1; // REG_SZ
             if (regSzValueType != queryRegistryInfo->ValueType) {
@@ -697,6 +744,28 @@ NTSTATUS __stdcall mockD3DKMTDestroyAllocation(IN CONST D3DKMT_DESTROYALLOCATION
 
 NTSTATUS __stdcall mockD3DKMTCloseAdapter(IN CONST D3DKMT_CLOSEADAPTER *) {
     ++closeAdapterCallCount;
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS __stdcall mockD3DKMTEnumAdapters3(IN OUT D3DKMT_ENUMADAPTERS3 *enumAdapters) {
+    ++enumAdapters3CallCount;
+    if ((enumAdapters == nullptr) || (0u == enumAdapters->Filter.IncludeComputeOnly)) {
+        return STATUS_INVALID_PARAMETER;
+    }
+    if (enumAdapters3CallCount == failEnumAdapters3OnCall) {
+        return STATUS_UNSUCCESSFUL;
+    }
+    if (enumAdapters->pAdapters != nullptr) {
+        if (enumAdapters->NumAdapters < mockEnumAdapters3Count) {
+            return STATUS_INVALID_PARAMETER;
+        }
+        for (uint32_t i = 0; i < mockEnumAdapters3Count; i++) {
+            enumAdapters->pAdapters[i] = {};
+            enumAdapters->pAdapters[i].hAdapter = mockEnumeratedAdapterHandleBase + i;
+            enumAdapters->pAdapters[i].AdapterLuid = NEO::UltAdapterLuid::create(NEO::UltAdapterLuid::kmtFactoryId, i);
+        }
+    }
+    enumAdapters->NumAdapters = mockEnumAdapters3Count;
     return STATUS_SUCCESS;
 }
 

@@ -8,6 +8,7 @@
 #include "shared/source/os_interface/windows/sys_calls.h"
 
 #include "shared/source/os_interface/windows/os_inc.h"
+#include "shared/test/common/mock_gdi/mock_driver_store_paths.h"
 #include "shared/test/common/os_interface/windows/mock_sys_calls.h"
 
 #include <cstdint>
@@ -44,7 +45,7 @@ BOOL getLastErrorConstantResult = TRUE;
 bool isShutdownInProgressRetVal = false;
 BOOL systemPowerStatusRetVal = 1;
 BYTE systemPowerStatusACLineStatusOverride = 1;
-const wchar_t *currentLibraryPath = L"C:\\Windows\\System32\\DriverStore\\FileRepository\\iigd_dch.inf_amd64_0x8086\\igdrcl64.dll";
+const wchar_t *currentLibraryPath = mockLibraryFromAdapterDriverStore.data();
 uint32_t regOpenKeySuccessCount = 0u;
 uint32_t regQueryValueSuccessCount = 0u;
 uint64_t regQueryValueExpectedData = 0ull;

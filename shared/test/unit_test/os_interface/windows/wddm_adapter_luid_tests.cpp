@@ -43,8 +43,8 @@ TEST_F(WddmFixtureLuid, givenValidOsContextAndGetDeviceNodeMaskThenValidDataRetu
 TEST_F(WddmFixtureLuid, givenDoNotValidateDriverPathWhenCreatingHwDeviceThenDriverStorePathIsNotValidated) {
     DebugManagerStateRestore debugSettingsRestore;
 
-    VariableBackup<const wchar_t *> driverStorePathBackup{&queryRegistryDriverStorePath, mockAdapterDriverStorePath};
-    VariableBackup<const wchar_t *> currentLibraryPathBackup{&SysCalls::currentLibraryPath, mockLibraryFromOtherDriverStore};
+    VariableBackup<const wchar_t *> driverStorePathBackup{&queryRegistryDriverStorePath, mockAdapterDriverStorePath.data()};
+    VariableBackup<const wchar_t *> currentLibraryPathBackup{&SysCalls::currentLibraryPath, mockLibraryFromOtherDriverStore.data()};
 
     LUID adapterLuid = {0x1, 0x1};
     wddm->hwDeviceId = NEO::createHwDeviceIdFromAdapterLuid(*osEnvironment, adapterLuid, 2u);
@@ -59,8 +59,8 @@ TEST_F(WddmFixtureLuid, givenDoNotValidateDriverPathWhenCreatingHwDeviceThenDriv
 TEST_F(WddmFixtureLuid, givenOverriddenGdiPathWhenCreatingHwDeviceThenDriverStorePathIsNotValidated) {
     DebugManagerStateRestore debugSettingsRestore;
 
-    VariableBackup<const wchar_t *> driverStorePathBackup{&queryRegistryDriverStorePath, mockAdapterDriverStorePath};
-    VariableBackup<const wchar_t *> currentLibraryPathBackup{&SysCalls::currentLibraryPath, mockLibraryFromOtherDriverStore};
+    VariableBackup<const wchar_t *> driverStorePathBackup{&queryRegistryDriverStorePath, mockAdapterDriverStorePath.data()};
+    VariableBackup<const wchar_t *> currentLibraryPathBackup{&SysCalls::currentLibraryPath, mockLibraryFromOtherDriverStore.data()};
 
     LUID adapterLuid = {0x1, 0x1};
     wddm->hwDeviceId = NEO::createHwDeviceIdFromAdapterLuid(*osEnvironment, adapterLuid, 2u);
@@ -73,8 +73,8 @@ TEST_F(WddmFixtureLuid, givenOverriddenGdiPathWhenCreatingHwDeviceThenDriverStor
 }
 
 TEST_F(WddmFixtureLuid, givenAdapterFromSameDriverStoreWhenCreatingHwDeviceThenHwDeviceIsCreatedWithoutQueryingPrivateDriverData) {
-    VariableBackup<const wchar_t *> driverStorePathBackup{&queryRegistryDriverStorePath, mockAdapterDriverStorePath};
-    VariableBackup<const wchar_t *> currentLibraryPathBackup{&SysCalls::currentLibraryPath, mockLibraryFromAdapterDriverStore};
+    VariableBackup<const wchar_t *> driverStorePathBackup{&queryRegistryDriverStorePath, mockAdapterDriverStorePath.data()};
+    VariableBackup<const wchar_t *> currentLibraryPathBackup{&SysCalls::currentLibraryPath, mockLibraryFromAdapterDriverStore.data()};
     VariableBackup<uint32_t> privateQueryCountBackup{&queryAdapterInfoUmDriverPrivateCallCount, 0u};
 
     LUID adapterLuid = {0x1, 0x1};
@@ -84,8 +84,8 @@ TEST_F(WddmFixtureLuid, givenAdapterFromSameDriverStoreWhenCreatingHwDeviceThenH
 }
 
 TEST_F(WddmFixtureLuid, givenAdapterFromOtherDriverStoreWhenCreatingHwDeviceThenHwDeviceIsNotCreatedAndPrivateDriverDataIsNotQueried) {
-    VariableBackup<const wchar_t *> driverStorePathBackup{&queryRegistryDriverStorePath, mockAdapterDriverStorePath};
-    VariableBackup<const wchar_t *> currentLibraryPathBackup{&SysCalls::currentLibraryPath, mockLibraryFromOtherDriverStore};
+    VariableBackup<const wchar_t *> driverStorePathBackup{&queryRegistryDriverStorePath, mockAdapterDriverStorePath.data()};
+    VariableBackup<const wchar_t *> currentLibraryPathBackup{&SysCalls::currentLibraryPath, mockLibraryFromOtherDriverStore.data()};
     VariableBackup<uint32_t> privateQueryCountBackup{&queryAdapterInfoUmDriverPrivateCallCount, 0u};
 
     LUID adapterLuid = {0x1, 0x1};
@@ -96,7 +96,7 @@ TEST_F(WddmFixtureLuid, givenAdapterFromOtherDriverStoreWhenCreatingHwDeviceThen
 
 TEST_F(WddmFixtureLuid, givenDriverStorePathQueryFailsWhenCreatingHwDeviceThenHwDeviceIsNotCreated) {
     VariableBackup<const wchar_t *> driverStorePathBackup{&queryRegistryDriverStorePath, nullptr};
-    VariableBackup<const wchar_t *> currentLibraryPathBackup{&SysCalls::currentLibraryPath, mockLibraryFromAdapterDriverStore};
+    VariableBackup<const wchar_t *> currentLibraryPathBackup{&SysCalls::currentLibraryPath, mockLibraryFromAdapterDriverStore.data()};
 
     LUID adapterLuid = {0x1, 0x1};
     auto hwDeviceId = NEO::createHwDeviceIdFromAdapterLuid(*osEnvironment, adapterLuid, 2u);
