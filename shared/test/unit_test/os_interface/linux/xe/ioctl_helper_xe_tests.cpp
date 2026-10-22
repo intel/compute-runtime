@@ -5088,6 +5088,41 @@ TEST_F(IoctlHelperXeTest, givenXeIoctlHelperAndDeferBackingDisabledWhenIsDeferBa
     EXPECT_FALSE(xeIoctlHelper->isDeferBackingEnabledForSize(1u));
 }
 
+TEST_F(IoctlHelperXeTest, givenReorderedRootDeviceEnvironmentsWhenIsDeferBackingEnabledForSizeIsCalledThenPressureOfOwningRootDeviceIsUsed) {
+    struct DeferBackingPressureMemoryManager : public TestedDrmMemoryManager {
+        using DrmMemoryManager::cachedMaxLocalMemory;
+        using MemoryManager::localMemAllocsSize;
+        using TestedDrmMemoryManager::TestedDrmMemoryManager;
+    };
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableDeferBacking.set(1);
+    debugManager.flags.DeferBackingMemoryPressurePercent.set(50);
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>(defaultHwInfo.get(), false, 2u);
+    for (auto &rootDeviceEnvironment : executionEnvironment->rootDeviceEnvironments) {
+        rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
+        rootDeviceEnvironment->osInterface->setDriverModel(DrmMockXe::create(*rootDeviceEnvironment));
+    }
+    std::swap(executionEnvironment->rootDeviceEnvironments[0], executionEnvironment->rootDeviceEnvironments[1]);
+    ASSERT_EQ(0u, executionEnvironment->rootDeviceEnvironments[1]->getRootDeviceIndex());
+
+    auto memoryManager = new DeferBackingPressureMemoryManager(*executionEnvironment);
+    executionEnvironment->memoryManager.reset(memoryManager);
+    memoryManager->cachedMaxLocalMemory[0] = 1000u;
+    memoryManager->cachedMaxLocalMemory[1] = 1000u;
+    memoryManager->localMemAllocsSize[0] = 900u;
+    memoryManager->localMemAllocsSize[1] = 0u;
+
+    auto drm = executionEnvironment->rootDeviceEnvironments[1]->osInterface->getDriverModel()->as<DrmMockXe>();
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    xeIoctlHelper->initialize();
+    EXPECT_FALSE(xeIoctlHelper->isDeferBackingEnabledForSize(1u));
+
+    memoryManager->localMemAllocsSize[1] = 900u;
+    EXPECT_TRUE(xeIoctlHelper->isDeferBackingEnabledForSize(1u));
+}
+
 TEST_F(IoctlHelperXeTest, givenSharedSystemRangeLimitedToUserSpaceWhenCallingVmUnbindForNonSvmHeapAddressThenOneBindOp) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);

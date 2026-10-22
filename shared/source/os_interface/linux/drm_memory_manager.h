@@ -64,6 +64,7 @@ class DrmMemoryManager : public MemoryManager {
     uint64_t getCurrentUsedLocalMemorySize(uint32_t rootDeviceIndex, uint32_t deviceBitfield) override;
     uint64_t getCurrentUsedSystemSharedMemorySize(uint32_t rootDeviceIndex) override;
     bool isDeferBackingMemoryPressureReached(uint32_t rootDeviceIndex, size_t allocationSize, int32_t thresholdPercent);
+    uint32_t getRootDeviceIndex(const Drm *drm);
 
     AllocationStatus populateOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override;
     void cleanOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override;
@@ -217,7 +218,6 @@ class DrmMemoryManager : public MemoryManager {
 
     inline std::unique_ptr<Gmm> makeGmmIfSingleHandle(const AllocationData &allocationData, size_t sizeAligned);
     inline std::unique_ptr<DrmAllocation> makeDrmAllocation(const AllocationData &allocationData, std::unique_ptr<Gmm> gmm, uint64_t gpuAddress, size_t sizeAligned);
-    uint32_t getRootDeviceIndex(const Drm *drm);
     BufferObject *createRootDeviceBufferObject(uint32_t rootDeviceIndex);
     void releaseBufferObject(uint32_t rootDeviceIndex);
     BufferObject::BOType getBOTypeFromPatIndex(uint64_t patIndex, bool isPatIndexSupported) const;
