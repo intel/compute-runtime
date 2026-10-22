@@ -11,6 +11,7 @@
 
 namespace NEO {
 struct DirectSubmissionControllerMock : public DirectSubmissionController {
+    using DirectSubmissionController::activeSubmissionsCount;
     using DirectSubmissionController::bcsTimeoutDivisor;
     using DirectSubmissionController::checkNewSubmissions;
     using DirectSubmissionController::condVarMutex;

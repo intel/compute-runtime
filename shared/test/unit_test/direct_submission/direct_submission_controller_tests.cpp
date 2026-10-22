@@ -1460,4 +1460,17 @@ TEST_F(DirectSubmissionIdleDetectionWithContextGroupTests, givenCsrsWithSameCont
         EXPECT_FALSE(controller->isDirectSubmissionIdle(csr1.get(), lock1));
     }
 }
+
+TEST(DirectSubmissionControllerTests, givenUnregisteredCsrWhenNotifyingNewSubmissionThenDirectSubmissionsAreNotModified) {
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+    executionEnvironment.initializeMemoryManager();
+    MockCommandStreamReceiver csr(executionEnvironment, 0, DeviceBitfield(1));
+
+    DirectSubmissionControllerMock controller;
+    controller.notifyNewSubmission(&csr);
+
+    EXPECT_TRUE(controller.directSubmissions.empty());
+    EXPECT_EQ(0u, controller.activeSubmissionsCount.load());
+}
 } // namespace NEO

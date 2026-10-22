@@ -48,7 +48,10 @@ DirectSubmissionController::~DirectSubmissionController() {
 
 void DirectSubmissionController::registerDirectSubmission(CommandStreamReceiver *csr) {
     std::lock_guard<std::mutex> lock(directSubmissionsMutex);
-    directSubmissions.emplace(csr, DirectSubmissionState());
+    {
+        std::lock_guard<std::mutex> structureLock(condVarMutex);
+        directSubmissions.emplace(csr, DirectSubmissionState());
+    }
     this->overrideDirectSubmissionTimeouts(csr->getProductHelper());
 
     if (debugManager.flags.DirectSubmissionControllerContextGroupIdleDetection.get() == -1 &&
@@ -65,6 +68,7 @@ void DirectSubmissionController::overrideDirectSubmissionTimeouts(const ProductH
 
 void DirectSubmissionController::unregisterDirectSubmission(CommandStreamReceiver *csr) {
     std::lock_guard<std::mutex> lock(directSubmissionsMutex);
+    std::lock_guard<std::mutex> structureLock(condVarMutex);
     directSubmissions.erase(csr);
 }
 
@@ -105,8 +109,11 @@ void *DirectSubmissionController::controlDirectSubmissionsState(void *self) {
 
 void DirectSubmissionController::notifyNewSubmission(const CommandStreamReceiver *csr) {
     std::lock_guard<std::mutex> lock(condVarMutex);
-    ++activeSubmissionsCount;
-    directSubmissions[const_cast<CommandStreamReceiver *>(csr)].isActive = true;
+    auto it = directSubmissions.find(const_cast<CommandStreamReceiver *>(csr));
+    if (it != directSubmissions.end()) {
+        ++activeSubmissionsCount;
+        it->second.isActive = true;
+    }
     condVar.notify_one();
 }
 
