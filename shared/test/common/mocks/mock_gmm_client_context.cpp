@@ -35,9 +35,9 @@ MEMORY_OBJECT_CONTROL_STATE MockGmmClientContextBase::cachePolicyGetMemoryObject
     return retVal;
 }
 
-uint32_t MockGmmClientContextBase::cachePolicyGetPATIndex(GMM_RESOURCE_INFO *gmmResourceInfo, GmmResourceUsageType usage, bool compressed, bool cacheable) {
+uint32_t MockGmmClientContextBase::cachePolicyGetPATIndex(GMM_RESOURCE_INFO *gmmResourceInfo, GmmResourceUsageType usage, bool compressed, bool cpuCacheable) {
     passedCompressedSettingForGetPatIndexQuery = compressed;
-    passedCacheableSettingForGetPatIndexQuery = cacheable;
+    passedCpuCacheableSettingForGetPatIndexQuery = cpuCacheable;
     passedUsageTypeForGetPatIndexQuery = usage;
 
     if (returnErrorOnPatIndexQuery) {

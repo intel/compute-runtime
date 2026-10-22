@@ -36,7 +36,7 @@ struct Overrider {
 struct GmmRequirements {
     bool preferCompressed;
     bool allowLargePages;
-    Overrider<bool> overriderCacheable;
+    Overrider<bool> overriderCpuCacheable;
     Overrider<bool> overriderPreferNoCpuAccess;
 };
 

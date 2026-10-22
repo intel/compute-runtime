@@ -82,9 +82,9 @@ MEMORY_OBJECT_CONTROL_STATE GmmClientContext::cachePolicyGetMemoryObject(GMM_RES
     return clientContext->CachePolicyGetMemoryObject(pResInfo, static_cast<GMM_RESOURCE_USAGE_TYPE_ENUM>(usage));
 }
 
-uint32_t GmmClientContext::cachePolicyGetPATIndex(GMM_RESOURCE_INFO *gmmResourceInfo, GmmResourceUsageType usage, bool compressed, bool cacheable) {
+uint32_t GmmClientContext::cachePolicyGetPATIndex(GMM_RESOURCE_INFO *gmmResourceInfo, GmmResourceUsageType usage, bool compressed, bool cpuCacheable) {
     bool outValue = compressed;
-    uint32_t patIndex = clientContext->CachePolicyGetPATIndex(gmmResourceInfo, static_cast<GMM_RESOURCE_USAGE_TYPE_ENUM>(usage), &outValue, cacheable);
+    uint32_t patIndex = clientContext->CachePolicyGetPATIndex(gmmResourceInfo, static_cast<GMM_RESOURCE_USAGE_TYPE_ENUM>(usage), &outValue, cpuCacheable);
 
     DEBUG_BREAK_IF(outValue != compressed);
 

@@ -43,16 +43,17 @@ Gmm::Gmm(GmmHelper *gmmHelper, const void *alignedPtr, size_t alignedSize, size_
     resourceParams->Flags.Info.Linear = 1;
 
     this->preferNoCpuAccess = CacheSettingsHelper::preferNoCpuAccess(gmmResourceUsage, gmmHelper->getRootDeviceEnvironment());
-    bool cacheable = !this->preferNoCpuAccess && !CacheSettingsHelper::isUncachedType(gmmResourceUsage);
+    const bool isLocalMemoryPlacement = gmmHelper->getRootDeviceEnvironment().getHelper<GfxCoreHelper>().getEnableLocalMemory(*gmmHelper->getHardwareInfo()) && !storageInfo.systemMemoryPlacement;
+    bool cpuCacheable = !this->preferNoCpuAccess && !isLocalMemoryPlacement && !CacheSettingsHelper::isUncachedType(gmmResourceUsage);
 
     gmmRequirements.overriderPreferNoCpuAccess.doOverride(this->preferNoCpuAccess);
-    gmmRequirements.overriderCacheable.doOverride(cacheable);
+    gmmRequirements.overriderCpuCacheable.doOverride(cpuCacheable);
 
     if (NEO::debugManager.flags.OverrideGmmCacheableField.get() != -1) {
-        cacheable = !!NEO::debugManager.flags.OverrideGmmCacheableField.get();
+        cpuCacheable = !!NEO::debugManager.flags.OverrideGmmCacheableField.get();
     }
 
-    resourceParams->Flags.Info.Cacheable = cacheable;
+    resourceParams->Flags.Info.Cacheable = cpuCacheable;
 
     resourceParams->Flags.Gpu.Texture = 1;
 

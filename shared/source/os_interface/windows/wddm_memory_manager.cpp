@@ -377,8 +377,8 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryUsingKmdAndMapItToC
     gmmRequirements.allowLargePages = allowLargePages;
     gmmRequirements.preferCompressed = allocationData.flags.preferCompressed;
     if (productHelper.overrideAllocationCpuCacheable(allocationData)) {
-        gmmRequirements.overriderCacheable.enableOverride = true;
-        gmmRequirements.overriderCacheable.value = true;
+        gmmRequirements.overriderCpuCacheable.enableOverride = true;
+        gmmRequirements.overriderCpuCacheable.value = true;
     }
 
     auto gmm = new Gmm(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), nullptr,
@@ -609,8 +609,8 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(co
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
     if (productHelper.overrideAllocationCpuCacheable(allocationData)) {
-        gmmRequirements.overriderCacheable.enableOverride = true;
-        gmmRequirements.overriderCacheable.value = true;
+        gmmRequirements.overriderCpuCacheable.enableOverride = true;
+        gmmRequirements.overriderCpuCacheable.value = true;
     }
 
     auto gmm = new Gmm(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), alignedPtr, alignedSize, 0u,

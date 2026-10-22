@@ -1671,28 +1671,28 @@ uint64_t Drm::getPatIndex(Gmm *gmm, AllocationType allocationType, CacheRegion c
     }
 
     GMM_RESOURCE_INFO *resourceInfo = nullptr;
-    bool cacheable = !CacheSettingsHelper::isUncachedType(usageType);
+    bool cpuCacheable = !CacheSettingsHelper::isUncachedType(usageType);
     bool compressed = false;
 
     if (gmm) {
         resourceInfo = gmm->gmmResourceInfo->peekGmmResourceInfo();
         usageType = gmm->getResourceUsageType();
         compressed = gmm->isCompressionEnabled();
-        cacheable = gmm->gmmResourceInfo->isCacheable();
+        cpuCacheable = gmm->gmmResourceInfo->isCacheable();
     } else if (forceCoherent) {
-        cacheable = true;
+        cpuCacheable = true;
     }
 
-    if ((isSystemMemory && cacheable) || (!gmm && forceCoherent)) {
+    if ((isSystemMemory && cpuCacheable) || (!gmm && forceCoherent)) {
         usageType = CacheSettingsHelper::getGmmUsageTypeForCoherentSystemMemory(usageType, productHelper, releaseHelper);
     }
 
-    uint64_t patIndex = rootDeviceEnvironment.getGmmClientContext()->cachePolicyGetPATIndex(resourceInfo, usageType, compressed, cacheable);
+    uint64_t patIndex = rootDeviceEnvironment.getGmmClientContext()->cachePolicyGetPATIndex(resourceInfo, usageType, compressed, cpuCacheable);
     patIndex = productHelper.overridePatIndex(isUncachedType, patIndex, allocationType);
 
     UNRECOVERABLE_IF(patIndex == static_cast<uint64_t>(GMM_PAT_ERROR));
 
-    if (isSystemMemory && cacheable) {
+    if (isSystemMemory && cpuCacheable) {
         patIndex = releaseHelper.overrideSystemMemoryPatIndex(patIndex);
     }
 
@@ -1806,8 +1806,8 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
             if (bo->isResourceDecompressRequired()) {
                 GMM_RESOURCE_USAGE_TYPE usageType = GMM_RESOURCE_USAGE_OCL_BUFFER;
                 bool compressed = false;
-                bool cacheable = false;
-                vmBind.patIndex = static_cast<uint16_t>(drm->getRootDeviceEnvironment().getGmmClientContext()->cachePolicyGetPATIndex(nullptr, usageType, compressed, cacheable));
+                bool cpuCacheable = false;
+                vmBind.patIndex = static_cast<uint16_t>(drm->getRootDeviceEnvironment().getGmmClientContext()->cachePolicyGetPATIndex(nullptr, usageType, compressed, cpuCacheable));
             } else {
                 vmBind.patIndex = bo->peekPatIndex();
             }

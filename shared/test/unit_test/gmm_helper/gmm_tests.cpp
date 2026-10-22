@@ -138,8 +138,8 @@ HWTEST_F(GmmTests, givenVariousResourceUsageTypeWhenCreateGmmThenFlagCacheableIs
         EXPECT_FALSE(gmmResourceParams->Flags.Info.Cacheable);
     }
     {
-        gmmRequirements.overriderCacheable.enableOverride = true;
-        gmmRequirements.overriderCacheable.value = true;
+        gmmRequirements.overriderCpuCacheable.enableOverride = true;
+        gmmRequirements.overriderCpuCacheable.value = true;
         auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, storageInfo, gmmRequirements);
         auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
         EXPECT_TRUE(gmmResourceParams->Flags.Info.Cacheable);
@@ -171,6 +171,88 @@ HWTEST_F(GmmTests, givenVariousCacheableDebugSettingsTheCacheableFieldIsProgramm
     debugManager.flags.OverrideGmmCacheableField.set(1);
 
     auto gmm2 = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER, storageInfo, gmmRequirements);
+    auto *gmmResourceParams2 = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm2->resourceParamsData.data());
+    EXPECT_TRUE(gmmResourceParams2->Flags.Info.Cacheable);
+}
+
+TEST_F(GmmTests, givenLocalMemoryPlacementWhenCreateGmmThenFlagCacheableIsFalse) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableCpuCacheForResources.set(1);
+    debugManager.flags.EnableLocalMemory.set(1);
+    getGmmHelper()->getRootDeviceEnvironment().getMutableHardwareInfo()->featureTable.flags.ftrLocalMemory = true;
+    StorageInfo storageInfo{};
+    storageInfo.systemMemoryPlacement = false;
+    GmmRequirements gmmRequirements{};
+
+    for (auto isLockable : {false, true}) {
+        storageInfo.isLockable = isLockable;
+        auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, storageInfo, gmmRequirements);
+        auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+        EXPECT_FALSE(gmmResourceParams->Flags.Info.Cacheable);
+        EXPECT_FALSE(gmm->getPreferNoCpuAccess());
+    }
+}
+
+TEST_F(GmmTests, givenSystemMemoryPlacementOnDeviceWithLocalMemoryWhenCreateGmmThenFlagCacheableIsTrue) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableCpuCacheForResources.set(1);
+    getGmmHelper()->getRootDeviceEnvironment().getMutableHardwareInfo()->featureTable.flags.ftrLocalMemory = true;
+    StorageInfo storageInfo{};
+    storageInfo.systemMemoryPlacement = true;
+    GmmRequirements gmmRequirements{};
+
+    for (auto resourceUsageType : {GMM_RESOURCE_USAGE_OCL_BUFFER,
+                                   GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER}) {
+        auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, resourceUsageType, storageInfo, gmmRequirements);
+        auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+        EXPECT_TRUE(gmmResourceParams->Flags.Info.Cacheable);
+    }
+}
+
+TEST_F(GmmTests, givenLocalMemoryPlacementOnDeviceWithoutLocalMemoryWhenCreateGmmThenFlagCacheableIsTrue) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableCpuCacheForResources.set(1);
+    getGmmHelper()->getRootDeviceEnvironment().getMutableHardwareInfo()->featureTable.flags.ftrLocalMemory = false;
+    StorageInfo storageInfo{};
+    storageInfo.systemMemoryPlacement = false;
+    GmmRequirements gmmRequirements{};
+
+    auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, storageInfo, gmmRequirements);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    EXPECT_TRUE(gmmResourceParams->Flags.Info.Cacheable);
+}
+
+TEST_F(GmmTests, givenLocalMemoryPlacementOnDeviceWithLocalMemoryDisabledWhenCreateGmmThenFlagCacheableIsTrue) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableCpuCacheForResources.set(1);
+    debugManager.flags.EnableLocalMemory.set(0);
+    getGmmHelper()->getRootDeviceEnvironment().getMutableHardwareInfo()->featureTable.flags.ftrLocalMemory = true;
+    StorageInfo storageInfo{};
+    storageInfo.systemMemoryPlacement = false;
+    GmmRequirements gmmRequirements{};
+
+    auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, storageInfo, gmmRequirements);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    EXPECT_TRUE(gmmResourceParams->Flags.Info.Cacheable);
+}
+
+TEST_F(GmmTests, givenLocalMemoryPlacementAndCacheableOverrideWhenCreateGmmThenOverrideIsApplied) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableLocalMemory.set(1);
+    getGmmHelper()->getRootDeviceEnvironment().getMutableHardwareInfo()->featureTable.flags.ftrLocalMemory = true;
+    StorageInfo storageInfo{};
+    storageInfo.systemMemoryPlacement = false;
+    GmmRequirements gmmRequirements{};
+    gmmRequirements.overriderCpuCacheable.enableOverride = true;
+    gmmRequirements.overriderCpuCacheable.value = true;
+
+    auto gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, storageInfo, gmmRequirements);
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+    EXPECT_TRUE(gmmResourceParams->Flags.Info.Cacheable);
+
+    gmmRequirements.overriderCpuCacheable.enableOverride = false;
+    debugManager.flags.OverrideGmmCacheableField.set(1);
+    auto gmm2 = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, storageInfo, gmmRequirements);
     auto *gmmResourceParams2 = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm2->resourceParamsData.data());
     EXPECT_TRUE(gmmResourceParams2->Flags.Info.Cacheable);
 }

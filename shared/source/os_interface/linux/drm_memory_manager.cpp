@@ -1900,7 +1900,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(c
         GmmRequirements gmmRequirements{};
         gmmRequirements.preferCompressed = properties.flags.preferCompressed;
         if (!properties.flags.preferCompressed && !properties.flags.uncacheable) {
-            gmmRequirements.overriderCacheable = {true, true};
+            gmmRequirements.overriderCpuCacheable = {true, true};
         }
         gmm = std::make_unique<Gmm>(gmmHelper, nullptr,
                                     size, 0u, CacheSettingsHelper::getGmmUsageType(properties.allocationType, properties.flags.uncacheable, drm.getRootDeviceEnvironment().getHelper<ProductHelper>(), gmmHelper->getHardwareInfo()), createStorageInfoFromProperties(properties), gmmRequirements);
@@ -2931,8 +2931,8 @@ inline std::unique_ptr<Gmm> DrmMemoryManager::makeGmmIfSingleHandle(const Alloca
     gmmRequirements.preferCompressed = allocationData.flags.preferCompressed;
 
     if (productHelper.overrideAllocationCpuCacheable(allocationData)) {
-        gmmRequirements.overriderCacheable.enableOverride = true;
-        gmmRequirements.overriderCacheable.value = true;
+        gmmRequirements.overriderCpuCacheable.enableOverride = true;
+        gmmRequirements.overriderCpuCacheable.value = true;
     }
 
     return std::make_unique<Gmm>(gmmHelper,

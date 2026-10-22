@@ -209,7 +209,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, OverrideMaxWorkGroupCount, -1, "-1: default, >0:
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideCmdQueueSynchronousMode, -1, "Overrides all command queues synchronous mode: -1: do not override, 0: implicit driver behavior, 1: synchronous, 2: asynchronous")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideImmediateCmdListSynchronousMode, -1, "Overrides all immediate command lists synchronous mode: -1: do not override, 0: implicit driver behavior, 1: synchronous, 2: asynchronous")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideGmmResourceUsageField, -1, "-1: default, >=0: gmmResourceParams->Usage is set to this value")
-DECLARE_DEBUG_VARIABLE(int32_t, OverrideGmmCacheableField, -1, "-1: default, >=0: gmm Flags.Info.Cacheable is set to this value")
+DECLARE_DEBUG_VARIABLE(int32_t, OverrideGmmCacheableField, -1, "-1: default, >=0: gmm Flags.Info.Cacheable (CPU cacheable) is set to this value")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideBufferSuitableForRenderCompression, -1, "-1: default, 0: Disable, 1: Enable")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideL1CacheControlInSurfaceState, -1, "-1: feature inactive, >=0 : following L1 cache control value will be programmed in render surface state (for regular buffers)")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideL1CacheControlInSurfaceStateForScratchSpace, -1, "-1: feature inactive, >=0 : following L1 cache control value will be programmed in render surface state for scratch space")
