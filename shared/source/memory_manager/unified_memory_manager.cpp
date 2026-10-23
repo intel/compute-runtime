@@ -556,7 +556,7 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
     AllocationType allocationType = getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled);
 
     bool preferCompressed = true;
-    if (compressionEnabled && memoryProperties.device) {
+    if (compressionEnabled && memoryProperties.device && !memoryProperties.allocationFlags.flags.compressedHint) {
         if (not memoryProperties.device->getExecutionEnvironment()->isResourceDecompressionEnabled() &&
             memoryProperties.device->hasAnyPeerAccess().value_or(false)) {
             preferCompressed = false;

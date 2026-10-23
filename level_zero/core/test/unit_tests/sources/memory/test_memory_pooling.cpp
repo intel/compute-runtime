@@ -796,9 +796,12 @@ TEST_F(AllocUsmDeviceEnabledSinglePoolMemoryTest, givenDeviceWhenCallingAllocDev
         EXPECT_TRUE(mockDeviceMemAllocPool->isInitialized());
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         EXPECT_NE(nullptr, ptrCompressedHint);
-        EXPECT_TRUE(mockDeviceMemAllocPool->isInPoolRange(ptrCompressedHint));
-        EXPECT_EQ(1u, mockDeviceMemAllocPool->allocations.getNumAllocs());
-        EXPECT_EQ(poolAllocationData, driverHandle->svmAllocsManager->getSVMAlloc(ptrCompressedHint));
+        const bool compressedHintApplied = l0GfxCoreHelper.usmCompressionSupported(hwInfo) &&
+                                           l0Devices[0]->getNEODevice()->getGfxCoreHelper().isBufferSizeSuitableForCompression(1u);
+        const bool pooled = !compressedHintApplied || mockDeviceMemAllocPool->isCompressed().value_or(false);
+        EXPECT_EQ(pooled, mockDeviceMemAllocPool->isInPoolRange(ptrCompressedHint));
+        EXPECT_EQ(pooled ? 1u : 0u, mockDeviceMemAllocPool->allocations.getNumAllocs());
+        EXPECT_EQ(pooled, poolAllocationData == driverHandle->svmAllocsManager->getSVMAlloc(ptrCompressedHint));
         result = context->freeMem(ptrCompressedHint);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         EXPECT_EQ(0u, mockDeviceMemAllocPool->allocations.getNumAllocs());
@@ -815,9 +818,10 @@ TEST_F(AllocUsmDeviceEnabledSinglePoolMemoryTest, givenDeviceWhenCallingAllocDev
         EXPECT_TRUE(mockDeviceMemAllocPool->isInitialized());
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         EXPECT_NE(nullptr, ptrCompressedHint);
-        EXPECT_TRUE(mockDeviceMemAllocPool->isInPoolRange(ptrCompressedHint));
-        EXPECT_EQ(1u, mockDeviceMemAllocPool->allocations.getNumAllocs());
-        EXPECT_EQ(poolAllocationData, driverHandle->svmAllocsManager->getSVMAlloc(ptrCompressedHint));
+        const bool pooled = !mockDeviceMemAllocPool->isCompressed().value_or(false);
+        EXPECT_EQ(pooled, mockDeviceMemAllocPool->isInPoolRange(ptrCompressedHint));
+        EXPECT_EQ(pooled ? 1u : 0u, mockDeviceMemAllocPool->allocations.getNumAllocs());
+        EXPECT_EQ(pooled, poolAllocationData == driverHandle->svmAllocsManager->getSVMAlloc(ptrCompressedHint));
         result = context->freeMem(ptrCompressedHint);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         EXPECT_EQ(0u, mockDeviceMemAllocPool->allocations.getNumAllocs());

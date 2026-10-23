@@ -2310,6 +2310,70 @@ TEST_P(UnifiedMemoryDevicePoolingFacadeTest, givenCompressionSupportedAndInitPar
     EXPECT_TRUE(mockUsmMemAllocPoolsFacade.freeSVMAlloc(allocation, FreePolicyType::blocking));
 }
 
+TEST_P(UnifiedMemoryDevicePoolingFacadeTest, givenResourceDecompressionDisabledAndCompressedPoolWhenAllocatingWithCompressionHintsThenOnlyMatchingHintIsPooled) {
+    device->getExecutionEnvironment()->setResourceDecompressionEnabled(false);
+    void *noHintAllocation = mockUsmMemAllocPoolsFacade.createUnifiedMemoryAllocation(MemoryConstants::kiloByte, *poolMemoryProperties);
+    ASSERT_NE(nullptr, mockUsmMemAllocPoolsFacade.getPoolContainingAlloc(noHintAllocation).pool);
+    ASSERT_TRUE(isPoolOfAllocationCompressed(noHintAllocation));
+    EXPECT_TRUE(mockUsmMemAllocPoolsFacade.freeSVMAlloc(noHintAllocation, FreePolicyType::blocking));
+
+    poolMemoryProperties->allocationFlags.flags.compressedHint = 1u;
+    void *compressedHintAllocation = mockUsmMemAllocPoolsFacade.createUnifiedMemoryAllocation(MemoryConstants::kiloByte, *poolMemoryProperties);
+    EXPECT_NE(nullptr, mockUsmMemAllocPoolsFacade.getPoolContainingAlloc(compressedHintAllocation).pool);
+    EXPECT_TRUE(mockUsmMemAllocPoolsFacade.freeSVMAlloc(compressedHintAllocation, FreePolicyType::blocking));
+
+    poolMemoryProperties->allocationFlags.flags.compressedHint = 0u;
+    poolMemoryProperties->allocationFlags.flags.uncompressedHint = 1u;
+    EXPECT_EQ(nullptr, mockUsmMemAllocPoolsFacade.createUnifiedMemoryAllocation(MemoryConstants::kiloByte, *poolMemoryProperties));
+}
+
+TEST_P(UnifiedMemoryDevicePoolingFacadeTest, givenResourceDecompressionDisabledAndUncompressedPoolWhenAllocatingWithCompressionHintsThenOnlyMatchingHintIsPooled) {
+    device->getExecutionEnvironment()->setResourceDecompressionEnabled(false);
+    mockUsmMemAllocPoolsFacade.cleanup();
+    mockUsmMemAllocPoolsFacade.initialize(poolMemoryType, rootDeviceIndices, deviceBitfields, device, svmManager.get(), {nullptr, false, true, {}, true});
+    void *noHintAllocation = mockUsmMemAllocPoolsFacade.createUnifiedMemoryAllocation(MemoryConstants::kiloByte, *poolMemoryProperties);
+    ASSERT_NE(nullptr, mockUsmMemAllocPoolsFacade.getPoolContainingAlloc(noHintAllocation).pool);
+    ASSERT_FALSE(isPoolOfAllocationCompressed(noHintAllocation));
+    EXPECT_TRUE(mockUsmMemAllocPoolsFacade.freeSVMAlloc(noHintAllocation, FreePolicyType::blocking));
+
+    poolMemoryProperties->allocationFlags.flags.compressedHint = 1u;
+    EXPECT_EQ(nullptr, mockUsmMemAllocPoolsFacade.createUnifiedMemoryAllocation(MemoryConstants::kiloByte, *poolMemoryProperties));
+
+    poolMemoryProperties->allocationFlags.flags.compressedHint = 0u;
+    poolMemoryProperties->allocationFlags.flags.uncompressedHint = 1u;
+    void *uncompressedHintAllocation = mockUsmMemAllocPoolsFacade.createUnifiedMemoryAllocation(MemoryConstants::kiloByte, *poolMemoryProperties);
+    EXPECT_NE(nullptr, mockUsmMemAllocPoolsFacade.getPoolContainingAlloc(uncompressedHintAllocation).pool);
+    EXPECT_TRUE(mockUsmMemAllocPoolsFacade.freeSVMAlloc(uncompressedHintAllocation, FreePolicyType::blocking));
+}
+
+TEST_P(UnifiedMemoryDevicePoolingFacadeTest, givenResourceDecompressionDisabledAndPoolManagerWithoutPoolsWhenAllocatingWithCompressionHintThenNoPoolIsAdded) {
+    if (!isPoolManagerEnabled) {
+        GTEST_SKIP();
+    }
+    device->getExecutionEnvironment()->setResourceDecompressionEnabled(false);
+    auto poolManager = reinterpret_cast<MockUsmMemAllocPoolsManager *>(mockUsmMemAllocPoolsFacade.poolManager.get());
+    ASSERT_TRUE(poolManager->pools.empty());
+
+    poolMemoryProperties->allocationFlags.flags.compressedHint = 1u;
+    EXPECT_EQ(nullptr, mockUsmMemAllocPoolsFacade.createUnifiedMemoryAllocation(MemoryConstants::kiloByte, *poolMemoryProperties));
+    EXPECT_TRUE(poolManager->pools.empty());
+}
+
+TEST_P(UnifiedMemoryDevicePoolingFacadeTest, givenResourceDecompressionEnabledAndCompressionHintWhenAllocatingThenAllocationIsPooled) {
+    device->getExecutionEnvironment()->setResourceDecompressionEnabled(true);
+
+    poolMemoryProperties->allocationFlags.flags.compressedHint = 1u;
+    void *compressedHintAllocation = mockUsmMemAllocPoolsFacade.createUnifiedMemoryAllocation(MemoryConstants::kiloByte, *poolMemoryProperties);
+    EXPECT_NE(nullptr, mockUsmMemAllocPoolsFacade.getPoolContainingAlloc(compressedHintAllocation).pool);
+    EXPECT_TRUE(mockUsmMemAllocPoolsFacade.freeSVMAlloc(compressedHintAllocation, FreePolicyType::blocking));
+
+    poolMemoryProperties->allocationFlags.flags.compressedHint = 0u;
+    poolMemoryProperties->allocationFlags.flags.uncompressedHint = 1u;
+    void *uncompressedHintAllocation = mockUsmMemAllocPoolsFacade.createUnifiedMemoryAllocation(MemoryConstants::kiloByte, *poolMemoryProperties);
+    EXPECT_NE(nullptr, mockUsmMemAllocPoolsFacade.getPoolContainingAlloc(uncompressedHintAllocation).pool);
+    EXPECT_TRUE(mockUsmMemAllocPoolsFacade.freeSVMAlloc(uncompressedHintAllocation, FreePolicyType::blocking));
+}
+
 TEST(UnifiedMemoryPooling, givenCompressionHintsWhenCreatingPoolMemoryPropertiesThenUncompressedHintWinsAndHintsApplyOnlyToDeviceMemory) {
     UltDeviceFactory deviceFactory{1, 1};
     auto device = deviceFactory.rootDevices[0];

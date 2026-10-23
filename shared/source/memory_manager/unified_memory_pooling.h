@@ -22,6 +22,7 @@
 
 #include <functional>
 #include <map>
+#include <optional>
 #include <vector>
 namespace NEO {
 class GraphicsAllocation;
@@ -68,6 +69,7 @@ class UsmMemAllocPool : NEO::NonCopyableAndNonMovableClass {
     MOCKABLE_VIRTUAL void cleanup();
     static bool alignmentIsAllowed(size_t alignment);
     static bool flagsAreAllowed(const UnifiedMemoryProperties &memoryProperties);
+    static bool compressionHintsAreAllowed(const Device *device, const UnifiedMemoryProperties &memoryProperties, std::optional<bool> poolCompressed);
     static UnifiedMemoryProperties createPoolMemoryProperties(InternalMemoryType memoryType,
                                                               const RootDeviceIndicesContainer &rootDeviceIndices,
                                                               const std::map<uint32_t, DeviceBitfield> &subdeviceBitfields,
@@ -81,6 +83,7 @@ class UsmMemAllocPool : NEO::NonCopyableAndNonMovableClass {
     MOCKABLE_VIRTUAL void *createUnifiedMemoryAllocation(size_t size, const UnifiedMemoryProperties &memoryProperties);
     bool isInPoolRange(const void *ptr) const;
     bool isEmpty() const;
+    std::optional<bool> isCompressed() const;
     MOCKABLE_VIRTUAL UsmPoolFreeResult freeSVMAlloc(const void *ptr, FreePolicyType policy);
     void reclaimDeferredFreeChunks();
     void markChunkExported(const void *ptr);
@@ -185,6 +188,7 @@ class UsmMemAllocPoolsManager : NEO::NonCopyableAndNonMovableClass {
     size_t totalSize{};
     std::mutex mtx;
     std::map<PoolInfo, std::vector<std::unique_ptr<UsmMemAllocPool>>> pools;
+    std::optional<bool> poolsCompressed;
     bool trackResidency{false};
 };
 

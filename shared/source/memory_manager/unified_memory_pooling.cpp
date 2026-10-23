@@ -9,6 +9,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
+#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
@@ -147,6 +148,22 @@ bool UsmMemAllocPool::flagsAreAllowed(const UnifiedMemoryProperties &memoryPrope
            memoryProperties.allocationFlags.hostptr == 0u;
 }
 
+bool UsmMemAllocPool::compressionHintsAreAllowed(const Device *device, const UnifiedMemoryProperties &memoryProperties, std::optional<bool> poolCompressed) {
+    const auto &flags = memoryProperties.allocationFlags.flags;
+    if (nullptr == device || (0u == flags.compressedHint && 0u == flags.uncompressedHint) ||
+        device->getExecutionEnvironment()->isResourceDecompressionEnabled()) {
+        return true;
+    }
+    return poolCompressed.has_value() && poolCompressed.value() == (1u == flags.compressedHint);
+}
+
+std::optional<bool> UsmMemAllocPool::isCompressed() const {
+    if (nullptr == allocation) {
+        return std::nullopt;
+    }
+    return allocation->isCompressionEnabled();
+}
+
 double UsmMemAllocPool::getPercentOfFreeMemoryForRecycling(InternalMemoryType memoryType) {
     if (InternalMemoryType::deviceUnifiedMemory == memoryType) {
         return 0.08;
@@ -161,6 +178,7 @@ bool UsmMemAllocPool::canBePooled(size_t size, const UnifiedMemoryProperties &me
     return sizeIsAllowed(size) &&
            alignmentIsAllowed(memoryProperties.alignment) &&
            flagsAreAllowed(memoryProperties) &&
+           compressionHintsAreAllowed(this->device, memoryProperties, isCompressed()) &&
            memoryProperties.memoryType == this->poolMemoryType;
 }
 
@@ -474,6 +492,10 @@ void *UsmMemAllocPoolsManager::createUnifiedMemoryAllocation(size_t size, const 
         if (size <= poolInfo.maxServicedSize) {
             {
                 std::lock_guard lock(mtx);
+                // Pools are created on demand, so a hint is not pooled until the first pool shows its compression state
+                if (!UsmMemAllocPool::compressionHintsAreAllowed(this->device, memoryProperties, this->poolsCompressed)) {
+                    return nullptr;
+                }
                 for (auto &pool : this->pools[poolInfo]) {
                     if (auto ptr = pool->createUnifiedMemoryAllocation(size, memoryProperties)) {
                         return ptr;
@@ -512,6 +534,7 @@ std::unique_ptr<UsmMemAllocPool> UsmMemAllocPoolsManager::createPool(PoolInfo po
 void UsmMemAllocPoolsManager::insertPool(PoolInfo poolInfo, std::unique_ptr<UsmMemAllocPool> pool) {
     std::lock_guard lock(mtx);
     this->totalSize += pool->getPoolSize();
+    this->poolsCompressed = pool->isCompressed();
     this->pools[poolInfo].push_back(std::move(pool));
 }
 bool UsmMemAllocPoolsManager::canAddPool(PoolInfo poolInfo) {

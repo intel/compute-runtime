@@ -2864,10 +2864,6 @@ bool Context::isAllocationSuitableForCompression(const StructuresLookupTable &st
         return false;
     }
 
-    if (l0GfxCoreHelper.forceDefaultUsmCompressionSupport() && !structuresLookupTable.rayTracingMemory) {
-        return true;
-    }
-
     return structuresLookupTable.compressedHint;
 }
 

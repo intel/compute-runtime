@@ -87,6 +87,7 @@ class MockDevice : public RootDevice {
     using Device::executionEnvironment;
     using Device::generateUuidFromPciBusInfo;
     using Device::getGlobalMemorySize;
+    using Device::hasPeerAccess;
     using Device::initializeCaps;
     using Device::initializePeerAccessForDevices;
     using Device::initUsmReuseLimits;

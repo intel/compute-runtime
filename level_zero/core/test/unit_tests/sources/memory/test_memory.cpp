@@ -573,6 +573,47 @@ HWTEST_F(CompressionMemoryTest, givenRayTracingDeviceUsmWithExplicitCompressedHi
     context->freeMem(ptr);
 }
 
+struct PeerAccessCompressionMemoryTest : public CompressionMemoryTest {
+    void SetUp() override {
+        debugManager.flags.RenderCompressedBuffersEnabled.set(1);
+        debugManager.flags.OverrideBufferSuitableForRenderCompression.set(1);
+        CompressionMemoryTest::SetUp();
+        neoDevice->hasPeerAccess = true;
+        neoDevice->getExecutionEnvironment()->setResourceDecompressionEnabled(false);
+    }
+
+    bool isPreferCompressedRequested(ze_memory_compression_hints_ext_flags_t hintFlags) {
+        ze_memory_compression_hints_ext_desc_t compressionHint = {};
+        compressionHint.stype = ZE_STRUCTURE_TYPE_MEMORY_COMPRESSION_HINTS_EXT_DESC;
+        compressionHint.flags = hintFlags;
+        deviceDesc.pNext = hintFlags ? &compressionHint : nullptr;
+
+        bool preferCompressed = false;
+        auto memoryManager = static_cast<MockMemoryManager *>(neoDevice->getMemoryManager());
+        memoryManager->validateAllocateProperties = [&preferCompressed](const AllocationProperties &properties) -> void {
+            preferCompressed = properties.flags.preferCompressed;
+        };
+
+        allocDeviceMem(2048);
+        context->freeMem(ptr);
+        memoryManager->validateAllocateProperties = {};
+        deviceDesc.pNext = nullptr;
+        return preferCompressed;
+    }
+};
+
+HWTEST_F(PeerAccessCompressionMemoryTest, givenPeerAccessAndResourceDecompressionDisabledWhenAllocatingDeviceUsmWithoutHintThenCompressionIsNotPreferred) {
+    EXPECT_FALSE(isPreferCompressedRequested(0u));
+}
+
+HWTEST_F(PeerAccessCompressionMemoryTest, givenPeerAccessAndResourceDecompressionDisabledWhenAllocatingDeviceUsmWithCompressedHintThenCompressionIsPreferred) {
+    EXPECT_TRUE(isPreferCompressedRequested(ZE_MEMORY_COMPRESSION_HINTS_EXT_FLAG_COMPRESSED));
+}
+
+HWTEST_F(PeerAccessCompressionMemoryTest, givenPeerAccessAndResourceDecompressionDisabledWhenAllocatingDeviceUsmWithUncompressedHintThenCompressionIsNotPreferred) {
+    EXPECT_FALSE(isPreferCompressedRequested(ZE_MEMORY_COMPRESSION_HINTS_EXT_FLAG_UNCOMPRESSED));
+}
+
 TEST_F(MemoryTest, givenDevicePointerThenDriverGetAllocPropertiesReturnsExpectedProperties) {
     size_t size = 10;
     size_t alignment = 1u;
