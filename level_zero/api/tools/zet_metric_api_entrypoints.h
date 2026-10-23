@@ -275,7 +275,8 @@ zetMetricGroupCreateExp(
     zet_metric_group_sampling_type_flags_t samplingType,
     zet_metric_group_handle_t *pMetricGroupHandle) {
 
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    auto device = Device::fromHandle(hDevice);
+    return static_cast<MetricDeviceContext &>(device->getMetricDeviceContext()).metricGroupCreate(name, description, static_cast<zet_metric_group_sampling_type_flag_t>(samplingType), pMetricGroupHandle);
 }
 
 ze_result_t ZE_APICALL

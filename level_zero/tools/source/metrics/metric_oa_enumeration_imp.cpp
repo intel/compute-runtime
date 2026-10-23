@@ -23,7 +23,7 @@
 namespace L0 {
 
 const char *MetricEnumeration::oaConcurrentGroupName = "OA";
-const char *MetricEnumeration::oaMConcurrentGroupPrefix = "OAM";
+const char *MetricEnumeration::oaMertConcurrentGroupName = "OAMERT";
 
 MetricEnumeration::MetricEnumeration(OaMetricSourceImp &metricSourceInput)
     : metricSource(metricSourceInput) {}
@@ -240,8 +240,6 @@ ze_result_t MetricEnumeration::cleanupMetricsDiscovery() {
         delete metricGroups[i];
     }
     metricGroups.clear();
-    oaBufferOverflowInformationMap.clear();
-    concurrentGroupMap.clear();
     cleanupExtendedMetricInformation();
 
     if (hMetricsDiscovery != nullptr) {
@@ -314,25 +312,26 @@ ze_result_t MetricEnumeration::cacheMetricInformation() {
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
+    // 1. Iterate over concurrent groups.
     MetricsDiscovery::IConcurrentGroup_1_13 *pConcurrentGroup = nullptr;
-    for (uint32_t mdapiCGIndex = 0; mdapiCGIndex < pMetricsDeviceParams->ConcurrentGroupsCount; ++mdapiCGIndex) {
-        pConcurrentGroup = getConcurrentGroupFromDevice(pMetricsDevice, mdapiCGIndex);
+    for (uint32_t i = 0; i < pMetricsDeviceParams->ConcurrentGroupsCount; ++i) {
+        pConcurrentGroup = getConcurrentGroupFromDevice(pMetricsDevice, i);
         DEBUG_BREAK_IF(pConcurrentGroup == nullptr);
 
         MetricsDiscovery::TConcurrentGroupParams_1_0 *pConcurrentGroupParams =
             pConcurrentGroup->GetParams();
         DEBUG_BREAK_IF(pConcurrentGroupParams == nullptr);
-        DEBUG_BREAK_IF(pConcurrentGroupParams->SymbolName == nullptr);
 
+        // 2. Find "OA" or "OAMERT" concurrent group.
         if (strcmp(pConcurrentGroupParams->SymbolName, oaConcurrentGroupName) == 0 ||
-            strncmp(pConcurrentGroupParams->SymbolName, oaMConcurrentGroupPrefix, strlen(oaMConcurrentGroupPrefix)) == 0) {
+            strcmp(pConcurrentGroupParams->SymbolName, oaMertConcurrentGroupName) == 0) {
 
-            // Find the oaBufferOverflowInformation of this concurrent group and store it under its mdapi index.
+            // Find the oaBufferOverflowInformation and store in member variable pOaBufferOverflowInformation
             const uint32_t measurementInfoCount = pConcurrentGroupParams->IoMeasurementInformationCount;
             MetricsDiscovery::IInformationLatest *oaBufferOverflowInformation = nullptr;
 
-            for (uint32_t j = 0; j < measurementInfoCount; ++j) {
-                MetricsDiscovery::IInformationLatest *ioMeasurement = pConcurrentGroup->GetIoMeasurementInformation(j);
+            for (uint32_t i = 0; i < measurementInfoCount; ++i) {
+                MetricsDiscovery::IInformationLatest *ioMeasurement = pConcurrentGroup->GetIoMeasurementInformation(i);
                 DEBUG_BREAK_IF(ioMeasurement == nullptr);
 
                 if (ioMeasurement->GetParams()->SymbolName == std::string("BufferOverflow")) {
@@ -341,26 +340,29 @@ ze_result_t MetricEnumeration::cacheMetricInformation() {
                 }
             }
 
+            // MDAPI checks for proper library initialization
             if (oaBufferOverflowInformation == nullptr ||
                 oaBufferOverflowInformation->GetParams()->IoReadEquation->GetEquationElementsCount() != 1 ||
                 oaBufferOverflowInformation->GetParams()->IoReadEquation->GetEquationElement(0)->Type != MetricsDiscovery::EQUATION_ELEM_IMM_UINT64) {
                 METRICS_LOG_ERR("IoMeasurmentInformation is not as expected for OA %s", " ");
                 return ZE_RESULT_ERROR_UNKNOWN;
             }
-            oaBufferOverflowInformationMap[mdapiCGIndex] = oaBufferOverflowInformation;
+            pOaBufferOverflowInformation = oaBufferOverflowInformation;
 
-            metricGroups.reserve(metricGroups.size() + pConcurrentGroupParams->MetricSetsCount);
+            // Reserve memory for metric groups
+            metricGroups.reserve(pConcurrentGroupParams->MetricSetsCount);
 
+            // 3. Iterate over metric sets.
             for (uint32_t j = 0; j < pConcurrentGroupParams->MetricSetsCount; ++j) {
                 MetricsDiscovery::IMetricSet_1_5 *pMetricSet = pConcurrentGroup->GetMetricSet(j);
                 DEBUG_BREAK_IF(pMetricSet == nullptr);
 
-                cacheMetricGroup(*pMetricSet, *pConcurrentGroup, mdapiCGIndex,
+                cacheMetricGroup(*pMetricSet, *pConcurrentGroup, i,
                                  ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED);
-                cacheMetricGroup(*pMetricSet, *pConcurrentGroup, mdapiCGIndex,
+                cacheMetricGroup(*pMetricSet, *pConcurrentGroup, i,
                                  ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED);
             }
-            cacheExtendedMetricInformation(*pConcurrentGroup, mdapiCGIndex);
+            cacheExtendedMetricInformation(*pConcurrentGroup, i);
         }
     }
 
@@ -390,11 +392,11 @@ MetricEnumeration::cacheMetricGroup(MetricsDiscovery::IMetricSet_1_5 &metricSet,
         snprintf(properties.description, sizeof(properties.description), "%s",
                  pMetricSetParams->ShortName);
         properties.samplingType = samplingType;
-        properties.domain = domain;
+        properties.domain = domain; // Concurrent group number
         properties.metricCount =
             pMetricSetParams->MetricsCount + pMetricSetParams->InformationCount;
 
-        auto pMetricGroup = OaMetricGroupImp::create(properties, metricSet, concurrentGroup, domain, metricSource);
+        auto pMetricGroup = OaMetricGroupImp::create(properties, metricSet, concurrentGroup, metricSource);
         DEBUG_BREAK_IF(pMetricGroup == nullptr);
 
         metricGroups.push_back(pMetricGroup);
@@ -404,11 +406,6 @@ MetricEnumeration::cacheMetricGroup(MetricsDiscovery::IMetricSet_1_5 &metricSet,
     }
 
     return ZE_RESULT_SUCCESS;
-}
-
-MetricsDiscovery::IInformationLatest *MetricEnumeration::getOaBufferOverflowInformation(const uint32_t concurrentGroupIndex) const {
-    auto entry = oaBufferOverflowInformationMap.find(concurrentGroupIndex);
-    return (entry != oaBufferOverflowInformationMap.end()) ? entry->second : nullptr;
 }
 
 void OaMetricGroupImp::getL0MetricPropertiesFromMdapiMetric(zet_metric_properties_t &l0MetricProps, MetricsDiscovery::IMetric_1_0 *mdapiMetric) {
@@ -575,15 +572,10 @@ ze_result_t MetricEnumeration::cacheExtendedMetricInformation(
     const uint32_t domain) {
 
     if (isMetricProgrammableSupportEnabled()) {
-        concurrentGroupMap[domain] = &concurrentGroup;
+        pConcurrentGroup = &concurrentGroup;
         cacheMetricPrototypes(concurrentGroup, domain);
     }
     return ZE_RESULT_SUCCESS;
-}
-
-MetricsDiscovery::IConcurrentGroup_1_13 *MetricEnumeration::getConcurrentGroup(const uint32_t concurrentGroupIndex) const {
-    auto entry = concurrentGroupMap.find(concurrentGroupIndex);
-    return (entry != concurrentGroupMap.end()) ? entry->second : nullptr;
 }
 
 void MetricEnumeration::cacheMetricPrototypes(MetricsDiscovery::IConcurrentGroup_1_13 &concurrentGroup,
@@ -847,14 +839,7 @@ ze_result_t OaMetricGroupImp::readIoStream(uint32_t &reportCount, uint8_t &repor
     switch (readResult) {
     case MetricsDiscovery::CC_OK:
     case MetricsDiscovery::CC_READ_PENDING: {
-        MetricsDiscovery::IInformationLatest *oaBufferOverflowInformation =
-            getMetricEnumeration().getOaBufferOverflowInformation(concurrentGroupIndex);
-        DEBUG_BREAK_IF(oaBufferOverflowInformation == nullptr);
-        if (oaBufferOverflowInformation == nullptr) {
-            METRICS_LOG_ERR("%s", "OA buffer overflow information is missing");
-            return ZE_RESULT_ERROR_UNKNOWN;
-        }
-
+        MetricsDiscovery::IInformationLatest *oaBufferOverflowInformation = getMetricEnumeration().getOaBufferOverflowInformation();
         const bool oaBufferOverflow = oaBufferOverflowInformation->GetParams()->IoReadEquation->GetEquationElement(0)->ImmediateUInt64 != 0;
         return oaBufferOverflow ? ZE_RESULT_WARNING_DROPPED_DATA : ZE_RESULT_SUCCESS;
     }
@@ -1244,9 +1229,8 @@ void OaMetricImp::copyProperties(const zet_metric_properties_t &source,
 MetricGroup *OaMetricGroupImp::create(zet_metric_group_properties_t &properties,
                                       MetricsDiscovery::IMetricSet_1_5 &metricSet,
                                       MetricsDiscovery::IConcurrentGroup_1_13 &concurrentGroup,
-                                      const uint32_t concurrentGroupIndex,
                                       MetricSource &metricSource) {
-    auto pMetricGroup = new OaMetricGroupImp(properties, metricSet, concurrentGroup, concurrentGroupIndex, metricSource, true);
+    auto pMetricGroup = new OaMetricGroupImp(properties, metricSet, concurrentGroup, metricSource, true);
     UNRECOVERABLE_IF(pMetricGroup == nullptr);
     pMetricGroup->addMetricGroupType(ZET_METRIC_GROUP_TYPE_EXP_FLAG_OTHER);
     // Set metric group type flag for marker if metric group is of type time-based.
@@ -1259,13 +1243,11 @@ MetricGroup *OaMetricGroupImp::create(zet_metric_group_properties_t &properties,
 OaMetricGroupImp::OaMetricGroupImp(const zet_metric_group_properties_t &sourceProperties,
                                    MetricsDiscovery::IMetricSet_1_5 &metricSet,
                                    MetricsDiscovery::IConcurrentGroup_1_13 &concurrentGroup,
-                                   const uint32_t inputConcurrentGroupIndex,
                                    MetricSource &metricSource, bool predefined) : MetricGroupImp(metricSource) {
 
     copyProperties(sourceProperties, properties);
     pReferenceMetricSet = &metricSet;
     pReferenceConcurrentGroup = &concurrentGroup;
-    concurrentGroupIndex = inputConcurrentGroupIndex;
     isPredefined = predefined;
 
     if (isPredefined) {

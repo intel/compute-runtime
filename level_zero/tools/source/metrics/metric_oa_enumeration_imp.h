@@ -14,8 +14,6 @@
 
 #include "metrics_discovery_api.h"
 
-#include <map>
-#include <string>
 #include <vector>
 
 namespace L0 {
@@ -76,9 +74,11 @@ struct MetricEnumeration {
         return metricDevice->GetConcurrentGroup(index);
     }
 
-    MetricsDiscovery::IInformationLatest *getOaBufferOverflowInformation(const uint32_t concurrentGroupIndex) const;
+    MetricsDiscovery::IInformationLatest *getOaBufferOverflowInformation() const { return pOaBufferOverflowInformation; }
     ze_result_t metricProgrammableGet(uint32_t *pCount, zet_metric_programmable_exp_handle_t *phMetricProgrammables);
-    MetricsDiscovery::IConcurrentGroup_1_13 *getConcurrentGroup(const uint32_t concurrentGroupIndex) const;
+    MetricsDiscovery::IConcurrentGroup_1_13 *getConcurrentGroup() {
+        return pConcurrentGroup;
+    }
     void cleanupExtendedMetricInformation();
     void setAdapterGroup(MetricsDiscovery::IAdapterGroup_1_13 *adapterGroup) {
         pAdapterGroup = adapterGroup;
@@ -132,7 +132,7 @@ struct MetricEnumeration {
     MetricsDiscovery::IAdapter_1_13 *pAdapter = nullptr;
     MetricsDiscovery::IMetricsDevice_1_13 *pMetricsDevice = nullptr;
     uint32_t maximumOaBufferSize = 0u;
-    std::map<uint32_t, MetricsDiscovery::IInformationLatest *> oaBufferOverflowInformationMap;
+    MetricsDiscovery::IInformationLatest *pOaBufferOverflowInformation = nullptr;
     void cacheMetricPrototypes(
         MetricsDiscovery::IConcurrentGroup_1_13 &concurrentGroup,
         const uint32_t domain);
@@ -140,15 +140,14 @@ struct MetricEnumeration {
         MetricsDiscovery::IConcurrentGroup_1_13 &concurrentGroup,
         const std::vector<MetricsDiscovery::IMetricPrototype_1_13 *> &metricPrototypes,
         uint32_t domain);
-    // Concurrent groups with programmable metrics, keyed by mdapi concurrent group index.
-    std::map<uint32_t, MetricsDiscovery::IConcurrentGroup_1_13 *> concurrentGroupMap;
+    MetricsDiscovery::IConcurrentGroup_1_13 *pConcurrentGroup = nullptr;
 
   public:
     // Metrics Discovery version should be at least 1.13.
     static const uint32_t requiredMetricsDiscoveryMajorVersion = 1;
     static const uint32_t requiredMetricsDiscoveryMinorVersion = 13;
     static const char *oaConcurrentGroupName;
-    static const char *oaMConcurrentGroupPrefix;
+    static const char *oaMertConcurrentGroupName;
 };
 
 struct OaMetricGroupImp : public MetricGroupImp {
@@ -157,7 +156,6 @@ struct OaMetricGroupImp : public MetricGroupImp {
     OaMetricGroupImp(const zet_metric_group_properties_t &sourceProperties,
                      MetricsDiscovery::IMetricSet_1_5 &metricSet,
                      MetricsDiscovery::IConcurrentGroup_1_13 &concurrentGroup,
-                     const uint32_t inputConcurrentGroupIndex,
                      MetricSource &metricSource,
                      bool predefined);
 
@@ -222,10 +220,8 @@ struct OaMetricGroupImp : public MetricGroupImp {
     static MetricGroup *create(zet_metric_group_properties_t &properties,
                                MetricsDiscovery::IMetricSet_1_5 &metricSet,
                                MetricsDiscovery::IConcurrentGroup_1_13 &concurrentGroup,
-                               const uint32_t concurrentGroupIndex,
                                MetricSource &metricSource);
     OaMetricSourceImp *getMetricSource() const { return static_cast<OaMetricSourceImp *>(&metricSource); }
-    uint32_t getConcurrentGroupIndex() const { return concurrentGroupIndex; }
     static ze_result_t getProperties(const zet_metric_group_handle_t handle, zet_metric_group_properties_t *pProperties);
     uint32_t getRawReportSize();
     const MetricEnumeration &getMetricEnumeration() const;
@@ -258,7 +254,6 @@ struct OaMetricGroupImp : public MetricGroupImp {
     zet_metric_group_properties_t properties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
     MetricsDiscovery::IMetricSet_1_5 *pReferenceMetricSet = nullptr;
     MetricsDiscovery::IConcurrentGroup_1_13 *pReferenceConcurrentGroup = nullptr;
-    uint32_t concurrentGroupIndex = UINT32_MAX;
 
     std::vector<MetricGroupImp *> metricGroups = {};
     size_t cachedExportDataHeapSize = 0;

@@ -242,7 +242,6 @@ ze_result_t OaMetricSourceImp::handleMetricGroupExtendedProperties(zet_metric_gr
 
 void OaMetricSourceImp::metricGroupCreate(MetricGroupDescription *metricGroupDesc,
                                           zet_metric_group_sampling_type_flag_t samplingType,
-                                          const uint32_t domain,
                                           zet_metric_group_handle_t *pMetricGroupHandle) {
 
     zet_metric_group_properties_t properties{};
@@ -251,19 +250,18 @@ void OaMetricSourceImp::metricGroupCreate(MetricGroupDescription *metricGroupDes
     properties.samplingType = samplingType;
     properties.domain = UINT32_MAX;
 
-    auto concurrentGrp = getMetricEnumeration().getConcurrentGroup(domain);
-    DEBUG_BREAK_IF(concurrentGrp == nullptr);
+    auto concurrentGrp = getMetricEnumeration().getConcurrentGroup();
     MetricsDiscovery::IMetricSet_1_13 *metricSet = concurrentGrp->AddMetricSet(metricGroupDesc->namePrefix, metricGroupDesc->description);
-    auto metricGroup = OaMetricGroupUserDefined::create(properties, *metricSet, *concurrentGrp, domain, *this);
+    auto metricGroup = OaMetricGroupUserDefined::create(properties, *metricSet, *concurrentGrp, *this);
     *pMetricGroupHandle = metricGroup->toHandle();
 }
 
 ze_result_t OaMetricSourceImp::metricGroupCreateFromMetric(MetricGroupDescription *metricGroupDesc,
-                                                           zet_metric_group_sampling_type_flags_t samplingType, const uint32_t domain,
-                                                           zet_metric_handle_t hMetric, zet_metric_group_handle_t *phMetricGroup) {
+                                                           zet_metric_group_sampling_type_flags_t samplingType, zet_metric_handle_t hMetric,
+                                                           zet_metric_group_handle_t *phMetricGroup) {
 
     zet_metric_group_handle_t hMetricGroup{};
-    metricGroupCreate(metricGroupDesc, static_cast<zet_metric_group_sampling_type_flag_t>(samplingType), domain, &hMetricGroup);
+    metricGroupCreate(metricGroupDesc, static_cast<zet_metric_group_sampling_type_flag_t>(samplingType), &hMetricGroup);
 
     auto oaMetricGroupImp = static_cast<OaMetricGroupUserDefined *>(MetricGroup::fromHandle(hMetricGroup));
     size_t errorStringSize = 0;
@@ -298,31 +296,26 @@ ze_result_t OaMetricSourceImp::createMetricGroupsFromMetrics(std::vector<zet_met
         createdMetricGroupList.clear();
     };
 
-    // Arrange the metrics based on their sampling types and domains, since a metric group
-    // holds metrics of a single sampling type from a single concurrent group.
-    using SamplingTypeAndDomain = std::pair<zet_metric_group_sampling_type_flags_t, uint32_t>;
-    std::map<SamplingTypeAndDomain, std::vector<zet_metric_handle_t>> samplingTypeAndDomainToMetricMap{};
+    if (isCountCalculationPath) {
+        // Metric group can be for streamer and query from a single programmable
+        // So multiplying by 2 to estimate the maximum metric group count
+        *maxMetricGroupCount = static_cast<uint32_t>(metricList.size()) * 2u;
+        return ZE_RESULT_SUCCESS;
+    }
+
+    // Arrange the metrics based on their sampling types
+    std::map<zet_metric_group_sampling_type_flags_t, std::vector<zet_metric_handle_t>> samplingTypeToMeticMap{};
     for (auto &metric : metricList) {
         auto metricImp = static_cast<OaMetricImp *>(Metric::fromHandle(metric));
         auto metricFromProgrammable = static_cast<OaMetricFromProgrammable *>(metricImp);
         auto samplingType = metricFromProgrammable->getSupportedSamplingType();
-        auto domain = metricFromProgrammable->getDomain();
         // Different metric groups based on sampling type
         if (samplingType == METRICS_SAMPLING_TYPE_TIME_EVENT_BASED) {
-            samplingTypeAndDomainToMetricMap[{ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED, domain}].push_back(metric);
-            samplingTypeAndDomainToMetricMap[{ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED, domain}].push_back(metric);
+            samplingTypeToMeticMap[ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED].push_back(metric);
+            samplingTypeToMeticMap[ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED].push_back(metric);
         } else {
-            samplingTypeAndDomainToMetricMap[{samplingType, domain}].push_back(metric);
+            samplingTypeToMeticMap[samplingType].push_back(metric);
         }
-    }
-
-    if (isCountCalculationPath) {
-        uint32_t maxCount = 0;
-        for (auto &entry : samplingTypeAndDomainToMetricMap) {
-            maxCount += static_cast<uint32_t>(entry.second.size());
-        }
-        *maxMetricGroupCount = maxCount;
-        return ZE_RESULT_SUCCESS;
     }
 
     metricGroupList.clear();
@@ -330,13 +323,12 @@ ze_result_t OaMetricSourceImp::createMetricGroupsFromMetrics(std::vector<zet_met
 
     auto createMetricGroupAndAddMetric = [&](zet_metric_handle_t metricHandle,
                                              zet_metric_group_sampling_type_flags_t samplingType,
-                                             const uint32_t domain,
                                              zet_metric_group_handle_t &metricGroup) {
         char metricGroupName[ZET_MAX_METRIC_GROUP_NAME] = {};
         snprintf(metricGroupName, ZET_MAX_METRIC_GROUP_NAME - 1, "%s%d", metricGroupDesc->namePrefix, numMetricGroupsCreated);
         MetricGroupDescription newDescription(metricGroupName, metricGroupDesc->description);
         newDescription.extendedInfo = metricGroupDesc->extendedInfo;
-        auto status = metricGroupCreateFromMetric(&newDescription, samplingType, domain, metricHandle, &metricGroup);
+        auto status = metricGroupCreateFromMetric(&newDescription, samplingType, metricHandle, &metricGroup);
         if (status != ZE_RESULT_SUCCESS) {
             return status;
         }
@@ -345,15 +337,14 @@ ze_result_t OaMetricSourceImp::createMetricGroupsFromMetrics(std::vector<zet_met
     };
 
     bool isMaxMetricGroupCountReached = numMetricGroupsCreated >= *maxMetricGroupCount;
-    // Process the metrics in each sampling type and domain separately
-    for (auto &entry : samplingTypeAndDomainToMetricMap) {
+    // Process the metrics in each sampling type separately
+    for (auto &entry : samplingTypeToMeticMap) {
         if (isMaxMetricGroupCountReached) {
             break;
         }
         std::vector<zet_metric_group_handle_t> perSamplingTypeMetricGroupList{};
         zet_metric_group_handle_t currentMetricGroup{};
-        auto samplingType = entry.first.first;
-        auto domain = entry.first.second;
+        auto samplingType = entry.first;
 
         // Create and add the metrics to group
         for (uint32_t index = 0; index < static_cast<uint32_t>(entry.second.size()); index++) {
@@ -375,7 +366,7 @@ ze_result_t OaMetricSourceImp::createMetricGroupsFromMetrics(std::vector<zet_met
                     break;
                 }
                 currentMetricGroup = nullptr;
-                auto status = createMetricGroupAndAddMetric(metricToAdd, samplingType, domain, currentMetricGroup);
+                auto status = createMetricGroupAndAddMetric(metricToAdd, samplingType, currentMetricGroup);
                 if (status != ZE_RESULT_SUCCESS) {
                     cleanupCreatedGroups(metricGroupList);
                     cleanupCreatedGroups(perSamplingTypeMetricGroupList);

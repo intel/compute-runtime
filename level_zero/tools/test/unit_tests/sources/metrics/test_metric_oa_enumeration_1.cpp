@@ -149,29 +149,7 @@ TEST_F(MetricEnumerationTest, givenTwoConcurrentMetricGroupsWhenZetGetMetricGrou
     EXPECT_NE(metricGroups[1], nullptr);
 }
 
-class MetricEnumerationTestOaMConcurrentGroups : public MetricEnumerationTest,
-                                                 public ::testing::WithParamInterface<const char *> {
-  public:
-    const char *concurrentGroupSymbolName = nullptr;
-    MetricEnumerationTestOaMConcurrentGroups() {
-        concurrentGroupSymbolName = GetParam();
-    }
-    ~MetricEnumerationTestOaMConcurrentGroups() override {}
-};
-
-TEST_P(MetricEnumerationTestOaMConcurrentGroups, givenOaMConcurrentGroupWhenZetGetMetricGroupIsCalledThenMetricSetsAndTheirMetricsAreEnumerated) {
-
-    // Names of the metric sets and their metrics are prefixed with the concurrent group symbol name.
-    const std::string groupSymbolName = concurrentGroupSymbolName;
-    const std::string groupDescription = groupSymbolName + " description";
-    const std::string timeBasedMetricSetSymbolName = groupSymbolName + "TimeBasedMetricSet";
-    const std::string timeBasedMetricSetShortName = groupSymbolName + " time based metric set";
-    const std::string eventBasedMetricSetSymbolName = groupSymbolName + "EventBasedMetricSet";
-    const std::string eventBasedMetricSetShortName = groupSymbolName + " event based metric set";
-    const std::string timeBasedMetricSymbolName = groupSymbolName + "TimeBasedMetric";
-    const std::string timeBasedMetricLongName = groupSymbolName + " time based metric";
-    const std::string eventBasedMetricSymbolName = groupSymbolName + "EventBasedMetric";
-    const std::string eventBasedMetricLongName = groupSymbolName + " event based metric";
+TEST_F(MetricEnumerationTest, givenOaMertConcurrentGroupWhenZetGetMetricGroupIsCalledThenMetricSetsAndTheirMetricsAreEnumerated) {
 
     // Metrics Discovery device.
     metricsDeviceParams.ConcurrentGroupsCount = 1;
@@ -180,8 +158,8 @@ TEST_P(MetricEnumerationTestOaMConcurrentGroups, givenOaMConcurrentGroupWhenZetG
     Mock<IConcurrentGroup_1_13> metricsConcurrentGroup;
     TConcurrentGroupParams_1_13 metricsConcurrentGroupParams = {};
     metricsConcurrentGroupParams.MetricSetsCount = 2;
-    metricsConcurrentGroupParams.SymbolName = groupSymbolName.c_str();
-    metricsConcurrentGroupParams.Description = groupDescription.c_str();
+    metricsConcurrentGroupParams.SymbolName = "OAMERT";
+    metricsConcurrentGroupParams.Description = "OAMERT description";
     metricsConcurrentGroupParams.IoMeasurementInformationCount = 1;
 
     Mock<MetricsDiscovery::IEquation_1_0> ioReadEquation;
@@ -202,29 +180,29 @@ TEST_P(MetricEnumerationTestOaMConcurrentGroups, givenOaMConcurrentGroupWhenZetG
     Mock<MetricsDiscovery::IMetricSet_1_13> metricsSetTimeBased;
     MetricsDiscovery::TMetricSetParams_1_11 metricsSetTimeBasedParams = {};
     metricsSetTimeBasedParams.ApiMask = MetricsDiscovery::API_TYPE_IOSTREAM;
-    metricsSetTimeBasedParams.SymbolName = timeBasedMetricSetSymbolName.c_str();
-    metricsSetTimeBasedParams.ShortName = timeBasedMetricSetShortName.c_str();
+    metricsSetTimeBasedParams.SymbolName = "OaMertTimeBasedMetricSet";
+    metricsSetTimeBasedParams.ShortName = "OaMert time based metric set";
     metricsSetTimeBasedParams.MetricsCount = 1;
 
     Mock<MetricsDiscovery::IMetricSet_1_13> metricsSetEventBased;
     MetricsDiscovery::TMetricSetParams_1_11 metricsSetEventBasedParams = {};
     metricsSetEventBasedParams.ApiMask = MetricsDiscovery::API_TYPE_OCL;
-    metricsSetEventBasedParams.SymbolName = eventBasedMetricSetSymbolName.c_str();
-    metricsSetEventBasedParams.ShortName = eventBasedMetricSetShortName.c_str();
+    metricsSetEventBasedParams.SymbolName = "OaMertEventBasedMetricSet";
+    metricsSetEventBasedParams.ShortName = "OaMert event based metric set";
     metricsSetEventBasedParams.MetricsCount = 1;
 
     // Metrics Discovery:: metrics - one per metric set.
     Mock<IMetric_1_13> timeBasedMetric;
     TMetricParams_1_13 timeBasedMetricParams = {};
-    timeBasedMetricParams.SymbolName = timeBasedMetricSymbolName.c_str();
-    timeBasedMetricParams.LongName = timeBasedMetricLongName.c_str();
+    timeBasedMetricParams.SymbolName = "OaMertTimeBasedMetric";
+    timeBasedMetricParams.LongName = "OaMert time based metric";
     timeBasedMetricParams.MetricType = MetricsDiscovery::TMetricType::METRIC_TYPE_EVENT;
     timeBasedMetricParams.ResultType = MetricsDiscovery::TMetricResultType::RESULT_UINT64;
 
     Mock<IMetric_1_13> eventBasedMetric;
     TMetricParams_1_13 eventBasedMetricParams = {};
-    eventBasedMetricParams.SymbolName = eventBasedMetricSymbolName.c_str();
-    eventBasedMetricParams.LongName = eventBasedMetricLongName.c_str();
+    eventBasedMetricParams.SymbolName = "OaMertEventBasedMetric";
+    eventBasedMetricParams.LongName = "OaMert event based metric";
     eventBasedMetricParams.MetricType = MetricsDiscovery::TMetricType::METRIC_TYPE_RATIO;
     eventBasedMetricParams.ResultType = MetricsDiscovery::TMetricResultType::RESULT_FLOAT;
 
@@ -246,7 +224,7 @@ TEST_P(MetricEnumerationTestOaMConcurrentGroups, givenOaMConcurrentGroupWhenZetG
     timeBasedMetric.GetParamsResult = &timeBasedMetricParams;
     eventBasedMetric.GetParamsResult = &eventBasedMetricParams;
 
-    // Both metric sets of the OAM* concurrent group are enumerated as metric groups.
+    // Both metric sets of the OAMERT concurrent group are enumerated as metric groups.
     uint32_t metricGroupCount = 0;
     EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr), ZE_RESULT_SUCCESS);
     ASSERT_EQ(metricGroupCount, 2u);
@@ -291,99 +269,6 @@ TEST_P(MetricEnumerationTestOaMConcurrentGroups, givenOaMConcurrentGroupWhenZetG
         EXPECT_EQ(metricProperties.metricType, expectedMetricTypes[index]);
         EXPECT_EQ(metricProperties.resultType, expectedResultTypes[index]);
     }
-}
-
-INSTANTIATE_TEST_SUITE_P(parameterizedMetricEnumerationTestOaMConcurrentGroups, MetricEnumerationTestOaMConcurrentGroups,
-                         ::testing::Values("OAMERT", "OAM0", "OAM1", "OAMG"),
-                         [](const ::testing::TestParamInfo<const char *> &info) { return std::string(info.param); });
-
-TEST_F(MetricEnumerationTest, givenConcurrentGroupNotEnumeratedWhenGetOaBufferOverflowInformationIsCalledThenNullptrIsReturnedAndReadIoStreamReturnsErrorUnknown) {
-
-    // Metrics Discovery device.
-    metricsDeviceParams.ConcurrentGroupsCount = 1;
-
-    // Metrics Discovery concurrent group.
-    Mock<IConcurrentGroup_1_13> metricsConcurrentGroup;
-    TConcurrentGroupParams_1_13 metricsConcurrentGroupParams = {};
-    metricsConcurrentGroupParams.SymbolName = "OA";
-    metricsConcurrentGroupParams.MetricSetsCount = 1;
-    metricsConcurrentGroupParams.IoMeasurementInformationCount = 1;
-
-    Mock<MetricsDiscovery::IEquation_1_0> ioReadEquation;
-    MetricsDiscovery::TEquationElement_1_0 ioEquationElement = {};
-    ioEquationElement.Type = MetricsDiscovery::EQUATION_ELEM_IMM_UINT64;
-    ioEquationElement.ImmediateUInt64 = 0;
-
-    ioReadEquation.getEquationElement.push_back(&ioEquationElement);
-
-    Mock<MetricsDiscovery::IInformation_1_0> ioMeasurement;
-    MetricsDiscovery::TInformationParams_1_0 oaInformation = {};
-    oaInformation.SymbolName = "BufferOverflow";
-    oaInformation.IoReadEquation = &ioReadEquation;
-    metricsConcurrentGroup.GetIoMeasurementInformationResult = &ioMeasurement;
-    ioMeasurement.GetParamsResult = &oaInformation;
-
-    // Metrics Discovery:: metric set.
-    Mock<MetricsDiscovery::IMetricSet_1_13> metricsSet;
-    MetricsDiscovery::TMetricSetParams_1_11 metricsSetParams = {};
-    metricsSetParams.ApiMask = MetricsDiscovery::API_TYPE_OCL;
-
-    openMetricsAdapter();
-
-    setupDefaultMocksForMetricDevice(metricsDevice);
-
-    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
-
-    metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
-    metricsConcurrentGroup.getMetricSetResult = &metricsSet;
-
-    metricsSet.GetParamsResult = &metricsSetParams;
-
-    uint32_t metricGroupCount = 0;
-    EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(metricGroupCount, 1u);
-
-    // Only the enumerated concurrent group (mdapi index 0) has its overflow information stored.
-    EXPECT_EQ(&ioMeasurement, mockMetricEnumeration->getOaBufferOverflowInformation(0u));
-
-    for (const auto notEnumeratedIndex : {1u, 2u, UINT32_MAX}) {
-        EXPECT_EQ(nullptr, mockMetricEnumeration->getOaBufferOverflowInformation(notEnumeratedIndex));
-    }
-
-    // readIoStream() of a metric group looks up the overflow information of its own concurrent group.
-    auto &oaMetricSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
-    zet_metric_group_properties_t groupProperties = {};
-    metricsConcurrentGroup.readIoStreamResult = TCompletionCode::CC_OK;
-    uint32_t reportCount = 1;
-    uint8_t reportData = 0;
-
-    OaMetricGroupImp enumeratedMetricGroup(groupProperties, metricsSet, metricsConcurrentGroup, 0u, oaMetricSource, false);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, enumeratedMetricGroup.readIoStream(reportCount, reportData));
-
-    OaMetricGroupImp notEnumeratedMetricGroup(groupProperties, metricsSet, metricsConcurrentGroup, 1u, oaMetricSource, false);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, notEnumeratedMetricGroup.readIoStream(reportCount, reportData));
-}
-
-TEST(OaConcurrentGroupIndexTest, givenConcurrentGroupIndexWhenMetricGroupIsCreatedThenItsConcurrentGroupIndexIsStored) {
-
-    Mock<IConcurrentGroup_1_13> concurrentGroup;
-    Mock<MetricsDiscovery::IMetricSet_1_13> metricsSet;
-    MockMetricSource mockSource{};
-    zet_metric_group_properties_t groupProperties = {};
-
-    for (const auto concurrentGroupIndex : {0u, 1u, 5u}) {
-        OaMetricGroupImp oaMetricGroup(groupProperties, metricsSet, concurrentGroup, concurrentGroupIndex, mockSource, false);
-        EXPECT_EQ(concurrentGroupIndex, oaMetricGroup.getConcurrentGroupIndex());
-    }
-}
-
-TEST(OaConcurrentGroupIndexTest, givenMetricGroupCreatedWithoutConcurrentGroupThenItsConcurrentGroupIndexIsInvalid) {
-
-    MockMetricSource mockSource{};
-
-    OaMetricGroupImp oaMetricGroup(mockSource);
-
-    EXPECT_EQ(UINT32_MAX, oaMetricGroup.getConcurrentGroupIndex());
 }
 
 TEST_F(MetricEnumerationTest, givenInvalidArgumentsWhenZetGetMetricGroupPropertiesIsCalledThenReturnsFail) {
@@ -4123,7 +4008,7 @@ TEST_F(MetricEnumerationTest, givenOAMetricGroupCanSetAndRetrieveTheMDAPIMetricS
     Mock<MetricsDiscovery::IConcurrentGroup_1_13> concurrentGroup;
     MockMetricSource mockSource{};
 
-    OaMetricGroupImp oaMetricGroup(groupProperties, metricsSet, concurrentGroup, 0u, mockSource, false);
+    OaMetricGroupImp oaMetricGroup(groupProperties, metricsSet, concurrentGroup, mockSource, false);
     EXPECT_EQ(oaMetricGroup.getReferenceMetricSet(), &metricsSet);
 }
 
