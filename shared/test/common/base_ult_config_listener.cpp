@@ -24,15 +24,6 @@ namespace NEO {
 
 extern unsigned int testCaseMaxTimeInMs;
 
-// The snapshot follows the leaked value, so only the leaking test fails.
-template <typename T>
-static void expectDebugVariableRestored(const char *variableName, T &snapshot, const T &current) {
-    if (snapshot != current) {
-        EXPECT_EQ(snapshot, current) << "debug variable " << variableName << " was not restored";
-        snapshot = current;
-    }
-}
-
 void BaseUltConfigListener::snapshotHwInfo() {
     referencedHwInfo = *defaultHwInfo;
     referencedFeatureTableHash = referencedHwInfo.featureTable.asHash();
@@ -41,8 +32,6 @@ void BaseUltConfigListener::snapshotHwInfo() {
 
 void BaseUltConfigListener::OnTestIterationStart(const ::testing::UnitTest &, int) {
     lastTest.reserve(maxTestNameLength);
-    debugVarSnapshot = debugManager.flags;
-    injectFcnSnapshot = debugManager.injectFcn;
     snapshotHwInfo();
     markIterationStart();
     resetAlarm(enableAlarm);
@@ -85,32 +74,6 @@ void BaseUltConfigListener::OnTestEnd(const ::testing::TestInfo &) {
         EXPECT_LT(std::chrono::duration_cast<std::chrono::milliseconds>(testEnd - testStart).count(), testCaseMaxTimeInMs);
     }
     aub_stream::injectMMIOListLegacy(aub_stream::MMIOList{});
-
-    if (debugVarSnapshot != debugManager.flags) {
-#define EXPECT_VARIABLE_RESTORED(variableName) expectDebugVariableRestored(#variableName, debugVarSnapshot.variableName.getRef(), debugManager.flags.variableName.getRef());
-#undef DECLARE_DEBUG_VARIABLE
-#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description) EXPECT_VARIABLE_RESTORED(variableName)
-#define DECLARE_DEBUG_SCOPED_V(dataType, variableName, defaultValue, description, ...) EXPECT_VARIABLE_RESTORED(variableName)
-#define DECLARE_DEBUG_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) EXPECT_VARIABLE_RESTORED(variableName)
-#include "debug_variables.inl"
-#undef DECLARE_DEBUG_VARIABLE_OPT
-#undef DECLARE_DEBUG_SCOPED_V
-#undef DECLARE_DEBUG_VARIABLE
-#define DECLARE_RELEASE_VARIABLE(dataType, variableName, defaultValue, description) EXPECT_VARIABLE_RESTORED(variableName)
-#define DECLARE_RELEASE_VARIABLE_OPT(enabled, dataType, variableName, defaultValue, description) EXPECT_VARIABLE_RESTORED(variableName)
-#include "release_variables.inl"
-#undef DECLARE_RELEASE_VARIABLE_OPT
-#undef DECLARE_RELEASE_VARIABLE
-#define DECLARE_RAW_ENV_VARIABLE(dataType, variableName, envVarName, defaultValue, description) EXPECT_VARIABLE_RESTORED(variableName)
-#define DECLARE_RAW_ENV_SCOPED_V(dataType, variableName, envVarName, defaultValue, scope, description) EXPECT_VARIABLE_RESTORED(variableName)
-#define DECLARE_RAW_ENV_VARIABLE_OPT(enabled, dataType, variableName, envVarName, defaultValue, description) EXPECT_VARIABLE_RESTORED(variableName)
-#include "env_variables.inl"
-#undef DECLARE_RAW_ENV_VARIABLE_OPT
-#undef DECLARE_RAW_ENV_SCOPED_V
-#undef DECLARE_RAW_ENV_VARIABLE
-#undef EXPECT_VARIABLE_RESTORED
-    }
-    expectDebugVariableRestored("injectFcn", injectFcnSnapshot, debugManager.injectFcn);
 
     // Ensure that global state is restored
     UltHwConfig expectedState{};

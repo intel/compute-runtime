@@ -23,6 +23,7 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/custom_event_listener.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/debug_variables_listener.h"
 #include "shared/test/common/helpers/default_hw_info.inl"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/stream_capture.h"
@@ -901,14 +902,15 @@ int main(int argc, char **argv) {
         }
     }
 
+    auto &listeners = ::testing::UnitTest::GetInstance()->listeners();
     if (useDefaultListener == false) {
-        auto &listeners = ::testing::UnitTest::GetInstance()->listeners();
         auto defaultListener = listeners.default_result_printer();
         auto customEventListener = new CCustomEventListener(defaultListener);
 
         listeners.Release(defaultListener);
         listeners.Append(customEventListener);
     }
+    listeners.Append(new DebugVariablesListener);
 
     auto *mockCpuInfo = getMockCpuInfo(CpuInfo::getInstance());
     mockCpuInfo->featuresDetected = true;

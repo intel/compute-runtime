@@ -10,6 +10,7 @@
 #include "shared/source/os_interface/os_library.h"
 #include "shared/source/utilities/logger.h"
 #include "shared/test/common/helpers/custom_event_listener.h"
+#include "shared/test/common/helpers/debug_variables_listener.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/memory_leak_listener.h"
 #include "shared/test/common/helpers/test_files.h"
@@ -180,6 +181,7 @@ int main(int argc, char **argv) {
     }
     listeners.Append(new NEO::MemoryLeakListener);
     listeners.Append(new NEO::VirtualFileSystemListener);
+    listeners.Append(new NEO::DebugVariablesListener);
 
     gEnvironment = reinterpret_cast<Environment *>(::testing::AddGlobalTestEnvironment(new Environment(devicePrefix, productConfig)));
 

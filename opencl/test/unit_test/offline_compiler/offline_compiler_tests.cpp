@@ -2596,6 +2596,7 @@ TEST_F(OfflineCompilerTests, GivenHelpOptionThenBuildDoesNotOccur) {
     delete pOfflineCompiler;
 }
 TEST_F(OfflineCompilerTests, GivenInvalidFileWhenBuildingThenInvalidFileErrorIsReturned) {
+    DebugManagerStateRestore restorer;
     debugManager.flags.PrintDebugMessages.set(true);
     std::vector<std::string> argv = {
         "ocloc",
@@ -2611,7 +2612,6 @@ TEST_F(OfflineCompilerTests, GivenInvalidFileWhenBuildingThenInvalidFileErrorIsR
     std::string output = capture.getCapturedStdout();
     EXPECT_STRNE(output.c_str(), "");
     EXPECT_EQ(OCLOC_INVALID_FILE, retVal);
-    debugManager.flags.PrintDebugMessages.set(false);
     delete pOfflineCompiler;
 }
 

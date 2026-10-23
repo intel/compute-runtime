@@ -93,6 +93,10 @@ set(IGDRCL_SRCS_offline_compiler_tests
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_compilers.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_modules_zebin.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_modules_zebin.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/debug_manager_state_restore.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/debug_manager_state_restore.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/debug_variables_listener.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/debug_variables_listener.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/memory_leak_listener.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/memory_leak_listener.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/memory_management.cpp

@@ -6,12 +6,12 @@
  */
 
 #pragma once
-#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/hw_info.h"
 
 #include "gtest/gtest.h"
 
 #include <chrono>
+#include <vector>
 
 namespace NEO {
 
@@ -27,8 +27,6 @@ class BaseUltConfigListener : public ::testing::EmptyTestEventListener {
   private:
     void snapshotHwInfo();
 
-    DebugVariables debugVarSnapshot;
-    void *injectFcnSnapshot = nullptr;
     HardwareInfo referencedHwInfo;
     uint64_t referencedFeatureTableHash = 0;
     uint64_t referencedWorkaroundTableHash = 0;

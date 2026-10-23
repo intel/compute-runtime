@@ -79,16 +79,19 @@ constexpr inline DVarsScopeMask compatibilityMask = getDebugVarScopeMaskFor<Debu
 
 template <typename T>
 struct DebugVarBase {
-    DebugVarBase(const T &defaultValue) : value(defaultValue), defaultValue(defaultValue) {}
-    DebugVarBase(const T &defaultValue, DVarsScopeMask scopeMask) : value(defaultValue), defaultValue(defaultValue), scopeMask(scopeMask) {}
+    using ChangeHook = void (*)(DebugVarBase<T> &variable, const T &newValue);
+    static inline ChangeHook changeHook = nullptr;
+
+    explicit DebugVarBase(const T &defaultValue) : value(defaultValue), defaultValue(defaultValue) {}
+    explicit DebugVarBase(const T &defaultValue, DVarsScopeMask scopeMask) : value(defaultValue), defaultValue(defaultValue), scopeMask(scopeMask) {}
     T get() const {
         return value;
     }
     void set(T data) {
+        if (changeHook) {
+            changeHook(*this, data);
+        }
         value = std::move(data);
-    }
-    T &getRef() {
-        return value;
     }
     const T &getRef() const {
         return value;

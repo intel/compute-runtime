@@ -18,6 +18,7 @@
 #include "shared/source/utilities/debug_settings_reader.h"
 #include "shared/source/utilities/logger.h"
 #include "shared/test/common/helpers/custom_event_listener.h"
+#include "shared/test/common/helpers/debug_variables_listener.h"
 #include "shared/test/common/helpers/default_hw_info.inl"
 #include "shared/test/common/helpers/memory_leak_listener.h"
 #include "shared/test/common/helpers/mock_sip_listener.h"
@@ -432,6 +433,7 @@ int main(int argc, char **argv) {
 
             listeners.Append(new MockSipListener);
             listeners.Append(new MemoryLeakListener);
+            listeners.Append(new DebugVariablesListener);
             listeners.Append(new NEO::VirtualFileSystemListener);
 
             addUltListener(listeners);
