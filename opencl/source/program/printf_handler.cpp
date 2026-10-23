@@ -89,17 +89,18 @@ bool PrintfHandler::printEnqueueOutput() {
     if (productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *printfSurface)) {
         printfOutputDecompressed = std::make_unique<uint8_t[]>(printfOutputSize);
         printfOutputBuffer = printfOutputDecompressed.get();
-        auto &bcsEngine = device.getEngine(EngineHelpers::getBcsEngineType(rootDeviceEnvironment, device.getDeviceBitfield(), device.getSelectorCopyEngine(), true), EngineUsage::regular);
+        auto bcsEngine = device.getInternalLinkCopyEngine();
+        UNRECOVERABLE_IF(bcsEngine == nullptr);
 
         BlitPropertiesContainer blitPropertiesContainer;
         blitPropertiesContainer.push_back(
             BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::bufferToHostPtr,
-                                                            *bcsEngine.commandStreamReceiver, printfSurface, nullptr,
+                                                            *bcsEngine->commandStreamReceiver, printfSurface, nullptr,
                                                             printfOutputDecompressed.get(),
                                                             printfSurface->getGpuAddress(),
                                                             0, 0, 0, Vec3<size_t>(printfOutputSize, 0, 0), 0, 0, 0, 0));
 
-        const auto newTaskCount = bcsEngine.commandStreamReceiver->flushBcsTask(blitPropertiesContainer, true, device);
+        const auto newTaskCount = bcsEngine->commandStreamReceiver->flushBcsTask(blitPropertiesContainer, true, device);
         if (newTaskCount > CompletionStamp::notReady) {
             return false;
         }

@@ -4876,7 +4876,7 @@ HWTEST_F(PrintfHandlerTests, givenKernelWithPrintfWhenPrintingOutputWithBlitterU
         PrintfHandler::printOutput(kernelImmutableData.get(), &mockAllocation, &mockDevice, true, alreadyPrintedSize);
         std::string output = capture.getCapturedStdout();
 
-        auto bcsEngine = device->tryGetEngine(NEO::EngineHelpers::getBcsEngineType(device->getRootDeviceEnvironment(), device->getDeviceBitfield(), device->getSelectorCopyEngine(), true), EngineUsage::internal);
+        auto bcsEngine = device->getInternalLinkCopyEngine();
         if (bcsEngine) {
             EXPECT_EQ(0u, output.size()); // memory is not actually copied with blitter in ULTs
             auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsEngine->commandStreamReceiver);
@@ -4885,6 +4885,66 @@ HWTEST_F(PrintfHandlerTests, givenKernelWithPrintfWhenPrintingOutputWithBlitterU
             EXPECT_EQ(size, bcsCsr->receivedBlitProperties[0].copySize[0]);
         } else {
             EXPECT_STREQ(expectedString, output.c_str());
+        }
+    }
+}
+
+HWTEST_F(PrintfHandlerTests, givenInternalBcsEngineNotPreferredWhenPrintingOutputWithBlitterUsedThenRegularCopyEngineContextCopiesBuffer) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.PreferInternalBcsEngine.set(0);
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    hwInfo.featureTable.ftrBcsInfo.set(0);
+
+    auto device = std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    {
+        auto bcsEngine = device->getInternalLinkCopyEngine();
+        if (!bcsEngine) {
+            GTEST_SKIP();
+        }
+        ASSERT_EQ(EngineUsage::regular, bcsEngine->getEngineUsage());
+        auto internalBcsEngine = device->tryGetEngine(bcsEngine->getEngineType(), EngineUsage::internal);
+
+        device->incRefInternal();
+        MockDeviceImp mockDevice(device.get());
+
+        auto kernelInfo = std::make_unique<KernelInfo>();
+        kernelInfo->heapInfo.kernelHeapSize = 1;
+        char kernelHeap[1];
+        kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
+        kernelInfo->kernelDescriptor.kernelMetadata.kernelName = ZebinTestData::ValidEmptyProgram<>::kernelName;
+
+        auto kernelImmutableData = std::make_unique<KernelImmutableData>(&mockDevice);
+        kernelImmutableData->initialize(kernelInfo.get(), &mockDevice, 0, nullptr, nullptr, false);
+
+        auto &kernelDescriptor = kernelInfo->kernelDescriptor;
+        kernelDescriptor.kernelAttributes.flags.usesPrintf = true;
+        kernelDescriptor.kernelAttributes.gpuPointerSize = 8u;
+
+        const char *expectedString = "test123";
+
+        constexpr size_t size = 128;
+        uint64_t gpuAddress = 0x2000;
+        uint32_t bufferArray[size] = {};
+        void *buffer = reinterpret_cast<void *>(bufferArray);
+        NEO::MockGraphicsAllocation mockAllocation(buffer, gpuAddress, size);
+        auto printfAllocation = reinterpret_cast<uint8_t *>(buffer);
+        uint32_t dataSize = sizeof(uint32_t) + sizeof(char *);
+        *reinterpret_cast<uint32_t *>(printfAllocation) = dataSize;
+        memcpy(printfAllocation + sizeof(uint32_t), &expectedString, sizeof(char *));
+
+        StreamCapture capture;
+        capture.captureStdout();
+        uint32_t alreadyPrintedSize = 0;
+        PrintfHandler::printOutput(kernelImmutableData.get(), &mockAllocation, &mockDevice, true, alreadyPrintedSize);
+        capture.getCapturedStdout();
+
+        auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsEngine->commandStreamReceiver);
+        EXPECT_EQ(1u, bcsCsr->blitBufferCalled);
+        if (internalBcsEngine) {
+            auto internalBcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(internalBcsEngine->commandStreamReceiver);
+            EXPECT_EQ(0u, internalBcsCsr->blitBufferCalled);
         }
     }
 }
@@ -4899,7 +4959,7 @@ HWTEST_F(PrintfHandlerTests, givenPrintDebugMessagesAndKernelWithPrintfWhenBlitt
 
     auto device = std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
     {
-        auto bcsEngine = device->tryGetEngine(NEO::EngineHelpers::getBcsEngineType(device->getRootDeviceEnvironment(), device->getDeviceBitfield(), device->getSelectorCopyEngine(), true), EngineUsage::internal);
+        auto bcsEngine = device->getInternalLinkCopyEngine();
         if (!bcsEngine) {
             GTEST_SKIP();
         }

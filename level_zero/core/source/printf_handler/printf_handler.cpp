@@ -10,7 +10,6 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/blit_properties.h"
-#include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -46,12 +45,7 @@ void PrintfHandler::printOutput(const KernelImmutableData *kernelData,
 
     if (useInternalBlitter) {
         auto selectedDevice = device->getNEODevice()->getNearestGenericSubDevice(0);
-        auto &selectorCopyEngine = selectedDevice->getSelectorCopyEngine();
-        auto deviceBitfield = selectedDevice->getDeviceBitfield();
-        const auto internalUsage = true;
-        auto bcsEngineType = NEO::EngineHelpers::getBcsEngineType(selectedDevice->getRootDeviceEnvironment(), deviceBitfield, selectorCopyEngine, internalUsage);
-        auto bcsEngineUsage = NEO::EngineUsage::internal;
-        auto bcsEngine = selectedDevice->tryGetEngine(bcsEngineType, bcsEngineUsage);
+        auto bcsEngine = selectedDevice->getInternalLinkCopyEngine();
 
         if (bcsEngine) {
             printfOutputTemporary = std::make_unique<uint8_t[]>(printfOutputSize);
@@ -101,10 +95,7 @@ void PrintfHandler::rewindPrintfBuffer(NEO::GraphicsAllocation *printfBuffer, De
 
     if (useInternalBlitter) {
         auto selectedDevice = device->getNEODevice()->getNearestGenericSubDevice(0);
-        auto &selectorCopyEngine = selectedDevice->getSelectorCopyEngine();
-        auto deviceBitfield = selectedDevice->getDeviceBitfield();
-        auto bcsEngineType = NEO::EngineHelpers::getBcsEngineType(selectedDevice->getRootDeviceEnvironment(), deviceBitfield, selectorCopyEngine, true);
-        auto bcsEngine = selectedDevice->tryGetEngine(bcsEngineType, NEO::EngineUsage::internal);
+        auto bcsEngine = selectedDevice->getInternalLinkCopyEngine();
 
         if (bcsEngine) {
             NEO::BlitPropertiesContainer blitPropertiesContainer;
