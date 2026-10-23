@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,17 +14,8 @@ bool GmmMemory::configureDevice(GMM_ESCAPE_HANDLE hAdapter,
                                 GMM_ESCAPE_HANDLE hDevice,
                                 GMM_ESCAPE_FUNC_TYPE pfnEscape,
                                 GMM_GFX_SIZE_T svmSize,
-                                BOOLEAN bdwL3Coherency,
-                                uintptr_t &minAddress,
-                                bool obtainMinAddress) {
-    auto retVal = configureDeviceAddressSpace(hAdapter, hDevice, pfnEscape, svmSize, bdwL3Coherency);
-    if (obtainMinAddress) {
-        minAddress = getInternalGpuVaRangeLimit();
-    }
-    return retVal;
-}
-uintptr_t GmmMemory::getInternalGpuVaRangeLimit() {
-    return static_cast<uintptr_t>(clientContext.GetInternalGpuVaRangeLimit());
+                                BOOLEAN bdwL3Coherency) {
+    return configureDeviceAddressSpace(hAdapter, hDevice, pfnEscape, svmSize, bdwL3Coherency);
 }
 
 bool GmmMemory::setDeviceInfo(GMM_DEVICE_INFO *deviceInfo) {

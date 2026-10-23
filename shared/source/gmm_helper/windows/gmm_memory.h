@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,11 +25,7 @@ class GmmMemory {
                          GMM_ESCAPE_HANDLE hDevice,
                          GMM_ESCAPE_FUNC_TYPE pfnEscape,
                          GMM_GFX_SIZE_T svmSize,
-                         BOOLEAN bdwL3Coherency,
-                         uintptr_t &minAddress,
-                         bool obtainMinAddress);
-
-    MOCKABLE_VIRTUAL uintptr_t getInternalGpuVaRangeLimit();
+                         BOOLEAN bdwL3Coherency);
 
     MOCKABLE_VIRTUAL bool setDeviceInfo(GMM_DEVICE_INFO *deviceInfo);
 

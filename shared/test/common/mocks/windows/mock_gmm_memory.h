@@ -38,10 +38,6 @@ class MockGmmMemory : public GmmMemory {
     bool configureDeviceAddressSpaceResult = true;
     StackVec<ConfigureDeviceAddressSpaceParams, 1> configureDeviceAddressSpaceParamsPassed{};
 
-    void overrideInternalGpuVaRangeLimit(uintptr_t value);
-
-    ADDMETHOD_NOBASE(getInternalGpuVaRangeLimit, uintptr_t, NEO::windowsMinAddress, ());
-
     bool setDeviceInfo(GMM_DEVICE_INFO *deviceInfo) override;
 
     uint32_t setDeviceInfoCalled = 0u;

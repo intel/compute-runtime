@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,10 +21,6 @@ bool MockGmmMemory::configureDeviceAddressSpace(GMM_ESCAPE_HANDLE hAdapter,
                                                        svmSize,
                                                        bdwL3Coherency});
     return configureDeviceAddressSpaceResult;
-}
-
-void MockGmmMemory::overrideInternalGpuVaRangeLimit(uintptr_t value) {
-    this->getInternalGpuVaRangeLimitResult = value;
 }
 
 bool MockGmmMemory::setDeviceInfo(GMM_DEVICE_INFO *deviceInfo) {

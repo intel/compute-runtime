@@ -17,15 +17,11 @@ using namespace NEO;
 using WddmTests = WddmTestWithMockGdiDll;
 
 TEST_F(WddmTests, whenInitializingWddmThenSetMinAddressToCorrectValue) {
-    constexpr static uintptr_t mockedInternalGpuVaRange = 0x9876u;
     auto gmmMemory = new MockGmmMemory(wddm->rootDeviceEnvironment.getGmmClientContext());
-    gmmMemory->overrideInternalGpuVaRangeLimit(mockedInternalGpuVaRange);
     wddm->gmmMemory.reset(gmmMemory);
 
     ASSERT_EQ(0u, wddm->getWddmMinAddress());
     wddm->init();
 
-    const bool obtainFromGmm = defaultHwInfo->platform.eRenderCoreFamily == IGFX_GEN12LP_CORE;
-    const auto expectedMinAddress = obtainFromGmm ? mockedInternalGpuVaRange : windowsMinAddress;
-    ASSERT_EQ(expectedMinAddress, wddm->getWddmMinAddress());
+    ASSERT_EQ(windowsMinAddress, wddm->getWddmMinAddress());
 }

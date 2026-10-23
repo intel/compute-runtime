@@ -225,8 +225,7 @@ bool Wddm::configureDeviceAddressSpace() {
         }
     }
 
-    uintptr_t addr = 0;
-    auto ret = gmmMemory->configureDevice(getAdapter(), device, getGdi()->escape, maxUsmSize, featureTable->flags.ftrL3IACoherency, addr, false);
+    auto ret = gmmMemory->configureDevice(getAdapter(), device, getGdi()->escape, maxUsmSize, featureTable->flags.ftrL3IACoherency);
     return ret;
 }
 

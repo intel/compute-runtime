@@ -1729,19 +1729,6 @@ TEST_F(Wddm20WithMockGdiDllTests, whenSetDeviceInfoFailsThenDeviceIsNotConfigure
     EXPECT_EQ(0u, mockGmmMemory->configureDeviceAddressSpaceCalled);
 }
 
-HWTEST_F(Wddm20WithMockGdiDllTests, givenNonGen12LPPlatformWhenConfigureDeviceAddressSpaceThenDontObtainMinAddress) {
-    if (defaultHwInfo->platform.eRenderCoreFamily == IGFX_GEN12LP_CORE) {
-        GTEST_SKIP();
-    }
-    auto gmmMemory = new MockGmmMemory(getGmmClientContext());
-    wddm->gmmMemory.reset(gmmMemory);
-
-    wddm->init();
-
-    EXPECT_EQ(NEO::windowsMinAddress, wddm->getWddmMinAddress());
-    EXPECT_EQ(0u, gmmMemory->getInternalGpuVaRangeLimitCalled);
-}
-
 struct GdiWithMockedCloseFunc : public MockGdi {
     GdiWithMockedCloseFunc() : MockGdi() {
         closeAdapter = mockCloseAdapter;

@@ -54,14 +54,12 @@ bool Wddm::configureDeviceAddressSpace() {
     SYSTEM_INFO sysInfo;
     Wddm::getSystemInfo(&sysInfo);
     maximumApplicationAddress = reinterpret_cast<uintptr_t>(sysInfo.lpMaximumApplicationAddress);
-    auto productFamily = hwInfo->platform.eProductFamily;
     minAddress = windowsMinAddress;
-    auto svmSize = hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace >= MemoryConstants::max64BitAppAddress
+    auto svmSize = hwInfo->capabilityTable.gpuAddressSpace >= MemoryConstants::max64BitAppAddress
                        ? maximumApplicationAddress + 1u
                        : 0u;
 
-    bool obtainMinAddress = hwInfo->platform.eRenderCoreFamily == IGFX_GEN12LP_CORE;
-    return gmmMemory->configureDevice(getAdapter(), device, getGdi()->escape, svmSize, featureTable->flags.ftrL3IACoherency, minAddress, obtainMinAddress);
+    return gmmMemory->configureDevice(getAdapter(), device, getGdi()->escape, svmSize, featureTable->flags.ftrL3IACoherency);
 }
 
 } // namespace NEO
