@@ -1,0 +1,7 @@
+libudev-dev:
+  name: Device management library
+  description: Development files for libudev, used by sysman to receive kernel device events
+  reference: NEO-20172
+  version:
+    ubuntu_24.04: 255.4-1ubuntu8.18-1
+    ubuntu_26.04: 259.5-0ubuntu3.4-1

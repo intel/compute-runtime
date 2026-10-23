@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,7 @@
 #include "level_zero/sysman/source/shared/linux/udev/udev_lib.h"
 
 #include <cinttypes>
+#include <libudev.h>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -21,16 +22,16 @@
 namespace L0 {
 namespace Sysman {
 
-typedef struct udev *(*pUdevNew)(void);
-typedef struct udev_monitor *(*pUdevMonitorNewFromNetlink)(struct udev *, const char *);
-typedef int (*pUdevMonitorFilterAddMatchSubsystemDevtype)(struct udev_monitor *udev_monitor, const char *subsystem, const char *devtype);
-typedef int (*pUdevMonitorEnableReceiving)(struct udev_monitor *udev_monitor);
-typedef int (*pUdevMonitorGetFd)(struct udev_monitor *udev_monitor);
-typedef struct udev_device *(*pUdevMonitorReceiveDevice)(struct udev_monitor *udev_monitor);
-typedef dev_t (*pUdevDeviceGetDevnum)(struct udev_device *udev_device);
-typedef const char *(*pUdevDeviceGetAction)(struct udev_device *udev_device);
-typedef const char *(*pUdevDeviceGetPropertyValue)(struct udev_device *udev_device, const char *key);
-typedef struct udev_device *(*pUdevDeviceUnref)(struct udev_device *udev_device);
+using pUdevNew = decltype(&udev_new);
+using pUdevMonitorNewFromNetlink = decltype(&udev_monitor_new_from_netlink);
+using pUdevMonitorFilterAddMatchSubsystemDevtype = decltype(&udev_monitor_filter_add_match_subsystem_devtype);
+using pUdevMonitorEnableReceiving = decltype(&udev_monitor_enable_receiving);
+using pUdevMonitorGetFd = decltype(&udev_monitor_get_fd);
+using pUdevMonitorReceiveDevice = decltype(&udev_monitor_receive_device);
+using pUdevDeviceGetDevnum = decltype(&udev_device_get_devnum);
+using pUdevDeviceGetAction = decltype(&udev_device_get_action);
+using pUdevDeviceGetPropertyValue = decltype(&udev_device_get_property_value);
+using pUdevDeviceUnref = decltype(&udev_device_unref);
 
 class UdevLibImp : public UdevLib {
   public:
