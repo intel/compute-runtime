@@ -49,6 +49,7 @@ class HostPointerManager;
 struct FabricVertex;
 struct FabricEdge;
 struct Image;
+class ImageAllocationCache;
 struct IpcHandleTracking;
 
 class DriverHandle : public BaseDriver, public NEO::NonCopyableAndNonMovableClass {
@@ -81,6 +82,7 @@ class DriverHandle : public BaseDriver, public NEO::NonCopyableAndNonMovableClas
 
     MOCKABLE_VIRTUAL NEO::SVMAllocsManager *getSvmAllocsManager();
     MOCKABLE_VIRTUAL NEO::StagingBufferManager *getStagingBufferManager();
+    ImageAllocationCache *getImageAllocationCache() const { return this->imageAllocationCache.get(); }
     ze_result_t initialize(std::vector<std::unique_ptr<NEO::Device>> neoDevices);
 
     MOCKABLE_VIRTUAL ze_result_t sysmanEventsListen(uint32_t timeout, uint32_t count, zes_device_handle_t *phDevices,
@@ -187,6 +189,7 @@ class DriverHandle : public BaseDriver, public NEO::NonCopyableAndNonMovableClas
     NEO::UsmMemAllocPoolsFacade usmHostMemAllocPoolFacade;
     ze_context_handle_t defaultContext = nullptr;
     std::unique_ptr<NEO::StagingBufferManager> stagingBufferManager;
+    std::unique_ptr<ImageAllocationCache> imageAllocationCache;
 
     std::unique_ptr<NEO::OsLibrary> rtasLibraryHandle;
     bool rtasLibraryUnavailable = false;

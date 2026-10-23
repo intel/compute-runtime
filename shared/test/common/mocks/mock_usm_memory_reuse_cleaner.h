@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,8 +10,8 @@
 namespace NEO {
 struct MockUnifiedMemoryReuseCleaner : public UnifiedMemoryReuseCleaner {
   public:
+    using UnifiedMemoryReuseCleaner::allocationCaches;
     using UnifiedMemoryReuseCleaner::keepCleaning;
-    using UnifiedMemoryReuseCleaner::svmAllocationCaches;
     using UnifiedMemoryReuseCleaner::UnifiedMemoryReuseCleaner;
     using UnifiedMemoryReuseCleaner::unifiedMemoryReuseCleanerThread;
 
@@ -43,8 +43,8 @@ struct MockUnifiedMemoryReuseCleaner : public UnifiedMemoryReuseCleaner {
         } while (!waitOnConditionVar.load());
     }
     void clearCaches() {
-        std::lock_guard<std::mutex> lock(svmAllocationCachesMutex);
-        svmAllocationCaches.clear();
+        std::lock_guard<std::mutex> lock(allocationCachesMutex);
+        allocationCaches.clear();
     }
     std::atomic_bool waitOnConditionVar = false;
     bool startThreadCalled = false;

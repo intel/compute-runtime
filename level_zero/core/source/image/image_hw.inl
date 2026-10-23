@@ -207,7 +207,22 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
 
                 properties.flags.preferCompressed = isSuitableForCompression(lookupTable, imgInfo);
 
-                allocation = device->getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+                auto imageAllocationCache = device->getDriverHandle()->getImageAllocationCache();
+                if (imageAllocationCache) {
+                    this->allocationCacheKey = {imgInfo, properties.subDevicesBitfield, properties.allocationType, properties.rootDeviceIndex, properties.flags.preferCompressed != 0u};
+                    allocation = imageAllocationCache->get(this->allocationCacheKey, imgInfo);
+                }
+                if (allocation == nullptr) {
+                    allocation = device->getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+                }
+                if (allocation == nullptr && imageAllocationCache) {
+                    imageAllocationCache->trim();
+                    allocation = device->getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+                }
+                if (allocation && imageAllocationCache) {
+                    this->allocatedImgInfo = imgInfo;
+                    this->isAllocationReusable = true;
+                }
             } else {
 
                 auto usmAllocation = this->device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(lookupTable.imageProperties.pitchedPtr);

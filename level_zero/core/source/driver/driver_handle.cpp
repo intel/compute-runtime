@@ -35,6 +35,7 @@
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/helpers/default_descriptors.h"
 #include "level_zero/core/source/image/image.h"
+#include "level_zero/core/source/image/image_allocation_cache.h"
 #include "level_zero/driver_experimental/zex_common.h"
 
 #include "driver_version.h"
@@ -230,6 +231,9 @@ ze_result_t DriverHandle::getExtensionProperties(uint32_t *pCount,
 }
 
 DriverHandle::~DriverHandle() {
+    if (this->imageAllocationCache) {
+        this->imageAllocationCache->cleanup();
+    }
     if (memoryManager != nullptr) {
         if (this->svmAllocsManager) {
             this->svmAllocsManager->cleanupUSMAllocCaches();
@@ -336,6 +340,7 @@ ze_result_t DriverHandle::initialize(std::vector<std::unique_ptr<NEO::Device>> n
 
     if (this->numDevices == 1) {
         this->svmAllocsManager->initUsmAllocationsCaches(*this->devices[0]->getNEODevice());
+        this->imageAllocationCache = ImageAllocationCache::create(*this->devices[0]->getNEODevice());
     }
 
     uuidTimestamp = static_cast<uint64_t>(std::chrono::system_clock::now().time_since_epoch().count());

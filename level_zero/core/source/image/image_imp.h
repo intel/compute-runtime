@@ -11,6 +11,7 @@
 #include "shared/source/helpers/surface_format_info.h"
 
 #include "level_zero/core/source/image/image.h"
+#include "level_zero/core/source/image/image_allocation_cache.h"
 
 #include <initializer_list>
 #include <memory>
@@ -140,6 +141,9 @@ struct ImageImp : public Image, NEO::NonCopyableAndNonMovableClass {
     bool depthStencilImage = false;
     NEO::SurfaceFormatInfo overriddenSurfaceFormat = {};
     bool hasOverriddenSurfaceFormat = false;
+    ImageAllocationCacheKey allocationCacheKey = {};
+    NEO::ImageInfo allocatedImgInfo = {};
+    bool isAllocationReusable = false;
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<ImageImp>);

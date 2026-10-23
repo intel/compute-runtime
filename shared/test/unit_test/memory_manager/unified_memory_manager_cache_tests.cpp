@@ -1342,12 +1342,12 @@ TEST_F(SvmDeviceAllocationCacheTest, givenUsmReuseCleanerWhenTrimOldInCachesCall
     auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager());
     device->executionEnvironment->unifiedMemoryReuseCleaner.reset(new MockUnifiedMemoryReuseCleaner(false));
     auto mockUnifiedMemoryReuseCleaner = reinterpret_cast<MockUnifiedMemoryReuseCleaner *>(device->executionEnvironment->unifiedMemoryReuseCleaner.get());
-    EXPECT_EQ(0u, mockUnifiedMemoryReuseCleaner->svmAllocationCaches.size());
+    EXPECT_EQ(0u, mockUnifiedMemoryReuseCleaner->allocationCaches.size());
     device->usmReuseInfo.init(1 * MemoryConstants::gigaByte, UsmReuseInfo::notLimited);
     svmManager->initUsmAllocationsCaches(*device);
     EXPECT_NE(nullptr, svmManager->usmDeviceAllocationsCache);
-    EXPECT_EQ(1u, mockUnifiedMemoryReuseCleaner->svmAllocationCaches.size());
-    EXPECT_EQ(svmManager->usmDeviceAllocationsCache.get(), mockUnifiedMemoryReuseCleaner->svmAllocationCaches[0]);
+    EXPECT_EQ(1u, mockUnifiedMemoryReuseCleaner->allocationCaches.size());
+    EXPECT_EQ(svmManager->usmDeviceAllocationsCache.get(), mockUnifiedMemoryReuseCleaner->allocationCaches[0]);
 
     auto unifiedMemoryProperties = createMemoryProperties(InternalMemoryType::deviceUnifiedMemory, device);
     auto allocation = svmManager->createUnifiedMemoryAllocation(10u, unifiedMemoryProperties);
@@ -1379,7 +1379,7 @@ TEST_F(SvmDeviceAllocationCacheTest, givenUsmReuseCleanerWhenTrimOldInCachesCall
     EXPECT_EQ(0u, svmManager->usmDeviceAllocationsCache->allocations.size());
 
     svmManager->cleanupUSMAllocCaches();
-    EXPECT_EQ(0u, mockUnifiedMemoryReuseCleaner->svmAllocationCaches.size());
+    EXPECT_EQ(0u, mockUnifiedMemoryReuseCleaner->allocationCaches.size());
 }
 
 TEST_F(SvmDeviceAllocationCacheTest, givenDirectSubmissionLightWhenTrimOldInCachesCalledThenAllOldAllocationsAreRemoved) {
@@ -1394,12 +1394,12 @@ TEST_F(SvmDeviceAllocationCacheTest, givenDirectSubmissionLightWhenTrimOldInCach
     auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager());
     device->executionEnvironment->unifiedMemoryReuseCleaner.reset(new MockUnifiedMemoryReuseCleaner(true));
     auto mockUnifiedMemoryReuseCleaner = reinterpret_cast<MockUnifiedMemoryReuseCleaner *>(device->executionEnvironment->unifiedMemoryReuseCleaner.get());
-    EXPECT_EQ(0u, mockUnifiedMemoryReuseCleaner->svmAllocationCaches.size());
+    EXPECT_EQ(0u, mockUnifiedMemoryReuseCleaner->allocationCaches.size());
     device->usmReuseInfo.init(1 * MemoryConstants::gigaByte, UsmReuseInfo::notLimited);
     svmManager->initUsmAllocationsCaches(*device);
     EXPECT_NE(nullptr, svmManager->usmDeviceAllocationsCache);
-    EXPECT_EQ(1u, mockUnifiedMemoryReuseCleaner->svmAllocationCaches.size());
-    EXPECT_EQ(svmManager->usmDeviceAllocationsCache.get(), mockUnifiedMemoryReuseCleaner->svmAllocationCaches[0]);
+    EXPECT_EQ(1u, mockUnifiedMemoryReuseCleaner->allocationCaches.size());
+    EXPECT_EQ(svmManager->usmDeviceAllocationsCache.get(), mockUnifiedMemoryReuseCleaner->allocationCaches[0]);
 
     auto unifiedMemoryProperties = createMemoryProperties(InternalMemoryType::deviceUnifiedMemory, device);
     auto allocation = svmManager->createUnifiedMemoryAllocation(10u, unifiedMemoryProperties);
@@ -1420,7 +1420,7 @@ TEST_F(SvmDeviceAllocationCacheTest, givenDirectSubmissionLightWhenTrimOldInCach
     EXPECT_EQ(0u, svmManager->usmDeviceAllocationsCache->allocations.size());
 
     svmManager->cleanupUSMAllocCaches();
-    EXPECT_EQ(0u, mockUnifiedMemoryReuseCleaner->svmAllocationCaches.size());
+    EXPECT_EQ(0u, mockUnifiedMemoryReuseCleaner->allocationCaches.size());
 }
 
 TEST_F(SvmDeviceAllocationCacheTest, givenUsmReuseCleanerWhenTrimOldInCachesCalledAndShouldLimitUsmReuseThenAllOldAllocationsAreRemovedEvenIfDeferredDeleterHasWork) {
@@ -1435,12 +1435,12 @@ TEST_F(SvmDeviceAllocationCacheTest, givenUsmReuseCleanerWhenTrimOldInCachesCall
     auto svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager);
     device->executionEnvironment->unifiedMemoryReuseCleaner.reset(new MockUnifiedMemoryReuseCleaner(false));
     auto mockUnifiedMemoryReuseCleaner = reinterpret_cast<MockUnifiedMemoryReuseCleaner *>(device->executionEnvironment->unifiedMemoryReuseCleaner.get());
-    EXPECT_EQ(0u, mockUnifiedMemoryReuseCleaner->svmAllocationCaches.size());
+    EXPECT_EQ(0u, mockUnifiedMemoryReuseCleaner->allocationCaches.size());
     device->usmReuseInfo.init(1 * MemoryConstants::gigaByte, UsmReuseInfo::notLimited);
     svmManager->initUsmAllocationsCaches(*device);
     EXPECT_NE(nullptr, svmManager->usmDeviceAllocationsCache);
-    EXPECT_EQ(1u, mockUnifiedMemoryReuseCleaner->svmAllocationCaches.size());
-    EXPECT_EQ(svmManager->usmDeviceAllocationsCache.get(), mockUnifiedMemoryReuseCleaner->svmAllocationCaches[0]);
+    EXPECT_EQ(1u, mockUnifiedMemoryReuseCleaner->allocationCaches.size());
+    EXPECT_EQ(svmManager->usmDeviceAllocationsCache.get(), mockUnifiedMemoryReuseCleaner->allocationCaches[0]);
 
     auto unifiedMemoryProperties = createMemoryProperties(InternalMemoryType::deviceUnifiedMemory, device);
     auto allocation = svmManager->createUnifiedMemoryAllocation(10u, unifiedMemoryProperties);
@@ -3357,4 +3357,58 @@ TEST_F(SvmHostAllocationCacheTest, givenCachedAllocationWhenAllocatingWithExtern
     svmManager->cleanupUSMAllocCaches();
     alignedFree(externalStorage);
 }
+
+namespace {
+struct MockGenericAllocationReuseCache : public AllocationReuseCache {
+    bool isEmpty() override { return this->emptyCache; }
+    void trimOldAllocs(std::chrono::high_resolution_clock::time_point trimTimePoint, bool trimAll) override {
+        this->trimOldAllocsCalled++;
+        this->lastTrimAll = trimAll;
+    }
+    MemoryManager *getMemoryManager() const override { return this->memoryManager; }
+
+    MemoryManager *memoryManager = nullptr;
+    uint32_t trimOldAllocsCalled = 0u;
+    bool lastTrimAll = false;
+    bool emptyCache = true;
+};
+} // namespace
+
+TEST(UnifiedMemoryReuseCleanerGenericCacheTest, givenRegisteredGenericAllocationCacheWhenTrimmingOldInCachesThenItIsTrimmedWithTrimAllOnlyUnderMemoryPressureUntilUnregistered) {
+    MockMemoryManager memoryManager;
+    memoryManager.usmReuseInfo.init(MemoryConstants::gigaByte, UsmReuseInfo::notLimited);
+    MockGenericAllocationReuseCache allocationCache;
+    allocationCache.memoryManager = &memoryManager;
+    MockUnifiedMemoryReuseCleaner reuseCleaner(false);
+
+    reuseCleaner.registerAllocationCache(&allocationCache);
+    reuseCleaner.trimOldInCaches();
+    EXPECT_EQ(1u, allocationCache.trimOldAllocsCalled);
+    EXPECT_FALSE(allocationCache.lastTrimAll);
+
+    memoryManager.usmReuseInfo.init(MemoryConstants::gigaByte, 0u);
+    reuseCleaner.trimOldInCaches();
+    EXPECT_EQ(2u, allocationCache.trimOldAllocsCalled);
+    EXPECT_TRUE(allocationCache.lastTrimAll);
+
+    reuseCleaner.unregisterAllocationCache(&allocationCache);
+    reuseCleaner.trimOldInCaches();
+    EXPECT_EQ(2u, allocationCache.trimOldAllocsCalled);
+}
+
+TEST(UnifiedMemoryReuseCleanerGenericCacheTest, givenRegisteredGenericAllocationCacheWhenItHoldsAllocationsThenCleanerIsNotEmpty) {
+    MockMemoryManager memoryManager;
+    MockGenericAllocationReuseCache allocationCache;
+    allocationCache.memoryManager = &memoryManager;
+    MockUnifiedMemoryReuseCleaner reuseCleaner(false);
+    reuseCleaner.registerAllocationCache(&allocationCache);
+
+    EXPECT_TRUE(reuseCleaner.isEmpty());
+    allocationCache.emptyCache = false;
+    EXPECT_FALSE(reuseCleaner.isEmpty());
+    EXPECT_TRUE(reuseCleaner.waitPredicate());
+
+    reuseCleaner.unregisterAllocationCache(&allocationCache);
+}
+
 } // namespace NEO

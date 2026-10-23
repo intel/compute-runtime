@@ -698,6 +698,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalSetWalkerPartitionCount, 0, "Experim
 DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalSetWalkerPartitionType, -1, "Experimental implementation: Set COMPUTE_WALKER Partition Type. Valid values for types from 1 to 3")
 DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalEnableCustomLocalMemoryAlignment, 0, "Align local memory allocations to a given value. Works only with allocations at least as big as the value.  0: no effect, 2097152: 2 megabytes, 1073741824: 1 gigabyte")
 DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalEnableDeviceAllocationCache, -1, "Experimentally enable device usm allocation cache. Use X% of device memory.")
+DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalEnableImageAllocationCache, -1, "Reuse graphics allocations of destroyed Level Zero images for new images with identical layout. -1: default (disabled), 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalEnableHostAllocationCache, -1, "Experimentally enable host usm allocation cache. Use X% of shared system memory.")
 DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalEnableSharedAllocationCache, -1, "Experimentally enable shared usm allocation cache. Use X% of device memory.")
 DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalUSMAllocationReuseCleaner, -1, "Enable usm allocation reuse cleaner. -1: default, 0: disable, 1:enable")

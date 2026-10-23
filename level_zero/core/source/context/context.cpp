@@ -33,6 +33,7 @@
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/helpers/properties_parser.h"
 #include "level_zero/core/source/image/image.h"
+#include "level_zero/core/source/image/image_allocation_cache.h"
 #include "level_zero/core/source/memory/memory_operations_helper.h"
 #include "level_zero/core/source/module/module.h"
 #include "level_zero/driver_experimental/zex_memory.h"
@@ -384,6 +385,14 @@ ze_result_t Context::allocDeviceMem(ze_device_handle_t hDevice,
     if (usmPtr == nullptr) {
         if (driverHandle->svmAllocsManager->getNumClaimableDeferFreeAllocs() > 0) {
             this->driverHandle->svmAllocsManager->freeSVMAllocDeferImpl();
+            usmPtr =
+                this->driverHandle->svmAllocsManager->createUnifiedMemoryAllocation(size, unifiedMemoryProperties);
+        }
+    }
+    if (usmPtr == nullptr) {
+        auto imageAllocationCache = this->driverHandle->getImageAllocationCache();
+        if (imageAllocationCache && !imageAllocationCache->isEmpty()) {
+            imageAllocationCache->trim();
             usmPtr =
                 this->driverHandle->svmAllocsManager->createUnifiedMemoryAllocation(size, unifiedMemoryProperties);
         }

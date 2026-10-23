@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,37 +46,37 @@ void *UnifiedMemoryReuseCleaner::cleanUnifiedMemoryReuse(void *self) {
     return nullptr;
 }
 
-void UnifiedMemoryReuseCleaner::notifySvmAllocationsCacheUpdate() {
+void UnifiedMemoryReuseCleaner::notifyAllocationCacheUpdate() {
     std::lock_guard<std::mutex> lock(condVarMutex);
     condVar.notify_one();
 }
 
-void UnifiedMemoryReuseCleaner::registerSvmAllocationCache(SvmAllocationCache *cache) {
-    std::lock_guard<std::mutex> lockSvmAllocationCaches(this->svmAllocationCachesMutex);
-    this->svmAllocationCaches.push_back(cache);
+void UnifiedMemoryReuseCleaner::registerAllocationCache(AllocationReuseCache *cache) {
+    std::lock_guard<std::mutex> lockAllocationCaches(this->allocationCachesMutex);
+    this->allocationCaches.push_back(cache);
 }
 
-void UnifiedMemoryReuseCleaner::unregisterSvmAllocationCache(SvmAllocationCache *cache) {
-    std::lock_guard<std::mutex> lockSvmAllocationCaches(this->svmAllocationCachesMutex);
-    this->svmAllocationCaches.erase(std::find(this->svmAllocationCaches.begin(), this->svmAllocationCaches.end(), cache));
+void UnifiedMemoryReuseCleaner::unregisterAllocationCache(AllocationReuseCache *cache) {
+    std::lock_guard<std::mutex> lockAllocationCaches(this->allocationCachesMutex);
+    std::erase(this->allocationCaches, cache);
 }
 
 void UnifiedMemoryReuseCleaner::trimOldInCaches() {
     bool shouldLimitReuse = false;
     auto trimTimePoint = std::chrono::high_resolution_clock::now() - maxHoldTime;
-    std::lock_guard<std::mutex> lockSvmAllocationCaches(this->svmAllocationCachesMutex);
-    for (auto svmAllocCache : this->svmAllocationCaches) {
-        shouldLimitReuse |= svmAllocCache->memoryManager->shouldLimitAllocationsReuse();
+    std::lock_guard<std::mutex> lockAllocationCaches(this->allocationCachesMutex);
+    for (auto allocationCache : this->allocationCaches) {
+        shouldLimitReuse |= allocationCache->getMemoryManager()->shouldLimitAllocationsReuse();
         if (shouldLimitReuse) {
             trimTimePoint = std::chrono::high_resolution_clock::now() - limitedHoldTime;
         } else {
-            if (auto deferredDeleter = svmAllocCache->memoryManager->getDeferredDeleter()) {
+            if (auto deferredDeleter = allocationCache->getMemoryManager()->getDeferredDeleter()) {
                 if (false == deferredDeleter->areElementsReleased(false)) {
                     continue;
                 }
             }
         }
-        svmAllocCache->trimOldAllocs(trimTimePoint, shouldLimitReuse || this->trimAllAllocations);
+        allocationCache->trimOldAllocs(trimTimePoint, shouldLimitReuse || this->trimAllAllocations);
     }
 }
 

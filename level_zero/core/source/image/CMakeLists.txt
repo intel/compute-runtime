@@ -8,6 +8,8 @@ target_sources(${L0_STATIC_LIB_NAME}
                PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                ${CMAKE_CURRENT_SOURCE_DIR}/image.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/image_allocation_cache.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/image_allocation_cache.h
                ${CMAKE_CURRENT_SOURCE_DIR}/image_format_desc_helper.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/image_format_desc_helper.h
                ${CMAKE_CURRENT_SOURCE_DIR}/image_formats.h

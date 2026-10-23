@@ -119,7 +119,7 @@ bool SVMAllocsManager::SvmAllocationCache::insert(size_t size, void *ptr, SvmAll
         if (auto usmReuseCleaner = this->memoryManager->peekExecutionEnvironment().unifiedMemoryReuseCleaner.get()) {
             lock.unlock();
             usmReuseCleaner->startThread();
-            usmReuseCleaner->notifySvmAllocationsCacheUpdate();
+            usmReuseCleaner->notifyAllocationCacheUpdate();
         }
     }
     if (enablePerformanceLogging) {
@@ -254,7 +254,7 @@ void SVMAllocsManager::SvmAllocationCache::trim() {
 void SVMAllocsManager::SvmAllocationCache::cleanup() {
     DEBUG_BREAK_IF(nullptr == this->memoryManager);
     if (auto usmReuseCleaner = this->memoryManager->peekExecutionEnvironment().unifiedMemoryReuseCleaner.get()) {
-        usmReuseCleaner->unregisterSvmAllocationCache(this);
+        usmReuseCleaner->unregisterAllocationCache(this);
     }
     this->trim();
 }
@@ -1191,7 +1191,7 @@ void SVMAllocsManager::initUsmDeviceAllocationsCache(Device &device) {
     this->usmDeviceAllocationsCache->svmAllocsManager = this;
     this->usmDeviceAllocationsCache->memoryManager = memoryManager;
     if (auto usmReuseCleaner = device.getExecutionEnvironment()->unifiedMemoryReuseCleaner.get()) {
-        usmReuseCleaner->registerSvmAllocationCache(this->usmDeviceAllocationsCache.get());
+        usmReuseCleaner->registerAllocationCache(this->usmDeviceAllocationsCache.get());
     }
 }
 
@@ -1201,7 +1201,7 @@ void SVMAllocsManager::initUsmHostAllocationsCache() {
     this->usmHostAllocationsCache->svmAllocsManager = this;
     this->usmHostAllocationsCache->memoryManager = memoryManager;
     if (auto usmReuseCleaner = this->memoryManager->peekExecutionEnvironment().unifiedMemoryReuseCleaner.get()) {
-        usmReuseCleaner->registerSvmAllocationCache(this->usmHostAllocationsCache.get());
+        usmReuseCleaner->registerAllocationCache(this->usmHostAllocationsCache.get());
     }
 }
 
@@ -1218,7 +1218,7 @@ void SVMAllocsManager::initUsmSharedAllocationsCache(Device &device) {
     this->usmSharedAllocationsCache->allocationSizeAlignment =
         roundTo2MB ? MemoryConstants::pageSize2M : MemoryConstants::pageSize64k;
     if (auto usmReuseCleaner = device.getExecutionEnvironment()->unifiedMemoryReuseCleaner.get()) {
-        usmReuseCleaner->registerSvmAllocationCache(this->usmSharedAllocationsCache.get());
+        usmReuseCleaner->registerAllocationCache(this->usmSharedAllocationsCache.get());
     }
 }
 

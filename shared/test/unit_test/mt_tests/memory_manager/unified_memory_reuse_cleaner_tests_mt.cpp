@@ -42,7 +42,7 @@ TEST(UnifiedMemoryReuseCleanerTestsMt, givenUnifiedMemoryReuseCleanerWhenCachesA
     mockMemoryManager.usmReuseInfo.init(svmAllocSize, svmAllocSize);
     svmAllocCache->memoryManager = &mockMemoryManager;
     svmAllocCache->svmAllocsManager = &svmAllocsManager;
-    cleaner.registerSvmAllocationCache(svmAllocCache.get());
+    cleaner.registerAllocationCache(svmAllocCache.get());
 
     // Caches are empty, ensure cleaner thread is still waiting on condition var
     cleaner.waitTillSleep();

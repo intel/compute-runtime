@@ -94,7 +94,10 @@ ImageImp::~ImageImp() {
     }
     if (this->device != nullptr) {
         if (!isImageView() && !imageFromBuffer) {
-            this->device->getNEODevice()->getMemoryManager()->freeGraphicsMemory(this->allocation);
+            auto imageAllocationCache = this->isAllocationReusable ? this->device->getDriverHandle()->getImageAllocationCache() : nullptr;
+            if (imageAllocationCache == nullptr || !imageAllocationCache->insert(this->allocationCacheKey, this->allocatedImgInfo, this->allocation)) {
+                this->device->getNEODevice()->getMemoryManager()->freeGraphicsMemory(this->allocation);
+            }
         }
         if (implicitArgsTag) {
             implicitArgsTag->returnTag();

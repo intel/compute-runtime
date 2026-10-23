@@ -12,6 +12,7 @@
 #include "shared/source/helpers/device_bitfield.h"
 #include "shared/source/helpers/memory_properties_flags.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
+#include "shared/source/memory_manager/allocation_reuse_cache.h"
 #include "shared/source/memory_manager/engine_completion_snapshot.h"
 #include "shared/source/memory_manager/free_policy_type.h"
 #include "shared/source/memory_manager/mem_free_callback.h"
@@ -188,7 +189,7 @@ class SVMAllocsManager {
         }
     };
 
-    struct SvmAllocationCache {
+    struct SvmAllocationCache : AllocationReuseCache {
         enum class CacheOperationType {
             insert,
             get,
@@ -221,10 +222,11 @@ class SVMAllocsManager {
         static bool allocUtilizationAllows(size_t requestedSize, size_t reuseCandidateSize);
         static bool alignmentAllows(void *ptr, size_t alignment);
         bool isInUse(SvmCacheAllocationInfo &cacheAllocInfo);
-        bool isEmpty() { return empty; };
+        bool isEmpty() override { return empty; };
         void *get(size_t size, const UnifiedMemoryProperties &unifiedMemoryProperties);
         void trim();
-        void trimOldAllocs(std::chrono::high_resolution_clock::time_point trimTimePoint, bool trimAll);
+        void trimOldAllocs(std::chrono::high_resolution_clock::time_point trimTimePoint, bool trimAll) override;
+        MemoryManager *getMemoryManager() const override { return memoryManager; }
         void cleanup();
         void logCacheOperation(const SvmAllocationCachePerfInfo &cachePerfEvent) const;
 
