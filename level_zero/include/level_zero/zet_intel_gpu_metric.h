@@ -177,13 +177,6 @@ typedef struct _zet_intel_metric_result_exp_t {
     zet_value_t value;                                             ///< [out] metric result calculated metric value
     zet_intel_metric_calculation_result_status_exp_t resultStatus; ///< [out] type of the result for the filters applied to the calculation.
 } zet_intel_metric_result_exp_t;
-typedef struct _zet_intel_metric_decoded_buffer_exp_properties_t {
-    zet_structure_type_ext_t stype; ///< [in] type of this structure
-    void *pNext;                    ///< [in][optional] must be null or a pointer to an extension-specific
-                                    ///< structure (i.e. contains stype and pNext).
-    uint64_t minTimeStamp;          ///< [out] minimum timestamp contained in the raw data buffer
-    uint64_t maxTimeStamp;          ///< [out] maximum timestamp contained in the raw data buffer
-} zet_intel_metric_decoded_buffer_exp_properties_t;
 
 ze_result_t ZE_APICALL
 zetIntelMetricCalculationOperationCreateExp(
@@ -229,8 +222,7 @@ ze_result_t ZE_APICALL zetIntelMetricCalculationOperationGetExcludedMetricsExp(
 ze_result_t ZE_APICALL
 zetIntelMetricCalculateValuesExp(
     const size_t rawDataSize,                                                  ///< [in] size in bytes of raw data buffer.
-    const uint8_t *pRawData,                                                   ///< [in,out][range(0, *rawDataSize)] buffer containing tracer
-                                                                               ///< data in raw format
+    const uint8_t *pRawData,                                                   ///< [in,out][range(0, *rawDataSize)] buffer containing data in raw format
     zet_intel_metric_calculation_operation_exp_handle_t hCalculationOperation, ///< [in] Calculation operation handle
     bool lastCall,                                                             ///< [in] flag to indicate the if the current is the last call call for the given data.
                                                                                ///< If false, the driver may cache data as needed for subsequent calls.
@@ -245,34 +237,6 @@ zetIntelMetricCalculateValuesExp(
                                                                                ///< the actual number of metric reports calculated.
     zet_intel_metric_result_exp_t *pMetricResults);                            ///< [in,out][range(0, *pTotalMetricReportCount x reportSize)] buffer of calculated
                                                                                ///< metrics results. Report size is retrieved by the number of metrics returned by zetIntelMetricCalculationOperationGetReportFormatExp()
-
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Decoded metric entry
-typedef struct _zet_metric_entry_exp2_t {
-    zet_value_t value;      ///< [out] value of the decodable metric entry or event. Number is
-                            ///< meaningful based on the metric type.
-    uint64_t timeStamp;     ///< [out] timestamp at which the event happened.
-    uint32_t metricIndex;   ///< [out] index to the decodable metric handle in the input array
-                            ///< (phMetric) in ::zetMetricTracerDecodeExp().
-    uint32_t metricScopeID; ///< [out] ID index of the scope for which the entry is meaningful.
-                            ///< If the array of metrics scopes submitted to ::zetMetricTracerDecode()
-                            ///< is the same as the one returned by zetMetricScopesGet(), then expect
-                            ///< the ID to be equal to the index of the metric scope in the array.
-    uint32_t duration;      ///< [out] Event duration in nanoseconds: 0 for
-                            ///< instant events, UINT32_MAX if the duration is unknown.
-} zet_metric_entry_exp2_t;
-
-#ifndef ZET_INTEL_METRIC_TRACER_DECODE_EXP2_NAME
-/// @brief Extension name to decode Intel Metric Tracer data with metric scopes
-#define ZET_INTEL_METRIC_TRACER_DECODE_EXP2_NAME "ZET_intel_metric_tracer_decode_exp2"
-#endif // ZET_INTEL_METRIC_TRACER_DECODE_EXP2_NAME
-////////////////////////////////////////////////////////////////////////////////
-/// @brief Metric Tracer Decode extension Version(s)
-typedef enum _zet_intel_metric_tracer_decode_exp2_version_t {
-    ZET_INTEL_METRIC_TRACER_DECODE_EXP2_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),                               ///< version 1.0
-    ZET_INTEL_METRIC_TRACER_DECODE_EXP2_VERSION_CURRENT = ZET_INTEL_METRIC_TRACER_DECODE_EXP2_VERSION_1_0, ///< latest known version
-    ZET_INTEL_METRIC_TRACER_DECODE_EXP2_VERSION_FORCE_UINT32 = 0x7fffffff
-} zet_intel_metric_tracer_decode_exp2_version_t;
 
 #ifndef ZET_INTEL_METRICS_RUNTIME_ENABLE_DISABLE_EXP_NAME
 /// @brief Extension name for enabling and disabling Intel Metrics collection
@@ -317,7 +281,7 @@ typedef enum _zet_intel_metric_hw_buffer_size_exp_version_t {
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Metric hardware buffer size descriptor
-/// This descriptor can be used as a "pNext" value to the zet_metric_streamer_desc_t and zet_metric_tracer_exp_desc_t.
+/// This descriptor can be used as a "pNext" value to the zet_metric_streamer_desc_t.
 /// This descriptor allow to request and query the allocated HW buffer size in bytes.
 /// The sizeInBytes should not be used to estimate buffer overflow scenario (Use notifyNReports to detect it).
 typedef struct _zet_intel_metric_hw_buffer_size_exp_desc_t {
