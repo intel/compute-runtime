@@ -66,14 +66,6 @@ bool ProductHelperHw<gfxProduct>::isDeviceUsmPoolAllocatorSupported() const {
 }
 
 template <>
-uint32_t ProductHelperHw<gfxProduct>::getNumCacheRegions() const {
-    constexpr uint32_t numSharedCacheRegions = 1;
-    constexpr uint32_t numReservedCacheRegions = 2;
-    constexpr uint32_t numTotalCacheRegions = numSharedCacheRegions + numReservedCacheRegions;
-    return numTotalCacheRegions;
-}
-
-template <>
 uint64_t ProductHelperHw<gfxProduct>::getPatIndex(CacheRegion cacheRegion, CachePolicy cachePolicy) const {
     /*
     PAT Index  CLOS   MemType

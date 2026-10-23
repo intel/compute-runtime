@@ -130,7 +130,7 @@ void ClDevice::initializeCaps() {
 
     auto simdSizeUsed = debugManager.flags.UseMaxSimdSizeToDeduceMaxWorkgroupSize.get()
                             ? CommonConstants::maximalSimdSize
-                            : gfxCoreHelper.getMinimalSIMDSize();
+                            : hwInfo.caps.minimalSimdSize;
 
     // calculate a maximum number of subgroups in a workgroup (for the required SIMD size)
     deviceInfo.maxNumOfSubGroups = static_cast<uint32_t>(sharedDeviceInfo.maxWorkGroupSize / simdSizeUsed);

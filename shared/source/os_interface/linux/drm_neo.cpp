@@ -1217,17 +1217,15 @@ void Drm::setupSystemInfo(HardwareInfo *hwInfo, SystemInfo *sysInfo) {
 }
 
 void Drm::setupCacheInfo(const HardwareInfo &hwInfo) {
-    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
-
     if (debugManager.flags.ForceStaticL2ClosReservation.get()) {
         if (debugManager.flags.L2ClosNumCacheWays.get() == -1) {
             debugManager.flags.L2ClosNumCacheWays.set(2U);
         }
     }
 
-    auto getL2CacheReservationLimits{[&productHelper]() {
+    auto getL2CacheReservationLimits{[&hwInfo]() {
         CacheReservationParameters out{};
-        if (productHelper.getNumCacheRegions() == 0) {
+        if (hwInfo.caps.numCacheRegions == 0) {
             return out;
         }
 
@@ -1240,9 +1238,9 @@ void Drm::setupCacheInfo(const HardwareInfo &hwInfo) {
         return out;
     }};
 
-    auto getL3CacheReservationLimits{[&hwInfo, &productHelper]() {
+    auto getL3CacheReservationLimits{[&hwInfo]() {
         CacheReservationParameters out{};
-        if (debugManager.flags.ClosEnabled.get() == 0 || productHelper.getNumCacheRegions() == 0) {
+        if (debugManager.flags.ClosEnabled.get() == 0 || hwInfo.caps.numCacheRegions == 0) {
             return out;
         }
 
@@ -1253,7 +1251,7 @@ void Drm::setupCacheInfo(const HardwareInfo &hwInfo) {
 
         out.maxNumWays = std::min(globalReservationLimit, clientReservationLimit);
         out.maxSize = (totalCacheSize * out.maxNumWays) / totalMaxNumWays;
-        out.maxNumRegions = productHelper.getNumCacheRegions() - 1;
+        out.maxNumRegions = hwInfo.caps.numCacheRegions - 1;
 
         return out;
     }};

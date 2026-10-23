@@ -108,11 +108,6 @@ uint32_t GfxCoreHelperHw<Family>::getMetricsLibraryGenId() const {
 }
 
 template <>
-uint32_t GfxCoreHelperHw<Family>::getMinimalSIMDSize() const {
-    return 16u;
-}
-
-template <>
 uint32_t GfxCoreHelperHw<Family>::getMocsIndex(const GmmHelper &gmmHelper, bool l3enabled, bool l1enabled) const {
     if (l3enabled) {
         return gmmHelper.getL3EnabledMOCS() >> 1;
@@ -239,11 +234,6 @@ void GfxCoreHelperHw<Family>::setExtraAllocationData(AllocationData &allocationD
             allocationData.storageInfo.memoryBanks = 1; // force Tile0
         }
     }
-}
-
-template <>
-int32_t GfxCoreHelperHw<Family>::getDefaultThreadArbitrationPolicy() const {
-    return ThreadArbitrationPolicy::RoundRobinAfterDependency;
 }
 
 template <>

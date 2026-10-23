@@ -341,7 +341,8 @@ KernelSharedState::KernelSharedState(Module *module) {
         return;
     }
     this->module = module;
-    this->implicitArgsVersion = module->getDevice()->getGfxCoreHelper().getImplicitArgsVersion();
+    const auto &hwInfo = module->getDevice()->getHwInfo();
+    this->implicitArgsVersion = hwInfo.caps.implicitArgsVersion;
     ModuleImp *moduleImp = reinterpret_cast<ModuleImp *>(this->module);
     if (moduleImp->getTranslationUnit()->programInfo.indirectAccessBufferMajorVersion > 0) {
         this->implicitArgsVersion = moduleImp->getTranslationUnit()->programInfo.indirectAccessBufferMajorVersion;

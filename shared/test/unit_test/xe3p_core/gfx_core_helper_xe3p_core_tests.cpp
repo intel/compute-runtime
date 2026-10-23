@@ -29,11 +29,6 @@
 #include "metrics_library_api_1_0.h"
 
 using GfxCoreHelperTestsXe3pCore = GfxCoreHelperTest;
-XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenXe3pCoreWhenAskedForMinimialSimdThen16IsReturned) {
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    EXPECT_EQ(16u, gfxCoreHelper.getMinimalSIMDSize());
-}
-
 XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, whenGettingMetricsLibraryGenIdThenXe3pIsReturned) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     EXPECT_EQ(static_cast<uint32_t>(MetricsLibraryApi::ClientGen::Xe3P), gfxCoreHelper.getMetricsLibraryGenId());
@@ -578,11 +573,6 @@ XE3P_CORETEST_F(LriHelperTestsXe3pCore, whenProgrammingLriCommandThenExpectMmioR
     EXPECT_EQ(sizeof(MI_LOAD_REGISTER_IMM), stream.getUsed());
     EXPECT_EQ(lri, stream.getCpuBase());
     EXPECT_TRUE(memcmp(lri, &expectedLri, sizeof(MI_LOAD_REGISTER_IMM)) == 0);
-}
-
-XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenXe3pCoreWhenAskedForMinimialGrfSizeThen32IsReturned) {
-    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    EXPECT_EQ(32u, gfxCoreHelper.getMinimalGrfSize());
 }
 
 XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, whenAskingForImplicitScalingImmWriteOffsetThenAlwaysReturnTsSize) {

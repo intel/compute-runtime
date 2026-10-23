@@ -18,12 +18,17 @@ namespace NEO {
     NEO_COPY_CAP_FUNC(cacheLineSize)                                             \
     NEO_COPY_CAP_FUNC(commandBuffersPreallocatedPerCommandQueue)                 \
     NEO_COPY_CAP_FUNC(defaultMidthreadPreemptionDelayTimer)                      \
+    NEO_COPY_CAP_FUNC(defaultThreadArbitrationPolicy)                            \
+    NEO_COPY_CAP_FUNC(implicitArgsVersion)                                       \
     NEO_COPY_CAP_FUNC(kernelBFloat16AtomicCapabilities)                          \
     NEO_COPY_CAP_FUNC(kernelFp16AtomicCapabilities)                              \
     NEO_COPY_CAP_FUNC(maxNumSamplers)                                            \
+    NEO_COPY_CAP_FUNC(minimalSimdSize)                                           \
+    NEO_COPY_CAP_FUNC(numCacheRegions)                                           \
     NEO_COPY_CAP_FUNC(planarYuvMaxHeight)                                        \
     NEO_COPY_CAP_FUNC(preferredWorkgroupCountPerSubslice)                        \
     NEO_COPY_CAP_FUNC(rtasFormat)                                                \
+    NEO_COPY_CAP_FUNC(shareMemoryWithoutNTHandle)                                \
     NEO_COPY_CAP_FUNC(stackSizePerRay)                                           \
                                                                                  \
     NEO_COPY_CAP_FUNC(max3dImageWidthOrHeight)                                   \

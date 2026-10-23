@@ -209,8 +209,8 @@ HWTEST2_F(CacheReservationTest, GivenCacheReservationSupportedWhenCallingSetCach
 }
 
 HWTEST2_F(CacheReservationTest, GivenCacheReservationSupportedWhenCallingSetCacheAdviceOnReservedCacheRegionThenSetCacheRegionCorrectly, IsCacheReservationSupported) {
-    auto &productHelper = neoDevice->getProductHelper();
-    if (productHelper.getNumCacheRegions() == 0) {
+    const auto &hwInfo = neoDevice->getHardwareInfo();
+    if (hwInfo.caps.numCacheRegions == 0) {
         GTEST_SKIP();
     }
     size_t cacheLevel = 3;
@@ -250,8 +250,8 @@ HWTEST2_F(CacheReservationTest, GivenCacheReservationSupportedWhenCallingSetCach
 }
 
 HWTEST2_F(CacheReservationTest, GivenCacheReservationSupportedWhenCallingSetCacheAdviceOnNonReservedCacheRegionThenSetCacheRegionCorrectly, IsCacheReservationSupported) {
-    auto &productHelper = neoDevice->getProductHelper();
-    if (productHelper.getNumCacheRegions() == 0) {
+    const auto &hwInfo = neoDevice->getHardwareInfo();
+    if (hwInfo.caps.numCacheRegions == 0) {
         GTEST_SKIP();
     }
     size_t cacheLevel = 3;
@@ -333,8 +333,8 @@ class L2CacheReservationFixture : public DeviceFixture {
 using L2CacheReservationTest = Test<L2CacheReservationFixture>;
 
 HWTEST2_F(L2CacheReservationTest, GivenCacheReservationSupportedWhenCallingSetCacheAdviceOnL2RegionReservedThenSetCacheRegionCorrectly, IsCacheReservationSupported) {
-    auto &productHelper = neoDevice->getProductHelper();
-    if (productHelper.getNumCacheRegions() == 0) {
+    const auto &hwInfo = neoDevice->getHardwareInfo();
+    if (hwInfo.caps.numCacheRegions == 0) {
         GTEST_SKIP();
     }
 

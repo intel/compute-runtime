@@ -15,6 +15,7 @@
 #include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -203,9 +204,9 @@ ze_result_t Context::allocHostMem(const ze_host_mem_alloc_desc_t *hostMemDesc,
 
     unifiedMemoryProperties.allocationFlags.flags.ipcSupportedAllocationByDefault = 0;
     auto neoDevice = L0::Device::fromHandle(this->devices.begin()->second)->getNEODevice();
-    auto &productHelper = neoDevice->getProductHelper();
     if (NEO::debugManager.flags.EnableipcSupportedAllocationByDefault.get()) {
-        unifiedMemoryProperties.allocationFlags.flags.ipcSupportedAllocationByDefault = productHelper.canShareMemoryWithoutNTHandle();
+        const auto &hwInfo = neoDevice->getHardwareInfo();
+        unifiedMemoryProperties.allocationFlags.flags.ipcSupportedAllocationByDefault = hwInfo.caps.shareMemoryWithoutNTHandle;
     }
     unifiedMemoryProperties.allocationFlags.flags.shareable = isShareableMemory(hostMemDesc->pNext, static_cast<uint32_t>(lookupTable.exportMemory), neoDevice, unifiedMemoryProperties.allocationFlags.flags.ipcSupportedAllocationByDefault);
 
@@ -343,9 +344,9 @@ ze_result_t Context::allocDeviceMem(ze_device_handle_t hDevice,
     deviceBitfields[rootDeviceIndex] = neoDevice->getDeviceBitfield();
     NEO::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, alignment, this->driverHandle->rootDeviceIndices, deviceBitfields);
     unifiedMemoryProperties.allocationFlags.flags.ipcSupportedAllocationByDefault = 0;
-    auto &productHelper = neoDevice->getProductHelper();
     if (NEO::debugManager.flags.EnableipcSupportedAllocationByDefault.get()) {
-        unifiedMemoryProperties.allocationFlags.flags.ipcSupportedAllocationByDefault = productHelper.canShareMemoryWithoutNTHandle();
+        const auto &hwInfo = neoDevice->getHardwareInfo();
+        unifiedMemoryProperties.allocationFlags.flags.ipcSupportedAllocationByDefault = hwInfo.caps.shareMemoryWithoutNTHandle;
     }
     unifiedMemoryProperties.allocationFlags.flags.shareable = isShareableMemory(deviceMemDesc->pNext, static_cast<uint32_t>(lookupTable.exportMemory), neoDevice, unifiedMemoryProperties.allocationFlags.flags.ipcSupportedAllocationByDefault);
     unifiedMemoryProperties.device = neoDevice;
@@ -357,6 +358,7 @@ ze_result_t Context::allocDeviceMem(ze_device_handle_t hDevice,
     }
 
     if (lookupTable.rayTracingMemory == true) {
+        auto &productHelper = neoDevice->getProductHelper();
         unifiedMemoryProperties.allocationFlags.flags.resource48Bit = productHelper.is48bResourceNeededForRayTracing();
         unifiedMemoryProperties.allocationFlags.allocFlags.rtAllocation = 1;
     }

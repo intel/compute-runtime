@@ -52,7 +52,6 @@ class ProductHelperHw : public ProductHelper {
     bool restartDirectSubmissionForHostptrFree() const override;
     bool heapInLocalMem(const HardwareInfo &hwInfo) const override;
     void setCapabilityCoherencyFlag(const HardwareInfo &hwInfo, bool &coherencyFlag) const override;
-    uint32_t canShareMemoryWithoutNTHandle() const override;
     bool pipeControlWARequired(const HardwareInfo &hwInfo) const override;
     bool imagePitchAlignmentWARequired(const HardwareInfo &hwInfo) const override;
     bool isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo) const override;
@@ -173,7 +172,6 @@ class ProductHelperHw : public ProductHelper {
     bool isPatIndexValidForUserptr(uint64_t patIndex) const override;
     bool isStagingBuffersEnabled() const override;
     size_t getCpuCopyThreshold(TransferType transferType) const override;
-    uint32_t getNumCacheRegions() const override;
     uint32_t adjustMaxThreadsPerThreadGroup(const HardwareInfo &hwInfo, uint32_t maxThreadsPerThreadGroup, uint32_t simt, uint32_t grfCount) const override;
     uint64_t getPatIndex(CacheRegion cacheRegion, CachePolicy cachePolicy) const override;
     uint64_t getSharedSystemPatIndex() const override;

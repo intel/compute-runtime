@@ -191,7 +191,8 @@ FORCE_NOINLINE void Program::dumpKernelInfoToAubComments() {
     auto rootDeviceIndex = pClDevice->getRootDeviceIndex();
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex];
     auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
-    bool useFullAddress = compilerProductHelper.isHeaplessModeEnabled(*rootDeviceEnvironment.getHardwareInfo());
+    const auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    bool useFullAddress = compilerProductHelper.isHeaplessModeEnabled(hwInfo);
     auto &symbols = buildInfos[rootDeviceIndex].symbols;
     auto &buildInfo = buildInfos[rootDeviceIndex];
     auto deviceBinary = buildInfo.unpackedDeviceBinary.get();
@@ -205,7 +206,7 @@ FORCE_NOINLINE void Program::dumpKernelInfoToAubComments() {
 
     auto &kernelInfoArray = buildInfos[rootDeviceIndex].kernelInfoArray;
     auto implicitArgsVersion = NEO::ImplicitArgsHelper::resolveImplicitArgsVersion(
-        rootDeviceEnvironment.getHelper<GfxCoreHelper>().getImplicitArgsVersion(),
+        hwInfo.caps.implicitArgsVersion,
         this->getIndirectAccessBufferVersion());
 
     NEO::AubComment::dumpKernelInfoToAubComments(useFullAddress, aubCenter, kernelInfoArray, symbols, options, refBin, implicitArgsVersion);

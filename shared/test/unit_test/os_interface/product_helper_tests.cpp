@@ -626,14 +626,6 @@ HWTEST_F(ProductHelperTest, givenSamplerStateWhenAdjustSamplerStateThenNothingIs
     EXPECT_EQ(0, memcmp(&initialState, &state, sizeof(SAMPLER_STATE)));
 }
 
-HWTEST2_F(ProductHelperTest, whenGettingNumberOfCacheRegionsThenReturnZero, IsClosUnsupported) {
-    EXPECT_EQ(0u, productHelper->getNumCacheRegions());
-}
-
-HWTEST2_F(ProductHelperTest, whenGettingNumberOfCacheRegionsThenReturnNonZero, IsClosSupported) {
-    EXPECT_NE(0u, productHelper->getNumCacheRegions());
-}
-
 HWTEST2_F(ProductHelperTest, givenClosUnsupportedWhenGettingPatIndexThenAbortIsThrown, IsClosUnsupported) {
     EXPECT_ANY_THROW(productHelper->getPatIndex(CacheRegion::defaultRegion, CachePolicy::uncached));
     EXPECT_ANY_THROW(productHelper->getPatIndex(CacheRegion::defaultRegion, CachePolicy::writeBack));
@@ -1304,14 +1296,6 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenisPackedCopyFormatSupportedTh
 
 HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingShouldRegisterEnqueuedWalkerWithProfilingThenFalseReturned) {
     EXPECT_FALSE(productHelper->shouldRegisterEnqueuedWalkerWithProfiling());
-}
-
-HWTEST2_F(ProductHelperTest, givenDG1ProductHelperWhenCanShareMemoryWithoutNTHandleIsCalledThenFalseIsReturned, IsDG1) {
-    EXPECT_EQ(productHelper->canShareMemoryWithoutNTHandle(), 0u);
-}
-
-HWTEST2_F(ProductHelperTest, givenNonDG1ProductHelperWhenCanShareMemoryWithoutNTHandleIsCalledThenTrueIsReturned, IsNotDG1) {
-    EXPECT_EQ(productHelper->canShareMemoryWithoutNTHandle(), 1u);
 }
 
 HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIsDeviceCapsReaderSupportedThenReturnFalse) {

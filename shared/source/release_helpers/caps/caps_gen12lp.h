@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_ip_version.h"
 #include "shared/source/kernel/kernel_properties.h"
@@ -18,8 +19,10 @@ namespace NEO {
 
 struct CapsGen12Lp {
     static constexpr uint32_t cacheLineSize = 64u;
+    static constexpr int32_t defaultThreadArbitrationPolicy = ThreadArbitrationPolicy::AgeBased;
     static constexpr uint32_t kernelFp16AtomicCapabilities = FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps;
     static constexpr uint32_t maxNumSamplers = 16u;
+    static constexpr uint32_t minimalSimdSize = 8u;
     static constexpr uint32_t planarYuvMaxHeight = 16352u;
 
     static constexpr size_t max3dImageWidthOrHeight = 2048u;
@@ -33,13 +36,22 @@ struct CapsGen12Lp {
     static constexpr bool scratchSpaceBasePointerInGrf = true;
 };
 
-struct CapsTgl : CapsGen12Lp {};
+struct CapsTgl : CapsGen12Lp {
+    static constexpr uint32_t shareMemoryWithoutNTHandle = 1u;
+};
 struct CapsRkl : CapsGen12Lp {
     static constexpr bool forceEmuInt32DivRemSPRequired = true;
+    static constexpr uint32_t shareMemoryWithoutNTHandle = 1u;
 };
-struct CapsAdlS : CapsGen12Lp {};
-struct CapsAdlP : CapsGen12Lp {};
-struct CapsAdlN : CapsGen12Lp {};
+struct CapsAdlS : CapsGen12Lp {
+    static constexpr uint32_t shareMemoryWithoutNTHandle = 1u;
+};
+struct CapsAdlP : CapsGen12Lp {
+    static constexpr uint32_t shareMemoryWithoutNTHandle = 1u;
+};
+struct CapsAdlN : CapsGen12Lp {
+    static constexpr uint32_t shareMemoryWithoutNTHandle = 1u;
+};
 struct CapsDg1 : CapsGen12Lp {};
 
 constexpr std::optional<Caps> resolveCapsTgl(HardwareIpVersion) {

@@ -7,7 +7,6 @@
 
 #include "shared/source/helpers/constants.h"
 #include "shared/source/os_interface/linux/cache_info.h"
-#include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
@@ -52,7 +51,7 @@ struct DrmCacheInfoFixture {
 using DrmCacheInfoTest = Test<DrmCacheInfoFixture>;
 
 HWTEST2_F(DrmCacheInfoTest, givenClosSupportedWhenCallingSetUpCacheInfoThenCacheInfoIsCreatedAndReturnsMaxReservationCacheLimits, IsClosSupported) {
-    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+    const auto &hwInfo = *defaultHwInfo;
 
     drm->setupCacheInfo(*defaultHwInfo.get());
 
@@ -67,7 +66,7 @@ HWTEST2_F(DrmCacheInfoTest, givenClosSupportedWhenCallingSetUpCacheInfoThenCache
     constexpr uint16_t maxReservationNumWays = std::min(globalReservationLimit, clientReservationLimit);
     const size_t totalCacheSize = gtSysInfo->L3CacheSizeInKb * MemoryConstants::kiloByte;
     const size_t maxReservationCacheSize = (totalCacheSize * maxReservationNumWays) / maxNumWays;
-    const size_t maxReservationNumCacheRegions = productHelper.getNumCacheRegions() - 1;
+    const size_t maxReservationNumCacheRegions = hwInfo.caps.numCacheRegions - 1;
 
     EXPECT_EQ(maxReservationCacheSize, cacheInfo->getMaxReservationCacheSize(cacheLevel));
     EXPECT_EQ(maxReservationNumCacheRegions, cacheInfo->getMaxReservationNumCacheRegions(cacheLevel));

@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/common_types.h"
 #include "shared/source/release_helpers/caps/caps_xe3p.h"
 
 #include "gtest/gtest.h"
@@ -39,12 +40,17 @@ TEST(CapsXe3pTest, givenCriReleaseWhenMaterializingCapsThenCapabilitiesAreCorrec
     EXPECT_EQ(256u, capsCri.cacheLineSize);
     EXPECT_EQ(2u, capsCri.commandBuffersPreallocatedPerCommandQueue);
     EXPECT_EQ(0u, capsCri.defaultMidthreadPreemptionDelayTimer);
+    EXPECT_EQ(ThreadArbitrationPolicy::RoundRobinAfterDependency, capsCri.defaultThreadArbitrationPolicy);
+    EXPECT_EQ(0u, capsCri.implicitArgsVersion);
     EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps | FpAtomicExtFlags::addAtomicCaps, capsCri.kernelBFloat16AtomicCapabilities);
     EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps | FpAtomicExtFlags::addAtomicCaps, capsCri.kernelFp16AtomicCapabilities);
     EXPECT_EQ(0u, capsCri.maxNumSamplers);
+    EXPECT_EQ(16u, capsCri.minimalSimdSize);
+    EXPECT_EQ(toUnderlying(CacheRegion::count), capsCri.numCacheRegions);
     EXPECT_EQ(16128u, capsCri.planarYuvMaxHeight);
     EXPECT_EQ(0u, capsCri.preferredWorkgroupCountPerSubslice);
     EXPECT_EQ(0u, capsCri.rtasFormat);
+    EXPECT_EQ(1u, capsCri.shareMemoryWithoutNTHandle);
     EXPECT_EQ(64u, capsCri.stackSizePerRay);
     EXPECT_EQ(16384u, capsCri.max3dImageWidthOrHeight);
     EXPECT_EQ(MemoryConstants::pageSize64k, capsCri.svmCpuAlignment);
@@ -96,12 +102,17 @@ TEST(CapsXe3pTest, givenNvlPReleaseWhenMaterializingCapsThenCapabilitiesAreCorre
     EXPECT_EQ(256u, capsNvlPA0.cacheLineSize);
     EXPECT_EQ(2u, capsNvlPA0.commandBuffersPreallocatedPerCommandQueue);
     EXPECT_EQ(0u, capsNvlPA0.defaultMidthreadPreemptionDelayTimer);
+    EXPECT_EQ(ThreadArbitrationPolicy::RoundRobinAfterDependency, capsNvlPA0.defaultThreadArbitrationPolicy);
+    EXPECT_EQ(0u, capsNvlPA0.implicitArgsVersion);
     EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps | FpAtomicExtFlags::addAtomicCaps, capsNvlPA0.kernelBFloat16AtomicCapabilities);
     EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps | FpAtomicExtFlags::addAtomicCaps, capsNvlPA0.kernelFp16AtomicCapabilities);
     EXPECT_EQ(16u, capsNvlPA0.maxNumSamplers);
+    EXPECT_EQ(16u, capsNvlPA0.minimalSimdSize);
+    EXPECT_EQ(0u, capsNvlPA0.numCacheRegions);
     EXPECT_EQ(16128u, capsNvlPA0.planarYuvMaxHeight);
     EXPECT_EQ(0u, capsNvlPA0.preferredWorkgroupCountPerSubslice);
     EXPECT_EQ(3u, capsNvlPA0.rtasFormat);
+    EXPECT_EQ(1u, capsNvlPA0.shareMemoryWithoutNTHandle);
     EXPECT_EQ(64u, capsNvlPA0.stackSizePerRay);
     EXPECT_EQ(16384u, capsNvlPA0.max3dImageWidthOrHeight);
     EXPECT_EQ(MemoryConstants::pageSize64k, capsNvlPA0.svmCpuAlignment);
@@ -152,12 +163,17 @@ TEST(CapsXe3pTest, givenNvlPReleaseWhenMaterializingCapsThenCapabilitiesAreCorre
     EXPECT_EQ(256u, capsNvlPB0.cacheLineSize);
     EXPECT_EQ(2u, capsNvlPB0.commandBuffersPreallocatedPerCommandQueue);
     EXPECT_EQ(0u, capsNvlPB0.defaultMidthreadPreemptionDelayTimer);
+    EXPECT_EQ(ThreadArbitrationPolicy::RoundRobinAfterDependency, capsNvlPB0.defaultThreadArbitrationPolicy);
+    EXPECT_EQ(0u, capsNvlPB0.implicitArgsVersion);
     EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps | FpAtomicExtFlags::addAtomicCaps, capsNvlPB0.kernelBFloat16AtomicCapabilities);
     EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps | FpAtomicExtFlags::addAtomicCaps, capsNvlPB0.kernelFp16AtomicCapabilities);
     EXPECT_EQ(16u, capsNvlPB0.maxNumSamplers);
+    EXPECT_EQ(16u, capsNvlPB0.minimalSimdSize);
+    EXPECT_EQ(0u, capsNvlPB0.numCacheRegions);
     EXPECT_EQ(16128u, capsNvlPB0.planarYuvMaxHeight);
     EXPECT_EQ(0u, capsNvlPB0.preferredWorkgroupCountPerSubslice);
     EXPECT_EQ(3u, capsNvlPB0.rtasFormat);
+    EXPECT_EQ(1u, capsNvlPB0.shareMemoryWithoutNTHandle);
     EXPECT_EQ(64u, capsNvlPB0.stackSizePerRay);
     EXPECT_EQ(16384u, capsNvlPB0.max3dImageWidthOrHeight);
     EXPECT_EQ(MemoryConstants::pageSize64k, capsNvlPB0.svmCpuAlignment);

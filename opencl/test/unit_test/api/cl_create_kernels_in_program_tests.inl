@@ -24,11 +24,12 @@ struct ClCreateKernelsInProgramTests : public ApiTests {
         ApiTests::SetUp();
 
         constexpr auto numBits = is32bit ? Elf::EI_CLASS_32 : Elf::EI_CLASS_64;
-        auto simd = std::max(16u, pDevice->getGfxCoreHelper().getMinimalSIMDSize());
+        const auto &hwInfo = pDevice->getHardwareInfo();
+        auto simd = std::max(16u, hwInfo.caps.minimalSimdSize);
 
         ZebinTestData::ZebinCopyBufferModule<numBits>::Descriptor desc{};
         desc.execEnv["simd_size"] = std::to_string(simd);
-        auto zebinData = std::make_unique<ZebinTestData::ZebinCopyBufferModule<numBits>>(pDevice->getHardwareInfo(), desc);
+        auto zebinData = std::make_unique<ZebinTestData::ZebinCopyBufferModule<numBits>>(hwInfo, desc);
         const auto &src = zebinData->storage;
         const auto &binarySize = src.size();
 
@@ -132,12 +133,11 @@ TEST_F(ClCreateKernelsInProgramTests, whenKernelCreationFailsOnClCreateKernelsIn
     auto kernelInfo1 = kernelInfoArray[0];
     auto kernelInfo2 = kernelInfoArray[1];
 
-    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
-    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+    const auto &hwInfo = pDevice->getHardwareInfo();
 
     // Enforce CL_INVALID_KERNEL error for kernel created using kernelInfo2
     // Kernel creation using kernelInfo1 should succeed.
-    auto minimalSimdSize = gfxCoreHelper.getMinimalSIMDSize();
+    auto minimalSimdSize = hwInfo.caps.minimalSimdSize;
     kernelInfo1->kernelDescriptor.kernelAttributes.simdSize = minimalSimdSize;
     kernelInfo2->kernelDescriptor.kernelAttributes.simdSize = minimalSimdSize - 1;
 

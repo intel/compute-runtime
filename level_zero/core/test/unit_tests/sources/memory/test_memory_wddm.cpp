@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
@@ -560,8 +561,8 @@ TEST_F(MemoryExportImportWinHandleTest,
     ASSERT_NE(nullptr, allocData);
     EXPECT_EQ(1u, allocData->allocationFlagsProperty.flags.shareable);
 
-    auto &productHelper = device->getNEODevice()->getProductHelper();
-    EXPECT_EQ(productHelper.canShareMemoryWithoutNTHandle(),
+    auto &hwInfo = device->getNEODevice()->getHardwareInfo();
+    EXPECT_EQ(hwInfo.caps.shareMemoryWithoutNTHandle,
               allocData->allocationFlagsProperty.flags.ipcSupportedAllocationByDefault);
 
     result = context->freeMem(ptr);

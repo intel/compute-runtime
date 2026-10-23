@@ -1150,6 +1150,7 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenPatIndexProgrammingEnabledWhen
     csr->setupContext(*osContext);
 
     auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+    const auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
     auto &releaseHelper = executionEnvironment->rootDeviceEnvironments[0]->getReleaseHelper();
     const bool usesTwoWayCoherentPat = productHelper.isL3FlushAfterPostSyncSupported() &&
                                        !debugManager.flags.Disable2WayCoherencyOverride.get() &&
@@ -1157,7 +1158,7 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenPatIndexProgrammingEnabledWhen
     const auto expectedGmmPatIndex = usesTwoWayCoherentPat ? MockGmmClientContextBase::MockPatIndex::twoWayCoherent
                                                            : MockGmmClientContextBase::MockPatIndex::cached;
 
-    bool closSupported = (productHelper.getNumCacheRegions() > 0);
+    bool closSupported = (hwInfo.caps.numCacheRegions > 0);
     bool patIndexProgrammingSupported = productHelper.isVmBindPatIndexProgrammingSupported();
 
     uint64_t gpuAddress = 0x123000;
@@ -1216,7 +1217,8 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenPatIndexErrorAndUncachedDebugF
     auto osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor());
     csr->setupContext(*osContext);
     auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
-    bool closSupported = (productHelper.getNumCacheRegions() > 0);
+    const auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
+    bool closSupported = (hwInfo.caps.numCacheRegions > 0);
     bool patIndexProgrammingSupported = productHelper.isVmBindPatIndexProgrammingSupported();
     if (!closSupported || !patIndexProgrammingSupported) {
         GTEST_SKIP();
@@ -1275,9 +1277,9 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenDebugFlagSetWhenVmBindCalledTh
 
     auto timestampStorageAlloc = csr->getTimestampPacketAllocator()->getTag()->getBaseGraphicsAllocation()->getDefaultGraphicsAllocation();
 
-    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+    const auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
 
-    if (productHelper.getNumCacheRegions() == 0) {
+    if (hwInfo.caps.numCacheRegions == 0) {
         GTEST_SKIP();
     }
 
@@ -1414,8 +1416,9 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenClosEnabledAndAllocationToBeCach
     mock->cacheInfo.reset(new CacheInfo(*mock->getIoctlHelper(), l2CacheParameters, l3CacheParameters));
 
     auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+    const auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
 
-    if (productHelper.getNumCacheRegions() == 0) {
+    if (hwInfo.caps.numCacheRegions == 0) {
         GTEST_SKIP();
     }
 

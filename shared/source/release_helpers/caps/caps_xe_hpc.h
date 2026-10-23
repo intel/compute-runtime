@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "shared/source/command_stream/thread_arbitration_policy.h"
+#include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_ip_version.h"
 #include "shared/source/kernel/kernel_properties.h"
@@ -21,9 +23,13 @@ namespace NEO {
 struct CapsXeHpcCore {
     static constexpr uint32_t cacheLineSize = 64u;
     static constexpr uint32_t commandBuffersPreallocatedPerCommandQueue = 2u;
+    static constexpr int32_t defaultThreadArbitrationPolicy = ThreadArbitrationPolicy::RoundRobinAfterDependency;
     static constexpr uint32_t kernelFp16AtomicCapabilities = FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps;
+    static constexpr uint32_t minimalSimdSize = 16u;
+    static constexpr uint32_t numCacheRegions = toUnderlying(CacheRegion::region3);
     static constexpr uint32_t planarYuvMaxHeight = 16128u;
     static constexpr uint32_t rtasFormat = 1u;
+    static constexpr uint32_t shareMemoryWithoutNTHandle = 1u;
 
     static constexpr size_t max3dImageWidthOrHeight = 16384u;
     static constexpr size_t svmCpuAlignment = MemoryConstants::pageSize64k;

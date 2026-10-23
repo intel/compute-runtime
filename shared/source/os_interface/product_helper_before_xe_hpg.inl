@@ -40,11 +40,6 @@ void ProductHelperHw<gfxProduct>::setCapabilityCoherencyFlag(const HardwareInfo 
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-uint32_t ProductHelperHw<gfxProduct>::canShareMemoryWithoutNTHandle() const {
-    return 1u;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isTimestampWaitSupportedForEvents() const {
     return false;
 }

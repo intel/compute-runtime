@@ -703,7 +703,8 @@ void Linker::resolveImplicitArgs(const KernelDescriptorsT &kernelDescriptors, De
                     uint64_t implicitArgsSize = 0;
                     uint8_t version = kernelDescriptor.kernelMetadata.indirectAccessBuffer;
                     if (version == 0) {
-                        version = pDevice->getGfxCoreHelper().getImplicitArgsVersion();
+                        const auto &hwInfo = pDevice->getHardwareInfo();
+                        version = hwInfo.caps.implicitArgsVersion;
                     }
 
                     if (version == 0) {

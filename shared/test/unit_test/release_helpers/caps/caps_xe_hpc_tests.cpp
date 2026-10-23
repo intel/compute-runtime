@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/common_types.h"
 #include "shared/source/release_helpers/caps/caps_xe_hpc.h"
 
 #include "gtest/gtest.h"
@@ -43,12 +44,17 @@ TEST(CapsXeHpcTest, givenPvcReleaseWhenMaterializingCapsThenCapabilitiesAreCorre
     EXPECT_EQ(64u, capsPvc.cacheLineSize);
     EXPECT_EQ(2u, capsPvc.commandBuffersPreallocatedPerCommandQueue);
     EXPECT_EQ(0u, capsPvc.defaultMidthreadPreemptionDelayTimer);
+    EXPECT_EQ(ThreadArbitrationPolicy::RoundRobinAfterDependency, capsPvc.defaultThreadArbitrationPolicy);
+    EXPECT_EQ(0u, capsPvc.implicitArgsVersion);
     EXPECT_EQ(0u, capsPvc.kernelBFloat16AtomicCapabilities);
     EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps, capsPvc.kernelFp16AtomicCapabilities);
     EXPECT_EQ(0u, capsPvc.maxNumSamplers);
+    EXPECT_EQ(16u, capsPvc.minimalSimdSize);
+    EXPECT_EQ(toUnderlying(CacheRegion::region3), capsPvc.numCacheRegions);
     EXPECT_EQ(16128u, capsPvc.planarYuvMaxHeight);
     EXPECT_EQ(0u, capsPvc.preferredWorkgroupCountPerSubslice);
     EXPECT_EQ(1u, capsPvc.rtasFormat);
+    EXPECT_EQ(1u, capsPvc.shareMemoryWithoutNTHandle);
     EXPECT_EQ(0u, capsPvc.stackSizePerRay);
     EXPECT_EQ(16384u, capsPvc.max3dImageWidthOrHeight);
     EXPECT_EQ(MemoryConstants::pageSize64k, capsPvc.svmCpuAlignment);
@@ -99,12 +105,17 @@ TEST(CapsXeHpcTest, givenPvcVgReleaseWhenMaterializingCapsThenCapabilitiesAreCor
     EXPECT_EQ(64u, capsPvcVg.cacheLineSize);
     EXPECT_EQ(2u, capsPvcVg.commandBuffersPreallocatedPerCommandQueue);
     EXPECT_EQ(0u, capsPvcVg.defaultMidthreadPreemptionDelayTimer);
+    EXPECT_EQ(ThreadArbitrationPolicy::RoundRobinAfterDependency, capsPvcVg.defaultThreadArbitrationPolicy);
+    EXPECT_EQ(0u, capsPvcVg.implicitArgsVersion);
     EXPECT_EQ(0u, capsPvcVg.kernelBFloat16AtomicCapabilities);
     EXPECT_EQ(FpAtomicExtFlags::minMaxAtomicCaps | FpAtomicExtFlags::loadStoreAtomicCaps, capsPvcVg.kernelFp16AtomicCapabilities);
     EXPECT_EQ(0u, capsPvcVg.maxNumSamplers);
+    EXPECT_EQ(16u, capsPvcVg.minimalSimdSize);
+    EXPECT_EQ(toUnderlying(CacheRegion::region3), capsPvcVg.numCacheRegions);
     EXPECT_EQ(16128u, capsPvcVg.planarYuvMaxHeight);
     EXPECT_EQ(0u, capsPvcVg.preferredWorkgroupCountPerSubslice);
     EXPECT_EQ(1u, capsPvcVg.rtasFormat);
+    EXPECT_EQ(1u, capsPvcVg.shareMemoryWithoutNTHandle);
     EXPECT_EQ(0u, capsPvcVg.stackSizePerRay);
     EXPECT_EQ(16384u, capsPvcVg.max3dImageWidthOrHeight);
     EXPECT_EQ(MemoryConstants::pageSize64k, capsPvcVg.svmCpuAlignment);

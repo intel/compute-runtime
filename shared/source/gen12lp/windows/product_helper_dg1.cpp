@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,11 +21,6 @@ namespace NEO {
 template <>
 void ProductHelperHw<gfxProduct>::setCapabilityCoherencyFlag(const HardwareInfo &hwInfo, bool &coherencyFlag) const {
     coherencyFlag = false;
-}
-
-template <>
-uint32_t ProductHelperHw<gfxProduct>::canShareMemoryWithoutNTHandle() const {
-    return 0u;
 }
 
 template class ProductHelperHw<gfxProduct>;

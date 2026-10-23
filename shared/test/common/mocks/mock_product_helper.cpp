@@ -182,11 +182,6 @@ bool ProductHelperHw<IGFX_UNKNOWN>::heapInLocalMem(const HardwareInfo &hwInfo) c
 }
 
 template <>
-uint32_t ProductHelperHw<IGFX_UNKNOWN>::canShareMemoryWithoutNTHandle() const {
-    return 1u;
-}
-
-template <>
 void ProductHelperHw<IGFX_UNKNOWN>::setCapabilityCoherencyFlag(const HardwareInfo &hwInfo, bool &coherencyFlag) const {
 }
 

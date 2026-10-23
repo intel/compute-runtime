@@ -172,8 +172,8 @@ struct AUBHelloWorldIntegrateTest : public AUBHelloWorldFixture,
     void SetUp() override {
         std::tie(this->simd, param) = GetParam();
         MockExecutionEnvironment executionEnvironment{};
-        auto &gfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
-        if (this->simd < gfxCoreHelper.getMinimalSIMDSize()) {
+        const auto &hwInfo = *executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
+        if (this->simd < hwInfo.caps.minimalSimdSize) {
             GTEST_SKIP();
         }
         ParentClass::setUp();
@@ -365,8 +365,8 @@ struct AUBSimpleArgIntegrateTest : public SimpleArgFixture,
         cl_uint simd;
         std::tie(simd, param) = GetParam();
         MockExecutionEnvironment executionEnvironment{};
-        auto &gfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
-        if (simd < gfxCoreHelper.getMinimalSIMDSize()) {
+        const auto &hwInfo = *executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
+        if (simd < hwInfo.caps.minimalSimdSize) {
             GTEST_SKIP();
         }
         ParentClass::setUp();

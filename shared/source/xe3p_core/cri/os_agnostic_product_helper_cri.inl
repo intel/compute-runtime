@@ -65,11 +65,6 @@ std::optional<bool> ProductHelperHw<gfxProduct>::isCoherentAllocation(uint64_t p
 }
 
 template <>
-uint32_t ProductHelperHw<gfxProduct>::getNumCacheRegions() const {
-    return static_cast<uint32_t>(CacheRegion::count);
-}
-
-template <>
 uint64_t ProductHelperHw<gfxProduct>::getPatIndex(CacheRegion cacheRegion, CachePolicy cachePolicy) const {
     uint64_t patIndex{0u};
     switch (cacheRegion) {

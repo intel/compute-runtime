@@ -2138,7 +2138,8 @@ FORCE_NOINLINE void ModuleImp::dumpKernelInfoToAubComments() {
     auto neoDevice = device->getNEODevice();
 
     auto &compilerProductHelper = neoDevice->getCompilerProductHelper();
-    bool useFullAddress = compilerProductHelper.isHeaplessModeEnabled(device->getHwInfo());
+    const auto &hwInfo = device->getHwInfo();
+    bool useFullAddress = compilerProductHelper.isHeaplessModeEnabled(hwInfo);
     auto &options = translationUnit->options;
     auto deviceBinary = translationUnit->unpackedDeviceBinary.get();
     auto deviceBinarySize = translationUnit->unpackedDeviceBinarySize;
@@ -2151,7 +2152,7 @@ FORCE_NOINLINE void ModuleImp::dumpKernelInfoToAubComments() {
     }
 
     auto implicitArgsVersion = NEO::ImplicitArgsHelper::resolveImplicitArgsVersion(
-        neoDevice->getGfxCoreHelper().getImplicitArgsVersion(),
+        hwInfo.caps.implicitArgsVersion,
         translationUnit->programInfo.indirectAccessBufferMajorVersion);
 
     NEO::AubComment::dumpKernelInfoToAubComments(useFullAddress, aubCenter, kernelImmData, symbols, options, refBin, implicitArgsVersion);

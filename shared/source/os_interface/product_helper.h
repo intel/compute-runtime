@@ -120,7 +120,6 @@ class ProductHelper {
     virtual bool restartDirectSubmissionForHostptrFree() const = 0;
     virtual bool heapInLocalMem(const HardwareInfo &hwInfo) const = 0;
     virtual void setCapabilityCoherencyFlag(const HardwareInfo &hwInfo, bool &coherencyFlag) const = 0;
-    virtual uint32_t canShareMemoryWithoutNTHandle() const = 0;
     virtual bool pipeControlWARequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool imagePitchAlignmentWARequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo) const = 0;
@@ -242,7 +241,6 @@ class ProductHelper {
     virtual bool isPatIndexValidForUserptr(uint64_t patIndex) const = 0;
     virtual bool isStagingBuffersEnabled() const = 0;
     virtual size_t getCpuCopyThreshold(TransferType transferType) const = 0;
-    virtual uint32_t getNumCacheRegions() const = 0;
     virtual uint32_t adjustMaxThreadsPerThreadGroup(const HardwareInfo &hwInfo, uint32_t maxThreadsPerThreadGroup, uint32_t simt, uint32_t grfCount) const = 0;
     virtual uint64_t getPatIndex(CacheRegion cacheRegion, CachePolicy cachePolicy) const = 0;
     virtual uint64_t getSharedSystemPatIndex() const = 0;

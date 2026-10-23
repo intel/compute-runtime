@@ -1251,8 +1251,8 @@ struct IntelClCloneKernelTracingTest : public IntelTracingTest, PlatformFixture 
         status = clEnableTracingINTEL(handle);
         ASSERT_EQ(CL_SUCCESS, status);
 
-        const auto &gfxHelper = pDevice->getGfxCoreHelper();
-        const_cast<KernelDescriptor &>(pKernel->getKernelInfo().kernelDescriptor).kernelAttributes.simdSize = gfxHelper.getMinimalSIMDSize();
+        const auto &hwInfo = pDevice->getHardwareInfo();
+        const_cast<KernelDescriptor &>(pKernel->getKernelInfo().kernelDescriptor).kernelAttributes.simdSize = hwInfo.caps.minimalSimdSize;
     }
     void TearDown() override {
         status = clDisableTracingINTEL(handle);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,11 +28,6 @@ int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, O
     kmdNotifyProperties.enableKmdNotify = true;
     kmdNotifyProperties.delayKmdNotifyMicroseconds = 300;
     return 0;
-}
-
-template <>
-uint32_t ProductHelperHw<gfxProduct>::canShareMemoryWithoutNTHandle() const {
-    return 0u;
 }
 
 template class ProductHelperHw<gfxProduct>;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -100,8 +100,8 @@ XE_HPC_CORETEST_F(BuffersWithClMemCacheClosTests, givenDrmBuffersWhenTheyAreCrea
     cl_mem_alloc_flags_intel allocflags = 0;
     MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, allocflags, device.get());
 
-    auto &productHelper = device->getProductHelper();
-    auto numCacheRegions = productHelper.getNumCacheRegions();
+    const auto &hwInfo = device->getHardwareInfo();
+    auto numCacheRegions = hwInfo.caps.numCacheRegions;
     EXPECT_EQ(3u, numCacheRegions);
 
     for (uint32_t cacheRegion = 0; cacheRegion < numCacheRegions; cacheRegion++) {

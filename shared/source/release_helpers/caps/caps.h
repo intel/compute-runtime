@@ -16,12 +16,17 @@ struct Caps {
     uint32_t cacheLineSize = 0u;
     uint32_t commandBuffersPreallocatedPerCommandQueue = 0u;
     uint32_t defaultMidthreadPreemptionDelayTimer = 0u; // STATE_COMPUTE_MODE field encoding, not microseconds
+    int32_t defaultThreadArbitrationPolicy = 0;
+    uint32_t implicitArgsVersion = 0u;
     uint32_t kernelBFloat16AtomicCapabilities = 0u;
     uint32_t kernelFp16AtomicCapabilities = 0u;
     uint32_t maxNumSamplers = 0u;
+    uint32_t minimalSimdSize = 0u;
+    uint32_t numCacheRegions = 0u;
     uint32_t planarYuvMaxHeight = 0u;
     uint32_t preferredWorkgroupCountPerSubslice = 0u;
     uint32_t rtasFormat = 0u;
+    uint32_t shareMemoryWithoutNTHandle = 0u;
     uint32_t stackSizePerRay = 0u;
 
     size_t max3dImageWidthOrHeight = 0u;

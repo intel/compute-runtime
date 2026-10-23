@@ -21,11 +21,6 @@ using Family = NEO::Xe3pCoreFamily;
 
 namespace NEO {
 template <>
-uint32_t GfxCoreHelperHw<Family>::getMinimalSIMDSize() const {
-    return 16u;
-}
-
-template <>
 uint32_t GfxCoreHelperHw<Family>::getMetricsLibraryGenId() const {
     return static_cast<uint32_t>(MetricsLibraryApi::ClientGen::Xe3P);
 }

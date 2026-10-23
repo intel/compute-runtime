@@ -880,8 +880,8 @@ ze_result_t EventPool::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &
         }
 
         if (NEO::debugManager.flags.EnableipcSupportedAllocationByDefault.get()) {
-            auto &productHelper = neoDevice->getProductHelper();
-            shareWithNoNTHandle = productHelper.canShareMemoryWithoutNTHandle();
+            const auto &hwInfo = neoDevice->getHardwareInfo();
+            shareWithNoNTHandle = hwInfo.caps.shareMemoryWithoutNTHandle;
         }
     }
     osHandleData.parentProcessId = parentID;

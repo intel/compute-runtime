@@ -89,10 +89,11 @@ TEST_F(PrintfHandlerTests, givenPreparedPrintfHandlerWithUndefinedSshOffsetWhenG
 TEST_F(PrintfHandlerTests, givenKernelWithImplicitArgsWhenPreparingPrintfHandlerThenProperAddressIsPatchedInImplicitArgsStruct) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockContext context(device.get());
+    const auto &hwInfo = device->getHardwareInfo();
 
     auto pKernelInfo = std::make_unique<MockKernelInfo>();
     pKernelInfo->setPrintfSurface(sizeof(uintptr_t), 0);
-    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = device->getGfxCoreHelper().getMinimalSIMDSize();
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = hwInfo.caps.minimalSimdSize;
     pKernelInfo->kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs = true;
 
     MockProgram program{&context, false, toClDeviceVector(*device)};
