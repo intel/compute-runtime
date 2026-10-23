@@ -46,6 +46,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
         bool stateBaseAddressDirty = false;
         bool contextOneTimeInit = false;
         bool stateCacheFlushRequired = false;
+        bool midThreadPreemptionStateRequired = false;
     };
 
   public:
@@ -103,6 +104,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     size_t getCmdSizeForPipelineSelect() const;
     size_t getCmdSizeForEngineMode(const DispatchFlags &dispatchFlags) const;
     size_t getCmdSizeForPerDssBackedBuffer(const HardwareInfo &hwInfo);
+    size_t getCmdSizeForMidThreadPreemptionState(Device &device) const;
     size_t getCmdSizeForActivePartitionConfig() const;
     size_t getCmdSizeForStallingCommands(const DispatchFlags &dispatchFlags) const;
     size_t getCmdSizeForStallingNoPostSyncCommands() const;
@@ -197,6 +199,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     }
 
     void dispatchRayTracingStateCommand(LinearStream &cmdStream, Device &device);
+    void programMidThreadPreemptionState(LinearStream &cmdStream, Device &device);
     uint64_t getScratchPatchAddress();
 
     SubmissionStatus programHeaplessProlog(Device &device);

@@ -411,6 +411,18 @@ HWTEST_F(MidThreadPreemptionTests, GivenNoWaWhenCreatingCsrSurfaceThenSurfaceIsC
     EXPECT_EQ(csrSurface, devCsrSurface);
 }
 
+HWTEST2_F(MidThreadPreemptionTests, givenMidThreadPreemptionAndNoPreemptionAllocationWhenProgrammingCsrBaseAddressThenNothingIsProgrammed, IsAtMostXe3Core) {
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    mockDevice->setPreemptionMode(PreemptionMode::MidThread);
+
+    auto requiredSize = PreemptionHelper::getRequiredPreambleSize<FamilyType>(*mockDevice);
+    StackVec<char, 4096> buffer(requiredSize);
+    LinearStream cmdStream(buffer.begin(), buffer.size());
+
+    PreemptionHelper::programCsrBaseAddress<FamilyType>(cmdStream, *mockDevice, nullptr);
+    EXPECT_EQ(0u, cmdStream.getUsed());
+}
+
 HWTEST_F(MidThreadPreemptionTests, givenMidThreadPreemptionWhenFailingOnCsrSurfaceAllocationThenFailToCreateDevice) {
 
     class FailingMemoryManager : public OsAgnosticMemoryManager {

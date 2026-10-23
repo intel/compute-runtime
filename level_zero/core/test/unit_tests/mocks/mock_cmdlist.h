@@ -138,6 +138,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::latestOperationHasCbEventWithProfiling;
     using BaseClass::latestOperationRequiredNonWalkerInOrderCmdsChaining;
     using BaseClass::maxFillPatternSizeForCopyEngine;
+    using BaseClass::midThreadPreemptionKernelAppended;
     using BaseClass::minimalSizeForBcsSplit;
     using BaseClass::obtainKernelPreemptionMode;
     using BaseClass::partitionCount;

@@ -77,6 +77,8 @@ struct CommandListExecutionContext {
 
     bool anyCommandListWithCooperativeKernels = false;
     bool anyCommandListRequiresDisabledEUFusion = false;
+    bool anyCommandListWithMidThreadPreemptionKernel = false;
+    bool midThreadPreemptionStateRequired = false;
     bool cachedMOCSAllowed = true;
     bool containsAnyRegularCmdList = false;
     bool gsbaStateDirty = false;

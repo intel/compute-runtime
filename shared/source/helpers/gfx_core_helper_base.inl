@@ -597,6 +597,11 @@ size_t GfxCoreHelperHw<GfxFamily>::getPreemptionAllocationAlignment() const {
 }
 
 template <typename GfxFamily>
+bool GfxCoreHelperHw<GfxFamily>::isMidThreadPreemptionAllocationOnDemandSupported() const {
+    return false;
+}
+
+template <typename GfxFamily>
 void GfxCoreHelperHw<GfxFamily>::applyAdditionalCompressionSettings(Gmm &gmm, bool isNotCompressed) const {}
 
 template <typename GfxFamily>

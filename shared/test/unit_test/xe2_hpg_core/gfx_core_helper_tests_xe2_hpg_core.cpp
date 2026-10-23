@@ -28,6 +28,11 @@
 
 using GfxCoreHelperTestsXe2HpgCore = GfxCoreHelperTest;
 
+XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCore, givenXe2HpgCoreWhenAskedForMidThreadPreemptionAllocationOnDemandSupportThenTrueIsReturned) {
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    EXPECT_TRUE(gfxCoreHelper.isMidThreadPreemptionAllocationOnDemandSupported());
+}
+
 XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCore, whenGetGpgpuEnginesThenReturnTwoCccsEnginesAndFourCcsEnginesAndEightLinkCopyEnginesAndTwoRegularCopyEngines) {
     const size_t numEngines = 18;
 

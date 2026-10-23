@@ -270,6 +270,15 @@ void CommandStreamReceiver::makeResidentHostPtrAllocation(GraphicsAllocation *gf
 void CommandStreamReceiver::setupContext(OsContext &osContext) {
     this->osContext = &osContext;
     this->skipPreemptionAllocation = this->skipPreemptionAllocation && osContext.isLatePreemptionStartTarget();
+
+    bool midThreadPreemptionAllocationOnDemandEnabled = getGfxCoreHelper().isMidThreadPreemptionAllocationOnDemandSupported();
+    if (debugManager.flags.MidThreadPreemptionAllocationOnDemand.get() != -1) {
+        midThreadPreemptionAllocationOnDemandEnabled = !!debugManager.flags.MidThreadPreemptionAllocationOnDemand.get();
+    }
+    this->midThreadPreemptionAllocationOnDemand = midThreadPreemptionAllocationOnDemandEnabled &&
+                                                  !this->heaplessModeEnabled &&
+                                                  !EngineHelpers::isBcs(osContext.getEngineType()) &&
+                                                  !osContext.isPartOfContextGroup();
     this->externalSemaphoreGpuWaitAllowed = !debugManager.flags.ForceExternalSemaphoreHostFunctionWait.get() &&
                                             osContext.isExternalSemaphoreGpuWaitSupported();
 }
@@ -474,7 +483,8 @@ bool CommandStreamReceiver::initializeResources(const PreemptionMode preemptionM
             }
 
             if (preemptionMode == NEO::PreemptionMode::MidThread &&
-                !this->getPreemptionAllocation()) {
+                !this->getPreemptionAllocation() &&
+                !this->midThreadPreemptionAllocationOnDemand) {
                 this->createPreemptionAllocation();
             }
             if (getProductHelper().isFrontEndControllerEnabled() && device->getFrontEndController() && !allocateFrontEndAllocation(device->getFrontEndController()->getFrontEndAllocationSize())) {
@@ -1608,6 +1618,10 @@ void CommandStreamReceiver::releaseGlobalStatelessHeap() {
     }
 
     getMemoryManager()->freeGraphicsMemory(allocation);
+}
+
+bool CommandStreamReceiver::isMidThreadPreemptionStateDeferred() const {
+    return this->midThreadPreemptionAllocationOnDemand && !getPreemptionAllocation() && !peekRootDeviceEnvironment().debugger;
 }
 
 bool CommandStreamReceiver::isRayTracingStateProgramingNeeded(Device &device) const {

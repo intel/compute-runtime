@@ -564,6 +564,9 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTaskHeapful(
     }
 
     programPreemption(commandStreamCSR, dispatchFlags);
+    if (isMidThreadPreemptionStateProgrammingRequired(dispatchFlags.hasMidThreadPreemptionKernel)) {
+        programMidThreadPreemptionState(commandStreamCSR, device);
+    }
 
     if (dispatchFlags.isStallingCommandsOnNextFlushRequired) {
         programStallingCommandsForBarrier(commandStreamCSR, dispatchFlags.barrierTimestampPacketNodes, dispatchFlags.isDcFlushRequiredOnStallingCommandsOnNextFlush);
@@ -836,6 +839,9 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
     }
     size += getCmdSizeForPipelineSelect();
     size += getCmdSizeForPreemption(dispatchFlags);
+    if (isMidThreadPreemptionStateProgrammingRequired(dispatchFlags.hasMidThreadPreemptionKernel)) {
+        size += getCmdSizeForMidThreadPreemptionState(device);
+    }
     if (isRayTracingStateProgramingNeeded(device)) {
         size += getCmdSizeForPerDssBackedBuffer(device.getHardwareInfo());
     }
@@ -944,10 +950,28 @@ void CommandStreamReceiverHw<GfxFamily>::dispatchLateMidThreadPreemptionStart(Li
 
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programStateSip(LinearStream &cmdStream, Device &device) {
-    if (!this->isStateSipSent) {
+    if (this->isStateSipProgrammingRequired()) {
         PreemptionHelper::programStateSip<GfxFamily>(cmdStream, device, this->osContext);
         setSipSentFlag(true);
     }
+}
+
+template <typename GfxFamily>
+size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForMidThreadPreemptionState(Device &device) const {
+    return MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier() +
+           PreemptionHelper::getRequiredPreambleSize<GfxFamily>(device) +
+           PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(device, isRcs());
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::programMidThreadPreemptionState(LinearStream &cmdStream, Device &device) {
+    UNRECOVERABLE_IF(!this->createPreemptionAllocation());
+
+    PipeControlArgs args;
+    MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(cmdStream, args);
+    PreemptionHelper::programCsrBaseAddress<GfxFamily>(cmdStream, device, getPreemptionAllocation());
+    programStateSip(cmdStream, device);
+    makeResidentPreemptionAllocation();
 }
 
 template <typename GfxFamily>
@@ -2236,7 +2260,13 @@ void CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushOneTimeContextInitS
     }
     flushData.estimatedSize += this->getCmdSizeForExceptions();
 
-    if (!this->isStateSipSent) {
+    if (this->isMidThreadPreemptionStateProgrammingRequired(dispatchFlags.hasMidThreadPreemptionKernel)) {
+        flushData.midThreadPreemptionStateRequired = true;
+        flushData.contextOneTimeInit = true;
+        flushData.estimatedSize += this->getCmdSizeForMidThreadPreemptionState(device);
+    }
+
+    if (this->isStateSipProgrammingRequired()) {
         size_t size = PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(device, isRcs());
 
         flushData.contextOneTimeInit |= size > 0;
@@ -2271,6 +2301,9 @@ void CommandStreamReceiverHw<GfxFamily>::dispatchImmediateFlushOneTimeContextIni
         }
         this->programExceptions(csrStream, device);
 
+        if (flushData.midThreadPreemptionStateRequired) {
+            this->programMidThreadPreemptionState(csrStream, device);
+        }
         programStateSip(csrStream, device);
     }
 }

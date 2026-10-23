@@ -135,6 +135,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
 
     auto kernelPreemptionMode = obtainKernelPreemptionMode(kernel);
     commandListPreemptionMode = std::min(commandListPreemptionMode, kernelPreemptionMode);
+    this->midThreadPreemptionKernelAppended |= (kernelPreemptionMode == NEO::PreemptionMode::MidThread);
 
     kernel->patchGlobalOffset();
 

@@ -186,6 +186,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     }
 
     auto kernelPreemptionMode = obtainKernelPreemptionMode(kernel);
+    this->midThreadPreemptionKernelAppended |= (kernelPreemptionMode == NEO::PreemptionMode::MidThread);
 
     this->patchKernelProperties(launchParams, *kernel, threadGroupDimensions);
 

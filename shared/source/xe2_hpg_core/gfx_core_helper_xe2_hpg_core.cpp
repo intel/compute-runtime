@@ -224,6 +224,11 @@ size_t GfxCoreHelperHw<Family>::getPreemptionAllocationAlignment() const {
 }
 
 template <>
+bool GfxCoreHelperHw<Family>::isMidThreadPreemptionAllocationOnDemandSupported() const {
+    return true;
+}
+
+template <>
 uint32_t GfxCoreHelperHw<Family>::overrideMaxWorkGroupSize(uint32_t maxWG) const {
     return std::min(maxWG, 2048u);
 }

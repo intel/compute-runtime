@@ -150,6 +150,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
         containsCooperativeKernelsFlag = false;
         commandListSLMEnabled = false;
         kernelWithAssertAppended = false;
+        midThreadPreemptionKernelAppended = false;
 
         postInitComputeSetup();
 

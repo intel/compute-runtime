@@ -1904,3 +1904,10 @@ HWTEST2_F(GfxCoreHelperTestWithEnginesCheck, whenGetEnginesCalledThenRegularCcsI
     EXPECT_EQ(expectedRenderEngineCount, getEngineCount(renderEngine, EngineUsage::regular));
     EXPECT_EQ(1u, getEngineCount(aub_stream::ENGINE_CCS, EngineUsage::regular));
 }
+
+using IsNotXe2HpgCore = IsNotGfxCore<IGFX_XE2_HPG_CORE>;
+
+HWTEST2_F(GfxCoreHelperTest, givenNotXe2HpgCoreWhenAskedForMidThreadPreemptionAllocationOnDemandSupportThenFalseIsReturned, IsNotXe2HpgCore) {
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    EXPECT_FALSE(gfxCoreHelper.isMidThreadPreemptionAllocationOnDemandSupported());
+}

@@ -10,10 +10,13 @@
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
 #include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/in_order_cmd_list_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
@@ -274,6 +277,135 @@ HWTEST2_F(CommandListXe2AndLaterPreemptionTest,
 
     auto result = commandListCore->obtainKernelPreemptionMode(kernel.get());
     EXPECT_EQ(NEO::PreemptionMode::MidThread, result);
+}
+
+HWTEST2_F(CommandListXe2AndLaterPreemptionTest, givenMidThreadPreemptionDeviceWhenAppendingKernelsThenMidThreadPreemptionKernelIsTrackedUntilReset, Platforms) {
+    neoDevice->preemptionMode = NEO::PreemptionMode::MidThread;
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+
+    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.requiresDisabledMidThreadPreemption = true;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams));
+    EXPECT_FALSE(commandList->hasMidThreadPreemptionKernel());
+
+    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.requiresDisabledMidThreadPreemption = false;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams));
+    EXPECT_TRUE(commandList->hasMidThreadPreemptionKernel());
+
+    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.requiresDisabledMidThreadPreemption = true;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams));
+    EXPECT_TRUE(commandList->hasMidThreadPreemptionKernel());
+
+    commandList->reset();
+    EXPECT_FALSE(commandList->hasMidThreadPreemptionKernel());
+}
+
+HWTEST2_F(CommandListXe2AndLaterPreemptionTest, givenMidThreadPreemptionAllocationOnDemandWhenExecutingCommandListsThenPreemptionStateIsProgrammedOnceOnFirstMidThreadPreemptionKernel, IsXe2HpgCore) {
+    using STATE_CONTEXT_DATA_BASE_ADDRESS = typename FamilyType::STATE_CONTEXT_DATA_BASE_ADDRESS;
+    using STATE_SIP = typename FamilyType::STATE_SIP;
+
+    neoDevice->preemptionMode = NEO::PreemptionMode::MidThread;
+    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    ASSERT_EQ(&csr, commandQueue->getCsr());
+    VariableBackup<NEO::GraphicsAllocation *> preemptionAllocationBackup(&csr.preemptionAllocation, nullptr);
+    VariableBackup<bool> onDemandBackup(&csr.midThreadPreemptionAllocationOnDemand, true);
+    VariableBackup<bool> stateSipSentBackup(&csr.isStateSipSent, false);
+    VariableBackup<NEO::PreemptionMode> preemptionModeBackup(&csr.lastPreemptionMode, NEO::PreemptionMode::Initial);
+
+    auto &queueStream = commandQueue->commandStream;
+    auto commandListHandle = commandList->toHandle();
+    CommandListExecutionInternalOptions internalOptions = {};
+
+    auto countPreemptionStateCommands = [&](size_t streamOffset, uint32_t &contextDataBaseAddressCount, uint32_t &stateSipCount) {
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(queueStream.getCpuBase(), streamOffset), queueStream.getUsed() - streamOffset));
+        contextDataBaseAddressCount = static_cast<uint32_t>(findAll<STATE_CONTEXT_DATA_BASE_ADDRESS *>(cmdList.begin(), cmdList.end()).size());
+        stateSipCount = static_cast<uint32_t>(findAll<STATE_SIP *>(cmdList.begin(), cmdList.end()).size());
+    };
+    auto fillUnusedQueueStreamWithGarbage = [&]() {
+        memset(ptrOffset(queueStream.getCpuBase(), queueStream.getUsed()), 0xFF, queueStream.getAvailableSpace());
+    };
+    uint32_t contextDataBaseAddressCount = 0;
+    uint32_t stateSipCount = 0;
+
+    commandList->close();
+    auto usedSize = queueStream.getUsed();
+    fillUnusedQueueStreamWithGarbage();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandLists(1, &commandListHandle, nullptr, internalOptions));
+    EXPECT_EQ(nullptr, csr.getPreemptionAllocation());
+    countPreemptionStateCommands(usedSize, contextDataBaseAddressCount, stateSipCount);
+    EXPECT_EQ(0u, contextDataBaseAddressCount);
+    EXPECT_EQ(0u, stateSipCount);
+
+    commandList->reset();
+    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.requiresDisabledMidThreadPreemption = false;
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams));
+    commandList->close();
+
+    usedSize = queueStream.getUsed();
+    fillUnusedQueueStreamWithGarbage();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandLists(1, &commandListHandle, nullptr, internalOptions));
+    auto preemptionAllocation = csr.getPreemptionAllocation();
+    ASSERT_NE(nullptr, preemptionAllocation);
+    EXPECT_TRUE(csr.getSipSentFlag());
+    countPreemptionStateCommands(usedSize, contextDataBaseAddressCount, stateSipCount);
+    EXPECT_EQ(1u, contextDataBaseAddressCount);
+    EXPECT_EQ(1u, stateSipCount);
+
+    usedSize = queueStream.getUsed();
+    fillUnusedQueueStreamWithGarbage();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandLists(1, &commandListHandle, nullptr, internalOptions));
+    EXPECT_EQ(preemptionAllocation, csr.getPreemptionAllocation());
+    countPreemptionStateCommands(usedSize, contextDataBaseAddressCount, stateSipCount);
+    EXPECT_EQ(0u, contextDataBaseAddressCount);
+    EXPECT_EQ(0u, stateSipCount);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->synchronize(0));
+    csr.getMemoryManager()->freeGraphicsMemory(preemptionAllocation);
+}
+
+template <typename FamilyType>
+void verifyImmediateCommandListCreatesPreemptionAllocationOnFirstMidThreadPreemptionKernel(L0::Device *device, NEO::MockDevice *neoDevice, ModuleImmutableDataFixture::MockImmutableData &mockKernelImmData, L0::Kernel &kernel, int32_t useImmediateFlushTask) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.UseImmediateFlushTask.set(useImmediateFlushTask);
+    neoDevice->setPreemptionMode(NEO::PreemptionMode::MidThread);
+
+    ze_command_queue_desc_t queueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandListImmediate(CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::compute, returnValue));
+    ASSERT_NE(nullptr, commandListImmediate);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandListImmediate->ensureImmediateResourcesInitialized());
+
+    auto &csr = *static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(commandListImmediate->getCsr(false));
+    VariableBackup<NEO::GraphicsAllocation *> preemptionAllocationBackup(&csr.preemptionAllocation, nullptr);
+    VariableBackup<bool> onDemandBackup(&csr.midThreadPreemptionAllocationOnDemand, true);
+    VariableBackup<bool> stateSipSentBackup(&csr.isStateSipSent, false);
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    mockKernelImmData.kernelDescriptor->kernelAttributes.flags.requiresDisabledMidThreadPreemption = true;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandListImmediate->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams));
+    EXPECT_EQ(nullptr, csr.getPreemptionAllocation());
+    EXPECT_FALSE(csr.getSipSentFlag());
+
+    mockKernelImmData.kernelDescriptor->kernelAttributes.flags.requiresDisabledMidThreadPreemption = false;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandListImmediate->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams));
+    auto preemptionAllocation = csr.getPreemptionAllocation();
+    EXPECT_NE(nullptr, preemptionAllocation);
+    EXPECT_TRUE(csr.getSipSentFlag());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandListImmediate->hostSynchronize(std::numeric_limits<uint64_t>::max()));
+    csr.getMemoryManager()->freeGraphicsMemory(preemptionAllocation);
+}
+
+HWTEST2_F(CommandListXe2AndLaterPreemptionTest, givenMidThreadPreemptionAllocationOnDemandAndImmediateFlushTaskWhenAppendingKernelsToImmediateCommandListThenPreemptionAllocationIsCreatedOnFirstMidThreadPreemptionKernel, IsXe2HpgCore) {
+    verifyImmediateCommandListCreatesPreemptionAllocationOnFirstMidThreadPreemptionKernel<FamilyType>(device, neoDevice, *mockKernelImmData, *kernel, 1);
+}
+
+HWTEST2_F(CommandListXe2AndLaterPreemptionTest, givenMidThreadPreemptionAllocationOnDemandAndRegularFlushTaskWhenAppendingKernelsToImmediateCommandListThenPreemptionAllocationIsCreatedOnFirstMidThreadPreemptionKernel, IsXe2HpgCore) {
+    verifyImmediateCommandListCreatesPreemptionAllocationOnFirstMidThreadPreemptionKernel<FamilyType>(device, neoDevice, *mockKernelImmData, *kernel, 0);
 }
 
 using InOrderCmdListTests = InOrderCmdListFixture;

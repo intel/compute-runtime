@@ -200,6 +200,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::CommandStreamReceiver::latestSentTaskCount;
     using BaseClass::CommandStreamReceiver::latestTaskCountUpdateOnlyFlushTaskCount;
     using BaseClass::CommandStreamReceiver::mediaVfeStateDirty;
+    using BaseClass::CommandStreamReceiver::midThreadPreemptionAllocationOnDemand;
     using BaseClass::CommandStreamReceiver::newResources;
     using BaseClass::CommandStreamReceiver::osContext;
     using BaseClass::CommandStreamReceiver::ownershipMutex;

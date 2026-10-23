@@ -147,6 +147,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
                                            NEO::Debugger::isDebugEnabled(internalUsage),
                                            csr->isProgramActivePartitionConfigRequired(),
                                            csr->getSipSentFlag()};
+    ctx.stateSipRequired &= !csr->isMidThreadPreemptionStateDeferred();
     ctx.pipelineCmdsDispatch |= ctx.isDebugEnabled &&
                                 !this->commandQueueDebugCmdsProgrammed &&
                                 device->getL0Debugger();
@@ -347,6 +348,10 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
             this->programCsrBaseAddressIfPreemptionModeInitial(ctx.isPreemptionModeInitial, *streamForDispatch);
         }
         this->programStateSip(ctx.stateSipRequired, *streamForDispatch);
+        if (ctx.midThreadPreemptionStateRequired) {
+            auto csrHw = static_cast<NEO::CommandStreamReceiverHw<GfxFamily> *>(this->csr);
+            csrHw->programMidThreadPreemptionState(*streamForDispatch, *neoDevice);
+        }
         this->programActivePartitionConfig(ctx.isProgramActivePartitionConfigRequired, *streamForDispatch);
         bool shouldProgramVfe = !frontEndTrackingEnabled() && ctx.frontEndStateDirty;
         this->programFrontEndAndClearDirtyFlag(shouldProgramVfe, ctx, *streamForDispatch, csr->getStreamProperties());
@@ -723,6 +728,8 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::setupCmdListsAndContextParams(
             if (commandList->getRequiredStreamState().frontEndState.disableEUFusion.value == 1) {
                 ctx.anyCommandListRequiresDisabledEUFusion = true;
             }
+
+            ctx.anyCommandListWithMidThreadPreemptionKernel |= commandList->hasMidThreadPreemptionKernel();
 
             // If the Command List has commands that require uncached MOCS, then any changes to the commands in the queue requires the uncached MOCS
             if (commandList->isRequiredQueueUncachedMocs() && ctx.cachedMOCSAllowed == true) {
@@ -1341,11 +1348,18 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeRegularHeapfulPost
         if (!this->csr->csrSurfaceProgrammed()) {
             linearStreamSizeEstimate += NEO::PreemptionHelper::getRequiredPreambleSize<GfxFamily>(*neoDevice);
         }
-    } else if (ctx.isPreemptionModeInitial) {
+    } else if (ctx.isPreemptionModeInitial && !this->csr->isMidThreadPreemptionStateDeferred()) {
         linearStreamSizeEstimate += NEO::PreemptionHelper::getRequiredPreambleSize<GfxFamily>(*neoDevice);
     }
     if (ctx.stateSipRequired) {
         linearStreamSizeEstimate += NEO::PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(*neoDevice, this->csr->isRcs());
+    }
+
+    ctx.midThreadPreemptionStateRequired = this->csr->isMidThreadPreemptionStateProgrammingRequired(ctx.anyCommandListWithMidThreadPreemptionKernel);
+    if (ctx.midThreadPreemptionStateRequired) {
+        auto csrHw = static_cast<NEO::CommandStreamReceiverHw<GfxFamily> *>(this->csr);
+        linearStreamSizeEstimate += csrHw->getCmdSizeForMidThreadPreemptionState(*neoDevice);
+        ctx.pipelineCmdsDispatch = true;
     }
 
     linearStreamSizeEstimate += this->computeDebuggerCmdsSize(ctx);

@@ -146,6 +146,7 @@ struct ImmediateDispatchFlags {
     bool hasRelaxedOrderingDependencies = false;
     bool hasStallingCmds = false;
     bool isWalkerWithProfilingEnqueued = false;
+    bool hasMidThreadPreemptionKernel = false;
 };
 
 } // namespace NEO

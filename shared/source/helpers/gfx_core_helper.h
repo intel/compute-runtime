@@ -121,6 +121,7 @@ class GfxCoreHelper {
     virtual aub_stream::MMIOList getExtraMmioList(const HardwareInfo &hwInfo, const GmmHelper &gmmHelper) const = 0;
     virtual bool isSubDeviceEngineSupported(const RootDeviceEnvironment &rootDeviceEnvironment, const DeviceBitfield &deviceBitfield, aub_stream::EngineType engineType) const = 0;
     virtual size_t getPreemptionAllocationAlignment() const = 0;
+    virtual bool isMidThreadPreemptionAllocationOnDemandSupported() const = 0;
     virtual std::unique_ptr<TagAllocatorBase> createTimestampPacketAllocator(const RootDeviceIndicesContainer &rootDeviceIndices, MemoryManager *memoryManager,
                                                                              uint32_t initialTagCount, CommandStreamReceiverType csrType,
                                                                              DeviceBitfield deviceBitfield) const = 0;
@@ -358,6 +359,8 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     bool isSubDeviceEngineSupported(const RootDeviceEnvironment &rootDeviceEnvironment, const DeviceBitfield &deviceBitfield, aub_stream::EngineType engineType) const override;
 
     size_t getPreemptionAllocationAlignment() const override;
+
+    bool isMidThreadPreemptionAllocationOnDemandSupported() const override;
 
     std::unique_ptr<TagAllocatorBase> createTimestampPacketAllocator(const RootDeviceIndicesContainer &rootDeviceIndices, MemoryManager *memoryManager,
                                                                      uint32_t initialTagCount, CommandStreamReceiverType csrType,

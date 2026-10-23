@@ -541,6 +541,10 @@ struct CommandList : _ze_command_list_handle_t {
         return kernelWithAssertAppended;
     }
 
+    bool hasMidThreadPreemptionKernel() const {
+        return midThreadPreemptionKernelAppended;
+    }
+
     bool isHeaplessModeEnabled() const {
         return heaplessModeEnabled;
     }
@@ -961,6 +965,7 @@ struct CommandList : _ze_command_list_handle_t {
     bool compactL3FlushEventPacket = false;
     bool dynamicHeapRequired = false;
     bool kernelWithAssertAppended = false;
+    bool midThreadPreemptionKernelAppended = false;
     bool dispatchCmdListBatchBufferAsPrimary = false;
     bool copyThroughLockedPtrEnabled = false;
     bool stagingCopiesAllowed = true;

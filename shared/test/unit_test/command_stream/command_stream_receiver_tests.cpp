@@ -47,6 +47,7 @@
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
 #include "shared/test/common/mocks/mock_csr.h"
+#include "shared/test/common/mocks/mock_debugger.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_direct_submission_hw.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
@@ -8228,4 +8229,208 @@ HWTEST_F(CommandStreamReceiverTest, givenLaterSubmissionPendingWhenTestingTaskCo
     EXPECT_EQ(testedTaskCount, ultCsr.latestDownloadAllocationsTaskCount);
 
     *ultCsr.getTagAddress() = ultCsr.peekTaskCount();
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenMidThreadPreemptionAllocationOnDemandDebugKeyWhenSettingUpContextThenOnDemandModeIsConfigured) {
+    DebugManagerStateRestore restorer;
+    MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}));
+    UltCommandStreamReceiver<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    commandStreamReceiver.heaplessModeEnabled = false;
+
+    commandStreamReceiver.setupContext(osContext);
+    EXPECT_EQ(pDevice->getGfxCoreHelper().isMidThreadPreemptionAllocationOnDemandSupported(), commandStreamReceiver.midThreadPreemptionAllocationOnDemand);
+
+    debugManager.flags.MidThreadPreemptionAllocationOnDemand.set(0);
+    commandStreamReceiver.setupContext(osContext);
+    EXPECT_FALSE(commandStreamReceiver.midThreadPreemptionAllocationOnDemand);
+
+    debugManager.flags.MidThreadPreemptionAllocationOnDemand.set(1);
+    commandStreamReceiver.setupContext(osContext);
+    EXPECT_TRUE(commandStreamReceiver.midThreadPreemptionAllocationOnDemand);
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenMidThreadPreemptionAllocationOnDemandEnabledWhenSettingUpHeaplessOrCopyOrContextGroupContextThenOnDemandModeIsDisabled) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.MidThreadPreemptionAllocationOnDemand.set(1);
+
+    MockOsContext computeOsContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}));
+    MockOsContext copyOsContext(1, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular}));
+    MockOsContext contextGroupOsContext(2, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}));
+    contextGroupOsContext.setContextGroupCount(8);
+    UltCommandStreamReceiver<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+
+    commandStreamReceiver.heaplessModeEnabled = true;
+    commandStreamReceiver.setupContext(computeOsContext);
+    EXPECT_FALSE(commandStreamReceiver.midThreadPreemptionAllocationOnDemand);
+
+    commandStreamReceiver.heaplessModeEnabled = false;
+    commandStreamReceiver.setupContext(copyOsContext);
+    EXPECT_FALSE(commandStreamReceiver.midThreadPreemptionAllocationOnDemand);
+
+    commandStreamReceiver.setupContext(contextGroupOsContext);
+    EXPECT_FALSE(commandStreamReceiver.midThreadPreemptionAllocationOnDemand);
+
+    commandStreamReceiver.setupContext(computeOsContext);
+    EXPECT_TRUE(commandStreamReceiver.midThreadPreemptionAllocationOnDemand);
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenMidThreadPreemptionAllocationOnDemandWhenInitializingResourcesThenPreemptionAllocationIsCreatedOnlyWithoutOnDemandMode) {
+    MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}));
+    UltCommandStreamReceiver<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    commandStreamReceiver.setupContext(osContext);
+    commandStreamReceiver.setDevice(pDevice);
+
+    commandStreamReceiver.midThreadPreemptionAllocationOnDemand = true;
+    EXPECT_TRUE(commandStreamReceiver.initializeResources(PreemptionMode::MidThread));
+    EXPECT_EQ(nullptr, commandStreamReceiver.getPreemptionAllocation());
+
+    commandStreamReceiver.resourcesInitialized = false;
+    commandStreamReceiver.midThreadPreemptionAllocationOnDemand = false;
+    EXPECT_TRUE(commandStreamReceiver.initializeResources(PreemptionMode::MidThread));
+    EXPECT_NE(nullptr, commandStreamReceiver.getPreemptionAllocation());
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenMidThreadPreemptionAllocationOnDemandWhenCheckingPreemptionStateThenDeferredStateDependsOnAllocationAndDebugger) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    VariableBackup<bool> onDemandBackup(&commandStreamReceiver.midThreadPreemptionAllocationOnDemand, false);
+    VariableBackup<GraphicsAllocation *> preemptionAllocationBackup(&commandStreamReceiver.preemptionAllocation, nullptr);
+    VariableBackup<bool> stateSipSentBackup(&commandStreamReceiver.isStateSipSent, false);
+    MockGraphicsAllocation preemptionAllocation;
+
+    EXPECT_FALSE(commandStreamReceiver.isMidThreadPreemptionStateDeferred());
+    EXPECT_FALSE(commandStreamReceiver.isMidThreadPreemptionStateProgrammingRequired(true));
+    EXPECT_TRUE(commandStreamReceiver.isStateSipProgrammingRequired());
+
+    commandStreamReceiver.midThreadPreemptionAllocationOnDemand = true;
+    EXPECT_TRUE(commandStreamReceiver.isMidThreadPreemptionStateDeferred());
+    EXPECT_TRUE(commandStreamReceiver.isMidThreadPreemptionStateProgrammingRequired(true));
+    EXPECT_FALSE(commandStreamReceiver.isMidThreadPreemptionStateProgrammingRequired(false));
+    EXPECT_FALSE(commandStreamReceiver.isStateSipProgrammingRequired());
+
+    commandStreamReceiver.preemptionAllocation = &preemptionAllocation;
+    EXPECT_FALSE(commandStreamReceiver.isMidThreadPreemptionStateDeferred());
+    EXPECT_FALSE(commandStreamReceiver.isMidThreadPreemptionStateProgrammingRequired(true));
+    EXPECT_TRUE(commandStreamReceiver.isStateSipProgrammingRequired());
+
+    commandStreamReceiver.isStateSipSent = true;
+    EXPECT_FALSE(commandStreamReceiver.isStateSipProgrammingRequired());
+
+    commandStreamReceiver.preemptionAllocation = nullptr;
+    commandStreamReceiver.isStateSipSent = false;
+    pDevice->getRootDeviceEnvironmentRef().debugger.reset(new MockDebugger);
+    EXPECT_FALSE(commandStreamReceiver.isMidThreadPreemptionStateDeferred());
+    EXPECT_TRUE(commandStreamReceiver.isStateSipProgrammingRequired());
+    pDevice->getRootDeviceEnvironmentRef().debugger.reset();
+}
+
+template <typename FamilyType>
+struct PreemptionAllocationFailingCommandStreamReceiver : public UltCommandStreamReceiver<FamilyType> {
+    using UltCommandStreamReceiver<FamilyType>::UltCommandStreamReceiver;
+    bool createPreemptionAllocation() override {
+        return false;
+    }
+};
+
+HWTEST_F(CommandStreamReceiverHwTest, givenPreemptionAllocationFailureWhenProgrammingMidThreadPreemptionStateThenUnrecoverableIsCalled) {
+    MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}));
+    PreemptionAllocationFailingCommandStreamReceiver<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    commandStreamReceiver.setupContext(osContext);
+
+    EXPECT_THROW(commandStreamReceiver.programMidThreadPreemptionState(commandStream, *pDevice), std::exception);
+}
+
+HWTEST2_F(CommandStreamReceiverHwTest, givenMidThreadPreemptionAllocationOnDemandWhenFlushingTasksThenPreemptionStateIsProgrammedOnceOnFirstMidThreadPreemptionKernel, IsXe2HpgCore) {
+    using STATE_CONTEXT_DATA_BASE_ADDRESS = typename FamilyType::STATE_CONTEXT_DATA_BASE_ADDRESS;
+    using STATE_SIP = typename FamilyType::STATE_SIP;
+
+    pDevice->setPreemptionMode(PreemptionMode::MidThread);
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    ASSERT_TRUE(commandStreamReceiver.midThreadPreemptionAllocationOnDemand);
+    commandStreamReceiver.getMemoryManager()->freeGraphicsMemory(commandStreamReceiver.preemptionAllocation);
+    commandStreamReceiver.preemptionAllocation = nullptr;
+    commandStreamReceiver.storeMakeResidentAllocations = true;
+
+    flushTaskFlags.preemptionMode = PreemptionMode::ThreadGroup;
+    flushTaskFlags.hasMidThreadPreemptionKernel = false;
+    commandStreamReceiver.flushTask(commandStream, 0, &dsh, &ioh, &ssh, taskLevel, flushTaskFlags, *pDevice);
+
+    EXPECT_EQ(nullptr, commandStreamReceiver.getPreemptionAllocation());
+    EXPECT_FALSE(commandStreamReceiver.getSipSentFlag());
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
+    EXPECT_EQ(0u, hwParser.getCommandCount<STATE_CONTEXT_DATA_BASE_ADDRESS>());
+    EXPECT_EQ(0u, hwParser.getCommandCount<STATE_SIP>());
+
+    auto usedSize = commandStreamReceiver.commandStream.getUsed();
+    flushTaskFlags.preemptionMode = PreemptionMode::MidThread;
+    flushTaskFlags.hasMidThreadPreemptionKernel = true;
+    commandStreamReceiver.flushTask(commandStream, 0, &dsh, &ioh, &ssh, taskLevel, flushTaskFlags, *pDevice);
+
+    auto preemptionAllocation = commandStreamReceiver.getPreemptionAllocation();
+    ASSERT_NE(nullptr, preemptionAllocation);
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(preemptionAllocation));
+    EXPECT_TRUE(commandStreamReceiver.getSipSentFlag());
+    hwParser.tearDown();
+    hwParser.parseCommands<FamilyType>(commandStreamReceiver.commandStream, usedSize);
+    auto stateContextDataBaseAddressCmds = hwParser.getCommandsList<STATE_CONTEXT_DATA_BASE_ADDRESS>();
+    ASSERT_EQ(1u, stateContextDataBaseAddressCmds.size());
+    auto stateContextDataBaseAddress = genCmdCast<STATE_CONTEXT_DATA_BASE_ADDRESS *>(*stateContextDataBaseAddressCmds.begin());
+    EXPECT_EQ(preemptionAllocation->getGpuAddressToPatch(), stateContextDataBaseAddress->getContextDataBaseAddress());
+    EXPECT_EQ(1u, hwParser.getCommandCount<STATE_SIP>());
+
+    usedSize = commandStreamReceiver.commandStream.getUsed();
+    commandStreamReceiver.flushTask(commandStream, 0, &dsh, &ioh, &ssh, taskLevel, flushTaskFlags, *pDevice);
+
+    EXPECT_EQ(preemptionAllocation, commandStreamReceiver.getPreemptionAllocation());
+    hwParser.tearDown();
+    hwParser.parseCommands<FamilyType>(commandStreamReceiver.commandStream, usedSize);
+    EXPECT_EQ(0u, hwParser.getCommandCount<STATE_CONTEXT_DATA_BASE_ADDRESS>());
+    EXPECT_EQ(0u, hwParser.getCommandCount<STATE_SIP>());
+}
+
+HWTEST2_F(CommandStreamReceiverHwTest, givenMidThreadPreemptionAllocationOnDemandWhenFlushingImmediateTasksThenPreemptionStateIsProgrammedOnceOnFirstMidThreadPreemptionKernel, IsXe2HpgCore) {
+    using STATE_CONTEXT_DATA_BASE_ADDRESS = typename FamilyType::STATE_CONTEXT_DATA_BASE_ADDRESS;
+    using STATE_SIP = typename FamilyType::STATE_SIP;
+
+    pDevice->setPreemptionMode(PreemptionMode::MidThread);
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    ASSERT_TRUE(commandStreamReceiver.midThreadPreemptionAllocationOnDemand);
+    commandStreamReceiver.getMemoryManager()->freeGraphicsMemory(commandStreamReceiver.preemptionAllocation);
+    commandStreamReceiver.preemptionAllocation = nullptr;
+    commandStreamReceiver.storeMakeResidentAllocations = true;
+
+    immediateFlushTaskFlags.hasMidThreadPreemptionKernel = false;
+    commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
+
+    EXPECT_EQ(nullptr, commandStreamReceiver.getPreemptionAllocation());
+    EXPECT_FALSE(commandStreamReceiver.getSipSentFlag());
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
+    EXPECT_EQ(0u, hwParser.getCommandCount<STATE_CONTEXT_DATA_BASE_ADDRESS>());
+    EXPECT_EQ(0u, hwParser.getCommandCount<STATE_SIP>());
+
+    auto usedSize = commandStreamReceiver.commandStream.getUsed();
+    immediateFlushTaskFlags.hasMidThreadPreemptionKernel = true;
+    commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
+
+    auto preemptionAllocation = commandStreamReceiver.getPreemptionAllocation();
+    ASSERT_NE(nullptr, preemptionAllocation);
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(preemptionAllocation));
+    EXPECT_TRUE(commandStreamReceiver.getSipSentFlag());
+    hwParser.tearDown();
+    hwParser.parseCommands<FamilyType>(commandStreamReceiver.commandStream, usedSize);
+    auto stateContextDataBaseAddressCmds = hwParser.getCommandsList<STATE_CONTEXT_DATA_BASE_ADDRESS>();
+    ASSERT_EQ(1u, stateContextDataBaseAddressCmds.size());
+    auto stateContextDataBaseAddress = genCmdCast<STATE_CONTEXT_DATA_BASE_ADDRESS *>(*stateContextDataBaseAddressCmds.begin());
+    EXPECT_EQ(preemptionAllocation->getGpuAddressToPatch(), stateContextDataBaseAddress->getContextDataBaseAddress());
+    EXPECT_EQ(1u, hwParser.getCommandCount<STATE_SIP>());
+
+    usedSize = commandStreamReceiver.commandStream.getUsed();
+    commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
+
+    EXPECT_EQ(preemptionAllocation, commandStreamReceiver.getPreemptionAllocation());
+    hwParser.tearDown();
+    hwParser.parseCommands<FamilyType>(commandStreamReceiver.commandStream, usedSize);
+    EXPECT_EQ(0u, hwParser.getCommandCount<STATE_CONTEXT_DATA_BASE_ADDRESS>());
+    EXPECT_EQ(0u, hwParser.getCommandCount<STATE_SIP>());
 }

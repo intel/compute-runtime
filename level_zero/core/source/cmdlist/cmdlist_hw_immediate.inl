@@ -321,15 +321,16 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmedia
     NEO::LinearStream *optionalEpilogueCmdStream = getOptionalEpilogueCmdStream(&cmdStreamTask, appendOperation);
 
     NEO::ImmediateDispatchFlags dispatchFlags{
-        &this->requiredStreamState,         // requiredState
-        sshCpuPointer,                      // sshCpuBase
-        optionalEpilogueCmdStream,          // optionalEpilogueCmdStream
-        appendOperation,                    // dispatchOperation
-        this->isSyncModeQueue,              // blockingAppend
-        requireTaskCountUpdate,             // requireTaskCountUpdate
-        hasRelaxedOrderingDependencies,     // hasRelaxedOrderingDependencies
-        hasStallingCmds,                    // hasStallingCmds
-        this->isWalkerWithProfilingEnqueued // isWalkerWithProfilingEnqueued
+        &this->requiredStreamState,          // requiredState
+        sshCpuPointer,                       // sshCpuBase
+        optionalEpilogueCmdStream,           // optionalEpilogueCmdStream
+        appendOperation,                     // dispatchOperation
+        this->isSyncModeQueue,               // blockingAppend
+        requireTaskCountUpdate,              // requireTaskCountUpdate
+        hasRelaxedOrderingDependencies,      // hasRelaxedOrderingDependencies
+        hasStallingCmds,                     // hasStallingCmds
+        this->isWalkerWithProfilingEnqueued, // isWalkerWithProfilingEnqueued
+        this->hasMidThreadPreemptionKernel() // hasMidThreadPreemptionKernel
     };
     this->isWalkerWithProfilingEnqueued = false;
     CommandList::storeReferenceTsToMappedEvents(true);
@@ -410,6 +411,7 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushRegular
     );
 
     dispatchFlags.isWalkerWithProfilingEnqueued = this->getAndClearIsWalkerWithProfilingEnqueued();
+    dispatchFlags.hasMidThreadPreemptionKernel = this->hasMidThreadPreemptionKernel();
     dispatchFlags.optionalEpilogueCmdStream = getOptionalEpilogueCmdStream(&cmdStreamTask, appendOperation);
 
     auto ioh = (this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::indirectObject));

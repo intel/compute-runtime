@@ -684,6 +684,13 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
             lateMidThreadPreemptionStartSubmissionPending = true;
         }
     }
+    bool isMidThreadPreemptionStateDeferred() const;
+    bool isMidThreadPreemptionStateProgrammingRequired(bool hasMidThreadPreemptionKernel) const {
+        return hasMidThreadPreemptionKernel && isMidThreadPreemptionStateDeferred();
+    }
+    bool isStateSipProgrammingRequired() const {
+        return !isStateSipSent && !isMidThreadPreemptionStateDeferred();
+    }
     void handleLateMidThreadPreemptionStartSubmission(SubmissionStatus submissionStatus) {
         if (lateMidThreadPreemptionStartSubmissionPending) {
             lateMidThreadPreemptionStartSubmissionPending = false;
@@ -826,6 +833,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     bool isPreambleSent = false;
     bool isStateSipSent = false;
     bool skipPreemptionAllocation = false;
+    bool midThreadPreemptionAllocationOnDemand = false;
     bool lateMidThreadPreemptionStartSubmissionPending = false;
     bool isEnginePrologueSent = false;
     bool areExceptionsSent = false;
