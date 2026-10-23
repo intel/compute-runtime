@@ -25,7 +25,6 @@ struct HostFunction;
 
 class HostFunctionSingleWorker : public HostFunctionWorker {
   public:
-    explicit HostFunctionSingleWorker(bool skipHostFunctionExecution);
     ~HostFunctionSingleWorker() override = 0;
 
     void start(HostFunctionStreamer *streamer) override = 0;

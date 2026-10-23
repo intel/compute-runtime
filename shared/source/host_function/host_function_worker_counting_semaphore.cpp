@@ -11,9 +11,7 @@
 
 namespace NEO {
 
-HostFunctionWorkerCountingSemaphore::HostFunctionWorkerCountingSemaphore(bool skipHostFunctionExecution)
-    : HostFunctionSingleWorker(skipHostFunctionExecution) {
-}
+HostFunctionWorkerCountingSemaphore::HostFunctionWorkerCountingSemaphore() = default;
 
 HostFunctionWorkerCountingSemaphore::~HostFunctionWorkerCountingSemaphore() = default;
 

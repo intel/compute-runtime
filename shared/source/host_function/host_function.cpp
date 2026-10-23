@@ -224,7 +224,6 @@ bool HostFunctionStreamer::isUsingSemaphore64bCmd() const {
 
 namespace HostFunctionFactory {
 void createAndSetHostFunctionWorker(HostFunctionWorkerMode hostFunctionWorkerMode,
-                                    bool skipHostFunctionExecution,
                                     CommandStreamReceiver *csr,
                                     RootDeviceEnvironment *rootDeviceEnvironment) {
 
@@ -236,7 +235,7 @@ void createAndSetHostFunctionWorker(HostFunctionWorkerMode hostFunctionWorkerMod
     default:
     case HostFunctionWorkerMode::defaultMode:
     case HostFunctionWorkerMode::countingSemaphore:
-        csr->setHostFunctionWorker(new HostFunctionWorkerCountingSemaphore(skipHostFunctionExecution));
+        csr->setHostFunctionWorker(new HostFunctionWorkerCountingSemaphore());
         break;
     case HostFunctionWorkerMode::schedulerWithThreadPool: {
         auto scheduler = rootDeviceEnvironment->getHostFunctionScheduler();
@@ -245,8 +244,7 @@ void createAndSetHostFunctionWorker(HostFunctionWorkerMode hostFunctionWorkerMod
                                    ? debugManager.flags.HostFunctionThreadPoolSize.get()
                                    : HostFunctionThreadPoolHelper::unlimitedThreads;
 
-            auto createdScheduler = std::make_unique<HostFunctionScheduler>(skipHostFunctionExecution,
-                                                                            nWorkers);
+            auto createdScheduler = std::make_unique<HostFunctionScheduler>(nWorkers);
 
             rootDeviceEnvironment->setHostFunctionScheduler(std::move(createdScheduler));
         }

@@ -14,10 +14,8 @@
 
 namespace NEO {
 
-HostFunctionScheduler::HostFunctionScheduler(bool skipHostFunctionExecution,
-                                             int32_t threadsInThreadPoolLimit)
-    : HostFunctionWorker(skipHostFunctionExecution),
-      threadPool(threadsInThreadPoolLimit) {
+HostFunctionScheduler::HostFunctionScheduler(int32_t threadsInThreadPoolLimit)
+    : threadPool(threadsInThreadPoolLimit) {
 }
 
 HostFunctionScheduler::~HostFunctionScheduler() = default;

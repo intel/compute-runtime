@@ -135,7 +135,6 @@ struct HostFunctionHelper {
 namespace HostFunctionFactory {
 
 void createAndSetHostFunctionWorker(HostFunctionWorkerMode hostFunctionWorkerMode,
-                                    bool skipHostFunctionExecution,
                                     CommandStreamReceiver *csr,
                                     RootDeviceEnvironment *rootDeviceEnvironment);
 

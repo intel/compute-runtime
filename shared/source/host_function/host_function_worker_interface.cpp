@@ -14,22 +14,16 @@
 #include <type_traits>
 
 namespace NEO {
-HostFunctionSingleWorker::HostFunctionSingleWorker(bool skipHostFunctionExecution)
-    : HostFunctionWorker(skipHostFunctionExecution) {
-}
-
 HostFunctionSingleWorker::~HostFunctionSingleWorker() = default;
 
 void HostFunctionSingleWorker::processNextHostFunction(std::stop_token st) noexcept {
 
-    if (skipHostFunctionExecution == false) {
-        auto hostFunctionId = waitUntilHostFunctionIsReady(st);
-        if (hostFunctionId.has_value()) {
-            auto hostFunction = streamer->getHostFunction(hostFunctionId.value());
-            streamer->prepareForExecution(hostFunction);
-            hostFunction.invoke();
-            streamer->signalHostFunctionCompletion(hostFunction);
-        }
+    auto hostFunctionId = waitUntilHostFunctionIsReady(st);
+    if (hostFunctionId.has_value()) {
+        auto hostFunction = streamer->getHostFunction(hostFunctionId.value());
+        streamer->prepareForExecution(hostFunction);
+        hostFunction.invoke();
+        streamer->signalHostFunctionCompletion(hostFunction);
     }
 }
 

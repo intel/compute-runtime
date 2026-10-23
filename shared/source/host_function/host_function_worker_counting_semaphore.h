@@ -20,7 +20,7 @@ struct HostFunction;
 
 class HostFunctionWorkerCountingSemaphore final : public HostFunctionSingleWorker {
   public:
-    HostFunctionWorkerCountingSemaphore(bool skipHostFunctionExecution);
+    HostFunctionWorkerCountingSemaphore();
     ~HostFunctionWorkerCountingSemaphore() override;
 
     void start(HostFunctionStreamer *streamer) override;

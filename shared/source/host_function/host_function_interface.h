@@ -23,10 +23,6 @@ struct HostFunction;
 
 class HostFunctionWorker : public NonCopyableAndNonMovableClass {
   public:
-    explicit HostFunctionWorker(bool skipHostFunctionExecution)
-        : skipHostFunctionExecution(skipHostFunctionExecution) {
-    }
-
     virtual ~HostFunctionWorker() = default;
     virtual void start(HostFunctionStreamer *streamer) = 0;
     virtual void finish() = 0;
@@ -35,7 +31,6 @@ class HostFunctionWorker : public NonCopyableAndNonMovableClass {
   protected:
     std::unique_ptr<std::jthread> worker;
     std::mutex workerMutex;
-    bool skipHostFunctionExecution = false;
 };
 
 static_assert(NonCopyableAndNonMovable<HostFunctionWorker>);

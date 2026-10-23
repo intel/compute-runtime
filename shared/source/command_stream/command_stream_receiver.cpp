@@ -327,13 +327,9 @@ void CommandStreamReceiver::createHostFunctionWorker() {
         return;
     }
 
-    bool skipHostFunctionExecution = getType() == NEO::CommandStreamReceiverType::aub ||
-                                     getType() == NEO::CommandStreamReceiverType::nullAub;
-
     auto *rootDeviceEnvironment = this->executionEnvironment.rootDeviceEnvironments[rootDeviceIndex].get();
 
     HostFunctionFactory::createAndSetHostFunctionWorker(this->hostFunctionWorkerMode,
-                                                        skipHostFunctionExecution,
                                                         this,
                                                         rootDeviceEnvironment);
 
@@ -885,7 +881,9 @@ void *CommandStreamReceiver::getIndirectHeapCurrentPtr(IndirectHeapType heapType
 }
 
 void CommandStreamReceiver::signalHostFunctionWorker(uint32_t nHostFunctions) {
-    hostFunctionWorker->submit(nHostFunctions);
+    if (hostFunctionWorker) {
+        hostFunctionWorker->submit(nHostFunctions);
+    }
 }
 
 void CommandStreamReceiver::ensureHostFunctionWorkerStarted(HostFunctionAllocator *allocator) {
@@ -901,7 +899,12 @@ void CommandStreamReceiver::startHostFunctionWorker(HostFunctionAllocator *alloc
     }
 
     createHostFunctionStreamer(allocator);
-    createHostFunctionWorker();
+
+    bool skipHostFunctionExecution = getType() == NEO::CommandStreamReceiverType::aub ||
+                                     getType() == NEO::CommandStreamReceiverType::nullAub;
+    if (!skipHostFunctionExecution) {
+        createHostFunctionWorker();
+    }
 
     this->hostFunctionWorkerStarted.store(true, std::memory_order_release);
 }

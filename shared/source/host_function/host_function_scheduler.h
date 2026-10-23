@@ -26,8 +26,7 @@ class HostFunctionStreamer;
 
 class HostFunctionScheduler final : public HostFunctionWorker {
   public:
-    HostFunctionScheduler(bool skipHostFunctionExecution,
-                          int32_t threadsInThreadPoolLimit);
+    explicit HostFunctionScheduler(int32_t threadsInThreadPoolLimit);
 
     ~HostFunctionScheduler() override;
 

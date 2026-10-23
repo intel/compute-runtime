@@ -563,6 +563,35 @@ TEST(CommandStreamReceiverHostFunctionsTest, givenReadyHostFunctionWhenItIsReser
     EXPECT_FALSE(streamer.getHostFunctionReadyToExecute().has_value());
 }
 
+TEST(CommandStreamReceiverHostFunctionsTest, givenAubCommandStreamReceiverWhenHostFunctionWorkerIsStartedThenOnlyStreamerIsCreatedAndSignalIsIgnored) {
+    for (auto csrType : {CommandStreamReceiverType::aub, CommandStreamReceiverType::nullAub}) {
+        MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+        auto *mockMemoryManager = new MockMemoryManager(executionEnvironment);
+        executionEnvironment.memoryManager.reset(mockMemoryManager);
+        DeviceBitfield devices(0b1);
+        auto csr = std::make_unique<MockCommandStreamReceiver>(executionEnvironment, 0, devices);
+        csr->commandStreamReceiverType = csrType;
+
+        uint32_t maxRootDeviceIndex = static_cast<uint32_t>(executionEnvironment.rootDeviceEnvironments.size() - 1);
+        MockHostFunctionAllocator hostFunctionAllocator(mockMemoryManager,
+                                                        csr.get(),
+                                                        MemoryConstants::pageSize64k,
+                                                        csr->getRootDeviceIndex(),
+                                                        maxRootDeviceIndex,
+                                                        csr->getActivePartitions(),
+                                                        false);
+
+        csr->ensureHostFunctionWorkerStarted(&hostFunctionAllocator);
+
+        EXPECT_NE(nullptr, csr->getHostFunctionStreamer().getHostFunctionIdAllocation());
+        EXPECT_EQ(0u, csr->createHostFunctionWorkerCounter);
+        EXPECT_EQ(nullptr, csr->getHostFunctionWorker());
+
+        csr->CommandStreamReceiver::signalHostFunctionWorker(2u);
+        EXPECT_EQ(nullptr, csr->getHostFunctionWorker());
+    }
+}
+
 TEST(CommandStreamReceiverHostFunctionsTest, givenDestructedCommandStreamReceiverWhenEnsureHostFunctionDataInitializationCalledThenHostFunctionAllocationsDeallocated) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     DeviceBitfield devices(0b11);
