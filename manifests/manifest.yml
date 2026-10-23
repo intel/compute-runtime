@@ -19,14 +19,6 @@ components:
     branch: master
     revision: 59ba245679f8d60f6a48d4c23fed91a2d9d5a7ce
     repository: https://github.com/intel/intelgraphicscompiler
-  igsc:
-    asset_name: igsc
-    dest_dir: igsc
-    type: git
-    branch: master
-    revision: V0.9.5
-    repository: https://github.com/intel/igsc.git
-    component_version: 301
   internal:
     branch: master
     dest_dir: internal

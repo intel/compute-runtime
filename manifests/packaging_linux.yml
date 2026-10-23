@@ -2,6 +2,9 @@ components:
   cal:
     dest_dir: cal
     version: 1065
+  ci_igsc:
+    dest_dir: ci_igsc
+    version: 137
   ci_l0_loader:
     dest_dir: level_zero
     version: v1.34.0
