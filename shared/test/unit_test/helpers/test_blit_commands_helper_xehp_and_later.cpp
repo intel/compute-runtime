@@ -297,7 +297,7 @@ HWTEST2_F(BlitTests, givenPlaneWhenGetBlitAllocationPropertiesIsCalledThenCompre
     };
 
     auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
-    auto &resInfo = static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get())->getResourceFlags()->Info;
+    auto &resInfo = static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get())->mockResourceCreateParams.Flags.Info;
     resInfo.MediaCompressed = true;
     MockGraphicsAllocation mockAllocationSrc(0, 1u /*num gmms*/, AllocationType::internalHostMemory,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
@@ -320,27 +320,6 @@ HWTEST2_F(BlitTests, givenPlaneWhenGetBlitAllocationPropertiesIsCalledThenCompre
         EXPECT_EQ(testInput.expectedCompressionFormat, compressionFormat);
     }
 }
-
-struct MyMockResourecInfo : public GmmResourceInfo {
-    using GmmResourceInfo::resourceInfo;
-
-    MyMockResourecInfo(GmmClientContext *clientContext, GMM_RESCREATE_PARAMS *inputParams) : GmmResourceInfo(clientContext, inputParams) {};
-    MyMockResourecInfo(GmmClientContext *clientContext, GMM_RESOURCE_INFO *inputGmmResourceInfo) : GmmResourceInfo(clientContext, inputGmmResourceInfo) {};
-    size_t getRenderPitch() override {
-        return pitch;
-    }
-    uint32_t getQPitch() override {
-        return 0;
-    }
-    GMM_RESOURCE_FLAG *getResourceFlags() override {
-        return &flags;
-    }
-    uint32_t getMipTailStartLODSurfaceState() override {
-        return 0;
-    }
-    size_t pitch = 0;
-    GMM_RESOURCE_FLAG flags = {};
-};
 
 HWTEST2_F(BlitTests, givenCompressionInfoWhenAppendImageCommandsThenCorrectPropertiesAreSet, IsXeHpgCore) {
     auto verifyCompressionFormat = [](bool mediaCompressed, bool renderCompressed, uint32_t compressionFormat) {
@@ -380,8 +359,8 @@ HWTEST2_F(BlitTests, givenCompressionInfoWhenAppendImageCommandsThenCorrectPrope
     for (auto &[mediaCompressedSrc, renderCompressedSrc] : params) {
         auto gmmSrc = std::make_unique<MockGmm>(pDevice->getGmmHelper());
         auto resourceInfoSrc = static_cast<MockGmmResourceInfo *>(gmmSrc->gmmResourceInfo.get());
-        resourceInfoSrc->getResourceFlags()->Info.MediaCompressed = mediaCompressedSrc;
-        resourceInfoSrc->getResourceFlags()->Info.RenderCompressed = renderCompressedSrc;
+        resourceInfoSrc->mockResourceCreateParams.Flags.Info.MediaCompressed = mediaCompressedSrc;
+        resourceInfoSrc->mockResourceCreateParams.Flags.Info.RenderCompressed = renderCompressedSrc;
         MockGraphicsAllocation mockAllocationSrc(0, 1u /*num gmms*/, AllocationType::internalHostMemory,
                                                  reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                                  MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
@@ -391,8 +370,8 @@ HWTEST2_F(BlitTests, givenCompressionInfoWhenAppendImageCommandsThenCorrectPrope
         for (auto &[mediaCompressedDst, renderCompressedDst] : params) {
             auto gmmDst = std::make_unique<MockGmm>(pDevice->getGmmHelper());
             auto resourceInfoDst = static_cast<MockGmmResourceInfo *>(gmmDst->gmmResourceInfo.get());
-            resourceInfoDst->getResourceFlags()->Info.MediaCompressed = mediaCompressedDst;
-            resourceInfoDst->getResourceFlags()->Info.RenderCompressed = renderCompressedDst;
+            resourceInfoDst->mockResourceCreateParams.Flags.Info.MediaCompressed = mediaCompressedDst;
+            resourceInfoDst->mockResourceCreateParams.Flags.Info.RenderCompressed = renderCompressedDst;
             MockGraphicsAllocation mockAllocationDst(0, 1u /*num gmms*/, AllocationType::internalHostMemory,
                                                      reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                                      MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
@@ -746,7 +725,7 @@ HWTEST2_F(BlitTests, givenBltCmdWhenSrcAndDstImage1DTiled4ThenSrcAndDstTypeIs2D,
 
     auto gmmSrc = std::make_unique<MockGmm>(pDevice->getGmmHelper());
     auto resourceInfoSrc = static_cast<MockGmmResourceInfo *>(gmmSrc->gmmResourceInfo.get());
-    resourceInfoSrc->getResourceFlags()->Info.Tile4 = 1;
+    resourceInfoSrc->mockResourceCreateParams.Flags.Info.Tile4 = 1;
     resourceInfoSrc->mockResourceCreateParams.Type = GMM_RESOURCE_TYPE::RESOURCE_1D;
     MockGraphicsAllocation mockAllocationSrc(0, 1u /*num gmms*/, AllocationType::internalHostMemory,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
@@ -771,7 +750,7 @@ HWTEST2_F(BlitTests, givenBltCmdWhenSrcAndDstImage1DTiled64ThenSrcAndDstTypeIs2D
 
     auto gmmSrc = std::make_unique<MockGmm>(pDevice->getGmmHelper());
     auto resourceInfoSrc = static_cast<MockGmmResourceInfo *>(gmmSrc->gmmResourceInfo.get());
-    resourceInfoSrc->getResourceFlags()->Info.Tile64 = 1;
+    resourceInfoSrc->mockResourceCreateParams.Flags.Info.Tile64 = 1;
     resourceInfoSrc->mockResourceCreateParams.Type = GMM_RESOURCE_TYPE::RESOURCE_1D;
     MockGraphicsAllocation mockAllocationSrc(0, 1u /*num gmms*/, AllocationType::internalHostMemory,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
@@ -796,8 +775,8 @@ HWTEST2_F(BlitTests, givenBltCmdWhenSrcAndDstImage1DNotTiledThenSrcAndDstTypeIs1
 
     auto gmmSrc = std::make_unique<MockGmm>(pDevice->getGmmHelper());
     auto resourceInfoSrc = static_cast<MockGmmResourceInfo *>(gmmSrc->gmmResourceInfo.get());
-    resourceInfoSrc->getResourceFlags()->Info.Tile64 = 0;
-    resourceInfoSrc->getResourceFlags()->Info.Tile4 = 0;
+    resourceInfoSrc->mockResourceCreateParams.Flags.Info.Tile64 = 0;
+    resourceInfoSrc->mockResourceCreateParams.Flags.Info.Tile4 = 0;
     resourceInfoSrc->mockResourceCreateParams.Type = GMM_RESOURCE_TYPE::RESOURCE_1D;
     MockGraphicsAllocation mockAllocationSrc(0, 1u /*num gmms*/, AllocationType::internalHostMemory,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),

@@ -15,6 +15,7 @@
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_gmm.h"
+#include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -152,34 +153,13 @@ HWTEST2_F(BlitTests, givenInputAndDefaultSlicePitchWhenAppendBlitCommandsForImag
         EXPECT_EQ(dstSlicePitch, inputSlicePitch);
     }
 }
-struct MyMockResourecInfo : public GmmResourceInfo {
-    using GmmResourceInfo::resourceInfo;
-
-    MyMockResourecInfo(GmmClientContext *clientContext, GMM_RESCREATE_PARAMS *inputParams) : GmmResourceInfo(clientContext, inputParams) {};
-    MyMockResourecInfo(GmmClientContext *clientContext, GMM_RESOURCE_INFO *inputGmmResourceInfo) : GmmResourceInfo(clientContext, inputGmmResourceInfo) {};
-    size_t getRenderPitch() override {
-        return pitch;
-    }
-    uint32_t getQPitch() override {
-        return 0;
-    }
-    GMM_RESOURCE_FLAG *getResourceFlags() override {
-        return &flags;
-    }
-    uint32_t getMipTailStartLODSurfaceState() override {
-        return 0;
-    }
-    size_t pitch = 0;
-    GMM_RESOURCE_FLAG flags = {};
-};
-
 HWTEST2_F(BlitTests, givenTiledSrcAndDestinationImagesWhenAppendImageCommandsThenPitchIsValueFromGmm, IsGen12LP) {
     auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
     GMM_RESCREATE_PARAMS gmmParams = {};
-    auto myResourecInfo = std::make_unique<MyMockResourecInfo>(pDevice->getRootDeviceEnvironment().getGmmClientContext(), &gmmParams);
-    myResourecInfo->pitch = 0x100;
-    myResourecInfo->flags.Info.TiledY = 1;
-    gmm->gmmResourceInfo.reset(myResourecInfo.release());
+    auto resourceInfo = std::make_unique<MockGmmResourceInfo>(&gmmParams);
+    resourceInfo->overrideReturnedRenderPitch(0x100);
+    resourceInfo->mockResourceCreateParams.Flags.Info.TiledY = 1;
+    gmm->gmmResourceInfo.reset(resourceInfo.release());
     MockGraphicsAllocation mockAllocationSrc(0, 1u /*num gmms*/, AllocationType::internalHostMemory,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                              MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
@@ -206,10 +186,10 @@ HWTEST2_F(BlitTests, givenTiledSrcAndDestinationImagesWhenAppendImageCommandsThe
 HWTEST2_F(BlitTests, givenLinearSrcAndDestinationImagesWhenAppendImageCommandsThenPitchIsValueFromProperties, IsGen12LP) {
     auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
     GMM_RESCREATE_PARAMS gmmParams = {};
-    auto myResourecInfo = std::make_unique<MyMockResourecInfo>(pDevice->getRootDeviceEnvironment().getGmmClientContext(), &gmmParams);
-    myResourecInfo->pitch = 0x100;
-    myResourecInfo->flags.Info.Linear = 1;
-    gmm->gmmResourceInfo.reset(myResourecInfo.release());
+    auto resourceInfo = std::make_unique<MockGmmResourceInfo>(&gmmParams);
+    resourceInfo->overrideReturnedRenderPitch(0x100);
+    resourceInfo->mockResourceCreateParams.Flags.Info.Linear = 1;
+    gmm->gmmResourceInfo.reset(resourceInfo.release());
     MockGraphicsAllocation mockAllocationSrc(0, 1u /*num gmms*/, AllocationType::internalHostMemory,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                              MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);

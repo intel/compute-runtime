@@ -93,35 +93,6 @@ HWTEST2_F(GfxCoreHelperXe2AndLaterTests, givenAtLeastXe2HpgWhenIsExtendedUsmPool
     EXPECT_TRUE(gfxCoreHelper.isExtendedUsmPoolSizeEnabled());
 }
 
-class MockGmmResourceInfoWithDenyCompression : public MockGmmResourceInfo {
-  public:
-    MockGmmResourceInfoWithDenyCompression(GMM_RESCREATE_PARAMS *resourceCreateParams) : MockGmmResourceInfo(resourceCreateParams) {}
-
-    bool isResourceDenyCompressionEnabled() override {
-        return true;
-    }
-};
-
-HWTEST2_F(GfxCoreHelperXe2AndLaterTests, givenXe2AndLaterWhenIsCompressionAppliedForImportedResourceWithDenyCompressionEnabledThenFalseIsReturned, IsAtLeastXe2HpgCore) {
-    MockExecutionEnvironment mockExecutionEnvironment{};
-    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
-
-    GMM_RESCREATE_PARAMS gmmParams = {};
-    gmmParams.Type = GMM_RESOURCE_TYPE::RESOURCE_BUFFER;
-    gmmParams.Format = GMM_FORMAT_GENERIC_8BIT;
-    gmmParams.BaseWidth64 = 1024;
-    gmmParams.BaseHeight = 1;
-    gmmParams.Depth = 1;
-    gmmParams.Flags.Info.NotCompressed = 0; // Compression enabled in flags
-
-    auto mockGmmResourceInfo = std::make_unique<MockGmmResourceInfoWithDenyCompression>(&gmmParams);
-    MockGmm mockGmm(mockExecutionEnvironment.rootDeviceEnvironments[0]->getGmmHelper());
-    mockGmm.gmmResourceInfo.reset(mockGmmResourceInfo.release());
-
-    // Even though NotCompressed = 0 (compression enabled), the deny compression should override it
-    EXPECT_FALSE(gfxCoreHelper.isCompressionAppliedForImportedResource(mockGmm));
-}
-
 HWTEST2_F(GfxCoreHelperXe2AndLaterDeviceTests, givenGfxCoreHelperWhenAskingForTimestampPacketAlignmentThenReturnCachelineSize, IsAtLeastXe2HpgCore) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
 

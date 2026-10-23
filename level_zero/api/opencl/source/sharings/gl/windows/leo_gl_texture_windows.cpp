@@ -86,7 +86,7 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
         l0imageDesc.arraylevels = static_cast<uint32_t>(gmmResourceInfo->getArraySize());
         l0glTextureExtDesc.hasUnifiedMcsSurface = (texInfo.numberOfSamples > 1) &&
                                                   (texInfo.globalShareHandleMCS == 0) &&
-                                                  gmmResourceInfo->getResourceFlags()->Gpu.MCS;
+                                                  gmmResourceInfo->isMCS();
     } else {
         l0imageDesc.width = (texInfo.textureBufferWidth != 0) ? texInfo.textureBufferWidth : 1u;
         l0imageDesc.height = 1u;

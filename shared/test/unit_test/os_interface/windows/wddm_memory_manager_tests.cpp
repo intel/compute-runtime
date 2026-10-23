@@ -5289,7 +5289,7 @@ TEST_F(MockWddmMemoryManagerTest, givenCompressedFlagSetWhenInternalIsUnsetThenD
     gmmRequirements.preferCompressed = false;
     auto myGmm = new Gmm(rootDeviceEnvironment->getGmmHelper(), reinterpret_cast<void *>(123), 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
     myGmm->setCompressionEnabled(false);
-    myGmm->gmmResourceInfo->getResourceFlags()->Info.RenderCompressed = 1;
+    static_cast<MockGmmResourceInfo *>(myGmm->gmmResourceInfo.get())->mockResourceCreateParams.Flags.Info.RenderCompressed = 1;
 
     auto wddmAlloc = static_cast<WddmAllocation *>(memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, MemoryConstants::pageSize}));
     delete wddmAlloc->getDefaultGmm();
@@ -5329,7 +5329,7 @@ HWTEST_F(MockWddmMemoryManagerTest, givenCompressedFlagSetWhenInternalIsSetThenU
     gmmRequirements.preferCompressed = false;
     auto myGmm = new Gmm(rootDeviceEnvironment->getGmmHelper(), reinterpret_cast<void *>(123), 4096u, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
     myGmm->setCompressionEnabled(true);
-    myGmm->gmmResourceInfo->getResourceFlags()->Info.RenderCompressed = 1;
+    static_cast<MockGmmResourceInfo *>(myGmm->gmmResourceInfo.get())->mockResourceCreateParams.Flags.Info.RenderCompressed = 1;
 
     auto wddmAlloc = static_cast<WddmAllocation *>(memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, MemoryConstants::pageSize}));
     delete wddmAlloc->getDefaultGmm();

@@ -14,7 +14,7 @@ namespace NEO {
 template <>
 void ImageHw<Family>::appendSurfaceStateDepthParams(RENDER_SURFACE_STATE *surfaceState, Gmm *gmm) {
     if (gmm) {
-        const bool isDepthResource = gmm->gmmResourceInfo->getResourceFlags()->Gpu.Depth;
+        const bool isDepthResource = gmm->gmmResourceInfo->isDepthResource();
         surfaceState->setDepthStencilResource(isDepthResource);
     }
 }

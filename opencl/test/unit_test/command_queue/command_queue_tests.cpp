@@ -2485,7 +2485,7 @@ TEST(CommandQueue, given64KBTileWith3DImageTypeWhenCallingBlitEnqueueImageAllowe
                 auto imageType = image->getImageDesc().image_type;
                 auto gfxAllocation = image->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex());
                 auto mockGmmResourceInfo = reinterpret_cast<MockGmmResourceInfo *>(gfxAllocation->getDefaultGmm()->gmmResourceInfo.get());
-                mockGmmResourceInfo->getResourceFlags()->Info.Tile64 = isTile64;
+                mockGmmResourceInfo->mockResourceCreateParams.Flags.Info.Tile64 = isTile64;
 
                 if (isTile64 && (imageType == CL_MEM_OBJECT_IMAGE3D)) {
                     auto supportExpected = productHelper.isTile64With3DSurfaceOnBCSSupported(hwInfo) && blitterEnabled;

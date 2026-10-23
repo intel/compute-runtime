@@ -473,7 +473,7 @@ TEST_F(GmmLocalMemoryTests, givenUseLocalMemoryInImageInfoTrueWhenGmmIsCreatedTh
     storageInfo.memoryBanks.set(1);
 
     auto gmm = std::make_unique<Gmm>(getGmmHelper(), imgInfo, storageInfo, false);
-    auto *gmmResourceFlags = gmm->gmmResourceInfo->getResourceFlags();
+    auto *gmmResourceFlags = &static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get())->mockResourceCreateParams.Flags;
 
     EXPECT_EQ(0u, gmmResourceFlags->Info.NonLocalOnly);
     EXPECT_EQ(0u, gmmResourceFlags->Info.LocalOnly);
@@ -504,7 +504,7 @@ TEST_F(GmmLocalMemoryTests, givenUseCompressionAndLocalMemoryInImageInfoTrueWhen
 
     auto gmm = std::make_unique<Gmm>(getGmmHelper(), imgInfo, storageInfo, true);
     EXPECT_TRUE(gmm->isCompressionEnabled());
-    auto *gmmResourceFlags = gmm->gmmResourceInfo->getResourceFlags();
+    auto *gmmResourceFlags = &static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get())->mockResourceCreateParams.Flags;
     EXPECT_EQ(0u, gmmResourceFlags->Info.NonLocalOnly);
     EXPECT_EQ(1u, gmmResourceFlags->Info.LocalOnly);
     EXPECT_EQ(1u, gmmResourceFlags->Info.NotLockable);

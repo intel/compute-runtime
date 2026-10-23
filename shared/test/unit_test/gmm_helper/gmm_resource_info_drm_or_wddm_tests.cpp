@@ -40,10 +40,6 @@ class GmmResourceInfoDrmOrWddmTest : public ::testing::Test {
     std::unique_ptr<GmmResourceInfo> gmmResourceInfo;
 };
 
-TEST_F(GmmResourceInfoDrmOrWddmTest, givenDrmOrWddmImplementationWhenIsResourceDenyCompressionEnabledIsCalledThenReturnsFalse) {
-    EXPECT_FALSE(gmmResourceInfo->isResourceDenyCompressionEnabled());
-}
-
 TEST_F(GmmResourceInfoDrmOrWddmTest, givenDrmOrWddmImplementationWhenIsDisplayableIsCalledThenReturnsFalse) {
     EXPECT_FALSE(gmmResourceInfo->isDisplayable());
 }

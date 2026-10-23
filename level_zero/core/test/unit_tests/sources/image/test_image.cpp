@@ -2485,7 +2485,7 @@ HWTEST2_F(ImageView, givenMediaCompressedPlanarImageWhenCreatingPlaneViewsThenCo
     auto gmm = image->getAllocation()->getDefaultGmm();
     ASSERT_NE(nullptr, gmm);
     gmm->setCompressionEnabled(true);
-    static_cast<NEO::MockGmmResourceInfo *>(gmm->gmmResourceInfo.get())->getResourceFlags()->Info.MediaCompressed = true;
+    static_cast<NEO::MockGmmResourceInfo *>(gmm->gmmResourceInfo.get())->mockResourceCreateParams.Flags.Info.MediaCompressed = true;
     auto gmmClientContext = static_cast<NEO::MockGmmClientContext *>(device->getNEODevice()->getGmmHelper()->getClientContext());
 
     struct {

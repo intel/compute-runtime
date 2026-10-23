@@ -352,7 +352,7 @@ HWTEST2_F(ImageClearColorFixture, givenImageForXeHPAndLaterWhenClearColorParamet
 
     std::unique_ptr<ImageHw<FamilyType>> imageHw(static_cast<ImageHw<FamilyType> *>(ImageHelperUlt<Image2dDefaults>::create(&context)));
     auto gmm = imageHw->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getDefaultGmm();
-    gmm->gmmResourceInfo->getResourceFlags()->Gpu.IndirectClearColor = 1;
+    static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get())->mockResourceCreateParams.Flags.Gpu.IndirectClearColor = 1;
     EncodeSurfaceState<FamilyType>::setClearColorParams(&surfaceState, gmm);
 
     EXPECT_EQ(true, surfaceState.getClearValueAddressEnable());
@@ -394,7 +394,7 @@ HWTEST2_F(ImageClearColorFixture, givenImageForXeHPAndLaterWhenCanonicalAddresFo
     std::unique_ptr<ImageHw<FamilyType>> imageHw(static_cast<ImageHw<FamilyType> *>(ImageHelperUlt<Image2dDefaults>::create(&context)));
 
     auto gmm = imageHw->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getDefaultGmm();
-    gmm->gmmResourceInfo->getResourceFlags()->Gpu.IndirectClearColor = 1;
+    static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get())->mockResourceCreateParams.Flags.Gpu.IndirectClearColor = 1;
     EXPECT_NO_THROW(EncodeSurfaceState<FamilyType>::setClearColorParams(&surfaceState, gmm));
 
     uint64_t nonCanonicalAddress = ((static_cast<uint64_t>(surfaceState.getClearColorAddressHigh()) << 32) | surfaceState.getClearColorAddress());
@@ -412,7 +412,7 @@ HWTEST2_F(XeHPAndLaterImageTests, givenMediaCompressionWhenAppendingNewAllocatio
     std::unique_ptr<Image> image(Image2dHelperUlt<>::create(&context, &imgDesc));
     auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
     auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
-    imageHw->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getDefaultGmm()->gmmResourceInfo->getResourceFlags()->Info.MediaCompressed = true;
+    static_cast<MockGmmResourceInfo *>(imageHw->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getDefaultGmm()->gmmResourceInfo.get())->mockResourceCreateParams.Flags.Info.MediaCompressed = true;
     surfaceState.setAuxiliarySurfaceMode(RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
 
     EncodeSurfaceState<FamilyType>::setImageAuxParamsForCCS(&surfaceState,
@@ -443,14 +443,14 @@ HWTEST2_F(XeHPAndLaterImageTests, givenCompressionWhenAppendingNewAllocationThen
     auto rootDeviceIndex = context.getDevice(0)->getRootDeviceIndex();
     auto gmm = imageHw->getGraphicsAllocation(rootDeviceIndex)->getDefaultGmm();
 
-    gmm->gmmResourceInfo->getResourceFlags()->Info.RenderCompressed = true;
+    static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get())->mockResourceCreateParams.Flags.Info.RenderCompressed = true;
     gmm->setCompressionEnabled(true);
 
     auto mcsGmm = new MockGmm(context.getDevice(0)->getGmmHelper());
     mcsGmm->setCompressionEnabled(true);
-    mcsGmm->gmmResourceInfo->getResourceFlags()->Info.RenderCompressed = true;
-    mcsGmm->gmmResourceInfo->getResourceFlags()->Gpu.UnifiedAuxSurface = true;
-    mcsGmm->gmmResourceInfo->getResourceFlags()->Gpu.CCS = true;
+    static_cast<MockGmmResourceInfo *>(mcsGmm->gmmResourceInfo.get())->mockResourceCreateParams.Flags.Info.RenderCompressed = true;
+    static_cast<MockGmmResourceInfo *>(mcsGmm->gmmResourceInfo.get())->mockResourceCreateParams.Flags.Gpu.UnifiedAuxSurface = true;
+    static_cast<MockGmmResourceInfo *>(mcsGmm->gmmResourceInfo.get())->mockResourceCreateParams.Flags.Gpu.CCS = true;
 
     auto mcsAlloc = context.getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, 1});
     mcsAlloc->setDefaultGmm(mcsGmm);
@@ -504,7 +504,7 @@ HWTEST2_F(XeHPAndLaterImageHelperTests, givenMediaCompressedImageWhenAppendingSu
     RENDER_SURFACE_STATE rss{};
     platformsImpl->clear();
     rss.setMemoryCompressionEnable(true);
-    mockGmmResourceInfo->getResourceFlags()->Info.MediaCompressed = true;
+    mockGmmResourceInfo->mockResourceCreateParams.Flags.Info.MediaCompressed = true;
     gmmClientContext->compressionFormatToReturn = mockCompressionFormat;
     const auto expectedGetSurfaceStateCompressionFormatCalled = gmmClientContext->getSurfaceStateCompressionFormatCalled;
     const auto expectedGetMediaSurfaceStateCompressionFormatCalled = gmmClientContext->getMediaSurfaceStateCompressionFormatCalled + 1;
@@ -523,7 +523,7 @@ HWTEST2_F(XeHPAndLaterImageHelperTests, givenMediaCompressedPlanarImageWhenAppen
     RENDER_SURFACE_STATE rss{};
     platformsImpl->clear();
     rss.setMemoryCompressionEnable(true);
-    mockGmmResourceInfo->getResourceFlags()->Info.MediaCompressed = true;
+    mockGmmResourceInfo->mockResourceCreateParams.Flags.Info.MediaCompressed = true;
 
     struct {
         uint8_t returnedCompressionFormat;
@@ -564,7 +564,7 @@ HWTEST2_F(XeHPAndLaterImageHelperTests, givenNotMediaCompressedImageWhenAppendin
     RENDER_SURFACE_STATE rss{};
     platformsImpl->clear();
     rss.setMemoryCompressionEnable(true);
-    mockGmmResourceInfo->getResourceFlags()->Info.MediaCompressed = false;
+    mockGmmResourceInfo->mockResourceCreateParams.Flags.Info.MediaCompressed = false;
     gmmClientContext->compressionFormatToReturn = mockCompressionFormat;
     const auto expectedGetSurfaceStateCompressionFormatCalled = gmmClientContext->getSurfaceStateCompressionFormatCalled + 1;
     const auto expectedGetMediaSurfaceStateCompressionFormatCalled = gmmClientContext->getMediaSurfaceStateCompressionFormatCalled;
@@ -584,7 +584,7 @@ HWTEST2_F(XeHPAndLaterImageHelperTests, givenAuxModeMcsLceWhenAppendingSurfaceSt
     platformsImpl->clear();
     rss.setMemoryCompressionEnable(false);
     rss.setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_MCS_LCE);
-    mockGmmResourceInfo->getResourceFlags()->Info.MediaCompressed = true;
+    mockGmmResourceInfo->mockResourceCreateParams.Flags.Info.MediaCompressed = true;
     gmmClientContext->compressionFormatToReturn = mockCompressionFormat;
     const auto expectedGetSurfaceStateCompressionFormatCalled = gmmClientContext->getSurfaceStateCompressionFormatCalled;
     const auto expectedGetMediaSurfaceStateCompressionFormatCalled = gmmClientContext->getMediaSurfaceStateCompressionFormatCalled + 1;

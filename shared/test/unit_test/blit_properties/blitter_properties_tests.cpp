@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -57,7 +57,7 @@ class BlitPropertiesTests : public Test<DeviceFixture> {
 };
 
 TEST_F(BlitPropertiesTests, givenBlitPropertiesWhenSrcIs1DTiledArrayThenTransformFrom1dArrayTo2DArray) {
-    resourceInfoSrc->getResourceFlags()->Info.Tile64 = 1;
+    resourceInfoSrc->mockResourceCreateParams.Flags.Info.Tile64 = 1;
     resourceInfoSrc->mockResourceCreateParams.Type = GMM_RESOURCE_TYPE::RESOURCE_1D;
     resourceInfoSrc->mockResourceCreateParams.ArraySize = 8;
     blitProperties.transform1DArrayTo2DArrayIfNeeded();
@@ -79,7 +79,7 @@ TEST_F(BlitPropertiesTests, givenBlitPropertiesWhenSrcIs1DTiledArrayThenTransfor
 }
 
 TEST_F(BlitPropertiesTests, givenBlitPropertiesWhenDstIs1DTiledArrayThenTransformFrom1dArrayTo2DArray) {
-    resourceInfoDst->getResourceFlags()->Info.Tile64 = 1;
+    resourceInfoDst->mockResourceCreateParams.Flags.Info.Tile64 = 1;
     resourceInfoDst->mockResourceCreateParams.Type = GMM_RESOURCE_TYPE::RESOURCE_1D;
     resourceInfoDst->mockResourceCreateParams.ArraySize = 8;
     blitProperties.transform1DArrayTo2DArrayIfNeeded();
@@ -120,26 +120,26 @@ TEST_F(BlitPropertiesTests, givenBlitPropertiesWhenDstAndSrcIsNot1DTiledArrayThe
 }
 
 TEST_F(BlitPropertiesTests, givenGmmResInfoForTiled1DArrayWhenIs1DTiledArrayCalledThenTrueReturned) {
-    resourceInfoSrc->getResourceFlags()->Info.Tile64 = 1;
+    resourceInfoSrc->mockResourceCreateParams.Flags.Info.Tile64 = 1;
     resourceInfoSrc->mockResourceCreateParams.Type = GMM_RESOURCE_TYPE::RESOURCE_1D;
     resourceInfoSrc->mockResourceCreateParams.ArraySize = 8;
     EXPECT_TRUE(blitProperties.is1DTiledArray(resourceInfoSrc));
 }
 TEST_F(BlitPropertiesTests, givenGmmResInfoForTiled2DArrayWhenIs1DTiledArrayCalledThenFalseReturned) {
-    resourceInfoSrc->getResourceFlags()->Info.Tile64 = 1;
+    resourceInfoSrc->mockResourceCreateParams.Flags.Info.Tile64 = 1;
     resourceInfoSrc->mockResourceCreateParams.Type = GMM_RESOURCE_TYPE::RESOURCE_2D;
     resourceInfoSrc->mockResourceCreateParams.ArraySize = 8;
     EXPECT_FALSE(blitProperties.is1DTiledArray(resourceInfoSrc));
 }
 
 TEST_F(BlitPropertiesTests, givenGmmResInfoForNotTiled1DArrayWhenIs1DTiledArrayCalledThenFalseReturned) {
-    resourceInfoSrc->getResourceFlags()->Info.Tile64 = 0;
+    resourceInfoSrc->mockResourceCreateParams.Flags.Info.Tile64 = 0;
     resourceInfoSrc->mockResourceCreateParams.Type = GMM_RESOURCE_TYPE::RESOURCE_1D;
     resourceInfoSrc->mockResourceCreateParams.ArraySize = 8;
     EXPECT_FALSE(blitProperties.is1DTiledArray(resourceInfoSrc));
 }
 TEST_F(BlitPropertiesTests, givenGmmResInfoForTiled1DWhenIs1DTiledArrayCalledThenFalseReturned) {
-    resourceInfoSrc->getResourceFlags()->Info.Tile64 = 1;
+    resourceInfoSrc->mockResourceCreateParams.Flags.Info.Tile64 = 1;
     resourceInfoSrc->mockResourceCreateParams.Type = GMM_RESOURCE_TYPE::RESOURCE_1D;
     resourceInfoSrc->mockResourceCreateParams.ArraySize = 1;
     EXPECT_FALSE(blitProperties.is1DTiledArray(resourceInfoSrc));

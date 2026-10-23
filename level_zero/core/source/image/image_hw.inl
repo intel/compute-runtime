@@ -492,7 +492,7 @@ void ImageCoreFamily<gfxCoreFamily>::encodeSurfaceStateReduced(const SurfaceStat
         }
 
         inputs.isDepthStencilResource =
-            (gmm != nullptr) && (this->depthStencilImage || gmm->gmmResourceInfo->getResourceFlags()->Gpu.Depth);
+            (gmm != nullptr) && (this->depthStencilImage || gmm->gmmResourceInfo->isDepthResource());
         return inputs;
     };
 
@@ -517,7 +517,7 @@ void ImageCoreFamily<gfxCoreFamily>::encodeSurfaceStateReduced(const SurfaceStat
                                               ? RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ONE
                                               : RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA;
 
-        inputs.isDepthStencilResource = (gmm != nullptr) && gmm->gmmResourceInfo->getResourceFlags()->Gpu.Depth;
+        inputs.isDepthStencilResource = (gmm != nullptr) && gmm->gmmResourceInfo->isDepthResource();
         return inputs;
     };
 
@@ -592,7 +592,7 @@ void ImageCoreFamily<gfxCoreFamily>::encodeSurfaceStateFull(const SurfaceStateSl
             NEO::ImageSurfaceStateHelper<GfxFamily>::setUnifiedAuxBaseAddress(surfaceState, mcsGmm);
         } else {
             using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
-            const bool isDepthResource = this->depthStencilImage || (gmm && gmm->gmmResourceInfo->getResourceFlags()->Gpu.Depth);
+            const bool isDepthResource = this->depthStencilImage || (gmm && gmm->gmmResourceInfo->isDepthResource());
             if (isDepthResource && surfaceState->getSurfaceFormat() != SURFACE_FORMAT::SURFACE_FORMAT_R32_FLOAT_X8X24_TYPELESS) {
                 surfaceState->setMultisampledSurfaceStorageFormat(
                     RENDER_SURFACE_STATE::MULTISAMPLED_SURFACE_STORAGE_FORMAT::MULTISAMPLED_SURFACE_STORAGE_FORMAT_DEPTH_STENCIL);
@@ -642,7 +642,7 @@ void ImageCoreFamily<gfxCoreFamily>::encodeSurfaceStateFull(const SurfaceStateSl
         }
 
         if (gmm) {
-            const bool isDepthResource = this->depthStencilImage || gmm->gmmResourceInfo->getResourceFlags()->Gpu.Depth;
+            const bool isDepthResource = this->depthStencilImage || gmm->gmmResourceInfo->isDepthResource();
             dst.setDepthStencilResource(isDepthResource);
         }
     };
@@ -682,7 +682,7 @@ void ImageCoreFamily<gfxCoreFamily>::encodeSurfaceStateFull(const SurfaceStateSl
         }
 
         if (gmm) {
-            const bool isDepthResource = gmm->gmmResourceInfo->getResourceFlags()->Gpu.Depth;
+            const bool isDepthResource = gmm->gmmResourceInfo->isDepthResource();
             dst.setDepthStencilResource(isDepthResource);
         }
     };

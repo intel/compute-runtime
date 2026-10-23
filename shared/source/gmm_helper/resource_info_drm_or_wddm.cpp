@@ -9,12 +9,8 @@
 
 namespace NEO {
 
-uint64_t GmmResourceInfo::getDriverProtectionBits(bool compressionDenied) {
+uint64_t GmmResourceInfo::getDriverProtectionBits() {
     return static_cast<uint64_t>(resourceInfo->GetDriverProtectionBits({}));
-}
-
-bool GmmResourceInfo::isResourceDenyCompressionEnabled() {
-    return false;
 }
 
 bool GmmResourceInfo::isDisplayable() const {

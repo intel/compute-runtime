@@ -470,9 +470,10 @@ struct GmmMediaCompressedTests : public GmmHelperTests {
         gmmRequirements.allowLargePages = true;
         gmmRequirements.preferCompressed = true;
         gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 4, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, info, gmmRequirements);
-        flags = gmm->gmmResourceInfo->getResourceFlags();
+        flags = &static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get())->mockResourceCreateParams.Flags;
         flags->Gpu.CCS = true;
         flags->Gpu.UnifiedAuxSurface = true;
+        flags->Info.NotCompressed = 0;
     }
     std::unique_ptr<Gmm> gmm;
     GMM_RESOURCE_FLAG *flags;
@@ -578,9 +579,9 @@ TEST_F(GmmHelperTests, givenAllValidFlagsWhenAskedForUnifiedAuxTranslationCapabi
     auto mockResource = reinterpret_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
 
     mockResource->setUnifiedAuxTranslationCapable();
-    EXPECT_EQ(1u, mockResource->mockResourceCreateParams.Flags.Gpu.CCS);
+    EXPECT_TRUE(mockResource->isCCS());
     EXPECT_EQ(1u, mockResource->mockResourceCreateParams.Flags.Gpu.UnifiedAuxSurface);
-    EXPECT_EQ(1u, mockResource->mockResourceCreateParams.Flags.Info.RenderCompressed);
+    EXPECT_EQ(GmmCompressionType::render, mockResource->getCompressionType());
 
     EXPECT_TRUE(gmm->unifiedAuxTranslationCapable());
 }
@@ -1504,7 +1505,7 @@ HWTEST2_F(GmmCompressionTests, givenGmmCreatedFromExistingGmmWithRenderCompressi
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
     MockGmm gmm(getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
-    auto flags = gmm.gmmResourceInfo->getResourceFlags();
+    auto flags = &static_cast<MockGmmResourceInfo *>(gmm.gmmResourceInfo.get())->mockResourceCreateParams.Flags;
     flags->Gpu.CCS = true;
     flags->Gpu.UnifiedAuxSurface = true;
     flags->Info.MediaCompressed = true;

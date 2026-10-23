@@ -33,10 +33,7 @@ class MockGmmResourceInfo : public GmmResourceInfo {
 
     size_t getRenderPitch() override { return rowPitch; }
 
-    uint64_t getDriverProtectionBits(bool compressionDenied) override {
-        driverProtectionBitsCompressionOverride = compressionDenied;
-        return driverProtectionBits;
-    }
+    uint64_t getDriverProtectionBits() override { return driverProtectionBits; }
 
     uint32_t getNumSamples() override { return mockResourceCreateParams.MSAA.NumSamples; }
 
@@ -68,7 +65,19 @@ class MockGmmResourceInfo : public GmmResourceInfo {
 
     GMM_RESOURCE_USAGE_TYPE getResourceUsage() { return mockResourceCreateParams.Usage; }
 
-    GMM_RESOURCE_FLAG *getResourceFlags() override { return &mockResourceCreateParams.Flags; }
+    ImageTilingMode getTilingMode() override;
+
+    GmmCompressionType getCompressionType() override;
+
+    bool isCacheable() override { return mockResourceCreateParams.Flags.Info.Cacheable; }
+
+    bool isDepthResource() override { return mockResourceCreateParams.Flags.Gpu.Depth; }
+
+    bool isMCS() override { return mockResourceCreateParams.Flags.Gpu.MCS; }
+
+    bool isIndirectClearColor() override { return mockResourceCreateParams.Flags.Gpu.IndirectClearColor; }
+
+    bool isCCS() override { return mockResourceCreateParams.Flags.Gpu.CCS; }
 
     GMM_STATUS getOffset(GMM_REQ_OFFSET_INFO &reqOffsetInfo) override;
 
@@ -121,7 +130,6 @@ class MockGmmResourceInfo : public GmmResourceInfo {
     using GmmResourceInfo::gmmResourceHandle;
 
     uint64_t driverProtectionBits = 0;
-    bool driverProtectionBitsCompressionOverride = false;
     uint32_t getOffsetCalled = 0u;
     uint32_t arrayIndexPassedToGetOffset = 0;
     SurfaceFormatInfo tempSurface{};
@@ -150,4 +158,15 @@ class MockGmmResourceInfo : public GmmResourceInfo {
     uint32_t auxQPitch = 1u;
     uint32_t mipTailStartLod = 0;
 };
+
+class MockGmmResourceInfoWithFlags : public GmmResourceInfo {
+  public:
+    MockGmmResourceInfoWithFlags() = default;
+
+    GMM_RESOURCE_FLAG resourceFlags = {};
+
+  protected:
+    GMM_RESOURCE_FLAG *getResourceFlags() override { return &resourceFlags; }
+};
+
 } // namespace NEO

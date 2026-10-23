@@ -20,8 +20,8 @@ HWTEST_F(EnqueueCopyImageTest, whenImagesCheckedForPackageFormatThenFalseIsRetur
     auto dstAllocation1 = dstImage1->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
     auto srcMockGmmResourceInfo1 = reinterpret_cast<MockGmmResourceInfo *>(srcAllocation1->getDefaultGmm()->gmmResourceInfo.get());
     auto dstMockGmmResourceInfo1 = reinterpret_cast<MockGmmResourceInfo *>(dstAllocation1->getDefaultGmm()->gmmResourceInfo.get());
-    srcMockGmmResourceInfo1->getResourceFlags()->Info.Tile64 = 1;
-    dstMockGmmResourceInfo1->getResourceFlags()->Info.Tile64 = 1;
+    srcMockGmmResourceInfo1->mockResourceCreateParams.Flags.Info.Tile64 = 1;
+    dstMockGmmResourceInfo1->mockResourceCreateParams.Flags.Info.Tile64 = 1;
 
     auto srcImageDescriptor1 = Image::convertDescriptor(srcImage1->getImageDesc());
     ClSurfaceFormatInfo srcSurfaceFormatInfo1 = srcImage1->getSurfaceFormatInfo();
@@ -59,8 +59,8 @@ HWTEST_F(EnqueueCopyImageTest, givenPackedSurfaceStateWhenCopyingImageThenSurfac
     std::unique_ptr<ImageHw<FamilyType>> dstImage(static_cast<ImageHw<FamilyType> *>(Image2dHelperUlt<>::create(context)));
     auto srcMockGmmResourceInfo = reinterpret_cast<MockGmmResourceInfo *>(srcImage->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getDefaultGmm()->gmmResourceInfo.get());
     auto dstMockGmmResourceInfo = reinterpret_cast<MockGmmResourceInfo *>(dstImage->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getDefaultGmm()->gmmResourceInfo.get());
-    srcMockGmmResourceInfo->getResourceFlags()->Info.Tile64 = 1;
-    dstMockGmmResourceInfo->getResourceFlags()->Info.Tile64 = 1;
+    srcMockGmmResourceInfo->mockResourceCreateParams.Flags.Info.Tile64 = 1;
+    dstMockGmmResourceInfo->mockResourceCreateParams.Flags.Info.Tile64 = 1;
 
     auto retVal = EnqueueCopyImageHelper<>::enqueueCopyImage(
         pCmdQ,

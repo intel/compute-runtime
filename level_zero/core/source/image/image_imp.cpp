@@ -450,7 +450,7 @@ bool ImageImp::writeImplicitArgsToTag() {
 
 cl_channel_type ImageImp::overrideChannelTypeForDepthInt24Image(cl_channel_type clChannelType, bool isDepthStencil,
                                                                 NEO::GraphicsAllocation *allocation) {
-    bool isDepthResource = isDepthStencil || (allocation && allocation->getDefaultGmm() && allocation->getDefaultGmm()->gmmResourceInfo->getResourceFlags()->Gpu.Depth && static_cast<int>(clChannelType) == CL_INVALID_VALUE);
+    bool isDepthResource = isDepthStencil || (allocation && allocation->getDefaultGmm() && allocation->getDefaultGmm()->gmmResourceInfo->isDepthResource() && static_cast<int>(clChannelType) == CL_INVALID_VALUE);
     if (isDepthResource && static_cast<int>(clChannelType) != CL_FLOAT) {
         return CL_UNORM_INT24;
     }

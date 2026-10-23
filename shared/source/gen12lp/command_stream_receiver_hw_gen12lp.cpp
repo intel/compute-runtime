@@ -235,7 +235,7 @@ void BlitCommandsHelper<Family>::getBlitAllocationProperties(const GraphicsAlloc
                                                              const RootDeviceEnvironment &rootDeviceEnvironment, ImagePlane plane) {
     if (allocation.getDefaultGmm()) {
         auto gmmResourceInfo = allocation.getDefaultGmm()->gmmResourceInfo.get();
-        if (!gmmResourceInfo->getResourceFlags()->Info.Linear) {
+        if (gmmResourceInfo->getTilingMode() != ImageTilingMode::notTiled) {
             qPitch = gmmResourceInfo->getQPitch() ? static_cast<uint32_t>(gmmResourceInfo->getQPitch()) : qPitch;
             pitch = gmmResourceInfo->getRenderPitch() ? static_cast<uint32_t>(gmmResourceInfo->getRenderPitch()) : pitch;
         }

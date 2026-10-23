@@ -6961,7 +6961,7 @@ HWTEST2_F(DrmAllocationTests, givenPat19OverrideWhenGettingPatThenOnlyCacheableS
                                      GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements);
 
     debugManager.flags.EnableOverrideToPat19ForSystemMemory.set(1);
-    gmm->gmmResourceInfo->getResourceFlags()->Info.Cacheable = true;
+    static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get())->mockResourceCreateParams.Flags.Info.Cacheable = true;
     const auto getPatIndex = [&](Gmm *resource, bool isSystemMemory) {
         return drm.getPatIndex(resource, AllocationType::buffer, CacheRegion::defaultRegion,
                                CachePolicy::writeBack, false, isSystemMemory, true);
@@ -6971,11 +6971,11 @@ HWTEST2_F(DrmAllocationTests, givenPat19OverrideWhenGettingPatThenOnlyCacheableS
     EXPECT_EQ(19u, getPatIndex(nullptr, true));
     EXPECT_EQ(MockGmmClientContextBase::MockPatIndex::cached, getPatIndex(gmm.get(), false));
 
-    gmm->gmmResourceInfo->getResourceFlags()->Info.Cacheable = false;
+    static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get())->mockResourceCreateParams.Flags.Info.Cacheable = false;
     EXPECT_EQ(MockGmmClientContextBase::MockPatIndex::cached, getPatIndex(gmm.get(), true));
 
     debugManager.flags.EnableOverrideToPat19ForSystemMemory.set(0);
-    gmm->gmmResourceInfo->getResourceFlags()->Info.Cacheable = true;
+    static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get())->mockResourceCreateParams.Flags.Info.Cacheable = true;
     EXPECT_EQ(MockGmmClientContextBase::MockPatIndex::cached, getPatIndex(gmm.get(), true));
 }
 
@@ -7008,7 +7008,7 @@ TEST_F(DrmAllocationTests, givenForceCoherentTrueWithGmmWhenUncachedThenGmmCache
     gmmRequirements.preferCompressed = false;
     auto gmm = std::make_unique<Gmm>(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getGmmHelper(),
                                      nullptr, 4096, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements);
-    gmm->gmmResourceInfo->getResourceFlags()->Info.Cacheable = 0;
+    static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get())->mockResourceCreateParams.Flags.Info.Cacheable = 0;
 
     drm.getPatIndex(gmm.get(), AllocationType::buffer, CacheRegion::defaultRegion, CachePolicy::writeBack, false, true, true);
     EXPECT_FALSE(mockClientContext->passedCacheableSettingForGetPatIndexQuery);
@@ -7042,7 +7042,7 @@ TEST_F(DrmAllocationTests, givenGmmAndMemoryPropertiesWhenGettingPatThenPreserve
         releaseHelperPtr->isAppTransientCoherentPatRequiredResult = !supports2WayCoherency;
         for (const bool withGmm : {false, true}) {
             for (const bool gmmCacheable : {false, true}) {
-                gmm->gmmResourceInfo->getResourceFlags()->Info.Cacheable = gmmCacheable;
+                static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get())->mockResourceCreateParams.Flags.Info.Cacheable = gmmCacheable;
                 for (const bool isSystemMemory : {false, true}) {
                     for (const bool forceCoherent : {false, true}) {
                         clientContext->passedUsageTypeForGetPatIndexQuery.reset();
@@ -7059,7 +7059,7 @@ TEST_F(DrmAllocationTests, givenGmmAndMemoryPropertiesWhenGettingPatThenPreserve
                         EXPECT_EQ(cacheable, clientContext->passedCacheableSettingForGetPatIndexQuery);
                         EXPECT_EQ(selectCoherentUsage && supports2WayCoherency ? MockGmmClientContextBase::MockPatIndex::twoWayCoherent : MockGmmClientContextBase::MockPatIndex::cached, patIndex);
                         EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_BUFFER, gmm->getResourceUsageType());
-                        EXPECT_EQ(gmmCacheable, gmm->gmmResourceInfo->getResourceFlags()->Info.Cacheable);
+                        EXPECT_EQ(gmmCacheable, gmm->gmmResourceInfo->isCacheable());
                     }
                 }
             }
@@ -7829,7 +7829,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenIsaAllocationTypeWhenAllocating32B
         ASSERT_NE(nullptr, allocation->getDefaultGmm());
         EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER, allocation->getDefaultGmm()->getResourceUsageType());
         EXPECT_FALSE(allocation->getDefaultGmm()->isCompressionEnabled());
-        EXPECT_TRUE(allocation->getDefaultGmm()->gmmResourceInfo->getResourceFlags()->Info.Cacheable);
+        EXPECT_TRUE(allocation->getDefaultGmm()->gmmResourceInfo->isCacheable());
         EXPECT_TRUE(allocation->isAllocationLockable());
         const auto isCoherent = device->getProductHelper().isCoherentAllocation(allocation->getBO()->peekPatIndex());
         EXPECT_FALSE(isCoherent.has_value() && !isCoherent.value());
@@ -11037,7 +11037,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenCompress
 
         {
             gmm->setCompressionEnabled(true);
-            gmm->gmmResourceInfo->getResourceFlags()->Info.Cacheable = 1;
+            static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get())->mockResourceCreateParams.Flags.Info.Cacheable = 1;
 
             mock->getPatIndex(allocation->getDefaultGmm(), allocation->getAllocationType(), CacheRegion::defaultRegion, CachePolicy::writeBack, false, false, false);
 
@@ -11047,7 +11047,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenCompress
 
         {
             gmm->setCompressionEnabled(false);
-            gmm->gmmResourceInfo->getResourceFlags()->Info.Cacheable = 0;
+            static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get())->mockResourceCreateParams.Flags.Info.Cacheable = 0;
 
             mock->getPatIndex(allocation->getDefaultGmm(), allocation->getAllocationType(), CacheRegion::defaultRegion, CachePolicy::writeBack, false, false, false);
 

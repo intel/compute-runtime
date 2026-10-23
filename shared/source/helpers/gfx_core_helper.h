@@ -128,7 +128,6 @@ class GfxCoreHelper {
     virtual size_t getTimestampPacketAllocatorAlignment() const = 0;
     virtual size_t getSingleTimestampPacketSize() const = 0;
     virtual void applyAdditionalCompressionSettings(Gmm &gmm, bool isNotCompressed) const = 0;
-    virtual bool isCompressionAppliedForImportedResource(Gmm &gmm) const = 0;
     virtual void applyRenderCompressionFlag(Gmm &gmm, uint32_t isCompressed) const = 0;
     virtual bool isEngineTypeRemappingToHwSpecificRequired() const = 0;
 
@@ -371,7 +370,6 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     static size_t getSingleTimestampPacketSizeHw();
 
     void applyAdditionalCompressionSettings(Gmm &gmm, bool isNotCompressed) const override;
-    bool isCompressionAppliedForImportedResource(Gmm &gmm) const override;
 
     void applyRenderCompressionFlag(Gmm &gmm, uint32_t isCompressed) const override;
 

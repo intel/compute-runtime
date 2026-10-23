@@ -42,6 +42,6 @@ class GmmResourceInfoWddmTest : public ::testing::Test {
 };
 
 TEST_F(GmmResourceInfoWddmTest, givenWddmImplementationWhenGetDriverProtectionBitsIsCalledThenReturnsZero) {
-    uint64_t result = gmmResourceInfo->getDriverProtectionBits(false);
+    uint64_t result = gmmResourceInfo->getDriverProtectionBits();
     EXPECT_EQ(0u, result);
 }

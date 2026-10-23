@@ -90,7 +90,8 @@ void BlitCommandsHelper<GfxFamily>::appendSurfaceType(const BlitProperties &blit
         auto resInfo = blitProperties.srcAllocation->getDefaultGmm()->gmmResourceInfo.get();
         auto resourceType = resInfo->getResourceType();
         auto isArray = resInfo->getArraySize() > 1;
-        auto isTiled = resInfo->getResourceFlags()->Info.Tile4 || resInfo->getResourceFlags()->Info.Tile64;
+        auto tilingMode = resInfo->getTilingMode();
+        auto isTiled = tilingMode == ImageTilingMode::tiled4 || tilingMode == ImageTilingMode::tiled64;
 
         if (resourceType == GMM_RESOURCE_TYPE::RESOURCE_1D) {
             if (isArray || isTiled) {
@@ -110,7 +111,8 @@ void BlitCommandsHelper<GfxFamily>::appendSurfaceType(const BlitProperties &blit
         auto resInfo = blitProperties.dstAllocation->getDefaultGmm()->gmmResourceInfo.get();
         auto resourceType = resInfo->getResourceType();
         auto isArray = resInfo->getArraySize() > 1;
-        auto isTiled = resInfo->getResourceFlags()->Info.Tile4 || resInfo->getResourceFlags()->Info.Tile64;
+        auto tilingMode = resInfo->getTilingMode();
+        auto isTiled = tilingMode == ImageTilingMode::tiled4 || tilingMode == ImageTilingMode::tiled64;
 
         if (resourceType == GMM_RESOURCE_TYPE::RESOURCE_1D) {
             if (isArray || isTiled) {
@@ -181,23 +183,22 @@ void BlitCommandsHelper<GfxFamily>::getBlitAllocationProperties(const GraphicsAl
     if (allocation.getDefaultGmm()) {
         auto gmmResourceInfo = allocation.getDefaultGmm()->gmmResourceInfo.get();
         mipTailLod = gmmResourceInfo->getMipTailStartLODSurfaceState();
-        auto resInfo = gmmResourceInfo->getResourceFlags()->Info;
-        if (resInfo.Tile4) {
-            tileType = ImageTilingMode::tiled4;
-        } else if (resInfo.Tile64) {
-            tileType = ImageTilingMode::tiled64;
+        auto tilingMode = gmmResourceInfo->getTilingMode();
+        if (tilingMode == ImageTilingMode::tiled4 || tilingMode == ImageTilingMode::tiled64) {
+            tileType = tilingMode;
         }
 
-        if (!resInfo.Linear) {
+        if (tilingMode != ImageTilingMode::notTiled) {
             qPitch = gmmResourceInfo->getQPitch() ? static_cast<uint32_t>(gmmResourceInfo->getQPitch()) : qPitch;
             pitch = gmmResourceInfo->getRenderPitch() ? static_cast<uint32_t>(gmmResourceInfo->getRenderPitch()) : pitch;
         }
 
         auto gmmClientContext = rootDeviceEnvironment.getGmmClientContext();
-        if (resInfo.MediaCompressed) {
+        auto compressionType = gmmResourceInfo->getCompressionType();
+        if (compressionType == GmmCompressionType::media) {
             compressionDetails = gmmClientContext->getMediaSurfaceStateCompressionFormat(gmmResourceInfo->getResourceFormat());
             EncodeWA<GfxFamily>::adjustCompressionFormatForPlanarImage(compressionDetails, static_cast<int>(plane));
-        } else if (resInfo.RenderCompressed) {
+        } else if (compressionType == GmmCompressionType::render) {
             compressionDetails = gmmClientContext->getSurfaceStateCompressionFormat(gmmResourceInfo->getResourceFormat());
         }
     }

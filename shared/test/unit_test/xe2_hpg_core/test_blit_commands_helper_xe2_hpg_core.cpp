@@ -270,8 +270,9 @@ HWTEST2_F(BlitTests, givenCompressionInfoWhenAppendImageCommandsThenCorrectPrope
     for (auto &[mediaCompressedSrc, renderCompressedSrc] : params) {
         auto gmmSrc = std::make_unique<MockGmm>(pDevice->getGmmHelper());
         auto resourceInfoSrc = static_cast<MockGmmResourceInfo *>(gmmSrc->gmmResourceInfo.get());
-        resourceInfoSrc->getResourceFlags()->Info.MediaCompressed = mediaCompressedSrc;
-        resourceInfoSrc->getResourceFlags()->Info.RenderCompressed = renderCompressedSrc;
+        resourceInfoSrc->mockResourceCreateParams.Flags.Info.MediaCompressed = mediaCompressedSrc;
+        resourceInfoSrc->mockResourceCreateParams.Flags.Info.RenderCompressed = renderCompressedSrc;
+        resourceInfoSrc->mockResourceCreateParams.Flags.Info.NotCompressed = 0;
         MockGraphicsAllocation mockAllocationSrc(0, 1u /*num gmms*/, AllocationType::internalHostMemory,
                                                  reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                                  MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
@@ -281,8 +282,9 @@ HWTEST2_F(BlitTests, givenCompressionInfoWhenAppendImageCommandsThenCorrectPrope
         for (auto &[mediaCompressedDst, renderCompressedDst] : params) {
             auto gmmDst = std::make_unique<MockGmm>(pDevice->getGmmHelper());
             auto resourceInfoDst = static_cast<MockGmmResourceInfo *>(gmmDst->gmmResourceInfo.get());
-            resourceInfoDst->getResourceFlags()->Info.MediaCompressed = mediaCompressedDst;
-            resourceInfoDst->getResourceFlags()->Info.RenderCompressed = renderCompressedDst;
+            resourceInfoDst->mockResourceCreateParams.Flags.Info.MediaCompressed = mediaCompressedDst;
+            resourceInfoDst->mockResourceCreateParams.Flags.Info.RenderCompressed = renderCompressedDst;
+            resourceInfoDst->mockResourceCreateParams.Flags.Info.NotCompressed = 0;
             MockGraphicsAllocation mockAllocationDst(0, 1u /*num gmms*/, AllocationType::internalHostMemory,
                                                      reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                                      MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);

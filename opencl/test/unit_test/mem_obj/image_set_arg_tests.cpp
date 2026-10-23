@@ -1176,7 +1176,7 @@ HWTEST2_F(ImageSetArgTest, givenMediaCompressedResourceThenSurfaceModeIsNone, Su
 
     auto gmm = srcAllocation->getDefaultGmm();
 
-    gmm->gmmResourceInfo->getResourceFlags()->Info.MediaCompressed = true;
+    static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get())->mockResourceCreateParams.Flags.Info.MediaCompressed = true;
     gmm->setCompressionEnabled(true);
     srcImage->setImageArg(&surfaceState, false, 0, pClDevice->getRootDeviceIndex());
 

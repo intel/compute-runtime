@@ -9,6 +9,7 @@
 #include "shared/source/gmm_helper/client_context/gmm_handle_allocator.h"
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/surface_format_info.h"
 
 namespace NEO {
 
@@ -105,7 +106,47 @@ GMM_SURFACESTATE_FORMAT GmmResourceInfo::getResourceFormatSurfaceState() { retur
 
 GMM_RESOURCE_TYPE GmmResourceInfo::getResourceType() { return resourceInfo->GetResourceType(); }
 
-GMM_RESOURCE_FLAG *GmmResourceInfo::getResourceFlags() { return &resourceInfo->GetResFlags(); }
+ImageTilingMode GmmResourceInfo::getTilingMode() {
+    auto flags = getResourceFlags();
+    if (flags->Info.TiledW) {
+        return ImageTilingMode::tiledW;
+    }
+    if (flags->Info.TiledX) {
+        return ImageTilingMode::tiledX;
+    }
+    if (flags->Info.TiledY) {
+        return ImageTilingMode::tiledY;
+    }
+    if (flags->Info.Tile4) {
+        return ImageTilingMode::tiled4;
+    }
+    if (flags->Info.Tile64) {
+        return ImageTilingMode::tiled64;
+    }
+    return ImageTilingMode::notTiled;
+}
+
+GmmCompressionType GmmResourceInfo::getCompressionType() {
+    auto flags = getResourceFlags();
+    if (flags->Info.NotCompressed) {
+        return GmmCompressionType::none;
+    }
+    UNRECOVERABLE_IF(flags->Info.RenderCompressed && flags->Info.MediaCompressed);
+    if (flags->Info.MediaCompressed) {
+        return GmmCompressionType::media;
+    }
+    return flags->Info.RenderCompressed ? GmmCompressionType::render : GmmCompressionType::none;
+}
+
+bool GmmResourceInfo::isCacheable() { return getResourceFlags()->Info.Cacheable; }
+
+bool GmmResourceInfo::isDepthResource() { return getResourceFlags()->Gpu.Depth; }
+
+bool GmmResourceInfo::isMCS() { return getResourceFlags()->Gpu.MCS; }
+
+bool GmmResourceInfo::isIndirectClearColor() { return getResourceFlags()->Gpu.IndirectClearColor; }
+
+bool GmmResourceInfo::isCCS() { return getResourceFlags()->Gpu.CCS; }
 
 GMM_STATUS GmmResourceInfo::getOffset(GMM_REQ_OFFSET_INFO &reqOffsetInfo) { return resourceInfo->GetOffset(reqOffsetInfo); }
 

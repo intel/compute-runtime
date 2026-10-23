@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/helpers/hardware_commands_helper.h"
@@ -49,7 +50,7 @@ GEN12LPTEST_F(Gen12LpKernelTest, GivenKernelWhenAtLeastOneArgIsMediaCompressedTh
     allocation = bufferMediaCompressed.getGraphicsAllocation(pClDevice->getRootDeviceIndex());
     auto gmm2 = new MockGmm(pDevice->getGmmHelper());
     allocation->setGmm(gmm2, 0);
-    allocation->getGmm(0)->gmmResourceInfo->getResourceFlags()->Info.MediaCompressed = 1;
+    static_cast<MockGmmResourceInfo *>(allocation->getGmm(0)->gmmResourceInfo.get())->mockResourceCreateParams.Flags.Info.MediaCompressed = 1;
     cl_mem clMem2 = &bufferMediaCompressed;
     kernel.mockKernel->setArgBuffer(2, sizeof(cl_mem *), &clMem2);
 

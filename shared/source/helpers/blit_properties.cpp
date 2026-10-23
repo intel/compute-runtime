@@ -220,7 +220,8 @@ bool BlitProperties::isDst1DTiledArray() const {
 bool BlitProperties::is1DTiledArray(GmmResourceInfo *resInfo) const {
     auto resourceType = resInfo->getResourceType();
     auto isArray = resInfo->getArraySize() > 1;
-    auto isTiled = resInfo->getResourceFlags()->Info.Tile4 || resInfo->getResourceFlags()->Info.Tile64;
+    auto tilingMode = resInfo->getTilingMode();
+    auto isTiled = tilingMode == ImageTilingMode::tiled4 || tilingMode == ImageTilingMode::tiled64;
     if (resourceType == GMM_RESOURCE_TYPE::RESOURCE_1D && isTiled && isArray) {
         return true;
     }

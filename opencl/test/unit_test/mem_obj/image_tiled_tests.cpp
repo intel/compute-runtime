@@ -8,6 +8,7 @@
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_gmm.h"
+#include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -176,7 +177,7 @@ TEST_F(CreateNonTiledImageTest, GivenSharedNonTiledImageWhenCheckingIsTiledThenF
         ASSERT_NE(nullptr, image);
 
         EXPECT_FALSE(image->isTiledAllocation());
-        EXPECT_EQ(info.linearStorage, image->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getDefaultGmm()->gmmResourceInfo->getResourceFlags()->Info.Linear);
+        EXPECT_EQ(ImageTilingMode::notTiled, image->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getDefaultGmm()->gmmResourceInfo->getTilingMode());
 
         delete image;
     }

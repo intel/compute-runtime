@@ -9,6 +9,7 @@
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/image/image_surface_state.h"
 #include "shared/test/common/mocks/mock_gmm.h"
+#include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/image/image_surface_state_fixture.h"
 
@@ -22,11 +23,11 @@ GEN12LPTEST_F(ImageSurfaceStateTestsGen12LP, givenGmmWithMediaCompressedWhenSetF
     auto castSurfaceState = reinterpret_cast<typename Gen12LpFamily::RENDER_SURFACE_STATE *>(surfaceState.get());
     castSurfaceState->setAuxiliarySurfaceMode(Gen12LpFamily::RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
 
-    mockGmm->gmmResourceInfo->getResourceFlags()->Info.MediaCompressed = false;
+    static_cast<MockGmmResourceInfo *>(mockGmm->gmmResourceInfo.get())->mockResourceCreateParams.Flags.Info.MediaCompressed = false;
     EncodeSurfaceState<FamilyType>::setFlagsForMediaCompression(castSurfaceState, mockGmm.get());
     EXPECT_EQ(castSurfaceState->getAuxiliarySurfaceMode(), Gen12LpFamily::RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
     EXPECT_EQ(castSurfaceState->getMemoryCompressionEnable(), false);
-    mockGmm->gmmResourceInfo->getResourceFlags()->Info.MediaCompressed = true;
+    static_cast<MockGmmResourceInfo *>(mockGmm->gmmResourceInfo.get())->mockResourceCreateParams.Flags.Info.MediaCompressed = true;
     EncodeSurfaceState<FamilyType>::setFlagsForMediaCompression(castSurfaceState, mockGmm.get());
     EXPECT_EQ(castSurfaceState->getAuxiliarySurfaceMode(), Gen12LpFamily::RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
     EXPECT_EQ(castSurfaceState->getMemoryCompressionEnable(), true);
@@ -37,7 +38,7 @@ GEN12LPTEST_F(ImageSurfaceStateTestsGen12LP, givenGmmWhenSetClearColorParamsThen
     auto surfaceState = std::make_unique<char[]>(size);
     auto castSurfaceState = reinterpret_cast<typename Gen12LpFamily::RENDER_SURFACE_STATE *>(surfaceState.get());
 
-    mockGmm->gmmResourceInfo->getResourceFlags()->Gpu.IndirectClearColor = true;
+    static_cast<MockGmmResourceInfo *>(mockGmm->gmmResourceInfo.get())->mockResourceCreateParams.Flags.Gpu.IndirectClearColor = true;
     EncodeSurfaceState<Gen12LpFamily>::setClearColorParams(castSurfaceState, mockGmm.get());
     EXPECT_EQ(castSurfaceState->getClearValueAddressEnable(), true);
 }

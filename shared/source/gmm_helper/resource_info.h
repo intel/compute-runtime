@@ -14,6 +14,14 @@
 
 namespace NEO {
 class GmmClientContext;
+enum class ImageTilingMode;
+
+enum class GmmCompressionType : uint8_t {
+    none,
+    render,
+    media
+};
+
 class GmmResourceInfo : NonCopyableAndNonMovableClass {
   public:
     static GmmResourceInfo *create(GmmClientContext *clientContext, GMM_RESCREATE_PARAMS *resourceCreateParams);
@@ -36,9 +44,7 @@ class GmmResourceInfo : NonCopyableAndNonMovableClass {
 
     MOCKABLE_VIRTUAL size_t getRenderPitch();
 
-    MOCKABLE_VIRTUAL uint64_t getDriverProtectionBits(bool compressionDenied);
-
-    MOCKABLE_VIRTUAL bool isResourceDenyCompressionEnabled();
+    MOCKABLE_VIRTUAL uint64_t getDriverProtectionBits();
 
     MOCKABLE_VIRTUAL uint32_t getNumSamples();
 
@@ -62,7 +68,19 @@ class GmmResourceInfo : NonCopyableAndNonMovableClass {
 
     MOCKABLE_VIRTUAL GMM_RESOURCE_TYPE getResourceType();
 
-    MOCKABLE_VIRTUAL GMM_RESOURCE_FLAG *getResourceFlags();
+    MOCKABLE_VIRTUAL ImageTilingMode getTilingMode();
+
+    MOCKABLE_VIRTUAL GmmCompressionType getCompressionType();
+
+    MOCKABLE_VIRTUAL bool isCacheable();
+
+    MOCKABLE_VIRTUAL bool isDepthResource();
+
+    MOCKABLE_VIRTUAL bool isMCS();
+
+    MOCKABLE_VIRTUAL bool isIndirectClearColor();
+
+    MOCKABLE_VIRTUAL bool isCCS();
 
     MOCKABLE_VIRTUAL GMM_STATUS getOffset(GMM_REQ_OFFSET_INFO &reqOffsetInfo);
 
@@ -93,6 +111,8 @@ class GmmResourceInfo : NonCopyableAndNonMovableClass {
     MOCKABLE_VIRTUAL void refreshHandle();
 
   protected:
+    MOCKABLE_VIRTUAL GMM_RESOURCE_FLAG *getResourceFlags() { return &resourceInfo->GetResFlags(); }
+
     using UniquePtrType = std::unique_ptr<GMM_RESOURCE_INFO, std::function<void(GMM_RESOURCE_INFO *)>>;
 
     GmmResourceInfo() = default;

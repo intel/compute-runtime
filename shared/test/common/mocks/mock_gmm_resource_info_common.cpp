@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/debug_helpers.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
 
 namespace NEO {
@@ -53,6 +54,34 @@ void MockGmmResourceInfo::setupDefaultActions() {
     size = alignUp(size, MemoryConstants::pageSize);
 }
 
+ImageTilingMode MockGmmResourceInfo::getTilingMode() {
+    const auto &flags = mockResourceCreateParams.Flags.Info;
+    if (flags.Tile4) {
+        return ImageTilingMode::tiled4;
+    } else if (flags.Tile64) {
+        return ImageTilingMode::tiled64;
+    } else if (flags.TiledW) {
+        return ImageTilingMode::tiledW;
+    } else if (flags.TiledX) {
+        return ImageTilingMode::tiledX;
+    } else if (flags.TiledY) {
+        return ImageTilingMode::tiledY;
+    }
+    return ImageTilingMode::notTiled;
+}
+
+GmmCompressionType MockGmmResourceInfo::getCompressionType() {
+    const auto &flags = mockResourceCreateParams.Flags.Info;
+    if (flags.NotCompressed) {
+        return GmmCompressionType::none;
+    }
+    UNRECOVERABLE_IF(flags.RenderCompressed && flags.MediaCompressed);
+    if (flags.MediaCompressed) {
+        return GmmCompressionType::media;
+    }
+    return flags.RenderCompressed ? GmmCompressionType::render : GmmCompressionType::none;
+}
+
 GMM_STATUS MockGmmResourceInfo::getOffset(GMM_REQ_OFFSET_INFO &reqOffsetInfo) {
     arrayIndexPassedToGetOffset = reqOffsetInfo.ArrayIndex;
     getOffsetCalled++;
@@ -87,6 +116,7 @@ void MockGmmResourceInfo::setUnifiedAuxTranslationCapable() {
     mockResourceCreateParams.Flags.Gpu.CCS = 1;
     mockResourceCreateParams.Flags.Gpu.UnifiedAuxSurface = 1;
     mockResourceCreateParams.Flags.Info.RenderCompressed = 1;
+    mockResourceCreateParams.Flags.Info.NotCompressed = 0;
 }
 
 void MockGmmResourceInfo::setMultisampleControlSurface() {

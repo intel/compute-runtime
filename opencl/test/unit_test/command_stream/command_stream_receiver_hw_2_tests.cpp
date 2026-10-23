@@ -2400,7 +2400,7 @@ HWTEST_F(BcsTests, given1DTiledArrayImageWhenConstructPropertiesThenImageTransfo
 
     auto gmmSrc = std::make_unique<MockGmm>(pDevice->getGmmHelper());
     auto resourceInfoSrc = static_cast<MockGmmResourceInfo *>(gmmSrc->gmmResourceInfo.get());
-    resourceInfoSrc->getResourceFlags()->Info.Tile64 = 1;
+    resourceInfoSrc->mockResourceCreateParams.Flags.Info.Tile64 = 1;
     resourceInfoSrc->mockResourceCreateParams.Type = GMM_RESOURCE_TYPE::RESOURCE_1D;
     resourceInfoSrc->mockResourceCreateParams.ArraySize = 8;
 
@@ -2427,7 +2427,7 @@ HWTEST_F(BcsTests, given1DNotTiledArrayImageWhenConstructPropertiesThenImageNotT
 
     auto gmmSrc = std::make_unique<MockGmm>(pDevice->getGmmHelper());
     auto resourceInfoSrc = static_cast<MockGmmResourceInfo *>(gmmSrc->gmmResourceInfo.get());
-    resourceInfoSrc->getResourceFlags()->Info.Tile64 = 0;
+    resourceInfoSrc->mockResourceCreateParams.Flags.Info.Tile64 = 0;
     resourceInfoSrc->mockResourceCreateParams.Type = GMM_RESOURCE_TYPE::RESOURCE_1D;
     resourceInfoSrc->mockResourceCreateParams.ArraySize = 8;
 

@@ -1303,7 +1303,7 @@ HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListWhenTiled1DArrayImagePassed
 
     auto gmmSrc = std::make_unique<MockGmm>(device->getNEODevice()->getGmmHelper());
     auto resourceInfoSrc = static_cast<MockGmmResourceInfo *>(gmmSrc->gmmResourceInfo.get());
-    resourceInfoSrc->getResourceFlags()->Info.Tile64 = 1;
+    resourceInfoSrc->mockResourceCreateParams.Flags.Info.Tile64 = 1;
     resourceInfoSrc->mockResourceCreateParams.Type = GMM_RESOURCE_TYPE::RESOURCE_1D;
     resourceInfoSrc->mockResourceCreateParams.ArraySize = 8;
 
@@ -1338,7 +1338,7 @@ HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListWhenNotTiled1DArrayImagePas
 
     auto gmmSrc = std::make_unique<MockGmm>(device->getNEODevice()->getGmmHelper());
     auto resourceInfoSrc = static_cast<MockGmmResourceInfo *>(gmmSrc->gmmResourceInfo.get());
-    resourceInfoSrc->getResourceFlags()->Info.Tile64 = 0;
+    resourceInfoSrc->mockResourceCreateParams.Flags.Info.Tile64 = 0;
     resourceInfoSrc->mockResourceCreateParams.Type = GMM_RESOURCE_TYPE::RESOURCE_1D;
     resourceInfoSrc->mockResourceCreateParams.ArraySize = 8;
 

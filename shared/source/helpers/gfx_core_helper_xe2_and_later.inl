@@ -28,13 +28,6 @@ void GfxCoreHelperHw<Family>::applyAdditionalCompressionSettings(Gmm &gmm, bool 
                  "\n\tFlags.Info.NotCompressed: %u", gmmResourceParams->Flags.Info.NotCompressed);
 }
 
-template <>
-bool GfxCoreHelperHw<Family>::isCompressionAppliedForImportedResource(Gmm &gmm) const {
-    auto gmmFlags = gmm.gmmResourceInfo->getResourceFlags();
-    bool denyCompression = gmm.gmmResourceInfo->isResourceDenyCompressionEnabled();
-    return !(gmmFlags->Info.NotCompressed || denyCompression);
-}
-
 template <typename GfxFamily>
 const EngineInstancesContainer GfxCoreHelperHw<GfxFamily>::getGpgpuEngineInstances(const RootDeviceEnvironment &rootDeviceEnvironment) const {
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();

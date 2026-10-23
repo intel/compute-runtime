@@ -1199,7 +1199,7 @@ bool CommandQueue::blitEnqueueImageAllowed(const size_t *origin, const size_t *r
 
     const auto &defaultGmm = image.getGraphicsAllocation(device->getRootDeviceIndex())->getDefaultGmm();
     if (defaultGmm != nullptr) {
-        auto isTile64 = defaultGmm->gmmResourceInfo->getResourceFlags()->Info.Tile64;
+        auto isTile64 = defaultGmm->gmmResourceInfo->getTilingMode() == ImageTilingMode::tiled64;
         auto imageType = image.getImageDesc().image_type;
         if (isTile64 && (imageType == CL_MEM_OBJECT_IMAGE3D)) {
             blitEnqueueImageAllowed &= productHelper.isTile64With3DSurfaceOnBCSSupported(hwInfo);

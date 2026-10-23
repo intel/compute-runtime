@@ -43,10 +43,10 @@ void BlitCommandsHelper<Family>::adjustControlSurfaceType(const BlitProperties &
     auto srcAllocation = blitProperties.srcAllocation;
     if (srcAllocation && srcAllocation->getDefaultGmm()) {
         auto gmmResourceInfo = srcAllocation->getDefaultGmm()->gmmResourceInfo.get();
-        auto resInfo = gmmResourceInfo->getResourceFlags()->Info;
-        if (resInfo.MediaCompressed) {
+        auto compressionType = gmmResourceInfo->getCompressionType();
+        if (compressionType == GmmCompressionType::media) {
             blitCmd.setSourceControlSurfaceType(CONTROL_SURFACE_TYPE::CONTROL_SURFACE_TYPE_MEDIA_CONTROL_SURFACE);
-        } else if (resInfo.RenderCompressed) {
+        } else if (compressionType == GmmCompressionType::render) {
             blitCmd.setSourceControlSurfaceType(CONTROL_SURFACE_TYPE::CONTROL_SURFACE_TYPE_3D_CONTROL_SURFACE);
         }
     }
@@ -54,11 +54,11 @@ void BlitCommandsHelper<Family>::adjustControlSurfaceType(const BlitProperties &
     auto dstAllocation = blitProperties.dstAllocation;
     if (dstAllocation && dstAllocation->getDefaultGmm()) {
         auto gmmResourceInfo = dstAllocation->getDefaultGmm()->gmmResourceInfo.get();
-        auto resInfo = gmmResourceInfo->getResourceFlags()->Info;
-        if (resInfo.MediaCompressed) {
+        auto compressionType = gmmResourceInfo->getCompressionType();
+        if (compressionType == GmmCompressionType::media) {
             blitCmd.setDestinationControlSurfaceType(CONTROL_SURFACE_TYPE::CONTROL_SURFACE_TYPE_MEDIA_CONTROL_SURFACE);
             blitCmd.setDestinationCompressionEnable(false);
-        } else if (resInfo.RenderCompressed) {
+        } else if (compressionType == GmmCompressionType::render) {
             blitCmd.setDestinationControlSurfaceType(CONTROL_SURFACE_TYPE::CONTROL_SURFACE_TYPE_3D_CONTROL_SURFACE);
         }
     }

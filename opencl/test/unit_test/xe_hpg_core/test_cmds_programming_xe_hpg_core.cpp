@@ -16,6 +16,7 @@
 #include "shared/test/common/fixtures/preamble_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
@@ -300,7 +301,7 @@ XE_HPG_CORETEST_F(CmdsProgrammingTestsXeHpgCore, givenDecompressInL3ForImage2dFr
     gmmRequirements.preferCompressed = false;
     auto gmm = new Gmm(context.getDevice(0)->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
     gmm->setCompressionEnabled(true);
-    gmm->gmmResourceInfo->getResourceFlags()->Info.MediaCompressed = true;
+    static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get())->mockResourceCreateParams.Flags.Info.MediaCompressed = true;
 
     auto buffer = castToObject<Buffer>(imageDesc.mem_object);
     buffer->getGraphicsAllocation(0)->setGmm(gmm, 0);

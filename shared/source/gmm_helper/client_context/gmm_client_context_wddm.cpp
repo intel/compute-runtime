@@ -14,7 +14,7 @@ namespace NEO {
 uint64_t GmmClientContext::mapGpuVirtualAddress(MapGpuVirtualAddressGmm *pMapGpuVa) {
     auto resourceInfo = pMapGpuVa->resourceInfoHandle;
     auto gmmResource = resourceInfo->peekGmmResourceInfo();
-    if (gmmResource->IsResourceMappedCompressible() && !resourceInfo->isResourceDenyCompressionEnabled()) {
+    if (gmmResource->IsResourceMappedCompressible()) {
         GMM_MAPGPUVIRTUALADDRESS gmmMapAddress = {pMapGpuVa->mapGpuVirtualAddressParams, 1, &gmmResource, pMapGpuVa->outVirtualAddress};
         return clientContext->MapGpuVirtualAddress(&gmmMapAddress);
     } else {
@@ -24,7 +24,7 @@ uint64_t GmmClientContext::mapGpuVirtualAddress(MapGpuVirtualAddressGmm *pMapGpu
 uint64_t GmmClientContext::freeGpuVirtualAddress(FreeGpuVirtualAddressGmm *pFreeGpuVa) {
     auto resourceInfo = pFreeGpuVa->resourceInfoHandle;
     auto gmmResource = resourceInfo->peekGmmResourceInfo();
-    if (gmmResource->IsResourceMappedCompressible() && !resourceInfo->isResourceDenyCompressionEnabled()) {
+    if (gmmResource->IsResourceMappedCompressible()) {
         GMM_FREEGPUVIRTUALADDRESS gmmFreeAddress = {pFreeGpuVa->hAdapter, pFreeGpuVa->baseAddress, pFreeGpuVa->size, 1, &gmmResource};
         return clientContext->FreeGpuVirtualAddress(&gmmFreeAddress);
     } else {

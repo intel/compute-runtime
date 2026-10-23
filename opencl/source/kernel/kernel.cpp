@@ -2173,7 +2173,7 @@ bool Kernel::requiresWaDisableRccRhwoOptimization() const {
             if (memObj && memObj->peekSharingHandler()) {
                 auto allocation = memObj->getGraphicsAllocation(rootDeviceIndex);
                 for (uint32_t handleId = 0u; handleId < allocation->getNumGmms(); handleId++) {
-                    if (allocation->getGmm(handleId)->gmmResourceInfo->getResourceFlags()->Info.MediaCompressed) {
+                    if (allocation->getGmm(handleId)->gmmResourceInfo->getCompressionType() == GmmCompressionType::media) {
                         return true;
                     }
                 }

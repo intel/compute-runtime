@@ -7,6 +7,7 @@
 
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/resource_info.h"
+#include "shared/test/common/mocks/mock_gmm_resource_info.h"
 
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
@@ -36,7 +37,7 @@ struct ImageTestsTgllAndLater : ClDeviceFixture, testing::Test {
 HWTEST2_F(ImageTestsTgllAndLater, givenDepthResourceWhenSettingImageArgThenSetDepthStencilResourceField, SupportsLegacyRenderSurfaceState) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     RENDER_SURFACE_STATE surfaceState{};
-    auto &gpuFlags = srcImage->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getDefaultGmm()->gmmResourceInfo->getResourceFlags()->Gpu;
+    auto &gpuFlags = static_cast<MockGmmResourceInfo *>(srcImage->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getDefaultGmm()->gmmResourceInfo.get())->mockResourceCreateParams.Flags.Gpu;
 
     gpuFlags.Depth = 0;
     srcImage->setImageArg(&surfaceState, false, 0, pClDevice->getRootDeviceIndex());

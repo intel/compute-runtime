@@ -54,7 +54,7 @@ void EncodeSurfaceState<Family>::setAuxParamsForMCSCCS(R_SURFACE_STATE *surfaceS
 
 template <typename Family>
 void EncodeSurfaceState<Family>::setClearColorParams(R_SURFACE_STATE *surfaceState, Gmm *gmm) {
-    if (gmm->gmmResourceInfo->getResourceFlags()->Gpu.IndirectClearColor) {
+    if (gmm->gmmResourceInfo->isIndirectClearColor()) {
         surfaceState->setClearValueAddressEnable(true);
 
         auto gmmHelper = gmm->getGmmHelper();
@@ -68,7 +68,7 @@ void EncodeSurfaceState<Family>::setClearColorParams(R_SURFACE_STATE *surfaceSta
 
 template <typename Family>
 void EncodeSurfaceState<Family>::setFlagsForMediaCompression(R_SURFACE_STATE *surfaceState, Gmm *gmm) {
-    if (gmm->gmmResourceInfo->getResourceFlags()->Info.MediaCompressed) {
+    if (gmm->gmmResourceInfo->getCompressionType() == GmmCompressionType::media) {
         surfaceState->setAuxiliarySurfaceMode(Family::RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
         surfaceState->setMemoryCompressionEnable(true);
     } else {

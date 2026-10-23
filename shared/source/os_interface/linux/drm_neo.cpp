@@ -1681,7 +1681,7 @@ uint64_t Drm::getPatIndex(Gmm *gmm, AllocationType allocationType, CacheRegion c
         resourceInfo = gmm->gmmResourceInfo->peekGmmResourceInfo();
         usageType = gmm->getResourceUsageType();
         compressed = gmm->isCompressionEnabled();
-        cacheable = gmm->gmmResourceInfo->getResourceFlags()->Info.Cacheable;
+        cacheable = gmm->gmmResourceInfo->isCacheable();
     } else if (forceCoherent) {
         cacheable = true;
     }

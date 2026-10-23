@@ -80,12 +80,7 @@ Gmm::Gmm(GmmHelper *gmmHelper, GmmResourceInfo *inputGmm) : Gmm(gmmHelper, input
 
 Gmm::Gmm(GmmHelper *gmmHelper, GmmResourceInfo *inputGmm, bool openingHandle) : gmmHelper(gmmHelper) {
     initializeResourceParams();
-    auto &rootDeviceEnvironment = gmmHelper->getRootDeviceEnvironment();
-    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
     gmmResourceInfo.reset(GmmResourceInfo::create(gmmHelper->getClientContext(), inputGmm->peekGmmResourceInfo(), openingHandle));
-    if (!gfxCoreHelper.isCompressionAppliedForImportedResource(*this)) {
-        compressionEnabled = false;
-    }
     applyDebugOverrides();
 }
 
@@ -395,13 +390,11 @@ uint8_t Gmm::resourceCopyBlt(void *sys, void *gpu, uint32_t pitch, uint32_t heig
 }
 
 bool Gmm::unifiedAuxTranslationCapable() const {
-    auto gmmFlags = this->gmmResourceInfo->getResourceFlags();
-    UNRECOVERABLE_IF(gmmFlags->Info.RenderCompressed && gmmFlags->Info.MediaCompressed);
-    return gmmFlags->Gpu.CCS && (gmmFlags->Info.RenderCompressed | gmmFlags->Info.MediaCompressed);
+    return this->gmmResourceInfo->isCCS() && this->gmmResourceInfo->getCompressionType() != GmmCompressionType::none;
 }
 
 bool Gmm::hasMultisampleControlSurface() const {
-    return this->gmmResourceInfo->getResourceFlags()->Gpu.MCS;
+    return this->gmmResourceInfo->isMCS();
 }
 
 GmmHelper *Gmm::getGmmHelper() const {

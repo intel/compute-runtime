@@ -19,7 +19,7 @@ void EncodeSurfaceState<Family>::appendImageCompressionParams(R_SURFACE_STATE *s
     if ((ccsMode == surfaceState->getAuxiliarySurfaceMode() || mcsLceMode == surfaceState->getAuxiliarySurfaceMode() || surfaceState->getMemoryCompressionEnable())) {
         uint32_t compressionFormat;
         auto gmmResourceInfo = allocation->getDefaultGmm()->gmmResourceInfo.get();
-        if (gmmResourceInfo->getResourceFlags()->Info.MediaCompressed) {
+        if (gmmResourceInfo->getCompressionType() == GmmCompressionType::media) {
             compressionFormat = gmmHelper->getClientContext()->getMediaSurfaceStateCompressionFormat(gmmResourceInfo->getResourceFormat());
             EncodeWA<Family>::adjustCompressionFormatForPlanarImage(compressionFormat, static_cast<int>(plane));
         } else {
