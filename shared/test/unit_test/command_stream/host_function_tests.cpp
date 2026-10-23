@@ -592,6 +592,18 @@ TEST(CommandStreamReceiverHostFunctionsTest, givenAubCommandStreamReceiverWhenHo
     }
 }
 
+TEST(HostFunctionSchedulerTests, givenHostFunctionSchedulerAlreadyCreatedWhenGetOrCreateHostFunctionSchedulerIsCalledThenExistingSchedulerIsReturned) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+
+    auto firstScheduler = rootDeviceEnvironment.getOrCreateHostFunctionScheduler(HostFunctionThreadPoolHelper::unlimitedThreads);
+    auto secondScheduler = rootDeviceEnvironment.getOrCreateHostFunctionScheduler(HostFunctionThreadPoolHelper::unlimitedThreads);
+
+    EXPECT_NE(nullptr, firstScheduler);
+    EXPECT_EQ(firstScheduler, secondScheduler);
+    EXPECT_EQ(firstScheduler, rootDeviceEnvironment.hostFunctionScheduler.get());
+}
+
 TEST(CommandStreamReceiverHostFunctionsTest, givenDestructedCommandStreamReceiverWhenEnsureHostFunctionDataInitializationCalledThenHostFunctionAllocationsDeallocated) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     DeviceBitfield devices(0b11);

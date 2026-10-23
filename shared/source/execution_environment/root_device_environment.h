@@ -116,8 +116,7 @@ struct RootDeviceEnvironment : NonCopyableClass {
         return exposeSingleDevice;
     }
 
-    void setHostFunctionScheduler(std::unique_ptr<HostFunctionWorker> &&scheduler);
-    HostFunctionWorker *getHostFunctionScheduler() const;
+    HostFunctionWorker *getOrCreateHostFunctionScheduler(int32_t threadsInThreadPoolLimit);
 
     std::unique_ptr<SipKernel> sipKernels[static_cast<uint32_t>(SipKernelType::count)];
     std::unique_ptr<GmmHelper> gmmHelper;

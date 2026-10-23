@@ -38,6 +38,7 @@ class HostFunctionThreadPool : public NonCopyableAndNonMovableClass {
     void workerLoop(std::stop_token st) noexcept;
 
     std::mutex hostFunctionsMutex;
+    std::mutex threadsMutex;
     std::deque<std::jthread> threads;
     std::deque<std::pair<HostFunctionStreamer *, HostFunction>> hostFunctions;
     std::counting_semaphore<> semaphore{0};

@@ -11,7 +11,6 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/host_function/host_function_interface.h"
-#include "shared/source/host_function/host_function_scheduler.h"
 #include "shared/source/host_function/host_function_worker_counting_semaphore.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -238,18 +237,11 @@ void createAndSetHostFunctionWorker(HostFunctionWorkerMode hostFunctionWorkerMod
         csr->setHostFunctionWorker(new HostFunctionWorkerCountingSemaphore());
         break;
     case HostFunctionWorkerMode::schedulerWithThreadPool: {
-        auto scheduler = rootDeviceEnvironment->getHostFunctionScheduler();
-        if (scheduler == nullptr) {
-            int32_t nWorkers = (debugManager.flags.HostFunctionThreadPoolSize.get() > 0)
-                                   ? debugManager.flags.HostFunctionThreadPoolSize.get()
-                                   : HostFunctionThreadPoolHelper::unlimitedThreads;
+        int32_t nWorkers = (debugManager.flags.HostFunctionThreadPoolSize.get() > 0)
+                               ? debugManager.flags.HostFunctionThreadPoolSize.get()
+                               : HostFunctionThreadPoolHelper::unlimitedThreads;
 
-            auto createdScheduler = std::make_unique<HostFunctionScheduler>(nWorkers);
-
-            rootDeviceEnvironment->setHostFunctionScheduler(std::move(createdScheduler));
-        }
-
-        scheduler = rootDeviceEnvironment->getHostFunctionScheduler();
+        auto scheduler = rootDeviceEnvironment->getOrCreateHostFunctionScheduler(nWorkers);
         csr->setHostFunctionWorker(scheduler);
         break;
     }

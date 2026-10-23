@@ -24,6 +24,7 @@ HostFunctionThreadPool::~HostFunctionThreadPool() = default;
 
 void HostFunctionThreadPool::registerThread() noexcept {
 
+    std::lock_guard lock{this->threadsMutex};
     if ((threads.size() < threadsLimit) || unlimitedThreads) {
         threads.emplace_back(([this](std::stop_token st) {
             this->workerLoop(st);
@@ -33,6 +34,7 @@ void HostFunctionThreadPool::registerThread() noexcept {
 
 void HostFunctionThreadPool::shutdown() noexcept {
 
+    std::lock_guard threadsLock{this->threadsMutex};
     for (auto &thread : threads) {
         thread.request_stop();
     }

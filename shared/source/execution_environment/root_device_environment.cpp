@@ -311,12 +311,12 @@ void RootDeviceEnvironment::releaseDummyAllocation() {
     dummyAllocation.reset();
 }
 
-void RootDeviceEnvironment::setHostFunctionScheduler(std::unique_ptr<HostFunctionWorker> &&scheduler) {
-    hostFunctionScheduler = std::move(scheduler);
-}
-
-HostFunctionWorker *RootDeviceEnvironment::getHostFunctionScheduler() const {
-    return hostFunctionScheduler.get();
+HostFunctionWorker *RootDeviceEnvironment::getOrCreateHostFunctionScheduler(int32_t threadsInThreadPoolLimit) {
+    std::lock_guard<std::mutex> autolock(this->mtx);
+    if (this->hostFunctionScheduler == nullptr) {
+        this->hostFunctionScheduler = std::make_unique<HostFunctionScheduler>(threadsInThreadPoolLimit);
+    }
+    return this->hostFunctionScheduler.get();
 }
 
 AssertHandler *RootDeviceEnvironment::getAssertHandler(Device *neoDevice) {
