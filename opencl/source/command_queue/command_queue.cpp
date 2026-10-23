@@ -384,7 +384,7 @@ void CommandQueue::constructBcsEngine(bool internalUsage) {
             auto &selectorCopyEngine = neoDevice.getSelectorCopyEngine();
             auto bcsEngineType = EngineHelpers::getBcsEngineType(device->getRootDeviceEnvironment(), device->getDeviceBitfield(), selectorCopyEngine, internalUsage);
             auto bcsIndex = EngineHelpers::getBcsIndex(bcsEngineType);
-            auto engineUsage = (internalUsage && gfxCoreHelper.preferInternalBcsEngine()) ? EngineUsage::internal : EngineUsage::regular;
+            auto engineUsage = EngineUsage::regular;
 
             if (priority == QueuePriority::high) {
                 auto hpBcs = neoDevice.getHpCopyEngine();
@@ -398,7 +398,7 @@ void CommandQueue::constructBcsEngine(bool internalUsage) {
             }
 
             if (bcsEngines[bcsIndex] == nullptr) {
-                bcsEngines[bcsIndex] = neoDevice.tryGetEngine(bcsEngineType, engineUsage);
+                bcsEngines[bcsIndex] = internalUsage ? neoDevice.getInternalLinkCopyEngine() : neoDevice.tryGetEngine(bcsEngineType, engineUsage);
             }
 
             if (bcsEngines[bcsIndex]) {

@@ -129,6 +129,7 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     EngineControl &getDefaultEngine();
     EngineControl &getInternalEngine();
     EngineControl *getInternalCopyEngine();
+    EngineControl *getInternalLinkCopyEngine();
     EngineControl *getHpCopyEngine();
     SelectorCopyEngine &getSelectorCopyEngine();
     MemoryManager *getMemoryManager() const;

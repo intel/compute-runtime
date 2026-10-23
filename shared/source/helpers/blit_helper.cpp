@@ -10,7 +10,6 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/blit_properties.h"
-#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 
@@ -33,7 +32,6 @@ BlitOperationResult BlitHelper::blitMemoryToAllocationBanks(const Device &device
     if (!hwInfo.capabilityTable.blitterOperationsSupported) {
         return BlitOperationResult::unsupported;
     }
-    auto &gfxCoreHelper = device.getGfxCoreHelper();
 
     UNRECOVERABLE_IF(memoryBanks.none());
 
@@ -46,12 +44,7 @@ BlitOperationResult BlitHelper::blitMemoryToAllocationBanks(const Device &device
 
         UNRECOVERABLE_IF(!pRootDevice->getDeviceBitfield().test(tileId));
         auto pDeviceForBlit = pRootDevice->getNearestGenericSubDevice(tileId);
-        auto &selectorCopyEngine = pDeviceForBlit->getSelectorCopyEngine();
-        auto deviceBitfield = pDeviceForBlit->getDeviceBitfield();
-        auto internalUsage = true;
-        auto bcsEngineType = EngineHelpers::getBcsEngineType(pDeviceForBlit->getRootDeviceEnvironment(), deviceBitfield, selectorCopyEngine, internalUsage);
-        auto bcsEngineUsage = gfxCoreHelper.preferInternalBcsEngine() ? EngineUsage::internal : EngineUsage::regular;
-        auto bcsEngine = pDeviceForBlit->tryGetEngine(bcsEngineType, bcsEngineUsage);
+        auto bcsEngine = pDeviceForBlit->getInternalLinkCopyEngine();
         if (!bcsEngine) {
             return BlitOperationResult::unsupported;
         }
@@ -85,7 +78,6 @@ BlitOperationResult BlitHelper::blitMemsetAllocationBanks(const Device &device, 
     if (!hwInfo.capabilityTable.blitterOperationsSupported) {
         return BlitOperationResult::unsupported;
     }
-    auto &gfxCoreHelper = device.getGfxCoreHelper();
 
     UNRECOVERABLE_IF(memoryBanks.none());
 
@@ -102,12 +94,7 @@ BlitOperationResult BlitHelper::blitMemsetAllocationBanks(const Device &device, 
 
         UNRECOVERABLE_IF(!pRootDevice->getDeviceBitfield().test(tileId));
         auto pDeviceForBlit = pRootDevice->getNearestGenericSubDevice(tileId);
-        auto &selectorCopyEngine = pDeviceForBlit->getSelectorCopyEngine();
-        auto deviceBitfield = pDeviceForBlit->getDeviceBitfield();
-        auto internalUsage = true;
-        auto bcsEngineType = EngineHelpers::getBcsEngineType(pDeviceForBlit->getRootDeviceEnvironment(), deviceBitfield, selectorCopyEngine, internalUsage);
-        auto bcsEngineUsage = gfxCoreHelper.preferInternalBcsEngine() ? EngineUsage::internal : EngineUsage::regular;
-        auto bcsEngine = pDeviceForBlit->tryGetEngine(bcsEngineType, bcsEngineUsage);
+        auto bcsEngine = pDeviceForBlit->getInternalLinkCopyEngine();
         if (!bcsEngine) {
             return BlitOperationResult::unsupported;
         }

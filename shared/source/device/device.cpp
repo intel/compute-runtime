@@ -979,6 +979,13 @@ EngineControl *Device::getInternalCopyEngine() {
     return nullptr;
 }
 
+EngineControl *Device::getInternalLinkCopyEngine() {
+    const auto internalUsage = true;
+    const auto bcsEngineType = EngineHelpers::getBcsEngineType(this->getRootDeviceEnvironment(), this->getDeviceBitfield(), this->getSelectorCopyEngine(), internalUsage);
+    const auto bcsEngineUsage = this->getGfxCoreHelper().preferInternalBcsEngine() ? EngineUsage::internal : EngineUsage::regular;
+    return this->tryGetEngine(bcsEngineType, bcsEngineUsage);
+}
+
 EngineControl *Device::getHpCopyEngine() {
     return hpCopyEngine;
 }

@@ -96,6 +96,42 @@ TEST(DeviceBlitterTest, givenForceBCSForInternalCopyEngineToIndexOneWhenGetInter
     EXPECT_EQ(EngineUsage::internal, engine->getEngineUsage());
 }
 
+using InternalLinkCopyEngineTest = ::testing::Test;
+
+HWTEST2_F(InternalLinkCopyEngineTest, givenInternalBcsEnginePreferredWhenGetInternalLinkCopyEngineIsCalledThenInternalCopyEngineIsReturned, IsAtLeastXeCore) {
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.ForceBcsEngineIndex.set(0);
+    debugManager.flags.PreferInternalBcsEngine.set(1);
+
+    VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
+    defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
+
+    UltDeviceFactory factory{1, 0};
+    factory.rootDevices[0]->createEngine({aub_stream::EngineType::ENGINE_BCS, EngineUsage::internal});
+    auto engine = factory.rootDevices[0]->getInternalLinkCopyEngine();
+    ASSERT_NE(nullptr, engine);
+
+    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, engine->getEngineType());
+    EXPECT_EQ(EngineUsage::internal, engine->getEngineUsage());
+}
+
+HWTEST2_F(InternalLinkCopyEngineTest, givenInternalBcsEngineNotPreferredWhenGetInternalLinkCopyEngineIsCalledThenRegularCopyEngineIsReturned, IsAtLeastXeCore) {
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.ForceBcsEngineIndex.set(0);
+    debugManager.flags.PreferInternalBcsEngine.set(0);
+
+    VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
+    defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
+
+    UltDeviceFactory factory{1, 0};
+    factory.rootDevices[0]->createEngine({aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular});
+    auto engine = factory.rootDevices[0]->getInternalLinkCopyEngine();
+    ASSERT_NE(nullptr, engine);
+
+    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, engine->getEngineType());
+    EXPECT_EQ(EngineUsage::regular, engine->getEngineUsage());
+}
+
 TEST(DeviceBlitterTest, givenBlitterOperationsDisabledWhenCreatingBlitterEngineThenAbort) {
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
     defaultHwInfo->capabilityTable.blitterOperationsSupported = false;
