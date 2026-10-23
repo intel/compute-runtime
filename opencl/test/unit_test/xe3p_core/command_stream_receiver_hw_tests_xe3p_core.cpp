@@ -681,6 +681,7 @@ XE3P_CORETEST_F(CommandStreamReceiverXe3pCoreComputeWalker2Tests, GivenComputeWa
         walkerCmd,
         &idd,
         true,
+        0u,
         0,
         *pDevice);
 

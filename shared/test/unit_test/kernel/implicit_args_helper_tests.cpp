@@ -27,7 +27,7 @@ using namespace NEO;
 
 TEST(ImplicitArgsHelperTest, whenLocalIdsAreGeneratedByRuntimeThenDimensionOrderIsTakedFromInput) {
     uint8_t inputDimensionOrder[3] = {2, 0, 1};
-    for (auto i = 0u; i < HwWalkOrderHelper::walkOrderPossibilties; i++) {
+    for (auto i = 0u; i < HwWalkOrderHelper::walkOrderPossibilities; i++) {
         auto dimOrderForImplicitArgs = ImplicitArgsHelper::getDimensionOrderForLocalIds(inputDimensionOrder, std::make_pair(false, i));
         EXPECT_EQ(inputDimensionOrder[0], dimOrderForImplicitArgs[0]);
         EXPECT_EQ(inputDimensionOrder[1], dimOrderForImplicitArgs[1]);
@@ -41,11 +41,11 @@ TEST(ImplicitArgsHelperTest, whenLocalIdsAreGeneratedByRuntimeThenDimensionOrder
 
 TEST(ImplicitArgsHelperTest, givenIncorrectcInputWhenGettingDimensionOrderThenAbortIsCalled) {
     EXPECT_THROW(ImplicitArgsHelper::getDimensionOrderForLocalIds(nullptr, std::make_pair(false, 0u)), std::runtime_error);
-    EXPECT_THROW(ImplicitArgsHelper::getDimensionOrderForLocalIds(nullptr, std::make_pair(true, HwWalkOrderHelper::walkOrderPossibilties)), std::runtime_error);
+    EXPECT_THROW(ImplicitArgsHelper::getDimensionOrderForLocalIds(nullptr, std::make_pair(true, HwWalkOrderHelper::walkOrderPossibilities)), std::runtime_error);
 }
 
 TEST(ImplicitArgsHelperTest, whenLocalIdsAreGeneratedByHwThenProperDimensionOrderIsReturned) {
-    for (auto i = 0u; i < HwWalkOrderHelper::walkOrderPossibilties; i++) {
+    for (auto i = 0u; i < HwWalkOrderHelper::walkOrderPossibilities; i++) {
         auto dimOrderForImplicitArgs = ImplicitArgsHelper::getDimensionOrderForLocalIds(nullptr, std::make_pair(true, i));
         EXPECT_EQ(HwWalkOrderHelper::compatibleDimensionOrders[i], dimOrderForImplicitArgs);
     }

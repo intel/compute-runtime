@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -84,6 +84,8 @@ struct HardwareCommandsHelper : public HardwareCommandsHelperBase<GfxFamily> {
         IndirectHeap &indirectHeap,
         Kernel &kernel,
         bool inlineDataProgrammingRequired,
+        bool localIdsGenerationByRuntime,
+        uint32_t requiredWalkOrder,
         WalkerType *walkerCmd,
         uint32_t &sizeCrossThreadData,
         uint64_t scratchAddress,
@@ -106,6 +108,7 @@ struct HardwareCommandsHelper : public HardwareCommandsHelperBase<GfxFamily> {
         WalkerType *walkerCmd,
         InterfaceDescriptorType *inlineInterfaceDescriptor,
         bool localIdsGenerationByRuntime,
+        uint32_t requiredWalkOrder,
         uint64_t scratchAddress,
         const Device &device);
 

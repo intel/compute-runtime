@@ -236,6 +236,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
     WalkerType *walkerCmd,
     InterfaceDescriptorType *inlineInterfaceDescriptor,
     bool localIdsGenerationByRuntime,
+    uint32_t requiredWalkOrder,
     uint64_t scratchAddress,
     const Device &device) {
 
@@ -298,7 +299,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
 
     auto inlineDataProgrammingRequired = EncodeDispatchKernel<GfxFamily>::inlineDataProgrammingRequired(kernel.getKernelInfo().kernelDescriptor);
     size_t offsetCrossThreadData = HardwareCommandsHelper<GfxFamily>::sendCrossThreadData<WalkerType>(
-        ioh, kernel, inlineDataProgrammingRequired,
+        ioh, kernel, inlineDataProgrammingRequired, localIdsGenerationByRuntime, requiredWalkOrder,
         walkerCmd, sizeCrossThreadData, scratchAddress, device.getRootDeviceEnvironment());
 
     size_t sizePerThreadDataTotal = 0;

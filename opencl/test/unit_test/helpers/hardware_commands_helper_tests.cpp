@@ -173,6 +173,8 @@ HWTEST_F(HardwareCommandsTest, WhenCrossThreadDataIsCreatedThenOnlyRequiredSpace
         indirectHeap,
         *kernel,
         false,
+        true,
+        0u,
         nullptr,
         sizeCrossThreadData,
         0,
@@ -202,6 +204,8 @@ HWTEST_F(HardwareCommandsTest, givenSendCrossThreadDataWhenWhenAddPatchInfoComme
         indirectHeap,
         *kernel,
         false,
+        true,
+        0u,
         nullptr,
         sizeCrossThreadData,
         0,
@@ -226,6 +230,8 @@ HWTEST2_F(HardwareCommandsTest, givenIndirectHeapNotAllocatedFromInternalPoolWhe
         indirectHeap,
         *mockKernelWithInternal->mockKernel,
         false,
+        true,
+        0u,
         nullptr,
         sizeCrossThreadData,
         0,
@@ -245,6 +251,8 @@ HWTEST2_F(HardwareCommandsTest, givenIndirectHeapAllocatedFromInternalPoolWhenSe
         indirectHeap,
         *mockKernelWithInternal->mockKernel,
         false,
+        true,
+        0u,
         nullptr,
         sizeCrossThreadData,
         0,
@@ -281,6 +289,8 @@ HWTEST2_F(HardwareCommandsTest, givenSendCrossThreadDataWhenWhenAddPatchInfoComm
         indirectHeap,
         *kernel,
         false,
+        true,
+        0u,
         nullptr,
         sizeCrossThreadData,
         0,
@@ -373,6 +383,7 @@ HWTEST2_F(HardwareCommandsTest, WhenAllocatingIndirectStateResourceThenCorrectSi
         pWalkerCmd,
         nullptr,
         true,
+        0u,
         0,
         *pDevice);
 
@@ -431,6 +442,7 @@ HWTEST2_F(HardwareCommandsTest, givenKernelWithFourBindingTableEntriesWhenIndire
         pWalkerCmd,
         nullptr,
         true,
+        0u,
         0,
         *pDevice);
 
@@ -480,6 +492,7 @@ HWTEST2_F(HardwareCommandsTest, givenKernelWith100BindingTableEntriesWhenIndirec
         pWalkerCmd,
         nullptr,
         true,
+        0u,
         0,
         *pDevice);
 
@@ -562,6 +575,7 @@ HWTEST2_F(HardwareCommandsTest, whenSendingIndirectStateThenKernelsWalkOrderIsTa
         pWalkerCmd,
         nullptr,
         true,
+        0u,
         0,
         *pDevice);
 
@@ -657,6 +671,7 @@ HWTEST2_F(HardwareCommandsTest, WhenSendingIndirectStateThenBindingTableStatesPo
         pWalkerCmd,
         nullptr,
         true,
+        0u,
         0,
         *pDevice);
 
@@ -768,6 +783,7 @@ HWTEST2_F(HardwareCommandsTest, WhenGettingBindingTableStateThenSurfaceStatePoin
             pWalkerCmd,
             nullptr,
             true,
+            0u,
             0,
             *pDevice);
 
@@ -913,6 +929,7 @@ HWTEST2_F(HardwareCommandsTest, GivenKernelWithInvalidSamplerStateArrayWhenSendI
         pWalkerCmd,
         nullptr,
         true,
+        0u,
         0,
         *pDevice);
 
@@ -939,6 +956,7 @@ HWTEST2_F(HardwareCommandsTest, GivenKernelWithInvalidSamplerStateArrayWhenSendI
         pWalkerCmd,
         nullptr,
         true,
+        0u,
         0,
         *pDevice);
 
@@ -1010,6 +1028,7 @@ HWTEST2_F(HardwareCommandsTest, GivenKernelWithSamplersWhenIndirectStateIsProgra
         pWalkerCmd,
         nullptr,
         true,
+        0u,
         0,
         *pDevice);
 
@@ -1113,6 +1132,7 @@ HWTEST2_F(HardwareCommandsTest, givenBindlessKernelWithBufferArgWhenSendIndirect
         pWalkerCmd,
         &interfaceDescriptorData,
         true,
+        0u,
         0,
         *pDevice);
 
@@ -1201,12 +1221,22 @@ struct HardwareCommandsImplicitArgsTests : Test<ClDeviceFixture> {
         const auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
         implicitArgsProgrammingSize = ImplicitArgsHelper::getSizeForImplicitArgsPatching(pImplicitArgs, kernel.getDescriptor(), false, rootDeviceEnvironment);
 
+        const auto &kernelAttributes = kernel.getDescriptor().kernelAttributes;
+        const size_t localWorkSize[3] = {expectedImplicitArgs.localSizeX, expectedImplicitArgs.localSizeY, expectedImplicitArgs.localSizeZ};
+        uint32_t requiredWalkOrder = 0u;
+        const bool localIdsGenerationByRuntime = EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
+            kernelAttributes.numLocalIdChannels, localWorkSize,
+            {{kernelAttributes.workgroupWalkOrder[0], kernelAttributes.workgroupWalkOrder[1], kernelAttributes.workgroupWalkOrder[2]}},
+            kernelAttributes.flags.requiresWorkgroupWalkOrder, requiredWalkOrder, kernelAttributes.simdSize);
+
         auto sizeCrossThreadData = kernel.getCrossThreadDataSize();
         using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
         HardwareCommandsHelper<FamilyType>::template sendCrossThreadData<DefaultWalkerType>(
             indirectHeap,
             kernel,
             false,
+            localIdsGenerationByRuntime,
+            requiredWalkOrder,
             nullptr,
             sizeCrossThreadData,
             0,
@@ -1354,6 +1384,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HardwareCommandsTestXeHpAndLater, givenIndirectHeap
         indirectHeap,
         *mockKernelWithInternal->mockKernel,
         false,
+        true,
+        0u,
         nullptr,
         sizeCrossThreadData,
         0,
@@ -1373,6 +1405,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HardwareCommandsTestXeHpAndLater, givenIndirectHeap
         indirectHeap,
         *mockKernelWithInternal->mockKernel,
         false,
+        true,
+        0u,
         nullptr,
         sizeCrossThreadData,
         0,
@@ -1410,6 +1444,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HardwareCommandsTestXeHpAndLater, givenSendCrossThr
         indirectHeap,
         *kernel,
         false,
+        true,
+        0u,
         nullptr,
         sizeCrossThreadData,
         0,

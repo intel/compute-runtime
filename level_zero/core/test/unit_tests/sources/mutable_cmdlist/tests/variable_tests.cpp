@@ -394,6 +394,39 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(0u, walkerCmdGpuBuffer->getLocalZMaximum());
 }
 
+template <typename FamilyType>
+void verifyHwLocalIdsGenerationWhenSettingGroupSize(VariableFixture &fixture, uint32_t numLocalIdChannels, const uint32_t (&groupSizeValues)[3], uint32_t expectedWalkOrder) {
+    using WalkerType = typename FamilyType::PorWalkerType;
+    fixture.stageCommitMode = false;
+    fixture.template createMutableComputeWalker<FamilyType, WalkerType>(0);
+    fixture.createVariableDispatch(false, true, false, false);
+    fixture.kernelDispatch->kernelData->numLocalIdChannels = numLocalIdChannels;
+
+    const void *argValue = &groupSizeValues;
+    Variable *groupSize = fixture.getVariable(L0::MCL::VariableType::groupSize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, groupSize->setValue(VariableFixture::kernelDispatchVariableSize, 0, argValue));
+
+    WalkerType *walkerCmdGpuBuffer = reinterpret_cast<WalkerType *>(fixture.walkerBuffer);
+    EXPECT_TRUE(walkerCmdGpuBuffer->getGenerateLocalId());
+    EXPECT_EQ((1u << numLocalIdChannels) - 1u, walkerCmdGpuBuffer->getEmitLocalId());
+    EXPECT_EQ(expectedWalkOrder, walkerCmdGpuBuffer->getWalkOrder());
+    EXPECT_EQ(groupSizeValues[0] - 1, walkerCmdGpuBuffer->getLocalXMaximum());
+    EXPECT_EQ(groupSizeValues[1] - 1, walkerCmdGpuBuffer->getLocalYMaximum());
+    EXPECT_EQ(groupSizeValues[2] - 1, walkerCmdGpuBuffer->getLocalZMaximum());
+}
+
+HWTEST2_F(VariableTest,
+          givenSingleLocalIdChannelAndNonEmittedYLargerThanOneWhenSettingGroupSizeThenHwGeneratesLocalIdsWithFullLocalMaximums,
+          IsXe3pCore) {
+    verifyHwLocalIdsGenerationWhenSettingGroupSize<FamilyType>(*this, 1u, {16, 7, 1}, 1u);
+}
+
+HWTEST2_F(VariableTest,
+          givenTwoLocalIdChannelsAndNonEmittedZLargerThanOneWhenSettingGroupSizeThenHwGeneratesLocalIdsWithFullLocalMaximums,
+          IsXe3pCore) {
+    verifyHwLocalIdsGenerationWhenSettingGroupSize<FamilyType>(*this, 2u, {8, 8, 4}, 0u);
+}
+
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             VariableTest,
             givenKernelChannelsZeroAndGroupSizeVariableDispatchWhenSettingGroupSizeThenGenerateLocalIdsDisabledAndKernelStartOffsetAdded) {

@@ -88,6 +88,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         &walkerCmd,
         nullptr,
         kernelUsesLocalIds,
+        0u,
         0,
         commandQueue.getDevice());
 

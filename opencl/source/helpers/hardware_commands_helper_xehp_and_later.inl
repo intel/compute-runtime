@@ -57,6 +57,8 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
     IndirectHeap &indirectHeap,
     Kernel &kernel,
     bool inlineDataProgrammingRequired,
+    bool localIdsGenerationByRuntime,
+    uint32_t requiredWalkOrder,
     WalkerType *walkerCmd,
     uint32_t &sizeCrossThreadData,
     [[maybe_unused]] uint64_t scratchAddress,
@@ -72,41 +74,10 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
 
     auto pImplicitArgs = kernel.getImplicitArgs();
     if (pImplicitArgs) {
-        size_t localWorkSize[3] = {0u, 0u, 0u};
-
         pImplicitArgs->setLocalIdTablePtr(indirectHeap.getGraphicsAllocation()->getGpuAddress() + offsetCrossThreadData);
-        if (pImplicitArgs->v0.header.structVersion == 0) {
-            localWorkSize[0] = pImplicitArgs->v0.localSizeX;
-            localWorkSize[1] = pImplicitArgs->v0.localSizeY;
-            localWorkSize[2] = pImplicitArgs->v0.localSizeZ;
-        } else if (pImplicitArgs->v1.header.structVersion == 1) {
-            localWorkSize[0] = pImplicitArgs->v1.localSizeX;
-            localWorkSize[1] = pImplicitArgs->v1.localSizeY;
-            localWorkSize[2] = pImplicitArgs->v1.localSizeZ;
-        } else if (pImplicitArgs->v2.header.structVersion == 2) {
-            localWorkSize[0] = pImplicitArgs->v2.localSizeX;
-            localWorkSize[1] = pImplicitArgs->v2.localSizeY;
-            localWorkSize[2] = pImplicitArgs->v2.localSizeZ;
-        } else {
-            UNRECOVERABLE_IF(true);
-        }
         const auto &kernelDescriptor = kernel.getDescriptor();
 
-        const auto &kernelAttributes = kernelDescriptor.kernelAttributes;
-        uint32_t requiredWalkOrder = 0u;
-
-        auto generationOfLocalIdsByRuntime = EncodeDispatchKernel<GfxFamily>::isRuntimeLocalIdsGenerationRequired(
-            3,
-            localWorkSize,
-            std::array<uint8_t, 3>{
-                {kernelAttributes.workgroupWalkOrder[0],
-                 kernelAttributes.workgroupWalkOrder[1],
-                 kernelAttributes.workgroupWalkOrder[2]}},
-            kernelAttributes.flags.requiresWorkgroupWalkOrder,
-            requiredWalkOrder,
-            kernelDescriptor.kernelAttributes.simdSize);
-
-        auto sizeForImplicitArgsProgramming = ImplicitArgsHelper::getSizeForImplicitArgsPatching(pImplicitArgs, kernelDescriptor, !generationOfLocalIdsByRuntime, rootDeviceEnvironment);
+        auto sizeForImplicitArgsProgramming = ImplicitArgsHelper::getSizeForImplicitArgsPatching(pImplicitArgs, kernelDescriptor, !localIdsGenerationByRuntime, rootDeviceEnvironment);
 
         auto sizeForLocalIdsProgramming = sizeForImplicitArgsProgramming - NEO::ImplicitArgsHelper::getSizeForImplicitArgsStruct(pImplicitArgs, kernelDescriptor, true, rootDeviceEnvironment);
         offsetCrossThreadData += sizeForLocalIdsProgramming;
@@ -114,7 +85,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
         auto ptrToPatchImplicitArgs = indirectHeap.getSpace(sizeForImplicitArgsProgramming);
         EncodeDispatchKernel<GfxFamily>::patchScratchAddressInImplicitArgs(*pImplicitArgs, scratchAddress, true);
 
-        ImplicitArgsHelper::patchImplicitArgs(ptrToPatchImplicitArgs, *pImplicitArgs, kernelDescriptor, std::make_pair(!generationOfLocalIdsByRuntime, requiredWalkOrder), rootDeviceEnvironment, nullptr);
+        ImplicitArgsHelper::patchImplicitArgs(ptrToPatchImplicitArgs, *pImplicitArgs, kernelDescriptor, std::make_pair(!localIdsGenerationByRuntime, requiredWalkOrder), rootDeviceEnvironment, nullptr);
     }
 
     uint32_t sizeToCopy = sizeCrossThreadData;

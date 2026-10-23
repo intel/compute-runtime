@@ -169,6 +169,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         &walkerCmd,
         interfaceDescriptor,
         localIdsGenerationByRuntime,
+        requiredWalkOrder,
         scratchAddress,
         device);
 

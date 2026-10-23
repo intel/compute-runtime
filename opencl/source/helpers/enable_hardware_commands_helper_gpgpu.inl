@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,6 +24,7 @@ template size_t NEO::HardwareCommandsHelper<NEO::FamilyType>::sendIndirectState<
     FamilyType::GPGPU_WALKER *walkerCmd,
     FamilyType::INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor,
     bool localIdsGenerationByRuntime,
+    uint32_t requiredWalkOrder,
     uint64_t scratchAddress,
     const Device &device);
 
@@ -31,6 +32,8 @@ template size_t NEO::HardwareCommandsHelper<NEO::FamilyType>::sendCrossThreadDat
     IndirectHeap &indirectHeap,
     Kernel &kernel,
     bool inlineDataProgrammingRequired,
+    bool localIdsGenerationByRuntime,
+    uint32_t requiredWalkOrder,
     FamilyType::GPGPU_WALKER *walkerCmd,
     uint32_t &sizeCrossThreadData,
     uint64_t scratchAddress,

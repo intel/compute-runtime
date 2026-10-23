@@ -12,12 +12,17 @@
 #include "shared/source/command_stream/scratch_space_controller.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/hw_walk_order.h"
+#include "shared/source/helpers/local_id_gen.h"
+#include "shared/source/helpers/per_thread_data.h"
 #include "shared/source/helpers/simd_helper.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/indirect_heap/indirect_heap_type.h"
+#include "shared/source/kernel/implicit_args_helper.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/os_interface/product_helper.h"
@@ -52,6 +57,8 @@
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
 #include "implicit_args.h"
+
+#include <algorithm>
 
 using namespace NEO;
 
@@ -191,12 +198,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimOn
     EXPECT_EQ(4u, computeWalker->getWalkOrder());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimTwoWhenOnlyYIdPresentAskHwForLocalIdsThenExpectGenerationFieldsSet) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimTwoWhenXAndYIdPresentAskHwForLocalIdsThenExpectGenerationFieldsSet) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     DefaultWalkerType *computeWalker = static_cast<DefaultWalkerType *>(linearStream.getSpace(sizeof(DefaultWalkerType)));
     *computeWalker = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
 
-    kernel->kernelInfo.setLocalIds({0, 1, 0});
+    kernel->kernelInfo.setLocalIds({1, 1, 0});
     localWorkSizesIn[1] = 16;
     localWorkSizesIn[0] = localWorkSizesIn[2] = 1;
 
@@ -210,18 +217,18 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimTw
     EXPECT_EQ(localWorkSizesIn[1], localY);
     EXPECT_EQ(localWorkSizesIn[2], localZ);
 
-    constexpr uint32_t expectedEmit = (1 << 1);
+    constexpr uint32_t expectedEmit = (1 << 0) | (1 << 1);
     EXPECT_EQ(expectedEmit, computeWalker->getEmitLocalId());
     EXPECT_EQ(1u, computeWalker->getGenerateLocalId());
     EXPECT_EQ(0u, computeWalker->getEmitInlineParameter());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkThreeTwoWhenOnlyZIdPresentAskHwForLocalIdsThenExpectGenerationFieldsSet) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimThreeWhenXYZIdPresentAskHwForLocalIdsThenExpectGenerationFieldsSet) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     DefaultWalkerType *computeWalker = static_cast<DefaultWalkerType *>(linearStream.getSpace(sizeof(DefaultWalkerType)));
     *computeWalker = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
 
-    kernel->kernelInfo.setLocalIds({0, 0, 1});
+    kernel->kernelInfo.setLocalIds({1, 1, 1});
     localWorkSizesIn[2] = 16;
     localWorkSizesIn[0] = localWorkSizesIn[1] = 1;
 
@@ -235,7 +242,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkThree
     EXPECT_EQ(localWorkSizesIn[1], localY);
     EXPECT_EQ(localWorkSizesIn[2], localZ);
 
-    constexpr uint32_t expectedEmit = (1 << 2);
+    constexpr uint32_t expectedEmit = (1 << 0) | (1 << 1) | (1 << 2);
     EXPECT_EQ(expectedEmit, computeWalker->getEmitLocalId());
     EXPECT_EQ(1u, computeWalker->getGenerateLocalId());
     EXPECT_EQ(0u, computeWalker->getEmitInlineParameter());
@@ -246,7 +253,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenDifferent
     DefaultWalkerType *computeWalker = static_cast<DefaultWalkerType *>(linearStream.getSpace(sizeof(DefaultWalkerType)));
     *computeWalker = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
 
-    kernel->kernelInfo.setLocalIds({0, 0, 1});
+    kernel->kernelInfo.setLocalIds({1, 1, 1});
     localWorkSizesIn[2] = 16;
     localWorkSizesIn[0] = localWorkSizesIn[1] = 1;
 
@@ -271,7 +278,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenDebugFlag
     DefaultWalkerType *computeWalker = static_cast<DefaultWalkerType *>(linearStream.getSpace(sizeof(DefaultWalkerType)));
     *computeWalker = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
 
-    kernel->kernelInfo.setLocalIds({0, 0, 1});
+    kernel->kernelInfo.setLocalIds({1, 1, 1});
     localWorkSizesIn[2] = 16;
     localWorkSizesIn[0] = localWorkSizesIn[1] = 1;
 
@@ -312,6 +319,100 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimTw
     EXPECT_EQ(expectedEmit, computeWalker->getEmitLocalId());
     EXPECT_EQ(1u, computeWalker->getGenerateLocalId());
     EXPECT_EQ(0u, computeWalker->getEmitInlineParameter());
+}
+
+HWTEST2_F(XeHPAndLaterDispatchWalkerBasicTest, givenNonEmittedDimensionLargerThanOneWhenEnqueuingKernelThenWalkerFollowsHwLocalIdsGenerationDecisionWithFullLocalMaximums, IsAtLeastXe3pCore) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+    debugManager.flags.EnableHwGenerationLocalIds.set(1);
+
+    auto &kd = kernel->kernelInfo.kernelDescriptor;
+    kd.kernelAttributes.simdSize = 32;
+    kd.kernelAttributes.flags.requiresWorkgroupWalkOrder = true;
+
+    struct {
+        size_t lws[3];
+        std::array<uint8_t, 3> localIds;
+        uint32_t walkOrder;
+    } testCases[] = {
+        {{16, 7, 1}, {1, 0, 0}, 1u},
+        {{32, 1, 4}, {1, 0, 0}, 0u},
+        {{8, 8, 4}, {1, 1, 0}, 0u},
+        {{8, 6, 1}, {1, 1, 0}, 1u},
+    };
+
+    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
+
+    for (auto &testCase : testCases) {
+        kernel->kernelInfo.setLocalIds(testCase.localIds);
+        auto &dimensionOrder = HwWalkOrderHelper::compatibleDimensionOrders[testCase.walkOrder];
+        std::copy(dimensionOrder.begin(), dimensionOrder.end(), kd.kernelAttributes.workgroupWalkOrder);
+
+        auto streamOffset = cmdQ->getCS(0).getUsed();
+        cmdQ->enqueueKernel(kernel->mockKernel, 3, nullptr, testCase.lws, testCase.lws, 0, nullptr, nullptr);
+
+        HardwareParse hwParser;
+        hwParser.parseCommands<FamilyType>(cmdQ->getCS(0), streamOffset);
+        hwParser.findHardwareCommands<FamilyType>();
+        ASSERT_NE(hwParser.itorWalker, hwParser.cmdList.end());
+
+        auto walker = genCmdCast<WalkerType *>(*hwParser.itorWalker);
+        EXPECT_EQ(1u, walker->getGenerateLocalId());
+        EXPECT_EQ(testCase.walkOrder, walker->getWalkOrder());
+        EXPECT_EQ((1u << kd.kernelAttributes.numLocalIdChannels) - 1u, walker->getEmitLocalId());
+        EXPECT_EQ(testCase.lws[0] - 1, walker->getLocalXMaximum());
+        EXPECT_EQ(testCase.lws[1] - 1, walker->getLocalYMaximum());
+        EXPECT_EQ(testCase.lws[2] - 1, walker->getLocalZMaximum());
+    }
+}
+
+template <typename FamilyType>
+void verifyImplicitArgsLocalIdsWithTwoLocalIdChannelsAndNonEmittedZ(XeHPAndLaterDispatchWalkerBasicFixture &fixture, bool expectedHwGeneration, const std::array<uint8_t, 3> &expectedDimensionOrder) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+    debugManager.flags.EnableHwGenerationLocalIds.set(1);
+
+    constexpr uint32_t simd = 32;
+    auto &kernelDescriptor = fixture.kernel->kernelInfo.kernelDescriptor;
+    kernelDescriptor.kernelAttributes.simdSize = simd;
+    kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs = true;
+    fixture.kernel->kernelInfo.setLocalIds({1, 1, 0});
+    fixture.kernel->mockKernel->pImplicitArgs = std::make_unique<ImplicitArgs>();
+    memset(fixture.kernel->mockKernel->pImplicitArgs.get(), 0, sizeof(ImplicitArgs));
+    fixture.kernel->mockKernel->pImplicitArgs->initializeHeader(0);
+
+    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(fixture.context.get(), fixture.device.get(), nullptr);
+    size_t lws[] = {8, 6, 2};
+    cmdQ->enqueueKernel(fixture.kernel->mockKernel, 3, nullptr, lws, lws, 0, nullptr, nullptr);
+
+    ClHardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(*cmdQ);
+    auto walker = genCmdCast<WalkerType *>(hwParser.cmdWalker);
+    ASSERT_NE(nullptr, walker);
+    EXPECT_EQ(expectedHwGeneration, walker->getGenerateLocalId());
+
+    const auto &rootDeviceEnvironment = fixture.device->getRootDeviceEnvironment();
+    std::array<uint16_t, 3> localSize{8, 6, 2};
+    auto grfSize = ImplicitArgsHelper::getGrfSize(simd);
+    auto numGrf = kernelDescriptor.kernelAttributes.numGrfRequired;
+    auto sizeForLocalIds = PerThreadDataHelper::getPerThreadDataSizeTotal(simd, grfSize, numGrf, 3u, lws[0] * lws[1] * lws[2], rootDeviceEnvironment);
+    std::unique_ptr<void, decltype(&alignedFree)> expectedLocalIds(alignedMalloc(sizeForLocalIds, MemoryConstants::cacheLineSize), &alignedFree);
+    generateLocalIDs(expectedLocalIds.get(), static_cast<uint16_t>(simd), localSize, expectedDimensionOrder, false, grfSize, numGrf, rootDeviceEnvironment, 3u);
+
+    auto iohAllocation = cmdQ->getIndirectHeap(IndirectHeap::Type::indirectObject, 0u).getGraphicsAllocation();
+    auto localIdTableGpuAddress = fixture.kernel->mockKernel->pImplicitArgs->v0.localIdTablePtr;
+    auto programmedLocalIds = ptrOffset(iohAllocation->getUnderlyingBuffer(), static_cast<size_t>(localIdTableGpuAddress - iohAllocation->getGpuAddress()));
+    EXPECT_EQ(0, memcmp(expectedLocalIds.get(), programmedLocalIds, sizeForLocalIds));
+}
+
+HWTEST2_F(XeHPAndLaterDispatchWalkerBasicTest, givenKernelWithImplicitArgsAndTwoLocalIdChannelsAndNonEmittedZLargerThanOneWhenEnqueuingKernelThenLocalIdsInImplicitArgsAreGeneratedInKernelDimensionsOrder, IsWithinXeCoreAndXe3Core) {
+    const auto &kernelAttributes = kernel->kernelInfo.kernelDescriptor.kernelAttributes;
+    const std::array<uint8_t, 3> kernelDimensionsOrder = {kernelAttributes.workgroupDimensionsOrder[0],
+                                                          kernelAttributes.workgroupDimensionsOrder[1],
+                                                          kernelAttributes.workgroupDimensionsOrder[2]};
+    verifyImplicitArgsLocalIdsWithTwoLocalIdChannelsAndNonEmittedZ<FamilyType>(*this, false, kernelDimensionsOrder);
+}
+
+HWTEST2_F(XeHPAndLaterDispatchWalkerBasicTest, givenKernelWithImplicitArgsAndTwoLocalIdChannelsAndNonEmittedZLargerThanOneWhenEnqueuingKernelThenLocalIdsInImplicitArgsAreGeneratedInHwWalkOrder, IsXe3pCore) {
+    verifyImplicitArgsLocalIdsWithTwoLocalIdChannelsAndNonEmittedZ<FamilyType>(*this, true, HwWalkOrderHelper::compatibleDimensionOrders[1]);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimThreeWhenAskHwForLocalIdsThenExpectGenerationFieldsSet) {

@@ -48,6 +48,7 @@
 #include "implicit_args.h"
 
 #include <algorithm>
+#include <optional>
 #include <span>
 #include <type_traits>
 
@@ -603,96 +604,61 @@ inline uint32_t EncodePostSync<Family>::getPostSyncMocs(const RootDeviceEnvironm
 }
 
 template <typename Family>
+bool EncodeDispatchKernel<Family>::isHwLocalIdsGenerationWithNonEmittedDimensionsSupported() {
+    return false;
+}
+
+template <typename Family>
 bool EncodeDispatchKernel<Family>::isRuntimeLocalIdsGenerationRequired(uint32_t activeChannels,
                                                                        const size_t *lws,
                                                                        std::array<uint8_t, 3> walkOrder,
                                                                        bool requireInputWalkOrder,
                                                                        uint32_t &requiredWalkOrder,
                                                                        uint32_t simd) {
-    if (simd == 1) {
+    if (simd == 1 || debugManager.flags.EnableHwGenerationLocalIds.get() == 0) {
         return true;
     }
-    bool hwGenerationOfLocalIdsEnabled = true;
-    if (debugManager.flags.EnableHwGenerationLocalIds.get() != -1) {
-        hwGenerationOfLocalIdsEnabled = !!debugManager.flags.EnableHwGenerationLocalIds.get();
-    }
-    if (hwGenerationOfLocalIdsEnabled) {
-        if (activeChannels == 0) {
-            return false;
-        }
 
-        size_t totalLwsSize = 1u;
-        for (auto dimension = 0u; dimension < 3; dimension++) {
-            totalLwsSize *= lws[dimension];
-            if (lws[dimension] > 1u && dimension >= activeChannels) {
+    if (activeChannels == 0) {
+        return false;
+    }
+
+    if (lws[0] * lws[1] * lws[2] > 1024u) {
+        return true;
+    }
+
+    if (!isHwLocalIdsGenerationWithNonEmittedDimensionsSupported()) {
+        for (auto dimension = activeChannels; dimension < 3u; dimension++) {
+            if (lws[dimension] > 1u) {
                 return true;
             }
         }
+    }
 
-        if (totalLwsSize > 1024u) {
-            return true;
+    std::optional<uint32_t> equivalentWalkOrder;
+    for (uint32_t walkOrderId = 0; walkOrderId < HwWalkOrderHelper::walkOrderPossibilities; walkOrderId++) {
+        const auto &possibleWalkOrder = HwWalkOrderHelper::compatibleDimensionOrders[walkOrderId];
+
+        if (!Math::isPow2<size_t>(lws[possibleWalkOrder[0]]) || !Math::isPow2<size_t>(lws[possibleWalkOrder[1]])) {
+            continue;
         }
 
-        // check if we need to follow kernel requirements
-        if (activeChannels == 1) {
-            if (Math::isPow2<size_t>(lws[0])) {
-                requiredWalkOrder = HwWalkOrderHelper::linearWalkIndex;
-                return false;
-            }
-            // If single channel is active but its size is not power of 2,
-            // place that dimension as last in walk order
-            requiredWalkOrder = HwWalkOrderHelper::singleDimWalkIndex;
+        if (!requireInputWalkOrder || possibleWalkOrder == walkOrder) {
+            requiredWalkOrder = walkOrderId;
             return false;
         }
 
-        if (requireInputWalkOrder && activeChannels == 3) {
-            for (uint32_t dimension = 0; dimension < 2u; dimension++) {
-                if (!Math::isPow2<size_t>(lws[walkOrder[dimension]])) {
-                    return true;
-                }
-            }
-
-            auto index = 0u;
-            while (index < HwWalkOrderHelper::walkOrderPossibilties) {
-                if (walkOrder[0] == HwWalkOrderHelper::compatibleDimensionOrders[index][0] &&
-                    walkOrder[1] == HwWalkOrderHelper::compatibleDimensionOrders[index][1]) {
-                    break;
-                }
-                index++;
-            }
-            DEBUG_BREAK_IF(index >= HwWalkOrderHelper::walkOrderPossibilties);
-
-            requiredWalkOrder = index;
-            return false;
-        }
-
-        for (uint32_t walkOrderId = 0; walkOrderId < HwWalkOrderHelper::walkOrderPossibilties; walkOrderId++) {
-            auto possibleWalkOrder = HwWalkOrderHelper::compatibleDimensionOrders[walkOrderId];
-            bool allDimensionsCompatible = true;
-            for (uint32_t dimension = 0; dimension < 2u; dimension++) {
-                if (walkOrder[2] == possibleWalkOrder[dimension] && activeChannels == 2) {
-                    // skip inactive dimension
-                    continue;
-                }
-                if (!Math::isPow2<size_t>(lws[possibleWalkOrder[dimension]])) {
-                    allDimensionsCompatible = false;
-                    break;
-                }
-            }
-
-            // Check if active channels remain in correct order if required
-            if (allDimensionsCompatible && requireInputWalkOrder && activeChannels == 2) {
-                auto [firstIndex, secondIndex] = HwWalkOrderHelper::getActiveIndices(possibleWalkOrder, walkOrder[0], walkOrder[1]);
-                allDimensionsCompatible = (firstIndex < secondIndex);
-            }
-
-            if (allDimensionsCompatible) {
-                requiredWalkOrder = walkOrderId;
-                return false;
-            }
+        if (!equivalentWalkOrder.has_value() && HwWalkOrderHelper::isSameOrderOfNonUnitDimensions(possibleWalkOrder, walkOrder, lws)) {
+            equivalentWalkOrder = walkOrderId;
         }
     }
-    return true;
+
+    if (!equivalentWalkOrder.has_value()) {
+        return true;
+    }
+
+    requiredWalkOrder = equivalentWalkOrder.value();
+    return false;
 }
 
 template <typename Family>

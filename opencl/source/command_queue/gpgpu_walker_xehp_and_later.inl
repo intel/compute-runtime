@@ -36,8 +36,6 @@ size_t GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(
     bool inlineDataProgrammingRequired,
     uint32_t requiredWorkGroupOrder) {
 
-    bool kernelUsesLocalIds = kernelDescriptor.kernelAttributes.numLocalIdChannels > 0;
-
     auto localWorkSize = localWorkSizesIn[0] * localWorkSizesIn[1] * localWorkSizesIn[2];
 
     walkerCmd->setThreadGroupIdXDimension(static_cast<uint32_t>(numWorkGroups[0]));
@@ -67,31 +65,27 @@ size_t GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(
     // so whenever local ids are driver or hw generated, reserve space by setting right values for emitLocalIds
     // 2) Auto-generation of local ids should be possible, when in fact local ids are used
 
-    if (!localIdsGenerationByRuntime && kernelUsesLocalIds) {
-        uint32_t emitLocalIdsForDim = 0;
-        if (kernelDescriptor.kernelAttributes.localId[0]) {
-            emitLocalIdsForDim |= (1 << 0);
-        }
-        if (kernelDescriptor.kernelAttributes.localId[1]) {
+    const uint32_t localIdDimensions = kernelDescriptor.kernelAttributes.numLocalIdChannels;
+    if (!localIdsGenerationByRuntime && localIdDimensions > 0) {
+        UNRECOVERABLE_IF(localIdDimensions > 3);
+        uint32_t emitLocalIdsForDim = (1 << 0);
+        walkerCmd->setLocalXMaximum(static_cast<uint32_t>(localWorkSizesIn[0] - 1));
+        walkerCmd->setLocalYMaximum(localWorkSizesIn[1] > 0 ? static_cast<uint32_t>(localWorkSizesIn[1] - 1) : 0);
+        walkerCmd->setLocalZMaximum(localWorkSizesIn[2] > 0 ? static_cast<uint32_t>(localWorkSizesIn[2] - 1) : 0);
+
+        if (localIdDimensions > 1) {
             emitLocalIdsForDim |= (1 << 1);
         }
-        if (kernelDescriptor.kernelAttributes.localId[2]) {
+        if (localIdDimensions > 2) {
             emitLocalIdsForDim |= (1 << 2);
         }
         walkerCmd->setEmitLocalId(emitLocalIdsForDim);
+        walkerCmd->setGenerateLocalId(1);
+        walkerCmd->setWalkOrder(requiredWorkGroupOrder);
     }
 
     if (inlineDataProgrammingRequired == true) {
         walkerCmd->setEmitInlineParameter(1);
-    }
-
-    if ((!localIdsGenerationByRuntime) && kernelUsesLocalIds) {
-        walkerCmd->setLocalXMaximum(static_cast<uint32_t>(localWorkSizesIn[0] - 1));
-        walkerCmd->setLocalYMaximum(static_cast<uint32_t>(localWorkSizesIn[1] - 1));
-        walkerCmd->setLocalZMaximum(static_cast<uint32_t>(localWorkSizesIn[2] - 1));
-
-        walkerCmd->setGenerateLocalId(1);
-        walkerCmd->setWalkOrder(requiredWorkGroupOrder);
     }
 
     return localWorkSize;

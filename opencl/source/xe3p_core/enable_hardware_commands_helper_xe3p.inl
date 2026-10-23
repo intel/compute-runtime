@@ -23,6 +23,7 @@ template size_t NEO::HardwareCommandsHelper<NEO::FamilyType>::sendIndirectState<
     FamilyType::COMPUTE_WALKER_2 *walkerCmd,
     FamilyType::INTERFACE_DESCRIPTOR_DATA_2 *inlineInterfaceDescriptor,
     bool localIdsGenerationByRuntime,
+    uint32_t requiredWalkOrder,
     uint64_t scratchAddress,
     const Device &device);
 
@@ -30,6 +31,8 @@ template size_t NEO::HardwareCommandsHelper<NEO::FamilyType>::sendCrossThreadDat
     IndirectHeap &indirectHeap,
     Kernel &kernel,
     bool inlineDataProgrammingRequired,
+    bool localIdsGenerationByRuntime,
+    uint32_t requiredWalkOrder,
     FamilyType::COMPUTE_WALKER_2 *walkerCmd,
     uint32_t &sizeCrossThreadData,
     uint64_t scratchAddress,

@@ -33,7 +33,7 @@ std::array<uint8_t, 3> getDimensionOrderForLocalIds(const uint8_t *workgroupDime
     }
 
     auto walkOrderForHwGenerationOfLocalIds = hwGenerationOfLocalIdsParams.value().second;
-    UNRECOVERABLE_IF(walkOrderForHwGenerationOfLocalIds >= HwWalkOrderHelper::walkOrderPossibilties);
+    UNRECOVERABLE_IF(walkOrderForHwGenerationOfLocalIds >= HwWalkOrderHelper::walkOrderPossibilities);
     return HwWalkOrderHelper::compatibleDimensionOrders[walkOrderForHwGenerationOfLocalIds];
 }
 
