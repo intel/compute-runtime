@@ -36,8 +36,6 @@ Drm **pDrmToReturnFromCreateFunc = nullptr;
 bool disableBindDefaultInTests = true;
 
 Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.IgnoreProductSpecificIoctlHelper.set(true);
     rootDeviceEnvironment.setHwInfoAndInitHelpers(defaultHwInfo.get());
     if (pDrmToReturnFromCreateFunc) {
         return *pDrmToReturnFromCreateFunc;

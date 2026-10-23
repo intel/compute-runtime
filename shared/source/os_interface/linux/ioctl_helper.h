@@ -509,5 +509,4 @@ class IoctlHelperPrelim20 : public IoctlHelperI915 {
     uint64_t uuid = 0;
 };
 
-extern std::optional<std::function<std::unique_ptr<IoctlHelper>(Drm &drm)>> ioctlHelperFactory[NEO::maxProductEnumValue];
 } // namespace NEO

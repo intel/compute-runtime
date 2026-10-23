@@ -77,8 +77,6 @@ class DrmGemCloseWorkerFixture {
         this->drmMock = new DrmMockForWorker(*executionEnvironment.rootDeviceEnvironments[0]);
 
         auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
-        DebugManagerStateRestore restore;
-        debugManager.flags.IgnoreProductSpecificIoctlHelper.set(true);
         drmMock->setupIoctlHelper(hwInfo->platform.eProductFamily);
 
         executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface = std::make_unique<OSInterface>();

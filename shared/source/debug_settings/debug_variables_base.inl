@@ -99,7 +99,6 @@ DECLARE_DEBUG_VARIABLE(bool, RemoveRestrictionsOnNumberOfThreadsInGpgpuThreadGro
 DECLARE_DEBUG_VARIABLE(bool, DisableGemCreateExtSetPat, false, "Do not use I915_GEM_CREATE_EXT_SET_PAT extension when gem create ext is called")
 DECLARE_DEBUG_VARIABLE(bool, PipelinedPipelineSelect, false, "Restore usage of default pipeline select command")
 DECLARE_DEBUG_VARIABLE(bool, AbortHostSyncOnNonHostVisibleEvent, false, "Aborts execution when user calls zeEventHostSynchronize on event without host signal scope")
-DECLARE_DEBUG_VARIABLE(bool, IgnoreProductSpecificIoctlHelper, false, "When set then product specific ioctl helper is not created even if available, generic one is used")
 DECLARE_DEBUG_VARIABLE(bool, EnableDdiHandlesExtension, true, "Enable L0 Driver Direct Device Interface (DDI) Handles Extension")
 DECLARE_DEBUG_VARIABLE(bool, BlockingEventRelease, false, "Makes clReleaseEvent blocking")
 DECLARE_DEBUG_VARIABLE(bool, PrintImgInfo, false, "Prints image info after creation")

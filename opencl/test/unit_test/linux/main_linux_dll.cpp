@@ -924,7 +924,6 @@ int main(int argc, char **argv) {
     auto compilerProductHelper = CompilerProductHelper::create(defaultHwInfo->platform.eProductFamily);
     defaultHwInfo->ipVersion.value = compilerProductHelper->getHwIpVersion(*defaultHwInfo);
 
-    debugManager.flags.IgnoreProductSpecificIoctlHelper.set(true);
     initializeTestedDevice();
 
     Os::dxcoreDllName = "";

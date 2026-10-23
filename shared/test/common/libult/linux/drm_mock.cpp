@@ -34,8 +34,6 @@ DrmMock::DrmMock(int fd, RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std
         }
     }
 
-    DebugManagerStateRestore restore;
-    debugManager.flags.IgnoreProductSpecificIoctlHelper.set(true);
     setupIoctlHelper(rootDeviceEnvironment.getHardwareInfo()->platform.eProductFamily);
     if (!isPerContextVMRequired()) {
         createVirtualMemoryAddressSpace(GfxCoreHelper::getSubDevicesCount(rootDeviceEnvironment.getHardwareInfo()));
@@ -402,14 +400,10 @@ const int mockFd = 33;
 const char *mockPciPath = "";
 
 DrmMockSuccess::DrmMockSuccess(int fd, RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(fd, mockPciPath), rootDeviceEnvironment) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.IgnoreProductSpecificIoctlHelper.set(true);
     setupIoctlHelper(NEO::defaultHwInfo->platform.eProductFamily);
 }
 
 DrmMockFail::DrmMockFail(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(mockFd, mockPciPath), rootDeviceEnvironment) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.IgnoreProductSpecificIoctlHelper.set(true);
     setupIoctlHelper(NEO::defaultHwInfo->platform.eProductFamily);
 }
 
@@ -697,8 +691,6 @@ std::unique_ptr<DrmMockCustom> DrmMockCustom::create(RootDeviceEnvironment &root
 }
 
 std::unique_ptr<DrmMockCustom> DrmMockCustom::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.IgnoreProductSpecificIoctlHelper.set(true);
     auto drm{new DrmMockCustom{std::move(hwDeviceId), rootDeviceEnvironment}};
 
     drm->reset();

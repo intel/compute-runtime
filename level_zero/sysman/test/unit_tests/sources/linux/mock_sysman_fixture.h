@@ -52,7 +52,6 @@ class PublicLinuxSysmanImp : public L0::Sysman::LinuxSysmanImp {
 class SysmanDeviceFixture : public ::testing::Test {
   public:
     void SetUp() override {
-        debugManager.flags.IgnoreProductSpecificIoctlHelper.set(true);
         VariableBackup<decltype(NEO::SysCalls::sysCallsRealpath)> mockRealPath(&NEO::SysCalls::sysCallsRealpath, [](const char *path, char *buf) -> char * {
             constexpr size_t sizeofPath = sizeof("/sys/devices/pci0000:00/0000:00:02.0");
             strcpy_s(buf, sizeofPath, "/sys/devices/pci0000:00/0000:00:02.0");
