@@ -404,7 +404,7 @@ HWTEST2_F(CmdListLargeGrfTestXe2Hpg,
     testBody<FamilyType>();
 }
 
-using CommandListStatePrefetchXe2HpgCore = Test<ModuleFixture>;
+using CommandListStatePrefetchXe2HpgCore = Test<ModuleFixtureWithoutModule>;
 
 HWTEST2_F(CommandListStatePrefetchXe2HpgCore, givenUnifiedSharedMemoryWhenPrefetchApiIsCalledThenRequestMemoryPrefetchByDefault, IsXe2HpgCore) {
     auto memoryManager = static_cast<MockMemoryManager *>(device->getDriverHandle()->getMemoryManager());

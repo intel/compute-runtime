@@ -66,7 +66,7 @@ struct CommandListDualStorage : public Test<ModuleFixture> {
 
         debugManager.flags.EnableLocalMemory.set(1);
         debugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(1);
-        ModuleFixture::setUp();
+        ModuleFixture::setUp(true);
     }
     void TearDown() override {
         ModuleFixture::tearDown();

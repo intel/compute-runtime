@@ -155,6 +155,12 @@ struct ModuleFixture : public DeviceFixture {
     DebugManagerStateRestore restore;
 };
 
+struct ModuleFixtureWithoutModule : public ModuleFixture {
+    void setUp() {
+        ModuleFixture::setUp(true);
+    }
+};
+
 struct MultiDeviceModuleFixture : public MultiDeviceFixture {
     MultiDeviceModuleFixture();
     ~MultiDeviceModuleFixture();

@@ -1051,7 +1051,7 @@ TEST_F(ModuleSpecConstantsCharTests, givenSpecializationConstantsSetWithCharSize
     runTest();
 }
 
-using ModuleIlFormatTests = ModuleTest;
+using ModuleIlFormatTests = Test<ModuleFixtureWithoutModule>;
 
 TEST_F(ModuleIlFormatTests, givenLlvmBitcodePassedAsIlSpirVFormatThenCompilerReceivesLlvmBcCodeType) {
     auto mockTranslationUnit = new MockModuleTranslationUnit(device);
@@ -1822,7 +1822,7 @@ TEST_F(ModulePropertyTest, givenCallToGetPropertiesWithUnresolvedSymbolsThenFlag
 
 struct ModuleFunctionPointerTests : public Test<ModuleFixture> {
     void SetUp() override {
-        Test<ModuleFixture>::SetUp();
+        ModuleFixture::setUp(true);
         module0 = std::make_unique<WhiteBox<::L0::Module>>(device, nullptr, ModuleType::user);
     }
     void TearDown() override {
@@ -2695,7 +2695,7 @@ TEST_F(ModuleDynamicLinkTests, givenModuleWithUnresolvedSymbolsNotPresentInAnoth
     ::zeModuleBuildLogDestroy(dynLinkLog);
 }
 
-using ModuleDynamicLinkTest = Test<ModuleFixture>;
+using ModuleDynamicLinkTest = Test<ModuleFixtureWithoutModule>;
 TEST_F(ModuleDynamicLinkTest, givenUnresolvedSymbolsWhenModuleIsCreatedThenIsaAllocationsAreNotCopied) {
 
     auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
