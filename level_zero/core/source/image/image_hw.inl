@@ -451,12 +451,6 @@ void ImageCoreFamily<gfxCoreFamily>::encodeSurfaceStateReduced(const SurfaceStat
     const bool hasFixedChannelSelect = context.hasFixedChannelSelect;
     const bool redescribedIsNV12 = context.redescribedIsNV12;
 
-    RENDER_SURFACE_STATE compressionSurfaceState = GfxFamily::cmdInitRenderSurfaceState;
-    if (numSamplesForSurfaceState <= 1 && this->allocation->isCompressionEnabled()) {
-        NEO::EncodeSurfaceState<GfxFamily>::appendImageCompressionParams(&compressionSurfaceState, this->allocation, gmmHelper, this->imageFromBuffer, imgInfo.plane);
-    }
-    const auto compressionFormat = NEO::getSurfaceStateCompressionFormatIfSupported(compressionSurfaceState);
-
     auto makeInputsFromSource = [&](const NEO::ImageInfo &encodeImageInfo, bool isNV12) {
         using NUMBER_OF_MULTISAMPLES = typename RENDER_SURFACE_STATE::NUMBER_OF_MULTISAMPLES;
 
@@ -469,7 +463,6 @@ void ImageCoreFamily<gfxCoreFamily>::encodeSurfaceStateReduced(const SurfaceStat
         inputs.cubeFaceIndex = cubeFaceIndex;
         inputs.useChannelSelects = true;
         inputs.isNV12Format = isNV12;
-        inputs.compressionFormat = compressionFormat;
 
         inputs.numberOfMultisamples =
             (numSamplesForSurfaceState <= 1)
