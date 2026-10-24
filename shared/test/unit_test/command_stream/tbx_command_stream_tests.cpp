@@ -362,6 +362,38 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenFlushIsCalledTh
     memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
+HWTEST_F(TbxCommandSteamSimpleTest, givenDirectSubmissionEngineSupportedWhenTbxCommandStreamReceiverIsCreatedThenPollForCompletionIsDisabledOnlyWhenDirectSubmissionIsEnabledInSimulationMode) {
+    DebugManagerStateRestore dbgRestore;
+    auto hwInfo = pDevice->executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
+    hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_CCS].engineSupported = true;
+    const bool directSubmissionSupported = pDevice->getProductHelper().isDirectSubmissionSupported();
+
+    debugManager.flags.EnableDirectSubmissionInSimulationMode.set(1);
+    {
+        MockTbxCsr<FamilyType> tbxCsr(*pDevice->executionEnvironment, pDevice->getDeviceBitfield());
+        EXPECT_EQ(!directSubmissionSupported, tbxCsr.pollForCompletionEnabled);
+    }
+
+    debugManager.flags.EnableDirectSubmission.set(1);
+    {
+        MockTbxCsr<FamilyType> tbxCsr(*pDevice->executionEnvironment, pDevice->getDeviceBitfield());
+        EXPECT_FALSE(tbxCsr.pollForCompletionEnabled);
+    }
+
+    debugManager.flags.EnableDirectSubmission.set(0);
+    {
+        MockTbxCsr<FamilyType> tbxCsr(*pDevice->executionEnvironment, pDevice->getDeviceBitfield());
+        EXPECT_TRUE(tbxCsr.pollForCompletionEnabled);
+    }
+
+    debugManager.flags.EnableDirectSubmission.set(1);
+    debugManager.flags.EnableDirectSubmissionInSimulationMode.set(0);
+    {
+        MockTbxCsr<FamilyType> tbxCsr(*pDevice->executionEnvironment, pDevice->getDeviceBitfield());
+        EXPECT_TRUE(tbxCsr.pollForCompletionEnabled);
+    }
+}
+
 HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCsrWhenCallingMakeSurfacePackNonResidentThenOnlyResidentAllocationsAddedAllocationsForDownload) {
     MockTbxCsr<FamilyType> tbxCsr{*pDevice->executionEnvironment, pDevice->getDeviceBitfield()};
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor(pDevice->getDeviceBitfield()));

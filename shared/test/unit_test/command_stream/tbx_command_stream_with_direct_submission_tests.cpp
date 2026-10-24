@@ -129,6 +129,22 @@ bool isRingBufferChunkUploaded(const MockTbxCsr<FamilyType> &tbxCsr) {
     return std::find(writtenAllocationTypes.begin(), writtenAllocationTypes.end(), AllocationType::ringBuffer) != writtenAllocationTypes.end();
 }
 
+template <typename FamilyType>
+bool isCommandBufferTbxWritableAfterFlush(MockTbxCsr<FamilyType> &tbxCsr, MemoryManager &memoryManager, const DeviceBitfield deviceBitfield) {
+    auto commandBuffer = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{tbxCsr.getRootDeviceIndex(), MemoryConstants::pageSize, deviceBitfield});
+
+    LinearStream commandStream(commandBuffer);
+    commandStream.getSpace(256);
+    BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(commandStream.getGraphicsAllocation(), &commandStream, commandStream.getUsed());
+    batchBuffer.endCmdPtr = ptrOffset(commandStream.getCpuBase(), 128);
+    ResidencyContainer allocationsForResidency;
+    tbxCsr.flush(batchBuffer, allocationsForResidency);
+
+    auto isTbxWritable = tbxCsr.isTbxWritable(*commandBuffer);
+    memoryManager.freeGraphicsMemory(commandBuffer);
+    return isTbxWritable;
+}
+
 using TbxCommandStreamDirectSubmissionTests = Test<TbxDirectSubmissionFixture>;
 using TbxCommandStreamBlitterDirectSubmissionTests = Test<TbxBlitterDirectSubmissionFixture>;
 
@@ -311,4 +327,16 @@ HWTEST_TEMPLATED_F(TbxCommandStreamDirectSubmissionTests, givenStartedDirectSubm
     tbxCsr->stopDirectSubmission(false, false);
 
     EXPECT_FALSE(mockHardwareContext->resubmitCalled);
+}
+
+HWTEST_TEMPLATED_F(TbxCommandStreamDirectSubmissionTests, givenStartedDirectSubmissionWhenFlushIsCalledThenCommandBufferIsTbxWritableAfterFlush) {
+    auto *tbxCsr = getCsr<FamilyType>();
+
+    EXPECT_TRUE(isCommandBufferTbxWritableAfterFlush(*tbxCsr, *pDevice->executionEnvironment->memoryManager, pDevice->getDeviceBitfield()));
+}
+
+HWTEST_TEMPLATED_F(TbxCommandStreamBlitterDirectSubmissionTests, givenStartedBlitterDirectSubmissionWhenFlushIsCalledThenCommandBufferIsTbxWritableAfterFlush) {
+    auto *tbxCsr = getCsr<FamilyType>();
+
+    EXPECT_TRUE(isCommandBufferTbxWritableAfterFlush(*tbxCsr, *pDevice->executionEnvironment->memoryManager, pDevice->getDeviceBitfield()));
 }

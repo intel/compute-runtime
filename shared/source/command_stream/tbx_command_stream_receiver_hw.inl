@@ -237,19 +237,11 @@ SubmissionStatus TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batch
 
     batchBuffer.allocationsForResidency = &allocationsForResidency;
 
-    if (this->directSubmission.get()) {
-        bool ret = this->directSubmission->dispatchCommandBuffer(batchBuffer, *this->flushStamp.get());
-        if (ret == false) {
-            return SubmissionStatus::failed;
-        }
-        return SubmissionStatus::success;
-    }
-    if (this->blitterDirectSubmission.get()) {
-        bool ret = this->blitterDirectSubmission->dispatchCommandBuffer(batchBuffer, *this->flushStamp.get());
-        if (ret == false) {
-            return SubmissionStatus::failed;
-        }
-        return SubmissionStatus::success;
+    if (this->directSubmission.get() || this->blitterDirectSubmission.get()) {
+        bool dispatched = this->directSubmission.get() ? this->directSubmission->dispatchCommandBuffer(batchBuffer, *this->flushStamp.get())
+                                                       : this->blitterDirectSubmission->dispatchCommandBuffer(batchBuffer, *this->flushStamp.get());
+        this->setTbxWritable(true, *batchBuffer.commandBufferAllocation);
+        return dispatched ? SubmissionStatus::success : SubmissionStatus::failed;
     }
 
     submitBatchBufferTbx(

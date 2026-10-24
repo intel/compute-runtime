@@ -119,8 +119,11 @@ CommandStreamReceiverSimulatedCommonHw<GfxFamily>::CommandStreamReceiverSimulate
             break;
         }
     }
-    this->pollForCompletionEnabled = !((debugManager.flags.EnableDirectSubmission.get() > 0 ||
-                                        executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getProductHelper().isDirectSubmissionSupported()) &&
+    bool directSubmissionEnabled = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getProductHelper().isDirectSubmissionSupported();
+    if (debugManager.flags.EnableDirectSubmission.get() != -1) {
+        directSubmissionEnabled = debugManager.flags.EnableDirectSubmission.get() > 0;
+    }
+    this->pollForCompletionEnabled = !(directSubmissionEnabled &&
                                        debugManager.flags.EnableDirectSubmissionInSimulationMode.get() > 0 &&
                                        anyDirectSubmissionEngineSupported);
 }

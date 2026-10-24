@@ -363,9 +363,7 @@ void OsAgnosticMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllo
     if (executionEnvironment.rootDeviceEnvironments.size() > rootDeviceIndex) {
         auto aubCenter = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->aubCenter.get();
         if (aubCenter && aubCenter->getAubManager() && debugManager.flags.EnableFreeMemory.get() && gfxAllocation->getAllocationType() != AllocationType::externalHostPtr) {
-            auto pageTablesLock = aubCenter->obtainPageTablesLock();
-            aubCenter->getAubManager()->freeMemory(
-                peekExecutionEnvironment().rootDeviceEnvironments[gfxAllocation->getRootDeviceIndex()].get()->gmmHelper.get()->decanonize(gfxAllocation->getGpuAddress()), gfxAllocation->getUnderlyingBufferSize());
+            freeMemoryInAubManager(*aubCenter, rootDeviceIndex, getGmmHelper(rootDeviceIndex)->decanonize(gfxAllocation->getGpuAddress()), gfxAllocation->getUnderlyingBufferSize());
         }
     }
 
@@ -418,13 +416,22 @@ MemoryManager::AllocationStatus OsAgnosticMemoryManager::populateOsHandles(OsHan
     }
     return AllocationStatus::Success;
 }
+void OsAgnosticMemoryManager::freeMemoryInAubManager(AubCenter &aubCenter, uint32_t rootDeviceIndex, uint64_t gpuAddress, size_t size) {
+    {
+        auto pageTablesLock = aubCenter.obtainPageTablesLock();
+        aubCenter.getAubManager()->freeMemory(gpuAddress, size);
+    }
+    for (auto &engine : getRegisteredEngines(rootDeviceIndex)) {
+        engine.osContext->setNewResourceBound();
+    }
+}
+
 void OsAgnosticMemoryManager::cleanOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) {
     for (unsigned int i = 0; i < maxFragmentsCount; i++) {
         if (handleStorage.fragmentStorageData[i].freeTheFragment) {
             auto aubCenter = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->aubCenter.get();
             if (aubCenter && aubCenter->getAubManager() && debugManager.flags.EnableFreeMemory.get()) {
-                auto pageTablesLock = aubCenter->obtainPageTablesLock();
-                aubCenter->getAubManager()->freeMemory((uint64_t)handleStorage.fragmentStorageData[i].cpuPtr, handleStorage.fragmentStorageData[i].fragmentSize);
+                freeMemoryInAubManager(*aubCenter, rootDeviceIndex, reinterpret_cast<uint64_t>(handleStorage.fragmentStorageData[i].cpuPtr), handleStorage.fragmentStorageData[i].fragmentSize);
             }
             delete handleStorage.fragmentStorageData[i].osHandleStorage;
             delete handleStorage.fragmentStorageData[i].residency;

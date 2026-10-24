@@ -9,6 +9,7 @@
 #include "shared/source/memory_manager/memory_manager.h"
 
 namespace NEO {
+class AubCenter;
 class MemoryAllocation;
 
 constexpr size_t bigAllocation = 1 * MemoryConstants::megaByte;
@@ -79,6 +80,7 @@ class OsAgnosticMemoryManager : public MemoryManager {
     MemoryAllocation *createMemoryAllocation(AllocationType allocationType, void *driverAllocatedCpuPointer, void *pMem, uint64_t gpuAddress, size_t memSize,
                                              uint64_t count, MemoryPool pool, uint32_t rootDeviceIndex, bool uncacheable, bool flushL3Required, bool requireSpecificBitness);
     void removeAllocationFromDownloadAllocationsInCsr(GraphicsAllocation *alloc) override;
+    void freeMemoryInAubManager(AubCenter &aubCenter, uint32_t rootDeviceIndex, uint64_t gpuAddress, size_t size);
     bool fakeBigAllocations = false;
 
   private:

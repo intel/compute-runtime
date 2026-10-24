@@ -1120,6 +1120,51 @@ TEST_F(MemoryAllocatorTest, givenAubManagerAndFreeMemoryEnabledWhenFreeingGraphi
     EXPECT_EQ(1u, lockCallsAtFree);
 }
 
+TEST_F(MemoryAllocatorTest, givenAubManagerAndFreeMemoryEnabledWhenFreeingGraphicsMemoryThenTlbFlushIsRequiredOnRegisteredOsContexts) {
+    DebugManagerStateRestore dbgRestore;
+    debugManager.flags.EnableFreeMemory.set(true);
+    const uint32_t rootDeviceIndex = 0u;
+    auto mockManager = new MockAubManager();
+    auto mockAubCenter = new MockAubCenter(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex], false, "aubfile", CommandStreamReceiverType::aub);
+    mockAubCenter->aubManager.reset(mockManager);
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->aubCenter.reset(mockAubCenter);
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, MemoryConstants::pageSize});
+    ASSERT_NE(nullptr, allocation);
+
+    auto &osContext = csr->getOsContext();
+    osContext.setTlbFlushed(osContext.peekTlbFlushCounter());
+    ASSERT_FALSE(osContext.isTlbFlushRequired());
+
+    memoryManager->freeGraphicsMemory(allocation);
+
+    EXPECT_TRUE(mockManager->freeMemoryCalled);
+    EXPECT_TRUE(osContext.isTlbFlushRequired());
+}
+
+TEST_F(MemoryAllocatorTest, givenAubManagerAndFreeMemoryEnabledWhenCleaningOsHandlesThenTlbFlushIsRequiredOnRegisteredOsContexts) {
+    DebugManagerStateRestore dbgRestore;
+    debugManager.flags.EnableFreeMemory.set(true);
+    const uint32_t rootDeviceIndex = 0u;
+    auto mockManager = new MockAubManager();
+    auto mockAubCenter = new MockAubCenter(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex], false, "aubfile", CommandStreamReceiverType::aub);
+    mockAubCenter->aubManager.reset(mockManager);
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->aubCenter.reset(mockAubCenter);
+
+    auto &osContext = csr->getOsContext();
+    osContext.setTlbFlushed(osContext.peekTlbFlushCounter());
+    ASSERT_FALSE(osContext.isTlbFlushRequired());
+
+    OsHandleStorage storage;
+    storage.fragmentStorageData[0].cpuPtr = reinterpret_cast<void *>(0x1000);
+    memoryManager->populateOsHandles(storage, rootDeviceIndex);
+    memoryManager->getHostPtrManager()->releaseHandleStorage(rootDeviceIndex, storage);
+    memoryManager->cleanOsHandles(storage, rootDeviceIndex);
+
+    EXPECT_TRUE(mockManager->freeMemoryCalled);
+    EXPECT_TRUE(osContext.isTlbFlushRequired());
+}
+
 TEST_F(MemoryAllocatorTest, givenAubManagerAndFreeMemoryEnabledWhenFreeingGraphicsMemoryThenAubManagerFreeMemoryIsCalledBeforeGpuAddressRangeIsFreed) {
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.EnableFreeMemory.set(true);
