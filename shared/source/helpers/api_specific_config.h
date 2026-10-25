@@ -32,7 +32,6 @@ struct ApiSpecificConfig {
     static std::string getName();
     static uint64_t getReducedMaxAllocSize(uint64_t maxAllocSize);
     static const char *getRegistryPath();
-    static void initPrefixes();
     static const StackVec<const char *, 4> &getPrefixStrings();
     static const StackVec<DebugVarPrefix, 4> &getPrefixTypes();
     static std::string getAubPrefixForSpecificApi() {

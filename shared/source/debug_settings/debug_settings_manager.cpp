@@ -134,7 +134,6 @@ static void injectBareNameReleaseSetting(SettingsReader &reader, SettingsReader 
 template <DebugFunctionalityLevel debugLevel>
 DebugSettingsManager<debugLevel>::DebugSettingsManager(const char *registryPath) {
     readerImpl = SettingsReaderCreator::create(std::string(registryPath));
-    ApiSpecificConfig::initPrefixes();
     for (auto prefixType : ApiSpecificConfig::getPrefixTypes()) {
         this->scope |= getDebugVarScopeMaskFor(prefixType);
     }

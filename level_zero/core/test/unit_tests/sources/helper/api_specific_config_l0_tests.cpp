@@ -39,6 +39,20 @@ TEST(ApiSpecificConfigL0Tests, WhenGettingRegistryPathThenL0RegistryPathIsReturn
     EXPECT_STREQ(L0::registryPath, ApiSpecificConfig::getRegistryPath());
 }
 
+TEST(ApiSpecificConfigL0Tests, WhenGettingPrefixesThenL0PrefixesAreReturned) {
+    auto &prefixStrings = ApiSpecificConfig::getPrefixStrings();
+    ASSERT_EQ(3u, prefixStrings.size());
+    EXPECT_STREQ("NEO_L0_", prefixStrings[0]);
+    EXPECT_STREQ("NEO_", prefixStrings[1]);
+    EXPECT_STREQ("", prefixStrings[2]);
+
+    auto &prefixTypes = ApiSpecificConfig::getPrefixTypes();
+    ASSERT_EQ(3u, prefixTypes.size());
+    EXPECT_EQ(DebugVarPrefix::neoL0, prefixTypes[0]);
+    EXPECT_EQ(DebugVarPrefix::neo, prefixTypes[1]);
+    EXPECT_EQ(DebugVarPrefix::none, prefixTypes[2]);
+}
+
 TEST(ApiSpecificConfigL0Tests, WhenCheckingIfHostDeviceAllocationCacheIsEnabledThenReturnTrue) {
     EXPECT_TRUE(ApiSpecificConfig::isHostAllocationCacheEnabled());
     EXPECT_TRUE(ApiSpecificConfig::isDeviceAllocationCacheEnabled());

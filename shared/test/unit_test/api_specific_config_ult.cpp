@@ -79,9 +79,6 @@ const char *ApiSpecificConfig::getRegistryPath() {
     return "";
 }
 
-void ApiSpecificConfig::initPrefixes() {
-}
-
 const StackVec<const char *, 4> &ApiSpecificConfig::getPrefixStrings() {
     if (apiTypeForUlts == ApiSpecificConfig::L0) {
         return validUltL0Prefixes;

@@ -16,9 +16,6 @@
 
 namespace NEO {
 
-StackVec<const char *, 4> validClPrefixes;
-StackVec<NEO::DebugVarPrefix, 4> validClPrefixTypes;
-
 bool ApiSpecificConfig::getGlobalBindlessHeapConfiguration(const HardwareInfo &hwInfo) {
     return false;
 }
@@ -67,16 +64,13 @@ const char *ApiSpecificConfig::getRegistryPath() {
     return oclRegPath;
 }
 
-void ApiSpecificConfig::initPrefixes() {
-    validClPrefixes = {"NEO_OCL_", "NEO_", ""};
-    validClPrefixTypes = {DebugVarPrefix::neoOcl, DebugVarPrefix::neo, DebugVarPrefix::none};
-}
-
 const StackVec<const char *, 4> &ApiSpecificConfig::getPrefixStrings() {
+    static const StackVec<const char *, 4> validClPrefixes = {"NEO_OCL_", "NEO_", ""};
     return validClPrefixes;
 }
 
 const StackVec<DebugVarPrefix, 4> &ApiSpecificConfig::getPrefixTypes() {
+    static const StackVec<DebugVarPrefix, 4> validClPrefixTypes = {DebugVarPrefix::neoOcl, DebugVarPrefix::neo, DebugVarPrefix::none};
     return validClPrefixTypes;
 }
 

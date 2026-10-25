@@ -36,6 +36,20 @@ TEST(ApiSpecificConfigOclTests, WhenGettingRegistryPathThenOclRegistryPathIsRetu
     EXPECT_STREQ(oclRegPath, ApiSpecificConfig::getRegistryPath());
 }
 
+TEST(ApiSpecificConfigOclTests, WhenGettingPrefixesThenOclPrefixesAreReturned) {
+    auto &prefixStrings = ApiSpecificConfig::getPrefixStrings();
+    ASSERT_EQ(3u, prefixStrings.size());
+    EXPECT_STREQ("NEO_OCL_", prefixStrings[0]);
+    EXPECT_STREQ("NEO_", prefixStrings[1]);
+    EXPECT_STREQ("", prefixStrings[2]);
+
+    auto &prefixTypes = ApiSpecificConfig::getPrefixTypes();
+    ASSERT_EQ(3u, prefixTypes.size());
+    EXPECT_EQ(DebugVarPrefix::neoOcl, prefixTypes[0]);
+    EXPECT_EQ(DebugVarPrefix::neo, prefixTypes[1]);
+    EXPECT_EQ(DebugVarPrefix::none, prefixTypes[2]);
+}
+
 TEST(ApiSpecificConfigOclTests, WhenCheckingIfHostOrDeviceAllocationCacheIsEnabledThenReturnCorrectValue) {
     EXPECT_TRUE(ApiSpecificConfig::isHostAllocationCacheEnabled());
     EXPECT_TRUE(ApiSpecificConfig::isDeviceAllocationCacheEnabled());

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,22 +13,16 @@
 
 namespace NEO {
 
-StackVec<const char *, 4> validOclocPrefixes;
-StackVec<NEO::DebugVarPrefix, 4> validOclocPrefixTypes;
-
 void translateDebugSettings(DebugVariables &debugVariables) {
 }
 
-void ApiSpecificConfig::initPrefixes() {
-    validOclocPrefixes = {"NEO_OCLOC_"};
-    validOclocPrefixTypes = {DebugVarPrefix::neoOcloc};
-}
-
 const StackVec<const char *, 4> &ApiSpecificConfig::getPrefixStrings() {
+    static const StackVec<const char *, 4> validOclocPrefixes = {"NEO_OCLOC_"};
     return validOclocPrefixes;
 }
 
 const StackVec<DebugVarPrefix, 4> &ApiSpecificConfig::getPrefixTypes() {
+    static const StackVec<DebugVarPrefix, 4> validOclocPrefixTypes = {DebugVarPrefix::neoOcloc};
     return validOclocPrefixTypes;
 }
 

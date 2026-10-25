@@ -19,8 +19,6 @@
 #include <string>
 
 namespace NEO {
-StackVec<const char *, 4> validL0Prefixes;
-StackVec<NEO::DebugVarPrefix, 4> validL0PrefixTypes;
 
 bool ApiSpecificConfig::getGlobalBindlessHeapConfiguration(const HardwareInfo &hwInfo) {
     if (debugManager.flags.UseExternalAllocatorForSshAndDsh.get() != -1) {
@@ -80,16 +78,13 @@ const char *ApiSpecificConfig::getRegistryPath() {
     return L0::registryPath;
 }
 
-void ApiSpecificConfig::initPrefixes() {
-    validL0Prefixes = {"NEO_L0_", "NEO_", ""};
-    validL0PrefixTypes = {DebugVarPrefix::neoL0, DebugVarPrefix::neo, DebugVarPrefix::none};
-}
-
 const StackVec<const char *, 4> &ApiSpecificConfig::getPrefixStrings() {
+    static const StackVec<const char *, 4> validL0Prefixes = {"NEO_L0_", "NEO_", ""};
     return validL0Prefixes;
 }
 
 const StackVec<DebugVarPrefix, 4> &ApiSpecificConfig::getPrefixTypes() {
+    static const StackVec<DebugVarPrefix, 4> validL0PrefixTypes = {DebugVarPrefix::neoL0, DebugVarPrefix::neo, DebugVarPrefix::none};
     return validL0PrefixTypes;
 }
 
