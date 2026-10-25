@@ -44,8 +44,7 @@ namespace L0 {
 namespace ult {
 using CommandListCreateTests = Test<CommandListCreateFixture>;
 HWTEST_F(CommandListCreateTests, givenCopyOnlyCommandListWhenAppendWriteGlobalTimestampCalledThenMiFlushDWWithTimestampEncoded) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
-    using MI_FLUSH_DW = typename GfxFamily::MI_FLUSH_DW;
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
 
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::copy, 0u, returnValue, false));

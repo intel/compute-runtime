@@ -781,8 +781,7 @@ HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenAppendBlitFillToShar
 }
 
 HWTEST2_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenAppendBlitFillThenCopyBltIsProgrammed, IsAtMostDg2) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
-    using XY_COLOR_BLT = typename GfxFamily::XY_COLOR_BLT;
+    using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
     MockCommandListForMemFill<FamilyType::gfxCoreFamily> commandList;
     MockDriverHandle driverHandleMock;
     NEO::DeviceVector neoDevices;
@@ -802,8 +801,7 @@ HWTEST2_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenAppendBlitFillThenC
 }
 
 HWTEST2_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenAppendBlitFillThenCopyBltIsProgrammed, IsAtLeastXeHpcCore) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
-    using MEM_SET = typename GfxFamily::MEM_SET;
+    using MEM_SET = typename FamilyType::MEM_SET;
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
     debugManager.flags.EnableHostUsmAllocationPool.set(0);
@@ -826,8 +824,7 @@ HWTEST2_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenAppendBlitFillThenC
 }
 
 HWTEST2_F(AppendMemoryCopyTests, givenExternalHostPointerAllocationWhenPassedToAppendBlitFillThenProgramDestinationAddressCorrectly, IsAtMostDg2) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
-    using XY_COLOR_BLT = typename GfxFamily::XY_COLOR_BLT;
+    using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
 
     L0::Device *device = driverHandle->devices[0];
 
@@ -862,8 +859,7 @@ HWTEST2_F(AppendMemoryCopyTests, givenExternalHostPointerAllocationWhenPassedToA
 }
 
 HWTEST2_F(AppendMemoryCopyTests, givenExternalHostPointerAllocationWhenPassedToAppendBlitFillThenProgramDestinationAddressCorrectly, IsAtLeastXeHpcCore) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
-    using MEM_SET = typename GfxFamily::MEM_SET;
+    using MEM_SET = typename FamilyType::MEM_SET;
 
     L0::Device *device = driverHandle->devices[0];
 
@@ -899,8 +895,7 @@ HWTEST2_F(AppendMemoryCopyTests, givenExternalHostPointerAllocationWhenPassedToA
 
 HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListAndHostPointersWhenMemoryCopyCalledThenPipeControlWithDcFlushAddedIsNotAddedAfterBlitCopy) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
-    using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
 
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
@@ -923,8 +918,7 @@ HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListAndHostPointersWhenMemor
 
 HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListAndHostPointersWhenMemoryCopyRegionCalledThenPipeControlWithDcFlushAddedIsNotAddedAfterBlitCopy) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
-    using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
 
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
@@ -998,8 +992,7 @@ HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListAndSharedSystemUsmInputW
 }
 
 HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenMemoryCopyRegionBlitCalledWithZeroDepthThenCopyRegionPathSelected) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
-    using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
 
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
@@ -1038,8 +1031,7 @@ HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenMemoryCopyRegionBlit
 }
 
 HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenMemoryCopyRegionBlitCalledWithNonZeroPitchThenCopyRegionPathSelected) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
-    using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
 
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
@@ -1076,8 +1068,7 @@ HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenMemoryCopyRegionBlit
 }
 
 HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListThenDcFlushIsNotAddedAfterBlitCopy) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
-    using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
 
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
@@ -1107,8 +1098,7 @@ HWTEST_F(AppendMemoryCopyTests, givenCopyOnlyCommandListThenDcFlushIsNotAddedAft
 }
 
 HWTEST_F(AppendMemoryCopyTests, givenCopyCommandListWhenTimestampPassedToMemoryCopyRegionBlitThenTimeStampRegistersAreAdded) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
-    using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
+    using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -1170,8 +1160,7 @@ HWTEST_F(AppendMemoryCopyTests, givenCopyCommandListWhenTimestampPassedToMemoryC
 }
 
 HWTEST_F(AppendMemoryCopyTests, givenCopyCommandListWhenTimestampPassedToImageCopyBlitThenTimeStampRegistersAreAdded) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
-    using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
+    using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
     commandList->useAdditionalBlitProperties = false;
@@ -1253,8 +1242,7 @@ HWTEST_F(AppendMemoryCopyTests, givenWaitWhenWhenAppendBlitCalledThenProgramSema
 }
 
 HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListWhenCopyFromImagBlitThenCommandAddedToStream, ImageSupport) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
-    using XY_BLOCK_COPY_BLT = typename GfxFamily::XY_BLOCK_COPY_BLT;
+    using XY_BLOCK_COPY_BLT = typename FamilyType::XY_BLOCK_COPY_BLT;
 
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::copy, 0u, returnValue, false));
@@ -2096,8 +2084,7 @@ HWTEST2_F(MultiTileAggregatedBcsSplitTests, givenBcsSplitDisabledWhenCallingZeDe
 }
 
 HWTEST2_F(AppendMemoryCopyTests, givenZeroWidthWhenAppendMemoryCopyRegionThenNoCopyBltProgrammed, IsAtLeastXeHpcCore) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
-    using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
 
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
@@ -2139,9 +2126,8 @@ HWTEST2_F(AppendMemoryCopyTests, givenZeroWidthWhenAppendMemoryCopyRegionThenNoC
 }
 
 HWTEST2_F(AppendMemoryCopyTests, givenZeroSizeWhenAppendMemoryFillThenNoMemSetOrXyColorBltProgrammed, IsAtLeastXeHpcCore) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
-    using MEM_SET = typename GfxFamily::MEM_SET;
-    using XY_COLOR_BLT = typename GfxFamily::XY_COLOR_BLT;
+    using MEM_SET = typename FamilyType::MEM_SET;
+    using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
 
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableDeviceUsmAllocationPool.set(0);

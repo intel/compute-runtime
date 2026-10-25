@@ -445,8 +445,7 @@ HWTEST_F(AppendFillTest, givenCallToAppendMemoryFillWithDataSizeNotAlignedToSize
 
 HWTEST2_F(AppendFillTest,
           givenCallToAppendMemoryFillWithImmediateValueWhenTimestampEventUsesRegistersThenSinglePacketUsesRegisterProfiling, IsGen12LP) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
-    using GPGPU_WALKER = typename GfxFamily::GPGPU_WALKER;
+    using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
@@ -503,8 +502,7 @@ HWTEST2_F(AppendFillTest,
 
 HWTEST2_F(AppendFillTest,
           givenCallToAppendMemoryFillWhenTimestampEventUsesRegistersThenSinglePacketUsesRegisterProfiling, IsGen12LP) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
-    using GPGPU_WALKER = typename GfxFamily::GPGPU_WALKER;
+    using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;

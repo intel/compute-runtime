@@ -193,8 +193,7 @@ HWTEST2_F(CommandListXe2AndLaterTests, given64bEventWithLsbMaskingWhenTimestampI
 using CommandListAppendRangesBarrierXe2AndLater = Test<DeviceFixture>;
 
 HWTEST2_F(CommandListAppendRangesBarrierXe2AndLater, givenCallToAppendRangesBarrierThenPipeControlProgrammed, Platforms) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
-    using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
     uint64_t gpuAddress = 0x1200;
@@ -217,7 +216,7 @@ HWTEST2_F(CommandListAppendRangesBarrierXe2AndLater, givenCallToAppendRangesBarr
     auto pipeControlCmd = reinterpret_cast<PIPE_CONTROL *>(*itor);
     EXPECT_TRUE(pipeControlCmd->getDataportFlush());
     EXPECT_TRUE(pipeControlCmd->getUnTypedDataPortCacheFlush());
-    auto expectedDcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, device->getNEODevice()->getRootDeviceEnvironment());
+    auto expectedDcFlushEnable = NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getNEODevice()->getRootDeviceEnvironment());
     EXPECT_EQ(expectedDcFlushEnable, pipeControlCmd->getDcFlushEnable());
 }
 
