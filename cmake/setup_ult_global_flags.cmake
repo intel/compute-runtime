@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2025 Intel Corporation
+# Copyright (C) 2021-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -24,5 +24,12 @@ if(NOT ULTS_ENABLE_OPTIMIZATIONS)
     set(CMAKE_CXX_FLAGS_RELEASEINTERNAL "${CMAKE_CXX_FLAGS_RELEASEINTERNAL} -O0")
     set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O0")
     set(CMAKE_C_FLAGS_RELEASEINTERNAL "${CMAKE_C_FLAGS_RELEASEINTERNAL} -O0")
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 16 AND NOT NEO_DISABLE_LTO)
+      # -O0 turns off -ftoplevel-reorder, and LTO in gcc older than 16 then puts most
+      # of the code into a single partition, compiled by one process at link time.
+      # The flag lets LTO split the code into partitions compiled in parallel.
+      # gcc 16 partitions such code correctly.
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftoplevel-reorder")
+    endif()
   endif()
 endif()
