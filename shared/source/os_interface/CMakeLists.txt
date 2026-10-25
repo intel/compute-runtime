@@ -47,7 +47,6 @@ set(NEO_CORE_OS_INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/product_helper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/product_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/product_helper.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_before_xe_hpg.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_before_xe2.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_hw.h
     ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_xe2_and_later.inl

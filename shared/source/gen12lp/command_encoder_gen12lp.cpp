@@ -846,4 +846,4 @@ template void NEO::EncodeDispatchKernelWithHeap<Family>::adjustBindingTablePrefe
 
 } // namespace NEO
 
-#include "shared/source/command_container/implicit_scaling_before_xe_hp.inl"
+#include "shared/source/gen12lp/implicit_scaling_gen12lp.inl"

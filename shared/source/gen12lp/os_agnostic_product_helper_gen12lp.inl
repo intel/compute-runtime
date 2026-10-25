@@ -5,9 +5,9 @@
  *
  */
 
+#include "shared/source/gen12lp/product_helper_gen12lp.inl"
 #include "shared/source/os_interface/product_helper.inl"
 #include "shared/source/os_interface/product_helper_before_xe2.inl"
-#include "shared/source/os_interface/product_helper_before_xe_hpg.inl"
 
 namespace NEO {
 template <>

@@ -57,7 +57,7 @@ set(CLOC_LIB_SRCS_LIB
     ${NEO_SHARED_DIRECTORY}/helpers/compiler_product_helper.h
     ${NEO_SHARED_DIRECTORY}/helpers/compiler_product_helper.cpp
     ${NEO_SHARED_DIRECTORY}/helpers/compiler_product_helper_base.inl
-    ${NEO_SHARED_DIRECTORY}/helpers/compiler_aot_config_tgllp_and_later.inl
+    ${NEO_SHARED_DIRECTORY}/helpers/compiler_aot_config_before_mtl.inl
     ${NEO_SHARED_DIRECTORY}/helpers/compiler_product_helper_before_xe_hpc.inl
     ${NEO_SHARED_DIRECTORY}/helpers/compiler_product_helper_xe_hpc_and_later.inl
     ${NEO_SHARED_DIRECTORY}/helpers/compiler_product_helper_from_xe_hpc_to_xe3p.inl
