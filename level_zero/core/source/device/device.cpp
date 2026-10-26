@@ -42,6 +42,7 @@
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/memory_manager/unified_memory_properties.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_interface.h"

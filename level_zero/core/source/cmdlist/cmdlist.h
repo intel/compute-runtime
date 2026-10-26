@@ -782,6 +782,9 @@ struct CommandList : _ze_command_list_handle_t {
     }
 
   protected:
+    void initializeFlatCapture();
+    void resetFlatCapture();
+
     using CleanupCallbackT = std::pair<zex_command_list_cleanup_callback_fn_t, void *>;
 
     ze_result_t initializeImmediateResources();

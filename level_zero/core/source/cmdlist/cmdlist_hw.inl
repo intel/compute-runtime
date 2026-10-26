@@ -71,7 +71,6 @@
 #include "level_zero/core/source/module/module.h"
 #include "level_zero/core/source/module/module_imp.h"
 #include "level_zero/driver_experimental/zex_api.h"
-#include "level_zero/experimental/source/graph/graph.h"
 
 #include "CL/cl_platform.h"
 
@@ -120,9 +119,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
         return immediateInitStatus;
     }
 
-    if (flatCapture) {
-        flatCapture->reset();
-    }
+    this->resetFlatCapture();
     this->storeFillPatternResourcesForReuse();
     removeDeallocationContainerData();
     removeHostPtrAllocations();
@@ -426,7 +423,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     if (isImmediateType() == false) {
         if ((this->flags & ZE_COMMAND_LIST_FLAG_ENABLE_CMD_VISITING) || NEO::debugManager.flags.ExperimentalFlatCommandListApiRecording.get()) {
             this->flags |= ZE_COMMAND_LIST_FLAG_ENABLE_CMD_VISITING;
-            this->flatCapture = std::make_unique<RecordedApiCommands>();
+            this->initializeFlatCapture();
         }
     }
 

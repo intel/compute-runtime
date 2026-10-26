@@ -13,6 +13,7 @@
 #include "shared/source/memory_manager/mem_free_callback.h"
 #include "shared/source/memory_manager/memory_operations_status.h"
 #include "shared/source/memory_manager/pool_info.h"
+#include "shared/source/memory_manager/unified_memory_pooling_facade.h"
 #include "shared/source/memory_manager/unified_memory_properties.h"
 #include "shared/source/unified_memory/unified_memory.h"
 #include "shared/source/utilities/heap_allocator.h"
@@ -28,17 +29,6 @@ class MemoryOperationsHandler;
 class SVMAllocsManager;
 class UsmMemAllocPool;
 struct SvmAllocationData;
-
-// pool is a bare pointer into a UsmMemAllocPoolsManager bucket, returned after the manager
-// lock is dropped. Only a live chunk keeps that pool off trimEmptyPools; the residency paths
-// deliberately dereference it without one and rely on the API-level pointer being valid.
-struct UsmPoolLookupResult {
-    UsmMemAllocPool *pool{nullptr};
-    PoolInfo poolInfo{};
-    void *pooledAllocationBasePtr{nullptr};
-    size_t pooledAllocationSize{0u};
-    bool isAllocatedInPool() const { return nullptr != pooledAllocationBasePtr; }
-};
 
 struct UsmPoolFreeResult {
     bool freeSucceeded{false};
@@ -64,8 +54,8 @@ class UsmMemAllocPool : NEO::NonCopyableAndNonMovableClass {
     };
 
     using AllocationsInfoStorage = BaseSortedPointerWithValueVector<AllocationInfo>;
-    using CustomCleanupFn = std::function<void(const void *)>;
-    using PeerAllocationsFn = std::function<StackVec<GraphicsAllocation *, 4>(const void *)>;
+    using CustomCleanupFn = UsmMemAllocPoolsFacade::CustomCleanupFn;
+    using PeerAllocationsFn = UsmMemAllocPoolsFacade::PeerAllocationsFn;
 
     UsmMemAllocPool() = default;
     MOCKABLE_VIRTUAL ~UsmMemAllocPool() = default;
@@ -193,35 +183,6 @@ class UsmMemAllocPoolsManager : NEO::NonCopyableAndNonMovableClass {
     std::mutex mtx;
     std::map<PoolInfo, std::vector<std::unique_ptr<UsmMemAllocPool>>> pools;
     bool trackResidency{false};
-};
-
-class UsmMemAllocPoolsFacade : NEO::NonCopyableAndNonMovableClass {
-  public:
-    using CustomCleanupFn = UsmMemAllocPool::CustomCleanupFn;
-    using PeerAllocationsFn = UsmMemAllocPool::PeerAllocationsFn;
-    struct InitParams {
-        CustomCleanupFn customCleanup{};
-        bool trackResidency{false};
-        bool compressedHint{false};
-        PeerAllocationsFn peerAllocations{};
-        bool uncompressedPool{false};
-    };
-    static bool poolingEnabled(InternalMemoryType memoryType, bool enabledByDefault);
-    static bool isPoolManagerSupported(InternalMemoryType memoryType, const Device *device);
-    bool initialize(InternalMemoryType memoryType, const RootDeviceIndicesContainer &rootDeviceIndices, const std::map<uint32_t, DeviceBitfield> &subdeviceBitfields, Device *device, SVMAllocsManager *svmMemoryManager, const InitParams &initParams);
-    bool isInitialized() const;
-    void cleanup();
-    void *createUnifiedMemoryAllocation(size_t size, const UnifiedMemoryProperties &memoryProperties);
-    bool freeSVMAlloc(const void *ptr, FreePolicyType policy);
-    size_t getPooledAllocationSize(const void *ptr);
-    void *getPooledAllocationBasePtr(const void *ptr);
-    UsmPoolLookupResult getPoolContainingAlloc(const void *ptr);
-    UsmMemAllocPool *getPool() const { return pool.get(); }
-    UsmMemAllocPoolsManager *getPoolManager() const { return poolManager.get(); }
-
-  protected:
-    std::unique_ptr<UsmMemAllocPool> pool;
-    std::unique_ptr<UsmMemAllocPoolsManager> poolManager;
 };
 
 } // namespace NEO

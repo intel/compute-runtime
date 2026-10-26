@@ -11,7 +11,8 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
-#include "shared/source/memory_manager/unified_memory_pooling.h"
+#include "shared/source/memory_manager/unified_memory_pooling_facade.h"
+#include "shared/source/memory_manager/unified_memory_properties.h"
 
 #include "level_zero/core/source/driver/base_driver.h"
 #include "level_zero/core/source/helpers/api_handle_helper.h"
@@ -156,8 +157,8 @@ class DriverHandle : public BaseDriver, public NEO::NonCopyableAndNonMovableClas
     void initDeviceUsmAllocPool(NEO::Device &device, bool multiDevice);
     void initDeviceUsmAllocPoolOnce();
     void initUsmPooling();
-    NEO::UsmMemAllocPool::CustomCleanupFn getPoolCleanupFn();
-    NEO::UsmMemAllocPool::PeerAllocationsFn getPoolPeerAllocationsFn();
+    NEO::UsmMemAllocPoolsFacade::CustomCleanupFn getPoolCleanupFn();
+    NEO::UsmMemAllocPoolsFacade::PeerAllocationsFn getPoolPeerAllocationsFn();
     NEO::UsmPoolLookupResult getHostUsmPoolOwningPtr(const void *ptr);
     NEO::UsmPoolLookupResult getUsmPoolOwningPtr(const void *ptr, NEO::SvmAllocationData *svmData);
 

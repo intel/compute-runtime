@@ -81,6 +81,16 @@ CmdListNonUniformLaunch::CmdListNonUniformLaunch(const CmdListNonUniformLaunchAr
 
 CommandList::CommandList(uint32_t numIddsPerBlock) : commandContainer(numIddsPerBlock) {}
 
+void CommandList::initializeFlatCapture() {
+    this->flatCapture = std::make_unique<RecordedApiCommands>();
+}
+
+void CommandList::resetFlatCapture() {
+    if (flatCapture) {
+        flatCapture->reset();
+    }
+}
+
 bool CommandList::containsSystemAllocation(const NEO::ResidencyContainer &residencyContainer) {
     for (const auto allocation : residencyContainer) {
         if (allocation != nullptr && isUsingSystemAllocation(allocation->getAllocationType())) {

@@ -567,6 +567,10 @@ UsmPoolLookupResult UsmMemAllocPoolsManager::getPoolContainingAlloc(const void *
     return {};
 }
 
+UsmMemAllocPoolsFacade::UsmMemAllocPoolsFacade() noexcept = default;
+
+UsmMemAllocPoolsFacade::~UsmMemAllocPoolsFacade() = default;
+
 bool UsmMemAllocPoolsFacade::poolingEnabled(InternalMemoryType memoryType, bool enabledByDefault) {
     const auto poolFlag = getPoolDebugFlag(memoryType);
     if (false == poolFlag.has_value()) {

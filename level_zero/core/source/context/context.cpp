@@ -22,6 +22,7 @@
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/memory_manager/pool_info.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/memory_manager/unified_memory_pooling.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/sys_calls_common.h"
 #include "shared/source/utilities/cpu_info.h"
