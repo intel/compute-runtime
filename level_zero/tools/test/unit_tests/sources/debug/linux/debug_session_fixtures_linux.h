@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/utilities/arrayref.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/test_macros/test.h"
