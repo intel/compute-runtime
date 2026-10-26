@@ -132,7 +132,7 @@ family/product during initialization.
 |--------|-------------|------------|
 | `GfxCoreHelper` | Graphics family (architecture) | Architecture-level queries and command-shaping decisions (scratch sizing, image alignment, default engine type, SIP type, ...). |
 | `ProductHelper` | Product / SKU | Product-specific configuration and workarounds (`configureHardwareCustom`, blitter support, page-table-manager support, WA flags). |
-| `ReleaseHelper` | IP release | Per-release feature and workaround switches (systolic/MMA support, bindless addressing, GRF configs, mem-bank size). |
+| `ReleaseHelper` | IP release | Per-release feature and workaround switches (GRF configs, SLM sizing, threads-per-EU configs, mem-bank size). |
 | `CompilerProductHelper` | Product (compiler-facing) | Product details the compiler path needs (e.g. supported features advertised to IGC). |
 | `AILConfiguration` | Application | Per-application tuning based on the detected process (Application Intelligence Layer). |
 
@@ -145,6 +145,24 @@ Prefer adding a query to the appropriate helper over scattering
 `if (family == ...)` checks through shared algorithms. The helper keeps the
 hardware decision in one place and makes the shared code generation-agnostic.
 
+## Compile-time capabilities (`HardwareInfo::caps`)
+
+`HardwareInfo::caps` is a flat struct of plain values
+(`shared/source/release_helpers/caps/`), resolved once from the IP version of
+the device. Use a cap instead of a helper query for a simple value (a flag, a
+size, a limit) that is known at compile time for each product, release, and
+stepping. Keep values that depend on runtime inputs or need additional logic
+in the helpers.
+
+Rules:
+
+* Every field in `Caps` (`caps.h`) defaults to `0` or `false`.
+* The per-family source structs (family core, product, release, stepping) set
+  only non-default compile-time constants.
+* Order the fields by type, then alphabetically, in `Caps`, `NEO_CAP_FIELDS`,
+  the source structs, and the tests.
+* A new field must also be added to `NEO_CAP_FIELDS` and to the tests.
+
 ## Choosing where a change belongs
 
 A short decision guide for hardware-specific work:
@@ -152,14 +170,16 @@ A short decision guide for hardware-specific work:
 1. **Different hardware commands/state for a generation** - the change belongs
    in the templated algorithm plus the `.inl` for the relevant family range, and
    may require new constant initializers in the family's `hw_cmds`.
-2. **A capability or workaround query (true/false, a size, an enum)** - add it
-   to `GfxCoreHelper`, `ProductHelper`, or `ReleaseHelper` depending on whether
-   it is architecture-, product-, or release-scoped, and implement it in the
-   matching `.inl`.
-3. **A compiler-facing detail** - extend `CompilerProductHelper`.
-4. **Behavior that depends on the running application** - extend
+2. **A compile-time constant per product/release/stepping (a flag, a size)** -
+   add a field to `HardwareInfo::caps`.
+3. **A capability or workaround query that needs runtime inputs or additional
+   logic** - add it to `GfxCoreHelper`, `ProductHelper`, or `ReleaseHelper`
+   depending on whether it is architecture-, product-, or release-scoped, and
+   implement it in the matching `.inl`.
+4. **A compiler-facing detail** - extend `CompilerProductHelper`.
+5. **Behavior that depends on the running application** - extend
    `AILConfiguration`.
-5. **OS-specific behavior** - that axis is orthogonal to hardware; see the
+6. **OS-specific behavior** - that axis is orthogonal to hardware; see the
    operating-system abstraction section in [ARCHITECTURE.md](../ARCHITECTURE.md).
 
 Keeping each kind of difference in its designated place is what allows NEO to

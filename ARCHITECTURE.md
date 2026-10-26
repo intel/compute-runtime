@@ -136,7 +136,7 @@ ExecutionEnvironment                 (one per process)
   |- DirectSubmissionController
   |- OsEnvironment
   |- rootDeviceEnvironments[]        (one RootDeviceEnvironment per root device)
-       |- HardwareInfo               (platform, feature table, capabilities)
+       |- HardwareInfo               (platform, feature table, capabilities, caps)
        |- OSInterface                (DRM or WDDM backend)
        |- GfxCoreHelper / ProductHelper / ReleaseHelper / CompilerProductHelper
        |- GmmHelper, CompilerInterface, BuiltIns, Debugger, ...
@@ -181,8 +181,13 @@ in [Hardware Abstraction](programmers-guide/HARDWARE_ABSTRACTION.md). In short:
   families they apply to (e.g. `_base.inl`, `_xehp_and_later.inl`,
   `_from_xe_hpc_to_xe3.inl`). Per-family `.cpp` files in the family directories
   instantiate the templates for a concrete family.
-* Behavioral differences that are not worth a full template specialization are
-  expressed through **helper objects** selected at runtime:
+* Simple values that are known at compile time for each product, release, and
+  stepping are fields of the flat **`HardwareInfo::caps`** struct, filled in
+  once for the detected device. All fields default to `0`/`false`; the
+  specialized structs set only the non-default values.
+* Other differences that are not worth a full template specialization, such as
+  values that depend on runtime inputs, are expressed through **helper
+  objects** selected for the detected device:
   * `GfxCoreHelper` - architecture-level (per graphics family) behavior.
   * `ProductHelper` - product/SKU-level behavior and workarounds.
   * `ReleaseHelper` - per-IP-release feature and workaround switches.
