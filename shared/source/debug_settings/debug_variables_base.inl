@@ -289,6 +289,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, ForceComputeWalkerPostSyncFlush, -1, "-1: defaul
 DECLARE_DEBUG_VARIABLE(int32_t, ContextGroupSize, -1, "-1: default, 0-1: context group disabled, >1: number of contexts in group.")
 DECLARE_DEBUG_VARIABLE(int32_t, SecondaryContextEngineTypeMask, -1, "-1: default - all supported engines enabled. != -1: Each mask bit enables engine from EngineType enum (is supported).")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideNumHighPriorityContexts, -1, "-1: default. >= Number of HighPriority contexts to create as part of Secondary engines.")
+DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalUseSecondaryContextForInternalEngine, -1, "-1: default (disabled), 0: disabled, 1: enabled. When enabled and secondary contexts are created for an engine, internal work uses a secondary context reserved in its context group instead of the dedicated internal engine")
 DECLARE_DEBUG_VARIABLE(int32_t, DisableScratchPages, -1, "-1: default, 0: do not disable scratch pages during VM creations, 1: disable scratch pages during VM creations")
 DECLARE_DEBUG_VARIABLE(int32_t, GpuFaultCheckThreshold, -1, "-1: default, 0: disable, >0: value for detecting the gpu pagefault for all contexts with scratch page disabled. When the number of hang check reaches to the threshold, gpu pagefault check will happen.")
 DECLARE_DEBUG_VARIABLE(int32_t, OptimizeIoqBarriersHandling, -1, "-1: default, 0: disable, 1: enable. If enabled, dont dispatch stalling commands for IOQ. Instead, inherit TimestampPackets from previous enqueue.")

@@ -2123,6 +2123,156 @@ HWTEST_F(DeviceTests, givenExposeSingleDeviceWhenGettingInternalEngineThenRootDe
     EXPECT_EQ(2u, internalEngine.osContext->getDeviceBitfield().count());
 }
 
+struct InternalEngineFromSecondaryContextTests : public ::testing::Test {
+    void SetUp() override {
+        if (defaultHwInfo->capabilityTable.defaultEngineType != aub_stream::EngineType::ENGINE_CCS) {
+            GTEST_SKIP();
+        }
+        debugManager.flags.ContextGroupSize.set(contextGroupSize);
+
+        hwInfo = *defaultHwInfo;
+        hwInfo.featureTable.flags.ftrCCSNode = true;
+        hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+        hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+        hwInfo.capabilityTable.blitterOperationsSupported = true;
+    }
+
+    std::unique_ptr<MockDevice> createDevice() {
+        return std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+    }
+
+    aub_stream::EngineType getCopyEngineTypeWithSecondaryContexts(MockDevice &device) {
+        auto copyEngineGroup = device.tryGetRegularEngineGroup(EngineGroupType::copy);
+        if (copyEngineGroup == nullptr || copyEngineGroup->engines.empty()) {
+            return aub_stream::EngineType::NUM_ENGINES;
+        }
+        auto copyEngineType = copyEngineGroup->engines[0].getEngineType();
+        if (!device.secondaryEngines.contains(copyEngineType)) {
+            return aub_stream::EngineType::NUM_ENGINES;
+        }
+        return copyEngineType;
+    }
+
+    static constexpr uint32_t contextGroupSize = 8;
+    static constexpr uint32_t reservedInternalEngineIndex = 1;
+    DebugManagerStateRestore dbgRestorer;
+    HardwareInfo hwInfo{};
+};
+
+HWTEST_F(InternalEngineFromSecondaryContextTests, givenUseSecondaryContextForInternalEngineDefaultOrDisabledWhenGettingInternalEngineThenDedicatedInternalEngineIsReturned) {
+    for (auto flagValue : {-1, 0}) {
+        debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(flagValue);
+        auto device = createDevice();
+
+        auto &secondaryEngines = device->secondaryEngines[aub_stream::EngineType::ENGINE_CCS];
+        EXPECT_EQ(0u, secondaryEngines.internalEngineIndex);
+        EXPECT_EQ(1u, secondaryEngines.assignedContextsCounter.load());
+
+        auto &internalEngine = device->getInternalEngine();
+        EXPECT_EQ(EngineUsage::internal, internalEngine.getEngineUsage());
+        EXPECT_FALSE(internalEngine.osContext->isPartOfContextGroup());
+    }
+}
+
+HWTEST_F(InternalEngineFromSecondaryContextTests, givenUseSecondaryContextForInternalEngineEnabledWhenGettingInternalEngineThenReservedSecondaryContextIsReturned) {
+    debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(1);
+    auto device = createDevice();
+
+    auto &secondaryEngines = device->secondaryEngines[aub_stream::EngineType::ENGINE_CCS];
+    ASSERT_EQ(reservedInternalEngineIndex, secondaryEngines.internalEngineIndex);
+    auto &reservedEngine = secondaryEngines.engines[reservedInternalEngineIndex];
+    EXPECT_FALSE(reservedEngine.commandStreamReceiver->isInitialized());
+
+    auto &internalEngine = device->getInternalEngine();
+    EXPECT_EQ(reservedEngine.commandStreamReceiver, internalEngine.commandStreamReceiver);
+    EXPECT_EQ(EngineUsage::regular, internalEngine.getEngineUsage());
+    EXPECT_TRUE(internalEngine.osContext->isPartOfContextGroup());
+    EXPECT_TRUE(internalEngine.commandStreamReceiver->isInitialized());
+}
+
+HWTEST_F(InternalEngineFromSecondaryContextTests, givenUseSecondaryContextForInternalEngineEnabledWhenAssigningSecondaryContextsToQueuesThenReservedContextIsNotAssigned) {
+    debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(1);
+    auto device = createDevice();
+
+    auto &secondaryEngines = device->secondaryEngines[aub_stream::EngineType::ENGINE_CCS];
+    ASSERT_EQ(reservedInternalEngineIndex, secondaryEngines.internalEngineIndex);
+    auto reservedCsr = secondaryEngines.engines[reservedInternalEngineIndex].commandStreamReceiver;
+
+    for (uint32_t i = 0; i < 2 * contextGroupSize; i++) {
+        auto regularEngine = device->getSecondaryEngineCsr({aub_stream::EngineType::ENGINE_CCS, EngineUsage::regular}, std::nullopt);
+        ASSERT_NE(nullptr, regularEngine);
+        EXPECT_NE(reservedCsr, regularEngine->commandStreamReceiver);
+
+        auto highPriorityEngine = device->getSecondaryEngineCsr({aub_stream::EngineType::ENGINE_CCS, EngineUsage::highPriority}, std::nullopt);
+        if (highPriorityEngine) {
+            EXPECT_NE(reservedCsr, highPriorityEngine->commandStreamReceiver);
+        }
+    }
+}
+
+HWTEST_F(InternalEngineFromSecondaryContextTests, givenUseSecondaryContextForInternalEngineEnabledAndSingleRegularContextInGroupWhenGettingInternalEngineThenPrimaryContextIsReturned) {
+    debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(1);
+    debugManager.flags.OverrideNumHighPriorityContexts.set(contextGroupSize - 1);
+    auto device = createDevice();
+
+    auto &secondaryEngines = device->secondaryEngines[aub_stream::EngineType::ENGINE_CCS];
+    EXPECT_EQ(0u, secondaryEngines.internalEngineIndex);
+
+    auto &internalEngine = device->getInternalEngine();
+    EXPECT_EQ(secondaryEngines.engines[0].commandStreamReceiver, internalEngine.commandStreamReceiver);
+    EXPECT_EQ(device->getDefaultEngine().commandStreamReceiver, internalEngine.commandStreamReceiver);
+}
+
+HWTEST_F(InternalEngineFromSecondaryContextTests, givenUseSecondaryContextForInternalEngineEnabledWhenGettingInternalCopyEngineThenReservedSecondaryContextIsReturnedAndRegularDirectSubmissionIsNotStopped) {
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.csrBaseCallBlitterDirectSubmissionAvailable = false;
+    debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(1);
+    hwInfo.featureTable.ftrBcsInfo = 1;
+    auto device = createDevice();
+
+    auto copyEngineType = getCopyEngineTypeWithSecondaryContexts(*device);
+    if (copyEngineType == aub_stream::EngineType::NUM_ENGINES) {
+        GTEST_SKIP();
+    }
+    debugManager.flags.ForceBCSForInternalCopyEngine.set(static_cast<int32_t>(EngineHelpers::getBcsIndex(copyEngineType)));
+
+    auto &secondaryEngines = device->secondaryEngines[copyEngineType];
+    ASSERT_EQ(reservedInternalEngineIndex, secondaryEngines.internalEngineIndex);
+
+    auto internalCopyEngine = device->getInternalCopyEngine();
+    ASSERT_NE(nullptr, internalCopyEngine);
+    EXPECT_EQ(secondaryEngines.engines[reservedInternalEngineIndex].commandStreamReceiver, internalCopyEngine->commandStreamReceiver);
+    EXPECT_EQ(EngineUsage::regular, internalCopyEngine->getEngineUsage());
+
+    auto regularUltCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(secondaryEngines.engines[0].commandStreamReceiver);
+    regularUltCsr->callBaseStopDirectSubmission = false;
+    regularUltCsr->blitterDirectSubmissionAvailable = true;
+    device->stopDirectSubmissionForCopyEngine();
+    EXPECT_FALSE(regularUltCsr->stopDirectSubmissionCalled);
+}
+
+HWTEST2_F(InternalEngineFromSecondaryContextTests, givenUseSecondaryContextForInternalEngineEnabledWhenGettingInternalLinkCopyEngineThenReservedSecondaryContextIsReturnedOnlyWhenInternalEngineIsPreferred, IsAtLeastXeCore) {
+    debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(1);
+    auto device = createDevice();
+
+    auto copyEngineType = getCopyEngineTypeWithSecondaryContexts(*device);
+    if (copyEngineType == aub_stream::EngineType::NUM_ENGINES) {
+        GTEST_SKIP();
+    }
+    debugManager.flags.ForceBcsEngineIndex.set(static_cast<int32_t>(EngineHelpers::getBcsIndex(copyEngineType)));
+    auto &secondaryEngines = device->secondaryEngines[copyEngineType];
+
+    debugManager.flags.PreferInternalBcsEngine.set(1);
+    auto internalLinkCopyEngine = device->getInternalLinkCopyEngine();
+    ASSERT_NE(nullptr, internalLinkCopyEngine);
+    EXPECT_EQ(secondaryEngines.engines[reservedInternalEngineIndex].commandStreamReceiver, internalLinkCopyEngine->commandStreamReceiver);
+
+    debugManager.flags.PreferInternalBcsEngine.set(0);
+    internalLinkCopyEngine = device->getInternalLinkCopyEngine();
+    ASSERT_NE(nullptr, internalLinkCopyEngine);
+    EXPECT_EQ(secondaryEngines.engines[0].commandStreamReceiver, internalLinkCopyEngine->commandStreamReceiver);
+}
+
 HWTEST_F(DeviceTests, givenRootDeviceWithCCSEngineAndContextGroupSizeEnabledWhenDeviceIsCreatedThenSecondaryEnginesAreCreated) {
     if (defaultHwInfo->capabilityTable.defaultEngineType != aub_stream::EngineType::ENGINE_CCS) {
         GTEST_SKIP();

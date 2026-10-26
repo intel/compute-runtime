@@ -71,6 +71,7 @@ struct SecondaryContexts : NEO::NonCopyableAndNonMovableClass {
         this->assignedContextsCounter = in.assignedContextsCounter.load();
         this->regularEnginesTotal = in.regularEnginesTotal;
         this->highPriorityEnginesTotal = in.highPriorityEnginesTotal;
+        this->internalEngineIndex = in.internalEngineIndex;
         this->npIndices = std::move(in.npIndices);
         this->hpIndices = std::move(in.hpIndices);
     }
@@ -84,6 +85,7 @@ struct SecondaryContexts : NEO::NonCopyableAndNonMovableClass {
     std::atomic<uint8_t> assignedContextsCounter = 0; // Counter of assigned contexts in group
     uint32_t regularEnginesTotal = 0;
     uint32_t highPriorityEnginesTotal = 0;
+    uint32_t internalEngineIndex = 0;
 
     std::vector<int32_t> npIndices;
     std::vector<int32_t> hpIndices;
@@ -355,6 +357,9 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     bool genericSubDevicesAllowed();
     void finalizeRayTracing();
     void createSecondaryContexts(const EngineControl &primaryEngine, SecondaryContexts &secondaryEnginesForType, uint32_t contextCount, uint32_t highPriorityContextCount);
+    bool initializeSecondaryEngine(const EngineControl &engineControl);
+    bool isInternalEngineFromSecondaryContextEnabled() const;
+    EngineControl *tryGetInternalSecondaryEngine(aub_stream::EngineType engineType);
     void allocateDebugSurface(size_t debugSurfaceSize);
 
     DeviceInfo deviceInfo = {};

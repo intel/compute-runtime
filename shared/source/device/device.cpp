@@ -484,6 +484,12 @@ void Device::createSecondaryContexts(const EngineControl &primaryEngine, Seconda
     secondaryEnginesForType.highPriorityCounter = 0;
     secondaryEnginesForType.assignedContextsCounter = 1;
 
+    constexpr uint32_t reservedInternalEngineIndex = 1;
+    if (isInternalEngineFromSecondaryContextEnabled() && regularContextCount > reservedInternalEngineIndex) {
+        secondaryEnginesForType.internalEngineIndex = reservedInternalEngineIndex;
+        secondaryEnginesForType.assignedContextsCounter = reservedInternalEngineIndex + 1;
+    }
+
     NEO::EngineTypeUsage engineTypeUsage;
     engineTypeUsage.first = primaryEngine.getEngineType();
     engineTypeUsage.second = primaryEngine.getEngineUsage();
@@ -707,29 +713,55 @@ EngineControl *Device::getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, st
         return nullptr;
     }
 
-    bool isPrimaryContextInGroup = engineControl->osContext->getIsPrimaryEngine() && engineControl->osContext->isPartOfContextGroup();
-
-    if (!isPrimaryContextInGroup) {
-        auto commandStreamReceiver = engineControl->commandStreamReceiver;
-
-        auto lock = commandStreamReceiver->obtainUniqueOwnership();
-
-        if (!commandStreamReceiver->isInitialized()) {
-
-            if (commandStreamReceiver->needsPageTableManager()) {
-                commandStreamReceiver->createPageTableManager();
-            }
-
-            EngineDescriptor engineDescriptor(engineTypeUsage, getDeviceBitfield(), preemptionMode, false);
-
-            if (!commandStreamReceiver->initializeResources(this->getPreemptionMode()) ||
-                !commandStreamReceiver->initializeTagAllocation()) {
-                commandStreamReceiver->releaseQueueOwnership();
-                return nullptr;
-            }
-        }
+    if (!this->initializeSecondaryEngine(*engineControl)) {
+        engineControl->commandStreamReceiver->releaseQueueOwnership();
+        return nullptr;
     }
     return engineControl;
+}
+
+bool Device::initializeSecondaryEngine(const EngineControl &engineControl) {
+    const bool isPrimaryContextInGroup = engineControl.osContext->getIsPrimaryEngine() && engineControl.osContext->isPartOfContextGroup();
+    if (isPrimaryContextInGroup) {
+        return true;
+    }
+
+    auto commandStreamReceiver = engineControl.commandStreamReceiver;
+    auto lock = commandStreamReceiver->obtainUniqueOwnership();
+
+    if (commandStreamReceiver->isInitialized()) {
+        return true;
+    }
+
+    if (commandStreamReceiver->needsPageTableManager()) {
+        commandStreamReceiver->createPageTableManager();
+    }
+
+    return commandStreamReceiver->initializeResources(this->getPreemptionMode()) &&
+           commandStreamReceiver->initializeTagAllocation();
+}
+
+bool Device::isInternalEngineFromSecondaryContextEnabled() const {
+    return debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.get() == 1;
+}
+
+EngineControl *Device::tryGetInternalSecondaryEngine(aub_stream::EngineType engineType) {
+    if (!this->isInternalEngineFromSecondaryContextEnabled()) {
+        return nullptr;
+    }
+
+    auto secondaryEnginesIt = this->secondaryEngines.find(engineType);
+    if (secondaryEnginesIt == this->secondaryEngines.end()) {
+        return nullptr;
+    }
+
+    auto &secondaryEnginesForType = secondaryEnginesIt->second;
+    auto &engineControl = secondaryEnginesForType.engines[secondaryEnginesForType.internalEngineIndex];
+
+    if (!this->initializeSecondaryEngine(engineControl)) {
+        return nullptr;
+    }
+    return &engineControl;
 }
 
 const HardwareInfo &Device::getHardwareInfo() const { return *getRootDeviceEnvironment().getHardwareInfo(); }
@@ -951,11 +983,12 @@ EngineControl &Device::getInternalEngine() {
     }
 
     auto engineType = getChosenEngineType(getHardwareInfo());
+    auto internalEngineDevice = getRootDeviceEnvironment().isExposeSingleDeviceMode() ? this : this->getNearestGenericSubDevice(0);
 
-    if (getRootDeviceEnvironment().isExposeSingleDeviceMode()) {
-        return this->getEngine(engineType, EngineUsage::internal);
+    if (auto internalSecondaryEngine = internalEngineDevice->tryGetInternalSecondaryEngine(engineType)) {
+        return *internalSecondaryEngine;
     }
-    return this->getNearestGenericSubDevice(0)->getEngine(engineType, EngineUsage::internal);
+    return internalEngineDevice->getEngine(engineType, EngineUsage::internal);
 }
 
 EngineControl *Device::getInternalCopyEngine() {
@@ -970,6 +1003,10 @@ EngineControl *Device::getInternalCopyEngine() {
         expectedEngine = EngineHelpers::mapBcsIndexToEngineType(debugManager.flags.ForceBCSForInternalCopyEngine.get(), true);
     }
 
+    if (auto internalSecondaryEngine = this->tryGetInternalSecondaryEngine(expectedEngine)) {
+        return internalSecondaryEngine;
+    }
+
     for (auto &engine : allEngines) {
         if (engine.osContext->getEngineType() == expectedEngine &&
             engine.osContext->isInternalEngine()) {
@@ -982,8 +1019,14 @@ EngineControl *Device::getInternalCopyEngine() {
 EngineControl *Device::getInternalLinkCopyEngine() {
     const auto internalUsage = true;
     const auto bcsEngineType = EngineHelpers::getBcsEngineType(this->getRootDeviceEnvironment(), this->getDeviceBitfield(), this->getSelectorCopyEngine(), internalUsage);
-    const auto bcsEngineUsage = this->getGfxCoreHelper().preferInternalBcsEngine() ? EngineUsage::internal : EngineUsage::regular;
-    return this->tryGetEngine(bcsEngineType, bcsEngineUsage);
+    if (!this->getGfxCoreHelper().preferInternalBcsEngine()) {
+        return this->tryGetEngine(bcsEngineType, EngineUsage::regular);
+    }
+
+    if (auto internalSecondaryEngine = this->tryGetInternalSecondaryEngine(bcsEngineType)) {
+        return internalSecondaryEngine;
+    }
+    return this->tryGetEngine(bcsEngineType, EngineUsage::internal);
 }
 
 EngineControl *Device::getHpCopyEngine() {
@@ -1459,7 +1502,7 @@ EngineControl *SecondaryContexts::getEngine(EngineUsage usage, std::optional<uin
 
 void Device::stopDirectSubmissionForCopyEngine() {
     auto internalBcsEngine = getInternalCopyEngine();
-    if (internalBcsEngine == nullptr || getHardwareInfo().featureTable.ftrBcsInfo.count() > 1) {
+    if (internalBcsEngine == nullptr || !internalBcsEngine->osContext->isInternalEngine() || getHardwareInfo().featureTable.ftrBcsInfo.count() > 1) {
         return;
     }
     auto regularBcsEngine = tryGetEngine(internalBcsEngine->osContext->getEngineType(), EngineUsage::regular);
