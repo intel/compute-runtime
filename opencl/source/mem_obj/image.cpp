@@ -1591,9 +1591,52 @@ bool Image::hasAlphaChannel(const cl_image_format *imageFormat) {
            (channelOrder == CL_ABGR);
 }
 
-size_t Image::calculateOffsetForMapping(const MemObjOffsetArray &origin) const {
-    size_t rowPitch = mappingOnCpuAllowed() ? imageDesc.image_row_pitch : getHostPtrRowPitch();
-    size_t slicePitch = mappingOnCpuAllowed() ? imageDesc.image_slice_pitch : getHostPtrSlicePitch();
+MipLevelHostLayout Image::getMipLevelHostLayout(uint32_t mipLevel) const {
+    const auto imageType = this->imageDesc.image_type;
+    const size_t imageCount = Image::isImageArray(imageType) ? this->imageDesc.image_array_size : 1u;
+    size_t height = Image::getImageHeight(this->imageDesc);
+    size_t depth = Image::getImageDepth(this->imageDesc);
+
+    MipLevelHostLayout layout{};
+    if (mipLevel == 0) {
+        layout.rowPitch = this->hostPtrRowPitch;
+        layout.slicePitch = this->hostPtrSlicePitch;
+    } else {
+        auto getMipLevelDimension = [mipLevel](size_t baseDimension) {
+            return std::max<size_t>(baseDimension >> mipLevel, 1u);
+        };
+        height = getMipLevelDimension(height);
+        depth = getMipLevelDimension(depth);
+        layout.rowPitch = getMipLevelDimension(this->imageDesc.image_width) * this->surfaceFormatInfo.surfaceFormat.imageElementSizeInBytes;
+        layout.slicePitch = Image::hasSlices(imageType) ? layout.rowPitch * height : 0u;
+    }
+    layout.size = Image::getHostPtrMinSize(imageType, this->surfaceFormatInfo.oclImageFormat, layout.rowPitch, layout.slicePitch, height, depth, imageCount);
+    return layout;
+}
+
+size_t Image::getMipLevelsHostSize(uint32_t mipLevelCount) const {
+    size_t size = 0;
+    for (uint32_t mipLevel = 0; mipLevel < mipLevelCount; mipLevel++) {
+        size += this->getMipLevelHostLayout(mipLevel).size;
+    }
+    return size;
+}
+
+size_t Image::getHostMapStorageSize() const {
+    if (!isMipMapped(this->imageDesc)) {
+        return this->getSize();
+    }
+    return std::max(this->getSize(), this->getMipLevelsHostSize(this->imageDesc.num_mip_levels));
+}
+
+size_t Image::calculateOffsetForMapping(const MemObjOffsetArray &origin, uint32_t mipLevel) const {
+    size_t rowPitch = this->imageDesc.image_row_pitch;
+    size_t slicePitch = this->imageDesc.image_slice_pitch;
+    if (!this->mappingOnCpuAllowed()) {
+        const auto mipLevelHostLayout = this->getMipLevelHostLayout(mipLevel);
+        rowPitch = mipLevelHostLayout.rowPitch;
+        slicePitch = mipLevelHostLayout.slicePitch;
+    }
 
     size_t offset = getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes * origin[0];
 
@@ -1613,6 +1656,11 @@ size_t Image::calculateOffsetForMapping(const MemObjOffsetArray &origin) const {
     }
 
     return offset;
+}
+
+size_t Image::calculateMappedPtrLength(const MemObjSizeArray &size, uint32_t mipLevel) const {
+    const MemObjOffsetArray lastElementOrigin = {{size[0] - 1, size[1] - 1, size[2] - 1}};
+    return this->calculateOffsetForMapping(lastElementOrigin, mipLevel) + this->surfaceFormatInfo.surfaceFormat.imageElementSizeInBytes;
 }
 
 cl_int Image::validateRegionAndOrigin(const size_t *origin, const size_t *region, const cl_image_desc &imgDesc) {

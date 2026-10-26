@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,6 +25,6 @@ inline bool isMipMapped(const cl_image_desc &imgDesc) {
 
 bool isMipMapped(const MemObj *memObj);
 
-uint32_t getMipOffset(Image *image, const size_t *origin);
+size_t getMipOffset(Image *image, const size_t *origin);
 
 } // namespace NEO

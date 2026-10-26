@@ -403,14 +403,15 @@ void *MemObj::getBasePtrForMap(uint32_t rootDeviceIndex) {
         if (getMapAllocation(rootDeviceIndex)) {
             return getMapAllocation(rootDeviceIndex)->getUnderlyingBuffer();
         } else {
+            const auto hostMapStorageSize = this->getHostMapStorageSize();
             auto memory = getAllocatedMapPtr();
             if (!memory) {
-                memory = memoryManager->allocateSystemMemory(getSize(), MemoryConstants::pageSize);
+                memory = memoryManager->allocateSystemMemory(hostMapStorageSize, MemoryConstants::pageSize);
                 setAllocatedMapPtr(memory);
             }
             AllocationProperties properties{rootDeviceIndex,
                                             false, // allocateMemory
-                                            getSize(), AllocationType::mapAllocation,
+                                            hostMapStorageSize, AllocationType::mapAllocation,
                                             false, // isMultiStorageAllocation
                                             context->getDeviceBitfieldForAllocation(rootDeviceIndex)};
 

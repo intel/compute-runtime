@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,7 +44,7 @@ bool MapOperationsHandler::isOverlapping(MapInfo &inputMapInfo) {
         auto mappedEndPtr = ptrOffset(mappedStartPtr, mapInfo.ptrLength);
 
         // Requested ptr starts before or inside existing ptr range and overlapping end
-        if (inputStartPtr < mappedEndPtr && inputEndPtr >= mappedStartPtr) {
+        if (inputStartPtr < mappedEndPtr && inputEndPtr > mappedStartPtr) {
             return true;
         }
     }

@@ -148,6 +148,7 @@ TEST_F(MipMapMapImageParamsTest, givenAllocatedMapPtrWhenMapsWithDifferentMipMap
         case CL_MEM_OBJECT_IMAGE1D_ARRAY:
             origin2[2] = 1;
             imageDesc.image_array_size = 2;
+            mapOffset *= imageDesc.image_array_size;
             image = std::unique_ptr<Image>(ImageHelperUlt<Image1dArrayDefaults>::create(context, &imageDesc));
             break;
         case CL_MEM_OBJECT_IMAGE2D:
@@ -157,6 +158,7 @@ TEST_F(MipMapMapImageParamsTest, givenAllocatedMapPtrWhenMapsWithDifferentMipMap
         case CL_MEM_OBJECT_IMAGE2D_ARRAY:
             origin2[3] = 1;
             imageDesc.image_array_size = 2;
+            mapOffset *= imageDesc.image_array_size;
             image = std::unique_ptr<Image>(ImageHelperUlt<Image2dArrayDefaults>::create(context, &imageDesc));
             break;
         case CL_MEM_OBJECT_IMAGE3D:
@@ -689,7 +691,7 @@ HWTEST_F(EnqueueMapImageTest, givenImageWithouUsetHostPtrFlagWhenMappedOnCpuThen
     EXPECT_EQ(region[1], mappedInfo.size[1]);
     EXPECT_EQ(region[2], mappedInfo.size[2]);
 
-    auto expectedPtr = ptrOffset(image->getCpuAddressForMapping(), image->calculateOffsetForMapping(mappedInfo.offset));
+    auto expectedPtr = ptrOffset(image->getCpuAddressForMapping(), image->calculateOffsetForMapping(mappedInfo.offset, 0u));
 
     EXPECT_EQ(mappedPtr, expectedPtr);
 }
@@ -717,7 +719,7 @@ HWTEST_F(EnqueueMapImageTest, givenImageWithUseHostPtrFlagWhenMappedOnCpuThenSet
     EXPECT_EQ(region[1], mappedInfo.size[1]);
     EXPECT_EQ(region[2], mappedInfo.size[2]);
 
-    auto expectedPtr = ptrOffset(image->getCpuAddressForMapping(), image->calculateOffsetForMapping(mappedInfo.offset));
+    auto expectedPtr = ptrOffset(image->getCpuAddressForMapping(), image->calculateOffsetForMapping(mappedInfo.offset, 0u));
 
     EXPECT_EQ(mappedPtr, expectedPtr);
 }
@@ -920,7 +922,7 @@ TEST_F(EnqueueMapImageTest, givenNonZeroCopyImageWhenMappedOnGpuThenReturnHostRo
     EXPECT_EQ(image->getHostPtrSlicePitch(), retImageSlicePitch);
 }
 
-TEST_F(EnqueueMapImageTest, givenMipMapImageWhenMappedThenReturnHostRowAndSlicePitch) {
+TEST_F(EnqueueMapImageTest, givenMipMapImageWhenMappedThenReturnMipLevelHostRowAndSlicePitch) {
     const size_t origin[4] = {0, 0, 0, 1};
     const size_t region[3] = {1, 1, 1};
     size_t retImageRowPitch = 0;
@@ -942,8 +944,149 @@ TEST_F(EnqueueMapImageTest, givenMipMapImageWhenMappedThenReturnHostRowAndSliceP
                            0, nullptr, nullptr, retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_EQ(image->getHostPtrRowPitch(), retImageRowPitch);
-    EXPECT_EQ(image->getHostPtrSlicePitch(), retImageSlicePitch);
+    const size_t mipLevelRowPitch = 2 * image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
+    EXPECT_EQ(mipLevelRowPitch, retImageRowPitch);
+    EXPECT_EQ(2 * mipLevelRowPitch, retImageSlicePitch);
+}
+
+TEST_F(EnqueueMapImageTest, givenMipMapImage2dWhenAllMipLevelsAreMappedThenLevelsArePackedInHostMemoryAndMipLevelPitchesAreReturned) {
+    cl_image_desc imageDesc = {};
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+    imageDesc.num_mip_levels = 4;
+    imageDesc.image_width = 8;
+    imageDesc.image_height = 8;
+
+    std::unique_ptr<Image> image(ImageHelperUlt<Image2dDefaults>::create(context, &imageDesc));
+    ASSERT_NE(nullptr, image);
+    ASSERT_EQ(4u, image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes);
+
+    const size_t expectedOffsets[] = {0, 256, 320, 336};
+    const size_t expectedRowPitches[] = {32, 16, 8, 4};
+    void *mappedPtrs[4] = {};
+    for (size_t mipLevel = 0; mipLevel < 4; mipLevel++) {
+        const size_t origin[3] = {0, 0, mipLevel};
+        const size_t region[3] = {std::max<size_t>(8u >> mipLevel, 1u), std::max<size_t>(8u >> mipLevel, 1u), 1};
+        size_t retImageRowPitch = 0;
+        size_t retImageSlicePitch = 1;
+        mappedPtrs[mipLevel] = pCmdQ->enqueueMapImage(image.get(), true, CL_MAP_READ, origin, region,
+                                                      &retImageRowPitch, &retImageSlicePitch,
+                                                      0, nullptr, nullptr, retVal);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(expectedRowPitches[mipLevel], retImageRowPitch);
+        EXPECT_EQ(0u, retImageSlicePitch);
+    }
+
+    for (size_t mipLevel = 0; mipLevel < 4; mipLevel++) {
+        EXPECT_EQ(ptrOffset(mappedPtrs[0], expectedOffsets[mipLevel]), mappedPtrs[mipLevel]);
+    }
+    EXPECT_LE(expectedOffsets[3] + expectedRowPitches[3], image->getMapAllocation(pClDevice->getRootDeviceIndex())->getUnderlyingBufferSize());
+
+    for (auto mappedPtr : mappedPtrs) {
+        EXPECT_EQ(CL_SUCCESS, pCmdQ->enqueueUnmapMemObject(image.get(), mappedPtr, 0, nullptr, nullptr));
+    }
+}
+
+TEST_F(EnqueueMapImageTest, givenMipMapImage2dWhenAdjacentMipLevelsAreMappedForWriteInReverseOrderThenBothMapsSucceed) {
+    cl_image_desc imageDesc = {};
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+    imageDesc.num_mip_levels = 2;
+    imageDesc.image_width = 8;
+    imageDesc.image_height = 8;
+
+    std::unique_ptr<Image> image(ImageHelperUlt<Image2dDefaults>::create(context, &imageDesc));
+    ASSERT_NE(nullptr, image);
+
+    void *mappedPtrs[2] = {};
+    for (size_t mipLevel = 2; mipLevel-- > 0;) {
+        const size_t origin[3] = {0, 0, mipLevel};
+        const size_t region[3] = {8u >> mipLevel, 8u >> mipLevel, 1};
+        mappedPtrs[mipLevel] = pCmdQ->enqueueMapImage(image.get(), true, CL_MAP_WRITE, origin, region,
+                                                      nullptr, nullptr, 0, nullptr, nullptr, retVal);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_NE(nullptr, mappedPtrs[mipLevel]);
+    }
+
+    for (auto mappedPtr : mappedPtrs) {
+        EXPECT_EQ(CL_SUCCESS, pCmdQ->enqueueUnmapMemObject(image.get(), mappedPtr, 0, nullptr, nullptr));
+    }
+}
+
+TEST_F(EnqueueMapImageTest, givenMipMapImage2dWhenAdjacentMipLevelsAreMappedForWriteThenBothMapsSucceed) {
+    cl_image_desc imageDesc = {};
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+    imageDesc.num_mip_levels = 2;
+    imageDesc.image_width = 8;
+    imageDesc.image_height = 8;
+
+    std::unique_ptr<Image> image(ImageHelperUlt<Image2dDefaults>::create(context, &imageDesc));
+    ASSERT_NE(nullptr, image);
+
+    void *mappedPtrs[2] = {};
+    for (size_t mipLevel = 0; mipLevel < 2; mipLevel++) {
+        const size_t origin[3] = {0, 0, mipLevel};
+        const size_t region[3] = {8u >> mipLevel, 8u >> mipLevel, 1};
+        mappedPtrs[mipLevel] = pCmdQ->enqueueMapImage(image.get(), true, CL_MAP_WRITE, origin, region,
+                                                      nullptr, nullptr, 0, nullptr, nullptr, retVal);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_NE(nullptr, mappedPtrs[mipLevel]);
+    }
+
+    for (auto mappedPtr : mappedPtrs) {
+        EXPECT_EQ(CL_SUCCESS, pCmdQ->enqueueUnmapMemObject(image.get(), mappedPtr, 0, nullptr, nullptr));
+    }
+}
+
+template <typename GfxFamily>
+struct MipLevelPitchesRecordingCmdQ : public CommandQueueHw<GfxFamily> {
+    MipLevelPitchesRecordingCmdQ(Context *context, ClDevice *device) : CommandQueueHw<GfxFamily>(context, device, nullptr, false) {}
+
+    cl_int enqueueReadImage(Image *srcImage, cl_bool blockingRead, const size_t *origin, const size_t *region, size_t rowPitch, size_t slicePitch, void *ptr,
+                            GraphicsAllocation *mapAllocation, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) override {
+        readRowPitch = rowPitch;
+        readSlicePitch = slicePitch;
+        return CL_SUCCESS;
+    }
+
+    cl_int enqueueWriteImage(Image *dstImage, cl_bool blockingWrite, const size_t *origin, const size_t *region, size_t inputRowPitch,
+                             size_t inputSlicePitch, const void *ptr, GraphicsAllocation *mapAllocation, cl_uint numEventsInWaitList, const cl_event *eventWaitList,
+                             cl_event *event) override {
+        writeRowPitch = inputRowPitch;
+        writeSlicePitch = inputSlicePitch;
+        return CL_SUCCESS;
+    }
+
+    size_t readRowPitch = 0;
+    size_t readSlicePitch = 0;
+    size_t writeRowPitch = 0;
+    size_t writeSlicePitch = 0;
+};
+
+HWTEST_F(EnqueueMapImageTest, givenMipMapImageWhenMipLevelIsMappedAndUnmappedThenReadAndWriteUseMipLevelHostPitches) {
+    cl_image_desc imageDesc = {};
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D_ARRAY;
+    imageDesc.num_mip_levels = 4;
+    imageDesc.image_width = 8;
+    imageDesc.image_height = 8;
+    imageDesc.image_array_size = 3;
+
+    std::unique_ptr<Image> image(ImageHelperUlt<Image2dArrayDefaults>::create(context, &imageDesc));
+    ASSERT_NE(nullptr, image);
+    MipLevelPitchesRecordingCmdQ<FamilyType> cmdQ(context, pClDevice);
+
+    const size_t origin[4] = {0, 0, 1, 2};
+    const size_t region[3] = {2, 2, 2};
+    auto mappedPtr = cmdQ.enqueueMapImage(image.get(), true, CL_MAP_WRITE, origin, region,
+                                          nullptr, nullptr, 0, nullptr, nullptr, retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, mappedPtr);
+    EXPECT_EQ(CL_SUCCESS, cmdQ.enqueueUnmapMemObject(image.get(), mappedPtr, 0, nullptr, nullptr));
+
+    const size_t mipLevelRowPitch = 2 * image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
+    const size_t mipLevelSlicePitch = 2 * mipLevelRowPitch;
+    EXPECT_EQ(mipLevelRowPitch, cmdQ.readRowPitch);
+    EXPECT_EQ(mipLevelSlicePitch, cmdQ.readSlicePitch);
+    EXPECT_EQ(mipLevelRowPitch, cmdQ.writeRowPitch);
+    EXPECT_EQ(mipLevelSlicePitch, cmdQ.writeSlicePitch);
 }
 
 TEST_F(EnqueueMapImageTest, givenImage1DArrayWhenEnqueueMapImageIsCalledThenReturnRowAndSlicePitchAreEqual) {

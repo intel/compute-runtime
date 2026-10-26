@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,7 +51,7 @@ struct TransferProperties {
     cl_command_type cmdType = 0;
     cl_map_flags mapFlags = 0;
     uint32_t mipLevel = 0;
-    uint32_t mipPtrOffset = 0;
+    size_t mipPtrOffset = 0;
     bool blocking = false;
     bool doTransferOnCpu = false;
     bool finishRequired = false;

@@ -1210,7 +1210,7 @@ HWTEST_F(ImageTests, givenImageWhenAskedForPtrOffsetForGpuMappingThenReturnCorre
 
     MemObjOffsetArray origin = {{4, 5, 6}};
 
-    auto retOffset = image->calculateOffsetForMapping(origin);
+    auto retOffset = image->calculateOffsetForMapping(origin, 0u);
     size_t expectedOffset = image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes * origin[0] +
                             image->getHostPtrRowPitch() * origin[1] + image->getHostPtrSlicePitch() * origin[2];
 
@@ -1256,7 +1256,7 @@ TEST(ImageTest, givenImageWhenAskedForPtrOffsetForCpuMappingThenReturnCorrectVal
 
     MemObjOffsetArray origin = {{4, 5, 6}};
 
-    auto retOffset = image->calculateOffsetForMapping(origin);
+    auto retOffset = image->calculateOffsetForMapping(origin, 0u);
     size_t expectedOffset = image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes * origin[0] +
                             image->getImageDesc().image_row_pitch * origin[1] +
                             image->getImageDesc().image_slice_pitch * origin[2];
@@ -1270,7 +1270,7 @@ TEST(ImageTest, given1DArrayImageWhenAskedForPtrOffsetForMappingThenReturnCorrec
 
     MemObjOffsetArray origin = {{4, 5, 0}};
 
-    auto retOffset = image->calculateOffsetForMapping(origin);
+    auto retOffset = image->calculateOffsetForMapping(origin, 0u);
     size_t expectedOffset = image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes * origin[0] +
                             image->getImageDesc().image_slice_pitch * origin[1];
 
@@ -1287,9 +1287,9 @@ HWTEST_F(ImageTests, givenImageWhenAskedForPtrLengthForGpuMappingThenReturnCorre
 
     MemObjSizeArray region = {{4, 5, 6}};
 
-    auto retLength = image->calculateMappedPtrLength(region);
+    auto retLength = image->calculateMappedPtrLength(region, 0u);
     size_t expectedLength = image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes * region[0] +
-                            image->getHostPtrRowPitch() * region[1] + image->getHostPtrSlicePitch() * region[2];
+                            image->getHostPtrRowPitch() * (region[1] - 1) + image->getHostPtrSlicePitch() * (region[2] - 1);
 
     EXPECT_EQ(expectedLength, retLength);
 }
@@ -1303,10 +1303,10 @@ TEST(ImageTest, givenImageWhenAskedForPtrLengthForCpuMappingThenReturnCorrectVal
 
     MemObjSizeArray region = {{4, 5, 6}};
 
-    auto retLength = image->calculateMappedPtrLength(region);
+    auto retLength = image->calculateMappedPtrLength(region, 0u);
     size_t expectedLength = image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes * region[0] +
-                            image->getImageDesc().image_row_pitch * region[1] +
-                            image->getImageDesc().image_slice_pitch * region[2];
+                            image->getImageDesc().image_row_pitch * (region[1] - 1) +
+                            image->getImageDesc().image_slice_pitch * (region[2] - 1);
 
     EXPECT_EQ(expectedLength, retLength);
 }
@@ -1325,7 +1325,7 @@ TEST(ImageTest, givenMipMapImage3DWhenAskedForPtrOffsetForGpuMappingThenReturnOf
 
     MemObjOffsetArray origin{{1, 1, 1}};
 
-    auto retOffset = image->calculateOffsetForMapping(origin);
+    auto retOffset = image->calculateOffsetForMapping(origin, 0u);
     size_t expectedOffset = image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes * origin[0] +
                             image->getHostPtrRowPitch() * origin[1] + image->getHostPtrSlicePitch() * origin[2];
 
@@ -1346,7 +1346,7 @@ TEST(ImageTest, givenMipMapImage2DArrayWhenAskedForPtrOffsetForGpuMappingThenRet
 
     MemObjOffsetArray origin{{1, 1, 1}};
 
-    auto retOffset = image->calculateOffsetForMapping(origin);
+    auto retOffset = image->calculateOffsetForMapping(origin, 0u);
     size_t expectedOffset = image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes * origin[0] +
                             image->getHostPtrRowPitch() * origin[1] + image->getHostPtrSlicePitch() * origin[2];
 
@@ -1367,7 +1367,7 @@ TEST(ImageTest, givenNonMipMapImage2DArrayWhenAskedForPtrOffsetForGpuMappingThen
 
     MemObjOffsetArray origin{{1, 1, 1}};
 
-    auto retOffset = image->calculateOffsetForMapping(origin);
+    auto retOffset = image->calculateOffsetForMapping(origin, 0u);
     size_t expectedOffset = image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes * origin[0] +
                             image->getHostPtrRowPitch() * origin[1] + image->getHostPtrSlicePitch() * origin[2];
 
@@ -1387,10 +1387,61 @@ TEST(ImageTest, givenMipMapImage1DArrayWhenAskedForPtrOffsetForGpuMappingThenRet
 
     MemObjOffsetArray origin{{1, 1, 0}};
 
-    auto retOffset = image->calculateOffsetForMapping(origin);
+    auto retOffset = image->calculateOffsetForMapping(origin, 0u);
     size_t expectedOffset = image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes * origin[0] + image->getHostPtrSlicePitch() * origin[1];
 
     EXPECT_EQ(expectedOffset, retOffset);
+}
+
+TEST(ImageTest, givenMipMapImage3DWhenAskedForPtrOffsetAndLengthForGpuMappingOfMipLevelThenMipLevelHostPitchesAreUsed) {
+    MockContext ctx;
+    cl_image_desc imageDesc{};
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE3D;
+    imageDesc.image_width = 8;
+    imageDesc.image_height = 8;
+    imageDesc.image_depth = 8;
+    imageDesc.num_mip_levels = 4;
+
+    std::unique_ptr<Image> image(ImageHelperUlt<Image3dDefaults>::create(&ctx, &imageDesc));
+    EXPECT_FALSE(image->mappingOnCpuAllowed());
+
+    const size_t bytesPerPixel = image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
+    const size_t mipLevelRowPitch = 2 * bytesPerPixel;
+    const size_t mipLevelSlicePitch = 2 * mipLevelRowPitch;
+    MemObjOffsetArray origin{{1, 1, 1}};
+    MemObjSizeArray region{{1, 1, 2}};
+
+    EXPECT_EQ(bytesPerPixel + mipLevelRowPitch + mipLevelSlicePitch, image->calculateOffsetForMapping(origin, 2u));
+    EXPECT_EQ(bytesPerPixel + mipLevelSlicePitch, image->calculateMappedPtrLength(region, 2u));
+}
+
+TEST(ImageTest, givenMipMapImageWhenGettingBasePtrForMapThenMapStorageCoversAllMipLevels) {
+    MockContext ctx;
+    cl_image_desc imageDesc{};
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D_ARRAY;
+    imageDesc.image_width = 64;
+    imageDesc.image_height = 1;
+    imageDesc.image_array_size = 2;
+    imageDesc.num_mip_levels = 7;
+
+    std::unique_ptr<Image> image(ImageHelperUlt<Image2dArrayDefaults>::create(&ctx, &imageDesc));
+    EXPECT_FALSE(image->mappingOnCpuAllowed());
+
+    const size_t requiredHostSize = image->getMipLevelsHostSize(imageDesc.num_mip_levels);
+    EXPECT_EQ(std::max(image->getSize(), requiredHostSize), image->getHostMapStorageSize());
+
+    auto rootDeviceIndex = ctx.getDevice(0)->getRootDeviceIndex();
+    EXPECT_NE(nullptr, image->getBasePtrForMap(rootDeviceIndex));
+    auto mapAllocation = image->getMapAllocation(rootDeviceIndex);
+    ASSERT_NE(nullptr, mapAllocation);
+    EXPECT_EQ(image->getHostMapStorageSize(), mapAllocation->getUnderlyingBufferSize());
+    EXPECT_LE(requiredHostSize, mapAllocation->getUnderlyingBufferSize());
+}
+
+TEST(ImageTest, givenNonMipMapImageWhenGettingHostMapStorageSizeThenImageSizeIsReturned) {
+    MockContext ctx;
+    std::unique_ptr<Image> image(ImageHelperUlt<Image3dDefaults>::create(&ctx));
+    EXPECT_EQ(image->getSize(), image->getHostMapStorageSize());
 }
 
 TEST(ImageTest, givenClMemForceLinearStorageSetWhenCreateImageThenDisallowTiling) {

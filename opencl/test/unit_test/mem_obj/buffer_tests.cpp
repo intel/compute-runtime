@@ -55,7 +55,7 @@ TEST(Buffer, giveBufferWhenAskedForPtrOffsetForMappingThenReturnCorrectValue) {
 
     MemObjOffsetArray offset = {{4, 5, 6}};
 
-    auto retOffset = buffer->calculateOffsetForMapping(offset);
+    auto retOffset = buffer->calculateOffsetForMapping(offset, 0u);
     EXPECT_EQ(offset[0], retOffset);
 }
 
@@ -74,7 +74,7 @@ TEST(Buffer, givenBufferWhenAskedForPtrLengthThenReturnCorrectValue) {
 
     MemObjSizeArray size = {{4, 5, 6}};
 
-    auto retOffset = buffer->calculateMappedPtrLength(size);
+    auto retOffset = buffer->calculateMappedPtrLength(size, 0u);
     EXPECT_EQ(size[0], retOffset);
 }
 

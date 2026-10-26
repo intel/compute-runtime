@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -134,8 +134,9 @@ class MemObj : public BaseObject<_cl_mem> {
     bool mappingOnCpuAllowed() const;
     MOCKABLE_VIRTUAL bool allowCpuAccess() const;
     bool allowCpuForMapUnmap() const;
-    virtual size_t calculateOffsetForMapping(const MemObjOffsetArray &offset) const { return offset[0]; }
-    size_t calculateMappedPtrLength(const MemObjSizeArray &size) const { return calculateOffsetForMapping(size); }
+    virtual size_t calculateOffsetForMapping(const MemObjOffsetArray &offset, uint32_t mipLevel) const { return offset[0]; }
+    virtual size_t calculateMappedPtrLength(const MemObjSizeArray &size, uint32_t mipLevel) const { return size[0]; }
+    virtual size_t getHostMapStorageSize() const { return this->getSize(); }
     cl_mem_object_type peekClMemObjType() const { return memObjectType; }
     size_t getOffset() const { return offset; }
     MemoryManager *getMemoryManager() const {

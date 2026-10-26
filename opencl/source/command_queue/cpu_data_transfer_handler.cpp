@@ -43,10 +43,10 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
 
     if (mapOperation) {
         returnPtr = ptrOffset(transferProperties.memObj->getCpuAddressForMapping(),
-                              transferProperties.memObj->calculateOffsetForMapping(transferProperties.offset) + transferProperties.mipPtrOffset);
+                              transferProperties.memObj->calculateOffsetForMapping(transferProperties.offset, transferProperties.mipLevel) + transferProperties.mipPtrOffset);
 
         auto graphicsAllocationForMap = transferProperties.memObj->getGraphicsAllocation(getDevice().getRootDeviceIndex());
-        if (!transferProperties.memObj->addMappedPtr(returnPtr, transferProperties.memObj->calculateMappedPtrLength(transferProperties.size),
+        if (!transferProperties.memObj->addMappedPtr(returnPtr, transferProperties.memObj->calculateMappedPtrLength(transferProperties.size, transferProperties.mipLevel),
                                                      transferProperties.mapFlags, transferProperties.size, transferProperties.offset, transferProperties.mipLevel, graphicsAllocationForMap)) {
             err.set(CL_INVALID_OPERATION);
             return nullptr;

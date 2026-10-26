@@ -1455,8 +1455,8 @@ HWTEST_F(CommandQueueHwTest, givenNotBlockedIOQWhenCpuTransferIsNotBlockedOutEve
     TransferProperties transferProperties(buffer.get(), CL_COMMAND_UNMAP_MEM_OBJECT, 0, false, &offset, &size, nullptr, false, pDevice->getRootDeviceIndex());
 
     auto returnPtr = ptrOffset(transferProperties.memObj->getCpuAddressForMapping(),
-                               transferProperties.memObj->calculateOffsetForMapping(transferProperties.offset) + transferProperties.mipPtrOffset);
-    transferProperties.memObj->addMappedPtr(returnPtr, transferProperties.memObj->calculateMappedPtrLength(transferProperties.size),
+                               transferProperties.memObj->calculateOffsetForMapping(transferProperties.offset, transferProperties.mipLevel) + transferProperties.mipPtrOffset);
+    transferProperties.memObj->addMappedPtr(returnPtr, transferProperties.memObj->calculateMappedPtrLength(transferProperties.size, transferProperties.mipLevel),
                                             transferProperties.mapFlags, transferProperties.size, transferProperties.offset, transferProperties.mipLevel, nullptr);
 
     EventsRequest eventsRequest(0, nullptr, &returnEvent);
@@ -1478,8 +1478,8 @@ HWTEST_F(CommandQueueHwTest, givenNotBlockedIOQWhenCpuTransferIsBlockedOutEventP
     TransferProperties transferProperties(buffer.get(), CL_COMMAND_UNMAP_MEM_OBJECT, 0, false, &offset, &size, nullptr, false, pDevice->getRootDeviceIndex());
 
     auto returnPtr = ptrOffset(transferProperties.memObj->getCpuAddressForMapping(),
-                               transferProperties.memObj->calculateOffsetForMapping(transferProperties.offset) + transferProperties.mipPtrOffset);
-    transferProperties.memObj->addMappedPtr(returnPtr, transferProperties.memObj->calculateMappedPtrLength(transferProperties.size),
+                               transferProperties.memObj->calculateOffsetForMapping(transferProperties.offset, transferProperties.mipLevel) + transferProperties.mipPtrOffset);
+    transferProperties.memObj->addMappedPtr(returnPtr, transferProperties.memObj->calculateMappedPtrLength(transferProperties.size, transferProperties.mipLevel),
                                             transferProperties.mapFlags, transferProperties.size, transferProperties.offset, transferProperties.mipLevel, nullptr);
 
     EventsRequest eventsRequest(0, nullptr, &returnEvent);

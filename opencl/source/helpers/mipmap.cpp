@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,6 @@
 
 #include "opencl/source/mem_obj/image.h"
 
-#include <algorithm>
 #include <cstdint>
 #include <limits>
 
@@ -59,38 +58,12 @@ bool isMipMapped(const MemObj *memObj) {
     return isMipMapped(image->getImageDesc());
 }
 
-uint32_t getMipOffset(Image *image, const size_t *origin) {
+size_t getMipOffset(Image *image, const size_t *origin) {
     if (isMipMapped(image) == false) {
         return 0;
     }
     UNRECOVERABLE_IF(origin == nullptr);
-    auto bytesPerPixel = image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
-    size_t offset{};
-    auto imageType = image->getImageDesc().image_type;
-    auto lod = findMipLevel(imageType, origin);
-    auto baseWidth = image->getImageDesc().image_width;
-    auto baseHeight = image->getImageDesc().image_height;
-    if (lod) {
-        size_t mipHeight = baseHeight;
-        size_t mipWidth = baseWidth;
-        bool translate = false;
-        if (lod >= 2) {
-            translate = true;
-            mipWidth += std::max<size_t>(baseWidth >> 2, 1);
-        }
-        for (size_t currentLod = 3; currentLod <= lod; currentLod++) {
-            mipHeight += std::max<size_t>(baseHeight >> currentLod, 1);
-            mipWidth += std::max<size_t>(baseWidth >> currentLod, 1);
-        }
-        if (imageType == CL_MEM_OBJECT_IMAGE1D) {
-            offset = mipWidth;
-        } else {
-            offset = baseWidth * mipHeight;
-            if (translate) {
-                offset += std::max<size_t>(baseWidth >> 1, 1);
-            }
-        }
-    }
-    return static_cast<uint32_t>(bytesPerPixel * offset);
+    auto lod = findMipLevel(image->getImageDesc().image_type, origin);
+    return image->getMipLevelsHostSize(lod);
 }
 } // namespace NEO

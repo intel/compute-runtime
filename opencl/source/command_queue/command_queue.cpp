@@ -778,8 +778,9 @@ cl_int CommandQueue::enqueueWriteMemObjForUnmap(MemObj *memObj, void *mappedPtr,
             auto mipIdx = getMipLevelOriginIdx(image->peekClMemObjType());
             UNRECOVERABLE_IF(mipIdx >= 4);
             writeOrigin[mipIdx] = unmapInfo.mipLevel;
+            const auto mipLevelHostLayout = image->getMipLevelHostLayout(unmapInfo.mipLevel);
             retVal = enqueueWriteImage(image, CL_FALSE, writeOrigin, &unmapInfo.size[0],
-                                       image->getHostPtrRowPitch(), image->getHostPtrSlicePitch(), mappedPtr, memObj->getMapAllocation(getDevice().getRootDeviceIndex()),
+                                       mipLevelHostLayout.rowPitch, mipLevelHostLayout.slicePitch, mappedPtr, memObj->getMapAllocation(getDevice().getRootDeviceIndex()),
                                        eventsRequest.numEventsInWaitList, eventsRequest.eventWaitList, eventsRequest.outEvent);
         }
     } else {
@@ -798,13 +799,13 @@ cl_int CommandQueue::enqueueWriteMemObjForUnmap(MemObj *memObj, void *mappedPtr,
 
 void *CommandQueue::enqueueReadMemObjForMap(TransferProperties &transferProperties, EventsRequest &eventsRequest, cl_int &errcodeRet) {
     void *basePtr = transferProperties.memObj->getBasePtrForMap(getDevice().getRootDeviceIndex());
-    size_t mapPtrOffset = transferProperties.memObj->calculateOffsetForMapping(transferProperties.offset) + transferProperties.mipPtrOffset;
+    size_t mapPtrOffset = transferProperties.memObj->calculateOffsetForMapping(transferProperties.offset, transferProperties.mipLevel) + transferProperties.mipPtrOffset;
     if (transferProperties.memObj->peekClMemObjType() == CL_MEM_OBJECT_BUFFER) {
         mapPtrOffset += transferProperties.memObj->getOffset();
     }
     void *returnPtr = ptrOffset(basePtr, mapPtrOffset);
 
-    if (!transferProperties.memObj->addMappedPtr(returnPtr, transferProperties.memObj->calculateMappedPtrLength(transferProperties.size),
+    if (!transferProperties.memObj->addMappedPtr(returnPtr, transferProperties.memObj->calculateMappedPtrLength(transferProperties.size, transferProperties.mipLevel),
                                                  transferProperties.mapFlags, transferProperties.size, transferProperties.offset, transferProperties.mipLevel,
                                                  transferProperties.memObj->getMapAllocation(getDevice().getRootDeviceIndex()))) {
         errcodeRet = CL_INVALID_OPERATION;
@@ -825,8 +826,9 @@ void *CommandQueue::enqueueReadMemObjForMap(TransferProperties &transferProperti
             auto mipIdx = getMipLevelOriginIdx(image->peekClMemObjType());
             UNRECOVERABLE_IF(mipIdx >= 4);
             readOrigin[mipIdx] = transferProperties.mipLevel;
+            const auto mipLevelHostLayout = image->getMipLevelHostLayout(transferProperties.mipLevel);
             errcodeRet = enqueueReadImage(image, transferProperties.blocking, readOrigin, &transferProperties.size[0],
-                                          image->getHostPtrRowPitch(), image->getHostPtrSlicePitch(),
+                                          mipLevelHostLayout.rowPitch, mipLevelHostLayout.slicePitch,
                                           returnPtr, transferProperties.memObj->getMapAllocation(getDevice().getRootDeviceIndex()), eventsRequest.numEventsInWaitList,
                                           eventsRequest.eventWaitList, eventsRequest.outEvent);
         }
@@ -895,8 +897,9 @@ void *CommandQueue::enqueueMapImage(Image *image, cl_bool blockingMap,
             GetInfoHelper::set(imageRowPitch, image->getImageDesc().image_row_pitch);
         }
     } else {
-        GetInfoHelper::set(imageSlicePitch, image->getHostPtrSlicePitch());
-        GetInfoHelper::set(imageRowPitch, image->getHostPtrRowPitch());
+        const auto mipLevelHostLayout = image->getMipLevelHostLayout(transferProperties.mipLevel);
+        GetInfoHelper::set(imageSlicePitch, mipLevelHostLayout.slicePitch);
+        GetInfoHelper::set(imageRowPitch, mipLevelHostLayout.rowPitch);
     }
     if (Image::hasSlices(image->peekClMemObjType()) == false) {
         GetInfoHelper::set(imageSlicePitch, static_cast<size_t>(0));

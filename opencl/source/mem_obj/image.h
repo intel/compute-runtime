@@ -41,6 +41,12 @@ using ImageCreateFunc = Image *(*)(Context * context,
                                    const ClSurfaceFormatInfo *surfaceFormatInfo,
                                    const SurfaceOffsets *surfaceOffsets);
 
+struct MipLevelHostLayout {
+    size_t rowPitch = 0;
+    size_t slicePitch = 0;
+    size_t size = 0;
+};
+
 struct ImageFactoryFuncs {
     ImageCreateFunc createImageFunction;
 };
@@ -196,7 +202,11 @@ class Image : public MemObj {
     const McsSurfaceInfo &getMcsSurfaceInfo() { return mcsSurfaceInfo; }
     void setPlane(ImagePlane plane) { this->plane = plane; }
     ImagePlane getPlane() const { return this->plane; }
-    size_t calculateOffsetForMapping(const MemObjOffsetArray &origin) const override;
+    size_t calculateOffsetForMapping(const MemObjOffsetArray &origin, uint32_t mipLevel) const override;
+    size_t calculateMappedPtrLength(const MemObjSizeArray &size, uint32_t mipLevel) const override;
+    size_t getHostMapStorageSize() const override;
+    MipLevelHostLayout getMipLevelHostLayout(uint32_t mipLevel) const;
+    size_t getMipLevelsHostSize(uint32_t mipLevelCount) const;
 
     bool hasSameDescriptor(const cl_image_desc &imageDesc) const;
     bool hasValidParentImageFormat(const cl_image_format &imageFormat) const;
