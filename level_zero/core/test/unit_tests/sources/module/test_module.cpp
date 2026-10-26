@@ -5342,64 +5342,293 @@ TEST_F(ModuleTest, givenBindlessModeAndMultisampleImageWhenInitializeThenTransla
     EXPECT_TRUE(module.forceBindfulPerCall[1]);
 }
 
-TEST_F(ModuleTest, givenSrcOptLevelInSrcNamesWhenMovingBuildOptionsThenOptionIsRemovedFromSrcNamesAndTranslatedOptionsStoredInDstNames) {
-    auto module = std::make_unique<ModuleImp>(device, nullptr, ModuleType::user);
-    ASSERT_NE(nullptr, module);
+using ModuleBuildOptionsTest = Test<DeviceFixture>;
 
-    std::string srcNames = NEO::CompilerOptions::concatenate(NEO::CompilerOptions::fastRelaxedMath, BuildOptions::optLevel);
-    srcNames += "=2";
-    std::string dstNames;
+TEST_F(ModuleBuildOptionsTest, givenValidOptLevelWhenCreatingBuildOptionsThenOptionIsConsumedWithoutWarningAndLevelIsApplied) {
+    struct {
+        const char *buildFlags;
+        bool optimizationsDisabled;
+    } testCases[] = {
+        {"-ze-opt-level=1", false},
+        {"-ze-opt-level=2", false},
+        {"-ze-opt-level 1", false},
+        {"-ze-opt-level 2", false},
+        {"-ze-opt-level=0", true},
+        {"-ze-opt-level 0", true},
+    };
 
-    auto result = module->moveOptLevelOption(dstNames, srcNames);
-    EXPECT_TRUE(result);
+    for (const auto &testCase : testCases) {
+        std::unique_ptr<ModuleBuildLog> moduleBuildLog{ModuleBuildLog::create()};
+        ModuleImp module(device, moduleBuildLog.get(), ModuleType::user);
+        std::string apiOptions;
+        std::string internalOptions;
 
-    EXPECT_EQ(NEO::CompilerOptions::optLevel.str() + std::string("2"), dstNames);
-    EXPECT_EQ(std::string::npos, srcNames.find(BuildOptions::optLevel.str()));
-    EXPECT_EQ(std::string::npos, srcNames.find(std::string("=2")));
+        module.createBuildOptions(testCase.buildFlags, apiOptions, internalOptions);
+
+        EXPECT_EQ(std::string::npos, apiOptions.find(BuildOptions::optLevel.str())) << testCase.buildFlags;
+        EXPECT_EQ(std::string::npos, internalOptions.find(BuildOptions::optLevel.str())) << testCase.buildFlags;
+        for (const char *level : {"0", "1", "2"}) {
+            EXPECT_FALSE(NEO::CompilerOptions::contains(apiOptions, level)) << testCase.buildFlags;
+        }
+        EXPECT_EQ(testCase.optimizationsDisabled, NEO::CompilerOptions::contains(apiOptions, NEO::CompilerOptions::optDisable)) << testCase.buildFlags;
+        EXPECT_STREQ("", moduleBuildLog->getBuildLog()) << testCase.buildFlags;
+    }
 }
 
-TEST_F(ModuleTest, givenSrcOptLevelWithoutLevelIntegerInSrcNamesWhenMovingBuildOptionsThenFalseIsReturned) {
-    auto module = std::make_unique<ModuleImp>(device, nullptr, ModuleType::user);
-    ASSERT_NE(nullptr, module);
+TEST_F(ModuleBuildOptionsTest, givenOptLevelNextToOtherBuildOptionsWhenCreatingBuildOptionsThenOtherOptionsAreDiscovered) {
+    struct {
+        const char *buildFlags;
+        bool optimizationsDisabled;
+    } testCases[] = {
+        {"-ze-opt-level=0 -ze-opt-greater-than-4GB-buffer-required -ze-opt-large-register-file -g -DA=1 -cl-std=CL3.0", true},
+        {"-g -ze-opt-level 1 -ze-opt-large-register-file -DA=1 -ze-opt-greater-than-4GB-buffer-required -cl-std=CL3.0", false},
+        {"-ze-opt-greater-than-4GB-buffer-required -ze-opt-large-register-file -g -DA=1 -cl-std=CL3.0 -ze-opt-level 2", false},
+        {"-ze-opt-greater-than-4GB-buffer-required -ze-opt-large-register-file -g -DA=1 -cl-std=CL3.0 -ze-opt-level", false},
+    };
 
-    std::string srcNames = NEO::CompilerOptions::concatenate(NEO::CompilerOptions::fastRelaxedMath, BuildOptions::optLevel);
-    std::string dstNames;
+    for (const auto &testCase : testCases) {
+        ModuleImp module(device, nullptr, ModuleType::user);
+        std::string apiOptions;
+        std::string internalOptions;
 
-    auto result = module->moveOptLevelOption(dstNames, srcNames);
-    EXPECT_FALSE(result);
+        module.createBuildOptions(testCase.buildFlags, apiOptions, internalOptions);
 
-    ASSERT_NE(std::string::npos, srcNames.find(BuildOptions::optLevel.str()));
-    EXPECT_EQ(std::string::npos, dstNames.find(NEO::CompilerOptions::optLevel.str()));
+        EXPECT_EQ(std::string::npos, apiOptions.find(BuildOptions::optLevel.str())) << testCase.buildFlags;
+        EXPECT_TRUE(NEO::CompilerOptions::contains(internalOptions, NEO::CompilerOptions::greaterThan4gbBuffersRequired)) << testCase.buildFlags;
+        EXPECT_TRUE(NEO::CompilerOptions::contains(internalOptions, NEO::CompilerOptions::largeGrf)) << testCase.buildFlags;
+        EXPECT_TRUE(NEO::CompilerOptions::contains(apiOptions, "-g")) << testCase.buildFlags;
+        EXPECT_TRUE(NEO::CompilerOptions::contains(apiOptions, "-DA=1")) << testCase.buildFlags;
+        EXPECT_TRUE(NEO::CompilerOptions::contains(apiOptions, "-cl-std=CL3.0")) << testCase.buildFlags;
+        EXPECT_EQ(testCase.optimizationsDisabled, NEO::CompilerOptions::contains(apiOptions, NEO::CompilerOptions::optDisable)) << testCase.buildFlags;
+    }
 }
 
-TEST_F(ModuleTest, givenSrcProfileFlagsInSrcNamesWhenMovingBuildOptionsThenOptionIsRemovedFromSrcNamesAndTranslatedOptionsStoredInDstNames) {
-    auto module = std::make_unique<ModuleImp>(device, nullptr, ModuleType::user);
-    ASSERT_NE(nullptr, module);
+TEST_F(ModuleBuildOptionsTest, givenOptLevelNextToProfileFlagsWhenCreatingBuildOptionsThenProfileFlagsAreParsed) {
+    for (const char *buildFlags : {"-ze-opt-level 2 -zet-profile-flags 0x5", "-zet-profile-flags 0x5 -ze-opt-level=1"}) {
+        ModuleImp module(device, nullptr, ModuleType::user);
+        std::string apiOptions;
+        std::string internalOptions;
 
-    std::string srcNames = NEO::CompilerOptions::concatenate(NEO::CompilerOptions::fastRelaxedMath, BuildOptions::profileFlags);
-    srcNames += " 2";
-    std::string dstNames;
+        module.createBuildOptions(buildFlags, apiOptions, internalOptions);
 
-    auto result = module->moveProfileFlagsOption(dstNames, srcNames);
-    EXPECT_TRUE(result);
-
-    EXPECT_EQ(BuildOptions::profileFlags.str() + std::string(" 2"), dstNames);
-    EXPECT_EQ(std::string::npos, srcNames.find(BuildOptions::profileFlags.str()));
-    EXPECT_EQ(std::string::npos, srcNames.find(std::string(" 2")));
+        EXPECT_EQ(0x5u, module.getProfileFlags()) << buildFlags;
+        EXPECT_EQ(std::string::npos, apiOptions.find(BuildOptions::optLevel.str())) << buildFlags;
+    }
 }
 
-TEST_F(ModuleTest, givenSrcProfileFlagsWithoutFlagValueInSrcNamesWhenMovingBuildOptionsThenFalseIsReturned) {
-    auto module = std::make_unique<ModuleImp>(device, nullptr, ModuleType::user);
-    ASSERT_NE(nullptr, module);
+TEST_F(ModuleBuildOptionsTest, givenOptLevelZeroAndOptDisableWhenCreatingBuildOptionsThenOptimizationsAreDisabledOnce) {
+    ModuleImp module(device, nullptr, ModuleType::user);
+    std::string apiOptions;
+    std::string internalOptions;
 
-    std::string srcNames = NEO::CompilerOptions::concatenate(NEO::CompilerOptions::fastRelaxedMath, BuildOptions::profileFlags);
-    std::string dstNames;
+    module.createBuildOptions("-ze-opt-disable -ze-opt-level=0", apiOptions, internalOptions);
 
-    auto result = module->moveProfileFlagsOption(dstNames, srcNames);
-    EXPECT_FALSE(result);
+    const auto firstPos = apiOptions.find(NEO::CompilerOptions::optDisable.str());
+    ASSERT_NE(std::string::npos, firstPos);
+    EXPECT_EQ(std::string::npos, apiOptions.find(NEO::CompilerOptions::optDisable.str(), firstPos + 1));
+}
 
-    ASSERT_NE(std::string::npos, srcNames.find(BuildOptions::profileFlags.str()));
-    EXPECT_EQ(std::string::npos, dstNames.find(BuildOptions::profileFlags.str()));
+TEST_F(ModuleBuildOptionsTest, givenUnsupportedBuildOptionValueWhenCreatingBuildOptionsThenOptionIsIgnoredWithWarningInBuildLog) {
+    struct {
+        const char *buildFlags;
+        NEO::ConstStringRef optionName;
+        const char *expectedWarning;
+    } testCases[] = {
+        {"-ze-opt-level=7", BuildOptions::optLevel, "warning: unsupported value '7'"},
+        {"-ze-opt-level=abc", BuildOptions::optLevel, "warning: unsupported value 'abc'"},
+        {"-ze-opt-level -1", BuildOptions::optLevel, "warning: unsupported value '-1'"},
+        {"-ze-opt-level=", BuildOptions::optLevel, "warning: missing value"},
+        {"-ze-opt-level", BuildOptions::optLevel, "warning: missing value"},
+        {"-ze-opt-level -", BuildOptions::optLevel, "warning: missing value"},
+        {"-zet-profile-flags=xyz", BuildOptions::profileFlags, "warning: unsupported value 'xyz'"},
+        {"-zet-profile-flags=1g", BuildOptions::profileFlags, "warning: unsupported value '1g'"},
+        {"-zet-profile-flags 0x100000000", BuildOptions::profileFlags, "warning: unsupported value '0x100000000'"},
+        {"-zet-profile-flags -1", BuildOptions::profileFlags, "warning: unsupported value '-1'"},
+        {"-zet-profile-flags", BuildOptions::profileFlags, "warning: missing value"},
+    };
+
+    for (const auto &testCase : testCases) {
+        std::unique_ptr<ModuleBuildLog> moduleBuildLog{ModuleBuildLog::create()};
+        ModuleImp module(device, moduleBuildLog.get(), ModuleType::user);
+        std::string apiOptions;
+        std::string internalOptions;
+
+        module.createBuildOptions(testCase.buildFlags, apiOptions, internalOptions);
+
+        EXPECT_EQ(std::string::npos, apiOptions.find(testCase.optionName.str())) << testCase.buildFlags;
+        EXPECT_FALSE(NEO::CompilerOptions::contains(apiOptions, "-1")) << testCase.buildFlags;
+        EXPECT_FALSE(NEO::CompilerOptions::contains(apiOptions, NEO::CompilerOptions::optDisable)) << testCase.buildFlags;
+        EXPECT_EQ(0u, module.getProfileFlags()) << testCase.buildFlags;
+        const std::string buildLog = moduleBuildLog->getBuildLog();
+        EXPECT_NE(std::string::npos, buildLog.find(testCase.expectedWarning)) << testCase.buildFlags;
+        EXPECT_NE(std::string::npos, buildLog.find(testCase.optionName.str())) << testCase.buildFlags;
+    }
+}
+
+TEST_F(ModuleBuildOptionsTest, givenBuildOptionWithMissingValueFollowedByOtherOptionWhenCreatingBuildOptionsThenOtherOptionIsKept) {
+    for (const char *buildFlags : {"-ze-opt-level -g", "-zet-profile-flags -g"}) {
+        std::unique_ptr<ModuleBuildLog> moduleBuildLog{ModuleBuildLog::create()};
+        ModuleImp module(device, moduleBuildLog.get(), ModuleType::user);
+        std::string apiOptions;
+        std::string internalOptions;
+
+        module.createBuildOptions(buildFlags, apiOptions, internalOptions);
+
+        EXPECT_TRUE(NEO::CompilerOptions::contains(apiOptions, "-g")) << buildFlags;
+        EXPECT_NE(std::string::npos, std::string(moduleBuildLog->getBuildLog()).find("warning: missing value")) << buildFlags;
+    }
+}
+
+TEST_F(ModuleBuildOptionsTest, givenUnsupportedOptLevelValueAndNoBuildLogWhenCreatingBuildOptionsThenOptionIsIgnored) {
+    ModuleImp module(device, nullptr, ModuleType::user);
+    std::string apiOptions;
+    std::string internalOptions;
+
+    module.createBuildOptions("-ze-opt-level=abc -g", apiOptions, internalOptions);
+
+    EXPECT_EQ(std::string::npos, apiOptions.find(BuildOptions::optLevel.str()));
+    EXPECT_TRUE(NEO::CompilerOptions::contains(apiOptions, "-g"));
+}
+
+TEST_F(ModuleBuildOptionsTest, givenOptionContainingOptLevelNameWhenCreatingBuildOptionsThenOptionIsNotConsumed) {
+    std::unique_ptr<ModuleBuildLog> moduleBuildLog{ModuleBuildLog::create()};
+    ModuleImp module(device, moduleBuildLog.get(), ModuleType::user);
+    std::string apiOptions;
+    std::string internalOptions;
+
+    module.createBuildOptions("-ze-opt-level-extra -DX=-ze-opt-level", apiOptions, internalOptions);
+
+    EXPECT_TRUE(NEO::CompilerOptions::contains(apiOptions, "-ze-opt-level-extra"));
+    EXPECT_TRUE(NEO::CompilerOptions::contains(apiOptions, "-DX=-ze-opt-level"));
+    EXPECT_STREQ("", moduleBuildLog->getBuildLog());
+}
+
+TEST_F(ModuleBuildOptionsTest, givenValidProfileFlagsWhenCreatingBuildOptionsThenValueIsStoredAndOptionIsConsumedWithoutWarning) {
+    struct {
+        const char *buildFlags;
+        uint32_t expectedProfileFlags;
+    } testCases[] = {
+        {"-zet-profile-flags 2", 0x2u},
+        {"-zet-profile-flags 0x5", 0x5u},
+        {"-zet-profile-flags=0x3", 0x3u},
+        {"-zet-profile-flags ff", 0xffu},
+    };
+
+    for (const auto &testCase : testCases) {
+        std::unique_ptr<ModuleBuildLog> moduleBuildLog{ModuleBuildLog::create()};
+        ModuleImp module(device, moduleBuildLog.get(), ModuleType::user);
+        std::string apiOptions;
+        std::string internalOptions;
+
+        module.createBuildOptions(testCase.buildFlags, apiOptions, internalOptions);
+
+        EXPECT_EQ(testCase.expectedProfileFlags, module.getProfileFlags()) << testCase.buildFlags;
+        EXPECT_EQ(std::string::npos, apiOptions.find(BuildOptions::profileFlags.str())) << testCase.buildFlags;
+        EXPECT_EQ(std::string::npos, internalOptions.find(BuildOptions::profileFlags.str())) << testCase.buildFlags;
+        for (const char *value : {"1", "2", "0x5", "0x3", "ff"}) {
+            EXPECT_FALSE(NEO::CompilerOptions::contains(apiOptions, value)) << testCase.buildFlags;
+        }
+        EXPECT_STREQ("", moduleBuildLog->getBuildLog()) << testCase.buildFlags;
+    }
+}
+
+TEST_F(ModuleBuildOptionsTest, givenProfileFlagsNextToOtherBuildOptionsWhenCreatingBuildOptionsThenOtherOptionsAreDiscovered) {
+    for (const char *buildFlags : {"-zet-profile-flags 0x1 -g -DA=1 -ze-opt-greater-than-4GB-buffer-required -cl-std=CL3.0",
+                                   "-g -DA=1 -zet-profile-flags=0x1 -ze-opt-greater-than-4GB-buffer-required -cl-std=CL3.0",
+                                   "-g -DA=1 -ze-opt-greater-than-4GB-buffer-required -cl-std=CL3.0 -zet-profile-flags 0x1"}) {
+        ModuleImp module(device, nullptr, ModuleType::user);
+        std::string apiOptions;
+        std::string internalOptions;
+
+        module.createBuildOptions(buildFlags, apiOptions, internalOptions);
+
+        EXPECT_EQ(0x1u, module.getProfileFlags()) << buildFlags;
+        EXPECT_EQ(std::string::npos, apiOptions.find(BuildOptions::profileFlags.str())) << buildFlags;
+        EXPECT_TRUE(NEO::CompilerOptions::contains(internalOptions, NEO::CompilerOptions::greaterThan4gbBuffersRequired)) << buildFlags;
+        EXPECT_TRUE(NEO::CompilerOptions::contains(apiOptions, "-g")) << buildFlags;
+        EXPECT_TRUE(NEO::CompilerOptions::contains(apiOptions, "-DA=1")) << buildFlags;
+        EXPECT_TRUE(NEO::CompilerOptions::contains(apiOptions, "-cl-std=CL3.0")) << buildFlags;
+    }
+}
+
+TEST_F(ModuleBuildOptionsTest, givenOptLevelPassedMultipleTimesWhenCreatingBuildOptionsThenFirstValidLevelIsAppliedAndConflictingLevelsAreIgnoredWithWarning) {
+    struct {
+        const char *buildFlags;
+        bool optimizationsDisabled;
+        const char *expectedWarning;
+    } testCases[] = {
+        {"-ze-opt-level=0 -ze-opt-level=2", true, "warning: conflicting value '2' of -ze-opt-level build option"},
+        {"-ze-opt-level=2 -ze-opt-level 0", false, "warning: conflicting value '0' of -ze-opt-level build option"},
+        {"-ze-opt-level=abc -ze-opt-level=0", true, "warning: unsupported value 'abc' of -ze-opt-level build option"},
+        {"-ze-opt-level=0 -ze-opt-level=abc", true, "warning: unsupported value 'abc' of -ze-opt-level build option"},
+        {"-ze-opt-level=2 -ze-opt-level=2", false, nullptr},
+        {"-ze-opt-level=0 -ze-opt-level 0", true, nullptr},
+    };
+
+    for (const auto &testCase : testCases) {
+        std::unique_ptr<ModuleBuildLog> moduleBuildLog{ModuleBuildLog::create()};
+        ModuleImp module(device, moduleBuildLog.get(), ModuleType::user);
+        std::string apiOptions;
+        std::string internalOptions;
+
+        module.createBuildOptions(testCase.buildFlags, apiOptions, internalOptions);
+
+        EXPECT_EQ(std::string::npos, apiOptions.find(BuildOptions::optLevel.str())) << testCase.buildFlags;
+        EXPECT_EQ(testCase.optimizationsDisabled, NEO::CompilerOptions::contains(apiOptions, NEO::CompilerOptions::optDisable)) << testCase.buildFlags;
+        const std::string buildLog = moduleBuildLog->getBuildLog();
+        if (testCase.expectedWarning) {
+            EXPECT_NE(std::string::npos, buildLog.find(testCase.expectedWarning)) << testCase.buildFlags;
+        } else {
+            EXPECT_TRUE(buildLog.empty()) << testCase.buildFlags;
+        }
+    }
+}
+
+TEST_F(ModuleBuildOptionsTest, givenProfileFlagsPassedMultipleTimesWhenCreatingBuildOptionsThenFirstValidValueIsAppliedAndConflictingValuesAreIgnoredWithWarning) {
+    struct {
+        const char *buildFlags;
+        uint32_t expectedProfileFlags;
+        const char *expectedWarning;
+    } testCases[] = {
+        {"-zet-profile-flags 1 -zet-profile-flags 2", 0x1u, "warning: conflicting value '2' of -zet-profile-flags build option"},
+        {"-zet-profile-flags=xyz -zet-profile-flags 2", 0x2u, "warning: unsupported value 'xyz' of -zet-profile-flags build option"},
+        {"-zet-profile-flags 1 -zet-profile-flags=xyz", 0x1u, "warning: unsupported value 'xyz' of -zet-profile-flags build option"},
+        {"-zet-profile-flags 1 -zet-profile-flags 1", 0x1u, nullptr},
+        {"-zet-profile-flags 0x1 -zet-profile-flags 1", 0x1u, nullptr},
+    };
+
+    for (const auto &testCase : testCases) {
+        std::unique_ptr<ModuleBuildLog> moduleBuildLog{ModuleBuildLog::create()};
+        ModuleImp module(device, moduleBuildLog.get(), ModuleType::user);
+        std::string apiOptions;
+        std::string internalOptions;
+
+        module.createBuildOptions(testCase.buildFlags, apiOptions, internalOptions);
+
+        EXPECT_EQ(testCase.expectedProfileFlags, module.getProfileFlags()) << testCase.buildFlags;
+        EXPECT_EQ(std::string::npos, apiOptions.find(BuildOptions::profileFlags.str())) << testCase.buildFlags;
+        const std::string buildLog = moduleBuildLog->getBuildLog();
+        if (testCase.expectedWarning) {
+            EXPECT_NE(std::string::npos, buildLog.find(testCase.expectedWarning)) << testCase.buildFlags;
+        } else {
+            EXPECT_TRUE(buildLog.empty()) << testCase.buildFlags;
+        }
+    }
+}
+
+TEST_F(ModuleBuildOptionsTest, givenOptLevelAndProfileFlagsBothRepeatedWhenCreatingBuildOptionsThenEachOptionIsResolvedIndependentlyAndWarningsNameTheOption) {
+    std::unique_ptr<ModuleBuildLog> moduleBuildLog{ModuleBuildLog::create()};
+    ModuleImp module(device, moduleBuildLog.get(), ModuleType::user);
+    std::string apiOptions;
+    std::string internalOptions;
+
+    module.createBuildOptions("-ze-opt-level=0 -zet-profile-flags 1 -ze-opt-level=2 -zet-profile-flags 2", apiOptions, internalOptions);
+
+    EXPECT_TRUE(NEO::CompilerOptions::contains(apiOptions, NEO::CompilerOptions::optDisable));
+    EXPECT_EQ(0x1u, module.getProfileFlags());
+    const std::string buildLog = moduleBuildLog->getBuildLog();
+    EXPECT_NE(std::string::npos, buildLog.find("warning: conflicting value '2' of -ze-opt-level build option, option ignored"));
+    EXPECT_NE(std::string::npos, buildLog.find("warning: conflicting value '2' of -zet-profile-flags build option, option ignored"));
 }
 
 TEST_F(ModuleTest, GivenInjectInternalBuildOptionsWhenBuildingUserModuleThenInternalOptionsAreAppended) {

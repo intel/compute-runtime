@@ -188,8 +188,9 @@ struct ModuleImp : public Module {
     void createBuildOptions(const char *pBuildFlags, std::string &buildOptions, std::string &internalBuildOptions);
     bool usesMsaaImage() const;
     bool verifyBuildOptions(std::string buildOptions) const;
-    bool moveOptLevelOption(std::string &dstOptionsSet, std::string &srcOptionSet);
-    bool moveProfileFlagsOption(std::string &dstOptionsSet, std::string &srcOptionSet);
+    void moveOptLevelOption(std::string &options);
+    void moveProfileFlagsOption(std::string &options);
+    void appendIgnoredBuildOptionWarning(NEO::ConstStringRef optionName, const std::string &reason);
     MOCKABLE_VIRTUAL void updateBuildLog(NEO::Device *neoDevice);
 
     Device *getDevice() const override { return device; }

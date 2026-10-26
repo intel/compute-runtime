@@ -67,6 +67,9 @@
 #include "program_debug_data.h"
 
 #include <algorithm>
+#include <cctype>
+#include <cstdlib>
+#include <limits>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -1219,8 +1222,8 @@ void ModuleImp::createBuildOptions(const char *pBuildFlags, std::string &apiOpti
 
         NEO::CompilerOptions::applyAdditionalInternalOptions(internalBuildOptions);
 
-        moveOptLevelOption(apiOptions, apiOptions);
-        moveProfileFlagsOption(apiOptions, apiOptions);
+        moveOptLevelOption(apiOptions);
+        moveProfileFlagsOption(apiOptions);
         this->isFunctionSymbolExportEnabled = moveBuildOption(apiOptions, apiOptions, BuildOptions::enableLibraryCompile, BuildOptions::enableLibraryCompile);
         this->isGlobalSymbolExportEnabled = moveBuildOption(apiOptions, apiOptions, BuildOptions::enableGlobalVariableSymbols, BuildOptions::enableGlobalVariableSymbols);
 
@@ -1233,48 +1236,108 @@ void ModuleImp::createBuildOptions(const char *pBuildFlags, std::string &apiOpti
     }
 }
 
-bool ModuleImp::moveOptLevelOption(std::string &dstOptionsSet, std::string &srcOptionSet) {
-    const char optDelim = ' ';
-    const char valDelim = '=';
+namespace {
+std::vector<std::string> consumeBuildOptionValues(std::string &options, NEO::ConstStringRef optionName) {
+    constexpr char optionDelimiter = ' ';
+    constexpr char valueDelimiter = '=';
+    constexpr char optionPrefix = '-';
 
-    auto optInSrcPos = srcOptionSet.find(BuildOptions::optLevel.begin());
-    if (std::string::npos == optInSrcPos) {
-        return false;
-    }
+    std::vector<std::string> values;
+    size_t searchPos = 0;
+    size_t optionPos = 0;
+    while ((optionPos = options.find(optionName.data(), searchPos)) != std::string::npos) {
+        const auto nameEndPos = optionPos + optionName.length();
+        const bool isOptionStart = (optionPos == 0) || (options[optionPos - 1] == optionDelimiter);
+        const bool isOptionNameEnd = (nameEndPos == options.size()) || (options[nameEndPos] == optionDelimiter) || (options[nameEndPos] == valueDelimiter);
+        if (!isOptionStart || !isOptionNameEnd) {
+            searchPos = nameEndPos;
+            continue;
+        }
 
-    std::string dstOptionStr(NEO::CompilerOptions::optLevel);
-    auto valInSrcPos = srcOptionSet.find(valDelim, optInSrcPos);
-    auto optInSrcEndPos = srcOptionSet.find(optDelim, optInSrcPos);
-    if (std::string::npos == valInSrcPos) {
-        return false;
+        auto valuePos = nameEndPos;
+        bool hasValue = false;
+        if ((nameEndPos < options.size()) && (options[nameEndPos] == valueDelimiter)) {
+            valuePos = nameEndPos + 1;
+            hasValue = true;
+        } else {
+            const auto nextTokenPos = options.find_first_not_of(optionDelimiter, nameEndPos);
+            hasValue = (nextTokenPos != std::string::npos) &&
+                       ((options[nextTokenPos] != optionPrefix) ||
+                        ((nextTokenPos + 1 < options.size()) && std::isdigit(static_cast<unsigned char>(options[nextTokenPos + 1]))));
+            if (hasValue) {
+                valuePos = nextTokenPos;
+            }
+        }
+        const auto valueEndPos = hasValue ? std::min(options.find(optionDelimiter, valuePos), options.size()) : nameEndPos;
+
+        values.push_back(options.substr(valuePos, valueEndPos - valuePos));
+        options.erase(optionPos, valueEndPos - optionPos);
+        searchPos = optionPos;
     }
-    dstOptionStr += srcOptionSet.substr(valInSrcPos + 1, (optInSrcEndPos - (valInSrcPos + 1)));
-    srcOptionSet.erase(optInSrcPos, (optInSrcEndPos + 1 - optInSrcPos));
-    NEO::CompilerOptions::concatenateAppend(dstOptionsSet, dstOptionStr);
-    return true;
+    return values;
 }
 
-bool ModuleImp::moveProfileFlagsOption(std::string &dstOptionsSet, std::string &srcOptionSet) {
-    const char optDelim = ' ';
+std::optional<uint32_t> parseHexValue(const std::string &value) {
+    constexpr int hexBase = 16;
+    if (value.empty() || !std::isxdigit(static_cast<unsigned char>(value[0]))) {
+        return std::nullopt;
+    }
+    char *parseEnd = nullptr;
+    const auto parsedValue = std::strtoull(value.c_str(), &parseEnd, hexBase);
+    if ((*parseEnd != '\0') || (parsedValue > std::numeric_limits<uint32_t>::max())) {
+        return std::nullopt;
+    }
+    return static_cast<uint32_t>(parsedValue);
+}
 
-    auto optInSrcPos = srcOptionSet.find(BuildOptions::profileFlags.begin());
-    if (std::string::npos == optInSrcPos) {
-        return false;
+std::string describeInvalidValue(const std::string &value) {
+    return value.empty() ? std::string("missing value") : "unsupported value '" + value + "'";
+}
+
+std::string describeConflictingValue(const std::string &value) {
+    return "conflicting value '" + value + "'";
+}
+} // namespace
+
+void ModuleImp::appendIgnoredBuildOptionWarning(NEO::ConstStringRef optionName, const std::string &reason) {
+    append(this->moduleBuildLog, "warning: " + reason + " of " + optionName.str() + " build option, option ignored\n");
+}
+
+void ModuleImp::moveOptLevelOption(std::string &options) {
+    constexpr const char *noOptimizationsLevel = "0";
+    constexpr const char *minimalOptimizationsLevel = "1";
+    constexpr const char *defaultOptimizationsLevel = "2";
+
+    std::optional<std::string> appliedLevel;
+    for (const auto &level : consumeBuildOptionValues(options, BuildOptions::optLevel)) {
+        const bool isSupportedLevel = (level == noOptimizationsLevel) || (level == minimalOptimizationsLevel) || (level == defaultOptimizationsLevel);
+        if (!isSupportedLevel) {
+            appendIgnoredBuildOptionWarning(BuildOptions::optLevel, describeInvalidValue(level));
+        } else if (!appliedLevel.has_value()) {
+            appliedLevel = level;
+        } else if (appliedLevel.value() != level) {
+            appendIgnoredBuildOptionWarning(BuildOptions::optLevel, describeConflictingValue(level));
+        }
     }
 
-    std::string dstOptionStr(BuildOptions::profileFlags);
-    auto valInSrcPos = srcOptionSet.find(optDelim, optInSrcPos);
-    auto optInSrcEndPos = srcOptionSet.find(optDelim, valInSrcPos + 1);
-    if (std::string::npos == valInSrcPos) {
-        return false;
+    if ((appliedLevel == noOptimizationsLevel) && !NEO::CompilerOptions::contains(options, NEO::CompilerOptions::optDisable)) {
+        NEO::CompilerOptions::concatenateAppend(options, NEO::CompilerOptions::optDisable);
     }
-    std::string valStr = srcOptionSet.substr(valInSrcPos, (optInSrcEndPos - valInSrcPos));
-    profileFlags = static_cast<uint32_t>(strtoul(valStr.c_str(), nullptr, 16));
-    dstOptionStr += valStr;
+}
 
-    srcOptionSet.erase(optInSrcPos, (optInSrcEndPos + 1 - optInSrcPos));
-    NEO::CompilerOptions::concatenateAppend(dstOptionsSet, dstOptionStr);
-    return true;
+void ModuleImp::moveProfileFlagsOption(std::string &options) {
+    std::optional<uint32_t> appliedFlags;
+    for (const auto &value : consumeBuildOptionValues(options, BuildOptions::profileFlags)) {
+        const auto flags = parseHexValue(value);
+        if (!flags.has_value()) {
+            appendIgnoredBuildOptionWarning(BuildOptions::profileFlags, describeInvalidValue(value));
+        } else if (!appliedFlags.has_value()) {
+            appliedFlags = flags;
+            this->profileFlags = flags.value();
+        } else if (appliedFlags.value() != flags.value()) {
+            appendIgnoredBuildOptionWarning(BuildOptions::profileFlags, describeConflictingValue(value));
+        }
+    }
 }
 
 void ModuleImp::updateBuildLog(NEO::Device *neoDevice) {
