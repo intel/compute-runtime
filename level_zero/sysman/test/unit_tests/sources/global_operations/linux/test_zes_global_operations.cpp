@@ -12,6 +12,7 @@
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 
 #include "level_zero/include/level_zero/zes_intel_gpu_sysman.h"
+#include "level_zero/sysman/source/api/pci/sysman_pci_utils.h"
 #include "level_zero/sysman/source/shared/linux/kmd_interface/sysman_kmd_interface.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.h"
 #include "level_zero/sysman/test/unit_tests/sources/global_operations/linux/mock_global_operations.h"
@@ -26,6 +27,19 @@
 namespace L0 {
 namespace Sysman {
 namespace ult {
+
+ssize_t mockPreadRootPortConfig(int fd, void *buf, size_t count, off_t offset) {
+    constexpr uint8_t pcieCapabilityPos = 0x40;
+    std::array<uint8_t, PCI_CFG_SPACE_SIZE> config = {};
+    config[PCI_STATUS] = PCI_STATUS_CAP_LIST;
+    config[PCI_CAPABILITY_LIST] = pcieCapabilityPos;
+    config[pcieCapabilityPos + PCI_CAP_LIST_ID] = PCI_CAP_ID_EXP;
+    if (offset < 0 || static_cast<size_t>(offset) + count > config.size()) {
+        return -1;
+    }
+    memcpy(buf, config.data() + offset, count);
+    return count;
+}
 
 constexpr uint64_t memSize1 = 2048;
 constexpr uint64_t memSize2 = 1024;
@@ -105,6 +119,7 @@ class SysmanGlobalOperationsFixture : public SysmanDeviceFixture {
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
         pLinuxSysmanImp->pProcfsAccess = pProcfsAccess.get();
         pLinuxSysmanImp->pFsAccess = pFsAccess.get();
+        pLinuxSysmanImp->preadFunction = mockPreadRootPortConfig;
         pSysmanDeviceImp->pDiagnosticsHandleContext = pDiagnosticsHandleContext.get();
         pSysmanDeviceImp->pFirmwareHandleContext = pFirmwareHandleContext.get();
         pSysmanDeviceImp->pRasHandleContext = pRasHandleContext.get();

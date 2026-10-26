@@ -8,6 +8,7 @@
 #include "shared/test/common/helpers/variable_backup.h"
 
 #include "level_zero/sysman/source/api/diagnostics/sysman_diagnostics_imp.h"
+#include "level_zero/sysman/source/api/pci/sysman_pci_utils.h"
 #include "level_zero/sysman/test/unit_tests/sources/diagnostics/linux/mock_zes_sysman_diagnostics.h"
 
 namespace L0 {
@@ -30,8 +31,36 @@ inline static int openMockDiagFail(const char *pathname, int flags) {
     return -1;
 }
 
+constexpr uint8_t mockPowerManagementCapabilityId = 0x01;
+constexpr uint8_t mockRootPortPowerManagementCapabilityPos = 0x40;
+constexpr uint8_t mockRootPortPcieCapabilityPos = 0x50;
+constexpr uint16_t mockRootPortSlotControlPos = mockRootPortPcieCapabilityPos + PCI_EXP_SLTCTL;
+constexpr uint8_t mockRootPortSlotControlValue = 0x2f;
+static bool mockRootPortHasPcieCapability = true;
+static uint8_t mockRootPortSlotControlWriteValue = 0;
+
+ssize_t preadMockRootPortConfig(void *buf, size_t count, off_t offset) {
+    std::array<uint8_t, PCI_CFG_SPACE_SIZE> config = {};
+    config[PCI_STATUS] = PCI_STATUS_CAP_LIST;
+    config[PCI_CAPABILITY_LIST] = mockRootPortPowerManagementCapabilityPos;
+    config[mockRootPortPowerManagementCapabilityPos + PCI_CAP_LIST_ID] = mockPowerManagementCapabilityId;
+    if (mockRootPortHasPcieCapability) {
+        config[mockRootPortPowerManagementCapabilityPos + PCI_CAP_LIST_NEXT] = mockRootPortPcieCapabilityPos;
+        config[mockRootPortPcieCapabilityPos + PCI_CAP_LIST_ID] = PCI_CAP_ID_EXP;
+        config[mockRootPortSlotControlPos] = mockRootPortSlotControlValue;
+    }
+    if (offset < 0 || static_cast<size_t>(offset) + count > config.size()) {
+        return -1;
+    }
+    memcpy(buf, config.data() + offset, count);
+    return count;
+}
+
 ssize_t preadMockDiag(int fd, void *buf, size_t count, off_t offset) {
     uint8_t *mockBuf = static_cast<uint8_t *>(buf);
+    if (fd == mockFileDescriptor) {
+        return preadMockRootPortConfig(buf, count, offset);
+    }
     if (fd == mockGtPciConfigFd) {
         mockBuf[0x006] = 0x24;
         mockBuf[0x034] = 0x40;
@@ -67,7 +96,14 @@ ssize_t preadMockDiag(int fd, void *buf, size_t count, off_t offset) {
     return count;
 }
 
+ssize_t preadMockRootPortConfigFail(int fd, void *buf, size_t count, off_t offset) {
+    return -1;
+}
+
 ssize_t pwriteMockDiag(int fd, const void *buf, size_t count, off_t offset) {
+    if (fd == mockFileDescriptor && offset == mockRootPortSlotControlPos) {
+        mockRootPortSlotControlWriteValue = *static_cast<const uint8_t *>(buf);
+    }
     return count;
 }
 class ZesDiagnosticsFixture : public SysmanDeviceFixture {
@@ -576,6 +612,38 @@ TEST_F(ZesDiagnosticsFixture, GivenValidSysmanImpPointerWhenCallingWarmResetAndR
     pLinuxSysmanImp->preadFunction = preadMockDiag;
     pLinuxSysmanImp->pwriteFunction = pwriteMockDiag;
 
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pLinuxSysmanImp->osWarmReset());
+}
+
+TEST_F(ZesDiagnosticsFixture, GivenRootPortListingPowerManagementCapabilityFirstWhenCallingWarmResetThenHotPlugInterruptIsDisabledInSlotControlOfPcieCapability) {
+    VariableBackup<uint8_t> slotControlWriteValueBackup(&mockRootPortSlotControlWriteValue, 0);
+    pLinuxSysmanImp->gtDevicePath = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0";
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup(&NEO::SysCalls::sysCallsOpen, openMockDiag);
+    pLinuxSysmanImp->preadFunction = preadMockDiag;
+    pLinuxSysmanImp->pwriteFunction = pwriteMockDiag;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxSysmanImp->osWarmReset());
+    EXPECT_EQ(mockRootPortSlotControlValue & ~PCI_EXP_SLTCTL_HPIE, mockRootPortSlotControlWriteValue);
+}
+
+TEST_F(ZesDiagnosticsFixture, GivenRootPortWithoutPcieCapabilityWhenCallingWarmResetThenCallFailsBeforeDeviceIsRemoved) {
+    VariableBackup<bool> pcieCapabilityBackup(&mockRootPortHasPcieCapability, false);
+    pLinuxSysmanImp->gtDevicePath = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0";
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup(&NEO::SysCalls::sysCallsOpen, openMockDiag);
+    pLinuxSysmanImp->preadFunction = preadMockDiag;
+    pLinuxSysmanImp->pwriteFunction = pwriteMockDiag;
+
+    pMockFsAccess->mockWriteError = ZE_RESULT_ERROR_NOT_AVAILABLE;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pLinuxSysmanImp->osWarmReset());
+}
+
+TEST_F(ZesDiagnosticsFixture, GivenRootPortConfigReadFailsWhenCallingWarmResetThenCallFailsBeforeDeviceIsRemoved) {
+    pLinuxSysmanImp->gtDevicePath = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0";
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup(&NEO::SysCalls::sysCallsOpen, openMockDiag);
+    pLinuxSysmanImp->preadFunction = preadMockRootPortConfigFail;
+    pLinuxSysmanImp->pwriteFunction = pwriteMockDiag;
+
+    pMockFsAccess->mockWriteError = ZE_RESULT_ERROR_NOT_AVAILABLE;
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pLinuxSysmanImp->osWarmReset());
 }
 

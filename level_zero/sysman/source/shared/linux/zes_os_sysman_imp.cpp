@@ -23,6 +23,7 @@
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/sysman/source/api/ecc/sysman_ecc_imp.h"
 #include "level_zero/sysman/source/api/global_operations/sysman_global_operations_imp.h"
+#include "level_zero/sysman/source/api/pci/linux/sysman_os_pci_imp.h"
 #include "level_zero/sysman/source/api/pci/sysman_pci.h"
 #include "level_zero/sysman/source/api/pci/sysman_pci_utils.h"
 #include "level_zero/sysman/source/device/sysman_device_imp.h"
@@ -468,20 +469,29 @@ void LinuxSysmanImp::reInitSysmanDeviceCache() {
     }
 }
 
+uint16_t LinuxSysmanImp::getSlotControlPos(int fd) {
+    std::vector<uint8_t> configMemory(PCI_CFG_SPACE_SIZE);
+    const auto bytesRead = this->preadFunction(fd, configMemory.data(), PCI_CFG_SPACE_SIZE, 0);
+    if (bytesRead != PCI_CFG_SPACE_SIZE) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): pread of PCI config space on fd=%d returned %zd instead of %d bytes, errno=%d \n", NEO_FUNCTION_NAME, fd, bytesRead, PCI_CFG_SPACE_SIZE, errno);
+        return 0;
+    }
+    const auto pcieCapabilityPos = L0::Sysman::LinuxPciImp::getPcieCapabilityPos(configMemory.data());
+    if (!pcieCapabilityPos) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): PCI Express capability not found in PCI config space on fd=%d \n", NEO_FUNCTION_NAME, fd);
+        return 0;
+    }
+    return pcieCapabilityPos + PCI_EXP_SLTCTL;
+}
+
 // function to clear Hot-Plug interrupt enable bit in the slot control register
 // this is required to prevent interrupts from being raised in the warm reset path.
-void LinuxSysmanImp::clearHPIE(int fd) {
+void LinuxSysmanImp::clearHPIE(int fd, uint16_t slotControlPos) {
     uint8_t value = 0x00;
     uint8_t resetValue = 0x00;
-    uint8_t offset = 0x0;
-    this->preadFunction(fd, &offset, 0x01, PCI_CAPABILITY_LIST);
-    // Bottom two bits of capability pointer register are reserved and
-    // software should mask these bits to get pointer to capability list.
-    // PCI_EXP_SLTCTL - offset for slot control register.
-    offset = (offset & 0xfc) + PCI_EXP_SLTCTL;
-    this->preadFunction(fd, &value, 0x01, offset);
+    this->preadFunction(fd, &value, 0x01, slotControlPos);
     resetValue = value & (~PCI_EXP_SLTCTL_HPIE);
-    this->pwriteFunction(fd, &resetValue, 0x01, offset);
+    this->pwriteFunction(fd, &resetValue, 0x01, slotControlPos);
     NEO::sleep(std::chrono::seconds(10)); // Sleep for 10seconds just to make sure the change is propagated.
 }
 
@@ -500,6 +510,12 @@ ze_result_t LinuxSysmanImp::osWarmReset() {
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
+    const auto slotControlPos = getSlotControlPos(fd);
+    if (!slotControlPos) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): failed to get slot control register position from %s and returning error:0x%x \n", NEO_FUNCTION_NAME, configFilePath.c_str(), ZE_RESULT_ERROR_UNKNOWN);
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
     std::string devicePath = {};
     if (pSysmanProductHelper->isUpstreamPortConnected()) {
         devicePath = getPciCardBusDirectoryPath(gtDevicePath);
@@ -513,7 +529,7 @@ ze_result_t LinuxSysmanImp::osWarmReset() {
     }
     NEO::sleep(std::chrono::seconds(10)); // Sleep for 10seconds to make sure that the config spaces of all devices are saved correctly.
 
-    clearHPIE(fd);
+    clearHPIE(fd, slotControlPos);
 
     uint8_t offset = PCI_BRIDGE_CONTROL; // Bridge control offset in Header of PCI config space
     uint8_t value = 0x00;
