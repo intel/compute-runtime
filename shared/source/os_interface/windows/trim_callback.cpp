@@ -160,7 +160,6 @@ bool WddmResidencyController::trimResidencyToBudget(uint64_t bytes) {
     WddmAllocation *wddmAllocation = nullptr;
     perfLogResidencyTrimToBudget(wddm.getResidencyLogger(), bytes, this);
 
-    auto allocationIter = evictionAllocations.begin();
     std::vector<D3DKMT_HANDLE> handlesToEvict;
     handlesToEvict.reserve(evictionAllocations.size());
     std::vector<WddmAllocation *> allocationsToRemove;
@@ -172,6 +171,7 @@ bool WddmResidencyController::trimResidencyToBudget(uint64_t bytes) {
         auto &osContext = static_cast<NEO::OsContextWin &>(csr->getOsContext());
         uint32_t osContextId = osContext.getContextId();
 
+        auto allocationIter = evictionAllocations.begin();
         while (numberOfBytesToTrim > 0 && allocationIter != evictionAllocations.end()) {
             wddmAllocation = reinterpret_cast<WddmAllocation *>(*allocationIter);
             uint64_t lastFence = wddmAllocation->getResidencyData().getFenceValueForContextId(osContextId);

@@ -521,6 +521,31 @@ TEST_F(WddmResidencyControllerWithGdiTest, GivenNumBytesToTrimIsNotZeroWhenTrimm
     EXPECT_FALSE(status);
 }
 
+TEST_F(WddmResidencyControllerWithGdiTest, givenAllocationResidentOnlyInLaterContextWhenTrimmingToBudgetThenItIsEvicted) {
+    auto osContextId2 = osContextId + 1;
+    auto mockOsContextWin2 = std::make_unique<MockOsContextWin>(*wddm, 0, osContextId2, EngineDescriptorHelper::getDefaultDescriptor());
+    mockOsContextWin2->contextInitialized = true;
+    wddm->getWddmInterface()->createMonitoredFence(*mockOsContextWin2);
+    std::unique_ptr<CommandStreamReceiver> csr2(createCommandStream(*executionEnvironment, 0u, 1));
+    auto &engines = executionEnvironment->memoryManager->getRegisteredEngines(0);
+    const_cast<EngineControlContainer &>(engines).emplace_back(csr2.get(), mockOsContextWin2.get());
+    csr2->setupContext(*mockOsContextWin2);
+
+    MockWddmAllocation allocation(rootDeviceEnvironment->getGmmHelper());
+    allocation.getResidencyData().updateCompletionData(0, osContextId2);
+    allocation.getResidencyData().resident[osContextId2] = true;
+    residencyController->getEvictionAllocations().push_back(&allocation);
+
+    wddm->callBaseEvict = false;
+
+    residencyController->trimResidencyToBudget(std::numeric_limits<uint64_t>::max());
+    EXPECT_FALSE(allocation.getResidencyData().resident[osContextId2]);
+    auto &evictionAllocations = residencyController->getEvictionAllocations();
+    EXPECT_EQ(evictionAllocations.end(), std::find(evictionAllocations.begin(), evictionAllocations.end(), &allocation));
+
+    const_cast<EngineControlContainer &>(engines).pop_back();
+}
+
 TEST_F(WddmResidencyControllerWithGdiTest, GivenNumBytesToTrimIsZeroWhenTrimmingToBudgetThenEvictingStops) {
     auto ptr = reinterpret_cast<void *>(0x1000);
     auto gmmHelper = rootDeviceEnvironment->getGmmHelper();
