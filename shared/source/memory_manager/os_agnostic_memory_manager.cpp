@@ -201,9 +201,10 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemory64kb(const Al
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex].get();
     auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
-    allocationDataAlign.alignment = gfxCoreHelper.is1MbAlignmentSupported(*hwInfo, allocationData.flags.preferCompressed)
-                                        ? MemoryConstants::megaByte
-                                        : MemoryConstants::pageSize64k;
+    size_t minimalAlignment = gfxCoreHelper.is1MbAlignmentSupported(*hwInfo, allocationData.flags.preferCompressed)
+                                  ? MemoryConstants::megaByte
+                                  : MemoryConstants::pageSize64k;
+    allocationDataAlign.alignment = std::max(allocationData.alignment, minimalAlignment);
     auto memoryAllocation = allocateGraphicsMemoryWithAlignment(allocationDataAlign);
     if (memoryAllocation) {
         static_cast<MemoryAllocation *>(memoryAllocation)->overrideMemoryPool(MemoryPool::system64KBPages);

@@ -1620,6 +1620,22 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesEnabledWhenAllocate
     memoryManager.freeGraphicsMemory(allocation);
 }
 
+TEST(OsAgnosticMemoryManager, givenRequestedAlignmentBiggerThan64kbWhenAllocateGraphicsMemory64kbIsCalledThenRequestedAlignmentIsUsed) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    executionEnvironment.initGmm();
+    MockMemoryManager memoryManager(true, false, executionEnvironment);
+    AllocationData allocationData;
+    allocationData.size = MemoryConstants::pageSize64k;
+    allocationData.alignment = MemoryConstants::pageSize2M;
+    auto allocation = memoryManager.allocateGraphicsMemory64kb(allocationData);
+    ASSERT_NE(nullptr, allocation);
+    EXPECT_EQ(MemoryConstants::pageSize2M, memoryManager.alignAllocationData.alignment);
+    EXPECT_TRUE(isAligned<MemoryConstants::pageSize2M>(allocation->getUnderlyingBuffer()));
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(allocation->getDefaultGmm()->resourceParamsData.data());
+    EXPECT_EQ(MemoryConstants::pageSize2M, gmmResourceParams->BaseAlignment);
+    memoryManager.freeGraphicsMemory(allocation);
+}
+
 TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesEnabledAndCompressionEnabledWhenAllocateGraphicsMemory64kbIsCalledThenMemoryPoolIsSystem64KBPages) {
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.RenderCompressedBuffersEnabled.set(true);
