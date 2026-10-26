@@ -5,8 +5,10 @@
  *
  */
 
+#include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_container/encode_surface_state.h"
+#include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"

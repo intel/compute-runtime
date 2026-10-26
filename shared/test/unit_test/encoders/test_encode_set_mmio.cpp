@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/indirect_heap/heap_size.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"

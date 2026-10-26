@@ -7,6 +7,10 @@
 
 #include "level_zero/core/source/sampler/sampler_imp.h"
 
+#include "shared/source/device/device.h"
+#include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/os_interface/product_helper.h"
+
 #include "level_zero/core/source/device/device.h"
 
 namespace L0 {
@@ -21,6 +25,12 @@ ze_result_t SamplerImp::destroy() {
 ze_result_t SamplerImp::initialize(Device *device, const ze_sampler_desc_t *desc) {
     samplerDesc = *desc;
     return ZE_RESULT_SUCCESS;
+}
+
+void SamplerImp::adjustSamplerState(void *samplerState, Device *device) {
+    auto &hwInfo = device->getHwInfo();
+    auto &helper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<NEO::ProductHelper>();
+    helper.adjustSamplerState(samplerState, hwInfo);
 }
 
 Sampler *Sampler::create(Device *device, const ze_sampler_desc_t *desc) {

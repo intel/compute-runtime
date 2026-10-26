@@ -5,13 +5,10 @@
  *
  */
 
-#include "shared/source/device/device.h"
-#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/utilities/numeric.h"
 
-#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/image/internal_core_image_ext.h"
 #include "level_zero/core/source/sampler/sampler_hw.h"
 
@@ -126,9 +123,7 @@ ze_result_t SamplerCoreFamily<gfxCoreFamily>::initialize(Device *device, const z
     samplerState.setMinLod(minLodValue.getRawAccess());
     samplerState.setMaxLod(maxLodValue.getRawAccess());
 
-    auto &hwInfo = device->getHwInfo();
-    auto &helper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<NEO::ProductHelper>();
-    helper.adjustSamplerState(&samplerState, hwInfo);
+    BaseClass::adjustSamplerState(&samplerState, device);
 
     return ZE_RESULT_SUCCESS;
 }

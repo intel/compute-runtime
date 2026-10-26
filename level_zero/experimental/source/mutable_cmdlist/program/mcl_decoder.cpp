@@ -7,6 +7,7 @@
 
 #include "level_zero/experimental/source/mutable_cmdlist/program/mcl_decoder.h"
 
+#include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/device/device.h"
 #include "shared/source/device_binary_format/elf/elf.h"
 #include "shared/source/device_binary_format/elf/elf_decoder.h"

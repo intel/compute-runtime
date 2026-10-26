@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/built_ins/sip.h"
+#include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/command_stream/tag_allocation_layout.h"
 #include "shared/source/gmm_helper/cache_settings_helper.h"
 #include "shared/source/gmm_helper/gmm_helper.h"

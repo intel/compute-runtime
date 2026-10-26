@@ -69,6 +69,7 @@ set(neo_libult_common_SRCS_LIB_ULT
     ${NEO_SHARED_DIRECTORY}/gmm_helper${BRANCH_DIR_SUFFIX}resource_info_impl.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/base_ult_config_listener.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/base_ult_config_listener.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/cmd_parse/hw_parse.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/aub_command_stream_receiver_fixture.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/command_stream_receiver_fixture.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/fixtures/command_stream_receiver_fixture.h

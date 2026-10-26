@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/linear_stream.h"
 
+#include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 
 namespace NEO {
@@ -31,6 +32,11 @@ LinearStream::LinearStream(void *buffer, size_t bufferSize, CommandContainer *cm
     : LinearStream(buffer, bufferSize) {
     this->cmdContainer = cmdContainer;
     this->batchBufferEndSize = batchBufferEndSize;
+}
+
+void LinearStream::allocateNextCommandBuffer() {
+    UNRECOVERABLE_IF(sizeUsed + batchBufferEndSize > maxAvailableSpace);
+    cmdContainer->closeAndAllocateNextCommandBuffer();
 }
 
 uint64_t LinearStream::getGpuBase() const {

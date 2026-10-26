@@ -21,6 +21,7 @@
 #include "shared/source/helpers/private_allocs_to_reuse_container.h"
 #include "shared/source/host_function/host_function.h"
 #include "shared/source/kernel/kernel_execution_type.h"
+#include "shared/source/memory_manager/residency_container.h"
 #include "shared/source/os_interface/defs.h"
 #include "shared/source/os_interface/external_semaphore.h"
 #include "shared/source/os_interface/user_fence.h"

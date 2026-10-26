@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/built_ins/built_in_ops_base.h"
+#include "shared/source/command_container/cmdcontainer_types.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/transfer_direction.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"

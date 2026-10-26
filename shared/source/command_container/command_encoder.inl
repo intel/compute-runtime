@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_container/encode_indirect_params.h"
 #include "shared/source/command_container/implicit_scaling.h"

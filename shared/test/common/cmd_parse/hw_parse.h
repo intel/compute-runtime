@@ -6,7 +6,6 @@
  */
 
 #pragma once
-#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/pipeline_select_helper.h"
@@ -21,6 +20,7 @@
 
 namespace NEO {
 
+class CommandStreamReceiver;
 struct KernelInfo;
 
 struct HardwareParse : NEO::NonCopyableAndNonMovableClass {
@@ -117,7 +117,7 @@ struct HardwareParse : NEO::NonCopyableAndNonMovableClass {
 
     template <typename FamilyType>
     void parseCommands(NEO::CommandStreamReceiver &commandStreamReceiver, NEO::LinearStream &commandStream) {
-        auto &commandStreamCSR = commandStreamReceiver.getCS();
+        auto &commandStreamCSR = getCsrCommandStream(commandStreamReceiver);
 
         parseCommands<FamilyType>(commandStreamCSR, startCSRCS);
         startCSRCS = commandStreamCSR.getUsed();
@@ -130,7 +130,7 @@ struct HardwareParse : NEO::NonCopyableAndNonMovableClass {
         previousCS = &commandStream;
 
         sizeUsed = commandStream.getUsed();
-        findHardwareCommands<FamilyType>(&commandStreamReceiver.getIndirectHeap(IndirectHeap::Type::dynamicState, 0));
+        findHardwareCommands<FamilyType>(&getCsrDynamicStateHeap(commandStreamReceiver));
     }
 
     template <typename FamilyType>
@@ -288,6 +288,10 @@ struct HardwareParse : NEO::NonCopyableAndNonMovableClass {
     void *cmdBindingTableBaseAddress = nullptr;
 
     bool parsePipeControl = false;
+
+  private:
+    static LinearStream &getCsrCommandStream(CommandStreamReceiver &commandStreamReceiver);
+    static IndirectHeap &getCsrDynamicStateHeap(CommandStreamReceiver &commandStreamReceiver);
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<HardwareParse>);

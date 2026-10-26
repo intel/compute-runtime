@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/queue_throttle.h"
 #include "shared/source/helpers/completion_stamp.h"

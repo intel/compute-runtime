@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "shared/source/command_container/cmdcontainer.h"
+#include "shared/source/command_container/cmdcontainer_types.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/ptr_math.h"
@@ -14,6 +14,7 @@
 #include <cstdint>
 
 namespace NEO {
+class CommandContainer;
 class GraphicsAllocation;
 
 class LinearStream : NEO::NonCopyableAndNonMovableClass {
@@ -60,6 +61,9 @@ class LinearStream : NEO::NonCopyableAndNonMovableClass {
     CommandContainer *cmdContainer{nullptr};
     size_t batchBufferEndSize{0};
     uint64_t gpuBase{0};
+
+  private:
+    void allocateNextCommandBuffer();
 };
 
 inline void *LinearStream::getCpuBase() const {
@@ -72,8 +76,7 @@ inline void LinearStream::setGpuBase(uint64_t gpuAddress) {
 
 inline void LinearStream::ensureContinuousSpace(size_t size) {
     if (cmdContainer && (getAvailableSpace() < (batchBufferEndSize + size))) {
-        UNRECOVERABLE_IF(sizeUsed + batchBufferEndSize > maxAvailableSpace);
-        cmdContainer->closeAndAllocateNextCommandBuffer();
+        allocateNextCommandBuffer();
     }
 }
 
