@@ -496,31 +496,76 @@ size_t Image::getApiSize() const {
     return this->calculateTotalSizeForImage(sizes);
 }
 
-size_t Image::calculateHostPtrSizeForImage(const std::array<size_t, 3> &sizes) const {
+size_t Image::calculateHostPtrSizeForImage(const std::array<size_t, 3> &sizes, const MipLevelHostLayout &layout) const {
     const size_t precedingRows = sizes[1] > 0u ? sizes[1] - 1u : 0u;
     const size_t precedingSlices = sizes[2] > 0u ? sizes[2] - 1u : 0u;
-    return this->calculateHostPtrOffsetForImage({sizes[0], precedingRows, precedingSlices});
+    return this->calculateHostPtrOffsetInMipLevel({sizes[0], precedingRows, precedingSlices}, layout);
 }
 
-size_t Image::calculateHostPtrOffsetForImage(const std::array<size_t, 3> &origin) const {
+size_t Image::calculateHostPtrOffsetForImage(const std::array<size_t, 3> &origin, const MipLevelHostLayout &layout) const {
+    return layout.offset + this->calculateHostPtrOffsetInMipLevel(origin, layout);
+}
+
+size_t Image::calculateHostPtrOffsetInMipLevel(const std::array<size_t, 3> &origin, const MipLevelHostLayout &layout) const {
     const auto &l0ImgInfo = getL0Object()->getImageInfo();
     auto offset = l0ImgInfo.surfaceFormat->imageElementSizeInBytes * origin[0];
 
     switch (l0ImgInfo.imgDesc.imageType) {
     case NEO::ImageType::image1DArray:
-        offset += this->getHostSlicePitch() * origin[1];
+        offset += layout.slicePitch * origin[1];
         break;
     case NEO::ImageType::image2D:
-        offset += this->getHostRowPitch() * origin[1];
+        offset += layout.rowPitch * origin[1];
         break;
     case NEO::ImageType::image2DArray:
     case NEO::ImageType::image3D:
-        offset += this->getHostRowPitch() * origin[1] + this->getHostSlicePitch() * origin[2];
+        offset += layout.rowPitch * origin[1] + layout.slicePitch * origin[2];
         break;
     default:
         break;
     }
     return offset;
+}
+
+std::array<size_t, 3> Image::getMipLevelHostSizes(uint32_t mipLevel) const {
+    const auto &imgDesc = getL0Object()->getImageInfo().imgDesc;
+    auto getMipLevelDimension = [mipLevel](size_t baseDimension) {
+        return std::max<size_t>(baseDimension >> mipLevel, 1u);
+    };
+
+    switch (imgDesc.imageType) {
+    case NEO::ImageType::image1DArray:
+        return {getMipLevelDimension(imgDesc.imageWidth), imgDesc.imageArraySize, 1u};
+    case NEO::ImageType::image2DArray:
+        return {getMipLevelDimension(imgDesc.imageWidth), getMipLevelDimension(imgDesc.imageHeight), imgDesc.imageArraySize};
+    default:
+        return {getMipLevelDimension(imgDesc.imageWidth), getMipLevelDimension(imgDesc.imageHeight), getMipLevelDimension(imgDesc.imageDepth)};
+    }
+}
+
+MipLevelHostLayout Image::getMipLevelHostLayout(uint32_t mipLevel) const {
+    const auto &l0ImgInfo = getL0Object()->getImageInfo();
+    MipLevelHostLayout layout{0u, this->getHostRowPitch(), this->getHostSlicePitch()};
+
+    for (uint32_t level = 1; level <= mipLevel; level++) {
+        layout.offset += this->calculateHostPtrSizeForImage(this->getMipLevelHostSizes(level - 1), layout);
+
+        const auto levelSizes = this->getMipLevelHostSizes(level);
+        layout.rowPitch = levelSizes[0] * l0ImgInfo.surfaceFormat->imageElementSizeInBytes;
+        switch (l0ImgInfo.imgDesc.imageType) {
+        case NEO::ImageType::image1DArray:
+            layout.slicePitch = layout.rowPitch;
+            break;
+        case NEO::ImageType::image2DArray:
+        case NEO::ImageType::image3D:
+            layout.slicePitch = layout.rowPitch * levelSizes[1];
+            break;
+        default:
+            layout.slicePitch = 0u;
+            break;
+        }
+    }
+    return layout;
 }
 
 size_t Image::getHostRowPitch() const {
@@ -545,12 +590,10 @@ size_t Image::getHostSlicePitch() const {
 }
 
 size_t Image::getHostptrSize() const {
-    auto l0Image = getL0Object();
-    const auto &l0ImgInfo = l0Image->getImageInfo();
-    MemObjSizeArray sizes{l0ImgInfo.imgDesc.imageWidth,
-                          l0ImgInfo.imgDesc.imageType == ImageType::image1DArray ? l0ImgInfo.imgDesc.imageArraySize : l0ImgInfo.imgDesc.imageHeight,
-                          l0ImgInfo.imgDesc.imageType == ImageType::image2DArray ? l0ImgInfo.imgDesc.imageArraySize : l0ImgInfo.imgDesc.imageDepth};
-    return this->calculateHostPtrSizeForImage(sizes);
+    const auto numMipLevels = getL0Object()->getImageInfo().imgDesc.numMipLevels;
+    const uint32_t lastMipLevel = std::max(numMipLevels, 1u) - 1u;
+    const auto lastMipLevelLayout = this->getMipLevelHostLayout(lastMipLevel);
+    return lastMipLevelLayout.offset + this->calculateHostPtrSizeForImage(this->getMipLevelHostSizes(lastMipLevel), lastMipLevelLayout);
 }
 
 bool Image::isCompressionEnabled() {

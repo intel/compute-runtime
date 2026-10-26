@@ -211,6 +211,68 @@ TEST_F(ImageHostPtrSizeTest, given2dImageWhenQueryingHostPtrSizeThenItIsSmallerT
     EXPECT_LT(image->getHostptrSize(), image->calculateTotalSizeForImage({width, height, 1u}));
 }
 
+TEST_F(ImageHostPtrSizeTest, givenMipmapped3dImageWhenQueryingHostLayoutThenMipLevelsArePackedOneAfterAnother) {
+    cl_image_desc desc{};
+    desc.image_type = CL_MEM_OBJECT_IMAGE3D;
+    desc.image_width = width;
+    desc.image_height = height;
+    desc.image_depth = depth;
+    desc.num_mip_levels = 3;
+
+    auto image = createImage(desc);
+    ASSERT_NE(nullptr, image);
+
+    const size_t mipLevel1Offset = expectedHostPtrSize(height, depth);
+    const size_t mipLevel1RowPitch = (width / 2) * pixelSize;
+    const size_t mipLevel1SlicePitch = mipLevel1RowPitch * (height / 2);
+    const size_t mipLevel2Offset = mipLevel1Offset + (depth / 2 - 1) * mipLevel1SlicePitch + (height / 2) * mipLevel1RowPitch;
+    const auto mipLevel2Layout = image->getMipLevelHostLayout(2u);
+    EXPECT_EQ(mipLevel2Offset, mipLevel2Layout.offset);
+    EXPECT_EQ(4 * pixelSize, mipLevel2Layout.rowPitch);
+    EXPECT_EQ(2 * 4 * pixelSize, mipLevel2Layout.slicePitch);
+    EXPECT_EQ(mipLevel2Offset + 2 * 4 * pixelSize, image->getHostptrSize());
+}
+
+TEST_F(ImageHostPtrSizeTest, givenMipmapped2dImageArrayWhenQueryingHostLayoutThenArraySizeIsNotReducedForMipLevel) {
+    cl_image_desc desc{};
+    desc.image_type = CL_MEM_OBJECT_IMAGE2D_ARRAY;
+    desc.image_width = width;
+    desc.image_height = height;
+    desc.image_array_size = arraySize;
+    desc.num_mip_levels = 2;
+
+    auto image = createImage(desc);
+    ASSERT_NE(nullptr, image);
+
+    const size_t mipLevel1Offset = expectedHostPtrSize(height, arraySize);
+    const size_t mipLevel1RowPitch = (width / 2) * pixelSize;
+    const size_t mipLevel1SlicePitch = mipLevel1RowPitch * (height / 2);
+    const auto mipLevel1Layout = image->getMipLevelHostLayout(1u);
+    EXPECT_EQ(mipLevel1Offset, mipLevel1Layout.offset);
+    EXPECT_EQ(mipLevel1RowPitch, mipLevel1Layout.rowPitch);
+    EXPECT_EQ(mipLevel1SlicePitch, mipLevel1Layout.slicePitch);
+    EXPECT_EQ(mipLevel1Offset + (arraySize - 1) * mipLevel1SlicePitch + (height / 2) * mipLevel1RowPitch, image->getHostptrSize());
+}
+
+TEST_F(ImageHostPtrSizeTest, givenMipmapped1dImageArrayWhenQueryingHostLayoutThenSlicePitchIsMipLevelRowPitch) {
+    cl_image_desc desc{};
+    desc.image_type = CL_MEM_OBJECT_IMAGE1D_ARRAY;
+    desc.image_width = width;
+    desc.image_array_size = arraySize;
+    desc.num_mip_levels = 2;
+
+    auto image = createImage(desc);
+    ASSERT_NE(nullptr, image);
+
+    const size_t mipLevel1Offset = arraySize * width * pixelSize;
+    const size_t mipLevel1RowPitch = (width / 2) * pixelSize;
+    const auto mipLevel1Layout = image->getMipLevelHostLayout(1u);
+    EXPECT_EQ(mipLevel1Offset, mipLevel1Layout.offset);
+    EXPECT_EQ(mipLevel1RowPitch, mipLevel1Layout.rowPitch);
+    EXPECT_EQ(mipLevel1RowPitch, mipLevel1Layout.slicePitch);
+    EXPECT_EQ(mipLevel1Offset + arraySize * mipLevel1RowPitch, image->getHostptrSize());
+}
+
 struct ImageGetInfoPitchTest : public ImageHostPtrSizeTest {
     static size_t queryInfo(Image &image, cl_image_info paramName) {
         size_t value = std::numeric_limits<size_t>::max();
@@ -334,7 +396,7 @@ TEST_F(ImageGetInfoPitchTest, given2dImageWithUnalignedWidthWhenCalculatingHostP
     ASSERT_NE(nullptr, image);
 
     const size_t hostRowPitch = unalignedWidth * elementSize;
-    EXPECT_EQ(2 * hostRowPitch + 3 * elementSize, image->calculateHostPtrOffsetForImage({3u, 2u, 0u}));
+    EXPECT_EQ(2 * hostRowPitch + 3 * elementSize, image->calculateHostPtrOffsetForImage({3u, 2u, 0u}, image->getMipLevelHostLayout(0u)));
     EXPECT_EQ((height - 1) * hostRowPitch + unalignedWidth * elementSize, image->getHostptrSize());
 }
 
@@ -350,7 +412,7 @@ TEST_F(ImageGetInfoPitchTest, given3dImageWithUnalignedWidthWhenCalculatingHostP
 
     const size_t hostRowPitch = unalignedWidth * elementSize;
     const size_t hostSlicePitch = hostRowPitch * height;
-    EXPECT_EQ(2 * hostSlicePitch + 1 * hostRowPitch + 5 * elementSize, image->calculateHostPtrOffsetForImage({5u, 1u, 2u}));
+    EXPECT_EQ(2 * hostSlicePitch + 1 * hostRowPitch + 5 * elementSize, image->calculateHostPtrOffsetForImage({5u, 1u, 2u}, image->getMipLevelHostLayout(0u)));
     EXPECT_EQ((depth - 1) * hostSlicePitch + (height - 1) * hostRowPitch + unalignedWidth * elementSize, image->getHostptrSize());
 }
 
@@ -364,7 +426,7 @@ TEST_F(ImageGetInfoPitchTest, given1dImageArrayWithUnalignedWidthWhenCalculating
     ASSERT_NE(nullptr, image);
 
     const size_t hostRowPitch = unalignedWidth * elementSize;
-    EXPECT_EQ(3 * hostRowPitch + 7 * elementSize, image->calculateHostPtrOffsetForImage({7u, 3u, 0u}));
+    EXPECT_EQ(3 * hostRowPitch + 7 * elementSize, image->calculateHostPtrOffsetForImage({7u, 3u, 0u}, image->getMipLevelHostLayout(0u)));
     EXPECT_EQ((arraySize - 1) * hostRowPitch + unalignedWidth * elementSize, image->getHostptrSize());
 }
 
@@ -383,7 +445,7 @@ TEST_F(ImageGetInfoPitchTest, given2dImageArrayWithHostPtrPitchesWhenCalculating
     image->setHostPtrRowPitch(hostRowPitch);
     image->setHostPtrSlicePitch(hostSlicePitch);
 
-    EXPECT_EQ(3 * hostSlicePitch + 2 * hostRowPitch + 1 * elementSize, image->calculateHostPtrOffsetForImage({1u, 2u, 3u}));
+    EXPECT_EQ(3 * hostSlicePitch + 2 * hostRowPitch + 1 * elementSize, image->calculateHostPtrOffsetForImage({1u, 2u, 3u}, image->getMipLevelHostLayout(0u)));
 }
 
 TEST(ImageFormatConversionTest, givenPackedYuvChannelOrderWhenConvertingToL0FormatThenLayoutIsMapped) {

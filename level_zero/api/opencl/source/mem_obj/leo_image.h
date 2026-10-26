@@ -16,6 +16,12 @@
 namespace NEO {
 namespace LEO {
 
+struct MipLevelHostLayout {
+    size_t offset = 0;
+    size_t rowPitch = 0;
+    size_t slicePitch = 0;
+};
+
 class Image : public MemObj {
   public:
     constexpr static cl_ulong maskMagic = 0xFFFFFFFFFFFFFFFFLL;
@@ -37,8 +43,9 @@ class Image : public MemObj {
                         size_t *paramValueSizeRet);
 
     size_t calculateTotalSizeForImage(const std::array<size_t, 3> &sizes) const;
-    size_t calculateHostPtrSizeForImage(const std::array<size_t, 3> &sizes) const;
-    size_t calculateHostPtrOffsetForImage(const std::array<size_t, 3> &origin) const;
+    size_t calculateHostPtrSizeForImage(const std::array<size_t, 3> &sizes, const MipLevelHostLayout &layout) const;
+    size_t calculateHostPtrOffsetForImage(const std::array<size_t, 3> &origin, const MipLevelHostLayout &layout) const;
+    MipLevelHostLayout getMipLevelHostLayout(uint32_t mipLevel) const;
     size_t getHostRowPitch() const;
     size_t getHostSlicePitch() const;
 
@@ -75,6 +82,9 @@ class Image : public MemObj {
     void setHostPtrSlicePitch(size_t pitch) { hostPtrSlicePitch = pitch; }
 
   protected:
+    std::array<size_t, 3> getMipLevelHostSizes(uint32_t mipLevel) const;
+    size_t calculateHostPtrOffsetInMipLevel(const std::array<size_t, 3> &origin, const MipLevelHostLayout &layout) const;
+
     cl_uint mediaPlane = 0;
     ze_image_handle_t imageHandle = nullptr;
     std::map<uint32_t, ze_image_handle_t> perDeviceImageHandles{};

@@ -532,6 +532,88 @@ TEST_F(EnqueueMapImageFixture, givenRegionReachingImageEndWhenClEnqueueMapImageT
     EXPECT_EQ(leoImage->getHostptrSize(), mappedEnd);
 }
 
+struct EnqueueMapMipmappedImageFixture : public EnqueueMapImageFixture {
+    void SetUp() override {
+        EnqueueMapImageFixture::SetUp();
+        if (IsSkipped()) {
+            return;
+        }
+        cl_image_format format{CL_RGBA, CL_FLOAT};
+        cl_image_desc desc{};
+        desc.image_type = CL_MEM_OBJECT_IMAGE2D;
+        desc.image_width = width;
+        desc.image_height = height;
+        desc.num_mip_levels = 3;
+
+        cl_int errcode = CL_INVALID_VALUE;
+        mipImage = clCreateImage(clContext, CL_MEM_READ_WRITE, &format, &desc, nullptr, &errcode);
+        ASSERT_EQ(CL_SUCCESS, errcode);
+        ASSERT_NE(nullptr, mipImage);
+    }
+
+    void TearDown() override {
+        if (mipImage != nullptr) {
+            EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(mipImage));
+        }
+        EnqueueMapImageFixture::TearDown();
+    }
+
+    void *mapMipLevel(size_t mipLevel, size_t *rowPitch, cl_int *retVal) {
+        size_t origin[3] = {0, 0, mipLevel};
+        size_t region[3] = {width >> mipLevel, height >> mipLevel, 1};
+        return clEnqueueMapImage(getCommandQueue(), mipImage, CL_FALSE, CL_MAP_WRITE, origin, region,
+                                 rowPitch, nullptr, 0, nullptr, nullptr, retVal);
+    }
+
+    static constexpr size_t mipLevel1Offset = width * height * elementSize;
+    static constexpr size_t mipLevel2Offset = mipLevel1Offset + (width / 2) * (height / 2) * elementSize;
+    cl_mem mipImage = nullptr;
+};
+
+TEST_F(EnqueueMapMipmappedImageFixture, givenMipmappedImageWhenClEnqueueMapImageOnTwoMipLevelsThenEachMipLevelGetsOwnHostRangeAndPitch) {
+    size_t rowPitch1 = 0;
+    size_t rowPitch2 = 0;
+    cl_int retVal1 = CL_INVALID_VALUE;
+    cl_int retVal2 = CL_INVALID_VALUE;
+
+    auto mappedPtr1 = mapMipLevel(1u, &rowPitch1, &retVal1);
+    auto mappedPtr2 = mapMipLevel(2u, &rowPitch2, &retVal2);
+    ASSERT_EQ(CL_SUCCESS, retVal1);
+    ASSERT_EQ(CL_SUCCESS, retVal2);
+
+    auto cpuPtr = castToObject<MemObj>(mipImage)->getCpuPtr();
+    EXPECT_EQ(ptrOffset(cpuPtr, mipLevel1Offset), mappedPtr1);
+    EXPECT_EQ(ptrOffset(cpuPtr, mipLevel2Offset), mappedPtr2);
+    EXPECT_EQ((width / 2) * elementSize, rowPitch1);
+    EXPECT_EQ((width / 4) * elementSize, rowPitch2);
+
+    EXPECT_EQ(CL_SUCCESS, clEnqueueUnmapMemObject(getCommandQueue(), mipImage, mappedPtr2, 0, nullptr, nullptr));
+    EXPECT_EQ(CL_SUCCESS, clEnqueueUnmapMemObject(getCommandQueue(), mipImage, mappedPtr1, 0, nullptr, nullptr));
+}
+
+TEST_F(EnqueueMapMipmappedImageFixture, givenMipLevelNotInImageWhenClEnqueueMapImageThenInvalidMipLevelIsReturned) {
+    cl_int retVal = CL_SUCCESS;
+
+    auto mappedPtr = mapMipLevel(3u, nullptr, &retVal);
+
+    EXPECT_EQ(CL_INVALID_MIP_LEVEL, retVal);
+    EXPECT_EQ(nullptr, mappedPtr);
+}
+
+TEST_F(EnqueueMapMipmappedImageFixture, givenMappedMipLevelWhenClEnqueueUnmapMemObjectThenWriteBackUsesMipLevelRowPitch) {
+    cl_int retVal = CL_INVALID_VALUE;
+    auto mappedPtr = mapMipLevel(2u, nullptr, &retVal);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    capturingCmdList.clearCaptures();
+
+    EXPECT_EQ(CL_SUCCESS, clEnqueueUnmapMemObject(getCommandQueue(), mipImage, mappedPtr, 0, nullptr, nullptr));
+
+    ASSERT_EQ(1u, capturingCmdList.appendImageCopyFromMemoryExtArgs.count());
+    const auto &writeBack = capturingCmdList.appendImageCopyFromMemoryExtArgs[0];
+    EXPECT_EQ(mappedPtr, writeBack.srcptr);
+    EXPECT_EQ((width / 4) * elementSize, writeBack.srcRowPitch);
+}
+
 struct EnqueueMapHostBackedImageFixture : public EnqueueMapImageFixture {
     void SetUp() override {
         EnqueueMapImageFixture::SetUp();

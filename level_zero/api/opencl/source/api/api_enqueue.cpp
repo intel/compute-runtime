@@ -927,6 +927,14 @@ void *CL_API_CALL clEnqueueMapImage(cl_command_queue commandQueue,
         return tracingRetVal;
     }
 
+    const uint32_t mipLevel = getOclMipLevel(pImage, origin);
+    if (mipLevel >= std::max(pImage->getL0Object()->getImageInfo().imgDesc.numMipLevels, 1u)) [[unlikely]] {
+        errcodeHelper.set(CL_INVALID_MIP_LEVEL);
+        void *tracingRetVal = nullptr;
+        TRACING_EXIT(ClEnqueueMapImage, &tracingRetVal);
+        return tracingRetVal;
+    }
+
     const auto mapFormat = pImage->getOriginalFormat();
     if (NEO::LEO::isPackedYuvImage(&mapFormat)) {
         retVal = NEO::LEO::validateYuvOperation(origin, region);
@@ -960,10 +968,11 @@ void *CL_API_CALL clEnqueueMapImage(cl_command_queue commandQueue,
     NEO::LEO::MemObjSizeArray sizes{region[0], region[1], region[2]};
     NEO::LEO::MemObjOffsetArray offsets{origin[0], origin[1], origin[2]};
 
-    const size_t size = pImage->calculateHostPtrSizeForImage(sizes);
-    const size_t offset = pImage->calculateHostPtrOffsetForImage(offsets);
-    const size_t hostRowPitch = pImage->getHostRowPitch();
-    const size_t hostSlicePitch = pImage->getHostSlicePitch();
+    const auto mipLevelHostLayout = pImage->getMipLevelHostLayout(mipLevel);
+    const size_t size = pImage->calculateHostPtrSizeForImage(sizes, mipLevelHostLayout);
+    const size_t offset = pImage->calculateHostPtrOffsetForImage(offsets, mipLevelHostLayout);
+    const size_t hostRowPitch = mipLevelHostLayout.rowPitch;
+    const size_t hostSlicePitch = mipLevelHostLayout.slicePitch;
 
     if (NEO::isValueSet(mapFlags, CL_MAP_WRITE_INVALIDATE_REGION)) {
         errcodeHelper.set(clEnqueueMarkerWithWaitList(commandQueue, numEventsInWaitList, eventWaitList, event));
@@ -997,7 +1006,7 @@ void *CL_API_CALL clEnqueueMapImage(cl_command_queue commandQueue,
         return tracingRetVal;
     }
 
-    if (!pImage->getMapOperationsHandler().add(ptrOffset(pImage->getCpuPtr(), offset), size, mapFlags, sizes, offsets, getOclMipLevel(pImage, origin))) {
+    if (!pImage->getMapOperationsHandler().add(ptrOffset(pImage->getCpuPtr(), offset), size, mapFlags, sizes, offsets, mipLevel)) {
         errcodeHelper.set(CL_INVALID_OPERATION);
         void *tracingRetVal = nullptr;
         TRACING_EXIT(ClEnqueueMapImage, &tracingRetVal);
@@ -1073,13 +1082,14 @@ cl_int CL_API_CALL clEnqueueUnmapMemObject(cl_command_queue commandQueue,
             }
         }
 
+        const auto mipLevelHostLayout = pImage->getMipLevelHostLayout(mapInfo.mipLevel);
         cl_int tracingRetVal = clEnqueueWriteImage(commandQueue,
                                                    memObj,
                                                    false,
                                                    origin,
                                                    region,
-                                                   pImage->getHostRowPitch(),
-                                                   pImage->getHostSlicePitch(),
+                                                   mipLevelHostLayout.rowPitch,
+                                                   mipLevelHostLayout.slicePitch,
                                                    mappedPtr,
                                                    numEventsInWaitList,
                                                    eventWaitList,
