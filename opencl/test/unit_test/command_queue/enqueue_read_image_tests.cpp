@@ -8,6 +8,9 @@
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/helpers/ptr_math.h"
+#include "shared/source/helpers/string.h"
+#include "shared/source/kernel/kernel_arg_descriptor.h"
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/memory_manager/migration_sync_data.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -26,6 +29,9 @@
 #include "opencl/test/unit_test/mocks/mock_builtin_dispatch_info_builder.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device_factory.h"
 #include "opencl/test/unit_test/mocks/mock_image.h"
+
+#include <algorithm>
+#include <vector>
 
 using namespace NEO;
 
@@ -1321,6 +1327,79 @@ HWTEST_F(EnqueueReadImageTest, givenImage1dBufferWhenReadImageIsEnqueuedOnGpgpuT
     EXPECT_EQ(nullptr, params->dstMemObj);
     EXPECT_NE(nullptr, params->dstPtr);
     EXPECT_EQ(region[0] * bytesPerPixel, params->size.x);
+
+    auto newBuilder = pClDevice->setBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::copyBufferToBuffer, pCmdQ->getDefaultBuiltInMode(), std::move(oldBuilder));
+    EXPECT_EQ(&mockBuilder, newBuilder.get());
+    pCmdQ->finish(false);
+}
+
+HWTEST_F(EnqueueReadImageTest, givenImages1dBufferCreatedFromSubBuffersWhenReadImageIsEnqueuedOnGpgpuThenOnlyBytesOfOwnSubBufferAreCopied) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableBlitterForEnqueueOperations.set(0);
+
+    const size_t subBufferSize = 2 * MemoryConstants::megaByte;
+    cl_int errcode = CL_SUCCESS;
+    std::unique_ptr<Buffer> buffer(Buffer::create(context, CL_MEM_READ_WRITE, 2 * subBufferSize, nullptr, errcode));
+    ASSERT_EQ(CL_SUCCESS, errcode);
+
+    cl_buffer_region regions[] = {{0, subBufferSize}, {subBufferSize, subBufferSize}};
+    cl_image_format imageFormat = {CL_RGBA, CL_UNSIGNED_INT8};
+    std::unique_ptr<Buffer> subBuffers[2];
+    std::unique_ptr<Image> images[2];
+    for (auto i = 0u; i < 2u; i++) {
+        subBuffers[i].reset(buffer->createSubBuffer(CL_MEM_READ_WRITE, 0, &regions[i], errcode));
+        ASSERT_EQ(CL_SUCCESS, errcode);
+        cl_image_desc imageDesc = Image1dBufferDefaults::imageDesc;
+        imageDesc.image_width = 64;
+        imageDesc.mem_object = subBuffers[i].get();
+        images[i].reset(Image1dHelperUlt<>::create(context, &imageDesc, &imageFormat));
+        ASSERT_NE(nullptr, images[i]);
+    }
+    const size_t bytesPerPixel = images[1]->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
+
+    auto builtIns = new MockBuiltins();
+    MockRootDeviceEnvironment::resetBuiltins(pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()].get(), builtIns);
+    auto &origBuilder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::copyBufferToBuffer, pCmdQ->getDefaultBuiltInMode(), pCmdQ->getClDevice());
+    auto oldBuilder = pClDevice->setBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::copyBufferToBuffer, pCmdQ->getDefaultBuiltInMode(),
+                                                               std::unique_ptr<NEO::BuiltIn::DispatchInfoBuilder>(new MockBuiltInDispatchInfoBuilder(*builtIns, pCmdQ->getClDevice(), &origBuilder)));
+
+    alignas(MemoryConstants::cacheLineSize) uint8_t hostData[256] = {};
+    size_t origin[] = {3, 0, 0};
+    size_t region[] = {40, 1, 1};
+    auto retVal = EnqueueReadImageHelper<>::enqueueReadImage(pCmdQ, images[1].get(), CL_FALSE, origin, region, 0, 0, hostData);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto &mockBuilder = static_cast<MockBuiltInDispatchInfoBuilder &>(BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::copyBufferToBuffer, pCmdQ->getDefaultBuiltInMode(), pCmdQ->getClDevice()));
+    const uint32_t srcBufferArgIndex = 0;
+    const uint32_t srcOffsetArgIndex = 2;
+    std::vector<std::pair<uint64_t, uint64_t>> copiedRanges;
+    for (const auto &dispatchInfo : *mockBuilder.getMultiDispatchInfo()) {
+        const auto kernel = dispatchInfo.getKernel();
+        EXPECT_EQ(static_cast<cl_mem>(subBuffers[1].get()), kernel->getKernelArg(srcBufferArgIndex));
+
+        const auto &offsetArg = kernel->getKernelInfo().getArgDescriptorAt(srcOffsetArgIndex).as<ArgDescValue>().elements[0];
+        uint64_t programmedOffset = 0;
+        memcpy_s(&programmedOffset, sizeof(programmedOffset), ptrOffset(kernel->getCrossThreadData(), offsetArg.offset), offsetArg.size);
+
+        const auto &kernelName = kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName;
+        const size_t bytesPerWorkItem = (kernelName.find("Middle") != std::string::npos) ? 4 * sizeof(uint32_t) : 1u;
+        copiedRanges.emplace_back(programmedOffset, programmedOffset + dispatchInfo.getGWS().x * bytesPerWorkItem);
+    }
+    ASSERT_FALSE(copiedRanges.empty());
+    std::sort(copiedRanges.begin(), copiedRanges.end());
+    for (auto i = 1u; i < copiedRanges.size(); i++) {
+        EXPECT_EQ(copiedRanges[i - 1].second, copiedRanges[i].first);
+    }
+    const uint64_t copyStart = copiedRanges.front().first;
+    const uint64_t copyEnd = copiedRanges.back().second;
+    EXPECT_EQ(origin[0] * bytesPerPixel, copyStart);
+    EXPECT_EQ(region[0] * bytesPerPixel, copyEnd - copyStart);
+
+    const auto rootDeviceIndex = pClDevice->getRootDeviceIndex();
+    const auto subBufferAddress = subBuffers[1]->getBufferAddress(rootDeviceIndex);
+    EXPECT_EQ(buffer->getBufferAddress(rootDeviceIndex) + subBufferSize, subBufferAddress);
+    EXPECT_LE(subBuffers[0]->getBufferAddress(rootDeviceIndex) + subBuffers[0]->getSize(), subBufferAddress + copyStart);
+    EXPECT_LE(subBufferAddress + copyEnd, subBufferAddress + subBuffers[1]->getSize());
 
     auto newBuilder = pClDevice->setBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::copyBufferToBuffer, pCmdQ->getDefaultBuiltInMode(), std::move(oldBuilder));
     EXPECT_EQ(&mockBuilder, newBuilder.get());
