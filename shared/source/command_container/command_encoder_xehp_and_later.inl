@@ -1107,7 +1107,7 @@ void EncodeDispatchKernel<Family>::encodeThreadGroupDispatch(InterfaceDescriptor
         auto tileCount = ImplicitScalingHelper::isImplicitScalingEnabled(device.getDeviceBitfield(), true) ? device.getNumSubDevices() : 1u;
 
         if (algorithmVersion == 2) {
-            auto threadsPerXeCore = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.MaxSubSlicesSupported;
+            auto threadsPerXeCore = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.SubSliceCount;
             if (grfCount == 256) {
                 threadsPerXeCore /= 2;
             }
@@ -1124,7 +1124,7 @@ void EncodeDispatchKernel<Family>::encodeThreadGroupDispatch(InterfaceDescriptor
             }
 
             // make sure we fit all xe core
-            while (threadGroupCount / tgDispatchSizeSelected < hwInfo.gtSystemInfo.MaxSubSlicesSupported * tileCount && tgDispatchSizeSelected > 1) {
+            while (threadGroupCount / tgDispatchSizeSelected < hwInfo.gtSystemInfo.SubSliceCount * tileCount && tgDispatchSizeSelected > 1) {
                 tgDispatchSizeSelected /= 2;
             }
 

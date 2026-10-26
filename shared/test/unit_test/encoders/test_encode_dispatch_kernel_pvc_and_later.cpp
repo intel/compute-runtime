@@ -319,6 +319,7 @@ HWTEST2_F(CommandEncodeStatesTestPvcAndLater, givenVariousDispatchParametersWhen
     DefaultWalkerType walkerCmd{};
     auto mutableHwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     mutableHwInfo->gtSystemInfo.MaxSubSlicesSupported = 64u;
+    mutableHwInfo->gtSystemInfo.SubSliceCount = 64u;
     mutableHwInfo->gtSystemInfo.ThreadCount = 4096u;
     auto hwInfo = pDevice->getHardwareInfo();
 
@@ -522,7 +523,7 @@ HWTEST2_F(CommandEncodeStatesTestPvcAndLater, givenVariousDispatchParametersWhen
     }
 }
 
-HWTEST2_F(CommandEncodeStatesTestPvcAndLater, givenDualSubSliceCountNotEqualToMaxSubsliceCounteWhenTgDispatchSizeIsSelectedThenAlgorithmV1IsUsed, IsAtLeastXeHpcCore) {
+HWTEST2_F(CommandEncodeStatesTestPvcAndLater, givenDualSubSliceCountNotEqualToMaxSubsliceCountWhenTgDispatchSizeIsSelectedThenAlgorithmV1IsUsed, IsAtLeastXeHpcCore) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using InterfaceDescriptorType = typename DefaultWalkerType::InterfaceDescriptorType;
     DefaultWalkerType walkerCmd{};
@@ -548,6 +549,64 @@ HWTEST2_F(CommandEncodeStatesTestPvcAndLater, givenDualSubSliceCountNotEqualToMa
     uint32_t threadGroups[] = {walkerCmd.getThreadGroupIdXDimension(), walkerCmd.getThreadGroupIdYDimension(), walkerCmd.getThreadGroupIdZDimension()};
     EncodeDispatchKernel<FamilyType>::encodeThreadGroupDispatch(iddArg, *pDevice, hwInfo, threadGroups, threadGroupCount, requiredThreadGroupDispatchSize, numGrf, numberOfThreadsInThreadGroup, walkerCmd);
     EXPECT_EQ(InterfaceDescriptorType::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1, iddArg.getThreadGroupDispatchSize());
+}
+
+HWTEST2_F(CommandEncodeStatesTestPvcAndLater, givenFusedPartAndAlgorithmV2ForcedWhenTgDispatchSizeIsSelectedThenEnabledXeCoresAreCounted, IsAtLeastXeHpcCore) {
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    using InterfaceDescriptorType = typename DefaultWalkerType::InterfaceDescriptorType;
+    DefaultWalkerType walkerCmd{};
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ForceThreadGroupDispatchSizeAlgorithm.set(2);
+    auto mutableHwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    mutableHwInfo->gtSystemInfo.MaxSubSlicesSupported = 64u;
+    mutableHwInfo->gtSystemInfo.SubSliceCount = 56u;
+    mutableHwInfo->gtSystemInfo.EUCount = 448u;
+    mutableHwInfo->gtSystemInfo.ThreadCount = 3584u;
+    auto hwInfo = pDevice->getHardwareInfo();
+
+    auto encode = [&](uint32_t threadGroupCount, uint32_t threadsPerThreadGroup, uint32_t grfCount) {
+        InterfaceDescriptorType iddArg = FamilyType::template getInitInterfaceDescriptor<InterfaceDescriptorType>();
+        iddArg.setNumberOfThreadsInGpgpuThreadGroup(threadsPerThreadGroup);
+        uint32_t threadGroups[] = {threadGroupCount, 1u, 1u};
+        EncodeDispatchKernel<FamilyType>::encodeThreadGroupDispatch(iddArg, *pDevice, hwInfo, threadGroups, threadGroupCount, 0u, grfCount,
+                                                                    threadsPerThreadGroup, walkerCmd);
+        return iddArg.getThreadGroupDispatchSize();
+    };
+
+    // 3584 threads / 56 enabled xe cores / 2 (256 grf) = 32 threads per xe core; counting 64 xe cores would give 28 and select TG_SIZE_1
+    EXPECT_EQ(InterfaceDescriptorType::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_2, encode(4096u, 16u, GrfConfig::largeGrfNumber));
+    // 480 / 8 = 60 batches fill the 56 enabled xe cores; counting 64 xe cores would select TG_SIZE_4
+    EXPECT_EQ(InterfaceDescriptorType::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_8, encode(480u, 1u, GrfConfig::defaultGrfNumber));
+}
+
+HWTEST2_F(CommandEncodeStatesTestPvcAndLater, givenFusedPartAndImplicitScalingAndAlgorithmV2ForcedWhenTgDispatchSizeIsSelectedThenEnabledXeCoresOfAllTilesAreFilled, IsAtLeastXe2HpgCore) {
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    using InterfaceDescriptorType = typename DefaultWalkerType::InterfaceDescriptorType;
+    DefaultWalkerType walkerCmd{};
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ForceThreadGroupDispatchSizeAlgorithm.set(2);
+    debugManager.flags.EnableWalkerPartition.set(1);
+    pDevice->numSubDevices = 2;
+    auto mutableHwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    mutableHwInfo->gtSystemInfo.MaxSubSlicesSupported = 32u;
+    mutableHwInfo->gtSystemInfo.SubSliceCount = 28u;
+    mutableHwInfo->gtSystemInfo.EUCount = 224u;
+    mutableHwInfo->gtSystemInfo.ThreadCount = 1792u;
+    auto hwInfo = pDevice->getHardwareInfo();
+
+    auto encode = [&](uint32_t threadGroupCount) {
+        const uint32_t threadsPerThreadGroup = 16u;
+        InterfaceDescriptorType iddArg = FamilyType::template getInitInterfaceDescriptor<InterfaceDescriptorType>();
+        iddArg.setNumberOfThreadsInGpgpuThreadGroup(threadsPerThreadGroup);
+        uint32_t threadGroups[] = {threadGroupCount, 1u, 1u};
+        EncodeDispatchKernel<FamilyType>::encodeThreadGroupDispatch(iddArg, *pDevice, hwInfo, threadGroups, threadGroupCount, 0u, GrfConfig::largeGrfNumber,
+                                                                    threadsPerThreadGroup, walkerCmd);
+        return iddArg.getThreadGroupDispatchSize();
+    };
+
+    // 2 tiles x 28 enabled xe cores = 56 xe cores to fill; counting 32 xe cores per tile would give 64
+    EXPECT_EQ(InterfaceDescriptorType::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_2, encode(112u));
+    EXPECT_EQ(InterfaceDescriptorType::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1, encode(56u));
 }
 
 HWTEST2_F(CommandEncodeStatesTestPvcAndLater, givenNumberOfThreadsInThreadGroupAndDebugFlagDisabledWhenCallingEncodeThreadGroupDispatchThenThreadGroupDispatchSizeIsDefault, IsAtLeastXeHpcCore) {
