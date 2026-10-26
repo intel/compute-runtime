@@ -28,4 +28,8 @@ bool WddmResidencyController::trimResidencyToBudget(uint64_t bytes) {
     return false;
 }
 
+bool WddmResidencyController::trimResidencyToBudget(uint64_t bytes, const StackVec<CommandStreamReceiver *, 5> &skippedCsrs) {
+    return false;
+}
+
 } // namespace NEO

@@ -22,6 +22,7 @@
 #include "shared/test/common/libult/create_command_stream.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
+#include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_os_context_win.h"
@@ -542,6 +543,58 @@ TEST_F(WddmResidencyControllerWithGdiTest, givenAllocationResidentOnlyInLaterCon
     EXPECT_FALSE(allocation.getResidencyData().resident[osContextId2]);
     auto &evictionAllocations = residencyController->getEvictionAllocations();
     EXPECT_EQ(evictionAllocations.end(), std::find(evictionAllocations.begin(), evictionAllocations.end(), &allocation));
+
+    const_cast<EngineControlContainer &>(engines).pop_back();
+}
+
+TEST_F(WddmResidencyControllerWithGdiTest, givenSecondaryCsrWhenTrimmingToBudgetFromTrimCallbackThenItIsTryLockedAfterResidencyLockAndSkippedWhenBusy) {
+    struct TryLockRecordingCsr : MockCommandStreamReceiver {
+        using MockCommandStreamReceiver::MockCommandStreamReceiver;
+        std::unique_lock<CommandStreamReceiver::MutexType> tryObtainUniqueOwnership() override {
+            residencyLockCountAtTryLock = residencyController->acquireLockCallCount;
+            return MockCommandStreamReceiver::tryObtainUniqueOwnership();
+        }
+        MockWddmResidencyController *residencyController = nullptr;
+        uint32_t residencyLockCountAtTryLock = 0;
+    };
+
+    auto osContextId2 = osContextId + 1;
+    auto mockOsContextWin2 = std::make_unique<MockOsContextWin>(*wddm, 0, osContextId2, EngineDescriptorHelper::getDefaultDescriptor());
+    mockOsContextWin2->contextInitialized = true;
+    wddm->getWddmInterface()->createMonitoredFence(*mockOsContextWin2);
+    TryLockRecordingCsr secondaryCsr(*executionEnvironment, 0u, 1);
+    secondaryCsr.residencyController = residencyController;
+    secondaryCsr.setupContext(*mockOsContextWin2);
+    secondaryCsr.setPrimaryCsr(csr.get());
+    auto &engines = executionEnvironment->memoryManager->getRegisteredEngines(0);
+    const_cast<EngineControlContainer &>(engines).emplace_back(&secondaryCsr, mockOsContextWin2.get());
+
+    MockWddmAllocation primaryAllocation(rootDeviceEnvironment->getGmmHelper());
+    primaryAllocation.getResidencyData().updateCompletionData(0, osContextId);
+    primaryAllocation.getResidencyData().resident[osContextId] = true;
+    MockWddmAllocation secondaryAllocation(rootDeviceEnvironment->getGmmHelper());
+    secondaryAllocation.getResidencyData().updateCompletionData(0, osContextId2);
+    secondaryAllocation.getResidencyData().resident[osContextId2] = true;
+    residencyController->getEvictionAllocations().push_back(&primaryAllocation);
+    residencyController->getEvictionAllocations().push_back(&secondaryAllocation);
+    wddm->callBaseEvict = false;
+
+    D3DKMT_TRIMNOTIFICATION trimNotification = {};
+    trimNotification.Flags.TrimToBudget = true;
+    trimNotification.NumBytesToTrim = std::numeric_limits<uint64_t>::max();
+
+    secondaryCsr.tryObtainUniqueOwnershipFails = true;
+    auto residencyLockCount = residencyController->acquireLockCallCount;
+    auto secondaryCsrLockCount = secondaryCsr.obtainUniqueOwnershipCalledTimes.load();
+    residencyController->trimResidency(trimNotification.Flags, trimNotification.NumBytesToTrim);
+    EXPECT_EQ(residencyLockCount + 1, secondaryCsr.residencyLockCountAtTryLock);
+    EXPECT_EQ(secondaryCsrLockCount, secondaryCsr.obtainUniqueOwnershipCalledTimes);
+    EXPECT_FALSE(primaryAllocation.getResidencyData().resident[osContextId]);
+    EXPECT_TRUE(secondaryAllocation.getResidencyData().resident[osContextId2]);
+
+    secondaryCsr.tryObtainUniqueOwnershipFails = false;
+    residencyController->trimResidency(trimNotification.Flags, trimNotification.NumBytesToTrim);
+    EXPECT_FALSE(secondaryAllocation.getResidencyData().resident[osContextId2]);
 
     const_cast<EngineControlContainer &>(engines).pop_back();
 }

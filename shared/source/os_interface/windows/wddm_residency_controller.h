@@ -11,6 +11,7 @@
 #include "shared/source/os_interface/windows/windows_defs.h"
 #include "shared/source/os_interface/windows/windows_wrapper.h"
 #include "shared/source/utilities/spinlock.h"
+#include "shared/source/utilities/stackvec.h"
 
 #include <mutex>
 
@@ -41,6 +42,7 @@ class WddmResidencyController {
 
     void trimResidency(const D3DDDI_TRIMRESIDENCYSET_FLAGS &flags, uint64_t bytes);
     MOCKABLE_VIRTUAL bool trimResidencyToBudget(uint64_t bytes);
+    bool trimResidencyToBudget(uint64_t bytes, const StackVec<CommandStreamReceiver *, 5> &skippedCsrs);
 
     bool isMemoryBudgetExhausted() const { return memoryBudgetExhausted; }
     void setMemoryBudgetExhausted() { memoryBudgetExhausted = true; }

@@ -129,18 +129,31 @@ void WddmResidencyController::trimResidency(const D3DDDI_TRIMRESIDENCYSET_FLAGS 
 
     if (flags.TrimToBudget) {
         StackVec<std::unique_lock<CommandStreamReceiver::MutexType>, 5> csrLocks;
-        this->wddm.forEachContextWithinWddm<true>([&](const EngineControl &engine) {
-            if (NEO::EngineHelpers::isBcs(engine.getEngineType())) {
-                csrLocks.push_back(engine.commandStreamReceiver->obtainUniqueOwnership());
-            }
-        });
-        this->wddm.forEachContextWithinWddm<true>([&](const EngineControl &engine) {
-            if (!NEO::EngineHelpers::isBcs(engine.getEngineType())) {
-                csrLocks.push_back(engine.commandStreamReceiver->obtainUniqueOwnership());
-            }
-        });
+        auto lockPrimaryCsrs = [&](bool bcs) {
+            this->wddm.forEachContextWithinWddm<true>([&](const EngineControl &engine) {
+                if (NEO::EngineHelpers::isBcs(engine.getEngineType()) == bcs && engine.commandStreamReceiver->getPrimaryCsr() == nullptr) {
+                    csrLocks.push_back(engine.commandStreamReceiver->obtainUniqueOwnership());
+                }
+            });
+        };
+        lockPrimaryCsrs(true);
+        lockPrimaryCsrs(false);
         auto lock = this->acquireLock();
-        trimResidencyToBudget(bytes);
+
+        // Submission on a secondary CSR may wait for its primary CSR or another CSR, so never wait while holding or for a secondary CSR; skip busy ones.
+        StackVec<CommandStreamReceiver *, 5> skippedCsrs;
+        this->wddm.forEachContextWithinWddm<true>([&](const EngineControl &engine) {
+            if (engine.commandStreamReceiver->getPrimaryCsr() == nullptr) {
+                return;
+            }
+            auto csrLock = engine.commandStreamReceiver->tryObtainUniqueOwnership();
+            if (csrLock.owns_lock()) {
+                csrLocks.push_back(std::move(csrLock));
+            } else {
+                skippedCsrs.push_back(engine.commandStreamReceiver);
+            }
+        });
+        trimResidencyToBudget(bytes, skippedCsrs);
     }
 
     if (flags.PeriodicTrim || flags.RestartPeriodicTrim) {
@@ -155,6 +168,10 @@ void WddmResidencyController::trimResidency(const D3DDDI_TRIMRESIDENCYSET_FLAGS 
 }
 
 bool WddmResidencyController::trimResidencyToBudget(uint64_t bytes) {
+    return trimResidencyToBudget(bytes, {});
+}
+
+bool WddmResidencyController::trimResidencyToBudget(uint64_t bytes, const StackVec<CommandStreamReceiver *, 5> &skippedCsrs) {
     uint64_t sizeToTrim = 0;
     uint64_t numberOfBytesToTrim = bytes;
     WddmAllocation *wddmAllocation = nullptr;
@@ -167,6 +184,9 @@ bool WddmResidencyController::trimResidencyToBudget(uint64_t bytes) {
 
     this->wddm.forEachContextWithinWddm<true>([&](const EngineControl &engine) {
         auto csr = engine.commandStreamReceiver;
+        if (std::find(skippedCsrs.begin(), skippedCsrs.end(), csr) != skippedCsrs.end()) {
+            return;
+        }
         csr->drainPagingFenceQueue();
         auto &osContext = static_cast<NEO::OsContextWin &>(csr->getOsContext());
         uint32_t osContextId = osContext.getContextId();
