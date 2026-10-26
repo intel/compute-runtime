@@ -1662,7 +1662,6 @@ struct ShareObjectsCapture {
         callCount++;
         lastObjectCount = cObjects;
         lastResourceHandle = hObjects ? *hObjects : 0u;
-        lastObjectAttributes = pObjectAttributes;
         lastDesiredAccess = dwDesiredAccess;
         *phSharedNtHandle = reinterpret_cast<HANDLE>(static_cast<uintptr_t>(0x1234u));
         return returnValue;
@@ -1672,7 +1671,6 @@ struct ShareObjectsCapture {
         callCount = 0u;
         lastObjectCount = 0u;
         lastResourceHandle = 0u;
-        lastObjectAttributes = nullptr;
         lastDesiredAccess = 0u;
         returnValue = STATUS_SUCCESS;
     }
@@ -1680,7 +1678,6 @@ struct ShareObjectsCapture {
     inline static uint32_t callCount = 0u;
     inline static UINT lastObjectCount = 0u;
     inline static D3DKMT_HANDLE lastResourceHandle = 0u;
-    inline static POBJECT_ATTRIBUTES lastObjectAttributes = nullptr;
     inline static DWORD lastDesiredAccess = 0u;
     inline static NTSTATUS returnValue = STATUS_SUCCESS;
 };

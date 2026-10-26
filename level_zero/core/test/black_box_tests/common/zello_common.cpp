@@ -33,7 +33,6 @@ static LoadedDriverExtensions driverExtensions;
 
 using LoadedDeviceQueueProperties = std::map<ze_device_handle_t, std::vector<ze_command_queue_group_properties_t>>;
 static LoadedDeviceQueueProperties deviceQueueProperties;
-static ze_driver_handle_t testDriverHandle;
 
 std::vector<ze_command_queue_group_properties_t> &getDeviceQueueProperties(ze_device_handle_t device) {
     auto &queueProperties = deviceQueueProperties[device];
@@ -503,7 +502,6 @@ std::vector<ze_device_handle_t> zelloInitContextAndGetDevices(ze_context_handle_
 
     driverCount = 1;
     SUCCESS_OR_TERMINATE(zeInitDrivers(&driverCount, &driverHandle, &desc));
-    testDriverHandle = driverHandle;
 
     context = zerGetDefaultContext();
     if (!context) {

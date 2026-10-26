@@ -113,13 +113,11 @@ void *capturingHostMmap(void *addr, size_t len, int prot, int flags, int fd, off
     capturedHostMmapFlags = flags;
     return addr;
 }
-void *capturedMremapOldAddress = nullptr;
 size_t capturedMremapSize = 0u;
 void *capturedMremapNewAddress = nullptr;
 uint32_t capturedMremapCalls = 0u;
 bool failCapturedMremap = false;
 void *capturingMremapFixed(void *oldAddress, size_t size, void *newAddress) noexcept {
-    capturedMremapOldAddress = oldAddress;
     capturedMremapSize = size;
     capturedMremapNewAddress = newAddress;
     capturedMremapCalls++;
@@ -142,7 +140,6 @@ void resetCapturedNoReplace() {
     failCapturedNoReplace = false;
 }
 void resetCapturedMremap() {
-    capturedMremapOldAddress = nullptr;
     capturedMremapSize = 0u;
     capturedMremapNewAddress = nullptr;
     capturedMremapCalls = 0u;
