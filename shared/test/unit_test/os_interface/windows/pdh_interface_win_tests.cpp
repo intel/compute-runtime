@@ -37,7 +37,6 @@ static inline PDH_STATUS pdhGetFormattedCounterValueStatus = ERROR_SUCCESS;
 static inline bool pdhLibraryLoadSuccess = true;
 static inline bool pdhLibraryIsLoaded = true;
 static inline std::string pdhMissingProcName = "";
-static inline uint32_t pdhAddCounterCallCount = 0;
 static inline uint32_t pdhCloseQueryCallCount = 0;
 static inline std::vector<std::wstring> pdhAddedCounterPaths;
 static inline std::unordered_map<PDH_HCOUNTER, LONGLONG> pdhCounterValues;
@@ -56,7 +55,6 @@ static void resetPdhMockState() {
     pdhLibraryLoadSuccess = true;
     pdhLibraryIsLoaded = true;
     pdhMissingProcName = "";
-    pdhAddCounterCallCount = 0;
     pdhCloseQueryCallCount = 0;
     pdhDedicatedValue = 0;
     pdhSharedValue = 0;
@@ -73,7 +71,6 @@ static PDH_STATUS __stdcall pdhOpenQueryConfigurableMock(LPCWSTR, DWORD_PTR, PDH
 }
 
 static PDH_STATUS __stdcall pdhAddEnglishCounterConfigurableMock(PDH_HQUERY, LPCWSTR counterPath, DWORD_PTR, PDH_HCOUNTER *counter) {
-    pdhAddCounterCallCount++;
     if (pdhAddEnglishCounterStatus != ERROR_SUCCESS) {
         return pdhAddEnglishCounterStatus;
     }
