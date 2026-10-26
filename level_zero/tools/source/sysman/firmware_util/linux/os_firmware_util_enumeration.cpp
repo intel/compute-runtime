@@ -11,5 +11,5 @@
 
 namespace L0 {
 int FirmwareUtilImp::fwUtilLoadFlags = RTLD_LAZY;
-std::string FirmwareUtilImp::fwUtilLibraryName = "libigsc.so.0";
+std::vector<std::string> FirmwareUtilImp::fwUtilLibraryNames = {"libigsc.so.1", "libigsc.so.0"};
 } // namespace L0

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -127,7 +127,7 @@ class FirmwareUtilImp : public FirmwareUtil, NEO::NonCopyableAndNonMovableClass 
     ze_result_t fwCallGetstatusExt(uint32_t &supportedTests, uint32_t &ifrApplied, uint32_t &prevErrors, uint32_t &pendingReset);
 
     static int fwUtilLoadFlags;
-    static std::string fwUtilLibraryName;
+    static std::vector<std::string> fwUtilLibraryNames;
     std::string fwDevicePath{};
     struct igsc_device_handle fwDeviceHandle = {};
     bool loadEntryPoints();

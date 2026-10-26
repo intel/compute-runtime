@@ -191,19 +191,29 @@ FirmwareUtilImp::~FirmwareUtilImp() {
 };
 
 FirmwareUtil *FirmwareUtil::create(uint16_t domain, uint8_t bus, uint8_t device, uint8_t function) {
-    FirmwareUtilImp *pFwUtilImp = new FirmwareUtilImp(domain, bus, device, function);
-    UNRECOVERABLE_IF(nullptr == pFwUtilImp);
-    NEO::OsLibraryCreateProperties properties(FirmwareUtilImp::fwUtilLibraryName);
-    properties.customLoadFlags = &FirmwareUtilImp::fwUtilLoadFlags;
-    pFwUtilImp->libraryHandle = NEO::OsLibrary::loadFunc(properties);
-    if (pFwUtilImp->libraryHandle == nullptr || pFwUtilImp->loadEntryPoints() == false || pFwUtilImp->fwDeviceInit() != ZE_RESULT_SUCCESS) {
-        if (nullptr != pFwUtilImp->libraryHandle) {
+    for (const auto &libName : FirmwareUtilImp::fwUtilLibraryNames) {
+        FirmwareUtilImp *pFwUtilImp = new FirmwareUtilImp(domain, bus, device, function);
+        UNRECOVERABLE_IF(nullptr == pFwUtilImp);
+
+        NEO::OsLibraryCreateProperties properties(libName);
+        properties.customLoadFlags = &FirmwareUtilImp::fwUtilLoadFlags;
+        pFwUtilImp->libraryHandle = NEO::OsLibrary::loadFunc(properties);
+
+        if (pFwUtilImp->libraryHandle == nullptr) {
+            delete pFwUtilImp;
+            continue;
+        }
+
+        if (pFwUtilImp->loadEntryPoints() == true &&
+            pFwUtilImp->fwDeviceInit() == ZE_RESULT_SUCCESS) {
+            return static_cast<FirmwareUtil *>(pFwUtilImp);
+        } else {
             delete pFwUtilImp->libraryHandle;
             pFwUtilImp->libraryHandle = nullptr;
+            delete pFwUtilImp;
+            return nullptr;
         }
-        delete pFwUtilImp;
-        return nullptr;
     }
-    return static_cast<FirmwareUtil *>(pFwUtilImp);
+    return nullptr;
 }
 } // namespace L0

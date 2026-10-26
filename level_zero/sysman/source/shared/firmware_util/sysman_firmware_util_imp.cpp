@@ -323,17 +323,20 @@ FirmwareUtil *FirmwareUtil::create(uint16_t domain, uint8_t bus, uint8_t device,
         properties.customLoadFlags = &FirmwareUtilImp::fwUtilLoadFlags;
         pFwUtilImp->libraryHandle = NEO::OsLibrary::loadFunc(properties);
 
-        if (pFwUtilImp->libraryHandle != nullptr &&
-            pFwUtilImp->loadEntryPoints() == true &&
-            pFwUtilImp->fwDeviceInit() == ZE_RESULT_SUCCESS) {
-            return static_cast<FirmwareUtil *>(pFwUtilImp);
+        if (pFwUtilImp->libraryHandle == nullptr) {
+            delete pFwUtilImp;
+            continue;
         }
 
-        if (nullptr != pFwUtilImp->libraryHandle) {
+        if (pFwUtilImp->loadEntryPoints() == true &&
+            pFwUtilImp->fwDeviceInit() == ZE_RESULT_SUCCESS) {
+            return static_cast<FirmwareUtil *>(pFwUtilImp);
+        } else {
             delete pFwUtilImp->libraryHandle;
             pFwUtilImp->libraryHandle = nullptr;
+            delete pFwUtilImp;
+            return nullptr;
         }
-        delete pFwUtilImp;
     }
     return nullptr;
 }

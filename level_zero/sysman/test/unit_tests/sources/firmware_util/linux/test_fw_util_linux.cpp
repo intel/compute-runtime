@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,6 +23,11 @@ extern bool dlOpenCalled;
 namespace L0 {
 namespace Sysman {
 namespace ult {
+
+TEST(FwUtilTest, GivenLinuxWhenCheckingFirmwareUtilLibraryNamesThenNewerIgscLibraryIsTriedBeforeOlderOne) {
+    std::vector<std::string> expectedLibraryNames = {"libigsc.so.1", "libigsc.so.0"};
+    EXPECT_EQ(L0::Sysman::FirmwareUtilImp::fwUtilLibraryNames, expectedLibraryNames);
+}
 
 TEST(FwUtilTest, GivenLibraryWasSetWhenCreatingFirmwareUtilInterfaceThenLibraryIsLoadedWithDeepbindDisabled) {
     VariableBackup<bool> dlOpenCalledBackup{&NEO::SysCalls::dlOpenCalled, false};

@@ -8,6 +8,6 @@
 #include "level_zero/tools/source/sysman/firmware_util/firmware_util_imp.h"
 
 namespace L0 {
-std::string FirmwareUtilImp::fwUtilLibraryName = "igsc.dll";
+std::vector<std::string> FirmwareUtilImp::fwUtilLibraryNames = {"igsc.dll"};
 int FirmwareUtilImp::fwUtilLoadFlags{};
 } // namespace L0
