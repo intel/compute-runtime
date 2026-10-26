@@ -3554,7 +3554,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (testMask.test(bitNumberTestWrappedMultipleEngines)) {
-        uint32_t engineCount = LevelZeroBlackBoxTests::getParamValue(argc, argv, "-e", "--engine_count", 60u);
+        uint32_t engineCount = LevelZeroBlackBoxTests::getParamValue(argc, argv, "-engc", "--engine_count", 60u);
         bool useInOrder = !!(LevelZeroBlackBoxTests::getParamValue(argc, argv, "-o", "--in_order", 0u));
 
         if (testSubMask.test(0)) {
