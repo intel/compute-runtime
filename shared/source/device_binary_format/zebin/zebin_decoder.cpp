@@ -315,9 +315,7 @@ DecodeError extractZebinSections(NEO::Elf::Elf<numBits> &elf, ZebinSections<numB
             // ignoring intentionally - rel/rela sections handled by Elf decoder
             continue;
         case Elf::SHT_ZEBIN_GTPIN_INFO:
-            if (sectionName.startsWith(Elf::SectionNames::gtpinInfo.data())) {
-                out.gtpinInfoSections.push_back(&elfSectionHeader);
-            } else {
+            if (false == sectionName.startsWith(Elf::SectionNames::gtpinInfo.data())) {
                 outWarning.append("DeviceBinaryFormat::zebin : Unhandled SHT_ZEBIN_GTPIN_INFO section : " + sectionName.str() + ", currently supports only : " + Elf::SectionNames::gtpinInfo.str() + "KERNEL_NAME\n");
             }
             break;
@@ -482,11 +480,6 @@ DecodeError decodeZebin(ProgramInfo &dst, NEO::Elf::Elf<numBits> &elf, std::stri
             return DecodeError::invalidBinary;
         }
 
-        auto gtpinInfoForKernel = getKernelGtpinInfo(kernelName, elf, zebinSections);
-        if (false == gtpinInfoForKernel.empty()) {
-            kernelInfo->igcInfoForGtpin = reinterpret_cast<const gtpin::igc_info_t *>(gtpinInfoForKernel.begin());
-        }
-
         kernelInfo->heapInfo.pKernelHeap = kernelInstructions.begin();
         kernelInfo->heapInfo.kernelHeapSize = static_cast<uint32_t>(kernelInstructions.size());
         kernelInfo->heapInfo.kernelUnpaddedSize = static_cast<uint32_t>(kernelInstructions.size());
@@ -525,22 +518,6 @@ ConstStringRef getKernelNameFromSectionName(ConstStringRef sectionName) {
         DEBUG_BREAK_IF(sectionName != NEO::Zebin::Elf::SectionNames::text);
         return Zebin::Elf::SectionNames::externalFunctions;
     }
-}
-
-template ArrayRef<const uint8_t> getKernelGtpinInfo<Elf::EI_CLASS_32>(ConstStringRef &kernelName, Elf::Elf<Elf::EI_CLASS_32> &elf, const ZebinSections<Elf::EI_CLASS_32> &zebinSections);
-template ArrayRef<const uint8_t> getKernelGtpinInfo<Elf::EI_CLASS_64>(ConstStringRef &kernelName, Elf::Elf<Elf::EI_CLASS_64> &elf, const ZebinSections<Elf::EI_CLASS_64> &zebinSections);
-template <Elf::ElfIdentifierClass numBits>
-ArrayRef<const uint8_t> getKernelGtpinInfo(ConstStringRef &kernelName, Elf::Elf<numBits> &elf, const ZebinSections<numBits> &zebinSections) {
-    auto sectionHeaderNamesData = elf.sectionHeaders[elf.elfFileHeader->shStrNdx].data;
-    ConstStringRef sectionHeaderNamesString(reinterpret_cast<const char *>(sectionHeaderNamesData.begin()), sectionHeaderNamesData.size());
-    for (auto *gtpinInfoSection : zebinSections.gtpinInfoSections) {
-        ConstStringRef sectionName = ConstStringRef(sectionHeaderNamesString.begin() + gtpinInfoSection->header->name);
-        auto suffix = sectionName.substr(static_cast<int>(Elf::SectionNames::gtpinInfo.length()));
-        if (suffix == kernelName) {
-            return gtpinInfoSection->data;
-        }
-    }
-    return {};
 }
 
 } // namespace Zebin

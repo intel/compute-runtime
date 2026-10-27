@@ -240,10 +240,6 @@ class Program : public BaseObject<_cl_program> {
         return buildInfos[rootDeviceIndex].debugData.get();
     }
 
-    size_t getDebugDataSize(uint32_t rootDeviceIndex) {
-        return buildInfos[rootDeviceIndex].debugDataSize;
-    }
-
     const Linker::RelocatedSymbolsMap &getSymbols(uint32_t rootDeviceIndex) const {
         return buildInfos[rootDeviceIndex].symbols;
     }

@@ -2068,29 +2068,7 @@ TEST_F(ProgramTests, whenContainsStatefulAccessIsCalledThenReturnCorrectResult) 
         kernelInfo->kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptor);
         program.addKernelInfo(kernelInfo.release(), 0);
 
-        EXPECT_EQ(expectedResult, AddressingModeHelper::containsBufferStatefulAccess(program.buildInfos[0].kernelInfoArray, false));
-    }
-}
-
-TEST_F(ProgramTests, givenSkipLastExplicitArgWhenContainsStatefulAccessIsCalledThenReturnCorrectResult) {
-    std::vector<std::tuple<bool, SurfaceStateHeapOffset, CrossThreadDataOffset>> testParams = {
-        {false, 0x40, undefined<CrossThreadDataOffset>},
-        {false, undefined<SurfaceStateHeapOffset>, 0x40},
-        {false, undefined<SurfaceStateHeapOffset>, undefined<CrossThreadDataOffset>}};
-
-    auto skipLastExplicitArg = true;
-    for (auto &[expectedResult, surfaceStateHeapOffset, crossThreadDataOffset] : testParams) {
-        MockProgram program(pContext, false, toClDeviceVector(*pClDevice));
-        auto kernelInfo = std::make_unique<KernelInfo>();
-        kernelInfo->kernelDescriptor.payloadMappings.explicitArgs.clear();
-        auto argDescriptor = ArgDescriptor(ArgDescriptor::argTPointer);
-        argDescriptor.as<ArgDescPointer>().bindful = surfaceStateHeapOffset;
-        argDescriptor.as<ArgDescPointer>().bindless = crossThreadDataOffset;
-
-        kernelInfo->kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptor);
-        program.addKernelInfo(kernelInfo.release(), 0);
-
-        EXPECT_EQ(expectedResult, AddressingModeHelper::containsBufferStatefulAccess(program.buildInfos[0].kernelInfoArray, skipLastExplicitArg));
+        EXPECT_EQ(expectedResult, AddressingModeHelper::containsBufferStatefulAccess(program.buildInfos[0].kernelInfoArray));
     }
 }
 

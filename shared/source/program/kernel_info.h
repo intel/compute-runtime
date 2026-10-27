@@ -16,10 +16,6 @@
 #include <utility>
 #include <vector>
 
-namespace gtpin {
-typedef struct igc_info_s igc_info_t;
-}
-
 namespace NEO {
 struct HardwareInfo;
 namespace BuiltIn {
@@ -115,12 +111,9 @@ struct KernelInfo : NEO::NonCopyableAndNonMovableClass {
     char *crossThreadData = nullptr;
     const BuiltIn::DispatchInfoBuilder *builtinDispatchBuilder = nullptr;
     uint32_t systemKernelOffset = 0;
-    uint64_t kernelId = 0;
-    bool isKernelHeapSubstituted = false;
     GraphicsAllocation *kernelAllocation = nullptr;
     DebugData debugData;
     bool computeMode = false;
-    const gtpin::igc_info_t *igcInfoForGtpin = nullptr;
 
     uint64_t shaderHashCode;
     KernelDescriptor kernelDescriptor;

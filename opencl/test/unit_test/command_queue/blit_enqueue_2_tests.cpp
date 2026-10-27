@@ -564,32 +564,6 @@ HWTEST_TEMPLATED_F(BlitCopyTests, givenLocalMemoryAccessNotAllowedWhenGlobalCons
     EXPECT_NE(nullptr, bcsMockContext->getSVMAllocsManager()->getSVMAlloc(gpuAddress));
 }
 
-HWTEST_TEMPLATED_F(BlitCopyTests, givenKernelAllocationInLocalMemoryWithoutCpuAccessAllowedWhenSubstituteKernelHeapIsCalledThenUseBcsForTransfer) {
-    debugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::cpuAccessDisallowed));
-    debugManager.flags.ForceNonSystemMemoryPlacement.set(1 << (static_cast<int64_t>(AllocationType::kernelIsa) - 1));
-
-    device->getExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
-
-    MockKernelWithInternals kernel(*bcsMockContext);
-    const size_t initialHeapSize = 0x40;
-    kernel.kernelInfo.heapInfo.kernelHeapSize = initialHeapSize;
-
-    kernel.kernelInfo.createKernelAllocation(device->getDevice(), false);
-    ASSERT_NE(nullptr, kernel.kernelInfo.kernelAllocation);
-    EXPECT_TRUE(kernel.kernelInfo.kernelAllocation->isAllocatedInLocalMemoryPool());
-
-    const size_t newHeapSize = initialHeapSize;
-    char newHeap[newHeapSize];
-
-    auto initialTaskCount = bcsMockContext->bcsCsr->peekTaskCount();
-
-    kernel.mockKernel->substituteKernelHeap(newHeap, newHeapSize);
-
-    EXPECT_EQ(initialTaskCount + 1, bcsMockContext->bcsCsr->peekTaskCount());
-
-    device->getMemoryManager()->freeGraphicsMemory(kernel.kernelInfo.kernelAllocation);
-}
-
 HWTEST_TEMPLATED_F(BlitCopyTests, givenKernelAllocationInLocalMemoryWithoutCpuAccessAllowedWhenLinkerRequiresPatchingOfInstructionSegmentsThenUseBcsForTransfer) {
     debugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::cpuAccessDisallowed));
     debugManager.flags.ForceNonSystemMemoryPlacement.set(1 << (static_cast<int64_t>(AllocationType::kernelIsa) - 1));

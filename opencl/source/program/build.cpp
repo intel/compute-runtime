@@ -142,8 +142,7 @@ cl_int Program::build(
 
         retVal = processGenBinaries(deviceVector, phaseReached);
 
-        auto skipLastExplicitArg = false;
-        auto containsBufferStatefulAccess = AddressingModeHelper::containsBufferStatefulAccess(buildInfos[clDevices[0]->getRootDeviceIndex()].kernelInfoArray, skipLastExplicitArg);
+        auto containsBufferStatefulAccess = AddressingModeHelper::containsBufferStatefulAccess(buildInfos[clDevices[0]->getRootDeviceIndex()].kernelInfoArray);
         auto isUserKernel = !isBuiltIn;
 
         auto failBuildProgram = containsBufferStatefulAccess &&

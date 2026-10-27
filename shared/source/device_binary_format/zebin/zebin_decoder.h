@@ -33,7 +33,6 @@ struct ZebinSections {
     using SectionHeaderData = NEO::Elf::SectionHeaderAndData<numBits>;
     StackVec<SectionHeaderData *, 1> textSections;
     StackVec<SectionHeaderData *, 32> textKernelSections;
-    StackVec<SectionHeaderData *, 32> gtpinInfoSections;
     StackVec<SectionHeaderData *, 1> zeInfoSections;
     StackVec<SectionHeaderData *, 1> globalDataSections;
     StackVec<SectionHeaderData *, 1> globalZeroInitDataSections;
@@ -74,9 +73,6 @@ DecodeError decodeZebin(ProgramInfo &dst, Elf::Elf<numBits> &elf, std::string &o
 
 template <Elf::ElfIdentifierClass numBits>
 ArrayRef<const uint8_t> getKernelHeap(ConstStringRef &kernelName, Elf::Elf<numBits> &elf, const ZebinSections<numBits> &zebinSections);
-
-template <Elf::ElfIdentifierClass numBits>
-ArrayRef<const uint8_t> getKernelGtpinInfo(ConstStringRef &kernelName, Elf::Elf<numBits> &elf, const ZebinSections<numBits> &zebinSections);
 
 void setKernelMiscInfoPosition(ConstStringRef metadata, ProgramInfo &dst);
 

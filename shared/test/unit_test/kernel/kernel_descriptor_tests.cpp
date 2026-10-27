@@ -84,7 +84,6 @@ TEST(KernelDescriptor, WhenDefaultInitializedThenValuesAreCleared) {
     EXPECT_EQ(0U, desc.kernelMetadata.requiredSubGroupSize);
     EXPECT_EQ(0U, desc.kernelMetadata.requiredThreadGroupDispatchSize);
     EXPECT_EQ(nullptr, desc.external.debugData.get());
-    EXPECT_EQ(nullptr, desc.external.igcInfoForGtpin);
 }
 
 TEST(KernelDescriptorAttributesSupportsBuffersBiggerThan4Gb, GivenPureStatelessBufferAddressingThenReturnTrue) {

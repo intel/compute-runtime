@@ -18,7 +18,7 @@ TEST(AddressingModeHelperTest, GivenArgIsNotPointerWhenCheckingForBufferStateful
     KernelDescriptor kernelDescriptor{};
     kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptor);
 
-    EXPECT_FALSE(AddressingModeHelper::containsBufferStatefulAccess(kernelDescriptor, false));
+    EXPECT_FALSE(AddressingModeHelper::containsBufferStatefulAccess(kernelDescriptor));
 }
 
 TEST(AddressingModeHelperTest, GivenArgIsPointerWithInvalidStatefulOffsetWhenCheckingForBufferStatefulAccessThenReturnFalse) {
@@ -29,7 +29,7 @@ TEST(AddressingModeHelperTest, GivenArgIsPointerWithInvalidStatefulOffsetWhenChe
     KernelDescriptor kernelDescriptor{};
     kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptor);
 
-    EXPECT_FALSE(AddressingModeHelper::containsBufferStatefulAccess(kernelDescriptor, false));
+    EXPECT_FALSE(AddressingModeHelper::containsBufferStatefulAccess(kernelDescriptor));
 }
 
 TEST(AddressingModeHelperTest, GivenArgIsPointerWithValidBindfulOffsetWhenCheckingForBufferStatefulAccessThenReturnTrue) {
@@ -40,7 +40,7 @@ TEST(AddressingModeHelperTest, GivenArgIsPointerWithValidBindfulOffsetWhenChecki
     KernelDescriptor kernelDescriptor{};
     kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptor);
 
-    EXPECT_TRUE(AddressingModeHelper::containsBufferStatefulAccess(kernelDescriptor, false));
+    EXPECT_TRUE(AddressingModeHelper::containsBufferStatefulAccess(kernelDescriptor));
 }
 
 TEST(AddressingModeHelperTest, GivenArgIsPointerWithValidBindlessOffsetWhenCheckingForBufferStatefulAccessThenReturnTrue) {
@@ -51,18 +51,7 @@ TEST(AddressingModeHelperTest, GivenArgIsPointerWithValidBindlessOffsetWhenCheck
     KernelDescriptor kernelDescriptor{};
     kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptor);
 
-    EXPECT_TRUE(AddressingModeHelper::containsBufferStatefulAccess(kernelDescriptor, false));
-}
-
-TEST(AddressingModeHelperTest, GivenLastArgIsPointerWithValidBindlessOffsetWhenIgnoreLastArgAndCheckingForBufferStatefulAccessThenReturnFalse) {
-    auto argDescriptor = ArgDescriptor(ArgDescriptor::argTPointer);
-    argDescriptor.as<ArgDescPointer>().bindful = undefined<SurfaceStateHeapOffset>;
-    argDescriptor.as<ArgDescPointer>().bindless = 0x40;
-
-    KernelDescriptor kernelDescriptor{};
-    kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptor);
-
-    EXPECT_FALSE(AddressingModeHelper::containsBufferStatefulAccess(kernelDescriptor, true));
+    EXPECT_TRUE(AddressingModeHelper::containsBufferStatefulAccess(kernelDescriptor));
 }
 
 TEST(AddressingModeHelperTest, GivenInvalidArgWhenCheckingForStatefulAccessThenReturnFalse) {

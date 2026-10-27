@@ -299,7 +299,6 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
     struct {
         std::unique_ptr<DebugData> debugData;
         std::unique_ptr<uint8_t[]> relocatedDebugData;
-        const void *igcInfoForGtpin = nullptr;
     } external;
 
     std::vector<uint8_t> generatedSsh;

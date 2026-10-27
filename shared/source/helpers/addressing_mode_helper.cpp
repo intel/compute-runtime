@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,11 +33,8 @@ inline bool argPointerIsStateful(const ArgDescriptor &arg) {
             NEO::isValidOffset(arg.as<NEO::ArgDescPointer>().bindful));
 }
 
-bool containsBufferStatefulAccess(const KernelDescriptor &kernelDescriptor, bool skipLastExplicitArg) {
+bool containsBufferStatefulAccess(const KernelDescriptor &kernelDescriptor) {
     auto size = static_cast<int32_t>(kernelDescriptor.payloadMappings.explicitArgs.size());
-    if (skipLastExplicitArg) {
-        size--;
-    }
     for (auto i = 0; i < size; i++) {
         if (argPointerIsStateful(kernelDescriptor.payloadMappings.explicitArgs[i])) {
             return true;
@@ -46,9 +43,9 @@ bool containsBufferStatefulAccess(const KernelDescriptor &kernelDescriptor, bool
     return false;
 }
 
-bool containsBufferStatefulAccess(const std::vector<KernelInfo *> &kernelInfos, bool skipLastExplicitArg) {
+bool containsBufferStatefulAccess(const std::vector<KernelInfo *> &kernelInfos) {
     for (const auto &kernelInfo : kernelInfos) {
-        if (containsBufferStatefulAccess(kernelInfo->kernelDescriptor, skipLastExplicitArg)) {
+        if (containsBufferStatefulAccess(kernelInfo->kernelDescriptor)) {
             return true;
         }
     }

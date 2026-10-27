@@ -5768,7 +5768,7 @@ TEST_F(ModuleTest, whenContainsStatefulAccessIsCalledThenResultIsCorrect) {
         moduleTranslationUnit->programInfo.kernelInfos.clear();
         moduleTranslationUnit->programInfo.kernelInfos.push_back(kernelInfo.release());
 
-        EXPECT_EQ(expectedResult, NEO::AddressingModeHelper::containsBufferStatefulAccess(moduleTranslationUnit->programInfo.kernelInfos, false));
+        EXPECT_EQ(expectedResult, NEO::AddressingModeHelper::containsBufferStatefulAccess(moduleTranslationUnit->programInfo.kernelInfos));
     }
 }
 

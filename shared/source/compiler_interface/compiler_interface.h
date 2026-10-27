@@ -43,7 +43,6 @@ struct TranslationInput {
     IGC::CodeType::CodeType_t srcType = IGC::CodeType::invalid;
     IGC::CodeType::CodeType_t preferredIntermediateType = IGC::CodeType::invalid;
     IGC::CodeType::CodeType_t outType = IGC::CodeType::invalid;
-    void *gtPinInput = nullptr;
 
     specConstValuesMap specializedValues;
 };

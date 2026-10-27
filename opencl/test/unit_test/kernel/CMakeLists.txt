@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2025 Intel Corporation
+# Copyright (C) 2018-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -21,7 +21,6 @@ set(IGDRCL_SRCS_tests_kernel
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_slm_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/debug_kernel_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/substitute_kernel_heap_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_addressing_tests.cpp
 )
 

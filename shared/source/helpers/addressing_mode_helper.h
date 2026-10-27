@@ -17,8 +17,8 @@ struct RootDeviceEnvironment;
 
 namespace AddressingModeHelper {
 bool failBuildProgramWithBufferStatefulAccess(const RootDeviceEnvironment &rootDeviceEnvironment);
-bool containsBufferStatefulAccess(const KernelDescriptor &kernelDescriptor, bool skipLastExplicitArg);
-bool containsBufferStatefulAccess(const std::vector<KernelInfo *> &kernelInfos, bool skipLastExplicitArg);
+bool containsBufferStatefulAccess(const KernelDescriptor &kernelDescriptor);
+bool containsBufferStatefulAccess(const std::vector<KernelInfo *> &kernelInfos);
 bool containsStatefulAccess(const KernelDescriptor &kernelDescriptor);
 bool containsBindlessKernel(const std::vector<KernelInfo *> &kernelInfos);
 template <typename... Ts>

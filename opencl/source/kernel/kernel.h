@@ -166,10 +166,6 @@ class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMova
 
     void resizeSurfaceStateHeap(void *pNewSsh, size_t newSshSize, size_t newBindingTableCount, size_t newBindingTableOffset);
 
-    void substituteKernelHeap(void *newKernelHeap, size_t newKernelHeapSize);
-    bool isKernelHeapSubstituted() const;
-    uint64_t getKernelId() const;
-    void setKernelId(uint64_t newKernelId);
     uint32_t getStartOffset() const;
     void setStartOffset(uint32_t offset);
 

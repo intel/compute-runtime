@@ -196,7 +196,6 @@ TEST(ExtractZebinSections, GivenKnownSectionsThenCapturesThemProperly) {
 
     ASSERT_EQ(1U, sections.textSections.size());
     ASSERT_EQ(2U, sections.textKernelSections.size());
-    ASSERT_EQ(2U, sections.gtpinInfoSections.size());
 
     ASSERT_EQ(1U, sections.globalDataSections.size());
     ASSERT_EQ(1U, sections.constDataSections.size());
@@ -216,8 +215,6 @@ TEST(ExtractZebinSections, GivenKnownSectionsThenCapturesThemProperly) {
     EXPECT_STREQ(NEO::Zebin::Elf::SectionNames::text.data(), strings + sections.textSections[0]->header->name);
     EXPECT_STREQ((NEO::Zebin::Elf::SectionNames::textPrefix.str() + "someKernel").c_str(), strings + sections.textKernelSections[0]->header->name);
     EXPECT_STREQ((NEO::Zebin::Elf::SectionNames::textPrefix.str() + "someOtherKernel").c_str(), strings + sections.textKernelSections[1]->header->name);
-    EXPECT_STREQ((NEO::Zebin::Elf::SectionNames::gtpinInfo.str() + "someKernel").c_str(), strings + sections.gtpinInfoSections[0]->header->name);
-    EXPECT_STREQ((NEO::Zebin::Elf::SectionNames::gtpinInfo.str() + "someOtherKernel").c_str(), strings + sections.gtpinInfoSections[1]->header->name);
     EXPECT_STREQ(NEO::Zebin::Elf::SectionNames::dataGlobal.data(), strings + sections.globalDataSections[0]->header->name);
     EXPECT_STREQ(NEO::Zebin::Elf::SectionNames::dataConst.data(), strings + sections.constDataSections[0]->header->name);
     EXPECT_STREQ(NEO::Zebin::Elf::SectionNames::dataConstString.data(), strings + sections.constDataStringSections[0]->header->name);
@@ -4820,37 +4817,6 @@ kernels:
     auto err = decodeZebin(programInfo, elf, errors, warnings);
     EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_STREQ("DeviceBinaryFormat::zebin : Could not find text section for kernel some_kernel\n", errors.c_str());
-}
-
-TEST(DecodeZebinTest, givenGtpinInfoSectionsWhenDecodingZebinThenProperlySetIgcInfoForGtpinForEachCorrespondingKernel) {
-    std::string errors, warnings;
-    ZebinTestData::ValidEmptyProgram zebin;
-    const uint8_t data[0x10]{0u};
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::textPrefix.str() + "someOtherKernel", ArrayRef<const uint8_t>::fromAny(data, 0x10));
-
-    std::array<uint8_t, 16> mockGtpinData1{};
-    mockGtpinData1.fill(7u);
-    std::array<uint8_t, 16> mockGtpinData2{};
-    mockGtpinData2.fill(16u);
-    zebin.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_GTPIN_INFO, NEO::Zebin::Elf::SectionNames::gtpinInfo.str() + zebin.kernelName, ArrayRef<const uint8_t>::fromAny(mockGtpinData1.data(), mockGtpinData1.size()));
-    zebin.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_GTPIN_INFO, NEO::Zebin::Elf::SectionNames::gtpinInfo.str() + "someOtherKernel", ArrayRef<const uint8_t>::fromAny(mockGtpinData2.data(), mockGtpinData2.size()));
-
-    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
-    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
-
-    NEO::ProgramInfo programInfo;
-    programInfo.kernelInfos.reserve(2);
-    auto kernelInfo1 = new KernelInfo();
-    kernelInfo1->kernelDescriptor.kernelMetadata.kernelName = zebin.kernelName;
-    programInfo.kernelInfos.push_back(kernelInfo1);
-    auto kernelInfo2 = new KernelInfo();
-    kernelInfo2->kernelDescriptor.kernelMetadata.kernelName = "someOtherKernel";
-    programInfo.kernelInfos.push_back(kernelInfo2);
-
-    auto err = decodeZebin(programInfo, elf, errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::success, err);
-    EXPECT_EQ(0, memcmp(reinterpret_cast<const uint8_t *>(kernelInfo1->igcInfoForGtpin), mockGtpinData1.data(), mockGtpinData1.size()));
-    EXPECT_EQ(0, memcmp(reinterpret_cast<const uint8_t *>(kernelInfo2->igcInfoForGtpin), mockGtpinData2.data(), mockGtpinData2.size()));
 }
 
 TEST(DecodeZebinTest, givenRequiredLibsSectionFollowingKernelMiscInfoSectionWhenDecodingZebinThenZeInfoNotTruncatedAndLibsDecoded) {

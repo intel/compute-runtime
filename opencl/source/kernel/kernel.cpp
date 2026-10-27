@@ -801,50 +801,6 @@ size_t Kernel::getKernelHeapSize() const {
     return kernelInfo.heapInfo.kernelHeapSize;
 }
 
-void Kernel::substituteKernelHeap(void *newKernelHeap, size_t newKernelHeapSize) {
-    KernelInfo *pKernelInfo = const_cast<KernelInfo *>(&kernelInfo);
-    void **pKernelHeap = const_cast<void **>(&pKernelInfo->heapInfo.pKernelHeap);
-    *pKernelHeap = newKernelHeap;
-    auto &heapInfo = pKernelInfo->heapInfo;
-    heapInfo.kernelHeapSize = static_cast<uint32_t>(newKernelHeapSize);
-    pKernelInfo->isKernelHeapSubstituted = true;
-    auto memoryManager = executionEnvironment.memoryManager.get();
-
-    auto currentAllocationSize = pKernelInfo->getIsaSize();
-    bool status = false;
-    auto &rootDeviceEnvironment = clDevice.getRootDeviceEnvironment();
-    auto &helper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
-    size_t isaPadding = helper.getPaddingForISAAllocation();
-
-    DEBUG_BREAK_IF(nullptr != pKernelInfo->getIsaParentAllocation());
-
-    if (currentAllocationSize >= newKernelHeapSize + isaPadding) {
-        auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
-        auto useBlitter = productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *pKernelInfo->getIsaGraphicsAllocation());
-        status = MemoryTransferHelper::transferMemoryToAllocation(useBlitter,
-                                                                  clDevice.getDevice(), pKernelInfo->getIsaGraphicsAllocation(), 0, newKernelHeap,
-                                                                  static_cast<size_t>(newKernelHeapSize));
-    } else {
-        memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(pKernelInfo->getIsaGraphicsAllocation());
-        pKernelInfo->setIsaPerKernelAllocation(nullptr);
-        status = pKernelInfo->createKernelAllocation(clDevice.getDevice(), isBuiltIn);
-    }
-    UNRECOVERABLE_IF(!status);
-}
-
-bool Kernel::isKernelHeapSubstituted() const {
-    return kernelInfo.isKernelHeapSubstituted;
-}
-
-uint64_t Kernel::getKernelId() const {
-    return kernelInfo.kernelId;
-}
-
-void Kernel::setKernelId(uint64_t newKernelId) {
-    KernelInfo *pKernelInfo = const_cast<KernelInfo *>(&kernelInfo);
-    pKernelInfo->kernelId = newKernelId;
-}
-
 uint32_t Kernel::getStartOffset() const {
     return this->startOffset;
 }

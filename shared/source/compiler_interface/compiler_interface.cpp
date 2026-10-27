@@ -158,7 +158,7 @@ TranslationErrorCode CompilerInterface::build(
     auto igcTranslationCtx = createIgcTranslationCtx(device, intermediateCodeType, igcOutputType);
 
     auto buildOutput = translate(igcTranslationCtx.get(), intermediateRepresentation.get(), idsBuffer.get(), valuesBuffer.get(),
-                                 fclOptions.get(), fclInternalOptions.get(), input.gtPinInput);
+                                 fclOptions.get(), fclInternalOptions.get(), nullptr);
 
     if (buildOutput == nullptr) {
         return TranslationErrorCode::unknownError;
@@ -282,7 +282,7 @@ TranslationErrorCode CompilerInterface::link(
 
         auto igcTranslationCtx = createIgcTranslationCtx(device, inType, outType);
         currOut = translate(igcTranslationCtx.get(), currSrc.get(),
-                            igcOptions.get(), igcInternalOptions.get(), input.gtPinInput);
+                            igcOptions.get(), igcInternalOptions.get(), nullptr);
 
         if (currOut == nullptr) {
             return TranslationErrorCode::unknownError;
