@@ -513,15 +513,18 @@ void CommandQueue::handleIndirectAllocationResidency(UnifiedMemoryControls unifi
 }
 
 void CommandQueue::makeResidentAndMigrate(bool performMigration, const NEO::ResidencyContainer &residencyContainer) {
+    if (performMigration) {
+        auto pageFaultManager = device->getDriverHandle()->getMemoryManager()->getPageFaultManager();
+        for (auto alloc : residencyContainer) {
+            if (alloc->getAllocationType() == NEO::AllocationType::svmGpu ||
+                alloc->getAllocationType() == NEO::AllocationType::svmCpu) {
+                pageFaultManager->moveAllocationToGpuDomain(reinterpret_cast<void *>(alloc->getGpuAddress()));
+            }
+        }
+    }
     for (auto alloc : residencyContainer) {
         alloc->prepareHostPtrForResidency(csr);
         csr->makeResident(*alloc);
-        if (performMigration &&
-            (alloc->getAllocationType() == NEO::AllocationType::svmGpu ||
-             alloc->getAllocationType() == NEO::AllocationType::svmCpu)) {
-            auto pageFaultManager = device->getDriverHandle()->getMemoryManager()->getPageFaultManager();
-            pageFaultManager->moveAllocationToGpuDomain(reinterpret_cast<void *>(alloc->getGpuAddress()));
-        }
     }
 }
 
