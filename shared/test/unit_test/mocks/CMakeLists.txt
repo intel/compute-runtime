@@ -11,6 +11,7 @@ target_sources(neo_shared_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/mock_csr_simulated_common_hw.h
                ${CMAKE_CURRENT_SOURCE_DIR}/mock_dispatch_kernel_encoder_interface.h
                ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_resource_info.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/mock_os_agnostic_direct_submission.h
                ${CMAKE_CURRENT_SOURCE_DIR}/mock_physical_address_allocator.h
                ${CMAKE_CURRENT_SOURCE_DIR}/mock_required_libs_helpers.h
 )

@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "shared/source/command_stream/command_stream_receiver_with_aub_dump.inl"
+#include "shared/source/direct_submission/direct_submission_hw.h"
 #include "shared/source/helpers/hardware_context_controller.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/test/common/fixtures/device_fixture.h"
@@ -25,6 +26,7 @@
 #include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/mocks/mock_tbx_csr.h"
 #include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/unit_test/mocks/mock_os_agnostic_direct_submission.h"
 
 #include <algorithm>
 #include <cstdint>
@@ -143,6 +145,42 @@ bool isCommandBufferTbxWritableAfterFlush(MockTbxCsr<FamilyType> &tbxCsr, Memory
     auto isTbxWritable = tbxCsr.isTbxWritable(*commandBuffer);
     memoryManager.freeGraphicsMemory(commandBuffer);
     return isTbxWritable;
+}
+
+template <typename FamilyType, typename Dispatcher>
+bool isPreviousRingBufferUploadedWhenRingBuffersAreSwitched(MockTbxCsr<FamilyType> &tbxCsr, std::unique_ptr<DirectSubmissionHw<FamilyType, Dispatcher>> &csrDirectSubmission, MockAubManager &mockAubManager, MemoryManager &memoryManager, const DeviceBitfield deviceBitfield) {
+    auto directSubmission = new MockOsAgnosticDirectSubmission<FamilyType, Dispatcher>(tbxCsr);
+    csrDirectSubmission.reset(directSubmission);
+    tbxCsr.completionFenceValuePointer = csrDirectSubmission->getCompletionValuePointer();
+    EXPECT_TRUE(directSubmission->initialize(false));
+
+    auto commandBuffer = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{tbxCsr.getRootDeviceIndex(), MemoryConstants::pageSize, deviceBitfield});
+    LinearStream commandStream(commandBuffer);
+    commandStream.getSpace(256);
+    ResidencyContainer allocationsForResidency;
+
+    auto flushCommandBuffer = [&]() {
+        BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(commandStream.getGraphicsAllocation(), &commandStream, commandStream.getUsed());
+        batchBuffer.endCmdPtr = ptrOffset(commandStream.getCpuBase(), 128);
+        allocationsForResidency.clear();
+        tbxCsr.flush(batchBuffer, allocationsForResidency);
+    };
+    flushCommandBuffer();
+
+    auto previousRingBuffer = directSubmission->ringBuffers[directSubmission->currentRingBuffer].ringBuffer;
+    directSubmission->ringCommandStream.getSpace(directSubmission->ringCommandStream.getAvailableSpace() - directSubmission->getSizeSwitchRingBufferSection());
+
+    mockAubManager.storeAllocationParams = true;
+    mockAubManager.storedAllocationParams.clear();
+    flushCommandBuffer();
+
+    auto ringBufferSwitched = directSubmission->ringBuffers[directSubmission->currentRingBuffer].ringBuffer != previousRingBuffer;
+    auto previousRingBufferUploaded = std::any_of(mockAubManager.storedAllocationParams.begin(), mockAubManager.storedAllocationParams.end(), [&](const auto &params) {
+        return params.gfxAddress == previousRingBuffer->getGpuAddress() && params.size == previousRingBuffer->getUnderlyingBufferSize();
+    });
+
+    memoryManager.freeGraphicsMemory(commandBuffer);
+    return ringBufferSwitched && previousRingBufferUploaded;
 }
 
 using TbxCommandStreamDirectSubmissionTests = Test<TbxDirectSubmissionFixture>;
@@ -339,4 +377,16 @@ HWTEST_TEMPLATED_F(TbxCommandStreamBlitterDirectSubmissionTests, givenStartedBli
     auto *tbxCsr = getCsr<FamilyType>();
 
     EXPECT_TRUE(isCommandBufferTbxWritableAfterFlush(*tbxCsr, *pDevice->executionEnvironment->memoryManager, pDevice->getDeviceBitfield()));
+}
+
+HWTEST_TEMPLATED_F(TbxCommandStreamDirectSubmissionTests, givenStartedDirectSubmissionWhenRingBuffersAreSwitchedThenPreviousRingBufferIsUploaded) {
+    auto *tbxCsr = getCsr<FamilyType>();
+
+    EXPECT_TRUE(isPreviousRingBufferUploadedWhenRingBuffersAreSwitched(*tbxCsr, tbxCsr->directSubmission, *mockAubManager, *pDevice->executionEnvironment->memoryManager, pDevice->getDeviceBitfield()));
+}
+
+HWTEST_TEMPLATED_F(TbxCommandStreamBlitterDirectSubmissionTests, givenStartedBlitterDirectSubmissionWhenRingBuffersAreSwitchedThenPreviousRingBufferIsUploaded) {
+    auto *tbxCsr = getCsr<FamilyType>();
+
+    EXPECT_TRUE(isPreviousRingBufferUploadedWhenRingBuffersAreSwitched(*tbxCsr, tbxCsr->blitterDirectSubmission, *mockAubManager, *pDevice->executionEnvironment->memoryManager, pDevice->getDeviceBitfield()));
 }

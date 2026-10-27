@@ -86,6 +86,8 @@ bool OsAgnosticDirectSubmission<GfxFamily, Dispatcher>::handleResidency(const Re
 
 template <typename GfxFamily, typename Dispatcher>
 void OsAgnosticDirectSubmission<GfxFamily, Dispatcher>::handleSwitchRingBuffers(ResidencyContainer *allocationsForResidency) {
+    auto *csrSimulatedHw = reinterpret_cast<const CommandStreamReceiverSimulatedHw<GfxFamily> *>(&this->csr);
+    csrSimulatedHw->writeMemoryWithAubManager(*this->ringBuffers[this->previousRingBuffer].ringBuffer, false, 0, 0);
 }
 
 template <typename GfxFamily, typename Dispatcher>

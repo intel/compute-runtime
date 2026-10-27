@@ -25,6 +25,9 @@ class MockTbxCsr : public TbxCommandStreamReceiverHw<GfxFamily> {
     using TbxCommandStreamReceiverHw<GfxFamily>::getParametersForMemory;
     using TbxCommandStreamReceiverHw<GfxFamily>::getTbxPageFaultManager;
     using TbxCommandStreamReceiverHw<GfxFamily>::pollForCompletionEnabled;
+    using TbxCommandStreamReceiverHw<GfxFamily>::directSubmission;
+    using TbxCommandStreamReceiverHw<GfxFamily>::blitterDirectSubmission;
+    using CommandStreamReceiver::completionFenceValuePointer;
     using CommandStreamReceiver::latestFlushedTaskCount;
 
     MockTbxCsr(ExecutionEnvironment &executionEnvironment,
