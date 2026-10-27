@@ -11,6 +11,7 @@ set(NEO_CORE_SRCS_BUILT_INS
     ${CMAKE_CURRENT_SOURCE_DIR}/built_ins.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/built_ins.h
     ${CMAKE_CURRENT_SOURCE_DIR}/built_in_ops_base.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/built_in_resource.h
     ${CMAKE_CURRENT_SOURCE_DIR}/registry/built_ins_registry.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/sip.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/sip.h
