@@ -1261,6 +1261,31 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             VariableTest,
+            givenBufferVariableWhenSameUsmPointerIsSetAgainAfterAnotherAllocationThenAllocIdIsKeptAndManagerCounterIsUpdated) {
+    auto svmPtr = allocateUsm(4096);
+
+    createVariable(L0::MCL::VariableType::buffer, true, -1, -1);
+    uint64_t *gpuAddressPatch = reinterpret_cast<uint64_t *>(ptrOffset(this->cmdListIndirectCpuBase, this->defaultBufferStatelessOffset));
+
+    auto ret = this->variable->setValue(kernelArgVariableSize, 0, &svmPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    const auto allocId = this->variable->getDesc().allocId;
+    const auto managerCounter = this->variable->getDesc().allocIdMemoryManagerCounter;
+
+    allocateUsm(4096);
+    *gpuAddressPatch = 0;
+
+    ret = this->variable->setValue(kernelArgVariableSize, 0, &svmPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    EXPECT_EQ(allocId, this->variable->getDesc().allocId);
+    EXPECT_LT(managerCounter, this->variable->getDesc().allocIdMemoryManagerCounter);
+    EXPECT_EQ(this->device->getDriverHandle()->getSvmAllocsManager()->allocationsCounter.load(), this->variable->getDesc().allocIdMemoryManagerCounter);
+    EXPECT_EQ(0u, *gpuAddressPatch);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            VariableTest,
             givenValueVariableWhenMutatingArgumentThenPayloadIsPatched) {
     constexpr size_t arraySize = defaultValueStatelessSize;
     alignas(8) uint8_t immediateValue[arraySize];

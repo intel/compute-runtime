@@ -58,6 +58,7 @@ bool UsmMemAllocPool::initialize(SVMAllocsManager *svmMemoryManager, void *ptr, 
     this->svmMemoryManager = svmMemoryManager;
     this->allocationData = svmData;
     this->poolEnd = ptrOffset(this->pool, svmData->size);
+    svmData->usmPool = this;
     size_t chunkAllocatorSizeThreshold = maxServicedSize / 2;
     if (debugManager.flags.UsmPoolChunkAllocatorSizeThreshold.get() != -1) {
         chunkAllocatorSizeThreshold = static_cast<size_t>(debugManager.flags.UsmPoolChunkAllocatorSizeThreshold.get());
@@ -103,6 +104,7 @@ void UsmMemAllocPool::cleanup() {
     if (this->customCleanup) {
         this->customCleanup(this->pool);
     }
+    this->allocationData->usmPool = nullptr;
     [[maybe_unused]] const auto status = hasDeferredChunks ? this->svmMemoryManager->freeSVMAllocDefer(this->pool) : this->svmMemoryManager->freeSVMAlloc(this->pool);
     DEBUG_BREAK_IF(false == status);
     this->svmMemoryManager = nullptr;
@@ -181,8 +183,7 @@ void *UsmMemAllocPool::createUnifiedMemoryAllocation(size_t requestedSize, const
     }
 
     auto pooledPtr = addrToPtr(pooledAddress);
-    this->allocations.insert(pooledPtr, AllocationInfo{pooledAddress, actualSize, requestedSize});
-    ++this->svmMemoryManager->allocationsCounter;
+    this->allocations.insert(pooledPtr, AllocationInfo{pooledAddress, actualSize, requestedSize, ++this->svmMemoryManager->allocationsCounter});
     return pooledPtr;
 }
 
@@ -311,6 +312,16 @@ UsmPoolLookupResult UsmMemAllocPool::lookupAlloc(const void *ptr) {
         result.pooledAllocationSize = allocationInfo->requestedSize;
     }
     return result;
+}
+
+uint32_t UsmMemAllocPool::getChunkAllocId(const void *ptr) {
+    std::unique_lock<std::mutex> lock(mtx);
+    const auto allocationInfo = allocations.get(ptr);
+    return nullptr != allocationInfo ? allocationInfo->allocId : 0u;
+}
+
+uint32_t SvmAllocationData::getAllocId(const void *ptr) const {
+    return nullptr != this->usmPool ? this->usmPool->getChunkAllocId(ptr) : this->getAllocId();
 }
 
 bool UsmMemAllocPool::addMemFreeCallback(const void *ptr, MemFreeCallback callback) {

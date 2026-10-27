@@ -785,6 +785,88 @@ TEST_F(InitializedHostUnifiedMemoryPoolingTest, givenPoolableAllocationWhenGetti
     EXPECT_EQ(nullptr, pastEndLookup.pooledAllocationBasePtr);
 }
 
+TEST_F(InitializedHostUnifiedMemoryPoolingTest, givenChunkReallocatedAtSameAddressWhenLookingUpAllocThenEachChunkHasOwnAllocationId) {
+    auto memoryProperties = makeHostProperties();
+    const auto allocationSize = 1 * MemoryConstants::kiloByte;
+
+    auto firstAlloc = usmMemAllocPool.createUnifiedMemoryAllocation(allocationSize, memoryProperties);
+    ASSERT_NE(nullptr, firstAlloc);
+    const auto firstAllocId = usmMemAllocPool.getChunkAllocId(firstAlloc);
+    EXPECT_EQ(svmManager->allocationsCounter.load(), firstAllocId);
+    EXPECT_NE(svmManager->getSVMAlloc(firstAlloc)->getAllocId(), firstAllocId);
+    EXPECT_EQ(firstAllocId, svmManager->getSVMAlloc(firstAlloc)->getAllocId(firstAlloc));
+
+    EXPECT_TRUE(usmMemAllocPool.freeSVMAlloc(firstAlloc, FreePolicyType::none).freeSucceeded);
+    auto secondAlloc = usmMemAllocPool.createUnifiedMemoryAllocation(allocationSize, memoryProperties);
+    ASSERT_EQ(firstAlloc, secondAlloc);
+    const auto secondAllocId = usmMemAllocPool.getChunkAllocId(secondAlloc);
+    EXPECT_EQ(svmManager->allocationsCounter.load(), secondAllocId);
+    EXPECT_NE(firstAllocId, secondAllocId);
+
+    EXPECT_TRUE(usmMemAllocPool.freeSVMAlloc(secondAlloc, FreePolicyType::none).freeSucceeded);
+}
+
+TEST_F(InitializedHostUnifiedMemoryPoolingTest, givenInteriorPointerOfChunkWhenGettingChunkAllocIdThenChunkAllocIdIsReturned) {
+    auto memoryProperties = makeHostProperties();
+    const auto allocationSize = 4 * MemoryConstants::kiloByte;
+
+    auto chunk = usmMemAllocPool.createUnifiedMemoryAllocation(allocationSize, memoryProperties);
+    ASSERT_NE(nullptr, chunk);
+    const auto chunkAllocId = usmMemAllocPool.getChunkAllocId(chunk);
+    EXPECT_NE(0u, chunkAllocId);
+    EXPECT_EQ(chunkAllocId, usmMemAllocPool.getChunkAllocId(ptrOffset(chunk, allocationSize - 1)));
+
+    EXPECT_TRUE(usmMemAllocPool.freeSVMAlloc(chunk, FreePolicyType::none).freeSucceeded);
+}
+
+TEST_F(InitializedHostUnifiedMemoryPoolingTest, givenFreedChunkAboveLiveChunkWhenGettingChunkAllocIdThenZeroIsReturned) {
+    auto memoryProperties = makeHostProperties();
+    const auto allocationSize = 1 * MemoryConstants::kiloByte;
+
+    auto firstChunk = usmMemAllocPool.createUnifiedMemoryAllocation(allocationSize, memoryProperties);
+    auto secondChunk = usmMemAllocPool.createUnifiedMemoryAllocation(allocationSize, memoryProperties);
+    ASSERT_NE(nullptr, firstChunk);
+    ASSERT_NE(nullptr, secondChunk);
+    auto lowerChunk = std::min(firstChunk, secondChunk);
+    auto higherChunk = std::max(firstChunk, secondChunk);
+
+    EXPECT_TRUE(usmMemAllocPool.freeSVMAlloc(higherChunk, FreePolicyType::none).freeSucceeded);
+    EXPECT_EQ(0u, usmMemAllocPool.getChunkAllocId(higherChunk));
+    EXPECT_NE(0u, usmMemAllocPool.getChunkAllocId(lowerChunk));
+
+    EXPECT_TRUE(usmMemAllocPool.freeSVMAlloc(lowerChunk, FreePolicyType::none).freeSucceeded);
+}
+
+TEST_F(InitializedHostUnifiedMemoryPoolingTest, givenEmptyPoolWhenGettingChunkAllocIdAtPoolStartThenZeroIsReturned) {
+    EXPECT_EQ(0u, usmMemAllocPool.getChunkAllocId(usmMemAllocPool.pool));
+}
+
+TEST_F(InitializedHostUnifiedMemoryPoolingTest, givenPoolWhenCleanedUpThenPoolAllocationDataNoLongerPointsToPool) {
+    auto poolPtr = usmMemAllocPool.pool;
+    auto poolAllocationData = svmManager->getSVMAlloc(poolPtr);
+    ASSERT_NE(nullptr, poolAllocationData);
+    EXPECT_EQ(&usmMemAllocPool, poolAllocationData->usmPool);
+
+    svmManager->freeSVMAllocImplCallBase = false;
+    usmMemAllocPool.cleanup();
+    EXPECT_EQ(nullptr, poolAllocationData->usmPool);
+
+    svmManager->freeSVMAllocImplCallBase = true;
+    EXPECT_TRUE(svmManager->freeSVMAlloc(poolPtr));
+}
+
+TEST_F(InitializedHostUnifiedMemoryPoolingTest, givenAllocationOutsidePoolWhenGettingAllocIdForPointerThenAllocationIdIsReturned) {
+    auto memoryProperties = makeHostProperties();
+    auto ptr = svmManager->createHostUnifiedMemoryAllocation(poolAllocationThreshold + 1, memoryProperties);
+    ASSERT_NE(nullptr, ptr);
+    auto allocationData = svmManager->getSVMAlloc(ptr);
+    ASSERT_NE(nullptr, allocationData);
+    EXPECT_EQ(nullptr, allocationData->usmPool);
+    EXPECT_EQ(allocationData->getAllocId(), allocationData->getAllocId(ptr));
+
+    EXPECT_TRUE(svmManager->freeSVMAlloc(ptr));
+}
+
 TEST_F(InitializedHostUnifiedMemoryPoolingTest, givenPointersWithDifferentOwnershipWhenCallingFreeIfOwnedAndIsPooledAllocationThenOwnershipIsRespected) {
     auto memoryProperties = makeHostProperties();
     const auto allocationSize = 1 * MemoryConstants::kiloByte;

@@ -38,6 +38,7 @@ class CommandStreamReceiver;
 class GraphicsAllocation;
 class MemoryManager;
 class Device;
+class UsmMemAllocPool;
 struct UnifiedMemoryProperties;
 struct UsmReuseInfo;
 struct VirtualMemoryReservation;
@@ -85,12 +86,14 @@ struct SvmAllocationData : NEO::NonCopyableAndNonMovableClass {
     bool mappedAllocData = false;
     bool isInternalAllocation = false;
     bool isSavedForReuse = false;
+    UsmMemAllocPool *usmPool = nullptr;
     uint32_t ipcHandleTypeFlags = 0;
     uint64_t mappedPhysicalOffset = 0;
 
     uint32_t getAllocId() const {
         return allocId;
     }
+    uint32_t getAllocId(const void *ptr) const;
 
     static constexpr uint32_t uninitializedAllocId = std::numeric_limits<uint32_t>::max();
 

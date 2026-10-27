@@ -272,6 +272,34 @@ struct MockKernelWithCallTracking : Mock<::L0::KernelImp> {
 
 using SetKernelArgCacheTest = Test<ModuleFixture>;
 
+TEST_F(SetKernelArgCacheTest, givenPooledBufferArgumentWhenChunkIsReallocatedAtSameAddressThenSetArgBufferWithAllocIsCalledAgain) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableUsmAllocationPoolManager.set(0);
+    NEO::debugManager.flags.EnableHostUsmAllocationPool.set(1);
+
+    MockKernelWithCallTracking mockKernel;
+    mockKernel.setModule(module.get());
+    ze_kernel_desc_t desc = {};
+    desc.pKernelName = kernelName.c_str();
+    mockKernel.initialize(&desc);
+
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    void *firstChunk = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, 4096, 4096, &firstChunk));
+    ASSERT_NE(nullptr, device->getDriverHandle()->getHostUsmPoolOwningPtr(firstChunk).pool);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgBuffer(0, sizeof(firstChunk), &firstChunk));
+    EXPECT_EQ(1u, mockKernel.setArgBufferWithAllocCalled);
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->freeMem(firstChunk));
+    void *secondChunk = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, 4096, 4096, &secondChunk));
+    ASSERT_EQ(firstChunk, secondChunk);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgBuffer(0, sizeof(secondChunk), &secondChunk));
+    EXPECT_EQ(2u, mockKernel.setArgBufferWithAllocCalled);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(secondChunk));
+}
+
 TEST_F(SetKernelArgCacheTest, givenValidBufferArgumentWhenSetMultipleTimesThenSetArgBufferWithAllocOnlyCalledIfNeeded) {
     MockKernelWithCallTracking mockKernel;
     mockKernel.setModule(module.get());
@@ -2818,6 +2846,43 @@ HWTEST2_F(KernelImpPatchBindlessTest, GivenNoPooledAllocationEndOffsetWhenSettin
 
     EXPECT_EQ(1u, mockKernel.getPooledAllocationEndOffsetForSurfaceStateCalled);
     EXPECT_EQ(allocationSize, getEncodedBufferLengthFromSurfaceState<FamilyType>(mockKernel.getSurfaceStateHeapData()));
+}
+
+HWTEST2_F(KernelImpPatchBindlessTest, GivenChunkAllocatorWithoutSizeThresholdAndPooledChunkReallocatedLargerAtSameAddressWhenSettingArgBufferAgainThenSurfaceStateEncodesNewChunkBound, IsHeapfulRequired) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableUsmAllocationPoolManager.set(0);
+    NEO::debugManager.flags.EnableHostUsmAllocationPool.set(1);
+    NEO::debugManager.flags.UsmPoolChunkAllocatorSizeThreshold.set(0);
+
+    ze_kernel_desc_t desc = {};
+    desc.pKernelName = kernelName.c_str();
+
+    WhiteBoxKernelHw<FamilyType::gfxCoreFamily> mockKernel;
+    mockKernel.setModule(module.get());
+    mockKernel.initialize(&desc);
+
+    auto &arg = const_cast<NEO::ArgDescPointer &>(mockKernel.getDescriptor().payloadMappings.explicitArgs[0].template as<NEO::ArgDescPointer>());
+    arg.bindful = 0x0;
+    arg.bindless = undefined<CrossThreadDataOffset>;
+    arg.bufferOffset = undefined<CrossThreadDataOffset>;
+
+    constexpr size_t firstSize = 2 * MemoryConstants::kiloByte;
+    constexpr size_t secondSize = 4 * MemoryConstants::kiloByte;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    void *firstChunk = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, firstSize, MemoryConstants::kiloByte, &firstChunk));
+    ASSERT_NE(nullptr, device->getDriverHandle()->getHostUsmPoolOwningPtr(firstChunk).pool);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgBuffer(0, sizeof(firstChunk), &firstChunk));
+    const auto firstBound = getEncodedBufferLengthFromSurfaceState<FamilyType>(mockKernel.getSurfaceStateHeapData());
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->freeMem(firstChunk));
+    void *secondChunk = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, secondSize, MemoryConstants::kiloByte, &secondChunk));
+    ASSERT_EQ(firstChunk, secondChunk);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgBuffer(0, sizeof(secondChunk), &secondChunk));
+    EXPECT_EQ(firstBound + secondSize - firstSize, getEncodedBufferLengthFromSurfaceState<FamilyType>(mockKernel.getSurfaceStateHeapData()));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(secondChunk));
 }
 
 HWTEST2_F(KernelImpPatchBindlessTest, GivenBindlessArgAndBindlessHeapsHelperWhenSettingBufferSurfaceStateThenPooledBoundIsNotQueried, IsHeapfulRequired) {

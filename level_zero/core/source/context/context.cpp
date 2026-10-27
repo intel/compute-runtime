@@ -1888,14 +1888,15 @@ ze_result_t Context::getMemAllocProperties(const void *ptr,
                                            ze_memory_allocation_properties_t *pMemAllocProperties,
                                            ze_device_handle_t *phDevice) {
     const auto alloc = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
-    if (nullptr == alloc) {
+    const auto allocId = nullptr != alloc ? alloc->getAllocId(ptr) : 0u;
+    if (0u == allocId) {
         pMemAllocProperties->type = ZE_MEMORY_TYPE_UNKNOWN;
         return ZE_RESULT_SUCCESS;
     }
 
     pMemAllocProperties->type = Context::parseUSMType(alloc->memoryType);
     pMemAllocProperties->pageSize = alloc->pageSizeForAlignment;
-    pMemAllocProperties->id = alloc->getAllocId();
+    pMemAllocProperties->id = allocId;
 
     if (phDevice != nullptr) {
         if (alloc->device == nullptr) {

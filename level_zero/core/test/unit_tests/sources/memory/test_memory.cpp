@@ -597,15 +597,8 @@ TEST_F(MemoryTest, givenDevicePointerThenDriverGetAllocPropertiesReturnsExpected
     EXPECT_NE(alloc, nullptr);
     EXPECT_NE(alloc->pageSizeForAlignment, 0u);
     EXPECT_EQ(alloc->pageSizeForAlignment, memoryProperties.pageSize);
-    auto usmPool = context->getUsmPoolOwningPtr(ptr, alloc).pool;
-
-    if (usmPool &&
-        usmPool->isInPoolRange(ptr)) {
-        EXPECT_EQ(memoryProperties.id, alloc->getAllocId());
-    } else {
-        EXPECT_EQ(memoryProperties.id,
-                  context->getDriverHandle()->getSvmAllocsManager()->allocationsCounter);
-    }
+    EXPECT_EQ(memoryProperties.id,
+              context->getDriverHandle()->getSvmAllocsManager()->allocationsCounter);
 
     result = context->freeMem(ptr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
@@ -629,21 +622,60 @@ TEST_F(MemoryTest, givenHostPointerThenDriverGetAllocPropertiesReturnsExpectedPr
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(memoryProperties.type, ZE_MEMORY_TYPE_HOST);
-    auto usmPool = driverHandle->getHostUsmPoolOwningPtr(ptr).pool;
     auto alloc = context->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
     EXPECT_NE(alloc, nullptr);
     EXPECT_NE(alloc->pageSizeForAlignment, 0u);
     EXPECT_EQ(alloc->pageSizeForAlignment, memoryProperties.pageSize);
-
-    if (usmPool && usmPool->isInPoolRange(ptr)) {
-        EXPECT_EQ(memoryProperties.id, alloc->getAllocId());
-    } else {
-        EXPECT_EQ(memoryProperties.id,
-                  context->getDriverHandle()->getSvmAllocsManager()->allocationsCounter);
-    }
+    EXPECT_EQ(memoryProperties.id,
+              context->getDriverHandle()->getSvmAllocsManager()->allocationsCounter);
 
     result = context->freeMem(ptr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+TEST_F(MemoryTest, givenTwoHostAllocationsFromSameUsmPoolWhenGettingAllocPropertiesThenIdsAreDifferent) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableUsmAllocationPoolManager.set(0);
+    NEO::debugManager.flags.EnableHostUsmAllocationPool.set(1);
+
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    void *firstPtr = nullptr;
+    void *secondPtr = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, 4096, 4096, &firstPtr));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, 4096, 4096, &secondPtr));
+    const auto usmPool = driverHandle->getHostUsmPoolOwningPtr(firstPtr).pool;
+    ASSERT_NE(nullptr, usmPool);
+    ASSERT_EQ(usmPool, driverHandle->getHostUsmPoolOwningPtr(secondPtr).pool);
+
+    ze_memory_allocation_properties_t firstProperties = {};
+    ze_memory_allocation_properties_t secondProperties = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->getMemAllocProperties(firstPtr, &firstProperties, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->getMemAllocProperties(secondPtr, &secondProperties, nullptr));
+    EXPECT_NE(firstProperties.id, secondProperties.id);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(secondPtr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(firstPtr));
+}
+
+TEST_F(MemoryTest, givenFreedChunkOfUsmPoolWhenGettingAllocPropertiesThenUnknownTypeIsReturned) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableUsmAllocationPoolManager.set(0);
+    NEO::debugManager.flags.EnableHostUsmAllocationPool.set(1);
+
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    void *liveChunk = nullptr;
+    void *freedChunk = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, 4096, 4096, &liveChunk));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, 4096, 4096, &freedChunk));
+    ASSERT_NE(nullptr, driverHandle->getHostUsmPoolOwningPtr(freedChunk).pool);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->freeMem(freedChunk));
+    ASSERT_NE(nullptr, driverHandle->getHostUsmPoolOwningPtr(freedChunk).pool);
+
+    ze_memory_allocation_properties_t memoryProperties = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->getMemAllocProperties(freedChunk, &memoryProperties, nullptr));
+    EXPECT_EQ(ZE_MEMORY_TYPE_UNKNOWN, memoryProperties.type);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(liveChunk));
 }
 
 TEST_F(MemoryTest, givenHostPointerMemmapSystemExtensionWhenAllocatingHostMemThenHostPtrMemoryIsUsed) {

@@ -41,6 +41,7 @@ class UsmMemAllocPool : NEO::NonCopyableAndNonMovableClass {
         uint64_t address;
         size_t size;
         size_t requestedSize;
+        uint32_t allocId;
         std::unordered_map<Device *, bool> isResident;
         std::vector<MemFreeCallback> memFreeCallbacks;
         bool isExported{false};
@@ -83,6 +84,7 @@ class UsmMemAllocPool : NEO::NonCopyableAndNonMovableClass {
     void reclaimDeferredFreeChunks();
     void markChunkExported(const void *ptr);
     UsmPoolLookupResult lookupAlloc(const void *ptr);
+    uint32_t getChunkAllocId(const void *ptr);
     bool addMemFreeCallback(const void *ptr, MemFreeCallback callback);
     std::vector<MemFreeCallback> takeMemFreeCallbacks(const void *ptr);
     size_t getOffsetInPool(const void *ptr) const;
