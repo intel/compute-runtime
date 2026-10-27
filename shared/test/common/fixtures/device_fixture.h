@@ -9,7 +9,6 @@
 #include "shared/source/built_ins/built_in_ops_base.h"
 #include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/test/common/helpers/debug_manager_state_restore.h"
 
 namespace NEO {
 
