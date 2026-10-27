@@ -17,6 +17,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 
 #include "CL/cl.h"
+#include "gtest/gtest.h"
 
 #include <atomic>
 #include <chrono>

@@ -6,6 +6,8 @@
  */
 
 #pragma once
+#include "shared/test/common/test_macros/mock_method_macros.h"
+
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/white_box.h"

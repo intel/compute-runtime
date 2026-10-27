@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/i915_prelim.h"
 

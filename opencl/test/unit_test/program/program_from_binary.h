@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,8 @@
 #include "opencl/test/unit_test/fixtures/program_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
+
+#include "gtest/gtest.h"
 
 #include <string>
 

@@ -47,7 +47,17 @@ else()
   endif()
 endif()
 
+if(UNIX AND NOT LIBUDEV_FOUND)
+  list(APPEND l0_exclude_patterns
+       "/udev/"
+  )
+endif()
+
 create_verify_headers_target(level_zero
                              INCLUDE_DIRS ${l0_include_dirs}
                              EXCLUDE_PATTERNS ${l0_exclude_patterns}
 )
+
+if(TARGET verify_level_zero)
+  target_compile_definitions(verify_level_zero INTERFACE CL_ENABLE_BETA_EXTENSIONS)
+endif()

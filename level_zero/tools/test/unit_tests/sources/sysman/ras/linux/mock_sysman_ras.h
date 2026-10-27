@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/system_info.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
