@@ -21,6 +21,7 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/topology.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/os_interface/linux/drm_allocation.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/drm_neo.h"

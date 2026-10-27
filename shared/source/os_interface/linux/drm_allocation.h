@@ -10,6 +10,7 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memadvise_flags.h"
 #include "shared/source/os_interface/linux/drm_debug.h"
+#include "shared/source/os_interface/linux/memory_unmap_function.h"
 
 namespace NEO {
 class BufferObject;
@@ -31,8 +32,6 @@ using BufferObjects = StackVec<BufferObject *, EngineLimits::maxHandleCount>;
 
 class DrmAllocation : public GraphicsAllocation {
   public:
-    using MemoryUnmapFunction = int (*)(void *, size_t);
-
     struct MemoryToUnmap {
         void *pointer;
         size_t size;

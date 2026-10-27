@@ -547,7 +547,7 @@ bool DrmAllocation::setMemPrefetch(Drm *drm, SubDeviceIdsVec &subDeviceIds) {
     return success;
 }
 
-void DrmAllocation::registerMemoryToUnmap(void *pointer, size_t size, DrmAllocation::MemoryUnmapFunction unmapFunction) {
+void DrmAllocation::registerMemoryToUnmap(void *pointer, size_t size, MemoryUnmapFunction unmapFunction) {
     this->memoryToUnmap.push_back({pointer, size, unmapFunction});
 }
 

@@ -14,6 +14,7 @@
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/os_interface/linux/drm_allocation.h"
+#include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
@@ -171,7 +172,7 @@ int IoctlHelper::munmapFunction(DrmMemoryManager &memoryManager, void *ptr, size
     return memoryManager.munmapFunction(ptr, size);
 }
 
-void IoctlHelper::registerMemoryToUnmap(DrmAllocation &allocation, void *pointer, size_t size, DrmAllocation::MemoryUnmapFunction unmapFunction) {
+void IoctlHelper::registerMemoryToUnmap(DrmAllocation &allocation, void *pointer, size_t size, MemoryUnmapFunction unmapFunction) {
     return allocation.registerMemoryToUnmap(pointer, size, unmapFunction);
 }
 

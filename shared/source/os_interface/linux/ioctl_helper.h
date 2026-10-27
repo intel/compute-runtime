@@ -7,11 +7,11 @@
 
 #pragma once
 #include "shared/source/command_stream/task_count_helper.h"
+#include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/topology_map.h"
-#include "shared/source/os_interface/linux/drm_allocation.h"
-#include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_debug.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
+#include "shared/source/os_interface/linux/memory_unmap_function.h"
 #include "shared/source/os_interface/linux/xe/eudebug/eudebug_interface.h"
 #include "shared/source/os_interface/os_time.h"
 #include "shared/source/os_interface/user_fence.h"
@@ -19,25 +19,35 @@
 
 #include "neo_igfxfmid.h"
 
+#include <bitset>
 #include <cinttypes>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <iosfwd>
 #include <memory>
 #include <optional>
 #include <string>
+#include <sys/types.h>
+#include <tuple>
 #include <vector>
 
 namespace NEO {
+class BufferObject;
 class Drm;
 class DrmAllocation;
 class DrmMemoryManager;
+class GraphicsAllocation;
 class OsContextLinux;
 class IoctlHelper;
 class OSTime;
+enum class AllocationType;
 enum class CacheRegion : uint16_t;
+enum class HeapIndex : uint32_t;
+enum class MemAdvise : uint8_t;
 enum class PreferredLocation : int16_t;
 enum class AtomicAccessMode : uint32_t;
+struct AllocationData;
 struct HardwareInfo;
 struct HardwareIpVersion;
 struct EngineInfo;
@@ -279,7 +289,7 @@ class IoctlHelper {
     virtual void releaseGpuRange(DrmMemoryManager &memoryManager, void *address, size_t size, uint32_t rootDeviceIndex, AllocationType allocType);
     virtual void *mmapFunction(DrmMemoryManager &memoryManager, void *ptr, size_t size, int prot, int flags, int fd, off_t offset);
     virtual int munmapFunction(DrmMemoryManager &memoryManager, void *ptr, size_t size);
-    virtual void registerMemoryToUnmap(DrmAllocation &allocation, void *pointer, size_t size, DrmAllocation::MemoryUnmapFunction unmapFunction);
+    virtual void registerMemoryToUnmap(DrmAllocation &allocation, void *pointer, size_t size, MemoryUnmapFunction unmapFunction);
     virtual BufferObject *allocUserptr(DrmMemoryManager &memoryManager, const AllocationData &allocData, uintptr_t address, size_t size, uint32_t rootDeviceIndex);
     virtual void syncUserptrAlloc(DrmMemoryManager &memoryManager, GraphicsAllocation &allocation) { return; };
 

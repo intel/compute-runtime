@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/xe_hpg_core/hw_cmds_arl.h"
 #include "shared/test/common/helpers/default_hw_info.h"
