@@ -200,7 +200,6 @@ class ProductHelperHw : public ProductHelper {
     void enableBlitterOperationsSupport(HardwareInfo *hwInfo) const;
     bool getConcurrentAccessMemCapabilitiesSupported(UsmAccessCapabilities capability) const;
     uint64_t getHostMemCapabilitiesValue() const;
-    bool getHostMemCapabilitiesSupported(const HardwareInfo *hwInfo) const;
     LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const override;
     void fillScmPropertiesSupportStructureBase(StateComputeModePropertiesSupport &propertiesSupport) const override;
     bool isCompressionForbiddenCommon(bool defaultValue) const;

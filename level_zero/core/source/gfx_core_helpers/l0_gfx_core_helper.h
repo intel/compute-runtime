@@ -39,7 +39,6 @@ struct AddressingMode;
 } // namespace BuiltIn
 struct RootDeviceEnvironment;
 class Debugger;
-class ProductHelper;
 class TagAllocatorBase;
 class MemoryManager;
 } // namespace NEO
@@ -107,7 +106,6 @@ class L0GfxCoreHelper : public NEO::ApiGfxCoreHelper {
     virtual uint32_t getImmediateWritePostSyncOffset() const = 0;
     virtual ze_mutable_command_exp_flags_t getPlatformCmdListUpdateCapabilities() const = 0;
     virtual ze_record_replay_graph_ext_flags_t getPlatformRecordReplayGraphCapabilities() const = 0;
-    virtual void appendPlatformSpecificExtensions(std::vector<std::pair<std::string, uint32_t>> &extensions, const NEO::ProductHelper &productHelper, const NEO::HardwareInfo &hwInfo) const = 0;
     virtual std::vector<std::pair<const char *, const char *>> getStallSamplingReportMetrics() const = 0;
     virtual void stallSumIpDataToTypedValues(uint64_t ip, void *sumIpData, std::vector<zet_typed_value_t> &ipDataValues) = 0;
     virtual bool stallIpDataMapUpdateFromData(const uint8_t *pRawIpData, std::map<uint64_t, void *> &stallSumIpDataMap) = 0;
@@ -170,7 +168,6 @@ class L0GfxCoreHelperHw : public L0GfxCoreHelper {
     uint32_t getImmediateWritePostSyncOffset() const override;
     ze_mutable_command_exp_flags_t getPlatformCmdListUpdateCapabilities() const override;
     ze_record_replay_graph_ext_flags_t getPlatformRecordReplayGraphCapabilities() const override;
-    void appendPlatformSpecificExtensions(std::vector<std::pair<std::string, uint32_t>> &extensions, const NEO::ProductHelper &productHelper, const NEO::HardwareInfo &hwInfo) const override;
     std::vector<std::pair<const char *, const char *>> getStallSamplingReportMetrics() const override;
     void stallSumIpDataToTypedValues(uint64_t ip, void *sumIpData, std::vector<zet_typed_value_t> &ipDataValues) override;
     bool stallIpDataMapUpdateFromData(const uint8_t *pRawIpData, std::map<uint64_t, void *> &stallSumIpDataMap) override;

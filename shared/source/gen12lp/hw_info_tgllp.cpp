@@ -56,7 +56,6 @@ const RuntimeCapabilityTable TGLLP::capabilityTable{
     .ftrSupportsCoherency = false,
     .ftrRenderCompressedBuffers = false,
     .ftrRenderCompressedImages = false,
-    .instrumentationEnabled = true,
     .supportCacheFlushAfterWalker = false,
     .supportsImages = true,
     .supportsOnDemandPageFaults = false,

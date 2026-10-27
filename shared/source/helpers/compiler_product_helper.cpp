@@ -131,9 +131,7 @@ std::string CompilerProductHelper::getDeviceExtensions(const HardwareInfo &hwInf
         extensions += "cl_intel_create_buffer_with_properties ";
     }
 
-    if (this->isSubgroupLocalBlockIoSupported()) {
-        extensions += "cl_intel_subgroup_local_block_io ";
-    }
+    extensions += "cl_intel_subgroup_local_block_io ";
 
     if (hwInfo.caps.matrixMultiplyAccumulateSupported) {
         extensions += "cl_intel_subgroup_matrix_multiply_accumulate ";

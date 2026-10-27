@@ -55,7 +55,6 @@ const RuntimeCapabilityTable MTL::capabilityTable{
     .ftrSupportsCoherency = false,
     .ftrRenderCompressedBuffers = false,
     .ftrRenderCompressedImages = false,
-    .instrumentationEnabled = true,
     .supportCacheFlushAfterWalker = true,
     .supportsImages = true,
     .supportsOnDemandPageFaults = false,

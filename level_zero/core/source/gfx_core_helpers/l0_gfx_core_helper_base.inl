@@ -67,10 +67,6 @@ uint32_t L0GfxCoreHelperHw<Family>::getImmediateWritePostSyncOffset() const {
 }
 
 template <typename Family>
-void L0GfxCoreHelperHw<Family>::appendPlatformSpecificExtensions(std::vector<std::pair<std::string, uint32_t>> &extensions, const NEO::ProductHelper &productHelper, const NEO::HardwareInfo &hwInfo) const {
-}
-
-template <typename Family>
 bool L0GfxCoreHelperHw<Family>::implicitSynchronizedDispatchForCooperativeKernelsAllowed() const {
     return false;
 }

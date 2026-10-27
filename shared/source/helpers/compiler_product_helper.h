@@ -54,7 +54,6 @@ class CompilerProductHelper {
     }
 
     virtual bool isMatrixMultiplyAccumulateTF32Supported(const HardwareInfo &hwInfo) const = 0;
-    virtual bool isSubgroupLocalBlockIoSupported() const = 0;
     virtual bool isCreateBufferWithPropertiesSupported() const = 0;
     virtual bool isSubgroupNamedBarrierSupported() const = 0;
     virtual bool isSubgroupExtendedBlockReadSupported() const = 0;
@@ -96,7 +95,6 @@ class CompilerProductHelperHw : public CompilerProductHelper {
     }
 
     bool isMatrixMultiplyAccumulateTF32Supported(const HardwareInfo &hwInfo) const override;
-    bool isSubgroupLocalBlockIoSupported() const override;
     bool isCreateBufferWithPropertiesSupported() const override;
     bool isSubgroupNamedBarrierSupported() const override;
     bool isSubgroupExtendedBlockReadSupported() const override;

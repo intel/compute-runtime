@@ -192,8 +192,6 @@ ze_result_t DriverHandle::getExtensionProperties(uint32_t *pCount,
         additionalExtensions.emplace_back(ZE_BFLOAT16_CONVERSIONS_EXT_NAME, ZE_BFLOAT16_CONVERSIONS_EXT_VERSION_1_0);
     }
 
-    devices[0]->getL0GfxCoreHelper().appendPlatformSpecificExtensions(additionalExtensions, devices[0]->getProductHelper(), devices[0]->getHwInfo());
-
     if (devices[0]->getL0GfxCoreHelper().synchronizedDispatchSupported() && devices[0]->isImplicitScalingCapable()) {
         additionalExtensions.emplace_back(ZE_SYNCHRONIZED_DISPATCH_EXP_NAME, ZE_SYNCHRONIZED_DISPATCH_EXP_VERSION_1_0);
     }

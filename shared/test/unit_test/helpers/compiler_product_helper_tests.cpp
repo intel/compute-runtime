@@ -48,12 +48,6 @@ HWTEST2_F(CompilerProductHelperFixture, GivenXeHpcAndLaterWhenIsForceToStateless
     EXPECT_FALSE(compilerProductHelper.isForceToStatelessRequired());
 }
 
-HWTEST_F(CompilerProductHelperFixture, GivenGen11AndLaterThenSubgroupLocalBlockIoIsSupported) {
-    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-
-    EXPECT_TRUE(compilerProductHelper.isSubgroupLocalBlockIoSupported());
-}
-
 HWTEST2_F(CompilerProductHelperFixture, GivenXeHpAndLaterThenCreateBufferWithPropertiesIsSupported, IsAtLeastXeCore) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
 

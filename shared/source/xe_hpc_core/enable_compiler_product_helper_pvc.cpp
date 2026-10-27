@@ -8,7 +8,6 @@
 #include "shared/source/helpers/compiler_aot_config_before_mtl.inl"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/compiler_product_helper_base.inl"
-#include "shared/source/helpers/compiler_product_helper_enable_subgroup_local_block_io.inl"
 #include "shared/source/helpers/compiler_product_helper_from_xe_hpc_to_xe3p.inl"
 #include "shared/source/helpers/compiler_product_helper_xe_hp_and_later.inl"
 #include "shared/source/helpers/compiler_product_helper_xe_hpc_and_later.inl"

@@ -17,7 +17,6 @@ class MockCompilerProductHelper : public CompilerProductHelper {
     using BaseClass::getDefaultHwIpVersion;
 
     ADDMETHOD_CONST_NOBASE(isMatrixMultiplyAccumulateTF32Supported, bool, false, (const HardwareInfo &hwInfo));
-    ADDMETHOD_CONST_NOBASE(isSubgroupLocalBlockIoSupported, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isCreateBufferWithPropertiesSupported, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isSubgroupNamedBarrierSupported, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isSubgroupExtendedBlockReadSupported, bool, false, ());

@@ -68,7 +68,6 @@ const RuntimeCapabilityTable PVC::capabilityTable{
     .ftrSupportsCoherency = false,
     .ftrRenderCompressedBuffers = false,
     .ftrRenderCompressedImages = false,
-    .instrumentationEnabled = true,
     .supportCacheFlushAfterWalker = false,
     .supportsImages = false,
     .supportsOnDemandPageFaults = false,

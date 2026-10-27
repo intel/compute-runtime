@@ -42,7 +42,7 @@ struct RuntimeCapabilityTable {
     bool ftrSupportsCoherency;
     bool ftrRenderCompressedBuffers;
     bool ftrRenderCompressedImages;
-    bool instrumentationEnabled;
+    bool instrumentationEnabled = true;
     bool supportCacheFlushAfterWalker;
     bool supportsImages;
     bool supportsOnDemandPageFaults;

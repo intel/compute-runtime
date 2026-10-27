@@ -57,7 +57,6 @@ const RuntimeCapabilityTable NVLP::capabilityTable{
     .ftrSupportsCoherency = false,
     .ftrRenderCompressedBuffers = false,
     .ftrRenderCompressedImages = false,
-    .instrumentationEnabled = true,
     .supportCacheFlushAfterWalker = false,
     .supportsImages = true,
     .supportsOnDemandPageFaults = true,

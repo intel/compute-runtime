@@ -61,7 +61,6 @@ const RuntimeCapabilityTable CRI::capabilityTable{
     .ftrSupportsCoherency = false,
     .ftrRenderCompressedBuffers = false,
     .ftrRenderCompressedImages = false,
-    .instrumentationEnabled = true,
     .supportCacheFlushAfterWalker = false,
     .supportsImages = false,
     .supportsOnDemandPageFaults = true,
