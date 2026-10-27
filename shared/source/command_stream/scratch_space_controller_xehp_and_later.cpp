@@ -34,20 +34,20 @@ ScratchSpaceControllerXeHPAndLater::ScratchSpaceControllerXeHPAndLater(uint32_t 
     if (debugManager.flags.EnablePrivateScratchSlot1.get() != -1) {
         twoSlotScratchSpaceSupported = !!debugManager.flags.EnablePrivateScratchSlot1.get();
     }
-    if (twoSlotScratchSpaceSupported) {
-        ScratchSpaceControllerXeHPAndLater::stateSlotsCount *= 2;
-    }
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    auto scratchSizesCount = Math::log2(gfxCoreHelper.getMaxScratchSize(productHelper)) - Math::log2(gfxCoreHelper.getMinimalScratchSpaceSize()) + 1;
+    auto maxScratchGrowths = scratchSizesCount * (twoSlotScratchSpaceSupported ? 2 : 1);
+    // Every scratch growth takes a new slot, slot 0 is never used and programHeaps() offsets slots by one.
+    // A power of two keeps the reserved heap space aligned.
+    stateSlotsCount = Math::nextPowerOfTwo(maxScratchGrowths + 2);
 }
 
-void ScratchSpaceControllerXeHPAndLater::setNewSshPtr(void *newSsh, bool &cfeDirty, bool changeId) {
+void ScratchSpaceControllerXeHPAndLater::setNewSshPtr(void *newSsh, bool &cfeDirty) {
     if (surfaceStateHeap != newSsh) {
         surfaceStateHeap = static_cast<char *>(newSsh);
-        if (scratchSlot0Allocation == nullptr) {
+        if (scratchSlot0Allocation == nullptr && scratchSlot1Allocation == nullptr) {
             cfeDirty = false;
         } else {
-            if (changeId) {
-                slotId = 0;
-            }
             programSurfaceState();
             cfeDirty = true;
         }
@@ -61,21 +61,18 @@ void ScratchSpaceControllerXeHPAndLater::setRequiredScratchSpace(void *sshBaseAd
                                                                  OsContext &osContext,
                                                                  bool &stateBaseAddressDirty,
                                                                  bool &vfeStateDirty) {
-    setNewSshPtr(sshBaseAddress, vfeStateDirty, offset == 0 ? true : false);
+    setNewSshPtr(sshBaseAddress, vfeStateDirty);
     bool scratchSurfaceDirty = false;
     prepareScratchAllocation(requiredPerThreadScratchSizeSlot0, requiredPerThreadScratchSizeSlot1, osContext, stateBaseAddressDirty, scratchSurfaceDirty, vfeStateDirty);
     if (scratchSurfaceDirty) {
         vfeStateDirty = true;
-        updateSlots = true;
+        slotId++;
         programSurfaceState();
     }
 }
 
 void ScratchSpaceControllerXeHPAndLater::programSurfaceState() {
-    if (updateSlots) {
-        slotId++;
-    }
-    UNRECOVERABLE_IF(slotId >= stateSlotsCount);
+    UNRECOVERABLE_IF(slotId + sshOffset >= stateSlotsCount);
     UNRECOVERABLE_IF(scratchSlot0Allocation == nullptr && scratchSlot1Allocation == nullptr);
 
     void *surfaceStateForScratchAllocation = ptrOffset(static_cast<void *>(surfaceStateHeap), getOffsetToSurfaceState(slotId + sshOffset));
@@ -125,9 +122,13 @@ size_t ScratchSpaceControllerXeHPAndLater::getOffsetToSurfaceState(uint32_t requ
     return offset;
 }
 
+size_t ScratchSpaceControllerXeHPAndLater::getReservedSshSize() const {
+    return getOffsetToSurfaceState(stateSlotsCount);
+}
+
 void ScratchSpaceControllerXeHPAndLater::reserveHeap(IndirectHeap::Type heapType, IndirectHeap *&indirectHeap) {
     if (heapType == IndirectHeap::Type::surfaceState) {
-        indirectHeap->getSpace(getOffsetToSurfaceState(stateSlotsCount));
+        indirectHeap->getSpace(getReservedSshSize());
     }
 }
 
@@ -203,16 +204,12 @@ void ScratchSpaceControllerXeHPAndLater::programHeaps(HeapContainer &heapContain
                                                       bool &stateBaseAddressDirty,
                                                       bool &vfeStateDirty) {
     sshOffset = scratchSlot;
-    updateSlots = false;
     setRequiredScratchSpace(heapContainer[0]->getUnderlyingBuffer(), sshOffset, requiredPerThreadScratchSizeSlot0, requiredPerThreadScratchSizeSlot1, osContext, stateBaseAddressDirty, vfeStateDirty);
 
     for (uint32_t i = 1; i < heapContainer.size(); ++i) {
         surfaceStateHeap = static_cast<char *>(heapContainer[i]->getUnderlyingBuffer());
-        updateSlots = false;
         programSurfaceState();
     }
-
-    updateSlots = true;
 }
 
 } // namespace NEO

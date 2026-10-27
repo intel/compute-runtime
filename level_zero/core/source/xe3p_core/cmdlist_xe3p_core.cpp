@@ -23,23 +23,6 @@ namespace L0 {
 
 static constexpr auto gfxCoreFamily = IGFX_XE3P_CORE;
 
-template <>
-size_t CommandListCoreFamily<gfxCoreFamily>::getReserveSshSize() {
-    constexpr size_t maxPtssSteps = 16;
-    constexpr size_t maxExtednedPtssSteps = 19;
-    constexpr size_t numSlotsPerStep = 2;
-    constexpr size_t numSteps = 2;
-    constexpr size_t startSlotIndex = 1;
-
-    using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
-    auto &productHelper = device->getProductHelper();
-    if (productHelper.isAvailableExtendedScratch()) {
-        return (maxExtednedPtssSteps * numSlotsPerStep + startSlotIndex) * numSteps * sizeof(RENDER_SURFACE_STATE);
-    }
-
-    return (maxPtssSteps * numSlotsPerStep + startSlotIndex) * numSteps * sizeof(RENDER_SURFACE_STATE);
-}
-
 template struct CommandListCoreFamily<gfxCoreFamily>;
 template struct CommandListCoreFamilyImmediate<gfxCoreFamily>;
 

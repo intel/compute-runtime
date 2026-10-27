@@ -9,7 +9,6 @@
 
 namespace L0 {
 namespace ult {
-HWTEST_EXCLUDE_PRODUCT(CommandListTestsReserveSize, givenCommandListWhenGetReserveSshSizeThen16slotSpaceReturned_IsHeapfulRequiredAndAtLeastXeCore, IGFX_NVL);
 HWTEST_EXCLUDE_PRODUCT(CommandQueueGroupTest, givenVaryingBlitterSupportAndCCSThenBCSGroupContainsCorrectNumberOfEngines, IGFX_NVL);
 HWTEST_EXCLUDE_PRODUCT(CommandQueueGroupTest, givenBlitterSupportAndCCSThenThreeQueueGroupsAreReturned, IGFX_NVL);
 } // namespace ult

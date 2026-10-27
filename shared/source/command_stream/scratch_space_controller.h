@@ -60,6 +60,7 @@ class ScratchSpaceController : NonCopyableAndNonMovableClass {
         return perThreadScratchSpaceSlot1Size;
     }
 
+    virtual size_t getReservedSshSize() const = 0;
     virtual void reserveHeap(IndirectHeap::Type heapType, IndirectHeap *&indirectHeap) = 0;
     virtual void programHeaps(HeapContainer &heapContainer,
                               uint32_t scratchSlot,

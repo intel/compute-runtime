@@ -8,6 +8,7 @@
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/command_stream/scratch_space_controller.h"
 #include "shared/source/helpers/cache_flush_xehp_and_later.inl"
 #include "shared/source/helpers/flush_caches_bitmask.h"
 #include "shared/source/helpers/pause_on_gpu_properties.h"
@@ -33,13 +34,7 @@ namespace L0 {
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 size_t CommandListCoreFamily<gfxCoreFamily>::getReserveSshSize() {
-    constexpr size_t maxPtssSteps = 16;
-    constexpr size_t numSlotsPerStep = 2;
-    constexpr size_t numSteps = 2;
-    constexpr size_t startSlotIndex = 1;
-
-    using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
-    return (maxPtssSteps * numSlotsPerStep + startSlotIndex) * numSteps * sizeof(RENDER_SURFACE_STATE);
+    return this->device->getNEODevice()->getDefaultEngine().commandStreamReceiver->getScratchSpaceController()->getReservedSshSize();
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

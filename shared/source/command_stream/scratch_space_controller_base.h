@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,6 +25,7 @@ class ScratchSpaceControllerBase : public ScratchSpaceController {
     uint64_t calculateNewGSH() override;
     uint64_t getScratchPatchAddress() override;
 
+    size_t getReservedSshSize() const override;
     void reserveHeap(IndirectHeap::Type heapType, IndirectHeap *&indirectHeap) override;
     void programHeaps(HeapContainer &heapContainer,
                       uint32_t scratchSlot,

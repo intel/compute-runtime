@@ -607,16 +607,6 @@ XE3P_CORETEST_F(CommandListCreateXe3pTest,
     EXPECT_FALSE(commandList->scratchAddressPatchingEnabled);
 }
 
-using CommandListTestsReserveSize = Test<DeviceFixture>;
-XE3P_CORETEST_F(CommandListTestsReserveSize, givenCommandListWhenGetReserveSshSizeThen16slotSpaceReturned) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.EnableExtendedScratchSurfaceSize.set(0);
-    L0::CommandListCoreFamily<FamilyType::gfxCoreFamily> commandList(1u);
-    commandList.initialize(device, NEO::EngineGroupType::compute, 0u);
-
-    EXPECT_EQ(commandList.getReserveSshSize(), (16 * 2 + 1) * 2 * sizeof(typename FamilyType::RENDER_SURFACE_STATE));
-}
-
 using MultiTileSynchronizedDispatchTestsXe3p = MultiTileSynchronizedDispatchFixture;
 
 XE3P_CORETEST_F(MultiTileSynchronizedDispatchTestsXe3p, givenLimitedSyncDispatchWhenAppendingThenProgramTokenCheck) {

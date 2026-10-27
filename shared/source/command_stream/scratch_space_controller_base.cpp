@@ -73,12 +73,14 @@ uint64_t ScratchSpaceControllerBase::getScratchPatchAddress() {
     return scratchAddress;
 }
 
+size_t ScratchSpaceControllerBase::getReservedSshSize() const {
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex];
+    return rootDeviceEnvironment.getHelper<GfxCoreHelper>().getRenderSurfaceStateSize(rootDeviceEnvironment);
+}
+
 void ScratchSpaceControllerBase::reserveHeap(IndirectHeap::Type heapType, IndirectHeap *&indirectHeap) {
     if (heapType == IndirectHeap::Type::surfaceState) {
-        auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex];
-        auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
-        auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize(rootDeviceEnvironment);
-        indirectHeap->getSpace(surfaceStateSize);
+        indirectHeap->getSpace(getReservedSshSize());
     }
 }
 

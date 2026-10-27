@@ -602,7 +602,7 @@ HWTEST_F(BlockedCommandQueueTest, givenCommandQueueWhenBlockedCommandIsBeingSubm
     auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::Type::dynamicState, 4096u);
     auto &ssh = pCmdQ->getIndirectHeap(IndirectHeap::Type::surfaceState, 4096u);
 
-    uint32_t defaultSshUse = UnitTestHelper<FamilyType>::getDefaultSshUsage();
+    uint32_t defaultSshUse = UnitTestHelper<FamilyType>::getDefaultSshUsage(pDevice->getProductHelper());
 
     EXPECT_EQ(0u, ioh.getUsed());
     EXPECT_EQ(0u, dsh.getUsed());
@@ -634,7 +634,7 @@ HWTEST_F(BlockedCommandQueueTest, givenCommandQueueWithUsedHeapsWhenBlockedComma
     pCmdQ->enqueueKernel(mockKernel, 1, &offset, &size, &size, 1, &blockedEvent, nullptr);
     userEvent.setStatus(CL_COMPLETE);
 
-    uint32_t sshSpaceUse = spaceToUse + UnitTestHelper<FamilyType>::getDefaultSshUsage();
+    uint32_t sshSpaceUse = spaceToUse + UnitTestHelper<FamilyType>::getDefaultSshUsage(pDevice->getProductHelper());
 
     EXPECT_EQ(spaceToUse, ioh.getUsed());
     EXPECT_EQ(spaceToUse, dsh.getUsed());

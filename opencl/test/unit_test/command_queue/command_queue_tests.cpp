@@ -715,7 +715,7 @@ HWTEST_F(CommandQueueIndirectHeapTest, GivenIndirectHeapWhenGettingAvailableSpac
 
         auto &indirectHeap = cmdQ.getIndirectHeap(heapType, sizeof(uint32_t));
         if (heapType == IndirectHeap::Type::surfaceState) {
-            size_t expectedSshUse = cmdQ.getGpgpuCommandStreamReceiver().defaultSshSize - MemoryConstants::pageSize - UnitTestHelper<FamilyType>::getDefaultSshUsage();
+            size_t expectedSshUse = cmdQ.getGpgpuCommandStreamReceiver().defaultSshSize - MemoryConstants::pageSize - UnitTestHelper<FamilyType>::getDefaultSshUsage(pClDevice->getProductHelper());
             EXPECT_EQ(expectedSshUse, indirectHeap.getAvailableSpace());
         } else {
             EXPECT_EQ(64 * MemoryConstants::kiloByte, indirectHeap.getAvailableSpace());

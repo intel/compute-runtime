@@ -19,7 +19,7 @@ class ScratchSpaceControllerXeHPAndLater : public ScratchSpaceController {
     ScratchSpaceControllerXeHPAndLater(uint32_t rootDeviceIndex,
                                        ExecutionEnvironment &environment,
                                        InternalAllocationStorage &allocationStorage);
-    void setNewSshPtr(void *newSsh, bool &cfeDirty, bool changeId);
+    void setNewSshPtr(void *newSsh, bool &cfeDirty);
 
     void setRequiredScratchSpace(void *sshBaseAddress,
                                  uint32_t scratchSlot,
@@ -32,6 +32,7 @@ class ScratchSpaceControllerXeHPAndLater : public ScratchSpaceController {
     uint64_t calculateNewGSH() override;
     uint64_t getScratchPatchAddress() override;
 
+    size_t getReservedSshSize() const override;
     void reserveHeap(IndirectHeap::Type heapType, IndirectHeap *&indirectHeap) override;
 
     void programHeaps(HeapContainer &heapContainer,
@@ -60,8 +61,7 @@ class ScratchSpaceControllerXeHPAndLater : public ScratchSpaceController {
                                                    bool &vfeStateDirty);
     size_t getOffsetToSurfaceState(uint32_t requiredSlotCount) const;
 
-    bool updateSlots = true;
-    uint32_t stateSlotsCount = 16;
+    uint32_t stateSlotsCount = 0;
     static const uint32_t scratchType = 6;
     bool twoSlotScratchSpaceSupported = true;
 

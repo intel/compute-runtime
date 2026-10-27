@@ -1055,7 +1055,7 @@ HWTEST_F(CommandStreamReceiverTest, givenSurfaceStateHeapTypeWhenAllocateHeapMem
     EXPECT_NE(nullptr, ssh);
     ASSERT_NE(nullptr, ssh->getGraphicsAllocation());
 
-    auto sshReservedSize = UnitTestHelper<FamilyType>::getDefaultSshUsage();
+    auto sshReservedSize = UnitTestHelper<FamilyType>::getDefaultSshUsage(pDevice->getProductHelper());
     EXPECT_EQ(sshReservedSize, ssh->getUsed());
 
     csr.indirectHeap[IndirectHeap::Type::surfaceState] = ssh;

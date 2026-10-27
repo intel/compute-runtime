@@ -22,6 +22,7 @@ namespace NEO {
 
 class CommandStreamReceiver;
 class LinearStream;
+class ProductHelper;
 struct DeviceInfo;
 struct KernelDescriptor;
 struct HardwareInfo;
@@ -54,7 +55,7 @@ struct UnitTestHelper : public UnitTestHelperBase<GfxFamily> {
 
     static bool isExpectMemoryNotEqualSupported();
 
-    static uint32_t getDefaultSshUsage();
+    static uint32_t getDefaultSshUsage(const ProductHelper &productHelper);
 
     static uint32_t getAppropriateThreadArbitrationPolicy(int32_t policy);
 

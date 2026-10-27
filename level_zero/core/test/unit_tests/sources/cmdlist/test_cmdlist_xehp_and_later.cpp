@@ -200,11 +200,12 @@ HWTEST2_F(CommandListTests, whenCommandListIsCreatedAndProgramExtendedPipeContro
 }
 
 using CommandListTestsReserveSize = Test<DeviceFixture>;
-HWTEST2_F(CommandListTestsReserveSize, givenCommandListWhenGetReserveSshSizeThen16slotSpaceReturned, IsHeapfulRequiredAndAtLeastXeCore) {
+HWTEST2_F(CommandListTestsReserveSize, givenCommandListWhenGetReserveSshSizeThenSpaceReservedByScratchSpaceControllerIsReturned, IsAtLeastXeCore) {
     L0::CommandListCoreFamily<FamilyType::gfxCoreFamily> commandList(1u);
     commandList.initialize(device, NEO::EngineGroupType::compute, 0u);
 
-    EXPECT_EQ(commandList.getReserveSshSize(), (16 * 2 + 1) * 2 * sizeof(typename FamilyType::RENDER_SURFACE_STATE));
+    auto scratchController = device->getNEODevice()->getDefaultEngine().commandStreamReceiver->getScratchSpaceController();
+    EXPECT_EQ(scratchController->getReservedSshSize(), commandList.getReserveSshSize());
 }
 
 using CommandListAppendLaunchKernel = Test<ModuleFixture>;

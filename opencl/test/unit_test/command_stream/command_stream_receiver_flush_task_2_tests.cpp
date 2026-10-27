@@ -635,6 +635,7 @@ struct MockScratchController : public ScratchSpaceController {
                                                bool &vfeStateDirty,
                                                NEO::CommandStreamReceiver *csr) override {
     }
+    size_t getReservedSshSize() const override { return 0u; };
     void reserveHeap(IndirectHeap::Type heapType, IndirectHeap *&indirectHeap) override {};
 };
 

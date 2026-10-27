@@ -345,7 +345,6 @@ HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLaterWi
                                                *pDevice->getDefaultEngine().osContext, stateBaseAddressDirty, cfeStateDirty);
     EXPECT_TRUE(cfeStateDirty);
     EXPECT_EQ(1u, scratchController->slotId);
-    EXPECT_TRUE(scratchController->updateSlots);
     uint64_t offset = static_cast<uint64_t>(scratchController->slotId * sizeof(RENDER_SURFACE_STATE) * 2);
     EXPECT_EQ(offset, scratchController->getScratchPatchAddress());
     EXPECT_EQ(0u, scratchController->calculateNewGSH());
@@ -409,7 +408,7 @@ HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLaterWi
     alignedFree(surfaceHeap);
 }
 
-HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLaterWithMockCsrHw, givenScratchWhenSetNewSshPtrAndChangeIdIsFalseThenSlotIdIsNotChanged) {
+HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLaterWithMockCsrHw, givenScratchWhenSetNewSshPtrThenSlotIdIsNotChanged) {
     class MockScratchSpaceControllerXeHPAndLater : public ScratchSpaceControllerXeHPAndLater {
       public:
         uint32_t programSurfaceStateCalledTimes = 0u;
@@ -440,7 +439,7 @@ HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLaterWi
     auto scratch = static_cast<MockScratchSpaceControllerXeHPAndLater *>(scratchController.get());
     scratch->slotId = 10;
     scratch->scratchSlot0Allocation = &graphicsAllocation;
-    scratch->setNewSshPtr(surfaceHeap, cfeStateDirty, false);
+    scratch->setNewSshPtr(surfaceHeap, cfeStateDirty);
     scratch->scratchSlot0Allocation = nullptr;
     EXPECT_EQ(10u, scratch->slotId);
     EXPECT_EQ(scratch->programSurfaceStateCalledTimes, 1u);
@@ -449,7 +448,7 @@ HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLaterWi
     alignedFree(surfaceHeap);
 }
 
-HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLaterWithMockCsrHw, givenScratchWhenProgramSurfaceStateAndUpdateSlotIsFalseThenSlotIdIsNotChanged) {
+HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLaterWithMockCsrHw, givenScratchWhenProgramSurfaceStateThenSlotIdIsNotChanged) {
     class MockScratchSpaceControllerXeHPAndLater : public ScratchSpaceControllerXeHPAndLater {
       public:
         MockScratchSpaceControllerXeHPAndLater(uint32_t rootDeviceIndex,
@@ -460,7 +459,6 @@ HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLaterWi
         using ScratchSpaceControllerXeHPAndLater::scratchSlot0Allocation;
         using ScratchSpaceControllerXeHPAndLater::slotId;
         using ScratchSpaceControllerXeHPAndLater::surfaceStateHeap;
-        using ScratchSpaceControllerXeHPAndLater::updateSlots;
     };
 
     auto commandStreamReceiver = static_cast<MockCsrHw<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
@@ -475,7 +473,6 @@ HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLaterWi
     auto scratch = static_cast<MockScratchSpaceControllerXeHPAndLater *>(scratchController.get());
     scratch->surfaceStateHeap = static_cast<char *>(surfaceHeap);
     scratch->slotId = 10;
-    scratch->updateSlots = false;
     scratch->scratchSlot0Allocation = &graphicsAllocation;
     scratch->programSurfaceState();
     scratch->scratchSlot0Allocation = nullptr;
@@ -589,24 +586,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenScrat
     EXPECT_EQ(nullptr, scratchController->scratchSlot1Allocation);
 
     EXPECT_EQ(0u, getScratchSurfaceStateAtSlot<FamilyType>(surfaceState, 3)->getSurfaceBaseAddress());
-}
-
-HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenScratchSpaceControllerWhenDebugKeyForPrivateScratchIsDisabledThenThereAre16Slots) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnablePrivateScratchSlot1.set(0);
-    MockCsrHw<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    commandStreamReceiver.setupContext(pDevice->getGpgpuCommandStreamReceiver().getOsContext());
-    auto scratchController = static_cast<MockScratchSpaceControllerXeHPAndLater *>(commandStreamReceiver.getScratchSpaceController());
-    EXPECT_EQ(16u, scratchController->stateSlotsCount);
-}
-
-HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenScratchSpaceControllerWhenDebugKeyForPrivateScratchIsEnabledThenThereAre32Slots) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnablePrivateScratchSlot1.set(1);
-    MockCsrHw<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
-    commandStreamReceiver.setupContext(pDevice->getGpgpuCommandStreamReceiver().getOsContext());
-    auto scratchController = static_cast<MockScratchSpaceControllerXeHPAndLater *>(commandStreamReceiver.getScratchSpaceController());
-    EXPECT_EQ(32u, scratchController->stateSlotsCount);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenDisabledPrivateScratchSpaceWhenSizeForPrivateScratchSpaceIsProvidedThenItIsNotCreated) {

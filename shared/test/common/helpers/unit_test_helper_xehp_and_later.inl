@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/kernel/kernel_descriptor.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
@@ -73,8 +74,8 @@ bool UnitTestHelper<GfxFamily>::isExpectMemoryNotEqualSupported() {
 }
 
 template <typename GfxFamily>
-uint32_t UnitTestHelper<GfxFamily>::getDefaultSshUsage() {
-    return (32 * 2 * 64);
+uint32_t UnitTestHelper<GfxFamily>::getDefaultSshUsage(const ProductHelper &productHelper) {
+    return (productHelper.isAvailableExtendedScratch() ? 64 : 32) * 2 * 64;
 }
 
 template <typename GfxFamily>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,6 @@ HWTEST_EXCLUDE_PRODUCT(RayTracingCmdListTest, givenRayTracingKernelWhenRegularCm
 HWTEST_EXCLUDE_PRODUCT(RayTracingCmdListTest, givenRayTracingKernelWhenRegularCmdListExecutedAndImmediateExecutedAgainThenDispatch3dBtdCommandOnceMakeResidentTwiceAndPipeControlWithStateCacheFlushAfterWalker_RayTracingMatcher, IGFX_CRI);
 HWTEST_EXCLUDE_PRODUCT(RayTracingCmdListTest, givenRayTracingKernelWhenImmediateCmdListExecutedAndImmediateExecutedAgainThenDispatch3dBtdCommandOnceMakeResidentTwiceAndPipeControlWithStateCacheFlushAfterWalker_RayTracingMatcher, IGFX_CRI);
 HWTEST_EXCLUDE_PRODUCT(RayTracingCmdListTest, givenRayTracingKernelWhenImmediateCmdListExecutedAndRegularExecutedAgainThenDispatch3dBtdCommandOnceMakeResidentTwiceAndPipeControlWithStateCacheFlushAfterWalker_RayTracingMatcher, IGFX_CRI);
-HWTEST_EXCLUDE_PRODUCT(CommandListTestsReserveSize, givenCommandListWhenGetReserveSshSizeThen16slotSpaceReturned_IsHeapfulRequiredAndAtLeastXeCore, IGFX_CRI);
 
 } // namespace ult
 } // namespace L0
