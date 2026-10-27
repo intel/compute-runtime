@@ -19,11 +19,20 @@
 #include <memory>
 
 namespace L0 {
+struct CommandList;
 struct Context;
+struct Device;
 } // namespace L0
 
 namespace NEO {
+enum class EngineGroupType : uint32_t;
+
 namespace LEO {
+
+namespace InternalCmdListFunctions {
+using CreateImmediateFunc = L0::CommandList *(*)(L0::Device * device, const ze_command_queue_desc_t *desc, bool internalUsage, NEO::EngineGroupType engineGroupType, ze_result_t &resultValue);
+extern CreateImmediateFunc createImmediate;
+} // namespace InternalCmdListFunctions
 
 class RegularEventsManager;
 
@@ -135,7 +144,7 @@ class Context : public BaseObject<_cl_context> {
   protected:
     void storeProperties(const cl_context_properties *properties);
     void setInteropUserSyncEnabled(bool enabled) { interopUserSync = enabled; }
-    ze_result_t obtainInternalCmdList(std::map<uint32_t, ze_command_list_handle_t> &internalCmdLists, uint32_t rootDeviceIndex, ze_command_queue_flags_t cmdListFlags, ze_command_list_handle_t &cmdList);
+    ze_result_t obtainInternalCmdList(std::map<uint32_t, ze_command_list_handle_t> &internalCmdLists, uint32_t rootDeviceIndex, ze_command_queue_flags_t cmdListFlags, NEO::EngineGroupType engineGroupType, ze_command_list_handle_t &cmdList);
 
     std::vector<std::pair<CallbackT, void *>> callbacks{};
 

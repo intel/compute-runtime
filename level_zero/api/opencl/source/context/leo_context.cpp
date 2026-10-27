@@ -7,6 +7,7 @@
 
 #include "level_zero/api/opencl/source/context/leo_context.h"
 
+#include "shared/source/helpers/definitions/engine_group_types.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/hw_info.h"
 
@@ -75,15 +76,19 @@ Context::~Context() {
     }
 }
 
+namespace InternalCmdListFunctions {
+CreateImmediateFunc createImmediate = static_cast<CreateImmediateFunc>(&L0::CommandList::createImmediate);
+} // namespace InternalCmdListFunctions
+
 ze_result_t Context::getInternalCopyCmdList(uint32_t rootDeviceIndex, ze_command_list_handle_t &cmdList) {
-    return obtainInternalCmdList(this->internalCopyCmdLists, rootDeviceIndex, ZE_COMMAND_QUEUE_FLAG_COPY_OFFLOAD_HINT | ZE_COMMAND_QUEUE_FLAG_IN_ORDER, cmdList);
+    return obtainInternalCmdList(this->internalCopyCmdLists, rootDeviceIndex, ZE_COMMAND_QUEUE_FLAG_COPY_OFFLOAD_HINT | ZE_COMMAND_QUEUE_FLAG_IN_ORDER, NEO::EngineGroupType::copy, cmdList);
 }
 
 ze_result_t Context::getInternalComputeCmdList(uint32_t rootDeviceIndex, ze_command_list_handle_t &cmdList) {
-    return obtainInternalCmdList(this->internalComputeCmdLists, rootDeviceIndex, 0, cmdList);
+    return obtainInternalCmdList(this->internalComputeCmdLists, rootDeviceIndex, 0, NEO::EngineGroupType::compute, cmdList);
 }
 
-ze_result_t Context::obtainInternalCmdList(std::map<uint32_t, ze_command_list_handle_t> &internalCmdLists, uint32_t rootDeviceIndex, ze_command_queue_flags_t cmdListFlags, ze_command_list_handle_t &cmdList) {
+ze_result_t Context::obtainInternalCmdList(std::map<uint32_t, ze_command_list_handle_t> &internalCmdLists, uint32_t rootDeviceIndex, ze_command_queue_flags_t cmdListFlags, NEO::EngineGroupType engineGroupType, ze_command_list_handle_t &cmdList) {
     std::lock_guard<std::mutex> lock(this->internalCmdListsCreationMtx);
 
     auto internalCmdListIt = internalCmdLists.find(rootDeviceIndex);
@@ -102,14 +107,16 @@ ze_result_t Context::obtainInternalCmdList(std::map<uint32_t, ze_command_list_ha
                                            cmdListFlags,
                                            ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS,
                                            ZE_COMMAND_QUEUE_PRIORITY_NORMAL};
-    ze_command_list_handle_t createdCmdList = nullptr;
-    auto resultValue = zeCommandListCreateImmediate(contextHandle, clDevice->getL0Handle(), &cmdListDesc, &createdCmdList);
+    const auto internalUsage = true;
+    auto resultValue = ZE_RESULT_SUCCESS;
+    auto createdCmdList = InternalCmdListFunctions::createImmediate(clDevice->getL0Object(), &cmdListDesc, internalUsage, engineGroupType, resultValue);
     if (resultValue != ZE_RESULT_SUCCESS) {
         return resultValue;
     }
+    createdCmdList->setCmdListContext(this->contextHandle);
 
-    internalCmdLists.emplace(rootDeviceIndex, createdCmdList);
-    cmdList = createdCmdList;
+    internalCmdLists.emplace(rootDeviceIndex, createdCmdList->toHandle());
+    cmdList = createdCmdList->toHandle();
     return ZE_RESULT_SUCCESS;
 }
 

@@ -76,7 +76,13 @@ TEST_F(ContextImplFixture, givenInitializedContextWhenGettingInternalCopyCmdList
     EXPECT_EQ(firstCmdList, secondCmdList);
     ASSERT_EQ(1u, createImmediateHook.requestedFlags.size());
     EXPECT_EQ(static_cast<ze_command_queue_flags_t>(ZE_COMMAND_QUEUE_FLAG_COPY_OFFLOAD_HINT | ZE_COMMAND_QUEUE_FLAG_IN_ORDER), createImmediateHook.requestedFlags[0]);
+    EXPECT_TRUE(createImmediateHook.requestedInternalUsage[0]);
+    EXPECT_EQ(NEO::EngineGroupType::copy, createImmediateHook.requestedEngineGroupTypes[0]);
     EXPECT_TRUE(context->internalComputeCmdLists.empty());
+
+    auto l0CmdList = L0::CommandList::fromHandle(firstCmdList);
+    EXPECT_TRUE(l0CmdList->isInternal());
+    EXPECT_EQ(context->getL0Object()->toHandle(), l0CmdList->getCmdListContext());
 }
 
 TEST_F(ContextImplFixture, givenInitializedContextWhenGettingInternalComputeCmdListThenOutOfOrderCmdListIsCreatedOnceAndReused) {
@@ -93,7 +99,13 @@ TEST_F(ContextImplFixture, givenInitializedContextWhenGettingInternalComputeCmdL
     EXPECT_EQ(firstCmdList, secondCmdList);
     ASSERT_EQ(1u, createImmediateHook.requestedFlags.size());
     EXPECT_EQ(0u, createImmediateHook.requestedFlags[0]);
+    EXPECT_TRUE(createImmediateHook.requestedInternalUsage[0]);
+    EXPECT_EQ(NEO::EngineGroupType::compute, createImmediateHook.requestedEngineGroupTypes[0]);
     EXPECT_TRUE(context->internalCopyCmdLists.empty());
+
+    auto l0CmdList = L0::CommandList::fromHandle(firstCmdList);
+    EXPECT_TRUE(l0CmdList->isInternal());
+    EXPECT_EQ(context->getL0Object()->toHandle(), l0CmdList->getCmdListContext());
 }
 
 TEST_F(ContextImplFixture, givenInitializedContextWhenGettingBothInternalCmdListsThenTheyAreDistinct) {
