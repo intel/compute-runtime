@@ -177,6 +177,7 @@ cl_int Program::createFromBinaryOrIl(cl_device_id device, size_t length, const u
     ze_result_t ret = zeModuleCreate(this->context->getL0ContextHandle(), deviceHandle, &moduleDescription, &moduleHandle, &buildLogHandle);
     if (ZE_RESULT_SUCCESS == ret) {
         this->moduleHandles[rootDeviceIndex] = moduleHandle;
+        this->populateIrBinaryFromModule();
         this->programBinaryType = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
         this->allowNonUniform = NEO::isNonUniformWorkGroupAllowed(this->getL0Object(rootDeviceIndex)->getTranslationUnit()->options);
         this->setBuildStatus(CL_BUILD_SUCCESS);

@@ -831,6 +831,67 @@ TEST_F(ClProgramNonUniformWorkGroupTests, givenInputProgramsWhenLinkProgramThenN
     clReleaseProgram(nonUniformProgram1);
 }
 
+using ClProgramNativeBinaryLinkTests = ClProgramNonUniformWorkGroupTests;
+
+TEST_F(ClProgramNativeBinaryLinkTests, givenNativeBinaryWithIrSectionWhenCreateProgramWithBinaryThenIrFromBinaryIsCaptured) {
+    ZebinTestData::ZebinWithL0TestCommonModule zebin(device->getHwInfo(), {ZebinTestData::AppendElfAdditionalSection::spirv});
+    const size_t length = zebin.storage.size();
+    const unsigned char *binary = zebin.storage.data();
+
+    cl_int errcode = CL_INVALID_VALUE;
+    auto program = clCreateProgramWithBinary(clContext, 1, &clDeviceId, &length, &binary, nullptr, &errcode);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+    ASSERT_NE(nullptr, program);
+
+    auto leoProgram = castToObject<Program>(program);
+    EXPECT_NE(nullptr, leoProgram->getIrBinary());
+    EXPECT_NE(0u, leoProgram->getIrBinarySize());
+
+    clReleaseProgram(program);
+}
+
+TEST_F(ClProgramNativeBinaryLinkTests, givenNativeBinaryWithoutIrSectionWhenCreateProgramWithBinaryThenProgramIsCreatedWithoutIr) {
+    ZebinTestData::ZebinWithL0TestCommonModule zebin(device->getHwInfo());
+    const size_t length = zebin.storage.size();
+    const unsigned char *binary = zebin.storage.data();
+
+    cl_int errcode = CL_INVALID_VALUE;
+    auto program = clCreateProgramWithBinary(clContext, 1, &clDeviceId, &length, &binary, nullptr, &errcode);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+    ASSERT_NE(nullptr, program);
+
+    auto leoProgram = castToObject<Program>(program);
+    EXPECT_EQ(nullptr, leoProgram->getIrBinary());
+    EXPECT_EQ(0u, leoProgram->getIrBinarySize());
+
+    clReleaseProgram(program);
+}
+
+TEST_F(ClProgramNativeBinaryLinkTests, givenProgramsCreatedFromNativeBinariesWithIrWhenLinkProgramThenLinkedProgramIsExecutable) {
+    ZebinTestData::ZebinWithL0TestCommonModule zebin(device->getHwInfo(), {ZebinTestData::AppendElfAdditionalSection::spirv});
+    const size_t length = zebin.storage.size();
+    const unsigned char *binary = zebin.storage.data();
+
+    cl_int errcode = CL_INVALID_VALUE;
+    auto program1 = clCreateProgramWithBinary(clContext, 1, &clDeviceId, &length, &binary, nullptr, &errcode);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+    auto program2 = clCreateProgramWithBinary(clContext, 1, &clDeviceId, &length, &binary, nullptr, &errcode);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+
+    cl_program inputPrograms[] = {program1, program2};
+    auto linkedProgram = clLinkProgram(clContext, 1, &clDeviceId, nullptr, 2, inputPrograms, nullptr, nullptr, &errcode);
+    EXPECT_EQ(CL_SUCCESS, errcode);
+    ASSERT_NE(nullptr, linkedProgram);
+
+    cl_program_binary_type binaryType = CL_PROGRAM_BINARY_TYPE_NONE;
+    EXPECT_EQ(CL_SUCCESS, clGetProgramBuildInfo(linkedProgram, clDeviceId, CL_PROGRAM_BINARY_TYPE, sizeof(binaryType), &binaryType, nullptr));
+    EXPECT_EQ(static_cast<cl_program_binary_type>(CL_PROGRAM_BINARY_TYPE_EXECUTABLE), binaryType);
+
+    clReleaseProgram(linkedProgram);
+    clReleaseProgram(program2);
+    clReleaseProgram(program1);
+}
+
 TEST_F(ClProgramNonUniformWorkGroupTests, givenNativeBinaryWhenCreateProgramWithBinaryThenAllowNonUniformFollowsBuildOptionsStoredInBinary) {
     struct BinaryCase {
         const char *storedBuildOptions;
