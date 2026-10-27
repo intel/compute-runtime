@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/gmm_helper/gmm_resource_usage_type.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -67,6 +68,7 @@ class Gmm {
     void updateOffsetsInImgInfo(ImageInfo &imgInfo, uint32_t arrayIndex);
     uint8_t resourceCopyBlt(void *sys, void *gpu, uint32_t pitch, uint32_t height, unsigned char upload, ImagePlane plane);
 
+    size_t getSizeAllocation() const;
     uint32_t getUnifiedAuxPitchTiles();
     uint32_t getAuxQPitch();
     bool getPreferNoCpuAccess() const { return preferNoCpuAccess; }

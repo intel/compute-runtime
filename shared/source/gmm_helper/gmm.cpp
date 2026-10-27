@@ -402,6 +402,10 @@ GmmHelper *Gmm::getGmmHelper() const {
     return this->gmmHelper;
 }
 
+size_t Gmm::getSizeAllocation() const {
+    return this->gmmResourceInfo->getSizeAllocation();
+}
+
 uint32_t Gmm::getUnifiedAuxPitchTiles() {
     return this->gmmResourceInfo->getRenderAuxPitchTiles();
 }

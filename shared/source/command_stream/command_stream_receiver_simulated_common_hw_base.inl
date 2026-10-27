@@ -13,7 +13,6 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
-#include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/hardware_context_controller.h"
@@ -58,7 +57,7 @@ bool CommandStreamReceiverSimulatedCommonHw<GfxFamily>::getParametersForMemory(G
     size = graphicsAllocation.getUnderlyingBufferSize();
 
     if (graphicsAllocation.isCompressionEnabled()) {
-        size = graphicsAllocation.getDefaultGmm()->gmmResourceInfo->getSizeAllocation();
+        size = graphicsAllocation.getDefaultGmm()->getSizeAllocation();
     }
 
     if (size == 0) {
