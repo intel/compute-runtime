@@ -11,6 +11,7 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 
@@ -19,6 +20,7 @@
 #include <atomic>
 #include <memory>
 #include <thread>
+#include <vector>
 
 namespace NEO {
 extern bool disableBindDefaultInTests;
@@ -149,4 +151,45 @@ TEST_F(DrmMemoryManagerMtTest, givenMultipleThreadsWhenSharedAllocationIsCreated
     for (size_t i = 0; i < maxThreads; i++) {
         threads[i].join();
     }
+}
+
+TEST_F(DrmMemoryManagerMtTest, givenLocalMemoryReservationsFromMultipleThreadsWhenOnlySomeFitThenExactlyThoseSucceed) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
+    auto drm = new DrmMock(*executionEnvironment.rootDeviceEnvironments[0]);
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
+    executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u, false);
+
+    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(executionEnvironment);
+
+    constexpr size_t maxThreads = 10;
+    constexpr size_t fittingReservations = 4;
+    constexpr size_t allocationSize = MemoryConstants::pageSize64k;
+    memoryManager->cachedMaxLocalMemory[0] = fittingReservations * allocationSize;
+
+    std::vector<std::unique_ptr<DrmAllocation>> allocations;
+    for (size_t i = 0; i < maxThreads; i++) {
+        allocations.push_back(std::make_unique<DrmAllocation>(0u, 1u, AllocationType::buffer, nullptr, nullptr, 0u, allocationSize, MemoryPool::localMemory));
+    }
+
+    std::atomic<size_t> successfulReservations{0};
+    std::vector<std::thread> threads;
+    for (size_t i = 0; i < maxThreads; i++) {
+        threads.emplace_back([&, i]() {
+            if (memoryManager->reserveLocalMemory(*allocations[i])) {
+                successfulReservations++;
+            }
+        });
+    }
+    for (auto &thread : threads) {
+        thread.join();
+    }
+
+    EXPECT_EQ(fittingReservations, successfulReservations.load());
+    EXPECT_EQ(fittingReservations * allocationSize, memoryManager->getUsedLocalMemorySize(0));
+
+    for (auto &allocation : allocations) {
+        memoryManager->releaseLocalMemoryReservation(*allocation);
+    }
+    EXPECT_EQ(0u, memoryManager->getUsedLocalMemorySize(0));
 }

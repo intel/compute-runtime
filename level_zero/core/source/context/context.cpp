@@ -416,6 +416,8 @@ ze_result_t Context::allocDeviceMem(ze_device_handle_t hDevice,
     }
     if (ret == ZE_RESULT_SUCCESS) {
         *ptr = usmPtr;
+    } else {
+        this->freeMem(usmPtr);
     }
     return ret;
 }

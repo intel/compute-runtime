@@ -970,4 +970,93 @@ INSTANTIATE_TEST_SUITE_P(Drm57Bit,
                          DrmMemoryManagerAllocation57BitTest,
                          ::testing::ValuesIn(allocation57Bit));
 
+struct DrmMemoryManagerLocalOnlyModeTest : public DrmMemoryManagerLocalMemoryTest {
+    void SetUp() override {
+        DrmMemoryManagerLocalMemoryTest::SetUp();
+        memoryManager->cachedMaxLocalMemory[rootDeviceIndex] = maxLocalMemory;
+        memoryManager->usmDeviceAllocationMode = LocalMemAllocationMode::localOnly;
+        allocData.size = MemoryConstants::pageSize;
+        allocData.flags.allocateMemory = true;
+        allocData.rootDeviceIndex = rootDeviceIndex;
+    }
+
+    MemoryManager::AllocationStatus allocate(AllocationType allocationType) {
+        allocData.type = allocationType;
+        auto status = MemoryManager::AllocationStatus::Success;
+        auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
+        memoryManager->freeGraphicsMemory(allocation);
+        return status;
+    }
+
+    static constexpr uint64_t maxLocalMemory = MemoryConstants::gigaByte;
+    AllocationData allocData{};
+};
+
+TEST_F(DrmMemoryManagerLocalOnlyModeTest, givenLocalOnlyModeWhenDeviceUsmAllocationExceedsLocalMemoryThenErrorIsReturnedWithoutRetryInSystemMemory) {
+    memoryManager->localMemAllocsSize[rootDeviceIndex] = maxLocalMemory;
+
+    for (const auto allocationType : {AllocationType::buffer, AllocationType::svmGpu}) {
+        EXPECT_EQ(MemoryManager::AllocationStatus::Error, allocate(allocationType));
+    }
+    EXPECT_TRUE(ioctlHelper->createGemExtCalls.empty());
+}
+
+TEST_F(DrmMemoryManagerLocalOnlyModeTest, givenLocalOnlyModeWhenDeviceUsmAllocationFitsInLocalMemoryThenAllocationSucceeds) {
+
+    EXPECT_EQ(MemoryManager::AllocationStatus::Success, allocate(AllocationType::buffer));
+    EXPECT_EQ(1u, ioctlHelper->hasEnoughDeviceMemoryCalled);
+}
+
+TEST_F(DrmMemoryManagerLocalOnlyModeTest, givenLocalOnlyModeWhenKmdReportsNotEnoughDeviceMemoryThenErrorIsReturned) {
+    ioctlHelper->hasEnoughDeviceMemoryResult = false;
+    const auto usedLocalMemoryBefore = memoryManager->getUsedLocalMemorySize(rootDeviceIndex);
+
+    EXPECT_EQ(MemoryManager::AllocationStatus::Error, allocate(AllocationType::buffer));
+    EXPECT_TRUE(ioctlHelper->createGemExtCalls.empty());
+    EXPECT_EQ(usedLocalMemoryBefore, memoryManager->getUsedLocalMemorySize(rootDeviceIndex));
+}
+
+TEST_F(DrmMemoryManagerLocalOnlyModeTest, givenLocalOnlyModeWhenNonUsmAllocationExceedsLocalMemoryThenAllocationSucceeds) {
+    memoryManager->localMemAllocsSize[rootDeviceIndex] = maxLocalMemory;
+
+    EXPECT_EQ(MemoryManager::AllocationStatus::Success, allocate(AllocationType::commandBuffer));
+    EXPECT_EQ(0u, ioctlHelper->hasEnoughDeviceMemoryCalled);
+}
+
+TEST_F(DrmMemoryManagerLocalOnlyModeTest, givenModeOtherThanLocalOnlyWhenDeviceUsmAllocationExceedsLocalMemoryThenAllocationSucceeds) {
+    memoryManager->localMemAllocsSize[rootDeviceIndex] = maxLocalMemory;
+
+    for (const auto mode : {LocalMemAllocationMode::hwDefault, LocalMemAllocationMode::localPreferred}) {
+        memoryManager->usmDeviceAllocationMode = mode;
+        EXPECT_EQ(MemoryManager::AllocationStatus::Success, allocate(AllocationType::buffer));
+    }
+    EXPECT_EQ(0u, ioctlHelper->hasEnoughDeviceMemoryCalled);
+}
+
+TEST_F(DrmMemoryManagerLocalOnlyModeTest, givenLocalOnlyModeWhenDeviceUsmAllocationIsRegisteredAndFreedThenItsSizeIsCountedOnce) {
+    const auto usedLocalMemoryBefore = memoryManager->getUsedLocalMemorySize(rootDeviceIndex);
+    allocData.type = AllocationType::buffer;
+
+    auto status = MemoryManager::AllocationStatus::Error;
+    auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
+    ASSERT_NE(nullptr, allocation);
+    const auto allocationSize = allocation->getUnderlyingBufferSize();
+    EXPECT_EQ(usedLocalMemoryBefore + allocationSize, memoryManager->getUsedLocalMemorySize(rootDeviceIndex));
+
+    EXPECT_EQ(MemoryManager::AllocationStatus::Success, memoryManager->registerLocalMemAlloc(allocation, rootDeviceIndex));
+    EXPECT_EQ(usedLocalMemoryBefore + allocationSize, memoryManager->getUsedLocalMemorySize(rootDeviceIndex));
+
+    memoryManager->freeGraphicsMemory(allocation);
+    EXPECT_EQ(usedLocalMemoryBefore, memoryManager->getUsedLocalMemorySize(rootDeviceIndex));
+}
+
+TEST_F(DrmMemoryManagerLocalOnlyModeTest, givenLocalOnlyModeWhenBufferObjectCreationFailsThenLocalMemoryReservationIsReleased) {
+    const auto usedLocalMemoryBefore = memoryManager->getUsedLocalMemorySize(rootDeviceIndex);
+    ioctlHelper->createGemExtResult = -1;
+
+    EXPECT_EQ(MemoryManager::AllocationStatus::Error, allocate(AllocationType::buffer));
+    EXPECT_FALSE(ioctlHelper->createGemExtCalls.empty());
+    EXPECT_EQ(usedLocalMemoryBefore, memoryManager->getUsedLocalMemorySize(rootDeviceIndex));
+}
+
 } // namespace NEO

@@ -51,6 +51,7 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using DrmMemoryManager::allocatePhysicalLocalDeviceMemory;
     using DrmMemoryManager::allocationTypeForCompletionFence;
     using DrmMemoryManager::allocUserptr;
+    using DrmMemoryManager::cachedMaxLocalMemory;
     using DrmMemoryManager::checkUnexpectedGpuPageFault;
     using DrmMemoryManager::createAllocWithAlignmentFromUserptr;
     using DrmMemoryManager::createBufferObjectInMemoryRegion;
@@ -83,6 +84,8 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using DrmMemoryManager::registerAllocationInOs;
     using DrmMemoryManager::registerSharedBoHandleAllocation;
     using DrmMemoryManager::releaseGpuRange;
+    using DrmMemoryManager::releaseLocalMemoryReservation;
+    using DrmMemoryManager::reserveLocalMemory;
     using DrmMemoryManager::secondaryEngines;
     using DrmMemoryManager::selectAlignmentAndHeap;
     using DrmMemoryManager::setDomainCpu;
@@ -97,6 +100,7 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using MemoryManager::allocateGraphicsMemoryInDevicePool;
     using MemoryManager::allRegisteredEngines;
     using MemoryManager::heapAssigners;
+    using MemoryManager::localMemAllocsSize;
     using MemoryManager::localMemorySupported;
 
     StorageInfo createStorageInfoFromPropertiesGeneric(const AllocationProperties &properties) {

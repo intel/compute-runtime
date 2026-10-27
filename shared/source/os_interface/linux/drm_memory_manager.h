@@ -226,6 +226,8 @@ class DrmMemoryManager : public MemoryManager {
     void setLocalMemBanksCount(uint32_t rootDeviceIndex);
     MOCKABLE_VIRTUAL void cacheMaxLocalMemorySize(uint32_t rootDeviceIndex);
     bool getLocalOnlyRequired(AllocationType allocationType, const ProductHelper &productHelper, const HardwareInfo &hwInfo, bool preferCompressed) const override;
+    bool reserveLocalMemory(DrmAllocation &allocation);
+    void releaseLocalMemoryReservation(DrmAllocation &allocation);
 
     template <typename Func>
     bool processOverAllocationBanks(GraphicsAllocation *graphicsAllocation, DeviceBitfield handleMask, Func funcToProcess);

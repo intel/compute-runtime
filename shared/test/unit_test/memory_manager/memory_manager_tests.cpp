@@ -64,6 +64,17 @@ enum class AtomicAccessMode : uint32_t;
 
 using namespace NEO;
 
+TEST(MemoryManagerTest, givenLocalMemoryAllocationModeReleaseKeyWhenMemoryManagerConstructedThenUsmDeviceAllocationModeIsSet) {
+    DebugManagerStateRestore restorer;
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+
+    for (const int32_t releaseKeyVal : {0, 1, 2}) {
+        debugManager.flags.NEO_LOCAL_MEMORY_ALLOCATION_MODE.set(releaseKeyVal);
+        OsAgnosticMemoryManager memoryManager(executionEnvironment);
+        EXPECT_EQ(toLocalMemAllocationMode(releaseKeyVal), memoryManager.usmDeviceAllocationMode);
+    }
+}
+
 TEST(MemoryManagerTest, WhenCallingSetSharedSystemAtomicAccessThenReturnTrue) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     OsAgnosticMemoryManager memoryManager(executionEnvironment);

@@ -2683,7 +2683,9 @@ AllocationStatus DrmMemoryManager::registerLocalMemAlloc(GraphicsAllocation *all
     if (!makeAllocationResident(allocation)) {
         return AllocationStatus::Error;
     }
-    this->localMemAllocsSize[rootDeviceIndex] += allocation->getUnderlyingBufferSize();
+    if (!static_cast<DrmAllocation *>(allocation)->isLocalMemoryReserved()) {
+        this->localMemAllocsSize[rootDeviceIndex] += allocation->getUnderlyingBufferSize();
+    }
     std::lock_guard<std::mutex> lock(this->allocMutex);
     this->localMemAllocs[rootDeviceIndex].push_back(allocation);
     return AllocationStatus::Success;
@@ -3088,6 +3090,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
                                              DrmAllocation *drmAllocation,
                                              uint64_t &gpuAddress,
                                              size_t &sizeAllocated) {
+        self->releaseLocalMemoryReservation(*drmAllocation);
         for (auto bo : drmAllocation->getBOs()) {
             delete bo;
         }
@@ -3156,7 +3159,10 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
     allocation->setReservedAddressRange(reinterpret_cast<void *>(gpuAddress), sizeAllocated);
     auto *drmAllocation = static_cast<DrmAllocation *>(allocation.get());
 
-    if (!createDrmAllocation(&getDrm(allocationData.rootDeviceIndex), allocation.get(), gpuAddress, maxOsContextCount, finalAlignment)) {
+    const bool localMemoryReservationRequired = isLocalOnlyAllocationMode() && isUsmDeviceAllocationType(allocationData.type);
+    if ((localMemoryReservationRequired && !reserveLocalMemory(*drmAllocation)) ||
+        !createDrmAllocation(&getDrm(allocationData.rootDeviceIndex), allocation.get(), gpuAddress, maxOsContextCount, finalAlignment)) {
+        releaseLocalMemoryReservation(*drmAllocation);
         for (auto handleId = 0u; handleId < allocationData.storageInfo.getNumBanks(); handleId++) {
             delete allocation->getGmm(handleId);
         }
@@ -4025,10 +4031,37 @@ void DrmMemoryManager::releaseDeviceSpecificGfxPartition(uint32_t rootDeviceInde
 }
 
 bool DrmMemoryManager::getLocalOnlyRequired(AllocationType allocationType, const ProductHelper &productHelper, const HardwareInfo &hwInfo, bool preferCompressed) const {
-    if (preferCompressed || allocationType == AllocationType::buffer || allocationType == AllocationType::svmGpu) {
-        return hwInfo.caps.localOnlyAllowed;
+    if (isUsmDeviceAllocationType(allocationType)) {
+        return getLocalOnlyFlagForMode(usmDeviceAllocationMode, hwInfo.caps.localOnlyAllowed);
     }
 
-    return false;
+    return MemoryManager::getLocalOnlyRequired(allocationType, productHelper, hwInfo, preferCompressed);
+}
+
+bool DrmMemoryManager::reserveLocalMemory(DrmAllocation &allocation) {
+    const auto rootDeviceIndex = allocation.getRootDeviceIndex();
+    const auto size = allocation.getUnderlyingBufferSize();
+    auto &usedLocalMemory = localMemAllocsSize[rootDeviceIndex];
+    auto used = usedLocalMemory.load();
+    do {
+        if (static_cast<uint64_t>(used) + size > cachedMaxLocalMemory[rootDeviceIndex]) {
+            return false;
+        }
+    } while (!usedLocalMemory.compare_exchange_weak(used, used + size));
+
+    const auto memoryBanks = static_cast<uint32_t>(allocation.storageInfo.memoryBanks.to_ulong());
+    if (!getDrm(rootDeviceIndex).getIoctlHelper()->hasEnoughDeviceMemory(size, memoryBanks)) {
+        usedLocalMemory -= size;
+        return false;
+    }
+
+    allocation.setLocalMemoryReserved(true);
+    return true;
+}
+
+void DrmMemoryManager::releaseLocalMemoryReservation(DrmAllocation &allocation) {
+    if (allocation.isLocalMemoryReserved()) {
+        localMemAllocsSize[allocation.getRootDeviceIndex()] -= allocation.getUnderlyingBufferSize();
+    }
 }
 } // namespace NEO

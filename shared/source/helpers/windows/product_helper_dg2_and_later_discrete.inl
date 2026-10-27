@@ -12,15 +12,6 @@ namespace NEO {
 
 template <>
 bool ProductHelperHw<gfxProduct>::getStorageInfoLocalOnlyFlag(LocalMemAllocationMode usmDeviceAllocationMode, bool defaultValue) const {
-    switch (usmDeviceAllocationMode) {
-    case LocalMemAllocationMode::hwDefault:
-        return defaultValue;
-    case LocalMemAllocationMode::localOnly:
-        return true;
-    case LocalMemAllocationMode::localPreferred:
-        return false;
-    default:
-        UNRECOVERABLE_IF(true);
-    }
+    return getLocalOnlyFlagForMode(usmDeviceAllocationMode, defaultValue);
 }
 } // namespace NEO

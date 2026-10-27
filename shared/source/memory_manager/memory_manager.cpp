@@ -71,6 +71,7 @@ MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : execu
     secondaryEngines.resize(rootEnvCount + 1);
     localMemAllocsSize = std::make_unique<std::atomic<size_t>[]>(rootEnvCount);
     sysMemAllocsSize.store(0u);
+    usmDeviceAllocationMode = toLocalMemAllocationMode(debugManager.flags.NEO_LOCAL_MEMORY_ALLOCATION_MODE.get());
 
     for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < rootEnvCount; ++rootDeviceIndex) {
         auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex];
@@ -1547,7 +1548,7 @@ void MemoryManager::removeCustomHeapAllocatorConfig(AllocationType allocationTyp
 }
 
 bool MemoryManager::getLocalOnlyRequired(AllocationType allocationType, const ProductHelper &productHelper, const HardwareInfo &hwInfo, bool preferCompressed) const {
-    if (allocationType == AllocationType::buffer || allocationType == AllocationType::svmGpu) {
+    if (isUsmDeviceAllocationType(allocationType)) {
         return productHelper.getStorageInfoLocalOnlyFlag(usmDeviceAllocationMode, hwInfo.caps.localOnlyAllowed);
     }
     return (preferCompressed ? hwInfo.caps.localOnlyAllowed : false);

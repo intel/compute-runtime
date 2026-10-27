@@ -114,6 +114,8 @@ class DrmAllocation : public GraphicsAllocation {
 
     void setUsmHostAllocation(bool flag) { usmHostAllocation = flag; }
     bool isUsmHostAllocation() { return usmHostAllocation; }
+    void setLocalMemoryReserved(bool flag) { localMemoryReserved = flag; }
+    bool isLocalMemoryReserved() const { return localMemoryReserved; }
 
     OsContextLinux *getOsContext() const {
         return this->osContext;
@@ -155,5 +157,6 @@ class DrmAllocation : public GraphicsAllocation {
     uint32_t numHandles = 0u;
 
     bool usmHostAllocation = false;
+    bool localMemoryReserved = false;
 };
 } // namespace NEO

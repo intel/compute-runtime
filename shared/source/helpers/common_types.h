@@ -124,6 +124,18 @@ constexpr inline auto toLocalMemAllocationMode(std::underlying_type_t<LocalMemAl
     DEBUG_BREAK_IF(modeFlag >= toUnderlying(LocalMemAllocationMode::count));
     return toEnum<LocalMemAllocationMode>(modeFlag);
 }
+inline bool getLocalOnlyFlagForMode(LocalMemAllocationMode usmDeviceAllocationMode, bool defaultValue) {
+    switch (usmDeviceAllocationMode) {
+    case LocalMemAllocationMode::hwDefault:
+        return defaultValue;
+    case LocalMemAllocationMode::localOnly:
+        return true;
+    case LocalMemAllocationMode::localPreferred:
+        return false;
+    default:
+        UNRECOVERABLE_IF(true);
+    }
+}
 
 namespace InterruptId {
 static constexpr uint32_t notUsed = std::numeric_limits<uint32_t>::max();

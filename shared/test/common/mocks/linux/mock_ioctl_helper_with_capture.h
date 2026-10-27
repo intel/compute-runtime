@@ -83,6 +83,11 @@ class MockIoctlHelperWithCapture : public IoctlHelperUpstream {
         return createGemExtResult;
     }
 
+    bool hasEnoughDeviceMemory(size_t size, uint32_t memoryBanks) override {
+        hasEnoughDeviceMemoryCalled++;
+        return hasEnoughDeviceMemoryResult;
+    }
+
     bool retrieveMmapOffsetForBufferObject(BufferObject &bo, uint64_t flags, uint64_t &offset) override {
         retrieveMmapOffsetCalled++;
         offset = mmapOffsetToReturn;
@@ -269,6 +274,8 @@ class MockIoctlHelperWithCapture : public IoctlHelperUpstream {
     bool preferredLocationRegionAvailable = false;
 
     bool retrieveMmapOffsetResult = true;
+    uint32_t hasEnoughDeviceMemoryCalled = 0u;
+    bool hasEnoughDeviceMemoryResult = true;
     uint32_t retrieveMmapOffsetCalled = 0u;
     uint64_t mmapOffsetToReturn = 0u;
 

@@ -12622,6 +12622,37 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDeviceUsmAllocationWhenLocalOnlyFl
     EXPECT_EQ(0U, productHelper.getStorageInfoLocalOnlyFlagCalled);
 }
 
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenUsmDeviceAllocationModeWhenLocalOnlyFlagValueComputedForDeviceUsmAllocationThenModeIsHonored) {
+    constexpr bool preferCompressed{false};
+    MockProductHelper productHelper{};
+
+    for (const bool localOnlyAllowed : {false, true}) {
+        auto hwInfo = *defaultHwInfo;
+        hwInfo.caps.localOnlyAllowed = localOnlyAllowed;
+
+        for (const auto allocationType : {AllocationType::buffer, AllocationType::svmGpu}) {
+            memoryManager->usmDeviceAllocationMode = LocalMemAllocationMode::hwDefault;
+            EXPECT_EQ(localOnlyAllowed, memoryManager->getLocalOnlyRequired(allocationType, productHelper, hwInfo, preferCompressed));
+
+            memoryManager->usmDeviceAllocationMode = LocalMemAllocationMode::localOnly;
+            EXPECT_TRUE(memoryManager->getLocalOnlyRequired(allocationType, productHelper, hwInfo, preferCompressed));
+
+            memoryManager->usmDeviceAllocationMode = LocalMemAllocationMode::localPreferred;
+            EXPECT_FALSE(memoryManager->getLocalOnlyRequired(allocationType, productHelper, hwInfo, preferCompressed));
+        }
+    }
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenLocalOnlyModeWhenLocalOnlyFlagValueComputedForNonUsmAllocationThenModeIsIgnored) {
+    MockProductHelper productHelper{};
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.caps.localOnlyAllowed = true;
+    memoryManager->usmDeviceAllocationMode = LocalMemAllocationMode::localOnly;
+
+    EXPECT_FALSE(memoryManager->getLocalOnlyRequired(AllocationType::commandBuffer, productHelper, hwInfo, false));
+    EXPECT_TRUE(memoryManager->getLocalOnlyRequired(AllocationType::commandBuffer, productHelper, hwInfo, true));
+}
+
 // Test: unbind a device virtual memory allocation fails.
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmDeviceVMAllocationBufferObjectUnbindFails) {
     const uint64_t gpuAddr = 0x1234;

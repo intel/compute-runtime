@@ -432,6 +432,7 @@ class MemoryManager {
     UsmReuseInfo usmReuseInfo;
     LocalMemAllocationMode usmDeviceAllocationMode = LocalMemAllocationMode::hwDefault;
     bool isLocalOnlyAllocationMode() const { return usmDeviceAllocationMode == LocalMemAllocationMode::localOnly; }
+    static bool isUsmDeviceAllocationType(AllocationType allocationType) { return allocationType == AllocationType::buffer || allocationType == AllocationType::svmGpu; }
 
     bool shouldLimitAllocationsReuse() const {
         return getUsedSystemMemorySize() >= usmReuseInfo.getLimitAllocationsReuseThreshold();

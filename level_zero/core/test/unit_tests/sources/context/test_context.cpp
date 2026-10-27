@@ -1187,6 +1187,8 @@ TEST_F(ContextMakeMemoryResidentTests, givenDeviceUnifiedMemoryAndLocalOnlyAlloc
     EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
 
     mockMemoryInterface->makeResidentResult = NEO::MemoryOperationsStatus::outOfMemory;
+    const auto numAllocsBefore = driverHandle->svmAllocsManager->getNumAllocs();
+    ptr = nullptr;
     ze_result_t res2 = context->allocDeviceMem(device->toHandle(),
                                                &deviceDesc,
                                                size,
@@ -1194,7 +1196,12 @@ TEST_F(ContextMakeMemoryResidentTests, givenDeviceUnifiedMemoryAndLocalOnlyAlloc
                                                &ptr);
     EXPECT_EQ(res2, (lmemAllocationModeSupported ? ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY : ZE_RESULT_SUCCESS));
     EXPECT_EQ(mockMemoryInterface->makeResidentCalled, (lmemAllocationModeSupported ? 2U : 0U));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+    if (lmemAllocationModeSupported) {
+        EXPECT_EQ(nullptr, ptr);
+        EXPECT_EQ(numAllocsBefore, driverHandle->svmAllocsManager->getNumAllocs());
+    } else {
+        EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+    }
 }
 
 TEST_F(ContextMakeMemoryResidentTests, givenNonDeviceUnifiedMemoryWhenAllocDeviceMemCalledThenMakeMemoryResidentIsNotImmediatelyCalled) {
