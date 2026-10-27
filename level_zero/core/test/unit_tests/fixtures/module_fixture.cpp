@@ -14,6 +14,7 @@
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 
 #include "level_zero/core/source/device/device.h"
+#include "level_zero/core/test/unit_tests/fixtures/device_fixture_extended.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
 #include "gtest/gtest.h"

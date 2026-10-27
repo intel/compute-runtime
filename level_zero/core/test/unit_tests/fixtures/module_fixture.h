@@ -12,7 +12,7 @@
 
 #include "level_zero/core/source/kernel/kernel_shared_state.h"
 #include "level_zero/core/source/module/module_imp.h"
-#include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/core/test/unit_tests/fixtures/device_fixture_extended.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 
 namespace NEO {

@@ -11,6 +11,7 @@
 #include "level_zero/tools/source/sysman/firmware_util/firmware_util_imp.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/firmware_util/mock_fw_util_fixture.h"
 
+#include <algorithm>
 #include <cstring>
 
 extern bool sysmanUltsEnable;

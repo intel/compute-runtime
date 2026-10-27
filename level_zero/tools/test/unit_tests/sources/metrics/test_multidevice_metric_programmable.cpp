@@ -8,7 +8,7 @@
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/core/test/unit_tests/fixtures/device_fixture_extended.h"
 #include "level_zero/tools/source/metrics/metric.h"
 #include "level_zero/tools/source/metrics/metric_multidevice_programmable.h"
 #include "level_zero/tools/source/metrics/metric_multidevice_programmable.inl"

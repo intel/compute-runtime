@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/image/image_format_desc_helper.h"

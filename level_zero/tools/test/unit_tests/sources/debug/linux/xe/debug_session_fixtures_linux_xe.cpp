@@ -12,6 +12,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 
+#include "level_zero/core/test/unit_tests/fixtures/device_fixture_extended.h"
 #include "level_zero/tools/test/unit_tests/sources/debug/mock_debug_session.h"
 
 namespace L0 {

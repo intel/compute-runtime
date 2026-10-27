@@ -10,6 +10,7 @@
 #include "shared/source/command_container/implicit_scaling.h"
 
 #include "level_zero/core/source/context/context.h"
+#include "level_zero/core/test/unit_tests/fixtures/device_fixture_extended.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 
 #include "gtest/gtest.h"

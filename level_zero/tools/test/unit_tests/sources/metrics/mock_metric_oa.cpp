@@ -10,6 +10,7 @@
 #include "shared/test/common/mocks/mock_os_library.h"
 
 #include "level_zero/core/source/device/device.h"
+#include "level_zero/core/test/unit_tests/fixtures/device_fixture_extended.h"
 #include "level_zero/tools/source/metrics/metric_ip_sampling_source.h"
 #include "level_zero/tools/source/metrics/metric_oa_source.h"
 #include "level_zero/tools/source/metrics/metric_oa_streamer_imp.h"

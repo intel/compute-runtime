@@ -5,7 +5,7 @@
  *
  */
 
-#include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/core/test/unit_tests/fixtures/device_fixture_extended.h"
 
 namespace L0 {
 namespace ult {

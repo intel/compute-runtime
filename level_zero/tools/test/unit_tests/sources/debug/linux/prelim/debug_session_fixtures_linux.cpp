@@ -10,6 +10,8 @@
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/test/common/mocks/mock_device.h"
 
+#include "level_zero/core/test/unit_tests/fixtures/device_fixture_extended.h"
+
 namespace L0 {
 namespace ult {
 

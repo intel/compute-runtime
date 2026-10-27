@@ -41,7 +41,7 @@
 #include "level_zero/core/source/module/module.h"
 #include "level_zero/core/source/mutable_cmdlist/helper.h"
 #include "level_zero/core/test/common/ult_helpers_l0.h"
-#include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/core/test/unit_tests/fixtures/device_fixture_extended.h"
 #include "level_zero/core/test/unit_tests/fixtures/memory_ipc_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"

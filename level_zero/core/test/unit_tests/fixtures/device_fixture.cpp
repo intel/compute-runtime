@@ -18,6 +18,7 @@
 #include "shared/test/common/mocks/ult_device_factory.h"
 
 #include "level_zero/core/source/device/device.h"
+#include "level_zero/core/test/unit_tests/fixtures/device_fixture_extended.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_context.h"
 
@@ -25,6 +26,9 @@
 
 namespace L0 {
 namespace ult {
+
+DeviceFixture::DeviceFixture() noexcept = default;
+DeviceFixture::~DeviceFixture() = default;
 
 void DeviceFixture::setUp() {
     hardwareInfo = defaultHwInfo.get();

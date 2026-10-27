@@ -34,7 +34,7 @@
 #include "level_zero/core/source/image/image_formats.h"
 #include "level_zero/core/source/image/internal_core_image_ext.h"
 #include "level_zero/core/test/common/ult_helpers_l0.h"
-#include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/core/test/unit_tests/fixtures/device_fixture_extended.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_image.h"
 
 #include "third_party/opencl_headers/CL/cl_ext.h"

@@ -28,7 +28,7 @@
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/image/image.h"
 #include "level_zero/core/test/common/ult_helpers_l0.h"
-#include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/core/test/unit_tests/fixtures/device_fixture_extended.h"
 #include "level_zero/core/test/unit_tests/fixtures/host_pointer_manager_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_context.h"

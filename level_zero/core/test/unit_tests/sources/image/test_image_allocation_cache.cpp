@@ -24,7 +24,7 @@
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/image/image.h"
 #include "level_zero/core/source/image/image_allocation_cache.h"
-#include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/core/test/unit_tests/fixtures/device_fixture_extended.h"
 
 #include <functional>
 
