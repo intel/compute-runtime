@@ -73,7 +73,6 @@ class MockCommandQueue : public CommandQueue {
     using CommandQueue::queueFamilyIndex;
     using CommandQueue::queueFamilySelected;
     using CommandQueue::queueIndexWithinFamily;
-    using CommandQueue::shouldFlushDC;
     using CommandQueue::splitBarrierRequired;
     using CommandQueue::throttle;
     using CommandQueue::timestampPacketContainer;

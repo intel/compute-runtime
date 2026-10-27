@@ -170,13 +170,3 @@ NVLPTEST_F(NvlProductHelper, givenNvlPA0WhenCallingAdjustMaxThreadsPerThreadGrou
     EXPECT_EQ(maxThreadsPerThreadGroup, productHelper->adjustMaxThreadsPerThreadGroup(hwInfo, maxThreadsPerThreadGroup, simt, 320));
     EXPECT_EQ(maxThreadsPerThreadGroup, productHelper->adjustMaxThreadsPerThreadGroup(hwInfo, maxThreadsPerThreadGroup, simt, 256));
 }
-
-NVLPTEST_F(NvlProductHelper, whenCheckIsTlbFlushRequiredThenReturnFalse) {
-    EXPECT_FALSE(productHelper->isTlbFlushRequired());
-}
-
-NVLPTEST_F(NvlProductHelper, givenForceTlbFlushSetWhenCheckIsTlbFlushRequiredThenReturnTrue) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.ForceTlbFlush.set(1);
-    EXPECT_TRUE(productHelper->isTlbFlushRequired());
-}

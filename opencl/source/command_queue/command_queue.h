@@ -401,7 +401,6 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     uint64_t dispatchHints = 0;
 
     bool isTextureCacheFlushNeeded(uint32_t commandType) const;
-    bool isDirectSubmissionImageCacheFlushNeeded(uint32_t commandType) const;
 
     const std::array<CopyEngineState, bcsInfoMaskSize> &peekActiveBcsStates() const { return bcsStates; }
 
@@ -474,7 +473,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
                 commandType == CL_COMMAND_READ_IMAGE ||
                 commandType == CL_COMMAND_SVM_MAP ||
                 printfHandler ||
-                isDirectSubmissionImageCacheFlushNeeded(commandType));
+                isTextureCacheFlushNeeded(commandType));
     }
 
     bool isImageWriteOperation(cl_command_type commandType) const {

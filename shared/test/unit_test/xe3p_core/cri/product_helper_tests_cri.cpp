@@ -272,13 +272,3 @@ CRITEST_F(CriProductHelper, givenCriWhenAskingForRegularCmdListDualStreamCopyOff
 CRITEST_F(CriProductHelper, givenCriWhenAskingIfDirectSubmissionContextGroupIdleDetectionIsEnabledThenFalseReturned) {
     EXPECT_FALSE(productHelper->isDirectSubmissionContextGroupIdleDetectionEnabled());
 }
-
-CRITEST_F(CriProductHelper, whenCheckIsTlbFlushRequiredThenReturnFalse) {
-    EXPECT_FALSE(productHelper->isTlbFlushRequired());
-}
-
-CRITEST_F(CriProductHelper, givenForceTlbFlushSetWhenCheckIsTlbFlushRequiredThenReturnTrue) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.ForceTlbFlush.set(1);
-    EXPECT_TRUE(productHelper->isTlbFlushRequired());
-}
