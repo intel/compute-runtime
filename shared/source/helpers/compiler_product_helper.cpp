@@ -199,4 +199,11 @@ BuiltIn::AddressingMode CompilerProductHelper::getDefaultBuiltInAddressingMode(b
     return BuiltIn::AddressingMode::getDefaultMode(bindlessImages, this->isForceToStatelessRequired());
 }
 
+const char *CompilerProductHelper::getCustomIgcLibraryName() const {
+    if (debugManager.flags.IgcLibraryName.get() != "unk") {
+        return debugManager.flags.IgcLibraryName.getRef().c_str();
+    }
+    return getDefaultIgcLibraryName();
+}
+
 } // namespace NEO

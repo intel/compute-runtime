@@ -73,7 +73,7 @@ class CompilerProductHelper {
     void getKernelFp32AtomicCapabilities(uint32_t &fp32Caps) const;
     void getKernelFp64AtomicCapabilities(uint32_t &fp64Caps) const;
     BuiltIn::AddressingMode getDefaultBuiltInAddressingMode(bool bindlessImages) const;
-    virtual const char *getCustomIgcLibraryName() const = 0;
+    const char *getCustomIgcLibraryName() const;
     virtual bool useIgcAsFcl() const = 0;
     virtual IGC::CodeType::CodeType_t getPreferredIntermediateRepresentation() const = 0;
 
@@ -83,6 +83,7 @@ class CompilerProductHelper {
 
   protected:
     virtual uint32_t getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const = 0;
+    virtual const char *getDefaultIgcLibraryName() const = 0;
     CompilerProductHelper() = default;
 };
 
@@ -109,7 +110,6 @@ class CompilerProductHelperHw : public CompilerProductHelper {
     uint32_t matchRevisionIdWithProductConfig(HardwareIpVersion ipVersion, uint32_t revisionID) const override;
     void adjustHwInfoForIgc(HardwareInfo &hwInfo) const override;
     bool isHeaplessModeEnabled(const HardwareInfo &hwInfo) const override;
-    const char *getCustomIgcLibraryName() const override;
     bool useIgcAsFcl() const override;
     IGC::CodeType::CodeType_t getPreferredIntermediateRepresentation() const override;
 
@@ -117,6 +117,7 @@ class CompilerProductHelperHw : public CompilerProductHelper {
 
   protected:
     uint32_t getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const override;
+    const char *getDefaultIgcLibraryName() const override;
 };
 
 template <PRODUCT_FAMILY gfxProduct>

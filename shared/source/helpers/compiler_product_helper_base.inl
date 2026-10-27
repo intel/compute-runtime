@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/hw_info.h"
@@ -47,10 +46,7 @@ void CompilerProductHelperHw<gfxProduct>::adjustHwInfoForIgc(HardwareInfo &hwInf
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-const char *CompilerProductHelperHw<gfxProduct>::getCustomIgcLibraryName() const {
-    if (debugManager.flags.IgcLibraryName.get() != "unk") {
-        return debugManager.flags.IgcLibraryName.getRef().c_str();
-    }
+const char *CompilerProductHelperHw<gfxProduct>::getDefaultIgcLibraryName() const {
     return nullptr;
 }
 

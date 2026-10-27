@@ -32,7 +32,7 @@ class MockCompilerProductHelper : public CompilerProductHelper {
     ADDMETHOD_CONST_NOBASE_VOIDRETURN(adjustHwInfoForIgc, (HardwareInfo & hwInfo));
     ADDMETHOD_CONST_NOBASE(isHeaplessModeEnabled, bool, false, (const HardwareInfo &hwInfo));
     ADDMETHOD_CONST_NOBASE(getProductConfigFromHwInfo, uint32_t, 0, (const HardwareInfo &hwInfo));
-    ADDMETHOD_CONST_NOBASE(getCustomIgcLibraryName, const char *, nullptr, ());
+    ADDMETHOD_CONST_NOBASE(getDefaultIgcLibraryName, const char *, nullptr, ());
     ADDMETHOD_CONST_NOBASE(useIgcAsFcl, bool, false, ());
     ADDMETHOD_CONST_NOBASE(getPreferredIntermediateRepresentation, IGC::CodeType::CodeType_t, IGC::CodeType::undefined, ());
 };
