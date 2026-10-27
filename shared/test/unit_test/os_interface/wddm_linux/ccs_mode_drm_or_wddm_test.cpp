@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/windows/gmm_memory.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/os_interface/windows/gdi_interface.h"

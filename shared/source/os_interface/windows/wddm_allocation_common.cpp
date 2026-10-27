@@ -5,10 +5,30 @@
  *
  */
 
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/os_interface/windows/wddm_allocation.h"
 #include "shared/source/os_interface/windows/wddm_memory_manager.h"
 
+#include <sstream>
+
 namespace NEO {
+
+void *WddmAllocation::getAlignedCpuPtr() const {
+    return alignDown(this->cpuPtr, MemoryConstants::pageSize);
+}
+
+size_t WddmAllocation::getAlignedSize() const {
+    return alignSizeWholePage(this->cpuPtr, this->size);
+}
+
+std::string WddmAllocation::getHandleInfoString() const {
+    std::stringstream ss;
+    for (auto &handle : handles) {
+        ss << " Handle: " << handle;
+    }
+    return ss.str();
+}
+
 GraphicsAllocation *WddmAllocation::createView(size_t offsetInParentAllocation, size_t viewSize) {
     return new WddmAllocation(this, offsetInParentAllocation, viewSize);
 }

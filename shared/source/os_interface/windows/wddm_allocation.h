@@ -7,12 +7,11 @@
 
 #pragma once
 #define UMDF_USING_NTSTATUS
-#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/os_interface/windows/d3dkmthk_wrapper.h"
 #include "shared/source/os_interface/windows/windows_wrapper.h"
 
-#include <sstream>
+#include <string>
 
 namespace NEO {
 
@@ -61,13 +60,9 @@ class WddmAllocation : public GraphicsAllocation {
   public:
     GraphicsAllocation *createView(size_t offsetInParentAllocation, size_t viewSize) override;
 
-    void *getAlignedCpuPtr() const {
-        return alignDown(this->cpuPtr, MemoryConstants::pageSize);
-    }
+    void *getAlignedCpuPtr() const;
 
-    size_t getAlignedSize() const {
-        return alignSizeWholePage(this->cpuPtr, this->size);
-    }
+    size_t getAlignedSize() const;
 
     const std::vector<D3DKMT_HANDLE> &getHandles() const { return handles; }
     D3DKMT_HANDLE &getHandleToModify(uint32_t handleIndex) { return handles[handleIndex]; }
@@ -132,13 +127,7 @@ class WddmAllocation : public GraphicsAllocation {
     D3DGPU_VIRTUAL_ADDRESS reservedGpuVirtualAddress = 0u;
     uint64_t reservedSizeForGpuVirtualAddress = 0u;
     uint64_t ntSecureHandle = 0u;
-    std::string getHandleInfoString() const {
-        std::stringstream ss;
-        for (auto &handle : handles) {
-            ss << " Handle: " << handle;
-        }
-        return ss.str();
-    }
+    std::string getHandleInfoString() const;
 
     std::vector<D3DKMT_HANDLE> handles;
     D3DKMT_HANDLE resourceHandle = 0u; // used by shared resources
