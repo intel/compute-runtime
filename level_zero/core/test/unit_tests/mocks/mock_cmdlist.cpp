@@ -7,6 +7,8 @@
 
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 
+#include "shared/source/memory_manager/memory_manager.h"
+
 namespace L0 {
 namespace ult {
 

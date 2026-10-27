@@ -6,14 +6,15 @@
  */
 
 #pragma once
+#include "shared/source/memory_manager/allocation_usage.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
-#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/utilities/idlist.h"
 
 #include <memory>
 
 namespace NEO {
 class CommandStreamReceiver;
+class Device;
 
 class AllocationsList : public IDList<GraphicsAllocation, true, true> {
   public:

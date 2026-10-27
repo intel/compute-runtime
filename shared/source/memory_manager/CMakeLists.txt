@@ -10,6 +10,7 @@ set(NEO_CORE_MEMORY_MANAGER
     ${CMAKE_CURRENT_SOURCE_DIR}/allocations_list.h
     ${CMAKE_CURRENT_SOURCE_DIR}/allocations_list.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/allocation_type.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/allocation_usage.h
     ${CMAKE_CURRENT_SOURCE_DIR}/alignment_selector.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/alignment_selector.h
     ${CMAKE_CURRENT_SOURCE_DIR}/allocation_properties.h

@@ -66,12 +66,6 @@ class HeapAllocator;
 
 using MultiDeviceEngineControlContainer = StackVec<EngineControlContainer, 6u>;
 
-enum AllocationUsage {
-    TEMPORARY_ALLOCATION,
-    REUSABLE_ALLOCATION,
-    DEFERRED_DEALLOCATION
-};
-
 struct AlignedMallocRestrictions {
     uintptr_t minAddress;
 };
