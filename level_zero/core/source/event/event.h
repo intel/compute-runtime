@@ -60,7 +60,6 @@ struct GraphInternalEventEntry;
 struct IpcEventPoolData {
     uint64_t handle = 0;
     size_t numEvents = 0;
-    uint32_t rootDeviceIndex = 0;
     uint32_t maxEventPackets = 0;
     uint16_t numDevices = 0;
     bool isDeviceEventPoolAllocation : 1 = false;
@@ -91,7 +90,6 @@ struct IpcOpaqueEventPoolData {
     } opaqueHandle = {};
     uint32_t numEvents = 0;
     unsigned int processId = 0;
-    uint16_t rootDeviceIndex = 0;
     uint8_t maxEventPackets = 0; // max is EventPacketsCount::maxKernelSplit (3)
     uint8_t numDevices = 0;
     bool isDeviceEventPoolAllocation : 1 = false;

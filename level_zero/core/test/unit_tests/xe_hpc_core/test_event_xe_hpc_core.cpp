@@ -80,7 +80,6 @@ HWTEST2_F(EventPoolIPCHandleHpcCoreTests, whenGettingIpcHandleForEventPoolWithDe
     constexpr uint64_t expectedHandle = static_cast<uint64_t>(-1);
     EXPECT_NE(expectedHandle, ipcHandleData.handle.val);
     EXPECT_EQ(numEvents, ipcHandleData.numEvents);
-    EXPECT_EQ(0u, ipcHandleData.rootDeviceIndex);
     EXPECT_EQ(1u, ipcHandleData.numDevices);
     EXPECT_TRUE(ipcHandleData.isDeviceEventPoolAllocation);
     EXPECT_TRUE(ipcHandleData.isHostVisibleEventPoolAllocation);

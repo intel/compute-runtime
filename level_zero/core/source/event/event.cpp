@@ -34,6 +34,8 @@
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/experimental/source/graph/graph_captured_apis.h"
 
+#include <algorithm>
+
 static_assert(sizeof(NEO::InOrderExecEventData) <= ZE_MAX_IPC_HANDLE_SIZE, "InOrderExecEventData is bigger than ZE_MAX_IPC_HANDLE_SIZE");
 
 namespace L0 {
@@ -792,7 +794,6 @@ ze_result_t EventPool::getIpcHandle(ze_ipc_event_pool_handle_t *ipcHandle) {
     ipcData = {};
     ipcData.handle.val = handle;
     ipcData.numEvents = static_cast<uint32_t>(numEvents);
-    ipcData.rootDeviceIndex = static_cast<uint16_t>(getDevice()->getRootDeviceIndex());
     ipcData.maxEventPackets = static_cast<uint8_t>(getEventMaxPackets());
     ipcData.numDevices = static_cast<uint8_t>(devices.size());
     ipcData.isDeviceEventPoolAllocation = isDeviceEventPoolAllocation;
@@ -829,11 +830,13 @@ ze_result_t EventPool::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &
     eventPool->isDeviceEventPoolAllocation = poolData.isDeviceEventPoolAllocation;
     eventPool->isHostVisibleEventPoolAllocation = poolData.isHostVisibleEventPoolAllocation;
     eventPool->isImplicitScalingCapable = poolData.isImplicitScalingCapable;
-    ze_device_handle_t *deviceHandlesUsed = deviceHandles;
-
     UNRECOVERABLE_IF(numDevices == 0);
     auto device = Device::fromHandle(*deviceHandles);
     auto neoDevice = device->getNEODevice();
+    const auto rootDeviceIndex = neoDevice->getRootDeviceIndex();
+    if (poolData.numDevices == 1) {
+        numDevices = 1;
+    }
     NEO::MemoryManager::OsHandleData osHandleData{static_cast<uint64_t>(poolData.handle.val)};
 
     uint32_t parentID = 0;
@@ -886,20 +889,8 @@ ze_result_t EventPool::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &
     }
     osHandleData.parentProcessId = parentID;
     osHandleData.handle = static_cast<NEO::osHandle>(importHandle);
-    if (poolData.numDevices == 1) {
-        for (uint32_t i = 0; i < numDevices; i++) {
-            auto deviceStruct = Device::fromHandle(deviceHandles[i]);
-            auto neoDeviceIteration = deviceStruct->getNEODevice();
-            if (neoDeviceIteration->getRootDeviceIndex() == poolData.rootDeviceIndex) {
-                *deviceHandlesUsed = deviceHandles[i];
-                neoDevice = neoDeviceIteration;
-                break;
-            }
-        }
-        numDevices = 1;
-    }
 
-    eventPool->initializeSizeParameters(numDevices, deviceHandlesUsed, *driver, neoDevice->getRootDeviceEnvironment());
+    eventPool->initializeSizeParameters(numDevices, deviceHandles, *driver, neoDevice->getRootDeviceEnvironment());
     if (eventPool->getEventMaxPackets() != poolData.maxEventPackets) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(),
                      stderr,
@@ -913,7 +904,7 @@ ze_result_t EventPool::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &
         allocationType = NEO::AllocationType::gpuTimestampDeviceBuffer;
     }
 
-    NEO::AllocationProperties unifiedMemoryProperties{poolData.rootDeviceIndex,
+    NEO::AllocationProperties unifiedMemoryProperties{rootDeviceIndex,
                                                       eventPool->getEventPoolSize(),
                                                       allocationType,
                                                       NEO::systemMemoryBitfield};
@@ -930,7 +921,7 @@ ze_result_t EventPool::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &
 
     // Primary import failed - retry via the reserved fallback handle (mirrors getMemHandlePtr).
     if (alloc == nullptr && reservedHandleData != nullptr) {
-        int fallbackFd = memoryManager->getImportHandleFromReservedHandleData(reservedHandleData, poolData.rootDeviceIndex);
+        int fallbackFd = memoryManager->getImportHandleFromReservedHandleData(reservedHandleData, rootDeviceIndex);
         if (fallbackFd != -1) {
             osHandleData.handle = static_cast<NEO::osHandle>(fallbackFd);
             alloc = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData,
@@ -951,18 +942,18 @@ ze_result_t EventPool::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &
     }
 
     eventPool->context = context;
-    eventPool->eventPoolAllocations =
-        std::make_unique<NEO::MultiGraphicsAllocation>(static_cast<uint32_t>(context->rootDeviceIndices.size()));
+    const auto maxRootDeviceIndex = *std::max_element(context->rootDeviceIndices.begin(), context->rootDeviceIndices.end());
+    eventPool->eventPoolAllocations = std::make_unique<NEO::MultiGraphicsAllocation>(maxRootDeviceIndex);
     eventPool->eventPoolAllocations->addAllocation(alloc);
     eventPool->eventPoolPtr = reinterpret_cast<void *>(alloc->getUnderlyingBuffer());
     for (uint32_t i = 0; i < numDevices; i++) {
-        eventPool->devices.push_back(Device::fromHandle(deviceHandlesUsed[i]));
+        eventPool->devices.push_back(Device::fromHandle(deviceHandles[i]));
     }
     eventPool->isImportedIpcPool = true;
 
     if (numDevices > 1) {
         for (auto currDeviceIndex : context->rootDeviceIndices) {
-            if (currDeviceIndex == poolData.rootDeviceIndex) {
+            if (currDeviceIndex == rootDeviceIndex) {
                 continue;
             }
 
