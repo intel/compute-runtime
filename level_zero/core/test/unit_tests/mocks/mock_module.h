@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
@@ -14,7 +15,6 @@
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/utilities/shared_pool_allocation.h"
 #include "shared/test/common/mocks/mock_cif.h"
-#include "shared/test/common/mocks/mock_compiler_interface.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include "level_zero/core/source/module/module_imp.h"

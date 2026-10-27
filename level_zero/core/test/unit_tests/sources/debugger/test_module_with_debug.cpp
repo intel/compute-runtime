@@ -9,6 +9,7 @@
 #include "shared/source/program/kernel_info.h"
 #include "shared/test/common/compiler_interface/linker_mock.h"
 #include "shared/test/common/helpers/mock_file_io.h"
+#include "shared/test/common/mocks/mock_compiler_interface.h"
 #include "shared/test/common/mocks/mock_elf.h"
 #include "shared/test/common/mocks/mock_l0_debugger.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
