@@ -8,6 +8,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/definitions/indirect_detection_versions.h"
+#include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/string_helpers.h"
 #include "shared/source/os_interface/product_helper.inl"
 #include "shared/source/os_interface/product_helper_before_xe2.inl"
