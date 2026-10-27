@@ -9,7 +9,6 @@
 
 #include "shared/source/os_interface/product_helper.h"
 
-#include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/helpers/api_handle_helper.h"
 #include "level_zero/ze_intel_gpu.h"
 #include <level_zero/ze_api.h>

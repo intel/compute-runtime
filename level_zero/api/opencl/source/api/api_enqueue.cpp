@@ -35,6 +35,7 @@
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
+#include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/image/internal_core_image_ext.h"
 #include "level_zero/core/source/kernel/kernel.h"
 #include <level_zero/ze_api.h>

@@ -9,6 +9,7 @@
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
+#include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/semaphore/external_semaphore_imp.h"
 
 namespace L0 {
