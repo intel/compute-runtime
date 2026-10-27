@@ -54,6 +54,7 @@ bool OsAgnosticDirectSubmission<GfxFamily, Dispatcher>::allocateOsResources() {
 
 template <typename GfxFamily, typename Dispatcher>
 bool OsAgnosticDirectSubmission<GfxFamily, Dispatcher>::submit(uint64_t gpuAddress, size_t size, const ResidencyContainer *allocationsForResidency) {
+    uploadRelaxedOrderingScheduler();
 
     auto *csrSimulatedHw = reinterpret_cast<const CommandStreamReceiverSimulatedHw<GfxFamily> *>(&this->csr);
     if (size) {
@@ -62,7 +63,9 @@ bool OsAgnosticDirectSubmission<GfxFamily, Dispatcher>::submit(uint64_t gpuAddre
         auto batchBuffer = ptrOffset(this->ringCommandStream.getGraphicsAllocation()->getUnderlyingBuffer(), static_cast<size_t>(offset));
         auto memoryBank = csrSimulatedHw->getMemoryBank(this->ringCommandStream.getGraphicsAllocation());
 
-        csrSimulatedHw->submit(*this->ringCommandStream.getGraphicsAllocation(), gpuAddress, batchBuffer, size, memoryBank, MemoryConstants::pageSize64k, this->isAubWritingDirectSubmission(), allocationsForResidency);
+        csrSimulatedHw->submit(*this->ringCommandStream.getGraphicsAllocation(), gpuAddress, batchBuffer, size, memoryBank, MemoryConstants::pageSize64k, this->isAubWritingDirectSubmission());
+        this->uploadedRingBufferAllocation = this->ringCommandStream.getGraphicsAllocation();
+        this->uploadedRingBufferOffset = this->ringCommandStream.getUsed();
     }
     return true;
 }
@@ -70,6 +73,10 @@ bool OsAgnosticDirectSubmission<GfxFamily, Dispatcher>::submit(uint64_t gpuAddre
 template <typename GfxFamily, typename Dispatcher>
 void OsAgnosticDirectSubmission<GfxFamily, Dispatcher>::unblockGpu() {
     DirectSubmissionHw<GfxFamily, Dispatcher>::unblockGpu();
+    uploadRelaxedOrderingScheduler();
+    if (!this->isAubWritingDirectSubmission()) {
+        uploadPendingRingBufferSection();
+    }
     const_cast<CommandStreamReceiver &>(this->csr).writeMemory(*this->semaphores, true, offsetof(RingSemaphoreData, queueWorkCount), sizeof(this->semaphoreData->queueWorkCount));
 }
 
@@ -77,17 +84,49 @@ template <typename GfxFamily, typename Dispatcher>
 bool OsAgnosticDirectSubmission<GfxFamily, Dispatcher>::handleResidency(const ResidencyContainer *allocationsForResidency) {
 
     if (allocationsForResidency) {
+        uploadPendingRingBufferSection();
+
         auto *csrSimulatedHw = reinterpret_cast<const CommandStreamReceiverSimulatedHw<GfxFamily> *>(&this->csr);
-        csrSimulatedHw->uploadRingAndCommandBuffers(*this->ringCommandStream.getGraphicsAllocation(), this->ringCommandStream.getGraphicsAllocation()->getGpuAddress(), this->ringCommandStream.getUsed(), allocationsForResidency);
         csrSimulatedHw->resubmitInactiveHardwareContexts();
     }
     return true;
 }
 
 template <typename GfxFamily, typename Dispatcher>
+void OsAgnosticDirectSubmission<GfxFamily, Dispatcher>::uploadPendingRingBufferSection() {
+    auto ringBufferAllocation = this->ringCommandStream.getGraphicsAllocation();
+    size_t sectionStartOffset = (ringBufferAllocation == this->uploadedRingBufferAllocation) ? this->uploadedRingBufferOffset : 0u;
+    size_t sectionEndOffset = this->ringCommandStream.getUsed();
+    uploadRingBufferSection(*ringBufferAllocation, sectionStartOffset, sectionEndOffset - sectionStartOffset);
+    this->uploadedRingBufferAllocation = ringBufferAllocation;
+    this->uploadedRingBufferOffset = sectionEndOffset;
+}
+
+template <typename GfxFamily, typename Dispatcher>
+void OsAgnosticDirectSubmission<GfxFamily, Dispatcher>::uploadRingBufferSection(GraphicsAllocation &ringBufferAllocation, size_t sectionOffset, size_t sectionSize) {
+    if (sectionSize == 0u) {
+        return;
+    }
+    const_cast<CommandStreamReceiver &>(this->csr).writeMemory(ringBufferAllocation, true, sectionOffset, sectionSize);
+}
+
+template <typename GfxFamily, typename Dispatcher>
+void OsAgnosticDirectSubmission<GfxFamily, Dispatcher>::uploadRelaxedOrderingScheduler() {
+    if (!this->relaxedOrderingInitialized || this->relaxedOrderingSchedulerUploaded) {
+        return;
+    }
+    const_cast<CommandStreamReceiver &>(this->csr).writeAllocationChunkToSimulation(*this->relaxedOrderingSchedulerAllocation, 0u, this->relaxedOrderingSchedulerAllocation->getUnderlyingBufferSize());
+    this->relaxedOrderingSchedulerUploaded = true;
+}
+
+template <typename GfxFamily, typename Dispatcher>
 void OsAgnosticDirectSubmission<GfxFamily, Dispatcher>::handleSwitchRingBuffers(ResidencyContainer *allocationsForResidency) {
-    auto *csrSimulatedHw = reinterpret_cast<const CommandStreamReceiverSimulatedHw<GfxFamily> *>(&this->csr);
-    csrSimulatedHw->writeMemoryWithAubManager(*this->ringBuffers[this->previousRingBuffer].ringBuffer, false, 0, 0);
+    if (this->ringStart && this->uploadedRingBufferAllocation != nullptr) {
+        auto previousRingBufferUsableSize = this->getRingBufferUsableSize(*this->uploadedRingBufferAllocation);
+        uploadRingBufferSection(*this->uploadedRingBufferAllocation, this->uploadedRingBufferOffset, previousRingBufferUsableSize - this->uploadedRingBufferOffset);
+    }
+    this->uploadedRingBufferAllocation = this->ringCommandStream.getGraphicsAllocation();
+    this->uploadedRingBufferOffset = 0u;
 }
 
 template <typename GfxFamily, typename Dispatcher>

@@ -1346,11 +1346,16 @@ void CommandStreamReceiver::setupTagAllocatorForSimulation(TagAllocatorBase &tag
 }
 
 void CommandStreamReceiver::writeAllocationChunkToSimulation(GraphicsAllocation &gfxAllocation, uint64_t chunkOffset, size_t chunkSize) {
-    if ((!isTbxMode() && !isAubMode()) || chunkSize == 0) {
+    if ((!isTbxMode() && (!isAubMode() || isAubSubCaptureInactive())) || chunkSize == 0) {
         return;
     }
 
     [[maybe_unused]] auto ownership = obtainUniqueOwnership();
+    if (gfxAllocation.getAllocationType() == AllocationType::commandBuffer && !gfxAllocation.isSimulationInitialUploadDone()) {
+        chunkOffset = 0u;
+        chunkSize = gfxAllocation.getUnderlyingBufferSize();
+        gfxAllocation.setSimulationInitialUploadDone(true);
+    }
     setWritableForSimulation(true, gfxAllocation);
 
     const bool useChunkCopy = isChunkCopySupportedForSimulation();
@@ -1365,6 +1370,40 @@ void CommandStreamReceiver::writeAllocationChunkToSimulation(GraphicsAllocation 
         setWritableForSimulation(false, gfxAllocation);
     }
     DEBUG_BREAK_IF(!writeStatus);
+}
+
+void CommandStreamReceiver::writeBatchBufferToSimulation(const BatchBuffer &batchBuffer) {
+    writeAllocationChunkToSimulation(*batchBuffer.commandBufferAllocation, batchBuffer.startOffset, batchBuffer.usedSize - batchBuffer.startOffset);
+}
+
+void CommandStreamReceiver::writeStreamChunkToSimulation(LinearStream &stream, size_t chunkStartOffset) {
+    writeAllocationChunkToSimulation(*stream.getGraphicsAllocation(), chunkStartOffset, stream.getUsed() - chunkStartOffset);
+}
+
+void CommandStreamReceiver::writeCommandBufferPatchToSimulation(GraphicsAllocation &commandBufferAllocation, const ResidencyContainer *candidateAllocations, const void *patchLocation, size_t patchSize) {
+    if (!isTbxMode() && !isAubMode()) {
+        return;
+    }
+
+    auto isPatchWithinAllocation = [patchLocation, patchSize](const GraphicsAllocation &allocation) {
+        auto allocationStart = reinterpret_cast<uintptr_t>(allocation.getUnderlyingBuffer());
+        auto patchStart = reinterpret_cast<uintptr_t>(patchLocation);
+        return patchStart >= allocationStart && patchStart + patchSize <= allocationStart + allocation.getUnderlyingBufferSize();
+    };
+
+    GraphicsAllocation *patchedAllocation = isPatchWithinAllocation(commandBufferAllocation) ? &commandBufferAllocation : nullptr;
+    if (patchedAllocation == nullptr && candidateAllocations != nullptr) {
+        for (auto candidateAllocation : *candidateAllocations) {
+            if (candidateAllocation->getAllocationType() == AllocationType::commandBuffer && isPatchWithinAllocation(*candidateAllocation)) {
+                patchedAllocation = candidateAllocation;
+                break;
+            }
+        }
+    }
+
+    if (patchedAllocation != nullptr) {
+        writeAllocationChunkToSimulation(*patchedAllocation, ptrDiff(patchLocation, patchedAllocation->getUnderlyingBuffer()), patchSize);
+    }
 }
 
 void CommandStreamReceiver::writeTagAllocationChunkToSimulation(TagNodeBase &tagNode, uint64_t tagOffset, size_t chunkSize) {

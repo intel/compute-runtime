@@ -284,8 +284,7 @@ SubmissionStatus TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batch
     batchBuffer.commandBufferAllocation->updateTaskCount(submissionTaskCount, osContext->getContextId());
 
     // Write only the new command buffer chunk to avoid overwriting data being executed by TBX
-    this->writeMemory(*batchBuffer.commandBufferAllocation, true, batchBuffer.startOffset, batchBuffer.commandBufferAllocation->getUnderlyingBufferSize() - batchBuffer.startOffset);
-    this->setTbxWritable(false, *batchBuffer.commandBufferAllocation);
+    this->writeBatchBufferToSimulation(batchBuffer);
 
     // Write allocations for residency
     processResidency(allocationsForResidency, 0u);
@@ -307,7 +306,6 @@ SubmissionStatus TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batch
     if (this->directSubmission.get() || this->blitterDirectSubmission.get()) {
         bool dispatched = this->directSubmission.get() ? this->directSubmission->dispatchCommandBuffer(batchBuffer, *this->flushStamp.get())
                                                        : this->blitterDirectSubmission->dispatchCommandBuffer(batchBuffer, *this->flushStamp.get());
-        this->setTbxWritable(true, *batchBuffer.commandBufferAllocation);
         return dispatched ? SubmissionStatus::success : SubmissionStatus::failed;
     }
 
@@ -317,7 +315,6 @@ SubmissionStatus TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batch
         this->getPPGTTAdditionalBits(batchBuffer.commandBufferAllocation),
         overrideRingHead);
 
-    this->setTbxWritable(true, *batchBuffer.commandBufferAllocation);
     if (subCaptureManager) {
         pollForCompletion();
         subCaptureManager->disableSubCapture();

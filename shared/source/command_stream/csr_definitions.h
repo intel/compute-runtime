@@ -47,6 +47,7 @@ struct DispatchBcsFlags {
         : flushTaskCount(flushTaskCount), hasStallingCmds(hasStallingCmds), hasRelaxedOrderingDependencies(hasRelaxedOrderingDependencies) {}
 
     LinearStream *optionalEpilogueCmdStream = nullptr;
+    size_t optionalEpilogueCmdStreamStartOffset = 0u;
     AppendOperations dispatchOperation = AppendOperations::none;
     bool flushTaskCount = false;
     bool hasStallingCmds = false;
@@ -97,6 +98,7 @@ struct DispatchFlags {
     PipelineSelectArgs pipelineSelectArgs;
     FlushStampTrackingObj *flushStampReference = nullptr;
     LinearStream *optionalEpilogueCmdStream = nullptr;
+    size_t optionalEpilogueCmdStreamStartOffset = 0u;
     QueueThrottle throttle = QueueThrottle::MEDIUM;
     PreemptionMode preemptionMode = PreemptionMode::Disabled;
     uint32_t numGrfRequired = GrfConfig::defaultGrfNumber;
@@ -133,6 +135,7 @@ struct ImmediateDispatchFlags {
     StreamProperties *requiredState = nullptr;
     void *sshCpuBase = nullptr;
     LinearStream *optionalEpilogueCmdStream = nullptr;
+    size_t optionalEpilogueCmdStreamStartOffset = 0u;
     AppendOperations dispatchOperation = AppendOperations::none;
     bool blockingAppend = false;
     bool requireTaskCountUpdate = false;

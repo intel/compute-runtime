@@ -133,7 +133,12 @@ struct SimulationWriteTrackingCsr : public UltCommandStreamReceiver<GfxFamily> {
         writableTransitions.push_back(writable);
     }
 
+    bool isAubSubCaptureInactive() const override {
+        return aubSubCaptureInactive;
+    }
+
     bool chunkCopySupported = false;
+    bool aubSubCaptureInactive = false;
     bool writeMemoryReturnValue = true;
     uint32_t writeMemoryCallCount = 0;
     uint32_t setWritableCallCount = 0;
@@ -662,6 +667,35 @@ HWTEST_F(CommandStreamReceiverTest, givenAubModeWhenWritingAllocationChunkThenUp
     EXPECT_EQ(8u, csr.lastChunkSize);
 }
 
+HWTEST_F(CommandStreamReceiverTest, givenDefaultCommandStreamReceiverWhenCheckingIfAubSubCaptureIsInactiveThenReturnFalse) {
+    EXPECT_FALSE(pDevice->getUltCommandStreamReceiver<FamilyType>().isAubSubCaptureInactive());
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenInactiveAubSubCaptureWhenWritingAllocationChunkThenUploadIsSkippedInAubModeOnly) {
+    SimulationWriteTrackingCsr<FamilyType> csr(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    csr.commandStreamReceiverType = CommandStreamReceiverType::aub;
+    csr.chunkCopySupported = true;
+    csr.aubSubCaptureInactive = true;
+
+    uint8_t storage[32] = {};
+    MockGraphicsAllocation allocation(storage, 0x1a00, sizeof(storage));
+    allocation.allocationType = AllocationType::commandBuffer;
+
+    csr.writeAllocationChunkToSimulation(allocation, 4u, 8u);
+
+    EXPECT_EQ(0u, csr.writeMemoryCallCount);
+    EXPECT_EQ(0u, csr.setWritableCallCount);
+    EXPECT_FALSE(allocation.isSimulationInitialUploadDone());
+
+    csr.commandStreamReceiverType = CommandStreamReceiverType::tbxWithAub;
+    csr.writeAllocationChunkToSimulation(allocation, 4u, 8u);
+
+    EXPECT_EQ(1u, csr.writeMemoryCallCount);
+    EXPECT_EQ(0u, csr.lastChunkOffset);
+    EXPECT_EQ(sizeof(storage), csr.lastChunkSize);
+    EXPECT_TRUE(allocation.isSimulationInitialUploadDone());
+}
+
 HWTEST_F(CommandStreamReceiverTest, givenSimulationModeWhenWritingAllocationChunkThenUseChunkOffsetAndRestoreWritableForOneTimeAllocation) {
     SimulationWriteTrackingCsr<FamilyType> csr(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     csr.commandStreamReceiverType = CommandStreamReceiverType::tbx;
@@ -682,6 +716,175 @@ HWTEST_F(CommandStreamReceiverTest, givenSimulationModeWhenWritingAllocationChun
     ASSERT_EQ(2u, csr.writableTransitions.size());
     EXPECT_EQ(true, csr.writableTransitions[0]);
     EXPECT_EQ(false, csr.writableTransitions[1]);
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenSimulationModeWhenWritingBatchBufferThenWriteRangeFromStartOffsetToUsedSize) {
+    SimulationWriteTrackingCsr<FamilyType> csr(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    csr.commandStreamReceiverType = CommandStreamReceiverType::tbx;
+    csr.chunkCopySupported = true;
+
+    uint8_t storage[64] = {};
+    MockGraphicsAllocation allocation(storage, 0x2000, sizeof(storage));
+    BatchBuffer batchBuffer{};
+    batchBuffer.commandBufferAllocation = &allocation;
+    batchBuffer.startOffset = 8u;
+    batchBuffer.usedSize = 40u;
+
+    csr.writeBatchBufferToSimulation(batchBuffer);
+
+    EXPECT_EQ(1u, csr.writeMemoryCallCount);
+    EXPECT_EQ(&allocation, csr.lastWriteAllocation);
+    EXPECT_EQ(8u, csr.lastChunkOffset);
+    EXPECT_EQ(32u, csr.lastChunkSize);
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenSimulationModeWhenWritingStreamChunkThenWriteRangeFromChunkStartToStreamEnd) {
+    SimulationWriteTrackingCsr<FamilyType> csr(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    csr.commandStreamReceiverType = CommandStreamReceiverType::tbx;
+    csr.chunkCopySupported = true;
+
+    uint8_t storage[64] = {};
+    MockGraphicsAllocation allocation(storage, 0x2000, sizeof(storage));
+    LinearStream stream(&allocation);
+    stream.getSpace(48u);
+
+    csr.writeStreamChunkToSimulation(stream, 16u);
+
+    EXPECT_EQ(1u, csr.writeMemoryCallCount);
+    EXPECT_EQ(&allocation, csr.lastWriteAllocation);
+    EXPECT_EQ(16u, csr.lastChunkOffset);
+    EXPECT_EQ(32u, csr.lastChunkSize);
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenCommandBufferAllocationWhenWritingChunksToSimulationThenWholeAllocationIsWrittenOnFirstUploadAndExactChunkAfterwards) {
+    for (auto simulationType : {CommandStreamReceiverType::tbx, CommandStreamReceiverType::aub}) {
+        SimulationWriteTrackingCsr<FamilyType> csr(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+        csr.commandStreamReceiverType = simulationType;
+        csr.chunkCopySupported = true;
+
+        uint8_t storage[64] = {};
+        MockGraphicsAllocation allocation(storage, 0x2000, sizeof(storage));
+        allocation.allocationType = AllocationType::commandBuffer;
+
+        csr.writeAllocationChunkToSimulation(allocation, 8u, 16u);
+
+        EXPECT_EQ(1u, csr.writeMemoryCallCount);
+        EXPECT_EQ(&allocation, csr.lastWriteAllocation);
+        EXPECT_EQ(0u, csr.lastChunkOffset);
+        EXPECT_EQ(sizeof(storage), csr.lastChunkSize);
+        EXPECT_TRUE(allocation.isSimulationInitialUploadDone());
+
+        csr.writeAllocationChunkToSimulation(allocation, 8u, 16u);
+
+        EXPECT_EQ(2u, csr.writeMemoryCallCount);
+        EXPECT_EQ(8u, csr.lastChunkOffset);
+        EXPECT_EQ(16u, csr.lastChunkSize);
+    }
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenCommandBufferAllocationWhenWritingEmptyChunkOrNotInSimulationModeThenInitialUploadIsNotDone) {
+    SimulationWriteTrackingCsr<FamilyType> csr(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    csr.commandStreamReceiverType = CommandStreamReceiverType::hardware;
+    csr.chunkCopySupported = true;
+
+    uint8_t storage[64] = {};
+    MockGraphicsAllocation allocation(storage, 0x2000, sizeof(storage));
+    allocation.allocationType = AllocationType::commandBuffer;
+
+    csr.writeAllocationChunkToSimulation(allocation, 8u, 16u);
+    csr.commandStreamReceiverType = CommandStreamReceiverType::tbx;
+    csr.writeAllocationChunkToSimulation(allocation, 8u, 0u);
+
+    EXPECT_EQ(0u, csr.writeMemoryCallCount);
+    EXPECT_FALSE(allocation.isSimulationInitialUploadDone());
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenNonCommandBufferAllocationWhenWritingChunkToSimulationThenExactChunkIsWrittenWithoutInitialUpload) {
+    SimulationWriteTrackingCsr<FamilyType> csr(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    csr.commandStreamReceiverType = CommandStreamReceiverType::aub;
+    csr.chunkCopySupported = true;
+
+    uint8_t storage[64] = {};
+    MockGraphicsAllocation allocation(storage, 0x2000, sizeof(storage));
+    allocation.allocationType = AllocationType::linearStream;
+
+    csr.writeAllocationChunkToSimulation(allocation, 8u, 16u);
+
+    EXPECT_EQ(1u, csr.writeMemoryCallCount);
+    EXPECT_EQ(8u, csr.lastChunkOffset);
+    EXPECT_EQ(16u, csr.lastChunkSize);
+    EXPECT_FALSE(allocation.isSimulationInitialUploadDone());
+}
+
+struct CommandBufferPatchAllocations {
+    CommandBufferPatchAllocations()
+        : otherTypeAllocation(storage, 0x2000, allocationSize),
+          commandBufferAllocation(storage + allocationSize, 0x3000, allocationSize),
+          candidateAllocation(storage + 2 * allocationSize, 0x4000, allocationSize) {
+        candidateAllocation.allocationType = AllocationType::commandBuffer;
+        candidateAllocation.setSimulationInitialUploadDone(true);
+        candidateAllocations = {&otherTypeAllocation, &candidateAllocation};
+    }
+
+    static constexpr size_t allocationSize = 64u;
+    uint8_t storage[3 * allocationSize] = {};
+    MockGraphicsAllocation otherTypeAllocation;
+    MockGraphicsAllocation commandBufferAllocation;
+    MockGraphicsAllocation candidateAllocation;
+    ResidencyContainer candidateAllocations;
+};
+
+HWTEST_F(CommandStreamReceiverTest, givenPatchWithinCommandBufferAllocationWhenWritingCommandBufferPatchThenWritePatchRangeOfCommandBufferAllocation) {
+    SimulationWriteTrackingCsr<FamilyType> csr(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    csr.commandStreamReceiverType = CommandStreamReceiverType::tbx;
+    csr.chunkCopySupported = true;
+    CommandBufferPatchAllocations allocations;
+
+    csr.writeCommandBufferPatchToSimulation(allocations.commandBufferAllocation, &allocations.candidateAllocations, ptrOffset(allocations.commandBufferAllocation.getUnderlyingBuffer(), 24u), 8u);
+
+    EXPECT_EQ(1u, csr.writeMemoryCallCount);
+    EXPECT_EQ(&allocations.commandBufferAllocation, csr.lastWriteAllocation);
+    EXPECT_EQ(24u, csr.lastChunkOffset);
+    EXPECT_EQ(8u, csr.lastChunkSize);
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenPatchWithinCandidateCommandBufferAllocationWhenWritingCommandBufferPatchThenWritePatchRangeOfCandidateAllocation) {
+    SimulationWriteTrackingCsr<FamilyType> csr(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    csr.commandStreamReceiverType = CommandStreamReceiverType::aub;
+    csr.chunkCopySupported = true;
+    CommandBufferPatchAllocations allocations;
+
+    csr.writeCommandBufferPatchToSimulation(allocations.commandBufferAllocation, &allocations.candidateAllocations, ptrOffset(allocations.candidateAllocation.getUnderlyingBuffer(), 56u), 8u);
+
+    EXPECT_EQ(1u, csr.writeMemoryCallCount);
+    EXPECT_EQ(&allocations.candidateAllocation, csr.lastWriteAllocation);
+    EXPECT_EQ(56u, csr.lastChunkOffset);
+    EXPECT_EQ(8u, csr.lastChunkSize);
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenPatchOutsideOfCommandBufferAllocationsWhenWritingCommandBufferPatchThenSkipUpload) {
+    SimulationWriteTrackingCsr<FamilyType> csr(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    csr.commandStreamReceiverType = CommandStreamReceiverType::tbx;
+    csr.chunkCopySupported = true;
+    CommandBufferPatchAllocations allocations;
+    auto patchWithinOtherTypeAllocation = ptrOffset(allocations.otherTypeAllocation.getUnderlyingBuffer(), 8u);
+    auto patchCrossingCommandBufferAllocationEnd = ptrOffset(allocations.commandBufferAllocation.getUnderlyingBuffer(), 60u);
+
+    csr.writeCommandBufferPatchToSimulation(allocations.commandBufferAllocation, nullptr, patchWithinOtherTypeAllocation, 8u);
+    csr.writeCommandBufferPatchToSimulation(allocations.commandBufferAllocation, &allocations.candidateAllocations, patchWithinOtherTypeAllocation, 8u);
+    csr.writeCommandBufferPatchToSimulation(allocations.commandBufferAllocation, &allocations.candidateAllocations, patchCrossingCommandBufferAllocationEnd, 8u);
+
+    EXPECT_EQ(0u, csr.writeMemoryCallCount);
+}
+HWTEST_F(CommandStreamReceiverTest, givenHardwareModeWhenWritingCommandBufferPatchThenSkipUpload) {
+    SimulationWriteTrackingCsr<FamilyType> csr(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    csr.commandStreamReceiverType = CommandStreamReceiverType::hardware;
+    csr.chunkCopySupported = true;
+    CommandBufferPatchAllocations allocations;
+
+    csr.writeCommandBufferPatchToSimulation(allocations.commandBufferAllocation, &allocations.candidateAllocations, ptrOffset(allocations.commandBufferAllocation.getUnderlyingBuffer(), 24u), 8u);
+
+    EXPECT_EQ(0u, csr.writeMemoryCallCount);
 }
 
 HWTEST_F(CommandStreamReceiverTest, givenTagNodeInAdditionalAllocationWhenUploadingTagChunkThenWriteExpectedChunkRange) {
@@ -7606,6 +7809,279 @@ HWTEST_F(CommandStreamReceiverHwTest, givenEpilogueStreamAvailableWhenFlushImmed
     EXPECT_NE(hwParser.cmdList.end(), cmdIterator);
 
     commandStreamReceiver.getMemoryManager()->freeGraphicsMemoryImpl(commandBuffer);
+}
+
+template <typename FamilyType>
+void enableSimulationChunkWriteTracking(UltCommandStreamReceiver<FamilyType> &commandStreamReceiver) {
+    commandStreamReceiver.commandStreamReceiverType = CommandStreamReceiverType::tbx;
+    commandStreamReceiver.chunkCopySupported = true;
+    commandStreamReceiver.writeMemoryParams.chunkWrites.clear();
+}
+
+bool isChunkWritten(const WriteMemoryParams &writeMemoryParams, const WrittenMemoryChunk &expectedChunk) {
+    return std::find(writeMemoryParams.chunkWrites.begin(), writeMemoryParams.chunkWrites.end(), expectedChunk) != writeMemoryParams.chunkWrites.end();
+}
+
+bool isAllocationWritten(const WriteMemoryParams &writeMemoryParams, const GraphicsAllocation *allocation) {
+    return std::any_of(writeMemoryParams.chunkWrites.begin(), writeMemoryParams.chunkWrites.end(), [allocation](const WrittenMemoryChunk &chunk) {
+        return chunk.gfxAllocation == allocation;
+    });
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenSimulationModeAndCsrCommandsWhenFlushBcsTaskCalledThenTaskStreamAndEpilogueSectionsAreUploaded) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.FlushTlbBeforeCopy.set(1);
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    MockGraphicsAllocation globalFenceAllocation;
+    VariableBackup<GraphicsAllocation *> globalFenceAllocationBackup(&commandStreamReceiver.globalFenceAllocation, &globalFenceAllocation);
+
+    GraphicsAllocation *epilogueAllocation = commandStreamReceiver.getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{commandStreamReceiver.getRootDeviceIndex(), MemoryConstants::pageSize});
+    ASSERT_NE(nullptr, epilogueAllocation);
+    LinearStream epilogueStream(epilogueAllocation);
+    constexpr size_t epilogueStartOffset = 64u;
+    epilogueStream.getSpace(epilogueStartOffset);
+    constexpr size_t taskStartOffset = 32u;
+    commandStream.getSpace(2 * taskStartOffset);
+
+    DispatchBcsFlags dispatchBcsFlags(false, false, false);
+    dispatchBcsFlags.flushTaskCount = true;
+    dispatchBcsFlags.optionalEpilogueCmdStream = &epilogueStream;
+    dispatchBcsFlags.optionalEpilogueCmdStreamStartOffset = epilogueStartOffset;
+    enableSimulationChunkWriteTracking(commandStreamReceiver);
+
+    commandStreamReceiver.flushBcsTask(commandStream, taskStartOffset, dispatchBcsFlags, pDevice->getHardwareInfo());
+
+    EXPECT_TRUE(isChunkWritten(commandStreamReceiver.writeMemoryParams, {commandStream.getGraphicsAllocation(), taskStartOffset, commandStream.getUsed() - taskStartOffset}));
+    EXPECT_TRUE(isChunkWritten(commandStreamReceiver.writeMemoryParams, {epilogueAllocation, epilogueStartOffset, epilogueStream.getUsed() - epilogueStartOffset}));
+
+    commandStreamReceiver.getMemoryManager()->freeGraphicsMemoryImpl(epilogueAllocation);
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenSimulationModeAndNoCsrCommandsWhenFlushBcsTaskCalledThenTaskStreamIsNotUploadedAsChunk) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    DispatchBcsFlags dispatchBcsFlags(false, false, false);
+    commandStreamReceiver.flushBcsTask(commandStream, commandStream.getUsed(), dispatchBcsFlags, pDevice->getHardwareInfo());
+
+    dispatchBcsFlags.dispatchOperation = NEO::AppendOperations::cmdList;
+    commandStreamReceiver.recordFlushedBatchBuffer = true;
+    enableSimulationChunkWriteTracking(commandStreamReceiver);
+
+    commandStreamReceiver.flushBcsTask(commandStream, commandStream.getUsed(), dispatchBcsFlags, pDevice->getHardwareInfo());
+
+    ASSERT_EQ(commandStream.getGraphicsAllocation(), commandStreamReceiver.latestFlushedBatchBuffer.commandBufferAllocation);
+    EXPECT_TRUE(commandStreamReceiver.writeMemoryParams.chunkWrites.empty());
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenSimulationModeAndCsrPreambleWhenFlushImmediateTaskCalledThenTaskStreamSectionIsUploaded) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.recordFlushedBatchBuffer = true;
+    commandStreamReceiver.requiresInstructionCacheFlush = true;
+    constexpr size_t taskStartOffset = 32u;
+    commandStream.getSpace(2 * taskStartOffset);
+    enableSimulationChunkWriteTracking(commandStreamReceiver);
+
+    if (commandStreamReceiver.heaplessPrologProgrammed) {
+        commandStreamReceiver.flushImmediateTaskHeapless(commandStream, taskStartOffset, immediateFlushTaskFlags, *pDevice);
+    } else {
+        commandStreamReceiver.flushImmediateTask(commandStream, taskStartOffset, immediateFlushTaskFlags, *pDevice);
+    }
+
+    ASSERT_NE(commandStream.getGraphicsAllocation(), commandStreamReceiver.latestFlushedBatchBuffer.commandBufferAllocation);
+    EXPECT_TRUE(isChunkWritten(commandStreamReceiver.writeMemoryParams, {commandStream.getGraphicsAllocation(), taskStartOffset, commandStream.getUsed() - taskStartOffset}));
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenSimulationModeAndEpilogueStreamWhenFlushImmediateTaskWithoutCsrPreambleCalledThenOnlyEpilogueSectionIsUploaded) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto heaplessPrologProgrammed = commandStreamReceiver.heaplessPrologProgrammed;
+    auto flushImmediate = [&]() {
+        if (heaplessPrologProgrammed) {
+            commandStreamReceiver.flushImmediateTaskHeapless(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
+        } else {
+            commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
+        }
+    };
+    flushImmediate();
+
+    GraphicsAllocation *epilogueAllocation = commandStreamReceiver.getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{commandStreamReceiver.getRootDeviceIndex(), MemoryConstants::pageSize});
+    ASSERT_NE(nullptr, epilogueAllocation);
+    LinearStream epilogueStream(epilogueAllocation);
+    constexpr size_t epilogueStartOffset = 64u;
+    epilogueStream.getSpace(epilogueStartOffset);
+
+    commandStreamReceiver.recordFlushedBatchBuffer = true;
+    immediateFlushTaskFlags.requireTaskCountUpdate = true;
+    immediateFlushTaskFlags.optionalEpilogueCmdStream = &epilogueStream;
+    immediateFlushTaskFlags.optionalEpilogueCmdStreamStartOffset = epilogueStartOffset;
+    enableSimulationChunkWriteTracking(commandStreamReceiver);
+
+    flushImmediate();
+
+    ASSERT_EQ(commandStream.getGraphicsAllocation(), commandStreamReceiver.latestFlushedBatchBuffer.commandBufferAllocation);
+    EXPECT_TRUE(isChunkWritten(commandStreamReceiver.writeMemoryParams, {epilogueAllocation, epilogueStartOffset, epilogueStream.getUsed() - epilogueStartOffset}));
+    EXPECT_FALSE(isAllocationWritten(commandStreamReceiver.writeMemoryParams, commandStream.getGraphicsAllocation()));
+
+    commandStreamReceiver.getMemoryManager()->freeGraphicsMemoryImpl(epilogueAllocation);
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenSimulationModeAndCsrPreambleWhenFlushTaskCalledThenTaskStreamAndEpilogueSectionsAreUploaded) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    if (commandStreamReceiver.heaplessModeEnabled) {
+        GTEST_SKIP();
+    }
+
+    GraphicsAllocation *epilogueAllocation = commandStreamReceiver.getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{commandStreamReceiver.getRootDeviceIndex(), MemoryConstants::pageSize});
+    ASSERT_NE(nullptr, epilogueAllocation);
+    LinearStream epilogueStream(epilogueAllocation);
+    constexpr size_t epilogueStartOffset = 64u;
+    epilogueStream.getSpace(epilogueStartOffset);
+    constexpr size_t taskStartOffset = 32u;
+    commandStream.getSpace(2 * taskStartOffset);
+
+    commandStreamReceiver.recordFlushedBatchBuffer = true;
+    commandStreamReceiver.requiresInstructionCacheFlush = true;
+    flushTaskFlags.guardCommandBufferWithPipeControl = true;
+    flushTaskFlags.optionalEpilogueCmdStream = &epilogueStream;
+    flushTaskFlags.optionalEpilogueCmdStreamStartOffset = epilogueStartOffset;
+    enableSimulationChunkWriteTracking(commandStreamReceiver);
+
+    commandStreamReceiver.flushTask(commandStream, taskStartOffset, &dsh, &ioh, nullptr, taskLevel, flushTaskFlags, *pDevice);
+
+    ASSERT_EQ(commandStreamReceiver.getCS(0).getGraphicsAllocation(), commandStreamReceiver.latestFlushedBatchBuffer.commandBufferAllocation);
+    EXPECT_TRUE(isChunkWritten(commandStreamReceiver.writeMemoryParams, {commandStream.getGraphicsAllocation(), taskStartOffset, commandStream.getUsed() - taskStartOffset}));
+    EXPECT_TRUE(isChunkWritten(commandStreamReceiver.writeMemoryParams, {epilogueAllocation, epilogueStartOffset, epilogueStream.getUsed() - epilogueStartOffset}));
+
+    commandStreamReceiver.getMemoryManager()->freeGraphicsMemoryImpl(epilogueAllocation);
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenSimulationModeAndRequiredEpilogueWhenFlushTaskWithoutCsrPreambleCalledThenCsrEpilogueSectionIsUploaded) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    if (commandStreamReceiver.heaplessModeEnabled) {
+        GTEST_SKIP();
+    }
+    commandStreamReceiver.flushTask(commandStream, 0, &dsh, &ioh, nullptr, taskLevel, flushTaskFlags, *pDevice);
+
+    auto taskStartOffset = commandStream.getUsed();
+    commandStream.getSpace(32);
+    auto &csrStream = commandStreamReceiver.getCS(0);
+    auto csrUsedBeforeFlush = csrStream.getUsed();
+    csrStream.getGraphicsAllocation()->setSimulationInitialUploadDone(true);
+    commandStreamReceiver.recordFlushedBatchBuffer = true;
+    flushTaskFlags.epilogueRequired = true;
+    enableSimulationChunkWriteTracking(commandStreamReceiver);
+
+    commandStreamReceiver.flushTask(commandStream, taskStartOffset, &dsh, &ioh, nullptr, taskLevel, flushTaskFlags, *pDevice);
+
+    ASSERT_EQ(commandStream.getGraphicsAllocation(), commandStreamReceiver.latestFlushedBatchBuffer.commandBufferAllocation);
+    EXPECT_TRUE(isChunkWritten(commandStreamReceiver.writeMemoryParams, {csrStream.getGraphicsAllocation(), csrUsedBeforeFlush, csrStream.getUsed() - csrUsedBeforeFlush}));
+    EXPECT_FALSE(isAllocationWritten(commandStreamReceiver.writeMemoryParams, commandStream.getGraphicsAllocation()));
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenSimulationModeAndNoEpilogueWhenFlushTaskWithoutCsrPreambleCalledThenNothingIsUploadedAsChunk) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    if (commandStreamReceiver.heaplessModeEnabled) {
+        GTEST_SKIP();
+    }
+    commandStreamReceiver.flushTask(commandStream, 0, &dsh, &ioh, nullptr, taskLevel, flushTaskFlags, *pDevice);
+
+    auto taskStartOffset = commandStream.getUsed();
+    commandStream.getSpace(32);
+    commandStreamReceiver.recordFlushedBatchBuffer = true;
+    enableSimulationChunkWriteTracking(commandStreamReceiver);
+
+    commandStreamReceiver.flushTask(commandStream, taskStartOffset, &dsh, &ioh, nullptr, taskLevel, flushTaskFlags, *pDevice);
+
+    ASSERT_EQ(commandStream.getGraphicsAllocation(), commandStreamReceiver.latestFlushedBatchBuffer.commandBufferAllocation);
+    EXPECT_TRUE(commandStreamReceiver.writeMemoryParams.chunkWrites.empty());
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenSimulationModeAndBatchedCommandBuffersWhenFlushingBatchedSubmissionsThenChainedBatchBuffersAreUploaded) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    if (commandStreamReceiver.heaplessModeEnabled) {
+        GTEST_SKIP();
+    }
+    commandStreamReceiver.overrideDispatchPolicy(DispatchMode::batchedDispatch);
+    auto &commandBufferList = commandStreamReceiver.submissionAggregator->peekCmdBufferList();
+
+    commandStream.getSpace(32);
+    commandStreamReceiver.flushTask(commandStream, 0, &dsh, &ioh, nullptr, taskLevel, flushTaskFlags, *pDevice);
+    auto secondTaskStartOffset = commandStream.getUsed();
+    commandStream.getSpace(32);
+    commandStreamReceiver.flushTask(commandStream, secondTaskStartOffset, &dsh, &ioh, nullptr, taskLevel, flushTaskFlags, *pDevice);
+    ASSERT_NE(commandBufferList.peekHead(), commandBufferList.peekTail());
+    auto chainedBatchBuffer = commandBufferList.peekTail()->batchBuffer;
+    enableSimulationChunkWriteTracking(commandStreamReceiver);
+
+    EXPECT_TRUE(commandStreamReceiver.flushBatchedSubmissions());
+
+    EXPECT_TRUE(isChunkWritten(commandStreamReceiver.writeMemoryParams, {chainedBatchBuffer.commandBufferAllocation, chainedBatchBuffer.startOffset, chainedBatchBuffer.usedSize - chainedBatchBuffer.startOffset}));
+}
+template <typename FamilyType>
+void verifyBatchedCommandBufferPatchesAreUploaded(UltCommandStreamReceiver<FamilyType> &commandStreamReceiver, Device &device, size_t gapBetweenTasks) {
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+    commandStreamReceiver.overrideDispatchPolicy(DispatchMode::batchedDispatch);
+    commandStreamReceiver.dcFlushSupport = true;
+
+    std::vector<uint8_t> commandBufferMemory(MemoryConstants::pageSize);
+    MockGraphicsAllocation commandBufferAllocation(commandBufferMemory.data(), commandBufferMemory.size());
+    commandBufferAllocation.allocationType = AllocationType::commandBuffer;
+    commandBufferAllocation.setSimulationInitialUploadDone(true);
+
+    auto pipeControlSize = MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(device.getRootDeviceEnvironment(), PostSyncMode::immediateData);
+    auto nooppedPipeControlLocation = commandBufferMemory.data();
+    auto batchBufferEndLocation = ptrOffset(nooppedPipeControlLocation, pipeControlSize);
+    auto commandBufferEndingSection = alignUp(ptrOffset(batchBufferEndLocation, sizeof(MI_BATCH_BUFFER_START)), MemoryConstants::cacheLineSize);
+    auto secondTaskStartOffset = ptrDiff(commandBufferEndingSection, commandBufferMemory.data()) + gapBetweenTasks;
+    auto epiloguePipeControlLocation = ptrOffset(commandBufferMemory.data(), secondTaskStartOffset);
+
+    auto firstCommandBuffer = std::make_unique<CommandBuffer>(device);
+    firstCommandBuffer->batchBuffer.commandBufferAllocation = &commandBufferAllocation;
+    firstCommandBuffer->batchBuffer.usedSize = ptrDiff(commandBufferEndingSection, commandBufferMemory.data());
+    firstCommandBuffer->batchBufferEndLocation = batchBufferEndLocation;
+    firstCommandBuffer->pipeControlThatMayBeErasedLocation = nooppedPipeControlLocation;
+    firstCommandBuffer->epiloguePipeControlLocation = nooppedPipeControlLocation;
+    firstCommandBuffer->taskCount = 1u;
+
+    auto secondCommandBuffer = std::make_unique<CommandBuffer>(device);
+    secondCommandBuffer->batchBuffer.commandBufferAllocation = &commandBufferAllocation;
+    secondCommandBuffer->batchBuffer.startOffset = secondTaskStartOffset;
+    secondCommandBuffer->batchBuffer.usedSize = secondTaskStartOffset;
+    secondCommandBuffer->batchBufferEndLocation = ptrOffset(epiloguePipeControlLocation, pipeControlSize);
+    secondCommandBuffer->pipeControlThatMayBeErasedLocation = epiloguePipeControlLocation;
+    secondCommandBuffer->epiloguePipeControlLocation = epiloguePipeControlLocation;
+    secondCommandBuffer->taskCount = 2u;
+
+    commandStreamReceiver.submissionAggregator->recordCommandBuffer(firstCommandBuffer.release());
+    commandStreamReceiver.submissionAggregator->recordCommandBuffer(secondCommandBuffer.release());
+
+    auto batchBufferEndPatchSize = gapBetweenTasks == 0u ? ptrDiff(commandBufferEndingSection, batchBufferEndLocation) : sizeof(MI_BATCH_BUFFER_START);
+    WrittenMemoryChunk nooppedPipeControlChunk{&commandBufferAllocation, 0u, pipeControlSize};
+    WrittenMemoryChunk batchBufferEndChunk{&commandBufferAllocation, pipeControlSize, batchBufferEndPatchSize};
+    WrittenMemoryChunk epiloguePipeControlChunk{&commandBufferAllocation, secondTaskStartOffset, pipeControlSize};
+    enableSimulationChunkWriteTracking(commandStreamReceiver);
+
+    EXPECT_TRUE(commandStreamReceiver.flushBatchedSubmissions());
+
+    EXPECT_TRUE(commandStreamReceiver.submissionAggregator->peekCmdBufferList().peekIsEmpty());
+    EXPECT_TRUE(isChunkWritten(commandStreamReceiver.writeMemoryParams, nooppedPipeControlChunk));
+    EXPECT_TRUE(isChunkWritten(commandStreamReceiver.writeMemoryParams, batchBufferEndChunk));
+    EXPECT_TRUE(isChunkWritten(commandStreamReceiver.writeMemoryParams, epiloguePipeControlChunk));
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenSimulationModeAndContiguousBatchedCommandBuffersWhenFlushingBatchedSubmissionsThenPatchedCommandBufferRangesAreUploaded) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    if (commandStreamReceiver.heaplessModeEnabled) {
+        GTEST_SKIP();
+    }
+    verifyBatchedCommandBufferPatchesAreUploaded(commandStreamReceiver, *pDevice, 0u);
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenSimulationModeAndNonContiguousBatchedCommandBuffersWhenFlushingBatchedSubmissionsThenPatchedCommandBufferRangesAreUploaded) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    if (commandStreamReceiver.heaplessModeEnabled) {
+        GTEST_SKIP();
+    }
+    verifyBatchedCommandBufferPatchesAreUploaded(commandStreamReceiver, *pDevice, MemoryConstants::cacheLineSize);
 }
 
 HWTEST_F(CommandStreamReceiverHwTest, givenFlushBcsTaskCmdListDispatchWhenCalledThenNoPrologueIsSent) {

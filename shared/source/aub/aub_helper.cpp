@@ -41,6 +41,7 @@ bool AubHelper::isOneTimeAubWritableAllocationType(const AllocationType &type) {
     case AllocationType::tagBuffer:
     case AllocationType::syncDispatchToken:
     case AllocationType::hostFunction:
+    case AllocationType::commandBuffer:
         return true;
     case AllocationType::bufferHostMemory:
         return NEO::debugManager.isTbxPageFaultManagerEnabled() ||

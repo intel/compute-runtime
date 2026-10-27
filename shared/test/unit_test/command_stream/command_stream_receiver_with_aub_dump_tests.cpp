@@ -141,7 +141,17 @@ struct MyMockCsr : UltCommandStreamReceiver<GfxFamily> {
         bool receivedInitFullPageTables = false;
     } writePooledMemoryParameterization;
 
+    void setWritableForSimulation(bool, GraphicsAllocation &) override {
+        setWritableForSimulationCallCount++;
+    }
+
+    bool isAubSubCaptureInactive() const override {
+        return aubSubCaptureInactive;
+    }
+
     std::optional<bool> overrideWriteMemoryStatus{};
+    uint32_t setWritableForSimulationCallCount = 0u;
+    bool aubSubCaptureInactive = false;
 };
 
 template <typename GfxFamily, typename BaseCSR>
@@ -478,6 +488,42 @@ HWTEST_TEMPLATED_P(CommandStreamReceiverWithAubDumpTest, givenNonHardwareBaseCsr
         EXPECT_TRUE(csrWithAubDump->writeMemory(mockAllocation, true, 3u, 5u));
         csrWithAubDump->overrideWriteMemoryStatus.reset();
         csrWithAubDump->getAubMockCsr().overrideWriteMemoryStatus.reset();
+    }
+}
+
+HWTEST_TEMPLATED_P(CommandStreamReceiverWithAubDumpTest, givenAubCsrWithInactiveSubCaptureWhenWritingMemoryAndSettingWritabilityThenOnlyBaseCsrIsUsed) {
+    MockGraphicsAllocation mockAllocation;
+
+    auto csrWithAubDump = getCsrWithAubDump<FamilyType>();
+    if (createAubCSR) {
+        csrWithAubDump->getAubMockCsr().aubSubCaptureInactive = true;
+    }
+
+    EXPECT_EQ(createAubCSR, csrWithAubDump->isAubSubCaptureInactive());
+
+    csrWithAubDump->writeMemory(mockAllocation, true, 3u, 5u);
+    csrWithAubDump->setWritableForSimulation(true, mockAllocation);
+
+    EXPECT_EQ(1u, csrWithAubDump->writeMemoryParams.totalCallCount);
+    EXPECT_EQ(1u, csrWithAubDump->setWritableForSimulationCallCount);
+    if (createAubCSR) {
+        EXPECT_EQ(0u, csrWithAubDump->getAubMockCsr().writeMemoryParams.totalCallCount);
+        EXPECT_EQ(0u, csrWithAubDump->getAubMockCsr().setWritableForSimulationCallCount);
+    }
+}
+
+HWTEST_TEMPLATED_P(CommandStreamReceiverWithAubDumpTest, givenAubCsrWithActiveSubCaptureWhenSettingWritabilityThenBothCsrsAreUsed) {
+    MockGraphicsAllocation mockAllocation;
+
+    auto csrWithAubDump = getCsrWithAubDump<FamilyType>();
+
+    EXPECT_FALSE(csrWithAubDump->isAubSubCaptureInactive());
+
+    csrWithAubDump->setWritableForSimulation(true, mockAllocation);
+
+    EXPECT_EQ(1u, csrWithAubDump->setWritableForSimulationCallCount);
+    if (createAubCSR) {
+        EXPECT_EQ(1u, csrWithAubDump->getAubMockCsr().setWritableForSimulationCallCount);
     }
 }
 

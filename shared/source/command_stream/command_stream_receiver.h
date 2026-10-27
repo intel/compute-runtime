@@ -341,10 +341,14 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     virtual std::unique_ptr<TagAllocatorBase> createMultiRootDeviceTimestampPacketAllocator(const RootDeviceIndicesContainer &rootDeviceIndices) = 0;
     void setupTagAllocatorForSimulation(TagAllocatorBase &tagAllocator);
     void writeAllocationChunkToSimulation(GraphicsAllocation &gfxAllocation, uint64_t chunkOffset, size_t chunkSize);
+    void writeBatchBufferToSimulation(const BatchBuffer &batchBuffer);
+    void writeStreamChunkToSimulation(LinearStream &stream, size_t chunkStartOffset);
+    void writeCommandBufferPatchToSimulation(GraphicsAllocation &commandBufferAllocation, const ResidencyContainer *candidateAllocations, const void *patchLocation, size_t patchSize);
     void writeTagAllocationChunkToSimulation(TagNodeBase &tagNode, uint64_t tagOffset, size_t chunkSize);
 
     virtual bool isChunkCopySupportedForSimulation() const { return false; }
     virtual void setWritableForSimulation(bool, GraphicsAllocation &) {}
+    virtual bool isAubSubCaptureInactive() const { return false; }
 
     virtual bool expectMemory(const void *gfxAddress, const void *srcAddress, size_t length, uint32_t compareOperation);
     MOCKABLE_VIRTUAL bool writeMemory(GraphicsAllocation &gfxAllocation) { return writeMemory(gfxAllocation, false, 0, 0); }

@@ -1588,6 +1588,9 @@ void CommandQueueHw<gfxCoreFamily>::programActivePartitionConfig(
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::programOneCmdListBatchBufferStart(CommandList *commandList, NEO::LinearStream &commandStream, CommandListExecutionContext &ctx) {
+    if (!ctx.patchPreambleEnabled) {
+        commandList->getCmdContainer().markCmdBufferAllocationsForSimulationUpload();
+    }
     dispatchPatchPreambleCrossSync(ctx, commandList, commandStream);
     if (this->dispatchCmdListBatchBufferAsPrimary) {
         programOneCmdListBatchBufferStartPrimaryBatchBuffer(commandList, commandStream, ctx);
@@ -1847,9 +1850,12 @@ NEO::SubmissionStatus CommandQueueHw<gfxCoreFamily>::prepareAndSubmitBatchBuffer
     }
     cleanLeftoverMemory(outerCommandStream, innerCommandStream);
 
-    size_t startOffset = (this->startingCmdBuffer == &this->firstCmdListStream)
-                             ? 0
-                             : ptrDiff(innerCommandStream.getCpuBase(), outerCommandStream.getCpuBase());
+    size_t innerCommandStreamOffset = ptrDiff(innerCommandStream.getCpuBase(), outerCommandStream.getCpuBase());
+    size_t startOffset = innerCommandStreamOffset;
+    if (this->startingCmdBuffer == &this->firstCmdListStream) {
+        startOffset = 0;
+        this->csr->writeAllocationChunkToSimulation(*outerCommandStream.getGraphicsAllocation(), innerCommandStreamOffset, innerCommandStream.getUsed());
+    }
 
     return submitBatchBuffer(startOffset,
                              endingCmd,

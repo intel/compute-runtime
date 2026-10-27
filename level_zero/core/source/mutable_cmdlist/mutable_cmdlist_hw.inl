@@ -493,6 +493,7 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::close() {
         this->baseCmdListClosed = true;
     } else {
         if (this->updatedCommandList == true) {
+            this->commandContainer.markCmdBufferAllocationsForSimulationUpload();
             if (this->hasStageCommitVariables) {
                 // traverse through all staged variables and commit them
                 for (auto &variable : this->stageCommitVariables) {

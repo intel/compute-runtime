@@ -5,11 +5,13 @@
  *
  */
 
+#include "shared/source/direct_submission/dispatchers/render_dispatcher.h"
 #include "shared/source/helpers/hardware_context_controller.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/batch_buffer_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/direct_submission_upload_helper.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_aub_center.h"
@@ -18,6 +20,7 @@
 #include "shared/test/common/mocks/mock_aub_memory_operations_handler.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/unit_test/mocks/mock_os_agnostic_direct_submission.h"
 
 #include <cstdint>
 
@@ -129,4 +132,26 @@ HWTEST_TEMPLATED_F(AubCommandStreamDirectSubmissionTests, givenStartedDirectSubm
     EXPECT_FALSE(mockHardwareContext->resubmitCalled);
 
     pDevice->executionEnvironment->memoryManager->freeGraphicsMemory(commandBuffer);
+}
+
+HWTEST_TEMPLATED_F(AubCommandStreamDirectSubmissionTests, givenStartedDirectSubmissionInAubModeWhenFlushIsCalledThenUsedCommandBufferRangeAndReturnPatchAreUploaded) {
+    auto uploadResult = flushCommandBufferOnStartedDirectSubmission<FamilyType>(*getCsr<FamilyType>(), *mockAubManager, *pDevice->executionEnvironment->memoryManager, pDevice->getDeviceBitfield());
+
+    EXPECT_TRUE(uploadResult.usedCommandBufferRangeUploaded);
+    EXPECT_TRUE(uploadResult.returnPatchUploaded);
+    EXPECT_FALSE(uploadResult.aubWritableAfterFlush);
+}
+
+HWTEST_TEMPLATED_F(AubCommandStreamDirectSubmissionTests, givenAubWritingDirectSubmissionWhenUnblockingGpuThenRingBufferSectionIsNotUploaded) {
+    MockOsAgnosticDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*commandStreamReceiver);
+    ASSERT_TRUE(directSubmission.initialize(false));
+    auto ringBufferAllocation = directSubmission.ringCommandStream.getGraphicsAllocation();
+    mockAubManager->storedAllocationParams.clear();
+    mockAubManager->storeAllocationParams = true;
+
+    directSubmission.ringCommandStream.getSpace(48);
+    directSubmission.unblockGpu();
+
+    EXPECT_TRUE(getUploadedSectionsOfAllocation(*mockAubManager, *ringBufferAllocation).empty());
+    EXPECT_EQ(nullptr, directSubmission.uploadedRingBufferAllocation);
 }

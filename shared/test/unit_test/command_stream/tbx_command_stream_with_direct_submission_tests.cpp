@@ -8,6 +8,7 @@
 #include "shared/source/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "shared/source/command_stream/command_stream_receiver_with_aub_dump.inl"
 #include "shared/source/direct_submission/direct_submission_hw.h"
+#include "shared/source/direct_submission/dispatchers/render_dispatcher.h"
 #include "shared/source/helpers/hardware_context_controller.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/test/common/fixtures/device_fixture.h"
@@ -15,6 +16,7 @@
 #include "shared/test/common/fixtures/tbx_command_stream_fixture.h"
 #include "shared/test/common/helpers/batch_buffer_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/direct_submission_upload_helper.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_aub_center.h"
@@ -169,6 +171,8 @@ bool isPreviousRingBufferUploadedWhenRingBuffersAreSwitched(MockTbxCsr<FamilyTyp
 
     auto previousRingBuffer = directSubmission->ringBuffers[directSubmission->currentRingBuffer].ringBuffer;
     directSubmission->ringCommandStream.getSpace(directSubmission->ringCommandStream.getAvailableSpace() - directSubmission->getSizeSwitchRingBufferSection());
+    auto switchSectionStart = previousRingBuffer->getGpuAddress() + directSubmission->ringCommandStream.getUsed();
+    auto switchSectionEnd = switchSectionStart + directSubmission->getSizeSwitchRingBufferSection();
 
     mockAubManager.storeAllocationParams = true;
     mockAubManager.storedAllocationParams.clear();
@@ -176,7 +180,7 @@ bool isPreviousRingBufferUploadedWhenRingBuffersAreSwitched(MockTbxCsr<FamilyTyp
 
     auto ringBufferSwitched = directSubmission->ringBuffers[directSubmission->currentRingBuffer].ringBuffer != previousRingBuffer;
     auto previousRingBufferUploaded = std::any_of(mockAubManager.storedAllocationParams.begin(), mockAubManager.storedAllocationParams.end(), [&](const auto &params) {
-        return params.gfxAddress == previousRingBuffer->getGpuAddress() && params.size == previousRingBuffer->getUnderlyingBufferSize();
+        return params.gfxAddress <= switchSectionStart && params.gfxAddress + params.size >= switchSectionEnd;
     });
 
     memoryManager.freeGraphicsMemory(commandBuffer);
@@ -367,16 +371,153 @@ HWTEST_TEMPLATED_F(TbxCommandStreamDirectSubmissionTests, givenStartedDirectSubm
     EXPECT_FALSE(mockHardwareContext->resubmitCalled);
 }
 
-HWTEST_TEMPLATED_F(TbxCommandStreamDirectSubmissionTests, givenStartedDirectSubmissionWhenFlushIsCalledThenCommandBufferIsTbxWritableAfterFlush) {
-    auto *tbxCsr = getCsr<FamilyType>();
+HWTEST_TEMPLATED_F(TbxCommandStreamDirectSubmissionTests, givenStartedDirectSubmissionWhenFlushIsCalledThenUsedCommandBufferRangeAndReturnPatchAreUploaded) {
+    auto uploadResult = flushCommandBufferOnStartedDirectSubmission<FamilyType>(*getCsr<FamilyType>(), *mockAubManager, *pDevice->executionEnvironment->memoryManager, pDevice->getDeviceBitfield());
 
-    EXPECT_TRUE(isCommandBufferTbxWritableAfterFlush(*tbxCsr, *pDevice->executionEnvironment->memoryManager, pDevice->getDeviceBitfield()));
+    EXPECT_TRUE(uploadResult.usedCommandBufferRangeUploaded);
+    EXPECT_TRUE(uploadResult.returnPatchUploaded);
+    EXPECT_FALSE(uploadResult.tbxWritableAfterFlush);
 }
 
-HWTEST_TEMPLATED_F(TbxCommandStreamBlitterDirectSubmissionTests, givenStartedBlitterDirectSubmissionWhenFlushIsCalledThenCommandBufferIsTbxWritableAfterFlush) {
-    auto *tbxCsr = getCsr<FamilyType>();
+HWTEST_TEMPLATED_F(TbxCommandStreamBlitterDirectSubmissionTests, givenStartedBlitterDirectSubmissionWhenFlushIsCalledThenUsedCommandBufferRangeAndReturnPatchAreUploaded) {
+    auto uploadResult = flushCommandBufferOnStartedDirectSubmission<FamilyType>(*getCsr<FamilyType>(), *mockAubManager, *pDevice->executionEnvironment->memoryManager, pDevice->getDeviceBitfield());
 
-    EXPECT_TRUE(isCommandBufferTbxWritableAfterFlush(*tbxCsr, *pDevice->executionEnvironment->memoryManager, pDevice->getDeviceBitfield()));
+    EXPECT_TRUE(uploadResult.usedCommandBufferRangeUploaded);
+    EXPECT_TRUE(uploadResult.returnPatchUploaded);
+    EXPECT_FALSE(uploadResult.tbxWritableAfterFlush);
+}
+
+HWTEST_TEMPLATED_F(TbxCommandStreamDirectSubmissionTests, givenRingBufferSectionsWhenHandlingResidencyThenOnlyNotUploadedSectionsAreWritten) {
+    MockOsAgnosticDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*commandStreamReceiver);
+    ASSERT_TRUE(directSubmission.initialize(false));
+    auto ringBufferAllocation = directSubmission.ringCommandStream.getGraphicsAllocation();
+    ResidencyContainer allocationsForResidency;
+    mockAubManager->storedAllocationParams.clear();
+    mockAubManager->storeAllocationParams = true;
+
+    directSubmission.ringCommandStream.getSpace(64);
+    auto firstSectionEnd = directSubmission.ringCommandStream.getUsed();
+    directSubmission.handleResidency(&allocationsForResidency);
+    directSubmission.ringCommandStream.getSpace(32);
+    auto secondSectionEnd = directSubmission.ringCommandStream.getUsed();
+    directSubmission.handleResidency(&allocationsForResidency);
+    directSubmission.handleResidency(&allocationsForResidency);
+    directSubmission.ringCommandStream.getSpace(16);
+    directSubmission.handleResidency(nullptr);
+
+    UploadedSections expectedSections = {{0u, firstSectionEnd}, {firstSectionEnd, secondSectionEnd - firstSectionEnd}};
+    EXPECT_EQ(expectedSections, getUploadedSectionsOfAllocation(*mockAubManager, *ringBufferAllocation));
+    EXPECT_EQ(ringBufferAllocation, directSubmission.uploadedRingBufferAllocation);
+    EXPECT_EQ(secondSectionEnd, directSubmission.uploadedRingBufferOffset);
+}
+
+HWTEST_TEMPLATED_F(TbxCommandStreamDirectSubmissionTests, givenTrackedSectionOfOtherRingBufferWhenHandlingResidencyThenCurrentRingBufferIsUploadedFromStart) {
+    MockOsAgnosticDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*commandStreamReceiver);
+    ASSERT_TRUE(directSubmission.initialize(false));
+    auto ringBufferAllocation = directSubmission.ringCommandStream.getGraphicsAllocation();
+    MockGraphicsAllocation otherRingBufferAllocation;
+    directSubmission.uploadedRingBufferAllocation = &otherRingBufferAllocation;
+    directSubmission.uploadedRingBufferOffset = 32u;
+    ResidencyContainer allocationsForResidency;
+    mockAubManager->storedAllocationParams.clear();
+    mockAubManager->storeAllocationParams = true;
+
+    directSubmission.ringCommandStream.getSpace(64);
+    auto sectionEnd = directSubmission.ringCommandStream.getUsed();
+    directSubmission.handleResidency(&allocationsForResidency);
+
+    UploadedSections expectedSections = {{0u, sectionEnd}};
+    EXPECT_EQ(expectedSections, getUploadedSectionsOfAllocation(*mockAubManager, *ringBufferAllocation));
+    EXPECT_EQ(ringBufferAllocation, directSubmission.uploadedRingBufferAllocation);
+    EXPECT_EQ(sectionEnd, directSubmission.uploadedRingBufferOffset);
+}
+
+HWTEST_TEMPLATED_F(TbxCommandStreamDirectSubmissionTests, givenRingBufferSubmissionWhenSubmitIsCalledThenSubmittedSectionIsTrackedAsUploaded) {
+    MockOsAgnosticDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*commandStreamReceiver);
+    ASSERT_TRUE(directSubmission.initialize(false));
+    auto ringBufferAllocation = directSubmission.ringCommandStream.getGraphicsAllocation();
+
+    directSubmission.ringCommandStream.getSpace(64);
+    auto submittedSectionEnd = directSubmission.ringCommandStream.getUsed();
+    directSubmission.submit(ringBufferAllocation->getGpuAddress(), submittedSectionEnd, nullptr);
+
+    EXPECT_EQ(ringBufferAllocation, directSubmission.uploadedRingBufferAllocation);
+    EXPECT_EQ(submittedSectionEnd, directSubmission.uploadedRingBufferOffset);
+
+    directSubmission.ringCommandStream.getSpace(16);
+    directSubmission.submit(ringBufferAllocation->getGpuAddress() + submittedSectionEnd, 0u, nullptr);
+
+    EXPECT_EQ(submittedSectionEnd, directSubmission.uploadedRingBufferOffset);
+}
+
+HWTEST_TEMPLATED_F(TbxCommandStreamDirectSubmissionTests, givenNotUploadedRingBufferSectionWhenUnblockingGpuThenSectionIsUploaded) {
+    MockOsAgnosticDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*commandStreamReceiver);
+    ASSERT_TRUE(directSubmission.initialize(false));
+    auto ringBufferAllocation = directSubmission.ringCommandStream.getGraphicsAllocation();
+    mockAubManager->storedAllocationParams.clear();
+    mockAubManager->storeAllocationParams = true;
+
+    directSubmission.ringCommandStream.getSpace(48);
+    auto sectionEnd = directSubmission.ringCommandStream.getUsed();
+    directSubmission.unblockGpu();
+
+    UploadedSections expectedSections = {{0u, sectionEnd}};
+    EXPECT_EQ(expectedSections, getUploadedSectionsOfAllocation(*mockAubManager, *ringBufferAllocation));
+    EXPECT_EQ(sectionEnd, directSubmission.uploadedRingBufferOffset);
+}
+
+HWTEST_TEMPLATED_F(TbxCommandStreamDirectSubmissionTests, givenStartedRingWithTrackedSectionWhenHandlingSwitchRingBuffersThenRemainingPartOfRingBufferIsUploaded) {
+    MockOsAgnosticDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*commandStreamReceiver);
+    ASSERT_TRUE(directSubmission.initialize(false));
+    auto ringBufferAllocation = directSubmission.ringCommandStream.getGraphicsAllocation();
+    ResidencyContainer allocationsForResidency;
+    directSubmission.ringCommandStream.getSpace(64);
+    auto trackedSectionEnd = directSubmission.ringCommandStream.getUsed();
+    directSubmission.handleResidency(&allocationsForResidency);
+    mockAubManager->storedAllocationParams.clear();
+    mockAubManager->storeAllocationParams = true;
+
+    directSubmission.ringStart = true;
+    directSubmission.handleSwitchRingBuffers(nullptr);
+    directSubmission.ringStart = false;
+
+    UploadedSections expectedSections = {{trackedSectionEnd, directSubmission.getRingBufferUsableSize(*ringBufferAllocation) - trackedSectionEnd}};
+    EXPECT_EQ(expectedSections, getUploadedSectionsOfAllocation(*mockAubManager, *ringBufferAllocation));
+    EXPECT_EQ(ringBufferAllocation, directSubmission.uploadedRingBufferAllocation);
+    EXPECT_EQ(0u, directSubmission.uploadedRingBufferOffset);
+}
+
+HWTEST_TEMPLATED_F(TbxCommandStreamDirectSubmissionTests, givenNotStartedRingWhenHandlingSwitchRingBuffersThenNothingIsUploadedAndTrackingIsReset) {
+    MockOsAgnosticDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*commandStreamReceiver);
+    ASSERT_TRUE(directSubmission.initialize(false));
+    auto ringBufferAllocation = directSubmission.ringCommandStream.getGraphicsAllocation();
+    ResidencyContainer allocationsForResidency;
+    directSubmission.ringCommandStream.getSpace(64);
+    directSubmission.handleResidency(&allocationsForResidency);
+    mockAubManager->storedAllocationParams.clear();
+    mockAubManager->storeAllocationParams = true;
+
+    directSubmission.handleSwitchRingBuffers(nullptr);
+
+    EXPECT_TRUE(getUploadedSectionsOfAllocation(*mockAubManager, *ringBufferAllocation).empty());
+    EXPECT_EQ(ringBufferAllocation, directSubmission.uploadedRingBufferAllocation);
+    EXPECT_EQ(0u, directSubmission.uploadedRingBufferOffset);
+}
+
+HWTEST_TEMPLATED_F(TbxCommandStreamDirectSubmissionTests, givenStartedRingWithoutTrackedSectionWhenHandlingSwitchRingBuffersThenNothingIsUploaded) {
+    MockOsAgnosticDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*commandStreamReceiver);
+    ASSERT_TRUE(directSubmission.initialize(false));
+    auto ringBufferAllocation = directSubmission.ringCommandStream.getGraphicsAllocation();
+    mockAubManager->storedAllocationParams.clear();
+    mockAubManager->storeAllocationParams = true;
+
+    directSubmission.ringStart = true;
+    directSubmission.handleSwitchRingBuffers(nullptr);
+    directSubmission.ringStart = false;
+
+    EXPECT_TRUE(getUploadedSectionsOfAllocation(*mockAubManager, *ringBufferAllocation).empty());
+    EXPECT_EQ(ringBufferAllocation, directSubmission.uploadedRingBufferAllocation);
+    EXPECT_EQ(0u, directSubmission.uploadedRingBufferOffset);
 }
 
 HWTEST_TEMPLATED_F(TbxCommandStreamDirectSubmissionTests, givenStartedDirectSubmissionWhenRingBuffersAreSwitchedThenPreviousRingBufferIsUploaded) {
@@ -389,4 +530,55 @@ HWTEST_TEMPLATED_F(TbxCommandStreamBlitterDirectSubmissionTests, givenStartedBli
     auto *tbxCsr = getCsr<FamilyType>();
 
     EXPECT_TRUE(isPreviousRingBufferUploadedWhenRingBuffersAreSwitched(*tbxCsr, tbxCsr->blitterDirectSubmission, *mockAubManager, *pDevice->executionEnvironment->memoryManager, pDevice->getDeviceBitfield()));
+}
+
+HWTEST_TEMPLATED_F(TbxCommandStreamDirectSubmissionTests, givenRelaxedOrderingNotInitializedWhenSubmittingThenSchedulerIsNotUploaded) {
+    debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
+    MockOsAgnosticDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*commandStreamReceiver);
+    ASSERT_TRUE(directSubmission.initialize(false));
+    ASSERT_NE(nullptr, directSubmission.relaxedOrderingSchedulerAllocation);
+    mockAubManager->storedAllocationParams.clear();
+    mockAubManager->storeAllocationParams = true;
+
+    directSubmission.submit(directSubmission.ringCommandStream.getGraphicsAllocation()->getGpuAddress(), 0u, nullptr);
+    directSubmission.unblockGpu();
+
+    EXPECT_TRUE(getUploadedSectionsOfAllocation(*mockAubManager, *directSubmission.relaxedOrderingSchedulerAllocation).empty());
+    EXPECT_FALSE(directSubmission.relaxedOrderingSchedulerUploaded);
+}
+
+HWTEST_TEMPLATED_F(TbxCommandStreamDirectSubmissionTests, givenRelaxedOrderingInitializedWhenSubmittingTwiceThenSchedulerIsUploadedOnce) {
+    debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
+    MockOsAgnosticDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*commandStreamReceiver);
+    ASSERT_TRUE(directSubmission.initialize(false));
+    auto schedulerAllocation = directSubmission.relaxedOrderingSchedulerAllocation;
+    ASSERT_NE(nullptr, schedulerAllocation);
+    mockAubManager->storedAllocationParams.clear();
+    mockAubManager->storeAllocationParams = true;
+    directSubmission.relaxedOrderingInitialized = true;
+
+    directSubmission.submit(directSubmission.ringCommandStream.getGraphicsAllocation()->getGpuAddress(), 0u, nullptr);
+    directSubmission.submit(directSubmission.ringCommandStream.getGraphicsAllocation()->getGpuAddress(), 0u, nullptr);
+
+    UploadedSections expectedSections = {{0u, schedulerAllocation->getUnderlyingBufferSize()}};
+    EXPECT_EQ(expectedSections, getUploadedSectionsOfAllocation(*mockAubManager, *schedulerAllocation));
+    EXPECT_TRUE(directSubmission.relaxedOrderingSchedulerUploaded);
+}
+
+HWTEST_TEMPLATED_F(TbxCommandStreamDirectSubmissionTests, givenRelaxedOrderingInitializedWhenUnblockingGpuTwiceThenSchedulerIsUploadedOnce) {
+    debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
+    MockOsAgnosticDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*commandStreamReceiver);
+    ASSERT_TRUE(directSubmission.initialize(false));
+    auto schedulerAllocation = directSubmission.relaxedOrderingSchedulerAllocation;
+    ASSERT_NE(nullptr, schedulerAllocation);
+    mockAubManager->storedAllocationParams.clear();
+    mockAubManager->storeAllocationParams = true;
+    directSubmission.relaxedOrderingInitialized = true;
+
+    directSubmission.unblockGpu();
+    directSubmission.unblockGpu();
+
+    UploadedSections expectedSections = {{0u, schedulerAllocation->getUnderlyingBufferSize()}};
+    EXPECT_EQ(expectedSections, getUploadedSectionsOfAllocation(*mockAubManager, *schedulerAllocation));
+    EXPECT_TRUE(directSubmission.relaxedOrderingSchedulerUploaded);
 }

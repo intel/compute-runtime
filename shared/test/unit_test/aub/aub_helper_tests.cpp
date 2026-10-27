@@ -116,6 +116,7 @@ TEST(AubHelper, givenAllocationTypeWhenAskingIfOneTimeWritableThenReturnCorrectR
         case AllocationType::tagBuffer:
         case AllocationType::syncDispatchToken:
         case AllocationType::hostFunction:
+        case AllocationType::commandBuffer:
             EXPECT_TRUE(isOneTimeWritable);
             break;
         default:

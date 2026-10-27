@@ -161,21 +161,13 @@ class CommandStreamReceiverSimulatedHw : public CommandStreamReceiverSimulatedCo
         return graphicsAllocation.isTbxWritable(bank);
     }
 
-    void uploadRingAndCommandBuffers(GraphicsAllocation &ringBufferAllocation, uint64_t ringBufferGpuVa, size_t ringBufferSize, const ResidencyContainer *allocationsForResidency) const {
-        writeMemoryWithAubManager(ringBufferAllocation, true, ptrDiff(ringBufferGpuVa, ringBufferAllocation.getGpuAddress()), ringBufferSize);
-        if (allocationsForResidency) {
-            for (auto &allocation : *allocationsForResidency) {
-                // update command buffer whose BB START was modified to point to ring buffer semaphore
-                if (allocation->getAllocationType() == AllocationType::commandBuffer) {
-                    writeMemoryWithAubManager(*allocation, false, 0, 0);
-                }
-            }
-        }
+    void uploadRingBufferChunk(GraphicsAllocation &ringBufferAllocation, uint64_t chunkOffset, size_t chunkSize) const {
+        writeMemoryWithAubManager(ringBufferAllocation, true, chunkOffset, chunkSize);
     }
 
     void submit(GraphicsAllocation &ringBufferAllocation, uint64_t batchBufferGpuAddress, const void *batchBuffer, size_t batchBufferSize,
-                uint32_t memoryBank, uint64_t entryBits, bool overrideRingHead, const ResidencyContainer *allocationsForResidency) const {
-        uploadRingAndCommandBuffers(ringBufferAllocation, batchBufferGpuAddress, batchBufferSize, allocationsForResidency);
+                uint32_t memoryBank, uint64_t entryBits, bool overrideRingHead) const {
+        uploadRingBufferChunk(ringBufferAllocation, ptrDiff(batchBufferGpuAddress, ringBufferAllocation.getGpuAddress()), batchBufferSize);
         UNRECOVERABLE_IF(nullptr == hardwareContextController);
         hardwareContextController->submit(batchBufferGpuAddress, batchBuffer, batchBufferSize,
                                           memoryBank, entryBits, overrideRingHead);

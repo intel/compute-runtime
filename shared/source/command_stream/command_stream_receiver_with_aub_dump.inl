@@ -131,7 +131,7 @@ bool CommandStreamReceiverWithAUBDump<BaseCSR>::writeMemory(GraphicsAllocation &
     const uint64_t aubChunkOffset = chunkWriteForAub ? gpuVaChunkOffset : 0;
     const size_t aubChunkSize = chunkWriteForAub ? chunkSize : 0;
     bool aubWriteStatus = true;
-    if (aubCSR) {
+    if (aubCSR && !aubCSR->isAubSubCaptureInactive()) {
         aubWriteStatus = aubCSR->writeMemory(gfxAllocation,
                                              chunkWriteForAub,
                                              aubChunkOffset,
@@ -171,9 +171,14 @@ bool CommandStreamReceiverWithAUBDump<BaseCSR>::isChunkCopySupportedForSimulatio
 template <typename BaseCSR>
 void CommandStreamReceiverWithAUBDump<BaseCSR>::setWritableForSimulation(bool writable, GraphicsAllocation &gfxAllocation) {
     BaseCSR::setWritableForSimulation(writable, gfxAllocation);
-    if (aubCSR) {
+    if (aubCSR && !aubCSR->isAubSubCaptureInactive()) {
         aubCSR->setWritableForSimulation(writable, gfxAllocation);
     }
+}
+
+template <typename BaseCSR>
+bool CommandStreamReceiverWithAUBDump<BaseCSR>::isAubSubCaptureInactive() const {
+    return aubCSR != nullptr && aubCSR->isAubSubCaptureInactive();
 }
 
 template <typename BaseCSR>

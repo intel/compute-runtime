@@ -132,6 +132,50 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenCreatingCommandBufferThenCorre
     EXPECT_EQ(AllocationType::commandBuffer, cmdContainer.getCmdBufferAllocations()[1]->getAllocationType());
 }
 
+HWTEST_F(CommandContainerTest, givenSimulationModeAndNotWritableCmdBufferAllocationsWhenMarkingForSimulationUploadThenAllCmdBufferAllocationsAreWritableAndRequireInitialUpload) {
+    for (auto csrType : {CommandStreamReceiverType::tbx, CommandStreamReceiverType::tbxWithAub, CommandStreamReceiverType::aub, CommandStreamReceiverType::hardwareWithAub}) {
+        pDevice->getUltCommandStreamReceiver<FamilyType>().commandStreamReceiverType = csrType;
+        CommandContainer cmdContainer;
+        cmdContainer.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
+        cmdContainer.allocateNextCommandBuffer();
+        ASSERT_LE(2u, cmdContainer.getCmdBufferAllocations().size());
+        for (auto cmdBufferAllocation : cmdContainer.getCmdBufferAllocations()) {
+            cmdBufferAllocation->setTbxWritable(false, GraphicsAllocation::allBanks);
+            cmdBufferAllocation->setAubWritable(false, GraphicsAllocation::allBanks);
+            cmdBufferAllocation->setSimulationInitialUploadDone(true);
+        }
+
+        cmdContainer.markCmdBufferAllocationsForSimulationUpload();
+
+        for (auto cmdBufferAllocation : cmdContainer.getCmdBufferAllocations()) {
+            EXPECT_TRUE(cmdBufferAllocation->isTbxWritable(GraphicsAllocation::allBanks));
+            EXPECT_TRUE(cmdBufferAllocation->isAubWritable(GraphicsAllocation::allBanks));
+            EXPECT_FALSE(cmdBufferAllocation->isSimulationInitialUploadDone());
+        }
+    }
+}
+
+HWTEST_F(CommandContainerTest, givenHardwareModeAndNotWritableCmdBufferAllocationsWhenMarkingForSimulationUploadThenCmdBufferAllocationsAreNotChanged) {
+    pDevice->getUltCommandStreamReceiver<FamilyType>().commandStreamReceiverType = CommandStreamReceiverType::hardware;
+    CommandContainer cmdContainer;
+    cmdContainer.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
+    cmdContainer.allocateNextCommandBuffer();
+    ASSERT_LE(2u, cmdContainer.getCmdBufferAllocations().size());
+    for (auto cmdBufferAllocation : cmdContainer.getCmdBufferAllocations()) {
+        cmdBufferAllocation->setTbxWritable(false, GraphicsAllocation::allBanks);
+        cmdBufferAllocation->setAubWritable(false, GraphicsAllocation::allBanks);
+        cmdBufferAllocation->setSimulationInitialUploadDone(true);
+    }
+
+    cmdContainer.markCmdBufferAllocationsForSimulationUpload();
+
+    for (auto cmdBufferAllocation : cmdContainer.getCmdBufferAllocations()) {
+        EXPECT_FALSE(cmdBufferAllocation->isTbxWritable(GraphicsAllocation::allBanks));
+        EXPECT_FALSE(cmdBufferAllocation->isAubWritable(GraphicsAllocation::allBanks));
+        EXPECT_TRUE(cmdBufferAllocation->isSimulationInitialUploadDone());
+    }
+}
+
 TEST_F(CommandContainerTest, givenCreateSecondaryCmdBufferInHostMemWhenInitializeThenCreateAdditionalLinearStream) {
     MyMockCommandContainer cmdContainer;
     cmdContainer.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, true);

@@ -75,6 +75,7 @@ class CommandContainer : public NonCopyableAndNonMovableClass {
     CommandContainer(uint32_t maxNumAggregatedIdds);
 
     CmdBufferContainer &getCmdBufferAllocations() { return cmdBufferAllocations; }
+    void markCmdBufferAllocationsForSimulationUpload();
 
     ResidencyContainer &getResidencyContainer() { return residencyContainer; }
 

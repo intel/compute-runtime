@@ -495,6 +495,10 @@ void *DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchWorkloadSection(BatchBu
         dispatchRelaxedOrderingReturnPtrRegs(relaxedOrderingReturnPtrCmdStream, returnGpuPointer);
     } else if (!copyCmdBuffer) {
         setReturnAddress(returnCmd, returnGpuPointer);
+        if (this->csr.isTbxMode() || this->isAubWritingDirectSubmission()) {
+            // update command buffer whose BB START was modified to point to ring buffer semaphore
+            const_cast<CommandStreamReceiver &>(this->csr).writeCommandBufferPatchToSimulation(*batchBuffer.commandBufferAllocation, batchBuffer.allocationsForResidency, returnCmd, sizeof(typename GfxFamily::MI_BATCH_BUFFER_START));
+        }
     }
 
     if (this->relaxedOrderingEnabled && batchBuffer.hasRelaxedOrderingDependencies) {

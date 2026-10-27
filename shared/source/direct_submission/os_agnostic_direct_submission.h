@@ -35,8 +35,14 @@ class OsAgnosticDirectSubmission : public DirectSubmissionHw<GfxFamily, Dispatch
     size_t dispatchStopRingBufferSectionSize() override;
     TaskCountType *getCompletionValuePointer() override;
     void unblockGpu() override;
+    void uploadPendingRingBufferSection();
+    void uploadRingBufferSection(GraphicsAllocation &ringBufferAllocation, size_t sectionOffset, size_t sectionSize);
+    void uploadRelaxedOrderingScheduler();
 
     TagData currentTagData{};
+    GraphicsAllocation *uploadedRingBufferAllocation = nullptr;
+    size_t uploadedRingBufferOffset = 0u;
+    bool relaxedOrderingSchedulerUploaded = false;
     TaskCountType completionFenceValue{};
     OsContext *osContext;
 };

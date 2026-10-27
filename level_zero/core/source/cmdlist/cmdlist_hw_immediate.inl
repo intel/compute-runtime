@@ -247,6 +247,7 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushBcsTask
     );
     this->copyOffloadTagUpdateRequired = false;
     dispatchBcsFlags.optionalEpilogueCmdStream = getOptionalEpilogueCmdStream(&cmdStreamTask, appendOperation);
+    dispatchBcsFlags.optionalEpilogueCmdStreamStartOffset = this->cmdListCurrentStartOffset;
     dispatchBcsFlags.dispatchOperation = appendOperation;
 
     CommandList::storeReferenceTsToMappedEvents(true);
@@ -391,6 +392,7 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmedia
         &this->requiredStreamState,          // requiredState
         sshCpuPointer,                       // sshCpuBase
         optionalEpilogueCmdStream,           // optionalEpilogueCmdStream
+        this->cmdListCurrentStartOffset,     // optionalEpilogueCmdStreamStartOffset
         appendOperation,                     // dispatchOperation
         this->isSyncModeQueue,               // blockingAppend
         requireTaskCountUpdate,              // requireTaskCountUpdate
@@ -425,6 +427,7 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmedia
         nullptr,                            // requiredState
         sshCpuPointer,                      // sshCpuBase
         optionalEpilogueCmdStream,          // optionalEpilogueCmdStream
+        this->cmdListCurrentStartOffset,    // optionalEpilogueCmdStreamStartOffset
         appendOperation,                    // dispatchOperation
         this->isSyncModeQueue,              // blockingAppend
         requireTaskCountUpdate,             // requireTaskCountUpdate
@@ -480,6 +483,7 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushRegular
     dispatchFlags.isWalkerWithProfilingEnqueued = this->getAndClearIsWalkerWithProfilingEnqueued();
     dispatchFlags.hasMidThreadPreemptionKernel = this->hasMidThreadPreemptionKernel();
     dispatchFlags.optionalEpilogueCmdStream = getOptionalEpilogueCmdStream(&cmdStreamTask, appendOperation);
+    dispatchFlags.optionalEpilogueCmdStreamStartOffset = this->cmdListCurrentStartOffset;
 
     auto ioh = (this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::indirectObject));
     NEO::IndirectHeap *dsh = nullptr;

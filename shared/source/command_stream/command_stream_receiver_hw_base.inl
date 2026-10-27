@@ -283,6 +283,9 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushBcsTask(LinearStream &c
 
     programEndingCmd(epilogueCommandStream, &bbEndLocation, isBlitterDirectSubmissionEnabled(), dispatchBcsFlags.hasRelaxedOrderingDependencies, true);
     EncodeNoop<GfxFamily>::alignToCacheLine(epilogueCommandStream);
+    if (dispatchBcsFlags.optionalEpilogueCmdStream != nullptr) {
+        this->writeStreamChunkToSimulation(*dispatchBcsFlags.optionalEpilogueCmdStream, dispatchBcsFlags.optionalEpilogueCmdStreamStartOffset);
+    }
 
     if (submitCSR) {
         auto bbStart = reinterpret_cast<MI_BATCH_BUFFER_START *>(commandStreamCSR.getSpace(sizeof(MI_BATCH_BUFFER_START)));
@@ -290,6 +293,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushBcsTask(LinearStream &c
         EncodeNoop<GfxFamily>::alignToCacheLine(commandStreamCSR);
 
         this->makeResident(*commandStreamCSR.getGraphicsAllocation());
+        this->writeStreamChunkToSimulation(commandStreamTask, commandStreamTaskStart);
     }
 
     size_t startOffset = submitCSR ? commandStreamStartCSR : commandStreamTaskStart;
@@ -689,6 +693,8 @@ inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
         ResourcePackage resourcePackage;
         void *currentPipeControlForNooping = nullptr;
         void *epiloguePipeControlLocation = nullptr;
+        std::vector<BatchBuffer> chainedBatchBuffers;
+        std::vector<std::pair<const void *, size_t>> commandBufferPatches;
 
         while (!commandBufferList.peekIsEmpty()) {
             size_t totalUsedSize = 0u;
@@ -719,6 +725,7 @@ inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
                         flatBatchBufferHelper->removePipeControlData(pipeControlLocationSize, currentPipeControlForNooping, peekRootDeviceEnvironment());
                     }
                     memset(currentPipeControlForNooping, 0, pipeControlLocationSize);
+                    commandBufferPatches.emplace_back(currentPipeControlForNooping, pipeControlLocationSize);
                 }
                 // obtain next candidate for nooping
                 currentPipeControlForNooping = nextCommandBuffer->pipeControlThatMayBeErasedLocation;
@@ -734,8 +741,10 @@ inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
                 // if we point to exact same command buffer, then batch buffer start is not needed at all
                 if (cpuAddressForCurrentCommandBufferEndingSection == cpuAddressForCommandBufferDestination) {
                     memset(currentBBendLocation, 0u, ptrDiff(cpuAddressForCurrentCommandBufferEndingSection, currentBBendLocation));
+                    commandBufferPatches.emplace_back(currentBBendLocation, ptrDiff(cpuAddressForCurrentCommandBufferEndingSection, currentBBendLocation));
                 } else {
                     addBatchBufferStart((MI_BATCH_BUFFER_START *)currentBBendLocation, offsetCommandBuffer, false);
+                    commandBufferPatches.emplace_back(currentBBendLocation, sizeof(MI_BATCH_BUFFER_START));
                 }
 
                 if (debugManager.flags.FlattenBatchBufferForAUBDump.get()) {
@@ -745,6 +754,7 @@ inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
                 currentBBendLocation = nextCommandBuffer->batchBufferEndLocation;
                 lastTaskCount = nextCommandBuffer->taskCount;
                 lastPipeControlArgs = nextCommandBuffer->epiloguePipeControlArgs;
+                chainedBatchBuffers.push_back(nextCommandBuffer->batchBuffer);
                 nextCommandBuffer = nextCommandBuffer->next;
 
                 commandBufferList.removeFrontOne();
@@ -762,6 +772,7 @@ inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
                     lastPipeControlArgs.dcFlushEnable = false;
                 }
 
+                commandBufferPatches.emplace_back(epiloguePipeControlLocation, pipeControlLocationSize);
                 MemorySynchronizationCommands<GfxFamily>::setBarrierWithPostSyncOperation(
                     epiloguePipeControlLocation,
                     PostSyncMode::immediateData,
@@ -770,6 +781,17 @@ inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
                     peekRootDeviceEnvironment(),
                     lastPipeControlArgs);
             }
+
+            if (isTbxMode() || isAubMode()) {
+                for (const auto &chainedBatchBuffer : chainedBatchBuffers) {
+                    this->writeBatchBufferToSimulation(chainedBatchBuffer);
+                }
+                for (const auto &[patchLocation, patchSize] : commandBufferPatches) {
+                    this->writeCommandBufferPatchToSimulation(*primaryCmdBuffer->batchBuffer.commandBufferAllocation, &surfacesForSubmit, patchLocation, patchSize);
+                }
+            }
+            chainedBatchBuffers.clear();
+            commandBufferPatches.clear();
 
             primaryCmdBuffer->batchBuffer.endCmdPtr = currentBBendLocation;
 
@@ -2442,6 +2464,9 @@ void CommandStreamReceiverHw<GfxFamily>::dispatchImmediateFlushClientBufferComma
 
     programEndingCmd(epilogueCommandStream, &flushData.endPtr, isDirectSubmissionEnabled(), dispatchFlags.hasRelaxedOrderingDependencies, EngineHelpers::isBcs(this->osContext->getEngineType()));
     EncodeNoop<GfxFamily>::alignToCacheLine(epilogueCommandStream);
+    if (dispatchFlags.optionalEpilogueCmdStream != nullptr) {
+        this->writeStreamChunkToSimulation(*dispatchFlags.optionalEpilogueCmdStream, dispatchFlags.optionalEpilogueCmdStreamStartOffset);
+    }
 }
 
 template <typename GfxFamily>
@@ -2453,6 +2478,9 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushSendBatc
     this->latestSentTaskCount = taskCount + 1;
 
     bool startFromCsr = flushData.estimatedSize > 0;
+    if (startFromCsr) {
+        this->writeStreamChunkToSimulation(immediateCommandStream, immediateCommandStreamStart);
+    }
     size_t startOffset = startFromCsr ? flushData.csrStartOffset : immediateCommandStreamStart;
     auto &streamToSubmit = startFromCsr ? csrStream : immediateCommandStream;
     GraphicsAllocation *chainedBatchBuffer = startFromCsr ? immediateCommandStream.getGraphicsAllocation() : nullptr;
@@ -2561,7 +2589,17 @@ inline BatchBuffer CommandStreamReceiverHw<GfxFamily>::prepareBatchBufferForSubm
         } else if (dispatchFlags.epilogueRequired) {
             this->makeResident(*commandStreamCSR.getGraphicsAllocation());
         }
+        size_t csrEpilogueStartOffset = commandStreamCSR.getUsed();
         this->programEpilogue(commandStreamCSR, device, &bbEndLocation, dispatchFlags);
+
+        if (submitCSR) {
+            this->writeStreamChunkToSimulation(commandStreamTask, commandStreamStartTask);
+        } else {
+            this->writeStreamChunkToSimulation(commandStreamCSR, csrEpilogueStartOffset);
+        }
+        if (dispatchFlags.optionalEpilogueCmdStream != nullptr) {
+            this->writeStreamChunkToSimulation(*dispatchFlags.optionalEpilogueCmdStream, dispatchFlags.optionalEpilogueCmdStreamStartOffset);
+        }
 
     } else if (submitCSR) {
         programEndingCmd(commandStreamCSR, &bbEndLocation, directSubmissionEnabled, dispatchFlags.hasRelaxedOrderingDependencies, EngineHelpers::isBcs(this->osContext->getEngineType()));

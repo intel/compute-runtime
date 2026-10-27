@@ -200,6 +200,8 @@ SubmissionStatus AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batch
 
     initializeEngine();
 
+    this->writeBatchBufferToSimulation(batchBuffer);
+
     // Write our batch buffer
     auto commandBufferAllocationBackup = batchBuffer.commandBufferAllocation;
     auto pBatchBuffer = ptrOffset(batchBuffer.commandBufferAllocation->getUnderlyingBuffer(), batchBuffer.startOffset);
@@ -499,6 +501,11 @@ void AUBCommandStreamReceiverHw<GfxFamily>::dumpAllocation(GraphicsAllocation &g
         }
         return;
     }
+}
+
+template <typename GfxFamily>
+bool AUBCommandStreamReceiverHw<GfxFamily>::isAubSubCaptureInactive() const {
+    return subCaptureManager->isSubCaptureMode() && !subCaptureManager->isSubCaptureEnabled();
 }
 
 template <typename GfxFamily>

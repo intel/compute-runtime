@@ -132,6 +132,8 @@ void AubWalkerPartitionZeroFixture::flushStream() {
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
     dispatchFlags.guardCommandBufferWithPipeControl = true;
 
+    helperSurface->setAubWritable(true, GraphicsAllocation::allBanks);
+    helperSurface->setTbxWritable(true, GraphicsAllocation::allBanks);
     csr->makeResident(*helperSurface);
     csr->flushTask(*taskStream, 0,
                    &csr->getIndirectHeap(IndirectHeap::Type::dynamicState, 0u),

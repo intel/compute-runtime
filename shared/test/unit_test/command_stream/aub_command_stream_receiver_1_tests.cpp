@@ -913,6 +913,24 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenAUBDump
     EXPECT_STREQ(debugManager.flags.AUBDumpCaptureFileName.get().c_str(), aubCsr->getFileName().c_str());
 }
 
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenCheckingIfAubSubCaptureIsInactiveThenReturnTrueOnlyInSubCaptureModeWithDisabledCapture) {
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>("", false, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));
+
+    AubSubCaptureCommon aubSubCaptureCommon;
+    auto subCaptureManagerMock = new AubSubCaptureManagerMock("", aubSubCaptureCommon);
+    aubCsr->subCaptureManager = std::unique_ptr<AubSubCaptureManagerMock>(subCaptureManagerMock);
+
+    aubSubCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::off;
+    EXPECT_FALSE(aubCsr->isAubSubCaptureInactive());
+
+    aubSubCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::toggle;
+    subCaptureManagerMock->setSubCaptureIsActive(false);
+    EXPECT_TRUE(aubCsr->isAubSubCaptureInactive());
+
+    subCaptureManagerMock->setSubCaptureIsActive(true);
+    EXPECT_FALSE(aubCsr->isAubSubCaptureInactive());
+}
+
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptureModeWhenAubSubCaptureIsActivatedThenFileIsOpened) {
     DebugManagerStateRestore stateRestore;
     std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>("", false, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()));

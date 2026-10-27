@@ -1517,6 +1517,125 @@ HWTEST_F(ImmediateCommandListTest, givenImmediateCmdListWhenAppendingRegularCmdL
     EXPECT_EQ(usedBefore, usedAfter);
 }
 
+void setCmdBufferAllocationsWritableForSimulation(CommandContainer &commandContainer, bool writable) {
+    for (auto cmdBufferAllocation : commandContainer.getCmdBufferAllocations()) {
+        cmdBufferAllocation->setTbxWritable(writable, NEO::GraphicsAllocation::allBanks);
+        cmdBufferAllocation->setAubWritable(writable, NEO::GraphicsAllocation::allBanks);
+    }
+}
+
+bool areCmdBufferAllocationsWritableForSimulation(CommandContainer &commandContainer) {
+    return std::all_of(commandContainer.getCmdBufferAllocations().begin(), commandContainer.getCmdBufferAllocations().end(), [](NEO::GraphicsAllocation *cmdBufferAllocation) {
+        return cmdBufferAllocation->isTbxWritable(NEO::GraphicsAllocation::allBanks) && cmdBufferAllocation->isAubWritable(NEO::GraphicsAllocation::allBanks);
+    });
+}
+
+HWTEST_F(ImmediateCommandListTest, givenNotWritableCmdBufferAllocationsWhenClosingRegularCmdListThenCmdBufferAllocationsAreWritable) {
+    neoDevice->getUltCommandStreamReceiver<FamilyType>().commandStreamReceiverType = NEO::CommandStreamReceiverType::tbx;
+    setCmdBufferAllocationsWritableForSimulation(commandList->getCmdContainer(), false);
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->close());
+
+    EXPECT_TRUE(areCmdBufferAllocationsWritableForSimulation(commandList->getCmdContainer()));
+}
+
+HWTEST_F(ImmediateCommandListTest, givenNoPatchingPreambleWhenExecutingRegularCmdListThenCmdBufferAllocationsAreWritable) {
+    neoDevice->getUltCommandStreamReceiver<FamilyType>().commandStreamReceiverType = NEO::CommandStreamReceiverType::tbx;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->close());
+    auto cmdListHandle = commandList->toHandle();
+    commandQueue->setPatchingPreamble(false);
+    setCmdBufferAllocationsWritableForSimulation(commandList->getCmdContainer(), false);
+
+    CommandListExecutionInternalOptions internalOptions = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandLists(1u, &cmdListHandle, nullptr, internalOptions));
+
+    EXPECT_TRUE(areCmdBufferAllocationsWritableForSimulation(commandList->getCmdContainer()));
+}
+
+HWTEST_F(ImmediateCommandListTest, givenPatchingPreambleWhenExecutingRegularCmdListThenCmdBufferAllocationsAreNotMarkedWritable) {
+    neoDevice->getUltCommandStreamReceiver<FamilyType>().commandStreamReceiverType = NEO::CommandStreamReceiverType::tbx;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->close());
+    auto cmdListHandle = commandList->toHandle();
+    commandQueue->setPatchingPreamble(true);
+    setCmdBufferAllocationsWritableForSimulation(commandList->getCmdContainer(), false);
+
+    CommandListExecutionInternalOptions internalOptions = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandLists(1u, &cmdListHandle, nullptr, internalOptions));
+
+    EXPECT_FALSE(areCmdBufferAllocationsWritableForSimulation(commandList->getCmdContainer()));
+}
+
+HWTEST_F(ImmediateCommandListTest, givenNoPatchingPreambleWhenExecutingRegularCopyCmdListsAgainThenCmdBufferAllocationsOfAllCmdListsAreWritable) {
+    neoDevice->getUltCommandStreamReceiver<FamilyType>().commandStreamReceiverType = NEO::CommandStreamReceiverType::tbx;
+    ze_result_t returnValue;
+    ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    auto copyQueue = whiteboxCast(CommandQueue::create(device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, true, false, false, returnValue));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    ASSERT_TRUE(copyQueue->peekIsCopyOnlyCommandQueue());
+    copyQueue->setPatchingPreamble(false);
+    copyQueue->dispatchCmdListBatchBufferAsPrimary = true;
+
+    std::unique_ptr<L0::CommandList> firstCopyCmdList(CommandList::create(device, NEO::EngineGroupType::copy, 0u, returnValue, false));
+    std::unique_ptr<L0::CommandList> secondCopyCmdList(CommandList::create(device, NEO::EngineGroupType::copy, 0u, returnValue, false));
+    L0::CommandList *copyCmdLists[] = {firstCopyCmdList.get(), secondCopyCmdList.get()};
+    ze_command_list_handle_t copyCmdListHandles[] = {firstCopyCmdList->toHandle(), secondCopyCmdList->toHandle()};
+    for (auto copyCmdList : copyCmdLists) {
+        CommandList::whiteboxCast(copyCmdList)->dispatchCmdListBatchBufferAsPrimary = true;
+        ASSERT_EQ(ZE_RESULT_SUCCESS, copyCmdList->close());
+    }
+
+    CommandListExecutionInternalOptions internalOptions = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, copyQueue->executeCommandLists(2u, copyCmdListHandles, nullptr, internalOptions));
+    for (auto copyCmdList : copyCmdLists) {
+        setCmdBufferAllocationsWritableForSimulation(copyCmdList->getCmdContainer(), false);
+    }
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, copyQueue->executeCommandLists(2u, copyCmdListHandles, nullptr, internalOptions));
+
+    for (auto copyCmdList : copyCmdLists) {
+        EXPECT_TRUE(areCmdBufferAllocationsWritableForSimulation(copyCmdList->getCmdContainer()));
+    }
+    copyQueue->destroy();
+}
+
+HWTEST_F(ImmediateCommandListTest, givenSimulationModeAndRegularCmdListAsStartingBufferWhenExecutingThenQueueEpilogueSectionIsUploaded) {
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->csr);
+    commandList->dispatchCmdListBatchBufferAsPrimary = true;
+    commandQueue->dispatchCmdListBatchBufferAsPrimary = true;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->close());
+    auto cmdListHandle = commandList->toHandle();
+    auto queueCmdBufferAllocation = commandQueue->commandStream.getGraphicsAllocation();
+
+    CommandListExecutionInternalOptions internalOptions = {};
+    ultCsr->commandStreamReceiverType = NEO::CommandStreamReceiverType::tbx;
+    ultCsr->chunkCopySupported = true;
+    ultCsr->registerInstructionCacheFlush();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandLists(1u, &cmdListHandle, nullptr, internalOptions));
+    ASSERT_NE(&commandQueue->firstCmdListStream, commandQueue->startingCmdBuffer);
+    auto queueChunkWritten = [&]() {
+        return std::any_of(ultCsr->writeMemoryParams.chunkWrites.begin(), ultCsr->writeMemoryParams.chunkWrites.end(), [&](const NEO::WrittenMemoryChunk &chunk) {
+            return chunk.gfxAllocation == queueCmdBufferAllocation;
+        });
+    };
+    EXPECT_FALSE(queueChunkWritten());
+
+    auto queueUsedBeforeExecute = commandQueue->commandStream.getUsed();
+    ultCsr->writeMemoryParams.chunkWrites.clear();
+    ultCsr->setStateComputeModeDirty(false);
+    queueCmdBufferAllocation->setSimulationInitialUploadDone(true);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandLists(1u, &cmdListHandle, nullptr, internalOptions));
+    ultCsr->commandStreamReceiverType = NEO::CommandStreamReceiverType::hardware;
+
+    ASSERT_EQ(&commandQueue->firstCmdListStream, commandQueue->startingCmdBuffer);
+    ASSERT_EQ(1u, ultCsr->writeMemoryParams.chunkWrites.size());
+    auto &queueChunk = ultCsr->writeMemoryParams.chunkWrites[0];
+    EXPECT_EQ(queueCmdBufferAllocation, queueChunk.gfxAllocation);
+    EXPECT_LE(queueUsedBeforeExecute, queueChunk.gpuVaChunkOffset);
+    EXPECT_NE(0u, queueChunk.chunkSize);
+    EXPECT_GE(commandQueue->commandStream.getUsed(), queueChunk.gpuVaChunkOffset + queueChunk.chunkSize);
+}
+
 HWTEST_F(ImmediateCommandListTest, givenImmediateCmdListWithPrimaryBatchBufferWhenAppendingRegularCmdListThenCorrectEpilogueCmdBufferIsUsed) {
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
 
@@ -1550,9 +1669,11 @@ HWTEST_F(ImmediateCommandListTest, givenImmediateCmdListWithPrimaryBatchBufferWh
         EXPECT_EQ(NEO::AppendOperations::cmdList, ultCsr.recordedImmediateDispatchFlags.dispatchOperation);
         EXPECT_EQ(dispatchRegularBufferLinearStream, ultCsr.lastFlushedImmediateCommandStream);
         EXPECT_EQ(immediateCmdBufferStream, ultCsr.recordedImmediateDispatchFlags.optionalEpilogueCmdStream);
+        EXPECT_EQ(immediateCmdBufferOffset, ultCsr.recordedImmediateDispatchFlags.optionalEpilogueCmdStreamStartOffset);
     } else {
         EXPECT_EQ(dispatchRegularBufferLinearStream, ultCsr.lastFlushedCommandStream);
         EXPECT_EQ(immediateCmdBufferStream, ultCsr.recordedDispatchFlags.optionalEpilogueCmdStream);
+        EXPECT_EQ(immediateCmdBufferOffset, ultCsr.recordedDispatchFlags.optionalEpilogueCmdStreamStartOffset);
     }
     EXPECT_EQ(regularCmdBufferAllocation, ultCsr.latestFlushedBatchBuffer.commandBufferAllocation);
 
@@ -1606,6 +1727,7 @@ HWTEST_F(ImmediateCommandListTest, givenCopyEngineImmediateCmdListWithPrimaryBat
     EXPECT_EQ(NEO::AppendOperations::cmdList, ultCsr->recordedBcsDispatchFlags.dispatchOperation);
     EXPECT_EQ(dispatchRegularBufferLinearStream, ultCsr->lastFlushedBcsCommandStream);
     EXPECT_EQ(immediateCmdBufferStream, ultCsr->recordedBcsDispatchFlags.optionalEpilogueCmdStream);
+    EXPECT_EQ(immediateCmdBufferOffset, ultCsr->recordedBcsDispatchFlags.optionalEpilogueCmdStreamStartOffset);
     EXPECT_EQ(regularCmdBufferAllocation, ultCsr->latestFlushedBatchBuffer.commandBufferAllocation);
 
     auto startStream = static_cast<L0::CommandQueue *>(commandListImmediate->cmdQImmediate)->getStartingCmdBuffer();

@@ -252,6 +252,18 @@ void CommandContainer::swapCommandStreamState(CommandContainer &other) {
     }
 }
 
+void CommandContainer::markCmdBufferAllocationsForSimulationUpload() {
+    auto csr = device->getDefaultEngine().commandStreamReceiver;
+    if (!csr->isTbxMode() && !csr->isAubMode()) {
+        return;
+    }
+    for (auto &cmdBufferAllocation : cmdBufferAllocations) {
+        cmdBufferAllocation->setTbxWritable(true, GraphicsAllocation::allBanks);
+        cmdBufferAllocation->setAubWritable(true, GraphicsAllocation::allBanks);
+        cmdBufferAllocation->setSimulationInitialUploadDone(false);
+    }
+}
+
 void CommandContainer::removeDuplicatesFromResidencyContainer() {
     std::sort(this->residencyContainer.begin(), this->residencyContainer.end());
     this->residencyContainer.erase(std::unique(this->residencyContainer.begin(), this->residencyContainer.end()), this->residencyContainer.end());

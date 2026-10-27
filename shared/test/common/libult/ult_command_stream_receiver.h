@@ -69,7 +69,15 @@ struct UltKmdWaiter : KmdWaiter {
     KmdWaiterParams &params;
 };
 
+struct WrittenMemoryChunk {
+    GraphicsAllocation *gfxAllocation = nullptr;
+    uint64_t gpuVaChunkOffset = 0;
+    size_t chunkSize = 0;
+    bool operator==(const WrittenMemoryChunk &) const = default;
+};
+
 struct WriteMemoryParams {
+    std::vector<WrittenMemoryChunk> chunkWrites;
     GraphicsAllocation *latestGfxAllocation = nullptr;
     uint64_t latestGpuVaChunkOffset = 0;
     size_t latestChunkSize = 0;
@@ -345,6 +353,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
         writeMemoryParams.totalCallCount++;
         if (isChunkCopy) {
             writeMemoryParams.chunkWriteCallCount++;
+            writeMemoryParams.chunkWrites.push_back({&gfxAllocation, gpuVaChunkOffset, chunkSize});
         }
 
         writeMemoryParams.latestGfxAllocation = &gfxAllocation;

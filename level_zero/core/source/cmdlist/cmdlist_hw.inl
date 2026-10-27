@@ -471,6 +471,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::close() {
     calculateActiveScratchPatchElemsPatchSize();
     calculateFrontEndPatchSize();
     calculateTotalNoopSpacePatchSize();
+    commandContainer.markCmdBufferAllocationsForSimulationUpload();
 
     closedCmdList = true;
 

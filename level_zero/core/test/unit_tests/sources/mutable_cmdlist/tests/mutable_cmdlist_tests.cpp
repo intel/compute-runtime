@@ -14,6 +14,7 @@
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -39,6 +40,36 @@ namespace L0 {
 namespace ult {
 
 using MutableCommandListTest = Test<MutableCommandListFixture<false, -1>>;
+
+void setMclCmdBufferAllocationsWritableForSimulation(MutableCommandList &mutableCmdList, bool writable) {
+    for (auto cmdBufferAllocation : mutableCmdList.getBase()->getCmdContainer().getCmdBufferAllocations()) {
+        cmdBufferAllocation->setTbxWritable(writable, NEO::GraphicsAllocation::allBanks);
+    }
+}
+
+bool areMclCmdBufferAllocationsWritableForSimulation(MutableCommandList &mutableCmdList) {
+    auto &cmdBufferAllocations = mutableCmdList.getBase()->getCmdContainer().getCmdBufferAllocations();
+    return std::all_of(cmdBufferAllocations.begin(), cmdBufferAllocations.end(), [](NEO::GraphicsAllocation *cmdBufferAllocation) {
+        return cmdBufferAllocation->isTbxWritable(NEO::GraphicsAllocation::allBanks);
+    });
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenClosedMutableCmdListWhenClosingAgainThenCmdBufferAllocationsAreMarkedWritableOnlyWhenUpdated) {
+    neoDevice->getUltCommandStreamReceiver<FamilyType>().commandStreamReceiverType = NEO::CommandStreamReceiverType::tbx;
+    setMclCmdBufferAllocationsWritableForSimulation(*mutableCommandList, false);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
+    EXPECT_TRUE(areMclCmdBufferAllocationsWritableForSimulation(*mutableCommandList));
+
+    setMclCmdBufferAllocationsWritableForSimulation(*mutableCommandList, false);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
+    EXPECT_FALSE(areMclCmdBufferAllocationsWritableForSimulation(*mutableCommandList));
+
+    mutableCommandList->toggleCommandListUpdated();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
+    EXPECT_TRUE(areMclCmdBufferAllocationsWritableForSimulation(*mutableCommandList));
+}
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             MutableCommandListTest,

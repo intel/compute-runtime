@@ -48,6 +48,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     void setWritableForSimulation(bool writable, GraphicsAllocation &gfxAllocation) override {
         this->setAubWritable(writable, gfxAllocation);
     }
+    bool isAubSubCaptureInactive() const override;
     MOCKABLE_VIRTUAL bool writeMemory(AllocationView &allocationView);
     void writeMMIO(uint32_t offset, uint32_t value) override;
     void expectMMIO(uint32_t mmioRegister, uint32_t expectedValue);
