@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/kernel/kernel_properties.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -19,6 +20,8 @@
 namespace NEO {
 class Device;
 } // namespace NEO
+
+using namespace NEO;
 
 namespace L0 {
 namespace ult {

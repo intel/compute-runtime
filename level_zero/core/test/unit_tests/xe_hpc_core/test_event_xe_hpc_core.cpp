@@ -10,12 +10,14 @@
 #include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/utilities/stackvec.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/device/device.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_event.h"
 
@@ -26,6 +28,8 @@
 namespace NEO {
 class ExecutionEnvironment;
 } // namespace NEO
+
+using namespace NEO;
 
 namespace L0 {
 namespace ult {

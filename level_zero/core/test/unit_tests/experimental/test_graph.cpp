@@ -12,6 +12,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -20,6 +21,7 @@
 #include "level_zero/api/internal/l0_event.h"
 #include "level_zero/api/internal/l0_graph.h"
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/mutable_cmdlist/mutable_semaphore_wait_hw.h"
 #include "level_zero/core/source/mutable_cmdlist/variable.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"

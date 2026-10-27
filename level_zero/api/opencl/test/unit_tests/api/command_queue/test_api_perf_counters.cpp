@@ -12,6 +12,7 @@
 #include "shared/source/os_interface/performance_counters.h"
 #include "shared/source/utilities/metrics_library.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/api/opencl/extensions/public/cl_ext_private.h"

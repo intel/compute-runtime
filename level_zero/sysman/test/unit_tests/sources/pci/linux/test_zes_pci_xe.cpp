@@ -5,6 +5,7 @@
  *
  */
 
+#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/sysman/source/api/pci/sysman_pci_utils.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mocks/mock_sysman_product_helper.h"

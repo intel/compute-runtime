@@ -9,6 +9,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device_binary_format/zebin/zebin_elf.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/test_macros/test.h"
 

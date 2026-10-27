@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/api/opencl/source/helpers/leo_cl_memory_properties_helpers.h"

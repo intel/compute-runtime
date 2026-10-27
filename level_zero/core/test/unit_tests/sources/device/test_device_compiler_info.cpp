@@ -6,10 +6,14 @@
  */
 
 #include "shared/test/common/compiler_interface/spirv_extensions_yaml_igc_sample.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_compiler_interface.h"
+#include "shared/test/common/mocks/mock_device.h"
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+
+#include "gtest/gtest.h"
 
 #include <algorithm>
 #include <array>

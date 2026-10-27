@@ -8,6 +8,7 @@
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/source/context/context.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 
 namespace L0 {

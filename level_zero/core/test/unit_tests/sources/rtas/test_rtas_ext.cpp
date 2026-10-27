@@ -1,15 +1,19 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/api/extensions/public/ze_exp_ext.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/rtas/rtas.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+
+using namespace NEO;
 
 namespace L0 {
 namespace ult {

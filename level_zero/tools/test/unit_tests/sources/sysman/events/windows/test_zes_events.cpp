@@ -8,6 +8,7 @@
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/os_interface/windows/mock_sys_calls.h"
 
+#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/tools/source/sysman/events/events_imp.h"
 #include "level_zero/tools/source/sysman/events/windows/os_events_imp.h"
 #include "level_zero/tools/source/sysman/global_operations/global_operations_imp.h"

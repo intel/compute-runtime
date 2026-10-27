@@ -5,11 +5,15 @@
  *
  */
 
+#include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
+
+using namespace NEO;
 
 namespace L0 {
 namespace ult {

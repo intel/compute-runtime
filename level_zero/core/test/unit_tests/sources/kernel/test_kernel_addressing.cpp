@@ -6,8 +6,10 @@
  */
 
 #include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/kernel/kernel_arg_descriptor.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/program/kernel_info.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "level_zero/core/source/builtin/builtin_functions_lib.h"
@@ -15,6 +17,10 @@
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/kernel/kernel.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+
+#include "gtest/gtest.h"
+
+using namespace NEO;
 
 namespace L0::ult {
 struct KernelAddressingTest : public DeviceFixture, public ::testing::Test {

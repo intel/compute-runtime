@@ -10,9 +10,12 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/hw_info.h"
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/module/module_imp.h"
+
+using namespace NEO;
 
 namespace L0 {
 namespace ult {

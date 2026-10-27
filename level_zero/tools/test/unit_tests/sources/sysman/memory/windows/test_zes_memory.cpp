@@ -1,9 +1,12 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#include "shared/source/helpers/hw_info.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 
 #include "level_zero/tools/source/sysman/memory/windows/os_memory_imp.h"
 #include "level_zero/tools/source/sysman/sysman_imp.h"

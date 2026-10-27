@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/helpers/memory_management.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/variable_backup.h"
@@ -18,6 +19,8 @@
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_builtin_functions_lib_impl.h"
 #include "level_zero/core/test/unit_tests/white_box.h"
+
+using namespace NEO;
 
 namespace L0 {
 namespace ult {

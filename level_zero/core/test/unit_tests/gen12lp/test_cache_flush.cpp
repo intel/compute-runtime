@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/gen12lp/hw_cmds_base.h"
 #include "shared/source/helpers/cache_flush.inl"
 #include "shared/source/helpers/l3_range.h"
@@ -14,8 +15,11 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
+
+using namespace NEO;
 
 namespace L0 {
 namespace ult {

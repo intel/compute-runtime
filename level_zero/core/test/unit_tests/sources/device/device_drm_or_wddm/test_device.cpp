@@ -28,6 +28,8 @@
 #include "gtest/gtest.h"
 #include "hw_device_id.h"
 
+using namespace NEO;
+
 namespace L0 {
 namespace ult {
 

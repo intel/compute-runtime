@@ -13,6 +13,8 @@
 #include "level_zero/core/source/mutable_cmdlist/mutable_command_walker_hw.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 
+#include <cstring>
+
 namespace L0 {
 namespace ult {
 

@@ -5,7 +5,11 @@
  *
  */
 
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/compiler_interface/spirv_extensions_yaml_igc_sample.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_compiler_interface.h"
 #include "shared/test/common/test_macros/test.h"
 

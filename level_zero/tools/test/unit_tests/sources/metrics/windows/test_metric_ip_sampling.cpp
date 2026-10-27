@@ -9,7 +9,9 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_wddm.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -23,6 +25,8 @@
 #include <memory>
 #include <new>
 #include <vector>
+
+using namespace NEO;
 
 namespace L0 {
 namespace ult {
