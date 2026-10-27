@@ -14,6 +14,8 @@
 
 #include "neo_igfxfmid.h"
 
+#include <vector>
+
 namespace L0 {
 class Ecc;
 class Events;

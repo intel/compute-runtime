@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "level_zero/tools/source/sysman/frequency/frequency.h"
 #include "level_zero/tools/source/sysman/frequency/windows/os_frequency_imp.h"
 #include "level_zero/tools/source/sysman/sysman_const.h"
 #include "level_zero/tools/source/sysman/sysman_imp.h"

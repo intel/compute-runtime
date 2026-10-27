@@ -19,13 +19,20 @@
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
+#include "level_zero/tools/source/sysman/diagnostics/diagnostics.h"
+#include "level_zero/tools/source/sysman/engine/engine.h"
+#include "level_zero/tools/source/sysman/firmware/firmware.h"
 #include "level_zero/tools/source/sysman/firmware_util/firmware_util.h"
 #include "level_zero/tools/source/sysman/linux/fs_access.h"
 #include "level_zero/tools/source/sysman/linux/pmt/pmt.h"
 #include "level_zero/tools/source/sysman/linux/pmu/pmu_imp.h"
+#include "level_zero/tools/source/sysman/memory/memory.h"
 #include "level_zero/tools/source/sysman/pci/linux/os_pci_imp.h"
 #include "level_zero/tools/source/sysman/pci/pci_utils.h"
+#include "level_zero/tools/source/sysman/power/power.h"
+#include "level_zero/tools/source/sysman/ras/ras.h"
 #include "level_zero/tools/source/sysman/sysman_imp.h"
+#include "level_zero/tools/source/sysman/temperature/temperature.h"
 
 namespace L0 {
 

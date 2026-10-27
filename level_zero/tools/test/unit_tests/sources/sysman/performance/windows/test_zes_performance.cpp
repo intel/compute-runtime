@@ -5,6 +5,7 @@
  *
  */
 
+#include "level_zero/tools/source/sysman/performance/performance.h"
 #include "level_zero/tools/source/sysman/performance/windows/os_performance_imp.h"
 #include "level_zero/tools/source/sysman/sysman_imp.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/performance/windows/mock_performance.h"

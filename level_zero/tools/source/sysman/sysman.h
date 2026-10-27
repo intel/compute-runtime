@@ -7,19 +7,6 @@
 
 #pragma once
 #include "level_zero/core/source/device/device_handle.h"
-#include "level_zero/tools/source/sysman/diagnostics/diagnostics.h"
-#include "level_zero/tools/source/sysman/engine/engine.h"
-#include "level_zero/tools/source/sysman/fabric_port/fabric_port.h"
-#include "level_zero/tools/source/sysman/fan/fan.h"
-#include "level_zero/tools/source/sysman/firmware/firmware.h"
-#include "level_zero/tools/source/sysman/frequency/frequency.h"
-#include "level_zero/tools/source/sysman/memory/memory.h"
-#include "level_zero/tools/source/sysman/performance/performance.h"
-#include "level_zero/tools/source/sysman/power/power.h"
-#include "level_zero/tools/source/sysman/ras/ras.h"
-#include "level_zero/tools/source/sysman/scheduler/scheduler.h"
-#include "level_zero/tools/source/sysman/temperature/temperature.h"
-#include "level_zero/tools/source/sysman/vf_management/vf_management.h"
 #include <level_zero/zes_api.h>
 
 struct _zet_sysman_handle_t {};
