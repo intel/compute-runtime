@@ -375,6 +375,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushImmediateTask(
             flushData.estimatedSize += SWTagsManager::estimateSpaceForSWTags<GfxFamily>();
         }
     }
+    flushData.estimatedSize += getCmdSizeForLateMidThreadPreemptionStart(dispatchFlags.hasMidThreadPreemptionKernel);
 
     // this must be the last call after all estimate size operations
     handleImmediateFlushJumpToImmediate(flushData);
@@ -401,6 +402,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushImmediateTask(
 
         dispatchImmediateFlushSWTagsCommands(csrCommandStream);
     }
+    programLateMidThreadPreemptionStart(csrCommandStream, dispatchFlags.hasMidThreadPreemptionKernel);
 
     dispatchImmediateFlushJumpToImmediateCommand(immediateCommandStream, immediateCommandStreamStart, flushData, csrCommandStream);
 

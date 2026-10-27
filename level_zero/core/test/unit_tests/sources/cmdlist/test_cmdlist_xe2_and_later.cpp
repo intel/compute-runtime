@@ -407,6 +407,70 @@ HWTEST2_F(CommandListXe2AndLaterPreemptionTest, givenMidThreadPreemptionAllocati
     verifyImmediateCommandListCreatesPreemptionAllocationOnFirstMidThreadPreemptionKernel<FamilyType>(device, neoDevice, *mockKernelImmData, *kernel, 0);
 }
 
+HWTEST2_F(CommandListXe2AndLaterPreemptionTest, givenAppendedCommandListWithMidThreadPreemptionKernelFailingToSubmitWhenAppendingBarrierThenLateStartIsDoneAndPreemptionAllocationIsMadeResident, Platforms) {
+    if (commandListImmediate->isHeaplessModeEnabled()) {
+        GTEST_SKIP();
+    }
+    auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(commandListImmediate->getCsr(false));
+    if (!ultCsr->getPreemptionAllocation()) {
+        GTEST_SKIP();
+    }
+    commandList->midThreadPreemptionKernelAppended = true;
+    commandList->close();
+    auto commandListHandle = commandList->toHandle();
+
+    ultCsr->skipPreemptionAllocation = true;
+    ultCsr->storeMakeResidentAllocations = true;
+    ultCsr->flushReturnValue = NEO::SubmissionStatus::outOfMemory;
+    CommandListExecutionInternalOptions internalOptions = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, commandListImmediate->appendCommandLists(1, &commandListHandle, nullptr, 0, nullptr, internalOptions));
+    EXPECT_TRUE(ultCsr->getSkipPreemptionAllocation());
+
+    ultCsr->flushReturnValue.reset();
+    ultCsr->makeResidentAllocations.clear();
+    CmdListWaitEventParameters waitEventsParameters = {};
+    CmdListSignalEventParameters signalEventParameters = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandListImmediate->appendBarrier(nullptr, 0, nullptr, waitEventsParameters, signalEventParameters));
+
+    EXPECT_FALSE(ultCsr->getSkipPreemptionAllocation());
+    EXPECT_TRUE(ultCsr->isMadeResident(ultCsr->getPreemptionAllocation()));
+}
+
+HWTEST2_F(CommandListXe2AndLaterPreemptionTest, givenImmediateCommandListUsingFlushTaskAndAppendedCommandListWithMidThreadPreemptionKernelFailingToSubmitWhenAppendingBarrierThenLateStartIsDoneAndPreemptionAllocationIsMadeResident, Platforms) {
+    debugManager.flags.UseImmediateFlushTask.set(0);
+
+    ze_command_queue_desc_t queueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    ze_result_t returnValue;
+    std::unique_ptr<WhiteBox<L0::CommandList>> immediateCmdList(CommandList::whiteboxCast(CommandList::createImmediate(device, &queueDesc, false, engineGroupType, returnValue)));
+    ASSERT_NE(nullptr, immediateCmdList);
+    if (immediateCmdList->isHeaplessModeEnabled()) {
+        GTEST_SKIP();
+    }
+    auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(immediateCmdList->getCsr(false));
+    if (!ultCsr->getPreemptionAllocation()) {
+        GTEST_SKIP();
+    }
+    commandList->midThreadPreemptionKernelAppended = true;
+    commandList->close();
+    auto commandListHandle = commandList->toHandle();
+
+    ultCsr->skipPreemptionAllocation = true;
+    ultCsr->storeMakeResidentAllocations = true;
+    ultCsr->flushReturnValue = NEO::SubmissionStatus::outOfMemory;
+    CommandListExecutionInternalOptions internalOptions = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, immediateCmdList->appendCommandLists(1, &commandListHandle, nullptr, 0, nullptr, internalOptions));
+    EXPECT_TRUE(ultCsr->getSkipPreemptionAllocation());
+
+    ultCsr->flushReturnValue.reset();
+    ultCsr->makeResidentAllocations.clear();
+    CmdListWaitEventParameters waitEventsParameters = {};
+    CmdListSignalEventParameters signalEventParameters = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immediateCmdList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters, signalEventParameters));
+
+    EXPECT_FALSE(ultCsr->getSkipPreemptionAllocation());
+    EXPECT_TRUE(ultCsr->isMadeResident(ultCsr->getPreemptionAllocation()));
+}
+
 using InOrderCmdListTests = InOrderCmdListFixture;
 
 HWTEST2_F(InOrderCmdListTests, givenDebugFlagWhenPostSyncWithInOrderExecInfoIsCreateThenL1IsNotFlushed, Platforms) {

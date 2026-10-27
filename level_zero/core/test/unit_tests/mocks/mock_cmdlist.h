@@ -375,6 +375,7 @@ struct WhiteBox<::L0::CommandList> : public ::L0::CommandList {
     using BaseClass::isSyncModeQueue;
     using BaseClass::isTbxMode;
     using BaseClass::l3FlushAfterPostSyncEnabled;
+    using BaseClass::midThreadPreemptionKernelAppended;
     using BaseClass::minimalSizeForBcsSplit;
     using BaseClass::partitionCount;
     using BaseClass::pipelineSelectStateTracking;

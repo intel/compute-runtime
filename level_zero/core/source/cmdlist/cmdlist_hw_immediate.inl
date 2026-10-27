@@ -2236,6 +2236,9 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendCommandLists(ui
     }
 
     this->isWalkerWithProfilingEnqueued |= this->cmdQImmediate->getAndClearIsWalkerWithProfilingEnqueued();
+    for (uint32_t i = 0; i < numCommandLists; i++) {
+        this->midThreadPreemptionKernelAppended |= CommandList::fromHandle(phCommandLists[i])->hasMidThreadPreemptionKernel();
+    }
 
     CommandListCoreFamily<gfxCoreFamily>::appendSignalEventPostWalker(signalEvent,
                                                                       nullptr,

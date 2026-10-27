@@ -352,6 +352,10 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
             auto csrHw = static_cast<NEO::CommandStreamReceiverHw<GfxFamily> *>(this->csr);
             csrHw->programMidThreadPreemptionState(*streamForDispatch, *neoDevice);
         }
+        if (ctx.lateMidThreadPreemptionStartRequired) {
+            this->csr->programLateMidThreadPreemptionStart(*streamForDispatch, ctx.anyCommandListWithMidThreadPreemptionKernel);
+            this->csr->makeResidentPreemptionAllocation();
+        }
         this->programActivePartitionConfig(ctx.isProgramActivePartitionConfigRequired, *streamForDispatch);
         bool shouldProgramVfe = !frontEndTrackingEnabled() && ctx.frontEndStateDirty;
         this->programFrontEndAndClearDirtyFlag(shouldProgramVfe, ctx, *streamForDispatch, csr->getStreamProperties());
@@ -1359,6 +1363,12 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeRegularHeapfulPost
     if (ctx.midThreadPreemptionStateRequired) {
         auto csrHw = static_cast<NEO::CommandStreamReceiverHw<GfxFamily> *>(this->csr);
         linearStreamSizeEstimate += csrHw->getCmdSizeForMidThreadPreemptionState(*neoDevice);
+        ctx.pipelineCmdsDispatch = true;
+    }
+
+    ctx.lateMidThreadPreemptionStartRequired = this->csr->isLateMidThreadPreemptionStartRequired(ctx.anyCommandListWithMidThreadPreemptionKernel);
+    if (ctx.lateMidThreadPreemptionStartRequired) {
+        linearStreamSizeEstimate += this->csr->getCmdSizeForLateMidThreadPreemptionStart(ctx.anyCommandListWithMidThreadPreemptionKernel);
         ctx.pipelineCmdsDispatch = true;
     }
 

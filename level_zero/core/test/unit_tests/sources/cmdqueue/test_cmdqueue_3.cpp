@@ -7,6 +7,7 @@
 
 #include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/command_stream/preemption.h"
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
@@ -29,6 +30,7 @@
 #include "shared/source/utilities/reference_tracked_object.h"
 #include "shared/source/utilities/stackvec.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
@@ -1337,6 +1339,159 @@ TEST(CommandQueue, givenContextGroupEnabledWhenCreatingCommandQueuesThenEachCmdQ
 
     commandQueue1->destroy();
     commandQueue2->destroy();
+}
+
+using CommandQueueLateMidThreadPreemptionStartTest = ::testing::Test;
+
+template <typename FamilyType>
+void verifyLateMidThreadPreemptionStartIsProgrammedInQueueStreamAndPreemptionAllocationIsMadeResident(int32_t midThreadPreemptionAllocationOnDemand) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.MidThreadPreemptionAllocationOnDemand.set(midThreadPreemptionAllocationOnDemand);
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+    hwInfo.capabilityTable.defaultPreemptionMode = NEO::PreemptionMode::MidThread;
+
+    auto neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
+    NEO::DeviceVector devices;
+    devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+    auto driverHandle = std::make_unique<Mock<L0::DriverHandle>>();
+    driverHandle->initialize(std::move(devices));
+    auto device = driverHandle->devices[0];
+
+    ze_result_t returnValue;
+    std::unique_ptr<WhiteBox<L0::CommandList>> commandList(CommandList::whiteboxCast(CommandList::create(device, NEO::EngineGroupType::compute, 0u, returnValue, false)));
+    ASSERT_NE(nullptr, commandList);
+    commandList->midThreadPreemptionKernelAppended = true;
+    commandList->close();
+
+    ze_command_queue_desc_t desc = {};
+    ze_command_queue_handle_t commandQueueHandle = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, device->createCommandQueue(&desc, &commandQueueHandle));
+    auto commandQueue = whiteboxCast(L0::CommandQueue::fromHandle(commandQueueHandle));
+    auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(commandQueue->getCsr());
+
+    if (!ultCsr->getOsContext().isLatePreemptionStartTarget() || ultCsr->heaplessModeEnabled || (!ultCsr->getPreemptionAllocation() && !ultCsr->isMidThreadPreemptionStateDeferred())) {
+        commandQueue->destroy();
+        GTEST_SKIP();
+    }
+
+    ultCsr->skipPreemptionAllocation = true;
+    ultCsr->storeMakeResidentAllocations = true;
+    auto usedBefore = commandQueue->commandStream.getUsed();
+
+    auto commandListHandle = commandList->toHandle();
+    CommandListExecutionInternalOptions internalOptions = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandLists(1, &commandListHandle, nullptr, internalOptions));
+
+    EXPECT_FALSE(ultCsr->getSkipPreemptionAllocation());
+    EXPECT_NE(nullptr, ultCsr->getPreemptionAllocation());
+    EXPECT_TRUE(ultCsr->isMadeResident(ultCsr->getPreemptionAllocation()));
+
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(commandQueue->commandStream, usedBefore);
+    size_t lateStartLriCount = 0;
+    for (auto &it : findAll<MI_LOAD_REGISTER_IMM *>(hwParser.cmdList.begin(), hwParser.cmdList.end())) {
+        auto lri = genCmdCast<MI_LOAD_REGISTER_IMM *>(*it);
+        if (lri->getRegisterOffset() == NEO::PreemptionConfig<FamilyType>::mmioAddress &&
+            lri->getDataDword() == (NEO::PreemptionConfig<FamilyType>::mask | NEO::PreemptionConfig<FamilyType>::midThreadVal)) {
+            lateStartLriCount++;
+        }
+    }
+    EXPECT_EQ(1u, lateStartLriCount);
+
+    commandQueue->destroy();
+}
+
+HWTEST2_F(CommandQueueLateMidThreadPreemptionStartTest, givenLateStartPendingAndPreemptionAllocationCreatedUpfrontWhenExecutingCommandListWithMidThreadPreemptionKernelThenLriIsProgrammedInQueueStreamAndPreemptionAllocationIsMadeResident, IsAtLeastXe2HpgCore) {
+    verifyLateMidThreadPreemptionStartIsProgrammedInQueueStreamAndPreemptionAllocationIsMadeResident<FamilyType>(0);
+}
+
+HWTEST2_F(CommandQueueLateMidThreadPreemptionStartTest, givenLateStartPendingAndPreemptionAllocationOnDemandWhenExecutingCommandListWithMidThreadPreemptionKernelThenLriIsProgrammedInQueueStreamAndPreemptionAllocationIsMadeResident, IsAtLeastXe2HpgCore) {
+    verifyLateMidThreadPreemptionStartIsProgrammedInQueueStreamAndPreemptionAllocationIsMadeResident<FamilyType>(1);
+}
+
+HWTEST2_F(CommandQueueLateMidThreadPreemptionStartTest, givenInitializedCsrAndPrimaryBatchBufferDispatchWhenExecutingCommandListWithMidThreadPreemptionKernelAndLateStartPendingThenSubmissionStartsInQueueStreamWithLri, IsAtLeastXe2HpgCore) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.DispatchCmdlistCmdBufferPrimary.set(1);
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+    hwInfo.capabilityTable.defaultPreemptionMode = NEO::PreemptionMode::MidThread;
+
+    auto neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
+    NEO::DeviceVector devices;
+    devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+    auto driverHandle = std::make_unique<Mock<L0::DriverHandle>>();
+    driverHandle->initialize(std::move(devices));
+    auto device = driverHandle->devices[0];
+
+    ze_result_t returnValue;
+    std::unique_ptr<WhiteBox<L0::CommandList>> initCommandList(CommandList::whiteboxCast(CommandList::create(device, NEO::EngineGroupType::compute, 0u, returnValue, false)));
+    ASSERT_NE(nullptr, initCommandList);
+    initCommandList->close();
+    std::unique_ptr<WhiteBox<L0::CommandList>> commandList(CommandList::whiteboxCast(CommandList::create(device, NEO::EngineGroupType::compute, 0u, returnValue, false)));
+    ASSERT_NE(nullptr, commandList);
+    commandList->midThreadPreemptionKernelAppended = true;
+    commandList->close();
+
+    ze_command_queue_desc_t desc = {};
+    ze_command_queue_handle_t commandQueueHandle = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, device->createCommandQueue(&desc, &commandQueueHandle));
+    auto commandQueue = whiteboxCast(L0::CommandQueue::fromHandle(commandQueueHandle));
+    auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(commandQueue->getCsr());
+
+    if (!commandQueue->dispatchCmdListBatchBufferAsPrimary || !ultCsr->getOsContext().isLatePreemptionStartTarget() || ultCsr->heaplessModeEnabled || (!ultCsr->getPreemptionAllocation() && !ultCsr->isMidThreadPreemptionStateDeferred())) {
+        commandQueue->destroy();
+        GTEST_SKIP();
+    }
+
+    auto initCommandListHandle = initCommandList->toHandle();
+    CommandListExecutionInternalOptions internalOptions = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandLists(1, &initCommandListHandle, nullptr, internalOptions));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandLists(1, &initCommandListHandle, nullptr, internalOptions));
+    ASSERT_EQ(&commandQueue->firstCmdListStream, commandQueue->startingCmdBuffer);
+
+    ultCsr->skipPreemptionAllocation = true;
+    auto usedBefore = commandQueue->commandStream.getUsed();
+
+    auto commandListHandle = commandList->toHandle();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandLists(1, &commandListHandle, nullptr, internalOptions));
+
+    EXPECT_EQ(&commandQueue->commandStream, commandQueue->startingCmdBuffer);
+    EXPECT_FALSE(ultCsr->getSkipPreemptionAllocation());
+
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(commandQueue->commandStream, usedBefore);
+    auto lriIt = hwParser.cmdList.end();
+    for (auto &it : findAll<MI_LOAD_REGISTER_IMM *>(hwParser.cmdList.begin(), hwParser.cmdList.end())) {
+        auto lri = genCmdCast<MI_LOAD_REGISTER_IMM *>(*it);
+        if (lri->getRegisterOffset() == NEO::PreemptionConfig<FamilyType>::mmioAddress &&
+            lri->getDataDword() == (NEO::PreemptionConfig<FamilyType>::mask | NEO::PreemptionConfig<FamilyType>::midThreadVal)) {
+            lriIt = it;
+            break;
+        }
+    }
+    ASSERT_NE(hwParser.cmdList.end(), lriIt);
+
+    auto commandListGpuAddress = commandList->getCmdContainer().getCmdBufferAllocations()[0]->getGpuAddress();
+    bool jumpToCommandListFound = false;
+    for (auto &it : findAll<MI_BATCH_BUFFER_START *>(lriIt, hwParser.cmdList.end())) {
+        if (genCmdCast<MI_BATCH_BUFFER_START *>(*it)->getBatchBufferStartAddress() == commandListGpuAddress) {
+            jumpToCommandListFound = true;
+            break;
+        }
+    }
+    EXPECT_TRUE(jumpToCommandListFound);
+
+    commandQueue->destroy();
 }
 
 struct DeferredFirstSubmissionCmdQueueTests : public Test<ModuleFixture> {

@@ -4002,6 +4002,60 @@ HWTEST2_F(LatePreemptionStartCsrTest, givenLatePreemptionStartPendingWhenGetting
     EXPECT_EQ(0u, commandStreamReceiver.getCmdSizeForLateMidThreadPreemptionStart(true));
 }
 
+HWTEST2_F(LatePreemptionStartCsrTest, givenLatePreemptionStartPendingWhenFlushingImmediateTaskWithMidThreadPreemptionKernelThenLriIsProgrammedAndPreemptionAllocationIsMadeResident, IsAtLeastXe2HpgCore) {
+    auto *ccsCsr = getCcsCsr<FamilyType>(EngineUsage::regular);
+    if (!ccsCsr) {
+        GTEST_SKIP();
+    }
+
+    auto &commandStreamReceiver = *ccsCsr;
+    if (commandStreamReceiver.heaplessModeEnabled) {
+        GTEST_SKIP();
+    }
+    if (!commandStreamReceiver.getPreemptionAllocation()) {
+        commandStreamReceiver.createPreemptionAllocation();
+    }
+    auto preemptionAllocation = commandStreamReceiver.getPreemptionAllocation();
+    if (!preemptionAllocation) {
+        GTEST_SKIP();
+    }
+
+    commandStreamReceiver.storeMakeResidentAllocations = true;
+
+    for (auto dispatchOperation : {NEO::AppendOperations::kernel, NEO::AppendOperations::cmdList}) {
+        commandStreamReceiver.skipPreemptionAllocation = true;
+        commandStreamReceiver.makeResidentAllocations.clear();
+        auto csrUsedBefore = commandStreamReceiver.commandStream.getUsed();
+
+        immediateFlushTaskFlags.dispatchOperation = dispatchOperation;
+        immediateFlushTaskFlags.hasMidThreadPreemptionKernel = true;
+        commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *ccsCsrDevice);
+
+        EXPECT_FALSE(commandStreamReceiver.getSkipPreemptionAllocation());
+        EXPECT_TRUE(commandStreamReceiver.isMadeResident(preemptionAllocation));
+        EXPECT_EQ(1u, countLatePreemptionStartLris<FamilyType>(commandStreamReceiver.commandStream, csrUsedBefore));
+    }
+}
+
+HWTEST2_F(LatePreemptionStartCsrTest, givenLatePreemptionStartPendingWhenFlushingImmediateTaskWithoutMidThreadPreemptionKernelThenLriIsNotProgrammed, IsAtLeastXe2HpgCore) {
+    auto *ccsCsr = getCcsCsr<FamilyType>(EngineUsage::regular);
+    if (!ccsCsr) {
+        GTEST_SKIP();
+    }
+
+    auto &commandStreamReceiver = *ccsCsr;
+    if (commandStreamReceiver.heaplessModeEnabled) {
+        GTEST_SKIP();
+    }
+    commandStreamReceiver.skipPreemptionAllocation = true;
+
+    immediateFlushTaskFlags.hasMidThreadPreemptionKernel = false;
+    commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *ccsCsrDevice);
+
+    EXPECT_TRUE(commandStreamReceiver.getSkipPreemptionAllocation());
+    EXPECT_EQ(0u, countLatePreemptionStartLris<FamilyType>(commandStreamReceiver.commandStream));
+}
+
 HWTEST2_F(LatePreemptionStartCsrTest, givenFailedSubmissionWhenFlushingTaskWithMidThreadPreemptionKernelThenLateStartIsProgrammedAgainOnNextFlush, IsAtLeastXe2HpgCore) {
     auto *ccsCsr = getCcsCsr<FamilyType>(EngineUsage::regular);
     if (!ccsCsr) {
