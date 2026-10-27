@@ -32,23 +32,27 @@ You may obtain a copy of the License at: https://opensource.org/licenses/MIT
 
 ## Supported Platforms
 
-|Platform|OpenCL|Level Zero|WSL
-|--------|:----:|:-----:|:-:|
-|DG1| 3.0 | 1.18 | Y |
-|Alchemist| 3.0 | 1.18 | Y |
-|Battlemage| 3.0 | 1.18 | Y |
-|Tiger Lake| 3.0 | 1.18 | Y |
-|Rocket Lake| 3.0 | 1.18 | Y |
-|Alder Lake| 3.0 | 1.18 | Y |
-|Raptor Lake| 3.0 | 1.18 | Y |
-|Meteor Lake| 3.0 | 1.18 | Y |
-|Arrow Lake| 3.0 | 1.18 | Y |
-|Lunar Lake| 3.0 | 1.18 | Y |
-|Panther Lake| 3.0 | 1.18 | Y |
-|Wildcat Lake| 3.0 | 1.18 | Y |
-|Crescent Island| 3.0 | 1.18 | N/A |
-|Nova Lake| 3.0 | 1.18 | N/A |
+Platforms at production quality expose OpenCL 3.0 and Level Zero 1.18, and are supported on WSL.
 
+### Discrete
+
+* [DG1](https://ark.intel.com/content/www/us/en/ark/products/codename/195485/products-formerly-dg1.html)
+* [Alchemist](https://ark.intel.com/content/www/us/en/ark/products/codename/226095/products-formerly-alchemist.html)
+* [Battlemage](https://www.intel.com/content/www/us/en/ark/products/series/240391/intel-arc-b-series-graphics.html)
+
+### Integrated
+
+* [Tiger Lake](https://ark.intel.com/content/www/us/en/ark/products/codename/88759/tiger-lake.html) / [Rocket Lake](https://ark.intel.com/content/www/us/en/ark/products/codename/192985/rocket-lake.html) / [Alder Lake](https://ark.intel.com/content/www/us/en/ark/products/codename/147470/products-formerly-alder-lake.html) / [Raptor Lake](https://ark.intel.com/content/www/us/en/ark/products/codename/215599/products-formerly-raptor-lake.html)
+* [Meteor Lake](https://ark.intel.com/content/www/us/en/ark/products/codename/90353/products-formerly-meteor-lake.html) / [Arrow Lake](https://www.intel.com/content/www/us/en/ark/products/codename/225837/products-formerly-arrow-lake.html)
+* [Lunar Lake](https://ark.intel.com/content/www/us/en/ark/products/codename/213792/products-formerly-lunar-lake.html)
+* [Panther Lake](https://www.intel.com/content/www/us/en/ark/products/codename/237132/products-formerly-panther-lake.html) / [Wildcat Lake](https://www.intel.com/content/www/us/en/ark/products/codename/241450/products-formerly-wildcat-lake.html)
+
+## Pre-Release Platforms
+
+Support for these platforms is a work in progress. Feature set, API versions and WSL support may change before they reach production quality.
+
+* Discrete: [Crescent Island](https://www.intel.com/content/www/us/en/products/details/discrete-gpus/data-center-gpu/d-series.html)
+* Integrated: Nova Lake
 
 _No code changes may be introduced that would regress support for any currently supported hardware. All contributions must ensure continued compatibility and functionality across all supported hardware platforms. Failure to maintain hardware compatibility may result in the rejection or reversion of the contribution. Any deliberate modifications or removal of hardware support will be transparently communicated in the release notes._
 
