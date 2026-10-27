@@ -251,7 +251,6 @@ using IsNotPvcOrDg2 = IsNotWithinProducts<IGFX_DG2, IGFX_PVC>;
 using IsBmgOrCri = IsAnyProducts<IGFX_BMG, IGFX_CRI>;
 using IsNotBmgOrCri = IsNoneProducts<IGFX_BMG, IGFX_CRI>;
 
-using IsDg2BmgOrCri = IsAnyProducts<IGFX_DG2, IGFX_BMG, IGFX_CRI>;
 using IsNotDg2BmgOrCri = IsNoneProducts<IGFX_DG2, IGFX_BMG, IGFX_CRI>;
 
 using HasStatefulSupport = IsNotAnyGfxCores<IGFX_XE_HPC_CORE>;

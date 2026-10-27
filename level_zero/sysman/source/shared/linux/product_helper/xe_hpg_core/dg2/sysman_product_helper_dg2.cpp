@@ -140,7 +140,7 @@ const std::map<std::string, std::map<std::string, uint64_t>> *SysmanProductHelpe
 }
 
 template <>
-bool SysmanProductHelperHw<gfxProduct>::isPmtBasedPowerSupported() {
+bool SysmanProductHelperHw<gfxProduct>::isPmtBasedPowerSupported(zes_power_domain_t powerDomain) {
     return true;
 }
 

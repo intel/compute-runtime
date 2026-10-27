@@ -486,7 +486,7 @@ LinuxPowerImp::LinuxPowerImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_
     pSysfsAccess = pSysmanKmdInterface->getSysFsAccess();
     pFsAccess = pSysmanKmdInterface->getFsAccess();
     pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
-    isPmtBasedPowerSupported = pSysmanProductHelper->isPmtBasedPowerSupported() && PlatformMonitoringTech::isTelemetrySupportAvailable(pLinuxSysmanImp, subdeviceId);
+    isPmtBasedPowerSupported = pSysmanProductHelper->isPmtBasedPowerSupported(powerDomain) && PlatformMonitoringTech::isTelemetrySupportAvailable(pLinuxSysmanImp, subdeviceId);
     init();
 }
 

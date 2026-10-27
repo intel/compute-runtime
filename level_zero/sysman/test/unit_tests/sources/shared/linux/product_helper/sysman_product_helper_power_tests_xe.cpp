@@ -385,9 +385,22 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandlesWhenGettingPower
     EXPECT_EQ(bmgPowerHandleComponentCount, handles.size());
 
     for (auto handle : handles) {
+        zes_power_properties_t properties = {};
+        zes_power_ext_properties_t extProperties = {};
+        properties.pNext = &extProperties;
+        extProperties.stype = ZES_STRUCTURE_TYPE_POWER_EXT_PROPERTIES;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
+
         zes_power_energy_counter_t energyCounter = {};
-        auto result = zesPowerGetEnergyCounter(handle, &energyCounter);
-        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        const uint64_t timeStampInitial = SysmanDevice::getSysmanTimestamp();
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetEnergyCounter(handle, &energyCounter));
+
+        if ((extProperties.domain == ZES_POWER_DOMAIN_CARD) || (extProperties.domain == ZES_POWER_DOMAIN_PACKAGE)) {
+            // Card and Package energy counters are read from hwmon
+            EXPECT_EQ(xeMockEnergyCounter, energyCounter.energy);
+            EXPECT_GE(energyCounter.timestamp, timeStampInitial);
+            continue;
+        }
 
         const uint64_t expectedEnergyCounter = static_cast<uint64_t>(convertU18p14(mockEnergyCounter) * microFactor);
         EXPECT_EQ(expectedEnergyCounter, energyCounter.energy);
@@ -481,8 +494,15 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandlesWhenGettingPower
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
 
         zes_power_energy_counter_t energyCounter = {};
-        auto result = zesPowerGetEnergyCounter(handle, &energyCounter);
-        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        const uint64_t timeStampInitial = SysmanDevice::getSysmanTimestamp();
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetEnergyCounter(handle, &energyCounter));
+
+        if ((extProperties.domain == ZES_POWER_DOMAIN_CARD) || (extProperties.domain == ZES_POWER_DOMAIN_PACKAGE)) {
+            // Card and Package energy counters are read from hwmon
+            EXPECT_EQ(xeMockEnergyCounter, energyCounter.energy);
+            EXPECT_GE(energyCounter.timestamp, timeStampInitial);
+            continue;
+        }
 
         uint64_t expectedEnergyCounter = 0;
 
@@ -1252,14 +1272,19 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysfsReadFailsWithVariousErrorCod
     }
 }
 
-HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidProductHelperHandleWhenCheckingIfPmtBasedPowerIsSupportedThenTrueIsReturned, IsDg2BmgOrCri) {
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidProductHelperHandleWhenCheckingIfPmtBasedPowerIsSupportedThenTrueIsReturnedOnlyForGpuAndMemoryDomains, IsBmgOrCri) {
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
-    EXPECT_TRUE(pSysmanProductHelper->isPmtBasedPowerSupported());
+    EXPECT_TRUE(pSysmanProductHelper->isPmtBasedPowerSupported(ZES_POWER_DOMAIN_GPU));
+    EXPECT_TRUE(pSysmanProductHelper->isPmtBasedPowerSupported(ZES_POWER_DOMAIN_MEMORY));
+    EXPECT_FALSE(pSysmanProductHelper->isPmtBasedPowerSupported(ZES_POWER_DOMAIN_CARD));
+    EXPECT_FALSE(pSysmanProductHelper->isPmtBasedPowerSupported(ZES_POWER_DOMAIN_PACKAGE));
 }
 
 HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidProductHelperHandleWhenCheckingIfPmtBasedPowerIsSupportedThenFalseIsReturned, IsNotDg2BmgOrCri) {
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
-    EXPECT_FALSE(pSysmanProductHelper->isPmtBasedPowerSupported());
+    for (auto powerDomain : {ZES_POWER_DOMAIN_CARD, ZES_POWER_DOMAIN_PACKAGE, ZES_POWER_DOMAIN_GPU, ZES_POWER_DOMAIN_MEMORY}) {
+        EXPECT_FALSE(pSysmanProductHelper->isPmtBasedPowerSupported(powerDomain));
+    }
 }
 
 HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleWhenCallingGetPowerUsageThenUnsupportedFeatureIsReturned, IsNotBmgOrCri) {

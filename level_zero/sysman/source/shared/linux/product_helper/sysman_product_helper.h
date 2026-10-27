@@ -141,7 +141,7 @@ class SysmanProductHelper {
     virtual bool isNetlinkEventSupported() = 0;
 
     // Pmt
-    virtual bool isPmtBasedPowerSupported() = 0;
+    virtual bool isPmtBasedPowerSupported(zes_power_domain_t powerDomain) = 0;
 
     virtual ~SysmanProductHelper() = default;
     virtual const std::map<std::string, std::map<std::string, uint64_t>> *getGuidToKeyOffsetMap() = 0;

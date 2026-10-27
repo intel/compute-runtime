@@ -33,7 +33,7 @@ inline constexpr int standbyModeRc6Never = 0;
 #include "level_zero/sysman/source/shared/product_helper/sysman_os_agnostic_product_helper_hw.inl"
 
 template <PRODUCT_FAMILY gfxProduct>
-bool SysmanProductHelperHw<gfxProduct>::isPmtBasedPowerSupported() {
+bool SysmanProductHelperHw<gfxProduct>::isPmtBasedPowerSupported(zes_power_domain_t powerDomain) {
     return false;
 }
 
