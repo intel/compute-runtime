@@ -160,6 +160,10 @@ void *GmmResourceInfo::getSystemMemPointer() { return resourceInfo->GetSystemMem
 
 bool GmmResourceInfo::is64KBPageSuitable() const { return resourceInfo->Is64KBPageSuitable(); }
 
+bool GmmResourceInfo::isDisplayable() const { return resourceInfo->IsDisplayable(); }
+
+uint64_t GmmResourceInfo::getDriverProtectionBits() { return static_cast<uint64_t>(resourceInfo->GetDriverProtectionBits({})); }
+
 GMM_RESOURCE_INFO *GmmResourceInfo::peekGmmResourceInfo() const { return resourceInfo.get(); }
 
 GmmResourceInfo::~GmmResourceInfo() {
