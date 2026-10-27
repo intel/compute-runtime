@@ -884,6 +884,33 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenInternalAllocationWhenNewAllocationIsCr
     svmManager->freeSVMAlloc(ptr2);
 }
 
+TEST_F(SVMLocalMemoryAllocatorTest, givenIndirectAllocationsMadeResidentWhenCsrIsAddedOrNewAllocationIsCreatedThenMaxLatestResidentObjectIdIsUpdated) {
+    std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 2));
+    auto device = deviceFactory->rootDevices[0];
+    auto memoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());
+    auto svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager);
+    auto csr = std::make_unique<MockCommandStreamReceiver>(*device->getExecutionEnvironment(), device->getRootDeviceIndex(), device->getDeviceBitfield());
+    csr->setupContext(*device->getDefaultEngine().osContext);
+
+    void *cmdQ = reinterpret_cast<void *>(0x12345);
+    auto mockPageFaultManager = new MockPageFaultManager();
+    memoryManager->pageFaultManager.reset(mockPageFaultManager);
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+
+    auto ptr = svmManager->createSharedUnifiedMemoryAllocation(4096u, unifiedMemoryProperties, &cmdQ);
+    EXPECT_EQ(0u, svmManager->maxLatestResidentObjectId.load());
+    svmManager->makeIndirectAllocationsResident(*csr, 1u);
+    EXPECT_EQ(svmManager->allocationsCounter.load(), svmManager->maxLatestResidentObjectId.load());
+
+    auto ptr2 = svmManager->createSharedUnifiedMemoryAllocation(4096u, unifiedMemoryProperties, &cmdQ);
+    EXPECT_LT(svmManager->maxLatestResidentObjectId.load(), svmManager->allocationsCounter.load());
+    svmManager->makeIndirectAllocationsResident(*csr, 2u);
+    EXPECT_EQ(svmManager->allocationsCounter.load(), svmManager->maxLatestResidentObjectId.load());
+
+    svmManager->freeSVMAlloc(ptr);
+    svmManager->freeSVMAlloc(ptr2);
+}
+
 TEST_F(SVMLocalMemoryAllocatorTest, givenLocalMemoryEnabledAndCompressionEnabledThenDeviceSideSharedUsmIsCompressed) {
     DebugManagerStateRestore restore;
     debugManager.flags.RenderCompressedBuffersEnabled.set(1);

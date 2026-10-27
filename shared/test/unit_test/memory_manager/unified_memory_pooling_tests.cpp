@@ -868,6 +868,7 @@ struct DeferredFreeUnifiedMemoryPoolingTest : public UnifiedMemoryPoolingTest, p
 
         poolGraphicsAllocation = svmManager->getSVMAlloc(usmMemAllocPool.pool)->gpuAllocations.getGraphicsAllocation(0u);
         ASSERT_NE(nullptr, poolGraphicsAllocation);
+        svmManager->maxLatestResidentObjectId = svmManager->getSVMAlloc(usmMemAllocPool.pool)->getAllocId();
     }
 
     void TearDown() override {

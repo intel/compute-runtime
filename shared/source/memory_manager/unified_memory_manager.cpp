@@ -112,7 +112,9 @@ bool SVMAllocsManager::SvmAllocationCache::insert(size_t size, void *ptr, SvmAll
         if (completionPolicy == CompletionCheckPolicy::waitOnFree) {
             svmAllocsManager->waitForEnginesCompletion(svmData);
         }
-        svmAllocsManager->removeFromAllocsForIndirectAccess(*svmData);
+        if (requireUpdatingAllocsForIndirectAccess) {
+            svmAllocsManager->removeFromAllocsForIndirectAccess(*svmData);
+        }
         svmData->isSavedForReuse = true;
         allocations.emplace(std::lower_bound(allocations.begin(), allocations.end(), size), size, ptr, svmData, completionPolicy == CompletionCheckPolicy::deferred);
         empty = false;
@@ -212,8 +214,12 @@ void *SVMAllocsManager::SvmAllocationCache::get(size_t size, const UnifiedMemory
                     memoryManager->setMemAdvise(gpuAllocation, MemAdviseFlags{}, gpuAllocation->getRootDeviceIndex());
                 }
             }
-            allocationIter->svmData->setAllocId(++svmAllocsManager->allocationsCounter);
-            svmAllocsManager->reinsertToAllocsForIndirectAccess(*allocationIter->svmData);
+            if (requireUpdatingAllocsForIndirectAccess) {
+                allocationIter->svmData->setAllocId(++svmAllocsManager->allocationsCounter);
+                svmAllocsManager->reinsertToAllocsForIndirectAccess(*allocationIter->svmData);
+            } else {
+                svmAllocsManager->reassignAllocIdForIndirectAccess(*allocationIter->svmData);
+            }
             allocations.erase(allocationIter);
             empty = allocations.empty();
             return allocationPtr;
@@ -770,6 +776,20 @@ void SVMAllocsManager::removeFromAllocsForIndirectAccess(SvmAllocationData &svmD
     internalAllocationsMap.erase(svmData.getAllocId());
 }
 
+void SVMAllocsManager::reassignAllocIdForIndirectAccess(SvmAllocationData &svmData) {
+    if (false == this->isAllocIdScannedForIndirectAccess(svmData.getAllocId())) {
+        return;
+    }
+    std::unique_lock<std::mutex> lockForIndirect(mtxForIndirectAccess);
+    ContainerReadWriteLockType lock(mtx);
+    const auto previousAllocId = svmData.getAllocId();
+    svmData.setAllocId(++this->allocationsCounter);
+    while (auto node = internalAllocationsMap.extract(previousAllocId)) {
+        node.key() = svmData.getAllocId();
+        internalAllocationsMap.insert(std::move(node));
+    }
+}
+
 void SVMAllocsManager::insertSVMAlloc(const SvmAllocationData &svmAllocData) {
     insertSVMAlloc(reinterpret_cast<void *>(svmAllocData.gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddressWithoutOffset()), svmAllocData);
 }
@@ -923,6 +943,9 @@ void SVMAllocsManager::applyIndirectAccessTaskCountFloor(SvmAllocationData *allo
     // prepareIndirectAllocationForDestruction does - both writers are monotonic towards
     // latestSentTaskCount. Kept separate from that function because the pool allocation
     // survives the chunk free and must stay always resident.
+    if (false == this->isAllocIdScannedForIndirectAccess(allocationData->getAllocId())) {
+        return;
+    }
     ContainerReadLockType lock(mtx);
     for (auto &[commandStreamReceiver, tracker] : this->indirectAllocationsResidency) {
         auto gpuAllocation = getAllocationKeptResidentForIndirectAccess(allocationData, commandStreamReceiver);
@@ -1225,6 +1248,7 @@ void SVMAllocsManager::initUsmSharedAllocationsCache(Device &device) {
 void SVMAllocsManager::initUsmAllocationsCaches(Device &device) {
     const bool debuggerEnabled = nullptr != device.getDebugger();
     const bool isHwModeSelected = NEO::DeviceFactory::isHwModeSelected();
+    const bool requireUpdatingAllocsForIndirectAccess = debugManager.flags.SetCommandStreamReceiver.get() > 0;
     bool usmDeviceAllocationsCacheEnabled = NEO::ApiSpecificConfig::isDeviceAllocationCacheEnabled() &&
                                             device.getProductHelper().isDeviceUsmAllocationReuseSupported() &&
                                             !debuggerEnabled &&
@@ -1235,6 +1259,7 @@ void SVMAllocsManager::initUsmAllocationsCaches(Device &device) {
     if (usmDeviceAllocationsCacheEnabled && device.usmReuseInfo.getMaxAllocationsSavedForReuseSize() > 0u) {
         device.getExecutionEnvironment()->initializeUnifiedMemoryReuseCleaner(device.isAnyDirectSubmissionLightEnabled());
         this->initUsmDeviceAllocationsCache(device);
+        this->usmDeviceAllocationsCache->requireUpdatingAllocsForIndirectAccess = requireUpdatingAllocsForIndirectAccess;
     }
 
     bool usmHostAllocationsCacheEnabled = NEO::ApiSpecificConfig::isHostAllocationCacheEnabled() &&
@@ -1247,6 +1272,7 @@ void SVMAllocsManager::initUsmAllocationsCaches(Device &device) {
     if (usmHostAllocationsCacheEnabled && this->memoryManager->usmReuseInfo.getMaxAllocationsSavedForReuseSize() > 0u) {
         device.getExecutionEnvironment()->initializeUnifiedMemoryReuseCleaner(device.isAnyDirectSubmissionLightEnabled());
         this->initUsmHostAllocationsCache();
+        this->usmHostAllocationsCache->requireUpdatingAllocsForIndirectAccess = requireUpdatingAllocsForIndirectAccess;
     }
 
     bool usmSharedAllocationsCacheEnabled = device.getProductHelper().isSharedUsmAllocationReuseSupported() &&
@@ -1258,6 +1284,7 @@ void SVMAllocsManager::initUsmAllocationsCaches(Device &device) {
     if (usmSharedAllocationsCacheEnabled && device.sharedUsmReuseInfo.getMaxAllocationsSavedForReuseSize() > 0u) {
         device.getExecutionEnvironment()->initializeUnifiedMemoryReuseCleaner(device.isAnyDirectSubmissionLightEnabled());
         this->initUsmSharedAllocationsCache(device);
+        this->usmSharedAllocationsCache->requireUpdatingAllocsForIndirectAccess = requireUpdatingAllocsForIndirectAccess;
     }
 }
 
@@ -1293,6 +1320,7 @@ void SVMAllocsManager::makeIndirectAllocationsResident(CommandStreamReceiver &co
         InternalAllocationsTracker tracker = {};
         tracker.latestResidentObjectId = this->allocationsCounter;
         tracker.latestSentTaskCount = taskCount;
+        this->maxLatestResidentObjectId = static_cast<uint32_t>(tracker.latestResidentObjectId);
 
         this->indirectAllocationsResidency.emplace(&commandStreamReceiver, tracker);
     } else {
@@ -1300,6 +1328,7 @@ void SVMAllocsManager::makeIndirectAllocationsResident(CommandStreamReceiver &co
             parseAllAllocations = true;
             previousCounter = entry->second.latestResidentObjectId;
             entry->second.latestResidentObjectId = this->allocationsCounter;
+            this->maxLatestResidentObjectId = static_cast<uint32_t>(entry->second.latestResidentObjectId);
         }
         entry->second.latestSentTaskCount = taskCount;
     }

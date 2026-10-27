@@ -236,6 +236,7 @@ class SVMAllocsManager {
         SVMAllocsManager *svmAllocsManager = nullptr;
         MemoryManager *memoryManager = nullptr;
         bool enablePerformanceLogging = false;
+        bool requireUpdatingAllocsForIndirectAccess = false;
         bool usesSharedUsmReuseInfo = false;
         size_t allocationSizeAlignment = 1u;
         std::atomic_bool empty = true;
@@ -290,6 +291,7 @@ class SVMAllocsManager {
     void removeSVMAlloc(const SvmAllocationData &svmData);
     void reinsertToAllocsForIndirectAccess(SvmAllocationData &svmData);
     void removeFromAllocsForIndirectAccess(SvmAllocationData &svmData);
+    void reassignAllocIdForIndirectAccess(SvmAllocationData &svmData);
     size_t getNumAllocs() const { return svmAllocs.getNumAllocs(); }
     size_t getNumClaimableDeferFreeAllocs() { return this->getDeferFreeAllocCounts().claimable; }
     MOCKABLE_VIRTUAL size_t getNumDeferFreeAllocs() { return this->getDeferFreeAllocCounts().outstanding(); }
@@ -306,6 +308,8 @@ class SVMAllocsManager {
     void freeSvmAllocationWithDeviceStorage(SvmAllocationData *svmData);
     bool hasHostAllocations();
     std::atomic<uint32_t> allocationsCounter = 0;
+    std::atomic<uint32_t> maxLatestResidentObjectId = 0;
+    bool isAllocIdScannedForIndirectAccess(uint32_t allocId) const { return allocId <= maxLatestResidentObjectId.load(); }
     MOCKABLE_VIRTUAL void makeIndirectAllocationsResident(CommandStreamReceiver &commandStreamReceiver, TaskCountType taskCount);
     void prepareIndirectAllocationForDestruction(SvmAllocationData *allocationData, bool isNonBlockingFree);
     bool sharedSystemMemAdvise(Device &callingDevice, Device &targetDevice, MemAdvise memAdviseOp, const void *ptr, const size_t size);
