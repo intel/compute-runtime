@@ -9,6 +9,7 @@
 #include "shared/source/image/image_surface_state.h"
 #include "shared/source/indirect_heap/indirect_heap_type.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/cl_device/cl_device_get_cap.inl"

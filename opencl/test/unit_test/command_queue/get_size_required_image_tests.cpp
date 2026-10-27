@@ -10,6 +10,7 @@
 #include "shared/source/helpers/file_io.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_zebin_wrapper.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/command_queue/gpgpu_walker.h"

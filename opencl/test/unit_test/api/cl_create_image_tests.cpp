@@ -9,6 +9,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/api/api.h"
 #include "opencl/source/context/context.h"

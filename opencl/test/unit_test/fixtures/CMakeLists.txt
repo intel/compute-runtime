@@ -16,6 +16,7 @@ set(IGDRCL_SRCS_tests_fixtures
     ${CMAKE_CURRENT_SOURCE_DIR}/device_instrumentation_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_handler_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hello_world_fixture.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/image_clear_color_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/image_fixture.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/image_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_arg_fixture.cpp

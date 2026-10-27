@@ -11,6 +11,7 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/helpers/task_information.h"
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"

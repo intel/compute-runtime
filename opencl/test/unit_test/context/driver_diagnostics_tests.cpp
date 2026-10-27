@@ -13,6 +13,7 @@
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/stream_capture.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/command_queue/cl_local_work_size.h"
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"

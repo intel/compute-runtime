@@ -1,13 +1,11 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
-
-using NEO::MockContext;
 
 static const size_t imageWidth = 7;
 static const size_t imageHeight = 9;
