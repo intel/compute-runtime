@@ -73,6 +73,7 @@ struct OaMetricGroupUserDefined : OaMetricGroupImp {
     static MetricGroup *create(zet_metric_group_properties_t &properties,
                                MetricsDiscovery::IMetricSet_1_13 &metricSet,
                                MetricsDiscovery::IConcurrentGroup_1_13 &concurrentGroup,
+                               const uint32_t concurrentGroupIndex,
                                MetricSource &metricSource);
     ze_result_t addMetric(zet_metric_handle_t hMetric, size_t *errorStringSize, char *pErrorString) override;
     ze_result_t removeMetric(zet_metric_handle_t hMetric) override;
@@ -83,7 +84,9 @@ struct OaMetricGroupUserDefined : OaMetricGroupImp {
     OaMetricGroupUserDefined(const zet_metric_group_properties_t &sourceProperties,
                              MetricsDiscovery::IMetricSet_1_5 &metricSet,
                              MetricsDiscovery::IConcurrentGroup_1_13 &concurrentGroup,
-                             MetricSource &metricSource) : OaMetricGroupImp(sourceProperties, metricSet, concurrentGroup, metricSource, false) {}
+                             const uint32_t concurrentGroupIndex,
+                             MetricSource &metricSource) : OaMetricGroupImp(sourceProperties, metricSet, concurrentGroup,
+                                                                            concurrentGroupIndex, metricSource, false) {}
     bool readyToActivate = false;
     bool isMetricSetOpened = false;
     bool isActivated = false;

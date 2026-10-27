@@ -222,6 +222,22 @@ TEST_F(OaMetricProgrammableTests, givenMetricProgrammableIsSupportedWhenCachingF
     metricEnumeration->cleanupExtendedMetricInformation();
 }
 
+TEST_F(OaMetricProgrammableTests, givenConcurrentGroupIsNotCachedForDomainWhenGettingConcurrentGroupThenNullptrIsReturned) {
+    // Nothing cached yet.
+    EXPECT_EQ(nullptr, metricEnumeration->getConcurrentGroup(1));
+
+    MockIConcurrentGroup1x13 mockConcurrentGroup;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, metricEnumeration->cacheExtendedMetricInformation(mockConcurrentGroup, 1));
+
+    // Only the cached domain is found.
+    EXPECT_EQ(&mockConcurrentGroup, metricEnumeration->getConcurrentGroup(1));
+    EXPECT_EQ(nullptr, metricEnumeration->getConcurrentGroup(0));
+    EXPECT_EQ(nullptr, metricEnumeration->getConcurrentGroup(2));
+    EXPECT_EQ(nullptr, metricEnumeration->getConcurrentGroup(UINT32_MAX));
+
+    metricEnumeration->cleanupExtendedMetricInformation();
+}
+
 TEST_F(OaMetricProgrammableTests, givenMetricsProgrammableSupportIsDisabledWhenMetricProgrammableGetIsCalledThenErrorIsReturned) {
     disableProgrammableMetricsSupport();
     MockIConcurrentGroup1x13 mockConcurrentGroup;
@@ -1580,6 +1596,193 @@ TEST_F(OaMetricProgrammableTests, givenCreateMetricGroupsFromMetricsWhenMultiple
     }
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricDestroyExp(metricHandle1));
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricDestroyExp(metricHandle2));
+    metricEnumeration->cleanupExtendedMetricInformation();
+}
+
+TEST_F(OaMetricProgrammableTests, givenCreateMetricGroupsFromMetricsWhenMetricsOfSameSamplingTypeAreFromDifferentDomainsThenSeparateGroupsAreCreatedPerDomain) {
+
+    // Two concurrent groups (e.g. OAM0 and OAM1), each with one event based prototype.
+    MockIConcurrentGroup1x13 mockConcurrentGroups[2];
+    const uint32_t domains[] = {1u, 2u};
+    for (uint32_t i = 0; i < 2; i++) {
+        mockConcurrentGroups[i].mockMetricEnumerator.metricProtoTypeReturn[0].mockParams.ApiMask = MetricsDiscovery::API_TYPE_OCL | MetricsDiscovery::API_TYPE_OGL4_X;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, metricEnumeration->cacheExtendedMetricInformation(mockConcurrentGroups[i], domains[i]));
+    }
+
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->metricProgrammableGet(&count, nullptr));
+    EXPECT_EQ(count, 2u);
+    std::vector<zet_metric_programmable_exp_handle_t> programmables(count);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->metricProgrammableGet(&count, programmables.data()));
+    zet_metric_programmable_param_value_exp_t parameterValue{};
+    parameterValue.value.ui32 = 20;
+    uint32_t metricHandleCount = 1;
+    const char metricName[ZET_MAX_METRIC_NAME] = "metricName";
+    const char metricDescription[ZET_MAX_METRIC_NAME] = "metricDescription";
+    zet_metric_handle_t metricHandles[2] = {};
+    for (uint32_t i = 0; i < 2; i++) {
+        EXPECT_EQ(ZE_RESULT_SUCCESS, MetricProgrammable::fromHandle(programmables[i])->createMetric(&parameterValue, 1, metricName, metricDescription, &metricHandleCount, &metricHandles[i]));
+    }
+
+    // One metric per domain, each needing its own metric group.
+    uint32_t metricGroupCount = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetricsExp(2, metricHandles, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
+    EXPECT_EQ(metricGroupCount, 2u);
+    std::vector<zet_metric_group_handle_t> metricGroupHandles(metricGroupCount);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetricsExp(2, metricHandles, "metricGroupName", "metricGroupDesc", &metricGroupCount, metricGroupHandles.data()));
+    ASSERT_EQ(metricGroupCount, 2u);
+
+    // Each metric group is created on the metric set of its own concurrent group.
+    for (uint32_t i = 0; i < 2; i++) {
+        auto oaMetricGroup = static_cast<OaMetricGroupImp *>(MetricGroup::fromHandle(metricGroupHandles[i]));
+        EXPECT_EQ(domains[i], oaMetricGroup->getConcurrentGroupIndex());
+        EXPECT_EQ(&mockConcurrentGroups[i].mockMetricSet, oaMetricGroup->getReferenceMetricSet());
+
+        zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricGroupGetProperties(metricGroupHandles[i], &metricGroupProperties));
+        EXPECT_EQ(domains[i], metricGroupProperties.domain);
+    }
+
+    // A metric from another domain cannot be added, and the group keeps reporting its own domain.
+    size_t errorStringSize = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetMetricGroupAddMetricExp(metricGroupHandles[0], metricHandles[1], &errorStringSize, nullptr));
+    zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricGroupGetProperties(metricGroupHandles[0], &metricGroupProperties));
+    EXPECT_EQ(domains[0], metricGroupProperties.domain);
+
+    for (auto &metricGroupHandle : metricGroupHandles) {
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricGroupDestroyExp(metricGroupHandle));
+    }
+    for (auto &metricHandle : metricHandles) {
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricDestroyExp(metricHandle));
+    }
+    metricEnumeration->cleanupExtendedMetricInformation();
+}
+
+TEST_F(OaMetricProgrammableTests, givenCreateMetricGroupsFromMetricsWhenMultipleMetricsOfSameSamplingTypeAreFromDifferentDomainsThenMetricsAreGroupedPerDomain) {
+
+    struct SamplingTypeCase {
+        uint32_t apiMask;
+        zet_metric_group_sampling_type_flags_t samplingType;
+    };
+    const SamplingTypeCase samplingTypeCases[] = {
+        {MetricsDiscovery::API_TYPE_OCL | MetricsDiscovery::API_TYPE_OGL4_X, ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED},
+        {MetricsDiscovery::API_TYPE_IOSTREAM, ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED}};
+
+    for (const auto &samplingTypeCase : samplingTypeCases) {
+
+        // Two concurrent groups (e.g. OAM0 and OAM1), each with one prototype of the same sampling type.
+        MockIConcurrentGroup1x13 mockConcurrentGroups[2];
+        const uint32_t domains[] = {1u, 2u};
+        for (uint32_t i = 0; i < 2; i++) {
+            mockConcurrentGroups[i].mockMetricEnumerator.metricProtoTypeReturn[0].mockParams.ApiMask = samplingTypeCase.apiMask;
+            EXPECT_EQ(ZE_RESULT_SUCCESS, metricEnumeration->cacheExtendedMetricInformation(mockConcurrentGroups[i], domains[i]));
+        }
+
+        uint32_t count = 0;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->metricProgrammableGet(&count, nullptr));
+        EXPECT_EQ(count, 2u);
+        std::vector<zet_metric_programmable_exp_handle_t> programmables(count);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->metricProgrammableGet(&count, programmables.data()));
+        zet_metric_programmable_param_value_exp_t parameterValue{};
+        parameterValue.value.ui32 = 20;
+        const char metricName[ZET_MAX_METRIC_NAME] = "metricName";
+        const char metricDescription[ZET_MAX_METRIC_NAME] = "metricDescription";
+
+        // Two metrics per domain, interleaved so that metrics of the same domain are not adjacent.
+        zet_metric_handle_t metricHandles[4] = {};
+        for (uint32_t i = 0; i < 4; i++) {
+            uint32_t metricHandleCount = 1;
+            EXPECT_EQ(ZE_RESULT_SUCCESS, MetricProgrammable::fromHandle(programmables[i % 2])->createMetric(&parameterValue, 1, metricName, metricDescription, &metricHandleCount, &metricHandles[i]));
+        }
+
+        // Count path reports the worst case of one metric group per metric.
+        uint32_t metricGroupCount = 0;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetricsExp(4, metricHandles, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
+        EXPECT_EQ(metricGroupCount, 4u);
+        std::vector<zet_metric_group_handle_t> metricGroupHandles(metricGroupCount);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetricsExp(4, metricHandles, "metricGroupName", "metricGroupDesc", &metricGroupCount, metricGroupHandles.data()));
+        // Metrics of the same domain share a metric group.
+        ASSERT_EQ(metricGroupCount, 2u);
+        metricGroupHandles.resize(metricGroupCount);
+
+        for (uint32_t i = 0; i < 2; i++) {
+            auto oaMetricGroup = static_cast<OaMetricGroupImp *>(MetricGroup::fromHandle(metricGroupHandles[i]));
+            EXPECT_EQ(domains[i], oaMetricGroup->getConcurrentGroupIndex());
+            EXPECT_EQ(&mockConcurrentGroups[i].mockMetricSet, oaMetricGroup->getReferenceMetricSet());
+
+            zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
+            EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricGroupGetProperties(metricGroupHandles[i], &metricGroupProperties));
+            EXPECT_EQ(domains[i], metricGroupProperties.domain);
+            EXPECT_EQ(samplingTypeCase.samplingType, metricGroupProperties.samplingType);
+
+            // The group holds both metrics of its own domain and none of the other domain.
+            uint32_t metricCount = 0;
+            EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricGet(metricGroupHandles[i], &metricCount, nullptr));
+            std::vector<zet_metric_handle_t> groupMetricHandles(metricCount);
+            EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricGet(metricGroupHandles[i], &metricCount, groupMetricHandles.data()));
+            for (uint32_t j = 0; j < 4; j++) {
+                const bool isFromSameDomain = (j % 2) == i;
+                const bool isInGroup = std::find(groupMetricHandles.begin(), groupMetricHandles.end(), metricHandles[j]) != groupMetricHandles.end();
+                EXPECT_EQ(isFromSameDomain, isInGroup);
+            }
+        }
+
+        for (auto &metricGroupHandle : metricGroupHandles) {
+            EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricGroupDestroyExp(metricGroupHandle));
+        }
+        for (auto &metricHandle : metricHandles) {
+            EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricDestroyExp(metricHandle));
+        }
+        metricEnumeration->cleanupExtendedMetricInformation();
+    }
+}
+
+TEST_F(OaMetricProgrammableTests, givenCreateMetricGroupsFromMetricsWhenMetricsOfSameSamplingTypeAreFromDifferentDomainsAndFewerMetricGroupsAreRequestedThenOnlyRequestedCountIsCreated) {
+
+    MockIConcurrentGroup1x13 mockConcurrentGroups[2];
+    const uint32_t domains[] = {1u, 2u};
+    for (uint32_t i = 0; i < 2; i++) {
+        mockConcurrentGroups[i].mockMetricEnumerator.metricProtoTypeReturn[0].mockParams.ApiMask = MetricsDiscovery::API_TYPE_OCL | MetricsDiscovery::API_TYPE_OGL4_X;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, metricEnumeration->cacheExtendedMetricInformation(mockConcurrentGroups[i], domains[i]));
+    }
+
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->metricProgrammableGet(&count, nullptr));
+    EXPECT_EQ(count, 2u);
+    std::vector<zet_metric_programmable_exp_handle_t> programmables(count);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->metricProgrammableGet(&count, programmables.data()));
+    zet_metric_programmable_param_value_exp_t parameterValue{};
+    parameterValue.value.ui32 = 20;
+    uint32_t metricHandleCount = 1;
+    const char metricName[ZET_MAX_METRIC_NAME] = "metricName";
+    const char metricDescription[ZET_MAX_METRIC_NAME] = "metricDescription";
+    zet_metric_handle_t metricHandles[2] = {};
+    for (uint32_t i = 0; i < 2; i++) {
+        EXPECT_EQ(ZE_RESULT_SUCCESS, MetricProgrammable::fromHandle(programmables[i])->createMetric(&parameterValue, 1, metricName, metricDescription, &metricHandleCount, &metricHandles[i]));
+    }
+
+    // Only one metric group is requested, so the second domain is not processed.
+    uint32_t metricGroupCount = 1;
+    zet_metric_group_handle_t metricGroupHandle{};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->createMetricGroupsFromMetricsExp(2, metricHandles, "metricGroupName", "metricGroupDesc", &metricGroupCount, &metricGroupHandle));
+    ASSERT_EQ(metricGroupCount, 1u);
+
+    auto oaMetricGroup = static_cast<OaMetricGroupImp *>(MetricGroup::fromHandle(metricGroupHandle));
+    EXPECT_EQ(domains[0], oaMetricGroup->getConcurrentGroupIndex());
+    EXPECT_EQ(&mockConcurrentGroups[0].mockMetricSet, oaMetricGroup->getReferenceMetricSet());
+
+    uint32_t metricCount = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricGet(metricGroupHandle, &metricCount, nullptr));
+    std::vector<zet_metric_handle_t> groupMetricHandles(metricCount);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricGet(metricGroupHandle, &metricCount, groupMetricHandles.data()));
+    EXPECT_NE(std::find(groupMetricHandles.begin(), groupMetricHandles.end(), metricHandles[0]), groupMetricHandles.end());
+    EXPECT_EQ(std::find(groupMetricHandles.begin(), groupMetricHandles.end(), metricHandles[1]), groupMetricHandles.end());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricGroupDestroyExp(metricGroupHandle));
+    for (auto &metricHandle : metricHandles) {
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricDestroyExp(metricHandle));
+    }
     metricEnumeration->cleanupExtendedMetricInformation();
 }
 
