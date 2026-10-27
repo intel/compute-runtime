@@ -35,7 +35,7 @@ class GmmClientContext : public NonCopyableClass {
     MOCKABLE_VIRTUAL GMM_RESOURCE_INFO *copyResInfoObject(GMM_RESOURCE_INFO *pSrcRes);
     MOCKABLE_VIRTUAL void destroyResInfoObject(GMM_RESOURCE_INFO *pResInfo);
     MOCKABLE_VIRTUAL GMM_RESOURCE_INFO *getGmmResInfoFromExternalResourceHandle(const void *externalResourceHandle);
-    MOCKABLE_VIRTUAL GmmResourceInfo *createResInfoFromWddmPrivateData(const void *pPrivateDriverData);
+    MOCKABLE_VIRTUAL GmmResourceInfo *createResInfoFromWddmPrivateData(const void *pPrivateDriverData, uint32_t privateDriverDataSize);
     MOCKABLE_VIRTUAL long deallocate2(DeallocateGmm *deallocateGmm);
     MOCKABLE_VIRTUAL uint64_t mapGpuVirtualAddress(MapGpuVirtualAddressGmm *pMapGpuVa);
     MOCKABLE_VIRTUAL uint64_t freeGpuVirtualAddress(FreeGpuVirtualAddressGmm *pFreeGpuVa);

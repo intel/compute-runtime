@@ -74,7 +74,7 @@ GMM_RESOURCE_INFO *GmmClientContext::getGmmResInfoFromExternalResourceHandle(con
     return static_cast<GMM_RESOURCE_INFO *>(const_cast<void *>(externalResourceHandle));
 }
 
-GmmResourceInfo *GmmClientContext::createResInfoFromWddmPrivateData(const void *pPrivateDriverData) {
+GmmResourceInfo *GmmClientContext::createResInfoFromWddmPrivateData(const void *pPrivateDriverData, uint32_t privateDriverDataSize) {
     return GmmResourceInfo::create(this, static_cast<GMM_RESOURCE_INFO *>(const_cast<void *>(pPrivateDriverData)));
 }
 

@@ -111,6 +111,8 @@ class GmmResourceInfo : NonCopyableAndNonMovableClass {
     MOCKABLE_VIRTUAL void refreshHandle();
 
   protected:
+    friend class GmmClientContext;
+
     MOCKABLE_VIRTUAL GMM_RESOURCE_FLAG *getResourceFlags() { return &resourceInfo->GetResFlags(); }
 
     using UniquePtrType = std::unique_ptr<GMM_RESOURCE_INFO, std::function<void(GMM_RESOURCE_INFO *)>>;
