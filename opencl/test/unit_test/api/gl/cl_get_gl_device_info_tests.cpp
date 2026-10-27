@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#include "shared/source/helpers/hw_info.h"
 
 #include "opencl/test/unit_test/api/cl_api_tests.h"
 
@@ -29,8 +31,8 @@ using GetDeviceGlInfoStr = GetDeviceInfoP;
 TEST_P(GetDeviceGlInfoStr, WhenGettingDeviceExtensionsThenExtensionsAreReportedCorrectly) {
     char *paramValue = nullptr;
     size_t paramRetSize = 0;
-    auto &productHelper = pDevice->getProductHelper();
-    bool clGLSharingAllowed = productHelper.isSharingWith3dOrMediaAllowed();
+    const auto &hwInfo = pDevice->getHardwareInfo();
+    bool clGLSharingAllowed = hwInfo.caps.sharingWith3dOrMediaAllowed;
 
     cl_int retVal = clGetDeviceInfo(testedClDevice, param, 0, nullptr, &paramRetSize);
     EXPECT_EQ(CL_SUCCESS, retVal);

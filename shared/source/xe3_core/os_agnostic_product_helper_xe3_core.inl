@@ -11,7 +11,6 @@
 #include "shared/source/os_interface/product_helper_xe2_and_later.inl"
 #include "shared/source/os_interface/product_helper_xe2_and_xe3.inl"
 #include "shared/source/os_interface/product_helper_xe_hpg_and_later.inl"
-#include "shared/source/os_interface/product_helper_xe_lpg_and_later.inl"
 
 #include "aubstream/product_family.h"
 
@@ -83,11 +82,6 @@ bool ProductHelperHw<gfxProduct>::initializeInternalEngineImmediately() const {
 template <>
 bool ProductHelperHw<gfxProduct>::isFlushBetweenBlitsRequired() const {
     return false;
-}
-
-template <>
-bool ProductHelperHw<gfxProduct>::isMisalignedUserPtr2WayCoherent() const {
-    return true;
 }
 
 template <>

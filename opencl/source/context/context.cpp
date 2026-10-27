@@ -14,6 +14,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/get_info.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/deferred_deleter.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -551,8 +552,8 @@ bool Context::BufferPoolAllocator::isAggregatedSmallBuffersEnabled(Context *cont
     bool isSupportedForAllContexts = false;
     if (context->getNumDevices() > 0) {
         auto ailConfiguration = context->getDevices()[0]->getRootDeviceEnvironment().getAILConfigurationHelper();
-        auto &productHelper = context->getDevices()[0]->getProductHelper();
-        isSupportedForSingleDeviceContexts = productHelper.isBufferPoolAllocatorSupported() && (ailConfiguration ? ailConfiguration->isBufferPoolEnabled() : true);
+        const auto &hwInfo = context->getDevices()[0]->getHardwareInfo();
+        isSupportedForSingleDeviceContexts = hwInfo.caps.bufferPoolAllocatorSupported && (ailConfiguration ? ailConfiguration->isBufferPoolEnabled() : true);
     }
 
     if (debugManager.flags.ExperimentalSmallBufferPoolAllocator.get() != -1) {

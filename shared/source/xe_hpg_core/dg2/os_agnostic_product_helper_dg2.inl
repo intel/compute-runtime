@@ -158,24 +158,10 @@ bool ProductHelperHw<gfxProduct>::isCpuCopyNecessary(const void *ptr, MemoryMana
     }
 }
 template <>
-bool ProductHelperHw<gfxProduct>::isStorageInfoAdjustmentRequired() const {
-    if constexpr (is32bit) {
-        return true;
-    } else {
-        return false;
-    }
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::isResolveDependenciesByPipeControlsSupported() const {
     if (debugManager.flags.ResolveDependenciesViaPipeControls.get() != -1) {
         return debugManager.flags.ResolveDependenciesViaPipeControls.get() == 1;
     }
-    return true;
-}
-
-template <>
-bool ProductHelperHw<gfxProduct>::useLocalPreferredForCacheableBuffers() const {
     return true;
 }
 

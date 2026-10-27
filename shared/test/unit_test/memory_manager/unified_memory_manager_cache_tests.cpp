@@ -2554,16 +2554,16 @@ HWTEST_F(SvmSharedAllocationCacheTest, givenApiSpecificConfigAndProductHelperAnd
     auto deviceFactory = std::make_unique<UltDeviceFactory>(1, 1);
     MockDevice *device = deviceFactory->rootDevices[0];
     device->initUsmReuseLimits();
-    RAIIProductHelperFactory<MockProductHelper> raii(*device->getExecutionEnvironment()->rootDeviceEnvironments[0]);
+    auto &hwInfo = *device->getRootDeviceEnvironmentRef().getMutableHardwareInfo();
 
     {
-        raii.mockProductHelper->isSharedUsmAllocationReuseSupportedResult = false;
+        hwInfo.caps.sharedUsmAllocationReuseSupported = false;
         auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager());
         svmManager->initUsmAllocationsCaches(*device);
         EXPECT_EQ(nullptr, svmManager->usmSharedAllocationsCache);
     }
     {
-        raii.mockProductHelper->isSharedUsmAllocationReuseSupportedResult = true;
+        hwInfo.caps.sharedUsmAllocationReuseSupported = true;
         device->initUsmReuseLimits();
         auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager());
         svmManager->initUsmAllocationsCaches(*device);
@@ -2572,7 +2572,7 @@ HWTEST_F(SvmSharedAllocationCacheTest, givenApiSpecificConfigAndProductHelperAnd
     {
         device->getRootDeviceEnvironmentRef().debugger.reset(new MockDebugger);
         device->setDebugger(device->getRootDeviceEnvironmentRef().debugger.get());
-        raii.mockProductHelper->isSharedUsmAllocationReuseSupportedResult = true;
+        hwInfo.caps.sharedUsmAllocationReuseSupported = true;
         device->initUsmReuseLimits();
         auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager());
         svmManager->initUsmAllocationsCaches(*device);
@@ -2588,8 +2588,9 @@ HWTEST_F(SvmSharedAllocationCacheTest, givenSharedReuseUnsupportedByProductWhenF
     auto deviceFactory = std::make_unique<UltDeviceFactory>(1, 1);
     MockDevice *device = deviceFactory->rootDevices[0];
     RAIIProductHelperFactory<MockProductHelper> raii(*device->getExecutionEnvironment()->rootDeviceEnvironments[0]);
+    auto &hwInfo = *device->getRootDeviceEnvironmentRef().getMutableHardwareInfo();
     raii.mockProductHelper->isDeviceUsmAllocationReuseSupportedResult = false;
-    raii.mockProductHelper->isSharedUsmAllocationReuseSupportedResult = false;
+    hwInfo.caps.sharedUsmAllocationReuseSupported = false;
 
     device->initUsmReuseLimits();
     EXPECT_LT(0u, device->sharedUsmReuseInfo.getMaxAllocationsSavedForReuseSize());
@@ -2606,11 +2607,12 @@ HWTEST_F(SvmSharedAllocationCacheTest, givenDeviceAndSharedCacheFlagCombinations
     auto deviceFactory = std::make_unique<UltDeviceFactory>(1, 1);
     MockDevice *device = deviceFactory->rootDevices[0];
     RAIIProductHelperFactory<MockProductHelper> raii(*device->getExecutionEnvironment()->rootDeviceEnvironments[0]);
+    auto &hwInfo = *device->getRootDeviceEnvironmentRef().getMutableHardwareInfo();
     MockAILConfiguration mockAilConfigurationHelper;
     device->mockAilConfigurationHelper = &mockAilConfigurationHelper;
     mockAilConfigurationHelper.limitAmountOfDeviceMemoryForRecyclingReturn = false;
     raii.mockProductHelper->isDeviceUsmAllocationReuseSupportedResult = true;
-    raii.mockProductHelper->isSharedUsmAllocationReuseSupportedResult = true;
+    hwInfo.caps.sharedUsmAllocationReuseSupported = true;
 
     const auto totalDeviceMemory = device->getGlobalMemorySize(static_cast<uint32_t>(device->getDeviceBitfield().to_ulong()));
     constexpr double defaultFraction = 0.08;
@@ -2650,11 +2652,12 @@ HWTEST_F(SvmSharedAllocationCacheTest, givenDeviceCacheDisabledByFlagAndSharedCa
     auto deviceFactory = std::make_unique<UltDeviceFactory>(1, 1);
     MockDevice *device = deviceFactory->rootDevices[0];
     RAIIProductHelperFactory<MockProductHelper> raii(*device->getExecutionEnvironment()->rootDeviceEnvironments[0]);
+    auto &hwInfo = *device->getRootDeviceEnvironmentRef().getMutableHardwareInfo();
     MockAILConfiguration mockAilConfigurationHelper;
     device->mockAilConfigurationHelper = &mockAilConfigurationHelper;
     mockAilConfigurationHelper.limitAmountOfDeviceMemoryForRecyclingReturn = false;
     raii.mockProductHelper->isDeviceUsmAllocationReuseSupportedResult = true;
-    raii.mockProductHelper->isSharedUsmAllocationReuseSupportedResult = true;
+    hwInfo.caps.sharedUsmAllocationReuseSupported = true;
 
     device->initUsmReuseLimits();
 
@@ -2673,11 +2676,12 @@ HWTEST_F(SvmSharedAllocationCacheTest, givenAilLimitsDeviceMemoryForRecyclingAnd
     auto deviceFactory = std::make_unique<UltDeviceFactory>(1, 1);
     MockDevice *device = deviceFactory->rootDevices[0];
     RAIIProductHelperFactory<MockProductHelper> raii(*device->getExecutionEnvironment()->rootDeviceEnvironments[0]);
+    auto &hwInfo = *device->getRootDeviceEnvironmentRef().getMutableHardwareInfo();
     MockAILConfiguration mockAilConfigurationHelper;
     device->mockAilConfigurationHelper = &mockAilConfigurationHelper;
     mockAilConfigurationHelper.limitAmountOfDeviceMemoryForRecyclingReturn = true;
     raii.mockProductHelper->isDeviceUsmAllocationReuseSupportedResult = true;
-    raii.mockProductHelper->isSharedUsmAllocationReuseSupportedResult = true;
+    hwInfo.caps.sharedUsmAllocationReuseSupported = true;
 
     device->initUsmReuseLimits();
 

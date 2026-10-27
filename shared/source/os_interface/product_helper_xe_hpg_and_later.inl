@@ -31,16 +31,6 @@ bool ProductHelperHw<gfxProduct>::isBlitterFullySupported(const HardwareInfo &hw
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isNewResidencyModelSupported() const {
-    return true;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::heapInLocalMem(const HardwareInfo &hwInfo) const {
-    return true;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isTimestampWaitSupportedForEvents() const {
     return true;
 }

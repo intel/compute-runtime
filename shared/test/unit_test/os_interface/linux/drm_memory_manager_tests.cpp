@@ -452,7 +452,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenAllocatePhysicalHostMemoryThenSucc
         if (productHelper.overrideAllocationCpuCacheable(allocationData)) {
             EXPECT_TRUE(gmmResourceParams->Flags.Info.Cacheable);
         } else {
-            auto gmmResourceUsage = CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, productHelper, gmmHelper->getHardwareInfo());
+            auto gmmResourceUsage = CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, productHelper, *gmmHelper->getHardwareInfo());
             auto preferNoCpuAccess = CacheSettingsHelper::preferNoCpuAccess(gmmResourceUsage, gmmHelper->getRootDeviceEnvironment());
             bool cacheable = !preferNoCpuAccess && !CacheSettingsHelper::isUncachedType(gmmResourceUsage);
             EXPECT_EQ(cacheable, gmmResourceParams->Flags.Info.Cacheable);
@@ -1787,7 +1787,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenSharedHandleAllocationWithCompress
 
     auto gmmHelper = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getGmmHelper();
     auto &productHelper = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getHelper<ProductHelper>();
-    auto gmmResourceUsage = CacheSettingsHelper::getGmmUsageType(AllocationType::buffer, false, productHelper, gmmHelper->getHardwareInfo());
+    auto gmmResourceUsage = CacheSettingsHelper::getGmmUsageType(AllocationType::buffer, false, productHelper, *gmmHelper->getHardwareInfo());
     auto preferNoCpuAccess = CacheSettingsHelper::preferNoCpuAccess(gmmResourceUsage, *executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
     bool expectedCacheable = !preferNoCpuAccess && !CacheSettingsHelper::isUncachedType(gmmResourceUsage);
     EXPECT_EQ(expectedCacheable, gmmResourceParams->Flags.Info.Cacheable);
@@ -1815,7 +1815,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenSharedHandleAllocationWithUncachea
 
     auto gmmHelper = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getGmmHelper();
     auto &productHelper = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getHelper<ProductHelper>();
-    auto expectedUsageType = CacheSettingsHelper::getGmmUsageType(AllocationType::buffer, true, productHelper, gmmHelper->getHardwareInfo());
+    auto expectedUsageType = CacheSettingsHelper::getGmmUsageType(AllocationType::buffer, true, productHelper, *gmmHelper->getHardwareInfo());
     EXPECT_EQ(expectedUsageType, gmm->getResourceUsageType());
     EXPECT_TRUE(CacheSettingsHelper::isUncachedType(gmm->getResourceUsageType()));
 
@@ -4593,10 +4593,10 @@ TEST_F(DrmMemoryManagerBasic, givenUnalignedHostPtrWithFlushL3RequiredWhenAlloca
     EXPECT_EQ(0x5001u, reinterpret_cast<uint64_t>(allocation->getUnderlyingBuffer()));
     EXPECT_EQ(13u, allocation->getUnderlyingBufferSize());
     EXPECT_EQ(1u, allocation->getAllocationOffset());
-    auto &productHelper = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHelper<ProductHelper>();
+    const auto &hwInfo = *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
     auto &releaseHelper = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getReleaseHelper();
 
-    const bool usesTwoWayCoherentPat = productHelper.isMisalignedUserPtr2WayCoherent() &&
+    const bool usesTwoWayCoherentPat = hwInfo.caps.misalignedUserPtr2WayCoherent &&
                                        !releaseHelper.isAppTransientCoherentPatRequired();
     const auto expectedUsage = usesTwoWayCoherentPat
                                    ? GMM_RESOURCE_USAGE_HW_CONTEXT

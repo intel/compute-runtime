@@ -581,18 +581,6 @@ DG2TEST_F(ProductConfigTests, givenNotSetDeviceAndRevisionIdWhenGetProductConfig
     EXPECT_EQ(productConfig, AOT::DG2_G10_C0);
 }
 
-DG2TEST_F(ProductHelperTestDg2, givenProductHelperWhenAskedIfStorageInfoAdjustmentIsRequiredThenTrueIsReturned) {
-    if constexpr (is32bit) {
-        EXPECT_TRUE(productHelper->isStorageInfoAdjustmentRequired());
-    } else {
-        EXPECT_FALSE(productHelper->isStorageInfoAdjustmentRequired());
-    }
-}
-
-DG2TEST_F(ProductHelperTestDg2, givenProductHelperWhenGettingUseLocalPreferredForCacheableBuffersThenExpectTrue) {
-    EXPECT_TRUE(productHelper->useLocalPreferredForCacheableBuffers());
-}
-
 DG2TEST_F(ProductHelperTestDg2, givenProductHelperWhenCheckingIsHostDeviceUsmPoolAllocatorSupportedThenCorrectValueIsReturned) {
     {
         VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::OCL);

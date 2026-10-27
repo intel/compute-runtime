@@ -974,9 +974,10 @@ TEST(MemoryManagerTest, givenPropertiesWithGpuAddressWhenGetAllocationDataIsCall
 
 TEST(MemoryManagerTest, givenMemoryManagerWhenAllocationTypeAndPlatrormSupportReadOnlyAllocationAndBliterTransferNotRequiredThenAllocationIsSetAsReadOnly) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    auto &hwInfo = *executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
     auto mockProductHelper = std::make_unique<MockProductHelper>();
     mockProductHelper->isBlitCopyRequiredForLocalMemoryResult = false;
-    mockProductHelper->supportReadOnlyAllocationsResult = true;
+    hwInfo.caps.readOnlyAllocationsSupported = true;
     std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
     std::swap(executionEnvironment.rootDeviceEnvironments[0]->productHelper, productHelper);
     MockMemoryManager memoryManager(false, true, executionEnvironment);
@@ -995,9 +996,10 @@ TEST(MemoryManagerTest, givenMemoryManagerWhenAllocationTypeAndPlatrormSupportRe
 
 TEST(MemoryManagerTest, givenMemoryManagerWhenAllocationTypeAndSupportReadOnlyButPlatformDoesNotAndBliterTransferNotRequiredThenAllocationIsNotSetAsReadOnly) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    auto &hwInfo = *executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
     auto mockProductHelper = std::make_unique<MockProductHelper>();
     mockProductHelper->isBlitCopyRequiredForLocalMemoryResult = false;
-    mockProductHelper->supportReadOnlyAllocationsResult = false;
+    hwInfo.caps.readOnlyAllocationsSupported = false;
     std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
     std::swap(executionEnvironment.rootDeviceEnvironments[0]->productHelper, productHelper);
     MockMemoryManager memoryManager(false, true, executionEnvironment);
@@ -1018,9 +1020,10 @@ TEST(MemoryManagerTest, givenPlatformSupportsReadOnlyAllocationsAndEnableReadOnl
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableReadOnlyAllocations.set(0);
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    auto &hwInfo = *executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
     auto mockProductHelper = std::make_unique<MockProductHelper>();
     mockProductHelper->isBlitCopyRequiredForLocalMemoryResult = false;
-    mockProductHelper->supportReadOnlyAllocationsResult = true;
+    hwInfo.caps.readOnlyAllocationsSupported = true;
     std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
     std::swap(executionEnvironment.rootDeviceEnvironments[0]->productHelper, productHelper);
     MockMemoryManager memoryManager(false, true, executionEnvironment);
@@ -1041,9 +1044,10 @@ TEST(MemoryManagerTest, givenPlatformDoesNotSupportReadOnlyAllocationsAndEnableR
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableReadOnlyAllocations.set(1);
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    auto &hwInfo = *executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
     auto mockProductHelper = std::make_unique<MockProductHelper>();
     mockProductHelper->isBlitCopyRequiredForLocalMemoryResult = false;
-    mockProductHelper->supportReadOnlyAllocationsResult = false;
+    hwInfo.caps.readOnlyAllocationsSupported = false;
     std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
     std::swap(executionEnvironment.rootDeviceEnvironments[0]->productHelper, productHelper);
     MockMemoryManager memoryManager(false, true, executionEnvironment);
@@ -1062,9 +1066,10 @@ TEST(MemoryManagerTest, givenPlatformDoesNotSupportReadOnlyAllocationsAndEnableR
 
 TEST(MemoryManagerTest, givenMemoryManagerWhenAllocationTypeAndPlatrormSupportReadOnlyAllocationAndBliterTransferRequiredThenAllocationIsNotSetAsReadOnly) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    auto &hwInfo = *executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
     auto mockProductHelper = std::make_unique<MockProductHelper>();
     mockProductHelper->isBlitCopyRequiredForLocalMemoryResult = true;
-    mockProductHelper->supportReadOnlyAllocationsResult = true;
+    hwInfo.caps.readOnlyAllocationsSupported = true;
     std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
     std::swap(executionEnvironment.rootDeviceEnvironments[0]->productHelper, productHelper);
     MockMemoryManager memoryManager(false, true, executionEnvironment);
@@ -1083,9 +1088,10 @@ TEST(MemoryManagerTest, givenMemoryManagerWhenAllocationTypeAndPlatrormSupportRe
 
 TEST(MemoryManagerTest, givenMemoryManagerWhenAllocationTypeDoesNotSupportReadOnlyButPlatformDoesAndBliterTransferNotRequiredThenAllocationIsNotSetAsReadOnly) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    auto &hwInfo = *executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
     auto mockProductHelper = std::make_unique<MockProductHelper>();
     mockProductHelper->isBlitCopyRequiredForLocalMemoryResult = false;
-    mockProductHelper->supportReadOnlyAllocationsResult = true;
+    hwInfo.caps.readOnlyAllocationsSupported = true;
     std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
     std::swap(executionEnvironment.rootDeviceEnvironments[0]->productHelper, productHelper);
     MockMemoryManager memoryManager(false, true, executionEnvironment);
@@ -1104,9 +1110,10 @@ TEST(MemoryManagerTest, givenMemoryManagerWhenAllocationTypeDoesNotSupportReadOn
 
 TEST(MemoryManagerTest, givenMemoryManagerWhenAllocationIsCommandBufferAndItIsSetAsNotReadOnlyThenAllocationIsNotSetAsReadOnly) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    auto &hwInfo = *executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
     auto mockProductHelper = std::make_unique<MockProductHelper>();
     mockProductHelper->isBlitCopyRequiredForLocalMemoryResult = false;
-    mockProductHelper->supportReadOnlyAllocationsResult = true;
+    hwInfo.caps.readOnlyAllocationsSupported = true;
     std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
     std::swap(executionEnvironment.rootDeviceEnvironments[0]->productHelper, productHelper);
     MockMemoryManager memoryManager(false, true, executionEnvironment);
@@ -1129,9 +1136,10 @@ TEST(MemoryManagerTest, givenMemoryManagerWhenAllocationIsCommandBufferAndItIsSe
 
 TEST(MemoryManagerTest, givenMemoryManagerWhenAllocationIsCommandBufferAndMultiContextCapableIsTrueThenAllocationIsNotSetAsReadOnly) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    auto &hwInfo = *executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
     auto mockProductHelper = std::make_unique<MockProductHelper>();
     mockProductHelper->isBlitCopyRequiredForLocalMemoryResult = false;
-    mockProductHelper->supportReadOnlyAllocationsResult = true;
+    hwInfo.caps.readOnlyAllocationsSupported = true;
     std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
     std::swap(executionEnvironment.rootDeviceEnvironments[0]->productHelper, productHelper);
     MockMemoryManager memoryManager(false, true, executionEnvironment);
@@ -1155,6 +1163,7 @@ TEST(MemoryManagerTest, givenMemoryManagerWhenAllocationIsCommandBufferAndMultiC
 
 TEST(MemoryManagerTest, givenSingleAddressSpaceSbaTrackingWhenAllocationIsCommandBufferAndMultiContextCapableIsFalseThenAllocationIsNotSetAsReadOnly) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    auto &hwInfo = *executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
     executionEnvironment.setDebuggingMode(NEO::DebuggingMode::offline);
     auto debugger = new MockDebugger;
     debugger->singleAddressSpaceSbaTracking = true;
@@ -1162,7 +1171,7 @@ TEST(MemoryManagerTest, givenSingleAddressSpaceSbaTrackingWhenAllocationIsComman
 
     auto mockProductHelper = std::make_unique<MockProductHelper>();
     mockProductHelper->isBlitCopyRequiredForLocalMemoryResult = false;
-    mockProductHelper->supportReadOnlyAllocationsResult = true;
+    hwInfo.caps.readOnlyAllocationsSupported = true;
     std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
     std::swap(executionEnvironment.rootDeviceEnvironments[0]->productHelper, productHelper);
     MockMemoryManager memoryManager(false, true, executionEnvironment);
@@ -1186,11 +1195,12 @@ TEST(MemoryManagerTest, givenSingleAddressSpaceSbaTrackingWhenAllocationIsComman
 
 TEST(MemoryManagerTest, givenPlatformNotHeaplessWhenAllocationIsCommandBufferAndMultiContextCapableIsFalseThenAllocationIsNotSetAsReadOnly) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    auto &hwInfo = *executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
     executionEnvironment.setDebuggingMode(NEO::DebuggingMode::offline);
 
     auto mockProductHelper = std::make_unique<MockProductHelper>();
     mockProductHelper->isBlitCopyRequiredForLocalMemoryResult = false;
-    mockProductHelper->supportReadOnlyAllocationsResult = true;
+    hwInfo.caps.readOnlyAllocationsSupported = true;
     std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
     std::swap(executionEnvironment.rootDeviceEnvironments[0]->productHelper, productHelper);
     MockMemoryManager memoryManager(false, true, executionEnvironment);
@@ -1216,9 +1226,10 @@ TEST(MemoryManagerTest, givenPlatformNotHeaplessWhenAllocationIsCommandBufferAnd
 
 TEST(MemoryManagerTest, givenMemoryManagerWhenAllocationTypeAndPlatrormSupportReadOnlyAllocationBliterAndAllocationTypeOtherThanCmdBufferTransferNotRequiredThenAllocationIsSetAsReadOnly) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    auto &hwInfo = *executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
     auto mockProductHelper = std::make_unique<MockProductHelper>();
     mockProductHelper->isBlitCopyRequiredForLocalMemoryResult = false;
-    mockProductHelper->supportReadOnlyAllocationsResult = true;
+    hwInfo.caps.readOnlyAllocationsSupported = true;
     std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
     std::swap(executionEnvironment.rootDeviceEnvironments[0]->productHelper, productHelper);
     MockMemoryManager memoryManager(false, true, executionEnvironment);
@@ -1470,10 +1481,8 @@ TEST(MemoryManagerTest, givenReadOnlyFlagInAllocationPropertiesWhenAllocatingInP
 
 TEST(MemoryManagerTest, givenNoReadOnlyFlagInAllocationPropertiesWhenAllocatingInPreferredPoolThenAllocationIsNotSetAsReadOnly) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    auto mockProductHelper = std::make_unique<MockProductHelper>();
-    mockProductHelper->supportReadOnlyAllocationsResult = false;
-    std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
-    std::swap(executionEnvironment.rootDeviceEnvironments[0]->productHelper, productHelper);
+    auto &hwInfo = *executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
+    hwInfo.caps.readOnlyAllocationsSupported = false;
     MockMemoryManager memoryManager(false, true, executionEnvironment);
 
     MockGraphicsAllocation mockGa(nullptr, MemoryConstants::pageSize, MemoryConstants::pageSize);

@@ -39,12 +39,15 @@ struct CapsXeHpcCore {
     static constexpr bool block2DLoadSupported = true;
     static constexpr bool block2DStoreSupported = true;
     static constexpr bool dummyBlitWaRequired = true;
+    static constexpr bool exposingSubdevicesAllowed = true;
     static constexpr bool initBuiltinAsyncSupported = true;
     static constexpr bool initDeviceWithFirstSubmissionRequired = true;
     static constexpr bool localOnlyAllowed = true;
+    static constexpr bool newResidencyModelSupported = true;
     static constexpr bool numRtStacksPerDssFixedValue = true;
     static constexpr bool rayTracingSupported = true;
     static constexpr bool rcsExposureDisabled = true;
+    static constexpr bool readOnlyAllocationsSupported = true;
     static constexpr bool scratchSpaceBasePointerInGrf = true;
 };
 

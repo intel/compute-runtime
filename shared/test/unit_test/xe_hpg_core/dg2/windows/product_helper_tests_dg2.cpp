@@ -12,10 +12,6 @@ using namespace NEO;
 
 using Dg2ProductHelperWindows = ProductHelperTestWindows;
 
-DG2TEST_F(Dg2ProductHelperWindows, givenProductHelperWhenCheckingIsBufferPoolAllocatorSupportedThenCorrectValueIsReturned) {
-    EXPECT_TRUE(productHelper->isBufferPoolAllocatorSupported());
-}
-
 DG2TEST_F(Dg2ProductHelperWindows, givenProductHelperWhenCheckDirectSubmissionSupportedThenTrueIsReturned) {
     EXPECT_FALSE(productHelper->isDirectSubmissionSupported());
 }

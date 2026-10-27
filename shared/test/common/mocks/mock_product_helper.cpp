@@ -68,11 +68,6 @@ uint64_t ProductHelperHw<IGFX_UNKNOWN>::getSharedSystemMemCapabilities(const Har
 }
 
 template <>
-bool ProductHelperHw<IGFX_UNKNOWN>::overrideGfxPartitionLayoutForWsl() const {
-    return false;
-}
-
-template <>
 uint32_t ProductHelperHw<IGFX_UNKNOWN>::getDeviceMemoryMaxClkRate(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) const {
     return 0;
 }
@@ -167,17 +162,7 @@ std::vector<int32_t> ProductHelperHw<IGFX_UNKNOWN>::getKernelSupportedThreadArbi
 }
 
 template <>
-bool ProductHelperHw<IGFX_UNKNOWN>::isNewResidencyModelSupported() const {
-    return false;
-}
-
-template <>
 bool ProductHelperHw<IGFX_UNKNOWN>::deferMOCSToPatIndex(bool isWddmOnLinux) const {
-    return false;
-}
-
-template <>
-bool ProductHelperHw<IGFX_UNKNOWN>::heapInLocalMem(const HardwareInfo &hwInfo) const {
     return false;
 }
 
@@ -207,11 +192,6 @@ bool ProductHelperHw<IGFX_UNKNOWN>::isForceEmuInt32DivRemSPWARequired(const Hard
 
 template <>
 bool ProductHelperHw<IGFX_UNKNOWN>::is3DPipelineSelectWARequired() const {
-    return false;
-}
-
-template <>
-bool ProductHelperHw<IGFX_UNKNOWN>::isStorageInfoAdjustmentRequired() const {
     return false;
 }
 
@@ -321,11 +301,6 @@ const SupportedNumGrfs ProductHelperHw<IGFX_UNKNOWN>::getSupportedNumGrfs(const 
 }
 
 template <>
-bool ProductHelperHw<IGFX_UNKNOWN>::isBufferPoolAllocatorSupported() const {
-    return false;
-}
-
-template <>
 bool ProductHelperHw<IGFX_UNKNOWN>::isHostUsmPoolAllocatorSupported() const {
     return false;
 }
@@ -342,11 +317,6 @@ bool ProductHelperHw<IGFX_UNKNOWN>::isDeviceUsmAllocationReuseSupported() const 
 
 template <>
 bool ProductHelperHw<IGFX_UNKNOWN>::isHostUsmAllocationReuseSupported() const {
-    return false;
-}
-
-template <>
-bool ProductHelperHw<IGFX_UNKNOWN>::useLocalPreferredForCacheableBuffers() const {
     return false;
 }
 

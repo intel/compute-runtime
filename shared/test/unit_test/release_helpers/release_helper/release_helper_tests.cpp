@@ -39,14 +39,6 @@ HWTEST2_F(ReleaseHelperPatIndexXe3pTests, givenSystemMemoryPatOverrideWhenDebugF
     EXPECT_EQ(19u, releaseHelper->overrideSystemMemoryPatIndex(patIndex));
 }
 
-namespace {
-struct MockProductHelperWithMisalignedUserPtr2WayCoherency : MockProductHelper {
-    bool isMisalignedUserPtr2WayCoherent() const override {
-        return true;
-    }
-};
-} // namespace
-
 TEST(ReleaseHelperPatIndexTests, givenCoherentSystemMemoryWhenSelectingGmmUsageThenPreserveSafeUsageAndUseAppTransientCoherentPatIfRequired) {
     DebugManagerStateRestore restore;
     MockProductHelper productHelper;
@@ -79,7 +71,8 @@ TEST(ReleaseHelperPatIndexTests, givenNoL3FlushAfterPostSyncSupportWhenSelecting
 
 TEST(ReleaseHelperPatIndexTests, givenMisalignedUserPtrWhenSelectingGmmUsageThenUse2WayCoherencyOnlyWhenSupportedByRelease) {
     DebugManagerStateRestore restore;
-    MockProductHelperWithMisalignedUserPtr2WayCoherency productHelper;
+    HardwareInfo hwInfo{};
+    hwInfo.caps.misalignedUserPtr2WayCoherent = true;
     MockReleaseHelper releaseHelper;
 
     const auto userPtr = reinterpret_cast<const void *>(0x1001);
@@ -87,16 +80,17 @@ TEST(ReleaseHelperPatIndexTests, givenMisalignedUserPtrWhenSelectingGmmUsageThen
 
     releaseHelper.isAppTransientCoherentPatRequiredResult = false;
     EXPECT_EQ(GMM_RESOURCE_USAGE_HW_CONTEXT,
-              CacheSettingsHelper::getGmmUsageTypeForUserPtr(true, userPtr, size, productHelper, releaseHelper));
+              CacheSettingsHelper::getGmmUsageTypeForUserPtr(true, userPtr, size, hwInfo, releaseHelper));
 
     releaseHelper.isAppTransientCoherentPatRequiredResult = true;
     EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER,
-              CacheSettingsHelper::getGmmUsageTypeForUserPtr(true, userPtr, size, productHelper, releaseHelper));
+              CacheSettingsHelper::getGmmUsageTypeForUserPtr(true, userPtr, size, hwInfo, releaseHelper));
 }
 
 TEST(ReleaseHelperPatIndexTests, givenCacheLineAlignedUserPtrWhenSelectingGmmUsageThenDoNotUse2WayCoherency) {
     DebugManagerStateRestore restore;
-    MockProductHelperWithMisalignedUserPtr2WayCoherency productHelper;
+    HardwareInfo hwInfo{};
+    hwInfo.caps.misalignedUserPtr2WayCoherent = true;
     MockReleaseHelper releaseHelper;
     releaseHelper.isAppTransientCoherentPatRequiredResult = false;
 
@@ -104,5 +98,5 @@ TEST(ReleaseHelperPatIndexTests, givenCacheLineAlignedUserPtrWhenSelectingGmmUsa
     constexpr size_t size = MemoryConstants::cacheLineSize;
 
     EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER,
-              CacheSettingsHelper::getGmmUsageTypeForUserPtr(true, userPtr, size, productHelper, releaseHelper));
+              CacheSettingsHelper::getGmmUsageTypeForUserPtr(true, userPtr, size, hwInfo, releaseHelper));
 }

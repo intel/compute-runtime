@@ -738,7 +738,8 @@ TEST(Buffer, givenNullptrPassedToBufferCreateWhenNoSharedContextOrCompressedBuff
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, nullptr, retVal));
 
     ASSERT_NE(nullptr, buffer.get());
-    if (MemoryPoolHelper::isSystemMemoryPool(buffer->getGraphicsAllocation(device->getRootDeviceIndex())->getMemoryPool()) && !device->getProductHelper().isNewCoherencyModelSupported()) {
+    const auto &hwInfo = device->getHardwareInfo();
+    if (MemoryPoolHelper::isSystemMemoryPool(buffer->getGraphicsAllocation(device->getRootDeviceIndex())->getMemoryPool()) && !hwInfo.caps.newCoherencyModelSupported) {
         EXPECT_EQ(AllocationType::bufferHostMemory, buffer->getGraphicsAllocation(device->getRootDeviceIndex())->getAllocationType());
     } else {
         EXPECT_EQ(AllocationType::buffer, buffer->getGraphicsAllocation(device->getRootDeviceIndex())->getAllocationType());
@@ -792,7 +793,8 @@ TEST(Buffer, givenAllocHostPtrFlagPassedToBufferCreateWhenNoSharedContextOrCompr
 
     ASSERT_NE(nullptr, buffer.get());
 
-    if (!device->getProductHelper().isNewCoherencyModelSupported()) {
+    const auto &hwInfo = device->getHardwareInfo();
+    if (!hwInfo.caps.newCoherencyModelSupported) {
         EXPECT_EQ(AllocationType::bufferHostMemory, buffer->getMultiGraphicsAllocation().getAllocationType());
     } else {
         EXPECT_EQ(AllocationType::buffer, buffer->getMultiGraphicsAllocation().getAllocationType());
@@ -1077,7 +1079,7 @@ TEST_F(CompressedBuffersTests, givenBufferNotCompressedAllocationAndNoHostPtrWhe
     buffer.reset(Buffer::create(context.get(), 0, bufferSize, nullptr, retVal));
     auto allocation = buffer->getGraphicsAllocation(device->getRootDeviceIndex());
     EXPECT_TRUE(buffer->isMemObjZeroCopy());
-    if (MemoryPoolHelper::isSystemMemoryPool(allocation->getMemoryPool()) && !device->getProductHelper().isNewCoherencyModelSupported()) {
+    if (MemoryPoolHelper::isSystemMemoryPool(allocation->getMemoryPool()) && !hwInfo->caps.newCoherencyModelSupported) {
         EXPECT_EQ(allocation->getAllocationType(), AllocationType::bufferHostMemory);
     } else {
         EXPECT_EQ(allocation->getAllocationType(), AllocationType::buffer);
@@ -1095,7 +1097,7 @@ TEST_F(CompressedBuffersTests, givenBufferNotCompressedAllocationAndNoHostPtrWhe
         EXPECT_FALSE(buffer->isMemObjZeroCopy());
         EXPECT_EQ(allocation->getAllocationType(), AllocationType::buffer);
         EXPECT_EQ(!memoryManager->allocate32BitGraphicsMemoryImplCalled, allocation->isCompressionEnabled());
-    } else if (!device->getProductHelper().isNewCoherencyModelSupported()) {
+    } else if (!hwInfo->caps.newCoherencyModelSupported) {
         EXPECT_TRUE(buffer->isMemObjZeroCopy());
         EXPECT_EQ(allocation->getAllocationType(), AllocationType::bufferHostMemory);
     } else {
@@ -1119,7 +1121,7 @@ TEST_F(CompressedBuffersTests, givenDebugVariableSetWhenHwFlagIsNotSetThenSelect
     if (gfxCoreHelper.isBufferSizeSuitableForCompression(bufferSize) && !productHelper.isCompressionForbidden(*hwInfo)) {
         EXPECT_EQ(graphicsAllocation->getAllocationType(), AllocationType::buffer);
         EXPECT_EQ(!memoryManager->allocate32BitGraphicsMemoryImplCalled, graphicsAllocation->isCompressionEnabled());
-    } else if (!device->getProductHelper().isNewCoherencyModelSupported()) {
+    } else if (!hwInfo->caps.newCoherencyModelSupported) {
         EXPECT_EQ(graphicsAllocation->getAllocationType(), AllocationType::bufferHostMemory);
     } else {
         EXPECT_EQ(graphicsAllocation->getAllocationType(), AllocationType::buffer);
@@ -1186,7 +1188,7 @@ TEST_F(CompressedBuffersCopyHostMemoryTests, givenCompressedBufferWhenCopyFromHo
         EXPECT_EQ(0u, mockCmdQ->writeBufferOffset);
         EXPECT_EQ(bufferSize, mockCmdQ->writeBufferSize);
         EXPECT_EQ(hostPtr, mockCmdQ->writeBufferPtr);
-    } else if (!context->getDevice(0)->getProductHelper().isNewCoherencyModelSupported()) {
+    } else if (!hwInfo->caps.newCoherencyModelSupported) {
         EXPECT_EQ(graphicsAllocation->getAllocationType(), AllocationType::bufferHostMemory);
         EXPECT_EQ(0u, mockCmdQ->writeBufferCounter);
         EXPECT_FALSE(mockCmdQ->writeBufferBlocking);
@@ -1379,7 +1381,8 @@ TEST_F(NoHostPtr, WhenGettingAllocationTypeThenCorrectBufferTypeIsReturned) {
         ASSERT_NE(nullptr, buffer);
 
         auto allocation = buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
-        if (MemoryPoolHelper::isSystemMemoryPool(allocation->getMemoryPool()) && !pClDevice->getProductHelper().isNewCoherencyModelSupported()) {
+        const auto &hwInfo = pClDevice->getHardwareInfo();
+        if (MemoryPoolHelper::isSystemMemoryPool(allocation->getMemoryPool()) && !hwInfo.caps.newCoherencyModelSupported) {
             EXPECT_EQ(allocation->getAllocationType(), AllocationType::bufferHostMemory);
         } else {
             EXPECT_EQ(allocation->getAllocationType(), AllocationType::buffer);
@@ -2396,7 +2399,8 @@ HWTEST_F(BufferL3CacheTests, givenMisalignedAndAlignedBufferWhenClEnqueueWriteBu
     for (uint64_t ptr : pointers) {
         hostPtr = reinterpret_cast<void *>(ptr);
         auto device = ctx.getDevice(0);
-        if (device->getProductHelper().isNewCoherencyModelSupported()) {
+        const auto &hwInfo = device->getHardwareInfo();
+        if (hwInfo.caps.newCoherencyModelSupported) {
             GTEST_SKIP();
         }
         const auto &compilerProductHelper = device->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();

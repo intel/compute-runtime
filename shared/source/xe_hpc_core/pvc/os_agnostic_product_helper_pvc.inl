@@ -266,16 +266,6 @@ bool ProductHelperHw<gfxProduct>::isSkippingStatefulInformationRequired(const Ke
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::supportReadOnlyAllocations() const {
-    return true;
-}
-
-template <>
-bool ProductHelperHw<gfxProduct>::isSharingWith3dOrMediaAllowed() const {
-    return false;
-}
-
-template <>
 uint64_t ProductHelperHw<gfxProduct>::getHostMemCapabilitiesValue() const {
     return (UnifiedSharedMemoryFlags::access);
 }

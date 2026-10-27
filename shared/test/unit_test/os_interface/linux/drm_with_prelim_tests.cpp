@@ -87,7 +87,7 @@ HWTEST2_F(IoctlHelperPrelimTest, whenGettingVmBindAvailabilityThenProperValueIsR
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
-    const auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getProductHelper();
+    const auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
     IoctlHelperPrelim20 ioctlHelper{drm};
 
     for (auto &ioctlValue : {0, EINVAL}) {
@@ -96,7 +96,7 @@ HWTEST2_F(IoctlHelperPrelimTest, whenGettingVmBindAvailabilityThenProperValueIsR
             drm.context.vmBindQueryValue = hasVmBind;
             drm.context.vmBindQueryCalled = 0u;
 
-            if (productHelper.isNewResidencyModelSupported()) {
+            if (hwInfo.caps.newResidencyModelSupported) {
                 if (ioctlValue == 0) {
                     EXPECT_EQ(hasVmBind, ioctlHelper.isVmBindAvailable());
                 } else {

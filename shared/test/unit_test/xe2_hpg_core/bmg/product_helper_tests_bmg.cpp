@@ -35,10 +35,6 @@ BMGTEST_F(BmgProductHelper, whenGettingAubstreamProductFamilyThenProperEnumValue
     EXPECT_EQ(aub_stream::ProductFamily::Bmg, productHelper->getAubStreamProductFamily());
 }
 
-BMGTEST_F(BmgProductHelper, givenProductHelperWhenAskingForReadOnlyResourceSupportThenTrueReturned) {
-    EXPECT_TRUE(productHelper->supportReadOnlyAllocations());
-}
-
 BMGTEST_F(BmgProductHelper, givenProductHelperWhenCheckIsCopyBufferRectSplitSupportedThenReturnsTrue) {
     EXPECT_TRUE(productHelper->isCopyBufferRectSplitSupported());
 }
@@ -148,10 +144,6 @@ TEST(BmgProductConfigHelperTest, givenLegacyProductConfigWhenGettingDeviceIdThen
 
         EXPECT_EQ(0u, productConfigHelper.getDeviceIdFromIpVersion(legacyProductConfig));
     }
-}
-
-BMGTEST_F(BmgProductHelper, givenProductHelperWhenCheckingIsBufferPoolAllocatorSupportedThenCorrectValueIsReturned) {
-    EXPECT_TRUE(productHelper->isBufferPoolAllocatorSupported());
 }
 
 BMGTEST_F(BmgProductHelper, givenProductHelperWhenAdjustNumberOfCcsThenOverrideToSingleCcs) {

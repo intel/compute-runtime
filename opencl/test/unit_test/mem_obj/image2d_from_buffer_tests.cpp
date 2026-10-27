@@ -313,7 +313,8 @@ TEST_F(Image2dFromBufferTest, givenBufferWhenImageFromBufferThenIsImageFromBuffe
 
     EXPECT_TRUE(imageFromBuffer->isImageFromBuffer());
     auto graphicsAllocation = imageFromBuffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex());
-    if (!context.getDevice(0)->getProductHelper().isNewCoherencyModelSupported()) {
+    const auto &hwInfo = context.getDevice(0)->getHardwareInfo();
+    if (!hwInfo.caps.newCoherencyModelSupported) {
         EXPECT_EQ(graphicsAllocation->getAllocationType(), AllocationType::bufferHostMemory);
     } else {
         EXPECT_EQ(graphicsAllocation->getAllocationType(), AllocationType::buffer);

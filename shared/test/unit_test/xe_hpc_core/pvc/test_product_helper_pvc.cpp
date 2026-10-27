@@ -247,17 +247,9 @@ PVCTEST_F(PvcProductHelper, givenPvcProductHelperWhenIsIpSamplingSupportedThenCo
     }
 }
 
-PVCTEST_F(PvcProductHelper, givenProductHelperWhenAskingForReadOnlyResourceSupportThenTrueReturned) {
-    EXPECT_TRUE(productHelper->supportReadOnlyAllocations());
-}
-
 PVCTEST_F(PvcProductHelper, givenProductHelperWhenGetRequiredDetectIndirectVersionCalledThenReturnCorrectVersion) {
     EXPECT_EQ(3u, productHelper->getRequiredDetectIndirectVersion());
     EXPECT_EQ(9u, productHelper->getRequiredDetectIndirectVersionVC());
-}
-
-PVCTEST_F(ProductHelperTest, givenProductHelperWhenAskingForSharingWith3dOrMediaSupportThenFalseReturned) {
-    EXPECT_FALSE(productHelper->isSharingWith3dOrMediaAllowed());
 }
 
 PVCTEST_F(ProductHelperTest, givenProductHelperThenCompressionIsForbidden) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,9 +26,9 @@ TEST(Device_GetCaps, givenForceClGlSharingWhenCapsAreCreatedThenDeviceReportsClG
         auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
         const auto &caps = device->getDeviceInfo();
 
-        auto &productHelper = device->getProductHelper();
+        const auto &hwInfo = device->getHardwareInfo();
 
-        if (productHelper.isSharingWith3dOrMediaAllowed()) {
+        if (hwInfo.caps.sharingWith3dOrMediaAllowed) {
             EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_gl_sharing ")));
         }
 

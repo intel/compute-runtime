@@ -18,7 +18,6 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/os_interface/linux/allocator_helper.h"
-#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/os_interface/windows/gdi_interface.h"
 #include "shared/source/os_interface/windows/gfx_escape_wrapper.h"
 #include "shared/source/os_interface/windows/wddm/um_km_data_temp_storage.h"
@@ -86,10 +85,10 @@ bool tryWritePartitionLayoutWithinProcess(Wddm &wddm, GMM_GFX_PARTITIONING &part
     return synchronizePartitionLayoutWithinProcess(wddm, partitionLayout, GfxSynchPartitionInfoEscapeHeader::actionSet);
 }
 
-bool adjustGfxPartitionLayout(GMM_GFX_PARTITIONING &partitionLayout, uint64_t gpuAddressSpace, uintptr_t minAllowedAddress, Wddm &wddm, PRODUCT_FAMILY productFamily) {
+bool adjustGfxPartitionLayout(GMM_GFX_PARTITIONING &partitionLayout, uint64_t gpuAddressSpace, uintptr_t minAllowedAddress, Wddm &wddm) {
     bool requiresRepartitioning = (gpuAddressSpace == maxNBitValue(47)) && wddm.getFeatureTable().flags.ftrCCSRing;
-    auto &productHelper = wddm.getRootDeviceEnvironment().getHelper<ProductHelper>();
-    requiresRepartitioning |= productHelper.overrideGfxPartitionLayoutForWsl();
+    const auto &hwInfo = *wddm.getRootDeviceEnvironment().getHardwareInfo();
+    requiresRepartitioning |= hwInfo.caps.overrideGfxPartitionLayoutForWsl;
     if (false == requiresRepartitioning) {
         return true;
     }
@@ -193,7 +192,7 @@ bool Wddm::configureDeviceAddressSpace() {
     }
 
     if (maxUsmSize > 0) {
-        if (false == adjustGfxPartitionLayout(this->gfxPartition, gpuAddressSpace, usmBase, *this, productFamily)) {
+        if (false == adjustGfxPartitionLayout(this->gfxPartition, gpuAddressSpace, usmBase, *this)) {
             return false;
         }
         if (gfxPartition.Standard64KB.Limit <= maxUsmSize) {

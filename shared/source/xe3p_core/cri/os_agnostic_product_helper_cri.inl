@@ -92,11 +92,6 @@ bool ProductHelperHw<gfxProduct>::is2MBLocalMemAlignmentEnabled() const {
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isSharingWith3dOrMediaAllowed() const {
-    return false;
-}
-
-template <>
 uint32_t ProductHelperHw<gfxProduct>::adjustMaxThreadsPerThreadGroup(const HardwareInfo &hwInfo, uint32_t maxThreadsPerThreadGroup, uint32_t simt, uint32_t grfCount) const {
     auto adjustedMaxThreadsPerThreadGroup = maxThreadsPerThreadGroup;
     if (grfCount == 512) {
@@ -114,11 +109,6 @@ bool ProductHelperHw<gfxProduct>::shouldRegisterEnqueuedWalkerWithProfiling() co
 
 template <>
 bool ProductHelperHw<gfxProduct>::isLEOSupported() const {
-    return true;
-}
-
-template <>
-bool ProductHelperHw<gfxProduct>::supportReadOnlyAllocations() const {
     return true;
 }
 

@@ -39,14 +39,15 @@ bool prepareDeviceEnvironments(ExecutionEnvironment &executionEnvironment, std::
             bool unsupportedDeviceDetected = false;
 
             auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[i];
-            if (!EngineHelpers::isRcsExposed(rootDeviceEnvironment) && !rootDeviceEnvironment.getHardwareInfo()->featureTable.flags.ftrCCSNode) {
+            const auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+            if (!EngineHelpers::isRcsExposed(rootDeviceEnvironment) && !hwInfo.featureTable.flags.ftrCCSNode) {
                 unsupportedDeviceDetected = true;
             }
 
             if (unsupportedDeviceDetected) {
                 executionEnvironment.rootDeviceEnvironments.erase(executionEnvironment.rootDeviceEnvironments.begin() + i);
             } else {
-                if (!executionEnvironment.rootDeviceEnvironments[i]->getProductHelper().isExposingSubdevicesAllowed()) {
+                if (!hwInfo.caps.exposingSubdevicesAllowed) {
                     executionEnvironment.rootDeviceEnvironments[i]->setExposeSingleDeviceMode(true);
                 }
                 if (debugManager.flags.ExposeSingleDevice.get() != -1) {

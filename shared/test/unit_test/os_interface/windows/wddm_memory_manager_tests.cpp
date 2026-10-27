@@ -1270,10 +1270,10 @@ TEST_F(WddmMemoryManagerSimpleTest, givenAllocateGraphicsMemoryForNonSvmHostPtrI
     EXPECT_EQ(size, allocation->getUnderlyingBufferSize());
     EXPECT_EQ(1u, allocation->getAllocationOffset());
 
-    const auto &productHelper = rootDeviceEnvironment->getHelper<ProductHelper>();
+    const auto &hwInfo = *rootDeviceEnvironment->getHardwareInfo();
     const auto &releaseHelper = rootDeviceEnvironment->getReleaseHelper();
     auto expectedUsage = GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
-    if (productHelper.isMisalignedUserPtr2WayCoherent() && !releaseHelper.isAppTransientCoherentPatRequired()) {
+    if (hwInfo.caps.misalignedUserPtr2WayCoherent && !releaseHelper.isAppTransientCoherentPatRequired()) {
         expectedUsage = GMM_RESOURCE_USAGE_HW_CONTEXT;
     }
     EXPECT_EQ(expectedUsage, allocation->getGmm(0)->getResourceUsageType());
@@ -2637,9 +2637,9 @@ TEST_F(WddmMemoryManagerSimpleTest, givenEnabledLocalMemoryWhenAllocatingMemoryI
 
     EXPECT_NE(0u, buffer->getGpuAddress());
 
-    const auto &productHelper = rootDeviceEnvironment->getHelper<ProductHelper>();
+    const auto &rootHwInfo = *rootDeviceEnvironment->getHardwareInfo();
 
-    if (!productHelper.overrideGfxPartitionLayoutForWsl() && is64bit) {
+    if (!rootHwInfo.caps.overrideGfxPartitionLayoutForWsl && is64bit) {
         EXPECT_LE(heapBase, buffer->getGpuAddress());
         EXPECT_GT(heapLimit, buffer->getGpuAddress());
     }
@@ -2903,7 +2903,6 @@ TEST_F(WddmMemoryManagerSimpleTest, givenShareableAllocationWhenAllocateGraphics
     hwInfo.featureTable.flags.ftrLocalMemory = true;
     executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hwInfo);
     executionEnvironment.rootDeviceEnvironments[0]->initGmm();
-    auto &productHelper = executionEnvironment.rootDeviceEnvironments[0]->getProductHelper();
 
     memoryManager = std::make_unique<MockWddmMemoryManager>(false, localMemoryEnabled, executionEnvironment);
     auto &memoryManagerHwInfo = *memoryManager->executionEnvironment.rootDeviceEnvironments[mockRootDeviceIndex]->getMutableHardwareInfo();
@@ -2924,7 +2923,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenShareableAllocationWhenAllocateGraphics
     allocation->peekInternalHandle(memoryManager.get(), handle, nullptr);
     EXPECT_NE(handle, 0u);
 
-    EXPECT_EQ(!productHelper.useLocalPreferredForCacheableBuffers(), gmmResourceParams->Flags.Info.LocalOnly);
+    EXPECT_EQ(!memoryManagerHwInfo.caps.useLocalPreferredForCacheableBuffers, gmmResourceParams->Flags.Info.LocalOnly);
     EXPECT_EQ(1u, gmmResourceParams->Flags.Info.NotLockable);
 
     memoryManager->freeGraphicsMemory(allocation);
@@ -3030,7 +3029,8 @@ TEST_F(WddmMemoryManagerSimpleTest, givenAtLeast2MbAllocationWhenAllocationInDev
 }
 
 HWTEST_F(WddmMemoryManagerSimpleTest, givenLinearStreamWhenItIsAllocatedThenItIsInLocalMemoryHasCpuPointerAndHasStandardHeap64kbAsGpuAddress) {
-    if (rootDeviceEnvironment->getHelper<ProductHelper>().overrideGfxPartitionLayoutForWsl()) {
+    const auto &hwInfo = *rootDeviceEnvironment->getHardwareInfo();
+    if (hwInfo.caps.overrideGfxPartitionLayoutForWsl) {
         GTEST_SKIP();
     }
     memoryManager = std::make_unique<MockWddmMemoryManager>(false, true, executionEnvironment);
@@ -4213,7 +4213,8 @@ HWTEST_F(WddmMemoryManagerTest, givenInternalHeapOrLinearStreamTypeWhenAllocatin
 }
 
 HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenAllocateGraphicsMemoryWithSetAllocattionPropertisWithAllocationTypeBufferIsCalledThenIsRendeCompressedFalseAndCorrectAddressRange) {
-    if (rootDeviceEnvironment->getHelper<ProductHelper>().overrideGfxPartitionLayoutForWsl()) {
+    const auto &rootHwInfo = *rootDeviceEnvironment->getHardwareInfo();
+    if (rootHwInfo.caps.overrideGfxPartitionLayoutForWsl) {
         GTEST_SKIP();
     }
     void *ptr = reinterpret_cast<void *>(0x1001);
@@ -4571,7 +4572,8 @@ TEST_F(WddmMemoryManagerTest, givenManagerWithEnabledDeferredDeleterWhenFirstAnd
 }
 
 TEST_F(WddmMemoryManagerTest, givenNullPtrAndSizePassedToCreateInternalAllocationWhenCallIsMadeThenAllocationIsCreatedIn32BitHeapInternal) {
-    if (rootDeviceEnvironment->getHelper<ProductHelper>().overrideGfxPartitionLayoutForWsl()) {
+    const auto &hwInfo = *rootDeviceEnvironment->getHardwareInfo();
+    if (hwInfo.caps.overrideGfxPartitionLayoutForWsl) {
         GTEST_SKIP();
     }
     DebugManagerStateRestore restorer;
@@ -4595,7 +4597,8 @@ TEST_F(WddmMemoryManagerTest, givenNullPtrAndSizePassedToCreateInternalAllocatio
 }
 
 TEST_F(WddmMemoryManagerTest, givenPtrAndSizePassedToCreateInternalAllocationWhenCallIsMadeThenAllocationIsCreatedIn32BitHeapInternal) {
-    if (rootDeviceEnvironment->getHelper<ProductHelper>().overrideGfxPartitionLayoutForWsl()) {
+    const auto &hwInfo = *rootDeviceEnvironment->getHardwareInfo();
+    if (hwInfo.caps.overrideGfxPartitionLayoutForWsl) {
         GTEST_SKIP();
     }
     DebugManagerStateRestore restorer;

@@ -30,10 +30,12 @@ struct CapsGen12Lp {
 
     static constexpr bool bFloat16ConversionSupported = true;
     static constexpr bool bindlessAddressingDisabled = true;
+    static constexpr bool exposingSubdevicesAllowed = true;
     static constexpr bool hvAlign4Required = true;
     static constexpr bool localOnlyAllowed = true;
     static constexpr bool numRtStacksPerDssFixedValue = true;
     static constexpr bool scratchSpaceBasePointerInGrf = true;
+    static constexpr bool sharingWith3dOrMediaAllowed = true;
 };
 
 struct CapsTgl : CapsGen12Lp {
@@ -52,7 +54,10 @@ struct CapsAdlP : CapsGen12Lp {
 struct CapsAdlN : CapsGen12Lp {
     static constexpr uint32_t shareMemoryWithoutNTHandle = 1u;
 };
-struct CapsDg1 : CapsGen12Lp {};
+struct CapsDg1 : CapsGen12Lp {
+    static constexpr bool overrideGfxPartitionLayoutForWsl = true;
+    static constexpr bool storageInfoAdjustmentRequired = true;
+};
 
 constexpr std::optional<Caps> resolveCapsTgl(HardwareIpVersion) {
     return materializeCaps<CapsTgl>();

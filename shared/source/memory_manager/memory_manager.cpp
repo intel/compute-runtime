@@ -603,7 +603,6 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex];
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     auto &helper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
-    auto &productHelper = rootDeviceEnvironment.getProductHelper();
 
     if (storageInfo.getMemoryBanks() == 0) {
         allocationData.flags.useSystemMemory = true;
@@ -799,7 +798,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     allocationData.storageInfo.systemMemoryForced = properties.flags.forceSystemMemory;
     allocationData.allocationMethod = getPreferredAllocationMethod(properties);
 
-    bool useLocalPreferredForCacheableBuffers = productHelper.useLocalPreferredForCacheableBuffers();
+    bool useLocalPreferredForCacheableBuffers = hwInfo.caps.useLocalPreferredForCacheableBuffers;
     if (debugManager.flags.UseLocalPreferredForCacheableBuffers.get() != -1) {
         useLocalPreferredForCacheableBuffers = debugManager.flags.UseLocalPreferredForCacheableBuffers.get() == 1;
     }
@@ -892,7 +891,8 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemoryInPreferredPool(const A
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex];
     auto &productHelper = rootDeviceEnvironment.getProductHelper();
 
-    bool readOnlyAllocationsSupported = productHelper.supportReadOnlyAllocations();
+    const auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    bool readOnlyAllocationsSupported = hwInfo.caps.readOnlyAllocationsSupported;
     if (debugManager.flags.EnableReadOnlyAllocations.get() != -1) {
         readOnlyAllocationsSupported = !!debugManager.flags.EnableReadOnlyAllocations.get();
     }

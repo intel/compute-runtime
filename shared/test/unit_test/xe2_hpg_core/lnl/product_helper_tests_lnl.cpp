@@ -123,21 +123,9 @@ LNLTEST_F(LnlProductHelper, givenProductHelperWhenCheckingIsDeviceUsmAllocationR
     EXPECT_TRUE(productHelper->isDeviceUsmAllocationReuseSupported());
 }
 
-LNLTEST_F(LnlProductHelper, givenProductHelperWhenCheckingIsSharedUsmAllocationReuseSupportedThenCorrectValueIsReturned) {
-    EXPECT_TRUE(productHelper->isSharedUsmAllocationReuseSupported());
-}
-
-LNLTEST_F(LnlProductHelper, givenProductHelperWhenCheckingIsBufferPoolAllocatorSupportedThenCorrectValueIsReturned) {
-    EXPECT_TRUE(productHelper->isBufferPoolAllocatorSupported());
-}
-
 LNLTEST_F(LnlProductHelper, givenProductHelperWhenCheckingIsHostDeviceUsmPoolAllocatorSupportedThenCorrectValueIsReturned) {
     EXPECT_TRUE(productHelper->isHostUsmPoolAllocatorSupported());
     EXPECT_TRUE(productHelper->isDeviceUsmPoolAllocatorSupported());
-}
-
-LNLTEST_F(LnlProductHelper, givenProductHelperWhenIsMisalignedUserPtr2WayCoherentThenReturnTrue) {
-    EXPECT_TRUE(productHelper->isMisalignedUserPtr2WayCoherent());
 }
 
 LNLTEST_F(LnlProductHelper, givenProductHelperWhenCheckingInitializeInternalEngineImmediatelyThenCorrectValueIsReturned) {

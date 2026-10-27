@@ -14,7 +14,6 @@
 #include "shared/test/common/mocks/mock_cache_settings_helper.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gmm.h"
-#include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 namespace NEO {
@@ -77,13 +76,10 @@ HWTEST_F(GmmTests, givenPreferNoCpuAccessSettingWhenDebugKeyUsedThenProperOverri
     auto rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment *>(executionEnvironment->rootDeviceEnvironments[0].get());
     rootDeviceEnvironment->isWddmOnLinuxEnable = true;
 
-    auto *origProductHelper = rootDeviceEnvironment->productHelper.release();
-    rootDeviceEnvironment->productHelper.reset(new MockProductHelper);
-
     // force isCpuCachingOfDeviceBuffersAllowed() to always return false
-    auto *mockProductHelper = static_cast<MockProductHelper *>(rootDeviceEnvironment->productHelper.get());
-    mockProductHelper->isNewCoherencyModelSupportedResult = true;
-    rootDeviceEnvironment->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
+    auto &hwInfo = *rootDeviceEnvironment->getMutableHardwareInfo();
+    hwInfo.caps.newCoherencyModelSupported = true;
+    hwInfo.capabilityTable.isIntegratedDevice = true;
     EXPECT_FALSE(MockCacheSettingsHelper::isCpuCachingOfDeviceBuffersAllowed(*rootDeviceEnvironment));
 
     // case of preferNoCpuAccess == true
@@ -102,8 +98,6 @@ HWTEST_F(GmmTests, givenPreferNoCpuAccessSettingWhenDebugKeyUsedThenProperOverri
     gmm = std::make_unique<Gmm>(getGmmHelper(), nullptr, 0, 0, gmmResourceUsageType, storageInfo, gmmRequirements);
     gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
     EXPECT_EQ(gmmResourceParams->Flags.Info.Cacheable, (not CacheSettingsHelper::isUncachedType(gmmResourceUsageType)));
-
-    rootDeviceEnvironment->productHelper.reset(origProductHelper);
 }
 
 HWTEST_F(GmmTests, givenVariousResourceUsageTypeWhenCreateGmmThenFlagCacheableIsSetProperly) {

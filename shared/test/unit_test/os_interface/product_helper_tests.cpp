@@ -290,11 +290,6 @@ TEST_F(ProductHelperTest, givenInvalidHwInfoWhenParsingHwInfoConfigThenErrorIsRe
     EXPECT_FALSE(success);
 }
 
-HWTEST_F(ProductHelperTest, whenOverrideGfxPartitionLayoutForWslThenReturnFalse) {
-
-    EXPECT_FALSE(productHelper->overrideGfxPartitionLayoutForWsl());
-}
-
 HWTEST_F(ProductHelperTest, givenHardwareInfoWhenCallingIsAdditionalStateBaseAddressWARequiredThenFalseIsReturned) {
 
     bool ret = productHelper->isAdditionalStateBaseAddressWARequired(pInHwInfo);
@@ -381,11 +376,6 @@ HWTEST_F(ProductHelperTest, givenVariousDebugKeyValuesWhenGettingLocalMemoryAcce
     EXPECT_EQ(LocalMemoryAccessMode::cpuAccessDisallowed, productHelper->getLocalMemoryAccessMode(pInHwInfo));
 }
 
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedIfHeapInLocalMemThenFalseIsReturned, IsGen12LP) {
-
-    EXPECT_FALSE(productHelper->heapInLocalMem(pInHwInfo));
-}
-
 HWTEST2_F(ProductHelperTest, givenProductHelperWhenIsSkippingStatefulInformationRequiredThenFalseIsReturned, IsNotPVC) {
 
     KernelDescriptor kernelDescriptor{};
@@ -414,11 +404,6 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfForceEmuInt32DivRemSPWA
 HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIf3DPipelineSelectWAIsRequiredThenFalseIsReturned) {
 
     EXPECT_FALSE(productHelper->is3DPipelineSelectWARequired());
-}
-
-HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfStorageInfoAdjustmentIsRequiredThenFalseIsReturned) {
-
-    EXPECT_FALSE(productHelper->isStorageInfoAdjustmentRequired());
 }
 
 HWTEST2_F(ProductHelperTest, givenProductHelperWhenCallUseGemCreateExtInAllocateMemoryByKMDThenFalseIsReturned, IsGen12LP) {
@@ -813,18 +798,6 @@ HWTEST2_F(ProductHelperTest, givenDebugFlagWhenCheckingIsResolveDependenciesByPi
     EXPECT_TRUE(productHelper->isResolveDependenciesByPipeControlsSupported());
 }
 
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsBufferPoolAllocatorSupportedThenCorrectValueIsReturned, IsGen12LP) {
-    EXPECT_FALSE(productHelper->isBufferPoolAllocatorSupported());
-}
-
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsBufferPoolAllocatorSupportedThenCorrectValueIsReturned, IsXeHpcCore) {
-    EXPECT_FALSE(productHelper->isBufferPoolAllocatorSupported());
-}
-
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsBufferPoolAllocatorSupportedThenCorrectValueIsReturned, IsXeHpgCore) {
-    EXPECT_TRUE(productHelper->isBufferPoolAllocatorSupported());
-}
-
 HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsUsmPoolAllocatorSupportedThenCorrectValueIsReturned, IsGen12LP) {
     EXPECT_FALSE(productHelper->isDeviceUsmPoolAllocatorSupported());
     EXPECT_FALSE(productHelper->isHostUsmPoolAllocatorSupported());
@@ -1108,14 +1081,6 @@ HWTEST_F(ProductHelperTest, whenGettingPreferredAllocationMethodThenNoPreference
     }
 }
 
-HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingForReadOnlyResourceSupportThenFalseReturned) {
-    EXPECT_FALSE(productHelper->supportReadOnlyAllocations());
-}
-
-HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingForSharingWith3dOrMediaSupportThenTrueReturned) {
-    EXPECT_TRUE(productHelper->isSharingWith3dOrMediaAllowed());
-}
-
 HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingForDeviceToHostCopySignalingFenceFalseReturned) {
     EXPECT_FALSE(productHelper->isDeviceToHostCopySignalingFenceRequired());
 }
@@ -1229,10 +1194,6 @@ HWTEST2_F(ProductHelperTest, givenProductHelperBeforeXe2WhenOverrideDirectSubmis
     EXPECT_EQ(5000ull, timeoutUs);
 }
 
-HWTEST_F(ProductHelperTest, givenProductHelperWhenIsExposingSubdevicesAllowedThenTrueIsReturned) {
-    EXPECT_TRUE(productHelper->isExposingSubdevicesAllowed());
-}
-
 HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingIsPrimaryContextsAggregationSupportedThenReturnCorrectValue) {
     EXPECT_FALSE(productHelper->isPrimaryContextsAggregationSupported());
 }
@@ -1304,14 +1265,6 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIsDeviceCapsReaderSupport
 
 HWTEST_F(ProductHelperTest, givenProductHelperWhenSipDoesNotSupportSubslicePoolsThenFalseReturned) {
     EXPECT_FALSE(productHelper->sipUsesSubslicePools());
-}
-
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenCallIsNewCoherencyModelSupportedThenTrueIsReturned, IsAtLeastMtl) {
-    EXPECT_TRUE(productHelper->isNewCoherencyModelSupported());
-}
-
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenCallIsNewCoherencyModelSupportedThenFalseIsReturned, IsAtMostPVC) {
-    EXPECT_FALSE(productHelper->isNewCoherencyModelSupported());
 }
 
 HWTEST2_F(ProductHelperTest, givenPatIndexWhenCheckIsCoherentAllocationThenReturnProperValue, IsWithinXe2HpgCoreAndXe3Core) {

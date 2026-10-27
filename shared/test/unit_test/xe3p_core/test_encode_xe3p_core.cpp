@@ -71,7 +71,7 @@ XE3P_CORETEST_F(CommandEncodeXe3pCoreTest, givenDebugVariableSetwhenProgramingSt
     const GraphicsAllocation allocation(0, 1u /*num gmms*/, AllocationType::buffer, nullptr, gpuVa, 0, 4096, MemoryPool::localMemory, MemoryManager::maxOsContextCount);
 
     auto rootDeviceEnv = mockExecutionEnvironment.rootDeviceEnvironments[0].get();
-    auto usage = CacheSettingsHelper::getGmmUsageType(allocation.getAllocationType(), false, rootDeviceEnv->getProductHelper(), rootDeviceEnv->getHardwareInfo());
+    auto usage = CacheSettingsHelper::getGmmUsageType(allocation.getAllocationType(), false, rootDeviceEnv->getProductHelper(), *rootDeviceEnv->getHardwareInfo());
     uint32_t mocs = rootDeviceEnv->getGmmHelper()->getMOCS(usage);
 
     static constexpr std::array<uint32_t, 7> expectedSizes = {{

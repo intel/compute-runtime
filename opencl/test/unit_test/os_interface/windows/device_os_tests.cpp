@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,8 @@
 
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/get_info.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/device_factory.h"
-#include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
@@ -28,16 +28,15 @@ TEST(DeviceOsTest, GivenDefaultClDeviceWhenCheckingForOsSpecificExtensionsThenCo
     DebugManagerStateRestore stateRestore;
     ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
 
-    auto hwInfo = defaultHwInfo.get();
-    auto pDevice = MockDevice::createWithNewExecutionEnvironment<Device>(hwInfo);
+    auto pDevice = MockDevice::createWithNewExecutionEnvironment<Device>(defaultHwInfo.get());
     DeviceFactory::prepareDeviceEnvironments(*pDevice->getExecutionEnvironment());
     auto pClDevice = new ClDevice{*pDevice, platform()};
     std::string extensionString(pClDevice->getDeviceInfo().deviceExtensions);
-    auto &productHelper = pDevice->getProductHelper();
+    const auto &hwInfo = pDevice->getHardwareInfo();
 
     EXPECT_FALSE(hasSubstr(extensionString, std::string("cl_intel_va_api_media_sharing ")));
 
-    if (productHelper.isSharingWith3dOrMediaAllowed()) {
+    if (hwInfo.caps.sharingWith3dOrMediaAllowed) {
         EXPECT_TRUE(hasSubstr(extensionString, std::string("cl_intel_dx9_media_sharing ")));
         EXPECT_TRUE(hasSubstr(extensionString, std::string("cl_khr_dx9_media_sharing ")));
         EXPECT_TRUE(hasSubstr(extensionString, std::string("cl_khr_d3d10_sharing ")));

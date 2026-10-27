@@ -34,11 +34,14 @@ struct CapsXeHpgCore {
     static constexpr size_t svmCpuAlignment = MemoryConstants::pageSize2M;
 
     static constexpr bool bFloat16ConversionSupported = true;
+    static constexpr bool bufferPoolAllocatorSupported = true;
     static constexpr bool dotProductAccumulateSystolicSupported = true;
     static constexpr bool dummyBlitWaRequired = true;
+    static constexpr bool exposingSubdevicesAllowed = true;
     static constexpr bool globalBindlessAllocatorEnabled = true;
     static constexpr bool localOnlyAllowed = true;
     static constexpr bool matrixMultiplyAccumulateSupported = true;
+    static constexpr bool newResidencyModelSupported = true;
     static constexpr bool numRtStacksPerDssFixedValue = true;
     static constexpr bool pipeControlPriorToNonPipelinedStateCommandsBaseWARequired = true;
     static constexpr bool postImageWriteFlushRequired = true;
@@ -46,7 +49,10 @@ struct CapsXeHpgCore {
     static constexpr bool rayTracingSupported = true;
     static constexpr bool rcsExposureDisabled = true;
     static constexpr bool scratchSpaceBasePointerInGrf = true;
+    static constexpr bool sharingWith3dOrMediaAllowed = true;
     static constexpr bool splitMatrixMultiplyAccumulateSupported = true;
+    static constexpr bool storageInfoAdjustmentRequired = is32bit;
+    static constexpr bool useLocalPreferredForCacheableBuffers = true;
 };
 
 struct CapsDg2G10 : CapsXeHpgCore {};

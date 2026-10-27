@@ -2730,7 +2730,8 @@ HWTEST2_F(PrimaryBatchBufferPreamblelessCmdListTest,
           givenPrimaryBatchBufferWhenExecutingSingleCommandListTwiceInSingleCallAndFirstTimeNotExpectsPreambleThenProperlyDispatchPreambleForSecondInstance,
           IsAtLeastXeCore) {
 
-    if (device->getProductHelper().isNewCoherencyModelSupported()) {
+    const auto &hwInfo = device->getHwInfo();
+    if (hwInfo.caps.newCoherencyModelSupported) {
         GTEST_SKIP();
     }
 
@@ -2925,7 +2926,8 @@ HWTEST2_F(PrimaryBatchBufferPreamblelessCmdListTest,
           IsAtLeastXeCore) {
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
-    if (device->getProductHelper().isNewCoherencyModelSupported()) {
+    const auto &hwInfo = device->getHwInfo();
+    if (hwInfo.caps.newCoherencyModelSupported) {
         GTEST_SKIP();
     }
 

@@ -167,7 +167,7 @@ void Gmm::setupImageResourceParams(ImageInfo &imgInfo, bool preferCompressed) {
     auto &productHelper = gmmHelper->getRootDeviceEnvironment().getHelper<ProductHelper>();
     resourceParams->NoGfxMemory = 1; // dont allocate, only query for params
 
-    resourceParams->Usage = static_cast<GMM_RESOURCE_USAGE_TYPE_ENUM>(CacheSettingsHelper::getGmmUsageType(AllocationType::image, false, productHelper, &hwInfo));
+    resourceParams->Usage = static_cast<GMM_RESOURCE_USAGE_TYPE_ENUM>(CacheSettingsHelper::getGmmUsageType(AllocationType::image, false, productHelper, hwInfo));
 
     resourceParams->Format = static_cast<GMM_RESOURCE_FORMAT>(imgInfo.surfaceFormat->gmmSurfaceFormat);
     resourceParams->Flags.Gpu.Texture = 1;

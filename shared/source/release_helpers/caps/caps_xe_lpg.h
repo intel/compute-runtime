@@ -34,12 +34,17 @@ struct CapsXeLpgCore {
     static constexpr size_t svmCpuAlignment = MemoryConstants::pageSize2M;
 
     static constexpr bool bFloat16ConversionSupported = true;
+    static constexpr bool bufferPoolAllocatorSupported = true;
     static constexpr bool directSubmissionLightSupported = true;
+    static constexpr bool exposingSubdevicesAllowed = true;
     static constexpr bool globalBindlessAllocatorEnabled = true;
     static constexpr bool localOnlyAllowed = true;
+    static constexpr bool newCoherencyModelSupported = true;
+    static constexpr bool newResidencyModelSupported = true;
     static constexpr bool numRtStacksPerDssFixedValue = true;
     static constexpr bool rayTracingSupported = true;
     static constexpr bool scratchSpaceBasePointerInGrf = true;
+    static constexpr bool sharingWith3dOrMediaAllowed = true;
 };
 
 struct CapsMtlU : CapsXeLpgCore {

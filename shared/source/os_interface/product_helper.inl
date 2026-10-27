@@ -259,11 +259,6 @@ bool ProductHelperHw<gfxProduct>::isPageTableManagerSupported(const HardwareInfo
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::overrideGfxPartitionLayoutForWsl() const {
-    return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 uint32_t ProductHelperHw<gfxProduct>::getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const {
     return CommonConstants::invalidStepping;
 }
@@ -357,11 +352,6 @@ bool ProductHelperHw<gfxProduct>::isForceEmuInt32DivRemSPWARequired(const Hardwa
 
 template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::is3DPipelineSelectWARequired() const {
-    return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isStorageInfoAdjustmentRequired() const {
     return false;
 }
 
@@ -806,16 +796,6 @@ std::optional<GfxMemoryAllocationMethod> ProductHelperHw<gfxProduct>::getPreferr
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isNewCoherencyModelSupported() const {
-    return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::supportReadOnlyAllocations() const {
-    return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isDeviceToHostCopySignalingFenceRequired() const {
     return false;
 }
@@ -867,11 +847,6 @@ size_t ProductHelperHw<gfxProduct>::getCpuCopyThreshold(TransferType transferTyp
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isSharingWith3dOrMediaAllowed() const {
-    return true;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 uint64_t ProductHelperHw<gfxProduct>::getPatIndex(CacheRegion cacheRegion, CachePolicy cachePolicy) const {
     UNRECOVERABLE_IF(true);
     return -1;
@@ -905,11 +880,6 @@ bool ProductHelperHw<gfxProduct>::isWalkerPreemptionFallbackRequired(PreemptionM
 template <PRODUCT_FAMILY gfxProduct>
 uint32_t ProductHelperHw<gfxProduct>::adjustMaxThreadsPerThreadGroup(const HardwareInfo &hwInfo, uint32_t maxThreadsPerThreadGroup, uint32_t simt, uint32_t grfCount) const {
     return maxThreadsPerThreadGroup;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isMisalignedUserPtr2WayCoherent() const {
-    return false;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
@@ -951,11 +921,6 @@ bool ProductHelperHw<gfxProduct>::isTile64With3DSurfaceOnBCSSupported(const Hard
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isBufferPoolAllocatorSupported() const {
-    return true;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isHostUsmPoolAllocatorSupported() const {
     return true;
 }
@@ -963,11 +928,6 @@ bool ProductHelperHw<gfxProduct>::isHostUsmPoolAllocatorSupported() const {
 template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isDeviceUsmPoolAllocatorSupported() const {
     return true;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::useLocalPreferredForCacheableBuffers() const {
-    return false;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
@@ -981,11 +941,6 @@ bool ProductHelperHw<gfxProduct>::isHostUsmAllocationReuseSupported() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isSharedUsmAllocationReuseSupported() const {
-    return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isCompressionForbiddenCommon(bool defaultValue) const {
     auto images = debugManager.flags.RenderCompressedImagesEnabled.get();
     auto buffers = debugManager.flags.RenderCompressedBuffersEnabled.get();
@@ -995,11 +950,6 @@ bool ProductHelperHw<gfxProduct>::isCompressionForbiddenCommon(bool defaultValue
     } else {
         return (images == 0 && buffers == 0);
     }
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isExposingSubdevicesAllowed() const {
-    return true;
 }
 
 template <PRODUCT_FAMILY gfxProduct>

@@ -125,7 +125,7 @@ void GfxCoreHelperHw<Family>::setExtraAllocationData(AllocationData &allocationD
         allocationData.flags.requiresCpuAccess = true;
     }
 
-    if (productHelper.isStorageInfoAdjustmentRequired()) {
+    if (hwInfo.caps.storageInfoAdjustmentRequired) {
         if (properties.allocationType == AllocationType::buffer && !properties.flags.preferCompressed && !properties.flags.shareable) {
             allocationData.storageInfo.isLockable = true;
         }

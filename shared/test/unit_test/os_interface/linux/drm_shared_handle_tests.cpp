@@ -836,7 +836,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTestImpl, givenUncacheableFlagWhenCreatingAll
 
     auto gmmHelper = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getGmmHelper();
     auto &productHelper = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getHelper<ProductHelper>();
-    auto expectedUsageType = CacheSettingsHelper::getGmmUsageType(AllocationType::buffer, true, productHelper, gmmHelper->getHardwareInfo());
+    auto expectedUsageType = CacheSettingsHelper::getGmmUsageType(AllocationType::buffer, true, productHelper, *gmmHelper->getHardwareInfo());
 
     for (uint32_t i = 0; i < handles.size(); i++) {
         auto gmm = graphicsAllocation->getGmm(i);

@@ -136,7 +136,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment
                                              allocationData.hostPtr,
                                              sizeAligned,
                                              alignment,
-                                             CacheSettingsHelper::getGmmUsageType(memoryAllocation->getAllocationType(), !!allocationData.flags.uncacheable, productHelper, pHwInfo),
+                                             CacheSettingsHelper::getGmmUsageType(memoryAllocation->getAllocationType(), !!allocationData.flags.uncacheable, productHelper, *pHwInfo),
                                              allocationData.storageInfo,
                                              gmmRequirements);
             memoryAllocation->setDefaultGmm(gmm.release());
@@ -217,7 +217,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemory64kb(const Al
                                              allocationData.hostPtr,
                                              allocationDataAlign.size,
                                              allocationDataAlign.alignment,
-                                             CacheSettingsHelper::getGmmUsageType(memoryAllocation->getAllocationType(), !!allocationData.flags.uncacheable, productHelper, hwInfo),
+                                             CacheSettingsHelper::getGmmUsageType(memoryAllocation->getAllocationType(), !!allocationData.flags.uncacheable, productHelper, *hwInfo),
                                              allocationData.storageInfo, gmmRequirements);
             memoryAllocation->setDefaultGmm(gmm.release());
         }
@@ -496,7 +496,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocatePhysicalLocalDeviceMemory(c
                                 nullptr,
                                 sizeAligned64k,
                                 MemoryConstants::pageSize64k,
-                                CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, productHelper, hwInfo),
+                                CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, productHelper, *hwInfo),
                                 allocationData.storageInfo,
                                 gmmRequirements);
 
@@ -529,7 +529,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocatePhysicalDeviceMemory(const 
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = allocationData.flags.preferCompressed;
     auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), allocationData.hostPtr,
-                                     allocationData.size, 0u, CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, productHelper, hwInfo),
+                                     allocationData.size, 0u, CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, productHelper, *hwInfo),
                                      allocationData.storageInfo, gmmRequirements);
 
     GraphicsAllocation *alloc = nullptr;
@@ -556,7 +556,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocatePhysicalHostMemory(const Al
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
     auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), nullptr,
-                                     allocationData.size, 0u, CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, productHelper, hwInfo),
+                                     allocationData.size, 0u, CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, productHelper, *hwInfo),
                                      allocationData.storageInfo, gmmRequirements);
 
     GraphicsAllocation *alloc = nullptr;
@@ -583,7 +583,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateMemoryByKMD(const Allocatio
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = allocationData.flags.preferCompressed;
     auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), allocationData.hostPtr,
-                                     allocationData.size, 0u, CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, productHelper, hwInfo),
+                                     allocationData.size, 0u, CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, productHelper, *hwInfo),
                                      allocationData.storageInfo, gmmRequirements);
 
     GraphicsAllocation *alloc = nullptr;
@@ -763,7 +763,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryInDevicePool(
                                              allocationData.hostPtr,
                                              sizeAligned,
                                              MemoryConstants::pageSize2M,
-                                             CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, productHelper, gmmHelper->getHardwareInfo()),
+                                             CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, productHelper, *gmmHelper->getHardwareInfo()),
                                              allocationData.storageInfo,
                                              gmmRequirements);
             allocation->setDefaultGmm(gmm.release());
@@ -789,7 +789,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryInDevicePool(
                                             allocationData.hostPtr,
                                             sizeAligned,
                                             finalAlignment,
-                                            CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, productHelper, gmmHelper->getHardwareInfo()),
+                                            CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, productHelper, *gmmHelper->getHardwareInfo()),
                                             allocationData.storageInfo,
                                             gmmRequirements);
             }

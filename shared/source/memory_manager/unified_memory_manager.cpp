@@ -1246,6 +1246,7 @@ void SVMAllocsManager::initUsmSharedAllocationsCache(Device &device) {
 }
 
 void SVMAllocsManager::initUsmAllocationsCaches(Device &device) {
+    const auto &hwInfo = device.getHardwareInfo();
     const bool debuggerEnabled = nullptr != device.getDebugger();
     const bool isHwModeSelected = NEO::DeviceFactory::isHwModeSelected();
     const bool requireUpdatingAllocsForIndirectAccess = debugManager.flags.SetCommandStreamReceiver.get() > 0;
@@ -1275,7 +1276,7 @@ void SVMAllocsManager::initUsmAllocationsCaches(Device &device) {
         this->usmHostAllocationsCache->requireUpdatingAllocsForIndirectAccess = requireUpdatingAllocsForIndirectAccess;
     }
 
-    bool usmSharedAllocationsCacheEnabled = device.getProductHelper().isSharedUsmAllocationReuseSupported() &&
+    bool usmSharedAllocationsCacheEnabled = hwInfo.caps.sharedUsmAllocationReuseSupported &&
                                             !debuggerEnabled &&
                                             isHwModeSelected;
     if (debugManager.flags.ExperimentalEnableSharedAllocationCache.get() != -1) {

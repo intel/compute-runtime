@@ -35,11 +35,6 @@ bool ProductHelperHw<gfxProduct>::blitEnqueuePreferred(bool isWriteToImageFromBu
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isMisalignedUserPtr2WayCoherent() const {
-    return true;
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::isHostUsmPoolAllocatorSupported() const {
     return true;
 }
@@ -52,11 +47,6 @@ bool ProductHelperHw<gfxProduct>::isDeviceUsmPoolAllocatorSupported() const {
 template <>
 bool ProductHelperHw<gfxProduct>::initializeInternalEngineImmediately() const {
     return false;
-}
-
-template <>
-bool ProductHelperHw<gfxProduct>::isSharedUsmAllocationReuseSupported() const {
-    return true;
 }
 
 } // namespace NEO

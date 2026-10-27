@@ -82,10 +82,6 @@ CRITEST_F(CriProductHelper, givenProductHelperWhenAdditionalKernelExecInfoSuppor
     EXPECT_TRUE(fePropertiesSupport.disableOverdispatch);
 }
 
-CRITEST_F(CriProductHelper, givenProductHelperWhenAskingForReadOnlyResourceSupportThenTrueReturned) {
-    EXPECT_TRUE(productHelper->supportReadOnlyAllocations());
-}
-
 CRITEST_F(CriProductHelper, givenCompilerProductHelperWhenGetDefaultHwIpVersionThenCorrectValueIsSet) {
     EXPECT_EQ(compilerProductHelper->getDefaultHwIpVersion(), AOT::CRI_A0);
 }
@@ -123,10 +119,6 @@ CRITEST_F(CriProductHelper, givenProductHelperWhenAdjustingEnginesGroupThenChang
 
 CRITEST_F(CriProductHelper, givenProductHelperWhenIsImplicitScalingSupportedThenExpectFalse) {
     EXPECT_TRUE(productHelper->isImplicitScalingSupported(*defaultHwInfo));
-}
-
-CRITEST_F(CriProductHelper, givenProductHelperWhenCheckingIsBufferPoolAllocatorSupportedThenCorrectValueIsReturned) {
-    EXPECT_TRUE(productHelper->isBufferPoolAllocatorSupported());
 }
 
 CRITEST_F(CriProductHelper, givenProductHelperWhenAdjustNumberOfCcsThenOverrideToSingleCcs) {
@@ -183,10 +175,6 @@ CRITEST_F(CriProductHelper, givenProductHelperWhenGettingAreSecondaryContextsSup
 
 CRITEST_F(CriProductHelper, givenProductHelperWhenCheckingIs2MBLocalMemAlignmentEnabledThenCorrectValueIsReturned) {
     EXPECT_TRUE(productHelper->is2MBLocalMemAlignmentEnabled());
-}
-
-CRITEST_F(CriProductHelper, givenProductHelperWhenAskingForSharingWith3dOrMediaSupportThenFalseReturned) {
-    EXPECT_FALSE(productHelper->isSharingWith3dOrMediaAllowed());
 }
 
 CRITEST_F(CriProductHelper, givenGrfCount512WhenCallAdjustMaxThreadsPerThreadGroupThenAdjustThreadsPerThreadGroup) {

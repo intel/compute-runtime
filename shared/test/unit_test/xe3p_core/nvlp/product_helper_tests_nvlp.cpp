@@ -130,10 +130,6 @@ NVLPTEST_F(NvlProductHelper, givenEnableExtendedScratchSurfaceSizeFlagWhenCallIs
     EXPECT_FALSE(productHelper->isAvailableExtendedScratch());
 }
 
-NVLPTEST_F(NvlProductHelper, givenProductHelperWhenCheckingIsBufferPoolAllocatorSupportedThenCorrectValueIsReturned) {
-    EXPECT_TRUE(productHelper->isBufferPoolAllocatorSupported());
-}
-
 NVLPTEST_F(NvlProductHelper, givenProductHelperWhenCheckingIsLEOSupportedThenReturnTrue) {
     EXPECT_TRUE(productHelper->isLEOSupported());
 }

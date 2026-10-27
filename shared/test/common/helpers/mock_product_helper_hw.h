@@ -26,7 +26,6 @@ struct MockProductHelperHw : NEO::ProductHelperHw<productFamily> {
     bool isUnlockingLockedPtrNecessary(const HardwareInfo &hwInfo) const override;
     const SupportedNumGrfs getSupportedNumGrfs(const ReleaseHelper &releaseHelper) const override;
     aub_stream::EngineType getDefaultCopyEngine() const override;
-    bool isBufferPoolAllocatorSupported() const override;
     bool useAdditionalBlitProperties(const BlitProperties &blitProperties) const override { return enableAdditionalBlitProperties; }
     bool isIpSamplingSupported(const HardwareInfo &hwInfo) const override {
         return isIpSamplingSupportedValue;
@@ -39,7 +38,6 @@ struct MockProductHelperHw : NEO::ProductHelperHw<productFamily> {
     bool failOnConfigureHardwareCustom = false;
     bool isCooperativeEngineSupportedValue = true;
     bool returnedIsUnlockingLockedPtrNecessary = false;
-    bool isBufferPoolAllocatorSupportedValue = true;
     bool enableAdditionalBlitProperties = false;
     bool isIpSamplingSupportedValue = true;
     uint32_t returnedStepping = 0;

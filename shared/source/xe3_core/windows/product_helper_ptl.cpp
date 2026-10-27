@@ -16,11 +16,6 @@ constexpr static auto gfxProduct = IGFX_PTL;
 
 namespace NEO {
 
-template <>
-bool ProductHelperHw<gfxProduct>::isSharedUsmAllocationReuseSupported() const {
-    return true;
-}
-
 template class ProductHelperHw<gfxProduct>;
 
 } // namespace NEO

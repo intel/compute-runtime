@@ -134,8 +134,8 @@ bool IoctlHelperPrelim20::getTopologyDataAndMap(HardwareInfo &hwInfo, DrmQueryTo
 }
 
 bool IoctlHelperPrelim20::isVmBindAvailable() {
-    const auto &productHelper = drm.getRootDeviceEnvironment().getHelper<ProductHelper>();
-    if (!productHelper.isNewResidencyModelSupported()) {
+    const auto &hwInfo = *drm.getRootDeviceEnvironment().getHardwareInfo();
+    if (!hwInfo.caps.newResidencyModelSupported) {
         return false;
     }
     int vmBindSupported = 0;

@@ -1908,7 +1908,8 @@ HWTEST2_F(ImmediateFlushTaskGlobalStatelessCmdListTest,
           IsSbaRequiredAndAtLeastXeCore) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
-    if (neoDevice->getProductHelper().isNewCoherencyModelSupported()) {
+    const auto &hwInfo = neoDevice->getHardwareInfo();
+    if (hwInfo.caps.newCoherencyModelSupported) {
         GTEST_SKIP();
     }
 
@@ -2040,7 +2041,8 @@ HWTEST2_F(ImmediateFlushTaskCsrSharedHeapCmdListTest,
           IsHeapfulRequiredAndAtLeastXeCore) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
-    if (neoDevice->getProductHelper().isNewCoherencyModelSupported()) {
+    const auto &hwInfo = neoDevice->getHardwareInfo();
+    if (hwInfo.caps.newCoherencyModelSupported) {
         GTEST_SKIP();
     }
 

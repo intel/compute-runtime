@@ -203,12 +203,6 @@ HWTEST2_F(GfxCoreHelperDg2AndLaterTest, givenGfxCoreHelperWhenFlagSetAndCallGetA
 
 using ProductHelperTestDg2AndLater = ::testing::Test;
 
-HWTEST2_F(ProductHelperTestDg2AndLater, givenDg2AndLaterPlatformWhenAskedIfHeapInLocalMemThenTrueIsReturned, IsAtLeastXeCore) {
-    MockExecutionEnvironment mockExecutionEnvironment{};
-    auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
-    EXPECT_TRUE(productHelper.heapInLocalMem(*defaultHwInfo));
-}
-
 HWTEST2_F(GfxCoreHelperDg2AndLaterTest, givenPlatformSupportsHdcUntypedCacheFlushWhenPropertyBlocksCacheFlushThenExpectNoCacheFlushSet, IsAtLeastXeCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;

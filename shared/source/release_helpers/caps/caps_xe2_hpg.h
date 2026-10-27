@@ -38,16 +38,21 @@ struct CapsXe2HpgCore {
     static constexpr bool blitImageAllowedForDepthFormat = true;
     static constexpr bool block2DLoadSupported = true;
     static constexpr bool block2DStoreSupported = true;
+    static constexpr bool bufferPoolAllocatorSupported = true;
     static constexpr bool cacheFlushPriorToImageReadRequired = true;
     static constexpr bool deviceConfigStringTileCountIncluded = true;
     static constexpr bool dotProductAccumulateSystolicSupported = true;
+    static constexpr bool exposingSubdevicesAllowed = true;
     static constexpr bool globalBindlessAllocatorEnabled = true;
     static constexpr bool matrixMultiplyAccumulateSupported = true;
+    static constexpr bool newCoherencyModelSupported = true;
+    static constexpr bool newResidencyModelSupported = true;
     static constexpr bool numRtStacksPerDssFixedValue = true;
     static constexpr bool preImageReadFlushRequired = true;
     static constexpr bool rayTracingSupported = true;
     static constexpr bool rcsExposureDisabled = true;
     static constexpr bool scratchSpaceBasePointerInGrf = true;
+    static constexpr bool sharingWith3dOrMediaAllowed = true;
 };
 
 struct CapsBmg : CapsXe2HpgCore {
@@ -55,6 +60,7 @@ struct CapsBmg : CapsXe2HpgCore {
     static constexpr bool ftrXe2Compression = true;
     static constexpr bool programAdditionalStallPriorToBarrierWithTimestamp = true;
     static constexpr bool queryPeerAccess = true;
+    static constexpr bool readOnlyAllocationsSupported = true;
     static constexpr bool singleDispatchRequiredForMultiCCS = true;
 };
 struct CapsBmgG21 : CapsBmg {};
@@ -62,6 +68,8 @@ struct CapsBmgG31 : CapsBmg {};
 
 struct CapsLnl : CapsXe2HpgCore {
     static constexpr bool latePreemptionStartSupported = true;
+    static constexpr bool misalignedUserPtr2WayCoherent = true;
+    static constexpr bool sharedUsmAllocationReuseSupported = true;
 };
 
 constexpr std::optional<Caps> resolveCapsBmgG21(HardwareIpVersion ipVersion) {

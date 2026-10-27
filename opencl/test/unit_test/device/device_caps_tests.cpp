@@ -417,8 +417,8 @@ TEST_F(DeviceGetCapsTest, givenEnableSharingFormatQuerySetTrueAndDisabledMultipl
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &caps = device->getDeviceInfo();
 
-    auto &productHelper = device->getProductHelper();
-    if (productHelper.isSharingWith3dOrMediaAllowed()) {
+    const auto &hwInfo = device->getHardwareInfo();
+    if (hwInfo.caps.sharingWith3dOrMediaAllowed) {
         EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_intel_sharing_format_query ")));
     } else {
         EXPECT_FALSE(hasSubstr(caps.deviceExtensions, std::string("cl_intel_sharing_format_query ")));
@@ -441,14 +441,14 @@ TEST_F(DeviceGetCapsTest, givenEnableSharingFormatQuerySetTrueAndEnabledMultiple
     debugManager.flags.CreateMultipleSubDevices.set(2);
 
     auto rootDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    auto &productHelper = rootDevice->getProductHelper();
+    const auto &hwInfo = rootDevice->getHardwareInfo();
 
     EXPECT_FALSE(hasSubstr(rootDevice->getDeviceInfo().deviceExtensions, std::string("cl_intel_sharing_format_query ")));
 
     auto subDevice0 = rootDevice->getSubDevice(0);
     auto subDevice1 = rootDevice->getSubDevice(1);
 
-    if (productHelper.isSharingWith3dOrMediaAllowed()) {
+    if (hwInfo.caps.sharingWith3dOrMediaAllowed) {
         EXPECT_TRUE(hasSubstr(subDevice0->getDeviceInfo().deviceExtensions, std::string("cl_intel_sharing_format_query ")));
         EXPECT_TRUE(hasSubstr(subDevice1->getDeviceInfo().deviceExtensions, std::string("cl_intel_sharing_format_query ")));
     } else {

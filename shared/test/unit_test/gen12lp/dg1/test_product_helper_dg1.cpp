@@ -82,10 +82,6 @@ DG1TEST_F(Dg1ProductHelper, givenA0SteppingAndDg1PlatformWhenAskingIfWAIsRequire
     }
 }
 
-DG1TEST_F(Dg1ProductHelper, givenProductHelperWhenAskedIfStorageInfoAdjustmentIsRequiredThenTrueIsReturned) {
-    EXPECT_TRUE(productHelper->isStorageInfoAdjustmentRequired());
-}
-
 DG1TEST_F(Dg1ProductHelper, givenProductHelperWhenAskedIf3DPipelineSelectWAIsRequiredThenTrueIsReturned) {
     EXPECT_TRUE(productHelper->is3DPipelineSelectWARequired());
 }
@@ -107,10 +103,6 @@ DG1TEST_F(Dg1ProductHelper, givenDg1WhenObtainingFullBlitterSupportThenReturnFal
     const auto &hardwareInfo = DG1::hwInfo;
 
     EXPECT_FALSE(productHelper->isBlitterFullySupported(hardwareInfo));
-}
-
-DG1TEST_F(Dg1ProductHelper, whenOverrideGfxPartitionLayoutForWslThenReturnTrue) {
-    EXPECT_TRUE(productHelper->overrideGfxPartitionLayoutForWsl());
 }
 
 DG1TEST_F(Dg1ProductHelper, givenCompilerProductHelperWhenGetProductConfigThenCorrectMatchIsFound) {

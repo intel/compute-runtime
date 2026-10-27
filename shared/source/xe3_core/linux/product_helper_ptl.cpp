@@ -44,10 +44,5 @@ bool ProductHelperHw<gfxProduct>::useSharedSystemUsm() const {
     return false;
 }
 
-template <>
-bool ProductHelperHw<gfxProduct>::isSharedUsmAllocationReuseSupported() const {
-    return true;
-}
-
 template class ProductHelperHw<gfxProduct>;
 } // namespace NEO

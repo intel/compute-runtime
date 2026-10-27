@@ -528,7 +528,7 @@ Buffer *Buffer::create(Context *context,
                     allocationInfo.copyMemoryFromHostPtr = true;
                 }
             }
-        } else if (!rootDeviceEnvironment.getProductHelper().isNewCoherencyModelSupported() && allocationInfo.allocationType == AllocationType::buffer && !compressionEnabled) {
+        } else if (!hwInfo->caps.newCoherencyModelSupported && allocationInfo.allocationType == AllocationType::buffer && !compressionEnabled) {
             allocationInfo.allocationType = AllocationType::bufferHostMemory;
         }
 

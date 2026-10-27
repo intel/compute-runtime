@@ -255,6 +255,7 @@ bool Device::initializeCommonResources() {
 }
 
 void Device::initUsmReuseLimits() {
+    const auto &hwInfo = getHardwareInfo();
     constexpr double defaultFractionForRecycling = 0.08;
     constexpr double defaultFractionForLimitThreshold = 0.8;
 
@@ -262,7 +263,7 @@ void Device::initUsmReuseLimits() {
     const bool limitDeviceMemoryForReuse = ailConfiguration && ailConfiguration->limitAmountOfDeviceMemoryForRecycling();
 
     const bool deviceCacheEnabledByDefault = NEO::ApiSpecificConfig::isDeviceAllocationCacheEnabled() && this->getProductHelper().isDeviceUsmAllocationReuseSupported() && !limitDeviceMemoryForReuse;
-    const bool sharedCacheEnabledByDefault = this->getProductHelper().isSharedUsmAllocationReuseSupported() && !limitDeviceMemoryForReuse;
+    const bool sharedCacheEnabledByDefault = hwInfo.caps.sharedUsmAllocationReuseSupported && !limitDeviceMemoryForReuse;
 
     // each cache's fraction of total memory: flag value (percent, 0 disables) overrides the default; -1 keeps the default
     auto cacheFractionFromFlag = [](int32_t flagValue, bool enabledByDefault, double defaultFraction) -> double {

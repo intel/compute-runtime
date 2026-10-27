@@ -22,11 +22,9 @@ struct MockProductHelper : ProductHelperHw<IGFX_UNKNOWN> {
     ADDMETHOD_CONST_NOBASE(is48bResourceNeededForRayTracing, bool, true, ());
     ADDMETHOD_CONST_NOBASE(overrideAllocationCpuCacheable, bool, false, (const AllocationData &allocationData));
     ADDMETHOD_NOBASE(configureHwInfoWddm, int, 0, (const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, const RootDeviceEnvironment &rootDeviceEnvironment));
-    ADDMETHOD_CONST_NOBASE(supportReadOnlyAllocations, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isBlitCopyRequiredForLocalMemory, bool, true, (const RootDeviceEnvironment &rootDeviceEnvironment, const GraphicsAllocation &allocation));
     ADDMETHOD_CONST_NOBASE(isDeviceUsmAllocationReuseSupported, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isHostUsmAllocationReuseSupported, bool, false, ());
-    ADDMETHOD_CONST_NOBASE(isSharedUsmAllocationReuseSupported, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isHostUsmPoolAllocatorSupported, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isDeviceUsmPoolAllocatorSupported, bool, false, ());
     ADDMETHOD_CONST_NOBASE(is2MBLocalMemAlignmentEnabled, bool, false, ());
@@ -41,7 +39,6 @@ struct MockProductHelper : ProductHelperHw<IGFX_UNKNOWN> {
     ADDMETHOD_CONST_NOBASE(isDualStreamCopyOffloadForRegularCmdListSupported, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isGraphPatchPreambleBarrierSupported, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isL3FlushAfterPostSyncSupported, bool, false, ());
-    ADDMETHOD_CONST_NOBASE(isNewCoherencyModelSupported, bool, true, ());
     ADDMETHOD_CONST_NOBASE(useAdditionalBlitProperties, bool, false, (const BlitProperties &blitProperties));
     ADDMETHOD_CONST_NOBASE(isLEOSupported, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isDirectSubmissionContextGroupIdleDetectionEnabled, bool, true, ());

@@ -40,12 +40,14 @@ struct Caps {
     bool blitImageAllowedForDepthFormat = false;
     bool block2DLoadSupported = false;
     bool block2DStoreSupported = false;
+    bool bufferPoolAllocatorSupported = false;
     bool cacheFlushPriorToImageReadRequired = false;
     bool deviceConfigStringTileCountIncluded = false;
     bool deviceConfigStringXeCuSegmentIncluded = false;
     bool directSubmissionLightSupported = false;
     bool dotProductAccumulateSystolicSupported = false;
     bool dummyBlitWaRequired = false;
+    bool exposingSubdevicesAllowed = false;
     bool forceEmuInt32DivRemSPRequired = false;
     bool ftrXe2Compression = false;
     bool globalBindlessAllocatorEnabled = false;
@@ -56,7 +58,11 @@ struct Caps {
     bool localOnlyAllowed = false;
     bool matrixMultiplyAccumulateSupported = false;
     bool memSetExtendedPayloadSupported = false;
+    bool misalignedUserPtr2WayCoherent = false;
+    bool newCoherencyModelSupported = false;
+    bool newResidencyModelSupported = false;
     bool numRtStacksPerDssFixedValue = false;
+    bool overrideGfxPartitionLayoutForWsl = false;
     bool pipeControlPriorToNonPipelinedStateCommandsBaseWARequired = false;
     bool pipeControlPriorToPipelineSelectWaRequired = false;
     bool postImageWriteFlushRequired = false;
@@ -67,10 +73,15 @@ struct Caps {
     bool rayTracingSupported = false;
     bool rayTracingWalkerAdjustmentRequired = false;
     bool rcsExposureDisabled = false;
+    bool readOnlyAllocationsSupported = false;
     bool reducedSurfaceStateSupported = false;
     bool scratchSpaceBasePointerInGrf = false;
+    bool sharedUsmAllocationReuseSupported = false;
+    bool sharingWith3dOrMediaAllowed = false;
     bool singleDispatchRequiredForMultiCCS = false;
     bool splitMatrixMultiplyAccumulateSupported = false;
+    bool storageInfoAdjustmentRequired = false;
+    bool useLocalPreferredForCacheableBuffers = false;
 
     constexpr bool operator==(const Caps &) const = default;
 };

@@ -19,7 +19,7 @@
 
 namespace NEO {
 
-GmmResourceUsageType CacheSettingsHelper::getGmmUsageType(AllocationType allocationType, bool forceUncached, const ProductHelper &productHelper, const HardwareInfo *hwInfo) {
+GmmResourceUsageType CacheSettingsHelper::getGmmUsageType(AllocationType allocationType, bool forceUncached, const ProductHelper &productHelper, const HardwareInfo &hwInfo) {
     if (debugManager.flags.ForceUncachedGmmUsageType.get()) {
         UNRECOVERABLE_IF(allocationType == AllocationType::unknown);
         if ((1llu << (static_cast<int64_t>(allocationType) - 1)) & debugManager.flags.ForceUncachedGmmUsageType.get()) {
@@ -28,7 +28,7 @@ GmmResourceUsageType CacheSettingsHelper::getGmmUsageType(AllocationType allocat
     }
 
     if (forceUncached || debugManager.flags.ForceAllResourcesUncached.get()) {
-        return getDefaultUsageTypeWithCachingDisabled(allocationType, productHelper);
+        return getDefaultUsageTypeWithCachingDisabled(allocationType, hwInfo);
     } else {
         return getDefaultUsageTypeWithCachingEnabled(allocationType, productHelper, hwInfo);
     }
@@ -36,7 +36,7 @@ GmmResourceUsageType CacheSettingsHelper::getGmmUsageType(AllocationType allocat
 
 // The CPU fills ISA through a persistent mmap, so unlike the generic ISA usage type this one
 // has to guarantee a cacheable resource on a coherent PAT index.
-GmmResourceUsageType CacheSettingsHelper::getGmmUsageTypeForKmdMappedIsa(AllocationType allocationType, bool forceUncached, const ProductHelper &productHelper, const HardwareInfo *hwInfo) {
+GmmResourceUsageType CacheSettingsHelper::getGmmUsageTypeForKmdMappedIsa(AllocationType allocationType, bool forceUncached, const ProductHelper &productHelper, const HardwareInfo &hwInfo) {
     DEBUG_BREAK_IF(allocationType != AllocationType::kernelIsa && allocationType != AllocationType::kernelIsaInternal);
 
     const auto usageType = getGmmUsageType(allocationType, forceUncached, productHelper, hwInfo);
@@ -54,10 +54,8 @@ bool CacheSettingsHelper::isUncachedType(GmmResourceUsageType gmmResourceUsageTy
 }
 
 bool CacheSettingsHelper::isCpuCachingOfDeviceBuffersAllowed(const RootDeviceEnvironment &rootDeviceEnvironment) {
-    auto &productHelper = rootDeviceEnvironment.getProductHelper();
-    auto hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
-
-    return (!productHelper.isNewCoherencyModelSupported() || !hwInfo->capabilityTable.isIntegratedDevice);
+    const auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    return (!hwInfo.caps.newCoherencyModelSupported || !hwInfo.capabilityTable.isIntegratedDevice);
 }
 
 bool CacheSettingsHelper::preferNoCpuAccess(GmmResourceUsageType gmmResourceUsageType, const RootDeviceEnvironment &rootDeviceEnvironment) {
@@ -73,7 +71,7 @@ bool CacheSettingsHelper::preferNoCpuAccess(GmmResourceUsageType gmmResourceUsag
     return (gmmResourceUsageType != GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER);
 }
 
-GmmResourceUsageType CacheSettingsHelper::getDefaultUsageTypeWithCachingEnabled(AllocationType allocationType, const ProductHelper &productHelper, const HardwareInfo *hwInfo) {
+GmmResourceUsageType CacheSettingsHelper::getDefaultUsageTypeWithCachingEnabled(AllocationType allocationType, const ProductHelper &productHelper, const HardwareInfo &hwInfo) {
     if (debugManager.flags.ForceGmmSystemMemoryBufferForAllocations.get()) {
         UNRECOVERABLE_IF(allocationType == AllocationType::unknown);
         if ((1llu << (static_cast<int64_t>(allocationType))) & debugManager.flags.ForceGmmSystemMemoryBufferForAllocations.get()) {
@@ -81,7 +79,7 @@ GmmResourceUsageType CacheSettingsHelper::getDefaultUsageTypeWithCachingEnabled(
         }
     }
 
-    if (hwInfo->capabilityTable.isIntegratedDevice) {
+    if (hwInfo.capabilityTable.isIntegratedDevice) {
         if (productHelper.isResourceUncachedForCS(allocationType) || AllocationType::tagBuffer == allocationType || AllocationType::hostFunction == allocationType) {
             return GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC;
         } else if (AllocationType::semaphoreBuffer == allocationType) {
@@ -95,12 +93,12 @@ GmmResourceUsageType CacheSettingsHelper::getDefaultUsageTypeWithCachingEnabled(
     case AllocationType::internalHeap:
     case AllocationType::linearStream:
         if (debugManager.flags.DisableCachingForHeaps.get()) {
-            return getDefaultUsageTypeWithCachingDisabled(allocationType, productHelper);
+            return getDefaultUsageTypeWithCachingDisabled(allocationType, hwInfo);
         }
         return GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER;
     case AllocationType::constantSurface:
         if (debugManager.flags.ForceL1Caching.get() == 0) {
-            return getDefaultUsageTypeWithCachingDisabled(allocationType, productHelper);
+            return getDefaultUsageTypeWithCachingDisabled(allocationType, hwInfo);
         }
         return GMM_RESOURCE_USAGE_OCL_BUFFER_CONST;
     case AllocationType::buffer:
@@ -108,7 +106,7 @@ GmmResourceUsageType CacheSettingsHelper::getDefaultUsageTypeWithCachingEnabled(
     case AllocationType::svmGpu:
     case AllocationType::unifiedSharedMemory:
         if (debugManager.flags.DisableCachingForStatefulBufferAccess.get()) {
-            return getDefaultUsageTypeWithCachingDisabled(allocationType, productHelper);
+            return getDefaultUsageTypeWithCachingDisabled(allocationType, hwInfo);
         }
         return GMM_RESOURCE_USAGE_OCL_BUFFER;
     case AllocationType::bufferHostMemory:
@@ -122,7 +120,7 @@ GmmResourceUsageType CacheSettingsHelper::getDefaultUsageTypeWithCachingEnabled(
     case AllocationType::printfSurface:
     case AllocationType::hostFunction:
         if (debugManager.flags.DisableCachingForStatefulBufferAccess.get()) {
-            return getDefaultUsageTypeWithCachingDisabled(allocationType, productHelper);
+            return getDefaultUsageTypeWithCachingDisabled(allocationType, hwInfo);
         }
         return GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
     case AllocationType::gpuTimestampDeviceBuffer:
@@ -130,13 +128,13 @@ GmmResourceUsageType CacheSettingsHelper::getDefaultUsageTypeWithCachingEnabled(
         if (productHelper.isNonCoherentTimestampsModeEnabled()) {
             return GMM_RESOURCE_USAGE_OCL_BUFFER;
         }
-        return getDefaultUsageTypeWithCachingDisabled(allocationType, productHelper);
+        return getDefaultUsageTypeWithCachingDisabled(allocationType, hwInfo);
     default:
         return GMM_RESOURCE_USAGE_OCL_BUFFER;
     }
 }
 
-GmmResourceUsageType CacheSettingsHelper::getDefaultUsageTypeWithCachingDisabled(AllocationType allocationType, const ProductHelper &productHelper) {
+GmmResourceUsageType CacheSettingsHelper::getDefaultUsageTypeWithCachingDisabled(AllocationType allocationType, const HardwareInfo &hwInfo) {
     switch (allocationType) {
     case AllocationType::preemption:
         return GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC;
@@ -144,17 +142,17 @@ GmmResourceUsageType CacheSettingsHelper::getDefaultUsageTypeWithCachingDisabled
     case AllocationType::linearStream:
         return GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED;
     default:
-        return productHelper.isNewCoherencyModelSupported() ? GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC : GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED;
+        return hwInfo.caps.newCoherencyModelSupported ? GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC : GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED;
     }
 }
 
 // Select 2-way coherency for cacheline-misaligned allocations only when supported by the release.
-GmmResourceUsageType CacheSettingsHelper::getGmmUsageTypeForUserPtr(bool isCacheFlushRequired, const void *userPtr, size_t size, const ProductHelper &productHelper, const ReleaseHelper &releaseHelper) {
+GmmResourceUsageType CacheSettingsHelper::getGmmUsageTypeForUserPtr(bool isCacheFlushRequired, const void *userPtr, size_t size, const HardwareInfo &hwInfo, const ReleaseHelper &releaseHelper) {
     if (debugManager.flags.Disable2WayCoherencyOverride.get() || releaseHelper.isAppTransientCoherentPatRequired()) {
         return GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
     }
 
-    if (isCacheFlushRequired && !isL3Capable(userPtr, size) && productHelper.isMisalignedUserPtr2WayCoherent()) {
+    if (isCacheFlushRequired && !isL3Capable(userPtr, size) && hwInfo.caps.misalignedUserPtr2WayCoherent) {
         return GMM_RESOURCE_USAGE_HW_CONTEXT;
     } else {
         return GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;

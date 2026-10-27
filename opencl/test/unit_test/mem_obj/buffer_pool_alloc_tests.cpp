@@ -9,8 +9,6 @@
 #include "shared/source/utilities/heap_allocator.h"
 #include "shared/source/utilities/stackvec.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/helpers/mock_product_helper_hw.h"
-#include "shared/test/common/helpers/raii_product_helper.h"
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_ail_configuration.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -149,26 +147,26 @@ HWTEST_F(AggregatedSmallBuffersDefaultTest, givenDifferentFlagValuesAndSingleOrM
     context->devices.pop_back();
 }
 
-HWTEST2_PRODUCT_F(AggregatedSmallBuffersDefaultTest, givenSupportsOclBufferPoolCapabilityWhenCheckIfEnabledThenReturnCorrectValue, MatchAny) {
+TEST_F(AggregatedSmallBuffersDefaultTest, givenSupportsOclBufferPoolCapabilityWhenCheckIfEnabledThenReturnCorrectValue) {
     auto &rootDeviceEnvironment = *device->getExecutionEnvironment()->rootDeviceEnvironments[1];
-    NEO::RAIIProductHelperFactory<MockProductHelperHw<productFamily>> raii(rootDeviceEnvironment);
+    auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
 
     rootDeviceEnvironment.ailConfiguration.reset(new MockAILConfiguration());
     auto mockAIL = static_cast<MockAILConfiguration *>(rootDeviceEnvironment.ailConfiguration.get());
 
-    raii.mockProductHelper->isBufferPoolAllocatorSupportedValue = true;
+    hwInfo.caps.bufferPoolAllocatorSupported = true;
     mockAIL->isBufferPoolEnabledReturn = true;
     EXPECT_TRUE(context->getBufferPoolAllocator(Context::BufferPoolType::SmallBuffersPool).isAggregatedSmallBuffersEnabled(context.get()));
 
-    raii.mockProductHelper->isBufferPoolAllocatorSupportedValue = true;
+    hwInfo.caps.bufferPoolAllocatorSupported = true;
     mockAIL->isBufferPoolEnabledReturn = false;
     EXPECT_FALSE(context->getBufferPoolAllocator(Context::BufferPoolType::SmallBuffersPool).isAggregatedSmallBuffersEnabled(context.get()));
 
-    raii.mockProductHelper->isBufferPoolAllocatorSupportedValue = false;
+    hwInfo.caps.bufferPoolAllocatorSupported = false;
     mockAIL->isBufferPoolEnabledReturn = true;
     EXPECT_FALSE(context->getBufferPoolAllocator(Context::BufferPoolType::SmallBuffersPool).isAggregatedSmallBuffersEnabled(context.get()));
 
-    raii.mockProductHelper->isBufferPoolAllocatorSupportedValue = false;
+    hwInfo.caps.bufferPoolAllocatorSupported = false;
     mockAIL->isBufferPoolEnabledReturn = false;
     EXPECT_FALSE(context->getBufferPoolAllocator(Context::BufferPoolType::SmallBuffersPool).isAggregatedSmallBuffersEnabled(context.get()));
 }

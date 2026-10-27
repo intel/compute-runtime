@@ -38,19 +38,26 @@ struct CapsXe3Core {
     static constexpr bool blitImageAllowedForDepthFormat = true;
     static constexpr bool block2DLoadSupported = true;
     static constexpr bool block2DStoreSupported = true;
+    static constexpr bool bufferPoolAllocatorSupported = true;
     static constexpr bool cacheFlushPriorToImageReadRequired = true;
     static constexpr bool deviceConfigStringTileCountIncluded = true;
     static constexpr bool dotProductAccumulateSystolicSupported = true;
+    static constexpr bool exposingSubdevicesAllowed = true;
     static constexpr bool globalBindlessAllocatorEnabled = true;
     static constexpr bool matrixMultiplyAccumulateSupported = true;
+    static constexpr bool misalignedUserPtr2WayCoherent = true;
+    static constexpr bool newCoherencyModelSupported = true;
+    static constexpr bool newResidencyModelSupported = true;
     static constexpr bool numRtStacksPerDssFixedValue = true;
     static constexpr bool preImageReadFlushRequired = true;
     static constexpr bool rcsExposureDisabled = true;
     static constexpr bool scratchSpaceBasePointerInGrf = true;
+    static constexpr bool sharingWith3dOrMediaAllowed = true;
 };
 
 struct CapsPtlH : CapsXe3Core {
     static constexpr bool rayTracingSupported = true;
+    static constexpr bool sharedUsmAllocationReuseSupported = true;
 };
 struct CapsPtlHA0 : CapsPtlH {};
 struct CapsPtlHB0 : CapsPtlH {
@@ -60,10 +67,12 @@ struct CapsPtlHB0 : CapsPtlH {
 struct CapsPtlU : CapsXe3Core {
     static constexpr bool ftrXe2Compression = true;
     static constexpr bool rayTracingSupported = true;
+    static constexpr bool sharedUsmAllocationReuseSupported = true;
 };
 
 struct CapsWcl : CapsXe3Core {
     static constexpr bool ftrXe2Compression = true;
+    static constexpr bool sharedUsmAllocationReuseSupported = true;
 };
 
 struct CapsNvlS : CapsXe3Core {

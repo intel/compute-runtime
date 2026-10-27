@@ -54,23 +54,8 @@ PTLTEST_F(PtlProductHelper, givenProductHelperWhenCallIsStagingBuffersEnabledThe
     EXPECT_TRUE(productHelper->isStagingBuffersEnabled());
 }
 
-PTLTEST_F(PtlProductHelper, givenProductHelperWhenCheckingIsBufferPoolAllocatorSupportedThenCorrectValueIsReturned) {
-    EXPECT_TRUE(productHelper->isBufferPoolAllocatorSupported());
-}
-
 PTLTEST_F(PtlProductHelper, givenProductHelperWhenCheckingInitializeInternalEngineImmediatelyThenCorrectValueIsReturned) {
     EXPECT_FALSE(productHelper->initializeInternalEngineImmediately());
-}
-
-PTLTEST_F(PtlProductHelper, givenProductHelperWhenCheckingIsSharedUsmAllocationReuseSupportedThenReturnsTrue) {
-    {
-        VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::OCL);
-        EXPECT_TRUE(productHelper->isSharedUsmAllocationReuseSupported());
-    }
-    {
-        VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::L0);
-        EXPECT_TRUE(productHelper->isSharedUsmAllocationReuseSupported());
-    }
 }
 
 PTLTEST_F(PtlProductHelper, givenProductHelperWhenCheckingIsHostDeviceUsmPoolAllocatorSupportedThenCorrectValueIsReturned) {
@@ -84,8 +69,4 @@ PTLTEST_F(PtlProductHelper, givenProductHelperWhenCheckingIsHostDeviceUsmPoolAll
         EXPECT_TRUE(productHelper->isHostUsmPoolAllocatorSupported());
         EXPECT_TRUE(productHelper->isDeviceUsmPoolAllocatorSupported());
     }
-}
-
-PTLTEST_F(PtlProductHelper, givenProductHelperWhenIsMisalignedUserPtr2WayCoherentThenReturnTrue) {
-    EXPECT_TRUE(productHelper->isMisalignedUserPtr2WayCoherent());
 }

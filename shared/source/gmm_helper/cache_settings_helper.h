@@ -24,9 +24,9 @@ class ReleaseHelper;
 struct RootDeviceEnvironment;
 
 struct CacheSettingsHelper {
-    static GmmResourceUsageType getGmmUsageType(AllocationType allocationType, bool forceUncached, const ProductHelper &productHelper, const HardwareInfo *hwInfo);
-    static GmmResourceUsageType getGmmUsageTypeForKmdMappedIsa(AllocationType allocationType, bool forceUncached, const ProductHelper &productHelper, const HardwareInfo *hwInfo);
-    static GmmResourceUsageType getGmmUsageTypeForUserPtr(bool isCacheFlushRequired, const void *userPtr, size_t size, const ProductHelper &productHelper, const ReleaseHelper &releaseHelper);
+    static GmmResourceUsageType getGmmUsageType(AllocationType allocationType, bool forceUncached, const ProductHelper &productHelper, const HardwareInfo &hwInfo);
+    static GmmResourceUsageType getGmmUsageTypeForKmdMappedIsa(AllocationType allocationType, bool forceUncached, const ProductHelper &productHelper, const HardwareInfo &hwInfo);
+    static GmmResourceUsageType getGmmUsageTypeForUserPtr(bool isCacheFlushRequired, const void *userPtr, size_t size, const HardwareInfo &hwInfo, const ReleaseHelper &releaseHelper);
     static GmmResourceUsageType getGmmUsageTypeForCoherentSystemMemory(GmmResourceUsageType preferredUsageType, const ProductHelper &productHelper, const ReleaseHelper &releaseHelper);
 
     static bool isUncachedType(GmmResourceUsageType gmmResourceUsageType);
@@ -34,8 +34,8 @@ struct CacheSettingsHelper {
     static bool preferNoCpuAccess(GmmResourceUsageType gmmResourceUsageType, const RootDeviceEnvironment &rootDeviceEnvironment);
 
   protected:
-    static GmmResourceUsageType getDefaultUsageTypeWithCachingEnabled(AllocationType allocationType, const ProductHelper &productHelper, const HardwareInfo *hwInfo);
-    static GmmResourceUsageType getDefaultUsageTypeWithCachingDisabled(AllocationType allocationType, const ProductHelper &productHelper);
+    static GmmResourceUsageType getDefaultUsageTypeWithCachingEnabled(AllocationType allocationType, const ProductHelper &productHelper, const HardwareInfo &hwInfo);
+    static GmmResourceUsageType getDefaultUsageTypeWithCachingDisabled(AllocationType allocationType, const HardwareInfo &hwInfo);
     static bool isCpuCachingOfDeviceBuffersAllowed(const RootDeviceEnvironment &rootDeviceEnvironment);
 };
 } // namespace NEO

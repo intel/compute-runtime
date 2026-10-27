@@ -39,11 +39,15 @@ struct CapsXe3pCore {
     static constexpr bool blitImageAllowedForDepthFormat = true;
     static constexpr bool block2DLoadSupported = true;
     static constexpr bool block2DStoreSupported = true;
+    static constexpr bool bufferPoolAllocatorSupported = true;
     static constexpr bool cacheFlushPriorToImageReadRequired = true;
     static constexpr bool deviceConfigStringTileCountIncluded = true;
     static constexpr bool dotProductAccumulateSystolicSupported = true;
+    static constexpr bool exposingSubdevicesAllowed = true;
     static constexpr bool globalBindlessAllocatorEnabled = true;
     static constexpr bool matrixMultiplyAccumulateSupported = true;
+    static constexpr bool newCoherencyModelSupported = true;
+    static constexpr bool newResidencyModelSupported = true;
     static constexpr bool postImageWriteFlushRequired = true;
     static constexpr bool rcsExposureDisabled = true;
     static constexpr bool scratchSpaceBasePointerInGrf = true;
@@ -53,6 +57,7 @@ struct CapsCri : CapsXe3pCore {
     static constexpr uint32_t numCacheRegions = toUnderlying(CacheRegion::count);
 
     static constexpr bool deviceConfigStringXeCuSegmentIncluded = true;
+    static constexpr bool readOnlyAllocationsSupported = true;
 };
 struct CapsNvlP : CapsXe3pCore {
     static constexpr uint32_t maxNumSamplers = 16u;
@@ -61,6 +66,7 @@ struct CapsNvlP : CapsXe3pCore {
     static constexpr bool ftrXe2Compression = true;
     static constexpr bool preImageReadFlushRequired = true;
     static constexpr bool rayTracingSupported = true;
+    static constexpr bool sharingWith3dOrMediaAllowed = true;
 };
 struct CapsNvlPA0 : CapsNvlP {};
 struct CapsNvlPB0 : CapsNvlP {
