@@ -6,7 +6,8 @@
  */
 
 #pragma once
-#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/unified_memory_pooling.h"
 #include "shared/source/utilities/buffer_pool_allocator.h"
 #include "shared/source/utilities/stackvec.h"
@@ -21,6 +22,7 @@
 
 #include <map>
 #include <type_traits>
+#include <utility>
 
 enum class InternalMemoryType : uint32_t;
 
@@ -48,6 +50,7 @@ struct OpenCLObjectMapper<_cl_context> {
 
 class Context : public BaseObject<_cl_context> {
     using UsmDeviceMemAllocPool = UsmMemAllocPool;
+    static void printDriverDiagnostics(const char *hint);
 
   public:
     using BufferAllocationsVec = StackVec<GraphicsAllocation *, 1>;
@@ -209,7 +212,7 @@ class Context : public BaseObject<_cl_context> {
             if (contextCallback) {
                 contextCallback(hint, &flags, sizeof(flags), userData);
             }
-            PRINT_STRING(debugManager.flags.PrintDriverDiagnostics.get() != -1, stdout, "\n%s\n", hint);
+            printDriverDiagnostics(hint);
         }
     }
 

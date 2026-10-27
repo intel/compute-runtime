@@ -43,6 +43,10 @@
 
 namespace NEO {
 
+void Context::printDriverDiagnostics(const char *hint) {
+    PRINT_STRING(debugManager.flags.PrintDriverDiagnostics.get() != -1, stdout, "\n%s\n", hint);
+}
+
 Context::Context(
     void(CL_CALLBACK *funcNotify)(const char *, const void *, size_t, void *),
     void *data) {

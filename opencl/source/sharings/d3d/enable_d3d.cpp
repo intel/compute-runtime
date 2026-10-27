@@ -9,6 +9,7 @@
 
 #include "opencl/source/sharings/d3d/enable_d3d.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/os_interface/windows/driver_info_windows.h"
 
 #include "opencl/source/api/api.h"

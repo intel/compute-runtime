@@ -7,6 +7,7 @@
 
 #include "opencl/source/mem_obj/mem_obj.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/bit_helpers.h"
