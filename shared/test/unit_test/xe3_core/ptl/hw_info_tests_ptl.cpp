@@ -81,19 +81,16 @@ PTLTEST_F(PtlHwInfoTest, whenCheckDirectSubmissionEnginesThenProperValuesAreSetT
             EXPECT_TRUE(directSubmissionEngines.data[i].engineSupported);
             EXPECT_FALSE(directSubmissionEngines.data[i].submitOnInit);
             EXPECT_FALSE(directSubmissionEngines.data[i].useNonDefault);
-            EXPECT_TRUE(directSubmissionEngines.data[i].useRootDevice);
             break;
         case aub_stream::ENGINE_BCS:
             EXPECT_TRUE(directSubmissionEngines.data[i].engineSupported);
             EXPECT_FALSE(directSubmissionEngines.data[i].submitOnInit);
             EXPECT_TRUE(directSubmissionEngines.data[i].useNonDefault);
-            EXPECT_TRUE(directSubmissionEngines.data[i].useRootDevice);
             break;
         default:
             EXPECT_FALSE(directSubmissionEngines.data[i].engineSupported);
             EXPECT_FALSE(directSubmissionEngines.data[i].submitOnInit);
             EXPECT_FALSE(directSubmissionEngines.data[i].useNonDefault);
-            EXPECT_FALSE(directSubmissionEngines.data[i].useRootDevice);
         }
     }
 }

@@ -1659,28 +1659,6 @@ HWTEST_F(InitDirectSubmissionTest, givenInternalContextWhenDirectSubmissionDisab
     csr.reset();
 }
 
-HWTEST_F(InitDirectSubmissionTest, givenRootDeviceContextWhenDirectSubmissionDisabledOnRootDeviceThenExpectFeatureNotAvailable) {
-    auto csr = std::make_unique<CommandStreamReceiverHw<FamilyType>>(*device->executionEnvironment, device->getRootDeviceIndex(), device->getDeviceBitfield());
-    std::unique_ptr<OsContext> osContext(OsContext::create(device->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), device->getRootDeviceIndex(), 0,
-                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::internal}, PreemptionMode::ThreadGroup,
-                                                                                                        device->getDeviceBitfield(), true)));
-    osContext->ensureContextInitialized();
-    osContext->setDefaultContext(true);
-
-    auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
-    hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
-    hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].useRootDevice = false;
-    hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].submitOnInit = false;
-
-    csr->setupContext(*osContext);
-    csr->initializeTagAllocation();
-    bool ret = csr->initDirectSubmission();
-    EXPECT_TRUE(ret);
-    EXPECT_FALSE(csr->isDirectSubmissionEnabled());
-
-    csr.reset();
-}
-
 HWTEST_F(InitDirectSubmissionTest, givenNonDefaultContextWhenDirectSubmissionDisabledOnNonDefaultThenExpectFeatureNotAvailable) {
     auto csr = std::make_unique<CommandStreamReceiverHw<FamilyType>>(*device->executionEnvironment, device->getRootDeviceIndex(), device->getDeviceBitfield());
     std::unique_ptr<OsContext> osContext(OsContext::create(device->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), device->getRootDeviceIndex(), 0,

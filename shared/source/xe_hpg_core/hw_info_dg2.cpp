@@ -31,11 +31,11 @@ const PLATFORM DG2::platform = {
 
 const RuntimeCapabilityTable DG2::capabilityTable{
     .directSubmissionEngines = makeDirectSubmissionPropertiesPerEngine({
-        {aub_stream::ENGINE_RCS, {.engineSupported = false, .submitOnInit = false, .useNonDefault = false, .useRootDevice = false}},
-        {aub_stream::ENGINE_CCS, {.engineSupported = true, .submitOnInit = false, .useNonDefault = false, .useRootDevice = true}},
-        {aub_stream::ENGINE_CCS1, {.engineSupported = true, .submitOnInit = false, .useNonDefault = true, .useRootDevice = true}},
-        {aub_stream::ENGINE_CCS2, {.engineSupported = true, .submitOnInit = false, .useNonDefault = true, .useRootDevice = true}},
-        {aub_stream::ENGINE_CCS3, {.engineSupported = true, .submitOnInit = false, .useNonDefault = true, .useRootDevice = true}},
+        {aub_stream::ENGINE_RCS, {.engineSupported = false, .submitOnInit = false, .useNonDefault = false}},
+        {aub_stream::ENGINE_CCS, {.engineSupported = true, .submitOnInit = false, .useNonDefault = false}},
+        {aub_stream::ENGINE_CCS1, {.engineSupported = true, .submitOnInit = false, .useNonDefault = true}},
+        {aub_stream::ENGINE_CCS2, {.engineSupported = true, .submitOnInit = false, .useNonDefault = true}},
+        {aub_stream::ENGINE_CCS3, {.engineSupported = true, .submitOnInit = false, .useNonDefault = true}},
 
     }),
     .kmdNotifyProperties = {0, 0, 0, 0, false, false, false, false},

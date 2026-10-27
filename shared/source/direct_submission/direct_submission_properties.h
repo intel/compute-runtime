@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,6 @@ struct DirectSubmissionProperties {
     bool engineSupported = false;
     bool submitOnInit = false;
     bool useNonDefault = false;
-    bool useRootDevice = false;
     bool operator==(const DirectSubmissionProperties &) const = default;
 };
 

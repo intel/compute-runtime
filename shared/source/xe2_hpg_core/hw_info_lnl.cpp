@@ -33,7 +33,7 @@ const PLATFORM LNL::platform = {
 
 const RuntimeCapabilityTable LNL::capabilityTable{
     .directSubmissionEngines = makeDirectSubmissionPropertiesPerEngine({
-        {aub_stream::ENGINE_CCS, {.engineSupported = true, .submitOnInit = false, .useNonDefault = false, .useRootDevice = true}},
+        {aub_stream::ENGINE_CCS, {.engineSupported = true, .submitOnInit = false, .useNonDefault = false}},
     }),
     .kmdNotifyProperties = {0, 0, 0, 0, false, false, false, false},
     .gpuAddressSpace = MemoryConstants::max48BitAddress,

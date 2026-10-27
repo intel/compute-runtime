@@ -33,9 +33,9 @@ const PLATFORM BMG::platform = {
 
 const RuntimeCapabilityTable BMG::capabilityTable{
     .directSubmissionEngines = makeDirectSubmissionPropertiesPerEngine({
-        {aub_stream::ENGINE_CCS, {.engineSupported = true, .submitOnInit = false, .useNonDefault = false, .useRootDevice = true}},
-        {aub_stream::ENGINE_CCS1, {.engineSupported = true, .submitOnInit = false, .useNonDefault = true, .useRootDevice = true}},
-        {aub_stream::ENGINE_BCS, {.engineSupported = true, .submitOnInit = false, .useNonDefault = true, .useRootDevice = true}},
+        {aub_stream::ENGINE_CCS, {.engineSupported = true, .submitOnInit = false, .useNonDefault = false}},
+        {aub_stream::ENGINE_CCS1, {.engineSupported = true, .submitOnInit = false, .useNonDefault = true}},
+        {aub_stream::ENGINE_BCS, {.engineSupported = true, .submitOnInit = false, .useNonDefault = true}},
     }),
     .kmdNotifyProperties = {0, 0, 0, 0, false, false, false, false},
     .gpuAddressSpace = MemoryConstants::max48BitAddress,

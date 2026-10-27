@@ -32,8 +32,8 @@ const PLATFORM RKL::platform = {
 
 const RuntimeCapabilityTable RKL::capabilityTable{
     .directSubmissionEngines = makeDirectSubmissionPropertiesPerEngine({
-        {aub_stream::ENGINE_RCS, {.engineSupported = true, .submitOnInit = true, .useNonDefault = false, .useRootDevice = false}},
-        {aub_stream::ENGINE_CCS, {.engineSupported = true, .submitOnInit = true, .useNonDefault = false, .useRootDevice = false}},
+        {aub_stream::ENGINE_RCS, {.engineSupported = true, .submitOnInit = true, .useNonDefault = false}},
+        {aub_stream::ENGINE_CCS, {.engineSupported = true, .submitOnInit = true, .useNonDefault = false}},
     }),
     .kmdNotifyProperties = {0, 0, 0, 0, false, false, false, false},
     .gpuAddressSpace = MemoryConstants::max48BitAddress,
