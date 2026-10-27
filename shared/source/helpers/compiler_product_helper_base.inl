@@ -22,6 +22,11 @@ uint64_t CompilerProductHelperHw<gfxProduct>::getHwInfoConfig(const HardwareInfo
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+void CompilerProductHelperHw<gfxProduct>::setProductConfigForHwInfo(HardwareInfo &hwInfo, HardwareIpVersion config) const {
+    hwInfo.ipVersion = config;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 const char *CompilerProductHelperHw<gfxProduct>::getCachingPolicyOptions(bool isDebuggerActive) const {
     return L1CachePolicyHelper<gfxProduct>::getCachingPolicyOptions(isDebuggerActive);
 }

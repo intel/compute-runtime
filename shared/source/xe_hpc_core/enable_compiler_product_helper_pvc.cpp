@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/helpers/compiler_aot_config_before_mtl.inl"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/compiler_product_helper_base.inl"
 #include "shared/source/helpers/compiler_product_helper_from_xe_hpc_to_xe3p.inl"
@@ -19,6 +18,12 @@ namespace NEO {
 template <>
 uint32_t CompilerProductHelperHw<IGFX_PVC>::getDefaultHwIpVersion() const {
     return AOT::PVC_XT_C0;
+}
+
+template <>
+void CompilerProductHelperHw<IGFX_PVC>::setProductConfigForHwInfo(HardwareInfo &hwInfo, HardwareIpVersion config) const {
+    hwInfo.platform.usRevId = config.revision;
+    hwInfo.ipVersion = config;
 }
 
 template <>

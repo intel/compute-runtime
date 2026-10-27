@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,9 +13,4 @@ template <PRODUCT_FAMILY gfxProduct>
 uint32_t CompilerProductHelperHw<gfxProduct>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
     return hwInfo.ipVersion.value ? hwInfo.ipVersion.value : getDefaultHwIpVersion();
 }
-template <PRODUCT_FAMILY gfxProduct>
-void CompilerProductHelperHw<gfxProduct>::setProductConfigForHwInfo(HardwareInfo &hwInfo, HardwareIpVersion config) const {
-    hwInfo.ipVersion = config;
-}
-
 } // namespace NEO

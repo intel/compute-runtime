@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/helpers/compiler_aot_config_before_mtl.inl"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/compiler_product_helper_base.inl"
 #include "shared/source/helpers/compiler_product_helper_before_xe_hpc.inl"
@@ -34,6 +33,12 @@ uint32_t CompilerProductHelperHw<IGFX_DG2>::matchRevisionIdWithProductConfig(Har
     dg2Config.revision = revisionID;
     return dg2Config.value;
 }
+template <>
+void CompilerProductHelperHw<IGFX_DG2>::setProductConfigForHwInfo(HardwareInfo &hwInfo, HardwareIpVersion config) const {
+    hwInfo.platform.usRevId = config.revision;
+    hwInfo.ipVersion = config;
+}
+
 template <>
 uint32_t CompilerProductHelperHw<IGFX_DG2>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
     if (DG2::isG10(hwInfo)) {

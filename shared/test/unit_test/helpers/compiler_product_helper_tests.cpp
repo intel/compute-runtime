@@ -122,14 +122,30 @@ HWTEST2_F(CompilerProductHelperFixture, GivenPreXeHpcThenMatrixMultiplyAccumulat
     EXPECT_FALSE(compilerProductHelper.isMatrixMultiplyAccumulateTF32Supported(hwInfo));
 }
 
-HWTEST2_F(CompilerProductHelperFixture, givenAotConfigWhenSetHwInfoRevisionIdThenCorrectValueIsSet, IsAtMostDg2) {
+using IsDg2OrPvc = IsWithinProducts<IGFX_DG2, IGFX_PVC>;
+using IsNotDg2OrPvc = IsNotWithinProducts<IGFX_DG2, IGFX_PVC>;
+
+HWTEST2_F(CompilerProductHelperFixture, givenAotConfigWhenSetHwInfoRevisionIdThenCorrectValueIsSet, IsDg2OrPvc) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
     auto hwInfo = *defaultHwInfo;
+    hwInfo.platform.usRevId = CommonConstants::invalidRevisionID;
     auto productConfig = compilerProductHelper.getHwIpVersion(*defaultHwInfo);
     HardwareIpVersion aotConfig = {0};
     aotConfig.value = productConfig;
     compilerProductHelper.setProductConfigForHwInfo(hwInfo, aotConfig);
     EXPECT_EQ(hwInfo.platform.usRevId, aotConfig.revision);
+    EXPECT_EQ(hwInfo.ipVersion.value, aotConfig.value);
+}
+
+HWTEST2_F(CompilerProductHelperFixture, givenAotConfigWhenSetProductConfigForHwInfoThenRevisionIdIsNotChanged, IsNotDg2OrPvc) {
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.platform.usRevId = CommonConstants::invalidRevisionID;
+    auto productConfig = compilerProductHelper.getHwIpVersion(*defaultHwInfo);
+    HardwareIpVersion aotConfig = {0};
+    aotConfig.value = productConfig;
+    compilerProductHelper.setProductConfigForHwInfo(hwInfo, aotConfig);
+    EXPECT_EQ(CommonConstants::invalidRevisionID, hwInfo.platform.usRevId);
     EXPECT_EQ(hwInfo.ipVersion.value, aotConfig.value);
 }
 

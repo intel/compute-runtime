@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/gen12lp/compiler_product_helper_gen12lp.inl"
-#include "shared/source/helpers/compiler_aot_config_before_mtl.inl"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/compiler_product_helper_base.inl"
 #include "shared/source/helpers/compiler_product_helper_before_xe_hpc.inl"
