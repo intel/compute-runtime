@@ -48,11 +48,9 @@ struct XeHpgCore {
 
     struct StateComputeModeStateSupport {
         static constexpr bool threadArbitrationPolicy = false;
-        static constexpr bool coherencyRequired = true;
         static constexpr bool largeGrfMode = true;
         static constexpr bool zPassAsyncComputeThreadLimit = true;
         static constexpr bool pixelAsyncComputeThreadLimit = true;
-        static constexpr bool devicePreemptionMode = false;
     };
 
     struct StateBaseAddressStateSupport {

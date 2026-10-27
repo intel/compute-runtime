@@ -11,16 +11,13 @@
 #include <stream_properties_ext.h>
 
 namespace NEO {
-enum PreemptionMode : uint32_t;
 struct RootDeviceEnvironment;
 
 struct StateComputeModePropertiesSupport {
-    bool coherencyRequired : 1 = false;
     bool largeGrfMode : 1 = false;
     bool zPassAsyncComputeThreadLimit : 1 = false;
     bool pixelAsyncComputeThreadLimit : 1 = false;
     bool threadArbitrationPolicy : 1 = false;
-    bool devicePreemptionMode : 1 = false;
     bool allocationForScratchAndMidthreadPreemption : 1 = false;
     bool enableVariableRegisterSizeAllocation : 1 = false;
     bool pipelinedEuThreadArbitration : 1 = false;
@@ -43,7 +40,6 @@ struct StateComputeModeProperties {
     StreamProperty zPassAsyncComputeThreadLimit{};
     StreamProperty pixelAsyncComputeThreadLimit{};
     StreamProperty threadArbitrationPolicy{};
-    StreamProperty devicePreemptionMode{};
     StreamProperty memoryAllocationForScratchAndMidthreadPreemptionBuffers{};
     StreamProperty enableVariableRegisterSizeAllocation{};
     StreamProperty pipelinedEuThreadArbitration{};
@@ -62,8 +58,8 @@ struct StateComputeModeProperties {
     void initSupport(const RootDeviceEnvironment &rootDeviceEnvironment);
     void resetState();
 
-    void setPropertiesAll(bool requiresCoherency, uint32_t numGrfRequired, int32_t threadArbitrationPolicy, PreemptionMode devicePreemptionMode, std::optional<bool> hasPeerAccess);
-    void setPropertiesPerContext(bool requiresCoherency, PreemptionMode devicePreemptionMode, bool clearDirtyState, std::optional<bool> hasPeerAccess);
+    void setPropertiesAll(uint32_t numGrfRequired, int32_t threadArbitrationPolicy, std::optional<bool> hasPeerAccess);
+    void setPropertiesPerContext(bool clearDirtyState, std::optional<bool> hasPeerAccess);
     void setPropertiesGrfNumberThreadArbitration(uint32_t numGrfRequired, int32_t threadArbitrationPolicy);
 
     void copyPropertiesAll(const StateComputeModeProperties &properties);
@@ -86,8 +82,6 @@ struct StateComputeModeProperties {
 
     void copyPropertiesExtra(const StateComputeModeProperties &properties);
 
-    void setCoherencyProperty(bool requiresCoherency);
-    void setDevicePreemptionProperty(PreemptionMode devicePreemptionMode);
     void setGrfNumberProperty(uint32_t numGrfRequired);
     void setThreadArbitrationProperty(int32_t threadArbitrationPolicy);
 

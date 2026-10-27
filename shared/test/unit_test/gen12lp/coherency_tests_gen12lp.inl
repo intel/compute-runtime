@@ -149,17 +149,6 @@ GEN12LPTEST_F(Gen12LpCoherencyRequirements, GivenNoSharedHandlesThenCoherencyCmd
 
     auto scmCmd = reinterpret_cast<char *>(stream.getCpuBase());
     EXPECT_TRUE(memcmp(&expectedScmCmd, scmCmd + cmdsSizeWABeginOffset, sizeof(STATE_COMPUTE_MODE)) == 0);
-
-    auto startOffset = stream.getUsed();
-
-    overrideCoherencyRequest(true, true, false);
-    csr->programComputeMode(stream, flags, *defaultHwInfo);
-    EXPECT_EQ(cmdsSize * 2, stream.getUsed());
-
-    expectedScmCmd.setForceNonCoherent(STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_DISABLED);
-    expectedScmCmd.setMaskBits(FamilyType::stateComputeModeForceNonCoherentMask);
-    scmCmd = reinterpret_cast<char *>(ptrOffset(stream.getCpuBase(), startOffset));
-    EXPECT_TRUE(memcmp(&expectedScmCmd, scmCmd + cmdsSizeWABeginOffset, sizeof(STATE_COMPUTE_MODE)) == 0);
 }
 
 GEN12LPTEST_F(Gen12LpCoherencyRequirements, GivenSharedHandlesThenCoherencyCmdValuesAreCorrect) {
@@ -193,20 +182,6 @@ GEN12LPTEST_F(Gen12LpCoherencyRequirements, GivenSharedHandlesThenCoherencyCmdVa
     EXPECT_TRUE(memcmp(&expectedScmCmd, scmCmd + cmdsSizeWABeginOffset, sizeof(STATE_COMPUTE_MODE)) == 0);
 
     auto pcCmd = reinterpret_cast<char *>(ptrOffset(stream.getCpuBase(), sizeof(STATE_COMPUTE_MODE)));
-    EXPECT_TRUE(memcmp(&expectedPcCmd, pcCmd + cmdsSizeWABeginOffset, sizeof(PIPE_CONTROL)) == 0);
-
-    auto startOffset = stream.getUsed();
-
-    overrideCoherencyRequest(true, true, true);
-    csr->programComputeMode(stream, flags, *defaultHwInfo);
-    EXPECT_EQ(cmdsSize * 2, stream.getUsed());
-
-    expectedScmCmd.setForceNonCoherent(STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_DISABLED);
-    expectedScmCmd.setMaskBits(FamilyType::stateComputeModeForceNonCoherentMask);
-    scmCmd = reinterpret_cast<char *>(ptrOffset(stream.getCpuBase(), startOffset));
-    EXPECT_TRUE(memcmp(&expectedScmCmd, scmCmd + cmdsSizeWABeginOffset, sizeof(STATE_COMPUTE_MODE)) == 0);
-
-    pcCmd = reinterpret_cast<char *>(ptrOffset(stream.getCpuBase(), startOffset + sizeof(STATE_COMPUTE_MODE)));
     EXPECT_TRUE(memcmp(&expectedPcCmd, pcCmd + cmdsSizeWABeginOffset, sizeof(PIPE_CONTROL)) == 0);
 }
 

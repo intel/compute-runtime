@@ -163,8 +163,8 @@ struct UltCommandStreamReceiverTest
 
         const auto &hwInfo = pDevice->getHardwareInfo();
         commandStreamReceiver.streamProperties.pipelineSelect.setPropertiesAll(true, false);
-        commandStreamReceiver.streamProperties.stateComputeMode.setPropertiesAll(0, GrfConfig::defaultGrfNumber,
-                                                                                 hwInfo.caps.defaultThreadArbitrationPolicy, pDevice->getPreemptionMode(), false);
+        commandStreamReceiver.streamProperties.stateComputeMode.setPropertiesAll(GrfConfig::defaultGrfNumber,
+                                                                                 hwInfo.caps.defaultThreadArbitrationPolicy, false);
         commandStreamReceiver.streamProperties.frontEndState.setPropertiesAll(false, false, false);
     }
 

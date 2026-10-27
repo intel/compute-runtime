@@ -916,7 +916,7 @@ void CommandList::enableCopyOperationOffload() {
 
 void CommandList::setStreamPropertiesDefaultSettings(NEO::StreamProperties &streamProperties) {
     if (this->stateComputeModeTracking) {
-        streamProperties.stateComputeMode.setPropertiesPerContext(cmdListDefaultCoherency, this->commandListPreemptionMode, true, std::nullopt);
+        streamProperties.stateComputeMode.setPropertiesPerContext(true, std::nullopt);
     }
 
     streamProperties.frontEndState.setPropertiesDisableOverdispatch(cmdListDefaultDisableOverdispatch, true);

@@ -248,7 +248,6 @@ HWTEST_F(CommandListExecuteImmediate, GivenImmediateCommandListWhenCommandListIs
 
     auto &currentCsrStreamProperties = commandListImmediate.getCsr(false)->getStreamProperties();
     EXPECT_EQ(-1, currentCsrStreamProperties.stateComputeMode.isCoherencyRequired.value);
-    EXPECT_EQ(-1, currentCsrStreamProperties.stateComputeMode.devicePreemptionMode.value);
 
     EXPECT_EQ(-1, currentCsrStreamProperties.frontEndState.disableOverdispatch.value);
     EXPECT_EQ(-1, currentCsrStreamProperties.frontEndState.singleSliceDispatchCcsMode.value);

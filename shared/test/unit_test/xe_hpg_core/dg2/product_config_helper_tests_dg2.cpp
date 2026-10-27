@@ -417,16 +417,9 @@ DG2TEST_F(ProductHelperTestDg2, givenDg2WhenSetForceNonCoherentThenProperFlagSet
     using FORCE_NON_COHERENT = typename FamilyType::STATE_COMPUTE_MODE::FORCE_NON_COHERENT;
 
     auto stateComputeMode = FamilyType::cmdInitStateComputeMode;
-    auto properties = StateComputeModeProperties{};
 
-    properties.isCoherencyRequired.set(false);
-    productHelper->setForceNonCoherent(&stateComputeMode, properties);
+    productHelper->setForceNonCoherent(&stateComputeMode);
     EXPECT_EQ(FORCE_NON_COHERENT::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT, stateComputeMode.getForceNonCoherent());
-    EXPECT_EQ(XeHpgCoreFamily::stateComputeModeForceNonCoherentMask, stateComputeMode.getMaskBits());
-
-    properties.isCoherencyRequired.set(true);
-    productHelper->setForceNonCoherent(&stateComputeMode, properties);
-    EXPECT_EQ(FORCE_NON_COHERENT::FORCE_NON_COHERENT_FORCE_DISABLED, stateComputeMode.getForceNonCoherent());
     EXPECT_EQ(XeHpgCoreFamily::stateComputeModeForceNonCoherentMask, stateComputeMode.getMaskBits());
 }
 

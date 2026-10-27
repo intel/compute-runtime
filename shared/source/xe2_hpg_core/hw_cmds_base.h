@@ -48,11 +48,9 @@ struct Xe2HpgCore {
 
     struct StateComputeModeStateSupport {
         static constexpr bool threadArbitrationPolicy = true;
-        static constexpr bool coherencyRequired = true;
         static constexpr bool largeGrfMode = true;
         static constexpr bool zPassAsyncComputeThreadLimit = false;
         static constexpr bool pixelAsyncComputeThreadLimit = false;
-        static constexpr bool devicePreemptionMode = false;
 
         static constexpr bool allocationForScratchAndMidthreadPreemption = true;
         static constexpr bool enableL1FlushUavCoherencyMode = true;

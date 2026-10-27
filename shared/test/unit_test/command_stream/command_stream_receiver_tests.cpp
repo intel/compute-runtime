@@ -5011,7 +5011,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
 
     EXPECT_TRUE(commandStreamReceiver.getStateComputeModeDirty());
 
-    this->requiredStreamProperties.stateComputeMode.setPropertiesAll(false, GrfConfig::defaultGrfNumber, ThreadArbitrationPolicy::AgeBased, NEO::PreemptionMode::ThreadGroup, false);
+    this->requiredStreamProperties.stateComputeMode.setPropertiesAll(GrfConfig::defaultGrfNumber, ThreadArbitrationPolicy::AgeBased, false);
 
     commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
 
@@ -5056,7 +5056,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
 
     EXPECT_TRUE(commandStreamReceiver.getStateComputeModeDirty());
 
-    this->requiredStreamProperties.stateComputeMode.setPropertiesAll(false, GrfConfig::defaultGrfNumber, ThreadArbitrationPolicy::AgeBased, NEO::PreemptionMode::ThreadGroup, false);
+    this->requiredStreamProperties.stateComputeMode.setPropertiesAll(GrfConfig::defaultGrfNumber, ThreadArbitrationPolicy::AgeBased, false);
 
     immediateFlushTaskFlags.dispatchOperation = NEO::AppendOperations::nonKernel;
     commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);

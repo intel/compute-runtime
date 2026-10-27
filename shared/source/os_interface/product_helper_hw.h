@@ -34,7 +34,7 @@ class ProductHelperHw : public ProductHelper {
     bool isMaxThreadsForWorkgroupWARequired(const HardwareInfo &hwInfo) const override;
     uint32_t getMaxThreadsForWorkgroupInDSSOrSS(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice, uint32_t maxNumEUsPerDualSubSlice) const override;
     uint32_t getMaxThreadsForWorkgroup(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice) const override;
-    void setForceNonCoherent(void *const commandPtr, const StateComputeModeProperties &properties) const override;
+    void setForceNonCoherent(void *const commandPtr) const override;
     bool obtainBlitterPreference(const HardwareInfo &hwInfo) const override;
     bool isBlitterFullySupported(const HardwareInfo &hwInfo) const override;
     bool isPageTableManagerSupported(const HardwareInfo &hwInfo) const override;
@@ -123,11 +123,9 @@ class ProductHelperHw : public ProductHelper {
     bool getFrontEndPropertySingleSliceDispatchCcsModeSupport() const override;
 
     bool getScmPropertyThreadArbitrationPolicySupport() const override;
-    bool getScmPropertyCoherencyRequiredSupport() const override;
     bool getScmPropertyZPassAsyncComputeThreadLimitSupport() const override;
     bool getScmPropertyPixelAsyncComputeThreadLimitSupport() const override;
     bool getScmPropertyLargeGrfModeSupport() const override;
-    bool getScmPropertyDevicePreemptionModeSupport() const override;
 
     bool getStateBaseAddressPropertyBindingTablePoolBaseAddressSupport() const override;
 

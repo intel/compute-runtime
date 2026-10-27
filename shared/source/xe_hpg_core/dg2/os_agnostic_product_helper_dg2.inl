@@ -87,14 +87,12 @@ bool ProductHelperHw<gfxProduct>::isMaxThreadsForWorkgroupWARequired(const Hardw
 }
 
 template <>
-void ProductHelperHw<gfxProduct>::setForceNonCoherent(void *const statePtr, const StateComputeModeProperties &properties) const {
+void ProductHelperHw<gfxProduct>::setForceNonCoherent(void *const statePtr) const {
     using STATE_COMPUTE_MODE = typename XeHpgCoreFamily::STATE_COMPUTE_MODE;
     using FORCE_NON_COHERENT = typename STATE_COMPUTE_MODE::FORCE_NON_COHERENT;
 
     STATE_COMPUTE_MODE &stateComputeMode = *static_cast<STATE_COMPUTE_MODE *>(statePtr);
-    FORCE_NON_COHERENT coherencyValue = (properties.isCoherencyRequired.value == 1) ? FORCE_NON_COHERENT::FORCE_NON_COHERENT_FORCE_DISABLED
-                                                                                    : FORCE_NON_COHERENT::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT;
-    stateComputeMode.setForceNonCoherent(coherencyValue);
+    stateComputeMode.setForceNonCoherent(FORCE_NON_COHERENT::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT);
 
     auto mask = stateComputeMode.getMaskBits();
     mask |= XeHpgCoreFamily::stateComputeModeForceNonCoherentMask;

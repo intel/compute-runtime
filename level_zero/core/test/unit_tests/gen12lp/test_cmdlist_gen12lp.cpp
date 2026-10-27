@@ -409,12 +409,10 @@ GEN12LPTEST_F(CommandListGen12LpStateComputeModeTrackingTest,
     auto &cmdListFinalState = commandList->getFinalStreamState();
     auto &commandListStream = *commandList->commandContainer.getCommandStream();
 
-    EXPECT_EQ(-1, cmdlistRequiredState.stateComputeMode.devicePreemptionMode.value);
     EXPECT_EQ(-1, cmdlistRequiredState.stateComputeMode.isCoherencyRequired.value);
     EXPECT_EQ(-1, cmdlistRequiredState.stateComputeMode.largeGrfMode.value);
     EXPECT_EQ(-1, cmdlistRequiredState.stateComputeMode.threadArbitrationPolicy.value);
 
-    EXPECT_EQ(-1, cmdListFinalState.stateComputeMode.devicePreemptionMode.value);
     EXPECT_EQ(-1, cmdListFinalState.stateComputeMode.isCoherencyRequired.value);
     EXPECT_EQ(-1, cmdListFinalState.stateComputeMode.largeGrfMode.value);
     EXPECT_EQ(-1, cmdListFinalState.stateComputeMode.threadArbitrationPolicy.value);
@@ -436,22 +434,8 @@ GEN12LPTEST_F(CommandListGen12LpStateComputeModeTrackingTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     sizeAfter = commandListStream.getUsed();
 
-    if (scmPropertiesSupport.devicePreemptionMode) {
-        int32_t expectedPreemption = static_cast<int32_t>(device->getDevicePreemptionMode());
-        EXPECT_EQ(expectedPreemption, cmdlistRequiredState.stateComputeMode.devicePreemptionMode.value);
-        EXPECT_EQ(expectedPreemption, cmdListFinalState.stateComputeMode.devicePreemptionMode.value);
-    } else {
-        EXPECT_EQ(-1, cmdlistRequiredState.stateComputeMode.devicePreemptionMode.value);
-        EXPECT_EQ(-1, cmdListFinalState.stateComputeMode.devicePreemptionMode.value);
-    }
-
-    if (scmPropertiesSupport.coherencyRequired) {
-        EXPECT_EQ(0, cmdlistRequiredState.stateComputeMode.isCoherencyRequired.value);
-        EXPECT_EQ(0, cmdListFinalState.stateComputeMode.isCoherencyRequired.value);
-    } else {
-        EXPECT_EQ(-1, cmdlistRequiredState.stateComputeMode.isCoherencyRequired.value);
-        EXPECT_EQ(-1, cmdListFinalState.stateComputeMode.isCoherencyRequired.value);
-    }
+    EXPECT_EQ(0, cmdlistRequiredState.stateComputeMode.isCoherencyRequired.value);
+    EXPECT_EQ(0, cmdListFinalState.stateComputeMode.isCoherencyRequired.value);
 
     if (scmPropertiesSupport.largeGrfMode) {
         EXPECT_EQ(0, cmdlistRequiredState.stateComputeMode.largeGrfMode.value);

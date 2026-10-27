@@ -49,11 +49,9 @@ struct Xe3Core {
 
     struct StateComputeModeStateSupport {
         static constexpr bool threadArbitrationPolicy = false;
-        static constexpr bool coherencyRequired = true;
         static constexpr bool largeGrfMode = true;
         static constexpr bool zPassAsyncComputeThreadLimit = false;
         static constexpr bool pixelAsyncComputeThreadLimit = false;
-        static constexpr bool devicePreemptionMode = false;
 
         static constexpr bool allocationForScratchAndMidthreadPreemption = true;
         static constexpr bool enableVariableRegisterSizeAllocation = true;

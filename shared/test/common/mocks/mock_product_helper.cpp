@@ -34,7 +34,7 @@ uint32_t ProductHelperHw<IGFX_UNKNOWN>::getMaxThreadsForWorkgroup(const Hardware
 }
 
 template <>
-void ProductHelperHw<IGFX_UNKNOWN>::setForceNonCoherent(void *const commandPtr, const StateComputeModeProperties &properties) const {
+void ProductHelperHw<IGFX_UNKNOWN>::setForceNonCoherent(void *const commandPtr) const {
 }
 
 template <>
@@ -343,11 +343,9 @@ struct UnknownProduct {
 
     struct StateComputeModeStateSupport {
         static constexpr bool threadArbitrationPolicy = false;
-        static constexpr bool coherencyRequired = false;
         static constexpr bool largeGrfMode = false;
         static constexpr bool zPassAsyncComputeThreadLimit = false;
         static constexpr bool pixelAsyncComputeThreadLimit = false;
-        static constexpr bool devicePreemptionMode = false;
     };
 
     struct StateBaseAddressStateSupport {

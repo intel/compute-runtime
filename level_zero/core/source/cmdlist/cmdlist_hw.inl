@@ -4858,7 +4858,7 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularComma
             finalStreamState = requiredStreamState;
         } else {
             finalStreamState = requiredStreamState;
-            requiredStreamState.stateComputeMode.setPropertiesAll(cmdListDefaultCoherency, kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy, device->getDevicePreemptionMode(), device->getNEODevice()->hasAnyPeerAccess());
+            requiredStreamState.stateComputeMode.setPropertiesAll(kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy, device->getNEODevice()->hasAnyPeerAccess());
         }
         containsAnyKernel = true;
     }
@@ -4897,7 +4897,7 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularComma
     if (this->stateComputeModeTracking) {
         finalStreamState.stateComputeMode.setPropertiesGrfNumberThreadArbitration(kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy);
     } else {
-        finalStreamState.stateComputeMode.setPropertiesAll(cmdListDefaultCoherency, kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy, device->getDevicePreemptionMode(), device->getNEODevice()->hasAnyPeerAccess());
+        finalStreamState.stateComputeMode.setPropertiesAll(kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy, device->getNEODevice()->hasAnyPeerAccess());
     }
     if (finalStreamState.stateComputeMode.isDirty()) {
         bool isRcs = (this->engineGroupType == NEO::EngineGroupType::renderCompute);

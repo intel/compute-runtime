@@ -912,8 +912,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEnoughMemoryOnlyForPreambleWh
 
     csrCS.getSpace(csrCS.getAvailableSpace() - sizeNeededForPreamble);
 
-    commandStreamReceiver.streamProperties.stateComputeMode.setPropertiesAll(false, flushTaskFlags.numGrfRequired,
-                                                                             flushTaskFlags.threadArbitrationPolicy, PreemptionMode::Disabled, false);
+    commandStreamReceiver.streamProperties.stateComputeMode.setPropertiesAll(flushTaskFlags.numGrfRequired,
+                                                                             flushTaskFlags.threadArbitrationPolicy, false);
     flushTask(commandStreamReceiver);
 
     EXPECT_GE(sizeNeeded, csrCS.getUsed());
@@ -949,8 +949,8 @@ SBA_HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEnoughMemoryOnlyForPreamb
 
     csrCS.getSpace(csrCS.getAvailableSpace() - sizeNeededForPreamble - sizeNeededForStateBaseAddress);
 
-    commandStreamReceiver.streamProperties.stateComputeMode.setPropertiesAll(false, flushTaskFlags.numGrfRequired,
-                                                                             flushTaskFlags.threadArbitrationPolicy, PreemptionMode::Disabled, false);
+    commandStreamReceiver.streamProperties.stateComputeMode.setPropertiesAll(flushTaskFlags.numGrfRequired,
+                                                                             flushTaskFlags.threadArbitrationPolicy, false);
     flushTask(commandStreamReceiver);
 
     EXPECT_GE(sizeNeeded, csrCS.getUsed());
@@ -986,8 +986,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEnoughMemoryOnlyForPreambleAn
 
     flushTaskFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(mockDevice->getHardwareInfo());
 
-    commandStreamReceiver.streamProperties.stateComputeMode.setPropertiesAll(false, flushTaskFlags.numGrfRequired,
-                                                                             flushTaskFlags.threadArbitrationPolicy, PreemptionMode::Disabled, false);
+    commandStreamReceiver.streamProperties.stateComputeMode.setPropertiesAll(flushTaskFlags.numGrfRequired,
+                                                                             flushTaskFlags.threadArbitrationPolicy, false);
     commandStreamReceiver.flushTask(
         commandStream,
         0,

@@ -577,7 +577,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenCommandContainerWhenNumGrfRequiredIsGrea
 
     StreamProperties streamProperties{};
     streamProperties.initSupport(rootDeviceEnvironment);
-    streamProperties.stateComputeMode.setPropertiesAll(false, GrfConfig::largeGrfNumber, 0u, PreemptionMode::Disabled, false);
+    streamProperties.stateComputeMode.setPropertiesAll(GrfConfig::largeGrfNumber, 0u, false);
     EncodeComputeMode<FamilyType>::programComputeModeCommand(*cmdContainer->getCommandStream(), streamProperties.stateComputeMode, rootDeviceEnvironment);
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());

@@ -41,11 +41,9 @@ struct Gen12Lp {
 
     struct StateComputeModeStateSupport {
         static constexpr bool threadArbitrationPolicy = false;
-        static constexpr bool coherencyRequired = true;
         static constexpr bool largeGrfMode = false;
         static constexpr bool zPassAsyncComputeThreadLimit = false;
         static constexpr bool pixelAsyncComputeThreadLimit = false;
-        static constexpr bool devicePreemptionMode = false;
     };
 
     struct StateBaseAddressStateSupport {

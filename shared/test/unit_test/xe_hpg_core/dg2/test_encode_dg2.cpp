@@ -39,7 +39,6 @@ DG2TEST_F(CommandEncodeDG2Test, whenProgrammingStateComputeModeThenProperFieldsA
     EXPECT_EQ(STATE_COMPUTE_MODE::Z_PASS_ASYNC_COMPUTE_THREAD_LIMIT_MAX_60, pScm->getZPassAsyncComputeThreadLimit());
     EXPECT_FALSE(pScm->getLargeGrfMode());
 
-    properties.isCoherencyRequired.value = 1;
     properties.zPassAsyncComputeThreadLimit.value = 1;
     properties.pixelAsyncComputeThreadLimit.value = 1;
     properties.largeGrfMode.value = 1;
@@ -49,7 +48,7 @@ DG2TEST_F(CommandEncodeDG2Test, whenProgrammingStateComputeModeThenProperFieldsA
     expectedMask |= FamilyType::stateComputeModeZPassAsyncComputeThreadLimitMask |
                     FamilyType::stateComputeModePixelAsyncComputeThreadLimitMask;
     EXPECT_EQ(expectedMask, pScm->getMaskBits());
-    EXPECT_EQ(STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_DISABLED, pScm->getForceNonCoherent());
+    EXPECT_EQ(STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT, pScm->getForceNonCoherent());
     EXPECT_EQ(STATE_COMPUTE_MODE::PIXEL_ASYNC_COMPUTE_THREAD_LIMIT_MAX_2, pScm->getPixelAsyncComputeThreadLimit());
     EXPECT_EQ(STATE_COMPUTE_MODE::Z_PASS_ASYNC_COMPUTE_THREAD_LIMIT_MAX_64, pScm->getZPassAsyncComputeThreadLimit());
     EXPECT_TRUE(pScm->getLargeGrfMode());

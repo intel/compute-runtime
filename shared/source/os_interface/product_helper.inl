@@ -245,7 +245,7 @@ uint32_t ProductHelperHw<gfxProduct>::getMaxThreadsForWorkgroup(const HardwareIn
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-void ProductHelperHw<gfxProduct>::setForceNonCoherent(void *const commandPtr, const StateComputeModeProperties &properties) const {}
+void ProductHelperHw<gfxProduct>::setForceNonCoherent(void *const commandPtr) const {}
 
 template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isPageTableManagerSupported(const HardwareInfo &hwInfo) const {
@@ -572,12 +572,10 @@ bool ProductHelperHw<gfxProduct>::isResolveDependenciesByPipeControlsSupported()
 
 template <PRODUCT_FAMILY gfxProduct>
 void ProductHelperHw<gfxProduct>::fillScmPropertiesSupportStructureBase(StateComputeModePropertiesSupport &propertiesSupport) const {
-    propertiesSupport.coherencyRequired = getScmPropertyCoherencyRequiredSupport();
     propertiesSupport.threadArbitrationPolicy = isThreadArbitrationPolicyReportedWithScm();
     propertiesSupport.largeGrfMode = isGrfNumReportedWithScm();
     propertiesSupport.zPassAsyncComputeThreadLimit = getScmPropertyZPassAsyncComputeThreadLimitSupport();
     propertiesSupport.pixelAsyncComputeThreadLimit = getScmPropertyPixelAsyncComputeThreadLimitSupport();
-    propertiesSupport.devicePreemptionMode = getScmPropertyDevicePreemptionModeSupport();
 }
 
 template <PRODUCT_FAMILY gfxProduct>
@@ -592,12 +590,6 @@ template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::getScmPropertyThreadArbitrationPolicySupport() const {
     using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
     return GfxProduct::StateComputeModeStateSupport::threadArbitrationPolicy;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::getScmPropertyCoherencyRequiredSupport() const {
-    using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
-    return GfxProduct::StateComputeModeStateSupport::coherencyRequired;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
@@ -616,12 +608,6 @@ template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::getScmPropertyLargeGrfModeSupport() const {
     using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
     return GfxProduct::StateComputeModeStateSupport::largeGrfMode;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::getScmPropertyDevicePreemptionModeSupport() const {
-    using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
-    return GfxProduct::StateComputeModeStateSupport::devicePreemptionMode;
 }
 
 template <PRODUCT_FAMILY gfxProduct>

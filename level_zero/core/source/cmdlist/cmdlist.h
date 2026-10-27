@@ -909,7 +909,6 @@ struct CommandList : _ze_command_list_handle_t {
     size_t frontEndPatchSize = 0;
     size_t totalNoopSpacePatchSize = 0;
 
-    static constexpr bool cmdListDefaultCoherency = false;
     static constexpr bool cmdListDefaultDisableOverdispatch = true;
     static constexpr bool cmdListDefaultPipelineSelectModeSelected = true;
 

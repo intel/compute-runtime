@@ -396,11 +396,11 @@ XE3_CORETEST_F(EncodeKernelXe3CoreTest, givenDebugFlagSetWhenSetPropertiesAllCal
         StreamProperties streamProperties{};
         streamProperties.initSupport(rootDeviceEnvironment);
 
-        streamProperties.stateComputeMode.setPropertiesAll(false, 0, 0, PreemptionMode::Disabled, false);
+        streamProperties.stateComputeMode.setPropertiesAll(0, 0, false);
         EXPECT_TRUE(streamProperties.stateComputeMode.isPipelinedEuThreadArbitrationEnabled());
         EXPECT_TRUE(streamProperties.stateComputeMode.pipelinedEuThreadArbitration.isDirty);
 
-        streamProperties.stateComputeMode.setPropertiesAll(false, 1, 1, PreemptionMode::Disabled, false);
+        streamProperties.stateComputeMode.setPropertiesAll(1, 1, false);
         EXPECT_FALSE(streamProperties.stateComputeMode.pipelinedEuThreadArbitration.isDirty);
     }
 
@@ -410,7 +410,7 @@ XE3_CORETEST_F(EncodeKernelXe3CoreTest, givenDebugFlagSetWhenSetPropertiesAllCal
         StreamProperties streamProperties{};
         streamProperties.initSupport(rootDeviceEnvironment);
 
-        streamProperties.stateComputeMode.setPropertiesAll(false, 0, 0, PreemptionMode::Disabled, false);
+        streamProperties.stateComputeMode.setPropertiesAll(0, 0, false);
         EXPECT_FALSE(streamProperties.stateComputeMode.isPipelinedEuThreadArbitrationEnabled());
         EXPECT_FALSE(streamProperties.stateComputeMode.pipelinedEuThreadArbitration.isDirty);
     }
@@ -431,7 +431,7 @@ XE3_CORETEST_F(EncodeKernelXe3CoreTest, givenDebugFlagWhenProgrammingStateComput
 
         StreamProperties streamProperties{};
         streamProperties.initSupport(rootDeviceEnvironment);
-        streamProperties.stateComputeMode.setPropertiesAll(false, 0, 0, PreemptionMode::Disabled, false);
+        streamProperties.stateComputeMode.setPropertiesAll(0, 0, false);
         EncodeComputeMode<FamilyType>::programComputeModeCommand(linearStream, streamProperties.stateComputeMode, rootDeviceEnvironment);
 
         auto &stateComputeModeCmd = *reinterpret_cast<STATE_COMPUTE_MODE *>(linearStream.getCpuBase());
@@ -446,7 +446,7 @@ XE3_CORETEST_F(EncodeKernelXe3CoreTest, givenDebugFlagWhenProgrammingStateComput
 
         StreamProperties streamProperties{};
         streamProperties.initSupport(rootDeviceEnvironment);
-        streamProperties.stateComputeMode.setPropertiesAll(false, 0, 0, PreemptionMode::Disabled, false);
+        streamProperties.stateComputeMode.setPropertiesAll(0, 0, false);
         EncodeComputeMode<FamilyType>::programComputeModeCommand(linearStream, streamProperties.stateComputeMode, rootDeviceEnvironment);
 
         auto &stateComputeModeCmd = *reinterpret_cast<STATE_COMPUTE_MODE *>(linearStream.getCpuBase());
@@ -461,7 +461,7 @@ XE3_CORETEST_F(EncodeKernelXe3CoreTest, givenDebugFlagWhenProgrammingStateComput
 
         StreamProperties streamProperties{};
         streamProperties.initSupport(rootDeviceEnvironment);
-        streamProperties.stateComputeMode.setPropertiesAll(false, 0, 0, PreemptionMode::Disabled, false);
+        streamProperties.stateComputeMode.setPropertiesAll(0, 0, false);
         EncodeComputeMode<FamilyType>::programComputeModeCommand(linearStream, streamProperties.stateComputeMode, rootDeviceEnvironment);
 
         auto &stateComputeModeCmd = *reinterpret_cast<STATE_COMPUTE_MODE *>(linearStream.getCpuBase());
@@ -562,7 +562,7 @@ XE3_CORETEST_F(EncodeKernelXe3CoreTest, givenCommandContainerWhenNumGrfRequiredI
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     StreamProperties streamProperties{};
     streamProperties.initSupport(rootDeviceEnvironment);
-    streamProperties.stateComputeMode.setPropertiesAll(false, GrfConfig::largeGrfNumber, 0u, PreemptionMode::Disabled, false);
+    streamProperties.stateComputeMode.setPropertiesAll(GrfConfig::largeGrfNumber, 0u, false);
     EncodeComputeMode<FamilyType>::programComputeModeCommand(*cmdContainer->getCommandStream(), streamProperties.stateComputeMode, rootDeviceEnvironment);
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());

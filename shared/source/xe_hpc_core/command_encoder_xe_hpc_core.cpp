@@ -36,9 +36,7 @@ void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, Sta
     auto maskBits = stateComputeMode.getMaskBits();
 
     if (properties.isCoherencyRequired.isDirty) {
-        FORCE_NON_COHERENT coherencyValue = !properties.isCoherencyRequired.value ? FORCE_NON_COHERENT::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT
-                                                                                  : FORCE_NON_COHERENT::FORCE_NON_COHERENT_FORCE_DISABLED;
-        stateComputeMode.setForceNonCoherent(coherencyValue);
+        stateComputeMode.setForceNonCoherent(FORCE_NON_COHERENT::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT);
         maskBits |= Family::stateComputeModeForceNonCoherentMask;
     }
 

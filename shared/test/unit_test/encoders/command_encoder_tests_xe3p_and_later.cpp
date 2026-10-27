@@ -270,7 +270,7 @@ HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenDebugFlagSetWhenLSCSamplerBa
 
         StreamProperties streamProperties{};
         streamProperties.initSupport(rootDeviceEnvironment);
-        streamProperties.stateComputeMode.setPropertiesAll(false, 0, 0, PreemptionMode::Disabled, false);
+        streamProperties.stateComputeMode.setPropertiesAll(0, 0, false);
         EncodeComputeMode<FamilyType>::programComputeModeCommand(linearStream, streamProperties.stateComputeMode, rootDeviceEnvironment);
 
         auto &stateComputeModeCmd = *reinterpret_cast<STATE_COMPUTE_MODE *>(linearStream.getCpuBase());
@@ -286,7 +286,7 @@ HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenDebugFlagSetWhenLSCSamplerBa
 
             StreamProperties streamProperties{};
             streamProperties.initSupport(rootDeviceEnvironment);
-            streamProperties.stateComputeMode.setPropertiesAll(false, 0, 0, PreemptionMode::Disabled, false);
+            streamProperties.stateComputeMode.setPropertiesAll(0, 0, false);
             EncodeComputeMode<FamilyType>::programComputeModeCommand(linearStream, streamProperties.stateComputeMode, rootDeviceEnvironment);
 
             auto &stateComputeModeCmd = *reinterpret_cast<STATE_COMPUTE_MODE *>(linearStream.getCpuBase());
@@ -311,7 +311,7 @@ HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenDebugFlagWhenProgrammingStat
 
         StreamProperties streamProperties{};
         streamProperties.initSupport(rootDeviceEnvironment);
-        streamProperties.stateComputeMode.setPropertiesAll(false, 0, 0, PreemptionMode::Disabled, false);
+        streamProperties.stateComputeMode.setPropertiesAll(0, 0, false);
         EncodeComputeMode<FamilyType>::programComputeModeCommand(linearStream, streamProperties.stateComputeMode, rootDeviceEnvironment);
 
         return *reinterpret_cast<STATE_COMPUTE_MODE *>(linearStream.getCpuBase());

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,13 +27,6 @@ GEN12LPTEST_F(CommandEncodeGen12LpTest, whenProgrammingStateComputeModeThenPrope
     auto pScm = reinterpret_cast<STATE_COMPUTE_MODE *>(pLinearStream->getCpuBase());
     EXPECT_EQ(FamilyType::stateComputeModeForceNonCoherentMask, pScm->getMaskBits());
     EXPECT_EQ(STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT, pScm->getForceNonCoherent());
-
-    properties.isCoherencyRequired.value = 1;
-    pLinearStream = std::make_unique<LinearStream>(buffer, sizeof(buffer));
-    EncodeComputeMode<FamilyType>::programComputeModeCommand(*pLinearStream, properties, rootDeviceEnvironment);
-    pScm = reinterpret_cast<STATE_COMPUTE_MODE *>(pLinearStream->getCpuBase());
-    EXPECT_EQ(FamilyType::stateComputeModeForceNonCoherentMask, pScm->getMaskBits());
-    EXPECT_EQ(STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_DISABLED, pScm->getForceNonCoherent());
 }
 
 GEN12LPTEST_F(CommandEncodeGen12LpTest, givenEncodeDataInMemoryWhenProgrammingFeCmdThenTakeNoAction) {

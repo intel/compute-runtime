@@ -16,7 +16,7 @@
 
 using namespace NEO;
 
-void StateComputeModeProperties::setPropertiesAll(bool requiresCoherency, uint32_t numGrfRequired, int32_t threadArbitrationPolicy, PreemptionMode devicePreemptionMode, std::optional<bool> hasPeerAccess) {
+void StateComputeModeProperties::setPropertiesAll(uint32_t numGrfRequired, int32_t threadArbitrationPolicy, std::optional<bool> hasPeerAccess) {
     DEBUG_BREAK_IF(!this->propertiesSupportLoaded);
     clearIsDirty();
 
@@ -47,7 +47,7 @@ void StateComputeModeProperties::setPropertiesAll(bool requiresCoherency, uint32
         this->memoryAllocationForScratchAndMidthreadPreemptionBuffers.set(memoryAllocationForScratchAndMidthreadPreemptionBuffers);
     }
 
-    setPropertiesPerContext(requiresCoherency, devicePreemptionMode, false, hasPeerAccess);
+    setPropertiesPerContext(false, hasPeerAccess);
 }
 
 void StateComputeModeProperties::copyPropertiesAll(const StateComputeModeProperties &properties) {
@@ -58,7 +58,6 @@ void StateComputeModeProperties::copyPropertiesAll(const StateComputeModePropert
     zPassAsyncComputeThreadLimit.set(properties.zPassAsyncComputeThreadLimit.value);
     pixelAsyncComputeThreadLimit.set(properties.pixelAsyncComputeThreadLimit.value);
     threadArbitrationPolicy.set(properties.threadArbitrationPolicy.value);
-    devicePreemptionMode.set(properties.devicePreemptionMode.value);
     memoryAllocationForScratchAndMidthreadPreemptionBuffers.set(properties.memoryAllocationForScratchAndMidthreadPreemptionBuffers.value);
     enableVariableRegisterSizeAllocation.set(properties.enableVariableRegisterSizeAllocation.value);
     pipelinedEuThreadArbitration.set(properties.pipelinedEuThreadArbitration.value);
@@ -92,7 +91,6 @@ bool StateComputeModeProperties::isDirty() const {
            zPassAsyncComputeThreadLimit.isDirty ||
            pixelAsyncComputeThreadLimit.isDirty ||
            threadArbitrationPolicy.isDirty ||
-           devicePreemptionMode.isDirty ||
            memoryAllocationForScratchAndMidthreadPreemptionBuffers.isDirty ||
            enableVariableRegisterSizeAllocation.isDirty ||
            pipelinedEuThreadArbitration.isDirty ||
@@ -121,7 +119,6 @@ void StateComputeModeProperties::clearIsDirty() {
 
 void StateComputeModeProperties::clearIsDirtyPerContext() {
     isCoherencyRequired.isDirty = false;
-    devicePreemptionMode.isDirty = false;
     enableVariableRegisterSizeAllocation.isDirty = false;
     pipelinedEuThreadArbitration.isDirty = false;
     enableL1FlushUavCoherencyMode.isDirty = false;
@@ -136,18 +133,6 @@ void StateComputeModeProperties::clearIsDirtyPerContext() {
     l1CachePolicy.isDirty = false;
 
     clearIsDirtyExtraPerContext();
-}
-
-void StateComputeModeProperties::setCoherencyProperty(bool requiresCoherency) {
-    if (this->scmPropertiesSupport.coherencyRequired) {
-        int32_t isCoherencyRequired = (requiresCoherency ? 1 : 0);
-        this->isCoherencyRequired.set(isCoherencyRequired);
-    }
-}
-void StateComputeModeProperties::setDevicePreemptionProperty(PreemptionMode devicePreemptionMode) {
-    if (this->scmPropertiesSupport.devicePreemptionMode) {
-        this->devicePreemptionMode.set(static_cast<int32_t>(devicePreemptionMode));
-    }
 }
 
 void StateComputeModeProperties::setGrfNumberProperty(uint32_t numGrfRequired) {
@@ -199,7 +184,6 @@ void StateComputeModeProperties::resetState() {
     this->zPassAsyncComputeThreadLimit.value = StreamProperty::initValue;
     this->pixelAsyncComputeThreadLimit.value = StreamProperty::initValue;
     this->threadArbitrationPolicy.value = StreamProperty::initValue;
-    this->devicePreemptionMode.value = StreamProperty::initValue;
     this->memoryAllocationForScratchAndMidthreadPreemptionBuffers.value = StreamProperty::initValue;
     this->enableVariableRegisterSizeAllocation.value = StreamProperty::initValue;
     this->pipelinedEuThreadArbitration.value = StreamProperty::initValue;
@@ -217,14 +201,13 @@ void StateComputeModeProperties::resetState() {
     resetStateExtra();
 }
 
-void StateComputeModeProperties::setPropertiesPerContext(bool requiresCoherency, PreemptionMode devicePreemptionMode, bool clearDirtyState, std::optional<bool> hasPeerAccess) {
+void StateComputeModeProperties::setPropertiesPerContext(bool clearDirtyState, std::optional<bool> hasPeerAccess) {
     DEBUG_BREAK_IF(!this->propertiesSupportLoaded);
 
     if (!clearDirtyState) {
         clearIsDirtyPerContext();
     }
-    setCoherencyProperty(requiresCoherency);
-    setDevicePreemptionProperty(devicePreemptionMode);
+    this->isCoherencyRequired.set(0);
 
     if (this->scmPropertiesSupport.enableVariableRegisterSizeAllocation) {
         this->enableVariableRegisterSizeAllocation.set(this->scmPropertiesSupport.enableVariableRegisterSizeAllocation);

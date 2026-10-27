@@ -478,19 +478,10 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenComputeModePropertiesWhenUpdateStr
     const_cast<NEO::KernelDescriptor *>(&kernel.getKernelDescriptor())->kernelAttributes.numGrfRequired = 0x100;
     const ze_group_count_t launchKernelArgs = {};
     commandList->updateStreamProperties(kernel, false, launchKernelArgs, false);
+    EXPECT_EQ(0, commandList->finalStreamState.stateComputeMode.isCoherencyRequired.value);
     if (commandList->stateComputeModeTracking) {
-        if (productHelper.getScmPropertyCoherencyRequiredSupport()) {
-            EXPECT_EQ(0, commandList->finalStreamState.stateComputeMode.isCoherencyRequired.value);
-        } else {
-            EXPECT_EQ(-1, commandList->finalStreamState.stateComputeMode.isCoherencyRequired.value);
-        }
         EXPECT_FALSE(commandList->finalStreamState.stateComputeMode.largeGrfMode.isDirty);
     } else {
-        if (productHelper.getScmPropertyCoherencyRequiredSupport()) {
-            EXPECT_EQ(0, commandList->finalStreamState.stateComputeMode.isCoherencyRequired.value);
-        } else {
-            EXPECT_EQ(-1, commandList->finalStreamState.stateComputeMode.isCoherencyRequired.value);
-        }
         EXPECT_EQ(productHelper.isGrfNumReportedWithScm(), commandList->finalStreamState.stateComputeMode.largeGrfMode.isDirty);
     }
 
@@ -499,11 +490,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenComputeModePropertiesWhenUpdateStr
     if constexpr (TestTraits<FamilyType::gfxCoreFamily>::largeGrfModeInStateComputeModeSupported) {
         EXPECT_EQ(productHelper.isGrfNumReportedWithScm(), commandList->finalStreamState.stateComputeMode.largeGrfMode.isDirty);
     }
-    if (productHelper.getScmPropertyCoherencyRequiredSupport()) {
-        EXPECT_EQ(0, commandList->finalStreamState.stateComputeMode.isCoherencyRequired.value);
-    } else {
-        EXPECT_EQ(-1, commandList->finalStreamState.stateComputeMode.isCoherencyRequired.value);
-    }
+    EXPECT_EQ(0, commandList->finalStreamState.stateComputeMode.isCoherencyRequired.value);
 }
 
 struct ProgramAllFieldsInComputeMode {
@@ -530,34 +517,21 @@ HWTEST2_F(CommandListAppendLaunchKernel,
     const_cast<NEO::KernelDescriptor *>(&kernel.getKernelDescriptor())->kernelAttributes.numGrfRequired = 0x100;
     const ze_group_count_t launchKernelArgs = {};
     commandList->updateStreamProperties(kernel, false, launchKernelArgs, false);
+    EXPECT_EQ(0, commandList->finalStreamState.stateComputeMode.isCoherencyRequired.value);
     if (commandList->stateComputeModeTracking) {
-        if (productHelper.getScmPropertyCoherencyRequiredSupport()) {
-            EXPECT_EQ(0, commandList->finalStreamState.stateComputeMode.isCoherencyRequired.value);
-        } else {
-            EXPECT_EQ(-1, commandList->finalStreamState.stateComputeMode.isCoherencyRequired.value);
-        }
         if (productHelper.isGrfNumReportedWithScm()) {
             EXPECT_NE(-1, commandList->finalStreamState.stateComputeMode.largeGrfMode.value);
         } else {
             EXPECT_EQ(-1, commandList->finalStreamState.stateComputeMode.largeGrfMode.value);
         }
     } else {
-        if (productHelper.getScmPropertyCoherencyRequiredSupport()) {
-            EXPECT_EQ(0, commandList->finalStreamState.stateComputeMode.isCoherencyRequired.value);
-        } else {
-            EXPECT_EQ(-1, commandList->finalStreamState.stateComputeMode.isCoherencyRequired.value);
-        }
         EXPECT_EQ(productHelper.isGrfNumReportedWithScm(), commandList->finalStreamState.stateComputeMode.largeGrfMode.isDirty);
     }
 
     const_cast<NEO::KernelDescriptor *>(&kernel.getKernelDescriptor())->kernelAttributes.numGrfRequired = 0x80;
     commandList->updateStreamProperties(kernel, false, launchKernelArgs, false);
     EXPECT_EQ(productHelper.isGrfNumReportedWithScm(), commandList->finalStreamState.stateComputeMode.largeGrfMode.isDirty);
-    if (productHelper.getScmPropertyCoherencyRequiredSupport()) {
-        EXPECT_EQ(0, commandList->finalStreamState.stateComputeMode.isCoherencyRequired.value);
-    } else {
-        EXPECT_EQ(-1, commandList->finalStreamState.stateComputeMode.isCoherencyRequired.value);
-    }
+    EXPECT_EQ(0, commandList->finalStreamState.stateComputeMode.isCoherencyRequired.value);
 }
 
 HWTEST2_F(CommandListAppendLaunchKernel, GivenComputeModePropertiesWhenPropertesNotChangedThenAllFieldsAreNotDirty, IsHeapfulRequired) {
@@ -575,28 +549,15 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenComputeModePropertiesWhenPropertes
     const_cast<NEO::KernelDescriptor *>(&kernel.getKernelDescriptor())->kernelAttributes.numGrfRequired = 0x100;
     const ze_group_count_t launchKernelArgs = {};
     commandList->updateStreamProperties(kernel, false, launchKernelArgs, false);
+    EXPECT_EQ(0, commandList->finalStreamState.stateComputeMode.isCoherencyRequired.value);
     if (commandList->stateComputeModeTracking) {
-        if (productHelper.getScmPropertyCoherencyRequiredSupport()) {
-            EXPECT_EQ(0, commandList->finalStreamState.stateComputeMode.isCoherencyRequired.value);
-        } else {
-            EXPECT_EQ(-1, commandList->finalStreamState.stateComputeMode.isCoherencyRequired.value);
-        }
         EXPECT_FALSE(commandList->finalStreamState.stateComputeMode.largeGrfMode.isDirty);
     } else {
-        if (productHelper.getScmPropertyCoherencyRequiredSupport()) {
-            EXPECT_EQ(0, commandList->finalStreamState.stateComputeMode.isCoherencyRequired.value);
-        } else {
-            EXPECT_EQ(-1, commandList->finalStreamState.stateComputeMode.isCoherencyRequired.value);
-        }
         EXPECT_EQ(productHelper.isGrfNumReportedWithScm(), commandList->finalStreamState.stateComputeMode.largeGrfMode.isDirty);
     }
 
     commandList->updateStreamProperties(kernel, false, launchKernelArgs, false);
-    if (productHelper.getScmPropertyCoherencyRequiredSupport()) {
-        EXPECT_EQ(0, commandList->finalStreamState.stateComputeMode.isCoherencyRequired.value);
-    } else {
-        EXPECT_EQ(-1, commandList->finalStreamState.stateComputeMode.isCoherencyRequired.value);
-    }
+    EXPECT_EQ(0, commandList->finalStreamState.stateComputeMode.isCoherencyRequired.value);
     EXPECT_FALSE(commandList->finalStreamState.stateComputeMode.largeGrfMode.isDirty);
 }
 

@@ -31,11 +31,9 @@ struct PVC : public XeHpcCoreFamily {
 
     struct StateComputeModeStateSupport {
         static constexpr bool threadArbitrationPolicy = true;
-        static constexpr bool coherencyRequired = true;
         static constexpr bool largeGrfMode = true;
         static constexpr bool zPassAsyncComputeThreadLimit = false;
         static constexpr bool pixelAsyncComputeThreadLimit = false;
-        static constexpr bool devicePreemptionMode = false;
     };
 
     static void (*setupHardwareInfo)(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);

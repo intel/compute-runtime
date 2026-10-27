@@ -39,7 +39,6 @@ struct KernelDescriptor;
 struct PipelineSelectArgs;
 struct PipelineSelectPropertiesSupport;
 struct StateBaseAddressPropertiesSupport;
-struct StateComputeModeProperties;
 struct StateComputeModePropertiesSupport;
 class ProductHelper;
 class ReleaseHelper;
@@ -102,7 +101,7 @@ class ProductHelper {
     virtual bool isMaxThreadsForWorkgroupWARequired(const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getMaxThreadsForWorkgroupInDSSOrSS(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice, uint32_t maxNumEUsPerDualSubSlice) const = 0;
     virtual uint32_t getMaxThreadsForWorkgroup(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice) const = 0;
-    virtual void setForceNonCoherent(void *const commandPtr, const StateComputeModeProperties &properties) const = 0;
+    virtual void setForceNonCoherent(void *const commandPtr) const = 0;
     virtual bool obtainBlitterPreference(const HardwareInfo &hwInfo) const = 0;
     virtual bool isBlitterFullySupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isPageTableManagerSupported(const HardwareInfo &hwInfo) const = 0;
@@ -190,11 +189,9 @@ class ProductHelper {
     virtual bool getFrontEndPropertySingleSliceDispatchCcsModeSupport() const = 0;
 
     virtual bool getScmPropertyThreadArbitrationPolicySupport() const = 0;
-    virtual bool getScmPropertyCoherencyRequiredSupport() const = 0;
     virtual bool getScmPropertyZPassAsyncComputeThreadLimitSupport() const = 0;
     virtual bool getScmPropertyPixelAsyncComputeThreadLimitSupport() const = 0;
     virtual bool getScmPropertyLargeGrfModeSupport() const = 0;
-    virtual bool getScmPropertyDevicePreemptionModeSupport() const = 0;
 
     virtual bool getStateBaseAddressPropertyBindingTablePoolBaseAddressSupport() const = 0;
 

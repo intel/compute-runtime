@@ -68,7 +68,7 @@ XE_HPG_CORETEST_F(ComputeModeRequirementsXeHpgCore, GivenVariousSettingsWhenComp
 
         pCsr->streamProperties.stateComputeMode = {};
         pCsr->streamProperties.stateComputeMode.initSupport(rootDeviceEnvironment);
-        pCsr->streamProperties.stateComputeMode.setPropertiesAll(false, 0u, 0u, PreemptionMode::Disabled, false);
+        pCsr->streamProperties.stateComputeMode.setPropertiesAll(0u, 0u, false);
         LinearStream stream(buff, 1024);
         pCsr->programComputeMode(stream, flags, *defaultHwInfo);
         EXPECT_EQ(cmdsSize, stream.getUsed());
@@ -90,7 +90,7 @@ XE_HPG_CORETEST_F(ComputeModeRequirementsXeHpgCore, GivenVariousSettingsWhenComp
 
     pCsr->streamProperties.stateComputeMode = {};
     pCsr->streamProperties.stateComputeMode.initSupport(rootDeviceEnvironment);
-    pCsr->streamProperties.stateComputeMode.setPropertiesAll(false, 0u, 0u, PreemptionMode::Disabled, false);
+    pCsr->streamProperties.stateComputeMode.setPropertiesAll(0u, 0u, false);
     LinearStream stream(buff, 1024);
     pCsr->programComputeMode(stream, flags, *defaultHwInfo);
     EXPECT_EQ(cmdsSize, stream.getUsed());

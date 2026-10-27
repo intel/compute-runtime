@@ -475,7 +475,7 @@ SubmissionStatus CommandStreamReceiverHw<GfxFamily>::initializeDeviceWithFirstSu
 template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::programComputeModeHeapless(Device &device, LinearStream &commandStream) {
 
-    this->streamProperties.stateComputeMode.setPropertiesAll(false, 0u, 0u, device.getPreemptionMode(), device.hasAnyPeerAccess());
+    this->streamProperties.stateComputeMode.setPropertiesAll(0u, 0u, device.hasAnyPeerAccess());
 
     const RootDeviceEnvironment &rootDeviceEnvironment = device.getRootDeviceEnvironment();
     EncodeComputeMode<Family>::programComputeModeCommand(commandStream, this->streamProperties.stateComputeMode, rootDeviceEnvironment);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,7 +41,7 @@ GEN12LPTEST_F(CommandEncoderTest, WhenAdjustComputeModeIsCalledThenStateComputeM
     // Adjust the State Compute Mode which sets FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT
     StreamProperties properties{};
     properties.initSupport(rootDeviceEnvironment);
-    properties.stateComputeMode.setPropertiesAll(false, GrfConfig::defaultGrfNumber, 0, PreemptionMode::Disabled, false);
+    properties.stateComputeMode.setPropertiesAll(GrfConfig::defaultGrfNumber, 0, false);
     NEO::EncodeComputeMode<FamilyType>::programComputeModeCommand(*cmdContainer.getCommandStream(),
                                                                   properties.stateComputeMode, rootDeviceEnvironment);
 

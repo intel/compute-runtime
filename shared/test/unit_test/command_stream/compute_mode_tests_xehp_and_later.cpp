@@ -17,8 +17,6 @@
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/command_stream/compute_mode_tests.h"
 
-#include "test_traits_common.h"
-
 using namespace NEO;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, ComputeModeRequirements, givenCoherencyWithoutSharedHandlesWhenCommandSizeIsCalculatedThenCorrectCommandSizeIsReturned) {
@@ -82,17 +80,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ComputeModeRequirements, givenCoherencyWithSharedHa
     EXPECT_EQ(cmdsSize, retSize);
 }
 
-struct ForceNonCoherentSupportedMatcher {
-    template <PRODUCT_FAMILY productFamily>
-    static constexpr bool isMatched() {
-        if constexpr (HwMapper<productFamily>::GfxProduct::supportsCmdSet(IGFX_XE_HP_CORE)) {
-            return TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>::forceNonCoherentSupported;
-        }
-        return false;
-    }
-};
-
-HWTEST2_F(ComputeModeRequirements, givenCoherencyWithoutSharedHandlesWhenComputeModeIsProgrammedThenCorrectCommandsAreAdded, ForceNonCoherentSupportedMatcher) {
+HWTEST2_F(ComputeModeRequirements, givenNoSharedHandlesWhenComputeModeIsProgrammedThenForceNonCoherentIsProgrammed, IsDG2) {
     setUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -123,25 +111,9 @@ HWTEST2_F(ComputeModeRequirements, givenCoherencyWithoutSharedHandlesWhenCompute
     EXPECT_TRUE(isValueSet(scmCmd->getMaskBits(), expectedBitsMask));
     expectedScmCmd.setMaskBits(scmCmd->getMaskBits());
     EXPECT_TRUE(memcmp(&expectedScmCmd, scmCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
-
-    auto startOffset = stream.getUsed();
-
-    overrideComputeModeRequest<FamilyType>(true, true, false, false, true);
-    getCsrHw<FamilyType>()->programComputeMode(stream, flags, *defaultHwInfo);
-    EXPECT_EQ(cmdsSize * 2, stream.getUsed());
-
-    expectedScmCmd = FamilyType::cmdInitStateComputeMode;
-    expectedScmCmd.setForceNonCoherent(STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_DISABLED);
-    scmCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(ptrOffset(stream.getCpuBase(), startOffset));
-    if (isBasicWARequired) {
-        scmCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(ptrOffset(stream.getCpuBase(), startOffset + sizeof(PIPE_CONTROL)));
-    }
-    EXPECT_TRUE(isValueSet(scmCmd->getMaskBits(), expectedBitsMask));
-    expectedScmCmd.setMaskBits(scmCmd->getMaskBits());
-    EXPECT_TRUE(memcmp(&expectedScmCmd, scmCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
 }
 
-HWTEST2_F(ComputeModeRequirements, givenCoherencyWithSharedHandlesWhenComputeModeIsProgrammedThenCorrectCommandsAreAdded, ForceNonCoherentSupportedMatcher) {
+HWTEST2_F(ComputeModeRequirements, givenSharedHandlesWhenComputeModeIsProgrammedThenForceNonCoherentAndPipeControlAreProgrammed, IsDG2) {
     setUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -179,31 +151,9 @@ HWTEST2_F(ComputeModeRequirements, givenCoherencyWithSharedHandlesWhenComputeMod
         pcCmd = reinterpret_cast<PIPE_CONTROL *>(ptrOffset(stream.getCpuBase(), sizeof(STATE_COMPUTE_MODE) + sizeof(PIPE_CONTROL)));
     }
     EXPECT_TRUE(memcmp(&expectedPcCmd, pcCmd, sizeof(PIPE_CONTROL)) == 0);
-
-    auto startOffset = stream.getUsed();
-
-    overrideComputeModeRequest<FamilyType>(true, true, true, false, true);
-    getCsrHw<FamilyType>()->programComputeMode(stream, flags, *defaultHwInfo);
-    EXPECT_EQ(cmdsSize * 2, stream.getUsed());
-
-    expectedScmCmd = FamilyType::cmdInitStateComputeMode;
-    expectedScmCmd.setForceNonCoherent(STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_DISABLED);
-    scmCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(ptrOffset(stream.getCpuBase(), startOffset));
-    if (isBasicWARequired) {
-        scmCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(ptrOffset(stream.getCpuBase(), startOffset + sizeof(PIPE_CONTROL)));
-    }
-    EXPECT_TRUE(isValueSet(scmCmd->getMaskBits(), expectedBitsMask));
-    expectedScmCmd.setMaskBits(scmCmd->getMaskBits());
-    EXPECT_TRUE(memcmp(&expectedScmCmd, scmCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
-
-    pcCmd = reinterpret_cast<PIPE_CONTROL *>(ptrOffset(stream.getCpuBase(), startOffset + sizeof(STATE_COMPUTE_MODE)));
-    if (isBasicWARequired) {
-        pcCmd = reinterpret_cast<PIPE_CONTROL *>(ptrOffset(stream.getCpuBase(), startOffset + sizeof(STATE_COMPUTE_MODE) + sizeof(PIPE_CONTROL)));
-    }
-    EXPECT_TRUE(memcmp(&expectedPcCmd, pcCmd, sizeof(PIPE_CONTROL)) == 0);
 }
 
-HWTEST2_F(ComputeModeRequirements, givenFlushWithoutSharedHandlesWhenPreviouslyUsedThenPcAndSCMAreNotProgrammed, ForceNonCoherentSupportedMatcher) {
+HWTEST2_F(ComputeModeRequirements, givenFlushWithoutSharedHandlesWhenPreviouslyUsedThenPcAndSCMAreNotProgrammed, IsXeCore) {
     setUpImpl<FamilyType>();
 
     auto graphicAlloc = csr->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
@@ -252,7 +202,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ComputeModeRequirements, givenComputeModeCmdSizeWhe
     EXPECT_EQ(cmdSize, retSize);
 }
 
-HWTEST2_F(ComputeModeRequirements, givenComputeModeProgrammingWhenLargeGrfModeChangeIsRequiredThenCorrectCommandsAreAdded, ForceNonCoherentSupportedMatcher) {
+HWTEST2_F(ComputeModeRequirements, givenComputeModeProgrammingWhenLargeGrfModeChangeIsRequiredThenCorrectCommandsAreAdded, IsDG2) {
     setUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -313,7 +263,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ComputeModeRequirements, givenComputeModeProgrammin
     EXPECT_FALSE(getCsrHw<FamilyType>()->streamProperties.stateComputeMode.isDirty());
 }
 
-HWTEST2_F(ComputeModeRequirements, givenComputeModeProgrammingWhenRequiredGRFNumberIsLowerThan128ThenSmallGRFModeIsProgrammed, ForceNonCoherentSupportedMatcher) {
+HWTEST2_F(ComputeModeRequirements, givenComputeModeProgrammingWhenRequiredGRFNumberIsLowerThan128ThenSmallGRFModeIsProgrammed, IsDG2) {
     setUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -346,7 +296,7 @@ HWTEST2_F(ComputeModeRequirements, givenComputeModeProgrammingWhenRequiredGRFNum
     EXPECT_TRUE(memcmp(&expectedScmCmd, scmCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
 }
 
-HWTEST2_F(ComputeModeRequirements, givenComputeModeProgrammingWhenRequiredGRFNumberIsGreaterThan128ThenLargeGRFModeIsProgrammed, ForceNonCoherentSupportedMatcher) {
+HWTEST2_F(ComputeModeRequirements, givenComputeModeProgrammingWhenRequiredGRFNumberIsGreaterThan128ThenLargeGRFModeIsProgrammed, IsDG2) {
     setUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;

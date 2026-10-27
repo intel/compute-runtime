@@ -273,7 +273,7 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, whenAdjustComputeModeIsCalledThenC
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     properties.initSupport(rootDeviceEnvironment);
-    properties.stateComputeMode.setPropertiesAll(false, 0, ThreadArbitrationPolicy::AgeBased, PreemptionMode::Disabled, false);
+    properties.stateComputeMode.setPropertiesAll(0, ThreadArbitrationPolicy::AgeBased, false);
     EncodeComputeMode<FamilyType>::programComputeModeCommand(*pLinearStream, properties.stateComputeMode, rootDeviceEnvironment);
     auto pScm = reinterpret_cast<STATE_COMPUTE_MODE *>(pLinearStream->getCpuBase());
     if (productHelper.isThreadArbitrationPolicyReportedWithScm()) {
@@ -283,7 +283,7 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, whenAdjustComputeModeIsCalledThenC
     }
 
     pLinearStream = std::make_unique<LinearStream>(buffer, sizeof(buffer));
-    properties.stateComputeMode.setPropertiesAll(false, 0, ThreadArbitrationPolicy::RoundRobin, PreemptionMode::Disabled, false);
+    properties.stateComputeMode.setPropertiesAll(0, ThreadArbitrationPolicy::RoundRobin, false);
     EncodeComputeMode<FamilyType>::programComputeModeCommand(*pLinearStream, properties.stateComputeMode, rootDeviceEnvironment);
     pScm = reinterpret_cast<STATE_COMPUTE_MODE *>(pLinearStream->getCpuBase());
     if (productHelper.isThreadArbitrationPolicyReportedWithScm()) {
@@ -293,7 +293,7 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, whenAdjustComputeModeIsCalledThenC
     }
 
     pLinearStream = std::make_unique<LinearStream>(buffer, sizeof(buffer));
-    properties.stateComputeMode.setPropertiesAll(false, 0, ThreadArbitrationPolicy::RoundRobinAfterDependency, PreemptionMode::Disabled, false);
+    properties.stateComputeMode.setPropertiesAll(0, ThreadArbitrationPolicy::RoundRobinAfterDependency, false);
     EncodeComputeMode<FamilyType>::programComputeModeCommand(*pLinearStream, properties.stateComputeMode, rootDeviceEnvironment);
     pScm = reinterpret_cast<STATE_COMPUTE_MODE *>(pLinearStream->getCpuBase());
     if (productHelper.isThreadArbitrationPolicyReportedWithScm()) {
@@ -303,7 +303,7 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, whenAdjustComputeModeIsCalledThenC
     }
 
     pLinearStream = std::make_unique<LinearStream>(buffer, sizeof(buffer));
-    properties.stateComputeMode.setPropertiesAll(false, 0, ThreadArbitrationPolicy::NotPresent, PreemptionMode::Disabled, false);
+    properties.stateComputeMode.setPropertiesAll(0, ThreadArbitrationPolicy::NotPresent, false);
     EncodeComputeMode<FamilyType>::programComputeModeCommand(*pLinearStream, properties.stateComputeMode, rootDeviceEnvironment);
     pScm = reinterpret_cast<STATE_COMPUTE_MODE *>(pLinearStream->getCpuBase());
     EXPECT_EQ(EU_THREAD_SCHEDULING_MODE::EU_THREAD_SCHEDULING_MODE_HW_DEFAULT, pScm->getEuThreadSchedulingMode());

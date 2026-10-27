@@ -501,8 +501,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTaskHeapful(
     dispatchFlags.pipelineSelectArgs.systolicPipelineSelectSupport = this->pipelineSupportFlags.systolicMode;
     handlePipelineSelectStateTransition(dispatchFlags);
 
-    this->streamProperties.stateComputeMode.setPropertiesAll(false, dispatchFlags.numGrfRequired,
-                                                             dispatchFlags.threadArbitrationPolicy, device.getPreemptionMode(), device.hasAnyPeerAccess());
+    this->streamProperties.stateComputeMode.setPropertiesAll(dispatchFlags.numGrfRequired,
+                                                             dispatchFlags.threadArbitrationPolicy, device.hasAnyPeerAccess());
 
     csrSizeRequestFlags.preemptionRequestChanged = this->lastPreemptionMode != dispatchFlags.preemptionMode;
 
