@@ -16,6 +16,8 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_reuse.h"
 #include "shared/source/memory_manager/unified_memory_reuse_cleaner.h"
+#include "shared/source/os_interface/device_factory.h"
+#include "shared/source/os_interface/product_helper.h"
 
 namespace L0 {
 
@@ -46,14 +48,25 @@ bool ImageAllocationCacheKey::matches(const ImageAllocationCacheKey &other) cons
 }
 
 std::unique_ptr<ImageAllocationCache> ImageAllocationCache::create(NEO::Device &device) {
-    if (NEO::debugManager.flags.ExperimentalEnableImageAllocationCache.get() != 1 ||
-        device.usmReuseInfo.getMaxAllocationsSavedForReuseSize() == 0u) {
+    bool cacheEnabled = device.getProductHelper().isDeviceUsmAllocationReuseSupported() &&
+                        nullptr == device.getDebugger() &&
+                        NEO::DeviceFactory::isHwModeSelected();
+    bool reuseCleanerRequired = true;
+    const auto debugFlag = NEO::debugManager.flags.ExperimentalEnableImageAllocationCache.get();
+    if (debugFlag != -1) {
+        cacheEnabled = debugFlag == 1;
+        reuseCleanerRequired = false;
+    }
+    if (!cacheEnabled || device.usmReuseInfo.getMaxAllocationsSavedForReuseSize() == 0u) {
         return nullptr;
     }
 
     auto executionEnvironment = device.getExecutionEnvironment();
     executionEnvironment->initializeUnifiedMemoryReuseCleaner(device.isAnyDirectSubmissionLightEnabled());
     auto reuseCleaner = executionEnvironment->unifiedMemoryReuseCleaner.get();
+    if (reuseCleanerRequired && reuseCleaner == nullptr) {
+        return nullptr;
+    }
 
     auto cache = std::make_unique<ImageAllocationCache>(device, reuseCleaner);
     if (reuseCleaner) {

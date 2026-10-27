@@ -10,10 +10,13 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/unified_memory_reuse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/raii_product_helper.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
+#include "shared/test/common/mocks/mock_debugger.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/mocks/mock_usm_memory_reuse_cleaner.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -295,16 +298,50 @@ TEST_F(ImageAllocationCacheCreateTest, givenCacheEnabledByDebugFlagAndNoReuseBud
     EXPECT_EQ(nullptr, ImageAllocationCache::create(*this->neoDevice));
 }
 
-TEST_F(ImageAllocationCacheCreateTest, givenDefaultSettingsWhenCreatingThenNullptrIsReturnedAndReuseCleanerIsNotInitialized) {
+TEST_F(ImageAllocationCacheCreateTest, givenDefaultSettingsAndProductSupportingDeviceUsmReuseWhenCreatingThenCacheIsCreatedAndRegisteredInReuseCleaner) {
+    NEO::RAIIProductHelperFactory<NEO::MockProductHelper> raii(*this->execEnv->rootDeviceEnvironments[this->neoDevice->getRootDeviceIndex()]);
+    raii.mockProductHelper->isDeviceUsmAllocationReuseSupportedResult = true;
+
+    auto cache = ImageAllocationCache::create(*this->neoDevice);
+    ASSERT_NE(nullptr, cache);
+    ASSERT_EQ(1u, this->reuseCleaner->allocationCaches.size());
+    EXPECT_EQ(cache.get(), this->reuseCleaner->allocationCaches[0]);
+}
+
+TEST_F(ImageAllocationCacheCreateTest, givenDefaultSettingsAndProductNotSupportingDeviceUsmReuseWhenCreatingThenNullptrIsReturned) {
+    NEO::RAIIProductHelperFactory<NEO::MockProductHelper> raii(*this->execEnv->rootDeviceEnvironments[this->neoDevice->getRootDeviceIndex()]);
+    raii.mockProductHelper->isDeviceUsmAllocationReuseSupportedResult = false;
+
+    EXPECT_EQ(nullptr, ImageAllocationCache::create(*this->neoDevice));
+    EXPECT_TRUE(this->reuseCleaner->allocationCaches.empty());
+}
+
+TEST_F(ImageAllocationCacheCreateTest, givenDefaultSettingsAndDebuggerWhenCreatingThenNullptrIsReturned) {
+    NEO::RAIIProductHelperFactory<NEO::MockProductHelper> raii(*this->execEnv->rootDeviceEnvironments[this->neoDevice->getRootDeviceIndex()]);
+    raii.mockProductHelper->isDeviceUsmAllocationReuseSupportedResult = true;
+    this->neoDevice->getRootDeviceEnvironmentRef().debugger.reset(new NEO::MockDebugger);
+    this->neoDevice->setDebugger(this->neoDevice->getRootDeviceEnvironmentRef().debugger.get());
+
+    EXPECT_EQ(nullptr, ImageAllocationCache::create(*this->neoDevice));
+
+    this->neoDevice->setDebugger(nullptr);
+    this->neoDevice->getRootDeviceEnvironmentRef().debugger.reset(nullptr);
+}
+
+TEST_F(ImageAllocationCacheCreateTest, givenDefaultSettingsAndNonHardwareCsrWhenCreatingThenNullptrIsReturned) {
+    NEO::RAIIProductHelperFactory<NEO::MockProductHelper> raii(*this->execEnv->rootDeviceEnvironments[this->neoDevice->getRootDeviceIndex()]);
+    raii.mockProductHelper->isDeviceUsmAllocationReuseSupportedResult = true;
+    NEO::debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(NEO::CommandStreamReceiverType::tbx));
+
+    EXPECT_EQ(nullptr, ImageAllocationCache::create(*this->neoDevice));
+}
+
+TEST_F(ImageAllocationCacheCreateTest, givenDefaultSettingsAndNoReuseCleanerWhenCreatingThenNullptrIsReturned) {
+    NEO::RAIIProductHelperFactory<NEO::MockProductHelper> raii(*this->execEnv->rootDeviceEnvironments[this->neoDevice->getRootDeviceIndex()]);
+    raii.mockProductHelper->isDeviceUsmAllocationReuseSupportedResult = true;
     this->execEnv->unifiedMemoryReuseCleaner.reset();
 
     EXPECT_EQ(nullptr, ImageAllocationCache::create(*this->neoDevice));
-    EXPECT_EQ(nullptr, this->execEnv->unifiedMemoryReuseCleaner.get());
-}
-
-TEST_F(ImageAllocationCacheCreateTest, givenDefaultSettingsAndReuseCleanerWhenCreatingThenNullptrIsReturned) {
-    EXPECT_EQ(nullptr, ImageAllocationCache::create(*this->neoDevice));
-    EXPECT_TRUE(this->reuseCleaner->allocationCaches.empty());
 }
 
 TEST_F(ImageAllocationCacheCreateTest, givenCacheEnabledByDebugFlagAndNoReuseCleanerWhenCreatingThenCacheIsCreatedWithoutRegistration) {
