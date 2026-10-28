@@ -1052,6 +1052,89 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendEventReset(ze_e
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+template <typename AppendMetricCommandsFunctionT>
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMetricCommandsAndFlush(AppendMetricCommandsFunctionT &&appendMetricCommands, ze_event_handle_t hSignalEvent,
+                                                                                        uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
+    auto ret = this->checkAvailableSpace(numWaitEvents, false, commonImmediateCommandSize, false);
+    if (ret != ZE_RESULT_SUCCESS) {
+        return ret;
+    }
+    if (this->isInOrderExecutionEnabled()) {
+        this->handleInOrderImplicitDependencies(false, false);
+    }
+    CmdListWaitEventParameters waitEventsParameters{
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = false,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+        .apiRequest = false,
+        .skipFlush = false};
+    ret = CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(numWaitEvents, phWaitEvents, waitEventsParameters);
+    if (numWaitEvents > 0) {
+        this->dependenciesPresent = true;
+    }
+    if (ret == ZE_RESULT_SUCCESS) {
+        ret = appendMetricCommands();
+    }
+    if (ret != ZE_RESULT_SUCCESS) {
+        auto commandStream = this->commandContainer.getCommandStream();
+        commandStream->reclaimSpace(commandStream->getUsed() - this->cmdListCurrentStartOffset);
+        return ret;
+    }
+    if (this->isInOrderExecutionEnabled()) {
+        this->appendSignalInOrderDependencyCounter(nullptr, false, true, false, false);
+        CmdListHandleInOrderDependencyParams inOrderDependencyParams{
+            .nonWalkerInOrderCmdsChaining = false,
+            .copyOffloadOperation = false,
+            .apiRequiredExternalGraphEvent = false};
+        this->handleInOrderDependencyCounter(nullptr, inOrderDependencyParams);
+    }
+    if (hSignalEvent) {
+        CmdListSignalEventParameters signalEventParameters = {
+            .relaxedOrderingDispatch = false,
+        };
+        if (Event::fromHandle(hSignalEvent)->isCounterBased()) {
+            waitEventsParameters.waitForImplicitInOrderDependency = true;
+            ret = CommandListCoreFamily<gfxCoreFamily>::appendBarrier(hSignalEvent, 0, nullptr, waitEventsParameters, signalEventParameters);
+        } else {
+            ret = CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(hSignalEvent, signalEventParameters);
+        }
+    }
+    return flushImmediate(ret, true, true, false, NEO::AppendOperations::nonKernel, false, hSignalEvent, false, nullptr, nullptr);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMetricMemoryBarrier() {
+    return this->appendMetricCommandsAndFlush([&]() { return CommandListCoreFamily<gfxCoreFamily>::appendMetricMemoryBarrier(); }, nullptr, 0, nullptr);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMetricStreamerMarker(zet_metric_streamer_handle_t hMetricStreamer, uint32_t value) {
+    return this->appendMetricCommandsAndFlush([&]() { return CommandListCoreFamily<gfxCoreFamily>::appendMetricStreamerMarker(hMetricStreamer, value); }, nullptr, 0, nullptr);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMetricMarker(zet_metric_group_handle_t hMetricGroup, uint32_t value) {
+    return this->appendMetricCommandsAndFlush([&]() { return CommandListCoreFamily<gfxCoreFamily>::appendMetricMarker(hMetricGroup, value); }, nullptr, 0, nullptr);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMetricQueryBegin(zet_metric_query_handle_t hMetricQuery) {
+    return this->appendMetricCommandsAndFlush([&]() { return CommandListCoreFamily<gfxCoreFamily>::appendMetricQueryBegin(hMetricQuery); }, nullptr, 0, nullptr);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMetricQueryEnd(zet_metric_query_handle_t hMetricQuery, ze_event_handle_t hSignalEvent,
+                                                                                uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
+    if (hSignalEvent != nullptr && Event::fromHandle(hSignalEvent)->isCounterBasedExplicitlyEnabled()) {
+        return ZE_RESULT_ERROR_INVALID_SYNCHRONIZATION_OBJECT;
+    }
+    return this->appendMetricCommandsAndFlush([&]() { return CommandListCoreFamily<gfxCoreFamily>::appendMetricQueryEnd(hMetricQuery, nullptr, 0, nullptr); }, hSignalEvent, numWaitEvents, phWaitEvents);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendPageFaultCopy(NEO::GraphicsAllocation *dstAllocation,
                                                                                NEO::GraphicsAllocation *srcAllocation,
                                                                                size_t size, bool flushHost, size_t offset) {

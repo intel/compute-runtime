@@ -259,6 +259,7 @@ struct CommandList : _ze_command_list_handle_t {
     virtual ze_result_t appendMetricMemoryBarrier();
     virtual ze_result_t appendMetricStreamerMarker(zet_metric_streamer_handle_t hMetricStreamer,
                                                    uint32_t value);
+    virtual ze_result_t appendMetricMarker(zet_metric_group_handle_t hMetricGroup, uint32_t value);
     virtual ze_result_t appendMetricQueryBegin(zet_metric_query_handle_t hMetricQuery);
     virtual ze_result_t appendMetricQueryEnd(zet_metric_query_handle_t hMetricQuery, ze_event_handle_t hSignalEvent,
                                              uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);

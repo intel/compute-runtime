@@ -5,9 +5,11 @@
  *
  */
 
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/common/test_macros/test_base.h"
 
+#include "level_zero/core/source/cmdqueue/cmdqueue.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_event.h"
@@ -1384,6 +1386,110 @@ TEST_F(MetricStreamerTest, givenValidArgumentsWhenZetCommandListAppendMetricStre
     EXPECT_EQ(zetCommandListAppendMetricStreamerMarker(commandList->toHandle(), streamerHandle, markerValue), ZE_RESULT_SUCCESS);
 
     // Metric streamer close.
+    EXPECT_EQ(zetMetricStreamerClose(streamerHandle), ZE_RESULT_SUCCESS);
+}
+
+TEST_F(MetricStreamerTest, givenImmediateCommandListWithLowAvailableSpaceWhenZetCommandListAppendMetricStreamerMarkerIsCalledThenMarkerCommandsAreWrittenToNewCommandBufferAndSubmitted) {
+    zet_device_handle_t metricDeviceHandle = device->toHandle();
+
+    ze_event_handle_t eventHandle = {};
+
+    ze_result_t returnValue;
+    ze_command_queue_desc_t queueDesc = {};
+    queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->ensureImmediateResourcesInitialized());
+    auto whiteBoxCmdList = CommandList::whiteboxCast(commandList.get());
+
+    zet_metric_streamer_handle_t streamerHandle = {};
+    zet_metric_streamer_desc_t streamerDesc = {};
+
+    streamerDesc.stype = ZET_STRUCTURE_TYPE_METRIC_STREAMER_DESC;
+    streamerDesc.notifyEveryNReports = 32768;
+    streamerDesc.samplingPeriod = 1000;
+
+    zet_metric_group_handle_t metricGroupHandle = {};
+
+    metricsDeviceParams.ConcurrentGroupsCount = 1;
+
+    Mock<IConcurrentGroup_1_13> metricsConcurrentGroup;
+    TConcurrentGroupParams_1_13 metricsConcurrentGroupParams = {};
+    metricsConcurrentGroupParams.MetricSetsCount = 1;
+    metricsConcurrentGroupParams.SymbolName = "OA";
+    metricsConcurrentGroupParams.Description = "OA description";
+    metricsConcurrentGroupParams.IoMeasurementInformationCount = 1;
+
+    Mock<MetricsDiscovery::IEquation_1_0> ioReadEquation;
+    MetricsDiscovery::TEquationElement_1_0 ioEquationElement = {};
+    ioEquationElement.Type = MetricsDiscovery::EQUATION_ELEM_IMM_UINT64;
+    ioEquationElement.ImmediateUInt64 = 0;
+
+    ioReadEquation.getEquationElement.push_back(&ioEquationElement);
+
+    Mock<MetricsDiscovery::IInformation_1_0> ioMeasurement;
+    MetricsDiscovery::TInformationParams_1_0 oaInformation = {};
+    oaInformation.SymbolName = "BufferOverflow";
+    oaInformation.IoReadEquation = &ioReadEquation;
+
+    Mock<MetricsDiscovery::IMetricSet_1_13> metricsSet;
+    MetricsDiscovery::TMetricSetParams_1_11 metricsSetParams = {};
+    metricsSetParams.ApiMask = MetricsDiscovery::API_TYPE_IOSTREAM;
+    metricsSetParams.MetricsCount = 0;
+    metricsSetParams.SymbolName = "Metric set name";
+    metricsSetParams.ShortName = "Metric set description";
+    metricsSetParams.RawReportSize = 256;
+
+    TypedValue_1_0 value = {};
+    value.Type = ValueType::Uint32;
+    value.ValueUInt32 = 64;
+
+    ContextHandle_1_0 contextHandle = {&value};
+
+    CommandBufferSize_1_0 commandBufferSize = {};
+    commandBufferSize.GpuMemorySize = 100;
+
+    uint32_t markerValue = 0x12345678;
+
+    openMetricsAdapter();
+
+    mockMetricsLibrary->g_mockApi->contextCreateOutHandle = contextHandle;
+    mockMetricsLibrary->g_mockApi->commandBufferGetSizeOutSize = commandBufferSize;
+
+    setupDefaultMocksForMetricDevice(metricsDevice);
+
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
+
+    metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
+    metricsConcurrentGroup.getMetricSetResult = &metricsSet;
+    metricsConcurrentGroup.GetIoMeasurementInformationResult = &ioMeasurement;
+    ioMeasurement.GetParamsResult = &oaInformation;
+
+    metricsSet.GetParamsResult = &metricsSetParams;
+
+    uint32_t metricGroupCount = 1;
+    ASSERT_EQ(zetMetricGroupGet(metricDeviceHandle, &metricGroupCount, &metricGroupHandle), ZE_RESULT_SUCCESS);
+    ASSERT_NE(metricGroupHandle, nullptr);
+
+    EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), metricDeviceHandle, 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
+
+    EXPECT_EQ(zetMetricStreamerOpen(context->toHandle(), metricDeviceHandle, metricGroupHandle, &streamerDesc, eventHandle, &streamerHandle), ZE_RESULT_SUCCESS);
+    EXPECT_NE(streamerHandle, nullptr);
+
+    auto commandStream = whiteBoxCmdList->commandContainer.getCommandStream();
+    commandStream->getSpace(commandStream->getAvailableSpace() - (commonImmediateCommandSize - 1));
+    whiteBoxCmdList->cmdListCurrentStartOffset = commandStream->getUsed();
+    auto oldCommandBuffer = commandStream->getGraphicsAllocation();
+
+    auto csr = whiteBoxCmdList->cmdQImmediate->getCsr();
+    auto taskCountBefore = csr->peekTaskCount();
+
+    EXPECT_EQ(zetCommandListAppendMetricStreamerMarker(commandList->toHandle(), streamerHandle, markerValue), ZE_RESULT_SUCCESS);
+    EXPECT_NE(oldCommandBuffer, commandStream->getGraphicsAllocation());
+    EXPECT_GE(whiteBoxCmdList->cmdListCurrentStartOffset, commandBufferSize.GpuMemorySize);
+    EXPECT_EQ(commandStream->getUsed(), whiteBoxCmdList->cmdListCurrentStartOffset);
+    EXPECT_GT(csr->peekTaskCount(), taskCountBefore);
+
     EXPECT_EQ(zetMetricStreamerClose(streamerHandle), ZE_RESULT_SUCCESS);
 }
 

@@ -13,6 +13,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 
+#include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/source/driver/driver_handle.h"
@@ -1330,6 +1331,9 @@ ze_result_t metricScopeGetProperties(
 }
 
 ze_result_t metricAppendMarker(zet_command_list_handle_t hCommandList, zet_metric_group_handle_t hMetricGroup, uint32_t value) {
+    if (nullptr != hCommandList) {
+        return CommandList::fromHandle(hCommandList)->appendMetricMarker(hMetricGroup, value);
+    }
     auto metricGroupImp = static_cast<MetricGroupImp *>(L0::MetricGroup::fromHandle(hMetricGroup));
     return metricGroupImp->getMetricSource().appendMarker(hCommandList, hMetricGroup, value);
 }

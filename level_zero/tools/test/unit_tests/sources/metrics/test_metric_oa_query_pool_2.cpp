@@ -5,10 +5,18 @@
  *
  */
 
+#include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/helpers/in_order_cmd_helpers.h"
+#include "shared/source/os_interface/os_context.h"
+#include "shared/test/common/cmd_parse/hw_parse.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test_base.h"
 
+#include "level_zero/core/source/cmdqueue/cmdqueue.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
+#include "level_zero/tools/source/metrics/metric_oa_query_imp.h"
 #include "level_zero/tools/source/metrics/metric_oa_source.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/metric_query_pool_fixture.h"
 
@@ -358,6 +366,393 @@ TEST_F(MetricQueryPoolTest, givenExecutionQueryTypeWithImmediateCommandListDefau
 
     EXPECT_EQ(zeEventDestroy(eventHandle), ZE_RESULT_SUCCESS);
     EXPECT_EQ(zeEventPoolDestroy(eventPoolHandle), ZE_RESULT_SUCCESS);
+}
+
+struct MetricQueryPoolImmediateCommandListTest : public MetricQueryPoolTest {
+    void SetUp() override {
+        MetricQueryPoolTest::SetUp();
+
+        ze_command_queue_desc_t desc = {};
+        desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+        ze_result_t returnValue = ZE_RESULT_SUCCESS;
+        commandList.reset(CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
+        ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+        ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->ensureImmediateResourcesInitialized());
+        whiteBoxCmdList = CommandList::whiteboxCast(commandList.get());
+        csr = whiteBoxCmdList->cmdQImmediate->getCsr();
+
+        value.Type = ValueType::Uint32;
+        value.ValueUInt32 = 64;
+        mockMetricsLibrary->g_mockApi->contextCreateOutHandle = {&value};
+        CommandBufferSize_1_0 commandBufferSize = {};
+        commandBufferSize.GpuMemorySize = metricCommandsSize;
+        mockMetricsLibrary->g_mockApi->commandBufferGetSizeOutSize = commandBufferSize;
+
+        zet_metric_query_pool_desc_t poolDesc = {ZET_STRUCTURE_TYPE_METRIC_QUERY_POOL_DESC};
+        poolDesc.count = 1;
+        poolDesc.type = ZET_METRIC_QUERY_POOL_TYPE_EXECUTION;
+        ASSERT_EQ(ZE_RESULT_SUCCESS, zetMetricQueryPoolCreate(context->toHandle(), device->toHandle(), nullptr, &poolDesc, &poolHandle));
+        ASSERT_EQ(ZE_RESULT_SUCCESS, zetMetricQueryCreate(poolHandle, 0, &queryHandle));
+    }
+
+    void TearDown() override {
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricQueryDestroy(queryHandle));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricQueryPoolDestroy(poolHandle));
+        commandList.reset();
+        MetricQueryPoolTest::TearDown();
+    }
+
+    void leaveAvailableSpaceInCommandStream(size_t availableSpace) {
+        auto commandStream = whiteBoxCmdList->commandContainer.getCommandStream();
+        commandStream->getSpace(commandStream->getAvailableSpace() - availableSpace);
+        whiteBoxCmdList->cmdListCurrentStartOffset = commandStream->getUsed();
+    }
+
+    bool hasPendingCommands() {
+        return whiteBoxCmdList->commandContainer.getCommandStream()->getUsed() != whiteBoxCmdList->cmdListCurrentStartOffset;
+    }
+
+    static constexpr uint32_t metricCommandsSize = 100;
+    std::unique_ptr<L0::CommandList> commandList;
+    CommandList *whiteBoxCmdList = nullptr;
+    NEO::CommandStreamReceiver *csr = nullptr;
+    TypedValue_1_0 value = {};
+    zet_metric_query_pool_handle_t poolHandle = nullptr;
+    zet_metric_query_handle_t queryHandle = nullptr;
+};
+
+TEST_F(MetricQueryPoolImmediateCommandListTest, givenLowAvailableSpaceInCommandStreamWhenAppendMetricQueryBeginIsCalledThenQueryCommandsAreWrittenToNewCommandBufferAndSubmitted) {
+    leaveAvailableSpaceInCommandStream(commonImmediateCommandSize - 1);
+    auto oldCommandBuffer = whiteBoxCmdList->commandContainer.getCommandStream()->getGraphicsAllocation();
+    auto taskCountBefore = csr->peekTaskCount();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetCommandListAppendMetricQueryBegin(commandList->toHandle(), queryHandle));
+
+    EXPECT_NE(oldCommandBuffer, whiteBoxCmdList->commandContainer.getCommandStream()->getGraphicsAllocation());
+    EXPECT_GE(whiteBoxCmdList->cmdListCurrentStartOffset, metricCommandsSize);
+    EXPECT_FALSE(hasPendingCommands());
+    EXPECT_GT(csr->peekTaskCount(), taskCountBefore);
+}
+
+TEST_F(MetricQueryPoolImmediateCommandListTest, givenNoSignalEventWhenAppendMetricQueryEndIsCalledThenQueryCommandsAreSubmitted) {
+    auto taskCountBefore = csr->peekTaskCount();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetCommandListAppendMetricQueryEnd(commandList->toHandle(), queryHandle, nullptr, 0, nullptr));
+
+    EXPECT_FALSE(hasPendingCommands());
+    EXPECT_EQ(taskCountBefore + 1, csr->peekTaskCount());
+}
+
+TEST_F(MetricQueryPoolImmediateCommandListTest, givenWaitEventAndSignalEventWhenAppendMetricQueryEndIsCalledThenCommandsAreSubmittedOnce) {
+    ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
+    eventPoolDesc.count = 2;
+    ze_event_pool_handle_t eventPoolHandle = nullptr;
+    zet_device_handle_t deviceHandle = device->toHandle();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeEventPoolCreate(context->toHandle(), &eventPoolDesc, 1, &deviceHandle, &eventPoolHandle));
+    ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC};
+    eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_DEVICE;
+    ze_event_handle_t eventHandle = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeEventCreate(eventPoolHandle, &eventDesc, &eventHandle));
+    eventDesc.index = 1;
+    ze_event_handle_t waitEventHandle = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeEventCreate(eventPoolHandle, &eventDesc, &waitEventHandle));
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendEventReset(commandList->toHandle(), eventHandle));
+
+    auto taskCountBefore = csr->peekTaskCount();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendEventReset(commandList->toHandle(), eventHandle));
+    auto singleFlushTaskCount = csr->peekTaskCount() - taskCountBefore;
+
+    taskCountBefore = csr->peekTaskCount();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetCommandListAppendMetricQueryEnd(commandList->toHandle(), queryHandle, eventHandle, 1, &waitEventHandle));
+
+    EXPECT_EQ(taskCountBefore + singleFlushTaskCount, csr->peekTaskCount());
+    EXPECT_FALSE(hasPendingCommands());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventDestroy(waitEventHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventDestroy(eventHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventPoolDestroy(eventPoolHandle));
+}
+
+TEST_F(MetricQueryPoolImmediateCommandListTest, givenPerformanceQueryAndWaitEventAndSignalEventWhenAppendMetricQueryEndIsCalledThenCommandsAreSubmittedOnce) {
+    auto &metricSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+    Mock<OaMetricGroupImp> metricGroup(metricSource);
+    zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
+    metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED;
+    metricGroup.getPropertiesOutProperties = &metricGroupProperties;
+    mockMetricsLibrary->g_mockApi->queryCreateOutHandle = {&value};
+    mockMetricsLibrary->g_mockApi->getParameterOutValue = value;
+
+    zet_metric_query_pool_desc_t performancePoolDesc = {ZET_STRUCTURE_TYPE_METRIC_QUERY_POOL_DESC};
+    performancePoolDesc.count = 1;
+    performancePoolDesc.type = ZET_METRIC_QUERY_POOL_TYPE_PERFORMANCE;
+    zet_metric_query_pool_handle_t performancePoolHandle = nullptr;
+    zet_metric_query_handle_t performanceQueryHandle = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zetMetricQueryPoolCreate(context->toHandle(), device->toHandle(), metricGroup.toHandle(), &performancePoolDesc, &performancePoolHandle));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zetMetricQueryCreate(performancePoolHandle, 0, &performanceQueryHandle));
+
+    ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
+    eventPoolDesc.count = 2;
+    ze_event_pool_handle_t eventPoolHandle = nullptr;
+    zet_device_handle_t deviceHandle = device->toHandle();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeEventPoolCreate(context->toHandle(), &eventPoolDesc, 1, &deviceHandle, &eventPoolHandle));
+    ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC};
+    eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_DEVICE;
+    ze_event_handle_t eventHandle = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeEventCreate(eventPoolHandle, &eventDesc, &eventHandle));
+    eventDesc.index = 1;
+    ze_event_handle_t waitEventHandle = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeEventCreate(eventPoolHandle, &eventDesc, &waitEventHandle));
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendEventReset(commandList->toHandle(), eventHandle));
+
+    auto taskCountBefore = csr->peekTaskCount();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendEventReset(commandList->toHandle(), eventHandle));
+    auto singleFlushTaskCount = csr->peekTaskCount() - taskCountBefore;
+
+    taskCountBefore = csr->peekTaskCount();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetCommandListAppendMetricQueryEnd(commandList->toHandle(), performanceQueryHandle, eventHandle, 1, &waitEventHandle));
+
+    EXPECT_EQ(taskCountBefore + singleFlushTaskCount, csr->peekTaskCount());
+    EXPECT_FALSE(hasPendingCommands());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventDestroy(waitEventHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventDestroy(eventHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventPoolDestroy(eventPoolHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricQueryDestroy(performanceQueryHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricQueryPoolDestroy(performancePoolHandle));
+}
+
+TEST_F(MetricQueryPoolImmediateCommandListTest, givenPerformanceQueryAndNotSignaledWaitEventWhenAppendMetricQueryEndIsCalledThenQueryPoolIsResidentForSubmissionOfQueryCommands) {
+    auto &metricSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+    Mock<OaMetricGroupImp> metricGroup(metricSource);
+    zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
+    metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED;
+    metricGroup.getPropertiesOutProperties = &metricGroupProperties;
+    mockMetricsLibrary->g_mockApi->queryCreateOutHandle = {&value};
+    mockMetricsLibrary->g_mockApi->getParameterOutValue = value;
+
+    zet_metric_query_pool_desc_t poolDesc = {ZET_STRUCTURE_TYPE_METRIC_QUERY_POOL_DESC};
+    poolDesc.count = 1;
+    poolDesc.type = ZET_METRIC_QUERY_POOL_TYPE_PERFORMANCE;
+    zet_metric_query_pool_handle_t performancePoolHandle = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zetMetricQueryPoolCreate(context->toHandle(), device->toHandle(), metricGroup.toHandle(), &poolDesc, &performancePoolHandle));
+    zet_metric_query_handle_t performanceQueryHandle = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zetMetricQueryCreate(performancePoolHandle, 0, &performanceQueryHandle));
+    auto poolAllocation = static_cast<OaMetricQueryPoolImp *>(MetricQueryPool::fromHandle(performancePoolHandle))->pAllocation;
+    ASSERT_NE(nullptr, poolAllocation);
+
+    ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
+    eventPoolDesc.count = 1;
+    ze_event_pool_handle_t eventPoolHandle = nullptr;
+    zet_device_handle_t deviceHandle = device->toHandle();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeEventPoolCreate(context->toHandle(), &eventPoolDesc, 1, &deviceHandle, &eventPoolHandle));
+    ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC};
+    eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_DEVICE;
+    ze_event_handle_t waitEventHandle = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeEventCreate(eventPoolHandle, &eventDesc, &waitEventHandle));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetCommandListAppendMetricQueryEnd(commandList->toHandle(), performanceQueryHandle, nullptr, 1, &waitEventHandle));
+
+    EXPECT_FALSE(hasPendingCommands());
+    EXPECT_EQ(csr->peekTaskCount(), poolAllocation->getTaskCount(csr->getOsContext().getContextId()));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventDestroy(waitEventHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventPoolDestroy(eventPoolHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricQueryDestroy(performanceQueryHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricQueryPoolDestroy(performancePoolHandle));
+}
+
+TEST_F(MetricQueryPoolImmediateCommandListTest, givenInOrderImmediateCommandListWhenAppendMetricQueryEndIsCalledThenInOrderCounterIsAdvanced) {
+    ze_command_queue_desc_t queueDesc = {};
+    queueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    std::unique_ptr<L0::CommandList> inOrderCommandList(CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    ASSERT_TRUE(inOrderCommandList->isInOrderExecutionEnabled());
+    auto inOrderExecInfo = inOrderCommandList->getInOrderExecInfo();
+    auto counterValueBefore = inOrderExecInfo->getCounterValue();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetCommandListAppendMetricQueryEnd(inOrderCommandList->toHandle(), queryHandle, nullptr, 0, nullptr));
+
+    EXPECT_EQ(counterValueBefore + 1, inOrderExecInfo->getCounterValue());
+    EXPECT_EQ(inOrderExecInfo->getCounterValue(), inOrderExecInfo->getProgrammedCounterValue());
+}
+
+TEST_F(MetricQueryPoolImmediateCommandListTest, givenInOrderImmediateCommandListAndImplicitlyCounterBasedSignalEventWhenAppendMetricQueryEndIsCalledThenEventIsSignaledWithCounterValueAfterQueryCommands) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableImplicitConvertionToCounterBasedEvents.set(1);
+    ze_command_queue_desc_t queueDesc = {};
+    queueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    std::unique_ptr<L0::CommandList> inOrderCommandList(CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    ASSERT_TRUE(inOrderCommandList->isInOrderExecutionEnabled());
+
+    ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
+    eventPoolDesc.count = 1;
+    ze_event_pool_handle_t eventPoolHandle = nullptr;
+    zet_device_handle_t deviceHandle = device->toHandle();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeEventPoolCreate(context->toHandle(), &eventPoolDesc, 1, &deviceHandle, &eventPoolHandle));
+    ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC};
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_DEVICE;
+    ze_event_handle_t eventHandle = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeEventCreate(eventPoolHandle, &eventDesc, &eventHandle));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendSignalEvent(inOrderCommandList->toHandle(), eventHandle));
+    auto event = Event::fromHandle(eventHandle);
+    ASSERT_TRUE(event->isCounterBased());
+    ASSERT_FALSE(event->isCounterBasedExplicitlyEnabled());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetCommandListAppendMetricQueryEnd(inOrderCommandList->toHandle(), queryHandle, eventHandle, 0, nullptr));
+
+    EXPECT_EQ(inOrderCommandList->getInOrderExecInfo()->getCounterValue(), event->getInOrderExecBaseSignalValue());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventDestroy(eventHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventPoolDestroy(eventPoolHandle));
+}
+
+TEST_F(MetricQueryPoolImmediateCommandListTest, givenInOrderImmediateCommandListAndCounterBasedSignalEventWhenAppendMetricQueryEndIsCalledThenInvalidSynchronizationObjectIsReturned) {
+    ze_command_queue_desc_t queueDesc = {};
+    queueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    std::unique_ptr<L0::CommandList> inOrderCommandList(CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    ASSERT_TRUE(inOrderCommandList->isInOrderExecutionEnabled());
+
+    ze_event_pool_counter_based_exp_desc_t counterBasedDesc = {ZE_STRUCTURE_TYPE_COUNTER_BASED_EVENT_POOL_EXP_DESC};
+    counterBasedDesc.flags = ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE;
+    ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, &counterBasedDesc};
+    eventPoolDesc.count = 1;
+    ze_event_pool_handle_t eventPoolHandle = nullptr;
+    zet_device_handle_t deviceHandle = device->toHandle();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeEventPoolCreate(context->toHandle(), &eventPoolDesc, 1, &deviceHandle, &eventPoolHandle));
+    ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC};
+    ze_event_handle_t eventHandle = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeEventCreate(eventPoolHandle, &eventDesc, &eventHandle));
+    ASSERT_TRUE(Event::fromHandle(eventHandle)->isCounterBasedExplicitlyEnabled());
+    auto inOrderExecInfo = inOrderCommandList->getInOrderExecInfo();
+    auto counterValueBefore = inOrderExecInfo->getCounterValue();
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_SYNCHRONIZATION_OBJECT, zetCommandListAppendMetricQueryEnd(inOrderCommandList->toHandle(), queryHandle, eventHandle, 0, nullptr));
+
+    EXPECT_EQ(counterValueBefore, inOrderExecInfo->getCounterValue());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventDestroy(eventHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventPoolDestroy(eventPoolHandle));
+}
+
+TEST_F(MetricQueryPoolImmediateCommandListTest, givenInOrderImmediateCommandListAndSignalEventWhenMetricsLibraryFailsToWriteQueryEndCommandsThenErrorIsReturnedAndInOrderCounterIsNotAdvanced) {
+    ze_command_queue_desc_t queueDesc = {};
+    queueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    std::unique_ptr<L0::CommandList> inOrderCommandList(CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    ASSERT_TRUE(inOrderCommandList->isInOrderExecutionEnabled());
+
+    ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
+    eventPoolDesc.count = 1;
+    ze_event_pool_handle_t eventPoolHandle = nullptr;
+    zet_device_handle_t deviceHandle = device->toHandle();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeEventPoolCreate(context->toHandle(), &eventPoolDesc, 1, &deviceHandle, &eventPoolHandle));
+    ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC};
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_DEVICE;
+    ze_event_handle_t eventHandle = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeEventCreate(eventPoolHandle, &eventDesc, &eventHandle));
+    auto inOrderExecInfo = inOrderCommandList->getInOrderExecInfo();
+    auto counterValueBefore = inOrderExecInfo->getCounterValue();
+    mockMetricsLibrary->g_mockApi->commandBufferGetResult = StatusCode::Failed;
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zetCommandListAppendMetricQueryEnd(inOrderCommandList->toHandle(), queryHandle, eventHandle, 0, nullptr));
+
+    EXPECT_EQ(counterValueBefore, inOrderExecInfo->getCounterValue());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventDestroy(eventHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventPoolDestroy(eventPoolHandle));
+}
+
+HWTEST_F(MetricQueryPoolImmediateCommandListTest, givenNotSignaledWaitEventWhenAppendMetricQueryEndIsCalledThenDependenciesArePresent) {
+    ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
+    eventPoolDesc.count = 1;
+    ze_event_pool_handle_t eventPoolHandle = nullptr;
+    zet_device_handle_t deviceHandle = device->toHandle();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeEventPoolCreate(context->toHandle(), &eventPoolDesc, 1, &deviceHandle, &eventPoolHandle));
+    ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC};
+    eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_DEVICE;
+    ze_event_handle_t waitEventHandle = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeEventCreate(eventPoolHandle, &eventDesc, &waitEventHandle));
+    auto immediateCommandList = static_cast<WhiteBox<CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(commandList.get());
+    immediateCommandList->dependenciesPresent = false;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetCommandListAppendMetricQueryEnd(commandList->toHandle(), queryHandle, nullptr, 1, &waitEventHandle));
+
+    EXPECT_TRUE(immediateCommandList->dependenciesPresent);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventDestroy(waitEventHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventPoolDestroy(eventPoolHandle));
+}
+
+HWTEST_F(MetricQueryPoolImmediateCommandListTest, givenInOrderImmediateCommandListWithNotCompletedPreviousOperationWhenAppendMetricMemoryBarrierIsCalledThenItWaitsForInOrderCounter) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    if (NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(FamilyType::isQwordInOrderCounter, device->getNEODevice()->getDeviceInfo().semaphore64bCmdSupport)) {
+        GTEST_SKIP();
+    }
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.ResolveDependenciesViaPipeControls.set(0);
+    ze_command_queue_desc_t queueDesc = {};
+    queueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    std::unique_ptr<L0::CommandList> inOrderCommandList(CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    ASSERT_TRUE(inOrderCommandList->isInOrderExecutionEnabled());
+    auto inOrderExecInfo = inOrderCommandList->getInOrderExecInfo();
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zetCommandListAppendMetricMemoryBarrier(inOrderCommandList->toHandle()));
+    auto commandStream = inOrderCommandList->getCmdContainer().getCommandStream();
+    auto offset = commandStream->getUsed();
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zetCommandListAppendMetricMemoryBarrier(inOrderCommandList->toHandle()));
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(*commandStream, offset);
+    auto semaphores = findAll<MI_SEMAPHORE_WAIT *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    auto counterAddress = inOrderExecInfo->getBaseDeviceAddress() + inOrderExecInfo->getAllocationOffset();
+    bool counterWaitFound = false;
+    for (auto &semaphore : semaphores) {
+        counterWaitFound |= genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphore)->getSemaphoreGraphicsAddress() == counterAddress;
+    }
+    EXPECT_TRUE(counterWaitFound);
+}
+
+TEST_F(MetricQueryPoolImmediateCommandListTest, givenLowAvailableSpaceInCommandStreamWhenAppendMetricMemoryBarrierIsCalledThenBarrierCommandsAreWrittenToNewCommandBufferAndSubmitted) {
+    leaveAvailableSpaceInCommandStream(commonImmediateCommandSize - 1);
+    auto oldCommandBuffer = whiteBoxCmdList->commandContainer.getCommandStream()->getGraphicsAllocation();
+    auto taskCountBefore = csr->peekTaskCount();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetCommandListAppendMetricMemoryBarrier(commandList->toHandle()));
+
+    EXPECT_NE(oldCommandBuffer, whiteBoxCmdList->commandContainer.getCommandStream()->getGraphicsAllocation());
+    EXPECT_GE(whiteBoxCmdList->cmdListCurrentStartOffset, metricCommandsSize);
+    EXPECT_FALSE(hasPendingCommands());
+    EXPECT_GT(csr->peekTaskCount(), taskCountBefore);
+}
+
+TEST_F(MetricQueryPoolImmediateCommandListTest, givenMetricsLibraryFailsToWriteCommandsWhenAppendMetricQueryBeginIsCalledThenErrorIsReturnedAndNothingIsSubmitted) {
+    mockMetricsLibrary->g_mockApi->commandBufferGetResult = StatusCode::Failed;
+    auto taskCountBefore = csr->peekTaskCount();
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zetCommandListAppendMetricQueryBegin(commandList->toHandle(), queryHandle));
+
+    EXPECT_EQ(taskCountBefore, csr->peekTaskCount());
+    EXPECT_FALSE(hasPendingCommands());
 }
 
 TEST_F(MetricQueryPoolTest, givenExecutionQueryTypeAndMetricsLibraryWillFailWhenAppendMetricQueryBeginAndEndIsCalledThenReturnFail) {

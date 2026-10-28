@@ -534,6 +534,7 @@ TEST_F(FailedImmediateCmdListTest, givenFailedInitializationWhenCallingMetricEnt
 
     EXPECT_EQ(expectedError, cmdList->appendMetricMemoryBarrier());
     EXPECT_EQ(expectedError, cmdList->appendMetricStreamerMarker(nullptr, 0));
+    EXPECT_EQ(expectedError, cmdList->appendMetricMarker(nullptr, 0));
     EXPECT_EQ(expectedError, cmdList->appendMetricQueryBegin(nullptr));
     EXPECT_EQ(expectedError, cmdList->appendMetricQueryEnd(nullptr, nullptr, 0, nullptr));
 }

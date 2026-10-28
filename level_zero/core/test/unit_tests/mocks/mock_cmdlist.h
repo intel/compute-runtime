@@ -240,6 +240,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::canSkipInOrderEventWait;
     using BaseClass::clearCommandsToPatch;
     using BaseClass::closedCmdList;
+    using BaseClass::cmdListCurrentStartOffset;
     using BaseClass::cmdListHeapAddressModel;
     using BaseClass::cmdListType;
     using BaseClass::cmdQImmediate;
@@ -252,6 +253,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::copyOffloadTagUpdateRequired;
     using BaseClass::copyOperationFenceSupported;
     using BaseClass::dcFlushSupport;
+    using BaseClass::dependenciesPresent;
     using BaseClass::device;
     using BaseClass::dispatchEventRemainingPacketsPostSyncOperation;
     using BaseClass::dispatchHostFunction;
@@ -342,6 +344,7 @@ struct WhiteBox<::L0::CommandList> : public ::L0::CommandList {
     using BaseClass::BaseClass;
     using BaseClass::bcsSplitMode;
     using BaseClass::closedCmdList;
+    using BaseClass::cmdListCurrentStartOffset;
     using BaseClass::cmdListHeapAddressModel;
     using BaseClass::cmdListType;
     using BaseClass::cmdQImmediate;

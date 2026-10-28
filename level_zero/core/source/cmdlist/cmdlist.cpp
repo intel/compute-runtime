@@ -515,6 +515,15 @@ ze_result_t CommandList::appendMetricStreamerMarker(zet_metric_streamer_handle_t
     return MetricStreamer::fromHandle(hMetricStreamer)->appendStreamerMarker(*this, value);
 }
 
+ze_result_t CommandList::appendMetricMarker(zet_metric_group_handle_t hMetricGroup, uint32_t value) {
+    auto returnValue = this->ensureImmediateResourcesInitialized();
+    if (returnValue != ZE_RESULT_SUCCESS) {
+        return returnValue;
+    }
+    auto metricGroupImp = static_cast<MetricGroupImp *>(MetricGroup::fromHandle(hMetricGroup));
+    return metricGroupImp->getMetricSource().appendMarker(this->toHandle(), hMetricGroup, value);
+}
+
 ze_result_t CommandList::appendMetricQueryBegin(zet_metric_query_handle_t hMetricQuery) {
     auto returnValue = ensureImmediateResourcesInitialized();
     if (returnValue != ZE_RESULT_SUCCESS) {

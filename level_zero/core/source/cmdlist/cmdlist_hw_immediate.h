@@ -123,6 +123,13 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
 
     ze_result_t appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phEvent, CmdListWaitEventParameters &waitEventParams) override;
 
+    ze_result_t appendMetricMemoryBarrier() override;
+    ze_result_t appendMetricStreamerMarker(zet_metric_streamer_handle_t hMetricStreamer, uint32_t value) override;
+    ze_result_t appendMetricMarker(zet_metric_group_handle_t hMetricGroup, uint32_t value) override;
+    ze_result_t appendMetricQueryBegin(zet_metric_query_handle_t hMetricQuery) override;
+    ze_result_t appendMetricQueryEnd(zet_metric_query_handle_t hMetricQuery, ze_event_handle_t hSignalEvent,
+                                     uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override;
+
     ze_result_t appendWriteGlobalTimestamp(uint64_t *dstptr, ze_event_handle_t hSignalEvent,
                                            uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
                                            CmdListWaitEventParameters &waitEventParams) override;
@@ -235,6 +242,9 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     void handleDebugSurfaceStateUpdate(NEO::IndirectHeap *ssh);
 
     ze_result_t checkAvailableSpace(uint32_t numEvents, bool hasRelaxedOrderingDependencies, size_t commandSize, bool requestCommandBufferInLocalMem);
+    template <typename AppendMetricCommandsFunctionT>
+    ze_result_t appendMetricCommandsAndFlush(AppendMetricCommandsFunctionT &&appendMetricCommands, ze_event_handle_t hSignalEvent,
+                                             uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
     void updateDispatchFlagsWithRequiredStreamState(NEO::DispatchFlags &dispatchFlags);
 
     MOCKABLE_VIRTUAL ze_result_t flushImmediate(ze_result_t inputRet, bool performMigration, bool hasStallingCmds, bool hasRelaxedOrderingDependencies,

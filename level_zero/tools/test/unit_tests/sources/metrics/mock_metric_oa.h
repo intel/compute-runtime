@@ -117,6 +117,9 @@ struct MockMetricsLibraryApi {
         return getParameterResult;
     }
     StatusCode commandBufferGetImpl(const CommandBufferData_1_0 *data) {
+        if (commandBufferGetResult == StatusCode::Success) {
+            memset(data->Data, 0, data->Size);
+        }
         return commandBufferGetResult;
     }
 
