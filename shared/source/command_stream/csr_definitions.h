@@ -129,13 +129,6 @@ struct DispatchFlags {
     bool hasMidThreadPreemptionKernel = false;
 };
 
-struct CsrSizeRequestFlags {
-    bool preemptionRequestChanged = false;
-    bool hasSharedHandles = false;
-    bool systolicPipelineSelectMode = false;
-    bool activePartitionsChanged = false;
-};
-
 struct ImmediateDispatchFlags {
     StreamProperties *requiredState = nullptr;
     void *sshCpuBase = nullptr;

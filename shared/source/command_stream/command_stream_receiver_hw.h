@@ -7,7 +7,7 @@
 
 #pragma once
 #include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/command_stream/csr_definitions.h"
+#include "shared/source/command_stream/csr_size_request_flags.h"
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/direct_submission/dispatchers/blitter_dispatcher.h"
 #include "shared/source/direct_submission/dispatchers/render_dispatcher.h"
@@ -24,6 +24,9 @@ class DirectSubmissionHw;
 template <typename GfxFamily>
 class DeviceCommandStreamReceiver;
 struct PipeControlArgs;
+struct DispatchBcsFlags;
+struct DispatchFlags;
+struct ImmediateDispatchFlags;
 
 template <typename GfxFamily>
 class CommandStreamReceiverHw : public CommandStreamReceiver {

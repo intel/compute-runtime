@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
+#include "shared/source/command_stream/csr_definitions.h"
 #include "shared/source/os_interface/os_context.h"
 
 namespace NEO {
