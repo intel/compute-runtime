@@ -449,11 +449,17 @@ struct MockGlobalOperationsProcfsAccess : public L0::Sysman::ProcFsAccessInterfa
     const ::pid_t extraPid = 4;
     const int extraFd = 5;
     const int extraFd1 = 6;
+    const ::pid_t extraChildPid = 7;
+    const int extraChildFd = 8;
+    const int extraChildFd1 = 9;
     std::vector<::pid_t> pidList = {1, 2, 3};
     std::vector<int> fdList = {0, 1, 2};
     ::pid_t ourDevicePid = 0;
     int ourDeviceFd = 0;
     int ourDeviceFd1 = 0;
+    ::pid_t ourDeviceChildPid = 0;
+    int ourDeviceChildFd = 0;
+    int ourDeviceChildFd1 = 0;
 
     std::vector<MockEnumListProcessCall> mockListProcessCall{};
     std::vector<bool> isRepeated{};
@@ -468,6 +474,9 @@ struct MockGlobalOperationsProcfsAccess : public L0::Sysman::ProcFsAccessInterfa
             if (mockListProcessCallValue == MockEnumListProcessCall::DEVICE_IN_USE) {
                 if (ourDevicePid) {
                     list.push_back(ourDevicePid);
+                }
+                if (ourDeviceChildPid) {
+                    list.push_back(ourDeviceChildPid);
                 }
             }
 
@@ -510,6 +519,12 @@ struct MockGlobalOperationsProcfsAccess : public L0::Sysman::ProcFsAccessInterfa
                 list.push_back(ourDeviceFd1);
             }
         }
+        if (ourDeviceChildPid && (ourDeviceChildPid == pid)) {
+            list.push_back(ourDeviceChildFd);
+            if (ourDeviceChildFd1) {
+                list.push_back(ourDeviceChildFd1);
+            }
+        }
         return getFileDescriptorsResult;
     }
 
@@ -520,7 +535,9 @@ struct MockGlobalOperationsProcfsAccess : public L0::Sysman::ProcFsAccessInterfa
             return mockGetFileNameError;
         }
 
-        if (pid == ourDevicePid && ((fd == ourDeviceFd) || (fd == ourDeviceFd1))) {
+        if (pid == ourDevicePid && ((fd == ourDeviceFd) || (ourDeviceFd1 && (fd == ourDeviceFd1)))) {
+            val = mockDeviceName;
+        } else if (ourDeviceChildPid && (pid == ourDeviceChildPid) && ((fd == ourDeviceChildFd) || (ourDeviceChildFd1 && (fd == ourDeviceChildFd1)))) {
             val = mockDeviceName;
         } else {
             // return fake filenames for other file descriptors
@@ -560,6 +577,25 @@ struct MockGlobalOperationsFsAccess : public L0::Sysman::FsAccessInterface {
     ze_result_t mockAlertReasonReadResult = ZE_RESULT_SUCCESS;
     bool mockDevicePciPathAccessible = true;
     bool mockDriverLoaded = true;
+    bool mockExposeClientIdInFdInfo = true;
+    uint64_t mockClientIdForFirstFd = 1;
+    uint64_t mockClientIdForSecondFd = 2;
+    uint64_t mockClientIdForChildFirstFd = 3;
+    uint64_t mockClientIdForChildSecondFd = 4;
+    std::map<::pid_t, uint64_t> mockProcessStartTime = {};
+    std::map<::pid_t, std::vector<std::string>> mockStatFileContents = {};
+    std::string mockProcessName = "(gpu app)";
+
+    std::string buildStatFileLine(const ::pid_t pid, const std::string &processName, const std::string &startTime) {
+        constexpr uint32_t fieldsBetweenProcessStateAndStartTime = 18u;
+        std::ostringstream statFileLine;
+        statFileLine << pid << " " << processName << " S";
+        for (uint32_t fieldIndex = 0; fieldIndex < fieldsBetweenProcessStateAndStartTime; fieldIndex++) {
+            statFileLine << " 0";
+        }
+        statFileLine << " " << startTime << " 0 0";
+        return statFileLine.str();
+    }
 
     bool directoryExists(const std::string path) override {
         return mockDevicePciPathAccessible;
@@ -631,9 +667,34 @@ struct MockGlobalOperationsFsAccess : public L0::Sysman::FsAccessInterface {
             return ZE_RESULT_SUCCESS;
         }
 
+        const std::string procFsDir("/proc/");
+        const std::string statFileSuffix("/stat");
+        if (file.starts_with(procFsDir) && file.ends_with(statFileSuffix) &&
+            (file.size() > (procFsDir.size() + statFileSuffix.size()))) {
+            ::pid_t pid = 0;
+            std::istringstream pidStream(file.substr(procFsDir.size(), file.size() - procFsDir.size() - statFileSuffix.size()));
+            pidStream >> pid;
+            auto statFileContents = mockStatFileContents.find(pid);
+            if (statFileContents != mockStatFileContents.end()) {
+                val = statFileContents->second;
+                return ZE_RESULT_SUCCESS;
+            }
+
+            auto startTime = mockProcessStartTime.find(pid);
+            if (startTime == mockProcessStartTime.end()) {
+                return ZE_RESULT_ERROR_NOT_AVAILABLE;
+            }
+
+            val.push_back(buildStatFileLine(pid, mockProcessName, std::to_string(startTime->second)));
+            return ZE_RESULT_SUCCESS;
+        }
+
         if (file == "/proc/4/fdinfo/5") {
             val.push_back("pos: 0");
             val.push_back("flags: 02100002");
+            if (mockExposeClientIdInFdInfo) {
+                val.push_back("drm-client-id: " + std::to_string(mockClientIdForFirstFd));
+            }
             val.push_back("drm-total-vram0: 120 MiB");
             val.push_back("drm-total-vram1: 50 KiB");
             val.push_back("drm-total-system: 125 MiB");
@@ -654,6 +715,9 @@ struct MockGlobalOperationsFsAccess : public L0::Sysman::FsAccessInterface {
         if (file == "/proc/4/fdinfo/6") {
             val.push_back("pos: 0");
             val.push_back("flags: 02100002");
+            if (mockExposeClientIdInFdInfo) {
+                val.push_back("drm-client-id: " + std::to_string(mockClientIdForSecondFd));
+            }
             val.push_back("drm-total-vram0: 534 ");
             val.push_back("drm-total-vram1: 50 MiB");
             val.push_back("drm-total-system: 125 MiB");
@@ -669,6 +733,36 @@ struct MockGlobalOperationsFsAccess : public L0::Sysman::FsAccessInterface {
             val.push_back("drm-engine-capacity-bcs: 16");
             val.push_back("drm-cycles-ccs: 0");
             val.push_back("drm-total-cycles-ccs: 0");
+            val.push_back("drm-engine-capacity-ccs: 2");
+        }
+        // An fd inherited through fork() reads back the same contents as the fd it was inherited from
+        if (file == "/proc/7/fdinfo/8") {
+            val.push_back("pos: 0");
+            val.push_back("flags: 02100002");
+            if (mockExposeClientIdInFdInfo) {
+                val.push_back("drm-client-id: " + std::to_string(mockClientIdForChildFirstFd));
+            }
+            val.push_back("drm-total-vram0: 120 MiB");
+            val.push_back("drm-total-vram1: 50 KiB");
+            val.push_back("drm-shared-vram0: 120 MiB");
+            val.push_back("drm-shared-vram1: 80 MiB");
+            val.push_back("drm-cycles-bcs: 200");
+            val.push_back("drm-total-cycles-bcs: 220000000");
+            val.push_back("drm-engine-capacity-bcs: 16");
+            val.push_back("drm-cycles-ccs: 100");
+            val.push_back("drm-total-cycles-ccs: 220000000");
+            val.push_back("drm-engine-capacity-ccs: 2");
+        }
+        if (file == "/proc/7/fdinfo/9") {
+            val.push_back("pos: 0");
+            val.push_back("flags: 02100002");
+            if (mockExposeClientIdInFdInfo) {
+                val.push_back("drm-client-id: " + std::to_string(mockClientIdForChildSecondFd));
+            }
+            val.push_back("drm-total-vram0: 10 MiB");
+            val.push_back("drm-shared-vram0: 5 MiB");
+            val.push_back("drm-cycles-ccs: 100");
+            val.push_back("drm-total-cycles-ccs: 220000000");
             val.push_back("drm-engine-capacity-ccs: 2");
         }
         return ZE_RESULT_SUCCESS;

@@ -109,6 +109,8 @@ class LinuxGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableAndN
     NEO::ExecutionEnvironment *executionEnvironment = nullptr;
     ze_result_t getListOfEnginesUsedByProcess(std::vector<std::string> &fdFileContents, uint32_t &activeEngines);
     ze_result_t getMemoryStatsUsedByProcess(std::vector<std::string> &fdFileContents, uint64_t &memSize, uint64_t &sharedSize);
+    bool getClientIdFromFdInfo(const std::vector<std::string> &fdFileContents, uint64_t &clientId);
+    uint64_t getProcessStartTime(const ::pid_t pid);
     ze_result_t resetImpl(ze_bool_t force, zes_reset_type_t resetType);
     bool getUuidFromSubDeviceInfo(uint32_t subDeviceID, std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid);
     zes_device_state_ext_flags_t getDeviceStateExtFlags();

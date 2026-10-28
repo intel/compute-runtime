@@ -25,9 +25,12 @@
 #include "level_zero/sysman/source/shared/linux/sysman_sysfs_engine_map.h"
 #include "level_zero/sysman/source/sysman_const.h"
 
+#include <algorithm>
 #include <chrono>
 #include <cstring>
 #include <iomanip>
+#include <limits>
+#include <set>
 
 namespace L0 {
 namespace Sysman {
@@ -51,6 +54,14 @@ static const std::map<int, zes_engine_type_flags_t> engineMap = {
     {2, ZES_ENGINE_TYPE_FLAG_MEDIA},
     {3, ZES_ENGINE_TYPE_FLAG_MEDIA},
     {4, ZES_ENGINE_TYPE_FLAG_COMPUTE}};
+
+constexpr uint64_t unknownProcessStartTime = std::numeric_limits<uint64_t>::max();
+
+struct GpuClientProcess {
+    uint64_t startTime = unknownProcessStartTime;
+    ::pid_t pid = 0;
+    std::vector<int> fds;
+};
 
 bool LinuxGlobalOperationsImp::getSerialNumber(char (&serialNumber)[ZES_STRING_PROPERTY_SIZE]) {
     uint64_t offset = 0;
@@ -450,11 +461,25 @@ ze_result_t LinuxGlobalOperationsImp::resetImpl(ze_bool_t force, zes_reset_type_
     return result;
 }
 
+struct FdInfoLine {
+    std::string label;
+    uint64_t value = 0;
+    std::string unitOfSize;
+};
+
+static FdInfoLine parseFdInfoLine(const std::string &fileContents) {
+    FdInfoLine parsedLine;
+    std::istringstream iss(fileContents);
+    iss >> parsedLine.label >> parsedLine.value >> parsedLine.unitOfSize;
+    parsedLine.label = parsedLine.label.substr(0, parsedLine.label.length() - 1);
+    return parsedLine;
+}
+
 ze_result_t LinuxGlobalOperationsImp::getMemoryStatsUsedByProcess(std::vector<std::string> &fdFileContents, uint64_t &memSize, uint64_t &sharedSize) {
     const std::string memSizeString("drm-total-vram");
     const std::string sharedSizeString("drm-shared-vram");
 
-    auto convertToBytes = [](std::string unitOfSize) -> std::uint64_t {
+    auto convertToBytes = [](const std::string &unitOfSize) -> std::uint64_t {
         if (unitOfSize.empty()) {
             return 1;
         } else if (unitOfSize == "KiB") {
@@ -467,23 +492,11 @@ ze_result_t LinuxGlobalOperationsImp::getMemoryStatsUsedByProcess(std::vector<st
     };
 
     for (const auto &fileContents : fdFileContents) {
-        std::istringstream iss(fileContents);
-        std::string label;
-        uint64_t value = 0;
-        std::string unitOfSize;
-        iss >> label >> value >> unitOfSize;
-
-        // Example: consider "fileContents = "drm-total-vram0: 120 MiB""
-        // Then if we are here, then label would be "drm-total-vram0:". So remove `:` from label
-        label = label.substr(0, label.length() - 1);
-        if (label.substr(0, memSizeString.length()) == memSizeString) {
-            // Convert Memory obtained to bytes
-            value = value * convertToBytes(std::move(unitOfSize));
-            memSize += value;
-        } else if (label.substr(0, sharedSizeString.length()) == sharedSizeString) {
-            // Convert Memory obtained to bytes
-            value = value * convertToBytes(std::move(unitOfSize));
-            sharedSize += value;
+        const auto parsedLine = parseFdInfoLine(fileContents);
+        if (parsedLine.label.starts_with(memSizeString)) {
+            memSize += parsedLine.value * convertToBytes(parsedLine.unitOfSize);
+        } else if (parsedLine.label.starts_with(sharedSizeString)) {
+            sharedSize += parsedLine.value * convertToBytes(parsedLine.unitOfSize);
         }
     }
 
@@ -494,19 +507,15 @@ ze_result_t LinuxGlobalOperationsImp::getListOfEnginesUsedByProcess(std::vector<
 
     const std::string stringPrefix("drm-cycles-");
     for (const auto &fileContents : fdFileContents) {
-        std::istringstream iss(fileContents);
-        std::string label;
-        uint64_t value;
-        iss >> label >> value;
-        label = label.substr(0, label.length() - 1);
+        const auto parsedLine = parseFdInfoLine(fileContents);
 
-        if ((label.substr(0, stringPrefix.length()) == stringPrefix) && (value != 0)) {
+        if (parsedLine.label.starts_with(stringPrefix) && (parsedLine.value != 0)) {
 
-            std::string engineClass = label.substr(stringPrefix.length());
+            std::string engineClass = parsedLine.label.substr(stringPrefix.length());
             auto it = sysfsEngineMapToLevel0EngineType.find(engineClass);
             if (it == sysfsEngineMapToLevel0EngineType.end()) {
                 PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                             "Error@ %s(): unknown engine type: %s and returning error:0x%x \n", NEO_FUNCTION_NAME, label.c_str(),
+                             "Error@ %s(): unknown engine type: %s and returning error:0x%x \n", NEO_FUNCTION_NAME, parsedLine.label.c_str(),
                              ZE_RESULT_ERROR_UNKNOWN);
                 DEBUG_BREAK_IF(1);
                 return ZE_RESULT_ERROR_UNKNOWN;
@@ -515,6 +524,45 @@ ze_result_t LinuxGlobalOperationsImp::getListOfEnginesUsedByProcess(std::vector<
         }
     }
     return ZE_RESULT_SUCCESS;
+}
+
+bool LinuxGlobalOperationsImp::getClientIdFromFdInfo(const std::vector<std::string> &fdFileContents, uint64_t &clientId) {
+    const std::string clientIdString("drm-client-id");
+
+    for (const auto &fileContents : fdFileContents) {
+        const auto parsedLine = parseFdInfoLine(fileContents);
+        if (parsedLine.label == clientIdString) {
+            clientId = parsedLine.value;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+uint64_t LinuxGlobalOperationsImp::getProcessStartTime(const ::pid_t pid) {
+    constexpr uint32_t fieldsBetweenProcessNameAndStartTime = 19u;
+
+    std::vector<std::string> statFileContents;
+    if ((ZE_RESULT_SUCCESS != pFsAccess->read("/proc/" + std::to_string(pid) + "/stat", statFileContents)) || statFileContents.empty()) {
+        return unknownProcessStartTime;
+    }
+
+    const auto &statLine = statFileContents.front();
+    const auto processNameEnd = statLine.rfind(')');
+    if (std::string::npos == processNameEnd) {
+        return unknownProcessStartTime;
+    }
+
+    std::istringstream stream(statLine.substr(processNameEnd + 1));
+    std::string skippedField;
+    for (uint32_t fieldIndex = 0; fieldIndex < fieldsBetweenProcessNameAndStartTime; fieldIndex++) {
+        stream >> skippedField;
+    }
+
+    uint64_t startTime = unknownProcessStartTime;
+    stream >> startTime;
+    return stream.fail() ? unknownProcessStartTime : startTime;
 }
 
 // Example fdinfo format:
@@ -555,7 +603,7 @@ ze_result_t LinuxGlobalOperationsImp::getListOfEnginesUsedByProcess(std::vector<
 // drm-total-cycles-ccs:   24339816184
 // drm-engine-capacity-ccs:        2
 ze_result_t LinuxGlobalOperationsImp::readClientInfoFromFdInfo(std::map<uint64_t, EngineMemoryPairType> &pidClientMap) {
-    std::map<::pid_t, std::vector<int>> gpuClientProcessMap; // This map contains processes and their opened gpu File descriptors
+    std::vector<GpuClientProcess> gpuClientProcesses;
     ze_result_t result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 
     {
@@ -570,19 +618,30 @@ ze_result_t LinuxGlobalOperationsImp::readClientInfoFromFdInfo(std::map<uint64_t
             std::vector<int> fds;
             pLinuxSysmanImp->getPidFdsForOpenDevice(pid, fds);
             if (!fds.empty()) {
-                gpuClientProcessMap.emplace(pid, fds);
+                gpuClientProcesses.push_back({getProcessStartTime(pid), pid, std::move(fds)});
             }
         }
+
+        std::sort(gpuClientProcesses.begin(), gpuClientProcesses.end(), [](const GpuClientProcess &left, const GpuClientProcess &right) {
+            if (left.startTime != right.startTime) {
+                return left.startTime < right.startTime;
+            }
+            return left.pid < right.pid;
+        });
     }
 
+    std::set<uint64_t> accountedClientIds;
+
     // iterate for each process
-    for (const auto &gpuClientProcess : gpuClientProcessMap) {
+    for (const auto &gpuClientProcess : gpuClientProcesses) {
         // iterate over all the opened GPU device file descriptors
-        uint64_t pid = static_cast<uint64_t>(gpuClientProcess.first);
+        uint64_t pid = static_cast<uint64_t>(gpuClientProcess.pid);
         uint32_t activeEngines = 0u; // This contains bit fields of engines used by processes
         uint64_t memSize = 0u;
         uint64_t sharedSize = 0u;
-        for (const auto &fd : gpuClientProcess.second) {
+        bool anyClientAccounted = false;
+        bool anyClientInherited = false;
+        for (const auto &fd : gpuClientProcess.fds) {
             std::string fdInfoPath = "/proc/" + std::to_string(static_cast<int>(pid)) + "/fdinfo/" + std::to_string(fd);
             std::vector<std::string> fdFileContents;
             result = pFsAccess->read(std::move(fdInfoPath), fdFileContents);
@@ -595,6 +654,13 @@ ze_result_t LinuxGlobalOperationsImp::readClientInfoFromFdInfo(std::map<uint64_t
                     return result;
                 }
             }
+
+            uint64_t clientId = 0;
+            if (getClientIdFromFdInfo(fdFileContents, clientId) && !accountedClientIds.insert(clientId).second) {
+                anyClientInherited = true;
+                continue;
+            }
+            anyClientAccounted = true;
 
             result = getListOfEnginesUsedByProcess(fdFileContents, activeEngines);
             if (result != ZE_RESULT_SUCCESS) {
@@ -612,6 +678,10 @@ ze_result_t LinuxGlobalOperationsImp::readClientInfoFromFdInfo(std::map<uint64_t
                 return result;
             }
         }
+        if (anyClientInherited && !anyClientAccounted) {
+            continue;
+        }
+
         DeviceMemStruct totalDeviceMem = {memSize, sharedSize};
         EngineMemoryPairType engineMemoryPair = {static_cast<int64_t>(activeEngines), totalDeviceMem};
         pidClientMap.emplace(pid, engineMemoryPair);

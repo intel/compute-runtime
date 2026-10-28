@@ -61,6 +61,15 @@ class SysmanGlobalOperationsFixtureXe : public SysmanDeviceFixture {
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetState(device, &deviceState));
     }
 
+    void setUpTwoProcessesSharingSameDrmClient() {
+        pProcfsAccess->ourDevicePid = pProcfsAccess->extraPid;
+        pProcfsAccess->ourDeviceFd = pProcfsAccess->extraFd;
+        pProcfsAccess->ourDeviceChildPid = pProcfsAccess->extraChildPid;
+        pProcfsAccess->ourDeviceChildFd = pProcfsAccess->extraChildFd;
+        pProcfsAccess->mockListProcessCall.push_back(DEVICE_IN_USE);
+        pFsAccess->mockClientIdForChildFirstFd = pFsAccess->mockClientIdForFirstFd;
+    }
+
     uint32_t getDeviceStateExtFlags() {
         zes_device_state_t deviceState = {};
         deviceState.stype = ZES_STRUCTURE_TYPE_DEVICE_STATE;
@@ -100,6 +109,219 @@ TEST_F(SysmanGlobalOperationsFixtureXe, GivenValidDeviceHandleWhileRetrievingInf
     uint64_t expectedSharedSize = (120 * MemoryConstants::megaByte) + (80 * MemoryConstants::megaByte) + (120 * MemoryConstants::kiloByte) + 689;
     EXPECT_EQ(processes[0].memSize, expectedMemSize);
     EXPECT_EQ(processes[0].sharedSize, expectedSharedSize);
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenMultipleFdsOfSameProcessReportingSameDrmClientIdWhenRetrievingProcessStateThenMemoryOfThatClientIsAccountedOnce) {
+
+    pProcfsAccess->ourDevicePid = pProcfsAccess->extraPid;
+    pProcfsAccess->ourDeviceFd = pProcfsAccess->extraFd;
+    pProcfsAccess->ourDeviceFd1 = pProcfsAccess->extraFd1;
+    pProcfsAccess->mockListProcessCall.push_back(DEVICE_IN_USE);
+    pFsAccess->mockClientIdForSecondFd = pFsAccess->mockClientIdForFirstFd;
+
+    uint32_t count = 0;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesDeviceProcessesGetState(device, &count, nullptr));
+    EXPECT_EQ(count, 1u);
+    std::vector<zes_process_state_t> processes(count);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesDeviceProcessesGetState(device, &count, processes.data()));
+    EXPECT_EQ(processes[0].processId, static_cast<uint32_t>(pProcfsAccess->extraPid));
+    constexpr int64_t expectedEngines = ZES_ENGINE_TYPE_FLAG_DMA | ZES_ENGINE_TYPE_FLAG_COMPUTE;
+    EXPECT_EQ(processes[0].engines, expectedEngines);
+    uint64_t expectedMemSize = (120 * MemoryConstants::megaByte) + (50 * MemoryConstants::kiloByte);
+    uint64_t expectedSharedSize = (120 * MemoryConstants::megaByte) + (80 * MemoryConstants::megaByte);
+    EXPECT_EQ(processes[0].memSize, expectedMemSize);
+    EXPECT_EQ(processes[0].sharedSize, expectedSharedSize);
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenFdInfoWithoutDrmClientIdWhenRetrievingProcessStateThenMemoryOfEveryFdIsAccounted) {
+
+    pProcfsAccess->ourDevicePid = pProcfsAccess->extraPid;
+    pProcfsAccess->ourDeviceFd = pProcfsAccess->extraFd;
+    pProcfsAccess->ourDeviceFd1 = pProcfsAccess->extraFd1;
+    pProcfsAccess->mockListProcessCall.push_back(DEVICE_IN_USE);
+    pFsAccess->mockExposeClientIdInFdInfo = false;
+
+    uint32_t count = 0;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesDeviceProcessesGetState(device, &count, nullptr));
+    EXPECT_EQ(count, 1u);
+    std::vector<zes_process_state_t> processes(count);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesDeviceProcessesGetState(device, &count, processes.data()));
+    EXPECT_EQ(processes[0].processId, static_cast<uint32_t>(pProcfsAccess->extraPid));
+    uint64_t expectedMemSize = (120 * MemoryConstants::megaByte) + (50 * MemoryConstants::kiloByte) + 534 + ((50 * MemoryConstants::megaByte));
+    uint64_t expectedSharedSize = (120 * MemoryConstants::megaByte) + (80 * MemoryConstants::megaByte) + (120 * MemoryConstants::kiloByte) + 689;
+    EXPECT_EQ(processes[0].memSize, expectedMemSize);
+    EXPECT_EQ(processes[0].sharedSize, expectedSharedSize);
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenForkedProcessHoldingOnlyInheritedDrmClientWhenRetrievingProcessStateThenOnlyProcessThatOpenedTheClientIsReported) {
+
+    pProcfsAccess->ourDevicePid = pProcfsAccess->extraPid;
+    pProcfsAccess->ourDeviceFd = pProcfsAccess->extraFd;
+    pProcfsAccess->ourDeviceFd1 = pProcfsAccess->extraFd1;
+    pProcfsAccess->ourDeviceChildPid = pProcfsAccess->extraChildPid;
+    pProcfsAccess->ourDeviceChildFd = pProcfsAccess->extraChildFd;
+    pProcfsAccess->mockListProcessCall.push_back(DEVICE_IN_USE);
+    pFsAccess->mockClientIdForChildFirstFd = pFsAccess->mockClientIdForFirstFd;
+
+    uint32_t count = 0;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesDeviceProcessesGetState(device, &count, nullptr));
+    EXPECT_EQ(count, 1u);
+    std::vector<zes_process_state_t> processes(count);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesDeviceProcessesGetState(device, &count, processes.data()));
+    EXPECT_EQ(processes[0].processId, static_cast<uint32_t>(pProcfsAccess->extraPid));
+    uint64_t expectedMemSize = (120 * MemoryConstants::megaByte) + (50 * MemoryConstants::kiloByte) + 534 + (50 * MemoryConstants::megaByte);
+    uint64_t expectedSharedSize = (120 * MemoryConstants::megaByte) + (80 * MemoryConstants::megaByte) + (120 * MemoryConstants::kiloByte) + 689;
+    EXPECT_EQ(processes[0].memSize, expectedMemSize);
+    EXPECT_EQ(processes[0].sharedSize, expectedSharedSize);
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenForkedProcessHoldingInheritedAndOwnDrmClientWhenRetrievingProcessStateThenOnlyItsOwnClientIsAccountedToIt) {
+
+    pProcfsAccess->ourDevicePid = pProcfsAccess->extraPid;
+    pProcfsAccess->ourDeviceFd = pProcfsAccess->extraFd;
+    pProcfsAccess->ourDeviceFd1 = pProcfsAccess->extraFd1;
+    pProcfsAccess->ourDeviceChildPid = pProcfsAccess->extraChildPid;
+    pProcfsAccess->ourDeviceChildFd = pProcfsAccess->extraChildFd;
+    pProcfsAccess->ourDeviceChildFd1 = pProcfsAccess->extraChildFd1;
+    pProcfsAccess->mockListProcessCall.push_back(DEVICE_IN_USE);
+    pFsAccess->mockClientIdForChildFirstFd = pFsAccess->mockClientIdForFirstFd;
+
+    uint32_t count = 0;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesDeviceProcessesGetState(device, &count, nullptr));
+    ASSERT_EQ(count, 2u);
+    std::vector<zes_process_state_t> processes(count);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesDeviceProcessesGetState(device, &count, processes.data()));
+
+    EXPECT_EQ(processes[0].processId, static_cast<uint32_t>(pProcfsAccess->extraPid));
+    uint64_t expectedMemSize = (120 * MemoryConstants::megaByte) + (50 * MemoryConstants::kiloByte) + 534 + (50 * MemoryConstants::megaByte);
+    uint64_t expectedSharedSize = (120 * MemoryConstants::megaByte) + (80 * MemoryConstants::megaByte) + (120 * MemoryConstants::kiloByte) + 689;
+    EXPECT_EQ(processes[0].memSize, expectedMemSize);
+    EXPECT_EQ(processes[0].sharedSize, expectedSharedSize);
+
+    EXPECT_EQ(processes[1].processId, static_cast<uint32_t>(pProcfsAccess->extraChildPid));
+    EXPECT_EQ(processes[1].engines, static_cast<uint32_t>(ZES_ENGINE_TYPE_FLAG_COMPUTE));
+    EXPECT_EQ(processes[1].memSize, 10 * MemoryConstants::megaByte);
+    EXPECT_EQ(processes[1].sharedSize, 5 * MemoryConstants::megaByte);
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenProcessThatOpenedDrmClientHasHigherPidThanTheProcessThatInheritedItWhenRetrievingProcessStateThenClientIsAccountedToTheProcessThatStartedFirst) {
+
+    setUpTwoProcessesSharingSameDrmClient();
+    pFsAccess->mockProcessStartTime[pProcfsAccess->extraChildPid] = 1000;
+    pFsAccess->mockProcessStartTime[pProcfsAccess->extraPid] = 2000;
+
+    uint32_t count = 0;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesDeviceProcessesGetState(device, &count, nullptr));
+    EXPECT_EQ(count, 1u);
+    std::vector<zes_process_state_t> processes(count);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesDeviceProcessesGetState(device, &count, processes.data()));
+    EXPECT_EQ(processes[0].processId, static_cast<uint32_t>(pProcfsAccess->extraChildPid));
+    uint64_t expectedMemSize = (120 * MemoryConstants::megaByte) + (50 * MemoryConstants::kiloByte);
+    uint64_t expectedSharedSize = (120 * MemoryConstants::megaByte) + (80 * MemoryConstants::megaByte);
+    EXPECT_EQ(processes[0].memSize, expectedMemSize);
+    EXPECT_EQ(processes[0].sharedSize, expectedSharedSize);
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenProcessNameContainingSpacesAndParenthesesWhenRetrievingProcessStateThenProcessStartTimeIsParsedFromStatFile) {
+
+    setUpTwoProcessesSharingSameDrmClient();
+    pFsAccess->mockProcessName = "(gpu (app) 1 2 3)";
+    pFsAccess->mockProcessStartTime[pProcfsAccess->extraChildPid] = 1000;
+    pFsAccess->mockProcessStartTime[pProcfsAccess->extraPid] = 2000;
+
+    uint32_t count = 0;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesDeviceProcessesGetState(device, &count, nullptr));
+    EXPECT_EQ(count, 1u);
+    std::vector<zes_process_state_t> processes(count);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesDeviceProcessesGetState(device, &count, processes.data()));
+    EXPECT_EQ(processes[0].processId, static_cast<uint32_t>(pProcfsAccess->extraChildPid));
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenProcessesReportingEqualStartTimeAndListedWithHigherPidFirstWhenRetrievingProcessStateThenSharedDrmClientIsAccountedToTheProcessWithLowerPid) {
+
+    pProcfsAccess->ourDevicePid = pProcfsAccess->extraChildPid;
+    pProcfsAccess->ourDeviceFd = pProcfsAccess->extraChildFd;
+    pProcfsAccess->ourDeviceChildPid = pProcfsAccess->extraPid;
+    pProcfsAccess->ourDeviceChildFd = pProcfsAccess->extraFd;
+    pProcfsAccess->mockListProcessCall.push_back(DEVICE_IN_USE);
+    pFsAccess->mockClientIdForChildFirstFd = pFsAccess->mockClientIdForFirstFd;
+    pFsAccess->mockProcessStartTime[pProcfsAccess->extraChildPid] = 1000;
+    pFsAccess->mockProcessStartTime[pProcfsAccess->extraPid] = 1000;
+
+    uint32_t count = 0;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesDeviceProcessesGetState(device, &count, nullptr));
+    EXPECT_EQ(count, 1u);
+    std::vector<zes_process_state_t> processes(count);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesDeviceProcessesGetState(device, &count, processes.data()));
+    EXPECT_EQ(processes[0].processId, static_cast<uint32_t>(pProcfsAccess->extraPid));
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenProcessStartTimeIsNotAvailableWhenRetrievingProcessStateThenSharedDrmClientIsAccountedToTheProcessWithLowerPid) {
+
+    setUpTwoProcessesSharingSameDrmClient();
+
+    uint32_t count = 0;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesDeviceProcessesGetState(device, &count, nullptr));
+    EXPECT_EQ(count, 1u);
+    std::vector<zes_process_state_t> processes(count);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesDeviceProcessesGetState(device, &count, processes.data()));
+    EXPECT_EQ(processes[0].processId, static_cast<uint32_t>(pProcfsAccess->extraPid));
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenEmptyStatFileWhenRetrievingProcessStateThenSharedDrmClientIsAccountedToTheProcessWithKnownStartTime) {
+
+    setUpTwoProcessesSharingSameDrmClient();
+    pFsAccess->mockProcessStartTime[pProcfsAccess->extraPid] = 2000;
+    pFsAccess->mockStatFileContents[pProcfsAccess->extraChildPid] = {};
+
+    uint32_t count = 0;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesDeviceProcessesGetState(device, &count, nullptr));
+    EXPECT_EQ(count, 1u);
+    std::vector<zes_process_state_t> processes(count);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesDeviceProcessesGetState(device, &count, processes.data()));
+    EXPECT_EQ(processes[0].processId, static_cast<uint32_t>(pProcfsAccess->extraPid));
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenStatFileWithoutParenthesisAroundProcessNameWhenRetrievingProcessStateThenSharedDrmClientIsAccountedToTheProcessWithKnownStartTime) {
+
+    setUpTwoProcessesSharingSameDrmClient();
+    pFsAccess->mockProcessStartTime[pProcfsAccess->extraPid] = 2000;
+    pFsAccess->mockStatFileContents[pProcfsAccess->extraChildPid] = {pFsAccess->buildStatFileLine(pProcfsAccess->extraChildPid, "gpu app", "1000")};
+
+    uint32_t count = 0;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesDeviceProcessesGetState(device, &count, nullptr));
+    EXPECT_EQ(count, 1u);
+    std::vector<zes_process_state_t> processes(count);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesDeviceProcessesGetState(device, &count, processes.data()));
+    EXPECT_EQ(processes[0].processId, static_cast<uint32_t>(pProcfsAccess->extraPid));
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenStatFileWithNonNumericStartTimeFieldWhenRetrievingProcessStateThenSharedDrmClientIsAccountedToTheProcessWithKnownStartTime) {
+
+    setUpTwoProcessesSharingSameDrmClient();
+    pFsAccess->mockProcessStartTime[pProcfsAccess->extraPid] = 2000;
+    pFsAccess->mockStatFileContents[pProcfsAccess->extraChildPid] = {pFsAccess->buildStatFileLine(pProcfsAccess->extraChildPid, pFsAccess->mockProcessName, "startTime")};
+
+    uint32_t count = 0;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesDeviceProcessesGetState(device, &count, nullptr));
+    EXPECT_EQ(count, 1u);
+    std::vector<zes_process_state_t> processes(count);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesDeviceProcessesGetState(device, &count, processes.data()));
+    EXPECT_EQ(processes[0].processId, static_cast<uint32_t>(pProcfsAccess->extraPid));
+}
+
+TEST_F(SysmanGlobalOperationsFixtureXe, GivenStatFileTruncatedBeforeStartTimeFieldWhenRetrievingProcessStateThenSharedDrmClientIsAccountedToTheProcessWithKnownStartTime) {
+
+    setUpTwoProcessesSharingSameDrmClient();
+    pFsAccess->mockProcessStartTime[pProcfsAccess->extraPid] = 2000;
+    pFsAccess->mockStatFileContents[pProcfsAccess->extraChildPid] = {std::to_string(pProcfsAccess->extraChildPid) + " (gpu app) S 0 0 0"};
+
+    uint32_t count = 0;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesDeviceProcessesGetState(device, &count, nullptr));
+    EXPECT_EQ(count, 1u);
+    std::vector<zes_process_state_t> processes(count);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesDeviceProcessesGetState(device, &count, processes.data()));
+    EXPECT_EQ(processes[0].processId, static_cast<uint32_t>(pProcfsAccess->extraPid));
 }
 
 TEST_F(SysmanGlobalOperationsFixtureXe,
