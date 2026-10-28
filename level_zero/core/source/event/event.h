@@ -57,26 +57,11 @@ struct Kernel;
 struct CommandList;
 struct GraphInternalEventEntry;
 
-#pragma pack(1)
-struct IpcEventPoolData {
-    uint64_t handle = 0;
-    size_t numEvents = 0;
-    uint32_t maxEventPackets = 0;
-    uint16_t numDevices = 0;
-    bool isDeviceEventPoolAllocation : 1 = false;
-    bool isHostVisibleEventPoolAllocation : 1 = false;
-    bool isImplicitScalingCapable : 1 = false;
-    bool isEventPoolKernelMappedTsFlagSet : 1 = false;
-    bool isEventPoolTsFlagSet : 1 = false;
-};
-#pragma pack()
-static_assert(sizeof(IpcEventPoolData) <= ZE_MAX_IPC_HANDLE_SIZE, "IpcEventPoolData is bigger than ZE_MAX_IPC_HANDLE_SIZE");
-
 // Sole wire format for event-pool IPC: getIpcHandle always writes it, openEventPoolIpcHandle always
-// parses it (IpcEventPoolData above is documentation-only). reservedHandleData[32] is an opaque OS
-// fallback handle tried if the primary fd/NT import fails (mirrors IpcOpaqueMemoryData). Fields are
-// ordered largest-to-smallest so each lands naturally aligned under #pragma pack(1) - a misaligned
-// reference (e.g. gtest EXPECT_EQ binding processId) is UB and trips UBSan.
+// parses it. reservedHandleData[32] is an opaque OS fallback handle tried if the primary fd/NT
+// import fails (mirrors IpcOpaqueMemoryData). Fields are ordered largest-to-smallest so each lands
+// naturally aligned under #pragma pack(1) - a misaligned reference (e.g. gtest EXPECT_EQ binding
+// processId) is UB and trips UBSan.
 #pragma pack(1)
 struct IpcOpaqueEventPoolData {
     union {
