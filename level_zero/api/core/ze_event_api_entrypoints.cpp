@@ -72,7 +72,7 @@ ze_result_t ZE_APICALL zeEventHostSynchronize(
 ze_result_t ZE_APICALL zeEventQueryStatus(
     ze_event_handle_t hEvent) {
     auto event = L0::Event::fromHandle(hEvent);
-    if (event->isCapturedGraphInternalEvent() || event->getIsSignalledAsGraphInternalEvent()) {
+    if (event->isGraphInternalEvent()) {
         return ZE_RESULT_ERROR_GRAPH_INTERNAL_EVENT;
     }
 

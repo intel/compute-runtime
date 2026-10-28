@@ -2271,6 +2271,11 @@ struct GraphInternalEventFixture : public GraphFixture {
         return zeCommandListAppendLaunchKernel(inOrderCmdList->toHandle(), kernel->toHandle(), &groupCount, eventHandle, 0, nullptr);
     }
 
+    ze_result_t appendExternalSignal(ze_event_handle_t eventHandle) {
+        ze_event_exp_flags_desc_t eventFlagsDesc = {.stype = ZE_STRUCTURE_TYPE_EVENT_EXP_FLAGS_DESC, .flags = ZE_EVENT_EXP_FLAG_APPEND_GRAPH_EXTERNAL};
+        return zeCommandListAppendSignalEventWithParameters(inOrderCmdList->toHandle(), &eventFlagsDesc, eventHandle);
+    }
+
     ze_event_handle_t createAggregatedCounterBasedEvent(uint64_t *counterDeviceAddress) {
         ze_event_counter_based_external_aggregate_storage_desc_t storageDesc = {
             .stype = ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_EXTERNAL_AGGREGATE_STORAGE_DESC,
@@ -2292,6 +2297,13 @@ struct GraphInternalEventFixture : public GraphFixture {
         auto cmdListHandle = inOrderCmdList->toHandle();
         ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(cmdListHandle, graphHandle, nullptr));
         ASSERT_EQ(ZE_RESULT_SUCCESS, appendKernelSignalling(eventHandle));
+        ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(cmdListHandle, &graphHandle, nullptr));
+    }
+
+    void captureExternalSignal(ze_graph_handle_t &graphHandle, ze_event_handle_t eventHandle) {
+        auto cmdListHandle = inOrderCmdList->toHandle();
+        ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(cmdListHandle, graphHandle, nullptr));
+        ASSERT_EQ(ZE_RESULT_SUCCESS, appendExternalSignal(eventHandle));
         ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(cmdListHandle, &graphHandle, nullptr));
     }
 
@@ -2992,11 +3004,9 @@ TEST_F(GraphInternalEventTest,
     std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
     ze_graph_handle_t hGraph = srcGraph->toHandle();
     auto hCmdList = inOrderCmdList->toHandle();
-    ze_event_exp_flags_desc_t eventFlagsDesc = {ZE_STRUCTURE_TYPE_EVENT_EXP_FLAGS_DESC};
-    eventFlagsDesc.flags = ZE_EVENT_EXP_FLAG_APPEND_GRAPH_EXTERNAL;
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(hCmdList, hGraph, nullptr));
-    ASSERT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendSignalEventWithParameters(hCmdList, &eventFlagsDesc, hEvent));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendExternalSignal(hEvent));
     EXPECT_EQ(hEvent, srcGraph->getInternalEvents().getInternal(hEvent));
     ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(hCmdList, &hGraph, nullptr));
 
@@ -3023,12 +3033,10 @@ TEST_F(GraphInternalEventTest,
     std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
     ze_graph_handle_t hGraph = srcGraph->toHandle();
     auto hCmdList = inOrderCmdList->toHandle();
-    ze_event_exp_flags_desc_t eventFlagsDesc = {ZE_STRUCTURE_TYPE_EVENT_EXP_FLAGS_DESC};
-    eventFlagsDesc.flags = ZE_EVENT_EXP_FLAG_APPEND_GRAPH_EXTERNAL;
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(hCmdList, hGraph, nullptr));
     ASSERT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendSignalEvent(hCmdList, hEvent));
-    ASSERT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendSignalEventWithParameters(hCmdList, &eventFlagsDesc, hEvent));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendExternalSignal(hEvent));
     EXPECT_NE(hEvent, srcGraph->getInternalEvents().getInternal(hEvent));
     ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(hCmdList, &hGraph, nullptr));
 
@@ -3044,6 +3052,118 @@ TEST_F(GraphInternalEventTest,
 
     srcGraph.reset();
     event->destroy();
+}
+
+TEST_F(GraphInternalEventTest, givenCbEventSignalledOnlyWithExternalSignalWhenCaptureEndedAndGraphIsDestroyedThenEventIsUsableOutsideGraph) {
+    GraphsCleanupGuard graphCleanup;
+
+    auto hEvent = createCounterBasedEvent(context, device, false);
+
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    ze_graph_handle_t hGraph = srcGraph->toHandle();
+    captureExternalSignal(hGraph, hEvent);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventQueryStatus(hEvent));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventHostSynchronize(hEvent, 0));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendWaitOnEvents(inOrderCmdList->toHandle(), 1U, &hEvent));
+
+    srcGraph.reset();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventQueryStatus(hEvent));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventHostSynchronize(hEvent, 0));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendWaitOnEvents(inOrderCmdList->toHandle(), 1U, &hEvent));
+
+    L0::Event::fromHandle(hEvent)->destroy();
+}
+
+TEST_F(GraphInternalEventTest, givenCbEventSignalledOnlyWithExternalSignalWhenCaptureIsOpenThenQueryStatusReportsEventState) {
+    GraphsCleanupGuard graphCleanup;
+
+    auto hEvent = createCounterBasedEvent(context, device, false);
+    auto hCmdList = inOrderCmdList->toHandle();
+
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    ze_graph_handle_t hGraph = srcGraph->toHandle();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(hCmdList, hGraph, nullptr));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendExternalSignal(hEvent));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventQueryStatus(hEvent));
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(hCmdList, &hGraph, nullptr));
+
+    srcGraph.reset();
+    L0::Event::fromHandle(hEvent)->destroy();
+}
+
+TEST_F(GraphInternalEventTest, givenExternalSignalRecordedInOneGraphWhenAnotherGraphRecordsOnlyRegularSignalThenEventIsUsableOutsideGraph) {
+    GraphsCleanupGuard graphCleanup;
+
+    auto hEvent = createCounterBasedEvent(context, device, false);
+
+    std::unique_ptr<L0::Graph> externalSignalGraph = std::make_unique<L0::Graph>(context, true);
+    ze_graph_handle_t hExternalSignalGraph = externalSignalGraph->toHandle();
+    captureExternalSignal(hExternalSignalGraph, hEvent);
+
+    std::unique_ptr<L0::Graph> regularSignalGraph = std::make_unique<L0::Graph>(context, true);
+    ze_graph_handle_t hRegularSignalGraph = regularSignalGraph->toHandle();
+    captureKernelSignalling(hRegularSignalGraph, hEvent);
+
+    EXPECT_NE(hEvent, regularSignalGraph->getInternalEvents().getInternal(hEvent));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventQueryStatus(hEvent));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventHostSynchronize(hEvent, 0));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendWaitOnEvents(inOrderCmdList->toHandle(), 1U, &hEvent));
+
+    regularSignalGraph.reset();
+    externalSignalGraph.reset();
+    L0::Event::fromHandle(hEvent)->destroy();
+}
+
+TEST_F(GraphInternalEventTest, givenRegularAndExternalSignalRecordedInOneGraphInEitherOrderWhenCaptureEndedThenRegularSignalUsesSubstituteAndEventIsUsableOutsideGraph) {
+    GraphsCleanupGuard graphCleanup;
+
+    auto hRegularFirstEvent = createCounterBasedEvent(context, device, false);
+    auto hExternalFirstEvent = createCounterBasedEvent(context, device, false);
+    auto hCmdList = inOrderCmdList->toHandle();
+
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    ze_graph_handle_t hGraph = srcGraph->toHandle();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(hCmdList, hGraph, nullptr));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendKernelSignalling(hRegularFirstEvent));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendExternalSignal(hRegularFirstEvent));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendExternalSignal(hExternalFirstEvent));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendKernelSignalling(hExternalFirstEvent));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(hCmdList, &hGraph, nullptr));
+
+    for (auto hEvent : {hRegularFirstEvent, hExternalFirstEvent}) {
+        EXPECT_NE(hEvent, srcGraph->getInternalEvents().getInternal(hEvent));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventQueryStatus(hEvent));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventHostSynchronize(hEvent, 0));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendWaitOnEvents(hCmdList, 1U, &hEvent));
+    }
+
+    srcGraph.reset();
+    L0::Event::fromHandle(hRegularFirstEvent)->destroy();
+    L0::Event::fromHandle(hExternalFirstEvent)->destroy();
+}
+
+TEST_F(GraphInternalEventTest, givenExternalSignalEventNeverSignalledWhenRegularWaitIsCapturedInAnotherGraphThenWaitIsAccepted) {
+    GraphsCleanupGuard graphCleanup;
+
+    auto hEvent = createCounterBasedEvent(context, device, false);
+    auto hCmdList = inOrderCmdList->toHandle();
+
+    std::unique_ptr<L0::Graph> externalSignalGraph = std::make_unique<L0::Graph>(context, true);
+    ze_graph_handle_t hExternalSignalGraph = externalSignalGraph->toHandle();
+    captureExternalSignal(hExternalSignalGraph, hEvent);
+
+    std::unique_ptr<L0::Graph> waitingGraph = std::make_unique<L0::Graph>(context, true);
+    ze_graph_handle_t hWaitingGraph = waitingGraph->toHandle();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(hCmdList, hWaitingGraph, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendWaitOnEvents(hCmdList, 1U, &hEvent));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(hCmdList, &hWaitingGraph, nullptr));
+
+    waitingGraph.reset();
+    externalSignalGraph.reset();
+    L0::Event::fromHandle(hEvent)->destroy();
 }
 
 TEST_F(GraphInternalEventTest, givenNonExternalCbEventSignalledOutsideGraphWhenWaitedOnDuringCaptureThenGraphInternalEventReturned) {

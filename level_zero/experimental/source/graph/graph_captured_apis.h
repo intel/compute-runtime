@@ -311,16 +311,13 @@ class GraphInternalEvents {
     }
 
     static bool isInternalEventDependency(L0::Event *event) {
-        bool apiRequiredExternalSignalEvent = event->getApiRequiredGraphExternalEvent();
         bool isQualifiedForInternal = event->isCounterBasedExplicitlyEnabled() && (false == event->isIpcImported()) &&
                                       (0 == (event->getCounterBasedFlags() & ZE_EVENT_COUNTER_BASED_FLAG_IPC)) &&
-                                      (false == (event->isExternalEvent() || apiRequiredExternalSignalEvent)) &&
+                                      (false == event->isExternalForCurrentSignal()) &&
                                       (false == L0::Event::isAggregatedEvent(event));
         // api required is one time append decision (in runtime/instantiation it is cleared when signal event is assigned to the next append)
         // clear it once is checked for being external
-        if (apiRequiredExternalSignalEvent) {
-            event->setApiRequiredGraphExternalEvent(false);
-        }
+        event->setApiRequiredGraphExternalEvent(false);
         return isQualifiedForInternal;
     }
 

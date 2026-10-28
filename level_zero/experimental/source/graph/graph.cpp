@@ -559,7 +559,7 @@ void handleExternalCbSignalEvent(L0::Event *event, CbExternalEventInstantiateCon
         return;
     }
 
-    if (event->isExternalEvent() || event->getApiRequiredGraphExternalEvent()) {
+    if (event->isExternalForCurrentSignal()) {
         cbEventContext.cbEventInfoContainer->addSignalCbEventInfo(event, cbEventContext.executorCommandList, event->getApiRequiredGraphExternalEvent());
         cbEventContext.storedCbEventState.restoreToEvent(event);
     } else {
@@ -2184,8 +2184,7 @@ bool usesGraphInternalEvents(std::span<ze_event_handle_t> waitEvents, ze_event_h
 bool waitsOnCbEventSignalledOutsideGraph(std::span<ze_event_handle_t> waitEvents, bool apiRequiredCurrentFlag) {
     for (const auto &hEvent : waitEvents) {
         auto *event = L0::Event::fromHandle(hEvent);
-        if ((false == event->isCounterBasedExplicitlyEnabled()) || event->isExternalEvent() ||
-            event->getApiRequiredGraphExternalEvent() || apiRequiredCurrentFlag ||
+        if ((false == event->isCounterBasedExplicitlyEnabled()) || event->isExternalForCurrentSignal() || apiRequiredCurrentFlag ||
             L0::Event::isAggregatedEvent(event) || (nullptr != event->getRecordedSignalFrom())) {
             continue;
         }

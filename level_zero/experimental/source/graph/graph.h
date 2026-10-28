@@ -571,8 +571,9 @@ ze_result_t captureCommand(L0::CommandList &srcCmdList, Graph *&graphCaptureTarg
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
+    const bool apiExternalSignalFlag = getCommandsGraphExternalSignalFlag<api>(apiArgs...);
     if (signalEvent) {
-        if (getCommandsGraphExternalSignalFlag<api>(apiArgs...)) {
+        if (apiExternalSignalFlag) {
             L0::Event::fromHandle(signalEvent)->setApiRequiredGraphExternalEvent(true);
         }
         if (auto ret = graphCaptureTarget->addInternalEventForNextCommand(*L0::Event::fromHandle(signalEvent)); ZE_RESULT_SUCCESS != ret) {
@@ -596,6 +597,9 @@ ze_result_t captureCommand(L0::CommandList &srcCmdList, Graph *&graphCaptureTarg
     }
 
     if (signalEvent) {
+        if (apiExternalSignalFlag) {
+            L0::Event::fromHandle(signalEvent)->setGraphExternalSignalRecorded();
+        }
         recordHandleSignalEventFromPreviousCommand(srcCmdList, *graphCaptureTarget, signalEvent);
     }
     return ZE_RESULT_SUCCESS;

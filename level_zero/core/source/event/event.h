@@ -441,9 +441,18 @@ struct Event : _ze_event_handle_t {
         return inOrderExecHelper.getPatchPreambleCounter() > 0;
     }
 
+    bool isExternalForCurrentSignal() const {
+        return isExternalEvent() || getApiRequiredGraphExternalEvent();
+    }
+
     bool isCapturedGraphInternalEvent() const {
         return (nullptr != getRecordedSignalFrom()) &&
-               isCounterBased() && (false == (isExternalEvent() || getApiRequiredGraphExternalEvent()));
+               isCounterBased() && (false == isExternalForCurrentSignal());
+    }
+
+    bool isGraphInternalEvent() const {
+        return (isCapturedGraphInternalEvent() && (false == wasGraphExternalSignalRecorded())) ||
+               getIsSignalledAsGraphInternalEvent();
     }
 
     virtual bool isPatchPreambleCounterCompleted(int64_t timeSinceWait, bool blockOnMiss) = 0;
@@ -462,10 +471,18 @@ struct Event : _ze_event_handle_t {
         apiRequiredGraphExternalEvent = value;
     }
 
+    bool wasGraphExternalSignalRecorded() const {
+        return graphExternalSignalRecorded;
+    }
+
+    void setGraphExternalSignalRecorded() {
+        graphExternalSignalRecorded = true;
+    }
+
     void setIsSignalledAsGraphInternalEvent(bool signalledFromGraph) {
         isSignalledAsGraphInternalEvent = signalledFromGraph &&
                                           isCounterBasedExplicitlyEnabled() &&
-                                          !(isExternalEvent() || getApiRequiredGraphExternalEvent()) &&
+                                          !(isExternalForCurrentSignal() || wasGraphExternalSignalRecorded()) &&
                                           !isAggregatedEvent(this);
     }
 
@@ -559,6 +576,7 @@ struct Event : _ze_event_handle_t {
     bool isDualCopyOffloadEvent = false;
     bool isSignalledAsGraphInternalEvent = false;
     bool apiRequiredGraphExternalEvent = false;
+    bool graphExternalSignalRecorded = false;
 };
 
 struct EventPool : _ze_event_pool_handle_t {
