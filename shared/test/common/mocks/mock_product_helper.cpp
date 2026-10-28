@@ -332,8 +332,6 @@ uint32_t ProductHelperHw<IGFX_UNKNOWN>::getIsaPrefetchSize(uint32_t isaSize) con
 
 struct UnknownProduct {
     struct FrontEndStateSupport {
-        static constexpr bool scratchSize = false;
-        static constexpr bool privateScratchSize = false;
         static constexpr bool computeDispatchAllWalker = false;
 
         static constexpr bool disableEuFusion = false;
@@ -354,12 +352,6 @@ struct UnknownProduct {
 
     struct PipelineSelectStateSupport {
         static constexpr bool systolicMode = false;
-    };
-
-    struct PreemptionDebugSupport {
-        static constexpr bool preemptionMode = false;
-        static constexpr bool stateSip = false;
-        static constexpr bool csrSurface = false;
     };
 
     static const uint32_t threadsPerEu = 8;

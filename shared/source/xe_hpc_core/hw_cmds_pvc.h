@@ -21,8 +21,6 @@ struct PVC : public XeHpcCoreFamily {
     static constexpr uint32_t numberOfpartsInTileForConcurrentKernels = 8u;
 
     struct FrontEndStateSupport {
-        static constexpr bool scratchSize = true;
-        static constexpr bool privateScratchSize = true;
         static constexpr bool computeDispatchAllWalker = true;
         static constexpr bool disableEuFusion = false;
         static constexpr bool disableOverdispatch = true;

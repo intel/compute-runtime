@@ -45,13 +45,6 @@ LNLTEST_F(LnlProductHelper, givenProductHelperWhenGetCommandsStreamPropertiesSup
 
     EXPECT_TRUE(productHelper->getStateBaseAddressPropertyBindingTablePoolBaseAddressSupport());
 
-    EXPECT_TRUE(productHelper->getFrontEndPropertyScratchSizeSupport());
-    EXPECT_TRUE(productHelper->getFrontEndPropertyPrivateScratchSizeSupport());
-
-    EXPECT_FALSE(productHelper->getPreemptionDbgPropertyPreemptionModeSupport());
-    EXPECT_TRUE(productHelper->getPreemptionDbgPropertyStateSipSupport());
-    EXPECT_TRUE(productHelper->getPreemptionDbgPropertyCsrSurfaceSupport());
-
     EXPECT_FALSE(productHelper->getFrontEndPropertyComputeDispatchAllWalkerSupport());
     EXPECT_FALSE(productHelper->getFrontEndPropertyDisableEuFusionSupport());
     EXPECT_TRUE(productHelper->getFrontEndPropertyDisableOverDispatchSupport());

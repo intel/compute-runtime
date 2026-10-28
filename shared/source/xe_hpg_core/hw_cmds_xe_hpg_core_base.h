@@ -38,8 +38,6 @@ struct XeHpgCore {
     static constexpr bool isUsingMiMathMocs = true;
 
     struct FrontEndStateSupport {
-        static constexpr bool scratchSize = true;
-        static constexpr bool privateScratchSize = true;
         static constexpr bool computeDispatchAllWalker = false;
         static constexpr bool disableEuFusion = true;
         static constexpr bool disableOverdispatch = true;
@@ -59,12 +57,6 @@ struct XeHpgCore {
 
     struct PipelineSelectStateSupport {
         static constexpr bool systolicMode = true;
-    };
-
-    struct PreemptionDebugSupport {
-        static constexpr bool preemptionMode = true;
-        static constexpr bool stateSip = true;
-        static constexpr bool csrSurface = false;
     };
 
     struct DataPortBindlessSurfaceExtendedMessageDescriptor {

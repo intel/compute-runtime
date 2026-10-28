@@ -39,8 +39,6 @@ struct Xe3Core {
     static constexpr bool isUsingMiMathMocs = true;
 
     struct FrontEndStateSupport {
-        static constexpr bool scratchSize = true;
-        static constexpr bool privateScratchSize = true;
         static constexpr bool computeDispatchAllWalker = false;
         static constexpr bool disableEuFusion = false;
         static constexpr bool disableOverdispatch = true;
@@ -64,12 +62,6 @@ struct Xe3Core {
 
     struct PipelineSelectStateSupport {
         static constexpr bool systolicMode = false;
-    };
-
-    struct PreemptionDebugSupport {
-        static constexpr bool preemptionMode = false;
-        static constexpr bool stateSip = true;
-        static constexpr bool csrSurface = true;
     };
 
     struct DataPortBindlessSurfaceExtendedMessageDescriptor {

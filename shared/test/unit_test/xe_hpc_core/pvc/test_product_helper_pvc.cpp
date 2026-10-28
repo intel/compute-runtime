@@ -113,13 +113,6 @@ PVCTEST_F(PvcProductHelper, givenProductHelperWhenGetCommandsStreamPropertiesSup
 
     EXPECT_TRUE(productHelper->getStateBaseAddressPropertyBindingTablePoolBaseAddressSupport());
 
-    EXPECT_TRUE(productHelper->getFrontEndPropertyScratchSizeSupport());
-    EXPECT_TRUE(productHelper->getFrontEndPropertyPrivateScratchSizeSupport());
-
-    EXPECT_TRUE(productHelper->getPreemptionDbgPropertyPreemptionModeSupport());
-    EXPECT_TRUE(productHelper->getPreemptionDbgPropertyStateSipSupport());
-    EXPECT_FALSE(productHelper->getPreemptionDbgPropertyCsrSurfaceSupport());
-
     EXPECT_TRUE(productHelper->getFrontEndPropertyComputeDispatchAllWalkerSupport());
     EXPECT_FALSE(productHelper->getFrontEndPropertyDisableEuFusionSupport());
     EXPECT_TRUE(productHelper->getFrontEndPropertyDisableOverDispatchSupport());

@@ -45,12 +45,6 @@ struct XeHpcCore {
         static constexpr bool systolicMode = true;
     };
 
-    struct PreemptionDebugSupport {
-        static constexpr bool preemptionMode = true;
-        static constexpr bool stateSip = true;
-        static constexpr bool csrSurface = false;
-    };
-
     struct DataPortBindlessSurfaceExtendedMessageDescriptor {
         union {
             struct {

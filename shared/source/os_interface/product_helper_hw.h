@@ -115,8 +115,6 @@ class ProductHelperHw : public ProductHelper {
     bool is2MBLocalMemAlignmentEnabled() const override;
     bool isPackedCopyFormatSupported() const override;
 
-    bool getFrontEndPropertyScratchSizeSupport() const override;
-    bool getFrontEndPropertyPrivateScratchSizeSupport() const override;
     bool getFrontEndPropertyComputeDispatchAllWalkerSupport() const override;
     bool getFrontEndPropertyDisableEuFusionSupport() const override;
     bool getFrontEndPropertyDisableOverDispatchSupport() const override;
@@ -128,10 +126,6 @@ class ProductHelperHw : public ProductHelper {
     bool getScmPropertyLargeGrfModeSupport() const override;
 
     bool getStateBaseAddressPropertyBindingTablePoolBaseAddressSupport() const override;
-
-    bool getPreemptionDbgPropertyPreemptionModeSupport() const override;
-    bool getPreemptionDbgPropertyStateSipSupport() const override;
-    bool getPreemptionDbgPropertyCsrSurfaceSupport() const override;
 
     bool getPipelineSelectPropertySystolicModeSupport() const override;
 

@@ -183,8 +183,6 @@ class ProductHelper {
     virtual bool overrideAllocationCpuCacheable(const AllocationData &allocationData) const = 0;
     virtual bool is2MBLocalMemAlignmentEnabled() const = 0;
 
-    virtual bool getFrontEndPropertyScratchSizeSupport() const = 0;
-    virtual bool getFrontEndPropertyPrivateScratchSizeSupport() const = 0;
     virtual bool getFrontEndPropertyComputeDispatchAllWalkerSupport() const = 0;
     virtual bool getFrontEndPropertyDisableEuFusionSupport() const = 0;
     virtual bool getFrontEndPropertyDisableOverDispatchSupport() const = 0;
@@ -196,10 +194,6 @@ class ProductHelper {
     virtual bool getScmPropertyLargeGrfModeSupport() const = 0;
 
     virtual bool getStateBaseAddressPropertyBindingTablePoolBaseAddressSupport() const = 0;
-
-    virtual bool getPreemptionDbgPropertyPreemptionModeSupport() const = 0;
-    virtual bool getPreemptionDbgPropertyStateSipSupport() const = 0;
-    virtual bool getPreemptionDbgPropertyCsrSurfaceSupport() const = 0;
 
     virtual bool getPipelineSelectPropertySystolicModeSupport() const = 0;
 
