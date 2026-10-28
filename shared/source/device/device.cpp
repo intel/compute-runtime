@@ -667,7 +667,7 @@ bool Device::initializeEngines() {
         if (initializeDevice) {
             engine.commandStreamReceiver->initializeResources(this->getPreemptionMode());
 
-            if (!engine.commandStreamReceiver->isStateInitSubmissionDeferred()) {
+            if (debugManager.flags.DeferStateInitSubmissionToFirstRegularUsage.get() != 1) {
                 engine.commandStreamReceiver->initializeDeviceWithFirstSubmission(*this);
             }
         }

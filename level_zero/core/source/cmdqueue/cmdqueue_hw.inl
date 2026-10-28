@@ -98,7 +98,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
 
     this->device->activateMetricGroups();
 
-    if (this->csr->isStateInitSubmissionDeferred()) {
+    if (NEO::debugManager.flags.DeferStateInitSubmissionToFirstRegularUsage.get() == 1) {
         this->csr->ensurePrimaryCsrInitialized(*this->device->getNEODevice());
     }
 

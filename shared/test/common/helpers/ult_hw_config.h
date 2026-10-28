@@ -39,9 +39,7 @@ struct UltHwConfig {
     bool leoForwardingSelfLoad = true;
     bool leoDetectionEnabled = false;
 
-    bool csrInTbxMode = false;
-
-    char padding[4];
+    char padding[5];
 };
 
 extern UltHwConfig ultHwConfig;
