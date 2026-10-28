@@ -7,6 +7,7 @@
 
 #include "os_metric_ip_sampling_imp_linux.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/linux/drm_neo.h"

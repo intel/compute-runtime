@@ -7,6 +7,7 @@
 
 #include "level_zero/tools/source/metrics/metric.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/sub_device.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
@@ -1345,6 +1346,11 @@ ze_result_t getMetricSupportedScopes(
 
     auto metricImp = static_cast<MetricImp *>(Metric::fromHandle(hMetric));
     return metricImp->getScopes(pScopesCount, phMetricScopes);
+}
+
+MetricGroupDescription::MetricGroupDescription(const char inMetricGroupNamePrefix[ZET_INTEL_MAX_METRIC_GROUP_NAME_PREFIX_EXP], const char inDescription[ZET_MAX_METRIC_GROUP_DESCRIPTION]) {
+    strncpy_s(namePrefix, ZET_INTEL_MAX_METRIC_GROUP_NAME_PREFIX_EXP, inMetricGroupNamePrefix, ZET_INTEL_MAX_METRIC_GROUP_NAME_PREFIX_EXP);
+    strncpy_s(description, ZET_MAX_METRIC_GROUP_DESCRIPTION, inDescription, ZET_MAX_METRIC_GROUP_DESCRIPTION);
 }
 
 } // namespace L0

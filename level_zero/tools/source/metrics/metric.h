@@ -6,7 +6,6 @@
  */
 
 #pragma once
-#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/preprocessor.h"
 
 #include "level_zero/core/source/event/event.h"
@@ -77,10 +76,7 @@ struct MetricScopeImp;
 struct MetricImp;
 
 struct MetricGroupDescription {
-    MetricGroupDescription(const char inMetricGroupNamePrefix[ZET_INTEL_MAX_METRIC_GROUP_NAME_PREFIX_EXP], const char inDescription[ZET_MAX_METRIC_GROUP_DESCRIPTION]) {
-        strncpy_s(namePrefix, ZET_INTEL_MAX_METRIC_GROUP_NAME_PREFIX_EXP, inMetricGroupNamePrefix, ZET_INTEL_MAX_METRIC_GROUP_NAME_PREFIX_EXP);
-        strncpy_s(description, ZET_MAX_METRIC_GROUP_DESCRIPTION, inDescription, ZET_MAX_METRIC_GROUP_DESCRIPTION);
-    }
+    MetricGroupDescription(const char inMetricGroupNamePrefix[ZET_INTEL_MAX_METRIC_GROUP_NAME_PREFIX_EXP], const char inDescription[ZET_MAX_METRIC_GROUP_DESCRIPTION]);
 
     char namePrefix[ZET_INTEL_MAX_METRIC_GROUP_NAME_PREFIX_EXP];
     char description[ZET_MAX_METRIC_GROUP_DESCRIPTION];
