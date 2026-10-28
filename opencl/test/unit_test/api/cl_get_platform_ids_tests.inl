@@ -402,7 +402,6 @@ TEST_F(ClGetPlatformIDsLeoTest, givenAutoEnableLeoWhenProductSupportsLeoThenPlat
     EXPECT_EQ(1u, numPlatforms);
     EXPECT_EQ(fakeLeoPlatform0, platform);
     EXPECT_TRUE(platformsImpl->empty());
-    EXPECT_TRUE(areAllPlatformsLeo());
     EXPECT_TRUE(isLeoPlatformHandle(platform));
 }
 
@@ -431,7 +430,6 @@ TEST_F(ClGetPlatformIDsLeoTest, givenLeoForcedOffThenNoLevelZeroPlatformIsReport
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_FALSE(platformsImpl->empty());
-    EXPECT_FALSE(areAllPlatformsLeo());
 }
 
 TEST_F(ClGetPlatformIDsLeoTest, givenTwoLevelZeroPlatformsAndANativeOneThenAllThreeAreMergedInDeviceGroupOrder) {

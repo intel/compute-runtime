@@ -4832,12 +4832,6 @@ void *CL_API_CALL clGetExtensionFunctionAddress(const char *funcName) {
     // Support an internal call by the ICD
     RETURN_FUNC_PTR_IF_EXIST(clIcdGetPlatformIDsKHR);
 
-    if (isLeoForcedOn() || areAllPlatformsLeo()) {
-        void *ret = forwardClGetExtensionFunctionAddress(funcName);
-        TRACING_EXIT(ClGetExtensionFunctionAddress, &ret);
-        return ret;
-    }
-
     // perf counters
     RETURN_FUNC_PTR_IF_EXIST(clCreatePerfCountersCommandQueueINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clSetPerformanceConfigurationINTEL);

@@ -39,13 +39,6 @@ bool isLeoPlatformHandle(cl_platform_id platform) {
                        [platform](const LeoPlatformEntry &entry) { return entry.handle == platform; });
 }
 
-bool areAllPlatformsLeo() {
-    if (leoPlatformEntries == nullptr || leoPlatformEntries->empty()) {
-        return false;
-    }
-    return platformsImpl != nullptr && platformsImpl->empty();
-}
-
 bool hasLeoPlatforms() {
     if (isLeoForcedOn()) {
         return true;

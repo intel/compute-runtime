@@ -53,7 +53,6 @@ bool isLeoForcedOff();
 bool ensureLeoLibraryLoaded();
 std::vector<cl_platform_id> getLeoPlatforms();
 bool isLeoPlatformHandle(cl_platform_id platform);
-bool areAllPlatformsLeo();
 bool hasLeoPlatforms();
 
 cl_int forwardClGetPlatformIDs(cl_uint numEntries, cl_platform_id *platforms, cl_uint *numPlatforms);

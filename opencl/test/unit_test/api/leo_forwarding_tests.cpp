@@ -12,6 +12,7 @@
 #include "shared/test/common/mocks/mock_os_library.h"
 #include "shared/test/common/test_macros/test.h"
 
+#include "opencl/source/api/api.h"
 #include "opencl/source/api/leo_forwarding.h"
 
 #include <cstring>
@@ -215,6 +216,22 @@ TEST_F(L0LibraryLoadTest, givenEnableLEOWhenLoadingLibrarySucceedsThenForwardFun
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     OsLibrary::loadFunc = savedLoadFunc;
+}
+
+TEST_F(L0LibraryLoadTest, givenEnableLEOAndLoadedLibraryWhenGettingExtensionFunctionAddressThenNativeFunctionIsReturned) {
+    debugManager.flags.EnableLEO.set(1);
+    VariableBackup<bool> selfLoadBackup{&ultHwConfig.leoForwardingSelfLoad, false};
+
+    auto mockLibrary = new MockOsLibraryCustom(nullptr, true);
+    mockLibrary->procMap["clGetExtensionFunctionAddress"] = reinterpret_cast<void *>(mockClGetExtensionFunctionAddress);
+
+    VariableBackup<decltype(OsLibrary::loadFunc)> loadFuncBackup{&OsLibrary::loadFunc, MockOsLibrary::load};
+    MockOsLibrary::loadLibraryNewObject = mockLibrary;
+
+    ASSERT_TRUE(ensureLeoLibraryLoaded());
+    ASSERT_EQ(reinterpret_cast<void *>(0x123), forwardClGetExtensionFunctionAddress("clHostMemAllocINTEL"));
+
+    EXPECT_EQ(reinterpret_cast<void *>(clHostMemAllocINTEL), clGetExtensionFunctionAddress("clHostMemAllocINTEL"));
 }
 
 TEST_F(L0LibraryLoadTest, givenEnableLEOWhenLibraryLoadedButNotAllSymbolsResolvedThenUnresolvedForwardsReturnDefaults) {
