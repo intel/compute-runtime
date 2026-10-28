@@ -90,6 +90,10 @@ bool SVMAllocsManager::SvmAllocationCache::insert(size_t size, void *ptr, SvmAll
         return false;
     }
 
+    svmAllocsManager->applyIndirectAccessTaskCountFloor(svmData);
+    if (completionPolicy == CompletionCheckPolicy::waitOnFree) {
+        svmAllocsManager->waitForEnginesCompletion(svmData);
+    }
     std::unique_lock<std::mutex> lock(this->mtx);
     if (svmData->device ? svmData->device->shouldLimitAllocationsReuse() : memoryManager->shouldLimitAllocationsReuse()) {
         return false;
@@ -108,10 +112,6 @@ bool SVMAllocsManager::SvmAllocationCache::insert(size_t size, void *ptr, SvmAll
         }
     }
     if (isSuccess) {
-        svmAllocsManager->applyIndirectAccessTaskCountFloor(svmData);
-        if (completionPolicy == CompletionCheckPolicy::waitOnFree) {
-            svmAllocsManager->waitForEnginesCompletion(svmData);
-        }
         if (requireUpdatingAllocsForIndirectAccess) {
             svmAllocsManager->removeFromAllocsForIndirectAccess(*svmData);
         }
@@ -236,8 +236,12 @@ void *SVMAllocsManager::SvmAllocationCache::get(size_t size, const UnifiedMemory
 }
 
 void SVMAllocsManager::SvmAllocationCache::trim() {
-    std::lock_guard<std::mutex> lock(this->mtx);
-    for (auto &cachedAllocationInfo : this->allocations) {
+    std::lock_guard<std::mutex> trimLock(this->trimMtx);
+    std::unique_lock<std::mutex> lock(this->mtx);
+    std::vector<SvmCacheAllocationInfo> allocationsToFree(this->allocations.begin(), this->allocations.end());
+    this->allocations.clear();
+    empty = true;
+    for (auto &cachedAllocationInfo : allocationsToFree) {
         DEBUG_BREAK_IF(nullptr == cachedAllocationInfo.svmData);
         {
             auto &usmReuseInfo = getUsmReuseInfo(*cachedAllocationInfo.svmData);
@@ -251,10 +255,11 @@ void SVMAllocsManager::SvmAllocationCache::trim() {
                                .operationType = CacheOperationType::trim,
                                .isSuccess = true});
         }
+    }
+    lock.unlock();
+    for (auto &cachedAllocationInfo : allocationsToFree) {
         svmAllocsManager->freeSVMAllocImpl(cachedAllocationInfo.allocation, FreePolicyType::blocking, cachedAllocationInfo.svmData);
     }
-    this->allocations.clear();
-    empty = true;
 }
 
 void SVMAllocsManager::SvmAllocationCache::cleanup() {

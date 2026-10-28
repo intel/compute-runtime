@@ -14,6 +14,7 @@
 #include "shared/test/common/mocks/mock_memory_manager.h"
 
 #include <atomic>
+#include <functional>
 
 namespace NEO {
 struct MockSVMAllocsManager : public SVMAllocsManager {
@@ -52,11 +53,15 @@ struct MockSVMAllocsManager : public SVMAllocsManager {
     void freeSVMAllocImpl(void *ptr, FreePolicyType policy, SvmAllocationData *svmData) override {
         freeSVMAllocImplLastFreePolicy = policy;
         freeSVMAllocImplLastPtr = ptr;
+        if (freeSVMAllocImplCallback) {
+            freeSVMAllocImplCallback();
+        }
         if (freeSVMAllocImplCallBase) {
             SVMAllocsManager::freeSVMAllocImpl(ptr, policy, svmData);
         }
     }
     bool freeSVMAllocImplCallBase = true;
+    std::function<void()> freeSVMAllocImplCallback{};
     std::atomic<void *> freeSVMAllocImplLastPtr{nullptr};
     std::atomic<FreePolicyType> freeSVMAllocImplLastFreePolicy{FreePolicyType::none};
 

@@ -5,7 +5,10 @@
  *
  */
 
+#include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/ptr_math.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_svm_manager.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
@@ -15,6 +18,7 @@
 #include <atomic>
 #include <chrono>
 #include <functional>
+#include <future>
 #include <map>
 #include <memory>
 #include <thread>
@@ -226,4 +230,98 @@ TEST_F(SvmDeferredFreeQueueTest, givenEntriesClaimedByOneThreadWhenAnotherThread
 
     claimingDrain.join();
     memoryManager->allocInUseCallback = nullptr;
+}
+
+struct SvmAllocationCacheLockTest : public ::testing::Test {
+    void SetUp() override {
+        allocationCache.memoryManager = &memoryManager;
+        allocationCache.svmAllocsManager = &svmAllocsManager;
+        memoryManager.usmReuseInfo.init(1 * MemoryConstants::gigaByte, UsmReuseInfo::notLimited);
+        svmAllocData.gpuAllocations.addAllocation(&gpuGfxAllocation);
+    }
+
+    bool isCacheLockedFromAnotherThread() {
+        bool locked = false;
+        std::thread([&]() {
+            if (allocationCache.mtx.try_lock()) {
+                allocationCache.mtx.unlock();
+            } else {
+                locked = true;
+            }
+        }).join();
+        return locked;
+    }
+
+    SVMAllocsManager::SvmAllocationCache allocationCache;
+    MockMemoryManager memoryManager;
+    MockSVMAllocsManager svmAllocsManager{&memoryManager};
+    MockGraphicsAllocation gpuGfxAllocation;
+    SvmAllocationData svmAllocData{mockRootDeviceIndex};
+    void *ptr = addrToPtr(0xFULL);
+};
+
+TEST_F(SvmAllocationCacheLockTest, givenBlockingFreeWhenInsertingIntoCacheThenEnginesCompletionIsAwaitedWithoutHoldingTheCacheLock) {
+    bool lockedDuringWait = false;
+    memoryManager.waitForEnginesCompletionCallback = [&]() { lockedDuringWait = isCacheLockedFromAnotherThread(); };
+
+    EXPECT_TRUE(allocationCache.insert(1u, ptr, &svmAllocData, SVMAllocsManager::SvmAllocationCache::CompletionCheckPolicy::waitOnFree));
+
+    EXPECT_EQ(1u, memoryManager.waitForEnginesCompletionCalled);
+    EXPECT_FALSE(lockedDuringWait);
+    EXPECT_EQ(1u, allocationCache.allocations.size());
+}
+
+TEST_F(SvmAllocationCacheLockTest, givenCachedAllocationWhenTrimmingThenItIsFreedWithoutHoldingTheCacheLock) {
+    allocationCache.insert(1u, ptr, &svmAllocData, SVMAllocsManager::SvmAllocationCache::CompletionCheckPolicy::notRequired);
+    svmAllocsManager.freeSVMAllocImplCallBase = false;
+    bool lockedDuringFree = false;
+    svmAllocsManager.freeSVMAllocImplCallback = [&]() { lockedDuringFree = isCacheLockedFromAnotherThread(); };
+
+    allocationCache.trim();
+
+    EXPECT_EQ(ptr, svmAllocsManager.freeSVMAllocImplLastPtr.load());
+    EXPECT_EQ(SVMAllocsManager::FreePolicyType::blocking, svmAllocsManager.freeSVMAllocImplLastFreePolicy.load());
+    EXPECT_FALSE(lockedDuringFree);
+    EXPECT_EQ(0u, allocationCache.allocations.size());
+}
+
+TEST_F(SvmAllocationCacheLockTest, givenTrimFreeingCachedAllocationWhenAnotherThreadTrimsThenItReturnsOnlyAfterTheFreeCompletes) {
+    allocationCache.insert(1u, ptr, &svmAllocData, SVMAllocsManager::SvmAllocationCache::CompletionCheckPolicy::notRequired);
+    svmAllocsManager.freeSVMAllocImplCallBase = false;
+
+    std::promise<void> freeStarted;
+    std::promise<void> freeReleased;
+    std::promise<void> secondTrimStarted;
+    std::promise<void> secondTrimReturned;
+    auto freeStartedFuture = freeStarted.get_future();
+    auto freeReleasedFuture = freeReleased.get_future();
+    auto secondTrimStartedFuture = secondTrimStarted.get_future();
+    auto secondTrimReturnedFuture = secondTrimReturned.get_future();
+    std::atomic_bool freeCompleted = false;
+    bool freeCompletedWhenSecondTrimReturned = false;
+
+    svmAllocsManager.freeSVMAllocImplCallback = [&]() {
+        freeStarted.set_value();
+        freeReleasedFuture.wait();
+        freeCompleted = true;
+    };
+
+    std::thread firstTrim([&]() { allocationCache.trim(); });
+    freeStartedFuture.wait();
+
+    std::thread secondTrim([&]() {
+        secondTrimStarted.set_value();
+        allocationCache.trim();
+        freeCompletedWhenSecondTrimReturned = freeCompleted.load();
+        secondTrimReturned.set_value();
+    });
+    secondTrimStartedFuture.wait();
+    EXPECT_EQ(std::future_status::timeout, secondTrimReturnedFuture.wait_for(std::chrono::milliseconds(1)));
+
+    freeReleased.set_value();
+    firstTrim.join();
+    secondTrim.join();
+
+    EXPECT_TRUE(freeCompletedWhenSecondTrimReturned);
+    EXPECT_EQ(0u, allocationCache.allocations.size());
 }

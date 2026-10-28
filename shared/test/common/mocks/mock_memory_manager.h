@@ -411,6 +411,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     std::map<uint64_t, GraphicsAllocation *> storedIpcAllocations;
     std::atomic<uint32_t> handleFenceCompletionCalled{0u};
     uint32_t waitForEnginesCompletionCalled = 0u;
+    std::function<void()> waitForEnginesCompletionCallback{};
     std::atomic<uint32_t> allocateGraphicsMemoryWithPropertiesCount{0};
     uint32_t setMemPrefetchCalledCount = 0;
     uint32_t setSharedSystemMemAdviseCalledCount = 0;

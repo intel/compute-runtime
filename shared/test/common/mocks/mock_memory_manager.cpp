@@ -65,6 +65,9 @@ void *MockMemoryManager::allocateSystemMemory(size_t size, size_t alignment) {
 
 void MockMemoryManager::waitForEnginesCompletion(GraphicsAllocation &graphicsAllocation) {
     waitForEnginesCompletionCalled++;
+    if (waitForEnginesCompletionCallback) {
+        waitForEnginesCompletionCallback();
+    }
     if (waitAllocations.get()) {
         waitAllocations->addAllocation(&graphicsAllocation);
     }
