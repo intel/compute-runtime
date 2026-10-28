@@ -13,7 +13,6 @@
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/execution_environment/cl_execution_environment.h"
-#include "opencl/source/kernel/multi_device_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
@@ -26,6 +25,7 @@ namespace NEO {
 class CommandQueue;
 class MockKernel;
 class MockProgram;
+class MultiDeviceKernel;
 
 struct ApiFixture {
 

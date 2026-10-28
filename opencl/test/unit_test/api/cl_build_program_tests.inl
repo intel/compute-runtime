@@ -11,6 +11,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/context/context.h"
+#include "opencl/source/kernel/multi_device_kernel.h"
 #include "opencl/source/program/program.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
