@@ -1410,6 +1410,9 @@ class MemoryManagerNTHandleMock : public NEO::OsAgnosticMemoryManager {
         gmmRequirements.allowLargePages = true;
         gmmRequirements.preferCompressed = false;
         graphicsAllocation->setDefaultGmm(new Gmm(executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
+        if (compressedResource) {
+            static_cast<MockGmmResourceInfo *>(graphicsAllocation->getDefaultGmm()->gmmResourceInfo.get())->setUnifiedAuxTranslationCapable();
+        }
         return graphicsAllocation;
     }
 
@@ -1426,6 +1429,11 @@ class MemoryManagerNTHandleMock : public NEO::OsAgnosticMemoryManager {
         return allocation;
     }
 
+    bool mapAuxGpuVA(NEO::GraphicsAllocation *graphicsAllocation) override {
+        mapAuxGpuVACalled++;
+        return mapAuxGpuVaRetValue;
+    }
+
     uint32_t importCalled = 0u;
     NEO::osHandle lastImportedHandle = 0u;
     uint32_t sharedNameCalled = 0u;
@@ -1433,6 +1441,9 @@ class MemoryManagerNTHandleMock : public NEO::OsAgnosticMemoryManager {
     NEO::ExternalMemoryType lastExternalMemoryType = NEO::ExternalMemoryType::opaqueFd;
     bool failSharedName = false;
     bool failImport = false;
+    bool compressedResource = false;
+    uint32_t mapAuxGpuVACalled = 0u;
+    bool mapAuxGpuVaRetValue = true;
 };
 } // namespace
 
@@ -1482,6 +1493,67 @@ HWTEST_F(ImageCreateExternalMemoryTest, givenNTHandleWhenCreatingImageThenSucces
     ASSERT_EQ(imageHW->getAllocation()->peekSharedHandle(), NEO::toOsHandle(importNTHandle.handle));
 
     imageHW.reset(nullptr);
+}
+
+HWTEST_F(ImageCreateExternalMemoryTest, givenNTHandleOfCompressedResourceWhenCreatingImageThenCompressionIsEnabled) {
+    ze_external_memory_import_win32_handle_t importNTHandle = {};
+    importNTHandle.handle = &imageHandle;
+    importNTHandle.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_D3D12_RESOURCE;
+    importNTHandle.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_WIN32;
+    desc.pNext = &importNTHandle;
+
+    delete driverHandle->svmAllocsManager;
+    driverHandle->setMemoryManager(execEnv->memoryManager.get());
+    driverHandle->svmAllocsManager = new NEO::SVMAllocsManager(execEnv->memoryManager.get());
+    memoryManager->compressedResource = true;
+    device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.ftrRenderCompressedImages = true;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    auto ret = imageHW->initialize(device, &desc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+    const bool pageTableManagerSupported = device->getProductHelper().isPageTableManagerSupported(device->getHwInfo());
+    EXPECT_EQ(pageTableManagerSupported ? 1u : 0u, memoryManager->mapAuxGpuVACalled);
+    EXPECT_TRUE(imageHW->getAllocation()->isCompressionEnabled());
+}
+
+HWTEST_F(ImageCreateExternalMemoryTest, givenNTHandleOfCompressedResourceWhenAuxMappingFailsThenCompressionIsEnabledOnlyWithoutPageTableManager) {
+    ze_external_memory_import_win32_handle_t importNTHandle = {};
+    importNTHandle.handle = &imageHandle;
+    importNTHandle.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_D3D12_RESOURCE;
+    importNTHandle.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_WIN32;
+    desc.pNext = &importNTHandle;
+
+    delete driverHandle->svmAllocsManager;
+    driverHandle->setMemoryManager(execEnv->memoryManager.get());
+    driverHandle->svmAllocsManager = new NEO::SVMAllocsManager(execEnv->memoryManager.get());
+    memoryManager->compressedResource = true;
+    memoryManager->mapAuxGpuVaRetValue = false;
+    device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.ftrRenderCompressedImages = true;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    auto ret = imageHW->initialize(device, &desc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+    const bool pageTableManagerSupported = device->getProductHelper().isPageTableManagerSupported(device->getHwInfo());
+    EXPECT_EQ(pageTableManagerSupported ? 1u : 0u, memoryManager->mapAuxGpuVACalled);
+    EXPECT_EQ(!pageTableManagerSupported, imageHW->getAllocation()->isCompressionEnabled());
+}
+
+HWTEST_F(ImageCreateExternalMemoryTest, givenNTHandleOfUncompressedResourceWhenCreatingImageThenCompressionIsDisabled) {
+    ze_external_memory_import_win32_handle_t importNTHandle = {};
+    importNTHandle.handle = &imageHandle;
+    importNTHandle.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_D3D12_RESOURCE;
+    importNTHandle.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_WIN32;
+    desc.pNext = &importNTHandle;
+
+    delete driverHandle->svmAllocsManager;
+    driverHandle->setMemoryManager(execEnv->memoryManager.get());
+    driverHandle->svmAllocsManager = new NEO::SVMAllocsManager(execEnv->memoryManager.get());
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    auto ret = imageHW->initialize(device, &desc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+    EXPECT_EQ(0u, memoryManager->mapAuxGpuVACalled);
+    EXPECT_FALSE(imageHW->getAllocation()->isCompressionEnabled());
 }
 
 HWTEST_F(ImageCreateExternalMemoryTest, givenD3D12HeapHandleWhenCreatingImageThenSuccessIsReturned) {
