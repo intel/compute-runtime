@@ -16,6 +16,7 @@
 #include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/compiler_interface/intermediate_representations.h"
 #include "shared/source/compiler_interface/linker.h"
+#include "shared/source/compiler_interface/tokenized_string.h"
 #include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/device/device.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
@@ -67,6 +68,9 @@
 #include "program_debug_data.h"
 
 #include <algorithm>
+#include <array>
+#include <cctype>
+#include <cstdlib>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -85,6 +89,7 @@ NEO::ConstStringRef profileFlags = "-zet-profile-flags";
 NEO::ConstStringRef optLargeRegisterFile = "-ze-opt-large-register-file";
 NEO::ConstStringRef optAutoGrf = "-ze-intel-enable-auto-large-GRF-mode";
 NEO::ConstStringRef enableLibraryCompile = "-library-compilation";
+NEO::ConstStringRef enableLibraryCompileAlias = "-ze-library-compilation";
 NEO::ConstStringRef enableGlobalVariableSymbols = "-ze-take-global-address";
 NEO::ConstStringRef enableFP64GenEmu = "-ze-fp64-gen-emu";
 NEO::ConstStringRef registerFileSize = "-ze-exp-register-file-size";
@@ -359,6 +364,45 @@ ze_result_t ModuleTranslationUnit::staticLinkSpirVAndLlvmBc(const std::vector<co
     return this->compileGenBinary(linkInputArgs, compileMode);
 }
 
+namespace {
+std::array<NEO::ConstStringRef, 4> getBackendOnlyOptions() {
+    return {BuildOptions::optLevel, BuildOptions::profileFlags, BuildOptions::registerFileSize, BuildOptions::debugKernelEnable};
+}
+
+bool isBackendOnlyOption(NEO::ConstStringRef token) {
+    const auto backendOnlyOptions = getBackendOnlyOptions();
+    return std::find(backendOnlyOptions.begin(), backendOnlyOptions.end(), token) != backendOnlyOptions.end();
+}
+
+bool isBackendOnlyOptionWithValue(NEO::ConstStringRef token) {
+    constexpr char valueDelimiter = '=';
+    const auto backendOnlyOptions = getBackendOnlyOptions();
+    return std::any_of(backendOnlyOptions.begin(), backendOnlyOptions.end(), [&token](NEO::ConstStringRef optionName) {
+        return token.startsWith(optionName) && (token.size() > optionName.size()) && (token[optionName.size()] == valueDelimiter);
+    });
+}
+
+bool isOptionValue(NEO::ConstStringRef token) {
+    constexpr char optionPrefix = '-';
+    return (token[0] != optionPrefix) || ((token.size() > 1) && std::isdigit(static_cast<unsigned char>(token[1])));
+}
+
+std::string removeBackendOnlyOptions(const std::string &options) {
+    const auto tokens = NEO::CompilerOptions::tokenize(options);
+    std::string frontendOptions;
+    for (size_t i = 0; i < tokens.size(); i++) {
+        if (isBackendOnlyOption(tokens[i])) {
+            if ((i + 1 < tokens.size()) && isOptionValue(tokens[i + 1])) {
+                i++;
+            }
+        } else if (!isBackendOnlyOptionWithValue(tokens[i])) {
+            NEO::CompilerOptions::concatenateAppend(frontendOptions, tokens[i]);
+        }
+    }
+    return frontendOptions;
+}
+} // namespace
+
 ze_result_t ModuleTranslationUnit::buildFromSource(ze_module_format_t inputFormat, const char *input, uint32_t inputSize, const char *buildOptions, const char *internalBuildOptions) {
     const auto &neoDevice = device->getNEODevice();
     auto compilerInterface = neoDevice->getCompilerInterface();
@@ -379,6 +423,8 @@ ze_result_t ModuleTranslationUnit::buildFromSource(ze_module_format_t inputForma
     }
     inputArgs.src = ArrayRef<const char>(input, inputSize);
     inputArgs.apiOptions = ArrayRef<const char>(this->options.c_str(), this->options.length());
+    const std::string frontendApiOptions = removeBackendOnlyOptions(this->options);
+    inputArgs.frontendApiOptions = ArrayRef<const char>(frontendApiOptions.c_str(), frontendApiOptions.length());
     inputArgs.internalOptions = ArrayRef<const char>(internalOptions.c_str(), internalOptions.length());
     return this->compileGenBinary(inputArgs, compileMode);
 }
@@ -406,6 +452,8 @@ ze_result_t ModuleTranslationUnit::buildFromSourceWithHeaders(ze_module_format_t
     NEO::TranslationInput inputArgs = {IGC::CodeType::elf, IGC::CodeType::undefined};
     inputArgs.src = ArrayRef<const char>(reinterpret_cast<const char *>(compileData.data()), compileData.size());
     inputArgs.apiOptions = ArrayRef<const char>(this->options.c_str(), this->options.length());
+    const std::string frontendApiOptions = removeBackendOnlyOptions(this->options);
+    inputArgs.frontendApiOptions = ArrayRef<const char>(frontendApiOptions.c_str(), frontendApiOptions.length());
     inputArgs.internalOptions = ArrayRef<const char>(internalOptions.c_str(), internalOptions.length());
     auto compileMode = CompilationMode::compile;
     if (this->hasCreateLibraryOption()) {
@@ -1217,6 +1265,7 @@ void ModuleImp::createBuildOptions(const char *pBuildFlags, std::string &apiOpti
 
         moveOptLevelOption(apiOptions, apiOptions);
         moveProfileFlagsOption(apiOptions, apiOptions);
+        moveBuildOption(apiOptions, apiOptions, BuildOptions::enableLibraryCompile, BuildOptions::enableLibraryCompileAlias);
         this->isFunctionSymbolExportEnabled = moveBuildOption(apiOptions, apiOptions, BuildOptions::enableLibraryCompile, BuildOptions::enableLibraryCompile);
         this->isGlobalSymbolExportEnabled = moveBuildOption(apiOptions, apiOptions, BuildOptions::enableGlobalVariableSymbols, BuildOptions::enableGlobalVariableSymbols);
 
@@ -2441,8 +2490,16 @@ bool ModuleImp::verifyBuildOptions(std::string buildOptions) const {
     if (registerFileSizeOptionUsed && grfOptionUsed) {
         return false;
     } else if (registerFileSizeOptionUsed) {
+        constexpr int autoDetectedBase = 0;
         const auto optionSplit = StringHelpers::split(registerFileSizeOption, " ");
-        const auto inputRegisterFileSize = StringHelpers::toUint32t(optionSplit[1]);
+        if ((optionSplit.size() < 2) || !std::isdigit(static_cast<unsigned char>(optionSplit[1][0]))) {
+            return false;
+        }
+        char *parseEnd = nullptr;
+        const auto inputRegisterFileSize = std::strtoull(optionSplit[1].c_str(), &parseEnd, autoDetectedBase);
+        if (*parseEnd != '\0') {
+            return false;
+        }
         const auto registerFileSizes = productHelper.getSupportedNumGrfs(device->getNEODevice()->getReleaseHelper());
         if (std::find(registerFileSizes.begin(), registerFileSizes.end(), inputRegisterFileSize) == registerFileSizes.end()) {
             return false;

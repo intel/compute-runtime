@@ -215,6 +215,13 @@ void translate(bool usingIgc, CIF::Builtins::BufferSimple *src, CIF::Builtins::B
         }
     }
 
+    if (debugVars.receivedApiOptionsOutput != nullptr) {
+        if (options != nullptr) {
+            debugVars.receivedApiOptionsOutput->assign(options->GetMemory<char>(),
+                                                       options->GetMemory<char>() + options->GetSizeRaw());
+        }
+    }
+
     bool forceFailure = debugVars.forceBuildFailure;
     if (forceFailure && debugVars.forceBuildFailureBackendOnly && (outType != IGC::CodeType::oclGenBin)) {
         forceFailure = false;

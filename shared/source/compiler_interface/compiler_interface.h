@@ -20,6 +20,7 @@
 #include "ocl_igc_interface/fcl_ocl_device_ctx.h"
 #include "ocl_igc_interface/igc_ocl_device_ctx.h"
 
+#include <optional>
 #include <unordered_map>
 
 namespace NEO {
@@ -38,6 +39,7 @@ struct TranslationInput {
 
     ArrayRef<const char> src;
     ArrayRef<const char> apiOptions;
+    std::optional<ArrayRef<const char>> frontendApiOptions;
     ArrayRef<const char> internalOptions;
     const char *tracingOptions = nullptr;
     uint32_t tracingOptionsCount = 0;
@@ -46,6 +48,10 @@ struct TranslationInput {
     IGC::CodeType::CodeType_t outType = IGC::CodeType::invalid;
 
     specConstValuesMap specializedValues;
+
+    ArrayRef<const char> getFrontendApiOptions() const {
+        return frontendApiOptions.value_or(apiOptions);
+    }
 };
 
 struct TranslationOutput {

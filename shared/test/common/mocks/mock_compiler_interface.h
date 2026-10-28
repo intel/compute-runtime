@@ -235,6 +235,10 @@ struct MockCompilerInterfaceCaptureBuildOptions : CompilerInterface {
         if ((input.internalOptions.size() > 0) && (input.internalOptions.begin() != nullptr)) {
             buildInternalOptions.assign(input.internalOptions.begin(), input.internalOptions.end());
         }
+        frontendBuildOptions.reset();
+        if (input.frontendApiOptions.has_value()) {
+            frontendBuildOptions = std::string(input.frontendApiOptions->begin(), input.frontendApiOptions->end());
+        }
 
         auto copy = [](TranslationOutput::MemAndSize &dst, TranslationOutput::MemAndSize &src) {
             if (src.size > 0) {
@@ -264,5 +268,6 @@ struct MockCompilerInterfaceCaptureBuildOptions : CompilerInterface {
     TranslationOutput output;
     std::string buildOptions;
     std::string buildInternalOptions;
+    std::optional<std::string> frontendBuildOptions;
 };
 } // namespace NEO

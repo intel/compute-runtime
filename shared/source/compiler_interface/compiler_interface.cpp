@@ -103,15 +103,18 @@ TranslationErrorCode CompilerInterface::build(
             intermediateCodeType = getPreferredIntermediateRepresentation(device);
         }
 
+        const auto frontendApiOptions = input.getFrontendApiOptions();
+        auto frontendOptions = CIF::Builtins::CreateConstBuffer(igcMain, frontendApiOptions.begin(), frontendApiOptions.size());
+
         CIF::RAII::UPtr_t<NEO::OclTranslationOutputTag> fclOutput;
         if (this->useIgcAsFcl(&device)) {
             auto igcTranslationCtx = createIgcTranslationCtx(device, srcCodeType, intermediateCodeType);
             fclOutput = translate(igcTranslationCtx.get(), inSrc.get(),
-                                  fclOptions.get(), fclInternalOptions.get());
+                                  frontendOptions.get(), fclInternalOptions.get());
         } else {
             auto fclTranslationCtx = createFclTranslationCtx(device, srcCodeType, intermediateCodeType);
             fclOutput = translate(fclTranslationCtx.get(), inSrc.get(),
-                                  fclOptions.get(), fclInternalOptions.get());
+                                  frontendOptions.get(), fclInternalOptions.get());
         }
 
         if (fclOutput == nullptr) {
@@ -224,7 +227,8 @@ TranslationErrorCode CompilerInterface::compile(
         fclMain = fcl.entryPoint.get();
     }
     auto fclSrc = CIF::Builtins::CreateConstBuffer(fclMain, input.src.begin(), input.src.size());
-    auto fclOptions = CIF::Builtins::CreateConstBuffer(fclMain, input.apiOptions.begin(), input.apiOptions.size());
+    const auto frontendApiOptions = input.getFrontendApiOptions();
+    auto fclOptions = CIF::Builtins::CreateConstBuffer(fclMain, frontendApiOptions.begin(), frontendApiOptions.size());
     auto fclInternalOptions = CIF::Builtins::CreateConstBuffer(fclMain, input.internalOptions.begin(), input.internalOptions.size());
 
     CIF::RAII::UPtr_t<NEO::OclTranslationOutputTag> fclOutput;

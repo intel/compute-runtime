@@ -382,6 +382,69 @@ TEST_F(CompilerInterfaceTest, GivenFclRedirectionEnvSetToForceFclWhenBuildingDev
     EXPECT_EQ(5, translationOutput.intermediateRepresentation.mem[1]);
 }
 
+class CompilerInterfaceFrontendApiOptionsTest : public CompilerInterfaceTest {
+  public:
+    void SetUp() override {
+        CompilerInterfaceTest::SetUp();
+        debugManager.flags.UseIgcAsFcl.set(2);
+
+        igcDebugVars.binaryToReturn = igcBin;
+        igcDebugVars.binaryToReturnSize = sizeof(igcBin);
+        igcDebugVars.receivedApiOptionsOutput = &receivedIgcApiOptions;
+        NEO::igcPushDebugVars(igcDebugVars);
+
+        fclDebugVars.binaryToReturn = fclBin;
+        fclDebugVars.binaryToReturnSize = sizeof(fclBin);
+        fclDebugVars.receivedApiOptionsOutput = &receivedFclApiOptions;
+        NEO::fclPushDebugVars(fclDebugVars);
+
+        inputArgs.apiOptions = ArrayRef<const char>(apiOptions.c_str(), apiOptions.length());
+    }
+
+    void TearDown() override {
+        NEO::fclPopDebugVars();
+        NEO::igcPopDebugVars();
+        CompilerInterfaceTest::TearDown();
+    }
+
+    DebugManagerStateRestore dbgRestore;
+    const std::string apiOptions = "-backend-only-option -frontend-option";
+    const std::string frontendApiOptions = "-frontend-option";
+    char fclBin[1] = {3};
+    char igcBin[1] = {7};
+    std::string receivedFclApiOptions;
+    std::string receivedIgcApiOptions;
+    MockCompilerDebugVars igcDebugVars;
+    MockCompilerDebugVars fclDebugVars;
+};
+
+TEST_F(CompilerInterfaceFrontendApiOptionsTest, givenFrontendApiOptionsWhenBuildingFromSourceThenFrontendReceivesFrontendApiOptionsAndBackendReceivesApiOptions) {
+    inputArgs.frontendApiOptions = ArrayRef<const char>(frontendApiOptions.c_str(), frontendApiOptions.length());
+
+    TranslationOutput translationOutput = {};
+    EXPECT_EQ(TranslationErrorCode::success, pCompilerInterface->build(*pDevice, inputArgs, translationOutput));
+
+    EXPECT_EQ(frontendApiOptions, receivedFclApiOptions);
+    EXPECT_EQ(apiOptions, receivedIgcApiOptions);
+}
+
+TEST_F(CompilerInterfaceFrontendApiOptionsTest, givenNoFrontendApiOptionsWhenBuildingFromSourceThenFrontendAndBackendReceiveApiOptions) {
+    TranslationOutput translationOutput = {};
+    EXPECT_EQ(TranslationErrorCode::success, pCompilerInterface->build(*pDevice, inputArgs, translationOutput));
+
+    EXPECT_EQ(apiOptions, receivedFclApiOptions);
+    EXPECT_EQ(apiOptions, receivedIgcApiOptions);
+}
+
+TEST_F(CompilerInterfaceFrontendApiOptionsTest, givenFrontendApiOptionsWhenCompilingToIrThenFrontendReceivesFrontendApiOptions) {
+    inputArgs.frontendApiOptions = ArrayRef<const char>(frontendApiOptions.c_str(), frontendApiOptions.length());
+
+    TranslationOutput translationOutput = {};
+    EXPECT_EQ(TranslationErrorCode::success, pCompilerInterface->compile(*pDevice, inputArgs, translationOutput));
+
+    EXPECT_EQ(frontendApiOptions, receivedFclApiOptions);
+}
+
 TEST_F(CompilerInterfaceTest, GivenProgramCreatedFromIrWhenCompileIsCalledThenDontRecompile) {
     TranslationOutput translationOutput = {};
     inputArgs.srcType = IGC::CodeType::spirV;

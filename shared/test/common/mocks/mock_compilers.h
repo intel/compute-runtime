@@ -64,6 +64,7 @@ struct MockCompilerDebugVars {
     IGC::SystemRoutineType::SystemRoutineType_t typeOfSystemRoutine = IGC::SystemRoutineType::undefined;
     SipAddressingType receivedSipAddressingType = SipAddressingType::unknown;
     std::string *receivedInternalOptionsOutput = nullptr;
+    std::string *receivedApiOptionsOutput = nullptr;
     std::string *receivedInput = nullptr;
     std::vector<uint32_t> *receivedSpecConstantIdsOutput = nullptr;
     std::vector<uint64_t> *receivedSpecConstantValuesOutput = nullptr;

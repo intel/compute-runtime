@@ -15,6 +15,7 @@
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/source/kernel/kernel.h"
+#include "level_zero/core/source/module/internal_core_program_ext.h"
 #include "level_zero/core/source/module/module_build_log.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
@@ -78,6 +79,103 @@ TEST_F(ModuleTests, whenCreatingAutoGrfBuildOptionsThenOptionsParsedCorrectly) {
     module.createBuildOptions(BuildOptions::optAutoGrf.data(), buildOptions, internalBuildOptions);
 
     EXPECT_TRUE(NEO::CompilerOptions::contains(internalBuildOptions, NEO::CompilerOptions::autoGrf));
+}
+
+TEST_F(ModuleTests, givenMalformedRegisterFileSizeWhenVerifyingBuildOptionsThenFalseIsReturned) {
+    ModuleImp module(device, nullptr, ModuleType::user);
+
+    for (const char *buildFlags : {"-ze-exp-register-file-size=abc", "-ze-exp-register-file-size=", "-ze-exp-register-file-size=99999999999999999999",
+                                   "-ze-exp-register-file-size=-1", "-ze-exp-register-file-size=256abc"}) {
+        EXPECT_FALSE(module.verifyBuildOptions(buildFlags)) << buildFlags;
+    }
+}
+
+TEST_F(ModuleTests, givenLibraryCompilationAliasWhenCreatingBuildOptionsThenItIsTranslatedToLibraryCompilationAndFunctionSymbolExportIsEnabled) {
+    for (const char *buildFlags : {"-ze-library-compilation", "-ze-take-global-address -ze-library-compilation"}) {
+        WhiteBox<::L0::Module> module(device, nullptr, ModuleType::user);
+        std::string apiOptions;
+        std::string internalOptions;
+
+        module.createBuildOptions(buildFlags, apiOptions, internalOptions);
+
+        EXPECT_TRUE(module.isFunctionSymbolExportEnabled) << buildFlags;
+        EXPECT_TRUE(NEO::CompilerOptions::contains(apiOptions, BuildOptions::enableLibraryCompile)) << buildFlags;
+        EXPECT_EQ(std::string::npos, apiOptions.find(BuildOptions::enableLibraryCompileAlias.str())) << buildFlags;
+        EXPECT_FALSE(NEO::CompilerOptions::contains(apiOptions, "-ze")) << buildFlags;
+    }
+}
+
+struct ModuleFrontendApiOptionsTests : public Test<DeviceFixture> {
+    void SetUp() override {
+        Test<DeviceFixture>::SetUp();
+        mockCompiler = new NEO::MockCompilerInterfaceCaptureBuildOptions();
+        device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->compilerInterface.reset(mockCompiler);
+    }
+
+    void createModule(ze_module_format_t format, const char *buildFlags, const void *pNext) {
+        ze_module_desc_t moduleDesc = {ZE_STRUCTURE_TYPE_MODULE_DESC};
+        moduleDesc.pNext = pNext;
+        moduleDesc.format = format;
+        moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(source);
+        moduleDesc.inputSize = strlen(source) + 1;
+        moduleDesc.pBuildFlags = buildFlags;
+
+        mockCompiler->buildOptions.clear();
+        mockCompiler->frontendBuildOptions.reset();
+        ModuleImp module(device, nullptr, ModuleType::user);
+        module.initialize(&moduleDesc, device->getNEODevice());
+    }
+
+    NEO::MockCompilerInterfaceCaptureBuildOptions *mockCompiler = nullptr;
+    const char *source = "kernel void k(global int *p) { p[0] = 1; }";
+};
+
+TEST_F(ModuleFrontendApiOptionsTests, givenOclcInputWithBackendOnlyOptionsWhenBuildingModuleThenFrontendOptionsExcludeThemAndApiOptionsAreUnchanged) {
+    struct TestCase {
+        std::string buildFlags;
+        std::string expectedFrontendApiOptions;
+        std::string expectedBackendOption;
+    };
+    std::vector<TestCase> testCases = {
+        {"-ze-opt-level=2 -zet-profile-flags 5 -DA=1 -g", "-DA=1 -g", "-ze-opt-level=O2"},
+        {"-ze-opt-level 2 -g", "-g", "-ze-opt-level 2"},
+        {"-ze-opt-level=0", "", "-ze-opt-level=O0"},
+        {"-zet-profile-flags 3 -ze-opt-level -g", "-g", "-zet-profile-flags 3"},
+        {"-zet-profile-flags -1 -DB=2", "-DB=2", "-zet-profile-flags -1"},
+        {"-ze-kernel-debug-enable -g", "-g", "-ze-kernel-debug-enable"},
+    };
+    const auto registerFileSizes = device->getProductHelper().getSupportedNumGrfs(device->getNEODevice()->getReleaseHelper());
+    if (!registerFileSizes.empty()) {
+        const std::string registerFileSize = std::to_string(registerFileSizes[0]);
+        testCases.push_back({"-ze-exp-register-file-size=" + registerFileSize + " -g", "-g", "-ze-exp-register-file-size=" + registerFileSize});
+        testCases.push_back({"-g -ze-exp-register-file-size " + registerFileSize, "-g", "-ze-exp-register-file-size " + registerFileSize});
+    }
+
+    for (const auto &testCase : testCases) {
+        createModule(ZE_MODULE_FORMAT_OCLC, testCase.buildFlags.c_str(), nullptr);
+
+        ASSERT_TRUE(mockCompiler->frontendBuildOptions.has_value()) << testCase.buildFlags;
+        EXPECT_EQ(testCase.expectedFrontendApiOptions, mockCompiler->frontendBuildOptions.value()) << testCase.buildFlags;
+        EXPECT_NE(std::string::npos, mockCompiler->buildOptions.find(testCase.expectedBackendOption)) << testCase.buildFlags;
+    }
+}
+
+TEST_F(ModuleFrontendApiOptionsTests, givenSpirvInputWhenBuildingModuleThenNoFrontendOptionsArePassed) {
+    createModule(ZE_MODULE_FORMAT_IL_SPIRV, "-ze-opt-level=2 -zet-profile-flags 5", nullptr);
+
+    EXPECT_FALSE(mockCompiler->frontendBuildOptions.has_value());
+    EXPECT_NE(std::string::npos, mockCompiler->buildOptions.find("-ze-opt-level=O2"));
+    EXPECT_NE(std::string::npos, mockCompiler->buildOptions.find("-zet-profile-flags 5"));
+}
+
+TEST_F(ModuleFrontendApiOptionsTests, givenOclcInputWithHeadersAndBackendOnlyOptionsWhenCompilingModuleThenFrontendOptionsExcludeThem) {
+    L0::ze_module_program_headers_exp_desc_t headersDesc{};
+    createModule(ZE_MODULE_FORMAT_OCLC, "-ze-opt-level=1 -DA=1 -zet-profile-flags 2", &headersDesc);
+
+    ASSERT_TRUE(mockCompiler->frontendBuildOptions.has_value());
+    EXPECT_EQ("-DA=1", mockCompiler->frontendBuildOptions.value());
+    EXPECT_NE(std::string::npos, mockCompiler->buildOptions.find("-ze-opt-level=O1"));
+    EXPECT_NE(std::string::npos, mockCompiler->buildOptions.find("-zet-profile-flags 2"));
 }
 
 TEST(ModuleDestroyTest, givenIsaAllocationWhenIsModuleDestroyedThenRequireInstructionCacheFlushInCsrThatUsedTheAllocation) {
