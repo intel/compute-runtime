@@ -30,6 +30,10 @@ class Driver {
         return pid;
     }
 
+    void setPid(uint32_t newPid) {
+        pid = newPid;
+    }
+
   protected:
     static Driver *driver;
     uint32_t pid = 0;
