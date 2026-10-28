@@ -210,6 +210,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, EnableImmediateVmBindExt, -1, "Use immediate bin
 DECLARE_DEBUG_VARIABLE(int32_t, ForceExecutionTile, -1, "-1: default, 0+: given tile is chosen as submission, must be used with EnableWalkerPartition = 0.")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideTimestampPacketSize, -1, "-1: default, >0: size in bytes. 4 and 8 supported for experiments")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideMaxWorkGroupCount, -1, "-1: default, >0: Max WG size")
+DECLARE_DEBUG_VARIABLE(int32_t, AllowNonCooperativeSyncBufferDispatch, -1, "-1: default (disabled), 0: disabled, 1: allow non-cooperative dispatch of kernels using sync buffer, sync buffer address is patched to null")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideCmdQueueSynchronousMode, -1, "Overrides all command queues synchronous mode: -1: do not override, 0: implicit driver behavior, 1: synchronous, 2: asynchronous")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideImmediateCmdListSynchronousMode, -1, "Overrides all immediate command lists synchronous mode: -1: do not override, 0: implicit driver behavior, 1: synchronous, 2: asynchronous")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideGmmResourceUsageField, -1, "-1: default, >=0: gmmResourceParams->Usage is set to this value")

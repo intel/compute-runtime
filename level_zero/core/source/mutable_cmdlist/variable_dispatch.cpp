@@ -229,7 +229,7 @@ void VariableDispatch::setGroupCount(const MaxChannelsCArray groupCount, const N
 
     PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL mutation group count variable %p new value %u %u %u\n", groupCountVar, groupCount[0], groupCount[1], groupCount[2]);
 
-    if (kernelDispatch->kernelData->usesSyncBuffer) {
+    if (kernelDispatch->kernelData->usesSyncBuffer && this->isCooperative) {
         auto newSize = NEO::KernelHelper::getSyncBufferSize(this->threadGroupCount);
         if (newSize > kernelDispatch->syncBufferSize) {
             auto syncBufferPair = device.syncBufferHandler->obtainAllocationAndOffset(newSize);
@@ -273,6 +273,10 @@ void VariableDispatch::setGroupCount(const MaxChannelsCArray groupCount, const N
                 groupCountVar->updateCmdListNoopPatchData(kernelDispatch->syncBufferNoopPatchIndex, currentNoopPtr, kernelDispatch->syncBufferSize, this->syncBufferOffset, currentKernelPatchGpuAddress);
             }
         }
+    } else if (kernelDispatch->kernelData->usesSyncBuffer &&
+               NEO::debugManager.flags.AllowNonCooperativeSyncBufferDispatch.get() == 1) {
+        indirectData->setAddress(kernelDispatch->kernelData->syncBufferAddressOffset, 0u,
+                                 kernelDispatch->kernelData->syncBufferPointerSize);
     }
 
     if (stageData) {

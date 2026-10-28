@@ -1384,6 +1384,246 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             MutableCommandListKernelTest,
+            givenNonCooperativeSyncBufferDispatchAllowedAndNonCooperativeKernelUsingSyncBufferWhenAppendingThenSyncBufferIsNotProgrammed) {
+    debugManager.flags.AllowNonCooperativeSyncBufferDispatch.set(1);
+    enableCooperativeSyncBuffer(kernel1Bit);
+
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT;
+    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    this->testGroupCount.groupCountX = 4;
+    result = mutableCommandList->appendLaunchKernel(kernelHandle, this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ASSERT_EQ(1u, mutableCommandList->dispatches.size());
+    auto kernelDispatch = mutableCommandList->dispatches[0].get();
+    EXPECT_EQ(nullptr, kernelDispatch->syncBuffer);
+    EXPECT_EQ(undefined<size_t>, kernelDispatch->syncBufferNoopPatchIndex);
+    EXPECT_EQ(0u, mutableCommandList->base->getTotalNoopSpace());
+    EXPECT_EQ(nullptr, device->getNEODevice()->syncBufferHandler.get());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListKernelTest,
+            givenNonCooperativeSyncBufferDispatchAllowedAndMutationKernelWithStaleSyncBufferAddressWhenAppendingNonCooperativeAndMutatingIntoItWithGroupCountThenSyncBufferAddressInPayloadIsCleared) {
+    debugManager.flags.AllowNonCooperativeSyncBufferDispatch.set(1);
+    mutableCommandIdDesc.flags = kernelIsaMutationFlags;
+
+    enableCooperativeSyncBuffer(kernel2Bit);
+    setupGroupCountOffsets(kernelAllMask);
+
+    constexpr uint64_t staleSyncBufferAddress = 0xffff800300060000;
+    NEO::MockGraphicsAllocation staleSyncBufferAllocation;
+    staleSyncBufferAllocation.setGpuPtr(staleSyncBufferAddress);
+    kernel2->patchSyncBuffer(&staleSyncBufferAllocation, 0u);
+
+    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, kernelMutationGroup, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    this->testGroupCount.groupCountX = 4;
+    result = mutableCommandList->appendLaunchKernel(kernelHandle, this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(&staleSyncBufferAllocation, kernel2->getSyncBufferAllocation());
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ASSERT_NE(0u, mutableCommandList->kernelMutations.size());
+    auto &mutation = mutableCommandList->kernelMutations[commandId - 1];
+    ASSERT_NE(nullptr, mutation.kernelGroup);
+
+    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernel2Handle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(kernel2.get(), mutation.kernelGroup->getCurrentMutableKernel()->getKernel());
+
+    ze_mutable_group_count_exp_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
+    ze_group_count_t mutatedGroupCount = {8, 1, 1};
+    groupCountDesc.commandId = commandId;
+    groupCountDesc.pGroupCount = &mutatedGroupCount;
+    mutableCommandsDesc.pNext = &groupCountDesc;
+
+    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto kernelDispatch = mutation.kernelGroup->getCurrentMutableKernel()->getKernelDispatch();
+    EXPECT_EQ(nullptr, kernelDispatch->syncBuffer);
+    EXPECT_EQ(undefined<size_t>, kernelDispatch->syncBufferNoopPatchIndex);
+    EXPECT_EQ(0u, mutableCommandList->base->getTotalNoopSpace());
+
+    auto indirectData = kernelDispatch->varDispatch->getIndirectData();
+    ASSERT_EQ(0u, indirectData->getInlineDataSize());
+
+    auto syncBufferAddressOffset = mockKernelImmData2->kernelDescriptor->payloadMappings.implicitArgs.syncBufferAddress.stateless;
+    uint64_t patchedSyncBufferAddress = 0;
+    memcpy_s(&patchedSyncBufferAddress, sizeof(patchedSyncBufferAddress),
+             ptrOffset(indirectData->getCrossThreadDataBaseAddress(), syncBufferAddressOffset), sizeof(patchedSyncBufferAddress));
+    EXPECT_EQ(0u, patchedSyncBufferAddress);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListKernelTest,
+            givenTwoMutationCooperativeKernelsWithResetSyncBufferWhenAppendingCooperativeAndMutatingBetweenThemWithSameGroupCountThenSyncBufferIsProgrammedIntoDefinedIndexAndAppendedKernelKeepsItsSyncBuffer) {
+    debugManager.flags.OverrideMaxWorkGroupCount.set(128);
+    mutableCommandIdDesc.flags = kernelIsaMutationFlags;
+
+    enableCooperativeSyncBuffer(kernelAllMask);
+    setupGroupCountOffsets(kernelAllMask);
+
+    NEO::MockGraphicsAllocation previousSyncBufferAllocation;
+    kernel->patchSyncBuffer(&previousSyncBufferAllocation, 0u);
+    kernel->resetSyncBuffer();
+    kernel2->patchSyncBuffer(&previousSyncBufferAllocation, 0u);
+    kernel2->resetSyncBuffer();
+
+    const auto kernelSyncBufferIndex = kernel->getSyncBufferIndex();
+    const auto kernel2SyncBufferIndex = kernel2->getSyncBufferIndex();
+    const auto kernelInternalResidencySize = kernel->getInternalResidencyContainer().size();
+    const auto kernel2InternalResidencySize = kernel2->getInternalResidencyContainer().size();
+    ASSERT_NE(std::numeric_limits<size_t>::max(), kernelSyncBufferIndex);
+    ASSERT_NE(std::numeric_limits<size_t>::max(), kernel2SyncBufferIndex);
+    EXPECT_EQ(nullptr, kernel->getSyncBufferAllocation());
+    EXPECT_EQ(nullptr, kernel2->getSyncBufferAllocation());
+
+    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, kernelMutationGroup, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    this->testLaunchParams.isCooperative = true;
+    this->testGroupCount.groupCountX = 4;
+    result = mutableCommandList->appendLaunchKernel(kernelHandle, this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &mutation = mutableCommandList->kernelMutations[commandId - 1];
+    ASSERT_NE(nullptr, mutation.kernelGroup);
+
+    auto readSyncBufferAddress = [&](L0::MCL::KernelDispatch *kernelDispatch, uint32_t syncBufferAddressOffset) {
+        auto indirectData = kernelDispatch->varDispatch->getIndirectData();
+        EXPECT_EQ(0u, indirectData->getInlineDataSize());
+        uint64_t address = 0;
+        memcpy_s(&address, sizeof(address), ptrOffset(indirectData->getCrossThreadDataBaseAddress(), syncBufferAddressOffset), sizeof(address));
+        return address;
+    };
+    const auto syncBufferAddressOffset = mockKernelImmData->kernelDescriptor->payloadMappings.implicitArgs.syncBufferAddress.stateless;
+    const auto syncBufferAddressOffset2 = mockKernelImmData2->kernelDescriptor->payloadMappings.implicitArgs.syncBufferAddress.stateless;
+
+    auto appendDispatch = mutation.kernelGroup->getCurrentMutableKernel()->getKernelDispatch();
+    auto appendSyncBuffer = appendDispatch->syncBuffer;
+    ASSERT_NE(nullptr, appendSyncBuffer);
+    EXPECT_EQ(kernelSyncBufferIndex, kernel->getSyncBufferIndex());
+    EXPECT_EQ(kernelInternalResidencySize, kernel->getInternalResidencyContainer().size());
+    EXPECT_EQ(appendSyncBuffer, kernel->getSyncBufferAllocation());
+    const auto appendSyncBufferAddress = readSyncBufferAddress(appendDispatch, syncBufferAddressOffset);
+    EXPECT_NE(0u, appendSyncBufferAddress);
+    const auto appendSyncBufferSize = appendDispatch->syncBufferSize;
+
+    ze_mutable_group_count_exp_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
+    ze_group_count_t mutatedGroupCount = {4, 1, 1};
+    groupCountDesc.commandId = commandId;
+    groupCountDesc.pGroupCount = &mutatedGroupCount;
+    mutableCommandsDesc.pNext = &groupCountDesc;
+
+    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernel2Handle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto mutatedDispatch = mutation.kernelGroup->getCurrentMutableKernel()->getKernelDispatch();
+    ASSERT_NE(nullptr, mutatedDispatch->syncBuffer);
+    EXPECT_EQ(appendSyncBufferSize, mutatedDispatch->syncBufferSize);
+    EXPECT_TRUE(isAllocationInMutableResidency(mutableCommandList.get(), mutatedDispatch->syncBuffer));
+    EXPECT_EQ(kernel2SyncBufferIndex, kernel2->getSyncBufferIndex());
+    EXPECT_EQ(kernel2InternalResidencySize, kernel2->getInternalResidencyContainer().size());
+    EXPECT_EQ(nullptr, kernel2->getSyncBufferAllocation());
+    const auto mutatedSyncBufferAddress = readSyncBufferAddress(mutatedDispatch, syncBufferAddressOffset2);
+    EXPECT_NE(0u, mutatedSyncBufferAddress);
+    EXPECT_NE(appendSyncBufferAddress, mutatedSyncBufferAddress);
+
+    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernelHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(appendDispatch, mutation.kernelGroup->getCurrentMutableKernel()->getKernelDispatch());
+    EXPECT_EQ(appendSyncBuffer, appendDispatch->syncBuffer);
+    EXPECT_EQ(appendSyncBufferSize, appendDispatch->syncBufferSize);
+    EXPECT_TRUE(isAllocationInMutableResidency(mutableCommandList.get(), appendSyncBuffer));
+    EXPECT_EQ(kernelSyncBufferIndex, kernel->getSyncBufferIndex());
+    EXPECT_EQ(kernelInternalResidencySize, kernel->getInternalResidencyContainer().size());
+    EXPECT_EQ(appendSyncBufferAddress, readSyncBufferAddress(appendDispatch, syncBufferAddressOffset));
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListKernelTest,
+            givenTwoMutationCooperativeKernelsWhenAppendingCooperativeAndMutatingIntoSecondWithSameGroupCountThenSecondKernelGetsNextSyncBufferChunk) {
+    debugManager.flags.OverrideMaxWorkGroupCount.set(128);
+    mutableCommandIdDesc.flags = kernelIsaMutationFlags;
+
+    enableCooperativeSyncBuffer(kernelAllMask);
+    setupGroupCountOffsets(kernelAllMask);
+
+    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, kernelMutationGroup, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    this->testLaunchParams.isCooperative = true;
+    this->testGroupCount.groupCountX = 4;
+    result = mutableCommandList->appendLaunchKernel(kernelHandle, this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &mutation = mutableCommandList->kernelMutations[commandId - 1];
+    ASSERT_NE(nullptr, mutation.kernelGroup);
+
+    auto appendDispatch = mutation.kernelGroup->getCurrentMutableKernel()->getKernelDispatch();
+    ASSERT_NE(nullptr, appendDispatch->syncBuffer);
+
+    void *cpuPtr = nullptr;
+    size_t patchSize = 0;
+    size_t appendOffset = 0;
+    uint64_t appendGpuAddress = 0;
+    mutableCommandList->fillCmdListNoopPatchData(appendDispatch->syncBufferNoopPatchIndex, cpuPtr, patchSize, appendOffset, appendGpuAddress);
+
+    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernel2Handle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_mutable_group_count_exp_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
+    ze_group_count_t mutatedGroupCount = {4, 1, 1};
+    groupCountDesc.commandId = commandId;
+    groupCountDesc.pGroupCount = &mutatedGroupCount;
+    mutableCommandsDesc.pNext = &groupCountDesc;
+
+    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto mutatedDispatch = mutation.kernelGroup->getCurrentMutableKernel()->getKernelDispatch();
+    size_t mutatedOffset = 0;
+    uint64_t mutatedGpuAddress = 0;
+    mutableCommandList->fillCmdListNoopPatchData(mutatedDispatch->syncBufferNoopPatchIndex, cpuPtr, patchSize, mutatedOffset, mutatedGpuAddress);
+
+    EXPECT_EQ(appendDispatch->syncBuffer, mutatedDispatch->syncBuffer);
+    EXPECT_EQ(appendDispatch->syncBufferSize, mutatedDispatch->syncBufferSize);
+    EXPECT_EQ(appendOffset + appendDispatch->syncBufferSize, mutatedOffset);
+    EXPECT_EQ(appendGpuAddress + appendDispatch->syncBufferSize, mutatedGpuAddress);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListKernelTest,
             givenTwoMutationKernelsOneCooperativeWhenAppendingCooperativeFirstAndMutatingGroupCountBiggerThanMaxThenErrorIsReturned) {
     debugManager.flags.OverrideMaxWorkGroupCount.set(4);
 

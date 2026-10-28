@@ -15,6 +15,8 @@
 #include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
 namespace L0 {
 namespace ult {
@@ -459,6 +461,28 @@ GEN12LPTEST_F(CommandListGen12LpStateComputeModeTrackingTest,
                                                       (sizeAfter - sizeBefore)));
     stateComputeModeList = findAll<STATE_COMPUTE_MODE *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(0u, stateComputeModeList.size());
+}
+
+HWTEST2_F(CommandListCreateGen12Lp, givenKernelUsingSyncBufferWhenAppendingNonCooperativeLaunchThenErrorIsReturnedUnlessNonCooperativeSyncBufferDispatchIsAllowed, IsGen12LP) {
+    Mock<::L0::KernelImp> kernel;
+    auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    kernel.module = pMockModule.get();
+    kernel.immutableData.kernelDescriptor->kernelAttributes.flags.usesSyncBuffer = true;
+    kernel.setGroupSize(4, 1, 1);
+    ze_group_count_t groupCount{8, 1, 1};
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
+    CmdListKernelLaunchParams launchParams = {};
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, commandList->appendLaunchKernelWithParams(&kernel, groupCount, nullptr, launchParams));
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.AllowNonCooperativeSyncBufferDispatch.set(1);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendLaunchKernelWithParams(&kernel, groupCount, nullptr, launchParams));
+    EXPECT_EQ(std::numeric_limits<size_t>::max(), kernel.getSyncBufferIndex());
+    EXPECT_EQ(nullptr, kernel.getSyncBufferAllocation());
+    EXPECT_EQ(nullptr, device->getNEODevice()->syncBufferHandler.get());
 }
 
 } // namespace ult

@@ -695,6 +695,14 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLau
         cooperative = false;
         result = commandList->appendLaunchKernelWithParams(&kernel, groupCount, nullptr, launchParams);
         EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+        EXPECT_EQ(syncBufferAllocation, kernel.getSyncBufferAllocation());
+
+        DebugManagerStateRestore restorer;
+        debugManager.flags.AllowNonCooperativeSyncBufferDispatch.set(1);
+        result = commandList->appendLaunchKernelWithParams(&kernel, groupCount, nullptr, launchParams);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_EQ(expectedIndex, kernel.getSyncBufferIndex());
+        EXPECT_EQ(nullptr, kernel.getSyncBufferAllocation());
     }
 
     const ze_command_queue_desc_t desc = {};
@@ -706,6 +714,74 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLau
     result = commandListImmediate->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, cooperativeParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(std::numeric_limits<size_t>::max(), cooperativeParams.syncBufferPatchIndex);
+    EXPECT_EQ(expectedIndex, kernel.getSyncBufferIndex());
+    EXPECT_EQ(syncBufferAllocation, kernel.getSyncBufferAllocation());
+}
+
+HWTEST2_F(CommandListAppendLaunchKernel, givenNonCooperativeSyncBufferDispatchAllowedAndKernelUsingSyncBufferWhenAppendedAlternatelyAsNonCooperativeAndCooperativeThenSyncBufferIsProgrammedOnlyForCooperativeLaunch, HasDispatchAllSupport) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.AllowNonCooperativeSyncBufferDispatch.set(1);
+    Mock<::L0::KernelImp> kernel;
+    auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    kernel.module = pMockModule.get();
+    kernel.immutableData.crossThreadDataSize = sizeof(uint64_t);
+    kernel.privateState.pImplicitArgs = Clonable(new ImplicitArgs());
+    kernel.privateState.pImplicitArgs->v1.header.structVersion = 1;
+    kernel.privateState.pImplicitArgs->v1.header.structSize = ImplicitArgsV1::getSize();
+    UnitTestHelper<FamilyType>::adjustKernelDescriptorForImplicitArgs(*kernel.immutableData.kernelDescriptor);
+
+    auto &kernelAttributes = kernel.immutableData.kernelDescriptor->kernelAttributes;
+    kernelAttributes.flags.usesSyncBuffer = true;
+    kernelAttributes.numGrfRequired = GrfConfig::defaultGrfNumber;
+
+    kernel.setGroupSize(4, 1, 1);
+    ze_group_count_t groupCount{8, 1, 1};
+
+    uint32_t allocationCountBeforeLaunch = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelGetAllocationPropertiesExp(kernel.toHandle(), &allocationCountBeforeLaunch, nullptr));
+
+    auto &productHelper = device->getProductHelper();
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    auto engineGroupType = NEO::EngineGroupType::compute;
+    if (productHelper.isCooperativeEngineSupported(*defaultHwInfo)) {
+        engineGroupType = gfxCoreHelper.getEngineGroupType(aub_stream::EngineType::ENGINE_CCS, EngineUsage::cooperative, *defaultHwInfo);
+    }
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
+    CmdListKernelLaunchParams defaultParams = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendLaunchKernelWithParams(&kernel, groupCount, nullptr, defaultParams));
+
+    EXPECT_EQ(std::numeric_limits<size_t>::max(), kernel.getSyncBufferIndex());
+    EXPECT_EQ(nullptr, kernel.getSyncBufferAllocation());
+    EXPECT_EQ(0u, kernel.privateState.pImplicitArgs->v1.syncBufferPtr);
+    uint32_t allocationCount = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelGetAllocationPropertiesExp(kernel.toHandle(), &allocationCount, nullptr));
+    EXPECT_EQ(allocationCountBeforeLaunch, allocationCount);
+
+    commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, engineGroupType, 0u);
+    CmdListKernelLaunchParams cooperativeParams = {};
+    cooperativeParams.isCooperative = true;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendLaunchKernelWithParams(&kernel, groupCount, nullptr, cooperativeParams));
+
+    auto syncBufferIndex = kernel.getSyncBufferIndex();
+    ASSERT_NE(nullptr, kernel.getSyncBufferAllocation());
+    EXPECT_NE(0u, kernel.privateState.pImplicitArgs->v1.syncBufferPtr);
+    allocationCount = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelGetAllocationPropertiesExp(kernel.toHandle(), &allocationCount, nullptr));
+    EXPECT_EQ(allocationCountBeforeLaunch + 1, allocationCount);
+
+    commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendLaunchKernelWithParams(&kernel, groupCount, nullptr, defaultParams));
+
+    EXPECT_EQ(syncBufferIndex, kernel.getSyncBufferIndex());
+    EXPECT_EQ(nullptr, kernel.getSyncBufferAllocation());
+    EXPECT_EQ(0u, kernel.privateState.pImplicitArgs->v1.syncBufferPtr);
+    allocationCount = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelGetAllocationPropertiesExp(kernel.toHandle(), &allocationCount, nullptr));
+    EXPECT_EQ(allocationCountBeforeLaunch, allocationCount);
 }
 
 HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLaunchCooperativeKernelWithMakeViewIsCalledThenNoAllocationCreated, IsAtLeastXeCore) {

@@ -266,11 +266,15 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
 
     if (!launchParams.makeKernelCommandView) {
         if (kernel->usesSyncBuffer()) {
-            auto retVal = (launchParams.isCooperative
-                               ? programSyncBuffer(*kernel, *neoDevice, threadGroupDimensions, launchParams.syncBufferPatchIndex)
-                               : ZE_RESULT_ERROR_INVALID_ARGUMENT);
-            if (retVal) {
-                return retVal;
+            if (launchParams.isCooperative) {
+                auto retVal = programSyncBuffer(*kernel, *neoDevice, threadGroupDimensions, launchParams.syncBufferPatchIndex);
+                if (retVal) {
+                    return retVal;
+                }
+            } else if (NEO::debugManager.flags.AllowNonCooperativeSyncBufferDispatch.get() == 1) {
+                kernel->resetSyncBuffer();
+            } else {
+                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }
         }
     }

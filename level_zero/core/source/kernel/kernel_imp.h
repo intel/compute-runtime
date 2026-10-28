@@ -139,6 +139,7 @@ struct KernelImp : Kernel {
 
     bool usesSyncBuffer() override;
     void patchSyncBuffer(NEO::GraphicsAllocation *gfxAllocation, size_t bufferOffset) override;
+    void resetSyncBuffer() override;
 
     const uint8_t *getSurfaceStateHeapData() const override { return privateState.surfaceStateHeapData.data(); }
     uint32_t getSurfaceStateHeapDataSize() const override;

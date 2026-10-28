@@ -391,7 +391,11 @@ ze_result_t KernelImp::getAllocationProperties(uint32_t *pCount, ze_kernel_alloc
         }
     }
 
-    totalAllocations += static_cast<uint32_t>(getInternalResidencyContainer().size());
+    for (const auto &alloc : getInternalResidencyContainer()) {
+        if (alloc) {
+            ++totalAllocations;
+        }
+    }
 
     if (*pCount == 0 || *pCount > totalAllocations) {
         *pCount = totalAllocations;
@@ -1485,6 +1489,18 @@ void KernelImp::patchSyncBuffer(NEO::GraphicsAllocation *gfxAllocation, size_t b
                       static_cast<uintptr_t>(ptrOffset(gfxAllocation->getGpuAddressToPatch(), bufferOffset)));
     if (privateState.pImplicitArgs) {
         privateState.pImplicitArgs->setSyncBufferPtr(static_cast<uintptr_t>(ptrOffset(gfxAllocation->getGpuAddressToPatch(), bufferOffset)));
+    }
+}
+
+void KernelImp::resetSyncBuffer() {
+    if (privateState.syncBufferIndex != std::numeric_limits<size_t>::max()) {
+        this->privateState.internalResidencyContainer[privateState.syncBufferIndex] = nullptr;
+    }
+    NEO::patchPointer(getCrossThreadDataSpan(),
+                      this->getImmutableData()->getDescriptor().payloadMappings.implicitArgs.syncBufferAddress,
+                      0u);
+    if (privateState.pImplicitArgs) {
+        privateState.pImplicitArgs->setSyncBufferPtr(0u);
     }
 }
 
