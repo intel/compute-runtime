@@ -16,6 +16,8 @@
 namespace NEO {
 namespace LEO {
 
+struct ClSurfaceFormatInfo;
+
 struct MipLevelHostLayout {
     size_t offset = 0;
     size_t rowPitch = 0;
