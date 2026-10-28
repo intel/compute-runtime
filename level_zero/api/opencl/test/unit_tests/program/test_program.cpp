@@ -8,8 +8,11 @@
 #include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device_binary_format/zebin/zebin_elf.h"
+#include "shared/source/device_binary_format/zebin/zeinfo.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_elf.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -104,12 +107,15 @@ struct MockEmptyContext : public Context {
 
 struct WhiteBoxProgram : public Program {
     using Program::buildModulesForContextDevices;
+    using Program::buildStatus;
+    using Program::createdFrom;
     using Program::linkModulesFully;
     using Program::mapModuleBuildResult;
     using Program::moduleHandles;
     using Program::populateIrBinaryFromModule;
     using Program::Program;
     using Program::programBinaryType;
+    using Program::requireModulesLinkedFullyForBuild;
 };
 
 using ClProgramCompileLinkTests = Test<OclFixture>;
@@ -473,6 +479,62 @@ TEST(ProgramLinkModulesTests, givenModuleWithUnresolvedImportsWhenLinkModulesFul
     EXPECT_EQ(static_cast<cl_program_binary_type>(CL_PROGRAM_BINARY_TYPE_NONE), program.programBinaryType);
 }
 
+TEST(ProgramLinkModulesTests, givenFullyLinkedModuleWhenRequireModulesLinkedFullyForBuildThenSucceedsAndProgramStateIsUnchanged) {
+    MockTrackedModule module;
+    MockEmptyContext context;
+    WhiteBoxProgram program(&context);
+    program.setModuleHandle(0u, module.toHandle());
+    program.programBinaryType = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
+    program.setBuildStatus(CL_BUILD_SUCCESS);
+
+    EXPECT_EQ(CL_SUCCESS, program.requireModulesLinkedFullyForBuild());
+    EXPECT_EQ(static_cast<cl_program_binary_type>(CL_PROGRAM_BINARY_TYPE_EXECUTABLE), program.programBinaryType);
+    EXPECT_EQ(static_cast<cl_build_status>(CL_BUILD_SUCCESS), program.buildStatus);
+}
+
+TEST(ProgramLinkModulesTests, givenModuleWithUnresolvedImportsWhenRequireModulesLinkedFullyForBuildThenReturnsBuildFailureAndBuildError) {
+    MockTrackedModule module;
+    module.linkedFully = false;
+    MockEmptyContext context;
+    WhiteBoxProgram program(&context);
+    program.setModuleHandle(0u, module.toHandle());
+    program.programBinaryType = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
+    program.setBuildStatus(CL_BUILD_SUCCESS);
+
+    EXPECT_EQ(CL_BUILD_PROGRAM_FAILURE, program.requireModulesLinkedFullyForBuild());
+    EXPECT_EQ(static_cast<cl_program_binary_type>(CL_PROGRAM_BINARY_TYPE_NONE), program.programBinaryType);
+    EXPECT_EQ(static_cast<cl_build_status>(CL_BUILD_ERROR), program.buildStatus);
+}
+
+TEST(ProgramLinkModulesTests, givenProgramCreatedFromNativeBinaryWithUnresolvedImportsWhenBuildThenReturnsBuildFailureAndBuildError) {
+    MockTrackedModule module;
+    module.linkedFully = false;
+    MockEmptyContext context;
+    WhiteBoxProgram program(&context);
+    program.setModuleHandle(0u, module.toHandle());
+    program.createdFrom = Program::CreatedFrom::binary;
+    program.programBinaryType = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
+    program.setBuildStatus(CL_BUILD_SUCCESS);
+
+    EXPECT_EQ(CL_BUILD_PROGRAM_FAILURE, program.build(nullptr, nullptr, nullptr));
+    EXPECT_EQ(static_cast<cl_program_binary_type>(CL_PROGRAM_BINARY_TYPE_NONE), program.programBinaryType);
+    EXPECT_EQ(static_cast<cl_build_status>(CL_BUILD_ERROR), program.buildStatus);
+}
+
+TEST(ProgramLinkModulesTests, givenProgramCreatedFromFullyLinkedNativeBinaryWhenBuildThenSucceedsAndBuildStatusStaysSuccess) {
+    MockTrackedModule module;
+    MockEmptyContext context;
+    WhiteBoxProgram program(&context);
+    program.setModuleHandle(0u, module.toHandle());
+    program.createdFrom = Program::CreatedFrom::binary;
+    program.programBinaryType = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
+    program.setBuildStatus(CL_BUILD_SUCCESS);
+
+    EXPECT_EQ(CL_SUCCESS, program.build(nullptr, nullptr, nullptr));
+    EXPECT_EQ(static_cast<cl_program_binary_type>(CL_PROGRAM_BINARY_TYPE_EXECUTABLE), program.programBinaryType);
+    EXPECT_EQ(static_cast<cl_build_status>(CL_BUILD_SUCCESS), program.buildStatus);
+}
+
 TEST(ProgramIrCaptureTests, givenModuleWithSpirvIrWhenPopulateIrBinaryFromModuleThenIsSpirvIsTrue) {
     MockIrModule module(spirvBlob, sizeof(spirvBlob));
     MockEmptyContext context;
@@ -721,6 +783,89 @@ struct MockZebinCompilerInterface : public L0::ult::MockCompilerInterface {
 
     ZebinTestData::ZebinWithL0TestCommonModule zebin;
 };
+
+struct MockUnresolvedSymbolZebinCompilerInterface : public L0::ult::MockCompilerInterface {
+    static constexpr NEO::ConstStringRef unresolvedSymbolName = "symbol_that_does_not_exist";
+
+    explicit MockUnresolvedSymbolZebinCompilerInterface(const NEO::HardwareInfo &hwInfo) {
+        MockElfEncoder<> elfEncoder;
+        auto &elfHeader = elfEncoder.getElfFileHeader();
+        elfHeader.type = NEO::Zebin::Elf::ET_ZEBIN_EXE;
+        auto compilerProductHelper = NEO::CompilerProductHelper::create(hwInfo.platform.eProductFamily);
+        auto copyHwInfo = hwInfo;
+        compilerProductHelper->adjustHwInfoForIgc(copyHwInfo);
+        elfHeader.machine = copyHwInfo.platform.eProductFamily;
+
+        const uint8_t kernelData[32] = {0u};
+        elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::textPrefix.str() + "kernel", kernelData);
+        const auto kernelSectionIndex = elfEncoder.getLastSectionHeaderIndex();
+        const std::string zeInfo = std::string("version :\'") + versionToString(NEO::Zebin::ZeInfo::zeInfoDecoderVersion) + R"===('
+kernels:
+    - name: kernel
+      execution_env:
+        simd_size: 8
+)===";
+        elfEncoder.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_ZEINFO, NEO::Zebin::Elf::SectionNames::zeInfo, zeInfo);
+
+        NEO::Elf::ElfSymbolEntry<NEO::Elf::EI_CLASS_64> symbols[2] = {};
+        symbols[1].name = decltype(symbols[1].name)(elfEncoder.appendSectionName(unresolvedSymbolName));
+        symbols[1].info = NEO::Elf::SymbolTableType::STT_NOTYPE | NEO::Elf::SymbolTableBind::STB_GLOBAL << 4;
+        symbols[1].shndx = NEO::Elf::SHN_UNDEF;
+        elfEncoder.appendSection(NEO::Elf::SHT_SYMTAB, NEO::Zebin::Elf::SectionNames::symtab,
+                                 ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(symbols), sizeof(symbols)));
+
+        NEO::Elf::ElfRel<NEO::Elf::EI_CLASS_64> kernelRelocation = {};
+        kernelRelocation.offset = 0x8;
+        kernelRelocation.info = (uint64_t(1) << 32) | NEO::Zebin::Elf::RelocTypeZebin::R_ZE_SYM_ADDR;
+        auto &kernelRelocationSection = elfEncoder.appendSection(NEO::Elf::SHT_REL, NEO::Elf::SpecialSectionNames::relPrefix.str() + NEO::Zebin::Elf::SectionNames::textPrefix.str() + "kernel",
+                                                                 {reinterpret_cast<uint8_t *>(&kernelRelocation), sizeof(kernelRelocation)});
+        kernelRelocationSection.info = kernelSectionIndex;
+
+        zebin = elfEncoder.encode();
+    }
+
+    NEO::TranslationErrorCode build(const NEO::Device &device,
+                                    const NEO::TranslationInput &input,
+                                    NEO::TranslationOutput &output) override {
+        output.deviceBinary.mem = makeCopy(zebin.data(), zebin.size());
+        output.deviceBinary.size = zebin.size();
+        return NEO::TranslationErrorCode::success;
+    }
+
+    std::vector<uint8_t> zebin;
+};
+
+TEST_F(ClProgramCompileLinkTests, givenIlProgramWithUnresolvedExternalSymbolWhenBuildProgramThenBuildFailsAndBuildLogNamesTheSymbol) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->compilerInterface.reset(new MockUnresolvedSymbolZebinCompilerInterface(device->getHwInfo()));
+
+    cl_device_id clDeviceId = nullptr;
+    cl_context clContext = createOclContext(platform, clDeviceId);
+
+    cl_int errcode = CL_INVALID_VALUE;
+    auto program = clCreateProgramWithIL(clContext, spirvBlob, sizeof(spirvBlob), &errcode);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+
+    EXPECT_EQ(CL_BUILD_PROGRAM_FAILURE, clBuildProgram(program, 1, &clDeviceId, nullptr, nullptr, nullptr));
+
+    cl_build_status buildStatus = CL_BUILD_SUCCESS;
+    EXPECT_EQ(CL_SUCCESS, clGetProgramBuildInfo(program, clDeviceId, CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, nullptr));
+    EXPECT_EQ(static_cast<cl_build_status>(CL_BUILD_ERROR), buildStatus);
+
+    cl_program_binary_type binaryType = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
+    EXPECT_EQ(CL_SUCCESS, clGetProgramBuildInfo(program, clDeviceId, CL_PROGRAM_BINARY_TYPE, sizeof(binaryType), &binaryType, nullptr));
+    EXPECT_EQ(static_cast<cl_program_binary_type>(CL_PROGRAM_BINARY_TYPE_NONE), binaryType);
+
+    size_t buildLogSize = 0u;
+    EXPECT_EQ(CL_SUCCESS, clGetProgramBuildInfo(program, clDeviceId, CL_PROGRAM_BUILD_LOG, 0, nullptr, &buildLogSize));
+    std::string buildLog(buildLogSize, '\0');
+    EXPECT_EQ(CL_SUCCESS, clGetProgramBuildInfo(program, clDeviceId, CL_PROGRAM_BUILD_LOG, buildLogSize, buildLog.data(), nullptr));
+    EXPECT_NE(std::string::npos, buildLog.find(MockUnresolvedSymbolZebinCompilerInterface::unresolvedSymbolName.data()));
+
+    clReleaseProgram(program);
+    clReleaseContext(clContext);
+}
 
 struct ClProgramNonUniformWorkGroupTests : public ClProgramCompileLinkTests {
     void SetUp() override {

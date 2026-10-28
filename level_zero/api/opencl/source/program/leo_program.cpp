@@ -23,6 +23,7 @@
 #include "level_zero/core/source/module/module_build_log.h"
 #include "level_zero/ze_intel_gpu.h"
 
+#include <algorithm>
 #include <cstring>
 #include <memory>
 #include <string_view>
@@ -336,8 +337,9 @@ cl_int Program::build(const char *options,
                       void(CL_CALLBACK *funcNotify)(cl_program program, void *userData), void *userData) {
     if (this->createdFrom == CreatedFrom::binary) [[unlikely]] {
         // A program created from a native binary is already built; nothing to do.
+        const cl_int retVal = this->requireModulesLinkedFullyForBuild();
         this->invokeCallback(funcNotify, userData);
-        return CL_SUCCESS;
+        return retVal;
     }
 
     this->setBuildStatus(CL_BUILD_ERROR);
@@ -346,6 +348,9 @@ cl_int Program::build(const char *options,
         retVal = this->buildFromSource(options);
     } else if (this->createdFrom == CreatedFrom::il) {
         retVal = this->buildFromIL(options);
+    }
+    if (CL_SUCCESS == retVal) {
+        retVal = this->requireModulesLinkedFullyForBuild();
     }
     if (CL_SUCCESS == retVal) {
         this->allowNonUniform = NEO::isNonUniformWorkGroupAllowed(options ? options : "");
@@ -473,15 +478,26 @@ cl_int Program::link(const char *options, cl_uint numInputPrograms, const cl_pro
 }
 
 // zeModuleCreate accepts modules with unresolved imports
+bool Program::areModulesLinkedFully() const {
+    return std::ranges::all_of(this->moduleHandles, [](const auto &entry) { return L0::Module::fromHandle(entry.second)->isLinkedFully(); });
+}
+
 cl_int Program::linkModulesFully() {
-    this->programBinaryType = CL_PROGRAM_BINARY_TYPE_NONE;
-    for (auto &[rootDeviceIndex, moduleHandle] : this->moduleHandles) {
-        if (false == L0::Module::fromHandle(moduleHandle)->isLinkedFully()) {
-            return CL_LINK_PROGRAM_FAILURE;
-        }
+    if (false == this->areModulesLinkedFully()) {
+        this->programBinaryType = CL_PROGRAM_BINARY_TYPE_NONE;
+        return CL_LINK_PROGRAM_FAILURE;
     }
     this->programBinaryType = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
     return CL_SUCCESS;
+}
+
+cl_int Program::requireModulesLinkedFullyForBuild() {
+    if (this->areModulesLinkedFully()) {
+        return CL_SUCCESS;
+    }
+    this->programBinaryType = CL_PROGRAM_BINARY_TYPE_NONE;
+    this->setBuildStatus(CL_BUILD_ERROR);
+    return CL_BUILD_PROGRAM_FAILURE;
 }
 
 cl_int Program::setProgramSpecializationConstant(cl_uint specId, size_t specSize, const void *specValue) {
