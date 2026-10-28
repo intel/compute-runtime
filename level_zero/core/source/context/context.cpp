@@ -615,6 +615,13 @@ void Context::releasePooledIpcHandles(const void *poolPtr) {
     }
 }
 
+void Context::eraseSharedMakeResidentAllocations(const NEO::SvmAllocationData &svmData) {
+    auto basePtr = addrToPtr(svmData.gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress());
+    std::lock_guard<std::mutex> lock(this->driverHandle->sharedMakeResidentAllocationsLock);
+    auto &allocations = this->driverHandle->sharedMakeResidentAllocations;
+    allocations.erase(allocations.lower_bound(basePtr), allocations.lower_bound(ptrOffset(basePtr, svmData.size)));
+}
+
 ze_result_t Context::freeMem(const void *ptr) {
     return this->freeMem(ptr, false);
 }
@@ -634,6 +641,10 @@ ze_result_t Context::freeMem(const void *ptr, bool blocking) {
     this->invokeMemFreeCallbacks(ptr, *allocation, poolLookup.pool);
 
     this->releaseIpcHandle(ptr, poolLookup.pool);
+
+    if (allocation->memoryType == InternalMemoryType::sharedUnifiedMemory) {
+        this->eraseSharedMakeResidentAllocations(*allocation);
+    }
 
     if (this->tryFreeViaPooling(ptr, allocation, poolLookup.pool,
                                 blocking ? NEO::FreePolicyType::blocking : NEO::FreePolicyType::none)) {
@@ -670,6 +681,10 @@ ze_result_t Context::freeMemExt(const ze_memory_free_ext_desc_t *pMemFreeDesc,
         this->invokeMemFreeCallbacks(ptr, *allocation, poolLookup.pool);
 
         this->releaseIpcHandle(ptr, poolLookup.pool);
+
+        if (allocation->memoryType == InternalMemoryType::sharedUnifiedMemory) {
+            this->eraseSharedMakeResidentAllocations(*allocation);
+        }
 
         if (this->tryFreeViaPooling(ptr, allocation, poolLookup.pool, NEO::FreePolicyType::defer)) {
             return ZE_RESULT_SUCCESS;
