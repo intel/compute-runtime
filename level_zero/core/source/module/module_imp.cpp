@@ -573,10 +573,6 @@ ze_result_t ModuleTranslationUnit::processUnpackedBinary() {
     NEO::DeviceInfoKernelPayloadConstants deviceInfoConstants;
     slmAvailable = static_cast<size_t>(device->getDeviceInfo().localMemSize);
     deviceInfoConstants.computeUnitsUsedForScratch = static_cast<uint32_t>(device->getDeviceInfo().computeUnitsUsedForScratch);
-    deviceInfoConstants.slmWindowSize = static_cast<uint32_t>(device->getDeviceInfo().localMemSize);
-    if (NEO::requiresLocalMemoryWindowVA(programInfo)) {
-        deviceInfoConstants.slmWindow = device->getNEODevice()->getExecutionEnvironment()->memoryManager->getReservedMemory(MemoryConstants::slmWindowSize, MemoryConstants::slmWindowAlignment);
-    }
 
     if (slmNeeded > slmAvailable) {
         CREATE_DEBUG_STRING(str, "Size of SLM (%u) larger than available (%u)\n", static_cast<uint32_t>(slmNeeded), static_cast<uint32_t>(slmAvailable));

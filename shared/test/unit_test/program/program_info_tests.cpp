@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,22 +43,4 @@ TEST(GetMaxInlineSlmNeeded, GivenProgramWithKernelsThenReturnMaxOfInlineSlmNeede
     programInfo.kernelInfos[1]->kernelDescriptor.kernelAttributes.slmInlineSize = 64;
     programInfo.kernelInfos[2]->kernelDescriptor.kernelAttributes.slmInlineSize = 32;
     EXPECT_EQ(64U, NEO::getMaxInlineSlmNeeded(programInfo));
-}
-
-TEST(RequiresLocalMemoryWindowVA, GivenProgramWithoutKernelsThenReturnFalse) {
-    NEO::ProgramInfo programInfo;
-    EXPECT_FALSE(NEO::requiresLocalMemoryWindowVA(programInfo));
-}
-
-TEST(RequiresLocalMemoryWindowVA, GivenProgramWithKernelsNotLocalMemoryWindowVAThenReturnFalse) {
-    NEO::ProgramInfo programInfo;
-    programInfo.kernelInfos = {new NEO::KernelInfo(), new NEO::KernelInfo(), new NEO::KernelInfo()};
-    EXPECT_FALSE(NEO::requiresLocalMemoryWindowVA(programInfo));
-}
-
-TEST(RequiresLocalMemoryWindowVA, GivenProgramWithKernelsWhenSomeOfKernelRequireLocalMemoryWidnowVAThenReturnTrue) {
-    NEO::ProgramInfo programInfo;
-    programInfo.kernelInfos = {new NEO::KernelInfo(), new NEO::KernelInfo(), new NEO::KernelInfo()};
-    programInfo.kernelInfos[1]->kernelDescriptor.payloadMappings.implicitArgs.localMemoryStatelessWindowStartAddres = 0U;
-    EXPECT_TRUE(NEO::requiresLocalMemoryWindowVA(programInfo));
 }

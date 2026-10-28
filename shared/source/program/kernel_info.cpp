@@ -114,8 +114,6 @@ void KernelInfo::apply(const DeviceInfoKernelPayloadConstants &constants) {
             *ptrOffset(reinterpret_cast<decltype(value) *>(crossThreadData), offset) = value;
         }
     };
-    setIfValidOffset(reinterpret_cast<uintptr_t>(constants.slmWindow), implicitArgs.localMemoryStatelessWindowStartAddres);
-    setIfValidOffset(constants.slmWindowSize, implicitArgs.localMemoryStatelessWindowSize);
     setIfValidOffset(privateMemorySize, implicitArgs.privateMemorySize);
     setIfValidOffset(constants.maxWorkGroupSize, implicitArgs.maxWorkGroupSize);
 }

@@ -11,7 +11,6 @@
 #include "shared/source/device_binary_format/zebin/debug_zebin.h"
 #include "shared/source/device_binary_format/zebin/zebin_decoder.h"
 #include "shared/source/device_binary_format/zebin/zeinfo_decoder.h"
-#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/debug_helpers.h"
@@ -289,10 +288,6 @@ cl_int Program::processProgramInfo(ProgramInfo &src, ClDevice &clDevice) {
     slmAvailable = static_cast<size_t>(clDevice.getSharedDeviceInfo().localMemSize);
     deviceInfoConstants.maxWorkGroupSize = static_cast<uint32_t>(clDevice.getSharedDeviceInfo().maxWorkGroupSize);
     deviceInfoConstants.computeUnitsUsedForScratch = clDevice.getSharedDeviceInfo().computeUnitsUsedForScratch;
-    deviceInfoConstants.slmWindowSize = static_cast<uint32_t>(clDevice.getSharedDeviceInfo().localMemSize);
-    if (requiresLocalMemoryWindowVA(src)) {
-        deviceInfoConstants.slmWindow = this->executionEnvironment.memoryManager->getReservedMemory(MemoryConstants::slmWindowSize, MemoryConstants::slmWindowAlignment);
-    }
     linkerInput = src.linkerInput.get();
     setLinkerInput(rootDeviceIndex, std::move(src.linkerInput));
 

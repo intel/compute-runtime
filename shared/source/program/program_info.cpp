@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,15 +35,6 @@ size_t getMaxInlineSlmNeeded(const ProgramInfo &programInfo) {
         ret = std::max(ret, kernelInfo->kernelDescriptor.kernelAttributes.slmInlineSize);
     }
     return ret;
-}
-
-bool requiresLocalMemoryWindowVA(const ProgramInfo &programInfo) {
-    for (const auto &kernelInfo : programInfo.kernelInfos) {
-        if (isValidOffset(kernelInfo->kernelDescriptor.payloadMappings.implicitArgs.localMemoryStatelessWindowStartAddres)) {
-            return true;
-        }
-    }
-    return false;
 }
 
 } // namespace NEO

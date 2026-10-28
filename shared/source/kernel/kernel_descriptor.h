@@ -234,8 +234,6 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
             CrossThreadDataOffset simdSize = undefined<CrossThreadDataOffset>;
             CrossThreadDataOffset deviceSideEnqueueParentEvent = undefined<CrossThreadDataOffset>;
             CrossThreadDataOffset preferredWkgMultiple = undefined<CrossThreadDataOffset>;
-            CrossThreadDataOffset localMemoryStatelessWindowSize = undefined<CrossThreadDataOffset>;
-            CrossThreadDataOffset localMemoryStatelessWindowStartAddres = undefined<CrossThreadDataOffset>;
             CrossThreadDataOffset implicitArgsBuffer = undefined<CrossThreadDataOffset>;
             ArgDescInlineDataPointer indirectDataPointerAddress;
             ArgDescScratchPointer scratchPointerAddress;

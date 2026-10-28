@@ -75,8 +75,6 @@ TEST(KernelDescriptor, WhenDefaultInitializedThenValuesAreCleared) {
     EXPECT_EQ(NEO::undefined<NEO::CrossThreadDataOffset>, desc.payloadMappings.implicitArgs.simdSize);
     EXPECT_EQ(NEO::undefined<NEO::CrossThreadDataOffset>, desc.payloadMappings.implicitArgs.deviceSideEnqueueParentEvent);
     EXPECT_EQ(NEO::undefined<NEO::CrossThreadDataOffset>, desc.payloadMappings.implicitArgs.preferredWkgMultiple);
-    EXPECT_EQ(NEO::undefined<NEO::CrossThreadDataOffset>, desc.payloadMappings.implicitArgs.localMemoryStatelessWindowSize);
-    EXPECT_EQ(NEO::undefined<NEO::CrossThreadDataOffset>, desc.payloadMappings.implicitArgs.localMemoryStatelessWindowStartAddres);
 
     EXPECT_TRUE(desc.kernelMetadata.kernelName.empty());
     EXPECT_TRUE(desc.kernelMetadata.kernelLanguageAttributes.empty());

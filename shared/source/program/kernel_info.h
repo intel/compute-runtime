@@ -32,8 +32,6 @@ class MemoryManager;
 static const float yTilingRatioValue = 1.3862943611198906188344642429164f;
 
 struct DeviceInfoKernelPayloadConstants {
-    void *slmWindow = nullptr;
-    uint32_t slmWindowSize = 0U;
     uint32_t computeUnitsUsedForScratch = 0U;
     uint32_t maxWorkGroupSize = 0U;
 };

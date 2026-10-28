@@ -339,7 +339,6 @@ class MemoryManager {
     static std::unique_ptr<MemoryManager> createMemoryManager(ExecutionEnvironment &executionEnvironment, DriverModelType driverModel);
     virtual void *reserveCpuAddressRange(size_t size, uint32_t rootDeviceIndex) { return nullptr; };
     virtual void releaseReservedCpuAddressRange(void *reserved, size_t size, uint32_t rootDeviceIndex) {};
-    void *getReservedMemory(size_t size, size_t alignment);
     GfxPartition *getGfxPartition(uint32_t rootDeviceIndex) { return gfxPartitions.at(rootDeviceIndex).get(); }
     GmmHelper *getGmmHelper(uint32_t rootDeviceIndex);
     virtual AddressRange reserveGpuAddress(const uint64_t requiredStartAddress, size_t size, const RootDeviceIndicesContainer &rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex) = 0;
@@ -504,7 +503,6 @@ class MemoryManager {
     std::vector<std::unique_ptr<GfxPartition>> gfxPartitions;
     std::vector<std::unique_ptr<LocalMemoryUsageBankSelector>> internalLocalMemoryUsageBankSelector;
     std::vector<std::unique_ptr<LocalMemoryUsageBankSelector>> externalLocalMemoryUsageBankSelector;
-    void *reservedMemory = nullptr;
     std::unique_ptr<CpuPageFaultManager> pageFaultManager;
     std::unique_ptr<PrefetchManager> prefetchManager;
     OSMemory::ReservedCpuAddressRange reservedCpuAddressRange;

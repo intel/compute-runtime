@@ -206,9 +206,6 @@ MemoryManager::~MemoryManager() {
         engineContainer.clear();
     }
     allRegisteredEngines.clear();
-    if (reservedMemory) {
-        MemoryManager::alignedFreeWrapper(reservedMemory);
-    }
 }
 
 bool MemoryManager::isLimitedGPU(uint32_t rootDeviceIndex) {
@@ -1265,15 +1262,6 @@ void MemoryManager::cleanTemporaryAllocationListOnAllEngines(bool waitForComplet
             }
         }
     }
-}
-
-void *MemoryManager::getReservedMemory(size_t size, size_t alignment) {
-    static std::mutex mutex;
-    std::lock_guard<std::mutex> lock(mutex);
-    if (!reservedMemory) {
-        reservedMemory = allocateSystemMemory(size, alignment);
-    }
-    return reservedMemory;
 }
 
 bool MemoryManager::isHostPointerTrackingEnabled(uint32_t rootDeviceIndex) {

@@ -59,6 +59,5 @@ struct ProgramInfo : NEO::NonCopyableClass {
 static_assert(NEO::NonCopyable<ProgramInfo>);
 
 size_t getMaxInlineSlmNeeded(const ProgramInfo &programInfo);
-bool requiresLocalMemoryWindowVA(const ProgramInfo &programInfo);
 
 } // namespace NEO
