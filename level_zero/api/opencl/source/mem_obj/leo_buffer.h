@@ -6,11 +6,13 @@
  */
 
 #pragma once
-#include "shared/source/memory_manager/unified_memory_manager.h"
 
 #include "level_zero/api/opencl/source/mem_obj/leo_mem_obj.h"
 
 namespace NEO {
+class MultiGraphicsAllocation;
+struct SvmAllocationData;
+
 namespace LEO {
 
 class Buffer : public MemObj {
@@ -31,7 +33,7 @@ class Buffer : public MemObj {
     cl_mem_object_type getClObjectType() final;
     size_t getApiSize() const final;
     bool isCompressionEnabled() final;
-    GraphicsAllocation *getGraphicsAllocation(uint32_t rootDeviceIndex) final { return static_cast<GraphicsAllocation *>(this->getAllocData()->gpuAllocations.getGraphicsAllocation(rootDeviceIndex)); };
+    GraphicsAllocation *getGraphicsAllocation(uint32_t rootDeviceIndex) final;
     void resetGraphicsAllocation(GraphicsAllocation *newGraphicsAllocation) final;
     void removeGraphicsAllocation(uint32_t rootDeviceIndex) final;
     void refreshDeviceAddress(uint32_t rootDeviceIndex) final;

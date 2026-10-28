@@ -13,6 +13,7 @@
 #include "shared/source/helpers/memory_properties_helpers.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
 
 #include "level_zero/api/opencl/source/helpers/l0_to_cl_return_types_mapper.h"
 #include "level_zero/api/opencl/source/helpers/leo_cl_memory_properties_helpers.h"
@@ -321,6 +322,8 @@ cl_mem_flags Buffer::inheritFlags(cl_mem_flags flags, cl_mem_flags parentFlags) 
     flags |= parentFlags & (CL_MEM_USE_HOST_PTR | CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR);
     return flags;
 }
+
+GraphicsAllocation *Buffer::getGraphicsAllocation(uint32_t rootDeviceIndex) { return static_cast<GraphicsAllocation *>(this->getAllocData()->gpuAllocations.getGraphicsAllocation(rootDeviceIndex)); }
 
 } // namespace LEO
 } // namespace NEO
