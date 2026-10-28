@@ -7,17 +7,9 @@
 
 #include "level_zero/api/opencl/source/sharings/unified/leo_unified_sharing.h"
 
-#include "shared/source/helpers/get_info.h"
-#include "shared/source/helpers/string.h"
-#include "shared/source/helpers/surface_format_info.h"
-#include "shared/source/helpers/timestamp_packet.h"
-#include "shared/source/memory_manager/allocation_properties.h"
-
-#include "level_zero/api/opencl/source/cl_device/leo_cl_device.h"
-#include "level_zero/api/opencl/source/context/leo_context.h"
 #include "level_zero/api/opencl/source/sharings/leo_sharing_factory.h"
 
-#include <unordered_map>
+#include <cstdint>
 
 namespace NEO {
 namespace LEO {
