@@ -2170,7 +2170,7 @@ TEST_F(EventPoolCreateMultiDevice, GivenContextCreatedWithAllDriverDevicesWhenOp
     driverHandle->setMemoryManager(originalMemoryManager);
 }
 
-TEST_F(EventPoolCreateMultiDevice, GivenEventPoolCreatedWithSingleDeviceWhenOpeningIpcEventPoolUsingMultiDeviceContextThenFirstContextDeviceIsUsed) {
+TEST_F(EventPoolCreateMultiDevice, GivenHostEventPoolCreatedWithSingleDeviceWhenOpeningIpcEventPoolUsingMultiDeviceContextThenFirstContextDeviceIsUsedAndHostStorageIsSharedWithOtherRootDevices) {
     uint32_t numEvents = 1;
     ze_event_pool_desc_t eventPoolDesc = {
         ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
@@ -2196,17 +2196,18 @@ TEST_F(EventPoolCreateMultiDevice, GivenEventPoolCreatedWithSingleDeviceWhenOpen
 
     auto &ipcHandleData = *reinterpret_cast<IpcOpaqueEventPoolData *>(ipcHandle.data);
     EXPECT_EQ(ipcHandleData.numDevices, 1u);
+    ipcHandleData.isDeviceEventPoolAllocation = false;
 
     auto prevMemoryManager = driverHandle->getMemoryManager();
     auto currMemoryManager = new MultiDeviceEventPoolOpenIpcHandleMemoryManager(*neoDevice->executionEnvironment);
     driverHandle->setMemoryManager(currMemoryManager);
-    currMemoryManager->maxCalls = 0u;
+    currMemoryManager->maxCalls = 4u;
 
     ze_event_pool_handle_t ipcEventPoolHandle = {};
     result = context->openEventPoolIpcHandle(ipcHandle, &ipcEventPoolHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     ASSERT_NE(nullptr, ipcEventPoolHandle);
-    EXPECT_EQ(0u, currMemoryManager->calls);
+    EXPECT_EQ(3u, currMemoryManager->calls);
 
     auto ipcEventPool = whiteboxCast(EventPool::fromHandle(ipcEventPoolHandle));
     EXPECT_EQ(ipcHandleData.numDevices, ipcEventPool->devices.size());
@@ -2214,7 +2215,7 @@ TEST_F(EventPoolCreateMultiDevice, GivenEventPoolCreatedWithSingleDeviceWhenOpen
 
     ipcEventPool->closeIpcHandle();
     EXPECT_EQ(1u, currMemoryManager->alloc0FreeCall);
-    EXPECT_EQ(0u, currMemoryManager->alloc1FreeCall);
+    EXPECT_EQ(3u, currMemoryManager->alloc1FreeCall);
 
     driverHandle->setMemoryManager(prevMemoryManager);
     delete currMemoryManager;
@@ -2270,6 +2271,162 @@ TEST_F(EventPoolCreateMultiDevice, GivenContextWithOnlyHighestRootDeviceWhenOpen
     EXPECT_EQ(ZE_RESULT_SUCCESS, eventPool->destroy());
     delete mockMemoryManager;
     driverHandle->setMemoryManager(originalMemoryManager);
+}
+
+class EventPoolPeerImportMemoryManager : public FailMemoryManager {
+  public:
+    using FailMemoryManager::FailMemoryManager;
+
+    GraphicsAllocation *createGraphicsAllocationFromSharedHandle(const OsHandleData &osHandleData, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) override {
+        importedRootDeviceIndices.push_back(properties.rootDeviceIndex);
+        importedHandles.push_back(static_cast<uint64_t>(osHandleData.handle));
+        importedAsHostIpc.push_back(isHostIpcAllocation);
+        if (properties.rootDeviceIndex == failingRootDeviceIndex) {
+            return nullptr;
+        }
+        auto allocation = new NEO::MockGraphicsAllocation(properties.rootDeviceIndex, buffer, sizeof(buffer));
+        allocation->internalHandle = exportedHandle;
+        allocation->peekInternalHandleResult = peekInternalHandleResult;
+        return allocation;
+    }
+
+    void closeInternalHandle(uint64_t &handle, uint32_t handleId, GraphicsAllocation *graphicsAllocation) override {
+        closedHandles.push_back(handle);
+    }
+
+    GraphicsAllocation *createGraphicsAllocationFromExistingStorage(AllocationProperties &properties, void *ptr, MultiGraphicsAllocation &multiGraphicsAllocation) override {
+        existingStorageCalls++;
+        return nullptr;
+    }
+
+    void freeGraphicsMemory(GraphicsAllocation *gfxAllocation) override {
+        freeCalls++;
+        delete gfxAllocation;
+    }
+
+    char buffer[256] = {};
+    std::vector<uint32_t> importedRootDeviceIndices;
+    std::vector<uint64_t> importedHandles;
+    std::vector<bool> importedAsHostIpc;
+    std::vector<uint64_t> closedHandles;
+    uint64_t exportedHandle = 0x55;
+    int peekInternalHandleResult = 0;
+    uint32_t failingRootDeviceIndex = std::numeric_limits<uint32_t>::max();
+    uint32_t existingStorageCalls = 0;
+    uint32_t freeCalls = 0;
+};
+
+struct EventPoolOpenIpcPeerAccessTest : public EventPoolCreateMultiDevice {
+    void SetUp() override {
+        EventPoolCreateMultiDevice::SetUp();
+
+        neoDevice = static_cast<NEO::MockDevice *>(driverHandle->devices[0]->getNEODevice());
+        originalMemoryManager = driverHandle->getMemoryManager();
+        exporterMemoryManager = std::make_unique<MemoryManagerEventPoolIpcMock>(*neoDevice->executionEnvironment);
+        exporterMemoryManager->callParentAllocateGraphicsMemoryWithProperties = false;
+        driverHandle->setMemoryManager(exporterMemoryManager.get());
+
+        ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, nullptr, ZE_EVENT_POOL_FLAG_IPC, 1};
+        auto exporterDeviceHandle = driverHandle->devices[2]->toHandle();
+        ze_result_t result = ZE_RESULT_SUCCESS;
+        exporterEventPool = EventPool::create(driverHandle.get(), context, 1, &exporterDeviceHandle, &eventPoolDesc, result);
+        ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+        ASSERT_NE(nullptr, exporterEventPool);
+        ASSERT_EQ(ZE_RESULT_SUCCESS, exporterEventPool->getIpcHandle(&ipcHandle));
+        ASSERT_TRUE(reinterpret_cast<IpcOpaqueEventPoolData *>(ipcHandle.data)->isDeviceEventPoolAllocation);
+
+        importerMemoryManager = std::make_unique<EventPoolPeerImportMemoryManager>(*neoDevice->executionEnvironment);
+        driverHandle->setMemoryManager(importerMemoryManager.get());
+    }
+
+    void TearDown() override {
+        driverHandle->setMemoryManager(exporterMemoryManager.get());
+        exporterEventPool->destroy();
+        driverHandle->setMemoryManager(originalMemoryManager);
+        EventPoolCreateMultiDevice::TearDown();
+    }
+
+    NEO::MockDevice *neoDevice = nullptr;
+    NEO::MemoryManager *originalMemoryManager = nullptr;
+    std::unique_ptr<MemoryManagerEventPoolIpcMock> exporterMemoryManager;
+    std::unique_ptr<EventPoolPeerImportMemoryManager> importerMemoryManager;
+    L0::EventPool *exporterEventPool = nullptr;
+    ze_ipc_event_pool_handle_t ipcHandle = {};
+};
+
+TEST_F(EventPoolOpenIpcPeerAccessTest, GivenSingleDeviceDeviceEventPoolAndPeerAccessSupportedWhenOpeningIpcHandleInMultiDeviceContextThenPeerAllocationIsImportedForEachContextRootDevice) {
+    NEO::debugManager.flags.ForceZeDeviceCanAccessPerReturnValue.set(1);
+
+    ze_event_pool_handle_t ipcEventPoolHandle = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->openEventPoolIpcHandle(ipcHandle, &ipcEventPoolHandle));
+    ASSERT_NE(nullptr, ipcEventPoolHandle);
+
+    auto ipcEventPool = whiteboxCast(EventPool::fromHandle(ipcEventPoolHandle));
+    ASSERT_EQ(numRootDevices, importerMemoryManager->importedRootDeviceIndices.size());
+    EXPECT_EQ(0u, importerMemoryManager->existingStorageCalls);
+    for (uint32_t i = 1; i < numRootDevices; i++) {
+        EXPECT_EQ(importerMemoryManager->exportedHandle, importerMemoryManager->importedHandles[i]);
+        EXPECT_FALSE(importerMemoryManager->importedAsHostIpc[i]);
+    }
+    EXPECT_EQ(std::vector<uint64_t>(numRootDevices - 1, importerMemoryManager->exportedHandle), importerMemoryManager->closedHandles);
+    auto firstRootDeviceIndex = driverHandle->devices[0]->getRootDeviceIndex();
+    for (auto &device : driverHandle->devices) {
+        auto rootDeviceIndex = device->getRootDeviceIndex();
+        auto allocation = ipcEventPool->getAllocation().getGraphicsAllocation(rootDeviceIndex);
+        ASSERT_NE(nullptr, allocation);
+        EXPECT_EQ(rootDeviceIndex, allocation->getRootDeviceIndex());
+        if (rootDeviceIndex != firstRootDeviceIndex) {
+            EXPECT_EQ(std::numeric_limits<osHandle>::max(), allocation->peekSharedHandle());
+        }
+    }
+
+    ipcEventPool->closeIpcHandle();
+    EXPECT_EQ(numRootDevices, importerMemoryManager->freeCalls);
+}
+
+TEST_F(EventPoolOpenIpcPeerAccessTest, GivenSingleDeviceDeviceEventPoolAndPeerAccessNotSupportedWhenOpeningIpcHandleInMultiDeviceContextThenOnlyFirstContextDeviceGetsAllocation) {
+    NEO::debugManager.flags.ForceZeDeviceCanAccessPerReturnValue.set(0);
+
+    ze_event_pool_handle_t ipcEventPoolHandle = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->openEventPoolIpcHandle(ipcHandle, &ipcEventPoolHandle));
+    ASSERT_NE(nullptr, ipcEventPoolHandle);
+
+    auto ipcEventPool = whiteboxCast(EventPool::fromHandle(ipcEventPoolHandle));
+    auto firstRootDeviceIndex = driverHandle->devices[0]->getRootDeviceIndex();
+    ASSERT_EQ(1u, importerMemoryManager->importedRootDeviceIndices.size());
+    EXPECT_EQ(firstRootDeviceIndex, importerMemoryManager->importedRootDeviceIndices[0]);
+    EXPECT_EQ(0u, importerMemoryManager->existingStorageCalls);
+    for (auto &device : driverHandle->devices) {
+        auto rootDeviceIndex = device->getRootDeviceIndex();
+        EXPECT_EQ(rootDeviceIndex == firstRootDeviceIndex, ipcEventPool->getAllocation().getGraphicsAllocation(rootDeviceIndex) != nullptr);
+    }
+
+    ipcEventPool->closeIpcHandle();
+    EXPECT_EQ(1u, importerMemoryManager->freeCalls);
+}
+
+TEST_F(EventPoolOpenIpcPeerAccessTest, GivenSingleDeviceDeviceEventPoolAndPeerImportFailureWhenOpeningIpcHandleInMultiDeviceContextThenErrorIsReturnedAndImportedAllocationsAreFreed) {
+    NEO::debugManager.flags.ForceZeDeviceCanAccessPerReturnValue.set(1);
+    importerMemoryManager->failingRootDeviceIndex = driverHandle->devices[2]->getRootDeviceIndex();
+
+    ze_event_pool_handle_t ipcEventPoolHandle = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, context->openEventPoolIpcHandle(ipcHandle, &ipcEventPoolHandle));
+    EXPECT_EQ(nullptr, ipcEventPoolHandle);
+    EXPECT_EQ(3u, importerMemoryManager->importedRootDeviceIndices.size());
+    EXPECT_EQ(2u, importerMemoryManager->closedHandles.size());
+    EXPECT_EQ(2u, importerMemoryManager->freeCalls);
+}
+
+TEST_F(EventPoolOpenIpcPeerAccessTest, GivenSingleDeviceDeviceEventPoolAndExportFromImportedAllocationFailsWhenOpeningIpcHandleInMultiDeviceContextThenErrorIsReturnedAndImportedAllocationIsFreed) {
+    NEO::debugManager.flags.ForceZeDeviceCanAccessPerReturnValue.set(1);
+    importerMemoryManager->peekInternalHandleResult = -1;
+
+    ze_event_pool_handle_t ipcEventPoolHandle = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, context->openEventPoolIpcHandle(ipcHandle, &ipcEventPoolHandle));
+    EXPECT_EQ(nullptr, ipcEventPoolHandle);
+    EXPECT_EQ(1u, importerMemoryManager->importedRootDeviceIndices.size());
+    EXPECT_EQ(0u, importerMemoryManager->closedHandles.size());
+    EXPECT_EQ(1u, importerMemoryManager->freeCalls);
 }
 
 TEST_F(EventPoolCreate, GivenNullptrDeviceAndNumberOfDevicesWhenCreatingEventPoolThenReturnError) {

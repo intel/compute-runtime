@@ -951,24 +951,51 @@ ze_result_t EventPool::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &
     }
     eventPool->isImportedIpcPool = true;
 
-    if (numDevices > 1) {
-        for (auto currDeviceIndex : context->rootDeviceIndices) {
-            if (currDeviceIndex == rootDeviceIndex) {
+    for (auto currDeviceIndex : context->rootDeviceIndices) {
+        if (currDeviceIndex == rootDeviceIndex) {
+            continue;
+        }
+
+        NEO::GraphicsAllocation *graphicsAllocation = nullptr;
+        if (eventPool->isDeviceEventPoolAllocation) {
+            auto peerDevice = Device::fromHandle(context->getDevices().at(currDeviceIndex))->getNEODevice();
+            if (!neoDevice->canAccessPeer(peerDevice)) {
                 continue;
             }
 
+            uint64_t peerHandle = 0;
+            if (alloc->peekInternalHandle(memoryManager, peerHandle, nullptr) < 0) {
+                return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+            }
+            NEO::AllocationProperties peerProperties = unifiedMemoryProperties;
+            peerProperties.rootDeviceIndex = currDeviceIndex;
+            peerProperties.subDevicesBitfield = peerDevice->getDeviceBitfield();
+            graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(NEO::MemoryManager::OsHandleData{peerHandle},
+                                                                                         peerProperties,
+                                                                                         false,
+                                                                                         false,
+                                                                                         false,
+                                                                                         nullptr);
+            if (graphicsAllocation) {
+                graphicsAllocation->setSharedHandle(std::numeric_limits<NEO::osHandle>::max());
+            }
+            memoryManager->closeInternalHandle(peerHandle, 0u, alloc);
+            if (!graphicsAllocation) {
+                return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+            }
+        } else {
             unifiedMemoryProperties.rootDeviceIndex = currDeviceIndex;
             unifiedMemoryProperties.flags.isUSMHostAllocation = true;
             unifiedMemoryProperties.flags.forceSystemMemory = true;
             unifiedMemoryProperties.flags.allocateMemory = false;
-            auto graphicsAllocation = memoryManager->createGraphicsAllocationFromExistingStorage(unifiedMemoryProperties,
-                                                                                                 eventPool->eventPoolPtr,
-                                                                                                 eventPool->getAllocation());
+            graphicsAllocation = memoryManager->createGraphicsAllocationFromExistingStorage(unifiedMemoryProperties,
+                                                                                            eventPool->eventPoolPtr,
+                                                                                            eventPool->getAllocation());
             if (!graphicsAllocation) {
                 return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
             }
-            eventPool->eventPoolAllocations->addAllocation(graphicsAllocation);
         }
+        eventPool->eventPoolAllocations->addAllocation(graphicsAllocation);
     }
 
     *eventPoolHandle = eventPool.release();
