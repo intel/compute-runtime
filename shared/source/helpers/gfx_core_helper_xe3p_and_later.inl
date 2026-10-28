@@ -129,8 +129,17 @@ const EngineInstancesContainer GfxCoreHelperHw<Family>::getGpgpuEngineInstances(
         engines.push_back({aub_stream::ENGINE_CCCS, EngineUsage::regular});
     }
 
+    const bool internalEngineFromContextGroup = EngineHelpers::isInternalEngineFromContextGroupEnabled(rootDeviceEnvironment);
+    const auto isInternalEngineRequired = [internalEngineFromContextGroup](aub_stream::EngineType engineType) {
+        const bool contextGroupEngineType = (EngineHelpers::isCcs(engineType) || EngineHelpers::isBcs(engineType)) &&
+                                            (static_cast<uint32_t>(debugManager.flags.SecondaryContextEngineTypeMask.get()) & (1 << static_cast<uint32_t>(engineType))) != 0;
+        return !(internalEngineFromContextGroup && contextGroupEngineType);
+    };
+
     engines.push_back({defaultEngine, EngineUsage::lowPriority});
-    engines.push_back({defaultEngine, EngineUsage::internal});
+    if (isInternalEngineRequired(defaultEngine)) {
+        engines.push_back({defaultEngine, EngineUsage::internal});
+    }
 
     const bool isPowerHintEngineSupported = NEO::EngineHelpers::isPowerHintEngineSupported(rootDeviceEnvironment);
     if (isPowerHintEngineSupported) {
@@ -141,9 +150,11 @@ const EngineInstancesContainer GfxCoreHelperHw<Family>::getGpgpuEngineInstances(
     bool regularPriorityCreated = false;
     bool powerHintBcsCreated = false;
 
-    const auto pushDefaultCopyEngineInstances = [&engines, &lowPriorityBcsCreated, &powerHintBcsCreated, isPowerHintEngineSupported](aub_stream::EngineType defaultCopyEngineType, bool addLowPriorityEngine) {
-        engines.push_back({defaultCopyEngineType, EngineUsage::regular});  // Main copy engine
-        engines.push_back({defaultCopyEngineType, EngineUsage::internal}); // Internal usage
+    const auto pushDefaultCopyEngineInstances = [&engines, &lowPriorityBcsCreated, &powerHintBcsCreated, isPowerHintEngineSupported, &isInternalEngineRequired](aub_stream::EngineType defaultCopyEngineType, bool addLowPriorityEngine) {
+        engines.push_back({defaultCopyEngineType, EngineUsage::regular}); // Main copy engine
+        if (isInternalEngineRequired(defaultCopyEngineType)) {
+            engines.push_back({defaultCopyEngineType, EngineUsage::internal}); // Internal usage
+        }
         if (addLowPriorityEngine && !lowPriorityBcsCreated) {
             engines.push_back({defaultCopyEngineType, EngineUsage::lowPriority});
             lowPriorityBcsCreated = true;
@@ -185,7 +196,7 @@ const EngineInstancesContainer GfxCoreHelperHw<Family>::getGpgpuEngineInstances(
                         lowPriorityBcsCreated = true;
                     }
 
-                    if (i == internalIndex) {
+                    if (i == internalIndex && isInternalEngineRequired(engineType)) {
                         engines.push_back({engineType, EngineUsage::internal});
                     }
                 }

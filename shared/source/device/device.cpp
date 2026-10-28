@@ -743,7 +743,7 @@ bool Device::initializeSecondaryEngine(const EngineControl &engineControl) {
 }
 
 bool Device::isInternalEngineFromSecondaryContextEnabled() const {
-    return debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.get() == 1;
+    return EngineHelpers::isInternalEngineFromContextGroupEnabled(this->getRootDeviceEnvironment());
 }
 
 EngineControl *Device::tryGetInternalSecondaryEngine(aub_stream::EngineType engineType) {
@@ -760,7 +760,7 @@ EngineControl *Device::tryGetInternalSecondaryEngine(aub_stream::EngineType engi
     auto &engineControl = secondaryEnginesForType.engines[secondaryEnginesForType.internalEngineIndex];
 
     if (!this->initializeSecondaryEngine(engineControl)) {
-        return nullptr;
+        return &secondaryEnginesForType.engines[0];
     }
     return &engineControl;
 }
@@ -989,7 +989,10 @@ EngineControl &Device::getInternalEngine() {
     if (auto internalSecondaryEngine = internalEngineDevice->tryGetInternalSecondaryEngine(engineType)) {
         return *internalSecondaryEngine;
     }
-    return internalEngineDevice->getEngine(engineType, EngineUsage::internal);
+    if (auto dedicatedInternalEngine = internalEngineDevice->tryGetEngine(engineType, EngineUsage::internal)) {
+        return *dedicatedInternalEngine;
+    }
+    return internalEngineDevice->getEngine(engineType, EngineUsage::regular);
 }
 
 EngineControl *Device::getInternalCopyEngine() {
@@ -1027,7 +1030,11 @@ EngineControl *Device::getInternalLinkCopyEngine() {
     if (auto internalSecondaryEngine = this->tryGetInternalSecondaryEngine(bcsEngineType)) {
         return internalSecondaryEngine;
     }
-    return this->tryGetEngine(bcsEngineType, EngineUsage::internal);
+    auto dedicatedInternalEngine = this->tryGetEngine(bcsEngineType, EngineUsage::internal);
+    if (dedicatedInternalEngine == nullptr && this->isInternalEngineFromSecondaryContextEnabled()) {
+        return this->tryGetEngine(bcsEngineType, EngineUsage::regular);
+    }
+    return dedicatedInternalEngine;
 }
 
 EngineControl *Device::getHpCopyEngine() {
@@ -1485,6 +1492,7 @@ EngineControl *SecondaryContexts::getEngine(EngineUsage usage, std::optional<uin
         DEBUG_BREAK_IF(true);
     }
 
+    DEBUG_BREAK_IF(internalEngineIndex != 0 && static_cast<uint32_t>(secondaryEngineIndex) == internalEngineIndex);
     auto &selectedEngine = engines[secondaryEngineIndex];
     if (hwPriority.has_value()) {
         selectedEngine.osContext->overridePriority(hwPriority.value());

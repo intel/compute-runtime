@@ -78,6 +78,9 @@ aub_stream::EngineType selectLinkCopyEngine(const RootDeviceEnvironment &rootDev
 
 bool isPowerHintEngineSupported(const RootDeviceEnvironment &rootDeviceEnvironment);
 
+inline constexpr uint32_t maxProcessCountForInternalEngineFromContextGroup = 16u;
+bool isInternalEngineFromContextGroupEnabled(const RootDeviceEnvironment &rootDeviceEnvironment);
+
 bool isRcsExposed(const RootDeviceEnvironment &rootDeviceEnvironment);
 
 void setupDefaultEngineType(const RootDeviceEnvironment &rootDeviceEnvironment);

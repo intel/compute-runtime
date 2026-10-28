@@ -358,7 +358,7 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     bool genericSubDevicesAllowed();
     void finalizeRayTracing();
     void createSecondaryContexts(const EngineControl &primaryEngine, SecondaryContexts &secondaryEnginesForType, uint32_t contextCount, uint32_t highPriorityContextCount);
-    bool initializeSecondaryEngine(const EngineControl &engineControl);
+    MOCKABLE_VIRTUAL bool initializeSecondaryEngine(const EngineControl &engineControl);
     bool isInternalEngineFromSecondaryContextEnabled() const;
     EngineControl *tryGetInternalSecondaryEngine(aub_stream::EngineType engineType);
     void allocateDebugSurface(size_t debugSurfaceSize);

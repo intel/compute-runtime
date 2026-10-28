@@ -259,6 +259,16 @@ bool isPowerHintEngineSupported(const RootDeviceEnvironment &rootDeviceEnvironme
            rootDeviceEnvironment.osInterface->getDriverModel()->getDriverModelType() == DriverModelType::wddm;
 }
 
+bool isInternalEngineFromContextGroupEnabled(const RootDeviceEnvironment &rootDeviceEnvironment) {
+    if (debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.get() != 1 ||
+        !rootDeviceEnvironment.getHelper<GfxCoreHelper>().areSecondaryContextsSupported() ||
+        rootDeviceEnvironment.isExposeSingleDeviceMode()) {
+        return false;
+    }
+    const auto processCount = rootDeviceEnvironment.osInterface ? rootDeviceEnvironment.osInterface->getAggregatedProcessCount() : 1u;
+    return processCount <= maxProcessCountForInternalEngineFromContextGroup;
+}
+
 bool isRcsExposed(const RootDeviceEnvironment &rootDeviceEnvironment) {
     const auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     if (!hwInfo.caps.rcsExposureDisabled) {
