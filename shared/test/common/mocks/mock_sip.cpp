@@ -10,6 +10,7 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/memory_allocation.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
+#include "shared/test/common/mocks/mock_sip_wrapper.h"
 
 #include "StateSaveAreaHeaderWrapper.h"
 

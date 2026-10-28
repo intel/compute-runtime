@@ -90,6 +90,7 @@ set(NEO_CORE_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_settings_reader.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_sip.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_sip.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_sip_wrapper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_submissions_aggregator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_svm_manager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_sync_buffer_handler.h

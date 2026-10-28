@@ -18,6 +18,8 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 
+using namespace NEO;
+
 namespace L0 {
 namespace ult {
 
