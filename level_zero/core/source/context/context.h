@@ -11,8 +11,8 @@
 #include "shared/source/helpers/device_bitfield.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/memory_manager/allocation_type.h"
+#include "shared/source/memory_manager/free_policy_type.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
-#include "shared/source/memory_manager/unified_memory_pooling.h"
 #include "shared/source/os_interface/sys_calls_common.h"
 #include "shared/source/unified_memory/unified_memory.h"
 #include "shared/source/utilities/mockable_virtual_defaults.h"
@@ -39,8 +39,10 @@ static_assert(IsCompliantWithDdiHandlesExt<_ze_physical_mem_handle_t>);
 
 namespace NEO {
 class GraphicsAllocation;
+class UsmMemAllocPool;
 enum class HeapIndex : uint32_t;
 struct SvmAllocationData;
+struct UsmPoolLookupResult;
 struct VirtualMemoryReservation;
 } // namespace NEO
 
