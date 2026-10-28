@@ -127,6 +127,31 @@ TEST_F(EventCallbacksTests, givenMultipleCallbacksOfTheSameTypeWhenEventComplete
     clReleaseEvent(event);
 }
 
+TEST_F(EventCallbacksTests, givenSignalledEventWithPendingCallbacksWhenWaitForEventsReturnsThenCallbacksAreAlreadyExecuted) {
+    auto mockHandler = installMockHandler(false);
+    auto event = new Event(CL_COMMAND_MARKER, commandQueue);
+    auto &runningTracker = createTracker();
+    auto &completeTracker = createTracker();
+    ASSERT_EQ(CL_SUCCESS, clSetEventCallback(event, CL_RUNNING, &CallbackTracker::callback, &runningTracker));
+    ASSERT_EQ(CL_SUCCESS, clSetEventCallback(event, CL_COMPLETE, &CallbackTracker::callback, &completeTracker));
+    signalEvent(event);
+    cl_event clEvent = event;
+
+    EXPECT_EQ(CL_SUCCESS, clWaitForEvents(1, &clEvent));
+
+    EXPECT_EQ(1u, runningTracker.count);
+    EXPECT_EQ(CL_RUNNING, runningTracker.lastStatus);
+    EXPECT_EQ(1u, completeTracker.count);
+    EXPECT_EQ(CL_COMPLETE, completeTracker.lastStatus);
+    EXPECT_FALSE(event->peekHasCallbacks());
+
+    mockHandler->process();
+    EXPECT_EQ(1u, runningTracker.count);
+    EXPECT_EQ(1u, completeTracker.count);
+
+    clReleaseEvent(event);
+}
+
 TEST_F(EventCallbacksTests, givenNotCompletedEventWhenUpdatingExecutionStatusThenCallbacksAreNotExecuted) {
     installMockHandler(false);
     auto event = new Event(CL_COMMAND_MARKER, commandQueue);

@@ -42,6 +42,7 @@ cl_int CL_API_CALL clWaitForEvents(cl_uint numEvents,
             TRACING_EXIT(ClWaitForEvents, &tracingRetVal);
             return tracingRetVal;
         }
+        pEvent->updateExecutionStatus();
     }
     cl_int tracingRetVal = CL_SUCCESS;
     TRACING_EXIT(ClWaitForEvents, &tracingRetVal);
