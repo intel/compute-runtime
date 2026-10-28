@@ -594,7 +594,7 @@ ze_result_t MutableCommandListImp::updateMutableCommandKernelsExp(uint32_t numKe
             oldMutableKernel->updateResidencySnapshotContainer();
             auto &residencyContainer = oldMutableKernel->getKernelResidencySnapshotContainer();
             for (auto resource : residencyContainer) {
-                removeFromResidencyContainer(resource);
+                removeFromResidencyContainer(resource, false);
             }
         }
         // remove old kernel arguments (buffers) from mutable residency and reset variables
@@ -607,7 +607,7 @@ ze_result_t MutableCommandListImp::updateMutableCommandKernelsExp(uint32_t numKe
                 auto &varDescriptor = kernelArgVarDesc.kernelArgumentVariable->getDesc();
                 if (varDescriptor.type == VariableType::buffer) {
                     if (varDescriptor.bufferAlloc != nullptr) {
-                        removeFromResidencyContainer(varDescriptor.bufferAlloc);
+                        removeFromResidencyContainer(varDescriptor.bufferAlloc, false);
                     }
                     kernelArgVarDesc.kernelArgumentVariable->resetBufferVariable();
                 }
@@ -665,7 +665,7 @@ ze_result_t MutableCommandListImp::updateMutableCommandKernelsExp(uint32_t numKe
             newMutableKernel->makeKernelResidencySnapshotContainer(false);
             auto &residencyContainer = newMutableKernel->getKernelResidencySnapshotContainer();
             for (auto resource : residencyContainer) {
-                addToResidencyContainer(resource);
+                addToResidencyContainer(resource, false);
             }
         }
 

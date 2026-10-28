@@ -213,8 +213,8 @@ struct MutableCommandList {
     virtual ze_result_t updateMutableCommandWaitEventsExp(uint64_t commandId, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) = 0;
     virtual ze_result_t updateMutableCommandKernelsExp(uint32_t numKernels, uint64_t *pCommandId, ze_kernel_handle_t *phKernels) = 0;
 
-    virtual void removeFromResidencyContainer(NEO::GraphicsAllocation *allocation) = 0;
-    virtual void addToResidencyContainer(NEO::GraphicsAllocation *allocation) = 0;
+    virtual void removeFromResidencyContainer(NEO::GraphicsAllocation *allocation, bool redirectToCopyOffload) = 0;
+    virtual void addToResidencyContainer(NEO::GraphicsAllocation *allocation, bool redirectToCopyOffload) = 0;
     virtual void processResidencyContainer(bool baseCmdListClosed) = 0;
 
     virtual void setBufferSurfaceState(void *address, NEO::GraphicsAllocation *alloc, Variable *variable) = 0;

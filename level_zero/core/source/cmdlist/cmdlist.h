@@ -846,7 +846,7 @@ struct CommandList : _ze_command_list_handle_t {
     void resetBcsSplitEvents(bool release);
     void ensureSubCmdLists(size_t count);
     void destroyRecordedBcsSplitResources();
-    void ensureCopyOffloadSubCmdList();
+    virtual void ensureCopyOffloadSubCmdList();
 
     std::map<const void *, NEO::GraphicsAllocation *> hostPtrMap;
     NEO::PrivateAllocsToReuseContainer ownedPrivateAllocations;

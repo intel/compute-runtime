@@ -83,6 +83,12 @@
 namespace L0 {
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+CommandListCoreFamily<gfxCoreFamily>::CopyOffloadStreamScope::CopyOffloadStreamScope(CommandListCoreFamily &cmdList, CmdListMemoryCopyParams &memoryCopyParams)
+    : cmdList(cmdList), active(cmdList.beginCopyOffloadStreamRecording(memoryCopyParams.copyOffloadAllowed)) {
+    memoryCopyParams.copyOffloadStreamRecordingActive = active;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 CommandListCoreFamily<gfxCoreFamily>::~CommandListCoreFamily() {
     clearCommandsToPatch();
     for (auto &alloc : this->ownedPrivateAllocations) {
@@ -1128,7 +1134,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
     bool shouldUseCopyOffload = this->imageCopyOffloadAllowed && this->isCopyOffloadForFillOrStagingPreferred(imageToBuffer);
     auto canUseCopyEngine = !(bytesPerPixel == 3 || bytesPerPixel == 6 || image->isMimickedImage());
     memoryCopyParams.copyOffloadAllowed = canUseCopyEngine && isCopyOffloadAllowed(allocationStruct.alloc, image->getAllocation(), remoteCopy, imageToBuffer, imgInfo.imgDesc.numMipLevels) && shouldUseCopyOffload;
-    CopyOffloadStreamScope copyOffloadStreamScope(*this, memoryCopyParams.copyOffloadAllowed);
+    CopyOffloadStreamScope copyOffloadStreamScope(*this, memoryCopyParams);
 
     if (isCopyOnly(memoryCopyParams.copyOffloadAllowed)) {
         if (!canUseCopyEngine) {
@@ -1347,7 +1353,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
     bool shouldUseCopyOffload = this->imageCopyOffloadAllowed && this->isCopyOffloadForFillOrStagingPreferred(imageToBuffer);
     auto canUseCopyEngine = !(bytesPerPixel == 3 || bytesPerPixel == 6 || image->isMimickedImage());
     memoryCopyParams.copyOffloadAllowed = canUseCopyEngine && isCopyOffloadAllowed(image->getAllocation(), allocationStruct.alloc, remoteCopy, false, imgInfo.imgDesc.numMipLevels) && shouldUseCopyOffload;
-    CopyOffloadStreamScope copyOffloadStreamScope(*this, memoryCopyParams.copyOffloadAllowed);
+    CopyOffloadStreamScope copyOffloadStreamScope(*this, memoryCopyParams);
 
     if (isCopyOnly(memoryCopyParams.copyOffloadAllowed)) {
         if (!canUseCopyEngine) {
@@ -1589,7 +1595,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
                          (dstImgInfo.imgDesc.imageType == NEO::ImageType::image1DBuffer);
     bool shouldUseCopyOffload = this->isCopyOffloadForFillOrStagingPreferred(imageToBuffer);
     memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(srcImage->getAllocation(), dstImage->getAllocation(), remoteCopy, imageToBuffer, srcImgInfo.imgDesc.numMipLevels) && shouldUseCopyOffload;
-    CopyOffloadStreamScope copyOffloadStreamScope(*this, memoryCopyParams.copyOffloadAllowed);
+    CopyOffloadStreamScope copyOffloadStreamScope(*this, memoryCopyParams);
 
     if (isCopyOnly(memoryCopyParams.copyOffloadAllowed)) {
         auto bytesPerPixel = static_cast<uint32_t>(srcImgInfo.surfaceFormat->imageElementSizeInBytes);
@@ -2564,7 +2570,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     }
 
     const bool isCopyOnlyEnabled = isCopyOnly(memoryCopyParams.copyOffloadAllowed);
-    CopyOffloadStreamScope copyOffloadStreamScope(*this, memoryCopyParams.copyOffloadAllowed);
+    CopyOffloadStreamScope copyOffloadStreamScope(*this, memoryCopyParams);
     const bool inOrderCopyOnlySignalingAllowed = this->isInOrderExecutionEnabled() && !memoryCopyParams.forceDisableCopyOnlyInOrderSignaling && isCopyOnlyEnabled;
 
     uint32_t kernelCounter = 0;
@@ -2836,7 +2842,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
     bool shouldUseCopyOffload = this->isCopyOffloadForFillOrStagingPreferred(imageToBuffer);
     memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(srcAllocationStruct.alloc, dstAllocationStruct.alloc, remoteCopy, std::max(srcSize, dstSize) <= BlitterConstants::maxD2DBcsCopySize, 0) && shouldUseCopyOffload;
     const bool isCopyOnlyEnabled = isCopyOnly(memoryCopyParams.copyOffloadAllowed);
-    CopyOffloadStreamScope copyOffloadStreamScope(*this, memoryCopyParams.copyOffloadAllowed);
+    CopyOffloadStreamScope copyOffloadStreamScope(*this, memoryCopyParams);
     const bool inOrderCopyOnlySignalingAllowed = this->isInOrderExecutionEnabled() && !memoryCopyParams.forceDisableCopyOnlyInOrderSignaling && isCopyOnlyEnabled;
 
     auto builtInMode = this->defaultBuiltInMode;
@@ -3175,7 +3181,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     }
 
     if (isCopyOnly(memoryCopyParams.copyOffloadAllowed)) {
-        CopyOffloadStreamScope copyOffloadStreamScope(*this, memoryCopyParams.copyOffloadAllowed);
+        CopyOffloadStreamScope copyOffloadStreamScope(*this, memoryCopyParams);
         auto status = appendBlitFill(ptr, pattern, patternSize, size, signalEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
         addToMappedEventList(signalEvent);
         return status;

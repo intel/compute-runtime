@@ -153,6 +153,7 @@ struct VariableDescriptor {
     bool immediateValueChunks = false;
     bool apiVariable = false;
     bool asyncMutation = false;
+    bool copyOffloadActive = false;
 };
 
 struct Variable : public VariableHandle {

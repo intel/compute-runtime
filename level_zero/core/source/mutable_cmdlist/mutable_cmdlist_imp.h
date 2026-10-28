@@ -9,6 +9,7 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/utilities/arrayref.h"
 
+#include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/mutable_cmdlist/mcl_types.h"
 #include "level_zero/core/source/mutable_cmdlist/mutable_cmdlist.h"
 #include "level_zero/core/source/mutable_cmdlist/mutable_command_walker.h"
@@ -122,19 +123,35 @@ struct MutableCommandListImp : public MutableCommandList {
     ze_result_t updateMutableCommandWaitEventsExp(uint64_t commandId, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override;
     ze_result_t updateMutableCommandKernelsExp(uint32_t numKernels, uint64_t *pCommandId, ze_kernel_handle_t *phKernels) override;
 
-    void removeFromResidencyContainer(NEO::GraphicsAllocation *allocation) override {
+    void removeFromResidencyContainer(NEO::GraphicsAllocation *allocation, bool redirectToCopyOffload) override {
         if (allocation == nullptr) {
             return;
         }
-        mutableAllocations.removeAllocation(allocation);
-        this->finalizeCommandListResidency = true;
+        if (redirectToCopyOffload) {
+            auto copyOffloadSubCmdList = this->base->getCopyOffloadSubCmdList();
+            UNRECOVERABLE_IF(copyOffloadSubCmdList == nullptr);
+            auto mutableCopyOffloadSubCmdList = static_cast<MutableCommandList *>(copyOffloadSubCmdList->asMutable());
+            UNRECOVERABLE_IF(mutableCopyOffloadSubCmdList == nullptr);
+            mutableCopyOffloadSubCmdList->removeFromResidencyContainer(allocation, false);
+        } else {
+            this->mutableAllocations.removeAllocation(allocation);
+            this->finalizeCommandListResidency = true;
+        }
     }
-    void addToResidencyContainer(NEO::GraphicsAllocation *allocation) override {
+    void addToResidencyContainer(NEO::GraphicsAllocation *allocation, bool redirectToCopyOffload) override {
         if (allocation == nullptr) {
             return;
         }
-        mutableAllocations.addAllocation(allocation);
-        this->finalizeCommandListResidency = true;
+        if (redirectToCopyOffload) {
+            auto copyOffloadSubCmdList = this->base->getCopyOffloadSubCmdList();
+            UNRECOVERABLE_IF(copyOffloadSubCmdList == nullptr);
+            auto mutableCopyOffloadSubCmdList = static_cast<MutableCommandList *>(copyOffloadSubCmdList->asMutable());
+            UNRECOVERABLE_IF(mutableCopyOffloadSubCmdList == nullptr);
+            mutableCopyOffloadSubCmdList->addToResidencyContainer(allocation, false);
+        } else {
+            this->mutableAllocations.addAllocation(allocation);
+            this->finalizeCommandListResidency = true;
+        }
     }
     void processResidencyContainer(bool baseCmdListClosed) override;
     void addVariableToCommitList(Variable *variable) override {

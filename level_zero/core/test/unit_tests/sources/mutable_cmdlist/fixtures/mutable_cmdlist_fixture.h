@@ -132,6 +132,7 @@ struct MutableCommandListFixtureInit : public ModuleImmutableDataFixture {
     std::vector<void *> deviceUsmAllocations;
     std::vector<ze_event_handle_t> eventHandles;
     std::vector<Event *> events;
+    std::vector<ze_event_pool_handle_t> eventPoolHandles;
     std::vector<void *> externalStorages;
 
     std::unique_ptr<MockImmutableData> mockKernelImmData;
@@ -152,7 +153,6 @@ struct MutableCommandListFixtureInit : public ModuleImmutableDataFixture {
 
     uintptr_t nextIsaPtr = 0x1234000;
 
-    ze_event_pool_handle_t eventPoolHandle = nullptr;
     ze_kernel_handle_t kernelHandle = nullptr;
     ze_kernel_handle_t kernel2Handle = nullptr;
     ze_kernel_handle_t kernelBigIsaHandle = nullptr;
@@ -161,13 +161,16 @@ struct MutableCommandListFixtureInit : public ModuleImmutableDataFixture {
     ze_group_count_t testGroupCount = {1, 1, 1};
 
     uint32_t kernelArgCount = 0;
+    uint32_t eventsInPoolCount = 32;
+    uint32_t currentEventPoolIndex = 0;
 
     ::NEO::EngineGroupType engineGroupType;
 
     uint16_t crossThreadOffset = defaultCrossThreadOffset;
     uint16_t nextArgOffset = defaultNextArgOffset;
 
-    bool createInOrder;
+    bool createInOrder = false;
+    bool createCopyOffload = false;
     bool l3FlushAfterPostSyncEnabled = false;
     bool qwordInUse = false;
     bool sem64bSupport = false;
@@ -183,6 +186,12 @@ struct MutableCommandListFixture : public MutableCommandListFixtureInit {
 
 struct MutableCommandListSWTagsFixture : public MutableCommandListFixture<false, -1> {
     void setUp();
+};
+
+struct MutableCommandListDualStreamCopyOffloadFixture : public MutableCommandListFixture<true, 0> {
+    void setUp();
+
+    std::unique_ptr<VariableBackup<NEO::HardwareInfo>> hwInfoBackup;
 };
 
 struct WhiteBoxMutableResidencyAllocations : public ::L0::MCL::MutableResidencyAllocations {

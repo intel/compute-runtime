@@ -21,6 +21,8 @@ struct WhiteBox<::L0::MCL::MutableCommandListCoreFamily<gfxCoreFamily>>
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
 
     using BaseClass = ::L0::MCL::MutableCommandListCoreFamily<gfxCoreFamily>;
+    using BaseCmdListClass = ::L0::CommandListCoreFamily<gfxCoreFamily>;
+
     using BaseClass::addVariableDispatch;
     using BaseClass::allocs;
     using BaseClass::allowCbWaitEventsNoopDispatch;
@@ -67,6 +69,8 @@ struct WhiteBox<::L0::MCL::MutableCommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::semaphore64bCmdSupported;
     using BaseClass::stageCommitVariables;
     using BaseClass::variableStorage;
+
+    using BaseCmdListClass::copyOffloadSubCmdList;
 
     WhiteBox() : ::L0::MCL::MutableCommandListCoreFamily<gfxCoreFamily>(BaseClass::defaultNumIddsPerBlock) {}
 };

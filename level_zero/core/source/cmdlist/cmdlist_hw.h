@@ -559,7 +559,7 @@ struct CommandListCoreFamily : public CommandList {
     // Regular cmd list records dual stream copy offload operations into separate copy engine command stream
     class CopyOffloadStreamScope : NEO::NonCopyableAndNonMovableClass {
       public:
-        CopyOffloadStreamScope(CommandListCoreFamily &cmdList, bool copyOffloadOperation) : cmdList(cmdList), active(cmdList.beginCopyOffloadStreamRecording(copyOffloadOperation)) {}
+        CopyOffloadStreamScope(CommandListCoreFamily &cmdList, CmdListMemoryCopyParams &memoryCopyParams);
         ~CopyOffloadStreamScope() {
             if (active) {
                 cmdList.endCopyOffloadStreamRecording();

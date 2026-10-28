@@ -867,8 +867,7 @@ void CommandList::enableCopyOperationOffload() {
 
     if (this->copyOffloadMode == CopyOffloadModes::dualStream && !isImmediateType()) {
         // Regular cmd list records copy operations into separate copy engine stream, synchronized with in-order counter.
-        // Mutable cmd lists are not supported, commands recorded into copy offload stream are not mutable.
-        if (!isInOrderExecutionEnabled() || asMutable() != nullptr) {
+        if (!isInOrderExecutionEnabled()) {
             this->copyOffloadMode = CopyOffloadModes::disabled;
         }
         return;

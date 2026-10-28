@@ -995,8 +995,8 @@ void Variable::commitVariable() {
 
 void Variable::updateAllocationResidency(NEO::GraphicsAllocation *oldAllocation, NEO::GraphicsAllocation *newAllocation) {
     if (oldAllocation != newAllocation) {
-        cmdList->addToResidencyContainer(newAllocation);
-        cmdList->removeFromResidencyContainer(oldAllocation);
+        cmdList->addToResidencyContainer(newAllocation, desc.copyOffloadActive);
+        cmdList->removeFromResidencyContainer(oldAllocation, desc.copyOffloadActive);
     }
 }
 

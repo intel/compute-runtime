@@ -48,6 +48,7 @@ struct MutableAppendEvents {
     bool inOrderIncrementEvent = false;
     bool omitWaitEventResidency = false;
     bool apiRequestGraphExternal = false;
+    bool copyOffloadActive = false;
 };
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -172,10 +173,12 @@ struct MutableCommandListCoreFamily : public MutableCommandListImp, public Comma
 
     void captureCounterBasedWaitEventCommands(CommandToPatchContainer::iterator &cmdsIterator,
                                               std::vector<MutableSemaphoreWait *> &variableSemaphoreWaitList,
-                                              std::vector<MutableLoadRegisterImm *> &variableLoadRegisterImmList);
+                                              std::vector<MutableLoadRegisterImm *> &variableLoadRegisterImmList,
+                                              MutableAppendEvents &mutableEventParams);
     void captureExternalCounterBasedWaitEventCommands(CommandToPatchContainer::iterator &cmdsIterator,
                                                       std::vector<MutableSemaphoreWait *> &variableSemaphoreWaitList,
-                                                      std::vector<MutableLoadRegisterImm *> &variableLoadRegisterImmList);
+                                                      std::vector<MutableLoadRegisterImm *> &variableLoadRegisterImmList,
+                                                      MutableAppendEvents &mutableEventParams);
     void captureRegularWaitEventCommands(CommandToPatchContainer::iterator &cmdsIterator,
                                          std::vector<MutableSemaphoreWait *> &variableSemaphoreWaitList);
     void captureCounterBasedTimestampSignalEventCommands(SignalEventVariableDescriptor &currentMutableSignalEvent,
@@ -207,6 +210,7 @@ struct MutableCommandListCoreFamily : public MutableCommandListImp, public Comma
     uint32_t getIohSizeForPrefetch(const Kernel &kernel, uint32_t reserveExtraSpace) const override;
     MutableKernelGroup *getKernelGroupForPrefetch(uint64_t cmdId) const;
     size_t ensureCmdBufferSpaceForPrefetch() override;
+    void ensureCopyOffloadSubCmdList() override;
 };
 } // namespace MCL
 } // namespace L0

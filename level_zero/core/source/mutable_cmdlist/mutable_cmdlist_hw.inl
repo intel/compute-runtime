@@ -211,7 +211,7 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendLaunchKern
                                                                     signalPipeControl);
             NEO::GraphicsAllocation *eventAlloc = signalEventVariableDesc.event->getAllocation(this->device);
             if (eventAlloc) {
-                addToResidencyContainer(eventAlloc);
+                addToResidencyContainer(eventAlloc, false);
             }
         }
         if (mutableEventParams.waitEvents) {
@@ -295,7 +295,7 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendLaunchKern
             launchParams.omitAddingKernelArgumentResidency = true;
             auto &residencyContainer = kernel->getArgumentsResidencyContainer();
             for (auto resource : residencyContainer) {
-                addToResidencyContainer(resource);
+                addToResidencyContainer(resource, false);
             }
         }
     }
@@ -334,7 +334,7 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendLaunchKern
 
             auto &residencyContainer = mutableCmdlistAppendLaunchParams.currentMutableKernel->getKernelResidencySnapshotContainer();
             for (auto resource : residencyContainer) {
-                addToResidencyContainer(resource);
+                addToResidencyContainer(resource, false);
             }
 
             mutableCmdlistAppendLaunchParams.currentMutableKernel->setComputeWalker(this->appendKernelMutableComputeWalker);
@@ -511,6 +511,13 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::close() {
         this->calculateAsyncPatchlistPatchSize();
         this->calculateActiveScratchPatchElemsPatchSize();
         this->calculateTotalNoopSpacePatchSize();
+        if (this->copyOffloadSubCmdList != nullptr) {
+            // when this->updatedCommandList == false, it means it is a first closure, handled by the base class - base class close will call on copyOffloadSubCmdList->close() and this is not needed here
+            if (this->updatedCommandList) {
+                static_cast<MutableCommandListCoreFamily<gfxCoreFamily> *>(this->copyOffloadSubCmdList)->toggleCommandListUpdated();
+                this->copyOffloadSubCmdList->close();
+            }
+        }
         this->updatedCommandList = false;
     }
     return result;
@@ -575,7 +582,8 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::switchCounterBasedEvents(uint6
 template <GFXCORE_FAMILY gfxCoreFamily>
 void MutableCommandListCoreFamily<gfxCoreFamily>::captureExternalCounterBasedWaitEventCommands(CommandToPatchContainer::iterator &cmdsIterator,
                                                                                                std::vector<MutableSemaphoreWait *> &variableSemaphoreWaitList,
-                                                                                               std::vector<MutableLoadRegisterImm *> &variableLoadRegisterImmList) {
+                                                                                               std::vector<MutableLoadRegisterImm *> &variableLoadRegisterImmList,
+                                                                                               MutableAppendEvents &mutableEventParams) {
     bool qwordIndirect = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(isQwordInOrderCounter(), this->semaphore64bCmdSupported);
     if (qwordIndirect) {
         auto *loadRegImmCmdToPatch = std::get_if<PatchExternalCbWaitEventPreambleCounterLoadRegisterImm>(&(*cmdsIterator));
@@ -586,7 +594,7 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::captureExternalCounterBasedWai
                                                                                    loadRegImmCmdToPatch->pDestination,
                                                                                    static_cast<uint32_t>(loadRegImmCmdToPatch->offset),
                                                                                    MutableLoadRegisterImm::cbEventWaitLoadPatchPreambleCounter,
-                                                                                   this->isCopyOnly(false));
+                                                                                   this->isCopyOnly(mutableEventParams.copyOffloadActive));
         mutableLoadRegisterImmCmds.emplace_back(std::move(loadRegImmPtr));
         auto loadRegImmCmd = (*mutableLoadRegisterImmCmds.rbegin()).get();
         variableLoadRegisterImmList.emplace_back(loadRegImmCmd);
@@ -601,7 +609,7 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::captureExternalCounterBasedWai
                                                                               loadRegImmCmdToPatch2->pDestination,
                                                                               static_cast<uint32_t>(loadRegImmCmdToPatch2->offset),
                                                                               MutableLoadRegisterImm::cbEventWaitLoadPatchPreambleCounter,
-                                                                              this->isCopyOnly(false));
+                                                                              this->isCopyOnly(mutableEventParams.copyOffloadActive));
         mutableLoadRegisterImmCmds.emplace_back(std::move(loadRegImmPtr));
         loadRegImmCmd = (*mutableLoadRegisterImmCmds.rbegin()).get();
         variableLoadRegisterImmList.emplace_back(loadRegImmCmd);
@@ -629,7 +637,8 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::captureExternalCounterBasedWai
 template <GFXCORE_FAMILY gfxCoreFamily>
 void MutableCommandListCoreFamily<gfxCoreFamily>::captureCounterBasedWaitEventCommands(CommandToPatchContainer::iterator &cmdsIterator,
                                                                                        std::vector<MutableSemaphoreWait *> &variableSemaphoreWaitList,
-                                                                                       std::vector<MutableLoadRegisterImm *> &variableLoadRegisterImmList) {
+                                                                                       std::vector<MutableLoadRegisterImm *> &variableLoadRegisterImmList,
+                                                                                       MutableAppendEvents &mutableEventParams) {
 
     bool qwordIndirect = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(isQwordInOrderCounter(), this->semaphore64bCmdSupported);
     if (qwordIndirect) {
@@ -641,7 +650,7 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::captureCounterBasedWaitEventCo
                                                                                    loadRegImmCmdToPatch->pDestination,
                                                                                    static_cast<uint32_t>(loadRegImmCmdToPatch->offset),
                                                                                    MutableLoadRegisterImm::cbEventWaitLoadCounter,
-                                                                                   this->isCopyOnly(false));
+                                                                                   this->isCopyOnly(mutableEventParams.copyOffloadActive));
         mutableLoadRegisterImmCmds.emplace_back(std::move(loadRegImmPtr));
         auto loadRegImmCmd = (*mutableLoadRegisterImmCmds.rbegin()).get();
         variableLoadRegisterImmList.emplace_back(loadRegImmCmd);
@@ -656,7 +665,7 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::captureCounterBasedWaitEventCo
                                                                               loadRegImmCmdToPatch2->pDestination,
                                                                               static_cast<uint32_t>(loadRegImmCmdToPatch2->offset),
                                                                               MutableLoadRegisterImm::cbEventWaitLoadCounter,
-                                                                              this->isCopyOnly(false));
+                                                                              this->isCopyOnly(mutableEventParams.copyOffloadActive));
         mutableLoadRegisterImmCmds.emplace_back(std::move(loadRegImmPtr));
         loadRegImmCmd = (*mutableLoadRegisterImmCmds.rbegin()).get();
         variableLoadRegisterImmList.emplace_back(loadRegImmCmd);
@@ -1083,7 +1092,7 @@ inline void MutableCommandListCoreFamily<gfxCoreFamily>::storeWaitEventsVariable
 
     if ((this->nextMutationFlags & ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS) == ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS) {
         if (numWaitEvents > 0) {
-            AppendEventMutation &currentAppend = this->eventMutations[(nextCommandId - 1)];
+            AppendEventMutation &currentAppend = this->eventMutations[(this->nextCommandId - 1)];
 
             currentAppend.waitEvents.reserve(numWaitEvents);
             mutableEventParams.waitEvents = true;
@@ -1114,12 +1123,6 @@ inline void MutableCommandListCoreFamily<gfxCoreFamily>::storeWaitEventsVariable
 
                     mutableWaitEventDesc.waitEventPackets = devicePartitionCount;
                     mutableEventParams.omitWaitEventResidency = true;
-                    auto deviceCounterAlloc = event->getInOrderExecEventHelper().getDeviceCounterAllocation();
-                    addToResidencyContainer(getDeviceCounterAllocForResidency(deviceCounterAlloc));
-                    if (event->isExternalEvent() || mutableEventParams.apiRequestGraphExternal || event->getInOrderExecEventHelper().getPatchPreambleCounter() != 0) {
-                        auto deviceCounterPatchPreambleAlloc = event->getInOrderExecEventHelper().getPatchPreambleDeviceAllocation();
-                        addToResidencyContainer(deviceCounterPatchPreambleAlloc);
-                    }
                 } else {
                     mutableWaitEventDesc.waitEventPackets = event->getPacketsToWait();
                 }
@@ -1129,7 +1132,6 @@ inline void MutableCommandListCoreFamily<gfxCoreFamily>::storeWaitEventsVariable
                 NEO::GraphicsAllocation *eventPoolAlloc = event->getAllocation(this->device);
                 if (eventPoolAlloc) {
                     mutableEventParams.omitWaitEventResidency = true;
-                    addToResidencyContainer(eventPoolAlloc);
                 }
             }
 
@@ -1153,18 +1155,35 @@ inline void MutableCommandListCoreFamily<gfxCoreFamily>::processWaitEventVariabl
         WaitEventVariableDescriptor &mutableWaitEvent = currentAppend.waitEvents[i];
         UNRECOVERABLE_IF(i != mutableWaitEvent.waitEventIndex);
 
+        NEO::GraphicsAllocation *eventPoolAlloc = mutableWaitEvent.event->getAllocation(this->device);
+        NEO::GraphicsAllocation *deviceCounterAlloc = nullptr;
+        NEO::GraphicsAllocation *deviceCounterPatchPreambleAlloc = nullptr;
+
+        if (CommandList::isInOrderExecutionEnabled() && mutableWaitEvent.event->isCounterBased()) {
+            auto &inOrderExecHelper = mutableWaitEvent.event->getInOrderExecEventHelper();
+            deviceCounterAlloc = inOrderExecHelper.getDeviceCounterAllocation();
+            if (mutableWaitEvent.event->isExternalEvent() || mutableEventParams.apiRequestGraphExternal || inOrderExecHelper.getPatchPreambleCounter() != 0) {
+                deviceCounterPatchPreambleAlloc = inOrderExecHelper.getPatchPreambleDeviceAllocation();
+            }
+        }
+
+        mutableWaitEvent.eventVariable->getDesc().copyOffloadActive = mutableEventParams.copyOffloadActive;
+        addToResidencyContainer(eventPoolAlloc, mutableEventParams.copyOffloadActive);
+        addToResidencyContainer(getDeviceCounterAllocForResidency(deviceCounterAlloc), mutableEventParams.copyOffloadActive);
+        addToResidencyContainer(deviceCounterPatchPreambleAlloc, mutableEventParams.copyOffloadActive);
+
         auto &variableSemWaitCmdList = mutableWaitEvent.eventVariable->getSemWaitList();
         auto &variableLoadRegImmCmdList = mutableWaitEvent.eventVariable->getLoadRegImmList();
 
         if (mutableWaitEvent.event->isExternalEvent() || mutableEventParams.apiRequestGraphExternal || mutableWaitEvent.event->getInOrderExecEventHelper().getPatchPreambleCounter() != 0) {
             for (uint32_t packet = 0; packet < mutableWaitEvent.waitEventPackets; packet++) {
-                captureExternalCounterBasedWaitEventCommands(waitEventCmdToPatchIterator, variableSemWaitCmdList, variableLoadRegImmCmdList);
+                captureExternalCounterBasedWaitEventCommands(waitEventCmdToPatchIterator, variableSemWaitCmdList, variableLoadRegImmCmdList, mutableEventParams);
             }
         }
 
         for (uint32_t packet = 0; packet < mutableWaitEvent.waitEventPackets; packet++) {
             if (CommandList::isInOrderExecutionEnabled() && mutableWaitEvent.event->isCounterBased() && this->isInOrderCounterWaitRequired(mutableWaitEvent.event)) {
-                captureCounterBasedWaitEventCommands(waitEventCmdToPatchIterator, variableSemWaitCmdList, variableLoadRegImmCmdList);
+                captureCounterBasedWaitEventCommands(waitEventCmdToPatchIterator, variableSemWaitCmdList, variableLoadRegImmCmdList, mutableEventParams);
             } else {
                 captureRegularWaitEventCommands(waitEventCmdToPatchIterator, variableSemWaitCmdList);
             }
@@ -1293,6 +1312,7 @@ ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemo
     }
 
     if (this->nextAppendKernelMutable) {
+        mutableEventParams.copyOffloadActive = memoryCopyParams.copyOffloadStreamRecordingActive;
         UNRECOVERABLE_IF(!mutableEventParams.waitEvents);
         processWaitEventVariables(numWaitEvents, mutableEventParams);
         clearMutableAppendData();
@@ -1327,6 +1347,7 @@ ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemory
     }
 
     if (this->nextAppendKernelMutable) {
+        mutableEventParams.copyOffloadActive = memoryCopyParams.copyOffloadStreamRecordingActive;
         UNRECOVERABLE_IF(!mutableEventParams.waitEvents);
         processWaitEventVariables(numWaitEvents, mutableEventParams);
         clearMutableAppendData();
@@ -1360,6 +1381,7 @@ ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(z
     }
 
     if (this->nextAppendKernelMutable) {
+        mutableEventParams.copyOffloadActive = memoryCopyParams.copyOffloadStreamRecordingActive;
         UNRECOVERABLE_IF(!mutableEventParams.waitEvents);
         processWaitEventVariables(numWaitEvents, mutableEventParams);
         clearMutableAppendData();
@@ -1392,6 +1414,7 @@ ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *
     }
 
     if (this->nextAppendKernelMutable) {
+        mutableEventParams.copyOffloadActive = memoryCopyParams.copyOffloadStreamRecordingActive;
         UNRECOVERABLE_IF(!mutableEventParams.waitEvents);
         processWaitEventVariables(numWaitEvents, mutableEventParams);
         clearMutableAppendData();
@@ -1460,6 +1483,7 @@ ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyFromCon
     }
 
     if (this->nextAppendKernelMutable) {
+        mutableEventParams.copyOffloadActive = memoryCopyParams.copyOffloadStreamRecordingActive;
         UNRECOVERABLE_IF(!mutableEventParams.waitEvents);
         processWaitEventVariables(numWaitEvents, mutableEventParams);
         clearMutableAppendData();
@@ -1497,6 +1521,7 @@ ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(
     }
 
     if (this->nextAppendKernelMutable) {
+        mutableEventParams.copyOffloadActive = memoryCopyParams.copyOffloadStreamRecordingActive;
         UNRECOVERABLE_IF(!mutableEventParams.waitEvents);
         processWaitEventVariables(numWaitEvents, mutableEventParams);
         clearMutableAppendData();
@@ -1530,6 +1555,7 @@ ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *
     }
 
     if (this->nextAppendKernelMutable) {
+        mutableEventParams.copyOffloadActive = memoryCopyParams.copyOffloadStreamRecordingActive;
         UNRECOVERABLE_IF(!mutableEventParams.waitEvents);
         processWaitEventVariables(numWaitEvents, mutableEventParams);
         clearMutableAppendData();
@@ -1631,6 +1657,18 @@ ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendHostFunction(ze_h
         clearMutableAppendData();
     }
     return result;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void MutableCommandListCoreFamily<gfxCoreFamily>::ensureCopyOffloadSubCmdList() {
+    if (this->copyOffloadSubCmdList == nullptr) {
+        ze_result_t returnValue = ZE_RESULT_SUCCESS;
+        this->copyOffloadSubCmdList = MutableCommandList::create(this->device, NEO::EngineGroupType::copy, 0, returnValue, true);
+        UNRECOVERABLE_IF(returnValue != ZE_RESULT_SUCCESS);
+
+        this->copyOffloadSubCmdList->setupPatchPreambleEnabled(this->patchPreambleEnabled);
+    }
+    CommandListCoreFamily<gfxCoreFamily>::ensureCopyOffloadSubCmdList();
 }
 
 } // namespace MCL

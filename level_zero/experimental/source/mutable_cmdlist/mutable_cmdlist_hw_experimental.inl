@@ -249,7 +249,7 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendVariableLa
 
     auto &residencyContainer = kernel->getArgumentsResidencyContainer();
     for (auto resource : residencyContainer) {
-        addToResidencyContainer(resource);
+        addToResidencyContainer(resource, false);
     }
 
     ze_group_count_t threadGroupDimensions = {1U, 1U, 1U};

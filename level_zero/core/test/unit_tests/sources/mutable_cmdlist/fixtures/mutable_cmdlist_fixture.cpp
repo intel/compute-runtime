@@ -68,8 +68,10 @@ void MutableCommandListFixtureInit::tearDown() {
     for (auto eventHandle : this->eventHandles) {
         zeEventDestroy(eventHandle);
     }
-    if (this->eventPoolHandle) {
-        zeEventPoolDestroy(this->eventPoolHandle);
+    for (auto eventPoolHandle : this->eventPoolHandles) {
+        if (eventPoolHandle) {
+            zeEventPoolDestroy(eventPoolHandle);
+        }
     }
     for (auto externalStorage : this->externalStorages) {
         context->freeMem(externalStorage);
@@ -151,6 +153,9 @@ std::unique_ptr<MutableCommandList> MutableCommandListFixtureInit::createMutable
     if (this->createInOrder) {
         flags |= ZE_COMMAND_LIST_FLAG_IN_ORDER;
     }
+    if (this->createCopyOffload) {
+        flags |= (ZE_COMMAND_LIST_FLAG_COPY_OFFLOAD_HINT | ZE_COMMAND_LIST_FLAG_IN_ORDER);
+    }
 
     std::unique_ptr<MutableCommandList> mutableCommandListPtr(
         MutableCommandList::whiteboxCast(::L0::MCL::MutableCommandList::fromHandle(::L0::MCL::MutableCommandList::create(this->device, this->engineGroupType, flags, returnValue, false))));
@@ -224,27 +229,37 @@ Event *MutableCommandListFixtureInit::createTestEvent(bool cbEvent, bool signalS
             this->events.push_back(event);
         }
     } else {
-        if (!this->eventPoolHandle) {
+        const auto eventCount = static_cast<uint32_t>(this->eventHandles.size());
+        const auto lastEventUsedInCurrentPool = eventCount % this->eventsInPoolCount;
+
+        if (eventCount > 0 && lastEventUsedInCurrentPool == 0) {
+            this->currentEventPoolIndex++;
+        }
+        if (this->currentEventPoolIndex == this->eventPoolHandles.size()) {
+            this->eventPoolHandles.push_back(nullptr);
+        }
+
+        if (!this->eventPoolHandles[this->currentEventPoolIndex]) {
             ze_event_pool_desc_t eventPoolDesc = {};
             eventPoolDesc.stype = ZE_STRUCTURE_TYPE_EVENT_POOL_DESC;
             eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
             if (timestamp) {
                 eventPoolDesc.flags |= ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
             }
-            eventPoolDesc.count = 32;
+            eventPoolDesc.count = this->eventsInPoolCount;
             ze_result_t ret = ZE_RESULT_SUCCESS;
-            zeEventPoolCreate(this->context, &eventPoolDesc, 0, nullptr, &this->eventPoolHandle);
+            zeEventPoolCreate(this->context, &eventPoolDesc, 0, nullptr, &this->eventPoolHandles[this->currentEventPoolIndex]);
             EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
         }
-        if (this->eventPoolHandle) {
+        if (this->eventPoolHandles[this->currentEventPoolIndex]) {
             ze_event_desc_t eventDesc = {};
             eventDesc.stype = ZE_STRUCTURE_TYPE_EVENT_DESC;
-            eventDesc.index = static_cast<uint32_t>(this->eventHandles.size());
+            eventDesc.index = lastEventUsedInCurrentPool;
             if (signalScope) {
                 eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
             }
             ze_event_handle_t eventHandle = nullptr;
-            ze_result_t ret = zeEventCreate(this->eventPoolHandle, &eventDesc, &eventHandle);
+            ze_result_t ret = zeEventCreate(this->eventPoolHandles[this->currentEventPoolIndex], &eventDesc, &eventHandle);
             EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
             if (eventHandle) {
                 this->eventHandles.push_back(eventHandle);
@@ -705,6 +720,19 @@ void MutableCommandListFixtureInit::mutableWaitEventsOnAppendHostFunctionCallbac
 void MutableCommandListSWTagsFixture::setUp() {
     NEO::debugManager.flags.EnableSWTags.set(true);
     MutableCommandListFixture<false, -1>::setUp();
+}
+
+void MutableCommandListDualStreamCopyOffloadFixture::setUp() {
+    NEO::debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.set(2);
+    NEO::debugManager.flags.OverrideCopyOffloadMode.set(static_cast<int32_t>(CopyOffloadModes::dualStream));
+    NEO::debugManager.flags.OverrideDualStreamCopyOffloadForRegularSupport.set(1);
+    NEO::debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+
+    hwInfoBackup = std::make_unique<VariableBackup<NEO::HardwareInfo>>(defaultHwInfo.get());
+    defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
+    defaultHwInfo->featureTable.ftrBcsInfo = 0b111;
+
+    MutableCommandListFixture<true, 0>::setUp();
 }
 
 } // namespace ult
