@@ -7,6 +7,9 @@
 
 #include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/device_binary_format/elf/elf_decoder.h"
+#include "shared/source/device_binary_format/elf/elf_encoder.h"
+#include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/device_binary_format/zebin/zebin_elf.h"
 #include "shared/source/device_binary_format/zebin/zeinfo.h"
 #include "shared/source/helpers/compiler_product_helper.h"
@@ -756,6 +759,271 @@ TEST_F(ClProgramCompileLinkTests, givenUndecodableDeviceBinaryWhenCreateProgramW
     cl_program_binary_type binaryType = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
     EXPECT_EQ(CL_SUCCESS, clGetProgramBuildInfo(program, clDeviceId, CL_PROGRAM_BINARY_TYPE, sizeof(binaryType), &binaryType, nullptr));
     EXPECT_EQ(static_cast<cl_program_binary_type>(CL_PROGRAM_BINARY_TYPE_NONE), binaryType);
+
+    clReleaseProgram(program);
+    clReleaseContext(clContext);
+}
+
+std::vector<uint8_t> getProgramBinary(cl_program program) {
+    size_t binarySize = 0u;
+    EXPECT_EQ(CL_SUCCESS, clGetProgramInfo(program, CL_PROGRAM_BINARY_SIZES, sizeof(binarySize), &binarySize, nullptr));
+    std::vector<uint8_t> binary(binarySize);
+    unsigned char *binaries[] = {binary.data()};
+    EXPECT_EQ(CL_SUCCESS, clGetProgramInfo(program, CL_PROGRAM_BINARIES, sizeof(binaries), binaries, nullptr));
+    return binary;
+}
+
+cl_program_binary_type getProgramBinaryType(cl_program program, cl_device_id clDeviceId) {
+    cl_program_binary_type binaryType = CL_PROGRAM_BINARY_TYPE_NONE;
+    EXPECT_EQ(CL_SUCCESS, clGetProgramBuildInfo(program, clDeviceId, CL_PROGRAM_BINARY_TYPE, sizeof(binaryType), &binaryType, nullptr));
+    return binaryType;
+}
+
+TEST_F(ClProgramCompileLinkTests, givenCompilerReturningLlvmBcWhenProgramIsCreatedFromBinaryOfCompiledSourceProgramThenItIsCompiledObjectWithSameIr) {
+    auto *mockCompiler = new MockLlvmBcCompileCompilerInterface();
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->compilerInterface.reset(mockCompiler);
+
+    cl_device_id clDeviceId = nullptr;
+    cl_context clContext = createOclContext(platform, clDeviceId);
+
+    cl_int errcode = CL_SUCCESS;
+    const char *source = "constant float foo = 9.6F;\n";
+    auto compiledProgram = clCreateProgramWithSource(clContext, 1, &source, nullptr, &errcode);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+    ASSERT_EQ(CL_SUCCESS, clCompileProgram(compiledProgram, 1, &clDeviceId, nullptr, 0, nullptr, nullptr, nullptr, nullptr));
+
+    const auto binary = getProgramBinary(compiledProgram);
+    const size_t length = binary.size();
+    const unsigned char *binaryData = binary.data();
+    auto programFromBinary = clCreateProgramWithBinary(clContext, 1, &clDeviceId, &length, &binaryData, nullptr, &errcode);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+    ASSERT_NE(nullptr, programFromBinary);
+
+    EXPECT_EQ(static_cast<cl_program_binary_type>(CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT), getProgramBinaryType(programFromBinary, clDeviceId));
+    auto leoProgram = castToObject<Program>(programFromBinary);
+    EXPECT_FALSE(leoProgram->getIsSpirv());
+    ASSERT_EQ(sizeof(llvmBcBlob), leoProgram->getIrBinarySize());
+    EXPECT_EQ(0, memcmp(llvmBcBlob, leoProgram->getIrBinary(), sizeof(llvmBcBlob)));
+
+    clReleaseProgram(programFromBinary);
+    clReleaseProgram(compiledProgram);
+    clReleaseContext(clContext);
+}
+
+TEST_F(ClProgramCompileLinkTests, givenLlvmBcLibraryProgramWhenQueryingProgramBinaryThenOclElfLibraryWithLlvmBcSectionIsReturnedAndRecreatesLibrary) {
+    cl_device_id clDeviceId = nullptr;
+    cl_context clContext = createOclContext(platform, clDeviceId);
+
+    cl_int errcode = CL_SUCCESS;
+    auto library = clCreateProgramWithIL(clContext, llvmBcBlob, sizeof(llvmBcBlob), &errcode);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+
+    const auto binary = getProgramBinary(library);
+    std::string decodeErrors;
+    std::string decodeWarnings;
+    auto elf = NEO::Elf::decodeElf<NEO::Elf::EI_CLASS_64>(ArrayRef<const uint8_t>(binary.data(), binary.size()), decodeErrors, decodeWarnings);
+    ASSERT_NE(nullptr, elf.elfFileHeader);
+    EXPECT_EQ(NEO::Elf::ET_OPENCL_LIBRARY, elf.elfFileHeader->type);
+    const auto irSection = std::ranges::find_if(elf.sectionHeaders, [](const auto &section) { return NEO::Elf::SHT_OPENCL_LLVM_BINARY == section.header->type; });
+    ASSERT_NE(elf.sectionHeaders.end(), irSection);
+    ASSERT_EQ(sizeof(llvmBcBlob), irSection->data.size());
+    EXPECT_EQ(0, memcmp(llvmBcBlob, irSection->data.begin(), sizeof(llvmBcBlob)));
+
+    const size_t length = binary.size();
+    const unsigned char *binaryData = binary.data();
+    auto libraryFromBinary = clCreateProgramWithBinary(clContext, 1, &clDeviceId, &length, &binaryData, nullptr, &errcode);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+    EXPECT_EQ(static_cast<cl_program_binary_type>(CL_PROGRAM_BINARY_TYPE_LIBRARY), getProgramBinaryType(libraryFromBinary, clDeviceId));
+    EXPECT_FALSE(castToObject<Program>(libraryFromBinary)->getIsSpirv());
+
+    clReleaseProgram(libraryFromBinary);
+    clReleaseProgram(library);
+    clReleaseContext(clContext);
+}
+
+TEST_F(ClProgramCompileLinkTests, givenSpirvCompiledObjectWhenQueryingProgramBinaryThenOclElfObjectWithSpirvSectionIsReturnedAndRecreatesCompiledObject) {
+    cl_device_id clDeviceId = nullptr;
+    cl_context clContext = createOclContext(platform, clDeviceId);
+
+    cl_int errcode = CL_SUCCESS;
+    auto compiledObject = clCreateProgramWithIL(clContext, spirvBlob, sizeof(spirvBlob), &errcode);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+
+    const auto binary = getProgramBinary(compiledObject);
+    std::string decodeErrors;
+    std::string decodeWarnings;
+    auto elf = NEO::Elf::decodeElf<NEO::Elf::EI_CLASS_64>(ArrayRef<const uint8_t>(binary.data(), binary.size()), decodeErrors, decodeWarnings);
+    ASSERT_NE(nullptr, elf.elfFileHeader);
+    EXPECT_EQ(NEO::Elf::ET_OPENCL_OBJECTS, elf.elfFileHeader->type);
+    const auto irSection = std::ranges::find_if(elf.sectionHeaders, [](const auto &section) { return NEO::Elf::SHT_OPENCL_SPIRV == section.header->type; });
+    ASSERT_NE(elf.sectionHeaders.end(), irSection);
+    ASSERT_EQ(sizeof(spirvBlob), irSection->data.size());
+    EXPECT_EQ(0, memcmp(spirvBlob, irSection->data.begin(), sizeof(spirvBlob)));
+
+    const size_t length = binary.size();
+    const unsigned char *binaryData = binary.data();
+    auto compiledObjectFromBinary = clCreateProgramWithBinary(clContext, 1, &clDeviceId, &length, &binaryData, nullptr, &errcode);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+    EXPECT_EQ(static_cast<cl_program_binary_type>(CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT), getProgramBinaryType(compiledObjectFromBinary, clDeviceId));
+    EXPECT_TRUE(castToObject<Program>(compiledObjectFromBinary)->getIsSpirv());
+
+    clReleaseProgram(compiledObjectFromBinary);
+    clReleaseProgram(compiledObject);
+    clReleaseContext(clContext);
+}
+
+TEST_F(ClProgramCompileLinkTests, givenCompiledObjectWithBuildOptionsWhenProgramIsCreatedFromItsBinaryAndBuiltWithoutOptionsThenStoredOptionsAreUsed) {
+    auto *mockCompiler = new MockLlvmBcCompileCompilerInterface();
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->compilerInterface.reset(mockCompiler);
+
+    cl_device_id clDeviceId = nullptr;
+    cl_context clContext = createOclContext(platform, clDeviceId);
+
+    cl_int errcode = CL_SUCCESS;
+    const char *source = "constant float foo = 9.6F;\n";
+    const char *compileOptions = "-cl-std=CL2.0";
+    auto compiledProgram = clCreateProgramWithSource(clContext, 1, &source, nullptr, &errcode);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+    ASSERT_EQ(CL_SUCCESS, clCompileProgram(compiledProgram, 1, &clDeviceId, compileOptions, 0, nullptr, nullptr, nullptr, nullptr));
+
+    const auto binary = getProgramBinary(compiledProgram);
+    std::string decodeErrors;
+    std::string decodeWarnings;
+    auto elf = NEO::Elf::decodeElf<NEO::Elf::EI_CLASS_64>(ArrayRef<const uint8_t>(binary.data(), binary.size()), decodeErrors, decodeWarnings);
+    ASSERT_NE(nullptr, elf.elfFileHeader);
+    const auto optionsSection = std::ranges::find_if(elf.sectionHeaders, [](const auto &section) { return NEO::Elf::SHT_OPENCL_OPTIONS == section.header->type; });
+    ASSERT_NE(elf.sectionHeaders.end(), optionsSection);
+    EXPECT_EQ(std::string(compileOptions), std::string(reinterpret_cast<const char *>(optionsSection->data.begin()), optionsSection->data.size()));
+
+    const size_t length = binary.size();
+    const unsigned char *binaryData = binary.data();
+    auto programFromBinary = clCreateProgramWithBinary(clContext, 1, &clDeviceId, &length, &binaryData, nullptr, &errcode);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+    EXPECT_TRUE(castToObject<Program>(programFromBinary)->getAllowNonUniform());
+
+    mockCompiler->receivedApiOptions.clear();
+    clBuildProgram(programFromBinary, 1, &clDeviceId, nullptr, nullptr, nullptr);
+    EXPECT_NE(std::string::npos, mockCompiler->receivedApiOptions.find(compileOptions));
+
+    clReleaseProgram(programFromBinary);
+    clReleaseProgram(compiledProgram);
+    clReleaseContext(clContext);
+}
+
+TEST_F(ClProgramCompileLinkTests, givenProgramCreatedFromOclElfCompiledObjectAndAlreadyBuiltWhenBuildProgramAgainThenIrIsBuiltAgain) {
+    auto *mockCompiler = new L0::ult::MockCompilerInterface();
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->compilerInterface.reset(mockCompiler);
+
+    cl_device_id clDeviceId = nullptr;
+    cl_context clContext = createOclContext(platform, clDeviceId);
+
+    cl_int errcode = CL_SUCCESS;
+    auto compiledObject = clCreateProgramWithIL(clContext, spirvBlob, sizeof(spirvBlob), &errcode);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+
+    const auto binary = getProgramBinary(compiledObject);
+    const size_t length = binary.size();
+    const unsigned char *binaryData = binary.data();
+    auto programFromBinary = clCreateProgramWithBinary(clContext, 1, &clDeviceId, &length, &binaryData, nullptr, &errcode);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+
+    clBuildProgram(programFromBinary, 1, &clDeviceId, nullptr, nullptr, nullptr);
+    mockCompiler->receivedApiOptions.clear();
+    const char *secondBuildOptions = "-cl-opt-disable";
+    clBuildProgram(programFromBinary, 1, &clDeviceId, secondBuildOptions, nullptr, nullptr);
+    EXPECT_NE(std::string::npos, mockCompiler->receivedApiOptions.find(secondBuildOptions));
+
+    clReleaseProgram(programFromBinary);
+    clReleaseProgram(compiledObject);
+    clReleaseContext(clContext);
+}
+
+TEST_F(ClProgramCompileLinkTests, givenProgramCreatedFromOclElfCompiledObjectWhenQueryingProgramIlAndSettingSpecConstantThenItIsNotTreatedAsIlProgram) {
+    cl_device_id clDeviceId = nullptr;
+    cl_context clContext = createOclContext(platform, clDeviceId);
+
+    cl_int errcode = CL_SUCCESS;
+    auto compiledObject = clCreateProgramWithIL(clContext, spirvBlob, sizeof(spirvBlob), &errcode);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+
+    const auto binary = getProgramBinary(compiledObject);
+    const size_t length = binary.size();
+    const unsigned char *binaryData = binary.data();
+    auto programFromBinary = clCreateProgramWithBinary(clContext, 1, &clDeviceId, &length, &binaryData, nullptr, &errcode);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+    EXPECT_EQ(Program::CreatedFrom::binary, castToObject<Program>(programFromBinary)->getCreatedFrom());
+
+    size_t ilSize = 1u;
+    EXPECT_EQ(CL_SUCCESS, clGetProgramInfo(programFromBinary, CL_PROGRAM_IL, 0, nullptr, &ilSize));
+    EXPECT_EQ(0u, ilSize);
+
+    const uint32_t specValue = 1u;
+    EXPECT_EQ(CL_INVALID_PROGRAM, clSetProgramSpecializationConstant(programFromBinary, 0u, sizeof(specValue), &specValue));
+
+    clReleaseProgram(programFromBinary);
+    clReleaseProgram(compiledObject);
+    clReleaseContext(clContext);
+}
+
+TEST_F(ClProgramCompileLinkTests, givenOclElfCompiledObjectWithoutIrWhenCreateProgramWithBinaryThenInvalidBinaryIsReturned) {
+    cl_device_id clDeviceId = nullptr;
+    cl_context clContext = createOclContext(platform, clDeviceId);
+
+    NEO::Elf::ElfEncoder<NEO::Elf::EI_CLASS_64> elfEncoder;
+    elfEncoder.getElfFileHeader().type = NEO::Elf::ET_OPENCL_OBJECTS;
+    elfEncoder.appendSection(NEO::Elf::SHT_OPENCL_OPTIONS, NEO::Elf::SectionNamesOpenCl::buildOptions, ArrayRef<const uint8_t>::fromAny("-cl-opt-disable", 15u));
+    const auto binary = elfEncoder.encode();
+
+    const size_t length = binary.size();
+    const unsigned char *binaryData = binary.data();
+    cl_int errcode = CL_SUCCESS;
+    cl_int binaryStatus = CL_SUCCESS;
+    auto program = clCreateProgramWithBinary(clContext, 1, &clDeviceId, &length, &binaryData, &binaryStatus, &errcode);
+    EXPECT_EQ(CL_INVALID_BINARY, errcode);
+    EXPECT_EQ(CL_INVALID_BINARY, binaryStatus);
+
+    if (program != nullptr) {
+        clReleaseProgram(program);
+    }
+    clReleaseContext(clContext);
+}
+
+TEST_F(ClProgramCompileLinkTests, givenOclElfExecutableWhenCreateProgramWithBinaryThenItIsNotTreatedAsCompiledObjectOrLibrary) {
+    cl_device_id clDeviceId = nullptr;
+    cl_context clContext = createOclContext(platform, clDeviceId);
+
+    NEO::Elf::ElfEncoder<NEO::Elf::EI_CLASS_64> elfEncoder;
+    elfEncoder.getElfFileHeader().type = NEO::Elf::ET_OPENCL_EXECUTABLE;
+    elfEncoder.appendSection(NEO::Elf::SHT_OPENCL_SPIRV, NEO::Elf::SectionNamesOpenCl::spirvObject, ArrayRef<const uint8_t>::fromAny(spirvBlob, sizeof(spirvBlob) / sizeof(spirvBlob[0])));
+    const auto binary = elfEncoder.encode();
+
+    const size_t length = binary.size();
+    const unsigned char *binaryData = binary.data();
+    cl_int errcode = CL_SUCCESS;
+    auto program = clCreateProgramWithBinary(clContext, 1, &clDeviceId, &length, &binaryData, nullptr, &errcode);
+    ASSERT_NE(nullptr, program);
+    EXPECT_EQ(Program::CreatedFrom::binary, castToObject<Program>(program)->getCreatedFrom());
+    const auto binaryType = getProgramBinaryType(program, clDeviceId);
+    EXPECT_NE(static_cast<cl_program_binary_type>(CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT), binaryType);
+    EXPECT_NE(static_cast<cl_program_binary_type>(CL_PROGRAM_BINARY_TYPE_LIBRARY), binaryType);
+
+    clReleaseProgram(program);
+    clReleaseContext(clContext);
+}
+
+TEST_F(ClProgramCompileLinkTests, givenCompiledObjectWithoutIrWhenQueryingProgramBinarySizesThenZeroIsReturned) {
+    cl_device_id clDeviceId = nullptr;
+    cl_context clContext = createOclContext(platform, clDeviceId);
+
+    cl_int errcode = CL_SUCCESS;
+    const char *source = "kernel void foo() {}";
+    auto program = clCreateProgramWithSource(clContext, 1, &source, nullptr, &errcode);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+    castToObject<Program>(program)->setProgramBinaryType(CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT);
+
+    size_t binarySize = 1u;
+    EXPECT_EQ(CL_SUCCESS, clGetProgramInfo(program, CL_PROGRAM_BINARY_SIZES, sizeof(binarySize), &binarySize, nullptr));
+    EXPECT_EQ(0u, binarySize);
 
     clReleaseProgram(program);
     clReleaseContext(clContext);

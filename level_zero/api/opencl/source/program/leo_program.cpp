@@ -10,6 +10,8 @@
 #include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/compiler_interface/intermediate_representations.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
+#include "shared/source/device_binary_format/elf/elf_encoder.h"
+#include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/device_binary_format/zebin/zebin_elf.h"
 #include "shared/source/helpers/compiler_options_parser.h"
 #include "shared/source/helpers/get_info.h"
@@ -150,6 +152,30 @@ cl_int Program::captureIrForLibraryOutput() {
     return populateIrBinaryFromModule();
 }
 
+cl_int Program::createFromIr(ArrayRef<const uint8_t> ir, cl_program_binary_type binaryType, CreatedFrom irCreatedFrom) {
+    this->irBinary = makeCopy(ir.begin(), ir.size());
+    this->irBinarySize = ir.size();
+    this->setProgramBinaryType(binaryType);
+    this->createdFrom = irCreatedFrom;
+    this->isSpirv = NEO::isSpirVBitcode(ir);
+    return CL_SUCCESS;
+}
+
+std::vector<uint8_t> Program::packIrBinary() const {
+    NEO::Elf::ElfEncoder<NEO::Elf::EI_CLASS_64> elfEncoder;
+    elfEncoder.getElfFileHeader().type = (CL_PROGRAM_BINARY_TYPE_LIBRARY == this->programBinaryType) ? NEO::Elf::ET_OPENCL_LIBRARY : NEO::Elf::ET_OPENCL_OBJECTS;
+    const ArrayRef<const uint8_t> ir(reinterpret_cast<const uint8_t *>(this->irBinary.get()), this->irBinarySize);
+    if (this->isSpirv) {
+        elfEncoder.appendSection(NEO::Elf::SHT_OPENCL_SPIRV, NEO::Elf::SectionNamesOpenCl::spirvObject, ir);
+    } else {
+        elfEncoder.appendSection(NEO::Elf::SHT_OPENCL_LLVM_BINARY, NEO::Elf::SectionNamesOpenCl::llvmObject, ir);
+    }
+    if (false == this->options.empty()) {
+        elfEncoder.appendSection(NEO::Elf::SHT_OPENCL_OPTIONS, NEO::Elf::SectionNamesOpenCl::buildOptions, ArrayRef<const uint8_t>::fromAny(this->options.data(), this->options.size()));
+    }
+    return elfEncoder.encode();
+}
+
 cl_int Program::createFromBinaryOrIl(cl_device_id device, size_t length, const unsigned char *binary) {
     auto deviceHandle = NEO::LEO::ConvertTo::zeDeviceHandle(device);
     if (!deviceHandle) {
@@ -161,14 +187,26 @@ cl_int Program::createFromBinaryOrIl(cl_device_id device, size_t length, const u
     const bool isLlvmBc = NEO::isLlvmBitcode(archive);
     const bool isDeviceBinary = isAnyDeviceBinaryFormat(archive);
     if (isSpirV || isLlvmBc) {
-        this->irBinary = makeCopy(binary, length);
-        this->irBinarySize = length;
-        this->setProgramBinaryType(isSpirV ? CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT : CL_PROGRAM_BINARY_TYPE_LIBRARY);
-        this->createdFrom = CreatedFrom::il;
-        this->isSpirv = isSpirV;
-        return CL_SUCCESS;
+        return this->createFromIr(archive, isSpirV ? CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT : CL_PROGRAM_BINARY_TYPE_LIBRARY, CreatedFrom::il);
     } else if (!isDeviceBinary) {
         return CL_INVALID_BINARY;
+    }
+
+    if (NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::oclElf>(archive)) {
+        std::string decodeErrors;
+        std::string decodeWarnings;
+        const auto oclElf = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::oclElf>(archive, {}, {}, decodeErrors, decodeWarnings);
+        const bool isCompiledObject = (NEO::DeviceBinaryFormat::oclCompiledObject == oclElf.format);
+        const bool isLibrary = (NEO::DeviceBinaryFormat::oclLibrary == oclElf.format);
+        if (isCompiledObject || isLibrary) {
+            if (oclElf.intermediateRepresentation.empty()) {
+                return CL_INVALID_BINARY;
+            }
+            this->options = oclElf.buildOptions.str();
+            this->createdFromIrBinary = true;
+            this->allowNonUniform = NEO::isNonUniformWorkGroupAllowed(this->options);
+            return this->createFromIr(oclElf.intermediateRepresentation, isLibrary ? CL_PROGRAM_BINARY_TYPE_LIBRARY : CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT, CreatedFrom::binary);
+        }
     }
 
     const auto rootDeviceIndex = L0::Device::fromHandle(deviceHandle)->getNEODevice()->getRootDeviceIndex();
@@ -335,25 +373,26 @@ cl_int Program::buildFromIL(const char *options) {
 
 cl_int Program::build(const char *options,
                       void(CL_CALLBACK *funcNotify)(cl_program program, void *userData), void *userData) {
-    if (this->createdFrom == CreatedFrom::binary) [[unlikely]] {
+    if (this->createdFrom == CreatedFrom::binary && false == this->createdFromIrBinary) [[unlikely]] {
         // A program created from a native binary is already built; nothing to do.
         const cl_int retVal = this->requireModulesLinkedFullyForBuild();
         this->invokeCallback(funcNotify, userData);
         return retVal;
     }
 
+    const char *buildOptions = (this->createdFrom == CreatedFrom::binary && nullptr == options) ? this->options.c_str() : options;
     this->setBuildStatus(CL_BUILD_ERROR);
     cl_int retVal = CL_INVALID_OPERATION;
     if (this->createdFrom == CreatedFrom::source) {
-        retVal = this->buildFromSource(options);
-    } else if (this->createdFrom == CreatedFrom::il) {
-        retVal = this->buildFromIL(options);
+        retVal = this->buildFromSource(buildOptions);
+    } else if (this->createdFrom == CreatedFrom::il || this->createdFrom == CreatedFrom::binary) {
+        retVal = this->buildFromIL(buildOptions);
     }
     if (CL_SUCCESS == retVal) {
         retVal = this->requireModulesLinkedFullyForBuild();
     }
     if (CL_SUCCESS == retVal) {
-        this->allowNonUniform = NEO::isNonUniformWorkGroupAllowed(options ? options : "");
+        this->allowNonUniform = NEO::isNonUniformWorkGroupAllowed(buildOptions ? buildOptions : "");
         this->setBuildStatus(CL_BUILD_SUCCESS);
     }
     this->invokeCallback(funcNotify, userData);
@@ -531,16 +570,18 @@ cl_int Program::getDeviceBinary(uint32_t rootDeviceIndex, size_t *outSize, unsig
         return L0ToClResultMapper(zeModuleGetNativeBinary(moduleHandle, outSize, outBinary));
     case CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT:
     case CL_PROGRAM_BINARY_TYPE_LIBRARY:
-    case CL_PROGRAM_BINARY_TYPE_INTERMEDIATE:
-        if (this->irBinarySize > 0) {
-            *outSize = this->irBinarySize;
-            if (outBinary) {
-                memcpy_s(outBinary, this->irBinarySize, this->irBinary.get(), this->irBinarySize);
-            }
-        } else {
-            L0::Module::fromHandle(moduleHandle)->getIrBinary(outSize, outBinary);
+    case CL_PROGRAM_BINARY_TYPE_INTERMEDIATE: {
+        if (0u == this->irBinarySize) {
+            *outSize = 0u;
+            return CL_SUCCESS;
+        }
+        const auto packedIrBinary = this->packIrBinary();
+        *outSize = packedIrBinary.size();
+        if (outBinary) {
+            memcpy_s(outBinary, packedIrBinary.size(), packedIrBinary.data(), packedIrBinary.size());
         }
         return CL_SUCCESS;
+    }
     case CL_PROGRAM_BINARY_TYPE_NONE:
     default:
         *outSize = 0u;

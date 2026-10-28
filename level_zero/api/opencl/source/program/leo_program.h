@@ -124,6 +124,8 @@ class Program : public BaseObject<_cl_program> {
     static cl_int mapModuleBuildResult(ze_result_t ret, cl_int buildFailureCode);
     cl_int populateIrBinaryFromModule();
     bool areModulesLinkedFully() const;
+    cl_int createFromIr(ArrayRef<const uint8_t> ir, cl_program_binary_type binaryType, CreatedFrom irCreatedFrom);
+    std::vector<uint8_t> packIrBinary() const;
     cl_int linkModulesFully();
     cl_int requireModulesLinkedFullyForBuild();
     // Reads the per-device program binary (native gen binary for EXECUTABLE, IR otherwise).
@@ -147,6 +149,7 @@ class Program : public BaseObject<_cl_program> {
     cl_build_status buildStatus = CL_BUILD_NONE;
     bool isSpirv = false;
     bool allowNonUniform = false;
+    bool createdFromIrBinary = false;
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<Program>);
