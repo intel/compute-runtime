@@ -15,8 +15,11 @@
 
 #include "gtest/gtest.h"
 
+#include <atomic>
+#include <chrono>
 #include <csignal>
 #include <sys/mman.h>
+#include <thread>
 
 using namespace NEO;
 
@@ -75,6 +78,13 @@ class MockFailPageFaultManager : public PageFaultManagerLinux {
         pageFaultHandlerWrapper(signal, info, context);
     }
 
+    static void mockBlockingPageFaultHandler(int signal, siginfo_t *info, void *context) {
+        blockingMockCalls++;
+        for (int i = 0; i < 1000 && blockingMockCalls < 2; i++) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+    }
+
     static void mockPageFaultSimpleHandler(int signal) {
         simpleMockCalled = true;
     }
@@ -89,6 +99,7 @@ class MockFailPageFaultManager : public PageFaultManagerLinux {
         simpleMockCalled = false;
         simpleMockCalled2 = false;
         staticVerifyCalled = false;
+        blockingMockCalls = 0;
     }
 
     static bool mockCalled;
@@ -96,6 +107,7 @@ class MockFailPageFaultManager : public PageFaultManagerLinux {
     static bool simpleMockCalled;
     static bool simpleMockCalled2;
     static bool staticVerifyCalled;
+    static std::atomic<int> blockingMockCalls;
     bool verifyCalled = false;
     int numPageFaultHandled = 0;
 };
@@ -105,6 +117,7 @@ bool MockFailPageFaultManager::mockCalled2 = false;
 bool MockFailPageFaultManager::simpleMockCalled = false;
 bool MockFailPageFaultManager::simpleMockCalled2 = false;
 bool MockFailPageFaultManager::staticVerifyCalled = false;
+std::atomic<int> MockFailPageFaultManager::blockingMockCalls = 0;
 
 TEST_F(PageFaultManagerLinuxTest, givenPageFaultThatNEOShouldNotHandleAndSigInfoFlagSetThenSaSigactionIsCalled) {
     struct sigaction previousHandler = {};
@@ -122,6 +135,27 @@ TEST_F(PageFaultManagerLinuxTest, givenPageFaultThatNEOShouldNotHandleAndSigInfo
     EXPECT_TRUE(mockPageFaultManager->verifyCalled);
     EXPECT_TRUE(MockFailPageFaultManager::mockCalled);
     EXPECT_FALSE(MockFailPageFaultManager::simpleMockCalled);
+
+    mockPageFaultManager.reset();
+    sigaction(SIGSEGV, &previousHandler, nullptr);
+}
+
+TEST_F(PageFaultManagerLinuxTest, givenPageFaultsThatNEOShouldNotHandleOnTwoThreadsAtOnceThenSaSigactionIsCalledOnBoth) {
+    struct sigaction previousHandler = {};
+    struct sigaction mockHandler = {};
+    mockHandler.sa_flags = SA_SIGINFO;
+    mockHandler.sa_sigaction = MockFailPageFaultManager::mockBlockingPageFaultHandler;
+    auto retVal = sigaction(SIGSEGV, &mockHandler, &previousHandler);
+    EXPECT_EQ(retVal, 0);
+
+    auto mockPageFaultManager = std::make_unique<MockFailPageFaultManager>();
+
+    // the first thread waits inside the previous handler until the second one gets there
+    std::thread thread1([] { std::raise(SIGSEGV); });
+    std::thread thread2([] { std::raise(SIGSEGV); });
+    thread1.join();
+    thread2.join();
+    EXPECT_EQ(2, MockFailPageFaultManager::blockingMockCalls);
 
     mockPageFaultManager.reset();
     sigaction(SIGSEGV, &previousHandler, nullptr);
