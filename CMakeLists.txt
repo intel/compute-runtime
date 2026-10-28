@@ -1014,9 +1014,6 @@ endif()
 
 add_subdirectory_unique(shared/source/release_helpers)
 add_subdirectory_unique(${OCLOC_DIRECTORY} ${NEO_BUILD_DIR}/offline_compiler)
-target_compile_definitions(ocloc_lib
-                           PRIVATE MOCKABLE_VIRTUAL=
-)
 include(cmake/ocloc_cmd_prefix.cmake)
 
 if(DONT_CARE_OF_VIRTUALS)

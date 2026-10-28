@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/utilities/mem_lifetime.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 #include "shared/source/utilities/stackvec.h"
 
 #include "level_zero/core/source/cmdqueue/counters_cross_sync_definitions.h"

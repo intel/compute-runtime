@@ -12,6 +12,7 @@
 #include "shared/source/helpers/heap_base_address_model.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/indirect_heap/indirect_heap_type.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include <atomic>
 #include <cstdint>

@@ -6,6 +6,8 @@
  */
 
 #pragma once
+#include "shared/source/utilities/mockable_virtual_defaults.h"
+
 #include "level_zero/sysman/source/shared/linux/nl_api/sysman_drm_ras_types.h"
 #include "level_zero/sysman/source/shared/linux/nl_api/sysman_nl_api.h"
 #include <level_zero/zes_api.h>

@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/helpers/device_bitfield.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include <cstddef>
 #include <cstdint>

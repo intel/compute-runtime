@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/helpers/non_copyable_or_moveable.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include "level_zero/sysman/source/driver/os_sysman_driver.h"
 #include "level_zero/sysman/source/shared/linux/udev/udev_lib.h"

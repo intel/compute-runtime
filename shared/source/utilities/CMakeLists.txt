@@ -37,6 +37,7 @@ set(NEO_CORE_UTILITIES
     ${CMAKE_CURRENT_SOURCE_DIR}/lookup_array.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mem_lifetime.h
     ${CMAKE_CURRENT_SOURCE_DIR}/metrics_library.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mockable_virtual_defaults.h
     ${CMAKE_CURRENT_SOURCE_DIR}/numeric.h
     ${CMAKE_CURRENT_SOURCE_DIR}/perf_counter.h
     ${CMAKE_CURRENT_SOURCE_DIR}/pool_allocator_traits.cpp

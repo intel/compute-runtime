@@ -9,6 +9,7 @@
 #include "shared/source/debugger/debugger.h"
 #include "shared/source/device/device_group_sort_key.h"
 #include "shared/source/helpers/device_hierarchy_mode.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 #include "shared/source/utilities/reference_tracked_object.h"
 
 #include <mutex>

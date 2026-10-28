@@ -12,6 +12,7 @@
 #include "shared/source/helpers/completion_stamp.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/utilities/cpuintrinsics.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 #include "shared/source/utilities/stackvec.h"
 
 #include <future>

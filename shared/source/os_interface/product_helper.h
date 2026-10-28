@@ -6,6 +6,8 @@
  */
 
 #pragma once
+#include "shared/source/utilities/mockable_virtual_defaults.h"
+
 #include "neo_igfxfmid.h"
 #include "supported_num_grfs.h"
 

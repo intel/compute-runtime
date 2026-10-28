@@ -9,6 +9,7 @@
 
 #include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include "level_zero/core/source/helpers/api_handle_helper.h"
 

@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/built_ins/built_in_ops_base.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include <memory>
 #include <mutex>

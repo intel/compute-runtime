@@ -15,6 +15,7 @@
 #include "shared/source/os_interface/linux/xe/eudebug/eudebug_interface.h"
 #include "shared/source/os_interface/os_time.h"
 #include "shared/source/os_interface/user_fence.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 #include "shared/source/utilities/stackvec.h"
 
 #include "neo_igfxfmid.h"

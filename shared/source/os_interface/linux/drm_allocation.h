@@ -11,6 +11,7 @@
 #include "shared/source/memory_manager/memadvise_flags.h"
 #include "shared/source/os_interface/linux/drm_debug.h"
 #include "shared/source/os_interface/linux/memory_unmap_function.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 namespace NEO {
 class BufferObject;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/command_stream/aub_subcapture_status.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include <atomic>
 #include <memory>

@@ -10,6 +10,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include "level_zero/sysman/source/api/global_operations/sysman_os_global_operations.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"

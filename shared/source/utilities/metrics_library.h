@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/os_interface/os_library.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include "metrics_library_api_1_0.h"
 

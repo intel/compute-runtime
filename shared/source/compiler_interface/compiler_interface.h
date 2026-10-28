@@ -10,6 +10,7 @@
 #include "shared/source/compiler_interface/translation_error_code.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/utilities/arrayref.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 #include "shared/source/utilities/spinlock.h"
 #include "shared/source/utilities/stackvec.h"
 

@@ -6,6 +6,8 @@
  */
 
 #pragma once
+#include "shared/source/utilities/mockable_virtual_defaults.h"
+
 #include "level_zero/api/opencl/source/sharings/leo_sharing.h"
 #include "level_zero/api/opencl/source/sharings/va/leo_va_sharing_defines.h"
 #include <level_zero/ze_api.h>

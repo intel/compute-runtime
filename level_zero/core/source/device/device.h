@@ -16,6 +16,7 @@
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 #include "shared/source/utilities/lockable.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include "level_zero/core/source/device/device_handle.h"
 #include "level_zero/core/source/helpers/api_handle_helper.h"

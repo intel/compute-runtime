@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/command_stream/command_stream_receiver_simulated_hw.h"
 #include "shared/source/memory_manager/residency_container.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include <mutex>
 

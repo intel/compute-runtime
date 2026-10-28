@@ -10,6 +10,7 @@
 #include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/helpers/topology_map.h"
 #include "shared/source/os_interface/os_thread.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include "level_zero/core/source/helpers/api_handle_helper.h"
 #include "level_zero/include/level_zero/zet_intel_gpu_debug.h"

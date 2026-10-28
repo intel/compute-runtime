@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/device/device.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include "level_zero/api/opencl/source/api/leo_cl_types.h"
 #include "level_zero/api/opencl/source/cl_device/leo_cl_device_info.h"

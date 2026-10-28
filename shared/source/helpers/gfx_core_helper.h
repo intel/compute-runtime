@@ -14,6 +14,7 @@
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/fence_type.h"
 #include "shared/source/helpers/options.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 #include "shared/source/utilities/stackvec.h"
 
 #include "aubstream/aubstream.h"

@@ -10,6 +10,7 @@
 #include "shared/source/compiler_interface/linker.h"
 #include "shared/source/compiler_interface/spec_const_values_map.h"
 #include "shared/source/program/program_info.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include "level_zero/core/source/kernel/kernel.h"
 #include "level_zero/core/source/module/module.h"

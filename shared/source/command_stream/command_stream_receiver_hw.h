@@ -15,6 +15,7 @@
 #include "shared/source/helpers/kmd_notify_helper.h"
 #include "shared/source/helpers/pipeline_select_args.h"
 #include "shared/source/helpers/state_base_address_helper.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 namespace NEO {
 class TagNodeBase;

@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include "External/Common/GmmPageTableMgr.h"
 

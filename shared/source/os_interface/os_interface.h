@@ -10,6 +10,7 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/topology_map.h"
 #include "shared/source/os_interface/external_semaphore.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include <limits>
 #include <memory>

@@ -11,6 +11,7 @@
 #include "shared/source/helpers/device_bitfield.h"
 #include "shared/source/memory_manager/definitions/engine_limits.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/tools/source/debug/debug_session.h"

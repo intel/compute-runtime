@@ -15,6 +15,7 @@
 #include "shared/source/memory_manager/unified_memory_pooling.h"
 #include "shared/source/os_interface/sys_calls_common.h"
 #include "shared/source/unified_memory/unified_memory.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 #include "shared/source/utilities/stackvec.h"
 
 #include "level_zero/core/source/helpers/api_handle_helper.h"

@@ -11,6 +11,7 @@
 #include "shared/source/os_interface/os_time.h"
 #include "shared/source/utilities/idlist.h"
 #include "shared/source/utilities/iflist.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include "opencl/source/api/cl_types.h"
 #include "opencl/source/command_queue/copy_engine_state.h"

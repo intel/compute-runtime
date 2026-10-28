@@ -9,6 +9,7 @@
 
 #include "shared/source/helpers/memory_properties_flags.h"
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include "opencl/extensions/public/cl_ext_private.h"
 #include "opencl/source/api/cl_types.h"

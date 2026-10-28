@@ -6,6 +6,8 @@
  */
 
 #pragma once
+#include "shared/source/utilities/mockable_virtual_defaults.h"
+
 #include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/tools/source/sysman/windows/kmd_sys_manager.h"
 #include <level_zero/zes_api.h>

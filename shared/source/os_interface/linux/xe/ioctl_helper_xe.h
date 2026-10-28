@@ -11,6 +11,7 @@
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/xe/eudebug/eudebug_interface.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include <bitset>
 #include <mutex>

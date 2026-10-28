@@ -9,6 +9,7 @@
 
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include "level_zero/ze_api.h"
 #include "level_zero/zet_api.h"

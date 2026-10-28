@@ -10,6 +10,7 @@
 #include "shared/source/device_binary_format/zebin/zebin_elf.h"
 #include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/const_stringref.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include <memory>
 #include <string>

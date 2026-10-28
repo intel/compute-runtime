@@ -13,6 +13,7 @@
 #include "shared/source/helpers/hw_mapper.h"
 #include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/source/unified_memory/unified_memory.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include "level_zero/core/source/cmdlist/command_to_patch.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"

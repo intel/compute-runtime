@@ -12,6 +12,7 @@
 #include "shared/source/os_interface/os_memory.h"
 #include "shared/source/os_interface/windows/pdh_interface.h"
 #include "shared/source/os_interface/windows/wddm_allocation.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include <d3dkmthk.h>
 

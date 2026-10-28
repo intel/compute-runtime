@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include <atomic>
 #include <condition_variable>

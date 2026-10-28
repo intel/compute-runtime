@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/helpers/profiling_info.h"
 #include "shared/source/utilities/iflist.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include "level_zero/api/opencl/source/api/leo_cl_types.h"
 #include "level_zero/api/opencl/source/command_queue/leo_command_queue.h"

@@ -10,6 +10,7 @@
 #include "shared/source/kernel/dispatch_kernel_encoder_interface.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/unified_memory/unified_memory.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include "level_zero/core/source/kernel/kernel.h"
 #include "level_zero/core/source/kernel/kernel_mutable_state.h"

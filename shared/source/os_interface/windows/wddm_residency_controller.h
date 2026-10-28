@@ -10,6 +10,7 @@
 #include "shared/source/memory_manager/residency_container.h"
 #include "shared/source/os_interface/windows/windows_defs.h"
 #include "shared/source/os_interface/windows/windows_wrapper.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 #include "shared/source/utilities/spinlock.h"
 #include "shared/source/utilities/stackvec.h"
 

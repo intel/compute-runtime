@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include "level_zero/api/opencl/source/context/leo_context.h"
 #include "level_zero/api/opencl/source/sharings/leo_sharing.h"

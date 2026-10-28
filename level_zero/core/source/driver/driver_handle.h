@@ -13,6 +13,7 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_pooling_facade.h"
 #include "shared/source/memory_manager/unified_memory_properties.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include "level_zero/core/source/driver/base_driver.h"
 #include "level_zero/core/source/helpers/api_handle_helper.h"

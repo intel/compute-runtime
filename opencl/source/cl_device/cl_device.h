@@ -9,6 +9,7 @@
 #include "shared/source/helpers/device_bitfield.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/utilities/lockable.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 #include "shared/source/utilities/reference_tracked_object.h"
 
 #include "opencl/source/api/cl_types.h"

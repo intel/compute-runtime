@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/os_interface/windows/d3dkmthk_wrapper.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include <cstdint>
 

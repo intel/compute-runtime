@@ -9,6 +9,7 @@
 
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/memory_manager/allocation_reuse_cache.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include <algorithm>
 #include <atomic>

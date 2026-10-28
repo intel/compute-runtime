@@ -10,6 +10,7 @@
 #include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include <cstddef>
 #include <cstdint>

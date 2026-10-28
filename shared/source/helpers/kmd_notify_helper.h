@@ -9,6 +9,7 @@
 #include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/helpers/kmd_notify_properties.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include <atomic>
 

@@ -14,6 +14,7 @@
 #include "shared/source/helpers/string_helpers.h"
 #include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/const_stringref.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include "ocl_igc_interface/code_type.h"
 

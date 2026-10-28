@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/os_interface/os_time.h"
 #include "shared/source/os_interface/windows/gfx_escape_wrapper.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #define GFX_ESCAPE_IGPA_INSTRUMENTATION_CONTROL 12
 

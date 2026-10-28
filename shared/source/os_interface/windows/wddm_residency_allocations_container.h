@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/memory_manager/memory_operations_status.h"
 #include "shared/source/os_interface/windows/windows_defs.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 #include "shared/source/utilities/spinlock.h"
 
 #include <mutex>

@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/tbx_command_stream_receiver.h"
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/memory_manager/page_table.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include <array>
 #include <set>

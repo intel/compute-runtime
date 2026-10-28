@@ -10,6 +10,7 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
 #include "shared/source/utilities/idlist.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include "metrics_library_api_1_0.h"
 

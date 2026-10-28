@@ -12,6 +12,7 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/program/program_info.h"
 #include "shared/source/utilities/const_stringref.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include "opencl/source/cl_device/cl_device_vector.h"
 #include "opencl/source/helpers/base_object.h"

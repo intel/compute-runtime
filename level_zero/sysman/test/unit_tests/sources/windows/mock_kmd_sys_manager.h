@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include "level_zero/sysman/source/shared/windows/sysman_kmd_sys_manager.h"
 #include "level_zero/zes_api.h"

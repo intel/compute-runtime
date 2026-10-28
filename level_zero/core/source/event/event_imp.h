@@ -9,6 +9,7 @@
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/timestamp_packet.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include "level_zero/core/source/event/event.h"
 

@@ -9,6 +9,7 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 #include "shared/source/os_interface/windows/wddm_residency_controller.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include <mutex>
 

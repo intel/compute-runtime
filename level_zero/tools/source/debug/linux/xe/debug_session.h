@@ -10,6 +10,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/os_interface/linux/drm_debug.h"
 #include "shared/source/os_interface/linux/xe/eudebug/eudebug_interface.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include "level_zero/tools/source/debug/debug_session.h"
 #include "level_zero/tools/source/debug/debug_session_imp.h"

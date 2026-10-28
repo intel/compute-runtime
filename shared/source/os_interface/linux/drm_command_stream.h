@@ -9,6 +9,7 @@
 #include "shared/source/command_stream/device_command_stream.h"
 #include "shared/source/os_interface/linux/drm_gem_close_worker.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include <vector>
 

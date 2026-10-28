@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/os_interface/driver_info.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include <functional>
 #include <memory>

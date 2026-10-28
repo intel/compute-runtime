@@ -18,6 +18,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/command_queue.h"

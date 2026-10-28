@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/memory_manager/allocations_list.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include <array>
 

@@ -12,6 +12,7 @@
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/os_memory.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include <map>
 #include <sys/mman.h>

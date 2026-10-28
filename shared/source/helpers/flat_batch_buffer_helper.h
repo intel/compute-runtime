@@ -9,6 +9,7 @@
 
 #include "shared/source/helpers/address_patch.h"
 #include "shared/source/helpers/device_bitfield.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include <map>
 #include <vector>

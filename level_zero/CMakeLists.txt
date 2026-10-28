@@ -310,7 +310,6 @@ if(BUILD_WITH_L0)
                    PROPERTY COMPILE_DEFINITIONS
       )
       target_compile_definitions(${LIB_NAME}
-                                 PUBLIC MOCKABLE_VIRTUAL=
                                  PUBLIC
                                  ${COMPUTE_RUNTIME_DEFINITIONS}
       )

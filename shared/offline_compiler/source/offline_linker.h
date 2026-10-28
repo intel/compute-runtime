@@ -9,6 +9,7 @@
 
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/utilities/arrayref.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include "ocl_igc_interface/code_type.h"
 

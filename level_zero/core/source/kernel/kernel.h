@@ -12,6 +12,7 @@
 #include "shared/source/kernel/dispatch_kernel_encoder_interface.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/unified_memory/unified_memory.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include "level_zero/core/source/helpers/api_handle_helper.h"
 

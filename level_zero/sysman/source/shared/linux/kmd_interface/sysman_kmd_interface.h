@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "shared/source/utilities/mockable_virtual_defaults.h"
+
 #include "level_zero/sysman/source/api/engine/sysman_engine.h"
 #include <level_zero/zes_api.h>
 

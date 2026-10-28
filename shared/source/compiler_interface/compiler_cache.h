@@ -10,6 +10,7 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/os_interface/os_handle.h"
 #include "shared/source/utilities/arrayref.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include <algorithm>
 #include <cstdint>

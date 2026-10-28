@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/helpers/hardware_context_controller.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include "aubstream/hardware_context.h"
 

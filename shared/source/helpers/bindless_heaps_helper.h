@@ -10,6 +10,7 @@
 #include "shared/source/helpers/heap_helper.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include <array>
 #include <memory>

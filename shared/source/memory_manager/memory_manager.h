@@ -26,6 +26,7 @@
 #include "shared/source/memory_manager/unified_memory_reuse.h"
 #include "shared/source/os_interface/os_memory.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 #include "shared/source/utilities/stackvec.h"
 
 #include <atomic>

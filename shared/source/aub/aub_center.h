@@ -9,6 +9,7 @@
 #include "shared/source/aub/aub_subcapture.h"
 #include "shared/source/helpers/options.h"
 #include "shared/source/memory_manager/physical_address_allocator.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include "aubstream/aub_manager.h"
 

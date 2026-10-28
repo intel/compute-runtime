@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/csr_definitions.h"
 #include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
 #include "level_zero/core/source/cmdlist/cmdlist_memory_copy_params.h"

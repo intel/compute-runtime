@@ -10,6 +10,7 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include "level_zero/tools/source/sysman/os_sysman.h"
 #include "level_zero/tools/source/sysman/sysman_const.h"

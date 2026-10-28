@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/gmm_helper/gmm_resource_usage_type.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include <cstddef>
 #include <cstdint>

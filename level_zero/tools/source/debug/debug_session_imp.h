@@ -11,6 +11,7 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/sip_external_lib/sip_external_lib.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include "level_zero/tools/source/debug/debug_session.h"
 #include "level_zero/zet_intel_gpu_debug.h"

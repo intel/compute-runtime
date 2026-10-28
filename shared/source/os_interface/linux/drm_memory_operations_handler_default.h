@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include <vector>
 

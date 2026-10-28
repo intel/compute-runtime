@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/helpers/constants.h"
 #include "shared/source/os_interface/os_memory.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include <array>
 

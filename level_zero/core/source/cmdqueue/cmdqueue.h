@@ -12,6 +12,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/heap_base_address_model.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 #include "shared/source/utilities/software_tags.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue_helpers.h"

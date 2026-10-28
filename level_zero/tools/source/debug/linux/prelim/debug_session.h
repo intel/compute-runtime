@@ -10,6 +10,7 @@
 #include "shared/source/os_interface/linux/drm_debug.h"
 #include "shared/source/os_interface/linux/i915_prelim.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/tools/source/debug/debug_session.h"

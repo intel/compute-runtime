@@ -25,6 +25,7 @@
 #include "shared/source/os_interface/defs.h"
 #include "shared/source/os_interface/external_semaphore.h"
 #include "shared/source/os_interface/user_fence.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 #include "shared/source/utilities/spinlock.h"
 
 #include <atomic>

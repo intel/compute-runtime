@@ -9,6 +9,7 @@
 
 #include "shared/offline_compiler/source/decoder/helper.h"
 #include "shared/source/utilities/const_stringref.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include <algorithm>
 #include <cstdint>

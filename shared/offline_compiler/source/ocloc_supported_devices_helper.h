@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 
 #include "shared/offline_compiler/source/ocloc_arg_helper.h"
 #include "shared/source/helpers/product_config_helper.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include <map>
 #include <string>

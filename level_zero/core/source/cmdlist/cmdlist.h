@@ -24,6 +24,7 @@
 #include "shared/source/memory_manager/prefetch_manager.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/unified_memory/unified_memory.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 #include "shared/source/utilities/software_tags.h"
 #include "shared/source/utilities/stackvec.h"
 

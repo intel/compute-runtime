@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 
 #include "shared/source/os_interface/os_memory.h"
 #include "shared/source/os_interface/windows/windows_wrapper.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 namespace NEO {
 

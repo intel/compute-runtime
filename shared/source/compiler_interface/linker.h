@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include <cstdint>
 #include <limits>

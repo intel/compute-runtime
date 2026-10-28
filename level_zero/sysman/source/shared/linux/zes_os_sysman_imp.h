@@ -12,6 +12,7 @@
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include "level_zero/include/level_zero/zes_intel_gpu_sysman.h"
 #include "level_zero/sysman/source/device/os_sysman.h"

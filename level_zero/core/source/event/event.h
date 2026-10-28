@@ -16,6 +16,7 @@
 #include "shared/source/helpers/timestamp_packet_container.h"
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
 #include "shared/source/os_interface/os_time.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 #include "shared/source/utilities/pool_allocators.h"
 
 #include "level_zero/core/source/helpers/api_handle_helper.h"

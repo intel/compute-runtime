@@ -17,6 +17,7 @@
 #include "shared/source/memory_manager/unified_memory_properties.h"
 #include "shared/source/unified_memory/unified_memory.h"
 #include "shared/source/utilities/heap_allocator.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 #include "shared/source/utilities/sorted_vector.h"
 
 #include <functional>

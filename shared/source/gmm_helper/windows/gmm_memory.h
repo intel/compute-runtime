@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/gmm_helper/gmm_lib.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 namespace NEO {
 class GmmClientContext;

@@ -9,6 +9,7 @@
 
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/host_function/host_function_interface.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include <functional>
 #include <memory>

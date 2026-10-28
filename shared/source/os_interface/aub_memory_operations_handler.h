@@ -9,6 +9,7 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/device_bitfield.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
+#include "shared/source/utilities/mockable_virtual_defaults.h"
 #include "shared/source/utilities/spinlock.h"
 
 #include "aubstream/aub_manager.h"
