@@ -1621,6 +1621,9 @@ void ModuleImp::checkIfPrivateMemoryPerDispatchIsNeeded() {
         auto globalMemorySize = neoDevice->getRootDevice()->getGlobalMemorySize(static_cast<uint32_t>(deviceBitfield.to_ulong()));
         auto numSubDevices = deviceBitfield.count();
         this->allocatePrivateMemoryPerDispatch = modulePrivateMemorySize * numSubDevices > globalMemorySize;
+        if (NEO::debugManager.flags.ForcePrivateMemoryPerDispatch.get() != -1) {
+            this->allocatePrivateMemoryPerDispatch = NEO::debugManager.flags.ForcePrivateMemoryPerDispatch.get() == 1;
+        }
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Private Memory Per Dispatch %d for modulePrivateMemorySize %zu subDevices %zu globalMemorySize %" PRIu64 "\n",
                      this->allocatePrivateMemoryPerDispatch, modulePrivateMemorySize, numSubDevices, globalMemorySize);
     }

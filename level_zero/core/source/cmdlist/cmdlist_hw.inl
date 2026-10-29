@@ -5069,11 +5069,13 @@ void CommandListCoreFamily<gfxCoreFamily>::allocateOrReuseKernelPrivateMemory(Ke
 
     bool allocToReuseFound = false;
 
+    // Any allocation at least this large serves: the kernel addresses it with its own per-thread size.
+    uint32_t reusedSize = 0;
     for (auto &alloc : privateAllocsToReuse) {
-        if (sizePerHwThread == alloc.first) {
+        if (sizePerHwThread <= alloc.first && (!allocToReuseFound || alloc.first < reusedSize)) {
             privateAlloc = alloc.second;
+            reusedSize = alloc.first;
             allocToReuseFound = true;
-            break;
         }
     }
     if (!allocToReuseFound) {

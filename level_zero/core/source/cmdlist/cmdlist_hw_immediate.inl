@@ -1945,7 +1945,26 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::allocateOrReuseKernelPrivate
     L0::KernelImp *kernelImp = static_cast<KernelImp *>(kernel);
     if (sizePerHwThread != 0U && kernelImp->getParentModule().shouldAllocatePrivateMemoryPerDispatch()) {
         auto ownership = getCsr(false)->obtainUniqueOwnership();
-        this->allocateOrReuseKernelPrivateMemory(kernel, sizePerHwThread, getCsr(false)->getOwnedPrivateAllocations());
+        auto &owned = getCsr(false)->getOwnedPrivateAllocations();
+        this->allocateOrReuseKernelPrivateMemory(kernel, sizePerHwThread, owned);
+        if (NEO::debugManager.flags.ForcePrivateMemoryPerDispatch.get() == 1 && owned.size() > 1) {
+            // One pool: keep the largest; the smaller ones go once the GPU has finished with them.
+            auto largest = owned[0];
+            for (auto &alloc : owned) {
+                if (alloc.first > largest.first) {
+                    largest = alloc;
+                }
+            }
+            auto csr = getCsr(false);
+            for (auto &alloc : owned) {
+                if (alloc.second != largest.second) {
+                    csr->getInternalAllocationStorage()->storeAllocationWithTaskCount(std::unique_ptr<NEO::GraphicsAllocation>(alloc.second),
+                                                                                      NEO::AllocationUsage::TEMPORARY_ALLOCATION, csr->peekTaskCount());
+                }
+            }
+            owned.clear();
+            owned.push_back(largest);
+        }
     }
 }
 

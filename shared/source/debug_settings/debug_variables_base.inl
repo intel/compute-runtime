@@ -671,6 +671,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, ExposeSingleDevice, -1, "-1: default, 0: disable
 DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalSetWalkerPartitionCount, 0, "Experimental implementation: Set number of COMPUTE_WALKERs for a given Partition Type, 0 - do not set the feature.")
 DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalSetWalkerPartitionType, -1, "Experimental implementation: Set COMPUTE_WALKER Partition Type. Valid values for types from 1 to 3")
 DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalEnableCustomLocalMemoryAlignment, 0, "Align local memory allocations to a given value. Works only with allocations at least as big as the value.  0: no effect, 2097152: 2 megabytes, 1073741824: 1 gigabyte")
+DECLARE_DEBUG_VARIABLE(int32_t, ForcePrivateMemoryPerDispatch, -1, "-1: default (only when a module's private memory exceeds the device), 0: never, 1: always, so kernels share their private allocations")
 DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalEnableDeviceAllocationCache, -1, "Experimentally enable device usm allocation cache. Use X% of device memory.")
 DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalEnableHostAllocationCache, -1, "Experimentally enable host usm allocation cache. Use X% of shared system memory.")
 DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalEnableSharedAllocationCache, -1, "Experimentally enable shared usm allocation cache. Use X% of device memory.")
