@@ -380,7 +380,7 @@ DECLARE_DEBUG_VARIABLE(bool, TemporaryEnablePageFaultException, true, "Enable pa
 DECLARE_DEBUG_VARIABLE(bool, TemporaryEnableOutOfBoundariesInTranslationException, true, "Enable Out of Boundaries in Translation Exception,  0: disabled, 1: enable(default)")
 DECLARE_DEBUG_VARIABLE(bool, MakeAllBuffersResident, false, "Make all buffers resident after creation")
 DECLARE_DEBUG_VARIABLE(int32_t, sipFifoValidNodeMaxTimeoutMs, -1, "-1: default 100ms. >=0: override time in ms to wait for sip fifo entry to become valid")
-DECLARE_DEBUG_VARIABLE(int32_t, OverrideLatePreemptionStart, 0, "-1: default. >=0: override late preemption start mode")
+DECLARE_DEBUG_VARIABLE(int32_t, OverrideLatePreemptionStart, -1, "-1: default. >=0: override late preemption start mode")
 DECLARE_DEBUG_VARIABLE(int32_t, MidThreadPreemptionAllocationOnDemand, -1, "-1: default, 0: create and program mid thread preemption allocation upfront, 1: create and program mid thread preemption allocation on first kernel requiring mid thread preemption")
 
 /*POWER AND CPU EFFICIENCY FLAGS*/
