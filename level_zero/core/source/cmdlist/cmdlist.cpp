@@ -24,6 +24,7 @@
 #include "shared/source/memory_manager/prefetch_manager.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_time.h"
+#include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 #include "shared/source/utilities/tag_allocator.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_launch_params.h"

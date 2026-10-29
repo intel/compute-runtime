@@ -5,6 +5,8 @@
  *
  */
 
+#include "level_zero/core/source/memory/cpu_page_fault_memory_manager.h"
+
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"

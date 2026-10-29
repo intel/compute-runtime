@@ -14,7 +14,6 @@
 #include "shared/source/memory_manager/memadvise_flags.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/product_helper.h"
-#include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 #include "shared/source/utilities/lockable.h"
 #include "shared/source/utilities/mockable_virtual_defaults.h"
 
@@ -338,7 +337,5 @@ struct Device : _ze_device_handle_t, NEO::NonCopyableAndNonMovableClass {
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<Device>);
-
-void transferAndUnprotectMemoryWithHints(NEO::CpuPageFaultManager *pageFaultHandler, void *allocPtr, NEO::CpuPageFaultManager::PageFaultData &pageFaultData);
 
 } // namespace L0

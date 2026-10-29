@@ -68,6 +68,7 @@
 #include "level_zero/core/source/image/internal_core_image_ext.h"
 #include "level_zero/core/source/kernel/kernel.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
+#include "level_zero/core/source/memory/cpu_page_fault_memory_manager.h"
 #include "level_zero/core/source/module/module.h"
 #include "level_zero/core/source/module/module_imp.h"
 #include "level_zero/driver_experimental/zex_api.h"

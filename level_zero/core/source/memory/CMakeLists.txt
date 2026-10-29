@@ -10,4 +10,5 @@ target_sources(${L0_STATIC_LIB_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/internal_mem_alloc_ext.h
                ${CMAKE_CURRENT_SOURCE_DIR}/memory_operations_helper.h
                ${CMAKE_CURRENT_SOURCE_DIR}/cpu_page_fault_memory_manager.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/cpu_page_fault_memory_manager.h
 )
