@@ -66,6 +66,7 @@ class DrmMemoryManager : public MemoryManager {
     uint64_t getCurrentUsedLocalMemorySize(uint32_t rootDeviceIndex, uint32_t deviceBitfield) override;
     uint64_t getCurrentUsedSystemSharedMemorySize(uint32_t rootDeviceIndex) override;
     bool isDeferBackingMemoryPressureReached(uint32_t rootDeviceIndex, size_t allocationSize, int32_t thresholdPercent);
+    bool isDeferBackingHostMemoryPressureReached(size_t allocationSize, int32_t thresholdPercent);
     uint32_t getRootDeviceIndex(const Drm *drm);
 
     AllocationStatus populateOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override;
@@ -101,7 +102,7 @@ class DrmMemoryManager : public MemoryManager {
     bool isPhysicalHostMemoryOffsetFoldRequired(uint32_t rootDeviceIndex) override;
     bool reserveExactCpuAddress(uint64_t requiredStartAddress, size_t size) override;
     MOCKABLE_VIRTUAL BufferObject *createBufferObjectInMemoryRegion(uint32_t rootDeviceIndex, Gmm *gmm, AllocationType allocationType, uint64_t gpuAddress, size_t size,
-                                                                    DeviceBitfield memoryBanks, size_t maxOsContextCount, int32_t pairHandle, bool isSystemMemoryPool, bool isUsmHostAllocation);
+                                                                    DeviceBitfield memoryBanks, size_t maxOsContextCount, int32_t pairHandle, bool isSystemMemoryPool, bool isUsmHostAllocation, bool deferBacking);
 
     bool hasPageFaultsEnabled(const Device &neoDevice) override;
     bool isKmdMigrationAvailable(uint32_t rootDeviceIndex) override;
@@ -247,6 +248,7 @@ class DrmMemoryManager : public MemoryManager {
     std::vector<std::vector<GraphicsAllocation *>> localMemAllocs;
     std::vector<size_t> localMemBanksCount;
     std::unique_ptr<uint64_t[]> cachedMaxLocalMemory;
+    std::atomic<uint64_t> deferBackedLocalMemAllocsSize{0u};
     std::vector<GraphicsAllocation *> sysMemAllocs;
     std::mutex allocMutex;
 };

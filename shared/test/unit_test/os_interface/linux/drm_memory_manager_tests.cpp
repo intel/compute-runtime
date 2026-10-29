@@ -3688,6 +3688,15 @@ struct DeferBackingPressureDrmMemoryManager : public DrmMemoryManager {
     void setUsedLocalMemory(uint32_t rootDeviceIndex, size_t value) {
         this->localMemAllocsSize[rootDeviceIndex] = value;
     }
+    bool getSystemMemoryUsageFromProcMeminfo(uint64_t &totalBytes, uint64_t &freeBytes) override {
+        totalBytes = totalHostMemory;
+        freeBytes = availableHostMemory;
+        return meminfoAvailable;
+    }
+    using DrmMemoryManager::deferBackedLocalMemAllocsSize;
+    bool meminfoAvailable = true;
+    uint64_t totalHostMemory = 0u;
+    uint64_t availableHostMemory = 0u;
 };
 
 TEST_F(DrmMemoryManagerBasic, givenThresholdWhenProjectedUsageCrossesThresholdThenDeferBackingDecisionFlips) {
@@ -3789,6 +3798,134 @@ TEST_F(DrmMemoryManagerBasic, givenPrintDeferBackingLogsEnabledWhenCheckingDefer
     const std::string output = capture.getCapturedStderr();
 
     EXPECT_NE(std::string::npos, output.find("[DeferBackingPressure]"));
+
+    memoryManager.commonCleanup();
+}
+
+TEST_F(DrmMemoryManagerBasic, givenHostThresholdWhenProjectedHostUsageCrossesThresholdThenHostPressureIsReached) {
+    DeferBackingPressureDrmMemoryManager memoryManager(GemCloseWorkerMode::gemCloseWorkerInactive, false, false, executionEnvironment);
+    memoryManager.totalHostMemory = 1000u;
+    memoryManager.availableHostMemory = 500u;
+
+    EXPECT_FALSE(memoryManager.isDeferBackingHostMemoryPressureReached(99u, 60));
+    EXPECT_TRUE(memoryManager.isDeferBackingHostMemoryPressureReached(100u, 60));
+
+    memoryManager.commonCleanup();
+}
+
+TEST_F(DrmMemoryManagerBasic, givenOutstandingDeferBackedLocalMemoryWhenCheckingHostPressureThenItCountsTowardProjectedUsage) {
+    DeferBackingPressureDrmMemoryManager memoryManager(GemCloseWorkerMode::gemCloseWorkerInactive, false, false, executionEnvironment);
+    memoryManager.totalHostMemory = 1000u;
+    memoryManager.availableHostMemory = 1000u;
+
+    memoryManager.deferBackedLocalMemAllocsSize = 599u;
+    EXPECT_FALSE(memoryManager.isDeferBackingHostMemoryPressureReached(0u, 60));
+
+    memoryManager.deferBackedLocalMemAllocsSize = 600u;
+    EXPECT_TRUE(memoryManager.isDeferBackingHostMemoryPressureReached(0u, 60));
+
+    memoryManager.deferBackedLocalMemAllocsSize = 0u;
+    memoryManager.commonCleanup();
+}
+
+TEST_F(DrmMemoryManagerBasic, givenAvailableHostMemoryAboveTotalWhenCheckingHostPressureThenUsedHostMemoryIsZero) {
+    DeferBackingPressureDrmMemoryManager memoryManager(GemCloseWorkerMode::gemCloseWorkerInactive, false, false, executionEnvironment);
+    memoryManager.totalHostMemory = 1000u;
+    memoryManager.availableHostMemory = 2000u;
+
+    EXPECT_FALSE(memoryManager.isDeferBackingHostMemoryPressureReached(599u, 60));
+    EXPECT_TRUE(memoryManager.isDeferBackingHostMemoryPressureReached(600u, 60));
+
+    memoryManager.commonCleanup();
+}
+
+TEST_F(DrmMemoryManagerBasic, givenHostMemoryUsageUnknownWhenCheckingHostPressureThenReturnsFalse) {
+    DeferBackingPressureDrmMemoryManager memoryManager(GemCloseWorkerMode::gemCloseWorkerInactive, false, false, executionEnvironment);
+    memoryManager.meminfoAvailable = false;
+    memoryManager.totalHostMemory = 1000u;
+    EXPECT_FALSE(memoryManager.isDeferBackingHostMemoryPressureReached(1000u, 0));
+
+    memoryManager.meminfoAvailable = true;
+    memoryManager.totalHostMemory = 0u;
+    EXPECT_FALSE(memoryManager.isDeferBackingHostMemoryPressureReached(1000u, 0));
+
+    memoryManager.commonCleanup();
+}
+
+TEST_F(DrmMemoryManagerBasic, givenPrintDeferBackingLogsEnabledWhenCheckingHostPressureThenDecisionIsPrinted) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.PrintDeferBackingLogs.set(true);
+
+    DeferBackingPressureDrmMemoryManager memoryManager(GemCloseWorkerMode::gemCloseWorkerInactive, false, false, executionEnvironment);
+    memoryManager.totalHostMemory = 1000u;
+    memoryManager.availableHostMemory = 1000u;
+
+    StreamCapture capture;
+    capture.captureStderr();
+    EXPECT_FALSE(memoryManager.isDeferBackingHostMemoryPressureReached(0u, 60));
+    EXPECT_TRUE(memoryManager.isDeferBackingHostMemoryPressureReached(600u, 60));
+    const std::string output = capture.getCapturedStderr();
+
+    EXPECT_NE(std::string::npos, output.find("[DeferBackingHostPressure]"));
+    EXPECT_NE(std::string::npos, output.find("deferBacking=ON"));
+    EXPECT_NE(std::string::npos, output.find("deferBacking=off"));
+
+    memoryManager.commonCleanup();
+}
+
+TEST_F(DrmMemoryManagerBasic, givenLocalMemoryAllocationWhenRegisteredAndUnregisteredThenOnlyDeferBackedSizeIsTracked) {
+    DeferBackingPressureDrmMemoryManager memoryManager(GemCloseWorkerMode::gemCloseWorkerInactive, false, false, executionEnvironment);
+    auto drm = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface->getDriverModel()->as<Drm>();
+
+    MockBufferObject deferredBo(rootDeviceIndex, drm, 3, 0, 1000u, 1);
+    deferredBo.setDeferBackingUsed(true);
+    MockDrmAllocation deferredAllocation(rootDeviceIndex, AllocationType::buffer, MemoryPool::localMemory);
+    deferredAllocation.bufferObjects[0] = &deferredBo;
+    deferredAllocation.setSize(1000u);
+
+    MockBufferObject backedBo(rootDeviceIndex, drm, 3, 0, 500u, 1);
+    MockDrmAllocation backedAllocation(rootDeviceIndex, AllocationType::buffer, MemoryPool::localMemory);
+    backedAllocation.bufferObjects[0] = &backedBo;
+    backedAllocation.setSize(500u);
+
+    EXPECT_EQ(MemoryManager::AllocationStatus::Success, memoryManager.registerLocalMemAlloc(&deferredAllocation, rootDeviceIndex));
+    EXPECT_EQ(MemoryManager::AllocationStatus::Success, memoryManager.registerLocalMemAlloc(&backedAllocation, rootDeviceIndex));
+    EXPECT_EQ(1000u, memoryManager.deferBackedLocalMemAllocsSize);
+    EXPECT_EQ(1500u, memoryManager.getUsedLocalMemorySize(rootDeviceIndex));
+
+    memoryManager.unregisterAllocation(&backedAllocation);
+    EXPECT_EQ(1000u, memoryManager.deferBackedLocalMemAllocsSize);
+
+    memoryManager.unregisterAllocation(&deferredAllocation);
+    EXPECT_EQ(0u, memoryManager.deferBackedLocalMemAllocsSize);
+    EXPECT_EQ(0u, memoryManager.getUsedLocalMemorySize(rootDeviceIndex));
+
+    memoryManager.commonCleanup();
+}
+
+TEST_F(DrmMemoryManagerBasic, givenMultiBankLocalMemoryAllocationWhenRegisteredAndUnregisteredThenSizesOfAllDeferBackedBufferObjectsAreTracked) {
+    DeferBackingPressureDrmMemoryManager memoryManager(GemCloseWorkerMode::gemCloseWorkerInactive, false, false, executionEnvironment);
+    auto drm = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface->getDriverModel()->as<Drm>();
+
+    MockBufferObject deferredBo1(rootDeviceIndex, drm, 3, 0, 1000u, 1);
+    deferredBo1.setDeferBackingUsed(true);
+    MockBufferObject deferredBo2(rootDeviceIndex, drm, 3, 0, 1000u, 1);
+    deferredBo2.setDeferBackingUsed(true);
+    MockBufferObject backedBo(rootDeviceIndex, drm, 3, 0, 1000u, 1);
+
+    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::buffer, MemoryPool::localMemory);
+    allocation.bufferObjects.resize(4);
+    allocation.bufferObjects[0] = nullptr;
+    allocation.bufferObjects[1] = &deferredBo1;
+    allocation.bufferObjects[2] = &deferredBo2;
+    allocation.bufferObjects[3] = &backedBo;
+    allocation.setSize(1000u);
+
+    EXPECT_EQ(MemoryManager::AllocationStatus::Success, memoryManager.registerLocalMemAlloc(&allocation, rootDeviceIndex));
+    EXPECT_EQ(2000u, memoryManager.deferBackedLocalMemAllocsSize);
+
+    memoryManager.unregisterAllocation(&allocation);
+    EXPECT_EQ(0u, memoryManager.deferBackedLocalMemAllocsSize);
 
     memoryManager.commonCleanup();
 }
@@ -9027,7 +9164,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemor
     auto gpuAddress = 0x1234u;
     auto size = MemoryConstants::pageSize;
 
-    auto bo = std::unique_ptr<BufferObject>(memoryManager->createBufferObjectInMemoryRegion(rootDeviceIndex, nullptr, AllocationType::buffer, gpuAddress, size, MemoryBanks::mainBank, 1, -1, false, false));
+    auto bo = std::unique_ptr<BufferObject>(memoryManager->createBufferObjectInMemoryRegion(rootDeviceIndex, nullptr, AllocationType::buffer, gpuAddress, size, MemoryBanks::mainBank, 1, -1, false, false, false));
     EXPECT_EQ(nullptr, bo);
 }
 
@@ -9035,7 +9172,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDrmMemor
     auto gpuAddress = 0x1234u;
     auto size = 0u;
 
-    auto bo = std::unique_ptr<BufferObject>(memoryManager->createBufferObjectInMemoryRegion(rootDeviceIndex, nullptr, AllocationType::buffer, gpuAddress, size, MemoryBanks::mainBank, 1, -1, false, false));
+    auto bo = std::unique_ptr<BufferObject>(memoryManager->createBufferObjectInMemoryRegion(rootDeviceIndex, nullptr, AllocationType::buffer, gpuAddress, size, MemoryBanks::mainBank, 1, -1, false, false, false));
     EXPECT_EQ(nullptr, bo);
 }
 
@@ -12166,6 +12303,39 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenMakeBosResidentSuccessWhenRegister
     EXPECT_EQ(MemoryManager::AllocationStatus::Success, memoryManager->registerSysMemAlloc(&allocation));
 
     EXPECT_EQ(MemoryManager::AllocationStatus::Success, memoryManager->registerLocalMemAlloc(&allocation, 0));
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenMakeBosResidentErrorWhenRegisteringDeferBackedLocalMemoryAllocationThenUnregisteringItKeepsDeferBackedSizeOfOtherAllocations) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.MakeEachAllocationResident.set(1);
+    auto &drm = static_cast<DrmMockCustom &>(memoryManager->getDrm(rootDeviceIndex));
+    drm.vmIdToCreate = 1;
+    drm.createVirtualMemoryAddressSpace(1);
+
+    MockBufferObject registeredBo(rootDeviceIndex, &drm, 3, 0, 500u, 1);
+    registeredBo.setDeferBackingUsed(true);
+    MockDrmAllocation registeredAllocation(rootDeviceIndex, AllocationType::buffer, MemoryPool::localMemory);
+    registeredAllocation.bufferObjects[0] = &registeredBo;
+    registeredAllocation.setSize(500u);
+    registeredAllocation.makeBOsResidentResult = 0;
+
+    MockBufferObject failedBo(rootDeviceIndex, &drm, 3, 0, 1000u, 1);
+    failedBo.setDeferBackingUsed(true);
+    MockDrmAllocation failedAllocation(rootDeviceIndex, AllocationType::buffer, MemoryPool::localMemory);
+    failedAllocation.bufferObjects[0] = &failedBo;
+    failedAllocation.setSize(1000u);
+    failedAllocation.makeBOsResidentResult = ENOSPC;
+
+    EXPECT_EQ(MemoryManager::AllocationStatus::Success, memoryManager->registerLocalMemAlloc(&registeredAllocation, rootDeviceIndex));
+    EXPECT_EQ(MemoryManager::AllocationStatus::Error, memoryManager->registerLocalMemAlloc(&failedAllocation, rootDeviceIndex));
+    EXPECT_EQ(500u, memoryManager->deferBackedLocalMemAllocsSize);
+
+    memoryManager->localMemAllocsSize[rootDeviceIndex] += 1000u;
+    memoryManager->unregisterAllocation(&failedAllocation);
+    EXPECT_EQ(500u, memoryManager->deferBackedLocalMemAllocsSize);
+
+    memoryManager->unregisterAllocation(&registeredAllocation);
+    EXPECT_EQ(0u, memoryManager->deferBackedLocalMemAllocsSize);
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDrmMemoryManagerWhenGpuAddressReservationIsAttemptedWithKnownAddressAtIndex1ThenAddressFromGfxPartitionIsUsed) {

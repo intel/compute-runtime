@@ -395,6 +395,7 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenDrmMemoryManagerWhenCreateBufferObj
                                                                                             1,
                                                                                             -1,
                                                                                             false,
+                                                                                            false,
                                                                                             false));
     ASSERT_NE(nullptr, bo);
     ASSERT_EQ(1u, ioctlHelper->createGemExtCalls.size());
@@ -426,7 +427,7 @@ class DrmMemoryManagerLocalMemoryMemoryBankMock : public TestedDrmMemoryManager 
                                                    DeviceBitfield memoryBanks,
                                                    size_t maxOsContextCount,
                                                    int32_t pairHandle,
-                                                   bool isSystemMemoryPool, bool isUSMHostAllocation) override {
+                                                   bool isSystemMemoryPool, bool isUSMHostAllocation, bool deferBacking) override {
         memoryBankIsOne = (memoryBanks.to_ulong() == 1u) ? true : false;
         return nullptr;
     }
@@ -845,6 +846,49 @@ TEST_F(DrmMemoryManagerLocalMemoryMultiTileTest, givenChunkSizeBasedColouringPol
         EXPECT_EQ(bo->peekSize() % allocation->storageInfo.colouringGranularity, 0u);
         boAddress += bo->peekSize();
     }
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerLocalMemoryMultiTileTest, givenMultiStorageAllocationWhenAllocatingInDevicePoolThenDeferBackingIsDecidedOnceForTotalSizeOfAllBufferObjects) {
+    class DeferBackingSizeCapturingIoctlHelper : public MockIoctlHelperWithCapture {
+      public:
+        using MockIoctlHelperWithCapture::MockIoctlHelperWithCapture;
+        bool isDeferBackingEnabledForAllocation(size_t allocationSize, AllocationType allocationType) const override {
+            queriedSizes.push_back(allocationSize);
+            return true;
+        }
+        mutable std::vector<size_t> queriedSizes;
+    };
+    auto deferBackingIoctlHelper = new DeferBackingSizeCapturingIoctlHelper(*mock);
+    mock->ioctlHelper.reset(deferBackingIoctlHelper);
+
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
+    AllocationData allocData;
+    allocData.allFlags = 0;
+    allocData.size = 18 * MemoryConstants::pageSize64k;
+    allocData.flags.allocateMemory = true;
+    allocData.type = AllocationType::buffer;
+    allocData.storageInfo.memoryBanks = maxNBitValue(MemoryBanks::getBankForLocalMemory(3));
+    allocData.storageInfo.multiStorage = true;
+    allocData.rootDeviceIndex = rootDeviceIndex;
+
+    auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
+    ASSERT_NE(nullptr, allocation);
+
+    auto &bos = static_cast<DrmAllocation *>(allocation)->getBOs();
+    size_t totalBoSize = 0u;
+    uint32_t numBos = 0u;
+    for (auto bo : bos) {
+        if (bo != nullptr) {
+            EXPECT_TRUE(bo->isDeferBackingUsed());
+            totalBoSize += bo->peekSize();
+            numBos++;
+        }
+    }
+    EXPECT_LT(1u, numBos);
+    ASSERT_EQ(1u, deferBackingIoctlHelper->queriedSizes.size());
+    EXPECT_EQ(totalBoSize, deferBackingIoctlHelper->queriedSizes[0]);
+
     memoryManager->freeGraphicsMemory(allocation);
 }
 

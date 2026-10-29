@@ -55,13 +55,13 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenCreateMultiHostDebugSurfaceAllocati
         BufferObject *createBufferObjectInMemoryRegion(uint32_t rootDeviceIndex, Gmm *gmm, AllocationType allocationType,
                                                        uint64_t gpuAddress, size_t size, DeviceBitfield memoryBanks,
                                                        size_t maxOsContextCount, int32_t pairHandle, bool isSystemMemoryPool,
-                                                       bool isUSMHostAllocation) override {
+                                                       bool isUSMHostAllocation, bool deferBacking) override {
             if (shouldBOCreationFail) {
                 return nullptr; // Simulate buffer object creation failure
             }
             return DrmMemoryManager::createBufferObjectInMemoryRegion(rootDeviceIndex, gmm, allocationType, gpuAddress,
                                                                       size, memoryBanks, maxOsContextCount, pairHandle,
-                                                                      isSystemMemoryPool, isUSMHostAllocation);
+                                                                      isSystemMemoryPool, isUSMHostAllocation, deferBacking);
         }
 
         bool shouldBOCreationFail = false;
@@ -134,14 +134,14 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenCreateMultiHostDebugSurfaceAllocati
         BufferObject *createBufferObjectInMemoryRegion(uint32_t rootDeviceIndex, Gmm *gmm, AllocationType allocationType,
                                                        uint64_t gpuAddress, size_t size, DeviceBitfield memoryBanks,
                                                        size_t maxOsContextCount, int32_t pairHandle, bool isSystemMemoryPool,
-                                                       bool isUSMHostAllocation) override {
+                                                       bool isUSMHostAllocation, bool deferBacking) override {
             if (creationCount == 1) { // Fail on second tile
                 return nullptr;
             }
             creationCount++;
             return DrmMemoryManager::createBufferObjectInMemoryRegion(rootDeviceIndex, gmm, allocationType, gpuAddress,
                                                                       size, memoryBanks, maxOsContextCount, pairHandle,
-                                                                      isSystemMemoryPool, isUSMHostAllocation);
+                                                                      isSystemMemoryPool, isUSMHostAllocation, deferBacking);
         }
 
         uint32_t creationCount = 0;

@@ -2552,6 +2552,33 @@ bool DrmMemoryManager::isDeferBackingMemoryPressureReached(uint32_t rootDeviceIn
     return pressureReached;
 }
 
+bool DrmMemoryManager::isDeferBackingHostMemoryPressureReached(size_t allocationSize, int32_t thresholdPercent) {
+    uint64_t totalHostMemory = 0u;
+    uint64_t availableHostMemory = 0u;
+    if (!getSystemMemoryUsageFromProcMeminfo(totalHostMemory, availableHostMemory) || totalHostMemory == 0u) {
+        return false;
+    }
+
+    // A defer-backed local memory BO can need a full-size system memory backing (e.g. on dma-buf export).
+    const uint64_t usedHostMemory = totalHostMemory - std::min(availableHostMemory, totalHostMemory);
+    const uint64_t projectedHostMemory = usedHostMemory + this->deferBackedLocalMemAllocsSize + allocationSize;
+    const bool pressureReached = (projectedHostMemory * 100ull) >= (totalHostMemory * static_cast<uint64_t>(thresholdPercent));
+
+    if (debugManager.flags.PrintDeferBackingLogs.get()) {
+        PRINT_STRING(true, stderr, "[DeferBackingHostPressure] used=%lluMB + deferred=%lluMB + req=%lluMB -> proj=%lluMB / total=%lluMB (%llu%%) threshold=%d%% -> deferBacking=%s\n",
+                     static_cast<unsigned long long>(usedHostMemory / MemoryConstants::megaByte),
+                     static_cast<unsigned long long>(this->deferBackedLocalMemAllocsSize / MemoryConstants::megaByte),
+                     static_cast<unsigned long long>(static_cast<uint64_t>(allocationSize) / MemoryConstants::megaByte),
+                     static_cast<unsigned long long>(projectedHostMemory / MemoryConstants::megaByte),
+                     static_cast<unsigned long long>(totalHostMemory / MemoryConstants::megaByte),
+                     static_cast<unsigned long long>(projectedHostMemory * 100ull / totalHostMemory),
+                     thresholdPercent,
+                     pressureReached ? "off" : "ON");
+    }
+
+    return pressureReached;
+}
+
 uint32_t DrmMemoryManager::getRootDeviceIndex(const Drm *drm) {
     auto rootDeviceCount = this->executionEnvironment.rootDeviceEnvironments.size();
 
@@ -2707,6 +2734,16 @@ bool DrmMemoryManager::registerSysMemAllocIfConsumed(std::unique_ptr<DrmAllocati
     return true;
 }
 
+static uint64_t getDeferBackedSize(GraphicsAllocation *allocation) {
+    uint64_t deferBackedSize = 0u;
+    for (const auto *bo : static_cast<DrmAllocation *>(allocation)->getBOs()) {
+        if (bo != nullptr && bo->isDeferBackingUsed()) {
+            deferBackedSize += bo->peekSize();
+        }
+    }
+    return deferBackedSize;
+}
+
 AllocationStatus DrmMemoryManager::registerLocalMemAlloc(GraphicsAllocation *allocation, uint32_t rootDeviceIndex) {
     if (!makeAllocationResident(allocation)) {
         return AllocationStatus::Error;
@@ -2714,6 +2751,7 @@ AllocationStatus DrmMemoryManager::registerLocalMemAlloc(GraphicsAllocation *all
     if (!static_cast<DrmAllocation *>(allocation)->isLocalMemoryReserved()) {
         this->localMemAllocsSize[rootDeviceIndex] += allocation->getUnderlyingBufferSize();
     }
+    this->deferBackedLocalMemAllocsSize += getDeferBackedSize(allocation);
     std::lock_guard<std::mutex> lock(this->allocMutex);
     this->localMemAllocs[rootDeviceIndex].push_back(allocation);
     return AllocationStatus::Success;
@@ -2729,7 +2767,11 @@ void DrmMemoryManager::unregisterAllocation(GraphicsAllocation *allocation) {
     }
     std::lock_guard<std::mutex> lock(this->allocMutex);
     std::erase(sysMemAllocs, allocation);
-    std::erase(localMemAllocs[allocation->getRootDeviceIndex()], allocation);
+    if (std::erase(localMemAllocs[allocation->getRootDeviceIndex()], allocation) > 0) {
+        const auto deferBackedSize = getDeferBackedSize(allocation);
+        DEBUG_BREAK_IF(deferBackedSize > this->deferBackedLocalMemAllocsSize);
+        this->deferBackedLocalMemAllocsSize -= deferBackedSize;
+    }
 }
 
 void DrmMemoryManager::registerAllocationInOs(GraphicsAllocation *allocation) {
@@ -3080,9 +3122,10 @@ GraphicsAllocation *DrmMemoryManager::allocatePhysicalHostMemory(const Allocatio
     const size_t alignedSize = alignUp<size_t>(allocationData.size, MemoryConstants::pageSize);
 
     auto gmm = makeGmmIfSingleHandle(allocationData, alignedSize);
+    const bool deferBacking = this->getDrm(allocationData.rootDeviceIndex).getIoctlHelper()->isDeferBackingEnabledForAllocation(alignedSize, allocationData.type);
     std::unique_ptr<BufferObject, BufferObject::Deleter> bo(this->createBufferObjectInMemoryRegion(allocationData.rootDeviceIndex, gmm.get(),
                                                                                                    allocationData.type, 0u, alignedSize,
-                                                                                                   0u, maxOsContextCount, -1, true, true));
+                                                                                                   0u, maxOsContextCount, -1, true, true, deferBacking));
     if (!bo) {
         return nullptr;
     }
@@ -3243,7 +3286,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
 }
 
 BufferObject *DrmMemoryManager::createBufferObjectInMemoryRegion(uint32_t rootDeviceIndex, Gmm *gmm, AllocationType allocationType, uint64_t gpuAddress,
-                                                                 size_t size, DeviceBitfield memoryBanks, size_t maxOsContextCount, int32_t pairHandle, bool isSystemMemoryPool, bool isUsmHostAllocation) {
+                                                                 size_t size, DeviceBitfield memoryBanks, size_t maxOsContextCount, int32_t pairHandle, bool isSystemMemoryPool, bool isUsmHostAllocation, bool deferBacking) {
     auto drm = &getDrm(rootDeviceIndex);
     auto memoryInfo = drm->getMemoryInfo();
     if (!memoryInfo) {
@@ -3254,10 +3297,6 @@ BufferObject *DrmMemoryManager::createBufferObjectInMemoryRegion(uint32_t rootDe
     int ret = 0;
 
     auto patIndex = drm->getPatIndex(gmm, allocationType, CacheRegion::defaultRegion, CachePolicy::writeBack, false, isSystemMemoryPool, false);
-
-    // Evaluate the defer-backing decision once so the gemCreate ioctl flag and the BO's recorded
-    // state cannot diverge as memory pressure changes between separate evaluations.
-    const bool deferBacking = drm->getIoctlHelper()->isDeferBackingEnabledForAllocation(size, allocationType);
 
     if (memoryBanks.count() > 1) {
         ret = memoryInfo->createGemExtWithMultipleRegions(memoryBanks, size, handle, patIndex, isUsmHostAllocation, deferBacking);
@@ -3388,6 +3427,15 @@ bool DrmMemoryManager::createDrmAllocation(Drm *drm, DrmAllocation *allocation, 
     }
     allocation->setNumHandles(handles);
 
+    auto getBoSize = [&](uint32_t handleId) {
+        return alignUp(allocation->getGmm(handleId)->gmmResourceInfo->getSizeAllocation(), preferredAlignment);
+    };
+    size_t totalBoSize = 0;
+    for (auto handleId = 0u; handleId < handles; handleId++) {
+        totalBoSize += getBoSize(handleId);
+    }
+    const bool deferBacking = drm->getIoctlHelper()->isDeferBackingEnabledForAllocation(totalBoSize, allocation->getAllocationType());
+
     int32_t pairHandle = -1;
     for (auto handleId = 0u; handleId < handles; handleId++, currentBank++) {
         if (currentBank == banksCnt) {
@@ -3405,10 +3453,9 @@ bool DrmMemoryManager::createDrmAllocation(Drm *drm, DrmAllocation *allocation, 
                 memoryBanks &= 1u << currentBank;
             }
         }
-        auto gmm = allocation->getGmm(handleId);
-        auto boSize = alignUp(gmm->gmmResourceInfo->getSizeAllocation(), preferredAlignment);
-        bos[handleId] = createBufferObjectInMemoryRegion(allocation->getRootDeviceIndex(), gmm, allocation->getAllocationType(), boAddress, boSize, memoryBanks, maxOsContextCount, pairHandle,
-                                                         !allocation->isAllocatedInLocalMemoryPool(), allocation->isUsmHostAllocation());
+        auto boSize = getBoSize(handleId);
+        bos[handleId] = createBufferObjectInMemoryRegion(allocation->getRootDeviceIndex(), allocation->getGmm(handleId), allocation->getAllocationType(), boAddress, boSize, memoryBanks, maxOsContextCount, pairHandle,
+                                                         !allocation->isAllocatedInLocalMemoryPool(), allocation->isUsmHostAllocation(), deferBacking);
         if (nullptr == bos[handleId]) {
             return false;
         }
@@ -3538,9 +3585,10 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &
 
         auto pointerDiff = ptrDiff(cpuPointer, cpuBasePointer);
         auto gmm = makeGmmIfSingleHandle(allocationData, alignedSize);
+        const bool deferBacking = ioctlHelper->isDeferBackingEnabledForAllocation(alignedSize, allocationData.type);
         std::unique_ptr<BufferObject, BufferObject::Deleter> bo(this->createBufferObjectInMemoryRegion(allocationData.rootDeviceIndex, gmm.get(), allocationData.type,
                                                                                                        reinterpret_cast<uintptr_t>(cpuPointer), alignedSize, 0u, maxOsContextCount, -1,
-                                                                                                       MemoryPoolHelper::isSystemMemoryPool(memoryPool), allocationData.flags.isUSMHostAllocation));
+                                                                                                       MemoryPoolHelper::isSystemMemoryPool(memoryPool), allocationData.flags.isUSMHostAllocation, deferBacking));
 
         if (!bo) {
             ioctlHelper->releaseGpuRange(*this, reinterpret_cast<void *>(preferredAddress), totalSizeToAlloc, allocationData.rootDeviceIndex, allocationData.type);

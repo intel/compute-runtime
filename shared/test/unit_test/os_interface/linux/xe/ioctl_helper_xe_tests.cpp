@@ -5120,13 +5120,24 @@ TEST_F(IoctlHelperXeTest, givenXeIoctlHelperAndDeferBackingDisabledWhenIsDeferBa
     EXPECT_FALSE(xeIoctlHelper->isDeferBackingEnabledForAllocation(1u, AllocationType::buffer));
 }
 
-TEST_F(IoctlHelperXeTest, givenReorderedRootDeviceEnvironmentsWhenIsDeferBackingEnabledForAllocationIsCalledThenPressureOfOwningRootDeviceIsUsed) {
-    struct DeferBackingPressureMemoryManager : public TestedDrmMemoryManager {
-        using DrmMemoryManager::cachedMaxLocalMemory;
-        using MemoryManager::localMemAllocsSize;
-        using TestedDrmMemoryManager::TestedDrmMemoryManager;
-    };
+struct DeferBackingPressureMemoryManager : public TestedDrmMemoryManager {
+    using DrmMemoryManager::cachedMaxLocalMemory;
+    using DrmMemoryManager::deferBackedLocalMemAllocsSize;
+    using MemoryManager::localMemAllocsSize;
+    using TestedDrmMemoryManager::TestedDrmMemoryManager;
 
+    bool getSystemMemoryUsageFromProcMeminfo(uint64_t &totalBytes, uint64_t &freeBytes) override {
+        totalBytes = totalHostMemory;
+        freeBytes = availableHostMemory;
+        return meminfoAvailable;
+    }
+
+    bool meminfoAvailable = false;
+    uint64_t totalHostMemory = 0u;
+    uint64_t availableHostMemory = 0u;
+};
+
+TEST_F(IoctlHelperXeTest, givenReorderedRootDeviceEnvironmentsWhenIsDeferBackingEnabledForAllocationIsCalledThenPressureOfOwningRootDeviceIsUsed) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableDeferBacking.set(1);
     debugManager.flags.DeferBackingMemoryPressurePercent.set(50);
@@ -5156,12 +5167,6 @@ TEST_F(IoctlHelperXeTest, givenReorderedRootDeviceEnvironmentsWhenIsDeferBacking
 }
 
 TEST_F(IoctlHelperXeTest, givenDeferBackingEnabledAndPressureThresholdNotReachedWhenIsDeferBackingEnabledForAllocationIsCalledThenOnlyPreemptionIsDeferred) {
-    struct DeferBackingPressureMemoryManager : public TestedDrmMemoryManager {
-        using DrmMemoryManager::cachedMaxLocalMemory;
-        using MemoryManager::localMemAllocsSize;
-        using TestedDrmMemoryManager::TestedDrmMemoryManager;
-    };
-
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableDeferBacking.set(1);
     debugManager.flags.DeferBackingMemoryPressurePercent.set(100);
@@ -5193,6 +5198,82 @@ TEST_F(IoctlHelperXeTest, givenDeferBackingDisabledWhenIsDeferBackingEnabledForA
     auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
     xeIoctlHelper->initialize();
     EXPECT_FALSE(xeIoctlHelper->isDeferBackingEnabledForAllocation(MemoryConstants::megaByte, AllocationType::preemption));
+}
+
+struct DeferBackingHostPressureIoctlHelperXeTest : public IoctlHelperXeTest {
+    void SetUp() override {
+        IoctlHelperXeTest::SetUp();
+        debugManager.flags.EnableDeferBacking.set(1);
+        auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[0];
+        rootDeviceEnvironment.osInterface = std::make_unique<OSInterface>();
+        rootDeviceEnvironment.osInterface->setDriverModel(DrmMockXe::create(rootDeviceEnvironment));
+        memoryManager = new DeferBackingPressureMemoryManager(*executionEnvironment);
+        executionEnvironment->memoryManager.reset(memoryManager);
+        memoryManager->cachedMaxLocalMemory[0] = 1000u;
+        memoryManager->localMemAllocsSize[0] = 900u;
+        memoryManager->meminfoAvailable = true;
+        memoryManager->totalHostMemory = 1000u;
+        memoryManager->availableHostMemory = 1000u;
+
+        drm = rootDeviceEnvironment.osInterface->getDriverModel()->as<DrmMockXe>();
+        xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+        xeIoctlHelper->initialize();
+    }
+
+    DebugManagerStateRestore restorer;
+    std::unique_ptr<MockExecutionEnvironment> executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DeferBackingPressureMemoryManager *memoryManager = nullptr;
+    DrmMockXe *drm = nullptr;
+    MockIoctlHelperXe *xeIoctlHelper = nullptr;
+};
+
+TEST_F(DeferBackingHostPressureIoctlHelperXeTest, givenHostMemoryPressureReachedWhenIsDeferBackingEnabledForAllocationIsCalledThenReturnsFalse) {
+    debugManager.flags.DeferBackingHostMemoryPressurePercent.set(60);
+    debugManager.flags.DeferBackingMemoryPressurePercent.set(50);
+    memoryManager->availableHostMemory = 400u;
+    EXPECT_FALSE(xeIoctlHelper->isDeferBackingEnabledForAllocation(1u, AllocationType::buffer));
+}
+
+TEST_F(DeferBackingHostPressureIoctlHelperXeTest, givenHostMemoryPressureNotReachedWhenIsDeferBackingEnabledForAllocationIsCalledThenReturnsTrue) {
+    debugManager.flags.DeferBackingHostMemoryPressurePercent.set(60);
+    debugManager.flags.DeferBackingMemoryPressurePercent.set(50);
+    memoryManager->availableHostMemory = 500u;
+    EXPECT_TRUE(xeIoctlHelper->isDeferBackingEnabledForAllocation(1u, AllocationType::buffer));
+}
+
+TEST_F(DeferBackingHostPressureIoctlHelperXeTest, givenLocalThresholdDisabledWhenHostMemoryPressureReachedThenDeferBackingIsUnconditional) {
+    debugManager.flags.DeferBackingHostMemoryPressurePercent.set(60);
+    debugManager.flags.DeferBackingMemoryPressurePercent.set(-1);
+    memoryManager->availableHostMemory = 0u;
+    memoryManager->localMemAllocsSize[0] = 0u;
+    EXPECT_TRUE(xeIoctlHelper->isDeferBackingEnabledForAllocation(1u, AllocationType::buffer));
+}
+
+TEST_F(DeferBackingHostPressureIoctlHelperXeTest, givenOutstandingDeferBackedLocalMemoryWhenIsDeferBackingEnabledForAllocationIsCalledThenItCountsTowardHostPressure) {
+    debugManager.flags.DeferBackingHostMemoryPressurePercent.set(60);
+    debugManager.flags.DeferBackingMemoryPressurePercent.set(50);
+    memoryManager->deferBackedLocalMemAllocsSize = 599u;
+    EXPECT_TRUE(xeIoctlHelper->isDeferBackingEnabledForAllocation(0u, AllocationType::buffer));
+
+    memoryManager->deferBackedLocalMemAllocsSize = 600u;
+    EXPECT_FALSE(xeIoctlHelper->isDeferBackingEnabledForAllocation(0u, AllocationType::buffer));
+}
+
+TEST_F(DeferBackingHostPressureIoctlHelperXeTest, givenHostThresholdDisabledWhenHostMemoryIsExhaustedThenDeferBackingFollowsLocalMemoryPressure) {
+    debugManager.flags.DeferBackingHostMemoryPressurePercent.set(-1);
+    debugManager.flags.DeferBackingMemoryPressurePercent.set(50);
+    memoryManager->availableHostMemory = 0u;
+    EXPECT_TRUE(xeIoctlHelper->isDeferBackingEnabledForAllocation(1u, AllocationType::buffer));
+
+    memoryManager->localMemAllocsSize[0] = 0u;
+    EXPECT_FALSE(xeIoctlHelper->isDeferBackingEnabledForAllocation(1u, AllocationType::buffer));
+}
+
+TEST_F(DeferBackingHostPressureIoctlHelperXeTest, givenLocalMemoryPressureNotReachedWhenHostMemoryIsFreeThenDeferBackingIsNotUsed) {
+    debugManager.flags.DeferBackingHostMemoryPressurePercent.set(60);
+    debugManager.flags.DeferBackingMemoryPressurePercent.set(50);
+    memoryManager->localMemAllocsSize[0] = 0u;
+    EXPECT_FALSE(xeIoctlHelper->isDeferBackingEnabledForAllocation(1u, AllocationType::buffer));
 }
 
 TEST_F(IoctlHelperXeTest, givenSharedSystemRangeLimitedToUserSpaceWhenCallingVmUnbindForNonSvmHeapAddressThenOneBindOp) {

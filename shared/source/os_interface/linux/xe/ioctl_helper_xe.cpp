@@ -2100,20 +2100,26 @@ bool IoctlHelperXe::isDeferBackingEnabledForAllocation(size_t allocationSize, Al
         return false;
     }
 
-    // Global threshold: once defer backing is enabled, -1 means defer unconditionally, while
+    // Global threshold: once defer backing is enabled, -1 means defer unconditionally (host threshold ignored), while
     // 0-100 defers only once the projected device footprint (used local memory + this allocation)
     // reaches threshold% of max local memory (overcommit onset), so normal-load allocations keep
     // immediate backing and avoid the cold first-submit latency hit. Preemption surfaces are always
     // deferred, since HW needs their memory only once it preempts a thread.
     const int32_t thresholdPercent = debugManager.flags.DeferBackingMemoryPressurePercent.get();
-    if (thresholdPercent < 0 || allocationType == AllocationType::preemption) {
+    const int32_t hostThresholdPercent = debugManager.flags.DeferBackingHostMemoryPressurePercent.get();
+    if (thresholdPercent == -1 || allocationType == AllocationType::preemption) {
         return true;
     }
 
     auto memoryManager = static_cast<DrmMemoryManager *>(drm.getRootDeviceEnvironment().executionEnvironment.memoryManager.get());
     UNRECOVERABLE_IF(memoryManager == nullptr);
-    const uint32_t rootDeviceIndex = memoryManager->getRootDeviceIndex(&drm);
-    return memoryManager->isDeferBackingMemoryPressureReached(rootDeviceIndex, allocationSize, thresholdPercent);
+    if (thresholdPercent >= 0) {
+        const uint32_t rootDeviceIndex = memoryManager->getRootDeviceIndex(&drm);
+        if (!memoryManager->isDeferBackingMemoryPressureReached(rootDeviceIndex, allocationSize, thresholdPercent)) {
+            return false;
+        }
+    }
+    return hostThresholdPercent < 0 || !memoryManager->isDeferBackingHostMemoryPressureReached(allocationSize, hostThresholdPercent);
 }
 
 bool IoctlHelperXe::isDeferBackingSupported() const {

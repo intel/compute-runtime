@@ -59,6 +59,7 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using DrmMemoryManager::createMultiHostDebugSurfaceAllocation;
     using DrmMemoryManager::createSharedUnifiedMemoryAllocation;
     using DrmMemoryManager::createStorageInfoFromProperties;
+    using DrmMemoryManager::deferBackedLocalMemAllocsSize;
     using DrmMemoryManager::eraseSharedBoHandleWrapper;
     using DrmMemoryManager::eraseSharedBufferObject;
     using DrmMemoryManager::getBOTypeFromPatIndex;
@@ -231,9 +232,9 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     HeapIndex acquireGpuRangeLastHeapIndex = HeapIndex::totalHeaps;
 
     BufferObject *createBufferObjectInMemoryRegion(uint32_t rootDeviceIndex, Gmm *gmm, AllocationType allocationType, uint64_t gpuAddress, size_t size,
-                                                   DeviceBitfield memoryBanks, size_t maxOsContextCount, int32_t pairHandle, bool isSystemMemoryPool, bool isUsmHostAllocation) override {
+                                                   DeviceBitfield memoryBanks, size_t maxOsContextCount, int32_t pairHandle, bool isSystemMemoryPool, bool isUsmHostAllocation, bool deferBacking) override {
         if (createBufferObjectInMemoryRegionCallBase) {
-            return DrmMemoryManager::createBufferObjectInMemoryRegion(rootDeviceIndex, gmm, allocationType, gpuAddress, size, memoryBanks, maxOsContextCount, pairHandle, isSystemMemoryPool, isUsmHostAllocation);
+            return DrmMemoryManager::createBufferObjectInMemoryRegion(rootDeviceIndex, gmm, allocationType, gpuAddress, size, memoryBanks, maxOsContextCount, pairHandle, isSystemMemoryPool, isUsmHostAllocation, deferBacking);
         }
         // Create a mock BufferObject for testing
         auto &drm = this->getDrm(rootDeviceIndex);
@@ -308,9 +309,9 @@ struct MockDrmMemoryManager : DrmMemoryManager {
     int getImportHandleFromReservedHandleDataReturnValue = -1;
 
     BufferObject *createBufferObjectInMemoryRegion(uint32_t rootDeviceIndex, Gmm *gmm, AllocationType allocationType, uint64_t gpuAddress, size_t size,
-                                                   DeviceBitfield memoryBanks, size_t maxOsContextCount, int32_t pairHandle, bool isSystemMemoryPool, bool isUsmHostAllocation) override {
+                                                   DeviceBitfield memoryBanks, size_t maxOsContextCount, int32_t pairHandle, bool isSystemMemoryPool, bool isUsmHostAllocation, bool deferBacking) override {
         if (createBufferObjectInMemoryRegionCallBase) {
-            return DrmMemoryManager::createBufferObjectInMemoryRegion(rootDeviceIndex, gmm, allocationType, gpuAddress, size, memoryBanks, maxOsContextCount, pairHandle, isSystemMemoryPool, isUsmHostAllocation);
+            return DrmMemoryManager::createBufferObjectInMemoryRegion(rootDeviceIndex, gmm, allocationType, gpuAddress, size, memoryBanks, maxOsContextCount, pairHandle, isSystemMemoryPool, isUsmHostAllocation, deferBacking);
         }
         // Create a mock BufferObject for testing
         auto &drm = this->getDrm(rootDeviceIndex);

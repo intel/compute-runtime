@@ -78,6 +78,7 @@ DrmAllocation *DrmMemoryManager::createMultiHostDebugSurfaceAllocation(const All
         allocation->setReservedAddressRange(reinterpret_cast<void *>(gpuAddress), sizePerTile);
     }
 
+    const bool deferBacking = drm.getIoctlHelper()->isDeferBackingEnabledForAllocation(hostSizeToAllocate, allocationData.type);
     for (auto tile = 0u, currentBank = 0u; tile < numTiles; ++tile, ++currentBank) {
         while (!allocationData.storageInfo.memoryBanks.test(currentBank)) {
             ++currentBank;
@@ -86,7 +87,7 @@ DrmAllocation *DrmMemoryManager::createMultiHostDebugSurfaceAllocation(const All
         auto boHostPtrPerTile = static_cast<uint8_t *>(cpuBasePointer) + tile * sizePerTile;
         std::unique_ptr<BufferObject, BufferObject::Deleter> bo(this->createBufferObjectInMemoryRegion(allocationData.rootDeviceIndex, nullptr, allocationData.type,
                                                                                                        gpuAddress, sizePerTile, 0u, maxOsContextCount, -1,
-                                                                                                       false /*System Memory Pool*/, allocationData.flags.isUSMHostAllocation));
+                                                                                                       false /*System Memory Pool*/, allocationData.flags.isUSMHostAllocation, deferBacking));
         if (!bo) {
             this->munmapFunction(cpuBasePointer, hostSizeToAllocate);
             // Release previous buffer object for this bank if already allocated

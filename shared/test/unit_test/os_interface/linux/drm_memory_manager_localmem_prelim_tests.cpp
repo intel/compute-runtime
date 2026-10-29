@@ -56,6 +56,7 @@ HWTEST2_F(DrmMemoryManagerLocalMemoryPrelimTest, givenDrmMemoryManagerWithPrelim
                                                                                             1,
                                                                                             -1,
                                                                                             false,
+                                                                                            false,
                                                                                             false));
     ASSERT_NE(nullptr, bo);
 
@@ -776,6 +777,7 @@ HWTEST2_F(DrmMemoryManagerLocalMemoryPrelimTest, givenPrintBOCreateDestroyResult
                                                                                             (1 << (MemoryBanks::getBankForLocalMemory(0) - 1)),
                                                                                             1,
                                                                                             -1,
+                                                                                            false,
                                                                                             false,
                                                                                             false));
     EXPECT_NE(nullptr, bo);
