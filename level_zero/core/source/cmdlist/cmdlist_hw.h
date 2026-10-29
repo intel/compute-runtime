@@ -576,7 +576,6 @@ struct CommandListCoreFamily : public CommandList {
     bool latestOperationRequiredNonWalkerInOrderCmdsChaining = false;
     bool duplicatedInOrderCounterStorageEnabled = false;
     bool inOrderAtomicSignalingEnabled = false;
-    bool allowCbWaitEventsNoopDispatch = false;
     bool copyOperationFenceSupported = false;
     bool implicitSynchronizedDispatchForCooperativeKernelsAllowed = false;
     bool useAdditionalBlitProperties = false;

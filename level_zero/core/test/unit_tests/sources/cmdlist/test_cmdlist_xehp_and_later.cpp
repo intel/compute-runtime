@@ -2826,53 +2826,57 @@ HWTEST2_F(CommandListAppendLaunchKernel,
         ptrOffset(cmdStream->getCpuBase(), commandStreamOffset),
         cmdStream->getUsed() - commandStreamOffset));
 
-    auto eventCompletionAddress = event->getInOrderExecEventHelper().getBaseDeviceAddress() + event->getInOrderAllocationOffset();
-    auto inOrderAllocation = event->getInOrderExecEventHelper().getDeviceCounterAllocation();
+    if (commandList->isHeaplessModeEnabled()) {
+        auto eventCompletionAddress = event->getInOrderExecEventHelper().getBaseDeviceAddress() + event->getInOrderAllocationOffset();
+        auto inOrderAllocation = event->getInOrderExecEventHelper().getDeviceCounterAllocation();
 
-    const bool useSemaphore64bCmd = commandList->getDevice()->getDeviceInfo().semaphore64bCmdSupport;
-    const bool lriRequired = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(FamilyType::isQwordInOrderCounter, useSemaphore64bCmd);
-    size_t expectedLoadRegImmCount = lriRequired ? 2 : 0;
+        const bool useSemaphore64bCmd = commandList->getDevice()->getDeviceInfo().semaphore64bCmdSupport;
+        const bool lriRequired = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(FamilyType::isQwordInOrderCounter, useSemaphore64bCmd);
+        size_t expectedLoadRegImmCount = lriRequired ? 2 : 0;
 
-    size_t expectedWaitCmds = 1 + expectedLoadRegImmCount;
-    ASSERT_EQ(expectedWaitCmds, outCbWaitEventCmds.size());
+        size_t expectedWaitCmds = 1 + expectedLoadRegImmCount;
+        ASSERT_EQ(expectedWaitCmds, outCbWaitEventCmds.size());
 
-    auto loadRegImmList = findAll<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
-    ASSERT_EQ(expectedLoadRegImmCount, loadRegImmList.size());
-    auto semaphoreWaitList = findAll<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
-    ASSERT_EQ(1u, semaphoreWaitList.size());
+        auto loadRegImmList = findAll<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
+        ASSERT_EQ(expectedLoadRegImmCount, loadRegImmList.size());
+        auto semaphoreWaitList = findAll<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+        ASSERT_EQ(1u, semaphoreWaitList.size());
 
-    size_t outCbWaitEventCmdsIndex = 0;
-    for (; outCbWaitEventCmdsIndex < expectedLoadRegImmCount; outCbWaitEventCmdsIndex++) {
-        auto *cmd = std::get_if<PatchCbWaitEventLoadRegisterImm>(&outCbWaitEventCmds[outCbWaitEventCmdsIndex]);
+        size_t outCbWaitEventCmdsIndex = 0;
+        for (; outCbWaitEventCmdsIndex < expectedLoadRegImmCount; outCbWaitEventCmdsIndex++) {
+            auto *cmd = std::get_if<PatchCbWaitEventLoadRegisterImm>(&outCbWaitEventCmds[outCbWaitEventCmdsIndex]);
 
+            ASSERT_NE(nullptr, cmd);
+
+            ASSERT_NE(nullptr, cmd->pDestination);
+            ASSERT_EQ(*loadRegImmList[outCbWaitEventCmdsIndex], cmd->pDestination);
+            auto loadRegImmCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(cmd->pDestination);
+            ASSERT_NE(nullptr, loadRegImmCmd);
+            auto registerNumber = 0x2600 + (4 * outCbWaitEventCmdsIndex);
+            EXPECT_EQ(registerNumber, cmd->offset);
+        }
+
+        auto *cmd = std::get_if<PatchCbWaitEventSemaphoreWait>(&outCbWaitEventCmds[outCbWaitEventCmdsIndex]);
         ASSERT_NE(nullptr, cmd);
 
         ASSERT_NE(nullptr, cmd->pDestination);
-        ASSERT_EQ(*loadRegImmList[outCbWaitEventCmdsIndex], cmd->pDestination);
-        auto loadRegImmCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(cmd->pDestination);
-        ASSERT_NE(nullptr, loadRegImmCmd);
-        auto registerNumber = 0x2600 + (4 * outCbWaitEventCmdsIndex);
-        EXPECT_EQ(registerNumber, cmd->offset);
+        ASSERT_EQ(*semaphoreWaitList[0], cmd->pDestination);
+        auto semaphoreWaitCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(cmd->pDestination);
+        ASSERT_NE(nullptr, semaphoreWaitCmd);
+        EXPECT_EQ(eventCompletionAddress + cmd->offset, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreWaitCmd));
+
+        auto &residencyContainer = commandContainer.getResidencyContainer();
+
+        auto eventAllocIt = std::find(residencyContainer.begin(), residencyContainer.end(), inOrderAllocation);
+        if (commandList->inOrderExecInfo->getDeviceCounterAllocation() == inOrderAllocation) {
+            ASSERT_NE(residencyContainer.end(), eventAllocIt);
+            ++eventAllocIt;
+            eventAllocIt = std::find(eventAllocIt, residencyContainer.end(), inOrderAllocation);
+        }
+        EXPECT_EQ(residencyContainer.end(), eventAllocIt);
+    } else {
+        EXPECT_EQ(0u, outCbWaitEventCmds.size());
     }
-
-    auto *cmd = std::get_if<PatchCbWaitEventSemaphoreWait>(&outCbWaitEventCmds[outCbWaitEventCmdsIndex]);
-    ASSERT_NE(nullptr, cmd);
-
-    ASSERT_NE(nullptr, cmd->pDestination);
-    ASSERT_EQ(*semaphoreWaitList[0], cmd->pDestination);
-    auto semaphoreWaitCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(cmd->pDestination);
-    ASSERT_NE(nullptr, semaphoreWaitCmd);
-    EXPECT_EQ(eventCompletionAddress + cmd->offset, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreWaitCmd));
-
-    auto &residencyContainer = commandContainer.getResidencyContainer();
-
-    auto eventAllocIt = std::find(residencyContainer.begin(), residencyContainer.end(), inOrderAllocation);
-    if (commandList->inOrderExecInfo->getDeviceCounterAllocation() == inOrderAllocation) {
-        ASSERT_NE(residencyContainer.end(), eventAllocIt);
-        ++eventAllocIt;
-        eventAllocIt = std::find(eventAllocIt, residencyContainer.end(), inOrderAllocation);
-    }
-    EXPECT_EQ(residencyContainer.end(), eventAllocIt);
 }
 
 HWTEST2_F(CommandListAppendLaunchKernel,

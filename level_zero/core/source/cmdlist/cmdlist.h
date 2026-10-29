@@ -783,6 +783,10 @@ struct CommandList : _ze_command_list_handle_t {
         return totalNoopSpacePatchSize;
     }
 
+    bool disallowNoopDispatchForWaitEvents(bool noopDispatchPresent) {
+        return noopDispatchPresent && this->allowCbWaitEventsNoopDispatch == false;
+    }
+
   protected:
     void initializeFlatCapture();
     void resetFlatCapture();
@@ -997,6 +1001,7 @@ struct CommandList : _ze_command_list_handle_t {
     bool copyOffloadStreamRecordingActive = false;
     bool useInternalCopyEngine = false;
     bool debuggerQueueNotified = false;
+    bool allowCbWaitEventsNoopDispatch = false;
 };
 
 using CommandListAllocatorFn = CommandList *(*)(uint32_t);

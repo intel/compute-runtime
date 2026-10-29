@@ -3182,6 +3182,112 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             MutableCommandListInOrderTest,
+            givenKernelWithUnassignedWaitCbTimestampEventWhenMutatingIntoUnassignedCbTimestampEventThenNoopSpaceIsPreserved) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    alignas(uint32_t) uint8_t noopSemWait[sizeof(MI_SEMAPHORE_WAIT)] = {0};
+
+    constexpr bool isTimestamp = true;
+    auto event = createTestEvent(true, false, isTimestamp, false, false);
+    auto eventHandle = event->toHandle();
+
+    auto newEvent = createTestEvent(true, false, isTimestamp, false, false);
+    auto newEventHandle = newEvent->toHandle();
+
+    // mutation point
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS;
+    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    // use event as wait event
+    result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 1, &eventHandle, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto waitEvents = getVariableList(commandId, L0::MCL::VariableType::waitEvent, nullptr);
+    ASSERT_EQ(1u, waitEvents.size());
+    auto waitEventVar = waitEvents[0];
+    ASSERT_EQ(1u, waitEventVar->getSemWaitList().size());
+
+    auto mutableSemWait = waitEventVar->getSemWaitList()[0];
+    auto mockMutableSemWait = static_cast<MockMutableSemaphoreWaitHw<FamilyType> *>(mutableSemWait);
+    EXPECT_EQ(0, memcmp(mockMutableSemWait->semWait, noopSemWait, sizeof(MI_SEMAPHORE_WAIT)));
+
+    result = mutableCommandList->updateMutableCommandWaitEventsExp(commandId, 1, &newEventHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(0, memcmp(mockMutableSemWait->semWait, noopSemWait, sizeof(MI_SEMAPHORE_WAIT)));
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListInOrderTest,
+            givenKernelWithUnassignedWaitCbTimestampEventWhenMutatingIntoAssignedCbTimestampEventThenNoopSpaceIsChangedIntoCommand) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    alignas(uint32_t) uint8_t noopSemWait[sizeof(MI_SEMAPHORE_WAIT)] = {0};
+
+    constexpr bool isTimestamp = true;
+    auto event = createTestEvent(true, false, isTimestamp, false, false);
+    auto eventHandle = event->toHandle();
+
+    auto newEvent = createTestEvent(true, false, isTimestamp, false, false);
+    auto newEventHandle = newEvent->toHandle();
+
+    auto externalCmdList = createMutableCmdList();
+    auto result = externalCmdList->appendLaunchKernel(kernel2->toHandle(), this->testGroupCount, newEventHandle, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = externalCmdList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS;
+    result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 1, &eventHandle, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto waitEvents = getVariableList(commandId, L0::MCL::VariableType::waitEvent, nullptr);
+    ASSERT_EQ(1u, waitEvents.size());
+    auto waitEventVar = waitEvents[0];
+    ASSERT_EQ(1u, waitEventVar->getSemWaitList().size());
+
+    auto mutableSemWait = waitEventVar->getSemWaitList()[0];
+    auto mockMutableSemWait = static_cast<MockMutableSemaphoreWaitHw<FamilyType> *>(mutableSemWait);
+    EXPECT_EQ(0, memcmp(mockMutableSemWait->semWait, noopSemWait, sizeof(MI_SEMAPHORE_WAIT)));
+
+    result = mutableCommandList->updateMutableCommandWaitEventsExp(commandId, 1, &newEventHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_NE(0, memcmp(mockMutableSemWait->semWait, noopSemWait, sizeof(MI_SEMAPHORE_WAIT)));
+
+    auto semWaitCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(mockMutableSemWait->semWait);
+    ASSERT_NE(nullptr, semWaitCmd);
+
+    uint64_t waitAddress = 0;
+    if (mutableCommandList->getBase()->isHeaplessModeEnabled()) {
+        if (newEvent->isCbEventWithProfiling()) {
+            waitAddress = newEvent->getGpuAddress(this->device);
+        } else {
+            auto &inOrderExecHelper = newEvent->getInOrderExecEventHelper();
+            waitAddress = inOrderExecHelper.getBaseDeviceAddress() + newEvent->getInOrderAllocationOffset();
+        }
+    } else {
+        waitAddress = newEvent->getCompletionFieldGpuAddress(this->device);
+    }
+    EXPECT_EQ(waitAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmd));
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListInOrderTest,
             givenKernelWithWaitRegularEventWhenWhenNoopedAndMutatedIntoDifferentEventThenDataIsUpdatedAndCommandNoopedAndRestoredIntoDifferentCompletion) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 

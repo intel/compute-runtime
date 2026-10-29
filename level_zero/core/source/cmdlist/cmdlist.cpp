@@ -337,7 +337,7 @@ bool CommandList::setupTimestampEventForMultiTile(Event *signalEvent) {
 }
 
 bool CommandList::isInOrderCounterWaitRequired(const Event *event) const {
-    if (event == nullptr || !event->hasInOrderTimestampNode()) {
+    if (event == nullptr || (!event->hasInOrderTimestampNode() && !event->isEventTimestampFlagSet())) {
         return true;
     }
     return heaplessModeEnabled && !event->isCbEventWithProfiling();

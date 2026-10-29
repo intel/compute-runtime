@@ -46,6 +46,11 @@
 namespace L0::MCL {
 using State = VariableDescriptor::State;
 
+bool isCbTimestampEventNooped(L0::CommandList *cmdList, L0::Event *event) {
+    bool cbTsEventNooped = !cmdList->isInOrderCounterWaitRequired(event) && event->getAllocation(cmdList->getDevice()) == nullptr;
+    return cbTsEventNooped;
+}
+
 Variable::Variable(MutableCommandList *cmdList) {
     this->cmdList = cmdList;
     this->desc = {};
@@ -174,7 +179,8 @@ ze_result_t Variable::setAsWaitEvent(WaitEventVariableDescriptor &waitEventVarDe
         this->desc.eventValue.cbEventDeviceCounterAllocation = cmdList->getDeviceCounterAllocForResidency(deviceCounterAlloc);
 
         this->desc.eventValue.waitPackets = waitEventVarDesc.waitEventPackets;
-        this->desc.eventValue.noopState = cmdList->isCbEventBoundToCmdList(waitEventVarDesc.event) || !waitEventVarDesc.event->getInOrderExecEventHelper().isDataAssigned();
+        bool cbTsEventNooped = isCbTimestampEventNooped(cmdList->getBase(), waitEventVarDesc.event);
+        this->desc.eventValue.noopState = cmdList->isCbEventBoundToCmdList(waitEventVarDesc.event) || cbTsEventNooped || !waitEventVarDesc.event->getInOrderExecEventHelper().isDataAssigned();
         this->desc.eventValue.isCbEventBoundToCmdList = cmdList->isCbEventBoundToCmdList(waitEventVarDesc.event);
         this->desc.eventValue.isExternalFlag |= waitEventVarDesc.event->isExternalEvent();
 
@@ -749,7 +755,8 @@ ze_result_t Variable::setWaitEventVariable(size_t size, const void *argVal) {
         newEventAllocation = newEvent->getAllocation(device);
         if (newEvent->isCounterBased()) {
             newCbEventBoundToCmdList = cmdList->isCbEventBoundToCmdList(newEvent);
-            if (newCbEventBoundToCmdList || !newInOrderEventHelper->isDataAssigned()) {
+            bool cbTsEventNooped = isCbTimestampEventNooped(cmdList->getBase(), newEvent);
+            if (newCbEventBoundToCmdList || cbTsEventNooped || !newInOrderEventHelper->isDataAssigned()) {
                 newNooped = true;
             } else {
                 auto deviceCounterAlloc = newInOrderEventHelper->getDeviceCounterAllocation();
@@ -784,7 +791,7 @@ ze_result_t Variable::setWaitEventVariable(size_t size, const void *argVal) {
 
     const uint64_t patchPreambleCounter = this->desc.eventValue.qwordInUse == false ? getLowPart(newPatchPreambleCounterValue) : newPatchPreambleCounterValue;
 
-    if (this->desc.eventValue.counterBasedEvent && this->cmdList->getBase()->isInOrderCounterWaitRequired(newEvent)) {
+    if (this->desc.eventValue.counterBasedEvent && cmdList->getBase()->isInOrderCounterWaitRequired(newEvent)) {
         if (oldNooped) {
             if (!newNooped) {
                 // was nooped, needs programming - restore

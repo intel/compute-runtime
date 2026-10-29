@@ -7969,6 +7969,88 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeAndNoopWaitEve
     EXPECT_EQ(0, memCmpRet);
 }
 
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            InOrderCmdListTests,
+            givenInOrderModeAndNoopWaitEventsAllowedWhenEmptyTimestampEventUsedThenNoopSpaceForWaitCommands) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    char noopedSemWaitBuffer[sizeof(MI_SEMAPHORE_WAIT)] = {};
+    memset(noopedSemWaitBuffer, 0, sizeof(MI_SEMAPHORE_WAIT));
+
+    char noopedLriBuffer[sizeof(MI_LOAD_REGISTER_IMM)] = {};
+    memset(noopedLriBuffer, 0, sizeof(MI_LOAD_REGISTER_IMM));
+
+    auto regularCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
+    regularCmdList->allowCbWaitEventsNoopDispatch = true;
+
+    auto eventPool = createEvents<FamilyType>(1, true);
+    auto eventHandle = events[0]->toHandle();
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+
+    CommandToPatchContainer outCbWaitEventCmds;
+    launchParams.outListCommands = &outCbWaitEventCmds;
+    auto result = regularCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 1, &eventHandle, launchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    const bool useSemaphore64bCmd = this->device->getDeviceInfo().semaphore64bCmdSupport;
+    const bool qwordIndirect = NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(FamilyType::isQwordInOrderCounter, useSemaphore64bCmd);
+
+    size_t expectedWaitCmds = 1;
+    if (regularCmdList->isHeaplessModeEnabled() && qwordIndirect) {
+        expectedWaitCmds += 2;
+    }
+    ASSERT_EQ(expectedWaitCmds, outCbWaitEventCmds.size());
+
+    size_t cmdIndex = 0;
+
+    if (regularCmdList->isHeaplessModeEnabled()) {
+        if (qwordIndirect) {
+            for (; cmdIndex < 2; cmdIndex++) {
+                auto *cmd = std::get_if<PatchCbWaitEventLoadRegisterImm>(&outCbWaitEventCmds[cmdIndex]);
+                ASSERT_NE(nullptr, cmd);
+                ASSERT_NE(nullptr, cmd->pDestination);
+                auto memCmpRet = memcmp(cmd->pDestination, noopedLriBuffer, sizeof(MI_LOAD_REGISTER_IMM));
+                EXPECT_EQ(0, memCmpRet);
+            }
+        }
+        auto *cmd = std::get_if<PatchCbWaitEventSemaphoreWait>(&outCbWaitEventCmds[cmdIndex]);
+        ASSERT_NE(nullptr, cmd);
+        ASSERT_NE(nullptr, cmd->pDestination);
+        auto memCmpRet = memcmp(cmd->pDestination, noopedSemWaitBuffer, sizeof(MI_SEMAPHORE_WAIT));
+        EXPECT_EQ(0, memCmpRet);
+    } else {
+        auto *cmd = std::get_if<PatchWaitEventSemaphoreWait>(&outCbWaitEventCmds[cmdIndex]);
+        ASSERT_NE(nullptr, cmd);
+        ASSERT_NE(nullptr, cmd->pDestination);
+        auto memCmpRet = memcmp(cmd->pDestination, noopedSemWaitBuffer, sizeof(MI_SEMAPHORE_WAIT));
+        EXPECT_EQ(0, memCmpRet);
+    }
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            InOrderCmdListTests,
+            givenInOrderModeAndNoopWaitEventsDisallowedWhenEmptyTimestampEventUsedThenNoDispatchNoopSpaceForWaitCommands) {
+    auto regularCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
+    regularCmdList->allowCbWaitEventsNoopDispatch = false;
+
+    auto eventPool = createEvents<FamilyType>(1, true);
+    auto eventHandle = events[0]->toHandle();
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+
+    CommandToPatchContainer outCbWaitEventCmds;
+    launchParams.outListCommands = &outCbWaitEventCmds;
+    auto result = regularCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 1, &eventHandle, launchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    size_t expectedWaitCmds = 0;
+    ASSERT_EQ(expectedWaitCmds, outCbWaitEventCmds.size());
+}
+
 HWTEST_F(InOrderCmdListTests, givenAggregatedEventBoundToCmdListWhenCheckingCanSkipWaitThenReturnFalse) {
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
 

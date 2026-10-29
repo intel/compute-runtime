@@ -3989,7 +3989,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnPatchPreamble(NEO::InOrde
     using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
     uint64_t counter = eventInOrderHelper.getPatchPreambleCounter();
     bool noopDispatch = counter == 0;
-    if (noopDispatch == true && this->allowCbWaitEventsNoopDispatch == false) {
+    if (this->disallowNoopDispatchForWaitEvents(noopDispatch)) {
         return;
     }
     const bool useSemaphore64bCmd = this->device->getDeviceInfo().semaphore64bCmdSupport;
@@ -4184,7 +4184,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
                 event->refreshImported2WayIpcCbData();
             }
             noopSkippedData = !event->getInOrderExecEventHelper().isDataAssigned();
-            if (noopSkippedData && this->allowCbWaitEventsNoopDispatch == false) {
+            if (this->disallowNoopDispatchForWaitEvents(noopSkippedData)) {
                 continue;
             }
         }
@@ -5641,14 +5641,18 @@ template <typename PatchSemaphoreType>
 void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnSingleEvent(Event *event, CommandToPatchContainer *outWaitCmds, bool relaxedOrderingAllowed, bool dualStreamCopyOffload) {
     using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
 
-    uint64_t gpuAddr = event->getCompletionFieldGpuAddress(this->device);
+    uint64_t gpuAddr = event->getAllocation(this->device) == nullptr ? 0 : event->getCompletionFieldGpuAddress(this->device);
     uint32_t packetsToWait = event->getPacketsToWait();
 
-    NEO::EncodeCaptureCommandData *outSemWaitCaptureDataPtr = nullptr;
+    const bool noopDispatch = gpuAddr == 0;
+    if (this->disallowNoopDispatchForWaitEvents(noopDispatch)) {
+        return;
+    }
+
     NEO::EncodeCaptureCommandData outSemWaitCaptureData = {};
+    outSemWaitCaptureData.noopSpace = noopDispatch;
     if (outWaitCmds != nullptr) {
         outSemWaitCaptureData.makeCommandView = outWaitCmds->makeCommandView;
-        outSemWaitCaptureDataPtr = &outSemWaitCaptureData;
     }
 
     for (uint32_t i = 0u; i < packetsToWait; i++) {
@@ -5656,11 +5660,18 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnSingleEvent(Event *event,
             NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programConditionalDataMemBatchBufferStart(*commandContainer.getCommandStream(), 0, gpuAddr, Event::STATE_CLEARED,
                                                                                                    NEO::CompareOperation::equal, true, false, isCopyOnly(dualStreamCopyOffload));
         } else {
-            bool useSemaphore64bCmd = this->device->getDeviceInfo().semaphore64bCmdSupport;
+            constexpr bool registerPollMode = false;
+            constexpr bool useQwordData = false;
+            constexpr bool indirect = false;
+            const bool useSemaphore64bCmd = this->device->getDeviceInfo().semaphore64bCmdSupport;
+
             NEO::EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(*commandContainer.getCommandStream(),
                                                                        gpuAddr,
                                                                        Event::STATE_CLEARED,
-                                                                       COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, false, false, false, this->isHighPriorityImmediateCmdList(), useSemaphore64bCmd, outSemWaitCaptureDataPtr);
+                                                                       COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD,
+                                                                       registerPollMode, useQwordData, indirect,
+                                                                       this->isHighPriorityImmediateCmdList(), useSemaphore64bCmd,
+                                                                       &outSemWaitCaptureData);
 
             if (outWaitCmds != nullptr) {
                 if constexpr (!std::is_same_v<PatchSemaphoreType, PatchInvalidPatchType>) {
