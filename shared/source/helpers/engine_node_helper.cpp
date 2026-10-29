@@ -261,8 +261,7 @@ bool isPowerHintEngineSupported(const RootDeviceEnvironment &rootDeviceEnvironme
 
 bool isInternalEngineFromContextGroupEnabled(const RootDeviceEnvironment &rootDeviceEnvironment) {
     if (debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.get() != 1 ||
-        !rootDeviceEnvironment.getHelper<GfxCoreHelper>().areSecondaryContextsSupported() ||
-        rootDeviceEnvironment.isExposeSingleDeviceMode()) {
+        !rootDeviceEnvironment.getHelper<GfxCoreHelper>().areSecondaryContextsSupported()) {
         return false;
     }
     const auto processCount = rootDeviceEnvironment.osInterface ? rootDeviceEnvironment.osInterface->getAggregatedProcessCount() : 1u;

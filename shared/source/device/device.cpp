@@ -448,7 +448,9 @@ bool Device::createEngines() {
 
                 auto primaryEngine = engineGroup->engines[engineIndex];
 
-                createSecondaryContexts(primaryEngine, secondaryEnginesForType, contextCount, highPriorityContextCount);
+                if (!createSecondaryContexts(primaryEngine, secondaryEnginesForType, contextCount, highPriorityContextCount)) {
+                    return false;
+                }
             }
         }
 
@@ -469,7 +471,9 @@ bool Device::createEngines() {
                     contextCount = std::max(contextCount / numProcesses, 2u);
                 }
 
-                createSecondaryContexts(primaryEngine, secondaryEnginesForType, contextCount, contextCount);
+                if (!createSecondaryContexts(primaryEngine, secondaryEnginesForType, contextCount, contextCount)) {
+                    return false;
+                }
             }
         }
     }
@@ -477,7 +481,7 @@ bool Device::createEngines() {
     return true;
 }
 
-void Device::createSecondaryContexts(const EngineControl &primaryEngine, SecondaryContexts &secondaryEnginesForType, uint32_t contextCount, uint32_t highPriorityContextCount) {
+bool Device::createSecondaryContexts(const EngineControl &primaryEngine, SecondaryContexts &secondaryEnginesForType, uint32_t contextCount, uint32_t highPriorityContextCount) {
     auto regularContextCount = contextCount - highPriorityContextCount;
     secondaryEnginesForType.regularEnginesTotal = regularContextCount;
     secondaryEnginesForType.highPriorityEnginesTotal = highPriorityContextCount;
@@ -513,6 +517,15 @@ void Device::createSecondaryContexts(const EngineControl &primaryEngine, Seconda
     if (regularContextCount == 0) {
         primaryEngine.osContext->setExclusivelyHpContext();
     }
+
+    if (secondaryEnginesForType.internalEngineIndex != 0) {
+        auto &reservedEngine = secondaryEnginesForType.engines[secondaryEnginesForType.internalEngineIndex];
+        reservedEngine.osContext->setReservedForInternalEngine(true);
+        if (getRootDeviceEnvironment().isExposeSingleDeviceMode()) {
+            return this->initializeSecondaryEngine(reservedEngine);
+        }
+    }
+    return true;
 }
 
 void Device::allocateDebugSurface(size_t debugSurfaceSize) {

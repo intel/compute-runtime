@@ -1440,7 +1440,8 @@ OsContext *MemoryManager::getDefaultEngineContext(uint32_t rootDeviceIndex, Devi
     if (!defaultContext && peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->isExposeSingleDeviceMode()) {
         for (auto &engine : getRegisteredEngines(rootDeviceIndex)) {
             auto osContext = engine.osContext;
-            if (osContext->isInternalEngine() && osContext->getDeviceBitfield() == subdevicesBitfield) {
+            const bool internalContext = osContext->isInternalEngine() || (osContext->isReservedForInternalEngine() && osContext->isInitialized());
+            if (internalContext && osContext->getDeviceBitfield() == subdevicesBitfield) {
                 defaultContext = osContext;
                 break;
             }

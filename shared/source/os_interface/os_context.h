@@ -125,6 +125,12 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     bool isPartOfContextGroup() const {
         return contextGroupCount > 0;
     }
+    void setReservedForInternalEngine(bool reservedForInternalEngine) {
+        this->reservedForInternalEngine = reservedForInternalEngine;
+    }
+    bool isReservedForInternalEngine() const {
+        return reservedForInternalEngine;
+    }
     void setCommandStreamReceiver(CommandStreamReceiver &commandStreamReceiver) {
         this->commandStreamReceiver = &commandStreamReceiver;
     }
@@ -162,6 +168,7 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     bool contextInitialized = false;
     bool debuggableContext = false;
     bool initializeInternalEngineImmediately = true;
+    bool reservedForInternalEngine = false;
     uint8_t powerHintValue = 0;
     static constexpr inline uint8_t powerHintMax = 100u; // by definition: 100% power-saving
 

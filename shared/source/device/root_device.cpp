@@ -146,7 +146,7 @@ bool RootDevice::createRootDeviceEngine(EngineTypeUsage engineTypeUsage, DeviceB
         UNRECOVERABLE_IF(secondaryEngines.contains(engineType));
         auto &secondaryEnginesForType = secondaryEngines[engineType];
 
-        createSecondaryContexts(engine, secondaryEnginesForType, contextCount, highPriorityContextCount);
+        return createSecondaryContexts(engine, secondaryEnginesForType, contextCount, highPriorityContextCount);
     }
     return true;
 }
