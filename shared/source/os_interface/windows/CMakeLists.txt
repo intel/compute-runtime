@@ -17,6 +17,7 @@ set(NEO_CORE_OS_INTERFACE_WINDOWS
     ${CMAKE_CURRENT_SOURCE_DIR}/external_semaphore_windows.h
     ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_drm_stub.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kmd_notify_properties_windows.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/mapped_file_win.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/named_object_windows.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/named_object_windows.h
     ${CMAKE_CURRENT_SOURCE_DIR}/os_inc.h
@@ -38,6 +39,7 @@ set(NEO_CORE_OS_INTERFACE_WINDOWS
     ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_win.h
     ${CMAKE_CURRENT_SOURCE_DIR}/power_settings.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/print.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tbx_in_process_simulator_win.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/required_libs_helpers.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/trim_callback.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm_device_command_stream.h

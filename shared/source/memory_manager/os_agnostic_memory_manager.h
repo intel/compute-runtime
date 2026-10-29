@@ -81,6 +81,7 @@ class OsAgnosticMemoryManager : public MemoryManager {
                                              uint64_t count, MemoryPool pool, uint32_t rootDeviceIndex, bool uncacheable, bool flushL3Required, bool requireSpecificBitness);
     void removeAllocationFromDownloadAllocationsInCsr(GraphicsAllocation *alloc) override;
     void freeMemoryInAubManager(AubCenter &aubCenter, uint32_t rootDeviceIndex, uint64_t gpuAddress, size_t size);
+    size_t getMinimalSystemMemoryAlignment(uint32_t rootDeviceIndex) const;
     bool fakeBigAllocations = false;
 
   private:

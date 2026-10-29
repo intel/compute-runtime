@@ -16,6 +16,10 @@
 
 /*SIMULATION FLAGS*/
 DECLARE_DEBUG_VARIABLE(std::string, TbxServer, std::string("127.0.0.1"), "TCP-IP address of TBX server")
+DECLARE_DEBUG_VARIABLE(std::string, TbxSharedSystemMemoryFile, std::string("unk"), "Path to existing file shared with TBX server as system memory, enables TBX shared memory mode, server must open the same file (-shmname), root device N>0 uses the name with _N inserted before the extension")
+DECLARE_DEBUG_VARIABLE(std::string, TbxSharedLocalMemoryFile, std::string("unk"), "Path to existing file shared with TBX server as local memory, used with TbxSharedSystemMemoryFile, root device N>0 uses the name with _N inserted before the extension")
+DECLARE_DEBUG_VARIABLE(std::string, TbxInProcessSimulatorLibrary, std::string("unk"), "Absolute path to TBX server library started in driver process, with TbxSharedSystemMemoryFile shared files hold physical to CPU address translation tables and allocation memory is shared with server")
+DECLARE_DEBUG_VARIABLE(std::string, TbxInProcessSimulatorArguments, std::string("unk"), "Command line arguments passed to TbxInProcessSimulatorLibrary, separated by semicolons (arguments may contain spaces) or, without semicolons, by whitespaces, for root device N>0 -socket port and -shmname files are replaced with that root device values")
 DECLARE_DEBUG_VARIABLE(std::string, ProductFamilyOverride, std::string("unk"), "Specify product for use in AUB/TBX")
 DECLARE_DEBUG_VARIABLE(std::string, HardwareInfoOverride, std::string("default"), "Specify hardware info config, i.e 1x4x8, for use in AUB/TBX")
 DECLARE_DEBUG_VARIABLE(std::string, ForceCompilerUsePlatform, std::string("unk"), "Specify product for use in compiler interface")

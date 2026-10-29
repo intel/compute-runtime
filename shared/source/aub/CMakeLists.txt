@@ -15,6 +15,8 @@ set(NEO_CORE_AUB
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_kernel_info_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_subcapture.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_subcapture.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/tbx_in_process_simulator.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tbx_in_process_simulator.h
 )
 
 set_property(GLOBAL PROPERTY NEO_CORE_AUB ${NEO_CORE_AUB})

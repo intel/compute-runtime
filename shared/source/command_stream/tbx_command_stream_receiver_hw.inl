@@ -20,6 +20,7 @@
 #include "shared/source/direct_submission/direct_submission_hw.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/debug_helpers.h"
@@ -58,10 +59,11 @@ TbxCommandStreamReceiverHw<GfxFamily>::TbxCommandStreamReceiverHw(ExecutionEnvir
     const auto &releaseHelper = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getReleaseHelper();
     physicalAddressAllocator.reset(this->createPhysicalAddressAllocator(&this->peekHwInfo(), releaseHelper));
     executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->initAubCenter(this->localMemoryEnabled, "", this->getType());
-    auto aubCenter = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->aubCenter.get();
-    UNRECOVERABLE_IF(nullptr == aubCenter);
+    simulationAubCenter = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->aubCenter.get();
+    UNRECOVERABLE_IF(nullptr == simulationAubCenter);
 
-    aubManager = aubCenter->getAubManager();
+    aubManager = simulationAubCenter->getAubManager();
+    allocationMemorySharedWithSimulator = simulationAubCenter->isAllocationMemorySharedWithSimulator();
 
     ppgtt = std::make_unique<std::conditional<is64bit, PML4, PDPE>::type>(physicalAddressAllocator.get());
     ggtt = std::make_unique<PDPE>(physicalAddressAllocator.get());
@@ -71,13 +73,70 @@ TbxCommandStreamReceiverHw<GfxFamily>::TbxCommandStreamReceiverHw(ExecutionEnvir
     };
 
     this->uploadAllocationChunkImpl = [this](GraphicsAllocation &graphicsAllocation, uint64_t chunkOffset, size_t chunkSize) {
-        this->writeMemoryWithAubManager(graphicsAllocation, true, chunkOffset, chunkSize);
+        this->writeAllocationWithAubManager(graphicsAllocation, true, chunkOffset, chunkSize);
     };
 }
 
 template <typename GfxFamily>
 TbxCommandStreamReceiverHw<GfxFamily>::~TbxCommandStreamReceiverHw() {
     this->downloadAllocationImpl = nullptr;
+}
+
+template <typename GfxFamily>
+void TbxCommandStreamReceiverHw<GfxFamily>::writeAllocationWithAubManager(GraphicsAllocation &gfxAllocation, bool isChunkCopy, uint64_t gpuVaChunkOffset, size_t chunkSize) {
+    if (shareAllocationMemoryWithSimulator(gfxAllocation)) {
+        return;
+    }
+    this->writeMemoryWithAubManager(gfxAllocation, isChunkCopy, gpuVaChunkOffset, chunkSize);
+}
+
+template <typename GfxFamily>
+bool TbxCommandStreamReceiverHw<GfxFamily>::shareAllocationMemoryWithSimulator(GraphicsAllocation &gfxAllocation) {
+    if (!allocationMemorySharedWithSimulator) {
+        return false;
+    }
+    auto pageTablesLock = simulationAubCenter->obtainPageTablesLock();
+    if (gfxAllocation.isSimulationMemoryShared()) {
+        return true;
+    }
+    if (gfxAllocation.isSimulationMemorySharingAttempted() || gfxAllocation.getDriverAllocatedCpuPtr() == nullptr || gfxAllocation.isCompressionEnabled() ||
+        gfxAllocation.isAllocatedInLocalMemoryPool() || isAllocTbxFaultable(&gfxAllocation)) {
+        return false;
+    }
+
+    uint64_t gpuAddress = 0;
+    void *cpuAddress = nullptr;
+    size_t size = 0;
+    if (!this->getParametersForMemory(gfxAllocation, gpuAddress, cpuAddress, size)) {
+        return false;
+    }
+
+    const size_t gpuPageSize = gfxAllocation.getUsedPageSize();
+    const auto physicalPageSize = std::max(gpuPageSize, MemoryConstants::pageSize64k);
+    if (!isAligned(gpuAddress, physicalPageSize) || !isAligned(size, physicalPageSize) || !isAligned<MemoryConstants::pageSize>(cpuAddress)) {
+        return false;
+    }
+
+    auto allocationParams = this->createAllocationParams(gfxAllocation, gpuAddress, nullptr, size);
+    allocationParams.pageSize = physicalPageSize;
+    aub_stream::PhysicalAllocationInfo physicalAllocationInfo{};
+    gfxAllocation.setSimulationMemorySharingAttempted(true);
+    if (!aubManager->reserveOnlyPhysicalSpace(allocationParams, physicalAllocationInfo)) {
+        return false;
+    }
+
+    constexpr bool isLocalMemory = false;
+    if (!aubManager->mapSystemMemoryToPhysicalAddress(physicalAllocationInfo.physicalAddress, size, MemoryConstants::pageSize, isLocalMemory, cpuAddress)) {
+        return false;
+    }
+
+    allocationParams.pageSize = std::min(gpuPageSize, physicalAllocationInfo.pageSize);
+    if (!aubManager->mapGpuVa2(physicalAllocationInfo.physicalAddress, allocationParams)) {
+        return false;
+    }
+    gfxAllocation.setSimulationMemoryShared(true);
+    this->getMemoryManager()->setNewResourceBoundOnRegisteredEngines(this->rootDeviceIndex);
+    return true;
 }
 
 template <typename GfxFamily>
@@ -300,7 +359,7 @@ bool TbxCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxA
     initializeEngine();
 
     if (aubManager) {
-        this->writeMemoryWithAubManager(gfxAllocation, isChunkCopy, gpuVaChunkOffset, chunkSize);
+        this->writeAllocationWithAubManager(gfxAllocation, isChunkCopy, gpuVaChunkOffset, chunkSize);
     } else {
         if (isChunkCopy) {
             gpuAddress += gpuVaChunkOffset;
@@ -490,7 +549,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::processEviction() {
 template <typename GfxFamily>
 void TbxCommandStreamReceiverHw<GfxFamily>::makeNonResident(GraphicsAllocation &gfxAllocation) {
     auto lock = this->obtainUniqueOwnership();
-    if (gfxAllocation.isResident(osContext->getContextId()) &&
+    if (gfxAllocation.isResident(osContext->getContextId()) && !gfxAllocation.isSimulationMemoryShared() &&
         (GraphicsAllocation::isSuitableForDownload(gfxAllocation.getAllocationType()) || debugManager.flags.TbxDownloadAllAllocations.get())) {
         this->allocationsForDownload.insert(&gfxAllocation);
     }
@@ -521,6 +580,9 @@ SubmissionStatus TbxCommandStreamReceiverHw<GfxFamily>::processResidency(Residen
 
 template <typename GfxFamily>
 void TbxCommandStreamReceiverHw<GfxFamily>::downloadAllocationChunkTbx(GraphicsAllocation &gfxAllocation, uint64_t chunkOffset, size_t chunkSize) {
+    if (gfxAllocation.isSimulationMemoryShared()) {
+        return;
+    }
 
     uint64_t gpuAddress = 0;
     void *cpuAddress = nullptr;

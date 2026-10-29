@@ -158,3 +158,34 @@ HWTEST_F(AubHelperTest, WhenHBMSizePerTileInGigabytesIsNotSetThenGetMemBankSizeR
     sysInfo.MultiTileArchInfo.TileCount = 4;
     EXPECT_EQ(8 * MemoryConstants::gigaByte, AubHelper::getPerTileLocalMemorySize(&hwInfo, *releaseHelper));
 }
+
+TEST(AubHelper, givenRootDeviceZeroWhenGettingTbxSharedMemoryFileNameThenNameIsUnchanged) {
+    EXPECT_EQ(std::string("dir/tbx_sys.bin"), NEO::AubHelper::getTbxSharedMemoryFileName("dir/tbx_sys.bin", 0u));
+}
+
+TEST(AubHelper, givenRootDeviceWithIndexWhenGettingTbxSharedMemoryFileNameThenIndexIsInsertedBeforeExtension) {
+    EXPECT_EQ(std::string("dir/tbx_sys_1.bin"), NEO::AubHelper::getTbxSharedMemoryFileName("dir/tbx_sys.bin", 1u));
+    EXPECT_EQ(std::string("C:\\shm\\tbx_local.v4_2.bin"), NEO::AubHelper::getTbxSharedMemoryFileName("C:\\shm\\tbx_local.v4.bin", 2u));
+}
+
+TEST(AubHelper, givenFileNameWithoutExtensionWhenGettingTbxSharedMemoryFileNameForRootDeviceThenIndexIsAppended) {
+    EXPECT_EQ(std::string("tbx_sys_1"), NEO::AubHelper::getTbxSharedMemoryFileName("tbx_sys", 1u));
+    EXPECT_EQ(std::string("C:\\dir.v4\\tbx_sys_1"), NEO::AubHelper::getTbxSharedMemoryFileName("C:\\dir.v4\\tbx_sys", 1u));
+    EXPECT_EQ(std::string("/tmp/dir.v4/tbx_sys_3"), NEO::AubHelper::getTbxSharedMemoryFileName("/tmp/dir.v4/tbx_sys", 3u));
+}
+
+TEST(AubHelper, givenMultipleRootDevicesWhenGettingTbxPortThenRootDeviceIndexIsAddedToPort) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.TbxPort.set(5000);
+    NEO::debugManager.flags.CreateMultipleRootDevices.set(2);
+
+    EXPECT_EQ(5000u, NEO::AubHelper::getTbxPort(0u));
+    EXPECT_EQ(5001u, NEO::AubHelper::getTbxPort(1u));
+}
+
+TEST(AubHelper, givenSingleRootDeviceWhenGettingTbxPortThenConfiguredPortIsReturned) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.TbxPort.set(5000);
+
+    EXPECT_EQ(5000u, NEO::AubHelper::getTbxPort(1u));
+}

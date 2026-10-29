@@ -322,6 +322,7 @@ class MemoryManager {
 
     const EngineControlContainer &getRegisteredEngines(uint32_t rootDeviceIndex) const { return allRegisteredEngines[rootDeviceIndex]; }
     const MultiDeviceEngineControlContainer &getRegisteredEngines() const { return allRegisteredEngines; }
+    void setNewResourceBoundOnRegisteredEngines(uint32_t rootDeviceIndex) const;
     const EngineControl *getRegisteredEngineForCsr(CommandStreamReceiver *commandStreamReceiver);
     void unregisterEngineForCsr(CommandStreamReceiver *commandStreamReceiver);
     void registerInstructionCacheFlushForAllocation(uint32_t rootDeviceIndex, const GraphicsAllocation &allocation);

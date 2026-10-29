@@ -17,6 +17,7 @@
 
 namespace NEO {
 
+class AubCenter;
 class AubSubCaptureManager;
 class CpuPageFaultManager;
 
@@ -37,6 +38,8 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     }
 
     bool isAllocTbxFaultable(GraphicsAllocation *gfxAlloc);
+    bool shareAllocationMemoryWithSimulator(GraphicsAllocation &gfxAllocation);
+    void writeAllocationWithAubManager(GraphicsAllocation &gfxAllocation, bool isChunkCopy, uint64_t gpuVaChunkOffset, size_t chunkSize);
     void registerAllocationWithTbxFaultMngrIfTbxFaultable(GraphicsAllocation *gfxAllocation, void *cpuAddress, size_t size);
     void allowCPUMemoryAccessIfTbxFaultable(GraphicsAllocation *gfxAllocation, void *cpuAddress, size_t size);
     void protectCPUMemoryAccessIfTbxFaultable(GraphicsAllocation *gfxAllocation, void *cpuAddress, size_t size);
@@ -123,5 +126,7 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
 
     bool dumpTbxNonWritable = false;
     bool isEngineInitialized = false;
+    bool allocationMemorySharedWithSimulator = false;
+    AubCenter *simulationAubCenter = nullptr;
 };
 } // namespace NEO

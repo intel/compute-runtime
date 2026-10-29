@@ -196,6 +196,68 @@ TEST(OSLibraryWinTest, WhenCreateOsLibraryWithoutSelfOpenThenLoadAndFreeLibrary)
     EXPECT_EQ(1u, freeLibraryCalled);
 }
 
+TEST(OSLibraryWinTest, GivenCustomLoadFlagsWhenCreatingOsLibraryThenLibraryIsLoadedOnceWithGivenNameAndFlags) {
+    static uint32_t loadLibraryCalled = 0;
+    static DWORD passedFlags = 0;
+    static bool passedNameMatches = false;
+    VariableBackup<decltype(loadLibraryCalled)> backupLoadLibraryCalled(&loadLibraryCalled, 0);
+    VariableBackup<decltype(passedFlags)> backupPassedFlags(&passedFlags, 0);
+    VariableBackup<decltype(passedNameMatches)> backupPassedNameMatches(&passedNameMatches, false);
+
+    VariableBackup<decltype(OsLibraryBackup::loadLibraryExA)> backupLoadLibrary(&OsLibraryBackup::loadLibraryExA, [](LPCSTR name, HANDLE, DWORD flags) -> HMODULE {
+        loadLibraryCalled++;
+        passedNameMatches = (strcmp(name, "c:/dir/library.dll") == 0);
+        passedFlags = flags;
+        return reinterpret_cast<HMODULE>(0x1000);
+    });
+    VariableBackup<decltype(OsLibraryBackup::freeLibrary)> backupFreeLibrary(&OsLibraryBackup::freeLibrary, [](HMODULE) -> BOOL {
+        return TRUE;
+    });
+
+    int customLoadFlags = LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR;
+    OsLibraryCreateProperties properties("c:/dir/library.dll");
+    properties.customLoadFlags = &customLoadFlags;
+    auto lib = std::make_unique<Windows::OsLibrary>(properties);
+
+    EXPECT_TRUE(lib->isLoaded());
+    EXPECT_EQ(1u, loadLibraryCalled);
+    EXPECT_TRUE(passedNameMatches);
+    EXPECT_EQ(static_cast<DWORD>(LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR), passedFlags);
+}
+
+TEST(OSLibraryWinTest, GivenZeroCustomLoadFlagsWhenCreatingOsLibraryThenLibraryIsLoadedFromDriverDirectoryWithSystem32Fallback) {
+    static uint32_t loadLibraryCalled = 0;
+    static DWORD passedFlags[2] = {};
+    static bool passedNamesMatch[2] = {};
+    VariableBackup<decltype(loadLibraryCalled)> backupLoadLibraryCalled(&loadLibraryCalled, 0);
+
+    auto bkp = OsLibraryBackup::backup([](LPCSTR name, HANDLE, DWORD flags) -> HMODULE {
+        if (loadLibraryCalled < 2) {
+            const char *expectedName = (loadLibraryCalled == 0) ? "z:\\library.dll" : "library.dll";
+            passedNamesMatch[loadLibraryCalled] = (strcmp(name, expectedName) == 0);
+            passedFlags[loadLibraryCalled] = flags;
+        }
+        loadLibraryCalled++;
+        return (flags == LOAD_LIBRARY_SEARCH_SYSTEM32) ? reinterpret_cast<HMODULE>(0x1000) : nullptr;
+    },
+                                       getModuleFileNameAMock, getSystemDirectoryAMock);
+    VariableBackup<decltype(OsLibraryBackup::freeLibrary)> backupFreeLibrary(&OsLibraryBackup::freeLibrary, [](HMODULE) -> BOOL {
+        return TRUE;
+    });
+
+    int customLoadFlags = 0;
+    OsLibraryCreateProperties properties("library.dll");
+    properties.customLoadFlags = &customLoadFlags;
+    auto lib = std::make_unique<Windows::OsLibrary>(properties);
+
+    EXPECT_TRUE(lib->isLoaded());
+    ASSERT_EQ(2u, loadLibraryCalled);
+    EXPECT_TRUE(passedNamesMatch[0]);
+    EXPECT_EQ(0u, passedFlags[0]);
+    EXPECT_TRUE(passedNamesMatch[1]);
+    EXPECT_EQ(static_cast<DWORD>(LOAD_LIBRARY_SEARCH_SYSTEM32), passedFlags[1]);
+}
+
 class GetLoadedLibVersionWinTest : public ::testing::Test {
   protected:
     struct LibModule {

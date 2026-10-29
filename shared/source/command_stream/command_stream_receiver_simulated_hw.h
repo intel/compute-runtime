@@ -73,14 +73,35 @@ class CommandStreamReceiverSimulatedHw : public CommandStreamReceiverSimulatedCo
         const auto devicesCount = GfxCoreHelper::getSubDevicesCount(hwInfo);
         return new PhysicalAddressAllocatorHw<GfxFamily>(bankSize, devicesCount);
     }
+    aub_stream::AllocationParams createAllocationParams(GraphicsAllocation &graphicsAllocation, uint64_t gpuAddress, const void *cpuAddress, size_t size) const {
+        int hint = graphicsAllocation.getAllocationType() == AllocationType::commandBuffer
+                       ? aub_stream::DataTypeHintValues::TraceBatchBuffer
+                       : aub_stream::DataTypeHintValues::TraceNotype;
+
+        aub_stream::AllocationParams allocationParams(gpuAddress, cpuAddress, size, this->getMemoryBank(&graphicsAllocation),
+                                                      hint, graphicsAllocation.getUsedPageSize());
+
+        auto gmm = graphicsAllocation.getDefaultGmm();
+
+        if (gmm) {
+            allocationParams.additionalParams.compressionEnabled = gmm->isCompressionEnabled();
+            allocationParams.additionalParams.uncached = CacheSettingsHelper::isUncachedType(gmm->getResourceUsageType());
+        }
+        return allocationParams;
+    }
+
+    bool isWrittenWithAubManager(GraphicsAllocation &graphicsAllocation) const {
+        bool isSingleDeviceAllocationWrittenByRootCsr = graphicsAllocation.storageInfo.pageTablesVisibility.count() <= 1 && graphicsAllocation.storageInfo.memoryBanks.count() <= 1;
+        isSingleDeviceAllocationWrittenByRootCsr &= (this->osContext && this->osContext->isRootDevice());
+
+        return graphicsAllocation.storageInfo.cloningOfPageTables || !graphicsAllocation.isAllocatedInLocalMemoryPool() || isSingleDeviceAllocationWrittenByRootCsr;
+    }
+
     void writeMemoryWithAubManager(GraphicsAllocation &graphicsAllocation, bool isChunkCopy, uint64_t gpuVaChunkOffset, size_t chunkSize) const override {
         uint64_t gpuAddress;
         void *cpuAddress;
         size_t allocSize;
         this->getParametersForMemory(graphicsAllocation, gpuAddress, cpuAddress, allocSize);
-        int hint = graphicsAllocation.getAllocationType() == AllocationType::commandBuffer
-                       ? aub_stream::DataTypeHintValues::TraceBatchBuffer
-                       : aub_stream::DataTypeHintValues::TraceNotype;
 
         if (isChunkCopy) {
             gpuAddress += gpuVaChunkOffset;
@@ -95,20 +116,9 @@ class CommandStreamReceiverSimulatedHw : public CommandStreamReceiverSimulatedCo
             cpuAddress = memoryCopy.get();
         }
 
-        aub_stream::AllocationParams allocationParams(gpuAddress, cpuAddress, allocSize, this->getMemoryBank(&graphicsAllocation),
-                                                      hint, graphicsAllocation.getUsedPageSize());
+        auto allocationParams = createAllocationParams(graphicsAllocation, gpuAddress, cpuAddress, allocSize);
 
-        auto gmm = graphicsAllocation.getDefaultGmm();
-
-        if (gmm) {
-            allocationParams.additionalParams.compressionEnabled = gmm->isCompressionEnabled();
-            allocationParams.additionalParams.uncached = CacheSettingsHelper::isUncachedType(gmm->getResourceUsageType());
-        }
-
-        bool isSingleDeviceAllocationWrittenByRootCsr = graphicsAllocation.storageInfo.pageTablesVisibility.count() <= 1 && graphicsAllocation.storageInfo.memoryBanks.count() <= 1;
-        isSingleDeviceAllocationWrittenByRootCsr &= (this->osContext && this->osContext->isRootDevice());
-
-        if (graphicsAllocation.storageInfo.cloningOfPageTables || !graphicsAllocation.isAllocatedInLocalMemoryPool() || isSingleDeviceAllocationWrittenByRootCsr) {
+        if (isWrittenWithAubManager(graphicsAllocation)) {
             UNRECOVERABLE_IF(nullptr == aubManager);
             aubManager->writeMemory2(allocationParams);
         } else {

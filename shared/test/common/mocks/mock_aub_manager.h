@@ -170,6 +170,26 @@ class MockAubManager : public aub_stream::AubManager {
     bool reservePhysicalMemory(aub_stream::AllocationParams allocationParams, aub_stream::PhysicalAllocationInfo &physicalAllocInfo) override { return false; };
     bool mapGpuVa(uint64_t gfxAddress, size_t size, aub_stream::PhysicalAllocationInfo physicalAllocInfo) override { return false; };
 
+    bool reserveOnlyPhysicalSpace(aub_stream::AllocationParams allocationParams, aub_stream::PhysicalAllocationInfo &physicalAllocInfo) override {
+        reserveOnlyPhysicalSpaceCalled++;
+        reservedPhysicalSpaceParams.push_back(allocationParams);
+        physicalAllocInfo = physicalAllocationInfoToReturn;
+        physicalAllocInfo.memoryBank = allocationParams.memoryBanks;
+        physicalAllocInfo.size = allocationParams.size;
+        return reserveOnlyPhysicalSpaceResult;
+    }
+
+    bool mapSystemMemoryToPhysicalAddress(uint64_t physAddress, size_t size, size_t alignment, bool isLocalMemory, const void *p) override {
+        mappedSystemMemoryRanges.push_back({physAddress, size, isLocalMemory, p});
+        return mappedSystemMemoryRanges.size() != failingMapSystemMemoryToPhysicalAddressCall;
+    }
+
+    bool mapGpuVa2(uint64_t physicalAddress, aub_stream::AllocationParams params) override {
+        mappedGpuVaPhysicalAddresses.push_back(physicalAddress);
+        mappedGpuVaParams.push_back(params);
+        return mapGpuVa2Result;
+    }
+
     uint32_t readMMIO(uint32_t offset) override {
         if (mmioData) {
             return (*mmioData)[offset];
@@ -178,7 +198,23 @@ class MockAubManager : public aub_stream::AubManager {
         }
     }
 
+    struct MappedSystemMemoryRange {
+        uint64_t physicalAddress;
+        size_t size;
+        bool isLocalMemory;
+        const void *systemMemory;
+    };
+
     std::vector<aub_stream::AllocationParams> storedAllocationParams;
+    std::vector<MappedSystemMemoryRange> mappedSystemMemoryRanges;
+    std::vector<aub_stream::AllocationParams> reservedPhysicalSpaceParams;
+    std::vector<uint64_t> mappedGpuVaPhysicalAddresses;
+    std::vector<aub_stream::AllocationParams> mappedGpuVaParams;
+    aub_stream::PhysicalAllocationInfo physicalAllocationInfoToReturn{0x400000u, 0u, 0u, 0x10000u};
+    uint32_t reserveOnlyPhysicalSpaceCalled = 0;
+    bool reserveOnlyPhysicalSpaceResult = true;
+    size_t failingMapSystemMemoryToPhysicalAddressCall = 0;
+    bool mapGpuVa2Result = true;
     uint32_t openCalledCnt = 0;
     std::string fileName = "";
     bool closeCalled = false;

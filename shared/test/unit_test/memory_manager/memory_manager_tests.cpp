@@ -7,6 +7,7 @@
 
 #include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/blit_helper.h"
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/memory_manager/engine_completion_snapshot.h"
@@ -50,6 +51,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
 
+#include "aubstream/aubstream.h"
 #include "gtest/gtest.h"
 
 #include <algorithm>
@@ -1201,6 +1203,45 @@ TEST_F(MemoryAllocatorTest, givenAubManagerAndFreeMemoryEnabledWhenFreeingGraphi
 
     EXPECT_TRUE(mockManager->freeMemoryCalled);
     EXPECT_TRUE(osContext.isTlbFlushRequired());
+}
+
+TEST_F(MemoryAllocatorTest, givenAllocationMemorySharedWithSimulatorWhenAllocatingSystemMemoryThenSizeAndAddressAreAlignedTo64KB) {
+    const uint32_t rootDeviceIndex = 0u;
+    auto mockAubCenter = new MockAubCenter(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex], false, "", CommandStreamReceiverType::tbx);
+    mockAubCenter->aubStreamMode = aub_stream::mode::tbxShm4;
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->aubCenter.reset(mockAubCenter);
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, MemoryConstants::pageSize});
+    ASSERT_NE(nullptr, allocation);
+
+    EXPECT_EQ(MemoryConstants::pageSize64k, allocation->getUnderlyingBufferSize());
+    EXPECT_TRUE(isAligned<MemoryConstants::pageSize64k>(allocation->getUnderlyingBuffer()));
+    EXPECT_TRUE(isAligned<MemoryConstants::pageSize64k>(allocation->getGpuAddress()));
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(MemoryAllocatorTest, givenAllocationMemoryNotSharedWithSimulatorWhenAllocatingSystemMemoryThenSizeIsAlignedTo4KB) {
+    const uint32_t rootDeviceIndex = 0u;
+    auto mockAubCenter = new MockAubCenter(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex], false, "", CommandStreamReceiverType::tbx);
+    mockAubCenter->aubStreamMode = aub_stream::mode::tbx;
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->aubCenter.reset(mockAubCenter);
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, MemoryConstants::pageSize});
+    ASSERT_NE(nullptr, allocation);
+
+    EXPECT_EQ(MemoryConstants::pageSize, allocation->getUnderlyingBufferSize());
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(MemoryAllocatorTest, givenNoAubCenterWhenAllocatingSystemMemoryThenSizeIsAlignedTo4KB) {
+    const uint32_t rootDeviceIndex = 0u;
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->aubCenter.reset();
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, MemoryConstants::pageSize});
+    ASSERT_NE(nullptr, allocation);
+
+    EXPECT_EQ(MemoryConstants::pageSize, allocation->getUnderlyingBufferSize());
+    memoryManager->freeGraphicsMemory(allocation);
 }
 
 TEST_F(MemoryAllocatorTest, givenAubManagerAndFreeMemoryEnabledWhenCleaningOsHandlesThenTlbFlushIsRequiredOnRegisteredOsContexts) {

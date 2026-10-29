@@ -13,12 +13,8 @@
 namespace NEO {
 
 void AubHelper::setTbxConfiguration(uint32_t rootDeviceIndex) {
-    auto port = static_cast<uint16_t>(debugManager.flags.TbxPort.get());
-    if (debugManager.flags.CreateMultipleRootDevices.get() > 1) {
-        port = static_cast<uint16_t>(port + rootDeviceIndex);
-    }
     aub_stream::setTbxServerIpLegacy(debugManager.flags.TbxServer.get());
-    aub_stream::setTbxServerPort(port);
+    aub_stream::setTbxServerPort(getTbxPort(rootDeviceIndex));
     aub_stream::setTbxFrontdoorMode(debugManager.flags.TbxFrontdoorMode.get());
 }
 } // namespace NEO

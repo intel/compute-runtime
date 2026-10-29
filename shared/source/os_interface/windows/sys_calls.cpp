@@ -185,6 +185,22 @@ DWORD setFilePointer(HANDLE hFile, LONG lDistanceToMove, PLONG lpDistanceToMoveH
     return SetFilePointer(hFile, lDistanceToMove, lpDistanceToMoveHigh, dwMoveMethod);
 }
 
+BOOL getFileSizeEx(HANDLE hFile, PLARGE_INTEGER lpFileSize) {
+    return GetFileSizeEx(hFile, lpFileSize);
+}
+
+HANDLE createFileMappingA(HANDLE hFile, LPSECURITY_ATTRIBUTES lpFileMappingAttributes, DWORD flProtect, DWORD dwMaximumSizeHigh, DWORD dwMaximumSizeLow, LPCSTR lpName) {
+    return CreateFileMappingA(hFile, lpFileMappingAttributes, flProtect, dwMaximumSizeHigh, dwMaximumSizeLow, lpName);
+}
+
+LPVOID mapViewOfFile(HANDLE hFileMappingObject, DWORD dwDesiredAccess, DWORD dwFileOffsetHigh, DWORD dwFileOffsetLow, SIZE_T dwNumberOfBytesToMap) {
+    return MapViewOfFile(hFileMappingObject, dwDesiredAccess, dwFileOffsetHigh, dwFileOffsetLow, dwNumberOfBytesToMap);
+}
+
+BOOL unmapViewOfFile(LPCVOID lpBaseAddress) {
+    return UnmapViewOfFile(lpBaseAddress);
+}
+
 void coTaskMemFree(LPVOID pv) {
     CoTaskMemFree(pv);
 }

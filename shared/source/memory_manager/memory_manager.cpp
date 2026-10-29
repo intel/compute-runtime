@@ -380,6 +380,12 @@ void MemoryManager::freeSystemMemory(void *ptr) {
     ::alignedFree(ptr);
 }
 
+void MemoryManager::setNewResourceBoundOnRegisteredEngines(uint32_t rootDeviceIndex) const {
+    for (auto &engine : getRegisteredEngines(rootDeviceIndex)) {
+        engine.osContext->setNewResourceBound();
+    }
+}
+
 void MemoryManager::freeGraphicsMemory(GraphicsAllocation *gfxAllocation) {
     freeGraphicsMemory(gfxAllocation, false);
 }

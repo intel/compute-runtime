@@ -121,6 +121,22 @@ std::unordered_map<std::string, DWORD> pathAttributes;
 size_t setFilePointerCalled = 0u;
 DWORD setFilePointerResult = 0;
 
+size_t getFileSizeExCalled = 0u;
+BOOL getFileSizeExResult = TRUE;
+extern const size_t getFileSizeExFileSizesCount = 4;
+LONGLONG getFileSizeExFileSizes[getFileSizeExFileSizesCount] = {0, 0, 0, 0};
+
+size_t createFileMappingACalled = 0u;
+extern const size_t createFileMappingAResultsCount = 4;
+HANDLE createFileMappingAResults[createFileMappingAResultsCount] = {nullptr, nullptr, nullptr, nullptr};
+
+size_t mapViewOfFileCalled = 0u;
+extern const size_t mapViewOfFileResultsCount = 4;
+LPVOID mapViewOfFileResults[mapViewOfFileResultsCount] = {nullptr, nullptr, nullptr, nullptr};
+
+size_t unmapViewOfFileCalled = 0u;
+LPCVOID unmapViewOfFileLastAddress = nullptr;
+
 size_t setProcessPowerThrottlingStateCalled = 0u;
 ProcessPowerThrottlingState setProcessPowerThrottlingStateLastValue{};
 
@@ -468,6 +484,39 @@ DWORD getFileAttributesA(LPCSTR lpFileName) {
 DWORD setFilePointer(HANDLE hFile, LONG lDistanceToMove, PLONG lpDistanceToMoveHigh, DWORD dwMoveMethod) {
     setFilePointerCalled++;
     return setFilePointerResult;
+}
+
+BOOL getFileSizeEx(HANDLE hFile, PLARGE_INTEGER lpFileSize) {
+    lpFileSize->QuadPart = 0;
+    if (getFileSizeExCalled < getFileSizeExFileSizesCount) {
+        lpFileSize->QuadPart = getFileSizeExFileSizes[getFileSizeExCalled];
+    }
+    getFileSizeExCalled++;
+    return getFileSizeExResult;
+}
+
+HANDLE createFileMappingA(HANDLE hFile, LPSECURITY_ATTRIBUTES lpFileMappingAttributes, DWORD flProtect, DWORD dwMaximumSizeHigh, DWORD dwMaximumSizeLow, LPCSTR lpName) {
+    HANDLE retVal = nullptr;
+    if (createFileMappingACalled < createFileMappingAResultsCount) {
+        retVal = createFileMappingAResults[createFileMappingACalled];
+    }
+    createFileMappingACalled++;
+    return retVal;
+}
+
+LPVOID mapViewOfFile(HANDLE hFileMappingObject, DWORD dwDesiredAccess, DWORD dwFileOffsetHigh, DWORD dwFileOffsetLow, SIZE_T dwNumberOfBytesToMap) {
+    LPVOID retVal = nullptr;
+    if (mapViewOfFileCalled < mapViewOfFileResultsCount) {
+        retVal = mapViewOfFileResults[mapViewOfFileCalled];
+    }
+    mapViewOfFileCalled++;
+    return retVal;
+}
+
+BOOL unmapViewOfFile(LPCVOID lpBaseAddress) {
+    unmapViewOfFileCalled++;
+    unmapViewOfFileLastAddress = lpBaseAddress;
+    return TRUE;
 }
 
 void coTaskMemFree(LPVOID pv) {

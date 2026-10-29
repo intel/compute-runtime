@@ -82,4 +82,23 @@ std::string AubHelper::getDeviceConfigString(bool includeTileCount, bool include
     return configString;
 }
 
+uint16_t AubHelper::getTbxPort(uint32_t rootDeviceIndex) {
+    auto port = static_cast<uint16_t>(debugManager.flags.TbxPort.get());
+    if (debugManager.flags.CreateMultipleRootDevices.get() > 1) {
+        port = static_cast<uint16_t>(port + rootDeviceIndex);
+    }
+    return port;
+}
+
+std::string AubHelper::getTbxSharedMemoryFileName(const std::string &fileName, uint32_t rootDeviceIndex) {
+    if (rootDeviceIndex == 0) {
+        return fileName;
+    }
+    const auto fileNameStart = fileName.find_last_of("/\\");
+    const auto extensionStart = fileName.rfind('.');
+    const bool hasExtension = extensionStart != std::string::npos && (fileNameStart == std::string::npos || extensionStart > fileNameStart);
+    const auto suffixPosition = hasExtension ? extensionStart : fileName.size();
+    return fileName.substr(0, suffixPosition) + "_" + std::to_string(rootDeviceIndex) + fileName.substr(suffixPosition);
+}
+
 } // namespace NEO

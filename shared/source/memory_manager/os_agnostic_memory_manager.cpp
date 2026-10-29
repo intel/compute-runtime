@@ -66,7 +66,7 @@ bool OsAgnosticMemoryManager::is64kbPagesEnabled(const HardwareInfo *hwInfo) {
 }
 
 GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) {
-    auto alignment = alignUpNonZero(allocationData.alignment, MemoryConstants::pageSize);
+    auto alignment = alignUpNonZero(allocationData.alignment, getMinimalSystemMemoryAlignment(allocationData.rootDeviceIndex));
     auto sizeAligned = alignUp(allocationData.size, alignment);
     MemoryAllocation *memoryAllocation = nullptr;
 
@@ -422,9 +422,15 @@ void OsAgnosticMemoryManager::freeMemoryInAubManager(AubCenter &aubCenter, uint3
         auto pageTablesLock = aubCenter.obtainPageTablesLock();
         aubCenter.getAubManager()->freeMemory(gpuAddress, size);
     }
-    for (auto &engine : getRegisteredEngines(rootDeviceIndex)) {
-        engine.osContext->setNewResourceBound();
+    setNewResourceBoundOnRegisteredEngines(rootDeviceIndex);
+}
+
+size_t OsAgnosticMemoryManager::getMinimalSystemMemoryAlignment(uint32_t rootDeviceIndex) const {
+    auto aubCenter = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->aubCenter.get();
+    if (aubCenter && aubCenter->isAllocationMemorySharedWithSimulator()) {
+        return MemoryConstants::pageSize64k;
     }
+    return MemoryConstants::pageSize;
 }
 
 void OsAgnosticMemoryManager::cleanOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) {

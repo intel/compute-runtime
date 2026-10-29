@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -125,6 +125,19 @@ TEST_F(AubCenterTests, GivenCsrTypeWhenGettingAubStreamModeThenCorrectModeIsRetu
 
     mode = AubCenter::getAubStreamMode(aubFile, CommandStreamReceiverType::tbxWithAub);
     EXPECT_EQ(aub_stream::mode::aubFileAndTbx, mode);
+}
+
+TEST_F(AubCenterTests, GivenAubStreamModeWhenGettingSharedMemoryAubStreamModeThenTbxModesAreReplacedWithSharedMemoryModes) {
+    EXPECT_EQ(aub_stream::mode::tbxShm, AubCenter::getSharedMemoryAubStreamMode(aub_stream::mode::tbx, false));
+    EXPECT_EQ(aub_stream::mode::aubFileAndShm, AubCenter::getSharedMemoryAubStreamMode(aub_stream::mode::aubFileAndTbx, false));
+    EXPECT_EQ(aub_stream::mode::aubFile, AubCenter::getSharedMemoryAubStreamMode(aub_stream::mode::aubFile, false));
+    EXPECT_EQ(aub_stream::mode::null, AubCenter::getSharedMemoryAubStreamMode(aub_stream::mode::null, false));
+}
+
+TEST_F(AubCenterTests, GivenAubStreamModeWhenGettingTranslationTableSharedMemoryAubStreamModeThenTbxModesAreReplacedWithTranslationTableModes) {
+    EXPECT_EQ(aub_stream::mode::tbxShm4, AubCenter::getSharedMemoryAubStreamMode(aub_stream::mode::tbx, true));
+    EXPECT_EQ(aub_stream::mode::aubFileAndShm4, AubCenter::getSharedMemoryAubStreamMode(aub_stream::mode::aubFileAndTbx, true));
+    EXPECT_EQ(aub_stream::mode::aubFile, AubCenter::getSharedMemoryAubStreamMode(aub_stream::mode::aubFile, true));
 }
 
 TEST_F(AubCenterTests, GivenSetCommandStreamReceiverFlagEqualDefaultHwWhenAubManagerIsCreatedThenCsrTypeDefinesAubStreamMode) {

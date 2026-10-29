@@ -80,6 +80,8 @@ OsLibrary::OsLibrary(const OsLibraryCreateProperties &properties) {
         if (properties.performSelfLoad) {
             this->handle = getModuleHandleA(properties.libraryName.c_str());
             this->selfOpen = true;
+        } else if (properties.customLoadFlags && *properties.customLoadFlags != 0) {
+            this->handle = loadLibraryExA(properties.libraryName.c_str(), NULL, static_cast<DWORD>(*properties.customLoadFlags));
         } else {
             this->handle = loadDependency(properties.libraryName);
             if (this->handle == nullptr) {

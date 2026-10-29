@@ -54,6 +54,8 @@ struct AubInfo {
     bool memObjectsAllocationWithWritableFlags = false;
     bool writeMemoryOnly = false;
     bool simulationInitialUploadDone = false;
+    bool simulationMemoryShared = false;
+    bool simulationMemorySharingAttempted = false;
 };
 
 struct SurfaceStateInHeapInfo {
@@ -254,6 +256,18 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
     }
     bool isSimulationInitialUploadDone() const {
         return aubInfo.simulationInitialUploadDone;
+    }
+    void setSimulationMemoryShared(bool shared) {
+        aubInfo.simulationMemoryShared = shared;
+    }
+    bool isSimulationMemoryShared() const {
+        return aubInfo.simulationMemoryShared;
+    }
+    void setSimulationMemorySharingAttempted(bool attempted) {
+        aubInfo.simulationMemorySharingAttempted = attempted;
+    }
+    bool isSimulationMemorySharingAttempted() const {
+        return aubInfo.simulationMemorySharingAttempted;
     }
     bool isAllocDumpable() const { return aubInfo.allocDumpable; }
     bool isMemObjectsAllocationWithWritableFlags() const { return aubInfo.memObjectsAllocationWithWritableFlags; }
