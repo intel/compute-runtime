@@ -26,6 +26,7 @@ class MockReleaseHelper : public ReleaseHelper {
     ADDMETHOD_CONST_NOBASE(getIpVersionForGmm, uint32_t, 0, ());
     ADDMETHOD_CONST_NOBASE(is2WayCoherentPatSupported, bool, true, ());
     ADDMETHOD_CONST_NOBASE(isAppTransientCoherentPatRequired, bool, false, ());
+    ADDMETHOD_CONST_NOBASE(getAubFilePrefix, const char *, nullptr, ());
 
     uint64_t overrideSystemMemoryPatIndexBase(uint64_t patIndex) const override {
         return patIndex;

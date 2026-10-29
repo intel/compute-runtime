@@ -99,7 +99,7 @@ void MulticontextAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStreame
         strfilename << "0_3";
     }
 
-    auto filename = AUBCommandStreamReceiver::createFullFilePath(localHwInfo, strfilename.str(), rootDeviceIndex);
+    auto filename = AUBCommandStreamReceiver::createFullFilePath(localHwInfo, executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getReleaseHelper(), strfilename.str(), rootDeviceIndex);
 
     debugManager.flags.AUBDumpCaptureFileName.set(filename);
 

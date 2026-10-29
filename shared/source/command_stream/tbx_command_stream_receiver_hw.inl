@@ -220,7 +220,7 @@ CommandStreamReceiver *TbxCommandStreamReceiverHw<GfxFamily>::create(const std::
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
     if (withAubDump) {
         auto localMemoryEnabled = gfxCoreHelper.getEnableLocalMemory(hwInfo);
-        auto fullName = AUBCommandStreamReceiver::createFullFilePath(hwInfo, baseName, rootDeviceIndex);
+        auto fullName = AUBCommandStreamReceiver::createFullFilePath(hwInfo, rootDeviceEnvironment.getReleaseHelper(), baseName, rootDeviceIndex);
         if (debugManager.flags.AUBDumpCaptureFileName.get() != "unk") {
             fullName.assign(debugManager.flags.AUBDumpCaptureFileName.get());
         }

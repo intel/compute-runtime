@@ -15,6 +15,7 @@ namespace NEO {
 struct HardwareInfo;
 class CommandStreamReceiver;
 class ExecutionEnvironment;
+class ReleaseHelper;
 
 struct AUBCommandStreamReceiver {
     static CommandStreamReceiver *create(const std::string &filename,
@@ -22,7 +23,7 @@ struct AUBCommandStreamReceiver {
                                          ExecutionEnvironment &executionEnvironment,
                                          uint32_t rootDeviceIndex,
                                          const DeviceBitfield deviceBitfield);
-    static std::string createFullFilePath(const HardwareInfo &hwInfo, const std::string &filename, uint32_t rootDeviceIndex);
+    static std::string createFullFilePath(const HardwareInfo &hwInfo, const ReleaseHelper &releaseHelper, const std::string &filename, uint32_t rootDeviceIndex);
     static std::string getDirectoryPathForFilePath(const std::string &filePath);
     static void createDirectoriesForFilePath(const std::string &filePath);
 };

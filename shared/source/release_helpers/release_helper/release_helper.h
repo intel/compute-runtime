@@ -48,6 +48,7 @@ class ReleaseHelper {
     virtual bool isAppTransientCoherentPatRequired() const = 0;
     uint64_t overrideSystemMemoryPatIndex(uint64_t patIndex) const;
     virtual uint32_t getIpVersionForGmm() const = 0;
+    virtual const char *getAubFilePrefix() const = 0;
 
   protected:
     virtual uint64_t overrideSystemMemoryPatIndexBase(uint64_t patIndex) const = 0;
@@ -77,6 +78,7 @@ class ReleaseHelperHw : public ReleaseHelper {
     bool isAppTransientCoherentPatRequired() const override;
     uint64_t overrideSystemMemoryPatIndexBase(uint64_t patIndex) const override;
     uint32_t getIpVersionForGmm() const override;
+    const char *getAubFilePrefix() const override;
 };
 
 template <uint32_t architecture>

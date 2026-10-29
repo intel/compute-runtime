@@ -1010,7 +1010,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenCreatedWithAubDumpThenFileNameIsE
     auto rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment *>(executionEnvironment.rootDeviceEnvironments[0].get());
     setMockAubCenter(*rootDeviceEnvironment, CommandStreamReceiverType::tbx, true);
 
-    auto fullName = AUBCommandStreamReceiver::createFullFilePath(*defaultHwInfo, "aubfile", mockRootDeviceIndex);
+    auto fullName = AUBCommandStreamReceiver::createFullFilePath(*defaultHwInfo, rootDeviceEnvironment->getReleaseHelper(), "aubfile", mockRootDeviceIndex);
 
     std::unique_ptr<TbxCommandStreamReceiverHw<FamilyType>> tbxCsr(reinterpret_cast<TbxCommandStreamReceiverHw<FamilyType> *>(TbxCommandStreamReceiver::create("aubfile", true, executionEnvironment, 0, 1)));
     EXPECT_STREQ(fullName.c_str(), rootDeviceEnvironment->aubFileNameReceived.c_str());

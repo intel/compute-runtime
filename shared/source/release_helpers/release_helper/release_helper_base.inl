@@ -90,4 +90,9 @@ uint32_t ReleaseHelperHw<releaseType>::getIpVersionForGmm() const {
     return hardwareIpVersion.value;
 }
 
+template <ReleaseType releaseType>
+const char *ReleaseHelperHw<releaseType>::getAubFilePrefix() const {
+    return nullptr;
+}
+
 } // namespace NEO

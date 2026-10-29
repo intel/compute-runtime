@@ -19,6 +19,7 @@
 #include "shared/source/helpers/options.h"
 #include "shared/source/os_interface/os_inc_base.h"
 #include "shared/source/os_interface/sys_calls_common.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/utilities/directory.h"
 
 #include <algorithm>
@@ -29,8 +30,9 @@
 namespace NEO {
 AubCommandStreamReceiverCreateFunc aubCommandStreamReceiverFactory[NEO::maxCoreEnumValue] = {};
 
-std::string AUBCommandStreamReceiver::createFullFilePath(const HardwareInfo &hwInfo, const std::string &filename, uint32_t rootDeviceIndex) {
-    std::string hwPrefix = hardwarePrefix[hwInfo.platform.eProductFamily];
+std::string AUBCommandStreamReceiver::createFullFilePath(const HardwareInfo &hwInfo, const ReleaseHelper &releaseHelper, const std::string &filename, uint32_t rootDeviceIndex) {
+    auto aubFilePrefix = releaseHelper.getAubFilePrefix();
+    std::string hwPrefix = aubFilePrefix ? aubFilePrefix : hardwarePrefix[hwInfo.platform.eProductFamily];
 
     // Generate the full filename
     const auto &gtSystemInfo = hwInfo.gtSystemInfo;
@@ -87,8 +89,9 @@ CommandStreamReceiver *AUBCommandStreamReceiver::create(const std::string &baseN
                                                         ExecutionEnvironment &executionEnvironment,
                                                         uint32_t rootDeviceIndex,
                                                         const DeviceBitfield deviceBitfield) {
-    auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
-    std::string filePath = AUBCommandStreamReceiver::createFullFilePath(*hwInfo, baseName, rootDeviceIndex);
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex];
+    auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
+    std::string filePath = AUBCommandStreamReceiver::createFullFilePath(*hwInfo, rootDeviceEnvironment.getReleaseHelper(), baseName, rootDeviceIndex);
     if (debugManager.flags.AUBDumpCaptureFileName.get() != "unk") {
         filePath.assign(debugManager.flags.AUBDumpCaptureFileName.get());
     }
