@@ -2157,22 +2157,6 @@ TEST_F(CommandQueueCreate, givenCommandQueueWhenHandleIndirectAllocationResidenc
     commandQueue->destroy();
 }
 
-TEST_F(DeviceCreateCommandQueueTest, givenDeviceWhenCreateCommandQueueForInternalUsageThenInternalEngineCsrUsed) {
-    ze_command_queue_desc_t desc{};
-    desc.ordinal = 0u;
-    desc.index = 0u;
-
-    ze_command_queue_handle_t commandQueueHandle = {};
-
-    auto internalEngine = neoDevice->getInternalEngine();
-    auto internalCsr = internalEngine.commandStreamReceiver;
-
-    reinterpret_cast<L0::Device *>(device)->createInternalCommandQueue(&desc, &commandQueueHandle);
-    auto commandQueue = L0::CommandQueue::fromHandle(commandQueueHandle);
-    EXPECT_EQ(commandQueue->getCsr(), internalCsr);
-    commandQueue->destroy();
-}
-
 TEST_F(DeviceCreateCommandQueueTest, givenDeviceWhenCreateCommandQueueForNonInternalUsageThenInternalEngineCsrNotUsed) {
     ze_command_queue_desc_t desc{};
     desc.ordinal = 0u;

@@ -91,8 +91,6 @@ struct Device : _ze_device_handle_t, NEO::NonCopyableAndNonMovableClass {
     MOCKABLE_VIRTUAL ze_result_t createCommandList(const ze_command_list_desc_t *desc,
                                                    ze_command_list_handle_t *commandList,
                                                    uint32_t estimatedNumberOfCommands);
-    MOCKABLE_VIRTUAL ze_result_t createInternalCommandList(const ze_command_list_desc_t *desc,
-                                                           ze_command_list_handle_t *commandList);
     ze_result_t createCommandListImmediate(const ze_command_queue_desc_t *desc,
                                            ze_command_list_handle_t *commandList) {
         return createCommandListImmediate(desc, commandList, 0u);
@@ -107,8 +105,6 @@ struct Device : _ze_device_handle_t, NEO::NonCopyableAndNonMovableClass {
     MOCKABLE_VIRTUAL ze_result_t createCommandQueue(const ze_command_queue_desc_t *desc,
                                                     ze_command_queue_handle_t *commandQueue,
                                                     uint8_t powerHint);
-    MOCKABLE_VIRTUAL ze_result_t createInternalCommandQueue(const ze_command_queue_desc_t *desc,
-                                                            ze_command_queue_handle_t *commandQueue);
     MOCKABLE_VIRTUAL ze_result_t createImage(const ze_image_desc_t *desc, ze_image_handle_t *phImage);
     MOCKABLE_VIRTUAL ze_result_t createModule(const ze_module_desc_t *desc, ze_module_handle_t *module,
                                               ze_module_build_log_handle_t *buildLog, ModuleType type);

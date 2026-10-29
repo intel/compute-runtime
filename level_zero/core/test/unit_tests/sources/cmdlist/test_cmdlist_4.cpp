@@ -1393,15 +1393,6 @@ HWTEST2_F(ImmediateCommandListTest, givenCopyEngineAsyncCmdListWhenAppendingRegu
     EXPECT_TRUE(ultCsr->latestFlushedBatchBuffer.hasStallingCmds);
 }
 
-HWTEST_F(CommandListCreateTests, givenDeviceWhenCreatingCommandListForInternalUsageThenInternalEngineGroupIsUsed) {
-    ze_command_list_handle_t commandList = nullptr;
-    ze_command_list_desc_t desc = {ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC};
-    reinterpret_cast<L0::Device *>(device)->createInternalCommandList(&desc, &commandList);
-    auto whiteboxCommandList = reinterpret_cast<WhiteBox<::L0::CommandList> *>(L0::CommandList::fromHandle(commandList));
-    EXPECT_TRUE(whiteboxCommandList->internalUsage);
-    whiteboxCommandList->destroy();
-}
-
 HWTEST_F(CommandListCreateTests, givenDeviceWhenCreatingCommandListForNotInternalUsageThenInternalEngineGroupIsNotUsed) {
     ze_command_list_handle_t commandList = nullptr;
     ze_command_list_desc_t desc = {ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC};

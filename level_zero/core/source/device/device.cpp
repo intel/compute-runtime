@@ -195,16 +195,6 @@ ze_result_t Device::createCommandList(const ze_command_list_desc_t *desc,
     return returnValue;
 }
 
-ze_result_t Device::createInternalCommandList(const ze_command_list_desc_t *desc,
-                                              ze_command_list_handle_t *commandList) {
-    NEO::EngineGroupType engineGroupType = getInternalEngineGroupType();
-
-    ze_result_t returnValue = ZE_RESULT_SUCCESS;
-
-    *commandList = CommandList::create(this, engineGroupType, desc->flags, returnValue, true);
-    return returnValue;
-}
-
 ze_result_t Device::createCommandListImmediate(const ze_command_queue_desc_t *desc,
                                                ze_command_list_handle_t *phCommandList,
                                                uint8_t powerHint) {
@@ -290,20 +280,6 @@ ze_result_t Device::createCommandQueue(const ze_command_queue_desc_t *desc,
             csr->releaseQueueOwnership();
         }
     }
-    return returnValue;
-}
-
-ze_result_t Device::createInternalCommandQueue(const ze_command_queue_desc_t *desc,
-                                               ze_command_queue_handle_t *commandQueue) {
-    auto internalEngine = this->getActiveDevice()->getInternalEngine();
-    auto csr = internalEngine.commandStreamReceiver;
-    auto engineGroupType = getInternalEngineGroupType();
-    auto isCopyOnly = NEO::EngineHelper::isCopyOnlyEngineType(engineGroupType);
-
-    UNRECOVERABLE_IF(csr == nullptr);
-
-    ze_result_t returnValue = ZE_RESULT_SUCCESS;
-    *commandQueue = CommandQueue::create(this, csr, desc, isCopyOnly, true, false, returnValue);
     return returnValue;
 }
 

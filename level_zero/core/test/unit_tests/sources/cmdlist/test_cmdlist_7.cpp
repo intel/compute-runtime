@@ -2034,20 +2034,6 @@ TEST_F(CommandListCsrReuseTests, givenCommandQueueWhenCreatedAndDestroyedThenSec
     EXPECT_EQ(0u, csr->getOwningQueueCount());
 }
 
-TEST_F(CommandListCsrReuseTests, givenInternalCommandQueueWhenDestroyedThenOwnershipIsNotReleased) {
-    ze_command_queue_desc_t desc = {};
-    ze_command_queue_handle_t handle = nullptr;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, device->createInternalCommandQueue(&desc, &handle));
-
-    auto commandQueue = L0::CommandQueue::fromHandle(handle);
-    auto internalCsr = neoDevice->getInternalEngine().commandStreamReceiver;
-    ASSERT_EQ(internalCsr, commandQueue->getCsr());
-    EXPECT_EQ(0u, internalCsr->getOwningQueueCount());
-
-    commandQueue->destroy();
-    EXPECT_EQ(0u, internalCsr->getOwningQueueCount());
-}
-
 TEST_F(CommandListCsrReuseTests, givenInternalImmediateCommandListWhenDestroyedThenOwnershipIsNotReleased) {
     ze_command_queue_desc_t desc = {};
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
