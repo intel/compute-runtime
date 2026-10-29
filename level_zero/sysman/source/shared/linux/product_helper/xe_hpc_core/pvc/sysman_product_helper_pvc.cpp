@@ -9,6 +9,7 @@
 #include "shared/source/os_interface/linux/pmt_util.h"
 #include "shared/source/os_interface/product_helper.h"
 
+#include "level_zero/sysman/source/device/sysman_device_imp.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.inl"
 #include "level_zero/sysman/source/sysman_const.h"

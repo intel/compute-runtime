@@ -12,7 +12,6 @@
 
 #include "level_zero/sysman/source/api/memory/linux/sysman_os_memory_imp.h"
 #include "level_zero/sysman/source/api/ras/linux/ras_util/sysman_ras_util.h"
-#include "level_zero/sysman/source/device/sysman_device_imp.h"
 #include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
 #include "level_zero/sysman/source/shared/linux/kmd_interface/sysman_kmd_interface.h"
 #include "level_zero/sysman/source/shared/linux/pmt/sysman_pmt.h"
@@ -191,7 +190,7 @@ bool SysmanProductHelperHw<gfxProduct>::isMemoryDomainSupported() {
 
 template <PRODUCT_FAMILY gfxProduct>
 bool SysmanProductHelperHw<gfxProduct>::isMediaDomainSupported(LinuxSysmanImp *pLinuxSysmanImp) {
-    return pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironment().getHardwareInfo()->capabilityTable.supportsImages;
+    return pLinuxSysmanImp->getHardwareInfo().capabilityTable.supportsImages;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
