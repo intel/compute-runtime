@@ -152,7 +152,7 @@ class IoctlHelperXe : public IoctlHelper {
         return gtIdToTileId.at(gtId);
     }
     uint32_t getGtIdFromTileId(uint32_t tileId, uint16_t engineClass) const override;
-    bool isDeferBackingEnabledForSize(size_t allocationSize) const override;
+    bool isDeferBackingEnabledForAllocation(size_t allocationSize, AllocationType allocationType) const override;
     bool isSmallBarConfigAllowed() const override { return false; }
     bool isLocalMemorySizeNetOfKmdReservations() const override { return true; }
     void *pciBarrierMmap() override;

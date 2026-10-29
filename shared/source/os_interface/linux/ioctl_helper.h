@@ -300,7 +300,7 @@ class IoctlHelper {
     virtual bool isTimestampsRefreshEnabled() { return false; }
     virtual uint32_t getNumProcesses() const { return 1; }
 
-    virtual bool isDeferBackingEnabledForSize(size_t allocationSize) const { return false; }
+    virtual bool isDeferBackingEnabledForAllocation(size_t allocationSize, AllocationType allocationType) const { return false; }
     virtual bool hasContextFreqHint() { return false; }
     virtual void fillExtSetparamLowLatency(GemContextCreateExtSetParam &extSetparam) { return; }
     virtual bool isSmallBarConfigAllowed() const = 0;

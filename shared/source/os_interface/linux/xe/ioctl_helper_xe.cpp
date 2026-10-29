@@ -746,7 +746,7 @@ int IoctlHelperXe::createGemExt(const MemRegionsVec &memClassInstances, size_t a
     create.placement = static_cast<uint32_t>(memoryInstances.to_ulong());
     create.cpu_caching = this->getCpuCachingMode(isCoherent, isSysMemOnly);
 
-    if (deferBacking.has_value() ? *deferBacking : this->isDeferBackingEnabledForSize(allocSize)) {
+    if (deferBacking.has_value() ? *deferBacking : this->isDeferBackingEnabledForAllocation(allocSize, AllocationType::unknown)) {
         create.flags |= DRM_XE_GEM_CREATE_FLAG_DEFER_BACKING;
     }
     if (hint == GemCreateExtHint::noCompression) {
@@ -794,7 +794,7 @@ uint32_t IoctlHelperXe::createGem(uint64_t size, uint32_t memoryBanks, std::opti
     create.placement = static_cast<uint32_t>(memoryInstances.to_ulong());
     create.cpu_caching = this->getCpuCachingMode(isCoherent, isSysMemOnly);
 
-    if (this->isDeferBackingEnabledForSize(size)) {
+    if (this->isDeferBackingEnabledForAllocation(size, AllocationType::unknown)) {
         create.flags |= DRM_XE_GEM_CREATE_FLAG_DEFER_BACKING;
     }
 
@@ -2092,7 +2092,7 @@ bool IoctlHelperXe::isImmediateVmBindRequired() const {
     return true;
 }
 
-bool IoctlHelperXe::isDeferBackingEnabledForSize(size_t allocationSize) const {
+bool IoctlHelperXe::isDeferBackingEnabledForAllocation(size_t allocationSize, AllocationType allocationType) const {
     if (!this->isDeferBackingSupported()) {
         return false;
     }
@@ -2100,9 +2100,10 @@ bool IoctlHelperXe::isDeferBackingEnabledForSize(size_t allocationSize) const {
     // Global threshold: once defer backing is enabled, -1 means defer unconditionally, while
     // 0-100 defers only once the projected device footprint (used local memory + this allocation)
     // reaches threshold% of max local memory (overcommit onset), so normal-load allocations keep
-    // immediate backing and avoid the cold first-submit latency hit.
+    // immediate backing and avoid the cold first-submit latency hit. Preemption surfaces are always
+    // deferred, since HW needs their memory only once it preempts a thread.
     const int32_t thresholdPercent = debugManager.flags.DeferBackingMemoryPressurePercent.get();
-    if (thresholdPercent < 0) {
+    if (thresholdPercent < 0 || allocationType == AllocationType::preemption) {
         return true;
     }
 

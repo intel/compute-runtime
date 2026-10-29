@@ -3229,7 +3229,7 @@ BufferObject *DrmMemoryManager::createBufferObjectInMemoryRegion(uint32_t rootDe
 
     // Evaluate the defer-backing decision once so the gemCreate ioctl flag and the BO's recorded
     // state cannot diverge as memory pressure changes between separate evaluations.
-    const bool deferBacking = drm->getIoctlHelper()->isDeferBackingEnabledForSize(size);
+    const bool deferBacking = drm->getIoctlHelper()->isDeferBackingEnabledForAllocation(size, allocationType);
 
     if (memoryBanks.count() > 1) {
         ret = memoryInfo->createGemExtWithMultipleRegions(memoryBanks, size, handle, patIndex, isUsmHostAllocation, deferBacking);
@@ -3682,7 +3682,7 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
     auto numHandles = GraphicsAllocation::getNumHandlesForKmdSharedAllocation(allocationData.storageInfo.getNumBanks());
     // Evaluate the defer-backing decision once and reuse it for the gemCreate ioctl flag, the BO's
     // recorded state, the immediate bind, and the always-resident marking so they cannot diverge.
-    const bool deferBacking = ioctlHelper->isDeferBackingEnabledForSize(size);
+    const bool deferBacking = ioctlHelper->isDeferBackingEnabledForAllocation(size, allocationData.type);
 
     bool useChunking = false;
     uint32_t numOfChunks = 0;
