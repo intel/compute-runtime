@@ -3869,6 +3869,27 @@ TEST_F(EventSynchronizeTimestampTest, GivenCounterBasedTimestampEventBackedByNod
     EXPECT_EQ(expectedEnd, result.global.kernelEnd);
 }
 
+TEST_F(EventSynchronizeTimestampTest, GivenCounterBasedTimestampEventWithoutTimestampNodeAndWithEventPoolAllocationWhenHostSignalThenTimestampsAreWrittenToEventPoolMemory) {
+    using TimestampPackets = NEO::TimestampPackets<uint32_t, NEO::TimestampPacketConstants::preferredPacketCount>;
+
+    event->enableCounterBasedMode(false, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
+
+    ASSERT_TRUE(event->isCounterBased());
+    ASSERT_FALSE(event->hasInOrderTimestampNode());
+    ASSERT_NE(nullptr, event->getAllocation(device));
+
+    event->setGpuStartTimestamp();
+    event->setGpuEndTimestamp();
+    ASSERT_NE(0u, event->gpuStartTimestamp);
+    ASSERT_NE(0u, event->gpuEndTimestamp);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, event->hostSignal(true));
+
+    auto timestampData = static_cast<TimestampPackets *>(event->getHostAddress());
+    EXPECT_EQ(static_cast<uint32_t>(event->gpuStartTimestamp), timestampData->getGlobalStartValue(0));
+    EXPECT_EQ(static_cast<uint32_t>(event->gpuEndTimestamp), timestampData->getGlobalEndValue(0));
+}
+
 HWTEST_F(EventSynchronizeTest, GivenDrmAndKmdWaitStrategyWhenSynchronizingCounterBasedEventThenBoundedUserFenceWaitIsUsed) {
     DebugManagerStateRestore restore;
     NEO::debugManager.flags.EventHostSynchronizeWaitStrategy.set(3);
@@ -4470,6 +4491,53 @@ TEST_F(EventQueryTimestampExpWithRootDeviceAndSubDevices, givenEventWhenQuerytim
         EXPECT_EQ(packetData[i].globalStart, results[i].global.kernelStart);
         EXPECT_EQ(packetData[i].globalEnd, results[i].global.kernelEnd);
     }
+}
+
+using EventMultiRootDeviceTimestampTest = Test<MultiDeviceFixture>;
+
+HWTEST_F(EventMultiRootDeviceTimestampTest, givenCounterBasedTimestampEventWithTimestampNodeFromOtherRootDeviceWhenHostSignalThenKernelTimestampIsReady) {
+    using TagSizeT = typename FamilyType::TimestampPacketType;
+
+    uint32_t deviceCount = 0;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeDeviceGet(driverHandle.get(), &deviceCount, nullptr));
+    ASSERT_LE(2u, deviceCount);
+    std::vector<ze_device_handle_t> devices(deviceCount);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeDeviceGet(driverHandle.get(), &deviceCount, devices.data()));
+    auto eventDevice = Device::fromHandle(devices[0]);
+    auto cmdListDevice = Device::fromHandle(devices[1]);
+    eventDevice->getNEODevice()->getRootDeviceEnvironmentRef().osTime.reset(new NEO::MockOSTimeWithConstTimestamp());
+
+    ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC};
+    std::unique_ptr<EventImp<TagSizeT>> event(static_cast<EventImp<TagSizeT> *>(L0::Event::create<TagSizeT>(eventPool.get(), &eventDesc, eventDevice, result)));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    event->enableCounterBasedMode(false, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
+    event->resetInOrderTimestampNode(cmdListDevice->getInOrderTimestampAllocator()->getTag(), 1);
+
+    ASSERT_TRUE(event->isCounterBased());
+    ASSERT_EQ(nullptr, event->getAllocation(eventDevice));
+
+    event->setGpuStartTimestamp();
+    event->setGpuEndTimestamp();
+    ASSERT_NE(0u, event->gpuStartTimestamp);
+    ASSERT_NE(0u, event->gpuEndTimestamp);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, event->hostSignal(true));
+
+    ze_kernel_timestamp_result_t timestamp = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, event->queryKernelTimestamp(&timestamp));
+    EXPECT_EQ(static_cast<TagSizeT>(event->gpuStartTimestamp), timestamp.global.kernelStart);
+    EXPECT_EQ(static_cast<TagSizeT>(event->gpuEndTimestamp), timestamp.global.kernelEnd);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, event.release()->destroy());
 }
 
 using EventqueryKernelTimestampsExt = Test<EventCompactL3FlushFixture<1, 1, -1>>;

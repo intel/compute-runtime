@@ -764,7 +764,7 @@ ze_result_t EventImp<TagSizeT>::queryStatus(int64_t timeSinceWait, bool blockOnM
 
 template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::hostEventSetValueTimestamps(Event::State eventState) {
-    if (isCounterBased() && !getAllocation(this->device)) {
+    if (isCounterBased() && !inOrderExecHelper.hasTimestampNodes() && !getAllocation(this->device)) {
         return ZE_RESULT_SUCCESS;
     }
 
