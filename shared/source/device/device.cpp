@@ -1490,6 +1490,9 @@ EngineControl *SecondaryContexts::getEngine(EngineUsage usage, std::optional<uin
             secondaryEngineIndex = assignedContextsCounter.fetch_add(1);
             regularCounter.fetch_add(1);
             npIndices.push_back(secondaryEngineIndex);
+        } else if (npIndices.size() == 0) {
+            regularCounter.fetch_add(1);
+            npIndices.push_back(secondaryEngineIndex);
         }
         // Assign from existing indices
         else {

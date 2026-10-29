@@ -2169,6 +2169,24 @@ HWTEST_F(InternalEngineFromSecondaryContextTests, givenUseSecondaryContextForInt
     EXPECT_EQ(device->getDefaultEngine().commandStreamReceiver, internalEngine.commandStreamReceiver);
 }
 
+HWTEST_F(InternalEngineFromSecondaryContextTests, givenUseSecondaryContextForInternalEngineEnabledAndTwoRegularContextsInGroupWhenRegularContextWithDifferentPriorityIsRequestedThenPrimaryContextIsReturned) {
+    debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(1);
+    debugManager.flags.OverrideNumHighPriorityContexts.set(contextGroupSize - 2);
+    auto device = createDevice();
+
+    auto &secondaryEngines = device->secondaryEngines[aub_stream::EngineType::ENGINE_CCS];
+    ASSERT_EQ(2u, secondaryEngines.regularEnginesTotal);
+    ASSERT_EQ(reservedInternalEngineIndex, secondaryEngines.internalEngineIndex);
+
+    auto primaryOsContext = secondaryEngines.engines[0].osContext;
+    ASSERT_FALSE(primaryOsContext->isPriorityChangeSupported());
+    primaryOsContext->overridePriority(1u);
+
+    auto regularEngine = device->getSecondaryEngineCsr({aub_stream::EngineType::ENGINE_CCS, EngineUsage::regular}, 2u);
+    ASSERT_NE(nullptr, regularEngine);
+    EXPECT_EQ(secondaryEngines.engines[0].commandStreamReceiver, regularEngine->commandStreamReceiver);
+}
+
 HWTEST_F(InternalEngineFromSecondaryContextTests, givenUseSecondaryContextForInternalEngineEnabledWhenGettingInternalCopyEngineThenReservedSecondaryContextIsReturnedAndRegularDirectSubmissionIsNotStopped) {
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.csrBaseCallBlitterDirectSubmissionAvailable = false;
