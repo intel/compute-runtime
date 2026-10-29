@@ -300,12 +300,12 @@ TEST_F(CommandListCreateTests, givenRegularCommandListWhenFlatApiRecordingDebugF
     auto *whiteBoxCmdList = CommandList::whiteboxCast(commandList.get());
     EXPECT_NE(nullptr, whiteBoxCmdList->flatCapture);
 
-    EXPECT_NE(0u, (commandList->getCmdListFlags() & ZE_COMMAND_LIST_FLAG_ENABLE_CMD_VISITING));
+    EXPECT_NE(0u, (commandList->getCmdListFlags() & ZE_COMMAND_LIST_FLAG_ENABLE_COMMAND_VISIT));
 }
 
 TEST_F(CommandListCreateTests, givenRegularCommandListWhenFlatApiRecordingApiFlagEnabledThenFlatCaptureIsAllocated) {
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::renderCompute, ZE_COMMAND_LIST_FLAG_ENABLE_CMD_VISITING, returnValue, false));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::renderCompute, ZE_COMMAND_LIST_FLAG_ENABLE_COMMAND_VISIT, returnValue, false));
 
     ASSERT_NE(nullptr, commandList);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);

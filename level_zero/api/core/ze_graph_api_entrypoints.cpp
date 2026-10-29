@@ -162,9 +162,9 @@ static ze_result_t executeGraphEagerly(ze_command_list_handle_t hCommandList, L0
     }
 
     // reappend recorded commands one by one - root level commands to target command list, forks to their original command lists
-    ze_visit_ext_desc_t visitDesc{ZEX_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC};
-    visitDesc.hReappendTargetCmdList = hCommandList;
-    visitDesc.defaultOp = ZE_VISIT_EXT_DEFAULT_OP_REAPPEND;
+    ze_command_visit_ext_desc_t visitDesc{ZE_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC};
+    visitDesc.hReappendTargetCommandList = hCommandList;
+    visitDesc.defaultOp = ZE_COMMAND_VISIT_EXT_DEFAULT_OP_REAPPEND;
     auto ret = sourceGraph.visit(&visitDesc);
     if (ret != ZE_RESULT_SUCCESS) {
         return ret;
@@ -315,7 +315,7 @@ ze_result_t ZE_APICALL zeGraphGetPrimaryCommandListExt(ze_graph_handle_t hGraph,
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t ZE_APICALL zeGraphVisitExt(ze_graph_handle_t hGraph, const ze_visit_ext_desc_t *desc) {
+ze_result_t ZE_APICALL zeGraphVisitExt(ze_graph_handle_t hGraph, const ze_command_visit_ext_desc_t *desc) {
     auto *graph = L0::Graph::fromHandle(hGraph);
     if (nullptr == graph) {
         return ZE_RESULT_ERROR_INVALID_NULL_HANDLE;

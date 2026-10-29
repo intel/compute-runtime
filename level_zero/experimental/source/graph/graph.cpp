@@ -1326,51 +1326,51 @@ ze_result_t Closure<CaptureApi::zeCommandListGetNextCommandIdWithKernelsExp>::in
 }
 
 ze_result_t Closure<CaptureApi::zeCommandListAppendMemoryCopy>::invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const {
-    auto cb = reinterpret_cast<ze_result_t(VISITOR_CCONV *)(ze_command_list_handle_t, void *, const void *, size_t, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
+    auto cb = reinterpret_cast<ze_result_t(ZE_VISITOR_CCONV *)(ze_command_list_handle_t, void *, const void *, size_t, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
     auto waitEventsList = getClosureWaitEventsList<CaptureApi::zeCommandListAppendMemoryCopy>(apiArgs, indirectArgs, externalStorage);
     return cb(apiArgs.hCommandList, apiArgs.dstptr, apiArgs.srcptr, apiArgs.size, apiArgs.hSignalEvent, static_cast<uint32_t>(waitEventsList.size()), waitEventsList.empty() ? nullptr : waitEventsList.data(), userData);
 }
 
 ze_result_t Closure<CaptureApi::zeCommandListAppendBarrier>::invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const {
-    auto cb = reinterpret_cast<ze_result_t(VISITOR_CCONV *)(ze_command_list_handle_t, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
+    auto cb = reinterpret_cast<ze_result_t(ZE_VISITOR_CCONV *)(ze_command_list_handle_t, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
     auto waitEventsList = getClosureWaitEventsList<CaptureApi::zeCommandListAppendBarrier>(apiArgs, indirectArgs, externalStorage);
     return cb(apiArgs.hCommandList, apiArgs.hSignalEvent, static_cast<uint32_t>(waitEventsList.size()), waitEventsList.empty() ? nullptr : waitEventsList.data(), userData);
 }
 
 ze_result_t Closure<CaptureApi::zeCommandListAppendWaitOnEvents>::invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const {
-    auto cb = reinterpret_cast<ze_result_t(VISITOR_CCONV *)(ze_command_list_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
+    auto cb = reinterpret_cast<ze_result_t(ZE_VISITOR_CCONV *)(ze_command_list_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
     auto waitEventsList = getClosureWaitEventsList<CaptureApi::zeCommandListAppendWaitOnEvents>(apiArgs, indirectArgs, externalStorage);
     return cb(apiArgs.hCommandList, static_cast<uint32_t>(waitEventsList.size()), waitEventsList.empty() ? nullptr : waitEventsList.data(), userData);
 }
 
 ze_result_t Closure<CaptureApi::zeCommandListAppendWaitOnEventsWithParameters>::invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const {
-    auto cb = reinterpret_cast<ze_result_t(VISITOR_CCONV *)(ze_command_list_handle_t, const void *, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
+    auto cb = reinterpret_cast<ze_result_t(ZE_VISITOR_CCONV *)(ze_command_list_handle_t, const void *, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
     auto waitEventsList = getClosureWaitEventsList<CaptureApi::zeCommandListAppendWaitOnEventsWithParameters>(apiArgs, indirectArgs, externalStorage);
     return cb(apiArgs.hCommandList, indirectArgs.clonedPNext, static_cast<uint32_t>(waitEventsList.size()), waitEventsList.empty() ? nullptr : waitEventsList.data(), userData);
 }
 
 ze_result_t Closure<CaptureApi::zeCommandListAppendWriteGlobalTimestamp>::invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const {
-    auto cb = reinterpret_cast<ze_result_t(VISITOR_CCONV *)(ze_command_list_handle_t, uint64_t *, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
+    auto cb = reinterpret_cast<ze_result_t(ZE_VISITOR_CCONV *)(ze_command_list_handle_t, uint64_t *, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
     auto waitEventsList = getClosureWaitEventsList<CaptureApi::zeCommandListAppendWriteGlobalTimestamp>(apiArgs, indirectArgs, externalStorage);
     return cb(apiArgs.hCommandList, apiArgs.dstptr, apiArgs.hSignalEvent, static_cast<uint32_t>(waitEventsList.size()), waitEventsList.empty() ? nullptr : waitEventsList.data(), userData);
 }
 
 ze_result_t Closure<CaptureApi::zeCommandListAppendMemoryRangesBarrier>::invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const {
-    auto cb = reinterpret_cast<ze_result_t(VISITOR_CCONV *)(ze_command_list_handle_t, uint32_t, const size_t *, const void **, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
+    auto cb = reinterpret_cast<ze_result_t(ZE_VISITOR_CCONV *)(ze_command_list_handle_t, uint32_t, const size_t *, const void **, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
     auto waitEventsList = getClosureWaitEventsList<CaptureApi::zeCommandListAppendMemoryRangesBarrier>(apiArgs, indirectArgs, externalStorage);
     return cb(apiArgs.hCommandList, apiArgs.numRanges, getOptionalData(indirectArgs.rangeSizes), const_cast<const void **>(getOptionalData(indirectArgs.ranges)),
               apiArgs.hSignalEvent, static_cast<uint32_t>(waitEventsList.size()), waitEventsList.empty() ? nullptr : waitEventsList.data(), userData);
 }
 
 ze_result_t Closure<CaptureApi::zeCommandListAppendMemoryFill>::invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const {
-    auto cb = reinterpret_cast<ze_result_t(VISITOR_CCONV *)(ze_command_list_handle_t, void *, const void *, size_t, size_t, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
+    auto cb = reinterpret_cast<ze_result_t(ZE_VISITOR_CCONV *)(ze_command_list_handle_t, void *, const void *, size_t, size_t, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
     auto waitEventsList = getClosureWaitEventsList<CaptureApi::zeCommandListAppendMemoryFill>(apiArgs, indirectArgs, externalStorage);
     return cb(apiArgs.hCommandList, apiArgs.ptr, getOptionalData(indirectArgs.pattern), apiArgs.patternSize, apiArgs.size,
               apiArgs.hSignalEvent, static_cast<uint32_t>(waitEventsList.size()), waitEventsList.empty() ? nullptr : waitEventsList.data(), userData);
 }
 
 ze_result_t Closure<CaptureApi::zeCommandListAppendMemoryCopyRegion>::invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const {
-    auto cb = reinterpret_cast<ze_result_t(VISITOR_CCONV *)(ze_command_list_handle_t, void *, const ze_copy_region_t *, uint32_t, uint32_t, const void *, const ze_copy_region_t *, uint32_t, uint32_t, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
+    auto cb = reinterpret_cast<ze_result_t(ZE_VISITOR_CCONV *)(ze_command_list_handle_t, void *, const ze_copy_region_t *, uint32_t, uint32_t, const void *, const ze_copy_region_t *, uint32_t, uint32_t, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
     auto waitEventsList = getClosureWaitEventsList<CaptureApi::zeCommandListAppendMemoryCopyRegion>(apiArgs, indirectArgs, externalStorage);
     return cb(apiArgs.hCommandList, apiArgs.dstptr, externalStorage.getCopyRegion(indirectArgs.dstRegion), apiArgs.dstPitch, apiArgs.dstSlicePitch,
               apiArgs.srcptr, externalStorage.getCopyRegion(indirectArgs.srcRegion), apiArgs.srcPitch, apiArgs.srcSlicePitch,
@@ -1378,21 +1378,21 @@ ze_result_t Closure<CaptureApi::zeCommandListAppendMemoryCopyRegion>::invokeVisi
 }
 
 ze_result_t Closure<CaptureApi::zeCommandListAppendMemoryCopyFromContext>::invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const {
-    auto cb = reinterpret_cast<ze_result_t(VISITOR_CCONV *)(ze_command_list_handle_t, void *, ze_context_handle_t, const void *, size_t, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
+    auto cb = reinterpret_cast<ze_result_t(ZE_VISITOR_CCONV *)(ze_command_list_handle_t, void *, ze_context_handle_t, const void *, size_t, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
     auto waitEventsList = getClosureWaitEventsList<CaptureApi::zeCommandListAppendMemoryCopyFromContext>(apiArgs, indirectArgs, externalStorage);
     return cb(apiArgs.hCommandList, apiArgs.dstptr, apiArgs.hContextSrc, apiArgs.srcptr, apiArgs.size,
               apiArgs.hSignalEvent, static_cast<uint32_t>(waitEventsList.size()), waitEventsList.empty() ? nullptr : waitEventsList.data(), userData);
 }
 
 ze_result_t Closure<CaptureApi::zeCommandListAppendImageCopy>::invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const {
-    auto cb = reinterpret_cast<ze_result_t(VISITOR_CCONV *)(ze_command_list_handle_t, ze_image_handle_t, ze_image_handle_t, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
+    auto cb = reinterpret_cast<ze_result_t(ZE_VISITOR_CCONV *)(ze_command_list_handle_t, ze_image_handle_t, ze_image_handle_t, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
     auto waitEventsList = getClosureWaitEventsList<CaptureApi::zeCommandListAppendImageCopy>(apiArgs, indirectArgs, externalStorage);
     return cb(apiArgs.hCommandList, apiArgs.hDstImage, apiArgs.hSrcImage,
               apiArgs.hSignalEvent, static_cast<uint32_t>(waitEventsList.size()), waitEventsList.empty() ? nullptr : waitEventsList.data(), userData);
 }
 
 ze_result_t Closure<CaptureApi::zeCommandListAppendImageCopyRegion>::invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const {
-    auto cb = reinterpret_cast<ze_result_t(VISITOR_CCONV *)(ze_command_list_handle_t, ze_image_handle_t, ze_image_handle_t, const ze_image_region_t *, const ze_image_region_t *, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
+    auto cb = reinterpret_cast<ze_result_t(ZE_VISITOR_CCONV *)(ze_command_list_handle_t, ze_image_handle_t, ze_image_handle_t, const ze_image_region_t *, const ze_image_region_t *, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
     auto waitEventsList = getClosureWaitEventsList<CaptureApi::zeCommandListAppendImageCopyRegion>(apiArgs, indirectArgs, externalStorage);
     return cb(apiArgs.hCommandList, apiArgs.hDstImage, apiArgs.hSrcImage,
               externalStorage.getImageRegion(indirectArgs.dstRegion), externalStorage.getImageRegion(indirectArgs.srcRegion),
@@ -1400,46 +1400,46 @@ ze_result_t Closure<CaptureApi::zeCommandListAppendImageCopyRegion>::invokeVisit
 }
 
 ze_result_t Closure<CaptureApi::zeCommandListAppendImageCopyToMemory>::invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const {
-    auto cb = reinterpret_cast<ze_result_t(VISITOR_CCONV *)(ze_command_list_handle_t, void *, ze_image_handle_t, const ze_image_region_t *, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
+    auto cb = reinterpret_cast<ze_result_t(ZE_VISITOR_CCONV *)(ze_command_list_handle_t, void *, ze_image_handle_t, const ze_image_region_t *, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
     auto waitEventsList = getClosureWaitEventsList<CaptureApi::zeCommandListAppendImageCopyToMemory>(apiArgs, indirectArgs, externalStorage);
     return cb(apiArgs.hCommandList, apiArgs.dstptr, apiArgs.hSrcImage, externalStorage.getImageRegion(indirectArgs.srcRegion),
               apiArgs.hSignalEvent, static_cast<uint32_t>(waitEventsList.size()), waitEventsList.empty() ? nullptr : waitEventsList.data(), userData);
 }
 
 ze_result_t Closure<CaptureApi::zeCommandListAppendImageCopyFromMemory>::invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const {
-    auto cb = reinterpret_cast<ze_result_t(VISITOR_CCONV *)(ze_command_list_handle_t, ze_image_handle_t, const void *, const ze_image_region_t *, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
+    auto cb = reinterpret_cast<ze_result_t(ZE_VISITOR_CCONV *)(ze_command_list_handle_t, ze_image_handle_t, const void *, const ze_image_region_t *, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
     auto waitEventsList = getClosureWaitEventsList<CaptureApi::zeCommandListAppendImageCopyFromMemory>(apiArgs, indirectArgs, externalStorage);
     return cb(apiArgs.hCommandList, apiArgs.hDstImage, apiArgs.srcptr, externalStorage.getImageRegion(indirectArgs.dstRegion),
               apiArgs.hSignalEvent, static_cast<uint32_t>(waitEventsList.size()), waitEventsList.empty() ? nullptr : waitEventsList.data(), userData);
 }
 
 ze_result_t Closure<CaptureApi::zeCommandListAppendMemoryPrefetch>::invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const {
-    auto cb = reinterpret_cast<ze_result_t(VISITOR_CCONV *)(ze_command_list_handle_t, const void *, size_t, void *)>(visitorCallback);
+    auto cb = reinterpret_cast<ze_result_t(ZE_VISITOR_CCONV *)(ze_command_list_handle_t, const void *, size_t, void *)>(visitorCallback);
     return cb(apiArgs.hCommandList, apiArgs.ptr, apiArgs.size, userData);
 }
 
 ze_result_t Closure<CaptureApi::zeCommandListAppendMemAdvise>::invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const {
-    auto cb = reinterpret_cast<ze_result_t(VISITOR_CCONV *)(ze_command_list_handle_t, ze_device_handle_t, const void *, size_t, ze_memory_advice_t, void *)>(visitorCallback);
+    auto cb = reinterpret_cast<ze_result_t(ZE_VISITOR_CCONV *)(ze_command_list_handle_t, ze_device_handle_t, const void *, size_t, ze_memory_advice_t, void *)>(visitorCallback);
     return cb(apiArgs.hCommandList, apiArgs.hDevice, apiArgs.ptr, apiArgs.size, apiArgs.advice, userData);
 }
 
 ze_result_t Closure<CaptureApi::zeCommandListAppendSignalEvent>::invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const {
-    auto cb = reinterpret_cast<ze_result_t(VISITOR_CCONV *)(ze_command_list_handle_t, ze_event_handle_t, void *)>(visitorCallback);
+    auto cb = reinterpret_cast<ze_result_t(ZE_VISITOR_CCONV *)(ze_command_list_handle_t, ze_event_handle_t, void *)>(visitorCallback);
     return cb(apiArgs.hCommandList, apiArgs.hEvent, userData);
 }
 
 ze_result_t Closure<CaptureApi::zeCommandListAppendSignalEventWithParameters>::invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const {
-    auto cb = reinterpret_cast<ze_result_t(VISITOR_CCONV *)(ze_command_list_handle_t, const void *, ze_event_handle_t, void *)>(visitorCallback);
+    auto cb = reinterpret_cast<ze_result_t(ZE_VISITOR_CCONV *)(ze_command_list_handle_t, const void *, ze_event_handle_t, void *)>(visitorCallback);
     return cb(apiArgs.hCommandList, indirectArgs.clonedPNext, apiArgs.hEvent, userData);
 }
 
 ze_result_t Closure<CaptureApi::zeCommandListAppendEventReset>::invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const {
-    auto cb = reinterpret_cast<ze_result_t(VISITOR_CCONV *)(ze_command_list_handle_t, ze_event_handle_t, void *)>(visitorCallback);
+    auto cb = reinterpret_cast<ze_result_t(ZE_VISITOR_CCONV *)(ze_command_list_handle_t, ze_event_handle_t, void *)>(visitorCallback);
     return cb(apiArgs.hCommandList, apiArgs.hEvent, userData);
 }
 
 ze_result_t Closure<CaptureApi::zeCommandListAppendQueryKernelTimestamps>::invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const {
-    auto cb = reinterpret_cast<ze_result_t(VISITOR_CCONV *)(ze_command_list_handle_t, uint32_t, ze_event_handle_t *, void *, const size_t *, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
+    auto cb = reinterpret_cast<ze_result_t(ZE_VISITOR_CCONV *)(ze_command_list_handle_t, uint32_t, ze_event_handle_t *, void *, const size_t *, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
     auto waitEventsList = getClosureWaitEventsList<CaptureApi::zeCommandListAppendQueryKernelTimestamps>(apiArgs, indirectArgs, externalStorage);
     return cb(apiArgs.hCommandList, apiArgs.numEvents,
               const_cast<ze_event_handle_t *>(getOptionalData(indirectArgs.events)),
@@ -1448,7 +1448,7 @@ ze_result_t Closure<CaptureApi::zeCommandListAppendQueryKernelTimestamps>::invok
 }
 
 ze_result_t Closure<CaptureApi::zeCommandListAppendSignalExternalSemaphoreExt>::invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const {
-    auto cb = reinterpret_cast<ze_result_t(VISITOR_CCONV *)(ze_command_list_handle_t, uint32_t, ze_external_semaphore_ext_handle_t *, ze_external_semaphore_signal_params_ext_t *, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
+    auto cb = reinterpret_cast<ze_result_t(ZE_VISITOR_CCONV *)(ze_command_list_handle_t, uint32_t, ze_external_semaphore_ext_handle_t *, ze_external_semaphore_signal_params_ext_t *, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
     auto waitEventsList = getClosureWaitEventsList<CaptureApi::zeCommandListAppendSignalExternalSemaphoreExt>(apiArgs, indirectArgs, externalStorage);
     return cb(apiArgs.hCommandList, apiArgs.numSemaphores,
               const_cast<ze_external_semaphore_ext_handle_t *>(getOptionalData(indirectArgs.semaphores)),
@@ -1457,7 +1457,7 @@ ze_result_t Closure<CaptureApi::zeCommandListAppendSignalExternalSemaphoreExt>::
 }
 
 ze_result_t Closure<CaptureApi::zeCommandListAppendWaitExternalSemaphoreExt>::invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const {
-    auto cb = reinterpret_cast<ze_result_t(VISITOR_CCONV *)(ze_command_list_handle_t, uint32_t, ze_external_semaphore_ext_handle_t *, ze_external_semaphore_wait_params_ext_t *, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
+    auto cb = reinterpret_cast<ze_result_t(ZE_VISITOR_CCONV *)(ze_command_list_handle_t, uint32_t, ze_external_semaphore_ext_handle_t *, ze_external_semaphore_wait_params_ext_t *, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
     auto waitEventsList = getClosureWaitEventsList<CaptureApi::zeCommandListAppendWaitExternalSemaphoreExt>(apiArgs, indirectArgs, externalStorage);
     return cb(apiArgs.hCommandList, apiArgs.numSemaphores,
               const_cast<ze_external_semaphore_ext_handle_t *>(getOptionalData(indirectArgs.semaphores)),
@@ -1466,7 +1466,7 @@ ze_result_t Closure<CaptureApi::zeCommandListAppendWaitExternalSemaphoreExt>::in
 }
 
 ze_result_t Closure<CaptureApi::zeCommandListAppendImageCopyToMemoryExt>::invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const {
-    auto cb = reinterpret_cast<ze_result_t(VISITOR_CCONV *)(ze_command_list_handle_t, void *, ze_image_handle_t, const ze_image_region_t *, uint32_t, uint32_t, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
+    auto cb = reinterpret_cast<ze_result_t(ZE_VISITOR_CCONV *)(ze_command_list_handle_t, void *, ze_image_handle_t, const ze_image_region_t *, uint32_t, uint32_t, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
     auto waitEventsList = getClosureWaitEventsList<CaptureApi::zeCommandListAppendImageCopyToMemoryExt>(apiArgs, indirectArgs, externalStorage);
     return cb(apiArgs.hCommandList, apiArgs.dstptr, apiArgs.hSrcImage, externalStorage.getImageRegion(indirectArgs.srcRegion),
               apiArgs.destRowPitch, apiArgs.destSlicePitch,
@@ -1474,7 +1474,7 @@ ze_result_t Closure<CaptureApi::zeCommandListAppendImageCopyToMemoryExt>::invoke
 }
 
 ze_result_t Closure<CaptureApi::zeCommandListAppendImageCopyFromMemoryExt>::invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const {
-    auto cb = reinterpret_cast<ze_result_t(VISITOR_CCONV *)(ze_command_list_handle_t, ze_image_handle_t, const void *, const ze_image_region_t *, uint32_t, uint32_t, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
+    auto cb = reinterpret_cast<ze_result_t(ZE_VISITOR_CCONV *)(ze_command_list_handle_t, ze_image_handle_t, const void *, const ze_image_region_t *, uint32_t, uint32_t, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
     auto waitEventsList = getClosureWaitEventsList<CaptureApi::zeCommandListAppendImageCopyFromMemoryExt>(apiArgs, indirectArgs, externalStorage);
     return cb(apiArgs.hCommandList, apiArgs.hDstImage, apiArgs.srcptr, externalStorage.getImageRegion(indirectArgs.dstRegion),
               apiArgs.srcRowPitch, apiArgs.srcSlicePitch,
@@ -1482,28 +1482,28 @@ ze_result_t Closure<CaptureApi::zeCommandListAppendImageCopyFromMemoryExt>::invo
 }
 
 ze_result_t Closure<CaptureApi::zeCommandListAppendLaunchKernel>::invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const {
-    auto cb = reinterpret_cast<ze_result_t(VISITOR_CCONV *)(ze_command_list_handle_t, ze_kernel_handle_t, const ze_group_count_t *, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
+    auto cb = reinterpret_cast<ze_result_t(ZE_VISITOR_CCONV *)(ze_command_list_handle_t, ze_kernel_handle_t, const ze_group_count_t *, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
     auto waitEventsList = getClosureWaitEventsList<CaptureApi::zeCommandListAppendLaunchKernel>(apiArgs, indirectArgs, externalStorage);
     return cb(apiArgs.hCommandList, indirectArgs.capturedKernel.get(), &indirectArgs.launchKernelArgs,
               apiArgs.hSignalEvent, static_cast<uint32_t>(waitEventsList.size()), waitEventsList.empty() ? nullptr : waitEventsList.data(), userData);
 }
 
 ze_result_t Closure<CaptureApi::zeCommandListAppendLaunchCooperativeKernel>::invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const {
-    auto cb = reinterpret_cast<ze_result_t(VISITOR_CCONV *)(ze_command_list_handle_t, ze_kernel_handle_t, const ze_group_count_t *, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
+    auto cb = reinterpret_cast<ze_result_t(ZE_VISITOR_CCONV *)(ze_command_list_handle_t, ze_kernel_handle_t, const ze_group_count_t *, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
     auto waitEventsList = getClosureWaitEventsList<CaptureApi::zeCommandListAppendLaunchCooperativeKernel>(apiArgs, indirectArgs, externalStorage);
     return cb(apiArgs.hCommandList, indirectArgs.capturedKernel.get(), &indirectArgs.launchKernelArgs,
               apiArgs.hSignalEvent, static_cast<uint32_t>(waitEventsList.size()), waitEventsList.empty() ? nullptr : waitEventsList.data(), userData);
 }
 
 ze_result_t Closure<CaptureApi::zeCommandListAppendLaunchKernelIndirect>::invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const {
-    auto cb = reinterpret_cast<ze_result_t(VISITOR_CCONV *)(ze_command_list_handle_t, ze_kernel_handle_t, const ze_group_count_t *, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
+    auto cb = reinterpret_cast<ze_result_t(ZE_VISITOR_CCONV *)(ze_command_list_handle_t, ze_kernel_handle_t, const ze_group_count_t *, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
     auto waitEventsList = getClosureWaitEventsList<CaptureApi::zeCommandListAppendLaunchKernelIndirect>(apiArgs, indirectArgs, externalStorage);
     return cb(apiArgs.hCommandList, indirectArgs.capturedKernel.get(), apiArgs.launchArgsBuffer,
               apiArgs.hSignalEvent, static_cast<uint32_t>(waitEventsList.size()), waitEventsList.empty() ? nullptr : waitEventsList.data(), userData);
 }
 
 ze_result_t Closure<CaptureApi::zeCommandListAppendLaunchMultipleKernelsIndirect>::invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const {
-    auto cb = reinterpret_cast<ze_result_t(VISITOR_CCONV *)(ze_command_list_handle_t, uint32_t, ze_kernel_handle_t *, const uint32_t *, const ze_group_count_t *, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
+    auto cb = reinterpret_cast<ze_result_t(ZE_VISITOR_CCONV *)(ze_command_list_handle_t, uint32_t, ze_kernel_handle_t *, const uint32_t *, const ze_group_count_t *, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
     auto waitEventsList = getClosureWaitEventsList<CaptureApi::zeCommandListAppendLaunchMultipleKernelsIndirect>(apiArgs, indirectArgs, externalStorage);
     std::vector<ze_kernel_handle_t> phKernelClones(apiArgs.numKernels);
     for (uint32_t i{0U}; i < apiArgs.numKernels; ++i) {
@@ -1514,14 +1514,14 @@ ze_result_t Closure<CaptureApi::zeCommandListAppendLaunchMultipleKernelsIndirect
 }
 
 ze_result_t Closure<CaptureApi::zeCommandListAppendLaunchKernelWithParameters>::invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const {
-    auto cb = reinterpret_cast<ze_result_t(VISITOR_CCONV *)(ze_command_list_handle_t, ze_kernel_handle_t, const ze_group_count_t *, const void *, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
+    auto cb = reinterpret_cast<ze_result_t(ZE_VISITOR_CCONV *)(ze_command_list_handle_t, ze_kernel_handle_t, const ze_group_count_t *, const void *, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
     auto waitEventsList = getClosureWaitEventsList<CaptureApi::zeCommandListAppendLaunchKernelWithParameters>(apiArgs, indirectArgs, externalStorage);
     return cb(apiArgs.hCommandList, indirectArgs.capturedKernel.get(), &indirectArgs.groupCounts, indirectArgs.clonedPNext,
               apiArgs.hSignalEvent, static_cast<uint32_t>(waitEventsList.size()), waitEventsList.empty() ? nullptr : waitEventsList.data(), userData);
 }
 
 ze_result_t Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments>::invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const {
-    auto cb = reinterpret_cast<ze_result_t(VISITOR_CCONV *)(ze_command_list_handle_t, ze_kernel_handle_t, const ze_group_count_t, const ze_group_size_t, void **, const void *, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
+    auto cb = reinterpret_cast<ze_result_t(ZE_VISITOR_CCONV *)(ze_command_list_handle_t, ze_kernel_handle_t, const ze_group_count_t, const ze_group_size_t, void **, const void *, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
     auto waitEventsList = getClosureWaitEventsList<CaptureApi::zeCommandListAppendLaunchKernelWithArguments>(apiArgs, indirectArgs, externalStorage);
     auto *kernelHandle = this->indirectArgs.capturedKernel.get();
     auto kernel = static_cast<KernelImp *>(Kernel::fromHandle(kernelHandle));
@@ -1532,61 +1532,61 @@ ze_result_t Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments>::i
 }
 
 ze_result_t Closure<CaptureApi::zetCommandListAppendMetricStreamerMarker>::invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const {
-    auto cb = reinterpret_cast<ze_result_t(VISITOR_CCONV *)(zet_command_list_handle_t, zet_metric_streamer_handle_t, uint32_t, void *)>(visitorCallback);
+    auto cb = reinterpret_cast<ze_result_t(ZE_VISITOR_CCONV *)(zet_command_list_handle_t, zet_metric_streamer_handle_t, uint32_t, void *)>(visitorCallback);
     return cb(apiArgs.hCommandList, apiArgs.hMetricStreamer, apiArgs.value, userData);
 }
 
 ze_result_t Closure<CaptureApi::zetCommandListAppendMetricQueryBegin>::invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const {
-    auto cb = reinterpret_cast<ze_result_t(VISITOR_CCONV *)(zet_command_list_handle_t, zet_metric_query_handle_t, void *)>(visitorCallback);
+    auto cb = reinterpret_cast<ze_result_t(ZE_VISITOR_CCONV *)(zet_command_list_handle_t, zet_metric_query_handle_t, void *)>(visitorCallback);
     return cb(apiArgs.hCommandList, apiArgs.hMetricQuery, userData);
 }
 
 ze_result_t Closure<CaptureApi::zetCommandListAppendMetricQueryEnd>::invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const {
-    auto cb = reinterpret_cast<ze_result_t(VISITOR_CCONV *)(zet_command_list_handle_t, zet_metric_query_handle_t, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
+    auto cb = reinterpret_cast<ze_result_t(ZE_VISITOR_CCONV *)(zet_command_list_handle_t, zet_metric_query_handle_t, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
     auto waitEventsList = getClosureWaitEventsList<CaptureApi::zetCommandListAppendMetricQueryEnd>(apiArgs, indirectArgs, externalStorage);
     return cb(apiArgs.hCommandList, apiArgs.hMetricQuery,
               apiArgs.hSignalEvent, static_cast<uint32_t>(waitEventsList.size()), waitEventsList.empty() ? nullptr : waitEventsList.data(), userData);
 }
 
 ze_result_t Closure<CaptureApi::zetCommandListAppendMetricMemoryBarrier>::invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const {
-    auto cb = reinterpret_cast<ze_result_t(VISITOR_CCONV *)(zet_command_list_handle_t, void *)>(visitorCallback);
+    auto cb = reinterpret_cast<ze_result_t(ZE_VISITOR_CCONV *)(zet_command_list_handle_t, void *)>(visitorCallback);
     return cb(apiArgs.hCommandList, userData);
 }
 
 ze_result_t Closure<CaptureApi::zetCommandListAppendMarkerExp>::invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const {
-    auto cb = reinterpret_cast<ze_result_t(VISITOR_CCONV *)(zet_command_list_handle_t, zet_metric_group_handle_t, uint32_t, void *)>(visitorCallback);
+    auto cb = reinterpret_cast<ze_result_t(ZE_VISITOR_CCONV *)(zet_command_list_handle_t, zet_metric_group_handle_t, uint32_t, void *)>(visitorCallback);
     return cb(apiArgs.hCommandList, apiArgs.hMetricGroup, apiArgs.value, userData);
 }
 
 ze_result_t Closure<CaptureApi::zeCommandListAppendMemoryCopyWithParameters>::invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const {
-    auto cb = reinterpret_cast<ze_result_t(VISITOR_CCONV *)(ze_command_list_handle_t, void *, const void *, size_t, const void *, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
+    auto cb = reinterpret_cast<ze_result_t(ZE_VISITOR_CCONV *)(ze_command_list_handle_t, void *, const void *, size_t, const void *, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
     auto waitEventsList = getClosureWaitEventsList<CaptureApi::zeCommandListAppendMemoryCopyWithParameters>(apiArgs, indirectArgs, externalStorage);
     return cb(apiArgs.hCommandList, apiArgs.dstptr, apiArgs.srcptr, apiArgs.size, indirectArgs.clonedPNext,
               apiArgs.hSignalEvent, static_cast<uint32_t>(waitEventsList.size()), waitEventsList.empty() ? nullptr : waitEventsList.data(), userData);
 }
 
 ze_result_t Closure<CaptureApi::zeCommandListAppendMemoryFillWithParameters>::invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const {
-    auto cb = reinterpret_cast<ze_result_t(VISITOR_CCONV *)(ze_command_list_handle_t, void *, const void *, size_t, size_t, const void *, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
+    auto cb = reinterpret_cast<ze_result_t(ZE_VISITOR_CCONV *)(ze_command_list_handle_t, void *, const void *, size_t, size_t, const void *, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
     auto waitEventsList = getClosureWaitEventsList<CaptureApi::zeCommandListAppendMemoryFillWithParameters>(apiArgs, indirectArgs, externalStorage);
     return cb(apiArgs.hCommandList, apiArgs.ptr, getOptionalData(indirectArgs.pattern), apiArgs.patternSize, apiArgs.size, indirectArgs.clonedPNext,
               apiArgs.hSignalEvent, static_cast<uint32_t>(waitEventsList.size()), waitEventsList.empty() ? nullptr : waitEventsList.data(), userData);
 }
 
 ze_result_t Closure<CaptureApi::zeCommandListAppendHostFunction>::invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const {
-    auto cb = reinterpret_cast<ze_result_t(VISITOR_CCONV *)(ze_command_list_handle_t, ze_host_function_callback_t, void *, const void *, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
+    auto cb = reinterpret_cast<ze_result_t(ZE_VISITOR_CCONV *)(ze_command_list_handle_t, ze_host_function_callback_t, void *, const void *, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
     auto waitEventsList = getClosureWaitEventsList<CaptureApi::zeCommandListAppendHostFunction>(apiArgs, indirectArgs, externalStorage);
     return cb(apiArgs.hCommandList, apiArgs.pHostFunction, apiArgs.pUserData, apiArgs.pNext,
               apiArgs.hSignalEvent, static_cast<uint32_t>(waitEventsList.size()), waitEventsList.empty() ? nullptr : waitEventsList.data(), userData);
 }
 
 ze_result_t Closure<CaptureApi::zeCommandListGetNextCommandIdExp>::invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &) const {
-    auto cb = reinterpret_cast<ze_result_t(VISITOR_CCONV *)(ze_command_list_handle_t, const ze_mutable_command_id_exp_desc_t *, uint64_t *, void *)>(visitorCallback);
+    auto cb = reinterpret_cast<ze_result_t(ZE_VISITOR_CCONV *)(ze_command_list_handle_t, const ze_mutable_command_id_exp_desc_t *, uint64_t *, void *)>(visitorCallback);
     uint64_t commandId = indirectArgs.commandId;
     return cb(apiArgs.hCommandList, &indirectArgs.desc, &commandId, userData);
 }
 
 ze_result_t Closure<CaptureApi::zeCommandListGetNextCommandIdWithKernelsExp>::invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &) const {
-    auto cb = reinterpret_cast<ze_result_t(VISITOR_CCONV *)(ze_command_list_handle_t, const ze_mutable_command_id_exp_desc_t *, uint32_t, ze_kernel_handle_t *, uint64_t *, void *)>(visitorCallback);
+    auto cb = reinterpret_cast<ze_result_t(ZE_VISITOR_CCONV *)(ze_command_list_handle_t, const ze_mutable_command_id_exp_desc_t *, uint32_t, ze_kernel_handle_t *, uint64_t *, void *)>(visitorCallback);
     uint64_t commandId = indirectArgs.commandId;
     auto kernelHandles = indirectArgs.kernels.empty() ? nullptr : const_cast<ze_kernel_handle_t *>(indirectArgs.kernels.data());
     return cb(apiArgs.hCommandList, &indirectArgs.desc, static_cast<uint32_t>(indirectArgs.kernels.size()), kernelHandles, &commandId, userData);
@@ -2227,10 +2227,10 @@ bool getGraphExternalSignalEventFlagFromPNext(const void *pNext) {
 }
 
 struct VisitContext {
-    explicit VisitContext(const ze_visit_ext_desc_t *desc)
+    explicit VisitContext(const ze_command_visit_ext_desc_t *desc)
         : desc(desc),
           userData(desc->userData),
-          hReappendTargetCmdList(desc->hReappendTargetCmdList),
+          hReappendTargetCommandList(desc->hReappendTargetCommandList),
           preAction(desc->beforeDefaultOpClb),
           defaultOp(desc->defaultOp),
           postAction(desc->afterDefaultOpClb) {
@@ -2239,7 +2239,7 @@ struct VisitContext {
     ze_result_t initialize() {
         L0::PNextRange pnexts{desc->pNext};
         for (auto &pnext : pnexts) {
-            if (pnext.stype != ZEX_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC) {
+            if ((pnext.stype != ZE_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC) && (pnext.stype != ZEX_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC)) {
                 return ZE_RESULT_ERROR_INVALID_ENUMERATION;
             }
             const auto &concreteVisitor = reinterpret_cast<const ze_concrete_visitor_ext_desc_t &>(pnext);
@@ -2264,16 +2264,16 @@ struct VisitContext {
         return ZE_RESULT_SUCCESS;
     }
 
-    const ze_visit_ext_desc_t *desc = nullptr;
+    const ze_command_visit_ext_desc_t *desc = nullptr;
     void *userData = nullptr;
-    ze_command_list_handle_t hReappendTargetCmdList = nullptr;
-    ze_visit_ext_default_op_callback_t preAction = nullptr;
-    ze_visit_ext_default_op_t defaultOp = ZE_VISIT_EXT_DEFAULT_OP_IGNORE;
-    ze_visit_ext_default_op_callback_t postAction = nullptr;
+    ze_command_list_handle_t hReappendTargetCommandList = nullptr;
+    ze_command_visit_ext_default_op_callback_t preAction = nullptr;
+    ze_command_visit_ext_default_op_t defaultOp = ZE_COMMAND_VISIT_EXT_DEFAULT_OP_IGNORE;
+    ze_command_visit_ext_default_op_callback_t postAction = nullptr;
     void *visitorCallbacks[numCapturedApis] = {};
 };
 
-ze_result_t Graph::visit(const ze_visit_ext_desc_t *desc) {
+ze_result_t Graph::visit(const ze_command_visit_ext_desc_t *desc) {
     if (nullptr == desc) {
         return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
     }
@@ -2287,7 +2287,7 @@ ze_result_t Graph::visit(const ze_visit_ext_desc_t *desc) {
     for (auto &seg : *orderedCommands) {
         // explicit reappend target applies only to root level recording, forks reappend to their original command lists
         bool isRootLevelSegment = (seg.subgraph->getRootGraph() == seg.subgraph);
-        visitContext.hReappendTargetCmdList = isRootLevelSegment ? desc->hReappendTargetCmdList : nullptr;
+        visitContext.hReappendTargetCommandList = isRootLevelSegment ? desc->hReappendTargetCommandList : nullptr;
 
         auto &allCommands = seg.subgraph->recordedApiCommands;
         for (CapturedCommandId cmdId = seg.subBegin; cmdId < seg.subBegin + seg.numCommands; ++cmdId) {
@@ -2301,7 +2301,7 @@ ze_result_t Graph::visit(const ze_visit_ext_desc_t *desc) {
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t RecordedApiCommands::visit(const ze_visit_ext_desc_t *desc) {
+ze_result_t RecordedApiCommands::visit(const ze_command_visit_ext_desc_t *desc) {
     VisitContext visitContext{desc};
     auto visitCtxInitResult = visitContext.initialize();
     if (ZE_RESULT_SUCCESS != visitCtxInitResult) {
@@ -2327,34 +2327,34 @@ ze_result_t RecordedApiCommands::visit(CapturedCommandId id, VisitContext &visit
 
     auto &cmdIt = this->commands[id];
     switch (static_cast<CaptureApi>(cmdIt.index())) {
-#define RR_CAPTURED_API(X)                                                                                                                               \
-    case CaptureApi::X: {                                                                                                                                \
-        auto &cmd = std::get<static_cast<size_t>(CaptureApi::X)>(cmdIt);                                                                                 \
-        const char *apiName = #X;                                                                                                                        \
-        if (visitContext.visitorCallbacks[static_cast<size_t>(CaptureApi::X)]) {                                                                         \
-            auto ret = cmd.invokeVisitor(visitContext.visitorCallbacks[static_cast<size_t>(CaptureApi::X)], visitContext.userData, externalStorage);     \
-            if (ZE_RESULT_SUCCESS != ret) {                                                                                                              \
-                return ret;                                                                                                                              \
-            }                                                                                                                                            \
-        } else {                                                                                                                                         \
-            auto signalEvent = getClosureSignalEvent<CaptureApi::X>(cmd.apiArgs);                                                                        \
-            auto waitEventsList = getClosureWaitEventsList<CaptureApi::X>(cmd.apiArgs, cmd.indirectArgs, externalStorage);                               \
-            ze_event_handle_t *waitEvents = waitEventsList.empty() ? nullptr : waitEventsList.data();                                                    \
-            uint32_t numWaitEvents = static_cast<uint32_t>(waitEventsList.size());                                                                       \
-            if (visitContext.preAction) {                                                                                                                \
-                visitContext.preAction(apiName, visitContext.userData, &numWaitEvents, &waitEvents, &signalEvent);                                       \
-            }                                                                                                                                            \
-            if (ZE_VISIT_EXT_DEFAULT_OP_REAPPEND == visitContext.defaultOp) {                                                                            \
-                EventParams events{.hSignalEvent = signalEvent, .numWaitEvents = numWaitEvents, .phWaitEvents = waitEvents};                             \
-                auto ret = cmd.instantiateTo(L0::CommandList::fromHandle(visitContext.hReappendTargetCmdList), externalStorage, cbEventContext, events); \
-                if (ZE_RESULT_SUCCESS != ret) {                                                                                                          \
-                    return ret;                                                                                                                          \
-                }                                                                                                                                        \
-            }                                                                                                                                            \
-            if (visitContext.postAction) {                                                                                                               \
-                visitContext.postAction(apiName, visitContext.userData, &numWaitEvents, &waitEvents, &signalEvent);                                      \
-            }                                                                                                                                            \
-        }                                                                                                                                                \
+#define RR_CAPTURED_API(X)                                                                                                                                   \
+    case CaptureApi::X: {                                                                                                                                    \
+        auto &cmd = std::get<static_cast<size_t>(CaptureApi::X)>(cmdIt);                                                                                     \
+        const char *apiName = #X;                                                                                                                            \
+        if (visitContext.visitorCallbacks[static_cast<size_t>(CaptureApi::X)]) {                                                                             \
+            auto ret = cmd.invokeVisitor(visitContext.visitorCallbacks[static_cast<size_t>(CaptureApi::X)], visitContext.userData, externalStorage);         \
+            if (ZE_RESULT_SUCCESS != ret) {                                                                                                                  \
+                return ret;                                                                                                                                  \
+            }                                                                                                                                                \
+        } else {                                                                                                                                             \
+            auto signalEvent = getClosureSignalEvent<CaptureApi::X>(cmd.apiArgs);                                                                            \
+            auto waitEventsList = getClosureWaitEventsList<CaptureApi::X>(cmd.apiArgs, cmd.indirectArgs, externalStorage);                                   \
+            ze_event_handle_t *waitEvents = waitEventsList.empty() ? nullptr : waitEventsList.data();                                                        \
+            uint32_t numWaitEvents = static_cast<uint32_t>(waitEventsList.size());                                                                           \
+            if (visitContext.preAction) {                                                                                                                    \
+                visitContext.preAction(apiName, visitContext.userData, &numWaitEvents, &waitEvents, &signalEvent);                                           \
+            }                                                                                                                                                \
+            if (ZE_COMMAND_VISIT_EXT_DEFAULT_OP_REAPPEND == visitContext.defaultOp) {                                                                        \
+                EventParams events{.hSignalEvent = signalEvent, .numWaitEvents = numWaitEvents, .phWaitEvents = waitEvents};                                 \
+                auto ret = cmd.instantiateTo(L0::CommandList::fromHandle(visitContext.hReappendTargetCommandList), externalStorage, cbEventContext, events); \
+                if (ZE_RESULT_SUCCESS != ret) {                                                                                                              \
+                    return ret;                                                                                                                              \
+                }                                                                                                                                            \
+            }                                                                                                                                                \
+            if (visitContext.postAction) {                                                                                                                   \
+                visitContext.postAction(apiName, visitContext.userData, &numWaitEvents, &waitEvents, &signalEvent);                                          \
+            }                                                                                                                                                \
+        }                                                                                                                                                    \
     } break;
 
         RR_CAPTURED_APIS()

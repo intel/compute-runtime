@@ -35,29 +35,29 @@ struct VisitExtCounters {
     ze_event_handle_t injectedWaitEvents[2] = {nullptr, nullptr};
 };
 
-static ze_result_t VISITOR_CCONV barrierConcreteVisitor(ze_command_list_handle_t,
-                                                        ze_event_handle_t,
-                                                        uint32_t,
-                                                        ze_event_handle_t *,
-                                                        void *userData) {
+static ze_result_t ZE_VISITOR_CCONV barrierConcreteVisitor(ze_command_list_handle_t,
+                                                           ze_event_handle_t,
+                                                           uint32_t,
+                                                           ze_event_handle_t *,
+                                                           void *userData) {
     auto *state = static_cast<VisitExtCounters *>(userData);
     ++state->concreteCalled;
     return ZE_RESULT_SUCCESS;
 }
 
-static ze_result_t VISITOR_CCONV barrierConcreteVisitorFail(ze_command_list_handle_t,
-                                                            ze_event_handle_t,
-                                                            uint32_t,
-                                                            ze_event_handle_t *,
-                                                            void *) {
+static ze_result_t ZE_VISITOR_CCONV barrierConcreteVisitorFail(ze_command_list_handle_t,
+                                                               ze_event_handle_t,
+                                                               uint32_t,
+                                                               ze_event_handle_t *,
+                                                               void *) {
     return ZE_RESULT_ERROR_UNKNOWN;
 }
 
-static void VISITOR_CCONV beforeDefaultBarrierVisitor(const char *,
-                                                      void *userData,
-                                                      uint32_t *numWaitEvents,
-                                                      ze_event_handle_t **phWaitEvents,
-                                                      ze_event_handle_t *hSignalEvent) {
+static void ZE_VISITOR_CCONV beforeDefaultBarrierVisitor(const char *,
+                                                         void *userData,
+                                                         uint32_t *numWaitEvents,
+                                                         ze_event_handle_t **phWaitEvents,
+                                                         ze_event_handle_t *hSignalEvent) {
     auto *state = static_cast<VisitExtCounters *>(userData);
     ++state->beforeCalled;
     *numWaitEvents = 2;
@@ -65,11 +65,11 @@ static void VISITOR_CCONV beforeDefaultBarrierVisitor(const char *,
     *hSignalEvent = state->injectedSignalEvent;
 }
 
-static void VISITOR_CCONV afterDefaultBarrierVisitor(const char *,
-                                                     void *userData,
-                                                     uint32_t *numWaitEvents,
-                                                     ze_event_handle_t **,
-                                                     ze_event_handle_t *hSignalEvent) {
+static void ZE_VISITOR_CCONV afterDefaultBarrierVisitor(const char *,
+                                                        void *userData,
+                                                        uint32_t *numWaitEvents,
+                                                        ze_event_handle_t **,
+                                                        ze_event_handle_t *hSignalEvent) {
     auto *state = static_cast<VisitExtCounters *>(userData);
     ++state->afterCalled;
     state->observedNumWaitEvents = *numWaitEvents;
@@ -134,7 +134,7 @@ HWTEST_F(CommandListExpTest, givenRegularCmdListWithSimulatedCsrWhenVerifyMemory
 }
 
 HWTEST_F(CommandListExpTest, givenVisitExtWhenNullParametersArePassedThenErrorIsReturned) {
-    ze_visit_ext_desc_t desc = {};
+    ze_command_visit_ext_desc_t desc = {};
 
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_HANDLE, L0::zeCommandListVisitExt(nullptr, &desc));
 
@@ -148,9 +148,9 @@ HWTEST_F(CommandListExpTest, givenVisitExtWhenCalledForBaseCommandListThenItForw
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0, returnValue, false));
 
-    ze_visit_ext_desc_t desc = {};
-    desc.stype = ZEX_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC;
-    desc.defaultOp = ZE_VISIT_EXT_DEFAULT_OP_IGNORE;
+    ze_command_visit_ext_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC;
+    desc.defaultOp = ZE_COMMAND_VISIT_EXT_DEFAULT_OP_IGNORE;
 
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeCommandListVisitExt(commandList->toHandle(), &desc));
 }
@@ -163,10 +163,10 @@ HWTEST_F(CommandListExpTest, givenVisitExtWithInvalidPnextStypeThenInvalidEnumer
     ze_base_desc_t invalidDesc{};
     invalidDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES;
 
-    ze_visit_ext_desc_t desc{};
-    desc.stype = ZEX_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC;
+    ze_command_visit_ext_desc_t desc{};
+    desc.stype = ZE_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC;
     desc.pNext = &invalidDesc;
-    desc.defaultOp = ZE_VISIT_EXT_DEFAULT_OP_IGNORE;
+    desc.defaultOp = ZE_COMMAND_VISIT_EXT_DEFAULT_OP_IGNORE;
 
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ENUMERATION, L0::zeCommandListVisitExt(cmdList.toHandle(), &desc));
 }
@@ -177,14 +177,14 @@ HWTEST_F(CommandListExpTest, givenVisitExtWithConcreteVisitorNullFunctionNameThe
     ASSERT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(cmdList.toHandle(), nullptr, 0, nullptr));
 
     ze_concrete_visitor_ext_desc_t concreteVisitor{};
-    concreteVisitor.stype = ZEX_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC;
+    concreteVisitor.stype = ZE_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC;
     concreteVisitor.fname = nullptr;
     concreteVisitor.callback = reinterpret_cast<void *>(barrierConcreteVisitor);
 
-    ze_visit_ext_desc_t desc{};
-    desc.stype = ZEX_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC;
+    ze_command_visit_ext_desc_t desc{};
+    desc.stype = ZE_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC;
     desc.pNext = &concreteVisitor;
-    desc.defaultOp = ZE_VISIT_EXT_DEFAULT_OP_IGNORE;
+    desc.defaultOp = ZE_COMMAND_VISIT_EXT_DEFAULT_OP_IGNORE;
 
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, L0::zeCommandListVisitExt(cmdList.toHandle(), &desc));
 }
@@ -195,14 +195,14 @@ HWTEST_F(CommandListExpTest, givenVisitExtWithConcreteVisitorUnknownFunctionName
     ASSERT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(cmdList.toHandle(), nullptr, 0, nullptr));
 
     ze_concrete_visitor_ext_desc_t concreteVisitor{};
-    concreteVisitor.stype = ZEX_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC;
+    concreteVisitor.stype = ZE_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC;
     concreteVisitor.fname = "unknownApiName";
     concreteVisitor.callback = reinterpret_cast<void *>(barrierConcreteVisitor);
 
-    ze_visit_ext_desc_t desc{};
-    desc.stype = ZEX_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC;
+    ze_command_visit_ext_desc_t desc{};
+    desc.stype = ZE_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC;
     desc.pNext = &concreteVisitor;
-    desc.defaultOp = ZE_VISIT_EXT_DEFAULT_OP_IGNORE;
+    desc.defaultOp = ZE_COMMAND_VISIT_EXT_DEFAULT_OP_IGNORE;
 
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, L0::zeCommandListVisitExt(cmdList.toHandle(), &desc));
 }
@@ -216,16 +216,16 @@ HWTEST_F(CommandListExpTest, givenVisitExtWithConcreteVisitorWhenCallbackMatches
     VisitExtCounters state{};
 
     ze_concrete_visitor_ext_desc_t concreteVisitor{};
-    concreteVisitor.stype = ZEX_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC;
+    concreteVisitor.stype = ZE_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC;
     concreteVisitor.fname = "zeCommandListAppendBarrier";
     concreteVisitor.callback = reinterpret_cast<void *>(barrierConcreteVisitor);
 
-    ze_visit_ext_desc_t desc{};
-    desc.stype = ZEX_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC;
+    ze_command_visit_ext_desc_t desc{};
+    desc.stype = ZE_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC;
     desc.pNext = &concreteVisitor;
     desc.userData = &state;
-    desc.defaultOp = ZE_VISIT_EXT_DEFAULT_OP_REAPPEND;
-    desc.hReappendTargetCmdList = reappendTargetCmdList.toHandle();
+    desc.defaultOp = ZE_COMMAND_VISIT_EXT_DEFAULT_OP_REAPPEND;
+    desc.hReappendTargetCommandList = reappendTargetCmdList.toHandle();
     desc.beforeDefaultOpClb = beforeDefaultBarrierVisitor;
     desc.afterDefaultOpClb = afterDefaultBarrierVisitor;
 
@@ -242,14 +242,14 @@ HWTEST_F(CommandListExpTest, givenVisitExtWithConcreteVisitorWhenCallbackFailsTh
     ASSERT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(srcCmdList.toHandle(), nullptr, 0, nullptr));
 
     ze_concrete_visitor_ext_desc_t concreteVisitor{};
-    concreteVisitor.stype = ZEX_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC;
+    concreteVisitor.stype = ZE_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC;
     concreteVisitor.fname = "zeCommandListAppendBarrier";
     concreteVisitor.callback = reinterpret_cast<void *>(barrierConcreteVisitorFail);
 
-    ze_visit_ext_desc_t desc{};
-    desc.stype = ZEX_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC;
+    ze_command_visit_ext_desc_t desc{};
+    desc.stype = ZE_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC;
     desc.pNext = &concreteVisitor;
-    desc.defaultOp = ZE_VISIT_EXT_DEFAULT_OP_REAPPEND;
+    desc.defaultOp = ZE_COMMAND_VISIT_EXT_DEFAULT_OP_REAPPEND;
 
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, L0::zeCommandListVisitExt(srcCmdList.toHandle(), &desc));
 }
@@ -264,10 +264,10 @@ HWTEST_F(CommandListExpTest, givenVisitExtIgnoreDefaultOpWithBeforeAfterCallback
     state.injectedWaitEvents[0] = reinterpret_cast<ze_event_handle_t>(static_cast<uintptr_t>(0x111));
     state.injectedWaitEvents[1] = reinterpret_cast<ze_event_handle_t>(static_cast<uintptr_t>(0x121));
 
-    ze_visit_ext_desc_t desc{};
-    desc.stype = ZEX_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC;
+    ze_command_visit_ext_desc_t desc{};
+    desc.stype = ZE_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC;
     desc.userData = &state;
-    desc.defaultOp = ZE_VISIT_EXT_DEFAULT_OP_IGNORE;
+    desc.defaultOp = ZE_COMMAND_VISIT_EXT_DEFAULT_OP_IGNORE;
     desc.beforeDefaultOpClb = beforeDefaultBarrierVisitor;
     desc.afterDefaultOpClb = afterDefaultBarrierVisitor;
 
@@ -293,11 +293,11 @@ HWTEST_F(CommandListExpTest, givenVisitExtReappendDefaultOpWithBeforeAfterCallba
     state.injectedWaitEvents[0] = waitEvent0.toHandle();
     state.injectedWaitEvents[1] = waitEvent1.toHandle();
 
-    ze_visit_ext_desc_t desc{};
-    desc.stype = ZEX_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC;
+    ze_command_visit_ext_desc_t desc{};
+    desc.stype = ZE_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC;
     desc.userData = &state;
-    desc.hReappendTargetCmdList = reappendTargetCmdList.toHandle();
-    desc.defaultOp = ZE_VISIT_EXT_DEFAULT_OP_REAPPEND;
+    desc.hReappendTargetCommandList = reappendTargetCmdList.toHandle();
+    desc.defaultOp = ZE_COMMAND_VISIT_EXT_DEFAULT_OP_REAPPEND;
     desc.beforeDefaultOpClb = beforeDefaultBarrierVisitor;
     desc.afterDefaultOpClb = afterDefaultBarrierVisitor;
 

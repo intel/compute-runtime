@@ -196,7 +196,7 @@ struct RecordedApiCommands {
     void updateWaitEvents(MclCommandId commandId, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
     void updateKernel(MclCommandId commandId, ze_kernel_handle_t kernelHandle);
 
-    MOCKABLE_VIRTUAL ze_result_t visit(const ze_visit_ext_desc_t *desc);
+    MOCKABLE_VIRTUAL ze_result_t visit(const ze_command_visit_ext_desc_t *desc);
     ze_result_t visit(CapturedCommandId id, VisitContext &visitCtx);
 
     template <CaptureApi api, typename... TArgs>
@@ -416,7 +416,7 @@ struct Graph : _ze_graph_handle_t {
         return multiEngineGraph;
     }
 
-    MOCKABLE_VIRTUAL ze_result_t visit(const ze_visit_ext_desc_t *desc);
+    MOCKABLE_VIRTUAL ze_result_t visit(const ze_command_visit_ext_desc_t *desc);
 
     ze_result_t addDestructorCallback(zex_mem_graph_free_callback_fn_t pfnCallback, void *pUserData, void *pNext) {
         if (pNext) {

@@ -139,7 +139,7 @@ CommandList::~CommandList() {
     }
 }
 
-ze_result_t CommandList::visit(const ze_visit_ext_desc_t *desc) {
+ze_result_t CommandList::visit(const ze_command_visit_ext_desc_t *desc) {
     if (nullptr == this->flatCapture) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }

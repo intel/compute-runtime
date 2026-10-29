@@ -111,7 +111,7 @@ struct LaunchKernelWithArgumentsVisitorCapture {
     bool wasCalled = false;
 };
 
-static ze_result_t VISITOR_CCONV launchKernelWithArgumentsVisitor(
+static ze_result_t ZE_VISITOR_CCONV launchKernelWithArgumentsVisitor(
     ze_command_list_handle_t hCommandList,
     ze_kernel_handle_t hKernel,
     ze_group_count_t groupCounts,
@@ -1350,9 +1350,9 @@ TEST_F(GraphInstantiation, GivenForkedGraphWhenVisitingWithReappendTargetCommand
         subCmdlist.appendBarrierCalled = 0;
         targetCmdlist.appendBarrierCalled = 0;
 
-        ze_visit_ext_desc_t desc{ZEX_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC};
-        desc.defaultOp = ZE_VISIT_EXT_DEFAULT_OP_REAPPEND;
-        desc.hReappendTargetCmdList = explicitTarget ? targetCmdlist.toHandle() : nullptr;
+        ze_command_visit_ext_desc_t desc{ZE_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC};
+        desc.defaultOp = ZE_COMMAND_VISIT_EXT_DEFAULT_OP_REAPPEND;
+        desc.hReappendTargetCommandList = explicitTarget ? targetCmdlist.toHandle() : nullptr;
         EXPECT_EQ(ZE_RESULT_SUCCESS, srcGraph.visit(&desc));
 
         EXPECT_EQ(explicitTarget ? 0U : 2U, cmdlist.appendBarrierCalled);
@@ -7561,14 +7561,14 @@ TEST(GraphTestZeGraphGetPrimaryCommandListExt, GivenStoppedGraphCaptureWhenQuery
 struct TestableGraphForVisitApi : public L0::Graph {
     using L0::Graph::Graph;
 
-    ze_result_t visit(const ze_visit_ext_desc_t *desc) override {
+    ze_result_t visit(const ze_command_visit_ext_desc_t *desc) override {
         ++visitCalled;
         passedDesc = desc;
         return returnValue;
     }
 
     uint32_t visitCalled = 0;
-    const ze_visit_ext_desc_t *passedDesc = nullptr;
+    const ze_command_visit_ext_desc_t *passedDesc = nullptr;
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
 };
 
@@ -7576,7 +7576,7 @@ TEST(GraphTestZeGraphVisitExt, GivenInvalidParametersThenReturnsAppropriateError
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
     TestableGraphForVisitApi graph{&ctx, true};
-    ze_visit_ext_desc_t desc{};
+    ze_command_visit_ext_desc_t desc{};
 
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_HANDLE, L0::zeGraphVisitExt(nullptr, &desc));
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, L0::zeGraphVisitExt(graph.toHandle(), nullptr));
@@ -7586,8 +7586,8 @@ TEST(GraphTestZeGraphVisitExt, GivenValidParametersThenForwardsToGraphVisitAndRe
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
     TestableGraphForVisitApi graph{&ctx, true};
-    ze_visit_ext_desc_t desc{};
-    desc.stype = ZEX_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC;
+    ze_command_visit_ext_desc_t desc{};
+    desc.stype = ZE_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC;
 
     graph.returnValue = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeGraphVisitExt(graph.toHandle(), &desc));
@@ -7598,14 +7598,14 @@ TEST(GraphTestZeGraphVisitExt, GivenValidParametersThenForwardsToGraphVisitAndRe
 struct TestableGraphForEagerSubmit : public L0::Graph {
     using L0::Graph::Graph;
 
-    ze_result_t visit(const ze_visit_ext_desc_t *desc) override {
+    ze_result_t visit(const ze_command_visit_ext_desc_t *desc) override {
         ++visitCalled;
         passedDesc = *desc;
         return returnValue;
     }
 
     uint32_t visitCalled = 0;
-    ze_visit_ext_desc_t passedDesc{};
+    ze_command_visit_ext_desc_t passedDesc{};
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
 };
 
@@ -7622,10 +7622,10 @@ TEST(GraphTestEagerSubmit, GivenGraphEagerSubmitEnabledWhenAppendingGraphThenSou
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListAppendGraphExt(cmdlist.toHandle(), execGraph.toHandle(), nullptr, nullptr, 0, nullptr));
     EXPECT_EQ(1u, srcGraph.visitCalled);
-    EXPECT_EQ(ZEX_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC, srcGraph.passedDesc.stype);
+    EXPECT_EQ(ZE_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC, srcGraph.passedDesc.stype);
     EXPECT_EQ(nullptr, srcGraph.passedDesc.pNext);
-    EXPECT_EQ(ZE_VISIT_EXT_DEFAULT_OP_REAPPEND, srcGraph.passedDesc.defaultOp);
-    EXPECT_EQ(cmdlist.toHandle(), srcGraph.passedDesc.hReappendTargetCmdList);
+    EXPECT_EQ(ZE_COMMAND_VISIT_EXT_DEFAULT_OP_REAPPEND, srcGraph.passedDesc.defaultOp);
+    EXPECT_EQ(cmdlist.toHandle(), srcGraph.passedDesc.hReappendTargetCommandList);
     EXPECT_EQ(nullptr, srcGraph.passedDesc.beforeDefaultOpClb);
     EXPECT_EQ(nullptr, srcGraph.passedDesc.afterDefaultOpClb);
     EXPECT_EQ(0u, cmdlist.appendWaitOnEventsCalled);
@@ -7785,10 +7785,10 @@ TEST(GraphTestVisit, GivenExternalCbEventsWhenReappendingThenPreserveEventsWitho
             ASSERT_EQ(ZE_RESULT_SUCCESS, commands.capture<CaptureApi::zeCommandListAppendSignalExternalSemaphoreExt>(hOriginalCmdList, 1u, &hSemaphore, &signalParams, hSignalEvent, numWaitEvents, phWaitEvents));
             ASSERT_EQ(ZE_RESULT_SUCCESS, commands.capture<CaptureApi::zeCommandListAppendWaitExternalSemaphoreExt>(hOriginalCmdList, 1u, &hSemaphore, &waitParams, hSignalEvent, numWaitEvents, phWaitEvents));
 
-            ze_visit_ext_desc_t desc{};
-            desc.stype = ZEX_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC;
-            desc.defaultOp = ZE_VISIT_EXT_DEFAULT_OP_REAPPEND;
-            desc.hReappendTargetCmdList = explicitTarget ? reappendCmdList.toHandle() : nullptr;
+            ze_command_visit_ext_desc_t desc{};
+            desc.stype = ZE_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC;
+            desc.defaultOp = ZE_COMMAND_VISIT_EXT_DEFAULT_OP_REAPPEND;
+            desc.hReappendTargetCommandList = explicitTarget ? reappendCmdList.toHandle() : nullptr;
             ASSERT_EQ(ZE_RESULT_SUCCESS, commands.visit(&desc)) << "explicitTarget: " << explicitTarget << ", numWaitEvents: " << numWaitEvents;
 
             EXPECT_EQ(1u, target.appendMetricQueryEndCalled);
@@ -7813,8 +7813,8 @@ TEST(GraphTestVisit, GivenInvalidPnextStypeWhenVisitingThenReturnsInvalidEnumera
     MockGraph graph{&ctx, true};
     ze_base_desc_t invalidDesc{};
     invalidDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES;
-    ze_visit_ext_desc_t desc{};
-    desc.stype = ZEX_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC;
+    ze_command_visit_ext_desc_t desc{};
+    desc.stype = ZE_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC;
     desc.pNext = &invalidDesc;
 
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ENUMERATION, graph.visit(&desc));
@@ -7825,10 +7825,10 @@ TEST(GraphTestVisit, GivenConcreteVisitorWithNullFunctionNameWhenVisitingThenRet
     ContextStubMock ctx;
     MockGraph graph{&ctx, true};
     ze_concrete_visitor_ext_desc_t concreteVisitor{};
-    concreteVisitor.stype = ZEX_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC;
+    concreteVisitor.stype = ZE_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC;
     concreteVisitor.fname = nullptr;
-    ze_visit_ext_desc_t desc{};
-    desc.stype = ZEX_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC;
+    ze_command_visit_ext_desc_t desc{};
+    desc.stype = ZE_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC;
     desc.pNext = &concreteVisitor;
 
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, graph.visit(&desc));
@@ -7839,11 +7839,11 @@ TEST(GraphTestVisit, GivenConcreteVisitorWithUnknownFunctionNameWhenVisitingThen
     ContextStubMock ctx;
     MockGraph graph{&ctx, true};
     ze_concrete_visitor_ext_desc_t concreteVisitor{};
-    concreteVisitor.stype = ZEX_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC;
+    concreteVisitor.stype = ZE_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC;
     concreteVisitor.fname = "unknownApiName";
     concreteVisitor.callback = nullptr;
-    ze_visit_ext_desc_t desc{};
-    desc.stype = ZEX_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC;
+    ze_command_visit_ext_desc_t desc{};
+    desc.stype = ZE_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC;
     desc.pNext = &concreteVisitor;
 
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, graph.visit(&desc));
@@ -7855,11 +7855,27 @@ TEST(GraphTestVisit, GivenConcreteVisitorForGetNextCommandIdWhenVisitingThenInit
     MockGraph graph{&ctx, true};
     graph.stopCapturing();
     ze_concrete_visitor_ext_desc_t concreteVisitor{};
-    concreteVisitor.stype = ZEX_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC;
+    concreteVisitor.stype = ZE_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC;
     concreteVisitor.fname = "zeCommandListGetNextCommandIdExp";
     concreteVisitor.callback = nullptr;
-    ze_visit_ext_desc_t desc{};
-    desc.stype = ZEX_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC;
+    ze_command_visit_ext_desc_t desc{};
+    desc.stype = ZE_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC;
+    desc.pNext = &concreteVisitor;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, graph.visit(&desc));
+}
+
+TEST(GraphTestVisit, GivenConcreteVisitorWithLegacyStypeWhenVisitingThenInitializationSucceeds) {
+    GraphsCleanupGuard graphCleanup;
+    ContextStubMock ctx;
+    MockGraph graph{&ctx, true};
+    graph.stopCapturing();
+    ze_concrete_visitor_ext_desc_t concreteVisitor{};
+    concreteVisitor.stype = static_cast<ze_structure_type_t>(ZEX_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC);
+    concreteVisitor.fname = "zeCommandListGetNextCommandIdExp";
+    concreteVisitor.callback = nullptr;
+    ze_command_visit_ext_desc_t desc{};
+    desc.stype = ZE_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC;
     desc.pNext = &concreteVisitor;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, graph.visit(&desc));
@@ -7871,11 +7887,11 @@ TEST(GraphTestVisit, GivenConcreteVisitorForGetNextCommandIdWithKernelsWhenVisit
     MockGraph graph{&ctx, true};
     graph.stopCapturing();
     ze_concrete_visitor_ext_desc_t concreteVisitor{};
-    concreteVisitor.stype = ZEX_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC;
+    concreteVisitor.stype = ZE_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC;
     concreteVisitor.fname = "zeCommandListGetNextCommandIdWithKernelsExp";
     concreteVisitor.callback = nullptr;
-    ze_visit_ext_desc_t desc{};
-    desc.stype = ZEX_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC;
+    ze_command_visit_ext_desc_t desc{};
+    desc.stype = ZE_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC;
     desc.pNext = &concreteVisitor;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, graph.visit(&desc));

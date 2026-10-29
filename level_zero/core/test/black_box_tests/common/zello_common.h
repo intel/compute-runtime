@@ -409,8 +409,8 @@ void prepareScratchTestValues(uint32_t &arraySize, uint32_t &vectorSize, uint32_
 void prepareScratchTestBuffers(void *srcBuffer, void *idxBuffer, void *expectedMemory, uint32_t arraySize, uint32_t vectorSize, uint32_t expectedMemorySize, uint32_t srcAdditionalMul);
 
 namespace VisitExtension {
-using zeCommandListVisitExtFP = ze_result_t(ZE_APICALL *)(ze_command_list_handle_t, const ze_visit_ext_desc_t *);
-using zeGraphVisitExtFP = ze_result_t(ZE_APICALL *)(ze_graph_handle_t, const ze_visit_ext_desc_t *);
+using zeCommandListVisitExtFP = ze_result_t(ZE_APICALL *)(ze_command_list_handle_t, const ze_command_visit_ext_desc_t *);
+using zeGraphVisitExtFP = ze_result_t(ZE_APICALL *)(ze_graph_handle_t, const ze_command_visit_ext_desc_t *);
 
 struct VisitApi {
     zeCommandListVisitExtFP commandListVisit = nullptr;

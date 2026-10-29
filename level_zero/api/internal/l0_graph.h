@@ -29,6 +29,6 @@ ze_result_t ZE_APICALL zeCommandListGetGraphExp(ze_command_list_handle_t hComman
 ze_result_t ZE_APICALL zeGraphSetDestructionCallbackExp(ze_graph_handle_t hGraph, zex_mem_graph_free_callback_fn_t pfnCallback, void *pUserData, void *pNext);
 
 ze_result_t ZE_APICALL zeGraphVisitExt(ze_graph_handle_t graph,
-                                       const ze_visit_ext_desc_t *desc);
+                                       const ze_command_visit_ext_desc_t *desc);
 
 } // namespace L0

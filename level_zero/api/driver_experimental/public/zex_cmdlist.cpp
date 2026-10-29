@@ -139,7 +139,7 @@ zexCommandListVerifyMemory(ze_command_list_handle_t hCommandList,
 
 ze_result_t ZE_APICALL
 zeCommandListVisitExt(ze_command_list_handle_t cmdlist,
-                      const ze_visit_ext_desc_t *desc) {
+                      const ze_command_visit_ext_desc_t *desc) {
     auto commandList = L0::CommandList::fromHandle(cmdlist);
 
     if (nullptr == commandList) {

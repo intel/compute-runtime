@@ -72,6 +72,6 @@ zexCommandListVerifyMemory(
 ze_result_t ZE_APICALL
 zeCommandListVisitExt(
     ze_command_list_handle_t cmdlist,
-    const ze_visit_ext_desc_t *desc);
+    const ze_command_visit_ext_desc_t *desc);
 
 } // namespace L0

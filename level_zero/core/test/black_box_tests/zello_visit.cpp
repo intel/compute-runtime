@@ -35,14 +35,14 @@ struct VisitProfilingData {
     bool overflow = false;
 };
 
-static ze_result_t VISITOR_CCONV appendMemoryCopyVisitor(ze_command_list_handle_t,
-                                                         void *dstptr,
-                                                         const void *srcptr,
-                                                         size_t size,
-                                                         ze_event_handle_t hSignalEvent,
-                                                         uint32_t numWaitEvents,
-                                                         ze_event_handle_t *phWaitEvents,
-                                                         void *userData) {
+static ze_result_t ZE_VISITOR_CCONV appendMemoryCopyVisitor(ze_command_list_handle_t,
+                                                            void *dstptr,
+                                                            const void *srcptr,
+                                                            size_t size,
+                                                            ze_event_handle_t hSignalEvent,
+                                                            uint32_t numWaitEvents,
+                                                            ze_event_handle_t *phWaitEvents,
+                                                            void *userData) {
     auto *visitUserData = static_cast<VisitUserData *>(userData);
     ++visitUserData->memoryCopyCount;
 
@@ -57,11 +57,11 @@ static ze_result_t VISITOR_CCONV appendMemoryCopyVisitor(ze_command_list_handle_
     return zeCommandListAppendMemoryCopy(visitUserData->targetCmdList, dstptr, srcptr, size, effectiveSignalEvent, numWaitEvents, phWaitEvents);
 }
 
-static ze_result_t VISITOR_CCONV appendBarrierVisitor(ze_command_list_handle_t,
-                                                      ze_event_handle_t hSignalEvent,
-                                                      uint32_t numWaitEvents,
-                                                      ze_event_handle_t *phWaitEvents,
-                                                      void *userData) {
+static ze_result_t ZE_VISITOR_CCONV appendBarrierVisitor(ze_command_list_handle_t,
+                                                         ze_event_handle_t hSignalEvent,
+                                                         uint32_t numWaitEvents,
+                                                         ze_event_handle_t *phWaitEvents,
+                                                         void *userData) {
     auto *visitUserData = static_cast<VisitUserData *>(userData);
     ++visitUserData->barrierCount;
 
@@ -76,13 +76,13 @@ static ze_result_t VISITOR_CCONV appendBarrierVisitor(ze_command_list_handle_t,
     return zeCommandListAppendBarrier(visitUserData->targetCmdList, effectiveSignalEvent, numWaitEvents, phWaitEvents);
 }
 
-static ze_result_t VISITOR_CCONV appendLaunchKernelVisitor(ze_command_list_handle_t,
-                                                           ze_kernel_handle_t hKernel,
-                                                           const ze_group_count_t *pLaunchFuncArgs,
-                                                           ze_event_handle_t hSignalEvent,
-                                                           uint32_t numWaitEvents,
-                                                           ze_event_handle_t *phWaitEvents,
-                                                           void *userData) {
+static ze_result_t ZE_VISITOR_CCONV appendLaunchKernelVisitor(ze_command_list_handle_t,
+                                                              ze_kernel_handle_t hKernel,
+                                                              const ze_group_count_t *pLaunchFuncArgs,
+                                                              ze_event_handle_t hSignalEvent,
+                                                              uint32_t numWaitEvents,
+                                                              ze_event_handle_t *phWaitEvents,
+                                                              void *userData) {
     auto *visitUserData = static_cast<VisitUserData *>(userData);
     ++visitUserData->launchKernelCount;
 
@@ -97,11 +97,11 @@ static ze_result_t VISITOR_CCONV appendLaunchKernelVisitor(ze_command_list_handl
     return zeCommandListAppendLaunchKernel(visitUserData->targetCmdList, hKernel, pLaunchFuncArgs, effectiveSignalEvent, numWaitEvents, phWaitEvents);
 }
 
-static void VISITOR_CCONV beforeDefaultOpProfiling(const char *,
-                                                   void *userData,
-                                                   uint32_t *,
-                                                   ze_event_handle_t **,
-                                                   ze_event_handle_t *hSignalEvent) {
+static void ZE_VISITOR_CCONV beforeDefaultOpProfiling(const char *,
+                                                      void *userData,
+                                                      uint32_t *,
+                                                      ze_event_handle_t **,
+                                                      ze_event_handle_t *hSignalEvent) {
     auto *profilingData = static_cast<VisitProfilingData *>(userData);
     if (profilingData->nextEventIndex >= profilingData->events.size()) {
         profilingData->overflow = true;
@@ -111,11 +111,11 @@ static void VISITOR_CCONV beforeDefaultOpProfiling(const char *,
     *hSignalEvent = profilingData->events[profilingData->nextEventIndex];
 }
 
-static void VISITOR_CCONV afterDefaultOpProfiling(const char *fname,
-                                                  void *userData,
-                                                  uint32_t *,
-                                                  ze_event_handle_t **,
-                                                  ze_event_handle_t *) {
+static void ZE_VISITOR_CCONV afterDefaultOpProfiling(const char *fname,
+                                                     void *userData,
+                                                     uint32_t *,
+                                                     ze_event_handle_t **,
+                                                     ze_event_handle_t *) {
     auto *profilingData = static_cast<VisitProfilingData *>(userData);
     if (profilingData->nextEventIndex >= profilingData->events.size()) {
         profilingData->overflow = true;
@@ -175,7 +175,7 @@ bool testVisitReappend(LevelZeroBlackBoxTests::VisitExtension::VisitApi &visitAp
 
     // ---------- build the non-immediate command list ----------
     ze_command_list_handle_t recordCmdList = nullptr;
-    SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, recordCmdList, false, ZE_COMMAND_LIST_FLAG_ENABLE_CMD_VISITING));
+    SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, recordCmdList, false, ZE_COMMAND_LIST_FLAG_ENABLE_COMMAND_VISIT));
 
     // host src -> device interim
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(recordCmdList, interimBuffer, srcBuffer, allocSize, nullptr, 0, nullptr));
@@ -213,7 +213,7 @@ bool testVisitReappend(LevelZeroBlackBoxTests::VisitExtension::VisitApi &visitAp
 
     // ---------- visit with REAPPEND ----------
 
-    ze_visit_ext_desc_t visitDesc{ZEX_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC};
+    ze_command_visit_ext_desc_t visitDesc{ZE_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC};
     VisitUserData visitUserData{};
     visitUserData.targetCmdList = immCmdList;
 
@@ -223,9 +223,9 @@ bool testVisitReappend(LevelZeroBlackBoxTests::VisitExtension::VisitApi &visitAp
         visitUserData.profilingEvents = profilingData.events;
     }
 
-    ze_concrete_visitor_ext_desc_t launchKernelVisitorDesc{ZEX_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC};
-    ze_concrete_visitor_ext_desc_t barrierVisitorDesc{ZEX_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC};
-    ze_concrete_visitor_ext_desc_t memoryCopyVisitorDesc{ZEX_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC};
+    ze_concrete_visitor_ext_desc_t launchKernelVisitorDesc{ZE_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC};
+    ze_concrete_visitor_ext_desc_t barrierVisitorDesc{ZE_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC};
+    ze_concrete_visitor_ext_desc_t memoryCopyVisitorDesc{ZE_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC};
 
     if (useConcreteVisitors) {
         launchKernelVisitorDesc.pNext = nullptr;
@@ -243,9 +243,9 @@ bool testVisitReappend(LevelZeroBlackBoxTests::VisitExtension::VisitApi &visitAp
 
     visitDesc.pNext = useConcreteVisitors ? &memoryCopyVisitorDesc : nullptr;
     visitDesc.userData = useConcreteVisitors ? static_cast<void *>(&visitUserData) : (useProfilingCallbacks ? static_cast<void *>(&profilingData) : nullptr);
-    visitDesc.hReappendTargetCmdList = useConcreteVisitors ? nullptr : immCmdList;
+    visitDesc.hReappendTargetCommandList = useConcreteVisitors ? nullptr : immCmdList;
     visitDesc.beforeDefaultOpClb = (useProfilingCallbacks && !useConcreteVisitors) ? beforeDefaultOpProfiling : nullptr;
-    visitDesc.defaultOp = useConcreteVisitors ? ZE_VISIT_EXT_DEFAULT_OP_IGNORE : ZE_VISIT_EXT_DEFAULT_OP_REAPPEND;
+    visitDesc.defaultOp = useConcreteVisitors ? ZE_COMMAND_VISIT_EXT_DEFAULT_OP_IGNORE : ZE_COMMAND_VISIT_EXT_DEFAULT_OP_REAPPEND;
     visitDesc.afterDefaultOpClb = (useProfilingCallbacks && !useConcreteVisitors) ? afterDefaultOpProfiling : nullptr;
 
     SUCCESS_OR_TERMINATE(visitApi.commandListVisit(recordCmdList, &visitDesc));

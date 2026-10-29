@@ -428,8 +428,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     }
 
     if (isImmediateType() == false) {
-        if ((this->flags & ZE_COMMAND_LIST_FLAG_ENABLE_CMD_VISITING) || NEO::debugManager.flags.ExperimentalFlatCommandListApiRecording.get()) {
-            this->flags |= ZE_COMMAND_LIST_FLAG_ENABLE_CMD_VISITING;
+        if ((this->flags & ZE_COMMAND_LIST_FLAG_ENABLE_COMMAND_VISIT) || NEO::debugManager.flags.ExperimentalFlatCommandListApiRecording.get()) {
+            this->flags |= ZE_COMMAND_LIST_FLAG_ENABLE_COMMAND_VISIT;
             this->initializeFlatCapture();
         }
     }

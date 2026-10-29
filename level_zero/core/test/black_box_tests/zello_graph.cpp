@@ -1728,8 +1728,8 @@ bool testMultipleLevelGraph(LevelZeroBlackBoxTests::VisitExtension::VisitApi *vi
         if (executeUsingVisitor == false) {
             SUCCESS_OR_TERMINATE(zeCommandListAppendGraphExt(cmdListRoot, physicalGraph, nullptr, nullptr, 0, nullptr));
         } else {
-            ze_visit_ext_desc_t visitDesc{static_cast<decltype(ze_visit_ext_desc_t::stype)>(0x00030032)};
-            visitDesc.defaultOp = ZE_VISIT_EXT_DEFAULT_OP_REAPPEND;
+            ze_command_visit_ext_desc_t visitDesc{ZE_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC};
+            visitDesc.defaultOp = ZE_COMMAND_VISIT_EXT_DEFAULT_OP_REAPPEND;
             SUCCESS_OR_TERMINATE(visitApi->graphVisit(virtualGraph, &visitDesc));
         }
     }
