@@ -8,7 +8,6 @@
 #pragma once
 #include "shared/source/helpers/completion_stamp.h"
 #include "shared/source/helpers/profiling_info.h"
-#include "shared/source/os_interface/os_time.h"
 #include "shared/source/utilities/idlist.h"
 #include "shared/source/utilities/iflist.h"
 #include "shared/source/utilities/mockable_virtual_defaults.h"

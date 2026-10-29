@@ -24,6 +24,7 @@
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
+#include "shared/source/os_interface/os_time.h"
 #include "shared/source/os_interface/performance_counters.h"
 #include "shared/source/utilities/logger.h"
 #include "shared/source/utilities/perf_counter.h"

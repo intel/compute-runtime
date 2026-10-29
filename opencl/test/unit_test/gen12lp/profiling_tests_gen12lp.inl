@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/os_interface/os_time.h"
 #include "shared/source/utilities/hw_timestamps.h"
 #include "shared/test/common/test_macros/test.h"
 

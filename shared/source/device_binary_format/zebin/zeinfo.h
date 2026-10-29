@@ -7,15 +7,18 @@
 
 #pragma once
 
-#include "shared/source/device_binary_format/yaml/yaml_parser.h"
 #include "shared/source/device_binary_format/zebin/zeinfo_l1_cache_policy.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/utilities/const_stringref.h"
 #include "shared/source/utilities/mem_lifetime.h"
 
 #include <array>
+#include <cstdint>
 #include <cstring>
 #include <optional>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace NEO::Zebin::ZeInfo {
 

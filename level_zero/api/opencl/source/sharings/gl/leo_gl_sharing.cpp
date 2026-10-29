@@ -8,7 +8,6 @@
 #include "level_zero/api/opencl/source/sharings/gl/leo_gl_sharing.h"
 
 #include "shared/source/helpers/string.h"
-#include "shared/source/helpers/timestamp_packet.h"
 
 #include "level_zero/api/opencl/source/context/leo_context.h"
 #include "level_zero/api/opencl/source/sharings/gl/leo_gl_context_guard.h"

@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include "shared/source/device/device.h"
 #include "shared/source/helpers/device_bitfield.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/memory_manager/allocation_type.h"

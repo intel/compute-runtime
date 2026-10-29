@@ -20,6 +20,7 @@
 #include "level_zero/tools/source/metrics/metric_oa_enumeration_imp.inl"
 #include "level_zero/tools/source/metrics/metric_oa_source.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric_oa.h"
+#include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric_source.h"
 #include "level_zero/zet_intel_gpu_metric.h"
 #include <level_zero/zet_api.h>
 

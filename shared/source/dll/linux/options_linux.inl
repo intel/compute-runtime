@@ -5,8 +5,6 @@
  *
  */
 
-#include "shared/source/os_interface/os_library.h"
-
 #include "igc.opencl.h"
 
 #include <cstdint>

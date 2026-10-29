@@ -14,7 +14,6 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/memory_manager/allocation_properties.h"
-#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/product_helper.h"
 
 #include "level_zero/api/opencl/source/cl_device/leo_cl_device.h"

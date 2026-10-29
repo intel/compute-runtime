@@ -9,6 +9,7 @@
 
 #include "shared/source/helpers/get_info.h"
 
+#include "level_zero/api/opencl/source/context/leo_context.h"
 #include "level_zero/api/opencl/source/helpers/leo_get_info_status_mapper.h"
 #include "level_zero/api/opencl/source/helpers/leo_surface_formats.h"
 #include "level_zero/api/opencl/source/l0_dispatch/leo_l0_dispatch.h"

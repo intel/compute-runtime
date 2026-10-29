@@ -16,7 +16,7 @@ typedef _tagCLGLSyncInfo CL_GL_SYNC_INFO;
 namespace NEO {
 class Context;
 class GLSharingFunctions;
-class OsInterface;
+class OSInterface;
 class OsContext;
 
 char *createArbSyncEventName();

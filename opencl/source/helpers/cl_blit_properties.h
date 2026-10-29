@@ -9,7 +9,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/blit_properties.h"
 
-#include "opencl/source/built_ins/builtins_dispatch_builder.h"
+#include "opencl/source/built_ins/builtin_op_params.h"
 #include "opencl/source/mem_obj/image.h"
 
 #include "CL/cl.h"

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,13 +7,16 @@
 
 #include "opencl/source/sharings/gl/gl_sharing.h"
 
-#include "shared/source/helpers/string.h"
-#include "shared/source/helpers/timestamp_packet.h"
-
 #include "opencl/source/context/context.inl"
 #include "opencl/source/sharings/gl/gl_context_guard.h"
 #include "opencl/source/sharings/sharing_factory.h"
 
+#include <algorithm>
+#include <atomic>
+#include <cstddef>
+#include <cstdint>
+#include <cstdio>
+#include <limits>
 #include <unordered_map>
 
 namespace NEO {

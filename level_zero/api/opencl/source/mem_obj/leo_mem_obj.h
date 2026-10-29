@@ -8,10 +8,11 @@
 #pragma once
 #include "level_zero/api/opencl/extensions/public/cl_ext_private.h"
 #include "level_zero/api/opencl/source/api/leo_cl_types.h"
-#include "level_zero/api/opencl/source/context/leo_context.h"
 #include "level_zero/api/opencl/source/helpers/leo_base_object.h"
 #include "level_zero/api/opencl/source/helpers/leo_cl_memory_properties_helpers.h"
 #include "level_zero/api/opencl/source/mem_obj/leo_map_operations_handler.h"
+#include "level_zero/api/opencl/source/sharings/leo_sharing.h"
+#include <level_zero/ze_api.h>
 
 #include "CL/cl.h"
 
@@ -19,6 +20,8 @@
 #include <vector>
 
 namespace NEO {
+class GraphicsAllocation;
+
 namespace LEO {
 
 template <>

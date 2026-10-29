@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/aub/aub_center.h"
+#include "aubstream/aub_manager.h"
 
 namespace NEO {
 aub_stream::AubManager *createAubManager(const aub_stream::AubManagerOptions &options) {
