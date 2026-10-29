@@ -16,7 +16,7 @@ namespace ult {
 
 constexpr uint32_t mockFwHandlesCount = 3;
 const std::string mockFwVersion("DG01->0->2026");
-const std::string mockOpromVersion("OPROM CODE VERSION:123_OPROM DATA VERSION:456");
+const std::string mockOpromVersion("CODE:23.1066.0.0_DATA:23.1065.0.0");
 const std::string mockPscVersion("version 1 : 2021/09/15 00:43:12");
 const std::string mockLateBindingVersion("1.2.3.4");
 const std::string mockUnknownVersion("unknown");

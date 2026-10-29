@@ -293,6 +293,39 @@ TEST_F(FwUtilTestFixture, GivenFirmwareUtilInstanceWhenGetVersionIsCalledForGfxD
     EXPECT_EQ(expectedFirmwareVersion, firmwareVersion);
 }
 
+TEST_F(FwUtilTestFixture, GivenFirmwareUtilInstanceWhenGetVersionIsCalledForOpromTypeThenCodeAndDataVersionsAreReturnedAsMajorMinorHotfixBuild) {
+    VariableBackup<decltype(L0::Sysman::deviceOpromVersion)> mockOpromVersion(&L0::Sysman::deviceOpromVersion, [](struct igsc_device_handle *handle, uint32_t opromType, struct igsc_oprom_version *version) -> int {
+        const uint8_t codeVersion[IGSC_OPROM_VER_SIZE] = {0x17, 0x00, 0x2A, 0x04, 0x01, 0x00, 0x34, 0x12};
+        const uint8_t dataVersion[IGSC_OPROM_VER_SIZE] = {0x17, 0x00, 0x29, 0x04, 0x00, 0x00, 0x00, 0x00};
+        memcpy(version->version, (opromType == IGSC_OPROM_CODE) ? codeVersion : dataVersion, IGSC_OPROM_VER_SIZE);
+        return IGSC_SUCCESS;
+    });
+
+    auto opromIt = std::find(fwTypes.begin(), fwTypes.end(), std::string("OptionROM"));
+    ASSERT_NE(opromIt, fwTypes.end());
+
+    std::string firmwareVersion;
+    ze_result_t result = pFwUtilImp->getFwVersion(*opromIt, firmwareVersion);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    EXPECT_EQ(std::string("CODE:23.1066.1.4660_DATA:23.1065.0.0"), firmwareVersion);
+}
+
+TEST_F(FwUtilTestFixture, GivenOpromVersionsWithMaximumFieldValuesWhenGetVersionIsCalledForOpromTypeThenFullVersionFitsInFirmwarePropertiesVersionString) {
+    VariableBackup<decltype(L0::Sysman::deviceOpromVersion)> mockOpromVersion(&L0::Sysman::deviceOpromVersion, [](struct igsc_device_handle *handle, uint32_t opromType, struct igsc_oprom_version *version) -> int {
+        memset(version->version, 0xFF, IGSC_OPROM_VER_SIZE);
+        return IGSC_SUCCESS;
+    });
+
+    auto opromIt = std::find(fwTypes.begin(), fwTypes.end(), std::string("OptionROM"));
+    ASSERT_NE(opromIt, fwTypes.end());
+
+    std::string firmwareVersion;
+    ze_result_t result = pFwUtilImp->getFwVersion(*opromIt, firmwareVersion);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    EXPECT_EQ(std::string("CODE:65535.65535.65535.65535_DATA:65535.65535.65535.65535"), firmwareVersion);
+    EXPECT_LT(firmwareVersion.size(), static_cast<size_t>(ZES_STRING_PROPERTY_SIZE));
+}
+
 TEST_F(FwUtilTestFixture, GivenFirmwareUtilInstanceWhenFirmwareFlashIsCalledForGfxDataTypeAndIgscCallFailsThenFlashingFails) {
     VariableBackup<decltype(L0::Sysman::deviceFwDataUpdate)> mockFirmwareFlashFailure(&L0::Sysman::deviceFwDataUpdate, [](struct igsc_device_handle *handle, const uint8_t *buffer, const uint32_t bufferLen, igsc_progress_func_t progressFunc, void *ctx) -> int {
         return IGSC_ERROR_BAD_IMAGE;

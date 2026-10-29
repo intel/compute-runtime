@@ -18,7 +18,7 @@ namespace ult {
 
 constexpr uint32_t mockHandleCount = 2;
 const std::string mockFwVersion("DG01->0->2026");
-const std::string mockOpromVersion("OPROM CODE VERSION:123_OPROM DATA VERSION:456");
+const std::string mockOpromVersion("CODE:23.1066.0.0_DATA:23.1065.0.0");
 const std::vector<std::string> mockSupportedFwTypes = {"GSC", "OptionROM"};
 const std::string mockUnknownVersion("unknown");
 const std::vector<std::string> mockUnsupportedFwTypes = {"unknown"};

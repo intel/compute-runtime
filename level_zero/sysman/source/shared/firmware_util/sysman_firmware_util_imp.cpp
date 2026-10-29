@@ -202,6 +202,21 @@ ze_result_t FirmwareUtilImp::fwDataGetVersion(std::string &fwDataVersion) {
     return ZE_RESULT_SUCCESS;
 }
 
+static std::string getOpromVersionString(const igsc_oprom_version &opromVersion) {
+    constexpr uint32_t bitsPerByte = 8;
+    constexpr uint32_t opromVersionFieldCount = IGSC_OPROM_VER_SIZE / sizeof(uint16_t);
+    std::string versionString;
+    for (uint32_t field = 0; field < opromVersionFieldCount; field++) {
+        const uint32_t lowByteIndex = field * sizeof(uint16_t);
+        const uint16_t fieldValue = static_cast<uint16_t>(opromVersion.version[lowByteIndex] | (opromVersion.version[lowByteIndex + 1] << bitsPerByte));
+        if (field != 0) {
+            versionString.append(".");
+        }
+        versionString.append(std::to_string(fieldValue));
+    }
+    return versionString;
+}
+
 ze_result_t FirmwareUtilImp::opromGetVersion(std::string &fwVersion) {
     const std::lock_guard<std::mutex> lock(this->fwLock);
     igsc_oprom_version opromVersion;
@@ -212,10 +227,8 @@ ze_result_t FirmwareUtilImp::opromGetVersion(std::string &fwVersion) {
                      "Error@ %s(): igsc get oprom code version failed (error:0x%x)\n", NEO_FUNCTION_NAME, ret);
         return getIgscResult(ret);
     }
-    fwVersion.append("OPROM CODE VERSION:");
-    for (int i = 0; i < IGSC_OPROM_VER_SIZE; i++) {
-        fwVersion.append(std::to_string(static_cast<unsigned int>(opromVersion.version[i])));
-    }
+    fwVersion.append("CODE:");
+    fwVersion.append(getOpromVersionString(opromVersion));
     fwVersion.append("_");
     memset(&opromVersion, 0, sizeof(opromVersion));
     ret = deviceOpromVersion(&fwDeviceHandle, IGSC_OPROM_DATA, &opromVersion);
@@ -224,10 +237,8 @@ ze_result_t FirmwareUtilImp::opromGetVersion(std::string &fwVersion) {
                      "Error@ %s(): igsc get oprom data version failed (error:0x%x)\n", NEO_FUNCTION_NAME, ret);
         return getIgscResult(ret);
     }
-    fwVersion.append("OPROM DATA VERSION:");
-    for (int i = 0; i < IGSC_OPROM_VER_SIZE; i++) {
-        fwVersion.append(std::to_string(static_cast<unsigned int>(opromVersion.version[i])));
-    }
+    fwVersion.append("DATA:");
+    fwVersion.append(getOpromVersionString(opromVersion));
     return ZE_RESULT_SUCCESS;
 }
 
