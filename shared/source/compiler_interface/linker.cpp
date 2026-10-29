@@ -22,6 +22,7 @@
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
+#include "shared/source/utilities/shared_pool_allocation.h"
 
 #include "RelocationInfo.h"
 

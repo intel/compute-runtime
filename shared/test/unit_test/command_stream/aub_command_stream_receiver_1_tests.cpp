@@ -12,6 +12,7 @@
 #include "shared/source/helpers/hardware_context_controller.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/source/utilities/shared_pool_allocation.h"
 #include "shared/test/common/fixtures/aub_command_stream_receiver_fixture.h"
 #include "shared/test/common/fixtures/mock_aub_center_fixture.h"
 #include "shared/test/common/helpers/batch_buffer_helper.h"

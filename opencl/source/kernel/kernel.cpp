@@ -39,6 +39,7 @@
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/utilities/logger.h"
 #include "shared/source/utilities/lookup_array.h"
+#include "shared/source/utilities/shared_pool_allocation.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/cl_device/cl_device.h"

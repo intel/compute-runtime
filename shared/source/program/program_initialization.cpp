@@ -18,6 +18,7 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_pooling.h"
 #include "shared/source/program/program_info.h"
+#include "shared/source/utilities/shared_pool_allocation.h"
 
 #include <mutex>
 

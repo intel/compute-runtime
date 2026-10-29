@@ -18,6 +18,7 @@
 #include "shared/source/utilities/device_buffers_pool.inl"
 #include "shared/source/utilities/generic_pool_allocator.h"
 #include "shared/source/utilities/heap_allocator.h"
+#include "shared/source/utilities/shared_pool_allocation.h"
 
 namespace NEO {
 

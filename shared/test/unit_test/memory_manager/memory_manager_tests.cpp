@@ -16,6 +16,7 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/program/program_initialization.h"
 #include "shared/source/utilities/heap_allocator.h"
+#include "shared/source/utilities/shared_pool_allocation.h"
 #include "shared/test/common/compiler_interface/linker_mock.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/fixtures/memory_allocator_fixture.h"

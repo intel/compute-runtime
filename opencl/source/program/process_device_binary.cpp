@@ -25,6 +25,7 @@
 #include "shared/source/program/program_info.h"
 #include "shared/source/program/program_initialization.h"
 #include "shared/source/utilities/logger.h"
+#include "shared/source/utilities/shared_pool_allocation.h"
 #include "shared/source/utilities/time_measure_wrapper.h"
 
 #include "opencl/source/cl_device/cl_device.h"

@@ -10,7 +10,6 @@
 #include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/utilities/device_buffers_pool.h"
 #include "shared/source/utilities/pool_allocator_traits.h"
-#include "shared/source/utilities/shared_pool_allocation.h"
 #include "shared/source/utilities/stackvec.h"
 
 #include <memory>
@@ -22,6 +21,7 @@ namespace NEO {
 class Device;
 class GraphicsAllocation;
 class ProductHelper;
+class SharedPoolAllocation;
 
 struct DeferredFreeContext {
     volatile TagAddressType *tagAddress = nullptr;

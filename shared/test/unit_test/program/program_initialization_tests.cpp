@@ -13,6 +13,7 @@
 #include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/memory_manager/unified_memory_pooling.h"
 #include "shared/source/program/program_initialization.h"
+#include "shared/source/utilities/shared_pool_allocation.h"
 #include "shared/test/common/compiler_interface/linker_mock.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"

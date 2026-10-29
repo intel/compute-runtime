@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/utilities/shared_pool_allocation.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
