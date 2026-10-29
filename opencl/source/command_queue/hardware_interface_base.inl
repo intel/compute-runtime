@@ -89,10 +89,8 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
             const_cast<DispatchInfo &>(dispatchInfo).setLWS(lws);
         }
         if (dispatchInfo.getKernel() == mainKernel) {
-            if (!mainKernel->isLocalWorkSize2Patchable()) {
-                const auto &lws = dispatchInfo.getLocalWorkgroupSize();
-                mainKernel->setLocalWorkSizeValues(static_cast<uint32_t>(lws.x), static_cast<uint32_t>(lws.y), static_cast<uint32_t>(lws.z));
-            }
+            const auto &lws = dispatchInfo.getLocalWorkgroupSize();
+            mainKernel->setLocalWorkSizeValues(static_cast<uint32_t>(lws.x), static_cast<uint32_t>(lws.y), static_cast<uint32_t>(lws.z));
         }
     }
 
@@ -227,11 +225,7 @@ void HardwareInterface<GfxFamily>::dispatchKernelCommands(CommandQueue &commandQ
     kernel.setGlobalWorkOffsetValues(static_cast<uint32_t>(offset.x), static_cast<uint32_t>(offset.y), static_cast<uint32_t>(offset.z));
     kernel.setGlobalWorkSizeValues(static_cast<uint32_t>(gws.x), static_cast<uint32_t>(gws.y), static_cast<uint32_t>(gws.z));
 
-    if (walkerArgs.isMainKernel || (!kernel.isLocalWorkSize2Patchable())) {
-        kernel.setLocalWorkSizeValues(static_cast<uint32_t>(lws.x), static_cast<uint32_t>(lws.y), static_cast<uint32_t>(lws.z));
-    }
-
-    kernel.setLocalWorkSize2Values(static_cast<uint32_t>(lws.x), static_cast<uint32_t>(lws.y), static_cast<uint32_t>(lws.z));
+    kernel.setLocalWorkSizeValues(static_cast<uint32_t>(lws.x), static_cast<uint32_t>(lws.y), static_cast<uint32_t>(lws.z));
     kernel.setEnqueuedLocalWorkSizeValues(static_cast<uint32_t>(elws.x), static_cast<uint32_t>(elws.y), static_cast<uint32_t>(elws.z));
 
     if (walkerArgs.isMainKernel) {

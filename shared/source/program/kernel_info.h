@@ -13,33 +13,19 @@
 
 #include <cstdint>
 #include <string>
-#include <utility>
-#include <vector>
 
 namespace NEO {
-struct HardwareInfo;
 namespace BuiltIn {
 class DispatchInfoBuilder;
 }
 class Device;
-class Kernel;
-struct KernelInfo;
-class DispatchInfo;
-struct KernelArgumentType;
 class GraphicsAllocation;
-class MemoryManager;
 
 static const float yTilingRatioValue = 1.3862943611198906188344642429164f;
-
-struct DeviceInfoKernelPayloadConstants {
-    uint32_t computeUnitsUsedForScratch = 0U;
-    uint32_t maxWorkGroupSize = 0U;
-};
 
 struct KernelInfo : NEO::NonCopyableAndNonMovableClass {
   public:
     KernelInfo() = default;
-    ~KernelInfo();
 
     GraphicsAllocation *getGraphicsAllocation() const { return this->kernelAllocation; }
 
@@ -77,7 +63,6 @@ struct KernelInfo : NEO::NonCopyableAndNonMovableClass {
     int32_t getArgNumByName(const char *name) const;
 
     bool createKernelAllocation(const Device &device, bool internalIsa);
-    void apply(const DeviceInfoKernelPayloadConstants &constants);
 
     uint32_t getIsaSize() const;
     GraphicsAllocation *getIsaGraphicsAllocation() const;
@@ -105,15 +90,10 @@ struct KernelInfo : NEO::NonCopyableAndNonMovableClass {
     const NEO::KernelDescriptor &getDescriptor() const { return kernelDescriptor; }
 
     HeapInfo heapInfo = {};
-    std::vector<std::pair<uint32_t, uint32_t>> childrenKernelsIdOffset;
-    char *crossThreadData = nullptr;
     const BuiltIn::DispatchInfoBuilder *builtinDispatchBuilder = nullptr;
-    uint32_t systemKernelOffset = 0;
     GraphicsAllocation *kernelAllocation = nullptr;
     DebugData debugData;
-    bool computeMode = false;
 
-    uint64_t shaderHashCode;
     KernelDescriptor kernelDescriptor;
 
   private:

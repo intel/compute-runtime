@@ -158,13 +158,12 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
                 bool usesSystolicPipelineSelectMode : 1;
                 bool usesPrintf : 1;
                 bool usesFencesForReadWriteImages : 1;
-                bool usesPrivateMemory : 1;
                 bool usesImages : 1;
                 bool usesSamplers : 1;
                 bool usesSyncBuffer : 1;
                 bool hasIndirectCalls : 1;
-                // 1
                 bool usesStatelessWrites : 1;
+                // 1
                 bool passInlineData : 1;
                 bool requiresDisabledEUFusion : 1;
                 bool requiresDisabledMidThreadPreemption : 1;
@@ -172,13 +171,13 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
                 bool requiresWorkgroupWalkOrder : 1;
                 bool requiresImplicitArgs : 1;
                 bool useStackCalls : 1;
-                // 2
                 bool hasRTCalls : 1;
+                // 2
                 bool isInvalid : 1;
                 bool hasSample : 1;
                 bool usesAssert : 1;
                 bool hasBindlessImageRead : 1;
-                bool reserved : 3;
+                bool reserved : 4;
             };
             std::array<bool, 3> packed;
         } flags = {};
@@ -189,7 +188,6 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
     struct {
         InstructionsSegmentOffset skipPerThreadDataLoad = 0U;
         InstructionsSegmentOffset skipSetFFIDGP = 0U;
-        InstructionsSegmentOffset systemKernel = 0U;
     } entryPoints;
 
     struct PayloadMappings {
@@ -197,7 +195,6 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
             CrossThreadDataOffset globalWorkOffset[3] = {undefined<CrossThreadDataOffset>, undefined<CrossThreadDataOffset>, undefined<CrossThreadDataOffset>};
             CrossThreadDataOffset globalWorkSize[3] = {undefined<CrossThreadDataOffset>, undefined<CrossThreadDataOffset>, undefined<CrossThreadDataOffset>};
             CrossThreadDataOffset localWorkSize[3] = {undefined<CrossThreadDataOffset>, undefined<CrossThreadDataOffset>, undefined<CrossThreadDataOffset>};
-            CrossThreadDataOffset localWorkSize2[3] = {undefined<CrossThreadDataOffset>, undefined<CrossThreadDataOffset>, undefined<CrossThreadDataOffset>};
 
             CrossThreadDataOffset enqueuedLocalWorkSize[3] = {undefined<CrossThreadDataOffset>, undefined<CrossThreadDataOffset>, undefined<CrossThreadDataOffset>};
             CrossThreadDataOffset numWorkGroups[3] = {undefined<CrossThreadDataOffset>, undefined<CrossThreadDataOffset>, undefined<CrossThreadDataOffset>};
@@ -224,16 +221,10 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
             ArgDescPointer globalVariablesSurfaceAddress;
             ArgDescPointer globalConstantsSurfaceAddress;
             ArgDescPointer privateMemoryAddress;
-            ArgDescPointer deviceSideEnqueueDefaultQueueSurfaceAddress;
             ArgDescPointer systemThreadSurfaceAddress;
             ArgDescPointer syncBufferAddress;
             ArgDescPointer rtDispatchGlobals;
             ArgDescPointer assertBufferAddress;
-            CrossThreadDataOffset privateMemorySize = undefined<CrossThreadDataOffset>;
-            CrossThreadDataOffset maxWorkGroupSize = undefined<CrossThreadDataOffset>;
-            CrossThreadDataOffset simdSize = undefined<CrossThreadDataOffset>;
-            CrossThreadDataOffset deviceSideEnqueueParentEvent = undefined<CrossThreadDataOffset>;
-            CrossThreadDataOffset preferredWkgMultiple = undefined<CrossThreadDataOffset>;
             CrossThreadDataOffset implicitArgsBuffer = undefined<CrossThreadDataOffset>;
             ArgDescInlineDataPointer indirectDataPointerAddress;
             ArgDescScratchPointer scratchPointerAddress;

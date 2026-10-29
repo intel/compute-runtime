@@ -184,7 +184,6 @@ cl_int Kernel::initialize() {
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     auto &kernelDescriptor = kernelInfo.kernelDescriptor;
-    const auto &implicitArgs = kernelDescriptor.payloadMappings.implicitArgs;
     const auto &explicitArgs = kernelDescriptor.payloadMappings.explicitArgs;
     auto maxSimdSize = kernelInfo.getMaxSimdSize();
     const auto &heapInfo = kernelInfo.heapInfo;
@@ -218,26 +217,7 @@ cl_int Kernel::initialize() {
 
     // now allocate our own cross-thread data, if necessary
     if (crossThreadDataSize) {
-        crossThreadData = new char[crossThreadDataSize];
-
-        if (kernelInfo.crossThreadData) {
-            memcpy_s(crossThreadData, crossThreadDataSize,
-                     kernelInfo.crossThreadData, crossThreadDataSize);
-        } else {
-            memset(crossThreadData, 0x00, crossThreadDataSize);
-        }
-
-        auto crossThread = reinterpret_cast<uint32_t *>(crossThreadData);
-        auto setArgsIfValidOffset = [&](uint32_t *&crossThreadData, NEO::CrossThreadDataOffset offset, uint32_t value) {
-            if (isValidOffset(offset)) {
-                crossThreadData = ptrOffset(crossThread, offset);
-                *crossThreadData = value;
-            }
-        };
-        setArgsIfValidOffset(maxWorkGroupSizeForCrossThreadData, implicitArgs.maxWorkGroupSize, maxKernelWorkGroupSize);
-        setArgsIfValidOffset(dataParameterSimdSize, implicitArgs.simdSize, maxSimdSize);
-        setArgsIfValidOffset(preferredWkgMultipleOffset, implicitArgs.preferredWkgMultiple, maxSimdSize);
-        setArgsIfValidOffset(parentEventOffset, implicitArgs.deviceSideEnqueueParentEvent, undefined<uint32_t>);
+        crossThreadData = new char[crossThreadDataSize]();
     }
 
     // allocate our own SSH, if necessary
@@ -290,12 +270,6 @@ cl_int Kernel::initialize() {
 
         const auto &arg = kernelDescriptor.payloadMappings.implicitArgs.globalVariablesSurfaceAddress;
         patchWithImplicitSurface(globalMemory, *globalSurface->getGraphicsAllocation(), reinterpret_cast<void *>(globalSurface->getGpuAddressToPatch()), size, arg);
-    }
-
-    if (isValidOffset(kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueDefaultQueueSurfaceAddress.bindful)) {
-        auto surfaceState = ptrOffset(reinterpret_cast<uintptr_t *>(getSurfaceStateHeap()),
-                                      kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueDefaultQueueSurfaceAddress.bindful);
-        Buffer::setSurfaceState(&pClDevice->getDevice(), surfaceState, false, false, 0, nullptr, 0, nullptr, 0, 0, areMultipleSubDevicesInContext());
     }
 
     auto &threadArbitrationPolicy = const_cast<ThreadArbitrationPolicy &>(kernelInfo.kernelDescriptor.kernelAttributes.threadArbitrationPolicy);
@@ -2177,12 +2151,6 @@ void Kernel::setLocalWorkSizeValues(uint32_t localWorkSizeX, uint32_t localWorkS
     }
 }
 
-void Kernel::setLocalWorkSize2Values(uint32_t localWorkSizeX, uint32_t localWorkSizeY, uint32_t localWorkSizeZ) {
-    patchVecNonPointer(getCrossThreadDataRef(),
-                       getDescriptor().payloadMappings.dispatchTraits.localWorkSize2,
-                       {localWorkSizeX, localWorkSizeY, localWorkSizeZ});
-}
-
 void Kernel::setEnqueuedLocalWorkSizeValues(uint32_t localWorkSizeX, uint32_t localWorkSizeY, uint32_t localWorkSizeZ) {
     patchVecNonPointer(getCrossThreadDataRef(),
                        getDescriptor().payloadMappings.dispatchTraits.enqueuedLocalWorkSize,
@@ -2199,11 +2167,6 @@ void Kernel::setNumWorkGroupsValues(uint32_t numWorkGroupsX, uint32_t numWorkGro
     if (pImplicitArgs) {
         pImplicitArgs->setGroupCount(numWorkGroupsX, numWorkGroupsY, numWorkGroupsZ);
     }
-}
-
-bool Kernel::isLocalWorkSize2Patchable() {
-    const auto &localWorkSize2 = getDescriptor().payloadMappings.dispatchTraits.localWorkSize2;
-    return isValidOffset(localWorkSize2[0]) && isValidOffset(localWorkSize2[1]) && isValidOffset(localWorkSize2[2]);
 }
 
 uint32_t Kernel::getMaxKernelWorkGroupSize() const {

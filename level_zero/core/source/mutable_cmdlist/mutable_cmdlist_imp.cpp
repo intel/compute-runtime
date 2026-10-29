@@ -171,7 +171,6 @@ ze_result_t MutableCommandListImp::addVariableDispatch(const NEO::KernelDescript
     auto offsets = std::make_unique<MutableIndirectData::Offsets>();
     std::copy(std::begin(dispatchTraits.globalWorkSize), std::end(dispatchTraits.globalWorkSize), std::begin(offsets->globalWorkSize));
     std::copy(std::begin(dispatchTraits.localWorkSize), std::end(dispatchTraits.localWorkSize), std::begin(offsets->localWorkSize));
-    std::copy(std::begin(dispatchTraits.localWorkSize2), std::end(dispatchTraits.localWorkSize2), std::begin(offsets->localWorkSize2));
     std::copy(std::begin(dispatchTraits.enqueuedLocalWorkSize), std::end(dispatchTraits.enqueuedLocalWorkSize), std::begin(offsets->enqLocalWorkSize));
     std::copy(std::begin(dispatchTraits.numWorkGroups), std::end(dispatchTraits.numWorkGroups), std::begin(offsets->numWorkGroups));
     offsets->workDimensions = dispatchTraits.workDim;

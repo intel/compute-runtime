@@ -482,7 +482,6 @@ DecodeError decodeZebin(ProgramInfo &dst, NEO::Elf::Elf<numBits> &elf, std::stri
 
         kernelInfo->heapInfo.pKernelHeap = kernelInstructions.begin();
         kernelInfo->heapInfo.kernelHeapSize = static_cast<uint32_t>(kernelInstructions.size());
-        kernelInfo->heapInfo.kernelUnpaddedSize = static_cast<uint32_t>(kernelInstructions.size());
 
         auto &kernelSSH = kernelInfo->kernelDescriptor.generatedSsh;
         kernelInfo->heapInfo.pSsh = kernelSSH.data();

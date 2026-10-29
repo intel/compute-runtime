@@ -59,7 +59,6 @@ class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMova
         SVM_ALLOC_OBJ,
         SAMPLER_OBJ,
         ACCELERATOR_OBJ,
-        DEVICE_QUEUE_OBJ,
         SLM_OBJ
     };
 
@@ -326,7 +325,6 @@ class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMova
     void setGlobalWorkOffsetValues(uint32_t globalWorkOffsetX, uint32_t globalWorkOffsetY, uint32_t globalWorkOffsetZ);
     void setGlobalWorkSizeValues(uint32_t globalWorkSizeX, uint32_t globalWorkSizeY, uint32_t globalWorkSizeZ);
     MOCKABLE_VIRTUAL void setLocalWorkSizeValues(uint32_t localWorkSizeX, uint32_t localWorkSizeY, uint32_t localWorkSizeZ);
-    void setLocalWorkSize2Values(uint32_t localWorkSizeX, uint32_t localWorkSizeY, uint32_t localWorkSizeZ);
     void setEnqueuedLocalWorkSizeValues(uint32_t localWorkSizeX, uint32_t localWorkSizeY, uint32_t localWorkSizeZ);
     void setNumWorkGroupsValues(uint32_t numWorkGroupsX, uint32_t numWorkGroupsY, uint32_t numWorkGroupsZ);
     void setWorkDim(uint32_t workDim);
@@ -339,11 +337,8 @@ class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMova
     std::array<const uint32_t *, 3> getDispatchTraitArray(const CrossThreadDataOffset dispatchTrait[3]) const { return {getDispatchTrait(dispatchTrait[0]), getDispatchTrait(dispatchTrait[1]), getDispatchTrait(dispatchTrait[2])}; }
     std::array<const uint32_t *, 3> getGlobalWorkOffsetValues() const { return getDispatchTraitArray(getDescriptor().payloadMappings.dispatchTraits.globalWorkOffset); }
     std::array<const uint32_t *, 3> getLocalWorkSizeValues() const { return getDispatchTraitArray(getDescriptor().payloadMappings.dispatchTraits.localWorkSize); }
-    std::array<const uint32_t *, 3> getLocalWorkSize2Values() const { return getDispatchTraitArray(getDescriptor().payloadMappings.dispatchTraits.localWorkSize2); }
     std::array<const uint32_t *, 3> getEnqueuedLocalWorkSizeValues() const { return getDispatchTraitArray(getDescriptor().payloadMappings.dispatchTraits.enqueuedLocalWorkSize); }
     std::array<const uint32_t *, 3> getNumWorkGroupsValues() const { return getDispatchTraitArray(getDescriptor().payloadMappings.dispatchTraits.numWorkGroups); }
-
-    bool isLocalWorkSize2Patchable();
 
     uint32_t getMaxKernelWorkGroupSize() const;
     uint32_t getSlmTotalSizePerThreadGroup() const;
@@ -436,10 +431,6 @@ class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMova
     GraphicsAllocation *privateSurface = nullptr;
     MultiDeviceKernel *pMultiDeviceKernel = nullptr;
 
-    uint32_t *maxWorkGroupSizeForCrossThreadData = &Kernel::dummyPatchLocation;
-    uint32_t *dataParameterSimdSize = &Kernel::dummyPatchLocation;
-    uint32_t *parentEventOffset = &Kernel::dummyPatchLocation;
-    uint32_t *preferredWkgMultipleOffset = &Kernel::dummyPatchLocation;
     char *crossThreadData = nullptr;
 
     AuxTranslationDirection auxTranslationDirection = AuxTranslationDirection::none;

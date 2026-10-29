@@ -617,10 +617,7 @@ ze_result_t ModuleTranslationUnit::processUnpackedBinary() {
     processDebugData();
 
     size_t slmNeeded = NEO::getMaxInlineSlmNeeded(programInfo);
-    size_t slmAvailable = 0U;
-    NEO::DeviceInfoKernelPayloadConstants deviceInfoConstants;
-    slmAvailable = static_cast<size_t>(device->getDeviceInfo().localMemSize);
-    deviceInfoConstants.computeUnitsUsedForScratch = static_cast<uint32_t>(device->getDeviceInfo().computeUnitsUsedForScratch);
+    size_t slmAvailable = static_cast<size_t>(device->getDeviceInfo().localMemSize);
 
     if (slmNeeded > slmAvailable) {
         CREATE_DEBUG_STRING(str, "Size of SLM (%u) larger than available (%u)\n", static_cast<uint32_t>(slmNeeded), static_cast<uint32_t>(slmAvailable));
@@ -641,11 +638,6 @@ ze_result_t ModuleTranslationUnit::processUnpackedBinary() {
     if (globalVariablesDataSize != 0) {
         this->globalVarBuffer.reset(NEO::allocateGlobalsSurface(svmAllocsManager, *device->getNEODevice(), globalVariablesDataSize,
                                                                 programInfo.globalVariables.zeroInitSize, false, programInfo.linkerInput.get(), programInfo.globalVariables.initData));
-    }
-
-    for (auto &kernelInfo : this->programInfo.kernelInfos) {
-        deviceInfoConstants.maxWorkGroupSize = gfxCoreHelper.calculateMaxWorkGroupSize(kernelInfo->kernelDescriptor, static_cast<uint32_t>(device->getDeviceInfo().maxWorkGroupSize), device->getNEODevice()->getRootDeviceEnvironment());
-        kernelInfo->apply(deviceInfoConstants);
     }
 
     if (this->packedDeviceBinary != nullptr) {

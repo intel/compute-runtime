@@ -10,8 +10,6 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/device_binary_format/zebin/zebin_elf.h"
-#include "shared/source/helpers/kernel_helpers.h"
-#include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 
@@ -19,15 +17,6 @@
 #include <unordered_map>
 
 namespace NEO {
-
-struct KernelArgumentType {
-    const char *argTypeQualifier;
-    uint64_t argTypeQualifierValue;
-};
-
-KernelInfo::~KernelInfo() {
-    delete[] crossThreadData;
-}
 
 size_t KernelInfo::getSamplerStateArrayCount() const {
     return kernelDescriptor.payloadMappings.samplerTable.numSamplers;
@@ -98,24 +87,6 @@ bool KernelInfo::createKernelAllocation(const Device &device, bool internalIsa) 
     return MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *kernelAllocation),
                                                             device, kernelAllocation, 0, heapInfo.pKernelHeap,
                                                             static_cast<size_t>(kernelIsaSize));
-}
-
-void KernelInfo::apply(const DeviceInfoKernelPayloadConstants &constants) {
-    if (nullptr == this->crossThreadData) {
-        return;
-    }
-
-    const auto &implicitArgs = kernelDescriptor.payloadMappings.implicitArgs;
-    const auto privateMemorySize = static_cast<uint32_t>(KernelHelper::getPrivateSurfaceSize(kernelDescriptor.kernelAttributes.perHwThreadPrivateMemorySize,
-                                                                                             constants.computeUnitsUsedForScratch));
-
-    auto setIfValidOffset = [&](auto value, NEO::CrossThreadDataOffset offset) {
-        if (isValidOffset(offset)) {
-            *ptrOffset(reinterpret_cast<decltype(value) *>(crossThreadData), offset) = value;
-        }
-    };
-    setIfValidOffset(privateMemorySize, implicitArgs.privateMemorySize);
-    setIfValidOffset(constants.maxWorkGroupSize, implicitArgs.maxWorkGroupSize);
 }
 
 GraphicsAllocation *KernelInfo::getIsaGraphicsAllocation() const {

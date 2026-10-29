@@ -42,7 +42,6 @@ struct KernelInfo;
 enum class DecodeError : uint8_t;
 struct ExternalFunctionInfo;
 class SharedPoolAllocation;
-struct DeviceInfoKernelPayloadConstants;
 class ProductHelper;
 
 template <>
@@ -207,7 +206,6 @@ class Program : public BaseObject<_cl_program> {
     cl_int setIsaGraphicsAllocations(
         Device &neoDevice,
         std::vector<KernelInfo *> &kernelInfoArray,
-        DeviceInfoKernelPayloadConstants &deviceInfoConstants,
         uint32_t rootDeviceIndex);
 
     MOCKABLE_VIRTUAL bool transferIsaSegmentsToAllocation(

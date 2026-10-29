@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,10 +20,6 @@ ProgramInfo::~ProgramInfo() {
         delete kernelInfo;
     }
     kernelInfos.clear();
-}
-
-KernelInfo::~KernelInfo() {
-    delete[] crossThreadData;
 }
 } // namespace NEO
 

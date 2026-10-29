@@ -40,7 +40,6 @@ TEST(KernelDescriptor, WhenDefaultInitializedThenValuesAreCleared) {
 
     EXPECT_EQ(0U, desc.entryPoints.skipPerThreadDataLoad);
     EXPECT_EQ(0U, desc.entryPoints.skipSetFFIDGP);
-    EXPECT_EQ(0U, desc.entryPoints.systemKernel);
 
     EXPECT_EQ(NEO::undefined<NEO::CrossThreadDataOffset>, desc.payloadMappings.dispatchTraits.globalWorkOffset[0]);
     EXPECT_EQ(NEO::undefined<NEO::CrossThreadDataOffset>, desc.payloadMappings.dispatchTraits.globalWorkOffset[1]);
@@ -51,9 +50,6 @@ TEST(KernelDescriptor, WhenDefaultInitializedThenValuesAreCleared) {
     EXPECT_EQ(NEO::undefined<NEO::CrossThreadDataOffset>, desc.payloadMappings.dispatchTraits.localWorkSize[0]);
     EXPECT_EQ(NEO::undefined<NEO::CrossThreadDataOffset>, desc.payloadMappings.dispatchTraits.localWorkSize[1]);
     EXPECT_EQ(NEO::undefined<NEO::CrossThreadDataOffset>, desc.payloadMappings.dispatchTraits.localWorkSize[2]);
-    EXPECT_EQ(NEO::undefined<NEO::CrossThreadDataOffset>, desc.payloadMappings.dispatchTraits.localWorkSize2[0]);
-    EXPECT_EQ(NEO::undefined<NEO::CrossThreadDataOffset>, desc.payloadMappings.dispatchTraits.localWorkSize2[1]);
-    EXPECT_EQ(NEO::undefined<NEO::CrossThreadDataOffset>, desc.payloadMappings.dispatchTraits.localWorkSize2[2]);
     EXPECT_EQ(NEO::undefined<NEO::CrossThreadDataOffset>, desc.payloadMappings.dispatchTraits.enqueuedLocalWorkSize[0]);
     EXPECT_EQ(NEO::undefined<NEO::CrossThreadDataOffset>, desc.payloadMappings.dispatchTraits.enqueuedLocalWorkSize[1]);
     EXPECT_EQ(NEO::undefined<NEO::CrossThreadDataOffset>, desc.payloadMappings.dispatchTraits.enqueuedLocalWorkSize[2]);
@@ -70,11 +66,6 @@ TEST(KernelDescriptor, WhenDefaultInitializedThenValuesAreCleared) {
     EXPECT_EQ(0U, desc.payloadMappings.samplerTable.numSamplers);
 
     EXPECT_EQ(0U, desc.payloadMappings.explicitArgs.size());
-    EXPECT_EQ(NEO::undefined<NEO::CrossThreadDataOffset>, desc.payloadMappings.implicitArgs.privateMemorySize);
-    EXPECT_EQ(NEO::undefined<NEO::CrossThreadDataOffset>, desc.payloadMappings.implicitArgs.maxWorkGroupSize);
-    EXPECT_EQ(NEO::undefined<NEO::CrossThreadDataOffset>, desc.payloadMappings.implicitArgs.simdSize);
-    EXPECT_EQ(NEO::undefined<NEO::CrossThreadDataOffset>, desc.payloadMappings.implicitArgs.deviceSideEnqueueParentEvent);
-    EXPECT_EQ(NEO::undefined<NEO::CrossThreadDataOffset>, desc.payloadMappings.implicitArgs.preferredWkgMultiple);
 
     EXPECT_TRUE(desc.kernelMetadata.kernelName.empty());
     EXPECT_TRUE(desc.kernelMetadata.kernelLanguageAttributes.empty());

@@ -144,10 +144,6 @@ void MockKernelInfo::setGlobalVariablesSurface(uint8_t pointerSize, CrossThreadD
     populatePointerArg(kernelDescriptor.payloadMappings.implicitArgs.globalVariablesSurfaceAddress, pointerSize, stateless, bindful);
 }
 
-void MockKernelInfo::setDeviceSideEnqueueDefaultQueueSurface(uint8_t pointerSize, CrossThreadDataOffset stateless, SurfaceStateHeapOffset bindful) {
-    populatePointerArg(kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueDefaultQueueSurfaceAddress, pointerSize, stateless, bindful);
-}
-
 void MockKernelInfo::setGlobalConstantsSurface(uint8_t pointerSize, CrossThreadDataOffset stateless, SurfaceStateHeapOffset bindful) {
     populatePointerArg(kernelDescriptor.payloadMappings.implicitArgs.globalConstantsSurfaceAddress, pointerSize, stateless, bindful);
 }
@@ -158,7 +154,6 @@ void MockKernelInfo::setSyncBuffer(uint8_t pointerSize, CrossThreadDataOffset st
 }
 
 void MockKernelInfo::setPrivateMemory(uint32_t perThreadPrivateMemorySize, bool isSimtThread, uint8_t pointerSize, CrossThreadDataOffset stateless, SurfaceStateHeapOffset bindful) {
-    kernelDescriptor.kernelAttributes.flags.usesPrivateMemory = true;
     auto multiplier = static_cast<uint32_t>(isSimtThread ? kernelDescriptor.kernelAttributes.simdSize : 1U);
     kernelDescriptor.kernelAttributes.perHwThreadPrivateMemorySize = multiplier * perThreadPrivateMemorySize;
     populatePointerArg(kernelDescriptor.payloadMappings.implicitArgs.privateMemoryAddress, pointerSize, stateless, bindful);

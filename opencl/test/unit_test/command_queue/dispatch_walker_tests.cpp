@@ -534,42 +534,6 @@ HWTEST_F(DispatchWalkerTest, GivenNoLocalWorkSizeWhenDispatchingWalkerThenLwsIsC
     EXPECT_EQ(3u, *localWorkSize[2]);
 }
 
-HWTEST_F(DispatchWalkerTest, GivenTwoSetsOfLwsOffsetsWhenDispatchingWalkerThenLwsIsCorrect) {
-    MockKernel kernel(program.get(), kernelInfo, *pClDevice);
-    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[0] = 0;
-    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[1] = 4;
-    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[2] = 8;
-    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize2[0] = 12;
-    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize2[1] = 16;
-    kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize2[2] = 20;
-    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
-
-    size_t globalOffsets[3] = {0, 0, 0};
-    size_t workItems[3] = {2, 5, 10};
-    size_t workGroupSize[3] = {1, 2, 3};
-    cl_uint dimensions = 3;
-    DispatchInfo dispatchInfo(pClDevice, const_cast<MockKernel *>(&kernel), dimensions, workItems, workGroupSize, globalOffsets);
-    dispatchInfo.setNumberOfWorkgroups({1, 1, 1});
-    dispatchInfo.setTotalNumberOfWorkgroups({1, 1, 1});
-    MultiDispatchInfo multiDispatchInfo;
-    multiDispatchInfo.push(dispatchInfo);
-    HardwareInterfaceWalkerArgs walkerArgs = createHardwareInterfaceWalkerArgs(CL_COMMAND_NDRANGE_KERNEL);
-    HardwareInterface<FamilyType>::template dispatchWalker<typename FamilyType::DefaultWalkerType>(
-        *pCmdQ,
-        multiDispatchInfo,
-        CsrDependencies(),
-        walkerArgs);
-
-    auto localWorkSize = kernel.getLocalWorkSizeValues();
-    EXPECT_EQ(1u, *localWorkSize[0]);
-    EXPECT_EQ(2u, *localWorkSize[1]);
-    EXPECT_EQ(3u, *localWorkSize[2]);
-    auto localWorkSize2 = kernel.getLocalWorkSize2Values();
-    EXPECT_EQ(1u, *localWorkSize2[0]);
-    EXPECT_EQ(2u, *localWorkSize2[1]);
-    EXPECT_EQ(3u, *localWorkSize2[2]);
-}
-
 HWTEST_F(DispatchWalkerTest, GivenSplitKernelWhenDispatchingWalkerThenLwsIsCorrect) {
     MockKernel kernel1(program.get(), kernelInfo, *pClDevice);
     kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[0] = 0;
@@ -623,9 +587,6 @@ HWTEST_F(DispatchWalkerTest, GivenSplitWalkerWhenDispatchingWalkerThenLwsIsCorre
     dispatchTraits.localWorkSize[0] = 0;
     dispatchTraits.localWorkSize[1] = 4;
     dispatchTraits.localWorkSize[2] = 8;
-    dispatchTraits.localWorkSize2[0] = 12;
-    dispatchTraits.localWorkSize2[1] = 16;
-    dispatchTraits.localWorkSize2[2] = 20;
     dispatchTraits.numWorkGroups[0] = 24;
     dispatchTraits.numWorkGroups[1] = 28;
     dispatchTraits.numWorkGroups[2] = 32;
@@ -653,25 +614,18 @@ HWTEST_F(DispatchWalkerTest, GivenSplitWalkerWhenDispatchingWalkerThenLwsIsCorre
     for (auto &dispatchInfo : multiDispatchInfo) {
         auto &kernel = static_cast<MockKernel &>(*dispatchInfo.getKernel());
         auto localWorkSize = kernel.getLocalWorkSizeValues();
-        auto localWorkSize2 = kernel.getLocalWorkSize2Values();
         auto numWorkGroups = kernel.getNumWorkGroupsValues();
         if (&kernel == &mainKernel) {
             EXPECT_EQ(4u, *localWorkSize[0]);
             EXPECT_EQ(5u, *localWorkSize[1]);
             EXPECT_EQ(6u, *localWorkSize[2]);
-            EXPECT_EQ(4u, *localWorkSize2[0]);
-            EXPECT_EQ(5u, *localWorkSize2[1]);
-            EXPECT_EQ(6u, *localWorkSize2[2]);
             EXPECT_EQ(3u, *numWorkGroups[0]);
             EXPECT_EQ(2u, *numWorkGroups[1]);
             EXPECT_EQ(2u, *numWorkGroups[2]);
         } else {
-            EXPECT_EQ(0u, *localWorkSize[0]);
-            EXPECT_EQ(0u, *localWorkSize[1]);
-            EXPECT_EQ(0u, *localWorkSize[2]);
-            EXPECT_EQ(1u, *localWorkSize2[0]);
-            EXPECT_EQ(2u, *localWorkSize2[1]);
-            EXPECT_EQ(3u, *localWorkSize2[2]);
+            EXPECT_EQ(1u, *localWorkSize[0]);
+            EXPECT_EQ(2u, *localWorkSize[1]);
+            EXPECT_EQ(3u, *localWorkSize[2]);
             EXPECT_EQ(0u, *numWorkGroups[0]);
             EXPECT_EQ(0u, *numWorkGroups[1]);
             EXPECT_EQ(0u, *numWorkGroups[2]);

@@ -352,11 +352,7 @@ bool Program::isIsaPoolingEnabled(Device &neoDevice) {
            false == neoDevice.getMemoryManager()->isKernelBinaryReuseEnabled();
 }
 
-cl_int Program::setIsaGraphicsAllocations(Device &neoDevice, std::vector<KernelInfo *> &kernelInfoArray, DeviceInfoKernelPayloadConstants &deviceInfoConstants, uint32_t rootDeviceIndex) {
-    for (auto &kernelInfo : kernelInfoArray) {
-        kernelInfo->apply(deviceInfoConstants);
-    }
-
+cl_int Program::setIsaGraphicsAllocations(Device &neoDevice, std::vector<KernelInfo *> &kernelInfoArray, uint32_t rootDeviceIndex) {
     std::vector<KernelInfo *> validKernelInfos;
     validKernelInfos.reserve(kernelInfoArray.size());
     std::ranges::copy_if(kernelInfoArray,

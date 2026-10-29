@@ -76,10 +76,6 @@ struct MultiDeviceKernelArgBufferTest : public ::testing::Test {
             pKernelInfosStorage[i]->heapInfo.surfaceStateHeapSize = sizeof(pSshLocal[i]);
             pKernelInfosStorage[i]->kernelDescriptor.kernelAttributes.simdSize = hwInfo.caps.minimalSimdSize;
 
-            auto crossThreadDataPointer = &pCrossThreadData[i];
-            memcpy_s(ptrOffset(&pCrossThreadData[i], i * sizeof(void *)), sizeof(void *), &crossThreadDataPointer, sizeof(void *));
-            pKernelInfosStorage[i]->crossThreadData = pCrossThreadData[i];
-
             pKernelInfosStorage[i]->addArgBuffer(0, static_cast<NEO::CrossThreadDataOffset>(i * sizeof(void *)), sizeof(void *));
 
             pKernelInfosStorage[i]->setCrossThreadDataSize(static_cast<uint16_t>((i + 1) * sizeof(void *)));
@@ -93,16 +89,9 @@ struct MultiDeviceKernelArgBufferTest : public ::testing::Test {
         pProgram = std::make_unique<MockProgram>(pContext.get(), false, pContext->getDevices());
     }
 
-    void TearDown() override {
-        for (auto i = 0u; i < 2; i++) {
-            pKernelInfosStorage[i]->crossThreadData = nullptr;
-        }
-    }
-
     UltClDeviceFactory deviceFactory{3, 2};
     std::unique_ptr<MockContext> pContext;
     std::unique_ptr<MockKernelInfo> pKernelInfosStorage[2];
-    char pCrossThreadData[2][64]{};
     char pSshLocal[2][64]{};
     KernelInfoContainer kernelInfos;
     std::unique_ptr<Buffer> pBuffer;

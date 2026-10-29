@@ -97,7 +97,6 @@ class MockKernel : public Kernel {
     using Kernel::containsStatelessWrites;
     using Kernel::crossThreadData;
     using Kernel::crossThreadDataSize;
-    using Kernel::dataParameterSimdSize;
     using Kernel::executionType;
     using Kernel::getDevice;
     using Kernel::getHardwareInfo;
@@ -115,14 +114,11 @@ class MockKernel : public Kernel {
     using Kernel::localBindingTableOffset;
     using Kernel::localIdsCache;
     using Kernel::maxKernelWorkGroupSize;
-    using Kernel::maxWorkGroupSizeForCrossThreadData;
     using Kernel::numberOfBindingTableStates;
-    using Kernel::parentEventOffset;
     using Kernel::patchBufferOffset;
     using Kernel::patchPrivateSurface;
     using Kernel::patchWithImplicitSurface;
     using Kernel::pImplicitArgs;
-    using Kernel::preferredWkgMultipleOffset;
     using Kernel::privateSurface;
     using Kernel::setInlineSamplers;
     using Kernel::slmSizes;
@@ -159,8 +155,6 @@ class MockKernel : public Kernel {
         info->setLocalIds({0, 0, 0});
         info->kernelDescriptor.kernelAttributes.numGrfRequired = grfNumber;
         info->kernelDescriptor.kernelAttributes.simdSize = 32;
-
-        info->crossThreadData = new char[crossThreadSize];
 
         auto kernel = new KernelType(program, *info, *device.getSpecializedDevice<ClDevice>());
         kernel->crossThreadData = new char[crossThreadSize];

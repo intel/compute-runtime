@@ -2791,72 +2791,6 @@ struct KernelCrossThreadTests : Test<ClDeviceFixture> {
     std::unique_ptr<MockKernelInfo> pKernelInfo;
 };
 
-TEST_F(KernelCrossThreadTests, WhenLocalWorkSize2OffsetsAreValidThenIsLocalWorkSize2PatchableReturnsTrue) {
-    auto &localWorkSize2 = pKernelInfo->kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize2;
-    localWorkSize2[0] = 0;
-    localWorkSize2[1] = 4;
-    localWorkSize2[2] = 8;
-
-    MockKernel kernel(program.get(), *pKernelInfo, *pClDevice);
-    EXPECT_TRUE(kernel.isLocalWorkSize2Patchable());
-}
-
-TEST_F(KernelCrossThreadTests, WhenNotAllLocalWorkSize2OffsetsAreValidThenIsLocalWorkSize2PatchableReturnsTrue) {
-    MockKernel kernel(program.get(), *pKernelInfo, *pClDevice);
-    auto &localWorkSize2 = pKernelInfo->kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize2;
-    for (auto ele0 : {true, false}) {
-        for (auto ele1 : {true, false}) {
-            for (auto ele2 : {true, false}) {
-                if (ele0 && ele1 && ele2) {
-                    continue;
-                } else {
-                    localWorkSize2[0] = ele0 ? 0 : undefined<CrossThreadDataOffset>;
-                    localWorkSize2[1] = ele1 ? 4 : undefined<CrossThreadDataOffset>;
-                    localWorkSize2[2] = ele2 ? 8 : undefined<CrossThreadDataOffset>;
-                    EXPECT_FALSE(kernel.isLocalWorkSize2Patchable());
-                }
-            }
-        }
-    }
-}
-
-HWTEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenEnqueuedMaxWorkGroupSizeIsCorrect) {
-    pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.maxWorkGroupSize = 12;
-
-    MockKernel kernel(program.get(), *pKernelInfo, *pClDevice);
-    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
-
-    EXPECT_NE(nullptr, kernel.maxWorkGroupSizeForCrossThreadData);
-    EXPECT_NE(&Kernel::dummyPatchLocation, kernel.maxWorkGroupSizeForCrossThreadData);
-    EXPECT_EQ(static_cast<void *>(kernel.getCrossThreadData() + pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.maxWorkGroupSize), static_cast<void *>(kernel.maxWorkGroupSizeForCrossThreadData));
-    EXPECT_EQ(pDevice->getDeviceInfo().maxWorkGroupSize, *kernel.maxWorkGroupSizeForCrossThreadData);
-    EXPECT_EQ(pDevice->getDeviceInfo().maxWorkGroupSize, kernel.maxKernelWorkGroupSize);
-}
-
-TEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenDataParameterSimdSizeIsCorrect) {
-    const auto &hwInfo = pClDevice->getHardwareInfo();
-    pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.simdSize = hwInfo.caps.minimalSimdSize;
-    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = hwInfo.caps.minimalSimdSize;
-    MockKernel kernel(program.get(), *pKernelInfo, *pClDevice);
-    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
-
-    EXPECT_NE(nullptr, kernel.dataParameterSimdSize);
-    EXPECT_NE(&Kernel::dummyPatchLocation, kernel.dataParameterSimdSize);
-    EXPECT_EQ(static_cast<void *>(kernel.getCrossThreadData() + pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.simdSize), static_cast<void *>(kernel.dataParameterSimdSize));
-    EXPECT_EQ_VAL(pKernelInfo->getMaxSimdSize(), *kernel.dataParameterSimdSize);
-}
-
-TEST_F(KernelCrossThreadTests, GivenParentEventOffsetWhenKernelIsInitializedThenParentEventIsInitiatedWithUndefined) {
-    pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueParentEvent = 16;
-    MockKernel kernel(program.get(), *pKernelInfo, *pClDevice);
-    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
-
-    EXPECT_NE(nullptr, kernel.parentEventOffset);
-    EXPECT_NE(&Kernel::dummyPatchLocation, kernel.parentEventOffset);
-    EXPECT_EQ(static_cast<void *>(kernel.getCrossThreadData() + pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueParentEvent), static_cast<void *>(kernel.parentEventOffset));
-    EXPECT_EQ(undefined<uint32_t>, *kernel.parentEventOffset);
-}
-
 TEST_F(KernelCrossThreadTests, WhenAddingKernelThenProgramRefCountIsIncremented) {
 
     auto refCount = program->getReference();
@@ -2894,22 +2828,6 @@ TEST_F(KernelCrossThreadTests, givenKernelWithPrivateMemoryWhenItIsCreatedThenCu
     auto privateAddressFromCurbe = (uintptr_t)*ptrCurbe;
 
     EXPECT_EQ(privateAddressFromCurbe, privateAddress);
-
-    delete kernel;
-}
-
-TEST_F(KernelCrossThreadTests, givenKernelWithPreferredWkgMultipleWhenItIsCreatedThenCurbeIsPatchedProperly) {
-
-    pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.preferredWkgMultiple = 8;
-    MockKernel *kernel = new MockKernel(program.get(), *pKernelInfo, *pClDevice);
-
-    kernel->initialize();
-
-    auto *crossThread = kernel->getCrossThreadData();
-
-    uint32_t *preferredWkgMultipleOffset = (uint32_t *)ptrOffset(crossThread, 8);
-
-    EXPECT_EQ(pKernelInfo->getMaxSimdSize(), *preferredWkgMultipleOffset);
 
     delete kernel;
 }
@@ -3815,14 +3733,11 @@ struct KernelLargeGrfTests : Test<ClDeviceFixture> {
 HWTEST2_F(KernelLargeGrfTests, GivenLargeGrfAndSimdSizeWhenGettingMaxWorkGroupSizeThenCorrectValueReturned, IsAtLeastXeCore) {
     const auto &hwInfo = pClDevice->getHardwareInfo();
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = hwInfo.caps.minimalSimdSize;
-    pKernelInfo->kernelDescriptor.kernelAttributes.crossThreadDataSize = 4;
-    pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.maxWorkGroupSize = 0;
     {
         MockKernel kernel(program.get(), *pKernelInfo, *pClDevice);
 
         pKernelInfo->kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::defaultGrfNumber;
         EXPECT_EQ(CL_SUCCESS, kernel.initialize());
-        EXPECT_EQ(pDevice->getDeviceInfo().maxWorkGroupSize, *kernel.maxWorkGroupSizeForCrossThreadData);
         EXPECT_EQ(pDevice->getDeviceInfo().maxWorkGroupSize, kernel.maxKernelWorkGroupSize);
     }
 
@@ -3833,7 +3748,6 @@ HWTEST2_F(KernelLargeGrfTests, GivenLargeGrfAndSimdSizeWhenGettingMaxWorkGroupSi
         EXPECT_EQ(CL_SUCCESS, kernel.initialize());
         if (pKernelInfo->kernelDescriptor.kernelAttributes.simdSize != 32) {
 
-            EXPECT_EQ(pDevice->getDeviceInfo().maxWorkGroupSize >> 1, *kernel.maxWorkGroupSizeForCrossThreadData);
             EXPECT_EQ(pDevice->getDeviceInfo().maxWorkGroupSize >> 1, kernel.maxKernelWorkGroupSize);
         }
     }
@@ -3843,7 +3757,6 @@ HWTEST2_F(KernelLargeGrfTests, GivenLargeGrfAndSimdSizeWhenGettingMaxWorkGroupSi
         pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
         pKernelInfo->kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::largeGrfNumber;
         EXPECT_EQ(CL_SUCCESS, kernel.initialize());
-        EXPECT_EQ(pDevice->getDeviceInfo().maxWorkGroupSize, *kernel.maxWorkGroupSizeForCrossThreadData);
         EXPECT_EQ(pDevice->getDeviceInfo().maxWorkGroupSize, kernel.maxKernelWorkGroupSize);
     }
 }

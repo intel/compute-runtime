@@ -282,13 +282,8 @@ cl_int Program::processProgramInfo(ProgramInfo &src, ClDevice &clDevice) {
     auto rootDeviceIndex = clDevice.getRootDeviceIndex();
     auto &kernelInfoArray = buildInfos[rootDeviceIndex].kernelInfoArray;
     size_t slmNeeded = getMaxInlineSlmNeeded(src);
-    size_t slmAvailable = 0U;
-    NEO::DeviceInfoKernelPayloadConstants deviceInfoConstants;
-    LinkerInput *linkerInput = nullptr;
-    slmAvailable = static_cast<size_t>(clDevice.getSharedDeviceInfo().localMemSize);
-    deviceInfoConstants.maxWorkGroupSize = static_cast<uint32_t>(clDevice.getSharedDeviceInfo().maxWorkGroupSize);
-    deviceInfoConstants.computeUnitsUsedForScratch = clDevice.getSharedDeviceInfo().computeUnitsUsedForScratch;
-    linkerInput = src.linkerInput.get();
+    size_t slmAvailable = static_cast<size_t>(clDevice.getSharedDeviceInfo().localMemSize);
+    LinkerInput *linkerInput = src.linkerInput.get();
     setLinkerInput(rootDeviceIndex, std::move(src.linkerInput));
 
     if (slmNeeded > slmAvailable) {
@@ -331,7 +326,7 @@ cl_int Program::processProgramInfo(ProgramInfo &src, ClDevice &clDevice) {
     }
     buildInfos[rootDeviceIndex].kernelMiscInfoPos = src.kernelMiscInfoPos;
 
-    if (auto retVal = setIsaGraphicsAllocations(clDevice.getDevice(), kernelInfoArray, deviceInfoConstants, rootDeviceIndex);
+    if (auto retVal = setIsaGraphicsAllocations(clDevice.getDevice(), kernelInfoArray, rootDeviceIndex);
         retVal != CL_SUCCESS) {
         return retVal;
     }

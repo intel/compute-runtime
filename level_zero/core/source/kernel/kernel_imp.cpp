@@ -94,19 +94,8 @@ ze_result_t KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device 
 
     ArrayRef<uint8_t> crossThreadDataArrayRef;
     if (crossThreadDataSize != 0) {
-        crossThreadDataTemplate = std::make_unique_for_overwrite<uint8_t[]>(crossThreadDataSize);
-
-        if (kernelInfo->crossThreadData) {
-            memcpy_s(crossThreadDataTemplate.get(), crossThreadDataSize,
-                     kernelInfo->crossThreadData, crossThreadDataSize);
-        } else {
-            memset(crossThreadDataTemplate.get(), 0x00, crossThreadDataSize);
-        }
-
+        crossThreadDataTemplate = std::make_unique<uint8_t[]>(crossThreadDataSize);
         crossThreadDataArrayRef = ArrayRef<uint8_t>(this->crossThreadDataTemplate.get(), crossThreadDataSize);
-
-        NEO::patchNonPointer<uint32_t>(crossThreadDataArrayRef,
-                                       kernelDescriptor->payloadMappings.implicitArgs.simdSize, kernelDescriptor->kernelAttributes.simdSize);
     }
 
     if (kernelInfo->heapInfo.surfaceStateHeapSize != 0) {
@@ -1524,7 +1513,6 @@ void KernelImp::patchWorkgroupSizeInCrossThreadData(uint32_t x, uint32_t y, uint
     auto dst = getCrossThreadDataSpan();
     uint32_t workgroupSize[3] = {x, y, z};
     NEO::patchVecNonPointer(dst, desc.payloadMappings.dispatchTraits.localWorkSize, workgroupSize);
-    NEO::patchVecNonPointer(dst, desc.payloadMappings.dispatchTraits.localWorkSize2, workgroupSize);
     NEO::patchVecNonPointer(dst, desc.payloadMappings.dispatchTraits.enqueuedLocalWorkSize, workgroupSize);
     if (privateState.pImplicitArgs) {
         privateState.pImplicitArgs->setLocalSize(x, y, z);

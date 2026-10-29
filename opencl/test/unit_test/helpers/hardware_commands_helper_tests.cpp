@@ -688,11 +688,10 @@ HWTEST2_F(HardwareCommandsTest, WhenGettingBindingTableStateThenSurfaceStatePoin
     auto pKernelInfo = std::make_unique<MockKernelInfo>();
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
 
-    // define patch offsets for global, constant, private, event pool and default device queue surfaces
+    // define patch offsets for global, constant and private surfaces
     pKernelInfo->setGlobalVariablesSurface(8, 0, 0);
     pKernelInfo->setGlobalConstantsSurface(8, 8, 64);
     pKernelInfo->setPrivateMemory(32, false, 8, 16, 128);
-    pKernelInfo->setDeviceSideEnqueueDefaultQueueSurface(8, 32, 256);
 
     // create program with valid context
     MockContext context;
