@@ -7,6 +7,7 @@
 
 #include "level_zero/sysman/source/api/memory/windows/sysman_os_memory_imp.h"
 
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 
 #include "level_zero/sysman/source/shared/windows/product_helper/sysman_product_helper.h"

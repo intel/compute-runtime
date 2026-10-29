@@ -6,7 +6,6 @@
  */
 
 #pragma once
-#include "shared/source/execution_environment/execution_environment.h"
 
 #include "level_zero/core/source/device/device_handle.h"
 #include "level_zero/include/level_zero/zes_intel_gpu_sysman.h"

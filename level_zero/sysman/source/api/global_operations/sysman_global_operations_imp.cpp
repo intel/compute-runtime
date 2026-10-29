@@ -8,6 +8,7 @@
 #include "level_zero/sysman/source/api/global_operations/sysman_global_operations_imp.h"
 
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
 
 #include "level_zero/include/level_zero/zes_intel_gpu_sysman.h"

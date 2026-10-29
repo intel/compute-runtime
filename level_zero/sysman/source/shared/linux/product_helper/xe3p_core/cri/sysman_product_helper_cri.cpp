@@ -10,6 +10,7 @@
 #include "shared/source/helpers/sleep.h"
 #include "shared/source/os_interface/linux/pmt_util.h"
 
+#include "level_zero/sysman/source/api/global_operations/linux/sysman_os_global_operations_imp.h"
 #include "level_zero/sysman/source/shared/linux/pmt/sysman_pmt.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.inl"

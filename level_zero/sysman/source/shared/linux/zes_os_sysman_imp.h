@@ -6,7 +6,6 @@
  */
 
 #pragma once
-#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/os_interface/driver_info.h"

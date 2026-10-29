@@ -5,11 +5,11 @@
  *
  */
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/preprocessor.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/system_info.h"
 
-#include "level_zero/sysman/source/api/global_operations/linux/sysman_os_global_operations_imp.h"
 #include "level_zero/sysman/source/api/memory/linux/sysman_os_memory_imp.h"
 #include "level_zero/sysman/source/api/ras/linux/ras_util/sysman_ras_util.h"
 #include "level_zero/sysman/source/device/sysman_device_imp.h"
@@ -23,6 +23,11 @@
 #include "level_zero/sysman/source/sysman_const.h"
 
 #include <algorithm>
+#include <map>
+#include <string>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 
 namespace L0 {
 namespace Sysman {

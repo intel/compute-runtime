@@ -6,13 +6,13 @@
  */
 
 #pragma once
-#include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/driver_info.h"
 
 #include "level_zero/sysman/source/device/sysman_hw_device_id.h"
 #include <level_zero/zes_api.h>
 
 #include <memory>
+#include <string>
 #include <vector>
 
 namespace L0 {
