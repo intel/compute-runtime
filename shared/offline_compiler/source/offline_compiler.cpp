@@ -1141,6 +1141,7 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
                 std::vector<std::string> tokens{
                     std::istream_iterator<std::string>{iss}, std::istream_iterator<std::string>{}};
 
+                argHelper->removeXePrefixFromDeviceNames(tokens);
                 retVal = parseCommandLine(tokens.size(), tokens);
                 if (retVal != OCLOC_SUCCESS) {
                     argHelper->printf("Failed with ocloc options from file:\n%s\n", oclocOptionsFromFile.c_str());
@@ -1650,6 +1651,11 @@ Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename
                                             Device acronyms may use '-' or '_' as a separator
                                             interchangeably (e.g. acm-g10 or acm_g10), including
                                             for each entry of a comma-separated list.
+                                            Device acronyms without a stepping suffix can
+                                            also be prefixed with "xe-" (e.g. xe-dg1, but not
+                                            xe-dg2-g10-a0), and ip versions in the
+                                            <major>.<minor>.<revision> form with "xe_"
+                                            (e.g. xe_12.10.0).
                                             Supported -device patterns examples:
                                             -device 0x4905        ; will compile 1 target (dg1)
                                             -device 12.10.0       ; will compile 1 target (dg1)

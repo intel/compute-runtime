@@ -57,6 +57,7 @@ class OclocArgHelper {
     bool hasOutput = false;
     MessagePrinter messagePrinter;
     void moveOutputs();
+    std::string removeXePrefix(const std::string &deviceName) const;
     Source *findSourceFile(const std::string &filename);
     bool sourceFileExists(const std::string &filename) const;
 
@@ -105,6 +106,8 @@ class OclocArgHelper {
     }
 
     MOCKABLE_VIRTUAL void saveOutput(const std::string &filename, const void *pData, const size_t &dataSize);
+
+    void removeXePrefixFromDeviceNames(std::vector<std::string> &args) const;
 
     MessagePrinter &getPrinterRef() { return messagePrinter; }
     void printf(const char *message) {

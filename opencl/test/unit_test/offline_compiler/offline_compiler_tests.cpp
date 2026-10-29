@@ -141,6 +141,38 @@ TEST_F(MultiCommandTests, WhenBuildingMultiCommandThenSuccessIsReturned) {
     deleteFileWithArgs();
 }
 
+TEST_F(MultiCommandTests, GivenXePrefixedDeviceNameWhenBuildingMultiCommandThenSuccessIsReturned) {
+    VariableBackup<decltype(NEO::IoFunctions::mkdirPtr)> mockCreateDir(&NEO::IoFunctions::mkdirPtr, [](const char *path) -> int { return 0; });
+
+    auto &devices = oclocArgHelperWithoutInput->productConfigHelper->getDeviceAotInfo();
+    auto device = std::find_if(devices.begin(), devices.end(), [](const auto &deviceInfo) { return !deviceInfo.deviceAcronyms.empty(); });
+    if (device == devices.end()) {
+        GTEST_SKIP();
+    }
+
+    nameOfFileWithArgs = "ImAMultiCommandMinimalGoodFile.txt";
+    std::vector<std::string> argv = {
+        "ocloc",
+        "multi",
+        nameOfFileWithArgs.c_str(),
+        "-q",
+    };
+
+    std::vector<std::string> singleArgs = {
+        "-file",
+        clCopybufferFilename.c_str(),
+        "-device",
+        "xe-" + device->deviceAcronyms.front().str()};
+
+    createFileWithArgs(singleArgs, 1);
+    auto pMultiCommand = std::unique_ptr<MultiCommand>(MultiCommand::create(argv, retVal, oclocArgHelperWithoutInput.get()));
+
+    EXPECT_NE(nullptr, pMultiCommand);
+    EXPECT_EQ(OCLOC_SUCCESS, retVal);
+
+    deleteFileWithArgs();
+}
+
 TEST_F(MultiCommandTests, GivenOutputFileWhenBuildingMultiCommandThenSuccessIsReturned) {
     VariableBackup<decltype(NEO::IoFunctions::mkdirPtr)> mockCreateDir(&NEO::IoFunctions::mkdirPtr, [](const char *path) -> int { return 0; });
 
@@ -4262,6 +4294,35 @@ TEST_F(OfflineCompilerTests, givenInputOptionsAndOclockOptionsFileWithForceStosO
     auto &internalOptions = mockOfflineCompiler->internalOptions;
     size_t found = internalOptions.find(NEO::CompilerOptions::greaterThan4gbBuffersRequired.data());
     EXPECT_EQ(std::string::npos, found);
+}
+
+TEST_F(OfflineCompilerTests, givenXePrefixedDeviceNamesInOclocOptionsFileWhenOfflineCompilerIsInitializedThenPlainDeviceNamesAreUsed) {
+    MockOclocArgHelper argHelper{filesMap};
+    auto &devices = argHelper.productConfigHelper->getDeviceAotInfo();
+    auto device = std::find_if(devices.begin(), devices.end(), [](const auto &deviceInfo) { return !deviceInfo.deviceAcronyms.empty(); });
+    if (device == devices.end()) {
+        GTEST_SKIP();
+    }
+    auto acronym = device->deviceAcronyms.front().str();
+    auto ipVersion = ProductConfigHelper::parseMajorMinorRevisionValue(device->aotConfig);
+
+    for (const auto &[prefixedName, plainName] : std::vector<std::pair<std::string, std::string>>{{"xe-" + acronym, acronym}, {"xe_" + ipVersion, ipVersion}}) {
+        auto mockOfflineCompiler = std::make_unique<MockOfflineCompiler>();
+        mockOfflineCompiler->uniqueHelper->filesMap = filesMap;
+        mockOfflineCompiler->uniqueHelper->filesMap["some_kernel_ocloc_options.txt"] = "-device " + prefixedName + " -device_options " + prefixedName + " -cl-opt-disable";
+
+        std::vector<std::string> argv = {
+            "ocloc",
+            "-q",
+            "-file",
+            clCopybufferFilename.c_str(),
+            "-device",
+            gEnvironment->devicePrefix.c_str()};
+
+        EXPECT_EQ(OCLOC_SUCCESS, mockOfflineCompiler->initialize(argv.size(), argv));
+        EXPECT_EQ(plainName, mockOfflineCompiler->deviceName);
+        EXPECT_TRUE(hasSubstr(mockOfflineCompiler->options, "-cl-opt-disable"));
+    }
 }
 
 struct OfflineCompilerStatelessToStatefulTests : public ::testing::Test {

@@ -1964,6 +1964,35 @@ TEST_F(OclocFatBinaryTest, givenSpirvInputAndExcludeIrFlagWhenFatBinaryIsRequest
     EXPECT_EQ(decodedArchive.files.end(), spirvFileIt);
 }
 
+TEST_F(OclocFatBinaryTest, givenXePrefixedDeviceNamesWhenCompilingThenArchiveIsTheSameAsForPlainDeviceNames) {
+    std::vector<const DeviceAotInfo *> devicesWithAcronym;
+    for (const auto &device : enabledProducts) {
+        if (!device.deviceAcronyms.empty()) {
+            devicesWithAcronym.push_back(&device);
+        }
+    }
+    if (devicesWithAcronym.size() < 2) {
+        GTEST_SKIP();
+    }
+    const auto acronym = devicesWithAcronym[0]->deviceAcronyms.front().str();
+    const auto ipVersion = ProductConfigHelper::parseMajorMinorRevisionValue(devicesWithAcronym[1]->aotConfig);
+
+    auto compile = [this](const std::string &devices) {
+        const char *argv[] = {"ocloc", "-output", outputArchiveName.c_str(), "-file", spirvFilename.c_str(),
+                              "-output_no_suffix", "-spirv_input", "-exclude_ir", "-device", devices.c_str()};
+        unsigned int argc = sizeof(argv) / sizeof(const char *);
+        mockArgHelper.interceptedFiles.clear();
+        EXPECT_EQ(OCLOC_SUCCESS, oclocInvokeWithHelper(&mockArgHelper, argc, argv));
+        return mockArgHelper.interceptedFiles[outputArchiveName];
+    };
+
+    mockArgHelper.getPrinterRef().setSuppressMessages(true);
+    const auto plainArchive = compile(acronym + "," + ipVersion);
+    const auto prefixedArchive = compile("xe-" + acronym + ",xe_" + ipVersion);
+    EXPECT_FALSE(plainArchive.empty());
+    EXPECT_EQ(plainArchive, prefixedArchive);
+}
+
 TEST_F(OclocFatBinaryTest, givenClInputFileWhenFatBinaryIsRequestedThenArchiveDoesNotContainGenericIrFile) {
     const auto devices = prepareTwoDevices(&mockArgHelper);
     if (devices.empty()) {

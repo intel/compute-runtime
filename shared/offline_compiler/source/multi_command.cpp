@@ -154,6 +154,7 @@ void MultiCommand::runBuilds(const std::string &argZero) {
         }
 
         addAdditionalOptionsToSingleCommandLine(args, i);
+        argHelper->removeXePrefixFromDeviceNames(args);
         retVal = singleBuild(args);
         retValues.push_back(retVal);
     }

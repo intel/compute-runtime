@@ -30,6 +30,7 @@ int oclocInvokeWithHelper(
             argHelper->printf("%s\n", driverVersion.c_str());
             return OCLOC_SUCCESS;
         }
+        argHelper->removeXePrefixFromDeviceNames(args);
         auto &command = args[1];
         int retVal = -0;
         if (command == CommandNames::disassemble) {

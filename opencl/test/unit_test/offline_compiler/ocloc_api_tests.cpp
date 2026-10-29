@@ -1328,7 +1328,11 @@ TEST_F(OclocApiTest, GivenFormerDeviceNamesWhenCompilingThenFormerOclocIsUsedAnd
         "bdw",
         "bdw,skl,icl",
         "bdw:icl",
-        ":icl"};
+        ":icl",
+        "xe-bdw",
+        "xe_8.0.0",
+        "xe-bdw,xe-skl,xe-icl",
+        "xe-bdw:xe-icl"};
 
     for (const auto &deviceArg : deviceCombinations) {
         const char *argv[] = {
@@ -1392,7 +1396,8 @@ TEST_F(OclocApiTest, GivenMixedFormerAndCurrentDeviceNamesWhenCompilingThenCorre
     std::vector<std::string> deviceCombinations = {
         "bdw,skl," + std::string(target.c_str()),
         "bdw:" + std::string(target.c_str()),
-        ":" + std::string(target.c_str())};
+        ":" + std::string(target.c_str()),
+        "xe-bdw,xe-skl," + std::string(target.c_str())};
 
     for (const auto &deviceArg : deviceCombinations) {
         const char *argv[] = {
@@ -1665,6 +1670,181 @@ TEST_F(OclocApiTest, GivenMixedFormerAndCurrentReleaseNamesWhenCompilingThenCorr
         EXPECT_EQ(retVal, OCLOC_SUCCESS) << "Failed for device: " << releaseArg;
         EXPECT_EQ(std::string::npos, output.find("Command was: ocloc -file test_files/copybuffer.cl -device " + releaseArg)) << "Unexpected command output for device: " << releaseArg;
     }
+}
+
+class OclocXePrefixTests : public ::testing::Test {
+  protected:
+    void SetUp() override {
+        auto formerHelper = std::make_unique<FormerProductConfigHelper>();
+        formerHelper->getData() = createMockFormerData();
+        mockArgHelper.setFormerProductConfigHelper(std::move(formerHelper));
+    }
+
+    std::string removeXePrefix(const std::string &deviceName) {
+        std::vector<std::string> args = {"ocloc", "-device", deviceName};
+        mockArgHelper.removeXePrefixFromDeviceNames(args);
+        return args[2];
+    }
+
+    MockOclocArgHelper::FilesMap filesMap{};
+    MockOclocArgHelper mockArgHelper{filesMap};
+};
+
+TEST_F(OclocXePrefixTests, givenXePrefixedDeviceAcronymOrIpVersionWhenRemovingXePrefixThenPlainNameIsReturned) {
+    for (const auto &device : mockArgHelper.productConfigHelper->getDeviceAotInfo()) {
+        for (const auto &acronym : device.deviceAcronyms) {
+            EXPECT_EQ(acronym.str(), removeXePrefix("xe-" + acronym.str()));
+        }
+        auto ipVersion = ProductConfigHelper::parseMajorMinorRevisionValue(device.aotConfig);
+        EXPECT_EQ(ipVersion, removeXePrefix("xe_" + ipVersion));
+    }
+    for (const auto &[acronym, ipVersion] : createMockFormerData().acronyms) {
+        EXPECT_EQ(acronym, removeXePrefix("xe-" + acronym));
+    }
+}
+
+TEST_F(OclocXePrefixTests, givenNamesWhichAreNotXePrefixedDeviceAcronymsOrIpVersionsWhenRemovingXePrefixThenNamesAreNotChanged) {
+    auto &productConfigHelper = *mockArgHelper.productConfigHelper;
+    std::vector<std::string> names = {"*", "xe-", "xe_", "xe-unknown"};
+    for (const auto &release : productConfigHelper.getReleasesAcronyms()) {
+        names.push_back(release.str());
+        names.push_back("xe-" + release.str());
+    }
+    for (const auto &family : productConfigHelper.getFamiliesAcronyms()) {
+        names.push_back(family.str());
+    }
+    for (const auto &device : productConfigHelper.getDeviceAotInfo()) {
+        for (const auto &acronym : device.deviceAcronyms) {
+            names.push_back("xe_" + acronym.str());
+        }
+        for (const auto &rtlIdAcronym : device.rtlIdAcronyms) {
+            names.push_back("xe-" + rtlIdAcronym.str());
+        }
+        names.push_back("xe-" + ProductConfigHelper::parseMajorMinorRevisionValue(device.aotConfig));
+    }
+
+    for (const auto &name : names) {
+        EXPECT_EQ(name, removeXePrefix(name));
+    }
+}
+
+TEST_F(OclocXePrefixTests, givenXePrefixedNamesInListsRangesAndDeviceOptionsWhenRemovingXePrefixThenOnlyDeviceNamesAreChanged) {
+    auto &devices = mockArgHelper.productConfigHelper->getDeviceAotInfo();
+    auto device = std::find_if(devices.begin(), devices.end(), [](const auto &deviceInfo) { return !deviceInfo.deviceAcronyms.empty(); });
+    if (device == devices.end()) {
+        GTEST_SKIP();
+    }
+    auto acronym = device->deviceAcronyms.front().str();
+    auto ipVersion = ProductConfigHelper::parseMajorMinorRevisionValue(device->aotConfig);
+    auto prefixedAcronym = "xe-" + acronym;
+    auto prefixedIpVersion = "xe_" + ipVersion;
+
+    std::vector<std::string> args = {
+        "ocloc", "-file", prefixedAcronym, "-options", prefixedAcronym,
+        "-device", prefixedAcronym + "," + prefixedIpVersion + ",xe-unknown",
+        "-device_options", prefixedAcronym + "," + prefixedIpVersion, "-cl-opt-disable"};
+    mockArgHelper.removeXePrefixFromDeviceNames(args);
+
+    std::vector<std::string> expectedArgs = {
+        "ocloc", "-file", prefixedAcronym, "-options", prefixedAcronym,
+        "-device", acronym + "," + ipVersion + ",xe-unknown",
+        "-device_options", acronym + "," + ipVersion, "-cl-opt-disable"};
+    EXPECT_EQ(expectedArgs, args);
+
+    for (const auto &[range, expectedRange] : std::vector<std::pair<std::string, std::string>>{
+             {prefixedAcronym + ":" + prefixedIpVersion, acronym + ":" + ipVersion},
+             {prefixedAcronym + ":", acronym + ":"},
+             {":" + prefixedIpVersion, ":" + ipVersion}}) {
+        EXPECT_EQ(expectedRange, removeXePrefix(range));
+    }
+}
+
+Ocloc::SupportedDevicesHelper::SupportedDevicesData createLegacyOclocFormerData() {
+    Ocloc::SupportedDevicesHelper::SupportedDevicesData legacyOclocData{};
+    legacyOclocData.deviceIpVersions = {0x2400009};
+    legacyOclocData.acronyms = {{"skl", 0x2400009}};
+    legacyOclocData.familyGroups = {{"gen9", {0x2400009}}};
+    legacyOclocData.releaseGroups = {{"gen9", {0x2400009}}};
+    return legacyOclocData;
+}
+
+TEST_F(OclocXePrefixTests, givenLegacyOclocDataWhenRemovingXePrefixThenOnlyLegacyDeviceAcronymIsChanged) {
+    auto formerHelper = std::make_unique<FormerProductConfigHelper>();
+    formerHelper->getData() = createLegacyOclocFormerData();
+    mockArgHelper.setFormerProductConfigHelper(std::move(formerHelper));
+
+    EXPECT_EQ("skl", removeXePrefix("xe-skl"));
+    EXPECT_EQ("xe-gen9", removeXePrefix("xe-gen9"));
+}
+
+namespace OclocTestMocks {
+std::vector<std::string> formerOclocArgs;
+}
+
+int mockOclocInvokeRecordingArgs(unsigned int numArgs, const char *argv[],
+                                 const uint32_t numSources, const uint8_t **dataSources, const uint64_t *lenSources, const char **nameSources,
+                                 const uint32_t numInputHeaders, const uint8_t **dataInputHeaders, const uint64_t *lenInputHeaders, const char **nameInputHeaders,
+                                 uint32_t *numOutputs, uint8_t ***dataOutputs, uint64_t **lenOutputs, char ***nameOutputs);
+
+int mockOclocInvokeRecordingArgs(unsigned int numArgs, const char *argv[],
+                                 const uint32_t numSources, const uint8_t **dataSources, const uint64_t *lenSources, const char **nameSources,
+                                 const uint32_t numInputHeaders, const uint8_t **dataInputHeaders, const uint64_t *lenInputHeaders, const char **nameInputHeaders,
+                                 uint32_t *numOutputs, uint8_t ***dataOutputs, uint64_t **lenOutputs, char ***nameOutputs) {
+    OclocTestMocks::formerOclocArgs.assign(argv, argv + numArgs);
+    return mockOclocInvoke(numArgs, argv, numSources, dataSources, lenSources, nameSources,
+                           numInputHeaders, dataInputHeaders, lenInputHeaders, nameInputHeaders,
+                           numOutputs, dataOutputs, lenOutputs, nameOutputs);
+}
+
+TEST_F(OclocApiTest, GivenLegacyOclocAndXePrefixedNamesWhenCompilingThenLegacyOclocGetsPlainDeviceNamesAndXePrefixedFamilyIsRejected) {
+    IoFunctionsMockHelper mockIoFunctions;
+
+    std::string clFileName("copybuffer.cl");
+    MockOclocArgHelper::FilesMap mockArgHelperFilesMap{{clFileName, "example_kernel(){}"}};
+    MockOclocArgHelper mockArgHelper{mockArgHelperFilesMap};
+    auto formerHelper = std::make_unique<FormerProductConfigHelper>();
+    formerHelper->getData() = createLegacyOclocFormerData();
+    mockArgHelper.setFormerProductConfigHelper(std::move(formerHelper));
+
+    VariableBackup<std::string> oclocFormerNameBackup{&Ocloc::oclocFormerLibName, "oclocFormer"};
+    VariableBackup<decltype(NEO::OsLibrary::loadFunc)> loadFuncBackup{&NEO::OsLibrary::loadFunc, MockOsLibrary::load};
+    VariableBackup<int> retCodeBackup{&OclocTestMocks::mockOclocInvokeResult, ocloc_error_t::OCLOC_SUCCESS};
+    VariableBackup<std::vector<std::string>> formerOclocArgsBackup{&OclocTestMocks::formerOclocArgs};
+
+    std::string output;
+    auto compile = [&](const std::string &deviceArg) {
+        OclocTestMocks::formerOclocArgs.clear();
+        auto osLibrary = new MockOsLibraryCustom(nullptr, true);
+        osLibrary->procMap["oclocInvoke"] = reinterpret_cast<void *>(mockOclocInvokeRecordingArgs);
+        MockOsLibrary::loadLibraryNewObject = osLibrary;
+
+        const char *argv[] = {
+            "ocloc",
+            "-file",
+            clFileName.c_str(),
+            "-device",
+            deviceArg.c_str()};
+        unsigned int argc = sizeof(argv) / sizeof(const char *);
+
+        StreamCapture capture;
+        capture.captureStdout();
+        auto retVal = oclocInvokeWithHelper(&mockArgHelper, argc, argv);
+        output = capture.getCapturedStdout();
+
+        delete MockOsLibrary::loadLibraryNewObject;
+        MockOsLibrary::loadLibraryNewObject = nullptr;
+        return retVal;
+    };
+
+    EXPECT_EQ(OCLOC_SUCCESS, compile("xe-skl"));
+    EXPECT_EQ((std::vector<std::string>{"ocloc", "-file", clFileName, "-device", "skl"}), OclocTestMocks::formerOclocArgs);
+
+    EXPECT_EQ(OCLOC_SUCCESS, compile("xe_9.0.9"));
+    EXPECT_EQ((std::vector<std::string>{"ocloc", "-file", clFileName, "-device", "9.0.9"}), OclocTestMocks::formerOclocArgs);
+
+    EXPECT_NE(OCLOC_SUCCESS, compile("xe-gen9"));
+    EXPECT_TRUE(OclocTestMocks::formerOclocArgs.empty());
+    EXPECT_NE(std::string::npos, output.find("Could not determine device target: xe-gen9.")) << output;
 }
 
 TEST(InvokeFormerOclocTest, givenEmptyOrInvalidFormerOclocNameWhenInvokeFormerOclocThenNulloptIsReturned) {

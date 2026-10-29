@@ -203,6 +203,53 @@ void OclocArgHelper::setHwInfoForHwInfoConfig(NEO::HardwareInfo &hwInfo, uint64_
     NEO::hardwareInfoBaseSetup[hwInfo.platform.eProductFamily](&hwInfo, true);
 }
 
+std::string OclocArgHelper::removeXePrefix(const std::string &deviceName) const {
+    constexpr std::string_view acronymPrefix = "xe-";
+    constexpr std::string_view versionPrefix = "xe_";
+
+    if (deviceName.starts_with(acronymPrefix)) {
+        auto acronym = deviceName.substr(acronymPrefix.length());
+        auto adjustedAcronym = acronym;
+        ProductConfigHelper::adjustDeviceName(adjustedAcronym);
+
+        const auto &devices = productConfigHelper->getDeviceAotInfo();
+        auto isDeviceAcronym = std::any_of(devices.begin(), devices.end(), [&adjustedAcronym](const DeviceAotInfo &device) {
+            return std::any_of(device.deviceAcronyms.begin(), device.deviceAcronyms.end(), ProductConfigHelper::findAcronymWithoutDash(adjustedAcronym));
+        });
+        isDeviceAcronym |= formerProductConfigHelper->getProductConfigFromAcronym(adjustedAcronym) != AOT::UNKNOWN_ISA;
+        if (isDeviceAcronym) {
+            return acronym;
+        }
+    } else if (deviceName.starts_with(versionPrefix)) {
+        auto version = deviceName.substr(versionPrefix.length());
+        if (version.find('.') != std::string::npos) {
+            return version;
+        }
+    }
+    return deviceName;
+}
+
+void OclocArgHelper::removeXePrefixFromDeviceNames(std::vector<std::string> &args) const {
+    for (size_t argIndex = 0; argIndex + 1 < args.size(); ++argIndex) {
+        if (args[argIndex] != "-device" && args[argIndex] != "-device_options") {
+            continue;
+        }
+        auto &deviceNames = args[++argIndex];
+        std::string adjustedDeviceNames;
+        size_t begin = 0;
+        size_t end = 0;
+        do {
+            end = deviceNames.find_first_of(",:", begin);
+            adjustedDeviceNames += removeXePrefix(deviceNames.substr(begin, end - begin));
+            if (end != std::string::npos) {
+                adjustedDeviceNames += deviceNames[end];
+                begin = end + 1;
+            }
+        } while (end != std::string::npos);
+        deviceNames = std::move(adjustedDeviceNames);
+    }
+}
+
 void OclocArgHelper::saveOutput(const std::string &filename, const void *pData, const size_t &dataSize) {
     if (outputEnabled()) {
         addOutput(filename, pData, dataSize);
