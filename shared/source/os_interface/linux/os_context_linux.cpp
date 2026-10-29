@@ -22,6 +22,8 @@
 #include "shared/source/os_interface/sys_calls_common.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 
+#include <sstream>
+
 namespace NEO {
 
 OsContext *OsContextLinux::create(OSInterface *osInterface, uint32_t rootDeviceIndex, uint32_t contextId, const EngineDescriptor &engineDescriptor) {

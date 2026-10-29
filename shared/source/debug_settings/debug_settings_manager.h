@@ -15,7 +15,6 @@
 
 #include <cstdint>
 #include <memory>
-#include <sstream>
 #include <string>
 #include <type_traits>
 
@@ -337,19 +336,21 @@ class DurationLog {
     static std::string getTimestamp();
 };
 
+std::string getDebugPrintPrefix();
+
 template <bool useFileBackend = true>
 struct FileLoggerProxy {
     void logString(std::string_view data);
 };
 
 template <bool useRealFile, typename... Args>
-void logStringToFile(FileLoggerProxy<useRealFile> &loggerProvider, const std::ostringstream &prefix, Args... args) {
+void logStringToFile(FileLoggerProxy<useRealFile> &loggerProvider, const std::string &prefix, Args... args) {
     constexpr int buffSz = 4096;
     char buff[buffSz];
 
     int bytes = 0;
-    if (not prefix.str().empty()) {
-        bytes += IoFunctions::snprintf(buff, buffSz, "%s", prefix.str().c_str());
+    if (not prefix.empty()) {
+        bytes += IoFunctions::snprintf(buff, buffSz, "%s", prefix.c_str());
     }
     bytes += IoFunctions::snprintf(buff, buffSz - bytes, args...);
 
@@ -369,13 +370,7 @@ void printStringForMacroUseOnly(FileLoggerProxy<useRealFile> &loggerProvider, FI
         maxSentinel = 4
     };
 
-    std::ostringstream prefix;
-    if (NEO::debugManager.flags.DebugMessagesBitmask.get() & DebugMessagesBitmask::withPid) {
-        prefix << "[PID: " << SysCalls::getCurrentProcessId() << "] ";
-    }
-    if (NEO::debugManager.flags.DebugMessagesBitmask.get() & DebugMessagesBitmask::withTimestamp) {
-        prefix << NEO::DurationLog::getTimestamp();
-    }
+    const auto prefix = getDebugPrintPrefix();
 
     const auto redirectionMode = [&]() {
         const auto flag = NEO::debugManager.flags.ForcePrintsRedirection.get();
@@ -399,8 +394,8 @@ void printStringForMacroUseOnly(FileLoggerProxy<useRealFile> &loggerProvider, FI
         break;
     }
 
-    if (not prefix.str().empty()) {
-        IoFunctions::fprintf(stream, "%s", prefix.str().c_str());
+    if (not prefix.empty()) {
+        IoFunctions::fprintf(stream, "%s", prefix.c_str());
     }
     IoFunctions::fprintf(stream, args...);
     flushDebugStream(stream, args...);

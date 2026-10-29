@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <linux/perf_event.h>
+#include <sstream>
 
 namespace L0 {
 

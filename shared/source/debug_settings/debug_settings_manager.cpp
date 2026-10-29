@@ -14,6 +14,7 @@
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/debug_env_reader.h"
+#include "shared/source/os_interface/sys_calls_common.h"
 #include "shared/source/utilities/debug_settings_reader_creator.h"
 #include "shared/source/utilities/io_functions.h"
 #include "shared/source/utilities/logger.h"
@@ -27,6 +28,17 @@
 #include <utility>
 
 namespace NEO {
+
+std::string getDebugPrintPrefix() {
+    std::ostringstream prefix;
+    if (NEO::debugManager.flags.DebugMessagesBitmask.get() & DebugMessagesBitmask::withPid) {
+        prefix << "[PID: " << SysCalls::getCurrentProcessId() << "] ";
+    }
+    if (NEO::debugManager.flags.DebugMessagesBitmask.get() & DebugMessagesBitmask::withTimestamp) {
+        prefix << NEO::DurationLog::getTimestamp();
+    }
+    return prefix.str();
+}
 
 DebugVariables::DebugVariables() = default;
 DebugVariables::DebugVariables(const DebugVariables &other) = default;

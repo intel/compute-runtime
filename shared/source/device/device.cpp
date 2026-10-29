@@ -40,6 +40,8 @@
 #include "shared/source/utilities/isa_pool_allocator.h"
 #include "shared/source/utilities/software_tags_manager.h"
 
+#include <sstream>
+
 namespace NEO {
 
 decltype(&PerformanceCounters::create) Device::createPerformanceCountersFunc = PerformanceCounters::create;

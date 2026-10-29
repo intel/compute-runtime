@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <cctype>
 #include <iomanip>
+#include <sstream>
 
 namespace L0 {
 namespace Sysman {
