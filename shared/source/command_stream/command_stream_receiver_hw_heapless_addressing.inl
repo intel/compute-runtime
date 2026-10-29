@@ -18,6 +18,7 @@
 #include "shared/source/helpers/preprocessor.h"
 #include "shared/source/helpers/state_base_address.h"
 #include "shared/source/helpers/timestamp_packet.h"
+#include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/utilities/logger.h"

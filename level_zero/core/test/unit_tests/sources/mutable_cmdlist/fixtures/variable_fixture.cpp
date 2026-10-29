@@ -9,6 +9,7 @@
 
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/in_order_cmd_helpers.h"
+#include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/utilities/tag_allocator.h"
 
 #include "level_zero/core/source/event/event.h"

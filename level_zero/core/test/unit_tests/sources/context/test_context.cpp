@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/unified_memory/unified_memory.h"

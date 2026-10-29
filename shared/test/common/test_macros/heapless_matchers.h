@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "shared/source/helpers/state_base_address_helper.h"
+#include "shared/source/helpers/state_base_address_types.h"
 
 #include "common_matchers.h"
 

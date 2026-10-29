@@ -9,6 +9,7 @@
 #include "shared/source/direct_submission/relaxed_ordering_helper.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/unified_memory/usm_memory_support.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"

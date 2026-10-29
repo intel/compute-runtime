@@ -21,6 +21,7 @@
 #include "shared/source/helpers/per_thread_data.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/register_offsets.h"
+#include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/indirect_heap/indirect_heap_type.h"
 #include "shared/source/kernel/implicit_args_helper.h"
 #include "shared/source/memory_manager/graphics_allocation.h"

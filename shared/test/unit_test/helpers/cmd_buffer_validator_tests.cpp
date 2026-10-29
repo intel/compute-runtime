@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/helpers/state_base_address_helper.h"
+#include "shared/source/helpers/state_base_address_types.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/cmd_buffer_validator.h"
 #include "shared/test/common/test_macros/hw_test.h"

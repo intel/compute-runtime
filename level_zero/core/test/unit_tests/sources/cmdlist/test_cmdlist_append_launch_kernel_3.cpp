@@ -11,6 +11,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/kernel_helpers.h"
 #include "shared/source/helpers/register_offsets.h"
+#include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/kernel/implicit_args_helper.h"
 #include "shared/source/os_interface/performance_counters.h"
 #include "shared/source/utilities/mem_lifetime.h"

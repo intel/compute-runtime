@@ -11,6 +11,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"

@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/helpers/state_base_address_helper.h"
+#include "shared/source/helpers/state_base_address_types.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 
 // clang-format off

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "shared/source/helpers/state_base_address_helper.h"
+#include "shared/source/helpers/state_base_address_types.h"
 
 #include <cstddef>
 #include <cstdint>

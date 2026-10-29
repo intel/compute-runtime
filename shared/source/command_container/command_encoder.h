@@ -12,12 +12,15 @@
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/source/debugger/debugger.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/source/helpers/register_offsets.h"
-#include "shared/source/helpers/state_base_address_helper.h"
+#include "shared/source/helpers/state_base_address_types.h"
 #include "shared/source/kernel/kernel_execution_type.h"
 
+#include <cstddef>
+#include <cstdint>
 #include <list>
 #include <optional>
 
@@ -26,10 +29,13 @@ enum class SlmPolicy;
 
 class BindlessHeapsHelper;
 class CommandContainer;
+class CommandStreamReceiver;
+class Device;
 class Gmm;
 class GmmHelper;
 class GraphicsAllocation;
 class IndirectHeap;
+class LinearStream;
 class ProductHelper;
 class ReleaseHelper;
 
