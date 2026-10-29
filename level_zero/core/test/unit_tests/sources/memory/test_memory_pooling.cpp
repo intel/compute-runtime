@@ -1207,18 +1207,16 @@ TEST_F(AllocUsmDeviceEnabledSinglePoolMemoryTest, givenPooledAndNotPooledIpcTrac
     auto notPooledTracking = new IpcHandleTracking;
     notPooledTracking->alloc = driverHandle->svmAllocsManager->getSVMAlloc(notPooledAllocation)->gpuAllocations.getDefaultGraphicsAllocation();
     notPooledTracking->refcnt = 1;
-    notPooledTracking->handle = std::numeric_limits<uint64_t>::max() - 1;
     notPooledTracking->ptr = castToUint64(notPooledAllocation);
-    ipcHandleMap.emplace(notPooledTracking->handle, notPooledTracking);
+    ipcHandleMap.emplace(std::numeric_limits<uint64_t>::max() - 1, notPooledTracking);
 
     auto secondBankTracking = new IpcHandleTracking;
     secondBankTracking->alloc = driverHandle->svmAllocsManager->getSVMAlloc(mockDeviceMemAllocPool->pool)->gpuAllocations.getDefaultGraphicsAllocation();
     secondBankTracking->refcnt = 1;
     secondBankTracking->handleId = 1;
-    secondBankTracking->handle = std::numeric_limits<uint64_t>::max();
     secondBankTracking->ptr = mockDeviceMemAllocPool->getPoolAddress();
     secondBankTracking->pooled = true;
-    ipcHandleMap.emplace(secondBankTracking->handle, secondBankTracking);
+    ipcHandleMap.emplace(std::numeric_limits<uint64_t>::max(), secondBankTracking);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(pooledAllocation));
     mockDeviceMemAllocPool->cleanup();

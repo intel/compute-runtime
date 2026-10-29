@@ -129,7 +129,6 @@ struct IpcHandleTracking {
     uint64_t refcnt = 0;
     NEO::GraphicsAllocation *alloc = nullptr;
     uint32_t handleId = 0;
-    uint64_t handle = 0;
     uint64_t ptr = 0;
     uint64_t cacheID = 0;
     struct IpcMemoryData ipcData = {};
@@ -436,7 +435,7 @@ struct Context : _ze_context_handle_t, NEO::NonCopyableAndNonMovableClass {
     bool isIpcRangeHandle(const ze_ipc_mem_handle_t &ipcHandle) const;
     uint64_t getIpcHandleKey(const ze_ipc_mem_handle_t &ipcHandle) const;
     void closeIpcHandleTracking(uint64_t handle);
-    void destroyIpcHandleTracking(IpcHandleTracking *handleTracking);
+    std::map<uint64_t, IpcHandleTracking *>::iterator eraseIpcHandleTracking(std::map<uint64_t, IpcHandleTracking *>::iterator ipcHandleIterator);
     void releaseIpcRangeChunkHandles(const std::vector<uint64_t> &handleKeys);
     void releaseIpcRangeTransport(const void *transportPtr);
 

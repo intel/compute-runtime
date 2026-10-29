@@ -4995,7 +4995,6 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithIpcMemoryDataTypeThenIpcDataI
     EXPECT_EQ(&mockAllocation, handleTracking->alloc);
     EXPECT_EQ(1u, handleTracking->refcnt);
     EXPECT_EQ(ptrAddress, handleTracking->ptr);
-    EXPECT_EQ(handle, handleTracking->handle);
 
     // Verify that the ipcData field is set
     uint64_t handleValue = 0;
@@ -5058,7 +5057,6 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithIpcOpaqueMemoryDataTypeThenIp
     EXPECT_EQ(&mockAllocation, handleTracking->alloc);
     EXPECT_EQ(1u, handleTracking->refcnt);
     EXPECT_EQ(ptrAddress, handleTracking->ptr);
-    EXPECT_EQ(handle, handleTracking->handle);
 
     uint64_t handleTrackingFdValue = 0;
     memcpy(&handleTrackingFdValue, &handleTracking->opaqueData.handle.fd, sizeof(handleTrackingFdValue));
@@ -5204,7 +5202,6 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithNtHandleTypeThenHandleUnionIs
     EXPECT_EQ(&mockAllocation, handleTracking->alloc);
     EXPECT_EQ(1u, handleTracking->refcnt);
     EXPECT_EQ(ptrAddress, handleTracking->ptr);
-    EXPECT_EQ(handle, handleTracking->handle);
 
     uint64_t handleTrackingReservedValue = 0;
     memcpy(&handleTrackingReservedValue, &handleTracking->opaqueData.handle.reserved, sizeof(handleTrackingReservedValue));
@@ -5265,7 +5262,6 @@ TEST_F(ContextTest, whenCallingGetFdFromIpcHandleWithOpaqueFdHandleThenCorrectHa
     contextWhitebox.settings.handleType = IpcHandleType::fdHandle;
 
     NEO::MockGraphicsAllocation mockAllocation;
-    uint64_t testHandle = 12345;
     int testFd = 42;
 
     // Create IPC handle tracking entry for opaque fd handle
@@ -5273,7 +5269,6 @@ TEST_F(ContextTest, whenCallingGetFdFromIpcHandleWithOpaqueFdHandleThenCorrectHa
     handleTracking->alloc = &mockAllocation;
     handleTracking->refcnt = 1;
     handleTracking->ptr = 0x1000;
-    handleTracking->handle = testHandle;
     handleTracking->opaqueData.handle.fd = testFd;
     handleTracking->opaqueData.type = IpcHandleType::fdHandle;
 
@@ -5323,7 +5318,6 @@ TEST_F(ContextTest, whenCallingGetFdFromIpcHandleWithNonOpaqueHandleThenCorrectF
     handleTracking->alloc = &mockAllocation;
     handleTracking->refcnt = 1;
     handleTracking->ptr = 0x2000;
-    handleTracking->handle = testHandle;
     handleTracking->ipcData.handle = testHandle;
     handleTracking->ipcData.type = static_cast<uint8_t>(InternalMemoryType::deviceUnifiedMemory);
 
@@ -5462,7 +5456,6 @@ TEST_F(ContextTest, whenCallingPutIpcMemHandleWithOpaqueIpcHandleThenUnregisterI
     handleTracking->alloc = &mockAllocation;
     handleTracking->refcnt = 1;
     handleTracking->ptr = 0x1000;
-    handleTracking->handle = testHandle;
     handleTracking->opaqueData.handle.fd = static_cast<int>(testHandle);
     handleTracking->opaqueData.type = IpcHandleType::fdHandle;
 
@@ -5505,7 +5498,6 @@ TEST_F(ContextTest, whenCallingPutIpcMemHandleWithNonOpaqueIpcHandleThenUnregist
     handleTracking->alloc = &mockAllocation;
     handleTracking->refcnt = 1;
     handleTracking->ptr = 0x2000;
-    handleTracking->handle = testHandle;
     handleTracking->ipcData.handle = testHandle;
 
     {
@@ -5587,7 +5579,6 @@ TEST_F(ContextTest, whenCallingPutIpcMemHandleWithMultipleRefCountThenHandleNotR
     handleTracking->alloc = &mockAllocation;
     handleTracking->refcnt = 2;
     handleTracking->ptr = 0x3000;
-    handleTracking->handle = testHandle;
     handleTracking->opaqueData.handle.fd = static_cast<int>(testHandle);
 
     {
@@ -6540,7 +6531,6 @@ TEST_F(ContextTest, whenCallingFreeMemWithOpaqueIpcHandleThenUnregisterIpcHandle
     handleTracking->alloc = nullptr;
     handleTracking->refcnt = 1;
     handleTracking->ptr = reinterpret_cast<uint64_t>(ptr);
-    handleTracking->handle = testHandle;
     handleTracking->opaqueData.handle.fd = static_cast<int>(testHandle);
     handleTracking->opaqueData.type = IpcHandleType::fdHandle;
 
@@ -6588,7 +6578,6 @@ TEST_F(ContextTest, whenCallingFreeMemWithNonOpaqueIpcHandleThenUnregisterIpcHan
     handleTracking->alloc = nullptr;
     handleTracking->refcnt = 1;
     handleTracking->ptr = reinterpret_cast<uint64_t>(ptr);
-    handleTracking->handle = testHandle;
     handleTracking->ipcData.handle = testHandle;
 
     {
@@ -6635,7 +6624,6 @@ TEST_F(ContextTest, whenCallingFreeMemWithOpaqueNtHandleThenUnregisterIpcHandleW
     handleTracking->alloc = nullptr;
     handleTracking->refcnt = 1;
     handleTracking->ptr = reinterpret_cast<uint64_t>(ptr);
-    handleTracking->handle = testHandle;
     handleTracking->opaqueData.handle.reserved = testHandle;
     handleTracking->opaqueData.type = IpcHandleType::ntHandle;
 
@@ -6726,7 +6714,6 @@ TEST_F(ContextTest, whenCallingFreeMemWithIpcHandleAndNullUsmPoolThenHandleIsRem
     handleTracking->alloc = nullptr;
     handleTracking->refcnt = 1;
     handleTracking->ptr = reinterpret_cast<uint64_t>(ptr);
-    handleTracking->handle = testHandle;
     handleTracking->handleId = 0;
     handleTracking->opaqueData.handle.fd = static_cast<int>(testHandle);
 
@@ -6769,7 +6756,6 @@ TEST_F(ContextTest, whenCallingPutIpcMemHandleWithNonSocketsOpaqueHandleThenUnre
     handleTracking->alloc = &mockAllocation;
     handleTracking->refcnt = 1;
     handleTracking->ptr = 0x5000;
-    handleTracking->handle = testHandle;
     handleTracking->opaqueData.handle.fd = static_cast<int>(testHandle);
 
     {
@@ -6873,7 +6859,6 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithExistingHandleInMapThenRefCou
     existingTracking->alloc = &mockAllocation;
     existingTracking->refcnt = 1;
     existingTracking->ptr = ptrAddress;
-    existingTracking->handle = handle;
 
     {
         auto lock = driverHandle->lockIPCHandleMap();
@@ -6916,7 +6901,6 @@ TEST_F(ContextTest, whenTrackingIpcEventPoolHandleWithNullAllocationThenHandleTr
     EXPECT_EQ(1u, handleIterator->second->refcnt);
     EXPECT_EQ(nullptr, handleIterator->second->alloc);
     EXPECT_EQ(0u, handleIterator->second->ptr);
-    EXPECT_EQ(testHandle, handleIterator->second->handle);
 
     delete handleIterator->second;
     ipcHandleMap.clear();
@@ -6972,7 +6956,6 @@ TEST_F(ContextTest, givenIpcHandleTrackingOfPooledAllocationWhenCallingFreeMemTh
     handleTracking->alloc = allocData->gpuAllocations.getDefaultGraphicsAllocation();
     handleTracking->refcnt = 2;
     handleTracking->ptr = poolLookup.pool->getPoolAddress();
-    handleTracking->handle = testHandle;
     handleTracking->pooled = true;
     driverHandle->getIPCHandleMap()[testHandle] = handleTracking.get();
 
@@ -7009,7 +6992,6 @@ TEST_F(ContextTest, whenCallingPutIpcMemHandleWithNtHandleTypeThenUnregisterIsNo
     handleTracking->alloc = &mockAllocation;
     handleTracking->refcnt = 1;
     handleTracking->ptr = 0x6000;
-    handleTracking->handle = testHandle;
     handleTracking->opaqueData.handle.reserved = testHandle;
 
     {
@@ -7061,7 +7043,6 @@ TEST_F(ContextIpcSocketTest, whenCallingFreeMemWithIpcHandleAndSocketsAndFdHandl
     handleTracking->alloc = nullptr;
     handleTracking->refcnt = 1;
     handleTracking->ptr = reinterpret_cast<uint64_t>(ptr);
-    handleTracking->handle = testHandle;
     handleTracking->handleId = 0;
     handleTracking->opaqueData.handle.fd = static_cast<int>(testHandle);
 
@@ -7118,7 +7099,6 @@ TEST_F(ContextTest, whenCallingPutIpcMemHandleWithCachedImportThenCacheIsCleared
     handleTracking->alloc = &mockAllocation;
     handleTracking->refcnt = 1;
     handleTracking->ptr = 0x7000;
-    handleTracking->handle = testHandle;
     handleTracking->cacheID = cacheID; // Set the cacheID
     handleTracking->opaqueData.handle.fd = static_cast<int>(testHandle);
 
@@ -7184,7 +7164,6 @@ TEST_F(ContextTest, whenCallingFreeMemWithCachedImportThenCacheIsCleared) {
     handleTracking->alloc = nullptr;
     handleTracking->refcnt = 1;
     handleTracking->ptr = reinterpret_cast<uint64_t>(ptr);
-    handleTracking->handle = testHandle;
     handleTracking->handleId = 0;
     handleTracking->cacheID = cacheID; // Set the cacheID
     handleTracking->opaqueData.handle.fd = static_cast<int>(testHandle);
@@ -7230,7 +7209,6 @@ TEST_F(ContextIpcSocketTest, whenCallingPutIpcMemHandleWithExactlySocketsOpaqueH
     handleTracking->alloc = &mockAllocation;
     handleTracking->refcnt = 1;
     handleTracking->ptr = 0x1000;
-    handleTracking->handle = testHandle;
     handleTracking->handleId = 0;
     handleTracking->opaqueData.handle.fd = static_cast<int>(testHandle);
     handleTracking->opaqueData.type = IpcHandleType::fdHandle;
@@ -7375,7 +7353,6 @@ TEST_F(ContextTest, whenCallingFreeMemWithSocketsOpaqueHandleButNtHandleTypeThen
     handleTracking->alloc = nullptr;
     handleTracking->refcnt = 1;
     handleTracking->ptr = reinterpret_cast<uint64_t>(ptr);
-    handleTracking->handle = testHandle;
     handleTracking->handleId = 0;
     handleTracking->opaqueData.handle.reserved = testHandle;
     handleTracking->opaqueData.type = IpcHandleType::ntHandle;
@@ -7605,7 +7582,6 @@ TEST_F(ContextTest, whenCallingPutIpcMemHandleWithReservedHandleDataThenCloseInt
     handleTracking->alloc = &mockAllocation;
     handleTracking->refcnt = 1;
     handleTracking->ptr = 0x1000;
-    handleTracking->handle = testHandle;
     handleTracking->handleId = 0;
     handleTracking->hasReservedHandleData = true;
     memcpy(handleTracking->opaqueData.reservedHandleData, &testReservedData, sizeof(void *));
@@ -7652,7 +7628,6 @@ TEST_F(ContextTest, whenCallingPutIpcMemHandleWithReservedHandleDataAndMultipleR
     handleTracking->alloc = &mockAllocation;
     handleTracking->refcnt = 2; // Multiple references
     handleTracking->ptr = 0x2000;
-    handleTracking->handle = testHandle;
     handleTracking->handleId = 0;
     handleTracking->hasReservedHandleData = true;
     memcpy(handleTracking->opaqueData.reservedHandleData, &testReservedData, sizeof(void *));
@@ -7792,7 +7767,6 @@ TEST_F(ContextTest, whenCallingPutIpcMemHandleWithReservedHandleDataThenHandleTr
     handleTracking->alloc = &mockAllocation;
     handleTracking->refcnt = 1;
     handleTracking->ptr = 0x5000;
-    handleTracking->handle = testHandle;
     handleTracking->handleId = 42;
     handleTracking->hasReservedHandleData = true;
     memcpy(handleTracking->opaqueData.reservedHandleData, &testReservedData, sizeof(void *));
@@ -7850,7 +7824,6 @@ TEST_F(ContextTest, whenCallingPutIpcMemHandleWithoutReservedHandleDataThenHandl
     handleTracking->alloc = &mockAllocation;
     handleTracking->refcnt = 1;
     handleTracking->ptr = 0x6000;
-    handleTracking->handle = testHandle;
     handleTracking->handleId = 33;
     handleTracking->hasReservedHandleData = false; // No reserved data
     handleTracking->ipcData.handle = testHandle;

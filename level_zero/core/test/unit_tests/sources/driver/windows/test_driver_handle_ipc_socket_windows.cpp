@@ -83,7 +83,6 @@ TEST_F(DriverHandleIpcSocketWindowsTest, givenOpaqueHandleWithFdTypeAndSocketFal
     EXPECT_EQ(&mockAllocation, handleIterator->second->alloc);
     EXPECT_EQ(1u, handleIterator->second->refcnt);
     EXPECT_EQ(ptrAddress, handleIterator->second->ptr);
-    EXPECT_EQ(handle, handleIterator->second->handle);
 
     int fdValue = 0;
     memcpy(&fdValue, &handleIterator->second->opaqueData.handle.fd, sizeof(fdValue));

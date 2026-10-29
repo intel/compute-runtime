@@ -595,8 +595,7 @@ void Context::releaseIpcHandle(const void *ptr, NEO::UsmMemAllocPool *usmPool) {
     ipcHandleIterator = this->driverHandle->getIPCHandleMap().begin();
     while (ipcHandleIterator != this->driverHandle->getIPCHandleMap().end()) {
         if (ipcHandleIterator->second->ptr == addressForIpc) {
-            this->destroyIpcHandleTracking(ipcHandleIterator->second);
-            this->driverHandle->getIPCHandleMap().erase(ipcHandleIterator);
+            this->eraseIpcHandleTracking(ipcHandleIterator);
             break;
         }
         ipcHandleIterator++;
@@ -609,8 +608,7 @@ void Context::releasePooledIpcHandles(const void *poolPtr) {
     auto &ipcMap = this->driverHandle->getIPCHandleMap();
     for (auto ipcHandleIterator = ipcMap.begin(); ipcHandleIterator != ipcMap.end();) {
         if (ipcHandleIterator->second->pooled && ipcHandleIterator->second->ptr == poolAddress) {
-            this->destroyIpcHandleTracking(ipcHandleIterator->second);
-            ipcHandleIterator = ipcMap.erase(ipcHandleIterator);
+            ipcHandleIterator = this->eraseIpcHandleTracking(ipcHandleIterator);
         } else {
             ipcHandleIterator++;
         }
@@ -924,14 +922,14 @@ void Context::closeIpcHandleTracking(uint64_t handle) {
         IpcHandleTracking *trackIPC = ipcIter->second;
         trackIPC->refcnt -= 1;
         if (trackIPC->refcnt == 0) {
-            this->destroyIpcHandleTracking(trackIPC);
-            ipcMap.erase(ipcIter);
+            this->eraseIpcHandleTracking(ipcIter);
         }
     }
 }
 
-void Context::destroyIpcHandleTracking(IpcHandleTracking *handleTracking) {
-    uint64_t handle = handleTracking->handle;
+std::map<uint64_t, IpcHandleTracking *>::iterator Context::eraseIpcHandleTracking(std::map<uint64_t, IpcHandleTracking *>::iterator ipcHandleIterator) {
+    uint64_t handle = ipcHandleIterator->first;
+    IpcHandleTracking *handleTracking = ipcHandleIterator->second;
     auto *memoryManager = this->driverHandle->getMemoryManager();
     if (handleTracking->hasReservedHandleData) {
         memoryManager->closeInternalHandleWithReservedData(handle, handleTracking->handleId, handleTracking->alloc, handleTracking->opaqueData.reservedHandleData);
@@ -943,6 +941,7 @@ void Context::destroyIpcHandleTracking(IpcHandleTracking *handleTracking) {
     }
     this->driverHandle->clearCachedImportHandle(handleTracking->cacheID);
     delete handleTracking;
+    return this->driverHandle->getIPCHandleMap().erase(ipcHandleIterator);
 }
 
 void Context::trackIpcEventPoolHandle(uint64_t handle, NEO::GraphicsAllocation *alloc) {
@@ -955,7 +954,6 @@ void Context::trackIpcEventPoolHandle(uint64_t handle, NEO::GraphicsAllocation *
         IpcHandleTracking *handleTracking = new IpcHandleTracking;
         handleTracking->alloc = alloc;
         handleTracking->refcnt = 1;
-        handleTracking->handle = handle;
         handleTracking->ptr = alloc ? alloc->getGpuAddress() : 0u;
         ipcMap.emplace(handle, handleTracking);
     }
@@ -969,12 +967,7 @@ void Context::releaseIpcEventPoolHandle(uint64_t handle) {
         IpcHandleTracking *trackIPC = ipcIter->second;
         trackIPC->refcnt -= 1;
         if (trackIPC->refcnt == 0) {
-            driverHandle->getMemoryManager()->closeInternalHandle(handle, trackIPC->handleId, trackIPC->alloc);
-            if ((settings.useOpaqueHandle == OpaqueHandlingType::sockets) && settings.handleType == IpcHandleType::fdHandle) {
-                this->driverHandle->unregisterIpcHandleWithServer(handle);
-            }
-            delete trackIPC;
-            ipcMap.erase(handle);
+            this->eraseIpcHandleTracking(ipcIter);
         }
     }
 }
@@ -982,22 +975,7 @@ void Context::releaseIpcEventPoolHandle(uint64_t handle) {
 ze_result_t Context::putIpcEventPoolHandle(ze_ipc_event_pool_handle_t ipcEventPoolHandle) {
     // getIpcHandle always writes IpcOpaqueEventPoolData, so parse it as such (see event.h).
     IpcOpaqueEventPoolData &ipcData = *reinterpret_cast<IpcOpaqueEventPoolData *>(ipcEventPoolHandle.data);
-    uint64_t handle = ipcData.handle.val;
-    auto lock = driverHandle->lockIPCHandleMap();
-    auto &ipcMap = driverHandle->getIPCHandleMap();
-    auto ipcIter = ipcMap.find(handle);
-    if (ipcIter != ipcMap.end()) {
-        IpcHandleTracking *trackIPC = ipcIter->second;
-        trackIPC->refcnt -= 1;
-        if (trackIPC->refcnt == 0) {
-            driverHandle->getMemoryManager()->closeInternalHandle(handle, trackIPC->handleId, trackIPC->alloc);
-            if ((settings.useOpaqueHandle == OpaqueHandlingType::sockets) && settings.handleType == IpcHandleType::fdHandle) {
-                this->driverHandle->unregisterIpcHandleWithServer(handle);
-            }
-            delete trackIPC;
-            ipcMap.erase(handle);
-        }
-    }
+    this->releaseIpcEventPoolHandle(ipcData.handle.val);
     return ZE_RESULT_SUCCESS;
 }
 
@@ -2924,7 +2902,6 @@ void Context::setIPCHandleData(NEO::GraphicsAllocation *graphicsAllocation, uint
         handleTracking->alloc = graphicsAllocation;
         handleTracking->refcnt = 1;
         handleTracking->ptr = ptrAddress;
-        handleTracking->handle = handle;
         handleTracking->hasReservedHandleData = hasReservedData;
         handleTracking->pooled = usmPool != nullptr;
         if constexpr (std::is_same_v<IpcDataT, IpcMemoryData>) {

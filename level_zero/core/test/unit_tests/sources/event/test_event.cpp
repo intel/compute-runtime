@@ -622,7 +622,6 @@ TEST_F(EventPoolIPCHandleTests, givenTrackedIpcEventPoolHandleWhenTrackingSameHa
     ASSERT_NE(handleIterator, ipcHandleMap.end());
     EXPECT_EQ(1u, handleIterator->second->refcnt);
     EXPECT_EQ(&mockAllocation, handleIterator->second->alloc);
-    EXPECT_EQ(handle, handleIterator->second->handle);
 
     contextWhitebox.trackIpcEventPoolHandle(handle, &mockAllocation);
 
@@ -631,7 +630,6 @@ TEST_F(EventPoolIPCHandleTests, givenTrackedIpcEventPoolHandleWhenTrackingSameHa
     ASSERT_NE(handleIterator, ipcHandleMap.end());
     EXPECT_EQ(2u, handleIterator->second->refcnt);
     EXPECT_EQ(&mockAllocation, handleIterator->second->alloc);
-    EXPECT_EQ(handle, handleIterator->second->handle);
 
     delete handleIterator->second;
     ipcHandleMap.clear();

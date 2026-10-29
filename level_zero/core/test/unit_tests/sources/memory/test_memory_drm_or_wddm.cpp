@@ -445,7 +445,6 @@ struct ContextOpaqueHandleMock : public L0::Context {
     void addIpcHandleTracking(uint64_t handle, bool useOpaqueHandle) {
         auto lock = this->driverHandle->lockIPCHandleMap();
         auto *tracking = new IpcHandleTracking();
-        tracking->handle = handle;
         tracking->refcnt = 1;
         settings.useOpaqueHandle = useOpaqueHandle;
 
