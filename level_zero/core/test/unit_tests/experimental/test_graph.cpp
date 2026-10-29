@@ -5384,6 +5384,8 @@ struct ForkedGraphWithExternalSignalEventsTest {
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             GraphTestInstantiationTest,
             GivenInOrderCmdListsAndMonolithicPolicyOnAForkedGraphWhenExternalSignalEventsUsedThenPatchPreambleCrossSyncsUseSamePatchPreambleCountersAsExternalEvents) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.OverrideGraphPatchPreambleBarrierSupport.set(0);
     GraphsCleanupGuard graphCleanup;
     ForkedGraphWithExternalSignalEventsTest graph;
     graph.executeGraph<FamilyType>(device, context);
@@ -5541,6 +5543,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
             GraphTestInstantiationTest,
             GivenInOrderCmdListsAndMonolithicPolicyOnAForkedGraphWhenGraphIsExecutedMoreThanOnceThenInOrderCompletionIsUsedToSynchronizeBeforePatchPreamble) {
     DebugManagerStateRestore restorer;
+    debugManager.flags.OverrideGraphPatchPreambleBarrierSupport.set(0);
     debugManager.flags.ResolveDependenciesViaPipeControls.set(1);
     GraphsCleanupGuard graphCleanup;
 

@@ -248,6 +248,18 @@ CRITEST_F(CriProductHelper, givenCriWhenAskingForRegularCmdListDualStreamCopyOff
     EXPECT_TRUE(productHelper->isDualStreamCopyOffloadForRegularCmdListSupported());
 }
 
+CRITEST_F(CriProductHelper, givenCriWhenAskingForGraphPatchPreambleBarrierSupportThenReturnTrueByDefaultAndRespectDebugFlag) {
+    DebugManagerStateRestore restorer;
+
+    EXPECT_TRUE(productHelper->isGraphPatchPreambleBarrierSupported());
+
+    debugManager.flags.OverrideGraphPatchPreambleBarrierSupport.set(0);
+    EXPECT_FALSE(productHelper->isGraphPatchPreambleBarrierSupported());
+
+    debugManager.flags.OverrideGraphPatchPreambleBarrierSupport.set(1);
+    EXPECT_TRUE(productHelper->isGraphPatchPreambleBarrierSupported());
+}
+
 CRITEST_F(CriProductHelper, givenCriWhenAskingIfDirectSubmissionContextGroupIdleDetectionIsEnabledThenFalseReturned) {
     EXPECT_FALSE(productHelper->isDirectSubmissionContextGroupIdleDetectionEnabled());
 }

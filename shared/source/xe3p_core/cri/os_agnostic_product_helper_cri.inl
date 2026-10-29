@@ -160,6 +160,14 @@ bool ProductHelperHw<gfxProduct>::isDualStreamCopyOffloadForRegularCmdListSuppor
 }
 
 template <>
+bool ProductHelperHw<gfxProduct>::isGraphPatchPreambleBarrierSupported() const {
+    if (debugManager.flags.OverrideGraphPatchPreambleBarrierSupport.get() != -1) {
+        return (debugManager.flags.OverrideGraphPatchPreambleBarrierSupport.get() == 1);
+    }
+    return true;
+}
+
+template <>
 bool ProductHelperHw<gfxProduct>::isWriteSplitRequired(bool isDstSystemOrRemoteMemory) const {
     switch (debugManager.flags.OverrideBcsWriteSplit.get()) {
     case 0:
