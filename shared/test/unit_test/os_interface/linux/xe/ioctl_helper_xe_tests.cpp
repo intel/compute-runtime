@@ -4162,7 +4162,7 @@ TEST_F(IoctlHelperXeTest, givenEnableDeferBackingSetToZeroWhenIsDeferBackingSupp
     EXPECT_FALSE(xeIoctlHelper->isDeferBackingSupported());
 }
 
-TEST_F(IoctlHelperXeTest, givenDeferBackingSupportedAndThresholdDisabledWhenIsDeferBackingEnabledForSizeIsCalledThenReturnsTrue) {
+TEST_F(IoctlHelperXeTest, givenDeferBackingSupportedAndThresholdDisabledWhenIsDeferBackingEnabledForAllocationIsCalledThenReturnsTrue) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableDeferBacking.set(1);
     debugManager.flags.DeferBackingMemoryPressurePercent.set(-1);
@@ -4171,10 +4171,10 @@ TEST_F(IoctlHelperXeTest, givenDeferBackingSupportedAndThresholdDisabledWhenIsDe
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
     auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
     xeIoctlHelper->initialize();
-    EXPECT_TRUE(xeIoctlHelper->isDeferBackingEnabledForSize(1u));
+    EXPECT_TRUE(xeIoctlHelper->isDeferBackingEnabledForAllocation(1u, AllocationType::buffer));
 }
 
-TEST_F(IoctlHelperXeTest, givenDeferBackingDisabledWhenIsDeferBackingEnabledForSizeIsCalledThenReturnsFalse) {
+TEST_F(IoctlHelperXeTest, givenDeferBackingDisabledWhenIsDeferBackingEnabledForAllocationIsCalledThenReturnsFalse) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableDeferBacking.set(0);
 
@@ -4182,7 +4182,7 @@ TEST_F(IoctlHelperXeTest, givenDeferBackingDisabledWhenIsDeferBackingEnabledForS
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
     auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
     xeIoctlHelper->initialize();
-    EXPECT_FALSE(xeIoctlHelper->isDeferBackingEnabledForSize(1u << 20));
+    EXPECT_FALSE(xeIoctlHelper->isDeferBackingEnabledForAllocation(1u << 20, AllocationType::buffer));
 }
 
 TEST_F(IoctlHelperXeTest, givenXeIoctlHelperWhenCreateDrmContextAndLowLatencyHintNotAvailableThenNoFlagIsSet) {
@@ -4828,7 +4828,7 @@ TEST_F(IoctlHelperXeTest, givenRegionSharedByMultipleTilesWhenHasEnoughDeviceMem
     EXPECT_FALSE(xeIoctlHelper->hasEnoughDeviceMemory(1u, 0b100u));
 }
 
-TEST_F(IoctlHelperXeTest, givenXeIoctlHelperAndDeferBackingEnabledAndCsrTypeHardwareWithAubWhenIsDeferBackingEnabledForSizeIsCalledThenReturnsFalse) {
+TEST_F(IoctlHelperXeTest, givenXeIoctlHelperAndDeferBackingEnabledAndCsrTypeHardwareWithAubWhenIsDeferBackingEnabledForAllocationIsCalledThenReturnsFalse) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableDeferBacking.set(1);
     debugManager.flags.DeferBackingMemoryPressurePercent.set(-1);
@@ -4839,10 +4839,10 @@ TEST_F(IoctlHelperXeTest, givenXeIoctlHelperAndDeferBackingEnabledAndCsrTypeHard
     auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
     xeIoctlHelper->initialize();
     EXPECT_FALSE(xeIoctlHelper->isDeferBackingSupported());
-    EXPECT_FALSE(xeIoctlHelper->isDeferBackingEnabledForSize(1u));
+    EXPECT_FALSE(xeIoctlHelper->isDeferBackingEnabledForAllocation(1u, AllocationType::buffer));
 }
 
-TEST_F(IoctlHelperXeTest, givenXeIoctlHelperAndDeferBackingEnabledAndCsrTypeHardwareWhenIsDeferBackingEnabledForSizeIsCalledThenReturnsTrue) {
+TEST_F(IoctlHelperXeTest, givenXeIoctlHelperAndDeferBackingEnabledAndCsrTypeHardwareWhenIsDeferBackingEnabledForAllocationIsCalledThenReturnsTrue) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableDeferBacking.set(1);
     debugManager.flags.DeferBackingMemoryPressurePercent.set(-1);
@@ -4853,10 +4853,10 @@ TEST_F(IoctlHelperXeTest, givenXeIoctlHelperAndDeferBackingEnabledAndCsrTypeHard
     auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
     xeIoctlHelper->initialize();
     EXPECT_TRUE(xeIoctlHelper->isDeferBackingSupported());
-    EXPECT_TRUE(xeIoctlHelper->isDeferBackingEnabledForSize(1u));
+    EXPECT_TRUE(xeIoctlHelper->isDeferBackingEnabledForAllocation(1u, AllocationType::buffer));
 }
 
-TEST_F(IoctlHelperXeTest, givenXeIoctlHelperAndDeferBackingEnabledAndCsrTypeDefaultWhenIsDeferBackingEnabledForSizeIsCalledThenReturnsTrue) {
+TEST_F(IoctlHelperXeTest, givenXeIoctlHelperAndDeferBackingEnabledAndCsrTypeDefaultWhenIsDeferBackingEnabledForAllocationIsCalledThenReturnsTrue) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableDeferBacking.set(1);
     debugManager.flags.DeferBackingMemoryPressurePercent.set(-1);
@@ -4867,10 +4867,10 @@ TEST_F(IoctlHelperXeTest, givenXeIoctlHelperAndDeferBackingEnabledAndCsrTypeDefa
     auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
     xeIoctlHelper->initialize();
     EXPECT_TRUE(xeIoctlHelper->isDeferBackingSupported());
-    EXPECT_TRUE(xeIoctlHelper->isDeferBackingEnabledForSize(1u));
+    EXPECT_TRUE(xeIoctlHelper->isDeferBackingEnabledForAllocation(1u, AllocationType::buffer));
 }
 
-TEST_F(IoctlHelperXeTest, givenXeIoctlHelperAndDeferBackingDisabledWhenIsDeferBackingEnabledForSizeIsCalledThenReturnsFalse) {
+TEST_F(IoctlHelperXeTest, givenXeIoctlHelperAndDeferBackingDisabledWhenIsDeferBackingEnabledForAllocationIsCalledThenReturnsFalse) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableDeferBacking.set(0);
     debugManager.flags.DeferBackingMemoryPressurePercent.set(-1);
@@ -4880,10 +4880,10 @@ TEST_F(IoctlHelperXeTest, givenXeIoctlHelperAndDeferBackingDisabledWhenIsDeferBa
     auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
     xeIoctlHelper->initialize();
     EXPECT_FALSE(xeIoctlHelper->isDeferBackingSupported());
-    EXPECT_FALSE(xeIoctlHelper->isDeferBackingEnabledForSize(1u));
+    EXPECT_FALSE(xeIoctlHelper->isDeferBackingEnabledForAllocation(1u, AllocationType::buffer));
 }
 
-TEST_F(IoctlHelperXeTest, givenReorderedRootDeviceEnvironmentsWhenIsDeferBackingEnabledForSizeIsCalledThenPressureOfOwningRootDeviceIsUsed) {
+TEST_F(IoctlHelperXeTest, givenReorderedRootDeviceEnvironmentsWhenIsDeferBackingEnabledForAllocationIsCalledThenPressureOfOwningRootDeviceIsUsed) {
     struct DeferBackingPressureMemoryManager : public TestedDrmMemoryManager {
         using DrmMemoryManager::cachedMaxLocalMemory;
         using MemoryManager::localMemAllocsSize;
@@ -4912,8 +4912,48 @@ TEST_F(IoctlHelperXeTest, givenReorderedRootDeviceEnvironmentsWhenIsDeferBacking
     auto drm = executionEnvironment->rootDeviceEnvironments[1]->osInterface->getDriverModel()->as<DrmMockXe>();
     auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
     xeIoctlHelper->initialize();
-    EXPECT_FALSE(xeIoctlHelper->isDeferBackingEnabledForSize(1u));
+    EXPECT_FALSE(xeIoctlHelper->isDeferBackingEnabledForAllocation(1u, AllocationType::buffer));
 
     memoryManager->localMemAllocsSize[1] = 900u;
-    EXPECT_TRUE(xeIoctlHelper->isDeferBackingEnabledForSize(1u));
+    EXPECT_TRUE(xeIoctlHelper->isDeferBackingEnabledForAllocation(1u, AllocationType::buffer));
+}
+
+TEST_F(IoctlHelperXeTest, givenDeferBackingEnabledAndPressureThresholdNotReachedWhenIsDeferBackingEnabledForAllocationIsCalledThenOnlyPreemptionIsDeferred) {
+    struct DeferBackingPressureMemoryManager : public TestedDrmMemoryManager {
+        using DrmMemoryManager::cachedMaxLocalMemory;
+        using MemoryManager::localMemAllocsSize;
+        using TestedDrmMemoryManager::TestedDrmMemoryManager;
+    };
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableDeferBacking.set(1);
+    debugManager.flags.DeferBackingMemoryPressurePercent.set(100);
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>(defaultHwInfo.get(), false, 1u);
+    auto &rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0];
+    rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
+    rootDeviceEnvironment->osInterface->setDriverModel(DrmMockXe::create(*rootDeviceEnvironment));
+
+    auto memoryManager = new DeferBackingPressureMemoryManager(*executionEnvironment);
+    executionEnvironment->memoryManager.reset(memoryManager);
+    memoryManager->cachedMaxLocalMemory[0] = 1000u;
+    memoryManager->localMemAllocsSize[0] = 0u;
+
+    auto drm = rootDeviceEnvironment->osInterface->getDriverModel()->as<DrmMockXe>();
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    xeIoctlHelper->initialize();
+    EXPECT_TRUE(xeIoctlHelper->isDeferBackingEnabledForAllocation(1u, AllocationType::preemption));
+    EXPECT_FALSE(xeIoctlHelper->isDeferBackingEnabledForAllocation(1u, AllocationType::buffer));
+}
+
+TEST_F(IoctlHelperXeTest, givenDeferBackingDisabledWhenIsDeferBackingEnabledForAllocationIsCalledForPreemptionThenReturnsFalse) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableDeferBacking.set(0);
+    debugManager.flags.DeferBackingMemoryPressurePercent.set(100);
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    xeIoctlHelper->initialize();
+    EXPECT_FALSE(xeIoctlHelper->isDeferBackingEnabledForAllocation(MemoryConstants::megaByte, AllocationType::preemption));
 }

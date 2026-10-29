@@ -3014,7 +3014,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, givenDeferBackingDecisio
     this->dontTestIoctlInTearDown = true;
 
     auto mockIoctlHelper = new MockIoctlHelper(*mock);
-    mockIoctlHelper->isDeferBackingEnabledForSizeResult = true;
+    mockIoctlHelper->isDeferBackingEnabledForAllocationResult = true;
 
     auto &drm = static_cast<DrmMockCustom &>(memoryManager->getDrm(rootDeviceIndex));
     drm.ioctlHelper.reset(mockIoctlHelper);
@@ -3025,7 +3025,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, givenDeferBackingDecisio
     ASSERT_NE(nullptr, allocation);
     EXPECT_TRUE(static_cast<DrmAllocation *>(allocation)->getBO()->isDeferBackingUsed());
 
-    mockIoctlHelper->isDeferBackingEnabledForSizeResult = false;
+    mockIoctlHelper->isDeferBackingEnabledForAllocationResult = false;
 
     auto ptr = memoryManager->lockResource(allocation);
     EXPECT_NE(nullptr, ptr);
@@ -3042,7 +3042,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, givenDeferBackingNotUsed
     this->dontTestIoctlInTearDown = true;
 
     auto mockIoctlHelper = new MockIoctlHelper(*mock);
-    mockIoctlHelper->isDeferBackingEnabledForSizeResult = false;
+    mockIoctlHelper->isDeferBackingEnabledForAllocationResult = false;
 
     auto &drm = static_cast<DrmMockCustom &>(memoryManager->getDrm(rootDeviceIndex));
     drm.ioctlHelper.reset(mockIoctlHelper);
@@ -3053,7 +3053,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, givenDeferBackingNotUsed
     ASSERT_NE(nullptr, allocation);
     EXPECT_FALSE(static_cast<DrmAllocation *>(allocation)->getBO()->isDeferBackingUsed());
 
-    mockIoctlHelper->isDeferBackingEnabledForSizeResult = true;
+    mockIoctlHelper->isDeferBackingEnabledForAllocationResult = true;
 
     auto ptr = memoryManager->lockResource(allocation);
     EXPECT_NE(nullptr, ptr);
@@ -3065,12 +3065,40 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, givenDeferBackingNotUsed
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+struct MockIoctlHelperDeferBackingForPreemption : public MockIoctlHelper {
+    using MockIoctlHelper::MockIoctlHelper;
+    bool isDeferBackingEnabledForAllocation(size_t allocationSize, AllocationType allocationType) const override {
+        return allocationType == AllocationType::preemption;
+    }
+};
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, givenIoctlHelperDefersOnlyPreemptionWhenAllocatingInLocalMemoryThenDeferBackingFollowsAllocationType) {
+    mock->ioctlExpected.total = -1;
+    this->dontTestIoctlInTearDown = true;
+
+    auto &drm = static_cast<DrmMockCustom &>(memoryManager->getDrm(rootDeviceIndex));
+    drm.ioctlHelper.reset(new MockIoctlHelperDeferBackingForPreemption(*mock));
+
+    auto preemptionAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, true, MemoryConstants::pageSize64k, AllocationType::preemption});
+    ASSERT_NE(nullptr, preemptionAllocation);
+    EXPECT_EQ(MemoryPool::localMemory, preemptionAllocation->getMemoryPool());
+    EXPECT_TRUE(static_cast<DrmAllocation *>(preemptionAllocation)->getBO()->isDeferBackingUsed());
+
+    auto bufferAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, true, MemoryConstants::pageSize64k, AllocationType::buffer});
+    ASSERT_NE(nullptr, bufferAllocation);
+    EXPECT_EQ(MemoryPool::localMemory, bufferAllocation->getMemoryPool());
+    EXPECT_FALSE(static_cast<DrmAllocation *>(bufferAllocation)->getBO()->isDeferBackingUsed());
+
+    memoryManager->freeGraphicsMemory(preemptionAllocation);
+    memoryManager->freeGraphicsMemory(bufferAllocation);
+}
+
 HWTEST_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmMemoryManagerAndResidentNeededbeforeLockWhenLockIsCalledForDebugAllocationsThenVerifyAllocationIsNotResident) {
     mock->ioctlExpected.total = -1;
     this->dontTestIoctlInTearDown = true;
 
     auto mockIoctlHelper = new MockIoctlHelper(*mock);
-    mockIoctlHelper->isDeferBackingEnabledForSizeResult = true;
+    mockIoctlHelper->isDeferBackingEnabledForAllocationResult = true;
 
     auto &drm = static_cast<DrmMockCustom &>(memoryManager->getDrm(rootDeviceIndex));
     drm.ioctlHelper.reset(mockIoctlHelper);
@@ -5239,7 +5267,7 @@ struct MockIoctlHelperPrelimResourceRegistration : public IoctlHelperPrelim20 {
 
     MockIoctlHelperPrelimResourceRegistration(Drm &drm) : IoctlHelperPrelim20(drm) {}
 
-    ADDMETHOD_CONST_NOBASE(isDeferBackingEnabledForSize, bool, false, (size_t allocationSize));
+    ADDMETHOD_CONST_NOBASE(isDeferBackingEnabledForAllocation, bool, false, (size_t allocationSize, AllocationType allocationType));
 };
 
 TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledWhenAllocationTypeShouldBeRegisteredThenBoHasBindExtHandleAdded) {
@@ -10123,7 +10151,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerWithLocalMemoryTest, givenMakeResidentBeforeL
     mock->ioctlExpected.gemMmapOffset = 1;
 
     auto mockIoctlHelper = new MockIoctlHelper(*mock);
-    mockIoctlHelper->isDeferBackingEnabledForSizeResult = true;
+    mockIoctlHelper->isDeferBackingEnabledForAllocationResult = true;
     mockIoctlHelper->callBaseVmAdviseAtomicAttribute = false;
     mockIoctlHelper->vmAdviseAtomicAttribute = std::nullopt;
 
