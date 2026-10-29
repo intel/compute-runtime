@@ -1,16 +1,18 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/test/common/helpers/debug_manager_state_restore.h"
-
-#include "opencl/test/unit_test/event/event_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_event.h"
 
+#include "gtest/gtest.h"
+
 #include <memory>
+#include <thread>
+
+using namespace NEO;
 
 class SmallMockEvent : public Event {
   public:
