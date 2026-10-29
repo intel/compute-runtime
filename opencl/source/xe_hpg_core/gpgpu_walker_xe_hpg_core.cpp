@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,13 +14,7 @@ namespace NEO {
 
 using Family = XeHpgCoreFamily;
 
-template <>
-template <>
-void GpgpuWalkerHelper<Family>::setSystolicModeEnable(Family::COMPUTE_WALKER *walkerCmd) {
-    if (debugManager.flags.OverrideSystolicInComputeWalker.get() != -1) {
-        walkerCmd->setSystolicModeEnable((debugManager.flags.OverrideSystolicInComputeWalker.get()));
-    }
-}
+#include "opencl/source/command_queue/gpgpu_walker_from_xe_hpg_to_xe_hpc.inl"
 
 template class GpgpuWalkerHelper<Family>;
 

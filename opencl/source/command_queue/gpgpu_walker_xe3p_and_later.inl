@@ -40,3 +40,16 @@ void NEO::GpgpuWalkerHelper<NEO::Family>::setupTimestampPacketFlushL3(WalkerType
         }
     }
 }
+
+namespace NEO {
+
+template <>
+size_t EnqueueOperation<Family>::getSizeRequiredCS(uint32_t cmdType, bool reserveProfilingCmdsSpace, bool reservePerfCounters, CommandQueue &commandQueue, const Kernel *pKernel, const DispatchInfo &dispatchInfo) {
+    if (isCommandWithoutKernel(cmdType)) {
+        return EnqueueOperation<Family>::getSizeRequiredCSNonKernel(reserveProfilingCmdsSpace, reservePerfCounters, commandQueue);
+    } else {
+        return EnqueueOperation<Family>::getSizeRequiredCSKernel<Family::COMPUTE_WALKER_2>(reserveProfilingCmdsSpace, reservePerfCounters, commandQueue, pKernel, dispatchInfo);
+    }
+}
+
+} // namespace NEO

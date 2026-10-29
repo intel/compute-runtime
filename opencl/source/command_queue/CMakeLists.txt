@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2025 Intel Corporation
+# Copyright (C) 2018-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -41,6 +41,7 @@ set(RUNTIME_SRCS_COMMAND_QUEUE
     ${CMAKE_CURRENT_SOURCE_DIR}/flush.h
     ${CMAKE_CURRENT_SOURCE_DIR}/gpgpu_walker.h
     ${CMAKE_CURRENT_SOURCE_DIR}/gpgpu_walker_base.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/gpgpu_walker_from_xe_hpg_to_xe_hpc.inl
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}hardware_interface.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hardware_interface.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hardware_interface_base.inl
@@ -60,6 +61,7 @@ if(SUPPORT_XE3P_AND_LATER)
   list(APPEND RUNTIME_SRCS_COMMAND_QUEUE
        ${CMAKE_CURRENT_SOURCE_DIR}/finish_xe3p_and_later.inl
        ${CMAKE_CURRENT_SOURCE_DIR}/gpgpu_walker_xe3p_and_later.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/hardware_interface_xe3p_and_later.inl
   )
 endif()
 

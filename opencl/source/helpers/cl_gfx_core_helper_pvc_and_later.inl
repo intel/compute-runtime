@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,6 +27,6 @@ inline bool ClGfxCoreHelperHw<Family>::getQueueFamilyName(std::string &name, Eng
 }
 
 template <>
-bool ClGfxCoreHelperHw<Family>::allowImageCompression(cl_image_format format) const {
-    return true;
+bool ClGfxCoreHelperHw<Family>::requiresAuxResolves(const KernelInfo &kernelInfo) const {
+    return false;
 }

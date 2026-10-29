@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,11 +18,6 @@ static auto gfxCore = IGFX_XE2_HPG_CORE;
 
 #include "opencl/source/helpers/cl_gfx_core_helper_factory_init.inl"
 #include "opencl/source/helpers/cl_gfx_core_helper_pvc_and_later.inl"
-
-template <>
-bool ClGfxCoreHelperHw<Family>::requiresAuxResolves(const KernelInfo &kernelInfo) const {
-    return false;
-}
 
 template <>
 bool ClGfxCoreHelperHw<Family>::isLimitationForPreemptionNeeded() const {

@@ -19,6 +19,7 @@ using Family = Xe3pCoreFamily;
 }
 
 #include "opencl/source/command_queue/gpgpu_walker_xe3p_and_later.inl"
+#include "opencl/source/command_queue/hardware_interface_xe3p_and_later.inl"
 
 namespace NEO {
 
@@ -28,11 +29,6 @@ template void GpgpuWalkerHelper<Family>::setupTimestampPacketFlushL3<Family::COM
 template void GpgpuWalkerHelper<Family>::setupTimestampPacket<Family::COMPUTE_WALKER_2>(LinearStream *cmdStream, Family::COMPUTE_WALKER_2 *walkerCmd, TagNodeBase *timestampPacketNode, const RootDeviceEnvironment &rootDeviceEnvironment);
 template size_t GpgpuWalkerHelper<Family>::setGpgpuWalkerThreadData<Family::COMPUTE_WALKER_2>(Family::COMPUTE_WALKER_2 *walkerCmd, const KernelDescriptor &kernelDescriptor, const size_t startWorkGroups[3],
                                                                                               const size_t numWorkGroups[3], const size_t localWorkSizesIn[3], uint32_t simd, uint32_t workDim, bool localIdsGenerationByRuntime, bool inlineDataProgrammingRequired, uint32_t requiredWorkGroupOrder);
-template <>
-void HardwareInterface<Family>::dispatchWalkerCommon(CommandQueue &commandQueue, const MultiDispatchInfo &multiDispatchInfo, const CsrDependencies &csrDependencies, HardwareInterfaceWalkerArgs &walkerArgs) {
-
-    dispatchWalker<Family::COMPUTE_WALKER_2>(commandQueue, multiDispatchInfo, csrDependencies, walkerArgs);
-}
 
 template class HardwareInterface<Family>;
 
@@ -40,15 +36,6 @@ template void HardwareInterface<Family>::dispatchWalker<Family::COMPUTE_WALKER_2
 template void HardwareInterface<Family>::programWalker<Family::COMPUTE_WALKER_2>(LinearStream &commandStream, Kernel &kernel, CommandQueue &commandQueue, IndirectHeap &dsh, IndirectHeap &ioh, IndirectHeap &ssh, const DispatchInfo &dispatchInfo, HardwareInterfaceWalkerArgs &walkerArgs);
 template void HardwareInterface<Family>::dispatchKernelCommands<Family::COMPUTE_WALKER_2>(CommandQueue &commandQueue, const DispatchInfo &dispatchInfo, LinearStream &commandStream, IndirectHeap &dsh, IndirectHeap &ioh, IndirectHeap &ssh, HardwareInterfaceWalkerArgs &walkerArgs);
 template Family::COMPUTE_WALKER_2 *HardwareInterface<Family>::allocateWalkerSpace<Family::COMPUTE_WALKER_2>(LinearStream &commandStream, const Kernel &kernel);
-
-template <>
-size_t EnqueueOperation<Family>::getSizeRequiredCS(uint32_t cmdType, bool reserveProfilingCmdsSpace, bool reservePerfCounters, CommandQueue &commandQueue, const Kernel *pKernel, const DispatchInfo &dispatchInfo) {
-    if (isCommandWithoutKernel(cmdType)) {
-        return EnqueueOperation<Family>::getSizeRequiredCSNonKernel(reserveProfilingCmdsSpace, reservePerfCounters, commandQueue);
-    } else {
-        return EnqueueOperation<Family>::getSizeRequiredCSKernel<Family::COMPUTE_WALKER_2>(reserveProfilingCmdsSpace, reservePerfCounters, commandQueue, pKernel, dispatchInfo);
-    }
-}
 
 template struct EnqueueOperation<Family>;
 
