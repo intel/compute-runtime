@@ -331,6 +331,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     this->copyOperationFenceSupported = (isCopyOnly(false) || isCopyOffloadEnabled()) && productHelper.isDeviceToHostCopySignalingFenceRequired();
     this->defaultPipelinedThreadArbitrationPolicy = hwInfo.caps.defaultThreadArbitrationPolicy;
     this->implicitSynchronizedDispatchForCooperativeKernelsAllowed = l0GfxCoreHelper.implicitSynchronizedDispatchForCooperativeKernelsAllowed();
+    this->implicitCounterBasedEventPromotionAllowed = l0GfxCoreHelper.implicitCounterBasedEventPromotionAllowed() && !this->dcFlushSupport;
     this->maxLocalSubRegionSize = productHelper.getMaxLocalSubRegionSize(hwInfo);
     this->l3FlushAfterPostSyncEnabled = productHelper.isL3FlushAfterPostSyncSupported();
     this->systemMemoryFenceInPostSyncRequired = productHelper.isGlobalFenceInPostSyncRequired(hwInfo);
@@ -5705,12 +5706,12 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleCounterBasedEventOperations(Eve
         return true;
     }
 
-    bool implicitCounterBasedEventConversionEnable = !this->dcFlushSupport;
+    bool implicitCounterBasedEventPromotionEnable = this->implicitCounterBasedEventPromotionAllowed;
     if (NEO::debugManager.flags.EnableImplicitConvertionToCounterBasedEvents.get() != -1) {
-        implicitCounterBasedEventConversionEnable = !!NEO::debugManager.flags.EnableImplicitConvertionToCounterBasedEvents.get();
+        implicitCounterBasedEventPromotionEnable = !!NEO::debugManager.flags.EnableImplicitConvertionToCounterBasedEvents.get();
     }
 
-    if (implicitCounterBasedEventConversionEnable && !signalEvent->isCounterBasedExplicitlyEnabled()) {
+    if (implicitCounterBasedEventPromotionEnable && !signalEvent->isCounterBasedExplicitlyEnabled()) {
         if (isInOrderExecutionEnabled() && isImmediateType()) {
             signalEvent->enableCounterBasedMode(false, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
         } else {

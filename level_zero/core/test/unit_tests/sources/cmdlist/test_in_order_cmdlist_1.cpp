@@ -2072,21 +2072,21 @@ HWTEST_F(InOrderCmdListTests, givenImplicitEventConvertionEnabledWhenUsingImmedi
 
     debugManager.flags.EnableImplicitConvertionToCounterBasedEvents.set(-1);
 
-    bool dcFlushRequired = immCmdList->getDcFlushRequired(true);
+    bool promotionDisabled = !immCmdList->implicitCounterBasedEventPromotionAllowed;
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
-    if (dcFlushRequired) {
+    if (promotionDisabled) {
         EXPECT_EQ(Event::CounterBasedMode::initiallyDisabled, events[0]->counterBasedMode);
         EXPECT_EQ(0u, events[0]->counterBasedFlags);
     } else {
         EXPECT_EQ(Event::CounterBasedMode::implicitlyEnabled, events[0]->counterBasedMode);
         EXPECT_EQ(static_cast<uint32_t>(ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE), events[0]->counterBasedFlags);
     }
-    EXPECT_NE(dcFlushRequired, events[0]->isCounterBased());
+    EXPECT_NE(promotionDisabled, events[0]->isCounterBased());
 
     regularCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[1]->toHandle(), 0, nullptr, launchParams);
 
-    if (dcFlushRequired) {
+    if (promotionDisabled) {
         EXPECT_EQ(Event::CounterBasedMode::initiallyDisabled, events[1]->counterBasedMode);
     } else {
         EXPECT_EQ(Event::CounterBasedMode::implicitlyDisabled, events[1]->counterBasedMode);
@@ -2095,7 +2095,7 @@ HWTEST_F(InOrderCmdListTests, givenImplicitEventConvertionEnabledWhenUsingImmedi
     EXPECT_FALSE(events[1]->isCounterBased());
 
     outOfOrderImmCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[2]->toHandle(), 0, nullptr, launchParams);
-    if (dcFlushRequired) {
+    if (promotionDisabled) {
         EXPECT_EQ(Event::CounterBasedMode::initiallyDisabled, events[2]->counterBasedMode);
     } else {
         EXPECT_EQ(Event::CounterBasedMode::implicitlyDisabled, events[2]->counterBasedMode);
@@ -2105,7 +2105,7 @@ HWTEST_F(InOrderCmdListTests, givenImplicitEventConvertionEnabledWhenUsingImmedi
 
     // Reuse on Regular = disable
     regularCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
-    if (dcFlushRequired) {
+    if (promotionDisabled) {
         EXPECT_EQ(Event::CounterBasedMode::initiallyDisabled, events[0]->counterBasedMode);
     } else {
         EXPECT_EQ(Event::CounterBasedMode::implicitlyDisabled, events[0]->counterBasedMode);
@@ -2116,23 +2116,23 @@ HWTEST_F(InOrderCmdListTests, givenImplicitEventConvertionEnabledWhenUsingImmedi
     // Reuse on non-inOrder = disable
     events[0]->counterBasedMode = Event::CounterBasedMode::implicitlyEnabled;
     regularCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
-    if (dcFlushRequired) {
+    if (promotionDisabled) {
         EXPECT_EQ(Event::CounterBasedMode::implicitlyEnabled, events[0]->counterBasedMode);
     } else {
         EXPECT_EQ(Event::CounterBasedMode::implicitlyDisabled, events[0]->counterBasedMode);
     }
     EXPECT_EQ(0u, events[0]->counterBasedFlags);
-    EXPECT_EQ(dcFlushRequired, events[0]->isCounterBased());
+    EXPECT_EQ(promotionDisabled, events[0]->isCounterBased());
 
     // Reuse on already disabled
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
-    if (dcFlushRequired) {
+    if (promotionDisabled) {
         EXPECT_EQ(Event::CounterBasedMode::implicitlyEnabled, events[0]->counterBasedMode);
     } else {
         EXPECT_EQ(Event::CounterBasedMode::implicitlyDisabled, events[0]->counterBasedMode);
     }
     EXPECT_EQ(0u, events[0]->counterBasedFlags);
-    EXPECT_EQ(dcFlushRequired, events[0]->isCounterBased());
+    EXPECT_EQ(promotionDisabled, events[0]->isCounterBased());
 
     // On explicitly enabled
     events[0]->counterBasedMode = Event::CounterBasedMode::explicitlyEnabled;
@@ -2377,7 +2377,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenImmediateCmdListWhenDispa
     auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, 16 * MemoryConstants::kiloByte, 4096u, &alloc);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 
-    bool dcFlushRequired = immCmdList->getDcFlushRequired(true);
+    bool promotionDisabled = !immCmdList->implicitCounterBasedEventPromotionAllowed;
 
     NEO::MockGraphicsAllocation mockAllocation(0, 1u /*num gmms*/, NEO::AllocationType::internalHostMemory,
                                                reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
@@ -2388,7 +2388,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenImmediateCmdListWhenDispa
     events[0]->makeCounterBasedInitiallyDisabled(eventPool->getAllocation());
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams);
 
-    if (dcFlushRequired) {
+    if (promotionDisabled) {
         EXPECT_EQ(Event::CounterBasedMode::initiallyDisabled, events[0]->counterBasedMode);
     } else {
         EXPECT_EQ(Event::CounterBasedMode::implicitlyEnabled, events[0]->counterBasedMode);
@@ -2399,7 +2399,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenImmediateCmdListWhenDispa
 
     events[0]->makeCounterBasedInitiallyDisabled(eventPool->getAllocation());
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, cooperativeParams);
-    if (dcFlushRequired) {
+    if (promotionDisabled) {
         EXPECT_EQ(Event::CounterBasedMode::initiallyDisabled, events[0]->counterBasedMode);
     } else {
         EXPECT_EQ(Event::CounterBasedMode::implicitlyEnabled, events[0]->counterBasedMode);
@@ -2407,7 +2407,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenImmediateCmdListWhenDispa
 
     events[0]->makeCounterBasedInitiallyDisabled(eventPool->getAllocation());
     immCmdList->appendLaunchKernelIndirect(kernel->toHandle(), *static_cast<ze_group_count_t *>(alloc), eventHandle, 0, nullptr, false);
-    if (dcFlushRequired) {
+    if (promotionDisabled) {
         EXPECT_EQ(Event::CounterBasedMode::initiallyDisabled, events[0]->counterBasedMode);
     } else {
         EXPECT_EQ(Event::CounterBasedMode::implicitlyEnabled, events[0]->counterBasedMode);
@@ -2425,7 +2425,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenImmediateCmdListWhenDispa
         .dualStreamCopyOffloadOperation = false,
     };
     immCmdList->appendMemoryRangesBarrier(1, &rangeSizes, ranges, eventHandle, 0, nullptr, waitEventsParameters);
-    if (dcFlushRequired) {
+    if (promotionDisabled) {
         EXPECT_EQ(Event::CounterBasedMode::initiallyDisabled, events[0]->counterBasedMode);
     } else {
         EXPECT_EQ(Event::CounterBasedMode::implicitlyEnabled, events[0]->counterBasedMode);
@@ -2433,7 +2433,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenImmediateCmdListWhenDispa
 
     events[0]->makeCounterBasedInitiallyDisabled(eventPool->getAllocation());
     copyOnlyCmdList->appendMemoryCopyBlitRegion(&allocationData, &allocationData, region, region, {0, 0, 0}, 0, 0, 0, 0, {0, 0, 0}, {0, 0, 0}, events[0].get(), 0, nullptr, copyParams);
-    if (dcFlushRequired) {
+    if (promotionDisabled) {
         EXPECT_EQ(Event::CounterBasedMode::initiallyDisabled, events[0]->counterBasedMode);
     } else {
         EXPECT_EQ(Event::CounterBasedMode::implicitlyEnabled, events[0]->counterBasedMode);
@@ -2444,7 +2444,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenImmediateCmdListWhenDispa
     static_cast<WhiteboxInOrderExecEventHelper &>(events[0]->inOrderExecHelper).timestampNodes.clear();
     events[0]->makeCounterBasedInitiallyDisabled(eventPool->getAllocation());
     immCmdList->appendMemoryCopy(&copyData, &copyData, 1, eventHandle, 0, nullptr, copyParams);
-    if (dcFlushRequired) {
+    if (promotionDisabled) {
         EXPECT_EQ(Event::CounterBasedMode::initiallyDisabled, events[0]->counterBasedMode);
     } else {
         EXPECT_EQ(Event::CounterBasedMode::implicitlyEnabled, events[0]->counterBasedMode);
@@ -2452,7 +2452,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenImmediateCmdListWhenDispa
 
     events[0]->makeCounterBasedInitiallyDisabled(eventPool->getAllocation());
     immCmdList->appendMemoryFill(alloc, &copyData, 1, 16, eventHandle, 0, nullptr, copyParams);
-    if (dcFlushRequired) {
+    if (promotionDisabled) {
         EXPECT_EQ(Event::CounterBasedMode::initiallyDisabled, events[0]->counterBasedMode);
     } else {
         EXPECT_EQ(Event::CounterBasedMode::implicitlyEnabled, events[0]->counterBasedMode);
@@ -2460,7 +2460,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenImmediateCmdListWhenDispa
 
     events[0]->makeCounterBasedInitiallyDisabled(eventPool->getAllocation());
     copyOnlyCmdList->appendBlitFill(alloc, &copyData, 1, 16, events[0].get(), 0, nullptr, copyParams);
-    if (dcFlushRequired) {
+    if (promotionDisabled) {
         EXPECT_EQ(Event::CounterBasedMode::initiallyDisabled, events[0]->counterBasedMode);
     } else {
         EXPECT_EQ(Event::CounterBasedMode::implicitlyEnabled, events[0]->counterBasedMode);
@@ -2471,7 +2471,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenImmediateCmdListWhenDispa
         .relaxedOrderingDispatch = false,
     };
     immCmdList->appendSignalEvent(eventHandle, signalEventParameters);
-    if (dcFlushRequired) {
+    if (promotionDisabled) {
         EXPECT_EQ(Event::CounterBasedMode::initiallyDisabled, events[0]->counterBasedMode);
     } else {
         EXPECT_EQ(Event::CounterBasedMode::implicitlyEnabled, events[0]->counterBasedMode);
@@ -2487,7 +2487,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenImmediateCmdListWhenDispa
         .dualStreamCopyOffloadOperation = false,
     };
     immCmdList->appendWriteGlobalTimestamp(reinterpret_cast<uint64_t *>(copyData), eventHandle, 0, nullptr, waitEventsParametersForGlobalTs);
-    if (dcFlushRequired) {
+    if (promotionDisabled) {
         EXPECT_EQ(Event::CounterBasedMode::initiallyDisabled, events[0]->counterBasedMode);
     } else {
         EXPECT_EQ(Event::CounterBasedMode::implicitlyEnabled, events[0]->counterBasedMode);
@@ -2503,7 +2503,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenImmediateCmdListWhenDispa
         .dualStreamCopyOffloadOperation = false,
     };
     immCmdList->appendBarrier(eventHandle, 0, nullptr, waitEventsParametersForBarrier, signalEventParameters);
-    if (dcFlushRequired) {
+    if (promotionDisabled) {
         EXPECT_EQ(Event::CounterBasedMode::initiallyDisabled, events[0]->counterBasedMode);
     } else {
         EXPECT_EQ(Event::CounterBasedMode::implicitlyEnabled, events[0]->counterBasedMode);
@@ -2513,7 +2513,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenImmediateCmdListWhenDispa
     desc.actionFlag = ZEX_WAIT_ON_MEMORY_FLAG_NOT_EQUAL;
     events[0]->makeCounterBasedInitiallyDisabled(eventPool->getAllocation());
     immCmdList->appendWaitOnMemory(reinterpret_cast<void *>(&desc), copyData, 1, eventHandle, false);
-    if (dcFlushRequired) {
+    if (promotionDisabled) {
         EXPECT_EQ(Event::CounterBasedMode::initiallyDisabled, events[0]->counterBasedMode);
     } else {
         EXPECT_EQ(Event::CounterBasedMode::implicitlyEnabled, events[0]->counterBasedMode);
@@ -2531,7 +2531,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenImmediateCmdListWhenDispa
     immCmdList->copyThroughLockedPtrEnabled = true;
     events[0]->makeCounterBasedInitiallyDisabled(eventPool->getAllocation());
     immCmdList->appendMemoryCopy(alloc, &copyData, 1, eventHandle, 0, nullptr, copyParams);
-    if (dcFlushRequired) {
+    if (promotionDisabled) {
         EXPECT_EQ(Event::CounterBasedMode::initiallyDisabled, events[0]->counterBasedMode);
     } else {
         EXPECT_EQ(Event::CounterBasedMode::implicitlyEnabled, events[0]->counterBasedMode);

@@ -116,6 +116,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::heaplessModeEnabled;
     using BaseClass::hostPtrMap;
     using BaseClass::immediateCmdListHeapSharing;
+    using BaseClass::implicitCounterBasedEventPromotionAllowed;
     using BaseClass::indirectAllocationsAllowed;
     using BaseClass::initialize;
     using BaseClass::inOrderAtomicSignalingEnabled;
@@ -273,6 +274,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::heaplessModeEnabled;
     using BaseClass::hostSynchronize;
     using BaseClass::immediateCmdListHeapSharing;
+    using BaseClass::implicitCounterBasedEventPromotionAllowed;
     using BaseClass::inOrderAtomicSignalingEnabled;
     using BaseClass::inOrderExecInfo;
     using BaseClass::internalUsage;

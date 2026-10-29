@@ -5706,10 +5706,10 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenImmediateCmdListWhenDispatchingWithR
     events[0]->makeCounterBasedInitiallyDisabled(eventPool->getAllocation());
     immCmdList->appendMemoryCopy(&copyData, &copyData, copySize, eventHandle, 0, nullptr, copyParams);
 
-    if (immCmdList->getDcFlushRequired(true)) {
-        EXPECT_EQ(Event::CounterBasedMode::initiallyDisabled, events[0]->counterBasedMode);
-    } else {
+    if (immCmdList->implicitCounterBasedEventPromotionAllowed) {
         EXPECT_EQ(Event::CounterBasedMode::implicitlyEnabled, events[0]->counterBasedMode);
+    } else {
+        EXPECT_EQ(Event::CounterBasedMode::initiallyDisabled, events[0]->counterBasedMode);
     }
 
     EXPECT_TRUE(verifySplit(bcsMiFlushCount + 1u));

@@ -33,6 +33,11 @@ bool L0GfxCoreHelperHw<Family>::platformSupportsStateBaseAddressTracking(const N
     return true;
 }
 
+template <>
+bool L0GfxCoreHelperHw<Family>::implicitCounterBasedEventPromotionAllowed() const {
+    return true;
+}
+
 /*
  * stall sample data item format:
  *

@@ -578,6 +578,7 @@ struct CommandListCoreFamily : public CommandList {
     bool inOrderAtomicSignalingEnabled = false;
     bool copyOperationFenceSupported = false;
     bool implicitSynchronizedDispatchForCooperativeKernelsAllowed = false;
+    bool implicitCounterBasedEventPromotionAllowed = false;
     bool useAdditionalBlitProperties = false;
     bool isPostImageWriteFlushRequired = false;
     bool isPreImageReadFlushRequired = false;

@@ -23,6 +23,11 @@ XE_HPC_CORETEST_F(L0GfxCoreHelperTestXeHpc, GivenHpcPlatformsWhenAlwaysAllocateE
     EXPECT_TRUE(l0GfxCoreHelper.alwaysAllocateEventInLocalMem());
 }
 
+XE_HPC_CORETEST_F(L0GfxCoreHelperTestXeHpc, GivenXeHpcWhenCheckingImplicitCounterBasedEventPromotionThenReturnTrue) {
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    EXPECT_TRUE(l0GfxCoreHelper.implicitCounterBasedEventPromotionAllowed());
+}
+
 XE_HPC_CORETEST_F(L0GfxCoreHelperTestXeHpc, GivenXeHpcWhenCheckingL0HelperForStateComputeModeTrackingSupportThenReturnTrue) {
     auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
     EXPECT_TRUE(l0GfxCoreHelper.platformSupportsStateComputeModeTracking());

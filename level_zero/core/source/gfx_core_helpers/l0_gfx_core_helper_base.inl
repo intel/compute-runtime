@@ -72,6 +72,11 @@ bool L0GfxCoreHelperHw<Family>::implicitSynchronizedDispatchForCooperativeKernel
 }
 
 template <typename Family>
+bool L0GfxCoreHelperHw<Family>::implicitCounterBasedEventPromotionAllowed() const {
+    return false;
+}
+
+template <typename Family>
 std::unique_ptr<NEO::TagAllocatorBase> L0GfxCoreHelperHw<Family>::getInOrderTimestampAllocator(const RootDeviceIndicesContainer &rootDeviceIndices, NEO::MemoryManager *memoryManager, uint32_t initialTagCount, size_t packetsCountPerElement,
                                                                                                size_t tagAlignment, NEO::DeviceBitfield deviceBitfield) const {
 
