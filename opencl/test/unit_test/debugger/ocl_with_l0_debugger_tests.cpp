@@ -11,6 +11,7 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/program/kernel_info.h"
+#include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_compiler_interface.h"
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -109,6 +110,25 @@ HWTEST_F(DebuggerCmdQTest, GivenDebuggingEnabledWhenInternalCommandQueueIsCreate
     cl_int retVal = 0;
     releaseQueue(mockCmdQ, retVal);
     EXPECT_EQ(0u, debuggerL0Hw->commandQueueDestroyedCount);
+}
+
+HWTEST_F(DebuggerCmdQTest, GivenDebuggingEnabledAndGpgpuEngineFromContextGroupWhenInitializingGpgpuInternalsThenDebugSurfaceIsAllocatedOnPrimaryCsr) {
+    auto &defaultEngine = device->getDefaultEngine();
+    auto primaryCsr = defaultEngine.commandStreamReceiver;
+    ASSERT_EQ(nullptr, primaryCsr->getDebugSurfaceAllocation());
+
+    MockCommandStreamReceiver secondaryCsr(*device->getExecutionEnvironment(), rootDeviceIndex, device->getDeviceBitfield());
+    secondaryCsr.setupContext(*defaultEngine.osContext);
+    secondaryCsr.setPrimaryCsr(primaryCsr);
+    EngineControl secondaryEngine{&secondaryCsr, defaultEngine.osContext};
+
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, clDevice, nullptr);
+    mockCmdQ->gpgpuEngine = &secondaryEngine;
+    mockCmdQ->initializeGpgpuInternals();
+
+    EXPECT_NE(nullptr, primaryCsr->getDebugSurfaceAllocation());
+    EXPECT_EQ(primaryCsr->getDebugSurfaceAllocation(), secondaryCsr.getDebugSurfaceAllocation());
+    mockCmdQ->gpgpuEngine = nullptr;
 }
 
 HWTEST_TEMPLATED_F(DebuggerCmdQTestWithMockCsr, GivenDebuggingEnabledWhenEnqueueingKernelThenDebugSurfaceIsResident) {

@@ -238,7 +238,9 @@ void CommandQueue::initializeGpgpuInternals() const {
 
     if (device->getDevice().getDebugger() && !this->gpgpuEngine->commandStreamReceiver->getDebugSurfaceAllocation()) {
         auto maxDbgSurfaceSize = NEO::SipKernel::getSipKernel(device->getDevice(), nullptr).getStateSaveAreaSize(&device->getDevice());
-        auto debugSurface = this->gpgpuEngine->commandStreamReceiver->allocateDebugSurface(maxDbgSurfaceSize);
+        auto gpgpuCsr = this->gpgpuEngine->commandStreamReceiver;
+        auto debugSurfaceOwnerCsr = gpgpuCsr->getPrimaryCsr() ? gpgpuCsr->getPrimaryCsr() : gpgpuCsr;
+        auto debugSurface = debugSurfaceOwnerCsr->allocateDebugSurface(maxDbgSurfaceSize);
         memset(debugSurface->getUnderlyingBuffer(), 0, debugSurface->getUnderlyingBufferSize());
 
         auto &stateSaveAreaHeader = SipKernel::getSipKernel(device->getDevice(), nullptr).getStateSaveAreaHeader();
