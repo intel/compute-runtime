@@ -342,6 +342,11 @@ uint32_t SvmAllocationData::getAllocId(const void *ptr) const {
     return nullptr != this->usmPool ? this->usmPool->getChunkAllocId(ptr) : this->getAllocId();
 }
 
+bool SvmAllocationData::existedAtCounter(const void *ptr, uint32_t allocationsCounter) const {
+    const auto allocId = this->getAllocId(ptr);
+    return 0u != allocId && allocId <= allocationsCounter;
+}
+
 bool UsmMemAllocPool::addMemFreeCallback(const void *ptr, MemFreeCallback callback) {
     if (false == isInitialized() || false == isInPoolRange(ptr)) {
         return false;

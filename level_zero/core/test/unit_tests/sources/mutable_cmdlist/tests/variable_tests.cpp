@@ -9,6 +9,7 @@
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/mutable_cmdlist/mcl_kernel_ext.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
@@ -1282,6 +1283,38 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_LT(managerCounter, this->variable->getDesc().allocIdMemoryManagerCounter);
     EXPECT_EQ(this->device->getDriverHandle()->getSvmAllocsManager()->allocationsCounter.load(), this->variable->getDesc().allocIdMemoryManagerCounter);
     EXPECT_EQ(0u, *gpuAddressPatch);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            VariableTest,
+            givenBufferVariableWithPooledChunkWhenChunkIsReallocatedAtSameAddressAndSetAgainThenPayloadIsPatchedAgain) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableUsmAllocationPoolManager.set(0);
+    NEO::debugManager.flags.EnableHostUsmAllocationPool.set(1);
+
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    void *chunk = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, this->context->allocHostMem(&hostDesc, 4096, 4096, &chunk));
+    ASSERT_NE(nullptr, this->device->getDriverHandle()->getHostUsmPoolOwningPtr(chunk).pool);
+
+    createVariable(L0::MCL::VariableType::buffer, true, -1, -1);
+    uint64_t *gpuAddressPatch = reinterpret_cast<uint64_t *>(ptrOffset(this->cmdListIndirectCpuBase, this->defaultBufferStatelessOffset));
+
+    auto ret = this->variable->setValue(kernelArgVariableSize, 0, &chunk);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    EXPECT_EQ(this->device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(chunk)->getAllocId(), this->variable->getDesc().allocId);
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, this->context->freeMem(chunk));
+    void *reallocatedChunk = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, this->context->allocHostMem(&hostDesc, 4096, 4096, &reallocatedChunk));
+    ASSERT_EQ(chunk, reallocatedChunk);
+    *gpuAddressPatch = 0;
+
+    ret = this->variable->setValue(kernelArgVariableSize, 0, &reallocatedChunk);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    EXPECT_EQ(reinterpret_cast<uint64_t>(reallocatedChunk), *gpuAddressPatch);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, this->context->freeMem(reallocatedChunk));
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,

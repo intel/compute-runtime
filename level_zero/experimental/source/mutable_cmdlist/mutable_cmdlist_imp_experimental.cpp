@@ -115,8 +115,8 @@ ze_result_t MutableCommandListImp::tempMemSet(const void *pTempMem) {
 
     NEO::GraphicsAllocation *alloc = nullptr;
     GpuAddress gpuAddress = undefined<GpuAddress>;
-    uint32_t allocId = undefined<uint32_t>;
-    auto result = getBufferGpuAddress(tempMemBuffor, base->getDevice(), alloc, gpuAddress, allocId);
+    NEO::SvmAllocationData *allocData = nullptr;
+    auto result = getBufferGpuAddress(tempMemBuffor, base->getDevice(), alloc, gpuAddress, allocData);
     if (result != ZE_RESULT_SUCCESS) {
         return result;
     }

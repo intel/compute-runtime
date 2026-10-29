@@ -747,7 +747,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(reinterpret_cast<uint64_t>(usm2), usmPatchAddressValue);
 
     auto usm2AllocId = bufferInternalDesc.allocId;
-    EXPECT_NE(usm1AllocId, usm2AllocId);
+    EXPECT_EQ(usm1AllocId, usm2AllocId);
 
     auto oldUsm2 = usm2;
 
@@ -767,7 +767,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     memcpy(&usmPatchAddressValue, gpuVaPatchFullAddress, sizeof(uint64_t));
     EXPECT_EQ(reinterpret_cast<uint64_t>(usm2), usmPatchAddressValue);
-    EXPECT_NE(usm2AllocId, bufferInternalDesc.allocId);
 
     result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);

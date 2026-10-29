@@ -302,6 +302,35 @@ TEST_F(SetKernelArgCacheTest, givenPooledBufferArgumentWhenChunkIsReallocatedAtS
     EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(secondChunk));
 }
 
+TEST_F(SetKernelArgCacheTest, givenPooledBufferArgumentWhenSetAgainAfterAnotherChunkIsAllocatedThenCachedArgIsReused) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableUsmAllocationPoolManager.set(0);
+    NEO::debugManager.flags.EnableHostUsmAllocationPool.set(1);
+
+    MockKernelWithCallTracking mockKernel;
+    mockKernel.setModule(module.get());
+    ze_kernel_desc_t desc = {};
+    desc.pKernelName = kernelName.c_str();
+    mockKernel.initialize(&desc);
+
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    void *chunk = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, 4096, 4096, &chunk));
+    ASSERT_NE(nullptr, device->getDriverHandle()->getHostUsmPoolOwningPtr(chunk).pool);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgBuffer(0, sizeof(chunk), &chunk));
+    EXPECT_EQ(1u, mockKernel.setArgBufferWithAllocCalled);
+    EXPECT_EQ(device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(chunk)->getAllocId(), mockKernel.privateState.kernelArgInfos[0].allocId);
+
+    void *otherChunk = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, 4096, 4096, &otherChunk));
+    ASSERT_EQ(device->getDriverHandle()->getHostUsmPoolOwningPtr(chunk).pool, device->getDriverHandle()->getHostUsmPoolOwningPtr(otherChunk).pool);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgBuffer(0, sizeof(chunk), &chunk));
+    EXPECT_EQ(1u, mockKernel.setArgBufferWithAllocCalled);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(otherChunk));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(chunk));
+}
+
 TEST_F(SetKernelArgCacheTest, givenValidBufferArgumentWhenSetMultipleTimesThenSetArgBufferWithAllocOnlyCalledIfNeeded) {
     MockKernelWithCallTracking mockKernel;
     mockKernel.setModule(module.get());
@@ -328,12 +357,12 @@ TEST_F(SetKernelArgCacheTest, givenValidBufferArgumentWhenSetMultipleTimesThenSe
     EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgBuffer(0, sizeof(svmAllocation), &svmAllocation));
     EXPECT_EQ(++callCounter, mockKernel.setArgBufferWithAllocCalled);
 
-    // same setArg and allocId matches - not called
+    // same setArg, saved counter older than alloc id - called
     svmAllocsManager->allocationsCounter = allocCounterBackup;
     ASSERT_EQ(mockKernel.privateState.kernelArgInfos[0].allocIdMemoryManagerCounter, 0u);
     EXPECT_EQ(mockKernel.privateState.kernelArgInfos[0].allocIdMemoryManagerCounter, kernelArgInfos[0].allocIdMemoryManagerCounter);
     EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgBuffer(0, sizeof(svmAllocation), &svmAllocation));
-    EXPECT_EQ(callCounter, mockKernel.setArgBufferWithAllocCalled);
+    EXPECT_EQ(++callCounter, mockKernel.setArgBufferWithAllocCalled);
     EXPECT_EQ(mockKernel.privateState.kernelArgInfos[0].allocIdMemoryManagerCounter, allocCounterBackup);
 
     allocData->setAllocId(1u);
@@ -356,8 +385,7 @@ TEST_F(SetKernelArgCacheTest, givenValidBufferArgumentWhenSetMultipleTimesThenSe
     EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgBuffer(0, sizeof(svmAllocation), &svmAllocation));
     EXPECT_EQ(callCounter, mockKernel.setArgBufferWithAllocCalled);
 
-    allocData->setAllocId(2u);
-    ++svmAllocsManager->allocationsCounter;
+    allocData->setAllocId(++svmAllocsManager->allocationsCounter);
     ASSERT_NE(mockKernel.privateState.kernelArgInfos[0].allocIdMemoryManagerCounter, svmAllocsManager->allocationsCounter);
     ASSERT_NE(mockKernel.privateState.kernelArgInfos[0].allocId, allocData->getAllocId());
     EXPECT_EQ(mockKernel.privateState.kernelArgInfos[0].allocId, kernelArgInfos[0].allocId);

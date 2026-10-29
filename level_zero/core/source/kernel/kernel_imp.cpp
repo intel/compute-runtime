@@ -861,7 +861,7 @@ ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const voi
                     reuseFromCache = true;
                 } else {
                     allocData = svmAllocsManager->getSVMAlloc(requestedAddress);
-                    if (allocData && allocData->getAllocId(requestedAddress) == argInfo.allocId) {
+                    if (allocData && allocData->existedAtCounter(requestedAddress, argInfo.allocIdMemoryManagerCounter)) {
                         reuseFromCache = true;
                         this->privateState.kernelArgInfos[argIndex].allocIdMemoryManagerCounter = allocationsCounter;
                     }
@@ -942,7 +942,7 @@ ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const voi
                 auto patchLocation = ptrOffset(getCrossThreadData(), argAsPtr.stateless);
                 NEO::patchNonPointer<int64_t, int64_t>(getCrossThreadDataSpan(), argAsPtr.bufferSize, 0);
                 patchWithRequiredSize(const_cast<uint8_t *>(patchLocation), argAsPtr.pointerSize, reinterpret_cast<uintptr_t>(requestedAddress));
-                const uint32_t allocId = allocData->getAllocId(requestedAddress);
+                const uint32_t allocId = allocData->getAllocId();
                 privateState.kernelArgInfos[argIndex] = KernelArgInfo{requestedAddress, allocId, allocationsCounter, false};
                 return ZE_RESULT_SUCCESS;
             } else {
@@ -972,7 +972,7 @@ ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const voi
         return result;
     }
 
-    privateState.kernelArgInfos[argIndex] = KernelArgInfo{requestedAddress, allocData->getAllocId(requestedAddress), allocationsCounter, false};
+    privateState.kernelArgInfos[argIndex] = KernelArgInfo{requestedAddress, allocData->getAllocId(), allocationsCounter, false};
     return ZE_RESULT_SUCCESS;
 }
 

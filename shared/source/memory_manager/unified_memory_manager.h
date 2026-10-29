@@ -95,6 +95,7 @@ struct SvmAllocationData : NEO::NonCopyableAndNonMovableClass {
         return allocId;
     }
     uint32_t getAllocId(const void *ptr) const;
+    bool existedAtCounter(const void *ptr, uint32_t allocationsCounter) const;
 
     static constexpr uint32_t uninitializedAllocId = std::numeric_limits<uint32_t>::max();
 

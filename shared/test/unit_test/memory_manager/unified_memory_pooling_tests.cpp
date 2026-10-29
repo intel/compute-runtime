@@ -867,6 +867,36 @@ TEST_F(InitializedHostUnifiedMemoryPoolingTest, givenAllocationOutsidePoolWhenGe
     EXPECT_TRUE(svmManager->freeSVMAlloc(ptr));
 }
 
+TEST_F(InitializedHostUnifiedMemoryPoolingTest, givenChunkWhenCheckingExistedAtCounterThenCountersFromBeforeChunkAllocationDoNotMatch) {
+    auto memoryProperties = makeHostProperties();
+    const auto counterBeforeChunk = svmManager->allocationsCounter.load();
+    auto chunk = usmMemAllocPool.createUnifiedMemoryAllocation(1 * MemoryConstants::kiloByte, memoryProperties);
+    ASSERT_NE(nullptr, chunk);
+    const auto counterAfterChunk = svmManager->allocationsCounter.load();
+    auto poolAllocationData = svmManager->getSVMAlloc(chunk);
+    ASSERT_NE(nullptr, poolAllocationData);
+
+    EXPECT_FALSE(poolAllocationData->existedAtCounter(chunk, counterBeforeChunk));
+    EXPECT_TRUE(poolAllocationData->existedAtCounter(chunk, counterAfterChunk));
+
+    EXPECT_TRUE(usmMemAllocPool.freeSVMAlloc(chunk, FreePolicyType::none).freeSucceeded);
+    EXPECT_FALSE(poolAllocationData->existedAtCounter(chunk, counterAfterChunk));
+}
+
+TEST_F(InitializedHostUnifiedMemoryPoolingTest, givenAllocationOutsidePoolWhenCheckingExistedAtCounterThenItsAllocIdIsCompared) {
+    auto memoryProperties = makeHostProperties();
+    const auto counterBeforeAllocation = svmManager->allocationsCounter.load();
+    auto ptr = svmManager->createHostUnifiedMemoryAllocation(poolAllocationThreshold + 1, memoryProperties);
+    ASSERT_NE(nullptr, ptr);
+    auto allocationData = svmManager->getSVMAlloc(ptr);
+    ASSERT_NE(nullptr, allocationData);
+
+    EXPECT_FALSE(allocationData->existedAtCounter(ptr, counterBeforeAllocation));
+    EXPECT_TRUE(allocationData->existedAtCounter(ptr, allocationData->getAllocId()));
+
+    EXPECT_TRUE(svmManager->freeSVMAlloc(ptr));
+}
+
 TEST_F(InitializedHostUnifiedMemoryPoolingTest, givenPointersWithDifferentOwnershipWhenCallingFreeIfOwnedAndIsPooledAllocationThenOwnershipIsRespected) {
     auto memoryProperties = makeHostProperties();
     const auto allocationSize = 1 * MemoryConstants::kiloByte;

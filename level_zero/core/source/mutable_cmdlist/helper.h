@@ -11,13 +11,14 @@
 
 namespace NEO {
 class GraphicsAllocation;
+struct SvmAllocationData;
 } // namespace NEO
 
 namespace L0 {
 struct Device;
 
 namespace MCL {
-ze_result_t getBufferGpuAddress(void *buffer, L0::Device *device, NEO::GraphicsAllocation *&outGraphicsAllocation, GpuAddress &outGpuAddress, uint32_t &outAllocId);
+ze_result_t getBufferGpuAddress(void *buffer, L0::Device *device, NEO::GraphicsAllocation *&outGraphicsAllocation, GpuAddress &outGpuAddress, NEO::SvmAllocationData *&outAllocData);
 } // namespace MCL
 
 } // namespace L0

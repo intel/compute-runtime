@@ -5117,9 +5117,9 @@ HWTEST_F(MultipleDevicePeerAllocationTest, givenBufferOwnedByOtherRootWhenGettin
 
     NEO::GraphicsAllocation *bufferAlloc = nullptr;
     L0::MCL::GpuAddress gpuAddress = 0u;
-    uint32_t allocId = 0u;
+    NEO::SvmAllocationData *bufferAllocData = nullptr;
     auto buffer = ptrOffset(ptr0, 0x10);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::MCL::getBufferGpuAddress(buffer, device1, bufferAlloc, gpuAddress, allocId));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::MCL::getBufferGpuAddress(buffer, device1, bufferAlloc, gpuAddress, bufferAllocData));
     ASSERT_NE(nullptr, bufferAlloc);
     EXPECT_EQ(1u, bufferAlloc->getRootDeviceIndex());
     auto peerBase = bufferAlloc->getGpuAddress();
@@ -5128,7 +5128,7 @@ HWTEST_F(MultipleDevicePeerAllocationTest, givenBufferOwnedByOtherRootWhenGettin
     NEO::GraphicsAllocation *secondBufferAlloc = nullptr;
     L0::MCL::GpuAddress secondGpuAddress = 0u;
     auto secondBuffer = ptrOffset(ptr0, 0x20);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::MCL::getBufferGpuAddress(secondBuffer, device1, secondBufferAlloc, secondGpuAddress, allocId));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::MCL::getBufferGpuAddress(secondBuffer, device1, secondBufferAlloc, secondGpuAddress, bufferAllocData));
     EXPECT_EQ(bufferAlloc, secondBufferAlloc);
     EXPECT_EQ(peerBase + (castToUint64(secondBuffer) - srcBase), secondGpuAddress);
     EXPECT_EQ(1u, device1->peerAllocations.allocations.size());
@@ -5148,8 +5148,8 @@ HWTEST_F(MultipleDevicePeerAllocationTest, givenBufferOwnedByOtherRootAndImportF
 
     NEO::GraphicsAllocation *bufferAlloc = nullptr;
     L0::MCL::GpuAddress gpuAddress = 0u;
-    uint32_t allocId = 0u;
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, L0::MCL::getBufferGpuAddress(ptr0, device1, bufferAlloc, gpuAddress, allocId));
+    NEO::SvmAllocationData *bufferAllocData = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, L0::MCL::getBufferGpuAddress(ptr0, device1, bufferAlloc, gpuAddress, bufferAllocData));
     EXPECT_EQ(0u, device1->peerAllocations.allocations.size());
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr0));

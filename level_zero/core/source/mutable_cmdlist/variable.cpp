@@ -21,6 +21,7 @@
 #include "shared/source/indirect_heap/indirect_heap_type.h"
 #include "shared/source/kernel/kernel_arg_descriptor.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/utilities/tag_allocator.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
@@ -442,12 +443,15 @@ ze_result_t Variable::setBufferVariable(size_t size, const void *argVal) {
             }
         }
 
-        auto retVal = getBufferGpuAddress(argValue, device, newBufferAlloc, gpuAddress, newAllocId);
+        NEO::SvmAllocationData *newAllocData = nullptr;
+        auto retVal = getBufferGpuAddress(argValue, device, newBufferAlloc, gpuAddress, newAllocData);
         if (retVal != ZE_RESULT_SUCCESS) {
             return retVal;
         }
+        newAllocId = nullptr != newAllocData ? newAllocData->getAllocId() : 0u;
 
-        if (desc.argValue == argValue && desc.allocId == newAllocId) {
+        if (desc.argValue == argValue && desc.allocId == newAllocId &&
+            (nullptr == newAllocData || newAllocData->existedAtCounter(argValue, desc.allocIdMemoryManagerCounter))) {
             PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL same alloc id, same arg value, updating alloc id from manager to new %u\n",
                          newAllocIdMemoryManagerCounter);
             desc.allocIdMemoryManagerCounter = newAllocIdMemoryManagerCounter;
