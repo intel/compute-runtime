@@ -4812,7 +4812,7 @@ HWTEST_F(ContextTest, givenBindlessImageWhenMakeImageResidentAndEvictThenImageIm
     auto bindlessHelper = new MockBindlesHeapsHelper(device->getNEODevice(),
                                                      device->getNEODevice()->getNumGenericSubDevices() > 1);
     device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getNEODevice()->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
-    // Reset ResidentCalledCount to 0 since bindlessHeapsHelper constructor changes the value.
+    bindlessHelper->getHeap(NEO::BindlessHeapsHelper::globalSsh);
     mockMemoryOperationsInterface->makeResidentCalledCount = 0;
 
     Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));

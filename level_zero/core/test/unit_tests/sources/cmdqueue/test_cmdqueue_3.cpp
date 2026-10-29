@@ -184,6 +184,7 @@ HWTEST2_F(CommandQueueProgramSBATest,
     MockBindlesHeapsHelper *bindlessHeapsHelperPtr = bindlessHeapsHelper.get();
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHeapsHelper.release());
     NEO::MockGraphicsAllocation baseAllocation;
+    bindlessHeapsHelperPtr->getHeap(NEO::BindlessHeapsHelper::globalSsh);
     bindlessHeapsHelperPtr->surfaceStateHeaps[NEO::BindlessHeapsHelper::globalSsh].reset(new IndirectHeap(&baseAllocation, true));
     baseAllocation.setGpuBaseAddress(0x123000);
     ze_command_queue_desc_t desc = {};
@@ -224,6 +225,7 @@ HWTEST2_F(CommandQueueProgramSBATest,
     bindlessHeapsHelperPtr->globalBindlessDsh = true;
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHeapsHelper.release());
     NEO::MockGraphicsAllocation baseAllocation;
+    bindlessHeapsHelperPtr->getHeap(NEO::BindlessHeapsHelper::globalSsh);
     bindlessHeapsHelperPtr->surfaceStateHeaps[NEO::BindlessHeapsHelper::globalSsh].reset(new IndirectHeap(&baseAllocation, true));
     baseAllocation.setGpuBaseAddress(0x123000);
     ze_command_queue_desc_t desc = {};
@@ -269,6 +271,7 @@ HWTEST2_F(CommandQueueProgramSBATest,
 
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHeapsHelper.release());
     NEO::MockGraphicsAllocation baseAllocation;
+    bindlessHeapsHelperPtr->getHeap(NEO::BindlessHeapsHelper::globalSsh);
     bindlessHeapsHelperPtr->surfaceStateHeaps[NEO::BindlessHeapsHelper::globalSsh].reset(new IndirectHeap(&baseAllocation, true));
     baseAllocation.setGpuBaseAddress(0x123000);
     ze_command_queue_desc_t desc = {};

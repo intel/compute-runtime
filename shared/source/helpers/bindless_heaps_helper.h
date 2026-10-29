@@ -72,12 +72,15 @@ class BindlessHeapsHelper : NEO::NonCopyableAndNonMovableClass {
 
   protected:
     bool growHeap(BindlesHeapType heapType);
+    GraphicsAllocation *getBorderColorStates();
     bool initializeReservedMemory();
     bool isReservedMemoryModeAvailable();
     bool tryReservingMemoryForSpecialSsh(const size_t size, size_t alignment);
     std::optional<AddressRange> reserveMemoryRange(size_t size, size_t alignment, HeapIndex heapIndex);
 
     std::mutex mtx;
+    std::once_flag heapInitialized[BindlesHeapType::numHeapTypes];
+    std::once_flag borderColorStatesInitialized;
 
     Device *rootDevice = nullptr;
     MemoryManager *memManager = nullptr;

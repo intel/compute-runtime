@@ -3208,7 +3208,8 @@ HWTEST2_F(ImageCreate, GivenBindlessImageWhenBindlessSlotAllocationFailsThenImag
                                   0};
 
     bindlessHelper->failAllocateSS = true;
-    bindlessHelper->globalSsh->getSpace(bindlessHelper->globalSsh->getAvailableSpace());
+    auto globalSsh = bindlessHelper->getHeap(NEO::BindlessHeapsHelper::globalSsh);
+    globalSsh->getSpace(globalSsh->getAvailableSpace());
 
     auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
     auto ret = imageHW->initialize(device, &srcImgDesc);
