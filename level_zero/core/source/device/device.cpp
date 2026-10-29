@@ -740,7 +740,7 @@ ze_result_t Device::getMemoryAccessProperties(ze_device_memory_access_properties
     auto &productHelper = this->getProductHelper();
 
     pMemAccessProperties->hostAllocCapabilities =
-        static_cast<ze_memory_access_cap_flags_t>(productHelper.getHostMemCapabilities(&hwInfo));
+        static_cast<ze_memory_access_cap_flags_t>(productHelper.getHostMemCapabilities());
 
     pMemAccessProperties->deviceAllocCapabilities =
         static_cast<ze_memory_access_cap_flags_t>(productHelper.getDeviceMemCapabilities());

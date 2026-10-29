@@ -3118,7 +3118,7 @@ TEST_F(DeviceTests, WhenGettingMemoryAccessPropertiesThenSuccessIsReturned) {
     auto &hwInfo = device->getHwInfo();
     auto &productHelper = device->getProductHelper();
 
-    auto expectedHostAllocCapabilities = static_cast<ze_memory_access_cap_flags_t>(productHelper.getHostMemCapabilities(&hwInfo));
+    auto expectedHostAllocCapabilities = static_cast<ze_memory_access_cap_flags_t>(productHelper.getHostMemCapabilities());
     EXPECT_EQ(expectedHostAllocCapabilities, properties.hostAllocCapabilities);
 
     auto expectedDeviceAllocCapabilities = static_cast<ze_memory_access_cap_flags_t>(productHelper.getDeviceMemCapabilities());

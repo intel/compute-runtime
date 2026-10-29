@@ -98,10 +98,10 @@ HWTEST_F(ProductHelperTest, givenDebugFlagSetWhenAskingForHostMemCapabilitiesThe
     DebugManagerStateRestore restore;
 
     debugManager.flags.EnableHostUsmSupport.set(0);
-    EXPECT_EQ(0u, productHelper->getHostMemCapabilities(&pInHwInfo));
+    EXPECT_EQ(0u, productHelper->getHostMemCapabilities());
 
     debugManager.flags.EnableHostUsmSupport.set(1);
-    EXPECT_NE(0u, productHelper->getHostMemCapabilities(&pInHwInfo));
+    EXPECT_NE(0u, productHelper->getHostMemCapabilities());
 }
 
 HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingSharedSystemMemCapabilitiesThenCorrectValueIsReturned) {
@@ -141,7 +141,7 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingMemoryCapabilitiesThenC
         debugManager.flags.EnableUsmConcurrentAccessSupport.set(capabilityBitmask);
         std::bitset<5> capabilityBitset(capabilityBitmask);
 
-        auto hostMemCapabilities = productHelper->getHostMemCapabilities(&pInHwInfo);
+        auto hostMemCapabilities = productHelper->getHostMemCapabilities();
         if (hostMemCapabilities > 0) {
             if (capabilityBitset.test(static_cast<uint32_t>(UsmAccessCapabilities::host))) {
                 EXPECT_TRUE(UnifiedSharedMemoryFlags::concurrentAccess & hostMemCapabilities);

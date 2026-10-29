@@ -91,7 +91,7 @@ class ProductHelper {
     virtual bool setupHardwareInfo(HardwareInfo &hwInfo, const DeviceCapsReader &capsReader) const = 0;
     virtual int configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const = 0;
     virtual void adjustSamplerState(void *sampler, const HardwareInfo &hwInfo) const = 0;
-    virtual uint64_t getHostMemCapabilities(const HardwareInfo *hwInfo) const = 0;
+    virtual uint64_t getHostMemCapabilities() const = 0;
     virtual uint64_t getDeviceMemCapabilities() const = 0;
     virtual uint64_t getSingleDeviceSharedMemCapabilities(bool isKmdMigrationAvailable) const = 0;
     virtual uint64_t getCrossDeviceSharedMemCapabilities() const = 0;

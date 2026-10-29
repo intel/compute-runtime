@@ -22,7 +22,7 @@ class ProductHelperHw : public ProductHelper {
     bool setupHardwareInfo(HardwareInfo &hwInfo, const DeviceCapsReader &capsReader) const override;
     int configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const override;
     void adjustSamplerState(void *sampler, const HardwareInfo &hwInfo) const override;
-    uint64_t getHostMemCapabilities(const HardwareInfo *hwInfo) const override;
+    uint64_t getHostMemCapabilities() const override;
     uint64_t getDeviceMemCapabilities() const override;
     uint64_t getSingleDeviceSharedMemCapabilities(bool isKmdMigrationAvailable) const override;
     uint64_t getCrossDeviceSharedMemCapabilities() const override;

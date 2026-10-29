@@ -1293,7 +1293,7 @@ TEST_F(MemoryTest, whenCallingSetAtomicAccessAttributeWithInsufficientCapability
         uint64_t getDeviceMemCapabilities() const override {
             return 0;
         }
-        uint64_t getHostMemCapabilities(const HardwareInfo *hwInfo) const override {
+        uint64_t getHostMemCapabilities() const override {
             return 0;
         }
         uint64_t getSingleDeviceSharedMemCapabilities(bool) const override {
@@ -1570,7 +1570,7 @@ TEST_F(MemoryTest, whenCallingSetAtomicAccessAttributeForHostAccessThenSuccessIs
 
     struct MockProductHelperAtomic : NEO::ProductHelperHw<IGFX_UNKNOWN> {
         MockProductHelperAtomic() = default;
-        uint64_t getHostMemCapabilities(const HardwareInfo *hwInfo) const override {
+        uint64_t getHostMemCapabilities() const override {
             return 3;
         }
     };
@@ -1605,7 +1605,7 @@ TEST_F(MemoryTest, givenSharedSystemAlloctionWhenCallingSetAtomicAccessAttribute
             return (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess);
         }
 
-        uint64_t getHostMemCapabilities(const HardwareInfo *hwInfo) const override {
+        uint64_t getHostMemCapabilities() const override {
             return (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess | UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess);
         }
     };

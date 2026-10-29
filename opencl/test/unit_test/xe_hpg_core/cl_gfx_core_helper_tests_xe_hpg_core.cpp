@@ -93,7 +93,7 @@ XE_HPG_CORETEST_F(ClGfxCoreHelperTestsXeHpgCore, givenDifferentCLImageFormatsWhe
 XE_HPG_CORETEST_F(GetDeviceInfoMemCapabilitiesTest, GivenValidParametersWhenGetDeviceInfoIsCalledThenClSuccessIsReturned) {
     auto productHelper = ProductHelper::create(defaultHwInfo->platform.eProductFamily);
     std::vector<TestParams> params = {
-        {CL_DEVICE_HOST_MEM_CAPABILITIES_INTEL, productHelper->getHostMemCapabilities(defaultHwInfo.get())},
+        {CL_DEVICE_HOST_MEM_CAPABILITIES_INTEL, productHelper->getHostMemCapabilities()},
         {CL_DEVICE_DEVICE_MEM_CAPABILITIES_INTEL,
          (CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL | CL_UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS_INTEL)},
         {CL_DEVICE_SINGLE_DEVICE_SHARED_MEM_CAPABILITIES_INTEL,

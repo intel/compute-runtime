@@ -338,7 +338,7 @@ void ClDevice::initializeCaps() {
                                                     ? CommonConstants::maximalSimdSize * 2
                                                     : CommonConstants::maximalSimdSize;
 
-    deviceInfo.hostMemCapabilities = productHelper.getHostMemCapabilities(&hwInfo);
+    deviceInfo.hostMemCapabilities = productHelper.getHostMemCapabilities();
     deviceInfo.deviceMemCapabilities = productHelper.getDeviceMemCapabilities();
 
     const bool isKmdMigrationAvailable{getMemoryManager()->isKmdMigrationAvailable(getRootDeviceIndex())};

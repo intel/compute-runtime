@@ -168,7 +168,7 @@ uint64_t ProductHelperHw<gfxProduct>::getSingleDeviceSharedMemCapabilities(bool 
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-uint64_t ProductHelperHw<gfxProduct>::getHostMemCapabilities(const HardwareInfo *hwInfo) const {
+uint64_t ProductHelperHw<gfxProduct>::getHostMemCapabilities() const {
     bool supported = true;
 
     if (debugManager.flags.EnableHostUsmSupport.get() != -1) {

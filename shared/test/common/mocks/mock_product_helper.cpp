@@ -38,7 +38,7 @@ void ProductHelperHw<IGFX_UNKNOWN>::setForceNonCoherent(void *const commandPtr) 
 }
 
 template <>
-uint64_t ProductHelperHw<IGFX_UNKNOWN>::getHostMemCapabilities(const HardwareInfo *hwInfo) const {
+uint64_t ProductHelperHw<IGFX_UNKNOWN>::getHostMemCapabilities() const {
     return 0;
 }
 
