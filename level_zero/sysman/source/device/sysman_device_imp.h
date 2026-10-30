@@ -7,7 +7,6 @@
 
 #pragma once
 #include "shared/source/execution_environment/execution_environment.h"
-#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
@@ -15,6 +14,7 @@
 
 namespace NEO {
 class ExecutionEnvironment;
+struct RootDeviceEnvironment;
 } // namespace NEO
 
 namespace L0 {
@@ -55,7 +55,7 @@ struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableAndNonMovableClass {
     NEO::RootDeviceEnvironment &getRootDeviceEnvironmentRef() const {
         return *executionEnvironment->rootDeviceEnvironments[rootDeviceIndex];
     }
-    const NEO::HardwareInfo &getHardwareInfo() const override { return *getRootDeviceEnvironment().getHardwareInfo(); }
+    const NEO::HardwareInfo &getHardwareInfo() const override;
     PRODUCT_FAMILY getProductFamily() const { return getHardwareInfo().platform.eProductFamily; }
     NEO::ExecutionEnvironment *getExecutionEnvironment() const { return executionEnvironment; }
     uint32_t getRootDeviceIndex() const { return rootDeviceIndex; }

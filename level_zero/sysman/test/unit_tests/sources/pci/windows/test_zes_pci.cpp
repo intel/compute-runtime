@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/os_interface/windows/mock_sys_calls.h"
 #include "shared/test/common/test_macros/hw_test.h"

@@ -8,6 +8,7 @@
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_driver_imp.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/hw_device_id.h"

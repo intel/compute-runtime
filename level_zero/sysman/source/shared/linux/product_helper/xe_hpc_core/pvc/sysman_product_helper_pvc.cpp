@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/preprocessor.h"
 #include "shared/source/os_interface/linux/pmt_util.h"
 #include "shared/source/os_interface/product_helper.h"

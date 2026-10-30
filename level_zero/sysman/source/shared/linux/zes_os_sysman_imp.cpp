@@ -8,6 +8,7 @@
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/preprocessor.h"
 #include "shared/source/helpers/sleep.h"

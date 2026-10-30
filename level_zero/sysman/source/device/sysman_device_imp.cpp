@@ -7,6 +7,7 @@
 
 #include "level_zero/sysman/source/device/sysman_device_imp.h"
 
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/os_interface/os_interface.h"
 
@@ -246,6 +247,8 @@ ze_result_t SysmanDeviceImp::setDeviceHealthStatus(zes_device_health_status_ext_
 ze_result_t SysmanDeviceImp::getPowerOffReasonExp(zes_intel_device_power_off_reason_exp_t *pReason) {
     return pGlobalOperations->getPowerOffReasonExp(pReason);
 }
+
+const NEO::HardwareInfo &SysmanDeviceImp::getHardwareInfo() const { return *getRootDeviceEnvironment().getHardwareInfo(); }
 
 } // namespace Sysman
 } // namespace L0

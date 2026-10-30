@@ -8,6 +8,7 @@
 #include "level_zero/sysman/source/api/pci/linux/sysman_os_pci_imp.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/preprocessor.h"
 #include "shared/source/utilities/directory.h"
 

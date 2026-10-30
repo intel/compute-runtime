@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/os_time.h"
 #include "shared/source/os_interface/product_helper.h"

@@ -8,6 +8,7 @@
 #include "level_zero/sysman/source/api/global_operations/windows/sysman_os_global_operations_imp.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/preprocessor.h"
 #include "shared/source/os_interface/os_interface.h"
 
