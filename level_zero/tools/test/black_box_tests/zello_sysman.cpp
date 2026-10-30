@@ -632,7 +632,7 @@ void testSysmanTemperature(ze_device_handle_t &device) {
         zes_temp_properties_t properties = {};
         VALIDATECALL(zesTemperatureGetProperties(handle, &properties));
 
-        double temperature;
+        double temperature = 0;
         VALIDATECALL(zesTemperatureGetState(handle, &temperature));
         if (verbose) {
             std::cout << "For subDevice " << properties.subdeviceId << " temperature current state for "
