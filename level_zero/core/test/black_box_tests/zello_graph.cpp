@@ -3457,7 +3457,7 @@ int main(int argc, char *argv[]) {
 
     LevelZeroBlackBoxTests::TestDuration testDuration = LevelZeroBlackBoxTests::TestDuration(argc, argv);
 
-    constexpr uint32_t defaultTestMask = std::numeric_limits<uint32_t>::max() & (~(1u << bitNumberTestExternalCbEventsOnCopyOffload));
+    constexpr uint32_t defaultTestMask = std::numeric_limits<uint32_t>::max();
     LevelZeroBlackBoxTests::TestBitMask testMask = LevelZeroBlackBoxTests::getTestMask(argc, argv, defaultTestMask);
     LevelZeroBlackBoxTests::TestBitMask testSubMask = LevelZeroBlackBoxTests::getTestSubmask(argc, argv, std::numeric_limits<uint32_t>::max());
 
