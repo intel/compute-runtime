@@ -186,3 +186,70 @@ XE3P_CORETEST_F(CommandStreamReceiverXe3pTest, givenEnableSWTagsWhenFlushImmedia
     EXPECT_TRUE(bxmlHeapAddressProgrammed);
     EXPECT_TRUE(tagHeapAddressProgrammed);
 }
+
+XE3P_CORETEST_F(CommandStreamReceiverXe3pTest, givenGlobalFenceAndOnPrimaryCsrWhenProgrammingEnginePrologueThenEstimatedSizeMatchesProgrammedSize) {
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+
+    UltCommandStreamReceiver<FamilyType> csr(*device->executionEnvironment, device->getRootDeviceIndex(), device->getDeviceBitfield());
+    csr.setupContext(*device->getDefaultEngine().osContext);
+
+    MockGraphicsAllocation globalFence(nullptr, 0x20000, MemoryConstants::pageSize);
+    VariableBackup<GraphicsAllocation *> globalFenceBackup(&csr.globalFenceAllocation, &globalFence);
+    VariableBackup<CommandStreamReceiver *> primaryCsrBackup(&csr.primaryCsr, nullptr);
+    csr.isEnginePrologueSent = false;
+
+    auto estimatedSize = csr.getCmdSizeForPrologue();
+    EXPECT_EQ(EncodeMemoryFence<FamilyType>::getSystemMemoryFenceSize(), estimatedSize);
+    EXPECT_NE(0u, estimatedSize);
+
+    alignas(64) uint8_t buffer[1024] = {};
+    LinearStream stream(buffer, sizeof(buffer));
+    csr.programEnginePrologue(stream);
+
+    EXPECT_EQ(estimatedSize, stream.getUsed());
+    EXPECT_TRUE(csr.isEnginePrologueSent);
+    EXPECT_EQ(0u, csr.getCmdSizeForPrologue());
+}
+
+XE3P_CORETEST_F(CommandStreamReceiverXe3pTest, givenGlobalFenceAndOnSecondaryCsrWhenProgrammingEnginePrologueThenFenceIsSkippedAndEstimatedSizeIsZero) {
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+
+    UltCommandStreamReceiver<FamilyType> csr(*device->executionEnvironment, device->getRootDeviceIndex(), device->getDeviceBitfield());
+    csr.setupContext(*device->getDefaultEngine().osContext);
+
+    UltCommandStreamReceiver<FamilyType> localPrimaryCsr(*device->executionEnvironment, device->getRootDeviceIndex(), device->getDeviceBitfield());
+
+    MockGraphicsAllocation globalFence(nullptr, 0x20000, MemoryConstants::pageSize);
+    VariableBackup<GraphicsAllocation *> globalFenceBackup(&csr.globalFenceAllocation, &globalFence);
+    VariableBackup<CommandStreamReceiver *> primaryCsrBackup(&csr.primaryCsr, &localPrimaryCsr);
+    VariableBackup<GraphicsAllocation *> primaryGlobalFenceBackup(&localPrimaryCsr.globalFenceAllocation, &globalFence);
+
+    csr.isEnginePrologueSent = false;
+
+    EXPECT_EQ(0u, csr.getCmdSizeForPrologue());
+
+    alignas(64) uint8_t buffer[1024] = {};
+    LinearStream stream(buffer, sizeof(buffer));
+    csr.programEnginePrologue(stream);
+
+    EXPECT_EQ(0u, stream.getUsed());
+    EXPECT_TRUE(csr.isEnginePrologueSent);
+}
+
+XE3P_CORETEST_F(CommandStreamReceiverXe3pTest, givenNoGlobalFenceWhenGettingPrologueSizeThenZeroIsReturned) {
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+
+    UltCommandStreamReceiver<FamilyType> csr(*device->executionEnvironment, device->getRootDeviceIndex(), device->getDeviceBitfield());
+    csr.setupContext(*device->getDefaultEngine().osContext);
+
+    VariableBackup<GraphicsAllocation *> globalFenceBackup(&csr.globalFenceAllocation, nullptr);
+    VariableBackup<CommandStreamReceiver *> primaryCsrBackup(&csr.primaryCsr, nullptr);
+    csr.isEnginePrologueSent = false;
+
+    EXPECT_EQ(0u, csr.getCmdSizeForPrologue());
+
+    alignas(64) uint8_t buffer[1024] = {};
+    LinearStream stream(buffer, sizeof(buffer));
+    csr.programEnginePrologue(stream);
+    EXPECT_EQ(0u, stream.getUsed());
+}

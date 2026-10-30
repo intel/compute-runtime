@@ -62,7 +62,8 @@ void CommandStreamReceiverHw<Family>::programEnginePrologue(LinearStream &csr) {
 template <>
 size_t CommandStreamReceiverHw<Family>::getCmdSizeForPrologue() const {
     if (!this->isEnginePrologueSent) {
-        if (getGlobalFenceAllocation()) {
+        bool skip = (this->primaryCsr != nullptr);
+        if (!skip && getGlobalFenceAllocation()) {
             return EncodeMemoryFence<Family>::getSystemMemoryFenceSize();
         }
     }
