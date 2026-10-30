@@ -19,7 +19,6 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_pooling.h"
-#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/tag_allocator.h"
 
@@ -195,12 +194,6 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
                                                      lookupTable.glTextureExt.mcsNtHandle,
                                                      lookupTable.glTextureExt.pGmmResInfoMcs,
                                                      lookupTable.glTextureExt.hasUnifiedMcsSurface);
-                } else if (allocation != nullptr && allocation->getDefaultGmm()->unifiedAuxTranslationCapable()) {
-                    // The producer API compressed the resource, so the surface states need its aux parameters
-                    bool compressionEnabled = device->getProductHelper().isPageTableManagerSupported(device->getHwInfo())
-                                                  ? device->getNEODevice()->getMemoryManager()->mapAuxGpuVA(allocation)
-                                                  : true;
-                    allocation->getDefaultGmm()->setCompressionEnabled(compressionEnabled);
                 }
                 if (allocation != nullptr) {
                     auto importedGmm = allocation->getDefaultGmm();
