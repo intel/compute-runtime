@@ -321,6 +321,18 @@ size_t CommandContainer::getAlignedCmdBufferSize() const {
     return alignUp<size_t>(finalTotalCommandBufferSize, defaultCmdBufferAllocationAlignment);
 }
 
+size_t CommandContainer::getAlignedCmdBufferSize(size_t requiredUsableSize) const {
+    return std::max(getAlignedCmdBufferSize(), alignUp<size_t>(requiredUsableSize + cmdBufferReservedSize, defaultCmdBufferAllocationAlignment));
+}
+
+size_t CommandContainer::getUsableSpace(const GraphicsAllocation &cmdBuffer) const {
+    const size_t allocationSize = cmdBuffer.getUnderlyingBufferSize();
+    if (allocationSize > getAlignedCmdBufferSize()) {
+        return allocationSize - cmdBufferReservedSize;
+    }
+    return getMaxUsableSpace();
+}
+
 void *CommandContainer::getHeapSpaceAllowGrow(HeapType heapType,
                                               size_t size) {
     return getHeapWithRequiredSize(heapType, size, 0, true)->getSpace(size);
@@ -557,8 +569,12 @@ GraphicsAllocation *CommandContainer::reuseExistingCmdBuffer() {
 }
 
 GraphicsAllocation *CommandContainer::reuseExistingCmdBuffer(bool forceHostMemory) {
+    return this->reuseExistingCmdBuffer(forceHostMemory, getMaxUsableSpace());
+}
+
+GraphicsAllocation *CommandContainer::reuseExistingCmdBuffer(bool forceHostMemory, size_t requiredUsableSize) {
     forceHostMemory &= this->useSecondaryCommandStream;
-    size_t alignedSize = getAlignedCmdBufferSize();
+    size_t alignedSize = getAlignedCmdBufferSize(requiredUsableSize);
     auto cmdBufferAllocation = this->detachReusableCommandBuffer(*this->immediateReusableAllocationList, alignedSize, forceHostMemory).release();
     if (!cmdBufferAllocation && this->reusableAllocationList) {
         cmdBufferAllocation = this->detachReusableCommandBuffer(*this->reusableAllocationList, alignedSize, forceHostMemory).release();
@@ -576,7 +592,7 @@ void CommandContainer::addCurrentCommandBufferToReusableAllocationList() {
 }
 
 void CommandContainer::setCmdBuffer(GraphicsAllocation *cmdBuffer) {
-    commandStream->replaceBuffer(cmdBuffer->getUnderlyingBuffer(), getMaxUsableSpace());
+    commandStream->replaceBuffer(cmdBuffer->getUnderlyingBuffer(), getUsableSpace(*cmdBuffer));
     commandStream->replaceGraphicsAllocation(cmdBuffer);
 
     if (!getFlushTaskUsedForImmediate()) {
@@ -585,7 +601,11 @@ void CommandContainer::setCmdBuffer(GraphicsAllocation *cmdBuffer) {
 }
 
 GraphicsAllocation *CommandContainer::allocateCommandBuffer(bool forceHostMemory) {
-    size_t alignedSize = getAlignedCmdBufferSize();
+    return this->allocateCommandBuffer(forceHostMemory, getMaxUsableSpace());
+}
+
+GraphicsAllocation *CommandContainer::allocateCommandBuffer(bool forceHostMemory, size_t requiredUsableSize) {
+    size_t alignedSize = getAlignedCmdBufferSize(requiredUsableSize);
 
     if (!forceHostMemory) {
         auto &rootDeviceEnvironment = this->device->getRootDeviceEnvironment();
@@ -748,7 +768,7 @@ void *CommandContainer::findCpuBaseForCmdBufferAddress(void *cmdBufferAddress) {
     for (size_t i = 0; i < cmdBufferAllocations.size() - 1; i++) {
         cpuBaseValue = reinterpret_cast<uintptr_t>(cmdBufferAllocations[i]->getUnderlyingBuffer());
         if ((cpuBaseValue <= cmdBufferAddressValue) &&
-            ((cpuBaseValue + getMaxUsableSpace()) > cmdBufferAddressValue)) {
+            ((cpuBaseValue + getUsableSpace(*cmdBufferAllocations[i])) > cmdBufferAddressValue)) {
             return reinterpret_cast<void *>(cpuBaseValue);
         }
     }

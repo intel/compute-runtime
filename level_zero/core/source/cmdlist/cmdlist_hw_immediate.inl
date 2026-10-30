@@ -92,8 +92,9 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::checkAvailableSpace(u
         commandSize += NEO::BlitCommandsHelper<GfxFamily>::getSizeForDebugPauseCommands(rootDeviceEnvironment);
     }
 
-    size_t semaphoreSize = NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait() * numEvents;
-    if (this->commandContainer.getCommandStream()->getAvailableSpace() < commandSize + semaphoreSize) {
+    const size_t semaphoreSize = NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait() * numEvents;
+    const size_t requiredSize = commandSize + semaphoreSize;
+    if (this->commandContainer.getCommandStream()->getAvailableSpace() < requiredSize) {
         bool requireSystemMemoryCommandBuffer = !hasRelaxedOrderingDependencies && !requestCommandBufferInLocalMem;
 
         if (this->cmdQImmediateCopyOffload) {
@@ -102,11 +103,11 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::checkAvailableSpace(u
             this->copyOffloadTagUpdateRequired |= (copyOffloadTaskCount != NEO::GraphicsAllocation::objectNotUsed) && (copyOffloadTaskCount > copyOffloadCsr->peekLatestFlushedTaskCount());
         }
 
-        auto alloc = this->commandContainer.reuseExistingCmdBuffer(requireSystemMemoryCommandBuffer);
+        auto alloc = this->commandContainer.reuseExistingCmdBuffer(requireSystemMemoryCommandBuffer, requiredSize);
         bool newCmdBufferAllocated = false;
 
         if (!alloc) {
-            alloc = this->commandContainer.allocateCommandBuffer(requireSystemMemoryCommandBuffer);
+            alloc = this->commandContainer.allocateCommandBuffer(requireSystemMemoryCommandBuffer, requiredSize);
             if (!alloc) {
                 return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
             }

@@ -56,12 +56,14 @@ class MyMockCommandContainer : public CommandContainer {
     using CommandContainer::secondaryCommandStreamForImmediateCmdList;
     using CommandContainer::skipHeapAllocationCreation;
 
-    GraphicsAllocation *allocateCommandBuffer(bool forceHostMemory) override {
+    using CommandContainer::allocateCommandBuffer;
+
+    GraphicsAllocation *allocateCommandBuffer(bool forceHostMemory, size_t requiredUsableSize) override {
         allocateCommandBufferCalled[!!forceHostMemory]++;
         if (forceHostMemory && failHostMemoryCommandBufferAllocation) {
             return nullptr;
         }
-        return CommandContainer::allocateCommandBuffer(forceHostMemory);
+        return CommandContainer::allocateCommandBuffer(forceHostMemory, requiredUsableSize);
     }
 
     uint32_t allocateCommandBufferCalled[2] = {0, 0};
@@ -1235,6 +1237,31 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenSetCmdBufferThenCmdBufferSetCo
     pDevice->getMemoryManager()->freeGraphicsMemory(alloc);
 }
 
+TEST_F(CommandContainerTest, givenRequiredUsableSizeAboveDefaultWhenAllocatingAndSettingCommandBufferThenCommandStreamFitsRequiredSize) {
+    MyMockCommandContainer cmdContainer;
+    ASSERT_EQ(CommandContainer::ErrorCode::success, cmdContainer.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), false, false));
+
+    const size_t requiredUsableSize = cmdContainer.getCommandStream()->getMaxAvailableSpace() + 1;
+    auto alloc = cmdContainer.allocateCommandBuffer(false, requiredUsableSize);
+    ASSERT_NE(nullptr, alloc);
+    cmdContainer.getCmdBufferAllocations().push_back(alloc);
+    cmdContainer.setCmdBuffer(alloc);
+
+    EXPECT_GE(alloc->getUnderlyingBufferSize(), requiredUsableSize + CommandContainer::cmdBufferReservedSize);
+    EXPECT_EQ(alloc->getUnderlyingBufferSize() - CommandContainer::cmdBufferReservedSize, cmdContainer.getCommandStream()->getMaxAvailableSpace());
+}
+
+TEST_F(CommandContainerTest, givenRequiredUsableSizeWithinDefaultWhenAllocatingCommandBufferThenDefaultSizeIsUsed) {
+    MyMockCommandContainer cmdContainer;
+    ASSERT_EQ(CommandContainer::ErrorCode::success, cmdContainer.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), false, false));
+
+    auto alloc = cmdContainer.allocateCommandBuffer(false, MemoryConstants::kiloByte);
+    ASSERT_NE(nullptr, alloc);
+    cmdContainer.getCmdBufferAllocations().push_back(alloc);
+
+    EXPECT_EQ(cmdContainer.getAlignedCmdBufferSize(), alloc->getUnderlyingBufferSize());
+}
+
 TEST_F(CommandContainerTest, givenCmdContainerWhenReuseExistingCmdBufferWithoutAnyAllocationInListThenReturnNullptr) {
     auto cmdContainer = std::make_unique<MyMockCommandContainer>();
     AllocationsList allocList;
@@ -1609,6 +1636,17 @@ TEST_F(CommandBufferReuseTests, givenActiveBufferWhenContainerIsDestroyedThenUsa
     EXPECT_EQ(0u, copyCsr->flushTagUpdateCalls);
     EXPECT_EQ(mainTaskCount, allocation->getTaskCount(mainCsr->getOsContext().getContextId()));
     EXPECT_EQ(copyTaskCount, allocation->getTaskCount(copyCsr->getOsContext().getContextId()));
+}
+
+TEST_F(CommandBufferReuseTests, givenReusableBufferSmallerThanRequiredUsableSizeWhenReusingThenItIsNotReturned) {
+    auto container = createContainer(true);
+    auto allocation = container->getCommandStream()->getGraphicsAllocation();
+    const size_t defaultUsableSize = container->getCommandStream()->getMaxAvailableSpace();
+    container->addCurrentCommandBufferToReusableAllocationList();
+    mainCsr->normalTags.fill(mainCsr->peekTaskCount());
+
+    EXPECT_EQ(nullptr, container->reuseExistingCmdBuffer(false, defaultUsableSize + 1));
+    EXPECT_EQ(allocation, container->reuseExistingCmdBuffer(false, defaultUsableSize));
 }
 
 TEST_F(CommandBufferReuseTests, givenNoSharedCacheWhenPrivateCacheIsEmptyThenNoBufferIsReused) {
@@ -2863,6 +2901,22 @@ TEST_F(CommandContainerTest, givenInitializedContainerWithTwoCommandBuffersWhenS
 
     void *cpuBase = cmdContainer.findCpuBaseForCmdBufferAddress(cmdBuffer);
     EXPECT_EQ(expectedCpuBase, cpuBase);
+}
+
+TEST_F(CommandContainerTest, givenOldCommandBufferLargerThanDefaultWhenSearchedAddressIsBeyondDefaultUsableSpaceThenReturnOldCommandBufferCpuBase) {
+    MyMockCommandContainer cmdContainer;
+    ASSERT_EQ(CommandContainer::ErrorCode::success, cmdContainer.initialize(pDevice, nullptr, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), false, false));
+
+    const size_t defaultUsableSize = cmdContainer.getCommandStream()->getMaxAvailableSpace();
+    auto largeAlloc = cmdContainer.allocateCommandBuffer(false, 2 * defaultUsableSize);
+    ASSERT_NE(nullptr, largeAlloc);
+    cmdContainer.getCmdBufferAllocations().push_back(largeAlloc);
+    cmdContainer.setCmdBuffer(largeAlloc);
+    cmdContainer.allocateNextCommandBuffer();
+
+    void *expectedCpuBase = largeAlloc->getUnderlyingBuffer();
+    void *cmdBuffer = ptrOffset(expectedCpuBase, defaultUsableSize + 0x100);
+    EXPECT_EQ(expectedCpuBase, cmdContainer.findCpuBaseForCmdBufferAddress(cmdBuffer));
 }
 
 TEST_F(CommandContainerTest, givenInitializedContainerWhenSearchedAddressIsOutsideCommandStreamThenReturnNullptr) {

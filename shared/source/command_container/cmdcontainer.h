@@ -157,7 +157,9 @@ class CommandContainer : public NonCopyableAndNonMovableClass {
 
     GraphicsAllocation *reuseExistingCmdBuffer();
     GraphicsAllocation *reuseExistingCmdBuffer(bool forceHostMemory);
-    MOCKABLE_VIRTUAL GraphicsAllocation *allocateCommandBuffer(bool forceHostMemory);
+    GraphicsAllocation *reuseExistingCmdBuffer(bool forceHostMemory, size_t requiredUsableSize);
+    GraphicsAllocation *allocateCommandBuffer(bool forceHostMemory);
+    MOCKABLE_VIRTUAL GraphicsAllocation *allocateCommandBuffer(bool forceHostMemory, size_t requiredUsableSize);
     void setCmdBuffer(GraphicsAllocation *cmdBuffer);
     void addCurrentCommandBufferToReusableAllocationList();
 
@@ -234,9 +236,11 @@ class CommandContainer : public NonCopyableAndNonMovableClass {
   protected:
     std::unique_ptr<GraphicsAllocation> detachReusableCommandBuffer(AllocationsList &allocations, size_t requiredSize, bool forceHostMemory);
     size_t getAlignedCmdBufferSize() const;
+    size_t getAlignedCmdBufferSize(size_t requiredUsableSize) const;
     size_t getMaxUsableSpace() const {
         return getAlignedCmdBufferSize() - cmdBufferReservedSize;
     }
+    size_t getUsableSpace(const GraphicsAllocation &cmdBuffer) const;
     IndirectHeap *getHeapWithRequiredSize(HeapType heapType, size_t sizeRequired, size_t alignment, bool allowGrow);
     void createAndAssignNewHeap(HeapType heapType, size_t size);
     IndirectHeap *initIndirectHeapReservation(ReservedIndirectHeap *indirectHeapReservation, size_t size, size_t alignment, HeapType heapType);

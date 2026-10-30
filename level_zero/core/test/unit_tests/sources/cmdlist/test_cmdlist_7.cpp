@@ -1846,6 +1846,26 @@ HWTEST_F(CommandListCreate, givenImmediateCommandListWhenThereIsNoEnoughSpaceFor
     EXPECT_EQ(latestFlushedTaskCount + 1, whiteBoxCmdList->getCsr(false)->peekLatestFlushedTaskCount());
 }
 
+HWTEST_F(CommandListCreate, givenImmediateCommandListWhenRequiredSpaceExceedsDefaultCommandBufferThenCommandBufferFittingRequiredSpaceIsSet) {
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
+    ASSERT_NE(nullptr, commandList);
+    auto commandStream = commandList->getCmdContainer().getCommandStream();
+
+    constexpr uint32_t numEvents = 100;
+    const size_t eventWaitSize = numEvents * NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait();
+    const size_t requiredCommandSize = commandStream->getMaxAvailableSpace() + 1;
+    const auto defaultCmdBuffer = commandStream->getGraphicsAllocation();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, reinterpret_cast<CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily> *>(commandList.get())->checkAvailableSpace(numEvents, false, requiredCommandSize, false));
+
+    EXPECT_NE(defaultCmdBuffer, commandStream->getGraphicsAllocation());
+    EXPECT_GE(commandStream->getAvailableSpace(), requiredCommandSize + eventWaitSize);
+    EXPECT_NE(nullptr, commandStream->getSpace(requiredCommandSize + eventWaitSize));
+}
+
 HWTEST_F(CommandListCreate, givenImmediateCommandListWhenThereIsNoEnoughSpaceForWaitOnEventsAndImmediateCommandAndAllocationListNotEmptyThenReuseCommandBuffer) {
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
