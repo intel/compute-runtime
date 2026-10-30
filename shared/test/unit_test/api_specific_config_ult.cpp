@@ -16,8 +16,6 @@ struct HardwareInfo;
 
 ApiSpecificConfig::ApiType apiTypeForUlts = ApiSpecificConfig::OCL;
 
-bool globalStatelessL0 = false;
-bool globalStatelessOcl = false;
 bool isDeviceUsmPoolingEnabledForUlts = true;
 
 const StackVec<DebugVarPrefix, 4> *validUltPrefixTypesOverride = nullptr;
@@ -116,16 +114,6 @@ bool ApiSpecificConfig::isUpdateTagFromWaitEnabledForHeapless() {
 
 int64_t ApiSpecificConfig::compilerCacheDefaultEnabled() {
     return 1l;
-}
-
-bool ApiSpecificConfig::isGlobalStatelessEnabled(const RootDeviceEnvironment &rootDeviceEnvironment) {
-
-    if (apiTypeForUlts == ApiSpecificConfig::L0) {
-        return globalStatelessL0;
-
-    } else {
-        return globalStatelessOcl;
-    }
 }
 
 } // namespace NEO

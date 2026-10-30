@@ -12,7 +12,6 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/gmm_helper/cache_settings_helper.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
-#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/preprocessor.h"
@@ -454,10 +453,6 @@ SubmissionStatus CommandStreamReceiverHw<GfxFamily>::initializeDeviceWithFirstSu
     if (EngineHelpers::isBcs(this->osContext->getEngineType())) {
         status = this->flushMiFlushDW(true);
     } else {
-
-        if (ApiSpecificConfig::isGlobalStatelessEnabled(device.getRootDeviceEnvironment())) {
-            this->createGlobalStatelessHeap();
-        }
         status = programHeaplessProlog(device);
     }
 

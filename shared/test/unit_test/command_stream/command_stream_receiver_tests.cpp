@@ -7211,6 +7211,39 @@ HWTEST_F(CommandStreamReceiverContextGroupTest, givenSecondaryCsrWhenGettingInte
     }
 }
 
+HWTEST_F(CommandStreamReceiverContextGroupTest, givenSecondaryCsrWhenCreatingGlobalStatelessHeapThenHeapIsAllocatedOnlyOnPrimaryCsr) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    if (hwInfo.capabilityTable.defaultEngineType != aub_stream::EngineType::ENGINE_CCS) {
+        GTEST_SKIP();
+    }
+
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.ContextGroupSize.set(5);
+
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+
+    const auto engineType = EngineHelpers::mapCcsIndexToEngineType(0);
+    auto &secondaryEngines = device->secondaryEngines[engineType];
+    ASSERT_EQ(5u, secondaryEngines.engines.size());
+
+    auto primaryCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(secondaryEngines.engines[0].commandStreamReceiver);
+    ASSERT_EQ(nullptr, primaryCsr->globalStatelessHeapAllocation);
+
+    auto secondaryCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(secondaryEngines.engines[1].commandStreamReceiver);
+    ASSERT_NE(nullptr, secondaryCsr->getPrimaryCsr());
+
+    secondaryCsr->createGlobalStatelessHeap();
+
+    EXPECT_NE(nullptr, primaryCsr->globalStatelessHeapAllocation);
+    EXPECT_EQ(nullptr, secondaryCsr->globalStatelessHeapAllocation);
+    EXPECT_EQ(primaryCsr->getGlobalStatelessHeap(), secondaryCsr->getGlobalStatelessHeap());
+    EXPECT_EQ(primaryCsr->getGlobalStatelessHeapAllocation(), secondaryCsr->getGlobalStatelessHeapAllocation());
+}
+
 HWTEST_F(CommandStreamReceiverContextGroupTest, givenSecondaryRootCsrWhenGettingInternalAllocationsThenAllocationFromPrimnaryCsrAreReturned) {
     HardwareInfo hwInfo = *defaultHwInfo;
     if (hwInfo.capabilityTable.defaultEngineType != aub_stream::EngineType::ENGINE_CCS) {

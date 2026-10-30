@@ -82,10 +82,6 @@ int64_t ApiSpecificConfig::compilerCacheDefaultEnabled() {
     return 1l;
 }
 
-bool ApiSpecificConfig::isGlobalStatelessEnabled(const RootDeviceEnvironment &rootDeviceEnvironment) {
-    return false;
-}
-
 bool ApiSpecificConfig::isUpdateTagFromWaitEnabledForHeapless() {
     return true;
 }

@@ -1570,6 +1570,10 @@ uint64_t CommandStreamReceiver::getCompletionAddress() const {
 }
 
 void CommandStreamReceiver::createGlobalStatelessHeap() {
+    if (this->primaryCsr) {
+        this->primaryCsr->createGlobalStatelessHeap();
+        return;
+    }
     if (this->globalStatelessHeapAllocation == nullptr) {
         auto lock = obtainUniqueOwnership();
         if (this->globalStatelessHeapAllocation == nullptr) {
