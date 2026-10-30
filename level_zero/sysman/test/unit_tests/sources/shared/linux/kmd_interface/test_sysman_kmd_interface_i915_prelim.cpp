@@ -104,6 +104,7 @@ TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceWhenGettingNodeFile
     EXPECT_TRUE(pSysmanKmdInterface->getNodeFileName(NodeName::amcAlertReason).empty());
     EXPECT_TRUE(pSysmanKmdInterface->getNodeFileName(NodeName::temperatureEmergency).empty());
     EXPECT_TRUE(pSysmanKmdInterface->getNodeFileName(NodeName::memoryTemperature).empty());
+    EXPECT_TRUE(pSysmanKmdInterface->getNodeFileName(NodeName::gpuTemperature).empty());
 }
 
 TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceWhenCallingGetSysmanDeviceDirNameForDiscreteDeviceThenCorrectNameIsReturned) {

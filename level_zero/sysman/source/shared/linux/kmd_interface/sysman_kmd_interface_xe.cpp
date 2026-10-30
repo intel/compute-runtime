@@ -130,6 +130,7 @@ void SysmanKmdInterfaceXe::initNodeNameToFileMap() {
     nodeNameToFileMap[NodeName::amcAlertReason] = "xe_amc_alert_reason";
     nodeNameToFileMap[NodeName::temperatureEmergency] = "temp2_emergency";
     nodeNameToFileMap[NodeName::memoryTemperature] = "temp3_input";
+    nodeNameToFileMap[NodeName::gpuTemperature] = "temp2_input";
 }
 
 void SysmanKmdInterfaceXe::initSysfsNameToNativeUnitMap(SysmanProductHelper *pSysmanProductHelper) {

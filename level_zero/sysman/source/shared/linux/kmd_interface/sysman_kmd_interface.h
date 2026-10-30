@@ -123,6 +123,7 @@ enum class NodeName {
     amcAlertReason,
     temperatureEmergency,
     memoryTemperature,
+    gpuTemperature,
 };
 
 enum class SysfsValueUnit {

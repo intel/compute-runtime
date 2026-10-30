@@ -18,6 +18,7 @@ constexpr uint32_t handleComponentCountForNoSubDevices = 2u;
 constexpr uint32_t invalidMaxTemperature = 125;
 constexpr uint32_t invalidMinTemperature = 10;
 constexpr double expectedMemoryTemperature = 39.0;
+constexpr double expectedGpuTemperature = 45.0;
 
 class SysmanMultiDeviceTemperatureFixture : public SysmanMultiDeviceFixture {
   protected:
@@ -548,6 +549,126 @@ HWTEST2_F(SysmanDeviceTemperatureFixture, GivenProductWithoutSysfsTemperatureSup
 
     PublicLinuxTemperatureImp temperatureImp(pOsSysman, false, 0u, 0u);
     temperatureImp.setSensorType(ZES_TEMP_SENSORS_MEMORY);
+
+    double temperature = 0.0;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, temperatureImp.getSensorTemperature(&temperature));
+}
+
+HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndHwmonGpuTemperatureNodeWhenGettingGpuTemperatureThenTemperatureIsReadFromSysfs, IsBMG) {
+    setUpHwmonKmdInterfaceXe();
+    pFsAccess->isRootUserResult = false;
+    pFsAccess->gpuTemperatureExists = true;
+
+    PublicLinuxTemperatureImp temperatureImp(pOsSysman, false, 0u, 0u);
+    temperatureImp.setSensorType(ZES_TEMP_SENSORS_GPU);
+
+    double temperature = 0.0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, temperatureImp.getSensorTemperature(&temperature));
+    EXPECT_DOUBLE_EQ(expectedGpuTemperature, temperature);
+}
+
+HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndHwmonGpuTemperatureReadFailureWhenGettingGpuTemperatureThenErrorIsReturned, IsBMG) {
+    setUpHwmonKmdInterfaceXe();
+    pFsAccess->isRootUserResult = false;
+    pFsAccess->gpuTemperatureExists = true;
+    pFsAccess->gpuTemperatureReadResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+
+    PublicLinuxTemperatureImp temperatureImp(pOsSysman, false, 0u, 0u);
+    temperatureImp.setSensorType(ZES_TEMP_SENSORS_GPU);
+
+    double temperature = 0.0;
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, temperatureImp.getSensorTemperature(&temperature));
+}
+
+HWTEST2_F(SysmanDeviceTemperatureFixture, GivenPrivilegedUserAndHwmonGpuTemperatureNodeWhenGettingGpuTemperatureThenTemperatureIsReadFromSysfs, IsBMG) {
+    setUpHwmonKmdInterfaceXe();
+    pFsAccess->isRootUserResult = true;
+    pFsAccess->gpuTemperatureExists = true;
+
+    PublicLinuxTemperatureImp temperatureImp(pOsSysman, false, 0u, 0u);
+    temperatureImp.setSensorType(ZES_TEMP_SENSORS_GPU);
+
+    double temperature = 0.0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, temperatureImp.getSensorTemperature(&temperature));
+    EXPECT_DOUBLE_EQ(expectedGpuTemperature, temperature);
+}
+
+HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndMissingHwmonGpuTemperatureNodeWhenGettingGpuTemperatureThenTelemetryIsUsed, IsBMG) {
+    setUpHwmonKmdInterfaceXe();
+    pFsAccess->isRootUserResult = false;
+    pFsAccess->gpuTemperatureExists = false;
+
+    PublicLinuxTemperatureImp temperatureImp(pOsSysman, false, 0u, 0u);
+    temperatureImp.setSensorType(ZES_TEMP_SENSORS_GPU);
+
+    double temperature = 0.0;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, temperatureImp.getSensorTemperature(&temperature));
+    EXPECT_FALSE(temperatureImp.isTempModuleSupported());
+}
+
+HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndHwmonGpuTemperatureNodeWhenGettingMemoryAndGlobalTemperatureThenTelemetryIsUsed, IsBMG) {
+    setUpHwmonKmdInterfaceXe();
+    pFsAccess->isRootUserResult = false;
+    pFsAccess->gpuTemperatureExists = true;
+
+    PublicLinuxTemperatureImp memoryTemperatureImp(pOsSysman, false, 0u, 0u);
+    memoryTemperatureImp.setSensorType(ZES_TEMP_SENSORS_MEMORY);
+    PublicLinuxTemperatureImp globalTemperatureImp(pOsSysman, false, 0u, 0u);
+    globalTemperatureImp.setSensorType(ZES_TEMP_SENSORS_GLOBAL);
+
+    double temperature = 0.0;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, memoryTemperatureImp.getSensorTemperature(&temperature));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, globalTemperatureImp.getSensorTemperature(&temperature));
+}
+
+HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndHwmonGpuTemperatureNodeAndNoTelemetrySupportWhenCheckingTempModuleSupportThenTrueIsReturned, IsBMG) {
+    setUpHwmonKmdInterfaceXe();
+    pFsAccess->isRootUserResult = false;
+    pFsAccess->gpuTemperatureExists = true;
+
+    PublicLinuxTemperatureImp temperatureImp(pOsSysman, false, 0u, 0u);
+    temperatureImp.setSensorType(ZES_TEMP_SENSORS_GPU);
+
+    EXPECT_TRUE(temperatureImp.isTempModuleSupported());
+}
+
+HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndHwmonGpuTemperatureNodeAppearingAfterReInitWhenGettingGpuTemperatureThenTemperatureIsReadFromSysfs, IsBMG) {
+    setUpHwmonKmdInterfaceXe();
+    pFsAccess->isRootUserResult = false;
+
+    PublicLinuxTemperatureImp temperatureImp(pOsSysman, false, 0u, 0u);
+    temperatureImp.setSensorType(ZES_TEMP_SENSORS_GPU);
+
+    double temperature = 0.0;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, temperatureImp.getSensorTemperature(&temperature));
+
+    pFsAccess->gpuTemperatureExists = true;
+    temperatureImp.reInit();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, temperatureImp.getSensorTemperature(&temperature));
+    EXPECT_DOUBLE_EQ(expectedGpuTemperature, temperature);
+}
+
+HWTEST2_F(SysmanDeviceTemperatureFixture, GivenSysfsTemperatureSupportedAndKmdInterfaceWithoutGpuTemperatureFileNameWhenInitializingThenGpuTemperatureNodeIsNotProbed, IsBMG) {
+    setUpHwmonKmdInterfaceI915Upstream();
+    pFsAccess->isRootUserResult = false;
+    pFsAccess->gpuTemperatureExists = true;
+
+    PublicLinuxTemperatureImp temperatureImp(pOsSysman, false, 0u, 0u);
+    temperatureImp.setSensorType(ZES_TEMP_SENSORS_GPU);
+
+    double temperature = 0.0;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, temperatureImp.getSensorTemperature(&temperature));
+    EXPECT_FALSE(temperatureImp.isTempModuleSupported());
+}
+
+HWTEST2_F(SysmanDeviceTemperatureFixture, GivenProductWithoutSysfsTemperatureSupportAndNonPrivilegedUserWhenGettingGpuTemperatureThenTelemetryIsUsed, IsDG2) {
+    setUpHwmonKmdInterfaceXe();
+    pFsAccess->isRootUserResult = false;
+    pFsAccess->gpuTemperatureExists = true;
+
+    PublicLinuxTemperatureImp temperatureImp(pOsSysman, false, 0u, 0u);
+    temperatureImp.setSensorType(ZES_TEMP_SENSORS_GPU);
 
     double temperature = 0.0;
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, temperatureImp.getSensorTemperature(&temperature));

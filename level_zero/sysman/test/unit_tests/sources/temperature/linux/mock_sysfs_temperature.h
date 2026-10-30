@@ -82,6 +82,7 @@ const std::string mockTemperatureHwmonNameFile0(mockTemperatureHwmonDir + "/hwmo
 const std::string mockTemperatureHwmonNameFile1(mockTemperatureHwmonDir + "/hwmon1/name");
 const std::string mockTemperatureHwmonTempFile0(mockTemperatureHwmonDir + "/hwmon0/temp2_emergency");
 const std::string mockMemoryTemperatureHwmonFile0(mockTemperatureHwmonDir + "/hwmon0/temp3_input");
+const std::string mockGpuTemperatureHwmonFile0(mockTemperatureHwmonDir + "/hwmon0/temp2_input");
 const std::string mockTemperatureHwmonSubDir0(mockTemperatureHwmonDir + "/hwmon0/");
 
 class MockTemperatureSysfsAccess : public L0::Sysman::SysFsAccessInterface {
@@ -110,12 +111,15 @@ struct MockTemperatureFsAccess : public L0::Sysman::FsAccessInterface {
     ze_result_t hwmonNameReadResult1 = ZE_RESULT_SUCCESS;
     ze_result_t temp2EmergencyReadResult = ZE_RESULT_SUCCESS;
     ze_result_t memoryTemperatureReadResult = ZE_RESULT_SUCCESS;
+    ze_result_t gpuTemperatureReadResult = ZE_RESULT_SUCCESS;
     std::string hwmonName0 = "xe";
     std::string hwmonName1 = "dummy";
     int32_t temp2EmergencyValue = 125000;
     int32_t memoryTemperatureValue = 39000;
+    int32_t gpuTemperatureValue = 45000;
     bool temp2EmergencyExists = true;
     bool memoryTemperatureExists = false;
+    bool gpuTemperatureExists = false;
     bool isRootUserResult = true;
     std::string listDirectoryPathRequested;
 
@@ -148,6 +152,12 @@ struct MockTemperatureFsAccess : public L0::Sysman::FsAccessInterface {
             }
             return memoryTemperatureReadResult;
         }
+        if (file == mockGpuTemperatureHwmonFile0) {
+            if (gpuTemperatureReadResult == ZE_RESULT_SUCCESS) {
+                val = gpuTemperatureValue;
+            }
+            return gpuTemperatureReadResult;
+        }
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
@@ -169,6 +179,9 @@ struct MockTemperatureFsAccess : public L0::Sysman::FsAccessInterface {
         }
         if (file == mockMemoryTemperatureHwmonFile0) {
             return memoryTemperatureExists;
+        }
+        if (file == mockGpuTemperatureHwmonFile0) {
+            return gpuTemperatureExists;
         }
         if (file == mockTemperatureHwmonSubDir0) {
             return true;

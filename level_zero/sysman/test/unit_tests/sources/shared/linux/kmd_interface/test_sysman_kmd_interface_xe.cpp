@@ -142,6 +142,7 @@ TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceWhenGettingNodeFileNamesThe
     EXPECT_STREQ("xe_amc_alert_reason", pSysmanKmdInterface->getNodeFileName(NodeName::amcAlertReason).c_str());
     EXPECT_STREQ("temp2_emergency", pSysmanKmdInterface->getNodeFileName(NodeName::temperatureEmergency).c_str());
     EXPECT_STREQ("temp3_input", pSysmanKmdInterface->getNodeFileName(NodeName::memoryTemperature).c_str());
+    EXPECT_STREQ("temp2_input", pSysmanKmdInterface->getNodeFileName(NodeName::gpuTemperature).c_str());
 }
 
 TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceWhenGettingNodeFileNameForUnmappedNodeThenEmptyNameIsReturned) {
@@ -150,6 +151,7 @@ TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceWhenGettingNodeFileNameForU
     EXPECT_TRUE(pMockSysmanKmdInterface->getNodeFileName(NodeName::amcAlertReason).empty());
     EXPECT_TRUE(pMockSysmanKmdInterface->getNodeFileName(NodeName::temperatureEmergency).empty());
     EXPECT_TRUE(pMockSysmanKmdInterface->getNodeFileName(NodeName::memoryTemperature).empty());
+    EXPECT_TRUE(pMockSysmanKmdInterface->getNodeFileName(NodeName::gpuTemperature).empty());
 }
 
 TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceInstanceWhenCallingGetPowerLimitFilePathsThenProperPathsAreReturned) {

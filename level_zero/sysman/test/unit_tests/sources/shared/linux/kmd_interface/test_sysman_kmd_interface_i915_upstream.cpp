@@ -145,6 +145,7 @@ TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceWhenGettingNodeFi
     EXPECT_TRUE(pSysmanKmdInterface->getNodeFileName(NodeName::amcAlertReason).empty());
     EXPECT_TRUE(pSysmanKmdInterface->getNodeFileName(NodeName::temperatureEmergency).empty());
     EXPECT_TRUE(pSysmanKmdInterface->getNodeFileName(NodeName::memoryTemperature).empty());
+    EXPECT_TRUE(pSysmanKmdInterface->getNodeFileName(NodeName::gpuTemperature).empty());
 }
 
 TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceWhenGettingEngineBasePathThenCorrectPathIsReturned) {

@@ -51,8 +51,10 @@ class LinuxTemperatureImp : public OsTemperature, NEO::NonCopyableAndNonMovableC
     SysmanProductHelper *pSysmanProductHelper = nullptr;
     std::string temperatureEmergencyFile = {};
     std::string memoryTemperatureFile = {};
+    std::string gpuTemperatureFile = {};
     bool temperatureEmergencyFileExists = false;
     bool memoryTemperatureFileExists = false;
+    bool gpuTemperatureFileExists = false;
 };
 
 } // namespace Sysman
