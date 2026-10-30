@@ -657,10 +657,16 @@ void CommandContainer::fillReusableAllocationLists() {
     if (!CommandBufferPoolAllocator::isEnabled(productHelper)) {
         for (auto i = 0u; i < amountToFill; i++) {
             auto allocToReuse = obtainNextCommandBufferAllocation();
+            if (!allocToReuse) {
+                break;
+            }
             this->immediateReusableAllocationList->pushTailOne(*allocToReuse);
 
             if (this->useSecondaryCommandStream) {
                 auto hostAllocToReuse = obtainNextCommandBufferAllocation(true);
+                if (!hostAllocToReuse) {
+                    break;
+                }
                 this->immediateReusableAllocationList->pushTailOne(*hostAllocToReuse);
             }
         }
@@ -685,6 +691,9 @@ void CommandContainer::fillReusableAllocationLists() {
                                                              heapSize,
                                                              defaultHeapAllocationAlignment,
                                                              device->getRootDeviceIndex());
+            if (!heapToReuse) {
+                return;
+            }
             {
                 auto lock = this->immediateCmdListCsr->obtainUniqueOwnership();
                 this->immediateCmdListCsr->makeResident(*heapToReuse);

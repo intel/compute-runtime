@@ -97,8 +97,8 @@ ThreadDataMap::~ThreadDataMap() {
  */
 void ThreadDataMap::insert(uint64_t hash, std::span<const uint8_t> threadData) {
     storage->align(heapAlignment);
-    if (storage->getAvailableSpace() < threadData.size()) {
-        reallocateMap();
+    if (storage->getAvailableSpace() < threadData.size() && !reallocateMap()) {
+        return;
     }
     auto gpuThreadData = std::span<uint8_t>(reinterpret_cast<uint8_t *>(storage->getSpace(threadData.size())), threadData.size());
     std::copy(threadData.begin(), threadData.end(), gpuThreadData.begin());
@@ -140,12 +140,18 @@ std::optional<uint64_t> ThreadDataMap::find(std::span<const uint8_t> crossThread
 
 /**
  * @brief Clears map, allocates new heap storage, and stores old allocation for future reusage.
+ * If the new allocation fails, the current storage and map are kept.
+ *
+ * @return true if new storage was allocated, false otherwise
  */
-void ThreadDataMap::reallocateMap() {
+bool ThreadDataMap::reallocateMap() {
     constexpr auto heapType = IndirectHeap::Type::indirectObject;
     auto heapSize = HeapSize::getDefaultHeapSize(heapType);
 
     auto newAlloc = heapHelper->getHeapAllocation(heapType, heapSize, MemoryConstants::pageSize64k, rootDeviceIndex);
+    if (!newAlloc) {
+        return false;
+    }
     auto oldAlloc = storage->getGraphicsAllocation();
 
     storage->replaceGraphicsAllocation(newAlloc);
@@ -153,6 +159,7 @@ void ThreadDataMap::reallocateMap() {
     heapHelper->storeHeapAllocation(oldAlloc);
 
     threadDataMap.clear();
+    return true;
 }
 
 } // namespace NEO

@@ -2415,6 +2415,127 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsWit
     allocList.freeAllGraphicsAllocations(pDevice);
 }
 
+TEST_F(CommandContainerTest, givenCommandBufferAllocationFailsWhenFillReusableAllocationListsThenNoAllocationIsAdded) {
+    DebugManagerStateRestore dbgRestore;
+    debugManager.flags.SetAmountOfReusableAllocations.set(2);
+    debugManager.flags.EnableCommandBufferPoolAllocator.set(0);
+    auto cmdContainer = std::make_unique<MyMockCommandContainer>();
+    auto csr = pDevice->getDefaultEngine().commandStreamReceiver;
+    AllocationsList allocList;
+    cmdContainer->initialize(pDevice, &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), false, false);
+    cmdContainer->setImmediateCmdListCsr(csr);
+    const auto commandBufferAllocationsBefore = cmdContainer->allocateCommandBufferCalled[0];
+
+    auto mockMemoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
+    mockMemoryManager->isMockHostMemoryManager = true;
+    mockMemoryManager->forceFailureInPrimaryAllocation = true;
+    cmdContainer->fillReusableAllocationLists();
+    mockMemoryManager->forceFailureInPrimaryAllocation = false;
+    mockMemoryManager->isMockHostMemoryManager = false;
+
+    ASSERT_NE(cmdContainer->immediateReusableAllocationList, nullptr);
+    EXPECT_TRUE(cmdContainer->immediateReusableAllocationList->peekIsEmpty());
+    EXPECT_EQ(commandBufferAllocationsBefore + 1, cmdContainer->allocateCommandBufferCalled[0]);
+
+    cmdContainer.reset();
+    allocList.freeAllGraphicsAllocations(pDevice);
+}
+
+TEST_F(CommandContainerTest, givenHostCommandBufferAllocationFailsWhenFillReusableAllocationListsThenOnlyDeviceAllocationIsAdded) {
+    DebugManagerStateRestore dbgRestore;
+    debugManager.flags.SetAmountOfReusableAllocations.set(2);
+    debugManager.flags.EnableCommandBufferPoolAllocator.set(0);
+    auto cmdContainer = std::make_unique<MyMockCommandContainer>();
+    auto csr = pDevice->getDefaultEngine().commandStreamReceiver;
+    AllocationsList allocList;
+    cmdContainer->initialize(pDevice, &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), false, true);
+    cmdContainer->setImmediateCmdListCsr(csr);
+
+    cmdContainer->failHostMemoryCommandBufferAllocation = true;
+    cmdContainer->fillReusableAllocationLists();
+
+    ASSERT_NE(cmdContainer->immediateReusableAllocationList, nullptr);
+    ASSERT_FALSE(cmdContainer->immediateReusableAllocationList->peekIsEmpty());
+    EXPECT_EQ(1u, cmdContainer->immediateReusableAllocationList->peekHead()->countThisAndAllConnected());
+    EXPECT_FALSE(cmdContainer->immediateReusableAllocationList->peekHead()->storageInfo.systemMemoryForced);
+
+    cmdContainer.reset();
+    allocList.freeAllGraphicsAllocations(pDevice);
+}
+
+TEST_F(CommandContainerTest, givenHeapAllocationFailsWhenFillReusableAllocationListsThenNoHeapIsStoredForReuse) {
+    DebugManagerStateRestore dbgRestore;
+    debugManager.flags.SetAmountOfReusableAllocations.set(1);
+    debugManager.flags.EnableCommandBufferPoolAllocator.set(0);
+    debugManager.flags.EnableLinearStreamPoolAllocator.set(0);
+    debugManager.flags.EnableInternalHeapPoolAllocator.set(0);
+    auto cmdContainer = std::make_unique<MyMockCommandContainer>();
+    auto csr = pDevice->getDefaultEngine().commandStreamReceiver;
+    AllocationsList allocList;
+    cmdContainer->initialize(pDevice, &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
+    cmdContainer->setImmediateCmdListCsr(csr);
+    auto heapHelper = reinterpret_cast<MockHeapHelper *>(cmdContainer->getHeapHelper());
+
+    auto mockMemoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
+    mockMemoryManager->isMockHostMemoryManager = true;
+    mockMemoryManager->forceFailureInPrimaryAllocation = true;
+    cmdContainer->fillReusableAllocationLists();
+    mockMemoryManager->forceFailureInPrimaryAllocation = false;
+    mockMemoryManager->isMockHostMemoryManager = false;
+
+    ASSERT_NE(cmdContainer->immediateReusableAllocationList, nullptr);
+    EXPECT_TRUE(cmdContainer->immediateReusableAllocationList->peekIsEmpty());
+    EXPECT_TRUE(heapHelper->storageForReuse->getAllocationsForReuse().peekIsEmpty());
+    EXPECT_EQ(nullptr, cmdContainer->getThreadDataMapStorage()->getGraphicsAllocation());
+
+    cmdContainer.reset();
+    allocList.freeAllGraphicsAllocations(pDevice);
+}
+
+TEST_F(CommandContainerTest, givenHeapAllocationFailsWhenInsertingIntoThreadDataMapThenThreadDataIsNotInserted) {
+    DebugManagerStateRestore dbgRestore;
+    debugManager.flags.EnableInternalHeapPoolAllocator.set(0);
+    auto csr = pDevice->getDefaultEngine().commandStreamReceiver;
+    HeapHelper heapHelper(pDevice, csr->getInternalAllocationStorage(), false);
+    ThreadDataMap threadDataMap(&heapHelper, pDevice->getRootDeviceIndex(), 64u);
+    const std::array<uint8_t, 64> threadData = {1u, 2u, 3u};
+
+    auto mockMemoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
+    mockMemoryManager->isMockHostMemoryManager = true;
+    mockMemoryManager->forceFailureInPrimaryAllocation = true;
+    threadDataMap.insert(0x1234u, threadData);
+    mockMemoryManager->forceFailureInPrimaryAllocation = false;
+    mockMemoryManager->isMockHostMemoryManager = false;
+
+    EXPECT_EQ(nullptr, threadDataMap.getStorage()->getGraphicsAllocation());
+    EXPECT_FALSE(threadDataMap.find(0x1234u, threadData, {}).has_value());
+}
+
+TEST_F(CommandContainerTest, givenHeapAllocationFailsWhenReallocatingThreadDataMapThenStorageAndEntriesAreKept) {
+    DebugManagerStateRestore dbgRestore;
+    debugManager.flags.EnableInternalHeapPoolAllocator.set(0);
+    auto csr = pDevice->getDefaultEngine().commandStreamReceiver;
+    HeapHelper heapHelper(pDevice, csr->getInternalAllocationStorage(), false);
+    ThreadDataMap threadDataMap(&heapHelper, pDevice->getRootDeviceIndex(), 64u);
+    const std::array<uint8_t, 64> threadData = {1u, 2u, 3u};
+
+    ASSERT_TRUE(threadDataMap.reallocateMap());
+    threadDataMap.insert(0x1234u, threadData);
+    auto storageAllocation = threadDataMap.getStorage()->getGraphicsAllocation();
+    auto offset = threadDataMap.find(0x1234u, threadData, {});
+    ASSERT_TRUE(offset.has_value());
+
+    auto mockMemoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
+    mockMemoryManager->isMockHostMemoryManager = true;
+    mockMemoryManager->forceFailureInPrimaryAllocation = true;
+    EXPECT_FALSE(threadDataMap.reallocateMap());
+    mockMemoryManager->forceFailureInPrimaryAllocation = false;
+    mockMemoryManager->isMockHostMemoryManager = false;
+
+    EXPECT_EQ(storageAllocation, threadDataMap.getStorage()->getGraphicsAllocation());
+    EXPECT_EQ(offset, threadDataMap.find(0x1234u, threadData, {}));
+}
+
 TEST_F(CommandContainerTest, givenCmdContainerAndCsrWhenGetHeapWithRequiredSizeAndAlignmentThenReuseAllocationIfAvailable) {
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.SetAmountOfReusableAllocations.set(1);

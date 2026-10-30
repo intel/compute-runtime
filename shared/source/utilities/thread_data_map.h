@@ -46,7 +46,7 @@ class ThreadDataMap : NEO::NonCopyableAndNonMovableClass {
     void insert(uint64_t hash, std::span<const uint8_t> threadData);
     std::optional<uint64_t> find(uint64_t hash, std::span<const uint8_t> crossThreadData, std::span<const uint8_t> perThreadData) const;
     std::optional<uint64_t> find(std::span<const uint8_t> crossThreadData, std::span<const uint8_t> perThreadData) const;
-    void reallocateMap();
+    bool reallocateMap();
     IndirectHeap *getStorage() const { return storage.get(); }
 
   private:
