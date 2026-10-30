@@ -7,9 +7,9 @@
 
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/gmm_helper/cache_settings_helper.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
-#include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/image/image_surface_state.h"
@@ -42,11 +42,11 @@ void ImageSurfaceStateHelper<GfxFamily>::setImageSurfaceState(RENDER_SURFACE_STA
     auto vAlign = RENDER_SURFACE_STATE::SURFACE_VERTICAL_ALIGNMENT_VALIGN_4;
 
     if (gmm) {
-        hAlign = static_cast<typename RENDER_SURFACE_STATE::SURFACE_HORIZONTAL_ALIGNMENT>(gmm->gmmResourceInfo->getHAlignSurfaceState());
-        vAlign = static_cast<typename RENDER_SURFACE_STATE::SURFACE_VERTICAL_ALIGNMENT>(gmm->gmmResourceInfo->getVAlignSurfaceState());
+        hAlign = static_cast<typename RENDER_SURFACE_STATE::SURFACE_HORIZONTAL_ALIGNMENT>(gmm->getHAlignSurfaceState());
+        vAlign = static_cast<typename RENDER_SURFACE_STATE::SURFACE_VERTICAL_ALIGNMENT>(gmm->getVAlignSurfaceState());
     }
 
-    if (cubeFaceIndex != __GMM_NO_CUBE_MAP) {
+    if (cubeFaceIndex != gmmNoCubeMap) {
         isImageArray = true;
         renderTargetViewExtent = 1;
         minimumArrayElement = cubeFaceIndex;
@@ -67,12 +67,12 @@ void ImageSurfaceStateHelper<GfxFamily>::setImageSurfaceState(RENDER_SURFACE_STA
     surfaceState->setSurfaceHorizontalAlignment(hAlign);
     surfaceState->setSurfaceVerticalAlignment(vAlign);
 
-    uint32_t tileMode = gmm ? gmm->gmmResourceInfo->getTileModeSurfaceState()
+    uint32_t tileMode = gmm ? gmm->getTileModeSurfaceState()
                             : static_cast<uint32_t>(RENDER_SURFACE_STATE::TILE_MODE_LINEAR);
 
     surfaceState->setTileMode(static_cast<typename RENDER_SURFACE_STATE::TILE_MODE>(tileMode));
 
-    surfaceState->setMemoryObjectControlState(gmmHelper.getMOCS(GMM_RESOURCE_USAGE_OCL_IMAGE));
+    surfaceState->setMemoryObjectControlState(gmmHelper.getMOCS(CacheSettingsHelper::getGmmUsageTypeForImage()));
 
     EncodeSurfaceState<GfxFamily>::setCoherencyType(surfaceState, RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT);
 
@@ -114,8 +114,8 @@ void ImageSurfaceStateHelper<GfxFamily>::setImageSurfaceStateDimensions(RENDER_S
         imageWidth = 1;
     }
 
-    if (cubeFaceIndex != __GMM_NO_CUBE_MAP) {
-        imageCount = __GMM_MAX_CUBE_FACE - cubeFaceIndex;
+    if (cubeFaceIndex != gmmNoCubeMap) {
+        imageCount = gmmMaxCubeFace - cubeFaceIndex;
     }
 
     if (imageInfo.imgDesc.imageType == ImageType::image1DBuffer) {
@@ -148,7 +148,7 @@ void ImageSurfaceStateHelper<GfxFamily>::setWidthForMediaBlockSurfaceState(RENDE
 template <typename GfxFamily>
 void ImageSurfaceStateHelper<GfxFamily>::setUnifiedAuxBaseAddress(RENDER_SURFACE_STATE *surfaceState, const Gmm *gmm) {
     uint64_t baseAddress = surfaceState->getSurfaceBaseAddress() +
-                           gmm->gmmResourceInfo->getUnifiedAuxSurfaceOffset(GMM_UNIFIED_AUX_TYPE::GMM_AUX_SURF);
+                           gmm->getAuxSurfaceOffset();
     surfaceState->setAuxiliarySurfaceBaseAddress(baseAddress);
 }
 
@@ -157,7 +157,7 @@ void ImageSurfaceStateHelper<GfxFamily>::setMipTailStartLOD(RENDER_SURFACE_STATE
     surfaceState->setMipTailStartLOD(0);
 
     if (gmm != nullptr) {
-        surfaceState->setMipTailStartLOD(gmm->gmmResourceInfo->getMipTailStartLODSurfaceState());
+        surfaceState->setMipTailStartLOD(gmm->getMipTailStartLODSurfaceState());
     }
 }
 

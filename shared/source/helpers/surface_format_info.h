@@ -331,6 +331,7 @@ struct SurfaceOffsets {
 };
 
 using GmmCubeFace = int32_t;
+constexpr GmmCubeFace gmmMaxCubeFace = 6;
 constexpr GmmCubeFace gmmNoCubeMap = 7;
 
 } // namespace NEO

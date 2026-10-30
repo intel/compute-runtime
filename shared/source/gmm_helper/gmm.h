@@ -64,6 +64,12 @@ class Gmm {
 
     GmmHelper *getGmmHelper() const;
 
+    uint32_t getHAlignSurfaceState() const;
+    uint32_t getVAlignSurfaceState() const;
+    uint32_t getTileModeSurfaceState() const;
+    uint64_t getAuxSurfaceOffset() const;
+    uint32_t getMipTailStartLODSurfaceState() const;
+
     uint32_t queryQPitch();
     void updateImgInfoAndDesc(ImageInfo &imgInfo, uint32_t arrayIndex, ImagePlane yuvPlaneType);
     void updateOffsetsInImgInfo(ImageInfo &imgInfo, uint32_t arrayIndex);

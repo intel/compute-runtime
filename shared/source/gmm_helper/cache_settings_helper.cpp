@@ -164,6 +164,10 @@ GmmResourceUsageType CacheSettingsHelper::getGmmUsageTypeForUserPtr(bool isCache
     }
 }
 
+GmmResourceUsageType CacheSettingsHelper::getGmmUsageTypeForImage() {
+    return GMM_RESOURCE_USAGE_OCL_IMAGE;
+}
+
 GmmResourceUsageType CacheSettingsHelper::getGmmUsageTypeForCoherentSystemMemory(GmmResourceUsageType preferredUsageType, const ProductHelper &productHelper, const ReleaseHelper &releaseHelper) {
 
     if (!productHelper.isL3FlushAfterPostSyncSupported()) {

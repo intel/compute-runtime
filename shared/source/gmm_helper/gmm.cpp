@@ -318,6 +318,26 @@ void Gmm::queryImageParams(ImageInfo &imgInfo) {
     imgInfo.qPitch = queryQPitch();
 }
 
+uint32_t Gmm::getHAlignSurfaceState() const {
+    return gmmResourceInfo->getHAlignSurfaceState();
+}
+
+uint32_t Gmm::getVAlignSurfaceState() const {
+    return gmmResourceInfo->getVAlignSurfaceState();
+}
+
+uint32_t Gmm::getTileModeSurfaceState() const {
+    return gmmResourceInfo->getTileModeSurfaceState();
+}
+
+uint64_t Gmm::getAuxSurfaceOffset() const {
+    return gmmResourceInfo->getUnifiedAuxSurfaceOffset(GMM_UNIFIED_AUX_TYPE::GMM_AUX_SURF);
+}
+
+uint32_t Gmm::getMipTailStartLODSurfaceState() const {
+    return gmmResourceInfo->getMipTailStartLODSurfaceState();
+}
+
 uint32_t Gmm::queryQPitch() {
     return gmmResourceInfo->getQPitch();
 }
