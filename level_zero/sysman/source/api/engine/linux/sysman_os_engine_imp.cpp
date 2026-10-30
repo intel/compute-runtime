@@ -69,11 +69,6 @@ zes_engine_group_t LinuxEngineImp::getGroupFromEngineType(zes_engine_group_t typ
 ze_result_t OsEngine::getNumEngineTypeAndInstances(MapOfEngineInfo &mapEngineInfo, OsSysman *pOsSysman) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
 
-    if (!pLinuxSysmanImp->getFsAccess().isRootUser()) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Not running as root user, returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS);
-        return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
-    }
-
     NEO::Drm *pDrm = pLinuxSysmanImp->getDrm();
     auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
 

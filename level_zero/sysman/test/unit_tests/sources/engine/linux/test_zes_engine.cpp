@@ -213,24 +213,15 @@ TEST_F(ZesEngineFixtureI915, GivenValidOsSysmanPointerWhenRetrievingEngineTypeAn
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::Sysman::OsEngine::getNumEngineTypeAndInstances(mapEngineInfo, pOsSysman));
 }
 
-TEST_F(ZesEngineFixtureI915, GivenNonRootUserWhenCallingZesDeviceEnumEngineGroupsThenErrorIsReturned) {
+TEST_F(ZesEngineFixtureI915, GivenNonRootUserWhenCallingZesDeviceEnumEngineGroupsThenEngineHandlesAreReturned) {
     mockFsAccess.mockIsRootUser = false;
 
     delete pSysmanDeviceImp->pEngineHandleContext;
     pSysmanDeviceImp->pEngineHandleContext = new EngineHandleContext(pOsSysman);
 
     uint32_t count = 0;
-    EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, zesDeviceEnumEngineGroups(device->toHandle(), &count, nullptr));
-    EXPECT_EQ(0u, count);
-
-    mockFsAccess.mockIsRootUser = true;
-}
-
-TEST_F(ZesEngineFixtureI915, GivenNonRootUserWhenCallingGetNumEngineTypeAndInstancesThenErrorIsReturned) {
-    mockFsAccess.mockIsRootUser = false;
-
-    MapOfEngineInfo mapEngineInfo = {};
-    EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, L0::Sysman::OsEngine::getNumEngineTypeAndInstances(mapEngineInfo, pOsSysman));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumEngineGroups(device->toHandle(), &count, nullptr));
+    EXPECT_EQ(handleComponentCount, count);
 
     mockFsAccess.mockIsRootUser = true;
 }
