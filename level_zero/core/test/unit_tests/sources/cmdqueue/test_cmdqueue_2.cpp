@@ -783,6 +783,7 @@ HWTEST2_F(DeviceWithDualStorage, givenCmdListWithAppendedKernelAndUsmTransferAnd
     }
 
     using CFE_STATE = typename FamilyType::CFE_STATE;
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<MockMemoryOperationsHandler>();
     ze_result_t res = ZE_RESULT_SUCCESS;
 
     const ze_command_queue_desc_t desc = {};

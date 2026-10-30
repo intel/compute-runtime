@@ -858,14 +858,7 @@ HWTEST_F(CommandListCreateTests, whenCommandListIsCreatedThenFlagsAreCorrectlySe
     }
 }
 
-struct HostPointerManagerCommandListFixture : public HostPointerManagerFixure {
-    void setUp() {
-        HostPointerManagerFixure::setUp();
-        mockMemoryInterface->makeResidentResult = NEO::MemoryOperationsStatus::success;
-    }
-};
-
-using HostPointerManagerCommandListTest = Test<HostPointerManagerCommandListFixture>;
+using HostPointerManagerCommandListTest = Test<HostPointerManagerFixure>;
 HWTEST_F(HostPointerManagerCommandListTest, givenImportedHostPointerWhenAppendMemoryFillUsingHostPointerThenAppendFillUsingHostPointerAllocation) {
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);

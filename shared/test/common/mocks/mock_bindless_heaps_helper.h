@@ -15,7 +15,12 @@ using namespace NEO;
 class MockBindlesHeapsHelper : public BindlessHeapsHelper {
   public:
     using BaseClass = BindlessHeapsHelper;
-    MockBindlesHeapsHelper(Device *rootDevice, bool isMultiOsContextCapable) : BindlessHeapsHelper(rootDevice, isMultiOsContextCapable) {}
+    MockBindlesHeapsHelper(Device *rootDevice, bool isMultiOsContextCapable) : BindlessHeapsHelper(rootDevice, isMultiOsContextCapable) {
+        globalSsh = surfaceStateHeaps[BindlesHeapType::globalSsh].get();
+        specialSsh = surfaceStateHeaps[BindlesHeapType::specialSsh].get();
+        scratchSsh = surfaceStateHeaps[BindlesHeapType::specialSsh].get();
+        globalDsh = surfaceStateHeaps[BindlesHeapType::specialSsh].get();
+    }
 
     SurfaceStateInHeapInfo allocateSSInHeap(size_t ssSize, GraphicsAllocation *surfaceAllocation, BindlesHeapType heapType) override {
         if (failAllocateSS) {
@@ -52,5 +57,9 @@ class MockBindlesHeapsHelper : public BindlessHeapsHelper {
     using BaseClass::tryReservingMemoryForSpecialSsh;
     using BaseClass::useReservedMemory;
 
+    IndirectHeap *specialSsh;
+    IndirectHeap *globalSsh;
+    IndirectHeap *scratchSsh;
+    IndirectHeap *globalDsh;
     bool failAllocateSS = false;
 };

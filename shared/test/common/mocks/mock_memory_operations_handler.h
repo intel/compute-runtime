@@ -132,7 +132,7 @@ class MockMemoryOperations : public MemoryOperationsHandler {
 
     std::vector<GraphicsAllocation *> gfxAllocationsForMakeResident{};
     std::atomic<int> makeResidentCalledCount{0};
-    std::atomic<bool> makeResidentForcePagingFenceValue{false};
+    bool makeResidentForcePagingFenceValue = false;
     std::atomic<int> evictCalledCount{0};
     std::atomic<int> releaseExplicitResidencyCalledCount{0};
     std::atomic<int> freeCalledCount{0};
