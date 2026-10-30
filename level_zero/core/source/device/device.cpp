@@ -1576,11 +1576,15 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
         NEO::MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *debugSurface),
                                                               *neoDevice, debugSurface, 0, stateSaveAreaHeader.data(),
                                                               stateSaveAreaHeader.size());
-        if (neoDevice->getBindlessHeapsHelper()) {
+        auto bindlessHeapsHelper = neoDevice->getBindlessHeapsHelper();
+        auto specialSsh = bindlessHeapsHelper ? bindlessHeapsHelper->getHeap(NEO::BindlessHeapsHelper::specialSsh) : nullptr;
+        if (bindlessHeapsHelper && specialSsh == nullptr) {
+            *returnValue = ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+        }
+        if (specialSsh) {
             auto &gfxCoreHelper = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[debugSurface->getRootDeviceIndex()]->getHelper<NEO::GfxCoreHelper>();
-            auto ssh = neoDevice->getBindlessHeapsHelper()->getHeap(NEO::BindlessHeapsHelper::specialSsh)->getCpuBase();
             NEO::EncodeSurfaceStateArgs args;
-            args.outMemory = ssh;
+            args.outMemory = specialSsh->getCpuBase();
             args.graphicsAddress = device->getDebugSurface()->getGpuAddress();
             args.size = device->getDebugSurface()->getUnderlyingBufferSize();
             args.mocs = device->getMOCS(false, false);

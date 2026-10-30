@@ -143,6 +143,7 @@ void ScratchSpaceControllerXeHPAndLater::programBindlessSurfaceStateForScratch(B
     prepareScratchAllocation(requiredPerThreadScratchSizeSlot0, requiredPerThreadScratchSizeSlot1, osContext, stateBaseAddressDirty, scratchSurfaceDirty, vfeStateDirty);
     if (scratchSurfaceDirty) {
         bindlessSS = heapsHelper->allocateSSInHeap(singleSurfaceStateSize * (twoSlotScratchSpaceSupported ? 2 : 1), scratchSlot0Allocation, BindlessHeapsHelper::specialSsh);
+        UNRECOVERABLE_IF(bindlessSS.ssPtr == nullptr);
         programSurfaceStateAtPtr(bindlessSS.ssPtr);
         vfeStateDirty = true;
     }

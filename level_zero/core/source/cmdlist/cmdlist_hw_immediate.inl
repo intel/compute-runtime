@@ -295,7 +295,9 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::handleHeapsAndResidencyForIm
         }
         csr->makeResident(*this->device->getDebugSurface());
         if (bindlessHeapsHelper) {
-            csr->makeResident(*bindlessHeapsHelper->getHeap(NEO::BindlessHeapsHelper::specialSsh)->getGraphicsAllocation());
+            auto specialSsh = bindlessHeapsHelper->getHeap(NEO::BindlessHeapsHelper::specialSsh);
+            UNRECOVERABLE_IF(specialSsh == nullptr);
+            csr->makeResident(*specialSsh->getGraphicsAllocation());
         }
     }
 
@@ -445,7 +447,9 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushRegular
             }
             csr->makeResident(*this->device->getDebugSurface());
             if (this->device->getNEODevice()->getBindlessHeapsHelper()) {
-                csr->makeResident(*this->device->getNEODevice()->getBindlessHeapsHelper()->getHeap(NEO::BindlessHeapsHelper::specialSsh)->getGraphicsAllocation());
+                auto specialSsh = this->device->getNEODevice()->getBindlessHeapsHelper()->getHeap(NEO::BindlessHeapsHelper::specialSsh);
+                UNRECOVERABLE_IF(specialSsh == nullptr);
+                csr->makeResident(*specialSsh->getGraphicsAllocation());
             }
         }
 

@@ -3501,10 +3501,12 @@ HWTEST2_F(SetKernelArg, givenBindlessKernelAndNoAvailableSpaceOnSshWhenSetArgIma
     auto handle = imageHW->toHandle();
     ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
 
+    auto globalSsh = bindlessHelper->getHeap(NEO::BindlessHeapsHelper::globalSsh);
+
+    globalSsh->getSpace(globalSsh->getAvailableSpace());
     mockMemManager->failInDevicePool = true;
     mockMemManager->failAllocateSystemMemory = true;
     mockMemManager->failAllocate32Bit = true;
-    bindlessHelper->globalSsh->getSpace(bindlessHelper->globalSsh->getAvailableSpace());
 
     ret = kernel->setArgImage(3, sizeof(imageHW.get()), &handle);
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, ret);
@@ -3512,6 +3514,48 @@ HWTEST2_F(SetKernelArg, givenBindlessKernelAndNoAvailableSpaceOnSshWhenSetArgIma
     auto &bindlessInfo = imageHW->getAllocation()->getBindlessInfo();
     EXPECT_EQ(nullptr, bindlessInfo.ssPtr);
     EXPECT_EQ(nullptr, bindlessInfo.heapAllocation);
+}
+
+HWTEST2_F(SetKernelArg, givenBindlessKernelAndGlobalSshNotAllocatedWhenSetArgImageCalledAndHeapAllocationFailsThenOutOfMemoryErrorReturnedAndLaterCallSucceeds, ImageSupport) {
+    createKernel();
+
+    auto mockMemManager = static_cast<MockMemoryManager *>(neoDevice->getMemoryManager());
+    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice,
+                                                     neoDevice->getNumGenericSubDevices() > 1);
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
+
+    auto &imageArg = const_cast<NEO::ArgDescImage &>(kernel->getDescriptor().payloadMappings.explicitArgs[3].template as<NEO::ArgDescImage>());
+    auto &addressingMode = kernel->getDescriptor().kernelAttributes.imageAddressingMode;
+    const_cast<NEO::KernelDescriptor::AddressingMode &>(addressingMode) = NEO::KernelDescriptor::Bindless;
+    imageArg.bindless = 0x0;
+    imageArg.bindful = undefined<SurfaceStateHeapOffset>;
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+
+    auto imageHW = std::make_unique<MyMockImage<FamilyType::gfxCoreFamily>>();
+    auto ret = imageHW->initialize(device, &desc);
+    auto handle = imageHW->toHandle();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+    ASSERT_EQ(nullptr, bindlessHelper->surfaceStateHeaps[NEO::BindlessHeapsHelper::globalSsh]);
+
+    mockMemManager->failInDevicePool = true;
+    mockMemManager->failAllocateSystemMemory = true;
+    mockMemManager->failAllocate32Bit = true;
+
+    ret = kernel->setArgImage(3, sizeof(imageHW.get()), &handle);
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, ret);
+    EXPECT_EQ(nullptr, bindlessHelper->surfaceStateHeaps[NEO::BindlessHeapsHelper::globalSsh]);
+    EXPECT_EQ(nullptr, imageHW->getAllocation()->getBindlessInfo().heapAllocation);
+    EXPECT_FALSE(kernel->privateState.isBindlessOffsetSet[3]);
+
+    mockMemManager->failInDevicePool = false;
+    mockMemManager->failAllocateSystemMemory = false;
+    mockMemManager->failAllocate32Bit = false;
+
+    ret = kernel->setArgImage(3, sizeof(imageHW.get()), &handle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    EXPECT_NE(nullptr, bindlessHelper->surfaceStateHeaps[NEO::BindlessHeapsHelper::globalSsh]);
+    EXPECT_TRUE(kernel->privateState.isBindlessOffsetSet[3]);
 }
 
 HWTEST2_F(SetKernelArg, givenImageAndBindlessKernelWhenSetArgImageThenCopyImplicitArgsSurfaceStateToSSHCalledWithCorrectArgs, ImageSupport) {
@@ -3912,10 +3956,12 @@ HWTEST2_F(SetKernelArg, givenGlobalBindlessHelperImageViewAndNoAvailableSpaceOnS
     auto ret = imageHW->initialize(device, &desc);
     ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
 
+    auto globalSsh = bindlessHelper->getHeap(NEO::BindlessHeapsHelper::globalSsh);
+
+    globalSsh->getSpace(globalSsh->getAvailableSpace());
     mockMemManager->failInDevicePool = true;
     mockMemManager->failAllocateSystemMemory = true;
     mockMemManager->failAllocate32Bit = true;
-    bindlessHelper->globalSsh->getSpace(bindlessHelper->globalSsh->getAvailableSpace());
 
     ze_image_handle_t imageViewHandle;
     desc.stype = ZE_STRUCTURE_TYPE_IMAGE_VIEW_PLANAR_EXT_DESC;
@@ -4044,10 +4090,12 @@ HWTEST2_F(SetKernelArg, givenBindlessKernelAndNoAvailableSpaceOnSshWhenSetArgRed
     auto handle = imageHW->toHandle();
     ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
 
+    auto globalSsh = bindlessHelper->getHeap(NEO::BindlessHeapsHelper::globalSsh);
+
+    globalSsh->getSpace(globalSsh->getAvailableSpace());
     mockMemManager->failInDevicePool = true;
     mockMemManager->failAllocateSystemMemory = true;
     mockMemManager->failAllocate32Bit = true;
-    bindlessHelper->globalSsh->getSpace(bindlessHelper->globalSsh->getAvailableSpace());
 
     ret = kernel->setArgRedescribedImage(3, handle, false, 0u);
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, ret);
@@ -4073,7 +4121,9 @@ HWTEST_F(SetKernelArg, givenBindlessKernelAndNoAvailableSpaceOnSshWhenSetArgBuff
     arg.bindless = 0x40;
     arg.bindful = undefined<SurfaceStateHeapOffset>;
 
-    bindlessHelper->globalSsh->getSpace(bindlessHelper->globalSsh->getAvailableSpace());
+    auto globalSsh = bindlessHelper->getHeap(NEO::BindlessHeapsHelper::globalSsh);
+
+    globalSsh->getSpace(globalSsh->getAvailableSpace());
 
     auto svmAllocsManager = device->getDriverHandle()->getSvmAllocsManager();
     auto allocationProperties = NEO::SVMAllocsManager::SvmAllocationProperties{};
@@ -4103,7 +4153,9 @@ HWTEST_F(SetKernelArg, givenBindlessKernelAndSetArgBufferFailedWhenSameBufferIsS
     arg.bindless = 0x40;
     arg.bindful = undefined<SurfaceStateHeapOffset>;
 
-    bindlessHelper->globalSsh->getSpace(bindlessHelper->globalSsh->getAvailableSpace());
+    auto globalSsh = bindlessHelper->getHeap(NEO::BindlessHeapsHelper::globalSsh);
+
+    globalSsh->getSpace(globalSsh->getAvailableSpace());
 
     auto svmAllocsManager = device->getDriverHandle()->getSvmAllocsManager();
     auto allocationProperties = NEO::SVMAllocsManager::SvmAllocationProperties{};

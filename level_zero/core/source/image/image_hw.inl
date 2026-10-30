@@ -12,6 +12,7 @@
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/image/image_surface_state.h"
@@ -425,6 +426,17 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
             ArrayRef<uint8_t> ssInHeapSpan{reinterpret_cast<uint8_t *>(ssInHeap->ssPtr), ssInHeap->ssSize};
             sampler->copySamplerStateToDSH(ssInHeapSpan, samplerStateOffset);
             sampler->destroy();
+
+            auto &compilerProductHelper = rootDeviceEnvironment.getHelper<NEO::CompilerProductHelper>();
+            if (!compilerProductHelper.isHeaplessModeEnabled(*rootDeviceEnvironment.getHardwareInfo())) {
+                // border color is fetched relative to dynamic state base address - point it to global default border color
+                auto bindlessHeapsHelper = this->device->getNEODevice()->getBindlessHeapsHelper();
+                if (bindlessHeapsHelper->getBorderColorStates() == nullptr) {
+                    return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+                }
+                auto samplerState = reinterpret_cast<typename GfxFamily::SAMPLER_STATE *>(ptrOffset(ssInHeap->ssPtr, samplerStateOffset));
+                samplerState->setIndirectStatePointer(bindlessHeapsHelper->getDefaultBorderColorOffset());
+            }
         }
     }
 

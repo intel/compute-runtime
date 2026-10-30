@@ -13,6 +13,7 @@
 #include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include <array>
+#include <atomic>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -45,13 +46,14 @@ class BindlessHeapsHelper : NEO::NonCopyableAndNonMovableClass {
     BindlessHeapsHelper(Device *rootDevice, bool isMultiOsContextCapable);
     MOCKABLE_VIRTUAL ~BindlessHeapsHelper();
 
-    GraphicsAllocation *getHeapAllocation(size_t heapSize, size_t alignment, bool allocInFrontWindow);
+    MOCKABLE_VIRTUAL GraphicsAllocation *getHeapAllocation(size_t heapSize, size_t alignment, bool allocInFrontWindow);
 
     MOCKABLE_VIRTUAL SurfaceStateInHeapInfo allocateSSInHeap(size_t ssSize, GraphicsAllocation *surfaceAllocation, BindlesHeapType heapType);
     uint64_t getGlobalHeapsBase();
     void *getSpaceInHeap(size_t ssSize, BindlesHeapType heapType);
     uint32_t getDefaultBorderColorOffset();
     uint32_t getAlphaBorderColorOffset();
+    GraphicsAllocation *getBorderColorStates();
     IndirectHeap *getHeap(BindlesHeapType heapType);
     void releaseSSToReusePool(const SurfaceStateInHeapInfo &surfStateInfo);
     bool isGlobalDshSupported() {
@@ -78,10 +80,11 @@ class BindlessHeapsHelper : NEO::NonCopyableAndNonMovableClass {
     std::optional<AddressRange> reserveMemoryRange(size_t size, size_t alignment, HeapIndex heapIndex);
 
     std::mutex mtx;
+    std::atomic<IndirectHeap *> initializedHeaps[BindlesHeapType::numHeapTypes] = {};
 
     Device *rootDevice = nullptr;
     MemoryManager *memManager = nullptr;
-    GraphicsAllocation *borderColorStates = nullptr;
+    std::atomic<GraphicsAllocation *> borderColorStates{nullptr};
 
     std::vector<AddressRange> reservedRanges;
     std::vector<GraphicsAllocation *> ssHeapsAllocations;

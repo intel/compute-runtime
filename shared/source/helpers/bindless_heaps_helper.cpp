@@ -56,28 +56,11 @@ BindlessHeapsHelper::BindlessHeapsHelper(Device *rootDevice, bool isMultiOsConte
                                                                                              isMultiOsContextCapable(isMultiOsContextCapable) {
 
     stateCacheDirtyForContext.resize(memManager->getRegisteredEngines(rootDeviceIndex).size(), false);
-    for (auto heapType = 0; heapType < BindlesHeapType::numHeapTypes; heapType++) {
-        auto size = MemoryConstants::pageSize64k;
 
-        if (heapType == BindlesHeapType::specialSsh) {
-            if (isReservedMemoryModeAvailable() &&
-                !tryReservingMemoryForSpecialSsh(size, MemoryConstants::pageSize64k)) {
-                useReservedMemory = initializeReservedMemory();
-            }
-        }
-
-        auto heapAllocation = getHeapAllocation(size, MemoryConstants::pageSize64k, heapType == BindlesHeapType::specialSsh);
-        UNRECOVERABLE_IF(heapAllocation == nullptr);
-        ssHeapsAllocations.push_back(heapAllocation);
-        surfaceStateHeaps[heapType] = std::make_unique<IndirectHeap>(heapAllocation, true);
+    if (isReservedMemoryModeAvailable() &&
+        !tryReservingMemoryForSpecialSsh(MemoryConstants::pageSize64k, MemoryConstants::pageSize64k)) {
+        useReservedMemory = initializeReservedMemory();
     }
-
-    borderColorStates = getHeapAllocation(MemoryConstants::pageSize, MemoryConstants::pageSize, false);
-    UNRECOVERABLE_IF(borderColorStates == nullptr);
-    float borderColorDefault[4] = {0, 0, 0, 0};
-    memcpy_s(borderColorStates->getUnderlyingBuffer(), sizeof(borderColorDefault), borderColorDefault, sizeof(borderColorDefault));
-    float borderColorAlpha[4] = {0, 0, 0, 1.0};
-    memcpy_s(ptrOffset(borderColorStates->getUnderlyingBuffer(), borderColorAlphaOffset), sizeof(borderColorAlpha), borderColorAlpha, sizeof(borderColorDefault));
 
     auto &hwInfo = *rootDevice->getRootDeviceEnvironment().getHardwareInfo();
     this->heaplessEnabled = rootDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>().isHeaplessModeEnabled(hwInfo);
@@ -138,7 +121,7 @@ BindlessHeapsHelper::~BindlessHeapsHelper() {
     for (auto *allocation : ssHeapsAllocations) {
         memManager->freeGraphicsMemory(allocation);
     }
-    memManager->freeGraphicsMemory(borderColorStates);
+    memManager->freeGraphicsMemory(borderColorStates.load());
     ssHeapsAllocations.clear();
 
     for (const auto &range : reservedRanges) {
@@ -159,6 +142,9 @@ GraphicsAllocation *BindlessHeapsHelper::getHeapAllocation(size_t heapSize, size
     properties.alignment = alignment;
 
     GraphicsAllocation *allocation = memManager->allocateGraphicsMemoryWithProperties(properties);
+    if (allocation == nullptr) {
+        return nullptr;
+    }
     MemoryOperationsHandler *memoryOperationsIface = rootDevice->getRootDeviceEnvironmentRef().memoryOperationsInterface.get();
     auto result = memoryOperationsIface->makeResident(rootDevice, ArrayRef<NEO::GraphicsAllocation *>(&allocation, 1), false, false);
     if (result != NEO::MemoryOperationsStatus::success) {
@@ -195,7 +181,10 @@ bool BindlessHeapsHelper::getStateDirtyForContext(uint32_t osContextId) {
 }
 
 SurfaceStateInHeapInfo BindlessHeapsHelper::allocateSSInHeap(size_t ssSize, GraphicsAllocation *surfaceAllocation, BindlesHeapType heapType) {
-    auto heap = surfaceStateHeaps[heapType].get();
+    auto heap = getHeap(heapType);
+    if (heap == nullptr) {
+        return SurfaceStateInHeapInfo{};
+    }
 
     std::lock_guard<std::mutex> autolock(this->mtx);
     if (heapType == BindlesHeapType::globalSsh) {
@@ -253,7 +242,10 @@ SurfaceStateInHeapInfo BindlessHeapsHelper::allocateSSInHeap(size_t ssSize, Grap
 }
 
 void *BindlessHeapsHelper::getSpaceInHeap(size_t ssSize, BindlesHeapType heapType) {
-    auto heap = surfaceStateHeaps[heapType].get();
+    auto heap = getHeap(heapType);
+    if (heap == nullptr) {
+        return nullptr;
+    }
     if (heap->getAvailableSpace() < ssSize) {
         if (!growHeap(heapType)) {
             return nullptr;
@@ -263,18 +255,60 @@ void *BindlessHeapsHelper::getSpaceInHeap(size_t ssSize, BindlesHeapType heapTyp
 }
 
 uint64_t BindlessHeapsHelper::getGlobalHeapsBase() {
-    return surfaceStateHeaps[BindlesHeapType::globalSsh]->getGraphicsAllocation()->getGpuBaseAddress();
+    auto globalSsh = getHeap(BindlesHeapType::globalSsh);
+    UNRECOVERABLE_IF(globalSsh == nullptr);
+    return globalSsh->getGraphicsAllocation()->getGpuBaseAddress();
+}
+
+GraphicsAllocation *BindlessHeapsHelper::getBorderColorStates() {
+    auto allocation = borderColorStates.load(std::memory_order_acquire);
+    if (allocation) {
+        return allocation;
+    }
+
+    std::lock_guard<std::mutex> autolock(this->mtx);
+    allocation = borderColorStates.load(std::memory_order_relaxed);
+    if (allocation == nullptr) {
+        allocation = getHeapAllocation(MemoryConstants::pageSize, MemoryConstants::pageSize, false);
+        if (allocation == nullptr) {
+            return nullptr;
+        }
+        float borderColorDefault[4] = {0, 0, 0, 0};
+        memcpy_s(allocation->getUnderlyingBuffer(), sizeof(borderColorDefault), borderColorDefault, sizeof(borderColorDefault));
+        float borderColorAlpha[4] = {0, 0, 0, 1.0};
+        memcpy_s(ptrOffset(allocation->getUnderlyingBuffer(), borderColorAlphaOffset), sizeof(borderColorAlpha), borderColorAlpha, sizeof(borderColorDefault));
+        borderColorStates.store(allocation, std::memory_order_release);
+    }
+    return allocation;
 }
 
 uint32_t BindlessHeapsHelper::getDefaultBorderColorOffset() {
-    return static_cast<uint32_t>(borderColorStates->getGpuAddress() - borderColorStates->getGpuBaseAddress());
+    auto borderColorAllocation = getBorderColorStates();
+    UNRECOVERABLE_IF(borderColorAllocation == nullptr);
+    return static_cast<uint32_t>(borderColorAllocation->getGpuAddress() - borderColorAllocation->getGpuBaseAddress());
 }
 uint32_t BindlessHeapsHelper::getAlphaBorderColorOffset() {
     return getDefaultBorderColorOffset() + borderColorAlphaOffset;
 }
 
 IndirectHeap *BindlessHeapsHelper::getHeap(BindlesHeapType heapType) {
-    return surfaceStateHeaps[heapType].get();
+    auto heap = initializedHeaps[heapType].load(std::memory_order_acquire);
+    if (heap) {
+        return heap;
+    }
+
+    std::lock_guard<std::mutex> autolock(this->mtx);
+    if (surfaceStateHeaps[heapType] == nullptr) {
+        auto heapAllocation = getHeapAllocation(MemoryConstants::pageSize64k, MemoryConstants::pageSize64k, heapType == BindlesHeapType::specialSsh);
+        if (heapAllocation == nullptr) {
+            return nullptr;
+        }
+        ssHeapsAllocations.push_back(heapAllocation);
+        surfaceStateHeaps[heapType] = std::make_unique<IndirectHeap>(heapAllocation, true);
+    }
+    heap = surfaceStateHeaps[heapType].get();
+    initializedHeaps[heapType].store(heap, std::memory_order_release);
+    return heap;
 }
 
 bool BindlessHeapsHelper::growHeap(BindlesHeapType heapType) {

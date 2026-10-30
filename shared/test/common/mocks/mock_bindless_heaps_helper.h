@@ -15,18 +15,20 @@ using namespace NEO;
 class MockBindlesHeapsHelper : public BindlessHeapsHelper {
   public:
     using BaseClass = BindlessHeapsHelper;
-    MockBindlesHeapsHelper(Device *rootDevice, bool isMultiOsContextCapable) : BindlessHeapsHelper(rootDevice, isMultiOsContextCapable) {
-        globalSsh = surfaceStateHeaps[BindlesHeapType::globalSsh].get();
-        specialSsh = surfaceStateHeaps[BindlesHeapType::specialSsh].get();
-        scratchSsh = surfaceStateHeaps[BindlesHeapType::specialSsh].get();
-        globalDsh = surfaceStateHeaps[BindlesHeapType::specialSsh].get();
-    }
+    MockBindlesHeapsHelper(Device *rootDevice, bool isMultiOsContextCapable) : BindlessHeapsHelper(rootDevice, isMultiOsContextCapable) {}
 
     SurfaceStateInHeapInfo allocateSSInHeap(size_t ssSize, GraphicsAllocation *surfaceAllocation, BindlesHeapType heapType) override {
         if (failAllocateSS) {
             return SurfaceStateInHeapInfo{};
         }
         return BaseClass::allocateSSInHeap(ssSize, surfaceAllocation, heapType);
+    }
+
+    GraphicsAllocation *getHeapAllocation(size_t heapSize, size_t alignment, bool allocInFrontWindow) override {
+        if (failHeapAllocation) {
+            return nullptr;
+        }
+        return BaseClass::getHeapAllocation(heapSize, alignment, allocInFrontWindow);
     }
 
     using BindlesHeapType = BindlessHeapsHelper::BindlesHeapType;
@@ -42,6 +44,7 @@ class MockBindlesHeapsHelper : public BindlessHeapsHelper {
     using BaseClass::isMultiOsContextCapable;
     using BaseClass::isReservedMemoryModeAvailable;
     using BaseClass::memManager;
+    using BaseClass::mtx;
     using BaseClass::releasePoolIndex;
     using BaseClass::reservedMemoryInitialized;
     using BaseClass::reservedRangeBase;
@@ -57,9 +60,6 @@ class MockBindlesHeapsHelper : public BindlessHeapsHelper {
     using BaseClass::tryReservingMemoryForSpecialSsh;
     using BaseClass::useReservedMemory;
 
-    IndirectHeap *specialSsh;
-    IndirectHeap *globalSsh;
-    IndirectHeap *scratchSsh;
-    IndirectHeap *globalDsh;
     bool failAllocateSS = false;
+    bool failHeapAllocation = false;
 };

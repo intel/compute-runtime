@@ -23,6 +23,7 @@
 #include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
 #include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/common/mocks/mock_usm_memory_pool.h"
@@ -3136,7 +3137,8 @@ HWTEST2_F(ImageCreate, GivenBindlessImageWhenBindlessSlotAllocationFailsThenImag
                                   0};
 
     bindlessHelper->failAllocateSS = true;
-    bindlessHelper->globalSsh->getSpace(bindlessHelper->globalSsh->getAvailableSpace());
+    auto globalSsh = bindlessHelper->getHeap(NEO::BindlessHeapsHelper::globalSsh);
+    globalSsh->getSpace(globalSsh->getAvailableSpace());
 
     auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
     auto ret = imageHW->initialize(device, &srcImgDesc);
@@ -3736,6 +3738,116 @@ HWTEST2_F(ImageCreate, GivenBindlessSampledImageWhenInitializedThenSamplerStateC
 
     ASSERT_EQ(samplerState->getMinModeFilter(), SAMPLER_STATE::MIN_MODE_FILTER_LINEAR);
     ASSERT_EQ(samplerState->getMagModeFilter(), SAMPLER_STATE::MAG_MODE_FILTER_LINEAR);
+}
+
+HWTEST2_F(ImageCreate, GivenBindlessSampledImageWhenInitializedThenSamplerStateIndirectStatePointerPointsToDefaultBorderColor, SupportsLegacyRenderSurfaceStateAndImageSupport) {
+    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice,
+                                                     neoDevice->getNumGenericSubDevices() > 1);
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
+    if (bindlessHelper->heaplessEnabled) {
+        GTEST_SKIP();
+    }
+    EXPECT_EQ(nullptr, bindlessHelper->borderColorStates.load());
+
+    ze_sampler_desc_t samplerDesc = {
+        ZE_STRUCTURE_TYPE_SAMPLER_DESC,
+        nullptr,
+        ZE_SAMPLER_ADDRESS_MODE_CLAMP,
+        ZE_SAMPLER_FILTER_MODE_NEAREST,
+        false};
+
+    ze_image_bindless_exp_desc_t bindlessExtDesc = {};
+    bindlessExtDesc.stype = ZE_STRUCTURE_TYPE_BINDLESS_IMAGE_EXP_DESC;
+    bindlessExtDesc.pNext = &samplerDesc;
+    bindlessExtDesc.flags = ZE_IMAGE_BINDLESS_EXP_FLAG_BINDLESS | ZE_IMAGE_BINDLESS_EXP_FLAG_SAMPLED_IMAGE;
+
+    ze_image_desc_t srcImgDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                                  &bindlessExtDesc,
+                                  ZE_IMAGE_FLAG_KERNEL_WRITE,
+                                  ZE_IMAGE_TYPE_2D,
+                                  {ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8, ZE_IMAGE_FORMAT_TYPE_UINT,
+                                   ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                                   ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A},
+                                  32,
+                                  32,
+                                  1,
+                                  0,
+                                  0};
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    auto ret = imageHW->initialize(device, &srcImgDesc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    auto ssHeapInfo = imageHW->getBindlessSlot();
+    ASSERT_NE(nullptr, ssHeapInfo);
+
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
+    auto *samplerState = static_cast<SAMPLER_STATE *>(ptrOffset(ssHeapInfo->ssPtr, sizeof(RENDER_SURFACE_STATE) * NEO::BindlessImageSlot::sampler));
+
+    EXPECT_NE(nullptr, bindlessHelper->borderColorStates.load());
+    EXPECT_EQ(bindlessHelper->getDefaultBorderColorOffset(), static_cast<uint32_t>(samplerState->getIndirectStatePointer()));
+}
+
+HWTEST2_F(ImageCreate, GivenBindlessSampledImageViewAndBorderColorAllocationFailsWhenInitializedThenOutOfMemoryErrorIsReturnedAndLaterCallSucceeds, SupportsLegacyRenderSurfaceStateAndImageSupport) {
+    auto mockMemManager = static_cast<MockMemoryManager *>(neoDevice->getMemoryManager());
+    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice,
+                                                     neoDevice->getNumGenericSubDevices() > 1);
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
+    if (bindlessHelper->heaplessEnabled) {
+        GTEST_SKIP();
+    }
+
+    ze_sampler_desc_t samplerDesc = {
+        ZE_STRUCTURE_TYPE_SAMPLER_DESC,
+        nullptr,
+        ZE_SAMPLER_ADDRESS_MODE_CLAMP,
+        ZE_SAMPLER_FILTER_MODE_NEAREST,
+        false};
+
+    ze_image_bindless_exp_desc_t bindlessExtDesc = {};
+    bindlessExtDesc.stype = ZE_STRUCTURE_TYPE_BINDLESS_IMAGE_EXP_DESC;
+    bindlessExtDesc.flags = ZE_IMAGE_BINDLESS_EXP_FLAG_BINDLESS;
+
+    ze_image_desc_t srcImgDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                                  &bindlessExtDesc,
+                                  ZE_IMAGE_FLAG_KERNEL_WRITE,
+                                  ZE_IMAGE_TYPE_2D,
+                                  {ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8, ZE_IMAGE_FORMAT_TYPE_UINT,
+                                   ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                                   ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A},
+                                  32,
+                                  32,
+                                  1,
+                                  0,
+                                  0};
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    auto ret = imageHW->initialize(device, &srcImgDesc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+    EXPECT_EQ(nullptr, bindlessHelper->borderColorStates.load());
+
+    bindlessExtDesc.flags = ZE_IMAGE_BINDLESS_EXP_FLAG_BINDLESS | ZE_IMAGE_BINDLESS_EXP_FLAG_SAMPLED_IMAGE;
+    bindlessExtDesc.pNext = &samplerDesc;
+
+    mockMemManager->failInDevicePool = true;
+    mockMemManager->failAllocateSystemMemory = true;
+    mockMemManager->failAllocate32Bit = true;
+
+    ze_image_handle_t imageView = nullptr;
+    ret = imageHW->createView(device, &srcImgDesc, &imageView);
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, ret);
+    EXPECT_EQ(nullptr, imageView);
+    EXPECT_EQ(nullptr, bindlessHelper->borderColorStates.load());
+
+    mockMemManager->failInDevicePool = false;
+    mockMemManager->failAllocateSystemMemory = false;
+    mockMemManager->failAllocate32Bit = false;
+
+    ret = imageHW->createView(device, &srcImgDesc, &imageView);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+    EXPECT_NE(nullptr, bindlessHelper->borderColorStates.load());
+    Image::fromHandle(imageView)->destroy();
 }
 
 HWTEST2_F(ImageCreate, GivenBindlessSampledImageViewFromUnsampledImageWhenInitializedThenSamplerStateCopiedToSSH, SupportsLegacyRenderSurfaceStateAndImageSupport) {

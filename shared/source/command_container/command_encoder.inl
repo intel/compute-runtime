@@ -99,6 +99,7 @@ uint32_t EncodeStates<Family>::copySamplerState(IndirectHeap *dsh,
         }
         dshAlign(dsh);
         auto samplerStateInDsh = bindlessHeapHelper->allocateSSInHeap(sizeSamplerState, nullptr, BindlessHeapsHelper::BindlesHeapType::globalDsh);
+        UNRECOVERABLE_IF(samplerStateInDsh.ssPtr == nullptr);
         dstSamplerState = reinterpret_cast<SAMPLER_STATE *>(samplerStateInDsh.ssPtr);
         samplerStateOffsetInDsh = static_cast<uint32_t>(samplerStateInDsh.surfaceStateOffset);
     }

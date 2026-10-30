@@ -731,6 +731,39 @@ struct DebuggerWithGlobalBindlessFixture : public L0DebuggerFixture {
 
 using DebuggerWithGlobalBindlessTest = Test<DebuggerWithGlobalBindlessFixture>;
 
+struct DebuggerWithGlobalBindlessAndFailingHeapAllocationFixture : public L0DebuggerFixture {
+    void setUp() {
+        NEO::debugManager.flags.UseExternalAllocatorForSshAndDsh.set(true);
+        L0DebuggerFixture::setUp(false);
+
+        auto mockHelper = std::make_unique<MockBindlesHeapsHelper>(neoDevice,
+                                                                   neoDevice->getNumGenericSubDevices() > 1);
+        mockHelper->failHeapAllocation = true;
+        bindlessHelper = mockHelper.get();
+
+        neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(mockHelper.release());
+    }
+
+    void tearDown() {
+        L0DebuggerFixture::tearDown();
+    }
+    DebugManagerStateRestore restorer;
+    MockBindlesHeapsHelper *bindlessHelper = nullptr;
+};
+
+using DebuggerWithGlobalBindlessAndFailingHeapAllocationTest = Test<DebuggerWithGlobalBindlessAndFailingHeapAllocationFixture>;
+
+HWTEST_F(DebuggerWithGlobalBindlessAndFailingHeapAllocationTest, GivenSpecialSshCannotBeAllocatedWhenDeviceIsCreatedThenOutOfHostMemoryErrorIsReturned) {
+    NEO::DeviceVector devices;
+    devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+    driverHandle = std::make_unique<Mock<L0::DriverHandle>>();
+    driverHandle->enableProgramDebugging = NEO::DebuggingMode::online;
+
+    auto result = driverHandle->initialize(std::move(devices));
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, result);
+    EXPECT_EQ(nullptr, bindlessHelper->surfaceStateHeaps[NEO::BindlessHeapsHelper::specialSsh]);
+}
+
 HWTEST_F(DebuggerWithGlobalBindlessTest, GivenGlobalBindlessHeapWhenDeviceIsCreatedThenDebugSurfaceStateIsProgrammedAtBindlessOffsetZero) {
     using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
 
