@@ -42,6 +42,17 @@ struct DeviceAotInfo {
     }
 };
 
+namespace IgcaFeatureSet {
+inline constexpr uint32_t compute = 0x1;
+inline constexpr uint32_t render = 0x2;
+inline constexpr uint32_t exact = 0x4;
+} // namespace IgcaFeatureSet
+
+struct IgcaTarget {
+    uint32_t target = 0;
+    uint32_t featureSets = 0;
+};
+
 struct ProductConfigHelper {
   public:
     ProductConfigHelper();
@@ -68,6 +79,7 @@ struct ProductConfigHelper {
     static AOT::PRODUCT_CONFIG getProductConfigFromAcronym(const std::string &device);
     static std::vector<std::string> getCompatibilityFallbackProductAbbreviations(AOT::PRODUCT_CONFIG requestedConfig);
     static const std::map<AOT::PRODUCT_CONFIG, std::vector<AOT::PRODUCT_CONFIG>> &getInvertedCompatibilityMapping();
+    static bool getIgcaTarget(NEO::HardwareIpVersion ipVersion, IgcaTarget &igcaTarget);
 
     static bool compareConfigs(DeviceAotInfo deviceAotInfo0, DeviceAotInfo deviceAotInfo1);
 

@@ -208,6 +208,10 @@ ze_result_t DriverHandle::getExtensionProperties(uint32_t *pCount,
         additionalExtensions.emplace_back(ZE_IPC_PHYS_MEM_HANDLE_RANGE_EXT_NAME, ZE_IPC_PHYS_MEM_HANDLE_RANGE_EXT_VERSION_1_0);
     }
 
+    if (Device::isIgcaTargetPropertiesEnabled()) {
+        additionalExtensions.emplace_back(ZE_DEVICE_IGCA_TARGET_EXT_NAME, ZE_DEVICE_IGCA_TARGET_EXT_VERSION_1_0);
+    }
+
     ExtensionInjectorHelper::addAdditionalExtensions(additionalExtensions, devices[0]);
 
     auto extensionCount = static_cast<uint32_t>(this->extensionsSupported.size() + additionalExtensions.size());

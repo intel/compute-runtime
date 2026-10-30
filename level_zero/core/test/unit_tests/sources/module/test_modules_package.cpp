@@ -769,6 +769,18 @@ TEST_F(ModulesPackageForwarding, WhenGetPropertiesIsCalledThenAccumulatesFromEac
     EXPECT_EQ(1U, moduleProperties.flags);
 }
 
+TEST_F(ModulesPackageForwarding, GivenModuleIgcaTargetPropertiesInExtensionChainWhenGetPropertiesIsCalledThenUnsupportedFeatureIsReturned) {
+    MockModulesPackage<> mp{this->device};
+
+    ze_module_igca_target_ext_properties_t igcaTargetProperties = {};
+    igcaTargetProperties.stype = ZE_STRUCTURE_TYPE_MODULE_IGCA_TARGET_EXT_PROPERTIES;
+    igcaTargetProperties.pNext = nullptr;
+
+    ze_module_properties_t moduleProperties = {ZE_STRUCTURE_TYPE_MODULE_PROPERTIES};
+    moduleProperties.pNext = &igcaTargetProperties;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, mp.getProperties(&moduleProperties));
+}
+
 TEST_F(ModulesPackageForwarding, WhenIsLinkedFullyIsCalledThenReturnsTrueOnlyIfAllModulesAreFullyLinked) {
     MockModulesPackage<> mp{this->device};
 

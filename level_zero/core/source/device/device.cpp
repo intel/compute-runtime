@@ -32,6 +32,7 @@
 #include "shared/source/helpers/image_implicit_args_tag_node.h"
 #include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/source/helpers/path.h"
+#include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/helpers/ray_tracing_helper.h"
 #include "shared/source/helpers/required_libs_helpers.h"
 #include "shared/source/helpers/surface_format_info.h"
@@ -903,6 +904,11 @@ ze_result_t Device::getKernelProperties(ze_device_module_properties_t *pKernelPr
 
             if (hardwareInfo.caps.dotProductAccumulateSystolicSupported) {
                 dpProperties->flags |= ZE_INTEL_DEVICE_MODULE_EXP_FLAG_DPAS;
+            }
+        } else if (static_cast<uint32_t>(extendedProperties->stype) == ZE_STRUCTURE_TYPE_DEVICE_IGCA_TARGET_EXT_PROPERTIES) {
+            auto result = getIgcaTargetExtProperties(extendedProperties);
+            if (result != ZE_RESULT_SUCCESS) {
+                return result;
             }
         } else if (static_cast<uint32_t>(extendedProperties->stype) == ZEX_STRUCTURE_DEVICE_MODULE_REGISTER_FILE_EXP) {
             zex_device_module_register_file_exp_t *properties = reinterpret_cast<zex_device_module_register_file_exp_t *>(extendedProperties);
@@ -2364,6 +2370,26 @@ void Device::getReadonlyMemoryExtProperties(ze_base_properties_t *extendedProper
         }
     }
     roProperties->readonlyCapability = capability;
+}
+
+bool Device::isIgcaTargetPropertiesEnabled() {
+    return NEO::debugManager.flags.EnableIgcaTargetProperties.get() == 1;
+}
+
+ze_result_t Device::getIgcaTargetExtProperties(ze_base_desc_t *extendedProperties) const {
+    static_assert(ZE_IGCA_FEATURE_SET_EXT_FLAG_COMPUTE == IgcaFeatureSet::compute, "Mismatch between internal and API - specific IGCA feature sets.");
+    static_assert(ZE_IGCA_FEATURE_SET_EXT_FLAG_RENDER == IgcaFeatureSet::render, "Mismatch between internal and API - specific IGCA feature sets.");
+
+    IgcaTarget igcaTarget{};
+    const auto ipVersion = neoDevice->getCompilerProductHelper().getHwIpVersion(neoDevice->getHardwareInfo());
+    if (!isIgcaTargetPropertiesEnabled() || !ProductConfigHelper::getIgcaTarget(ipVersion, igcaTarget)) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    auto igcaProperties = reinterpret_cast<ze_device_igca_target_ext_properties_t *>(extendedProperties);
+    igcaProperties->target = igcaTarget.target;
+    igcaProperties->featureSets = igcaTarget.featureSets & (IgcaFeatureSet::compute | IgcaFeatureSet::render);
+    return ZE_RESULT_SUCCESS;
 }
 
 uint32_t Device::getAggregatedCopyOffloadIncrementValue() {

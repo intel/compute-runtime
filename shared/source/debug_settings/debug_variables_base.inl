@@ -684,6 +684,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, ResourceBarrierL1FlushMode, -1, "Invalidate or f
 DECLARE_DEBUG_VARIABLE(bool, EnableExtendedScratchSurfaceSize, true, "Enable support for increase per-thread scratch size HSD-14013581208")
 DECLARE_DEBUG_VARIABLE(int32_t, Enable64BitSemaphore, -1, "Enable 64-bit semaphore, -1: default, 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideCommandLevelMocsIndex, -1, "Set MOCS index programmed into per-command MOCS fields. -1: default, 0-15: MOCS index value.")
+DECLARE_DEBUG_VARIABLE(int32_t, EnableIgcaTargetProperties, -1, "-1: default (disabled), 0: disabled, 1: enabled - report IGCA target in ze_device_igca_target_ext_properties_t")
 
 /* IMPLICIT SCALING */
 DECLARE_DEBUG_VARIABLE(int32_t, EnableWalkerPartition, -1, "-1: default, 0: disable, 1: enable, Enables Walker Partitioning via WPARID.")

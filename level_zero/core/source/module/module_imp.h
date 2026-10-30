@@ -143,6 +143,8 @@ struct ModuleTranslationUnit {
     std::optional<uint32_t> l1CachePolicyOverride;
 };
 
+bool isModuleIgcaTargetQueried(const ze_module_properties_t *pModuleProperties);
+
 struct ModuleImp : public Module {
     ModuleImp() = delete;
 
@@ -389,6 +391,9 @@ struct ModulesPackage : public Module {
     }
 
     ze_result_t getProperties(ze_module_properties_t *pModuleProperties) override {
+        if (isModuleIgcaTargetQueried(pModuleProperties)) {
+            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
         pModuleProperties->flags = 0;
         return allModulesUnless<ReturnsFailure>([&](Module &mod) {
             ze_module_properties_t unitProperties = {ZE_STRUCTURE_TYPE_MODULE_PROPERTIES};

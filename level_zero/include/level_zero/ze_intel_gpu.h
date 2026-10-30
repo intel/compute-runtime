@@ -80,6 +80,64 @@ typedef struct _ze_intel_device_module_dp_exp_properties_t {
     ze_intel_device_module_dp_exp_flags_t flags; ///< [out] 0 (none) or a valid combination of ::ze_intel_device_module_dp_flag_t
 } ze_intel_device_module_dp_exp_properties_t;
 
+#ifndef ZE_DEVICE_IGCA_TARGET_EXT_NAME
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Device IGCA Target Extension Name
+#define ZE_DEVICE_IGCA_TARGET_EXT_NAME "ZE_extension_device_igca_target"
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Device IGCA Target Extension Version(s)
+typedef enum _ze_device_igca_target_ext_version_t {
+    ZE_DEVICE_IGCA_TARGET_EXT_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
+    ZE_DEVICE_IGCA_TARGET_EXT_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
+    ZE_DEVICE_IGCA_TARGET_EXT_VERSION_FORCE_UINT32 = 0x7fffffff
+} ze_device_igca_target_ext_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Supported IGCA feature set flags
+typedef uint32_t ze_igca_feature_set_ext_flags_t;
+typedef enum _ze_igca_feature_set_ext_flag_t {
+    ZE_IGCA_FEATURE_SET_EXT_FLAG_COMPUTE = ZE_BIT(0), ///< IGCA compute feature set
+    ZE_IGCA_FEATURE_SET_EXT_FLAG_RENDER = ZE_BIT(1),  ///< IGCA render feature set
+    ZE_IGCA_FEATURE_SET_EXT_FLAG_EXACT = ZE_BIT(2),   ///< IGCA target has the "a" (exact) suffix, only reported by zeModuleGetProperties
+    ZE_IGCA_FEATURE_SET_EXT_FLAG_FORCE_UINT32 = 0x7fffffff
+} ze_igca_feature_set_ext_flag_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Device IGCA target properties queried using zeDeviceGetModuleProperties
+typedef struct _ze_device_igca_target_ext_properties_t {
+    ze_structure_type_ext_t stype;               ///< [in] type of this structure
+    void *pNext;                                 ///< [in,out][optional] must be null or a pointer to an extension-specific
+                                                 ///< structure (i.e. contains sType and pNext).
+    uint32_t target;                             ///< [out] Numeric IGCA target supported by the device
+    ze_igca_feature_set_ext_flags_t featureSets; ///< [out] 0 (none) or a valid combination of ze_igca_feature_set_ext_flag_t
+} ze_device_igca_target_ext_properties_t;
+#endif // ZE_DEVICE_IGCA_TARGET_EXT_NAME
+
+#ifndef ZE_MODULE_IGCA_TARGET_EXT_NAME
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Module IGCA Target Extension Name
+#define ZE_MODULE_IGCA_TARGET_EXT_NAME "ZE_extension_module_igca_target"
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Module IGCA Target Extension Version(s)
+typedef enum _ze_module_igca_target_ext_version_t {
+    ZE_MODULE_IGCA_TARGET_EXT_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
+    ZE_MODULE_IGCA_TARGET_EXT_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
+    ZE_MODULE_IGCA_TARGET_EXT_VERSION_FORCE_UINT32 = 0x7fffffff
+} ze_module_igca_target_ext_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Module IGCA target properties queried using zeModuleGetProperties
+typedef struct _ze_module_igca_target_ext_properties_t {
+    ze_structure_type_ext_t stype;               ///< [in] type of this structure
+    void *pNext;                                 ///< [in,out][optional] must be null or a pointer to an extension-specific
+                                                 ///< structure (i.e. contains sType and pNext).
+    uint32_t target;                             ///< [out] Numeric IGCA target of the module
+    ze_igca_feature_set_ext_flags_t featureSets; ///< [out] 0 (none) or a valid combination of ze_igca_feature_set_ext_flag_t
+} ze_module_igca_target_ext_properties_t;
+#endif // ZE_MODULE_IGCA_TARGET_EXT_NAME
+
 #ifndef ZE_INTEL_COMMAND_LIST_MEMORY_SYNC
 /// @brief Cmd List memory sync extension name
 #define ZE_INTEL_COMMAND_LIST_MEMORY_SYNC "ZE_intel_experimental_command_list_memory_sync"

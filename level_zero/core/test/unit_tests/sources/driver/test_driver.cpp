@@ -2456,6 +2456,27 @@ TEST(MultiDriverHandleTest, givenMultiplesDifferentDevicesWhenGetDriverHandleThe
     globalDriverHandles->clear();
 }
 
+TEST_F(DriverExtensionsTest, givenEnableIgcaTargetPropertiesWhenAskingForExtensionsThenDeviceIgcaTargetExtensionIsReturnedOnlyWhenEnabled) {
+    auto isExtensionReported = [](const std::vector<ze_driver_extension_properties_t> &extensions, const char *extensionName) {
+        return std::any_of(extensions.begin(), extensions.end(), [extensionName](const auto &extension) { return strcmp(extension.name, extensionName) == 0; });
+    };
+    EXPECT_FALSE(isExtensionReported(extensionProperties, ZE_DEVICE_IGCA_TARGET_EXT_NAME));
+    EXPECT_FALSE(isExtensionReported(extensionProperties, ZE_MODULE_IGCA_TARGET_EXT_NAME));
+
+    DebugManagerStateRestore restorer;
+    for (const auto enableIgcaTargetProperties : {0, 1}) {
+        debugManager.flags.EnableIgcaTargetProperties.set(enableIgcaTargetProperties);
+        uint32_t count = 0;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->getExtensionProperties(&count, nullptr));
+        extensionProperties.resize(count);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->getExtensionProperties(&count, extensionProperties.data()));
+
+        EXPECT_EQ(enableIgcaTargetProperties == 1, isExtensionReported(extensionProperties, ZE_DEVICE_IGCA_TARGET_EXT_NAME));
+        EXPECT_FALSE(isExtensionReported(extensionProperties, ZE_MODULE_IGCA_TARGET_EXT_NAME));
+    }
+    verifyExtensionDefinition(ZE_DEVICE_IGCA_TARGET_EXT_NAME, ZE_DEVICE_IGCA_TARGET_EXT_VERSION_1_0);
+}
+
 TEST_F(DriverExtensionsTest, givenDriverHandleWhenAskingForExtensionsThenReturnCorrectVersions) {
 
     // Standard Core Extensions

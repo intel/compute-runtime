@@ -1793,12 +1793,41 @@ TEST_F(ModulePropertyTest, givenCallToGetPropertiesWithoutUnresolvedSymbolsThenF
 
     ze_module_property_flags_t expectedFlags = 0;
 
-    ze_result_t res = module->getProperties(&moduleProperties);
     moduleProperties.stype = ZE_STRUCTURE_TYPE_MODULE_PROPERTIES;
     moduleProperties.pNext = nullptr;
+    ze_result_t res = module->getProperties(&moduleProperties);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(expectedFlags, moduleProperties.flags);
+}
+
+TEST_F(ModulePropertyTest, givenModuleIgcaTargetPropertiesInExtensionChainWhenGettingPropertiesThenUnsupportedFeatureIsReturned) {
+    ze_module_igca_target_ext_properties_t igcaTargetProperties = {};
+    igcaTargetProperties.stype = ZE_STRUCTURE_TYPE_MODULE_IGCA_TARGET_EXT_PROPERTIES;
+    igcaTargetProperties.pNext = nullptr;
+
+    ze_base_properties_t otherProperties = {};
+    otherProperties.stype = ZE_STRUCTURE_TYPE_FORCE_UINT32;
+    otherProperties.pNext = &igcaTargetProperties;
+
+    ze_module_properties_t moduleProperties = {};
+    moduleProperties.stype = ZE_STRUCTURE_TYPE_MODULE_PROPERTIES;
+    moduleProperties.pNext = &otherProperties;
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, module->getProperties(&moduleProperties));
+}
+
+TEST_F(ModulePropertyTest, givenOnlyOtherPropertiesInExtensionChainWhenGettingPropertiesThenSuccessIsReturned) {
+    ze_base_properties_t otherProperties = {};
+    otherProperties.stype = ZE_STRUCTURE_TYPE_FORCE_UINT32;
+    otherProperties.pNext = nullptr;
+
+    ze_module_properties_t moduleProperties = {};
+    moduleProperties.stype = ZE_STRUCTURE_TYPE_MODULE_PROPERTIES;
+    moduleProperties.pNext = &otherProperties;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, module->getProperties(&moduleProperties));
+    EXPECT_EQ(0u, moduleProperties.flags);
 }
 
 TEST_F(ModulePropertyTest, givenCallToGetPropertiesWithUnresolvedSymbolsThenFlagIsSet) {

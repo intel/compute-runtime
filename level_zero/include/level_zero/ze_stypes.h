@@ -78,6 +78,14 @@ typedef struct _ze_device_readonly_memory_ext_properties_t {
 #endif
 #endif
 
+#ifndef ZE_DEVICE_IGCA_TARGET_EXT_NAME
+#define ZE_STRUCTURE_TYPE_DEVICE_IGCA_TARGET_EXT_PROPERTIES static_cast<ze_structure_type_ext_t>(0x00030036)
+#endif // ZE_DEVICE_IGCA_TARGET_EXT_NAME
+
+#ifndef ZE_MODULE_IGCA_TARGET_EXT_NAME
+#define ZE_STRUCTURE_TYPE_MODULE_IGCA_TARGET_EXT_PROPERTIES static_cast<ze_structure_type_ext_t>(0x00030037)
+#endif // ZE_MODULE_IGCA_TARGET_EXT_NAME
+
 // Metric structure types
 #define ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP static_cast<zet_structure_type_ext_t>(0x00010006)
 #define ZET_INTEL_STRUCTURE_TYPE_METRIC_HW_BUFFER_SIZE_EXP_DESC static_cast<zet_structure_type_ext_t>(0x00010007)

@@ -1703,6 +1703,9 @@ bool ModuleImp::linkInternalRequiredLibsModule() {
 }
 
 ze_result_t ModuleImp::getProperties(ze_module_properties_t *pModuleProperties) {
+    if (isModuleIgcaTargetQueried(pModuleProperties)) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
     pModuleProperties->flags = 0;
 
     if (!unresolvedExternalsInfo.empty()) {
@@ -2128,6 +2131,17 @@ StackVec<NEO::GraphicsAllocation *, 32> ModuleImp::getModuleAllocations() {
         }
     }
     return allocs;
+}
+
+bool isModuleIgcaTargetQueried(const ze_module_properties_t *pModuleProperties) {
+    auto extendedProperties = static_cast<const ze_base_properties_t *>(pModuleProperties->pNext);
+    while (extendedProperties) {
+        if (static_cast<uint32_t>(extendedProperties->stype) == ZE_STRUCTURE_TYPE_MODULE_IGCA_TARGET_EXT_PROPERTIES) {
+            return true;
+        }
+        extendedProperties = static_cast<const ze_base_properties_t *>(extendedProperties->pNext);
+    }
+    return false;
 }
 
 bool moveBuildOption(std::string &dstOptionsSet, std::string &srcOptionSet, NEO::ConstStringRef dstOptionName, NEO::ConstStringRef srcOptionName) {

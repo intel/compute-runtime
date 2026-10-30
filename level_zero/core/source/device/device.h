@@ -178,6 +178,7 @@ struct Device : _ze_device_handle_t, NEO::NonCopyableAndNonMovableClass {
     static Device *create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool isSubDevice, ze_result_t *returnValue);
     static Device *create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool isSubDevice, ze_result_t *returnValue, L0::Device *deviceL0);
     static Device *deviceReinit(DriverHandle *driverHandle, L0::Device *device, std::unique_ptr<NEO::Device> &neoDevice, ze_result_t *returnValue);
+    static bool isIgcaTargetPropertiesEnabled();
 
     MOCKABLE_VIRTUAL NEO::PreemptionMode getDevicePreemptionMode() const;
     MOCKABLE_VIRTUAL const NEO::DeviceInfo &getDeviceInfo() const;
@@ -301,6 +302,7 @@ struct Device : _ze_device_handle_t, NEO::NonCopyableAndNonMovableClass {
     bool tryAssignSecondaryContext(aub_stream::EngineType engineType, NEO::EngineUsage engineUsage, std::optional<uint32_t> priorityLevel, NEO::CommandStreamReceiver **csr);
     void getIntelXeDeviceProperties(ze_base_properties_t *extendedProperties) const;
     void getReadonlyMemoryExtProperties(ze_base_properties_t *extendedProperties);
+    ze_result_t getIgcaTargetExtProperties(ze_base_desc_t *extendedProperties) const;
     MOCKABLE_VIRTUAL Module *createRequiredLibModule(const std::string &libName, ModuleBuildLog *buildLog, ze_result_t &result);
     bool getRequiredLibDirPath(const std::string &libName, std::string &outPath);
     MOCKABLE_VIRTUAL NEO::BuiltIn::Resource getBufferFromFile(const std::string &dirPath, const std::string &fileName) const;

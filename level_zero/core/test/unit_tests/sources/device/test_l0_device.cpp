@@ -72,6 +72,7 @@
 
 #include "StateSaveAreaHeaderWrapper.h"
 #include "gtest/gtest.h"
+#include "platforms.h"
 
 #include <memory>
 #include <span>
@@ -6704,6 +6705,87 @@ INSTANTIATE_TEST_SUITE_P(
     CommandQueueGroupWithBcsInfoTestValues,
     CommandQueueGroupWithBcsInfoTest,
     testing::Values(0, 1, 2, 3));
+
+struct DeviceIgcaTargetTest : public DeviceTest {
+    void SetUp() override {
+        DeviceTest::SetUp();
+        debugManager.flags.EnableIgcaTargetProperties.set(1);
+    }
+
+    ze_result_t queryIgcaTarget(uint32_t hwIpVersion) {
+        debugManager.flags.OverrideHwIpVersion.set(static_cast<int32_t>(hwIpVersion));
+        igcaTargetProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_IGCA_TARGET_EXT_PROPERTIES;
+        igcaTargetProperties.pNext = nullptr;
+        igcaTargetProperties.target = std::numeric_limits<uint32_t>::max();
+        igcaTargetProperties.featureSets = std::numeric_limits<uint32_t>::max();
+        kernelProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_MODULE_PROPERTIES;
+        kernelProperties.pNext = &igcaTargetProperties;
+        return device->getKernelProperties(&kernelProperties);
+    }
+
+    DebugManagerStateRestore restorer;
+    ze_device_igca_target_ext_properties_t igcaTargetProperties = {};
+    ze_device_module_properties_t kernelProperties = {};
+};
+
+TEST_F(DeviceIgcaTargetTest, givenDefaultEnableIgcaTargetPropertiesWhenQueryingIgcaTargetThenUnsupportedFeatureIsReturned) {
+    debugManager.flags.EnableIgcaTargetProperties.set(-1);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, queryIgcaTarget(AOT::PVC_XT_C0));
+    EXPECT_EQ(std::numeric_limits<uint32_t>::max(), igcaTargetProperties.target);
+    EXPECT_EQ(std::numeric_limits<uint32_t>::max(), igcaTargetProperties.featureSets);
+}
+
+TEST_F(DeviceIgcaTargetTest, givenEnableIgcaTargetPropertiesDisabledWhenQueryingIgcaTargetThenUnsupportedFeatureIsReturned) {
+    debugManager.flags.EnableIgcaTargetProperties.set(0);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, queryIgcaTarget(AOT::PVC_XT_C0));
+    EXPECT_EQ(std::numeric_limits<uint32_t>::max(), igcaTargetProperties.target);
+    EXPECT_EQ(std::numeric_limits<uint32_t>::max(), igcaTargetProperties.featureSets);
+}
+
+TEST_F(DeviceIgcaTargetTest, givenComputeDeviceWithExactIgcaTargetWhenQueryingIgcaTargetThenTargetAndComputeFeatureSetWithoutExactAreReturned) {
+    EXPECT_EQ(ZE_RESULT_SUCCESS, queryIgcaTarget(AOT::PVC_XT_C0));
+    EXPECT_EQ(20u, igcaTargetProperties.target);
+    EXPECT_EQ(static_cast<ze_igca_feature_set_ext_flags_t>(ZE_IGCA_FEATURE_SET_EXT_FLAG_COMPUTE), igcaTargetProperties.featureSets);
+}
+
+TEST_F(DeviceIgcaTargetTest, givenRenderDeviceWhenQueryingIgcaTargetThenTargetAndRenderFeatureSetAreReturned) {
+    EXPECT_EQ(ZE_RESULT_SUCCESS, queryIgcaTarget(AOT::TGL));
+    EXPECT_EQ(10u, igcaTargetProperties.target);
+    EXPECT_EQ(static_cast<ze_igca_feature_set_ext_flags_t>(ZE_IGCA_FEATURE_SET_EXT_FLAG_RENDER), igcaTargetProperties.featureSets);
+}
+
+TEST_F(DeviceIgcaTargetTest, givenDeviceRevisionWithoutIgcaTargetEntryWhenQueryingIgcaTargetThenIgcaTargetOfSameReleaseIsReturned) {
+    EXPECT_EQ(ZE_RESULT_SUCCESS, queryIgcaTarget(AOT::BMG_G21_A1_RESERVED));
+    EXPECT_EQ(40u, igcaTargetProperties.target);
+    EXPECT_EQ(static_cast<ze_igca_feature_set_ext_flags_t>(ZE_IGCA_FEATURE_SET_EXT_FLAG_RENDER), igcaTargetProperties.featureSets);
+}
+
+TEST_F(DeviceIgcaTargetTest, givenDeviceWithoutIgcaTargetWhenQueryingIgcaTargetThenUnsupportedFeatureIsReturned) {
+    NEO::HardwareIpVersion unknownIpVersion(AOT::TGL);
+    unknownIpVersion.architecture = 0x3ff;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, queryIgcaTarget(unknownIpVersion.value));
+    EXPECT_EQ(std::numeric_limits<uint32_t>::max(), igcaTargetProperties.target);
+    EXPECT_EQ(std::numeric_limits<uint32_t>::max(), igcaTargetProperties.featureSets);
+}
+
+TEST_F(DeviceIgcaTargetTest, givenIgcaTargetPropertiesChainedWithOtherExtendedPropertiesWhenQueryingKernelPropertiesThenAllPropertiesAreSet) {
+    ze_float_atomic_ext_properties_t floatAtomicProperties = {};
+    floatAtomicProperties.stype = ZE_STRUCTURE_TYPE_FLOAT_ATOMIC_EXT_PROPERTIES;
+    floatAtomicProperties.pNext = nullptr;
+    const ze_device_fp_atomic_ext_flags_t maxValue{std::numeric_limits<uint32_t>::max()};
+    floatAtomicProperties.fp32Flags = maxValue;
+
+    debugManager.flags.OverrideHwIpVersion.set(static_cast<int32_t>(AOT::CRI_A0));
+    igcaTargetProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_IGCA_TARGET_EXT_PROPERTIES;
+    igcaTargetProperties.pNext = &floatAtomicProperties;
+    kernelProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_MODULE_PROPERTIES;
+    kernelProperties.pNext = &igcaTargetProperties;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, device->getKernelProperties(&kernelProperties));
+    EXPECT_EQ(60u, igcaTargetProperties.target);
+    EXPECT_EQ(0u, igcaTargetProperties.featureSets);
+    EXPECT_NE(maxValue, floatAtomicProperties.fp32Flags);
+}
 
 } // namespace ult
 } // namespace L0

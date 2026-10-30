@@ -11,6 +11,7 @@
 
 #include "device_ids_configs.h"
 #include "hw_cmds.h"
+#include "igca_targets.h"
 #include "platforms.h"
 
 ProductConfigHelper::ProductConfigHelper() : deviceAotInfo({
@@ -420,4 +421,21 @@ std::vector<std::string> ProductConfigHelper::getCompatibilityFallbackProductAbb
     }
 
     return result;
+}
+
+static_assert(IgcaFeatureSet::compute == AOT::IGCA_FEATURE_SET_COMPUTE);
+static_assert(IgcaFeatureSet::render == AOT::IGCA_FEATURE_SET_RENDER);
+static_assert(IgcaFeatureSet::exact == AOT::IGCA_FEATURE_SET_EXACT);
+
+bool ProductConfigHelper::getIgcaTarget(NEO::HardwareIpVersion ipVersion, IgcaTarget &igcaTarget) {
+    NEO::HardwareIpVersion productIpVersion(0u);
+    productIpVersion.architecture = ipVersion.architecture;
+    productIpVersion.release = ipVersion.release;
+    auto igcaTargetIt = AOT::igcaProductTargets.find(static_cast<AOT::IgcaProduct>(productIpVersion.value));
+    if (igcaTargetIt == AOT::igcaProductTargets.end()) {
+        return false;
+    }
+    igcaTarget.target = igcaTargetIt->second >> AOT::igcaTargetVersionShift;
+    igcaTarget.featureSets = igcaTargetIt->second & AOT::igcaTargetFeatureSetMask;
+    return true;
 }

@@ -12,6 +12,7 @@
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/test.h"
 
+#include "igca_targets.h"
 #include "platforms.h"
 
 #include <algorithm>
@@ -826,4 +827,58 @@ TEST_F(AotDeviceInfoTests, givenNoAcronymsWhenGetAcronymForProductConfigThenMajo
 TEST_F(AotDeviceInfoTests, givenUnknownIsaWhenSearchForAnAcronymThenEmptyIsReturned) {
     auto name = productConfigHelper->getAcronymForProductConfig(AOT::UNKNOWN_ISA);
     EXPECT_TRUE(name.empty());
+}
+
+TEST(ProductConfigHelperIgcaTargetTests, givenIgcaProductsWhenGettingIgcaTargetThenDecodedValueIsReturned) {
+    for (const auto &[igcaProduct, encodedIgcaTarget] : AOT::igcaProductTargets) {
+        IgcaTarget igcaTarget{};
+        EXPECT_TRUE(ProductConfigHelper::getIgcaTarget(NEO::HardwareIpVersion(static_cast<uint32_t>(igcaProduct)), igcaTarget));
+        EXPECT_EQ(static_cast<uint32_t>(encodedIgcaTarget) >> AOT::igcaTargetVersionShift, igcaTarget.target);
+        EXPECT_EQ(static_cast<uint32_t>(encodedIgcaTarget) & AOT::igcaTargetFeatureSetMask, igcaTarget.featureSets);
+    }
+}
+
+TEST(ProductConfigHelperIgcaTargetTests, givenKnownProductConfigsWhenGettingIgcaTargetThenExpectedTargetAndFeatureSetsAreReturned) {
+    IgcaTarget igcaTarget{};
+    EXPECT_TRUE(ProductConfigHelper::getIgcaTarget(NEO::HardwareIpVersion(AOT::TGL), igcaTarget));
+    EXPECT_EQ(10u, igcaTarget.target);
+    EXPECT_EQ(IgcaFeatureSet::render, igcaTarget.featureSets);
+
+    EXPECT_TRUE(ProductConfigHelper::getIgcaTarget(NEO::HardwareIpVersion(AOT::PVC_XT_C0), igcaTarget));
+    EXPECT_EQ(20u, igcaTarget.target);
+    EXPECT_EQ(IgcaFeatureSet::compute | IgcaFeatureSet::exact, igcaTarget.featureSets);
+
+    EXPECT_TRUE(ProductConfigHelper::getIgcaTarget(NEO::HardwareIpVersion(AOT::CRI_A0), igcaTarget));
+    EXPECT_EQ(60u, igcaTarget.target);
+    EXPECT_EQ(0u, igcaTarget.featureSets);
+}
+
+TEST(ProductConfigHelperIgcaTargetTests, givenDifferentRevisionsOfSameReleaseWhenGettingIgcaTargetThenRevisionIsIgnored) {
+    for (const auto productConfig : {AOT::LNL_A0, AOT::LNL_A1, AOT::LNL_B0}) {
+        IgcaTarget igcaTarget{};
+        EXPECT_TRUE(ProductConfigHelper::getIgcaTarget(NEO::HardwareIpVersion(productConfig), igcaTarget));
+        EXPECT_EQ(40u, igcaTarget.target);
+        EXPECT_EQ(IgcaFeatureSet::render, igcaTarget.featureSets);
+    }
+
+    IgcaTarget igcaTarget{};
+    EXPECT_TRUE(ProductConfigHelper::getIgcaTarget(NEO::HardwareIpVersion(AOT::BMG_G21_A1_RESERVED), igcaTarget));
+    EXPECT_EQ(40u, igcaTarget.target);
+    EXPECT_EQ(IgcaFeatureSet::render, igcaTarget.featureSets);
+}
+
+TEST(ProductConfigHelperIgcaTargetTests, givenKnownArchitectureWithUnknownReleaseWhenGettingIgcaTargetThenFalseIsReturned) {
+    NEO::HardwareIpVersion ipVersion(AOT::TGL);
+    ipVersion.release = 0xff;
+    IgcaTarget igcaTarget{};
+    EXPECT_FALSE(ProductConfigHelper::getIgcaTarget(ipVersion, igcaTarget));
+    EXPECT_EQ(0u, igcaTarget.target);
+    EXPECT_EQ(0u, igcaTarget.featureSets);
+}
+
+TEST(ProductConfigHelperIgcaTargetTests, givenUnknownArchitectureWhenGettingIgcaTargetThenFalseIsReturned) {
+    NEO::HardwareIpVersion ipVersion(AOT::TGL);
+    ipVersion.architecture = 0x3ff;
+    IgcaTarget igcaTarget{};
+    EXPECT_FALSE(ProductConfigHelper::getIgcaTarget(ipVersion, igcaTarget));
 }
