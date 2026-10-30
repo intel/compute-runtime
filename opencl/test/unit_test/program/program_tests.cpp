@@ -1990,7 +1990,9 @@ HWTEST2_F(ProgramTests, givenDefaultL1CachePolicyWhenGetInternalOptionsThenCorre
 HWTEST2_F(ProgramTests, givenDefaultL1CachePolicyWhenGetInternalOptionsThenCorrectBuildOptionIsSet, IsAtLeastXe3pCore) {
     MockProgram program(pContext, false, toClDeviceVector(*pClDevice));
     auto internalOptions = program.getInternalOptions();
-    EXPECT_TRUE(CompilerOptions::contains(internalOptions, "-cl-store-cache-default=30 -cl-load-cache-default=25"));
+    auto cachingPolicyOptions = pClDevice->getCompilerProductHelper().getCachingPolicyOptions(false);
+    ASSERT_NE(nullptr, cachingPolicyOptions);
+    EXPECT_TRUE(CompilerOptions::contains(internalOptions, cachingPolicyOptions));
 }
 
 TEST_F(ProgramTests, WhenCreatingProgramThenBindlessIsEnabledOnlyIfDebugFlagIsEnabled) {

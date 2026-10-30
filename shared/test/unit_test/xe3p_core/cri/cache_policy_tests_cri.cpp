@@ -29,7 +29,7 @@ CRITEST_F(CriCachePolicy, givenCriWhenGetUncachedL1CachePolicyThenReturnUcPolicy
 }
 
 CRITEST_F(CriCachePolicy, givenCriWhenGetCachingPolicyOptionsThenReturnWriteStreamingPolicyOptions) {
-    const char *writeStreamingPolicyOptions = "-cl-store-cache-default=30 -cl-load-cache-default=25";
+    const char *writeStreamingPolicyOptions = "-cl-store-cache-default=28 -cl-load-cache-default=25";
     const char *writeByPassPolicyOptions = "-cl-store-cache-default=18 -cl-load-cache-default=25";
     EXPECT_EQ(0, memcmp(L1CachePolicyHelper<IGFX_CRI>::getCachingPolicyOptions(false), writeStreamingPolicyOptions, strlen(writeStreamingPolicyOptions)));
     EXPECT_EQ(0, memcmp(L1CachePolicyHelper<IGFX_CRI>::getCachingPolicyOptions(true), writeByPassPolicyOptions, strlen(writeByPassPolicyOptions)));

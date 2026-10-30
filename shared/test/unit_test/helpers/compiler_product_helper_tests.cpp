@@ -9,6 +9,7 @@
 #include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/kernel/kernel_properties.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
@@ -166,7 +167,8 @@ HWTEST2_F(CompilerProductHelperFixture, givenAtLeastXeHpgCoreWhenGetCachingPolic
 
 HWTEST2_F(CompilerProductHelperFixture, givenAtLeastXeHpgCoreWhenGetCachingPolicyOptionsThenReturnWriteByPassPolicyOption, IsAtLeastXe3pCore) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-    const char *expectedStr = "-cl-store-cache-default=30 -cl-load-cache-default=25";
+    const bool isWriteStreamingDefault = pDevice->getProductHelper().getL1CachePolicy(false) == FamilyType::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WS;
+    const char *expectedStr = isWriteStreamingDefault ? "-cl-store-cache-default=28 -cl-load-cache-default=25" : "-cl-store-cache-default=30 -cl-load-cache-default=25";
     const char *dbgExpectedStr = "-cl-store-cache-default=18 -cl-load-cache-default=25";
     EXPECT_EQ(0, memcmp(compilerProductHelper.getCachingPolicyOptions(false), expectedStr, strlen(expectedStr)));
     EXPECT_EQ(0, memcmp(compilerProductHelper.getCachingPolicyOptions(true), dbgExpectedStr, strlen(dbgExpectedStr)));
@@ -188,6 +190,16 @@ HWTEST2_F(CompilerProductHelperFixture, givenAtLeastXe3pcOREWhenGetCachingPolicy
 
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
     const char *expectedStr = "-cl-store-cache-default=30 -cl-load-cache-default=25";
+    EXPECT_EQ(0, memcmp(compilerProductHelper.getCachingPolicyOptions(false), expectedStr, strlen(expectedStr)));
+    EXPECT_EQ(0, memcmp(compilerProductHelper.getCachingPolicyOptions(true), expectedStr, strlen(expectedStr)));
+}
+
+HWTEST2_F(CompilerProductHelperFixture, givenAtLeastXe3pCoreAndWriteStreamingPolicyWhenGetCachingPolicyOptionsThenReturnWriteStreamingPolicyOption, IsAtLeastXe3pCore) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(4);
+
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+    const char *expectedStr = "-cl-store-cache-default=28 -cl-load-cache-default=25";
     EXPECT_EQ(0, memcmp(compilerProductHelper.getCachingPolicyOptions(false), expectedStr, strlen(expectedStr)));
     EXPECT_EQ(0, memcmp(compilerProductHelper.getCachingPolicyOptions(true), expectedStr, strlen(expectedStr)));
 }

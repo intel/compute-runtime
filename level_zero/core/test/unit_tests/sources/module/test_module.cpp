@@ -5044,7 +5044,9 @@ HWTEST2_F(ModuleTranslationUnitTest, givenDefaultL1CachePolicyWhenGetInternalOpt
     result = moduleTu.buildFromSpirV("", 0U, nullptr, "", nullptr);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(moduleTu.processUnpackedBinaryCalled, 1u);
-    EXPECT_NE(pMockCompilerInterface->inputInternalOptions.find("-cl-store-cache-default=30 -cl-load-cache-default=25"), std::string::npos);
+    auto cachingPolicyOptions = this->neoDevice->getCompilerProductHelper().getCachingPolicyOptions(false);
+    ASSERT_NE(nullptr, cachingPolicyOptions);
+    EXPECT_NE(pMockCompilerInterface->inputInternalOptions.find(cachingPolicyOptions), std::string::npos);
 }
 
 HWTEST_F(ModuleTranslationUnitTest, givenForceToStatelessRequiredWhenBuildingModuleThen4GbBuffersAreRequired) {
