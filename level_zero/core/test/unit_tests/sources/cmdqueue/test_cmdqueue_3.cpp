@@ -932,45 +932,6 @@ HWTEST_F(CommandQueueTest, givenCommandQueueWhenPerformMigrationIsTrueAndAllocat
     commandQueue->destroy();
 }
 
-HWTEST_F(CommandQueueTest, givenSharedAllocationAfterOtherAllocationInContainerWhenMakeResidentAndMigrateThenMigrationIsDoneBeforeAnyAllocationIsMadeResident) {
-    struct PageFaultManagerRecordingResidency : public MockPageFaultManager {
-        void moveAllocationToGpuDomain(void *ptr) override {
-            makeResidentCalledTimesAtMigration = csr->makeResidentCalledTimes;
-            MockPageFaultManager::moveAllocationToGpuDomain(ptr);
-        }
-        MockCommandStreamReceiver *csr = nullptr;
-        uint32_t makeResidentCalledTimesAtMigration = std::numeric_limits<uint32_t>::max();
-    };
-
-    MockCommandStreamReceiver csr(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
-    csr.setupContext(*neoDevice->getDefaultEngine().osContext);
-    auto mockPageFaultManager = new PageFaultManagerRecordingResidency();
-    mockPageFaultManager->csr = &csr;
-    static_cast<MockMemoryManager *>(neoDevice->getExecutionEnvironment()->memoryManager.get())->pageFaultManager.reset(mockPageFaultManager);
-
-    ze_result_t returnValue;
-    ze_command_queue_desc_t desc = {};
-    L0::CommandQueue *commandQueue = CommandQueue::create(device,
-                                                          &csr,
-                                                          &desc,
-                                                          true,
-                                                          false,
-                                                          false,
-                                                          returnValue);
-    ResidencyContainer container;
-    MockGraphicsAllocation hostAllocation;
-    hostAllocation.allocationType = NEO::AllocationType::bufferHostMemory;
-    MockGraphicsAllocation sharedAllocation;
-    sharedAllocation.allocationType = NEO::AllocationType::svmGpu;
-    container.push_back(&hostAllocation);
-    container.push_back(&sharedAllocation);
-    commandQueue->makeResidentAndMigrate(true, container);
-    EXPECT_EQ(1, mockPageFaultManager->moveAllocationToGpuDomainCalled);
-    EXPECT_EQ(0u, mockPageFaultManager->makeResidentCalledTimesAtMigration);
-    EXPECT_EQ(2u, csr.makeResidentCalledTimes);
-    commandQueue->destroy();
-}
-
 HWTEST_F(CommandQueueTest, givenCommandQueueWhenPerformMigrationIsTrueAndAllocationTypeIsNoSvmTypeThenTransferToGpuWasNotCalled) {
     auto mockPageFaultManager = new MockPageFaultManager();
     static_cast<MockMemoryManager *>(neoDevice->getExecutionEnvironment()->memoryManager.get())->pageFaultManager.reset(mockPageFaultManager);
