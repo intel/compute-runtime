@@ -94,6 +94,10 @@ int close(int fd) {
 int open(const char *file, int flags) {
     return ::open(file, flags);
 }
+int ftruncate(int fd, off_t length) {
+    return ::ftruncate(fd, length);
+}
+
 int openWithMode(const char *file, int flags, int mode) {
     return ::open(file, flags, mode);
 }

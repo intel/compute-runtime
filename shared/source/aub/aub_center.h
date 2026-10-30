@@ -55,8 +55,9 @@ class AubCenter {
 
   protected:
     bool enableTbxSharedMemory(const RootDeviceEnvironment &rootDeviceEnvironment, bool inProcessSimulatorRequested, aub_stream::AubManagerOptions &options);
-    bool mapTbxSharedMemory(const std::string &systemMemoryFile, const std::string &localMemoryFile, aub_stream::SharedMemoryInfo &sharedMemoryInfo);
-    bool isTbxSharedMemorySizeSufficient(bool translationTableMode, const aub_stream::AubManagerOptions &options) const;
+    bool mapTbxSharedMemory(const std::string &systemMemoryFile, const std::string &localMemoryFile, bool createFiles, uint64_t createdFileSize, aub_stream::SharedMemoryInfo &sharedMemoryInfo);
+    static uint64_t getRequiredTbxSharedMemoryFileSize(bool translationTableMode, const aub_stream::AubManagerOptions &options);
+    bool isTbxSharedMemorySizeSufficient(uint64_t requiredFileSize, const aub_stream::AubManagerOptions &options) const;
     void unmapTbxSharedMemory(aub_stream::SharedMemoryInfo &sharedMemoryInfo);
 
     std::unique_ptr<PhysicalAddressAllocator> physicalAddressAllocator;

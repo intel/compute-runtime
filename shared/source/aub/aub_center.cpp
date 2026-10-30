@@ -139,7 +139,9 @@ bool AubCenter::enableTbxSharedMemory(const RootDeviceEnvironment &rootDeviceEnv
     const auto systemMemoryFile = AubHelper::getTbxSharedMemoryFileName(systemMemoryFileSetting, rootDeviceIndex);
     const auto &localMemoryFileSetting = debugManager.flags.TbxSharedLocalMemoryFile.get();
     const auto localMemoryFile = localMemoryFileSetting == "unk" ? std::string() : AubHelper::getTbxSharedMemoryFileName(localMemoryFileSetting, rootDeviceIndex);
-    if (!mapTbxSharedMemory(systemMemoryFile, localMemoryFile, options.sharedMemoryInfo) || !isTbxSharedMemorySizeSufficient(inProcessSimulatorRequested, options)) {
+    const auto requiredFileSize = getRequiredTbxSharedMemoryFileSize(inProcessSimulatorRequested, options);
+    if (!mapTbxSharedMemory(systemMemoryFile, localMemoryFile, inProcessSimulatorRequested, requiredFileSize, options.sharedMemoryInfo) ||
+        !isTbxSharedMemorySizeSufficient(requiredFileSize, options)) {
         unmapTbxSharedMemory(options.sharedMemoryInfo);
         return false;
     }
@@ -168,19 +170,23 @@ bool AubCenter::enableTbxSharedMemory(const RootDeviceEnvironment &rootDeviceEnv
     return false;
 }
 
-bool AubCenter::mapTbxSharedMemory(const std::string &systemMemoryFile, const std::string &localMemoryFile, aub_stream::SharedMemoryInfo &sharedMemoryInfo) {
-    this->sharedSystemMemory = MappedFile::open(systemMemoryFile);
+bool AubCenter::mapTbxSharedMemory(const std::string &systemMemoryFile, const std::string &localMemoryFile, bool createFiles, uint64_t createdFileSize, aub_stream::SharedMemoryInfo &sharedMemoryInfo) {
+    auto mapFile = [createFiles, createdFileSize](const std::string &file) {
+        return createFiles ? MappedFile::create(file, createdFileSize) : MappedFile::open(file);
+    };
+
+    this->sharedSystemMemory = mapFile(systemMemoryFile);
     if (!this->sharedSystemMemory) {
-        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "Failed to map TBX shared system memory file: %s, falling back to TBX socket mode\n", systemMemoryFile.c_str());
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "Failed to %s TBX shared system memory file: %s, falling back to TBX socket mode\n", createFiles ? "create" : "map", systemMemoryFile.c_str());
         return false;
     }
     sharedMemoryInfo.sysMemBase = this->sharedSystemMemory->getBase();
     sharedMemoryInfo.sysMemSize = this->sharedSystemMemory->getSize();
 
     if (!localMemoryFile.empty()) {
-        this->sharedLocalMemory = MappedFile::open(localMemoryFile);
+        this->sharedLocalMemory = mapFile(localMemoryFile);
         if (!this->sharedLocalMemory) {
-            PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "Failed to map TBX shared local memory file: %s, falling back to TBX socket mode\n", localMemoryFile.c_str());
+            PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "Failed to %s TBX shared local memory file: %s, falling back to TBX socket mode\n", createFiles ? "create" : "map", localMemoryFile.c_str());
             return false;
         }
         sharedMemoryInfo.localMemBase = this->sharedLocalMemory->getBase();
@@ -189,10 +195,12 @@ bool AubCenter::mapTbxSharedMemory(const std::string &systemMemoryFile, const st
     return true;
 }
 
-bool AubCenter::isTbxSharedMemorySizeSufficient(bool translationTableMode, const aub_stream::AubManagerOptions &options) const {
+uint64_t AubCenter::getRequiredTbxSharedMemoryFileSize(bool translationTableMode, const aub_stream::AubManagerOptions &options) {
     const uint64_t physicalMemorySize = static_cast<uint64_t>(options.devicesCount) * options.memoryBankSize;
-    const uint64_t requiredFileSize = translationTableMode ? physicalMemorySize / MemoryConstants::pageSize * sizeof(uint64_t) : physicalMemorySize;
+    return translationTableMode ? physicalMemorySize / MemoryConstants::pageSize * sizeof(uint64_t) : physicalMemorySize;
+}
 
+bool AubCenter::isTbxSharedMemorySizeSufficient(uint64_t requiredFileSize, const aub_stream::AubManagerOptions &options) const {
     if (options.localMemorySupported) {
         if (!this->sharedLocalMemory) {
             PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "TbxSharedLocalMemoryFile is required with local memory, falling back to TBX socket mode\n");

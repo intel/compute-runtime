@@ -109,6 +109,7 @@ uint32_t mmapFixedNoReplaceFuncCalled = 0u;
 int (*sysCallsOpen)(const char *pathname, int flags) = nullptr;
 int (*sysCallsClose)(int fileDescriptor) = nullptr;
 int (*sysCallsOpenWithMode)(const char *pathname, int flags, int mode) = nullptr;
+int (*sysCallsFtruncate)(int fd, off_t length) = nullptr;
 int (*sysCallsAccess)(const char *pathname, int mode) = nullptr;
 int (*sysCallsDlinfo)(void *handle, int request, void *info) = nullptr;
 ssize_t (*sysCallsPread)(int fd, void *buf, size_t count, off_t offset) = nullptr;
@@ -229,6 +230,13 @@ int open(const char *file, int flags) {
     }
 
     return openFuncRetVal;
+}
+
+int ftruncate(int fd, off_t length) {
+    if (sysCallsFtruncate != nullptr) {
+        return sysCallsFtruncate(fd, length);
+    }
+    return 0;
 }
 
 int openWithMode(const char *file, int flags, int mode) {

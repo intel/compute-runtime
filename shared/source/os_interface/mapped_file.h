@@ -15,6 +15,7 @@ namespace NEO {
 class MappedFile {
   public:
     static std::unique_ptr<MappedFile> open(const std::string &filePath);
+    static std::unique_ptr<MappedFile> create(const std::string &filePath, uint64_t fileSize);
 
     virtual ~MappedFile() = default;
 

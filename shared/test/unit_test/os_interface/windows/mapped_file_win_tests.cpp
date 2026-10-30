@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/constants.h"
 #include "shared/source/os_interface/mapped_file.h"
 #include "shared/test/common/os_interface/windows/mock_sys_calls.h"
 
@@ -13,6 +14,7 @@
 namespace NEO {
 namespace SysCalls {
 extern size_t createFileACalled;
+extern size_t createFileACreateAlwaysCalled;
 extern const size_t createFileAResultsCount;
 extern HANDLE createFileAResults[];
 extern size_t closeHandleCalled;
@@ -21,6 +23,7 @@ extern BOOL getFileSizeExResult;
 extern const size_t getFileSizeExFileSizesCount;
 extern LONGLONG getFileSizeExFileSizes[];
 extern size_t createFileMappingACalled;
+extern uint64_t createFileMappingALastMaximumSize;
 extern const size_t createFileMappingAResultsCount;
 extern HANDLE createFileMappingAResults[];
 extern size_t mapViewOfFileCalled;
@@ -28,6 +31,7 @@ extern const size_t mapViewOfFileResultsCount;
 extern LPVOID mapViewOfFileResults[];
 extern size_t unmapViewOfFileCalled;
 extern LPCVOID unmapViewOfFileLastAddress;
+extern DWORD createFileALastFlagsAndAttributes;
 } // namespace SysCalls
 
 class MappedFileSysCallsMock {
@@ -59,6 +63,14 @@ class MappedFileSysCallsMock {
         return SysCalls::unmapViewOfFileCalled;
     }
 
+    size_t getCreateCount() const {
+        return SysCalls::createFileACreateAlwaysCalled;
+    }
+
+    uint64_t getLastCreatedSize() const {
+        return SysCalls::createFileMappingALastMaximumSize;
+    }
+
   protected:
     void resetMocks() {
         for (size_t i = 0; i < SysCalls::createFileAResultsCount; i++) {
@@ -74,6 +86,8 @@ class MappedFileSysCallsMock {
             SysCalls::mapViewOfFileResults[i] = nullptr;
         }
         SysCalls::createFileACalled = 0u;
+        SysCalls::createFileACreateAlwaysCalled = 0u;
+        SysCalls::createFileMappingALastMaximumSize = 0u;
         SysCalls::closeHandleCalled = 0u;
         SysCalls::getFileSizeExCalled = 0u;
         SysCalls::getFileSizeExResult = TRUE;
@@ -81,6 +95,7 @@ class MappedFileSysCallsMock {
         SysCalls::mapViewOfFileCalled = 0u;
         SysCalls::unmapViewOfFileCalled = 0u;
         SysCalls::unmapViewOfFileLastAddress = nullptr;
+        SysCalls::createFileALastFlagsAndAttributes = 0u;
     }
 };
 
@@ -140,6 +155,7 @@ TEST_F(MappedFileWinTests, givenMappableFileWhenOpeningMappedFileThenViewAndFile
 
     auto mappedFile = MappedFile::open("file.bin");
     ASSERT_NE(nullptr, mappedFile);
+    EXPECT_EQ(static_cast<DWORD>(FILE_ATTRIBUTE_NORMAL), SysCalls::createFileALastFlagsAndAttributes);
     EXPECT_EQ(fileView, mappedFile->getBase());
     EXPECT_EQ(sizeof(fileView), mappedFile->getSize());
     EXPECT_EQ(0u, SysCalls::closeHandleCalled);
@@ -147,6 +163,32 @@ TEST_F(MappedFileWinTests, givenMappableFileWhenOpeningMappedFileThenViewAndFile
     mappedFile.reset();
     EXPECT_EQ(1u, SysCalls::unmapViewOfFileCalled);
     EXPECT_EQ(fileView, SysCalls::unmapViewOfFileLastAddress);
+    EXPECT_EQ(2u, SysCalls::closeHandleCalled);
+}
+
+TEST_F(MappedFileWinTests, givenFileWhichCannotBeCreatedWhenCreatingMappedFileThenNullptrIsReturned) {
+    sysCallsMock.makeFileNotOpenable(0u);
+
+    EXPECT_EQ(nullptr, MappedFile::create("file.bin", MemoryConstants::pageSize64k));
+    EXPECT_EQ(1u, SysCalls::createFileACreateAlwaysCalled);
+    EXPECT_EQ(0u, SysCalls::createFileMappingACalled);
+}
+
+TEST_F(MappedFileWinTests, givenCreatableFileWhenCreatingMappedFileThenFileIsOverwrittenAndMappedWithRequestedSizeAndDeletedOnClose) {
+    sysCallsMock.makeFileMappable(0u, fileView, 0u);
+    constexpr uint64_t fileSize = 0x100000000ull + MemoryConstants::pageSize64k;
+
+    auto mappedFile = MappedFile::create("file.bin", fileSize);
+    ASSERT_NE(nullptr, mappedFile);
+    EXPECT_EQ(1u, SysCalls::createFileACreateAlwaysCalled);
+    EXPECT_EQ(static_cast<DWORD>(FILE_ATTRIBUTE_NORMAL | FILE_FLAG_DELETE_ON_CLOSE), SysCalls::createFileALastFlagsAndAttributes);
+    EXPECT_EQ(0u, SysCalls::getFileSizeExCalled);
+    EXPECT_EQ(fileSize, SysCalls::createFileMappingALastMaximumSize);
+    EXPECT_EQ(fileView, mappedFile->getBase());
+    EXPECT_EQ(fileSize, mappedFile->getSize());
+
+    mappedFile.reset();
+    EXPECT_EQ(1u, SysCalls::unmapViewOfFileCalled);
     EXPECT_EQ(2u, SysCalls::closeHandleCalled);
 }
 

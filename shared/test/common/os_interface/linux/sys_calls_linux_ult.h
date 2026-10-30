@@ -31,6 +31,7 @@ extern int (*sysCallsRmdir)(const std::string &dir);
 extern int (*sysCallsOpen)(const char *pathname, int flags);
 extern int (*sysCallsClose)(int fileDescriptor);
 extern int (*sysCallsOpenWithMode)(const char *pathname, int flags, int mode);
+extern int (*sysCallsFtruncate)(int fd, off_t length);
 extern int (*sysCallsAccess)(const char *pathname, int mode);
 extern int (*sysCallsDlinfo)(void *handle, int request, void *info);
 extern ssize_t (*sysCallsPread)(int fd, void *buf, size_t count, off_t offset);

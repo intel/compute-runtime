@@ -880,6 +880,11 @@ TEST(SysCalls, WhenSysCallsFstatCalledThenCallIsRedirectedToOs) {
     EXPECT_EQ(0, result);
 }
 
+TEST(SysCalls, givenInvalidFileDescriptorWhenSysCallsFtruncateCalledThenCallIsRedirectedToOsAndErrorIsReturned) {
+    auto result = NEO::SysCalls::ftruncate(-1, 0);
+    EXPECT_EQ(-1, result);
+}
+
 TEST(SysCalls, WhenSysCallsGetNumThreadsCalledThenCallIsRedirectedToOs) {
     auto result = NEO::SysCalls::getNumThreads();
     EXPECT_GT(result, 0u);

@@ -76,6 +76,8 @@ BOOL removeDirectoryAResult = TRUE;
 BOOL erasePathAttributes = FALSE;
 
 size_t createFileACalled = 0u;
+size_t createFileACreateAlwaysCalled = 0u;
+DWORD createFileALastFlagsAndAttributes = 0u;
 extern const size_t createFileAResultsCount = 4;
 HANDLE createFileAResults[createFileAResultsCount] = {nullptr, nullptr, nullptr, nullptr};
 
@@ -127,6 +129,7 @@ extern const size_t getFileSizeExFileSizesCount = 4;
 LONGLONG getFileSizeExFileSizes[getFileSizeExFileSizesCount] = {0, 0, 0, 0};
 
 size_t createFileMappingACalled = 0u;
+uint64_t createFileMappingALastMaximumSize = 0u;
 extern const size_t createFileMappingAResultsCount = 4;
 HANDLE createFileMappingAResults[createFileMappingAResultsCount] = {nullptr, nullptr, nullptr, nullptr};
 
@@ -387,6 +390,10 @@ HANDLE createFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, 
     if (createFileACalled < createFileAResultsCount) {
         retVal = createFileAResults[createFileACalled];
     }
+    if (dwCreationDisposition == CREATE_ALWAYS) {
+        createFileACreateAlwaysCalled++;
+    }
+    createFileALastFlagsAndAttributes = dwFlagsAndAttributes;
 
     createFileACalled++;
     return retVal;
@@ -500,6 +507,7 @@ HANDLE createFileMappingA(HANDLE hFile, LPSECURITY_ATTRIBUTES lpFileMappingAttri
     if (createFileMappingACalled < createFileMappingAResultsCount) {
         retVal = createFileMappingAResults[createFileMappingACalled];
     }
+    createFileMappingALastMaximumSize = (static_cast<uint64_t>(dwMaximumSizeHigh) << 32) | dwMaximumSizeLow;
     createFileMappingACalled++;
     return retVal;
 }

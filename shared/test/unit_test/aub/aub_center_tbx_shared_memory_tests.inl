@@ -68,6 +68,7 @@ TEST_F(AubCenterTbxSharedMemoryTests, givenMappableSharedSystemMemoryFileWhenCre
         EXPECT_EQ(nullptr, aubManager->options.sharedMemoryInfo.localMemBase);
         EXPECT_EQ(0u, aubManager->options.sharedMemoryInfo.localMemSize);
         EXPECT_EQ(1u, sysCallsMock.getOpenCount());
+        EXPECT_EQ(0u, sysCallsMock.getCreateCount());
         EXPECT_EQ(0u, sysCallsMock.getUnmapCount());
     }
     EXPECT_EQ(1u, sysCallsMock.getUnmapCount());
@@ -299,7 +300,45 @@ TEST_F(AubCenterTbxInProcessSimulatorTests, givenInProcessSimulatorWhichStartsWh
 
     EXPECT_EQ(aub_stream::mode::tbxShm4, aubManager->options.mode);
     EXPECT_EQ(systemMemory, aubManager->options.sharedMemoryInfo.sysMemBase);
+    EXPECT_EQ(translationTableSize, aubManager->options.sharedMemoryInfo.sysMemSize);
+    EXPECT_EQ(1u, sysCallsMock.getCreateCount());
+    EXPECT_EQ(translationTableSize, sysCallsMock.getLastCreatedSize());
     EXPECT_TRUE(aubCenter.isAllocationMemorySharedWithSimulator());
+}
+
+TEST_F(AubCenterTbxInProcessSimulatorTests, givenInProcessSimulatorAndLocalMemoryWhenCreatingTbxAubCenterThenSystemAndLocalTranslationTablesAreCreatedWithRequiredSize) {
+    VariableBackup<decltype(OsLibrary::loadFunc)> loadFuncBackup{&OsLibrary::loadFunc, AubCenterTbxInProcessSimulatorTests::loadSimulatorLibrary};
+    debugManager.flags.TbxSharedLocalMemoryFile.set("local_memory.bin");
+    sysCallsMock.makeFileMappable(1u, localMemory, 0u);
+
+    MockAubCenter aubCenter(rootDeviceEnvironment, true, "", CommandStreamReceiverType::tbx);
+    auto aubManager = getAubManager(aubCenter);
+    ASSERT_NE(nullptr, aubManager);
+
+    EXPECT_EQ(aub_stream::mode::tbxShm4, aubManager->options.mode);
+    EXPECT_EQ(2u, sysCallsMock.getCreateCount());
+    EXPECT_EQ(translationTableSize, sysCallsMock.getLastCreatedSize());
+    EXPECT_EQ(localMemory, aubManager->options.sharedMemoryInfo.localMemBase);
+    EXPECT_EQ(translationTableSize, aubManager->options.sharedMemoryInfo.localMemSize);
+    EXPECT_EQ(translationTableSize, aubManager->options.sharedMemoryInfo.sysMemSize);
+}
+
+TEST_F(AubCenterTbxInProcessSimulatorTests, givenInProcessSimulatorAndLocalMemoryFileWhichCannotBeCreatedWhenCreatingTbxAubCenterThenSystemMemoryIsUnmappedAndTbxModeIsUsed) {
+    VariableBackup<decltype(OsLibrary::loadFunc)> loadFuncBackup{&OsLibrary::loadFunc, AubCenterTbxInProcessSimulatorTests::loadSimulatorLibrary};
+    debugManager.flags.TbxSharedLocalMemoryFile.set("local_memory.bin");
+    sysCallsMock.makeFileNotOpenable(1u);
+
+    testing::internal::CaptureStderr();
+    MockAubCenter aubCenter(rootDeviceEnvironment, true, "", CommandStreamReceiverType::tbx);
+    EXPECT_EQ(std::string("Failed to create TBX shared local memory file: local_memory.bin, falling back to TBX socket mode\n"), testing::internal::GetCapturedStderr());
+    auto aubManager = getAubManager(aubCenter);
+    ASSERT_NE(nullptr, aubManager);
+
+    EXPECT_EQ(aub_stream::mode::tbx, aubManager->options.mode);
+    EXPECT_EQ(nullptr, aubManager->options.sharedMemoryInfo.sysMemBase);
+    EXPECT_EQ(2u, sysCallsMock.getCreateCount());
+    EXPECT_EQ(1u, sysCallsMock.getUnmapCount());
+    EXPECT_FALSE(aubCenter.isAllocationMemorySharedWithSimulator());
 }
 
 TEST_F(AubCenterTbxInProcessSimulatorTests, givenFirstRootDeviceWhenCreatingTbxAubCenterThenSimulatorArgumentsAreNotChanged) {
@@ -347,21 +386,6 @@ TEST_F(AubCenterTbxInProcessSimulatorTests, givenInProcessSimulatorWithDefaultAr
     EXPECT_FALSE(aubCenter.isAllocationMemorySharedWithSimulator());
 }
 
-TEST_F(AubCenterTbxInProcessSimulatorTests, givenInProcessSimulatorAndTooSmallTranslationTableWhenCreatingTbxAubCenterThenSimulatorIsNotStartedAndTbxModeIsUsed) {
-    VariableBackup<decltype(OsLibrary::loadFunc)> loadFuncBackup{&OsLibrary::loadFunc, AubCenterTbxInProcessSimulatorTests::loadSimulatorLibrary};
-    sysCallsMock.makeFileMappable(0u, systemMemory, translationTableSize - MemoryConstants::pageSize);
-
-    testing::internal::CaptureStderr();
-    MockAubCenter aubCenter(rootDeviceEnvironment, false, "", CommandStreamReceiverType::tbx);
-    EXPECT_EQ(tooSmallFileMessage("system", translationTableSize - MemoryConstants::pageSize, translationTableSize), testing::internal::GetCapturedStderr());
-    auto aubManager = getAubManager(aubCenter);
-    ASSERT_NE(nullptr, aubManager);
-
-    EXPECT_EQ(aub_stream::mode::tbx, aubManager->options.mode);
-    EXPECT_FALSE(aubCenter.isAllocationMemorySharedWithSimulator());
-    EXPECT_EQ(1u, sysCallsMock.getUnmapCount());
-}
-
 TEST_F(AubCenterTbxInProcessSimulatorTests, givenInProcessSimulatorAndSharedSystemMemoryFileNotSetWhenCreatingTbxAubCenterThenFallbackIsReportedAndTbxModeIsUsed) {
     VariableBackup<decltype(OsLibrary::loadFunc)> loadFuncBackup{&OsLibrary::loadFunc, AubCenterTbxInProcessSimulatorTests::loadSimulatorLibrary};
     debugManager.flags.TbxSharedSystemMemoryFile.set("unk");
@@ -392,17 +416,18 @@ TEST_F(AubCenterTbxInProcessSimulatorTests, givenInProcessSimulatorWhichFailsToS
     EXPECT_FALSE(aubCenter.isAllocationMemorySharedWithSimulator());
 }
 
-TEST_F(AubCenterTbxInProcessSimulatorTests, givenInProcessSimulatorAndNotMappableSharedMemoryWhenCreatingTbxAubCenterThenSimulatorIsNotStartedAndTbxModeIsUsed) {
+TEST_F(AubCenterTbxInProcessSimulatorTests, givenInProcessSimulatorAndSystemMemoryFileWhichCannotBeCreatedWhenCreatingTbxAubCenterThenSimulatorIsNotStartedAndTbxModeIsUsed) {
     VariableBackup<decltype(OsLibrary::loadFunc)> loadFuncBackup{&OsLibrary::loadFunc, AubCenterTbxInProcessSimulatorTests::failToLoadSimulatorLibrary};
     sysCallsMock.makeFileNotOpenable(0u);
 
     testing::internal::CaptureStderr();
     MockAubCenter aubCenter(rootDeviceEnvironment, false, "", CommandStreamReceiverType::tbx);
-    EXPECT_EQ(std::string("Failed to map TBX shared system memory file: system_memory.bin, falling back to TBX socket mode\n"), testing::internal::GetCapturedStderr());
+    EXPECT_EQ(std::string("Failed to create TBX shared system memory file: system_memory.bin, falling back to TBX socket mode\n"), testing::internal::GetCapturedStderr());
     auto aubManager = getAubManager(aubCenter);
     ASSERT_NE(nullptr, aubManager);
 
     EXPECT_EQ(aub_stream::mode::tbx, aubManager->options.mode);
+    EXPECT_EQ(1u, sysCallsMock.getCreateCount());
 }
 
 } // namespace NEO

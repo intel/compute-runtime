@@ -12,6 +12,7 @@
 #include "gtest/gtest.h"
 
 #include <array>
+#include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 
@@ -36,6 +37,17 @@ class MappedFileSysCallsMock {
         unmapCount = 0u;
         lastUnmappedAddress = nullptr;
         lastUnmappedSize = 0u;
+        createCount = 0u;
+        lastCreateFlags = 0;
+        lastCreatedSize = 0u;
+        ftruncateResult = 0;
+        removeCount = 0u;
+        lastRemovedFile.clear();
+    }
+
+    ~MappedFileSysCallsMock() {
+        lastRemovedFile.clear();
+        lastRemovedFile.shrink_to_fit();
     }
 
     void makeFileMappable(size_t openIndex, void *base, uint64_t size) {
@@ -54,6 +66,22 @@ class MappedFileSysCallsMock {
         return unmapCount;
     }
 
+    size_t getCreateCount() const {
+        return createCount;
+    }
+
+    uint64_t getLastCreatedSize() const {
+        return lastCreatedSize;
+    }
+
+    size_t getRemoveCount() const {
+        return removeCount;
+    }
+
+    std::string getLastRemovedFile() const {
+        return lastRemovedFile;
+    }
+
     static MockedFileState &getFile(int fileDescriptor) {
         return files[static_cast<size_t>(fileDescriptor - firstFileDescriptor)];
     }
@@ -65,6 +93,12 @@ class MappedFileSysCallsMock {
     static inline size_t unmapCount = 0u;
     static inline void *lastUnmappedAddress = nullptr;
     static inline size_t lastUnmappedSize = 0u;
+    static inline size_t createCount = 0u;
+    static inline int lastCreateFlags = 0;
+    static inline uint64_t lastCreatedSize = 0u;
+    static inline int ftruncateResult = 0;
+    static inline size_t removeCount = 0u;
+    static inline std::string lastRemovedFile;
 
   protected:
     VariableBackup<decltype(SysCalls::sysCallsOpen)> openBackup{&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
@@ -74,6 +108,19 @@ class MappedFileSysCallsMock {
                                                                     }
                                                                     return firstFileDescriptor + static_cast<int>(openIndex);
                                                                 }};
+    VariableBackup<decltype(SysCalls::sysCallsOpenWithMode)> openWithModeBackup{&SysCalls::sysCallsOpenWithMode, [](const char *pathname, int flags, int mode) -> int {
+                                                                                    createCount++;
+                                                                                    lastCreateFlags = flags;
+                                                                                    auto openIndex = openCount++;
+                                                                                    if (openIndex >= maxFiles || !files[openIndex].openable) {
+                                                                                        return -1;
+                                                                                    }
+                                                                                    return firstFileDescriptor + static_cast<int>(openIndex);
+                                                                                }};
+    VariableBackup<decltype(SysCalls::sysCallsFtruncate)> ftruncateBackup{&SysCalls::sysCallsFtruncate, [](int fd, off_t length) -> int {
+                                                                              lastCreatedSize = static_cast<uint64_t>(length);
+                                                                              return ftruncateResult;
+                                                                          }};
     VariableBackup<decltype(SysCalls::sysCallsFstat)> fstatBackup{&SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
                                                                       buf->st_size = static_cast<off_t>(getFile(fd).size);
                                                                       return fstatResult;
@@ -86,6 +133,11 @@ class MappedFileSysCallsMock {
                                                                         unmapCount++;
                                                                         lastUnmappedAddress = addr;
                                                                         lastUnmappedSize = size;
+                                                                        return 0;
+                                                                    }};
+    VariableBackup<decltype(SysCalls::sysCallsUnlink)> unlinkBackup{&SysCalls::sysCallsUnlink, [](const std::string &pathname) -> int {
+                                                                        removeCount++;
+                                                                        lastRemovedFile = pathname;
                                                                         return 0;
                                                                     }};
     VariableBackup<decltype(SysCalls::sysCallsClose)> closeBackup{&SysCalls::sysCallsClose, [](int fileDescriptor) -> int {
@@ -128,6 +180,7 @@ TEST_F(MappedFileLinuxTests, givenMmapFailureWhenOpeningMappedFileThenFileIsClos
     EXPECT_EQ(nullptr, MappedFile::open("file.bin"));
     EXPECT_EQ(1u, MappedFileSysCallsMock::closeCount);
     EXPECT_EQ(0u, MappedFileSysCallsMock::unmapCount);
+    EXPECT_EQ(0u, sysCallsMock.getRemoveCount());
 }
 
 TEST_F(MappedFileLinuxTests, givenMappableFileWhenOpeningMappedFileThenViewAndFileSizeAreReturnedAndViewIsUnmappedOnDestruction) {
@@ -143,6 +196,53 @@ TEST_F(MappedFileLinuxTests, givenMappableFileWhenOpeningMappedFileThenViewAndFi
     EXPECT_EQ(1u, MappedFileSysCallsMock::unmapCount);
     EXPECT_EQ(fileView, MappedFileSysCallsMock::lastUnmappedAddress);
     EXPECT_EQ(sizeof(fileView), MappedFileSysCallsMock::lastUnmappedSize);
+    EXPECT_EQ(0u, sysCallsMock.getRemoveCount());
+}
+
+TEST_F(MappedFileLinuxTests, givenFileWhichCannotBeCreatedWhenCreatingMappedFileThenNullptrIsReturned) {
+    sysCallsMock.makeFileNotOpenable(0u);
+
+    EXPECT_EQ(nullptr, MappedFile::create("file.bin", sizeof(fileView)));
+    EXPECT_EQ(1u, MappedFileSysCallsMock::createCount);
+    EXPECT_EQ(0u, MappedFileSysCallsMock::closeCount);
+    EXPECT_EQ(0u, sysCallsMock.getRemoveCount());
+}
+
+TEST_F(MappedFileLinuxTests, givenTruncateFailureWhenCreatingMappedFileThenFileIsClosedAndRemovedAndNullptrIsReturned) {
+    sysCallsMock.makeFileMappable(0u, fileView, 0u);
+    MappedFileSysCallsMock::ftruncateResult = -1;
+
+    EXPECT_EQ(nullptr, MappedFile::create("file.bin", sizeof(fileView)));
+    EXPECT_EQ(1u, MappedFileSysCallsMock::closeCount);
+    EXPECT_EQ(1u, sysCallsMock.getRemoveCount());
+    EXPECT_EQ(std::string("file.bin"), sysCallsMock.getLastRemovedFile());
+}
+
+TEST_F(MappedFileLinuxTests, givenMmapFailureWhenCreatingMappedFileThenFileIsClosedAndRemovedAndNullptrIsReturned) {
+    sysCallsMock.makeFileMappable(0u, nullptr, 0u);
+
+    EXPECT_EQ(nullptr, MappedFile::create("file.bin", sizeof(fileView)));
+    EXPECT_EQ(1u, MappedFileSysCallsMock::closeCount);
+    EXPECT_EQ(1u, sysCallsMock.getRemoveCount());
+    EXPECT_EQ(std::string("file.bin"), sysCallsMock.getLastRemovedFile());
+}
+
+TEST_F(MappedFileLinuxTests, givenCreatableFileWhenCreatingMappedFileThenFileIsTruncatedToRequestedSizeAndMapped) {
+    sysCallsMock.makeFileMappable(0u, fileView, 0u);
+
+    auto mappedFile = MappedFile::create("file.bin", sizeof(fileView));
+    ASSERT_NE(nullptr, mappedFile);
+    EXPECT_EQ(O_RDWR | O_CREAT | O_TRUNC, MappedFileSysCallsMock::lastCreateFlags);
+    EXPECT_EQ(sizeof(fileView), MappedFileSysCallsMock::lastCreatedSize);
+    EXPECT_EQ(fileView, mappedFile->getBase());
+    EXPECT_EQ(sizeof(fileView), mappedFile->getSize());
+    EXPECT_EQ(1u, MappedFileSysCallsMock::closeCount);
+    EXPECT_EQ(0u, sysCallsMock.getRemoveCount());
+
+    mappedFile.reset();
+    EXPECT_EQ(1u, MappedFileSysCallsMock::unmapCount);
+    EXPECT_EQ(1u, sysCallsMock.getRemoveCount());
+    EXPECT_EQ(std::string("file.bin"), sysCallsMock.getLastRemovedFile());
 }
 
 } // namespace NEO

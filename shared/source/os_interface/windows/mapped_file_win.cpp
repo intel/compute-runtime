@@ -26,20 +26,14 @@ class MappedFileWin : public MappedFile {
     HANDLE mappingHandle;
 };
 
-std::unique_ptr<MappedFile> MappedFile::open(const std::string &filePath) {
-    HANDLE fileHandle = SysCalls::createFileA(filePath.c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                                              nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
-    if (fileHandle == INVALID_HANDLE_VALUE) {
-        return nullptr;
-    }
+namespace {
+HANDLE openFileHandle(const std::string &filePath, DWORD creationDisposition, DWORD flagsAndAttributes) {
+    return SysCalls::createFileA(filePath.c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                                 nullptr, creationDisposition, flagsAndAttributes, nullptr);
+}
 
-    LARGE_INTEGER fileSize{};
-    if (!SysCalls::getFileSizeEx(fileHandle, &fileSize) || fileSize.QuadPart <= 0) {
-        SysCalls::closeHandle(fileHandle);
-        return nullptr;
-    }
-
-    HANDLE mappingHandle = SysCalls::createFileMappingA(fileHandle, nullptr, PAGE_READWRITE, 0, 0, nullptr);
+std::unique_ptr<MappedFile> mapFileHandle(HANDLE fileHandle, uint64_t fileSize) {
+    HANDLE mappingHandle = SysCalls::createFileMappingA(fileHandle, nullptr, PAGE_READWRITE, static_cast<DWORD>(fileSize >> 32), static_cast<DWORD>(fileSize), nullptr);
     if (mappingHandle == nullptr) {
         SysCalls::closeHandle(fileHandle);
         return nullptr;
@@ -52,7 +46,32 @@ std::unique_ptr<MappedFile> MappedFile::open(const std::string &filePath) {
         return nullptr;
     }
 
-    return std::make_unique<MappedFileWin>(fileHandle, mappingHandle, view, static_cast<uint64_t>(fileSize.QuadPart));
+    return std::make_unique<MappedFileWin>(fileHandle, mappingHandle, view, fileSize);
+}
+} // namespace
+
+std::unique_ptr<MappedFile> MappedFile::open(const std::string &filePath) {
+    HANDLE fileHandle = openFileHandle(filePath, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL);
+    if (fileHandle == INVALID_HANDLE_VALUE) {
+        return nullptr;
+    }
+
+    LARGE_INTEGER fileSize{};
+    if (!SysCalls::getFileSizeEx(fileHandle, &fileSize) || fileSize.QuadPart <= 0) {
+        SysCalls::closeHandle(fileHandle);
+        return nullptr;
+    }
+
+    return mapFileHandle(fileHandle, static_cast<uint64_t>(fileSize.QuadPart));
+}
+
+std::unique_ptr<MappedFile> MappedFile::create(const std::string &filePath, uint64_t fileSize) {
+    HANDLE fileHandle = openFileHandle(filePath, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_DELETE_ON_CLOSE);
+    if (fileHandle == INVALID_HANDLE_VALUE) {
+        return nullptr;
+    }
+
+    return mapFileHandle(fileHandle, fileSize);
 }
 
 } // namespace NEO
