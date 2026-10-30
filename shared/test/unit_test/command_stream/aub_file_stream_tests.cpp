@@ -14,6 +14,7 @@
 #include "shared/source/helpers/neo_driver_version.h"
 #include "shared/source/memory_manager/page_table.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/source/os_interface/os_inc_base.h"
 #include "shared/test/common/fixtures/aub_command_stream_receiver_fixture.h"
 #include "shared/test/common/helpers/batch_buffer_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -25,6 +26,7 @@
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_os_context.h"
+#include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "driver_version.h"
@@ -443,18 +445,6 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWithAubManagerWhenInit
     aubCsr.aubManager = nullptr;
 }
 
-HWTEST2_F(AubFileStreamTests, givenAubCommandStreamReceiverWhenCreateFullFilePathIsCalledForMultipleDevicesThenFileNameIsExtendedWithSuffixToIndicateMultipleDevices, IsAtMostXeCore) {
-    DebugManagerStateRestore stateRestore;
-
-    debugManager.flags.CreateMultipleSubDevices.set(1);
-    auto fullName = AUBCommandStreamReceiver::createFullFilePath(*defaultHwInfo, pDevice->getRootDeviceEnvironment().getReleaseHelper(), "aubfile", mockRootDeviceIndex);
-    EXPECT_EQ(std::string::npos, fullName.find("tx"));
-
-    debugManager.flags.CreateMultipleSubDevices.set(2);
-    fullName = AUBCommandStreamReceiver::createFullFilePath(*defaultHwInfo, pDevice->getRootDeviceEnvironment().getReleaseHelper(), "aubfile", mockRootDeviceIndex);
-    EXPECT_NE(std::string::npos, fullName.find("2tx"));
-}
-
 HWTEST_F(AubFileStreamTests, givenDisabledGeneratingPerProcessAubNameAndAubCommandStreamReceiverWhenCreateFullFilePathIsCalledThenFileNameIsExtendedWithRootDeviceIndex) {
     DebugManagerStateRestore stateRestore;
     debugManager.flags.GenerateAubFilePerProcessId.set(0);
@@ -541,35 +531,70 @@ HWTEST_F(AubFileStreamTests, givenAubCommandStreamReceiverWithAubManagerWhenInit
     EXPECT_EQ(expectedAddedComments, mockAubManager->receivedComments);
 }
 
-HWTEST2_F(AubFileStreamTests, whenCreateFullFilePathIsCalledThenFileNameIsCorrect, IsAtLeastXe2HpgCore) {
-    DebugManagerStateRestore stateRestore;
-    auto hwInfo = *defaultHwInfo;
-    const uint32_t rootDeviceIndex = 0u;
-
-    auto setupConfig = [&hwInfo](uint32_t tileCount, uint32_t sliceCount, uint32_t subSliceCount, uint32_t euPerSubSliceCount) {
+struct AubFileNameTests : public ::testing::Test {
+    std::string createFullFilePath(uint32_t tileCount, uint32_t sliceCount, uint32_t subSliceCount, uint32_t euPerSubSliceCount) {
         debugManager.flags.CreateMultipleSubDevices.set(tileCount);
         hwInfo.gtSystemInfo.SliceCount = sliceCount;
         hwInfo.gtSystemInfo.SubSliceCount = sliceCount * subSliceCount;
         hwInfo.gtSystemInfo.MaxEuPerSubSlice = euPerSubSliceCount;
-    };
+        return AUBCommandStreamReceiver::createFullFilePath(hwInfo, releaseHelper, "aubfile", 0u);
+    }
 
-    setupConfig(1, 1, 1, 1);
-    auto fullName = AUBCommandStreamReceiver::createFullFilePath(hwInfo, pDevice->getRootDeviceEnvironment().getReleaseHelper(), "aubfile", rootDeviceIndex);
-    EXPECT_NE(std::string::npos, fullName.find("1tx1x1x1"));
+    DebugManagerStateRestore stateRestore;
+    HardwareInfo hwInfo = *defaultHwInfo;
+    MockReleaseHelper releaseHelper;
+};
 
-    setupConfig(1, 2, 3, 4);
-    fullName = AUBCommandStreamReceiver::createFullFilePath(hwInfo, pDevice->getRootDeviceEnvironment().getReleaseHelper(), "aubfile", rootDeviceIndex);
-    EXPECT_NE(std::string::npos, fullName.find("1tx2x3x4"));
+TEST_F(AubFileNameTests, givenDeviceConfigStringWithoutTileCountWhenCreateFullFilePathIsCalledThenTileCountIsAddedOnlyForMultipleSubDevices) {
+    hwInfo.caps.deviceConfigStringTileCountIncluded = false;
+    hwInfo.caps.deviceConfigStringXeCuSegmentIncluded = false;
 
-    setupConfig(12, 9, 6, 3);
-    fullName = AUBCommandStreamReceiver::createFullFilePath(hwInfo, pDevice->getRootDeviceEnvironment().getReleaseHelper(), "aubfile", rootDeviceIndex);
-    EXPECT_NE(std::string::npos, fullName.find("12tx9x6x3"));
+    auto fullName = createFullFilePath(1, 2, 3, 4);
+    EXPECT_NE(std::string::npos, fullName.find("_2x3x4_"));
+    EXPECT_EQ(std::string::npos, fullName.find("tx"));
 
-    setupConfig(8, 8, 8, 8);
-    fullName = AUBCommandStreamReceiver::createFullFilePath(hwInfo, pDevice->getRootDeviceEnvironment().getReleaseHelper(), "aubfile", rootDeviceIndex);
-    EXPECT_NE(std::string::npos, fullName.find("8tx8x8x8"));
+    fullName = createFullFilePath(2, 2, 3, 4);
+    EXPECT_NE(std::string::npos, fullName.find("_2tx2x3x4_"));
+}
 
-    setupConfig(16, 16, 16, 16);
-    fullName = AUBCommandStreamReceiver::createFullFilePath(hwInfo, pDevice->getRootDeviceEnvironment().getReleaseHelper(), "aubfile", rootDeviceIndex);
-    EXPECT_NE(std::string::npos, fullName.find("16tx16x16x16"));
+TEST_F(AubFileNameTests, givenDeviceConfigStringWithTileCountWhenCreateFullFilePathIsCalledThenTileCountIsAlwaysAdded) {
+    hwInfo.caps.deviceConfigStringTileCountIncluded = true;
+    hwInfo.caps.deviceConfigStringXeCuSegmentIncluded = false;
+
+    EXPECT_NE(std::string::npos, createFullFilePath(1, 1, 1, 1).find("_1tx1x1x1_"));
+    EXPECT_NE(std::string::npos, createFullFilePath(1, 2, 3, 4).find("_1tx2x3x4_"));
+    EXPECT_NE(std::string::npos, createFullFilePath(12, 9, 6, 3).find("_12tx9x6x3_"));
+    EXPECT_NE(std::string::npos, createFullFilePath(16, 16, 16, 16).find("_16tx16x16x16_"));
+}
+
+TEST_F(AubFileNameTests, givenDeviceConfigStringWithXeCuSegmentWhenCreateFullFilePathIsCalledThenXeCuCountIsAdded) {
+    hwInfo.caps.deviceConfigStringTileCountIncluded = true;
+    hwInfo.caps.deviceConfigStringXeCuSegmentIncluded = true;
+
+    EXPECT_NE(std::string::npos, createFullFilePath(1, 1, 1, 1).find("_1tx1x1x1x1_"));
+    EXPECT_NE(std::string::npos, createFullFilePath(1, 3, 2, 4).find("_1tx1x3x2x4_"));
+    EXPECT_NE(std::string::npos, createFullFilePath(12, 8, 6, 3).find("_12tx2x4x6x3_"));
+    EXPECT_NE(std::string::npos, createFullFilePath(8, 8, 8, 8).find("_8tx2x4x8x8_"));
+    EXPECT_NE(std::string::npos, createFullFilePath(16, 16, 16, 16).find("_16tx4x4x16x16_"));
+}
+
+TEST_F(AubFileNameTests, givenDeviceConfigStringWithXeCuSegmentAndSliceCountNotDivisibleIntoXeCusWhenCreateFullFilePathIsCalledThenAbortIsCalled) {
+    hwInfo.caps.deviceConfigStringTileCountIncluded = true;
+    hwInfo.caps.deviceConfigStringXeCuSegmentIncluded = true;
+
+    EXPECT_ANY_THROW(createFullFilePath(16, 10, 16, 16));
+}
+
+TEST_F(AubFileNameTests, givenReleaseHelperWithoutAubFilePrefixWhenCreateFullFilePathIsCalledThenHardwarePrefixIsUsed) {
+    releaseHelper.getAubFilePrefixResult = nullptr;
+
+    auto fullName = createFullFilePath(1, 1, 1, 1);
+    EXPECT_NE(std::string::npos, fullName.find(std::string(Os::fileSeparator) + hardwarePrefix[hwInfo.platform.eProductFamily] + "_"));
+}
+
+TEST_F(AubFileNameTests, givenReleaseHelperWithAubFilePrefixWhenCreateFullFilePathIsCalledThenPrefixFromReleaseHelperIsUsed) {
+    releaseHelper.getAubFilePrefixResult = "customprefix";
+
+    auto fullName = createFullFilePath(1, 1, 1, 1);
+    EXPECT_NE(std::string::npos, fullName.find(std::string(Os::fileSeparator) + "customprefix_"));
 }
