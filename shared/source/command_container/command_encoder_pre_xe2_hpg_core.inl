@@ -18,7 +18,8 @@ size_t EncodeDispatchKernel<Family>::getDefaultIOHAlignment(bool isLocalMemory, 
 }
 
 template <typename Family>
-uint32_t EncodeDispatchKernel<Family>::getThreadCountPerSubslice(const HardwareInfo &hwInfo) {
+uint32_t EncodeDispatchKernel<Family>::getMaxConcurrentThreadCountPerSubslice(const RootDeviceEnvironment &rootDeviceEnvironment, [[maybe_unused]] uint32_t grfCount) {
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     return hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.DualSubSliceCount;
 }
 
@@ -31,10 +32,9 @@ template <typename Family>
 uint32_t EncodeDispatchKernel<Family>::calculateThreadGroupCountSharingSubsliceSlm(const RootDeviceEnvironment &rootDeviceEnvironment, const EncodeSlmSizePerSubSliceArgs &slmArgs) {
     UNRECOVERABLE_IF(slmArgs.threadsPerThreadGroup == 0u);
 
-    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    const uint32_t threadCountPerSubslice = EncodeDispatchKernel<Family>::getThreadCountPerSubslice(hwInfo);
+    const uint32_t maxConcurrentThreadCountPerSubslice = EncodeDispatchKernel<Family>::getMaxConcurrentThreadCountPerSubslice(rootDeviceEnvironment, slmArgs.grfCount);
 
-    return static_cast<uint32_t>(Math::divideAndRoundUp(threadCountPerSubslice, slmArgs.threadsPerThreadGroup));
+    return static_cast<uint32_t>(Math::divideAndRoundUp(maxConcurrentThreadCountPerSubslice, slmArgs.threadsPerThreadGroup));
 }
 
 template <typename Family>

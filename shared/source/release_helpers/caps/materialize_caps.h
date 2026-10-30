@@ -53,6 +53,7 @@ namespace NEO {
     NEO_COPY_CAP_FUNC(forceEmuInt32DivRemSPRequired)                             \
     NEO_COPY_CAP_FUNC(ftrXe2Compression)                                         \
     NEO_COPY_CAP_FUNC(globalBindlessAllocatorEnabled)                            \
+    NEO_COPY_CAP_FUNC(grfLimitedPreferredSlmSizeEnabled)                         \
     NEO_COPY_CAP_FUNC(hvAlign4Required)                                          \
     NEO_COPY_CAP_FUNC(initBuiltinAsyncSupported)                                 \
     NEO_COPY_CAP_FUNC(initDeviceWithFirstSubmissionRequired)                     \

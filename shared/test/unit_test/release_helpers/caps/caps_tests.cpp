@@ -73,6 +73,7 @@ TEST(CapsSetupTest, givenEveryEnabledProductConfigWhenSettingUpCapsThenHwInfoIsI
         EXPECT_EQ(expectedCaps->forceEmuInt32DivRemSPRequired, hwInfo.caps.forceEmuInt32DivRemSPRequired);
         EXPECT_EQ(expectedCaps->ftrXe2Compression, hwInfo.caps.ftrXe2Compression);
         EXPECT_EQ(expectedCaps->globalBindlessAllocatorEnabled, hwInfo.caps.globalBindlessAllocatorEnabled);
+        EXPECT_EQ(expectedCaps->grfLimitedPreferredSlmSizeEnabled, hwInfo.caps.grfLimitedPreferredSlmSizeEnabled);
         EXPECT_EQ(expectedCaps->hvAlign4Required, hwInfo.caps.hvAlign4Required);
         EXPECT_EQ(expectedCaps->initBuiltinAsyncSupported, hwInfo.caps.initBuiltinAsyncSupported);
         EXPECT_EQ(expectedCaps->initDeviceWithFirstSubmissionRequired, hwInfo.caps.initDeviceWithFirstSubmissionRequired);
@@ -155,6 +156,7 @@ TEST(CapsTest, givenDefaultCapsThenValuesAreCorrect) {
     EXPECT_FALSE(caps.forceEmuInt32DivRemSPRequired);
     EXPECT_FALSE(caps.ftrXe2Compression);
     EXPECT_FALSE(caps.globalBindlessAllocatorEnabled);
+    EXPECT_FALSE(caps.grfLimitedPreferredSlmSizeEnabled);
     EXPECT_FALSE(caps.hvAlign4Required);
     EXPECT_FALSE(caps.initBuiltinAsyncSupported);
     EXPECT_FALSE(caps.initDeviceWithFirstSubmissionRequired);

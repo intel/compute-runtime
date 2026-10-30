@@ -77,6 +77,7 @@ TEST(CapsXeHpcTest, givenPvcReleaseWhenMaterializingCapsThenCapabilitiesAreCorre
     EXPECT_FALSE(capsPvc.forceEmuInt32DivRemSPRequired);
     EXPECT_FALSE(capsPvc.ftrXe2Compression);
     EXPECT_FALSE(capsPvc.globalBindlessAllocatorEnabled);
+    EXPECT_FALSE(capsPvc.grfLimitedPreferredSlmSizeEnabled);
     EXPECT_FALSE(capsPvc.hvAlign4Required);
     EXPECT_TRUE(capsPvc.initBuiltinAsyncSupported);
     EXPECT_TRUE(capsPvc.initDeviceWithFirstSubmissionRequired);
@@ -149,6 +150,7 @@ TEST(CapsXeHpcTest, givenPvcVgReleaseWhenMaterializingCapsThenCapabilitiesAreCor
     EXPECT_FALSE(capsPvcVg.forceEmuInt32DivRemSPRequired);
     EXPECT_FALSE(capsPvcVg.ftrXe2Compression);
     EXPECT_FALSE(capsPvcVg.globalBindlessAllocatorEnabled);
+    EXPECT_FALSE(capsPvcVg.grfLimitedPreferredSlmSizeEnabled);
     EXPECT_FALSE(capsPvcVg.hvAlign4Required);
     EXPECT_TRUE(capsPvcVg.initBuiltinAsyncSupported);
     EXPECT_TRUE(capsPvcVg.initDeviceWithFirstSubmissionRequired);

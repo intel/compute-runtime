@@ -57,6 +57,7 @@ struct CapsCri : CapsXe3pCore {
     static constexpr uint32_t numCacheRegions = toUnderlying(CacheRegion::count);
 
     static constexpr bool deviceConfigStringXeCuSegmentIncluded = true;
+    static constexpr bool grfLimitedPreferredSlmSizeEnabled = true;
     static constexpr bool readOnlyAllocationsSupported = true;
 };
 struct CapsNvlP : CapsXe3pCore {

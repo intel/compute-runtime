@@ -11,6 +11,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/kernel/dispatch_kernel_encoder_interface.h"
+#include "shared/source/kernel/grf_config.h"
 #include "shared/test/common/test_macros/test.h"
 
 template <typename FamilyType>
@@ -54,6 +55,7 @@ void verifyPreferredSlmValuesPreXe2(std::vector<PreferredSlmTestValuesPreXe2<Fam
                     .threadsPerThreadGroup = threadsPerThreadGroup,
                     .workloadThreadGroupCount = 1024,
                     .slmTotalSizePerThreadGroup = slmTotalSizePerThreadGroup,
+                    .grfCount = GrfConfig::defaultGrfNumber,
                     .slmPolicy = slmPolicy};
 
                 NEO::EncodeDispatchKernel<FamilyType>::encodeSlmSizePerSubSlice(&idd, rootDeviceEnvironment, slmArgs);
