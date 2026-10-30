@@ -1395,5 +1395,46 @@ HWTEST_F(CommandQueueSynchronizeTest, givenCmdQueueWhenCallWaitForCommandQueueCo
     commandQueue->waitForCommandQueueCompletion(ctx);
     EXPECT_FALSE(ownership.owns_lock());
 }
+
+HWTEST_F(CommandQueueSynchronizeTest, givenDebuggerAndSwTagsDisabledWhenPreparingBatchBufferThenLeftoverMemoryIsCleaned) {
+    using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
+    DebugManagerStateRestore restore;
+    NEO::debugManager.flags.EnableSWTags.set(0);
+
+    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    ze_command_queue_desc_t desc = {};
+    auto commandQueue = std::make_unique<MockCommandQueueHw<FamilyType::gfxCoreFamily>>(device, &csr, &desc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandQueue->initialize(false, false, false));
+
+    auto &outerCommandStream = commandQueue->commandStream;
+    constexpr size_t outerUsedSize = 512;
+    ASSERT_GE(outerCommandStream.getAvailableSpace(), outerUsedSize);
+
+    // simulate overestimated inner stream filled with garbage
+    auto outerBase = outerCommandStream.getSpace(0);
+    memset(outerBase, 0xFF, outerUsedSize);
+    outerCommandStream.getSpace(outerUsedSize);
+
+    NEO::LinearStream innerCommandStream(outerBase, outerUsedSize);
+
+    CommandListExecutionContext ctx{};
+    ctx.isNEODebuggerActive = false;
+    ctx.isDirectSubmissionEnabled = false;
+
+    commandQueue->prepareAndSubmitBatchBuffer(ctx, innerCommandStream);
+
+    EXPECT_EQ(outerUsedSize, innerCommandStream.getUsed());
+
+    auto leftoverPtr = static_cast<uint8_t *>(ptrOffset(outerBase, sizeof(MI_BATCH_BUFFER_END)));
+    auto leftoverSize = outerUsedSize - sizeof(MI_BATCH_BUFFER_END);
+    for (size_t i = 0; i < leftoverSize; i++) {
+        EXPECT_EQ(0u, leftoverPtr[i]) << "offset " << i;
+    }
+
+    commandQueue->destroy();
+    commandQueue.release();
+}
+
 } // namespace ult
 } // namespace L0

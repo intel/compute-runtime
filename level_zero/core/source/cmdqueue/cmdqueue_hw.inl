@@ -1833,14 +1833,12 @@ NEO::SubmissionStatus CommandQueueHw<gfxCoreFamily>::prepareAndSubmitBatchBuffer
         *(MI_BATCH_BUFFER_END *)buffer = GfxFamily::cmdInitBatchBufferEnd;
     }
 
-    if (ctx.isNEODebuggerActive || NEO::debugManager.flags.EnableSWTags.get()) {
-        cleanLeftoverMemory(outerCommandStream, innerCommandStream);
-    } else if (this->alignedChildStreamPadding) {
+    if (this->alignedChildStreamPadding) {
         void *paddingPtr = innerCommandStream.getSpace(this->alignedChildStreamPadding);
         memset(paddingPtr, 0, this->alignedChildStreamPadding);
-
-        DEBUG_BREAK_IF(innerCommandStream.getAvailableSpace() > 0);
     }
+    cleanLeftoverMemory(outerCommandStream, innerCommandStream);
+
     size_t startOffset = (this->startingCmdBuffer == &this->firstCmdListStream)
                              ? 0
                              : ptrDiff(innerCommandStream.getCpuBase(), outerCommandStream.getCpuBase());
