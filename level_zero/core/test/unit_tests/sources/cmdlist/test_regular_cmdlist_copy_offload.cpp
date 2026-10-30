@@ -916,7 +916,7 @@ HWTEST2_F(RegularCmdListCopyOffloadTests, givenPatchPreambleWhenExecutingCmdList
 }
 
 HWTEST2_F(RegularCmdListCopyOffloadTests,
-          givenComputeWithCopyOffloadCommandListWhenCopyOffloadIsPresentThenCopyOffloadCommandBufferBelongsToComputeResidency,
+          givenComputeWithCopyOffloadCommandListWhenCopyOffloadIsPresentThenCopyOffloadCommandBufferDoesNotBelongToComputeResidency,
           IsAtLeastXeCore) {
     auto cmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, appendCopy(*cmdList, nullptr));
@@ -925,9 +925,10 @@ HWTEST2_F(RegularCmdListCopyOffloadTests,
     auto copyCmdList = getCopyOffloadCmdList(*cmdList);
     auto &mainContainer = cmdList->getCmdContainer();
     auto &copyContainer = copyCmdList->getCmdContainer();
+    ASSERT_FALSE(copyContainer.getCmdBufferAllocations().empty());
 
     for (auto &copyOffloadCmdBuffer : copyContainer.getCmdBufferAllocations()) {
-        EXPECT_NE(mainContainer.getResidencyContainer().end(), std::find(mainContainer.getResidencyContainer().begin(), mainContainer.getResidencyContainer().end(), copyOffloadCmdBuffer));
+        EXPECT_EQ(mainContainer.getResidencyContainer().end(), std::find(mainContainer.getResidencyContainer().begin(), mainContainer.getResidencyContainer().end(), copyOffloadCmdBuffer));
     }
 }
 

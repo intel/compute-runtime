@@ -5199,5 +5199,111 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(mutatedEventAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmd));
 }
 
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListDualStreamCopyOffloadTest,
+            givenCopyOffloadSubCmdListWhenAddingAsyncMutationElementThenElementIsRedirectedOnlyWhenRequested) {
+    this->createCopyOffload = true;
+    this->mutableCommandList = createMutableCmdList();
+
+    constexpr size_t size = 8;
+    void *usm1 = allocateUsm(size);
+    void *usm2 = allocateUsm(size);
+
+    CmdListMemoryCopyParams copyParams = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, this->mutableCommandList->appendMemoryCopy(usm1, usm2, size, nullptr, 0, nullptr, copyParams));
+    EXPECT_TRUE(copyParams.copyOffloadAllowed);
+
+    auto baseCmdList = this->mutableCommandList->getBase();
+    auto copyOffloadSubCmdList = baseCmdList->getCopyOffloadSubCmdList();
+    ASSERT_NE(nullptr, copyOffloadSubCmdList);
+
+    auto &computeAsyncPatchContainer = baseCmdList->getAsyncPatchContainer();
+    auto &copyAsyncPatchContainer = copyOffloadSubCmdList->getAsyncPatchContainer();
+    computeAsyncPatchContainer.clear();
+    copyAsyncPatchContainer.clear();
+
+    uint8_t computeHostSource[16] = {};
+    uint8_t copyHostSource[16] = {};
+    constexpr uint64_t computeGpuDestination = 0x10000;
+    constexpr uint64_t copyGpuDestination = 0x20000;
+
+    this->mutableCommandList->addAsyncMutationElement(computeGpuDestination, computeHostSource, sizeof(computeHostSource), false);
+    ASSERT_EQ(1u, computeAsyncPatchContainer.size());
+    EXPECT_EQ(0u, copyAsyncPatchContainer.size());
+    EXPECT_EQ(computeGpuDestination, computeAsyncPatchContainer[0].gpuDestinationAddress);
+    EXPECT_EQ(computeHostSource, computeAsyncPatchContainer[0].hostSourceAddress);
+
+    this->mutableCommandList->addAsyncMutationElement(copyGpuDestination, copyHostSource, sizeof(copyHostSource), true);
+    EXPECT_EQ(1u, computeAsyncPatchContainer.size());
+    ASSERT_EQ(1u, copyAsyncPatchContainer.size());
+    EXPECT_EQ(copyGpuDestination, copyAsyncPatchContainer[0].gpuDestinationAddress);
+    EXPECT_EQ(copyHostSource, copyAsyncPatchContainer[0].hostSourceAddress);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListDualStreamCopyOffloadTest,
+            givenCopyOffloadHintWithPatchPreambleWhenMutatingCbWaitEventOfCopyOffloadAppendThenAsyncPatchesLandInCopyOffloadSubCmdList) {
+    this->createCopyOffload = true;
+    this->mutableCommandList = createMutableCmdList();
+    auto whiteBoxBaseCmdList = static_cast<MutableCommandListCoreFamily<FamilyType::gfxCoreFamily> *>(this->mutableCommandList->base);
+    whiteBoxBaseCmdList->setupPatchPreambleEnabled(true);
+
+    constexpr size_t size = 8;
+    void *usm1 = allocateUsm(size);
+    void *usm2 = allocateUsm(size);
+
+    createTestEvent(true, false, false, false, false);
+    createTestEvent(true, false, false, false, false);
+
+    CmdListWaitEventParameters waitEventsParameters = {};
+    CmdListSignalEventParameters signalEventParameters = {};
+    auto originalCommandList = this->createMutableCmdList();
+    auto result = originalCommandList->appendBarrier(this->eventHandles[0], 0, nullptr, waitEventsParameters, signalEventParameters);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    auto mutatedCommandList = this->createMutableCmdList();
+    result = mutatedCommandList->appendBarrier(this->eventHandles[1], 0, nullptr, waitEventsParameters, signalEventParameters);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS;
+    result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    CmdListMemoryCopyParams copyParams = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, this->mutableCommandList->appendMemoryCopy(usm1, usm2, size, nullptr, 1, &this->eventHandles[0], copyParams));
+    EXPECT_TRUE(copyParams.copyOffloadAllowed);
+
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto copyOffloadSubCmdList = whiteBoxBaseCmdList->getCopyOffloadSubCmdList();
+    ASSERT_NE(nullptr, copyOffloadSubCmdList);
+
+    auto &computeAsyncPatchContainer = whiteBoxBaseCmdList->getAsyncPatchContainer();
+    auto &copyAsyncPatchContainer = copyOffloadSubCmdList->getAsyncPatchContainer();
+    computeAsyncPatchContainer.clear();
+    copyAsyncPatchContainer.clear();
+
+    auto &selectedEventAppend = mutableCommandList->eventMutations[(commandId - 1)];
+    ASSERT_NE(0u, selectedEventAppend.waitEvents.size());
+    auto waitEventVar = selectedEventAppend.waitEvents[0].eventVariable;
+    ASSERT_NE(nullptr, waitEventVar);
+    ASSERT_EQ(1u, waitEventVar->getSemWaitList().size());
+
+    std::vector<void *> expectedHostSources;
+    expectedHostSources.push_back(static_cast<MockMutableSemaphoreWaitHw<FamilyType> *>(waitEventVar->getSemWaitList()[0])->commandView);
+    for (auto &mutableLri : waitEventVar->getLoadRegImmList()) {
+        expectedHostSources.push_back(static_cast<MockMutableLoadRegisterImmHw<FamilyType> *>(mutableLri)->commandView);
+    }
+
+    result = mutableCommandList->updateMutableCommandWaitEventsExp(commandId, 1, &this->eventHandles[1]);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(0u, computeAsyncPatchContainer.size());
+    ASSERT_EQ(expectedHostSources.size(), copyAsyncPatchContainer.size());
+    for (auto &patch : copyAsyncPatchContainer) {
+        EXPECT_NE(expectedHostSources.end(), std::find(expectedHostSources.begin(), expectedHostSources.end(), patch.hostSourceAddress));
+    }
+}
+
 } // namespace ult
 } // namespace L0

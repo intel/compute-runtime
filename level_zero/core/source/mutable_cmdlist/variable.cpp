@@ -823,10 +823,10 @@ ze_result_t Variable::setWaitEventVariable(size_t size, const void *argVal) {
 
     if (desc.asyncMutation) {
         for (auto &mutableSemWait : this->desc.eventValue.semWaitCmds) {
-            this->cmdList->addAsyncMutationElement(mutableSemWait->getGpuDestinationAddress(), mutableSemWait->getCommandView(), mutableSemWait->getCommandSize());
+            this->cmdList->addAsyncMutationElement(mutableSemWait->getGpuDestinationAddress(), mutableSemWait->getCommandView(), mutableSemWait->getCommandSize(), desc.copyOffloadActive);
         }
         for (auto &mutableLri : this->desc.eventValue.loadRegImmCmds) {
-            this->cmdList->addAsyncMutationElement(mutableLri->getGpuDestinationAddress(), mutableLri->getCommandView(), mutableLri->getCommandSize());
+            this->cmdList->addAsyncMutationElement(mutableLri->getGpuDestinationAddress(), mutableLri->getCommandView(), mutableLri->getCommandSize(), desc.copyOffloadActive);
         }
     }
 

@@ -681,8 +681,16 @@ ze_result_t MutableCommandListImp::updateMutableCommandKernelsExp(uint32_t numKe
     return ZE_RESULT_SUCCESS;
 }
 
-void MutableCommandListImp::addAsyncMutationElement(uint64_t gpuDestination, void *hostSource, size_t size) {
-    base->getAsyncPatchContainer().push_back({gpuDestination, hostSource, size});
+void MutableCommandListImp::addAsyncMutationElement(uint64_t gpuDestination, void *hostSource, size_t size, bool redirectToCopyOffload) {
+    if (redirectToCopyOffload) {
+        auto copyOffloadSubCmdList = this->base->getCopyOffloadSubCmdList();
+        UNRECOVERABLE_IF(copyOffloadSubCmdList == nullptr);
+        auto mutableCopyOffloadSubCmdList = static_cast<MutableCommandList *>(copyOffloadSubCmdList->asMutable());
+        UNRECOVERABLE_IF(mutableCopyOffloadSubCmdList == nullptr);
+        mutableCopyOffloadSubCmdList->addAsyncMutationElement(gpuDestination, hostSource, size, false);
+    } else {
+        base->getAsyncPatchContainer().push_back({gpuDestination, hostSource, size});
+    }
 }
 
 } // namespace MCL
