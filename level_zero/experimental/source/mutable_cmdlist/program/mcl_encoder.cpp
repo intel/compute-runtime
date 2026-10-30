@@ -258,10 +258,6 @@ void MclEncoder::parseDispatches(const std::vector<std::unique_ptr<KernelDispatc
             addCrossThreadDataReloc(RelocType::localWorkSizeY, payloadOffsets.localWorkSize[1]);
             addCrossThreadDataReloc(RelocType::localWorkSizeZ, payloadOffsets.localWorkSize[2]);
 
-            addCrossThreadDataReloc(RelocType::localWorkSize2, payloadOffsets.localWorkSize2[0]);
-            addCrossThreadDataReloc(RelocType::localWorkSize2Y, payloadOffsets.localWorkSize2[1]);
-            addCrossThreadDataReloc(RelocType::localWorkSize2Z, payloadOffsets.localWorkSize2[2]);
-
             addCrossThreadDataReloc(RelocType::enqLocalWorkSize, payloadOffsets.enqLocalWorkSize[0]);
             addCrossThreadDataReloc(RelocType::enqLocalWorkSizeY, payloadOffsets.enqLocalWorkSize[1]);
             addCrossThreadDataReloc(RelocType::enqLocalWorkSizeZ, payloadOffsets.enqLocalWorkSize[2]);

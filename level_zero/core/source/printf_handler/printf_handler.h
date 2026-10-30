@@ -21,12 +21,10 @@ class GraphicsAllocation;
 
 namespace L0 {
 struct Device;
-struct KernelImmutableData;
 
 struct PrintfHandler : NEO::NonCopyableAndNonMovableClass {
     static NEO::GraphicsAllocation *createPrintfBuffer(Device *device);
-    static void printOutput(const KernelImmutableData *kernelData,
-                            NEO::GraphicsAllocation *printfBuffer, Device *device, bool useInternalBlitter,
+    static void printOutput(NEO::GraphicsAllocation *printfBuffer, Device *device, bool useInternalBlitter,
                             uint32_t &alreadyPrintedSize);
     static size_t getPrintBufferSize();
 

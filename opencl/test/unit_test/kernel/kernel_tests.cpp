@@ -1076,19 +1076,6 @@ TEST_F(KernelPrivateSurfaceTest, givenStatelessKernelWhenKernelIsCreatedThenPriv
     delete kernel;
 }
 
-TEST_F(KernelPrivateSurfaceTest, givenNullDataParameterStreamWhenGettingConstantBufferSizeThenZeroIsReturned) {
-    auto pKernelInfo = std::make_unique<KernelInfo>();
-
-    EXPECT_EQ(0u, pKernelInfo->getConstantBufferSize());
-}
-
-TEST_F(KernelPrivateSurfaceTest, givenNonNullDataParameterStreamWhenGettingConstantBufferSizeThenCorrectSizeIsReturned) {
-    auto pKernelInfo = std::make_unique<MockKernelInfo>();
-    pKernelInfo->setCrossThreadDataSize(64);
-
-    EXPECT_EQ(64u, pKernelInfo->getConstantBufferSize());
-}
-
 TEST_F(KernelPrivateSurfaceTest, GivenKernelWhenScratchSizeIsGreaterThanMaxScratchSizeThenReturnInvalidKernel) {
     auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
     auto &productHelper = pDevice->getProductHelper();
@@ -2830,31 +2817,6 @@ TEST_F(KernelCrossThreadTests, givenKernelWithPrivateMemoryWhenItIsCreatedThenCu
     EXPECT_EQ(privateAddressFromCurbe, privateAddress);
 
     delete kernel;
-}
-
-TEST(KernelInfoTest, WhenPatchingBorderColorOffsetThenPatchIsAppliedCorrectly) {
-    MockKernelInfo info;
-    EXPECT_EQ(0u, info.getBorderColorOffset());
-
-    info.setSamplerTable(3, 1, 0);
-    EXPECT_EQ(3u, info.getBorderColorOffset());
-}
-
-TEST(KernelInfoTest, GivenArgNameWhenGettingArgNumberByNameThenCorrectValueIsReturned) {
-    MockKernelInfo info;
-    EXPECT_EQ(-1, info.getArgNumByName(""));
-
-    info.addExtendedMetadata(0, "arg1");
-    EXPECT_EQ(-1, info.getArgNumByName(""));
-    EXPECT_EQ(-1, info.getArgNumByName("arg2"));
-    EXPECT_EQ(0, info.getArgNumByName("arg1"));
-
-    info.addExtendedMetadata(1, "arg2");
-    EXPECT_EQ(0, info.getArgNumByName("arg1"));
-    EXPECT_EQ(1, info.getArgNumByName("arg2"));
-
-    info.kernelDescriptor.explicitArgsExtendedMetadata.clear();
-    EXPECT_EQ(-1, info.getArgNumByName("arg1"));
 }
 
 TEST(KernelInfoTest, givenGfxCoreHelperWhenCreatingKernelAllocationThenCorrectPaddingIsAdded) {

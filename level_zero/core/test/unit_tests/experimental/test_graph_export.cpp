@@ -1009,7 +1009,7 @@ TEST_F(GraphDotExporterSimpleStyleTest, GivenKernelCommandWhenGetCommandNodeLabe
     auto mockIsaAllocation = std::make_unique<MockGraphicsAllocation>();
     mockIsaAllocation->setAllocationType(NEO::AllocationType::kernelIsa);
     kernelImmutableData->setIsaPerKernelAllocation(mockIsaAllocation.release());
-    kernelImmutableData->initialize(&kernelInfo, &l0Device, 0, nullptr, nullptr, false);
+    kernelImmutableData->initialize(&kernelInfo, &l0Device, nullptr, nullptr);
     mockModule->kernelImmData.push_back(std::move(kernelImmutableData));
 
     Mock<KernelImp> kernel;

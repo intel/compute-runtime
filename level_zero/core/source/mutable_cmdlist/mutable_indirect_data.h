@@ -13,18 +13,23 @@
 
 #include <memory>
 
+namespace NEO {
+struct KernelDescriptor;
+}
+
 namespace L0::MCL {
 class MutableIndirectData {
   public:
     struct Offsets {
         CrossThreadDataOffset localWorkSize[3] = {undefined<CrossThreadDataOffset>, undefined<CrossThreadDataOffset>, undefined<CrossThreadDataOffset>};
-        CrossThreadDataOffset localWorkSize2[3] = {undefined<CrossThreadDataOffset>, undefined<CrossThreadDataOffset>, undefined<CrossThreadDataOffset>};
         CrossThreadDataOffset enqLocalWorkSize[3] = {undefined<CrossThreadDataOffset>, undefined<CrossThreadDataOffset>, undefined<CrossThreadDataOffset>};
         CrossThreadDataOffset globalWorkSize[3] = {undefined<CrossThreadDataOffset>, undefined<CrossThreadDataOffset>, undefined<CrossThreadDataOffset>};
         CrossThreadDataOffset numWorkGroups[3] = {undefined<CrossThreadDataOffset>, undefined<CrossThreadDataOffset>, undefined<CrossThreadDataOffset>};
         CrossThreadDataOffset workDimensions = undefined<CrossThreadDataOffset>;
         CrossThreadDataOffset globalWorkOffset[3] = {undefined<CrossThreadDataOffset>, undefined<CrossThreadDataOffset>, undefined<CrossThreadDataOffset>};
     };
+
+    static std::unique_ptr<Offsets> createOffsets(const NEO::KernelDescriptor &kernelDescriptor);
 
     MutableIndirectData(std::unique_ptr<Offsets> offsets,
                         ArrayRef<uint8_t> crossThreadData, ArrayRef<uint8_t> perThreadData,
@@ -33,7 +38,6 @@ class MutableIndirectData {
 
     inline void setIfDefined(const CrossThreadDataOffset (&offsets)[3], MaxChannelsArray data);
     void setLocalWorkSize(MaxChannelsArray localWorkSize);
-    void setLocalWorkSize2(MaxChannelsArray localWorkSize2);
     void setEnqLocalWorkSize(MaxChannelsArray enqLocalWorkSize);
     void setGlobalWorkSize(MaxChannelsArray globalWorkSize);
     void setNumWorkGroups(MaxChannelsArray numWorkGroups);

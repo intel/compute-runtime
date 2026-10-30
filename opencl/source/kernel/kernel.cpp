@@ -758,7 +758,7 @@ cl_int Kernel::getSubGroupInfo(cl_kernel_sub_group_info paramName,
         return changeGetInfoStatusToCLResultType(info.set<size_t>(Math::divideAndRoundUp(maxRequiredWorkGroupSize, largestCompiledSIMDSize)));
     }
     case CL_KERNEL_COMPILE_NUM_SUB_GROUPS: {
-        return changeGetInfoStatusToCLResultType(info.set<size_t>(static_cast<size_t>(kernelInfo.kernelDescriptor.kernelMetadata.compiledSubGroupsNumber)));
+        return changeGetInfoStatusToCLResultType(info.set<size_t>(0u));
     }
     case CL_KERNEL_COMPILE_SUB_GROUP_SIZE_INTEL: {
         return changeGetInfoStatusToCLResultType(info.set<size_t>(kernelInfo.kernelDescriptor.kernelMetadata.requiredSubGroupSize));

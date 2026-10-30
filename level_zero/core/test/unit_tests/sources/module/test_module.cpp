@@ -1658,7 +1658,7 @@ HWTEST_F(ModuleLinkingTest, whenExternFunctionsAllocationIsPresentThenItsBeingAd
     kernelInfo.heapInfo.kernelHeapSize = sizeof(data);
 
     std::unique_ptr<WhiteBox<::L0::KernelImmutableData>> kernelImmData{new WhiteBox<::L0::KernelImmutableData>(this->device)};
-    kernelImmData->initialize(&kernelInfo, device, 0, nullptr, nullptr, false);
+    kernelImmData->initialize(&kernelInfo, device, nullptr, nullptr);
     module.kernelImmData.push_back(std::move(kernelImmData));
 
     module.translationUnit->programInfo.linkerInput.reset(new NEO::LinkerInput);
@@ -5703,8 +5703,8 @@ struct ModuleIsaAllocationsFixture : public DeviceFixture {
         ~ProxyKernelImmutableData() override { this->KernelImmutableData::~KernelImmutableData(); }
 
         ADDMETHOD(initialize, ze_result_t, true, ZE_RESULT_ERROR_UNKNOWN,
-                  (NEO::KernelInfo * kernelInfo, L0::Device *device, uint32_t computeUnitsUsedForScratch, NEO::SharedPoolAllocation *globalConstBuffer, NEO::SharedPoolAllocation *globalVarBuffer, bool internalKernel),
-                  (kernelInfo, device, computeUnitsUsedForScratch, globalConstBuffer, globalVarBuffer, internalKernel));
+                  (NEO::KernelInfo * kernelInfo, L0::Device *device, NEO::SharedPoolAllocation *globalConstBuffer, NEO::SharedPoolAllocation *globalVarBuffer),
+                  (kernelInfo, device, globalConstBuffer, globalVarBuffer));
     };
 
     void givenMultipleKernelIsasWhenKernelInitializationFailsThenItIsProperlyCleanedAndPreviouslyInitializedKernelsLeftUntouched() {
@@ -5990,7 +5990,7 @@ TEST_F(ModuleDebugDataTest, GivenDebugDataWithRelocationsWhenCreatingRelocatedDe
 
     auto kernelImmData = std::make_unique<WhiteBox<::L0::KernelImmutableData>>(this->device);
     kernelImmData->setIsaPerKernelAllocation(module->allocateKernelsIsaMemory(kernelInfo->heapInfo.kernelHeapSize));
-    kernelImmData->initialize(kernelInfo, device, 0, module->translationUnit->globalConstBuffer.get(), module->translationUnit->globalVarBuffer.get(), false);
+    kernelImmData->initialize(kernelInfo, device, module->translationUnit->globalConstBuffer.get(), module->translationUnit->globalVarBuffer.get());
     kernelImmData->createRelocatedDebugData(module->translationUnit->globalConstBuffer.get(), module->translationUnit->globalVarBuffer.get());
 
     module->kernelImmData.push_back(std::move(kernelImmData));
@@ -6182,7 +6182,7 @@ TEST_F(ModuleTests, whenCopyingPatchedSegmentsThenAllocationsAreSetWritableForTb
 
     std::unique_ptr<WhiteBox<::L0::KernelImmutableData>> kernelImmData{new WhiteBox<::L0::KernelImmutableData>(this->device)};
     kernelImmData->setIsaPerKernelAllocation(pModule->allocateKernelsIsaMemory(kernelInfo->heapInfo.kernelHeapSize));
-    kernelImmData->initialize(kernelInfo.get(), device, 0, nullptr, nullptr, false);
+    kernelImmData->initialize(kernelInfo.get(), device, nullptr, nullptr);
 
     pModule->kernelImmData.push_back(std::move(kernelImmData));
     auto linkerInput = std::make_unique<::WhiteBox<NEO::LinkerInput>>();
@@ -6212,7 +6212,7 @@ TEST_F(ModuleTests, givenConstDataStringSectionWhenLinkingModuleThenSegmentIsPat
 
     std::unique_ptr<WhiteBox<::L0::KernelImmutableData>> kernelImmData{new WhiteBox<::L0::KernelImmutableData>(this->device)};
     kernelImmData->setIsaPerKernelAllocation(pModule->allocateKernelsIsaMemory(kernelInfo->heapInfo.kernelHeapSize));
-    kernelImmData->initialize(kernelInfo, device, 0, nullptr, nullptr, false);
+    kernelImmData->initialize(kernelInfo, device, nullptr, nullptr);
     auto patchAddr = reinterpret_cast<uintptr_t>(ptrOffset(kernelImmData->isaGraphicsAllocation->getUnderlyingBuffer(), 0x8));
     pModule->kernelImmData.push_back(std::move(kernelImmData));
     pModule->translationUnit->programInfo.kernelInfos.push_back(kernelInfo);
@@ -6243,7 +6243,7 @@ TEST_F(ModuleTests, givenImplicitArgsRelocationWhenLinkingBuiltinModuleThenSegme
 
     std::unique_ptr<WhiteBox<::L0::KernelImmutableData>> kernelImmData{new WhiteBox<::L0::KernelImmutableData>(this->device)};
     kernelImmData->setIsaPerKernelAllocation(pModule->allocateKernelsIsaMemory(kernelInfo->heapInfo.kernelHeapSize));
-    kernelImmData->initialize(kernelInfo, device, 0, nullptr, nullptr, true);
+    kernelImmData->initialize(kernelInfo, device, nullptr, nullptr);
 
     auto isaCpuPtr = reinterpret_cast<char *>(kernelImmData->isaGraphicsAllocation->getUnderlyingBuffer());
     pModule->kernelImmData.push_back(std::move(kernelImmData));
@@ -6288,7 +6288,7 @@ TEST_F(ModuleTests, givenFullyLinkedModuleAndSlmSizeExceedingLocalMemorySizeWhen
 
     std::unique_ptr<WhiteBox<::L0::KernelImmutableData>> kernelImmData{new WhiteBox<::L0::KernelImmutableData>(this->device)};
     kernelImmData->setIsaPerKernelAllocation(pModule->allocateKernelsIsaMemory(kernelInfo->heapInfo.kernelHeapSize));
-    kernelImmData->initialize(kernelInfo.get(), device, 0, nullptr, nullptr, true);
+    kernelImmData->initialize(kernelInfo.get(), device, nullptr, nullptr);
 
     pModule->kernelImmData.push_back(std::move(kernelImmData));
     pModule->translationUnit->programInfo.kernelInfos.push_back(kernelInfo.release());
@@ -6349,7 +6349,7 @@ TEST_F(ModuleTests, givenFullyLinkedModuleWhenCreatingKernelThenDebugMsgOnPrivat
 
     std::unique_ptr<WhiteBox<::L0::KernelImmutableData>> kernelImmData{new WhiteBox<::L0::KernelImmutableData>(this->device)};
     kernelImmData->setIsaPerKernelAllocation(pModule->allocateKernelsIsaMemory(kernelInfo->heapInfo.kernelHeapSize));
-    kernelImmData->initialize(kernelInfo.get(), device, 0, nullptr, nullptr, true);
+    kernelImmData->initialize(kernelInfo.get(), device, nullptr, nullptr);
 
     pModule->kernelImmData.push_back(std::move(kernelImmData));
     pModule->translationUnit->programInfo.kernelInfos.push_back(kernelInfo.release());
@@ -6395,7 +6395,7 @@ TEST_F(ModuleTests, givenImplicitArgsRelocationAndStackCallsWhenLinkingModuleThe
 
     std::unique_ptr<WhiteBox<::L0::KernelImmutableData>> kernelImmData{new WhiteBox<::L0::KernelImmutableData>(this->device)};
     kernelImmData->setIsaPerKernelAllocation(pModule->allocateKernelsIsaMemory(kernelInfo->heapInfo.kernelHeapSize));
-    kernelImmData->initialize(kernelInfo, device, 0, nullptr, nullptr, false);
+    kernelImmData->initialize(kernelInfo, device, nullptr, nullptr);
 
     kernelImmData->kernelDescriptor->kernelAttributes.flags.useStackCalls = true;
     auto isaCpuPtr = reinterpret_cast<char *>(kernelImmData->isaGraphicsAllocation->getUnderlyingBuffer());
@@ -6427,7 +6427,7 @@ TEST_F(ModuleTests, givenImplicitArgsRelocationAndNoDebuggerOrStackCallsWhenLink
 
     std::unique_ptr<WhiteBox<::L0::KernelImmutableData>> kernelImmData{new WhiteBox<::L0::KernelImmutableData>(this->device)};
     kernelImmData->setIsaPerKernelAllocation(pModule->allocateKernelsIsaMemory(kernelInfo->heapInfo.kernelHeapSize));
-    kernelImmData->initialize(kernelInfo, device, 0, nullptr, nullptr, false);
+    kernelImmData->initialize(kernelInfo, device, nullptr, nullptr);
 
     kernelImmData->kernelDescriptor->kernelAttributes.flags.useStackCalls = false;
     auto isaCpuPtr = reinterpret_cast<char *>(kernelImmData->isaGraphicsAllocation->getUnderlyingBuffer());
@@ -6458,7 +6458,7 @@ TEST_F(ModuleTests, givenRequiredImplicitArgsInKernelAndNoDebuggerOrStackCallsWh
 
     std::unique_ptr<WhiteBox<::L0::KernelImmutableData>> kernelImmData{new WhiteBox<::L0::KernelImmutableData>(this->device)};
     kernelImmData->setIsaPerKernelAllocation(pModule->allocateKernelsIsaMemory(kernelInfo->heapInfo.kernelHeapSize));
-    kernelImmData->initialize(kernelInfo, device, 0, nullptr, nullptr, false);
+    kernelImmData->initialize(kernelInfo, device, nullptr, nullptr);
 
     kernelImmData->kernelDescriptor->kernelAttributes.flags.useStackCalls = false;
     auto isaCpuPtr = reinterpret_cast<char *>(kernelImmData->isaGraphicsAllocation->getUnderlyingBuffer());
@@ -6501,7 +6501,7 @@ TEST_F(ModuleTests, givenModuleWithGlobalAndConstAllocationsWhenGettingModuleAll
     auto isaAlloc = module->allocateKernelsIsaMemory(kernelInfo->heapInfo.kernelHeapSize);
     ASSERT_NE(isaAlloc, nullptr);
     kernelImmData->setIsaPerKernelAllocation(isaAlloc);
-    kernelImmData->initialize(kernelInfo, device, 0, module->translationUnit->globalConstBuffer.get(), module->translationUnit->globalVarBuffer.get(), false);
+    kernelImmData->initialize(kernelInfo, device, module->translationUnit->globalConstBuffer.get(), module->translationUnit->globalVarBuffer.get());
     module->kernelImmData.push_back(std::move(kernelImmData));
 
     const auto allocs = module->getModuleAllocations();

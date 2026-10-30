@@ -1111,7 +1111,7 @@ HWTEST2_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyBufferToImageStatele
 
     auto kernel = multiDispatchInfo.begin()->getKernel();
     ASSERT_NE(nullptr, kernel);
-    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelAttributes.supportsBuffersBiggerThan4Gb());
+    EXPECT_EQ(NEO::KernelDescriptor::Stateless, kernel->getKernelInfo().kernelDescriptor.kernelAttributes.bufferAddressingMode);
     EXPECT_FALSE(kernel->getKernelInfo().getArgDescriptorAt(0).as<ArgDescPointer>().isPureStateful());
 }
 
@@ -1260,7 +1260,7 @@ HWTEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyImageToSystemBufferSt
 
     auto kernel = multiDispatchInfo.begin()->getKernel();
     ASSERT_NE(nullptr, kernel);
-    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelAttributes.supportsBuffersBiggerThan4Gb());
+    EXPECT_EQ(NEO::KernelDescriptor::Stateless, kernel->getKernelInfo().kernelDescriptor.kernelAttributes.bufferAddressingMode);
 
     for (auto &dispatchInfo : multiDispatchInfo) {
         EXPECT_TRUE(dispatchInfo.getKernel()->getDestinationAllocationInSystemMemory());
@@ -1298,7 +1298,7 @@ HWTEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyImageToLocalBufferSta
 
     auto kernel = multiDispatchInfo.begin()->getKernel();
     ASSERT_NE(nullptr, kernel);
-    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelAttributes.supportsBuffersBiggerThan4Gb());
+    EXPECT_EQ(NEO::KernelDescriptor::Stateless, kernel->getKernelInfo().kernelDescriptor.kernelAttributes.bufferAddressingMode);
 
     for (auto &dispatchInfo : multiDispatchInfo) {
         EXPECT_FALSE(dispatchInfo.getKernel()->getDestinationAllocationInSystemMemory());
@@ -2846,7 +2846,7 @@ HWTEST_F(BuiltInTests, givenAdjustedCopyBufferToBufferWhenWidenessEnabledAndStat
 
     auto kernel = mdi.begin()->getKernel();
     ASSERT_NE(nullptr, kernel);
-    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelAttributes.supportsBuffersBiggerThan4Gb());
+    EXPECT_EQ(NEO::KernelDescriptor::Stateless, kernel->getKernelInfo().kernelDescriptor.kernelAttributes.bufferAddressingMode);
 
     EXPECT_EQ(sizeof(uint64_t), kernel->getKernelInfo().getArgDescriptorAt(2).as<ArgDescValue>().elements[0].size);
     EXPECT_EQ(sizeof(uint64_t), kernel->getKernelInfo().getArgDescriptorAt(3).as<ArgDescValue>().elements[0].size);
@@ -2885,7 +2885,7 @@ HWTEST_F(BuiltInTests, givenAdjustedCopyBufferRect2dWhenWidenessEnabledAndStatel
 
     auto kernel = mdi.begin()->getKernel();
     ASSERT_NE(nullptr, kernel);
-    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelAttributes.supportsBuffersBiggerThan4Gb());
+    EXPECT_EQ(NEO::KernelDescriptor::Stateless, kernel->getKernelInfo().kernelDescriptor.kernelAttributes.bufferAddressingMode);
 
     EXPECT_EQ(2 * sizeof(uint64_t), kernel->getKernelInfo().getArgDescriptorAt(2).as<ArgDescValue>().elements[0].size);
     EXPECT_EQ(2 * sizeof(uint64_t), kernel->getKernelInfo().getArgDescriptorAt(3).as<ArgDescValue>().elements[0].size);
@@ -2923,7 +2923,7 @@ HWTEST_F(BuiltInTests, givenAdjustedFillBufferWhenWidenessEnabledAndStatelessReq
 
     auto kernel = mdi.begin()->getKernel();
     ASSERT_NE(nullptr, kernel);
-    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelAttributes.supportsBuffersBiggerThan4Gb());
+    EXPECT_EQ(NEO::KernelDescriptor::Stateless, kernel->getKernelInfo().kernelDescriptor.kernelAttributes.bufferAddressingMode);
 
     EXPECT_EQ(sizeof(uint64_t), kernel->getKernelInfo().getArgDescriptorAt(1).as<ArgDescValue>().elements[0].size);
 }
@@ -2956,7 +2956,7 @@ HWTEST_F(BuiltInTests, givenAdjustedCopyBufferToImage3dWhenWidenessEnabledAndSta
 
     auto kernel = mdi.begin()->getKernel();
     ASSERT_NE(nullptr, kernel);
-    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelAttributes.supportsBuffersBiggerThan4Gb());
+    EXPECT_EQ(NEO::KernelDescriptor::Stateless, kernel->getKernelInfo().kernelDescriptor.kernelAttributes.bufferAddressingMode);
 
     EXPECT_EQ(sizeof(uint64_t), kernel->getKernelInfo().getArgDescriptorAt(2).as<ArgDescValue>().elements[0].size);
     EXPECT_EQ(2 * sizeof(uint64_t), kernel->getKernelInfo().getArgDescriptorAt(4).as<ArgDescValue>().elements[0].size);
@@ -2990,7 +2990,7 @@ HWTEST_F(BuiltInTests, givenAdjustedCopyImage3dToBufferWhenWidenessEnabledAndSta
 
     auto kernel = mdi.begin()->getKernel();
     ASSERT_NE(nullptr, kernel);
-    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelAttributes.supportsBuffersBiggerThan4Gb());
+    EXPECT_EQ(NEO::KernelDescriptor::Stateless, kernel->getKernelInfo().kernelDescriptor.kernelAttributes.bufferAddressingMode);
 
     EXPECT_EQ(sizeof(uint64_t), kernel->getKernelInfo().getArgDescriptorAt(3).as<ArgDescValue>().elements[0].size);
     EXPECT_EQ(2 * sizeof(uint64_t), kernel->getKernelInfo().getArgDescriptorAt(4).as<ArgDescValue>().elements[0].size);

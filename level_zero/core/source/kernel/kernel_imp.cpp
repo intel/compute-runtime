@@ -76,9 +76,8 @@ KernelImmutableData::~KernelImmutableData() {
     dynamicStateHeapTemplate.reset();
 }
 
-ze_result_t KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device *device, uint32_t computeUnitsUsedForScratch,
-                                            NEO::SharedPoolAllocation *globalConstBuffer, NEO::SharedPoolAllocation *globalVarBuffer,
-                                            bool internalKernel) {
+ze_result_t KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device *device,
+                                            NEO::SharedPoolAllocation *globalConstBuffer, NEO::SharedPoolAllocation *globalVarBuffer) {
 
     UNRECOVERABLE_IF(kernelInfo == nullptr);
     this->kernelInfo = kernelInfo;
@@ -350,7 +349,7 @@ KernelSharedState::~KernelSharedState() {
     const auto *kernelImmData = this->kernelImmData;
     if (this->printfBuffer != nullptr) {
         // not allowed to call virtual function on destructor, so calling printOutput directly
-        PrintfHandler::printOutput(kernelImmData, this->printfBuffer, this->module->getDevice(), false,
+        PrintfHandler::printOutput(this->printfBuffer, this->module->getDevice(), false,
                                    this->printfOutputAlreadyPrintedSize);
         this->module->getDevice()->getNEODevice()->getMemoryManager()->freeGraphicsMemory(this->printfBuffer);
     }
@@ -1114,7 +1113,7 @@ ze_result_t KernelImp::getProperties(ze_kernel_properties_t *pKernelProperties) 
     pKernelProperties->requiredGroupSizeX = kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0];
     pKernelProperties->requiredGroupSizeY = kernelDescriptor.kernelAttributes.requiredWorkgroupSize[1];
     pKernelProperties->requiredGroupSizeZ = kernelDescriptor.kernelAttributes.requiredWorkgroupSize[2];
-    pKernelProperties->requiredNumSubGroups = kernelDescriptor.kernelMetadata.compiledSubGroupsNumber;
+    pKernelProperties->requiredNumSubGroups = 0u;
     pKernelProperties->requiredSubgroupSize = kernelDescriptor.kernelMetadata.requiredSubGroupSize;
     pKernelProperties->maxSubgroupSize = kernelDescriptor.kernelAttributes.simdSize;
     pKernelProperties->localMemSize = this->getSlmTotalSizePerThreadGroup();
@@ -1464,7 +1463,7 @@ void KernelImp::createPrintfBuffer() {
 }
 
 void KernelImp::printPrintfOutput(bool hangDetected) {
-    PrintfHandler::printOutput(getImmutableData(), this->sharedState->printfBuffer, module->getDevice(), hangDetected,
+    PrintfHandler::printOutput(this->sharedState->printfBuffer, module->getDevice(), hangDetected,
                                this->sharedState->printfOutputAlreadyPrintedSize);
 }
 

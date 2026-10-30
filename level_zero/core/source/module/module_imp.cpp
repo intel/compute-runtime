@@ -1123,10 +1123,8 @@ ze_result_t ModuleImp::initializeKernelImmutableData() {
         for (size_t i = 0lu; i < kernelsCount; i++) {
             result = kernelImmData[i]->initialize(this->translationUnit->programInfo.kernelInfos[i],
                                                   device,
-                                                  device->getNEODevice()->getDeviceInfo().computeUnitsUsedForScratch,
                                                   this->translationUnit->globalConstBuffer.get(),
-                                                  this->translationUnit->globalVarBuffer.get(),
-                                                  this->type == ModuleType::builtin);
+                                                  this->translationUnit->globalVarBuffer.get());
             if (result != ZE_RESULT_SUCCESS) {
                 kernelImmData[i].reset();
                 return result;

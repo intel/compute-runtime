@@ -280,7 +280,7 @@ HWTEST2_F(EnqueueCopyBufferTest, WhenCopyingBufferStatelessThenStatelessKernelIs
     EXPECT_NE(0u, multiDispatchInfo.size());
 
     auto kernel = multiDispatchInfo.begin()->getKernel();
-    EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelAttributes.supportsBuffersBiggerThan4Gb());
+    EXPECT_EQ(NEO::KernelDescriptor::Stateless, kernel->getKernelInfo().kernelDescriptor.kernelAttributes.bufferAddressingMode);
     EXPECT_FALSE(kernel->getKernelInfo().getArgDescriptorAt(0).as<ArgDescPointer>().isPureStateful());
 }
 
@@ -310,7 +310,7 @@ HWTEST2_F(EnqueueCopyBufferTest, WhenCopyingBufferStatelessHeaplessThenCorrectKe
 
     auto kernel = multiDispatchInfo.begin()->getKernel();
     auto &kernelDescriptor = kernel->getKernelInfo().kernelDescriptor;
-    EXPECT_TRUE(kernelDescriptor.kernelAttributes.supportsBuffersBiggerThan4Gb());
+    EXPECT_EQ(NEO::KernelDescriptor::Stateless, kernelDescriptor.kernelAttributes.bufferAddressingMode);
     EXPECT_FALSE(kernel->getKernelInfo().getArgDescriptorAt(0).as<ArgDescPointer>().isPureStateful());
 
     auto indirectDataPointerAddress = kernelDescriptor.payloadMappings.implicitArgs.indirectDataPointerAddress;

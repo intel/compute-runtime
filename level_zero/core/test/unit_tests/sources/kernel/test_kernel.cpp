@@ -966,7 +966,7 @@ TEST_F(KernelImmutableDataIsaCopyTests, whenUserKernelIsCreatedThenIsaIsCopiedWh
               mockMemoryManager->copyMemoryToAllocationCalledTimes);
 }
 
-TEST_F(KernelImmutableDataIsaCopyTests, whenImmutableDataIsInitializedForUserKernelThenIsaIsNotCopied) {
+TEST_F(KernelImmutableDataIsaCopyTests, whenImmutableDataIsInitializedThenIsaIsNotCopied) {
     MockImmutableMemoryManager *mockMemoryManager =
         static_cast<MockImmutableMemoryManager *>(device->getNEODevice()->getMemoryManager());
 
@@ -980,33 +980,8 @@ TEST_F(KernelImmutableDataIsaCopyTests, whenImmutableDataIsInitializedForUserKer
         mockMemoryManager->copyMemoryToAllocationCalledTimes;
 
     mockKernelImmData->initialize(mockKernelImmData->mockKernelInfo, device,
-                                  device->getNEODevice()->getDeviceInfo().computeUnitsUsedForScratch,
                                   module->translationUnit->globalConstBuffer.get(),
-                                  module->translationUnit->globalVarBuffer.get(),
-                                  isInternal);
-
-    EXPECT_EQ(previouscopyMemoryToAllocationCalledTimes,
-              mockMemoryManager->copyMemoryToAllocationCalledTimes);
-}
-
-TEST_F(KernelImmutableDataIsaCopyTests, whenImmutableDataIsInitializedForInternalKernelThenIsaIsNotCopied) {
-    MockImmutableMemoryManager *mockMemoryManager =
-        static_cast<MockImmutableMemoryManager *>(device->getNEODevice()->getMemoryManager());
-
-    uint32_t perHwThreadPrivateMemorySizeRequested = 32u;
-    bool isInternal = true;
-
-    std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(perHwThreadPrivateMemorySizeRequested);
-    createModuleFromMockBinary(perHwThreadPrivateMemorySizeRequested, isInternal, mockKernelImmData.get());
-
-    uint32_t previouscopyMemoryToAllocationCalledTimes =
-        mockMemoryManager->copyMemoryToAllocationCalledTimes;
-
-    mockKernelImmData->initialize(mockKernelImmData->mockKernelInfo, device,
-                                  device->getNEODevice()->getDeviceInfo().computeUnitsUsedForScratch,
-                                  module->translationUnit->globalConstBuffer.get(),
-                                  module->translationUnit->globalVarBuffer.get(),
-                                  isInternal);
+                                  module->translationUnit->globalVarBuffer.get());
 
     EXPECT_EQ(previouscopyMemoryToAllocationCalledTimes,
               mockMemoryManager->copyMemoryToAllocationCalledTimes);
@@ -4940,19 +4915,6 @@ HWTEST_F(PrintfHandlerTests, givenKernelWithPrintfWhenPrintingOutputWithBlitterU
         device->incRefInternal();
         MockDeviceImp mockDevice(device.get());
 
-        auto kernelInfo = std::make_unique<KernelInfo>();
-        kernelInfo->heapInfo.kernelHeapSize = 1;
-        char kernelHeap[1];
-        kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
-        kernelInfo->kernelDescriptor.kernelMetadata.kernelName = ZebinTestData::ValidEmptyProgram<>::kernelName;
-
-        auto kernelImmutableData = std::make_unique<KernelImmutableData>(&mockDevice);
-        kernelImmutableData->initialize(kernelInfo.get(), &mockDevice, 0, nullptr, nullptr, false);
-
-        auto &kernelDescriptor = kernelInfo->kernelDescriptor;
-        kernelDescriptor.kernelAttributes.flags.usesPrintf = true;
-        kernelDescriptor.kernelAttributes.gpuPointerSize = 8u;
-
         const char *expectedString = "test123";
 
         constexpr size_t size = 128;
@@ -4968,7 +4930,7 @@ HWTEST_F(PrintfHandlerTests, givenKernelWithPrintfWhenPrintingOutputWithBlitterU
         StreamCapture capture;
         capture.captureStdout();
         uint32_t alreadyPrintedSize = 0;
-        PrintfHandler::printOutput(kernelImmutableData.get(), &mockAllocation, &mockDevice, true, alreadyPrintedSize);
+        PrintfHandler::printOutput(&mockAllocation, &mockDevice, true, alreadyPrintedSize);
         std::string output = capture.getCapturedStdout();
 
         auto bcsEngine = device->getInternalLinkCopyEngine();
@@ -5004,19 +4966,6 @@ HWTEST_F(PrintfHandlerTests, givenInternalBcsEngineNotPreferredWhenPrintingOutpu
         device->incRefInternal();
         MockDeviceImp mockDevice(device.get());
 
-        auto kernelInfo = std::make_unique<KernelInfo>();
-        kernelInfo->heapInfo.kernelHeapSize = 1;
-        char kernelHeap[1];
-        kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
-        kernelInfo->kernelDescriptor.kernelMetadata.kernelName = ZebinTestData::ValidEmptyProgram<>::kernelName;
-
-        auto kernelImmutableData = std::make_unique<KernelImmutableData>(&mockDevice);
-        kernelImmutableData->initialize(kernelInfo.get(), &mockDevice, 0, nullptr, nullptr, false);
-
-        auto &kernelDescriptor = kernelInfo->kernelDescriptor;
-        kernelDescriptor.kernelAttributes.flags.usesPrintf = true;
-        kernelDescriptor.kernelAttributes.gpuPointerSize = 8u;
-
         const char *expectedString = "test123";
 
         constexpr size_t size = 128;
@@ -5032,7 +4981,7 @@ HWTEST_F(PrintfHandlerTests, givenInternalBcsEngineNotPreferredWhenPrintingOutpu
         StreamCapture capture;
         capture.captureStdout();
         uint32_t alreadyPrintedSize = 0;
-        PrintfHandler::printOutput(kernelImmutableData.get(), &mockAllocation, &mockDevice, true, alreadyPrintedSize);
+        PrintfHandler::printOutput(&mockAllocation, &mockDevice, true, alreadyPrintedSize);
         capture.getCapturedStdout();
 
         auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsEngine->commandStreamReceiver);
@@ -5065,19 +5014,6 @@ HWTEST_F(PrintfHandlerTests, givenPrintDebugMessagesAndKernelWithPrintfWhenBlitt
         bcsCsr->callBaseFlushBcsTask = false;
         bcsCsr->flushBcsTaskReturnValue = NEO::CompletionStamp::gpuHang;
 
-        auto kernelInfo = std::make_unique<KernelInfo>();
-        kernelInfo->heapInfo.kernelHeapSize = 1;
-        char kernelHeap[1];
-        kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
-        kernelInfo->kernelDescriptor.kernelMetadata.kernelName = ZebinTestData::ValidEmptyProgram<>::kernelName;
-
-        auto kernelImmutableData = std::make_unique<KernelImmutableData>(&mockDevice);
-        kernelImmutableData->initialize(kernelInfo.get(), &mockDevice, 0, nullptr, nullptr, false);
-
-        auto &kernelDescriptor = kernelInfo->kernelDescriptor;
-        kernelDescriptor.kernelAttributes.flags.usesPrintf = true;
-        kernelDescriptor.kernelAttributes.gpuPointerSize = 8u;
-
         const char *expectedString = "test123";
 
         constexpr size_t size = 128;
@@ -5094,7 +5030,7 @@ HWTEST_F(PrintfHandlerTests, givenPrintDebugMessagesAndKernelWithPrintfWhenBlitt
         capture.captureStdout();
         capture.captureStderr();
         uint32_t alreadyPrintedSize = 0;
-        PrintfHandler::printOutput(kernelImmutableData.get(), &mockAllocation, &mockDevice, true, alreadyPrintedSize);
+        PrintfHandler::printOutput(&mockAllocation, &mockDevice, true, alreadyPrintedSize);
         std::string output = capture.getCapturedStdout();
         std::string error = capture.getCapturedStderr();
 
@@ -5112,18 +5048,6 @@ HWTEST_F(PrintfHandlerTests, givenPrintfBufferDrainedFromTwoChannelsThenOutputIs
     device->incRefInternal();
     MockDeviceImp mockDevice(device.get());
 
-    auto kernelInfo = std::make_unique<KernelInfo>();
-    kernelInfo->heapInfo.kernelHeapSize = 1;
-    char kernelHeap[1];
-    kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
-    kernelInfo->kernelDescriptor.kernelMetadata.kernelName = ZebinTestData::ValidEmptyProgram<>::kernelName;
-
-    auto kernelImmutableData = std::make_unique<KernelImmutableData>(&mockDevice);
-    kernelImmutableData->initialize(kernelInfo.get(), &mockDevice, 0, nullptr, nullptr, false);
-    auto &kernelDescriptor = kernelInfo->kernelDescriptor;
-    kernelDescriptor.kernelAttributes.flags.usesPrintf = true;
-    kernelDescriptor.kernelAttributes.gpuPointerSize = 8u;
-
     const char *expectedString = "printed_once";
     constexpr size_t size = 128;
     uint32_t bufferArray[size] = {};
@@ -5139,7 +5063,7 @@ HWTEST_F(PrintfHandlerTests, givenPrintfBufferDrainedFromTwoChannelsThenOutputIs
 
     StreamCapture firstCapture;
     firstCapture.captureStdout();
-    PrintfHandler::printOutput(kernelImmutableData.get(), &mockAllocation, &mockDevice, false, alreadyPrintedSize);
+    PrintfHandler::printOutput(&mockAllocation, &mockDevice, false, alreadyPrintedSize);
     std::string firstOutput = firstCapture.getCapturedStdout();
     EXPECT_STREQ(expectedString, firstOutput.c_str());
     EXPECT_EQ(dataSize, alreadyPrintedSize);
@@ -5147,7 +5071,7 @@ HWTEST_F(PrintfHandlerTests, givenPrintfBufferDrainedFromTwoChannelsThenOutputIs
     // Second channel draining the same launch (no new bytes written) must print nothing.
     StreamCapture secondCapture;
     secondCapture.captureStdout();
-    PrintfHandler::printOutput(kernelImmutableData.get(), &mockAllocation, &mockDevice, false, alreadyPrintedSize);
+    PrintfHandler::printOutput(&mockAllocation, &mockDevice, false, alreadyPrintedSize);
     std::string secondOutput = secondCapture.getCapturedStdout();
     EXPECT_EQ(0u, secondOutput.size());
     EXPECT_EQ(dataSize, alreadyPrintedSize);
@@ -5157,18 +5081,6 @@ HWTEST_F(PrintfHandlerTests, givenPrintfBufferGrowingAcrossLaunchesThenEachLaunc
     auto device = std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(defaultHwInfo.get(), 0));
     device->incRefInternal();
     MockDeviceImp mockDevice(device.get());
-
-    auto kernelInfo = std::make_unique<KernelInfo>();
-    kernelInfo->heapInfo.kernelHeapSize = 1;
-    char kernelHeap[1];
-    kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
-    kernelInfo->kernelDescriptor.kernelMetadata.kernelName = ZebinTestData::ValidEmptyProgram<>::kernelName;
-
-    auto kernelImmutableData = std::make_unique<KernelImmutableData>(&mockDevice);
-    kernelImmutableData->initialize(kernelInfo.get(), &mockDevice, 0, nullptr, nullptr, false);
-    auto &kernelDescriptor = kernelInfo->kernelDescriptor;
-    kernelDescriptor.kernelAttributes.flags.usesPrintf = true;
-    kernelDescriptor.kernelAttributes.gpuPointerSize = 8u;
 
     const char *firstString = "launch_one";
     const char *secondString = "launch_two";
@@ -5186,7 +5098,7 @@ HWTEST_F(PrintfHandlerTests, givenPrintfBufferGrowingAcrossLaunchesThenEachLaunc
     uint32_t alreadyPrintedSize = 0;
     StreamCapture firstCapture;
     firstCapture.captureStdout();
-    PrintfHandler::printOutput(kernelImmutableData.get(), &mockAllocation, &mockDevice, false, alreadyPrintedSize);
+    PrintfHandler::printOutput(&mockAllocation, &mockDevice, false, alreadyPrintedSize);
     EXPECT_STREQ(firstString, firstCapture.getCapturedStdout().c_str());
     EXPECT_EQ(sizeAfterFirst, alreadyPrintedSize);
 
@@ -5197,7 +5109,7 @@ HWTEST_F(PrintfHandlerTests, givenPrintfBufferGrowingAcrossLaunchesThenEachLaunc
 
     StreamCapture secondCapture;
     secondCapture.captureStdout();
-    PrintfHandler::printOutput(kernelImmutableData.get(), &mockAllocation, &mockDevice, false, alreadyPrintedSize);
+    PrintfHandler::printOutput(&mockAllocation, &mockDevice, false, alreadyPrintedSize);
     std::string secondOutput = secondCapture.getCapturedStdout();
     EXPECT_STREQ(secondString, secondOutput.c_str()); // only the new entry, launch_one is not re-printed
     EXPECT_EQ(sizeAfterSecond, alreadyPrintedSize);
@@ -5207,18 +5119,6 @@ HWTEST_F(PrintfHandlerTests, givenFullPrintfBufferWhenDrainedThenBufferIsRewound
     auto device = std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(defaultHwInfo.get(), 0));
     device->incRefInternal();
     MockDeviceImp mockDevice(device.get());
-
-    auto kernelInfo = std::make_unique<KernelInfo>();
-    kernelInfo->heapInfo.kernelHeapSize = 1;
-    char kernelHeap[1];
-    kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
-    kernelInfo->kernelDescriptor.kernelMetadata.kernelName = ZebinTestData::ValidEmptyProgram<>::kernelName;
-
-    auto kernelImmutableData = std::make_unique<KernelImmutableData>(&mockDevice);
-    kernelImmutableData->initialize(kernelInfo.get(), &mockDevice, 0, nullptr, nullptr, false);
-    auto &kernelDescriptor = kernelInfo->kernelDescriptor;
-    kernelDescriptor.kernelAttributes.flags.usesPrintf = true;
-    kernelDescriptor.kernelAttributes.gpuPointerSize = 8u;
 
     const char *lastString = "at_capacity";
     const char *afterReclaimString = "after_reclaim";
@@ -5239,7 +5139,7 @@ HWTEST_F(PrintfHandlerTests, givenFullPrintfBufferWhenDrainedThenBufferIsRewound
 
     StreamCapture capture;
     capture.captureStdout();
-    PrintfHandler::printOutput(kernelImmutableData.get(), &mockAllocation, &mockDevice, false, alreadyPrintedSize);
+    PrintfHandler::printOutput(&mockAllocation, &mockDevice, false, alreadyPrintedSize);
     EXPECT_STREQ(lastString, capture.getCapturedStdout().c_str());
 
     // Full buffer was rewound: write offset reset to the start and the mark cleared.
@@ -5253,7 +5153,7 @@ HWTEST_F(PrintfHandlerTests, givenFullPrintfBufferWhenDrainedThenBufferIsRewound
 
     StreamCapture reuseCapture;
     reuseCapture.captureStdout();
-    PrintfHandler::printOutput(kernelImmutableData.get(), &mockAllocation, &mockDevice, false, alreadyPrintedSize);
+    PrintfHandler::printOutput(&mockAllocation, &mockDevice, false, alreadyPrintedSize);
     EXPECT_STREQ(afterReclaimString, reuseCapture.getCapturedStdout().c_str());
     EXPECT_EQ(reusedSize, alreadyPrintedSize);
 }
@@ -5706,7 +5606,7 @@ TEST(KernelImmutableDataTest, givenBindlessKernelWhenInitializingImmDataThenSshT
         kernelInfo->kernelDescriptor.kernelAttributes.numArgsStateful = 1;
 
         auto kernelImmutableData = std::make_unique<KernelImmutableData>(&mockDevice);
-        kernelImmutableData->initialize(kernelInfo.get(), &mockDevice, 0, nullptr, nullptr, false);
+        kernelImmutableData->initialize(kernelInfo.get(), &mockDevice, nullptr, nullptr);
 
         auto &gfxCoreHelper = device->getGfxCoreHelper();
         auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getRenderSurfaceStateSize(device->getRootDeviceEnvironment()));

@@ -206,7 +206,7 @@ TEST_F(KernelSubGroupInfoTest, GivenWorkGroupSizeWhenGettingMaxNumSubGroupsThenR
     EXPECT_EQ(paramValue[0], Math::divideAndRoundUp(calculatedMaxWorkgroupSize, largestCompiledSIMDSize));
 }
 
-TEST_F(KernelSubGroupInfoTest, GivenKernelWhenGettingCompileNumSubGroupThenReturnIsCalculatedCorrectly) {
+TEST_F(KernelSubGroupInfoTest, GivenKernelWhenGettingCompileNumSubGroupThenZeroIsReturned) {
     REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
 
     retVal = clGetKernelSubGroupInfo(
@@ -221,7 +221,7 @@ TEST_F(KernelSubGroupInfoTest, GivenKernelWhenGettingCompileNumSubGroupThenRetur
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(paramValueSizeRet, sizeof(size_t));
-    EXPECT_EQ(paramValue[0], static_cast<size_t>(pKernel->getKernelInfo().kernelDescriptor.kernelMetadata.compiledSubGroupsNumber));
+    EXPECT_EQ(0u, paramValue[0]);
 }
 
 TEST_F(KernelSubGroupInfoTest, GivenKernelWhenGettingCompileSubGroupSizeThenReturnIsCalculatedCorrectly) {
