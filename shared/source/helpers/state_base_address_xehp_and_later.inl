@@ -8,7 +8,6 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/cache_settings_helper.h"
-#include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/state_base_address_base.inl"
 
@@ -117,10 +116,7 @@ void StateBaseAddressHelper<GfxFamily>::programBindingTableBaseAddress(LinearStr
         _3DSTATE_BINDING_TABLE_POOL_ALLOC cmd = GfxFamily::cmdInitStateBindingTablePoolAlloc;
         cmd.setBindingTablePoolBaseAddress(baseAddress);
         cmd.setBindingTablePoolBufferSize(sizeInPages);
-        cmd.setSurfaceObjectControlStateIndexToMocsTables(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER));
-        if (debugManager.flags.DisableCachingForHeaps.get()) {
-            cmd.setSurfaceObjectControlStateIndexToMocsTables(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED));
-        }
+        cmd.setSurfaceObjectControlStateIndexToMocsTables(gmmHelper->getMOCS(CacheSettingsHelper::getGmmUsageTypeForStateHeap(debugManager.flags.DisableCachingForHeaps.get())));
 
         *bindingTablePoolAlloc = cmd;
     }

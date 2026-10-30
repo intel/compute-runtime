@@ -46,6 +46,11 @@ GmmResourceUsageType CacheSettingsHelper::getGmmUsageTypeForKmdMappedIsa(Allocat
     return GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
 }
 
+GmmResourceUsageType CacheSettingsHelper::getGmmUsageTypeForStateHeap(bool forceUncached) {
+    return forceUncached ? GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED
+                         : GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER;
+}
+
 bool CacheSettingsHelper::isUncachedType(GmmResourceUsageType gmmResourceUsageType) {
     return ((gmmResourceUsageType == GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC) ||
             (gmmResourceUsageType == GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED) ||

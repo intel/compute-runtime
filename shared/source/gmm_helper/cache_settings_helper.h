@@ -29,6 +29,7 @@ struct CacheSettingsHelper {
     static GmmResourceUsageType getGmmUsageTypeForUserPtr(bool isCacheFlushRequired, const void *userPtr, size_t size, const HardwareInfo &hwInfo, const ReleaseHelper &releaseHelper);
     static GmmResourceUsageType getGmmUsageTypeForCoherentSystemMemory(GmmResourceUsageType preferredUsageType, const ProductHelper &productHelper, const ReleaseHelper &releaseHelper);
 
+    static GmmResourceUsageType getGmmUsageTypeForStateHeap(bool forceUncached);
     static bool isUncachedType(GmmResourceUsageType gmmResourceUsageType);
 
     static bool preferNoCpuAccess(GmmResourceUsageType gmmResourceUsageType, const RootDeviceEnvironment &rootDeviceEnvironment);
