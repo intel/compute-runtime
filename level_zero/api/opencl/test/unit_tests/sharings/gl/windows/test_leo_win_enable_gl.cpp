@@ -8,6 +8,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/test.h"
 
+#include "level_zero/api/opencl/source/sharings/gl/leo_gl_arb_sync_event.h"
 #include "level_zero/api/opencl/source/sharings/gl/windows/leo_win_enable_gl.h"
 
 namespace NEO {
@@ -32,6 +33,12 @@ TEST(LeoGlSharingBuilderFactoryWindowsTest, givenGlSharingEnabledByDebugFlagWhen
                           "cl_khr_gl_event "
                           "cl_khr_gl_msaa_sharing "),
               factory.getExtensions(nullptr));
+}
+
+TEST(LeoGlSharingBuilderFactoryWindowsTest, givenGlSharingBuilderWhenAskedForGlSyncFunctionsThenExportedEntryPointsAreReturned) {
+    GlSharingBuilderFactory factory;
+    EXPECT_EQ(reinterpret_cast<void *>(clGetCLEventInfoINTEL), factory.getExtensionFunctionAddress("clGetCLEventInfoINTEL"));
+    EXPECT_EQ(reinterpret_cast<void *>(clReleaseGlSharedEventINTEL), factory.getExtensionFunctionAddress("clReleaseGlSharedEventINTEL"));
 }
 
 } // namespace ult

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -95,6 +95,12 @@ std::string GlSharingBuilderFactory::getExtensions(DriverInfo *driverInfo) {
 }
 
 void *GlSharingBuilderFactory::getExtensionFunctionAddress(const std::string &functionName) {
+    if (functionName == "clGetCLEventInfoINTEL") {
+        return reinterpret_cast<void *>(clGetCLEventInfoINTEL);
+    }
+    if (functionName == "clReleaseGlSharedEventINTEL") {
+        return reinterpret_cast<void *>(clReleaseGlSharedEventINTEL);
+    }
     if (debugManager.flags.EnableFormatQuery.get() &&
         functionName == "clGetSupportedGLTextureFormatsINTEL") {
         return ((void *)(clGetSupportedGLTextureFormatsINTEL));

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/test/common/fixtures/memory_management_fixture.h"
 
+#include "opencl/source/sharings/gl/cl_gl_api_intel.h"
 #include "opencl/source/sharings/gl/windows/win_enable_gl.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
@@ -28,6 +29,11 @@ TEST_F(GlSharingEnablerTests, givenGlFactoryWhenAskedThenExtensionsAreReturned) 
     auto ext = factory->getExtensions(nullptr);
     EXPECT_GT(ext.length(), 0u);
     EXPECT_STRNE("", ext.c_str());
+}
+
+TEST_F(GlSharingEnablerTests, givenGlFactoryWhenAskedForGlSyncFunctionsThenExportedEntryPointsAreReturned) {
+    EXPECT_EQ(reinterpret_cast<void *>(clGetCLEventInfoINTEL), factory->getExtensionFunctionAddress("clGetCLEventInfoINTEL"));
+    EXPECT_EQ(reinterpret_cast<void *>(clReleaseGlSharedEventINTEL), factory->getExtensionFunctionAddress("clReleaseGlSharedEventINTEL"));
 }
 
 TEST_F(GlSharingEnablerTests, givenGlFactoryWhenAskedThenGlobalIcdIsConfigured) {

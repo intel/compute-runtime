@@ -11,6 +11,7 @@
 
 #include "level_zero/api/opencl/source/context/leo_context.h"
 #include "level_zero/api/opencl/source/sharings/gl/leo_cl_gl_api_intel.h"
+#include "level_zero/api/opencl/source/sharings/gl/leo_gl_arb_sync_event.h"
 #include "level_zero/api/opencl/source/sharings/gl/windows/leo_gl_sharing_windows.h"
 #include "level_zero/api/opencl/source/sharings/leo_sharing_factory.h"
 #include "level_zero/api/opencl/source/sharings/leo_sharing_factory.inl"
@@ -95,6 +96,12 @@ std::string GlSharingBuilderFactory::getExtensions(DriverInfo *driverInfo) {
 }
 
 void *GlSharingBuilderFactory::getExtensionFunctionAddress(const std::string &functionName) {
+    if (functionName == "clGetCLEventInfoINTEL") {
+        return reinterpret_cast<void *>(clGetCLEventInfoINTEL);
+    }
+    if (functionName == "clReleaseGlSharedEventINTEL") {
+        return reinterpret_cast<void *>(clReleaseGlSharedEventINTEL);
+    }
     if (debugManager.flags.EnableFormatQuery.get() &&
         functionName == "clGetSupportedGLTextureFormatsINTEL") {
         return ((void *)(clGetSupportedGLTextureFormatsINTEL));
