@@ -2518,6 +2518,42 @@ TEST_F(SvmHostAllocationCacheTest, givenMultiDeviceWhenHostAllocationCachedForBo
     svmManager->cleanupUSMAllocCaches();
 }
 
+TEST_F(SvmDeviceAllocationCacheTest, givenMultiDeviceContextWhenDeviceAllocationIsRequestedForAllRootDevicesThenCachedAllocationOfSameDeviceIsReused) {
+    auto deviceFactory = std::make_unique<UltDeviceFactory>(2, 0);
+    DebugManagerStateRestore restore;
+    debugManager.flags.ExperimentalEnableDeviceAllocationCache.set(1);
+    auto device0 = deviceFactory->rootDevices[0];
+    auto device1 = deviceFactory->rootDevices[1];
+    auto memoryManager = reinterpret_cast<MockMemoryManager *>(device0->getMemoryManager());
+    auto svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager);
+    device0->usmReuseInfo.init(1 * MemoryConstants::gigaByte, UsmReuseInfo::notLimited);
+    svmManager->initUsmAllocationsCaches(*device0);
+    ASSERT_NE(nullptr, svmManager->usmDeviceAllocationsCache);
+
+    RootDeviceIndicesContainer bothRootDeviceIndices;
+    bothRootDeviceIndices.pushUnique(device0->getRootDeviceIndex());
+    bothRootDeviceIndices.pushUnique(device1->getRootDeviceIndex());
+    std::map<uint32_t, DeviceBitfield> bothDeviceBitfields = {
+        {device0->getRootDeviceIndex(), device0->getDeviceBitfield()},
+        {device1->getRootDeviceIndex(), device1->getDeviceBitfield()}};
+    UnifiedMemoryProperties properties(InternalMemoryType::deviceUnifiedMemory, 1, bothRootDeviceIndices, bothDeviceBitfields);
+    properties.device = device0;
+
+    auto allocation = svmManager->createUnifiedMemoryAllocation(MemoryConstants::pageSize64k, properties);
+    ASSERT_NE(nullptr, allocation);
+    ASSERT_EQ(nullptr, svmManager->getSVMAlloc(allocation)->gpuAllocations.getGraphicsAllocation(device1->getRootDeviceIndex()));
+
+    svmManager->freeSVMAlloc(allocation);
+    EXPECT_EQ(1u, svmManager->usmDeviceAllocationsCache->allocations.size());
+
+    auto recycledAllocation = svmManager->createUnifiedMemoryAllocation(MemoryConstants::pageSize64k, properties);
+    EXPECT_EQ(allocation, recycledAllocation);
+    EXPECT_EQ(0u, svmManager->usmDeviceAllocationsCache->allocations.size());
+
+    svmManager->freeSVMAlloc(recycledAllocation);
+    svmManager->cleanupUSMAllocCaches();
+}
+
 struct SvmSharedAllocationCacheTestFixture : SvmAllocationCacheTestFixture {
     UnifiedMemoryProperties createSharedMemoryProperties(Device *device) {
         return createMemoryProperties(InternalMemoryType::sharedUnifiedMemory, device);

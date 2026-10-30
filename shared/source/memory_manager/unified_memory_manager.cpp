@@ -180,6 +180,9 @@ void *SVMAllocsManager::SvmAllocationCache::get(size_t size, const UnifiedMemory
         void *allocationPtr = allocationIter->allocation;
         DEBUG_BREAK_IF(nullptr == allocationIter->svmData);
         auto hasAllRootDeviceMappings = [&]() {
+            if (unifiedMemoryProperties.memoryType == InternalMemoryType::deviceUnifiedMemory) {
+                return allocationIter->svmData->gpuAllocations.getGraphicsAllocation(unifiedMemoryProperties.getRootDeviceIndex()) != nullptr;
+            }
             for (const auto &rootDeviceIndex : unifiedMemoryProperties.rootDeviceIndices) {
                 if (allocationIter->svmData->gpuAllocations.getGraphicsAllocation(rootDeviceIndex) == nullptr) {
                     return false;
