@@ -2927,6 +2927,21 @@ void testSysmanDriverProperties(zes_driver_handle_t driver) {
     if (properties.driverVersion == 0) {
         std::cout << "Warning: driverVersion is zero, the driver version could not be retrieved" << std::endl;
     }
+
+    using zesIntelDriverGetApiVersionExp_pfn = ze_result_t(ZE_APICALL *)(zes_driver_handle_t, zes_intel_api_version_exp_t *);
+
+    zesIntelDriverGetApiVersionExp_pfn zesIntelDriverGetApiVersionExpPtr = nullptr;
+    VALIDATECALL(zesDriverGetExtensionFunctionAddress(driver, "zesIntelDriverGetApiVersionExp", reinterpret_cast<void **>(&zesIntelDriverGetApiVersionExpPtr)));
+    if (!zesIntelDriverGetApiVersionExpPtr) {
+        std::cout << "Driver API version EXP function pointer not available" << std::endl;
+        return;
+    }
+
+    zes_intel_api_version_exp_t apiVersion = {};
+    VALIDATECALL(zesIntelDriverGetApiVersionExpPtr(driver, &apiVersion));
+    if (verbose) {
+        std::cout << "driverApiVersion = " << ZES_INTEL_MAJOR_VERSION(apiVersion) << "." << ZES_INTEL_MINOR_VERSION(apiVersion) << std::endl;
+    }
 }
 
 std::string pciLinkStatusToString(zes_pci_link_status_t status) {

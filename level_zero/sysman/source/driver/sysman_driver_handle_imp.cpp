@@ -51,6 +51,7 @@ void *getSysmanExtensionFunctionAddress(const std::string &functionName) {
     RETURN_FUNC_PTR_IF_EXIST(zesIntelDeviceGetPowerOffReasonExp);
     RETURN_FUNC_PTR_IF_EXIST(zesIntelDriverEnumInfoLogsExp);
     RETURN_FUNC_PTR_IF_EXIST(zesIntelDriverGetPciDevicePropertiesExp);
+    RETURN_FUNC_PTR_IF_EXIST(zesIntelDriverGetApiVersionExp);
     RETURN_FUNC_PTR_IF_EXIST(zesIntelInfoLogGetPropertiesExp);
     RETURN_FUNC_PTR_IF_EXIST(zesIntelInfoLogCreateInstanceExp);
     RETURN_FUNC_PTR_IF_EXIST(zesIntelInfoLogInstanceReadWithMetadataExp);
@@ -411,6 +412,15 @@ ze_result_t SysmanDriverHandleImp::getDeviceRescan(uint32_t *pCount, zes_device_
     }
 
     return pOsSysmanDriver->rescanDevices(this, pCount, phDevices);
+}
+
+zes_intel_api_version_exp_t SysmanDriverHandle::getSupportedApiVersion() {
+    return ZES_INTEL_API_VERSION_EXP_1_19;
+}
+
+ze_result_t SysmanDriverHandleImp::getApiVersion(zes_intel_api_version_exp_t *pVersion) {
+    *pVersion = SysmanDriverHandle::getSupportedApiVersion();
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t SysmanDriverHandleImp::getDriverProperties(zes_driver_properties_t *pProperties) {

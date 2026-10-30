@@ -1145,6 +1145,89 @@ ze_result_t ZE_APICALL zesIntelDriverGetPciDevicePropertiesExp(
 );
 
 ///////////////////////////////////////////////////////////////////////////////
+#ifndef ZES_INTEL_DRIVER_API_VERSION_EXP_NAME
+/// @brief Driver API version extension name
+#define ZES_INTEL_DRIVER_API_VERSION_EXP_NAME "ZES_intel_experimental_driver_api_version"
+#endif // ZES_INTEL_DRIVER_API_VERSION_EXP_NAME
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Driver API version extension Version(s)
+typedef enum _zes_intel_driver_api_version_exp_version_t {
+    ZES_INTEL_DRIVER_API_VERSION_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),                            ///< version 1.0
+    ZES_INTEL_DRIVER_API_VERSION_EXP_VERSION_CURRENT = ZES_INTEL_DRIVER_API_VERSION_EXP_VERSION_1_0, ///< latest known version
+    ZES_INTEL_DRIVER_API_VERSION_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
+} zes_intel_driver_api_version_exp_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
+#ifndef ZES_INTEL_MAKE_VERSION
+/// @brief Generates generic Sysman API versions
+#define ZES_INTEL_MAKE_VERSION(_major, _minor) ((_major << 16) | (_minor & 0x0000ffff))
+#endif // ZES_INTEL_MAKE_VERSION
+
+///////////////////////////////////////////////////////////////////////////////
+#ifndef ZES_INTEL_MAJOR_VERSION
+/// @brief Extracts Sysman API major version
+#define ZES_INTEL_MAJOR_VERSION(_ver) (_ver >> 16)
+#endif // ZES_INTEL_MAJOR_VERSION
+
+///////////////////////////////////////////////////////////////////////////////
+#ifndef ZES_INTEL_MINOR_VERSION
+/// @brief Extracts Sysman API minor version
+#define ZES_INTEL_MINOR_VERSION(_ver) (_ver & 0x0000ffff)
+#endif // ZES_INTEL_MINOR_VERSION
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Supported Sysman API versions
+///
+/// @details
+///     - API versions contain major and minor attributes, use ::ZES_INTEL_MAJOR_VERSION
+///       and ::ZES_INTEL_MINOR_VERSION
+typedef enum _zes_intel_api_version_exp_t {
+    ZES_INTEL_API_VERSION_EXP_1_0 = ZES_INTEL_MAKE_VERSION(1, 0),   ///< version 1.0
+    ZES_INTEL_API_VERSION_EXP_1_1 = ZES_INTEL_MAKE_VERSION(1, 1),   ///< version 1.1
+    ZES_INTEL_API_VERSION_EXP_1_2 = ZES_INTEL_MAKE_VERSION(1, 2),   ///< version 1.2
+    ZES_INTEL_API_VERSION_EXP_1_3 = ZES_INTEL_MAKE_VERSION(1, 3),   ///< version 1.3
+    ZES_INTEL_API_VERSION_EXP_1_4 = ZES_INTEL_MAKE_VERSION(1, 4),   ///< version 1.4
+    ZES_INTEL_API_VERSION_EXP_1_5 = ZES_INTEL_MAKE_VERSION(1, 5),   ///< version 1.5
+    ZES_INTEL_API_VERSION_EXP_1_6 = ZES_INTEL_MAKE_VERSION(1, 6),   ///< version 1.6
+    ZES_INTEL_API_VERSION_EXP_1_7 = ZES_INTEL_MAKE_VERSION(1, 7),   ///< version 1.7
+    ZES_INTEL_API_VERSION_EXP_1_8 = ZES_INTEL_MAKE_VERSION(1, 8),   ///< version 1.8
+    ZES_INTEL_API_VERSION_EXP_1_9 = ZES_INTEL_MAKE_VERSION(1, 9),   ///< version 1.9
+    ZES_INTEL_API_VERSION_EXP_1_10 = ZES_INTEL_MAKE_VERSION(1, 10), ///< version 1.10
+    ZES_INTEL_API_VERSION_EXP_1_11 = ZES_INTEL_MAKE_VERSION(1, 11), ///< version 1.11
+    ZES_INTEL_API_VERSION_EXP_1_12 = ZES_INTEL_MAKE_VERSION(1, 12), ///< version 1.12
+    ZES_INTEL_API_VERSION_EXP_1_13 = ZES_INTEL_MAKE_VERSION(1, 13), ///< version 1.13
+    ZES_INTEL_API_VERSION_EXP_1_14 = ZES_INTEL_MAKE_VERSION(1, 14), ///< version 1.14
+    ZES_INTEL_API_VERSION_EXP_1_15 = ZES_INTEL_MAKE_VERSION(1, 15), ///< version 1.15
+    ZES_INTEL_API_VERSION_EXP_1_16 = ZES_INTEL_MAKE_VERSION(1, 16), ///< version 1.16
+    ZES_INTEL_API_VERSION_EXP_1_17 = ZES_INTEL_MAKE_VERSION(1, 17), ///< version 1.17
+    ZES_INTEL_API_VERSION_EXP_1_18 = ZES_INTEL_MAKE_VERSION(1, 18), ///< version 1.18
+    ZES_INTEL_API_VERSION_EXP_1_19 = ZES_INTEL_MAKE_VERSION(1, 19), ///< version 1.19
+    ZES_INTEL_API_VERSION_EXP_1_20 = ZES_INTEL_MAKE_VERSION(1, 20), ///< version 1.20
+    ZES_INTEL_API_VERSION_EXP_FORCE_UINT32 = 0x7fffffff
+} zes_intel_api_version_exp_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Returns the API version supported by the specified sysman driver
+///
+/// @details
+///     - The application may call this function from simultaneous threads.
+///     - The implementation of this function should be lock-free.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hDriver`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == version`
+ze_result_t ZE_APICALL zesIntelDriverGetApiVersionExp(
+    zes_driver_handle_t hDriver,         ///< [in] handle of the sysman driver instance
+    zes_intel_api_version_exp_t *version ///< [out] api version
+);
+
+///////////////////////////////////////////////////////////////////////////////
 #ifndef ZES_INTEL_DEVICE_SOC_UID_EXP_PROPERTY_NAME
 /// @brief Device SOC UID property extension name
 #define ZES_INTEL_DEVICE_SOC_UID_EXP_PROPERTY_NAME "ZES_intel_experimental_device_soc_uid_property"

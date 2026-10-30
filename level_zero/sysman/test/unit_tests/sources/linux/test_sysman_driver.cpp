@@ -302,6 +302,7 @@ bool verifyExtensionDefinition(std::vector<zes_driver_extension_properties_t> &e
         {ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_NAME, ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_VERSION_CURRENT},
         {ZES_INTEL_DEVICE_COMPUTE_EXP_PROPERTY_NAME, ZES_INTEL_DEVICE_COMPUTE_EXP_PROPERTIES_VERSION_CURRENT},
         {ZES_INTEL_DRIVER_PCI_DEVICE_PROPERTIES_EXP_NAME, ZES_INTEL_DRIVER_PCI_DEVICE_PROPERTIES_EXP_VERSION_CURRENT},
+        {ZES_INTEL_DRIVER_API_VERSION_EXP_NAME, ZES_INTEL_DRIVER_API_VERSION_EXP_VERSION_CURRENT},
         {ZES_INTEL_DEVICE_GENERATION_EXP_PROPERTY_NAME, ZES_INTEL_DEVICE_GENERATION_EXP_PROPERTIES_VERSION_CURRENT},
         {ZES_INTEL_DEVICE_SOC_UID_EXP_PROPERTY_NAME, ZES_INTEL_DEVICE_SOC_UID_EXP_PROPERTIES_VERSION_CURRENT},
         {ZES_INTEL_ENGINE_ACTIVITY_COLLECTION_EXP_NAME, ZES_INTEL_ENGINE_ACTIVITY_COLLECTION_EXP_VERSION_CURRENT}};
@@ -418,6 +419,9 @@ TEST_F(SysmanDriverHandleTest,
     result = zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelEngineStopActivityCollectionExp", &funPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
+    result = zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelDriverGetApiVersionExp", &funPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
     result = zesDriverGetExtensionFunctionAddress(driverHandle, "zexDriverImportUnKnownPointer", &funPtr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
@@ -494,6 +498,27 @@ TEST_F(SysmanDriverHandleTest, GivenNeitherInitFlagSetWhenCallingGetDriverProper
 
     zes_driver_properties_t properties = {ZES_STRUCTURE_TYPE_DRIVER_PROPERTIES};
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDriverGetProperties(driverHandle->toHandle(), &properties));
+}
+
+TEST_F(SysmanDriverHandleTest, GivenSysmanOnlyInitWhenCallingGetApiVersionEntrypointThenExpectedVersionIsReturned) {
+    zes_intel_api_version_exp_t version = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelDriverGetApiVersionExp(driverHandle->toHandle(), &version));
+    EXPECT_EQ(ZES_INTEL_API_VERSION_EXP_1_19, version);
+}
+
+TEST_F(SysmanDriverHandleTest, GivenSysmanInitFromCoreWhenCallingGetApiVersionEntrypointThenUnsupportedFeatureIsReturned) {
+    VariableBackup<bool> sysmanInitFromCoreBackup(&L0::sysmanInitFromCore, true);
+
+    zes_intel_api_version_exp_t version = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelDriverGetApiVersionExp(driverHandle->toHandle(), &version));
+}
+
+TEST_F(SysmanDriverHandleTest, GivenNeitherInitFlagSetWhenCallingGetApiVersionEntrypointThenUninitializedIsReturned) {
+    VariableBackup<bool> sysmanInitFromCoreBackup(&L0::sysmanInitFromCore, false);
+    VariableBackup<bool> sysmanOnlyInitBackup(&L0::Sysman::sysmanOnlyInit, false);
+
+    zes_intel_api_version_exp_t version = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesIntelDriverGetApiVersionExp(driverHandle->toHandle(), &version));
 }
 
 TEST_F(SysmanDriverHandleTest, GivenInitializedDriverHandleWhenCallingGetUuidTimestampThenSameNonZeroTimestampIsReturned) {

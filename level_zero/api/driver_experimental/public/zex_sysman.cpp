@@ -77,6 +77,16 @@ ze_result_t ZE_APICALL zesIntelDriverGetPciDevicePropertiesExp(zes_driver_handle
     }
 }
 
+ze_result_t ZE_APICALL zesIntelDriverGetApiVersionExp(zes_driver_handle_t hDriver, zes_intel_api_version_exp_t *pVersion) {
+    if (L0::sysmanInitFromCore) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    } else if (L0::Sysman::sysmanOnlyInit) {
+        return L0::Sysman::SysmanDriverHandle::fromHandle(hDriver)->getApiVersion(pVersion);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+}
+
 ze_result_t ZE_APICALL zesIntelInfoLogGetPropertiesExp(zes_intel_info_log_handle_t hInfoLog, zes_intel_info_log_properties_exp_t *pInfoLogProperties) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
@@ -162,6 +172,10 @@ ze_result_t ZE_APICALL zesIntelDriverEventListenExp(zes_driver_handle_t hDriver,
 
 ze_result_t ZE_APICALL zesIntelDriverGetPciDevicePropertiesExp(zes_driver_handle_t hDriver, uint32_t *pCount, zes_intel_driver_pci_device_properties_exp_t *pProperties) {
     return L0::zesIntelDriverGetPciDevicePropertiesExp(hDriver, pCount, pProperties);
+}
+
+ze_result_t ZE_APICALL zesIntelDriverGetApiVersionExp(zes_driver_handle_t hDriver, zes_intel_api_version_exp_t *pVersion) {
+    return L0::zesIntelDriverGetApiVersionExp(hDriver, pVersion);
 }
 
 ze_result_t ZE_APICALL zesIntelInfoLogGetPropertiesExp(zes_intel_info_log_handle_t hInfoLog, zes_intel_info_log_properties_exp_t *pInfoLogProperties) {
