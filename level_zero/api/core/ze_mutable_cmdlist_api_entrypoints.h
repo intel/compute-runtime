@@ -48,6 +48,43 @@ ze_result_t ZE_APICALL zeCommandListIsMutableExp(
     ze_command_list_handle_t hCommandList,
     ze_bool_t *pIsMutable);
 
+ze_result_t ZE_APICALL zeCommandListGetNextCommandIdExt(
+    ze_command_list_handle_t hCommandList,
+    const ze_mutable_command_id_ext_desc_t *desc,
+    uint64_t *pCommandId);
+
+ze_result_t ZE_APICALL zeCommandListGetNextCommandIdWithKernelsExt(
+    ze_command_list_handle_t hCommandList,
+    const ze_mutable_command_id_ext_desc_t *desc,
+    uint32_t numKernels,
+    ze_kernel_handle_t *phKernels,
+    uint64_t *pCommandId);
+
+ze_result_t ZE_APICALL zeCommandListUpdateMutableCommandsExt(
+    ze_command_list_handle_t hCommandList,
+    const ze_mutable_commands_ext_desc_t *desc);
+
+ze_result_t ZE_APICALL zeCommandListIsMutableExt(
+    ze_command_list_handle_t hCommandList,
+    ze_bool_t *pIsMutable);
+
+ze_result_t ZE_APICALL zeCommandListUpdateMutableCommandSignalEventExt(
+    ze_command_list_handle_t hCommandList,
+    uint64_t commandId,
+    ze_event_handle_t hSignalEvent);
+
+ze_result_t ZE_APICALL zeCommandListUpdateMutableCommandWaitEventsExt(
+    ze_command_list_handle_t hCommandList,
+    uint64_t commandId,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents);
+
+ze_result_t ZE_APICALL zeCommandListUpdateMutableCommandKernelsExt(
+    ze_command_list_handle_t hCommandList,
+    uint32_t numKernels,
+    uint64_t *pCommandId,
+    ze_kernel_handle_t *phKernels);
+
 } // namespace L0
 
 extern "C" {
@@ -93,5 +130,42 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListUpdateMutableCommandKernelsExp(
 ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListIsMutableExp(
     ze_command_list_handle_t hCommandList,
     ze_bool_t *pIsMutable);
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListGetNextCommandIdExt(
+    ze_command_list_handle_t hCommandList,
+    const ze_mutable_command_id_ext_desc_t *desc,
+    uint64_t *pCommandId);
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListGetNextCommandIdWithKernelsExt(
+    ze_command_list_handle_t hCommandList,
+    const ze_mutable_command_id_ext_desc_t *desc,
+    uint32_t numKernels,
+    ze_kernel_handle_t *phKernels,
+    uint64_t *pCommandId);
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListUpdateMutableCommandsExt(
+    ze_command_list_handle_t hCommandList,
+    const ze_mutable_commands_ext_desc_t *desc);
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListIsMutableExt(
+    ze_command_list_handle_t hCommandList,
+    ze_bool_t *pIsMutable);
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListUpdateMutableCommandSignalEventExt(
+    ze_command_list_handle_t hCommandList,
+    uint64_t commandId,
+    ze_event_handle_t hSignalEvent);
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListUpdateMutableCommandWaitEventsExt(
+    ze_command_list_handle_t hCommandList,
+    uint64_t commandId,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents);
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListUpdateMutableCommandKernelsExt(
+    ze_command_list_handle_t hCommandList,
+    uint32_t numKernels,
+    uint64_t *pCommandId,
+    ze_kernel_handle_t *phKernels);
 
 } // extern "C"

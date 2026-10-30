@@ -30,5 +30,6 @@ ze_result_t ZE_APICALL zeGraphGetPrimaryCommandListExt(ze_graph_handle_t hGraph,
 ze_result_t ZE_APICALL zeGraphPauseCaptureExt(ze_graph_handle_t hGraph);
 ze_result_t ZE_APICALL zeGraphResumeCaptureExt(ze_graph_handle_t hGraph);
 ze_result_t ZE_APICALL zeGraphGetIdExt(ze_graph_handle_t hGraph, uint64_t *pGraphId);
+ze_result_t ZE_APICALL zeGraphVisitExt(ze_graph_handle_t hGraph, const ze_command_visit_ext_desc_t *pDesc);
 
 } // namespace L0

@@ -199,6 +199,10 @@ ze_result_t ZE_APICALL zeCommandListAppendWaitOnEventsWithParameters(
     uint32_t numEvents,
     ze_event_handle_t *phEvents);
 
+ze_result_t ZE_APICALL zeCommandListVisitExt(
+    ze_command_list_handle_t hCommandList,
+    const ze_command_visit_ext_desc_t *pDesc);
+
 } // namespace L0
 
 extern "C" {

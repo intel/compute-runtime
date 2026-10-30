@@ -20,7 +20,7 @@ DriverDispatch globalDriverDispatch;
 
 DriverDispatch::DriverDispatch() {
     this->core.isValidFlag = true;
-    this->core.version = ZE_API_VERSION_1_18;
+    this->core.version = ZE_API_VERSION_1_20;
     this->core.RTASBuilderExp = &this->coreRTASBuilderExp;
     this->core.RTASBuilder = &this->coreRTASBuilder;
     this->core.RTASParallelOperationExp = &this->coreRTASParallelOperationExp;
@@ -77,7 +77,7 @@ DriverDispatch::DriverDispatch() {
     this->tools.Debug = &this->toolsDebug;
 
     this->sysman.isValidFlag = true;
-    this->sysman.version = ZE_API_VERSION_1_19;
+    this->sysman.version = ZE_API_VERSION_1_20;
     this->sysman.Global = &this->sysmanGlobal;
     this->sysman.Device = &this->sysmanDevice;
     this->sysman.DeviceExp = &this->sysmanDeviceExp;
@@ -167,6 +167,7 @@ DriverDispatch::DriverDispatch() {
     this->coreDevice.pfnValidateRuntimeRequirements = L0::zeDeviceValidateRuntimeRequirements;
     this->coreDevice.pfnGetCounterBasedEventMaxValue = L0::zeDeviceGetCounterBasedEventMaxValue;
     this->coreDevice.pfnGetCompilerInfo = L0::zeDeviceGetCompilerInfo;
+    this->coreDevice.pfnGetCompilerInfoSupported = L0::zeDeviceGetCompilerInfoSupported;
     this->coreDeviceExp.pfnGetFabricVertexExp = L0::zeDeviceGetFabricVertexExp;
     this->coreContext.pfnCreate = L0::zeContextCreate;
     this->coreContext.pfnDestroy = L0::zeContextDestroy;
@@ -186,6 +187,11 @@ DriverDispatch::DriverDispatch() {
     this->coreCommandQueue.pfnGetMode = L0::zeCommandQueueGetMode;
     this->coreCommandQueue.pfnGetPriority = L0::zeCommandQueueGetPriority;
     this->coreCommandQueue.pfnGetFlags = L0::zeCommandQueueGetFlags;
+    this->coreCommandQueue.pfnSetPriorityExt = L0::zeCommandQueueSetPriorityExt;
+    this->coreCommandQueue.pfnSetQosExt = L0::zeCommandQueueSetQosExt;
+    this->coreCommandQueue.pfnGetQosExt = L0::zeCommandQueueGetQosExt;
+    this->coreCommandQueue.pfnSignalExternalSemaphoreExt = L0::zeCommandQueueSignalExternalSemaphoreExt;
+    this->coreCommandQueue.pfnWaitExternalSemaphoreExt = L0::zeCommandQueueWaitExternalSemaphoreExt;
     this->coreCommandList.pfnCreate = L0::zeCommandListCreate;
     this->coreCommandList.pfnCreateImmediate = L0::zeCommandListCreateImmediate;
     this->coreCommandList.pfnDestroy = L0::zeCommandListDestroy;
@@ -240,6 +246,14 @@ DriverDispatch::DriverDispatch() {
     this->coreCommandList.pfnAppendHostFunction = L0::zeCommandListAppendHostFunction;
     this->coreCommandList.pfnAppendSignalEventWithParameters = L0::zeCommandListAppendSignalEventWithParameters;
     this->coreCommandList.pfnAppendWaitOnEventsWithParameters = L0::zeCommandListAppendWaitOnEventsWithParameters;
+    this->coreCommandList.pfnVisitExt = L0::zeCommandListVisitExt;
+    this->coreCommandList.pfnGetNextCommandIdExt = L0::zeCommandListGetNextCommandIdExt;
+    this->coreCommandList.pfnGetNextCommandIdWithKernelsExt = L0::zeCommandListGetNextCommandIdWithKernelsExt;
+    this->coreCommandList.pfnUpdateMutableCommandsExt = L0::zeCommandListUpdateMutableCommandsExt;
+    this->coreCommandList.pfnIsMutableExt = L0::zeCommandListIsMutableExt;
+    this->coreCommandList.pfnUpdateMutableCommandSignalEventExt = L0::zeCommandListUpdateMutableCommandSignalEventExt;
+    this->coreCommandList.pfnUpdateMutableCommandWaitEventsExt = L0::zeCommandListUpdateMutableCommandWaitEventsExt;
+    this->coreCommandList.pfnUpdateMutableCommandKernelsExt = L0::zeCommandListUpdateMutableCommandKernelsExt;
     this->coreCommandListExp.pfnCreateCloneExp = L0::zeCommandListCreateCloneExp;
     this->coreCommandListExp.pfnImmediateAppendCommandListsExp = L0::zeCommandListImmediateAppendCommandListsExp;
     this->coreCommandListExp.pfnGetNextCommandIdExp = L0::zeCommandListGetNextCommandIdExp;
@@ -363,6 +377,7 @@ DriverDispatch::DriverDispatch() {
     this->coreGraph.pfnGetIdExt = L0::zeGraphGetIdExt;
     this->coreGraph.pfnPauseCaptureExt = L0::zeGraphPauseCaptureExt;
     this->coreGraph.pfnResumeCaptureExt = L0::zeGraphResumeCaptureExt;
+    this->coreGraph.pfnVisitExt = L0::zeGraphVisitExt;
     this->coreExecutableGraph.pfnGetSourceGraphExt = L0::zeExecutableGraphGetSourceGraphExt;
     this->coreExecutableGraph.pfnDestroyExt = L0::zeExecutableGraphDestroyExt;
 
@@ -495,6 +510,7 @@ DriverDispatch::DriverDispatch() {
     this->sysmanInfoLogInstance.pfnPeekWithMetadataExt = L0::zesInfoLogInstancePeekWithMetadataExt;
     this->sysmanInfoLogInstance.pfnDeleteExt = L0::zesInfoLogInstanceDeleteExt;
     this->sysmanDriver.pfnGetProperties = L0::zesDriverGetProperties;
+    this->sysmanDriver.pfnGetPciDeviceProperties = L0::zesDriverGetPciDeviceProperties;
     this->sysmanDriverExp.pfnGetDeviceByUuidExp = L0::zesDriverGetDeviceByUuidExp;
     this->sysmanOverclock.pfnGetDomainProperties = L0::zesOverclockGetDomainProperties;
     this->sysmanOverclock.pfnGetDomainVFProperties = L0::zesOverclockGetDomainVFProperties;

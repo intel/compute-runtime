@@ -86,6 +86,57 @@ ze_result_t ZE_APICALL zeCommandListIsMutableExp(
     return L0::CommandList::fromHandle(hCommandList)->isMutableExp(pIsMutable);
 }
 
+ze_result_t ZE_APICALL zeCommandListGetNextCommandIdExt(
+    ze_command_list_handle_t hCommandList,
+    const ze_mutable_command_id_ext_desc_t *desc,
+    uint64_t *pCommandId) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t ZE_APICALL zeCommandListGetNextCommandIdWithKernelsExt(
+    ze_command_list_handle_t hCommandList,
+    const ze_mutable_command_id_ext_desc_t *desc,
+    uint32_t numKernels,
+    ze_kernel_handle_t *phKernels,
+    uint64_t *pCommandId) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t ZE_APICALL zeCommandListUpdateMutableCommandsExt(
+    ze_command_list_handle_t hCommandList,
+    const ze_mutable_commands_ext_desc_t *desc) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t ZE_APICALL zeCommandListIsMutableExt(
+    ze_command_list_handle_t hCommandList,
+    ze_bool_t *pIsMutable) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t ZE_APICALL zeCommandListUpdateMutableCommandSignalEventExt(
+    ze_command_list_handle_t hCommandList,
+    uint64_t commandId,
+    ze_event_handle_t hSignalEvent) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t ZE_APICALL zeCommandListUpdateMutableCommandWaitEventsExt(
+    ze_command_list_handle_t hCommandList,
+    uint64_t commandId,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t ZE_APICALL zeCommandListUpdateMutableCommandKernelsExt(
+    ze_command_list_handle_t hCommandList,
+    uint32_t numKernels,
+    uint64_t *pCommandId,
+    ze_kernel_handle_t *phKernels) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 } // namespace L0
 
 extern "C" {
@@ -144,6 +195,57 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListIsMutableExp(
     ze_command_list_handle_t hCommandList,
     ze_bool_t *pIsMutable) {
     return L0::zeCommandListIsMutableExp(hCommandList, pIsMutable);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListGetNextCommandIdExt(
+    ze_command_list_handle_t hCommandList,
+    const ze_mutable_command_id_ext_desc_t *desc,
+    uint64_t *pCommandId) {
+    return L0::zeCommandListGetNextCommandIdExt(hCommandList, desc, pCommandId);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListGetNextCommandIdWithKernelsExt(
+    ze_command_list_handle_t hCommandList,
+    const ze_mutable_command_id_ext_desc_t *desc,
+    uint32_t numKernels,
+    ze_kernel_handle_t *phKernels,
+    uint64_t *pCommandId) {
+    return L0::zeCommandListGetNextCommandIdWithKernelsExt(hCommandList, desc, numKernels, phKernels, pCommandId);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListUpdateMutableCommandsExt(
+    ze_command_list_handle_t hCommandList,
+    const ze_mutable_commands_ext_desc_t *desc) {
+    return L0::zeCommandListUpdateMutableCommandsExt(hCommandList, desc);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListIsMutableExt(
+    ze_command_list_handle_t hCommandList,
+    ze_bool_t *pIsMutable) {
+    return L0::zeCommandListIsMutableExt(hCommandList, pIsMutable);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListUpdateMutableCommandSignalEventExt(
+    ze_command_list_handle_t hCommandList,
+    uint64_t commandId,
+    ze_event_handle_t hSignalEvent) {
+    return L0::zeCommandListUpdateMutableCommandSignalEventExt(hCommandList, commandId, hSignalEvent);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListUpdateMutableCommandWaitEventsExt(
+    ze_command_list_handle_t hCommandList,
+    uint64_t commandId,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents) {
+    return L0::zeCommandListUpdateMutableCommandWaitEventsExt(hCommandList, commandId, numWaitEvents, phWaitEvents);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListUpdateMutableCommandKernelsExt(
+    ze_command_list_handle_t hCommandList,
+    uint32_t numKernels,
+    uint64_t *pCommandId,
+    ze_kernel_handle_t *phKernels) {
+    return L0::zeCommandListUpdateMutableCommandKernelsExt(hCommandList, numKernels, pCommandId, phKernels);
 }
 
 } // extern "C"

@@ -154,3 +154,13 @@ zeCommandListVisitExt(ze_command_list_handle_t cmdlist,
 }
 
 } // namespace L0
+
+extern "C" {
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListVisitExt(
+    ze_command_list_handle_t hCommandList,
+    const ze_command_visit_ext_desc_t *pDesc) {
+    return L0::zeCommandListVisitExt(hCommandList, pDesc);
+}
+
+} // extern "C"

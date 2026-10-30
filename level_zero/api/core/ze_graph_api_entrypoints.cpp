@@ -437,4 +437,10 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeGraphGetIdExt(ze_graph_handle_t hGraph, ui
     return L0::zeGraphGetIdExt(hGraph, pGraphId);
 }
 
+ZE_APIEXPORT ze_result_t ZE_APICALL zeGraphVisitExt(
+    ze_graph_handle_t hGraph,
+    const ze_command_visit_ext_desc_t *pDesc) {
+    return L0::zeGraphVisitExt(hGraph, pDesc);
+}
+
 } // extern "C"

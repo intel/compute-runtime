@@ -1441,6 +1441,13 @@ ze_result_t ZE_APICALL zesInfoLogInstanceDeleteExt(
         [&]() { return L0::Sysman::InfoLogInstance::fromHandle(hInfoLogInstance)->destroy(); });
 }
 
+ze_result_t ZE_APICALL zesDriverGetPciDeviceProperties(
+    zes_driver_handle_t hDriver,
+    uint32_t *pCount,
+    zes_driver_pci_device_properties_t *pProperties) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 } // namespace L0
 
 extern "C" {
@@ -2945,5 +2952,12 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zesInfoLogInstanceDeleteExt(
     zes_info_log_instance_handle_t hInfoLogInstance) {
     return L0::zesInfoLogInstanceDeleteExt(
         hInfoLogInstance);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesDriverGetPciDeviceProperties(
+    zes_driver_handle_t hDriver,
+    uint32_t *pCount,
+    zes_driver_pci_device_properties_t *pProperties) {
+    return L0::zesDriverGetPciDeviceProperties(hDriver, pCount, pProperties);
 }
 }

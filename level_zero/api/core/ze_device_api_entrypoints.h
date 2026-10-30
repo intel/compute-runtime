@@ -148,6 +148,14 @@ zeDeviceGetCompilerInfo(
     size_t *pSize,
     void *pData);
 
+ze_result_t ZE_APICALL zeDeviceGetCompilerInfoSupported(
+    ze_device_handle_t hDevice,
+    ze_device_compiler_info_t paramName,
+    const void *pNext,
+    const void *pElement,
+    const char *pValue,
+    ze_bool_t *pSupported);
+
 } // namespace L0
 
 extern "C" {
@@ -284,5 +292,13 @@ zeDeviceGetCompilerInfo(
     const void *pNext,
     size_t *pSize,
     void *pData);
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeDeviceGetCompilerInfoSupported(
+    ze_device_handle_t hDevice,
+    ze_device_compiler_info_t paramName,
+    const void *pNext,
+    const void *pElement,
+    const char *pValue,
+    ze_bool_t *pSupported);
 
 } // extern "C"

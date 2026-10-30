@@ -71,6 +71,46 @@ ze_result_t ZE_APICALL zeCommandQueueGetPriority(
     return L0::CommandQueue::fromHandle(hCommandQueue)->getPriority(pPriority);
 }
 
+ze_result_t ZE_APICALL zeCommandQueueSetPriorityExt(
+    ze_command_queue_handle_t hCommandQueue,
+    ze_command_queue_priority_t priority) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t ZE_APICALL zeCommandQueueSetQosExt(
+    ze_command_queue_handle_t hCommandQueue,
+    const ze_command_queue_qos_ext_desc_t *desc) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t ZE_APICALL zeCommandQueueGetQosExt(
+    ze_command_queue_handle_t hCommandQueue,
+    ze_command_queue_qos_ext_properties_t *pProperties) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t ZE_APICALL zeCommandQueueSignalExternalSemaphoreExt(
+    ze_command_queue_handle_t hCommandQueue,
+    uint32_t numSemaphores,
+    ze_external_semaphore_ext_handle_t *phSemaphores,
+    ze_external_semaphore_signal_params_ext_t *signalParams,
+    ze_event_handle_t hSignalEvent,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t ZE_APICALL zeCommandQueueWaitExternalSemaphoreExt(
+    ze_command_queue_handle_t hCommandQueue,
+    uint32_t numSemaphores,
+    ze_external_semaphore_ext_handle_t *phSemaphores,
+    ze_external_semaphore_wait_params_ext_t *waitParams,
+    ze_event_handle_t hSignalEvent,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 } // namespace L0
 
 extern "C" {
@@ -143,6 +183,46 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandQueueGetPriority(
     return L0::zeCommandQueueGetPriority(
         hCommandQueue,
         pPriority);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandQueueSetPriorityExt(
+    ze_command_queue_handle_t hCommandQueue,
+    ze_command_queue_priority_t priority) {
+    return L0::zeCommandQueueSetPriorityExt(hCommandQueue, priority);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandQueueSetQosExt(
+    ze_command_queue_handle_t hCommandQueue,
+    const ze_command_queue_qos_ext_desc_t *desc) {
+    return L0::zeCommandQueueSetQosExt(hCommandQueue, desc);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandQueueGetQosExt(
+    ze_command_queue_handle_t hCommandQueue,
+    ze_command_queue_qos_ext_properties_t *pProperties) {
+    return L0::zeCommandQueueGetQosExt(hCommandQueue, pProperties);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandQueueSignalExternalSemaphoreExt(
+    ze_command_queue_handle_t hCommandQueue,
+    uint32_t numSemaphores,
+    ze_external_semaphore_ext_handle_t *phSemaphores,
+    ze_external_semaphore_signal_params_ext_t *signalParams,
+    ze_event_handle_t hSignalEvent,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents) {
+    return L0::zeCommandQueueSignalExternalSemaphoreExt(hCommandQueue, numSemaphores, phSemaphores, signalParams, hSignalEvent, numWaitEvents, phWaitEvents);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandQueueWaitExternalSemaphoreExt(
+    ze_command_queue_handle_t hCommandQueue,
+    uint32_t numSemaphores,
+    ze_external_semaphore_ext_handle_t *phSemaphores,
+    ze_external_semaphore_wait_params_ext_t *waitParams,
+    ze_event_handle_t hSignalEvent,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents) {
+    return L0::zeCommandQueueWaitExternalSemaphoreExt(hCommandQueue, numSemaphores, phSemaphores, waitParams, hSignalEvent, numWaitEvents, phWaitEvents);
 }
 
 } // extern "C"

@@ -210,6 +210,16 @@ zeDeviceGetCompilerInfo(
     return Device::fromHandle(hDevice)->getCompilerInfo(paramName, pNext, pSize, pData);
 }
 
+ze_result_t ZE_APICALL zeDeviceGetCompilerInfoSupported(
+    ze_device_handle_t hDevice,
+    ze_device_compiler_info_t paramName,
+    const void *pNext,
+    const void *pElement,
+    const char *pValue,
+    ze_bool_t *pSupported) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 } // namespace L0
 
 extern "C" {
@@ -440,6 +450,16 @@ zeDeviceGetCompilerInfo(
     size_t *pSize,
     void *pData) {
     return L0::zeDeviceGetCompilerInfo(hDevice, paramName, pNext, pSize, pData);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeDeviceGetCompilerInfoSupported(
+    ze_device_handle_t hDevice,
+    ze_device_compiler_info_t paramName,
+    const void *pNext,
+    const void *pElement,
+    const char *pValue,
+    ze_bool_t *pSupported) {
+    return L0::zeDeviceGetCompilerInfoSupported(hDevice, paramName, pNext, pElement, pValue, pSupported);
 }
 
 } // extern "C"

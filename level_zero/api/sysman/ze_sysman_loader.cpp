@@ -103,6 +103,7 @@ zesGetDriverProcAddrTable(
     fillDdiEntry(pDdiTable->pfnEventListenExt, L0::globalDriverDispatch.sysmanDriver.pfnEventListenExt, version, ZE_API_VERSION_1_19);
     fillDdiEntry(pDdiTable->pfnEnumInfoLogsExt, L0::globalDriverDispatch.sysmanDriver.pfnEnumInfoLogsExt, version, ZE_API_VERSION_1_19);
     fillDdiEntry(pDdiTable->pfnGetProperties, L0::globalDriverDispatch.sysmanDriver.pfnGetProperties, version, ZE_API_VERSION_1_19);
+    fillDdiEntry(pDdiTable->pfnGetPciDeviceProperties, L0::globalDriverDispatch.sysmanDriver.pfnGetPciDeviceProperties, version, ZE_API_VERSION_1_20);
     return result;
 }
 
