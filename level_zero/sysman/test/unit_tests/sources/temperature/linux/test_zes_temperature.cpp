@@ -424,7 +424,7 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenHwmonDirectoryIsSearchedWhenInitiali
     EXPECT_EQ(mockTemperatureHwmonDir, pFsAccess->listDirectoryPathRequested);
 }
 
-HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndHwmonMemoryTemperatureNodeWhenGettingMemoryTemperatureThenTemperatureIsReadFromSysfs, IsBMG) {
+HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndHwmonMemoryTemperatureNodeWhenGettingMemoryTemperatureThenTemperatureIsReadFromSysfs, IsBmgOrCri) {
     setUpHwmonKmdInterfaceXe();
     pFsAccess->isRootUserResult = false;
     pFsAccess->memoryTemperatureExists = true;
@@ -437,7 +437,7 @@ HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndHwmonMemoryTe
     EXPECT_DOUBLE_EQ(expectedMemoryTemperature, temperature);
 }
 
-HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndHwmonMemoryTemperatureReadFailureWhenGettingMemoryTemperatureThenErrorIsReturned, IsBMG) {
+HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndHwmonMemoryTemperatureReadFailureWhenGettingMemoryTemperatureThenErrorIsReturned, IsBmgOrCri) {
     setUpHwmonKmdInterfaceXe();
     pFsAccess->isRootUserResult = false;
     pFsAccess->memoryTemperatureExists = true;
@@ -450,7 +450,7 @@ HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndHwmonMemoryTe
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, temperatureImp.getSensorTemperature(&temperature));
 }
 
-HWTEST2_F(SysmanDeviceTemperatureFixture, GivenPrivilegedUserAndHwmonMemoryTemperatureNodeWhenGettingMemoryTemperatureThenTemperatureIsReadFromSysfs, IsBMG) {
+HWTEST2_F(SysmanDeviceTemperatureFixture, GivenPrivilegedUserAndHwmonMemoryTemperatureNodeWhenGettingMemoryTemperatureThenTemperatureIsReadFromSysfs, IsBmgOrCri) {
     setUpHwmonKmdInterfaceXe();
     pFsAccess->isRootUserResult = true;
     pFsAccess->memoryTemperatureExists = true;
@@ -463,7 +463,7 @@ HWTEST2_F(SysmanDeviceTemperatureFixture, GivenPrivilegedUserAndHwmonMemoryTempe
     EXPECT_DOUBLE_EQ(expectedMemoryTemperature, temperature);
 }
 
-HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndMissingHwmonMemoryTemperatureNodeWhenGettingMemoryTemperatureThenTelemetryIsUsed, IsBMG) {
+HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndMissingHwmonMemoryTemperatureNodeWhenGettingMemoryTemperatureThenTelemetryIsUsed, IsBmgOrCri) {
     setUpHwmonKmdInterfaceXe();
     pFsAccess->isRootUserResult = false;
     pFsAccess->memoryTemperatureExists = false;
@@ -475,7 +475,7 @@ HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndMissingHwmonM
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, temperatureImp.getSensorTemperature(&temperature));
 }
 
-HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndHwmonMemoryTemperatureNodeWhenGettingGpuAndGlobalTemperatureThenTelemetryIsUsed, IsBMG) {
+HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndHwmonMemoryTemperatureNodeWhenGettingGpuAndGlobalTemperatureThenTelemetryIsUsed, IsBmgOrCri) {
     setUpHwmonKmdInterfaceXe();
     pFsAccess->isRootUserResult = false;
     pFsAccess->memoryTemperatureExists = true;
@@ -490,7 +490,7 @@ HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndHwmonMemoryTe
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, globalTemperatureImp.getSensorTemperature(&temperature));
 }
 
-HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndHwmonMemoryTemperatureNodeAndNoTelemetrySupportWhenCheckingTempModuleSupportThenTrueIsReturned, IsBMG) {
+HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndHwmonMemoryTemperatureNodeAndNoTelemetrySupportWhenCheckingTempModuleSupportThenTrueIsReturned, IsBmgOrCri) {
     setUpHwmonKmdInterfaceXe();
     pFsAccess->isRootUserResult = false;
     pFsAccess->memoryTemperatureExists = true;
@@ -501,7 +501,7 @@ HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndHwmonMemoryTe
     EXPECT_TRUE(temperatureImp.isTempModuleSupported());
 }
 
-HWTEST2_F(SysmanDeviceTemperatureFixture, GivenPrivilegedUserAndHwmonMemoryTemperatureNodeAndNoTelemetrySupportWhenCheckingTempModuleSupportThenTrueIsReturned, IsBMG) {
+HWTEST2_F(SysmanDeviceTemperatureFixture, GivenPrivilegedUserAndHwmonMemoryTemperatureNodeAndNoTelemetrySupportWhenCheckingTempModuleSupportThenTrueIsReturned, IsBmgOrCri) {
     setUpHwmonKmdInterfaceXe();
     pFsAccess->isRootUserResult = true;
     pFsAccess->memoryTemperatureExists = true;
@@ -512,7 +512,7 @@ HWTEST2_F(SysmanDeviceTemperatureFixture, GivenPrivilegedUserAndHwmonMemoryTempe
     EXPECT_TRUE(temperatureImp.isTempModuleSupported());
 }
 
-HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndHwmonMemoryTemperatureNodeAppearingAfterReInitWhenGettingMemoryTemperatureThenTemperatureIsReadFromSysfs, IsBMG) {
+HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndHwmonMemoryTemperatureNodeAppearingAfterReInitWhenGettingMemoryTemperatureThenTemperatureIsReadFromSysfs, IsBmgOrCri) {
     setUpHwmonKmdInterfaceXe();
     pFsAccess->isRootUserResult = false;
 
@@ -529,7 +529,7 @@ HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndHwmonMemoryTe
     EXPECT_DOUBLE_EQ(expectedMemoryTemperature, temperature);
 }
 
-HWTEST2_F(SysmanDeviceTemperatureFixture, GivenSysfsTemperatureSupportedAndKmdInterfaceWithoutMemoryTemperatureFileNameWhenInitializingThenMemoryTemperatureNodeIsNotProbed, IsBMG) {
+HWTEST2_F(SysmanDeviceTemperatureFixture, GivenSysfsTemperatureSupportedAndKmdInterfaceWithoutMemoryTemperatureFileNameWhenInitializingThenMemoryTemperatureNodeIsNotProbed, IsBmgOrCri) {
     setUpHwmonKmdInterfaceI915Upstream();
     pFsAccess->isRootUserResult = false;
     pFsAccess->memoryTemperatureExists = true;
@@ -554,7 +554,7 @@ HWTEST2_F(SysmanDeviceTemperatureFixture, GivenProductWithoutSysfsTemperatureSup
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, temperatureImp.getSensorTemperature(&temperature));
 }
 
-HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndHwmonGpuTemperatureNodeWhenGettingGpuTemperatureThenTemperatureIsReadFromSysfs, IsBMG) {
+HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndHwmonGpuTemperatureNodeWhenGettingGpuTemperatureThenTemperatureIsReadFromSysfs, IsBmgOrCri) {
     setUpHwmonKmdInterfaceXe();
     pFsAccess->isRootUserResult = false;
     pFsAccess->gpuTemperatureExists = true;
@@ -567,7 +567,7 @@ HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndHwmonGpuTempe
     EXPECT_DOUBLE_EQ(expectedGpuTemperature, temperature);
 }
 
-HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndHwmonGpuTemperatureReadFailureWhenGettingGpuTemperatureThenErrorIsReturned, IsBMG) {
+HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndHwmonGpuTemperatureReadFailureWhenGettingGpuTemperatureThenErrorIsReturned, IsBmgOrCri) {
     setUpHwmonKmdInterfaceXe();
     pFsAccess->isRootUserResult = false;
     pFsAccess->gpuTemperatureExists = true;
@@ -580,7 +580,7 @@ HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndHwmonGpuTempe
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, temperatureImp.getSensorTemperature(&temperature));
 }
 
-HWTEST2_F(SysmanDeviceTemperatureFixture, GivenPrivilegedUserAndHwmonGpuTemperatureNodeWhenGettingGpuTemperatureThenTemperatureIsReadFromSysfs, IsBMG) {
+HWTEST2_F(SysmanDeviceTemperatureFixture, GivenPrivilegedUserAndHwmonGpuTemperatureNodeWhenGettingGpuTemperatureThenTemperatureIsReadFromSysfs, IsBmgOrCri) {
     setUpHwmonKmdInterfaceXe();
     pFsAccess->isRootUserResult = true;
     pFsAccess->gpuTemperatureExists = true;
@@ -593,7 +593,7 @@ HWTEST2_F(SysmanDeviceTemperatureFixture, GivenPrivilegedUserAndHwmonGpuTemperat
     EXPECT_DOUBLE_EQ(expectedGpuTemperature, temperature);
 }
 
-HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndMissingHwmonGpuTemperatureNodeWhenGettingGpuTemperatureThenTelemetryIsUsed, IsBMG) {
+HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndMissingHwmonGpuTemperatureNodeWhenGettingGpuTemperatureThenTelemetryIsUsed, IsBmgOrCri) {
     setUpHwmonKmdInterfaceXe();
     pFsAccess->isRootUserResult = false;
     pFsAccess->gpuTemperatureExists = false;
@@ -606,7 +606,7 @@ HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndMissingHwmonG
     EXPECT_FALSE(temperatureImp.isTempModuleSupported());
 }
 
-HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndHwmonGpuTemperatureNodeWhenGettingMemoryAndGlobalTemperatureThenTelemetryIsUsed, IsBMG) {
+HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndHwmonGpuTemperatureNodeWhenGettingMemoryAndGlobalTemperatureThenTelemetryIsUsed, IsBmgOrCri) {
     setUpHwmonKmdInterfaceXe();
     pFsAccess->isRootUserResult = false;
     pFsAccess->gpuTemperatureExists = true;
@@ -621,7 +621,7 @@ HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndHwmonGpuTempe
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, globalTemperatureImp.getSensorTemperature(&temperature));
 }
 
-HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndHwmonGpuTemperatureNodeAndNoTelemetrySupportWhenCheckingTempModuleSupportThenTrueIsReturned, IsBMG) {
+HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndHwmonGpuTemperatureNodeAndNoTelemetrySupportWhenCheckingTempModuleSupportThenTrueIsReturned, IsBmgOrCri) {
     setUpHwmonKmdInterfaceXe();
     pFsAccess->isRootUserResult = false;
     pFsAccess->gpuTemperatureExists = true;
@@ -632,7 +632,7 @@ HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndHwmonGpuTempe
     EXPECT_TRUE(temperatureImp.isTempModuleSupported());
 }
 
-HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndHwmonGpuTemperatureNodeAppearingAfterReInitWhenGettingGpuTemperatureThenTemperatureIsReadFromSysfs, IsBMG) {
+HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndHwmonGpuTemperatureNodeAppearingAfterReInitWhenGettingGpuTemperatureThenTemperatureIsReadFromSysfs, IsBmgOrCri) {
     setUpHwmonKmdInterfaceXe();
     pFsAccess->isRootUserResult = false;
 
@@ -649,7 +649,7 @@ HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndHwmonGpuTempe
     EXPECT_DOUBLE_EQ(expectedGpuTemperature, temperature);
 }
 
-HWTEST2_F(SysmanDeviceTemperatureFixture, GivenSysfsTemperatureSupportedAndKmdInterfaceWithoutGpuTemperatureFileNameWhenInitializingThenGpuTemperatureNodeIsNotProbed, IsBMG) {
+HWTEST2_F(SysmanDeviceTemperatureFixture, GivenSysfsTemperatureSupportedAndKmdInterfaceWithoutGpuTemperatureFileNameWhenInitializingThenGpuTemperatureNodeIsNotProbed, IsBmgOrCri) {
     setUpHwmonKmdInterfaceI915Upstream();
     pFsAccess->isRootUserResult = false;
     pFsAccess->gpuTemperatureExists = true;

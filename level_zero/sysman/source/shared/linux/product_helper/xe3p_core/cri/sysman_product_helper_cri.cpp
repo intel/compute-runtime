@@ -952,6 +952,11 @@ bool SysmanProductHelperHw<gfxProduct>::isMemoryMaxTemperatureSupported() {
 }
 
 template <>
+bool SysmanProductHelperHw<gfxProduct>::isTemperatureReadFromSysfsSupported() {
+    return true;
+}
+
+template <>
 bool SysmanProductHelperHw<gfxProduct>::isMemoryDomainSupported() {
     return true;
 }
