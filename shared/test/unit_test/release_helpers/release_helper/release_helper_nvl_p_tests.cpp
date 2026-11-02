@@ -202,3 +202,13 @@ TEST_F(ReleaseHelperNvlPTests, givenAppTransientPatOverrideWhenCheckingRequireme
         EXPECT_EQ(baseIpVersion == AOT::NVL_P_A0, releaseHelper->isAppTransientCoherentPatRequired());
     }
 }
+
+TEST_F(ReleaseHelperNvlPTests, whenOverridingSystemMemoryPatIndexThenPat19IsReturnedForAllSteppings) {
+    constexpr uint64_t patIndex = 5u;
+    for (const auto baseIpVersion : {AOT::NVL_P_A0, AOT::NVL_P_B0}) {
+        ipVersion.value = static_cast<uint32_t>(baseIpVersion);
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        EXPECT_EQ(19u, releaseHelper->overrideSystemMemoryPatIndex(patIndex));
+    }
+}

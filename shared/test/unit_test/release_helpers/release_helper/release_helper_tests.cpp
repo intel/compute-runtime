@@ -23,14 +23,11 @@ using namespace NEO;
 
 using ReleaseHelperPatIndexXe3pTests = ::testing::Test;
 
-HWTEST2_F(ReleaseHelperPatIndexXe3pTests, givenSystemMemoryPatOverrideWhenDebugFlagIsSetThenSelectDefaultDisabledOrForcedPat, IsAtLeastXe3pCore) {
+HWTEST2_F(ReleaseHelperPatIndexXe3pTests, givenSystemMemoryPatOverrideWhenDebugFlagIsSetThenSelectDisabledOrForcedPat, IsAtLeastXe3pCore) {
     DebugManagerStateRestore restore;
     auto releaseHelper = ReleaseHelper::create(defaultHwInfo->ipVersion);
     ASSERT_NE(nullptr, releaseHelper);
     constexpr uint64_t patIndex = 5u;
-
-    debugManager.flags.EnableOverrideToPat19ForSystemMemory.set(-1);
-    EXPECT_EQ(defaultHwInfo->capabilityTable.isIntegratedDevice ? 19u : patIndex, releaseHelper->overrideSystemMemoryPatIndex(patIndex));
 
     debugManager.flags.EnableOverrideToPat19ForSystemMemory.set(0);
     EXPECT_EQ(patIndex, releaseHelper->overrideSystemMemoryPatIndex(patIndex));
