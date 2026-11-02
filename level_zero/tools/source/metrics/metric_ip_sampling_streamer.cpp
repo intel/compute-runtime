@@ -107,10 +107,10 @@ IpSamplingMetricCalcOpImp::IpSamplingMetricCalcOpImp(bool multidevice,
                                                      std::vector<MetricImp *> &metricsInReport,
                                                      const std::vector<MetricScopeImp *> &metricScopesInReport,
                                                      IpSamplingMetricSourceImp &metricSource,
-                                                     std::vector<uint32_t> &includedMetricIndexes,
+                                                     std::map<uint32_t, std::vector<uint32_t>> &perScopeIncludedMetricIndexes,
                                                      std::vector<MetricImp *> &excludedMetrics)
     : MetricCalcOpImp(multidevice, metricScopesInReport, metricsInReport, excludedMetrics),
-      metricSource(metricSource), includedMetricIndexes(includedMetricIndexes), metricScopesInCalcOp(metricScopesInCalcOp) {
+      metricSource(metricSource), perScopeIncludedMetricIndexes(perScopeIncludedMetricIndexes), metricScopesInCalcOp(metricScopesInCalcOp) {
 
     // Create an IP data cache for each scope in the calcOp
     for (auto &scope : metricScopesInCalcOp) {
@@ -183,11 +183,10 @@ ze_result_t IpSamplingMetricCalcOpImp::create(bool isMultiDevice,
         metricScopes.push_back(static_cast<MetricScopeImp *>(MetricScope::fromHandle(pCalculationDesc->phMetricScopes[i])));
     }
 
-    // Validate that all metrics support the requested scopes
     std::vector<MetricImp *> excludedMetrics;
-    ze_result_t status = MetricSource::validateMetricsAgainstScopesAndGetExcludedMetrics(includedMetrics, pCalculationDesc->metricScopesCount,
-                                                                                         pCalculationDesc->phMetricScopes,
-                                                                                         excludedMetrics);
+    MetricSource::checkMetricsScopesAndGetExcludedMetrics(includedMetrics, pCalculationDesc->metricScopesCount,
+                                                          pCalculationDesc->phMetricScopes,
+                                                          excludedMetrics);
     if (!excludedMetrics.empty()) {
         // Remove excluded metrics from includedMetrics and includedMetricIndexes
         std::vector<MetricImp *> allMetrics = includedMetrics;
@@ -206,22 +205,58 @@ ze_result_t IpSamplingMetricCalcOpImp::create(bool isMultiDevice,
         }
     }
 
-    // Create metricsInReport and corresponding scopes in metricScopesInReport
-    std::vector<MetricImp *> metricsInReport = {};
-    std::vector<MetricScopeImp *> metricScopesInReport = {};
-
-    for (uint32_t scopeIndex = 0; scopeIndex < metricScopes.size(); scopeIndex++) {
-        for (uint32_t metricIndex = 0; metricIndex < includedMetrics.size(); metricIndex++) {
-            metricsInReport.push_back(includedMetrics[metricIndex]);
-            metricScopesInReport.push_back(metricScopes[scopeIndex]);
-        }
+    std::vector<std::vector<zet_intel_metric_scope_exp_handle_t>> includedMetricsSupportedScopes(includedMetrics.size());
+    for (size_t i = 0; i < includedMetrics.size(); i++) {
+        uint32_t supportedScopeCount = 0;
+        includedMetrics[i]->getScopes(&supportedScopeCount, nullptr);
+        includedMetricsSupportedScopes[i].resize(supportedScopeCount);
+        includedMetrics[i]->getScopes(&supportedScopeCount, includedMetricsSupportedScopes[i].data());
     }
 
-    auto calcOp = new IpSamplingMetricCalcOpImp(isMultiDevice, metricScopes, metricsInReport,
-                                                metricScopesInReport, metricSource, includedMetricIndexes,
+    // Each scope reports only the metrics supporting it.
+    // The indexes of the metrics in the HW report are tracked per scope as well, so the results of
+    // each scope can be picked from its data following the report format.
+    std::vector<MetricImp *> metricsInReport = {};
+    std::vector<MetricScopeImp *> metricScopesInReport = {};
+    std::map<uint32_t, std::vector<uint32_t>> perScopeIncludedMetricIndexes = {};
+    std::vector<MetricScopeImp *> metricScopesInCalcOp = {};
+
+    for (auto &metricScope : metricScopes) {
+        auto metricScopeHandle = metricScope->toHandle();
+        std::vector<uint32_t> scopeIncludedMetricIndexes = {};
+
+        for (size_t metricIndex = 0; metricIndex < includedMetrics.size(); metricIndex++) {
+            const auto &supportedScopes = includedMetricsSupportedScopes[metricIndex];
+            if (std::find(supportedScopes.begin(), supportedScopes.end(), metricScopeHandle) == supportedScopes.end()) {
+                continue;
+            }
+
+            metricsInReport.push_back(includedMetrics[metricIndex]);
+            metricScopesInReport.push_back(metricScope);
+            scopeIncludedMetricIndexes.push_back(includedMetricIndexes[metricIndex]);
+        }
+
+        if (scopeIncludedMetricIndexes.empty()) {
+            METRICS_LOG_INFO("None of the metrics of the calculation operation supports the metric scope with ID %u, so the scope is excluded from the calculation operation",
+                             metricScope->getId());
+            continue;
+        }
+
+        perScopeIncludedMetricIndexes[metricScope->getId()] = std::move(scopeIncludedMetricIndexes);
+        metricScopesInCalcOp.push_back(metricScope);
+    }
+
+    if (metricScopesInCalcOp.empty()) {
+        METRICS_LOG_ERR("%s", "None of the metrics requested for the calculation operation supports any of the requested metric scopes");
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    auto calcOp = new IpSamplingMetricCalcOpImp(isMultiDevice, metricScopesInCalcOp, metricsInReport,
+                                                metricScopesInReport, metricSource, perScopeIncludedMetricIndexes,
                                                 excludedMetrics);
     *phCalculationOperation = calcOp->toHandle();
 
+    ze_result_t status = ZE_RESULT_SUCCESS;
     if ((pCalculationDesc->timeWindowsCount > 0) || (pCalculationDesc->timeAggregationWindow != 0)) {
         // Time filtering is not supported in IP sampling, update pCalculationDesc accordingly
         pCalculationDesc->timeWindowsCount = 0;
@@ -425,7 +460,8 @@ ze_result_t IpSamplingMetricCalcOpImp::metricCalculateValues(const size_t rawDat
         }
 
         metricReportCount = std::min<uint32_t>(*pTotalMetricReportCount, getLargestCacheSize());
-        ipSamplingCalculation->stallDataMapToMetricResults(*getScopeCache(scopeId), metricReportCount, includedMetricIndexes, pMetricResults);
+        ipSamplingCalculation->stallDataMapToMetricResults(*getScopeCache(scopeId), metricReportCount,
+                                                           perScopeIncludedMetricIndexes[scopeId], pMetricResults);
     } else {
         if (!isMultiDeviceData) {
             METRICS_LOG_ERR("%s", "Cannot use sub-device raw data in a root device calculation operation handle");
@@ -442,7 +478,8 @@ ze_result_t IpSamplingMetricCalcOpImp::metricCalculateValues(const size_t rawDat
         }
 
         metricReportCount = std::min<uint32_t>(*pTotalMetricReportCount, getLargestCacheSize());
-        ipSamplingCalculation->multiDataMapToMetricResults(perScopeIpDataCaches, metricReportCount, includedMetricIndexes, pMetricResults);
+        ipSamplingCalculation->multiDataMapToMetricResults(perScopeIpDataCaches, metricReportCount,
+                                                           perScopeIncludedMetricIndexes, pMetricResults);
     }
     // Update with the actual number of reports calculated
     *pTotalMetricReportCount = metricReportCount;

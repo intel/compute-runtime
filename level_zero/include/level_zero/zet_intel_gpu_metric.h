@@ -163,9 +163,9 @@ typedef struct _zet_intel_metric_calculation_exp_desc_t {
                                                                              ///< calculation operation will use.
     uint32_t metricScopesCount;                                              ///< [in] number of metric scopes in metric scopes handles. Must not be 0, otherwise error is returned.
     zet_intel_metric_scope_exp_handle_t *phMetricScopes;                     ///< [in][optional] [range (0, metricScopesCount)] array of metric scopes handles to use for calculation.
-                                                                             ///< Duplicated entries will be removed. Metrics not supporting all metric scopes listed will be excluded
-                                                                             ///< from the calculation operation. If no metric supports all metric scopes included, the calculation
-                                                                             ///< operation creation will fail.
+                                                                             ///< Duplicated entries will be removed. Metrics not supporting any of the scopes provided will be excluded
+                                                                             ///< from the calculation operation. The calculation operation creation will fail if no metric supports
+                                                                             ///< any of the provided scopes since it cannot be empty.
 } zet_intel_metric_calculation_exp_desc_t;
 typedef enum _zet_intel_metric_calculation_result_status_exp_t {
     ZET_INTEL_METRIC_CALCULATION_EXP_RESULT_VALID = 0,

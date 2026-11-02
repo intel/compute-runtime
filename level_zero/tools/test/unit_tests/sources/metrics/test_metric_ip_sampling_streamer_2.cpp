@@ -744,6 +744,121 @@ HWTEST2_PRODUCT_F(MetricIpSamplingCalcAggregationTest, GivenIpSamplingCalcOpOnRo
     }
 }
 
+HWTEST2_PRODUCT_F(MetricIpSamplingCalcAggregationTest, GivenMetricsSupportingDifferentScopesWhenCalculatingThenResultsFollowThePerScopeReportFormat, IsAtLeastXe2HpgCore) {
+
+    uint32_t expectedMetricsInGroup = 0;
+    ipSamplingTestProductHelper->getExpectedMetricCount(productFamily, expectedMetricsInGroup);
+    ASSERT_GE(expectedMetricsInGroup, 2u);
+
+    // Raw data for a single read with different data for sub-device 0 and 1
+    size_t rawDataSize = sizeof(IpSamplingMultiDevDataHeader) + rawReportsBytesSize + sizeof(IpSamplingMultiDevDataHeader) + rawReports2BytesSize;
+    std::vector<uint8_t> rawDataWithHeader(rawDataSize);
+    MockRawDataHelper::addMultiSubDevHeader(rawDataWithHeader.data(), rawDataWithHeader.size(), reinterpret_cast<uint8_t *>(rawReports.data()), rawReportsBytesSize, 0);
+    MockRawDataHelper::addMultiSubDevHeader(rawDataWithHeader.data() + rawReportsBytesSize + sizeof(IpSamplingMultiDevDataHeader),
+                                            rawDataWithHeader.size() - (rawReportsBytesSize + sizeof(IpSamplingMultiDevDataHeader)),
+                                            reinterpret_cast<uint8_t *>(rawReports2.data()), rawReports2BytesSize, 1);
+
+    // Calculate with the calcOp of the fixture including both compute scopes, where every metric
+    // supports every scope, to use its results as the reference of the per scope results.
+    const uint32_t referenceReportSize = expectedMetricsInGroup * 2;
+    uint32_t referenceMetricsInReportCount = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationGetReportFormatExp(hCalcOpAllCompScopes, &referenceMetricsInReportCount, nullptr, nullptr));
+    ASSERT_EQ(referenceMetricsInReportCount, referenceReportSize);
+
+    // three IPs in raw data for sub-dev 0 (rawReports), two IPs for sub-dev 1 (rawReports2), expect the biggest
+    uint32_t referenceReportCount = IpSamplingTestProductHelper::numberOfIpsInRawData;
+    size_t usedSize = 0;
+    std::vector<zet_intel_metric_result_exp_t> referenceResults(referenceReportCount * referenceMetricsInReportCount);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateValuesExp(rawDataSize, rawDataWithHeader.data(), hCalcOpAllCompScopes,
+                                                                  false, &usedSize, &referenceReportCount, referenceResults.data()));
+    EXPECT_EQ(referenceReportCount, IpSamplingTestProductHelper::numberOfIpsInRawData);
+
+    // Restrict the scopes of two metrics: the first one is not reported by the compute scope of
+    // sub-device 1 and the second one is not reported by the compute scope of sub-device 0.
+    uint32_t metricCount = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricGet(rootDevMetricGroupHandle, &metricCount, nullptr));
+    std::vector<zet_metric_handle_t> hMetrics(metricCount);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricGet(rootDevMetricGroupHandle, &metricCount, hMetrics.data()));
+
+    std::vector<zet_intel_metric_scope_exp_handle_t> onlyCompute0Scope = {hMockScopeCompute0};
+    std::vector<zet_intel_metric_scope_exp_handle_t> onlyCompute1Scope = {hMockScopeCompute1};
+    static_cast<MockMetric *>(Metric::fromHandle(hMetrics[0]))->setScopes(onlyCompute0Scope);
+    static_cast<MockMetric *>(Metric::fromHandle(hMetrics[1]))->setScopes(onlyCompute1Scope);
+
+    // Indexes in the HW report of the metrics each compute scope reports
+    std::vector<uint32_t> compute0MetricIndexes = {};
+    std::vector<uint32_t> compute1MetricIndexes = {};
+    for (uint32_t i = 0; i < expectedMetricsInGroup; i++) {
+        if (i != 1) {
+            compute0MetricIndexes.push_back(i);
+        }
+        if (i != 0) {
+            compute1MetricIndexes.push_back(i);
+        }
+    }
+
+    zet_intel_metric_calculation_exp_desc_t calculationDesc{};
+    calculationDesc.stype = ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULATION_DESC_EXP;
+    calculationDesc.metricGroupCount = 1;
+    calculationDesc.phMetricGroups = &rootDevMetricGroupHandle;
+    calculationDesc.metricScopesCount = static_cast<uint32_t>(hComputeMetricScopes.size());
+    calculationDesc.phMetricScopes = hComputeMetricScopes.data();
+
+    zet_intel_metric_calculation_operation_exp_handle_t hCalcOp = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationCreateExp(context->toHandle(), rootDevice->toHandle(),
+                                                                             &calculationDesc, &hCalcOp));
+    ASSERT_NE(hCalcOp, nullptr);
+
+    // Each scope reports only the metrics supporting it, and the scope with the lowest ID goes first
+    uint32_t metricsInReportCount = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationGetReportFormatExp(hCalcOp, &metricsInReportCount, nullptr, nullptr));
+    ASSERT_EQ(metricsInReportCount, compute0MetricIndexes.size() + compute1MetricIndexes.size());
+
+    std::vector<zet_metric_handle_t> metricsInReport(metricsInReportCount);
+    std::vector<zet_intel_metric_scope_exp_handle_t> metricScopesInReport(metricsInReportCount);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationGetReportFormatExp(hCalcOp, &metricsInReportCount,
+                                                                                      metricsInReport.data(), metricScopesInReport.data()));
+    for (uint32_t i = 0; i < metricsInReportCount; i++) {
+        if (i < compute0MetricIndexes.size()) {
+            EXPECT_EQ(metricScopesInReport[i], hMockScopeCompute0);
+            EXPECT_EQ(metricsInReport[i], hMetrics[compute0MetricIndexes[i]]);
+        } else {
+            EXPECT_EQ(metricScopesInReport[i], hMockScopeCompute1);
+            EXPECT_EQ(metricsInReport[i], hMetrics[compute1MetricIndexes[i - compute0MetricIndexes.size()]]);
+        }
+    }
+
+    // Leaving metrics out of a scope does not change the IPs in the raw data, so it yields as many reports as the reference
+    uint32_t totalMetricReportCount = referenceReportCount;
+    std::vector<zet_intel_metric_result_exp_t> metricResults(totalMetricReportCount * metricsInReportCount);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculateValuesExp(rawDataSize, rawDataWithHeader.data(), hCalcOp,
+                                                                  false, &usedSize, &totalMetricReportCount, metricResults.data()));
+    EXPECT_EQ(totalMetricReportCount, referenceReportCount);
+
+    // Every result of the report has to be the same metric and scope got when no metric was
+    // filtered out, so leaving a metric out of a scope only removes its own results from the report.
+    for (uint32_t reportIndex = 0; reportIndex < totalMetricReportCount; reportIndex++) {
+        const uint32_t resultBase = reportIndex * metricsInReportCount;
+        const uint32_t referenceBase = reportIndex * referenceReportSize;
+
+        for (size_t i = 0; i < compute0MetricIndexes.size(); i++) {
+            const auto &result = metricResults[resultBase + i];
+            const auto &referenceResult = referenceResults[referenceBase + compute0MetricIndexes[i]];
+            EXPECT_EQ(result.value.ui64, referenceResult.value.ui64);
+            EXPECT_EQ(result.resultStatus, referenceResult.resultStatus);
+        }
+
+        for (size_t i = 0; i < compute1MetricIndexes.size(); i++) {
+            const auto &result = metricResults[resultBase + compute0MetricIndexes.size() + i];
+            const auto &referenceResult = referenceResults[referenceBase + expectedMetricsInGroup + compute1MetricIndexes[i]];
+            EXPECT_EQ(result.value.ui64, referenceResult.value.ui64);
+            EXPECT_EQ(result.resultStatus, referenceResult.resultStatus);
+        }
+    }
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelMetricCalculationOperationDestroyExp(hCalcOp));
+}
+
 HWTEST2_PRODUCT_F(MetricIpSamplingCalcAggregationTest, GivenIpSamplingCalcOpOnRootDeviceCalculatingConcatenatedDataExpectSuccess, IsAtLeastXe2HpgCore) {
 
     uint32_t expectedMetricsInGroup = 0;

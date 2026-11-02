@@ -54,7 +54,7 @@ struct IpSamplingMetricCalcOpImp : public MetricCalcOpImp {
                               std::vector<MetricImp *> &metricsInReport,
                               const std::vector<MetricScopeImp *> &metricScopesInReport,
                               IpSamplingMetricSourceImp &metricSource,
-                              std::vector<uint32_t> &includedMetricIndexes,
+                              std::map<uint32_t, std::vector<uint32_t>> &perScopeIncludedMetricIndexes,
                               std::vector<MetricImp *> &excludedMetrics);
     ~IpSamplingMetricCalcOpImp() override {};
 
@@ -71,7 +71,7 @@ struct IpSamplingMetricCalcOpImp : public MetricCalcOpImp {
 
   protected:
     IpSamplingMetricSourceImp &metricSource;
-    std::vector<uint32_t> includedMetricIndexes{};
+    std::map<uint32_t, std::vector<uint32_t>> perScopeIncludedMetricIndexes{};
     std::vector<MetricScopeImp *> metricScopesInCalcOp{};
     bool isMultiDeviceData = false;
 

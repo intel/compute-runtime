@@ -122,10 +122,10 @@ class MetricSource {
     virtual bool canDisable() = 0;
     virtual ze_result_t initMetricScopes(MetricDeviceContext &metricDeviceContext) = 0;
     static std::optional<zet_intel_metric_hw_buffer_size_exp_desc_t *> getHwBufferSizeDesc(zet_base_desc_t *baseDesc);
-    static ze_result_t validateMetricsAgainstScopesAndGetExcludedMetrics(const std::vector<MetricImp *> &metrics,
-                                                                         uint32_t scopeCount,
-                                                                         zet_intel_metric_scope_exp_handle_t *phMetricScopes,
-                                                                         std::vector<MetricImp *> &excludedMetrics);
+    static void checkMetricsScopesAndGetExcludedMetrics(const std::vector<MetricImp *> &metrics,
+                                                        uint32_t scopeCount,
+                                                        zet_intel_metric_scope_exp_handle_t *phMetricScopes,
+                                                        std::vector<MetricImp *> &excludedMetrics);
 
     template <typename T>
     ze_result_t activatePreferDeferredHierarchical(Device *device, const uint32_t count, zet_metric_group_handle_t *phMetricGroups);

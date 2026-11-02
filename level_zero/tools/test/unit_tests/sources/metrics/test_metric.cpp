@@ -51,6 +51,25 @@ TEST(MultidevMetric, GivenMultideviceMetricCreatedThenReferenceIsUpdatedSuccessf
     delete multiDevMetric;
 }
 
+TEST(MetricSourceTest, GivenDuplicatedMetricWithoutRequestedScopeWhenGettingExcludedMetricsThenMetricIsExcludedOnlyOnce) {
+    MockMetricSource mockMetricSource{};
+    zet_intel_metric_scope_properties_exp_t scopeProperties{};
+    scopeProperties.stype = ZET_STRUCTURE_TYPE_INTEL_METRIC_SCOPE_PROPERTIES_EXP;
+    scopeProperties.pNext = nullptr;
+    MockMetricScope supportedMetricScope(scopeProperties, false, 0);
+    MockMetricScope requestedMetricScope(scopeProperties, false, 1);
+    std::vector<MetricScopeImp *> supportedMetricScopes{&supportedMetricScope};
+    MockMetric mockMetric(mockMetricSource, supportedMetricScopes);
+
+    std::vector<MetricImp *> metrics{&mockMetric, &mockMetric};
+    zet_intel_metric_scope_exp_handle_t hRequestedMetricScope = requestedMetricScope.toHandle();
+    std::vector<MetricImp *> excludedMetrics;
+    MetricSource::checkMetricsScopesAndGetExcludedMetrics(metrics, 1, &hRequestedMetricScope, excludedMetrics);
+
+    ASSERT_EQ(1u, excludedMetrics.size());
+    EXPECT_EQ(&mockMetric, excludedMetrics[0]);
+}
+
 class CalcOperationFixture : public DeviceFixture,
                              public ::testing::Test {
   protected:

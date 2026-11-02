@@ -770,15 +770,17 @@ ze_result_t IpSamplingCalculation::updateStallDataMapFromData(const size_t rawDa
 
 void IpSamplingCalculation::multiDataMapToMetricResults(std::map<uint32_t, std::map<uint64_t, void *> *> &perScopeIpDataCaches,
                                                         uint32_t metricReportCount,
-                                                        std::vector<uint32_t> includedMetricIndexes,
+                                                        const std::map<uint32_t, std::vector<uint32_t>> &perScopeIncludedMetricIndexes,
                                                         zet_intel_metric_result_exp_t *pMetricResults) {
 
-    // Every report includes the filtered metrics per scope
+    // Every report includes the filtered metrics per scope.
     std::vector<zet_typed_value_t> ipDataValues;
     uint32_t resultIndex = 0;
     for (uint32_t reportIndex = 0; reportIndex < metricReportCount; reportIndex++) {
         for (auto &entry : perScopeIpDataCaches) {
             ipDataValues.clear();
+
+            const auto &includedMetricIndexes = perScopeIncludedMetricIndexes.at(entry.first);
 
             std::map<uint64_t, void *> *scopeCache = entry.second;
 
@@ -805,7 +807,7 @@ void IpSamplingCalculation::multiDataMapToMetricResults(std::map<uint32_t, std::
 
 void IpSamplingCalculation::stallDataMapToMetricResults(std::map<uint64_t, void *> &stallReportDataMap,
                                                         uint32_t metricReportCount,
-                                                        std::vector<uint32_t> includedMetricIndexes,
+                                                        const std::vector<uint32_t> &includedMetricIndexes,
                                                         zet_intel_metric_result_exp_t *pMetricResults) {
     std::vector<zet_typed_value_t> ipDataValues;
     uint32_t i = 0;

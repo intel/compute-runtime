@@ -221,11 +221,11 @@ struct IpSamplingCalculation {
                                            bool *dataOverflow);
     void stallDataMapToMetricResults(std::map<uint64_t, void *> &stallReportDataMap,
                                      uint32_t metricReportCount,
-                                     std::vector<uint32_t> includedMetricIndexes,
+                                     const std::vector<uint32_t> &includedMetricIndexes,
                                      zet_intel_metric_result_exp_t *pMetricResults);
     void multiDataMapToMetricResults(std::map<uint32_t, std::map<uint64_t, void *> *> &perScopeIpDataCaches,
                                      uint32_t metricReportCount,
-                                     std::vector<uint32_t> includedMetricIndexes,
+                                     const std::map<uint32_t, std::vector<uint32_t>> &perScopeIncludedMetricIndexes,
                                      zet_intel_metric_result_exp_t *pMetricResults);
     void stallDataMapToTypedValues(std::map<uint64_t, void *> &stallReportDataMap,
                                    uint32_t &metricValueCount,

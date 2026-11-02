@@ -84,11 +84,12 @@ uint32_t MetricSource::getSubDeviceIdForComputeScopeId(MetricDeviceContext &metr
     return subDeviceId;
 }
 
-ze_result_t MetricSource::validateMetricsAgainstScopesAndGetExcludedMetrics(const std::vector<MetricImp *> &metrics,
-                                                                            uint32_t scopeCount,
-                                                                            zet_intel_metric_scope_exp_handle_t *phMetricScopes,
-                                                                            std::vector<MetricImp *> &excludedMetrics) {
+void MetricSource::checkMetricsScopesAndGetExcludedMetrics(const std::vector<MetricImp *> &metrics,
+                                                           uint32_t scopeCount,
+                                                           zet_intel_metric_scope_exp_handle_t *phMetricScopes,
+                                                           std::vector<MetricImp *> &excludedMetrics) {
     excludedMetrics.clear();
+    std::unordered_set<MetricImp *> excludedMetricsSet;
 
     for (const auto &metric : metrics) {
         uint32_t metricSupportedScopeCount = 0;
@@ -98,27 +99,25 @@ ze_result_t MetricSource::validateMetricsAgainstScopesAndGetExcludedMetrics(cons
         std::vector<zet_intel_metric_scope_exp_handle_t> metricSupportedScopes(metricSupportedScopeCount);
         metric->getScopes(&metricSupportedScopeCount, metricSupportedScopes.data());
 
-        // Check if all requested scopes are supported by the metric
-        for (uint32_t i = 0; i < scopeCount; i++) {
-            bool scopeSupported = false;
+        // A metric is only excluded if it does not support any scope
+        bool anyScopeSupported = false;
+        for (uint32_t i = 0; (i < scopeCount) && !anyScopeSupported; i++) {
             for (const auto &supportedScope : metricSupportedScopes) {
                 if (phMetricScopes[i] == supportedScope) {
-                    scopeSupported = true;
+                    anyScopeSupported = true;
                     break;
                 }
             }
-            if (!scopeSupported) {
-                excludedMetrics.push_back(metric);
-                break;
-            }
+        }
+
+        if (!anyScopeSupported && excludedMetricsSet.insert(metric).second) {
+            excludedMetrics.push_back(metric);
         }
     }
 
     if (!excludedMetrics.empty()) {
         METRICS_LOG_INFO("Total excluded metrics: %zu", excludedMetrics.size());
     }
-
-    return ZE_RESULT_SUCCESS;
 }
 
 std::optional<zet_intel_metric_hw_buffer_size_exp_desc_t *> MetricSource::getHwBufferSizeDesc(zet_base_desc_t *baseDesc) {
@@ -704,7 +703,6 @@ ze_result_t MetricDeviceContext::calcOperationCreate(zet_context_handle_t hConte
                                                      zet_intel_metric_calculation_exp_desc_t *pCalculationDesc,
                                                      zet_intel_metric_calculation_operation_exp_handle_t *phCalculationOperation) {
 
-    // Remove duplicates from metric groups and metrics
     std::vector<zet_metric_group_handle_t> metricGroups =
         removeDuplicates(pCalculationDesc->phMetricGroups, pCalculationDesc->metricGroupCount);
     std::vector<zet_metric_handle_t> metrics =
@@ -773,7 +771,6 @@ ze_result_t MetricDeviceContext::calcOperationCreate(zet_context_handle_t hConte
         }
     }
 
-    // Remove duplicates
     std::vector<zet_intel_metric_scope_exp_handle_t> phMetricScopes;
     phMetricScopes = removeDuplicates(pCalculationDesc->phMetricScopes, static_cast<uint32_t>(pCalculationDesc->metricScopesCount));
 
