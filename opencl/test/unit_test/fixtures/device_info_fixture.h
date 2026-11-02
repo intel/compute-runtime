@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #pragma once
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 
@@ -27,7 +27,7 @@ struct GetDeviceInfoMemCapabilitiesTest : ::testing::Test {
     void check(std::vector<TestParams> &params) {
         DebugManagerStateRestore restore;
         debugManager.flags.EnableSharedSystemUsmSupport.set(0);
-        auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+        auto device = createMockClDevice(nullptr);
         const bool isKmdMigrationAvailable{device->getMemoryManager()->isKmdMigrationAvailable(device->getRootDeviceIndex())};
 
         for (auto &param : params) {
@@ -50,7 +50,7 @@ struct GetDeviceInfoMemCapabilitiesTest : ::testing::Test {
 
 struct QueueFamilyNameTest : ::testing::Test {
     void SetUp() override {
-        device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+        device = createMockClDevice(defaultHwInfo.get());
     }
 
     void verify(EngineGroupType type, const char *expectedName) {

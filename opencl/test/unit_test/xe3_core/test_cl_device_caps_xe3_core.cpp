@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/xe3_core/hw_cmds_xe3_core.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"

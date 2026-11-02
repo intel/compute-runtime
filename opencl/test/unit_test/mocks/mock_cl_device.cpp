@@ -19,6 +19,10 @@
 
 using namespace NEO;
 
+std::unique_ptr<MockClDevice> NEO::createMockClDevice(const HardwareInfo *hwInfo) {
+    return std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(hwInfo));
+}
+
 bool &MockClDevice::createSingleDevice = MockDevice::createSingleDevice;
 
 decltype(&createCommandStream) &MockClDevice::createCommandStreamReceiverFunc = MockDevice::createCommandStreamReceiverFunc;

@@ -88,4 +88,6 @@ class MockClDevice : public ClDevice {
     std::vector<EngineControl> &allEngines;
 };
 
+std::unique_ptr<MockClDevice> createMockClDevice(const HardwareInfo *hwInfo);
+
 } // namespace NEO
