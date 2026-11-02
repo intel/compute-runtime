@@ -69,6 +69,7 @@ TEST(DeviceBlitterTest, whenBlitterOperationsSupportIsDisabledThenNoInternalCopy
 
 TEST(DeviceBlitterTest, givenForceBCSForInternalCopyEngineToIndexZeroWhenGetInternalCopyEngineIsCalledThenInternalMainCopyEngineIsReturned) {
     DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
     debugManager.flags.ForceBCSForInternalCopyEngine.set(0);
 
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
@@ -103,6 +104,7 @@ using InternalLinkCopyEngineTest = ::testing::Test;
 
 HWTEST2_F(InternalLinkCopyEngineTest, givenInternalBcsEnginePreferredWhenGetInternalLinkCopyEngineIsCalledThenInternalCopyEngineIsReturned, IsAtLeastXeCore) {
     DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
     debugManager.flags.ForceBcsEngineIndex.set(0);
     debugManager.flags.PreferInternalBcsEngine.set(1);
 
@@ -1899,6 +1901,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenCCSEngineAndContextGroupSizeEnabl
 
 HWTEST_F(DeviceTests, givenCCSEnginesAndContextGroupSizeEnabledWhenDeviceIsCreatedThenSecondaryEnginesAreCreated) {
     DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
     const uint32_t contextGroupSize = 8;
     debugManager.flags.ContextGroupSize.set(contextGroupSize);
 
@@ -2059,6 +2062,7 @@ HWTEST_F(DeviceTests, givenExposeSingleDeviceWhenGettingInternalEngineThenRootDe
     VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
 
     DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
     debugManager.flags.CreateMultipleSubDevices.set(2);
 
     HardwareInfo hwInfo = *defaultHwInfo;
@@ -2114,19 +2118,28 @@ struct InternalEngineFromSecondaryContextTests : public ::testing::Test {
     HardwareInfo hwInfo{};
 };
 
-HWTEST_F(InternalEngineFromSecondaryContextTests, givenUseSecondaryContextForInternalEngineDefaultOrDisabledWhenGettingInternalEngineThenDedicatedInternalEngineIsReturned) {
-    for (auto flagValue : {-1, 0}) {
-        debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(flagValue);
-        auto device = createDevice();
+HWTEST_F(InternalEngineFromSecondaryContextTests, givenUseSecondaryContextForInternalEngineDisabledWhenGettingInternalEngineThenDedicatedInternalEngineIsReturned) {
+    debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
+    auto device = createDevice();
 
-        auto &secondaryEngines = device->secondaryEngines[aub_stream::EngineType::ENGINE_CCS];
-        EXPECT_EQ(0u, secondaryEngines.internalEngineIndex);
-        EXPECT_EQ(1u, secondaryEngines.assignedContextsCounter.load());
+    auto &secondaryEngines = device->secondaryEngines[aub_stream::EngineType::ENGINE_CCS];
+    EXPECT_EQ(0u, secondaryEngines.internalEngineIndex);
+    EXPECT_EQ(1u, secondaryEngines.assignedContextsCounter.load());
 
-        auto &internalEngine = device->getInternalEngine();
-        EXPECT_EQ(EngineUsage::internal, internalEngine.getEngineUsage());
-        EXPECT_FALSE(internalEngine.osContext->isPartOfContextGroup());
-    }
+    auto &internalEngine = device->getInternalEngine();
+    EXPECT_EQ(EngineUsage::internal, internalEngine.getEngineUsage());
+    EXPECT_FALSE(internalEngine.osContext->isPartOfContextGroup());
+}
+
+HWTEST_F(InternalEngineFromSecondaryContextTests, givenUseSecondaryContextForInternalEngineDefaultWhenGettingInternalEngineThenReservedSecondaryContextIsReturned) {
+    auto device = createDevice();
+
+    auto &secondaryEngines = device->secondaryEngines[aub_stream::EngineType::ENGINE_CCS];
+    ASSERT_EQ(reservedInternalEngineIndex, secondaryEngines.internalEngineIndex);
+
+    auto &internalEngine = device->getInternalEngine();
+    EXPECT_EQ(secondaryEngines.engines[reservedInternalEngineIndex].commandStreamReceiver, internalEngine.commandStreamReceiver);
+    EXPECT_TRUE(internalEngine.osContext->isPartOfContextGroup());
 }
 
 HWTEST_F(InternalEngineFromSecondaryContextTests, givenUseSecondaryContextForInternalEngineEnabledWhenGettingInternalEngineThenReservedSecondaryContextIsReturned) {
@@ -2317,6 +2330,7 @@ HWTEST_F(InternalEngineFromSecondaryContextTests, givenUseSecondaryContextForInt
 }
 
 HWTEST_F(InternalEngineFromSecondaryContextTests, givenUseSecondaryContextForInternalEngineDisabledAndSecondaryContextInitializationFailureWhenDeviceIsCreatedThenDeviceIsCreated) {
+    debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
     auto device = std::unique_ptr<FailingSecondaryEngineInitializationMockDevice>(MockDevice::createWithNewExecutionEnvironment<FailingSecondaryEngineInitializationMockDevice>(&hwInfo));
     ASSERT_NE(nullptr, device);
     EXPECT_EQ(0u, device->initializeSecondaryEngineCalled);
@@ -2346,6 +2360,7 @@ HWTEST_F(InternalEngineFromSecondaryContextTests, givenUseSecondaryContextForInt
 }
 
 HWTEST_F(InternalEngineFromSecondaryContextTests, givenUseSecondaryContextForInternalEngineDisabledWhenDeviceIsCreatedThenDedicatedInternalEngineIsCreatedForContextGroupEngine) {
+    debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
     auto device = createDevice();
 
     ASSERT_TRUE(device->secondaryEngines.contains(aub_stream::EngineType::ENGINE_CCS));
@@ -2485,6 +2500,7 @@ HWTEST_F(DeviceTests, givenRootDeviceWithCCSEngineAndContextGroupSizeEnabledWhen
         GTEST_SKIP();
     }
     DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
     const uint32_t contextGroupSize = 8;
     debugManager.flags.ContextGroupSize.set(contextGroupSize);
     debugManager.flags.CreateMultipleSubDevices.set(2);
@@ -2607,6 +2623,7 @@ HWTEST_F(DeviceTests, givenRootDeviceAndDebugFlagSetWhenCreatingSecondaryEngines
 
 HWTEST_F(DeviceTests, givenContextGroupSizeEnabledWhenMoreHpEnginesCreatedThenFreeEnginesAreAssignedUpToHalfOfContextGroup) {
     DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
     const uint32_t contextGroupSize = 14;
     debugManager.flags.ContextGroupSize.set(contextGroupSize);
 
@@ -2711,6 +2728,7 @@ HWTEST_F(DeviceTests, givenDeviceWithCCSEngineAndAggregatedProcessesWhenDeviceIs
         GTEST_SKIP();
     }
     DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
 
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.flags.ftrCCSNode = true;
@@ -2939,6 +2957,7 @@ HWTEST_F(DeviceTests, givenNulloptPriorityLevelWhenGetSecondaryEnginesThenPriori
         GTEST_SKIP();
     }
     DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
     constexpr uint32_t contextGroupSize = 16;
     debugManager.flags.ContextGroupSize.set(contextGroupSize);
     debugManager.flags.PrintSecondaryContextEngineInfo.set(1);
@@ -3376,6 +3395,7 @@ HWTEST_F(DeviceTests, givenContextGroupEnabledWhenGettingSecondaryEngineThenReso
     }
 
     DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
     debugManager.flags.ContextGroupSize.set(5);
 
     hwInfo.featureTable.flags.ftrCCSNode = true;
@@ -3526,6 +3546,7 @@ HWTEST_F(DeviceTests, givenCopyEnginesWhenCreatingSecondaryContextsThenUseCopyTy
     HardwareInfo hwInfo = *defaultHwInfo;
 
     DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
     debugManager.flags.ContextGroupSize.set(5);
 
     hwInfo.capabilityTable.blitterOperationsSupported = true;
@@ -3763,6 +3784,7 @@ TEST(DeviceWithoutAILTest, givenNoAILWhenCreateDeviceThenDeviceIsCreated) {
 
 HWTEST_F(DeviceTests, givenCopyInternalEngineWhenStopDirectSubmissionForCopyEngineCalledThenStopDirectSubmission) {
     DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     debugManager.flags.ForceBCSForInternalCopyEngine.set(0);

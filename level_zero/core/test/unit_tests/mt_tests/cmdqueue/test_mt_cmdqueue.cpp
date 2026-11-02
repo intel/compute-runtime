@@ -148,7 +148,8 @@ TEST_F(CommandQueueCsrReuseMtTests, givenReleasedCsrWhenCreatingQueuesConcurrent
     ASSERT_EQ(ZE_RESULT_SUCCESS, device->createCommandQueue(&desc, &initialHandle));
     L0::CommandQueue::fromHandle(initialHandle)->destroy();
 
-    auto count = neoDevice->secondaryEngines[aub_stream::ENGINE_CCS].regularEnginesTotal;
+    const auto &secondaryEngines = neoDevice->secondaryEngines[aub_stream::ENGINE_CCS];
+    const uint32_t count = secondaryEngines.regularEnginesTotal - (secondaryEngines.internalEngineIndex != 0 ? 1u : 0u);
     std::vector<ze_command_queue_handle_t> handles(count, nullptr);
     std::vector<ze_result_t> results(count, ZE_RESULT_ERROR_UNKNOWN);
     std::vector<std::thread> threads;

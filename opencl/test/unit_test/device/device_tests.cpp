@@ -576,6 +576,8 @@ HWTEST_F(DeviceHwTest, givenBothCcsAndRcsEnginesInDeviceWhenGettingEngineGroupsT
 }
 
 TEST(DeviceGetEngineTest, givenHwCsrModeWhenGetEngineThenDedicatedForInternalUsageEngineIsReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(nullptr));
 
     auto &internalEngine = device->getInternalEngine();

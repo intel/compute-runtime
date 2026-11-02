@@ -1962,6 +1962,7 @@ struct CommandListCsrReuseTests : public ::testing::Test {
         }
         debugManager.flags.ContextGroupSize.set(5);
         debugManager.flags.OverrideNumHighPriorityContexts.set(1);
+        debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
         hwInfo.featureTable.flags.ftrCCSNode = true;
         hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
         neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
@@ -3515,6 +3516,7 @@ TEST(CommandList, givenCopyContextGroupEnabledWhenCreatingImmediateCommandListTh
 
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.ContextGroupSize.set(5);
+    debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
 
     hwInfo.featureTable.ftrBcsInfo = 0b111;
     hwInfo.capabilityTable.blitterOperationsSupported = true;

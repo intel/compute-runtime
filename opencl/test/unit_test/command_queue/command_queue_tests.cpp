@@ -372,6 +372,7 @@ TEST(CommandQueue, givenDeviceWithSubDevicesSupportingBlitOperationsWhenQueueIsC
 
 TEST(CommandQueue, whenCommandQueueWithInternalUsageIsCreatedThenInternalBcsEngineIsUsed) {
     DebugManagerStateRestore restorer;
+    debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
     debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
     debugManager.flags.DeferCmdQBcsInitialization.set(0);
     HardwareInfo hwInfo = *defaultHwInfo;
@@ -3123,6 +3124,7 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenMultipleFamiliesWhenCreatingQue
 
 HWTEST_F(CommandQueueOnSpecificEngineTests, givenContextGroupWhenCreatingQueuesThenAssignDifferentCsr) {
     DebugManagerStateRestore restore;
+    debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
     debugManager.flags.ContextGroupSize.set(8);
 
     HardwareInfo hwInfo = *defaultHwInfo;
@@ -3952,6 +3954,7 @@ struct CommandQueueSecondaryContextOwnershipTest : public ::testing::Test {
             GTEST_SKIP();
         }
         debugManager.flags.ContextGroupSize.set(4);
+        debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
 
         hwInfo.featureTable.flags.ftrCCSNode = true;
         hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;

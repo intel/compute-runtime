@@ -90,6 +90,8 @@ HWTEST2_F(EngineNodeHelperTestsXeHPAndLater, givenLessThanFourCopyEnginesWhenGet
 }
 
 HWTEST2_F(EngineNodeHelperTestsXeHPAndLater, givenLessThanFourCopyEnginesWhenGetGpgpuEngineInstancesThenUseLastCopyEngineAsInternal, IsAtLeastXeHpcCore) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
     auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
     auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
     hwInfo.capabilityTable.blitterOperationsSupported = true;
