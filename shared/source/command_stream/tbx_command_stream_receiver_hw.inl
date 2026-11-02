@@ -99,8 +99,9 @@ bool TbxCommandStreamReceiverHw<GfxFamily>::shareAllocationMemoryWithSimulator(G
     if (gfxAllocation.isSimulationMemoryShared()) {
         return true;
     }
+    const bool isLocalMemory = gfxAllocation.isAllocatedInLocalMemoryPool();
     if (gfxAllocation.isSimulationMemorySharingAttempted() || gfxAllocation.getDriverAllocatedCpuPtr() == nullptr || gfxAllocation.isCompressionEnabled() ||
-        gfxAllocation.isAllocatedInLocalMemoryPool() || isAllocTbxFaultable(&gfxAllocation)) {
+        (isLocalMemory && !this->isWrittenWithAubManager(gfxAllocation)) || isAllocTbxFaultable(&gfxAllocation)) {
         return false;
     }
 
@@ -118,6 +119,9 @@ bool TbxCommandStreamReceiverHw<GfxFamily>::shareAllocationMemoryWithSimulator(G
     }
 
     auto allocationParams = this->createAllocationParams(gfxAllocation, gpuAddress, nullptr, size);
+    if (isLocalMemory && DeviceBitfield(allocationParams.memoryBanks).count() != 1) {
+        return false;
+    }
     allocationParams.pageSize = physicalPageSize;
     aub_stream::PhysicalAllocationInfo physicalAllocationInfo{};
     gfxAllocation.setSimulationMemorySharingAttempted(true);
@@ -125,7 +129,6 @@ bool TbxCommandStreamReceiverHw<GfxFamily>::shareAllocationMemoryWithSimulator(G
         return false;
     }
 
-    constexpr bool isLocalMemory = false;
     if (!aubManager->mapSystemMemoryToPhysicalAddress(physicalAllocationInfo.physicalAddress, size, MemoryConstants::pageSize, isLocalMemory, cpuAddress)) {
         return false;
     }

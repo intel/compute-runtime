@@ -2068,9 +2068,29 @@ HWTEST_F(TbxAllocationMemorySharingTests, givenPhysicalPageSizeSmallerThanAlloca
     EXPECT_EQ(MemoryConstants::pageSize, aubManager->mappedGpuVaParams[0].pageSize);
 }
 
-HWTEST_F(TbxAllocationMemorySharingTests, givenLocalMemoryAllocationWhenWritingAllocationThenMemoryIsCopiedInsteadOfShared) {
+HWTEST_F(TbxAllocationMemorySharingTests, givenSingleBankLocalMemoryAllocationWhenWritingAllocationThenCpuMemoryBacksReservedLocalMemoryPages) {
     auto tbxCsr = createCsrSharingAllocationMemory<FamilyType>();
     auto allocation = createAllocation(cpuMemory, cpuMemory, gpuAddress, MemoryConstants::pageSize64k, MemoryPool::localMemory);
+    allocation->storageInfo.memoryBanks = 0b1;
+
+    EXPECT_TRUE(tbxCsr->writeMemory(*allocation));
+
+    EXPECT_TRUE(allocation->isSimulationMemoryShared());
+    EXPECT_FALSE(aubManager->writeMemory2Called);
+    ASSERT_EQ(1u, aubManager->reservedPhysicalSpaceParams.size());
+    EXPECT_EQ(0b1u, aubManager->reservedPhysicalSpaceParams[0].memoryBanks);
+    ASSERT_EQ(1u, aubManager->mappedSystemMemoryRanges.size());
+    EXPECT_TRUE(aubManager->mappedSystemMemoryRanges[0].isLocalMemory);
+    EXPECT_EQ(cpuMemory, aubManager->mappedSystemMemoryRanges[0].systemMemory);
+    EXPECT_EQ(MemoryConstants::pageSize64k, aubManager->mappedSystemMemoryRanges[0].size);
+    ASSERT_EQ(1u, aubManager->mappedGpuVaParams.size());
+    EXPECT_EQ(0b1u, aubManager->mappedGpuVaParams[0].memoryBanks);
+}
+
+HWTEST_F(TbxAllocationMemorySharingTests, givenMultiBankLocalMemoryAllocationWhenWritingAllocationThenMemoryIsCopiedInsteadOfShared) {
+    auto tbxCsr = createCsrSharingAllocationMemory<FamilyType>();
+    auto allocation = createAllocation(cpuMemory, cpuMemory, gpuAddress, MemoryConstants::pageSize64k, MemoryPool::localMemory);
+    allocation->storageInfo.memoryBanks = 0b11;
 
     EXPECT_FALSE(tbxCsr->shareAllocationMemoryWithSimulator(*allocation));
     EXPECT_TRUE(tbxCsr->writeMemory(*allocation));
@@ -2079,6 +2099,31 @@ HWTEST_F(TbxAllocationMemorySharingTests, givenLocalMemoryAllocationWhenWritingA
     EXPECT_EQ(0u, aubManager->reserveOnlyPhysicalSpaceCalled);
     EXPECT_TRUE(aubManager->mappedSystemMemoryRanges.empty());
     EXPECT_TRUE(aubManager->mappedGpuVaPhysicalAddresses.empty());
+}
+
+HWTEST_F(TbxAllocationMemorySharingTests, givenLocalMemoryAllocationWithoutClonedPageTablesNotWrittenByRootCsrWhenSharingAllocationMemoryThenNothingIsMapped) {
+    auto tbxCsr = createCsrSharingAllocationMemory<FamilyType>();
+    auto allocation = createAllocation(cpuMemory, cpuMemory, gpuAddress, MemoryConstants::pageSize64k, MemoryPool::localMemory);
+    allocation->storageInfo.cloningOfPageTables = false;
+    allocation->storageInfo.memoryBanks = 0b1;
+    allocation->storageInfo.pageTablesVisibility = 0b11;
+
+    EXPECT_FALSE(tbxCsr->shareAllocationMemoryWithSimulator(*allocation));
+
+    EXPECT_FALSE(allocation->isSimulationMemorySharingAttempted());
+    EXPECT_EQ(0u, aubManager->reserveOnlyPhysicalSpaceCalled);
+}
+
+HWTEST_F(TbxAllocationMemorySharingTests, givenCompressedLocalMemoryAllocationWhenSharingAllocationMemoryThenNothingIsMapped) {
+    auto tbxCsr = createCsrSharingAllocationMemory<FamilyType>();
+    auto allocation = createAllocation(cpuMemory, cpuMemory, gpuAddress, MemoryConstants::pageSize64k, MemoryPool::localMemory);
+    MockGmm gmm(pDevice->getGmmHelper());
+    gmm.setCompressionEnabled(true);
+    allocation->setDefaultGmm(&gmm);
+
+    EXPECT_FALSE(tbxCsr->shareAllocationMemoryWithSimulator(*allocation));
+
+    EXPECT_EQ(0u, aubManager->reserveOnlyPhysicalSpaceCalled);
 }
 
 HWTEST_F(TbxAllocationMemorySharingTests, givenAllocationMemoryNotSharedWithSimulatorWhenWritingAllocationThenMemoryIsCopied) {
