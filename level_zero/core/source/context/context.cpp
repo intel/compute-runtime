@@ -939,7 +939,6 @@ std::map<uint64_t, IpcHandleTracking *>::iterator Context::eraseIpcHandleTrackin
     if ((settings.useOpaqueHandle == OpaqueHandlingType::sockets) && settings.handleType == IpcHandleType::fdHandle) {
         this->driverHandle->unregisterIpcHandleWithServer(handle);
     }
-    this->driverHandle->clearCachedImportHandle(handleTracking->cacheID);
     delete handleTracking;
     return this->driverHandle->getIPCHandleMap().erase(ipcHandleIterator);
 }

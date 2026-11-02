@@ -1076,9 +1076,6 @@ void DriverHandle::setCachedImportHandle(uint64_t cacheID, uint64_t importHandle
 }
 
 void DriverHandle::clearCachedImportHandle(uint64_t cacheID) {
-    if (cacheID == 0) {
-        return;
-    }
     std::lock_guard<std::mutex> lock(opaqueHandleImportCacheMutex);
     auto it = opaqueHandleImportCache.find(cacheID);
     if (it != opaqueHandleImportCache.end()) {

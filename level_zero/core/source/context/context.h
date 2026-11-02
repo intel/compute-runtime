@@ -129,7 +129,6 @@ struct IpcHandleTracking {
     NEO::GraphicsAllocation *alloc = nullptr;
     uint32_t handleId = 0;
     uint64_t ptr = 0;
-    uint64_t cacheID = 0;
     struct IpcMemoryData ipcData = {};
     struct IpcOpaqueMemoryData opaqueData = {};
     bool hasReservedHandleData = false;
