@@ -60,6 +60,12 @@ class DrmAllocation : public GraphicsAllocation {
         }
         return this->bufferObjects[0];
     }
+    BufferObject *getBOForVmHandle(uint32_t vmHandleId) const {
+        if (this->storageInfo.getNumBanks() > 1 && !this->storageInfo.isChunked) {
+            return this->bufferObjects[vmHandleId];
+        }
+        return this->getBO();
+    }
     const BufferObjects &getBOs() const {
         return this->bufferObjects;
     }

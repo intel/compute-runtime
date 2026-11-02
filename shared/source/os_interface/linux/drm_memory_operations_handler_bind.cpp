@@ -111,11 +111,7 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::makeResidentWithinOsConte
 
         for (auto gfxAllocation = gfxAllocations.begin(); gfxAllocation != gfxAllocations.end(); gfxAllocation++) {
             auto drmAllocation = static_cast<DrmAllocation *>(*gfxAllocation);
-            auto bo = drmAllocation->storageInfo.getNumBanks() > 1 ? drmAllocation->getBOs()[drmIterator] : drmAllocation->getBO();
-
-            if (drmAllocation->storageInfo.isChunked) {
-                bo = drmAllocation->getBO();
-            }
+            auto bo = drmAllocation->getBOForVmHandle(drmIterator);
 
             if (!bo->getBindInfo()[bo->getOsContextId(osContext)][drmIterator]) {
                 bo->requireExplicitLockedMemory(drmAllocation->isLockedMemory());
@@ -173,10 +169,7 @@ int DrmMemoryOperationsHandlerBind::evictImpl(OsContext *osContext, GraphicsAllo
             if (retVal) {
                 return retVal;
             }
-            auto bo = drmAllocation->storageInfo.getNumBanks() > 1 ? drmAllocation->getBOs()[drmIterator] : drmAllocation->getBO();
-            if (drmAllocation->storageInfo.isChunked) {
-                bo = drmAllocation->getBO();
-            }
+            auto bo = drmAllocation->getBOForVmHandle(drmIterator);
             bo->requireImmediateBinding(false);
         }
     }
@@ -260,11 +253,7 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::makeResidentAsync(OsConte
         }
         devicesDone++;
         auto &drmAllocation = *static_cast<DrmAllocation *>(gfxAllocation);
-        auto bo = drmAllocation.storageInfo.getNumBanks() > 1 ? drmAllocation.getBOs()[drmIterator] : drmAllocation.getBO();
-
-        if (drmAllocation.storageInfo.isChunked) {
-            bo = drmAllocation.getBO();
-        }
+        auto bo = drmAllocation.getBOForVmHandle(drmIterator);
         bo->requireExplicitLockedMemory(drmAllocation.isLockedMemory());
         bo->requireImmediateBinding(true);
         bo->setAsyncPagingFenceRequired();
@@ -289,11 +278,7 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::waitForAsyncResidency(OsC
         devicesDone++;
 
         auto &drmAllocation = *static_cast<DrmAllocation *>(gfxAllocation);
-        auto bo = drmAllocation.storageInfo.getNumBanks() > 1 ? drmAllocation.getBOs()[drmIterator] : drmAllocation.getBO();
-
-        if (drmAllocation.storageInfo.isChunked) {
-            bo = drmAllocation.getBO();
-        }
+        auto bo = drmAllocation.getBOForVmHandle(drmIterator);
         UNRECOVERABLE_IF(!bo->isAsyncPagingFenceRequired());
         auto ret = bo->waitOnAsyncPagingFence(osContext, drmIterator);
         if (ret != 0) {

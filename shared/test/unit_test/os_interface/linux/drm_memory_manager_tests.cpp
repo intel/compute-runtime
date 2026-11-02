@@ -4922,6 +4922,25 @@ TEST_F(DrmAllocationTests, givenAllocationTypeWhenPassedToDrmAllocationConstruct
     EXPECT_EQ(AllocationType::unknown, allocation2.getAllocationType());
 }
 
+TEST_F(DrmAllocationTests, givenAllocationWhenGettingBufferObjectForVmHandleThenBankBufferObjectIsReturnedOnlyForNotChunkedMultiBankAllocation) {
+    DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
+    MockBufferObject firstBankBo(0, &drm, 3, 0, 0, 1);
+    MockBufferObject secondBankBo(0, &drm, 3, 0, 0, 1);
+    MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::localMemory);
+    allocation.bufferObjects[0] = &firstBankBo;
+    allocation.bufferObjects[1] = &secondBankBo;
+
+    allocation.storageInfo.memoryBanks = 0b1;
+    EXPECT_EQ(&firstBankBo, allocation.getBOForVmHandle(1u));
+
+    allocation.storageInfo.memoryBanks = 0b11;
+    EXPECT_EQ(&firstBankBo, allocation.getBOForVmHandle(0u));
+    EXPECT_EQ(&secondBankBo, allocation.getBOForVmHandle(1u));
+
+    allocation.storageInfo.isChunked = true;
+    EXPECT_EQ(&firstBankBo, allocation.getBOForVmHandle(1u));
+}
+
 TEST_F(DrmAllocationTests, givenMemoryPoolWhenPassedToDrmAllocationConstructorThenMemoryPoolIsStored) {
     DrmAllocation allocation{0, 1u /*num gmms*/, AllocationType::commandBuffer, nullptr, nullptr, static_cast<size_t>(0), 0u, MemoryPool::system64KBPages};
     EXPECT_EQ(MemoryPool::system64KBPages, allocation.getMemoryPool());
