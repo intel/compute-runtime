@@ -274,6 +274,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(groupSizeValues[1], localWorkSizePatch[1]);
     EXPECT_EQ(groupSizeValues[2], localWorkSizePatch[2]);
 
+    uint32_t *localWorkSize2Patch = reinterpret_cast<uint32_t *>(ptrOffset(this->crossThreadData.get(), this->offsets.localWorkSize2));
+    EXPECT_EQ(groupSizeValues[0], localWorkSize2Patch[0]);
+    EXPECT_EQ(groupSizeValues[1], localWorkSize2Patch[1]);
+    EXPECT_EQ(groupSizeValues[2], localWorkSize2Patch[2]);
+
     uint32_t *enqLocalWorkSizePatch = reinterpret_cast<uint32_t *>(ptrOffset(this->crossThreadData.get(), this->offsets.enqLocalWorkSize));
     EXPECT_EQ(groupSizeValues[0], enqLocalWorkSizePatch[0]);
     EXPECT_EQ(groupSizeValues[1], enqLocalWorkSizePatch[1]);
@@ -291,6 +296,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     groupSize->commitVariable();
     EXPECT_EQ(groupSizeValues[1] - 1, walkerCmdCpuBuffer->getLocalYMaximum());
     EXPECT_EQ(groupSizeValues[1], localWorkSizePatch[1]);
+    EXPECT_EQ(groupSizeValues[1], localWorkSize2Patch[1]);
     EXPECT_EQ(groupSizeValues[1], enqLocalWorkSizePatch[1]);
 
     groupSizeValues[2] = 4;
@@ -302,6 +308,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     groupSize->commitVariable();
     EXPECT_EQ(groupSizeValues[2] - 1, walkerCmdCpuBuffer->getLocalZMaximum());
     EXPECT_EQ(groupSizeValues[2], localWorkSizePatch[2]);
+    EXPECT_EQ(groupSizeValues[2], localWorkSize2Patch[2]);
     EXPECT_EQ(groupSizeValues[2], enqLocalWorkSizePatch[2]);
 
     ret = groupSize->setValue(kernelDispatchVariableSize, 0, argValue);
@@ -345,6 +352,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(groupSizeValues[0], localWorkSizePatch[0]);
     EXPECT_EQ(groupSizeValues[1], localWorkSizePatch[1]);
     EXPECT_EQ(groupSizeValues[2], localWorkSizePatch[2]);
+
+    uint32_t *localWorkSize2Patch = reinterpret_cast<uint32_t *>(ptrOffset(this->crossThreadData.get(), this->offsets.localWorkSize2));
+    EXPECT_EQ(groupSizeValues[0], localWorkSize2Patch[0]);
+    EXPECT_EQ(groupSizeValues[1], localWorkSize2Patch[1]);
+    EXPECT_EQ(groupSizeValues[2], localWorkSize2Patch[2]);
 
     uint32_t *enqLocalWorkSizePatch = reinterpret_cast<uint32_t *>(ptrOffset(this->crossThreadData.get(), this->offsets.enqLocalWorkSize));
     EXPECT_EQ(groupSizeValues[0], enqLocalWorkSizePatch[0]);

@@ -4158,7 +4158,7 @@ TEST_F(CommandListAppendLaunchKernelWithArgumentsTests, givenNullptrInputWhenApp
     auto mockIsaAllocation = std::make_unique<MockGraphicsAllocation>(reinterpret_cast<void *>(0x543000), 10);
     mockIsaAllocation->setAllocationType(NEO::AllocationType::kernelIsa);
     kernelImmutableData->setIsaPerKernelAllocation(mockIsaAllocation.release());
-    kernelImmutableData->initialize(&kernelInfo, device, nullptr, nullptr);
+    kernelImmutableData->initialize(&kernelInfo, device, 0, nullptr, nullptr, false);
 
     std::unique_ptr<L0::ult::Module> mockModule = std::make_unique<L0::ult::Module>(device, nullptr, ModuleType::user);
     mockModule->kernelImmData.push_back(std::move(kernelImmutableData));
@@ -4236,7 +4236,7 @@ TEST_F(CommandListAppendLaunchKernelWithArgumentsTests, whenAppendLaunchKernelWi
     auto mockIsaAllocation = std::make_unique<MockGraphicsAllocation>(reinterpret_cast<void *>(0x543000), 10);
     mockIsaAllocation->setAllocationType(NEO::AllocationType::kernelIsa);
     kernelImmutableData->setIsaPerKernelAllocation(mockIsaAllocation.release());
-    kernelImmutableData->initialize(&kernelInfo, device, nullptr, nullptr);
+    kernelImmutableData->initialize(&kernelInfo, device, 0, nullptr, nullptr, false);
 
     std::unique_ptr<L0::ult::Module> mockModule = std::make_unique<L0::ult::Module>(device, nullptr, ModuleType::user);
     mockModule->kernelImmData.push_back(std::move(kernelImmutableData));
@@ -4301,7 +4301,7 @@ TEST_F(CommandListAppendLaunchKernelWithArgumentsTests, givenKernelWithoutArgume
     auto mockIsaAllocation = std::make_unique<MockGraphicsAllocation>(reinterpret_cast<void *>(0x543000), 10);
     mockIsaAllocation->setAllocationType(NEO::AllocationType::kernelIsa);
     kernelImmutableData->setIsaPerKernelAllocation(mockIsaAllocation.release());
-    kernelImmutableData->initialize(&kernelInfo, device, nullptr, nullptr);
+    kernelImmutableData->initialize(&kernelInfo, device, 0, nullptr, nullptr, false);
 
     std::unique_ptr<L0::ult::Module> mockModule = std::make_unique<L0::ult::Module>(device, nullptr, ModuleType::user);
     mockModule->kernelImmData.push_back(std::move(kernelImmutableData));

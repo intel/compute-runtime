@@ -32,6 +32,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     this->indirectData->setGlobalWorkOffset(data);
     this->indirectData->setGlobalWorkSize(data);
     this->indirectData->setLocalWorkSize(data);
+    this->indirectData->setLocalWorkSize2(data);
     this->indirectData->setNumWorkGroups(data);
     this->indirectData->setWorkDimensions(3);
 

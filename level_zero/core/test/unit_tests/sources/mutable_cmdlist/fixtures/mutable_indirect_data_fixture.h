@@ -30,10 +30,11 @@ struct MutableIndirectDataFixture {
 
         L0::MCL::CrossThreadDataOffset globalWorkSize = initialOffset;
         L0::MCL::CrossThreadDataOffset localWorkSize = initialOffset + patchSize;
-        L0::MCL::CrossThreadDataOffset enqLocalWorkSize = initialOffset + 2 * patchSize;
-        L0::MCL::CrossThreadDataOffset numWorkGroups = initialOffset + 3 * patchSize;
-        L0::MCL::CrossThreadDataOffset workDimensions = initialOffset + 4 * patchSize;
-        L0::MCL::CrossThreadDataOffset globalWorkOffset = initialOffset + 5 * patchSize;
+        L0::MCL::CrossThreadDataOffset localWorkSize2 = initialOffset + 2 * patchSize;
+        L0::MCL::CrossThreadDataOffset enqLocalWorkSize = initialOffset + 3 * patchSize;
+        L0::MCL::CrossThreadDataOffset numWorkGroups = initialOffset + 4 * patchSize;
+        L0::MCL::CrossThreadDataOffset workDimensions = initialOffset + 5 * patchSize;
+        L0::MCL::CrossThreadDataOffset globalWorkOffset = initialOffset + 6 * patchSize;
     } offsets;
 
     std::unique_ptr<L0::MCL::MutableIndirectData> indirectData;
