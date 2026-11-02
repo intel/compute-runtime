@@ -327,7 +327,7 @@ struct Graph : _ze_graph_handle_t {
     struct CaptureTargetDesc {
         ze_device_handle_t hDevice = nullptr;
         ze_command_list_desc_t desc{ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC};
-        ze_mutable_command_list_exp_desc_t mutableExpDesc{ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_LIST_EXP_DESC};
+        ze_mutable_command_list_ext_desc_t mutableExtDesc{ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_LIST_EXT_DESC};
     };
 
     const CaptureTargetDesc &getCaptureTargetDesc() const {
@@ -335,7 +335,7 @@ struct Graph : _ze_graph_handle_t {
     }
 
     void enableMutableCommandList() {
-        captureTargetDesc.desc.pNext = &captureTargetDesc.mutableExpDesc;
+        captureTargetDesc.desc.pNext = &captureTargetDesc.mutableExtDesc;
         mutableCmdlist = true;
     }
 

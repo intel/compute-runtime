@@ -1115,8 +1115,8 @@ ze_result_t Device::getProperties(ze_device_properties_t *pDeviceProperties) {
                 supportMatrix |= hardwareInfo.caps.block2DLoadSupported ? ZE_INTEL_DEVICE_EXP_FLAG_2D_BLOCK_LOAD : 0;
                 auto blockTransposeProps = reinterpret_cast<ze_intel_device_block_array_exp_properties_t *>(extendedProperties);
                 blockTransposeProps->flags = supportMatrix;
-            } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_LIST_EXP_PROPERTIES) {
-                ze_mutable_command_list_exp_properties_t *mclProperties = reinterpret_cast<ze_mutable_command_list_exp_properties_t *>(extendedProperties);
+            } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_LIST_EXP_PROPERTIES || extendedProperties->stype == ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_LIST_EXT_PROPERTIES) {
+                ze_mutable_command_list_ext_properties_t *mclProperties = reinterpret_cast<ze_mutable_command_list_ext_properties_t *>(extendedProperties);
                 mclProperties->mutableCommandListFlags = 0;
                 mclProperties->mutableCommandFlags = getL0GfxCoreHelper().getCmdListUpdateCapabilities(this->getNEODevice()->getRootDeviceEnvironment());
             } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXP_PROPERTIES) {
@@ -2350,7 +2350,7 @@ ze_result_t Device::synchronize() {
 
 Device::CmdListCreateFunPtrT Device::getCmdListCreateFunc(const ze_base_desc_t *desc) {
     if (desc) {
-        if (desc->stype == ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_LIST_EXP_DESC) {
+        if (desc->stype == ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_LIST_EXP_DESC || desc->stype == ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_LIST_EXT_DESC) {
             return &MCL::MutableCommandList::create;
         }
     }

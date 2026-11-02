@@ -207,8 +207,8 @@ struct MutableCommandList {
     virtual ze_result_t getNativeBinary(uint8_t *outBinary, size_t *outBinarySize, const uint8_t *module, size_t moduleSize) = 0;
     virtual ze_result_t loadFromBinary(const uint8_t *binary, const size_t binarySize) = 0;
 
-    virtual ze_result_t getNextCommandId(const ze_mutable_command_id_exp_desc_t *desc, uint32_t numKernels, ze_kernel_handle_t *phKernels, uint64_t *pCommandId) = 0;
-    virtual ze_result_t updateMutableCommands(const ze_mutable_commands_exp_desc_t *desc) = 0;
+    virtual ze_result_t getNextCommandId(const ze_mutable_command_id_ext_desc_t *desc, uint32_t numKernels, ze_kernel_handle_t *phKernels, uint64_t *pCommandId) = 0;
+    virtual ze_result_t updateMutableCommands(const ze_mutable_commands_ext_desc_t *desc) = 0;
     virtual ze_result_t updateMutableCommandSignalEvent(uint64_t commandId, ze_event_handle_t signalEvent) = 0;
     virtual ze_result_t updateMutableCommandWaitEvents(uint64_t commandId, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) = 0;
     virtual ze_result_t updateMutableCommandKernels(uint32_t numKernels, uint64_t *pCommandId, ze_kernel_handle_t *phKernels) = 0;

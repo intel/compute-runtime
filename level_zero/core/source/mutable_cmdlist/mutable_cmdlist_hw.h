@@ -24,7 +24,7 @@ struct MutableAppendLaunchKernelWithParams {
     uint32_t maxKernelGroupScratch[2] = {0, 0};
     uint32_t maxKernelGroupIndirectHeap = 0;
     uint32_t extraPayloadSpaceForKernelGroup = 0;
-    ze_mutable_command_exp_flags_t mutationFlags = 0;
+    ze_mutable_command_ext_flags_t mutationFlags = 0;
     NEO::RequiredPartitionDim requiredPartitionDimFromApi = NEO::RequiredPartitionDim::none;
     NEO::RequiredDispatchWalkOrder requiredDispatchWalkOrderFromApi = NEO::RequiredDispatchWalkOrder::none;
 

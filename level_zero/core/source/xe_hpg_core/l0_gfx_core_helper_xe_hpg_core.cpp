@@ -20,9 +20,9 @@ using Family = NEO::XeHpgCoreFamily;
 static auto gfxCore = IGFX_XE_HPG_CORE;
 
 template <>
-ze_mutable_command_exp_flags_t L0GfxCoreHelperHw<Family>::getPlatformCmdListUpdateCapabilities() const {
-    return ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT | ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_SIZE | ZE_MUTABLE_COMMAND_EXP_FLAG_GLOBAL_OFFSET |
-           ZE_MUTABLE_COMMAND_EXP_FLAG_SIGNAL_EVENT | ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS;
+ze_mutable_command_ext_flags_t L0GfxCoreHelperHw<Family>::getPlatformCmdListUpdateCapabilities() const {
+    return ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_COUNT | ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_SIZE | ZE_MUTABLE_COMMAND_EXT_FLAG_GLOBAL_OFFSET |
+           ZE_MUTABLE_COMMAND_EXT_FLAG_SIGNAL_EVENT | ZE_MUTABLE_COMMAND_EXT_FLAG_WAIT_EVENTS;
 }
 
 #include "level_zero/core/source/helpers/l0_gfx_core_helper_factory_init.inl"

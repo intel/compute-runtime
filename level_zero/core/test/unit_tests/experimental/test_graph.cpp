@@ -2342,8 +2342,8 @@ TEST_F(GraphInternalEventTest, givenSignalOnlyClosuresAndEnforcedExternalWaitWhe
 HWCMDTEST_F(IGFX_XE_HP_CORE, GraphInternalEventTest, givenTimestampQueriesWhenGraphIsInstantiatedThenQuerySourcesUseInternalEventsWithoutChangingCapturedHandles) {
     struct QueryRecordingCommandList : Mock<CommandList> {
         struct WaitRecordingMutableCommandList : MutableCommandListCoreFamily<FamilyType::gfxCoreFamily> {
-            ze_result_t getNextCommandId(const ze_mutable_command_id_exp_desc_t *desc, uint32_t numKernels, ze_kernel_handle_t *phKernels, uint64_t *pCommandId) override {
-                EXPECT_EQ(ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS, desc->flags);
+            ze_result_t getNextCommandId(const ze_mutable_command_id_ext_desc_t *desc, uint32_t numKernels, ze_kernel_handle_t *phKernels, uint64_t *pCommandId) override {
+                EXPECT_EQ(ZE_MUTABLE_COMMAND_EXT_FLAG_WAIT_EVENTS, desc->flags);
                 *pCommandId = ++getNextCommandIdCalled;
                 return ZE_RESULT_SUCCESS;
             }
@@ -4369,11 +4369,11 @@ void GraphExternalWaitEventFixtureInit::testExternalWaitEventRootChild(bool exte
     const auto &childDesc = childGraph->getCaptureTargetDesc();
 
     if (externalWaitRoot) {
-        EXPECT_EQ(reinterpret_cast<const void *>(&rootDesc.mutableExpDesc), rootDesc.desc.pNext);
+        EXPECT_EQ(reinterpret_cast<const void *>(&rootDesc.mutableExtDesc), rootDesc.desc.pNext);
         EXPECT_TRUE(srcGraph->isMutableCommandList());
     } else {
         if (multiEngineGraph == false && externalWaitChild) {
-            EXPECT_EQ(reinterpret_cast<const void *>(&rootDesc.mutableExpDesc), rootDesc.desc.pNext);
+            EXPECT_EQ(reinterpret_cast<const void *>(&rootDesc.mutableExtDesc), rootDesc.desc.pNext);
             EXPECT_TRUE(srcGraph->isMutableCommandList());
         } else {
             EXPECT_EQ(nullptr, rootDesc.desc.pNext);
@@ -4382,7 +4382,7 @@ void GraphExternalWaitEventFixtureInit::testExternalWaitEventRootChild(bool exte
     }
 
     if (externalWaitChild) {
-        EXPECT_EQ(reinterpret_cast<const void *>(&childDesc.mutableExpDesc), childDesc.desc.pNext);
+        EXPECT_EQ(reinterpret_cast<const void *>(&childDesc.mutableExtDesc), childDesc.desc.pNext);
         EXPECT_TRUE(childGraph->isMutableCommandList());
     } else {
         EXPECT_EQ(nullptr, childDesc.desc.pNext);

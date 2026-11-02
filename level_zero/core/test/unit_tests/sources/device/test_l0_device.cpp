@@ -6369,7 +6369,8 @@ struct L0DeviceGetCmdlistCreateFunFixture {
 
     ze_command_list_desc_t desc{};
     L0::Device *device = nullptr;
-    ze_mutable_command_list_exp_desc_t mutableExpDesc{};
+    ze_mutable_command_list_exp_desc_t mutableExpDesc{ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_LIST_EXP_DESC};
+    ze_mutable_command_list_ext_desc_t mutableExtDesc{ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_LIST_EXT_DESC};
 
     const CmdListCreateFunPtrT mutableCreateAddress = &L0::MCL::MutableCommandList::create;
 
@@ -6390,8 +6391,11 @@ TEST_F(L0DeviceGetCmdlistCreateFunTest, GivenOtherExtReturnBaseCommandListCreate
 }
 
 TEST_F(L0DeviceGetCmdlistCreateFunTest, GivenMclExpDescriptorReturnMclCreateFun) {
-    ze_mutable_command_list_exp_desc_t mutableExpDesc{ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_LIST_EXP_DESC};
-    EXPECT_EQ(mutableCreateAddress, device->getCmdListCreateFunc(reinterpret_cast<const ze_base_desc_t *>(&mutableExpDesc)));
+    EXPECT_EQ(this->mutableCreateAddress, device->getCmdListCreateFunc(reinterpret_cast<const ze_base_desc_t *>(&this->mutableExpDesc)));
+}
+
+TEST_F(L0DeviceGetCmdlistCreateFunTest, GivenMclExtDescriptorReturnMclCreateFun) {
+    EXPECT_EQ(this->mutableCreateAddress, device->getCmdListCreateFunc(reinterpret_cast<const ze_base_desc_t *>(&this->mutableExtDesc)));
 }
 
 TEST_F(L0DeviceGetCmdlistCreateFunTest, GivenQueryDeviceMclPropertiesWhenReturnMclPropertiesThenProvidePerDeviceCapability) {
@@ -6404,6 +6408,13 @@ TEST_F(L0DeviceGetCmdlistCreateFunTest, GivenQueryDeviceMclPropertiesWhenReturnM
 
     uint32_t deviceMclCapability = device->getL0GfxCoreHelper().getCmdListUpdateCapabilities(device->getNEODevice()->getRootDeviceEnvironment());
     EXPECT_EQ(deviceMclCapability, mclDeviceProperties.mutableCommandFlags);
+
+    ze_mutable_command_list_ext_properties_t mclExtDeviceProperties{ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_LIST_EXT_PROPERTIES};
+
+    deviceProperties.pNext = &mclExtDeviceProperties;
+
+    device->getProperties(&deviceProperties);
+    EXPECT_EQ(deviceMclCapability, mclExtDeviceProperties.mutableCommandFlags);
 }
 
 TEST_F(L0DeviceGetCmdlistCreateFunTest, GivenQueryDeviceRecordReplayGraphWhenReturnReplayGraphPropertiesThenProvidePerDeviceCapability) {

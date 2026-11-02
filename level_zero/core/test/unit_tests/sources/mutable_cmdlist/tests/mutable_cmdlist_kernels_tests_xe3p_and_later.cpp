@@ -31,7 +31,7 @@ HWTEST2_F(MutableCommandListInOrderTest,
           IsAtLeastXe3pCore) {
     using WalkerType = typename FamilyType::PorWalkerType;
 
-    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_SIGNAL_EVENT;
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_SIGNAL_EVENT;
 
     auto event = createTestEvent(true, false, false, true, false);
     auto newEvent = createTestEvent(true, false, false, true, false);
@@ -162,7 +162,7 @@ HWTEST2_F(MutableCommandListKernelTest, givenScratchKernelsWhenMutatingBetweenIn
     using WalkerType = typename FamilyType::DefaultWalkerType;
     constexpr uint32_t inlineDataSize = WalkerType::getInlineDataSize();
 
-    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_INSTRUCTION | ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT;
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_INSTRUCTION | ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_COUNT;
 
     mockKernelImmData->kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = 0x80;
     mockKernelImmData->kernelDescriptor->kernelAttributes.flags.passInlineData = 1;
@@ -229,7 +229,7 @@ HWTEST2_F(MutableCommandListKernelTest, givenScratchKernelsWithInlineDataDisable
     const uint64_t scratchOffset1 = 8u;
     const uint64_t scratchOffset2 = 16u;
 
-    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_INSTRUCTION | ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT;
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_INSTRUCTION | ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_COUNT;
 
     mockKernelImmData->kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = 0x80;
     mockKernelImmData->kernelDescriptor->kernelAttributes.flags.passInlineData = 0;
@@ -574,7 +574,7 @@ HWTEST2_F(MutableCommandListKernelTest, givenTwoAppendsWhenMutatingFromNoScratch
 }
 
 HWTEST2_F(MutableCommandListKernelTest, givenScratchKernelsWhenMutatingWithDifferentScratchOffsetsThenWalkerIsUpdatedAndNoPatchingIsRequired, IsAtLeastXe3pCore) {
-    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_INSTRUCTION | ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT;
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_INSTRUCTION | ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_COUNT;
     const uint64_t scratchOffset1 = 8u;
     const uint64_t scratchOffset2 = 16u;
 
@@ -631,7 +631,7 @@ HWTEST2_F(MutableCommandListKernelTest, givenScratchKernelsWhenMutatingWithDiffe
 }
 
 HWTEST2_F(MutableCommandListKernelTest, givenScratchKernelsAndScratchPatchIndexUndefinedWhenMutatingKernelThenWalkerIsNotUpdated, IsAtLeastXe3pCore) {
-    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_INSTRUCTION | ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT;
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_INSTRUCTION | ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_COUNT;
     const uint64_t scratchOffset1 = 8u;
     const uint64_t scratchOffset2 = 16u;
 
@@ -675,7 +675,7 @@ HWTEST2_F(MutableCommandListKernelTest, givenScratchKernelsWithScratchInCrossThr
     const uint64_t scratchOffset1 = inlineDataSize;
     const uint64_t scratchOffset2 = inlineDataSize + 8u;
 
-    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_INSTRUCTION | ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT;
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_INSTRUCTION | ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_COUNT;
 
     mockKernelImmData->kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = 0x80;
     auto &scratchPointerAddress = mockKernelImmData->kernelDescriptor->payloadMappings.implicitArgs.scratchPointerAddress;
@@ -734,7 +734,7 @@ HWTEST2_F(MutableCommandListKernelTest, givenScratchKernelWithScratchInInlineDat
     const uint64_t scratchOffsetInline = 8u;
     const uint64_t scratchOffsetCrossThread = inlineDataSize + 8u;
 
-    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_INSTRUCTION | ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT;
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_INSTRUCTION | ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_COUNT;
 
     mockKernelImmData->kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = 0x80;
     auto &scratchPointerAddress = mockKernelImmData->kernelDescriptor->payloadMappings.implicitArgs.scratchPointerAddress;
@@ -793,7 +793,7 @@ HWTEST2_F(MutableCommandListKernelTest, givenScratchKernelWithScratchInCrossThre
     const uint64_t scratchOffsetCrossThread = inlineDataSize + 8u;
     const uint64_t scratchOffsetInline = 8u;
 
-    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_INSTRUCTION | ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT;
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_INSTRUCTION | ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_COUNT;
 
     mockKernelImmData->kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = 0x80;
     auto &scratchPointerAddress = mockKernelImmData->kernelDescriptor->payloadMappings.implicitArgs.scratchPointerAddress;

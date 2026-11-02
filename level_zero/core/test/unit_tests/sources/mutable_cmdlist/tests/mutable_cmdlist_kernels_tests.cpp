@@ -91,7 +91,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernel2Handle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    ze_mutable_group_count_exp_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
+    ze_mutable_group_count_ext_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXT_DESC};
     groupCountDesc.commandId = commandId;
     groupCountDesc.pGroupCount = &this->testGroupCount;
     mutableCommandsDesc.pNext = &groupCountDesc;
@@ -128,7 +128,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto event = createTestEvent(false, false, false, false, false);
     auto eventAddress = event->getGpuAddress(this->device);
 
-    mutableCommandIdDesc.flags = kernelIsaMutationFlags | ZE_MUTABLE_COMMAND_EXP_FLAG_SIGNAL_EVENT | ZE_MUTABLE_COMMAND_EXP_FLAG_GLOBAL_OFFSET;
+    mutableCommandIdDesc.flags = kernelIsaMutationFlags | ZE_MUTABLE_COMMAND_EXT_FLAG_SIGNAL_EVENT | ZE_MUTABLE_COMMAND_EXT_FLAG_GLOBAL_OFFSET;
 
     auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, kernelMutationGroup, &commandId);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -167,7 +167,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(kernelIsaAddress, walkerCmd->getInterfaceDescriptor().getKernelStartPointer());
 
     ze_group_count_t mutatedGroupCount = {8, 2, 1};
-    ze_mutable_group_count_exp_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
+    ze_mutable_group_count_ext_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXT_DESC};
     groupCountDesc.commandId = commandId;
     groupCountDesc.pGroupCount = &mutatedGroupCount;
     mutableCommandsDesc.pNext = &groupCountDesc;
@@ -189,7 +189,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     auto event = createTestEvent(true, false, false, false, false);
 
-    mutableCommandIdDesc.flags = kernelIsaMutationFlags | ZE_MUTABLE_COMMAND_EXP_FLAG_SIGNAL_EVENT | ZE_MUTABLE_COMMAND_EXP_FLAG_GLOBAL_OFFSET;
+    mutableCommandIdDesc.flags = kernelIsaMutationFlags | ZE_MUTABLE_COMMAND_EXT_FLAG_SIGNAL_EVENT | ZE_MUTABLE_COMMAND_EXT_FLAG_GLOBAL_OFFSET;
 
     auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, kernelMutationGroup, &commandId);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -357,7 +357,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(nullptr, kernel1SlmVariable->getDesc().bufferAlloc);
     EXPECT_EQ(undefined<uint64_t>, kernel1SlmVariable->getDesc().bufferGpuAddress);
 
-    ze_mutable_kernel_argument_exp_desc_t kernelBufferArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t kernelBufferArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     mutableCommandsDesc.pNext = &kernelBufferArg;
 
     kernelBufferArg.argIndex = 0;
@@ -365,7 +365,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     kernelBufferArg.commandId = commandId;
     kernelBufferArg.pArgValue = &usm2;
 
-    ze_mutable_kernel_argument_exp_desc_t kernelSlmArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t kernelSlmArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     kernelBufferArg.pNext = &kernelSlmArg;
 
     kernelSlmArg.argIndex = 1;
@@ -486,7 +486,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernel2Handle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    ze_mutable_kernel_argument_exp_desc_t kernelBufferArg1 = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t kernelBufferArg1 = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     mutableCommandsDesc.pNext = &kernelBufferArg1;
 
     kernelBufferArg1.argIndex = 0;
@@ -494,7 +494,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     kernelBufferArg1.commandId = commandId;
     kernelBufferArg1.pArgValue = &usm1;
 
-    ze_mutable_kernel_argument_exp_desc_t kernelBufferArg2 = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t kernelBufferArg2 = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     kernelBufferArg1.pNext = &kernelBufferArg2;
 
     kernelBufferArg2.argIndex = 1;
@@ -528,7 +528,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             MutableCommandListKernelTest,
             givenKernelGroupWhenNextCommandIdCalledThenSetMaxIsaSize) {
-    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_INSTRUCTION;
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_INSTRUCTION;
 
     ze_kernel_handle_t kernels[2] = {kernel->toHandle(), kernel2->toHandle()};
 
@@ -574,7 +574,7 @@ HWTEST2_F(MutableCommandListKernelTest,
     using STATE_PREFETCH = typename FamilyType::STATE_PREFETCH;
     using MI_NOOP = typename FamilyType::MI_NOOP;
     debugManager.flags.EnableMemoryPrefetch.set(1);
-    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_INSTRUCTION | ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT;
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_INSTRUCTION | ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_COUNT;
 
     auto ioh = mutableCommandList->getBase()->getCmdContainer().getIndirectHeap(NEO::IndirectHeapType::indirectObject);
     ioh->getSpace(MemoryConstants::cacheLineSize);
@@ -644,7 +644,7 @@ HWTEST2_F(MutableCommandListKernelTest,
           givenPrefetchEnabledWhenAppendingKernelThenEnsureEnoughSpace,
           IsAtLeastXeHpcCore) {
     debugManager.flags.EnableMemoryPrefetch.set(1);
-    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_INSTRUCTION | ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT;
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_INSTRUCTION | ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_COUNT;
 
     ze_kernel_handle_t kernels[2] = {kernel->toHandle(), kernel2->toHandle()};
 
@@ -677,7 +677,7 @@ HWTEST2_F(MutableCommandListKernelTest,
     using STATE_PREFETCH = typename FamilyType::STATE_PREFETCH;
     using MI_NOOP = typename FamilyType::MI_NOOP;
     debugManager.flags.EnableMemoryPrefetch.set(1);
-    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_INSTRUCTION | ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT;
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_INSTRUCTION | ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_COUNT;
 
     auto ioh = mutableCommandList->getBase()->getCmdContainer().getIndirectHeap(NEO::IndirectHeapType::indirectObject);
     ioh->getSpace(MemoryConstants::cacheLineSize);
@@ -763,7 +763,7 @@ HWTEST2_F(MutableCommandListKernelTest,
     using MI_NOOP = typename FamilyType::MI_NOOP;
     debugManager.flags.EnableMemoryPrefetch.set(1);
     debugManager.flags.LimitIsaPrefetchSize.set(static_cast<uint32_t>(256 * MemoryConstants::kiloByte));
-    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_INSTRUCTION | ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT;
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_INSTRUCTION | ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_COUNT;
 
     prepareBigIsaKernel();
 
@@ -922,7 +922,7 @@ HWTEST2_F(MutableCommandListKernelTest,
           givenPrefetchDisabledWhenAppendingKernelThenKernelGroupHasNoPrefetchCaptured,
           IsAtLeastXeHpcCore) {
     debugManager.flags.EnableMemoryPrefetch.set(0);
-    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_INSTRUCTION | ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT | ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS;
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_INSTRUCTION | ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_COUNT | ZE_MUTABLE_COMMAND_EXT_FLAG_WAIT_EVENTS;
 
     auto event = createTestEvent(false, false, false, false, false);
     auto eventHandle = event->toHandle();
@@ -1120,9 +1120,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernelHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    ze_mutable_kernel_argument_exp_desc_t kernelSlmArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
-    ze_mutable_group_count_exp_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
-    ze_mutable_group_size_exp_desc_t groupSizeDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t kernelSlmArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
+    ze_mutable_group_count_ext_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXT_DESC};
+    ze_mutable_group_size_ext_desc_t groupSizeDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXT_DESC};
 
     mutableCommandsDesc.pNext = &kernelSlmArg;
 
@@ -1336,7 +1336,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     size_t oldOffset = offset;
     void *oldCpuPtr = cpuPtr;
 
-    ze_mutable_group_count_exp_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
+    ze_mutable_group_count_ext_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXT_DESC};
 
     mutableCommandsDesc.pNext = &groupCountDesc;
 
@@ -1388,7 +1388,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     debugManager.flags.AllowNonCooperativeSyncBufferDispatch.set(1);
     enableCooperativeSyncBuffer(kernel1Bit);
 
-    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT;
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_COUNT;
     auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -1440,7 +1440,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(kernel2.get(), mutation.kernelGroup->getCurrentMutableKernel()->getKernel());
 
-    ze_mutable_group_count_exp_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
+    ze_mutable_group_count_ext_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXT_DESC};
     ze_group_count_t mutatedGroupCount = {8, 1, 1};
     groupCountDesc.commandId = commandId;
     groupCountDesc.pGroupCount = &mutatedGroupCount;
@@ -1525,7 +1525,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_NE(0u, appendSyncBufferAddress);
     const auto appendSyncBufferSize = appendDispatch->syncBufferSize;
 
-    ze_mutable_group_count_exp_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
+    ze_mutable_group_count_ext_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXT_DESC};
     ze_group_count_t mutatedGroupCount = {4, 1, 1};
     groupCountDesc.commandId = commandId;
     groupCountDesc.pGroupCount = &mutatedGroupCount;
@@ -1600,7 +1600,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernel2Handle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    ze_mutable_group_count_exp_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
+    ze_mutable_group_count_ext_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXT_DESC};
     ze_group_count_t mutatedGroupCount = {4, 1, 1};
     groupCountDesc.commandId = commandId;
     groupCountDesc.pGroupCount = &mutatedGroupCount;
@@ -1645,7 +1645,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    ze_mutable_group_count_exp_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
+    ze_mutable_group_count_ext_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXT_DESC};
 
     mutableCommandsDesc.pNext = &groupCountDesc;
 
@@ -1705,8 +1705,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernel2Handle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    ze_mutable_group_count_exp_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
-    ze_mutable_group_size_exp_desc_t groupSizeDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXP_DESC};
+    ze_mutable_group_count_ext_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXT_DESC};
+    ze_mutable_group_size_ext_desc_t groupSizeDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXT_DESC};
 
     mutableCommandsDesc.pNext = &groupCountDesc;
 
@@ -1862,8 +1862,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
         EXPECT_FALSE(isAllocationInMutableResidency(mutableCommandList.get(), kernel2Allocation));
     }
 
-    ze_mutable_group_count_exp_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
-    ze_mutable_group_size_exp_desc_t groupSizeDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXP_DESC};
+    ze_mutable_group_count_ext_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXT_DESC};
+    ze_mutable_group_size_ext_desc_t groupSizeDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXT_DESC};
 
     mutableCommandsDesc.pNext = &groupCountDesc;
 
@@ -1970,8 +1970,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernel2Handle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    ze_mutable_group_count_exp_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
-    ze_mutable_group_size_exp_desc_t groupSizeDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXP_DESC};
+    ze_mutable_group_count_ext_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXT_DESC};
+    ze_mutable_group_size_ext_desc_t groupSizeDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXT_DESC};
 
     mutableCommandsDesc.pNext = &groupCountDesc;
 
@@ -2227,8 +2227,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernel2Handle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    ze_mutable_kernel_argument_exp_desc_t slmArg0 = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
-    ze_mutable_kernel_argument_exp_desc_t slmArg1 = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t slmArg0 = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
+    ze_mutable_kernel_argument_ext_desc_t slmArg1 = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     slmArg0.argIndex = 0;
     slmArg0.argSize = mutatedSlmArg0Size;
     slmArg0.commandId = commandId;
@@ -2300,8 +2300,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernel2Handle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    ze_mutable_kernel_argument_exp_desc_t slmArg0 = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
-    ze_mutable_kernel_argument_exp_desc_t slmArg1 = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t slmArg0 = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
+    ze_mutable_kernel_argument_ext_desc_t slmArg1 = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     slmArg0.argIndex = 0;
     slmArg0.argSize = mutatedSlmArg0Size;
     slmArg0.commandId = commandId;
@@ -2378,10 +2378,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernel2Handle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    ze_mutable_group_count_exp_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
-    ze_mutable_group_size_exp_desc_t groupSizeDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXP_DESC};
-    ze_mutable_kernel_argument_exp_desc_t kernelBufferArg1 = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
-    ze_mutable_kernel_argument_exp_desc_t kernelBufferArg2 = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_group_count_ext_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXT_DESC};
+    ze_mutable_group_size_ext_desc_t groupSizeDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXT_DESC};
+    ze_mutable_kernel_argument_ext_desc_t kernelBufferArg1 = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
+    ze_mutable_kernel_argument_ext_desc_t kernelBufferArg2 = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
 
     mutableCommandsDesc.pNext = &groupCountDesc;
 

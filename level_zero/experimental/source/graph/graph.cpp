@@ -583,8 +583,8 @@ void handleExternalCbWaitEvents(uint32_t numWaitEvents,
     }
     if (isExternalEventPresent) {
         uint64_t commandId = 0;
-        ze_mutable_command_id_exp_desc_t flagsDesc{ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
-        flagsDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS;
+        ze_mutable_command_id_ext_desc_t flagsDesc{ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
+        flagsDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_WAIT_EVENTS;
         static_cast<L0::MCL::MutableCommandList *>(executionTarget->asMutable())->getNextCommandId(&flagsDesc, 0, nullptr, &commandId);
 
         cbEventContext.cbEventInfoContainer->addWaitCbEventsInfo(numWaitEvents, phWaitEvents, commandId, executionTarget);

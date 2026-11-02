@@ -53,7 +53,7 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
     ASSERT_EQ(nullptr, kernel->getArgumentsResidencyContainer()[0]);
     ASSERT_EQ(systemShared, kernel->getKernelArgInfos()[0].value);
 
-    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS;
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS;
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->appendLaunchKernel(kernel->toHandle(), testGroupCount, event->toHandle(), 0, nullptr, testLaunchParams));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
@@ -67,7 +67,7 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
     }
     EXPECT_FALSE(walker->getPostSync().getL2Flush());
 
-    ze_mutable_kernel_argument_exp_desc_t argDesc = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t argDesc = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     argDesc.commandId = commandId;
     argDesc.argIndex = 0;
     argDesc.argSize = sizeof(void *);
@@ -133,7 +133,7 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
     ASSERT_EQ(ZE_RESULT_SUCCESS, kernel->setArgBuffer(0, sizeof(void *), &hostUsm));
     ASSERT_EQ(ZE_RESULT_SUCCESS, kernel->setArgBuffer(1, sizeof(void *), &deviceUsm1));
 
-    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS;
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS;
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->appendLaunchKernel(kernel->toHandle(), testGroupCount, event->toHandle(), 0, nullptr, testLaunchParams));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
@@ -150,7 +150,7 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
     }
 
     // mutate arg0 host -> device
-    ze_mutable_kernel_argument_exp_desc_t argDesc = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t argDesc = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     argDesc.commandId = commandId;
     argDesc.argIndex = 0;
     argDesc.argSize = sizeof(void *);
@@ -194,7 +194,7 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
     kernel->privateState.kernelRequiresGenerationOfLocalIdsByRuntime = false;
     kernel->privateState.reservePerThreadDataForWholeThreadGroup(0);
 
-    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS;
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS;
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->appendLaunchKernel(kernel->toHandle(), testGroupCount, event->toHandle(), 0, nullptr, testLaunchParams));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
@@ -205,7 +205,7 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
     EXPECT_FALSE(walker->getPostSync().getL2Flush());
 
     // mutate arg0 device -> host
-    ze_mutable_kernel_argument_exp_desc_t argDesc = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t argDesc = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     argDesc.commandId = commandId;
     argDesc.argIndex = 0;
     argDesc.argSize = sizeof(void *);
@@ -253,7 +253,7 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
     ASSERT_EQ(ZE_RESULT_SUCCESS, kernel->setArgBuffer(0, sizeof(void *), &hostUsm0));
     ASSERT_EQ(ZE_RESULT_SUCCESS, kernel->setArgBuffer(1, sizeof(void *), &hostUsm1));
 
-    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS;
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS;
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->appendLaunchKernel(kernel->toHandle(), testGroupCount, event->toHandle(), 0, nullptr, testLaunchParams));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
@@ -270,7 +270,7 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
     }
 
     // mutate arg0 host -> device
-    ze_mutable_kernel_argument_exp_desc_t argDesc = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t argDesc = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     argDesc.commandId = commandId;
     argDesc.argIndex = 0;
     argDesc.argSize = sizeof(void *);
@@ -335,7 +335,7 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
     ASSERT_EQ(ZE_RESULT_SUCCESS, kernel->setArgBuffer(0, sizeof(void *), &importedUsm));
     ASSERT_EQ(ZE_RESULT_SUCCESS, kernel->setArgBuffer(1, sizeof(void *), &deviceUsm1));
 
-    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS;
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS;
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->appendLaunchKernel(kernel->toHandle(), testGroupCount, event->toHandle(), 0, nullptr, testLaunchParams));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
@@ -352,7 +352,7 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
     }
 
     // mutate arg0 imported -> device usm
-    ze_mutable_kernel_argument_exp_desc_t argDesc = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t argDesc = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     argDesc.commandId = commandId;
     argDesc.argIndex = 0;
     argDesc.argSize = sizeof(void *);
@@ -403,7 +403,7 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
     ASSERT_EQ(ZE_RESULT_SUCCESS, kernel->setArgBuffer(0, sizeof(void *), &deviceUsm0));
     ASSERT_EQ(ZE_RESULT_SUCCESS, kernel->setArgBuffer(1, sizeof(void *), &deviceUsm1));
 
-    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS;
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS;
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->appendLaunchKernel(kernel->toHandle(), testGroupCount, event->toHandle(), 0, nullptr, testLaunchParams));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
@@ -414,7 +414,7 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
     EXPECT_FALSE(walker->getPostSync().getL2Flush());
 
     // mutate arg0 device USM -> device USM
-    ze_mutable_kernel_argument_exp_desc_t argDesc = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t argDesc = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     argDesc.commandId = commandId;
     argDesc.argIndex = 0;
     argDesc.argSize = sizeof(void *);
@@ -450,7 +450,7 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, kernel->setArgBuffer(0, sizeof(void *), &importedHostUsm));
 
-    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS;
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS;
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->appendLaunchKernel(kernel->toHandle(), testGroupCount, event->toHandle(), 0, nullptr, testLaunchParams));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
@@ -464,7 +464,7 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
         EXPECT_FALSE(walker->getPostSync().getL2Flush());
     }
 
-    ze_mutable_kernel_argument_exp_desc_t argDesc = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t argDesc = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     argDesc.commandId = commandId;
     argDesc.argIndex = 0;
     argDesc.argSize = sizeof(void *);
@@ -499,7 +499,7 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, kernel->setArgBuffer(0, sizeof(void *), &deviceUsm));
 
-    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS;
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS;
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->appendLaunchKernel(kernel->toHandle(), testGroupCount, event->toHandle(), 0, nullptr, testLaunchParams));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
@@ -508,7 +508,7 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
     EXPECT_FALSE(walker->getPostSync().getL2TransientFlush());
     EXPECT_FALSE(walker->getPostSync().getL2Flush());
 
-    ze_mutable_kernel_argument_exp_desc_t argDesc = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t argDesc = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     argDesc.commandId = commandId;
     argDesc.argIndex = 0;
     argDesc.argSize = sizeof(void *);
@@ -559,7 +559,7 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, kernel->setArgBuffer(0, sizeof(void *), &deviceUsm));
 
-    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS;
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS;
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->appendLaunchKernel(kernel->toHandle(), testGroupCount, event->toHandle(), 0, nullptr, testLaunchParams));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
@@ -568,7 +568,7 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
     EXPECT_FALSE(walker->getPostSync().getL2TransientFlush());
     EXPECT_FALSE(walker->getPostSync().getL2Flush());
 
-    ze_mutable_kernel_argument_exp_desc_t argDesc = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t argDesc = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     argDesc.commandId = commandId;
     argDesc.argIndex = 0;
     argDesc.argSize = sizeof(void *);
@@ -624,7 +624,7 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
     ASSERT_EQ(ZE_RESULT_SUCCESS, kernel->setArgBuffer(0, sizeof(void *), &hostUsm0));
     ASSERT_EQ(ZE_RESULT_SUCCESS, kernel->setArgBuffer(1, sizeof(void *), &importedUsm));
 
-    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS;
+    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS;
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->appendLaunchKernel(kernel->toHandle(), testGroupCount, event->toHandle(), 0, nullptr, testLaunchParams));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
@@ -635,7 +635,7 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
     EXPECT_FALSE(walker->getPostSync().getL2Flush());
 
     // mutate arg0 host USM-> device USM
-    ze_mutable_kernel_argument_exp_desc_t argDesc = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t argDesc = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     argDesc.commandId = commandId;
     argDesc.argIndex = 0;
     argDesc.argSize = sizeof(void *);

@@ -29,10 +29,10 @@ struct MutableCommandListFixtureInit : public ModuleImmutableDataFixture {
     static constexpr uint16_t defaultCrossThreadOffset = 64;
     static constexpr uint16_t defaultNextArgOffset = 32;
     static constexpr uint32_t crossThreadInitSize = 1024;
-    static constexpr uint32_t kernelIsaMutationFlags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS |
-                                                       ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT |
-                                                       ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_SIZE |
-                                                       ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_INSTRUCTION;
+    static constexpr uint32_t kernelIsaMutationFlags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS |
+                                                       ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_COUNT |
+                                                       ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_SIZE |
+                                                       ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_INSTRUCTION;
 
     static constexpr uint32_t kernel1Bit = (1u << 0);
     static constexpr uint32_t kernel2Bit = (1u << 1);
@@ -123,8 +123,8 @@ struct MutableCommandListFixtureInit : public ModuleImmutableDataFixture {
                                              bool createCbEvent,
                                              bool doNotGetNextCommandId);
 
-    ze_mutable_command_id_exp_desc_t mutableCommandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
-    ze_mutable_commands_exp_desc_t mutableCommandsDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+    ze_mutable_command_id_ext_desc_t mutableCommandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
+    ze_mutable_commands_ext_desc_t mutableCommandsDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
 
     CmdListKernelLaunchParams testLaunchParams = {};
 

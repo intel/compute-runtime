@@ -18,7 +18,7 @@ ze_result_t ZE_APICALL zeCommandListGetNextCommandIdExt(
     ze_command_list_handle_t hCommandList,
     const ze_mutable_command_id_ext_desc_t *desc,
     uint64_t *pCommandId) {
-    auto result = L0::MCL::MutableCommandList::fromHandle(hCommandList)->getNextCommandId(reinterpret_cast<const ze_mutable_command_id_exp_desc_t *>(desc), 0, nullptr, pCommandId);
+    auto result = L0::MCL::MutableCommandList::fromHandle(hCommandList)->getNextCommandId(desc, 0, nullptr, pCommandId);
     if (result != ZE_RESULT_SUCCESS) {
         return result;
     }
@@ -35,7 +35,7 @@ ze_result_t ZE_APICALL zeCommandListGetNextCommandIdExt(
 ze_result_t ZE_APICALL zeCommandListUpdateMutableCommandsExt(
     ze_command_list_handle_t hCommandList,
     const ze_mutable_commands_ext_desc_t *desc) {
-    return L0::MCL::MutableCommandList::fromHandle(hCommandList)->updateMutableCommands(reinterpret_cast<const ze_mutable_commands_exp_desc_t *>(desc));
+    return L0::MCL::MutableCommandList::fromHandle(hCommandList)->updateMutableCommands(desc);
 }
 
 ze_result_t ZE_APICALL zeCommandListUpdateMutableCommandSignalEventExt(
@@ -59,7 +59,7 @@ ze_result_t ZE_APICALL zeCommandListGetNextCommandIdWithKernelsExt(
     uint32_t numKernels,
     ze_kernel_handle_t *phKernels,
     uint64_t *pCommandId) {
-    auto result = L0::MCL::MutableCommandList::fromHandle(hCommandList)->getNextCommandId(reinterpret_cast<const ze_mutable_command_id_exp_desc_t *>(desc), numKernels, phKernels, pCommandId);
+    auto result = L0::MCL::MutableCommandList::fromHandle(hCommandList)->getNextCommandId(desc, numKernels, phKernels, pCommandId);
     if (result != ZE_RESULT_SUCCESS) {
         return result;
     }
@@ -93,7 +93,7 @@ ze_result_t ZE_APICALL zeCommandListGetNextCommandIdExp(
     ze_command_list_handle_t hCommandList,
     const ze_mutable_command_id_exp_desc_t *desc,
     uint64_t *pCommandId) {
-    auto result = L0::MCL::MutableCommandList::fromHandle(hCommandList)->getNextCommandId(desc, 0, nullptr, pCommandId);
+    auto result = L0::MCL::MutableCommandList::fromHandle(hCommandList)->getNextCommandId(reinterpret_cast<const ze_mutable_command_id_ext_desc_t *>(desc), 0, nullptr, pCommandId);
     if (result != ZE_RESULT_SUCCESS) {
         return result;
     }
@@ -134,7 +134,7 @@ ze_result_t ZE_APICALL zeCommandListGetNextCommandIdWithKernelsExp(
     uint32_t numKernels,
     ze_kernel_handle_t *phKernels,
     uint64_t *pCommandId) {
-    auto result = L0::MCL::MutableCommandList::fromHandle(hCommandList)->getNextCommandId(desc, numKernels, phKernels, pCommandId);
+    auto result = L0::MCL::MutableCommandList::fromHandle(hCommandList)->getNextCommandId(reinterpret_cast<const ze_mutable_command_id_ext_desc_t *>(desc), numKernels, phKernels, pCommandId);
     if (result != ZE_RESULT_SUCCESS) {
         return result;
     }
