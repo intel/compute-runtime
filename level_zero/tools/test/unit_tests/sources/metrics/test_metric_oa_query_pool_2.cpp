@@ -10,6 +10,7 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test_base.h"
 
@@ -846,6 +847,78 @@ TEST_F(MetricQueryPoolTest, givenUninitializedMetricEnumerationWhenGetQueryRepor
     const uint32_t invalidSize = metricsLibrary.getQueryReportGpuSize();
 
     EXPECT_EQ(invalidSize, 0u);
+}
+
+TEST_F(MetricQueryPoolTest, givenErrorLogsEnabledAndGetParameterFailsWhenGetQueryReportGpuSizeIsCalledThenErrorWithStatusCodeIsPrintedAndInvalidSizeIsReturned) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.PrintL0MetricLogs.set(METRICS_LOG_BITMASK::LOG_ERROR);
+
+    auto &metricSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+    auto &metricsLibrary = metricSource.getMetricsLibrary();
+
+    TypedValue_1_0 value = {};
+    ContextHandle_1_0 contextHandle = {&value};
+
+    mockMetricsLibrary->g_mockApi->contextCreateOutHandle = contextHandle;
+    mockMetricsLibrary->g_mockApi->getParameterResult = StatusCode::Failed;
+
+    StreamCapture capture;
+    capture.captureStderr();
+    const uint32_t invalidSize = metricsLibrary.getQueryReportGpuSize();
+    const std::string errorLog = capture.getCapturedStderr();
+
+    EXPECT_EQ(invalidSize, 0u);
+    const std::string expectedMessage = "MDAPI GetParameter QueryHwCountersReportGpuSize failed with status code: " + std::to_string(static_cast<int>(StatusCode::Failed));
+    EXPECT_NE(errorLog.find(expectedMessage), std::string::npos);
+}
+
+TEST_F(MetricQueryPoolTest, givenErrorLogsEnabledAndGetParameterReturnsZeroSizeWhenGetQueryReportGpuSizeIsCalledThenErrorIsPrintedAndInvalidSizeIsReturned) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.PrintL0MetricLogs.set(METRICS_LOG_BITMASK::LOG_ERROR);
+
+    auto &metricSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+    auto &metricsLibrary = metricSource.getMetricsLibrary();
+
+    TypedValue_1_0 value = {};
+    value.Type = ValueType::Uint32;
+    value.ValueUInt32 = 0;
+    ContextHandle_1_0 contextHandle = {&value};
+
+    mockMetricsLibrary->g_mockApi->contextCreateOutHandle = contextHandle;
+    mockMetricsLibrary->g_mockApi->getParameterOutValue = value;
+
+    StreamCapture capture;
+    capture.captureStderr();
+    const uint32_t invalidSize = metricsLibrary.getQueryReportGpuSize();
+    const std::string errorLog = capture.getCapturedStderr();
+
+    EXPECT_EQ(invalidSize, 0u);
+    EXPECT_NE(errorLog.find("MDAPI GetParameter QueryHwCountersReportGpuSize returned an invalid report size of 0"), std::string::npos);
+}
+
+TEST_F(MetricQueryPoolTest, givenErrorLogsEnabledAndCommandBufferGetFailsWhenGetGpuCommandsIsCalledThenErrorWithStatusCodeIsPrintedAndFalseIsReturned) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.PrintL0MetricLogs.set(METRICS_LOG_BITMASK::LOG_ERROR);
+
+    auto &metricSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+    auto &metricsLibrary = metricSource.getMetricsLibrary();
+
+    TypedValue_1_0 value = {};
+    ContextHandle_1_0 contextHandle = {&value};
+
+    mockMetricsLibrary->g_mockApi->contextCreateOutHandle = contextHandle;
+    mockMetricsLibrary->g_mockApi->commandBufferGetResult = StatusCode::Failed;
+
+    CommandBufferData_1_0 commandBuffer = {};
+
+    StreamCapture capture;
+    capture.captureStderr();
+    const bool result = metricsLibrary.getGpuCommands(commandBuffer);
+    const std::string errorLog = capture.getCapturedStderr();
+
+    EXPECT_FALSE(result);
+    const std::string expectedMessage = "MDAPI CommandBufferGet failed with status code: " + std::to_string(static_cast<int>(StatusCode::Failed));
+    EXPECT_NE(errorLog.find(expectedMessage), std::string::npos);
 }
 
 TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenActivateMetricGroupsIsCalledThenReturnsSuccess) {

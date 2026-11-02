@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,7 +41,7 @@ bool MetricsLibrary::activateConfiguration(const ConfigurationHandle_1_0 configu
     const bool validConfiguration = configurationHandle.IsValid();
     const bool result =
         validMetricsLibrary && validConfiguration &&
-        (api.ConfigurationActivate(configurationHandle, &activateData) == StatusCode::Success);
+        this->callMdapi("ConfigurationActivate", this->api.ConfigurationActivate, configurationHandle, &activateData);
 
     DEBUG_BREAK_IF(!result);
     return result;
@@ -52,7 +52,7 @@ bool MetricsLibrary::deactivateConfiguration(const ConfigurationHandle_1_0 confi
     const bool validMetricsLibrary = isInitialized();
     const bool validConfiguration = configurationHandle.IsValid();
     const bool result = validMetricsLibrary && validConfiguration &&
-                        (api.ConfigurationDeactivate(configurationHandle) == StatusCode::Success);
+                        this->callMdapi("ConfigurationDeactivate", this->api.ConfigurationDeactivate, configurationHandle);
 
     DEBUG_BREAK_IF(!result);
     return result;

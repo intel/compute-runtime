@@ -50,18 +50,21 @@ bool MetricsLibrary::isInitialized() {
 
 uint32_t MetricsLibrary::getQueryReportGpuSize() {
 
+    if (!this->isInitialized()) {
+        DEBUG_BREAK_IF(true);
+        return 0;
+    }
+
     TypedValue_1_0 gpuReportSize = {};
 
     // Obtain gpu report size.
-    if (!isInitialized() ||
-        api.GetParameter(ParameterType::QueryHwCountersReportGpuSize, &gpuReportSize.Type, &gpuReportSize) != StatusCode::Success) {
-
-        DEBUG_BREAK_IF(true);
+    if (!this->callMdapi("GetParameter QueryHwCountersReportGpuSize", this->api.GetParameter, ParameterType::QueryHwCountersReportGpuSize, &gpuReportSize.Type, &gpuReportSize)) {
         return 0;
     }
 
     // Validate gpu report size.
     if (!gpuReportSize.ValueUInt32) {
+        METRICS_LOG_ERR("%s", "MDAPI GetParameter QueryHwCountersReportGpuSize returned an invalid report size of 0");
         DEBUG_BREAK_IF(true);
         return 0;
     }
@@ -86,8 +89,7 @@ bool MetricsLibrary::createMetricQuery(const uint32_t slotsCount, QueryHandle_1_
     queryData.Slots = slotsCount;
 
     // Create query pool within metrics library.
-    if (api.QueryCreate(&queryData, &query) != StatusCode::Success) {
-        DEBUG_BREAK_IF(true);
+    if (!this->callMdapi("QueryCreate", this->api.QueryCreate, &queryData, &query)) {
         return false;
     }
 
@@ -106,7 +108,7 @@ bool MetricsLibrary::destroyMetricQuery(QueryHandle_1_0 &query) {
     std::lock_guard<std::mutex> lock(mutex);
     DEBUG_BREAK_IF(!query.IsValid());
 
-    const bool result = isInitialized() && (api.QueryDelete(query) == StatusCode::Success);
+    const bool result = this->isInitialized() && this->callMdapi("QueryDelete", this->api.QueryDelete, query);
     auto iter = std::find_if(queries.begin(), queries.end(), [&](const QueryHandle_1_0 &element) { return element.data == query.data; });
 
     // Unregister query.
@@ -121,14 +123,25 @@ bool MetricsLibrary::getMetricQueryReportSize(size_t &rawDataSize) {
     ValueType valueType = ValueType::Last;
     TypedValue_1_0 value = {};
 
-    const bool result = isInitialized() && (api.GetParameter(ParameterType::QueryHwCountersReportApiSize, &valueType, &value) == StatusCode::Success);
+    rawDataSize = 0;
+    if (!this->isInitialized()) {
+        DEBUG_BREAK_IF(true);
+        return false;
+    }
+
+    const bool result = this->callMdapi("GetParameter QueryHwCountersReportApiSize", this->api.GetParameter, ParameterType::QueryHwCountersReportApiSize, &valueType, &value);
     rawDataSize = static_cast<size_t>(value.ValueUInt32);
-    DEBUG_BREAK_IF(!result);
+
     return result;
 }
 
 bool MetricsLibrary::getMetricQueryReport(QueryHandle_1_0 &query, const uint32_t slot,
                                           const size_t rawDataSize, uint8_t *pData) {
+
+    if (!this->isInitialized()) {
+        DEBUG_BREAK_IF(true);
+        return false;
+    }
 
     GetReportData_1_0 report = {};
     report.Type = ObjectType::QueryHwCounters;
@@ -138,9 +151,7 @@ bool MetricsLibrary::getMetricQueryReport(QueryHandle_1_0 &query, const uint32_t
     report.Query.Data = pData;
     report.Query.DataSize = static_cast<uint32_t>(rawDataSize);
 
-    const bool result = isInitialized() && (api.GetData(&report) == StatusCode::Success);
-    DEBUG_BREAK_IF(!result);
-    return result;
+    return this->callMdapi("GetData QueryHwCounters", this->api.GetData, &report);
 }
 
 void MetricsLibrary::initialize() {
@@ -318,25 +329,27 @@ ClientGen MetricsLibrary::getGenType(const NEO::GfxCoreHelper &gfxCoreHelper) co
 uint32_t MetricsLibrary::getGpuCommandsSize(CommandBufferData_1_0 &commandBuffer) {
     CommandBufferSize_1_0 commandBufferSize = {};
 
-    bool result = isInitialized();
-
-    // Validate metrics library initialization state.
-    if (result) {
-        commandBuffer.HandleContext = context;
-        result = api.CommandBufferGetSize(&commandBuffer, &commandBufferSize) == StatusCode::Success;
+    if (!this->isInitialized()) {
+        DEBUG_BREAK_IF(true);
+        return 0;
     }
 
-    DEBUG_BREAK_IF(!result);
+    // Validate metrics library initialization state.
+    commandBuffer.HandleContext = context;
+    const bool result = this->callMdapi("CommandBufferGetSize", this->api.CommandBufferGetSize, &commandBuffer, &commandBufferSize);
+
     return result ? commandBufferSize.GpuMemorySize : 0;
 }
 
 bool MetricsLibrary::getGpuCommands(CommandBufferData_1_0 &commandBuffer) {
 
+    if (!this->isInitialized()) {
+        DEBUG_BREAK_IF(true);
+        return false;
+    }
+
     // Obtain gpu commands from metrics library.
-    const bool result =
-        isInitialized() && (api.CommandBufferGet(&commandBuffer) == StatusCode::Success);
-    DEBUG_BREAK_IF(!result);
-    return result;
+    return this->callMdapi("CommandBufferGet", this->api.CommandBufferGet, &commandBuffer);
 }
 
 bool MetricsLibrary::getGpuCommands(CommandList &commandList,
@@ -358,11 +371,7 @@ bool MetricsLibrary::getGpuCommands(CommandList &commandList,
     // Fill attached command buffer with gpu commands.
     commandBuffer.Data = buffer;
 
-    // Obtain gpu commands from metrics library.
-    const bool result =
-        isInitialized() && (api.CommandBufferGet(&commandBuffer) == StatusCode::Success);
-    DEBUG_BREAK_IF(!result);
-    return result;
+    return this->getGpuCommands(commandBuffer);
 }
 
 ConfigurationHandle_1_0
@@ -391,7 +400,7 @@ MetricsLibrary::createConfiguration(const zet_metric_group_handle_t metricGroupH
         handleData.Type = ObjectType::ConfigurationHwCountersOa;
 
         // Use metrics library to create configuration for the activated metric group.
-        api.ConfigurationCreate(&handleData, &handle);
+        this->callMdapi("ConfigurationCreate", this->api.ConfigurationCreate, &handleData, &handle);
 
         // Use metrics discovery to deactivate metric group.
         metricGroup->deactivateMetricSet();
@@ -434,7 +443,7 @@ void MetricsLibrary::deleteAllConfigurations() {
     if (api.ConfigurationDelete) {
         for (auto &configuration : configurations) {
             if (configuration.second.IsValid()) {
-                api.ConfigurationDelete(configuration.second);
+                this->callMdapi("ConfigurationDelete", this->api.ConfigurationDelete, configuration.second);
             }
         }
     }
@@ -495,7 +504,7 @@ ze_result_t OaMetricQueryPoolImp::metricQueryPoolCreate(zet_context_handle_t hCo
                 metricPoolSubdeviceImp = nullptr;
                 metricPoolImp = nullptr;
                 *phMetricQueryPool = nullptr;
-                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+                return ZE_RESULT_ERROR_UNKNOWN;
             }
 
             metricPools.push_back(metricPoolSubdeviceImp);
@@ -508,7 +517,7 @@ ze_result_t OaMetricQueryPoolImp::metricQueryPoolCreate(zet_context_handle_t hCo
             metricPoolImp->destroy();
             metricPoolImp = nullptr;
             *phMetricQueryPool = nullptr;
-            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            return ZE_RESULT_ERROR_UNKNOWN;
         }
     }
 
@@ -517,7 +526,7 @@ ze_result_t OaMetricQueryPoolImp::metricQueryPoolCreate(zet_context_handle_t hCo
         metricPoolImp->destroy();
         metricPoolImp = nullptr;
         *phMetricQueryPool = nullptr;
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        return ZE_RESULT_ERROR_UNKNOWN;
     }
 
     *phMetricQueryPool = metricPoolImp;
@@ -603,6 +612,7 @@ bool OaMetricQueryPoolImp::allocateGpuMemory() {
                              : metricsLibrary.getQueryReportGpuSize() * description.count;
 
         if (allocationSize == 0) {
+            METRICS_LOG_ERR("%s", "Failed to get allocation size for metric query pool.");
             return false;
         }
 
@@ -627,6 +637,7 @@ bool OaMetricQueryPoolImp::createMetricQueryPool() {
     const bool validMetricGroup = metricGroupProperties.samplingType == ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED;
 
     if (!validMetricGroup) {
+        METRICS_LOG_ERR("%s", "Invalid metric group: only event based sampling is supported.");
         return false;
     }
 

@@ -1,17 +1,20 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/debug_settings/debug_settings_manager.h"
+
 #include "level_zero/tools/source/metrics/metric.h"
 
 #include "metrics_library_api_1_0.h"
 
 #include <map>
 #include <mutex>
+#include <utility>
 #include <vector>
 
 using MetricsLibraryApi::ClientCallbacks_1_0;
@@ -92,6 +95,17 @@ struct MetricsLibrary {
     ConfigurationHandle_1_0 addConfiguration(const zet_metric_group_handle_t metricGroup);
 
     ClientGen getGenType(const NEO::GfxCoreHelper &gfxCoreHelper) const;
+
+    template <typename ApiFunctionT, typename... Args>
+    bool callMdapi(const char *functionName, ApiFunctionT apiFunction, Args &&...args) {
+        const StatusCode status = apiFunction(std::forward<Args>(args)...);
+        if (status != StatusCode::Success) {
+            METRICS_LOG_ERR("MDAPI %s failed with status code: %d", functionName, static_cast<int>(status));
+            DEBUG_BREAK_IF(true);
+            return false;
+        }
+        return true;
+    }
 
   protected:
     std::unique_ptr<NEO::OsLibrary> handle;

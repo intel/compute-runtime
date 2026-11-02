@@ -70,7 +70,7 @@ TEST_F(MetricQueryPoolTest, givenIncorrectMetricGroupTypeWhenZetMetricQueryPoolC
 
     metricGroup.getPropertiesOutProperties = &metricGroupProperties;
 
-    EXPECT_EQ(zetMetricQueryPoolCreate(context->toHandle(), metricDevice, metricGroup.toHandle(), &poolDesc, &poolHandle), ZE_RESULT_ERROR_INVALID_ARGUMENT);
+    EXPECT_EQ(zetMetricQueryPoolCreate(context->toHandle(), metricDevice, metricGroup.toHandle(), &poolDesc, &poolHandle), ZE_RESULT_ERROR_UNKNOWN);
     EXPECT_EQ(poolHandle, nullptr);
 }
 
@@ -103,7 +103,7 @@ TEST_F(MetricQueryPoolTest, givenIncorrectParameterWhenZetMetricQueryPoolCreateI
     mockMetricsLibrary->g_mockApi->queryCreateOutHandle = queryHandle;
     mockMetricsLibrary->g_mockApi->getParameterResult = StatusCode::Failed;
 
-    EXPECT_EQ(zetMetricQueryPoolCreate(context->toHandle(), metricDevice, metricGroup.toHandle(), &poolDesc, &poolHandle), ZE_RESULT_ERROR_INVALID_ARGUMENT);
+    EXPECT_EQ(zetMetricQueryPoolCreate(context->toHandle(), metricDevice, metricGroup.toHandle(), &poolDesc, &poolHandle), ZE_RESULT_ERROR_UNKNOWN);
     EXPECT_EQ(poolHandle, nullptr);
 }
 
@@ -127,7 +127,7 @@ TEST_F(MetricQueryPoolTest, givenIncorrectContextWhenZetMetricQueryPoolCreateIsC
 
     mockMetricsLibrary->g_mockApi->contextCreateResult = StatusCode::Failed;
 
-    EXPECT_EQ(zetMetricQueryPoolCreate(context->toHandle(), metricDevice, metricGroup.toHandle(), &poolDesc, &poolHandle), ZE_RESULT_ERROR_INVALID_ARGUMENT);
+    EXPECT_EQ(zetMetricQueryPoolCreate(context->toHandle(), metricDevice, metricGroup.toHandle(), &poolDesc, &poolHandle), ZE_RESULT_ERROR_UNKNOWN);
     EXPECT_EQ(poolHandle, nullptr);
 }
 
@@ -151,7 +151,7 @@ TEST_F(MetricQueryPoolTest, givenIncorrectContextDataWhenZetMetricQueryPoolCreat
 
     metricGroup.getPropertiesOutProperties = &metricGroupProperties;
 
-    EXPECT_EQ(zetMetricQueryPoolCreate(context->toHandle(), metricDevice, metricGroup.toHandle(), &poolDesc, &poolHandle), ZE_RESULT_ERROR_INVALID_ARGUMENT);
+    EXPECT_EQ(zetMetricQueryPoolCreate(context->toHandle(), metricDevice, metricGroup.toHandle(), &poolDesc, &poolHandle), ZE_RESULT_ERROR_UNKNOWN);
     EXPECT_EQ(poolHandle, nullptr);
 }
 
@@ -184,7 +184,7 @@ TEST_F(MetricQueryPoolTest, givenIncorrectGpuReportSizeWhenZetMetricQueryPoolCre
     mockMetricsLibrary->g_mockApi->queryCreateOutHandle = queryHandle;
     mockMetricsLibrary->g_mockApi->getParameterOutValue = value;
 
-    EXPECT_EQ(zetMetricQueryPoolCreate(context->toHandle(), metricDevice, metricGroup.toHandle(), &poolDesc, &poolHandle), ZE_RESULT_ERROR_INVALID_ARGUMENT);
+    EXPECT_EQ(zetMetricQueryPoolCreate(context->toHandle(), metricDevice, metricGroup.toHandle(), &poolDesc, &poolHandle), ZE_RESULT_ERROR_UNKNOWN);
     EXPECT_EQ(poolHandle, nullptr);
 }
 

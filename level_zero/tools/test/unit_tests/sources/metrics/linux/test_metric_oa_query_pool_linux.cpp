@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,8 @@
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
@@ -127,6 +129,27 @@ TEST_F(MetricQueryPoolLinuxTest, givenCorrectArgumentsWhenActivateConfigurationI
     EXPECT_FALSE(mockMetricsLibrary->activateConfiguration(dummyConfigurationHandle));
 }
 
+TEST_F(MetricQueryPoolLinuxTest, givenErrorLogsEnabledAndMetricLibraryActivateFailsWhenActivateConfigurationIsCalledThenErrorWithStatusCodeIsPrinted) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.PrintL0MetricLogs.set(METRICS_LOG_BITMASK::LOG_ERROR);
+
+    ConfigurationHandle_1_0 dummyConfigurationHandle;
+    dummyConfigurationHandle.data = &dummyConfigurationHandle;
+    mockMetricsLibrary->initializationState = ZE_RESULT_SUCCESS;
+
+    mockMetricsLibrary->g_mockApi->configurationActivationCounter = 1;
+    mockMetricsLibrary->g_mockApi->configurationActivateResult = StatusCode::Failed;
+
+    StreamCapture capture;
+    capture.captureStderr();
+    const bool result = mockMetricsLibrary->activateConfiguration(dummyConfigurationHandle);
+    const std::string errorLog = capture.getCapturedStderr();
+
+    EXPECT_FALSE(result);
+    const std::string expectedMessage = "MDAPI ConfigurationActivate failed with status code: " + std::to_string(static_cast<int>(StatusCode::Failed));
+    EXPECT_NE(errorLog.find(expectedMessage), std::string::npos);
+}
+
 TEST_F(MetricQueryPoolLinuxTest, givenInCorrectConfigurationWhenActivateConfigurationIsCalledThenReturnsFail) {
 
     ConfigurationHandle_1_0 dummyConfigurationHandle;
@@ -165,6 +188,27 @@ TEST_F(MetricQueryPoolLinuxTest, givenCorrectArgumentsWhenDeActivateConfiguratio
     mockMetricsLibrary->g_mockApi->configurationDeactivationCounter = 1;
     mockMetricsLibrary->g_mockApi->configurationDeactivateResult = StatusCode::Failed;
     EXPECT_FALSE(mockMetricsLibrary->deactivateConfiguration(dummyConfigurationHandle));
+}
+
+TEST_F(MetricQueryPoolLinuxTest, givenErrorLogsEnabledAndMetricLibraryDeactivateFailsWhenDeactivateConfigurationIsCalledThenErrorWithStatusCodeIsPrinted) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.PrintL0MetricLogs.set(METRICS_LOG_BITMASK::LOG_ERROR);
+
+    ConfigurationHandle_1_0 dummyConfigurationHandle;
+    dummyConfigurationHandle.data = &dummyConfigurationHandle;
+    mockMetricsLibrary->initializationState = ZE_RESULT_SUCCESS;
+
+    mockMetricsLibrary->g_mockApi->configurationDeactivationCounter = 1;
+    mockMetricsLibrary->g_mockApi->configurationDeactivateResult = StatusCode::Failed;
+
+    StreamCapture capture;
+    capture.captureStderr();
+    const bool result = mockMetricsLibrary->deactivateConfiguration(dummyConfigurationHandle);
+    const std::string errorLog = capture.getCapturedStderr();
+
+    EXPECT_FALSE(result);
+    const std::string expectedMessage = "MDAPI ConfigurationDeactivate failed with status code: " + std::to_string(static_cast<int>(StatusCode::Failed));
+    EXPECT_NE(errorLog.find(expectedMessage), std::string::npos);
 }
 
 TEST_F(MetricQueryPoolLinuxTest, givenInCorrectConfigurationWhenDeActivateConfigurationIsCalledThenReturnsFail) {
