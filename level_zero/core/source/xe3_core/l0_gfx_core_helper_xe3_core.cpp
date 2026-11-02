@@ -20,16 +20,12 @@ namespace L0 {
 using Family = NEO::Xe3CoreFamily;
 static auto gfxCore = IGFX_XE3_CORE;
 
+#include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper_from_xe2_hpg_to_xe3.inl"
 #include "level_zero/core/source/helpers/l0_gfx_core_helper_factory_init.inl"
 
 template <>
 uint32_t L0GfxCoreHelperHw<Family>::getGrfRegisterCount(uint32_t *regPtr) const {
     return (regPtr[4] & 0x1FF);
-}
-
-template <>
-void L0GfxCoreHelperHw<Family>::adjustBuiltInImageModeToBindful(NEO::BuiltIn::AddressingMode &mode) const {
-    mode.imageMode = NEO::BuiltIn::AddressingMode::ImageMode::bindful;
 }
 
 template class L0GfxCoreHelperHw<Family>;

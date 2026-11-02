@@ -46,4 +46,21 @@ uint64_t L0GfxCoreHelperHw<Family>::getOaTimestampValidBits() const {
     return oaTimestampValidBits;
 };
 
+template <typename Family>
+std::vector<std::pair<const char *, const char *>> L0GfxCoreHelperHw<Family>::getStallSamplingReportMetrics() const {
+    std::vector<std::pair<const char *, const char *>> stallSamplingReportList = {
+        {"Active", "Active cycles"},
+        {"PSDepStall", "Stall on Pixel Shader Order Dependency"},
+        {"ControlStall", "Stall on control"},
+        {"PipeStall", "Stall on pipe"},
+        {"SendStall", "Stall on send"},
+        {"DistStall", "Stall on distance"},
+        {"SbidStall", "Stall on scoreboard"},
+        {"SyncStall", "Stall on sync"},
+        {"InstrFetchStall", "Stall on instruction fetch"},
+        {"OtherStall", "Stall on other condition"},
+    };
+    return stallSamplingReportList;
+}
+
 } // namespace L0

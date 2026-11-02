@@ -10,6 +10,7 @@ target_sources(${L0_STATIC_LIB_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/l0_gfx_core_helper_base.inl
                ${CMAKE_CURRENT_SOURCE_DIR}/l0_gfx_core_helper.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/l0_gfx_core_helper.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/l0_gfx_core_helper_from_xe2_hpg_to_xe3.inl
 )
 
 if(SUPPORT_XEHP_AND_LATER)

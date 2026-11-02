@@ -19,6 +19,7 @@ target_sources(${L0_STATIC_LIB_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/mutable_command_walker.h
                ${CMAKE_CURRENT_SOURCE_DIR}/mutable_command_walker_hw.h
                ${CMAKE_CURRENT_SOURCE_DIR}/mutable_command_walker_hw.inl
+               ${CMAKE_CURRENT_SOURCE_DIR}/mutable_command_walker_hw_xe_hpg_and_later.inl
                ${CMAKE_CURRENT_SOURCE_DIR}/mutable_indirect_data.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/mutable_indirect_data.h
                ${CMAKE_CURRENT_SOURCE_DIR}/mutable_kernel.cpp
