@@ -32,6 +32,7 @@
 #include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/memory_manager/host_ptr_manager.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
+#include "shared/source/memory_manager/multi_graphics_allocation.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/os_interface/windows/dxgi_wrapper.h"

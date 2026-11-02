@@ -114,6 +114,22 @@ struct SvmMapOperation {
     bool readOnlyMap = false;
 };
 
+class SvmMapBasedAllocationTracker {
+    friend class SVMAllocsManager;
+
+  public:
+    using SvmAllocationContainer = std::map<const void *, SvmAllocationData>;
+    void insert(const SvmAllocationData &);
+    void remove(const SvmAllocationData &);
+    SvmAllocationData *get(const void *);
+    size_t getNumAllocs() const { return allocations.size(); };
+
+    void freeAllocations(NEO::MemoryManager &memoryManager);
+
+    SvmAllocationContainer allocations;
+    NEO::SpinLock mutex;
+};
+
 class SVMAllocsManager {
   public:
     using SortedVectorBasedAllocationTracker = BaseSortedPointerWithValueVector<SvmAllocationData>;
@@ -133,21 +149,7 @@ class SVMAllocsManager {
     };
     static_assert(NEO::NonCopyableAndNonMovable<ContainerReadLockTypeRAIIHelper>);
 
-    class MapBasedAllocationTracker {
-        friend class SVMAllocsManager;
-
-      public:
-        using SvmAllocationContainer = std::map<const void *, SvmAllocationData>;
-        void insert(const SvmAllocationData &);
-        void remove(const SvmAllocationData &);
-        SvmAllocationData *get(const void *);
-        size_t getNumAllocs() const { return allocations.size(); };
-
-        void freeAllocations(NEO::MemoryManager &memoryManager);
-
-        SvmAllocationContainer allocations;
-        NEO::SpinLock mutex;
-    };
+    using MapBasedAllocationTracker = SvmMapBasedAllocationTracker;
 
     struct MapOperationsTracker {
         using SvmMapOperationsContainer = std::map<const void *, SvmMapOperation>;

@@ -13,6 +13,7 @@
 #include "shared/source/kernel/kernel_arg_descriptor.h"
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/memory_manager/migration_sync_data.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_builtins.h"

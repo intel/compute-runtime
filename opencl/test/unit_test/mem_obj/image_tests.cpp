@@ -16,6 +16,7 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/migration_sync_data.h"
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/fixtures/memory_management_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"

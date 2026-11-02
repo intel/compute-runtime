@@ -11,6 +11,7 @@
 #include "shared/source/helpers/blit_properties.h"
 #include "shared/source/memory_manager/deferred_deleter.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/utilities/staging_buffer_manager.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"

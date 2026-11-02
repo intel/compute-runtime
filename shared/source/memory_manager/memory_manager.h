@@ -18,11 +18,11 @@
 #include "shared/source/memory_manager/address_range.h"
 #include "shared/source/memory_manager/alignment_selector.h"
 #include "shared/source/memory_manager/definitions/storage_info.h"
+#include "shared/source/memory_manager/engine_completion_snapshot.h"
 #include "shared/source/memory_manager/external_memory_type.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/host_ptr_defines.h"
 #include "shared/source/memory_manager/memadvise_flags.h"
-#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_reuse.h"
 #include "shared/source/os_interface/os_memory.h"
 #include "shared/source/os_interface/product_helper.h"
@@ -46,6 +46,9 @@
 namespace NEO {
 
 class AllocationsList;
+class SVMAllocsManager;
+class SvmMapBasedAllocationTracker;
+struct SvmAllocationData;
 class Device;
 class MultiGraphicsAllocation;
 class CpuPageFaultManager;
@@ -213,7 +216,7 @@ class MemoryManager {
 
     GraphicsAllocation *getOrImportPeerAllocation(Device *device,
                                                   SVMAllocsManager *svmAllocsManager,
-                                                  SVMAllocsManager::MapBasedAllocationTracker &storage,
+                                                  SvmMapBasedAllocationTracker &storage,
                                                   SvmAllocationData *allocData,
                                                   void *basePtr,
                                                   uintptr_t *peerGpuAddress,

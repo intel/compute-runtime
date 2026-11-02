@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/memory_manager/allocation_type.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/utilities/hw_timestamps.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/compiler_interface/linker_mock.h"
