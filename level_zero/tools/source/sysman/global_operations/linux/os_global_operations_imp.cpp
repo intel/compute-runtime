@@ -26,6 +26,7 @@
 
 #include <chrono>
 #include <cstring>
+#include <sstream>
 
 namespace L0 {
 

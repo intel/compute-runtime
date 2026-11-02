@@ -27,6 +27,7 @@
 #include "level_zero/tools/source/sysman/sysman_const.h"
 #include "level_zero/tools/source/sysman/sysman_imp.h"
 
+#include <sstream>
 #include <unordered_set>
 
 namespace L0 {

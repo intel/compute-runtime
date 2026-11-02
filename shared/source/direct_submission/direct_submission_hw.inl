@@ -35,6 +35,7 @@
 #include <algorithm>
 #include <cstring>
 #include <future>
+#include <sstream>
 
 namespace NEO {
 

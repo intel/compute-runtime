@@ -20,6 +20,8 @@
 #include "level_zero/tools/source/sysman/pci/pci_utils.h"
 #include "level_zero/tools/source/sysman/sysman_const.h"
 
+#include <sstream>
+
 namespace L0 {
 
 const std::string LinuxPciImp::deviceDir("device");
