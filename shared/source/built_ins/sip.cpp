@@ -153,7 +153,7 @@ bool SipKernel::initBuiltinsSipKernel(SipKernelType type, Device &device, OsCont
     return true;
 }
 
-bool SipKernel::initRawBinaryFromFileKernel(SipKernelType type, Device &device, std::string &fileName) {
+bool SipKernel::initRawBinaryFromFileKernel(SipKernelType type, Device &device, const std::string &fileName) {
     uint32_t sipIndex = static_cast<uint32_t>(type);
     uint32_t rootDeviceIndex = device.getRootDeviceIndex();
 
@@ -268,36 +268,26 @@ bool SipKernel::initSipKernelFromExternalLib(SipKernelType type, Device &device)
     return true;
 }
 
-void SipKernel::selectSipClassType(std::string &fileName, Device &device) {
-    const GfxCoreHelper &gfxCoreHelper = device.getGfxCoreHelper();
-    const std::string unknown("unk");
-    if (fileName.compare(unknown) == 0) {
-        bool debuggingEnabled = device.getDebugger() != nullptr;
-        bool externalLibAvailable = device.getSipExternalLibInterface() != nullptr;
-        bool helperPreference = gfxCoreHelper.getSipBinaryFromExternalLib();
-        if ((debuggingEnabled || helperPreference) && externalLibAvailable) {
-            SipKernel::classType = SipClassType::externalLib;
-        } else {
-            SipKernel::classType = SipClassType::builtins;
-        }
-    } else {
-        SipKernel::classType = SipClassType::rawBinaryFromFile;
+bool SipKernel::isExternalLibRequired(const GfxCoreHelper &gfxCoreHelper) {
+    return debugManager.flags.GetSipBinaryFromExternalLib.get() == 1 || gfxCoreHelper.isSipExternalLibRequired();
+}
+
+SipClassType SipKernel::selectSipClassType(const GfxCoreHelper &gfxCoreHelper) {
+    if (debugManager.flags.LoadBinarySipFromFile.get() != "unk") {
+        return SipClassType::rawBinaryFromFile;
     }
-    if (debugManager.flags.ForceSipClass.get() != -1) {
-        SipKernel::classType = static_cast<SipClassType>(debugManager.flags.ForceSipClass.get());
+    if (isExternalLibRequired(gfxCoreHelper)) {
+        return SipClassType::externalLib;
     }
+    return SipClassType::builtins;
 }
 
 bool SipKernel::initSipKernelImpl(SipKernelType type, Device &device, OsContext *context) {
-    std::string fileName = debugManager.flags.LoadBinarySipFromFile.get();
-    SipKernel::selectSipClassType(fileName, device);
+    SipKernel::classType = SipKernel::selectSipClassType(device.getGfxCoreHelper());
 
     switch (SipKernel::classType) {
     case SipClassType::rawBinaryFromFile:
-        return SipKernel::initRawBinaryFromFileKernel(type, device, fileName);
-    case SipClassType::hexadecimalHeaderFile:
-        UNRECOVERABLE_IF(true); // unsupported
-        return false;
+        return SipKernel::initRawBinaryFromFileKernel(type, device, debugManager.flags.LoadBinarySipFromFile.get());
     case SipClassType::externalLib:
         return SipKernel::initSipKernelFromExternalLib(type, device);
     default:
@@ -310,7 +300,6 @@ const SipKernel &SipKernel::getSipKernelImpl(Device &device) {
 
     switch (SipKernel::classType) {
     case SipClassType::rawBinaryFromFile:
-    case SipClassType::hexadecimalHeaderFile:
     case SipClassType::externalLib: {
         auto ptr = device.getRootDeviceEnvironment().sipKernels[static_cast<uint32_t>(sipType)].get();
         UNRECOVERABLE_IF(!ptr);

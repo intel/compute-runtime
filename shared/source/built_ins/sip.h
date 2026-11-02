@@ -58,6 +58,8 @@ class SipKernel : NEO::NonCopyableAndNonMovableClass {
     static const SipKernel &getDebugSipKernel(Device &device, OsContext *context);
     static SipKernelType getSipKernelType(Device &device);
     static SipKernelType getSipKernelType(Device &device, bool debuggingEnable);
+    static bool isExternalLibRequired(const GfxCoreHelper &gfxCoreHelper);
+    static SipClassType selectSipClassType(const GfxCoreHelper &gfxCoreHelper);
     static SipClassType classType;
 
     enum class Command : uint32_t {
@@ -73,12 +75,11 @@ class SipKernel : NEO::NonCopyableAndNonMovableClass {
     static const SipKernel &getSipKernelImpl(Device &device);
 
     static bool initBuiltinsSipKernel(SipKernelType type, Device &device, OsContext *context);
-    static bool initRawBinaryFromFileKernel(SipKernelType type, Device &device, std::string &fileName);
+    static bool initRawBinaryFromFileKernel(SipKernelType type, Device &device, const std::string &fileName);
     static std::vector<char> readStateSaveAreaHeaderFromFile(const std::string &fileName);
     static std::string createHeaderFilename(const std::string &filename);
 
     static bool initSipKernelFromExternalLib(SipKernelType type, Device &device);
-    static void selectSipClassType(std::string &fileName, Device &device);
 
     const std::vector<char> stateSaveAreaHeader;
     const std::vector<char> binary;

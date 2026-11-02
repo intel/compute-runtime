@@ -1522,9 +1522,9 @@ HWTEST2_F(GfxCoreHelperTest, whenGetDefaultDeviceHierarchyThenReturnCompositeHie
     EXPECT_EQ(DeviceHierarchyMode::composite, defaultDeviceHierarchy);
 }
 
-HWTEST2_F(GfxCoreHelperTest, whenGetSipBinaryFromExternalLibThenReturnFalse, IsAtMostXe3Core) {
+HWTEST2_F(GfxCoreHelperTest, whenIsSipExternalLibRequiredThenReturnFalse, IsDebugSipFromIgc) {
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    EXPECT_FALSE(gfxCoreHelper.getSipBinaryFromExternalLib());
+    EXPECT_FALSE(gfxCoreHelper.isSipExternalLibRequired());
 }
 
 HWTEST_F(GfxCoreHelperTest, givenContextGroupDisabledWhenContextGroupContextsCountAndSecondaryContextsSupportQueriedThenZeroCountAndFalseIsReturned) {

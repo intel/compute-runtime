@@ -72,8 +72,7 @@ HWTEST2_F(Xe3AndLaterCoreDebugSessionTestFixture,
 }
 
 using DebugSessionRegistersAccessTesXe3AndLaterSpecfic = Test<DebugSessionRegistersAccess>;
-HWTEST2_F(DebugSessionRegistersAccessTesXe3AndLaterSpecfic, GivenGetThreadRegisterSetPropertiesCalledExceptGrfCountOtherPropertieAreSameAsGetRegisterSetProperties,
-          IsAtLeastXe3Core) {
+HWTEST2_F(DebugSessionRegistersAccessTesXe3AndLaterSpecfic, GivenGetThreadRegisterSetPropertiesCalledExceptGrfCountOtherPropertieAreSameAsGetRegisterSetProperties, IsDebugSipFromIgcAndAtLeastXe3Core) {
 
     auto mockBuiltins = new MockBuiltins();
     mockBuiltins->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);

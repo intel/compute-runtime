@@ -20,7 +20,6 @@ class MemoryAllocation;
 class MockSipKernel : public SipKernel {
   public:
     using SipKernel::createHeaderFilename;
-    using SipKernel::selectSipClassType;
     using SipKernel::type;
 
     MockSipKernel(SipKernelType type, GraphicsAllocation *sipAlloc);

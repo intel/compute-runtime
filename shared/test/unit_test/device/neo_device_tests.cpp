@@ -26,6 +26,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/raii_gfx_core_helper.h"
 #include "shared/test/common/helpers/raii_product_helper.h"
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
@@ -37,6 +38,7 @@
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
+#include "shared/test/common/mocks/mock_gfx_core_helper.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_os_interface.h"
@@ -701,7 +703,8 @@ TEST_F(DeviceGetCapsTest, givenForcePreemptionModeDebugVariableWhenCreateDeviceT
     }
 }
 
-TEST_F(DeviceGetCapsTest, givenDeviceWithMidThreadPreemptionWhenDeviceIsCreatedThenSipKernelIsNotCreated) {
+HWTEST_F(DeviceGetCapsTest, givenDeviceWithMidThreadPreemptionWhenDeviceIsCreatedThenSipKernelIsNotCreated) {
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelperHw<FamilyType>> gfxCoreHelperBackup{*pDevice->executionEnvironment->rootDeviceEnvironments[0]};
     VariableBackup<bool> mockSipBackup(&MockSipData::useMockSip, false);
     DebugManagerStateRestore dbgRestorer;
     {

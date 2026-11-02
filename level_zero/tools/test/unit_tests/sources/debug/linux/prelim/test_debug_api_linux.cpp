@@ -7698,7 +7698,7 @@ TEST_F(DebugApiRegistersAccessTest, GivenReadSbaBufferCalledThenSbaBufferIsRead)
     EXPECT_EQ(sbaExpected.bindlessSamplerStateBaseAddress, sba.bindlessSamplerStateBaseAddress);
 }
 
-TEST_F(DebugApiRegistersAccessTest, givenInvalidSbaRegistersIndicesWhenReadSbaRegistersCalledThenErrorInvalidArgumentIsReturned) {
+HWTEST2_F(DebugApiRegistersAccessTest, givenInvalidSbaRegistersIndicesWhenReadSbaRegistersCalledThenErrorInvalidArgumentIsReturned, IsDebugSipFromIgc) {
     SIP::version version = {2, 0, 0};
     initStateSaveArea(session->stateSaveAreaHeader, version, device);
 
@@ -7706,7 +7706,7 @@ TEST_F(DebugApiRegistersAccessTest, givenInvalidSbaRegistersIndicesWhenReadSbaRe
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetDebugReadRegisters(session->toHandle(), {0, 0, 0, 0}, ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU, 8, 2, nullptr));
 }
 
-TEST_F(DebugApiRegistersAccessTest, GivenReadSbaRegistersCalledThenSbaRegistersAreRead) {
+HWTEST2_F(DebugApiRegistersAccessTest, GivenReadSbaRegistersCalledThenSbaRegistersAreRead, IsDebugSipFromIgc) {
     SIP::version version = {1, 0, 0};
     initStateSaveArea(session->stateSaveAreaHeader, version, device);
 
@@ -7753,7 +7753,7 @@ TEST_F(DebugApiRegistersAccessTest, GivenReadSbaRegistersCalledThenSbaRegistersA
     EXPECT_EQ(expectedScratchSpaceBaseAddress, sba[8]);
 }
 
-TEST_F(DebugApiRegistersAccessTest, GivenScratchPointerAndZeroAddressInSurfaceStateWhenGettingScratchBaseRegThenValueIsZero) {
+HWTEST2_F(DebugApiRegistersAccessTest, GivenScratchPointerAndZeroAddressInSurfaceStateWhenGettingScratchBaseRegThenValueIsZero, IsDebugSipFromIgc) {
     SIP::version version = {1, 0, 0};
     initStateSaveArea(session->stateSaveAreaHeader, version, device);
 
@@ -7833,7 +7833,7 @@ TEST_F(DebugApiRegistersAccessTest, givenReadDebugScratchRegisterCalledThenCorre
     EXPECT_EQ(scratch[1], debugSurfaceSize);
 }
 
-TEST_F(DebugApiRegistersAccessTest, givenReadModeRegisterCalledThenSuccessIsReturned) {
+HWTEST2_F(DebugApiRegistersAccessTest, givenReadModeRegisterCalledThenSuccessIsReturned, IsDebugSipFromIgc) {
     SIP::version version = {3, 0, 0};
     initStateSaveArea(session->stateSaveAreaHeader, version, device);
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugReadRegisters(session->toHandle(), {0, 0, 0, 0}, ZET_DEBUG_REGSET_TYPE_MODE_FLAGS_INTEL_GPU, 0, 1, nullptr));

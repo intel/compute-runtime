@@ -28,6 +28,8 @@ struct TestTraits<IGFX_XE_HPG_CORE> {
     static constexpr bool largeGrfModeInStateComputeModeSupported = true;
     static constexpr bool heaplessRequired = false;
     static constexpr bool bindingTableStateSupported = true;
+    static constexpr bool debugSipFromIgc = true;
+    static constexpr bool csrSipFromIgc = false;
 };
 #ifdef TESTS_MTL
 #include "shared/test/common/xe_hpg_core/mtl/test_traits_mtl.h"

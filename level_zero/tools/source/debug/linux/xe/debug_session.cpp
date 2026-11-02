@@ -691,7 +691,7 @@ bool DebugSessionLinuxXe::handleVmBind(VmBindData &vmBindData) {
                     if (metaDataEntry.metadata.type == euDebugInterface->getParamValue(NEO::EuDebugParam::metadataSipArea)) {
                         auto neoDevice = connectedDevice->getNEODevice();
                         auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
-                        if (gfxCoreHelper.getSipBinaryFromExternalLib()) {
+                        if (NEO::SipKernel::isExternalLibRequired(gfxCoreHelper)) {
                             if (!openSipWrapper(neoDevice, vmBindData.vmBind.vmHandle, vmBindOp.addr)) {
                                 return false;
                             }

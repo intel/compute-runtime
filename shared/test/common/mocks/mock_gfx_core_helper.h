@@ -27,8 +27,12 @@ class MockGfxCoreHelperHw : public GfxCoreHelperHw<GfxFamily> {
     bool isPerContextDebugSipRequired() const override {
         return perContextSipRequired;
     }
+    bool isSipExternalLibRequired() const override {
+        return sipExternalLibRequired;
+    }
     mutable uint32_t alignThreadGroupCountToDssSizeCalledTimes = 0;
     bool setIsLockable = true;
     bool perContextSipRequired = false;
+    bool sipExternalLibRequired = false;
 };
 } // namespace NEO

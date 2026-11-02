@@ -184,7 +184,7 @@ CompilerInterface *RootDeviceEnvironment::getCompilerInterface() {
 
 SipExternalLib *RootDeviceEnvironment::getSipExternalLibInterface() {
     if (sipExternalLib.get() == nullptr) {
-        if (gfxCoreHelper->getSipBinaryFromExternalLib()) {
+        if (SipKernel::isExternalLibRequired(*gfxCoreHelper)) {
             std::lock_guard<std::mutex> autolock(this->mtx);
             sipExternalLib.reset(SipExternalLib::getSipExternalLibInstance());
         }

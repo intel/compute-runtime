@@ -169,7 +169,7 @@ HWTEST2_F(DebugApiTest, givenDeviceWhenDebugIsNotSupportedThenGetPropertiesRetur
     EXPECT_EQ(0u, debugProperties.flags);
 }
 
-TEST_F(DebugApiTest, givenStateSaveAreaHeaderUnavailableWhenGettingDebugPropertiesThenAttachFlagIsNotReturned) {
+HWTEST2_F(DebugApiTest, givenStateSaveAreaHeaderUnavailableWhenGettingDebugPropertiesThenAttachFlagIsNotReturned, IsDebugSipFromIgc) {
     zet_device_debug_properties_t debugProperties = {};
     debugProperties.flags = ZET_DEVICE_DEBUG_PROPERTY_FLAG_FORCE_UINT32;
 
@@ -182,7 +182,7 @@ TEST_F(DebugApiTest, givenStateSaveAreaHeaderUnavailableWhenGettingDebugProperti
     EXPECT_EQ(0u, debugProperties.flags);
 }
 
-TEST_F(DebugApiTest, givenTileAttachedDisabledAndSubDeviceWhenDebugAttachIsAvaialbleThenGetPropertiesReturnsNoFlag) {
+HWTEST2_F(DebugApiTest, givenTileAttachedDisabledAndSubDeviceWhenDebugAttachIsAvaialbleThenGetPropertiesReturnsNoFlag, IsDebugSipFromIgc) {
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.ExperimentalEnableTileAttach.set(0);
 
@@ -278,27 +278,27 @@ TEST_F(DebugApiTest, givenNullCountPointerWhenGetRegisterSetPropertiesCalledThen
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, zetDebugGetRegisterSetProperties(device->toHandle(), nullptr, nullptr));
 }
 
-TEST_F(DebugApiTest, givenZeroCountWhenGetRegisterSetPropertiesCalledThenCorrectCountIsSet) {
+HWTEST2_F(DebugApiTest, givenZeroCountWhenGetRegisterSetPropertiesCalledThenCorrectCountIsSet, IsDebugSipFromIgc) {
     uint32_t count = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugGetRegisterSetProperties(device->toHandle(), &count, nullptr));
     EXPECT_EQ(13u, count);
 }
 
-TEST_F(DebugApiTest, givenZeroCountWhenGetRegisterSetPropertiesCalledWithV3HeaderThenCorrectCountIsSet) {
+HWTEST2_F(DebugApiTest, givenZeroCountWhenGetRegisterSetPropertiesCalledWithV3HeaderThenCorrectCountIsSet, IsDebugSipFromIgc) {
     uint32_t count = 0;
     setUpV3Header();
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugGetRegisterSetProperties(device->toHandle(), &count, nullptr));
     EXPECT_EQ(17u, count);
 }
 
-TEST_F(DebugApiTest, givenGetRegisterSetPropertiesCalledAndExtraSpaceIsProvidedThenCorrectPropertiesReturned) {
+HWTEST2_F(DebugApiTest, givenGetRegisterSetPropertiesCalledAndExtraSpaceIsProvidedThenCorrectPropertiesReturned, IsDebugSipFromIgc) {
     uint32_t count = 100;
     std::vector<zet_debug_regset_properties_t> regsetProps(count);
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugGetRegisterSetProperties(device->toHandle(), &count, regsetProps.data()));
     EXPECT_EQ(13u, count);
 }
 
-TEST_F(DebugApiTest, givenNoStateSaveHeaderWhenGettingRegSetPropertiesThenZeroCountIsReturned) {
+HWTEST2_F(DebugApiTest, givenNoStateSaveHeaderWhenGettingRegSetPropertiesThenZeroCountIsReturned, IsDebugSipFromIgc) {
     uint32_t count = 10;
     std::vector<zet_debug_regset_properties_t> regsetProps(count);
 
@@ -313,7 +313,7 @@ TEST_F(DebugApiTest, givenNonZeroCountAndNullRegsetPointerWhenGetRegisterSetProp
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, zetDebugGetRegisterSetProperties(device->toHandle(), &count, nullptr));
 }
 
-TEST_F(DebugApiTest, givenSsaHeaderVersionGreaterThan5WhenGetRegisterSetPropertiesCalledThenUnknownIsReturned) {
+HWTEST2_F(DebugApiTest, givenSsaHeaderVersionGreaterThan5WhenGetRegisterSetPropertiesCalledThenUnknownIsReturned, IsDebugSipFromIgc) {
     auto stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(5);
     auto versionHeader = &reinterpret_cast<SIP::StateSaveAreaHeader *>(stateSaveAreaHeader.data())->versionHeader;
     versionHeader->version.major = 99;
@@ -322,7 +322,7 @@ TEST_F(DebugApiTest, givenSsaHeaderVersionGreaterThan5WhenGetRegisterSetProperti
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zetDebugGetRegisterSetProperties(device->toHandle(), &count, nullptr));
 }
 
-TEST_F(DebugApiTest, givenSIPHeaderHasZeroSizeMMEThenNotExposedAsRegset) {
+HWTEST2_F(DebugApiTest, givenSIPHeaderHasZeroSizeMMEThenNotExposedAsRegset, IsDebugSipFromIgc) {
     mockBuiltins = new MockBuiltins();
     mockBuiltins->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2, 128, 0);
     MockRootDeviceEnvironment::resetBuiltins(neoDevice->executionEnvironment->rootDeviceEnvironments[0].get(), mockBuiltins);
@@ -338,7 +338,7 @@ TEST_F(DebugApiTest, givenSIPHeaderHasZeroSizeMMEThenNotExposedAsRegset) {
     }
 }
 
-TEST_F(DebugApiTest, givenSIPHeaderGRFCountNotEqualTo128ThenGetRegisterSetPropertiesReturns128) {
+HWTEST2_F(DebugApiTest, givenSIPHeaderGRFCountNotEqualTo128ThenGetRegisterSetPropertiesReturns128, IsDebugSipFromIgc) {
     static_cast<MockBuiltins *>(neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.get())->stateSaveAreaHeader =
         MockSipData::createStateSaveAreaHeader(2, 256);
     uint32_t count = 0;
@@ -356,7 +356,7 @@ TEST_F(DebugApiTest, givenSIPHeaderGRFCountNotEqualTo128ThenGetRegisterSetProper
     }
 }
 
-TEST_F(DebugApiTest, givenGetRegisterSetPropertiesCalledWithV3HeaderCorrectPropertiesReturned) {
+HWTEST2_F(DebugApiTest, givenGetRegisterSetPropertiesCalledWithV3HeaderCorrectPropertiesReturned, IsDebugSipFromIgc) {
 
     setUpV3Header();
     uint32_t count = 0;
@@ -478,7 +478,7 @@ TEST_F(DebugApiTest, givenGetRegisterSetPropertiesCalledWithV5HeaderCorrectPrope
     validateRegsetProps(ZET_DEBUG_REGSET_TYPE_DIRECT_INTEL_GPU, readOnly, 1, 8);
 }
 
-TEST_F(DebugApiTest, givenGetRegisterSetPropertiesCalledWhenV3HeaderHeaplessThenCorrectPropertiesReturned) {
+HWTEST2_F(DebugApiTest, givenGetRegisterSetPropertiesCalledWhenV3HeaderHeaplessThenCorrectPropertiesReturned, IsDebugSipFromIgc) {
 
     setUpV3HeaderWithoutHeapless();
     uint32_t count = 0;
@@ -522,7 +522,7 @@ TEST_F(DebugApiTest, givenGetRegisterSetPropertiesCalledWhenV3HeaderHeaplessThen
     validateRegsetProps(regsetProps[16], ZET_DEBUG_REGSET_TYPE_SCALAR_INTEL_GPU, ZET_DEBUG_REGSET_FLAG_READABLE | ZET_DEBUG_REGSET_FLAG_WRITEABLE, 1, 64, 8);
 }
 
-TEST_F(DebugApiTest, givenGetRegisterSetPropertiesCalledCorrectPropertiesReturned) {
+HWTEST2_F(DebugApiTest, givenGetRegisterSetPropertiesCalledCorrectPropertiesReturned, IsDebugSipFromIgc) {
     uint32_t count = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugGetRegisterSetProperties(device->toHandle(), &count, nullptr));
     EXPECT_EQ(13u, count);
@@ -706,7 +706,7 @@ TEST_F(DebugApiTest, givenReadDebugScratchRegisterCalledThenSuccessIsReturned) {
     EXPECT_EQ(scratch[1], 0u);
 }
 
-TEST_F(DebugApiTest, givenReadModeRegisterCalledThenSuccessIsReturned) {
+HWTEST2_F(DebugApiTest, givenReadModeRegisterCalledThenSuccessIsReturned, IsDebugSipFromIgc) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 

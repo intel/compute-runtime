@@ -65,7 +65,7 @@ struct DebuggerSingleAddressSpaceAubFixture : public DebuggerAubFixture {
 };
 using DebuggerSingleAddressSpaceAub = Test<DebuggerSingleAddressSpaceAubFixture>;
 
-HWTEST_F(DebuggerSingleAddressSpaceAub, GivenSingleAddressSpaceWhenCmdListIsExecutedThenSbaAddressesAreTracked) {
+HWTEST2_F(DebuggerSingleAddressSpaceAub, GivenSingleAddressSpaceWhenCmdListIsExecutedThenSbaAddressesAreTracked, IsDebugSipFromIgc) {
     if (neoDevice->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo)) {
         GTEST_SKIP();
     }

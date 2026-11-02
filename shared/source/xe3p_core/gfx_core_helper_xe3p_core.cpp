@@ -17,8 +17,6 @@ using Family = NEO::Xe3pCoreFamily;
 #include "shared/source/helpers/gfx_core_helper_xe3p_and_later.inl"
 #include "shared/source/helpers/gfx_core_helper_xehp_and_later.inl"
 
-#include "gfx_core_helper_xe3p_core_additional.inl"
-
 namespace NEO {
 template <>
 uint32_t GfxCoreHelperHw<Family>::getMetricsLibraryGenId() const {

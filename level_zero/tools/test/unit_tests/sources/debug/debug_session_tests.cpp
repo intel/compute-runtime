@@ -7,7 +7,9 @@
 
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/sip_external_lib/sip_external_lib.h"
+#include "shared/test/common/helpers/raii_gfx_core_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_gfx_core_helper.h"
 #include "shared/test/common/mocks/mock_gmm_helper.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/mocks/mock_sip.h"
@@ -2051,7 +2053,7 @@ TEST(DebugSessionTest, givenErrorFromResumeImpWhenResumeCalledThenErrorReturned)
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
 }
 
-TEST(DebugSessionTest, givenErrorFromReadSbaBufferWhenReadSbaRegistersCalledThenErrorReturned) {
+HWTEST2_F(DebugSessionTest, givenErrorFromReadSbaBufferWhenReadSbaRegistersCalledThenErrorReturned, IsDebugSipFromIgc) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
     auto hwInfo = *NEO::defaultHwInfo.get();
@@ -2068,7 +2070,7 @@ TEST(DebugSessionTest, givenErrorFromReadSbaBufferWhenReadSbaRegistersCalledThen
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
 }
 
-TEST(DebugSessionTest, givenErrorFromReadRegistersWhenReadSbaRegistersCalledThenErrorReturned) {
+HWTEST2_F(DebugSessionTest, givenErrorFromReadRegistersWhenReadSbaRegistersCalledThenErrorReturned, IsDebugSipFromIgc) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
     auto hwInfo = *NEO::defaultHwInfo.get();
@@ -2085,7 +2087,7 @@ TEST(DebugSessionTest, givenErrorFromReadRegistersWhenReadSbaRegistersCalledThen
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
 }
 
-HWTEST2_F(DebugSessionTest, givenErrorFromReadMemoryWhenReadSbaRegistersCalledThenErrorReturned, IsAtLeastXeCore) {
+HWTEST2_F(DebugSessionTest, givenErrorFromReadMemoryWhenReadSbaRegistersCalledThenErrorReturned, IsDebugSipFromIgcAndAtLeastXeCore) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
     auto hwInfo = *NEO::defaultHwInfo.get();
@@ -3634,7 +3636,7 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenStateSaveHeaderGreaterThanV3WhenC
     EXPECT_EQ(0u, session->calculateSrMagicOffset(pStateSaveAreaHeader, session->allThreads[thread0].get()));
 }
 
-TEST_F(DebugSessionRegistersAccessTestV3, givenTypeToRegsetDescCalledThenCorrectRegdescIsReturned) {
+HWTEST2_F(DebugSessionRegistersAccessTestV3, givenTypeToRegsetDescCalledThenCorrectRegdescIsReturned, IsDebugSipFromIgc) {
     auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
 
     EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU, mockDevice.get()), nullptr);
@@ -3889,7 +3891,7 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenSsaHeaderVersionGreaterThan3WhenC
 
 using DebugSessionRegistersAccessTest = Test<DebugSessionRegistersAccess>;
 
-TEST_F(DebugSessionRegistersAccessTest, givenTypeToRegsetDescCalledThenCorrectRegdescIsReturned) {
+HWTEST2_F(DebugSessionRegistersAccessTest, givenTypeToRegsetDescCalledThenCorrectRegdescIsReturned, IsDebugSipFromIgc) {
     auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
 
     EXPECT_EQ(session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU, mockDevice.get()), nullptr);
@@ -4035,7 +4037,7 @@ TEST_F(DebugSessionRegistersAccessTest, givenThreadAllWhenReadWriteRegistersCall
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zetDebugWriteRegisters(session->toHandle(), threadAll, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 0, 2, nullptr));
 }
 
-TEST_F(DebugSessionRegistersAccessTest, givenInvalidSbaRegistersIndicesWhenReadSbaRegistersCalledThenErrorInvalidArgumentIsReturned) {
+HWTEST2_F(DebugSessionRegistersAccessTest, givenInvalidSbaRegistersIndicesWhenReadSbaRegistersCalledThenErrorInvalidArgumentIsReturned, IsDebugSipFromIgc) {
     session->areRequestedThreadsStoppedReturnValue = 1;
 
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetDebugReadRegisters(session->toHandle(), stoppedThread, ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU, 9, 1, nullptr));
@@ -4400,7 +4402,7 @@ TEST_F(DebugSessionRegistersAccessTestV3, WhenReadingDebugScratchRegisterThenErr
     EXPECT_EQ(scratch[1], 0u);
 }
 
-TEST_F(DebugSessionRegistersAccessTestV3, WhenReadingModeRegisterThenCorrectResultReturned) {
+HWTEST2_F(DebugSessionRegistersAccessTestV3, WhenReadingModeRegisterThenCorrectResultReturned, IsDebugSipFromIgc) {
     auto mockBuiltins = new MockBuiltins();
     mockBuiltins->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(3);
     MockRootDeviceEnvironment::resetBuiltins(neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0].get(), mockBuiltins);
@@ -4413,7 +4415,7 @@ TEST_F(DebugSessionRegistersAccessTestV3, WhenReadingModeRegisterThenCorrectResu
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset();
 }
 
-TEST_F(DebugSessionRegistersAccessTestV3, WhenReadingModeForSSHVersion5RegisterThenCorrectResultReturned) {
+HWTEST2_F(DebugSessionRegistersAccessTestV3, WhenReadingModeForSSHVersion5RegisterThenCorrectResultReturned, IsDebugSipFromIgc) {
     auto mockBuiltins = new MockBuiltins();
     mockBuiltins->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(5);
     MockRootDeviceEnvironment::resetBuiltins(neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0].get(), mockBuiltins);
@@ -4426,7 +4428,7 @@ TEST_F(DebugSessionRegistersAccessTestV3, WhenReadingModeForSSHVersion5RegisterT
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset();
 }
 
-TEST_F(DebugSessionRegistersAccessTest, WhenReadingSbaRegistersThenCorrectAddressesAreReturned) {
+HWTEST2_F(DebugSessionRegistersAccessTest, WhenReadingSbaRegistersThenCorrectAddressesAreReturned, IsDebugSipFromIgc) {
 
     {
         auto pStateSaveAreaHeader = reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data());
@@ -5500,7 +5502,7 @@ TEST_F(MultiTileDebugSessionTest, GivenSubDeviceAndTileAttachWhenRootDeviceDebug
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, retVal);
 }
 
-TEST_F(MultiTileDebugSessionTest, givenTileAttachEnabledWhenGettingDebugPropertiesThenDebugAttachIsSetForRootAndSubdevices) {
+HWTEST2_F(MultiTileDebugSessionTest, givenTileAttachEnabledWhenGettingDebugPropertiesThenDebugAttachIsSetForRootAndSubdevices, IsDebugSipFromIgc) {
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.ExperimentalEnableTileAttach.set(1);
 
@@ -5883,7 +5885,7 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenTypeToRegsetDescWithSipLibInterfa
     EXPECT_EQ(result, DebugSessionImp::getThreadScratchRegsetDesc());
 }
 
-TEST_F(DebugSessionRegistersAccessTestV3, givenTypeToRegsetDescWithSipLibInterfaceWhenCalledWithSbaTypeThenReturnsSbaRegsetDesc) {
+HWTEST2_F(DebugSessionRegistersAccessTestV3, givenTypeToRegsetDescWithSipLibInterfaceWhenCalledWithSbaTypeThenReturnsSbaRegsetDesc, IsDebugSipFromIgc) {
     auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
 
     auto result = session->typeToRegsetDesc(pStateSaveAreaHeader, ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU, mockDevice.get());
@@ -5983,14 +5985,11 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenRegistersAccessHelperWithValidPar
     EXPECT_TRUE(result == ZE_RESULT_SUCCESS || result == ZE_RESULT_ERROR_UNKNOWN);
 }
 
-TEST_F(DebugSessionRegistersAccessTestV3, givenSipExternalLibWhenGetRegisterSetPropertiesBinaryRetrievalFailsThenErrorUnknownReturned) {
-    DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.GetSipBinaryFromExternalLib.set(1);
+HWTEST_F(DebugSessionRegistersAccessTestV3, givenSipExternalLibWhenGetRegisterSetPropertiesBinaryRetrievalFailsThenErrorUnknownReturned) {
     auto neoDevice = mockDevice->getNEODevice();
-    if (!neoDevice->getGfxCoreHelper().getSipBinaryFromExternalLib()) {
-        GTEST_SKIP();
-    }
     auto &rootEnv = *neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelperHw<FamilyType>> gfxCoreHelperBackup{rootEnv};
+    gfxCoreHelperBackup.mockGfxCoreHelper->sipExternalLibRequired = true;
     auto originalSipLib = rootEnv.sipExternalLib.release();
 
     auto mockSipLib = new MockSipExternalLib();
@@ -6004,14 +6003,11 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenSipExternalLibWhenGetRegisterSetP
     rootEnv.sipExternalLib.reset(originalSipLib);
 }
 
-TEST_F(DebugSessionRegistersAccessTestV3, givenSipExternalLibWhenGetRegisterSetPropertiesCreateMapFailsThenErrorUnknownReturned) {
-    DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.GetSipBinaryFromExternalLib.set(1);
+HWTEST_F(DebugSessionRegistersAccessTestV3, givenSipExternalLibWhenGetRegisterSetPropertiesCreateMapFailsThenErrorUnknownReturned) {
     auto neoDevice = mockDevice->getNEODevice();
-    if (!neoDevice->getGfxCoreHelper().getSipBinaryFromExternalLib()) {
-        GTEST_SKIP();
-    }
     auto &rootEnv = *neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()];
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelperHw<FamilyType>> gfxCoreHelperBackup{rootEnv};
+    gfxCoreHelperBackup.mockGfxCoreHelper->sipExternalLibRequired = true;
 
     auto originalSipLib = rootEnv.sipExternalLib.release();
     auto mockSipLib = new MockSipExternalLib();
@@ -6255,7 +6251,7 @@ TEST_F(DebugSessionRegistersAccessTestV3, GivenGetSbaRegsetDescWhenVersionMajorI
     EXPECT_EQ(result, nullptr);
 }
 
-TEST_F(DebugSessionRegistersAccessTestV3, givenVersion3WithoutHeaplessModeWhenGetRegisterSetPropertiesCalledThenThreadScratchRegsetNotIncluded) {
+HWTEST2_F(DebugSessionRegistersAccessTestV3, givenVersion3WithoutHeaplessModeWhenGetRegisterSetPropertiesCalledThenThreadScratchRegsetNotIncluded, IsDebugSipFromIgc) {
     // Test the false branch of: isHeaplessMode(device, pStateSaveArea->regHeaderV3) || version.major == 5
     // Version 3, no heapless flag, no SIP external lib -> THREAD_SCRATCH should NOT be included
 

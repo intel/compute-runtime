@@ -28,4 +28,6 @@ struct TestTraits<IGFX_XE_HPC_CORE> {
     static constexpr bool largeGrfModeInStateComputeModeSupported = true;
     static constexpr bool heaplessRequired = false;
     static constexpr bool bindingTableStateSupported = true;
+    static constexpr bool debugSipFromIgc = true;
+    static constexpr bool csrSipFromIgc = false;
 };

@@ -192,7 +192,7 @@ class GfxCoreHelper {
     virtual bool usmCompressionSupported(const NEO::HardwareInfo &hwInfo) const = 0;
 
     virtual void alignThreadGroupCountToDssSize(uint32_t &threadCount, uint32_t dssCount, uint32_t threadsPerDss, uint32_t threadGroupSize) const = 0;
-    virtual bool getSipBinaryFromExternalLib() const = 0;
+    virtual bool isSipExternalLibRequired() const = 0;
 
     virtual uint32_t getQueuePriorityLevels() const = 0;
     virtual uint32_t getDefaultWalkerInlineDataSize() const = 0;
@@ -429,7 +429,7 @@ class GfxCoreHelperHw : public GfxCoreHelper {
 
     bool usmCompressionSupported(const NEO::HardwareInfo &hwInfo) const override;
 
-    bool getSipBinaryFromExternalLib() const override;
+    bool isSipExternalLibRequired() const override;
 
     uint32_t getQueuePriorityLevels() const override;
     uint32_t getHwQueuePriority(int32_t apiPriority) const override;

@@ -326,6 +326,31 @@ struct ImageSupport {
 
 using SupportsLegacyRenderSurfaceStateAndImageSupport = SupportsLegacyRenderSurfaceStateAnd<ImageSupport>;
 
+struct IsDebugSipFromIgc {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>::debugSipFromIgc;
+    }
+};
+
+struct IsCsrSipFromIgc {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>::csrSipFromIgc;
+    }
+};
+
+template <typename DependentMatcher>
+struct IsDebugSipFromIgcAnd {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return IsDebugSipFromIgc::template isMatched<productFamily>() && DependentMatcher::template isMatched<productFamily>();
+    }
+};
+
+using IsDebugSipFromIgcAndAtLeastXeCore = IsDebugSipFromIgcAnd<IsAtLeastXeCore>;
+using IsDebugSipFromIgcAndAtLeastXe3Core = IsDebugSipFromIgcAnd<IsAtLeastXe3Core>;
+
 template <typename GfxFamily>
 concept HasSemaphore64bCmd = requires {
     typename GfxFamily::MI_SEMAPHORE_WAIT_64;

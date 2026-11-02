@@ -601,7 +601,9 @@ TEST(DebugSip, givenBuiltInsWhenDbgCsrSipIsRequestedThenCorrectSipKernelIsReturn
     EXPECT_EQ(SipKernelType::dbgCsr, sipKernel.getType());
 }
 
-TEST(DebugSip, givenDebugSipIsRequestedThenCorrectSipKernelIsReturned) {
+using DebugSip = ::testing::Test;
+
+HWTEST2_F(DebugSip, givenDebugSipIsRequestedThenCorrectSipKernelIsReturned, IsDebugSipFromIgc) {
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     EXPECT_NE(nullptr, mockDevice);
 
@@ -619,9 +621,7 @@ TEST(DebugSip, givenDebugSipIsRequestedThenCorrectSipKernelIsReturned) {
 }
 using DebugBindlessSipTest = ::testing::Test;
 
-TEST(DebugBindlessSip, givenContextWhenBindlessDebugSipIsRequestedThenCorrectSipKernelIsReturned) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.GetSipBinaryFromExternalLib.set(0);
+HWTEST2_F(DebugBindlessSipTest, givenContextWhenBindlessDebugSipIsRequestedThenCorrectSipKernelIsReturned, IsDebugSipFromIgc) {
     auto executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
     auto builtIns = new NEO::MockBuiltins();
     builtIns->callBaseGetSipKernel = true;
@@ -651,7 +651,7 @@ TEST(DebugBindlessSip, givenContextWhenBindlessDebugSipIsRequestedThenCorrectSip
     EXPECT_FALSE(contextSip->getStateSaveAreaHeader().empty());
 }
 
-HWTEST_F(DebugBindlessSipTest, givenOfflineDebuggingModeWhenGettingSipForContextThenCorrectSipKernelIsReturned) {
+HWTEST2_F(DebugBindlessSipTest, givenOfflineDebuggingModeWhenGettingSipForContextThenCorrectSipKernelIsReturned, IsDebugSipFromIgc) {
     auto executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
     executionEnvironment->setDebuggingMode(DebuggingMode::offline);
 
@@ -685,7 +685,7 @@ HWTEST_F(DebugBindlessSipTest, givenOfflineDebuggingModeWhenGettingSipForContext
     EXPECT_FALSE(contextSip->getStateSaveAreaHeader().empty());
 }
 
-HWTEST_F(DebugBindlessSipTest, givenOfflineDebuggingModeAndSubdevicesWhenGettingSipForContextThenMemoryTransferGoesThroughCpuPointer) {
+HWTEST2_F(DebugBindlessSipTest, givenOfflineDebuggingModeAndSubdevicesWhenGettingSipForContextThenMemoryTransferGoesThroughCpuPointer, IsDebugSipFromIgc) {
     auto executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
     executionEnvironment->setDebuggingMode(DebuggingMode::offline);
     VariableBackup<bool> mockSipBackup(&MockSipData::useMockSip, false);
@@ -722,7 +722,7 @@ HWTEST_F(DebugBindlessSipTest, givenOfflineDebuggingModeAndSubdevicesWhenGetting
     EXPECT_EQ(0, memcmp(sipBinary.data(), sipKernel.getSipAllocation()->getUnderlyingBuffer(), sipBinary.size()));
 }
 
-HWTEST_F(DebugBindlessSipTest, givenOfflineDebuggingModeWhenGettingSipForContextThenMemoryTransferGoesThroughCpuPointer) {
+HWTEST2_F(DebugBindlessSipTest, givenOfflineDebuggingModeWhenGettingSipForContextThenMemoryTransferGoesThroughCpuPointer, IsDebugSipFromIgc) {
     auto executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
     executionEnvironment->setDebuggingMode(DebuggingMode::offline);
     VariableBackup<bool> mockSipBackup(&MockSipData::useMockSip, false);
@@ -759,7 +759,7 @@ HWTEST_F(DebugBindlessSipTest, givenOfflineDebuggingModeWhenGettingSipForContext
     EXPECT_EQ(0, memcmp(sipBinary.data(), sipKernel.getSipAllocation()->getUnderlyingBuffer(), sipBinary.size()));
 }
 
-HWTEST_F(DebugBindlessSipTest, givenOfflineDebuggingModeAndSparseDeviceBitfieldWhenGettingSipForContextThenMemoryIsTransferredToSelectedBank) {
+HWTEST2_F(DebugBindlessSipTest, givenOfflineDebuggingModeAndSparseDeviceBitfieldWhenGettingSipForContextThenMemoryIsTransferredToSelectedBank, IsDebugSipFromIgc) {
     auto executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
     executionEnvironment->setDebuggingMode(DebuggingMode::offline);
     VariableBackup<bool> mockSipBackup(&MockSipData::useMockSip, false);
@@ -803,7 +803,7 @@ HWTEST_F(DebugBindlessSipTest, givenOfflineDebuggingModeAndSparseDeviceBitfieldW
     EXPECT_EQ(0, memcmp(sipBinary.data(), sipKernel.getSipAllocation()->getUnderlyingBuffer(), sipBinary.size()));
 }
 
-TEST(DebugBindlessSip, givenTwoContextsWhenBindlessDebugSipIsRequestedThenEachSipKernelIsAssignedToADifferentContextId) {
+HWTEST2_F(DebugBindlessSipTest, givenTwoContextsWhenBindlessDebugSipIsRequestedThenEachSipKernelIsAssignedToADifferentContextId, IsDebugSipFromIgc) {
     auto executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
     auto builtIns = new NEO::MockBuiltins();
     builtIns->callBaseGetSipKernel = true;
@@ -835,7 +835,7 @@ TEST(DebugBindlessSip, givenTwoContextsWhenBindlessDebugSipIsRequestedThenEachSi
     EXPECT_NE(alloc0Id, alloc1Id);
 }
 
-TEST(DebugBindlessSip, givenFailingSipAllocationWhenBindlessDebugSipWithContextIsRequestedThenSipAllocationInSipKernelIsNull) {
+HWTEST2_F(DebugBindlessSipTest, givenFailingSipAllocationWhenBindlessDebugSipWithContextIsRequestedThenSipAllocationInSipKernelIsNull, IsDebugSipFromIgc) {
     auto executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
 
     auto builtIns = new NEO::MockBuiltins();
@@ -869,7 +869,7 @@ TEST(DebugBindlessSip, givenFailingSipAllocationWhenBindlessDebugSipWithContextI
     EXPECT_FALSE(contextSip->getStateSaveAreaHeader().empty());
 }
 
-TEST(DebugBindlessSip, givenCorrectSipKernelWhenReleasingAllocationManuallyThenFreeGraphicsMemoryIsSkippedOnDestruction) {
+HWTEST2_F(DebugBindlessSipTest, givenCorrectSipKernelWhenReleasingAllocationManuallyThenFreeGraphicsMemoryIsSkippedOnDestruction, IsDebugSipFromIgc) {
     auto executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
     auto builtIns = new NEO::MockBuiltins();
     builtIns->callBaseGetSipKernel = true;
@@ -966,7 +966,7 @@ TEST(DebugBindlessSip, givenOfflineDebuggingModeAndInvalidSipWhenSipIsInitialize
     NEO::igcPopDebugVars();
 }
 
-TEST(DebugBindlessSip, givenOfflineDebuggingModeWhenDebugSipForContextIsCreatedThenContextIdIsPatched) {
+HWTEST2_F(DebugBindlessSipTest, givenOfflineDebuggingModeWhenDebugSipForContextIsCreatedThenContextIdIsPatched, IsDebugSipFromIgc) {
     MockCompilerDebugVars igcDebugVars;
     uint32_t binary[20] = {0};
     binary[2] = 0xcafebead;
@@ -1019,7 +1019,7 @@ TEST(DebugBindlessSip, givenOfflineDebuggingModeWhenDebugSipForContextIsCreatedT
 
 using DebugBuiltinSipTest = Test<DeviceFixture>;
 
-TEST_F(DebugBuiltinSipTest, givenDebuggerWhenInitSipKernelThenDbgSipIsLoadedFromBuiltin) {
+HWTEST2_F(DebugBuiltinSipTest, givenDebuggerWhenInitSipKernelThenDbgSipIsLoadedFromBuiltin, IsDebugSipFromIgc) {
     VariableBackup<bool> mockSipBackup(&MockSipData::useMockSip, false);
     pDevice->executionEnvironment->rootDeviceEnvironments[0]->initDebuggerL0(pDevice);
     auto sipKernelType = SipKernel::getSipKernelType(*pDevice);
@@ -1028,18 +1028,6 @@ TEST_F(DebugBuiltinSipTest, givenDebuggerWhenInitSipKernelThenDbgSipIsLoadedFrom
 
     auto sipAllocation = SipKernel::getSipKernel(*pDevice, nullptr).getSipAllocation();
     EXPECT_NE(nullptr, sipAllocation);
-    EXPECT_EQ(MockSipKernel::classType, SipClassType::builtins);
-
-    SipKernel::freeSipKernels(&pDevice->getRootDeviceEnvironmentRef(), pDevice->getMemoryManager());
-}
-
-TEST_F(DebugBuiltinSipTest, givenDebugFlagForForceSipClassWhenInitSipKernelThenProperSipClassIsSet) {
-    VariableBackup<bool> mockSipBackup(&MockSipData::useMockSip, false);
-    VariableBackup sipClassBackup(&MockSipKernel::classType);
-    DebugManagerStateRestore restorer;
-
-    debugManager.flags.ForceSipClass.set(static_cast<int32_t>(SipClassType::builtins));
-    EXPECT_TRUE(SipKernel::initSipKernel(SipKernelType::csr, *pDevice));
     EXPECT_EQ(MockSipKernel::classType, SipClassType::builtins);
 
     SipKernel::freeSipKernels(&pDevice->getRootDeviceEnvironmentRef(), pDevice->getMemoryManager());
@@ -1058,9 +1046,9 @@ TEST_F(DebugBuiltinSipTest, givenDumpSipHeaderFileWhenGettingSipKernelThenSipHea
     EXPECT_TRUE(NEO::virtualFileList.contains("sip_header.bin"));
 }
 
-TEST(SipTest, whenForcingBuiltinSipClassThenPreemptionSurfaceSizeIsSetBasedOnStateSaveAreaHeader) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.ForceSipClass.set(static_cast<int32_t>(SipClassType::builtins));
+using SipTest = ::testing::Test;
+
+HWTEST2_F(SipTest, givenBuiltinSipWhenGettingCsrSipKernelThenPreemptionSurfaceSizeIsSetBasedOnStateSaveAreaHeader, IsCsrSipFromIgc) {
     auto executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
     auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[0];
     constexpr uint32_t initialPreemptionSurfaceSize = 0xdeadbeef;
@@ -1081,34 +1069,115 @@ TEST(SipTest, whenForcingBuiltinSipClassThenPreemptionSurfaceSizeIsSetBasedOnSta
 
 using DebugExternalLibSipTest = Test<DeviceFixture>;
 
-HWTEST2_F(DebugExternalLibSipTest, givenDebuggerWhenInitSipKernelThenDbgSipIsLoadedFromBuiltIns, IsAtMostXe3Core) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.GetSipBinaryFromExternalLib.set(1);
-    VariableBackup<bool> mockSipBackup(&MockSipData::useMockSip, false);
-    pDevice->executionEnvironment->rootDeviceEnvironments[0]->initDebuggerL0(pDevice);
-    std::string fileName = "unk";
-    MockSipKernel::selectSipClassType(fileName, *pDevice);
-    EXPECT_EQ(MockSipKernel::classType, SipClassType::builtins);
+HWTEST_F(DebugExternalLibSipTest, givenSipExternalLibRequiredWhenSelectingSipClassThenExternalLibIsSelected) {
+    MockGfxCoreHelperHw<FamilyType> gfxCoreHelper;
+    gfxCoreHelper.sipExternalLibRequired = true;
+    EXPECT_EQ(SipClassType::externalLib, SipKernel::selectSipClassType(gfxCoreHelper));
 }
 
-TEST_F(DebugExternalLibSipTest, givenGetSipBinaryFromExternalLibRetunsTrueWhenGetSipExternalLibInterfaceIsCalledThenNullptrReturned) {
+HWTEST_F(DebugExternalLibSipTest, givenSipExternalLibNotRequiredWhenSelectingSipClassThenBuiltinsAreSelected) {
+    MockGfxCoreHelperHw<FamilyType> gfxCoreHelper;
+    EXPECT_EQ(SipClassType::builtins, SipKernel::selectSipClassType(gfxCoreHelper));
+}
+
+HWTEST_F(DebugExternalLibSipTest, givenSipExternalLibNotRequiredAndGetSipBinaryFromExternalLibSetWhenSelectingSipClassThenExternalLibIsSelected) {
     DebugManagerStateRestore restorer;
     debugManager.flags.GetSipBinaryFromExternalLib.set(1);
+    MockGfxCoreHelperHw<FamilyType> gfxCoreHelper;
+    EXPECT_EQ(SipClassType::externalLib, SipKernel::selectSipClassType(gfxCoreHelper));
+}
+
+HWTEST_F(DebugExternalLibSipTest, givenSipExternalLibRequiredAndLoadBinarySipFromFileSetWhenSelectingSipClassThenRawBinaryFromFileIsSelected) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.LoadBinarySipFromFile.set("sip.bin");
+    MockGfxCoreHelperHw<FamilyType> gfxCoreHelper;
+    gfxCoreHelper.sipExternalLibRequired = true;
+    EXPECT_EQ(SipClassType::rawBinaryFromFile, SipKernel::selectSipClassType(gfxCoreHelper));
+}
+
+HWTEST_F(DebugExternalLibSipTest, givenSipExternalLibNotRequiredAndLoadBinarySipFromFileSetWhenSelectingSipClassThenRawBinaryFromFileIsSelected) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.LoadBinarySipFromFile.set("sip.bin");
+    MockGfxCoreHelperHw<FamilyType> gfxCoreHelper;
+    EXPECT_EQ(SipClassType::rawBinaryFromFile, SipKernel::selectSipClassType(gfxCoreHelper));
+}
+
+HWTEST_F(DebugExternalLibSipTest, givenGetSipBinaryFromExternalLibAndLoadBinarySipFromFileSetWhenSelectingSipClassThenRawBinaryFromFileIsSelected) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.GetSipBinaryFromExternalLib.set(1);
+    debugManager.flags.LoadBinarySipFromFile.set("sip.bin");
+    MockGfxCoreHelperHw<FamilyType> gfxCoreHelper;
+    EXPECT_EQ(SipClassType::rawBinaryFromFile, SipKernel::selectSipClassType(gfxCoreHelper));
+}
+
+HWTEST_F(DebugExternalLibSipTest, givenSipExternalLibNotRequiredWhenCheckingIfExternalLibIsRequiredThenFalseIsReturned) {
+    MockGfxCoreHelperHw<FamilyType> gfxCoreHelper;
+    EXPECT_FALSE(SipKernel::isExternalLibRequired(gfxCoreHelper));
+}
+
+HWTEST_F(DebugExternalLibSipTest, givenSipExternalLibRequiredWhenCheckingIfExternalLibIsRequiredThenTrueIsReturned) {
+    MockGfxCoreHelperHw<FamilyType> gfxCoreHelper;
+    gfxCoreHelper.sipExternalLibRequired = true;
+    EXPECT_TRUE(SipKernel::isExternalLibRequired(gfxCoreHelper));
+}
+
+HWTEST_F(DebugExternalLibSipTest, givenGetSipBinaryFromExternalLibSetWhenCheckingIfExternalLibIsRequiredThenTrueIsReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.GetSipBinaryFromExternalLib.set(1);
+    MockGfxCoreHelperHw<FamilyType> gfxCoreHelper;
+    EXPECT_TRUE(SipKernel::isExternalLibRequired(gfxCoreHelper));
+}
+
+HWTEST_F(DebugExternalLibSipTest, givenSipExternalLibRequiredAndLoadBinarySipFromFileSetWhenCheckingIfExternalLibIsRequiredThenTrueIsReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.LoadBinarySipFromFile.set("sip.bin");
+    MockGfxCoreHelperHw<FamilyType> gfxCoreHelper;
+    gfxCoreHelper.sipExternalLibRequired = true;
+    EXPECT_TRUE(SipKernel::isExternalLibRequired(gfxCoreHelper));
+}
+
+HWTEST_F(DebugExternalLibSipTest, givenSipExternalLibRequiredAndNotAvailableWhenInitSipKernelThenAbortIsCalled) {
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelperHw<FamilyType>> gfxCoreHelperBackup{*pDevice->executionEnvironment->rootDeviceEnvironments[0]};
+    gfxCoreHelperBackup.mockGfxCoreHelper->sipExternalLibRequired = true;
+    VariableBackup<bool> mockSipBackup(&MockSipData::useMockSip, false);
+    VariableBackup sipClassBackup(&MockSipKernel::classType);
+    pDevice->getRootDeviceEnvironmentRef().sipExternalLib.reset();
+    EXPECT_THROW(SipKernel::initSipKernel(SipKernelType::dbgBindless, *pDevice), std::exception);
+}
+
+HWTEST_F(DebugExternalLibSipTest, givenSipExternalLibRequiredAndAvailableWhenInitSipKernelThenSipKernelIsCreatedFromExternalLib) {
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelperHw<FamilyType>> gfxCoreHelperBackup{*pDevice->executionEnvironment->rootDeviceEnvironments[0]};
+    gfxCoreHelperBackup.mockGfxCoreHelper->sipExternalLibRequired = true;
+    VariableBackup<bool> mockSipBackup(&MockSipData::useMockSip, false);
+    VariableBackup sipClassBackup(&MockSipKernel::classType);
+    auto lib = new MockSipExternalLib();
+    lib->getSipKernelBinaryRetBinary = std::vector<char>{0x1, 0x2, 0x3, 0x4};
+    lib->getSipKernelBinaryStateSaveAreaHeader = std::vector<char>{'t', 's', 's', 'a', 'r', 'e', 'a', 0};
+    pDevice->getRootDeviceEnvironmentRef().sipExternalLib.reset(lib);
+    EXPECT_TRUE(SipKernel::initSipKernel(SipKernelType::dbgBindless, *pDevice));
+    EXPECT_EQ(SipClassType::externalLib, MockSipKernel::classType);
+    EXPECT_NE(nullptr, pDevice->getRootDeviceEnvironment().sipKernels[static_cast<uint32_t>(SipKernelType::dbgBindless)].get());
+    SipKernel::freeSipKernels(&pDevice->getRootDeviceEnvironmentRef(), pDevice->getMemoryManager());
+}
+
+HWTEST_F(DebugExternalLibSipTest, givenSipExternalLibRequiredWhenGetSipExternalLibInterfaceIsCalledThenNullptrReturned) {
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelperHw<FamilyType>> gfxCoreHelperBackup{*pDevice->executionEnvironment->rootDeviceEnvironments[0]};
+    gfxCoreHelperBackup.mockGfxCoreHelper->sipExternalLibRequired = true;
     EXPECT_EQ(nullptr, pDevice->getSipExternalLibInterface());
 }
 
-TEST_F(DebugExternalLibSipTest, givenGetSipBinaryFromExternalLibRetunsTrueWhenGetStateSaveAreaSizeCalledThenSizeIsReturned) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.GetSipBinaryFromExternalLib.set(1);
+HWTEST_F(DebugExternalLibSipTest, givenSipExternalLibRequiredWhenGetStateSaveAreaSizeCalledThenSizeIsReturned) {
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelperHw<FamilyType>> gfxCoreHelperBackup{*pDevice->executionEnvironment->rootDeviceEnvironments[0]};
+    gfxCoreHelperBackup.mockGfxCoreHelper->sipExternalLibRequired = true;
     auto lib = new MockSipExternalLib();
     lib->getStateSaveAreaSizeRetValue = 17381;
     pDevice->getRootDeviceEnvironmentRef().sipExternalLib.reset(lib);
     EXPECT_EQ(alignUp(17381u, MemoryConstants::pageSize), SipKernel::getSipKernel(*pDevice, nullptr).getStateSaveAreaSize(pDevice));
 }
 
-TEST_F(DebugExternalLibSipTest, givenGetSipBinaryFromExternalLibRetunsTrueAndDebugSipKernelWhenGetStateSaveAreaSizeCalledThenSizeIsReturned) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.GetSipBinaryFromExternalLib.set(1);
+HWTEST_F(DebugExternalLibSipTest, givenSipExternalLibRequiredAndDebugSipKernelWhenGetStateSaveAreaSizeCalledThenSizeIsReturned) {
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelperHw<FamilyType>> gfxCoreHelperBackup{*pDevice->executionEnvironment->rootDeviceEnvironments[0]};
+    gfxCoreHelperBackup.mockGfxCoreHelper->sipExternalLibRequired = true;
     auto lib = new MockSipExternalLib();
     lib->getSipKernelBinaryRetBinary = std::vector<char>{0x1, 0x2, 0x3, 0x4};
     lib->getSipKernelBinaryStateSaveAreaHeader = std::vector<char>{'t', 's', 's', 'a', 'r', 'e', 'a', 0};

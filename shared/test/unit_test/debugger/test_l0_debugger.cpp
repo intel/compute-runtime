@@ -48,7 +48,9 @@ TEST(Debugger, givenL0DebuggerWhenGettingL0DebuggerThenCorrectObjectIsReturned) 
     EXPECT_EQ(mockDebugger, debugger);
 }
 
-TEST(Debugger, givenL0DebuggerOFFWhenGettingStateSaveAreaHeaderThenValidSipTypeIsReturned) {
+using DebuggerSipTest = ::testing::Test;
+
+HWTEST2_F(DebuggerSipTest, givenL0DebuggerOFFWhenGettingStateSaveAreaHeaderThenValidSipTypeIsReturned, IsCsrSipFromIgc) {
     VariableBackup<bool> mockSipBackup(&MockSipData::useMockSip, false);
     auto executionEnvironment = new NEO::ExecutionEnvironment();
     executionEnvironment->prepareRootDeviceEnvironments(1);
