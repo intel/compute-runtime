@@ -365,38 +365,26 @@ ze_result_t ModuleTranslationUnit::staticLinkSpirVAndLlvmBc(const std::vector<co
 }
 
 namespace {
-std::array<NEO::ConstStringRef, 4> getBackendOnlyOptions() {
-    return {BuildOptions::optLevel, BuildOptions::profileFlags, BuildOptions::registerFileSize, BuildOptions::debugKernelEnable};
-}
-
-bool isBackendOnlyOption(NEO::ConstStringRef token) {
-    const auto backendOnlyOptions = getBackendOnlyOptions();
-    return std::find(backendOnlyOptions.begin(), backendOnlyOptions.end(), token) != backendOnlyOptions.end();
-}
-
-bool isBackendOnlyOptionWithValue(NEO::ConstStringRef token) {
-    constexpr char valueDelimiter = '=';
-    const auto backendOnlyOptions = getBackendOnlyOptions();
-    return std::any_of(backendOnlyOptions.begin(), backendOnlyOptions.end(), [&token](NEO::ConstStringRef optionName) {
-        return token.startsWith(optionName) && (token.size() > optionName.size()) && (token[optionName.size()] == valueDelimiter);
-    });
-}
-
 bool isOptionValue(NEO::ConstStringRef token) {
     constexpr char optionPrefix = '-';
     return (token[0] != optionPrefix) || ((token.size() > 1) && std::isdigit(static_cast<unsigned char>(token[1])));
 }
 
 std::string removeBackendOnlyOptions(const std::string &options) {
+    constexpr char valueDelimiter = '=';
+    const std::array<NEO::ConstStringRef, 4> backendOnlyOptions = {BuildOptions::optLevel, BuildOptions::profileFlags, BuildOptions::registerFileSize, BuildOptions::debugKernelEnable};
+
     const auto tokens = NEO::CompilerOptions::tokenize(options);
     std::string frontendOptions;
     for (size_t i = 0; i < tokens.size(); i++) {
-        if (isBackendOnlyOption(tokens[i])) {
-            if ((i + 1 < tokens.size()) && isOptionValue(tokens[i + 1])) {
-                i++;
-            }
-        } else if (!isBackendOnlyOptionWithValue(tokens[i])) {
-            NEO::CompilerOptions::concatenateAppend(frontendOptions, tokens[i]);
+        const auto &token = tokens[i];
+        const auto option = std::find_if(backendOnlyOptions.begin(), backendOnlyOptions.end(), [&token](NEO::ConstStringRef optionName) {
+            return token.startsWith(optionName) && ((token.size() == optionName.size()) || (token[optionName.size()] == valueDelimiter));
+        });
+        if (option == backendOnlyOptions.end()) {
+            NEO::CompilerOptions::concatenateAppend(frontendOptions, token);
+        } else if ((token.size() == option->size()) && (i + 1 < tokens.size()) && isOptionValue(tokens[i + 1])) {
+            i++;
         }
     }
     return frontendOptions;

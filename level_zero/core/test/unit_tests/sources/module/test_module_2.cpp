@@ -100,7 +100,7 @@ TEST_F(ModuleTests, givenLibraryCompilationAliasWhenCreatingBuildOptionsThenItIs
 
         EXPECT_TRUE(module.isFunctionSymbolExportEnabled) << buildFlags;
         EXPECT_TRUE(NEO::CompilerOptions::contains(apiOptions, BuildOptions::enableLibraryCompile)) << buildFlags;
-        EXPECT_EQ(std::string::npos, apiOptions.find(BuildOptions::enableLibraryCompileAlias.str())) << buildFlags;
+        EXPECT_FALSE(NEO::CompilerOptions::contains(apiOptions, BuildOptions::enableLibraryCompileAlias)) << buildFlags;
         EXPECT_FALSE(NEO::CompilerOptions::contains(apiOptions, "-ze")) << buildFlags;
     }
 }
