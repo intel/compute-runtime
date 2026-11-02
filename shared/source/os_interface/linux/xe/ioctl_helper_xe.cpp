@@ -749,6 +749,13 @@ int IoctlHelperXe::createGemExt(const MemRegionsVec &memClassInstances, size_t a
     if (deferBacking.has_value() ? *deferBacking : this->isDeferBackingEnabledForAllocation(allocSize, AllocationType::unknown)) {
         create.flags |= DRM_XE_GEM_CREATE_FLAG_DEFER_BACKING;
     }
+    // On small-BAR devices a VRAM BO that the CPU maps (SIP kernel, host-pointer buffer copies) must live in the
+    // CPU-visible window, otherwise the first CPU access raises SIGBUS. The flag is a no-op on full-BAR devices.
+    // Limited to small BOs so large allocations do not exhaust the visible window.
+    constexpr size_t maxVisibleVramBoSize = 16 * MemoryConstants::megaByte;
+    if (!isSysMemOnly && create.size <= maxVisibleVramBoSize) {
+        create.flags |= DRM_XE_GEM_CREATE_FLAG_NEEDS_VISIBLE_VRAM;
+    }
     if (hint == GemCreateExtHint::noCompression) {
         create.flags |= DRM_XE_GEM_CREATE_FLAG_NO_COMPRESSION;
     }
