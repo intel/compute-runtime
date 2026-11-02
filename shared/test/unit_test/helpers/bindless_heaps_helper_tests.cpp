@@ -250,6 +250,26 @@ TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenGettingHeapMultipleT
     EXPECT_EQ(nullptr, bindlessHeapHelper->borderColorStates.load());
 }
 
+TEST_F(BindlessHeapsHelperTests, givenHeapsAndBorderColorStatesAlreadyAllocatedWhenGettingThemThenOwnershipIsNotObtained) {
+    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getDevice(), false);
+
+    std::array<IndirectHeap *, BindlessHeapsHelper::numHeapTypes> heaps = {};
+    for (int heapType = 0; heapType < BindlessHeapsHelper::numHeapTypes; heapType++) {
+        heaps[heapType] = bindlessHeapHelper->getHeap(static_cast<BindlessHeapsHelper::BindlesHeapType>(heapType));
+        ASSERT_NE(nullptr, heaps[heapType]);
+    }
+    auto borderColorStates = bindlessHeapHelper->getBorderColorStates();
+    ASSERT_NE(nullptr, borderColorStates);
+    EXPECT_EQ(static_cast<uint32_t>(BindlessHeapsHelper::numHeapTypes) + 1u, bindlessHeapHelper->obtainUniqueOwnershipCalled);
+
+    bindlessHeapHelper->obtainUniqueOwnershipCalled = 0u;
+    for (int heapType = 0; heapType < BindlessHeapsHelper::numHeapTypes; heapType++) {
+        EXPECT_EQ(heaps[heapType], bindlessHeapHelper->getHeap(static_cast<BindlessHeapsHelper::BindlesHeapType>(heapType)));
+    }
+    EXPECT_EQ(borderColorStates, bindlessHeapHelper->getBorderColorStates());
+    EXPECT_EQ(0u, bindlessHeapHelper->obtainUniqueOwnershipCalled);
+}
+
 TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenGettingGlobalHeapsBaseThenOnlyGlobalSshIsAllocated) {
     auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getDevice(), false);
 

@@ -15,8 +15,6 @@
 
 #include <array>
 #include <atomic>
-#include <chrono>
-#include <future>
 #include <thread>
 
 using namespace NEO;
@@ -109,28 +107,4 @@ TEST(BindlessHeapsHelperMtTest, givenNoMemoryAvailableWhenGettingHeapsConcurrent
         EXPECT_EQ(borderColorStates[0], borderColorStates[i]);
     }
     EXPECT_EQ(1u, bindlessHeapHelper->ssHeapsAllocations.size());
-}
-
-TEST(BindlessHeapsHelperMtTest, givenHeapsAndBorderColorStatesAlreadyAllocatedWhenGettingThemThenMutexIsNotAcquired) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.UseExternalAllocatorForSshAndDsh.set(true);
-    std::unique_ptr<MockDevice> rootDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get(), 0u));
-    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(rootDevice.get(), false);
-
-    auto globalSsh = bindlessHeapHelper->getHeap(BindlessHeapsHelper::globalSsh);
-    auto borderColorStates = bindlessHeapHelper->getBorderColorStates();
-    ASSERT_NE(nullptr, globalSsh);
-    ASSERT_NE(nullptr, borderColorStates);
-
-    std::unique_lock<std::mutex> lock(bindlessHeapHelper->mtx);
-    auto future = std::async(std::launch::async, [&]() {
-        return std::make_pair(bindlessHeapHelper->getHeap(BindlessHeapsHelper::globalSsh), bindlessHeapHelper->getBorderColorStates());
-    });
-    auto status = future.wait_for(std::chrono::seconds(10));
-    lock.unlock();
-
-    EXPECT_EQ(std::future_status::ready, status);
-    auto result = future.get();
-    EXPECT_EQ(globalSsh, result.first);
-    EXPECT_EQ(borderColorStates, result.second);
 }

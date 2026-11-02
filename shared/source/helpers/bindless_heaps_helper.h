@@ -73,6 +73,9 @@ class BindlessHeapsHelper : NEO::NonCopyableAndNonMovableClass {
     void clearStateDirtyForContext(uint32_t osContextId);
 
   protected:
+    [[nodiscard]] MOCKABLE_VIRTUAL std::unique_lock<std::mutex> obtainUniqueOwnership() {
+        return std::unique_lock<std::mutex>(this->mtx);
+    }
     bool growHeap(BindlesHeapType heapType);
     bool initializeReservedMemory();
     bool isReservedMemoryModeAvailable();

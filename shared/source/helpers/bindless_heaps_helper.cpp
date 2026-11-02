@@ -163,7 +163,7 @@ bool BindlessHeapsHelper::isReservedMemoryModeAvailable() {
 }
 
 void BindlessHeapsHelper::clearStateDirtyForContext(uint32_t osContextId) {
-    std::lock_guard<std::mutex> autolock(this->mtx);
+    auto lock = this->obtainUniqueOwnership();
 
     uint32_t contextIdShifted = osContextId - memManager->getFirstContextIdForRootDevice(rootDeviceIndex);
     DEBUG_BREAK_IF(contextIdShifted >= stateCacheDirtyForContext.size());
@@ -172,7 +172,7 @@ void BindlessHeapsHelper::clearStateDirtyForContext(uint32_t osContextId) {
 }
 
 bool BindlessHeapsHelper::getStateDirtyForContext(uint32_t osContextId) {
-    std::lock_guard<std::mutex> autolock(this->mtx);
+    auto lock = this->obtainUniqueOwnership();
 
     uint32_t contextIdShifted = osContextId - memManager->getFirstContextIdForRootDevice(rootDeviceIndex);
     DEBUG_BREAK_IF(contextIdShifted >= stateCacheDirtyForContext.size());
@@ -186,7 +186,7 @@ SurfaceStateInHeapInfo BindlessHeapsHelper::allocateSSInHeap(size_t ssSize, Grap
         return SurfaceStateInHeapInfo{};
     }
 
-    std::lock_guard<std::mutex> autolock(this->mtx);
+    auto lock = this->obtainUniqueOwnership();
     if (heapType == BindlesHeapType::globalSsh) {
 
         if (!allocateFromReusePool) {
@@ -266,7 +266,7 @@ GraphicsAllocation *BindlessHeapsHelper::getBorderColorStates() {
         return allocation;
     }
 
-    std::lock_guard<std::mutex> autolock(this->mtx);
+    auto lock = this->obtainUniqueOwnership();
     allocation = borderColorStates.load(std::memory_order_relaxed);
     if (allocation == nullptr) {
         allocation = getHeapAllocation(MemoryConstants::pageSize, MemoryConstants::pageSize, false);
@@ -297,7 +297,7 @@ IndirectHeap *BindlessHeapsHelper::getHeap(BindlesHeapType heapType) {
         return heap;
     }
 
-    std::lock_guard<std::mutex> autolock(this->mtx);
+    auto lock = this->obtainUniqueOwnership();
     if (surfaceStateHeaps[heapType] == nullptr) {
         auto heapAllocation = getHeapAllocation(MemoryConstants::pageSize64k, MemoryConstants::pageSize64k, heapType == BindlesHeapType::specialSsh);
         if (heapAllocation == nullptr) {
@@ -328,7 +328,7 @@ bool BindlessHeapsHelper::growHeap(BindlesHeapType heapType) {
 
 void BindlessHeapsHelper::releaseSSToReusePool(const SurfaceStateInHeapInfo &surfStateInfo) {
     if (surfStateInfo.heapAllocation != nullptr) {
-        std::lock_guard<std::mutex> autolock(this->mtx);
+        auto lock = this->obtainUniqueOwnership();
         int index = getReusedSshVectorIndex(surfStateInfo.ssSize);
         surfaceStateInHeapVectorReuse[releasePoolIndex][index].push_back(surfStateInfo);
     }

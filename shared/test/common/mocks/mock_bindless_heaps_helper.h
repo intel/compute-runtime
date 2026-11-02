@@ -31,6 +31,11 @@ class MockBindlesHeapsHelper : public BindlessHeapsHelper {
         return BaseClass::getHeapAllocation(heapSize, alignment, allocInFrontWindow);
     }
 
+    std::unique_lock<std::mutex> obtainUniqueOwnership() override {
+        obtainUniqueOwnershipCalled++;
+        return BaseClass::obtainUniqueOwnership();
+    }
+
     using BindlesHeapType = BindlessHeapsHelper::BindlesHeapType;
     using BaseClass::allocateFromReusePool;
     using BaseClass::allocatePoolIndex;
@@ -44,7 +49,6 @@ class MockBindlesHeapsHelper : public BindlessHeapsHelper {
     using BaseClass::isMultiOsContextCapable;
     using BaseClass::isReservedMemoryModeAvailable;
     using BaseClass::memManager;
-    using BaseClass::mtx;
     using BaseClass::releasePoolIndex;
     using BaseClass::reservedMemoryInitialized;
     using BaseClass::reservedRangeBase;
@@ -62,4 +66,5 @@ class MockBindlesHeapsHelper : public BindlessHeapsHelper {
 
     bool failAllocateSS = false;
     bool failHeapAllocation = false;
+    std::atomic<uint32_t> obtainUniqueOwnershipCalled = 0u;
 };
