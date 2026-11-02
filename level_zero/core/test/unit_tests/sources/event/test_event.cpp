@@ -7916,7 +7916,7 @@ HWTEST2_F(EventMultiTileDynamicPacketUseTest, givenEventUsedCreatedOnSubDeviceBu
     EXPECT_EQ(1u, downloadCounter0);
 
     EXPECT_EQ(1u, ultCsr1->downloadAllocationsCalledCount);
-    EXPECT_TRUE(ultCsr1->latestDownloadAllocationsBlocking);
+    EXPECT_FALSE(ultCsr1->latestDownloadAllocationsBlocking);
     EXPECT_EQ(0u, downloadCounter1);
 
     EXPECT_EQ(0u, ultCsr2->downloadAllocationsCalledCount);
@@ -7983,7 +7983,7 @@ HWTEST2_F(EventMultiTileDynamicPacketUseTest, givenEventCounterBasedUsedCreatedO
     EXPECT_FALSE(ultCsr0->latestDownloadAllocationsBlocking);
 
     EXPECT_EQ(1u, ultCsr1->downloadAllocationsCalledCount);
-    EXPECT_TRUE(ultCsr1->latestDownloadAllocationsBlocking);
+    EXPECT_FALSE(ultCsr1->latestDownloadAllocationsBlocking);
 
     event1->hostSynchronize(1);
 
@@ -7999,7 +7999,7 @@ HWTEST2_F(EventMultiTileDynamicPacketUseTest, givenEventCounterBasedUsedCreatedO
     EXPECT_FALSE(ultCsr0->latestDownloadAllocationsBlocking);
 
     EXPECT_EQ(4u, ultCsr1->downloadAllocationsCalledCount);
-    EXPECT_TRUE(ultCsr1->latestDownloadAllocationsBlocking);
+    EXPECT_FALSE(ultCsr1->latestDownloadAllocationsBlocking);
 
     event0->destroy();
     event1->destroy();

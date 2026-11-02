@@ -38,6 +38,7 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     }
 
     bool isAllocTbxFaultable(GraphicsAllocation *gfxAlloc);
+    bool isAllocationModifiedByHost(GraphicsAllocation &gfxAllocation);
     bool shareAllocationMemoryWithSimulator(GraphicsAllocation &gfxAllocation);
     void writeAllocationWithAubManager(GraphicsAllocation &gfxAllocation, bool isChunkCopy, uint64_t gpuVaChunkOffset, size_t chunkSize);
     void registerAllocationWithTbxFaultMngrIfTbxFaultable(GraphicsAllocation *gfxAllocation, void *cpuAddress, size_t size);
@@ -45,6 +46,7 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     void protectCPUMemoryAccessIfTbxFaultable(GraphicsAllocation *gfxAllocation, void *cpuAddress, size_t size);
     void protectCPUMemoryFromWritesIfTbxFaultable(GraphicsAllocation *gfxAllocation, void *cpuAddress, size_t size);
     void executeDownloadAllocations(TaskCountType taskCountToWait);
+    void downloadSubmittedAllocationsWithoutRetiring(TaskCountType taskCount);
     TaskCountType peekCompletedTaskCount() const;
     TaskCountType waitForCompletionOfTaskCount(TaskCountType taskCountToWait);
 

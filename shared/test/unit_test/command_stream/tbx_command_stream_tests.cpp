@@ -713,7 +713,7 @@ HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCsrWhenUpdatingTaskCountDuringWaitTh
     allocation2.updateTaskCount(2u, tbxCsr.getOsContext().getContextId());
 
     tbxCsr.downloadAllocations(false);
-    EXPECT_EQ(0u, tbxCsr.obtainUniqueOwnershipCalled);
+    EXPECT_EQ(1u, tbxCsr.obtainUniqueOwnershipCalled);
     EXPECT_EQ(3u, tbxCsr.allocationsForDownload.size());
 
     *tagAddress = 1u;
@@ -721,7 +721,7 @@ HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCsrWhenUpdatingTaskCountDuringWaitTh
     tbxCsr.downloadAllocations(false);
     // one lock for downloadAllocations itself, one for the forced tag update it triggers when
     // trying to catch up on allocation2's task, which was never actually flushed
-    EXPECT_EQ(2u, tbxCsr.obtainUniqueOwnershipCalled);
+    EXPECT_EQ(3u, tbxCsr.obtainUniqueOwnershipCalled);
     EXPECT_EQ(1u, tbxCsr.allocationsForDownload.size());
     EXPECT_TRUE(tbxCsr.allocationsForDownload.contains(&allocation2));
 }
@@ -766,20 +766,52 @@ HWTEST_F(TbxCommandSteamSimpleTest, givenDifferentTaskCountThanLatestFlushedWhen
     tbxCsr.latestFlushedTaskCount = 1;
 
     tbxCsr.downloadAllocations(false, 2);
-    EXPECT_EQ(0u, tbxCsr.obtainUniqueOwnershipCalled);
+    EXPECT_EQ(1u, tbxCsr.obtainUniqueOwnershipCalled);
 
     *tbxCsr.getTagAddress() = 1;
 
     tbxCsr.downloadAllocations(false, 2);
-    EXPECT_EQ(1u, tbxCsr.obtainUniqueOwnershipCalled);
+    EXPECT_EQ(2u, tbxCsr.obtainUniqueOwnershipCalled);
 
     tbxCsr.latestFlushedTaskCount = 3;
     tbxCsr.downloadAllocations(false, 2);
-    EXPECT_EQ(1u, tbxCsr.obtainUniqueOwnershipCalled);
+    EXPECT_EQ(3u, tbxCsr.obtainUniqueOwnershipCalled);
 
     *tbxCsr.getTagAddress() = 3;
     tbxCsr.downloadAllocations(false, 2);
-    EXPECT_EQ(2u, tbxCsr.obtainUniqueOwnershipCalled);
+    EXPECT_EQ(4u, tbxCsr.obtainUniqueOwnershipCalled);
+}
+
+HWTEST_F(TbxCommandSteamSimpleTest, givenSubmissionNotCompletedWithinTimeoutWhenDownloadingAllocationsWithoutBlockingThenSubmittedAllocationsAreDownloadedAndKeptForDownload) {
+    MockTbxCsrRegisterDownloadedAllocations<FamilyType> tbxCsr{*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()};
+    MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor(pDevice->getDeviceBitfield()));
+
+    tbxCsr.setupContext(osContext);
+    tbxCsr.initializeTagAllocation();
+
+    std::set<GraphicsAllocation *> downloadedAllocations;
+    tbxCsr.downloadAllocationImpl = [&downloadedAllocations](GraphicsAllocation &gfxAllocation, uint64_t, size_t) {
+        downloadedAllocations.insert(&gfxAllocation);
+    };
+
+    *tbxCsr.getTagAddress() = 1u;
+    tbxCsr.latestFlushedTaskCount = 3u;
+
+    MockGraphicsAllocation completedAllocation, submittedAllocation, laterSubmittedAllocation, unusedAllocation;
+    const auto contextId = tbxCsr.getOsContext().getContextId();
+    completedAllocation.updateTaskCount(1u, contextId);
+    submittedAllocation.updateTaskCount(2u, contextId);
+    laterSubmittedAllocation.updateTaskCount(3u, contextId);
+
+    tbxCsr.allocationsForDownload = {&completedAllocation, &submittedAllocation, &laterSubmittedAllocation, &unusedAllocation};
+
+    tbxCsr.downloadAllocations(false, 2u);
+
+    EXPECT_EQ(1u, tbxCsr.obtainUniqueOwnershipCalled);
+    std::set<GraphicsAllocation *> expectedDownloadedAllocations = {tbxCsr.getTagAllocation(), &completedAllocation, &submittedAllocation, &unusedAllocation};
+    EXPECT_EQ(expectedDownloadedAllocations, downloadedAllocations);
+    std::set<GraphicsAllocation *> expectedAllocationsForDownload = {&completedAllocation, &submittedAllocation, &laterSubmittedAllocation, &unusedAllocation};
+    EXPECT_EQ(expectedAllocationsForDownload, tbxCsr.allocationsForDownload);
 }
 
 HWTEST_F(TbxCommandSteamSimpleTest, whenTbxCommandStreamReceiverIsCreatedThenPPGTTAndGGTTCreatedHavePhysicalAddressAllocatorSet) {
@@ -1609,6 +1641,71 @@ HWTEST_F(TbxCommandStreamTests, givenTbxModeWhenHostWritesHostAllocThenAllocShou
     tbxCsr->tbxFaultManager->removeAllocation(gfxAlloc1);
 
     memoryManager->freeGraphicsMemory(gfxAlloc1);
+}
+
+template <typename FamilyType>
+class MockTbxCsrWithShortDownloadTimeout : public MockTbxCsrForPageFaultTests<FamilyType> {
+  public:
+    using MockTbxCsrForPageFaultTests<FamilyType>::MockTbxCsrForPageFaultTests;
+    using CommandStreamReceiver::downloadAllocationImpl;
+
+    uint64_t getNonBlockingDownloadTimeoutMs() const override {
+        return 1;
+    }
+};
+
+HWTEST_F(TbxCommandStreamTests, givenHostAllocWrittenByHostAfterDownloadWhenDownloadingAllocationsThenItIsRemovedFromDownloadListWithoutDownload) {
+    DebugManagerStateRestore stateRestore;
+    debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::tbx));
+    debugManager.flags.EnableTbxPageFaultManager.set(1);
+
+    std::set<GraphicsAllocation *> downloadedAllocations;
+    auto tbxCsr = std::make_unique<MockTbxCsrWithShortDownloadTimeout<FamilyType>>(*pDevice->executionEnvironment, pDevice->getDeviceBitfield());
+    tbxCsr->setupContext(*pDevice->getDefaultEngine().osContext);
+    tbxCsr->initializeTagAllocation();
+
+    auto memoryManager = pDevice->getMemoryManager();
+    auto hostAllocation = memoryManager->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, AllocationType::bufferHostMemory, pDevice->getDeviceBitfield()});
+    ASSERT_NE(nullptr, hostAllocation);
+
+    uint64_t gpuAddress = 0;
+    void *cpuAddress = nullptr;
+    size_t size = 0;
+    EXPECT_TRUE(tbxCsr->getParametersForMemory(*hostAllocation, gpuAddress, cpuAddress, size));
+
+    tbxCsr->writeMemory(*hostAllocation);
+    EXPECT_FALSE(tbxCsr->isTbxWritable(*hostAllocation));
+    *reinterpret_cast<char *>(cpuAddress) = 1;
+    EXPECT_TRUE(tbxCsr->isTbxWritable(*hostAllocation));
+
+    tbxCsr->downloadAllocationImpl = [&downloadedAllocations](GraphicsAllocation &gfxAllocation, uint64_t, size_t) {
+        downloadedAllocations.insert(&gfxAllocation);
+    };
+
+    const auto contextId = tbxCsr->getOsContext().getContextId();
+    MockGraphicsAllocation deviceAllocation;
+    hostAllocation->updateTaskCount(1u, contextId);
+    deviceAllocation.updateTaskCount(1u, contextId);
+    *tbxCsr->getTagAddress() = 0u;
+    tbxCsr->latestFlushedTaskCount = 1u;
+
+    tbxCsr->allocationsForDownload = {hostAllocation, &deviceAllocation};
+    tbxCsr->downloadAllocations(false, 1u);
+
+    EXPECT_EQ(std::set<GraphicsAllocation *>({tbxCsr->getTagAllocation(), &deviceAllocation}), downloadedAllocations);
+    EXPECT_EQ(std::set<GraphicsAllocation *>({&deviceAllocation}), tbxCsr->allocationsForDownload);
+
+    downloadedAllocations.clear();
+    *tbxCsr->getTagAddress() = 1u;
+    tbxCsr->allocationsForDownload = {hostAllocation, &deviceAllocation};
+    tbxCsr->downloadAllocations(true, 1u);
+
+    EXPECT_EQ(std::set<GraphicsAllocation *>({&deviceAllocation}), downloadedAllocations);
+    EXPECT_TRUE(tbxCsr->allocationsForDownload.empty());
+
+    tbxCsr->downloadAllocationImpl = nullptr;
+    tbxCsr->tbxFaultManager->removeAllocation(hostAllocation);
+    memoryManager->freeGraphicsMemory(hostAllocation);
 }
 
 class MockTbxPageFaultManager : public TbxPageFaultManager {

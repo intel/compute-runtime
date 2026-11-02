@@ -159,6 +159,11 @@ bool TbxCommandStreamReceiverHw<GfxFamily>::isAllocTbxFaultable(GraphicsAllocati
 }
 
 template <typename GfxFamily>
+bool TbxCommandStreamReceiverHw<GfxFamily>::isAllocationModifiedByHost(GraphicsAllocation &gfxAllocation) {
+    return isAllocTbxFaultable(&gfxAllocation) && this->isTbxWritable(gfxAllocation);
+}
+
+template <typename GfxFamily>
 void TbxCommandStreamReceiverHw<GfxFamily>::registerAllocationWithTbxFaultMngrIfTbxFaultable(GraphicsAllocation *gfxAlloc, void *cpuAddress, size_t size) {
     if (!isAllocTbxFaultable(gfxAlloc)) {
         return;
@@ -473,7 +478,9 @@ void TbxCommandStreamReceiverHw<GfxFamily>::executeDownloadAllocations(TaskCount
         const bool isAllocationTaskCompleted = !graphicsAllocation->isUsedByOsContext(contextId) ||
                                                (allocationTaskCount <= taskCountToWait);
 
-        if (isAllocationTaskCompleted) {
+        if (isAllocationModifiedByHost(*graphicsAllocation)) {
+            it = this->allocationsForDownload.erase(it);
+        } else if (isAllocationTaskCompleted) {
             this->downloadAllocation(*graphicsAllocation);
             it = this->allocationsForDownload.erase(it);
         } else {
@@ -504,6 +511,22 @@ void TbxCommandStreamReceiverHw<GfxFamily>::executeDownloadAllocations(TaskCount
                 ++it;
             }
         }
+    }
+}
+
+template <typename GfxFamily>
+void TbxCommandStreamReceiverHw<GfxFamily>::downloadSubmittedAllocationsWithoutRetiring(TaskCountType taskCount) {
+    const uint32_t contextId = this->osContext->getContextId();
+    for (auto it = this->allocationsForDownload.begin(); it != this->allocationsForDownload.end();) {
+        auto graphicsAllocation = *it;
+        if (isAllocationModifiedByHost(*graphicsAllocation)) {
+            it = this->allocationsForDownload.erase(it);
+            continue;
+        }
+        if (!graphicsAllocation->isUsedByOsContext(contextId) || graphicsAllocation->getTaskCount(contextId) <= taskCount) {
+            this->downloadAllocation(*graphicsAllocation);
+        }
+        ++it;
     }
 }
 
@@ -625,6 +648,8 @@ void TbxCommandStreamReceiverHw<GfxFamily>::downloadAllocations(bool blockingWai
                     // Additional delay to reach PC in case of Event wait
                     timeDiff = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - startTime).count();
                     if (timeDiff > getNonBlockingDownloadTimeoutMs()) {
+                        auto lockCSR = this->obtainUniqueOwnership();
+                        this->downloadSubmittedAllocationsWithoutRetiring(waitTaskCount);
                         return;
                     }
                 }

@@ -556,7 +556,7 @@ void EventImp<TagSizeT>::downloadAllTbxAllocations() {
         if (taskCount == NEO::GraphicsAllocation::objectNotUsed) {
             taskCount = csr->peekLatestFlushedTaskCount();
         }
-        csr->downloadAllocations(true, taskCount);
+        csr->downloadAllocations(false, taskCount);
     }
 
     for (auto &engine : this->device->getNEODevice()->getMemoryManager()->getRegisteredEngines()[this->device->getRootDeviceIndex()]) {
