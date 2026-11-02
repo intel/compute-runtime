@@ -11,7 +11,6 @@
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
-#include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include <atomic>
@@ -19,6 +18,7 @@
 #include <mutex>
 
 namespace NEO {
+class MockGraphicsAllocation;
 
 template <class T>
 class MemoryManagerCreate : public T {
@@ -106,28 +106,9 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
 
     void *allocateSystemMemory(size_t size, size_t alignment) override;
 
-    void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) override {
-        freeGraphicsMemoryCalled++;
-        OsAgnosticMemoryManager::freeGraphicsMemoryImpl(gfxAllocation);
-    };
+    void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) override;
 
-    AddressRange reserveGpuAddressOnHeap(const uint64_t requiredStartAddress, size_t size, const RootDeviceIndicesContainer &rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex, HeapIndex heap, size_t alignment) override {
-        reserveGpuAddressOnHeapCalled++;
-        reserveGpuAddressOnHeapParamsPassed.push_back({requiredStartAddress, size, rootDeviceIndices, reservedOnRootDeviceIndex, heap, alignment});
-
-        bool shouldFail = failReserveGpuAddressOnHeap;
-        if (!reserveGpuAddressOnHeapFailOnCalls.empty() &&
-            std::find(reserveGpuAddressOnHeapFailOnCalls.begin(), reserveGpuAddressOnHeapFailOnCalls.end(), reserveGpuAddressOnHeapCalled - 1) != reserveGpuAddressOnHeapFailOnCalls.end()) {
-            shouldFail = true;
-        }
-
-        if (shouldFail) {
-            reserveGpuAddressOnHeapResult = AddressRange{0u, 0u};
-        } else {
-            reserveGpuAddressOnHeapResult = OsAgnosticMemoryManager::reserveGpuAddressOnHeap(requiredStartAddress, size, rootDeviceIndices, reservedOnRootDeviceIndex, heap, alignment);
-        }
-        return reserveGpuAddressOnHeapResult;
-    }
+    AddressRange reserveGpuAddressOnHeap(const uint64_t requiredStartAddress, size_t size, const RootDeviceIndicesContainer &rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex, HeapIndex heap, size_t alignment) override;
 
     struct ReserveGpuAddressOnHeapParams {
         uint64_t requiredStartAddress{};
@@ -141,63 +122,21 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     StackVec<ReserveGpuAddressOnHeapParams, 2> reserveGpuAddressOnHeapParamsPassed{};
     StackVec<size_t, 5> reserveGpuAddressOnHeapFailOnCalls;
 
-    void freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) override {
-        freeGpuAddressCalled++;
-        return OsAgnosticMemoryManager::freeGpuAddress(addressRange, rootDeviceIndex);
-    }
+    void freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) override;
 
-    void *lockResourceImpl(GraphicsAllocation &gfxAllocation) override {
-        lockResourceCalled++;
-        void *pLockedMemory = nullptr;
-        if (!failLockResource) {
-            pLockedMemory = OsAgnosticMemoryManager::lockResourceImpl(gfxAllocation);
-        }
-        lockResourcePointers.push_back(pLockedMemory);
-        return pLockedMemory;
-    }
+    void *lockResourceImpl(GraphicsAllocation &gfxAllocation) override;
 
-    void unlockResourceImpl(GraphicsAllocation &gfxAllocation) override {
-        unlockResourceCalled++;
-        OsAgnosticMemoryManager::unlockResourceImpl(gfxAllocation);
-    }
+    void unlockResourceImpl(GraphicsAllocation &gfxAllocation) override;
 
-    bool allocInUse(GraphicsAllocation &graphicsAllocation) override {
-        allocInUseCalled++;
-
-        if (allocInUseCallback) {
-            allocInUseCallback();
-        }
-
-        if (callBaseAllocInUse) {
-            return OsAgnosticMemoryManager::allocInUse(graphicsAllocation);
-        }
-
-        if (deferAllocInUse) {
-            return true;
-        }
-        return false;
-    }
+    bool allocInUse(GraphicsAllocation &graphicsAllocation) override;
 
     void waitForEnginesCompletion(GraphicsAllocation &graphicsAllocation) override;
 
-    void handleFenceCompletion(GraphicsAllocation *graphicsAllocation) override {
-        handleFenceCompletionCalled++;
-        OsAgnosticMemoryManager::handleFenceCompletion(graphicsAllocation);
-    }
+    void handleFenceCompletion(GraphicsAllocation *graphicsAllocation) override;
 
-    void *reserveCpuAddressRange(size_t size, uint32_t rootDeviceIndex) override {
-        if (failReserveAddress) {
-            return nullptr;
-        }
-        return OsAgnosticMemoryManager::reserveCpuAddressRange(size, rootDeviceIndex);
-    }
+    void *reserveCpuAddressRange(size_t size, uint32_t rootDeviceIndex) override;
 
-    AddressRange reserveCpuAddress(const uint64_t requiredStartAddress, size_t size) override {
-        if (failReserveAddress) {
-            return {};
-        }
-        return OsAgnosticMemoryManager::reserveCpuAddress(requiredStartAddress, size);
-    }
+    AddressRange reserveCpuAddress(const uint64_t requiredStartAddress, size_t size) override;
 
     void freeCpuAddress(AddressRange addressRange) override {
         return OsAgnosticMemoryManager::freeCpuAddress(addressRange);
@@ -205,12 +144,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
 
     void *createMultiGraphicsAllocationInSystemMemoryPool(RootDeviceIndicesContainer &rootDeviceIndices,
                                                           AllocationProperties &properties,
-                                                          MultiGraphicsAllocation &multiGraphicsAllocation) override {
-        if (isMockEventPoolCreateMemoryManager) {
-            return nullptr;
-        }
-        return OsAgnosticMemoryManager::createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndices, properties, multiGraphicsAllocation);
-    }
+                                                          MultiGraphicsAllocation &multiGraphicsAllocation) override;
 
     bool isCpuCopyRequired(const void *ptr) override { return cpuCopyRequired; }
 
@@ -222,61 +156,19 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     }
     void forceLimitedRangeAllocator(uint32_t rootDeviceIndex, uint64_t range);
 
-    bool setMemAdvise(GraphicsAllocation *gfxAllocation, MemAdviseFlags flags, uint32_t rootDeviceIndex) override {
-        memAdviseFlags = flags;
-        if (failSetMemAdvise) {
-            return false;
-        }
-        return MemoryManager::setMemAdvise(gfxAllocation, flags, rootDeviceIndex);
-    }
+    bool setMemAdvise(GraphicsAllocation *gfxAllocation, MemAdviseFlags flags, uint32_t rootDeviceIndex) override;
 
-    bool setSharedSystemMemAdvise(const void *ptr, const size_t size, MemAdvise memAdviseOp, Device &callingDevice, Device &targetDevice) override {
-        setSharedSystemMemAdviseCalledCount++;
-        setSharedSystemMemAdviseCalled = true;
-        if (failSetSharedSystemMemAdvise) {
-            return false;
-        }
-        return MemoryManager::setSharedSystemMemAdvise(ptr, size, memAdviseOp, callingDevice, targetDevice);
-    }
+    bool setSharedSystemMemAdvise(const void *ptr, const size_t size, MemAdvise memAdviseOp, Device &callingDevice, Device &targetDevice) override;
 
-    bool setMemPrefetch(GraphicsAllocation *gfxAllocation, SubDeviceIdsVec &subDeviceIds, uint32_t rootDeviceIndex) override {
-        memPrefetchSubDeviceIds = subDeviceIds;
-        setMemPrefetchCalled = true;
-        setMemPrefetchCalledCount++;
-        return MemoryManager::setMemPrefetch(gfxAllocation, subDeviceIds, rootDeviceIndex);
-    }
+    bool setMemPrefetch(GraphicsAllocation *gfxAllocation, SubDeviceIdsVec &subDeviceIds, uint32_t rootDeviceIndex) override;
 
-    bool setAtomicAccess(GraphicsAllocation *gfxAllocation, size_t size, AtomicAccessMode mode, uint32_t rootDeviceIndex) override {
+    bool setAtomicAccess(GraphicsAllocation *gfxAllocation, size_t size, AtomicAccessMode mode, uint32_t rootDeviceIndex) override;
 
-        if (failSetAtomicAccess) {
-            return false;
-        }
-        return MemoryManager::setAtomicAccess(gfxAllocation, size, mode, rootDeviceIndex);
-    }
+    bool setSharedSystemAtomicAccess(const void *ptr, const size_t size, AtomicAccessMode mode, SubDeviceIdsVec &subDeviceIds, uint32_t rootDeviceIndex) override;
 
-    bool setSharedSystemAtomicAccess(const void *ptr, const size_t size, AtomicAccessMode mode, SubDeviceIdsVec &subDeviceIds, uint32_t rootDeviceIndex) override {
-        setSharedSystemAtomicAccessCalledCount++;
-        setSharedSystemAtomicAccessCalled = true;
-        if (failSetSharedSystemAtomicAccess) {
-            return false;
-        }
-        return MemoryManager::setSharedSystemAtomicAccess(ptr, size, mode, subDeviceIds, rootDeviceIndex);
-    }
+    AtomicAccessMode getSharedSystemAtomicAccess(const void *ptr, const size_t size, SubDeviceIdsVec &subDeviceIds, uint32_t rootDeviceIndex) override;
 
-    AtomicAccessMode getSharedSystemAtomicAccess(const void *ptr, const size_t size, SubDeviceIdsVec &subDeviceIds, uint32_t rootDeviceIndex) override {
-        getSharedSystemAtomicAccessCalledCount++;
-        getSharedSystemAtomicAccessCalled = true;
-        if (failGetSharedSystemAtomicAccess) {
-            return AtomicAccessMode::invalid;
-        }
-        return MemoryManager::getSharedSystemAtomicAccess(ptr, size, subDeviceIds, rootDeviceIndex);
-    }
-
-    bool prefetchSharedSystemAlloc(const void *ptr, const size_t size, SubDeviceIdsVec &subDeviceIds, uint32_t rootDeviceIndex) override {
-        memPrefetchSubDeviceIds = subDeviceIds;
-        prefetchSharedSystemAllocCalled = true;
-        return MemoryManager::prefetchSharedSystemAlloc(ptr, size, subDeviceIds, rootDeviceIndex);
-    }
+    bool prefetchSharedSystemAlloc(const void *ptr, const size_t size, SubDeviceIdsVec &subDeviceIds, uint32_t rootDeviceIndex) override;
 
     bool hasPageFaultsEnabled(const Device &neoDevice) override;
     bool isKmdMigrationAvailable(uint32_t rootDeviceIndex) override;
@@ -293,19 +185,9 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     bool copyMemoryToAllocationBanks(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, const void *memoryToCopy, size_t sizeToCopy, DeviceBitfield handleMask) override;
     bool copyMemoryToAllocation(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, const void *memoryToCopy, size_t sizeToCopy) override;
 
-    bool memsetAllocation(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, int value, size_t sizeToSet) override {
-        memsetAllocationCalled++;
-        return MemoryManager::memsetAllocation(graphicsAllocation, destinationOffset, value, sizeToSet);
-    }
+    bool memsetAllocation(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, int value, size_t sizeToSet) override;
 
-    MemoryManager::AllocationStatus populateOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override {
-        populateOsHandlesCalled++;
-        populateOsHandlesParamsPassed.push_back({handleStorage, rootDeviceIndex});
-        if (callBasePopulateOsHandles) {
-            populateOsHandlesResult = OsAgnosticMemoryManager::populateOsHandles(handleStorage, rootDeviceIndex);
-        }
-        return populateOsHandlesResult;
-    }
+    MemoryManager::AllocationStatus populateOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) override;
 
     struct PopulateOsHandlesParams {
         OsHandleStorage handleStorage{};
@@ -314,74 +196,25 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
 
     StackVec<PopulateOsHandlesParams, 1> populateOsHandlesParamsPassed{};
 
-    GraphicsAllocation *allocateGraphicsMemoryForNonSvmHostPtr(const AllocationData &allocationData) override {
-        allocateGraphicsMemoryForNonSvmHostPtrCalled++;
-        if (callBaseAllocateGraphicsMemoryForNonSvmHostPtr) {
-            allocateGraphicsMemoryForNonSvmHostPtrResult = OsAgnosticMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(allocationData);
-        }
-        return allocateGraphicsMemoryForNonSvmHostPtrResult;
-    }
+    GraphicsAllocation *allocateGraphicsMemoryForNonSvmHostPtr(const AllocationData &allocationData) override;
 
-    bool allowIndirectAllocationsAsPack(uint32_t rootDeviceIndex) override {
-        if (overrideAllocateAsPackReturn != -1) {
-            return !!overrideAllocateAsPackReturn;
-        } else {
-            return MemoryManager::allowIndirectAllocationsAsPack(rootDeviceIndex);
-        }
-    }
+    bool allowIndirectAllocationsAsPack(uint32_t rootDeviceIndex) override;
 
     bool appliesVirtualMemoryAccessFlags(const GraphicsAllocation &physicalAllocation) override { return appliesVirtualMemoryAccessFlagsResult; }
 
-    bool mapPhysicalDeviceMemoryToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryflags, size_t offset) override {
-        passedMapPhysicalDeviceMemoryOffset = offset;
-        if (failMapPhysicalToVirtualMemory) {
-            return false;
-        }
-        return OsAgnosticMemoryManager::mapPhysicalDeviceMemoryToVirtualMemory(physicalAllocation, gpuRange, bufferSize, memoryflags, offset);
-    }
+    bool mapPhysicalDeviceMemoryToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryflags, size_t offset) override;
 
-    bool mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, size_t offset, bool keepReservationPlaceholder) override {
-        passedMapPhysicalHostMemoryOffset = offset;
-        if (failMapPhysicalToVirtualMemory) {
-            return false;
-        }
-        return OsAgnosticMemoryManager::mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuRange, bufferSize, offset, keepReservationPlaceholder);
-    }
+    bool mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, size_t offset, bool keepReservationPlaceholder) override;
 
-    bool unMapPhysicalDeviceMemoryFromVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, OsContext *osContext, uint32_t rootDeviceIndex) override {
-        // Need to call actual unMapPhysicalDeviceMemoryFromVirtualMemory to ensure the virtual memory is unmapped.
-        bool retVal = OsAgnosticMemoryManager::unMapPhysicalDeviceMemoryFromVirtualMemory(physicalAllocation, gpuRange, bufferSize, osContext, rootDeviceIndex);
-        if (failUnMapPhysicalToVirtualMemory) { // Return false if unmapping is supposed to fail.
-            return false;
-        }
-        return retVal;
-    }
+    bool unMapPhysicalDeviceMemoryFromVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, OsContext *osContext, uint32_t rootDeviceIndex) override;
 
-    bool unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, bool keepReservationPlaceholder) override {
-        // Need to call actual unMapPhysicalDeviceMemoryFromVirtualMemory to ensure the virtual memory is unmapped.
-        bool retVal = OsAgnosticMemoryManager::unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocation, physicalAllocation, gpuRange, bufferSize, true);
-        if (failUnMapPhysicalToVirtualMemory) { // Return false if unmapping is supposed to fail.
-            return false;
-        }
-        return retVal;
-    }
+    bool unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, bool keepReservationPlaceholder) override;
 
-    [[nodiscard]] std::unique_lock<std::mutex> lockVirtualMemoryReservationMap() override {
-        lockVirtualMemoryReservationMapCalled++;
-        return MemoryManager::lockVirtualMemoryReservationMap();
-    }
+    [[nodiscard]] std::unique_lock<std::mutex> lockVirtualMemoryReservationMap() override;
 
-    void registerIpcExportedAllocation(GraphicsAllocation *graphicsAllocation) override {
-        registerIpcExportedAllocationCalled++;
-        if (storeIpcAllocations) {
-            storedIpcAllocations[static_cast<MemoryAllocation *>(graphicsAllocation)->internalHandle] = graphicsAllocation;
-        }
-    }
+    void registerIpcExportedAllocation(GraphicsAllocation *graphicsAllocation) override;
 
-    void getExtraDeviceProperties(uint32_t rootDeviceIndex, uint32_t *moduleId, uint16_t *serverType) override {
-        *moduleId = MockMemoryManager::moduleId;
-        *serverType = MockMemoryManager::serverType;
-    }
+    void getExtraDeviceProperties(uint32_t rootDeviceIndex, uint32_t *moduleId, uint16_t *serverType) override;
 
     bool reInitDeviceSpecificGfxPartition(uint32_t rootDeviceIndex) override;
     void releaseDeviceSpecificGfxPartition(uint32_t rootDeviceIndex) override;

@@ -10,6 +10,7 @@
 #include "shared/source/memory_manager/unified_memory_properties.h"
 #include "shared/source/os_interface/linux/drm_allocation.h"
 #include "shared/test/common/libult/linux/drm_mock_helper.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/unit_test/os_interface/linux/drm_memory_manager_local_memory_fixture.h"
 
 #include "gtest/gtest.h"
