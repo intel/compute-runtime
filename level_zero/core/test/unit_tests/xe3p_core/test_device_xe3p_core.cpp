@@ -153,6 +153,7 @@ XE3P_CORETEST_F(CommandQueueGroupTest, givenBlitterDisabledAndAllBcsSetThenOneQu
 
 XE3P_CORETEST_F(CommandQueueGroupTest, givenContextGroupSupportAndCCSEngineEnabledWhenGettingCsrForOrdinalAndIndexThenSecondaryEnginesAreReturned) {
     DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
     debugManager.flags.EnableBlitterOperationsSupport.set(0);
     debugManager.flags.ContextGroupSize.set(8);
     const uint32_t rootDeviceIndex = 0u;
@@ -197,6 +198,7 @@ XE3P_CORETEST_F(CommandQueueGroupTest, givenContextGroupSupportAndCCSEngineEnabl
 
 XE3P_CORETEST_F(CommandQueueGroupTest, givenContextGroupSupportAndBcsEngineEnabledWhenGettingCsrForOrdinalAndIndexThenSecondaryEnginesAreReturned) {
     DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
     debugManager.flags.EnableBlitterOperationsSupport.set(1);
     debugManager.flags.ContextGroupSize.set(8);
     const uint32_t rootDeviceIndex = 0u;

@@ -1958,6 +1958,7 @@ struct CommandListCsrReuseTests : public ::testing::Test {
         }
         debugManager.flags.ContextGroupSize.set(5);
         debugManager.flags.OverrideNumHighPriorityContexts.set(1);
+        debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
         hwInfo.featureTable.flags.ftrCCSNode = true;
         hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
         neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);

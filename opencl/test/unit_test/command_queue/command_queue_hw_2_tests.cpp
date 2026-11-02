@@ -1742,7 +1742,14 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenUnalignedHostPtrWhenEnqueueReadAndWrite
     EXPECT_EQ(CL_SUCCESS, cmdQHw->finish(false));
 }
 
-HWTEST_F(IoqCommandQueueHwBlitTest, givenImageWithHostPtrWhenCreateImageThenStopRegularBcs) {
+struct IoqCommandQueueHwBlitWithDedicatedInternalEngineTest : public IoqCommandQueueHwBlitTest {
+    void SetUp() override {
+        debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
+        IoqCommandQueueHwBlitTest::SetUp();
+    }
+};
+
+HWTEST_F(IoqCommandQueueHwBlitWithDedicatedInternalEngineTest, givenImageWithHostPtrWhenCreateImageThenStopRegularBcs) {
     REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
     auto &engine = pDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular);
     auto mockCsr = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(engine.commandStreamReceiver);
@@ -1756,7 +1763,7 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenImageWithHostPtrWhenCreateImageThenStop
     EXPECT_FALSE(directSubmission->ringStart);
 }
 
-HWTEST_F(IoqCommandQueueHwBlitTest, givenBufferWithHostPtrWhenCreateBufferThenStopRegularBcs) {
+HWTEST_F(IoqCommandQueueHwBlitWithDedicatedInternalEngineTest, givenBufferWithHostPtrWhenCreateBufferThenStopRegularBcs) {
     DebugManagerStateRestore restorer{};
     debugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::cpuAccessDisallowed));
 

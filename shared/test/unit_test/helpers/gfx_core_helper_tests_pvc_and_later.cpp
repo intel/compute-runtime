@@ -122,6 +122,7 @@ HWTEST2_F(GfxCoreHelperTestPvcAndLater, givenForceBCSForInternalCopyEngineVariab
     hwInfo.capabilityTable.blitterOperationsSupported = true;
 
     DebugManagerStateRestore restore;
+    debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
     debugManager.flags.ForceBCSForInternalCopyEngine.set(2);
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
