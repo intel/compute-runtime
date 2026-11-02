@@ -107,8 +107,6 @@ TEST_F(DrmMemoryOperationsHandlerBaseTest, whenLockingAllocationThenAllocationIs
     EXPECT_TRUE(std::find(drmMemoryOperationsHandler->residency.begin(), drmMemoryOperationsHandler->residency.end(), drmAllocation) != drmMemoryOperationsHandler->residency.end());
     EXPECT_EQ(drmMemoryOperationsHandler->isResident(nullptr, *drmAllocation), MemoryOperationsStatus::success);
     EXPECT_TRUE(drmAllocation->isLockedMemory());
-    EXPECT_TRUE(mockBos[0]->isExplicitLockedMemoryRequired());
-    EXPECT_TRUE(mockBos[1]->isExplicitLockedMemoryRequired());
 }
 
 TEST_F(DrmMemoryOperationsHandlerBaseTest, whenEvictingLockedAllocationThenAllocationIsNotResident) {
@@ -122,13 +120,11 @@ TEST_F(DrmMemoryOperationsHandlerBaseTest, whenEvictingLockedAllocationThenAlloc
     EXPECT_TRUE(std::find(drmMemoryOperationsHandler->residency.begin(), drmMemoryOperationsHandler->residency.end(), drmAllocation) != drmMemoryOperationsHandler->residency.end());
     EXPECT_EQ(drmMemoryOperationsHandler->residency.size(), 1u);
     EXPECT_TRUE(drmAllocation->isLockedMemory());
-    EXPECT_TRUE(mockBos[0]->isExplicitLockedMemoryRequired());
 
     EXPECT_EQ(drmMemoryOperationsHandler->evict(nullptr, *drmAllocation), MemoryOperationsStatus::success);
     EXPECT_EQ(drmMemoryOperationsHandler->isResident(nullptr, *drmAllocation), MemoryOperationsStatus::memoryNotFound);
     EXPECT_EQ(drmMemoryOperationsHandler->residency.size(), 0u);
     EXPECT_FALSE(drmAllocation->isLockedMemory());
-    EXPECT_FALSE(mockBos[0]->isExplicitLockedMemoryRequired());
 }
 
 TEST_F(DrmMemoryOperationsHandlerBaseTest, whenEvictingLockedAllocationWithMultipleBOsThenAllocationIsNotResident) {
@@ -142,15 +138,11 @@ TEST_F(DrmMemoryOperationsHandlerBaseTest, whenEvictingLockedAllocationWithMulti
     EXPECT_TRUE(std::find(drmMemoryOperationsHandler->residency.begin(), drmMemoryOperationsHandler->residency.end(), drmAllocation) != drmMemoryOperationsHandler->residency.end());
     EXPECT_EQ(drmMemoryOperationsHandler->residency.size(), 1u);
     EXPECT_TRUE(drmAllocation->isLockedMemory());
-    EXPECT_TRUE(mockBos[0]->isExplicitLockedMemoryRequired());
-    EXPECT_TRUE(mockBos[1]->isExplicitLockedMemoryRequired());
 
     EXPECT_EQ(drmMemoryOperationsHandler->evict(nullptr, *drmAllocation), MemoryOperationsStatus::success);
     EXPECT_EQ(drmMemoryOperationsHandler->isResident(nullptr, *drmAllocation), MemoryOperationsStatus::memoryNotFound);
     EXPECT_EQ(drmMemoryOperationsHandler->residency.size(), 0u);
     EXPECT_FALSE(drmAllocation->isLockedMemory());
-    EXPECT_FALSE(mockBos[0]->isExplicitLockedMemoryRequired());
-    EXPECT_FALSE(mockBos[1]->isExplicitLockedMemoryRequired());
 }
 
 TEST_F(DrmMemoryOperationsHandlerBaseTest, whenEvictingLockedAllocationWithChunkedThenAllocationIsNotResident) {
@@ -165,13 +157,11 @@ TEST_F(DrmMemoryOperationsHandlerBaseTest, whenEvictingLockedAllocationWithChunk
     EXPECT_TRUE(std::find(drmMemoryOperationsHandler->residency.begin(), drmMemoryOperationsHandler->residency.end(), drmAllocation) != drmMemoryOperationsHandler->residency.end());
     EXPECT_EQ(drmMemoryOperationsHandler->residency.size(), 1u);
     EXPECT_TRUE(drmAllocation->isLockedMemory());
-    EXPECT_TRUE(mockBos[0]->isExplicitLockedMemoryRequired());
 
     EXPECT_EQ(drmMemoryOperationsHandler->evict(nullptr, *drmAllocation), MemoryOperationsStatus::success);
     EXPECT_EQ(drmMemoryOperationsHandler->isResident(nullptr, *drmAllocation), MemoryOperationsStatus::memoryNotFound);
     EXPECT_EQ(drmMemoryOperationsHandler->residency.size(), 0u);
     EXPECT_FALSE(drmAllocation->isLockedMemory());
-    EXPECT_FALSE(mockBos[0]->isExplicitLockedMemoryRequired());
 }
 
 TEST_F(DrmMemoryOperationsHandlerBaseTest, givenOperationsHandlerWhenCallingMakeResidentWithDummyExecNotNeededThenFlushDummyExecNotCalled) {
@@ -292,4 +282,38 @@ HWTEST2_F(DrmMemoryOperationsHandlerBaseTestFlushDummyExec, givenDirectSubmissio
     pMemManager->freeGraphicsMemoryImpl(allocation);
 
     EXPECT_TRUE(static_cast<UltCommandStreamReceiver<FamilyType> *>(pMemManager->getRegisteredEngines(0u)[0].commandStreamReceiver)->stopDirectSubmissionCalled);
+}
+
+TEST_F(DrmMemoryOperationsHandlerBaseTest, givenSingleBankAllocationWithEmptyBufferObjectSlotsWhenLockingAndEvictingThenAllocationLockedStateIsUpdated) {
+    MockBufferObject bo(0, mock, 3, 0, 0, 1);
+    MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::system4KBPages);
+    allocation.bufferObjects[0] = &bo;
+    ASSERT_LT(1u, allocation.getBOs().size());
+    ASSERT_EQ(nullptr, allocation.getBOs()[1]);
+    GraphicsAllocation *allocationPtr = &allocation;
+
+    EXPECT_EQ(MemoryOperationsStatus::success, drmMemoryOperationsHandler->lock(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1)));
+    EXPECT_TRUE(allocation.isLockedMemory());
+
+    EXPECT_EQ(MemoryOperationsStatus::success, drmMemoryOperationsHandler->evict(nullptr, allocation));
+    EXPECT_FALSE(allocation.isLockedMemory());
+}
+
+TEST_F(DrmMemoryOperationsHandlerBaseTest, givenMultiBankAllocationWithEmptyBufferObjectSlotsWhenLockingAndEvictingThenAllocationLockedStateIsUpdated) {
+    MockBufferObject firstBankBo(0, mock, 3, 0, 0, 1);
+    MockBufferObject secondBankBo(0, mock, 3, 0, 0, 1);
+    MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::localMemory);
+    allocation.storageInfo.memoryBanks = 0b11;
+    allocation.bufferObjects[0] = &firstBankBo;
+    allocation.bufferObjects[1] = &secondBankBo;
+    ASSERT_EQ(2u, allocation.storageInfo.getNumBanks());
+    ASSERT_LT(2u, allocation.getBOs().size());
+    ASSERT_EQ(nullptr, allocation.getBOs()[2]);
+    GraphicsAllocation *allocationPtr = &allocation;
+
+    EXPECT_EQ(MemoryOperationsStatus::success, drmMemoryOperationsHandler->lock(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1)));
+    EXPECT_TRUE(allocation.isLockedMemory());
+
+    EXPECT_EQ(MemoryOperationsStatus::success, drmMemoryOperationsHandler->evict(nullptr, allocation));
+    EXPECT_FALSE(allocation.isLockedMemory());
 }

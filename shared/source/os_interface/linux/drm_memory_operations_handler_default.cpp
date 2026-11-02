@@ -57,11 +57,7 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::decompress(Device *dev
 MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::lock(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) {
     OsContext *osContext = nullptr;
     for (auto gfxAllocation = gfxAllocations.begin(); gfxAllocation != gfxAllocations.end(); gfxAllocation++) {
-        auto drmAllocation = static_cast<DrmAllocation *>(*gfxAllocation);
-        drmAllocation->setLockedMemory(true);
-        for (auto bo : drmAllocation->getBOs()) {
-            bo->requireExplicitLockedMemory(true);
-        }
+        (*gfxAllocation)->setLockedMemory(true);
     }
     return this->makeResidentWithinOsContext(osContext, gfxAllocations, false, false, true);
 }
@@ -78,16 +74,7 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::evictWithinOsContext(O
 
 MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::evict(Device *device, GraphicsAllocation &gfxAllocation) {
     OsContext *osContext = nullptr;
-    auto drmAllocation = static_cast<DrmAllocation *>(&gfxAllocation);
-    drmAllocation->setLockedMemory(false);
-    if (drmAllocation->storageInfo.isChunked || drmAllocation->storageInfo.getNumBanks() == 1) {
-        auto bo = drmAllocation->getBO();
-        bo->requireExplicitLockedMemory(false);
-    } else {
-        for (auto bo : drmAllocation->getBOs()) {
-            bo->requireExplicitLockedMemory(false);
-        }
-    }
+    gfxAllocation.setLockedMemory(false);
     return this->evictWithinOsContext(osContext, gfxAllocation);
 }
 
