@@ -36,6 +36,7 @@
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_cpu_page_fault_manager.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_gmm_page_table_mngr.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
@@ -368,6 +369,71 @@ HWTEST_F(CommandQueueCommandsSingleTile, givenCommandQueueWhenExecutingCommandLi
     }
 
     EXPECT_EQ(status, ZE_RESULT_SUCCESS);
+    commandQueue->destroy();
+}
+
+HWTEST_F(CommandQueueCommandsSingleTile, givenPageTableManagerRequiringInitializationWhenExecutingCommandListsThenAuxTableRegistersAreProgrammedOnlyOnce) {
+    MockCsrHw2<FamilyType> csr(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+    csr.initializeTagAllocation();
+    csr.setupContext(*neoDevice->getDefaultEngine().osContext);
+    auto pageTableManager = new MockGmmPageTableMngr();
+    csr.pageTableManager.reset(pageTableManager);
+
+    ze_result_t returnValue;
+    L0::CommandQueue *commandQueue = CommandQueue::create(device,
+                                                          &csr,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          false,
+                                                          returnValue);
+    ASSERT_NE(nullptr, commandQueue);
+
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::compute, 0u, returnValue, false));
+    auto commandListHandle = commandList->toHandle();
+    commandList->close();
+    CommandListExecutionInternalOptions internalOptions = {};
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandLists(1, &commandListHandle, nullptr, internalOptions));
+    EXPECT_EQ(1u, pageTableManager->initContextAuxTableRegisterCalled);
+    EXPECT_EQ(&csr, pageTableManager->initContextAuxTableRegisterParamsPassed[0].initialBBHandle);
+    EXPECT_FALSE(csr.isPageTableManagerInitializationRequired());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandLists(1, &commandListHandle, nullptr, internalOptions));
+    EXPECT_EQ(1u, pageTableManager->initContextAuxTableRegisterCalled);
+
+    commandQueue->destroy();
+}
+
+HWTEST_F(CommandQueueCommandsSingleTile, givenAuxTableRegistersSubmissionFailureWhenExecutingCommandListsThenErrorIsReturnedAndRegistersAreProgrammedOnNextExecution) {
+    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto pageTableManager = new MockGmmPageTableMngr();
+    csr.pageTableManager.reset(pageTableManager);
+    csr.flushReturnValue = NEO::SubmissionStatus::outOfMemory;
+
+    ze_result_t returnValue;
+    L0::CommandQueue *commandQueue = CommandQueue::create(device,
+                                                          &csr,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          false,
+                                                          returnValue);
+    ASSERT_NE(nullptr, commandQueue);
+
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::compute, 0u, returnValue, false));
+    auto commandListHandle = commandList->toHandle();
+    commandList->close();
+    CommandListExecutionInternalOptions internalOptions = {};
+
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, commandQueue->executeCommandLists(1, &commandListHandle, nullptr, internalOptions));
+    EXPECT_EQ(1u, pageTableManager->initContextAuxTableRegisterCalled);
+
+    csr.flushReturnValue = NEO::SubmissionStatus::success;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandLists(1, &commandListHandle, nullptr, internalOptions));
+    EXPECT_EQ(2u, pageTableManager->initContextAuxTableRegisterCalled);
+    EXPECT_FALSE(csr.isPageTableManagerInitializationRequired());
+
     commandQueue->destroy();
 }
 

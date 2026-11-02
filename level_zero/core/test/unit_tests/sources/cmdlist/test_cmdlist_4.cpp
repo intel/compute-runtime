@@ -15,7 +15,9 @@
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_command_encoder.h"
+#include "shared/test/common/mocks/mock_gmm_page_table_mngr.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -702,6 +704,37 @@ HWTEST_F(CommandListCreateTests, givenImmediateCopyOnlyCmdListWhenAppendBarrierT
     EXPECT_EQ(cmd->getPostSyncOperation(), MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA_QWORD);
     EXPECT_EQ(cmd->getDestinationAddress(), whiteBoxCmdList->getCsr(false)->getBarrierCountGpuAddress());
     EXPECT_EQ(cmd->getImmediateData(), 2u);
+}
+
+HWTEST_F(CommandListCreateTests, givenImmediateCopyOnlyCmdListWithPageTableManagerWhenAppendingBarrierThenAuxTableRegistersAreProgrammedOnlyOnce) {
+    ze_command_queue_desc_t queueDesc = {};
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(device, &queueDesc, false, NEO::EngineGroupType::copy, returnValue));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto whiteBoxCmdList = CommandList::whiteboxCast(commandList.get());
+    auto csr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(whiteBoxCmdList->getCsr(false));
+    auto pageTableManager = new MockGmmPageTableMngr();
+    csr->pageTableManager.reset(pageTableManager);
+    EXPECT_TRUE(csr->isPageTableManagerInitializationRequired());
+
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters, signalEventParameters));
+    EXPECT_EQ(1u, pageTableManager->initContextAuxTableRegisterCalled);
+    EXPECT_EQ(csr, pageTableManager->initContextAuxTableRegisterParamsPassed[0].initialBBHandle);
+    EXPECT_FALSE(csr->isPageTableManagerInitializationRequired());
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters, signalEventParameters));
+    EXPECT_EQ(1u, pageTableManager->initContextAuxTableRegisterCalled);
 }
 
 HWTEST_F(CommandListCreateTests, givenImmediateCopyOnlyCmdListWhenAppendWaitOnEventsThenIncrementBarrierCountAndDispatchBarrierTagUpdate) {

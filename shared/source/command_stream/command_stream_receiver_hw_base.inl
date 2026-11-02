@@ -247,6 +247,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushBcsTask(LinearStream &c
     auto &commandStreamCSR = getCS(getRequiredCmdStreamSizeAligned(dispatchBcsFlags));
     size_t commandStreamStartCSR = commandStreamCSR.getUsed();
 
+    programPageTableManagerRegisters();
+
     if (dispatchBcsFlags.dispatchOperation != AppendOperations::cmdList) {
         programHardwareContext(commandStreamCSR);
 
@@ -376,12 +378,15 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushImmediateTask(
         }
     }
     flushData.estimatedSize += getCmdSizeForLateMidThreadPreemptionStart(dispatchFlags.hasMidThreadPreemptionKernel);
+    flushData.estimatedSize += getCmdSizeForPageTableManagerRegisters();
 
     // this must be the last call after all estimate size operations
     handleImmediateFlushJumpToImmediate(flushData);
 
     auto &csrCommandStream = getCS(flushData.estimatedSize);
     flushData.csrStartOffset = csrCommandStream.getUsed();
+
+    programPageTableManagerRegisters();
 
     if (dispatchFlags.dispatchOperation != AppendOperations::cmdList) {
         if (flushData.stateCacheFlushRequired) {
@@ -549,9 +554,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTaskHeapful(
     programActivePartitionConfigFlushTask(commandStreamCSR);
     programEngineModeCommands(commandStreamCSR, dispatchFlags);
 
-    if (pageTableManager.get() && !pageTableManagerInitialized) {
-        pageTableManagerInitialized = pageTableManager->initPageTableManagerRegisters(this);
-    }
+    programPageTableManagerRegisters();
 
     programHardwareContext(commandStreamCSR);
     programPipelineSelect(commandStreamCSR, dispatchFlags.pipelineSelectArgs);
@@ -796,6 +799,7 @@ inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
 template <typename GfxFamily>
 size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const DispatchBcsFlags &dispatchBcsFlags) {
     size_t size = getCmdsSizeForHardwareContext() + sizeof(typename GfxFamily::MI_BATCH_BUFFER_START);
+    size += getCmdSizeForPageTableManagerRegisters();
 
     if (debugManager.flags.FlushTlbBeforeCopy.get() == 1) {
         auto rootExecutionEnvironment = this->executionEnvironment.rootDeviceEnvironments[this->rootDeviceIndex].get();
@@ -849,6 +853,7 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
     }
     size += getCmdSizeForEpilogue(dispatchFlags);
     size += getCmdsSizeForHardwareContext();
+    size += getCmdSizeForPageTableManagerRegisters();
     if (csrSizeRequestFlags.activePartitionsChanged) {
         size += getCmdSizeForActivePartitionConfig();
     }
@@ -1102,6 +1107,7 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
         estimatedCsSize += MemorySynchronizationCommands<GfxFamily>::getSizeForAdditionalSynchronization(NEO::FenceType::release, *rootDeviceEnvironment.get());
         estimatedCsSize += EncodeMiFlushDW<GfxFamily>::getCommandSizeWithWa(ucWaArgs);
     }
+    estimatedCsSize += getCmdSizeForPageTableManagerRegisters();
     auto &commandStream = getCS(estimatedCsSize);
 
     auto commandStreamStart = commandStream.getUsed();
@@ -1129,9 +1135,7 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
 
     programEnginePrologue(commandStream);
 
-    if (pageTableManager.get() && !pageTableManagerInitialized) {
-        pageTableManagerInitialized = pageTableManager->initPageTableManagerRegisters(this);
-    }
+    programPageTableManagerRegisters();
 
     if (isRelaxedOrderingDispatch) {
         RelaxedOrderingHelper::encodeRegistersBeforeDependencyCheckers<GfxFamily>(commandStream, true);
@@ -1247,6 +1251,7 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
     updateStreamTaskCount(commandStream, newTaskCount);
 
     auto flushSubmissionStatus = flush(batchBuffer, getResidencyAllocations());
+    handlePageTableManagerRegistersSubmission(flushSubmissionStatus);
     if (flushSubmissionStatus != SubmissionStatus::success) {
         updateStreamTaskCount(commandStream, taskCount);
         return CompletionStamp::getTaskCountFromSubmissionStatusError(flushSubmissionStatus);
@@ -1296,7 +1301,8 @@ inline SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushMiFlushDW(bool 
     args.notifyEnable = isUsedNotifyEnableForPostSync();
 
     size_t requiredSize = MemorySynchronizationCommands<GfxFamily>::getSizeForSingleAdditionalSynchronization(NEO::FenceType::release, peekRootDeviceEnvironment()) +
-                          EncodeMiFlushDW<GfxFamily>::getCommandSizeWithWa(waArgs);
+                          EncodeMiFlushDW<GfxFamily>::getCommandSizeWithWa(waArgs) +
+                          getCmdSizeForPageTableManagerRegisters();
 
     if (initializeProlog) {
         requiredSize += getCmdsSizeForHardwareContext();
@@ -1304,6 +1310,8 @@ inline SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushMiFlushDW(bool 
 
     auto &commandStream = getCS(requiredSize);
     auto commandStreamStart = commandStream.getUsed();
+
+    programPageTableManagerRegisters();
 
     if (initializeProlog) {
         programHardwareContext(commandStream);
@@ -1337,12 +1345,15 @@ SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushPipeControl(bool state
         args.tlbInvalidation = this->isTlbFlushRequiredForStateCacheFlush();
     }
 
-    auto dispatchSize = MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(peekRootDeviceEnvironment(), NEO::PostSyncMode::immediateData) + this->getCmdSizeForPrologue();
+    auto dispatchSize = MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(peekRootDeviceEnvironment(), NEO::PostSyncMode::immediateData) + this->getCmdSizeForPrologue() +
+                        getCmdSizeForPageTableManagerRegisters();
 
     auto &commandStream = getCS(dispatchSize);
     auto commandStreamStart = commandStream.getUsed();
 
     this->programEnginePrologue(commandStream);
+
+    programPageTableManagerRegisters();
 
     MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(commandStream,
                                                                               PostSyncMode::immediateData,
@@ -1357,6 +1368,30 @@ SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushPipeControl(bool state
     auto submissionStatus = this->flushSmallTask(commandStream, commandStreamStart);
     this->latestFlushedTaskCount = taskCount.load();
     return submissionStatus;
+}
+
+template <typename GfxFamily>
+size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForPageTableManagerRegisters() const {
+    // GmmCallbacks::writeL3Address programs the AUX table base address with two LRIs
+    return isPageTableManagerInitializationRequired() ? 2 * sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM) : 0u;
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::programPageTableManagerRegisters() {
+    // Gmm writes the commands to this CSR's command stream
+    if (isPageTableManagerInitializationRequired()) {
+        pageTableManagerInitialized = pageTableManager->initPageTableManagerRegisters(this);
+        pageTableManagerRegistersSubmissionPending = pageTableManagerInitialized;
+    }
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::handlePageTableManagerRegistersSubmission(SubmissionStatus status) {
+    if (pageTableManagerRegistersSubmissionPending) {
+        // The next submission starts after the registers, so program them again if they were not submitted
+        pageTableManagerInitialized = status == SubmissionStatus::success;
+        pageTableManagerRegistersSubmissionPending = false;
+    }
 }
 
 template <typename GfxFamily>
@@ -1401,6 +1436,7 @@ template <typename GfxFamily>
 inline SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushHandler(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
     this->latestFlushIsTaskCountUpdateOnly = batchBuffer.taskCountUpdateOnly;
     auto status = flush(batchBuffer, allocationsForResidency);
+    handlePageTableManagerRegistersSubmission(status);
     handleLateMidThreadPreemptionStartSubmission(status);
     makeSurfacePackNonResident(allocationsForResidency, true);
     return status;
@@ -2057,9 +2093,10 @@ inline CompletionStamp CommandStreamReceiverHw<GfxFamily>::handleFlushTaskSubmis
     }
 
     if (this->dispatchMode == DispatchMode::batchedDispatch) {
-        if (this->lateMidThreadPreemptionStartSubmissionPending) {
+        if (this->lateMidThreadPreemptionStartSubmissionPending || this->pageTableManagerRegistersSubmissionPending) {
             auto submissionStatus = this->flushBatchedSubmissions() ? SubmissionStatus::success : SubmissionStatus::failed;
             handleLateMidThreadPreemptionStartSubmission(submissionStatus);
+            handlePageTableManagerRegistersSubmission(submissionStatus);
         }
         handleBatchedDispatchImplicitFlush(device.getDeviceInfo().globalMemSize, implicitFlush);
     }

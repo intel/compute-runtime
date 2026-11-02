@@ -106,6 +106,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::flushTaskHeapless;
     using BaseClass::getCmdSizeForExceptions;
     using BaseClass::getCmdSizeForHeaplessPrologue;
+    using BaseClass::getCmdSizeForPageTableManagerRegisters;
     using BaseClass::getCmdSizeForPrologue;
     using BaseClass::getFrontEndPrologueSize;
     using BaseClass::getHostFunctionStreamer;

@@ -13,6 +13,7 @@
 #include "shared/source/command_stream/tag_allocation_layout.h"
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/debugger/debugger_l0.h"
+#include "shared/source/gmm_helper/gmm_callbacks.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/page_table_mngr.h"
 #include "shared/source/helpers/api_specific_config.h"
@@ -52,6 +53,7 @@
 #include "shared/test/common/mocks/mock_direct_submission_hw.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_gmm_page_table_mngr.h"
 #include "shared/test/common/mocks/mock_host_function_allocator.h"
 #include "shared/test/common/mocks/mock_internal_allocation_storage.h"
 #include "shared/test/common/mocks/mock_kmd_notify_helper.h"
@@ -8505,4 +8507,440 @@ HWTEST2_F(CommandStreamReceiverHwTest, givenMidThreadPreemptionAllocationOnDeman
     hwParser.parseCommands<FamilyType>(commandStreamReceiver.commandStream, usedSize);
     EXPECT_EQ(0u, hwParser.getCommandCount<STATE_CONTEXT_DATA_BASE_ADDRESS>());
     EXPECT_EQ(0u, hwParser.getCommandCount<STATE_SIP>());
+}
+
+template <typename FamilyType>
+class AuxTableLriWritingPageTableMngr : public MockGmmPageTableMngr {
+  public:
+    static constexpr uint32_t lowRegisterOffset = 0x12340;
+    static constexpr uint32_t highRegisterOffset = 0x12344;
+
+    bool initContextAuxTableRegister(HANDLE initialBBHandle, GMM_ENGINE_TYPE engineType) override {
+        GmmCallbacks<FamilyType>::writeL3Address(initialBBHandle, 0x123456000ull, (static_cast<uint64_t>(highRegisterOffset) << 32) | lowRegisterOffset);
+        return MockGmmPageTableMngr::initContextAuxTableRegister(initialBBHandle, engineType);
+    }
+
+    static uint32_t countLris(LinearStream &stream, size_t startOffset) {
+        HardwareParse hwParser;
+        hwParser.parseCommands<FamilyType>(stream, startOffset);
+        uint32_t count = 0;
+        for (auto &cmd : hwParser.cmdList) {
+            auto lri = genCmdCast<typename FamilyType::MI_LOAD_REGISTER_IMM *>(cmd);
+            if (lri != nullptr && (lri->getRegisterOffset() == lowRegisterOffset || lri->getRegisterOffset() == highRegisterOffset)) {
+                count++;
+            }
+        }
+        return count;
+    }
+};
+
+HWTEST_F(CommandStreamReceiverHwTest, givenPageTableManagerWhenFlushingBcsTaskStreamThenAuxTableRegistersAreProgrammedOnlyOnceInSubmittedCsrStreamBeforeJumpToTaskStream) {
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.dispatchMode = DispatchMode::immediateDispatch;
+    commandStreamReceiver.recordFlushedBatchBuffer = true;
+    auto pageTableManager = new AuxTableLriWritingPageTableMngr<FamilyType>();
+    commandStreamReceiver.pageTableManager.reset(pageTableManager);
+    auto dispatchBcsFlags = DispatchFlagsHelper::createDefaultBcsDispatchFlags();
+
+    auto csrStreamStart = commandStreamReceiver.commandStream.getUsed();
+    auto taskStreamStart = commandStream.getUsed();
+    auto completionStamp = commandStreamReceiver.flushBcsTask(commandStream, taskStreamStart, dispatchBcsFlags, pDevice->getHardwareInfo());
+
+    EXPECT_LT(completionStamp.taskCount, CompletionStamp::notReady);
+    EXPECT_EQ(1u, pageTableManager->initContextAuxTableRegisterCalled);
+    EXPECT_EQ(&commandStreamReceiver, pageTableManager->initContextAuxTableRegisterParamsPassed[0].initialBBHandle);
+    EXPECT_FALSE(commandStreamReceiver.isPageTableManagerInitializationRequired());
+    EXPECT_EQ(2u, AuxTableLriWritingPageTableMngr<FamilyType>::countLris(commandStreamReceiver.commandStream, csrStreamStart));
+
+    EXPECT_EQ(&commandStreamReceiver.commandStream, commandStreamReceiver.latestFlushedBatchBuffer.stream);
+    EXPECT_EQ(csrStreamStart, commandStreamReceiver.latestFlushedBatchBuffer.startOffset);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(commandStreamReceiver.commandStream, csrStreamStart);
+    uint32_t lrisBeforeJump = 0;
+    MI_BATCH_BUFFER_START *jumpToTaskStream = nullptr;
+    for (auto &cmd : hwParser.cmdList) {
+        if (auto bbStart = genCmdCast<MI_BATCH_BUFFER_START *>(cmd); bbStart != nullptr && jumpToTaskStream == nullptr) {
+            jumpToTaskStream = bbStart;
+        } else if (auto lri = genCmdCast<MI_LOAD_REGISTER_IMM *>(cmd); lri != nullptr && jumpToTaskStream == nullptr &&
+                                                                       (lri->getRegisterOffset() == AuxTableLriWritingPageTableMngr<FamilyType>::lowRegisterOffset ||
+                                                                        lri->getRegisterOffset() == AuxTableLriWritingPageTableMngr<FamilyType>::highRegisterOffset)) {
+            lrisBeforeJump++;
+        }
+    }
+    ASSERT_NE(nullptr, jumpToTaskStream);
+    EXPECT_EQ(commandStream.getGpuBase() + taskStreamStart, jumpToTaskStream->getBatchBufferStartAddress());
+    EXPECT_EQ(2u, lrisBeforeJump);
+
+    csrStreamStart = commandStreamReceiver.commandStream.getUsed();
+    commandStreamReceiver.flushBcsTask(commandStream, commandStream.getUsed(), dispatchBcsFlags, pDevice->getHardwareInfo());
+
+    EXPECT_EQ(1u, pageTableManager->initContextAuxTableRegisterCalled);
+    EXPECT_EQ(0u, AuxTableLriWritingPageTableMngr<FamilyType>::countLris(commandStreamReceiver.commandStream, csrStreamStart));
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenNoPageTableManagerWhenFlushingBcsTaskStreamWithCmdListDispatchThenTaskStreamIsSubmittedDirectly) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.dispatchMode = DispatchMode::immediateDispatch;
+    commandStreamReceiver.recordFlushedBatchBuffer = true;
+    commandStreamReceiver.pageTableManager.reset();
+    auto dispatchBcsFlags = DispatchFlagsHelper::createDefaultBcsDispatchFlags();
+    dispatchBcsFlags.dispatchOperation = NEO::AppendOperations::cmdList;
+
+    auto taskStreamStart = commandStream.getUsed();
+    commandStreamReceiver.flushBcsTask(commandStream, taskStreamStart, dispatchBcsFlags, pDevice->getHardwareInfo());
+
+    EXPECT_EQ(&commandStream, commandStreamReceiver.latestFlushedBatchBuffer.stream);
+    EXPECT_EQ(taskStreamStart, commandStreamReceiver.latestFlushedBatchBuffer.startOffset);
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenPageTableManagerWhenFlushingBcsTaskStreamWithCmdListDispatchThenAuxTableRegistersAreProgrammedInSubmittedCsrStream) {
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.dispatchMode = DispatchMode::immediateDispatch;
+    commandStreamReceiver.recordFlushedBatchBuffer = true;
+    auto dispatchBcsFlags = DispatchFlagsHelper::createDefaultBcsDispatchFlags();
+    dispatchBcsFlags.dispatchOperation = NEO::AppendOperations::cmdList;
+
+    auto pageTableManager = new AuxTableLriWritingPageTableMngr<FamilyType>();
+    commandStreamReceiver.pageTableManager.reset(pageTableManager);
+    auto csrStreamStart = commandStreamReceiver.commandStream.getUsed();
+    auto taskStreamStart = commandStream.getUsed();
+    commandStreamReceiver.flushBcsTask(commandStream, taskStreamStart, dispatchBcsFlags, pDevice->getHardwareInfo());
+
+    EXPECT_EQ(1u, pageTableManager->initContextAuxTableRegisterCalled);
+    EXPECT_FALSE(commandStreamReceiver.isPageTableManagerInitializationRequired());
+    EXPECT_EQ(2u, AuxTableLriWritingPageTableMngr<FamilyType>::countLris(commandStreamReceiver.commandStream, csrStreamStart));
+    EXPECT_EQ(&commandStreamReceiver.commandStream, commandStreamReceiver.latestFlushedBatchBuffer.stream);
+    EXPECT_EQ(csrStreamStart, commandStreamReceiver.latestFlushedBatchBuffer.startOffset);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(commandStreamReceiver.commandStream, csrStreamStart);
+    auto bbStart = hwParser.getCommand<MI_BATCH_BUFFER_START>();
+    ASSERT_NE(nullptr, bbStart);
+    EXPECT_EQ(commandStream.getGpuBase() + taskStreamStart, bbStart->getBatchBufferStartAddress());
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenPageTableManagerRequiringInitializationWhenGettingRequiredBcsCmdStreamSizeThenAuxTableRegistersAreIncluded) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.pageTableManager.reset();
+    auto dispatchBcsFlags = DispatchFlagsHelper::createDefaultBcsDispatchFlags();
+    auto sizeWithoutPageTableManager = commandStreamReceiver.getRequiredCmdStreamSize(dispatchBcsFlags);
+
+    commandStreamReceiver.pageTableManager.reset(new MockGmmPageTableMngr());
+    EXPECT_EQ(sizeWithoutPageTableManager + 2 * sizeof(typename FamilyType::MI_LOAD_REGISTER_IMM), commandStreamReceiver.getRequiredCmdStreamSize(dispatchBcsFlags));
+
+    commandStreamReceiver.pageTableManagerInitialized = true;
+    EXPECT_EQ(sizeWithoutPageTableManager, commandStreamReceiver.getRequiredCmdStreamSize(dispatchBcsFlags));
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenAuxTableRegistersSubmissionFailureWhenFlushingBcsTaskStreamThenRegistersAreProgrammedAgainOnNextFlush) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.dispatchMode = DispatchMode::immediateDispatch;
+    auto pageTableManager = new AuxTableLriWritingPageTableMngr<FamilyType>();
+    commandStreamReceiver.pageTableManager.reset(pageTableManager);
+    auto dispatchBcsFlags = DispatchFlagsHelper::createDefaultBcsDispatchFlags();
+
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::outOfMemory;
+    auto completionStamp = commandStreamReceiver.flushBcsTask(commandStream, commandStream.getUsed(), dispatchBcsFlags, pDevice->getHardwareInfo());
+    EXPECT_EQ(CompletionStamp::outOfDeviceMemory, completionStamp.taskCount);
+    EXPECT_EQ(1u, pageTableManager->initContextAuxTableRegisterCalled);
+    EXPECT_TRUE(commandStreamReceiver.isPageTableManagerInitializationRequired());
+
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::success;
+    auto csrStreamStart = commandStreamReceiver.commandStream.getUsed();
+    completionStamp = commandStreamReceiver.flushBcsTask(commandStream, commandStream.getUsed(), dispatchBcsFlags, pDevice->getHardwareInfo());
+
+    EXPECT_LT(completionStamp.taskCount, CompletionStamp::notReady);
+    EXPECT_EQ(2u, pageTableManager->initContextAuxTableRegisterCalled);
+    EXPECT_FALSE(commandStreamReceiver.isPageTableManagerInitializationRequired());
+    EXPECT_EQ(2u, AuxTableLriWritingPageTableMngr<FamilyType>::countLris(commandStreamReceiver.commandStream, csrStreamStart));
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenAuxTableRegistersSubmissionFailureWhenFlushingBcsTaskBlitThenRegistersAreProgrammedAgainOnNextFlush) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto pageTableManager = new AuxTableLriWritingPageTableMngr<FamilyType>();
+    commandStreamReceiver.pageTableManager.reset(pageTableManager);
+
+    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::bufferToHostPtr,
+                                                                          commandStreamReceiver, commandStreamReceiver.getTagAllocation(), nullptr,
+                                                                          commandStreamReceiver.getTagAllocation()->getUnderlyingBuffer(),
+                                                                          commandStreamReceiver.getTagAllocation()->getGpuAddress(), 0,
+                                                                          0, 0, 0, 0, 0, 0, 0);
+    BlitPropertiesContainer container;
+    container.push_back(blitProperties);
+
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::outOfMemory;
+    EXPECT_EQ(CompletionStamp::outOfDeviceMemory, commandStreamReceiver.flushBcsTask(container, false, *pDevice));
+    EXPECT_EQ(1u, pageTableManager->initContextAuxTableRegisterCalled);
+    EXPECT_TRUE(commandStreamReceiver.isPageTableManagerInitializationRequired());
+
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::success;
+    auto csrStreamStart = commandStreamReceiver.commandStream.getUsed();
+    EXPECT_LT(commandStreamReceiver.flushBcsTask(container, false, *pDevice), CompletionStamp::notReady);
+
+    EXPECT_EQ(2u, pageTableManager->initContextAuxTableRegisterCalled);
+    EXPECT_FALSE(commandStreamReceiver.isPageTableManagerInitializationRequired());
+    EXPECT_EQ(2u, AuxTableLriWritingPageTableMngr<FamilyType>::countLris(commandStreamReceiver.commandStream, csrStreamStart));
+
+    csrStreamStart = commandStreamReceiver.commandStream.getUsed();
+    EXPECT_LT(commandStreamReceiver.flushBcsTask(container, false, *pDevice), CompletionStamp::notReady);
+    EXPECT_EQ(2u, pageTableManager->initContextAuxTableRegisterCalled);
+    EXPECT_EQ(0u, AuxTableLriWritingPageTableMngr<FamilyType>::countLris(commandStreamReceiver.commandStream, csrStreamStart));
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenAuxTableRegistersSubmissionFailureWhenFlushingTaskThenRegistersAreProgrammedAgainOnNextFlush) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    if (commandStreamReceiver.heaplessModeEnabled) {
+        GTEST_SKIP();
+    }
+    commandStreamReceiver.dispatchMode = DispatchMode::immediateDispatch;
+    auto pageTableManager = new AuxTableLriWritingPageTableMngr<FamilyType>();
+    commandStreamReceiver.pageTableManager.reset(pageTableManager);
+
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::outOfMemory;
+    auto completionStamp = commandStreamReceiver.flushTask(commandStream, 0, &dsh, &ioh, &ssh, taskLevel, flushTaskFlags, *pDevice);
+    EXPECT_EQ(CompletionStamp::outOfDeviceMemory, completionStamp.taskCount);
+    EXPECT_EQ(1u, pageTableManager->initContextAuxTableRegisterCalled);
+    EXPECT_TRUE(commandStreamReceiver.isPageTableManagerInitializationRequired());
+
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::success;
+    auto csrStreamStart = commandStreamReceiver.commandStream.getUsed();
+    completionStamp = commandStreamReceiver.flushTask(commandStream, 0, &dsh, &ioh, &ssh, taskLevel, flushTaskFlags, *pDevice);
+
+    EXPECT_LT(completionStamp.taskCount, CompletionStamp::notReady);
+    EXPECT_EQ(2u, pageTableManager->initContextAuxTableRegisterCalled);
+    EXPECT_FALSE(commandStreamReceiver.isPageTableManagerInitializationRequired());
+    EXPECT_EQ(2u, AuxTableLriWritingPageTableMngr<FamilyType>::countLris(commandStreamReceiver.commandStream, csrStreamStart));
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenPageTableManagerWhenFlushingTaskInBatchedDispatchThenBatchWithAuxTableRegistersIsSubmittedRightAwayAndRegistersAreProgrammedAgainAfterFailure) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    if (commandStreamReceiver.heaplessModeEnabled) {
+        GTEST_SKIP();
+    }
+    commandStreamReceiver.overrideDispatchPolicy(DispatchMode::batchedDispatch);
+    commandStreamReceiver.useNewResourceImplicitFlush = false;
+    commandStreamReceiver.useGpuIdleImplicitFlush = false;
+    auto &commandBufferList = commandStreamReceiver.submissionAggregator->peekCmdBufferList();
+    auto pageTableManager = new AuxTableLriWritingPageTableMngr<FamilyType>();
+    commandStreamReceiver.pageTableManager.reset(pageTableManager);
+
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::outOfMemory;
+    commandStreamReceiver.flushTask(commandStream, 0, &dsh, &ioh, &ssh, taskLevel, flushTaskFlags, *pDevice);
+    EXPECT_TRUE(commandBufferList.peekIsEmpty());
+    EXPECT_EQ(1u, pageTableManager->initContextAuxTableRegisterCalled);
+    EXPECT_TRUE(commandStreamReceiver.isPageTableManagerInitializationRequired());
+
+    commandStreamReceiver.flushReturnValue.reset();
+    auto csrStreamStart = commandStreamReceiver.commandStream.getUsed();
+    commandStreamReceiver.flushTask(commandStream, 0, &dsh, &ioh, &ssh, taskLevel, flushTaskFlags, *pDevice);
+    EXPECT_TRUE(commandBufferList.peekIsEmpty());
+    EXPECT_EQ(2u, pageTableManager->initContextAuxTableRegisterCalled);
+    EXPECT_FALSE(commandStreamReceiver.isPageTableManagerInitializationRequired());
+    EXPECT_EQ(2u, AuxTableLriWritingPageTableMngr<FamilyType>::countLris(commandStreamReceiver.commandStream, csrStreamStart));
+
+    commandStream.getSpace(4);
+    csrStreamStart = commandStreamReceiver.commandStream.getUsed();
+    commandStreamReceiver.flushTask(commandStream, 0, &dsh, &ioh, &ssh, taskLevel, flushTaskFlags, *pDevice);
+    EXPECT_FALSE(commandBufferList.peekIsEmpty());
+    EXPECT_EQ(2u, pageTableManager->initContextAuxTableRegisterCalled);
+    EXPECT_EQ(0u, AuxTableLriWritingPageTableMngr<FamilyType>::countLris(commandStreamReceiver.commandStream, csrStreamStart));
+
+    EXPECT_TRUE(commandStreamReceiver.flushBatchedSubmissions());
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenAuxTableRegistersSubmissionFailureWhenFlushingMiFlushDwThenRegistersAreProgrammedAgainOnNextFlush) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto pageTableManager = new AuxTableLriWritingPageTableMngr<FamilyType>();
+    commandStreamReceiver.pageTableManager.reset(pageTableManager);
+
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::outOfMemory;
+    EXPECT_EQ(SubmissionStatus::outOfMemory, commandStreamReceiver.flushMiFlushDW(false));
+    EXPECT_EQ(1u, pageTableManager->initContextAuxTableRegisterCalled);
+    EXPECT_TRUE(commandStreamReceiver.isPageTableManagerInitializationRequired());
+
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::success;
+    auto csrStreamStart = commandStreamReceiver.commandStream.getUsed();
+    EXPECT_EQ(SubmissionStatus::success, commandStreamReceiver.flushMiFlushDW(false));
+
+    EXPECT_EQ(2u, pageTableManager->initContextAuxTableRegisterCalled);
+    EXPECT_FALSE(commandStreamReceiver.isPageTableManagerInitializationRequired());
+    EXPECT_EQ(2u, AuxTableLriWritingPageTableMngr<FamilyType>::countLris(commandStreamReceiver.commandStream, csrStreamStart));
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenPageTableManagerWhenFlushingImmediateTaskThenAuxTableRegistersAreProgrammedOnlyOnceInCsrStream) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    if (commandStreamReceiver.heaplessModeEnabled) {
+        GTEST_SKIP();
+    }
+    auto pageTableManager = new AuxTableLriWritingPageTableMngr<FamilyType>();
+    commandStreamReceiver.pageTableManager.reset(pageTableManager);
+
+    EXPECT_TRUE(commandStreamReceiver.isPageTableManagerInitializationRequired());
+    EXPECT_EQ(2 * sizeof(typename FamilyType::MI_LOAD_REGISTER_IMM), commandStreamReceiver.getCmdSizeForPageTableManagerRegisters());
+
+    commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
+
+    EXPECT_EQ(1u, pageTableManager->initContextAuxTableRegisterCalled);
+    EXPECT_EQ(&commandStreamReceiver, pageTableManager->initContextAuxTableRegisterParamsPassed[0].initialBBHandle);
+    EXPECT_FALSE(commandStreamReceiver.isPageTableManagerInitializationRequired());
+    EXPECT_EQ(0u, commandStreamReceiver.getCmdSizeForPageTableManagerRegisters());
+    EXPECT_EQ(2u, AuxTableLriWritingPageTableMngr<FamilyType>::countLris(commandStreamReceiver.commandStream, 0));
+
+    auto usedSize = commandStreamReceiver.commandStream.getUsed();
+    commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
+
+    EXPECT_EQ(1u, pageTableManager->initContextAuxTableRegisterCalled);
+    EXPECT_EQ(0u, AuxTableLriWritingPageTableMngr<FamilyType>::countLris(commandStreamReceiver.commandStream, usedSize));
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenPageTableManagerWhenFlushingImmediateCmdListDispatchThenAuxTableRegistersAreProgrammedBeforeJumpingToImmediateStream) {
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    if (commandStreamReceiver.heaplessModeEnabled) {
+        GTEST_SKIP();
+    }
+    auto pageTableManager = new AuxTableLriWritingPageTableMngr<FamilyType>();
+    commandStreamReceiver.pageTableManager.reset(pageTableManager);
+
+    immediateFlushTaskFlags.dispatchOperation = NEO::AppendOperations::cmdList;
+    auto immediateStartOffset = commandStream.getUsed();
+    commandStreamReceiver.flushImmediateTask(commandStream, immediateStartOffset, immediateFlushTaskFlags, *pDevice);
+
+    EXPECT_EQ(1u, pageTableManager->initContextAuxTableRegisterCalled);
+    EXPECT_EQ(2u, AuxTableLriWritingPageTableMngr<FamilyType>::countLris(commandStreamReceiver.commandStream, 0));
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
+    auto bbStart = hwParser.getCommand<MI_BATCH_BUFFER_START>();
+    ASSERT_NE(nullptr, bbStart);
+    EXPECT_EQ(commandStream.getGpuBase() + immediateStartOffset, bbStart->getBatchBufferStartAddress());
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenAuxTableRegistersInitializationFailureWhenFlushingImmediateTaskThenInitializationIsRetriedOnNextFlush) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    if (commandStreamReceiver.heaplessModeEnabled) {
+        GTEST_SKIP();
+    }
+    auto pageTableManager = new MockGmmPageTableMngr();
+    pageTableManager->initContextAuxTableRegisterResult = false;
+    commandStreamReceiver.pageTableManager.reset(pageTableManager);
+
+    commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
+    EXPECT_TRUE(commandStreamReceiver.isPageTableManagerInitializationRequired());
+
+    pageTableManager->initContextAuxTableRegisterResult = true;
+    commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
+
+    EXPECT_EQ(2u, pageTableManager->initContextAuxTableRegisterCalled);
+    EXPECT_FALSE(commandStreamReceiver.isPageTableManagerInitializationRequired());
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenPageTableManagerRequiringInitializationWhenGettingRequiredCmdStreamSizeThenAuxTableRegistersAreIncluded) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.pageTableManager.reset();
+    auto dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
+    auto sizeWithoutPageTableManager = commandStreamReceiver.getRequiredCmdStreamSize(dispatchFlags, *pDevice);
+
+    commandStreamReceiver.pageTableManager.reset(new MockGmmPageTableMngr());
+    EXPECT_EQ(sizeWithoutPageTableManager + 2 * sizeof(typename FamilyType::MI_LOAD_REGISTER_IMM), commandStreamReceiver.getRequiredCmdStreamSize(dispatchFlags, *pDevice));
+
+    commandStreamReceiver.pageTableManagerInitialized = true;
+    EXPECT_EQ(sizeWithoutPageTableManager, commandStreamReceiver.getRequiredCmdStreamSize(dispatchFlags, *pDevice));
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenNoPageTableManagerThenAuxTableRegistersInitializationIsNotRequired) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.pageTableManager.reset();
+
+    EXPECT_FALSE(commandStreamReceiver.isPageTableManagerInitializationRequired());
+    EXPECT_EQ(0u, commandStreamReceiver.getCmdSizeForPageTableManagerRegisters());
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenPageTableManagerWhenFlushingPipeControlThenAuxTableRegistersAreProgrammedInSubmittedCsrStream) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.recordFlushedBatchBuffer = true;
+    auto pageTableManager = new AuxTableLriWritingPageTableMngr<FamilyType>();
+    commandStreamReceiver.pageTableManager.reset(pageTableManager);
+
+    auto usedSize = commandStreamReceiver.commandStream.getUsed();
+    EXPECT_EQ(SubmissionStatus::success, commandStreamReceiver.flushPipeControl(false));
+
+    EXPECT_EQ(1u, pageTableManager->initContextAuxTableRegisterCalled);
+    EXPECT_FALSE(commandStreamReceiver.isPageTableManagerInitializationRequired());
+    EXPECT_EQ(2u, AuxTableLriWritingPageTableMngr<FamilyType>::countLris(commandStreamReceiver.commandStream, usedSize));
+    EXPECT_EQ(usedSize, commandStreamReceiver.latestFlushedBatchBuffer.startOffset);
+
+    usedSize = commandStreamReceiver.commandStream.getUsed();
+    EXPECT_EQ(SubmissionStatus::success, commandStreamReceiver.flushPipeControl(false));
+
+    EXPECT_EQ(1u, pageTableManager->initContextAuxTableRegisterCalled);
+    EXPECT_EQ(0u, AuxTableLriWritingPageTableMngr<FamilyType>::countLris(commandStreamReceiver.commandStream, usedSize));
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenPageTableManagerWhenFlushingMiFlushDwThenAuxTableRegistersAreProgrammedInSubmittedCsrStream) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.recordFlushedBatchBuffer = true;
+    auto pageTableManager = new AuxTableLriWritingPageTableMngr<FamilyType>();
+    commandStreamReceiver.pageTableManager.reset(pageTableManager);
+
+    auto usedSize = commandStreamReceiver.commandStream.getUsed();
+    EXPECT_EQ(SubmissionStatus::success, commandStreamReceiver.flushMiFlushDW(false));
+
+    EXPECT_EQ(1u, pageTableManager->initContextAuxTableRegisterCalled);
+    EXPECT_FALSE(commandStreamReceiver.isPageTableManagerInitializationRequired());
+    EXPECT_EQ(2u, AuxTableLriWritingPageTableMngr<FamilyType>::countLris(commandStreamReceiver.commandStream, usedSize));
+    EXPECT_EQ(usedSize, commandStreamReceiver.latestFlushedBatchBuffer.startOffset);
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenAuxTableRegistersSubmissionFailureWhenFlushingPipeControlThenRegistersAreProgrammedAgainOnNextFlush) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto pageTableManager = new AuxTableLriWritingPageTableMngr<FamilyType>();
+    commandStreamReceiver.pageTableManager.reset(pageTableManager);
+
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::outOfMemory;
+    EXPECT_EQ(SubmissionStatus::outOfMemory, commandStreamReceiver.flushPipeControl(false));
+    EXPECT_TRUE(commandStreamReceiver.isPageTableManagerInitializationRequired());
+
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::success;
+    auto usedSize = commandStreamReceiver.commandStream.getUsed();
+    EXPECT_EQ(SubmissionStatus::success, commandStreamReceiver.flushPipeControl(false));
+
+    EXPECT_EQ(2u, pageTableManager->initContextAuxTableRegisterCalled);
+    EXPECT_FALSE(commandStreamReceiver.isPageTableManagerInitializationRequired());
+    EXPECT_EQ(2u, AuxTableLriWritingPageTableMngr<FamilyType>::countLris(commandStreamReceiver.commandStream, usedSize));
+
+    usedSize = commandStreamReceiver.commandStream.getUsed();
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::outOfMemory;
+    EXPECT_EQ(SubmissionStatus::outOfMemory, commandStreamReceiver.flushPipeControl(false));
+
+    EXPECT_FALSE(commandStreamReceiver.isPageTableManagerInitializationRequired());
+    EXPECT_EQ(0u, AuxTableLriWritingPageTableMngr<FamilyType>::countLris(commandStreamReceiver.commandStream, usedSize));
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenAuxTableRegistersSubmissionFailureWhenFlushingImmediateTaskThenRegistersAreProgrammedAgainOnNextFlush) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    if (commandStreamReceiver.heaplessModeEnabled) {
+        GTEST_SKIP();
+    }
+    auto pageTableManager = new AuxTableLriWritingPageTableMngr<FamilyType>();
+    commandStreamReceiver.pageTableManager.reset(pageTableManager);
+
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::outOfMemory;
+    commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
+    EXPECT_TRUE(commandStreamReceiver.isPageTableManagerInitializationRequired());
+
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::success;
+    auto usedSize = commandStreamReceiver.commandStream.getUsed();
+    commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
+
+    EXPECT_EQ(2u, pageTableManager->initContextAuxTableRegisterCalled);
+    EXPECT_FALSE(commandStreamReceiver.isPageTableManagerInitializationRequired());
+    EXPECT_EQ(2u, AuxTableLriWritingPageTableMngr<FamilyType>::countLris(commandStreamReceiver.commandStream, usedSize));
 }

@@ -9,11 +9,16 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_gmm_page_table_mngr.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/common/test_macros/test_base.h"
 
+#include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
+#include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
@@ -71,6 +76,45 @@ TEST_F(CommandQueueCreateMt, givenCommandQueueWhenHandleIndirectAllocationReside
     th.join();
     reinterpret_cast<WhiteBox<::L0::DriverHandle> *>(device->getDriverHandle())->svmAllocsManager = prevSvmAllocsManager;
     lock.unlock();
+    commandQueue->destroy();
+}
+
+HWTEST_F(CommandQueueCreateMt, givenPageTableManagerRequiringInitializationWhenExecutingCommandListsThenAuxTableRegistersAreProgrammedUnderCsrLock) {
+    struct LockCheckingCsr : public MockCsrHw2<FamilyType> {
+        using BaseClass = MockCsrHw2<FamilyType>;
+        using BaseClass::BaseClass;
+        NEO::SubmissionStatus flushTagUpdate() override {
+            std::thread([this] { csrLockedDuringTagUpdate = !this->tryObtainUniqueOwnership().owns_lock(); }).join();
+            return BaseClass::flushTagUpdate();
+        }
+        bool csrLockedDuringTagUpdate = false;
+    };
+    LockCheckingCsr csr(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+    csr.initializeTagAllocation();
+    csr.setupContext(*neoDevice->getDefaultEngine().osContext);
+    auto pageTableManager = new MockGmmPageTableMngr();
+    csr.pageTableManager.reset(pageTableManager);
+
+    const ze_command_queue_desc_t desc{};
+    ze_result_t returnValue;
+    L0::CommandQueue *commandQueue = CommandQueue::create(device,
+                                                          &csr,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          false,
+                                                          returnValue);
+    ASSERT_NE(nullptr, commandQueue);
+
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::compute, 0u, returnValue, false));
+    auto commandListHandle = commandList->toHandle();
+    commandList->close();
+    CommandListExecutionInternalOptions internalOptions = {};
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandLists(1, &commandListHandle, nullptr, internalOptions));
+    EXPECT_EQ(1u, pageTableManager->initContextAuxTableRegisterCalled);
+    EXPECT_TRUE(csr.csrLockedDuringTagUpdate);
+
     commandQueue->destroy();
 }
 

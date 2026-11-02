@@ -246,6 +246,9 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     size_t getFrontEndPrologueSize() const;
 
     size_t getCmdSizeForPrologue() const;
+    size_t getCmdSizeForPageTableManagerRegisters() const;
+    void programPageTableManagerRegisters();
+    void handlePageTableManagerRegistersSubmission(SubmissionStatus status);
     void programExceptions(LinearStream &csr, Device &device);
     size_t getCmdSizeForExceptions() const;
     bool shouldProgramExceptions() const;

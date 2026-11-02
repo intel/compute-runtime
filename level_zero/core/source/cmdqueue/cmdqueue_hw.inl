@@ -114,6 +114,14 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     } else {
         lockCSR = this->csr->obtainUniqueOwnership();
         this->startingCmdBuffer = &this->commandStream;
+
+        if (this->csr->isPageTableManagerInitializationRequired()) {
+            // The AUX table registers are written to the CSR stream, so program them with a tag update
+            auto submissionStatus = this->csr->flushTagUpdate();
+            if (submissionStatus != NEO::SubmissionStatus::success) {
+                return getErrorCodeForSubmissionStatus(submissionStatus);
+            }
+        }
     }
 
     this->swTagCounters.reset();

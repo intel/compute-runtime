@@ -165,6 +165,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
 
     virtual GmmPageTableMngr *createPageTableManager() { return nullptr; }
     bool needsPageTableManager() const;
+    bool isPageTableManagerInitializationRequired() const { return pageTableManager.get() != nullptr && !pageTableManagerInitialized; }
 
     MOCKABLE_VIRTUAL WaitStatus waitForTaskCount(TaskCountType requiredTaskCount);
     WaitStatus waitForTaskCountAndCleanAllocationList(TaskCountType requiredTaskCount, uint32_t allocationUsage);
@@ -861,6 +862,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
 
     bool localMemoryEnabled = false;
     bool pageTableManagerInitialized = false;
+    bool pageTableManagerRegistersSubmissionPending = false;
 
     bool useNewResourceImplicitFlush = false;
     bool newResources = false;
