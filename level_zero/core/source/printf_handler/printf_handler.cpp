@@ -71,8 +71,7 @@ void PrintfHandler::printOutput(NEO::GraphicsAllocation *printfBuffer, Device *d
 
     NEO::PrintFormatter printfFormatter{
         printfOutputBuffer,
-        printfOutputSize,
-        false};
+        printfOutputSize};
     printfFormatter.setStartParsingOffset(alreadyPrintedSize);
     printfFormatter.printKernelOutput();
 

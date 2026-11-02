@@ -2937,32 +2937,6 @@ HWTEST_F(KernelTest, givenKernelWhenDebugFlagToUseMaxSimdForCalculationsIsUsedTh
     EXPECT_EQ(256u, maxKernelWkgSize);
 }
 
-TEST(KernelTest, givenKernelWithKernelInfoWith32bitPointerSizeThenReport32bit) {
-    KernelInfo info;
-    info.kernelDescriptor.kernelAttributes.gpuPointerSize = 4;
-
-    const auto rootDeviceIndex = 0u;
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr, rootDeviceIndex));
-    MockContext context;
-    MockProgram program(&context, false, toClDeviceVector(*device));
-    std::unique_ptr<MockKernel> kernel(new MockKernel(&program, info, *device));
-
-    EXPECT_TRUE(kernel->is32Bit());
-}
-
-TEST(KernelTest, givenKernelWithKernelInfoWith64bitPointerSizeThenReport64bit) {
-    KernelInfo info;
-    info.kernelDescriptor.kernelAttributes.gpuPointerSize = 8;
-
-    const auto rootDeviceIndex = 0u;
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr, rootDeviceIndex));
-    MockContext context;
-    MockProgram program(&context, false, toClDeviceVector(*device));
-    std::unique_ptr<MockKernel> kernel(new MockKernel(&program, info, *device));
-
-    EXPECT_FALSE(kernel->is32Bit());
-}
-
 TEST(KernelTest, givenBuiltInProgramWhenCallingInitializeThenAuxTranslationRequiredIsFalse) {
     DebugManagerStateRestore restore;
     debugManager.flags.RenderCompressedBuffersEnabled.set(1);
@@ -3589,7 +3563,6 @@ class KernelCreateTest : public ::testing::Test {
 
 TEST_F(KernelCreateTest, whenInitFailedThenReturnNull) {
     KernelInfo info{};
-    info.kernelDescriptor.kernelAttributes.gpuPointerSize = 8;
 
     cl_int retVal{CL_SUCCESS};
     auto ret = Kernel::create<MockKernel>(&mockProgram, info, mockProgram.mDevice, retVal);

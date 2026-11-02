@@ -650,14 +650,12 @@ HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfBlockedByEventWhenEventUn
     EXPECT_STREQ("test", output.c_str());
 }
 
-HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfWithStringMapDisbaledAndImplicitArgsBlockedByEventWhenEventUnblockedThenNoOutputPrinted) {
+HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithImplicitArgsAndWithoutPrintfBlockedByEventWhenEventUnblockedThenNoOutputPrinted) {
     auto userEvent = makeReleaseable<UserEvent>(context);
 
     MockKernelWithInternals mockKernel(*context);
-    std::string testString = "test";
     mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.flags.usesPrintf = false;
     UnitTestHelper<FamilyType>::adjustKernelDescriptorForImplicitArgs(mockKernel.kernelInfo.kernelDescriptor);
-    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::oclElf;
     mockKernel.mockKernel->pImplicitArgs = std::make_unique<ImplicitArgs>();
     *mockKernel.mockKernel->pImplicitArgs = {};
 

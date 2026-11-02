@@ -42,8 +42,7 @@ static_assert(sizeof(PrintfDataType) == sizeof(int));
 
 class PrintFormatter {
   public:
-    PrintFormatter(const uint8_t *printfOutputBuffer, uint32_t printfOutputBufferMaxSize,
-                   bool using32BitPointers);
+    PrintFormatter(const uint8_t *printfOutputBuffer, uint32_t printfOutputBufferMaxSize);
     void printKernelOutput(const std::function<void(char *)> &print = [](char *str) { printToStdout(str); });
     void setInitialOffset(uint32_t offset) {
         initialOffset = offset;
@@ -54,12 +53,12 @@ class PrintFormatter {
     constexpr static size_t maxSinglePrintStringLength = 16 * MemoryConstants::kiloByte;
 
     constexpr static uint64_t inlineStringFormatFlag = 0x8000000000000000ull;
+    constexpr static uint64_t endOfDataMarker = 0xffffffff;
 
   protected:
     void printString(const char *formatString, const std::function<void(char *)> &print);
     size_t printToken(char *output, size_t size, const char *formatString);
     size_t printStringToken(char *output, size_t size, const char *formatString);
-    size_t printPointerToken(char *output, size_t size, const char *formatString);
     void skipToken(PrintfDataType type);
 
     char escapeChar(char escape);
@@ -147,8 +146,6 @@ class PrintFormatter {
 
     const uint8_t *printfOutputBuffer = nullptr; // buffer extracted from the kernel, contains values to be printed
     uint32_t printfOutputBufferSize = 0;         // size of the data contained in the buffer
-
-    bool using32BitPointers = false;
 
     uint32_t currentOffset = 0;      // current position in currently parsed buffer
     uint32_t initialOffset = 0;      // initial offset - reserved memory for header in buffer

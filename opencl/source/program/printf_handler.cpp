@@ -107,7 +107,7 @@ bool PrintfHandler::printEnqueueOutput() {
         }
     }
     printfOutputBuffer[printfOutputSize - 1] = 0;
-    PrintFormatter printFormatter(printfOutputBuffer, printfOutputSize, kernel->is32Bit());
+    PrintFormatter printFormatter(printfOutputBuffer, printfOutputSize);
     printFormatter.printKernelOutput();
 
     return true;

@@ -134,7 +134,6 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
         uint8_t workgroupWalkOrder[3] = {0, 1, 2};
         uint8_t workgroupDimensionsOrder[3] = {0, 1, 2};
 
-        uint8_t gpuPointerSize = 0;
         uint8_t simdSize = 8;
         uint8_t numLocalIdChannels = 0;
         uint8_t localId[3] = {0U, 0U, 0U};

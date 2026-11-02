@@ -284,10 +284,6 @@ class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMova
         return executionType;
     }
 
-    bool is32Bit() const {
-        return kernelInfo.kernelDescriptor.kernelAttributes.gpuPointerSize == 4;
-    }
-
     std::vector<PatchInfoData> &getPatchInfoDataList() { return patchInfoDataList; };
     bool usesImages() const {
         return usingImages;

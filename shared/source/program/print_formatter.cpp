@@ -14,11 +14,9 @@
 
 namespace NEO {
 
-PrintFormatter::PrintFormatter(const uint8_t *printfOutputBuffer, uint32_t printfOutputBufferMaxSize,
-                               bool using32BitPointers)
+PrintFormatter::PrintFormatter(const uint8_t *printfOutputBuffer, uint32_t printfOutputBufferMaxSize)
     : printfOutputBuffer(printfOutputBuffer),
-      printfOutputBufferSize(printfOutputBufferMaxSize),
-      using32BitPointers(using32BitPointers) {
+      printfOutputBufferSize(printfOutputBufferMaxSize) {
 
     output.reset(new char[maxSinglePrintStringLength]);
 }
@@ -38,7 +36,7 @@ void PrintFormatter::printKernelOutput(const std::function<void(char *)> &print)
     while (currentOffset + sizeof(char *) <= printfOutputBufferSize) {
         char *formatString = nullptr;
         read(&formatString);
-        if (formatString == reinterpret_cast<char *>(static_cast<uintptr_t>(0xffffffff))) {
+        if (formatString == reinterpret_cast<char *>(static_cast<uintptr_t>(endOfDataMarker))) {
             break;
         }
         const char *stringToPrint = formatString;
@@ -176,7 +174,7 @@ size_t PrintFormatter::printToken(char *output, size_t size, const char *formatS
         return 0;
     }
     case PrintfDataType::pointerType:
-        return printPointerToken(output, size, formatString);
+        return typedPrintToken<uint64_t>(output, size, formatString);
     case PrintfDataType::doubleType:
         return typedPrintToken<double>(output, size, formatString);
     case PrintfDataType::vectorByteType:
@@ -246,17 +244,6 @@ void PrintFormatter::skipToken(PrintfDataType type) {
     default:
         return;
     }
-}
-
-size_t PrintFormatter::printPointerToken(char *output, size_t size, const char *formatString) {
-    uint64_t value = {0};
-    read(&value);
-
-    if (using32BitPointers) {
-        value &= 0x00000000FFFFFFFF;
-    }
-
-    return simpleSprintf(output, size, formatString, value);
 }
 
 char PrintFormatter::escapeChar(char escape) {
