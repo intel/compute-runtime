@@ -125,6 +125,46 @@ TEST_F(RegularEventsManagerTests, givenExhaustedPoolAndCompletedPendingEventWhen
     manager.returnEvent(event, false);
 }
 
+TEST_F(RegularEventsManagerTests, givenExhaustedPoolAndRunOfCompletedPendingEventsWhenObtainingEventThenWholeRunLeavesPendingListAndEventsAfterIncompleteOneStay) {
+    WhiteBoxRegularEventsManager manager(context->toHandle(), {device->toHandle()});
+
+    ze_event_handle_t pendingEvents[4] = {};
+    for (auto &pendingEvent : pendingEvents) {
+        pendingEvent = manager.obtainEvent(false);
+        ASSERT_NE(nullptr, pendingEvent);
+        zeEventHostReset(pendingEvent);
+        manager.returnEvent(pendingEvent, false);
+    }
+    ASSERT_EQ(4u, manager.hostVisiblePendingCount());
+
+    zeEventHostSignal(pendingEvents[0]);
+    zeEventHostSignal(pendingEvents[1]);
+    zeEventHostSignal(pendingEvents[3]);
+    manager.exhaustHostVisiblePool();
+
+    auto firstEvent = manager.obtainEvent(false);
+    EXPECT_EQ(pendingEvents[1], firstEvent);
+    EXPECT_EQ(2u, manager.hostVisiblePendingCount());
+    EXPECT_EQ(1u, manager.hostVisibleFreeCount());
+
+    auto secondEvent = manager.obtainEvent(false);
+    EXPECT_EQ(pendingEvents[0], secondEvent);
+    EXPECT_EQ(2u, manager.hostVisiblePendingCount());
+    EXPECT_EQ(0u, manager.hostVisibleFreeCount());
+
+    auto thirdEvent = manager.obtainEvent(false);
+    EXPECT_EQ(pendingEvents[3], thirdEvent);
+    EXPECT_EQ(1u, manager.hostVisiblePendingCount());
+    EXPECT_EQ(0u, manager.hostVisibleFreeCount());
+    EXPECT_EQ(1u, manager.hostVisiblePoolCount());
+
+    zeEventHostSignal(pendingEvents[2]);
+    for (auto event : {firstEvent, secondEvent, thirdEvent}) {
+        zeEventHostSignal(event);
+        manager.returnEvent(event, false);
+    }
+}
+
 TEST_F(RegularEventsManagerTests, givenExhaustedPoolAndStillIncompletePendingEventWhenObtainingEventThenNewPoolIsCreated) {
     WhiteBoxRegularEventsManager manager(context->toHandle(), {device->toHandle()});
 

@@ -9,6 +9,7 @@
 
 #include "level_zero/api/opencl/source/l0_dispatch/leo_l0_dispatch.h"
 
+#include <algorithm>
 #include <utility>
 
 namespace NEO {
@@ -68,21 +69,21 @@ void RegularEventsManager::returnEvent(ze_event_handle_t event, bool timestamp) 
 }
 
 ze_event_handle_t RegularEventsManager::takeCompletedPendingEvent(EventPoolGroup &group) {
-    for (auto it = group.pendingEvents.begin(); it != group.pendingEvents.end(); ++it) {
-        if (zeEventQueryStatus(*it) != ZE_RESULT_SUCCESS) {
-            continue;
-        }
-
-        auto event = *it;
-        group.pendingEvents.erase(it);
-
-        if (ZE_RESULT_SUCCESS == zeEventHostReset(event)) {
-            return event;
-        }
-        zeEventDestroy(event);
+    auto isCompleted = [](ze_event_handle_t event) { return zeEventQueryStatus(event) == ZE_RESULT_SUCCESS; };
+    auto completedBegin = std::find_if(group.pendingEvents.begin(), group.pendingEvents.end(), isCompleted);
+    if (completedBegin == group.pendingEvents.end()) {
         return nullptr;
     }
+    auto completedEnd = std::find_if_not(std::next(completedBegin), group.pendingEvents.end(), isCompleted);
+    group.freeEvents.insert(group.freeEvents.end(), completedBegin, completedEnd);
+    group.pendingEvents.erase(completedBegin, completedEnd);
 
+    auto event = group.freeEvents.back();
+    group.freeEvents.pop_back();
+    if (ZE_RESULT_SUCCESS == zeEventHostReset(event)) {
+        return event;
+    }
+    zeEventDestroy(event);
     return nullptr;
 }
 
