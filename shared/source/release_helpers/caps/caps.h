@@ -57,7 +57,6 @@ struct Caps {
     bool initDeviceWithFirstSubmissionRequired = false;
     bool latePreemptionStartSupported = false;
     bool localOnlyAllowed = false;
-    bool matrixMultiplyAccumulateSupported = false;
     bool memSetExtendedPayloadSupported = false;
     bool misalignedUserPtr2WayCoherent = false;
     bool newCoherencyModelSupported = false;

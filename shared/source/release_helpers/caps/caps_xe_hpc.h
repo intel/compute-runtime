@@ -53,7 +53,6 @@ struct CapsXeHpcCore {
 
 struct CapsPvc : CapsXeHpcCore {
     static constexpr bool dotProductAccumulateSystolicSupported = true;
-    static constexpr bool matrixMultiplyAccumulateSupported = true;
 };
 
 struct CapsPvcVg : CapsXeHpcCore {};

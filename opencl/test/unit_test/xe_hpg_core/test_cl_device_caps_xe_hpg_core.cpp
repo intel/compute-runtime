@@ -33,7 +33,7 @@ XE_HPG_CORETEST_F(XeHpgCoreClDeviceCaps, giveDeviceExtensionsWhenDeviceCapsIniti
     EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_intel_create_buffer_with_properties")));
     EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_intel_subgroup_local_block_io")));
 
-    EXPECT_EQ(hwInfoCaps.matrixMultiplyAccumulateSupported, hasSubstr(caps.deviceExtensions, std::string("cl_intel_subgroup_matrix_multiply_accumulate")));
+    EXPECT_EQ(hwInfoCaps.dotProductAccumulateSystolicSupported, hasSubstr(caps.deviceExtensions, std::string("cl_intel_subgroup_matrix_multiply_accumulate")));
     EXPECT_EQ(hwInfoCaps.splitMatrixMultiplyAccumulateSupported, hasSubstr(caps.deviceExtensions, std::string("cl_intel_subgroup_split_matrix_multiply_accumulate")));
 
     EXPECT_EQ(hwInfoCaps.bFloat16ConversionSupported, hasSubstr(caps.deviceExtensions, std::string("cl_intel_bfloat16_conversions")));

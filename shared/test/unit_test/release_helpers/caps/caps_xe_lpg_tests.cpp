@@ -88,7 +88,6 @@ TEST(CapsXeLpgTest, givenMtlUReleaseWhenMaterializingCapsThenCapabilitiesAreCorr
     EXPECT_FALSE(capsMtlUA0.initDeviceWithFirstSubmissionRequired);
     EXPECT_FALSE(capsMtlUA0.latePreemptionStartSupported);
     EXPECT_TRUE(capsMtlUA0.localOnlyAllowed);
-    EXPECT_FALSE(capsMtlUA0.matrixMultiplyAccumulateSupported);
     EXPECT_FALSE(capsMtlUA0.memSetExtendedPayloadSupported);
     EXPECT_FALSE(capsMtlUB0.memSetExtendedPayloadSupported);
     EXPECT_FALSE(capsMtlUA0.misalignedUserPtr2WayCoherent);
@@ -157,7 +156,6 @@ TEST(CapsXeLpgTest, givenMtlUReleaseWhenMaterializingCapsThenCapabilitiesAreCorr
     EXPECT_FALSE(capsMtlUB0.initDeviceWithFirstSubmissionRequired);
     EXPECT_FALSE(capsMtlUB0.latePreemptionStartSupported);
     EXPECT_TRUE(capsMtlUB0.localOnlyAllowed);
-    EXPECT_FALSE(capsMtlUB0.matrixMultiplyAccumulateSupported);
     EXPECT_FALSE(capsMtlUB0.misalignedUserPtr2WayCoherent);
     EXPECT_TRUE(capsMtlUB0.newCoherencyModelSupported);
     EXPECT_TRUE(capsMtlUB0.newResidencyModelSupported);
@@ -231,7 +229,6 @@ TEST(CapsXeLpgTest, givenMtlHReleaseWhenMaterializingCapsThenCapabilitiesAreCorr
     EXPECT_FALSE(capsMtlHA0.initDeviceWithFirstSubmissionRequired);
     EXPECT_FALSE(capsMtlHA0.latePreemptionStartSupported);
     EXPECT_TRUE(capsMtlHA0.localOnlyAllowed);
-    EXPECT_FALSE(capsMtlHA0.matrixMultiplyAccumulateSupported);
     EXPECT_FALSE(capsMtlHA0.memSetExtendedPayloadSupported);
     EXPECT_FALSE(capsMtlHB0.memSetExtendedPayloadSupported);
     EXPECT_FALSE(capsMtlHA0.misalignedUserPtr2WayCoherent);
@@ -300,7 +297,6 @@ TEST(CapsXeLpgTest, givenMtlHReleaseWhenMaterializingCapsThenCapabilitiesAreCorr
     EXPECT_FALSE(capsMtlHB0.initDeviceWithFirstSubmissionRequired);
     EXPECT_FALSE(capsMtlHB0.latePreemptionStartSupported);
     EXPECT_TRUE(capsMtlHB0.localOnlyAllowed);
-    EXPECT_FALSE(capsMtlHB0.matrixMultiplyAccumulateSupported);
     EXPECT_FALSE(capsMtlHB0.misalignedUserPtr2WayCoherent);
     EXPECT_TRUE(capsMtlHB0.newCoherencyModelSupported);
     EXPECT_TRUE(capsMtlHB0.newResidencyModelSupported);
@@ -371,7 +367,6 @@ TEST(CapsXeLpgTest, givenArlHReleaseWhenMaterializingCapsThenCapabilitiesAreCorr
     EXPECT_FALSE(capsArlH.initDeviceWithFirstSubmissionRequired);
     EXPECT_FALSE(capsArlH.latePreemptionStartSupported);
     EXPECT_TRUE(capsArlH.localOnlyAllowed);
-    EXPECT_TRUE(capsArlH.matrixMultiplyAccumulateSupported);
     EXPECT_FALSE(capsArlH.memSetExtendedPayloadSupported);
     EXPECT_FALSE(capsArlH.misalignedUserPtr2WayCoherent);
     EXPECT_TRUE(capsArlH.newCoherencyModelSupported);

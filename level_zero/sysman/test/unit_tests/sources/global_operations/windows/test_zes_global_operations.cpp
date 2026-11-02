@@ -649,7 +649,7 @@ TEST_F(SysmanDevicePropertiesFixture,
     mockHardwareInfo.gtSystemInfo.MaxEuPerSubSlice = 8;
     mockHardwareInfo.gtSystemInfo.EUCount = 64;
     mockHardwareInfo.gtSystemInfo.ThreadCount = 512;
-    mockHardwareInfo.caps.matrixMultiplyAccumulateSupported = true;
+    mockHardwareInfo.caps.dotProductAccumulateSystolicSupported = true;
     device->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->setHwInfoAndInitHelpers(&mockHardwareInfo);
 
     zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
@@ -674,7 +674,7 @@ TEST_F(SysmanDevicePropertiesFixture,
     mockHardwareInfo.gtSystemInfo.MaxEuPerSubSlice = 8;
     mockHardwareInfo.gtSystemInfo.EUCount = 64;
     mockHardwareInfo.gtSystemInfo.ThreadCount = 512;
-    mockHardwareInfo.caps.matrixMultiplyAccumulateSupported = false;
+    mockHardwareInfo.caps.dotProductAccumulateSystolicSupported = false;
     device->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->setHwInfoAndInitHelpers(&mockHardwareInfo);
 
     zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
@@ -699,7 +699,7 @@ TEST_F(SysmanDevicePropertiesFixture,
     mockHardwareInfo.gtSystemInfo.MaxEuPerSubSlice = 8;
     mockHardwareInfo.gtSystemInfo.EUCount = 52;
     mockHardwareInfo.gtSystemInfo.ThreadCount = 416;
-    mockHardwareInfo.caps.matrixMultiplyAccumulateSupported = true;
+    mockHardwareInfo.caps.dotProductAccumulateSystolicSupported = true;
     device->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->setHwInfoAndInitHelpers(&mockHardwareInfo);
 
     zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};

@@ -20,7 +20,7 @@ inline cl_command_queue_capabilities_intel ClGfxCoreHelperHw<GfxFamily>::getAddi
 template <typename GfxFamily>
 cl_device_feature_capabilities_intel ClGfxCoreHelperHw<GfxFamily>::getSupportedDeviceFeatureCapabilities(const HardwareInfo &hwInfo) const {
 
-    if (hwInfo.caps.matrixMultiplyAccumulateSupported) {
+    if (hwInfo.caps.dotProductAccumulateSystolicSupported) {
         return CL_DEVICE_FEATURE_FLAG_DPAS_INTEL | CL_DEVICE_FEATURE_FLAG_DP4A_INTEL;
     }
     return CL_DEVICE_FEATURE_FLAG_DP4A_INTEL;

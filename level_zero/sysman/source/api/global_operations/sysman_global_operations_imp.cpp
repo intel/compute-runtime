@@ -173,7 +173,7 @@ ze_result_t GlobalOperationsImp::deviceGetProperties(zes_device_properties_t *pP
             computeProperties->numSlices = hardwareInfo.gtSystemInfo.SliceCount;
             computeProperties->numCores = hardwareInfo.gtSystemInfo.SubSliceCount;
             computeProperties->numVectorEngines = numEUs;
-            computeProperties->numMatrixEngines = hardwareInfo.caps.matrixMultiplyAccumulateSupported ? numEUs : 0;
+            computeProperties->numMatrixEngines = hardwareInfo.caps.dotProductAccumulateSystolicSupported ? numEUs : 0;
             computeProperties->numEUs = numEUs;
             computeProperties->numThreads = hardwareInfo.gtSystemInfo.ThreadCount;
         } else if (pNext->stype == ZES_INTEL_STRUCTURE_TYPE_DEVICE_SOC_UID_EXP_PROPERTIES) {

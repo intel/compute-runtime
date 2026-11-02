@@ -296,7 +296,7 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
     }
     case CL_DEVICE_FEATURE_CAPABILITIES_INTEL: {
         const auto &hwInfo = getDevice().getHardwareInfo();
-        if (hwInfo.caps.matrixMultiplyAccumulateSupported) {
+        if (hwInfo.caps.dotProductAccumulateSystolicSupported) {
             param.bitfield = CL_DEVICE_FEATURE_FLAG_DPAS_INTEL | CL_DEVICE_FEATURE_FLAG_DP4A_INTEL;
         } else {
             param.bitfield = CL_DEVICE_FEATURE_FLAG_DP4A_INTEL;

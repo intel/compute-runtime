@@ -133,7 +133,7 @@ std::string CompilerProductHelper::getDeviceExtensions(const HardwareInfo &hwInf
 
     extensions += "cl_intel_subgroup_local_block_io ";
 
-    if (hwInfo.caps.matrixMultiplyAccumulateSupported) {
+    if (hwInfo.caps.dotProductAccumulateSystolicSupported) {
         extensions += "cl_intel_subgroup_matrix_multiply_accumulate ";
     }
 
