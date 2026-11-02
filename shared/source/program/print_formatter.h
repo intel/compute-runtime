@@ -60,11 +60,13 @@ class PrintFormatter {
     size_t printToken(char *output, size_t size, const char *formatString);
     size_t printStringToken(char *output, size_t size, const char *formatString);
     size_t printPointerToken(char *output, size_t size, const char *formatString);
+    void skipToken(PrintfDataType type);
 
     char escapeChar(char escape);
     bool isConversionSpecifier(char c);
     void stripVectorFormat(const char *format, char *stripped);
     void stripVectorTypeConversion(char *format);
+    void stripStringLengthModifiers(char *format);
 
     template <class T>
     bool read(T *value) {
@@ -123,6 +125,22 @@ class PrintFormatter {
         }
 
         return charactersPrinted;
+    }
+
+    template <class T>
+    void skipTypedToken() {
+        T value{0};
+        read(&value);
+        currentOffset = alignUp(currentOffset, sizeof(uint32_t));
+    }
+
+    template <class T>
+    void skipTypedVectorToken() {
+        int valueCount = 0;
+        read(&valueCount);
+        for (int i = 0; i < valueCount; i++) {
+            skipTypedToken<T>();
+        }
     }
 
     std::unique_ptr<char[]> output;

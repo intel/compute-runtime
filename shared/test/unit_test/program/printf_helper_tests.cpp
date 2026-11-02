@@ -639,6 +639,165 @@ TEST_F(PrintFormatterTest, GivenNullTokenWhenPrintingThenNullIsInserted) {
     EXPECT_STREQ("(null)", actualOutput);
 }
 
+std::pair<std::string, std::string> stringLengthModifierValues[] = {
+    {"<%ls>|%d", "<wide>|7"},
+    {"<%Ls>|%d", "<wide>|7"},
+    {"<%ws>|%d", "<wide>|7"},
+    {"<%lls>|%d", "<wide>|7"},
+    {"<%-6.3ls>|%d", "<wid   >|7"},
+};
+
+class PrintfStringLengthModifierTest : public PrintFormatterTest,
+                                       public ::testing::WithParamInterface<std::pair<std::string, std::string>> {};
+
+TEST_P(PrintfStringLengthModifierTest, GivenNarrowStringForStringConversionWithLengthModifierWhenPrintingThenStringAndNextArgumentArePrinted) {
+    auto input = GetParam();
+
+    auto stringIndex = injectFormatString(input.first);
+    storeData(stringIndex);
+    injectStringValue(injectFormatString("wide"));
+    injectValue(static_cast<int32_t>(7));
+
+    char actualOutput[maxPrintfOutputLength];
+
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength - 1); });
+
+    EXPECT_STREQ(input.second.c_str(), actualOutput);
+}
+
+INSTANTIATE_TEST_SUITE_P(PrintfStringLengthModifierTest,
+                         PrintfStringLengthModifierTest,
+                         ::testing::ValuesIn(stringLengthModifierValues));
+
+TEST_F(PrintFormatterTest, GivenUnknownConversionFollowedByDirectiveWhenPrintingThenEachDirectiveConsumesItsOwnArgument) {
+    auto stringIndex = injectFormatString("%y%d|");
+    storeData(stringIndex);
+    injectValue(static_cast<int32_t>(1));
+    injectValue(static_cast<int32_t>(7));
+
+    char actualOutput[maxPrintfOutputLength];
+
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength - 1); });
+
+    EXPECT_STREQ("7|", actualOutput);
+}
+
+TEST_F(PrintFormatterTest, GivenStringArgumentForNonStringConversionWhenPrintingThenNothingIsPrintedForItAndNextArgumentIsPrinted) {
+    auto stringIndex = injectFormatString("%d%d|");
+    storeData(stringIndex);
+    injectStringValue(injectFormatString("abc"));
+    injectValue(static_cast<int32_t>(7));
+
+    char actualOutput[maxPrintfOutputLength];
+
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength - 1); });
+
+    EXPECT_STREQ("7|", actualOutput);
+}
+
+TEST_F(PrintFormatterTest, GivenArgumentsOfEveryTypeForUnknownConversionsWhenPrintingThenAllAreSkippedAndNextArgumentIsPrinted) {
+    auto stringIndex = injectFormatString("%y%y%y%y%y%y%y%y%y%y%y%y%y%y%d|");
+    storeData(stringIndex);
+    injectValue(static_cast<int8_t>(1));
+    injectValue(static_cast<int16_t>(1));
+    injectValue(static_cast<int32_t>(1));
+    injectValue(1.0f);
+    injectValue(static_cast<int64_t>(1));
+    injectStringValue(injectFormatString("abc"));
+    storeData(PrintfDataType::pointerType);
+    storeData<uint64_t>(1);
+    injectValue(1.0);
+
+    storeData(PrintfDataType::vectorByteType);
+    storeData(4);
+    for (int i = 0; i < 4; i++) {
+        storeData<int8_t>(1);
+    }
+    for (int i = 0; i < 3; i++) {
+        storeData<int32_t>(0);
+    }
+
+    storeData(PrintfDataType::vectorShortType);
+    storeData(2);
+    storeData<int16_t>(1);
+    storeData<int16_t>(1);
+    storeData<int32_t>(0);
+
+    storeData(PrintfDataType::vectorIntType);
+    storeData(2);
+    storeData<int32_t>(1);
+    storeData<int32_t>(1);
+
+    storeData(PrintfDataType::vectorLongType);
+    storeData(2);
+    storeData<int64_t>(1);
+    storeData<int64_t>(1);
+
+    storeData(PrintfDataType::vectorFloatType);
+    storeData(2);
+    storeData(1.0f);
+    storeData(1.0f);
+
+    storeData(PrintfDataType::vectorDoubleType);
+    storeData(2);
+    storeData(1.0);
+    storeData(1.0);
+
+    injectValue(static_cast<int32_t>(7));
+
+    char actualOutput[maxPrintfOutputLength];
+
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength - 1); });
+
+    EXPECT_STREQ("7|", actualOutput);
+}
+
+TEST_F(PrintFormatterTest, GivenVectorArgumentForStringConversionWhenPrintingThenNullIsInsertedAndNextArgumentIsPrinted) {
+    auto stringIndex = injectFormatString("%s|%d");
+    storeData(stringIndex);
+    storeData(PrintfDataType::vectorIntType);
+    storeData(2);
+    storeData(1);
+    storeData(2);
+    injectValue(static_cast<int32_t>(7));
+
+    char actualOutput[maxPrintfOutputLength];
+
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength - 1); });
+
+    EXPECT_STREQ("(null)|7", actualOutput);
+}
+
+TEST_F(PrintFormatterTest, GivenVectorArgumentForStringConversionAtEndOfOutputWhenPrintingThenOnlyNullIsInserted) {
+    std::string literal(PrintFormatter::maxSinglePrintStringLength - 7, 'a');
+    auto stringIndex = injectFormatString(literal + "%s");
+    storeData(stringIndex);
+    storeData(PrintfDataType::vectorIntType);
+    storeData(16);
+    for (int i = 0; i < 16; i++) {
+        storeData(i);
+    }
+
+    std::string actualOutput;
+
+    printFormatter->printKernelOutput([&actualOutput](char *str) { actualOutput = str; });
+
+    EXPECT_EQ(literal + "(null)", actualOutput);
+}
+
+TEST_F(PrintFormatterTest, GivenLongLengthModifierWithoutConversionWhenPrintingThenNextArgumentIsPrinted) {
+    auto stringIndex = injectFormatString("%l%d|");
+    storeData(stringIndex);
+    injectValue(static_cast<int64_t>(1));
+    injectValue(static_cast<int32_t>(7));
+
+    char actualOutput[maxPrintfOutputLength];
+
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength - 1); });
+
+    EXPECT_STREQ("7|", actualOutput);
+}
+
 // ----------------------- Vector channel count ---------------------------------
 TEST_F(PrintFormatterTest, GivenVector2WhenPrintingThenAllValuesAreInserted) {
     int channelCount = 2;
@@ -1051,6 +1210,17 @@ TEST(printToStdoutTest, GivenStringWhenPrintingToStdoutThenOutputOccurs) {
     printToStdout("test");
     std::string output = capture.getCapturedStdout();
     EXPECT_STREQ("test", output.c_str());
+}
+
+TEST(simpleSprintf, GivenFormatRejectedByCrtWhenSimpleSprintfIsCalledThenZeroIsReturned) {
+    if (is32bit) {
+        GTEST_SKIP();
+    }
+    const char narrowString[8] = "wide";
+    char out[1024] = {};
+
+    EXPECT_EQ(0U, simpleSprintf(out, sizeof(out), "%ls", narrowString));
+    EXPECT_EQ(0U, simpleSprintf<uint64_t>(out, sizeof(out), "%ls", reinterpret_cast<uint64_t>(narrowString)));
 }
 
 TEST(simpleSprintf, GivenEmptyFormatStringWhenSimpleSprintfIsCalledThenBailOutWith0) {

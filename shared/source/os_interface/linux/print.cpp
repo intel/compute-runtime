@@ -1,13 +1,11 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/os_interface/print.h"
-
-#include "shared/source/helpers/debug_helpers.h"
 
 #include <cstdint>
 #include <cstdio>
@@ -26,14 +24,12 @@ void printToStderr(const char *str) {
 template <class T>
 size_t simpleSprintf(char *output, size_t outputSize, const char *format, T value) {
     auto retVal = snprintf(output, outputSize, format, value);
-    UNRECOVERABLE_IF(retVal < 0);
-    return static_cast<size_t>(retVal);
+    return retVal < 0 ? 0 : static_cast<size_t>(retVal);
 }
 
 size_t simpleSprintf(char *output, size_t outputSize, const char *format, const char *value) {
     auto retVal = snprintf(output, outputSize, format, value);
-    UNRECOVERABLE_IF(retVal < 0);
-    return static_cast<size_t>(retVal);
+    return retVal < 0 ? 0 : static_cast<size_t>(retVal);
 }
 
 template size_t simpleSprintf<float>(char *output, size_t output_size, const char *format, float value);

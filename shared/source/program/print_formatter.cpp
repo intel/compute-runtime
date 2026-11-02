@@ -10,6 +10,7 @@
 #include "shared/source/helpers/string.h"
 
 #include <iostream>
+#include <string_view>
 
 namespace NEO {
 
@@ -73,14 +74,19 @@ void PrintFormatter::printString(const char *formatString, const std::function<v
                 continue;
             }
 
-            while (isConversionSpecifier(formatString[end++]) == false && end < length) {
+            while (isConversionSpecifier(formatString[end++]) == false && end < length && formatString[end] != '%') {
                 ;
             }
 
             memcpy_s(dataFormat.get(), length, formatString + i, end - i);
             dataFormat[end - i] = '\0';
 
-            if (formatString[end - 1] == 's') {
+            if (isConversionSpecifier(formatString[end - 1]) == false) {
+                PrintfDataType type = PrintfDataType::invalidType;
+                read(&type);
+                skipToken(type);
+            } else if (formatString[end - 1] == 's') {
+                stripStringLengthModifiers(dataFormat.get());
                 cursor += printStringToken(output.get() + cursor, maxSinglePrintStringLength - cursor, dataFormat.get());
             } else {
                 cursor += printToken(output.get() + cursor, maxSinglePrintStringLength - cursor, dataFormat.get());
@@ -121,6 +127,13 @@ void PrintFormatter::stripVectorTypeConversion(char *format) {
     }
 }
 
+void PrintFormatter::stripStringLengthModifiers(char *format) {
+    std::string_view token(format);
+    auto conversionPosition = token.find_last_not_of("lLw", token.size() - 2) + 1;
+    format[conversionPosition] = 's';
+    format[conversionPosition + 1] = '\0';
+}
+
 template <>
 void PrintFormatter::adjustFormatString<int64_t>(std::string &formatString) {
     auto sizeTOrPtrdiffTModifierPosition = formatString.find_first_of("zt");
@@ -157,6 +170,11 @@ size_t PrintFormatter::printToken(char *output, size_t size, const char *formatS
         return typedPrintToken<float>(output, size, formatString);
     case PrintfDataType::longType:
         return typedPrintToken<int64_t>(output, size, formatString);
+    case PrintfDataType::stringType: {
+        const char *string = nullptr;
+        read(&string);
+        return 0;
+    }
     case PrintfDataType::pointerType:
         return printPointerToken(output, size, formatString);
     case PrintfDataType::doubleType:
@@ -182,15 +200,51 @@ size_t PrintFormatter::printStringToken(char *output, size_t size, const char *f
     PrintfDataType type = PrintfDataType::invalidType;
     read(&type);
 
-    const char *string = nullptr;
-    read(&string);
-
     switch (type) {
     default:
+        skipToken(type);
         return simpleSprintf(output, size, formatString, 0);
     case PrintfDataType::stringType:
-    case PrintfDataType::pointerType:
+    case PrintfDataType::pointerType: {
+        const char *string = nullptr;
+        read(&string);
         return simpleSprintf(output, size, formatString, string);
+    }
+    }
+}
+
+void PrintFormatter::skipToken(PrintfDataType type) {
+    switch (type) {
+    case PrintfDataType::byteType:
+        return skipTypedToken<int8_t>();
+    case PrintfDataType::shortType:
+        return skipTypedToken<int16_t>();
+    case PrintfDataType::intType:
+        return skipTypedToken<int>();
+    case PrintfDataType::floatType:
+        return skipTypedToken<float>();
+    case PrintfDataType::longType:
+        return skipTypedToken<int64_t>();
+    case PrintfDataType::stringType:
+        return skipTypedToken<const char *>();
+    case PrintfDataType::pointerType:
+        return skipTypedToken<uint64_t>();
+    case PrintfDataType::doubleType:
+        return skipTypedToken<double>();
+    case PrintfDataType::vectorByteType:
+        return skipTypedVectorToken<int8_t>();
+    case PrintfDataType::vectorShortType:
+        return skipTypedVectorToken<int16_t>();
+    case PrintfDataType::vectorIntType:
+        return skipTypedVectorToken<int>();
+    case PrintfDataType::vectorLongType:
+        return skipTypedVectorToken<int64_t>();
+    case PrintfDataType::vectorFloatType:
+        return skipTypedVectorToken<float>();
+    case PrintfDataType::vectorDoubleType:
+        return skipTypedVectorToken<double>();
+    default:
+        return;
     }
 }
 

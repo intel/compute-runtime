@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,11 +7,11 @@
 
 #include "shared/source/os_interface/print.h"
 
-#include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/os_interface/windows/windows_wrapper.h"
 
 #include <cctype>
 #include <cstdint>
+#include <cstdlib>
 #include <fcntl.h>
 #include <io.h>
 #include <iostream>
@@ -41,8 +41,22 @@ void printToStderr(const char *str) {
     printToStreamHandle(str, STD_ERROR_HANDLE);
 }
 
+namespace {
+void ignoreInvalidParameter(const wchar_t *, const wchar_t *, const wchar_t *, unsigned int, uintptr_t) {}
+
+class InvalidParameterHandlerOverride {
+  public:
+    InvalidParameterHandlerOverride() : previousHandler(_set_thread_local_invalid_parameter_handler(ignoreInvalidParameter)) {}
+    ~InvalidParameterHandlerOverride() { _set_thread_local_invalid_parameter_handler(previousHandler); }
+
+  private:
+    decltype(&ignoreInvalidParameter) previousHandler;
+};
+} // namespace
+
 template <class T>
 size_t simpleSprintf(char *output, size_t outputSize, const char *format, T value) {
+    InvalidParameterHandlerOverride invalidParameterHandlerOverride;
 #if (_MSC_VER == 1800)
     _set_output_format(_TWO_DIGIT_EXPONENT);
 #endif
@@ -72,14 +86,13 @@ size_t simpleSprintf(char *output, size_t outputSize, const char *format, T valu
     } else {
         retVal = sprintf_s(output, outputSize, format, value);
     }
-    UNRECOVERABLE_IF(retVal < 0);
-    return static_cast<size_t>(retVal);
+    return retVal < 0 ? 0 : static_cast<size_t>(retVal);
 }
 
 size_t simpleSprintf(char *output, size_t outputSize, const char *format, const char *value) {
+    InvalidParameterHandlerOverride invalidParameterHandlerOverride;
     auto retVal = sprintf_s(output, outputSize, format, value);
-    UNRECOVERABLE_IF(retVal < 0);
-    return static_cast<size_t>(retVal);
+    return retVal < 0 ? 0 : static_cast<size_t>(retVal);
 }
 
 template size_t simpleSprintf<float>(char *output, size_t output_size, const char *format, float value);
