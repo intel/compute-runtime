@@ -194,25 +194,25 @@ TEST(SvmAllocationCacheSimpleTest, givenAllocationsWhenInsertingAllocationThenDo
     {
         svmAllocData.isImportedAllocation = false;
         svmAllocData.isInternalAllocation = false;
-        EXPECT_TRUE(allocationCache.insert(1u, ptr, &svmAllocData, SVMAllocsManager::SvmAllocationCache::CompletionCheckPolicy::notRequired));
+        EXPECT_TRUE(allocationCache.insert(1u, ptr, &svmAllocData, FreePolicyType::none));
         allocationCache.allocations.clear();
     }
     {
         svmAllocData.isImportedAllocation = true;
         svmAllocData.isInternalAllocation = false;
-        EXPECT_FALSE(allocationCache.insert(1u, ptr, &svmAllocData, SVMAllocsManager::SvmAllocationCache::CompletionCheckPolicy::notRequired));
+        EXPECT_FALSE(allocationCache.insert(1u, ptr, &svmAllocData, FreePolicyType::none));
         allocationCache.allocations.clear();
     }
     {
         svmAllocData.isImportedAllocation = false;
         svmAllocData.isInternalAllocation = true;
-        EXPECT_FALSE(allocationCache.insert(1u, ptr, &svmAllocData, SVMAllocsManager::SvmAllocationCache::CompletionCheckPolicy::notRequired));
+        EXPECT_FALSE(allocationCache.insert(1u, ptr, &svmAllocData, FreePolicyType::none));
         allocationCache.allocations.clear();
     }
     {
         svmAllocData.isInternalAllocation = false;
         svmAllocData.isExternalMemmapAllocation = true;
-        EXPECT_FALSE(allocationCache.insert(1u, ptr, &svmAllocData, SVMAllocsManager::SvmAllocationCache::CompletionCheckPolicy::notRequired));
+        EXPECT_FALSE(allocationCache.insert(1u, ptr, &svmAllocData, FreePolicyType::none));
         allocationCache.allocations.clear();
     }
 }
@@ -232,7 +232,7 @@ TEST(SvmAllocationCacheSimpleTest, givenExportedAllocationWhenInsertingAllocatio
     svmAllocData.gpuAllocations.addAllocation(&gpuGfxAllocation);
     svmAllocData.isExportedAllocation = true;
 
-    EXPECT_FALSE(allocationCache.insert(1u, ptr, &svmAllocData, SVMAllocsManager::SvmAllocationCache::CompletionCheckPolicy::notRequired));
+    EXPECT_FALSE(allocationCache.insert(1u, ptr, &svmAllocData, FreePolicyType::none));
     EXPECT_TRUE(allocationCache.allocations.empty());
 }
 
@@ -261,7 +261,7 @@ TEST(SvmAllocationCacheSimpleTest, givenAllocIdAlreadyScannedForIndirectAccessWh
     UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
 
     EXPECT_EQ(2u, svmAllocsManager.internalAllocationsMap.count(1u));
-    EXPECT_TRUE(allocationCache.insert(1u, ptr, &svmAllocData, SVMAllocsManager::SvmAllocationCache::CompletionCheckPolicy::notRequired));
+    EXPECT_TRUE(allocationCache.insert(1u, ptr, &svmAllocData, FreePolicyType::none));
     EXPECT_EQ(2u, svmAllocsManager.internalAllocationsMap.count(1u));
     auto reusedPtr = allocationCache.get(1u, unifiedMemoryProperties);
     EXPECT_EQ(ptr, reusedPtr);
@@ -297,13 +297,13 @@ TEST(SvmAllocationCacheSimpleTest, givenStorageOwnerRootDeviceIndexRequestedWhen
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{0u, mockDeviceBitfield}, {1u, mockDeviceBitfield}};
     UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
 
-    EXPECT_TRUE(allocationCache.insert(1u, ptr, &svmAllocData, SVMAllocsManager::SvmAllocationCache::CompletionCheckPolicy::notRequired));
+    EXPECT_TRUE(allocationCache.insert(1u, ptr, &svmAllocData, FreePolicyType::none));
     EXPECT_EQ(nullptr, allocationCache.get(1u, unifiedMemoryProperties, 0u));
     EXPECT_EQ(1u, allocationCache.allocations.size());
     EXPECT_EQ(ptr, allocationCache.get(1u, unifiedMemoryProperties, 1u));
     EXPECT_EQ(0u, allocationCache.allocations.size());
 
-    EXPECT_TRUE(allocationCache.insert(1u, ptr, &svmAllocData, SVMAllocsManager::SvmAllocationCache::CompletionCheckPolicy::notRequired));
+    EXPECT_TRUE(allocationCache.insert(1u, ptr, &svmAllocData, FreePolicyType::none));
     EXPECT_EQ(ptr, allocationCache.get(1u, unifiedMemoryProperties, std::nullopt));
     EXPECT_EQ(0u, allocationCache.allocations.size());
 }
@@ -330,7 +330,7 @@ TEST(SvmAllocationCacheSimpleTest, givenAllocIdNotYetScannedForIndirectAccessWhe
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
     UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
 
-    EXPECT_TRUE(allocationCache.insert(1u, ptr, &svmAllocData, SVMAllocsManager::SvmAllocationCache::CompletionCheckPolicy::notRequired));
+    EXPECT_TRUE(allocationCache.insert(1u, ptr, &svmAllocData, FreePolicyType::none));
     auto reusedPtr = allocationCache.get(1u, unifiedMemoryProperties);
     EXPECT_EQ(ptr, reusedPtr);
     EXPECT_EQ(2u, svmAllocData.getAllocId());
@@ -363,7 +363,7 @@ TEST(SvmAllocationCacheSimpleTest, givenUpdatingAllocsForIndirectAccessRequiredW
     UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
 
     EXPECT_EQ(1u, svmAllocsManager.internalAllocationsMap.count(1u));
-    EXPECT_TRUE(allocationCache.insert(1u, ptr, &svmAllocData, SVMAllocsManager::SvmAllocationCache::CompletionCheckPolicy::notRequired));
+    EXPECT_TRUE(allocationCache.insert(1u, ptr, &svmAllocData, FreePolicyType::none));
     EXPECT_EQ(0u, svmAllocsManager.internalAllocationsMap.count(1u));
     EXPECT_EQ(0u, svmAllocsManager.internalAllocationsMap.count(2u));
     auto reusedPtr = allocationCache.get(1u, unifiedMemoryProperties);
@@ -391,7 +391,7 @@ TEST(SvmAllocationCacheSimpleTest, givenAllocationsInCacheWhenCallingTrimThenUse
     SvmAllocationData svmAllocData(mockRootDeviceIndex);
     svmAllocData.gpuAllocations.addAllocation(&gpuGfxAllocation);
 
-    allocationCache.insert(1u, ptr, &svmAllocData, SVMAllocsManager::SvmAllocationCache::CompletionCheckPolicy::waitOnFree);
+    allocationCache.insert(1u, ptr, &svmAllocData, FreePolicyType::blocking);
     EXPECT_EQ(1u, allocationCache.allocations.size());
     svmAllocsManager.freeSVMAllocImplCallBase = false;
     allocationCache.trim();
@@ -425,7 +425,7 @@ TEST(SvmAllocationCacheSimpleTest, givenReuseCleanerWhenInsertingAllocationIntoC
     UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
 
     EXPECT_FALSE(reuseCleaner->startThreadCalled);
-    EXPECT_TRUE(allocationCache.insert(1u, ptr, &svmAllocData, SVMAllocsManager::SvmAllocationCache::CompletionCheckPolicy::notRequired));
+    EXPECT_TRUE(allocationCache.insert(1u, ptr, &svmAllocData, FreePolicyType::none));
     EXPECT_TRUE(reuseCleaner->startThreadCalled);
 
     EXPECT_FALSE(reuseCleaner->stopThreadCalled);

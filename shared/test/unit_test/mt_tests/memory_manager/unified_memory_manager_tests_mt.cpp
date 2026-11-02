@@ -265,7 +265,7 @@ TEST_F(SvmAllocationCacheLockTest, givenBlockingFreeWhenInsertingIntoCacheThenEn
     bool lockedDuringWait = false;
     memoryManager.waitForEnginesCompletionCallback = [&]() { lockedDuringWait = isCacheLockedFromAnotherThread(); };
 
-    EXPECT_TRUE(allocationCache.insert(1u, ptr, &svmAllocData, SVMAllocsManager::SvmAllocationCache::CompletionCheckPolicy::waitOnFree));
+    EXPECT_TRUE(allocationCache.insert(1u, ptr, &svmAllocData, FreePolicyType::blocking));
 
     EXPECT_EQ(1u, memoryManager.waitForEnginesCompletionCalled);
     EXPECT_FALSE(lockedDuringWait);
@@ -273,7 +273,7 @@ TEST_F(SvmAllocationCacheLockTest, givenBlockingFreeWhenInsertingIntoCacheThenEn
 }
 
 TEST_F(SvmAllocationCacheLockTest, givenCachedAllocationWhenTrimmingThenItIsFreedWithoutHoldingTheCacheLock) {
-    allocationCache.insert(1u, ptr, &svmAllocData, SVMAllocsManager::SvmAllocationCache::CompletionCheckPolicy::notRequired);
+    allocationCache.insert(1u, ptr, &svmAllocData, FreePolicyType::none);
     svmAllocsManager.freeSVMAllocImplCallBase = false;
     bool lockedDuringFree = false;
     svmAllocsManager.freeSVMAllocImplCallback = [&]() { lockedDuringFree = isCacheLockedFromAnotherThread(); };
@@ -287,7 +287,7 @@ TEST_F(SvmAllocationCacheLockTest, givenCachedAllocationWhenTrimmingThenItIsFree
 }
 
 TEST_F(SvmAllocationCacheLockTest, givenTrimFreeingCachedAllocationWhenAnotherThreadTrimsThenItReturnsOnlyAfterTheFreeCompletes) {
-    allocationCache.insert(1u, ptr, &svmAllocData, SVMAllocsManager::SvmAllocationCache::CompletionCheckPolicy::notRequired);
+    allocationCache.insert(1u, ptr, &svmAllocData, FreePolicyType::none);
     svmAllocsManager.freeSVMAllocImplCallBase = false;
 
     std::promise<void> freeStarted;

@@ -52,11 +52,6 @@ struct SVMAllocsManager::SvmAllocationCache : AllocationReuseCache {
         trim,
         trimOld
     };
-    enum class CompletionCheckPolicy {
-        waitOnFree,
-        deferred,
-        notRequired,
-    };
 
     struct SvmAllocationCachePerfInfo {
         uint64_t allocationSize;
@@ -74,7 +69,7 @@ struct SVMAllocsManager::SvmAllocationCache : AllocationReuseCache {
 
     static bool sizeAllowed(size_t size) { return size <= SvmAllocationCache::maxServicedSize; }
     UsmReuseInfo &getUsmReuseInfo(SvmAllocationData &svmData);
-    bool insert(size_t size, void *ptr, SvmAllocationData *svmData, CompletionCheckPolicy completionCheckPolicy);
+    bool insert(size_t size, void *ptr, SvmAllocationData *svmData, FreePolicyType freePolicy);
     static bool allocUtilizationAllows(size_t requestedSize, size_t reuseCandidateSize);
     static bool alignmentAllows(void *ptr, size_t alignment);
     bool isInUse(SvmCacheAllocationInfo &cacheAllocInfo);

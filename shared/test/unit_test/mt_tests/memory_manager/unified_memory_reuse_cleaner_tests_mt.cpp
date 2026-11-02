@@ -55,7 +55,7 @@ TEST(UnifiedMemoryReuseCleanerTestsMt, givenUnifiedMemoryReuseCleanerWhenCachesA
     cleaner.waitOnConditionVar.store(false);
     EXPECT_FALSE(cleaner.waitOnConditionVar.load());
     SvmAllocationData allocData{0};
-    svmAllocCache->insert(svmAllocSize, nullptr, &allocData, SVMAllocsManager::SvmAllocationCache::CompletionCheckPolicy::notRequired);
+    svmAllocCache->insert(svmAllocSize, nullptr, &allocData, FreePolicyType::none);
     cleaner.waitTillSleep();
     EXPECT_TRUE(cleaner.waitOnConditionVar.load());
     EXPECT_TRUE(cleaner.isEmpty());
