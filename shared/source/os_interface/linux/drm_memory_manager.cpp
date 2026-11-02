@@ -1901,7 +1901,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(c
         auto gmmHelper = executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getGmmHelper();
         GmmRequirements gmmRequirements{};
         gmmRequirements.preferCompressed = properties.flags.preferCompressed;
-        if (!properties.flags.preferCompressed && !properties.flags.uncacheable) {
+        if (!properties.flags.preferCompressed) {
             gmmRequirements.overriderCpuCacheable = {true, true};
         }
         gmm = std::make_unique<Gmm>(gmmHelper, nullptr,

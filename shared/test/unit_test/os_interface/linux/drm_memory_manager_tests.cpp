@@ -1795,7 +1795,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenSharedHandleAllocationWithCompress
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
 
-HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenSharedHandleAllocationWithUncacheableFlagThenGmmUsageTypeIsUncachedAndCacheableIsNotOverridden) {
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenSharedHandleAllocationWithUncacheableFlagThenGmmUsageTypeIsUncachedAndGmmIsCacheable) {
     mock->ioctlExpected.primeFdToHandle = 1;
     mock->ioctlExpected.gemWait = 1;
     mock->ioctlExpected.gemClose = 1;
@@ -1820,7 +1820,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenSharedHandleAllocationWithUncachea
     EXPECT_TRUE(CacheSettingsHelper::isUncachedType(gmm->getResourceUsageType()));
 
     auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
-    EXPECT_FALSE(gmmResourceParams->Flags.Info.Cacheable);
+    EXPECT_TRUE(gmmResourceParams->Flags.Info.Cacheable);
 
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
