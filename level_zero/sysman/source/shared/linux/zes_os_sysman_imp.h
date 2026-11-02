@@ -27,6 +27,7 @@ namespace NEO {
 class Drm;
 class ExecutionEnvironment;
 struct PhysicalDevicePciBusInfo;
+struct SystemInfo;
 } // namespace NEO
 
 namespace L0 {
@@ -62,6 +63,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableAndNonMovableClass {
     const NEO::HardwareInfo &getHardwareInfo() const override;
     std::string getPciCardBusDirectoryPath(std::string realPciPath);
     uint32_t getMemoryType();
+    static NEO::SystemInfo *querySystemInfo(NEO::Drm &drm);
     static std::string getPciRootPortDirectoryPath(std::string realPciPath);
     std::string getAlertReasonFilePath();
     ze_result_t readPowerOffReasons(zes_intel_device_power_off_reason_exp_flags_t &reasons);

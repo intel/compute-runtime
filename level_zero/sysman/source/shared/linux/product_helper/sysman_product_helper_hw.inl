@@ -8,7 +8,6 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/preprocessor.h"
-#include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/system_info.h"
 
 #include "level_zero/sysman/source/api/memory/linux/sysman_os_memory_imp.h"
@@ -80,44 +79,40 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryProperties(zes_mem_prope
     pProperties->physicalSize = 0;
 
     auto hwDeviceId = pLinuxSysmanImp->getSysmanHwDeviceIdInstance();
-    auto status = pDrm->querySystemInfo();
+    auto memSystemInfo = LinuxSysmanImp::querySystemInfo(*pDrm);
+    if (memSystemInfo != nullptr) {
+        auto memType = memSystemInfo->getMemoryType();
+        switch (memType) {
+        case NEO::DeviceBlobConstants::MemoryType::hbm2e:
+        case NEO::DeviceBlobConstants::MemoryType::hbm2:
+            pProperties->type = ZES_MEM_TYPE_HBM;
+            break;
+        case NEO::DeviceBlobConstants::MemoryType::lpddr4:
+            pProperties->type = ZES_MEM_TYPE_LPDDR4;
+            break;
+        case NEO::DeviceBlobConstants::MemoryType::lpddr5:
+            pProperties->type = ZES_MEM_TYPE_LPDDR5;
+            break;
+        case NEO::DeviceBlobConstants::MemoryType::gddr6:
+            pProperties->type = ZES_MEM_TYPE_GDDR6;
+            break;
+        default:
+            DEBUG_BREAK_IF(true);
+            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
 
-    if (status) {
-        auto memSystemInfo = pDrm->getSystemInfo();
-        if (memSystemInfo != nullptr) {
-            auto memType = memSystemInfo->getMemoryType();
-            switch (memType) {
-            case NEO::DeviceBlobConstants::MemoryType::hbm2e:
-            case NEO::DeviceBlobConstants::MemoryType::hbm2:
-                pProperties->type = ZES_MEM_TYPE_HBM;
-                break;
-            case NEO::DeviceBlobConstants::MemoryType::lpddr4:
-                pProperties->type = ZES_MEM_TYPE_LPDDR4;
-                break;
-            case NEO::DeviceBlobConstants::MemoryType::lpddr5:
-                pProperties->type = ZES_MEM_TYPE_LPDDR5;
-                break;
-            case NEO::DeviceBlobConstants::MemoryType::gddr6:
-                pProperties->type = ZES_MEM_TYPE_GDDR6;
-                break;
-            default:
-                DEBUG_BREAK_IF(true);
-                return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        if (pProperties->type == ZES_MEM_TYPE_HBM) {
+            pProperties->numChannels = memSystemInfo->getNumHbmStacksPerTile() * memSystemInfo->getNumChannelsPerHbmStack();
+        } else if (pProperties->type == ZES_MEM_TYPE_GDDR6) {
+            uint32_t numChannels = 0;
+            ze_result_t result = this->getNumberOfMemoryChannels(pLinuxSysmanImp, &numChannels);
+            isNumChannelsFromTelemetry = true;
+            if (result == ZE_RESULT_SUCCESS) {
+                pProperties->numChannels = numChannels;
+                pProperties->busWidth = pProperties->numChannels * 32;
             }
-
-            if (pProperties->type == ZES_MEM_TYPE_HBM) {
-                pProperties->numChannels = memSystemInfo->getNumHbmStacksPerTile() * memSystemInfo->getNumChannelsPerHbmStack();
-            } else if (pProperties->type == ZES_MEM_TYPE_GDDR6) {
-                uint32_t numChannels = 0;
-                ze_result_t result = this->getNumberOfMemoryChannels(pLinuxSysmanImp, &numChannels);
-                isNumChannelsFromTelemetry = true;
-                if (result == ZE_RESULT_SUCCESS) {
-                    pProperties->numChannels = numChannels;
-                    pProperties->busWidth = pProperties->numChannels * 32;
-                }
-            } else {
-                pProperties->numChannels = memSystemInfo->getMaxMemoryChannels();
-            }
+        } else {
+            pProperties->numChannels = memSystemInfo->getMaxMemoryChannels();
         }
     }
 

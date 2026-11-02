@@ -605,16 +605,20 @@ ze_result_t LinuxSysmanImp::osColdReset() {
     return ZE_RESULT_ERROR_DEVICE_LOST; // in case the reset fails inform upper layers.
 }
 
+NEO::SystemInfo *LinuxSysmanImp::querySystemInfo(NEO::Drm &drm) {
+    if (!drm.querySystemInfo()) {
+        return nullptr;
+    }
+    return drm.getSystemInfo();
+}
+
 uint32_t LinuxSysmanImp::getMemoryType() {
     if (memType == unknownMemoryType) {
-        NEO::Drm *pDrm = getDrm();
         auto hwDeviceIdInstance = getSysmanHwDeviceIdInstance();
 
-        if (pDrm->querySystemInfo()) {
-            auto memSystemInfo = getDrm()->getSystemInfo();
-            if (memSystemInfo != nullptr) {
-                memType = memSystemInfo->getMemoryType();
-            }
+        auto memSystemInfo = querySystemInfo(*getDrm());
+        if (memSystemInfo != nullptr) {
+            memType = memSystemInfo->getMemoryType();
         }
     }
     return memType;
