@@ -10,7 +10,6 @@
 #include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/source/device_binary_format/device_binary_format.h"
 #include "shared/source/helpers/constants.h"
-#include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/kernel/debug_data.h"
 #include "shared/source/kernel/grf_config.h"
@@ -108,8 +107,6 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
         uint32_t numThreadsRequired = 0u;
         uint32_t spillFillScratchMemorySize = 0u;
         uint32_t privateScratchMemorySize = 0u;
-        NEO::RequiredDispatchWalkOrder dispatchWalkOrder = NEO::RequiredDispatchWalkOrder::none;
-        NEO::RequiredPartitionDim partitionDim = NEO::RequiredPartitionDim::none;
         ThreadArbitrationPolicy threadArbitrationPolicy = NotPresent;
         uint16_t requiredWorkgroupSize[3] = {0U, 0U, 0U};
         uint16_t crossThreadDataSize = 0U;

@@ -515,7 +515,6 @@ struct CommandListCoreFamily : public CommandList {
     bool isCopyOffloadAllowed(const NEO::GraphicsAllocation *srcAllocation, const NEO::GraphicsAllocation *dstAllocation, bool remoteCopy, bool localToLocalAllowed, uint32_t mipLevel) const;
     bool isSharedSystemEnabled() const;
     void emitMemAdviseForSystemCopy(const AlignedAllocationData &allocationStruct, size_t size);
-    void setAdditionalKernelLaunchParams(CmdListKernelLaunchParams &launchParams, Kernel &kernel) const;
     void dispatchInOrderPostOperationBarrier(Event *signalOperation, bool dcFlushRequired, bool copyOperation);
     NEO::GraphicsAllocation *getDeviceCounterAllocForResidency(NEO::GraphicsAllocation *counterDeviceAlloc);
     bool isHighPriorityImmediateCmdList() const;

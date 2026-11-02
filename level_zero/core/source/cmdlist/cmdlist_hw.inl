@@ -5974,18 +5974,6 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingAllWalkers(Eve
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::setAdditionalKernelLaunchParams(CmdListKernelLaunchParams &launchParams, Kernel &kernel) const {
-    auto &kernelDescriptor = kernel.getImmutableData()->getDescriptor();
-
-    if (launchParams.requiredDispatchWalkOrder == NEO::RequiredDispatchWalkOrder::none) {
-        launchParams.requiredDispatchWalkOrder = kernelDescriptor.kernelAttributes.dispatchWalkOrder;
-    }
-    if (launchParams.requiredPartitionDim == NEO::RequiredPartitionDim::none) {
-        launchParams.requiredPartitionDim = kernelDescriptor.kernelAttributes.partitionDim;
-    }
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::dispatchInOrderPostOperationBarrier(Event *signalEvent, bool dcFlushRequired, bool copyOperation) {
     if ((!signalEvent || !signalEvent->getAllocation(this->device)) && !copyOperation) {
         NEO::PipeControlArgs args;

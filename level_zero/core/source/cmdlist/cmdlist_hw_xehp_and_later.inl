@@ -99,8 +99,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         }
     }
 
-    setAdditionalKernelLaunchParams(launchParams, *kernel);
-
     // When the kernel's module carries an L1 cache policy override (native binary whose zeinfo policy
     // mismatched the driver default and could not be rebuilt), program SBA with the module's policy.
     // Modules without an override fall back to the driver default so a module's policy does not leak

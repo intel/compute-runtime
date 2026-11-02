@@ -178,7 +178,6 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     EncodeWalkerArgs encodeWalkerArgs{
         .argsExtended = &argsExtended,
         .kernelExecutionType = kernel.getExecutionType(),
-        .requiredDispatchWalkOrder = kernelAttributes.dispatchWalkOrder,
         .maxFrontEndThreads = device.getDeviceInfo().maxFrontEndThreads,
         .requiredSystemFence = kernelSystemAllocation && walkerArgs.event != nullptr,
         .hasSample = kernelInfo.kernelDescriptor.kernelAttributes.flags.hasSample};
@@ -205,10 +204,6 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         const uint64_t workPartitionAllocationGpuVa = queueCsr.getWorkPartitionAllocationGpuAddress();
         uint32_t partitionCount = 0u;
         RequiredPartitionDim requiredPartitionDim = kernel.usesImages() ? RequiredPartitionDim::x : RequiredPartitionDim::none;
-
-        if (kernelAttributes.partitionDim != NEO::RequiredPartitionDim::none) {
-            requiredPartitionDim = kernelAttributes.partitionDim;
-        }
 
         ImplicitScalingDispatchCommandArgs implicitScalingArgs{
             workPartitionAllocationGpuVa,        // workPartitionAllocationGpuVa

@@ -783,13 +783,6 @@ void populateKernelExecutionEnvironment(KernelDescriptor &dst, const KernelExecu
     dst.kernelAttributes.hasIndirectStatelessAccess = (execEnv.indirectStatelessCount > 0);
     dst.kernelAttributes.numThreadsRequired = static_cast<uint32_t>(execEnv.euThreadCount);
 
-    if (execEnv.dispatchWalkOrder != Types::Kernel::ExecutionEnv::Defaults::dispatchWalkOrder) {
-        dst.kernelAttributes.dispatchWalkOrder = EncodeParamsApiMappings::dispatchWalkOrder[execEnv.dispatchWalkOrder];
-    }
-    if (execEnv.partitionDim != Types::Kernel::ExecutionEnv::Defaults::partitionDim) {
-        dst.kernelAttributes.partitionDim = EncodeParamsApiMappings::partitionDim[execEnv.partitionDim];
-    }
-
     switch (execEnv.slmAllocMode) {
     case Types::Kernel::ExecutionEnv::Constants::compilerResolved:
         dst.kernelAttributes.slmAllocationMode = KernelDescriptor::SlmAllocationMode::compilerResolved;
