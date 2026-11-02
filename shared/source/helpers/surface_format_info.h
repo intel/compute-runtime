@@ -202,6 +202,7 @@ enum class ImagePlane {
 };
 
 using GmmResourceFormat = int32_t;
+constexpr GmmResourceFormat gmmFormatR8G8B8A8Unorm = 126;
 
 struct SurfaceFormatInfo {
     GmmResourceFormat gmmSurfaceFormat;

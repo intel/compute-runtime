@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_stream/command_stream_receiver_simulated_hw.h"
+#include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/hardware_context_controller.h"
 #include "shared/source/helpers/timestamp_packet.h"

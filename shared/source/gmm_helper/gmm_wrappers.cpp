@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,6 +19,8 @@ static_assert(static_cast<GMM_YUV_PLANE>(ImagePlane::planeU) == GMM_PLANE_U);
 static_assert(static_cast<GMM_YUV_PLANE>(ImagePlane::planeV) == GMM_PLANE_V);
 
 static_assert(static_cast<GMM_CUBE_FACE_ENUM>(gmmNoCubeMap) == __GMM_NO_CUBE_MAP);
+
+static_assert(static_cast<GMM_RESOURCE_FORMAT>(gmmFormatR8G8B8A8Unorm) == GMM_FORMAT_R8G8B8A8_UNORM_TYPE);
 
 static_assert(static_cast<GMM_TILE_TYPE>(ImageTilingMode::tiledX) == GMM_TILED_X);
 static_assert(static_cast<GMM_TILE_TYPE>(ImageTilingMode::tiledY) == GMM_TILED_Y);

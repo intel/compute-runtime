@@ -7,7 +7,6 @@
 
 #pragma once
 #include "shared/source/gmm_helper/gmm.h"
-#include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/gmm_helper/gmm_resource_usage_ocl_buffer.h"
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/memory_manager/allocation_properties.h"
@@ -17,8 +16,8 @@
 
 namespace NEO {
 namespace MockGmmParams {
-static SurfaceFormatInfo mockSurfaceFormat = {GMM_FORMAT_R8G8B8A8_UNORM_TYPE, SurfaceFormat::GFX3DSTATE_SURFACEFORMAT_R8G8B8A8_UNORM, 0, 4, 1, 4};
-}
+static SurfaceFormatInfo mockSurfaceFormat = {gmmFormatR8G8B8A8Unorm, SurfaceFormat::GFX3DSTATE_SURFACEFORMAT_R8G8B8A8_UNORM, 0, 4, 1, 4};
+} // namespace MockGmmParams
 
 class MockGmm : public Gmm {
   public:
