@@ -12,6 +12,7 @@
 #include "shared/source/helpers/blit_properties.h"
 #include "shared/source/helpers/patch_store_operation.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/compression_selector.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/product_helper.h"

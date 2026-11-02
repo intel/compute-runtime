@@ -8,12 +8,14 @@
 #pragma once
 
 #include "shared/source/helpers/constants.h"
-#include "shared/source/memory_manager/allocation_properties.h"
+#include "shared/source/memory_manager/allocation_type.h"
 
 #include <concepts>
+#include <cstddef>
 
 namespace NEO {
 
+struct AllocationProperties;
 class Device;
 class ProductHelper;
 
@@ -23,7 +25,7 @@ concept PoolTraits = requires(Device *d, size_t s) {
     { T::maxAllocationSize } -> std::convertible_to<size_t>;
     { T::defaultPoolSize } -> std::convertible_to<size_t>;
     { T::poolAlignment } -> std::convertible_to<size_t>;
-    { T::createAllocationProperties(d, s) } -> std::same_as<AllocationProperties>;
+    requires std::same_as<decltype(T::createAllocationProperties(d, s)), AllocationProperties>;
 };
 
 struct TimestampPoolTraits {

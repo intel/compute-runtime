@@ -25,6 +25,8 @@
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/zet_intel_gpu_debug.h"
 
+#include <cinttypes>
+
 namespace L0 {
 
 using SipTransferAddr = DebugSessionImp::SipTransferAddr;

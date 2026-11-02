@@ -24,6 +24,7 @@
 #include <level_zero/ze_api.h>
 
 #include <algorithm>
+#include <cinttypes>
 
 namespace L0 {
 

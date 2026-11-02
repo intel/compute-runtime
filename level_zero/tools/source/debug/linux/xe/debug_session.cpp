@@ -19,6 +19,8 @@
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/tools/source/debug/linux/drm_helper.h"
 
+#include <cinttypes>
+
 namespace L0 {
 
 static DebugSessionLinuxPopulateFactory<DEBUG_SESSION_LINUX_TYPE_XE, DebugSessionLinuxXe>

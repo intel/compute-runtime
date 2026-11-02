@@ -12,6 +12,7 @@
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/memory_properties_helpers.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 

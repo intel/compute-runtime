@@ -13,6 +13,8 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 
+#include <cinttypes>
+
 namespace NEO {
 
 template <typename GfxFamily>

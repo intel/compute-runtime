@@ -24,6 +24,8 @@
 #include "level_zero/tools/source/debug/linux/drm_helper.h"
 #include "level_zero/zet_intel_gpu_debug.h"
 
+#include <cinttypes>
+
 namespace L0 {
 DebugSessionLinuxAllocatorFn debugSessionLinuxFactory[DEBUG_SESSION_LINUX_TYPE_MAX] = {};
 
