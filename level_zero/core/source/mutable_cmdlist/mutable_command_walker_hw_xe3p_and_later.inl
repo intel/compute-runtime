@@ -325,13 +325,13 @@ void MutableComputeWalkerHw<GfxFamily>::updateSpecificFields(const NEO::Device &
     if (!this->stageCommitMode) {
         if (args.partitionCount == 1) {
             constexpr uint32_t dispatchWalkOrderIndex = 4;
-            constexpr uint32_t quantumSizeIndex = 13;
+            constexpr uint32_t partitionDataIndex = 13;
 
             auto walkerCmd = reinterpret_cast<WalkerType *>(this->walker);
             walkerCmd->getInterfaceDescriptor() = idd;
 
             walkerCmd->getRawData(dispatchWalkOrderIndex) = cpuBufferWalker->getRawData(dispatchWalkOrderIndex);
-            walkerCmd->getRawData(quantumSizeIndex) = cpuBufferWalker->getRawData(quantumSizeIndex);
+            walkerCmd->getRawData(partitionDataIndex) = cpuBufferWalker->getRawData(partitionDataIndex);
         } else {
             this->saveCpuBufferIntoGpuBuffer(true, false);
         }

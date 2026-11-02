@@ -42,7 +42,6 @@ struct KernelData {
 
     LocalInstructionsOffset skipPerThreadDataLoad = undefined<LocalInstructionsOffset>;
     CrossThreadDataOffset syncBufferAddressOffset = undefined<CrossThreadDataOffset>;
-    CrossThreadDataOffset regionGroupBarrierBufferOffset = undefined<CrossThreadDataOffset>;
 
     uint8_t workgroupWalkOrder[3] = {0, 0, 0};
     uint8_t simdSize = 0;
@@ -50,7 +49,6 @@ struct KernelData {
     uint8_t indirectOffset = 0;
     uint8_t barrierCount = 0;
     uint8_t syncBufferPointerSize = 0;
-    uint8_t regionGroupBarrierBufferPointerSize = 0;
     uint8_t numLocalIdChannels = 3;
 
     NEO::KernelDescriptor::SlmAllocationMode slmAllocationMode = NEO::KernelDescriptor::SlmAllocationMode::compilerResolved;

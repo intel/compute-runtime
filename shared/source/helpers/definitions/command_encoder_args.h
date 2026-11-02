@@ -52,8 +52,6 @@ enum class RequiredDispatchWalkOrder : uint32_t {
     y,
 };
 
-static constexpr uint32_t localRegionSizeParamNotSet = 0;
-
 namespace EncodeParamsApiMappings {
 static constexpr std::array<NEO::RequiredPartitionDim, 3> partitionDim = {{RequiredPartitionDim::x, NEO::RequiredPartitionDim::y, NEO::RequiredPartitionDim::z}};
 static constexpr std::array<NEO::RequiredDispatchWalkOrder, 2> dispatchWalkOrder = {{NEO::RequiredDispatchWalkOrder::x, NEO::RequiredDispatchWalkOrder::y}};

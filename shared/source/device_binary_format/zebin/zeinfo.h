@@ -378,7 +378,6 @@ using IndirectStatelessCountT = int32_t;
 using HasSampleT = bool;
 using PrivateSizeT = int32_t;
 using SpillSizeT = int32_t;
-using LocalRegionSizeT = int32_t;
 using WalkOrderT = int32_t;
 using PartitionDimT = int32_t;
 using RequireImplicitArgBufferT = bool;

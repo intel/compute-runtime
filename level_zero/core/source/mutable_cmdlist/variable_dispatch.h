@@ -99,7 +99,6 @@ struct VariableDispatch {
     size_t perThreadDataSize = 0U;
     size_t totalLwsSize = 1u;
     size_t syncBufferOffset = undefined<size_t>;
-    size_t regionBarrierOffset = undefined<size_t>;
 
     const uint32_t grfSize;
     const uint32_t numChannels;

@@ -49,7 +49,6 @@ struct WhiteBox<::L0::MCL::VariableDispatch>
     using BaseClass::perThreadData;
     using BaseClass::perThreadDataAllocSize;
     using BaseClass::perThreadDataSize;
-    using BaseClass::regionBarrierOffset;
     using BaseClass::requiredDispatchWalkOrder;
     using BaseClass::requiredPartitionDim;
     using BaseClass::requiresLocalIdGeneration;
