@@ -83,9 +83,11 @@ function(compile_builtin_with_prefix core_type platform_it builtin bits builtin_
       if(NEO_SERIALIZED_BUILTINS_COMPILATION)
         set(OUTPUT_FILES_BINARIES_PREV ${OUTPUT_FILE_BINARY})
       endif()
+      list(APPEND BUILTINS_COMMANDS ${OUTPUT_FILE_BINARY})
     endif()
     add_builtin_to_group(BINARY ${RELEASE_FILENAME} ${OUTPUTDIR}/builtins_${RELEASE_FILENAME}.cpp ${OUTPUT_FILE_BINARY})
   endforeach()
+  set(BUILTINS_COMMANDS ${BUILTINS_COMMANDS} PARENT_SCOPE)
 endfunction()
 
 function(generate_spirv builtin mode_prefix builtin_options is_wide)
@@ -176,6 +178,14 @@ macro(macro_for_each_platform)
   CORE_CONTAINS_PLATFORM("SUPPORTED_IMAGES" ${CORE_TYPE} ${PLATFORM_IT} IMAGE_SUPPORT)
   CORE_CONTAINS_PLATFORM("SUPPORTED_AUX_TRANSLATION" ${CORE_TYPE} ${PLATFORM_IT} AUX_TRANSLATION_SUPPORT)
 
+  # Builtins are compiled in per-platform targets
+  if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
+    set(target_name builtins_${PLATFORM_IT_LOWER})
+    add_custom_target(${target_name})
+    list(APPEND BUILTINS_PLATFORM_TARGETS ${target_name})
+    set_target_properties(${target_name} PROPERTIES FOLDER "${SHARED_SOURCE_PROJECTS_FOLDER}/${SHARED_BUILTINS_PROJECTS_FOLDER}/${PLATFORM_IT_LOWER}")
+  endif()
+
   FIND_IDX_FOR_CORE_TYPE(${CORE_TYPE} CORE_IDX)
   GET_LIST_FOR_CORE_TYPE("ADDRESSING_MODES" "BUILTIN" ${CORE_IDX} PLATFORM_ADDRESSING_MODES)
 
@@ -195,6 +205,8 @@ macro(macro_for_each_platform)
   endif()
 
   foreach(ADDR_MODE ${PLATFORM_ADDRESSING_MODES})
+    unset(BUILTINS_COMMANDS)
+
     set(IS_BINDLESS FALSE)
     if(ADDR_MODE MATCHES "bindless")
       set(IS_BINDLESS TRUE)
@@ -253,6 +265,12 @@ macro(macro_for_each_platform)
                                   "${HEAPLESS_FLAG}" "${INTERNAL_OPTIONS}" "${ACTIVE_KERNEL_TYPES}"
       )
     endforeach()
+
+    if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
+      add_custom_target(${target_name}_${ADDR_MODE} DEPENDS ${BUILTINS_COMMANDS})
+      add_dependencies(${target_name} ${target_name}_${ADDR_MODE})
+      set_target_properties(${target_name}_${ADDR_MODE} PROPERTIES FOLDER "${SHARED_SOURCE_PROJECTS_FOLDER}/${SHARED_BUILTINS_PROJECTS_FOLDER}/${PLATFORM_IT_LOWER}")
+    endif()
   endforeach()
 
 endmacro()
@@ -305,10 +323,14 @@ if(NOT "${OUTPUT_LIST_CPP_FILES}" STREQUAL "")
   endif()
 endif()
 
+set(BUILTINS_PLATFORM_TARGETS)
 apply_macro_for_each_core_type("SUPPORTED")
 
 generate_builtin_groups_cpps(BINARY GENERATED_BUILTINS_CPPS)
 set_property(GLOBAL PROPERTY GENERATED_BUILTINS_CPPS ${GENERATED_BUILTINS_CPPS})
 add_custom_target(builtins DEPENDS ${GENERATED_BUILTINS_CPPS})
+if(BUILTINS_PLATFORM_TARGETS)
+  add_dependencies(builtins ${BUILTINS_PLATFORM_TARGETS})
+endif()
 set_target_properties(builtins PROPERTIES FOLDER "${SHARED_SOURCE_PROJECTS_FOLDER}/${SHARED_BUILTINS_PROJECTS_FOLDER}")
 add_dependencies(${BUILTINS_BINARIES_LIB_NAME} builtins)
