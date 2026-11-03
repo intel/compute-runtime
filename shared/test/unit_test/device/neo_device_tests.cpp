@@ -56,7 +56,8 @@ using namespace NEO;
 extern ApiSpecificConfig::ApiType apiTypeForUlts;
 namespace NEO {
 extern bool isDeviceUsmPoolingEnabledForUlts;
-}
+extern ApiSpecificConfig::ApiType apiTypeForUlts;
+} // namespace NEO
 
 TEST(DeviceBlitterTest, whenBlitterOperationsSupportIsDisabledThenNoInternalCopyEngineIsReturned) {
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
@@ -2436,6 +2437,34 @@ HWTEST_F(InternalEngineFromSecondaryContextTests, givenUseSecondaryContextForInt
         EXPECT_EQ(subDeviceBitfield, defaultEngineContext->getDeviceBitfield());
         EXPECT_TRUE(defaultEngineContext->isInternalEngine() || defaultEngineContext->isReservedForInternalEngine());
         EXPECT_TRUE(defaultEngineContext->isInitialized());
+    }
+}
+
+HWTEST_F(InternalEngineFromSecondaryContextTests, givenUseSecondaryContextForInternalEngineEnabledAndExposeSingleDeviceModeAndLevelZeroWhenDeviceIsCreatedThenPrimaryContextIsInitializedBeforeReservedSecondaryContext) {
+    VariableBackup<ApiSpecificConfig::ApiType> apiTypeBackup(&NEO::apiTypeForUlts, ApiSpecificConfig::L0);
+    VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
+    debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(1);
+    debugManager.flags.CreateMultipleSubDevices.set(2);
+    hwInfo.featureTable.ftrBcsInfo = 0b111;
+
+    auto executionEnvironment = MockDevice::prepareExecutionEnvironment(&hwInfo, 0);
+    executionEnvironment->rootDeviceEnvironments[0]->setExposeSingleDeviceMode(true);
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(&hwInfo, executionEnvironment, 0));
+    ASSERT_NE(nullptr, device);
+
+    uint32_t initializedReservedContexts = 0;
+    for (auto subDevice : device->getSubDevices()) {
+        for (auto &[engineType, secondaryEnginesForType] : static_cast<MockSubDevice *>(subDevice)->secondaryEngines) {
+            if (secondaryEnginesForType.internalEngineIndex == 0 ||
+                !secondaryEnginesForType.engines[secondaryEnginesForType.internalEngineIndex].osContext->isInitialized()) {
+                continue;
+            }
+            initializedReservedContexts++;
+            EXPECT_TRUE(secondaryEnginesForType.engines[0].osContext->isInitialized());
+        }
+    }
+    if (initializedReservedContexts == 0) {
+        GTEST_SKIP();
     }
 }
 
