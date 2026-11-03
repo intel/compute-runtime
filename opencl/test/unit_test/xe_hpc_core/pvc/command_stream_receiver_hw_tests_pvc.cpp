@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
-#include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/gmm_helper/resource_info.h"
@@ -41,33 +40,6 @@
 using namespace NEO;
 
 using PvcCommandStreamReceiverFlushTaskTests = UltCommandStreamReceiverTest;
-PVCTEST_F(PvcCommandStreamReceiverFlushTaskTests, givenOverrideThreadArbitrationPolicyDebugVariableSetForPvcWhenFlushingThenRequestRequiredMode) {
-    DebugManagerStateRestore restore;
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-
-    debugManager.flags.OverrideThreadArbitrationPolicy.set(ThreadArbitrationPolicy::RoundRobin);
-
-    EXPECT_EQ(-1, commandStreamReceiver.streamProperties.stateComputeMode.threadArbitrationPolicy.value);
-
-    flushTask(commandStreamReceiver);
-    EXPECT_EQ(ThreadArbitrationPolicy::RoundRobin,
-              commandStreamReceiver.streamProperties.stateComputeMode.threadArbitrationPolicy.value);
-}
-
-PVCTEST_F(PvcCommandStreamReceiverFlushTaskTests, givenNotExistPolicyWhenFlushingThenDefaultPolicyIsProgrammed) {
-    char buff[1024] = {0};
-    LinearStream stream(buff, 1024);
-
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
-    int32_t notExistPolicy = -2;
-    flushTaskFlags.threadArbitrationPolicy = notExistPolicy;
-
-    flushTask(commandStreamReceiver);
-
-    EXPECT_EQ(notExistPolicy, commandStreamReceiver.streamProperties.stateComputeMode.threadArbitrationPolicy.value);
-}
-
 PVCTEST_F(PvcCommandStreamReceiverFlushTaskTests, givenRevisionBAndAboveWhenLastSystolicPipelineSelectModeIsTrueAndFlushTaskIsCalledThenDontReprogramPipelineSelect) {
     auto hwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();

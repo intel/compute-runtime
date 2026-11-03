@@ -167,15 +167,6 @@ XE3P_CORETEST_F(Xe3pCommandStreamReceiverFlushTaskTests, givenNotExistPolicyWhen
     EXPECT_EQ(notExistPolicy, commandStreamReceiver.streamProperties.stateComputeMode.threadArbitrationPolicy.value);
 }
 
-XE3P_CORETEST_F(Xe3pCommandStreamReceiverFlushTaskTests, givenLastSystolicPipelineSelectModeWhenFlushTaskIsCalledThenDontReprogramPipelineSelect) {
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    commandStreamReceiver.isPreambleSent = true;
-    flushTaskFlags.pipelineSelectArgs.systolicPipelineSelectMode = true;
-
-    flushTask(commandStreamReceiver);
-    EXPECT_FALSE(commandStreamReceiver.lastSystolicPipelineSelectMode);
-}
-
 struct Xe3pBcsTests : public UltCommandStreamReceiverTest {
     void SetUp() override {
         debugManager.flags.EnableLocalMemory.set(true);

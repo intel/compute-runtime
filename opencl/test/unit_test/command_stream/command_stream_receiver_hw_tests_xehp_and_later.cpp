@@ -34,6 +34,7 @@
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
+#include "opencl/test/unit_test/fixtures/ult_command_stream_receiver_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue_hw.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
@@ -104,6 +105,7 @@ struct CommandStreamReceiverHwTestXeHPAndLaterWithMockCsrT
 
 using CommandStreamReceiverHwTestXeHPAndLaterWithMockCsrHw = CommandStreamReceiverHwTestXeHPAndLaterWithMockCsrT<MockCsrHw>;
 using CommandStreamReceiverHwTestXeHPAndLaterWithMockCsrHw2 = CommandStreamReceiverHwTestXeHPAndLaterWithMockCsrT<MockCsrHw2>;
+using CommandStreamReceiverHwXeHpcToXe2HpgTests = UltCommandStreamReceiverTest;
 
 HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLaterWithMockCsrHw, givenPreambleSentWhenEnqueueingKernelThenDontProgramL3Register) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
@@ -946,4 +948,27 @@ HWTEST2_TEMPLATED_F(CommandStreamReceiverHwTestXeHPAndLaterWithMockCsrHw, givenS
 
     MI_BATCH_BUFFER_START *bbStart = genCmdCast<MI_BATCH_BUFFER_START *>(*cmdItor);
     ASSERT_NE(nullptr, bbStart);
+}
+
+HWTEST2_F(CommandStreamReceiverHwXeHpcToXe2HpgTests, givenOverrideThreadArbitrationPolicyDebugVariableSetWhenFlushingThenRequestRequiredMode, IsWithinXeHpcCoreAndXe2HpgCore) {
+    DebugManagerStateRestore restore;
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    debugManager.flags.OverrideThreadArbitrationPolicy.set(ThreadArbitrationPolicy::RoundRobin);
+
+    EXPECT_EQ(-1, commandStreamReceiver.streamProperties.stateComputeMode.threadArbitrationPolicy.value);
+
+    flushTask(commandStreamReceiver);
+    EXPECT_EQ(ThreadArbitrationPolicy::RoundRobin,
+              commandStreamReceiver.streamProperties.stateComputeMode.threadArbitrationPolicy.value);
+}
+
+HWTEST2_F(CommandStreamReceiverHwXeHpcToXe2HpgTests, givenNotExistPolicyWhenFlushingThenDefaultPolicyIsProgrammed, IsWithinXeHpcCoreAndXe2HpgCore) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    int32_t notExistPolicy = -2;
+    flushTaskFlags.threadArbitrationPolicy = notExistPolicy;
+
+    flushTask(commandStreamReceiver);
+
+    EXPECT_EQ(notExistPolicy, commandStreamReceiver.streamProperties.stateComputeMode.threadArbitrationPolicy.value);
 }
