@@ -165,42 +165,50 @@ typedef enum _zes_intel_driver_rescan_devices_exp_version_t {
 } zes_intel_driver_rescan_devices_exp_version_t;
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief Rescan devices after BDF changes
+/// @brief Rescan the sysman devices within a sysman driver
 ///
 /// @details
-///     - This function scans for devices that may have changed their PCI BDF
-///       (Domain:Bus:Device:Function) address after events like device reset or hot-plug.
-///     - The driver will update internal cached BDF information for devices that moved.
-///     - Device handles remain valid after this call - applications do not need to re-enumerate.
-///     - This is a synchronous operation that may take several milliseconds.
-///     - The application must not call any other sysman telemetry or query APIs
-///       concurrently with this call. While the rescan is in progress the driver
-///       is updating its cached BDF-dependent state, so the device objects are in
-///       a transient/inconsistent state and any concurrent sysman API may return
-///       stale or incorrect data.
+///     - This function refreshes the devices of a sysman driver instance. Call it after an
+///       external event that can change the set of devices, or the PCI address of a device,
+///       such as a device reset, a hot-plug, a hot-unplug etc.
+///     - The count reported by this function is the number of devices present in the system.
+///       It can differ from the count returned by a previous call to ::zesDeviceGet.
+///     - A device that is still present keeps its handle, and the handles of its components,
+///       valid. A device that is no longer present is not returned by this function or by any
+///       subsequent call to ::zesDeviceGet, and its handle and the handles of its components
+///       become invalid and must not be used by the application.
+///     - The handles returned are those of the devices managed by this sysman driver instance
+///       after the rescan. Subsequent calls to ::zesDeviceGet return the same handles, in the
+///       same order, until the next call to this function.
+///     - This function blocks until the rescan has completed. The application must not call it
+///       from simultaneous threads with the same sysman driver handle, and while it is
+///       executing must not call any other sysman function with that driver handle or with any
+///       device or component handle retrieved from it. Any concurrent call may return stale or
+///       incorrect data.
 ///
 /// @returns
 ///     - ::ZE_RESULT_SUCCESS
 ///     - ::ZE_RESULT_ERROR_UNINITIALIZED
 ///     - ::ZE_RESULT_ERROR_UNKNOWN
+///         + There were problems discovering the devices present in the system.
 ///     - ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE
+///         + The sysman driver instance does not support rescanning devices.
 ///     - ::ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE
-///     - ::ZE_RESULT_ERROR_DEVICE_LOST
-///         + One or more devices were unplugged and are no longer available
 ///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
 ///         + `nullptr == hDriver`
 ///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
 ///         + `nullptr == pCount`
 ze_result_t ZE_APICALL zesIntelDriverRescanDevicesExp(
-    zes_driver_handle_t hDriver,   ///< [in] handle of the driver instance
-    uint32_t *pCount,              ///< [in,out] pointer to the number of devices.
+    zes_driver_handle_t hDriver,   ///< [in] handle of the sysman driver instance
+    uint32_t *pCount,              ///< [in,out] pointer to the number of sysman devices.
                                    ///< if count is zero, then the driver shall update the value with the
-                                   ///< total number of devices available.
-                                   ///< if count is greater than the number of devices available, then the
-                                   ///< driver shall update the value with the correct number of devices available.
-    zes_device_handle_t *phDevices ///< [in,out][optional][range(0, *pCount)] array of handle of devices.
-                                   ///< if count is less than the number of devices available, then driver
-                                   ///< shall only retrieve that number of device handles.
+                                   ///< total number of sysman devices available.
+                                   ///< if count is greater than the number of sysman devices available, then
+                                   ///< the driver shall update the value with the correct number of sysman
+                                   ///< devices available.
+    zes_device_handle_t *phDevices ///< [in,out][optional][range(0, *pCount)] array of handle of sysman devices.
+                                   ///< if count is less than the number of sysman devices available, then
+                                   ///< driver shall only retrieve that number of sysman devices.
 );
 
 ///////////////////////////////////////////////////////////////////////////////

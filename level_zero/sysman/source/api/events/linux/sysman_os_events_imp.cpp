@@ -231,9 +231,10 @@ ze_result_t LinuxEventsUtil::eventsListen(uint64_t timeout, uint32_t count, zes_
     for (uint32_t devIndex = 0; devIndex < count; devIndex++) {
         auto device = static_cast<SysmanDeviceImp *>(L0::Sysman::SysmanDevice::fromHandle(phDevices[devIndex]));
         if (device == nullptr) {
+            auto result = SysmanDevice::isLostDeviceHandle(phDevices[devIndex]) ? ZE_RESULT_ERROR_DEVICE_LOST : ZE_RESULT_ERROR_INVALID_ARGUMENT;
             PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                         "Error@ %s(): device handle at index %d could not be mapped to a sysman device and returning error:0x%x \n", NEO_FUNCTION_NAME, devIndex, ZE_RESULT_ERROR_INVALID_ARGUMENT);
-            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+                         "Error@ %s(): device handle at index %d could not be mapped to a sysman device and returning error:0x%x \n", NEO_FUNCTION_NAME, devIndex, result);
+            return result;
         }
         {
             std::unique_lock<std::mutex> lock(eventsMutex);

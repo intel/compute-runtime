@@ -63,7 +63,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableAndNonMovableClass {
     uint32_t getSubDeviceCount() override;
     uint32_t getRootDeviceIndex() const override { return rootDeviceIndex; }
     void getDeviceUuids(std::vector<std::string> &deviceUuids) override;
-    std::string getPciUuid() override;
+    MOCKABLE_VIRTUAL std::string getPciUuid();
     const NEO::HardwareInfo &getHardwareInfo() const override;
     std::string getPciCardBusDirectoryPath(std::string realPciPath);
     uint32_t getMemoryType();
@@ -132,6 +132,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableAndNonMovableClass {
     };
     std::vector<Uuid> uuidVec;
     NEO::PhysicalDevicePciBusInfo pciBdfInfo = {};
+    std::string pciUuid;
 
   private:
     LinuxSysmanImp() = delete;
@@ -144,7 +145,6 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableAndNonMovableClass {
     std::mutex fwLock;
     std::string devicePciBdf = "";
     std::string driverName;
-    std::string pciUuid;
 };
 
 } // namespace Sysman

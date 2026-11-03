@@ -20,7 +20,6 @@
 
 namespace NEO {
 class ExecutionEnvironment;
-struct PhysicalDevicePciBusInfo;
 } // namespace NEO
 
 namespace L0 {
@@ -45,6 +44,7 @@ struct SysmanDriverHandleImp : SysmanDriverHandle {
                                          uint32_t *pNumDeviceEvents, zes_event_type_flags_t *pEvents,
                                          zes_event_type_flags_t *pDriverEvents) override;
     std::vector<SysmanDevice *> sysmanDevices;
+    std::vector<SysmanDevice *> lostSysmanDevices;
     uint32_t numDevices = 0;
     ze_result_t getExtensionFunctionAddress(const char *pFuncName, void **pfunc) override;
     struct OsSysmanDriver *pOsSysmanDriver = nullptr;
@@ -63,12 +63,15 @@ struct SysmanDriverHandleImp : SysmanDriverHandle {
     // list of supported extension apis
     static const std::vector<std::pair<std::string, uint32_t>> extensionsSupported;
 
+    NEO::ExecutionEnvironment *getExecutionEnvironment() const { return executionEnvironment; }
+
     bool isDeferredDiscoveryMode() const { return deferredDiscoveryMode; }
     bool areDevicesDiscovered() const { return devicesDiscovered; }
 
     void updateUuidMap(SysmanDevice *sysmanDevice);
-    void updatePciUuidMap(SysmanDevice *sysmanDevice);
-    std::map<std::string, std::unique_ptr<NEO::PhysicalDevicePciBusInfo>> pciUuidToPciBusInfoMap;
+    void moveSysmanDeviceToLost(SysmanDevice *sysmanDevice);
+    bool isLostSysmanDevice(SysmanDevice *sysmanDevice) const;
+    bool isLostDeviceHandle(zes_device_handle_t hDevice);
 
     struct OsSysmanDriver *getOsSysmanDriver();
 
@@ -81,6 +84,7 @@ struct SysmanDriverHandleImp : SysmanDriverHandle {
     std::unordered_map<ze_device_handle_t, SysmanDevice *> coreToSysmanDeviceMap{};
 
   protected:
+    NEO::ExecutionEnvironment *executionEnvironment = nullptr;
     uint64_t uuidTimestamp = 0u;
     std::unordered_map<std::string, SysmanDevice *> uuidDeviceMap{};
     std::unordered_map<ze_driver_handle_t, SysmanDriverHandle *> coreToSysmanDriverMap{};

@@ -13,6 +13,7 @@
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/sysman/source/driver/sysman_driver.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
+#include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_rescan.h"
 
 namespace L0 {
 namespace Sysman {
@@ -98,6 +99,68 @@ HWTEST2_F(SysmanDeviceFixtureWithCore, GivenValidCoreHandleWhenRetrievingSysmanH
     pSysmanDevice = nullptr;
     pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(coreDeviceHandle);
     EXPECT_NE(pSysmanDevice, nullptr);
+}
+
+HWTEST2_F(SysmanDeviceFixtureWithCore, GivenCoreHandleResolvedBeforeDeviceIsLostWhenCallingSysmanApiWithCoreHandleThenDeviceLostIsReturned, IsPVC) {
+    auto coreDeviceHandle = device->toHandle();
+    ASSERT_EQ(pSysmanDevice, L0::Sysman::SysmanDevice::fromHandle(coreDeviceHandle));
+
+    SysmanDeviceFixture::driverHandle->moveSysmanDeviceToLost(pSysmanDevice);
+
+    EXPECT_EQ(nullptr, L0::Sysman::SysmanDevice::fromHandle(coreDeviceHandle));
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, L0::Sysman::SysmanDevice::getUnresolvedHandleResult(coreDeviceHandle));
+    zes_device_state_t state = {ZES_STRUCTURE_TYPE_DEVICE_STATE};
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, L0::Sysman::SysmanDevice::deviceGetState(coreDeviceHandle, &state));
+}
+
+HWTEST2_F(SysmanDeviceFixtureWithCore, GivenCoreHandleResolvedBeforeDeviceIsLostWhenListeningForEventsWithCoreHandleThenDeviceLostIsReturned, IsPVC) {
+    auto coreDeviceHandle = device->toHandle();
+    ASSERT_EQ(pSysmanDevice, L0::Sysman::SysmanDevice::fromHandle(coreDeviceHandle));
+
+    SysmanDeviceFixture::driverHandle->moveSysmanDeviceToLost(pSysmanDevice);
+
+    PublicLinuxSysmanDriverImp driverImp = {};
+    uint32_t numDeviceEvents = 0;
+    zes_event_type_flags_t deviceEvents = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, driverImp.eventsListen(0u, 1u, &coreDeviceHandle, &numDeviceEvents, &deviceEvents));
+}
+
+HWTEST2_F(SysmanDeviceFixtureWithCore, GivenDeviceRelocatedBeforeCoreHandleIsFirstUsedWhenRetrievingSysmanDeviceFromCoreHandleThenRelocatedDeviceIsReturned, IsPVC) {
+    auto pMockOsSysman = std::make_unique<MockRescanOsSysman>(pSysmanDeviceImp);
+    pMockOsSysman->useMockDeviceUuids = true;
+    pMockOsSysman->mockDeviceUuids = {"relocated-device-uuid"};
+    auto pOrigOsSysman = pSysmanDeviceImp->pOsSysman;
+    pSysmanDeviceImp->pOsSysman = pMockOsSysman.get();
+    MockRescanOsSysmanDriver mockOsSysmanDriver;
+    NEO::HwDeviceIdDrm relocatedHwDeviceId(-1, "0000:ab:00.0", "/dev/dri/renderD128");
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mockOsSysmanDriver.reinitDeviceCachedInfo(pSysmanDevice, &relocatedHwDeviceId));
+
+    EXPECT_EQ(pSysmanDevice, L0::Sysman::SysmanDevice::fromHandle(device->toHandle()));
+
+    pSysmanDeviceImp->pOsSysman = pOrigOsSysman;
+}
+
+HWTEST2_F(SysmanDeviceFixtureWithCore, GivenCoreHandleFirstUsedAfterDeviceIsLostWhenCallingSysmanApiWithCoreHandleThenDeviceLostIsReturned, IsPVC) {
+    auto coreDeviceHandle = device->toHandle();
+
+    SysmanDeviceFixture::driverHandle->moveSysmanDeviceToLost(pSysmanDevice);
+
+    EXPECT_EQ(nullptr, L0::Sysman::SysmanDevice::fromHandle(coreDeviceHandle));
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, L0::Sysman::SysmanDevice::getUnresolvedHandleResult(coreDeviceHandle));
+    zes_device_state_t state = {ZES_STRUCTURE_TYPE_DEVICE_STATE};
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, L0::Sysman::SysmanDevice::deviceGetState(coreDeviceHandle, &state));
+}
+
+HWTEST2_F(SysmanDeviceFixtureWithCore, GivenCoreHandleFirstUsedAfterDeviceIsLostWhenListeningForEventsWithCoreHandleThenDeviceLostIsReturned, IsPVC) {
+    auto coreDeviceHandle = device->toHandle();
+
+    SysmanDeviceFixture::driverHandle->moveSysmanDeviceToLost(pSysmanDevice);
+
+    PublicLinuxSysmanDriverImp driverImp = {};
+    uint32_t numDeviceEvents = 0;
+    zes_event_type_flags_t deviceEvents = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, driverImp.eventsListen(0u, 1u, &coreDeviceHandle, &numDeviceEvents, &deviceEvents));
 }
 
 class MockDriverHandleForFromHandle : public DriverHandle {

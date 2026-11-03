@@ -140,10 +140,6 @@ void WddmSysmanImp::getDeviceUuids(std::vector<std::string> &deviceUuids) {
     }
 }
 
-std::string WddmSysmanImp::getPciUuid() {
-    return "";
-}
-
 bool WddmSysmanImp::getUuid(std::array<uint8_t, CommonConstants::uuidSize> &uuid) {
     if (getSysmanDeviceImp()->getRootDeviceEnvironment().osInterface != nullptr) {
         auto driverModel = getSysmanDeviceImp()->getRootDeviceEnvironment().osInterface->getDriverModel();

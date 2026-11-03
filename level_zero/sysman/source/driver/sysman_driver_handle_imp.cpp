@@ -28,6 +28,8 @@
 
 #include "driver_version.h"
 
+#include <algorithm>
+
 namespace L0 {
 namespace Sysman {
 
@@ -80,15 +82,23 @@ void SysmanDriverHandleImp::updateUuidMap(SysmanDevice *sysmanDevice) {
     return;
 }
 
-void SysmanDriverHandleImp::updatePciUuidMap(SysmanDevice *sysmanDevice) {
-    auto sysmanDeviceImp = static_cast<SysmanDeviceImp *>(sysmanDevice);
-    auto pOsSysman = sysmanDeviceImp->deviceGetOsInterface();
-    std::string pciUuid = pOsSysman->getPciUuid();
-    if (pciUuid.empty()) {
-        return;
+void SysmanDriverHandleImp::moveSysmanDeviceToLost(SysmanDevice *sysmanDevice) {
+    lostSysmanDevices.push_back(sysmanDevice);
+    std::erase(sysmanDevices, sysmanDevice);
+    numDevices = static_cast<uint32_t>(sysmanDevices.size());
+}
+
+bool SysmanDriverHandleImp::isLostSysmanDevice(SysmanDevice *sysmanDevice) const {
+    return std::find(lostSysmanDevices.begin(), lostSysmanDevices.end(), sysmanDevice) != lostSysmanDevices.end();
+}
+
+bool SysmanDriverHandleImp::isLostDeviceHandle(zes_device_handle_t hDevice) {
+    if (this->isLostSysmanDevice(static_cast<SysmanDevice *>(hDevice))) {
+        return true;
     }
-    auto pciBusInfo = pOsSysman->getPciBdfInfo();
-    pciUuidToPciBusInfoMap[pciUuid] = std::move(pciBusInfo);
+    const std::lock_guard<std::mutex> lock(this->coreToSysmanDeviceMapLock);
+    auto sysmanDevice = this->findSysmanDeviceFromCoreToSysmanDeviceMap(hDevice);
+    return sysmanDevice != nullptr && this->isLostSysmanDevice(sysmanDevice);
 }
 
 SysmanDevice *SysmanDriverHandleImp::findSysmanDeviceFromCoreToSysmanDeviceMap(ze_device_handle_t handle) {
@@ -140,13 +150,15 @@ ze_result_t SysmanDriverHandleImp::initialize(NEO::ExecutionEnvironment &executi
         if (pSysmanDevice != nullptr) {
             this->sysmanDevices.push_back(pSysmanDevice);
             updateUuidMap(pSysmanDevice);
-            updatePciUuidMap(pSysmanDevice);
         }
     }
 
     if (this->sysmanDevices.size() == 0) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
+
+    this->executionEnvironment = &executionEnvironment;
+    this->executionEnvironment->incRefInternal();
 
     getOsSysmanDriver();
     this->numDevices = static_cast<uint32_t>(this->sysmanDevices.size());
@@ -464,10 +476,19 @@ SysmanDriverHandleImp::~SysmanDriverHandleImp() {
         delete device;
     }
     this->sysmanDevices.clear();
+    for (auto &device : this->lostSysmanDevices) {
+        delete device;
+    }
+    this->lostSysmanDevices.clear();
 
     if (pOsSysmanDriver != nullptr) {
         delete pOsSysmanDriver;
         pOsSysmanDriver = nullptr;
+    }
+
+    if (executionEnvironment != nullptr) {
+        executionEnvironment->decRefInternal();
+        executionEnvironment = nullptr;
     }
 
     // Clean up saved ExecutionEnvironment if discovery never happened

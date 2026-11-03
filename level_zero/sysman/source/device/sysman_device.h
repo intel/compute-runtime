@@ -39,6 +39,8 @@ struct OsSysman;
 
 struct SysmanDevice : _ze_device_handle_t {
     static SysmanDevice *fromHandle(zes_device_handle_t handle);
+    static bool isLostDeviceHandle(zes_device_handle_t handle);
+    static ze_result_t getUnresolvedHandleResult(zes_device_handle_t handle);
     inline zes_device_handle_t toHandle() { return this; }
     virtual ~SysmanDevice() = default;
     static SysmanDevice *create(NEO::ExecutionEnvironment &executionEnvironment, const uint32_t rootDeviceIndex);

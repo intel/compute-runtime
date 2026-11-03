@@ -87,6 +87,31 @@ TEST_F(SysmanDeviceFixtureWithCore, GivenValidCoreHandleWhenPopulatingDeviceUuid
     EXPECT_FALSE(diffFound);
     EXPECT_NE(pSysmanDevice, nullptr);
 }
+
+TEST_F(SysmanDeviceFixtureWithCore, GivenCoreHandleResolvedBeforeDeviceIsLostWhenCallingSysmanApiWithCoreHandleThenDeviceLostIsReturned) {
+    auto coreDeviceHandle = device->toHandle();
+    ASSERT_EQ(pSysmanDevice, L0::Sysman::SysmanDevice::fromHandle(coreDeviceHandle));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, L0::Sysman::SysmanDevice::getUnresolvedHandleResult(coreDeviceHandle));
+
+    SysmanDeviceFixture::driverHandle->moveSysmanDeviceToLost(pSysmanDevice);
+
+    EXPECT_EQ(nullptr, L0::Sysman::SysmanDevice::fromHandle(coreDeviceHandle));
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, L0::Sysman::SysmanDevice::getUnresolvedHandleResult(coreDeviceHandle));
+    zes_device_state_t state = {ZES_STRUCTURE_TYPE_DEVICE_STATE};
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, L0::Sysman::SysmanDevice::deviceGetState(coreDeviceHandle, &state));
+}
+
+TEST_F(SysmanDeviceFixtureWithCore, GivenCoreHandleFirstUsedAfterDeviceIsLostWhenCallingSysmanApiWithCoreHandleThenDeviceLostIsReturned) {
+    auto coreDeviceHandle = device->toHandle();
+
+    SysmanDeviceFixture::driverHandle->moveSysmanDeviceToLost(pSysmanDevice);
+
+    EXPECT_EQ(nullptr, L0::Sysman::SysmanDevice::fromHandle(coreDeviceHandle));
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, L0::Sysman::SysmanDevice::getUnresolvedHandleResult(coreDeviceHandle));
+    zes_device_state_t state = {ZES_STRUCTURE_TYPE_DEVICE_STATE};
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, L0::Sysman::SysmanDevice::deviceGetState(coreDeviceHandle, &state));
+}
+
 class MockDriverHandleForFromHandle : public DriverHandle {
   public:
     enum Mode {

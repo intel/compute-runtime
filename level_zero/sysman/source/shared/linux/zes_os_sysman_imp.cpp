@@ -84,6 +84,7 @@ ze_result_t LinuxSysmanImp::init() {
     pFsAccess = pSysmanKmdInterface->getFsAccess();
     pProcfsAccess = pSysmanKmdInterface->getProcFsAccess();
     pSysfsAccess = pSysmanKmdInterface->getSysFsAccess();
+    getPciUuid();
 
     devicePciBdf = pSysfsAccess->getDevicePciBdf();
     auto sysmanHwDeviceId = getSysmanHwDeviceIdInstance();
@@ -843,8 +844,8 @@ bool LinuxSysmanImp::isDeviceInSurvivabilityMode() {
 }
 
 ze_result_t LinuxSysmanImp::updateBdfDependentData() {
-    pSysmanKmdInterface->setSysmanDeviceDirName(
-        getSysmanDeviceImp()->getRootDeviceEnvironment().getHardwareInfo()->capabilityTable.isIntegratedDevice);
+    pFsAccess->clearFdCache();
+    pSysfsAccess->clearFdCache();
 
     // Rediscover sysfs device directory from updated file descriptor.
     auto sysmanHwDeviceId = getSysmanHwDeviceIdInstance();
@@ -860,6 +861,9 @@ ze_result_t LinuxSysmanImp::updateBdfDependentData() {
         return result;
     }
     pSysfsAccess->reinit(devNodePath);
+
+    pSysmanKmdInterface->setSysmanDeviceDirName(
+        getSysmanDeviceImp()->getRootDeviceEnvironment().getHardwareInfo()->capabilityTable.isIntegratedDevice);
 
     devicePciBdf = pSysfsAccess->getDevicePciBdf();
 

@@ -19,7 +19,8 @@
 
 namespace NEO {
 class HwDeviceId;
-}
+struct PhysicalDevicePciBusInfo;
+} // namespace NEO
 
 namespace L0 {
 namespace Sysman {
@@ -49,8 +50,13 @@ class LinuxSysmanDriverImp : public OsSysmanDriver, NEO::NonCopyableAndNonMovabl
     ze_result_t rescanDevices(SysmanDriverHandleImp *driverHandle, uint32_t *pCount, zes_device_handle_t *phDevices) override;
     ze_result_t getPciDeviceProperties(uint32_t *pCount, zes_driver_pci_device_properties_t *pProperties) override;
     MOCKABLE_VIRTUAL std::vector<zes_pci_address_t> getPciDeviceAddresses();
-    MOCKABLE_VIRTUAL ze_result_t getPciBdfAndUuidForHwDevice(NEO::HwDeviceId *hwDeviceId, std::string &pciBdf, std::string &pciUuid);
-    MOCKABLE_VIRTUAL ze_result_t updateHwDeviceId(SysmanDevice *sysmanDevice, const std::string &newBdf);
+    MOCKABLE_VIRTUAL ze_result_t getPciBdfForHwDevice(NEO::HwDeviceId *hwDeviceId, std::string &pciBdf);
+    MOCKABLE_VIRTUAL ze_result_t getPciUuidForHwDevice(NEO::HwDeviceId *hwDeviceId, std::string &pciUuid);
+    MOCKABLE_VIRTUAL ze_result_t updateHwDeviceId(SysmanDevice *sysmanDevice, NEO::HwDeviceId *hwDeviceId);
+    MOCKABLE_VIRTUAL ze_result_t reinitDeviceCachedInfo(SysmanDevice *sysmanDevice, NEO::HwDeviceId *hwDeviceId);
+    static SysmanDevice *getSysmanDeviceByPciUuid(const SysmanDriverHandleImp *driverHandle, const std::string &pciUuid);
+    static SysmanDevice *getSysmanDeviceByPciBusInfo(const SysmanDriverHandleImp *driverHandle, const NEO::PhysicalDevicePciBusInfo &pciBusInfo);
+    static void removeLostSysmanDevices(SysmanDriverHandleImp *driverHandle, const std::vector<SysmanDevice *> &foundDevices);
     void eventRegister(zes_event_type_flags_t events, SysmanDeviceImp *pSysmanDevice);
     L0::Sysman::UdevLib *getUdevLibHandle();
     DrmNlApi *getDrmNlApiHandle();
@@ -72,7 +78,6 @@ class LinuxSysmanDriverImp : public OsSysmanDriver, NEO::NonCopyableAndNonMovabl
     mutable std::mutex cperFdsMutex;
 
   private:
-    int32_t findDeviceIndexByPciUuid(SysmanDriverHandleImp *driverHandle, const std::string &pciUuid);
     void netlinkCleanup();
 };
 

@@ -165,10 +165,6 @@ TEST_F(SysmanDeviceFixture, GivenValidWddmSysmanImpWhenRetrievingUuidThenTrueIsR
     EXPECT_TRUE(result);
 }
 
-TEST_F(SysmanDeviceFixture, GivenWddmSysmanImpWhenCallingGetPciUuidThenEmptyStringIsReturned) {
-    EXPECT_TRUE(pWddmSysmanImp->getPciUuid().empty());
-}
-
 TEST_F(SysmanDeviceFixture, GivenValidSysmanDeviceHandleWhenRetrievingBdfInfoThenNullptrIsReturned) {
 
     auto hwDeviceId = std::make_unique<NEO::HwDeviceId>(NEO::DriverModelType::wddm);
@@ -179,31 +175,30 @@ TEST_F(SysmanDeviceFixture, GivenValidSysmanDeviceHandleWhenRetrievingBdfInfoThe
     EXPECT_EQ(nullptr, pciBdfInfo);
 }
 
-TEST_F(SysmanDeviceFixture, GivenEmptyPciUuidWhenCallingUpdatePciUuidMapThenNoEntryIsInserted) {
-    auto pMockOsSysman = std::make_unique<MockPciUuidWddmSysmanImp>(pSysmanDeviceImp);
-    pMockOsSysman->mockPciUuid = "";
-    auto pOrigOsSysman = pSysmanDeviceImp->pOsSysman;
-    pSysmanDeviceImp->pOsSysman = pMockOsSysman.get();
+TEST_F(SysmanDeviceFixture, GivenDeviceNotLostWhenCallingGetUnresolvedHandleResultThenUninitializedIsReturned) {
+    EXPECT_FALSE(driverHandle->isLostSysmanDevice(pSysmanDevice));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, SysmanDevice::getUnresolvedHandleResult(pSysmanDevice->toHandle()));
 
-    const size_t sizeBefore = driverHandle->pciUuidToPciBusInfoMap.size();
-    driverHandle->updatePciUuidMap(pSysmanDeviceImp);
-    EXPECT_EQ(sizeBefore, driverHandle->pciUuidToPciBusInfoMap.size());
-    EXPECT_FALSE(driverHandle->pciUuidToPciBusInfoMap.contains(""));
-
-    pSysmanDeviceImp->pOsSysman = pOrigOsSysman;
+    L0::Sysman::globalSysmanDriver = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, SysmanDevice::getUnresolvedHandleResult(pSysmanDevice->toHandle()));
 }
 
-TEST_F(SysmanDeviceFixture, GivenNonEmptyPciUuidWhenCallingUpdatePciUuidMapThenEntryIsInserted) {
-    const std::string mockPciUuid = "0000:03:00.0-uuid";
-    auto pMockOsSysman = std::make_unique<MockPciUuidWddmSysmanImp>(pSysmanDeviceImp);
-    pMockOsSysman->mockPciUuid = mockPciUuid;
-    auto pOrigOsSysman = pSysmanDeviceImp->pOsSysman;
-    pSysmanDeviceImp->pOsSysman = pMockOsSysman.get();
+TEST_F(SysmanDeviceFixture, GivenDeviceWhenCallingMoveSysmanDeviceToLostThenDeviceIsMovedToLostListAndItsHandleReportsDeviceLost) {
+    const auto uuidDeviceMapAtInit = driverHandle->getUuidDeviceMap();
+    ASSERT_FALSE(uuidDeviceMapAtInit.empty());
 
-    driverHandle->updatePciUuidMap(pSysmanDeviceImp);
-    EXPECT_TRUE(driverHandle->pciUuidToPciBusInfoMap.contains(mockPciUuid));
+    driverHandle->moveSysmanDeviceToLost(pSysmanDevice);
 
-    pSysmanDeviceImp->pOsSysman = pOrigOsSysman;
+    EXPECT_TRUE(driverHandle->sysmanDevices.empty());
+    EXPECT_EQ(0u, driverHandle->numDevices);
+    ASSERT_EQ(1u, driverHandle->lostSysmanDevices.size());
+    EXPECT_EQ(pSysmanDevice, driverHandle->lostSysmanDevices[0]);
+    EXPECT_TRUE(driverHandle->isLostSysmanDevice(pSysmanDevice));
+    EXPECT_EQ(uuidDeviceMapAtInit, driverHandle->getUuidDeviceMap());
+
+    zes_device_handle_t staleHandle = pSysmanDevice->toHandle();
+    EXPECT_EQ(nullptr, SysmanDevice::fromHandle(staleHandle));
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, SysmanDevice::getUnresolvedHandleResult(staleHandle));
 }
 
 } // namespace ult

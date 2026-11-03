@@ -51,6 +51,25 @@ TEST_F(SysmanDriverHandleOsAgnosticTest,
     EXPECT_EQ(expectedName, std::string(extensionsReturned[0].name));
 }
 
+TEST_F(SysmanDriverHandleOsAgnosticTest,
+       GivenInitializedDriverHandleWhenDriverHandleIsDestroyedThenItReleasesItsReferenceToTheExecutionEnvironment) {
+    auto executionEnvironment = driverHandle->getExecutionEnvironment();
+    ASSERT_EQ(execEnv, executionEnvironment);
+    executionEnvironment->incRefInternal();
+    const auto refCountBeforeDestroy = executionEnvironment->getRefInternalCount();
+    const auto deviceCount = static_cast<int32_t>(driverHandle->sysmanDevices.size());
+
+    driverHandle.reset();
+
+    EXPECT_EQ(refCountBeforeDestroy - deviceCount - 1, executionEnvironment->getRefInternalCount());
+    executionEnvironment->decRefInternal();
+}
+
+TEST_F(SysmanDriverHandleOsAgnosticTest,
+       GivenSysmanDeviceWhenGettingOsInterfaceThenOsSysmanOfTheDeviceIsReturned) {
+    EXPECT_EQ(pOsSysman, pSysmanDevice->deviceGetOsInterface());
+}
+
 TEST(SysmanDriverDeferredDiscoveryOsAgnostic,
      GivenNoFlagWhenNoDevicesPresentThenInitializeFails) {
     OsAgnosticMockSysmanDriver driver;

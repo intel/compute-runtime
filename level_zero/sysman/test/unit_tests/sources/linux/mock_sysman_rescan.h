@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/os_interface/driver_info.h"
+#include "shared/source/os_interface/linux/hw_device_id.h"
 
 #include "level_zero/sysman/source/driver/os_sysman_driver.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
@@ -41,6 +42,7 @@ class MockRescanSysfsAccess : public L0::Sysman::SysFsAccessInterface {
     std::string mockBdf = "0000:03:00.0";
     std::string mockRealPath = "/sys/devices/pci0000:03/0000:03:00.0";
     uint32_t getRealPathCalled = 0;
+    uint32_t clearFdCacheCalled = 0;
 
     ze_result_t read(const std::string file, std::string &val) override {
         if (mockReadResult != ZE_RESULT_SUCCESS) {
@@ -61,6 +63,20 @@ class MockRescanSysfsAccess : public L0::Sysman::SysFsAccessInterface {
         val = mockRealPath + "/" + mockBdf;
         return ZE_RESULT_SUCCESS;
     }
+    void clearFdCache() override {
+        clearFdCacheCalled++;
+        L0::Sysman::SysFsAccessInterface::clearFdCache();
+    }
+};
+
+class MockRescanFsAccess : public L0::Sysman::FsAccessInterface {
+  public:
+    uint32_t clearFdCacheCalled = 0;
+
+    void clearFdCache() override {
+        clearFdCacheCalled++;
+        L0::Sysman::FsAccessInterface::clearFdCache();
+    }
 };
 
 // Procfs access mock returning a canned device node name for updateBdfDependentData().
@@ -78,21 +94,25 @@ class MockRescanProcfsAccess : public L0::Sysman::ProcFsAccessInterface {
 
 class MockRescanOsSysmanDriver : public L0::Sysman::LinuxSysmanDriverImp {
   public:
-    ze_result_t mockGetPciBdfAndUuidResult = ZE_RESULT_SUCCESS;
+    ze_result_t mockGetPciBdfResult = ZE_RESULT_SUCCESS;
+    ze_result_t mockGetPciUuidResult = ZE_RESULT_SUCCESS;
     ze_result_t mockUpdateHwDeviceIdResult = ZE_RESULT_SUCCESS;
     std::string mockPciBdf = "0000:03:00.0";
     std::string mockPciUuid = "";
-    uint32_t getPciBdfAndUuidCalled = 0;
     uint32_t updateHwDeviceIdCalled = 0;
+    std::string lastUpdateHwDeviceIdPciPath = "";
 
-    ze_result_t getPciBdfAndUuidForHwDevice(NEO::HwDeviceId *hwDeviceId, std::string &pciBdf, std::string &pciUuid) override {
-        getPciBdfAndUuidCalled++;
+    ze_result_t getPciBdfForHwDevice(NEO::HwDeviceId *hwDeviceId, std::string &pciBdf) override {
         pciBdf = mockPciBdf;
-        pciUuid = mockPciUuid;
-        return mockGetPciBdfAndUuidResult;
+        return mockGetPciBdfResult;
     }
-    ze_result_t updateHwDeviceId(SysmanDevice *sysmanDevice, const std::string &newBdf) override {
+    ze_result_t getPciUuidForHwDevice(NEO::HwDeviceId *hwDeviceId, std::string &pciUuid) override {
+        pciUuid = mockPciUuid;
+        return mockGetPciUuidResult;
+    }
+    ze_result_t updateHwDeviceId(SysmanDevice *sysmanDevice, NEO::HwDeviceId *hwDeviceId) override {
         updateHwDeviceIdCalled++;
+        lastUpdateHwDeviceIdPciPath = hwDeviceId->as<NEO::HwDeviceIdDrm>()->getPciPath();
         return mockUpdateHwDeviceIdResult;
     }
 };
@@ -105,6 +125,7 @@ class MockRescanOsSysman : public L0::Sysman::LinuxSysmanImp {
     ze_result_t mockUpdateBdfResult = ZE_RESULT_SUCCESS;
     uint32_t updateBdfDependentDataCalled = 0;
     bool useMockPciBdfInfo = false;
+    bool returnNullPciBdfInfo = false;
     NEO::PhysicalDevicePciBusInfo mockPciBdfInfo{};
     bool useMockDeviceUuids = false;
     std::vector<std::string> mockDeviceUuids = {};
@@ -124,6 +145,9 @@ class MockRescanOsSysman : public L0::Sysman::LinuxSysmanImp {
         return mockUpdateBdfResult;
     }
     std::unique_ptr<NEO::PhysicalDevicePciBusInfo> getPciBdfInfo() const override {
+        if (returnNullPciBdfInfo) {
+            return nullptr;
+        }
         if (useMockPciBdfInfo) {
             return std::make_unique<NEO::PhysicalDevicePciBusInfo>(mockPciBdfInfo);
         }
