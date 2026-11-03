@@ -192,12 +192,29 @@ struct MockCommandListCaptureSignalWaitEventParams : public MockCommandList {
     CmdListWaitEventParameters capturedWaitEventParameters;
 };
 
-TEST(zeCommandListAppendSignalEventWithParameters, WhenAppendingSignalEventWithFlagsExtensionThenParamIsCorrectlySet) {
+TEST(zeCommandListAppendSignalEventWithParameters, WhenAppendingSignalEventWithFlagsExpExtensionThenParamIsCorrectlySet) {
     MockCommandListCaptureSignalWaitEventParams commandList;
     Mock<Event> eventObj;
     ze_event_handle_t event = eventObj.toHandle();
 
     ze_event_exp_flags_desc_t eventFlagsDesc = {ZE_STRUCTURE_TYPE_EVENT_EXP_FLAGS_DESC, nullptr, ZE_EVENT_EXP_FLAG_APPEND_GRAPH_EXTERNAL};
+
+    auto result = zeCommandListAppendSignalEventWithParameters(commandList.toHandle(), &eventFlagsDesc, event);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_TRUE(commandList.capturedSignalEventParameters.apiRequestForGraphExternal);
+
+    eventFlagsDesc.flags = 0;
+    result = zeCommandListAppendSignalEventWithParameters(commandList.toHandle(), &eventFlagsDesc, event);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_FALSE(commandList.capturedSignalEventParameters.apiRequestForGraphExternal);
+}
+
+TEST(zeCommandListAppendSignalEventWithParameters, WhenAppendingSignalEventWithFlagsCoreExtensionThenParamIsCorrectlySet) {
+    MockCommandListCaptureSignalWaitEventParams commandList;
+    Mock<Event> eventObj;
+    ze_event_handle_t event = eventObj.toHandle();
+
+    ze_event_ext_flags_desc_t eventFlagsDesc = {ZE_STRUCTURE_TYPE_EVENT_EXT_FLAGS_DESC, nullptr, ZE_EVENT_EXT_FLAG_APPEND_GRAPH_EXTERNAL};
 
     auto result = zeCommandListAppendSignalEventWithParameters(commandList.toHandle(), &eventFlagsDesc, event);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -230,12 +247,29 @@ TEST(zeCommandListAppendSignalEventWithParameters, WhenAppendingSignalEventWithN
     EXPECT_FALSE(commandList.capturedSignalEventParameters.apiRequestForGraphExternal);
 }
 
-TEST(zeCommandListAppendWaitOnEventsWithParameters, WhenAppendingWaitOnEventsWithFlagsExtensionThenParamIsCorrectlySet) {
+TEST(zeCommandListAppendWaitOnEventsWithParameters, WhenAppendingWaitOnEventsWithFlagsExpExtensionThenParamIsCorrectlySet) {
     MockCommandListCaptureSignalWaitEventParams commandList;
     Mock<Event> eventObj;
     ze_event_handle_t event = eventObj.toHandle();
 
     ze_event_exp_flags_desc_t eventFlagsDesc = {ZE_STRUCTURE_TYPE_EVENT_EXP_FLAGS_DESC, nullptr, ZE_EVENT_EXP_FLAG_APPEND_GRAPH_EXTERNAL};
+
+    auto result = zeCommandListAppendWaitOnEventsWithParameters(commandList.toHandle(), &eventFlagsDesc, 1, &event);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_TRUE(commandList.capturedWaitEventParameters.apiRequestForGraphExternal);
+
+    eventFlagsDesc.flags = 0;
+    result = zeCommandListAppendWaitOnEventsWithParameters(commandList.toHandle(), &eventFlagsDesc, 1, &event);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_FALSE(commandList.capturedWaitEventParameters.apiRequestForGraphExternal);
+}
+
+TEST(zeCommandListAppendWaitOnEventsWithParameters, WhenAppendingWaitOnEventsWithFlagsCoreExtensionThenParamIsCorrectlySet) {
+    MockCommandListCaptureSignalWaitEventParams commandList;
+    Mock<Event> eventObj;
+    ze_event_handle_t event = eventObj.toHandle();
+
+    ze_event_ext_flags_desc_t eventFlagsDesc = {ZE_STRUCTURE_TYPE_EVENT_EXT_FLAGS_DESC, nullptr, ZE_EVENT_EXT_FLAG_APPEND_GRAPH_EXTERNAL};
 
     auto result = zeCommandListAppendWaitOnEventsWithParameters(commandList.toHandle(), &eventFlagsDesc, 1, &event);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);

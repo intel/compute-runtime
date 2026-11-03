@@ -23,6 +23,7 @@ target_sources(${L0_STATIC_LIB_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}cmdlist_memory_copy_params_ext.h
                ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}copy_offload_mode.h
                ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}cmdlist_additional_args.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/pnext_helpers.h
 )
 
 if(SUPPORT_GEN12LP OR SUPPORT_XE_HPG_CORE OR SUPPORT_XE_HPC_CORE OR SUPPORT_XE2_HPG_CORE OR SUPPORT_XE3_CORE)

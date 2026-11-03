@@ -4949,7 +4949,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context->toHandle(), device->toHandle(), &eventDesc, &eventHandle));
     auto event = L0::Event::fromHandle(eventHandle);
 
-    ze_event_exp_flags_desc_t eventFlagsDesc = {ZE_STRUCTURE_TYPE_EVENT_EXP_FLAGS_DESC, nullptr, ZE_EVENT_EXP_FLAG_APPEND_GRAPH_EXTERNAL};
+    ze_event_ext_flags_desc_t eventFlagsDesc = {ZE_STRUCTURE_TYPE_EVENT_EXT_FLAGS_DESC, nullptr, ZE_EVENT_EXT_FLAG_APPEND_GRAPH_EXTERNAL};
 
     std::unique_ptr<L0::Graph> outsideGraph = std::make_unique<L0::Graph>(context, true);
     ze_graph_handle_t outsideGraphHandle = outsideGraph->toHandle();

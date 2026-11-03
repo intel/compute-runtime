@@ -67,6 +67,8 @@ void dumpGraphOnInstantiate(const Graph &graph, const ExecutableGraph &executabl
 namespace GraphDumpHelper {
 
 std::string formatPointer(const void *ptr);
+std::string formatHex(uint64_t value);
+std::string formatHex(uint64_t value, uint32_t width);
 std::string formatGroupCount(const ze_group_count_t &groupCount);
 std::string formatGroupSize(const ze_group_size_t &groupSize);
 std::string_view getKernelName(ze_kernel_handle_t kernelHandle);

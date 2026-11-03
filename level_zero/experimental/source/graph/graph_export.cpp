@@ -21,6 +21,7 @@
 #include "level_zero/ze_api.h"
 
 #include <algorithm>
+#include <iomanip>
 #include <optional>
 #include <sstream>
 #include <string>
@@ -548,9 +549,17 @@ std::string formatPointer(const void *ptr) {
     if (ptr == nullptr) {
         return std::string("nullptr");
     }
-    std::ostringstream addr;
-    addr << "0x" << std::hex << std::uppercase << reinterpret_cast<uintptr_t>(ptr);
-    return addr.str();
+    return formatHex(reinterpret_cast<uintptr_t>(ptr));
+}
+
+std::string formatHex(uint64_t value) {
+    return formatHex(value, 0u);
+}
+
+std::string formatHex(uint64_t value, uint32_t width) {
+    std::ostringstream oss;
+    oss << "0x" << std::hex << std::uppercase << std::setfill('0') << std::setw(static_cast<int>(width)) << value;
+    return oss.str();
 }
 
 std::string formatGroupCount(const ze_group_count_t &groupCount) {
@@ -689,12 +698,16 @@ void addEventExtensionParameters(std::vector<std::pair<std::string, std::string>
     const auto *baseDesc = static_cast<const ze_base_desc_t *>(clonedPNext);
 
     while (baseDesc != nullptr) {
-        const auto stypeValue = std::to_string(static_cast<uint32_t>(baseDesc->stype));
+        const auto stypeValue = formatHex(baseDesc->stype);
 
         if (baseDesc->stype == ZE_STRUCTURE_TYPE_EVENT_EXP_FLAGS_DESC) {
             const auto *eventFlagsDesc = reinterpret_cast<const ze_event_exp_flags_desc_t *>(baseDesc);
             params.emplace_back("eventFlagsExp.stype", stypeValue);
-            params.emplace_back("eventFlagsExp.flags", std::to_string(eventFlagsDesc->flags));
+            params.emplace_back("eventFlagsExp.flags", formatHex(eventFlagsDesc->flags));
+        } else if (baseDesc->stype == ZE_STRUCTURE_TYPE_EVENT_EXT_FLAGS_DESC) {
+            const auto *eventFlagsDesc = reinterpret_cast<const ze_event_ext_flags_desc_t *>(baseDesc);
+            params.emplace_back("eventFlagsExt.stype", stypeValue);
+            params.emplace_back("eventFlagsExt.flags", formatHex(eventFlagsDesc->flags));
         } else {
             params.emplace_back("extension.stype", stypeValue + " (not recognized)");
         }
