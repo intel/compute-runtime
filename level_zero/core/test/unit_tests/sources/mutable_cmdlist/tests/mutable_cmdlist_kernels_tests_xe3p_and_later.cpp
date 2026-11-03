@@ -54,7 +54,7 @@ HWTEST2_F(MutableCommandListInOrderTest,
     auto walkerPostSyncAddress = NEO::UnitTestHelper<FamilyType>::getWalkerActivePostSyncAddress(walkerCmd);
     EXPECT_EQ(baseGpuVa, walkerPostSyncAddress);
 
-    result = mutableCommandList->updateMutableCommandSignalEventExp(commandId, newEvent->toHandle());
+    result = mutableCommandList->updateMutableCommandSignalEvent(commandId, newEvent->toHandle());
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -118,7 +118,7 @@ HWTEST2_F(MutableCommandListKernelTest,
     overridePatchedScratchAddress(scratchAddress1);
 
     // mutation should update scratch address in second kernel
-    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernel2Handle);
+    result = mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernel2Handle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(mutableCommandList->getBase()->getActiveScratchPatchElements(), 1u);
 
@@ -147,7 +147,7 @@ HWTEST2_F(MutableCommandListKernelTest,
         expectedScratchAddress += ssh->getGpuBase();
     }
 
-    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernelHandle);
+    result = mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernelHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -199,7 +199,7 @@ HWTEST2_F(MutableCommandListKernelTest, givenScratchKernelsWhenMutatingBetweenIn
         EXPECT_NE(0u, inlineGpuAddress);
     }
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernels[1]));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernels[1]));
 
     auto crossThreadCpu = mutation.kernelGroup->getCurrentMutableKernel()->getKernelDispatch()->varDispatch->getIndirectData()->getCrossThreadDataBaseAddress();
     auto iohAllocation = ioh->getGraphicsAllocation();
@@ -212,7 +212,7 @@ HWTEST2_F(MutableCommandListKernelTest, givenScratchKernelsWhenMutatingBetweenIn
         EXPECT_NE(inlineGpuAddress, patch.gpuAddress);
     }
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernels[0]));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernels[0]));
     {
         auto cmdsToPatch = mutableCommandList->getBase()->getCommandsToPatch();
         auto &patch = std::get<PatchComputeWalkerInlineDataScratch>(cmdsToPatch[scratchPatchIndex]);
@@ -256,7 +256,7 @@ HWTEST2_F(MutableCommandListKernelTest, givenScratchKernelsWithInlineDataDisable
     auto scratchPatchIndex = mutation.kernelGroup->getScratchAddressPatchIndex();
     auto walkerCpu = mutation.kernelGroup->getCurrentMutableKernel()->getMutableComputeWalker()->getWalkerCmdPointer();
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernels[1]));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernels[1]));
 
     auto newKernelIndirectData = mutation.kernelGroup->getCurrentMutableKernel()->getKernelDispatch()->varDispatch->getIndirectData();
     ASSERT_EQ(0u, newKernelIndirectData->getInlineDataSize());
@@ -371,7 +371,7 @@ HWTEST2_F(MutableCommandListKernelTest, givenNonScratchKernelWhenMutatingToScrat
     EXPECT_TRUE(isUndefined(scratchPatchCommand->patchSize));
 
     // Now mutate to kernel2 which has a defined scratch offset
-    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernels[1]));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernels[1]));
     EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
 
     // Patch commands should have been updated with the new scratch offset
@@ -387,7 +387,7 @@ HWTEST2_F(MutableCommandListKernelTest, givenNonScratchKernelWhenMutatingToScrat
     EXPECT_EQ(expectedSize, mutableCommandList->getBase()->getActiveScratchPatchElemsPatchSize());
 
     // Mutate kernel back to kernel with undefined scratch offset
-    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernels[0]));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernels[0]));
     EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
 
     auto *scratchPatchCommandAfterBack = std::get_if<PatchComputeWalkerInlineDataScratch>(&cmdsToPatch[scratchPatchIndex]);
@@ -400,7 +400,7 @@ HWTEST2_F(MutableCommandListKernelTest, givenNonScratchKernelWhenMutatingToScrat
     EXPECT_EQ(0u, mutableCommandList->getBase()->getActiveScratchPatchElemsPatchSize());
 
     // Now mutate to kernel2 which has a defined scratch offset and then reset command list
-    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernels[1]));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernels[1]));
     EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
     EXPECT_EQ(expectedSize, mutableCommandList->getBase()->getActiveScratchPatchElemsPatchSize());
 
@@ -450,7 +450,7 @@ HWTEST2_F(MutableCommandListKernelTest, givenScratchKernelGroupWhenMutatingFromN
     EXPECT_TRUE(isUndefined(scratchPatchCommand->patchSize));
 
     // Mutate to kernel2 which also has an undefined scratch offset
-    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernels[1]));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernels[1]));
     EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
 
     // Patch commands should still contain undefined values
@@ -492,7 +492,7 @@ HWTEST2_F(MutableCommandListKernelTest, givenScratchKernelWhenMutatingWithSameSc
     overridePatchedScratchAddress(mockScratchPatchAddress);
 
     // Now mutate to kernel2 which has the same scratch offset
-    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernels[1]));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernels[1]));
 
     // After mutation with same scratch offset, compute walker should have the scratch address programmed properly
     uint64_t expectedProgrammedScratchPatchAddress = mockScratchPatchAddress;
@@ -549,7 +549,7 @@ HWTEST2_F(MutableCommandListKernelTest, givenTwoAppendsWhenMutatingFromNoScratch
     EXPECT_EQ(mutableCommandList->getBase()->getActiveScratchPatchElements(), 0u);
 
     // Now mutate first append to kernel2 which has a defined scratch offset
-    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernels[1]));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernels[1]));
     EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
 
     // Patch commands should have been updated with the new scratch offset in the first kernel group
@@ -565,7 +565,7 @@ HWTEST2_F(MutableCommandListKernelTest, givenTwoAppendsWhenMutatingFromNoScratch
     EXPECT_TRUE(isUndefined(scratchPatchCommand2.patchSize));
 
     // Mutate second append to kernel2 which has a defined scratch offset
-    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandKernelsExp(1, &commandId2, &kernels[1]));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandKernels(1, &commandId2, &kernels[1]));
     EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
 
     EXPECT_EQ(expectedScratchOffset, static_cast<uint8_t>(scratchPatchCommand2.offset - mutableCommandList->mutableWalkerCmds[0]->getInlineDataOffset()));
@@ -611,7 +611,7 @@ HWTEST2_F(MutableCommandListKernelTest, givenScratchKernelsWhenMutatingWithDiffe
     EXPECT_EQ(mutableCommandList->getBase()->getActiveScratchPatchElements(), 1u);
 
     // Now mutate to kernel2 which has different scratch offset
-    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernels[1]));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernels[1]));
 
     // After mutation, compute walker should have the scratch address programmed properly without need of patchCommands
     uint64_t expectedProgrammedScratchPatchAddress = mockScratchPatchAddress;
@@ -708,7 +708,7 @@ HWTEST2_F(MutableCommandListKernelTest, givenScratchKernelsWithScratchInCrossThr
     EXPECT_EQ(scratchOffset1 - inlineDataSize, scratchPatchCommand.offset);
     EXPECT_EQ(1u, mutableCommandList->getBase()->getActiveScratchPatchElements());
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernels[1]));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernels[1]));
 
     uint64_t expectedProgrammedScratchPatchAddress = mockScratchPatchAddress;
     auto ssh = mutableCommandList->getBase()->getCmdContainer().getIndirectHeap(NEO::HeapType::surfaceState);
@@ -767,7 +767,7 @@ HWTEST2_F(MutableCommandListKernelTest, givenScratchKernelWithScratchInInlineDat
     EXPECT_EQ(mutableCommandList->mutableWalkerCmds[0]->getInlineDataOffset() + scratchOffsetInline, scratchPatchCommand.offset);
     EXPECT_EQ(1u, mutableCommandList->getBase()->getActiveScratchPatchElements());
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernels[1]));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernels[1]));
 
     uint64_t expectedProgrammedScratchPatchAddress = mockScratchPatchAddress;
     auto ssh = mutableCommandList->getBase()->getCmdContainer().getIndirectHeap(NEO::HeapType::surfaceState);
@@ -826,7 +826,7 @@ HWTEST2_F(MutableCommandListKernelTest, givenScratchKernelWithScratchInCrossThre
     EXPECT_EQ(scratchOffsetCrossThread - inlineDataSize, scratchPatchCommand.offset);
     EXPECT_EQ(1u, mutableCommandList->getBase()->getActiveScratchPatchElements());
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernels[1]));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernels[1]));
 
     uint64_t expectedProgrammedScratchPatchAddress = mockScratchPatchAddress;
     auto ssh = mutableCommandList->getBase()->getCmdContainer().getIndirectHeap(NEO::HeapType::surfaceState);

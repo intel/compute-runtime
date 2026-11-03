@@ -555,16 +555,6 @@ TEST(ZeGetProcAddrTableTest, givenApiVersion1_20WhenCallingStubbedEntriesThenUns
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, commandQueueTable.pfnGetQosExt(nullptr, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, commandQueueTable.pfnSignalExternalSemaphoreExt(nullptr, 0u, nullptr, nullptr, nullptr, 0u, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, commandQueueTable.pfnWaitExternalSemaphoreExt(nullptr, 0u, nullptr, nullptr, nullptr, 0u, nullptr));
-
-    ze_command_list_dditable_t commandListTable = {};
-    ASSERT_EQ(ZE_RESULT_SUCCESS, zeGetCommandListProcAddrTable(ZE_API_VERSION_1_20, &commandListTable));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, commandListTable.pfnGetNextCommandIdExt(nullptr, nullptr, nullptr));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, commandListTable.pfnGetNextCommandIdWithKernelsExt(nullptr, nullptr, 0u, nullptr, nullptr));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, commandListTable.pfnUpdateMutableCommandsExt(nullptr, nullptr));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, commandListTable.pfnIsMutableExt(nullptr, nullptr));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, commandListTable.pfnUpdateMutableCommandSignalEventExt(nullptr, 0u, nullptr));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, commandListTable.pfnUpdateMutableCommandWaitEventsExt(nullptr, 0u, 0u, nullptr));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, commandListTable.pfnUpdateMutableCommandKernelsExt(nullptr, 0u, nullptr, nullptr));
 }
 
 } // namespace ult

@@ -395,8 +395,8 @@ ze_result_t MutableCommandListImp::getNextCommandId(const ze_mutable_command_id_
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t MutableCommandListImp::updateMutableCommandsExp(const ze_mutable_commands_exp_desc_t *desc) {
-    PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL updateMutableCommandsExp cmdlist: %p\n", this);
+ze_result_t MutableCommandListImp::updateMutableCommands(const ze_mutable_commands_exp_desc_t *desc) {
+    PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL updateMutableCommands cmdlist: %p\n", this);
     ze_result_t result = ZE_RESULT_SUCCESS;
     const void *next = desc->pNext;
     while (next != nullptr) {
@@ -507,8 +507,8 @@ ze_result_t MutableCommandListImp::updateMutableCommandsExp(const ze_mutable_com
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t MutableCommandListImp::updateMutableCommandSignalEventExp(uint64_t commandId, ze_event_handle_t signalEvent) {
-    PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL updateMutableCommandSignalEventExp cmdlist: %p commandId: %" PRIu64 " new signal event handle: %p\n", this, commandId, signalEvent);
+ze_result_t MutableCommandListImp::updateMutableCommandSignalEvent(uint64_t commandId, ze_event_handle_t signalEvent) {
+    PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL updateMutableCommandSignalEvent cmdlist: %p commandId: %" PRIu64 " new signal event handle: %p\n", this, commandId, signalEvent);
     AppendEventMutation &selectedAppend = this->eventMutations[(commandId - 1)];
     if (selectedAppend.signalEvent.eventVariable == nullptr) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -529,8 +529,8 @@ ze_result_t MutableCommandListImp::updateMutableCommandSignalEventExp(uint64_t c
     return ret;
 }
 
-ze_result_t MutableCommandListImp::updateMutableCommandWaitEventsExp(uint64_t commandId, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
-    PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL updateMutableCommandWaitEventsExp cmdlist: %p commandId: %" PRIu64 " numWaitEvents: %u\n", this, commandId, numWaitEvents);
+ze_result_t MutableCommandListImp::updateMutableCommandWaitEvents(uint64_t commandId, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
+    PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL updateMutableCommandWaitEvents cmdlist: %p commandId: %" PRIu64 " numWaitEvents: %u\n", this, commandId, numWaitEvents);
     AppendEventMutation &selectedAppend = this->eventMutations[(commandId - 1)];
     if (numWaitEvents > selectedAppend.waitEvents.size()) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -561,8 +561,8 @@ ze_result_t MutableCommandListImp::updateMutableCommandWaitEventsExp(uint64_t co
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t MutableCommandListImp::updateMutableCommandKernelsExp(uint32_t numKernels, uint64_t *pCommandId, ze_kernel_handle_t *phKernels) {
-    PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL updateMutableCommandKernelsExp cmdlist: %p numKernels: %u\n", this, numKernels);
+ze_result_t MutableCommandListImp::updateMutableCommandKernels(uint32_t numKernels, uint64_t *pCommandId, ze_kernel_handle_t *phKernels) {
+    PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL updateMutableCommandKernels cmdlist: %p numKernels: %u\n", this, numKernels);
     for (uint32_t id = 0; id < numKernels; id++) {
         auto commandId = pCommandId[id];
         auto kernelHandle = phKernels[id];

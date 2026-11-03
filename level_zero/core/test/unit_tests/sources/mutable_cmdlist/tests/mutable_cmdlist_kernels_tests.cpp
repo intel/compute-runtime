@@ -88,7 +88,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
                                          });
     EXPECT_NE(whiteBoxAllocations.addedAllocations.end(), kernelIsaAllocIt);
 
-    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernel2Handle);
+    result = mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernel2Handle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     ze_mutable_group_count_exp_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
@@ -96,7 +96,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     groupCountDesc.pGroupCount = &this->testGroupCount;
     mutableCommandsDesc.pNext = &groupCountDesc;
 
-    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -151,7 +151,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto walkerPostSyncAddress = NEO::UnitTestHelper<FamilyType>::getWalkerActivePostSyncAddress(walkerCmd);
     EXPECT_EQ(eventAddress, walkerPostSyncAddress);
 
-    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernel2Handle);
+    result = mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernel2Handle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -172,7 +172,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     groupCountDesc.pGroupCount = &mutatedGroupCount;
     mutableCommandsDesc.pNext = &groupCountDesc;
 
-    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -218,7 +218,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto walkerPostSyncAddress = NEO::UnitTestHelper<FamilyType>::getWalkerActivePostSyncAddress(walkerCmd);
     EXPECT_EQ(eventAddress, walkerPostSyncAddress);
 
-    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernel2Handle);
+    result = mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernel2Handle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -272,7 +272,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
                                    });
     EXPECT_NE(whiteBoxAllocations.addedAllocations.end(), usmAllocIt);
 
-    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernel2Handle);
+    result = mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernel2Handle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     ze_mutable_kernel_argument_exp_desc_t kernelBufferArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
@@ -283,7 +283,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     kernelBufferArg.commandId = commandId;
     kernelBufferArg.pArgValue = &usm2;
 
-    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -337,7 +337,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernel2Handle);
+    result = mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernel2Handle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto kernel1BufferVariables = getVariableList(commandId, L0::MCL::VariableType::buffer, kernel.get());
@@ -373,7 +373,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     kernelSlmArg.commandId = commandId;
     kernelSlmArg.pArgValue = nullptr;
 
-    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -425,7 +425,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
         EXPECT_EQ(nullptr, mutableKernel->getKernelVariables().kernelArguments[1].kernelArgumentVariable);
     }
 
-    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernel2Handle);
+    result = mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernel2Handle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
@@ -483,7 +483,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernel2Handle);
+    result = mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernel2Handle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     ze_mutable_kernel_argument_exp_desc_t kernelBufferArg1 = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
@@ -502,7 +502,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     kernelBufferArg2.commandId = commandId;
     kernelBufferArg2.pArgValue = &usm2;
 
-    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -694,7 +694,7 @@ HWTEST2_F(MutableCommandListKernelTest,
               mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams));
     mutableCommandList->close();
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernels[1]));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernels[1]));
     mutableCommandList->close();
 
     auto &prefetchPatch = mutation.kernelGroup->getPrefetchCmd();
@@ -781,7 +781,7 @@ HWTEST2_F(MutableCommandListKernelTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->appendLaunchKernel(kernelBigIsaHandle, this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams));
     mutableCommandList->close();
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernel2Handle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernel2Handle));
     mutableCommandList->close();
 
     auto &prefetchPatch = mutation.kernelGroup->getPrefetchCmd();
@@ -866,7 +866,7 @@ HWTEST2_F(MutableCommandListKernelTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->appendLaunchKernel(kernel2Handle, this->testGroupCount, nullptr, 1, &eventHandle, this->testLaunchParams));
     mutableCommandList->close();
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernelBigIsaHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernelBigIsaHandle));
     mutableCommandList->close();
 
     auto &prefetchCmdToPatch = mutation.kernelGroup->getPrefetchCmd();
@@ -1008,7 +1008,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernel2Handle);
+    result = mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernel2Handle);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
@@ -1026,7 +1026,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernelHandle);
+    result = mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernelHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
@@ -1117,7 +1117,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     ASSERT_NE(nullptr, baseCmdList->getFlatCapture());
 
     // mutate the kernel with slm argument
-    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernelHandle);
+    result = mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernelHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     ze_mutable_kernel_argument_exp_desc_t kernelSlmArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
@@ -1142,7 +1142,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     groupSizeDesc.groupSizeY = 1;
     groupSizeDesc.groupSizeZ = 1;
 
-    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -1161,12 +1161,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_FALSE(isAllocationInMutableResidency(mutableCommandList.get(), kernelPrivateIsaAllocation));
 
     // mutate back the kernel with private memory
-    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernelHandlePrivate);
+    result = mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernelHandlePrivate);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     mutableCommandsDesc.pNext = &groupCountDesc;
 
-    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -1181,12 +1181,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_TRUE(isAllocationInMutableResidency(mutableCommandList.get(), kernelPrivateIsaAllocation));
 
     // mutate back the cooperative kernel with slm argument
-    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernelHandle);
+    result = mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernelHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     mutableCommandsDesc.pNext = &kernelSlmArg;
 
-    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -1230,12 +1230,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_FALSE(isAllocationInMutableResidency(mutableCommandList.get(), kernelPrivateIsaAllocation));
 
     // mutate the kernel with private memory
-    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernelHandlePrivate);
+    result = mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernelHandlePrivate);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     mutableCommandsDesc.pNext = &groupCountDesc;
 
-    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -1250,12 +1250,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_TRUE(isAllocationInMutableResidency(mutableCommandList.get(), kernelPrivateIsaAllocation));
 
     // mutate back the kernel with slm argument
-    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernelHandle);
+    result = mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernelHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     mutableCommandsDesc.pNext = &kernelSlmArg;
 
-    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -1270,12 +1270,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_FALSE(isAllocationInMutableResidency(mutableCommandList.get(), kernelPrivateIsaAllocation));
 
     // mutate back the kernel with private memory
-    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernelHandlePrivate);
+    result = mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernelHandlePrivate);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     mutableCommandsDesc.pNext = &groupCountDesc;
 
-    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -1345,7 +1345,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     groupCountDesc.commandId = commandId;
     groupCountDesc.pGroupCount = &mutatedGroupCount;
 
-    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -1361,7 +1361,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     mutatedGroupCount.groupCountY = 1;
     mutatedGroupCount.groupCountZ = 1;
 
-    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -1436,7 +1436,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto &mutation = mutableCommandList->kernelMutations[commandId - 1];
     ASSERT_NE(nullptr, mutation.kernelGroup);
 
-    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernel2Handle);
+    result = mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernel2Handle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(kernel2.get(), mutation.kernelGroup->getCurrentMutableKernel()->getKernel());
 
@@ -1446,7 +1446,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     groupCountDesc.pGroupCount = &mutatedGroupCount;
     mutableCommandsDesc.pNext = &groupCountDesc;
 
-    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -1531,9 +1531,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     groupCountDesc.pGroupCount = &mutatedGroupCount;
     mutableCommandsDesc.pNext = &groupCountDesc;
 
-    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernel2Handle);
+    result = mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernel2Handle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -1549,9 +1549,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_NE(0u, mutatedSyncBufferAddress);
     EXPECT_NE(appendSyncBufferAddress, mutatedSyncBufferAddress);
 
-    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernelHandle);
+    result = mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernelHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -1597,7 +1597,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     uint64_t appendGpuAddress = 0;
     mutableCommandList->fillCmdListNoopPatchData(appendDispatch->syncBufferNoopPatchIndex, cpuPtr, patchSize, appendOffset, appendGpuAddress);
 
-    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernel2Handle);
+    result = mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernel2Handle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     ze_mutable_group_count_exp_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
@@ -1606,7 +1606,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     groupCountDesc.pGroupCount = &mutatedGroupCount;
     mutableCommandsDesc.pNext = &groupCountDesc;
 
-    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -1654,7 +1654,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     groupCountDesc.commandId = commandId;
     groupCountDesc.pGroupCount = &mutatedGroupCount;
 
-    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_SIZE, result);
 }
 
@@ -1702,7 +1702,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_NE(nullptr, cpuPtr);
     EXPECT_EQ(requiredSize, mutableCommandList->base->getTotalNoopSpace());
 
-    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernel2Handle);
+    result = mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernel2Handle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     ze_mutable_group_count_exp_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
@@ -1730,7 +1730,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
         EXPECT_TRUE(isAllocationInMutableResidency(mutableCommandList.get(), kernel2Allocation));
     }
 
-    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -1742,7 +1742,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(nullptr, cpuPtr);
 
     // mutate back into kernel cooperative
-    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernelHandle);
+    result = mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernelHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_TRUE(isAllocationInMutableResidency(mutableCommandList.get(), kernelIsaAllocation));
@@ -1755,7 +1755,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
         EXPECT_FALSE(isAllocationInMutableResidency(mutableCommandList.get(), kernel2Allocation));
     }
 
-    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -1767,7 +1767,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_NE(nullptr, cpuPtr);
 
     // mutate back into kernel regular
-    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernel2Handle);
+    result = mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernel2Handle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_FALSE(isAllocationInMutableResidency(mutableCommandList.get(), kernelIsaAllocation));
@@ -1780,7 +1780,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
         EXPECT_TRUE(isAllocationInMutableResidency(mutableCommandList.get(), kernel2Allocation));
     }
 
-    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -1790,7 +1790,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(nullptr, cpuPtr);
 
     // mutate final into kernel cooperative
-    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernelHandle);
+    result = mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernelHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_TRUE(isAllocationInMutableResidency(mutableCommandList.get(), kernelIsaAllocation));
@@ -1803,7 +1803,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
         EXPECT_FALSE(isAllocationInMutableResidency(mutableCommandList.get(), kernel2Allocation));
     }
 
-    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -1849,7 +1849,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(undefined<size_t>, noopIndex);
 
     // mutate into cooperative
-    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernelHandle);
+    result = mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernelHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_TRUE(isAllocationInMutableResidency(mutableCommandList.get(), kernelIsaAllocation));
@@ -1877,7 +1877,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     groupSizeDesc.groupSizeY = 1;
     groupSizeDesc.groupSizeZ = 1;
 
-    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -1899,7 +1899,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(requiredSize, mutableCommandList->base->getTotalNoopSpace());
 
     // mutate back into regular kernel
-    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernel2Handle);
+    result = mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernel2Handle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_FALSE(isAllocationInMutableResidency(mutableCommandList.get(), kernelIsaAllocation));
@@ -1912,7 +1912,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
         EXPECT_TRUE(isAllocationInMutableResidency(mutableCommandList.get(), kernel2Allocation));
     }
 
-    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -1967,7 +1967,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     size_t oldPatchSize = patchSize;
 
     // second kernel mutate at 8,4,1 - with increased group count
-    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernel2Handle);
+    result = mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernel2Handle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     ze_mutable_group_count_exp_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
@@ -1985,7 +1985,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     groupSizeDesc.groupSizeY = 1;
     groupSizeDesc.groupSizeZ = 1;
 
-    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -2021,12 +2021,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(syncBufferGpuActualAddress, syncBufferGpuPatchAddress);
 
     // mutate back first kernel mutate at 8,8,1 - with increased group count
-    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernelHandle);
+    result = mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernelHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     mutatedGroupCount = {8, 8, 1};
 
-    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -2050,12 +2050,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(syncBufferGpuActualAddress, syncBufferGpuPatchAddress);
 
     // mutate back second kernel mutate at 8,4,1 - with the same group count at first mutation - update its patch data for 8,4,1
-    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernel2Handle);
+    result = mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernel2Handle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     mutatedGroupCount = {8, 4, 1};
 
-    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -2219,12 +2219,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
 
-    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernel2Handle);
+    result = mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernel2Handle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernelHandle);
+    result = mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernelHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernel2Handle);
+    result = mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernel2Handle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     ze_mutable_kernel_argument_exp_desc_t slmArg0 = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
@@ -2240,7 +2240,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     slmArg1.pNext = &slmArg0;
     mutableCommandsDesc.pNext = &slmArg1;
 
-    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
 
@@ -2297,7 +2297,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(inlineSlmSize, inactiveKernelSlmVariables[0]->getDesc().slmValue.slmBaseOffset);
     EXPECT_EQ(undefined<L0::MCL::SlmOffset>, inactiveKernelSlmVariables[1]->getDesc().slmValue.slmBaseOffset);
 
-    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernel2Handle);
+    result = mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernel2Handle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     ze_mutable_kernel_argument_exp_desc_t slmArg0 = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
@@ -2313,7 +2313,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     slmArg1.pArgValue = nullptr;
     mutableCommandsDesc.pNext = &slmArg0;
 
-    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
 
@@ -2375,7 +2375,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    result = mutableCommandList->updateMutableCommandKernelsExp(1, &commandId, &kernel2Handle);
+    result = mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernel2Handle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     ze_mutable_group_count_exp_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
@@ -2406,7 +2406,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     kernelBufferArg2.commandId = commandId;
     kernelBufferArg2.pArgValue = &usm2;
 
-    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();

@@ -74,13 +74,13 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
     argDesc.pArgValue = &deviceUsm;
     mutableCommandsDesc.pNext = &argDesc;
 
-    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommands(&mutableCommandsDesc));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
     EXPECT_FALSE(walker->getPostSync().getL2TransientFlush());
     EXPECT_FALSE(walker->getPostSync().getL2Flush());
 
     argDesc.pArgValue = &systemShared;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommands(&mutableCommandsDesc));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
     if (this->l3FlushAfterPostSyncEnabled) {
         EXPECT_TRUE(walker->getPostSync().getL2TransientFlush());
@@ -90,13 +90,13 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
     EXPECT_FALSE(walker->getPostSync().getL2Flush());
 
     argDesc.pArgValue = nullptr;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommands(&mutableCommandsDesc));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
     EXPECT_FALSE(walker->getPostSync().getL2TransientFlush());
     EXPECT_FALSE(walker->getPostSync().getL2Flush());
 
     argDesc.pArgValue = &systemShared;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommands(&mutableCommandsDesc));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
     if (this->l3FlushAfterPostSyncEnabled) {
         EXPECT_TRUE(walker->getPostSync().getL2TransientFlush());
@@ -156,7 +156,7 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
     argDesc.argSize = sizeof(void *);
     argDesc.pArgValue = &deviceUsm0;
     mutableCommandsDesc.pNext = &argDesc;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommands(&mutableCommandsDesc));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
 
     EXPECT_FALSE(walker->getPostSync().getL2TransientFlush());
@@ -211,7 +211,7 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
     argDesc.argSize = sizeof(void *);
     argDesc.pArgValue = &hostUsm;
     mutableCommandsDesc.pNext = &argDesc;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommands(&mutableCommandsDesc));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
 
     if (signalHostEvent && this->l3FlushAfterPostSyncEnabled) {
@@ -276,7 +276,7 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
     argDesc.argSize = sizeof(void *);
     argDesc.pArgValue = &deviceUsm0;
     mutableCommandsDesc.pNext = &argDesc;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommands(&mutableCommandsDesc));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
 
     if (signalHostEvent && this->l3FlushAfterPostSyncEnabled) {
@@ -292,7 +292,7 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
     argDesc.argIndex = 1;
     argDesc.pArgValue = &deviceUsm1;
     mutableCommandsDesc.pNext = &argDesc;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommands(&mutableCommandsDesc));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
 
     EXPECT_FALSE(walker->getPostSync().getL2TransientFlush());
@@ -358,7 +358,7 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
     argDesc.argSize = sizeof(void *);
     argDesc.pArgValue = &deviceUsm0;
     mutableCommandsDesc.pNext = &argDesc;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommands(&mutableCommandsDesc));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
 
     // no imported allocs
@@ -368,7 +368,7 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
     // mutate arg0 plain device -> imported
     argDesc.pArgValue = &importedUsm;
     mutableCommandsDesc.pNext = &argDesc;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommands(&mutableCommandsDesc));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
 
     if (signalHostEvent && this->l3FlushAfterPostSyncEnabled) {
@@ -420,7 +420,7 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
     argDesc.argSize = sizeof(void *);
     argDesc.pArgValue = &deviceUsm0New;
     mutableCommandsDesc.pNext = &argDesc;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommands(&mutableCommandsDesc));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
 
     EXPECT_FALSE(walker->getPostSync().getL2TransientFlush());
@@ -470,7 +470,7 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
     argDesc.argSize = sizeof(void *);
     argDesc.pArgValue = &deviceUsm;
     mutableCommandsDesc.pNext = &argDesc;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommands(&mutableCommandsDesc));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
 
     EXPECT_FALSE(walker->getPostSync().getL2TransientFlush());
@@ -514,7 +514,7 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
     argDesc.argSize = sizeof(void *);
     argDesc.pArgValue = &hostUsm;
     mutableCommandsDesc.pNext = &argDesc;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommands(&mutableCommandsDesc));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
 
     if (this->l3FlushAfterPostSyncEnabled) {
@@ -525,7 +525,7 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
     EXPECT_FALSE(walker->getPostSync().getL2Flush());
 
     argDesc.pArgValue = &deviceUsm;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommands(&mutableCommandsDesc));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
 
     EXPECT_FALSE(walker->getPostSync().getL2TransientFlush());
@@ -574,7 +574,7 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
     argDesc.argSize = sizeof(void *);
     argDesc.pArgValue = &importedUsm;
     mutableCommandsDesc.pNext = &argDesc;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommands(&mutableCommandsDesc));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
 
     if (this->l3FlushAfterPostSyncEnabled) {
@@ -585,7 +585,7 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
     EXPECT_FALSE(walker->getPostSync().getL2TransientFlush());
 
     argDesc.pArgValue = &deviceUsm;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommands(&mutableCommandsDesc));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
 
     EXPECT_FALSE(walker->getPostSync().getL2TransientFlush());
@@ -641,7 +641,7 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
     argDesc.argSize = sizeof(void *);
     argDesc.pArgValue = &deviceUsm0;
     mutableCommandsDesc.pNext = &argDesc;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommands(&mutableCommandsDesc));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
 
     EXPECT_FALSE(walker->getPostSync().getL2TransientFlush());
@@ -651,7 +651,7 @@ HWTEST2_F(MutableCommandListPostSyncL3FlushTest,
     argDesc.argIndex = 1;
     argDesc.pArgValue = &deviceUsm1;
     mutableCommandsDesc.pNext = &argDesc;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommands(&mutableCommandsDesc));
     ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
 
     EXPECT_FALSE(walker->getPostSync().getL2TransientFlush());

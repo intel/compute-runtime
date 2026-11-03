@@ -1226,6 +1226,29 @@ std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::z
 }
 
 template <>
+std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::zeCommandListGetNextCommandIdExt>(
+    const Closure<CaptureApi::zeCommandListGetNextCommandIdExt> &closure, const ClosureExternalStorage &) {
+
+    auto params = createBaseParams(closure.apiArgs);
+    params.emplace_back("flags", std::to_string(closure.indirectArgs.desc.flags));
+    params.emplace_back("commandId", std::to_string(closure.indirectArgs.commandId));
+
+    return params;
+}
+
+template <>
+std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::zeCommandListGetNextCommandIdWithKernelsExt>(
+    const Closure<CaptureApi::zeCommandListGetNextCommandIdWithKernelsExt> &closure, const ClosureExternalStorage &) {
+
+    auto params = createBaseParams(closure.apiArgs);
+    params.emplace_back("flags", std::to_string(closure.indirectArgs.desc.flags));
+    params.emplace_back("numKernels", std::to_string(closure.indirectArgs.kernels.size()));
+    params.emplace_back("commandId", std::to_string(closure.indirectArgs.commandId));
+
+    return params;
+}
+
+template <>
 std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::NoopedCommandListFailedFunction>(
     const Closure<CaptureApi::NoopedCommandListFailedFunction> &closure, const ClosureExternalStorage &storage) {
 

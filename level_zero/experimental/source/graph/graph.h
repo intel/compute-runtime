@@ -214,7 +214,8 @@ struct RecordedApiCommands {
             brokenCapture = true;
             return externalStorage.lastResult;
         }
-        if constexpr ((api == CaptureApi::zeCommandListGetNextCommandIdExp) || (api == CaptureApi::zeCommandListGetNextCommandIdWithKernelsExp)) {
+        if constexpr ((api == CaptureApi::zeCommandListGetNextCommandIdExp) || (api == CaptureApi::zeCommandListGetNextCommandIdWithKernelsExp) ||
+                      (api == CaptureApi::zeCommandListGetNextCommandIdExt) || (api == CaptureApi::zeCommandListGetNextCommandIdWithKernelsExt)) {
             mclMap[*capturedArgs.pCommandId] = static_cast<CapturedCommandId>(commands.size() - 1);
         }
         return ZE_RESULT_SUCCESS;

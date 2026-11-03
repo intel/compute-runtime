@@ -20,12 +20,14 @@
 #include "level_zero/ze_api.h"
 #include "level_zero/zet_api.h"
 
+#include <concepts>
 #include <memory>
 #include <mutex>
 #include <optional>
 #include <span>
 #include <string>
 #include <tuple>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -46,6 +48,8 @@ struct Event;
     RR_CAPTURED_API(NoopedCommandListFailedFunction)                  \
     RR_CAPTURED_API(zeCommandListGetNextCommandIdExp)                 \
     RR_CAPTURED_API(zeCommandListGetNextCommandIdWithKernelsExp)      \
+    RR_CAPTURED_API(zeCommandListGetNextCommandIdExt)                 \
+    RR_CAPTURED_API(zeCommandListGetNextCommandIdWithKernelsExt)      \
     RR_CAPTURED_API(zeCommandListAppendWriteGlobalTimestamp)          \
     RR_CAPTURED_API(zeCommandListAppendBarrier)                       \
     RR_CAPTURED_API(zeCommandListAppendMemoryRangesBarrier)           \
@@ -665,6 +669,13 @@ inline ze_event_handle_t getClosureSignalEvent(const typename Closure<api>::ApiA
 template <class ApiArgsT>
 concept HasPCommandId = requires(ApiArgsT &apiArgs) {
     apiArgs.pCommandId;
+    requires std::same_as<std::remove_cvref_t<decltype(*apiArgs.desc)>, ze_mutable_command_id_exp_desc_t>;
+};
+
+template <class ApiArgsT>
+concept HasPCommandIdExt = requires(ApiArgsT &apiArgs) {
+    apiArgs.pCommandId;
+    requires std::same_as<std::remove_cvref_t<decltype(*apiArgs.desc)>, ze_mutable_command_id_ext_desc_t>;
 };
 
 bool getGraphExternalWaitEventFlagFromPNext(const void *pNext);
@@ -738,6 +749,24 @@ struct GetNextCommandIdIndirectArgs {
     }
 
     ze_mutable_command_id_exp_desc_t desc{};
+    uint64_t commandId = 0;
+};
+
+struct GetNextCommandIdIndirectArgsExt {
+    template <typename ApiArgsT>
+        requires HasPCommandIdExt<ApiArgsT>
+    GetNextCommandIdIndirectArgsExt(const ApiArgsT &apiArgs, ClosureExternalStorage &externalStorage) {
+        if (apiArgs.desc) {
+            UNRECOVERABLE_IF(apiArgs.desc->pNext != nullptr);
+            this->desc = *apiArgs.desc;
+        }
+        if (apiArgs.pCommandId) {
+            this->commandId = *apiArgs.pCommandId;
+        }
+        externalStorage.lastResult = ZE_RESULT_SUCCESS;
+    }
+
+    ze_mutable_command_id_ext_desc_t desc{};
     uint64_t commandId = 0;
 };
 
@@ -1751,6 +1780,54 @@ struct Closure<CaptureApi::zeCommandListGetNextCommandIdWithKernelsExp> {
 
     struct IndirectArgs : GetNextCommandIdIndirectArgs {
         IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : GetNextCommandIdIndirectArgs(apiArgs, externalStorage) {
+            if ((apiArgs.numKernels > 0) && apiArgs.phKernels) {
+                kernels.resize(apiArgs.numKernels);
+                std::copy_n(apiArgs.phKernels, apiArgs.numKernels, kernels.begin());
+            }
+        }
+
+        StackVec<ze_kernel_handle_t, 2> kernels;
+    } indirectArgs;
+
+    Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
+
+    ze_result_t instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, CbExternalEventInstantiateContext &cbEventContext, std::optional<EventParams> enforcedEvents) const;
+    ze_result_t invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const;
+};
+
+template <>
+struct Closure<CaptureApi::zeCommandListGetNextCommandIdExt> {
+    static constexpr bool isSupported = true;
+
+    struct ApiArgs {
+        ze_command_list_handle_t hCommandList;
+        const ze_mutable_command_id_ext_desc_t *desc;
+        uint64_t *pCommandId;
+    } apiArgs;
+
+    using IndirectArgs = GetNextCommandIdIndirectArgsExt;
+    IndirectArgs indirectArgs;
+
+    Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
+
+    ze_result_t instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, CbExternalEventInstantiateContext &cbEventContext, std::optional<EventParams> enforcedEvents) const;
+    ze_result_t invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const;
+};
+
+template <>
+struct Closure<CaptureApi::zeCommandListGetNextCommandIdWithKernelsExt> {
+    static constexpr bool isSupported = true;
+
+    struct ApiArgs {
+        ze_command_list_handle_t hCommandList;
+        const ze_mutable_command_id_ext_desc_t *desc;
+        uint32_t numKernels;
+        ze_kernel_handle_t *phKernels;
+        uint64_t *pCommandId;
+    } apiArgs;
+
+    struct IndirectArgs : GetNextCommandIdIndirectArgsExt {
+        IndirectArgs(const Closure::ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : GetNextCommandIdIndirectArgsExt(apiArgs, externalStorage) {
             if ((apiArgs.numKernels > 0) && apiArgs.phKernels) {
                 kernels.resize(apiArgs.numKernels);
                 std::copy_n(apiArgs.phKernels, apiArgs.numKernels, kernels.begin());

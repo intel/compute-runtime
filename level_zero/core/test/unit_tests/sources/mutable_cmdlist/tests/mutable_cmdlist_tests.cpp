@@ -238,7 +238,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     kernelSlm2Arg.pArgValue = nullptr;
     kernelSlmArg.pNext = &kernelSlm2Arg;
 
-    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -316,7 +316,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     kernelBufferArg.pArgValue = &buffer;
 
     // cannot mutate when variable is not created
-    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
@@ -419,7 +419,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     kernelBuffer2Arg.pArgValue = &usm2;
     kernelBuffer1Arg.pNext = &kernelBuffer2Arg;
 
-    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -498,7 +498,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     kernelBuffer1Arg.pArgValue = nullSurface;
     mutableCommandsDesc.pNext = &kernelBuffer1Arg;
 
-    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -581,7 +581,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     kernelImmediateArg.commandId = commandId;
     kernelImmediateArg.pArgValue = &value2;
 
-    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -595,7 +595,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     kernelBufferArg.pNext = nullptr;
 
-    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -661,7 +661,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     kernelBufferArg.commandId = commandId;
     kernelBufferArg.pArgValue = &usmAllocatedHost;
 
-    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -739,7 +739,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     kernelBufferArg.commandId = commandId;
     kernelBufferArg.pArgValue = &usm2;
 
-    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -761,7 +761,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     EXPECT_EQ(oldUsm2, usm2);
 
-    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -770,7 +770,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     memcpy(&usmPatchAddressValue, gpuVaPatchFullAddress, sizeof(uint64_t));
     EXPECT_EQ(reinterpret_cast<uint64_t>(usm2), usmPatchAddressValue);
 
-    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -833,7 +833,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     kernelBufferArg.commandId = commandId;
     kernelBufferArg.pArgValue = nullptr;
 
-    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
@@ -860,7 +860,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     kernelBufferArg.commandId = commandId;
     kernelBufferArg.pArgValue = nullptr;
 
-    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
@@ -906,7 +906,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     groupCountDesc.commandId = commandId;
     groupCountDesc.pGroupCount = &mutatedGroupCount;
 
-    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -952,9 +952,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     groupCountDesc.commandId = commandId;
     groupCountDesc.pGroupCount = &mutatedGroupCount;
 
-    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
 
-    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
@@ -1003,7 +1003,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     groupSizeDesc.groupSizeY = mutatedGroupSizeY;
     groupSizeDesc.groupSizeZ = mutatedGroupSizeZ;
 
-    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -1065,7 +1065,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     groupSizeDesc.groupSizeY = mutatedGroupSizeY;
     groupSizeDesc.groupSizeZ = mutatedGroupSizeZ;
 
-    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -1111,7 +1111,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     groupSizeDesc.groupSizeY = 1;
     groupSizeDesc.groupSizeZ = 2;
 
-    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
@@ -1156,7 +1156,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     globalOffsetDesc.offsetY = mutatedGlobalOffsetY;
     globalOffsetDesc.offsetZ = mutatedGlobalOffsetZ;
 
-    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -1194,7 +1194,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     globalOffsetDesc.offsetY = 2;
     globalOffsetDesc.offsetZ = 3;
 
-    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
@@ -1274,7 +1274,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     globalOffsetDesc.offsetY = mutatedGlobalOffsetY;
     globalOffsetDesc.offsetZ = mutatedGlobalOffsetZ;
 
-    result = mutableCommandList->updateMutableCommandsExp(&mutableCommandsDesc);
+    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -1401,7 +1401,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto walkerPostSyncAddress = NEO::UnitTestHelper<FamilyType>::getWalkerActivePostSyncAddress(walkerCmd);
     EXPECT_EQ(originalEventAddress, walkerPostSyncAddress);
 
-    result = mutableCommandList->updateMutableCommandSignalEventExp(commandId, this->eventHandles[1]);
+    result = mutableCommandList->updateMutableCommandSignalEvent(commandId, this->eventHandles[1]);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -1410,7 +1410,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     walkerPostSyncAddress = NEO::UnitTestHelper<FamilyType>::getWalkerActivePostSyncAddress(walkerCmd);
     EXPECT_EQ(newEventAddress, walkerPostSyncAddress);
 
-    result = mutableCommandList->updateMutableCommandSignalEventExp(commandId, this->eventHandles[1]);
+    result = mutableCommandList->updateMutableCommandSignalEvent(commandId, this->eventHandles[1]);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -1437,7 +1437,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    result = mutableCommandList->updateMutableCommandSignalEventExp(commandId, mutatedEvent->toHandle());
+    result = mutableCommandList->updateMutableCommandSignalEvent(commandId, mutatedEvent->toHandle());
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
@@ -1481,7 +1481,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto postSyncAddress = NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl);
     EXPECT_EQ(originalEventAddress, postSyncAddress);
 
-    result = mutableCommandList->updateMutableCommandSignalEventExp(commandId, this->eventHandles[1]);
+    result = mutableCommandList->updateMutableCommandSignalEvent(commandId, this->eventHandles[1]);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -1536,7 +1536,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     }
     ASSERT_NE(nullptr, storeRegMemCmd);
 
-    result = mutableCommandList->updateMutableCommandSignalEventExp(commandId, this->eventHandles[1]);
+    result = mutableCommandList->updateMutableCommandSignalEvent(commandId, this->eventHandles[1]);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -1590,7 +1590,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto waitAddress = event->getCompletionFieldGpuAddress(this->device);
     EXPECT_EQ(waitAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmd));
 
-    result = mutableCommandList->updateMutableCommandWaitEventsExp(commandId, 1, &newEventHandle);
+    result = mutableCommandList->updateMutableCommandWaitEvents(commandId, 1, &newEventHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -1642,7 +1642,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto waitAddress = event->getCompletionFieldGpuAddress(this->device);
     EXPECT_EQ(waitAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmd));
 
-    result = mutableCommandList->updateMutableCommandWaitEventsExp(commandId, 1, &newEventHandle);
+    result = mutableCommandList->updateMutableCommandWaitEvents(commandId, 1, &newEventHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -1687,7 +1687,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto waitAddress = event->getCompletionFieldGpuAddress(this->device);
     EXPECT_EQ(waitAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmd));
 
-    result = mutableCommandList->updateMutableCommandWaitEventsExp(commandId, 1, &newEventHandle);
+    result = mutableCommandList->updateMutableCommandWaitEvents(commandId, 1, &newEventHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -1743,7 +1743,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto waitAddress = event->getCompletionFieldGpuAddress(this->device);
     EXPECT_EQ(waitAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmd));
 
-    result = mutableCommandList->updateMutableCommandWaitEventsExp(commandId, 1, &noopEventHandle);
+    result = mutableCommandList->updateMutableCommandWaitEvents(commandId, 1, &noopEventHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -1758,7 +1758,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     EXPECT_EQ(0, memcmp(semWaitCmd, semWaitNoop, sizeof(MI_SEMAPHORE_WAIT)));
 
-    result = mutableCommandList->updateMutableCommandWaitEventsExp(commandId, 1, &newEventHandle);
+    result = mutableCommandList->updateMutableCommandWaitEvents(commandId, 1, &newEventHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -1819,7 +1819,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto waitAddress = event->getCompletionFieldGpuAddress(this->device);
     EXPECT_EQ(waitAddress, UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmd));
 
-    result = mutableCommandList->updateMutableCommandWaitEventsExp(commandId, 1, &newEventHandle);
+    result = mutableCommandList->updateMutableCommandWaitEvents(commandId, 1, &newEventHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -1961,7 +1961,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto waitAddress2 = event2->getCompletionFieldGpuAddress(this->device);
     EXPECT_EQ(waitAddress2, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWait2Cmd));
 
-    result = mutableCommandList->updateMutableCommandWaitEventsExp(commandId, 2, mutateEvents);
+    result = mutableCommandList->updateMutableCommandWaitEvents(commandId, 2, mutateEvents);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -1982,7 +1982,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     waitAddress2 = newEvent->getCompletionFieldGpuAddress(this->device);
     EXPECT_EQ(waitAddress2, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWait2Cmd));
 
-    result = mutableCommandList->updateMutableCommandWaitEventsExp(commandId, 2, restoreFirstEvents);
+    result = mutableCommandList->updateMutableCommandWaitEvents(commandId, 2, restoreFirstEvents);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -2023,7 +2023,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    result = mutableCommandList->updateMutableCommandWaitEventsExp(commandId, 1, &mutatedHandle);
+    result = mutableCommandList->updateMutableCommandWaitEvents(commandId, 1, &mutatedHandle);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
@@ -2156,7 +2156,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto signalEvents = getVariableList(commandId, L0::MCL::VariableType::signalEvent, nullptr);
     ASSERT_EQ(1u, signalEvents.size());
 
-    result = mutableCommandList->updateMutableCommandSignalEventExp(commandId, this->eventHandles[1]);
+    result = mutableCommandList->updateMutableCommandSignalEvent(commandId, this->eventHandles[1]);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -2204,7 +2204,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto walkerPostSyncAddress = NEO::UnitTestHelper<FamilyType>::getWalkerActivePostSyncAddress(walkerCmd);
     EXPECT_EQ(baseGpuVa, walkerPostSyncAddress);
 
-    result = mutableCommandList->updateMutableCommandSignalEventExp(commandId, this->eventHandles[1]);
+    result = mutableCommandList->updateMutableCommandSignalEvent(commandId, this->eventHandles[1]);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     eventAllocation = newEvent->getAllocation(this->device);
@@ -2266,7 +2266,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto walkerPostSyncAddress = NEO::UnitTestHelper<FamilyType>::getWalkerActivePostSyncAddress(walkerCmd);
     EXPECT_EQ(baseGpuVa, walkerPostSyncAddress);
 
-    result = mutableCommandList->updateMutableCommandSignalEventExp(commandId, this->eventHandles[1]);
+    result = mutableCommandList->updateMutableCommandSignalEvent(commandId, this->eventHandles[1]);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     eventAllocation = newEvent->getAllocation(this->device);
@@ -2307,7 +2307,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     EXPECT_EQ(nullptr, event->getAllocation(this->device));
 
-    result = mutableCommandList->updateMutableCommandSignalEventExp(commandId, this->eventHandles[1]);
+    result = mutableCommandList->updateMutableCommandSignalEvent(commandId, this->eventHandles[1]);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -2373,7 +2373,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
         EXPECT_EQ(completionGpuVa, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semCmd));
     }
 
-    result = mutableCommandList->updateMutableCommandSignalEventExp(commandId, this->eventHandles[1]);
+    result = mutableCommandList->updateMutableCommandSignalEvent(commandId, this->eventHandles[1]);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     eventAllocation = newEvent->getAllocation(this->device);
@@ -2457,7 +2457,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
         EXPECT_EQ(completionGpuVa, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semCmd));
     }
 
-    result = mutableCommandList->updateMutableCommandSignalEventExp(commandId, this->eventHandles[1]);
+    result = mutableCommandList->updateMutableCommandSignalEvent(commandId, this->eventHandles[1]);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     eventAllocation = newEvent->getAllocation(this->device);
@@ -2548,7 +2548,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto postSyncAddress = NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControlCmd);
     EXPECT_EQ(baseGpuVa, postSyncAddress);
 
-    result = mutableCommandList->updateMutableCommandSignalEventExp(commandId, this->eventHandles[1]);
+    result = mutableCommandList->updateMutableCommandSignalEvent(commandId, this->eventHandles[1]);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     eventAllocation = newEvent->getAllocation(this->device);
@@ -2644,7 +2644,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     ASSERT_NE(nullptr, srmBaseCmd);
     ASSERT_NE(nullptr, srmComplCmd);
 
-    result = mutableCommandList->updateMutableCommandSignalEventExp(commandId, this->eventHandles[1]);
+    result = mutableCommandList->updateMutableCommandSignalEvent(commandId, this->eventHandles[1]);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     eventAllocation = newEvent->getAllocation(this->device);
@@ -2732,7 +2732,7 @@ void MutableCommandListFixtureInit::waitCbEventBelongToCurrentMutateToDifferent(
         EXPECT_EQ(0, memcmp(lriUpperCmd, lriNoopSpace, sizeof(MI_LOAD_REGISTER_IMM)));
     }
 
-    result = this->mutableCommandList->updateMutableCommandWaitEventsExp(this->commandId, 1, &newEventHandle);
+    result = this->mutableCommandList->updateMutableCommandWaitEvents(this->commandId, 1, &newEventHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = this->mutableCommandList->close();
@@ -2819,7 +2819,7 @@ void MutableCommandListFixtureInit::waitCbEventBelongToCurrentMutateToCurrent() 
         EXPECT_EQ(0, memcmp(lriUpperCmd, lriNoopSpace, sizeof(MI_LOAD_REGISTER_IMM)));
     }
 
-    result = this->mutableCommandList->updateMutableCommandWaitEventsExp(this->commandId, 1, &newEventHandle);
+    result = this->mutableCommandList->updateMutableCommandWaitEvents(this->commandId, 1, &newEventHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = this->mutableCommandList->close();
@@ -2912,7 +2912,7 @@ void MutableCommandListFixtureInit::waitCbEventBelongToDifferentMutateToCurrent(
         EXPECT_EQ(secondRegister, lriUpperCmd->getRegisterOffset());
     }
 
-    result = this->mutableCommandList->updateMutableCommandWaitEventsExp(this->commandId, 1, &newEventHandle);
+    result = this->mutableCommandList->updateMutableCommandWaitEvents(this->commandId, 1, &newEventHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = this->mutableCommandList->close();
@@ -2986,7 +2986,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     }
     EXPECT_EQ(waitAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmd));
 
-    result = mutableCommandList->updateMutableCommandWaitEventsExp(commandId, 1, &newEventHandle);
+    result = mutableCommandList->updateMutableCommandWaitEvents(commandId, 1, &newEventHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -3067,7 +3067,7 @@ void MutableCommandListFixtureInit::waitCbEventBelongToDifferentNoopMutateBack()
         EXPECT_EQ(secondRegister, lriUpperCmd->getRegisterOffset());
     }
 
-    result = this->mutableCommandList->updateMutableCommandWaitEventsExp(this->commandId, 1, &noopHandle);
+    result = this->mutableCommandList->updateMutableCommandWaitEvents(this->commandId, 1, &noopHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = this->mutableCommandList->close();
@@ -3079,7 +3079,7 @@ void MutableCommandListFixtureInit::waitCbEventBelongToDifferentNoopMutateBack()
         EXPECT_EQ(0, memcmp(lriUpperCmd, lriNoopSpace, sizeof(MI_LOAD_REGISTER_IMM)));
     }
 
-    result = this->mutableCommandList->updateMutableCommandWaitEventsExp(this->commandId, 1, &eventHandle);
+    result = this->mutableCommandList->updateMutableCommandWaitEvents(this->commandId, 1, &eventHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = this->mutableCommandList->close();
@@ -3091,7 +3091,7 @@ void MutableCommandListFixtureInit::waitCbEventBelongToDifferentNoopMutateBack()
         EXPECT_EQ(secondRegister, lriUpperCmd->getRegisterOffset());
     }
 
-    result = this->mutableCommandList->updateMutableCommandWaitEventsExp(this->commandId, 1, &newEventHandle);
+    result = this->mutableCommandList->updateMutableCommandWaitEvents(this->commandId, 1, &newEventHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = this->mutableCommandList->close();
@@ -3170,7 +3170,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     // mutate same event handle - should update the wait event to point to the new in order exec info
-    result = mutableCommandList->updateMutableCommandWaitEventsExp(commandId, 1, &eventHandle);
+    result = mutableCommandList->updateMutableCommandWaitEvents(commandId, 1, &eventHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -3215,7 +3215,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto mockMutableSemWait = static_cast<MockMutableSemaphoreWaitHw<FamilyType> *>(mutableSemWait);
     EXPECT_EQ(0, memcmp(mockMutableSemWait->semWait, noopSemWait, sizeof(MI_SEMAPHORE_WAIT)));
 
-    result = mutableCommandList->updateMutableCommandWaitEventsExp(commandId, 1, &newEventHandle);
+    result = mutableCommandList->updateMutableCommandWaitEvents(commandId, 1, &newEventHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -3262,7 +3262,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto mockMutableSemWait = static_cast<MockMutableSemaphoreWaitHw<FamilyType> *>(mutableSemWait);
     EXPECT_EQ(0, memcmp(mockMutableSemWait->semWait, noopSemWait, sizeof(MI_SEMAPHORE_WAIT)));
 
-    result = mutableCommandList->updateMutableCommandWaitEventsExp(commandId, 1, &newEventHandle);
+    result = mutableCommandList->updateMutableCommandWaitEvents(commandId, 1, &newEventHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -3332,7 +3332,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto waitAddress = event->getCompletionFieldGpuAddress(this->device);
     EXPECT_EQ(waitAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmd));
 
-    result = mutableCommandList->updateMutableCommandWaitEventsExp(commandId, 1, &noopHandle);
+    result = mutableCommandList->updateMutableCommandWaitEvents(commandId, 1, &noopHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -3347,7 +3347,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     EXPECT_EQ(0, memcmp(semWaitCmd, semWaitNoopSpace, sizeof(MI_SEMAPHORE_WAIT)));
 
-    result = mutableCommandList->updateMutableCommandWaitEventsExp(commandId, 1, &newEventHandle);
+    result = mutableCommandList->updateMutableCommandWaitEvents(commandId, 1, &newEventHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -3433,7 +3433,7 @@ void MutableCommandListFixtureInit::waitCbEventBelongToDifferentMutateToDifferen
     }
 
     // mutate to event 2
-    result = this->mutableCommandList->updateMutableCommandWaitEventsExp(this->commandId, 1, &newEventHandle);
+    result = this->mutableCommandList->updateMutableCommandWaitEvents(this->commandId, 1, &newEventHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     result = this->mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -3978,7 +3978,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
         EXPECT_EQ(counter, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(semWaitCmd));
     }
 
-    result = mutableCommandList->updateMutableCommandWaitEventsExp(commandId, 1, &noopHandle);
+    result = mutableCommandList->updateMutableCommandWaitEvents(commandId, 1, &noopHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -3991,7 +3991,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
         EXPECT_EQ(0, memcmp(lriCmd, noopLri, sizeof(MI_LOAD_REGISTER_IMM)));
     }
 
-    result = mutableCommandList->updateMutableCommandWaitEventsExp(commandId, 1, &newEventHandle);
+    result = mutableCommandList->updateMutableCommandWaitEvents(commandId, 1, &newEventHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -4123,7 +4123,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
         }
     }
 
-    result = mutableCommandList->updateMutableCommandWaitEventsExp(commandId, 1, &newEventHandle);
+    result = mutableCommandList->updateMutableCommandWaitEvents(commandId, 1, &newEventHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -4259,7 +4259,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
         EXPECT_EQ(0, memcmp(&noopLri, lriHighCmd, sizeof(MI_LOAD_REGISTER_IMM)));
     }
 
-    result = mutableCommandList->updateMutableCommandWaitEventsExp(commandId, 1, &newEventHandle);
+    result = mutableCommandList->updateMutableCommandWaitEvents(commandId, 1, &newEventHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -4281,7 +4281,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     }
 
     // mutate back into noop state
-    result = mutableCommandList->updateMutableCommandWaitEventsExp(commandId, 1, &eventHandle);
+    result = mutableCommandList->updateMutableCommandWaitEvents(commandId, 1, &eventHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -4362,7 +4362,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
         ASSERT_NE(nullptr, lriHighCmd);
     }
 
-    result = mutableCommandList->updateMutableCommandWaitEventsExp(commandId, 1, &newEventHandle);
+    result = mutableCommandList->updateMutableCommandWaitEvents(commandId, 1, &newEventHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -4376,7 +4376,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     }
 
     // mutate back into noop state
-    result = mutableCommandList->updateMutableCommandWaitEventsExp(commandId, 1, &eventHandle);
+    result = mutableCommandList->updateMutableCommandWaitEvents(commandId, 1, &eventHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -4491,7 +4491,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     MockGraphicsAllocation patchPreambleDeviceAllocation(nullptr, patchPreambleDeviceGpuAddress, sizeof(uint64_t));
     event->getInOrderExecEventHelper().assignPatchPreambleData(patchPreambleCounter, nullptr, 0, nullptr, patchPreambleDeviceGpuAddress, &patchPreambleDeviceAllocation);
 
-    result = mutableCommandList->updateMutableCommandWaitEventsExp(commandId, 1, &eventHandle);
+    result = mutableCommandList->updateMutableCommandWaitEvents(commandId, 1, &eventHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     result = mutableCommandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -4564,7 +4564,7 @@ struct MutableCommandListPatchPreambleWaitFixture : public MutableCommandListFix
 
     void mutateWaitEvent(Event *event) {
         auto eventHandle = event->toHandle();
-        EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandWaitEventsExp(commandId, 1, &eventHandle));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->updateMutableCommandWaitEvents(commandId, 1, &eventHandle));
         EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
     }
 
@@ -5094,7 +5094,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto semWaitCmd = reinterpret_cast<MI_SEMAPHORE_WAIT *>(mockMutableSemWait->semWait);
     EXPECT_EQ(originalEventAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semWaitCmd));
 
-    result = mutableCommandList->updateMutableCommandWaitEventsExp(commandId, 1, &this->eventHandles[1]);
+    result = mutableCommandList->updateMutableCommandWaitEvents(commandId, 1, &this->eventHandles[1]);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -5221,7 +5221,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
         EXPECT_TRUE(mockMutableLri->isCopy);
     }
 
-    result = mutableCommandList->updateMutableCommandWaitEventsExp(commandId, 1, &this->eventHandles[1]);
+    result = mutableCommandList->updateMutableCommandWaitEvents(commandId, 1, &this->eventHandles[1]);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -5341,7 +5341,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
         expectedHostSources.push_back(static_cast<MockMutableLoadRegisterImmHw<FamilyType> *>(mutableLri)->commandView);
     }
 
-    result = mutableCommandList->updateMutableCommandWaitEventsExp(commandId, 1, &this->eventHandles[1]);
+    result = mutableCommandList->updateMutableCommandWaitEvents(commandId, 1, &this->eventHandles[1]);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(0u, computeAsyncPatchContainer.size());

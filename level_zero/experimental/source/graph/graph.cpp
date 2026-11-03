@@ -816,7 +816,7 @@ void ExternalCbEventInfoContainer::updateExecutorContainer(L0::CommandList *curr
 
 void ExternalCbEventInfoContainer::refreshExternalCbWaitEvents() {
     for (auto &info : waitEventsContainer) {
-        static_cast<L0::MCL::MutableCommandList *>(info.executor->asMutable())->updateMutableCommandWaitEventsExp(info.commandId, static_cast<uint32_t>(info.waitEvents.size()), info.waitEvents.data());
+        static_cast<L0::MCL::MutableCommandList *>(info.executor->asMutable())->updateMutableCommandWaitEvents(info.commandId, static_cast<uint32_t>(info.waitEvents.size()), info.waitEvents.data());
     }
 }
 
@@ -1325,6 +1325,17 @@ ze_result_t Closure<CaptureApi::zeCommandListGetNextCommandIdWithKernelsExp>::in
     return zeCommandListGetNextCommandIdWithKernelsExp(resolveExecutionTargetForInstantiate(executionTarget, apiArgs.hCommandList), &indirectArgs.desc, static_cast<uint32_t>(indirectArgs.kernels.size()), kernelHandles, &commandId);
 }
 
+ze_result_t Closure<CaptureApi::zeCommandListGetNextCommandIdExt>::instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, CbExternalEventInstantiateContext &, std::optional<EventParams>) const {
+    uint64_t commandId = indirectArgs.commandId;
+    return zeCommandListGetNextCommandIdExt(resolveExecutionTargetForInstantiate(executionTarget, apiArgs.hCommandList), &indirectArgs.desc, &commandId);
+}
+
+ze_result_t Closure<CaptureApi::zeCommandListGetNextCommandIdWithKernelsExt>::instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, CbExternalEventInstantiateContext &, std::optional<EventParams>) const {
+    uint64_t commandId = indirectArgs.commandId;
+    auto kernelHandles = indirectArgs.kernels.empty() ? nullptr : const_cast<ze_kernel_handle_t *>(indirectArgs.kernels.data());
+    return zeCommandListGetNextCommandIdWithKernelsExt(resolveExecutionTargetForInstantiate(executionTarget, apiArgs.hCommandList), &indirectArgs.desc, static_cast<uint32_t>(indirectArgs.kernels.size()), kernelHandles, &commandId);
+}
+
 ze_result_t Closure<CaptureApi::zeCommandListAppendMemoryCopy>::invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const {
     auto cb = reinterpret_cast<ze_result_t(ZE_VISITOR_CCONV *)(ze_command_list_handle_t, void *, const void *, size_t, ze_event_handle_t, uint32_t, ze_event_handle_t *, void *)>(visitorCallback);
     auto waitEventsList = getClosureWaitEventsList<CaptureApi::zeCommandListAppendMemoryCopy>(apiArgs, indirectArgs, externalStorage);
@@ -1587,6 +1598,19 @@ ze_result_t Closure<CaptureApi::zeCommandListGetNextCommandIdExp>::invokeVisitor
 
 ze_result_t Closure<CaptureApi::zeCommandListGetNextCommandIdWithKernelsExp>::invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &) const {
     auto cb = reinterpret_cast<ze_result_t(ZE_VISITOR_CCONV *)(ze_command_list_handle_t, const ze_mutable_command_id_exp_desc_t *, uint32_t, ze_kernel_handle_t *, uint64_t *, void *)>(visitorCallback);
+    uint64_t commandId = indirectArgs.commandId;
+    auto kernelHandles = indirectArgs.kernels.empty() ? nullptr : const_cast<ze_kernel_handle_t *>(indirectArgs.kernels.data());
+    return cb(apiArgs.hCommandList, &indirectArgs.desc, static_cast<uint32_t>(indirectArgs.kernels.size()), kernelHandles, &commandId, userData);
+}
+
+ze_result_t Closure<CaptureApi::zeCommandListGetNextCommandIdExt>::invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &) const {
+    auto cb = reinterpret_cast<ze_result_t(ZE_VISITOR_CCONV *)(ze_command_list_handle_t, const ze_mutable_command_id_ext_desc_t *, uint64_t *, void *)>(visitorCallback);
+    uint64_t commandId = indirectArgs.commandId;
+    return cb(apiArgs.hCommandList, &indirectArgs.desc, &commandId, userData);
+}
+
+ze_result_t Closure<CaptureApi::zeCommandListGetNextCommandIdWithKernelsExt>::invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &) const {
+    auto cb = reinterpret_cast<ze_result_t(ZE_VISITOR_CCONV *)(ze_command_list_handle_t, const ze_mutable_command_id_ext_desc_t *, uint32_t, ze_kernel_handle_t *, uint64_t *, void *)>(visitorCallback);
     uint64_t commandId = indirectArgs.commandId;
     auto kernelHandles = indirectArgs.kernels.empty() ? nullptr : const_cast<ze_kernel_handle_t *>(indirectArgs.kernels.data());
     return cb(apiArgs.hCommandList, &indirectArgs.desc, static_cast<uint32_t>(indirectArgs.kernels.size()), kernelHandles, &commandId, userData);

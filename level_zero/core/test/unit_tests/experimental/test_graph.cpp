@@ -7865,6 +7865,22 @@ TEST(GraphTestVisit, GivenConcreteVisitorForGetNextCommandIdWhenVisitingThenInit
     EXPECT_EQ(ZE_RESULT_SUCCESS, graph.visit(&desc));
 }
 
+TEST(GraphTestVisit, GivenConcreteVisitorForGetNextCommandIdExtWhenVisitingThenInitializationSucceeds) {
+    GraphsCleanupGuard graphCleanup;
+    ContextStubMock ctx;
+    MockGraph graph{&ctx, true};
+    graph.stopCapturing();
+    ze_concrete_visitor_ext_desc_t concreteVisitor{};
+    concreteVisitor.stype = ZE_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC;
+    concreteVisitor.fname = "zeCommandListGetNextCommandIdExt";
+    concreteVisitor.callback = nullptr;
+    ze_command_visit_ext_desc_t desc{};
+    desc.stype = ZE_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC;
+    desc.pNext = &concreteVisitor;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, graph.visit(&desc));
+}
+
 TEST(GraphTestVisit, GivenConcreteVisitorWithLegacyStypeWhenVisitingThenInitializationSucceeds) {
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
@@ -7881,6 +7897,22 @@ TEST(GraphTestVisit, GivenConcreteVisitorWithLegacyStypeWhenVisitingThenInitiali
     EXPECT_EQ(ZE_RESULT_SUCCESS, graph.visit(&desc));
 }
 
+TEST(GraphTestVisit, GivenConcreteVisitorWithLegacyStypeAndExtWhenVisitingThenInitializationSucceeds) {
+    GraphsCleanupGuard graphCleanup;
+    ContextStubMock ctx;
+    MockGraph graph{&ctx, true};
+    graph.stopCapturing();
+    ze_concrete_visitor_ext_desc_t concreteVisitor{};
+    concreteVisitor.stype = static_cast<ze_structure_type_t>(ZEX_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC);
+    concreteVisitor.fname = "zeCommandListGetNextCommandIdExt";
+    concreteVisitor.callback = nullptr;
+    ze_command_visit_ext_desc_t desc{};
+    desc.stype = ZE_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC;
+    desc.pNext = &concreteVisitor;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, graph.visit(&desc));
+}
+
 TEST(GraphTestVisit, GivenConcreteVisitorForGetNextCommandIdWithKernelsWhenVisitingThenInitializationSucceeds) {
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
@@ -7889,6 +7921,22 @@ TEST(GraphTestVisit, GivenConcreteVisitorForGetNextCommandIdWithKernelsWhenVisit
     ze_concrete_visitor_ext_desc_t concreteVisitor{};
     concreteVisitor.stype = ZE_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC;
     concreteVisitor.fname = "zeCommandListGetNextCommandIdWithKernelsExp";
+    concreteVisitor.callback = nullptr;
+    ze_command_visit_ext_desc_t desc{};
+    desc.stype = ZE_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC;
+    desc.pNext = &concreteVisitor;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, graph.visit(&desc));
+}
+
+TEST(GraphTestVisit, GivenConcreteVisitorForGetNextCommandIdWithKernelsExtWhenVisitingThenInitializationSucceeds) {
+    GraphsCleanupGuard graphCleanup;
+    ContextStubMock ctx;
+    MockGraph graph{&ctx, true};
+    graph.stopCapturing();
+    ze_concrete_visitor_ext_desc_t concreteVisitor{};
+    concreteVisitor.stype = ZE_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC;
+    concreteVisitor.fname = "zeCommandListGetNextCommandIdWithKernelsExt";
     concreteVisitor.callback = nullptr;
     ze_command_visit_ext_desc_t desc{};
     desc.stype = ZE_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC;
@@ -8062,6 +8110,27 @@ TEST(CaptureTestMclIdMapping, GivenGetNextCommandIdFollowedByAppendBarrierWhenGe
     EXPECT_TRUE(std::holds_alternative<Closure<CaptureApi::zeCommandListAppendBarrier>>(*cmd));
 }
 
+TEST(CaptureTestMclIdMapping, GivenGetNextCommandExtIdFollowedByAppendBarrierWhenGettingCommandByMclIdThenReturnsMappedFollowingCommand) {
+    GraphsCleanupGuard graphCleanup;
+    ContextStubMock ctx;
+    Mock<CommandList> cmdlist;
+    cmdlist.device = nullptr;
+
+    MockGraph graph{&ctx, true};
+
+    ze_mutable_command_id_ext_desc_t desc{};
+    uint64_t commandId = 0U;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, graph.recordedApiCommands.capture<L0::CaptureApi::zeCommandListGetNextCommandIdExt>(
+                                     cmdlist.toHandle(), &desc, &commandId));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, graph.recordedApiCommands.capture<L0::CaptureApi::zeCommandListAppendBarrier>(
+                                     cmdlist.toHandle(), nullptr, 0U, nullptr));
+
+    auto *cmd = graph.recordedApiCommands.getCommandByMclId(commandId);
+    EXPECT_NE(nullptr, cmd);
+    EXPECT_TRUE(std::holds_alternative<Closure<CaptureApi::zeCommandListAppendBarrier>>(*cmd));
+}
+
 TEST(CaptureTestMclIdMapping, GivenMultipleMutableCommandsWithDifferentFollowingCommandsWhenMappingThenEachReferencesCorrectCommand) {
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
@@ -8109,6 +8178,28 @@ TEST(CaptureTestMclIdMapping, GivenGetNextCommandIdWithKernelsFollowedByLaunchKe
     ze_kernel_handle_t kernels[] = {nullptr};
     uint64_t commandId = 0U;
     EXPECT_EQ(ZE_RESULT_SUCCESS, graph.recordedApiCommands.capture<L0::CaptureApi::zeCommandListGetNextCommandIdWithKernelsExp>(
+                                     cmdlist.toHandle(), &desc, 1U, kernels, &commandId));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, graph.recordedApiCommands.capture<L0::CaptureApi::zeCommandListAppendBarrier>(
+                                     cmdlist.toHandle(), nullptr, 0U, nullptr));
+
+    auto *cmd = graph.recordedApiCommands.getCommandByMclId(commandId);
+    EXPECT_NE(nullptr, cmd);
+    EXPECT_TRUE(std::holds_alternative<Closure<CaptureApi::zeCommandListAppendBarrier>>(*cmd));
+}
+
+TEST(CaptureTestMclIdMapping, GivenGetNextCommandIdWithKernelExtsFollowedByLaunchKernelWhenMappingThenReturnsMappedKernelCommand) {
+    GraphsCleanupGuard graphCleanup;
+    ContextStubMock ctx;
+    Mock<CommandList> cmdlist;
+    cmdlist.device = nullptr;
+
+    MockGraph graph{&ctx, true};
+
+    ze_mutable_command_id_ext_desc_t desc{};
+    ze_kernel_handle_t kernels[] = {nullptr};
+    uint64_t commandId = 0U;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, graph.recordedApiCommands.capture<L0::CaptureApi::zeCommandListGetNextCommandIdWithKernelsExt>(
                                      cmdlist.toHandle(), &desc, 1U, kernels, &commandId));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, graph.recordedApiCommands.capture<L0::CaptureApi::zeCommandListAppendBarrier>(
