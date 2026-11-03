@@ -9,19 +9,28 @@
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/device/device_info.h"
 #include "shared/source/helpers/common_types.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/engine_control.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/options.h"
 #include "shared/source/memory_manager/unified_memory_reuse.h"
-#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/mockable_virtual_defaults.h"
 #include "shared/source/utilities/pool_allocators.h"
 #include "shared/source/utilities/reference_tracked_object.h"
 
+#include "neo_igfxfmid.h"
+
 #include <array>
 #include <atomic>
+#include <bitset>
+#include <memory>
 #include <mutex>
+#include <optional>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 namespace NEO {
 class AILConfiguration;
@@ -207,9 +216,9 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     MOCKABLE_VIRTUAL uint64_t getGlobalMemorySize(uint32_t deviceBitfield) const;
     uint64_t getUsableMemorySize() const;
     const std::vector<SubDevice *> &getSubDevices() const { return subdevices; }
-    bool getUuid(std::array<uint8_t, ProductHelper::uuidSize> &uuid);
-    void generateUuid(std::array<uint8_t, ProductHelper::uuidSize> &uuid);
-    void getAdapterLuid(std::array<uint8_t, ProductHelper::luidSize> &luid);
+    bool getUuid(std::array<uint8_t, CommonConstants::uuidSize> &uuid);
+    void generateUuid(std::array<uint8_t, CommonConstants::uuidSize> &uuid);
+    void getAdapterLuid(std::array<uint8_t, CommonConstants::luidSize> &luid);
     MOCKABLE_VIRTUAL bool verifyAdapterLuid();
     void getAdapterMask(uint32_t &nodeMask);
     const GfxCoreHelper &getGfxCoreHelper() const;
@@ -426,9 +435,9 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
 
     struct {
         bool isValid = false;
-        std::array<uint8_t, ProductHelper::uuidSize> id;
+        std::array<uint8_t, CommonConstants::uuidSize> id;
     } uuid;
-    bool generateUuidFromPciBusInfo(const PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, ProductHelper::uuidSize> &uuid);
+    bool generateUuidFromPciBusInfo(const PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, CommonConstants::uuidSize> &uuid);
 };
 
 inline EngineControl &Device::getDefaultEngine() {

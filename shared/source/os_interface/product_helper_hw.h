@@ -65,7 +65,7 @@ class ProductHelperHw : public ProductHelper {
     bool isTile64With3DSurfaceOnBCSSupported(const HardwareInfo &hwInfo) const override;
     bool isDcFlushAllowed() const override;
     uint32_t computeMaxNeededSubSliceSpace(const HardwareInfo &hwInfo) const override;
-    bool getUuid(NEO::DriverModel *driverModel, uint32_t subDeviceCount, uint32_t deviceIndex, std::array<uint8_t, ProductHelper::uuidSize> &uuid) const override;
+    bool getUuid(NEO::DriverModel *driverModel, uint32_t subDeviceCount, uint32_t deviceIndex, std::array<uint8_t, CommonConstants::uuidSize> &uuid) const override;
     bool isSystolicModeConfigurable(const HardwareInfo &hwInfo) const override;
     bool isCopyEngineSelectorEnabled(const HardwareInfo &hwInfo) const override;
     bool isReleaseGlobalFenceInCommandStreamRequired(const HardwareInfo &hwInfo) const override;

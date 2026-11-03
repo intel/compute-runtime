@@ -128,7 +128,7 @@ KmdSysManager &WddmSysmanImp::getKmdSysManager() {
 
 void WddmSysmanImp::getDeviceUuids(std::vector<std::string> &deviceUuids) {
     deviceUuids.clear();
-    std::array<uint8_t, NEO::ProductHelper::uuidSize> deviceUuid{};
+    std::array<uint8_t, CommonConstants::uuidSize> deviceUuid{};
     bool uuidValid = this->getUuid(deviceUuid);
     if (uuidValid) {
         uint8_t uuid[ZE_MAX_DEVICE_UUID_SIZE] = {};
@@ -142,7 +142,7 @@ std::string WddmSysmanImp::getPciUuid() {
     return "";
 }
 
-bool WddmSysmanImp::getUuid(std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid) {
+bool WddmSysmanImp::getUuid(std::array<uint8_t, CommonConstants::uuidSize> &uuid) {
     if (getSysmanDeviceImp()->getRootDeviceEnvironment().osInterface != nullptr) {
         auto driverModel = getSysmanDeviceImp()->getRootDeviceEnvironment().osInterface->getDriverModel();
         if (!this->uuid.isValid) {
@@ -158,7 +158,7 @@ bool WddmSysmanImp::getUuid(std::array<uint8_t, NEO::ProductHelper::uuidSize> &u
     return this->uuid.isValid;
 }
 
-bool WddmSysmanImp::generateUuidFromPciBusInfo(const NEO::PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid) {
+bool WddmSysmanImp::generateUuidFromPciBusInfo(const NEO::PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, CommonConstants::uuidSize> &uuid) {
     if (pciBusInfo.pciDomain != NEO::PhysicalDevicePciBusInfo::invalidValue) {
         uuid.fill(0);
 
@@ -197,9 +197,9 @@ bool WddmSysmanImp::generateUuidFromPciBusInfo(const NEO::PhysicalDevicePciBusIn
         deviceUUID.pciFunc = static_cast<uint8_t>(pciBusInfo.pciFunction);
         deviceUUID.subDeviceID = 0;
 
-        static_assert(sizeof(DeviceUUID) == NEO::ProductHelper::uuidSize);
+        static_assert(sizeof(DeviceUUID) == CommonConstants::uuidSize);
 
-        memcpy_s(uuid.data(), NEO::ProductHelper::uuidSize, &deviceUUID, sizeof(DeviceUUID));
+        memcpy_s(uuid.data(), CommonConstants::uuidSize, &deviceUUID, sizeof(DeviceUUID));
 
         return true;
     }

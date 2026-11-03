@@ -10,6 +10,8 @@
 #include "level_zero/sysman/source/shared/windows/sysman_kmd_sys.h"
 #include "level_zero/sysman/source/shared/windows/sysman_kmd_sys_manager.h"
 
+#include <algorithm>
+
 namespace L0 {
 namespace Sysman {
 

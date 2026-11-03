@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#include "shared/source/os_interface/product_helper.h"
 
 #include "level_zero/tools/test/unit_tests/sources/sysman/frequency/linux/mock_sysfs_frequency_prelim.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/linux/mock_sysman_fixture.h"

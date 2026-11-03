@@ -10,6 +10,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/os_interface/product_helper.h"
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"

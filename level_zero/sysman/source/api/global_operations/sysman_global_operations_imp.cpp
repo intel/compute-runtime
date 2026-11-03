@@ -88,7 +88,7 @@ ze_result_t GlobalOperationsImp::deviceGetProperties(zes_device_properties_t *pP
     pProperties->core.timestampValidBits = hardwareInfo.capabilityTable.timestampValidBits;
     pProperties->core.kernelTimestampValidBits = hardwareInfo.capabilityTable.kernelTimestampValidBits;
 
-    std::array<uint8_t, NEO::ProductHelper::uuidSize> deviceUuid;
+    std::array<uint8_t, CommonConstants::uuidSize> deviceUuid;
     bool uuidValid = pOsGlobalOperations->getUuid(deviceUuid);
     if (uuidValid) {
         std::copy_n(std::begin(deviceUuid), ZE_MAX_DEVICE_UUID_SIZE, std::begin(pProperties->core.uuid.id));

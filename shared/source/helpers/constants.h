@@ -100,6 +100,8 @@ inline constexpr uint32_t gpuHangCheckTimeInUS = 500'000;
 inline constexpr double defaultProfilingTimerResolution = 83.333;
 inline constexpr uint64_t nsecPerSec = 1000000000ull;
 inline constexpr uint32_t maxAllowedEnvVariableSize = 4096u;
+inline constexpr uint32_t uuidSize = 16u;
+inline constexpr uint32_t luidSize = 8u;
 } // namespace CommonConstants
 
 namespace SamplerConstants {

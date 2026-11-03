@@ -7,9 +7,9 @@
 
 #pragma once
 
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/os_interface/driver_info.h"
-#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include "level_zero/sysman/source/api/global_operations/sysman_os_global_operations.h"
@@ -53,10 +53,10 @@ class LinuxGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableAndN
     ze_result_t scanProcessesState(std::vector<zes_process_state_t> &pProcessList) override;
     ze_result_t deviceGetState(zes_device_state_t *pState) override;
     ze_result_t resetExt(zes_reset_properties_t *pProperties) override;
-    bool getUuid(std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid) override;
-    bool generateUuidFromPciBusInfo(const NEO::PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid) override;
+    bool getUuid(std::array<uint8_t, CommonConstants::uuidSize> &uuid) override;
+    bool generateUuidFromPciBusInfo(const NEO::PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, CommonConstants::uuidSize> &uuid) override;
     ze_bool_t getDeviceInfoByUuid(zes_uuid_t uuid, ze_bool_t *onSubdevice, uint32_t *subdeviceId) override;
-    bool generateUuidFromPciAndSubDeviceInfo(uint32_t subDeviceID, const NEO::PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid);
+    bool generateUuidFromPciAndSubDeviceInfo(uint32_t subDeviceID, const NEO::PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, CommonConstants::uuidSize> &uuid);
     ze_result_t getSubDeviceProperties(uint32_t *pCount, zes_subdevice_exp_properties_t *pSubdeviceProps) override;
     ze_result_t memoryGetPageOfflineStateExp(zes_intel_mem_page_status_exp_t pageStatus, uint32_t *pCount, zes_intel_mem_page_info_exp_t *pPageOfflineInfo) override;
     ze_result_t getMaxMemoryOfflinePages(uint32_t *pMaxOfflinePages) override;
@@ -72,7 +72,7 @@ class LinuxGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableAndN
 
     struct {
         bool isValid = false;
-        std::array<uint8_t, NEO::ProductHelper::uuidSize> id;
+        std::array<uint8_t, CommonConstants::uuidSize> id;
     } uuid[maxUuidsPerDevice];
 
   protected:
@@ -113,7 +113,7 @@ class LinuxGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableAndN
     bool getClientIdFromFdInfo(const std::vector<std::string> &fdFileContents, uint64_t &clientId);
     uint64_t getProcessStartTime(const ::pid_t pid);
     ze_result_t resetImpl(ze_bool_t force, zes_reset_type_t resetType);
-    bool getUuidFromSubDeviceInfo(uint32_t subDeviceID, std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid);
+    bool getUuidFromSubDeviceInfo(uint32_t subDeviceID, std::array<uint8_t, CommonConstants::uuidSize> &uuid);
     zes_device_state_ext_flags_t getDeviceStateExtFlags();
     MOCKABLE_VIRTUAL bool isDevicePciPathAccessible();
     MOCKABLE_VIRTUAL bool isDrmIoctlOk();

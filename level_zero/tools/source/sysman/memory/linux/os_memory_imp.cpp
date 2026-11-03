@@ -17,6 +17,7 @@
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/linux/system_info.h"
+#include "shared/source/os_interface/product_helper.h"
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"

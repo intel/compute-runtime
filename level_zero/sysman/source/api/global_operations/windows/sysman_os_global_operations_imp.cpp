@@ -61,7 +61,7 @@ void WddmGlobalOperationsImp::getTimerResolution(double *pTimerResolution) {
     *pTimerResolution = pWddmSysmanImp->getSysmanDeviceImp()->getTimerResolution();
 }
 
-bool WddmGlobalOperationsImp::getUuid(std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid) {
+bool WddmGlobalOperationsImp::getUuid(std::array<uint8_t, CommonConstants::uuidSize> &uuid) {
     if (pWddmSysmanImp->getSysmanDeviceImp()->getRootDeviceEnvironment().osInterface != nullptr) {
         auto driverModel = pWddmSysmanImp->getSysmanDeviceImp()->getRootDeviceEnvironment().osInterface->getDriverModel();
         if (!this->uuid.isValid) {
@@ -77,7 +77,7 @@ bool WddmGlobalOperationsImp::getUuid(std::array<uint8_t, NEO::ProductHelper::uu
     return this->uuid.isValid;
 }
 
-bool WddmGlobalOperationsImp::generateUuidFromPciBusInfo(const NEO::PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid) {
+bool WddmGlobalOperationsImp::generateUuidFromPciBusInfo(const NEO::PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, CommonConstants::uuidSize> &uuid) {
     if (pciBusInfo.pciDomain != NEO::PhysicalDevicePciBusInfo::invalidValue) {
         uuid.fill(0);
 
@@ -117,9 +117,9 @@ bool WddmGlobalOperationsImp::generateUuidFromPciBusInfo(const NEO::PhysicalDevi
         deviceUUID.pciFunc = static_cast<uint8_t>(pciBusInfo.pciFunction);
         deviceUUID.subDeviceID = 0;
 
-        static_assert(sizeof(DeviceUUID) == NEO::ProductHelper::uuidSize);
+        static_assert(sizeof(DeviceUUID) == CommonConstants::uuidSize);
 
-        memcpy_s(uuid.data(), NEO::ProductHelper::uuidSize, &deviceUUID, sizeof(DeviceUUID));
+        memcpy_s(uuid.data(), CommonConstants::uuidSize, &deviceUUID, sizeof(DeviceUUID));
 
         return true;
     }
@@ -128,7 +128,7 @@ bool WddmGlobalOperationsImp::generateUuidFromPciBusInfo(const NEO::PhysicalDevi
 }
 
 ze_bool_t WddmGlobalOperationsImp::getDeviceInfoByUuid(zes_uuid_t uuid, ze_bool_t *onSubdevice, uint32_t *subdeviceId) {
-    std::array<uint8_t, NEO::ProductHelper::uuidSize> deviceUuid;
+    std::array<uint8_t, CommonConstants::uuidSize> deviceUuid;
     bool uuidValid = getUuid(deviceUuid);
     if (uuidValid) {
         if (0 == std::memcmp(uuid.id, deviceUuid.data(), ZE_MAX_DEVICE_UUID_SIZE)) {

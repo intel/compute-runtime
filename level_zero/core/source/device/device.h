@@ -13,7 +13,6 @@
 #include "shared/source/helpers/topology_map.h"
 #include "shared/source/memory_manager/memadvise_flags.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
-#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/lockable.h"
 #include "shared/source/utilities/mockable_virtual_defaults.h"
 
@@ -24,9 +23,10 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <optional>
+#include <string>
 #include <unordered_map>
-
-static_assert(NEO::ProductHelper::uuidSize == ZE_MAX_DEVICE_UUID_SIZE);
+#include <vector>
 
 namespace aub_stream {
 enum EngineType : uint32_t;
@@ -46,6 +46,7 @@ class GfxCoreHelper;
 class GraphicsAllocation;
 class MemoryManager;
 class OSInterface;
+class ProductHelper;
 class HostFunctionAllocator;
 class TagAllocatorBase;
 enum class AllocationType;

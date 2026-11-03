@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/mocks/linux/mock_ioctl_helper.h"
 
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"

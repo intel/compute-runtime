@@ -19,6 +19,7 @@
 #include "shared/source/helpers/sleep.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/sip_external_lib/sip_external_lib.h"
 
 #include "level_zero/core/source/device/device.h"

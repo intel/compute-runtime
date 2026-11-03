@@ -18,6 +18,8 @@
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_driver_imp.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 
+#include <algorithm>
+
 namespace L0 {
 namespace Sysman {
 

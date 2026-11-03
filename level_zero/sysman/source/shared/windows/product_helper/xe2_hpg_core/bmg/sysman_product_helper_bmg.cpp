@@ -13,6 +13,7 @@
 #include "level_zero/sysman/source/shared/windows/product_helper/sysman_product_helper_hw.inl"
 #include "level_zero/sysman/source/sysman_const.h"
 
+#include <algorithm>
 #include <utility>
 #include <vector>
 

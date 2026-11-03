@@ -32,6 +32,7 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/os_time.h"
 #include "shared/source/os_interface/performance_counters.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/os_interface/query_peer_access.h"
 #include "shared/source/program/sync_buffer_handler.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
@@ -1134,7 +1135,7 @@ void Device::finalizeRayTracing() {
 
 OSTime *Device::getOSTime() const { return getRootDeviceEnvironment().osTime.get(); };
 
-bool Device::getUuid(std::array<uint8_t, ProductHelper::uuidSize> &uuid) {
+bool Device::getUuid(std::array<uint8_t, CommonConstants::uuidSize> &uuid) {
     if (this->uuid.isValid) {
         uuid = this->uuid.id;
 
@@ -1144,13 +1145,13 @@ bool Device::getUuid(std::array<uint8_t, ProductHelper::uuidSize> &uuid) {
         if (subDevicesCount > 1 && deviceBitfield.count() == 1) {
             // In case of no sub devices created (bits set in affinity mask == 1), return the UUID of enabled sub-device.
             uint32_t subDeviceIndex = Math::log2(static_cast<uint32_t>(deviceBitfield.to_ulong()));
-            uuid[ProductHelper::uuidSize - 1] = subDeviceIndex + 1;
+            uuid[CommonConstants::uuidSize - 1] = subDeviceIndex + 1;
         }
     }
     return this->uuid.isValid;
 }
 
-bool Device::generateUuidFromPciBusInfo(const PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, ProductHelper::uuidSize> &uuid) {
+bool Device::generateUuidFromPciBusInfo(const PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, CommonConstants::uuidSize> &uuid) {
     if (pciBusInfo.pciDomain != PhysicalDevicePciBusInfo::invalidValue) {
         generateUuid(uuid);
 
@@ -1178,7 +1179,7 @@ bool Device::generateUuidFromPciBusInfo(const PhysicalDevicePciBusInfo &pciBusIn
             uint8_t reserved[4];
             uint8_t subDeviceID;
         };
-        static_assert(sizeof(DeviceUUID) == ProductHelper::uuidSize);
+        static_assert(sizeof(DeviceUUID) == CommonConstants::uuidSize);
 
         DeviceUUID deviceUUID{};
         memcpy_s(&deviceUUID, sizeof(DeviceUUID), uuid.data(), uuid.size());
@@ -1195,7 +1196,7 @@ bool Device::generateUuidFromPciBusInfo(const PhysicalDevicePciBusInfo &pciBusIn
     return false;
 }
 
-void Device::generateUuid(std::array<uint8_t, ProductHelper::uuidSize> &uuid) {
+void Device::generateUuid(std::array<uint8_t, CommonConstants::uuidSize> &uuid) {
     const auto &deviceInfo = getDeviceInfo();
     const auto &hardwareInfo = getHardwareInfo();
     uint32_t rootDeviceIndex = getRootDeviceIndex();

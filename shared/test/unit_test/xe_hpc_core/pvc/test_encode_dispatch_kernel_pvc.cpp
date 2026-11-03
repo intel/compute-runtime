@@ -7,6 +7,7 @@
 
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/kernel/grf_config.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/xe_hpc_core/hw_cmds_pvc.h"
 #include "shared/source/xe_hpc_core/pvc/device_ids_configs_pvc.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"

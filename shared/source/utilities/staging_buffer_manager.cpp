@@ -16,6 +16,7 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_properties.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/cpu_info.h"
 #include "shared/source/utilities/heap_allocator.h"
 

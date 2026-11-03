@@ -48,8 +48,8 @@ HWTEST2_PRODUCT_F(MultipleDeviceBdfUuidTest, GivenValidBdfWithCombinationOfAffin
     PhysicalDevicePciBusInfo pciBusInfo(0x00, 0x34, 0xab, 0xcd);
     deviceFactory = createDevices(pciBusInfo, 4, mockExecutionEnvironment.release());
 
-    std::array<uint8_t, NEO::ProductHelper::uuidSize> uuid;
-    uint8_t expectedUuid[NEO::ProductHelper::uuidSize] = {};
+    std::array<uint8_t, CommonConstants::uuidSize> uuid;
+    uint8_t expectedUuid[CommonConstants::uuidSize] = {};
 
     uint16_t vendorId = 0x8086; // Intel
     uint16_t deviceId = static_cast<uint16_t>(deviceFactory->rootDevices[0]->getHardwareInfo().platform.usDeviceID);
@@ -96,7 +96,7 @@ HWTEST2_PRODUCT_F(MultipleDeviceBdfUuidTest, GivenDefaultAffinityMaskWhenRetriev
     RAIIProductHelperFactory<MockProductHelperHw<productFamily>> raii(*mockExecutionEnvironment->rootDeviceEnvironments[0]);
     std::array<uint8_t, 16> uuid;
     const uint32_t numSubDevices = 2;
-    uint8_t expectedUuid[NEO::ProductHelper::uuidSize] = {};
+    uint8_t expectedUuid[CommonConstants::uuidSize] = {};
     debugManager.flags.ZE_AFFINITY_MASK.set("default");
     PhysicalDevicePciBusInfo pciBusInfo(0x54ad, 0x34, 0xab, 0xcd);
     deviceFactory = createDevices(pciBusInfo, numSubDevices, mockExecutionEnvironment.release());
@@ -135,7 +135,7 @@ HWTEST2_PRODUCT_F(MultipleDeviceBdfUuidTest, GivenDefaultAffinityMaskWhenRetriev
     RAIIProductHelperFactory<MockProductHelperHw<productFamily>> raii(*mockExecutionEnvironment->rootDeviceEnvironments[0]);
     std::array<uint8_t, 16> uuid;
     const uint32_t numSubDevices = 1;
-    uint8_t expectedUuid[NEO::ProductHelper::uuidSize] = {};
+    uint8_t expectedUuid[CommonConstants::uuidSize] = {};
     debugManager.flags.ZE_AFFINITY_MASK.set("default");
     PhysicalDevicePciBusInfo pciBusInfo(0x54ad, 0x34, 0xab, 0xcd);
     deviceFactory = createDevices(pciBusInfo, numSubDevices, mockExecutionEnvironment.release());
@@ -179,8 +179,8 @@ HWTEST2_PRODUCT_F(MultipleDeviceBdfUuidTest, GivenNoSubDevicesInAffinityMaskwhen
     std::unique_ptr<UltDeviceFactory> deviceFactory;
     auto mockExecutionEnvironment = std::make_unique<MockExecutionEnvironment>(defaultHwInfo.get(), false, 1);
     RAIIProductHelperFactory<MockProductHelperHw<productFamily>> raii(*mockExecutionEnvironment->rootDeviceEnvironments[0]);
-    std::array<uint8_t, NEO::ProductHelper::uuidSize> uuid{};
-    uint8_t expectedUuid[NEO::ProductHelper::uuidSize] = {};
+    std::array<uint8_t, CommonConstants::uuidSize> uuid{};
+    uint8_t expectedUuid[CommonConstants::uuidSize] = {};
 
     PhysicalDevicePciBusInfo pciBusInfo(0x00, 0x34, 0xab, 0xcd);
 
@@ -216,8 +216,8 @@ HWTEST2_PRODUCT_F(MultipleDeviceBdfUuidTest, GivenValidBdfWithOneBitEnabledInAff
     PhysicalDevicePciBusInfo pciBusInfo(0x00, 0x34, 0xab, 0xcd);
     deviceFactory = createDevices(pciBusInfo, 4, mockExecutionEnvironment.release());
 
-    std::array<uint8_t, NEO::ProductHelper::uuidSize> uuid;
-    uint8_t expectedUuid[NEO::ProductHelper::uuidSize] = {};
+    std::array<uint8_t, CommonConstants::uuidSize> uuid;
+    uint8_t expectedUuid[CommonConstants::uuidSize] = {};
 
     uint16_t vendorId = 0x8086; // Intel
     uint16_t deviceId = static_cast<uint16_t>(deviceFactory->rootDevices[0]->getHardwareInfo().platform.usDeviceID);
@@ -251,8 +251,8 @@ HWTEST2_PRODUCT_F(MultipleDeviceBdfUuidTest, GivenValidBdfWithOneBitEnabledInAff
     PhysicalDevicePciBusInfo pciBusInfo(0x00, 0x34, 0xab, 0xcd);
     deviceFactory = createDevices(pciBusInfo, 4, mockExecutionEnvironment.release());
 
-    std::array<uint8_t, NEO::ProductHelper::uuidSize> uuid;
-    uint8_t expectedUuid[NEO::ProductHelper::uuidSize] = {};
+    std::array<uint8_t, CommonConstants::uuidSize> uuid;
+    uint8_t expectedUuid[CommonConstants::uuidSize] = {};
 
     uint16_t vendorId = 0x8086; // Intel
     uint16_t deviceId = static_cast<uint16_t>(deviceFactory->rootDevices[0]->getHardwareInfo().platform.usDeviceID);
@@ -282,7 +282,7 @@ class MockProductHelperHwUuidEnablementTest : public ProductHelperHw<gfxProduct>
   public:
     bool returnStatus;
     MockProductHelperHwUuidEnablementTest() {}
-    bool getUuid(NEO::DriverModel *driverModel, const uint32_t subDeviceCount, const uint32_t deviceIndex, std::array<uint8_t, ProductHelper::uuidSize> &uuid) const override {
+    bool getUuid(NEO::DriverModel *driverModel, const uint32_t subDeviceCount, const uint32_t deviceIndex, std::array<uint8_t, CommonConstants::uuidSize> &uuid) const override {
         uuid.fill(255u);
         return returnStatus;
     }

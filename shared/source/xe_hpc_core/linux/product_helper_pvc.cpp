@@ -34,7 +34,7 @@ const std::map<std::string, std::pair<uint32_t, uint32_t>> guidUuidOffsetMap = {
 namespace UuidUtil {
 
 static bool uuidReadFromTelem(std::string_view telemDir, std::array<char, PmtUtil::guidStringSize> &guidString, const uint64_t offset,
-                              const uint8_t deviceIndex, std::array<uint8_t, ProductHelper::uuidSize> &uuid) {
+                              const uint8_t deviceIndex, std::array<uint8_t, CommonConstants::uuidSize> &uuid) {
     auto pos = guidUuidOffsetMap.find(guidString.data());
     if (pos != guidUuidOffsetMap.end()) {
         uuid.fill(0);
@@ -51,7 +51,7 @@ static bool uuidReadFromTelem(std::string_view telemDir, std::array<char, PmtUti
 } // namespace UuidUtil
 
 template <>
-bool ProductHelperHw<gfxProduct>::getUuid(DriverModel *driverModel, const uint32_t subDeviceCount, const uint32_t deviceIndex, std::array<uint8_t, ProductHelper::uuidSize> &uuid) const {
+bool ProductHelperHw<gfxProduct>::getUuid(DriverModel *driverModel, const uint32_t subDeviceCount, const uint32_t deviceIndex, std::array<uint8_t, CommonConstants::uuidSize> &uuid) const {
     if (driverModel->getDriverModelType() != DriverModelType::drm) {
         return false;
     }

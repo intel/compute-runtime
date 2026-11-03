@@ -14,6 +14,7 @@
 #include "shared/source/helpers/pipeline_select_helper.h"
 #include "shared/source/indirect_heap/heap_size.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/mocks/mock_device.h"

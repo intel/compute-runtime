@@ -978,7 +978,8 @@ ze_result_t Device::getProperties(ze_device_properties_t *pDeviceProperties) {
 
     pDeviceProperties->flags = 0u;
 
-    std::array<uint8_t, NEO::ProductHelper::uuidSize> deviceUuid;
+    static_assert(CommonConstants::uuidSize == ZE_MAX_DEVICE_UUID_SIZE);
+    std::array<uint8_t, CommonConstants::uuidSize> deviceUuid;
     if (this->neoDevice->getUuid(deviceUuid) == false) {
         this->neoDevice->generateUuid(deviceUuid);
     }

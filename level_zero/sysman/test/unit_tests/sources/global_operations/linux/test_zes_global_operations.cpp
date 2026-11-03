@@ -1742,7 +1742,7 @@ class SysmanGlobalOperationsUuidFixture : public SysmanDeviceFixture {
 
 struct MockGlobalOperationsProductHelper : public ProductHelperHw<IGFX_UNKNOWN> {
     MockGlobalOperationsProductHelper() = default;
-    bool getUuid(DriverModel *driverModel, const uint32_t subDeviceCount, const uint32_t deviceIndex, std::array<uint8_t, ProductHelper::uuidSize> &uuid) const override {
+    bool getUuid(DriverModel *driverModel, const uint32_t subDeviceCount, const uint32_t deviceIndex, std::array<uint8_t, CommonConstants::uuidSize> &uuid) const override {
         auto pDrm = driverModel->as<Drm>();
         if (pDrm->getFileDescriptor() >= 0) {
             return true;
@@ -1760,7 +1760,7 @@ TEST_F(SysmanGlobalOperationsUuidFixture, GivenValidDeviceFDWhenRetrievingUuidTh
 
     std::swap(rootDeviceEnvironment.productHelper, mockProductHelper);
 
-    std::array<uint8_t, NEO::ProductHelper::uuidSize> uuid;
+    std::array<uint8_t, CommonConstants::uuidSize> uuid;
     bool result = pGlobalOperationsImp->pOsGlobalOperations->getUuid(uuid);
     EXPECT_EQ(true, result);
 
@@ -1774,7 +1774,7 @@ TEST_F(SysmanGlobalOperationsUuidFixture, GivenValidUuidCacheWhenCallingClearCac
     auto &rootDeviceEnvironment = device->getRootDeviceEnvironmentRef();
     std::swap(rootDeviceEnvironment.productHelper, mockProductHelper);
 
-    std::array<uint8_t, NEO::ProductHelper::uuidSize> uuid;
+    std::array<uint8_t, CommonConstants::uuidSize> uuid;
     EXPECT_TRUE(pGlobalOperationsImp->pOsGlobalOperations->getUuid(uuid));
 
     auto pLinuxGlobalOps = static_cast<PublicLinuxGlobalOperationsImp *>(pGlobalOperationsImp->pOsGlobalOperations);
@@ -1893,7 +1893,7 @@ TEST_F(SysmanGlobalOperationsUuidFixture, GivenValidDeviceHandleWhenCallingGener
     pHwInfo->platform.usDeviceID = 0x1234;
     pHwInfo->platform.usRevId = 0x1;
 
-    std::array<uint8_t, NEO::ProductHelper::uuidSize> uuid;
+    std::array<uint8_t, CommonConstants::uuidSize> uuid;
     NEO::PhysicalDevicePciBusInfo pciBusInfo = {};
     pciBusInfo.pciDomain = 0x5678;
     pciBusInfo.pciBus = 0x9;
@@ -1915,7 +1915,7 @@ TEST_F(SysmanGlobalOperationsUuidFixture, GivenValidDeviceHandleWhenCallingGener
 TEST_F(SysmanGlobalOperationsUuidFixture, GivenValidDeviceHandleWithInvalidPciDomainWhenCallingGenerateUuidFromPciBusInfoThenFalseIsReturned) {
     initGlobalOps();
 
-    std::array<uint8_t, NEO::ProductHelper::uuidSize> uuid;
+    std::array<uint8_t, CommonConstants::uuidSize> uuid;
     NEO::PhysicalDevicePciBusInfo pciBusInfo = {};
     pciBusInfo.pciDomain = std::numeric_limits<uint32_t>::max();
 
@@ -1930,7 +1930,7 @@ TEST_F(SysmanGlobalOperationsUuidFixture, GivenNullOsInterfaceObjectWhenRetrievi
     auto prevOsInterface = std::move(rootDeviceEnvironment.osInterface);
     rootDeviceEnvironment.osInterface = nullptr;
 
-    std::array<uint8_t, NEO::ProductHelper::uuidSize> uuid;
+    std::array<uint8_t, CommonConstants::uuidSize> uuid;
     bool result = pGlobalOperationsImp->pOsGlobalOperations->getUuid(uuid);
     EXPECT_EQ(false, result);
     rootDeviceEnvironment.osInterface = std::move(prevOsInterface);
@@ -1944,7 +1944,7 @@ TEST_F(SysmanGlobalOperationsUuidFixture, GivenInvalidPciBusInfoWhenRetrievingUu
     PhysicalDevicePciBusInfo pciBusInfo = {};
     pciBusInfo.pciDomain = std::numeric_limits<uint32_t>::max();
     setPciBusInfo(execEnv, pciBusInfo, 0);
-    std::array<uint8_t, NEO::ProductHelper::uuidSize> uuid;
+    std::array<uint8_t, CommonConstants::uuidSize> uuid;
     bool result = pGlobalOperationsImp->pOsGlobalOperations->getUuid(uuid);
     EXPECT_EQ(false, result);
     debugManager.flags.EnableChipsetUniqueUUID.set(prevFlag);

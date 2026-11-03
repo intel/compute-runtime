@@ -13,6 +13,8 @@
 #include "level_zero/sysman/source/shared/windows/sysman_kmd_sys_manager.h"
 #include "level_zero/sysman/source/shared/windows/zes_os_sysman_imp.h"
 
+#include <algorithm>
+
 namespace L0 {
 namespace Sysman {
 

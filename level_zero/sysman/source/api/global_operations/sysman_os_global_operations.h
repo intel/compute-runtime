@@ -7,9 +7,9 @@
 
 #pragma once
 
+#include "shared/source/helpers/constants.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/os_time.h"
-#include "shared/source/os_interface/product_helper.h"
 
 #include "level_zero/sysman/source/device/os_sysman.h"
 #include "level_zero/sysman/source/shared/firmware_util/sysman_igsc_wrapper.h"
@@ -35,8 +35,8 @@ class OsGlobalOperations {
     virtual void getDriverName(char (&driverName)[ZES_STRING_PROPERTY_SIZE]) = 0;
     virtual void getRepairStatus(zes_device_state_t *pState) = 0;
     virtual void getTimerResolution(double *pTimerResolution) = 0;
-    virtual bool getUuid(std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid) = 0;
-    virtual bool generateUuidFromPciBusInfo(const NEO::PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid) = 0;
+    virtual bool getUuid(std::array<uint8_t, CommonConstants::uuidSize> &uuid) = 0;
+    virtual bool generateUuidFromPciBusInfo(const NEO::PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, CommonConstants::uuidSize> &uuid) = 0;
     virtual ze_bool_t getDeviceInfoByUuid(zes_uuid_t uuid, ze_bool_t *onSubdevice, uint32_t *subdeviceId) = 0;
     virtual ze_result_t getSubDeviceProperties(uint32_t *pCount, zes_subdevice_exp_properties_t *pSubdeviceProps) = 0;
     virtual ze_result_t reset(ze_bool_t force) = 0;

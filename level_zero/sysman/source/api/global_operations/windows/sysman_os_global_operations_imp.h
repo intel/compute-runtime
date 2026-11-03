@@ -6,8 +6,8 @@
  */
 
 #pragma once
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
-#include "shared/source/os_interface/product_helper.h"
 
 #include "level_zero/sysman/source/api/global_operations/sysman_os_global_operations.h"
 #include "level_zero/sysman/source/shared/windows/zes_os_sysman_imp.h"
@@ -31,8 +31,8 @@ class WddmGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableAndNo
     ze_result_t scanProcessesState(std::vector<zes_process_state_t> &pProcessList) override;
     ze_result_t deviceGetState(zes_device_state_t *pState) override;
     ze_result_t resetExt(zes_reset_properties_t *pProperties) override;
-    bool getUuid(std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid) override;
-    bool generateUuidFromPciBusInfo(const NEO::PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid) override;
+    bool getUuid(std::array<uint8_t, CommonConstants::uuidSize> &uuid) override;
+    bool generateUuidFromPciBusInfo(const NEO::PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, CommonConstants::uuidSize> &uuid) override;
     ze_bool_t getDeviceInfoByUuid(zes_uuid_t uuid, ze_bool_t *onSubdevice, uint32_t *subdeviceId) override;
     ze_result_t getSubDeviceProperties(uint32_t *pCount, zes_subdevice_exp_properties_t *pSubdeviceProps) override;
     ze_result_t memoryGetPageOfflineStateExp(zes_intel_mem_page_status_exp_t pageStatus, uint32_t *pCount, zes_intel_mem_page_info_exp_t *pPageOfflineInfo) override;
@@ -48,7 +48,7 @@ class WddmGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableAndNo
     ~WddmGlobalOperationsImp() override = default;
     struct {
         bool isValid = false;
-        std::array<uint8_t, NEO::ProductHelper::uuidSize> id;
+        std::array<uint8_t, CommonConstants::uuidSize> id;
     } uuid;
 
   protected:

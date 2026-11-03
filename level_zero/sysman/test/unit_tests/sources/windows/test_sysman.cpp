@@ -113,7 +113,7 @@ TEST_F(SysmanDeviceFixture, GivenInvalidSysmanDeviceHandleWhenCallingSysmanDevic
 }
 
 TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleWithInvalidPciDomainWhenCallingGenerateUuidFromPciBusInfoThenFalseIsReturned) {
-    std::array<uint8_t, NEO::ProductHelper::uuidSize> uuid{};
+    std::array<uint8_t, CommonConstants::uuidSize> uuid{};
     NEO::PhysicalDevicePciBusInfo pciBusInfo = {};
     pciBusInfo.pciDomain = std::numeric_limits<uint32_t>::max();
     bool result = pWddmSysmanImp->generateUuidFromPciBusInfo(pciBusInfo, uuid);
@@ -154,13 +154,13 @@ TEST_F(SysmanDeviceFixture, GivenInvalidPciBusInfoWhenRetrievingUuidThenFalseIsR
     auto pSysmanDeviceImp = std::make_unique<L0::Sysman::SysmanDeviceImp>(execEnv, 0);
     auto pWddmSysmanImp = static_cast<PublicWddmSysmanImp *>(pSysmanDeviceImp->pOsSysman);
 
-    std::array<uint8_t, NEO::ProductHelper::uuidSize> uuid{};
+    std::array<uint8_t, CommonConstants::uuidSize> uuid{};
     bool result = pWddmSysmanImp->getUuid(uuid);
     EXPECT_FALSE(result);
 }
 
 TEST_F(SysmanDeviceFixture, GivenValidWddmSysmanImpWhenRetrievingUuidThenTrueIsReturned) {
-    std::array<uint8_t, NEO::ProductHelper::uuidSize> uuid{};
+    std::array<uint8_t, CommonConstants::uuidSize> uuid{};
     bool result = pWddmSysmanImp->getUuid(uuid);
     EXPECT_TRUE(result);
 }

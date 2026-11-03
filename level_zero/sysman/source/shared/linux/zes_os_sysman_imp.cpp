@@ -19,6 +19,7 @@
 #include "shared/source/os_interface/linux/pmt_util.h"
 #include "shared/source/os_interface/linux/system_info.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/directory.h"
 
 #include "level_zero/core/source/driver/driver.h"
@@ -670,7 +671,7 @@ void LinuxSysmanImp::getDeviceUuids(std::vector<std::string> &deviceUuids) {
     uint32_t totalUuidCountForDevice = this->getSubDeviceCount() + rootDeviceCount;
     deviceUuids.clear();
     for (uint32_t index = 0; index < totalUuidCountForDevice; index++) {
-        std::array<uint8_t, NEO::ProductHelper::uuidSize> deviceUuid{};
+        std::array<uint8_t, CommonConstants::uuidSize> deviceUuid{};
         bool uuidValid = this->getUuidFromSubDeviceInfo(index, deviceUuid);
         if (uuidValid) {
             uint8_t uuid[ZE_MAX_DEVICE_UUID_SIZE] = {};
@@ -697,7 +698,7 @@ std::string LinuxSysmanImp::getPciUuid() {
     return pciUuid;
 }
 
-bool LinuxSysmanImp::generateUuidFromPciAndSubDeviceInfo(uint32_t subDeviceID, const NEO::PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid) {
+bool LinuxSysmanImp::generateUuidFromPciAndSubDeviceInfo(uint32_t subDeviceID, const NEO::PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, CommonConstants::uuidSize> &uuid) {
     if (pciBusInfo.pciDomain != NEO::PhysicalDevicePciBusInfo::invalidValue) {
         uuid.fill(0);
 
@@ -736,16 +737,16 @@ bool LinuxSysmanImp::generateUuidFromPciAndSubDeviceInfo(uint32_t subDeviceID, c
         deviceUUID.pciFunc = static_cast<uint8_t>(pciBusInfo.pciFunction);
         deviceUUID.subDeviceID = subDeviceID;
 
-        static_assert(sizeof(DeviceUUID) == NEO::ProductHelper::uuidSize);
+        static_assert(sizeof(DeviceUUID) == CommonConstants::uuidSize);
 
-        memcpy_s(uuid.data(), NEO::ProductHelper::uuidSize, &deviceUUID, sizeof(DeviceUUID));
+        memcpy_s(uuid.data(), CommonConstants::uuidSize, &deviceUUID, sizeof(DeviceUUID));
 
         return true;
     }
     return false;
 }
 
-bool LinuxSysmanImp::getUuidFromSubDeviceInfo(uint32_t subDeviceID, std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid) {
+bool LinuxSysmanImp::getUuidFromSubDeviceInfo(uint32_t subDeviceID, std::array<uint8_t, CommonConstants::uuidSize> &uuid) {
     auto subDeviceCount = getSubDeviceCount();
     if (uuidVec.size() == 0) {
         constexpr uint32_t rootDeviceCount = 1;

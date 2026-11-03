@@ -401,7 +401,7 @@ TEST_F(DeviceTest, givenDispatchGlobalsAllocationFailsThenRTDispatchGlobalsInfoI
 }
 
 TEST_F(DeviceTest, GivenDeviceWhenGenerateUuidThenValidValuesAreSet) {
-    std::array<uint8_t, ProductHelper::uuidSize> uuid, expectedUuid;
+    std::array<uint8_t, CommonConstants::uuidSize> uuid, expectedUuid;
     pDevice->generateUuid(uuid);
     uint32_t rootDeviceIndex = pDevice->getRootDeviceIndex();
 
@@ -415,11 +415,11 @@ TEST_F(DeviceTest, GivenDeviceWhenGenerateUuidThenValidValuesAreSet) {
     memcpy_s(&expectedUuid[4], sizeof(uint16_t), &revisionId, sizeof(uint16_t));
     memcpy_s(&expectedUuid[6], sizeof(uint32_t), &rootDeviceIndex, sizeof(rootDeviceIndex));
 
-    EXPECT_EQ(memcmp(&uuid, &expectedUuid, ProductHelper::uuidSize), 0);
+    EXPECT_EQ(memcmp(&uuid, &expectedUuid, CommonConstants::uuidSize), 0);
 }
 
 TEST_F(DeviceTest, GivenDeviceWhenGenerateUuidFromPciBusInfoThenValidValuesAreSet) {
-    std::array<uint8_t, ProductHelper::uuidSize> uuid, expectedUuid;
+    std::array<uint8_t, CommonConstants::uuidSize> uuid, expectedUuid;
 
     PhysicalDevicePciBusInfo pciBusInfo = {1, 1, 1, 1};
 
@@ -442,7 +442,7 @@ TEST_F(DeviceTest, GivenDeviceWhenGenerateUuidFromPciBusInfoThenValidValuesAreSe
     memcpy_s(&expectedUuid[9], sizeof(uint8_t), &pciDevice, sizeof(uint8_t));
     memcpy_s(&expectedUuid[10], sizeof(uint8_t), &pciFunction, sizeof(uint8_t));
 
-    EXPECT_EQ(memcmp(&uuid, &expectedUuid, ProductHelper::uuidSize), 0);
+    EXPECT_EQ(memcmp(&uuid, &expectedUuid, CommonConstants::uuidSize), 0);
 }
 
 TEST_F(DeviceTest, givenDeviceWhenUsingBufferPoolsTrackingThenCountIsUpdated) {

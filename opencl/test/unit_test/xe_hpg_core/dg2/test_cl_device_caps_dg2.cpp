@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/xe_hpg_core/dg2/device_ids_configs_dg2.h"
 #include "shared/source/xe_hpg_core/hw_info_xe_hpg_core.h"
 #include "shared/test/common/helpers/gtest_helpers.h"

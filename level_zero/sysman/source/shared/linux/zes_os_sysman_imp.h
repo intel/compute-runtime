@@ -6,11 +6,11 @@
  */
 
 #pragma once
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
-#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include "level_zero/include/level_zero/zes_intel_gpu_sysman.h"
@@ -19,9 +19,13 @@
 #include "level_zero/sysman/source/shared/linux/sysman_hw_device_id_linux.h"
 #include "level_zero/sysman/source/sysman_const.h"
 
+#include <array>
 #include <atomic>
 #include <map>
+#include <memory>
 #include <mutex>
+#include <string>
+#include <vector>
 
 namespace NEO {
 class Drm;
@@ -100,8 +104,8 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableAndNonMovableClass {
     static ze_result_t getResult(int err);
     static ze_result_t getPmtResult(int err);
     ze_result_t getTelemData(uint32_t subDeviceId, std::string &telemDir, std::string &guid, uint64_t &telemOffset);
-    bool getUuidFromSubDeviceInfo(uint32_t subDeviceID, std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid);
-    bool generateUuidFromPciAndSubDeviceInfo(uint32_t subDeviceID, const NEO::PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid);
+    bool getUuidFromSubDeviceInfo(uint32_t subDeviceID, std::array<uint8_t, CommonConstants::uuidSize> &uuid);
+    bool generateUuidFromPciAndSubDeviceInfo(uint32_t subDeviceID, const NEO::PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, CommonConstants::uuidSize> &uuid);
     ze_result_t initSurvivabilityMode(std::unique_ptr<NEO::HwDeviceId> hwDeviceId) override;
     bool isDeviceInSurvivabilityMode() override;
     std::unique_ptr<NEO::PhysicalDevicePciBusInfo> getPciBdfInfo() const override { return std::make_unique<NEO::PhysicalDevicePciBusInfo>(pciBdfInfo); }
@@ -124,7 +128,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableAndNonMovableClass {
     std::unique_ptr<PlatformMonitoringTech::TelemData> pTelemData = nullptr;
     struct Uuid {
         bool isValid = false;
-        std::array<uint8_t, NEO::ProductHelper::uuidSize> id{};
+        std::array<uint8_t, CommonConstants::uuidSize> id{};
     };
     std::vector<Uuid> uuidVec;
     NEO::PhysicalDevicePciBusInfo pciBdfInfo = {};

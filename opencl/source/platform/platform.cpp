@@ -21,6 +21,7 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/memory_manager/usm_pool_params.h"
 #include "shared/source/os_interface/device_factory.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/pin/pin.h"
 #include "shared/source/utilities/staging_buffer_manager.h"
 

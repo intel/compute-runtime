@@ -788,7 +788,7 @@ TEST(SysmanErrorCodeTest, GivenDifferentErrorCodesWhenCallingGetPmtResultThenVer
 }
 
 TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleWithInvalidPciDomainWhenCallingGenerateUuidFromPciBusInfoThenFalseIsReturned) {
-    std::array<uint8_t, NEO::ProductHelper::uuidSize> uuid{};
+    std::array<uint8_t, CommonConstants::uuidSize> uuid{};
     NEO::PhysicalDevicePciBusInfo pciBusInfo = {};
     pciBusInfo.pciDomain = std::numeric_limits<uint32_t>::max();
     uint32_t subDeviceId = 0;
@@ -848,7 +848,7 @@ TEST_F(SysmanDeviceFixture, GivenInvalidPciBusInfoWhenRetrievingUuidThenFalseIsR
 
     debugManager.flags.EnableChipsetUniqueUUID.set(0);
 
-    std::array<uint8_t, NEO::ProductHelper::uuidSize> uuid{};
+    std::array<uint8_t, CommonConstants::uuidSize> uuid{};
     uint32_t subDeviceId = 0;
     bool result = pLinuxSysmanImp->getUuidFromSubDeviceInfo(subDeviceId, uuid);
     EXPECT_FALSE(result);
@@ -856,7 +856,7 @@ TEST_F(SysmanDeviceFixture, GivenInvalidPciBusInfoWhenRetrievingUuidThenFalseIsR
 
 struct MockSysmanLinuxProductHelper : public ProductHelperHw<IGFX_UNKNOWN> {
     MockSysmanLinuxProductHelper() = default;
-    bool getUuid(DriverModel *driverModel, const uint32_t subDeviceCount, const uint32_t deviceIndex, std::array<uint8_t, ProductHelper::uuidSize> &uuid) const override {
+    bool getUuid(DriverModel *driverModel, const uint32_t subDeviceCount, const uint32_t deviceIndex, std::array<uint8_t, CommonConstants::uuidSize> &uuid) const override {
         auto pDrm = driverModel->as<Drm>();
         if (pDrm->getFileDescriptor() >= 0) {
             return true;
@@ -873,7 +873,7 @@ TEST_F(SysmanDeviceFixture, GivenValidDeviceWhenRetrievingUuidThenValidFdIsVerif
     auto &rootDeviceEnvironment = (pLinuxSysmanImp->getSysmanDeviceImp()->getRootDeviceEnvironmentRef());
     std::swap(rootDeviceEnvironment.productHelper, mockProductHelper);
 
-    std::array<uint8_t, NEO::ProductHelper::uuidSize> uuid{};
+    std::array<uint8_t, CommonConstants::uuidSize> uuid{};
     uint32_t subDeviceId = 0;
     bool result = pLinuxSysmanImp->getUuidFromSubDeviceInfo(subDeviceId, uuid);
     EXPECT_TRUE(result);

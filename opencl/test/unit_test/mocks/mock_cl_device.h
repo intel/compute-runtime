@@ -8,10 +8,12 @@
 #pragma once
 
 #include "shared/source/built_ins/built_in_ops_base.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/engine_control.h"
-#include "shared/source/os_interface/product_helper.h"
 
 #include "opencl/source/cl_device/cl_device.h"
+
+#include <array>
 
 namespace NEO {
 namespace BuiltIn {
@@ -57,7 +59,7 @@ class MockClDevice : public ClDevice {
 
     explicit MockClDevice(MockDevice *pMockDevice);
 
-    void setPciUuid(std::array<uint8_t, ProductHelper::uuidSize> &id);
+    void setPciUuid(std::array<uint8_t, CommonConstants::uuidSize> &id);
     bool createEngines();
     void setOSTime(OSTime *osTime);
     bool getCpuTime(uint64_t *timeStamp);

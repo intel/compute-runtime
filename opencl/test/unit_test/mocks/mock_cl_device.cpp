@@ -71,7 +71,7 @@ std::unique_ptr<BuiltIn::DispatchInfoBuilder> MockClDevice::setBuiltinDispatchIn
     return newBuilder;
 }
 
-void MockClDevice::setPciUuid(std::array<uint8_t, ProductHelper::uuidSize> &id) {
-    memcpy_s(device.uuid.id.data(), ProductHelper::uuidSize, id.data(), ProductHelper::uuidSize);
+void MockClDevice::setPciUuid(std::array<uint8_t, CommonConstants::uuidSize> &id) {
+    memcpy_s(device.uuid.id.data(), CommonConstants::uuidSize, id.data(), CommonConstants::uuidSize);
     device.uuid.isValid = true;
 }

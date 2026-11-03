@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,9 +11,9 @@
 
 namespace NEO {
 
-void Device::getAdapterLuid(std::array<uint8_t, ProductHelper::luidSize> &luid) {
+void Device::getAdapterLuid(std::array<uint8_t, CommonConstants::luidSize> &luid) {
     const LUID adapterLuid = getRootDeviceEnvironment().osInterface->getDriverModel()->as<Wddm>()->getAdapterLuid();
-    memcpy_s(&luid, ProductHelper::luidSize, &adapterLuid, sizeof(luid));
+    memcpy_s(&luid, CommonConstants::luidSize, &adapterLuid, sizeof(luid));
 }
 
 bool Device::verifyAdapterLuid() {

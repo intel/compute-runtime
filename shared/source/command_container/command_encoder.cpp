@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "shared/source/command_container/command_encoder.h"
 
 #include "shared/source/device/device.h"
+#include "shared/source/os_interface/product_helper.h"
 
 namespace NEO {
 

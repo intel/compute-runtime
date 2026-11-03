@@ -12,6 +12,8 @@
 #include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 
+#include <algorithm>
+
 const std::string iafPath = "device/";
 const std::string iafDirectory = "iaf.";
 const std::string pscbinVersion = "/pscbin_version";

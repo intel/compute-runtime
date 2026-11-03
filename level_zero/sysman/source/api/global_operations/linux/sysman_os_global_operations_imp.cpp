@@ -14,6 +14,7 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/pmt_util.h"
+#include "shared/source/os_interface/product_helper.h"
 
 #include "level_zero/sysman/source/api/global_operations/sysman_global_operations_imp.h"
 #include "level_zero/sysman/source/device/sysman_device_imp.h"
@@ -190,7 +191,7 @@ void LinuxGlobalOperationsImp::getDriverVersion(char (&driverVersion)[ZES_STRING
     pSysmanKmdInterface->getDriverVersion(driverVersion);
 }
 
-bool LinuxGlobalOperationsImp::generateUuidFromPciAndSubDeviceInfo(uint32_t subDeviceID, const NEO::PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid) {
+bool LinuxGlobalOperationsImp::generateUuidFromPciAndSubDeviceInfo(uint32_t subDeviceID, const NEO::PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, CommonConstants::uuidSize> &uuid) {
     if (pciBusInfo.pciDomain != NEO::PhysicalDevicePciBusInfo::invalidValue) {
         uuid.fill(0);
 
@@ -230,24 +231,24 @@ bool LinuxGlobalOperationsImp::generateUuidFromPciAndSubDeviceInfo(uint32_t subD
         deviceUUID.pciFunc = static_cast<uint8_t>(pciBusInfo.pciFunction);
         deviceUUID.subDeviceID = subDeviceID;
 
-        static_assert(sizeof(DeviceUUID) == NEO::ProductHelper::uuidSize);
+        static_assert(sizeof(DeviceUUID) == CommonConstants::uuidSize);
 
-        memcpy_s(uuid.data(), NEO::ProductHelper::uuidSize, &deviceUUID, sizeof(DeviceUUID));
+        memcpy_s(uuid.data(), CommonConstants::uuidSize, &deviceUUID, sizeof(DeviceUUID));
 
         return true;
     }
     return false;
 }
 
-bool LinuxGlobalOperationsImp::generateUuidFromPciBusInfo(const NEO::PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid) {
+bool LinuxGlobalOperationsImp::generateUuidFromPciBusInfo(const NEO::PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, CommonConstants::uuidSize> &uuid) {
     return generateUuidFromPciAndSubDeviceInfo(0, pciBusInfo, uuid);
 }
 
-bool LinuxGlobalOperationsImp::getUuid(std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid) {
+bool LinuxGlobalOperationsImp::getUuid(std::array<uint8_t, CommonConstants::uuidSize> &uuid) {
     return this->getUuidFromSubDeviceInfo(0, uuid);
 }
 
-bool LinuxGlobalOperationsImp::getUuidFromSubDeviceInfo(uint32_t subDeviceID, std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid) {
+bool LinuxGlobalOperationsImp::getUuidFromSubDeviceInfo(uint32_t subDeviceID, std::array<uint8_t, CommonConstants::uuidSize> &uuid) {
     if (this->uuid[subDeviceID].isValid) {
         uuid = this->uuid[subDeviceID].id;
         return this->uuid[subDeviceID].isValid;
@@ -287,7 +288,7 @@ void LinuxGlobalOperationsImp::clearUuidCache() {
 ze_bool_t LinuxGlobalOperationsImp::getDeviceInfoByUuid(zes_uuid_t uuid, ze_bool_t *onSubdevice, uint32_t *subdeviceId) {
     auto subDeviceCount = pLinuxSysmanImp->getSubDeviceCount();
     for (uint32_t index = 0; index < (subDeviceCount + 1); index++) {
-        std::array<uint8_t, NEO::ProductHelper::uuidSize> deviceUuid;
+        std::array<uint8_t, CommonConstants::uuidSize> deviceUuid;
         bool uuidValid = getUuidFromSubDeviceInfo(index, deviceUuid);
         if (uuidValid) {
             if (0 == std::memcmp(uuid.id, deviceUuid.data(), ZE_MAX_DEVICE_UUID_SIZE)) {
@@ -312,7 +313,7 @@ ze_result_t LinuxGlobalOperationsImp::getSubDeviceProperties(uint32_t *pCount, z
 
     for (uint32_t subDeviceIndex = 0; subDeviceIndex < *pCount; subDeviceIndex++) {
         pSubdeviceProps[subDeviceIndex].subdeviceId = subDeviceIndex;
-        std::array<uint8_t, NEO::ProductHelper::uuidSize> subDeviceUuid;
+        std::array<uint8_t, CommonConstants::uuidSize> subDeviceUuid;
         bool uuidValid = getUuidFromSubDeviceInfo(subDeviceIndex + 1, subDeviceUuid);
         if (uuidValid) {
             std::copy_n(std::begin(subDeviceUuid), ZE_MAX_DEVICE_UUID_SIZE, std::begin(pSubdeviceProps[subDeviceIndex].uuid.id));
