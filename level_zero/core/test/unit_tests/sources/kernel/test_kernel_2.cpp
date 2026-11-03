@@ -974,7 +974,7 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalConstBufferAndBindlessExpl
         const auto globalConstantsSurfaceAddressSSIndex = 1;
 
         auto kernelImmutableData = std::make_unique<KernelImmutableData>(&mockDevice);
-        kernelImmutableData->initialize(kernelInfo.get(), &mockDevice, 0, globalConstBuffer.get(), nullptr, false);
+        kernelImmutableData->initialize(kernelInfo.get(), &mockDevice, globalConstBuffer.get(), nullptr);
 
         auto &gfxCoreHelper = device->getGfxCoreHelper();
         auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getRenderSurfaceStateSize(device->getRootDeviceEnvironment()));
@@ -1045,7 +1045,7 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalVarBufferAndBindlessExplic
         const auto globalVariablesSurfaceAddressSSIndex = 1;
 
         auto kernelImmutableData = std::make_unique<KernelImmutableData>(&mockDevice);
-        kernelImmutableData->initialize(kernelInfo.get(), &mockDevice, 0, nullptr, globalVarBuffer.get(), false);
+        kernelImmutableData->initialize(kernelInfo.get(), &mockDevice, nullptr, globalVarBuffer.get());
 
         auto &gfxCoreHelper = device->getGfxCoreHelper();
         auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getRenderSurfaceStateSize(device->getRootDeviceEnvironment()));
@@ -1120,7 +1120,7 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalConstBufferAndBindlessExpl
         kernelInfo->kernelDescriptor.initBindlessOffsetToSurfaceState();
 
         auto kernelImmutableData = std::make_unique<KernelImmutableData>(&mockDevice);
-        kernelImmutableData->initialize(kernelInfo.get(), &mockDevice, 0, globalConstBuffer.get(), nullptr, false);
+        kernelImmutableData->initialize(kernelInfo.get(), &mockDevice, globalConstBuffer.get(), nullptr);
 
         auto &gfxCoreHelper = device->getGfxCoreHelper();
         auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getRenderSurfaceStateSize(device->getRootDeviceEnvironment()));
@@ -1206,7 +1206,7 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalVarBufferAndBindlessExplic
         kernelInfo->kernelDescriptor.initBindlessOffsetToSurfaceState();
 
         auto kernelImmutableData = std::make_unique<KernelImmutableData>(&mockDevice);
-        kernelImmutableData->initialize(kernelInfo.get(), &mockDevice, 0, nullptr, globalVarBuffer.get(), false);
+        kernelImmutableData->initialize(kernelInfo.get(), &mockDevice, nullptr, globalVarBuffer.get());
 
         auto &gfxCoreHelper = device->getGfxCoreHelper();
         auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getRenderSurfaceStateSize(device->getRootDeviceEnvironment()));

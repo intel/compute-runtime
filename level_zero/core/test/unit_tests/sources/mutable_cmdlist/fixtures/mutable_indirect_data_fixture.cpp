@@ -25,7 +25,6 @@ void MutableIndirectDataFixture::createMutableIndirectOffset() {
 
     fillOffsets(indirectOffsets->globalWorkSize, offsets.globalWorkSize, 3);
     fillOffsets(indirectOffsets->localWorkSize, offsets.localWorkSize, 3);
-    fillOffsets(indirectOffsets->localWorkSize2, offsets.localWorkSize2, 3);
     fillOffsets(indirectOffsets->enqLocalWorkSize, offsets.enqLocalWorkSize, 3);
     fillOffsets(indirectOffsets->numWorkGroups, offsets.numWorkGroups, 3);
     indirectOffsets->workDimensions = offsets.workDimensions;
@@ -57,17 +56,15 @@ void MutableIndirectDataFixture::createMutableIndirectOffset() {
 void MutableIndirectDataFixture::recalculateOffsets(L0::MCL::CrossThreadDataOffset initialOffset) {
     offsets.globalWorkSize = initialOffset;
     offsets.localWorkSize = initialOffset + Offsets::patchSize;
-    offsets.localWorkSize2 = initialOffset + 2 * Offsets::patchSize;
-    offsets.enqLocalWorkSize = initialOffset + 3 * Offsets::patchSize;
-    offsets.numWorkGroups = initialOffset + 4 * Offsets::patchSize;
-    offsets.workDimensions = initialOffset + 5 * Offsets::patchSize;
-    offsets.globalWorkOffset = initialOffset + 6 * Offsets::patchSize;
+    offsets.enqLocalWorkSize = initialOffset + 2 * Offsets::patchSize;
+    offsets.numWorkGroups = initialOffset + 3 * Offsets::patchSize;
+    offsets.workDimensions = initialOffset + 4 * Offsets::patchSize;
+    offsets.globalWorkOffset = initialOffset + 5 * Offsets::patchSize;
 }
 
 void MutableIndirectDataFixture::undefineOffsets() {
     offsets.globalWorkSize = undefinedOffset;
     offsets.localWorkSize = undefinedOffset;
-    offsets.localWorkSize2 = undefinedOffset;
     offsets.enqLocalWorkSize = undefinedOffset;
     offsets.numWorkGroups = undefinedOffset;
     offsets.workDimensions = undefinedOffset;

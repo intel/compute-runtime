@@ -159,10 +159,3 @@ TEST(KernelInfo, whenGetKernelNamesStringIsCalledThenNamesAreProperlyConcatenate
     kernelInfoArray.push_back(&kernel2);
     EXPECT_STREQ("kern1;kern2", concatenateKernelNames(kernelInfoArray).c_str());
 }
-
-TEST(KernelInfo, givenNumbersOfSamplerWhenCheckSamplerStateCountAndSamplerStateArraySizeThenCorrectValueAreReturned) {
-    KernelInfo kernel = {};
-    uint8_t numSamplers = 5u;
-    kernel.kernelDescriptor.payloadMappings.samplerTable.numSamplers = numSamplers;
-    EXPECT_EQ(kernel.getSamplerStateArrayCount(), numSamplers);
-}

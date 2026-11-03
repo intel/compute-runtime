@@ -10,8 +10,11 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/kernel/kernel_descriptor.h"
 
+#include <algorithm>
 #include <cinttypes>
+#include <iterator>
 
 namespace L0::MCL {
 
@@ -67,14 +70,21 @@ inline void MutableIndirectData::setIfDefined(const CrossThreadDataOffset (&offs
     }
 }
 
+std::unique_ptr<MutableIndirectData::Offsets> MutableIndirectData::createOffsets(const NEO::KernelDescriptor &kernelDescriptor) {
+    auto &dispatchTraits = kernelDescriptor.payloadMappings.dispatchTraits;
+    auto offsets = std::make_unique<Offsets>();
+    std::copy(std::begin(dispatchTraits.globalWorkSize), std::end(dispatchTraits.globalWorkSize), std::begin(offsets->globalWorkSize));
+    std::copy(std::begin(dispatchTraits.localWorkSize), std::end(dispatchTraits.localWorkSize), std::begin(offsets->localWorkSize));
+    std::copy(std::begin(dispatchTraits.enqueuedLocalWorkSize), std::end(dispatchTraits.enqueuedLocalWorkSize), std::begin(offsets->enqLocalWorkSize));
+    std::copy(std::begin(dispatchTraits.numWorkGroups), std::end(dispatchTraits.numWorkGroups), std::begin(offsets->numWorkGroups));
+    offsets->workDimensions = dispatchTraits.workDim;
+    std::copy(std::begin(dispatchTraits.globalWorkOffset), std::end(dispatchTraits.globalWorkOffset), std::begin(offsets->globalWorkOffset));
+    return offsets;
+}
+
 void MutableIndirectData::setLocalWorkSize(MaxChannelsArray localWorkSize) {
     PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL mutation set lws %u %u %u\n", localWorkSize[0], localWorkSize[1], localWorkSize[2]);
     setIfDefined(offsets->localWorkSize, localWorkSize);
-}
-
-void MutableIndirectData::setLocalWorkSize2(MaxChannelsArray localWorkSize2) {
-    PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL mutation set lws2 %u %u %u\n", localWorkSize2[0], localWorkSize2[1], localWorkSize2[2]);
-    setIfDefined(offsets->localWorkSize2, localWorkSize2);
 }
 
 void MutableIndirectData::setEnqLocalWorkSize(MaxChannelsArray enqLocalWorkSize) {

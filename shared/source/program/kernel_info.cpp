@@ -18,32 +18,6 @@
 
 namespace NEO {
 
-size_t KernelInfo::getSamplerStateArrayCount() const {
-    return kernelDescriptor.payloadMappings.samplerTable.numSamplers;
-}
-
-size_t KernelInfo::getBorderColorOffset() const {
-    size_t borderColorOffset = 0;
-    if (kernelDescriptor.payloadMappings.samplerTable.numSamplers > 0U) {
-        borderColorOffset = kernelDescriptor.payloadMappings.samplerTable.borderColor;
-    }
-    return borderColorOffset;
-}
-
-uint32_t KernelInfo::getConstantBufferSize() const {
-    return kernelDescriptor.kernelAttributes.crossThreadDataSize;
-}
-int32_t KernelInfo::getArgNumByName(const char *name) const {
-    int32_t argNum = 0;
-    for (const auto &argMeta : kernelDescriptor.explicitArgsExtendedMetadata) {
-        if (argMeta.argName.compare(name) == 0) {
-            return argNum;
-        }
-        ++argNum;
-    }
-    return -1;
-}
-
 bool KernelInfo::createKernelAllocation(const Device &device, bool internalIsa) {
     UNRECOVERABLE_IF(kernelAllocation);
     auto kernelIsaSize = heapInfo.kernelHeapSize;

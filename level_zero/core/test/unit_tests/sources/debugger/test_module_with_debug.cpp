@@ -65,7 +65,7 @@ TEST_F(KernelInitializeTest, givenDebuggingEnabledWhenKernelsAreInitializedThenA
     *reinterpret_cast<uint32_t *>(isa) = 0;
 
     memoryOperationsHandler->makeResidentCalledCount = 0;
-    kernelImmutableData.initialize(&kernelInfo, device, 0, nullptr, nullptr, false);
+    kernelImmutableData.initialize(&kernelInfo, device, nullptr, nullptr);
     EXPECT_EQ(0, memoryOperationsHandler->makeResidentCalledCount);
 
     EXPECT_NE(0, memcmp(isa, &kernelHeap, sizeof(kernelHeap)));
@@ -330,14 +330,14 @@ HWTEST_F(ModuleWithZebinAndL0DebuggerTest, GivenZebinDebugDataWhenInitializingMo
 
     auto kernelImmutableData = ::std::make_unique<KernelImmutableData>(device);
     kernelImmutableData->setIsaPerKernelAllocation(this->allocateIsaMemory(kernelInfo->heapInfo.kernelHeapSize, false));
-    kernelImmutableData->initialize(kernelInfo.get(), device, 0, nullptr, nullptr, false);
+    kernelImmutableData->initialize(kernelInfo.get(), device, nullptr, nullptr);
     std::unique_ptr<MockModule> moduleMock = std::make_unique<MockModule>(device, nullptr, ModuleType::user);
     moduleMock->translationUnit = std::make_unique<MockModuleTranslationUnit>(device);
     moduleMock->kernelImmData.push_back(std::move(kernelImmutableData));
 
     kernelImmutableData = ::std::make_unique<KernelImmutableData>(device);
     kernelImmutableData->setIsaPerKernelAllocation(this->allocateIsaMemory(kernelInfo->heapInfo.kernelHeapSize, false));
-    kernelImmutableData->initialize(kernelInfo.get(), device, 0, nullptr, nullptr, false);
+    kernelImmutableData->initialize(kernelInfo.get(), device, nullptr, nullptr);
     moduleMock->kernelImmData.push_back(std::move(kernelImmutableData));
 
     auto zebin = ZebinTestData::ValidEmptyProgram<>();
@@ -376,12 +376,12 @@ HWTEST_F(ModuleWithZebinAndL0DebuggerTest, GivenDumpElfFlagAndZebinWhenInitializ
 
     auto kernelImmutableData = ::std::make_unique<KernelImmutableData>(device);
     kernelImmutableData->setIsaPerKernelAllocation(this->allocateIsaMemory(kernelInfo->heapInfo.kernelHeapSize, false));
-    kernelImmutableData->initialize(kernelInfo.get(), device, 0, nullptr, nullptr, false);
+    kernelImmutableData->initialize(kernelInfo.get(), device, nullptr, nullptr);
     moduleMock->kernelImmData.push_back(std::move(kernelImmutableData));
 
     kernelImmutableData = ::std::make_unique<KernelImmutableData>(device);
     kernelImmutableData->setIsaPerKernelAllocation(this->allocateIsaMemory(kernelInfo->heapInfo.kernelHeapSize, false));
-    kernelImmutableData->initialize(kernelInfo.get(), device, 0, nullptr, nullptr, false);
+    kernelImmutableData->initialize(kernelInfo.get(), device, nullptr, nullptr);
     moduleMock->kernelImmData.push_back(std::move(kernelImmutableData));
 
     auto zebin = ZebinTestData::ValidEmptyProgram<>();
@@ -441,7 +441,7 @@ HWTEST_F(ModuleWithZebinAndL0DebuggerTest, GivenZebinWhenModuleIsInitializedAndD
 
     auto kernelImmutableData = ::std::make_unique<KernelImmutableData>(device);
     kernelImmutableData->setIsaPerKernelAllocation(this->allocateIsaMemory(kernelInfo->heapInfo.kernelHeapSize, false));
-    kernelImmutableData->initialize(kernelInfo.get(), device, 0, nullptr, nullptr, false);
+    kernelImmutableData->initialize(kernelInfo.get(), device, nullptr, nullptr);
     std::unique_ptr<MockModule> moduleMock = std::make_unique<MockModule>(device, nullptr, ModuleType::user);
     moduleMock->translationUnit = std::make_unique<MockModuleTranslationUnit>(device);
     moduleMock->kernelImmData.push_back(std::move(kernelImmutableData));
@@ -576,7 +576,7 @@ HWTEST_F(ModuleWithZebinAndL0DebuggerTest, GivenModuleDebugHandleZeroWhenInitial
 
     auto kernelImmutableData = ::std::make_unique<KernelImmutableData>(device);
     kernelImmutableData->setIsaPerKernelAllocation(this->allocateIsaMemory(kernelInfo->heapInfo.kernelHeapSize, false));
-    kernelImmutableData->initialize(kernelInfo.get(), device, 0, nullptr, nullptr, false);
+    kernelImmutableData->initialize(kernelInfo.get(), device, nullptr, nullptr);
     std::unique_ptr<MockModule> moduleMock = std::make_unique<MockModule>(device, nullptr, ModuleType::user);
     moduleMock->kernelImmData.push_back(std::move(kernelImmutableData));
 

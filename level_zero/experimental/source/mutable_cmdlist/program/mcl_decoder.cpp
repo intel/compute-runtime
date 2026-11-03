@@ -588,16 +588,6 @@ void MclDecoder::parseDispatchRelocation(Sections::SectionType targetSecType, Ke
             getCtdOffset(di.indirectDataOffsets.localWorkSize[2], reloc.offset);
             break;
 
-        case RelocType::localWorkSize2:
-            getCtdOffset(di.indirectDataOffsets.localWorkSize2[0], reloc.offset);
-            break;
-        case RelocType::localWorkSize2Y:
-            getCtdOffset(di.indirectDataOffsets.localWorkSize2[1], reloc.offset);
-            break;
-        case RelocType::localWorkSize2Z:
-            getCtdOffset(di.indirectDataOffsets.localWorkSize2[2], reloc.offset);
-            break;
-
         case RelocType::enqLocalWorkSize:
             getCtdOffset(di.indirectDataOffsets.enqLocalWorkSize[0], reloc.offset);
             break;

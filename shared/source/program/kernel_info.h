@@ -40,8 +40,6 @@ struct KernelInfo : NEO::NonCopyableAndNonMovableClass {
         DEBUG_BREAK_IF(index >= kernelDescriptor.explicitArgsExtendedMetadata.size());
         return kernelDescriptor.explicitArgsExtendedMetadata[index];
     }
-    size_t getSamplerStateArrayCount() const;
-    size_t getBorderColorOffset() const;
     unsigned int getMaxSimdSize() const {
         return kernelDescriptor.kernelAttributes.simdSize;
     }
@@ -58,9 +56,6 @@ struct KernelInfo : NEO::NonCopyableAndNonMovableClass {
         }
         return maxRequiredWorkGroupSize;
     }
-
-    uint32_t getConstantBufferSize() const;
-    int32_t getArgNumByName(const char *name) const;
 
     bool createKernelAllocation(const Device &device, bool internalIsa);
 

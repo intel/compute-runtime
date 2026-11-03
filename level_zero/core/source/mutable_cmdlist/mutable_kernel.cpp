@@ -16,8 +16,6 @@
 #include "level_zero/core/source/mutable_cmdlist/mutable_kernel_dispatch.h"
 #include <level_zero/ze_api.h>
 
-#include <iterator>
-
 namespace L0::MCL {
 
 MutableKernel::MutableKernel(ze_kernel_handle_t kernelHandle, uint32_t inlineDataSize, uint32_t maxPerThreadDataSize)
@@ -45,14 +43,7 @@ void MutableKernel::createHostViewIndirectData(bool copyInlineData) {
 
     auto &kernelDescriptor = kernel->getKernelDescriptor();
 
-    auto &dispatchTraits = kernelDescriptor.payloadMappings.dispatchTraits;
-    auto offsets = std::make_unique<MutableIndirectData::Offsets>();
-    std::copy(std::begin(dispatchTraits.globalWorkSize), std::end(dispatchTraits.globalWorkSize), std::begin(offsets->globalWorkSize));
-    std::copy(std::begin(dispatchTraits.localWorkSize), std::end(dispatchTraits.localWorkSize), std::begin(offsets->localWorkSize));
-    std::copy(std::begin(dispatchTraits.enqueuedLocalWorkSize), std::end(dispatchTraits.enqueuedLocalWorkSize), std::begin(offsets->enqLocalWorkSize));
-    std::copy(std::begin(dispatchTraits.numWorkGroups), std::end(dispatchTraits.numWorkGroups), std::begin(offsets->numWorkGroups));
-    offsets->workDimensions = dispatchTraits.workDim;
-    std::copy(std::begin(dispatchTraits.globalWorkOffset), std::end(dispatchTraits.globalWorkOffset), std::begin(offsets->globalWorkOffset));
+    auto offsets = MutableIndirectData::createOffsets(kernelDescriptor);
 
     ArrayRef<uint8_t> inlineData;
 

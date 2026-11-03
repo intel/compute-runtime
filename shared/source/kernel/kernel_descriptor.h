@@ -142,10 +142,6 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
         uint8_t numLocalIdChannels = 0;
         uint8_t localId[3] = {0U, 0U, 0U};
 
-        bool supportsBuffersBiggerThan4Gb() const {
-            return Stateless == bufferAddressingMode;
-        }
-
         bool usesBarriers() const {
             return 0 != barrierCount;
         }
@@ -278,7 +274,6 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
         std::string kernelName;
         std::string kernelLanguageAttributes;
 
-        uint16_t compiledSubGroupsNumber = 0U;
         uint8_t requiredSubGroupSize = 0U;
         uint8_t requiredThreadGroupDispatchSize = 0U;
         uint8_t indirectAccessBuffer = 0u;

@@ -191,7 +191,6 @@ void VariableFixture::createMutableIndirectOffset() {
 
     fillOffsets(indirectOffsets->globalWorkSize, offsets.globalWorkSize, 3);
     fillOffsets(indirectOffsets->localWorkSize, offsets.localWorkSize, 3);
-    fillOffsets(indirectOffsets->localWorkSize2, offsets.localWorkSize2, 3);
     fillOffsets(indirectOffsets->enqLocalWorkSize, offsets.enqLocalWorkSize, 3);
     fillOffsets(indirectOffsets->numWorkGroups, offsets.numWorkGroups, 3);
     indirectOffsets->workDimensions = offsets.workDimensions;

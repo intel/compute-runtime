@@ -69,28 +69,9 @@ TEST(KernelDescriptor, WhenDefaultInitializedThenValuesAreCleared) {
 
     EXPECT_TRUE(desc.kernelMetadata.kernelName.empty());
     EXPECT_TRUE(desc.kernelMetadata.kernelLanguageAttributes.empty());
-    EXPECT_EQ(0U, desc.kernelMetadata.compiledSubGroupsNumber);
     EXPECT_EQ(0U, desc.kernelMetadata.requiredSubGroupSize);
     EXPECT_EQ(0U, desc.kernelMetadata.requiredThreadGroupDispatchSize);
     EXPECT_EQ(nullptr, desc.external.debugData.get());
-}
-
-TEST(KernelDescriptorAttributesSupportsBuffersBiggerThan4Gb, GivenPureStatelessBufferAddressingThenReturnTrue) {
-    NEO::KernelDescriptor desc;
-    desc.kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::Stateless;
-    EXPECT_TRUE(desc.kernelAttributes.supportsBuffersBiggerThan4Gb());
-}
-
-TEST(KernelDescriptorAttributesSupportsBuffersBiggerThan4Gb, GivenStatefulBufferAddressingThenReturnFalse) {
-    NEO::KernelDescriptor desc;
-    desc.kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::Bindful;
-    EXPECT_FALSE(desc.kernelAttributes.supportsBuffersBiggerThan4Gb());
-    desc.kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindfulAndStateless;
-    EXPECT_FALSE(desc.kernelAttributes.supportsBuffersBiggerThan4Gb());
-    desc.kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::Bindless;
-    EXPECT_FALSE(desc.kernelAttributes.supportsBuffersBiggerThan4Gb());
-    desc.kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindlessAndStateless;
-    EXPECT_FALSE(desc.kernelAttributes.supportsBuffersBiggerThan4Gb());
 }
 
 TEST(KernelDescriptorAttributes, GivenImageOrSamplerStateFlagsWhenUsesImageOrSamplerStateIsCalledThenCorrectValueIsReturned) {

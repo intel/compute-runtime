@@ -188,7 +188,6 @@ void VariableDispatch::setGroupSize(const MaxChannelsCArray groupSize, NEO::Devi
     mutableCommandWalker->setKernelStartAddress(kernelStartAddress);
 
     indirectData->setLocalWorkSize(this->groupSize);
-    indirectData->setLocalWorkSize2(this->groupSize);
     indirectData->setEnqLocalWorkSize(this->groupSize);
     setGws();
     setWorkDim();
@@ -485,7 +484,6 @@ void VariableDispatch::commitChanges(const NEO::Device &device) {
         }
         mutableCommandWalker->setKernelStartAddress(kernelStartAddress);
         indirectData->setLocalWorkSize(this->groupSize);
-        indirectData->setLocalWorkSize2(this->groupSize);
         indirectData->setEnqLocalWorkSize(this->groupSize);
 
         mutableCommandWalker->setNumberThreadsPerThreadGroup(this->numThreadsPerThreadGroup);

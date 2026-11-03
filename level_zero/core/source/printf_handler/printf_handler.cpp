@@ -10,7 +10,6 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/blit_properties.h"
-#include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/program/print_formatter.h"
@@ -34,11 +33,8 @@ NEO::GraphicsAllocation *PrintfHandler::createPrintfBuffer(Device *device) {
     return allocation;
 }
 
-void PrintfHandler::printOutput(const KernelImmutableData *kernelData,
-                                NEO::GraphicsAllocation *printfBuffer, Device *device, bool useInternalBlitter,
+void PrintfHandler::printOutput(NEO::GraphicsAllocation *printfBuffer, Device *device, bool useInternalBlitter,
                                 uint32_t &alreadyPrintedSize) {
-    bool using32BitGpuPointers = kernelData->getDescriptor().kernelAttributes.gpuPointerSize == 4u;
-
     auto printfOutputBuffer = static_cast<uint8_t *>(printfBuffer->getUnderlyingBuffer());
     auto printfOutputSize = static_cast<uint32_t>(printfBuffer->getUnderlyingBufferSize());
     std::unique_ptr<uint8_t[]> printfOutputTemporary;
@@ -76,15 +72,14 @@ void PrintfHandler::printOutput(const KernelImmutableData *kernelData,
     NEO::PrintFormatter printfFormatter{
         printfOutputBuffer,
         printfOutputSize,
-        using32BitGpuPointers};
+        false};
     printfFormatter.setStartParsingOffset(alreadyPrintedSize);
     printfFormatter.printKernelOutput();
 
     alreadyPrintedSize = bytesWritten;
 
     // Rewind only when full: the GPU has stopped writing, so this cannot race a live launch.
-    const uint32_t minEntrySize = using32BitGpuPointers ? sizeof(uint32_t) : sizeof(uint64_t);
-    if (bytesWritten + minEntrySize > printfOutputSize) {
+    if (bytesWritten + sizeof(uint64_t) > printfOutputSize) {
         rewindPrintfBuffer(printfBuffer, device, useInternalBlitter);
         alreadyPrintedSize = 0;
     }

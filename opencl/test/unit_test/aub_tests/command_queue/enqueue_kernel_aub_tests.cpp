@@ -555,7 +555,7 @@ HWTEST_F(AUBSimpleKernelStatelessTest, givenSimpleKernelWhenStatelessPathIsUsedT
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_FALSE(this->kernel->getKernelInfo().kernelDescriptor.payloadMappings.explicitArgs[0].as<ArgDescPointer>().isPureStateful());
-    EXPECT_TRUE(this->kernel->getKernelInfo().kernelDescriptor.kernelAttributes.supportsBuffersBiggerThan4Gb());
+    EXPECT_EQ(NEO::KernelDescriptor::Stateless, this->kernel->getKernelInfo().kernelDescriptor.kernelAttributes.bufferAddressingMode);
 
     this->pCmdQ->flush();
     expectMemory<FamilyType>(addrToPtr(ptrOffset(pBuffer->getGraphicsAllocation(device->getRootDeviceIndex())->getGpuAddress(), pBuffer->getOffset())),
