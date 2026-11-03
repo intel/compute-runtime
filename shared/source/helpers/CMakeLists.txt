@@ -30,6 +30,9 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_base.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_from_gen12lp_to_xe3p.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_from_gen12lp_to_xe_hpg.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_from_xe2_hpg_to_xe3.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_from_xe2_hpg_to_xe3p.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/blit_helper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/blit_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/blit_properties.cpp

@@ -684,4 +684,8 @@ void BlitCommandsHelper<GfxFamily>::dispatchDummyBlit(LinearStream &linearStream
     BlitCommandsHelper<GfxFamily>::dispatchDummyBlit(cmdBuffer, waArgs);
 }
 
+template <typename GfxFamily>
+void BlitCommandsHelper<GfxFamily>::appendClearColor(const BlitProperties &blitProperties, typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd) {
+}
+
 } // namespace NEO

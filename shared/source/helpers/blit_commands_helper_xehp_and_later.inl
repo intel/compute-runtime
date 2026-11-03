@@ -298,10 +298,6 @@ size_t BlitCommandsHelper<GfxFamily>::getSizeForGlobalSequencerFlush() {
 }
 
 template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::appendClearColor(const BlitProperties &blitProperties, typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd) {
-}
-
-template <typename GfxFamily>
 void BlitCommandsHelper<GfxFamily>::printImageBlitBlockCopyCommand(const typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd, const uint32_t sliceIndex) {
     std::ostringstream ss;
     ss << std::showbase;

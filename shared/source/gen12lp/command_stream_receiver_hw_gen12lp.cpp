@@ -178,10 +178,6 @@ size_t BlitCommandsHelper<GfxFamily>::getSizeForGlobalSequencerFlush() {
 }
 
 template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::appendClearColor(const BlitProperties &blitProperties, typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd) {
-}
-
-template <typename GfxFamily>
 void BlitCommandsHelper<GfxFamily>::printImageBlitBlockCopyCommand(const typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd, const uint32_t sliceIndex) {}
 
 template <typename GfxFamily>
@@ -277,18 +273,7 @@ void BlitCommandsHelper<Family>::appendBlitCommandsForImages(const BlitPropertie
     dstSlicePitch = std::max(dstSlicePitch, dstRowPitch * dstQPitch);
 }
 
-template <>
-size_t BlitCommandsHelper<Family>::getNumberOfBlitsForByteFill(const Vec3<size_t> &copySize, size_t patternSize, const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed) {
-    return NEO::BlitCommandsHelper<Family>::getNumberOfBlitsForFill(copySize, patternSize, rootDeviceEnvironment, isSystemMemoryPoolUsed);
-}
-
-template <>
-BlitCommandsResult BlitCommandsHelper<Family>::dispatchBlitMemoryByteFill(const BlitProperties &blitProperties, LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment) {
-    return NEO::BlitCommandsHelper<Family>::dispatchBlitMemoryColorFill(blitProperties, linearStream, rootDeviceEnvironment);
-}
-
-template <>
-void BlitCommandsHelper<Family>::appendBlitMemSetCompressionFormat(void *blitCmd, NEO::GraphicsAllocation *dstAlloc, uint32_t compressionFormat) {}
+#include "shared/source/helpers/blit_commands_helper_from_gen12lp_to_xe_hpg.inl"
 
 template <>
 void BlitCommandsHelper<Family>::appendBlitMemoryOptionsForFillBuffer(NEO::GraphicsAllocation *dstAlloc, typename Family::XY_COLOR_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment) {
