@@ -355,6 +355,7 @@ class PublicLinuxEventsUtil : public L0::Sysman::LinuxEventsUtil {
     using LinuxEventsUtil::registeredDriverEvents;
     using LinuxEventsUtil::supportedPciDeviceAddresses;
     using LinuxEventsUtil::supportedPciDeviceAddressesOutdated;
+    using LinuxEventsUtil::sysmanDeviceToLastBdfPathMap;
     using LinuxEventsUtil::updateCperPollSource;
     using LinuxEventsUtil::updateSupportedPciDeviceAddresses;
 };

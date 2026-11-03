@@ -12,6 +12,8 @@
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 #include "level_zero/sysman/test/unit_tests/sources/shared/linux/kmd_interface/mock_sysman_kmd_interface_xe.h"
 
+#include <chrono>
+
 namespace L0 {
 namespace Sysman {
 namespace ult {
@@ -1889,6 +1891,194 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForDeviceDetachEv
     delete pUdevLibLocal;
 }
 
+TEST_F(SysmanEventsFixture, GivenDeviceRealPathNoLongerResolvedAfterPreviousListenWhenListeningForDeviceDetachEventsThenDetachEventIsReturned) {
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
+        pipeFd[0] = mockReadPipeFd;
+        pipeFd[1] = mockWritePipeFd;
+        return 1;
+    });
+    VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+        for (uint64_t i = 0; i < numberOfFds; i++) {
+            if (pollFd[i].fd == mockUdevFd) {
+                pollFd[i].revents = POLLIN;
+            }
+        }
+        return 1;
+    });
+
+    auto pPublicLinuxSysmanDriverImp = std::make_unique<PublicLinuxSysmanDriverImp>();
+    VariableBackup<L0::Sysman::OsSysmanDriver *> backupOsSysmanDriver(&driverHandle->pOsSysmanDriver, pPublicLinuxSysmanDriverImp.get());
+
+    auto pUdevLibLocal = std::make_unique<EventsUdevLibMock>();
+    int a = 0;
+    pUdevLibLocal->allocateDeviceToReceiveDataResult = &a;
+    pUdevLibLocal->getEventTypeResult = "change";
+    pUdevLibLocal->eventPropertyValueDevPathResult = "/devices/pci0000:97/0000:97:02.0/0000:98:00.0/0000:99:01.0/0000:9a:00.0/drm/card0";
+    VariableBackup<L0::Sysman::UdevLib *> backupUdevLib(&pPublicLinuxSysmanDriverImp->pUdevLib, pUdevLibLocal.get());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_DETACH));
+    zes_device_handle_t hDevice = device->toHandle();
+    uint32_t numDeviceEvents = 0;
+    zes_event_type_flags_t deviceEvents = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, &hDevice, &numDeviceEvents, &deviceEvents));
+    EXPECT_EQ(0u, numDeviceEvents);
+
+    pSysfsAccess->getRealPathResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+    pUdevLibLocal->getEventTypeResult = "remove";
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, &hDevice, &numDeviceEvents, &deviceEvents));
+    EXPECT_EQ(1u, numDeviceEvents);
+    EXPECT_EQ(ZES_EVENT_TYPE_FLAG_DEVICE_DETACH, deviceEvents);
+}
+
+TEST_F(SysmanEventsFixture, GivenDeviceRealPathNoLongerResolvedAfterPreviousListenWhenListeningForDeviceAttachEventsThenAttachEventIsReturned) {
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
+        pipeFd[0] = mockReadPipeFd;
+        pipeFd[1] = mockWritePipeFd;
+        return 1;
+    });
+    VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+        for (uint64_t i = 0; i < numberOfFds; i++) {
+            if (pollFd[i].fd == mockUdevFd) {
+                pollFd[i].revents = POLLIN;
+            }
+        }
+        return 1;
+    });
+
+    auto pPublicLinuxSysmanDriverImp = std::make_unique<PublicLinuxSysmanDriverImp>();
+    VariableBackup<L0::Sysman::OsSysmanDriver *> backupOsSysmanDriver(&driverHandle->pOsSysmanDriver, pPublicLinuxSysmanDriverImp.get());
+
+    auto pUdevLibLocal = std::make_unique<EventsUdevLibMock>();
+    int a = 0;
+    pUdevLibLocal->allocateDeviceToReceiveDataResult = &a;
+    pUdevLibLocal->getEventTypeResult = "change";
+    pUdevLibLocal->eventPropertyValueDevPathResult = "/devices/pci0000:97/0000:97:02.0/0000:98:00.0/0000:99:01.0/0000:9a:00.0/drm/card0";
+    VariableBackup<L0::Sysman::UdevLib *> backupUdevLib(&pPublicLinuxSysmanDriverImp->pUdevLib, pUdevLibLocal.get());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH));
+    zes_device_handle_t hDevice = device->toHandle();
+    uint32_t numDeviceEvents = 0;
+    zes_event_type_flags_t deviceEvents = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, &hDevice, &numDeviceEvents, &deviceEvents));
+    EXPECT_EQ(0u, numDeviceEvents);
+
+    pSysfsAccess->getRealPathResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+    pUdevLibLocal->getEventTypeResult = "add";
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, &hDevice, &numDeviceEvents, &deviceEvents));
+    EXPECT_EQ(1u, numDeviceEvents);
+    EXPECT_EQ(ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH, deviceEvents);
+}
+
+TEST_F(SysmanEventsFixture, GivenDeviceRealPathNoLongerResolvedAfterRegisteringDeviceDetachEventWhenListeningForFirstTimeThenDetachEventIsReturned) {
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
+        pipeFd[0] = mockReadPipeFd;
+        pipeFd[1] = mockWritePipeFd;
+        return 1;
+    });
+    VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+        for (uint64_t i = 0; i < numberOfFds; i++) {
+            if (pollFd[i].fd == mockUdevFd) {
+                pollFd[i].revents = POLLIN;
+            }
+        }
+        return 1;
+    });
+
+    auto pPublicLinuxSysmanDriverImp = std::make_unique<PublicLinuxSysmanDriverImp>();
+    VariableBackup<L0::Sysman::OsSysmanDriver *> backupOsSysmanDriver(&driverHandle->pOsSysmanDriver, pPublicLinuxSysmanDriverImp.get());
+
+    auto pUdevLibLocal = std::make_unique<EventsUdevLibMock>();
+    int a = 0;
+    pUdevLibLocal->allocateDeviceToReceiveDataResult = &a;
+    pUdevLibLocal->getEventTypeResult = "remove";
+    pUdevLibLocal->eventPropertyValueDevPathResult = "/devices/pci0000:97/0000:97:02.0/0000:98:00.0/0000:99:01.0/0000:9a:00.0/drm/card0";
+    VariableBackup<L0::Sysman::UdevLib *> backupUdevLib(&pPublicLinuxSysmanDriverImp->pUdevLib, pUdevLibLocal.get());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_DETACH));
+
+    pSysfsAccess->getRealPathResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+    zes_device_handle_t hDevice = device->toHandle();
+    uint32_t numDeviceEvents = 0;
+    zes_event_type_flags_t deviceEvents = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, &hDevice, &numDeviceEvents, &deviceEvents));
+    EXPECT_EQ(1u, numDeviceEvents);
+    EXPECT_EQ(ZES_EVENT_TYPE_FLAG_DEVICE_DETACH, deviceEvents);
+}
+
+TEST_F(SysmanEventsFixture, GivenDeviceRealPathNoLongerResolvedAfterRegisteringDeviceAttachEventWhenListeningForFirstTimeThenAttachEventIsReturned) {
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
+        pipeFd[0] = mockReadPipeFd;
+        pipeFd[1] = mockWritePipeFd;
+        return 1;
+    });
+    VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+        for (uint64_t i = 0; i < numberOfFds; i++) {
+            if (pollFd[i].fd == mockUdevFd) {
+                pollFd[i].revents = POLLIN;
+            }
+        }
+        return 1;
+    });
+
+    auto pPublicLinuxSysmanDriverImp = std::make_unique<PublicLinuxSysmanDriverImp>();
+    VariableBackup<L0::Sysman::OsSysmanDriver *> backupOsSysmanDriver(&driverHandle->pOsSysmanDriver, pPublicLinuxSysmanDriverImp.get());
+
+    auto pUdevLibLocal = std::make_unique<EventsUdevLibMock>();
+    int a = 0;
+    pUdevLibLocal->allocateDeviceToReceiveDataResult = &a;
+    pUdevLibLocal->getEventTypeResult = "add";
+    pUdevLibLocal->eventPropertyValueDevPathResult = "/devices/pci0000:97/0000:97:02.0/0000:98:00.0/0000:99:01.0/0000:9a:00.0/drm/card0";
+    VariableBackup<L0::Sysman::UdevLib *> backupUdevLib(&pPublicLinuxSysmanDriverImp->pUdevLib, pUdevLibLocal.get());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH));
+
+    pSysfsAccess->getRealPathResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+    zes_device_handle_t hDevice = device->toHandle();
+    uint32_t numDeviceEvents = 0;
+    zes_event_type_flags_t deviceEvents = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, &hDevice, &numDeviceEvents, &deviceEvents));
+    EXPECT_EQ(1u, numDeviceEvents);
+    EXPECT_EQ(ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH, deviceEvents);
+}
+
+TEST_F(SysmanEventsFixture, GivenUnrelatedUeventsKeepArrivingWhenListeningForDeviceDetachEventsThenEventListenAPIReturnsNotBeforeTimeout) {
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
+        pipeFd[0] = mockReadPipeFd;
+        pipeFd[1] = mockWritePipeFd;
+        return 1;
+    });
+    VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+        for (uint64_t i = 0; i < numberOfFds; i++) {
+            if (pollFd[i].fd == mockUdevFd) {
+                pollFd[i].revents = POLLIN;
+            }
+        }
+        return 1;
+    });
+
+    auto pPublicLinuxSysmanDriverImp = std::make_unique<PublicLinuxSysmanDriverImp>();
+    VariableBackup<L0::Sysman::OsSysmanDriver *> backupOsSysmanDriver(&driverHandle->pOsSysmanDriver, pPublicLinuxSysmanDriverImp.get());
+
+    auto pUdevLibLocal = std::make_unique<EventsUdevLibMock>();
+    int a = 0;
+    pUdevLibLocal->allocateDeviceToReceiveDataResult = &a;
+    pUdevLibLocal->getEventTypeResult = "remove";
+    pUdevLibLocal->eventPropertyValueDevPathResult = "/devices/pci0000:97/0000:97:02.0/0000:98:00.0/0000:99:01.0/0000:9a:00.0/drm/card0/card0-DP-1";
+    VariableBackup<L0::Sysman::UdevLib *> backupUdevLib(&pPublicLinuxSysmanDriverImp->pUdevLib, pUdevLibLocal.get());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_DETACH));
+    zes_device_handle_t hDevice = device->toHandle();
+    uint32_t numDeviceEvents = 0;
+    zes_event_type_flags_t deviceEvents = 0;
+    constexpr uint64_t timeoutMs = 10u;
+    constexpr auto minimumListenDuration = std::chrono::milliseconds(timeoutMs - 1);
+    const auto start = std::chrono::steady_clock::now();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), timeoutMs, 1u, &hDevice, &numDeviceEvents, &deviceEvents));
+    const auto listenDuration = std::chrono::steady_clock::now() - start;
+    EXPECT_EQ(0u, numDeviceEvents);
+    EXPECT_GE(listenDuration, minimumListenDuration);
+}
+
 TEST_F(SysmanEventsFixture,
        GivenValidDeviceWhenListeningForDeviceDetachEventsAndDrmEventReceivedButRemoveEventNotReceivedThenEventListenAPIWaitForTimeout) {
     VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
@@ -2711,7 +2901,7 @@ TEST_F(SysmanEventsFixture, GivenNullOsInterfaceWhenBuildingDevPathMapThenUnreco
     eventsUtil->deviceEventsMap[pSysmanDeviceImp] = ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED;
 
     std::vector<zes_event_type_flags_t> registeredEvents(1, 0);
-    std::map<uint32_t, std::string> mapOfDevIndexToDevPath;
+    std::map<uint32_t, std::string> devIndexToDevBdfPathMap;
     L0::Sysman::FsAccessInterface *pFsAccess = nullptr;
 
     zes_device_handle_t handle = device->toHandle();
@@ -2719,7 +2909,18 @@ TEST_F(SysmanEventsFixture, GivenNullOsInterfaceWhenBuildingDevPathMapThenUnreco
     VariableBackup<L0::Sysman::OsSysman *> osInterfaceBackup(&pSysmanDeviceImp->pOsSysman, nullptr);
 
     // In test builds abortExecution() throws std::exception rather than calling abort()
-    EXPECT_THROW(eventsUtil->getDevIndexToDevPathMap(registeredEvents, 1u, &handle, mapOfDevIndexToDevPath, pFsAccess), std::exception);
+    EXPECT_THROW(eventsUtil->getDevIndexToDevPathMap(registeredEvents, 1u, &handle, devIndexToDevBdfPathMap, pFsAccess), std::exception);
+}
+
+TEST_F(SysmanEventsFixture, GivenNullOsInterfaceWhenRegisteringDeviceDetachEventThenEventIsRegisteredWithoutResolvingDevicePath) {
+    PublicLinuxSysmanDriverImp driverImp{};
+    auto eventsUtil = std::make_unique<PublicLinuxEventsUtil>(&driverImp);
+    VariableBackup<L0::Sysman::OsSysman *> osInterfaceBackup(&pSysmanDeviceImp->pOsSysman, nullptr);
+
+    eventsUtil->eventRegister(ZES_EVENT_TYPE_FLAG_DEVICE_DETACH, pSysmanDeviceImp);
+
+    EXPECT_EQ(ZES_EVENT_TYPE_FLAG_DEVICE_DETACH, eventsUtil->deviceEventsMap[pSysmanDeviceImp]);
+    EXPECT_FALSE(eventsUtil->sysmanDeviceToLastBdfPathMap.contains(pSysmanDeviceImp));
 }
 
 TEST_F(SysmanEventsFixture, GivenNullFsAccessWhenWedgedEventPathReachesIsSurvivabilityModeAsExpectedThenNoEventIsReturned) {
@@ -2732,13 +2933,13 @@ TEST_F(SysmanEventsFixture, GivenNullFsAccessWhenWedgedEventPathReachesIsSurviva
     std::vector<zes_device_handle_t> phDevices = {device->toHandle()};
 
     std::vector<zes_event_type_flags_t> registeredEvents(1, ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED);
-    std::map<uint32_t, std::string> mapOfDevIndexToDevPath = {{0u, "/devices/pci0000:97/0000:97:02.0/0000:98:00.0/0000:99:01.0/0000:9a:00.0"}};
+    std::map<uint32_t, std::string> devIndexToDevBdfPathMap = {{0u, "/devices/pci0000:97/0000:97:02.0/0000:98:00.0/0000:99:01.0/0000:9a:00.0"}};
     L0::Sysman::FsAccessInterface *pFsAccess = nullptr;
     zes_event_type_flags_t pEvents[1] = {0};
 
     int a = 0;
     void *dev = &a;
-    bool retVal = eventsUtil->checkDeviceEvents(registeredEvents, mapOfDevIndexToDevPath, pFsAccess, pEvents, dev, phDevices.data());
+    bool retVal = eventsUtil->checkDeviceEvents(registeredEvents, devIndexToDevBdfPathMap, pFsAccess, pEvents, dev, phDevices.data());
     EXPECT_FALSE(retVal);
     EXPECT_EQ(0u, pEvents[0]);
 }
@@ -2769,12 +2970,12 @@ TEST_F(SysmanEventsFixture, GivenActionIsNotChangeWhenCheckingWedgedEventThenFal
 
     std::vector<zes_device_handle_t> phDevices = {device->toHandle()};
     std::vector<zes_event_type_flags_t> registeredEvents(1, ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED);
-    std::map<uint32_t, std::string> mapOfDevIndexToDevPath = {{0u, devPath}};
+    std::map<uint32_t, std::string> devIndexToDevBdfPathMap = {{0u, devPath}};
     zes_event_type_flags_t pEvents[1] = {0};
 
     int a = 0;
     void *dev = &a;
-    bool retVal = eventsUtil->checkDeviceEvents(registeredEvents, mapOfDevIndexToDevPath, pFsAccess.get(), pEvents, dev, phDevices.data());
+    bool retVal = eventsUtil->checkDeviceEvents(registeredEvents, devIndexToDevBdfPathMap, pFsAccess.get(), pEvents, dev, phDevices.data());
     EXPECT_FALSE(retVal);
     EXPECT_EQ(0u, pEvents[0]);
 }
@@ -2792,12 +2993,12 @@ TEST_F(SysmanEventsFixture, GivenWedgedPropertyIsNullWhenCheckingWedgedEventThen
 
     std::vector<zes_device_handle_t> phDevices = {device->toHandle()};
     std::vector<zes_event_type_flags_t> registeredEvents(1, ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED);
-    std::map<uint32_t, std::string> mapOfDevIndexToDevPath = {{0u, devPath}};
+    std::map<uint32_t, std::string> devIndexToDevBdfPathMap = {{0u, devPath}};
     zes_event_type_flags_t pEvents[1] = {0};
 
     int a = 0;
     void *dev = &a;
-    bool retVal = eventsUtil->checkDeviceEvents(registeredEvents, mapOfDevIndexToDevPath, pFsAccess.get(), pEvents, dev, phDevices.data());
+    bool retVal = eventsUtil->checkDeviceEvents(registeredEvents, devIndexToDevBdfPathMap, pFsAccess.get(), pEvents, dev, phDevices.data());
     EXPECT_FALSE(retVal);
     EXPECT_EQ(0u, pEvents[0]);
 }
@@ -2815,12 +3016,12 @@ TEST_F(SysmanEventsFixture, GivenWedgedPropertyIsVendorSpecificAndSurvivabilityM
 
     std::vector<zes_device_handle_t> phDevices = {device->toHandle()};
     std::vector<zes_event_type_flags_t> registeredEvents(1, ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED);
-    std::map<uint32_t, std::string> mapOfDevIndexToDevPath = {{0u, devPath}};
+    std::map<uint32_t, std::string> devIndexToDevBdfPathMap = {{0u, devPath}};
     zes_event_type_flags_t pEvents[1] = {0};
 
     int a = 0;
     void *dev = &a;
-    bool retVal = eventsUtil->checkDeviceEvents(registeredEvents, mapOfDevIndexToDevPath, pFsAccess.get(), pEvents, dev, phDevices.data());
+    bool retVal = eventsUtil->checkDeviceEvents(registeredEvents, devIndexToDevBdfPathMap, pFsAccess.get(), pEvents, dev, phDevices.data());
     EXPECT_TRUE(retVal);
     EXPECT_EQ(ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED, pEvents[0]);
 }
@@ -2838,12 +3039,12 @@ TEST_F(SysmanEventsFixture, GivenWedgedPropertyIsVendorSpecificAndSurvivabilityM
 
     std::vector<zes_device_handle_t> phDevices = {device->toHandle()};
     std::vector<zes_event_type_flags_t> registeredEvents(1, ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED);
-    std::map<uint32_t, std::string> mapOfDevIndexToDevPath = {{0u, devPath}};
+    std::map<uint32_t, std::string> devIndexToDevBdfPathMap = {{0u, devPath}};
     zes_event_type_flags_t pEvents[1] = {0};
 
     int a = 0;
     void *dev = &a;
-    bool retVal = eventsUtil->checkDeviceEvents(registeredEvents, mapOfDevIndexToDevPath, pFsAccess.get(), pEvents, dev, phDevices.data());
+    bool retVal = eventsUtil->checkDeviceEvents(registeredEvents, devIndexToDevBdfPathMap, pFsAccess.get(), pEvents, dev, phDevices.data());
     EXPECT_FALSE(retVal);
     EXPECT_EQ(0u, pEvents[0]);
 }
@@ -2861,12 +3062,12 @@ TEST_F(SysmanEventsFixture, GivenWedgedPropertyIsVendorSpecificAndSurvivabilityM
 
     std::vector<zes_device_handle_t> phDevices = {device->toHandle()};
     std::vector<zes_event_type_flags_t> registeredEvents(1, ZES_EVENT_TYPE_FLAG_SURVIVABILITY_MODE_DETECTED);
-    std::map<uint32_t, std::string> mapOfDevIndexToDevPath = {{0u, devPath}};
+    std::map<uint32_t, std::string> devIndexToDevBdfPathMap = {{0u, devPath}};
     zes_event_type_flags_t pEvents[1] = {0};
 
     int a = 0;
     void *dev = &a;
-    bool retVal = eventsUtil->checkDeviceEvents(registeredEvents, mapOfDevIndexToDevPath, pFsAccess.get(), pEvents, dev, phDevices.data());
+    bool retVal = eventsUtil->checkDeviceEvents(registeredEvents, devIndexToDevBdfPathMap, pFsAccess.get(), pEvents, dev, phDevices.data());
     EXPECT_FALSE(retVal);
     EXPECT_EQ(0u, pEvents[0]);
 }

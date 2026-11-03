@@ -73,6 +73,7 @@ class LinuxEventsUtil {
     LinuxSysmanDriverImp *pLinuxSysmanDriverImp = nullptr;
     int pipeFd[2] = {-1, -1};
     std::map<SysmanDeviceImp *, zes_event_type_flags_t> deviceEventsMap;
+    std::map<SysmanDeviceImp *, std::string> sysmanDeviceToLastBdfPathMap;
     zes_event_type_flags_t registeredDriverEvents = 0;
     std::set<std::string> supportedPciDeviceAddresses;
     bool supportedPciDeviceAddressesOutdated = false;
@@ -86,8 +87,9 @@ class LinuxEventsUtil {
     bool checkDeviceWedgedEvent(void *dev, zes_event_type_flags_t &pEvent);
     ze_result_t checkEventSourcesAvailable(const std::vector<zes_event_type_flags_t> &registeredEvents, zes_event_type_flags_t driverRegisteredEvents, uint32_t count, zes_device_handle_t *phDevices);
     ze_result_t listenSystemEvents(zes_event_type_flags_t *pEvents, uint32_t count, std::vector<zes_event_type_flags_t> &registeredEvents, zes_device_handle_t *phDevices, uint64_t timeout, bool &eventReceived, zes_event_type_flags_t *pDriverEvents = nullptr);
-    bool checkDeviceEvents(std::vector<zes_event_type_flags_t> &registeredEvents, const std::map<uint32_t, std::string> &mapOfDevIndexToDevPath, FsAccessInterface *pFsAccess, zes_event_type_flags_t *pEvents, void *dev, zes_device_handle_t *phDevices);
-    void getDevIndexToDevPathMap(std::vector<zes_event_type_flags_t> &registeredEvents, uint32_t count, zes_device_handle_t *phDevices, std::map<uint32_t, std::string> &mapOfDevIndexToDevPath, FsAccessInterface *&pFsAccess);
+    bool checkDeviceEvents(std::vector<zes_event_type_flags_t> &registeredEvents, const std::map<uint32_t, std::string> &devIndexToDevBdfPathMap, FsAccessInterface *pFsAccess, zes_event_type_flags_t *pEvents, void *dev, zes_device_handle_t *phDevices);
+    void updateLastBdfPath(SysmanDeviceImp *device, LinuxSysmanImp *osInterface);
+    void getDevIndexToDevPathMap(std::vector<zes_event_type_flags_t> &registeredEvents, uint32_t count, zes_device_handle_t *phDevices, std::map<uint32_t, std::string> &devIndexToDevBdfPathMap, FsAccessInterface *&pFsAccess);
     MOCKABLE_VIRTUAL void updateCperPollSource(zes_event_type_flags_t driverRegisteredEvents, std::vector<PollDescriptor> &pollSources, bool &cperRegistered);
     void refreshDriverEventPollSources(zes_event_type_flags_t *pDriverEvents, zes_event_type_flags_t &driverRegisteredEvents, std::vector<PollDescriptor> &pollSources, bool &cperRegistered);
     bool handleNetlinkEvents(zes_event_type_flags_t *pEvents, uint32_t count, zes_device_handle_t *phDevices, const std::vector<zes_event_type_flags_t> &registeredEvents);

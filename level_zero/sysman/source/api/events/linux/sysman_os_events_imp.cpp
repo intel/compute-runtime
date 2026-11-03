@@ -148,6 +148,13 @@ void LinuxEventsUtil::eventRegister(zes_event_type_flags_t events, SysmanDeviceI
             registeredEvents |= (events & supportedEventMask);
         }
 
+        // Resolve the device path while the device is still bound, so its uevents can be matched even if the first listen starts after an unbind
+        if (registeredEvents & (ZES_EVENT_TYPE_FLAG_DEVICE_DETACH | ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH)) {
+            if (auto *osInterface = static_cast<LinuxSysmanImp *>(pSysmanDevice->deviceGetOsInterface())) {
+                updateLastBdfPath(pSysmanDevice, osInterface);
+            }
+        }
+
         // Write to Pipe only if eventregister() is called during listen and previously registered events are modified.
         if ((pipeFd[1] != -1) && (prevRegisteredEvents != registeredEvents)) {
             uint8_t value = 0x00;
@@ -482,7 +489,29 @@ bool LinuxEventsUtil::processNetlinkRasEvent(const DrmRasEvent &netlinkEvent, ze
     return netlinkProcessRasEvent(netlinkEvent, pEvents, count, phDevices, registeredEvents);
 }
 
-void LinuxEventsUtil::getDevIndexToDevPathMap(std::vector<zes_event_type_flags_t> &registeredEvents, uint32_t count, zes_device_handle_t *phDevices, std::map<uint32_t, std::string> &mapOfDevIndexToDevPath, FsAccessInterface *&pFsAccess) {
+void LinuxEventsUtil::updateLastBdfPath(SysmanDeviceImp *device, LinuxSysmanImp *osInterface) {
+    std::string fullBdfPath;
+    auto pSysfsAccess = &osInterface->getSysfsAccess();
+    if (pSysfsAccess->getRealPath("device", fullBdfPath) != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "%s", "Failed to get real path of device\n");
+        return;
+    }
+
+    // /sys needs to be removed from real path inorder to equate with "DEVPATH" property of uevent.
+    // Example of real path: /sys/devices/pci0000:97/0000:97:02.0/0000:98:00.0/0000:99:01.0/0000:9a:00.0
+    // Example of DEVPATH: /devices/pci0000:97/0000:97:02.0/0000:98:00.0/0000:99:01.0/0000:9a:00.0
+    const auto loc = fullBdfPath.find("/devices");
+    if (loc == std::string::npos) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "%s", "Invalid device path\n");
+        return;
+    }
+
+    this->sysmanDeviceToLastBdfPathMap[device] = fullBdfPath.substr(loc);
+}
+
+void LinuxEventsUtil::getDevIndexToDevPathMap(std::vector<zes_event_type_flags_t> &registeredEvents, uint32_t count, zes_device_handle_t *phDevices, std::map<uint32_t, std::string> &devIndexToDevBdfPathMap, FsAccessInterface *&pFsAccess) {
     for (uint32_t devIndex = 0; devIndex < count; devIndex++) {
         auto device = static_cast<SysmanDeviceImp *>(L0::Sysman::SysmanDevice::fromHandle(phDevices[devIndex]));
         if (auto it = deviceEventsMap.find(device); it != deviceEventsMap.end()) {
@@ -498,36 +527,23 @@ void LinuxEventsUtil::getDevIndexToDevPathMap(std::vector<zes_event_type_flags_t
                          "%s", "Failed to get OS Interface\n");
             UNRECOVERABLE_IF(true);
         }
-        std::string bdf;
-        auto pSysfsAccess = &osInterface->getSysfsAccess();
-        if (pSysfsAccess->getRealPath("device", bdf) == ZE_RESULT_SUCCESS) {
-            // /sys needs to be removed from real path inorder to equate with
-            // DEVPATH property of uevent.
-            // Example of real path: /sys/devices/pci0000:97/0000:97:02.0/0000:98:00.0/0000:99:01.0/0000:9a:00.0
-            // Example of DEVPATH: /devices/pci0000:97/0000:97:02.0/0000:98:00.0/0000:99:01.0/0000:9a:00.0/i915.iaf.0
-            const auto loc = bdf.find("/devices");
-            if (loc == std::string::npos) {
-                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                             "%s", "Invalid device path\n");
-                continue;
-            }
 
-            bdf = bdf.substr(loc);
-            mapOfDevIndexToDevPath.emplace(devIndex, bdf);
+        updateLastBdfPath(device, osInterface);
+
+        // After an unbind or removal the sysfs node of the device is gone, so its uevents are matched by the last resolved path
+        if (auto it = this->sysmanDeviceToLastBdfPathMap.find(device); it != this->sysmanDeviceToLastBdfPathMap.end()) {
+            devIndexToDevBdfPathMap.emplace(devIndex, it->second);
             pFsAccess = &osInterface->getFsAccess();
-        } else {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                         "%s", "Failed to get real path of device\n");
         }
     }
 }
 
-bool LinuxEventsUtil::checkDeviceEvents(std::vector<zes_event_type_flags_t> &registeredEvents, const std::map<uint32_t, std::string> &mapOfDevIndexToDevPath, FsAccessInterface *pFsAccess, zes_event_type_flags_t *pEvents, void *dev, zes_device_handle_t *phDevices) {
+bool LinuxEventsUtil::checkDeviceEvents(std::vector<zes_event_type_flags_t> &registeredEvents, const std::map<uint32_t, std::string> &devIndexToDevBdfPathMap, FsAccessInterface *pFsAccess, zes_event_type_flags_t *pEvents, void *dev, zes_device_handle_t *phDevices) {
     const char *devicePath = pUdevLib->getEventPropertyValue(dev, "DEVPATH");
     bool retVal = false;
     if (devicePath != nullptr) {
         std::string devPath(devicePath);
-        for (auto it = mapOfDevIndexToDevPath.begin(); it != mapOfDevIndexToDevPath.end(); it++) {
+        for (auto it = devIndexToDevBdfPathMap.begin(); it != devIndexToDevBdfPathMap.end(); it++) {
             if (devPath.find(it->second.c_str()) != std::string::npos) {
                 const bool isDrmCardNodeEvent = isDrmCardNode(devPath, it->second);
                 if (isDrmCardNodeEvent && (registeredEvents[it->first] & ZES_EVENT_TYPE_FLAG_DEVICE_DETACH)) {
@@ -703,7 +719,7 @@ ze_result_t LinuxEventsUtil::listenSystemEvents(zes_event_type_flags_t *pEvents,
     }
 
     std::vector<std::string> subsystemList;
-    std::map<uint32_t, std::string> mapOfDevIndexToDevPath = {};
+    std::map<uint32_t, std::string> devIndexToDevBdfPathMap = {};
     FsAccessInterface *pFsAccess = nullptr;
     bool cperRegistered = isCperEventRegistered(driverRegisteredEvents);
 
@@ -719,6 +735,7 @@ ze_result_t LinuxEventsUtil::listenSystemEvents(zes_event_type_flags_t *pEvents,
 
     auto start = L0::Sysman::SteadyClock::now();
     std::chrono::duration<double, std::milli> timeElapsed;
+    uint64_t remainingTimeout = timeout;
     {
         std::unique_lock<std::mutex> lock(eventsMutex);
         if (NEO::SysCalls::pipe(pipeFd) < 0) {
@@ -734,7 +751,7 @@ ze_result_t LinuxEventsUtil::listenSystemEvents(zes_event_type_flags_t *pEvents,
         refreshDriverEventPollSources(pDriverEvents, driverRegisteredEvents, pollSources, cperRegistered);
         updateSupportedPciDeviceAddresses(driverRegisteredEvents);
 
-        getDevIndexToDevPathMap(registeredEvents, count, phDevices, mapOfDevIndexToDevPath, pFsAccess);
+        getDevIndexToDevPathMap(registeredEvents, count, phDevices, devIndexToDevBdfPathMap, pFsAccess);
         // Re-check since driver events may have been re-registered before the pipe was created
         result = checkEventSourcesAvailable(registeredEvents, driverRegisteredEvents, count, phDevices);
     }
@@ -754,7 +771,7 @@ ze_result_t LinuxEventsUtil::listenSystemEvents(zes_event_type_flags_t *pEvents,
     };
 
     syncPfds();
-    while (result == ZE_RESULT_SUCCESS && NEO::SysCalls::poll(pfds.data(), static_cast<nfds_t>(pfds.size()), static_cast<int>(timeout)) > 0) {
+    while (result == ZE_RESULT_SUCCESS && NEO::SysCalls::poll(pfds.data(), static_cast<nfds_t>(pfds.size()), static_cast<int>(remainingTimeout)) > 0) {
         syncRevents();
 
         bool pipeTriggered = false;
@@ -782,9 +799,9 @@ ze_result_t LinuxEventsUtil::listenSystemEvents(zes_event_type_flags_t *pEvents,
             ssize_t pipeReadRet = NEO::SysCalls::read(pipeFd[0], &dummy, 1);
             PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get() && (pipeReadRet < 0),
                          stderr, "read() on event pipe fd=%d failed errno=%d\n", pipeFd[0], errno);
-            mapOfDevIndexToDevPath.clear();
+            devIndexToDevBdfPathMap.clear();
             pFsAccess = nullptr;
-            getDevIndexToDevPathMap(registeredEvents, count, phDevices, mapOfDevIndexToDevPath, pFsAccess);
+            getDevIndexToDevPathMap(registeredEvents, count, phDevices, devIndexToDevBdfPathMap, pFsAccess);
             refreshDriverEventPollSources(pDriverEvents, driverRegisteredEvents, pollSources, cperRegistered);
             updateSupportedPciDeviceAddresses(driverRegisteredEvents);
             result = checkEventSourcesAvailable(registeredEvents, driverRegisteredEvents, count, phDevices);
@@ -799,7 +816,7 @@ ze_result_t LinuxEventsUtil::listenSystemEvents(zes_event_type_flags_t *pEvents,
             eventReceived = true;
         }
 
-        if (mapOfDevIndexToDevPath.empty() && !cperRegistered && !(driverRegisteredEvents & driverScopedAttachDetachEvents)) {
+        if (devIndexToDevBdfPathMap.empty() && !cperRegistered && !(driverRegisteredEvents & driverScopedAttachDetachEvents)) {
             break;
         }
 
@@ -810,7 +827,7 @@ ze_result_t LinuxEventsUtil::listenSystemEvents(zes_event_type_flags_t *pEvents,
                 auto eventTypePtr = pUdevLib->getEventType(dev);
                 if (eventTypePtr != nullptr) {
                     action = std::string(eventTypePtr);
-                    if (checkDeviceEvents(registeredEvents, mapOfDevIndexToDevPath, pFsAccess, pEvents, dev, phDevices)) {
+                    if (checkDeviceEvents(registeredEvents, devIndexToDevBdfPathMap, pFsAccess, pEvents, dev, phDevices)) {
                         eventReceived = true;
                     }
                     if ((pDriverEvents != nullptr) && checkDriverAttachDetachEvent(dev, driverRegisteredEvents, *pDriverEvents)) {
@@ -833,7 +850,7 @@ ze_result_t LinuxEventsUtil::listenSystemEvents(zes_event_type_flags_t *pEvents,
 
         timeElapsed = L0::Sysman::SteadyClock::now() - start;
         if (timeout > timeElapsed.count()) {
-            timeout = timeout - timeElapsed.count();
+            remainingTimeout = timeout - static_cast<uint64_t>(timeElapsed.count());
             continue;
         } else {
             break;
