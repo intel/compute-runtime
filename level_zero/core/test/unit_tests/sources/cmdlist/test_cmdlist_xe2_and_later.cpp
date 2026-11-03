@@ -21,6 +21,7 @@
 #include "level_zero/core/test/unit_tests/fixtures/in_order_cmd_list_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_event.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
 namespace L0 {
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -472,6 +473,8 @@ HWTEST2_F(CommandListXe2AndLaterPreemptionTest, givenImmediateCommandListUsingFl
 }
 
 using InOrderCmdListTests = InOrderCmdListFixture;
+using IsWithinXe3CoreAndXe3pCore = IsWithinGfxCore<IGFX_XE3_CORE, IGFX_XE3P_CORE>;
+using CmdlistXe3ToXe3pTests = Test<ModuleFixture>;
 
 HWTEST2_F(InOrderCmdListTests, givenDebugFlagWhenPostSyncWithInOrderExecInfoIsCreateThenL1IsNotFlushed, Platforms) {
     DebugManagerStateRestore restorer;
@@ -493,6 +496,85 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagWhenPostSyncWithInOrderExecInfoIsCr
 
     EXPECT_FALSE(postSync.getDataportPipelineFlush());
     EXPECT_FALSE(postSync.getDataportSubsliceCacheFlush());
+}
+
+HWTEST2_F(CmdlistXe3ToXe3pTests, givenVariousKernelsWhenUpdateStreamPropertiesIsCalledThenRequiredStateFinalStateAndCommandsToPatchAreCorrectlySet, IsWithinXe3CoreAndXe3pCore) {
+    DebugManagerStateRestore restorer;
+
+    debugManager.flags.AllowPatchingVfeStateInCommandLists.set(1);
+
+    Mock<::L0::KernelImp> defaultKernel;
+    auto pMockModule1 = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    defaultKernel.module = pMockModule1.get();
+
+    Mock<::L0::KernelImp> cooperativeKernel;
+    auto pMockModule2 = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    cooperativeKernel.module = pMockModule2.get();
+    cooperativeKernel.immutableData.kernelDescriptor->kernelAttributes.flags.usesSyncBuffer = true;
+
+    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    auto result = pCommandList->initialize(device, NEO::EngineGroupType::compute, 0u);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(0u, pCommandList->commandsToPatch.size());
+
+    const ze_group_count_t launchKernelArgs = {};
+    pCommandList->updateStreamProperties(defaultKernel, false, launchKernelArgs, false);
+    EXPECT_EQ(0u, pCommandList->commandsToPatch.size());
+    pCommandList->reset();
+
+    pCommandList->updateStreamProperties(cooperativeKernel, true, launchKernelArgs, false);
+    pCommandList->updateStreamProperties(cooperativeKernel, true, launchKernelArgs, false);
+
+    EXPECT_EQ(0u, pCommandList->commandsToPatch.size());
+    pCommandList->reset();
+
+    pCommandList->updateStreamProperties(defaultKernel, false, launchKernelArgs, false);
+    pCommandList->updateStreamProperties(cooperativeKernel, true, launchKernelArgs, false);
+    EXPECT_EQ(0u, pCommandList->commandsToPatch.size());
+    pCommandList->reset();
+
+    pCommandList->updateStreamProperties(cooperativeKernel, true, launchKernelArgs, false);
+    pCommandList->updateStreamProperties(defaultKernel, false, launchKernelArgs, false);
+    pCommandList->updateStreamProperties(cooperativeKernel, true, launchKernelArgs, false);
+    EXPECT_EQ(0u, pCommandList->commandsToPatch.size());
+    pCommandList->reset();
+
+    pCommandList->updateStreamProperties(defaultKernel, false, launchKernelArgs, false);
+    pCommandList->updateStreamProperties(defaultKernel, false, launchKernelArgs, false);
+    EXPECT_EQ(0u, pCommandList->commandsToPatch.size());
+    pCommandList->reset();
+
+    EXPECT_EQ(0u, pCommandList->commandsToPatch.size());
+}
+
+HWTEST2_F(CmdlistXe3ToXe3pTests, givenVariousKernelsAndPatchingDisallowedWhenUpdateStreamPropertiesIsCalledThenCommandsToPatchAreEmpty, IsWithinXe3CoreAndXe3pCore) {
+    DebugManagerStateRestore restorer;
+
+    Mock<::L0::KernelImp> defaultKernel;
+    auto pMockModule1 = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    defaultKernel.module = pMockModule1.get();
+
+    Mock<::L0::KernelImp> cooperativeKernel;
+    auto pMockModule2 = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    cooperativeKernel.module = pMockModule2.get();
+    cooperativeKernel.immutableData.kernelDescriptor->kernelAttributes.flags.usesSyncBuffer = true;
+
+    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    auto result = pCommandList->initialize(device, NEO::EngineGroupType::compute, 0u);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    const ze_group_count_t launchKernelArgs = {};
+    pCommandList->updateStreamProperties(defaultKernel, false, launchKernelArgs, false);
+    pCommandList->updateStreamProperties(cooperativeKernel, true, launchKernelArgs, false);
+    EXPECT_EQ(0u, pCommandList->commandsToPatch.size());
+    pCommandList->reset();
+
+    debugManager.flags.AllowPatchingVfeStateInCommandLists.set(1);
+    pCommandList->updateStreamProperties(defaultKernel, false, launchKernelArgs, false);
+    pCommandList->updateStreamProperties(cooperativeKernel, true, launchKernelArgs, false);
+    EXPECT_EQ(0u, pCommandList->commandsToPatch.size());
+    pCommandList->reset();
 }
 
 } // namespace ult

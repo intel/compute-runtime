@@ -32,56 +32,6 @@ HWTEST_EXCLUDE_PRODUCT(AppendMemoryCopyTests, givenCopyCommandListWhenTimestampP
 HWTEST_EXCLUDE_PRODUCT(InOrderCmdListTests, givenCmdListWhenAskingForQwordDataSizeThenReturnFalse, IGFX_XE3P_CORE);
 
 using CommandListAppendLaunchKernelXe3p = Test<ModuleFixture>;
-XE3P_CORETEST_F(CommandListAppendLaunchKernelXe3p, givenVariousKernelsWhenUpdateStreamPropertiesIsCalledThenRequiredStateFinalStateAndCommandsToPatchAreCorrectlySet) {
-    DebugManagerStateRestore restorer;
-
-    debugManager.flags.AllowPatchingVfeStateInCommandLists.set(1);
-
-    Mock<::L0::KernelImp> defaultKernel;
-    auto pMockModule1 = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
-    defaultKernel.module = pMockModule1.get();
-
-    Mock<::L0::KernelImp> cooperativeKernel;
-    auto pMockModule2 = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
-    cooperativeKernel.module = pMockModule2.get();
-    cooperativeKernel.immutableData.kernelDescriptor->kernelAttributes.flags.usesSyncBuffer = true;
-
-    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
-    auto result = pCommandList->initialize(device, NEO::EngineGroupType::compute, 0u);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-
-    EXPECT_EQ(0u, pCommandList->commandsToPatch.size());
-
-    const ze_group_count_t launchKernelArgs = {};
-    pCommandList->updateStreamProperties(defaultKernel, false, launchKernelArgs, false);
-    EXPECT_EQ(0u, pCommandList->commandsToPatch.size());
-    pCommandList->reset();
-
-    pCommandList->updateStreamProperties(cooperativeKernel, true, launchKernelArgs, false);
-    pCommandList->updateStreamProperties(cooperativeKernel, true, launchKernelArgs, false);
-
-    EXPECT_EQ(0u, pCommandList->commandsToPatch.size());
-    pCommandList->reset();
-
-    pCommandList->updateStreamProperties(defaultKernel, false, launchKernelArgs, false);
-    pCommandList->updateStreamProperties(cooperativeKernel, true, launchKernelArgs, false);
-    EXPECT_EQ(0u, pCommandList->commandsToPatch.size());
-    pCommandList->reset();
-
-    pCommandList->updateStreamProperties(cooperativeKernel, true, launchKernelArgs, false);
-    pCommandList->updateStreamProperties(defaultKernel, false, launchKernelArgs, false);
-    pCommandList->updateStreamProperties(cooperativeKernel, true, launchKernelArgs, false);
-    EXPECT_EQ(0u, pCommandList->commandsToPatch.size());
-    pCommandList->reset();
-
-    pCommandList->updateStreamProperties(defaultKernel, false, launchKernelArgs, false);
-    pCommandList->updateStreamProperties(defaultKernel, false, launchKernelArgs, false);
-    EXPECT_EQ(0u, pCommandList->commandsToPatch.size());
-    pCommandList->reset();
-
-    EXPECT_EQ(0u, pCommandList->commandsToPatch.size());
-}
-
 XE3P_CORETEST_F(CommandListAppendLaunchKernelXe3p, givenCmdListWhenAskingForQwordDataSizeThenReturnTrue) {
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
 
@@ -180,35 +130,6 @@ XE3P_CORETEST_F(CommandListAppendLaunchKernelXe3p, givenScratchPointerAndInlineD
     EXPECT_EQ(dispatchKernelArgs.outCrossThreadDataGpuVa, patch.gpuAddress);
     EXPECT_EQ(static_cast<size_t>(scratchOffset), patch.offset);
     EXPECT_EQ(8u, patch.patchSize);
-}
-
-XE3P_CORETEST_F(CommandListAppendLaunchKernelXe3p, givenVariousKernelsAndPatchingDisallowedWhenUpdateStreamPropertiesIsCalledThenCommandsToPatchAreEmpty) {
-    DebugManagerStateRestore restorer;
-
-    Mock<::L0::KernelImp> defaultKernel;
-    auto pMockModule1 = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
-    defaultKernel.module = pMockModule1.get();
-
-    Mock<::L0::KernelImp> cooperativeKernel;
-    auto pMockModule2 = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
-    cooperativeKernel.module = pMockModule2.get();
-    cooperativeKernel.immutableData.kernelDescriptor->kernelAttributes.flags.usesSyncBuffer = true;
-
-    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
-    auto result = pCommandList->initialize(device, NEO::EngineGroupType::compute, 0u);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-
-    const ze_group_count_t launchKernelArgs = {};
-    pCommandList->updateStreamProperties(defaultKernel, false, launchKernelArgs, false);
-    pCommandList->updateStreamProperties(cooperativeKernel, true, launchKernelArgs, false);
-    EXPECT_EQ(0u, pCommandList->commandsToPatch.size());
-    pCommandList->reset();
-
-    debugManager.flags.AllowPatchingVfeStateInCommandLists.set(1);
-    pCommandList->updateStreamProperties(defaultKernel, false, launchKernelArgs, false);
-    pCommandList->updateStreamProperties(cooperativeKernel, true, launchKernelArgs, false);
-    EXPECT_EQ(0u, pCommandList->commandsToPatch.size());
-    pCommandList->reset();
 }
 
 struct LocalMemoryModuleFixture : public ModuleFixture {
