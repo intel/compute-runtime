@@ -144,6 +144,10 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
         return CL_SUCCESS;
     }
 
+    if (this->postSyncRequiredForAllWalkers && !multiDispatchInfo.empty() && (getDevice().getRootDeviceEnvironment().getDummyAllocation() == nullptr)) {
+        return CL_OUT_OF_RESOURCES;
+    }
+
     TagNodeBase *hwTimeStamps = nullptr;
     CommandStreamReceiver &computeCommandStreamReceiver = getGpgpuCommandStreamReceiver();
 

@@ -108,6 +108,13 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     if (timestampPacketNode) {
 
         GpgpuWalkerHelper<GfxFamily>::template setupTimestampPacket<WalkerType>(&commandStream, &walkerCmd, timestampPacketNode, rootDeviceEnvironment);
+    } else if (commandQueue.isPostSyncRequiredForAllWalkers()) {
+        using POSTSYNC_DATA = decltype(GfxFamily::template getPostSyncType<WalkerType>());
+        GpgpuWalkerHelper<GfxFamily>::template setupPostSyncFlushAndMocs<WalkerType>(walkerCmd, rootDeviceEnvironment);
+        auto &postSyncData = walkerCmd.getPostSync();
+        postSyncData.setOperation(POSTSYNC_DATA::OPERATION::OPERATION_WRITE_IMMEDIATE_DATA);
+        postSyncData.setDestinationAddress(rootDeviceEnvironment.getDummyAllocation()->getGpuAddress());
+        postSyncData.setImmediateData(0);
     }
 
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();

@@ -38,6 +38,11 @@ void CommandStreamReceiverHw<GfxFamily>::handleAllocationsResidencyForFlushTaskH
         makeResident(*getGlobalFenceAllocation());
     }
 
+    auto dummyAllocation = peekRootDeviceEnvironment().getDummyAllocation();
+    if (dummyAllocation && peekRootDeviceEnvironment().getProductHelper().isPostSyncRequiredForAllWalkers()) {
+        makeResident(*dummyAllocation);
+    }
+
     if (getFrontEndAllocation()) {
         makeResident(*getFrontEndAllocation());
     }

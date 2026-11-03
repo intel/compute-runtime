@@ -146,7 +146,11 @@ CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_pr
         this->l3FlushAfterPostSyncEnabled = productHelper.isL3FlushAfterPostSyncSupported();
         this->shouldRegisterEnqueuedWalkerWithProfiling = productHelper.shouldRegisterEnqueuedWalkerWithProfiling();
         this->isBarrierForImplicitDependenciesAllowed = productHelper.isResolveDependenciesByPipeControlsSupported();
-        this->isWalkerPostSyncSkipEnabled = gfxCoreHelper.isWalkerPostSyncSkipEnabled(this->isBarrierForImplicitDependenciesAllowed);
+        this->postSyncRequiredForAllWalkers = productHelper.isPostSyncRequiredForAllWalkers();
+        if (this->postSyncRequiredForAllWalkers) {
+            device->getDevice().getRootDeviceEnvironmentRef().initDummyAllocation();
+        }
+        this->isWalkerPostSyncSkipEnabled = gfxCoreHelper.isWalkerPostSyncSkipEnabled(this->isBarrierForImplicitDependenciesAllowed) && !this->postSyncRequiredForAllWalkers;
     }
 }
 

@@ -93,13 +93,8 @@ size_t GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(
 
 template <typename GfxFamily>
 template <typename WalkerType>
-void GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(LinearStream *cmdStream,
-                                                        WalkerType *walkerCmd,
-                                                        TagNodeBase *timestampPacketNode,
-                                                        const RootDeviceEnvironment &rootDeviceEnvironment) {
-    using POSTSYNC_DATA = decltype(GfxFamily::template getPostSyncType<WalkerType>());
-
-    auto &postSyncData = walkerCmd->getPostSync();
+void GpgpuWalkerHelper<GfxFamily>::setupPostSyncFlushAndMocs(WalkerType &walkerCmd, const RootDeviceEnvironment &rootDeviceEnvironment) {
+    auto &postSyncData = walkerCmd.getPostSync();
     postSyncData.setDataportPipelineFlush(true);
     postSyncData.setDataportSubsliceCacheFlush(true);
 
@@ -112,6 +107,18 @@ void GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(LinearStream *cmdStream,
                                                            MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, rootDeviceEnvironment));
 
     postSyncData.setMocs(mocs);
+}
+
+template <typename GfxFamily>
+template <typename WalkerType>
+void GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(LinearStream *cmdStream,
+                                                        WalkerType *walkerCmd,
+                                                        TagNodeBase *timestampPacketNode,
+                                                        const RootDeviceEnvironment &rootDeviceEnvironment) {
+    using POSTSYNC_DATA = decltype(GfxFamily::template getPostSyncType<WalkerType>());
+
+    setupPostSyncFlushAndMocs(*walkerCmd, rootDeviceEnvironment);
+    auto &postSyncData = walkerCmd->getPostSync();
 
     if (debugManager.flags.UseImmDataWriteModeOnPostSyncOperation.get()) {
         postSyncData.setOperation(POSTSYNC_DATA::OPERATION::OPERATION_WRITE_IMMEDIATE_DATA);

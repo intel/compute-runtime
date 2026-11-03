@@ -409,6 +409,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     void handlePostCompletionOperations(bool checkQueueCompletion);
 
     bool getHeaplessModeEnabled() const { return this->heaplessModeEnabled; }
+    bool isPostSyncRequiredForAllWalkers() const { return this->postSyncRequiredForAllWalkers; }
     BuiltIn::AddressingMode getDefaultBuiltInMode() const { return this->defaultBuiltInMode; }
 
     bool isBcsSplitInitialized() const { return this->bcsSplitInitialized; }
@@ -568,6 +569,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     bool pendingL3FlushForHostVisibleResources = false;
     bool isBarrierForImplicitDependenciesAllowed = false;
     bool isWalkerPostSyncSkipEnabled = false;
+    bool postSyncRequiredForAllWalkers = false;
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<CommandQueue>);
