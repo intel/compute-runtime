@@ -10,6 +10,7 @@
 #include "shared/source/helpers/flush_caches_bitmask.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/memory_manager/svm_allocation_cache.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/debug_env_reader.h"
 #include "shared/source/utilities/debug_file_reader.h"

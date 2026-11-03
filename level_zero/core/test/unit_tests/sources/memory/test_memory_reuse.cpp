@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/memory_manager/svm_allocation_cache.h"
 #include "shared/source/memory_manager/unified_memory_pooling.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"

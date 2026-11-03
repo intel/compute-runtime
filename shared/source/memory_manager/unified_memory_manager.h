@@ -8,11 +8,9 @@
 #pragma once
 #include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/helpers/common_types.h"
-#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/device_bitfield.h"
 #include "shared/source/helpers/memory_properties_flags.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
-#include "shared/source/memory_manager/allocation_reuse_cache.h"
 #include "shared/source/memory_manager/engine_completion_snapshot.h"
 #include "shared/source/memory_manager/free_policy_type.h"
 #include "shared/source/memory_manager/mem_free_callback.h"
@@ -25,8 +23,8 @@
 #include "shared/source/utilities/spinlock.h"
 
 #include <atomic>
-#include <chrono>
 #include <cstdint>
+#include <limits>
 #include <map>
 #include <memory>
 #include <shared_mutex>
@@ -173,82 +171,8 @@ class SVMAllocsManager {
         TaskCountType latestResidentObjectId = 0lu;
     };
 
-    struct SvmCacheAllocationInfo {
-        size_t allocationSize;
-        void *allocation;
-        SvmAllocationData *svmData;
-        std::chrono::high_resolution_clock::time_point saveTime;
-        bool isInUseCheckRequired;
-        SvmCacheAllocationInfo(size_t allocationSize, void *allocation, SvmAllocationData *svmData, bool isInUseCheckRequired) : allocationSize(allocationSize), allocation(allocation), svmData(svmData), isInUseCheckRequired(isInUseCheckRequired) {
-            saveTime = std::chrono::high_resolution_clock::now();
-        }
-        bool operator<(SvmCacheAllocationInfo const &other) const {
-            return allocationSize < other.allocationSize;
-        }
-        bool operator<(size_t const &size) const {
-            return allocationSize < size;
-        }
-        void markForDelete() {
-            allocationSize = 0u;
-        }
-        static bool isMarkedForDelete(SvmCacheAllocationInfo const &info) {
-            return 0 == info.allocationSize;
-        }
-    };
-
-    struct SvmAllocationCache : AllocationReuseCache {
-        enum class CacheOperationType {
-            insert,
-            get,
-            trim,
-            trimOld
-        };
-        enum class CompletionCheckPolicy {
-            waitOnFree,
-            deferred,
-            notRequired,
-        };
-
-        struct SvmAllocationCachePerfInfo {
-            uint64_t allocationSize;
-            std::chrono::high_resolution_clock::time_point timePoint;
-            InternalMemoryType allocationType;
-            CacheOperationType operationType;
-            bool isSuccess;
-        };
-
-        static constexpr size_t maxServicedSize = 256 * MemoryConstants::megaByte;
-        static constexpr size_t minimalSizeToCheckUtilization = 4 * MemoryConstants::pageSize64k;
-        static constexpr double minimalAllocUtilization = 0.5;
-
-        SvmAllocationCache();
-
-        static bool sizeAllowed(size_t size) { return size <= SvmAllocationCache::maxServicedSize; }
-        UsmReuseInfo &getUsmReuseInfo(SvmAllocationData &svmData);
-        bool insert(size_t size, void *ptr, SvmAllocationData *svmData, CompletionCheckPolicy completionCheckPolicy);
-        static bool allocUtilizationAllows(size_t requestedSize, size_t reuseCandidateSize);
-        static bool alignmentAllows(void *ptr, size_t alignment);
-        bool isInUse(SvmCacheAllocationInfo &cacheAllocInfo);
-        bool isEmpty() override { return empty; };
-        void *get(size_t size, const UnifiedMemoryProperties &unifiedMemoryProperties);
-        void trim();
-        void trimOldAllocs(std::chrono::high_resolution_clock::time_point trimTimePoint, bool trimAll) override;
-        MemoryManager *getMemoryManager() const override { return memoryManager; }
-        void cleanup();
-        void logCacheOperation(const SvmAllocationCachePerfInfo &cachePerfEvent) const;
-
-        std::vector<SvmCacheAllocationInfo> allocations;
-
-        std::mutex mtx;
-        std::mutex trimMtx;
-        SVMAllocsManager *svmAllocsManager = nullptr;
-        MemoryManager *memoryManager = nullptr;
-        bool enablePerformanceLogging = false;
-        bool requireUpdatingAllocsForIndirectAccess = false;
-        bool usesSharedUsmReuseInfo = false;
-        size_t allocationSizeAlignment = 1u;
-        std::atomic_bool empty = true;
-    };
+    struct SvmCacheAllocationInfo;
+    struct SvmAllocationCache;
 
     using FreePolicyType = NEO::FreePolicyType;
 

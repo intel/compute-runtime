@@ -21,6 +21,7 @@
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/compression_selector.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/memory_manager/svm_allocation_cache.h"
 #include "shared/source/memory_manager/unified_memory_properties.h"
 #include "shared/source/memory_manager/unified_memory_reuse.h"
 #include "shared/source/memory_manager/unified_memory_reuse_cleaner.h"

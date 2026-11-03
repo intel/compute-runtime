@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/memory_manager/svm_allocation_cache.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_svm_manager.h"
 #include "shared/test/common/mocks/mock_usm_memory_reuse_cleaner.h"
