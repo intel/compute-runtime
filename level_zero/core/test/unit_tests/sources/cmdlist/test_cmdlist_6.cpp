@@ -4137,8 +4137,6 @@ HWTEST2_F(ContextGroupStateBaseAddressGlobalStatelessTest,
 HWTEST2_F(ContextGroupStateBaseAddressGlobalStatelessTest,
           givenHeaplessModeAndContextGroupEnabledWhenExecutingImmCommandListThenScratchControllerAndHeapAllocationFromPrimaryCsrIsUsed,
           IsHeaplessRequired) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
 
     HardwareInfo hwInfo = *defaultHwInfo;
     if (hwInfo.capabilityTable.defaultEngineType != aub_stream::EngineType::ENGINE_CCS) {

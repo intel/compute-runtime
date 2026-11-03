@@ -83,14 +83,7 @@ struct EnqueueFixtureXe3pCore : public ::testing::Test {
 
 using ProgramWalkerTestsXe3pCore = EnqueueFixtureXe3pCore;
 
-struct CommandQueueTestsXe3pCore : public EnqueueFixtureXe3pCore {
-    void SetUp() override {
-        debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
-        EnqueueFixtureXe3pCore::SetUp();
-    }
-
-    DebugManagerStateRestore restorer;
-};
+using CommandQueueTestsXe3pCore = EnqueueFixtureXe3pCore;
 
 XE3P_CORETEST_F(CommandQueueTestsXe3pCore, whenMultipleComputeCmdQueuesCreatedThenEveryQueueHasDifferentCsrAndOsContextAssigned) {
     auto &productHelper = this->clDevice->getDevice().getProductHelper();

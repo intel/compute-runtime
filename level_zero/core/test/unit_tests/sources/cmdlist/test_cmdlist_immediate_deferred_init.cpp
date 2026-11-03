@@ -112,12 +112,9 @@ TEST_F(ImmediateCmdListCreationTest, givenCsrProvidedWhenCreatingInternalImmedia
 
 struct ImmediateCmdListDeferredInitializationFixture : public ImmediateCmdListCreationFixture {
     void setUp() {
-        debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
         ImmediateCmdListCreationFixture::setUp();
         device->setFirstImmCmdlistCreated();
     }
-
-    DebugManagerStateRestore restorer;
 };
 
 using ImmediateCmdListDeferredInitializationTest = Test<ImmediateCmdListDeferredInitializationFixture>;

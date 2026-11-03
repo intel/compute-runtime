@@ -166,7 +166,6 @@ HWTEST2_F(PrintfHandlerTests, givenInternalBcsEnginePreferredAndDisallowedLocalM
     hwInfo.capabilityTable.blitterOperationsSupported = true;
 
     DebugManagerStateRestore restore;
-    debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
     debugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::cpuAccessDisallowed));
     debugManager.flags.EnableLocalMemory.set(1);
     debugManager.flags.PreferInternalBcsEngine.set(1);

@@ -2313,16 +2313,7 @@ HWTEST2_F(CommandListCreateTests, givenInOrderExecutionWhenDispatchingBarrierThe
     EXPECT_FALSE(ultCsr->latestFlushedBatchBuffer.hasStallingCmds);
 }
 
-struct CommandListCreateWithDedicatedInternalEngineTests : public CommandListCreateTests {
-    void SetUp() override {
-        debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
-        CommandListCreateTests::SetUp();
-    }
-
-    DebugManagerStateRestore restorer;
-};
-
-HWTEST2_F(CommandListCreateWithDedicatedInternalEngineTests, givenInOrderExecutionWhenDispatchingBarrierWithFlushAndWithoutDependenciesThenDontMarkAsStalling, IsAtLeastXeHpcCore) {
+HWTEST2_F(CommandListCreateTests, givenInOrderExecutionWhenDispatchingBarrierWithFlushAndWithoutDependenciesThenDontMarkAsStalling, IsAtLeastXeHpcCore) {
     bool useImmediateFlushTask = getHelper<L0GfxCoreHelper>().platformSupportsImmediateComputeFlushTask();
 
     DebugManagerStateRestore restore;

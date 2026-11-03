@@ -170,8 +170,6 @@ HWTEST2_F(GfxCoreHelperXe3pAndLaterTestsWithEnginesCheck, givenGroupContextWhenC
 }
 
 HWTEST2_F(GfxCoreHelperXe3pAndLaterTests, givenBcsDisabledWhenGetEnginesCalledThenDontCreateAnyBcs, IsAtLeastXe3pCore) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
     const size_t numEngines = 6;
 
     HardwareInfo hwInfo = *defaultHwInfo;

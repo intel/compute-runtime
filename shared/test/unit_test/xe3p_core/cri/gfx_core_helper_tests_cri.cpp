@@ -124,7 +124,6 @@ CRITEST_F(GfxCoreHelperTestsCri, givenContextGroupWhenQueryingEnginesThenLowPrio
     constexpr size_t numEngines = 7;
 
     DebugManagerStateRestore restore;
-    debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
     debugManager.flags.ContextGroupSize.set(4);
 
     HardwareInfo hwInfo = *defaultHwInfo;
@@ -281,7 +280,6 @@ struct GfxCoreHelperTestsCriWithEnginesCheck : public GfxCoreHelperTestWithEngin
 
 CRITEST_F(GfxCoreHelperTestsCriWithEnginesCheck, whenGetGpgpuEnginesThenReturnTwoCccsEnginesAndFourCcsEnginesAndEightLinkCopyEngines) {
     DebugManagerStateRestore restore;
-    debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
 
     const size_t numEnginesWithCccs = 18;
     const size_t numEnginesWithoutCccs = 17;

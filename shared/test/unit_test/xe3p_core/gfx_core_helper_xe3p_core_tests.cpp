@@ -128,8 +128,6 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, whenGetGpgpuEnginesThenReturnTwoCccs
 }
 
 XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCoreWithEnginesCheck, givenOneCcsEnabledWhenGetEnginesCalledThenCreateOnlyOneCcs) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.featureTable.ftrBcsInfo = maxNBitValue(9);
@@ -190,8 +188,6 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCoreWithEnginesCheck, givenOneCcsEnabledWh
 }
 
 XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCoreWithEnginesCheck, givenNotAllCopyEnginesWhenSettingEngineTableThenDontAddUnsupported) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.featureTable.ftrBcsInfo = maxNBitValue(9);
@@ -350,7 +346,6 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenContextGroupWhenQueryingEngines
     constexpr size_t numEngines = 9;
 
     DebugManagerStateRestore restore;
-    debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
     debugManager.flags.ContextGroupSize.set(4);
 
     HardwareInfo hwInfo = *defaultHwInfo;
@@ -400,7 +395,6 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenContextGroupWhenQueryingEngines
 
 XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenContextGroupWhenQueryingInternalCopyEngineThenCorrectEngineIsReturned) {
     DebugManagerStateRestore restore;
-    debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
     debugManager.flags.ContextGroupSize.set(4);
 
     HardwareInfo hwInfo = *defaultHwInfo;
