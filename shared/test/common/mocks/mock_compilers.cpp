@@ -263,6 +263,7 @@ MockIgcOclDeviceCtx::MockIgcOclDeviceCtx() {
     platform = new MockCIFPlatform;
     gtSystemInfo = new MockGTSystemInfo;
     igcFtrWa = new MockIgcFeaturesAndWorkarounds;
+    igcOptionsAndCapabilities = new MockIgcOptionsAndCapabilities;
 }
 
 MockIgcOclDeviceCtx::~MockIgcOclDeviceCtx() {
@@ -274,6 +275,9 @@ MockIgcOclDeviceCtx::~MockIgcOclDeviceCtx() {
     }
     if (igcFtrWa != nullptr) {
         igcFtrWa->Release();
+    }
+    if (igcOptionsAndCapabilities != nullptr) {
+        igcOptionsAndCapabilities->Release();
     }
 }
 
@@ -328,6 +332,11 @@ bool MockIgcOclDeviceCtx::GetSystemRoutine(IGC::SystemRoutineType::SystemRoutine
         stateSaveAreaHeaderInit->PushBackRawBytes(&mockSipStateSaveAreaHeaderV3, sizeof(mockSipStateSaveAreaHeaderV3));
     }
     return true;
+}
+
+void MockIgcOptionsAndCapabilities::GetCompilerSupportedSPIRVExtensionsYAML(CIF::Builtins::BufferSimple *outSupportedSPIRVExtensionsYAML) const {
+    const auto &yaml = NEO::igcDebugVars->spirvExtensionsYAMLToReturn;
+    outSupportedSPIRVExtensionsYAML->PushBackRawBytes(yaml.data(), yaml.size());
 }
 
 const char *MockIgcOclDeviceCtx::GetIGCRevision() {

@@ -20,6 +20,7 @@
 #include "shared/source/compiler_interface/default_cache_config.h"
 #include "shared/source/compiler_interface/intermediate_representations.h"
 #include "shared/source/compiler_interface/oclc_extensions.h"
+#include "shared/source/compiler_interface/spirv_capabilities_parser.h"
 #include "shared/source/compiler_interface/tokenized_string.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
@@ -219,6 +220,41 @@ std::vector<NameVersionPair> OfflineCompiler::getOpenCLCFeatures(ConstStringRef 
     return allSupportedFeatures;
 }
 
+int OfflineCompiler::getSpirvExtensions(ConstStringRef product, std::vector<NameVersionPair> &spirvExtensions, OclocArgHelper *helper) {
+    std::vector<std::string> args{"ocloc", "-device", product.str()};
+    int retVal = OCLOC_SUCCESS;
+    std::unique_ptr<OfflineCompiler> compiler{OfflineCompiler::create(args.size(), args, true, retVal, helper)};
+    if (nullptr == compiler) {
+        return retVal;
+    }
+    retVal = compiler->igcFacade->initialize(compiler->hwInfo);
+    if (OCLOC_SUCCESS != retVal) {
+        return retVal;
+    }
+
+    const auto yaml = compiler->igcFacade->getSpirvExtensionsYAML();
+    if (yaml.empty()) {
+        return OCLOC_SUCCESS;
+    }
+
+    std::vector<SpirvExtensionInfo> extensions;
+    std::string errReason;
+    std::string warning;
+    if (!SpirvCapabilitiesParser::parseSpirvExtensionsYAML(yaml, extensions, errReason, warning)) {
+        helper->printf("Error! Cannot parse SPIR-V extensions reported by IGC:\n%s", errReason.c_str());
+        return OCLOC_OUT_OF_HOST_MEMORY;
+    }
+    if (!warning.empty()) {
+        helper->printf("Warning! Issues found while parsing SPIR-V extensions reported by IGC:\n%s", warning.c_str());
+    }
+
+    spirvExtensions.reserve(extensions.size());
+    for (const auto &extension : extensions) {
+        spirvExtensions.emplace_back(extension.name, 0);
+    }
+    return OCLOC_SUCCESS;
+}
+
 std::vector<NameVersionPair> getCommonNameVersion(const std::vector<std::vector<NameVersionPair>> &perTarget) {
     std::vector<NameVersionPair> commonExtensionsVec;
     if (perTarget.size() == 1) {
@@ -271,6 +307,19 @@ std::vector<NameVersionPair> getCommonOpenCLCFeatures(std::vector<ConstStringRef
     }
 
     return getCommonNameVersion(perTarget);
+}
+
+int getCommonSpirvExtensions(std::vector<ConstStringRef> products, std::vector<NameVersionPair> &commonExtensions, OclocArgHelper *helper) {
+    std::vector<std::vector<NameVersionPair>> perTarget(products.size());
+    for (size_t i = 0; i < products.size(); ++i) {
+        auto retVal = OfflineCompiler::getSpirvExtensions(products[i], perTarget[i], helper);
+        if (OCLOC_SUCCESS != retVal) {
+            return retVal;
+        }
+    }
+
+    commonExtensions = getCommonNameVersion(perTarget);
+    return OCLOC_SUCCESS;
 }
 
 std::string formatNameVersionString(std::vector<NameVersionPair> extensions, bool needVersions) {
@@ -335,6 +384,8 @@ int OfflineCompiler::query(size_t numArgs, const std::vector<std::string> &allAr
             queries.push_back(Queries::QueryType::oclDeviceOpenCLCAllVersions);
         } else if (Queries::queryOCLDeviceOpenCLCFeatures == *argIt) {
             queries.push_back(Queries::QueryType::oclDeviceOpenCLCFeatures);
+        } else if (Queries::querySpirvExtensions == *argIt) {
+            queries.push_back(Queries::QueryType::spirvExtensions);
         } else if (Queries::querySupportedDevices == *argIt) {
             queries.push_back(Queries::QueryType::supportedDevices);
             if (argIt + 1 != allArgs.end()) {
@@ -414,6 +465,16 @@ int OfflineCompiler::query(size_t numArgs, const std::vector<std::string> &allAr
             auto commonFeaturesString = formatNameVersionString(commonFeaturesVec, true);
             helper->saveOutput(Queries::queryOCLDeviceOpenCLCFeatures.str(), commonFeaturesVec.data(), commonFeaturesVec.size() * sizeof(NameVersionPair));
             helper->printf("%s\n", commonFeaturesString.c_str());
+        } break;
+        case Queries::QueryType::spirvExtensions: {
+            std::vector<NameVersionPair> commonExtensionsVec;
+            auto retVal = getCommonSpirvExtensions(targetProducts, commonExtensionsVec, helper);
+            if (OCLOC_SUCCESS != retVal) {
+                return retVal;
+            }
+            auto commonExtString = formatNameVersionString(commonExtensionsVec, false);
+            helper->saveOutput(Queries::querySpirvExtensions.str(), commonExtString.c_str(), commonExtString.size());
+            helper->printf("%s\n", commonExtString.c_str());
         } break;
         case Queries::QueryType::supportedDevices: {
             querySupportedDevices(supportedDevicesMode, helper);

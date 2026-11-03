@@ -11,6 +11,7 @@
 #include "shared/offline_compiler/source/ocloc_fatbinary.h"
 #include "shared/offline_compiler/source/ocloc_interface.h"
 #include "shared/offline_compiler/source/ocloc_supported_devices_helper.h"
+#include "shared/offline_compiler/source/queries.h"
 #include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/compiler_interface/intermediate_representations.h"
 #include "shared/source/compiler_interface/oclc_extensions.h"
@@ -5515,6 +5516,124 @@ TEST(OclocQuery, WhenQueryingDeviceOpenCFeaturesThenFeaturesStringWithVersionsIs
         }
     }
     ASSERT_NE(nullptr, found);
+}
+
+TEST(OclocQuery, GivenIgcReportingSpirvExtensionsWhenQueryingSpirvExtensionsThenExtensionNamesAreReturned) {
+    MockOclocArgHelper::FilesMap vfs;
+    MockOclocArgHelper argHelper{vfs};
+    argHelper.messagePrinter.setSuppressMessages(true);
+
+    MockCompilerDebugVars igcDebugVars{gEnvironment->igcDebugVars};
+    igcDebugVars.spirvExtensionsYAMLToReturn = R"(---
+- name:            SPV_EXT_optnone
+  spec_url:        'https://github.khronos.org/SPIRV-Registry/extensions/EXT/SPV_EXT_optnone.html'
+  supported_capabilities:
+    - id:              6094
+      name:            OptNoneEXT
+- name:            SPV_INTEL_2d_block_io
+  spec_url:        'https://github.com/KhronosGroup/SPIRV-Registry/blob/main/extensions/INTEL/SPV_INTEL_2d_block_io.asciidoc'
+  supported_capabilities:
+    - id:              6228
+      name:            Subgroup2DBlockIOINTEL
+)";
+    NEO::setIgcDebugVars(igcDebugVars);
+
+    std::vector<std::string> argv = {"ocloc", "query", Queries::querySpirvExtensions.str(), "-device", gEnvironment->devicePrefix};
+    int retVal = OfflineCompiler::query(argv.size(), argv, &argHelper);
+    NEO::setIgcDebugVars(gEnvironment->igcDebugVars);
+    EXPECT_EQ(OCLOC_SUCCESS, retVal);
+
+    const std::string expectedExtensions = "SPV_EXT_optnone SPV_INTEL_2d_block_io";
+    EXPECT_EQ(expectedExtensions + "\n", argHelper.getPrinterRef().getLog().str());
+    auto savedOutput = vfs.find(Queries::querySpirvExtensions.str());
+    ASSERT_NE(vfs.end(), savedOutput);
+    EXPECT_EQ(expectedExtensions, savedOutput->second);
+}
+
+TEST(OclocQuery, GivenIgcNotReportingSpirvExtensionsWhenQueryingSpirvExtensionsThenEmptyListIsReturned) {
+    MockOclocArgHelper::FilesMap vfs;
+    MockOclocArgHelper argHelper{vfs};
+    argHelper.messagePrinter.setSuppressMessages(true);
+
+    std::vector<std::string> argv = {"ocloc", "query", Queries::querySpirvExtensions.str(), "-device", gEnvironment->devicePrefix};
+    int retVal = OfflineCompiler::query(argv.size(), argv, &argHelper);
+    EXPECT_EQ(OCLOC_SUCCESS, retVal);
+
+    EXPECT_EQ("\n", argHelper.getPrinterRef().getLog().str());
+    auto savedOutput = vfs.find(Queries::querySpirvExtensions.str());
+    ASSERT_NE(vfs.end(), savedOutput);
+    EXPECT_TRUE(savedOutput->second.empty());
+}
+
+TEST(OclocQuery, GivenIgcInitializationFailureWhenQueryingSpirvExtensionsThenErrorIsReturned) {
+    MockOclocArgHelper::FilesMap vfs;
+    MockOclocArgHelper argHelper{vfs};
+    argHelper.messagePrinter.setSuppressMessages(true);
+
+    MockCompilerDebugVars igcDebugVars{gEnvironment->igcDebugVars};
+    igcDebugVars.failCreatePlatformInterface = true;
+    NEO::setIgcDebugVars(igcDebugVars);
+
+    std::vector<std::string> argv = {"ocloc", "query", Queries::querySpirvExtensions.str(), "-device", gEnvironment->devicePrefix};
+    int retVal = OfflineCompiler::query(argv.size(), argv, &argHelper);
+    NEO::setIgcDebugVars(gEnvironment->igcDebugVars);
+    EXPECT_EQ(OCLOC_OUT_OF_HOST_MEMORY, retVal);
+
+    EXPECT_TRUE(hasSubstr(argHelper.getPrinterRef().getLog().str(), "Error! IGC device context has not been properly created!"));
+    EXPECT_FALSE(vfs.contains(Queries::querySpirvExtensions.str()));
+}
+
+TEST(OclocQuery, GivenIgcReportingUnparsableSpirvExtensionsWhenQueryingSpirvExtensionsThenErrorIsReturned) {
+    MockOclocArgHelper::FilesMap vfs;
+    MockOclocArgHelper argHelper{vfs};
+    argHelper.messagePrinter.setSuppressMessages(true);
+
+    MockCompilerDebugVars igcDebugVars{gEnvironment->igcDebugVars};
+    igcDebugVars.spirvExtensionsYAMLToReturn = "this is not valid yaml: [[[";
+    NEO::setIgcDebugVars(igcDebugVars);
+
+    std::vector<std::string> argv = {"ocloc", "query", Queries::querySpirvExtensions.str(), "-device", gEnvironment->devicePrefix};
+    int retVal = OfflineCompiler::query(argv.size(), argv, &argHelper);
+    NEO::setIgcDebugVars(gEnvironment->igcDebugVars);
+    EXPECT_EQ(OCLOC_OUT_OF_HOST_MEMORY, retVal);
+
+    EXPECT_TRUE(hasSubstr(argHelper.getPrinterRef().getLog().str(), "Error! Cannot parse SPIR-V extensions reported by IGC:\nNEO::Yaml : "));
+    EXPECT_FALSE(vfs.contains(Queries::querySpirvExtensions.str()));
+}
+
+TEST(OclocQuery, GivenIgcSpirvExtensionsWithParserWarningWhenQueryingSpirvExtensionsThenWarningIsPrintedAndExtensionsAreReturned) {
+    MockOclocArgHelper::FilesMap vfs;
+    MockOclocArgHelper argHelper{vfs};
+    argHelper.messagePrinter.setSuppressMessages(true);
+
+    MockCompilerDebugVars igcDebugVars{gEnvironment->igcDebugVars};
+    igcDebugVars.spirvExtensionsYAMLToReturn = R"(---
+- name:            SPV_INTEL_2d_block_io
+  spec_url:        123
+)";
+    NEO::setIgcDebugVars(igcDebugVars);
+
+    std::vector<std::string> argv = {"ocloc", "query", Queries::querySpirvExtensions.str(), "-device", gEnvironment->devicePrefix};
+    int retVal = OfflineCompiler::query(argv.size(), argv, &argHelper);
+    NEO::setIgcDebugVars(gEnvironment->igcDebugVars);
+    EXPECT_EQ(OCLOC_SUCCESS, retVal);
+
+    EXPECT_TRUE(hasSubstr(argHelper.getPrinterRef().getLog().str(), "Warning! Issues found while parsing SPIR-V extensions reported by IGC:\nWarning: Failed to read 'url' field\n"));
+    auto savedOutput = vfs.find(Queries::querySpirvExtensions.str());
+    ASSERT_NE(vfs.end(), savedOutput);
+    EXPECT_EQ("SPV_INTEL_2d_block_io", savedOutput->second);
+}
+
+TEST(OclocQuery, GivenUnknownDeviceWhenQueryingSpirvExtensionsThenErrorIsReturned) {
+    MockOclocArgHelper::FilesMap vfs;
+    MockOclocArgHelper argHelper{vfs};
+    argHelper.messagePrinter.setSuppressMessages(true);
+
+    std::vector<std::string> argv = {"ocloc", "query", Queries::querySpirvExtensions.str(), "-device", "unknown_device"};
+    int retVal = OfflineCompiler::query(argv.size(), argv, &argHelper);
+    EXPECT_EQ(OCLOC_INVALID_DEVICE, retVal);
+
+    EXPECT_FALSE(vfs.contains(Queries::querySpirvExtensions.str()));
 }
 
 TEST(OclocOptionsTests, givenInvalidOclocOptionsFileWhenCmdlineIsPrintedThenTheyArePrinted) {

@@ -71,6 +71,7 @@ struct MockCompilerDebugVars {
 
     std::string buildLogToReturn;
     std::string translationContextCreationError;
+    std::string spirvExtensionsYAMLToReturn;
 };
 
 struct MockCompilerEnableGuard {
@@ -157,6 +158,10 @@ struct MockIgcFeaturesAndWorkarounds : MockCIF<NEO::IgcFeaturesAndWorkaroundsTag
     };
 
     uint32_t maxOCLParamSize = 0;
+};
+
+struct MockIgcOptionsAndCapabilities : MockCIF<IGC::IgcOptionsAndCapabilitiesLatest> {
+    void GetCompilerSupportedSPIRVExtensionsYAML(CIF::Builtins::BufferSimple *outSupportedSPIRVExtensionsYAML) const override;
 };
 
 struct MockIgcOclTranslationCtx : MockCIF<NEO::IgcOclTranslationCtxTag> {
@@ -255,6 +260,10 @@ struct MockIgcOclDeviceCtx : MockCIF<NEO::IgcOclDeviceCtxTag> {
         return igcFtrWa;
     }
 
+    IGC::IgcOptionsAndCapabilitiesBase *GetIgcOptionsAndCapabilitiesHandleImpl(CIF::Version_t ver) override {
+        return igcOptionsAndCapabilities;
+    }
+
     IGC::IgcOclTranslationCtxBase *CreateTranslationCtxImpl(CIF::Version_t ver,
                                                             IGC::CodeType::CodeType_t inType,
                                                             IGC::CodeType::CodeType_t outType) override;
@@ -276,6 +285,7 @@ struct MockIgcOclDeviceCtx : MockCIF<NEO::IgcOclDeviceCtxTag> {
     MockCIFPlatform *platform = nullptr;
     MockGTSystemInfo *gtSystemInfo = nullptr;
     MockIgcFeaturesAndWorkarounds *igcFtrWa = nullptr;
+    MockIgcOptionsAndCapabilities *igcOptionsAndCapabilities = nullptr;
     MockCompilerDebugVars debugVars;
 
     using TranslationOpT = std::pair<IGC::CodeType::CodeType_t, IGC::CodeType::CodeType_t>;

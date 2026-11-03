@@ -11,6 +11,7 @@
 #include "shared/offline_compiler/source/ocloc_arg_helper.h"
 #include "shared/source/compiler_interface/igc_platform_helper.h"
 #include "shared/source/compiler_interface/os_compiler_cache_helper.h"
+#include "shared/source/compiler_interface/spirv_capabilities_parser.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/debug_helpers.h"
@@ -131,6 +132,10 @@ const char *OclocIgcFacade::getIgcRevision() {
 
 const std::string &OclocIgcFacade::getIgcRegKeys() {
     return igcRegKeys;
+}
+
+std::string OclocIgcFacade::getSpirvExtensionsYAML() {
+    return SpirvCapabilitiesParser::getSpirvExtensionsYAMLFromDeviceCtx(igcDeviceCtx.get(), igcMain.get());
 }
 
 size_t OclocIgcFacade::getIgcLibSize() {

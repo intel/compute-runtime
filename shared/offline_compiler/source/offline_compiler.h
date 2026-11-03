@@ -80,6 +80,7 @@ class OfflineCompiler : NEO::NonCopyableAndNonMovableClass {
     static std::vector<NameVersionPair> getExtensions(ConstStringRef product, bool needVersions, OclocArgHelper *helper);
     static std::vector<NameVersionPair> getOpenCLCVersions(ConstStringRef product, OclocArgHelper *helper);
     static std::vector<NameVersionPair> getOpenCLCFeatures(ConstStringRef product, OclocArgHelper *helper);
+    static int getSpirvExtensions(ConstStringRef product, std::vector<NameVersionPair> &spirvExtensions, OclocArgHelper *helper);
     static int query(size_t numArgs, const std::vector<std::string> &allArgs, OclocArgHelper *helper);
     static int queryAcronymIds(size_t numArgs, const std::vector<std::string> &allArgs, OclocArgHelper *helper);
     static int querySupportedDevices(Ocloc::SupportedDevicesMode mode, OclocArgHelper *helper);
@@ -111,6 +112,7 @@ Supported query options:
   CL_DEVICE_PROFILE                 ; OpenCL device profile supported by device_filter
   CL_DEVICE_OPENCL_C_ALL_VERSIONS   ; OpenCL C versions supported by device_filter
   CL_DEVICE_OPENCL_C_FEATURES       ; OpenCL C features supported by device_filter
+  SPIRV_EXTENSIONS                  ; list of SPIR-V extensions supported by the compiler for device_filter
   SUPPORTED_DEVICES                 ; Generates a YAML file with information about supported devices
 
 SUPPORTED_DEVICES option:
@@ -133,6 +135,7 @@ Examples:
   ocloc query OCL_DRIVER_VERSION
   ocloc query CL_DEVICE_EXTENSIONS -device tgllp
   ocloc query CL_DEVICE_OPENCL_C_ALL_VERSIONS -device "*"
+  ocloc query SPIRV_EXTENSIONS -device bmg
 )OCLOC_HELP";
 
     static constexpr ConstStringRef idsHelp = R"OCLOC_HELP(

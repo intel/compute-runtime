@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,6 +22,7 @@ enum class QueryType {
     oclDeviceProfile,
     oclDeviceOpenCLCAllVersions,
     oclDeviceOpenCLCFeatures,
+    spirvExtensions,
     supportedDevices
 };
 
@@ -33,6 +34,7 @@ inline constexpr ConstStringRef queryOCLDeviceExtensionsWithVersion = "CL_DEVICE
 inline constexpr ConstStringRef queryOCLDeviceProfile = "CL_DEVICE_PROFILE";
 inline constexpr ConstStringRef queryOCLDeviceOpenCLCAllVersions = "CL_DEVICE_OPENCL_C_ALL_VERSIONS";
 inline constexpr ConstStringRef queryOCLDeviceOpenCLCFeatures = "CL_DEVICE_OPENCL_C_FEATURES";
+inline constexpr ConstStringRef querySpirvExtensions = "SPIRV_EXTENSIONS";
 inline constexpr ConstStringRef querySupportedDevices = "SUPPORTED_DEVICES";
 }; // namespace Queries
 } // namespace NEO
