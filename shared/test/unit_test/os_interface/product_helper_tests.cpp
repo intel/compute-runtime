@@ -1296,6 +1296,10 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskingIsLEOSupportedThenFalse
     EXPECT_FALSE(productHelper->isLEOSupported());
 }
 
+HWTEST_F(ProductHelperTest, givenDefaultSettingsWhenAskingIsPostSyncRequiredForAllWalkersThenFalseReturned) {
+    EXPECT_FALSE(productHelper->isPostSyncRequiredForAllWalkers());
+}
+
 HWTEST2_F(ProductHelperTest, givenIsaSizeExceedingDefaultLimitWhenGettingIsaPrefetchSizeThenDefaultLimitIsReturned, IsAtMostXe3Core) {
     constexpr uint32_t isaSize = 4 * MemoryConstants::kiloByte;
 

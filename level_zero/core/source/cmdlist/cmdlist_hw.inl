@@ -342,7 +342,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     this->isPostImageWriteFlushRequired = hwInfo.caps.postImageWriteFlushRequired;
     this->isPreImageReadFlushRequired = hwInfo.caps.preImageReadFlushRequired;
     this->shouldRegisterEnqueuedWalkerWithProfiling = this->device->getNEODevice()->getProductHelper().shouldRegisterEnqueuedWalkerWithProfiling();
-    this->isWalkerPostSyncSkipEnabled = gfxCoreHelper.isWalkerPostSyncSkipEnabled(this->dcFlushSupport);
+    this->postSyncRequiredForAllWalkers = productHelper.isPostSyncRequiredForAllWalkers();
+    if (this->postSyncRequiredForAllWalkers) {
+        neoDevice->getRootDeviceEnvironmentRef().initDummyAllocation();
+    }
+    this->isWalkerPostSyncSkipEnabled = gfxCoreHelper.isWalkerPostSyncSkipEnabled(this->dcFlushSupport) && !this->postSyncRequiredForAllWalkers;
     this->statelessBuiltinsEnabled = compilerProductHelper.isForceToStatelessRequired();
     this->defaultBuiltInMode = compilerProductHelper.getDefaultBuiltInAddressingMode(
         NEO::ApiSpecificConfig::getBindlessMode(*neoDevice));
@@ -397,7 +401,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
         commandContainer.systolicModeSupportRef() = this->systolicModeSupport;
     }
 
-    ze_result_t returnType = (returnValue == NEO::CommandContainer::ErrorCode::outOfDeviceMemory)
+    const bool dummyPostSyncAllocationMissing = this->postSyncRequiredForAllWalkers && (neoDevice->getRootDeviceEnvironment().getDummyAllocation() == nullptr);
+    ze_result_t returnType = (returnValue == NEO::CommandContainer::ErrorCode::outOfDeviceMemory || dummyPostSyncAllocationMissing)
                                  ? ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY
                                  : ZE_RESULT_SUCCESS;
     if (returnType == ZE_RESULT_SUCCESS) {

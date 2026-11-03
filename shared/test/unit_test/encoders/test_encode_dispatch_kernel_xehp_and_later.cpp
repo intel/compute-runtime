@@ -1729,6 +1729,57 @@ HWTEST2_F(CommandEncodeStatesTest, givenForceComputeWalkerPostSyncFlushWithWrite
     EXPECT_EQ(expectedData, postSync.getImmediateData());
 }
 
+HWTEST2_F(CommandEncodeStatesTest, givenDummyPostSyncAddressAndNoEventWhenEncodeIsCalledThenPostSyncWritesImmediateDataToDummyAddress, IsAtLeastXeCore) {
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    using PostSyncType = decltype(FamilyType::template getPostSyncType<DefaultWalkerType>());
+    using OPERATION = typename PostSyncType::OPERATION;
+
+    uint32_t dims[] = {1, 1, 1};
+    std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, false);
+    dispatchArgs.postSyncArgs.dummyPostSyncAddress = 0x1234000;
+
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
+
+    GenCmdList commands;
+    CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
+    auto it = find<DefaultWalkerType *>(commands.begin(), commands.end());
+    ASSERT_NE(it, commands.end());
+
+    auto &postSync = genCmdCast<DefaultWalkerType *>(*it)->getPostSync();
+    EXPECT_EQ(OPERATION::OPERATION_WRITE_IMMEDIATE_DATA, postSync.getOperation());
+    EXPECT_EQ(0x1234000u, postSync.getDestinationAddress());
+    EXPECT_EQ(0u, postSync.getImmediateData());
+    EXPECT_TRUE(postSync.getDataportPipelineFlush());
+    EXPECT_TRUE(postSync.getDataportSubsliceCacheFlush());
+}
+
+HWTEST2_F(CommandEncodeStatesTest, givenDummyPostSyncAddressAndRegularEventWhenEncodeIsCalledThenPostSyncWritesToEventAddress, IsAtLeastXeCore) {
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    using PostSyncType = decltype(FamilyType::template getPostSyncType<DefaultWalkerType>());
+    using OPERATION = typename PostSyncType::OPERATION;
+
+    uint32_t dims[] = {1, 1, 1};
+    std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, false);
+    dispatchArgs.postSyncArgs.dummyPostSyncAddress = 0x1234000;
+    dispatchArgs.postSyncArgs.eventAddress = 0x5678000;
+    dispatchArgs.postSyncArgs.eventPacketsCount = 1;
+    dispatchArgs.postSyncArgs.postSyncImmValue = 1;
+
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
+
+    GenCmdList commands;
+    CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
+    auto it = find<DefaultWalkerType *>(commands.begin(), commands.end());
+    ASSERT_NE(it, commands.end());
+
+    auto &postSync = genCmdCast<DefaultWalkerType *>(*it)->getPostSync();
+    EXPECT_EQ(OPERATION::OPERATION_WRITE_IMMEDIATE_DATA, postSync.getOperation());
+    EXPECT_EQ(0x5678000u, postSync.getDestinationAddress());
+    EXPECT_EQ(1u, postSync.getImmediateData());
+}
+
 HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenRequestingCommandViewThenDoNotConsumeCmdBufferAndHeapSpace, IsAtLeastXeCore) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     uint32_t dims[] = {1, 1, 1};

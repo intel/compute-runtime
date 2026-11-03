@@ -907,6 +907,11 @@ bool ProductHelperHw<gfxProduct>::useAdditionalBlitProperties() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isPostSyncRequiredForAllWalkers() const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isDualStreamCopyOffloadForRegularCmdListSupported() const {
     return (debugManager.flags.OverrideDualStreamCopyOffloadForRegularSupport.get() == 1);
 }

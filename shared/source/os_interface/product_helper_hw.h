@@ -166,6 +166,7 @@ class ProductHelperHw : public ProductHelper {
     void setRenderCompressedFlags(HardwareInfo &hwInfo) const override;
     bool isCompressionForbidden(const HardwareInfo &hwInfo) const override;
     bool useAdditionalBlitProperties() const override;
+    bool isPostSyncRequiredForAllWalkers() const override;
     bool isDualStreamCopyOffloadForRegularCmdListSupported() const override;
     bool isGraphPatchPreambleBarrierSupported() const override;
     bool useAdditionalBlitProperties(const BlitProperties &blitProperties) const override;

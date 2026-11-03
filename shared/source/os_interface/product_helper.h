@@ -236,6 +236,7 @@ class ProductHelper {
     virtual void setRenderCompressedFlags(HardwareInfo &hwInfo) const = 0;
     virtual bool isCompressionForbidden(const HardwareInfo &hwInfo) const = 0;
     virtual bool useAdditionalBlitProperties() const = 0;
+    virtual bool isPostSyncRequiredForAllWalkers() const = 0;
     virtual bool isDualStreamCopyOffloadForRegularCmdListSupported() const = 0;
     virtual bool isGraphPatchPreambleBarrierSupported() const = 0;
     virtual bool useAdditionalBlitProperties(const BlitProperties &blitProperties) const = 0;

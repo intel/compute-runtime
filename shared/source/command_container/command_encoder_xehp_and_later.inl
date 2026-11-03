@@ -428,6 +428,11 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         EncodePostSync<Family>::setupPostSyncForInOrderExec(walkerCmd, args.postSyncArgs);
     } else if (args.postSyncArgs.isRegularEvent()) {
         EncodePostSync<Family>::setupPostSyncForRegularEvent(walkerCmd, args.postSyncArgs);
+    } else if (args.postSyncArgs.dummyPostSyncAddress != 0) {
+        using POSTSYNC_DATA = decltype(Family::template getPostSyncType<WalkerType>());
+        auto mocs = EncodePostSync<Family>::getPostSyncMocs(rootDeviceEnvironment, args.postSyncArgs.dcFlushEnable);
+        EncodePostSync<Family>::setPostSyncData(EncodePostSync<Family>::getPostSync(walkerCmd, 0), POSTSYNC_DATA::OPERATION_WRITE_IMMEDIATE_DATA,
+                                                args.postSyncArgs.dummyPostSyncAddress, 0, 0, mocs, false, false);
     } else {
         EncodeDispatchKernel<Family>::forceComputeWalkerPostSyncFlushWithWrite(walkerCmd);
     }

@@ -428,6 +428,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     setAdditionalDispatchKernelArgsFromLaunchParams(dispatchKernelArgs, launchParams);
     setAdditionalDispatchKernelArgsFromKernel(dispatchKernelArgs, kernel);
 
+    if (this->postSyncRequiredForAllWalkers) {
+        auto dummyAllocation = neoDevice->getRootDeviceEnvironment().getDummyAllocation();
+        dispatchKernelArgs.postSyncArgs.dummyPostSyncAddress = dummyAllocation->getGpuAddress();
+        commandContainer.addToResidencyContainer(dummyAllocation);
+    }
+
     if (dispatchPerfCounters) {
         appendPerfCountersCommands(*perfCounters, *perfCounterNode, true);
     }

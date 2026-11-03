@@ -585,6 +585,7 @@ struct CommandListCoreFamily : public CommandList {
     bool latestFlushIsDualCopyOffload = false;
     bool implicitDependencyOnPreviousCsrPending = false;
     bool isWalkerPostSyncSkipEnabled = false;
+    bool postSyncRequiredForAllWalkers = false;
 };
 
 } // namespace L0
