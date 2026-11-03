@@ -1247,6 +1247,79 @@ TEST_F(DirectSubmissionIdleDetectionWithContextGroupTests, whenOtherCsrInGroupHa
     EXPECT_FALSE(controller->isDirectSubmissionIdle(csr1.get(), lock));
 }
 
+TEST_F(DirectSubmissionIdleDetectionWithContextGroupTests, givenNewSubmissionOnMainCsrWhileOtherMembersAreCheckedWhenCheckingDirectSubmissionIdleThenMainCsrIsRecheckedAndReturnsFalse) {
+    struct SubmittingToMainCsrDuringTryLockCsr : public MockContextGroupIdleDetectionCsr {
+        using MockContextGroupIdleDetectionCsr::MockContextGroupIdleDetectionCsr;
+        std::unique_lock<CommandStreamReceiver::MutexType> tryObtainUniqueOwnership() override {
+            if (mainCsr) {
+                mainCsr->taskCount++;
+            }
+            return MockContextGroupIdleDetectionCsr::tryObtainUniqueOwnership();
+        }
+        MockContextGroupIdleDetectionCsr *mainCsr = nullptr;
+    };
+
+    auto mainCsr = createAndRegisterCsr(123, false);
+    mainCsr->latestFlushedTaskCount = 1;
+    mainCsr->taskCount = 1;
+
+    DeviceBitfield deviceBitfield(1);
+    SubmittingToMainCsrDuringTryLockCsr peerCsr(executionEnvironment, 0, deviceBitfield);
+    auto peerOsContext = std::unique_ptr<OsContext>(OsContext::create(nullptr, 0, static_cast<uint32_t>(registeredCsrs.size()),
+                                                                      EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular},
+                                                                                                                   PreemptionMode::ThreadGroup, deviceBitfield)));
+    peerOsContext->setContextGroupCount(8);
+    peerCsr.setupContext(*peerOsContext);
+    peerCsr.setContextGroupId(123);
+    peerCsr.latestFlushedTaskCount = 1;
+    peerCsr.taskCount = 1;
+    controller->registerDirectSubmission(&peerCsr);
+
+    controller->notifyNewSubmission(mainCsr.get());
+    controller->notifyNewSubmission(&peerCsr);
+
+    {
+        auto lock = mainCsr->obtainUniqueOwnership();
+        EXPECT_TRUE(controller->isDirectSubmissionIdle(mainCsr.get(), lock));
+        EXPECT_TRUE(lock.owns_lock());
+
+        peerCsr.mainCsr = mainCsr.get();
+        EXPECT_FALSE(controller->isDirectSubmissionIdle(mainCsr.get(), lock));
+        EXPECT_TRUE(lock.owns_lock());
+        EXPECT_EQ(2u, peerCsr.tryObtainUniqueOwnershipCalled);
+    }
+
+    controller->unregisterDirectSubmission(&peerCsr);
+}
+
+TEST_F(DirectSubmissionIdleDetectionWithContextGroupTests, givenBusyActiveCsrsOutsideOfContextGroupWhenCheckingDirectSubmissionIdleThenOnlyMembersOfSameContextGroupAreChecked) {
+    auto csr1 = createAndRegisterCsr(77, false);
+    auto csrInOtherGroup = createAndRegisterCsr(88, true);
+
+    DeviceBitfield deviceBitfield(1);
+    MockContextGroupIdleDetectionCsr csrWithoutGroup(executionEnvironment, 0, deviceBitfield);
+    auto osContextWithoutGroup = std::unique_ptr<OsContext>(OsContext::create(nullptr, 0, 0,
+                                                                              EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular},
+                                                                                                                           PreemptionMode::ThreadGroup, deviceBitfield)));
+    csrWithoutGroup.setupContext(*osContextWithoutGroup);
+    csrWithoutGroup.setBusy(true);
+    controller->registerDirectSubmission(&csrWithoutGroup);
+
+    csr1->latestFlushedTaskCount = 1;
+    csr1->taskCount = 1;
+
+    controller->notifyNewSubmission(csr1.get());
+    controller->notifyNewSubmission(csrInOtherGroup.get());
+    controller->notifyNewSubmission(&csrWithoutGroup);
+
+    {
+        std::unique_lock<std::recursive_mutex> lock(csr1->getMutex());
+        EXPECT_TRUE(controller->isDirectSubmissionIdle(csr1.get(), lock));
+    }
+
+    controller->unregisterDirectSubmission(&csrWithoutGroup);
+}
+
 TEST_F(DirectSubmissionIdleDetectionWithContextGroupTests, whenContextGroupIdleDetectionDisabledThenOnlySelfIsChecked) {
     controller->isCsrsContextGroupIdleDetectionEnabled = false;
 
@@ -1374,6 +1447,101 @@ TEST_F(DirectSubmissionIdleDetectionWithContextGroupTests, givenIdleContextGroup
     EXPECT_TRUE(controller->directSubmissions[csr2.get()].isStopped);
     EXPECT_EQ(1u, csr1->stopDirectSubmissionCalledTimes);
     EXPECT_EQ(1u, csr2->stopDirectSubmissionCalledTimes);
+}
+
+TEST_F(DirectSubmissionIdleDetectionWithContextGroupTests, givenAdvancingTaskCountsSumOfContextGroupWhenCheckingNewSubmissionsThenIdleGroupMemberIsNotLockedNorStoppedUntilSumIsStable) {
+    auto csr1 = createAndRegisterCsr(123, false);
+    auto csr2 = createAndRegisterCsr(123, false);
+    csr1->taskCount.store(1u);
+    csr1->latestFlushedTaskCount.store(1u);
+    csr2->taskCount.store(1u);
+    csr2->latestFlushedTaskCount.store(1u);
+
+    controller->timeoutElapsedReturnValue.store(TimeoutElapsedMode::fullyElapsed);
+    controller->contextGroupTimeout = std::chrono::microseconds{0};
+    controller->cpuTimestamp = SteadyClock::time_point{};
+    controller->notifyNewSubmission(csr1.get());
+    controller->notifyNewSubmission(csr2.get());
+    controller->checkNewSubmissions();
+
+    for (TaskCountType taskCount = 2u; taskCount < 5u; taskCount++) {
+        controller->cpuTimestamp += controller->timeout;
+        csr2->taskCount.store(taskCount);
+        csr2->latestFlushedTaskCount.store(taskCount);
+        controller->checkNewSubmissions();
+
+        EXPECT_FALSE(controller->directSubmissions[csr1.get()].isStopped);
+        EXPECT_FALSE(controller->directSubmissions[csr1.get()].idleSince.has_value());
+        EXPECT_EQ(0u, csr1->obtainUniqueOwnershipCalledTimes);
+        EXPECT_EQ(0u, csr2->obtainUniqueOwnershipCalledTimes);
+        EXPECT_EQ(0u, csr1->tryObtainUniqueOwnershipCalled);
+        EXPECT_EQ(0u, csr2->tryObtainUniqueOwnershipCalled);
+    }
+
+    controller->cpuTimestamp += controller->timeout;
+    controller->checkNewSubmissions();
+
+    EXPECT_FALSE(controller->directSubmissions[csr1.get()].isStopped);
+    EXPECT_TRUE(controller->directSubmissions[csr1.get()].idleSince.has_value());
+    EXPECT_EQ(1u, csr1->obtainUniqueOwnershipCalledTimes);
+    EXPECT_EQ(1u, csr2->obtainUniqueOwnershipCalledTimes);
+
+    controller->cpuTimestamp += controller->timeout;
+    controller->checkNewSubmissions();
+
+    EXPECT_TRUE(controller->directSubmissions[csr1.get()].isStopped);
+    EXPECT_TRUE(controller->directSubmissions[csr2.get()].isStopped);
+    EXPECT_EQ(1u, csr1->stopDirectSubmissionCalledTimes);
+    EXPECT_EQ(1u, csr2->stopDirectSubmissionCalledTimes);
+}
+
+TEST_F(DirectSubmissionIdleDetectionWithContextGroupTests, givenIdleDetectionDisabledAndAdvancingTaskCountsSumOfContextGroupWhenCheckingNewSubmissionsThenIdleGroupMemberIsStoppedAfterTimeout) {
+    debugManager.flags.DirectSubmissionControllerIdleDetection.set(0);
+    controller = std::make_unique<DirectSubmissionControllerMock>();
+
+    auto csr1 = createAndRegisterCsr(123, false);
+    auto csr2 = createAndRegisterCsr(123, false);
+    csr1->taskCount.store(1u);
+    csr2->taskCount.store(1u);
+
+    controller->timeoutElapsedReturnValue.store(TimeoutElapsedMode::fullyElapsed);
+    controller->cpuTimestamp = SteadyClock::time_point{};
+    controller->notifyNewSubmission(csr1.get());
+    controller->notifyNewSubmission(csr2.get());
+    controller->checkNewSubmissions();
+
+    controller->cpuTimestamp += controller->timeout;
+    csr2->taskCount.store(2u);
+    controller->checkNewSubmissions();
+
+    EXPECT_TRUE(controller->directSubmissions[csr1.get()].isStopped);
+    EXPECT_EQ(1u, csr1->stopDirectSubmissionCalledTimes);
+    EXPECT_FALSE(controller->directSubmissions[csr2.get()].isStopped);
+    EXPECT_EQ(0u, csr2->stopDirectSubmissionCalledTimes);
+}
+
+TEST_F(DirectSubmissionIdleDetectionWithContextGroupTests, givenTaskCountAdvanceOnInactiveContextGroupMemberWhenCheckingNewSubmissionsThenGroupIsTreatedAsProgressingWithoutRefreshingGroupActivityTime) {
+    auto activeCsr = createAndRegisterCsr(5, false);
+    auto inactiveCsr = createAndRegisterCsr(5, false);
+    activeCsr->taskCount.store(1u);
+    activeCsr->latestFlushedTaskCount.store(1u);
+
+    controller->timeoutElapsedReturnValue.store(TimeoutElapsedMode::fullyElapsed);
+    controller->contextGroupTimeout = std::chrono::microseconds{0};
+    controller->cpuTimestamp = SteadyClock::time_point{};
+    controller->notifyNewSubmission(activeCsr.get());
+    controller->checkNewSubmissions();
+    const auto groupActivityTime = controller->groupLastActivityTime.at(5u);
+
+    controller->cpuTimestamp += controller->timeout;
+    inactiveCsr->taskCount.store(3u);
+    controller->checkNewSubmissions();
+
+    EXPECT_EQ(groupActivityTime, controller->groupLastActivityTime.at(5u));
+    EXPECT_FALSE(controller->directSubmissions[activeCsr.get()].isStopped);
+    EXPECT_FALSE(controller->directSubmissions[activeCsr.get()].idleSince.has_value());
+    EXPECT_EQ(0u, activeCsr->obtainUniqueOwnershipCalledTimes);
+    EXPECT_FALSE(controller->directSubmissions[inactiveCsr.get()].isActive);
 }
 
 TEST_F(DirectSubmissionIdleDetectionWithContextGroupTests, givenNonContextGroupCsrWhenGlobalTimeoutExpiresThenDirectSubmissionIsStoppedWithoutWaitingForContextGroupTimeout) {

@@ -92,9 +92,20 @@ class DirectSubmissionController {
         std::optional<SteadyClock::time_point> idleSince{};
     };
 
+    struct ContextGroupProgress {
+        uint64_t taskCountsSum = 0;
+        uint64_t currentTaskCountsSum = 0;
+        bool hasProgressed = false;
+    };
+
     static void *controlDirectSubmissionsState(void *self);
     MOCKABLE_VIRTUAL void checkNewSubmissions();
+    void updateContextGroupsProgress(SteadyClock::time_point now);
+    bool hasContextGroupProgressed(CommandStreamReceiver *csr);
     bool isDirectSubmissionIdle(CommandStreamReceiver *csr, std::unique_lock<std::recursive_mutex> &csrLock);
+    bool isCsrIdleAfterTagFlush(CommandStreamReceiver *csr, std::unique_lock<std::recursive_mutex> &csrLock);
+    bool isCsrIdleWithoutTagFlush(CommandStreamReceiver *csr);
+    bool areOtherContextGroupMembersIdle(CommandStreamReceiver *csr);
     bool isCopyEngineOnDeviceIdle(uint32_t rootDeviceIndex, std::optional<TaskCountType> &bcsTaskCount);
     MOCKABLE_VIRTUAL bool sleep(std::unique_lock<std::mutex> &lock);
     bool waitPredicate() { return !keepControlling || !pagingFenceRequests.empty() || activeSubmissionsCount; }
@@ -113,6 +124,7 @@ class DirectSubmissionController {
     std::unordered_map<CommandStreamReceiver *, DirectSubmissionState> directSubmissions;
     std::mutex directSubmissionsMutex;
     std::unordered_map<uint32_t, SteadyClock::time_point> groupLastActivityTime;
+    std::unordered_map<uint32_t, ContextGroupProgress> contextGroupsProgress;
 
     std::unique_ptr<Thread> directSubmissionControllingThread;
     std::atomic_bool keepControlling = true;

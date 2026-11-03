@@ -128,12 +128,7 @@ void DirectSubmissionController::checkNewSubmissions() {
 
     const auto now = getCpuTimestamp();
     if (isCsrsContextGroupIdleDetectionEnabled) {
-        for (auto &[csr, state] : directSubmissions) {
-            if (state.isActive && csr->getOsContext().isPartOfContextGroup() &&
-                csr->peekTaskCount() != state.taskCount) {
-                groupLastActivityTime[csr->getContextGroupId()] = now;
-            }
-        }
+        updateContextGroupsProgress(now);
     }
 
     for (auto &[csr, state] : directSubmissions) {
@@ -151,6 +146,10 @@ void DirectSubmissionController::checkNewSubmissions() {
         auto taskCount = csr->peekTaskCount();
         if (taskCount == state.taskCount) {
             if (state.isStopped) {
+                continue;
+            }
+            if (isCsrIdleDetectionEnabled && hasContextGroupProgressed(csr)) {
+                state.idleSince.reset();
                 continue;
             }
             bool isCopyEngineIdle = true;
@@ -188,31 +187,60 @@ void DirectSubmissionController::checkNewSubmissions() {
     }
 }
 
-bool DirectSubmissionController::isDirectSubmissionIdle(CommandStreamReceiver *csr, std::unique_lock<std::recursive_mutex> &csrLock) {
-    // Helper lambda to check if a single CSR is idle (with flush+poll)
-    auto checkCSRIdle = [this](CommandStreamReceiver *checkCsr, std::unique_lock<std::recursive_mutex> &lock) -> bool {
-        if (checkCsr->peekLatestFlushedTaskCount() == checkCsr->peekTaskCount()) {
-            return !checkCsr->isBusyWithoutHang(lastHangCheckTime);
+void DirectSubmissionController::updateContextGroupsProgress(SteadyClock::time_point now) {
+    for (auto &[contextGroupId, progress] : this->contextGroupsProgress) {
+        progress.currentTaskCountsSum = 0;
+    }
+    for (auto &[csr, state] : this->directSubmissions) {
+        if (!csr->getOsContext().isPartOfContextGroup()) {
+            continue;
         }
+        const auto taskCount = csr->peekTaskCount();
+        this->contextGroupsProgress[csr->getContextGroupId()].currentTaskCountsSum += taskCount;
+        if (state.isActive && taskCount != state.taskCount) {
+            this->groupLastActivityTime[csr->getContextGroupId()] = now;
+        }
+    }
+    for (auto &[contextGroupId, progress] : this->contextGroupsProgress) {
+        progress.hasProgressed = progress.currentTaskCountsSum != progress.taskCountsSum;
+        progress.taskCountsSum = progress.currentTaskCountsSum;
+    }
+}
 
-        checkCsr->flushTagUpdate();
-        auto osTime = checkCsr->peekRootDeviceEnvironment().osTime.get();
-        uint64_t currCpuTimeInNS;
+bool DirectSubmissionController::hasContextGroupProgressed(CommandStreamReceiver *csr) {
+    return this->isCsrsContextGroupIdleDetectionEnabled && csr->getOsContext().isPartOfContextGroup() &&
+           this->contextGroupsProgress[csr->getContextGroupId()].hasProgressed;
+}
+
+bool DirectSubmissionController::isCsrIdleWithoutTagFlush(CommandStreamReceiver *csr) {
+    return csr->peekLatestFlushedTaskCount() == csr->peekTaskCount() && !csr->isBusyWithoutHang(this->lastHangCheckTime);
+}
+
+// Helper to check if a single CSR is idle (with flush+poll)
+bool DirectSubmissionController::isCsrIdleAfterTagFlush(CommandStreamReceiver *csr, std::unique_lock<std::recursive_mutex> &csrLock) {
+    if (csr->peekLatestFlushedTaskCount() == csr->peekTaskCount()) {
+        return !csr->isBusyWithoutHang(this->lastHangCheckTime);
+    }
+
+    csr->flushTagUpdate();
+    auto osTime = csr->peekRootDeviceEnvironment().osTime.get();
+    uint64_t currCpuTimeInNS;
+    osTime->getCpuTime(&currCpuTimeInNS);
+    auto timeToWait = currCpuTimeInNS + timeToPollTagUpdateNS;
+
+    // unblock csr during polling
+    csrLock.unlock();
+    while (currCpuTimeInNS < timeToWait) {
+        if (!csr->isBusyWithoutHang(this->lastHangCheckTime)) {
+            break;
+        }
         osTime->getCpuTime(&currCpuTimeInNS);
-        auto timeToWait = currCpuTimeInNS + timeToPollTagUpdateNS;
+    }
+    csrLock.lock();
+    return !csr->isBusyWithoutHang(this->lastHangCheckTime);
+}
 
-        // unblock csr during polling
-        lock.unlock();
-        while (currCpuTimeInNS < timeToWait) {
-            if (!checkCsr->isBusyWithoutHang(lastHangCheckTime)) {
-                break;
-            }
-            osTime->getCpuTime(&currCpuTimeInNS);
-        }
-        lock.lock();
-        return !checkCsr->isBusyWithoutHang(lastHangCheckTime);
-    };
-
+bool DirectSubmissionController::isDirectSubmissionIdle(CommandStreamReceiver *csr, std::unique_lock<std::recursive_mutex> &csrLock) {
     const bool contextGroupIdleDetectionEnabled = isCsrsContextGroupIdleDetectionEnabled && csr->getOsContext().isPartOfContextGroup();
     if (contextGroupIdleDetectionEnabled) {
         auto groupLastActivity = groupLastActivityTime.find(csr->getContextGroupId());
@@ -223,7 +251,7 @@ bool DirectSubmissionController::isDirectSubmissionIdle(CommandStreamReceiver *c
     }
 
     // Check if THIS CSR is idle
-    if (!checkCSRIdle(csr, csrLock)) {
+    if (!isCsrIdleAfterTagFlush(csr, csrLock)) {
         return false;
     }
 
@@ -236,11 +264,23 @@ bool DirectSubmissionController::isDirectSubmissionIdle(CommandStreamReceiver *c
     csrLock.unlock();
 
     // Check if all OTHER CSRs in the same context group are idle
-    const auto contextGroupId = csr->getContextGroupId();
-    bool allOthersIdle = true;
+    const bool otherMembersIdle = areOtherContextGroupMembersIdle(csr);
 
-    for (auto &entry : directSubmissions) {
-        auto *otherCsr = entry.first;
+    // Re-acquire the main CSR lock before returning
+    csrLock.lock();
+
+    // If other CSRs weren't idle, return false
+    if (!otherMembersIdle) {
+        return false;
+    }
+
+    // Double-check that the main CSR is still idle after re-acquiring lock
+    return isCsrIdleWithoutTagFlush(csr);
+}
+
+bool DirectSubmissionController::areOtherContextGroupMembersIdle(CommandStreamReceiver *csr) {
+    const auto contextGroupId = csr->getContextGroupId();
+    for (auto &[otherCsr, otherState] : this->directSubmissions) {
         if (otherCsr == csr) {
             continue; // Skip self
         }
@@ -248,33 +288,18 @@ bool DirectSubmissionController::isDirectSubmissionIdle(CommandStreamReceiver *c
             otherCsr->getContextGroupId() != contextGroupId) {
             continue;
         }
-        if (!entry.second.isActive) {
+        if (!otherState.isActive) {
             continue; // Only consider active CSRs in the group.
         }
         auto otherLock = otherCsr->tryObtainUniqueOwnership();
         if (!otherLock.owns_lock()) {
-            allOthersIdle = false;
-            break; // Treat contended CSR as active.
+            return false; // Treat contended CSR as active.
         }
-        if (!checkCSRIdle(otherCsr, otherLock)) {
-            allOthersIdle = false; // Early exit for performance
-            break;
+        if (!isCsrIdleAfterTagFlush(otherCsr, otherLock)) {
+            return false; // Early exit for performance
         }
     }
-
-    // Re-acquire the main CSR lock before returning
-    csrLock.lock();
-
-    // If other CSRs weren't idle, return false
-    if (!allOthersIdle) {
-        return false;
-    }
-
-    // Double-check that the main CSR is still idle after re-acquiring lock
-    if (csr->peekLatestFlushedTaskCount() == csr->peekTaskCount()) {
-        return !csr->isBusyWithoutHang(lastHangCheckTime);
-    }
-    return false;
+    return true;
 }
 
 bool DirectSubmissionController::isCopyEngineOnDeviceIdle(uint32_t rootDeviceIndex, std::optional<TaskCountType> &bcsTaskCount) {
