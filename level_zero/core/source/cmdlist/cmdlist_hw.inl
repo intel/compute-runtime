@@ -5984,7 +5984,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::dispatchInOrderPostOperationBarrier(Event *signalEvent, bool dcFlushRequired, bool copyOperation) {
     if ((!signalEvent || !signalEvent->getAllocation(this->device)) && !copyOperation) {
         NEO::PipeControlArgs args;
-        args.dcFlushEnable = dcFlushRequired;
+        args.dcFlushEnable = dcFlushRequired || (signalEvent && this->heaplessModeEnabled && getDcFlushRequired(signalEvent->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST)));
 
         NEO::MemorySynchronizationCommands<GfxFamily>::setPostSyncExtraProperties(args);
         NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);

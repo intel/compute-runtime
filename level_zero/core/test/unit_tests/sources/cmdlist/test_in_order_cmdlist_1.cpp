@@ -5840,6 +5840,56 @@ HWTEST_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendBarrierWithou
     EXPECT_EQ(immCmdList->getDcFlushRequired(events[0]->isSignalScope()), pcCmd->getDcFlushEnable());
 }
 
+HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenCounterBasedEventWithoutPoolAllocationWhenAppendingSplitMemoryFillThenPostOperationBarrierFlushesDataCacheOnlyForHostScopeInHeaplessMode) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+
+    constexpr size_t splitFillSize = 1000;
+    auto hostAlloc = allocHostMem(MemoryConstants::pageSize);
+    uint8_t pattern = 0;
+
+    for (ze_event_scope_flags_t signalScope : {ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_DEVICE}) {
+        ze_event_counter_based_desc_t counterBasedDesc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+        counterBasedDesc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE;
+        counterBasedDesc.signal = signalScope;
+        ze_event_handle_t eventHandle = nullptr;
+        ASSERT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context, device, &counterBasedDesc, &eventHandle));
+        auto event = Event::fromHandle(eventHandle);
+        ASSERT_TRUE(event->isCounterBased());
+        ASSERT_EQ(nullptr, event->getAllocation(device));
+
+        for (bool heaplessModeEnabled : {false, true}) {
+            auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+            immCmdList->dcFlushSupport = true;
+            immCmdList->heaplessModeEnabled = heaplessModeEnabled;
+
+            auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+            auto offset = cmdStream->getUsed();
+
+            CmdListMemoryCopyParams copyParams = {};
+            EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendMemoryFill(hostAlloc, &pattern, sizeof(pattern), splitFillSize, eventHandle, 0, nullptr, copyParams));
+
+            GenCmdList cmdList;
+            ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
+                                                              ptrOffset(cmdStream->getCpuBase(), offset),
+                                                              (cmdStream->getUsed() - offset)));
+
+            auto walkers = findAll<WalkerType *>(cmdList.begin(), cmdList.end());
+            ASSERT_LT(1u, walkers.size());
+
+            auto pipeControls = findAll<PIPE_CONTROL *>(walkers.back(), cmdList.end());
+            auto dataCacheFlushFound = std::any_of(pipeControls.begin(), pipeControls.end(), [](auto &itor) {
+                return genCmdCast<PIPE_CONTROL *>(*itor)->getDcFlushEnable();
+            });
+            EXPECT_EQ(heaplessModeEnabled && (signalScope == ZE_EVENT_SCOPE_FLAG_HOST), dataCacheFlushFound);
+        }
+
+        zeEventDestroy(eventHandle);
+    }
+
+    context->freeMem(hostAlloc);
+}
+
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendBarrierWithHostVisibleEventThenSignalCounterWithStallingPipeControl) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
