@@ -3577,6 +3577,7 @@ TEST(CommandList, givenLowPriorityCopyEngineWhenCreatingCmdListThenAssignCorrect
 
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.ContextGroupSize.set(5);
+    debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
 
     hwInfo.featureTable.ftrBcsInfo = 0b111;
     hwInfo.capabilityTable.blitterOperationsSupported = true;

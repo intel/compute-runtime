@@ -221,34 +221,19 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenAdditionalBcsWhenCreatingCommandQue
     MockClDevice clDevice{device};
     MockContext context{&clDevice};
 
-    const auto &productHelper = device->getExecutionEnvironment()->rootDeviceEnvironments[0]->getProductHelper();
     auto engineGroupType = EngineGroupType::linkedCopy;
-    if (aub_stream::EngineType::ENGINE_BCS != productHelper.getDefaultCopyEngine()) {
-        engineGroupType = EngineGroupType::copy;
-    }
+    device->getProductHelper().adjustEngineGroupType(engineGroupType);
     const auto familyIndex = device->getEngineGroupIndexFromEngineGroupType(engineGroupType);
-    cl_command_queue_properties queueProperties[5] = {
-        CL_QUEUE_FAMILY_INTEL,
-        familyIndex,
-        CL_QUEUE_INDEX_INTEL,
-        0,
-        0,
-    };
+    const auto &familyEngines = device->getRegularEngineGroups()[familyIndex].engines;
+    cl_command_queue_properties queueProperties[5] = {CL_QUEUE_FAMILY_INTEL, familyIndex, CL_QUEUE_INDEX_INTEL, 0, 0};
 
-    queueProperties[3] = 0;
-    auto queue = std::make_unique<MockCommandQueue>(&context, context.getDevice(0), queueProperties, false);
-    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS1, queue->bcsEngines[EngineHelpers::getBcsIndex(aub_stream::ENGINE_BCS1)]->getEngineType());
-    EXPECT_EQ(1u, queue->countBcsEngines());
-
-    queueProperties[3] = 4;
-    queue = std::make_unique<MockCommandQueue>(&context, context.getDevice(0), queueProperties, false);
-    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS5, queue->bcsEngines[EngineHelpers::getBcsIndex(aub_stream::ENGINE_BCS5)]->getEngineType());
-    EXPECT_EQ(1u, queue->countBcsEngines());
-
-    queueProperties[3] = 7;
-    if (queueProperties[3] < clDevice.device.getRegularEngineGroups()[familyIndex].engines.size()) {
-        queue = std::make_unique<MockCommandQueue>(&context, context.getDevice(0), queueProperties, false);
-        EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS8, queue->bcsEngines[EngineHelpers::getBcsIndex(aub_stream::ENGINE_BCS8)]->getEngineType());
+    for (uint32_t queueIndex : {0u, 4u, 7u}) {
+        if (queueIndex >= familyEngines.size()) {
+            continue;
+        }
+        queueProperties[3] = queueIndex;
+        auto queue = std::make_unique<MockCommandQueue>(&context, context.getDevice(0), queueProperties, false);
+        EXPECT_EQ(familyEngines[queueIndex].getEngineType(), queue->bcsQueueEngineType);
         EXPECT_EQ(1u, queue->countBcsEngines());
     }
 }
@@ -613,17 +598,10 @@ struct BcsCsrSelectionCommandQueueTests : ::testing::Test {
         return bcsEngines;
     }
 
-    std::unique_ptr<MockCommandQueue> createQueueWithLinkBcsSelectedWithQueueFamilies(size_t linkBcsIndex) {
-        const auto &productHelper = device->getRootDeviceEnvironment().getProductHelper();
+    std::unique_ptr<MockCommandQueue> createQueueWithLinkBcsSelectedWithQueueFamilies(uint32_t queueIndex) {
         auto engineGroupType = EngineGroupType::linkedCopy;
-        if (aub_stream::EngineType::ENGINE_BCS != productHelper.getDefaultCopyEngine()) {
-            engineGroupType = EngineGroupType::copy;
-        }
-        cl_command_queue_properties queueProperties[5] = {};
-        queueProperties[0] = CL_QUEUE_FAMILY_INTEL;
-        queueProperties[1] = device->getEngineGroupIndexFromEngineGroupType(engineGroupType);
-        queueProperties[2] = CL_QUEUE_INDEX_INTEL;
-        queueProperties[3] = linkBcsIndex;
+        device->getProductHelper().adjustEngineGroupType(engineGroupType);
+        cl_command_queue_properties queueProperties[5] = {CL_QUEUE_FAMILY_INTEL, device->getEngineGroupIndexFromEngineGroupType(engineGroupType), CL_QUEUE_INDEX_INTEL, queueIndex, 0};
         auto queue = createQueue(queueProperties);
         EXPECT_EQ(1u, queue->countBcsEngines());
         return queue;
@@ -648,9 +626,9 @@ HWTEST2_F(BcsCsrSelectionCommandQueueTests, givenBcsSelectedWithQueueFamiliesWhe
     MockBuffer srcMemObj{srcGraphicsAllocation};
     MockBuffer dstMemObj{dstGraphicsAllocation};
 
-    constexpr auto linkBcsType = aub_stream::ENGINE_BCS6;
-    constexpr auto linkBcsIndex = 5;
+    constexpr auto linkBcsIndex = 5u;
     auto queue = createQueueWithLinkBcsSelectedWithQueueFamilies(linkBcsIndex);
+    const auto linkBcsType = queue->bcsQueueEngineType.value();
     {
         srcGraphicsAllocation.memoryPool = MemoryPool::system4KBPages;
         dstGraphicsAllocation.memoryPool = MemoryPool::system4KBPages;
@@ -740,10 +718,10 @@ HWTEST2_F(BcsCsrSelectionCommandQueueTests, givenBcsSelectedWithQueueFamiliesAnd
     MockBuffer srcMemObj{srcGraphicsAllocation};
     MockBuffer dstMemObj{dstGraphicsAllocation};
 
-    constexpr auto linkBcsType = aub_stream::ENGINE_BCS6;
-    constexpr auto linkBcsIndex = 5;
     debugManager.flags.ForceBcsEngineIndex.set(2); // this should be ignored, because of queue families
+    constexpr auto linkBcsIndex = 5u;
     auto queue = createQueueWithLinkBcsSelectedWithQueueFamilies(linkBcsIndex);
+    const auto linkBcsType = queue->bcsQueueEngineType.value();
     {
         srcGraphicsAllocation.memoryPool = MemoryPool::system4KBPages;
         dstGraphicsAllocation.memoryPool = MemoryPool::system4KBPages;
