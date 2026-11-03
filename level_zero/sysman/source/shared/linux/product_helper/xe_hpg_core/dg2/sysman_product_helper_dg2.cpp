@@ -20,6 +20,7 @@ RasInterfaceType SysmanProductHelperHw<gfxProduct>::getGtRasUtilInterface() {
     return RasInterfaceType::pmu;
 }
 
+#include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_from_gen12lp_to_xe_hpc.inl"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_xe_hp_and_later.inl"
 
 static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap = {
@@ -257,11 +258,6 @@ bool SysmanProductHelperHw<gfxProduct>::isUpstreamPortConnected() {
 template <>
 bool SysmanProductHelperHw<gfxProduct>::isVfMemoryUtilizationSupported() {
     return true;
-}
-
-template <>
-std::string SysmanProductHelperHw<gfxProduct>::getGpuGeneration() {
-    return "xe";
 }
 
 template class SysmanProductHelperHw<gfxProduct>;

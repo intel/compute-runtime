@@ -12,10 +12,7 @@ namespace L0 {
 namespace Sysman {
 constexpr static auto gfxProduct = IGFX_ALDERLAKE_S;
 
-template <>
-std::string SysmanProductHelperHw<gfxProduct>::getGpuGeneration() {
-    return "xe";
-}
+#include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_from_gen12lp_to_xe_hpc.inl"
 
 template class SysmanProductHelperHw<gfxProduct>;
 
