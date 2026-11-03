@@ -190,6 +190,9 @@ FragmentStorage *HostPtrManager::getFragmentAndCheckForOverlaps(uint32_t rootDev
 
     if (element != partialAllocations.begin()) {
         element--;
+        if (element->first.rootDeviceIndex != rootDeviceIndex) {
+            element = nextElement;
+        }
     }
 
     if (element != partialAllocations.end()) {

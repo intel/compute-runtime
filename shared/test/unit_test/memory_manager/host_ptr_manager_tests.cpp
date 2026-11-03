@@ -742,6 +742,28 @@ TEST_F(HostPtrManagerTest, GivenHostPtrManagerFilledWithFragmentsWhenCheckedForO
     EXPECT_EQ(nullptr, fragment4);
 }
 
+TEST_F(HostPtrManagerTest, givenFragmentsStoredForTwoRootDevicesWhenCheckingForOverlapsOnHigherRootDeviceThenItsFragmentIsFound) {
+    MockHostPtrManager hostPtrManager;
+    auto ptr = reinterpret_cast<void *>(0x2000);
+    FragmentStorage lowerRootDeviceFragment;
+    lowerRootDeviceFragment.fragmentCpuPointer = ptr;
+    lowerRootDeviceFragment.fragmentSize = MemoryConstants::pageSize;
+    FragmentStorage higherRootDeviceFragment = lowerRootDeviceFragment;
+    hostPtrManager.storeFragment(rootDeviceIndex - 1, lowerRootDeviceFragment);
+    hostPtrManager.storeFragment(rootDeviceIndex, higherRootDeviceFragment);
+    ASSERT_EQ(2u, hostPtrManager.getFragmentCount());
+
+    OverlapStatus overlapStatus;
+    EXPECT_EQ(hostPtrManager.getFragment({ptr, rootDeviceIndex}), hostPtrManager.getFragmentAndCheckForOverlaps(rootDeviceIndex, ptr, MemoryConstants::pageSize, overlapStatus));
+    EXPECT_EQ(OverlapStatus::FRAGMENT_WITH_EXACT_SIZE_AS_STORED_FRAGMENT, overlapStatus);
+
+    EXPECT_EQ(nullptr, hostPtrManager.getFragmentAndCheckForOverlaps(rootDeviceIndex, reinterpret_cast<void *>(0x1000), 2 * MemoryConstants::pageSize, overlapStatus));
+    EXPECT_EQ(OverlapStatus::FRAGMENT_OVERLAPING_AND_BIGGER_THEN_STORED_FRAGMENT, overlapStatus);
+
+    EXPECT_EQ(nullptr, hostPtrManager.getFragmentAndCheckForOverlaps(rootDeviceIndex, reinterpret_cast<void *>(0x1000), MemoryConstants::pageSize, overlapStatus));
+    EXPECT_EQ(OverlapStatus::FRAGMENT_NOT_OVERLAPING_WITH_ANY_OTHER, overlapStatus);
+}
+
 TEST_F(HostPtrManagerTest, GivenEmptyHostPtrManagerWhenAskedForOverlapingThenNoOverlappingIsReturned) {
     MockHostPtrManager hostPtrManager;
     auto bigPtr = (void *)0x04000;
