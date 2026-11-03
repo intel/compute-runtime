@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "level_zero/sysman/source/driver/windows/sysman_os_driver_imp.h"
+
+#include "shared/source/os_interface/hw_device_id.h"
 
 namespace L0 {
 namespace Sysman {

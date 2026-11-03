@@ -7,6 +7,7 @@
 
 #include "shared/source/memory_manager/unified_memory_properties.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/os_interface/windows/hw_device_id.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 #include "shared/source/os_interface/windows/windows_wrapper.h"

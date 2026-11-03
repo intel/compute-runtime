@@ -7,7 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/driver_model_type.h"
-#include "shared/source/os_interface/os_interface.h"
+#include "shared/source/os_interface/hw_device_id.h"
 #include "shared/source/os_interface/windows/d3dkmthk_wrapper.h"
 #include "shared/source/os_interface/windows/windows_wrapper.h"
 

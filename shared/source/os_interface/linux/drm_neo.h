@@ -12,7 +12,6 @@
 #include "shared/source/memory_manager/definitions/engine_limits.h"
 #include "shared/source/os_interface/linux/drm_debug.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
-#include "shared/source/os_interface/linux/hw_device_id.h"
 #include "shared/source/os_interface/linux/xe/eudebug/eudebug_interface.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/user_fence.h"
@@ -57,6 +56,7 @@ class Gmm;
 class GraphicsAllocation;
 struct CacheInfo;
 struct EngineInfo;
+class HwDeviceIdDrm;
 struct HardwareInfo;
 struct RootDeviceEnvironment;
 struct SystemInfo;
@@ -101,7 +101,7 @@ class Drm : public DriverModel {
     bool isPreemptionSupported() const { return preemptionSupported; }
 
     MOCKABLE_VIRTUAL void checkPreemptionSupport();
-    inline int getFileDescriptor() const { return hwDeviceId->getFileDescriptor(); }
+    int getFileDescriptor() const;
     MOCKABLE_VIRTUAL int queryAdapterBDF();
     MOCKABLE_VIRTUAL int createDrmVirtualMemory(uint32_t &drmVmId);
     void destroyDrmVirtualMemory(uint32_t drmVmId);
@@ -234,8 +234,8 @@ class Drm : public DriverModel {
 
     static Drm *create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment);
     static void overrideBindSupport(bool &useVmBind);
-    std::string getPciPath() { return hwDeviceId->getPciPath(); }
-    std::string getDeviceNode() { return hwDeviceId->getDeviceNode(); }
+    std::string getPciPath();
+    std::string getDeviceNode();
 
     std::optional<std::pair<uint64_t, uint64_t>> getFenceAddressAndValToWait(uint32_t vmHandleId, bool isLocked);
     void waitForBind(uint32_t vmHandleId);

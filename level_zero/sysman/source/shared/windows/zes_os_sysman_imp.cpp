@@ -11,6 +11,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/driver_info.h"
+#include "shared/source/os_interface/hw_device_id.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 
 #include "level_zero/core/source/driver/driver.h"

@@ -1037,6 +1037,12 @@ void Drm::cleanup() {
     destroyVirtualMemoryAddressSpace();
 }
 
+int Drm::getFileDescriptor() const { return hwDeviceId->getFileDescriptor(); }
+
+std::string Drm::getPciPath() { return hwDeviceId->getPciPath(); }
+
+std::string Drm::getDeviceNode() { return hwDeviceId->getDeviceNode(); }
+
 Drm::~Drm() {
     this->printIoctlStatistics();
 }

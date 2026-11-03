@@ -9,8 +9,10 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/adapter_bdf.h"
+#include "shared/source/helpers/driver_model_type.h"
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/os_time.h"
-#include "shared/source/os_interface/windows/hw_device_id.h"
+#include "shared/source/os_interface/windows/d3dkmthk_wrapper.h"
 #include "shared/source/os_interface/windows/sharedata_wrapper.h"
 #include "shared/source/os_interface/windows/wddm/wddm_defs.h"
 #include "shared/source/os_interface/windows/wddm_memory_manager.h"
@@ -30,6 +32,7 @@ namespace NEO {
 enum PreemptionMode : uint32_t;
 enum class WaitStatus;
 class Gdi;
+class HwDeviceIdWddm;
 class GfxPartition;
 class Gmm;
 class GmmMemory;
@@ -158,11 +161,11 @@ class Wddm : public DriverModel {
     HwDeviceIdWddm *getHwDeviceId() const {
         return hwDeviceId.get();
     }
-    D3DKMT_HANDLE getAdapter() const { return hwDeviceId->getAdapter(); }
+    D3DKMT_HANDLE getAdapter() const;
     D3DKMT_HANDLE getDeviceHandle() const override { return device; }
     D3DKMT_HANDLE getPagingQueue() const { return pagingQueue; }
     D3DKMT_HANDLE getPagingQueueSyncObject() const { return pagingQueueSyncObject; }
-    Gdi *getGdi() const { return hwDeviceId->getGdi(); }
+    Gdi *getGdi() const;
     MOCKABLE_VIRTUAL bool verifyAdapterLuid(LUID adapterLuid) const;
     LUID getAdapterLuid() const;
 

@@ -33,6 +33,7 @@
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/os_interface/sys_calls_common.h"
 #include "shared/source/os_interface/windows/gdi_interface.h"
+#include "shared/source/os_interface/windows/hw_device_id.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
 #include "shared/source/os_interface/windows/os_environment_win.h"
 #include "shared/source/os_interface/windows/sharedata_wrapper.h"
@@ -1471,6 +1472,10 @@ PFND3DKMT_ESCAPE Wddm::getEscapeHandle() const {
 bool Wddm::verifyAdapterLuid(LUID adapterLuid) const {
     return adapterLuid.HighPart == hwDeviceId->getAdapterLuid().HighPart && adapterLuid.LowPart == hwDeviceId->getAdapterLuid().LowPart;
 }
+
+D3DKMT_HANDLE Wddm::getAdapter() const { return hwDeviceId->getAdapter(); }
+
+Gdi *Wddm::getGdi() const { return hwDeviceId->getGdi(); }
 
 LUID Wddm::getAdapterLuid() const {
     return hwDeviceId->getAdapterLuid();
