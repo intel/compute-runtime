@@ -1683,6 +1683,11 @@ std::string SysmanProductHelperHw<gfxProduct>::getGpuGeneration() {
     return "xe3p";
 }
 
+template <>
+std::string SysmanProductHelperHw<gfxProduct>::getProductCodeName() {
+    return "Crescent Island";
+}
+
 template class SysmanProductHelperHw<gfxProduct>;
 
 static EnableSysmanProductHelper<gfxProduct> enableCRI;

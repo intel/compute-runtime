@@ -576,5 +576,10 @@ std::string SysmanProductHelperHw<gfxProduct>::getGpuGeneration() {
     return "unknown";
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+std::string SysmanProductHelperHw<gfxProduct>::getProductCodeName() {
+    return "";
+}
+
 } // namespace Sysman
 } // namespace L0

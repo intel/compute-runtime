@@ -161,15 +161,18 @@ void LinuxGlobalOperationsImp::getBrandName(char (&brandName)[ZES_STRING_PROPERT
 void LinuxGlobalOperationsImp::getModelName(char (&modelName)[ZES_STRING_PROPERTY_SIZE]) {
     auto &hwInfo = pLinuxSysmanImp->getParentSysmanDeviceImp()->getHardwareInfo();
     std::string deviceName = hwInfo.capabilityTable.deviceName;
-    if (!deviceName.empty()) {
-        std::strncpy(modelName, deviceName.c_str(), ZES_STRING_PROPERTY_SIZE);
-        return;
+    if (deviceName.empty()) {
+        std::stringstream deviceNameDefault;
+        deviceNameDefault << "Intel(R) Graphics";
+        deviceNameDefault << " [0x" << std::hex << std::setw(4) << std::setfill('0') << hwInfo.platform.usDeviceID << "]";
+        deviceName = deviceNameDefault.str();
     }
 
-    std::stringstream deviceNameDefault;
-    deviceNameDefault << "Intel(R) Graphics";
-    deviceNameDefault << " [0x" << std::hex << std::setw(4) << std::setfill('0') << hwInfo.platform.usDeviceID << "]";
-    std::strncpy(modelName, deviceNameDefault.str().c_str(), ZES_STRING_PROPERTY_SIZE);
+    const std::string productCodeName = pLinuxSysmanImp->getSysmanProductHelper()->getProductCodeName();
+    if (!productCodeName.empty()) {
+        deviceName += " " + productCodeName;
+    }
+    strncpy_s(modelName, ZES_STRING_PROPERTY_SIZE, deviceName.c_str(), ZES_STRING_PROPERTY_SIZE - 1);
 }
 
 void LinuxGlobalOperationsImp::getVendorName(char (&vendorName)[ZES_STRING_PROPERTY_SIZE]) {

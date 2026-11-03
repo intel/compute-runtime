@@ -62,6 +62,7 @@ class SysmanProductHelperHw : public SysmanProductHelper {
     ze_result_t getMaxMemoryOfflinePages(SysFsAccessInterface *pSysFsAccess, uint32_t *pMaxOfflinePages) override;
     ze_result_t getSocUid(SysFsAccessInterface *pSysFsAccess, zes_uuid_t *pSocUid) override;
     std::string getGpuGeneration() override;
+    std::string getProductCodeName() override;
 
     // power
     int32_t getPowerLimitValue(uint64_t value) override;

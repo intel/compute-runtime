@@ -94,6 +94,7 @@ class SysmanProductHelper {
     virtual ze_result_t getMaxMemoryOfflinePages(SysFsAccessInterface *pSysFsAccess, uint32_t *pMaxOfflinePages) = 0;
     virtual ze_result_t getSocUid(SysFsAccessInterface *pSysFsAccess, zes_uuid_t *pSocUid) = 0;
     virtual std::string getGpuGeneration() = 0;
+    virtual std::string getProductCodeName() = 0;
 
     // power
     virtual int32_t getPowerLimitValue(uint64_t value) = 0;

@@ -12,6 +12,8 @@
 #include "level_zero/sysman/test/unit_tests/sources/global_operations/linux/mock_global_operations.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 
+#include <iomanip>
+
 namespace L0 {
 namespace Sysman {
 namespace ult {
@@ -366,6 +368,45 @@ HWTEST2_F(SysmanDeviceFixture, GivenValidExtensionStructureWhenCallingZesDeviceG
     ze_result_t result = zesDeviceGetProperties(pSysmanDevice->toHandle(), &properties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(expectedMaxOfflinePages, memPageOfflineProperties.maxOfflinePages);
+}
+
+HWTEST2_F(SysmanDeviceFixture, GivenDeviceNameIsEmptyWhenCallingZesDeviceGetPropertiesThenModelNameIsDefaultNameWithProductCodeName, IsCRI) {
+    pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironmentRef().osTime = MockOSTime::create();
+    pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironmentRef().osTime->setDeviceTimerResolution();
+    auto pHwInfo = pLinuxSysmanImp->getSysmanDeviceImp()->getRootDeviceEnvironment().getMutableHardwareInfo();
+    pHwInfo->capabilityTable.deviceName = "";
+
+    std::stringstream expectedModelName;
+    expectedModelName << "Intel(R) Graphics [0x" << std::hex << std::setw(4) << std::setfill('0') << pHwInfo->platform.usDeviceID << "] Crescent Island";
+
+    zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetProperties(pSysmanDevice->toHandle(), &properties));
+    EXPECT_STREQ(expectedModelName.str().c_str(), properties.modelName);
+}
+
+HWTEST2_F(SysmanDeviceFixture, GivenDeviceNameIsSetWhenCallingZesDeviceGetPropertiesThenModelNameIsDeviceNameWithProductCodeName, IsCRI) {
+    pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironmentRef().osTime = MockOSTime::create();
+    pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironmentRef().osTime->setDeviceTimerResolution();
+    auto pHwInfo = pLinuxSysmanImp->getSysmanDeviceImp()->getRootDeviceEnvironment().getMutableHardwareInfo();
+    pHwInfo->capabilityTable.deviceName = "IntelTestDevice";
+
+    zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetProperties(pSysmanDevice->toHandle(), &properties));
+    EXPECT_STREQ("IntelTestDevice Crescent Island", properties.modelName);
+}
+
+HWTEST2_F(SysmanDeviceFixture, GivenDeviceNameIsLongerThanModelNameWhenCallingZesDeviceGetPropertiesThenModelNameIsTruncatedAndNullTerminated, IsCRI) {
+    pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironmentRef().osTime = MockOSTime::create();
+    pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironmentRef().osTime->setDeviceTimerResolution();
+    auto pHwInfo = pLinuxSysmanImp->getSysmanDeviceImp()->getRootDeviceEnvironment().getMutableHardwareInfo();
+    const std::string longDeviceName(ZES_STRING_PROPERTY_SIZE, 'A');
+    pHwInfo->capabilityTable.deviceName = longDeviceName.c_str();
+    const std::string expectedModelName = longDeviceName.substr(0, ZES_STRING_PROPERTY_SIZE - 1);
+
+    zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetProperties(pSysmanDevice->toHandle(), &properties));
+    ASSERT_EQ(expectedModelName.length(), strnlen(properties.modelName, ZES_STRING_PROPERTY_SIZE));
+    EXPECT_STREQ(expectedModelName.c_str(), properties.modelName);
 }
 
 HWTEST2_F(SysmanProductHelperGlobalOperationsTest, GivenValidProductHelperHandleWhenQueryingGpuGenerationThenXeIsReturned, IsGen12LP) {
