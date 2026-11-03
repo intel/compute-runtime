@@ -50,7 +50,6 @@ class BindlessHeapsHelper : NEO::NonCopyableAndNonMovableClass {
 
     MOCKABLE_VIRTUAL SurfaceStateInHeapInfo allocateSSInHeap(size_t ssSize, GraphicsAllocation *surfaceAllocation, BindlesHeapType heapType);
     uint64_t getGlobalHeapsBase();
-    void *getSpaceInHeap(size_t ssSize, BindlesHeapType heapType);
     uint32_t getDefaultBorderColorOffset();
     uint32_t getAlphaBorderColorOffset();
     GraphicsAllocation *getBorderColorStates();
@@ -76,6 +75,7 @@ class BindlessHeapsHelper : NEO::NonCopyableAndNonMovableClass {
     [[nodiscard]] MOCKABLE_VIRTUAL std::unique_lock<std::mutex> obtainUniqueOwnership() {
         return std::unique_lock<std::mutex>(this->mtx);
     }
+    void *getSpaceInHeap(IndirectHeap &heap, size_t ssSize, BindlesHeapType heapType);
     bool growHeap(BindlesHeapType heapType);
     bool initializeReservedMemory();
     bool isReservedMemoryModeAvailable();

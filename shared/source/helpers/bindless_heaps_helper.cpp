@@ -224,7 +224,7 @@ SurfaceStateInHeapInfo BindlessHeapsHelper::allocateSSInHeap(size_t ssSize, Grap
         }
     }
 
-    void *ptrInHeap = getSpaceInHeap(ssSize, heapType);
+    void *ptrInHeap = getSpaceInHeap(*heap, ssSize, heapType);
     SurfaceStateInHeapInfo bindlesInfo = {nullptr, 0, nullptr};
 
     if (ptrInHeap) {
@@ -241,17 +241,13 @@ SurfaceStateInHeapInfo BindlessHeapsHelper::allocateSSInHeap(size_t ssSize, Grap
     return bindlesInfo;
 }
 
-void *BindlessHeapsHelper::getSpaceInHeap(size_t ssSize, BindlesHeapType heapType) {
-    auto heap = getHeap(heapType);
-    if (heap == nullptr) {
-        return nullptr;
-    }
-    if (heap->getAvailableSpace() < ssSize) {
+void *BindlessHeapsHelper::getSpaceInHeap(IndirectHeap &heap, size_t ssSize, BindlesHeapType heapType) {
+    if (heap.getAvailableSpace() < ssSize) {
         if (!growHeap(heapType)) {
             return nullptr;
         }
     }
-    return heap->getSpace(ssSize);
+    return heap.getSpace(ssSize);
 }
 
 uint64_t BindlessHeapsHelper::getGlobalHeapsBase() {

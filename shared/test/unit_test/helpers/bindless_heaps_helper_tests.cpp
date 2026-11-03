@@ -334,7 +334,6 @@ TEST_F(BindlessHeapsHelperTests, givenNoMemoryAvailableWhenAllocatingFirstSurfac
         EXPECT_EQ(nullptr, ssInHeapInfo.heapAllocation);
         EXPECT_EQ(nullptr, ssInHeapInfo.ssPtr);
         EXPECT_EQ(0u, ssInHeapInfo.surfaceStateOffset);
-        EXPECT_EQ(nullptr, bindlessHeapHelper->getSpaceInHeap(ssSize, type));
     }
     EXPECT_TRUE(bindlessHeapHelper->ssHeapsAllocations.empty());
 
@@ -346,7 +345,6 @@ TEST_F(BindlessHeapsHelperTests, givenNoMemoryAvailableWhenAllocatingFirstSurfac
         auto ssInHeapInfo = bindlessHeapHelper->allocateSSInHeap(ssSize, nullptr, type);
         EXPECT_EQ(bindlessHeapHelper->getHeap(type)->getGraphicsAllocation(), ssInHeapInfo.heapAllocation);
         EXPECT_NE(nullptr, ssInHeapInfo.ssPtr);
-        EXPECT_NE(nullptr, bindlessHeapHelper->getSpaceInHeap(ssSize, type));
     }
 }
 
