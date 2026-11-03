@@ -203,12 +203,20 @@ TEST_F(ReleaseHelperNvlPTests, givenAppTransientPatOverrideWhenCheckingRequireme
     }
 }
 
-TEST_F(ReleaseHelperNvlPTests, whenOverridingSystemMemoryPatIndexThenPat19IsReturnedForAllSteppings) {
+TEST_F(ReleaseHelperNvlPTests, whenOverridingSystemMemoryPatIndexThenCorrectPatIndexIsReturned) {
     constexpr uint64_t patIndex = 5u;
-    for (const auto baseIpVersion : {AOT::NVL_P_A0, AOT::NVL_P_B0}) {
-        ipVersion.value = static_cast<uint32_t>(baseIpVersion);
-        releaseHelper = ReleaseHelper::create(ipVersion);
-        ASSERT_NE(nullptr, releaseHelper);
-        EXPECT_EQ(19u, releaseHelper->overrideSystemMemoryPatIndex(patIndex));
-    }
+    ipVersion.value = static_cast<uint32_t>(AOT::NVL_P_A0);
+    releaseHelper = ReleaseHelper::create(ipVersion);
+    ASSERT_NE(nullptr, releaseHelper);
+    EXPECT_EQ(patIndex, releaseHelper->overrideSystemMemoryPatIndex(patIndex));
+
+    ipVersion.revision = 1u;
+    releaseHelper = ReleaseHelper::create(ipVersion);
+    ASSERT_NE(nullptr, releaseHelper);
+    EXPECT_EQ(patIndex, releaseHelper->overrideSystemMemoryPatIndex(patIndex));
+
+    ipVersion.value = static_cast<uint32_t>(AOT::NVL_P_B0);
+    releaseHelper = ReleaseHelper::create(ipVersion);
+    ASSERT_NE(nullptr, releaseHelper);
+    EXPECT_EQ(19u, releaseHelper->overrideSystemMemoryPatIndex(patIndex));
 }
