@@ -5015,6 +5015,25 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithIpcMemoryDataTypeThenIpcDataI
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
+TEST_F(ContextTest, givenIpcHandleTrackingOfNotExportedAllocationWhenFreeingItThenTrackingIsSkipped) {
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    hostDesc.flags = ZE_HOST_MEM_ALLOC_FLAG_BIAS_UNCACHED;
+    void *ptr = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, MemoryConstants::pageSize, 1u, &ptr));
+
+    auto &ipcMap = driverHandle->getIPCHandleMap();
+    auto handleTracking = new IpcHandleTracking;
+    handleTracking->refcnt = 1;
+    handleTracking->ptr = castToUint64(ptr);
+    ipcMap.emplace(1000u, handleTracking);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+    EXPECT_EQ(1u, ipcMap.size());
+
+    delete handleTracking;
+    ipcMap.clear();
+}
+
 TEST_F(ContextTest, whenCallingSetIPCHandleDataWithIpcOpaqueMemoryDataTypeThenIpcDataIsNotSetInHandleTracking) {
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
@@ -6505,7 +6524,7 @@ TEST_F(ContextTest, givenContextWhenChangingVirtualMemAccessAttributeAndPtrNotIn
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
-TEST_F(ContextTest, whenCallingFreeMemWithOpaqueIpcHandleThenUnregisterIpcHandleWithServerIsCalled) {
+TEST_F(ContextTest, givenExportedAllocationWithOpaqueIpcHandleWhenCallingFreeMemThenUnregisterIpcHandleWithServerIsCalled) {
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
 
@@ -6528,6 +6547,7 @@ TEST_F(ContextTest, whenCallingFreeMemWithOpaqueIpcHandleThenUnregisterIpcHandle
     EXPECT_NE(nullptr, ptr);
 
     uint64_t testHandle = 12345;
+    driverHandle->svmAllocsManager->getSVMAlloc(ptr)->isExportedAllocation = true;
     L0::IpcHandleTracking *handleTracking = new L0::IpcHandleTracking();
     handleTracking->alloc = nullptr;
     handleTracking->refcnt = 1;
@@ -6552,7 +6572,7 @@ TEST_F(ContextTest, whenCallingFreeMemWithOpaqueIpcHandleThenUnregisterIpcHandle
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
-TEST_F(ContextTest, whenCallingFreeMemWithNonOpaqueIpcHandleThenUnregisterIpcHandleWithServerIsNotCalled) {
+TEST_F(ContextTest, givenExportedAllocationWithNonOpaqueIpcHandleWhenCallingFreeMemThenUnregisterIpcHandleWithServerIsNotCalled) {
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
 
@@ -6575,6 +6595,7 @@ TEST_F(ContextTest, whenCallingFreeMemWithNonOpaqueIpcHandleThenUnregisterIpcHan
     EXPECT_NE(nullptr, ptr);
 
     uint64_t testHandle = 67890;
+    driverHandle->svmAllocsManager->getSVMAlloc(ptr)->isExportedAllocation = true;
     L0::IpcHandleTracking *handleTracking = new L0::IpcHandleTracking();
     handleTracking->alloc = nullptr;
     handleTracking->refcnt = 1;
@@ -6598,7 +6619,7 @@ TEST_F(ContextTest, whenCallingFreeMemWithNonOpaqueIpcHandleThenUnregisterIpcHan
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
-TEST_F(ContextTest, whenCallingFreeMemWithOpaqueNtHandleThenUnregisterIpcHandleWithServerIsNotCalled) {
+TEST_F(ContextTest, givenExportedAllocationWithOpaqueNtHandleWhenCallingFreeMemThenUnregisterIpcHandleWithServerIsNotCalled) {
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
 
@@ -6621,6 +6642,7 @@ TEST_F(ContextTest, whenCallingFreeMemWithOpaqueNtHandleThenUnregisterIpcHandleW
     EXPECT_NE(nullptr, ptr);
 
     uint64_t testHandle = 11111;
+    driverHandle->svmAllocsManager->getSVMAlloc(ptr)->isExportedAllocation = true;
     L0::IpcHandleTracking *handleTracking = new L0::IpcHandleTracking();
     handleTracking->alloc = nullptr;
     handleTracking->refcnt = 1;
@@ -6688,7 +6710,7 @@ TEST_F(ContextTest, whenCallingNormalizeIPCHandleWithNtHandleTypeThenReturnsRese
     EXPECT_EQ(0x123456789ABCDEF0ull, result);
 }
 
-TEST_F(ContextTest, whenCallingFreeMemWithIpcHandleAndNullUsmPoolThenHandleIsRemovedFromMap) {
+TEST_F(ContextTest, givenExportedAllocationWithIpcHandleAndNullUsmPoolWhenCallingFreeMemThenHandleIsRemovedFromMap) {
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
 
@@ -6711,6 +6733,7 @@ TEST_F(ContextTest, whenCallingFreeMemWithIpcHandleAndNullUsmPoolThenHandleIsRem
     EXPECT_NE(nullptr, ptr);
 
     uint64_t testHandle = 99999;
+    driverHandle->svmAllocsManager->getSVMAlloc(ptr)->isExportedAllocation = true;
     L0::IpcHandleTracking *handleTracking = new L0::IpcHandleTracking();
     handleTracking->alloc = nullptr;
     handleTracking->refcnt = 1;
@@ -7017,7 +7040,7 @@ TEST_F(ContextTest, whenCallingPutIpcMemHandleWithNtHandleTypeThenUnregisterIsNo
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
-TEST_F(ContextIpcSocketTest, whenCallingFreeMemWithIpcHandleAndSocketsAndFdHandleThenUnregisterIsCalled) {
+TEST_F(ContextIpcSocketTest, givenExportedAllocationWithIpcHandleAndSocketsAndFdHandleWhenCallingFreeMemThenUnregisterIsCalled) {
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
 
@@ -7040,6 +7063,7 @@ TEST_F(ContextIpcSocketTest, whenCallingFreeMemWithIpcHandleAndSocketsAndFdHandl
     EXPECT_NE(nullptr, ptr);
 
     uint64_t testHandle = 77777;
+    driverHandle->svmAllocsManager->getSVMAlloc(ptr)->isExportedAllocation = true;
     L0::IpcHandleTracking *handleTracking = new L0::IpcHandleTracking();
     handleTracking->alloc = nullptr;
     handleTracking->refcnt = 1;
@@ -7204,7 +7228,7 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithSocketsButNtHandleThenServerR
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
-TEST_F(ContextTest, whenCallingFreeMemWithSocketsOpaqueHandleButNtHandleTypeThenUnregisterIsNotCalled) {
+TEST_F(ContextTest, givenExportedAllocationWithSocketsOpaqueHandleButNtHandleTypeWhenCallingFreeMemThenUnregisterIsNotCalled) {
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
 
@@ -7228,6 +7252,7 @@ TEST_F(ContextTest, whenCallingFreeMemWithSocketsOpaqueHandleButNtHandleTypeThen
     EXPECT_NE(nullptr, ptr);
 
     uint64_t testHandle = 99999;
+    driverHandle->svmAllocsManager->getSVMAlloc(ptr)->isExportedAllocation = true;
     L0::IpcHandleTracking *handleTracking = new L0::IpcHandleTracking();
     handleTracking->alloc = nullptr;
     handleTracking->refcnt = 1;

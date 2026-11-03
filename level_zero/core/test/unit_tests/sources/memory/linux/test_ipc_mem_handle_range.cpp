@@ -137,6 +137,19 @@ class ReservedDataRecordingAllocation : public NEO::MockGraphicsAllocation {
     bool reservedHandleDataWasSet = false;
 };
 
+class FixedHandleAllocation : public NEO::MockGraphicsAllocation {
+  public:
+    FixedHandleAllocation(uint32_t rootDeviceIndex, void *buffer, size_t sizeIn, uint64_t handle)
+        : NEO::MockGraphicsAllocation(rootDeviceIndex, buffer, sizeIn) {
+        this->internalHandle = handle;
+    }
+
+    int createInternalHandle(NEO::MemoryManager *memoryManager, uint32_t handleId, uint64_t &handle, void *reservedHandleData) override {
+        handle = this->internalHandle;
+        return 0;
+    }
+};
+
 struct RangeExportContext : public L0::Context {
     RangeExportContext(L0::DriverHandle *inDriverHandle) : L0::Context(inDriverHandle) {
         driverHandle = inDriverHandle;
@@ -164,7 +177,7 @@ struct RangeExportContext : public L0::Context {
                                                       uint8_t ipcType = static_cast<uint8_t>(InternalIpcMemoryType::deviceUnifiedMemory),
                                                       uint64_t physicalOffset = 0u,
                                                       void *reservedHandleData = nullptr) {
-        return encodeIpcHandleForRangeAllocation(alloc, ptrAddress, ipcType, physicalOffset, reservedHandleData, ipcHandle);
+        return encodeIpcHandleForRangeAllocation(alloc, nullptr, ptrAddress, ipcType, physicalOffset, reservedHandleData, ipcHandle);
     }
     ze_result_t callOpenIpcRangeHandle(ze_device_handle_t hDevice, const ze_ipc_mem_handle_t &ipcHandle, ze_ipc_memory_flags_t flags, void **pptr) {
         return openIpcRangeHandle(hDevice, ipcHandle, flags, pptr);
@@ -441,6 +454,40 @@ TEST_F(IpcMemHandleRangeTest, givenContiguousReservationMappingsWhenGettingRange
     EXPECT_EQ(numMappings, header->numHandles);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, exportContext->putIpcMemHandle(ipcHandle));
+    clearReservation();
+}
+
+TEST_F(IpcMemHandleRangeTest, givenExportedRangeHandleWhenPuttingItThenIpcHandleTrackingOfChunksAndTransportIsReleased) {
+    installExportSvmManager();
+    auto exportContext = createExportContext();
+
+    void *basePtr = reinterpret_cast<void *>(0x100000);
+    const size_t mappingSize = 4096u;
+    const uint32_t numMappings = 2u;
+    void *secondPtr = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(basePtr) + mappingSize);
+
+    FixedHandleAllocation alloc0(neoDevice->getRootDeviceIndex(), basePtr, mappingSize, 101u);
+    FixedHandleAllocation alloc1(neoDevice->getRootDeviceIndex(), secondPtr, mappingSize, 102u);
+
+    NEO::MemoryMappedRange range0{};
+    range0.ptr = basePtr;
+    range0.size = mappingSize;
+    range0.mappedAllocation.allocation = &alloc0;
+
+    NEO::MemoryMappedRange range1{};
+    range1.ptr = secondPtr;
+    range1.size = mappingSize;
+    range1.mappedAllocation.allocation = &alloc1;
+
+    installReservation(basePtr, {&range0, &range1});
+
+    auto desc = buildRangeDesc(numMappings * mappingSize);
+    ze_ipc_mem_handle_t ipcHandle = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, exportContext->getIpcMemHandle(basePtr, &desc, &ipcHandle));
+    EXPECT_EQ(numMappings + 1u, driverHandle->getIPCHandleMap().size());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, exportContext->putIpcMemHandle(ipcHandle));
+    EXPECT_TRUE(driverHandle->getIPCHandleMap().empty());
     clearReservation();
 }
 

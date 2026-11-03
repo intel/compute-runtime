@@ -1187,7 +1187,7 @@ TEST_F(AllocUsmDeviceEnabledSinglePoolMemoryTest, givenIpcHandleOfPooledAllocati
     EXPECT_EQ(0u, ipcHandleMap.size());
 }
 
-TEST_F(AllocUsmDeviceEnabledSinglePoolMemoryTest, givenPooledAndNotPooledIpcTrackingWhenCleaningUpPoolThenOnlyTrackingOfThatPoolIsReleased) {
+TEST_F(AllocUsmDeviceEnabledSinglePoolMemoryTest, givenIpcTrackingOfPooledAndExportedNotPooledAllocationsWhenCleaningUpPoolThenOnlyTrackingOfThatPoolIsReleased) {
     auto mockDeviceMemAllocPool = reinterpret_cast<MockUsmMemAllocPool *>(l0Devices[0]->getNEODevice()->getDeviceUsmMemAllocPoolFacade().getPool());
     ASSERT_NE(nullptr, mockDeviceMemAllocPool);
 
@@ -1204,6 +1204,7 @@ TEST_F(AllocUsmDeviceEnabledSinglePoolMemoryTest, givenPooledAndNotPooledIpcTrac
     auto &ipcHandleMap = driverHandle->getIPCHandleMap();
     ASSERT_EQ(1u, ipcHandleMap.size());
 
+    driverHandle->svmAllocsManager->getSVMAlloc(notPooledAllocation)->isExportedAllocation = true;
     auto notPooledTracking = new IpcHandleTracking;
     notPooledTracking->alloc = driverHandle->svmAllocsManager->getSVMAlloc(notPooledAllocation)->gpuAllocations.getDefaultGraphicsAllocation();
     notPooledTracking->refcnt = 1;

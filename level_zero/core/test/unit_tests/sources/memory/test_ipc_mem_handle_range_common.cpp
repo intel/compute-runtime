@@ -120,7 +120,7 @@ struct CommonRangeContext : public L0::Context {
     using L0::Context::ipcRangeTransportsPresent;
 
     ze_result_t callEncode(NEO::GraphicsAllocation *alloc, ze_ipc_mem_handle_t &ipcHandle) {
-        return encodeIpcHandleForRangeAllocation(alloc, 0x1000u, static_cast<uint8_t>(InternalIpcMemoryType::deviceUnifiedMemory), 0u, nullptr, ipcHandle);
+        return encodeIpcHandleForRangeAllocation(alloc, nullptr, 0x1000u, static_cast<uint8_t>(InternalIpcMemoryType::deviceUnifiedMemory), 0u, nullptr, ipcHandle);
     }
     ze_result_t callOpenIpcRangeHandle(ze_device_handle_t hDevice, const ze_ipc_mem_handle_t &ipcHandle, ze_ipc_memory_flags_t flags, void **pptr) {
         return openIpcRangeHandle(hDevice, ipcHandle, flags, pptr);
