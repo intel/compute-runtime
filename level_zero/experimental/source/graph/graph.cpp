@@ -2175,7 +2175,12 @@ void releaseRecordedSignalForEagerCommand(ze_event_handle_t event) {
         return;
     }
 
-    L0::Event::fromHandle(event)->setRecordedSignalEntry({});
+    auto *signalEvent = L0::Event::fromHandle(event);
+    if (signalEvent->isCounterBasedExplicitlyEnabled() && (false == L0::Event::isAggregatedEvent(signalEvent))) {
+        // released in assignInOrderExecInfoToEvent once the eager append binds the event
+        return;
+    }
+    signalEvent->setRecordedSignalEntry({});
 }
 
 bool isGraphCapturingAllowed(const L0::CommandList &srcCmdList) {
@@ -2195,14 +2200,14 @@ bool usesForkEvents(std::span<ze_event_handle_t> events) {
     return false;
 }
 
-bool usesGraphInternalEvents(std::span<ze_event_handle_t> waitEvents, ze_event_handle_t signalEvent) {
+bool waitsOnGraphInternalEvents(std::span<ze_event_handle_t> waitEvents) {
     for (const auto &hEvent : waitEvents) {
         const auto *event = L0::Event::fromHandle(hEvent);
         if (event->isCapturedGraphInternalEvent() || event->getIsSignalledAsGraphInternalEvent()) {
             return true;
         }
     }
-    return signalEvent && L0::Event::fromHandle(signalEvent)->isCapturedGraphInternalEvent();
+    return false;
 }
 
 bool waitsOnCbEventSignalledOutsideGraph(std::span<ze_event_handle_t> waitEvents, bool apiRequiredCurrentFlag) {

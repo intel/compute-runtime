@@ -212,6 +212,9 @@ void CommandListCoreFamily<gfxCoreFamily>::assignInOrderExecInfoToEvent(Event *e
     }
     event->setApiRequiredGraphExternalEvent(apiRequiredExternalGraphEvent);
     event->setIsSignalledAsGraphInternalEvent(getIsGraphInstantiationTarget());
+    if (false == getIsGraphInstantiationTarget()) {
+        event->setRecordedSignalEntry({});
+    }
     event->updateInOrderExecState(inOrderExecInfo, inOrderExecInfo->getCounterValue(), inOrderExecInfo->getAllocationOffset());
 }
 

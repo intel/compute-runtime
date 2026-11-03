@@ -521,7 +521,7 @@ bool isGraphCapturingAllowed(const L0::CommandList &srcCmdList);
 bool isGraphInstantiationTarget(const L0::CommandList &srcCmdList);
 bool usesForkEvents(std::span<ze_event_handle_t> events);
 bool usesForkEventsFromOtherSession(const Graph *session, std::span<ze_event_handle_t> events);
-bool usesGraphInternalEvents(std::span<ze_event_handle_t> waitEvents, ze_event_handle_t signalEvent);
+bool waitsOnGraphInternalEvents(std::span<ze_event_handle_t> waitEvents);
 bool waitsOnCbEventSignalledOutsideGraph(std::span<ze_event_handle_t> waitEvents, bool apiRequiredCurrentFlag);
 
 template <CaptureApi api, typename... TArgs>
@@ -546,7 +546,7 @@ ze_result_t captureCommand(L0::CommandList &srcCmdList, Graph *&graphCaptureTarg
             // it's an error to try and fork to a cmdlist that doesn't support capturing
             return ZE_RESULT_ERROR_INVALID_COMMAND_LIST_TYPE;
         }
-        if (usesGraphInternalEvents(eventsWaitList, signalEvent)) {
+        if (waitsOnGraphInternalEvents(eventsWaitList)) {
             return ZE_RESULT_ERROR_GRAPH_INTERNAL_EVENT;
         }
         releaseRecordedSignalForEagerCommand(signalEvent);
@@ -566,7 +566,7 @@ ze_result_t captureCommand(L0::CommandList &srcCmdList, Graph *&graphCaptureTarg
     }
 
     if (nullptr == graphCaptureTarget) {
-        if (usesGraphInternalEvents(eventsWaitList, signalEvent)) {
+        if (waitsOnGraphInternalEvents(eventsWaitList)) {
             return ZE_RESULT_ERROR_GRAPH_INTERNAL_EVENT;
         }
         releaseRecordedSignalForEagerCommand(signalEvent);
