@@ -4040,7 +4040,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnPatchPreamble(NEO::InOrde
                     .gpuDestination = cmdCaptureData.gpuAddress,
                     .pDestination = cmdCaptureData.cpuBuffer,
                     .commandView = cmdCaptureData.commandView,
-                    .offset = firstRegister,
+                    .offset = secondRegister,
                     .patchSize = cmdCaptureData.cmdSize});
             }
         }

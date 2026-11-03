@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/helpers/register_offsets.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
@@ -4928,6 +4929,50 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
         EXPECT_EQ(cbCounter, lriCmd->getDataDword());
         mutableLri = waitExternalVariable->getLoadRegImmList()[3];
         EXPECT_EQ(L0::MCL::MutableLoadRegisterImm::cbEventWaitLoadCounter, mutableLri->getType());
+    }
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListInOrderNoSem64Test,
+            givenLriRequiredAndCbEventWithPatchPreambleCounterWhenRestoringPatchPreambleLoadRegisterImmsThenEachLoadsItsOwnRegister) {
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    if (!this->lriRequired) {
+        GTEST_SKIP();
+    }
+
+    auto event = this->createTestEvent(true, false, false, false, false);
+    auto eventHandle = event->toHandle();
+
+    auto externalCmdList = this->createMutableCmdList();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, externalCmdList->appendLaunchKernel(this->kernel2->toHandle(), this->testGroupCount, eventHandle, 0, nullptr, this->testLaunchParams));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, externalCmdList->close());
+
+    MockGraphicsAllocation patchPreambleDeviceAllocation(nullptr, 0xCD000, sizeof(uint64_t));
+    event->getInOrderExecEventHelper().assignPatchPreambleData(4, nullptr, 0, nullptr, patchPreambleDeviceAllocation.getGpuAddress(), &patchPreambleDeviceAllocation);
+
+    this->mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, this->mutableCommandList->getNextCommandId(&this->mutableCommandIdDesc, 0, nullptr, &this->commandId));
+
+    L0::CmdListWaitEventParameters waitEventParams = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, this->mutableCommandList->appendWaitOnEvents(1, &eventHandle, waitEventParams));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, this->mutableCommandList->close());
+
+    auto &eventMutation = mutableCommandList->eventMutations[this->commandId - 1];
+    ASSERT_EQ(1u, eventMutation.waitEvents.size());
+    auto &loadRegImmList = eventMutation.waitEvents[0].eventVariable->getLoadRegImmList();
+    ASSERT_EQ(4u, loadRegImmList.size());
+
+    const uint32_t expectedRegisters[] = {RegisterOffsets::csGprR0, RegisterOffsets::csGprR0 + 4};
+    for (size_t i = 0; i < 2; i++) {
+        auto mutableLri = static_cast<MockMutableLoadRegisterImmHw<FamilyType> *>(loadRegImmList[i]);
+        EXPECT_EQ(L0::MCL::MutableLoadRegisterImm::cbEventWaitLoadPatchPreambleCounter, mutableLri->getType());
+
+        mutableLri->restore();
+
+        auto lriCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(mutableLri->loadRegImm);
+        ASSERT_NE(nullptr, lriCmd);
+        EXPECT_EQ(expectedRegisters[i], lriCmd->getRegisterOffset());
     }
 }
 
