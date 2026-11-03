@@ -519,55 +519,55 @@ TEST_F(GmmHelperTests, GivenPlaneWhenCopyingResourceBltThenResourceIsCopiedCorre
     auto gmm = MockGmm::queryImgParams(getGmmHelper(), imgInfo, false);
     auto mockResInfo = static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
 
-    GMM_RES_COPY_BLT &requestedCpuBlt = mockResInfo->requestedResCopyBlt;
+    GmmCpuBltParams &requestedCpuBlt = mockResInfo->requestedCpuBltParams;
     mockResInfo->cpuBltCalled = 0u;
-    GMM_RES_COPY_BLT expectedCpuBlt = {};
+    GmmCpuBltParams expectedCpuBlt = {};
     char sys(0), gpu(0);
     uint32_t pitch = 300;
     uint32_t height = 400;
     uint8_t upload = 1u;
 
-    expectedCpuBlt.Sys.pData = &sys;
-    expectedCpuBlt.Gpu.pData = &gpu;
-    expectedCpuBlt.Sys.RowPitch = pitch;
-    expectedCpuBlt.Blt.Upload = upload;
-    expectedCpuBlt.Sys.BufferSize = pitch * height;
+    expectedCpuBlt.sysData = &sys;
+    expectedCpuBlt.gpuData = &gpu;
+    expectedCpuBlt.sysRowPitch = pitch;
+    expectedCpuBlt.upload = true;
+    expectedCpuBlt.sysBufferSize = pitch * height;
 
     // plane Y
     auto retVal = gmm->resourceCopyBlt(&sys, &gpu, pitch, height, upload, ImagePlane::planeY);
     EXPECT_EQ(1u, retVal);
-    EXPECT_TRUE(memcmp(&expectedCpuBlt, &requestedCpuBlt, sizeof(GMM_RES_COPY_BLT)) == 0);
+    EXPECT_EQ(expectedCpuBlt, requestedCpuBlt);
     EXPECT_EQ(1u, mockResInfo->cpuBltCalled);
 
     // no-plane
     retVal = gmm->resourceCopyBlt(&sys, &gpu, pitch, height, upload, ImagePlane::noPlane);
     EXPECT_EQ(1u, retVal);
-    EXPECT_TRUE(memcmp(&expectedCpuBlt, &requestedCpuBlt, sizeof(GMM_RES_COPY_BLT)) == 0);
+    EXPECT_EQ(expectedCpuBlt, requestedCpuBlt);
     EXPECT_EQ(2u, mockResInfo->cpuBltCalled);
 
     // plane UV
-    expectedCpuBlt.Sys.pData = ptrOffset(&sys, height * pitch * 2u);
+    expectedCpuBlt.sysData = ptrOffset(&sys, height * pitch * 2u);
     retVal = gmm->resourceCopyBlt(&sys, &gpu, pitch, height, upload, ImagePlane::planeUV);
     EXPECT_EQ(1u, retVal);
-    EXPECT_TRUE(memcmp(&expectedCpuBlt, &requestedCpuBlt, sizeof(GMM_RES_COPY_BLT)) == 0);
+    EXPECT_EQ(expectedCpuBlt, requestedCpuBlt);
     EXPECT_EQ(3u, mockResInfo->cpuBltCalled);
 
     // plane V
-    expectedCpuBlt.Sys.pData = ptrOffset(&sys, height * pitch * 2u);
-    expectedCpuBlt.Sys.RowPitch = pitch / 2;
-    expectedCpuBlt.Sys.BufferSize = expectedCpuBlt.Sys.RowPitch * height;
+    expectedCpuBlt.sysData = ptrOffset(&sys, height * pitch * 2u);
+    expectedCpuBlt.sysRowPitch = pitch / 2;
+    expectedCpuBlt.sysBufferSize = expectedCpuBlt.sysRowPitch * height;
     retVal = gmm->resourceCopyBlt(&sys, &gpu, pitch, height, upload, ImagePlane::planeV);
     EXPECT_EQ(1u, retVal);
-    EXPECT_TRUE(memcmp(&expectedCpuBlt, &requestedCpuBlt, sizeof(GMM_RES_COPY_BLT)) == 0);
+    EXPECT_EQ(expectedCpuBlt, requestedCpuBlt);
     EXPECT_EQ(4u, mockResInfo->cpuBltCalled);
 
     // plane U
-    expectedCpuBlt.Sys.pData = ptrOffset(&sys, height * pitch * 2u + height * pitch / 2u);
-    expectedCpuBlt.Sys.RowPitch = pitch / 2;
-    expectedCpuBlt.Sys.BufferSize = expectedCpuBlt.Sys.RowPitch * height;
+    expectedCpuBlt.sysData = ptrOffset(&sys, height * pitch * 2u + height * pitch / 2u);
+    expectedCpuBlt.sysRowPitch = pitch / 2;
+    expectedCpuBlt.sysBufferSize = expectedCpuBlt.sysRowPitch * height;
     retVal = gmm->resourceCopyBlt(&sys, &gpu, pitch, height, upload, ImagePlane::planeU);
     EXPECT_EQ(1u, retVal);
-    EXPECT_TRUE(memcmp(&expectedCpuBlt, &requestedCpuBlt, sizeof(GMM_RES_COPY_BLT)) == 0);
+    EXPECT_EQ(expectedCpuBlt, requestedCpuBlt);
     EXPECT_EQ(5u, mockResInfo->cpuBltCalled);
 }
 

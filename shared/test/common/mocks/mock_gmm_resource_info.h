@@ -81,11 +81,9 @@ class MockGmmResourceInfo : public GmmResourceInfo {
 
     GMM_STATUS getOffset(GMM_REQ_OFFSET_INFO &reqOffsetInfo) override;
 
-    uint8_t cpuBlt(GMM_RES_COPY_BLT *resCopyBlt) override {
+    uint8_t cpuBlt(const GmmCpuBltParams &params) override {
         cpuBltCalled++;
-        if (resCopyBlt) {
-            requestedResCopyBlt = *resCopyBlt;
-        }
+        requestedCpuBltParams = params;
         return cpuBltResult;
     };
 
@@ -135,7 +133,7 @@ class MockGmmResourceInfo : public GmmResourceInfo {
     SurfaceFormatInfo tempSurface{};
     bool is64KBPageSuitableValue = true;
     bool isDisplayableValue = false;
-    GMM_RES_COPY_BLT requestedResCopyBlt = {};
+    GmmCpuBltParams requestedCpuBltParams = {};
     uint32_t cpuBltCalled = 0u;
     uint8_t cpuBltResult = 1u;
     static constexpr uint32_t getHAlignSurfaceStateResult = 2u;

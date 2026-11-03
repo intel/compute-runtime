@@ -388,8 +388,6 @@ void Gmm::updateOffsetsInImgInfo(ImageInfo &imgInfo, uint32_t arrayIndex) {
 }
 
 uint8_t Gmm::resourceCopyBlt(void *sys, void *gpu, uint32_t pitch, uint32_t height, unsigned char upload, ImagePlane plane) {
-    GMM_RES_COPY_BLT gmmResourceCopyBLT = {};
-
     if (plane == ImagePlane::planeV) {
         sys = ptrOffset(sys, height * pitch * 2);
         pitch /= 2;
@@ -399,15 +397,8 @@ uint8_t Gmm::resourceCopyBlt(void *sys, void *gpu, uint32_t pitch, uint32_t heig
     } else if (plane == ImagePlane::planeUV) {
         sys = ptrOffset(sys, height * pitch * 2);
     }
-    uint32_t size = pitch * height;
 
-    gmmResourceCopyBLT.Sys.pData = sys;
-    gmmResourceCopyBLT.Gpu.pData = gpu;
-    gmmResourceCopyBLT.Sys.RowPitch = pitch;
-    gmmResourceCopyBLT.Blt.Upload = upload;
-    gmmResourceCopyBLT.Sys.BufferSize = size;
-
-    return this->gmmResourceInfo->cpuBlt(&gmmResourceCopyBLT);
+    return this->gmmResourceInfo->cpuBlt({.gpuData = gpu, .sysData = sys, .sysRowPitch = pitch, .sysBufferSize = pitch * height, .upload = upload != 0});
 }
 
 bool Gmm::unifiedAuxTranslationCapable() const {

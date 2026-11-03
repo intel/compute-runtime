@@ -152,7 +152,15 @@ GMM_STATUS GmmResourceInfo::getOffset(GMM_REQ_OFFSET_INFO &reqOffsetInfo) { retu
 
 GMM_RESOURCE_USAGE_TYPE GmmResourceInfo::getCachePolicyUsage() const { return resourceInfo->GetCachePolicyUsage(); }
 
-uint8_t GmmResourceInfo::cpuBlt(GMM_RES_COPY_BLT *resCopyBlt) { return resourceInfo->CpuBlt(resCopyBlt); }
+uint8_t GmmResourceInfo::cpuBlt(const GmmCpuBltParams &params) {
+    GMM_RES_COPY_BLT resCopyBlt = {};
+    resCopyBlt.Gpu.pData = params.gpuData;
+    resCopyBlt.Sys.pData = params.sysData;
+    resCopyBlt.Sys.RowPitch = params.sysRowPitch;
+    resCopyBlt.Sys.BufferSize = params.sysBufferSize;
+    resCopyBlt.Blt.Upload = params.upload;
+    return resourceInfo->CpuBlt(&resCopyBlt);
+}
 
 uint64_t GmmResourceInfo::getUnifiedAuxSurfaceOffset(GMM_UNIFIED_AUX_TYPE auxType) { return resourceInfo->GetUnifiedAuxSurfaceOffset(auxType); }
 

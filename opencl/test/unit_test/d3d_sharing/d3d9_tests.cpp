@@ -803,33 +803,33 @@ TEST_F(D3D9Tests, GivenNonSharedResourceSurfaceAndLockableWhenReleasingThenResou
     memoryManager->lockResourceReturnValue = returnedLockedRes;
     memoryManager->expectedLockingAllocation = graphicsAllocation;
 
-    GMM_RES_COPY_BLT &requestedResCopyBlt = mockGmmResInfo->requestedResCopyBlt;
-    GMM_RES_COPY_BLT expectedResCopyBlt = {};
+    GmmCpuBltParams &requestedResCopyBlt = mockGmmResInfo->requestedCpuBltParams;
+    GmmCpuBltParams expectedResCopyBlt = {};
     mockGmmResInfo->cpuBltCalled = 0u;
-    expectedResCopyBlt.Sys.pData = lockedRect.pBits;
-    expectedResCopyBlt.Gpu.pData = returnedLockedRes;
-    expectedResCopyBlt.Sys.RowPitch = lockedRect.Pitch;
-    expectedResCopyBlt.Blt.Upload = 1;
-    expectedResCopyBlt.Sys.BufferSize = lockedRect.Pitch * imgHeight;
+    expectedResCopyBlt.sysData = lockedRect.pBits;
+    expectedResCopyBlt.gpuData = returnedLockedRes;
+    expectedResCopyBlt.sysRowPitch = lockedRect.Pitch;
+    expectedResCopyBlt.upload = true;
+    expectedResCopyBlt.sysBufferSize = lockedRect.Pitch * imgHeight;
 
     auto retVal = clEnqueueAcquireDX9MediaSurfacesKHR(cmdQ, 1, &clMem, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(1, memoryManager->lockResourceCalled);
     EXPECT_EQ(1, memoryManager->unlockResourceCalled);
-    EXPECT_TRUE(memcmp(&requestedResCopyBlt, &expectedResCopyBlt, sizeof(GMM_RES_COPY_BLT)) == 0);
+    EXPECT_EQ(requestedResCopyBlt, expectedResCopyBlt);
     EXPECT_EQ(1u, mockGmmResInfo->cpuBltCalled);
     EXPECT_EQ(1u, mockSharingFcns->lockRectCalled);
 
     mockSharingFcns->lockRectParamsSet.lockedRect = lockedRect;
 
     requestedResCopyBlt = {};
-    expectedResCopyBlt.Blt.Upload = 0;
+    expectedResCopyBlt.upload = false;
 
     EXPECT_EQ(1u, mockSharingFcns->unlockRectCalled);
 
     retVal = clEnqueueReleaseDX9MediaSurfacesKHR(cmdQ, 1, &clMem, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_TRUE(memcmp(&requestedResCopyBlt, &expectedResCopyBlt, sizeof(GMM_RES_COPY_BLT)) == 0);
+    EXPECT_EQ(requestedResCopyBlt, expectedResCopyBlt);
     EXPECT_EQ(2, memoryManager->lockResourceCalled);
     EXPECT_EQ(2, memoryManager->unlockResourceCalled);
     EXPECT_EQ(2u, mockGmmResInfo->cpuBltCalled);
@@ -873,18 +873,18 @@ TEST_F(D3D9Tests, GivenNonSharedResourceSurfaceAndLockableIntelWhenReleasingThen
     memoryManager->lockResourceReturnValue = returnedLockedRes;
     memoryManager->expectedLockingAllocation = graphicsAllocation;
 
-    GMM_RES_COPY_BLT &requestedResCopyBlt = mockGmmResInfo->requestedResCopyBlt;
-    GMM_RES_COPY_BLT expectedResCopyBlt = {};
+    GmmCpuBltParams &requestedResCopyBlt = mockGmmResInfo->requestedCpuBltParams;
+    GmmCpuBltParams expectedResCopyBlt = {};
     mockGmmResInfo->cpuBltCalled = 0u;
-    expectedResCopyBlt.Sys.pData = lockedRect.pBits;
-    expectedResCopyBlt.Gpu.pData = returnedLockedRes;
-    expectedResCopyBlt.Sys.RowPitch = lockedRect.Pitch;
-    expectedResCopyBlt.Blt.Upload = 1;
-    expectedResCopyBlt.Sys.BufferSize = lockedRect.Pitch * imgHeight;
+    expectedResCopyBlt.sysData = lockedRect.pBits;
+    expectedResCopyBlt.gpuData = returnedLockedRes;
+    expectedResCopyBlt.sysRowPitch = lockedRect.Pitch;
+    expectedResCopyBlt.upload = true;
+    expectedResCopyBlt.sysBufferSize = lockedRect.Pitch * imgHeight;
 
     auto retVal = clEnqueueAcquireDX9ObjectsINTEL(cmdQ, 1, &clMem, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_TRUE(memcmp(&requestedResCopyBlt, &expectedResCopyBlt, sizeof(GMM_RES_COPY_BLT)) == 0);
+    EXPECT_EQ(requestedResCopyBlt, expectedResCopyBlt);
     EXPECT_EQ(1, memoryManager->lockResourceCalled);
     EXPECT_EQ(1, memoryManager->unlockResourceCalled);
     EXPECT_EQ(1u, mockGmmResInfo->cpuBltCalled);
@@ -893,13 +893,13 @@ TEST_F(D3D9Tests, GivenNonSharedResourceSurfaceAndLockableIntelWhenReleasingThen
     mockSharingFcns->lockRectParamsSet.lockedRect = lockedRect;
 
     requestedResCopyBlt = {};
-    expectedResCopyBlt.Blt.Upload = 0;
+    expectedResCopyBlt.upload = false;
 
     EXPECT_EQ(1u, mockSharingFcns->unlockRectCalled);
 
     retVal = clEnqueueReleaseDX9ObjectsINTEL(cmdQ, 1, &clMem, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_TRUE(memcmp(&requestedResCopyBlt, &expectedResCopyBlt, sizeof(GMM_RES_COPY_BLT)) == 0);
+    EXPECT_EQ(requestedResCopyBlt, expectedResCopyBlt);
     EXPECT_EQ(2, memoryManager->lockResourceCalled);
     EXPECT_EQ(2, memoryManager->unlockResourceCalled);
     EXPECT_EQ(2u, mockGmmResInfo->cpuBltCalled);
@@ -947,18 +947,18 @@ TEST_F(D3D9Tests, GivenNonSharedResourceSurfaceAndNonLockableWhenReleasingThenRe
     memoryManager->lockResourceReturnValue = returnedLockedRes;
     memoryManager->expectedLockingAllocation = graphicsAllocation;
 
-    GMM_RES_COPY_BLT &requestedResCopyBlt = mockGmmResInfo->requestedResCopyBlt;
+    GmmCpuBltParams &requestedResCopyBlt = mockGmmResInfo->requestedCpuBltParams;
     mockGmmResInfo->cpuBltCalled = 0u;
-    GMM_RES_COPY_BLT expectedResCopyBlt = {};
-    expectedResCopyBlt.Sys.pData = lockedRect.pBits;
-    expectedResCopyBlt.Gpu.pData = returnedLockedRes;
-    expectedResCopyBlt.Sys.RowPitch = lockedRect.Pitch;
-    expectedResCopyBlt.Blt.Upload = 1;
-    expectedResCopyBlt.Sys.BufferSize = lockedRect.Pitch * imgHeight;
+    GmmCpuBltParams expectedResCopyBlt = {};
+    expectedResCopyBlt.sysData = lockedRect.pBits;
+    expectedResCopyBlt.gpuData = returnedLockedRes;
+    expectedResCopyBlt.sysRowPitch = lockedRect.Pitch;
+    expectedResCopyBlt.upload = true;
+    expectedResCopyBlt.sysBufferSize = lockedRect.Pitch * imgHeight;
 
     auto retVal = clEnqueueAcquireDX9MediaSurfacesKHR(cmdQ, 1, &clMem, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_TRUE(memcmp(&requestedResCopyBlt, &expectedResCopyBlt, sizeof(GMM_RES_COPY_BLT)) == 0);
+    EXPECT_EQ(requestedResCopyBlt, expectedResCopyBlt);
     EXPECT_EQ(1, memoryManager->lockResourceCalled);
     EXPECT_EQ(1, memoryManager->unlockResourceCalled);
     EXPECT_EQ(1u, mockGmmResInfo->cpuBltCalled);
@@ -966,13 +966,13 @@ TEST_F(D3D9Tests, GivenNonSharedResourceSurfaceAndNonLockableWhenReleasingThenRe
 
     mockSharingFcns->lockRectParamsSet.lockedRect = lockedRect;
 
-    expectedResCopyBlt.Blt.Upload = 0;
+    expectedResCopyBlt.upload = false;
 
     EXPECT_EQ(1u, mockSharingFcns->unlockRectCalled);
 
     retVal = clEnqueueReleaseDX9MediaSurfacesKHR(cmdQ, 1, &clMem, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_TRUE(memcmp(&requestedResCopyBlt, &expectedResCopyBlt, sizeof(GMM_RES_COPY_BLT)) == 0);
+    EXPECT_EQ(requestedResCopyBlt, expectedResCopyBlt);
     EXPECT_EQ(2, memoryManager->lockResourceCalled);
     EXPECT_EQ(2, memoryManager->unlockResourceCalled);
     EXPECT_EQ(2u, mockGmmResInfo->cpuBltCalled);

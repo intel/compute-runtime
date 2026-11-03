@@ -23,6 +23,16 @@ enum class GmmCompressionType : uint8_t {
     media
 };
 
+struct GmmCpuBltParams {
+    void *gpuData = nullptr;
+    void *sysData = nullptr;
+    uint32_t sysRowPitch = 0;
+    uint32_t sysBufferSize = 0;
+    bool upload = false;
+
+    bool operator==(const GmmCpuBltParams &) const = default;
+};
+
 class GmmResourceInfo : NonCopyableAndNonMovableClass {
   public:
     static GmmResourceInfo *create(GmmClientContext *clientContext, GMM_RESCREATE_PARAMS *resourceCreateParams);
@@ -85,7 +95,7 @@ class GmmResourceInfo : NonCopyableAndNonMovableClass {
 
     MOCKABLE_VIRTUAL GMM_STATUS getOffset(GMM_REQ_OFFSET_INFO &reqOffsetInfo);
 
-    MOCKABLE_VIRTUAL uint8_t cpuBlt(GMM_RES_COPY_BLT *resCopyBlt);
+    MOCKABLE_VIRTUAL uint8_t cpuBlt(const GmmCpuBltParams &params);
 
     MOCKABLE_VIRTUAL void *getSystemMemPointer();
 
