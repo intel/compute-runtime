@@ -2455,9 +2455,34 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledHostMemoryValid
     EXPECT_EQ(nullptr, storage.fragmentStorageData[1].osHandleStorage);
     EXPECT_EQ(nullptr, storage.fragmentStorageData[2].osHandleStorage);
 
-    storage.fragmentStorageData[0].freeTheFragment = true;
+    EXPECT_TRUE(storage.fragmentStorageData[0].freeTheFragment);
     memoryManager->cleanOsHandles(storage, rootDeviceIndex);
     mock->ioctlResExt = &mock->none;
+}
+
+TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenUserptrFailingForSecondNewFragmentWhenPopulatingOsHandlesThenFragmentsCreatedInThatCallAreMarkedToFree) {
+    mock->reset();
+    DrmMockCustom::IoctlResExt ioctlResExt = {1, -1};
+    mock->ioctlResExt = &ioctlResExt;
+    mock->ioctlExpected.gemUserptr = 2;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
+
+    OsHandleStorage handleStorage;
+    for (auto fragmentId = 0u; fragmentId < 3u; fragmentId++) {
+        handleStorage.fragmentStorageData[fragmentId].cpuPtr = reinterpret_cast<void *>(0x1000 + fragmentId * MemoryConstants::pageSize);
+        handleStorage.fragmentStorageData[fragmentId].fragmentSize = MemoryConstants::pageSize;
+    }
+
+    EXPECT_EQ(MemoryManager::AllocationStatus::Error, memoryManager->populateOsHandles(handleStorage, rootDeviceIndex));
+    mock->ioctlResExt = &mock->none;
+    EXPECT_TRUE(handleStorage.fragmentStorageData[0].freeTheFragment);
+    EXPECT_TRUE(handleStorage.fragmentStorageData[1].freeTheFragment);
+    EXPECT_EQ(nullptr, handleStorage.fragmentStorageData[2].osHandleStorage);
+    EXPECT_EQ(0u, static_cast<MockHostPtrManager *>(memoryManager->getHostPtrManager())->getFragmentCount());
+
+    memoryManager->cleanOsHandles(handleStorage, rootDeviceIndex);
+    mock->testIoctls();
 }
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenNoInputsWhenOsHandleIsCreatedThenAllBoHandlesAreInitializedAsNullPtrs) {

@@ -2328,10 +2328,40 @@ bool DrmMemoryManager::parseMeminfo(const std::string &content, uint64_t &totalB
     return foundTotal && foundFree;
 }
 
+namespace {
+class AllocatedFragmentsReleaseGuard : NonCopyableAndNonMovableClass {
+  public:
+    AllocatedFragmentsReleaseGuard(OsHandleStorage &handleStorage, const uint32_t *fragmentIndexes, const uint32_t &fragmentsCount)
+        : handleStorage(handleStorage), fragmentIndexes(fragmentIndexes), fragmentsCount(fragmentsCount) {}
+
+    ~AllocatedFragmentsReleaseGuard() {
+        if (this->released) {
+            return;
+        }
+        for (uint32_t i = 0; i < this->fragmentsCount; i++) {
+            this->handleStorage.fragmentStorageData[this->fragmentIndexes[i]].freeTheFragment = true;
+        }
+    }
+
+    void release() {
+        this->released = true;
+    }
+
+  private:
+    OsHandleStorage &handleStorage;
+    const uint32_t *fragmentIndexes;
+    const uint32_t &fragmentsCount;
+    bool released = false;
+};
+
+static_assert(NonCopyableAndNonMovable<AllocatedFragmentsReleaseGuard>);
+} // namespace
+
 AllocationStatus DrmMemoryManager::populateOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) {
     BufferObject *allocatedBos[maxFragmentsCount];
     uint32_t numberOfBosAllocated = 0;
-    uint32_t indexesOfAllocatedBos[maxFragmentsCount];
+    uint32_t indexesOfAllocatedBos[maxFragmentsCount] = {};
+    AllocatedFragmentsReleaseGuard allocatedFragmentsReleaseGuard(handleStorage, indexesOfAllocatedBos, numberOfBosAllocated);
 
     for (unsigned int i = 0; i < maxFragmentsCount; i++) {
         // If there is no fragment it means it already exists.
@@ -2358,9 +2388,6 @@ AllocationStatus DrmMemoryManager::populateOsHandles(OsHandleStorage &handleStor
         int result = pinBBs.at(rootDeviceIndex)->validateHostPtr(allocatedBos, numberOfBosAllocated, getDefaultOsContext(rootDeviceIndex), 0, getDefaultDrmContextId(rootDeviceIndex));
 
         if (result == EFAULT) {
-            for (uint32_t i = 0; i < numberOfBosAllocated; i++) {
-                handleStorage.fragmentStorageData[indexesOfAllocatedBos[i]].freeTheFragment = true;
-            }
             return AllocationStatus::InvalidHostPointer;
         } else if (result != 0) {
             return AllocationStatus::Error;
@@ -2370,6 +2397,7 @@ AllocationStatus DrmMemoryManager::populateOsHandles(OsHandleStorage &handleStor
     for (uint32_t i = 0; i < numberOfBosAllocated; i++) {
         hostPtrManager->storeFragment(rootDeviceIndex, handleStorage.fragmentStorageData[indexesOfAllocatedBos[i]]);
     }
+    allocatedFragmentsReleaseGuard.release();
     return AllocationStatus::Success;
 }
 

@@ -1054,6 +1054,9 @@ MemoryManager::AllocationStatus WddmMemoryManager::populateOsHandles(OsHandleSto
     auto result = getWddm(rootDeviceIndex).createAllocationsAndMapGpuVa(handleStorage);
 
     if (result == STATUS_GRAPHICS_NO_VIDEO_MEMORY) {
+        for (uint32_t i = 0; i < allocatedFragmentsCounter; i++) {
+            handleStorage.fragmentStorageData[allocatedFragmentIndexes[i]].freeTheFragment = true;
+        }
         return AllocationStatus::InvalidHostPointer;
     }
 
@@ -1073,7 +1076,10 @@ void WddmMemoryManager::cleanOsHandles(OsHandleStorage &handleStorage, uint32_t 
 
     for (unsigned int i = 0; i < maxFragmentsCount; i++) {
         if (handleStorage.fragmentStorageData[i].freeTheFragment) {
-            handles[allocationCount++] = static_cast<OsHandleWin *>(handleStorage.fragmentStorageData[i].osHandleStorage)->handle;
+            auto handle = static_cast<OsHandleWin *>(handleStorage.fragmentStorageData[i].osHandleStorage)->handle;
+            if (handle) {
+                handles[allocationCount++] = handle;
+            }
             std::fill(handleStorage.fragmentStorageData[i].residency->resident.begin(), handleStorage.fragmentStorageData[i].residency->resident.end(), false);
         }
     }

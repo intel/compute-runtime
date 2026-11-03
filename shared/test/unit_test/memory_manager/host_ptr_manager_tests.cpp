@@ -868,6 +868,24 @@ TEST_F(HostPtrAllocationTest, givenTwoAllocationsThatSharesOneFragmentWhenOneIsD
     EXPECT_EQ(0u, hostPtrManager->getFragmentCount());
 }
 
+TEST_F(HostPtrAllocationTest, givenFragmentReusedFromLiveAllocationWhenPopulatingOsHandlesFailsThenReferenceToReusedFragmentIsReleased) {
+    auto hostPtrManager = static_cast<MockHostPtrManager *>(memoryManager->getHostPtrManager());
+    const auto rootDeviceIndex = csr->getRootDeviceIndex();
+    void *storedPtr = reinterpret_cast<void *>(0x101000);
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, false, MemoryConstants::pageSize, csr->getOsContext().getDeviceBitfield()}, storedPtr);
+    ASSERT_NE(nullptr, allocation);
+    ASSERT_EQ(1, hostPtrManager->getFragment({storedPtr, rootDeviceIndex})->refCount);
+
+    memoryManager->callBasePopulateOsHandles = false;
+    memoryManager->populateOsHandlesResult = MemoryManager::AllocationStatus::Error;
+    auto osStorage = hostPtrManager->prepareOsStorageForAllocation(*memoryManager, MemoryConstants::pageSize, ptrOffset(storedPtr, MemoryConstants::pageSize / 2), rootDeviceIndex);
+    EXPECT_EQ(0u, osStorage.fragmentCount);
+    EXPECT_EQ(1, hostPtrManager->getFragment({storedPtr, rootDeviceIndex})->refCount);
+
+    memoryManager->freeGraphicsMemory(allocation);
+    EXPECT_EQ(0u, hostPtrManager->getFragmentCount());
+}
+
 TEST_F(HostPtrAllocationTest, whenPrepareOsHandlesForAllocationThenPopulateAsManyFragmentsAsRequired) {
     auto hostPtrManager = static_cast<MockHostPtrManager *>(memoryManager->getHostPtrManager());
     void *cpuPtr = reinterpret_cast<void *>(0x100001);

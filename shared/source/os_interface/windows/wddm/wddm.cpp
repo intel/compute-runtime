@@ -796,22 +796,27 @@ NTSTATUS Wddm::createAllocationsAndMapGpuVa(OsHandleStorage &osHandles) {
             DEBUG_BREAK_IF(status != STATUS_GRAPHICS_NO_VIDEO_MEMORY);
             break;
         }
-        auto allocationIndex = 0;
+        uint32_t createdFragmentIndexes[maxFragmentsCount] = {};
+        auto allocationIndex = 0u;
         for (int i = 0; i < allocationCount; i++) {
             while (static_cast<OsHandleWin *>(osHandles.fragmentStorageData[allocationIndex].osHandleStorage)->handle) {
                 allocationIndex++;
             }
             static_cast<OsHandleWin *>(osHandles.fragmentStorageData[allocationIndex].osHandleStorage)->handle = allocationInfo[i].hAllocation;
-            bool success = mapGpuVirtualAddress(&osHandles.fragmentStorageData[allocationIndex]);
+            createdFragmentIndexes[i] = allocationIndex;
+            allocationIndex++;
+        }
+
+        for (int i = 0; i < allocationCount; i++) {
+            auto fragmentIndex = createdFragmentIndexes[i];
+            bool success = mapGpuVirtualAddress(&osHandles.fragmentStorageData[fragmentIndex]);
 
             if (!success) {
-                osHandles.fragmentStorageData[allocationIndex].freeTheFragment = true;
+                osHandles.fragmentStorageData[fragmentIndex].freeTheFragment = true;
                 PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s mapGpuVirtualAddress: %d", NEO_FUNCTION_NAME, success);
                 DEBUG_BREAK_IF(true);
                 return STATUS_GRAPHICS_NO_VIDEO_MEMORY;
             }
-
-            allocationIndex++;
         }
 
         status = STATUS_SUCCESS;

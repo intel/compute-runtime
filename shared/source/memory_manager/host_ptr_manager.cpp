@@ -255,7 +255,16 @@ OsHandleStorage HostPtrManager::prepareOsStorageForAllocation(MemoryManager &mem
     UNRECOVERABLE_IF(checkAllocationsForOverlapping(memoryManager, &requirements) == RequirementsStatus::fatal);
     auto osStorage = populateAlreadyAllocatedFragments(requirements);
     if (osStorage.fragmentCount > 0) {
+        bool reusedFragments[maxFragmentsCount] = {};
+        for (auto fragmentId = 0u; fragmentId < maxFragmentsCount; fragmentId++) {
+            reusedFragments[fragmentId] = osStorage.fragmentStorageData[fragmentId].osHandleStorage != nullptr;
+        }
         if (memoryManager.populateOsHandles(osStorage, rootDeviceIndex) != MemoryManager::AllocationStatus::Success) {
+            for (auto fragmentId = 0u; fragmentId < maxFragmentsCount; fragmentId++) {
+                if (reusedFragments[fragmentId]) {
+                    osStorage.fragmentStorageData[fragmentId].freeTheFragment = releaseHostPtr(rootDeviceIndex, osStorage.fragmentStorageData[fragmentId].cpuPtr);
+                }
+            }
             memoryManager.cleanOsHandles(osStorage, rootDeviceIndex);
             osStorage.fragmentCount = 0;
         }

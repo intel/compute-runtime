@@ -5483,7 +5483,7 @@ TEST_F(WddmMemoryManagerTest2, givenReadOnlyMemoryWhenCreateAllocationFailsThenP
     auto result = memoryManager->populateOsHandles(handleStorage, 0);
 
     EXPECT_EQ(MemoryManager::AllocationStatus::InvalidHostPointer, result);
-    handleStorage.fragmentStorageData[0].freeTheFragment = true;
+    EXPECT_TRUE(handleStorage.fragmentStorageData[0].freeTheFragment);
     memoryManager->cleanOsHandles(handleStorage, 0);
 }
 
@@ -5508,9 +5508,59 @@ TEST_F(WddmMemoryManagerTest2, givenReadOnlyMemoryPassedToPopulateOsHandlesWhenC
     auto numberOfStoredFragments = hostPtrManager->getFragmentCount();
     EXPECT_EQ(0u, numberOfStoredFragments);
     EXPECT_EQ(nullptr, hostPtrManager->getFragment({handleStorage.fragmentStorageData[1].cpuPtr, mockRootDeviceIndex}));
+    EXPECT_FALSE(handleStorage.fragmentStorageData[0].freeTheFragment);
+    EXPECT_TRUE(handleStorage.fragmentStorageData[1].freeTheFragment);
 
-    handleStorage.fragmentStorageData[1].freeTheFragment = true;
     memoryManager->cleanOsHandles(handleStorage, mockRootDeviceIndex);
+}
+
+TEST_F(WddmMemoryManagerTest2, givenMapGpuVaFailingForFirstOfNewFragmentsWhenPopulateOsHandlesFailsThenAllocationsOfAllNewFragmentsAreDestroyed) {
+    memoryManager->setDeferredDeleter(nullptr);
+    wddm->callBaseMapGpuVa = false;
+    wddm->mapGpuVaStatus = false;
+
+    constexpr uint32_t newFragmentsCount = 3;
+    OsHandleStorage handleStorage;
+    handleStorage.fragmentCount = newFragmentsCount;
+    for (auto fragmentId = 0u; fragmentId < newFragmentsCount; fragmentId++) {
+        handleStorage.fragmentStorageData[fragmentId].cpuPtr = reinterpret_cast<void *>(0x1000 + fragmentId * MemoryConstants::pageSize);
+        handleStorage.fragmentStorageData[fragmentId].fragmentSize = MemoryConstants::pageSize;
+    }
+
+    auto mapGpuVaCalledBefore = wddm->mapGpuVirtualAddressResult.called;
+    EXPECT_EQ(MemoryManager::AllocationStatus::InvalidHostPointer, memoryManager->populateOsHandles(handleStorage, mockRootDeviceIndex));
+    EXPECT_EQ(mapGpuVaCalledBefore + 1, wddm->mapGpuVirtualAddressResult.called);
+    for (auto fragmentId = 0u; fragmentId < newFragmentsCount; fragmentId++) {
+        EXPECT_TRUE(handleStorage.fragmentStorageData[fragmentId].freeTheFragment);
+        EXPECT_NE(0u, static_cast<OsHandleWin *>(handleStorage.fragmentStorageData[fragmentId].osHandleStorage)->handle);
+    }
+
+    auto destroyCalledBefore = wddm->destroyAllocationResult.called;
+    wddm->destroyAllocationResult.success = false;
+    memoryManager->cleanOsHandles(handleStorage, mockRootDeviceIndex);
+    EXPECT_EQ(destroyCalledBefore + 1, wddm->destroyAllocationResult.called);
+    EXPECT_TRUE(wddm->destroyAllocationResult.success);
+}
+
+TEST_F(WddmMemoryManagerTest2, givenCreateAllocationFailingWhenPopulateOsHandlesFailsThenCleanOsHandlesDestroysNoEmptyHandles) {
+    memoryManager->setDeferredDeleter(nullptr);
+    wddm->callBaseCreateAllocationsAndMapGpuVa = false;
+    wddm->createAllocationsAndMapGpuVaStatus = STATUS_GRAPHICS_NO_VIDEO_MEMORY;
+
+    OsHandleStorage handleStorage;
+    handleStorage.fragmentCount = 2;
+    handleStorage.fragmentStorageData[0].cpuPtr = reinterpret_cast<void *>(0x1000);
+    handleStorage.fragmentStorageData[0].fragmentSize = MemoryConstants::pageSize;
+    handleStorage.fragmentStorageData[1].cpuPtr = reinterpret_cast<void *>(0x2000);
+    handleStorage.fragmentStorageData[1].fragmentSize = MemoryConstants::pageSize;
+
+    EXPECT_EQ(MemoryManager::AllocationStatus::InvalidHostPointer, memoryManager->populateOsHandles(handleStorage, mockRootDeviceIndex));
+    EXPECT_TRUE(handleStorage.fragmentStorageData[0].freeTheFragment);
+    EXPECT_TRUE(handleStorage.fragmentStorageData[1].freeTheFragment);
+
+    wddm->destroyAllocationResult.success = false;
+    memoryManager->cleanOsHandles(handleStorage, mockRootDeviceIndex);
+    EXPECT_TRUE(wddm->destroyAllocationResult.success);
 }
 
 TEST(WddmMemoryManagerTest3, givenDefaultWddmMemoryManagerWhenItIsQueriedForInternalHeapBaseThenHeapInternalBaseIsReturned) {
