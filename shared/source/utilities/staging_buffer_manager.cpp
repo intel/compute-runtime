@@ -420,14 +420,16 @@ bool StagingBufferManager::isValidForStagingTransfer(const Device &device, const
 
 // Common checks for usm, buffers and images
 bool StagingBufferManager::isValidForStaging(const Device &device, const void *ptr, size_t size, bool hasDependencies) {
-    auto stagingCopyEnabled = device.getProductHelper().isStagingBuffersEnabled();
+    const auto &productHelper = device.getProductHelper();
+    auto stagingCopyEnabled = productHelper.isStagingBuffersEnabled();
     if (debugManager.flags.EnableCopyWithStagingBuffers.get() != -1) {
         stagingCopyEnabled = debugManager.flags.EnableCopyWithStagingBuffers.get();
     }
     auto isValidCpuVirtualAddress = isValidCpuVirtualAddressRange(ptr, size);
     auto osInterface = device.getRootDeviceEnvironment().osInterface.get();
     bool sizeWithinThreshold = osInterface ? osInterface->isSizeWithinThresholdForStaging(ptr, size) : true;
-    return stagingCopyEnabled && isValidCpuVirtualAddress && !hasDependencies && sizeWithinThreshold && !this->registerHostPtr(ptr);
+    bool alignmentAllowed = productHelper.isStagingFor2MBAlignedHostPtrAllowed() || !isAligned<MemoryConstants::pageSize2M>(ptr);
+    return stagingCopyEnabled && isValidCpuVirtualAddress && !hasDependencies && sizeWithinThreshold && alignmentAllowed && !this->registerHostPtr(ptr);
 }
 
 void StagingBufferManager::clearTrackedChunks() {

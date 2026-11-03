@@ -213,6 +213,11 @@ CRITEST_F(CriProductHelper, givenProductHelperWhenCheckingIsLEOSupportedThenRetu
     EXPECT_TRUE(productHelper->isLEOSupported());
 }
 
+CRITEST_F(CriProductHelper, givenProductHelperWhenCheckingStagingBuffersThenEnabledButNotFor2MBAlignedHostPtr) {
+    EXPECT_TRUE(productHelper->isStagingBuffersEnabled());
+    EXPECT_FALSE(productHelper->isStagingFor2MBAlignedHostPtrAllowed());
+}
+
 CRITEST_F(CriProductHelper, givenProductHelperWhenGetCpuCopyThresholdThenReturnCriThresholds) {
     EXPECT_EQ(0u, productHelper->getCpuCopyThreshold(TransferType::unknown));
 

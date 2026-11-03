@@ -154,6 +154,7 @@ class ProductHelperHw : public ProductHelper {
     std::optional<bool> isCoherentAllocation(uint64_t patIndex) const override;
     bool isPatIndexValidForUserptr(uint64_t patIndex) const override;
     bool isStagingBuffersEnabled() const override;
+    bool isStagingFor2MBAlignedHostPtrAllowed() const override;
     size_t getCpuCopyThreshold(TransferType transferType) const override;
     uint32_t adjustMaxThreadsPerThreadGroup(const HardwareInfo &hwInfo, uint32_t maxThreadsPerThreadGroup, uint32_t simt, uint32_t grfCount) const override;
     uint64_t getPatIndex(CacheRegion cacheRegion, CachePolicy cachePolicy) const override;

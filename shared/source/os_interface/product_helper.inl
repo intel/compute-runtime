@@ -760,6 +760,11 @@ bool ProductHelperHw<gfxProduct>::isStagingBuffersEnabled() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isStagingFor2MBAlignedHostPtrAllowed() const {
+    return true;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 size_t ProductHelperHw<gfxProduct>::getCpuCopyThreshold(TransferType transferType) const {
     size_t threshold = 0u;
 

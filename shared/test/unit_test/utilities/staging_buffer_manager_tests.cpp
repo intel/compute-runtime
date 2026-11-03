@@ -10,9 +10,11 @@
 #include "shared/source/utilities/staging_buffer_manager.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/raii_product_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/mocks/mock_svm_manager.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
@@ -291,6 +293,22 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferEnabledWhenValidForStagingTra
     EXPECT_FALSE(stagingBufferManager->isValidForStagingTransfer(*pDevice, nonUsmBuffer, bufferSize, false));
 
     svmAllocsManager->freeSVMAlloc(usmBuffer);
+}
+
+TEST_F(StagingBufferManagerTest, givenStagingFor2MBAlignedHostPtrNotAllowedWhenValidForStagingTransferThenOnlyPtrNotAlignedTo2MBIsValid) {
+    RAIIProductHelperFactory<MockProductHelper> productHelper(*pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]);
+    constexpr size_t bufferSize = 1024;
+    const auto alignedPtr = reinterpret_cast<const void *>(MemoryConstants::pageSize2M * 16);
+    const auto notAlignedPtr = ptrOffset(alignedPtr, MemoryConstants::pageSize64k);
+
+    productHelper.mockProductHelper->isStagingFor2MBAlignedHostPtrAllowedResult = false;
+    EXPECT_FALSE(stagingBufferManager->isValidForStagingTransfer(*pDevice, alignedPtr, bufferSize, false));
+    EXPECT_TRUE(stagingBufferManager->isValidForStagingTransfer(*pDevice, notAlignedPtr, bufferSize, false));
+    stagingBufferManager->resetDetectedPtrs();
+
+    productHelper.mockProductHelper->isStagingFor2MBAlignedHostPtrAllowedResult = true;
+    EXPECT_TRUE(stagingBufferManager->isValidForStagingTransfer(*pDevice, alignedPtr, bufferSize, false));
+    EXPECT_TRUE(stagingBufferManager->isValidForStagingTransfer(*pDevice, notAlignedPtr, bufferSize, false));
 }
 
 TEST_F(StagingBufferManagerTest, givenStagingBufferWhenPerformCopyOnHwThenDontSetWritable) {

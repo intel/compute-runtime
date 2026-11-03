@@ -152,6 +152,16 @@ size_t ProductHelperHw<gfxProduct>::getCpuCopyThreshold(TransferType transferTyp
 }
 
 template <>
+bool ProductHelperHw<gfxProduct>::isStagingBuffersEnabled() const {
+    return true;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isStagingFor2MBAlignedHostPtrAllowed() const {
+    return false;
+}
+
+template <>
 bool ProductHelperHw<gfxProduct>::isDualStreamCopyOffloadForRegularCmdListSupported() const {
     if (debugManager.flags.OverrideDualStreamCopyOffloadForRegularSupport.get() != -1) {
         return (debugManager.flags.OverrideDualStreamCopyOffloadForRegularSupport.get() == 1);
