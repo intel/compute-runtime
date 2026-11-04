@@ -176,19 +176,6 @@ XE3P_CORETEST_F(Xe3pCoreCommandEncoderTests, whenEncodeDispatchKernelThenCorrect
     }
 }
 
-using CommandEncodeStatesXe3pTest = Test<CommandEncodeStatesFixture>;
-
-XE3P_CORETEST_F(CommandEncodeStatesXe3pTest, givenEncodeDispatchKernelWhenGettingInlineDataOffsetInHeaplessModeThenReturnWalker2InlineOffset) {
-    using WalkerType = typename FamilyType::DefaultWalkerType;
-
-    EncodeDispatchKernelArgs dispatchArgs = {};
-    dispatchArgs.isHeaplessModeEnabled = true;
-
-    size_t expectedOffset = offsetof(WalkerType, TheStructure.Common.InlineData);
-
-    EXPECT_EQ(expectedOffset, EncodeDispatchKernel<FamilyType>::getInlineDataOffset(dispatchArgs));
-}
-
 using WalkerDispatchTestsXe3pCore = ::testing::Test;
 
 const std::vector<uint32_t> slmSizesPerThreadGroupXe3pIgpu = slmSizesInBytes({0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 24, 32, 48, 64, 96, 128, 192});

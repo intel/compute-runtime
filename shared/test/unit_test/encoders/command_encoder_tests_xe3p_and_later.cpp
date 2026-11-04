@@ -1629,3 +1629,14 @@ HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenHeaplessModeEnabledWhenPatch
         EXPECT_EQ(scratchAddress, implicitArgs.v1.scratchPtr);
     }
 }
+
+HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenEncodeDispatchKernelWhenGettingInlineDataOffsetInHeaplessModeThenReturnWalker2InlineOffset, IsAtLeastXe3pCore) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+
+    EncodeDispatchKernelArgs dispatchArgs = {};
+    dispatchArgs.isHeaplessModeEnabled = true;
+
+    size_t expectedOffset = offsetof(WalkerType, TheStructure.Common.InlineData);
+
+    EXPECT_EQ(expectedOffset, EncodeDispatchKernel<FamilyType>::getInlineDataOffset(dispatchArgs));
+}

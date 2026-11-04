@@ -473,7 +473,6 @@ HWTEST2_F(CommandListXe2AndLaterPreemptionTest, givenImmediateCommandListUsingFl
 }
 
 using InOrderCmdListTests = InOrderCmdListFixture;
-using IsWithinXe3CoreAndXe3pCore = IsWithinGfxCore<IGFX_XE3_CORE, IGFX_XE3P_CORE>;
 using CmdlistXe3ToXe3pTests = Test<ModuleFixture>;
 
 HWTEST2_F(InOrderCmdListTests, givenDebugFlagWhenPostSyncWithInOrderExecInfoIsCreateThenL1IsNotFlushed, Platforms) {

@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/aub_mem_dump/aub_alloc_dump.h"
 #include "shared/source/aub_mem_dump/page_table_entry_bits.h"
 #include "shared/source/command_stream/aub_command_stream_receiver_hw.h"
 #include "shared/source/helpers/engine_node_helper.h"
@@ -20,6 +21,7 @@
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/ult_aub_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_aub_csr.h"
+#include "shared/test/common/mocks/mock_aub_manager.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
@@ -30,6 +32,7 @@
 #include <vector>
 
 using namespace NEO;
+using AubCommandStreamReceiverLinkBcsDumpTests = ::testing::Test;
 
 struct XeHPAndLaterAubCommandStreamReceiverTests : DeviceFixture, ::testing::Test {
     template <typename FamilyType>
@@ -200,4 +203,35 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubCommandStreamReceiverTests, givenGra
     aubCsr->deviceIndex = deviceIndex;
     bank = aubCsr->getMemoryBank(&allocation);
     EXPECT_EQ(expectedMemoryBanks, bank);
+}
+
+HWTEST2_F(AubCommandStreamReceiverLinkBcsDumpTests, givenLinkBcsEngineWhenDumpAllocationCalledThenIgnore, IsWithinXe2HpgCoreAndXe3pCore) {
+    DebugManagerStateRestore dbgRestore;
+    debugManager.flags.AUBDumpBufferFormat.set("BIN");
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+
+    auto memoryManager = device->getMemoryManager();
+    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), MemoryConstants::pageSize, AllocationType::buffer, device->getDeviceBitfield()});
+    gfxAllocation->setMemObjectsAllocationWithWritableFlags(true);
+    EXPECT_TRUE(AubAllocDump::isWritableBuffer(*gfxAllocation));
+
+    auto engineDescriptor = EngineDescriptorHelper::getDefaultDescriptor();
+
+    for (uint32_t i = aub_stream::EngineType::ENGINE_BCS1; i <= aub_stream::EngineType::ENGINE_BCS8; i++) {
+        MockAubCsr<FamilyType> aubCsr("", true, *device->getExecutionEnvironment(), device->getRootDeviceIndex(), device->getDeviceBitfield());
+        engineDescriptor.engineTypeUsage.first = static_cast<aub_stream::EngineType>(i);
+
+        MockOsContext osContext(0, engineDescriptor);
+        aubCsr.setupContext(osContext);
+        aubCsr.initializeEngine();
+        aubCsr.dumpAllocation(*gfxAllocation);
+
+        auto mockHardwareContext = static_cast<MockHardwareContext *>(aubCsr.hardwareContextController->hardwareContexts[0].get());
+
+        EXPECT_FALSE(mockHardwareContext->dumpSurfaceCalled);
+        EXPECT_TRUE(AubAllocDump::isWritableBuffer(*gfxAllocation));
+    }
+
+    memoryManager->freeGraphicsMemory(gfxAllocation);
 }

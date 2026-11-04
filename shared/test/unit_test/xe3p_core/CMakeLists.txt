@@ -11,7 +11,6 @@ if(TESTS_XE3P_CORE)
   target_sources(neo_shared_tests PRIVATE
                  ${NEO_CORE_tests_xe3p_core_excludes}
                  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-                 ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_receiver_2_tests_xe3p_core.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_tests_xe3p.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_xe3p_core_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/compute_mode_tests_xe3p_core.cpp

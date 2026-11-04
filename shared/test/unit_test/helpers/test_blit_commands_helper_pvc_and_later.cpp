@@ -402,3 +402,7 @@ HWTEST2_F(BlitTests, GivenDispatchDummyBlitWhenWorkaroundIsNotRequiredThenDummyA
     BlitCommandsHelper<FamilyType>::dispatchDummyBlit(stream, waArgs);
     EXPECT_EQ(nullptr, rootDeviceEnvironment->getDummyAllocation());
 }
+
+HWTEST2_F(BlitTests, givenBcsCommandsHelperWhenIsFlushBetweenBlitsRequiredThenReturnFalse, IsWithinXe3CoreAndXe3pCore) {
+    EXPECT_FALSE(this->getHelper<ProductHelper>().isFlushBetweenBlitsRequired());
+}

@@ -214,6 +214,8 @@ using IsWithinXeCoreAndXe2HpgCore = IsWithinGfxCore<IGFX_XE_HPG_CORE, IGFX_XE2_H
 using IsWithinXeCoreAndXe3Core = IsWithinGfxCore<IGFX_XE_HPG_CORE, IGFX_XE3_CORE>;
 using IsWithinXeHpcCoreAndXe2HpgCore = IsWithinGfxCore<IGFX_XE_HPC_CORE, IGFX_XE2_HPG_CORE>;
 using IsWithinXe2HpgCoreAndXe3Core = IsWithinGfxCore<IGFX_XE2_HPG_CORE, IGFX_XE3_CORE>;
+using IsWithinXe2HpgCoreAndXe3pCore = IsWithinGfxCore<IGFX_XE2_HPG_CORE, IGFX_XE3P_CORE>;
+using IsWithinXe3CoreAndXe3pCore = IsWithinGfxCore<IGFX_XE3_CORE, IGFX_XE3P_CORE>;
 using IsWithinXeHpcCoreAndXe3Core = IsWithinGfxCore<IGFX_XE_HPC_CORE, IGFX_XE3_CORE>;
 using IsWithinXeHpcCoreAndXe3pCore = IsWithinGfxCore<IGFX_XE_HPC_CORE, IGFX_XE3P_CORE>;
 
