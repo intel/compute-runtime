@@ -194,7 +194,7 @@ std::unique_ptr<KmdWaiter> WddmCommandStreamReceiver<GfxFamily>::createKmdWaiter
             return nullptr;
         }
     }
-    return this->wddm->createMonitoredFenceKmdWaiter(monitoredFence, flushStamp);
+    return this->wddm->createMonitoredFenceKmdWaiter(*static_cast<OsContextWin *>(this->osContext), flushStamp);
 }
 
 template <typename GfxFamily>

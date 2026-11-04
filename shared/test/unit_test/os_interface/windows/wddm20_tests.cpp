@@ -483,6 +483,26 @@ TEST_F(Wddm20WithMockGdiDllTests, GivenGpuHangIndicationWhenCheckingForGpuHangTh
     EXPECT_TRUE(wddm->isGpuHangDetected(*osContext));
 }
 
+TEST_F(Wddm20WithMockGdiDllTests, GivenSecondaryContextWhenPrimaryContextHasGpuHangIndicationThenGpuHangIsDetectedForSecondaryContext) {
+    osContext->setContextGroupCount(8u);
+    auto secondaryContext = std::make_unique<OsContextWin>(*wddm, 0, 1u, EngineDescriptorHelper::getDefaultDescriptor({osContext->getEngineType(), EngineUsage::regular}, osContext->getPreemptionMode()));
+    secondaryContext->setPrimaryContext(osContext.get());
+
+    uint64_t secondaryFenceCpuValue = 0u;
+    D3DKMT_HANDLE secondaryFenceHandle = 2u;
+    D3DGPU_VIRTUAL_ADDRESS secondaryFenceGpuAddress = castToUint64(&secondaryFenceCpuValue);
+    secondaryContext->resetMonitoredFenceParams(secondaryFenceHandle, &secondaryFenceCpuValue, secondaryFenceGpuAddress);
+
+    auto primaryFenceCpuAddress = osContext->getMonitoredFence().cpuAddress;
+    VariableBackup<volatile uint64_t> backupPrimaryFence(primaryFenceCpuAddress);
+
+    *primaryFenceCpuAddress = 777u;
+    EXPECT_FALSE(wddm->isGpuHangDetected(*secondaryContext));
+
+    *primaryFenceCpuAddress = NEO::Wddm::gpuHangIndication;
+    EXPECT_TRUE(wddm->isGpuHangDetected(*secondaryContext));
+}
+
 TEST_F(Wddm20WithMockGdiDllTests, GivenThreeOsHandlesWhenAskedForDestroyAllocationsThenAllMarkedAllocationsAreDestroyed) {
     OsHandleStorage storage;
     OsHandleWin osHandle1;

@@ -36,6 +36,7 @@
 #include "shared/test/common/mocks/mock_wddm_interface23.h"
 #include "shared/test/common/mocks/mock_wddm_interface32.h"
 #include "shared/test/common/mocks/windows/mock_gdi_interface.h"
+#include "shared/test/common/os_interface/windows/mock_sys_calls.h"
 #include "shared/test/common/os_interface/windows/mock_wddm_memory_manager.h"
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -1089,6 +1090,22 @@ void waitFromCpuOnDefaultEngineMonitoredFence(MockDevice &device, WddmMock *wddm
 
     wddm->waitFromCpu(fenceValueToWaitFor, monitoredFence, busyWait);
 }
+
+struct CapturedWaitFromCpu {
+    UINT objectCount = 0;
+    UINT waitAny = 0;
+    std::vector<D3DKMT_HANDLE> handles;
+    std::vector<uint64_t> fenceValues;
+};
+CapturedWaitFromCpu capturedWaitFromCpu;
+
+NTSTATUS __stdcall captureWaitFromCpuMock(const D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU *waitStruct) {
+    capturedWaitFromCpu.objectCount = waitStruct->ObjectCount;
+    capturedWaitFromCpu.waitAny = waitStruct->Flags.WaitAny;
+    capturedWaitFromCpu.handles.assign(waitStruct->ObjectHandleArray, waitStruct->ObjectHandleArray + waitStruct->ObjectCount);
+    capturedWaitFromCpu.fenceValues.assign(waitStruct->FenceValueArray, waitStruct->FenceValueArray + waitStruct->ObjectCount);
+    return STATUS_SUCCESS;
+}
 } // namespace
 
 HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionAndUllsKmdWaitDisabledWhenCreatingKmdWaiterThenNoWaiterIsCreated) {
@@ -1321,6 +1338,93 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenNativeFenceNotAvailableWhe
     EXPECT_FALSE(directSubmission->lastNotifyKmdParamValue);
 
     static_cast<MockWddmCsr<FamilyType> *>(csr)->directSubmission.reset();
+}
+
+HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenSecondaryContextWhosePrimaryContextHasGpuHangIndicationWhenWaitFromCpuThenMonitorFenceIsNotFlushedAndKmdWaitIsSkipped) {
+    auto directSubmission = setUpDirectSubmissionRecordingNotifyKmd<FamilyType>(*device, csr);
+    if (directSubmission == nullptr) {
+        GTEST_SKIP();
+    }
+
+    auto defaultOsContext = static_cast<OsContextWin *>(device->getDefaultEngine().osContext);
+    OsContextWin primaryOsContext(*wddm, 0, 100u, EngineDescriptorHelper::getDefaultDescriptor({defaultOsContext->getEngineType(), EngineUsage::regular}, defaultOsContext->getPreemptionMode()));
+    primaryOsContext.setContextGroupCount(8u);
+    uint64_t primaryFenceCpuValue = Wddm::gpuHangIndication;
+    D3DKMT_HANDLE primaryFenceHandle = 2u;
+    D3DGPU_VIRTUAL_ADDRESS primaryFenceGpuAddress = castToUint64(&primaryFenceCpuValue);
+    primaryOsContext.resetMonitoredFenceParams(primaryFenceHandle, &primaryFenceCpuValue, primaryFenceGpuAddress);
+    defaultOsContext->setPrimaryContext(&primaryOsContext);
+
+    wddm->callBaseWaitFromCpu = true;
+    gdi->getWaitFromCpuArg().ObjectCount = 0;
+
+    waitFromCpuOnDefaultEngineMonitoredFence(*device, wddm);
+
+    EXPECT_EQ(0u, directSubmission->flushMonitorFenceCalled);
+    EXPECT_EQ(0u, gdi->getWaitFromCpuArg().ObjectCount);
+
+    defaultOsContext->setContextGroupCount(0u);
+    static_cast<MockWddmCsr<FamilyType> *>(csr)->directSubmission.reset();
+}
+
+HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenSecondaryContextWhenWaitFromCpuWaitsInKmdThenWaitAlsoCompletesOnGpuHangIndicationOfPrimaryContext) {
+    VariableBackup<CapturedWaitFromCpu> capturedWaitBackup(&capturedWaitFromCpu, {});
+    gdi->waitForSynchronizationObjectFromCpu = &captureWaitFromCpuMock;
+    wddm->callBaseWaitFromCpu = true;
+
+    auto defaultOsContext = static_cast<OsContextWin *>(device->getDefaultEngine().osContext);
+    OsContextWin primaryOsContext(*wddm, 0, 100u, EngineDescriptorHelper::getDefaultDescriptor({defaultOsContext->getEngineType(), EngineUsage::regular}, defaultOsContext->getPreemptionMode()));
+    primaryOsContext.setContextGroupCount(8u);
+    uint64_t primaryFenceCpuValue = 0u;
+    D3DKMT_HANDLE primaryFenceHandle = 2u;
+    D3DGPU_VIRTUAL_ADDRESS primaryFenceGpuAddress = castToUint64(&primaryFenceCpuValue);
+    primaryOsContext.resetMonitoredFenceParams(primaryFenceHandle, &primaryFenceCpuValue, primaryFenceGpuAddress);
+    defaultOsContext->setPrimaryContext(&primaryOsContext);
+
+    waitFromCpuOnDefaultEngineMonitoredFence(*device, wddm);
+
+    EXPECT_EQ(2u, capturedWaitFromCpu.objectCount);
+    EXPECT_EQ(1u, capturedWaitFromCpu.waitAny);
+    EXPECT_EQ((std::vector<D3DKMT_HANDLE>{1u, primaryFenceHandle}), capturedWaitFromCpu.handles);
+    EXPECT_EQ((std::vector<uint64_t>{1u, Wddm::gpuHangIndication}), capturedWaitFromCpu.fenceValues);
+
+    defaultOsContext->setContextGroupCount(0u);
+
+    waitFromCpuOnDefaultEngineMonitoredFence(*device, wddm);
+
+    EXPECT_EQ(1u, capturedWaitFromCpu.objectCount);
+    EXPECT_EQ(0u, capturedWaitFromCpu.waitAny);
+    EXPECT_EQ((std::vector<D3DKMT_HANDLE>{1u}), capturedWaitFromCpu.handles);
+}
+
+HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenSecondaryContextWhosePrimaryContextHasGpuHangIndicationWhenKmdWaiterWaitsThenGpuHangIsReturned) {
+    VariableBackup<DWORD> waitResultBackup(&SysCalls::waitForMultipleObjectsReturnValue, WAIT_OBJECT_0 + 1);
+
+    auto defaultOsContext = static_cast<OsContextWin *>(device->getDefaultEngine().osContext);
+    uint64_t secondaryFenceCpuValue = 0u;
+    D3DKMT_HANDLE secondaryFenceHandle = 1u;
+    D3DGPU_VIRTUAL_ADDRESS secondaryFenceGpuAddress = castToUint64(&secondaryFenceCpuValue);
+    defaultOsContext->resetMonitoredFenceParams(secondaryFenceHandle, &secondaryFenceCpuValue, secondaryFenceGpuAddress);
+
+    OsContextWin primaryOsContext(*wddm, 0, 100u, EngineDescriptorHelper::getDefaultDescriptor({defaultOsContext->getEngineType(), EngineUsage::regular}, defaultOsContext->getPreemptionMode()));
+    primaryOsContext.setContextGroupCount(8u);
+    uint64_t primaryFenceCpuValue = 0u;
+    D3DKMT_HANDLE primaryFenceHandle = 2u;
+    D3DGPU_VIRTUAL_ADDRESS primaryFenceGpuAddress = castToUint64(&primaryFenceCpuValue);
+    primaryOsContext.resetMonitoredFenceParams(primaryFenceHandle, &primaryFenceCpuValue, primaryFenceGpuAddress);
+    defaultOsContext->setPrimaryContext(&primaryOsContext);
+
+    auto kmdWaiter = wddm->Wddm::createMonitoredFenceKmdWaiter(*defaultOsContext, 1u);
+    ASSERT_NE(nullptr, kmdWaiter);
+    EXPECT_EQ(2u, gdi->getWaitFromCpuArg().ObjectCount);
+    EXPECT_EQ(1u, gdi->getWaitFromCpuArg().Flags.WaitAny);
+    EXPECT_EQ(WaitStatus::notReady, kmdWaiter->wait(500000u));
+
+    primaryFenceCpuValue = Wddm::gpuHangIndication;
+    EXPECT_EQ(WaitStatus::gpuHang, kmdWaiter->wait(500000u));
+
+    kmdWaiter.reset();
+    defaultOsContext->setContextGroupCount(0u);
 }
 
 HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionFailsThenFlushReturnsError) {

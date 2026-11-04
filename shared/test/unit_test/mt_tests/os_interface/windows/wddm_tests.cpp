@@ -110,9 +110,11 @@ TEST(WddmKmdWaitMTTest, givenConcurrentKmdWaitersWhenTheyAreCreatedAndDestroyedT
     VariableBackup<decltype(mockCreateEventClb)> createEventBackup(&mockCreateEventClb, &countingCreateEventMock);
     createdKmdWaitEvents = 0;
 
-    volatile uint64_t fenceCpuValue = 0u;
-    MonitoredFence monitoredFence = {};
-    monitoredFence.cpuAddress = &fenceCpuValue;
+    OsContextWin osContext(wddm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    uint64_t fenceCpuValue = 0u;
+    D3DKMT_HANDLE fenceHandle = 1u;
+    D3DGPU_VIRTUAL_ADDRESS fenceGpuAddress = castToUint64(&fenceCpuValue);
+    osContext.resetMonitoredFenceParams(fenceHandle, &fenceCpuValue, fenceGpuAddress);
 
     constexpr uint32_t threadCount = 4;
     constexpr uint32_t waitersPerThread = 1000;
@@ -121,7 +123,7 @@ TEST(WddmKmdWaitMTTest, givenConcurrentKmdWaitersWhenTheyAreCreatedAndDestroyedT
     for (uint32_t threadIndex = 0; threadIndex < threadCount; threadIndex++) {
         threads.emplace_back([&] {
             for (uint32_t iteration = 0; iteration < waitersPerThread; iteration++) {
-                if (wddm.Wddm::createMonitoredFenceKmdWaiter(monitoredFence, 1u)) {
+                if (wddm.Wddm::createMonitoredFenceKmdWaiter(osContext, 1u)) {
                     createdWaiters++;
                 }
             }

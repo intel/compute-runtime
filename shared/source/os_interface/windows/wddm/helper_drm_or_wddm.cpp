@@ -48,7 +48,7 @@ bool Wddm::waitForMonitoredFenceKmdWaitEvent(HANDLE eventHandle, uint32_t timeou
     return false;
 }
 
-std::unique_ptr<KmdWaiter> Wddm::createMonitoredFenceKmdWaiter(const MonitoredFence &monitoredFence, uint64_t fenceValue) {
+std::unique_ptr<KmdWaiter> Wddm::createMonitoredFenceKmdWaiter(const OsContextWin &osContext, uint64_t fenceValue) {
     return nullptr;
 }
 

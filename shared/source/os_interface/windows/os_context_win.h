@@ -49,6 +49,7 @@ class OsContextWin : public OsContext {
     MOCKABLE_VIRTUAL WddmResidencyController &getResidencyController();
     static OsContext *create(OSInterface *osInterface, uint32_t rootDeviceIndex, uint32_t contextId, const EngineDescriptor &engineDescriptor);
     MonitoredFence &getMonitoredFence() { return monitoredFence; }
+    const MonitoredFence &getMonitoredFence() const { return monitoredFence; }
     MonitoredFenceKmdWaitData &getMonitoredFenceKmdWaitData() { return monitoredFenceKmdWaitData; }
     void releaseMonitoredFenceKmdWaitEvent();
     void resetMonitoredFenceParams(D3DKMT_HANDLE &handle, uint64_t *cpuAddress, D3DGPU_VIRTUAL_ADDRESS &gpuAddress);

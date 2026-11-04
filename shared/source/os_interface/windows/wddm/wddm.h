@@ -107,7 +107,7 @@ class Wddm : public DriverModel {
     MOCKABLE_VIRTUAL bool submit(uint64_t commandBuffer, size_t size, void *commandHeader, WddmSubmitArguments &submitArguments);
     MOCKABLE_VIRTUAL bool waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monitoredFence, bool busyWait);
     MOCKABLE_VIRTUAL WaitStatus waitFromCpu(uint64_t lastFenceValue, OsContextWin &osContext, uint64_t timeoutNanoseconds);
-    MOCKABLE_VIRTUAL std::unique_ptr<KmdWaiter> createMonitoredFenceKmdWaiter(const MonitoredFence &monitoredFence, uint64_t fenceValue);
+    MOCKABLE_VIRTUAL std::unique_ptr<KmdWaiter> createMonitoredFenceKmdWaiter(const OsContextWin &osContext, uint64_t fenceValue);
 
     MOCKABLE_VIRTUAL NTSTATUS escape(D3DKMT_ESCAPE &escapeCommand);
     MOCKABLE_VIRTUAL MmioTimestampPtrHelper createMmioTimestampPtrHelper(D3DKMT_HANDLE context);
@@ -128,6 +128,7 @@ class Wddm : public DriverModel {
     MOCKABLE_VIRTUAL bool isNativeFenceAvailable();
 
     bool isGpuHangDetected(OsContext &osContext) override;
+    static bool isGpuHangIndicated(const OsContextWin &osContext);
 
     bool waitExternalSemaphoresFromCpu(std::span<const ExternalSemaphoreOperation> waits) override;
     bool signalExternalSemaphoresFromCpu(std::span<const ExternalSemaphoreOperation> signals) override;
@@ -269,6 +270,21 @@ class Wddm : public DriverModel {
         StackVec<uint64_t, 4> fenceValues;
     };
     static ExternalSemaphoreSyncObjects getExternalSemaphoreSyncObjects(std::span<const ExternalSemaphoreOperation> operations);
+
+    struct MonitoredFenceWaitObjects {
+        D3DKMT_HANDLE handles[2] = {};
+        uint64_t fenceValues[2] = {};
+        UINT objectCount = 1;
+        UINT waitAny = 0;
+
+        void setUpWait(D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU &waitFromCpu) const {
+            waitFromCpu.ObjectCount = objectCount;
+            waitFromCpu.ObjectHandleArray = handles;
+            waitFromCpu.FenceValueArray = fenceValues;
+            waitFromCpu.Flags.WaitAny = waitAny;
+        }
+    };
+    static MonitoredFenceWaitObjects getMonitoredFenceWaitObjects(const MonitoredFence &monitoredFence, const OsContextWin *osContext, uint64_t fenceValue);
 
     bool translateTopologyInfo(TopologyMapping &mapping);
     CommandStreamReceiver *getCsrForMonitoredFence(const MonitoredFence &monitoredFence);

@@ -113,7 +113,7 @@ class WddmMock : public Wddm {
     GMM_GFX_PARTITIONING *getGfxPartitionPtr();
     bool waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monitoredFence, bool busyWait) override;
     WaitStatus waitFromCpu(uint64_t lastFenceValue, OsContextWin &osContext, uint64_t timeoutNanoseconds) override;
-    std::unique_ptr<KmdWaiter> createMonitoredFenceKmdWaiter(const MonitoredFence &monitoredFence, uint64_t fenceValue) override;
+    std::unique_ptr<KmdWaiter> createMonitoredFenceKmdWaiter(const OsContextWin &osContext, uint64_t fenceValue) override;
     HANDLE createMonitoredFenceKmdWaitEvent() override;
     bool resetMonitoredFenceKmdWaitEvent(HANDLE eventHandle) override;
     bool waitForMonitoredFenceKmdWaitEvent(HANDLE eventHandle, uint32_t timeoutMilliseconds) override;

@@ -44,8 +44,8 @@ bool Wddm::waitForMonitoredFenceKmdWaitEvent(HANDLE eventHandle, uint32_t timeou
 
 class Wddm::MonitoredFenceKmdWaiter : public KmdWaiter {
   public:
-    MonitoredFenceKmdWaiter(Wddm &wddm, const MonitoredFence &monitoredFence, uint64_t fenceValue, const KmdWaitHandles &handles)
-        : wddm(wddm), monitoredFence(monitoredFence), fenceValue(fenceValue), handles(handles) {}
+    MonitoredFenceKmdWaiter(Wddm &wddm, const OsContextWin &osContext, uint64_t fenceValue, const KmdWaitHandles &handles)
+        : wddm(wddm), osContext(osContext), monitoredFence(osContext.getMonitoredFence()), fenceValue(fenceValue), handles(handles) {}
 
     ~MonitoredFenceKmdWaiter() override {
         if (this->osWaitFailed) {
@@ -62,7 +62,7 @@ class Wddm::MonitoredFenceKmdWaiter : public KmdWaiter {
             this->osWaitFailed = true;
             return std::nullopt;
         }
-        if (*this->monitoredFence.cpuAddress == Wddm::gpuHangIndication) {
+        if (Wddm::isGpuHangIndicated(this->osContext)) {
             return WaitStatus::gpuHang;
         }
         return this->isFenceReached() ? WaitStatus::ready : WaitStatus::notReady;
@@ -88,13 +88,14 @@ class Wddm::MonitoredFenceKmdWaiter : public KmdWaiter {
     }
 
     Wddm &wddm;
+    const OsContextWin &osContext;
     const MonitoredFence &monitoredFence;
     const uint64_t fenceValue;
     const KmdWaitHandles handles;
     bool osWaitFailed = false;
 };
 
-std::unique_ptr<KmdWaiter> Wddm::createMonitoredFenceKmdWaiter(const MonitoredFence &monitoredFence, uint64_t fenceValue) {
+std::unique_ptr<KmdWaiter> Wddm::createMonitoredFenceKmdWaiter(const OsContextWin &osContext, uint64_t fenceValue) {
     KmdWaitHandles handles = {};
     {
         std::lock_guard lock(this->unusedKmdWaitHandlesMutex);
@@ -116,11 +117,10 @@ std::unique_ptr<KmdWaiter> Wddm::createMonitoredFenceKmdWaiter(const MonitoredFe
         return nullptr;
     }
 
-    auto kmdWaiter = std::make_unique<MonitoredFenceKmdWaiter>(*this, monitoredFence, fenceValue, handles);
+    auto kmdWaiter = std::make_unique<MonitoredFenceKmdWaiter>(*this, osContext, fenceValue, handles);
+    const auto waitObjects = getMonitoredFenceWaitObjects(osContext.getMonitoredFence(), &osContext, fenceValue);
     D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU waitFromCpu = {};
-    waitFromCpu.ObjectCount = 1;
-    waitFromCpu.ObjectHandleArray = &monitoredFence.fenceHandle;
-    waitFromCpu.FenceValueArray = &fenceValue;
+    waitObjects.setUpWait(waitFromCpu);
     waitFromCpu.hDevice = this->device;
     waitFromCpu.hAsyncEvent = handles.eventHandle;
     if (this->getGdi()->waitForSynchronizationObjectFromCpu(&waitFromCpu) != STATUS_SUCCESS) {

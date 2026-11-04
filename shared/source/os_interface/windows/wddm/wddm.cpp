@@ -1202,6 +1202,10 @@ bool Wddm::waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monitoredF
     if (!skipResourceCleanup() && lastFenceValue > *monitoredFence.cpuAddress) {
         auto csr = getCsrForMonitoredFence(monitoredFence);
 
+        if (csr != nullptr && csr->isGpuHangDetected()) {
+            return false;
+        }
+
         if (csr != nullptr && lastFenceValue > monitoredFence.lastSubmittedFence) {
             auto lock = csr->obtainUniqueOwnership();
             csr->flushMonitorFence(false);
@@ -1223,10 +1227,10 @@ bool Wddm::waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monitoredF
                 auto lock = csr->obtainUniqueOwnership();
                 csr->flushMonitorFence(isNativeFenceAvailable());
             }
+            const auto osContext = csr != nullptr ? static_cast<const OsContextWin *>(&csr->getOsContext()) : nullptr;
+            const auto waitObjects = getMonitoredFenceWaitObjects(monitoredFence, osContext, lastFenceValue);
             D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU waitFromCpu = {};
-            waitFromCpu.ObjectCount = 1;
-            waitFromCpu.ObjectHandleArray = &monitoredFence.fenceHandle;
-            waitFromCpu.FenceValueArray = &lastFenceValue;
+            waitObjects.setUpWait(waitFromCpu);
             waitFromCpu.hDevice = device;
             waitFromCpu.hAsyncEvent = NULL_HANDLE;
             status = getGdi()->waitForSynchronizationObjectFromCpu(&waitFromCpu);
@@ -1241,7 +1245,7 @@ WaitStatus Wddm::waitFromCpu(uint64_t lastFenceValue, OsContextWin &osContext, u
     if (skipResourceCleanup()) {
         return WaitStatus::ready;
     }
-    if (*monitoredFence.cpuAddress == gpuHangIndication) {
+    if (isGpuHangIndicated(osContext)) {
         return WaitStatus::gpuHang;
     }
     if (lastFenceValue <= *monitoredFence.cpuAddress) {
@@ -1254,7 +1258,7 @@ WaitStatus Wddm::waitFromCpu(uint64_t lastFenceValue, OsContextWin &osContext, u
         csr->flushMonitorFence(false);
     }
 
-    if (*monitoredFence.cpuAddress == gpuHangIndication) {
+    if (isGpuHangIndicated(osContext)) {
         return WaitStatus::gpuHang;
     }
     if (lastFenceValue <= *monitoredFence.cpuAddress) {
@@ -1286,10 +1290,9 @@ WaitStatus Wddm::waitFromCpu(uint64_t lastFenceValue, OsContextWin &osContext, u
                     auto csrLock = csr->obtainUniqueOwnership();
                     csr->flushMonitorFence(isNativeFenceAvailable());
                 }
+                const auto waitObjects = getMonitoredFenceWaitObjects(monitoredFence, &osContext, lastFenceValue);
                 D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU waitFromCpu = {};
-                waitFromCpu.ObjectCount = 1;
-                waitFromCpu.ObjectHandleArray = &monitoredFence.fenceHandle;
-                waitFromCpu.FenceValueArray = &lastFenceValue;
+                waitObjects.setUpWait(waitFromCpu);
                 waitFromCpu.hDevice = device;
                 waitFromCpu.hAsyncEvent = eventHandle;
                 const auto status = getGdi()->waitForSynchronizationObjectFromCpu(&waitFromCpu);
@@ -1302,7 +1305,7 @@ WaitStatus Wddm::waitFromCpu(uint64_t lastFenceValue, OsContextWin &osContext, u
     }
 
     if (lastFenceValue <= *monitoredFence.cpuAddress) {
-        return *monitoredFence.cpuAddress == gpuHangIndication ? WaitStatus::gpuHang : WaitStatus::ready;
+        return isGpuHangIndicated(osContext) ? WaitStatus::gpuHang : WaitStatus::ready;
     }
 
     if (pendingFenceValue == 0 || pendingFenceValue > lastFenceValue) {
@@ -1323,10 +1326,10 @@ WaitStatus Wddm::waitFromCpu(uint64_t lastFenceValue, OsContextWin &osContext, u
     }
 
     if (!this->waitForMonitoredFenceKmdWaitEvent(eventHandle, static_cast<uint32_t>(timeoutMilliseconds))) {
-        return WaitStatus::notReady;
+        return isGpuHangIndicated(osContext) ? WaitStatus::gpuHang : WaitStatus::notReady;
     }
 
-    if (*monitoredFence.cpuAddress == gpuHangIndication) {
+    if (isGpuHangIndicated(osContext)) {
         return WaitStatus::gpuHang;
     }
     return lastFenceValue <= *monitoredFence.cpuAddress ? WaitStatus::ready : WaitStatus::notReady;
@@ -1395,10 +1398,34 @@ bool Wddm::waitExternalSemaphoresFromGpu(OsContextWin &osContext, std::span<cons
     return true;
 }
 
+Wddm::MonitoredFenceWaitObjects Wddm::getMonitoredFenceWaitObjects(const MonitoredFence &monitoredFence, const OsContextWin *osContext, uint64_t fenceValue) {
+    MonitoredFenceWaitObjects waitObjects{};
+    waitObjects.handles[0] = monitoredFence.fenceHandle;
+    waitObjects.fenceValues[0] = fenceValue;
+    const auto primaryContext = (osContext != nullptr && osContext->isPartOfContextGroup()) ? osContext->getPrimaryContext() : nullptr;
+    if (primaryContext != nullptr) {
+        waitObjects.handles[1] = static_cast<const OsContextWin *>(primaryContext)->getMonitoredFence().fenceHandle;
+        waitObjects.fenceValues[1] = gpuHangIndication;
+        waitObjects.objectCount = 2u;
+        waitObjects.waitAny = 1u;
+    }
+    return waitObjects;
+}
+
+bool Wddm::isGpuHangIndicated(const OsContextWin &osContext) {
+    const auto isHangIndicatedOnFence = [](const MonitoredFence &monitoredFence) {
+        return monitoredFence.cpuAddress && *monitoredFence.cpuAddress == gpuHangIndication;
+    };
+    if (isHangIndicatedOnFence(osContext.getMonitoredFence())) {
+        return true;
+    }
+    const auto primaryContext = osContext.getPrimaryContext();
+    return osContext.isPartOfContextGroup() && primaryContext != nullptr &&
+           isHangIndicatedOnFence(static_cast<const OsContextWin *>(primaryContext)->getMonitoredFence());
+}
+
 bool Wddm::isGpuHangDetected(OsContext &osContext) {
-    const auto osContextWin = static_cast<OsContextWin *>(&osContext);
-    const auto &monitoredFence = osContextWin->getMonitoredFence();
-    bool hangDetected = monitoredFence.cpuAddress && *monitoredFence.cpuAddress == gpuHangIndication;
+    const bool hangDetected = isGpuHangIndicated(*static_cast<OsContextWin *>(&osContext));
 
     PRINT_STRING(hangDetected && debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "ERROR: GPU HANG detected!\n");
 

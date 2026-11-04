@@ -306,7 +306,7 @@ WaitStatus WddmMock::waitFromCpu(uint64_t lastFenceValue, OsContextWin &osContex
     return this->waitFromCpuWithTimeoutReturnValue;
 }
 
-std::unique_ptr<KmdWaiter> WddmMock::createMonitoredFenceKmdWaiter(const MonitoredFence &monitoredFence, uint64_t fenceValue) {
+std::unique_ptr<KmdWaiter> WddmMock::createMonitoredFenceKmdWaiter(const OsContextWin &osContext, uint64_t fenceValue) {
     this->createMonitoredFenceKmdWaiterCalled++;
     this->createMonitoredFenceKmdWaiterFenceValue = fenceValue;
     return nullptr;

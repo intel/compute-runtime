@@ -950,6 +950,28 @@ NTSTATUS __stdcall waitForSynchronizationObjectFromCpuNoOpMock(const D3DKMT_WAIT
     return waitForSynchronizationObjectFromCpuReturnValue;
 }
 
+struct RegisteredFenceWait {
+    UINT objectCount = 0;
+    UINT waitAny = 0;
+    D3DKMT_HANDLE secondHandle = 0;
+    uint64_t secondFenceValue = 0;
+    volatile uint64_t *fenceAddressToHangOnRegistration = nullptr;
+};
+RegisteredFenceWait registeredFenceWait;
+
+NTSTATUS __stdcall registerFenceWaitAndHangMock(const D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU *waitStruct) {
+    registeredFenceWait.objectCount = waitStruct->ObjectCount;
+    registeredFenceWait.waitAny = waitStruct->Flags.WaitAny;
+    if (waitStruct->ObjectCount > 1) {
+        registeredFenceWait.secondHandle = waitStruct->ObjectHandleArray[1];
+        registeredFenceWait.secondFenceValue = waitStruct->FenceValueArray[1];
+    }
+    if (registeredFenceWait.fenceAddressToHangOnRegistration != nullptr) {
+        *registeredFenceWait.fenceAddressToHangOnRegistration = Wddm::gpuHangIndication;
+    }
+    return STATUS_SUCCESS;
+}
+
 class WddmSkipResourceCleanupMock : public WddmMock {
   public:
     using NEO::DriverModel::skipResourceCleanupVar;
@@ -1239,6 +1261,63 @@ TEST_F(WddmSkipResourceCleanupFixtureTests, givenGpuHangIndicationWhenWaitingFro
 
     EXPECT_EQ(WaitStatus::gpuHang, wddm->waitFromCpu(1u, *osContext, 10000000u));
     EXPECT_EQ(0u, waitForSynchronizationObjectFromCpuCounter);
+}
+
+TEST_F(WddmSkipResourceCleanupFixtureTests, givenSecondaryContextWhosePrimaryContextHasGpuHangIndicationWhenWaitingFromCpuWithTimeoutThenGpuHangIsReturnedWithoutRegisteringWait) {
+    VariableBackup<uint64_t> waitCallCounterBackup(&waitForSynchronizationObjectFromCpuCounter, 0u);
+
+    init();
+    executionEnvironment->initializeMemoryManager();
+    wddm->skipResourceCleanupVar = false;
+    wddm->getGdi()->waitForSynchronizationObjectFromCpu = &waitForSynchronizationObjectFromCpuNoOpMock;
+
+    osContext->setContextGroupCount(8u);
+    auto secondaryContext = std::make_unique<OsContextWin>(*wddm, 0, 1u, EngineDescriptorHelper::getDefaultDescriptor({osContext->getEngineType(), EngineUsage::regular}, osContext->getPreemptionMode()));
+    secondaryContext->setPrimaryContext(osContext.get());
+
+    uint64_t secondaryFenceCpuValue = 0u;
+    D3DKMT_HANDLE secondaryFenceHandle = 2u;
+    D3DGPU_VIRTUAL_ADDRESS secondaryFenceGpuAddress = castToUint64(&secondaryFenceCpuValue);
+    secondaryContext->resetMonitoredFenceParams(secondaryFenceHandle, &secondaryFenceCpuValue, secondaryFenceGpuAddress);
+
+    auto &primaryMonitoredFence = osContext->getMonitoredFence();
+    VariableBackup<volatile uint64_t> primaryFenceValueBackup(primaryMonitoredFence.cpuAddress);
+    *primaryMonitoredFence.cpuAddress = Wddm::gpuHangIndication;
+
+    EXPECT_EQ(WaitStatus::gpuHang, wddm->waitFromCpu(1u, *secondaryContext, 10000000u));
+    EXPECT_EQ(0u, waitForSynchronizationObjectFromCpuCounter);
+}
+
+TEST_F(WddmSkipResourceCleanupFixtureTests, givenSecondaryContextWhenPrimaryContextHangsDuringWaitFromCpuWithTimeoutThenWaitIsRegisteredOnBothFencesAndGpuHangIsReturned) {
+    VariableBackup<RegisteredFenceWait> registeredFenceWaitBackup(&registeredFenceWait, {});
+
+    init();
+    executionEnvironment->initializeMemoryManager();
+    wddm->skipResourceCleanupVar = false;
+    wddm->getGdi()->waitForSynchronizationObjectFromCpu = &registerFenceWaitAndHangMock;
+    wddm->monitoredFenceKmdWaitEventResult.waitResult = false;
+
+    osContext->setContextGroupCount(8u);
+    auto secondaryContext = std::make_unique<OsContextWin>(*wddm, 0, 1u, EngineDescriptorHelper::getDefaultDescriptor({osContext->getEngineType(), EngineUsage::regular}, osContext->getPreemptionMode()));
+    secondaryContext->setPrimaryContext(osContext.get());
+
+    uint64_t secondaryFenceCpuValue = 0u;
+    D3DKMT_HANDLE secondaryFenceHandle = 2u;
+    D3DGPU_VIRTUAL_ADDRESS secondaryFenceGpuAddress = castToUint64(&secondaryFenceCpuValue);
+    secondaryContext->resetMonitoredFenceParams(secondaryFenceHandle, &secondaryFenceCpuValue, secondaryFenceGpuAddress);
+    secondaryContext->getMonitoredFence().lastSubmittedFence = 1u;
+
+    auto &primaryMonitoredFence = osContext->getMonitoredFence();
+    VariableBackup<volatile uint64_t> primaryFenceValueBackup(primaryMonitoredFence.cpuAddress);
+    *primaryMonitoredFence.cpuAddress = 0u;
+    registeredFenceWait.fenceAddressToHangOnRegistration = primaryMonitoredFence.cpuAddress;
+
+    EXPECT_EQ(WaitStatus::gpuHang, wddm->waitFromCpu(1u, *secondaryContext, 10000000u));
+    EXPECT_EQ(2u, registeredFenceWait.objectCount);
+    EXPECT_EQ(1u, registeredFenceWait.waitAny);
+    EXPECT_EQ(primaryMonitoredFence.fenceHandle, registeredFenceWait.secondHandle);
+    EXPECT_EQ(Wddm::gpuHangIndication, registeredFenceWait.secondFenceValue);
+    EXPECT_EQ(1u, wddm->monitoredFenceKmdWaitEventResult.waitCalled);
 }
 
 TEST(WddmAllocationTest, whenAllocationIsShareableThenSharedHandleToModifyIsSharedHandleOfAllocation) {
