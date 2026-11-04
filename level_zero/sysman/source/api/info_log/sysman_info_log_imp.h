@@ -29,6 +29,8 @@ class InfoLogImp : public InfoLog {
     ze_result_t infoLogCreateInstance(const char *pInstanceName,
                                       zes_info_log_instance_ext_desc_t *pDesc,
                                       zes_info_log_instance_handle_t *phInfoLogInstance) override;
+    ze_result_t infoLogCreateDecoderContext(zes_intel_info_log_decoder_context_handle_t *phDecoderContext) override;
+    ze_result_t infoLogDeleteDecoderContext(zes_intel_info_log_decoder_context_handle_t *phDecoderContext) override;
     ze_result_t destroyInstance(InfoLogInstance *pInstance) override;
     void destroyAllInstances() override;
 
@@ -36,6 +38,9 @@ class InfoLogImp : public InfoLog {
     std::unique_ptr<OsInfoLog> pOsInfoLog;
 
   private:
+    ze_result_t checkDecodeSupported() const;
+    void destroyAllDecoderContexts();
+
     // Captured once at construction. Nothing changes these afterwards, so every query is served
     // from here, and a failed capture is reported to every caller.
     ze_result_t initResult = ZE_RESULT_ERROR_UNINITIALIZED;
@@ -44,6 +49,9 @@ class InfoLogImp : public InfoLog {
     std::mutex instancesMutex;
     std::vector<std::unique_ptr<InfoLogInstance>> instances;
     std::set<std::string> activeInstanceNames;
+
+    std::mutex decoderContextsMutex;
+    std::vector<std::unique_ptr<InfoLogDecoderContext>> decoderContexts;
 };
 
 } // namespace Sysman

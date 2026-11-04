@@ -10,6 +10,8 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/preprocessor.h"
 
+#include "level_zero/sysman/source/api/info_log/sysman_info_log_decoder_context_imp.h"
+
 #include <algorithm>
 
 namespace L0 {
@@ -17,6 +19,7 @@ namespace Sysman {
 
 ze_result_t InfoLogImp::infoLogGetProperties(zes_info_log_ext_properties_t *pProperties) {
     if (initResult != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Info log properties were not captured, returning error: 0x%x\n", NEO_FUNCTION_NAME, initResult);
         return initResult;
     }
 
@@ -76,6 +79,63 @@ ze_result_t InfoLogImp::infoLogCreateInstance(const char *pInstanceName,
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t InfoLogImp::checkDecodeSupported() const {
+    if (initResult != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Info log properties were not captured, returning error: 0x%x\n", NEO_FUNCTION_NAME, initResult);
+        return initResult;
+    }
+
+    if (infoLogProperties.infoLogFormat != ZES_INFO_LOG_FORMAT_EXT_CPER) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Decoding is not supported for info log format %d, returning error: 0x%x\n", NEO_FUNCTION_NAME, infoLogProperties.infoLogFormat, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t InfoLogImp::infoLogCreateDecoderContext(zes_intel_info_log_decoder_context_handle_t *phDecoderContext) {
+    auto result = checkDecodeSupported();
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+
+    std::lock_guard<std::mutex> lock(decoderContextsMutex);
+
+    auto pDecoderContext = std::make_unique<InfoLogDecoderContextImp>(pOsInfoLog.get());
+    *phDecoderContext = pDecoderContext->toHandle();
+    decoderContexts.push_back(std::move(pDecoderContext));
+
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t InfoLogImp::infoLogDeleteDecoderContext(zes_intel_info_log_decoder_context_handle_t *phDecoderContext) {
+    if (*phDecoderContext == nullptr) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): *phDecoderContext is nullptr, returning error: 0x%x\n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_INVALID_NULL_HANDLE);
+        return ZE_RESULT_ERROR_INVALID_NULL_HANDLE;
+    }
+
+    auto pDecoderContext = InfoLogDecoderContext::fromHandle(*phDecoderContext);
+
+    std::lock_guard<std::mutex> lock(decoderContextsMutex);
+
+    auto it = std::find_if(decoderContexts.begin(), decoderContexts.end(),
+                           [pDecoderContext](const std::unique_ptr<InfoLogDecoderContext> &pOwned) { return pOwned.get() == pDecoderContext; });
+    if (it == decoderContexts.end()) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): The decoder context was not created from this info log, returning error: 0x%x\n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_INVALID_ARGUMENT);
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    decoderContexts.erase(it);
+    *phDecoderContext = nullptr;
+
+    return ZE_RESULT_SUCCESS;
+}
+
+void InfoLogImp::destroyAllDecoderContexts() {
+    std::lock_guard<std::mutex> lock(decoderContextsMutex);
+    decoderContexts.clear();
+}
+
 ze_result_t InfoLogImp::destroyInstance(InfoLogInstance *pInstance) {
     std::lock_guard<std::mutex> lock(instancesMutex);
 
@@ -124,6 +184,7 @@ InfoLogImp::InfoLogImp(zes_info_log_format_ext_t format) {
 // The call is qualified because virtual dispatch is already restricted to this class once the
 // destructor runs.
 InfoLogImp::~InfoLogImp() {
+    InfoLogImp::destroyAllDecoderContexts();
     InfoLogImp::destroyAllInstances();
 }
 

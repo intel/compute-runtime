@@ -17,6 +17,7 @@
 #include "level_zero/sysman/test/unit_tests/sources/linux/tracefs_api/mock_tracefs_api.h"
 
 #include <algorithm>
+#include <array>
 #include <cerrno>
 #include <cstdint>
 #include <cstdio>
@@ -65,6 +66,11 @@ static const std::string mockSampleCperLogData =
     "             bash-3065    [019] ...1.  2697.731375: write_msr: 830, value c00fc\n" +
     mockSampleCperEvent7 +
     mockSampleCperEvent8;
+
+// sig_id of mockSampleCperEvent1 to mockSampleCperEvent8, in the order mockSampleCperLogData holds
+// them. Each is the little endian uint32 at offset 20 of the body of the single accelerator section of
+// that event's cper_raw, which its validation bits at offset 28 mark valid.
+static constexpr std::array<uint32_t, 8> mockSampleCperLogSigIds = {9u, 9u, 10u, 10u, 11u, 11u, 12u, 12u};
 // clang-format on
 
 static constexpr uint32_t mockCperLen = 532u;
@@ -967,15 +973,43 @@ class MockOsInfoLog : public OsInfoLog {
   public:
     ze_result_t getPropertiesResult = ZE_RESULT_SUCCESS;
     bool isNamedInstanceSupported = true;
+    zes_info_log_format_ext_t format = ZES_INFO_LOG_FORMAT_EXT_CPER;
     ze_result_t createInstanceResult = ZE_RESULT_SUCCESS;
     bool createInstanceReturnsNullInstance = false;
     uint32_t createInstanceCallCount = 0;
     ze_result_t instanceTeardownResult = ZE_RESULT_SUCCESS;
     uint32_t instanceTeardownCallCount = 0;
+    ze_result_t getFieldInfoResult = ZE_RESULT_SUCCESS;
+    uint32_t getFieldInfoCallCount = 0;
+    ze_result_t validateRecordsResult = ZE_RESULT_SUCCESS;
+    uint32_t validateRecordsCallCount = 0;
+    ze_result_t readFieldResult = ZE_RESULT_SUCCESS;
+    uint32_t readFieldCallCount = 0;
+
+    ze_result_t getFieldInfo(uint32_t *pCount, zes_intel_info_log_decodable_field_info_exp_t *) override {
+        getFieldInfoCallCount++;
+        if (getFieldInfoResult == ZE_RESULT_SUCCESS && *pCount == 0) {
+            *pCount = 1u;
+        }
+        return getFieldInfoResult;
+    }
+
+    ze_result_t validateRecords(uint32_t, uint32_t, const zes_info_log_metadata_ext_t *) override {
+        validateRecordsCallCount++;
+        return validateRecordsResult;
+    }
+
+    ze_result_t readField(uint32_t, const uint8_t *, const zes_info_log_metadata_ext_t *, uint32_t, uint32_t,
+                          void *, size_t, size_t *pBytesCopied) override {
+        readFieldCallCount++;
+        *pBytesCopied = 0;
+        return readFieldResult;
+    }
 
     ze_result_t getProperties(zes_info_log_ext_properties_t *pProperties) override {
         if (getPropertiesResult == ZE_RESULT_SUCCESS && pProperties != nullptr) {
             pProperties->isNamedInstanceSupported = isNamedInstanceSupported;
+            pProperties->infoLogFormat = format;
         }
         return getPropertiesResult;
     }

@@ -8,14 +8,18 @@
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 
 #include "level_zero/core/source/driver/driver.h"
+#include "level_zero/sysman/source/api/info_log/linux/sysman_info_log_cper_decoder.h"
 #include "level_zero/sysman/source/api/info_log/linux/sysman_os_info_log_imp.h"
 #include "level_zero/sysman/source/api/info_log/linux/sysman_os_info_log_instance_imp.h"
 #include "level_zero/sysman/source/api/info_log/sysman_info_log_imp.h"
+#include "level_zero/sysman/test/unit_tests/sources/info_log/linux/mock_cper_record.h"
 #include "level_zero/sysman/test/unit_tests/sources/info_log/linux/mock_sysman_info_log.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 #include "level_zero/zes_intel_gpu_sysman.h"
 
+#include <algorithm>
 #include <cerrno>
+#include <string>
 
 namespace L0 {
 namespace Sysman {
@@ -3929,6 +3933,731 @@ TEST_F(SysmanInfoLogFixture, GivenExperimentalInfoLogEntryPointsWhenCalledThenUn
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelDriverEnumInfoLogsExp", reinterpret_cast<void **>(&pfnEnumInfoLogsExp)));
     ASSERT_NE(nullptr, pfnEnumInfoLogsExp);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pfnEnumInfoLogsExp(driverHandle->toHandle(), &count, nullptr));
+}
+
+TEST_F(SysmanInfoLogFixture, GivenLinuxBackendWhenDecodingRecordsThenTheCperDecoderIsUsed) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        auto mockApi = std::make_unique<PublicTraceFsApi>();
+        mockApi->loadEntryPointsFromBase();
+        return mockApi;
+    });
+
+    LinuxInfoLogImp infoLogImp(ZES_INFO_LOG_FORMAT_EXT_CPER);
+
+    uint32_t count = 0;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, infoLogImp.getFieldInfo(&count, nullptr));
+    ASSERT_EQ(2u, count);
+
+    std::vector<zes_intel_info_log_decodable_field_info_exp_t> fieldInfos(count);
+    for (auto &fieldInfo : fieldInfos) {
+        fieldInfo.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_DECODABLE_FIELD_INFO_EXP;
+    }
+    ASSERT_EQ(ZE_RESULT_SUCCESS, infoLogImp.getFieldInfo(&count, fieldInfos.data()));
+    ASSERT_EQ(2u, count);
+    EXPECT_STREQ("sig_id", fieldInfos[0].name);
+    EXPECT_STREQ("uuid", fieldInfos[1].name);
+
+    auto record = MockCperRecord::sampleRecord();
+    zes_info_log_metadata_ext_t descriptor = {};
+    descriptor.stype = ZES_STRUCTURE_TYPE_INFO_LOG_METADATA_EXT;
+    descriptor.lengthOfData = static_cast<uint32_t>(record.size());
+
+    auto recordSize = static_cast<uint32_t>(record.size());
+    ASSERT_EQ(ZE_RESULT_SUCCESS, infoLogImp.validateRecords(recordSize, 1, &descriptor));
+
+    uint32_t sigId = 0;
+    size_t bytesCopied = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, infoLogImp.readField(recordSize, record.data(), &descriptor, CperDecoder::sigIdField, 0, &sigId, sizeof(sigId), &bytesCopied));
+    EXPECT_EQ(sizeof(sigId), bytesCopied);
+    EXPECT_EQ(9u, sigId);
+
+    MockCperRecord::Guid uuid = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, infoLogImp.readField(recordSize, record.data(), &descriptor, CperDecoder::uuidField, 0, uuid.data(), uuid.size(), &bytesCopied));
+    EXPECT_EQ(static_cast<size_t>(ZES_MAX_UUID_SIZE), bytesCopied);
+    EXPECT_EQ(MockCperRecord::sampleFruId, uuid);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenLinuxBackendWhenDecodeArgumentsAreInvalidThenTheCperDecoderErrorIsReturned) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        auto mockApi = std::make_unique<PublicTraceFsApi>();
+        mockApi->loadEntryPointsFromBase();
+        return mockApi;
+    });
+
+    LinuxInfoLogImp infoLogImp(ZES_INFO_LOG_FORMAT_EXT_CPER);
+
+    auto record = MockCperRecord::sampleRecord();
+    zes_info_log_metadata_ext_t descriptor = {};
+    descriptor.stype = ZES_STRUCTURE_TYPE_INFO_LOG_METADATA_EXT;
+    descriptor.lengthOfData = static_cast<uint32_t>(record.size()) + 1u;
+
+    auto recordSize = static_cast<uint32_t>(record.size());
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, infoLogImp.validateRecords(recordSize, 1, &descriptor));
+
+    descriptor.lengthOfData = recordSize;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, infoLogImp.validateRecords(recordSize, 1, &descriptor));
+
+    uint32_t sigId = 0;
+    size_t bytesCopied = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT,
+              infoLogImp.readField(recordSize, record.data(), &descriptor, CperDecoder::fieldCount, 0, &sigId, sizeof(sigId), &bytesCopied));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_SIZE,
+              infoLogImp.readField(recordSize, record.data(), &descriptor, CperDecoder::sigIdField, 0, &sigId, sizeof(sigId) - 1, &bytesCopied));
+    EXPECT_EQ(0u, bytesCopied);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenLinuxBackendAndARecordWithoutAFruIdWhenReadingTheUuidThenNotAvailableIsReturned) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        auto mockApi = std::make_unique<PublicTraceFsApi>();
+        mockApi->loadEntryPointsFromBase();
+        return mockApi;
+    });
+
+    LinuxInfoLogImp infoLogImp(ZES_INFO_LOG_FORMAT_EXT_CPER);
+
+    MockCperRecord builder;
+    builder.addSection(MockCperRecord::acceleratorGuid, 64, 20, 17);
+    auto record = builder.build();
+    zes_info_log_metadata_ext_t descriptor = {};
+    descriptor.stype = ZES_STRUCTURE_TYPE_INFO_LOG_METADATA_EXT;
+    descriptor.lengthOfData = static_cast<uint32_t>(record.size());
+
+    auto recordSize = static_cast<uint32_t>(record.size());
+    ASSERT_EQ(ZE_RESULT_SUCCESS, infoLogImp.validateRecords(recordSize, 1, &descriptor));
+
+    uint32_t sigId = 0;
+    size_t bytesCopied = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, infoLogImp.readField(recordSize, record.data(), &descriptor, CperDecoder::sigIdField, 0, &sigId, sizeof(sigId), &bytesCopied));
+    EXPECT_EQ(17u, sigId);
+
+    MockCperRecord::Guid uuid = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, infoLogImp.readField(recordSize, record.data(), &descriptor, CperDecoder::uuidField, 0, uuid.data(), uuid.size(), &bytesCopied));
+    EXPECT_EQ(0u, bytesCopied);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenValidInfoLogHandleWhenCreatingAndDeletingADecoderContextThenSuccessIsReturnedAndTheHandleIsCleared) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        auto mockApi = std::make_unique<PublicTraceFsApi>();
+        mockApi->loadEntryPointsFromBase();
+        return mockApi;
+    });
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+
+    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+    ASSERT_NE(nullptr, hDecoderContext);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDeleteDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+    EXPECT_EQ(nullptr, hDecoderContext);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenADecoderContextWhenGettingFieldInfoThenTheSameFieldsAreReportedBeforeDuringAndAfterABatch) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        auto mockApi = std::make_unique<PublicTraceFsApi>();
+        mockApi->loadEntryPointsFromBase();
+        return mockApi;
+    });
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+
+    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+
+    auto readFieldNames = [hDecoderContext]() {
+        uint32_t count = 0;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderGetFieldInfoExp(hDecoderContext, &count, nullptr));
+        std::vector<zes_intel_info_log_decodable_field_info_exp_t> fieldInfos(count);
+        for (auto &fieldInfo : fieldInfos) {
+            fieldInfo.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_DECODABLE_FIELD_INFO_EXP;
+        }
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderGetFieldInfoExp(hDecoderContext, &count, fieldInfos.data()));
+        std::vector<std::string> names;
+        for (const auto &fieldInfo : fieldInfos) {
+            names.push_back(fieldInfo.name);
+        }
+        return names;
+    };
+
+    auto beforeBatch = readFieldNames();
+    ASSERT_EQ(2u, beforeBatch.size());
+
+    auto record = MockCperRecord::sampleRecord();
+    zes_info_log_metadata_ext_t descriptor = {};
+    descriptor.stype = ZES_STRUCTURE_TYPE_INFO_LOG_METADATA_EXT;
+    descriptor.lengthOfData = static_cast<uint32_t>(record.size());
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderDecodeStartExp(hDecoderContext, static_cast<uint32_t>(record.size()), record.data(), 1, &descriptor));
+    auto duringBatch = readFieldNames();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderDecodeStopExp(hDecoderContext));
+    auto afterBatch = readFieldNames();
+
+    EXPECT_EQ(beforeBatch, duringBatch);
+    EXPECT_EQ(beforeBatch, afterBatch);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDeleteDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+}
+
+TEST_F(SysmanInfoLogFixture, GivenRecordsReadWithMetadataWhenDecodingThenOneTriplePerRecordIsReturned) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        return std::make_unique<MockTraceFsApiWithData>(false, false, mockSampleCperLogData);
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpenBackup(&NEO::SysCalls::sysCallsOpen, MockTraceFsApiWithData::mockSysCallsOpen);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> mockReadBackup(&NEO::SysCalls::sysCallsRead, MockTraceFsApiWithData::mockSysCallsRead);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockCloseBackup(&NEO::SysCalls::sysCallsClose, MockTraceFsApiWithData::mockSysCallsClose);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsDup)> mockDupBackup(&NEO::SysCalls::sysCallsDup, MockTraceFsApiWithData::mockSysCallsDup);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsFdopen)> mockFdopenBackup(&NEO::SysCalls::sysCallsFdopen, MockTraceFsApiWithData::mockSysCallsFdopen);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsFgets)> mockFgetsBackup(&NEO::SysCalls::sysCallsFgets, MockTraceFsApiWithData::mockSysCallsFgets);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsFclose)> mockFcloseBackup(&NEO::SysCalls::sysCallsFclose, MockTraceFsApiWithData::mockSysCallsFclose);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsSetvbuf)> mockSetvbufBackup(&NEO::SysCalls::sysCallsSetvbuf, MockTraceFsApiWithData::mockSysCallsSetvbuf);
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+
+    auto desc = makeInstanceDesc();
+    zes_info_log_instance_handle_t hInstance = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesInfoLogCreateInstanceExt(infoLogHandles[0], nullptr, &desc, &hInstance));
+
+    uint32_t size = 0;
+    uint32_t recordCount = 0;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &size, nullptr, &recordCount, nullptr, nullptr));
+    ASSERT_EQ(static_cast<uint32_t>(mockSampleCperLogSigIds.size()), recordCount);
+
+    std::vector<uint8_t> buffer(size);
+    std::vector<zes_info_log_metadata_ext_t> descriptors(recordCount);
+    for (auto &descriptor : descriptors) {
+        descriptor.stype = ZES_STRUCTURE_TYPE_INFO_LOG_METADATA_EXT;
+    }
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &size, buffer.data(), &recordCount, descriptors.data(), nullptr));
+
+    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+
+    uint32_t fieldCount = 0;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderGetFieldInfoExp(hDecoderContext, &fieldCount, nullptr));
+    ASSERT_EQ(2u, fieldCount);
+    std::vector<zes_intel_info_log_decodable_field_info_exp_t> fieldInfos(fieldCount);
+    for (auto &fieldInfo : fieldInfos) {
+        fieldInfo.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_DECODABLE_FIELD_INFO_EXP;
+    }
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderGetFieldInfoExp(hDecoderContext, &fieldCount, fieldInfos.data()));
+    ASSERT_STREQ("sig_id", fieldInfos[0].name);
+    ASSERT_STREQ("uuid", fieldInfos[1].name);
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderDecodeStartExp(hDecoderContext, size, buffer.data(), recordCount, descriptors.data()));
+
+    for (uint32_t r = 0; r < recordCount; r++) {
+        uint32_t sigId = 0;
+        size_t bytesCopied = 0;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderReadFieldExp(hDecoderContext, fieldInfos[0].fieldId, r, &sigId, sizeof(sigId), &bytesCopied)) << "record " << r;
+        EXPECT_EQ(mockSampleCperLogSigIds[r], sigId) << "record " << r;
+    }
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderDecodeStopExp(hDecoderContext));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDeleteDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceDeleteExt(hInstance));
+}
+
+TEST_F(SysmanInfoLogFixture, GivenADecoderContextWhenTheRecordBufferIsLeftUnmodifiedThenEveryReadReturnsTheSameValues) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        auto mockApi = std::make_unique<PublicTraceFsApi>();
+        mockApi->loadEntryPointsFromBase();
+        return mockApi;
+    });
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+
+    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+
+    auto record = MockCperRecord::sampleRecord();
+    zes_info_log_metadata_ext_t descriptor = {};
+    descriptor.stype = ZES_STRUCTURE_TYPE_INFO_LOG_METADATA_EXT;
+    descriptor.lengthOfData = static_cast<uint32_t>(record.size());
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderDecodeStartExp(hDecoderContext, static_cast<uint32_t>(record.size()), record.data(), 1, &descriptor));
+
+    for (uint32_t attempt = 0; attempt < 3u; attempt++) {
+        uint32_t sigId = 0;
+        size_t bytesCopied = 0;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderReadFieldExp(hDecoderContext, CperDecoder::sigIdField, 0, &sigId, sizeof(sigId), &bytesCopied)) << "attempt " << attempt;
+        EXPECT_EQ(9u, sigId) << "attempt " << attempt;
+
+        MockCperRecord::Guid uuid = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderReadFieldExp(hDecoderContext, CperDecoder::uuidField, 0, uuid.data(), uuid.size(), &bytesCopied)) << "attempt " << attempt;
+        EXPECT_EQ(MockCperRecord::sampleFruId, uuid) << "attempt " << attempt;
+    }
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderDecodeStopExp(hDecoderContext));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDeleteDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+}
+
+TEST_F(SysmanInfoLogFixture, GivenADecoderContextWithNoActiveBatchWhenReadingAFieldOrStoppingThenUninitializedIsReturned) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        auto mockApi = std::make_unique<PublicTraceFsApi>();
+        mockApi->loadEntryPointsFromBase();
+        return mockApi;
+    });
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+
+    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+
+    uint32_t sigId = 0;
+    size_t bytesCopied = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesIntelInfoLogDecoderReadFieldExp(hDecoderContext, CperDecoder::sigIdField, 0, &sigId, sizeof(sigId), &bytesCopied));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesIntelInfoLogDecoderDecodeStopExp(hDecoderContext));
+
+    auto record = MockCperRecord::sampleRecord();
+    zes_info_log_metadata_ext_t descriptor = {};
+    descriptor.stype = ZES_STRUCTURE_TYPE_INFO_LOG_METADATA_EXT;
+    descriptor.lengthOfData = static_cast<uint32_t>(record.size());
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderDecodeStartExp(hDecoderContext, static_cast<uint32_t>(record.size()), record.data(), 1, &descriptor));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderDecodeStopExp(hDecoderContext));
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesIntelInfoLogDecoderReadFieldExp(hDecoderContext, CperDecoder::sigIdField, 0, &sigId, sizeof(sigId), &bytesCopied));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesIntelInfoLogDecoderDecodeStopExp(hDecoderContext));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDeleteDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+}
+
+TEST_F(SysmanInfoLogFixture, GivenADecoderContextWithAnActiveBatchWhenStartingAnotherThenHandleObjectInUseIsReturnedAndTheBatchIsKept) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        auto mockApi = std::make_unique<PublicTraceFsApi>();
+        mockApi->loadEntryPointsFromBase();
+        return mockApi;
+    });
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+
+    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+
+    auto record = MockCperRecord::sampleRecord();
+    zes_info_log_metadata_ext_t descriptor = {};
+    descriptor.stype = ZES_STRUCTURE_TYPE_INFO_LOG_METADATA_EXT;
+    descriptor.lengthOfData = static_cast<uint32_t>(record.size());
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderDecodeStartExp(hDecoderContext, static_cast<uint32_t>(record.size()), record.data(), 1, &descriptor));
+
+    EXPECT_EQ(ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE,
+              zesIntelInfoLogDecoderDecodeStartExp(hDecoderContext, static_cast<uint32_t>(record.size()), record.data(), 1, &descriptor));
+
+    uint32_t sigId = 0;
+    size_t bytesCopied = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderReadFieldExp(hDecoderContext, CperDecoder::sigIdField, 0, &sigId, sizeof(sigId), &bytesCopied));
+    EXPECT_EQ(9u, sigId);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderDecodeStopExp(hDecoderContext));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDeleteDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+}
+
+TEST_F(SysmanInfoLogFixture, GivenADecoderContextWhenStartingASecondBatchAfterEndingTheFirstThenTheSecondBatchIsDecoded) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        auto mockApi = std::make_unique<PublicTraceFsApi>();
+        mockApi->loadEntryPointsFromBase();
+        return mockApi;
+    });
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+
+    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+
+    MockCperRecord secondBuilder;
+    secondBuilder.addSection(MockCperRecord::acceleratorGuid, 64, 20, 31);
+    auto first = MockCperRecord::sampleRecord();
+    auto second = secondBuilder.build();
+
+    zes_info_log_metadata_ext_t descriptor = {};
+    descriptor.stype = ZES_STRUCTURE_TYPE_INFO_LOG_METADATA_EXT;
+
+    uint32_t sigId = 0;
+    size_t bytesCopied = 0;
+
+    descriptor.lengthOfData = static_cast<uint32_t>(first.size());
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderDecodeStartExp(hDecoderContext, static_cast<uint32_t>(first.size()), first.data(), 1, &descriptor));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderReadFieldExp(hDecoderContext, CperDecoder::sigIdField, 0, &sigId, sizeof(sigId), &bytesCopied));
+    EXPECT_EQ(9u, sigId);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderDecodeStopExp(hDecoderContext));
+
+    descriptor.lengthOfData = static_cast<uint32_t>(second.size());
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderDecodeStartExp(hDecoderContext, static_cast<uint32_t>(second.size()), second.data(), 1, &descriptor));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderReadFieldExp(hDecoderContext, CperDecoder::sigIdField, 0, &sigId, sizeof(sigId), &bytesCopied));
+    EXPECT_EQ(31u, sigId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderDecodeStopExp(hDecoderContext));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDeleteDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+}
+
+TEST_F(SysmanInfoLogFixture, GivenTwoDecoderContextsOfOneInfoLogWhenEachDecodesABatchThenEachReadsBackItsOwnValues) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        auto mockApi = std::make_unique<PublicTraceFsApi>();
+        mockApi->loadEntryPointsFromBase();
+        return mockApi;
+    });
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+
+    zes_intel_info_log_decoder_context_handle_t hFirstContext = nullptr;
+    zes_intel_info_log_decoder_context_handle_t hSecondContext = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateDecoderContextExp(infoLogHandles[0], &hFirstContext));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateDecoderContextExp(infoLogHandles[0], &hSecondContext));
+    ASSERT_NE(hFirstContext, hSecondContext);
+
+    MockCperRecord secondBuilder;
+    secondBuilder.addSection(MockCperRecord::acceleratorGuid, 64, 20, 31);
+    auto first = MockCperRecord::sampleRecord();
+    auto second = secondBuilder.build();
+
+    zes_info_log_metadata_ext_t firstDescriptor = {};
+    firstDescriptor.stype = ZES_STRUCTURE_TYPE_INFO_LOG_METADATA_EXT;
+    firstDescriptor.lengthOfData = static_cast<uint32_t>(first.size());
+    zes_info_log_metadata_ext_t secondDescriptor = {};
+    secondDescriptor.stype = ZES_STRUCTURE_TYPE_INFO_LOG_METADATA_EXT;
+    secondDescriptor.lengthOfData = static_cast<uint32_t>(second.size());
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderDecodeStartExp(hFirstContext, static_cast<uint32_t>(first.size()), first.data(), 1, &firstDescriptor));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderDecodeStartExp(hSecondContext, static_cast<uint32_t>(second.size()), second.data(), 1, &secondDescriptor));
+
+    uint32_t sigId = 0;
+    size_t bytesCopied = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderReadFieldExp(hFirstContext, CperDecoder::sigIdField, 0, &sigId, sizeof(sigId), &bytesCopied));
+    EXPECT_EQ(9u, sigId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderReadFieldExp(hSecondContext, CperDecoder::sigIdField, 0, &sigId, sizeof(sigId), &bytesCopied));
+    EXPECT_EQ(31u, sigId);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderDecodeStopExp(hFirstContext));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderDecodeStopExp(hSecondContext));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDeleteDecoderContextExp(infoLogHandles[0], &hFirstContext));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDeleteDecoderContextExp(infoLogHandles[0], &hSecondContext));
+}
+
+TEST_F(SysmanInfoLogFixture, GivenInvalidDecodeStartArgumentsWhenStartingABatchThenTheArgumentIsRejectedAndNoBatchIsActive) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        auto mockApi = std::make_unique<PublicTraceFsApi>();
+        mockApi->loadEntryPointsFromBase();
+        return mockApi;
+    });
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+
+    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+
+    auto record = MockCperRecord::sampleRecord();
+    zes_info_log_metadata_ext_t descriptor = {};
+    descriptor.stype = ZES_STRUCTURE_TYPE_INFO_LOG_METADATA_EXT;
+    descriptor.lengthOfData = static_cast<uint32_t>(record.size());
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, zesIntelInfoLogDecoderDecodeStartExp(hDecoderContext, static_cast<uint32_t>(record.size()), nullptr, 1, &descriptor));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, zesIntelInfoLogDecoderDecodeStartExp(hDecoderContext, static_cast<uint32_t>(record.size()), record.data(), 1, nullptr));
+
+    descriptor.lengthOfData = static_cast<uint32_t>(record.size()) + 1u;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zesIntelInfoLogDecoderDecodeStartExp(hDecoderContext, static_cast<uint32_t>(record.size()), record.data(), 1, &descriptor));
+
+    uint32_t sigId = 0;
+    size_t bytesCopied = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesIntelInfoLogDecoderReadFieldExp(hDecoderContext, CperDecoder::sigIdField, 0, &sigId, sizeof(sigId), &bytesCopied));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDeleteDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+}
+
+TEST_F(SysmanInfoLogFixture, GivenZeroRecordsWhenStartingABatchThenSuccessIsReturnedAndEveryReadIsRejected) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        auto mockApi = std::make_unique<PublicTraceFsApi>();
+        mockApi->loadEntryPointsFromBase();
+        return mockApi;
+    });
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+
+    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderDecodeStartExp(hDecoderContext, 0, nullptr, 0, nullptr));
+
+    uint32_t sigId = 0;
+    size_t bytesCopied = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zesIntelInfoLogDecoderReadFieldExp(hDecoderContext, CperDecoder::sigIdField, 0, &sigId, sizeof(sigId), &bytesCopied));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderDecodeStopExp(hDecoderContext));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDeleteDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+}
+
+TEST_F(SysmanInfoLogFixture, GivenInvalidReadFieldArgumentsWhenReadingAFieldThenTheArgumentIsRejected) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        auto mockApi = std::make_unique<PublicTraceFsApi>();
+        mockApi->loadEntryPointsFromBase();
+        return mockApi;
+    });
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+
+    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+
+    auto record = MockCperRecord::sampleRecord();
+    zes_info_log_metadata_ext_t descriptor = {};
+    descriptor.stype = ZES_STRUCTURE_TYPE_INFO_LOG_METADATA_EXT;
+    descriptor.lengthOfData = static_cast<uint32_t>(record.size());
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderDecodeStartExp(hDecoderContext, static_cast<uint32_t>(record.size()), record.data(), 1, &descriptor));
+
+    uint32_t sigId = 0;
+    size_t bytesCopied = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zesIntelInfoLogDecoderReadFieldExp(hDecoderContext, CperDecoder::sigIdField, 1, &sigId, sizeof(sigId), &bytesCopied));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zesIntelInfoLogDecoderReadFieldExp(hDecoderContext, CperDecoder::fieldCount, 0, &sigId, sizeof(sigId), &bytesCopied));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_SIZE, zesIntelInfoLogDecoderReadFieldExp(hDecoderContext, CperDecoder::sigIdField, 0, &sigId, sizeof(sigId) - 1, &bytesCopied));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderDecodeStopExp(hDecoderContext));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDeleteDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+}
+
+TEST_F(SysmanInfoLogFixture, GivenADecoderContextWithAnActiveBatchWhenDeletingItThenSuccessIsReturned) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        auto mockApi = std::make_unique<PublicTraceFsApi>();
+        mockApi->loadEntryPointsFromBase();
+        return mockApi;
+    });
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+
+    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+
+    auto record = MockCperRecord::sampleRecord();
+    zes_info_log_metadata_ext_t descriptor = {};
+    descriptor.stype = ZES_STRUCTURE_TYPE_INFO_LOG_METADATA_EXT;
+    descriptor.lengthOfData = static_cast<uint32_t>(record.size());
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderDecodeStartExp(hDecoderContext, static_cast<uint32_t>(record.size()), record.data(), 1, &descriptor));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDeleteDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+    EXPECT_EQ(nullptr, hDecoderContext);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenADecoderContextOfAnotherInfoLogWhenDeletingItThenInvalidArgumentIsReturned) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        auto mockApi = std::make_unique<PublicTraceFsApi>();
+        mockApi->loadEntryPointsFromBase();
+        return mockApi;
+    });
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+
+    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+
+    InfoLogImp otherInfoLog(ZES_INFO_LOG_FORMAT_EXT_CPER);
+    otherInfoLog.init();
+    auto hNotOwned = hDecoderContext;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, otherInfoLog.infoLogDeleteDecoderContext(&hNotOwned));
+    EXPECT_EQ(hDecoderContext, hNotOwned);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDeleteDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+}
+
+TEST_F(SysmanInfoLogFixture, GivenADecoderContextWhichIsNotDeletedWhenTheInfoLogIsTornDownThenItIsDestroyed) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        auto mockApi = std::make_unique<PublicTraceFsApi>();
+        mockApi->loadEntryPointsFromBase();
+        return mockApi;
+    });
+
+    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    {
+        InfoLogImp infoLog(ZES_INFO_LOG_FORMAT_EXT_CPER);
+        infoLog.init();
+        ASSERT_EQ(ZE_RESULT_SUCCESS, infoLog.infoLogCreateDecoderContext(&hDecoderContext));
+        ASSERT_NE(nullptr, hDecoderContext);
+    }
+}
+
+TEST_F(SysmanInfoLogFixture, GivenANullDecoderContextHandleWhenDeletingADecoderContextThenInvalidNullHandleIsReturned) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        auto mockApi = std::make_unique<PublicTraceFsApi>();
+        mockApi->loadEntryPointsFromBase();
+        return mockApi;
+    });
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+
+    zes_intel_info_log_decoder_context_handle_t hNull = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_HANDLE, zesIntelInfoLogDeleteDecoderContextExp(infoLogHandles[0], &hNull));
+}
+
+TEST_F(SysmanInfoLogFixture, GivenNonCperInfoLogFormatWhenCreatingADecoderContextThenUnsupportedFeatureIsReturned) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        auto mockApi = std::make_unique<PublicTraceFsApi>();
+        mockApi->loadEntryPointsFromBase();
+        return mockApi;
+    });
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+
+    auto pInfoLogImp = static_cast<InfoLogImp *>(InfoLog::fromHandle(infoLogHandles[0]));
+    auto pMockOsInfoLog = std::make_unique<MockOsInfoLog>();
+    pMockOsInfoLog->format = static_cast<zes_info_log_format_ext_t>(ZES_INFO_LOG_FORMAT_EXT_CPER + 1);
+    pInfoLogImp->pOsInfoLog = std::move(pMockOsInfoLog);
+    pInfoLogImp->init();
+
+    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelInfoLogCreateDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+    EXPECT_EQ(nullptr, hDecoderContext);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenInfoLogPropertiesNotCapturedWhenCreatingADecoderContextThenCaptureErrorIsReturned) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        auto mockApi = std::make_unique<PublicTraceFsApi>();
+        mockApi->loadEntryPointsFromBase();
+        return mockApi;
+    });
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+
+    auto pInfoLogImp = static_cast<InfoLogImp *>(InfoLog::fromHandle(infoLogHandles[0]));
+    auto pMockOsInfoLog = std::make_unique<MockOsInfoLog>();
+    pMockOsInfoLog->getPropertiesResult = ZE_RESULT_ERROR_UNKNOWN;
+    pInfoLogImp->pOsInfoLog = std::move(pMockOsInfoLog);
+    pInfoLogImp->init();
+
+    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogCreateDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+    EXPECT_EQ(nullptr, hDecoderContext);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenADecoderContextWhenCallingItsFunctionsThenTheBackendIsCalled) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        auto mockApi = std::make_unique<PublicTraceFsApi>();
+        mockApi->loadEntryPointsFromBase();
+        return mockApi;
+    });
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+
+    auto pInfoLogImp = static_cast<InfoLogImp *>(InfoLog::fromHandle(infoLogHandles[0]));
+    auto pMockOsInfoLog = std::make_unique<MockOsInfoLog>();
+    auto *pRawMockOsInfoLog = pMockOsInfoLog.get();
+    pInfoLogImp->pOsInfoLog = std::move(pMockOsInfoLog);
+    pInfoLogImp->init();
+
+    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderGetFieldInfoExp(hDecoderContext, &count, nullptr));
+    EXPECT_EQ(1u, pRawMockOsInfoLog->getFieldInfoCallCount);
+
+    auto record = MockCperRecord::sampleRecord();
+    zes_info_log_metadata_ext_t descriptor = {};
+    descriptor.stype = ZES_STRUCTURE_TYPE_INFO_LOG_METADATA_EXT;
+    descriptor.lengthOfData = static_cast<uint32_t>(record.size());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderDecodeStartExp(hDecoderContext, static_cast<uint32_t>(record.size()), record.data(), 1, &descriptor));
+    EXPECT_EQ(1u, pRawMockOsInfoLog->validateRecordsCallCount);
+
+    uint32_t value = 0;
+    size_t bytesCopied = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderReadFieldExp(hDecoderContext, 0, 0, &value, sizeof(value), &bytesCopied));
+    EXPECT_EQ(1u, pRawMockOsInfoLog->readFieldCallCount);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderDecodeStopExp(hDecoderContext));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDeleteDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+}
+
+TEST_F(SysmanInfoLogFixture, GivenABackendWhichFailsToDecodeWhenStartingABatchThenTheErrorIsReturnedAndNoBatchIsActive) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        auto mockApi = std::make_unique<PublicTraceFsApi>();
+        mockApi->loadEntryPointsFromBase();
+        return mockApi;
+    });
+
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
+
+    auto pInfoLogImp = static_cast<InfoLogImp *>(InfoLog::fromHandle(infoLogHandles[0]));
+    auto pMockOsInfoLog = std::make_unique<MockOsInfoLog>();
+    pMockOsInfoLog->validateRecordsResult = ZE_RESULT_ERROR_UNKNOWN;
+    pInfoLogImp->pOsInfoLog = std::move(pMockOsInfoLog);
+    pInfoLogImp->init();
+
+    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+
+    auto record = MockCperRecord::sampleRecord();
+    zes_info_log_metadata_ext_t descriptor = {};
+    descriptor.stype = ZES_STRUCTURE_TYPE_INFO_LOG_METADATA_EXT;
+    descriptor.lengthOfData = static_cast<uint32_t>(record.size());
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogDecoderDecodeStartExp(hDecoderContext, static_cast<uint32_t>(record.size()), record.data(), 1, &descriptor));
+
+    uint32_t value = 0;
+    size_t bytesCopied = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesIntelInfoLogDecoderReadFieldExp(hDecoderContext, 0, 0, &value, sizeof(value), &bytesCopied));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDeleteDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+}
+
+TEST_F(SysmanInfoLogFixture, GivenSysmanInitFromCoreOrNoInitWhenCallingTheDecoderEntryPointsThenErrorIsReturned) {
+    auto hInfoLog = reinterpret_cast<zes_info_log_handle_t>(0x1);
+    auto hDecoderContext = reinterpret_cast<zes_intel_info_log_decoder_context_handle_t>(0x2);
+    zes_intel_info_log_decoder_context_handle_t hCreated = nullptr;
+    uint32_t count = 0;
+    uint32_t value = 0;
+    size_t bytesCopied = 0;
+
+    {
+        VariableBackup<bool> sysmanInitFromCoreBackup(&L0::sysmanInitFromCore, true);
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelInfoLogCreateDecoderContextExp(hInfoLog, &hCreated));
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelInfoLogDecoderGetFieldInfoExp(hDecoderContext, &count, nullptr));
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelInfoLogDecoderDecodeStartExp(hDecoderContext, 0, nullptr, 0, nullptr));
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelInfoLogDecoderReadFieldExp(hDecoderContext, 0, 0, &value, sizeof(value), &bytesCopied));
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelInfoLogDecoderDecodeStopExp(hDecoderContext));
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelInfoLogDeleteDecoderContextExp(hInfoLog, &hDecoderContext));
+    }
+    {
+        VariableBackup<bool> sysmanInitFromCoreBackup(&L0::sysmanInitFromCore, false);
+        VariableBackup<bool> sysmanOnlyInitBackup(&L0::Sysman::sysmanOnlyInit, false);
+        EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesIntelInfoLogCreateDecoderContextExp(hInfoLog, &hCreated));
+        EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesIntelInfoLogDecoderGetFieldInfoExp(hDecoderContext, &count, nullptr));
+        EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesIntelInfoLogDecoderDecodeStartExp(hDecoderContext, 0, nullptr, 0, nullptr));
+        EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesIntelInfoLogDecoderReadFieldExp(hDecoderContext, 0, 0, &value, sizeof(value), &bytesCopied));
+        EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesIntelInfoLogDecoderDecodeStopExp(hDecoderContext));
+        EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesIntelInfoLogDeleteDecoderContextExp(hInfoLog, &hDecoderContext));
+    }
+}
+
+TEST_F(SysmanInfoLogFixture, GivenDecoderEntryPointNamesWhenGettingExtensionFunctionAddressThenFunctionsAreReturned) {
+    void *funPtr = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelInfoLogCreateDecoderContextExp", &funPtr));
+    EXPECT_EQ(reinterpret_cast<void *>(zesIntelInfoLogCreateDecoderContextExp), funPtr);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelInfoLogDecoderGetFieldInfoExp", &funPtr));
+    EXPECT_EQ(reinterpret_cast<void *>(zesIntelInfoLogDecoderGetFieldInfoExp), funPtr);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelInfoLogDecoderDecodeStartExp", &funPtr));
+    EXPECT_EQ(reinterpret_cast<void *>(zesIntelInfoLogDecoderDecodeStartExp), funPtr);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelInfoLogDecoderReadFieldExp", &funPtr));
+    EXPECT_EQ(reinterpret_cast<void *>(zesIntelInfoLogDecoderReadFieldExp), funPtr);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelInfoLogDecoderDecodeStopExp", &funPtr));
+    EXPECT_EQ(reinterpret_cast<void *>(zesIntelInfoLogDecoderDecodeStopExp), funPtr);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelInfoLogDeleteDecoderContextExp", &funPtr));
+    EXPECT_EQ(reinterpret_cast<void *>(zesIntelInfoLogDeleteDecoderContextExp), funPtr);
 }
 
 } // namespace ult

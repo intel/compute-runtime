@@ -8,6 +8,7 @@
 #include "shared/test/common/helpers/variable_backup.h"
 
 #include "level_zero/core/source/driver/driver.h"
+#include "level_zero/sysman/source/api/info_log/sysman_info_log_decoder_context.h"
 #include "level_zero/sysman/source/api/info_log/sysman_info_log_imp.h"
 #include "level_zero/sysman/source/api/info_log/sysman_info_log_instance_imp.h"
 #include "level_zero/sysman/source/api/info_log/windows/sysman_os_info_log_imp.h"
@@ -56,6 +57,12 @@ struct MockInfoLog : public InfoLog {
     }
     ze_result_t infoLogCreateInstance(const char *, zes_info_log_instance_ext_desc_t *,
                                       zes_info_log_instance_handle_t *) override {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+    ze_result_t infoLogCreateDecoderContext(zes_intel_info_log_decoder_context_handle_t *) override {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+    ze_result_t infoLogDeleteDecoderContext(zes_intel_info_log_decoder_context_handle_t *) override {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
     ze_result_t destroyInstance(InfoLogInstance *pInstance) override {
@@ -132,12 +139,14 @@ struct MockOsInfoLogInstance : public OsInfoLogInstance {
 };
 
 struct MockOsInfoLog : public OsInfoLog {
+    static constexpr uint32_t decodeFieldCount = 3u;
+
     ze_result_t getProperties(zes_info_log_ext_properties_t *pProperties) override {
         if (getPropertiesResult != ZE_RESULT_SUCCESS) {
             return getPropertiesResult;
         }
         pProperties->infoLogType = ZES_INFO_LOG_TYPE_EXT_DEVICE;
-        pProperties->infoLogFormat = ZES_INFO_LOG_FORMAT_EXT_CPER;
+        pProperties->infoLogFormat = format;
         pProperties->isNamedInstanceSupported = isNamedInstanceSupported;
         pProperties->isPeekDataSupported = true;
         return ZE_RESULT_SUCCESS;
@@ -152,12 +161,39 @@ struct MockOsInfoLog : public OsInfoLog {
         }
         return createInstanceResult;
     }
+    ze_result_t getFieldInfo(uint32_t *pCount, zes_intel_info_log_decodable_field_info_exp_t *) override {
+        getFieldInfoCallCount++;
+        if (getFieldInfoResult == ZE_RESULT_SUCCESS && *pCount == 0) {
+            *pCount = decodeFieldCount;
+        }
+        return getFieldInfoResult;
+    }
+
+    ze_result_t validateRecords(uint32_t, uint32_t, const zes_info_log_metadata_ext_t *) override {
+        validateRecordsCallCount++;
+        return validateRecordsResult;
+    }
+
+    ze_result_t readField(uint32_t, const uint8_t *, const zes_info_log_metadata_ext_t *, uint32_t, uint32_t,
+                          void *, size_t, size_t *pBytesCopied) override {
+        readFieldCallCount++;
+        *pBytesCopied = 0;
+        return readFieldResult;
+    }
+
     ze_result_t getPropertiesResult = ZE_RESULT_SUCCESS;
     ze_result_t createInstanceResult = ZE_RESULT_SUCCESS;
     ze_result_t instanceTeardownResult = ZE_RESULT_SUCCESS;
+    ze_result_t getFieldInfoResult = ZE_RESULT_SUCCESS;
+    ze_result_t validateRecordsResult = ZE_RESULT_SUCCESS;
+    ze_result_t readFieldResult = ZE_RESULT_SUCCESS;
+    zes_info_log_format_ext_t format = ZES_INFO_LOG_FORMAT_EXT_CPER;
     bool isNamedInstanceSupported = true;
     uint32_t createInstanceCallCount = 0;
     uint32_t teardownCallCount = 0;
+    uint32_t getFieldInfoCallCount = 0;
+    uint32_t validateRecordsCallCount = 0;
+    uint32_t readFieldCallCount = 0;
 };
 
 class SysmanInfoLogFixture : public SysmanDriverHandleTest {
@@ -182,10 +218,14 @@ class SysmanInfoLogFixture : public SysmanDriverHandleTest {
     }
 
     std::unique_ptr<InfoLogImp> createInfoLogWithMockOsBackend(MockOsInfoLog **ppMockOsInfoLog,
-                                                               bool namedCollectionSupported = true) {
+                                                               bool namedCollectionSupported = true,
+                                                               zes_info_log_format_ext_t format = ZES_INFO_LOG_FORMAT_EXT_CPER,
+                                                               ze_result_t getPropertiesResult = ZE_RESULT_SUCCESS) {
         auto pInfoLogImp = std::make_unique<InfoLogImp>(ZES_INFO_LOG_FORMAT_EXT_CPER);
         auto mockOsInfoLog = std::make_unique<MockOsInfoLog>();
         mockOsInfoLog->isNamedInstanceSupported = namedCollectionSupported;
+        mockOsInfoLog->format = format;
+        mockOsInfoLog->getPropertiesResult = getPropertiesResult;
         *ppMockOsInfoLog = mockOsInfoLog.get();
         pInfoLogImp->pOsInfoLog = std::move(mockOsInfoLog);
         pInfoLogImp->init();
@@ -345,6 +385,32 @@ TEST_F(SysmanInfoLogFixture, GivenWddmBackendWhenAskedForPropertiesAndForAnInsta
     EXPECT_TRUE(OsInfoLog::getSupportedInfoLogFormats().empty());
 }
 
+TEST_F(SysmanInfoLogFixture, GivenWddmBackendWhenDecodingRecordsThenUnsupportedFeatureIsReturnedAndNothingIsWritten) {
+    WddmInfoLogImp wddmInfoLog;
+
+    uint32_t count = 0;
+    zes_intel_info_log_decodable_field_info_exp_t fieldInfo = {ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_DECODABLE_FIELD_INFO_EXP};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, wddmInfoLog.getFieldInfo(&count, nullptr));
+    EXPECT_EQ(0u, count);
+
+    count = 1;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, wddmInfoLog.getFieldInfo(&count, &fieldInfo));
+    EXPECT_STREQ("", fieldInfo.name);
+
+    std::vector<uint8_t> buffer(mockReadBufferSize, 0);
+    zes_info_log_metadata_ext_t descriptor = {};
+    descriptor.stype = ZES_STRUCTURE_TYPE_INFO_LOG_METADATA_EXT;
+    descriptor.lengthOfData = mockReadBufferSize;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE,
+              wddmInfoLog.validateRecords(mockReadBufferSize, 1, &descriptor));
+
+    uint32_t value = 0;
+    size_t bytesCopied = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE,
+              wddmInfoLog.readField(mockReadBufferSize, buffer.data(), &descriptor, 0, 0, &value, sizeof(value), &bytesCopied));
+    EXPECT_EQ(0u, value);
+}
+
 TEST_F(SysmanInfoLogFixture, GivenInstanceHandleWhenCallingInstanceReadAndPeekWithMetadataExpThenCallsAreForwardedToTheInstance) {
     MockInfoLogInstance instance;
 
@@ -458,6 +524,237 @@ TEST_F(SysmanInfoLogFixture, GivenPropertyCaptureSucceededWhenGettingPropertiesT
     EXPECT_TRUE(properties.isPeekDataSupported);
 
     EXPECT_EQ(ZES_STRUCTURE_TYPE_INFO_LOG_EXT_PROPERTIES, properties.stype);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenPropertyCaptureFailsWhenCreatingADecoderContextThenCaptureErrorIsReturned) {
+    MockOsInfoLog *pMockOsInfoLog = nullptr;
+    auto pInfoLogImp = createInfoLogWithMockOsBackend(&pMockOsInfoLog, true,
+                                                      ZES_INFO_LOG_FORMAT_EXT_CPER, ZE_RESULT_ERROR_UNKNOWN);
+
+    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pInfoLogImp->infoLogCreateDecoderContext(&hDecoderContext));
+    EXPECT_EQ(nullptr, hDecoderContext);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenNonCperInfoLogFormatWhenCreatingADecoderContextThenUnsupportedFeatureIsReturned) {
+    MockOsInfoLog *pMockOsInfoLog = nullptr;
+    auto nonCperFormat = static_cast<zes_info_log_format_ext_t>(ZES_INFO_LOG_FORMAT_EXT_CPER + 1);
+    auto pInfoLogImp = createInfoLogWithMockOsBackend(&pMockOsInfoLog, true, nonCperFormat);
+
+    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pInfoLogImp->infoLogCreateDecoderContext(&hDecoderContext));
+    EXPECT_EQ(nullptr, hDecoderContext);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenCperInfoLogFormatWhenCreatingAndDeletingADecoderContextThenAHandleIsReturnedAndClearedOnDelete) {
+    MockOsInfoLog *pMockOsInfoLog = nullptr;
+    auto pInfoLogImp = createInfoLogWithMockOsBackend(&pMockOsInfoLog);
+
+    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogCreateDecoderContext(&hDecoderContext));
+    EXPECT_NE(nullptr, hDecoderContext);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogDeleteDecoderContext(&hDecoderContext));
+    EXPECT_EQ(nullptr, hDecoderContext);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenADecoderContextWhenCallingItsFunctionsThenTheOsBackendIsCalled) {
+    MockOsInfoLog *pMockOsInfoLog = nullptr;
+    auto pInfoLogImp = createInfoLogWithMockOsBackend(&pMockOsInfoLog);
+
+    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogCreateDecoderContext(&hDecoderContext));
+    auto pDecoderContext = InfoLogDecoderContext::fromHandle(hDecoderContext);
+
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pDecoderContext->getFieldInfo(&count, nullptr));
+    EXPECT_EQ(MockOsInfoLog::decodeFieldCount, count);
+    EXPECT_EQ(1u, pMockOsInfoLog->getFieldInfoCallCount);
+
+    std::vector<uint8_t> buffer(mockReadBufferSize, 0);
+    zes_info_log_metadata_ext_t descriptor = {};
+    descriptor.stype = ZES_STRUCTURE_TYPE_INFO_LOG_METADATA_EXT;
+    descriptor.lengthOfData = mockReadBufferSize;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pDecoderContext->decodeStart(mockReadBufferSize, buffer.data(), 1, &descriptor));
+    EXPECT_EQ(1u, pMockOsInfoLog->validateRecordsCallCount);
+
+    uint32_t value = 0;
+    size_t bytesCopied = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pDecoderContext->readField(0, 0, &value, sizeof(value), &bytesCopied));
+    EXPECT_EQ(1u, pMockOsInfoLog->readFieldCallCount);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pDecoderContext->decodeStop());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogDeleteDecoderContext(&hDecoderContext));
+}
+
+TEST_F(SysmanInfoLogFixture, GivenAnOsBackendWhichFailsWhenCallingTheDecoderContextFunctionsThenTheBackendErrorIsReturned) {
+    MockOsInfoLog *pMockOsInfoLog = nullptr;
+    auto pInfoLogImp = createInfoLogWithMockOsBackend(&pMockOsInfoLog);
+    pMockOsInfoLog->getFieldInfoResult = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    pMockOsInfoLog->validateRecordsResult = ZE_RESULT_ERROR_UNKNOWN;
+
+    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogCreateDecoderContext(&hDecoderContext));
+    auto pDecoderContext = InfoLogDecoderContext::fromHandle(hDecoderContext);
+
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pDecoderContext->getFieldInfo(&count, nullptr));
+    EXPECT_EQ(1u, pMockOsInfoLog->getFieldInfoCallCount);
+
+    std::vector<uint8_t> buffer(mockReadBufferSize, 0);
+    zes_info_log_metadata_ext_t descriptor = {};
+    descriptor.stype = ZES_STRUCTURE_TYPE_INFO_LOG_METADATA_EXT;
+    descriptor.lengthOfData = mockReadBufferSize;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pDecoderContext->decodeStart(mockReadBufferSize, buffer.data(), 1, &descriptor));
+    EXPECT_EQ(1u, pMockOsInfoLog->validateRecordsCallCount);
+
+    uint32_t value = 0;
+    size_t bytesCopied = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, pDecoderContext->readField(0, 0, &value, sizeof(value), &bytesCopied));
+    EXPECT_EQ(0u, pMockOsInfoLog->readFieldCallCount);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogDeleteDecoderContext(&hDecoderContext));
+}
+
+TEST_F(SysmanInfoLogFixture, GivenADecoderContextWithAnActiveBatchWhenStartingAnotherBatchThenHandleObjectInUseIsReturned) {
+    MockOsInfoLog *pMockOsInfoLog = nullptr;
+    auto pInfoLogImp = createInfoLogWithMockOsBackend(&pMockOsInfoLog);
+
+    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogCreateDecoderContext(&hDecoderContext));
+    auto pDecoderContext = InfoLogDecoderContext::fromHandle(hDecoderContext);
+
+    std::vector<uint8_t> buffer(mockReadBufferSize, 0);
+    zes_info_log_metadata_ext_t descriptor = {};
+    descriptor.stype = ZES_STRUCTURE_TYPE_INFO_LOG_METADATA_EXT;
+    descriptor.lengthOfData = mockReadBufferSize;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, pDecoderContext->decodeStart(mockReadBufferSize, buffer.data(), 1, &descriptor));
+
+    EXPECT_EQ(ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE,
+              pDecoderContext->decodeStart(mockReadBufferSize, buffer.data(), 1, &descriptor));
+    EXPECT_EQ(1u, pMockOsInfoLog->validateRecordsCallCount);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pDecoderContext->decodeStop());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogDeleteDecoderContext(&hDecoderContext));
+}
+
+TEST_F(SysmanInfoLogFixture, GivenZeroRecordsWhenStartingABatchThenSuccessIsReturnedAndNoRecordCanBeRead) {
+    MockOsInfoLog *pMockOsInfoLog = nullptr;
+    auto pInfoLogImp = createInfoLogWithMockOsBackend(&pMockOsInfoLog);
+
+    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogCreateDecoderContext(&hDecoderContext));
+    auto pDecoderContext = InfoLogDecoderContext::fromHandle(hDecoderContext);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pDecoderContext->decodeStart(0, nullptr, 0, nullptr));
+    EXPECT_EQ(1u, pMockOsInfoLog->validateRecordsCallCount);
+
+    uint32_t value = 0;
+    size_t bytesCopied = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, pDecoderContext->readField(0, 0, &value, sizeof(value), &bytesCopied));
+    EXPECT_EQ(0u, pMockOsInfoLog->readFieldCallCount);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pDecoderContext->decodeStop());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogDeleteDecoderContext(&hDecoderContext));
+}
+
+TEST_F(SysmanInfoLogFixture, GivenRecordsWithoutABufferOrDescriptorsWhenStartingABatchThenInvalidNullPointerIsReturned) {
+    MockOsInfoLog *pMockOsInfoLog = nullptr;
+    auto pInfoLogImp = createInfoLogWithMockOsBackend(&pMockOsInfoLog);
+
+    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogCreateDecoderContext(&hDecoderContext));
+    auto pDecoderContext = InfoLogDecoderContext::fromHandle(hDecoderContext);
+
+    std::vector<uint8_t> buffer(mockReadBufferSize, 0);
+    zes_info_log_metadata_ext_t descriptor = {};
+    descriptor.stype = ZES_STRUCTURE_TYPE_INFO_LOG_METADATA_EXT;
+    descriptor.lengthOfData = mockReadBufferSize;
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, pDecoderContext->decodeStart(mockReadBufferSize, nullptr, 1, &descriptor));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, pDecoderContext->decodeStart(mockReadBufferSize, buffer.data(), 1, nullptr));
+    EXPECT_EQ(0u, pMockOsInfoLog->validateRecordsCallCount);
+
+    uint32_t value = 0;
+    size_t bytesCopied = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, pDecoderContext->readField(0, 0, &value, sizeof(value), &bytesCopied));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogDeleteDecoderContext(&hDecoderContext));
+}
+
+TEST_F(SysmanInfoLogFixture, GivenARecordIdBeyondTheBatchWhenReadingAFieldThenInvalidArgumentIsReturned) {
+    MockOsInfoLog *pMockOsInfoLog = nullptr;
+    auto pInfoLogImp = createInfoLogWithMockOsBackend(&pMockOsInfoLog);
+
+    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogCreateDecoderContext(&hDecoderContext));
+    auto pDecoderContext = InfoLogDecoderContext::fromHandle(hDecoderContext);
+
+    std::vector<uint8_t> buffer(mockReadBufferSize, 0);
+    zes_info_log_metadata_ext_t descriptor = {};
+    descriptor.stype = ZES_STRUCTURE_TYPE_INFO_LOG_METADATA_EXT;
+    descriptor.lengthOfData = mockReadBufferSize;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, pDecoderContext->decodeStart(mockReadBufferSize, buffer.data(), 1, &descriptor));
+
+    uint32_t value = 0;
+    size_t bytesCopied = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, pDecoderContext->readField(0, 1, &value, sizeof(value), &bytesCopied));
+    EXPECT_EQ(0u, pMockOsInfoLog->readFieldCallCount);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pDecoderContext->readField(0, 0, &value, sizeof(value), &bytesCopied));
+    EXPECT_EQ(1u, pMockOsInfoLog->readFieldCallCount);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pDecoderContext->decodeStop());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogDeleteDecoderContext(&hDecoderContext));
+}
+
+TEST_F(SysmanInfoLogFixture, GivenADecoderContextWithNoActiveBatchWhenEndingTheBatchThenUninitializedIsReturned) {
+    MockOsInfoLog *pMockOsInfoLog = nullptr;
+    auto pInfoLogImp = createInfoLogWithMockOsBackend(&pMockOsInfoLog);
+
+    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogCreateDecoderContext(&hDecoderContext));
+    auto pDecoderContext = InfoLogDecoderContext::fromHandle(hDecoderContext);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, pDecoderContext->decodeStop());
+
+    std::vector<uint8_t> buffer(mockReadBufferSize, 0);
+    zes_info_log_metadata_ext_t descriptor = {};
+    descriptor.stype = ZES_STRUCTURE_TYPE_INFO_LOG_METADATA_EXT;
+    descriptor.lengthOfData = mockReadBufferSize;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, pDecoderContext->decodeStart(mockReadBufferSize, buffer.data(), 1, &descriptor));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, pDecoderContext->decodeStop());
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, pDecoderContext->decodeStop());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogDeleteDecoderContext(&hDecoderContext));
+}
+
+TEST_F(SysmanInfoLogFixture, GivenANullDecoderContextHandleWhenDeletingADecoderContextThenInvalidNullHandleIsReturned) {
+    MockOsInfoLog *pMockOsInfoLog = nullptr;
+    auto pInfoLogImp = createInfoLogWithMockOsBackend(&pMockOsInfoLog);
+
+    zes_intel_info_log_decoder_context_handle_t hNullContext = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_HANDLE, pInfoLogImp->infoLogDeleteDecoderContext(&hNullContext));
+    EXPECT_EQ(nullptr, hNullContext);
+}
+
+TEST_F(SysmanInfoLogFixture, GivenADecoderContextOfAnotherInfoLogWhenDeletingItThenInvalidArgumentIsReturned) {
+    MockOsInfoLog *pOwningMockOsInfoLog = nullptr;
+    auto pOwningInfoLogImp = createInfoLogWithMockOsBackend(&pOwningMockOsInfoLog);
+    MockOsInfoLog *pOtherMockOsInfoLog = nullptr;
+    auto pOtherInfoLogImp = createInfoLogWithMockOsBackend(&pOtherMockOsInfoLog);
+
+    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, pOwningInfoLogImp->infoLogCreateDecoderContext(&hDecoderContext));
+    ASSERT_NE(nullptr, hDecoderContext);
+
+    auto hNotOwned = hDecoderContext;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, pOtherInfoLogImp->infoLogDeleteDecoderContext(&hNotOwned));
+    EXPECT_EQ(hDecoderContext, hNotOwned);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pOwningInfoLogImp->infoLogDeleteDecoderContext(&hDecoderContext));
+    EXPECT_EQ(nullptr, hDecoderContext);
 }
 
 TEST_F(SysmanInfoLogFixture, GivenNamedCollectionUnsupportedWhenCreatingNamedInstanceThenUnsupportedFeatureIsReturned) {

@@ -58,6 +58,12 @@ void *getSysmanExtensionFunctionAddress(const std::string &functionName) {
     RETURN_FUNC_PTR_IF_EXIST(zesIntelInfoLogInstanceReadWithMetadataExp);
     RETURN_FUNC_PTR_IF_EXIST(zesIntelInfoLogInstancePeekWithMetadataExp);
     RETURN_FUNC_PTR_IF_EXIST(zesIntelInfoLogInstanceDeleteExp);
+    RETURN_FUNC_PTR_IF_EXIST(zesIntelInfoLogCreateDecoderContextExp);
+    RETURN_FUNC_PTR_IF_EXIST(zesIntelInfoLogDecoderGetFieldInfoExp);
+    RETURN_FUNC_PTR_IF_EXIST(zesIntelInfoLogDecoderDecodeStartExp);
+    RETURN_FUNC_PTR_IF_EXIST(zesIntelInfoLogDecoderReadFieldExp);
+    RETURN_FUNC_PTR_IF_EXIST(zesIntelInfoLogDecoderDecodeStopExp);
+    RETURN_FUNC_PTR_IF_EXIST(zesIntelInfoLogDeleteDecoderContextExp);
     RETURN_FUNC_PTR_IF_EXIST(zesIntelEngineStartActivityCollectionExp);
     RETURN_FUNC_PTR_IF_EXIST(zesIntelEngineStopActivityCollectionExp);
 

@@ -2843,6 +2843,53 @@ typedef ze_result_t(ZE_APICALL *zesInfoLogInstanceCollectExt_pfn)(
     zes_info_log_metadata_ext_t *pDescriptors,
     zes_info_log_read_status_ext_t *pReadStatus);
 
+typedef ze_result_t(ZE_APICALL *zesIntelInfoLogCreateDecoderContextExp_pfn)(
+    zes_info_log_handle_t hInfoLog,
+    zes_intel_info_log_decoder_context_handle_t *phDecoderContext);
+
+typedef ze_result_t(ZE_APICALL *zesIntelInfoLogDecoderGetFieldInfoExp_pfn)(
+    zes_intel_info_log_decoder_context_handle_t hDecoderContext,
+    uint32_t *pCount,
+    zes_intel_info_log_decodable_field_info_exp_t *pFieldInfos);
+
+typedef ze_result_t(ZE_APICALL *zesIntelInfoLogDecoderDecodeStartExp_pfn)(
+    zes_intel_info_log_decoder_context_handle_t hDecoderContext,
+    uint32_t size,
+    const uint8_t *pBuffer,
+    uint32_t recordCount,
+    const zes_info_log_metadata_ext_t *pDescriptors);
+
+typedef ze_result_t(ZE_APICALL *zesIntelInfoLogDecoderReadFieldExp_pfn)(
+    zes_intel_info_log_decoder_context_handle_t hDecoderContext,
+    uint32_t fieldId,
+    uint32_t recordId,
+    void *pOutBuffer,
+    size_t bufferLen,
+    size_t *pBytesCopied);
+
+typedef ze_result_t(ZE_APICALL *zesIntelInfoLogDecoderDecodeStopExp_pfn)(
+    zes_intel_info_log_decoder_context_handle_t hDecoderContext);
+
+typedef ze_result_t(ZE_APICALL *zesIntelInfoLogDeleteDecoderContextExp_pfn)(
+    zes_info_log_handle_t hInfoLog,
+    zes_intel_info_log_decoder_context_handle_t *phDecoderContext);
+
+zesIntelInfoLogCreateDecoderContextExp_pfn zesIntelInfoLogCreateDecoderContextExpPtr = nullptr;
+zesIntelInfoLogDecoderGetFieldInfoExp_pfn zesIntelInfoLogDecoderGetFieldInfoExpPtr = nullptr;
+zesIntelInfoLogDecoderDecodeStartExp_pfn zesIntelInfoLogDecoderDecodeStartExpPtr = nullptr;
+zesIntelInfoLogDecoderReadFieldExp_pfn zesIntelInfoLogDecoderReadFieldExpPtr = nullptr;
+zesIntelInfoLogDecoderDecodeStopExp_pfn zesIntelInfoLogDecoderDecodeStopExpPtr = nullptr;
+zesIntelInfoLogDeleteDecoderContextExp_pfn zesIntelInfoLogDeleteDecoderContextExpPtr = nullptr;
+
+void getInfoLogDecoderExpFunctionPointers(zes_driver_handle_t driverHandle) {
+    VALIDATECALL(zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelInfoLogCreateDecoderContextExp", reinterpret_cast<void **>(&zesIntelInfoLogCreateDecoderContextExpPtr)));
+    VALIDATECALL(zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelInfoLogDecoderGetFieldInfoExp", reinterpret_cast<void **>(&zesIntelInfoLogDecoderGetFieldInfoExpPtr)));
+    VALIDATECALL(zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelInfoLogDecoderDecodeStartExp", reinterpret_cast<void **>(&zesIntelInfoLogDecoderDecodeStartExpPtr)));
+    VALIDATECALL(zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelInfoLogDecoderReadFieldExp", reinterpret_cast<void **>(&zesIntelInfoLogDecoderReadFieldExpPtr)));
+    VALIDATECALL(zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelInfoLogDecoderDecodeStopExp", reinterpret_cast<void **>(&zesIntelInfoLogDecoderDecodeStopExpPtr)));
+    VALIDATECALL(zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelInfoLogDeleteDecoderContextExp", reinterpret_cast<void **>(&zesIntelInfoLogDeleteDecoderContextExpPtr)));
+}
+
 std::string getInfoLogTypeString(zes_info_log_type_ext_t type) {
     static const std::map<zes_info_log_type_ext_t, std::string> infoLogTypeMap{
         {ZES_INFO_LOG_TYPE_EXT_DEVICE, "ZES_INFO_LOG_TYPE_EXT_DEVICE"}};
@@ -3032,6 +3079,171 @@ void printHexData(const uint8_t *data, uint32_t size, uint32_t maxBytes) {
     std::cout << std::dec;
 }
 
+void printDecodedFieldValue(const zes_intel_info_log_decodable_field_info_exp_t &field, const uint8_t *pValue, size_t bytes) {
+    const size_t availableBytes = std::min(bytes, field.requiredBytes);
+
+    auto printTooShort = [availableBytes]() {
+        std::cout << "(value of " << std::dec << availableBytes << " byte(s) is too short for the data type)";
+    };
+
+    switch (field.type) {
+    case ZES_INTEL_INFO_LOG_FIELD_TYPE_EXP_UINT32: {
+        uint32_t value = 0;
+        if (availableBytes < sizeof(value)) {
+            printTooShort();
+            break;
+        }
+        memcpy(&value, pValue, sizeof(value));
+        std::cout << value;
+        break;
+    }
+    case ZES_INTEL_INFO_LOG_FIELD_TYPE_EXP_INT64: {
+        int64_t value = 0;
+        if (availableBytes < sizeof(value)) {
+            printTooShort();
+            break;
+        }
+        memcpy(&value, pValue, sizeof(value));
+        std::cout << value;
+        break;
+    }
+    case ZES_INTEL_INFO_LOG_FIELD_TYPE_EXP_DOUBLE: {
+        double value = 0.0;
+        if (availableBytes < sizeof(value)) {
+            printTooShort();
+            break;
+        }
+        memcpy(&value, pValue, sizeof(value));
+        std::cout << value;
+        break;
+    }
+    case ZES_INTEL_INFO_LOG_FIELD_TYPE_EXP_STRING: {
+        const auto *pChars = reinterpret_cast<const char *>(pValue);
+        std::cout << std::string(pChars, std::find(pChars, pChars + availableBytes, '\0'));
+        break;
+    }
+    case ZES_INTEL_INFO_LOG_FIELD_TYPE_EXP_RAW_BYTES:
+        if (availableBytes == ZES_MAX_UUID_SIZE) {
+            zes_uuid_t value = {};
+            memcpy(value.id, pValue, sizeof(value.id));
+            std::cout << uuidToString(value);
+        } else {
+            printHexData(pValue, static_cast<uint32_t>(availableBytes), 32);
+        }
+        break;
+    default:
+        std::cout << "(unknown data type " << field.type << ")";
+        break;
+    }
+}
+
+struct InfoLogDecoder {
+    zes_info_log_handle_t hInfoLog = nullptr;
+    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    std::vector<zes_intel_info_log_decodable_field_info_exp_t> fields;
+};
+
+InfoLogDecoder sigIdDecoder;
+
+void createInfoLogDecoder(zes_info_log_handle_t hInfoLog) {
+    sigIdDecoder = {};
+    if (zesIntelInfoLogCreateDecoderContextExpPtr == nullptr || zesIntelInfoLogDecoderGetFieldInfoExpPtr == nullptr ||
+        zesIntelInfoLogDecoderDecodeStartExpPtr == nullptr || zesIntelInfoLogDecoderReadFieldExpPtr == nullptr ||
+        zesIntelInfoLogDecoderDecodeStopExpPtr == nullptr || zesIntelInfoLogDeleteDecoderContextExpPtr == nullptr) {
+        std::cout << "Info Log sig_id decoder EXP function pointers not available" << std::endl;
+        return;
+    }
+
+    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    ze_result_t result = zesIntelInfoLogCreateDecoderContextExpPtr(hInfoLog, &hDecoderContext);
+    if (result != ZE_RESULT_SUCCESS) {
+        std::cout << "zesIntelInfoLogCreateDecoderContextExp() Failed: " << getErrorString(result) << std::endl;
+        return;
+    }
+
+    uint32_t count = 0;
+    result = zesIntelInfoLogDecoderGetFieldInfoExpPtr(hDecoderContext, &count, nullptr);
+    if (result != ZE_RESULT_SUCCESS) {
+        std::cout << "zesIntelInfoLogDecoderGetFieldInfoExp() query Failed: " << getErrorString(result) << std::endl;
+        zesIntelInfoLogDeleteDecoderContextExpPtr(hInfoLog, &hDecoderContext);
+        return;
+    }
+
+    std::vector<zes_intel_info_log_decodable_field_info_exp_t> fields(count, {ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_DECODABLE_FIELD_INFO_EXP});
+    result = zesIntelInfoLogDecoderGetFieldInfoExpPtr(hDecoderContext, &count, fields.data());
+    if (result != ZE_RESULT_SUCCESS) {
+        std::cout << "zesIntelInfoLogDecoderGetFieldInfoExp() Failed: " << getErrorString(result) << std::endl;
+        zesIntelInfoLogDeleteDecoderContextExpPtr(hInfoLog, &hDecoderContext);
+        return;
+    }
+    fields.resize(count);
+
+    std::cout << "Decodable fields of a record: " << count << std::endl;
+    for (const auto &field : fields) {
+        std::cout << "  " << std::left << std::setw(14) << std::setfill(' ') << field.name << std::right
+                  << "id " << field.fieldId << ", " << field.requiredBytes << " byte(s), since version "
+                  << field.versionString << std::endl;
+        std::cout << "    " << field.desc << std::endl;
+    }
+
+    sigIdDecoder.hInfoLog = hInfoLog;
+    sigIdDecoder.hDecoderContext = hDecoderContext;
+    sigIdDecoder.fields = std::move(fields);
+}
+
+void deleteInfoLogDecoder() {
+    if (sigIdDecoder.hDecoderContext == nullptr) {
+        return;
+    }
+
+    ze_result_t result = zesIntelInfoLogDeleteDecoderContextExpPtr(sigIdDecoder.hInfoLog, &sigIdDecoder.hDecoderContext);
+    if (result != ZE_RESULT_SUCCESS) {
+        std::cout << "zesIntelInfoLogDeleteDecoderContextExp() Failed: " << getErrorString(result) << std::endl;
+    }
+    sigIdDecoder = {};
+}
+
+bool decodeInfoLogRecordsStart(const uint8_t *pBuffer, uint32_t size, uint32_t recordCount,
+                               const zes_info_log_metadata_ext_t *pDescriptors) {
+    if (sigIdDecoder.hDecoderContext == nullptr || sigIdDecoder.fields.empty()) {
+        return false;
+    }
+
+    ze_result_t result = zesIntelInfoLogDecoderDecodeStartExpPtr(sigIdDecoder.hDecoderContext, size, pBuffer, recordCount, pDescriptors);
+    if (result != ZE_RESULT_SUCCESS) {
+        std::cout << "zesIntelInfoLogDecoderDecodeStartExp() Failed: " << getErrorString(result) << std::endl;
+        return false;
+    }
+    return true;
+}
+
+void decodeInfoLogRecordsEnd() {
+    ze_result_t result = zesIntelInfoLogDecoderDecodeStopExpPtr(sigIdDecoder.hDecoderContext);
+    if (result != ZE_RESULT_SUCCESS) {
+        std::cout << "zesIntelInfoLogDecoderDecodeStopExp() Failed: " << getErrorString(result) << std::endl;
+    }
+}
+
+void printInfoLogSigId(uint32_t record) {
+    for (const auto &field : sigIdDecoder.fields) {
+        std::vector<uint8_t> value(field.requiredBytes, 0);
+        size_t bytesCopied = 0;
+        ze_result_t result = zesIntelInfoLogDecoderReadFieldExpPtr(sigIdDecoder.hDecoderContext, field.fieldId, record,
+                                                                   value.data(), value.size(), &bytesCopied);
+        if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
+            continue;
+        }
+        if (result != ZE_RESULT_SUCCESS) {
+            std::cout << "zesIntelInfoLogDecoderReadFieldExp() Failed for '" << field.name << "': "
+                      << getErrorString(result) << std::endl;
+            continue;
+        }
+        std::cout << "  " << std::left << std::setw(14) << std::setfill(' ') << field.name << std::right;
+        printDecodedFieldValue(field, value.data(), bytesCopied);
+        std::cout << std::endl;
+    }
+}
+
 void printInfoLogRecord(uint32_t recordNumber, const zes_info_log_metadata_ext_t &descriptor, const uint8_t *pBuffer) {
     std::cout << "\nEvent #" << recordNumber << ":" << std::endl;
     std::cout << "  Timestamp:    " << descriptor.timestamp << " nano seconds" << std::endl;
@@ -3202,11 +3414,18 @@ ze_result_t collectInfoLogRecords(zesInfoLogInstanceCollectExt_pfn pfnCollect,
 }
 
 void printInfoLogRecords(const InfoLogRecords &records, uint32_t firstRecordNumber) {
+    bool decoding = decodeInfoLogRecordsStart(records.buffer.data(), records.size, records.recordCount, records.descriptors.data());
     std::cout << std::string(80, '-') << std::endl;
     for (uint32_t i = 0; i < records.recordCount; i++) {
         printInfoLogRecord(firstRecordNumber + i, records.descriptors[i], records.buffer.data());
+        if (decoding) {
+            printInfoLogSigId(i);
+        }
     }
     std::cout << std::string(80, '-') << std::endl;
+    if (decoding) {
+        decodeInfoLogRecordsEnd();
+    }
 }
 
 uint32_t drainInfoLogRecords(zesInfoLogInstanceCollectExt_pfn pfnCollect,
@@ -3318,6 +3537,7 @@ void testSysmanInfoLogInstanceReadPeek(zes_driver_handle_t driver, std::vector<z
         return;
     }
     std::cout << "Created collection instance '" << instanceName << "'" << std::endl;
+    createInfoLogDecoder(hInfoLog);
 
     InfoLogChecks check;
 
@@ -3349,6 +3569,7 @@ void testSysmanInfoLogInstanceReadPeek(zes_driver_handle_t driver, std::vector<z
     if (pendingCount == 0) {
         std::cout << "No CPER record was collected within " << recordWaitMs
                   << " ms. Skipping the read and peek verification." << std::endl;
+        deleteInfoLogDecoder();
         VALIDATECALL(zesInfoLogInstanceDeleteExt(hInstance));
         return;
     }
@@ -3402,6 +3623,7 @@ void testSysmanInfoLogInstanceReadPeek(zes_driver_handle_t driver, std::vector<z
     std::cout << std::endl;
     check.printSummary();
 
+    deleteInfoLogDecoder();
     VALIDATECALL(zesInfoLogInstanceDeleteExt(hInstance));
     std::cout << "Deleted collection instance '" << instanceName << "'" << std::endl;
 }
@@ -3448,6 +3670,7 @@ void testSysmanInfoLogInstanceOnEvent(zes_driver_handle_t driver, std::vector<ze
         std::cout << "zesInfoLogCreateInstanceExt() Failed: " << getErrorString(result) << std::endl;
         return;
     }
+    createInfoLogDecoder(hInfoLog);
 
     // The descriptor members are updated in place with the values which were actually applied
     if (pBufferSize != nullptr) {
@@ -3541,6 +3764,7 @@ void testSysmanInfoLogInstanceOnEvent(zes_driver_handle_t driver, std::vector<ze
     }
     check.printSummary();
 
+    deleteInfoLogDecoder();
     VALIDATECALL(zesDriverEventRegisterExt(driver, 0));
     VALIDATECALL(zesInfoLogInstanceDeleteExt(hInstance));
 }
@@ -4171,6 +4395,10 @@ int main(int argc, char *argv[]) {
                 usage();
                 exit(0);
             }
+        }
+
+        if (infoLogDoInstanceApi || infoLogDoInstancePeek || infoLogDoInstanceRead) {
+            getInfoLogDecoderExpFunctionPointers(driver);
         }
 
         if (infoLogDoInstanceApi) {

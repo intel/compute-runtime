@@ -114,5 +114,6 @@ typedef struct _ze_device_readonly_memory_ext_properties_t {
 #define ZES_INTEL_STRUCTURE_TYPE_DEVICE_GENERATION_EXP_PROPERTIES static_cast<zes_structure_type_ext_t>(0x00040019)
 #define ZES_INTEL_STRUCTURE_TYPE_DEVICE_SOC_UID_EXP_PROPERTIES static_cast<zes_structure_type_ext_t>(0x0004001A)
 #define ZES_INTEL_STRUCTURE_TYPE_PCI_CONFIG_EXP_STATE static_cast<zes_structure_type_ext_t>(0x0004001B)
+#define ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_DECODABLE_FIELD_INFO_EXP static_cast<zes_structure_type_ext_t>(0x0004001C)
 
 #endif

@@ -86,6 +86,7 @@ bool verifyExtensionDefinition(std::vector<zes_driver_extension_properties_t> &e
         {ZES_INTEL_PCI_CONFIG_EXP_PROPERTY_NAME, ZES_INTEL_PCI_CONFIG_EXP_PROPERTIES_VERSION_CURRENT},
         {ZES_INTEL_PCI_CONFIG_EXP_STATE_NAME, ZES_INTEL_PCI_CONFIG_EXP_STATE_VERSION_CURRENT},
         {ZES_INTEL_DRIVER_RESCAN_DEVICES_EXP_NAME, ZES_INTEL_DRIVER_RESCAN_DEVICES_EXP_VERSION_CURRENT},
+        {ZES_INTEL_INFO_LOG_SIG_ID_EXP_NAME, ZES_INTEL_INFO_LOG_SIG_ID_EXP_VERSION_CURRENT},
         {ZES_INTEL_DEVICE_STATE_PENDING_ACTION_EXP_NAME, ZES_INTEL_DEVICE_STATE_PENDING_ACTION_EXP_VERSION_CURRENT},
         {ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_NAME, ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_VERSION_CURRENT},
         {ZES_INTEL_DEVICE_COMPUTE_EXP_PROPERTY_NAME, ZES_INTEL_DEVICE_COMPUTE_EXP_PROPERTIES_VERSION_CURRENT},
@@ -180,6 +181,24 @@ TEST_F(SysmanDriverHandleTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelInfoLogInstanceDeleteExp", &funPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelInfoLogCreateDecoderContextExp", &funPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelInfoLogDecoderGetFieldInfoExp", &funPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelInfoLogDecoderDecodeStartExp", &funPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelInfoLogDecoderReadFieldExp", &funPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelInfoLogDecoderDecodeStopExp", &funPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelInfoLogDeleteDecoderContextExp", &funPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelEngineStartActivityCollectionExp", &funPtr);

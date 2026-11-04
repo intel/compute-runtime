@@ -928,6 +928,340 @@ ze_result_t ZE_APICALL zesIntelInfoLogInstanceDeleteExp(
 );
 
 ///////////////////////////////////////////////////////////////////////////////
+#ifndef ZES_INTEL_INFO_LOG_SIG_ID_EXP_NAME
+/// @brief Info log signature ID extension name
+#define ZES_INTEL_INFO_LOG_SIG_ID_EXP_NAME "ZES_intel_experimental_info_log_sig_id"
+#endif // ZES_INTEL_INFO_LOG_SIG_ID_EXP_NAME
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Info log signature ID extension Version(s)
+typedef enum _zes_intel_info_log_sig_id_exp_version_t {
+    ZES_INTEL_INFO_LOG_SIG_ID_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),                         ///< version 1.0
+    ZES_INTEL_INFO_LOG_SIG_ID_EXP_VERSION_CURRENT = ZES_INTEL_INFO_LOG_SIG_ID_EXP_VERSION_1_0, ///< latest known version
+    ZES_INTEL_INFO_LOG_SIG_ID_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
+} zes_intel_info_log_sig_id_exp_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
+#ifndef ZES_INTEL_INFO_LOG_FIELD_DESC_SIZE
+/// @brief Maximum number of bytes of the description of a decodable field, including the
+///        null terminator
+#define ZES_INTEL_INFO_LOG_FIELD_DESC_SIZE 256
+#endif // ZES_INTEL_INFO_LOG_FIELD_DESC_SIZE
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Handle of an info log decoder context
+struct _zes_intel_info_log_decoder_context_handle_t {};
+typedef struct _zes_intel_info_log_decoder_context_handle_t *zes_intel_info_log_decoder_context_handle_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Data type of a field decoded from a record
+///
+/// @details
+///     - Newer drivers may report values not listed here. Applications must skip a field
+///       whose data type they do not recognize.
+typedef enum _zes_intel_info_log_field_type_exp_t {
+    ZES_INTEL_INFO_LOG_FIELD_TYPE_EXP_UINT32 = 0,    ///< uint32_t
+    ZES_INTEL_INFO_LOG_FIELD_TYPE_EXP_INT64 = 1,     ///< int64_t
+    ZES_INTEL_INFO_LOG_FIELD_TYPE_EXP_DOUBLE = 2,    ///< double
+    ZES_INTEL_INFO_LOG_FIELD_TYPE_EXP_STRING = 3,    ///< null terminated array of char
+    ZES_INTEL_INFO_LOG_FIELD_TYPE_EXP_RAW_BYTES = 4, ///< uninterpreted bytes
+    ZES_INTEL_INFO_LOG_FIELD_TYPE_EXP_FORCE_UINT32 = 0x7fffffff
+} zes_intel_info_log_field_type_exp_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Description of one field the driver can decode from a record
+typedef struct _zes_intel_info_log_decodable_field_info_exp_t {
+    zes_structure_type_ext_t stype;                ///< [in] type of this structure. Must be
+                                                   ///< ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_DECODABLE_FIELD_INFO_EXP
+    void *pNext;                                   ///< [in,out][optional] must be null, no extension structures are supported
+    char desc[ZES_INTEL_INFO_LOG_FIELD_DESC_SIZE]; ///< [out] human readable description of the field (NULL terminated string
+                                                   ///< value). For display only, it may be reworded between driver versions.
+    char name[ZES_STRING_PROPERTY_SIZE];           ///< [out] name of the field, e.g. "sig_id" (NULL terminated string value).
+                                                   ///< The name identifies the field and does not change across driver versions.
+    uint32_t fieldId;                              ///< [out] identifier of the field, to be passed to
+                                                   ///< ::zesIntelInfoLogDecoderReadFieldExp. Stable for a given name across
+                                                   ///< driver versions.
+    zes_intel_info_log_field_type_exp_t type;      ///< [out] data type of the field. Scalar values are in host byte order.
+    size_t requiredBytes;                          ///< [out] number of bytes the caller must provide to
+                                                   ///< ::zesIntelInfoLogDecoderReadFieldExp for this field. For a string it
+                                                   ///< includes the null terminator.
+    size_t elementCount;                           ///< [out] number of elements of the data type the field holds, 1 for a
+                                                   ///< scalar. For a string it is the number of characters, one less than
+                                                   ///< requiredBytes. For every other type requiredBytes is elementCount
+                                                   ///< times the size of one element.
+    char versionString[ZES_STRING_PROPERTY_SIZE];  ///< [out] version of this extension in which the field was first reported,
+                                                   ///< e.g. "1.0" (NULL terminated string value). It does not change once the
+                                                   ///< field is published.
+} zes_intel_info_log_decodable_field_info_exp_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Create a decoder context for an info log
+///
+/// @details
+///     - A decoder context decodes the records returned by
+///       ::zesInfoLogInstanceReadWithMetadataExt or ::zesInfoLogInstancePeekWithMetadataExt
+///       into named fields, which the application reads one at a time with
+///       ::zesIntelInfoLogDecoderReadFieldExp.
+///     - The context is created from the info log handle and not from a collection instance
+///       handle, because the fields which can be decoded follow the info log's
+///       zes_info_log_ext_properties_t.infoLogFormat, which every collection instance of
+///       that info log shares. One context therefore decodes records read from any
+///       collection instance of the info log, and records of a buffer which was saved
+///       earlier and whose collection instance no longer exists.
+///     - Any number of contexts may exist for one info log. A context holds the state of
+///       one batch of records, so two threads decode two batches at the same time by using
+///       one context each.
+///     - A context which the application does not delete is destroyed when the driver tears
+///       the info log down.
+///     - Only supported for info logs of format ::ZES_INFO_LOG_FORMAT_EXT_CPER.
+///     - The application must pass a valid hInfoLog. The behaviour is undefined otherwise.
+///     - The function does not access the device.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE
+///         + the info log format is not ::ZES_INFO_LOG_FORMAT_EXT_CPER
+///         + the driver has no decoder for this operating system
+///     - ::ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY
+///         + the context could not be allocated
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == phDecoderContext`
+ze_result_t ZE_APICALL zesIntelInfoLogCreateDecoderContextExp(
+    zes_info_log_handle_t hInfoLog,                               ///< [in] handle of the info log the records are read from
+    zes_intel_info_log_decoder_context_handle_t *phDecoderContext ///< [out] handle of the decoder context which was created
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Get the fields a decoder context can decode from a record
+///
+/// @details
+///     - The caller should first call this function with the count pointer set to 0 to
+///       retrieve the number of fields, then allocate that many descriptors and call it
+///       again.
+///     - A call with a non-zero count returns one descriptor per field, up to that number
+///       of descriptors, and sets `*pCount` to the number of descriptors it reports. A
+///       non-zero count with a null `pFieldInfos` writes no descriptor and reports that
+///       number, as a count query does.
+///     - The fields are a property of the info log's format and not of a batch of records,
+///       so this function returns the same answer before ::zesIntelInfoLogDecoderDecodeStartExp,
+///       while a batch is being decoded, and after ::zesIntelInfoLogDecoderDecodeStopExp. One
+///       call per context is enough and the result may be cached for the lifetime of the
+///       context.
+///     - For ::ZES_INFO_LOG_FORMAT_EXT_CPER the driver currently reports two fields, both
+///       decoded from the first section of a record whose type is known:
+///         + "sig_id", ::ZES_INTEL_INFO_LOG_FIELD_TYPE_EXP_UINT32: signature ID of the event
+///           the record describes.
+///         + "uuid", ::ZES_INTEL_INFO_LOG_FIELD_TYPE_EXP_RAW_BYTES of 16 bytes: UUID reported
+///           by the record, in the same byte order as zes_info_log_metadata_ext_t.uuid, so the
+///           16 bytes may be read into a ::zes_uuid_t.
+///     - Newer drivers may report additional fields, and a field may be reported by one
+///       driver and not by another. Applications must locate a field by its name, and use
+///       the fieldId, type and requiredBytes reported for that name.
+///     - The application must pass a valid hDecoderContext and must initialize the stype
+///       member of every element. The behaviour is undefined otherwise.
+///     - A call which fails writes no descriptors.
+///     - The function does not access the device.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == pCount`
+///     - ::ZE_RESULT_ERROR_INVALID_ARGUMENT
+///         + `nullptr != pFieldInfos[i].pNext` for an element which would be written, as no
+///           extension structures are supported. Nothing is written.
+ze_result_t ZE_APICALL zesIntelInfoLogDecoderGetFieldInfoExp(
+    zes_intel_info_log_decoder_context_handle_t hDecoderContext, ///< [in] handle of the decoder context
+    uint32_t *pCount,                                            ///< [in,out] pointer to the number of fields which can be decoded.
+                                                                 ///< if count is zero, then the driver shall update the value with the
+                                                                 ///< number of fields and return no descriptors.
+                                                                 ///< if count is non-zero, then the driver shall only return that number
+                                                                 ///< of descriptors.
+    zes_intel_info_log_decodable_field_info_exp_t *pFieldInfos   ///< [in,out][optional][range(0, *pCount)] array of field descriptions,
+                                                                 ///< one descriptor per field
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Decode a batch of info log records into a decoder context
+///
+/// @details
+///     - Decodes the records returned by one call to
+///       ::zesInfoLogInstanceReadWithMetadataExt or
+///       ::zesInfoLogInstancePeekWithMetadataExt. `size`, `pBuffer`, `recordCount` and
+///       `pDescriptors` are the buffer passed to and the values returned by that call.
+///     - Fields are decoded on demand by ::zesIntelInfoLogDecoderReadFieldExp, so the
+///       context reads `pBuffer` and `pDescriptors` for as long as it is decoding the batch.
+///       The application must keep both allocated, and must not modify either, until
+///       ::zesIntelInfoLogDecoderDecodeStopExp returns. In particular it must not read a
+///       further batch into the same buffer. The behaviour is undefined otherwise, and a
+///       field read from a buffer which was modified may report a value which no record
+///       ever carried.
+///     - The `recordId` of ::zesIntelInfoLogDecoderReadFieldExp is an index into
+///       `pDescriptors`, so record `r` is the record which `pDescriptors[r]` describes,
+///       whatever order the records are stored in `pBuffer`.
+///     - Every descriptor is bounds checked against `size` before the batch is started, so
+///       a call which fails leaves the context as it was, with no batch being decoded.
+///     - A record which carries no field at all is not an error, and affects no other
+///       record of the batch: every field of it reports
+///       ::ZE_RESULT_ERROR_NOT_AVAILABLE. This covers a record with no section of a known
+///       type, a section too short to hold a field, and malformed CPER framing.
+///     - A `recordCount` of zero starts a batch which holds no records. `pBuffer` and
+///       `pDescriptors` may then be null.
+///     - The context must not already be decoding a batch:
+///       ::zesIntelInfoLogDecoderDecodeStopExp must be called before a second batch is
+///       started.
+///     - The application must pass a valid hDecoderContext. The behaviour is undefined
+///       otherwise.
+///     - The application must not call this function, ::zesIntelInfoLogDecoderReadFieldExp,
+///       ::zesIntelInfoLogDecoderDecodeStopExp or ::zesIntelInfoLogDeleteDecoderContextExp
+///       from simultaneous threads with the same context. Different contexts may be used
+///       simultaneously.
+///     - The function does not access the device.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY
+///         + the decoded records could not be allocated
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `0 < recordCount && nullptr == pBuffer`
+///         + `0 < recordCount && nullptr == pDescriptors`
+///     - ::ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE
+///         + the context is already decoding a batch. That batch is not changed.
+///     - ::ZE_RESULT_ERROR_INVALID_ARGUMENT
+///         + the offset and lengthOfData of a descriptor lie outside `size`. Nothing is
+///           decoded.
+ze_result_t ZE_APICALL zesIntelInfoLogDecoderDecodeStartExp(
+    zes_intel_info_log_decoder_context_handle_t hDecoderContext, ///< [in] handle of the decoder context
+    uint32_t size,                                               ///< [in] size of the record data in pBuffer, as returned in *pSize
+    const uint8_t *pBuffer,                                      ///< [in][optional][range(0, size)] the record data, as returned in pBuffer
+    uint32_t recordCount,                                        ///< [in] number of records, as returned in *pRecordCount
+    const zes_info_log_metadata_ext_t *pDescriptors              ///< [in][optional][range(0, recordCount)] per-record metadata, as
+                                                                 ///< returned in pDescriptors
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Read one field of one record of the batch a decoder context is decoding
+///
+/// @details
+///     - `fieldId` is the fieldId of a descriptor returned by
+///       ::zesIntelInfoLogDecoderGetFieldInfoExp, and `recordId` is an index into the
+///       `pDescriptors` passed to ::zesIntelInfoLogDecoderDecodeStartExp.
+///     - On success exactly requiredBytes of the field are written and `*pBytesCopied` is
+///       set to that number. A `bufferLen` larger than requiredBytes is accepted and the
+///       bytes beyond requiredBytes are not written.
+///     - A record which does not carry the field returns ::ZE_RESULT_ERROR_NOT_AVAILABLE
+///       with `*pBytesCopied` set to 0, and pOutBuffer is not written. This is not a driver
+///       failure, it is how the absence of a field is reported.
+///     - Which fields a record carries is decided per field, so a record may carry either
+///       one without the other. For ::ZES_INFO_LOG_FORMAT_EXT_CPER "uuid" is present only
+///       when the validity flags of the CPER section descriptor mark the field replaceable
+///       unit valid, and every section type carries those flags. "sig_id" is present only
+///       when the validity flags of the section body mark it valid, for the section types
+///       which carry such a flag; a record of one of those types which does not populate a
+///       signature ID reports "sig_id" as not available rather than a placeholder value
+///       which an application could mistake for a real signature ID. A section type which
+///       carries no validity flag for "sig_id" reports the field whenever the section is
+///       present, so for such a record an application cannot tell an unpopulated signature
+///       ID from a real one.
+///     - The fields of a record may be read in any order, any number of times, and a field
+///       need not be read at all. Each call decodes the field from the `pBuffer` and
+///       `pDescriptors` passed to ::zesIntelInfoLogDecoderDecodeStartExp, which the
+///       application must therefore keep allocated and unmodified for the lifetime of the
+///       batch. Only a field which is not read costs nothing to decode.
+///     - The context must be decoding a batch.
+///     - The application must pass a valid hDecoderContext. The behaviour is undefined
+///       otherwise.
+///     - The application must not call this function from simultaneous threads with the same
+///       context.
+///     - The function does not access the device.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///         + the driver is not initialized
+///         + the context is not decoding a batch
+///     - ::ZE_RESULT_ERROR_NOT_AVAILABLE
+///         + the record does not carry the field. `*pBytesCopied` is 0.
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == pOutBuffer`
+///         + `nullptr == pBytesCopied`
+///     - ::ZE_RESULT_ERROR_INVALID_SIZE
+///         + `bufferLen` is smaller than the requiredBytes reported for the field.
+///           `*pBytesCopied` is 0.
+///     - ::ZE_RESULT_ERROR_INVALID_ARGUMENT
+///         + `fieldId` is not the fieldId of a field reported by
+///           ::zesIntelInfoLogDecoderGetFieldInfoExp
+///         + `recordId` is not smaller than the recordCount of the batch
+ze_result_t ZE_APICALL zesIntelInfoLogDecoderReadFieldExp(
+    zes_intel_info_log_decoder_context_handle_t hDecoderContext, ///< [in] handle of the decoder context, which must be decoding a batch
+    uint32_t fieldId,                                            ///< [in] fieldId of the field to read, as reported by
+                                                                 ///< ::zesIntelInfoLogDecoderGetFieldInfoExp
+    uint32_t recordId,                                           ///< [in] index of the record in the pDescriptors passed to
+                                                                 ///< ::zesIntelInfoLogDecoderDecodeStartExp
+    void *pOutBuffer,                                            ///< [out][range(0, bufferLen)] buffer receiving the value of the field
+    size_t bufferLen,                                            ///< [in] size of pOutBuffer in bytes
+    size_t *pBytesCopied                                         ///< [out] number of bytes written to pOutBuffer, 0 when the record does
+                                                                 ///< not carry the field
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Stop decoding the batch of records a decoder context is decoding
+///
+/// @details
+///     - The context drops the `pBuffer` and `pDescriptors` it was passed by
+///       ::zesIntelInfoLogDecoderDecodeStartExp, which the application is free to release
+///       or reuse once this function returns. The context may then decode another batch, so
+///       a context is created once and used for every
+///       ::zesInfoLogInstanceReadWithMetadataExt call.
+///     - The context must be decoding a batch.
+///     - The application must pass a valid hDecoderContext. The behaviour is undefined
+///       otherwise.
+///     - The application must not call this function from simultaneous threads with the same
+///       context.
+///     - The function does not access the device.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///         + the driver is not initialized
+///         + the context is not decoding a batch
+ze_result_t ZE_APICALL zesIntelInfoLogDecoderDecodeStopExp(
+    zes_intel_info_log_decoder_context_handle_t hDecoderContext ///< [in] handle of the decoder context
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Delete a decoder context of an info log
+///
+/// @details
+///     - `hInfoLog` must be the info log the context was created from, which the driver
+///       verifies.
+///     - A context which is decoding a batch is deleted, and the batch released, without an
+///       explicit ::zesIntelInfoLogDecoderDecodeStopExp.
+///     - On success `*phDecoderContext` is set to nullptr.
+///     - The application must pass a valid hInfoLog. The behaviour is undefined otherwise.
+///     - The application must ensure that no other function is using the context when
+///       calling this function, must not call it from simultaneous threads with the same
+///       context, and must not call it twice with the same context.
+///     - The function does not access the device.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == *phDecoderContext`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == phDecoderContext`
+///     - ::ZE_RESULT_ERROR_INVALID_ARGUMENT
+///         + the context was not created from `hInfoLog`
+ze_result_t ZE_APICALL zesIntelInfoLogDeleteDecoderContextExp(
+    zes_info_log_handle_t hInfoLog,                               ///< [in] handle of the info log the context was created from
+    zes_intel_info_log_decoder_context_handle_t *phDecoderContext ///< [in,out][release] handle of the decoder context to delete. Set to
+                                                                  ///< nullptr on success.
+);
+
+///////////////////////////////////////////////////////////////////////////////
 #ifndef ZES_INTEL_DRIVER_EVENT_EXP_NAME
 /// @brief Driver scoped event extension name
 #define ZES_INTEL_DRIVER_EVENT_EXP_NAME "ZES_intel_experimental_driver_event"

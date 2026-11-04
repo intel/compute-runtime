@@ -26,6 +26,21 @@ ze_result_t WddmInfoLogImp::createInstance(const char *pInstanceName,
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
+ze_result_t WddmInfoLogImp::getFieldInfo(uint32_t *pCount, zes_intel_info_log_decodable_field_info_exp_t *pFieldInfos) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t WddmInfoLogImp::validateRecords(uint32_t size, uint32_t recordCount,
+                                            const zes_info_log_metadata_ext_t *pDescriptors) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t WddmInfoLogImp::readField(uint32_t size, const uint8_t *pBuffer, const zes_info_log_metadata_ext_t *pDescriptors,
+                                      uint32_t fieldId, uint32_t recordId,
+                                      void *pOutBuffer, size_t bufferLen, size_t *pBytesCopied) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 std::vector<zes_info_log_format_ext_t> OsInfoLog::getSupportedInfoLogFormats() {
     return {};
 }

@@ -10,6 +10,12 @@ set(L0_TESTS_SYSMAN_INFO_LOG_LINUX
 )
 
 if(UNIX)
+  target_sources(${TARGET_NAME}
+                 PRIVATE
+                 ${CMAKE_CURRENT_SOURCE_DIR}/mock_cper_record.h
+                 ${CMAKE_CURRENT_SOURCE_DIR}/test_zes_sysman_info_log_cper_decoder.cpp
+  )
+
   if(LIBTRACEFS_FOUND)
     target_sources(${TARGET_NAME}
                    PRIVATE
