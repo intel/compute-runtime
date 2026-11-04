@@ -777,48 +777,54 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenRegularCmdListWhenAppendC
     EXPECT_EQ(eventAllocationIt, cmdlistResidency.end());
 }
 
+struct TimestampCompletionMockEvent : public L0::EventImp<uint64_t> {
+    using BaseClass = L0::EventImp<uint64_t>;
+
+    TimestampCompletionMockEvent(L0::EventPool *pool, L0::Device *device, bool tbxMode) : BaseClass::EventImp(0, device, tbxMode) {
+        this->eventPool = pool;
+
+        this->eventPoolAllocation = &pool->getAllocation();
+
+        this->totalEventSize = 128;
+        hostAddressFromPool = eventPoolAllocation->getGraphicsAllocation(0)->getUnderlyingBuffer();
+        this->csrs[0] = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+
+        this->maxPacketCount = 1;
+    }
+
+    uint32_t assignKernelEventCompletionDataCalled = 0;
+    uint32_t assignKernelEventCompletionDataFailCounter = 0;
+    mutable uint32_t getCompletionTimeoutCalled = 0;
+    uint64_t completionTimeout = std::numeric_limits<uint64_t>::max();
+    const uint64_t notReadyData = Event::STATE_CLEARED;
+    bool useContextEndForVerification = true;
+
+    void assignKernelEventCompletionData(void *address) override {
+        auto offset = useContextEndForVerification ? NEO::TimestampPackets<uint64_t, 1>::getContextEndOffset() : NEO::TimestampPackets<uint64_t, 1>::getGlobalEndOffset();
+        auto completionAddress = reinterpret_cast<uint64_t *>(ptrOffset(getHostAddress(), offset));
+        assignKernelEventCompletionDataCalled++;
+        if (assignKernelEventCompletionDataCalled <= assignKernelEventCompletionDataFailCounter) {
+            *completionAddress = notReadyData;
+        } else {
+            *completionAddress = 0x123;
+        }
+
+        L0::EventImp<uint64_t>::assignKernelEventCompletionData(address);
+    }
+
+    uint64_t getCompletionTimeout() const override {
+        getCompletionTimeoutCalled++;
+        return completionTimeout;
+    }
+};
+
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenCounterBasedTimestampEventWhenQueryingTimestampThenEnsureItsCompletion) {
-    struct MyMockEvent : public L0::EventImp<uint64_t> {
-        using BaseClass = L0::EventImp<uint64_t>;
-
-        MyMockEvent(L0::EventPool *pool, L0::Device *device) : BaseClass::EventImp(0, device, false) {
-            this->eventPool = pool;
-
-            this->eventPoolAllocation = &pool->getAllocation();
-
-            this->totalEventSize = 128;
-            hostAddressFromPool = eventPoolAllocation->getGraphicsAllocation(0)->getUnderlyingBuffer();
-            this->csrs[0] = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
-
-            this->maxPacketCount = 1;
-        }
-
-        uint32_t assignKernelEventCompletionDataCalled = 0;
-        uint32_t assignKernelEventCompletionDataFailCounter = 0;
-        const uint64_t notReadyData = Event::STATE_CLEARED;
-        bool useContextEndForVerification = true;
-
-        void assignKernelEventCompletionData(void *address) override {
-            auto offset = useContextEndForVerification ? NEO::TimestampPackets<uint64_t, 1>::getContextEndOffset() : NEO::TimestampPackets<uint64_t, 1>::getGlobalEndOffset();
-            auto completionAddress = reinterpret_cast<uint64_t *>(ptrOffset(getHostAddress(), offset));
-            assignKernelEventCompletionDataCalled++;
-            if (assignKernelEventCompletionDataCalled <= assignKernelEventCompletionDataFailCounter) {
-                *completionAddress = notReadyData;
-            } else {
-                *completionAddress = 0x123;
-            }
-
-            L0::EventImp<uint64_t>::assignKernelEventCompletionData(address);
-        }
-        uint64_t getCompletionTimeout() const override { return std::numeric_limits<uint64_t>::max(); } // no timeout to avoid timing issues
-    };
-
     auto cmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
 
     auto eventPool = createEvents<FamilyType>(1, true);
-    auto event1 = std::make_unique<MyMockEvent>(eventPool.get(), device);
-    auto event2 = std::make_unique<MyMockEvent>(eventPool.get(), device);
-    auto event3 = std::make_unique<MyMockEvent>(eventPool.get(), device);
+    auto event1 = std::make_unique<TimestampCompletionMockEvent>(eventPool.get(), device, false);
+    auto event2 = std::make_unique<TimestampCompletionMockEvent>(eventPool.get(), device, false);
+    auto event3 = std::make_unique<TimestampCompletionMockEvent>(eventPool.get(), device, false);
 
     event1->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
     event1->getInOrderExecEventHelper().initializeLocalTempStorage();
@@ -865,6 +871,147 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenCounterBasedTimestampEven
     EXPECT_EQ(event1->assignKernelEventCompletionDataFailCounter + 1, event1->assignKernelEventCompletionDataCalled);
     EXPECT_EQ(event2->assignKernelEventCompletionDataFailCounter + 1, event2->assignKernelEventCompletionDataCalled);
     EXPECT_EQ(event3->assignKernelEventCompletionDataFailCounter + 1, event3->assignKernelEventCompletionDataCalled);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenCounterBasedTimestampEventWithNotCompletedCounterWhenQueryingTimestampThenCheckTimestampOnceWithoutWaiting) {
+    auto cmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+
+    auto eventPool = createEvents<FamilyType>(1, true);
+    auto event = std::make_unique<TimestampCompletionMockEvent>(eventPool.get(), device, false);
+
+    event->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
+    event->getInOrderExecEventHelper().initializeLocalTempStorage();
+    event->setEventTimestampFlag(true);
+    event->assignKernelEventCompletionDataFailCounter = std::numeric_limits<uint32_t>::max();
+    event->completionTimeout = 0;
+
+    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, event->toHandle(), 0, nullptr, launchParams);
+    event->hostEventSetValue(Event::STATE_CLEARED);
+    ASSERT_TRUE(event->hasInOrderTimestampNode());
+
+    ze_kernel_timestamp_result_t kernelTimestamps = {};
+
+    event->assignKernelEventCompletionDataCalled = 0;
+    EXPECT_EQ(ZE_RESULT_NOT_READY, event->queryKernelTimestamp(&kernelTimestamps));
+    EXPECT_EQ(2u, event->assignKernelEventCompletionDataCalled);
+    EXPECT_EQ(0u, event->getCompletionTimeoutCalled);
+
+    event->assignKernelEventCompletionDataCalled = 0;
+    event->assignKernelEventCompletionDataFailCounter = 1;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, event->queryKernelTimestamp(&kernelTimestamps));
+    EXPECT_EQ(2u, event->assignKernelEventCompletionDataCalled);
+    EXPECT_EQ(0u, event->getCompletionTimeoutCalled);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenTbxModeAndCounterBasedTimestampEventWithNotCompletedCounterWhenQueryingTimestampThenDownloadAllocationsAndReturnNotReadyWithoutWaiting) {
+    auto cmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(cmdList->getCsr(false));
+
+    auto eventPool = createEvents<FamilyType>(1, true);
+    auto event = std::make_unique<TimestampCompletionMockEvent>(eventPool.get(), device, true);
+
+    event->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
+    event->getInOrderExecEventHelper().initializeLocalTempStorage();
+    event->setEventTimestampFlag(true);
+    event->assignKernelEventCompletionDataFailCounter = std::numeric_limits<uint32_t>::max();
+    event->completionTimeout = 0;
+
+    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, event->toHandle(), 0, nullptr, launchParams);
+    event->hostEventSetValue(Event::STATE_CLEARED);
+    ASSERT_TRUE(event->hasInOrderTimestampNode());
+
+    ze_kernel_timestamp_result_t kernelTimestamps = {};
+
+    ultCsr->downloadAllocationCalled = false;
+    event->assignKernelEventCompletionDataCalled = 0;
+    EXPECT_EQ(ZE_RESULT_NOT_READY, event->queryKernelTimestamp(&kernelTimestamps));
+    EXPECT_TRUE(ultCsr->downloadAllocationCalled);
+    EXPECT_EQ(2u, event->assignKernelEventCompletionDataCalled);
+    EXPECT_EQ(0u, event->getCompletionTimeoutCalled);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenCounterBasedEventWithProfilingAndNotCompletedCounterWhenQueryingStatusThenCheckTimestampOnceWithoutWaiting) {
+    auto cmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+
+    auto eventPool = createEvents<FamilyType>(1, true);
+    auto event = std::make_unique<TimestampCompletionMockEvent>(eventPool.get(), device, false);
+
+    event->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
+    event->getInOrderExecEventHelper().initializeLocalTempStorage();
+    event->setEventTimestampFlag(true);
+    event->assignKernelEventCompletionDataFailCounter = std::numeric_limits<uint32_t>::max();
+    event->completionTimeout = 0;
+
+    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, event->toHandle(), 0, nullptr, launchParams);
+    event->hostEventSetValue(Event::STATE_CLEARED);
+    event->setCbEventWithProfiling(true);
+
+    event->assignKernelEventCompletionDataCalled = 0;
+    EXPECT_EQ(ZE_RESULT_NOT_READY, event->queryStatus(0));
+    EXPECT_EQ(1u, event->assignKernelEventCompletionDataCalled);
+    EXPECT_EQ(0u, event->getCompletionTimeoutCalled);
+
+    event->assignKernelEventCompletionDataCalled = 0;
+    event->assignKernelEventCompletionDataFailCounter = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, event->queryStatus(0));
+    EXPECT_EQ(1u, event->assignKernelEventCompletionDataCalled);
+    EXPECT_EQ(0u, event->getCompletionTimeoutCalled);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenCounterBasedEventWithoutTimestampAndNotCompletedCounterWhenQueryingStatusThenReturnNotReadyWithoutWaiting) {
+    auto cmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+    auto event = std::make_unique<TimestampCompletionMockEvent>(eventPool.get(), device, false);
+
+    event->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
+    event->getInOrderExecEventHelper().initializeLocalTempStorage();
+    event->completionTimeout = 0;
+
+    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, event->toHandle(), 0, nullptr, launchParams);
+    auto hostCounterAddress = cmdList->inOrderExecInfo->isHostStorageDuplicated() ? cmdList->inOrderExecInfo->getBaseHostAddress() : static_cast<uint64_t *>(cmdList->inOrderExecInfo->getDeviceCounterAllocation()->getUnderlyingBuffer());
+    *hostCounterAddress = 0;
+
+    EXPECT_EQ(ZE_RESULT_NOT_READY, event->queryStatus(0));
+    EXPECT_EQ(0u, event->assignKernelEventCompletionDataCalled);
+    EXPECT_EQ(0u, event->getCompletionTimeoutCalled);
+
+    *hostCounterAddress = event->getInOrderExecBaseSignalValue();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, event->queryStatus(0));
+    EXPECT_EQ(0u, event->assignKernelEventCompletionDataCalled);
+    EXPECT_EQ(0u, event->getCompletionTimeoutCalled);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenRegularTimestampEventWithNotCompletedCounterWhenQueryingThenReturnNotReadyWithoutWaiting) {
+    auto cmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+
+    auto eventPool = createEvents<FamilyType>(1, true);
+    auto event = std::make_unique<TimestampCompletionMockEvent>(eventPool.get(), device, false);
+
+    event->disableImplicitCounterBasedMode();
+    event->setEventTimestampFlag(true);
+    event->assignKernelEventCompletionDataFailCounter = std::numeric_limits<uint32_t>::max();
+    event->completionTimeout = 0;
+
+    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, event->toHandle(), 0, nullptr, launchParams);
+    event->hostEventSetValue(Event::STATE_CLEARED);
+    ASSERT_FALSE(event->isCounterBased());
+    auto hostCounterAddress = cmdList->inOrderExecInfo->isHostStorageDuplicated() ? cmdList->inOrderExecInfo->getBaseHostAddress() : static_cast<uint64_t *>(cmdList->inOrderExecInfo->getDeviceCounterAllocation()->getUnderlyingBuffer());
+    *hostCounterAddress = 0;
+
+    ze_kernel_timestamp_result_t kernelTimestamps = {};
+
+    event->assignKernelEventCompletionDataCalled = 0;
+    EXPECT_EQ(ZE_RESULT_NOT_READY, event->queryStatus(0));
+    EXPECT_EQ(ZE_RESULT_NOT_READY, event->queryKernelTimestamp(&kernelTimestamps));
+    EXPECT_EQ(0u, event->assignKernelEventCompletionDataCalled);
+    EXPECT_EQ(0u, event->getCompletionTimeoutCalled);
+
+    *hostCounterAddress = event->getInOrderExecBaseSignalValue();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, event->queryStatus(0));
+    EXPECT_EQ(0u, event->getCompletionTimeoutCalled);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInterruptableEventsWhenExecutingOnDifferentCsrThenAssignItToEventOnExecute) {

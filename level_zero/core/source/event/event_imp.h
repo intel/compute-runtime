@@ -95,6 +95,7 @@ struct EventImp : public Event {
     void copyDataToEventAlloc(void *dstHostAddr, uint64_t dstGpuVa, size_t copySize, const void *copyData);
     void copyTbxData(uint64_t dstGpuVa, size_t copySize);
     bool isTimestampPopulated() const { return (contextEndTS != Event::STATE_CLEARED || globalEndTS != Event::STATE_CLEARED); }
+    void refreshTimestampCompletionData();
     void synchronizeTimestampCompletionWithTimeout();
     bool isCacheFlushRequiredForHostSync() const;
     TaskCountType flushTagUpdateForHostSync(NEO::CommandStreamReceiver &csrForCacheFlush) const;

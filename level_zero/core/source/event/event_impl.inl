@@ -353,7 +353,7 @@ ze_result_t EventImp<TagSizeT>::queryCounterBasedEventStatus(int64_t timeSinceWa
         bool signaled = true;
 
         if (this->cbEventWithProfiling) {
-            this->synchronizeTimestampCompletionWithTimeout();
+            this->refreshTimestampCompletionData();
             signaled = this->isTimestampPopulated();
         } else {
             const uint64_t *hostAddress = ptrOffset(inOrderExecHelper.getBaseHostCpuAddress(), inOrderExecHelper.getEventData()->counterOffset);
@@ -1218,22 +1218,27 @@ void EventImp<TagSizeT>::resetDeviceCompletionData(bool resetAllPackets) {
 }
 
 template <typename TagSizeT>
+void EventImp<TagSizeT>::refreshTimestampCompletionData() {
+    if (this->tbxMode) {
+        this->downloadTbxAllocationsForQuery();
+    }
+    this->assignKernelEventCompletionData(this->getHostAddress());
+    this->calculateProfilingData();
+
+    this->statusQueryAssignedCompletionData = true;
+}
+
+template <typename TagSizeT>
 void EventImp<TagSizeT>::synchronizeTimestampCompletionWithTimeout() {
     std::chrono::high_resolution_clock::time_point startTime = std::chrono::high_resolution_clock::now();
     uint64_t timeDiff = 0;
 
     do {
-        if (this->tbxMode) {
-            downloadTbxAllocationsForQuery();
-        }
-        assignKernelEventCompletionData(getHostAddress());
-        calculateProfilingData();
+        this->refreshTimestampCompletionData();
 
         timeDiff = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - startTime).count();
     } while (!isTimestampPopulated() && (timeDiff < getCompletionTimeout()));
     DEBUG_BREAK_IF(!isTimestampPopulated());
-
-    this->statusQueryAssignedCompletionData = true;
 }
 
 template <typename TagSizeT>
@@ -1241,7 +1246,8 @@ ze_result_t EventImp<TagSizeT>::queryKernelTimestamp(ze_kernel_timestamp_result_
     ze_kernel_timestamp_result_t &result = *dstptr;
 
     this->statusQueryAssignedCompletionData = false;
-    if (!this->isCounterBased() || !inOrderExecHelper.hasTimestampNodes()) {
+    const bool completionCheckedByQueryStatus = !this->isCounterBased() || !this->inOrderExecHelper.hasTimestampNodes();
+    if (completionCheckedByQueryStatus) {
         if (queryStatus(0) != ZE_RESULT_SUCCESS) {
             return ZE_RESULT_NOT_READY;
         }
@@ -1253,7 +1259,12 @@ ze_result_t EventImp<TagSizeT>::queryKernelTimestamp(ze_kernel_timestamp_result_
     calculateProfilingData();
 
     if (!isTimestampPopulated()) {
-        synchronizeTimestampCompletionWithTimeout();
+        const bool completionConfirmed = completionCheckedByQueryStatus || this->inOrderExecHelper.isCounterAlreadyDone(this->getInOrderExecBaseSignalValue(), this->getInOrderAllocationOffset());
+        if (completionConfirmed) {
+            this->synchronizeTimestampCompletionWithTimeout();
+        } else {
+            this->refreshTimestampCompletionData();
+        }
         if (inOrderExecHelper.hasTimestampNodes()) {
             if (!isTimestampPopulated()) {
                 return ZE_RESULT_NOT_READY;
