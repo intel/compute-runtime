@@ -86,6 +86,8 @@ set(NEO_CORE_OS_INTERFACE_WDDM
     ${CMAKE_CURRENT_SOURCE_DIR}/os_environment_win.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_environment_win.h
     ${CMAKE_CURRENT_SOURCE_DIR}/pdh_interface.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/shared_section.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/shared_section_${DRIVER_MODEL}.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/sharedata_wrapper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/sys_calls.h
     ${CMAKE_CURRENT_SOURCE_DIR}/sys_calls_winmm.h

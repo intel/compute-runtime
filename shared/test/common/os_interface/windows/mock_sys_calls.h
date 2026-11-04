@@ -109,5 +109,22 @@ extern size_t ntOpenDirectoryObjectCalled;
 extern BOOL (*sysCallsProcessIdToSessionId)(DWORD dwProcessId, DWORD *pSessionId);
 extern void (*sysCallsRtlInitUnicodeString)(PUNICODE_STRING destinationString, PCWSTR sourceString);
 extern NTSTATUS (*sysCallsNtOpenDirectoryObject)(PHANDLE directoryHandle, ACCESS_MASK desiredAccess, POBJECT_ATTRIBUTES objectAttributes);
+extern size_t ntQueryObjectCalled;
+extern NTSTATUS ntQueryObjectResult;
+extern const wchar_t *ntQueryObjectTypeName;
+extern HANDLE ntQueryObjectLastHandle;
+extern OBJECT_INFORMATION_CLASS ntQueryObjectLastInformationClass;
+extern ULONG ntQueryObjectLastInformationLength;
+extern HANDLE openFileMappingResult;
+extern DWORD openFileMappingLastDesiredAccess;
+extern LPCWSTR openFileMappingLastName;
+extern size_t mapViewOfFileCalled;
+extern LPVOID mapViewOfFileResults[];
+extern DWORD mapViewOfFileLastDesiredAccess;
+extern SIZE_T mapViewOfFileLastNumberOfBytesToMap;
+extern size_t unmapViewOfFileCalled;
+extern LPCVOID unmapViewOfFileLastAddress;
+extern MEMORY_BASIC_INFORMATION virtualQueryMemoryBasicInformation;
+extern SIZE_T virtualQueryResult;
 } // namespace SysCalls
 } // namespace NEO

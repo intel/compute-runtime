@@ -349,5 +349,16 @@ NTSTATUS ntOpenDirectoryObject(PHANDLE directoryHandle, ACCESS_MASK desiredAcces
     auto ntOpenDirectoryObjectFunc = reinterpret_cast<ntOpenDirectoryObjectPtr>(GetProcAddress(handle, "NtOpenDirectoryObject"));
     return ntOpenDirectoryObjectFunc(directoryHandle, desiredAccess, objectAttributes);
 }
+
+NTSTATUS ntQueryObject(HANDLE handle, OBJECT_INFORMATION_CLASS objectInformationClass, PVOID objectInformation, ULONG objectInformationLength, PULONG returnLength) {
+    using ntQueryObjectPtr = NTSTATUS(NTAPI *)(HANDLE, OBJECT_INFORMATION_CLASS, PVOID, ULONG, PULONG);
+    auto handleNtdll = GetModuleHandleA("ntdll.dll");
+    auto ntQueryObjectFunc = reinterpret_cast<ntQueryObjectPtr>(GetProcAddress(handleNtdll, "NtQueryObject"));
+    return ntQueryObjectFunc(handle, objectInformationClass, objectInformation, objectInformationLength, returnLength);
+}
+
+HANDLE openFileMapping(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCWSTR lpName) {
+    return OpenFileMappingW(dwDesiredAccess, bInheritHandle, lpName);
+}
 } // namespace SysCalls
 } // namespace NEO

@@ -136,6 +136,8 @@ HANDLE createFileMappingAResults[createFileMappingAResultsCount] = {nullptr, nul
 size_t mapViewOfFileCalled = 0u;
 extern const size_t mapViewOfFileResultsCount = 4;
 LPVOID mapViewOfFileResults[mapViewOfFileResultsCount] = {nullptr, nullptr, nullptr, nullptr};
+DWORD mapViewOfFileLastDesiredAccess = 0u;
+SIZE_T mapViewOfFileLastNumberOfBytesToMap = 0u;
 
 size_t unmapViewOfFileCalled = 0u;
 LPCVOID unmapViewOfFileLastAddress = nullptr;
@@ -201,6 +203,15 @@ size_t ntOpenDirectoryObjectCalled = 0u;
 BOOL (*sysCallsProcessIdToSessionId)(DWORD dwProcessId, DWORD *pSessionId) = nullptr;
 void (*sysCallsRtlInitUnicodeString)(PUNICODE_STRING destinationString, PCWSTR sourceString) = nullptr;
 NTSTATUS (*sysCallsNtOpenDirectoryObject)(PHANDLE directoryHandle, ACCESS_MASK desiredAccess, POBJECT_ATTRIBUTES objectAttributes) = nullptr;
+size_t ntQueryObjectCalled = 0u;
+NTSTATUS ntQueryObjectResult = STATUS_SUCCESS;
+const wchar_t *ntQueryObjectTypeName = nullptr;
+HANDLE ntQueryObjectLastHandle = nullptr;
+OBJECT_INFORMATION_CLASS ntQueryObjectLastInformationClass = ObjectBasicInformation;
+ULONG ntQueryObjectLastInformationLength = 0u;
+HANDLE openFileMappingResult = nullptr;
+DWORD openFileMappingLastDesiredAccess = 0u;
+LPCWSTR openFileMappingLastName = nullptr;
 
 bool isShutdownInProgress() {
     return isShutdownInProgressRetVal;
@@ -231,6 +242,27 @@ NTSTATUS ntOpenDirectoryObject(PHANDLE directoryHandle, ACCESS_MASK desiredAcces
     }
     *directoryHandle = reinterpret_cast<HANDLE>(dummyHandle);
     return STATUS_SUCCESS;
+}
+
+NTSTATUS ntQueryObject(HANDLE handle, OBJECT_INFORMATION_CLASS objectInformationClass, PVOID objectInformation, ULONG objectInformationLength, PULONG returnLength) {
+    ntQueryObjectCalled++;
+    ntQueryObjectLastHandle = handle;
+    ntQueryObjectLastInformationClass = objectInformationClass;
+    ntQueryObjectLastInformationLength = objectInformationLength;
+    if (ntQueryObjectResult != STATUS_SUCCESS) {
+        return ntQueryObjectResult;
+    }
+    auto &typeName = static_cast<PUBLIC_OBJECT_TYPE_INFORMATION *>(objectInformation)->TypeName;
+    typeName.Buffer = const_cast<PWSTR>(ntQueryObjectTypeName);
+    typeName.Length = ntQueryObjectTypeName ? static_cast<USHORT>(wcslen(ntQueryObjectTypeName) * sizeof(wchar_t)) : 0u;
+    typeName.MaximumLength = typeName.Length;
+    return STATUS_SUCCESS;
+}
+
+HANDLE openFileMapping(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCWSTR lpName) {
+    openFileMappingLastDesiredAccess = dwDesiredAccess;
+    openFileMappingLastName = lpName;
+    return openFileMappingResult;
 }
 
 void exit(int code) {
@@ -518,6 +550,8 @@ LPVOID mapViewOfFile(HANDLE hFileMappingObject, DWORD dwDesiredAccess, DWORD dwF
         retVal = mapViewOfFileResults[mapViewOfFileCalled];
     }
     mapViewOfFileCalled++;
+    mapViewOfFileLastDesiredAccess = dwDesiredAccess;
+    mapViewOfFileLastNumberOfBytesToMap = dwNumberOfBytesToMap;
     return retVal;
 }
 
@@ -732,9 +766,10 @@ LSTATUS regQueryValueExA(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReserved, LPDW
 };
 
 MEMORY_BASIC_INFORMATION virtualQueryMemoryBasicInformation = {};
+SIZE_T virtualQueryResult = sizeof(MEMORY_BASIC_INFORMATION);
 SIZE_T virtualQuery(LPCVOID lpAddress, PMEMORY_BASIC_INFORMATION lpBuffer, SIZE_T dwLength) {
     memcpy_s(lpBuffer, sizeof(MEMORY_BASIC_INFORMATION), &virtualQueryMemoryBasicInformation, sizeof(MEMORY_BASIC_INFORMATION));
-    return sizeof(MEMORY_BASIC_INFORMATION);
+    return virtualQueryResult;
 }
 
 BOOL (*sysCallsGetModuleHandleExW)(DWORD dwFlags, LPCWSTR lpModuleName, HMODULE *phModule) = nullptr;

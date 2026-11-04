@@ -22,6 +22,7 @@ namespace NEO {
 class Gmm;
 class OsContextWin;
 class PdhInterface;
+class SharedSection;
 class Wddm;
 
 extern const GfxMemoryAllocationMethod preferredAllocationMethod;
@@ -90,6 +91,9 @@ class WddmMemoryManager : public MemoryManager, NEO::NonCopyableAndNonMovableCla
     GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, const AllocationData &allocationData) override;
     GraphicsAllocation *allocateGraphicsMemoryForNonSvmHostPtr(const AllocationData &allocationData) override;
     GraphicsAllocation *allocateUSMHostGraphicsMemory(const AllocationData &allocationData) override;
+    MOCKABLE_VIRTUAL GraphicsAllocation *createGraphicsAllocationFromSectionHandle(HANDLE handle, const AllocationProperties &properties);
+    GraphicsAllocation *createBufferAllocationFromSection(const SharedSection &section, const AllocationProperties &properties);
+    GraphicsAllocation *createImageAllocationFromSection(const SharedSection &section, const AllocationProperties &properties);
     GraphicsAllocation *allocateGraphicsMemoryWithHostPtr(const AllocationData &allocationData) override;
     GraphicsAllocation *allocateGraphicsMemory64kb(const AllocationData &allocationData) override;
     GraphicsAllocation *allocateMemoryByKMD(const AllocationData &allocationData) override;

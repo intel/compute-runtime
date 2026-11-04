@@ -491,6 +491,7 @@ class MemoryManagerNTHandleMock : public NEO::OsAgnosticMemoryManager {
     NEO::GraphicsAllocation *createGraphicsAllocationFromSharedHandle(const OsHandleData &osHandleData, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) override {
         ++importCalled;
         lastImportedHandle = osHandleData.handle;
+        lastImportedSize = properties.size;
         if (failImport) {
             return nullptr;
         }
@@ -521,6 +522,7 @@ class MemoryManagerNTHandleMock : public NEO::OsAgnosticMemoryManager {
 
     uint32_t importCalled = 0u;
     NEO::osHandle lastImportedHandle = 0u;
+    size_t lastImportedSize = 0u;
     uint32_t sharedNameCalled = 0u;
     const void *lastSharedName = nullptr;
     NEO::ExternalMemoryType lastExternalMemoryType = NEO::ExternalMemoryType::opaqueFd;
@@ -538,7 +540,7 @@ HWTEST_F(ImportNTHandleWithMockMemoryManager, givenCallToImportNTHandleWithHostB
 
     uint64_t imageHandle = 0x1;
     NEO::AllocationType allocationType = NEO::AllocationType::bufferHostMemory;
-    void *ptr = driverHandle->importNTHandle(device->toHandle(), &imageHandle, nullptr, NEO::ExternalMemoryType::opaqueWin32, allocationType, true, 0u, false, 0u).second;
+    void *ptr = driverHandle->importNTHandle(device->toHandle(), &imageHandle, nullptr, NEO::ExternalMemoryType::opaqueWin32, 0u, allocationType, true, 0u, false, 0u).second;
     EXPECT_NE(ptr, nullptr);
 
     auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
@@ -556,7 +558,7 @@ HWTEST_F(ImportNTHandleWithMockMemoryManager, givenCallToImportNTHandleWithBuffe
 
     uint64_t imageHandle = 0x1;
     NEO::AllocationType allocationType = NEO::AllocationType::buffer;
-    void *ptr = driverHandle->importNTHandle(device->toHandle(), &imageHandle, nullptr, NEO::ExternalMemoryType::opaqueWin32, allocationType, false, 0u, false, 0u).second;
+    void *ptr = driverHandle->importNTHandle(device->toHandle(), &imageHandle, nullptr, NEO::ExternalMemoryType::opaqueWin32, 0u, allocationType, false, 0u, false, 0u).second;
     EXPECT_NE(ptr, nullptr);
 
     auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
@@ -587,6 +589,7 @@ HWTEST_F(ImportNTHandleWithMockMemoryManager, givenNTHandleWhenCreatingDeviceMem
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     auto alloc = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
     ASSERT_EQ(alloc->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex())->peekSharedHandle(), NEO::toOsHandle(importNTHandle.handle));
+    EXPECT_EQ(100u, memoryManager->lastImportedSize);
     result = context->freeMem(ptr);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 }
@@ -611,6 +614,7 @@ HWTEST_F(ImportNTHandleWithMockMemoryManager, givenNTHandleWhenCreatingHostMemor
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     auto alloc = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
     ASSERT_EQ(alloc->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex())->peekSharedHandle(), NEO::toOsHandle(importNTHandle.handle));
+    EXPECT_EQ(100u, memoryManager->lastImportedSize);
     result = context->freeMem(ptr);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 }
@@ -633,6 +637,7 @@ TEST_F(ImportNTHandleWithMockMemoryManager, givenNamedNTHandleWhenCreatingDevice
     EXPECT_EQ(static_cast<const void *>(name), memoryManager->lastSharedName);
     EXPECT_EQ(NEO::ExternalMemoryType::d3d12Resource, memoryManager->lastExternalMemoryType);
     EXPECT_EQ(1u, memoryManager->importCalled);
+    EXPECT_EQ(100u, memoryManager->lastImportedSize);
     auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
     ASSERT_NE(allocData, nullptr);
     EXPECT_EQ(allocData->memoryType, InternalMemoryType::deviceUnifiedMemory);
@@ -699,6 +704,7 @@ TEST_F(ImportNTHandleWithMockMemoryManager, givenNamedNTHandleWhenCreatingHostMe
     EXPECT_EQ(static_cast<const void *>(name), memoryManager->lastSharedName);
     EXPECT_EQ(NEO::ExternalMemoryType::opaqueWin32, memoryManager->lastExternalMemoryType);
     EXPECT_EQ(1u, memoryManager->importCalled);
+    EXPECT_EQ(100u, memoryManager->lastImportedSize);
     auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
     ASSERT_NE(allocData, nullptr);
     EXPECT_EQ(allocData->memoryType, InternalMemoryType::hostUnifiedMemory);

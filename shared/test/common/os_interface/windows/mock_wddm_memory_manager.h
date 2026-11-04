@@ -11,6 +11,7 @@
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_host_ptr_manager.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/test_macros/mock_method_macros.h"
 
 namespace NEO {
 class MockWddmMemoryManager : public MemoryManagerCreate<WddmMemoryManager> {
@@ -28,7 +29,9 @@ class MockWddmMemoryManager : public MemoryManagerCreate<WddmMemoryManager> {
     using BaseClass::allocatePhysicalHostMemory;
     using BaseClass::allocatePhysicalLocalDeviceMemory;
     using BaseClass::allRegisteredEngines;
+    using BaseClass::createBufferAllocationFromSection;
     using BaseClass::createGraphicsAllocation;
+    using BaseClass::createImageAllocationFromSection;
     using BaseClass::createPhysicalAllocation;
     using BaseClass::createWddmAllocation;
     using BaseClass::getWddm;
@@ -112,6 +115,9 @@ class MockWddmMemoryManager : public MemoryManagerCreate<WddmMemoryManager> {
         registerAllocationInOsCalled++;
         BaseClass::registerAllocationInOs(gfxAllocation);
     }
+
+    ADDMETHOD(createGraphicsAllocationFromSectionHandle, GraphicsAllocation *, true, nullptr, (HANDLE handle, const AllocationProperties &properties), (handle, properties));
+
     uint32_t copyMemoryToAllocationBanksCalled = 0u;
     uint32_t memsetAllocationBanksCalled = 0u;
     uint32_t freeGraphicsMemoryImplCalled = 0u;

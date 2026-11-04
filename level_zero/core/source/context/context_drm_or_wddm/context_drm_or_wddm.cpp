@@ -89,6 +89,7 @@ std::pair<NEO::GraphicsAllocation *, void *> Context::getMemHandlePtr(ze_device_
                                                   reinterpret_cast<void *>(handle),
                                                   nullptr,
                                                   NEO::ExternalMemoryType::opaqueWin32,
+                                                  0u,
                                                   allocationType,
                                                   isHostIpcAllocation,
                                                   processId,

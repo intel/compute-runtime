@@ -164,6 +164,7 @@ ze_result_t Context::allocHostMem(const ze_host_mem_alloc_desc_t *hostMemDesc,
                                                       lookupTable.sharedHandleType.ntHandle,
                                                       lookupTable.sharedHandleType.ntHandleName,
                                                       lookupTable.sharedHandleType.externalMemoryType,
+                                                      size,
                                                       NEO::AllocationType::bufferHostMemory, true, 0, false, 0u)
                        .second;
             if (*ptr == nullptr) {
@@ -338,6 +339,7 @@ ze_result_t Context::allocDeviceMem(ze_device_handle_t hDevice,
                                                       lookupTable.sharedHandleType.ntHandle,
                                                       lookupTable.sharedHandleType.ntHandleName,
                                                       lookupTable.sharedHandleType.externalMemoryType,
+                                                      size,
                                                       NEO::AllocationType::buffer,
                                                       false, 0, false, 0u)
                        .second;

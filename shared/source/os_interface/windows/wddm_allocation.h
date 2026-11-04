@@ -122,6 +122,9 @@ class WddmAllocation : public GraphicsAllocation {
     D3DKMT_HANDLE &getResourceHandleToModify() { return resourceHandle; }
     void setResourceHandle(D3DKMT_HANDLE resourceHandle) { this->resourceHandle = resourceHandle; }
 
+    void *getSectionView() const { return sectionView; }
+    void setSectionView(void *sectionView) { this->sectionView = sectionView; }
+
   protected:
     // OS assigned fields
     D3DGPU_VIRTUAL_ADDRESS reservedGpuVirtualAddress = 0u;
@@ -131,6 +134,7 @@ class WddmAllocation : public GraphicsAllocation {
 
     std::vector<D3DKMT_HANDLE> handles;
     D3DKMT_HANDLE resourceHandle = 0u; // used by shared resources
+    void *sectionView = nullptr;
     uint32_t shareable = 0u;
     bool allocInFrontWindowPool = false;
     bool physicalMemoryReservation = false;

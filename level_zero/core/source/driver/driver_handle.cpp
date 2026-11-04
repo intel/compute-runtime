@@ -893,14 +893,14 @@ NEO::GraphicsAllocation *DriverHandle::resolveMemoryAllocation(Device *device, v
     return allocation;
 }
 
-std::pair<NEO::GraphicsAllocation *, void *> DriverHandle::importNTHandle(ze_device_handle_t hDevice, void *handle, const void *name, NEO::ExternalMemoryType type, NEO::AllocationType allocationType, bool isHostIpcAllocation, uint32_t parentProcessId, bool compressedMemory, uint64_t physicalOffset) {
+std::pair<NEO::GraphicsAllocation *, void *> DriverHandle::importNTHandle(ze_device_handle_t hDevice, void *handle, const void *name, NEO::ExternalMemoryType type, size_t size, NEO::AllocationType allocationType, bool isHostIpcAllocation, uint32_t parentProcessId, bool compressedMemory, uint64_t physicalOffset) {
     auto neoDevice = Device::fromHandle(hDevice)->getNEODevice();
 
     NEO::MemoryManager::OsHandleData osHandleData{handle};
     osHandleData.parentProcessId = parentProcessId;
     osHandleData.physicalOffset = physicalOffset;
     NEO::AllocationProperties properties{neoDevice->getRootDeviceIndex(),
-                                         MemoryConstants::pageSize,
+                                         size,
                                          allocationType,
                                          neoDevice->getDeviceBitfield()};
     properties.flags.preferCompressed = compressedMemory;

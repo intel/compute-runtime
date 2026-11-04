@@ -29,6 +29,7 @@ if(WIN32)
                  ${CMAKE_CURRENT_SOURCE_DIR}/registry_reader_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/registry_reader_tests.h
                  ${CMAKE_CURRENT_SOURCE_DIR}/self_lib_win.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/shared_section_wddm_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/um_km_data_translator_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/${BRANCH_DIR_SUFFIX}wddm_additional_apater_info_options_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/${BRANCH_DIR_SUFFIX}wddm_configure_device_address_space_tests.cpp
@@ -40,6 +41,7 @@ if(WIN32)
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_residency_controller_multigpu_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_special_heap_test.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_memory_reservation_tests.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/wddm_memory_manager_windows_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_windows_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm32_tests_extra.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/${BRANCH_DIR_SUFFIX}/wddm_perf_tests.cpp

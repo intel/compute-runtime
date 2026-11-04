@@ -12,6 +12,7 @@
 #include "shared/source/os_interface/windows/hw_device_id.h"
 #include "shared/source/os_interface/windows/os_environment_win.h"
 #include "shared/source/os_interface/windows/pdh_interface.h"
+#include "shared/source/os_interface/windows/shared_section.h"
 #include "shared/source/os_interface/windows/sys_calls_wrapper.h"
 #include "shared/source/os_interface/windows/wddm/um_km_data_translator.h"
 #include "shared/source/os_interface/windows/wddm/wddm_interface.h"
@@ -19,6 +20,7 @@
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mock_gdi/mock_gdi.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_wddm.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 #include "shared/test/common/os_interface/windows/mock_wddm_memory_manager.h"
@@ -26,6 +28,7 @@
 
 #include "gtest/gtest.h"
 
+#include <array>
 #include <fcntl.h>
 
 using namespace NEO;
@@ -504,4 +507,37 @@ TEST_F(DrmOrWddmMemoryManagerTest, givenWslShareableAllocationWithNtHandleWhenFr
 
     EXPECT_EQ(1u, SysCalls::closeFuncCalled);
     EXPECT_EQ(ntHandleFileDescriptor, SysCalls::closeFuncArgPassed);
+}
+
+TEST(DrmOrWddmTest, givenWslWhenUsingSectionSysCallsThenTheyFail) {
+    const HANDLE sectionHandle = reinterpret_cast<HANDLE>(0x4321);
+    EXPECT_EQ(nullptr, SysCalls::openFileMapping(FILE_MAP_READ | FILE_MAP_WRITE, FALSE, L"myMemory"));
+    EXPECT_EQ(nullptr, SysCalls::mapViewOfFile(sectionHandle, FILE_MAP_READ | FILE_MAP_WRITE, 0, 0, 0));
+    EXPECT_FALSE(SysCalls::unmapViewOfFile(reinterpret_cast<LPCVOID>(0x1000)));
+}
+
+TEST(DrmOrWddmTest, givenWslWhenCheckingIfHandleIsSectionThenFalseIsReturned) {
+    EXPECT_FALSE(SharedSection::isSection(reinterpret_cast<HANDLE>(0x4321)));
+}
+
+TEST(DrmOrWddmTest, givenWslWhenInitializingSharedSectionThenFalseIsReturned) {
+    std::array<uint8_t, MemoryConstants::pageSize> view = {};
+    SharedSection section(view.data());
+    EXPECT_FALSE(section.initialize());
+}
+
+TEST_F(DrmOrWddmMemoryManagerTest, givenWslWhenCreatingAllocationFromSharedNameWhichIsNotSharedResourceThenSectionIsNotFoundAndInvalidNameIsReturned) {
+    wddm->openNTHandleFromNameCallBase = false;
+    AllocationProperties properties(0, MemoryConstants::pageSize, AllocationType::bufferHostMemory, mockDeviceBitfield);
+    auto status = MemoryManager::AllocationStatus::Success;
+
+    EXPECT_EQ(nullptr, memoryManager->createGraphicsAllocationFromSharedName(L"myMemory", ExternalMemoryType::opaqueWin32, MemoryManager::OsHandleData{0u}, properties, true, status));
+    EXPECT_EQ(MemoryManager::AllocationStatus::InvalidName, status);
+    EXPECT_EQ(0u, memoryManager->createGraphicsAllocationFromSectionHandleCalled);
+}
+
+TEST_F(DrmOrWddmMemoryManagerTest, givenWslWhenCreatingAllocationFromSectionHandleThenSectionIsNotMappedAndNullptrIsReturned) {
+    AllocationProperties properties(0, MemoryConstants::pageSize, AllocationType::bufferHostMemory, mockDeviceBitfield);
+
+    EXPECT_EQ(nullptr, memoryManager->createGraphicsAllocationFromSectionHandle(reinterpret_cast<HANDLE>(0x4321), properties));
 }

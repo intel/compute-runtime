@@ -95,6 +95,8 @@ DWORD getLastError();
 BOOL processIdToSessionId(DWORD dwProcessId, DWORD *pSessionId);
 void rtlInitUnicodeString(PUNICODE_STRING destinationString, PCWSTR sourceString);
 NTSTATUS ntOpenDirectoryObject(PHANDLE directoryHandle, ACCESS_MASK desiredAccess, POBJECT_ATTRIBUTES objectAttributes);
+NTSTATUS ntQueryObject(HANDLE handle, OBJECT_INFORMATION_CLASS objectInformationClass, PVOID objectInformation, ULONG objectInformationLength, PULONG returnLength);
+HANDLE openFileMapping(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCWSTR lpName);
 extern LPWCH mockEnvStringsW;
 extern BOOL mockFreeEnvStringsWResult;
 LPWCH getEnvironmentStringsW();

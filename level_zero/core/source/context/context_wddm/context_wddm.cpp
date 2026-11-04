@@ -41,7 +41,7 @@ void Context::closeExternalHandle(uint64_t) {
 }
 
 std::pair<NEO::GraphicsAllocation *, void *> Context::getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, unsigned int processId, ze_ipc_memory_flags_t flags, void *reservedHandleData, bool compressedMemory, bool isOpaqueHandle, uint64_t physicalOffset) {
-    return this->driverHandle->importNTHandle(hDevice, reinterpret_cast<void *>(handle), nullptr, NEO::ExternalMemoryType::opaqueWin32, allocationType, isHostIpcAllocation, processId, compressedMemory, physicalOffset);
+    return this->driverHandle->importNTHandle(hDevice, reinterpret_cast<void *>(handle), nullptr, NEO::ExternalMemoryType::opaqueWin32, 0u, allocationType, isHostIpcAllocation, processId, compressedMemory, physicalOffset);
 }
 
 void Context::getDataFromIpcHandle(ze_device_handle_t hDevice, const ze_ipc_mem_handle_t &ipcHandle, uint64_t &handle, uint8_t &type, unsigned int &processId, uint64_t &poolOffset, void *&reservedHandleData, bool &compressedMemory, bool &isOpaqueHandle) {

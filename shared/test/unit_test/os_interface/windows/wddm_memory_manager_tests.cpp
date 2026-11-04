@@ -33,6 +33,7 @@
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/mocks/mock_release_helper.h"
+#include "shared/test/common/mocks/windows/mock_shared_section.h"
 #include "shared/test/common/mocks/windows/mock_wddm_allocation.h"
 #include "shared/test/common/os_interface/windows/mock_pdh_interface.h"
 #include "shared/test/common/os_interface/windows/mock_wddm_memory_manager.h"
@@ -5895,4 +5896,111 @@ TEST_F(WddmMemoryManagerSimpleTest, givenPhysicalDeviceMemoryAndVirtualMemoryThe
     wddmAllocation->setMappedPhysicalMemoryReservation(false);
 
     memoryManager->freeGraphicsMemory(allocation);
+}
+
+struct WddmMemoryManagerAllocationFromSharedSectionTest : public WddmFixture {
+    void SetUp() override {
+        WddmFixture::SetUp();
+        view = alignedMalloc(viewSize, MemoryConstants::pageSize64k);
+        memset(view, 0, viewSize);
+    }
+
+    void TearDown() override {
+        alignedFree(view);
+        WddmFixture::TearDown();
+    }
+
+    static constexpr size_t viewSize = 2 * MemoryConstants::pageSize;
+    void *view = nullptr;
+};
+
+TEST_F(WddmMemoryManagerAllocationFromSharedSectionTest, givenSizeWithinUsableSizeWhenCreatingBufferAllocationFromSectionThenHostAllocationOfThatSizeIsCreatedOverView) {
+    MockSharedSection section(view);
+    section.usableSize = MemoryConstants::pageSize;
+    AllocationProperties properties(0, MemoryConstants::pageSize - 1, AllocationType::buffer, mockDeviceBitfield);
+
+    auto allocation = memoryManager->createBufferAllocationFromSection(section, properties);
+    ASSERT_NE(nullptr, allocation);
+    EXPECT_EQ(view, allocation->getUnderlyingBuffer());
+    EXPECT_EQ(MemoryConstants::pageSize - 1, allocation->getUnderlyingBufferSize());
+    EXPECT_EQ(AllocationType::bufferHostMemory, allocation->getAllocationType());
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(WddmMemoryManagerAllocationFromSharedSectionTest, givenZeroSizeOrSizeExceedingUsableSizeWhenCreatingBufferAllocationFromSectionThenNullptrIsReturned) {
+    MockSharedSection section(view);
+    section.usableSize = MemoryConstants::pageSize;
+
+    for (auto size : {size_t{0u}, MemoryConstants::pageSize + 1}) {
+        AllocationProperties properties(0, size, AllocationType::bufferHostMemory, mockDeviceBitfield);
+        EXPECT_EQ(nullptr, memoryManager->createBufferAllocationFromSection(section, properties));
+    }
+}
+
+TEST_F(WddmMemoryManagerAllocationFromSharedSectionTest, givenLinearImageWhenCreatingImageAllocationFromSectionThenAllocationOfImageSizeIsCreatedOverViewUsingSectionGmmParams) {
+    MockSharedSection section(view);
+    section.gmmParams.Type = RESOURCE_2D;
+    section.gmmParams.Flags.Info.Linear = 1;
+    section.gmmParams.Format = GMM_FORMAT_R8G8B8A8_UNORM_TYPE;
+    section.gmmParams.BaseWidth64 = 256u;
+    section.gmmParams.BaseHeight = 4u;
+    section.gmmParams.ExistingSysMemSize = MemoryConstants::pageSize;
+    section.gmmParams.pExistingSysMem = castToUint64(view);
+    section.usableSize = MemoryConstants::pageSize;
+    AllocationProperties properties(0, true, nullptr, AllocationType::sharedImage, mockDeviceBitfield);
+
+    auto allocation = memoryManager->createImageAllocationFromSection(section, properties);
+    ASSERT_NE(nullptr, allocation);
+    EXPECT_EQ(view, allocation->getUnderlyingBuffer());
+    EXPECT_EQ(MemoryConstants::pageSize, allocation->getUnderlyingBufferSize());
+    EXPECT_EQ(AllocationType::sharedImage, allocation->getAllocationType());
+    auto &gmmParams = static_cast<MockGmmResourceInfo *>(allocation->getDefaultGmm()->gmmResourceInfo.get())->mockResourceCreateParams;
+    EXPECT_EQ(0, memcmp(&section.getGmmParams(), &gmmParams, sizeof(gmmParams)));
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(WddmMemoryManagerAllocationFromSharedSectionTest, givenExportedResourceTypeWhenCreatingImageAllocationFromSectionThenOnlyLinearImagesAreAccepted) {
+    MockSharedSection section(view);
+    AllocationProperties properties(0, true, nullptr, AllocationType::sharedImage, mockDeviceBitfield);
+
+    for (auto type : {RESOURCE_1D, RESOURCE_2D, RESOURCE_3D}) {
+        section.gmmParams.Type = type;
+        section.gmmParams.Flags.Info.Linear = 1;
+        auto allocation = memoryManager->createImageAllocationFromSection(section, properties);
+        EXPECT_NE(nullptr, allocation);
+        memoryManager->freeGraphicsMemory(allocation);
+    }
+
+    section.gmmParams.Type = RESOURCE_BUFFER;
+    section.gmmParams.Flags.Info.Linear = 1;
+    EXPECT_EQ(nullptr, memoryManager->createImageAllocationFromSection(section, properties));
+
+    section.gmmParams.Type = RESOURCE_2D;
+    section.gmmParams.Flags.Info.Linear = 0;
+    EXPECT_EQ(nullptr, memoryManager->createImageAllocationFromSection(section, properties));
+}
+
+TEST_F(WddmMemoryManagerAllocationFromSharedSectionTest, givenImageLargerThanUsableSizeWhenCreatingImageAllocationFromSectionThenNullptrIsReturned) {
+    MockSharedSection section(view);
+    section.gmmParams.Type = RESOURCE_2D;
+    section.gmmParams.Flags.Info.Linear = 1;
+    section.gmmParams.Format = GMM_FORMAT_R8G8B8A8_UNORM_TYPE;
+    section.gmmParams.BaseWidth64 = 256u;
+    section.gmmParams.BaseHeight = 4u;
+    section.usableSize = MemoryConstants::pageSize - 1;
+    AllocationProperties properties(0, true, nullptr, AllocationType::sharedImage, mockDeviceBitfield);
+    auto createAllocationCalledBefore = wddm->createAllocationResult.called;
+
+    EXPECT_EQ(nullptr, memoryManager->createImageAllocationFromSection(section, properties));
+    EXPECT_EQ(createAllocationCalledBefore, wddm->createAllocationResult.called);
+}
+
+TEST_F(WddmMemoryManagerAllocationFromSharedSectionTest, givenCreatingWddmAllocationFailsWhenCreatingImageAllocationFromSectionThenNullptrIsReturned) {
+    MockSharedSection section(view);
+    section.gmmParams.Type = RESOURCE_2D;
+    section.gmmParams.Flags.Info.Linear = 1;
+    wddm->failCreateAllocation = true;
+    AllocationProperties properties(0, true, nullptr, AllocationType::sharedImage, mockDeviceBitfield);
+
+    EXPECT_EQ(nullptr, memoryManager->createImageAllocationFromSection(section, properties));
 }

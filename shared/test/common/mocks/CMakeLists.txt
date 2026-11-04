@@ -148,6 +148,7 @@ if(WIN32 OR NOT DISABLE_WDDM_LINUX)
        ${CMAKE_CURRENT_SOURCE_DIR}/windows/mock_gmm_memory.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/windows/mock_gmm_memory.h
        ${CMAKE_CURRENT_SOURCE_DIR}/windows/mock_os_time_win.h
+       ${CMAKE_CURRENT_SOURCE_DIR}/windows/mock_shared_section.h
        ${CMAKE_CURRENT_SOURCE_DIR}/windows/mock_wddm_eudebug.h
        ${CMAKE_CURRENT_SOURCE_DIR}/windows/mock_wddm_allocation.h
        ${NEO_SHARED_TEST_DIRECTORY}/common/mock_gdi/mock_create_gdi.cpp

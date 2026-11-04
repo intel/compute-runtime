@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,5 +12,8 @@
 namespace NEO {
 namespace SysCalls {
 BOOL closeHandle(HANDLE hObject);
-}
+HANDLE openFileMapping(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCWSTR lpName);
+LPVOID mapViewOfFile(HANDLE hFileMappingObject, DWORD dwDesiredAccess, DWORD dwFileOffsetHigh, DWORD dwFileOffsetLow, SIZE_T dwNumberOfBytesToMap);
+BOOL unmapViewOfFile(LPCVOID lpBaseAddress);
+} // namespace SysCalls
 } // namespace NEO

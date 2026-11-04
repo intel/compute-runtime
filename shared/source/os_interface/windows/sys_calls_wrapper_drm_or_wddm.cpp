@@ -18,5 +18,17 @@ BOOL closeHandle(HANDLE hObject) {
 
     return close(static_cast<int>(castToUint64(hObject))) == 0 ? TRUE : FALSE;
 }
+
+HANDLE openFileMapping(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCWSTR lpName) {
+    return nullptr;
+}
+
+LPVOID mapViewOfFile(HANDLE hFileMappingObject, DWORD dwDesiredAccess, DWORD dwFileOffsetHigh, DWORD dwFileOffsetLow, SIZE_T dwNumberOfBytesToMap) {
+    return nullptr;
+}
+
+BOOL unmapViewOfFile(LPCVOID lpBaseAddress) {
+    return FALSE;
+}
 } // namespace SysCalls
 } // namespace NEO

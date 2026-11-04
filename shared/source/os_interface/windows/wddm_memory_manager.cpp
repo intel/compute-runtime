@@ -37,6 +37,7 @@
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/os_interface/windows/dxgi_wrapper.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
+#include "shared/source/os_interface/windows/shared_section.h"
 #include "shared/source/os_interface/windows/sys_calls_wrapper.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 #include "shared/source/os_interface/windows/wddm_allocation.h"
@@ -772,8 +773,19 @@ GraphicsAllocation *WddmMemoryManager::createGraphicsAllocationFromSharedName(co
     auto &wddm = getWddm(properties.rootDeviceIndex);
     auto handle = wddm.openNTHandleFromName(name, type == ExternalMemoryType::opaqueWin32);
     if (handle == nullptr) {
-        status = AllocationStatus::InvalidName;
-        return nullptr;
+        HANDLE sectionHandle = nullptr;
+        if (type == ExternalMemoryType::opaqueWin32) {
+            sectionHandle = SysCalls::openFileMapping(FILE_MAP_READ | FILE_MAP_WRITE, FALSE, static_cast<const wchar_t *>(name));
+        }
+        if (sectionHandle == nullptr) {
+            status = AllocationStatus::InvalidName;
+            return nullptr;
+        }
+        auto allocation = createGraphicsAllocationFromSectionHandle(sectionHandle, properties);
+        [[maybe_unused]] auto closeSectionStatus = SysCalls::closeHandle(sectionHandle);
+        DEBUG_BREAK_IF(!closeSectionStatus);
+        status = allocation != nullptr ? AllocationStatus::Success : AllocationStatus::Error;
+        return allocation;
     }
 
     OsHandleData namedOsHandleData = osHandleData;
@@ -788,12 +800,19 @@ GraphicsAllocation *WddmMemoryManager::createGraphicsAllocationFromSharedName(co
 }
 
 GraphicsAllocation *WddmMemoryManager::createGraphicsAllocationFromSharedHandle(const OsHandleData &osHandleData, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) {
+    auto &wddm = getWddm(properties.rootDeviceIndex);
+    bool isSharedHandle = verifyHandle(osHandleData.handle, properties.rootDeviceIndex, false);
+    auto ntHandle = reinterpret_cast<HANDLE>(static_cast<uintptr_t>(osHandleData.handle));
+    if (!isSharedHandle && osHandleData.parentProcessId == 0u && SharedSection::isSection(ntHandle)) {
+        return createGraphicsAllocationFromSectionHandle(ntHandle, properties);
+    }
+
     auto allocation = std::make_unique<WddmAllocation>(properties.rootDeviceIndex, 1u /*num gmms*/, properties.allocationType, nullptr, 0, osHandleData.handle, MemoryPool::systemCpuInaccessible, maxOsContextCount, 0llu);
     bool status;
-    if (verifyHandle(osHandleData.handle, properties.rootDeviceIndex, false)) {
-        status = getWddm(properties.rootDeviceIndex).openSharedHandle(osHandleData, allocation.get());
+    if (isSharedHandle) {
+        status = wddm.openSharedHandle(osHandleData, allocation.get());
     } else {
-        status = getWddm(properties.rootDeviceIndex).openNTHandle(osHandleData, allocation.get());
+        status = wddm.openNTHandle(osHandleData, allocation.get());
     }
 
     if (!status) {
@@ -823,6 +842,76 @@ GraphicsAllocation *WddmMemoryManager::createGraphicsAllocationFromSharedHandle(
         return nullptr;
     }
 
+    logAllocation(allocationLoggerInstance(), allocation.get(), this);
+    return allocation.release();
+}
+
+GraphicsAllocation *WddmMemoryManager::createGraphicsAllocationFromSectionHandle(HANDLE handle, const AllocationProperties &properties) {
+    bool isImage = properties.allocationType == AllocationType::sharedImage;
+    if (!isImage && properties.allocationType != AllocationType::buffer && properties.allocationType != AllocationType::bufferHostMemory) {
+        return nullptr;
+    }
+
+    auto view = SysCalls::mapViewOfFile(handle, FILE_MAP_READ | FILE_MAP_WRITE, 0, 0, 0);
+    if (view == nullptr) {
+        return nullptr;
+    }
+
+    SharedSection section(view);
+    WddmAllocation *allocation = nullptr;
+    if (section.initialize()) {
+        allocation = static_cast<WddmAllocation *>(isImage ? createImageAllocationFromSection(section, properties)
+                                                           : createBufferAllocationFromSection(section, properties));
+    }
+    if (allocation == nullptr) {
+        [[maybe_unused]] auto unmapStatus = SysCalls::unmapViewOfFile(view);
+        DEBUG_BREAK_IF(!unmapStatus);
+        return nullptr;
+    }
+
+    allocation->setSectionView(view);
+    return allocation;
+}
+
+GraphicsAllocation *WddmMemoryManager::createBufferAllocationFromSection(const SharedSection &section, const AllocationProperties &properties) {
+    if (properties.size == 0u || properties.size > section.getUsableSize()) {
+        return nullptr;
+    }
+
+    AllocationProperties viewProperties{properties.rootDeviceIndex, false, properties.size, AllocationType::bufferHostMemory, false, properties.subDevicesBitfield};
+    viewProperties.flags.isUSMHostAllocation = true;
+    return allocateGraphicsMemoryWithProperties(viewProperties, section.getView());
+}
+
+GraphicsAllocation *WddmMemoryManager::createImageAllocationFromSection(const SharedSection &section, const AllocationProperties &properties) {
+    auto gmmParams = section.getGmmParams();
+    bool isImage = gmmParams.Type == RESOURCE_1D || gmmParams.Type == RESOURCE_2D || gmmParams.Type == RESOURCE_3D;
+    if (!isImage || !gmmParams.Flags.Info.Linear) {
+        return nullptr;
+    }
+
+    auto view = section.getView();
+    auto gmmHelper = getGmmHelper(properties.rootDeviceIndex);
+    std::unique_ptr<GmmResourceInfo> resourceInfo(GmmResourceInfo::create(gmmHelper->getClientContext(), &gmmParams));
+    auto gmm = std::make_unique<Gmm>(gmmHelper, resourceInfo.get());
+
+    auto size = gmm->gmmResourceInfo->getSizeAllocation();
+    if (size > section.getUsableSize()) {
+        return nullptr;
+    }
+    auto allocation = std::make_unique<WddmAllocation>(properties.rootDeviceIndex,
+                                                       1u, // numGmms
+                                                       properties.allocationType, view, gmmHelper->canonize(castToUint64(view)),
+                                                       size, nullptr, MemoryPool::system4KBPages,
+                                                       0u, // shareable
+                                                       maxOsContextCount);
+    allocation->setDefaultGmm(gmm.release());
+    if (!createWddmAllocation(allocation.get(), nullptr)) {
+        delete allocation->getDefaultGmm();
+        return nullptr;
+    }
+
+    this->registerSysMemAlloc(allocation.get());
     logAllocation(allocationLoggerInstance(), allocation.get(), this);
     return allocation.release();
 }
@@ -974,6 +1063,11 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
     } else if (MemoryPool::memoryNull != gfxAllocation->getMemoryPool()) {
         DEBUG_BREAK_IF(gfxAllocation->getUnderlyingBufferSize() > sysMemAllocsSize);
         sysMemAllocsSize -= gfxAllocation->getUnderlyingBufferSize();
+    }
+
+    if (input->getSectionView()) {
+        [[maybe_unused]] auto unmapStatus = SysCalls::unmapViewOfFile(input->getSectionView());
+        DEBUG_BREAK_IF(!unmapStatus);
     }
 
     delete gfxAllocation;
