@@ -22,10 +22,7 @@ bool NEO::ReleaseHelperHw<NEO::release>::is2WayCoherentPatSupported() const {
 
 template <>
 uint64_t NEO::ReleaseHelperHw<NEO::release>::overrideSystemMemoryPatIndexBase(uint64_t patIndex) const {
-    if (this->is2WayCoherentPatSupported()) {
-        return 19u;
-    }
-    return patIndex;
+    return 19u;
 }
 
 #include "shared/source/release_helpers/release_helper/release_helper_common_xe3p.inl"
