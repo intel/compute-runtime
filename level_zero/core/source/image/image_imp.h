@@ -110,6 +110,9 @@ struct ImageImp : public Image, NEO::NonCopyableAndNonMovableClass {
                                                           std::initializer_list<uint32_t> bindlessSlots,
                                                           uint32_t mipLevel,
                                                           bool isMediaBlockArg);
+    void writeMainBindlessSlots();
+    void adoptCachedBindlessState(ImageBindlessState &bindlessState);
+    void finalizeCachedBindlessState();
 
     Device *device = nullptr;
     NEO::ImageInfo imgInfo = {};
@@ -129,7 +132,9 @@ struct ImageImp : public Image, NEO::NonCopyableAndNonMovableClass {
     std::unique_ptr<NEO::SurfaceStateInHeapInfo> bindlessInfo;
     std::vector<std::unique_ptr<NEO::SurfaceStateInHeapInfo>> mipLevelBindlessInfos;
     std::unique_ptr<NEO::SurfaceStateInHeapInfo> mediaBlockBindlessInfo;
-    uint32_t bindlessSlotsWrittenMask = 0u;
+    ImageBindlessState pendingBindlessState;
+    std::vector<uint8_t> encodedSurfaceStates;
+    bool mainBindlessSlotsWritten = false;
     std::mutex mipLevelBindlessInfosMutex;
     bool bindlessImage = false;
     bool imageFromBuffer = false;

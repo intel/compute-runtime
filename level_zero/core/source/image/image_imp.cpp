@@ -72,6 +72,28 @@ void getImageDescriptorFor3ChEmulation(const ze_image_desc_t *origImgDesc, ze_im
 }
 
 ImageImp::~ImageImp() {
+    bool allocationCached = false;
+    if (this->device != nullptr && !isImageView() && !imageFromBuffer) {
+        auto imageAllocationCache = this->isAllocationReusable ? this->device->getDriverHandle()->getImageAllocationCache() : nullptr;
+        if (imageAllocationCache != nullptr && this->allocation != nullptr && !this->pendingBindlessState.encodedSurfaceStates.empty()) {
+            imageAllocationCache->releaseBindlessState(*this->allocation, this->pendingBindlessState);
+        }
+        if (imageAllocationCache != nullptr) {
+            ImageBindlessState bindlessState;
+            bindlessState.mipLevelBindlessInfos = std::move(this->mipLevelBindlessInfos);
+            bindlessState.mediaBlockBindlessInfo = std::move(this->mediaBlockBindlessInfo);
+            bindlessState.implicitArgsTag = this->implicitArgsTag;
+            bindlessState.mainBindlessSlotsWritten = this->mainBindlessSlotsWritten;
+            bindlessState.encodedSurfaceStates = this->encodedSurfaceStates;
+            allocationCached = imageAllocationCache->insert(this->allocationCacheKey, this->allocatedImgInfo, this->allocation, bindlessState);
+            if (allocationCached) {
+                this->implicitArgsTag = nullptr;
+            } else {
+                this->mipLevelBindlessInfos = std::move(bindlessState.mipLevelBindlessInfos);
+                this->mediaBlockBindlessInfo = std::move(bindlessState.mediaBlockBindlessInfo);
+            }
+        }
+    }
     if (this->device != nullptr) {
         auto rootIndex = this->device->getNEODevice()->getRootDeviceIndex();
         auto bindlessHeapsHelper = this->device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[rootIndex]->getBindlessHeapsHelper();
@@ -93,11 +115,8 @@ ImageImp::~ImageImp() {
         }
     }
     if (this->device != nullptr) {
-        if (!isImageView() && !imageFromBuffer) {
-            auto imageAllocationCache = this->isAllocationReusable ? this->device->getDriverHandle()->getImageAllocationCache() : nullptr;
-            if (imageAllocationCache == nullptr || !imageAllocationCache->insert(this->allocationCacheKey, this->allocatedImgInfo, this->allocation)) {
-                this->device->getNEODevice()->getMemoryManager()->freeGraphicsMemory(this->allocation);
-            }
+        if (!isImageView() && !imageFromBuffer && !allocationCached) {
+            this->device->getNEODevice()->getMemoryManager()->freeGraphicsMemory(this->allocation);
         }
         if (implicitArgsTag) {
             implicitArgsTag->returnTag();
@@ -237,6 +256,43 @@ NEO::SurfaceStateInHeapInfo *ImageImp::allocateBindlessSlotCopy(std::unique_ptr<
     return slotCopy.get();
 }
 
+void ImageImp::adoptCachedBindlessState(ImageBindlessState &bindlessState) {
+    if (bindlessState.implicitArgsTag != nullptr) {
+        this->implicitArgsTag = bindlessState.implicitArgsTag;
+        this->implicitArgsAllocation = this->implicitArgsTag->getBaseGraphicsAllocation()->getGraphicsAllocation(this->device->getRootDeviceIndex());
+        bindlessState.implicitArgsTag = nullptr;
+    }
+    this->pendingBindlessState = std::move(bindlessState);
+}
+
+void ImageImp::finalizeCachedBindlessState() {
+    auto &pending = this->pendingBindlessState;
+    const bool sameSurfaceStates = pending.encodedSurfaceStates == this->encodedSurfaceStates &&
+                                   pending.mipLevelBindlessInfos.size() == this->mipLevelBindlessInfos.size();
+    if (sameSurfaceStates) {
+        this->mipLevelBindlessInfos = std::move(pending.mipLevelBindlessInfos);
+        this->mediaBlockBindlessInfo = std::move(pending.mediaBlockBindlessInfo);
+        this->mainBindlessSlotsWritten = pending.mainBindlessSlotsWritten;
+        pending = {};
+        return;
+    }
+    this->device->getDriverHandle()->getImageAllocationCache()->releaseBindlessState(*this->allocation, pending);
+}
+
+void ImageImp::writeMainBindlessSlots() {
+    if (this->mainBindlessSlotsWritten) {
+        return;
+    }
+
+    auto &rootDeviceEnvironment = *this->device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[allocation->getRootDeviceIndex()];
+    const auto surfaceStateSize = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>().getRenderSurfaceStateSize(rootDeviceEnvironment);
+
+    for (const auto slot : {NEO::BindlessImageSlot::image, NEO::BindlessImageSlot::implicitArgs, NEO::BindlessImageSlot::redescribedImage, NEO::BindlessImageSlot::packedImage}) {
+        copySurfaceStateToSSH(ptrOffset(this->bindlessInfo->ssPtr, surfaceStateSize * slot), 0u, slot, false, 0u);
+    }
+    this->mainBindlessSlotsWritten = true;
+}
+
 ze_result_t ImageImp::allocateBindlessSlotWithMipmap(uint32_t mipLevel) {
     auto result = allocateBindlessSlot();
     if (result != ZE_RESULT_SUCCESS) {
@@ -257,6 +313,7 @@ ze_result_t ImageImp::allocateBindlessSlotWithMipmap(uint32_t mipLevel) {
 
     std::lock_guard<std::mutex> lock(this->mipLevelBindlessInfosMutex);
     UNRECOVERABLE_IF(clampedMipLevel >= this->mipLevelBindlessInfos.size());
+    writeMainBindlessSlots();
     auto slotCopy = allocateBindlessSlotCopy(this->mipLevelBindlessInfos[clampedMipLevel],
                                              {NEO::BindlessImageSlot::image, NEO::BindlessImageSlot::redescribedImage, NEO::BindlessImageSlot::packedImage},
                                              clampedMipLevel, false);
@@ -269,6 +326,7 @@ NEO::SurfaceStateInHeapInfo *ImageImp::getOrInitializeBindlessSlot(uint32_t bind
             return nullptr;
         }
         std::lock_guard<std::mutex> lock(this->mipLevelBindlessInfosMutex);
+        writeMainBindlessSlots();
         return allocateBindlessSlotCopy(this->mediaBlockBindlessInfo, {NEO::BindlessImageSlot::image, NEO::BindlessImageSlot::implicitArgs}, 0u, true);
     }
 
@@ -282,13 +340,7 @@ NEO::SurfaceStateInHeapInfo *ImageImp::getOrInitializeBindlessSlot(uint32_t bind
     }
 
     std::lock_guard<std::mutex> lock(this->mipLevelBindlessInfosMutex);
-    const uint32_t slotBit = 1u << bindlessSlot;
-    if ((this->bindlessSlotsWrittenMask & slotBit) == 0u) {
-        auto &rootDeviceEnvironment = *this->device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[allocation->getRootDeviceIndex()];
-        const auto surfaceStateSize = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>().getRenderSurfaceStateSize(rootDeviceEnvironment);
-        copySurfaceStateToSSH(ptrOffset(this->bindlessInfo->ssPtr, surfaceStateSize * bindlessSlot), 0u, bindlessSlot, false, 0u);
-        this->bindlessSlotsWrittenMask |= slotBit;
-    }
+    writeMainBindlessSlots();
 
     return this->bindlessInfo.get();
 }

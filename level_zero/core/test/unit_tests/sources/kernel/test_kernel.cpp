@@ -3755,7 +3755,7 @@ HWTEST2_F(SetKernelArg, givenImageBindlessKernelAndGlobalBindlessHelperWhenSetAr
         ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
     }
     EXPECT_EQ(2u, imageHW->copySurfaceStateCalled[NEO::BindlessImageSlot::redescribedImage]);
-    EXPECT_EQ(1u, imageHW->copySurfaceStateCalled[NEO::BindlessImageSlot::packedImage]);
+    EXPECT_EQ(2u, imageHW->copySurfaceStateCalled[NEO::BindlessImageSlot::packedImage]);
 }
 
 HWTEST2_F(SetKernelArg, givenImageBindlessKernelAndGlobalBindlessHelperWhenSetArgImageCalledRepeatedlyThenGlobalSlotsAreWrittenOnlyOnce, ImageSupport) {
@@ -3834,7 +3834,7 @@ HWTEST2_F(SetKernelArg, givenMediaBlockImageArgAndBindlessKernelWhenSetArgImageT
     ASSERT_NE(nullptr, baseSlot);
     EXPECT_NE(baseSlot->surfaceStateOffset, mediaBlockSlot->surfaceStateOffset);
     EXPECT_EQ(getExpectedPatchValue(baseSlot->surfaceStateOffset), *patchLocation);
-    EXPECT_EQ(ptrOffset(baseSlot->ssPtr, 0u), imageHW->passedSurfaceStateHeap);
+    EXPECT_EQ(2u, imageHW->copySurfaceStateCalled[NEO::BindlessImageSlot::image]);
 
     arg.getExtendedTypeInfo().isMediaBlockImage = true;
     ret = kernel->setArgImage(3, sizeof(imageHW.get()), &handle);

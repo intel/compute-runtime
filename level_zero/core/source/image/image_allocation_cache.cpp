@@ -18,8 +18,29 @@
 #include "shared/source/memory_manager/unified_memory_reuse_cleaner.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/utilities/tag_allocator.h"
+
+#include <utility>
 
 namespace L0 {
+
+ImageBindlessState::ImageBindlessState() = default;
+ImageBindlessState::~ImageBindlessState() = default;
+ImageBindlessState::ImageBindlessState(ImageBindlessState &&other) noexcept
+    : mipLevelBindlessInfos(std::move(other.mipLevelBindlessInfos)),
+      mediaBlockBindlessInfo(std::move(other.mediaBlockBindlessInfo)),
+      encodedSurfaceStates(std::move(other.encodedSurfaceStates)),
+      implicitArgsTag(std::exchange(other.implicitArgsTag, nullptr)),
+      mainBindlessSlotsWritten(std::exchange(other.mainBindlessSlotsWritten, false)) {}
+
+ImageBindlessState &ImageBindlessState::operator=(ImageBindlessState &&other) noexcept {
+    this->mipLevelBindlessInfos = std::move(other.mipLevelBindlessInfos);
+    this->mediaBlockBindlessInfo = std::move(other.mediaBlockBindlessInfo);
+    this->encodedSurfaceStates = std::move(other.encodedSurfaceStates);
+    this->implicitArgsTag = std::exchange(other.implicitArgsTag, nullptr);
+    this->mainBindlessSlotsWritten = std::exchange(other.mainBindlessSlotsWritten, false);
+    return *this;
+}
 
 bool ImageAllocationCacheKey::matches(const ImageAllocationCacheKey &other) const {
     const auto &desc = this->imgInfo.imgDesc;
@@ -84,6 +105,11 @@ ImageAllocationCache::~ImageAllocationCache() {
 }
 
 bool ImageAllocationCache::insert(const ImageAllocationCacheKey &key, const NEO::ImageInfo &imgInfo, NEO::GraphicsAllocation *allocation) {
+    ImageBindlessState bindlessState;
+    return this->insert(key, imgInfo, allocation, bindlessState);
+}
+
+bool ImageAllocationCache::insert(const ImageAllocationCacheKey &key, const NEO::ImageInfo &imgInfo, NEO::GraphicsAllocation *allocation, ImageBindlessState &bindlessState) {
     if (allocation == nullptr) {
         return false;
     }
@@ -102,7 +128,7 @@ bool ImageAllocationCache::insert(const ImageAllocationCacheKey &key, const NEO:
         }
         this->usmReuseInfo.recordAllocationSaveForReuse(allocationSize);
     }
-    this->allocations.push_back({key, imgInfo, allocation, std::chrono::high_resolution_clock::now()});
+    this->allocations.push_back({key, imgInfo, allocation, std::chrono::high_resolution_clock::now(), std::move(bindlessState)});
     this->empty = false;
     lock.unlock();
 
@@ -114,6 +140,15 @@ bool ImageAllocationCache::insert(const ImageAllocationCacheKey &key, const NEO:
 }
 
 NEO::GraphicsAllocation *ImageAllocationCache::get(const ImageAllocationCacheKey &key, NEO::ImageInfo &imgInfo) {
+    ImageBindlessState bindlessState;
+    auto allocation = this->get(key, imgInfo, bindlessState);
+    if (allocation) {
+        this->releaseBindlessState(*allocation, bindlessState);
+    }
+    return allocation;
+}
+
+NEO::GraphicsAllocation *ImageAllocationCache::get(const ImageAllocationCacheKey &key, NEO::ImageInfo &imgInfo, ImageBindlessState &bindlessState) {
     if (this->empty) {
         return nullptr;
     }
@@ -127,7 +162,7 @@ NEO::GraphicsAllocation *ImageAllocationCache::get(const ImageAllocationCacheKey
             auto reuseLock = this->usmReuseInfo.obtainAllocationsReuseLock();
             this->usmReuseInfo.recordAllocationGetFromReuse(allocation->getUnderlyingBufferSize());
         }
-        this->releaseBindlessSlot(*allocation);
+        bindlessState = std::move(it->bindlessState);
         imgInfo = it->imgInfo;
         this->allocations.erase(it);
         this->empty = this->allocations.empty();
@@ -136,29 +171,45 @@ NEO::GraphicsAllocation *ImageAllocationCache::get(const ImageAllocationCacheKey
     return nullptr;
 }
 
-void ImageAllocationCache::releaseBindlessSlot(NEO::GraphicsAllocation &allocation) {
-    const auto &bindlessInfo = allocation.getBindlessInfo();
-    if (bindlessInfo.heapAllocation == nullptr) {
-        return;
-    }
+void ImageAllocationCache::releaseBindlessState(NEO::GraphicsAllocation &allocation, ImageBindlessState &bindlessState) {
     auto bindlessHeapsHelper = this->memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[allocation.getRootDeviceIndex()]->getBindlessHeapsHelper();
     if (bindlessHeapsHelper) {
-        bindlessHeapsHelper->releaseSSToReusePool(bindlessInfo);
+        const auto &bindlessInfo = allocation.getBindlessInfo();
+        if (bindlessInfo.heapAllocation != nullptr) {
+            bindlessHeapsHelper->releaseSSToReusePool(bindlessInfo);
+        }
+        for (const auto &mipLevelBindlessInfo : bindlessState.mipLevelBindlessInfos) {
+            if (mipLevelBindlessInfo != nullptr) {
+                bindlessHeapsHelper->releaseSSToReusePool(*mipLevelBindlessInfo);
+            }
+        }
+        if (bindlessState.mediaBlockBindlessInfo != nullptr) {
+            bindlessHeapsHelper->releaseSSToReusePool(*bindlessState.mediaBlockBindlessInfo);
+        }
     }
     allocation.setBindlessInfo({});
+    bindlessState.mipLevelBindlessInfos.clear();
+    bindlessState.mediaBlockBindlessInfo.reset();
+    bindlessState.encodedSurfaceStates.clear();
+    bindlessState.mainBindlessSlotsWritten = false;
+    if (bindlessState.implicitArgsTag != nullptr) {
+        bindlessState.implicitArgsTag->returnTag();
+        bindlessState.implicitArgsTag = nullptr;
+    }
 }
 
-void ImageAllocationCache::freeCachedAllocation(const CachedAllocation &cachedAllocation) {
+void ImageAllocationCache::freeCachedAllocation(CachedAllocation &cachedAllocation) {
     {
         auto reuseLock = this->usmReuseInfo.obtainAllocationsReuseLock();
         this->usmReuseInfo.recordAllocationGetFromReuse(cachedAllocation.allocation->getUnderlyingBufferSize());
     }
+    this->releaseBindlessState(*cachedAllocation.allocation, cachedAllocation.bindlessState);
     this->memoryManager->freeGraphicsMemory(cachedAllocation.allocation);
 }
 
 void ImageAllocationCache::trim() {
     std::lock_guard<std::mutex> lock(this->mtx);
-    for (const auto &cachedAllocation : this->allocations) {
+    for (auto &cachedAllocation : this->allocations) {
         this->freeCachedAllocation(cachedAllocation);
     }
     this->allocations.clear();

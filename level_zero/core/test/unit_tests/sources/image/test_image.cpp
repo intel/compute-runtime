@@ -4872,13 +4872,14 @@ HWTEST2_F(ImageCreate, givenMipmappedImageWhenGettingOrInitializingBindlessSlotR
     auto baseSlot = imageHW->getOrInitializeBindlessSlot(NEO::BindlessImageSlot::redescribedImage, 0u, false);
     ASSERT_NE(nullptr, baseSlot);
     EXPECT_EQ(imageHW->getBindlessSlot(), baseSlot);
-    ASSERT_EQ(1u, imageHW->copiedSurfaceStates.size());
-    EXPECT_EQ(ptrOffset(baseSlot->ssPtr, surfaceStateSize * NEO::BindlessImageSlot::redescribedImage), imageHW->copiedSurfaceStates[0].destination);
-    EXPECT_EQ(NEO::BindlessImageSlot::redescribedImage, imageHW->copiedSurfaceStates[0].bindlessSlot);
-    EXPECT_EQ(0u, imageHW->copiedSurfaceStates[0].mipLevel);
+    ASSERT_EQ(4u, imageHW->copiedSurfaceStates.size());
+    for (const auto &copiedSurfaceState : imageHW->copiedSurfaceStates) {
+        EXPECT_EQ(ptrOffset(baseSlot->ssPtr, surfaceStateSize * copiedSurfaceState.bindlessSlot), copiedSurfaceState.destination);
+        EXPECT_EQ(0u, copiedSurfaceState.mipLevel);
+    }
 
     EXPECT_EQ(baseSlot, imageHW->getOrInitializeBindlessSlot(NEO::BindlessImageSlot::redescribedImage, 0u, false));
-    EXPECT_EQ(1u, imageHW->copiedSurfaceStates.size());
+    EXPECT_EQ(4u, imageHW->copiedSurfaceStates.size());
 
     constexpr uint32_t mipLevel = 2u;
     auto mipLevelSlot = imageHW->getOrInitializeBindlessSlot(NEO::BindlessImageSlot::redescribedImage, mipLevel, false);
@@ -4886,8 +4887,8 @@ HWTEST2_F(ImageCreate, givenMipmappedImageWhenGettingOrInitializingBindlessSlotR
     EXPECT_NE(baseSlot, mipLevelSlot);
     EXPECT_EQ(imageHW->getBindlessSlotWithMipmap(mipLevel), mipLevelSlot);
 
-    ASSERT_EQ(4u, imageHW->copiedSurfaceStates.size());
-    for (uint32_t i = 1u; i < 4u; i++) {
+    ASSERT_EQ(7u, imageHW->copiedSurfaceStates.size());
+    for (uint32_t i = 4u; i < 7u; i++) {
         EXPECT_EQ(mipLevel, imageHW->copiedSurfaceStates[i].mipLevel);
         EXPECT_FALSE(imageHW->copiedSurfaceStates[i].isMediaBlockArg);
         EXPECT_EQ(ptrOffset(mipLevelSlot->ssPtr, surfaceStateSize * imageHW->copiedSurfaceStates[i].bindlessSlot), imageHW->copiedSurfaceStates[i].destination);
@@ -4896,7 +4897,7 @@ HWTEST2_F(ImageCreate, givenMipmappedImageWhenGettingOrInitializingBindlessSlotR
     for (const auto slot : {NEO::BindlessImageSlot::image, NEO::BindlessImageSlot::redescribedImage, NEO::BindlessImageSlot::packedImage}) {
         EXPECT_EQ(mipLevelSlot, imageHW->getOrInitializeBindlessSlot(slot, mipLevel, false));
     }
-    EXPECT_EQ(4u, imageHW->copiedSurfaceStates.size());
+    EXPECT_EQ(7u, imageHW->copiedSurfaceStates.size());
 
     EXPECT_EQ(imageHW->getOrInitializeBindlessSlot(NEO::BindlessImageSlot::redescribedImage, desc.miplevels - 1u, false),
               imageHW->getOrInitializeBindlessSlot(NEO::BindlessImageSlot::redescribedImage, desc.miplevels + 100u, false));
@@ -5028,11 +5029,144 @@ HWTEST2_F(ImageCreate, givenNonMipmappedImageWhenGettingOrInitializingBindlessSl
     auto slot = imageHW->getOrInitializeBindlessSlot(NEO::BindlessImageSlot::redescribedImage, 3u, false);
     ASSERT_NE(nullptr, slot);
     EXPECT_EQ(imageHW->getBindlessSlot(), slot);
-    ASSERT_EQ(1u, imageHW->copiedSurfaceStates.size());
-    EXPECT_EQ(0u, imageHW->copiedSurfaceStates[0].mipLevel);
+    ASSERT_EQ(4u, imageHW->copiedSurfaceStates.size());
+    for (const auto &copiedSurfaceState : imageHW->copiedSurfaceStates) {
+        EXPECT_EQ(0u, copiedSurfaceState.mipLevel);
+    }
 
     EXPECT_EQ(slot, imageHW->getOrInitializeBindlessSlot(NEO::BindlessImageSlot::redescribedImage, 0u, false));
-    EXPECT_EQ(1u, imageHW->copiedSurfaceStates.size());
+    EXPECT_EQ(4u, imageHW->copiedSurfaceStates.size());
+}
+
+HWTEST2_F(ImageCreate, givenImageWhenBindlessSlotIsInitializedForAnySlotThenAllMainSlotsAreWrittenBeforeSlotIsReturned, ImageSupport) {
+    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice, neoDevice->getNumGenericSubDevices() > 1);
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
+
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.arraylevels = 1u;
+    desc.depth = 1u;
+    desc.height = 32u;
+    desc.width = 32u;
+    desc.type = ZE_IMAGE_TYPE_2D;
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_UINT;
+    desc.format.x = ZE_IMAGE_FORMAT_SWIZZLE_R;
+    desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_G;
+    desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_B;
+    desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_A;
+
+    const auto surfaceStateSize = device->getGfxCoreHelper().getRenderSurfaceStateSize(neoDevice->getRootDeviceEnvironment());
+    const std::array<uint32_t, 4> mainSlots = {NEO::BindlessImageSlot::image, NEO::BindlessImageSlot::implicitArgs,
+                                               NEO::BindlessImageSlot::redescribedImage, NEO::BindlessImageSlot::packedImage};
+
+    for (const auto requestedSlot : mainSlots) {
+        auto imageHW = std::make_unique<CopySurfaceStateTrackingImage<FamilyType::gfxCoreFamily>>();
+        ASSERT_EQ(ZE_RESULT_SUCCESS, imageHW->initialize(device, &desc));
+        imageHW->copiedSurfaceStates.clear();
+
+        auto slot = imageHW->getOrInitializeBindlessSlot(requestedSlot, 0u, false);
+        ASSERT_NE(nullptr, slot);
+
+        ASSERT_EQ(mainSlots.size(), imageHW->copiedSurfaceStates.size());
+        for (const auto expectedSlot : mainSlots) {
+            auto copiedSurfaceState = std::find_if(imageHW->copiedSurfaceStates.begin(), imageHW->copiedSurfaceStates.end(),
+                                                   [&](const auto &copied) { return copied.bindlessSlot == expectedSlot; });
+            ASSERT_NE(imageHW->copiedSurfaceStates.end(), copiedSurfaceState);
+            EXPECT_EQ(ptrOffset(slot->ssPtr, surfaceStateSize * expectedSlot), copiedSurfaceState->destination);
+            EXPECT_EQ(0u, copiedSurfaceState->mipLevel);
+            EXPECT_FALSE(copiedSurfaceState->isMediaBlockArg);
+        }
+
+        for (const auto otherSlot : mainSlots) {
+            EXPECT_EQ(slot, imageHW->getOrInitializeBindlessSlot(otherSlot, 0u, false));
+        }
+        EXPECT_EQ(mainSlots.size(), imageHW->copiedSurfaceStates.size());
+    }
+}
+
+HWTEST2_F(ImageCreate, givenImageWithoutWrittenMainSlotsWhenMediaBlockSlotIsRequestedThenMainSlotsAreWrittenBeforeMediaBlockCopy, ImageSupport) {
+    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice, neoDevice->getNumGenericSubDevices() > 1);
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
+
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.arraylevels = 1u;
+    desc.depth = 1u;
+    desc.height = 32u;
+    desc.width = 32u;
+    desc.type = ZE_IMAGE_TYPE_2D;
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_UINT;
+    desc.format.x = ZE_IMAGE_FORMAT_SWIZZLE_R;
+    desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_G;
+    desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_B;
+    desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_A;
+
+    auto imageHW = std::make_unique<CopySurfaceStateTrackingImage<FamilyType::gfxCoreFamily>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, imageHW->initialize(device, &desc));
+    imageHW->copiedSurfaceStates.clear();
+
+    auto mediaBlockSlot = imageHW->getOrInitializeBindlessSlot(NEO::BindlessImageSlot::image, 0u, true);
+    ASSERT_NE(nullptr, mediaBlockSlot);
+    auto baseSlot = imageHW->getBindlessSlot();
+    ASSERT_NE(nullptr, baseSlot);
+    EXPECT_NE(baseSlot, mediaBlockSlot);
+
+    const auto surfaceStateSize = device->getGfxCoreHelper().getRenderSurfaceStateSize(neoDevice->getRootDeviceEnvironment());
+    ASSERT_EQ(6u, imageHW->copiedSurfaceStates.size());
+    for (uint32_t i = 0u; i < 4u; i++) {
+        EXPECT_EQ(ptrOffset(baseSlot->ssPtr, surfaceStateSize * imageHW->copiedSurfaceStates[i].bindlessSlot), imageHW->copiedSurfaceStates[i].destination);
+        EXPECT_FALSE(imageHW->copiedSurfaceStates[i].isMediaBlockArg);
+    }
+    for (uint32_t i = 4u; i < 6u; i++) {
+        EXPECT_EQ(ptrOffset(mediaBlockSlot->ssPtr, surfaceStateSize * imageHW->copiedSurfaceStates[i].bindlessSlot), imageHW->copiedSurfaceStates[i].destination);
+    }
+
+    EXPECT_EQ(baseSlot, imageHW->getOrInitializeBindlessSlot(NEO::BindlessImageSlot::redescribedImage, 0u, false));
+    EXPECT_EQ(6u, imageHW->copiedSurfaceStates.size());
+}
+
+HWTEST2_F(ImageCreate, givenBindlessImageWhenInitializedThenAllMainSlotsAreWrittenAndNotRewrittenOnSlotRequest, ImageSupport) {
+    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice, neoDevice->getNumGenericSubDevices() > 1);
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
+
+    ze_image_bindless_exp_desc_t bindlessExtDesc = {};
+    bindlessExtDesc.stype = ZE_STRUCTURE_TYPE_BINDLESS_IMAGE_EXP_DESC;
+    bindlessExtDesc.flags = ZE_IMAGE_BINDLESS_EXP_FLAG_BINDLESS;
+
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.pNext = &bindlessExtDesc;
+    desc.arraylevels = 1u;
+    desc.depth = 1u;
+    desc.height = 32u;
+    desc.width = 32u;
+    desc.type = ZE_IMAGE_TYPE_2D;
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_UINT;
+    desc.format.x = ZE_IMAGE_FORMAT_SWIZZLE_R;
+    desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_G;
+    desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_B;
+    desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_A;
+
+    auto imageHW = std::make_unique<CopySurfaceStateTrackingImage<FamilyType::gfxCoreFamily>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, imageHW->initialize(device, &desc));
+
+    auto baseSlot = imageHW->getBindlessSlot();
+    ASSERT_NE(nullptr, baseSlot);
+    const auto surfaceStateSize = device->getGfxCoreHelper().getRenderSurfaceStateSize(neoDevice->getRootDeviceEnvironment());
+    ASSERT_EQ(4u, imageHW->copiedSurfaceStates.size());
+    for (const auto expectedSlot : {NEO::BindlessImageSlot::image, NEO::BindlessImageSlot::implicitArgs,
+                                    NEO::BindlessImageSlot::redescribedImage, NEO::BindlessImageSlot::packedImage}) {
+        auto copiedSurfaceState = std::find_if(imageHW->copiedSurfaceStates.begin(), imageHW->copiedSurfaceStates.end(),
+                                               [&](const auto &copied) { return copied.bindlessSlot == expectedSlot; });
+        ASSERT_NE(imageHW->copiedSurfaceStates.end(), copiedSurfaceState);
+        EXPECT_EQ(ptrOffset(baseSlot->ssPtr, surfaceStateSize * expectedSlot), copiedSurfaceState->destination);
+    }
+
+    EXPECT_EQ(baseSlot, imageHW->getOrInitializeBindlessSlot(NEO::BindlessImageSlot::redescribedImage, 0u, false));
+    EXPECT_EQ(4u, imageHW->copiedSurfaceStates.size());
 }
 
 HWTEST2_F(ImageCreate, givenImageWithMediaBlockBindlessSlotWhenDestroyingImageThenMediaBlockSlotIsReleasedToReusePool, ImageSupport) {

@@ -42,6 +42,7 @@ static_assert(ImageFormats::maxLayoutCount == static_cast<uint32_t>(ZE_IMAGE_FOR
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_image_desc_t *desc) {
+    bool adoptedBindlessState = false;
     using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
 
     const auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
@@ -211,7 +212,16 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
                 auto imageAllocationCache = device->getDriverHandle()->getImageAllocationCache();
                 if (imageAllocationCache) {
                     this->allocationCacheKey = {imgInfo, properties.subDevicesBitfield, properties.allocationType, properties.rootDeviceIndex, properties.flags.preferCompressed != 0u};
-                    allocation = imageAllocationCache->get(this->allocationCacheKey, imgInfo);
+                    ImageBindlessState bindlessState;
+                    allocation = imageAllocationCache->get(this->allocationCacheKey, imgInfo, bindlessState);
+                    if (allocation != nullptr) {
+                        if (this->bindlessImage) {
+                            imageAllocationCache->releaseBindlessState(*allocation, bindlessState);
+                        } else {
+                            adoptCachedBindlessState(bindlessState);
+                            adoptedBindlessState = true;
+                        }
+                    }
                 }
                 if (allocation == nullptr) {
                     allocation = device->getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
@@ -275,7 +285,12 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
         }
         obtainImplicitArgsTag();
     } else if (this->device->getNEODevice()->getBindlessHeapsHelper()) {
-        allocateImplicitArgsOnDemand();
+        if (implicitArgsTag != nullptr) {
+            writeImplicitArgsToTag();
+            encodeImplicitArgsSurfaceState();
+        } else {
+            allocateImplicitArgsOnDemand();
+        }
     }
 
     auto gmm = this->allocation->getDefaultGmm();
@@ -411,10 +426,16 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
 
     encodeSurfaceState(slotContext);
 
+    this->encodedSurfaceStates.clear();
+    for (const auto *storage : {&surfaceStateStorage, &redescribedSurfaceStateStorage, &packedSurfaceStateStorage, &implicitArgsSurfaceStateStorage}) {
+        this->encodedSurfaceStates.insert(this->encodedSurfaceStates.end(), storage->begin(), storage->end());
+    }
+    if (adoptedBindlessState) {
+        finalizeCachedBindlessState();
+    }
+
     if (this->bindlessImage) {
         auto ssInHeap = getBindlessSlot();
-        copySurfaceStateToSSH(ssInHeap->ssPtr, 0u, NEO::BindlessImageSlot::image, false, 0u);
-        bindlessSlotsWrittenMask |= (1u << NEO::BindlessImageSlot::image);
 
         if (this->sampledImage) {
             auto sampler = Sampler::create(device, &this->samplerDesc);
@@ -438,14 +459,12 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
                 samplerState->setIndirectStatePointer(bindlessHeapsHelper->getDefaultBorderColorOffset());
             }
         }
-    }
 
-    if (this->bindlessImage && implicitArgsAllocation) {
-        writeImplicitArgsToTag();
-        this->encodeImplicitArgsSurfaceState();
-        auto ssInHeap = getBindlessSlot();
-        copySurfaceStateToSSH(ptrOffset(ssInHeap->ssPtr, surfaceStateSize), 0u, NEO::BindlessImageSlot::implicitArgs, false, 0u);
-        bindlessSlotsWrittenMask |= (1u << NEO::BindlessImageSlot::implicitArgs);
+        if (implicitArgsAllocation) {
+            writeImplicitArgsToTag();
+            this->encodeImplicitArgsSurfaceState();
+        }
+        writeMainBindlessSlots();
     }
 
     return ZE_RESULT_SUCCESS;

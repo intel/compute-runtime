@@ -21,7 +21,9 @@
 namespace NEO {
 class Device;
 class GraphicsAllocation;
+class TagNodeBase;
 class UnifiedMemoryReuseCleaner;
+struct SurfaceStateInHeapInfo;
 struct UsmReuseInfo;
 } // namespace NEO
 
@@ -37,6 +39,19 @@ struct ImageAllocationCacheKey {
     bool matches(const ImageAllocationCacheKey &other) const;
 };
 
+struct ImageBindlessState {
+    ImageBindlessState();
+    ~ImageBindlessState();
+    ImageBindlessState(ImageBindlessState &&other) noexcept;
+    ImageBindlessState &operator=(ImageBindlessState &&other) noexcept;
+
+    std::vector<std::unique_ptr<NEO::SurfaceStateInHeapInfo>> mipLevelBindlessInfos;
+    std::unique_ptr<NEO::SurfaceStateInHeapInfo> mediaBlockBindlessInfo;
+    std::vector<uint8_t> encodedSurfaceStates;
+    NEO::TagNodeBase *implicitArgsTag = nullptr;
+    bool mainBindlessSlotsWritten = false;
+};
+
 class ImageAllocationCache : public NEO::AllocationReuseCache {
   public:
     struct CachedAllocation {
@@ -44,6 +59,7 @@ class ImageAllocationCache : public NEO::AllocationReuseCache {
         NEO::ImageInfo imgInfo;
         NEO::GraphicsAllocation *allocation;
         std::chrono::high_resolution_clock::time_point saveTime;
+        ImageBindlessState bindlessState;
     };
 
     static std::unique_ptr<ImageAllocationCache> create(NEO::Device &device);
@@ -52,7 +68,10 @@ class ImageAllocationCache : public NEO::AllocationReuseCache {
     ~ImageAllocationCache() override;
 
     bool insert(const ImageAllocationCacheKey &key, const NEO::ImageInfo &imgInfo, NEO::GraphicsAllocation *allocation);
+    bool insert(const ImageAllocationCacheKey &key, const NEO::ImageInfo &imgInfo, NEO::GraphicsAllocation *allocation, ImageBindlessState &bindlessState);
     NEO::GraphicsAllocation *get(const ImageAllocationCacheKey &key, NEO::ImageInfo &imgInfo);
+    NEO::GraphicsAllocation *get(const ImageAllocationCacheKey &key, NEO::ImageInfo &imgInfo, ImageBindlessState &bindlessState);
+    void releaseBindlessState(NEO::GraphicsAllocation &allocation, ImageBindlessState &bindlessState);
     void trim();
     void cleanup();
 
@@ -61,8 +80,7 @@ class ImageAllocationCache : public NEO::AllocationReuseCache {
     NEO::MemoryManager *getMemoryManager() const override { return this->memoryManager; }
 
   protected:
-    void releaseBindlessSlot(NEO::GraphicsAllocation &allocation);
-    void freeCachedAllocation(const CachedAllocation &cachedAllocation);
+    void freeCachedAllocation(CachedAllocation &cachedAllocation);
 
     std::vector<CachedAllocation> allocations;
     std::mutex mtx;

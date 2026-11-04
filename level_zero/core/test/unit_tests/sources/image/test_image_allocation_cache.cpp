@@ -7,8 +7,12 @@
 
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/bindless_heaps_helper.h"
+#include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/unified_memory_reuse.h"
+#include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/raii_product_helper.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
@@ -175,6 +179,108 @@ TEST_F(ImageAllocationCacheTest, givenCachedAllocationInUseWhenGettingThenItIsSk
     this->memoryManager->deferAllocInUse = false;
     EXPECT_EQ(allocation, this->cache->get(createImageAllocationCacheKey(16u), imgInfo));
 
+    this->memoryManager->freeGraphicsMemory(allocation);
+}
+
+struct ImageAllocationCacheBindlessStateFixture : public ImageAllocationCacheFixture {
+    void setUp() {
+        ImageAllocationCacheFixture::setUp();
+        this->bindlessHelper = new MockBindlesHeapsHelper(this->neoDevice, this->neoDevice->getNumGenericSubDevices() > 1);
+        this->neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[this->neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(this->bindlessHelper);
+    }
+
+    size_t releasedSlotCount() const {
+        return this->bindlessHelper->surfaceStateInHeapVectorReuse[this->bindlessHelper->releasePoolIndex][0].size() +
+               this->bindlessHelper->surfaceStateInHeapVectorReuse[this->bindlessHelper->releasePoolIndex][1].size();
+    }
+
+    NEO::GraphicsAllocation *allocateWithBindlessState(ImageBindlessState &bindlessState) {
+        auto allocation = this->allocate();
+        EXPECT_TRUE(this->memoryManager->allocateBindlessSlot(allocation));
+        const auto surfaceStateSize = this->device->getGfxCoreHelper().getRenderSurfaceStateSize(this->neoDevice->getRootDeviceEnvironment());
+        bindlessState.mipLevelBindlessInfos.push_back(nullptr);
+        bindlessState.mipLevelBindlessInfos.push_back(std::make_unique<NEO::SurfaceStateInHeapInfo>(
+            this->bindlessHelper->allocateSSInHeap(NEO::BindlessImageSlot::max * surfaceStateSize, allocation, NEO::BindlessHeapsHelper::globalSsh)));
+        bindlessState.implicitArgsTag = this->device->getImageImplicitArgsAllocator()->getTag();
+        bindlessState.mainBindlessSlotsWritten = true;
+        return allocation;
+    }
+
+    MockBindlesHeapsHelper *bindlessHelper = nullptr;
+};
+
+using ImageAllocationCacheBindlessStateTest = Test<ImageAllocationCacheBindlessStateFixture>;
+
+TEST_F(ImageAllocationCacheBindlessStateTest, givenAllocationCachedWithBindlessStateWhenGettingWithStateThenStateIsHandedBackAndNoSlotIsReleased) {
+    ImageBindlessState bindlessState;
+    auto allocation = this->allocateWithBindlessState(bindlessState);
+    const auto mainSlotOffset = allocation->getBindlessOffset();
+    const auto mipLevelSlotOffset = bindlessState.mipLevelBindlessInfos[1]->surfaceStateOffset;
+    auto implicitArgsTag = bindlessState.implicitArgsTag;
+    const auto releasedSlotCountBefore = this->releasedSlotCount();
+
+    EXPECT_TRUE(this->cache->insert(createImageAllocationCacheKey(16u), {}, allocation, bindlessState));
+    EXPECT_TRUE(bindlessState.mipLevelBindlessInfos.empty());
+    EXPECT_EQ(nullptr, bindlessState.implicitArgsTag);
+
+    NEO::ImageInfo imgInfo = {};
+    ImageBindlessState returnedBindlessState;
+    EXPECT_EQ(allocation, this->cache->get(createImageAllocationCacheKey(16u), imgInfo, returnedBindlessState));
+    EXPECT_EQ(mainSlotOffset, allocation->getBindlessOffset());
+    ASSERT_EQ(2u, returnedBindlessState.mipLevelBindlessInfos.size());
+    EXPECT_EQ(nullptr, returnedBindlessState.mipLevelBindlessInfos[0]);
+    ASSERT_NE(nullptr, returnedBindlessState.mipLevelBindlessInfos[1]);
+    EXPECT_EQ(mipLevelSlotOffset, returnedBindlessState.mipLevelBindlessInfos[1]->surfaceStateOffset);
+    EXPECT_EQ(implicitArgsTag, returnedBindlessState.implicitArgsTag);
+    EXPECT_TRUE(returnedBindlessState.mainBindlessSlotsWritten);
+    EXPECT_EQ(releasedSlotCountBefore, this->releasedSlotCount());
+
+    this->cache->releaseBindlessState(*allocation, returnedBindlessState);
+    EXPECT_EQ(releasedSlotCountBefore + 2u, this->releasedSlotCount());
+    EXPECT_EQ(std::numeric_limits<uint64_t>::max(), allocation->getBindlessOffset());
+    EXPECT_TRUE(returnedBindlessState.mipLevelBindlessInfos.empty());
+    EXPECT_EQ(nullptr, returnedBindlessState.implicitArgsTag);
+    EXPECT_FALSE(returnedBindlessState.mainBindlessSlotsWritten);
+
+    this->memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(ImageAllocationCacheBindlessStateTest, givenAllocationCachedWithBindlessStateWhenGettingWithoutStateThenAllSlotsAreReleased) {
+    ImageBindlessState bindlessState;
+    auto allocation = this->allocateWithBindlessState(bindlessState);
+    const auto releasedSlotCountBefore = this->releasedSlotCount();
+    EXPECT_TRUE(this->cache->insert(createImageAllocationCacheKey(16u), {}, allocation, bindlessState));
+
+    NEO::ImageInfo imgInfo = {};
+    EXPECT_EQ(allocation, this->cache->get(createImageAllocationCacheKey(16u), imgInfo));
+    EXPECT_EQ(releasedSlotCountBefore + 2u, this->releasedSlotCount());
+    EXPECT_EQ(std::numeric_limits<uint64_t>::max(), allocation->getBindlessOffset());
+
+    this->memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(ImageAllocationCacheBindlessStateTest, givenAllocationCachedWithBindlessStateWhenTrimmingThenAllSlotsAreReleased) {
+    ImageBindlessState bindlessState;
+    auto allocation = this->allocateWithBindlessState(bindlessState);
+    const auto releasedSlotCountBefore = this->releasedSlotCount();
+    EXPECT_TRUE(this->cache->insert(createImageAllocationCacheKey(16u), {}, allocation, bindlessState));
+
+    this->cache->trim();
+    EXPECT_TRUE(this->cache->isEmpty());
+    EXPECT_EQ(releasedSlotCountBefore + 2u, this->releasedSlotCount());
+}
+
+TEST_F(ImageAllocationCacheBindlessStateTest, givenRejectedInsertWhenInsertingWithBindlessStateThenStateStaysWithCaller) {
+    ImageBindlessState bindlessState;
+    auto allocation = this->allocateWithBindlessState(bindlessState);
+    auto implicitArgsTag = bindlessState.implicitArgsTag;
+    this->usmReuseInfo->init(MemoryConstants::pageSize - 1u, NEO::UsmReuseInfo::notLimited);
+
+    EXPECT_FALSE(this->cache->insert(createImageAllocationCacheKey(16u), {}, allocation, bindlessState));
+    EXPECT_EQ(2u, bindlessState.mipLevelBindlessInfos.size());
+    EXPECT_EQ(implicitArgsTag, bindlessState.implicitArgsTag);
+
+    this->cache->releaseBindlessState(*allocation, bindlessState);
     this->memoryManager->freeGraphicsMemory(allocation);
 }
 
@@ -506,6 +612,107 @@ HWTEST2_F(ImageAllocationReuseTest, givenBindlessImageWhenGraphicsAllocationIsRe
     EXPECT_NE(std::numeric_limits<uint64_t>::max(), allocation->getBindlessOffset());
     EXPECT_NE(firstBindlessOffset, allocation->getBindlessOffset());
     EXPECT_NE(nullptr, secondImage->getBindlessSlot());
+    secondImage->destroy();
+}
+
+HWTEST2_F(ImageAllocationReuseTest, givenImageWithInitializedBindlessSlotsWhenGraphicsAllocationIsReusedThenSlotsAndImplicitArgsAreAdoptedWithoutRewrite, ImageSupport) {
+    auto bindlessHelper = new MockBindlesHeapsHelper(this->neoDevice, this->neoDevice->getNumGenericSubDevices() > 1);
+    this->neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[this->neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
+    const auto surfaceStateSize = this->device->getGfxCoreHelper().getRenderSurfaceStateSize(this->neoDevice->getRootDeviceEnvironment());
+
+    auto desc = createImageDesc(32u);
+    desc.miplevels = 2u;
+
+    L0::Image *image = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, Image::create(this->device, &desc, &image));
+    auto allocation = image->getAllocation();
+    auto implicitArgsAllocation = image->getImplicitArgsAllocation();
+    ASSERT_NE(nullptr, implicitArgsAllocation);
+    auto mainSlot = image->getOrInitializeBindlessSlot(NEO::BindlessImageSlot::redescribedImage, 0u, false);
+    ASSERT_NE(nullptr, mainSlot);
+    auto mipLevelSlot = image->getOrInitializeBindlessSlot(NEO::BindlessImageSlot::redescribedImage, 1u, false);
+    ASSERT_NE(nullptr, mipLevelSlot);
+    const auto mainSlotOffset = mainSlot->surfaceStateOffset;
+    const auto mipLevelSlotOffset = mipLevelSlot->surfaceStateOffset;
+    auto mainRedescribedState = reinterpret_cast<uint32_t *>(ptrOffset(mainSlot->ssPtr, surfaceStateSize * NEO::BindlessImageSlot::redescribedImage));
+    auto mipLevelRedescribedState = reinterpret_cast<uint32_t *>(ptrOffset(mipLevelSlot->ssPtr, surfaceStateSize * NEO::BindlessImageSlot::redescribedImage));
+    image->destroy();
+
+    constexpr uint32_t marker = 0xabcdabcd;
+    *mainRedescribedState = marker;
+    *mipLevelRedescribedState = marker;
+
+    L0::Image *secondImage = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, Image::create(this->device, &desc, &secondImage));
+    EXPECT_EQ(allocation, secondImage->getAllocation());
+    EXPECT_EQ(implicitArgsAllocation, secondImage->getImplicitArgsAllocation());
+
+    auto secondMainSlot = secondImage->getOrInitializeBindlessSlot(NEO::BindlessImageSlot::redescribedImage, 0u, false);
+    ASSERT_NE(nullptr, secondMainSlot);
+    EXPECT_EQ(mainSlotOffset, secondMainSlot->surfaceStateOffset);
+    auto secondMipLevelSlot = secondImage->getOrInitializeBindlessSlot(NEO::BindlessImageSlot::redescribedImage, 1u, false);
+    ASSERT_NE(nullptr, secondMipLevelSlot);
+    EXPECT_EQ(mipLevelSlotOffset, secondMipLevelSlot->surfaceStateOffset);
+    EXPECT_EQ(marker, *mainRedescribedState);
+    EXPECT_EQ(marker, *mipLevelRedescribedState);
+    secondImage->destroy();
+}
+
+HWTEST2_F(ImageAllocationReuseTest, givenImageWithInitializedBindlessSlotsWhenGraphicsAllocationIsReusedByImageWithDifferentSwizzleThenCachedSlotsAreNotAdopted, ImageSupport) {
+    auto bindlessHelper = new MockBindlesHeapsHelper(this->neoDevice, this->neoDevice->getNumGenericSubDevices() > 1);
+    this->neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[this->neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
+    const auto surfaceStateSize = this->device->getGfxCoreHelper().getRenderSurfaceStateSize(this->neoDevice->getRootDeviceEnvironment());
+
+    auto desc = createImageDesc(32u);
+    desc.miplevels = 2u;
+
+    L0::Image *image = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, Image::create(this->device, &desc, &image));
+    auto allocation = image->getAllocation();
+    auto mainSlot = image->getOrInitializeBindlessSlot(NEO::BindlessImageSlot::redescribedImage, 0u, false);
+    ASSERT_NE(nullptr, mainSlot);
+    ASSERT_NE(nullptr, image->getOrInitializeBindlessSlot(NEO::BindlessImageSlot::redescribedImage, 1u, false));
+    const auto mainSlotOffset = mainSlot->surfaceStateOffset;
+    image->destroy();
+
+    auto releasedSlotCount = [&]() {
+        return bindlessHelper->surfaceStateInHeapVectorReuse[bindlessHelper->releasePoolIndex][0].size() +
+               bindlessHelper->surfaceStateInHeapVectorReuse[bindlessHelper->releasePoolIndex][1].size();
+    };
+    const auto releasedSlotCountBefore = releasedSlotCount();
+
+    auto swizzledDesc = desc;
+    swizzledDesc.format.x = ZE_IMAGE_FORMAT_SWIZZLE_B;
+    swizzledDesc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_R;
+    L0::Image *secondImage = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, Image::create(this->device, &swizzledDesc, &secondImage));
+    EXPECT_EQ(allocation, secondImage->getAllocation());
+    EXPECT_EQ(releasedSlotCountBefore + 2u, releasedSlotCount());
+
+    auto secondMainSlot = secondImage->getOrInitializeBindlessSlot(NEO::BindlessImageSlot::image, 0u, false);
+    ASSERT_NE(nullptr, secondMainSlot);
+    EXPECT_NE(mainSlotOffset, secondMainSlot->surfaceStateOffset);
+    auto imageState = reinterpret_cast<uint32_t *>(ptrOffset(secondMainSlot->ssPtr, surfaceStateSize * NEO::BindlessImageSlot::image));
+    EXPECT_NE(0u, *imageState);
+    secondImage->destroy();
+}
+
+HWTEST2_F(ImageAllocationReuseTest, givenImageWithoutInitializedBindlessSlotsWhenGraphicsAllocationIsReusedThenMainSlotsAreWrittenOnFirstUse, ImageSupport) {
+    auto bindlessHelper = new MockBindlesHeapsHelper(this->neoDevice, this->neoDevice->getNumGenericSubDevices() > 1);
+    this->neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[this->neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
+    const auto surfaceStateSize = this->device->getGfxCoreHelper().getRenderSurfaceStateSize(this->neoDevice->getRootDeviceEnvironment());
+
+    const auto desc = createImageDesc(32u);
+    L0::Image *image = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, Image::create(this->device, &desc, &image));
+    image->destroy();
+
+    L0::Image *secondImage = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, Image::create(this->device, &desc, &secondImage));
+    auto mainSlot = secondImage->getOrInitializeBindlessSlot(NEO::BindlessImageSlot::image, 0u, false);
+    ASSERT_NE(nullptr, mainSlot);
+    auto redescribedState = reinterpret_cast<uint32_t *>(ptrOffset(mainSlot->ssPtr, surfaceStateSize * NEO::BindlessImageSlot::redescribedImage));
+    EXPECT_NE(0u, *redescribedState);
     secondImage->destroy();
 }
 
