@@ -241,8 +241,10 @@ TEST_F(SysmanRescanLinuxImpTest, GivenProcfsGetFileNameSucceedsWhenCallingUpdate
         return 0;
     });
 
+    EXPECT_NE(nullptr, pLinuxSysmanImp->getFwctlInterface());
     EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxSysmanImp->updateBdfDependentData());
     EXPECT_GE(pMockSysfsAccess->getRealPathCalled, 1u);
+    EXPECT_EQ(nullptr, pLinuxSysmanImp->pFwctlInterface.get());
 
     pLinuxSysmanImp->pSysfsAccess = pOrigSysfsAccess;
     pLinuxSysmanImp->pProcfsAccess = pOrigProcfsAccess;
