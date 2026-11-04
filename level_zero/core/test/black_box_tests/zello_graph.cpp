@@ -2769,7 +2769,7 @@ bool testExternalFlagCbEventsImmediate(ze_context_handle_t &context,
     ze_group_count_t groupCount = {static_cast<uint32_t>(elemCount / groupSizeX), 1, 1};
     // attach external flag event to append operation - wait for eventInput and signal eventOutput
 
-    ze_event_exp_flags_desc_t eventExternalFlagDesc = {ZE_STRUCTURE_TYPE_EVENT_EXP_FLAGS_DESC, nullptr, ZE_EVENT_EXP_FLAG_APPEND_GRAPH_EXTERNAL};
+    ze_event_ext_flags_desc_t eventExternalFlagDesc = {ZE_STRUCTURE_TYPE_EVENT_EXT_FLAGS_DESC, nullptr, ZE_EVENT_EXT_FLAG_APPEND_GRAPH_EXTERNAL};
 
     SUCCESS_OR_TERMINATE(zeCommandListAppendWaitOnEventsWithParameters(replayCmdList, &eventExternalFlagDesc, 1, &eventInputUseFlags));
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(replayCmdList, kernelAddConstant, &groupCount, nullptr, 0, nullptr));
@@ -2892,7 +2892,7 @@ bool testForkJoinExternalFlagSignalHostSynchronize(ze_context_handle_t &context,
     SUCCESS_OR_TERMINATE(zeCommandListAppendWaitOnEvents(replayCmdList, 1, &event));
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(replayCmdList, outputBuffer, inputBuffer, allocSize, nullptr, 0, nullptr));
 
-    ze_event_exp_flags_desc_t eventExternalFlagDesc = {ZE_STRUCTURE_TYPE_EVENT_EXP_FLAGS_DESC, nullptr, ZE_EVENT_EXP_FLAG_APPEND_GRAPH_EXTERNAL};
+    ze_event_ext_flags_desc_t eventExternalFlagDesc = {ZE_STRUCTURE_TYPE_EVENT_EXT_FLAGS_DESC, nullptr, ZE_EVENT_EXT_FLAG_APPEND_GRAPH_EXTERNAL};
     SUCCESS_OR_TERMINATE(zeCommandListAppendSignalEventWithParameters(replayCmdList, &eventExternalFlagDesc, event));
     SUCCESS_OR_TERMINATE(zeCommandListEndGraphCaptureExt(replayCmdList, nullptr, nullptr));
 
@@ -2988,7 +2988,7 @@ bool testForkJoinExternalFlagWaitBeforeMemoryCopy(ze_context_handle_t &context,
     SUCCESS_OR_TERMINATE(zeGraphCreateExt(context, nullptr, &virtualGraph));
 
     SUCCESS_OR_TERMINATE(zeCommandListBeginCaptureIntoGraphExt(replayCmdList, virtualGraph, nullptr));
-    ze_event_exp_flags_desc_t eventExternalFlagDesc = {ZE_STRUCTURE_TYPE_EVENT_EXP_FLAGS_DESC, nullptr, ZE_EVENT_EXP_FLAG_APPEND_GRAPH_EXTERNAL};
+    ze_event_ext_flags_desc_t eventExternalFlagDesc = {ZE_STRUCTURE_TYPE_EVENT_EXT_FLAGS_DESC, nullptr, ZE_EVENT_EXT_FLAG_APPEND_GRAPH_EXTERNAL};
     SUCCESS_OR_TERMINATE(zeCommandListAppendWaitOnEventsWithParameters(replayCmdList, &eventExternalFlagDesc, 1, &event));
     SUCCESS_OR_TERMINATE(zeCommandListAppendSignalEvent(replayCmdList, event));
     SUCCESS_OR_TERMINATE(zeCommandListAppendWaitOnEvents(forkCmdList, 1, &event));
@@ -3120,7 +3120,7 @@ bool testExternalFlagCbEventsGraphs(ze_context_handle_t &context,
     // perform input copy and signal eventInputUseFlags - so it is attached as an wait event
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(inputOutputCmdList, zeBufferIn, inputBuffer, allocSize, nullptr, 0, nullptr));
 
-    ze_event_exp_flags_desc_t eventExternalFlagDesc = {ZE_STRUCTURE_TYPE_EVENT_EXP_FLAGS_DESC, nullptr, ZE_EVENT_EXP_FLAG_APPEND_GRAPH_EXTERNAL};
+    ze_event_ext_flags_desc_t eventExternalFlagDesc = {ZE_STRUCTURE_TYPE_EVENT_EXT_FLAGS_DESC, nullptr, ZE_EVENT_EXT_FLAG_APPEND_GRAPH_EXTERNAL};
     SUCCESS_OR_TERMINATE(zeCommandListAppendSignalEventWithParameters(inputOutputCmdList, &eventExternalFlagDesc, eventInputUseFlags));
     SUCCESS_OR_TERMINATE(zeCommandListEndGraphCaptureExt(inputOutputCmdList, nullptr, nullptr));
 
