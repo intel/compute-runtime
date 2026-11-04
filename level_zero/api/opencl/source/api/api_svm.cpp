@@ -25,6 +25,7 @@
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/memory/internal_mem_alloc_ext.h"
+#include "level_zero/driver_experimental/zex_memory.h"
 #include <level_zero/ze_api.h>
 
 #include "CL/cl.h"
@@ -155,9 +156,15 @@ CL_API_ENTRY void *CL_API_CALL clHostMemAllocINTEL(
     if (memoryProperties.allocFlags.allocWriteCombined) {
         hostDesc.flags |= ZE_HOST_MEM_ALLOC_FLAG_BIAS_WRITE_COMBINED;
     }
+    if (memoryProperties.hostptr != 0) {
+        hostDesc.flags |= ZEX_HOST_MEM_ALLOC_FLAG_USE_HOST_PTR;
+    }
 
-    void *ptr = nullptr;
+    void *ptr = reinterpret_cast<void *>(memoryProperties.hostptr);
     ze_result_t ret = zeMemAllocHost(pContext->getL0ContextHandle(), &hostDesc, size, alignment, &ptr);
+    if (ret != ZE_RESULT_SUCCESS) {
+        ptr = nullptr;
+    }
     err.set(L0ToClResultMapper(ret));
     TRACING_EXIT(ClHostMemAllocINTEL, &ptr);
     return ptr;
@@ -251,9 +258,15 @@ CL_API_ENTRY void *CL_API_CALL clSharedMemAllocINTEL(
     if (memoryProperties.allocFlags.usmInitialPlacementCpu) {
         hostDesc.flags |= ZE_HOST_MEM_ALLOC_FLAG_BIAS_INITIAL_PLACEMENT;
     }
+    if (memoryProperties.hostptr != 0) {
+        hostDesc.flags |= ZEX_HOST_MEM_ALLOC_FLAG_USE_HOST_PTR;
+    }
 
-    void *ptr = nullptr;
+    void *ptr = reinterpret_cast<void *>(memoryProperties.hostptr);
     ze_result_t ret = zeMemAllocShared(pContext->getL0ContextHandle(), &deviceDesc, &hostDesc, size, alignment, device ? NEO::LEO::castToObject<NEO::LEO::ClDevice>(device)->getL0Handle() : nullptr, &ptr);
+    if (ret != ZE_RESULT_SUCCESS) {
+        ptr = nullptr;
+    }
     err.set(L0ToClResultMapper(ret));
     TRACING_EXIT(ClSharedMemAllocINTEL, &ptr);
     return ptr;

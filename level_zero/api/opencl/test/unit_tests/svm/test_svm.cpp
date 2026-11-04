@@ -6,13 +6,17 @@
  */
 
 #include "shared/source/device/device_info.h"
+#include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/test_macros/test.h"
 
+#include "level_zero/api/opencl/extensions/public/cl_ext_private.h"
 #include "level_zero/api/opencl/source/cl_device/leo_cl_device.h"
 #include "level_zero/api/opencl/source/command_queue/leo_command_queue.h"
 #include "level_zero/api/opencl/source/context/leo_context.h"
@@ -135,6 +139,93 @@ TEST_F(ClSvmAllocTest, givenSupportedAlignmentsWhenClSvmAllocThenAllocationSucce
         EXPECT_NE(nullptr, ptr) << "alignment: " << alignment;
         clSVMFree(getContext(), ptr);
     }
+}
+
+TEST_F(ClSvmAllocTest, givenUseHostPtrPropertyWhenClHostMemAllocIntelThenGivenHostPtrIsUsed) {
+    auto hostStorage = alignedMalloc(validSize, MemoryConstants::pageSize64k);
+    cl_mem_properties_intel properties[] = {CL_MEM_ALLOC_USE_HOST_PTR_INTEL, reinterpret_cast<cl_mem_properties_intel>(hostStorage), 0};
+    cl_int retVal = CL_INVALID_VALUE;
+
+    auto ptr = clHostMemAllocINTEL(getContext(), properties, validSize, 0, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(hostStorage, ptr);
+    auto svmData = svmManager->getSVMAlloc(ptr);
+    ASSERT_NE(nullptr, svmData);
+    EXPECT_EQ(reinterpret_cast<uintptr_t>(hostStorage), svmData->allocationFlagsProperty.hostptr);
+
+    EXPECT_EQ(CL_SUCCESS, clMemBlockingFreeINTEL(getContext(), ptr));
+    alignedFree(hostStorage);
+}
+
+TEST_F(ClSvmAllocTest, givenNoUseHostPtrPropertyWhenClHostMemAllocIntelThenNoExternalHostPtrIsUsed) {
+    cl_int retVal = CL_INVALID_VALUE;
+
+    auto ptr = clHostMemAllocINTEL(getContext(), nullptr, validSize, 0, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    auto svmData = svmManager->getSVMAlloc(ptr);
+    ASSERT_NE(nullptr, svmData);
+    EXPECT_EQ(0u, svmData->allocationFlagsProperty.hostptr);
+
+    EXPECT_EQ(CL_SUCCESS, clMemBlockingFreeINTEL(getContext(), ptr));
+}
+
+TEST_F(ClSvmAllocTest, givenUseHostPtrPropertyWhenClSharedMemAllocIntelThenGivenHostPtrIsUsed) {
+    auto hostStorage = alignedMalloc(validSize, MemoryConstants::pageSize64k);
+    cl_mem_properties_intel properties[] = {CL_MEM_ALLOC_USE_HOST_PTR_INTEL, reinterpret_cast<cl_mem_properties_intel>(hostStorage), 0};
+    cl_int retVal = CL_INVALID_VALUE;
+
+    auto ptr = clSharedMemAllocINTEL(getContext(), clDevice, properties, validSize, 0, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(hostStorage, ptr);
+    auto svmData = svmManager->getSVMAlloc(ptr);
+    ASSERT_NE(nullptr, svmData);
+    EXPECT_EQ(reinterpret_cast<uintptr_t>(hostStorage), svmData->allocationFlagsProperty.hostptr);
+
+    EXPECT_EQ(CL_SUCCESS, clMemBlockingFreeINTEL(getContext(), ptr));
+    alignedFree(hostStorage);
+}
+
+TEST_F(ClSvmAllocTest, givenNoUseHostPtrPropertyWhenClSharedMemAllocIntelThenNoExternalHostPtrIsUsed) {
+    cl_int retVal = CL_INVALID_VALUE;
+
+    auto ptr = clSharedMemAllocINTEL(getContext(), clDevice, nullptr, validSize, 0, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    auto svmData = svmManager->getSVMAlloc(ptr);
+    ASSERT_NE(nullptr, svmData);
+    EXPECT_EQ(0u, svmData->allocationFlagsProperty.hostptr);
+
+    EXPECT_EQ(CL_SUCCESS, clMemBlockingFreeINTEL(getContext(), ptr));
+}
+
+TEST_F(ClSvmAllocTest, givenUseHostPtrPropertyWhenClHostMemAllocIntelFailsThenNullIsReturned) {
+    auto memoryManager = static_cast<MockMemoryManager *>(driverHandle->getMemoryManager());
+    memoryManager->isMockHostMemoryManager = true;
+    memoryManager->forceFailureInAllocationWithHostPointer = true;
+    auto hostStorage = alignedMalloc(validSize, MemoryConstants::pageSize64k);
+    cl_mem_properties_intel properties[] = {CL_MEM_ALLOC_USE_HOST_PTR_INTEL, reinterpret_cast<cl_mem_properties_intel>(hostStorage), 0};
+    cl_int retVal = CL_SUCCESS;
+
+    auto ptr = clHostMemAllocINTEL(getContext(), properties, validSize, 0, &retVal);
+    EXPECT_NE(CL_SUCCESS, retVal);
+    EXPECT_EQ(nullptr, ptr);
+
+    alignedFree(hostStorage);
+}
+
+TEST_F(ClSvmAllocTest, givenUseHostPtrPropertyWhenClSharedMemAllocIntelFailsThenNullIsReturned) {
+    auto memoryManager = static_cast<MockMemoryManager *>(driverHandle->getMemoryManager());
+    memoryManager->isMockHostMemoryManager = true;
+    memoryManager->forceFailureInPrimaryAllocation = true;
+    memoryManager->forceFailureInAllocationWithHostPointer = true;
+    auto hostStorage = alignedMalloc(validSize, MemoryConstants::pageSize64k);
+    cl_mem_properties_intel properties[] = {CL_MEM_ALLOC_USE_HOST_PTR_INTEL, reinterpret_cast<cl_mem_properties_intel>(hostStorage), 0};
+    cl_int retVal = CL_SUCCESS;
+
+    auto ptr = clSharedMemAllocINTEL(getContext(), clDevice, properties, validSize, 0, &retVal);
+    EXPECT_NE(CL_SUCCESS, retVal);
+    EXPECT_EQ(nullptr, ptr);
+
+    alignedFree(hostStorage);
 }
 
 struct RecordingCommandList : public L0::ult::Mock<L0::ult::CommandList> {
