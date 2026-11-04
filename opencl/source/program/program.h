@@ -80,10 +80,8 @@ class Program : public BaseObject<_cl_program> {
 
     enum class BuildPhase {
         init,
-        sourceCodeNotification,
         binaryCreation,
-        binaryProcessing,
-        debugDataNotification
+        binaryProcessing
     };
 
     enum class CreatedFrom {
@@ -178,8 +176,6 @@ class Program : public BaseObject<_cl_program> {
     cl_int processSpirBinary(const void *pBinary, size_t binarySize, bool isSpirV);
 
     cl_int getSource(std::string &binary) const;
-
-    MOCKABLE_VIRTUAL void processDebugData(uint32_t rootDeviceIndex);
 
     void updateBuildLog(uint32_t rootDeviceIndex, const char *pErrorString, const size_t errorStringSize);
 
@@ -291,8 +287,6 @@ class Program : public BaseObject<_cl_program> {
         this->context = pContext;
     }
 
-    MOCKABLE_VIRTUAL void debugNotify(const ClDeviceVector &deviceVector, std::unordered_map<uint32_t, BuildPhase> &phasesReached);
-    void createDebugData(ClDevice *clDevice);
     MOCKABLE_VIRTUAL void createDebugZebin(uint32_t rootDeviceIndex);
     Zebin::Debug::Segments getZebinSegments(uint32_t rootDeviceIndex);
     MOCKABLE_VIRTUAL void callPopulateZebinExtendedArgsMetadataOnce(uint32_t rootDeviceIndex);

@@ -200,7 +200,7 @@ FORCE_NOINLINE void Program::dumpKernelInfoToAubComments() {
     auto refBin = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(deviceBinary), deviceBinarySize);
     auto aubCenter = rootDeviceEnvironment.aubCenter.get();
 
-    if (!deviceBinary || !NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::zebin>(refBin)) {
+    if (!deviceBinary) {
         return;
     }
 
@@ -827,29 +827,26 @@ void Program::notifyModuleCreate() {
     }
 
     for (const auto &device : clDevices) {
-        if (device->getDevice().getL0Debugger()) {
-
-            auto debuggerL0 = device->getDevice().getL0Debugger();
+        auto debuggerL0 = device->getDevice().getL0Debugger();
+        if (debuggerL0) {
             auto rootDeviceIndex = device->getRootDeviceIndex();
             auto &buildInfo = this->buildInfos[rootDeviceIndex];
-            auto refBin = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(buildInfo.unpackedDeviceBinary.get()), buildInfo.unpackedDeviceBinarySize);
-
-            if (NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::zebin>(refBin)) {
-
-                createDebugZebin(rootDeviceIndex);
-                NEO::DebugData debugData;
-                debugData.vIsa = reinterpret_cast<const char *>(buildInfo.debugData.get());
-                debugData.vIsaSize = static_cast<uint32_t>(buildInfo.debugDataSize);
-                this->debuggerInfos[rootDeviceIndex].debugElfHandle = debuggerL0->registerElf(&debugData);
-
-                auto allocs = getModuleAllocations(device->getRootDeviceIndex());
-                debuggerL0->attachZebinModuleToSegmentAllocations(allocs, this->debuggerInfos[rootDeviceIndex].debugModuleHandle, this->debuggerInfos[rootDeviceIndex].debugElfHandle);
-                device->getDevice().getL0Debugger()->notifyModuleLoadAllocations(&device->getDevice(), allocs);
-
-                auto minGpuAddressAlloc = std::min_element(allocs.begin(), allocs.end(), [](const auto &alloc1, const auto &alloc2) { return alloc1->getGpuAddress() < alloc2->getGpuAddress(); });
-                this->debuggerInfos[rootDeviceIndex].moduleLoadAddress = (*minGpuAddressAlloc)->getGpuAddress();
-                debuggerL0->notifyModuleCreate(buildInfo.debugData.get(), static_cast<uint32_t>(buildInfo.debugDataSize), this->debuggerInfos[rootDeviceIndex].moduleLoadAddress);
+            if (!buildInfo.unpackedDeviceBinary) {
+                continue;
             }
+            auto &debuggerInfo = this->debuggerInfos[rootDeviceIndex];
+
+            createDebugZebin(rootDeviceIndex);
+            const ArrayRef<const char> debugZebin(buildInfo.debugData.get(), buildInfo.debugDataSize);
+            debuggerInfo.debugElfHandle = debuggerL0->registerElf(debugZebin);
+
+            auto allocs = getModuleAllocations(rootDeviceIndex);
+            debuggerL0->attachZebinModuleToSegmentAllocations(allocs, debuggerInfo.debugModuleHandle, debuggerInfo.debugElfHandle);
+            debuggerL0->notifyModuleLoadAllocations(&device->getDevice(), allocs);
+
+            auto minGpuAddressAlloc = std::min_element(allocs.begin(), allocs.end(), [](const auto &alloc1, const auto &alloc2) { return alloc1->getGpuAddress() < alloc2->getGpuAddress(); });
+            debuggerInfo.moduleLoadAddress = (*minGpuAddressAlloc)->getGpuAddress();
+            debuggerL0->notifyModuleCreate(debugZebin, debuggerInfo.moduleLoadAddress);
         }
     }
 }

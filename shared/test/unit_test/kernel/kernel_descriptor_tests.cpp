@@ -70,7 +70,6 @@ TEST(KernelDescriptor, WhenDefaultInitializedThenValuesAreCleared) {
     EXPECT_TRUE(desc.kernelMetadata.kernelLanguageAttributes.empty());
     EXPECT_EQ(0U, desc.kernelMetadata.requiredSubGroupSize);
     EXPECT_EQ(0U, desc.kernelMetadata.requiredThreadGroupDispatchSize);
-    EXPECT_EQ(nullptr, desc.external.debugData.get());
 }
 
 TEST(KernelDescriptorAttributes, GivenImageOrSamplerStateFlagsWhenUsesImageOrSamplerStateIsCalledThenCorrectValueIsReturned) {

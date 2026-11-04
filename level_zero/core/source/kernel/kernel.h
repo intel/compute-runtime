@@ -87,9 +87,6 @@ struct KernelImmutableData {
         return isaCopiedToAllocation;
     }
 
-    MOCKABLE_VIRTUAL void createRelocatedDebugData(NEO::SharedPoolAllocation *globalConstBuffer,
-                                                   NEO::SharedPoolAllocation *globalVarBuffer);
-
   protected:
     Device *device = nullptr;
     NEO::KernelInfo *kernelInfo = nullptr;

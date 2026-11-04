@@ -15,7 +15,6 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/gfx_core_helper.h"
-#include "shared/source/kernel/debug_data.h"
 #include "shared/source/os_interface/linux/drm_allocation.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
@@ -79,14 +78,7 @@ void DebuggerL0::initSbaTrackingMode() {
 
 void DebuggerL0::registerAllocationType(GraphicsAllocation *allocation) {}
 
-void DebuggerL0::registerElfAndLinkWithAllocation(NEO::DebugData *debugData, NEO::GraphicsAllocation *isaAllocation) {
-    auto handle = registerElf(debugData);
-    if (handle != 0) {
-        static_cast<NEO::DrmAllocation *>(isaAllocation)->linkWithRegisteredHandle(handle);
-    }
-}
-
-uint32_t DebuggerL0::registerElf(NEO::DebugData *debugData) {
+uint32_t DebuggerL0::registerElf(ArrayRef<const char> debugZebin) {
     uint32_t handle = 0;
     if (!device->getRootDeviceEnvironment().osInterface.get()) {
         return handle;
@@ -98,9 +90,9 @@ uint32_t DebuggerL0::registerElf(NEO::DebugData *debugData) {
         auto fullName = std::string(DebuggerL0::debugProcDir) + "/elf-" + std::to_string(handle);
         auto &isaDebugData = drm->isaDebugDataMap[handle];
         strcpy_s(isaDebugData.elfPath, sizeof(isaDebugData.elfPath), fullName.c_str());
-        dumpFileIncrement(debugData->vIsa, debugData->vIsaSize, fullName, "");
+        dumpFileIncrement(debugZebin.begin(), debugZebin.size(), fullName, "");
     } else {
-        handle = drm->registerResource(NEO::DrmResourceClass::elf, debugData->vIsa, debugData->vIsaSize);
+        handle = drm->registerResource(NEO::DrmResourceClass::elf, debugZebin.begin(), debugZebin.size());
     }
 
     return handle;
@@ -222,7 +214,7 @@ void DebuggerL0::notifyCommandQueueDestroyed(NEO::Device *device) {
     }
 }
 
-void DebuggerL0::notifyModuleCreate(void *module, uint32_t moduleSize, uint64_t moduleLoadAddress) {}
+void DebuggerL0::notifyModuleCreate(ArrayRef<const char> debugZebin, uint64_t moduleLoadAddress) {}
 
 void DebuggerL0::removeTempFiles() {
 

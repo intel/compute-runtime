@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,6 +23,11 @@
 using namespace NEO::Elf;
 
 using ELF_CLASS = NEO::Elf::ElfIdentifierClass;
+
+enum class RelocationX8664Type : uint32_t {
+    relocation64 = 0x1,
+    relocation32 = 0xa
+};
 
 class TestElf {
   public:

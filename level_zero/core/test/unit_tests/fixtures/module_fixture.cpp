@@ -266,9 +266,6 @@ ModuleWithZebinFixture::MockImmutableData::~MockImmutableData() {
     delete kernelDescriptor;
 }
 
-ModuleWithZebinFixture::MockModuleWithZebin::MockModuleWithZebin(L0::Device *device) : ModuleImp(device, nullptr, ModuleType::user) {
-    isZebinBinary = true;
-}
 void ModuleWithZebinFixture::MockModuleWithZebin::addSegments() {
     constexpr bool createWithSharedGlobalConstSurfaces = false;
     addSegments(createWithSharedGlobalConstSurfaces);

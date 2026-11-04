@@ -102,7 +102,6 @@ struct ModuleTranslationUnit {
     std::string generateCompilerOptions(const char *buildOptions, const char *internalBuildOptions);
     MOCKABLE_VIRTUAL ze_result_t compileGenBinary(NEO::TranslationInput &inputArgs, CompilationMode compilationMode);
     void updateBuildLog(const std::string &newLogEntry);
-    void processDebugData();
     void freeGlobalBufferAllocation(std::unique_ptr<NEO::SharedPoolAllocation> &buffer);
     NEO::GraphicsAllocation *getGlobalConstBufferGA() const;
     NEO::GraphicsAllocation *getGlobalVarBufferGA() const;
@@ -131,7 +130,6 @@ struct ModuleTranslationUnit {
 
     std::unique_ptr<char[]> debugData;
     size_t debugDataSize = 0U;
-    std::vector<char *> alignedvIsas;
 
     NEO::specConstValuesMap specConstantsValues;
     bool isBuiltIn{false};
@@ -280,7 +278,6 @@ struct ModuleImp : public Module {
     bool isLlvmBitcode = false;
     bool isFullyLinked = false;
     bool allocatePrivateMemoryPerDispatch = true;
-    bool isZebinBinary = false;
     bool forceBindfulForMsaaImages = false;
     bool isFunctionSymbolExportEnabled = false;
     bool isGlobalSymbolExportEnabled = false;
@@ -292,6 +289,7 @@ struct ModuleImp : public Module {
     uint32_t debugElfHandle = 0;
     uint32_t profileFlags = 0;
     uint64_t moduleLoadAddress = std::numeric_limits<uint64_t>::max();
+    bool hasDeviceBinary = false;
     size_t isaAllocationPageSize = 0;
 
     NEO::Linker::PatchableSegments isaSegmentsForPatching;

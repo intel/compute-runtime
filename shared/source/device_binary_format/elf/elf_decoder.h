@@ -18,11 +18,6 @@ namespace NEO {
 
 namespace Elf {
 
-enum class RelocationX8664Type : uint32_t {
-    relocation64 = 0x1,
-    relocation32 = 0xa
-};
-
 template <ElfIdentifierClass numBits = EI_CLASS_64>
 struct ProgramHeaderAndData {
     const ElfProgramHeader<numBits> *header = nullptr;

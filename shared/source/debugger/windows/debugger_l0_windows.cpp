@@ -10,7 +10,6 @@
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/gfx_core_helper.h"
-#include "shared/source/kernel/debug_data.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 #include "shared/source/os_interface/windows/wddm_allocation.h"
 #include "shared/source/os_interface/windows/wddm_debug.h"
@@ -99,10 +98,7 @@ void DebuggerL0::registerAllocationType(GraphicsAllocation *allocation) {
     DEBUG_BREAK_IF(STATUS_SUCCESS != status);
 }
 
-void DebuggerL0::registerElfAndLinkWithAllocation(NEO::DebugData *debugData, NEO::GraphicsAllocation *allocation) {
-}
-
-uint32_t DebuggerL0::registerElf(NEO::DebugData *debugData) {
+uint32_t DebuggerL0::registerElf(ArrayRef<const char> debugZebin) {
     return 0;
 }
 
@@ -110,7 +106,7 @@ bool DebuggerL0::attachZebinModuleToSegmentAllocations(const StackVec<NEO::Graph
     return false;
 }
 
-void DebuggerL0::notifyModuleCreate(void *module, uint32_t moduleSize, uint64_t moduleLoadAddress) {
+void DebuggerL0::notifyModuleCreate(ArrayRef<const char> debugZebin, uint64_t moduleLoadAddress) {
     if (device->getRootDeviceEnvironment().osInterface == nullptr) {
         return;
     }
@@ -121,8 +117,8 @@ void DebuggerL0::notifyModuleCreate(void *module, uint32_t moduleSize, uint64_t 
     escapeInfo.Header.Size = sizeof(escapeInfo) - sizeof(escapeInfo.Header);
     escapeInfo.EscapeOperation = KM_ESCAPE_EUDBG_UMD_CREATE_DEBUG_DATA;
     escapeInfo.KmEuDbgUmdCreateDebugData.DebugDataType = ELF_BINARY;
-    escapeInfo.KmEuDbgUmdCreateDebugData.DataSize = moduleSize;
-    escapeInfo.KmEuDbgUmdCreateDebugData.hElfAddressPtr = reinterpret_cast<uint64_t>(module);
+    escapeInfo.KmEuDbgUmdCreateDebugData.DataSize = static_cast<uint32_t>(debugZebin.size());
+    escapeInfo.KmEuDbgUmdCreateDebugData.hElfAddressPtr = reinterpret_cast<uint64_t>(debugZebin.begin());
 
     auto wddm = device->getRootDeviceEnvironment().osInterface->getDriverModel()->as<NEO::Wddm>();
 
@@ -151,8 +147,8 @@ void DebuggerL0::notifyModuleCreate(void *module, uint32_t moduleSize, uint64_t 
     escapeInfo.Header.Size = sizeof(escapeInfo) - sizeof(escapeInfo.Header);
     escapeInfo.EscapeOperation = KM_ESCAPE_EUDBG_UMD_MODULE_CREATE_NOTIFY;
     escapeInfo.KmEuDbgUmdCreateModuleNotification.IsCreate = true;
-    escapeInfo.KmEuDbgUmdCreateModuleNotification.Modulesize = moduleSize;
-    escapeInfo.KmEuDbgUmdCreateModuleNotification.hElfAddressPtr = reinterpret_cast<uint64_t>(module);
+    escapeInfo.KmEuDbgUmdCreateModuleNotification.Modulesize = static_cast<uint32_t>(debugZebin.size());
+    escapeInfo.KmEuDbgUmdCreateModuleNotification.hElfAddressPtr = reinterpret_cast<uint64_t>(debugZebin.begin());
     escapeInfo.KmEuDbgUmdCreateModuleNotification.LoadAddress = moduleLoadAddress;
 
     status = wddm->escape(escapeCommand);

@@ -5956,52 +5956,6 @@ TEST_F(ModuleInitializeTest, whenModuleInitializeIsCalledThenCorrectResultIsRetu
     }
 }
 
-using ModuleDebugDataTest = Test<DeviceFixture>;
-
-TEST_F(ModuleDebugDataTest, GivenDebugDataWithRelocationsWhenCreatingRelocatedDebugDataThenRelocationsAreApplied) {
-    auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
-    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->compilerInterface.reset(cip);
-
-    ModuleBuildLog *moduleBuildLog = nullptr;
-
-    auto module = std::make_unique<MockModule>(device, moduleBuildLog, ModuleType::user);
-    module->translationUnit = std::make_unique<MockModuleTranslationUnit>(device);
-
-    module->translationUnit->globalVarBuffer = std::make_unique<SharedPoolAllocation>(neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
-        {device->getRootDeviceIndex(), MemoryConstants::pageSize, NEO::AllocationType::buffer, neoDevice->getDeviceBitfield()}));
-    module->translationUnit->globalConstBuffer = std::make_unique<SharedPoolAllocation>(neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
-        {device->getRootDeviceIndex(), MemoryConstants::pageSize, NEO::AllocationType::buffer, neoDevice->getDeviceBitfield()}));
-
-    uint32_t kernelHeap = 0;
-    auto kernelInfo = new KernelInfo();
-    kernelInfo->heapInfo.kernelHeapSize = 1;
-    kernelInfo->heapInfo.pKernelHeap = &kernelHeap;
-
-    kernelInfo->kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful = 0;
-    kernelInfo->kernelDescriptor.external.debugData = std::make_unique<NEO::DebugData>();
-
-    auto debugData = MockElfEncoder<>::createRelocateableDebugDataElf();
-
-    kernelInfo->kernelDescriptor.external.debugData->vIsaSize = static_cast<uint32_t>(debugData.size());
-    kernelInfo->kernelDescriptor.external.debugData->vIsa = reinterpret_cast<char *>(debugData.data());
-
-    // pass kernelInfo ownership to programInfo
-    module->translationUnit->programInfo.kernelInfos.push_back(kernelInfo);
-
-    auto kernelImmData = std::make_unique<WhiteBox<::L0::KernelImmutableData>>(this->device);
-    kernelImmData->setIsaPerKernelAllocation(module->allocateKernelsIsaMemory(kernelInfo->heapInfo.kernelHeapSize));
-    kernelImmData->initialize(kernelInfo, device, module->translationUnit->globalConstBuffer.get(), module->translationUnit->globalVarBuffer.get());
-    kernelImmData->createRelocatedDebugData(module->translationUnit->globalConstBuffer.get(), module->translationUnit->globalVarBuffer.get());
-
-    module->kernelImmData.push_back(std::move(kernelImmData));
-
-    EXPECT_NE(nullptr, kernelInfo->kernelDescriptor.external.relocatedDebugData);
-
-    uint64_t *relocAddress = reinterpret_cast<uint64_t *>(kernelInfo->kernelDescriptor.external.relocatedDebugData.get() + 600);
-    auto expectedValue = module->kernelImmData[0]->getIsaGraphicsAllocation()->getGpuAddress() + 0x1a8;
-    EXPECT_EQ(expectedValue, *relocAddress);
-}
-
 TEST_F(ModuleTest, givenModuleWithSymbolWhenGettingGlobalPointerThenSizeAndPointerAreReurned) {
     uint64_t gpuAddress = 0x12345000;
 
@@ -6777,7 +6731,6 @@ TEST_F(ModuleWithZebinTest, givenNonZebinaryFormatWhenGettingDebugInfoThenDebugZ
     size_t mockProgramSize = sizeof(Elf::ElfFileHeader<Elf::EI_CLASS_64>);
     module->translationUnit->unpackedDeviceBinary = std::make_unique<char[]>(mockProgramSize);
     module->translationUnit->unpackedDeviceBinarySize = mockProgramSize;
-    module->isZebinBinary = false;
     size_t debugDataSize;
     ze_result_t retCode = module->getDebugInfo(&debugDataSize, nullptr);
     EXPECT_EQ(debugDataSize, 0u);

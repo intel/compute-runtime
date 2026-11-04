@@ -265,16 +265,15 @@ TEST_F(L0DebuggerLinuxTest, givenUpstreamDebuggerWhenRegisterElfCalledThenHandle
     VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopenToNull{&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * { return nullptr; }};
 
     IsaDebugData::nextDebugDataMapHandle.store(0u);
-    NEO::DebugData debugData;
-    debugData.vIsa = "01234567890";
-    debugData.vIsaSize = 10;
-    auto handle = device->getL0Debugger()->registerElf(&debugData);
+    const char elfData[] = "01234567890";
+    const ArrayRef<const char> debugZebin(elfData, 10);
+    auto handle = device->getL0Debugger()->registerElf(debugZebin);
     EXPECT_EQ(handle, 0u);
-    handle = device->getL0Debugger()->registerElf(&debugData);
+    handle = device->getL0Debugger()->registerElf(debugZebin);
     EXPECT_EQ(handle, 1u);
-    handle = device->getL0Debugger()->registerElf(&debugData);
+    handle = device->getL0Debugger()->registerElf(debugZebin);
     EXPECT_EQ(handle, 2u);
-    handle = device->getL0Debugger()->registerElf(&debugData);
+    handle = device->getL0Debugger()->registerElf(debugZebin);
     EXPECT_EQ(handle, 3u);
 }
 
@@ -289,21 +288,20 @@ TEST_F(L0DebuggerLinuxTest, givenUpstreamDebuggerWhenRegisterElfCalledThenElfFil
     VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopenToNull{&NEO::IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * { return nullptr; }};
 
     IsaDebugData::nextDebugDataMapHandle.store(0u);
-    NEO::DebugData debugData;
-    debugData.vIsa = "01234567890";
-    debugData.vIsaSize = 10;
+    const char elfData[] = "01234567890";
+    const ArrayRef<const char> debugZebin(elfData, 10);
     std::string expectedFilename = "/tmp/intel-gpu-debugger/12345/elf-0";
 
     NEO::WhiteBox<NEO::DebuggerL0>::initDebuggingInOs(neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.get());
 
     EXPECT_FALSE(virtualFileExists(expectedFilename));
-    device->getL0Debugger()->registerElf(&debugData);
+    device->getL0Debugger()->registerElf(debugZebin);
     EXPECT_TRUE(virtualFileExists(expectedFilename));
 
     size_t dataSize = 0;
     auto writtenData = loadDataFromVirtualFile(expectedFilename.c_str(), dataSize);
     EXPECT_TRUE(memcmp("0123456789", writtenData.get(), dataSize) == 0);
-    EXPECT_EQ(dataSize, debugData.vIsaSize);
+    EXPECT_EQ(dataSize, debugZebin.size());
     EXPECT_EQ(drmMock->isaDebugDataMap[0].elfPath, expectedFilename);
 }
 
@@ -415,57 +413,6 @@ TEST_F(L0DebuggerLinuxTest, givenNullEntryWhenSetDrmResourceClassThenValidEntrie
 
     isaAllocation.setDrmResourceClass(DrmResourceClass::isa);
     EXPECT_EQ(bo.resourceClass, DrmResourceClass::isa);
-}
-
-TEST_F(L0DebuggerLinuxTest, whenRegisterElfAndLinkWithAllocationIsCalledThenItRegistersBindExtHandles) {
-    NEO::DebugData debugData;
-    debugData.vIsa = "01234567890";
-    debugData.vIsaSize = 10;
-    MockDrmAllocation isaAllocation(rootDeviceIndex, AllocationType::kernelIsa, MemoryPool::system4KBPages);
-    MockBufferObject bo(rootDeviceIndex, drmMock, 3, 0, 0, 1);
-    isaAllocation.bufferObjects[0] = &bo;
-    device->getL0Debugger()->registerElfAndLinkWithAllocation(&debugData, &isaAllocation);
-
-    EXPECT_EQ(static_cast<size_t>(10), drmMock->registeredDataSize);
-
-    auto &bos = isaAllocation.getBOs();
-    for (auto bo : bos) {
-        if (bo) {
-            auto extBindHandles = bo->getBindExtHandles();
-            EXPECT_NE(static_cast<size_t>(0), extBindHandles.size());
-        }
-    }
-}
-
-TEST_F(L0DebuggerLinuxTest, whenRegisterElfAndLinkWithAllocationIsCalledInAllocationWithNoBOThenItRegistersBindExtHandles) {
-    NEO::DebugData debugData;
-    debugData.vIsa = "01234567890";
-    debugData.vIsaSize = 10;
-    MockDrmAllocation isaAllocation(rootDeviceIndex, AllocationType::kernelIsa, MemoryPool::system4KBPages);
-    device->getL0Debugger()->registerElfAndLinkWithAllocation(&debugData, &isaAllocation);
-
-    EXPECT_EQ(static_cast<size_t>(10u), drmMock->registeredDataSize);
-}
-
-HWTEST_F(L0DebuggerLinuxTest, givenFailureToRegisterElfWhenRegisterElfAndLinkWithAllocationIsCalledThenBindExtHandleIsNotAdded) {
-    NEO::DebugData debugData;
-    debugData.vIsa = "01234567890";
-    debugData.vIsaSize = 10;
-    MockDrmAllocation isaAllocation(rootDeviceIndex, AllocationType::kernelIsa, MemoryPool::system4KBPages);
-    MockBufferObject bo(rootDeviceIndex, drmMock, 3, 0, 0, 1);
-    isaAllocation.bufferObjects[0] = &bo;
-
-    auto debuggerL0Hw = static_cast<MockDebuggerL0Hw<FamilyType> *>(device->getL0Debugger());
-    debuggerL0Hw->elfHandleToReturn = 0;
-    device->getL0Debugger()->registerElfAndLinkWithAllocation(&debugData, &isaAllocation);
-
-    auto &bos = isaAllocation.getBOs();
-    for (auto bo : bos) {
-        if (bo) {
-            auto extBindHandles = bo->getBindExtHandles();
-            EXPECT_EQ(static_cast<size_t>(0), extBindHandles.size());
-        }
-    }
 }
 
 TEST_F(L0DebuggerLinuxTest, givenAllocationsWhenAttachingZebinModuleThenAllAllocationsHaveRegisteredHandles) {

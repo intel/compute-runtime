@@ -21,7 +21,6 @@ namespace ult {
 template <>
 struct WhiteBox<::L0::KernelImmutableData> : public ::L0::KernelImmutableData {
     using BaseClass = ::L0::KernelImmutableData;
-    using ::L0::KernelImmutableData::createRelocatedDebugData;
     using ::L0::KernelImmutableData::crossThreadDataSize;
     using ::L0::KernelImmutableData::crossThreadDataTemplate;
     using ::L0::KernelImmutableData::device;

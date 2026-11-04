@@ -166,7 +166,7 @@ TEST_F(L0DebuggerWindowsTest, givenAllocateGraphicsMemoryWhenAllocationRegistrat
 TEST_F(L0DebuggerWindowsTest, givenDebuggerL0NotifyModuleCreateCalledAndCreateDebugDataEscapeFailedThenModuleCreateNotifyEscapeIsNotCalled) {
     wddm->createDebugDataPassedParam.ntStatus = STATUS_UNSUCCESSFUL;
     auto debugger = static_cast<DebuggerL0 *>(neoDevice->getDebugger());
-    debugger->notifyModuleCreate((void *)0x12345678, 0x1000, 0x80000000);
+    debugger->notifyModuleCreate({reinterpret_cast<const char *>(0x12345678), 0x1000}, 0x80000000);
     EXPECT_EQ(1u, wddm->createDebugDataCalled);
     EXPECT_EQ_VAL(0xDEADDEADu, wddm->createDebugDataPassedParam.param.hElfAddressPtr);
     EXPECT_EQ(0u, wddm->moduleCreateNotifyCalled);
@@ -175,7 +175,7 @@ TEST_F(L0DebuggerWindowsTest, givenDebuggerL0NotifyModuleCreateCalledAndCreateDe
 TEST_F(L0DebuggerWindowsTest, givenDebuggerL0NotifyModuleCreateCalledAndModuleCreateNotifyEscapeIsFailedThenModuleIsNotRegistered) {
     wddm->moduleCreateNotificationPassedParam.ntStatus = STATUS_UNSUCCESSFUL;
     auto debugger = static_cast<DebuggerL0 *>(neoDevice->getDebugger());
-    debugger->notifyModuleCreate((void *)0x12345678, 0x1000, 0x80000000);
+    debugger->notifyModuleCreate({reinterpret_cast<const char *>(0x12345678), 0x1000}, 0x80000000);
     EXPECT_EQ(1u, wddm->createDebugDataCalled);
     EXPECT_EQ_VAL(0x12345678u, wddm->createDebugDataPassedParam.param.hElfAddressPtr);
     EXPECT_EQ(1u, wddm->moduleCreateNotifyCalled);
@@ -184,7 +184,7 @@ TEST_F(L0DebuggerWindowsTest, givenDebuggerL0NotifyModuleCreateCalledAndModuleCr
 
 TEST_F(L0DebuggerWindowsTest, givenDebuggerL0NotifyModuleCreateCalledThenCreateDebugDataAndModuleCreateNotifyEscapesAreCalled) {
     auto debugger = static_cast<DebuggerL0 *>(neoDevice->getDebugger());
-    debugger->notifyModuleCreate((void *)0x12345678, 0x1000, 0x80000000);
+    debugger->notifyModuleCreate({reinterpret_cast<const char *>(0x12345678), 0x1000}, 0x80000000);
     EXPECT_EQ(1u, wddm->createDebugDataCalled);
     EXPECT_EQ(ELF_BINARY, wddm->createDebugDataPassedParam.param.DebugDataType);
     EXPECT_EQ(0x1000u, wddm->createDebugDataPassedParam.param.DataSize);

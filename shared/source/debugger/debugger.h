@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,6 @@ namespace NEO {
 struct HardwareInfo;
 class LinearStream;
 class IndirectHeap;
-struct DebugData;
 class GraphicsAllocation;
 struct RootDeviceEnvironment;
 

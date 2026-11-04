@@ -87,7 +87,6 @@ struct KernelInfo : NEO::NonCopyableAndNonMovableClass {
     HeapInfo heapInfo = {};
     const BuiltIn::DispatchInfoBuilder *builtinDispatchBuilder = nullptr;
     GraphicsAllocation *kernelAllocation = nullptr;
-    DebugData debugData;
 
     KernelDescriptor kernelDescriptor;
 

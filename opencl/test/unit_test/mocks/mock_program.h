@@ -220,21 +220,9 @@ class MockProgram : public Program {
         return kernelInfos;
     }
 
-    void processDebugData(uint32_t rootDeviceIndex) override {
-        Program::processDebugData(rootDeviceIndex);
-        wasProcessDebugDataCalled = true;
-    }
-
     void createDebugZebin(uint32_t rootDeviceIndex) override {
         Program::createDebugZebin(rootDeviceIndex);
         wasCreateDebugZebinCalled = true;
-    }
-
-    void debugNotify(const ClDeviceVector &deviceVector, std::unordered_map<uint32_t, BuildPhase> &phasesReached) override {
-        if (callBaseDebugNotify) {
-            Program::debugNotify(deviceVector, phasesReached);
-            wasDebuggerNotified = true;
-        }
     }
 
     void callPopulateZebinExtendedArgsMetadataOnce(uint32_t rootDeviceIndex) override {
@@ -268,12 +256,9 @@ class MockProgram : public Program {
     int transferIsaSegmentsToAllocationOverride = -1;
     int isIsaPoolingEnabledOverride = -1;
     bool contextSet = false;
-    bool wasProcessDebugDataCalled = false;
     bool wasCreateDebugZebinCalled = false;
-    bool wasDebuggerNotified = false;
     bool wasPopulateZebinExtendedArgsMetadataOnceCalled = false;
     bool callBasePopulateZebinExtendedArgsMetadataOnce = false;
-    bool callBaseDebugNotify = true;
     auto getIntermediateRepresentation() const { return this->intermediateRepresentation; }
     auto getIsGeneratedByIgc() const { return this->isGeneratedByIgc; }
     auto &getBuildInfos() { return this->buildInfos; }

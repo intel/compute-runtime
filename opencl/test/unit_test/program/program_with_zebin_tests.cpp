@@ -172,23 +172,6 @@ TEST_F(ProgramWithZebinFixture, givenEmptyDebugDataAndZebinBinaryFormatThenCreat
     EXPECT_EQ(numDevices * sizeof(debugData), retData);
 }
 
-TEST_F(ProgramWithZebinFixture, givenZebinFormatAndDebuggerNotAvailableWhenCreatingDebugDataThenCreateDebugZebinIsCalled) {
-    pClDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->debugger.reset(nullptr);
-
-    addEmptyZebin(program.get());
-    populateProgramWithSegments(program.get());
-    auto &buildInfo = program->buildInfos[rootDeviceIndex];
-    buildInfo.debugDataSize = 0u;
-    buildInfo.debugData.reset(nullptr);
-    for (auto &device : program->getDevices()) {
-        program->createDebugData(device);
-    }
-    EXPECT_TRUE(program->wasCreateDebugZebinCalled);
-    EXPECT_FALSE(program->wasProcessDebugDataCalled);
-    EXPECT_NE(nullptr, program->buildInfos[rootDeviceIndex].debugData);
-    EXPECT_GT(program->buildInfos[rootDeviceIndex].debugDataSize, 0u);
-}
-
 HWTEST_F(ProgramWithZebinFixture, givenProgramWhenDumpKernelInfoToAubCommentsIsCalledThenExpectedTokensAreVisible) {
 
     auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();

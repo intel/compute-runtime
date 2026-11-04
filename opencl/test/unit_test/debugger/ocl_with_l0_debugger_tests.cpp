@@ -213,19 +213,14 @@ HWTEST_F(DebuggerZebinProgramTest, GivenDebuggingEnabledWhenProgramNotifiesModul
     releaseProgram(program);
 }
 
-HWTEST_F(DebuggerZebinProgramTest, GivenDebuggingEnabledAndNonZebinWhenProgramNotifiesModuleCreationThenDebuggerL0IsNotNotified) {
+HWTEST_F(DebuggerZebinProgramTest, GivenDebuggingEnabledAndNoDeviceBinaryWhenProgramNotifiesModuleCreationThenDebuggerL0IsNotNotified) {
     auto debuggerL0Hw = static_cast<MockDebuggerL0Hw<FamilyType> *>(device->getL0Debugger());
     debuggerL0Hw->elfHandleToReturn = 5;
     debuggerL0Hw->moduleHandleToReturn = 6;
 
     auto program = createProgram();
-
-    const uint8_t nonZebinBinary[] = {0x01, 0x02, 0x03, 0x04};
-
-    program->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize = sizeof(nonZebinBinary);
-    program->buildInfos[rootDeviceIndex].unpackedDeviceBinary.reset(new char[sizeof(nonZebinBinary)]);
-    memcpy_s(program->buildInfos[rootDeviceIndex].unpackedDeviceBinary.get(), program->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize,
-             nonZebinBinary, sizeof(nonZebinBinary));
+    program->buildInfos[rootDeviceIndex].unpackedDeviceBinary.reset();
+    program->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize = 0u;
 
     program->notifyModuleCreate();
 

@@ -9,6 +9,7 @@
 #include "shared/source/debugger/debugger.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/memory_manager/address_range.h"
+#include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/mockable_virtual_defaults.h"
 #include "shared/source/utilities/stackvec.h"
 
@@ -82,12 +83,11 @@ class DebuggerL0 : public NEO::Debugger, NEO::NonCopyableAndNonMovableClass {
     }
 
     void printTrackedAddresses(uint32_t contextId);
-    MOCKABLE_VIRTUAL void registerElfAndLinkWithAllocation(NEO::DebugData *debugData, NEO::GraphicsAllocation *isaAllocation);
-    MOCKABLE_VIRTUAL uint32_t registerElf(NEO::DebugData *debugData);
+    MOCKABLE_VIRTUAL uint32_t registerElf(ArrayRef<const char> debugZebin);
     MOCKABLE_VIRTUAL void notifyCommandQueueCreated(NEO::Device *device);
     MOCKABLE_VIRTUAL void notifyCommandQueueDestroyed(NEO::Device *device);
     MOCKABLE_VIRTUAL void notifyModuleLoadAllocations(Device *device, const StackVec<NEO::GraphicsAllocation *, 32> &allocs);
-    MOCKABLE_VIRTUAL void notifyModuleCreate(void *module, uint32_t moduleSize, uint64_t moduleLoadAddress);
+    MOCKABLE_VIRTUAL void notifyModuleCreate(ArrayRef<const char> debugZebin, uint64_t moduleLoadAddress);
     MOCKABLE_VIRTUAL void notifyModuleDestroy(uint64_t moduleLoadAddress);
     MOCKABLE_VIRTUAL void registerAllocationType(GraphicsAllocation *allocation);
     void initSbaTrackingMode();

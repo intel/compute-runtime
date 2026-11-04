@@ -193,10 +193,9 @@ struct ModuleWithZebinFixture : public DeviceFixture {
     struct MockModuleWithZebin : public L0::ModuleImp {
         using ModuleImp::getDebugInfo;
         using ModuleImp::getZebinSegments;
-        using ModuleImp::isZebinBinary;
         using ModuleImp::kernelImmData;
         using ModuleImp::translationUnit;
-        MockModuleWithZebin(L0::Device *device);
+        MockModuleWithZebin(L0::Device *device) : ModuleImp(device, nullptr, ModuleType::user) {}
 
         void addSegments();
         void addSegments(bool createWithSharedGlobalConstSurfaces);

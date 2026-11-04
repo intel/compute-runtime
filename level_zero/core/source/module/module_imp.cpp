@@ -29,7 +29,6 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/addressing_mode_helper.h"
-#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/compiler_options_parser.h"
 #include "shared/source/helpers/compiler_product_helper.h"
@@ -64,8 +63,6 @@
 #include "level_zero/core/source/module/module_build_log.h"
 #include "level_zero/core/source/module/modules_package_binary.h"
 #include "level_zero/ze_intel_gpu.h"
-
-#include "program_debug_data.h"
 
 #include <algorithm>
 #include <array>
@@ -102,12 +99,6 @@ ModuleTranslationUnit::ModuleTranslationUnit(L0::Device *device)
 ModuleTranslationUnit::~ModuleTranslationUnit() {
     freeGlobalBufferAllocation(globalConstBuffer);
     freeGlobalBufferAllocation(globalVarBuffer);
-
-    if (this->debugData != nullptr) {
-        for (std::vector<char *>::iterator iter = alignedvIsas.begin(); iter != alignedvIsas.end(); ++iter) {
-            alignedFree(static_cast<void *>(*iter));
-        }
-    }
 }
 
 void ModuleTranslationUnit::freeGlobalBufferAllocation(std::unique_ptr<NEO::SharedPoolAllocation> &globalBuffer) {
@@ -602,8 +593,6 @@ ze_result_t ModuleTranslationUnit::processUnpackedBinary() {
         NEO::dumpFileIncrement(reinterpret_cast<const char *>(blob.begin()), blob.size(), "dumped_zebin_module", ".elf");
     }
 
-    processDebugData();
-
     size_t slmNeeded = NEO::getMaxInlineSlmNeeded(programInfo);
     size_t slmAvailable = static_cast<size_t>(device->getDeviceInfo().localMemSize);
 
@@ -660,43 +649,6 @@ void ModuleTranslationUnit::updateBuildLog(const std::string &newLogEntry) {
     buildLog += newLogEntry.c_str();
     if ('\n' != *buildLog.rbegin()) {
         buildLog.append("\n");
-    }
-}
-
-void ModuleTranslationUnit::processDebugData() {
-    if (this->debugData != nullptr) {
-        iOpenCL::SProgramDebugDataHeaderIGC *programDebugHeader = reinterpret_cast<iOpenCL::SProgramDebugDataHeaderIGC *>(debugData.get());
-
-        DEBUG_BREAK_IF(programDebugHeader->NumberOfKernels != programInfo.kernelInfos.size());
-
-        const iOpenCL::SKernelDebugDataHeaderIGC *kernelDebugHeader = reinterpret_cast<iOpenCL::SKernelDebugDataHeaderIGC *>(
-            ptrOffset(programDebugHeader, sizeof(iOpenCL::SProgramDebugDataHeaderIGC)));
-
-        const char *kernelName = nullptr;
-        const char *kernelDebugData = nullptr;
-
-        for (uint32_t i = 0; i < programDebugHeader->NumberOfKernels; i++) {
-            kernelName = reinterpret_cast<const char *>(ptrOffset(kernelDebugHeader, sizeof(iOpenCL::SKernelDebugDataHeaderIGC)));
-
-            auto kernelInfo = programInfo.kernelInfos[i];
-            UNRECOVERABLE_IF(kernelInfo->kernelDescriptor.kernelMetadata.kernelName != kernelName);
-
-            kernelDebugData = ptrOffset(kernelName, kernelDebugHeader->KernelNameSize);
-
-            kernelInfo->kernelDescriptor.external.debugData = std::make_unique<NEO::DebugData>();
-
-            char *alignedAlloc = static_cast<char *>(alignedMalloc(kernelDebugHeader->SizeVisaDbgInBytes, MemoryConstants::pageSize));
-            memcpy_s(static_cast<void *>(alignedAlloc), kernelDebugHeader->SizeVisaDbgInBytes, kernelDebugData, kernelDebugHeader->SizeVisaDbgInBytes);
-
-            kernelInfo->kernelDescriptor.external.debugData->vIsa = alignedAlloc;
-            kernelInfo->kernelDescriptor.external.debugData->genIsa = ptrOffset(kernelDebugData, kernelDebugHeader->SizeVisaDbgInBytes);
-            kernelInfo->kernelDescriptor.external.debugData->vIsaSize = kernelDebugHeader->SizeVisaDbgInBytes;
-            kernelInfo->kernelDescriptor.external.debugData->genIsaSize = kernelDebugHeader->SizeGenIsaDbgInBytes;
-
-            kernelDebugData = ptrOffset(kernelDebugData, static_cast<size_t>(kernelDebugHeader->SizeVisaDbgInBytes) + kernelDebugHeader->SizeGenIsaDbgInBytes);
-            kernelDebugHeader = reinterpret_cast<const iOpenCL::SKernelDebugDataHeaderIGC *>(kernelDebugData);
-            alignedvIsas.push_back(alignedAlloc);
-        }
     }
 }
 
@@ -794,10 +746,7 @@ ze_result_t ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neo
         return result;
     }
 
-    auto refBin = ArrayRef<const uint8_t>::fromAny(translationUnit->unpackedDeviceBinary.get(), translationUnit->unpackedDeviceBinarySize);
-    if (NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::zebin>(refBin)) {
-        isZebinBinary = true;
-    }
+    this->hasDeviceBinary = this->translationUnit->unpackedDeviceBinary != nullptr;
 
     StackVec<NEO::GraphicsAllocation *, 32> moduleAllocs = getModuleAllocations();
     if (!moduleAllocs.empty()) {
@@ -1204,6 +1153,9 @@ NEO::GraphicsAllocation *ModuleImp::allocateKernelsIsaMemory(size_t size) {
 }
 
 void ModuleImp::createDebugZebin() {
+    if (translationUnit->debugData) {
+        return;
+    }
     auto refBin = ArrayRef<const uint8_t>::fromAny(translationUnit->unpackedDeviceBinary.get(), translationUnit->unpackedDeviceBinarySize);
     auto segments = getZebinSegments();
     auto debugZebin = NEO::Zebin::Debug::createDebugZebin(refBin, segments);
@@ -1375,9 +1327,7 @@ ze_result_t ModuleImp::getDebugInfo(size_t *pDebugDataSize, uint8_t *pDebugData)
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 
-    if (nullptr == translationUnit->debugData.get() && isZebinBinary) {
-        createDebugZebin();
-    }
+    createDebugZebin();
     if (pDebugData != nullptr) {
         if (*pDebugDataSize < translationUnit->debugDataSize) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -2005,96 +1955,52 @@ ze_result_t ModuleImp::destroy() {
 void ModuleImp::registerElfInDebuggerL0() {
     auto debuggerL0 = device->getL0Debugger();
 
-    if (this->type != ModuleType::user || !debuggerL0) {
+    if (this->type != ModuleType::user || !debuggerL0 || !this->hasDeviceBinary) {
         return;
     }
 
-    if (isZebinBinary) {
-        size_t debugDataSize = 0;
-        getDebugInfo(&debugDataSize, nullptr);
+    createDebugZebin();
+    const ArrayRef<const char> debugZebin(translationUnit->debugData.get(), translationUnit->debugDataSize);
+    this->debugElfHandle = debuggerL0->registerElf(debugZebin);
 
-        NEO::DebugData debugData; // pass debug zebin in vIsa field
-        debugData.vIsa = reinterpret_cast<const char *>(translationUnit->debugData.get());
-        debugData.vIsaSize = static_cast<uint32_t>(translationUnit->debugDataSize);
-        this->debugElfHandle = debuggerL0->registerElf(&debugData);
-
-        if (NEO::debugManager.flags.DebuggerLogBitmask.get() & NEO::DebugVariables::DEBUGGER_LOG_BITMASK::DUMP_ELF) {
-            NEO::dumpFileIncrement(debugData.vIsa, debugData.vIsaSize, "dumped_debug_module", ".elf");
-        }
-
-        StackVec<NEO::GraphicsAllocation *, 32> segmentAllocs;
-        for (auto &data : kernelImmData) {
-            segmentAllocs.push_back(data->getIsaGraphicsAllocation());
-        }
-
-        if (translationUnit->globalVarBuffer) {
-            segmentAllocs.push_back(translationUnit->globalVarBuffer->getGraphicsAllocation());
-        }
-        if (translationUnit->globalConstBuffer) {
-            segmentAllocs.push_back(translationUnit->globalConstBuffer->getGraphicsAllocation());
-        }
-
-        debuggerL0->attachZebinModuleToSegmentAllocations(segmentAllocs, this->debugModuleHandle, this->debugElfHandle);
-    } else {
-        for (auto &data : kernelImmData) {
-            if (data->getKernelInfo()->kernelDescriptor.external.debugData.get()) {
-                NEO::DebugData *notifyDebugData = data->getKernelInfo()->kernelDescriptor.external.debugData.get();
-                NEO::DebugData relocatedDebugData;
-
-                if (data->getKernelInfo()->kernelDescriptor.external.relocatedDebugData.get()) {
-                    relocatedDebugData.genIsa = data->getKernelInfo()->kernelDescriptor.external.debugData->genIsa;
-                    relocatedDebugData.genIsaSize = data->getKernelInfo()->kernelDescriptor.external.debugData->genIsaSize;
-                    relocatedDebugData.vIsa = reinterpret_cast<char *>(data->getKernelInfo()->kernelDescriptor.external.relocatedDebugData.get());
-                    relocatedDebugData.vIsaSize = data->getKernelInfo()->kernelDescriptor.external.debugData->vIsaSize;
-                    notifyDebugData = &relocatedDebugData;
-                }
-
-                debuggerL0->registerElfAndLinkWithAllocation(notifyDebugData, data->getIsaGraphicsAllocation());
-            }
-        }
+    if (NEO::debugManager.flags.DebuggerLogBitmask.get() & NEO::DebugVariables::DEBUGGER_LOG_BITMASK::DUMP_ELF) {
+        NEO::dumpFileIncrement(debugZebin.begin(), debugZebin.size(), "dumped_debug_module", ".elf");
     }
+
+    StackVec<NEO::GraphicsAllocation *, 32> segmentAllocs;
+    for (auto &data : kernelImmData) {
+        segmentAllocs.push_back(data->getIsaGraphicsAllocation());
+    }
+
+    if (translationUnit->globalVarBuffer) {
+        segmentAllocs.push_back(translationUnit->globalVarBuffer->getGraphicsAllocation());
+    }
+    if (translationUnit->globalConstBuffer) {
+        segmentAllocs.push_back(translationUnit->globalConstBuffer->getGraphicsAllocation());
+    }
+
+    debuggerL0->attachZebinModuleToSegmentAllocations(segmentAllocs, this->debugModuleHandle, this->debugElfHandle);
 }
 
 void ModuleImp::notifyModuleCreate() {
     auto debuggerL0 = device->getL0Debugger();
 
-    if (!debuggerL0) {
+    if (!debuggerL0 || !this->hasDeviceBinary) {
         return;
     }
 
-    if (isZebinBinary) {
-        size_t debugDataSize = 0;
-        getDebugInfo(&debugDataSize, nullptr);
-        UNRECOVERABLE_IF(!translationUnit->debugData);
-        debuggerL0->notifyModuleCreate(translationUnit->debugData.get(), static_cast<uint32_t>(debugDataSize), moduleLoadAddress);
-    } else {
-        for (auto &data : kernelImmData) {
-            auto debugData = data->getKernelInfo()->kernelDescriptor.external.debugData.get();
-            auto relocatedDebugData = data->getKernelInfo()->kernelDescriptor.external.relocatedDebugData.get();
-
-            if (debugData) {
-                debuggerL0->notifyModuleCreate(relocatedDebugData ? reinterpret_cast<char *>(relocatedDebugData) : const_cast<char *>(debugData->vIsa), debugData->vIsaSize, data->getIsaGraphicsAllocation()->getGpuAddress());
-            } else {
-                debuggerL0->notifyModuleCreate(nullptr, 0, data->getIsaGraphicsAllocation()->getGpuAddress());
-            }
-        }
-    }
+    createDebugZebin();
+    debuggerL0->notifyModuleCreate({translationUnit->debugData.get(), translationUnit->debugDataSize}, moduleLoadAddress);
 }
 
 void ModuleImp::notifyModuleDestroy() {
     auto debuggerL0 = device->getL0Debugger();
 
-    if (!debuggerL0) {
+    if (!debuggerL0 || !this->hasDeviceBinary) {
         return;
     }
 
-    if (isZebinBinary) {
-        debuggerL0->notifyModuleDestroy(moduleLoadAddress);
-    } else {
-        for (auto &data : kernelImmData) {
-            debuggerL0->notifyModuleDestroy(data->getIsaGraphicsAllocation()->getGpuAddress());
-        }
-    }
+    debuggerL0->notifyModuleDestroy(moduleLoadAddress);
 }
 
 StackVec<NEO::GraphicsAllocation *, 32> ModuleImp::getModuleAllocations() {
@@ -2184,7 +2090,7 @@ FORCE_NOINLINE void ModuleImp::dumpKernelInfoToAubComments() {
     auto &executionEnvironment = *neoDevice->getExecutionEnvironment();
     auto aubCenter = executionEnvironment.rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->aubCenter.get();
 
-    if (!deviceBinary || !isZebinBinary) {
+    if (!deviceBinary) {
         return;
     }
 

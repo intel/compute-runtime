@@ -32,11 +32,7 @@
 #include "opencl/source/context/context.h"
 #include "opencl/source/program/program.h"
 
-#include "program_debug_data.h"
-
 #include <algorithm>
-
-using namespace iOpenCL;
 
 namespace NEO {
 extern bool familyEnabled[];
@@ -400,36 +396,6 @@ cl_int Program::resolveRequiredLibs(ClDevice &clDevice, const ProgramInfo &progr
     return CL_SUCCESS;
 }
 
-void Program::processDebugData(uint32_t rootDeviceIndex) {
-    if (this->buildInfos[rootDeviceIndex].debugData != nullptr) {
-        auto &kernelInfoArray = buildInfos[rootDeviceIndex].kernelInfoArray;
-        SProgramDebugDataHeaderIGC *programDebugHeader = reinterpret_cast<SProgramDebugDataHeaderIGC *>(this->buildInfos[rootDeviceIndex].debugData.get());
-
-        DEBUG_BREAK_IF(programDebugHeader->NumberOfKernels != kernelInfoArray.size());
-
-        const SKernelDebugDataHeaderIGC *kernelDebugHeader = reinterpret_cast<SKernelDebugDataHeaderIGC *>(ptrOffset(programDebugHeader, sizeof(SProgramDebugDataHeaderIGC)));
-        const char *kernelName = nullptr;
-        const char *kernelDebugData = nullptr;
-
-        for (uint32_t i = 0; i < programDebugHeader->NumberOfKernels; i++) {
-            kernelName = reinterpret_cast<const char *>(ptrOffset(kernelDebugHeader, sizeof(SKernelDebugDataHeaderIGC)));
-
-            auto kernelInfo = kernelInfoArray[i];
-            UNRECOVERABLE_IF(kernelInfo->kernelDescriptor.kernelMetadata.kernelName != kernelName);
-
-            kernelDebugData = ptrOffset(kernelName, kernelDebugHeader->KernelNameSize);
-
-            kernelInfo->debugData.vIsa = kernelDebugData;
-            kernelInfo->debugData.genIsa = ptrOffset(kernelDebugData, kernelDebugHeader->SizeVisaDbgInBytes);
-            kernelInfo->debugData.vIsaSize = kernelDebugHeader->SizeVisaDbgInBytes;
-            kernelInfo->debugData.genIsaSize = kernelDebugHeader->SizeGenIsaDbgInBytes;
-
-            kernelDebugData = ptrOffset(kernelDebugData, kernelDebugHeader->SizeVisaDbgInBytes + kernelDebugHeader->SizeGenIsaDbgInBytes);
-            kernelDebugHeader = reinterpret_cast<const SKernelDebugDataHeaderIGC *>(kernelDebugData);
-        }
-    }
-}
-
 Zebin::Debug::Segments Program::getZebinSegments(uint32_t rootDeviceIndex) {
     ArrayRef<const uint8_t> strings = {reinterpret_cast<const uint8_t *>(buildInfos[rootDeviceIndex].constStringSectionData.initData),
                                        buildInfos[rootDeviceIndex].constStringSectionData.size};
@@ -465,17 +431,6 @@ void Program::createDebugZebin(uint32_t rootDeviceIndex) {
     debugDataRef.reset(new char[debugDataSizeRef]);
     memcpy_s(debugDataRef.get(), debugDataSizeRef,
              debugZebin.data(), debugZebin.size());
-}
-
-void Program::createDebugData(ClDevice *clDevice) {
-    auto rootDeviceIndex = clDevice->getRootDeviceIndex();
-    auto &buildInfo = this->buildInfos[rootDeviceIndex];
-    auto refBin = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(buildInfo.unpackedDeviceBinary.get()), buildInfo.unpackedDeviceBinarySize);
-    if (NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::zebin>(refBin)) {
-        createDebugZebin(rootDeviceIndex);
-    } else {
-        processDebugData(rootDeviceIndex);
-    }
 }
 
 } // namespace NEO

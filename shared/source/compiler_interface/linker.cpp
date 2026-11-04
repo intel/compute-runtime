@@ -629,40 +629,6 @@ std::string constructRelocationsDebugMessage(const Linker::RelocatedSymbolsMap &
     return stream.str();
 }
 
-void Linker::applyDebugDataRelocations(const NEO::Elf::Elf<NEO::Elf::EI_CLASS_64> &decodedElf, ArrayRef<uint8_t> inputOutputElf, const SegmentInfo &text, const SegmentInfo &globalData, const SegmentInfo &constData) {
-
-    for (auto &reloc : decodedElf.getDebugInfoRelocations()) {
-        auto targetSectionName = decodedElf.getSectionName(reloc.targetSectionIndex);
-        auto sectionName = decodedElf.getSectionName(reloc.symbolSectionIndex);
-        auto symbolAddress = decodedElf.getSymbolValue(reloc.symbolTableIndex);
-
-        if (sectionName == Elf::SpecialSectionNames::text) {
-            symbolAddress += text.gpuAddress;
-        } else if (ConstStringRef(sectionName.c_str()).startsWith(Zebin::Elf::SectionNames::dataConst.data())) {
-            symbolAddress += constData.gpuAddress;
-        } else if (ConstStringRef(sectionName.c_str()).startsWith(Zebin::Elf::SectionNames::dataGlobal.data())) {
-            symbolAddress += globalData.gpuAddress;
-        } else {
-            // do not offset debug sections
-            if (!ConstStringRef(sectionName.c_str()).startsWith(Elf::SpecialSectionNames::debug.data())) {
-                // skip other sections
-                continue;
-            }
-        }
-
-        symbolAddress += reloc.addend;
-
-        auto targetSectionOffset = decodedElf.sectionHeaders[reloc.targetSectionIndex].header->offset;
-        auto relocLocation = reinterpret_cast<uint64_t>(inputOutputElf.begin()) + targetSectionOffset + reloc.offset;
-
-        if (static_cast<Elf::RelocationX8664Type>(reloc.relocType) == Elf::RelocationX8664Type::relocation64) {
-            *reinterpret_cast<uint64_t *>(relocLocation) = symbolAddress;
-        } else if (static_cast<Elf::RelocationX8664Type>(reloc.relocType) == Elf::RelocationX8664Type::relocation32) {
-            *reinterpret_cast<uint32_t *>(relocLocation) = static_cast<uint32_t>(symbolAddress & uint32_t(-1));
-        }
-    }
-}
-
 bool Linker::resolveExternalFunctions(const KernelDescriptorsT &kernelDescriptors, std::vector<ExternalFunctionInfo> &externalFunctions) {
     if (externalFunctions.size() == 0U) {
         return true;

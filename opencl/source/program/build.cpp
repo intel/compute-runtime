@@ -212,15 +212,4 @@ void Program::extractInternalOptions(const std::string &options, std::string &in
     }
 }
 
-void Program::debugNotify(const ClDeviceVector &deviceVector, std::unordered_map<uint32_t, BuildPhase> &phasesReached) {
-    for (auto &clDevice : deviceVector) {
-        auto rootDeviceIndex = clDevice->getRootDeviceIndex();
-        if (BuildPhase::debugDataNotification == phasesReached[rootDeviceIndex]) {
-            continue;
-        }
-        createDebugData(clDevice);
-        phasesReached[rootDeviceIndex] = BuildPhase::debugDataNotification;
-    }
-}
-
 } // namespace NEO

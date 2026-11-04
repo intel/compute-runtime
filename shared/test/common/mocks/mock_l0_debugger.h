@@ -8,7 +8,6 @@
 #pragma once
 #include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/device/device.h"
-#include "shared/source/kernel/debug_data.h"
 
 extern NEO::DebugerL0CreateFn mockDebuggerL0HwFactory[];
 
@@ -60,19 +59,12 @@ class MockDebuggerL0Hw : public NEO::DebuggerL0Hw<GfxFamily> {
         return NEO::DebuggerL0Hw<GfxFamily>::getSbaTrackingCommandsSize(trackedAddressCount);
     }
 
-    void registerElfAndLinkWithAllocation(NEO::DebugData *debugData, NEO::GraphicsAllocation *isaAllocation) override {
-        registerElfAndLinkCount++;
-        lastReceivedElf = debugData->vIsa;
-        NEO::DebuggerL0Hw<GfxFamily>::registerElfAndLinkWithAllocation(debugData, isaAllocation);
-    }
-
-    uint32_t registerElf(NEO::DebugData *debugData) override {
+    uint32_t registerElf(ArrayRef<const char> debugZebin) override {
         registerElfCount++;
-        lastReceivedElf = debugData->vIsa;
         if (elfHandleToReturn != std::numeric_limits<uint32_t>::max()) {
             return elfHandleToReturn;
         }
-        return NEO::DebuggerL0Hw<GfxFamily>::registerElf(debugData);
+        return NEO::DebuggerL0Hw<GfxFamily>::registerElf(debugZebin);
     }
 
     bool attachZebinModuleToSegmentAllocations(const StackVec<NEO::GraphicsAllocation *, 32> &allocs, uint32_t &moduleHandle, uint32_t elfHandle) override {
@@ -104,9 +96,9 @@ class MockDebuggerL0Hw : public NEO::DebuggerL0Hw<GfxFamily> {
         NEO::DebuggerL0Hw<GfxFamily>::registerAllocationType(allocation);
     }
 
-    void notifyModuleCreate(void *module, uint32_t moduleSize, uint64_t moduleLoadAddress) override {
+    void notifyModuleCreate(ArrayRef<const char> debugZebin, uint64_t moduleLoadAddress) override {
         notifyModuleCreateCount++;
-        NEO::DebuggerL0Hw<GfxFamily>::notifyModuleCreate(module, moduleSize, moduleLoadAddress);
+        NEO::DebuggerL0Hw<GfxFamily>::notifyModuleCreate(debugZebin, moduleLoadAddress);
     }
 
     void notifyModuleDestroy(uint64_t moduleLoadAddress) override {
@@ -122,13 +114,11 @@ class MockDebuggerL0Hw : public NEO::DebuggerL0Hw<GfxFamily> {
     uint32_t captureStateBaseAddressCount = 0;
     uint32_t getSbaTrackingCommandsSizeCount = 0;
     uint32_t registerElfCount = 0;
-    uint32_t registerElfAndLinkCount = 0;
     uint32_t commandQueueCreatedCount = 0;
     uint32_t commandQueueDestroyedCount = 0;
     uint32_t registerAllocationTypeCount = 0;
     uint32_t notifyModuleCreateCount = 0;
     uint32_t notifyModuleDestroyCount = 0;
-    const char *lastReceivedElf = nullptr;
 
     uint32_t segmentCountWithAttachedModuleHandle = 0;
     uint32_t removedZebinModuleHandle = 0;

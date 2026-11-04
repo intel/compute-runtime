@@ -11,7 +11,6 @@
 #include "shared/source/device_binary_format/device_binary_format.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
-#include "shared/source/kernel/debug_data.h"
 #include "shared/source/kernel/grf_config.h"
 #include "shared/source/kernel/kernel_arg_descriptor.h"
 #include "shared/source/kernel/kernel_arg_metadata.h"
@@ -275,11 +274,6 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
         uint8_t indirectAccessBuffer = 0u;
         bool isGeneratedByIgc = true;
     } kernelMetadata;
-
-    struct {
-        std::unique_ptr<DebugData> debugData;
-        std::unique_ptr<uint8_t[]> relocatedDebugData;
-    } external;
 
     std::vector<uint8_t> generatedSsh;
     std::vector<uint8_t> generatedDsh;
