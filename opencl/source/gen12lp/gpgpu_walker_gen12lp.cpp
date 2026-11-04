@@ -247,11 +247,6 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsEnd(
     }
 }
 
-template <typename GfxFamily>
-size_t EnqueueOperation<GfxFamily>::getSizeForCacheFlushAfterWalkerCommands(const Kernel &kernel, const CommandQueue &commandQueue) {
-    return 0;
-}
-
 template <>
 void GpgpuWalkerHelper<Family>::adjustMiStoreRegMemMode(MI_STORE_REG_MEM<Family> *storeCmd) {
     storeCmd->setMmioRemapEnable(true);

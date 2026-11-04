@@ -184,9 +184,4 @@ template <typename GfxFamily>
 void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsEnd(TagNodeBase &hwTimeStamps, LinearStream *commandStream, const RootDeviceEnvironment &rootDeviceEnvironment) {
 }
 
-template <typename GfxFamily>
-size_t EnqueueOperation<GfxFamily>::getSizeForCacheFlushAfterWalkerCommands(const Kernel &kernel, const CommandQueue &commandQueue) {
-    return 0;
-}
-
 } // namespace NEO
