@@ -6,6 +6,7 @@
  */
 
 #ifdef USE_LSC_INTRINSICS_WB
+void __builtin_IB_lsc_store_global_uint2(__global uint2 *base, int immElemOff, uint2 val, int cacheOpt);
 void __builtin_IB_lsc_store_global_uint4(__global uint4 *base, int immElemOff, uint4 val, int cacheOpt);
 #endif
 
@@ -149,3 +150,25 @@ __kernel void CopyBufferToBufferMiddleRegion(
     }
 }
 
+__kernel void CopyBufferToBufferMiddleRegion8Bytes(
+    __global uint* pDst,
+    const __global uint* pSrc,
+    idx_t elems,
+    offset_t dstSshOffset,
+    offset_t srcSshOffset)
+{
+    ALIGNED4(pSrc);
+    ALIGNED4(pDst);
+    idx_t gid = get_global_id(0);
+    __global uint* pDstWithOffset = (__global uint*)((__global uchar*)pDst + dstSshOffset);
+    __global uint* pSrcWithOffset = (__global uint*)((__global uchar*)pSrc + srcSshOffset);
+    if (gid < elems) {
+        uint2 loaded = vload2(gid, pSrcWithOffset);
+#ifdef USE_LSC_INTRINSICS_WB
+        __global uint2* pDst2 = (__global uint2*)(pDstWithOffset + gid * 2);
+        __builtin_IB_lsc_store_global_uint2(pDst2, 0, loaded, LSC_STCC_L1WB_L3WB);
+#else
+        vstore2(loaded, gid, pDstWithOffset);
+#endif
+    }
+}

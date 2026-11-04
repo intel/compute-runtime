@@ -25,6 +25,7 @@ enum class BufferBuiltIn : uint32_t {
     copyBufferRectBytes2d,
     copyBufferRectBytes3d,
     copyBufferToBufferMiddle,
+    copyBufferToBufferMiddle8Bytes,
     copyBufferToBufferSide,
     fillBufferImmediate,
     fillBufferImmediateLeftOver,
@@ -70,6 +71,8 @@ constexpr const char *getKernelName(BufferBuiltIn func) {
         return "CopyBufferRectBytes3d";
     case BufferBuiltIn::copyBufferToBufferMiddle:
         return "CopyBufferToBufferMiddleRegion";
+    case BufferBuiltIn::copyBufferToBufferMiddle8Bytes:
+        return "CopyBufferToBufferMiddleRegion8Bytes";
     case BufferBuiltIn::copyBufferToBufferSide:
         return "CopyBufferToBufferSideRegion";
     case BufferBuiltIn::fillBufferImmediate:
@@ -95,6 +98,7 @@ constexpr NEO::BuiltIn::BaseKernel getBaseKernel(BufferBuiltIn func) {
     switch (func) {
     case BufferBuiltIn::copyBufferBytes:
     case BufferBuiltIn::copyBufferToBufferMiddle:
+    case BufferBuiltIn::copyBufferToBufferMiddle8Bytes:
     case BufferBuiltIn::copyBufferToBufferSide:
         return NEO::BuiltIn::BaseKernel::copyBufferToBuffer;
     case BufferBuiltIn::copyBufferRectBytes2d:

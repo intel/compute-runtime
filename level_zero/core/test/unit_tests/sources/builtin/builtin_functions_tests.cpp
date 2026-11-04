@@ -144,6 +144,10 @@ HWTEST_F(TestBuiltinFunctionsLibImpl, givenBindlessBuiltinsWhenInitBuiltinKernel
     EXPECT_EQ(NEO::BuiltIn::BaseKernel::copyBufferToBuffer, lib.baseKernelPassed);
     EXPECT_STREQ("CopyBufferToBufferMiddleRegion", lib.kernelNamePassed.c_str());
 
+    lib.initBuiltinKernel(L0::BufferBuiltIn::copyBufferToBufferMiddle8Bytes, bindlessMode);
+    EXPECT_EQ(NEO::BuiltIn::BaseKernel::copyBufferToBuffer, lib.baseKernelPassed);
+    EXPECT_STREQ("CopyBufferToBufferMiddleRegion8Bytes", lib.kernelNamePassed.c_str());
+
     lib.initBuiltinKernel(L0::BufferBuiltIn::copyBufferToBufferSide, bindlessMode);
     EXPECT_EQ(NEO::BuiltIn::BaseKernel::copyBufferToBuffer, lib.baseKernelPassed);
     EXPECT_STREQ("CopyBufferToBufferSideRegion", lib.kernelNamePassed.c_str());
