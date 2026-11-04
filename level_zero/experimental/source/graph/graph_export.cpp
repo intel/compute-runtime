@@ -562,6 +562,21 @@ std::string formatHex(uint64_t value, uint32_t width) {
     return oss.str();
 }
 
+std::string formatFlags(uint32_t flags) {
+    constexpr uint32_t flagsHexWidth = 8u;
+    return formatHex(flags, flagsHexWidth);
+}
+
+std::string formatStructureType(ze_structure_type_t stype) {
+    constexpr uint32_t structureTypeHexWidth = 8u;
+    return formatHex(stype, structureTypeHexWidth);
+}
+
+std::string formatStructureExtType(ze_structure_type_ext_t stype) {
+    constexpr uint32_t structureTypeHexWidth = 8u;
+    return formatHex(stype, structureTypeHexWidth);
+}
+
 std::string formatGroupCount(const ze_group_count_t &groupCount) {
     return std::to_string(groupCount.groupCountX) + "x" +
            std::to_string(groupCount.groupCountY) + "x" +
@@ -668,7 +683,7 @@ void addLaunchKernelExtensionParameters(std::vector<std::pair<std::string, std::
 
     const auto *baseDesc = static_cast<const ze_base_desc_t *>(clonedPNext);
     while (baseDesc != nullptr) {
-        const auto stypeValue = std::to_string(static_cast<uint32_t>(baseDesc->stype));
+        const auto stypeValue = formatStructureType(baseDesc->stype);
 
         if (baseDesc->stype == ZE_STRUCTURE_TYPE_COMMAND_LIST_APPEND_PARAM_COOPERATIVE_DESC) {
             const auto *cooperativeDesc = reinterpret_cast<const ze_command_list_append_launch_kernel_param_cooperative_desc_t *>(baseDesc);
@@ -698,16 +713,16 @@ void addEventExtensionParameters(std::vector<std::pair<std::string, std::string>
     const auto *baseDesc = static_cast<const ze_base_desc_t *>(clonedPNext);
 
     while (baseDesc != nullptr) {
-        const auto stypeValue = formatHex(baseDesc->stype);
+        const auto stypeValue = formatStructureType(baseDesc->stype);
 
         if (baseDesc->stype == ZE_STRUCTURE_TYPE_EVENT_EXP_FLAGS_DESC) {
             const auto *eventFlagsDesc = reinterpret_cast<const ze_event_exp_flags_desc_t *>(baseDesc);
             params.emplace_back("eventFlagsExp.stype", stypeValue);
-            params.emplace_back("eventFlagsExp.flags", formatHex(eventFlagsDesc->flags));
+            params.emplace_back("eventFlagsExp.flags", formatFlags(eventFlagsDesc->flags));
         } else if (baseDesc->stype == ZE_STRUCTURE_TYPE_EVENT_EXT_FLAGS_DESC) {
             const auto *eventFlagsDesc = reinterpret_cast<const ze_event_ext_flags_desc_t *>(baseDesc);
             params.emplace_back("eventFlagsExt.stype", stypeValue);
-            params.emplace_back("eventFlagsExt.flags", formatHex(eventFlagsDesc->flags));
+            params.emplace_back("eventFlagsExt.flags", formatFlags(eventFlagsDesc->flags));
         } else {
             params.emplace_back("extension.stype", stypeValue + " (not recognized)");
         }
@@ -1220,7 +1235,7 @@ std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::z
     const Closure<CaptureApi::zeCommandListGetNextCommandIdExp> &closure, const ClosureExternalStorage &) {
 
     auto params = createBaseParams(closure.apiArgs);
-    params.emplace_back("flags", std::to_string(closure.indirectArgs.desc.flags));
+    params.emplace_back("flags", formatFlags(closure.indirectArgs.desc.flags));
     params.emplace_back("commandId", std::to_string(closure.indirectArgs.commandId));
 
     return params;
@@ -1231,7 +1246,7 @@ std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::z
     const Closure<CaptureApi::zeCommandListGetNextCommandIdWithKernelsExp> &closure, const ClosureExternalStorage &) {
 
     auto params = createBaseParams(closure.apiArgs);
-    params.emplace_back("flags", std::to_string(closure.indirectArgs.desc.flags));
+    params.emplace_back("flags", formatFlags(closure.indirectArgs.desc.flags));
     params.emplace_back("numKernels", std::to_string(closure.indirectArgs.kernels.size()));
     params.emplace_back("commandId", std::to_string(closure.indirectArgs.commandId));
 
@@ -1243,7 +1258,7 @@ std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::z
     const Closure<CaptureApi::zeCommandListGetNextCommandIdExt> &closure, const ClosureExternalStorage &) {
 
     auto params = createBaseParams(closure.apiArgs);
-    params.emplace_back("flags", std::to_string(closure.indirectArgs.desc.flags));
+    params.emplace_back("flags", formatFlags(closure.indirectArgs.desc.flags));
     params.emplace_back("commandId", std::to_string(closure.indirectArgs.commandId));
 
     return params;
@@ -1254,7 +1269,7 @@ std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::z
     const Closure<CaptureApi::zeCommandListGetNextCommandIdWithKernelsExt> &closure, const ClosureExternalStorage &) {
 
     auto params = createBaseParams(closure.apiArgs);
-    params.emplace_back("flags", std::to_string(closure.indirectArgs.desc.flags));
+    params.emplace_back("flags", formatFlags(closure.indirectArgs.desc.flags));
     params.emplace_back("numKernels", std::to_string(closure.indirectArgs.kernels.size()));
     params.emplace_back("commandId", std::to_string(closure.indirectArgs.commandId));
 
@@ -1268,11 +1283,7 @@ std::vector<std::pair<std::string, std::string>> extractParameters<CaptureApi::N
     auto params = createBaseParams(closure.apiArgs);
     std::string failedFunctionName(closure.apiArgs.failedFunctionName);
     params.emplace_back("failed_function_name", failedFunctionName);
-
-    std::ostringstream oss;
-    oss << "0x" << std::hex << closure.indirectArgs.failureResult;
-    std::string hexStr = oss.str();
-    params.emplace_back("failed_function_return_value", hexStr);
+    params.emplace_back("failed_function_return_value", formatHex(closure.indirectArgs.failureResult));
 
     return params;
 }

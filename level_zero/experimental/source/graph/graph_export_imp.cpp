@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,13 +19,13 @@ namespace L0 {
 namespace GraphDumpHelper {
 
 void addLaunchKernelAdditionalExtensionParameters(std::vector<std::pair<std::string, std::string>> &params, const ze_base_desc_t *baseDesc) {
-    const auto stypeValue = std::to_string(static_cast<uint32_t>(baseDesc->stype));
+    const auto stypeValue = formatStructureType(baseDesc->stype);
 
     params.emplace_back("extension.stype", stypeValue + " (not recognized)");
 }
 
 void addMemoryTransferAdditionalExtensionParameters(std::vector<std::pair<std::string, std::string>> &params, const ze_base_desc_t *baseDesc) {
-    const auto stypeValue = std::to_string(static_cast<uint32_t>(baseDesc->stype));
+    const auto stypeValue = formatStructureType(baseDesc->stype);
 
     params.emplace_back("extension.stype", stypeValue + " (not recognized)");
 }

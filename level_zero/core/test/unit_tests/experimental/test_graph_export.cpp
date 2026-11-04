@@ -1185,6 +1185,22 @@ TEST(GraphDumpHelperTest, givenWidthWhenFormatHexThenValueIsZeroPadded) {
     EXPECT_EQ("0x123456789", GraphDumpHelper::formatHex(0x123456789u, 8u));
 }
 
+TEST(GraphDumpHelperTest, givenFlagsWhenFormatFlagsThenEightDigitHexReturned) {
+    EXPECT_EQ("0x00000000", GraphDumpHelper::formatFlags(0u));
+    EXPECT_EQ("0x00000005", GraphDumpHelper::formatFlags(0x5u));
+    EXPECT_EQ("0x80000000", GraphDumpHelper::formatFlags(0x80000000u));
+}
+
+TEST(GraphDumpHelperTest, givenStructureTypeWhenFormatStructureTypeThenEightDigitHexReturned) {
+    EXPECT_EQ("0x00000001", GraphDumpHelper::formatStructureType(ZE_STRUCTURE_TYPE_DRIVER_PROPERTIES));
+    EXPECT_EQ("0x00010002", GraphDumpHelper::formatStructureType(ZE_STRUCTURE_TYPE_RAYTRACING_MEM_ALLOC_EXT_DESC));
+    EXPECT_EQ("0x00020001", GraphDumpHelper::formatStructureType(ZE_STRUCTURE_TYPE_RELAXED_ALLOCATION_LIMITS_EXP_DESC));
+}
+
+TEST(GraphDumpHelperTest, givenStructureTypeWhenFormatStructureExtTypeThenEightDigitHexReturned) {
+    EXPECT_EQ("0x00030033", GraphDumpHelper::formatStructureExtType(ZE_STRUCTURE_TYPE_EVENT_EXP_FLAGS_DESC));
+}
+
 TEST(GraphDumpHelperTest, GivenGroupCountWhenFormatGroupCountIsCalledThenReturnsFormattedString) {
     ze_group_count_t groupCount{1, 2, 3};
     EXPECT_EQ(GraphDumpHelper::formatGroupCount(groupCount), "1x2x3");
@@ -1215,7 +1231,7 @@ TEST(GraphDumpHelperTest, GivenLaunchKernelExtensionWhenAddLaunchKernelExtension
     EXPECT_EQ(params[0].first, "pNext");
     EXPECT_EQ(params[0].second, L0::GraphDumpHelper::formatPointer(&cooperativeDesc));
     EXPECT_EQ(params[1].first, "cooperative.stype");
-    EXPECT_EQ(params[1].second, std::to_string(static_cast<uint32_t>(cooperativeDesc.stype)));
+    EXPECT_EQ(params[1].second, L0::GraphDumpHelper::formatStructureType(cooperativeDesc.stype));
     EXPECT_EQ(params[2].first, "cooperative.isCooperative");
     EXPECT_EQ(params[2].second, "true");
 }
@@ -1230,7 +1246,7 @@ TEST(GraphDumpHelperTest, GivenUnknownLaunchKernelExtensionWhenAddLaunchKernelEx
     EXPECT_EQ(params[0].first, "pNext");
     EXPECT_EQ(params[0].second, L0::GraphDumpHelper::formatPointer(&unknownDesc));
     EXPECT_EQ(params[1].first, "extension.stype");
-    EXPECT_EQ(params[1].second, std::to_string(static_cast<uint32_t>(unknownDesc.stype)) + " (not recognized)");
+    EXPECT_EQ(params[1].second, L0::GraphDumpHelper::formatStructureType(unknownDesc.stype) + " (not recognized)");
 }
 
 TEST(GraphDumpHelperTest, GivenNullptrWhenAddEventExtensionParametersIsCalledThenParamsContainNullptr) {
@@ -1253,9 +1269,9 @@ TEST(GraphDumpHelperTest, GivenEventFlagsExtensionWhenAddEventExpExtensionParame
     EXPECT_EQ(params[0].first, "pNext");
     EXPECT_EQ(params[0].second, L0::GraphDumpHelper::formatPointer(&eventFlagsDesc));
     EXPECT_EQ(params[1].first, "eventFlagsExp.stype");
-    EXPECT_EQ(params[1].second, L0::GraphDumpHelper::formatHex(eventFlagsDesc.stype));
+    EXPECT_EQ(params[1].second, L0::GraphDumpHelper::formatStructureExtType(eventFlagsDesc.stype));
     EXPECT_EQ(params[2].first, "eventFlagsExp.flags");
-    EXPECT_EQ(params[2].second, L0::GraphDumpHelper::formatHex(ZE_EVENT_EXP_FLAG_APPEND_GRAPH_EXTERNAL));
+    EXPECT_EQ(params[2].second, L0::GraphDumpHelper::formatFlags(ZE_EVENT_EXP_FLAG_APPEND_GRAPH_EXTERNAL));
 }
 
 TEST(GraphDumpHelperTest, GivenEventFlagsExtensionWhenAddEventCoreExtensionParametersIsCalledThenParamsAreFilledProperly) {
@@ -1269,9 +1285,9 @@ TEST(GraphDumpHelperTest, GivenEventFlagsExtensionWhenAddEventCoreExtensionParam
     EXPECT_EQ(params[0].first, "pNext");
     EXPECT_EQ(params[0].second, L0::GraphDumpHelper::formatPointer(&eventFlagsDesc));
     EXPECT_EQ(params[1].first, "eventFlagsExt.stype");
-    EXPECT_EQ(params[1].second, L0::GraphDumpHelper::formatHex(eventFlagsDesc.stype));
+    EXPECT_EQ(params[1].second, L0::GraphDumpHelper::formatStructureType(eventFlagsDesc.stype));
     EXPECT_EQ(params[2].first, "eventFlagsExt.flags");
-    EXPECT_EQ(params[2].second, L0::GraphDumpHelper::formatHex(ZE_EVENT_EXT_FLAG_APPEND_GRAPH_EXTERNAL));
+    EXPECT_EQ(params[2].second, L0::GraphDumpHelper::formatFlags(ZE_EVENT_EXT_FLAG_APPEND_GRAPH_EXTERNAL));
 }
 
 TEST(GraphDumpHelperTest, GivenUnknownEventExtensionWhenAddEventExtensionParametersIsCalledThenParamsAreFilledProperly) {
@@ -1284,7 +1300,7 @@ TEST(GraphDumpHelperTest, GivenUnknownEventExtensionWhenAddEventExtensionParamet
     EXPECT_EQ(params[0].first, "pNext");
     EXPECT_EQ(params[0].second, L0::GraphDumpHelper::formatPointer(&unknownDesc));
     EXPECT_EQ(params[1].first, "extension.stype");
-    EXPECT_EQ(params[1].second, L0::GraphDumpHelper::formatHex(unknownDesc.stype) + " (not recognized)");
+    EXPECT_EQ(params[1].second, L0::GraphDumpHelper::formatStructureType(unknownDesc.stype) + " (not recognized)");
 }
 
 DEFINE_APIARGS_FIELDS(zeCommandListAppendWriteGlobalTimestamp, "hCommandList", "dstptr", "hSignalEvent", "numWaitEvents", "phWaitEvents", "phWaitEvents[0]");
@@ -1777,7 +1793,7 @@ TEST_F(ExtractParametersTest, GivenLaunchKernelWithParametersWhenCooperativeExte
     auto params = GraphDumpHelper::extractParameters<CaptureApi::zeCommandListAppendLaunchKernelWithParameters>(closure, storage);
 
     const auto expectedPointer = GraphDumpHelper::formatPointer(&cooperativeDesc);
-    const auto expectedStype = std::to_string(static_cast<uint32_t>(ZE_STRUCTURE_TYPE_COMMAND_LIST_APPEND_PARAM_COOPERATIVE_DESC));
+    const auto expectedStype = GraphDumpHelper::formatStructureType(ZE_STRUCTURE_TYPE_COMMAND_LIST_APPEND_PARAM_COOPERATIVE_DESC);
 
     EXPECT_EQ(getParamValue(params, "pNext"), expectedPointer);
     EXPECT_EQ(getParamValue(params, "cooperative.stype"), expectedStype);
@@ -1830,7 +1846,7 @@ TEST_F(ExtractParametersTest, GivenLaunchKernelWithArgumentsWhenCooperativeExten
     auto params = GraphDumpHelper::extractParameters<CaptureApi::zeCommandListAppendLaunchKernelWithArguments>(closure, storage);
 
     const auto expectedPointer = GraphDumpHelper::formatPointer(&cooperativeDesc);
-    const auto expectedStype = std::to_string(static_cast<uint32_t>(ZE_STRUCTURE_TYPE_COMMAND_LIST_APPEND_PARAM_COOPERATIVE_DESC));
+    const auto expectedStype = GraphDumpHelper::formatStructureType(ZE_STRUCTURE_TYPE_COMMAND_LIST_APPEND_PARAM_COOPERATIVE_DESC);
     EXPECT_EQ(getParamValue(params, "pNext"), expectedPointer);
     EXPECT_EQ(getParamValue(params, "cooperative.stype"), expectedStype);
     EXPECT_EQ(getParamValue(params, "cooperative.isCooperative"), "true");
@@ -1868,11 +1884,11 @@ TEST_F(ExtractParametersTest, GivenSignalEventWithParametersWhenEventFlagsExpExt
     auto params = GraphDumpHelper::extractParameters<CaptureApi::zeCommandListAppendSignalEventWithParameters>(closure, storage);
 
     const auto expectedPointer = GraphDumpHelper::formatPointer(closure.apiArgs.pNext);
-    const auto expectedStype = GraphDumpHelper::formatHex(ZE_STRUCTURE_TYPE_EVENT_EXP_FLAGS_DESC);
+    const auto expectedStype = GraphDumpHelper::formatStructureExtType(ZE_STRUCTURE_TYPE_EVENT_EXP_FLAGS_DESC);
 
     EXPECT_EQ(getParamValue(params, "pNext"), expectedPointer);
     EXPECT_EQ(getParamValue(params, "eventFlagsExp.stype"), expectedStype);
-    EXPECT_EQ(getParamValue(params, "eventFlagsExp.flags"), GraphDumpHelper::formatHex(ZE_EVENT_EXP_FLAG_APPEND_GRAPH_EXTERNAL));
+    EXPECT_EQ(getParamValue(params, "eventFlagsExp.flags"), GraphDumpHelper::formatFlags(ZE_EVENT_EXP_FLAG_APPEND_GRAPH_EXTERNAL));
 }
 
 TEST_F(ExtractParametersTest, GivenSignalEventWithParametersWhenEventFlagsCoreExtensionProvidedThenExtractsFlagsDetails) {
@@ -1888,11 +1904,11 @@ TEST_F(ExtractParametersTest, GivenSignalEventWithParametersWhenEventFlagsCoreEx
     auto params = GraphDumpHelper::extractParameters<CaptureApi::zeCommandListAppendSignalEventWithParameters>(closure, storage);
 
     const auto expectedPointer = GraphDumpHelper::formatPointer(closure.apiArgs.pNext);
-    const auto expectedStype = GraphDumpHelper::formatHex(ZE_STRUCTURE_TYPE_EVENT_EXT_FLAGS_DESC);
+    const auto expectedStype = GraphDumpHelper::formatStructureType(ZE_STRUCTURE_TYPE_EVENT_EXT_FLAGS_DESC);
 
     EXPECT_EQ(getParamValue(params, "pNext"), expectedPointer);
     EXPECT_EQ(getParamValue(params, "eventFlagsExt.stype"), expectedStype);
-    EXPECT_EQ(getParamValue(params, "eventFlagsExt.flags"), GraphDumpHelper::formatHex(ZE_EVENT_EXT_FLAG_APPEND_GRAPH_EXTERNAL));
+    EXPECT_EQ(getParamValue(params, "eventFlagsExt.flags"), GraphDumpHelper::formatFlags(ZE_EVENT_EXT_FLAG_APPEND_GRAPH_EXTERNAL));
 }
 
 TEST_F(ExtractParametersTest, GivenWaitEventsWithParametersWhenEventFlagsExpExtensionProvidedThenExtractsFlagsDetails) {
@@ -1908,11 +1924,11 @@ TEST_F(ExtractParametersTest, GivenWaitEventsWithParametersWhenEventFlagsExpExte
     auto params = GraphDumpHelper::extractParameters<CaptureApi::zeCommandListAppendWaitOnEventsWithParameters>(closure, storage);
 
     const auto expectedPointer = GraphDumpHelper::formatPointer(closure.apiArgs.pNext);
-    const auto expectedStype = GraphDumpHelper::formatHex(ZE_STRUCTURE_TYPE_EVENT_EXP_FLAGS_DESC);
+    const auto expectedStype = GraphDumpHelper::formatStructureExtType(ZE_STRUCTURE_TYPE_EVENT_EXP_FLAGS_DESC);
 
     EXPECT_EQ(getParamValue(params, "pNext"), expectedPointer);
     EXPECT_EQ(getParamValue(params, "eventFlagsExp.stype"), expectedStype);
-    EXPECT_EQ(getParamValue(params, "eventFlagsExp.flags"), GraphDumpHelper::formatHex(ZE_EVENT_EXP_FLAG_APPEND_GRAPH_EXTERNAL));
+    EXPECT_EQ(getParamValue(params, "eventFlagsExp.flags"), GraphDumpHelper::formatFlags(ZE_EVENT_EXP_FLAG_APPEND_GRAPH_EXTERNAL));
 }
 
 TEST_F(ExtractParametersTest, GivenWaitEventsWithParametersWhenEventFlagsCoreExtensionProvidedThenExtractsFlagsDetails) {
@@ -1928,11 +1944,11 @@ TEST_F(ExtractParametersTest, GivenWaitEventsWithParametersWhenEventFlagsCoreExt
     auto params = GraphDumpHelper::extractParameters<CaptureApi::zeCommandListAppendWaitOnEventsWithParameters>(closure, storage);
 
     const auto expectedPointer = GraphDumpHelper::formatPointer(closure.apiArgs.pNext);
-    const auto expectedStype = GraphDumpHelper::formatHex(ZE_STRUCTURE_TYPE_EVENT_EXT_FLAGS_DESC);
+    const auto expectedStype = GraphDumpHelper::formatStructureType(ZE_STRUCTURE_TYPE_EVENT_EXT_FLAGS_DESC);
 
     EXPECT_EQ(getParamValue(params, "pNext"), expectedPointer);
     EXPECT_EQ(getParamValue(params, "eventFlagsExt.stype"), expectedStype);
-    EXPECT_EQ(getParamValue(params, "eventFlagsExt.flags"), GraphDumpHelper::formatHex(ZE_EVENT_EXT_FLAG_APPEND_GRAPH_EXTERNAL));
+    EXPECT_EQ(getParamValue(params, "eventFlagsExt.flags"), GraphDumpHelper::formatFlags(ZE_EVENT_EXT_FLAG_APPEND_GRAPH_EXTERNAL));
 }
 
 class ExtractKernelParametersTestFixture : public ModuleImmutableDataFixture, public ExtractParametersTestFixture {
