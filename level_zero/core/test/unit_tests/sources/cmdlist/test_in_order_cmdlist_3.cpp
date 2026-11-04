@@ -1970,5 +1970,80 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     testExternalTypeSignalEventForPropertyAndCommand<FamilyType>(event, regularCmdList.get(), true, false);
 }
 
+template <typename BaseFixture>
+struct InOrderCmdListWaitSpaceFixture : public BaseFixture {
+    template <GFXCORE_FAMILY gfxCoreFamily>
+    bool isCmdBufferSwitchedWhenCheckingSpace(size_t availableSpace) {
+        auto immCmdList = this->template createImmCmdList<gfxCoreFamily>();
+        immCmdList->checkAvailableSpace(0, false, commonImmediateCommandSize, false);
+
+        auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+        cmdStream->getSpace(cmdStream->getAvailableSpace() - availableSpace);
+        auto cmdBuffer = cmdStream->getGraphicsAllocation();
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->checkAvailableSpace(1, false, commonImmediateCommandSize, false));
+        return cmdBuffer != immCmdList->getCmdContainer().getCommandStream()->getGraphicsAllocation();
+    }
+
+    template <typename FamilyType>
+    size_t getWaitEventSize() const {
+        size_t semaphoreWaitSize = NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait();
+        if (NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(FamilyType::isQwordInOrderCounter, this->device->getDeviceInfo().semaphore64bCmdSupport)) {
+            semaphoreWaitSize += 2 * NEO::EncodeSetMMIO<FamilyType>::sizeIMM;
+        }
+        const bool atomicSignalling = this->device->getNEODevice()->getGfxCoreHelper().inOrderAtomicSignallingEnabled();
+        const size_t devicePartitionCount = atomicSignalling ? 1 : this->device->getNEODevice()->getDeviceBitfield().count();
+        return devicePartitionCount * semaphoreWaitSize;
+    }
+
+    template <typename FamilyType>
+    void verifyWaitEventsBudget() {
+        const size_t requiredSize = commonImmediateCommandSize + getWaitEventSize<FamilyType>();
+
+        EXPECT_TRUE(isCmdBufferSwitchedWhenCheckingSpace<FamilyType::gfxCoreFamily>(requiredSize - 1));
+        EXPECT_FALSE(isCmdBufferSwitchedWhenCheckingSpace<FamilyType::gfxCoreFamily>(requiredSize));
+    }
+
+    template <typename FamilyType>
+    void verifyEmittedWaitOnCbEventSize() {
+        auto signalCmdList = this->template createImmCmdList<FamilyType::gfxCoreFamily>();
+        signalCmdList->partitionCount = static_cast<uint32_t>(this->device->getNEODevice()->getDeviceBitfield().count());
+        auto waitCmdList = this->template createImmCmdList<FamilyType::gfxCoreFamily>();
+
+        auto eventPool = this->template createEvents<FamilyType>(1, false);
+        auto eventHandle = this->events[0]->toHandle();
+        EXPECT_EQ(ZE_RESULT_SUCCESS, signalCmdList->appendLaunchKernel(this->kernel->toHandle(), this->groupCount, eventHandle, 0, nullptr, this->launchParams));
+
+        auto cmdStream = waitCmdList->getCmdContainer().getCommandStream();
+        const size_t usedBefore = cmdStream->getUsed();
+
+        CmdListWaitEventParameters waitEventParams = {};
+        waitEventParams.skipFlush = true;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, waitCmdList->appendWaitOnEvents(1, &eventHandle, waitEventParams));
+
+        EXPECT_EQ(getWaitEventSize<FamilyType>(), cmdStream->getUsed() - usedBefore);
+    }
+};
+
+using InOrderCmdListWaitSpaceTests = InOrderCmdListWaitSpaceFixture<InOrderCmdListFixture>;
+
+HWTEST_F(InOrderCmdListWaitSpaceTests, givenWaitEventsWhenCheckingSpaceThenEventWaitIsBudgetedForEachDevicePartitionToWait) {
+    verifyWaitEventsBudget<FamilyType>();
+}
+
+HWTEST_F(InOrderCmdListWaitSpaceTests, givenCbEventWhenAppendingWaitThenEmittedSizeMatchesWaitEventBudget) {
+    verifyEmittedWaitOnCbEventSize<FamilyType>();
+}
+
+using MultiTileInOrderCmdListWaitSpaceTests = InOrderCmdListWaitSpaceFixture<MultiTileInOrderCmdListFixture>;
+
+HWTEST2_F(MultiTileInOrderCmdListWaitSpaceTests, givenMultiTileDeviceWhenCheckingSpaceForWaitEventsThenEventWaitIsBudgetedForEachDevicePartitionToWait, IsAtLeastXeHpcCore) {
+    verifyWaitEventsBudget<FamilyType>();
+}
+
+HWTEST2_F(MultiTileInOrderCmdListWaitSpaceTests, givenMultiTileDeviceAndCbEventWhenAppendingWaitThenEmittedSizeMatchesWaitEventBudget, IsAtLeastXeHpcCore) {
+    verifyEmittedWaitOnCbEventSize<FamilyType>();
+}
+
 } // namespace ult
 } // namespace L0

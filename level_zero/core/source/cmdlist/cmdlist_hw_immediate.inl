@@ -156,8 +156,13 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::checkAvailableSpace(u
         commandSize += NEO::BlitCommandsHelper<GfxFamily>::getSizeForDebugPauseCommands(rootDeviceEnvironment);
     }
 
-    const size_t semaphoreSize = NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait() * numEvents;
-    const size_t requiredSize = commandSize + semaphoreSize;
+    size_t semaphoreWaitSize = NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait();
+    if (NEO::InOrderProgrammingHelpers::isLriFor64bDataProgrammingRequired(this->isQwordInOrderCounter(), this->device->getDeviceInfo().semaphore64bCmdSupport)) {
+        semaphoreWaitSize += 2 * NEO::EncodeSetMMIO<GfxFamily>::sizeIMM;
+    }
+    const size_t devicePartitionCount = this->inOrderAtomicSignalingEnabled ? 1 : this->device->getNEODevice()->getDeviceBitfield().count();
+    const size_t waitEventsSize = devicePartitionCount * semaphoreWaitSize * numEvents;
+    const size_t requiredSize = commandSize + waitEventsSize;
     if (this->commandContainer.getCommandStream()->getAvailableSpace() < requiredSize) {
         bool requireSystemMemoryCommandBuffer = !hasRelaxedOrderingDependencies && !requestCommandBufferInLocalMem;
 
