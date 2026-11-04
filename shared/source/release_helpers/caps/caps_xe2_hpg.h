@@ -44,6 +44,7 @@ struct CapsXe2HpgCore {
     static constexpr bool dotProductAccumulateSystolicSupported = true;
     static constexpr bool exposingSubdevicesAllowed = true;
     static constexpr bool globalBindlessAllocatorEnabled = true;
+    static constexpr bool latePreemptionStartSupported = true;
     static constexpr bool newCoherencyModelSupported = true;
     static constexpr bool newResidencyModelSupported = true;
     static constexpr bool numRtStacksPerDssFixedValue = true;
@@ -66,7 +67,6 @@ struct CapsBmgG21 : CapsBmg {};
 struct CapsBmgG31 : CapsBmg {};
 
 struct CapsLnl : CapsXe2HpgCore {
-    static constexpr bool latePreemptionStartSupported = true;
     static constexpr bool misalignedUserPtr2WayCoherent = true;
     static constexpr bool sharedUsmAllocationReuseSupported = true;
 };

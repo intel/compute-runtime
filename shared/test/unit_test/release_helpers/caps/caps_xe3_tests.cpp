@@ -98,7 +98,7 @@ TEST(CapsXe3Test, givenPtlHReleaseWhenMaterializingCapsThenCapabilitiesAreCorrec
     EXPECT_FALSE(capsPtlHA0.hvAlign4Required);
     EXPECT_FALSE(capsPtlHA0.initBuiltinAsyncSupported);
     EXPECT_FALSE(capsPtlHA0.initDeviceWithFirstSubmissionRequired);
-    EXPECT_FALSE(capsPtlHA0.latePreemptionStartSupported);
+    EXPECT_TRUE(capsPtlHA0.latePreemptionStartSupported);
     EXPECT_FALSE(capsPtlHA0.localOnlyAllowed);
     EXPECT_FALSE(capsPtlHA0.memSetExtendedPayloadSupported);
     EXPECT_FALSE(capsPtlHB0.memSetExtendedPayloadSupported);
@@ -166,7 +166,7 @@ TEST(CapsXe3Test, givenPtlHReleaseWhenMaterializingCapsThenCapabilitiesAreCorrec
     EXPECT_FALSE(capsPtlHB0.hvAlign4Required);
     EXPECT_FALSE(capsPtlHB0.initBuiltinAsyncSupported);
     EXPECT_FALSE(capsPtlHB0.initDeviceWithFirstSubmissionRequired);
-    EXPECT_FALSE(capsPtlHB0.latePreemptionStartSupported);
+    EXPECT_TRUE(capsPtlHB0.latePreemptionStartSupported);
     EXPECT_FALSE(capsPtlHB0.localOnlyAllowed);
     EXPECT_TRUE(capsPtlHB0.misalignedUserPtr2WayCoherent);
     EXPECT_TRUE(capsPtlHB0.newCoherencyModelSupported);
@@ -236,7 +236,7 @@ TEST(CapsXe3Test, givenPtlUReleaseWhenMaterializingCapsThenCapabilitiesAreCorrec
     EXPECT_FALSE(capsPtlU.hvAlign4Required);
     EXPECT_FALSE(capsPtlU.initBuiltinAsyncSupported);
     EXPECT_FALSE(capsPtlU.initDeviceWithFirstSubmissionRequired);
-    EXPECT_FALSE(capsPtlU.latePreemptionStartSupported);
+    EXPECT_TRUE(capsPtlU.latePreemptionStartSupported);
     EXPECT_FALSE(capsPtlU.localOnlyAllowed);
     EXPECT_FALSE(capsPtlU.memSetExtendedPayloadSupported);
     EXPECT_TRUE(capsPtlU.misalignedUserPtr2WayCoherent);
@@ -308,7 +308,7 @@ TEST(CapsXe3Test, givenWclReleaseWhenMaterializingCapsThenCapabilitiesAreCorrect
     EXPECT_FALSE(capsWcl.hvAlign4Required);
     EXPECT_FALSE(capsWcl.initBuiltinAsyncSupported);
     EXPECT_FALSE(capsWcl.initDeviceWithFirstSubmissionRequired);
-    EXPECT_FALSE(capsWcl.latePreemptionStartSupported);
+    EXPECT_TRUE(capsWcl.latePreemptionStartSupported);
     EXPECT_FALSE(capsWcl.localOnlyAllowed);
     EXPECT_FALSE(capsWcl.memSetExtendedPayloadSupported);
     EXPECT_TRUE(capsWcl.misalignedUserPtr2WayCoherent);
@@ -380,7 +380,7 @@ TEST(CapsXe3Test, givenNvlSReleaseWhenMaterializingCapsThenCapabilitiesAreCorrec
     EXPECT_FALSE(capsNvlS.hvAlign4Required);
     EXPECT_FALSE(capsNvlS.initBuiltinAsyncSupported);
     EXPECT_FALSE(capsNvlS.initDeviceWithFirstSubmissionRequired);
-    EXPECT_FALSE(capsNvlS.latePreemptionStartSupported);
+    EXPECT_TRUE(capsNvlS.latePreemptionStartSupported);
     EXPECT_FALSE(capsNvlS.localOnlyAllowed);
     EXPECT_FALSE(capsNvlS.memSetExtendedPayloadSupported);
     EXPECT_TRUE(capsNvlS.misalignedUserPtr2WayCoherent);
@@ -452,7 +452,7 @@ TEST(CapsXe3Test, givenNvlUReleaseWhenMaterializingCapsThenCapabilitiesAreCorrec
     EXPECT_FALSE(capsNvlU.hvAlign4Required);
     EXPECT_FALSE(capsNvlU.initBuiltinAsyncSupported);
     EXPECT_FALSE(capsNvlU.initDeviceWithFirstSubmissionRequired);
-    EXPECT_FALSE(capsNvlU.latePreemptionStartSupported);
+    EXPECT_TRUE(capsNvlU.latePreemptionStartSupported);
     EXPECT_FALSE(capsNvlU.localOnlyAllowed);
     EXPECT_FALSE(capsNvlU.memSetExtendedPayloadSupported);
     EXPECT_TRUE(capsNvlU.misalignedUserPtr2WayCoherent);

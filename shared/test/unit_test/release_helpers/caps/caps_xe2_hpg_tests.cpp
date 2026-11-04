@@ -87,7 +87,7 @@ TEST(CapsXe2HpgTest, givenBmgG21ReleaseWhenMaterializingCapsThenCapabilitiesAreC
     EXPECT_FALSE(capsBmgG21.hvAlign4Required);
     EXPECT_FALSE(capsBmgG21.initBuiltinAsyncSupported);
     EXPECT_FALSE(capsBmgG21.initDeviceWithFirstSubmissionRequired);
-    EXPECT_FALSE(capsBmgG21.latePreemptionStartSupported);
+    EXPECT_TRUE(capsBmgG21.latePreemptionStartSupported);
     EXPECT_FALSE(capsBmgG21.localOnlyAllowed);
     EXPECT_FALSE(capsBmgG21.memSetExtendedPayloadSupported);
     EXPECT_FALSE(capsBmgG21.misalignedUserPtr2WayCoherent);
@@ -159,7 +159,7 @@ TEST(CapsXe2HpgTest, givenBmgG31ReleaseWhenMaterializingCapsThenCapabilitiesAreC
     EXPECT_FALSE(capsBmgG31.hvAlign4Required);
     EXPECT_FALSE(capsBmgG31.initBuiltinAsyncSupported);
     EXPECT_FALSE(capsBmgG31.initDeviceWithFirstSubmissionRequired);
-    EXPECT_FALSE(capsBmgG31.latePreemptionStartSupported);
+    EXPECT_TRUE(capsBmgG31.latePreemptionStartSupported);
     EXPECT_FALSE(capsBmgG31.localOnlyAllowed);
     EXPECT_FALSE(capsBmgG31.memSetExtendedPayloadSupported);
     EXPECT_FALSE(capsBmgG31.misalignedUserPtr2WayCoherent);
