@@ -4896,15 +4896,17 @@ TEST_F(DrmMemoryManagerBasic, givenUnalignedHostPtrWithFlushL3RequiredWhenAlloca
     const auto &hwInfo = *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
     auto &releaseHelper = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getReleaseHelper();
 
-    const bool usesTwoWayCoherentPat = hwInfo.caps.misalignedUserPtr2WayCoherent &&
-                                       !releaseHelper.isAppTransientCoherentPatRequired();
-    const auto expectedUsage = usesTwoWayCoherentPat
-                                   ? GMM_RESOURCE_USAGE_HW_CONTEXT
-                                   : GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
-    const auto passedUsage = static_cast<MockGmmClientContextBase *>(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getGmmClientContext())->passedUsageTypeForGetPatIndexQuery;
+    auto expectedUsage = GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
+    if (releaseHelper.isAppTransientCoherentPatRequired()) {
+        expectedUsage = GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED;
+    } else if (hwInfo.caps.misalignedUserPtr2WayCoherent) {
+        expectedUsage = GMM_RESOURCE_USAGE_HW_CONTEXT;
+    }
+    auto mockClientContext = static_cast<MockGmmClientContextBase *>(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getGmmClientContext());
+    const auto passedUsage = mockClientContext->passedUsageTypeForGetPatIndexQuery;
     ASSERT_TRUE(passedUsage.has_value());
     EXPECT_EQ(expectedUsage, passedUsage.value());
-    const auto gmmPatIndex = usesTwoWayCoherentPat ? MockGmmClientContextBase::MockPatIndex::twoWayCoherent : MockGmmClientContextBase::MockPatIndex::cached;
+    const auto gmmPatIndex = mockClientContext->cachePolicyGetPATIndex(nullptr, expectedUsage, false, true);
     EXPECT_EQ(releaseHelper.overrideSystemMemoryPatIndex(gmmPatIndex),
               allocation->getBO()->peekPatIndex());
 

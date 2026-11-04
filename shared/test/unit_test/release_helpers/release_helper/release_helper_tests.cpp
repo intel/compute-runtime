@@ -66,7 +66,7 @@ TEST(ReleaseHelperPatIndexTests, givenNoL3FlushAfterPostSyncSupportWhenSelecting
               CacheSettingsHelper::getGmmUsageTypeForCoherentSystemMemory(GMM_RESOURCE_USAGE_OCL_BUFFER, productHelper, releaseHelper));
 }
 
-TEST(ReleaseHelperPatIndexTests, givenMisalignedUserPtrWhenSelectingGmmUsageThenUse2WayCoherencyOnlyWhenSupportedByRelease) {
+TEST(ReleaseHelperPatIndexTests, givenMisalignedUserPtrDestinationWhenSelectingGmmUsageThenUse2WayCoherencyOrUncachedIfOnlyAppTransientPatIsAvailable) {
     DebugManagerStateRestore restore;
     HardwareInfo hwInfo{};
     hwInfo.caps.misalignedUserPtr2WayCoherent = true;
@@ -80,8 +80,27 @@ TEST(ReleaseHelperPatIndexTests, givenMisalignedUserPtrWhenSelectingGmmUsageThen
               CacheSettingsHelper::getGmmUsageTypeForUserPtr(true, userPtr, size, hwInfo, releaseHelper));
 
     releaseHelper.isAppTransientCoherentPatRequiredResult = true;
-    EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER,
+    EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED,
               CacheSettingsHelper::getGmmUsageTypeForUserPtr(true, userPtr, size, hwInfo, releaseHelper));
+}
+
+TEST(ReleaseHelperPatIndexTests, givenOnlyAppTransientPatAvailableWhenUserPtrIsNotMisalignedDestinationThenUseAppTransientUsage) {
+    DebugManagerStateRestore restore;
+    HardwareInfo hwInfo{};
+    MockReleaseHelper releaseHelper;
+    releaseHelper.isAppTransientCoherentPatRequiredResult = true;
+
+    const auto misalignedPtr = reinterpret_cast<const void *>(0x1001);
+    const auto alignedPtr = reinterpret_cast<const void *>(MemoryConstants::cacheLineSize);
+
+    EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER,
+              CacheSettingsHelper::getGmmUsageTypeForUserPtr(false, misalignedPtr, 13u, hwInfo, releaseHelper));
+    EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER,
+              CacheSettingsHelper::getGmmUsageTypeForUserPtr(true, alignedPtr, MemoryConstants::cacheLineSize, hwInfo, releaseHelper));
+
+    debugManager.flags.Disable2WayCoherencyOverride.set(true);
+    EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER,
+              CacheSettingsHelper::getGmmUsageTypeForUserPtr(true, misalignedPtr, 13u, hwInfo, releaseHelper));
 }
 
 TEST(ReleaseHelperPatIndexTests, givenCacheLineAlignedUserPtrWhenSelectingGmmUsageThenDoNotUse2WayCoherency) {

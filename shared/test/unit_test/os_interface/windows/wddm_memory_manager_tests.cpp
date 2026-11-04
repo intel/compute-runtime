@@ -1274,7 +1274,9 @@ TEST_F(WddmMemoryManagerSimpleTest, givenAllocateGraphicsMemoryForNonSvmHostPtrI
     const auto &hwInfo = *rootDeviceEnvironment->getHardwareInfo();
     const auto &releaseHelper = rootDeviceEnvironment->getReleaseHelper();
     auto expectedUsage = GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
-    if (hwInfo.caps.misalignedUserPtr2WayCoherent && !releaseHelper.isAppTransientCoherentPatRequired()) {
+    if (releaseHelper.isAppTransientCoherentPatRequired()) {
+        expectedUsage = GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED;
+    } else if (hwInfo.caps.misalignedUserPtr2WayCoherent) {
         expectedUsage = GMM_RESOURCE_USAGE_HW_CONTEXT;
     }
     EXPECT_EQ(expectedUsage, allocation->getGmm(0)->getResourceUsageType());
