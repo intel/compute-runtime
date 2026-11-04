@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/preprocessor.h"
 
 #include "level_zero/sysman/source/api/ras/linux/ras_util/sysman_ras_util.h"
@@ -131,7 +132,6 @@ ze_result_t NetlinkRasUtil::rasGetStateExp2(const uint32_t count, const zes_ras_
 }
 
 ze_result_t NetlinkRasUtil::rasClearStateExp(zes_ras_error_category_exp_t category) {
-
     auto categoryToErrorNameIt = categoryToErrorNameMap.find(category);
     if (categoryToErrorNameIt == categoryToErrorNameMap.end()) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): RAS error category not supported by Netlink and returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
@@ -213,6 +213,7 @@ ze_result_t NetlinkRasUtil::rasSetConfigExp(const uint32_t count, const zes_ras_
     // Threshold functionality is only supported for correctable errors.
     // Setting a threshold for uncorrectable errors is not supported.
     if (rasErrorType == ZES_RAS_ERROR_TYPE_UNCORRECTABLE) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Setting config not supported for uncorrectable error type and returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
@@ -271,6 +272,11 @@ NetlinkRasUtil::NetlinkRasUtil(zes_ras_error_type_t type, LinuxSysmanImp *pLinux
             break;
         }
     }
+
+    if (!isRasNodeResolved()) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): No %s RAS node found for device %s \n", NEO_FUNCTION_NAME, targetNodeName.c_str(), devicePciBdf.c_str());
+    }
+    DEBUG_BREAK_IF(!isRasNodeResolved());
 }
 
 NetlinkRasUtil::~NetlinkRasUtil() = default;
