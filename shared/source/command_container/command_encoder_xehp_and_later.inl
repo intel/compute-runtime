@@ -131,7 +131,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     EncodeDispatchKernel<Family>::programBarrierEnable(idd,
                                                        kernelDescriptor);
 
-    EncodeDispatchKernel<Family>::encodeEuSchedulingPolicy(&idd, kernelDescriptor, args.defaultPipelinedThreadArbitrationPolicy);
+    EncodeDispatchKernel<Family>::encodeEuSchedulingPolicy(&idd, args.dispatchInterface->getThreadArbitrationPolicy(), args.defaultPipelinedThreadArbitrationPolicy);
 
     EncodeDispatchKernel<Family>::encodeSlmSizePerThreadGroup(&idd, rootDeviceEnvironment, args.dispatchInterface->getSlmTotalSizePerThreadGroup(), heaplessModeEnabled);
 

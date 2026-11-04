@@ -4763,7 +4763,7 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForFlushTaskDis
 
     bool fusedEuDisabled = getFusedEuDisabled<gfxCoreFamily>(kernel, this->device, threadGroupDimensions, isIndirect);
 
-    requiredStreamState.stateComputeMode.setPropertiesGrfNumberThreadArbitration(kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy);
+    requiredStreamState.stateComputeMode.setPropertiesGrfNumberThreadArbitration(kernelAttributes.numGrfRequired, kernel.getThreadArbitrationPolicy());
 
     requiredStreamState.frontEndState.setPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(isCooperative, fusedEuDisabled);
 
@@ -4864,11 +4864,11 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularComma
         requiredStreamState.stateBaseAddress.setPropertiesIndirectState(currentIndirectObjectBaseAddress, currentIndirectObjectSize);
 
         if (this->stateComputeModeTracking) {
-            requiredStreamState.stateComputeMode.setPropertiesGrfNumberThreadArbitration(kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy);
+            requiredStreamState.stateComputeMode.setPropertiesGrfNumberThreadArbitration(kernelAttributes.numGrfRequired, kernel.getThreadArbitrationPolicy());
             finalStreamState = requiredStreamState;
         } else {
             finalStreamState = requiredStreamState;
-            requiredStreamState.stateComputeMode.setPropertiesAll(kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy, device->getNEODevice()->hasAnyPeerAccess());
+            requiredStreamState.stateComputeMode.setPropertiesAll(kernelAttributes.numGrfRequired, kernel.getThreadArbitrationPolicy(), device->getNEODevice()->hasAnyPeerAccess());
         }
         containsAnyKernel = true;
     }
@@ -4905,9 +4905,9 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularComma
     }
 
     if (this->stateComputeModeTracking) {
-        finalStreamState.stateComputeMode.setPropertiesGrfNumberThreadArbitration(kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy);
+        finalStreamState.stateComputeMode.setPropertiesGrfNumberThreadArbitration(kernelAttributes.numGrfRequired, kernel.getThreadArbitrationPolicy());
     } else {
-        finalStreamState.stateComputeMode.setPropertiesAll(kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy, device->getNEODevice()->hasAnyPeerAccess());
+        finalStreamState.stateComputeMode.setPropertiesAll(kernelAttributes.numGrfRequired, kernel.getThreadArbitrationPolicy(), device->getNEODevice()->hasAnyPeerAccess());
     }
     if (finalStreamState.stateComputeMode.isDirty()) {
         bool isRcs = (this->engineGroupType == NEO::EngineGroupType::renderCompute);

@@ -173,6 +173,7 @@ struct KernelImp : Kernel {
     uint64_t getIsaOffsetInParentAllocation() const override;
 
     uint32_t getRequiredWorkgroupOrder() const override { return privateState.requiredWorkgroupOrder; }
+    NEO::ThreadArbitrationPolicy getThreadArbitrationPolicy() const override { return privateState.threadArbitrationPolicy; }
     bool requiresGenerationOfLocalIdsByRuntime() const override { return privateState.kernelRequiresGenerationOfLocalIdsByRuntime; }
     bool getKernelRequiresUncachedMocs() { return (privateState.kernelRequiresUncachedMocsCount > 0); }
     bool getKernelRequiresQueueUncachedMocs() { return (privateState.kernelRequiresQueueUncachedMocsCount > 0); }

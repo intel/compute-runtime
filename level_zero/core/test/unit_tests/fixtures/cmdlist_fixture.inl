@@ -991,7 +991,7 @@ void CmdListThreadArbitrationFixture::testBody() {
     auto result = ZE_RESULT_SUCCESS;
 
     {
-        mockKernelImmData->kernelDescriptor->kernelAttributes.threadArbitrationPolicy = NEO::ThreadArbitrationPolicy::AgeBased;
+        kernel->privateState.threadArbitrationPolicy = NEO::ThreadArbitrationPolicy::AgeBased;
 
         sizeBefore = commandListStream.getUsed();
         result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
@@ -1040,7 +1040,7 @@ void CmdListThreadArbitrationFixture::testBody() {
     }
 
     {
-        mockKernelImmData->kernelDescriptor->kernelAttributes.threadArbitrationPolicy = NEO::ThreadArbitrationPolicy::RoundRobin;
+        kernel->privateState.threadArbitrationPolicy = NEO::ThreadArbitrationPolicy::RoundRobin;
         sizeBefore = commandListStream.getUsed();
         result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -1060,7 +1060,7 @@ void CmdListThreadArbitrationFixture::testBody() {
         cmdList.clear();
         stateComputeModeList.clear();
 
-        mockKernelImmData->kernelDescriptor->kernelAttributes.threadArbitrationPolicy = NEO::ThreadArbitrationPolicy::AgeBased;
+        kernel->privateState.threadArbitrationPolicy = NEO::ThreadArbitrationPolicy::AgeBased;
         sizeBefore = commandListStream.getUsed();
         result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -1108,7 +1108,7 @@ void CmdListThreadArbitrationFixture::testBody() {
     }
 
     {
-        mockKernelImmData->kernelDescriptor->kernelAttributes.threadArbitrationPolicy = NEO::ThreadArbitrationPolicy::RoundRobin;
+        kernel->privateState.threadArbitrationPolicy = NEO::ThreadArbitrationPolicy::RoundRobin;
         sizeBefore = commandListStream.getUsed();
         result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -1128,7 +1128,7 @@ void CmdListThreadArbitrationFixture::testBody() {
         cmdList.clear();
         stateComputeModeList.clear();
 
-        mockKernelImmData->kernelDescriptor->kernelAttributes.threadArbitrationPolicy = NEO::ThreadArbitrationPolicy::AgeBased;
+        kernel->privateState.threadArbitrationPolicy = NEO::ThreadArbitrationPolicy::AgeBased;
         sizeBefore = commandListStream.getUsed();
         result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -1151,7 +1151,7 @@ void CmdListThreadArbitrationFixture::testBody() {
         cmdList.clear();
         stateComputeModeList.clear();
 
-        mockKernelImmData->kernelDescriptor->kernelAttributes.threadArbitrationPolicy = NEO::ThreadArbitrationPolicy::RoundRobinAfterDependency;
+        kernel->privateState.threadArbitrationPolicy = NEO::ThreadArbitrationPolicy::RoundRobinAfterDependency;
         sizeBefore = commandListStream.getUsed();
         result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -1198,7 +1198,7 @@ void CmdListThreadArbitrationFixture::testBody() {
         commandList->reset();
     }
     {
-        mockKernelImmData->kernelDescriptor->kernelAttributes.threadArbitrationPolicy = NEO::ThreadArbitrationPolicy::RoundRobinAfterDependency;
+        kernel->privateState.threadArbitrationPolicy = NEO::ThreadArbitrationPolicy::RoundRobinAfterDependency;
         sizeBefore = commandListStream.getUsed();
         result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);

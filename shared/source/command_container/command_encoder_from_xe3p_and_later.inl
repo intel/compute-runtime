@@ -85,8 +85,8 @@ void EncodeDispatchKernel<Family>::setScratchAddress(uint64_t &scratchAddress, u
 
 template <typename Family>
 template <typename InterfaceDescriptorType>
-void EncodeDispatchKernel<Family>::encodeEuSchedulingPolicy(InterfaceDescriptorType *pInterfaceDescriptor, const KernelDescriptor &kernelDesc, int32_t defaultPipelinedThreadArbitrationPolicy) {
-    auto pipelinedThreadArbitrationPolicy = kernelDesc.kernelAttributes.threadArbitrationPolicy;
+void EncodeDispatchKernel<Family>::encodeEuSchedulingPolicy(InterfaceDescriptorType *pInterfaceDescriptor, ThreadArbitrationPolicy kernelThreadArbitrationPolicy, int32_t defaultPipelinedThreadArbitrationPolicy) {
+    auto pipelinedThreadArbitrationPolicy = kernelThreadArbitrationPolicy;
 
     if (pipelinedThreadArbitrationPolicy == ThreadArbitrationPolicy::NotPresent) {
         pipelinedThreadArbitrationPolicy = static_cast<ThreadArbitrationPolicy>(defaultPipelinedThreadArbitrationPolicy);

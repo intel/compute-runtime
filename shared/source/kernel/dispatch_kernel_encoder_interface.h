@@ -12,6 +12,7 @@ namespace NEO {
 class GraphicsAllocation;
 struct ImplicitArgs;
 struct KernelDescriptor;
+enum ThreadArbitrationPolicy : int32_t;
 
 enum class SlmPolicy {
     slmPolicyNone,
@@ -45,6 +46,7 @@ struct DispatchKernelEncoderI {
 
     virtual uint32_t getRequiredWorkgroupOrder() const = 0;
     virtual bool requiresGenerationOfLocalIdsByRuntime() const = 0;
+    virtual ThreadArbitrationPolicy getThreadArbitrationPolicy() const = 0;
 
     virtual ImplicitArgs *getImplicitArgs() const = 0;
     virtual void patchBindlessOffsetsInCrossThreadData(uint64_t bindlessSurfaceStateBaseOffset) const = 0;

@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/source/helpers/vec.h"
 #include "shared/source/unified_memory/unified_memory.h"
 #include "shared/source/utilities/mem_lifetime.h"
@@ -75,6 +76,7 @@ struct KernelMutableStateDefaultCopyableParams {
     uint32_t threadExecutionMask = 0U;
     uint32_t numThreadsPerThreadGroup = 1U;
     ze_cache_config_flags_t cacheConfigFlags = 0U;
+    NEO::ThreadArbitrationPolicy threadArbitrationPolicy = NEO::ThreadArbitrationPolicy::NotPresent;
 
     bool kernelHasIndirectAccess = false;
     bool kernelRequiresGenerationOfLocalIdsByRuntime = true;

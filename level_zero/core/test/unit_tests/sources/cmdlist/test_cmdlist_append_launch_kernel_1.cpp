@@ -339,7 +339,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithOldestFirstThreadArbitrat
     ze_scheduling_hint_exp_desc_t pHint{};
     pHint.flags = ZE_SCHEDULING_HINT_EXP_FLAG_OLDEST_FIRST;
     kernel->setSchedulingHintExp(&pHint);
-    ASSERT_EQ(kernel->getKernelDescriptor().kernelAttributes.threadArbitrationPolicy, NEO::ThreadArbitrationPolicy::AgeBased);
+    ASSERT_EQ(kernel->getThreadArbitrationPolicy(), NEO::ThreadArbitrationPolicy::AgeBased);
 }
 
 HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithRRThreadArbitrationPolicySetUsingSchedulingHintExtensionThenCorrectInternalPolicyIsReturned) {
@@ -347,7 +347,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithRRThreadArbitrationPolicy
     ze_scheduling_hint_exp_desc_t pHint{};
     pHint.flags = ZE_SCHEDULING_HINT_EXP_FLAG_ROUND_ROBIN;
     kernel->setSchedulingHintExp(&pHint);
-    ASSERT_EQ(kernel->getKernelDescriptor().kernelAttributes.threadArbitrationPolicy, NEO::ThreadArbitrationPolicy::RoundRobin);
+    ASSERT_EQ(kernel->getThreadArbitrationPolicy(), NEO::ThreadArbitrationPolicy::RoundRobin);
 }
 
 HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithStallRRThreadArbitrationPolicySetUsingSchedulingHintExtensionThenCorrectInternalPolicyIsReturned) {
@@ -355,7 +355,63 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithStallRRThreadArbitrationP
     ze_scheduling_hint_exp_desc_t pHint{};
     pHint.flags = ZE_SCHEDULING_HINT_EXP_FLAG_STALL_BASED_ROUND_ROBIN;
     kernel->setSchedulingHintExp(&pHint);
-    ASSERT_EQ(kernel->getKernelDescriptor().kernelAttributes.threadArbitrationPolicy, NEO::ThreadArbitrationPolicy::RoundRobinAfterDependency);
+    ASSERT_EQ(kernel->getThreadArbitrationPolicy(), NEO::ThreadArbitrationPolicy::RoundRobinAfterDependency);
+}
+
+HWTEST_F(CommandListAppendLaunchKernel, givenKernelDescriptorWithThreadArbitrationPolicyWhenKernelIsCreatedThenKernelUsesPolicyFromKernelDescriptor) {
+    auto &kernelImmData = *module->getKernelImmutableData(kernelName.c_str());
+    const_cast<NEO::KernelDescriptor &>(kernelImmData.getDescriptor()).kernelAttributes.threadArbitrationPolicy = NEO::ThreadArbitrationPolicy::RoundRobin;
+
+    createKernel();
+
+    EXPECT_EQ(NEO::ThreadArbitrationPolicy::RoundRobin, kernel->getThreadArbitrationPolicy());
+}
+
+HWTEST_F(CommandListAppendLaunchKernel, givenTwoKernelsOfSameFunctionWhenSchedulingHintIsSetOnOneKernelThenOtherKernelsAndKernelDescriptorKeepTheirPolicy) {
+    createKernel();
+    auto kernelCreatedBeforeHint = createKernelWithName(kernelName);
+    auto policyFromKernelDescriptor = kernel->getKernelDescriptor().kernelAttributes.threadArbitrationPolicy;
+
+    ze_scheduling_hint_exp_desc_t hint{ZE_STRUCTURE_TYPE_SCHEDULING_HINT_EXP_DESC};
+    hint.flags = ZE_SCHEDULING_HINT_EXP_FLAG_OLDEST_FIRST;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, kernel->setSchedulingHintExp(&hint));
+    auto kernelCreatedAfterHint = createKernelWithName(kernelName);
+
+    EXPECT_EQ(NEO::ThreadArbitrationPolicy::AgeBased, kernel->getThreadArbitrationPolicy());
+    EXPECT_EQ(policyFromKernelDescriptor, kernelCreatedBeforeHint->getThreadArbitrationPolicy());
+    EXPECT_EQ(policyFromKernelDescriptor, kernelCreatedAfterHint->getThreadArbitrationPolicy());
+    EXPECT_EQ(policyFromKernelDescriptor, kernel->getKernelDescriptor().kernelAttributes.threadArbitrationPolicy);
+}
+
+HWTEST_F(CommandListAppendLaunchKernel, givenSchedulingHintSetOnOneKernelWhenOtherKernelOfSameFunctionIsAppendedThenCmdListThreadArbitrationPolicyIsNotAffectedByHint) {
+    auto &compilerProductHelper = device->getCompilerProductHelper();
+    if (compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo)) {
+        GTEST_SKIP();
+    }
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);
+
+    createKernel();
+    auto otherKernel = createKernelWithName(kernelName);
+
+    auto getCmdListThreadArbitrationPolicyAfterAppend = [&](L0::Kernel &kernelToAppend) {
+        ze_group_count_t groupCount{1, 1, 1};
+        ze_result_t returnValue;
+        std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
+        CmdListKernelLaunchParams launchParams = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendLaunchKernel(kernelToAppend.toHandle(), groupCount, nullptr, 0, nullptr, launchParams));
+        return commandList->getFinalStreamState().stateComputeMode.threadArbitrationPolicy.value;
+    };
+
+    auto policyWithoutHint = getCmdListThreadArbitrationPolicyAfterAppend(*otherKernel);
+
+    ze_scheduling_hint_exp_desc_t hint{ZE_STRUCTURE_TYPE_SCHEDULING_HINT_EXP_DESC};
+    hint.flags = ZE_SCHEDULING_HINT_EXP_FLAG_OLDEST_FIRST;
+    kernel->setSchedulingHintExp(&hint);
+
+    EXPECT_EQ(policyWithoutHint, getCmdListThreadArbitrationPolicyAfterAppend(*otherKernel));
+    EXPECT_EQ(NEO::ThreadArbitrationPolicy::AgeBased, getCmdListThreadArbitrationPolicyAfterAppend(*kernel));
 }
 
 HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithThreadArbitrationPolicySetUsingSchedulingHintExtensionTheSameFlagIsUsedToSetCmdListThreadArbitrationPolicy) {

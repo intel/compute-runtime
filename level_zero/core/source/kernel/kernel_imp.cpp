@@ -1389,6 +1389,8 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
         privateState.kernelHasIndirectAccess = true;
     }
 
+    privateState.threadArbitrationPolicy = kernelDescriptor.kernelAttributes.threadArbitrationPolicy;
+
     if (this->usesRayTracing()) {
         if (!hwInfo.caps.rayTracingSupported) {
             PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Ray tracing detected in kernel, but the current device does not support ray tracing. Returning ZE_RESULT_ERROR_UNSUPPORTED_FEATURE.\n");
@@ -1616,7 +1618,7 @@ uint64_t KernelImp::getIsaOffsetInParentAllocation() const {
 }
 
 ze_result_t KernelImp::setSchedulingHintExp(ze_scheduling_hint_exp_desc_t *pHint) {
-    auto &threadArbitrationPolicy = const_cast<NEO::ThreadArbitrationPolicy &>(getKernelDescriptor().kernelAttributes.threadArbitrationPolicy);
+    auto &threadArbitrationPolicy = this->privateState.threadArbitrationPolicy;
     if (pHint->flags == ZE_SCHEDULING_HINT_EXP_FLAG_OLDEST_FIRST) {
         threadArbitrationPolicy = NEO::ThreadArbitrationPolicy::AgeBased;
     } else if (pHint->flags == ZE_SCHEDULING_HINT_EXP_FLAG_ROUND_ROBIN) {

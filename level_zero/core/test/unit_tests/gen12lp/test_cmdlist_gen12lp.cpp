@@ -429,7 +429,7 @@ GEN12LPTEST_F(CommandListGen12LpStateComputeModeTrackingTest,
     auto result = ZE_RESULT_SUCCESS;
 
     mockKernelImmData->kernelDescriptor->kernelAttributes.numGrfRequired = GrfConfig::defaultGrfNumber;
-    mockKernelImmData->kernelDescriptor->kernelAttributes.threadArbitrationPolicy = NEO::ThreadArbitrationPolicy::RoundRobin;
+    kernel->privateState.threadArbitrationPolicy = NEO::ThreadArbitrationPolicy::RoundRobin;
 
     sizeBefore = commandListStream.getUsed();
     result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);

@@ -1314,7 +1314,7 @@ HWTEST2_F(CommandEncoderTests, givenInterfaceDescriptorWhenEncodeEuSchedulingPol
     KernelDescriptor kernelDescriptor;
     kernelDescriptor.kernelAttributes.threadArbitrationPolicy = ThreadArbitrationPolicy::AgeBased;
     int32_t defaultPipelinedThreadArbitrationPolicy = ThreadArbitrationPolicy::RoundRobin;
-    EncodeDispatchKernel<FamilyType>::encodeEuSchedulingPolicy(&idd, kernelDescriptor, defaultPipelinedThreadArbitrationPolicy);
+    EncodeDispatchKernel<FamilyType>::encodeEuSchedulingPolicy(&idd, kernelDescriptor.kernelAttributes.threadArbitrationPolicy, defaultPipelinedThreadArbitrationPolicy);
 
     EXPECT_EQ(idd.getEuThreadSchedulingModeOverride(), INTERFACE_DESCRIPTOR_DATA::EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_OLDEST_FIRST);
 }
@@ -1329,7 +1329,7 @@ HWTEST2_F(CommandEncoderTests, givenInterfaceDescriptorWhenEncodeEuSchedulingPol
     KernelDescriptor kernelDescriptor;
     kernelDescriptor.kernelAttributes.threadArbitrationPolicy = ThreadArbitrationPolicy::AgeBased;
     int32_t defaultPipelinedThreadArbitrationPolicy = ThreadArbitrationPolicy::RoundRobin;
-    EncodeDispatchKernel<FamilyType>::encodeEuSchedulingPolicy(&idd, kernelDescriptor, defaultPipelinedThreadArbitrationPolicy);
+    EncodeDispatchKernel<FamilyType>::encodeEuSchedulingPolicy(&idd, kernelDescriptor.kernelAttributes.threadArbitrationPolicy, defaultPipelinedThreadArbitrationPolicy);
 
     constexpr uint32_t iddSizeInDW = 8;
     for (uint32_t i = 0u; i < iddSizeInDW; i++) {
