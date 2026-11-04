@@ -129,6 +129,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     auto isCcsUsed = EngineHelpers::isCcs(commandQueue.getGpgpuEngine().osContext->getEngineType());
 
     if (auto kernelAllocation = kernelInfo.getIsaGraphicsAllocation()) {
+        EncodeMemoryPrefetch<GfxFamily>::programAdditionalMemoryPrefetch(commandStream, *kernelAllocation, kernelInfo.heapInfo.kernelHeapSize, kernelInfo.getIsaOffsetInParentAllocation(), rootDeviceEnvironment);
         EncodeMemoryPrefetch<GfxFamily>::programMemoryPrefetch(commandStream, *kernelAllocation, kernelInfo.heapInfo.kernelHeapSize, kernelInfo.getIsaOffsetInParentAllocation(), rootDeviceEnvironment);
     }
 

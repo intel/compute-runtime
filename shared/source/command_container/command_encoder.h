@@ -696,6 +696,8 @@ template <typename GfxFamily>
 struct EncodeMemoryPrefetch {
     static void programMemoryPrefetch(LinearStream &commandStream, const GraphicsAllocation &graphicsAllocation, uint32_t size, size_t offset, const RootDeviceEnvironment &rootDeviceEnvironment);
     static size_t getSizeForMemoryPrefetch(size_t size, const RootDeviceEnvironment &rootDeviceEnvironment);
+    static void programAdditionalMemoryPrefetch(LinearStream &commandStream, const GraphicsAllocation &graphicsAllocation, size_t size, size_t offset, const RootDeviceEnvironment &rootDeviceEnvironment);
+    static size_t getSizeForAdditionalMemoryPrefetch(const GraphicsAllocation &graphicsAllocation, size_t size, size_t offset, const RootDeviceEnvironment &rootDeviceEnvironment);
 };
 
 template <typename GfxFamily>

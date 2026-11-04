@@ -351,6 +351,12 @@ bool EncodeDispatchKernel<Family>::isHwLocalIdsGenerationWithNonEmittedDimension
 }
 
 template <>
+size_t EncodeMemoryPrefetch<Family>::getSizeForAdditionalMemoryPrefetch(const GraphicsAllocation &graphicsAllocation, size_t size, size_t offset, const RootDeviceEnvironment &rootDeviceEnvironment) { return 0u; }
+
+template <>
+void EncodeMemoryPrefetch<Family>::programAdditionalMemoryPrefetch(LinearStream &commandStream, const GraphicsAllocation &graphicsAllocation, size_t size, size_t offset, const RootDeviceEnvironment &rootDeviceEnvironment) {}
+
+template <>
 uint32_t ContextTimestampRegister<Family>::getRegisterOffsetLow() {
     return RegisterOffsets::queueTimestampRegAddressOffsetLow;
 }

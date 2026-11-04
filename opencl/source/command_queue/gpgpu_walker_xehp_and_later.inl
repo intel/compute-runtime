@@ -142,10 +142,17 @@ template <typename WalkerType>
 size_t EnqueueOperation<GfxFamily>::getSizeRequiredCSKernel(bool reserveProfilingCmdsSpace, bool reservePerfCounters, CommandQueue &commandQueue, const Kernel *pKernel, const DispatchInfo &dispatchInfo) {
     size_t numBarriers = MemorySynchronizationCommands<GfxFamily>::isBarrierWaRequired(commandQueue.getDevice().getRootDeviceEnvironment()) ? 2 : 1;
 
+    const auto &kernelInfo = pKernel->getKernelInfo();
+    const auto &rootDeviceEnvironment = commandQueue.getDevice().getRootDeviceEnvironment();
+
     size_t size = sizeof(WalkerType) +
                   (MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier() * numBarriers) +
                   HardwareCommandsHelper<GfxFamily>::getSizeRequiredCS() +
-                  EncodeMemoryPrefetch<GfxFamily>::getSizeForMemoryPrefetch(pKernel->getKernelInfo().heapInfo.kernelHeapSize, commandQueue.getDevice().getRootDeviceEnvironment());
+                  EncodeMemoryPrefetch<GfxFamily>::getSizeForMemoryPrefetch(kernelInfo.heapInfo.kernelHeapSize, rootDeviceEnvironment);
+
+    if (auto kernelAllocation = kernelInfo.getIsaGraphicsAllocation()) {
+        size += EncodeMemoryPrefetch<GfxFamily>::getSizeForAdditionalMemoryPrefetch(*kernelAllocation, kernelInfo.heapInfo.kernelHeapSize, kernelInfo.getIsaOffsetInParentAllocation(), rootDeviceEnvironment);
+    }
 
     if (pKernel->requiresStateCacheInvalidationWa()) {
         size += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();

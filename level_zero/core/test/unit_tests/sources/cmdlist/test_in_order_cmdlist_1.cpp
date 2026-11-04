@@ -3719,6 +3719,11 @@ HWTEST2_F(InOrderCmdListTests, givenIoqAndPrefetchEnabledWhenKernelIsAppendedThe
     auto heap = immCmdList->getCmdContainer().getIndirectHeap(NEO::IndirectHeapType::indirectObject);
     auto heapAddress = gmmHelper->decanonize(heap->getGraphicsAllocation()->getGpuAddress()) + heap->getUsed();
 
+    auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
+    auto isaPrefetchSize = device->getProductHelper().getIsaPrefetchSize(kernel->getImmutableData()->getIsaSizeWithoutPadding());
+    auto iohAdditionalPrefetchCount = NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForAdditionalMemoryPrefetch(*heap->getGraphicsAllocation(), kernel->getIndirectSize(), heap->getUsed(), rootDeviceEnvironment) / sizeof(STATE_PREFETCH);
+    auto isaAdditionalPrefetchCount = NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForAdditionalMemoryPrefetch(*isaAllocation, isaPrefetchSize, kernel->getIsaOffsetInParentAllocation(), rootDeviceEnvironment) / sizeof(STATE_PREFETCH);
+
     zeCommandListAppendLaunchKernel(immCmdList->toHandle(), kernel->toHandle(), &groupCount, nullptr, 0, nullptr);
 
     GenCmdList cmdList;
@@ -3726,6 +3731,13 @@ HWTEST2_F(InOrderCmdListTests, givenIoqAndPrefetchEnabledWhenKernelIsAppendedThe
 
     auto firstPrefetchIterator = find<STATE_PREFETCH *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), firstPrefetchIterator);
+
+    for (size_t i = 0; i < iohAdditionalPrefetchCount; i++, firstPrefetchIterator++) {
+        auto iohAdditionalPrefetch = genCmdCast<STATE_PREFETCH *>(*firstPrefetchIterator);
+        ASSERT_NE(nullptr, iohAdditionalPrefetch);
+        EXPECT_EQ(alignDown(heapAddress, MemoryConstants::pageSize), iohAdditionalPrefetch->getAddress());
+        EXPECT_FALSE(iohAdditionalPrefetch->getKernelInstructionPrefetch());
+    }
 
     auto heapSize = alignUp(kernel->getIndirectSize(), MemoryConstants::cacheLineSize) / MemoryConstants::cacheLineSize;
 
@@ -3738,6 +3750,13 @@ HWTEST2_F(InOrderCmdListTests, givenIoqAndPrefetchEnabledWhenKernelIsAppendedThe
 
     auto secondPrefetchIterator = find<STATE_PREFETCH *>(++firstPrefetchIterator, cmdList.end());
     ASSERT_NE(cmdList.end(), secondPrefetchIterator);
+
+    for (size_t i = 0; i < isaAdditionalPrefetchCount; i++, secondPrefetchIterator++) {
+        auto isaAdditionalPrefetch = genCmdCast<STATE_PREFETCH *>(*secondPrefetchIterator);
+        ASSERT_NE(nullptr, isaAdditionalPrefetch);
+        EXPECT_EQ(alignDown(isaAddress, MemoryConstants::pageSize), isaAdditionalPrefetch->getAddress());
+        EXPECT_FALSE(isaAdditionalPrefetch->getKernelInstructionPrefetch());
+    }
 
     auto secondPrefetch = genCmdCast<STATE_PREFETCH *>(*secondPrefetchIterator);
     ASSERT_NE(nullptr, secondPrefetch);

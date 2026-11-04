@@ -709,6 +709,12 @@ template <typename CommandType>
 void EncodePostSync<Family>::adjustTimestampPacket(CommandType &cmd, const EncodePostSyncArgs &args) {}
 
 template <>
+size_t EncodeMemoryPrefetch<Family>::getSizeForAdditionalMemoryPrefetch(const GraphicsAllocation &graphicsAllocation, size_t size, size_t offset, const RootDeviceEnvironment &rootDeviceEnvironment) { return 0u; }
+
+template <>
+void EncodeMemoryPrefetch<Family>::programAdditionalMemoryPrefetch(LinearStream &commandStream, const GraphicsAllocation &graphicsAllocation, size_t size, size_t offset, const RootDeviceEnvironment &rootDeviceEnvironment) {}
+
+template <>
 size_t EncodeWA<Family>::getAdditionalPipelineSelectSize(Device &device, bool isRcs) {
     size_t size = 0;
     const auto &productHelper = device.getProductHelper();

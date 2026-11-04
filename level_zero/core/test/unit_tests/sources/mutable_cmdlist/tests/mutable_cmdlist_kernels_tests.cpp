@@ -32,6 +32,7 @@
 #include "level_zero/core/source/kernel/kernel.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
 #include "level_zero/core/source/kernel/kernel_mutable_state.h"
+#include "level_zero/core/source/mutable_cmdlist/mutable_kernel_group.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/sources/mutable_cmdlist/fixtures/mutable_cmdlist_fixture.h"
 #include "level_zero/core/test/unit_tests/sources/mutable_cmdlist/mocks/mock_variable.h"
@@ -43,6 +44,53 @@ namespace ult {
 using MutableCommandListKernelTest = Test<MutableCommandListFixture<false, -1>>;
 using MutableCommandListKernelInOrderTest = Test<MutableCommandListFixture<true, -1>>;
 using MutableCommandListKernelSWTagsTest = Test<MutableCommandListSWTagsFixture>;
+
+namespace {
+template <typename FamilyType>
+size_t getAdditionalPrefetchSize(const NEO::GraphicsAllocation &allocation, size_t size, size_t offset, L0::Device &device) {
+    return NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForAdditionalMemoryPrefetch(allocation, size, offset, device.getNEODevice()->getRootDeviceEnvironment());
+}
+
+template <typename FamilyType>
+size_t getIsaAdditionalPrefetchSize(const L0::Kernel &kernel, L0::Device &device) {
+    auto isaPrefetchSize = device.getProductHelper().getIsaPrefetchSize(kernel.getImmutableData()->getIsaSizeWithoutPadding());
+    return getAdditionalPrefetchSize<FamilyType>(*kernel.getIsaAllocation(), isaPrefetchSize, kernel.getIsaOffsetInParentAllocation(), device);
+}
+
+template <typename FamilyType>
+size_t getGroupAdditionalPrefetchReserve(const MCL::MutableKernelGroup &kernelGroup, size_t iohOffset, const L0::Kernel &kernelA, const L0::Kernel &kernelB, L0::Device &device) {
+    return getAdditionalPrefetchSize<FamilyType>(*kernelGroup.getIohForPrefetch(), kernelGroup.getMaxAppendIndirectHeapSize(), iohOffset, device) +
+           std::max(getIsaAdditionalPrefetchSize<FamilyType>(kernelA, device), getIsaAdditionalPrefetchSize<FamilyType>(kernelB, device));
+}
+
+template <typename FamilyType>
+void expectAdditionalPrefetchCommands(GenCmdList::iterator &itor, const NEO::GraphicsAllocation &allocation, size_t size, size_t offset, L0::Device &device) {
+    using STATE_PREFETCH = typename FamilyType::STATE_PREFETCH;
+
+    const auto expectedCount = getAdditionalPrefetchSize<FamilyType>(allocation, size, offset, device) / sizeof(STATE_PREFETCH);
+    const auto expectedAddress = alignDown(device.getNEODevice()->getGmmHelper()->decanonize(allocation.getGpuAddress()) + offset, MemoryConstants::pageSize);
+
+    for (size_t i = 0; i < expectedCount; i++, itor++) {
+        auto additionalPrefetchCmd = genCmdCast<STATE_PREFETCH *>(*itor);
+        ASSERT_NE(nullptr, additionalPrefetchCmd);
+        EXPECT_FALSE(additionalPrefetchCmd->getKernelInstructionPrefetch());
+        if (i == 0) {
+            EXPECT_EQ(expectedAddress, additionalPrefetchCmd->getAddress());
+        }
+    }
+}
+
+template <typename FamilyType>
+void expectIohAdditionalPrefetchCommands(GenCmdList::iterator &itor, const MCL::MutableKernelGroup &kernelGroup, const L0::Kernel &kernel, size_t iohOffset, L0::Device &device) {
+    expectAdditionalPrefetchCommands<FamilyType>(itor, *kernelGroup.getIohForPrefetch(), kernel.getIndirectSize(), iohOffset, device);
+}
+
+template <typename FamilyType>
+void expectIsaAdditionalPrefetchCommands(GenCmdList::iterator &itor, const L0::Kernel &kernel, L0::Device &device) {
+    auto isaPrefetchSize = device.getProductHelper().getIsaPrefetchSize(kernel.getImmutableData()->getIsaSizeWithoutPadding());
+    expectAdditionalPrefetchCommands<FamilyType>(itor, *kernel.getIsaAllocation(), isaPrefetchSize, kernel.getIsaOffsetInParentAllocation(), device);
+}
+} // namespace
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             MutableCommandListKernelTest,
@@ -619,6 +667,8 @@ HWTEST2_F(MutableCommandListKernelTest,
 
     auto itor = cmdList.begin();
 
+    expectIohAdditionalPrefetchCommands<FamilyType>(itor, *mutation.kernelGroup, *kernel, prefetchPatch.offset, *device);
+
     auto prefetchCmd = genCmdCast<STATE_PREFETCH *>(*itor);
     ASSERT_NE(nullptr, prefetchCmd);
     EXPECT_EQ(expectedIohPrefetchSize / MemoryConstants::cacheLineSize, prefetchCmd->getPrefetchSize());
@@ -631,6 +681,8 @@ HWTEST2_F(MutableCommandListKernelTest,
         ASSERT_NE(nullptr, noopCmd);
         itor++;
     }
+
+    expectIsaAdditionalPrefetchCommands<FamilyType>(itor, *kernel, *device);
 
     auto isaPrefetchCmd = genCmdCast<STATE_PREFETCH *>(*itor);
     ASSERT_NE(nullptr, isaPrefetchCmd);
@@ -720,7 +772,10 @@ HWTEST2_F(MutableCommandListKernelTest,
     auto expectedIsaPrefetchSize =
         NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(kernel2->getImmutableData()->getIsaSizeWithoutPadding(),
                                                                         this->device->getNEODevice()->getRootDeviceEnvironment());
-    auto expectedPrefetchSize = expectedIohPrefetchSize + expectedIsaPrefetchSize;
+    expectedMaxSize += getGroupAdditionalPrefetchReserve<FamilyType>(*mutation.kernelGroup, prefetchPatch.offset, *kernel, *kernel2, *device);
+    auto expectedPrefetchSize = expectedIohPrefetchSize + expectedIsaPrefetchSize +
+                                getAdditionalPrefetchSize<FamilyType>(*mutation.kernelGroup->getIohForPrefetch(), kernel2->getIndirectSize(), prefetchPatch.offset, *device) +
+                                getIsaAdditionalPrefetchSize<FamilyType>(*kernel2, *device);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, prefetchPatch.pDestination, prefetchPatch.patchSize));
@@ -728,6 +783,8 @@ HWTEST2_F(MutableCommandListKernelTest,
     auto itor = cmdList.begin();
 
     auto gmmHelper = device->getNEODevice()->getGmmHelper();
+
+    expectIohAdditionalPrefetchCommands<FamilyType>(itor, *mutation.kernelGroup, *kernel2, prefetchPatch.offset, *device);
 
     auto prefetchCmd = genCmdCast<STATE_PREFETCH *>(*itor);
     ASSERT_NE(nullptr, prefetchCmd);
@@ -742,6 +799,8 @@ HWTEST2_F(MutableCommandListKernelTest,
 
     prefetchSize =
         static_cast<uint32_t>(alignUp(kernel2->getImmutableData()->getIsaSizeWithoutPadding(), MemoryConstants::cacheLineSize) / MemoryConstants::cacheLineSize);
+
+    expectIsaAdditionalPrefetchCommands<FamilyType>(itor, *kernel2, *device);
 
     auto isaPrefetchCmd = genCmdCast<STATE_PREFETCH *>(*itor);
     ASSERT_NE(nullptr, isaPrefetchCmd);
@@ -807,7 +866,10 @@ HWTEST2_F(MutableCommandListKernelTest,
     auto expectedIsaPrefetchSize =
         NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(kernel2->getImmutableData()->getIsaSizeWithoutPadding(),
                                                                         this->device->getNEODevice()->getRootDeviceEnvironment());
-    auto expectedPrefetchSize = expectedIohPrefetchSize + expectedIsaPrefetchSize;
+    expectedMaxSize += getGroupAdditionalPrefetchReserve<FamilyType>(*mutation.kernelGroup, prefetchPatch.offset, *kernelBigIsa, *kernel2, *device);
+    auto expectedPrefetchSize = expectedIohPrefetchSize + expectedIsaPrefetchSize +
+                                getAdditionalPrefetchSize<FamilyType>(*mutation.kernelGroup->getIohForPrefetch(), kernel2->getIndirectSize(), prefetchPatch.offset, *device) +
+                                getIsaAdditionalPrefetchSize<FamilyType>(*kernel2, *device);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, prefetchPatch.pDestination, prefetchPatch.patchSize));
@@ -815,6 +877,8 @@ HWTEST2_F(MutableCommandListKernelTest,
     auto itor = cmdList.begin();
 
     auto gmmHelper = device->getNEODevice()->getGmmHelper();
+
+    expectIohAdditionalPrefetchCommands<FamilyType>(itor, *mutation.kernelGroup, *kernel2, prefetchPatch.offset, *device);
 
     auto prefetchCmd = genCmdCast<STATE_PREFETCH *>(*itor);
     ASSERT_NE(nullptr, prefetchCmd);
@@ -826,6 +890,8 @@ HWTEST2_F(MutableCommandListKernelTest,
     itor++;
 
     prefetchSize = static_cast<uint32_t>(alignUp(kernel2->getImmutableData()->getIsaSizeWithoutPadding(), MemoryConstants::cacheLineSize) / MemoryConstants::cacheLineSize);
+
+    expectIsaAdditionalPrefetchCommands<FamilyType>(itor, *kernel2, *device);
 
     auto isaPrefetchCmd = genCmdCast<STATE_PREFETCH *>(*itor);
     ASSERT_NE(nullptr, isaPrefetchCmd);
@@ -884,7 +950,10 @@ HWTEST2_F(MutableCommandListKernelTest,
 
     auto expectedIohPrefetchSize = NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(kernelBigIsa->getIndirectSize(), this->device->getNEODevice()->getRootDeviceEnvironment());
     auto expectedIsaPrefetchSize = NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(kernelBigIsa->getImmutableData()->getIsaSizeWithoutPadding(), this->device->getNEODevice()->getRootDeviceEnvironment());
-    auto expectedPrefetchSize = expectedIohPrefetchSize + expectedIsaPrefetchSize;
+    expectedMaxSize += getGroupAdditionalPrefetchReserve<FamilyType>(*mutation.kernelGroup, prefetchCmdToPatch.offset, *kernelBigIsa, *kernel2, *device);
+    auto expectedPrefetchSize = expectedIohPrefetchSize + expectedIsaPrefetchSize +
+                                getAdditionalPrefetchSize<FamilyType>(*mutation.kernelGroup->getIohForPrefetch(), kernelBigIsa->getIndirectSize(), prefetchCmdToPatch.offset, *device) +
+                                getIsaAdditionalPrefetchSize<FamilyType>(*kernelBigIsa, *device);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, prefetchCmdToPatch.pDestination, prefetchCmdToPatch.patchSize));
@@ -892,6 +961,8 @@ HWTEST2_F(MutableCommandListKernelTest,
     auto itor = cmdList.begin();
 
     auto gmmHelper = device->getNEODevice()->getGmmHelper();
+
+    expectIohAdditionalPrefetchCommands<FamilyType>(itor, *mutation.kernelGroup, *kernelBigIsa, prefetchCmdToPatch.offset, *device);
 
     auto prefetchCmd = genCmdCast<STATE_PREFETCH *>(*itor);
     ASSERT_NE(nullptr, prefetchCmd);
@@ -904,6 +975,8 @@ HWTEST2_F(MutableCommandListKernelTest,
 
     prefetchSize = static_cast<uint32_t>(MemoryConstants::pageSize64k / MemoryConstants::cacheLineSize);
     uint64_t isaGpuAddress = gmmHelper->decanonize(kernelBigIsa->getIsaAllocation()->getGpuAddress());
+
+    expectIsaAdditionalPrefetchCommands<FamilyType>(itor, *kernelBigIsa, *device);
 
     auto isaPrefetchCmd = genCmdCast<STATE_PREFETCH *>(*itor);
     ASSERT_NE(nullptr, isaPrefetchCmd);

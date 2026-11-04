@@ -2986,12 +2986,21 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughIohSpaceWhenLaunchingKern
     auto prefetchList = find<STATE_PREFETCH *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(prefetchList, cmdList.end());
 
+    auto gmmHelper = device->getNEODevice()->getGmmHelper();
+    auto iohGpuVa = gmmHelper->decanonize(ioh->getGraphicsAllocation()->getGpuAddress());
+
+    auto additionalPrefetchCount = NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForAdditionalMemoryPrefetch(*ioh->getGraphicsAllocation(), kernel.getIndirectSize(), 0, device->getNEODevice()->getRootDeviceEnvironment()) / sizeof(STATE_PREFETCH);
+    for (size_t i = 0; i < additionalPrefetchCount; i++, prefetchList++) {
+        auto additionalPrefetch = genCmdCast<STATE_PREFETCH *>(*prefetchList);
+        ASSERT_NE(nullptr, additionalPrefetch);
+        EXPECT_EQ(alignDown(iohGpuVa, MemoryConstants::pageSize), additionalPrefetch->getAddress());
+        EXPECT_FALSE(additionalPrefetch->getKernelInstructionPrefetch());
+    }
+
     auto statePrefetch = genCmdCast<STATE_PREFETCH *>(*prefetchList);
     ASSERT_NE(nullptr, statePrefetch);
 
-    auto gmmHelper = device->getNEODevice()->getGmmHelper();
-
-    EXPECT_EQ(gmmHelper->decanonize(ioh->getGraphicsAllocation()->getGpuAddress()), statePrefetch->getAddress());
+    EXPECT_EQ(iohGpuVa, statePrefetch->getAddress());
 }
 
 HWTEST2_F(CommandListAppendLaunchKernel, givenDebugVariableWhenPrefetchingIsaThenLimitItsSize, IsAtLeastXeHpcCore) {
@@ -3027,6 +3036,8 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenDebugVariableWhenPrefetchingIsaThe
         GenCmdList cmdList;
         ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), cmdStream->getUsed() - offset));
 
+        auto isaAdditionalPrefetchCount = NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForAdditionalMemoryPrefetch(*isaAlloc, device->getProductHelper().getIsaPrefetchSize(defaultIsaSize), kernel.getIsaOffsetInParentAllocation(), device->getNEODevice()->getRootDeviceEnvironment()) / sizeof(STATE_PREFETCH);
+
         size_t prefetchedSize = 0;
 
         auto itor = find<STATE_PREFETCH *>(cmdList.begin(), cmdList.end());
@@ -3035,13 +3046,19 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenDebugVariableWhenPrefetchingIsaThe
             if (statePrefetch) {
                 if (statePrefetch->getAddress() >= isaAlloc->getGpuAddress() &&
                     statePrefetch->getAddress() < (isaAlloc->getGpuAddress() + isaAlloc->getUnderlyingBufferSize())) {
-                    prefetchedSize += statePrefetch->getPrefetchSize() * MemoryConstants::cacheLineSize;
+                    if (isaAdditionalPrefetchCount > 0) {
+                        EXPECT_FALSE(statePrefetch->getKernelInstructionPrefetch());
+                        isaAdditionalPrefetchCount--;
+                    } else {
+                        prefetchedSize += statePrefetch->getPrefetchSize() * MemoryConstants::cacheLineSize;
+                    }
                 }
             } else {
                 break;
             }
             itor++;
         }
+        EXPECT_EQ(0u, isaAdditionalPrefetchCount);
         EXPECT_EQ(device->getProductHelper().getIsaPrefetchSize(defaultIsaSize), prefetchedSize); // limited to product default
     }
 
@@ -3053,6 +3070,8 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenDebugVariableWhenPrefetchingIsaThe
         GenCmdList cmdList;
         ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), cmdStream->getUsed() - offset));
 
+        auto isaAdditionalPrefetchCount = NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForAdditionalMemoryPrefetch(*isaAlloc, device->getProductHelper().getIsaPrefetchSize(defaultIsaSize), kernel.getIsaOffsetInParentAllocation(), device->getNEODevice()->getRootDeviceEnvironment()) / sizeof(STATE_PREFETCH);
+
         size_t prefetchedSize = 0;
 
         auto itor = find<STATE_PREFETCH *>(cmdList.begin(), cmdList.end());
@@ -3061,13 +3080,19 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenDebugVariableWhenPrefetchingIsaThe
             if (statePrefetch) {
                 if (statePrefetch->getAddress() >= isaAlloc->getGpuAddress() &&
                     statePrefetch->getAddress() < (isaAlloc->getGpuAddress() + isaAlloc->getUnderlyingBufferSize())) {
-                    prefetchedSize += statePrefetch->getPrefetchSize() * MemoryConstants::cacheLineSize;
+                    if (isaAdditionalPrefetchCount > 0) {
+                        EXPECT_FALSE(statePrefetch->getKernelInstructionPrefetch());
+                        isaAdditionalPrefetchCount--;
+                    } else {
+                        prefetchedSize += statePrefetch->getPrefetchSize() * MemoryConstants::cacheLineSize;
+                    }
                 }
             } else {
                 break;
             }
             itor++;
         }
+        EXPECT_EQ(0u, isaAdditionalPrefetchCount);
         EXPECT_EQ(static_cast<uint32_t>(2 * MemoryConstants::kiloByte), prefetchedSize); // limited to 2kb by debug variable
     }
 }
@@ -3107,6 +3132,8 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenIsaAllocationWithPaddingWhenPrefet
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), cmdStream->getUsed() - offset));
 
+    auto isaAdditionalPrefetchCount = NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForAdditionalMemoryPrefetch(*isaAlloc, device->getProductHelper().getIsaPrefetchSize(kernelHeapSize), kernel.getIsaOffsetInParentAllocation(), device->getNEODevice()->getRootDeviceEnvironment()) / sizeof(STATE_PREFETCH);
+
     size_t prefetchedSize = 0;
 
     auto itor = find<STATE_PREFETCH *>(cmdList.begin(), cmdList.end());
@@ -3115,13 +3142,19 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenIsaAllocationWithPaddingWhenPrefet
         if (statePrefetch) {
             if (statePrefetch->getAddress() >= isaAlloc->getGpuAddress() &&
                 statePrefetch->getAddress() < (isaAlloc->getGpuAddress() + isaAlloc->getUnderlyingBufferSize())) {
-                prefetchedSize += statePrefetch->getPrefetchSize() * MemoryConstants::cacheLineSize;
+                if (isaAdditionalPrefetchCount > 0) {
+                    EXPECT_FALSE(statePrefetch->getKernelInstructionPrefetch());
+                    isaAdditionalPrefetchCount--;
+                } else {
+                    prefetchedSize += statePrefetch->getPrefetchSize() * MemoryConstants::cacheLineSize;
+                }
             }
         } else {
             break;
         }
         itor++;
     }
+    EXPECT_EQ(0u, isaAdditionalPrefetchCount);
     EXPECT_EQ(device->getProductHelper().getIsaPrefetchSize(kernelHeapSize), prefetchedSize); // padding is not prefetched
 }
 
@@ -3465,6 +3498,13 @@ HWTEST2_F(IOHCacheCommandListTest,
                                                       cmdStream->getUsed() - cmdStreamOffset));
     auto itor = find<STATE_PREFETCH *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(itor, cmdList.end());
+    auto additionalPrefetchSize = NEO::EncodeMemoryPrefetch<FamilyType>::getSizeForAdditionalMemoryPrefetch(*cacheStorage->getGraphicsAllocation(), kernel->getIndirectSize(), expectedIohOffset, device->getNEODevice()->getRootDeviceEnvironment());
+    if (additionalPrefetchSize != 0) {
+        auto additionalPrefetch = genCmdCast<STATE_PREFETCH *>(*itor);
+        ASSERT_NE(nullptr, additionalPrefetch);
+        EXPECT_EQ(alignDown(expectedPrefetchGpuVa, MemoryConstants::pageSize), additionalPrefetch->getAddress());
+        itor++;
+    }
     auto statePrefetch = genCmdCast<STATE_PREFETCH *>(*itor);
     ASSERT_NE(nullptr, statePrefetch);
     EXPECT_FALSE(statePrefetch->getKernelInstructionPrefetch());

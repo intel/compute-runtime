@@ -852,6 +852,21 @@ HWTEST_F(CommandEncoderTests, whenEncodeMemoryPrefetchCalledThenDoNothing) {
     EXPECT_EQ(0u, EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(2, *mockExecutionEnvironment.rootDeviceEnvironments[0]));
 }
 
+HWTEST_F(CommandEncoderTests, whenEncodeAdditionalMemoryPrefetchCalledThenDoNothing) {
+
+    MockExecutionEnvironment mockExecutionEnvironment{};
+
+    uint8_t buffer[MemoryConstants::pageSize] = {};
+    LinearStream linearStream(buffer, sizeof(buffer));
+
+    GraphicsAllocation allocation(0, 1u, AllocationType::buffer, nullptr, 0x10000000, 0, 0x10000, MemoryPool::localMemory, MemoryManager::maxOsContextCount);
+
+    EncodeMemoryPrefetch<FamilyType>::programAdditionalMemoryPrefetch(linearStream, allocation, 0x2000, 0, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
+
+    EXPECT_EQ(0u, linearStream.getUsed());
+    EXPECT_EQ(0u, EncodeMemoryPrefetch<FamilyType>::getSizeForAdditionalMemoryPrefetch(allocation, 0x2000, 0, *mockExecutionEnvironment.rootDeviceEnvironments[0]));
+}
+
 HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncoderTests, WhenAnyParameterIsProvidedThenRuntimeGenerationLocalIdsIsRequired) {
     uint32_t workDim = 1;
     uint32_t simd = 8;

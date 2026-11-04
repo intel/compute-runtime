@@ -128,6 +128,12 @@ template <typename CommandType>
 void EncodePostSync<Family>::encodeL3Flush(CommandType &cmd, const EncodePostSyncArgs &args) {}
 
 template <typename Family>
+size_t EncodeMemoryPrefetch<Family>::getSizeForAdditionalMemoryPrefetch(const GraphicsAllocation &graphicsAllocation, size_t size, size_t offset, const RootDeviceEnvironment &rootDeviceEnvironment) { return 0u; }
+
+template <typename Family>
+void EncodeMemoryPrefetch<Family>::programAdditionalMemoryPrefetch(LinearStream &commandStream, const GraphicsAllocation &graphicsAllocation, size_t size, size_t offset, const RootDeviceEnvironment &rootDeviceEnvironment) {}
+
+template <typename Family>
 void EncodeSurfaceState<Family>::setAdditionalCacheSettings(R_SURFACE_STATE *surfaceState) {
 }
 } // namespace NEO

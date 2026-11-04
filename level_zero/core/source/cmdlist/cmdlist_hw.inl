@@ -502,9 +502,11 @@ void CommandListCoreFamily<gfxCoreFamily>::prefetchKernelMemory(NEO::LinearStrea
     auto currentCmdStreamPtr = cmdStream.getSpace(0);
     auto cmdStreamOffset = cmdStream.getUsed();
 
+    NEO::EncodeMemoryPrefetch<GfxFamily>::programAdditionalMemoryPrefetch(cmdStream, *iohAllocation, kernel.getIndirectSize(), iohOffset, rootExecEnv);
     NEO::EncodeMemoryPrefetch<GfxFamily>::programMemoryPrefetch(cmdStream, *iohAllocation, kernel.getIndirectSize(), iohOffset, rootExecEnv);
 
     auto isaSizeToPrefetch = rootExecEnv.getHelper<NEO::ProductHelper>().getIsaPrefetchSize(kernel.getImmutableData()->getIsaSizeWithoutPadding());
+    NEO::EncodeMemoryPrefetch<GfxFamily>::programAdditionalMemoryPrefetch(cmdStream, *kernel.getIsaAllocation(), isaSizeToPrefetch, kernel.getIsaOffsetInParentAllocation(), rootExecEnv);
     NEO::EncodeMemoryPrefetch<GfxFamily>::programMemoryPrefetch(cmdStream, *kernel.getIsaAllocation(), isaSizeToPrefetch, kernel.getIsaOffsetInParentAllocation(), rootExecEnv);
 
     auto cmdStreamSizeConsumed = cmdStream.getUsed() - cmdStreamOffset;
@@ -592,7 +594,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
         }
         auto [iohAllocation, iohOffset] = getIohAllocationAndOffsetForPrefetch(*kernel, launchParams.reserveExtraPayloadSpace, isThreadDataMapAllowed,
                                                                                launchParams.threadDataCacheHitOnPrefetch);
-        auto estimateSizeForPrefetch = ensureCmdBufferSpaceForPrefetch();
+        auto estimateSizeForPrefetch = ensureCmdBufferSpaceForPrefetch(*iohAllocation, iohOffset);
         prefetchKernelMemory(*commandContainer.getCommandStream(), *kernel, iohAllocation, iohOffset, launchParams.outListCommands, getPrefetchCmdId(), estimateSizeForPrefetch);
     }
 

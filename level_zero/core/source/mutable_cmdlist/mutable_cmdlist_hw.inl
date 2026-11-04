@@ -66,7 +66,7 @@ MutableKernelGroup *MutableCommandListCoreFamily<gfxCoreFamily>::getKernelGroupF
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-size_t MutableCommandListCoreFamily<gfxCoreFamily>::ensureCmdBufferSpaceForPrefetch() {
+size_t MutableCommandListCoreFamily<gfxCoreFamily>::ensureCmdBufferSpaceForPrefetch(const NEO::GraphicsAllocation &iohAllocation, size_t iohOffset) {
     if (!CommandListCoreFamily<gfxCoreFamily>::kernelMemoryPrefetchEnabled()) {
         return 0;
     }
@@ -75,10 +75,23 @@ size_t MutableCommandListCoreFamily<gfxCoreFamily>::ensureCmdBufferSpaceForPrefe
         return 0;
     }
 
-    auto groupMaxIsaSizeToPrefetch = this->device->getProductHelper().getIsaPrefetchSize(kernelGroup->getMaxIsaSize());
+    auto &rootDeviceEnvironment = this->device->getNEODevice()->getRootDeviceEnvironment();
+    auto &productHelper = this->device->getProductHelper();
 
-    auto expectedSize = NEO::EncodeMemoryPrefetch<GfxFamily>::getSizeForMemoryPrefetch(kernelGroup->getMaxAppendIndirectHeapSize(), this->device->getNEODevice()->getRootDeviceEnvironment()) +
-                        NEO::EncodeMemoryPrefetch<GfxFamily>::getSizeForMemoryPrefetch(groupMaxIsaSizeToPrefetch, this->device->getNEODevice()->getRootDeviceEnvironment());
+    auto groupMaxIsaSizeToPrefetch = productHelper.getIsaPrefetchSize(kernelGroup->getMaxIsaSize());
+
+    auto expectedSize = NEO::EncodeMemoryPrefetch<GfxFamily>::getSizeForMemoryPrefetch(kernelGroup->getMaxAppendIndirectHeapSize(), rootDeviceEnvironment) +
+                        NEO::EncodeMemoryPrefetch<GfxFamily>::getSizeForMemoryPrefetch(groupMaxIsaSizeToPrefetch, rootDeviceEnvironment) +
+                        NEO::EncodeMemoryPrefetch<GfxFamily>::getSizeForAdditionalMemoryPrefetch(iohAllocation, kernelGroup->getMaxAppendIndirectHeapSize(), iohOffset, rootDeviceEnvironment);
+
+    size_t maxIsaAdditionalPrefetchSize = 0;
+    for (auto &mutableKernel : kernelGroup->getKernelsInGroup()) {
+        auto groupKernel = mutableKernel->getKernel();
+        auto isaSizeToPrefetch = productHelper.getIsaPrefetchSize(groupKernel->getImmutableData()->getIsaSizeWithoutPadding());
+        maxIsaAdditionalPrefetchSize = std::max(maxIsaAdditionalPrefetchSize, NEO::EncodeMemoryPrefetch<GfxFamily>::getSizeForAdditionalMemoryPrefetch(*groupKernel->getIsaAllocation(), isaSizeToPrefetch, groupKernel->getIsaOffsetInParentAllocation(), rootDeviceEnvironment));
+    }
+    expectedSize += maxIsaAdditionalPrefetchSize;
+
     this->commandContainer.getCommandStream()->ensureContinuousSpace(expectedSize);
 
     return expectedSize;

@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/built_ins/sip.h"
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/gmm_helper/gmm.h"
@@ -3904,12 +3905,22 @@ HWTEST2_F(PrefetchTests, givenKernelWhenWalkerIsProgrammedThenPrefetchIsaBeforeW
     auto itorStatePrefetch = find<STATE_PREFETCH *>(hwParse.cmdList.begin(), itorWalker);
     EXPECT_NE(itorWalker, itorStatePrefetch);
 
-    auto statePrefetchCmd = genCmdCast<STATE_PREFETCH *>(*itorStatePrefetch);
-    EXPECT_NE(nullptr, statePrefetchCmd);
-
     auto gmmHelper = clDevice->getRootDeviceEnvironment().getGmmHelper();
+    auto isaAllocation = mockKernel->kernelInfo.getIsaGraphicsAllocation();
+    auto isaAddress = gmmHelper->decanonize(isaAllocation->getGpuAddress());
 
-    EXPECT_EQ(gmmHelper->decanonize(mockKernel->kernelInfo.getIsaGraphicsAllocation()->getGpuAddress()), statePrefetchCmd->getAddress());
+    auto additionalPrefetchCount = EncodeMemoryPrefetch<FamilyType>::getSizeForAdditionalMemoryPrefetch(*isaAllocation, mockKernel->kernelInfo.heapInfo.kernelHeapSize, 0, clDevice->getRootDeviceEnvironment()) / sizeof(STATE_PREFETCH);
+    for (size_t i = 0; i < additionalPrefetchCount; i++, itorStatePrefetch++) {
+        auto additionalPrefetchCmd = genCmdCast<STATE_PREFETCH *>(*itorStatePrefetch);
+        ASSERT_NE(nullptr, additionalPrefetchCmd);
+        EXPECT_EQ(alignDown(isaAddress, MemoryConstants::pageSize), additionalPrefetchCmd->getAddress());
+        EXPECT_FALSE(additionalPrefetchCmd->getKernelInstructionPrefetch());
+    }
+
+    auto statePrefetchCmd = genCmdCast<STATE_PREFETCH *>(*itorStatePrefetch);
+    ASSERT_NE(nullptr, statePrefetchCmd);
+
+    EXPECT_EQ(isaAddress, statePrefetchCmd->getAddress());
     EXPECT_TRUE(statePrefetchCmd->getKernelInstructionPrefetch());
 }
 

@@ -210,7 +210,7 @@ struct MutableCommandListCoreFamily : public MutableCommandListImp, public Comma
     void updateKernelMemoryPrefetch(const Kernel &kernel, const NEO::GraphicsAllocation *iohAllocation, const PatchPrefetchKernelMemory &cmdToPatch, uint64_t cmdId) override;
     uint32_t getIohSizeForPrefetch(const Kernel &kernel, uint32_t reserveExtraSpace) const override;
     MutableKernelGroup *getKernelGroupForPrefetch(uint64_t cmdId) const;
-    size_t ensureCmdBufferSpaceForPrefetch() override;
+    size_t ensureCmdBufferSpaceForPrefetch(const NEO::GraphicsAllocation &iohAllocation, size_t iohOffset) override;
     void ensureCopyOffloadSubCmdList() override;
 };
 } // namespace MCL
