@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,6 +23,7 @@ MultiGraphicsAllocation::MultiGraphicsAllocation(const MultiGraphicsAllocation &
     this->graphicsAllocations = multiGraphicsAllocation.graphicsAllocations;
     this->migrationSyncData = multiGraphicsAllocation.migrationSyncData;
     this->isMultiStorage = multiGraphicsAllocation.isMultiStorage;
+    this->storageOwnerRootDeviceIndex = multiGraphicsAllocation.storageOwnerRootDeviceIndex;
     if (migrationSyncData) {
         migrationSyncData->incRefInternal();
     }
@@ -31,6 +32,7 @@ MultiGraphicsAllocation::MultiGraphicsAllocation(MultiGraphicsAllocation &&multi
     this->graphicsAllocations = std::move(multiGraphicsAllocation.graphicsAllocations);
     std::swap(this->migrationSyncData, multiGraphicsAllocation.migrationSyncData);
     this->isMultiStorage = multiGraphicsAllocation.isMultiStorage;
+    this->storageOwnerRootDeviceIndex = multiGraphicsAllocation.storageOwnerRootDeviceIndex;
 };
 
 MultiGraphicsAllocation::~MultiGraphicsAllocation() {
@@ -40,6 +42,9 @@ MultiGraphicsAllocation::~MultiGraphicsAllocation() {
 }
 
 GraphicsAllocation *MultiGraphicsAllocation::getDefaultGraphicsAllocation() const {
+    if (this->storageOwnerRootDeviceIndex) {
+        return this->graphicsAllocations[*this->storageOwnerRootDeviceIndex];
+    }
     for (auto &allocation : graphicsAllocations) {
         if (allocation) {
             return allocation;
@@ -56,6 +61,14 @@ void MultiGraphicsAllocation::addAllocation(GraphicsAllocation *graphicsAllocati
 
 void MultiGraphicsAllocation::removeAllocation(uint32_t rootDeviceIndex) {
     graphicsAllocations[rootDeviceIndex] = nullptr;
+    if (this->storageOwnerRootDeviceIndex == rootDeviceIndex) {
+        this->storageOwnerRootDeviceIndex.reset();
+    }
+}
+
+void MultiGraphicsAllocation::setStorageOwnerRootDeviceIndex(uint32_t rootDeviceIndex) {
+    UNRECOVERABLE_IF(getGraphicsAllocation(rootDeviceIndex) == nullptr);
+    this->storageOwnerRootDeviceIndex = rootDeviceIndex;
 }
 
 GraphicsAllocation *MultiGraphicsAllocation::getGraphicsAllocation(uint32_t rootDeviceIndex) const {

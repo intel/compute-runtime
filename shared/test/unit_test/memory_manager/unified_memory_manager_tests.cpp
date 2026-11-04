@@ -1140,3 +1140,98 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenAllocationAbsentOnOneRootDeviceWhenCapt
     EXPECT_EQ(defaultEngine.commandStreamReceiver, snapshot[0].first);
     EXPECT_EQ(taskCount, snapshot[0].second);
 }
+
+class NumaPreferringMockMemoryManager : public MockMemoryManager {
+  public:
+    using MockMemoryManager::MockMemoryManager;
+    std::optional<uint32_t> getRootDeviceIndexClosestToPreferredNumaNode(const RootDeviceIndicesContainer &rootDeviceIndices) override {
+        getRootDeviceIndexClosestToPreferredNumaNodeCalled++;
+        return numaRootDeviceIndex;
+    }
+    std::optional<uint32_t> numaRootDeviceIndex;
+    uint32_t getRootDeviceIndexClosestToPreferredNumaNodeCalled = 0u;
+};
+
+struct SvmHostAllocationNumaTest : public ::testing::Test {
+    SvmHostAllocationNumaTest() : executionEnvironment(defaultHwInfo.get(), false, 3u),
+                                  memoryManager(false, false, executionEnvironment),
+                                  svmManager(&memoryManager) {}
+
+    MockExecutionEnvironment executionEnvironment;
+    NumaPreferringMockMemoryManager memoryManager;
+    MockSVMAllocsManager svmManager;
+    RootDeviceIndicesContainer rootDeviceIndices = {0u, 1u, 2u};
+    std::map<uint32_t, DeviceBitfield> deviceBitfields{{0u, mockDeviceBitfield}, {1u, mockDeviceBitfield}, {2u, mockDeviceBitfield}};
+    UnifiedMemoryProperties unifiedMemoryProperties{InternalMemoryType::hostUnifiedMemory, 1, rootDeviceIndices, deviceBitfields};
+};
+
+TEST_F(SvmHostAllocationNumaTest, givenRootDeviceClosestToPreferredNumaNodeWhenCreatingHostAllocationThenItOwnsStorageAndOtherRootDevicesImportIt) {
+    memoryManager.numaRootDeviceIndex = 1u;
+
+    auto ptr = svmManager.createHostUnifiedMemoryAllocation(MemoryConstants::pageSize, unifiedMemoryProperties);
+    ASSERT_NE(nullptr, ptr);
+
+    auto svmData = svmManager.getSVMAlloc(ptr);
+    ASSERT_NE(nullptr, svmData);
+    EXPECT_EQ(1u, memoryManager.getRootDeviceIndexClosestToPreferredNumaNodeCalled);
+    EXPECT_EQ(1u, svmData->gpuAllocations.getDefaultGraphicsAllocation()->getRootDeviceIndex());
+    for (const auto rootDeviceIndex : rootDeviceIndices) {
+        EXPECT_NE(nullptr, svmData->gpuAllocations.getGraphicsAllocation(rootDeviceIndex));
+    }
+    EXPECT_EQ(2u, memoryManager.createGraphicsAllocationFromExistingStorageCalled);
+
+    svmManager.freeSVMAlloc(ptr);
+}
+
+TEST_F(SvmHostAllocationNumaTest, givenNoRootDeviceClosestToPreferredNumaNodeWhenCreatingHostAllocationThenFirstRootDeviceOwnsStorage) {
+    auto ptr = svmManager.createHostUnifiedMemoryAllocation(MemoryConstants::pageSize, unifiedMemoryProperties);
+    ASSERT_NE(nullptr, ptr);
+
+    EXPECT_EQ(1u, memoryManager.getRootDeviceIndexClosestToPreferredNumaNodeCalled);
+    EXPECT_EQ(0u, svmManager.getSVMAlloc(ptr)->gpuAllocations.getDefaultGraphicsAllocation()->getRootDeviceIndex());
+
+    svmManager.freeSVMAlloc(ptr);
+}
+
+TEST_F(SvmHostAllocationNumaTest, givenExternalHostPointerWhenCreatingHostAllocationThenRootDeviceClosestToPreferredNumaNodeIsNotQueried) {
+    memoryManager.numaRootDeviceIndex = 1u;
+    auto externalHostPointer = alignedMalloc(MemoryConstants::pageSize, MemoryConstants::pageSize);
+    unifiedMemoryProperties.allocationFlags.hostptr = reinterpret_cast<uintptr_t>(externalHostPointer);
+
+    auto ptr = svmManager.createHostUnifiedMemoryAllocation(MemoryConstants::pageSize, unifiedMemoryProperties);
+    ASSERT_EQ(externalHostPointer, ptr);
+
+    EXPECT_EQ(0u, memoryManager.getRootDeviceIndexClosestToPreferredNumaNodeCalled);
+    EXPECT_EQ(0u, svmManager.getSVMAlloc(ptr)->gpuAllocations.getDefaultGraphicsAllocation()->getRootDeviceIndex());
+
+    svmManager.freeSVMAlloc(ptr);
+    alignedFree(externalHostPointer);
+}
+
+TEST_F(SvmHostAllocationNumaTest, givenHostAllocationCacheWhenRootDeviceClosestToPreferredNumaNodeChangesThenAllocationOwnedByOtherRootDeviceIsNotReused) {
+    memoryManager.usmReuseInfo.init(1 * MemoryConstants::gigaByte, UsmReuseInfo::notLimited);
+    svmManager.initUsmHostAllocationsCache();
+    ASSERT_NE(nullptr, svmManager.usmHostAllocationsCache);
+
+    memoryManager.numaRootDeviceIndex = 1u;
+    auto ptrOwnedByRootDevice1 = svmManager.createHostUnifiedMemoryAllocation(MemoryConstants::pageSize, unifiedMemoryProperties);
+    ASSERT_NE(nullptr, ptrOwnedByRootDevice1);
+    svmManager.freeSVMAlloc(ptrOwnedByRootDevice1);
+    ASSERT_EQ(1u, svmManager.usmHostAllocationsCache->allocations.size());
+
+    memoryManager.numaRootDeviceIndex = 2u;
+    auto ptrOwnedByRootDevice2 = svmManager.createHostUnifiedMemoryAllocation(MemoryConstants::pageSize, unifiedMemoryProperties);
+    ASSERT_NE(nullptr, ptrOwnedByRootDevice2);
+    EXPECT_NE(ptrOwnedByRootDevice1, ptrOwnedByRootDevice2);
+    EXPECT_EQ(2u, svmManager.getSVMAlloc(ptrOwnedByRootDevice2)->gpuAllocations.getDefaultGraphicsAllocation()->getRootDeviceIndex());
+    EXPECT_EQ(1u, svmManager.usmHostAllocationsCache->allocations.size());
+
+    memoryManager.numaRootDeviceIndex = 1u;
+    auto reusedPtr = svmManager.createHostUnifiedMemoryAllocation(MemoryConstants::pageSize, unifiedMemoryProperties);
+    EXPECT_EQ(ptrOwnedByRootDevice1, reusedPtr);
+    EXPECT_EQ(0u, svmManager.usmHostAllocationsCache->allocations.size());
+
+    svmManager.freeSVMAlloc(reusedPtr);
+    svmManager.freeSVMAlloc(ptrOwnedByRootDevice2);
+    svmManager.cleanupUSMAllocCaches();
+}

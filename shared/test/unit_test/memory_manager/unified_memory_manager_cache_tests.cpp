@@ -275,6 +275,39 @@ TEST(SvmAllocationCacheSimpleTest, givenAllocIdAlreadyScannedForIndirectAccessWh
     allocationCache.allocations.clear();
 }
 
+TEST(SvmAllocationCacheSimpleTest, givenStorageOwnerRootDeviceIndexRequestedWhenGettingHostAllocationFromCacheThenOnlyAllocationWithThatStorageOwnerIsReused) {
+    SVMAllocsManager::SvmAllocationCache allocationCache;
+    MockMemoryManager memoryManager;
+    MockSVMAllocsManager svmAllocsManager(&memoryManager);
+
+    allocationCache.memoryManager = &memoryManager;
+    allocationCache.svmAllocsManager = &svmAllocsManager;
+    memoryManager.usmReuseInfo.init(1 * MemoryConstants::gigaByte, UsmReuseInfo::notLimited);
+
+    void *ptr = addrToPtr(0xFULL);
+    MockGraphicsAllocation gpuGfxAllocation(0u, ptr, MemoryConstants::pageSize);
+    MockGraphicsAllocation secondGpuGfxAllocation(1u, ptr, MemoryConstants::pageSize);
+    SvmAllocationData svmAllocData(1u);
+    svmAllocData.gpuAllocations.addAllocation(&gpuGfxAllocation);
+    svmAllocData.gpuAllocations.addAllocation(&secondGpuGfxAllocation);
+    svmAllocData.gpuAllocations.setStorageOwnerRootDeviceIndex(1u);
+    svmAllocsManager.insertSVMAlloc(ptr, svmAllocData);
+
+    RootDeviceIndicesContainer rootDeviceIndices = {0u, 1u};
+    std::map<uint32_t, DeviceBitfield> deviceBitfields{{0u, mockDeviceBitfield}, {1u, mockDeviceBitfield}};
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+
+    EXPECT_TRUE(allocationCache.insert(1u, ptr, &svmAllocData, SVMAllocsManager::SvmAllocationCache::CompletionCheckPolicy::notRequired));
+    EXPECT_EQ(nullptr, allocationCache.get(1u, unifiedMemoryProperties, 0u));
+    EXPECT_EQ(1u, allocationCache.allocations.size());
+    EXPECT_EQ(ptr, allocationCache.get(1u, unifiedMemoryProperties, 1u));
+    EXPECT_EQ(0u, allocationCache.allocations.size());
+
+    EXPECT_TRUE(allocationCache.insert(1u, ptr, &svmAllocData, SVMAllocsManager::SvmAllocationCache::CompletionCheckPolicy::notRequired));
+    EXPECT_EQ(ptr, allocationCache.get(1u, unifiedMemoryProperties, std::nullopt));
+    EXPECT_EQ(0u, allocationCache.allocations.size());
+}
+
 TEST(SvmAllocationCacheSimpleTest, givenAllocIdNotYetScannedForIndirectAccessWhenGettingAllocationFromCacheThenAllocIdAndAllocationsMapEntryAreKept) {
     SVMAllocsManager::SvmAllocationCache allocationCache;
     MockMemoryManager memoryManager;

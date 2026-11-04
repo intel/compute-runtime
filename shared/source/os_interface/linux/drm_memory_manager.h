@@ -151,6 +151,7 @@ class DrmMemoryManager : public MemoryManager {
     size_t getUserptrAlignment();
 
     void drainGemCloseWorker() const override;
+    std::optional<uint32_t> getRootDeviceIndexClosestToPreferredNumaNode(const RootDeviceIndicesContainer &rootDeviceIndices) override;
     void disableForcePin();
 
     MOCKABLE_VIRTUAL BufferObjects createBufferObjectsForNonSvmHostPtr(size_t realAllocationSize, const void *alignedPtr, uint64_t gpuVirtualAddress, const AllocationData &allocationData, uint32_t rootDeviceIndex, uint8_t patIndex, size_t alignedSize);
@@ -161,6 +162,7 @@ class DrmMemoryManager : public MemoryManager {
     decltype(&SysCalls::mmapFixedNoReplace) mmapFixedNoReplaceFunction = SysCalls::mmapFixedNoReplace;
 
   protected:
+    void initNumaAwarePlacement();
     bool releaseVirtualMemoryReservationRange(void *address, size_t size, bool keepReservationPlaceholder);
     void registerSharedBoHandleAllocation(DrmAllocation *drmAllocation);
     BufferObjectHandleWrapper tryToGetBoHandleWrapperWithSharedOwnership(int boHandle, uint32_t rootDeviceIndex);
@@ -251,5 +253,7 @@ class DrmMemoryManager : public MemoryManager {
     std::atomic<uint64_t> deferBackedLocalMemAllocsSize{0u};
     std::vector<GraphicsAllocation *> sysMemAllocs;
     std::mutex allocMutex;
+    std::once_flag numaAwarePlacementInitFlag;
+    bool rootDevicesOnMultipleNumaNodes = false;
 };
 } // namespace NEO

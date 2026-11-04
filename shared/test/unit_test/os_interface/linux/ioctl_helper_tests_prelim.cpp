@@ -10,6 +10,7 @@
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/i915_prelim.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
+#include "shared/source/os_interface/linux/numa_library.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/product_helper.h"
@@ -318,9 +319,10 @@ struct MockIoctlHelperPrelim20 : IoctlHelperPrelim20 {
                 auto lastPolicy = reinterpret_cast<prelim_drm_i915_gem_create_ext_memory_policy *>(pExtensionBase);
                 lastPolicyMode = lastPolicy->mode;
                 lastPolicyFlags = lastPolicy->flags;
+                lastPolicyNodeMaskMax = lastPolicy->nodemask_max;
                 lastPolicyNodeMask.clear();
                 auto nodeMaskPtr = reinterpret_cast<unsigned long *>(lastPolicy->nodemask_ptr);
-                for (auto i = 0u; i < lastPolicy->nodemask_max; i++) {
+                for (auto i = 0u; i < lastPolicy->nodemask_max / Linux::NumaLibrary::bitsPerNodeMaskElement; i++) {
                     lastPolicyNodeMask.push_back(nodeMaskPtr[i]);
                 }
                 return true;
@@ -337,6 +339,7 @@ struct MockIoctlHelperPrelim20 : IoctlHelperPrelim20 {
     std::optional<int> overrideGemCreateExtReturnValue{};
     uint32_t lastPolicyMode = 0;
     uint32_t lastPolicyFlags = 0;
+    uint32_t lastPolicyNodeMaskMax = 0;
     std::vector<unsigned long> lastPolicyNodeMask{};
     std::optional<prelim_drm_i915_reset_stats> overrideResetStatsPrelim{};
     int overrideResetStatsPrelimReturnValue = 0;
@@ -371,6 +374,7 @@ HWTEST2_F(IoctlPrelimHelperCreateGemExtTests, givenPrelimWhenCreateGemExtWithMem
     EXPECT_TRUE(mockIoctlHelper.lastGemCreateContainedMemPolicy);
     EXPECT_EQ(0u, mockIoctlHelper.lastPolicyFlags);
     EXPECT_EQ(memPolicyMode, mockIoctlHelper.lastPolicyMode);
+    EXPECT_EQ(memPolicy.size() * Linux::NumaLibrary::bitsPerNodeMaskElement, mockIoctlHelper.lastPolicyNodeMaskMax);
     EXPECT_EQ(memPolicy, mockIoctlHelper.lastPolicyNodeMask);
     EXPECT_TRUE(output.find(expectedSubstring) != std::string::npos);
 }
@@ -395,6 +399,7 @@ HWTEST2_F(IoctlPrelimHelperCreateGemExtTests, givenPrelimWhenCreateGemExtWithMem
     EXPECT_TRUE(mockIoctlHelper.lastGemCreateContainedMemPolicy);
     EXPECT_EQ(0u, mockIoctlHelper.lastPolicyFlags);
     EXPECT_EQ(memPolicyMode, mockIoctlHelper.lastPolicyMode);
+    EXPECT_EQ(memPolicy.size() * Linux::NumaLibrary::bitsPerNodeMaskElement, mockIoctlHelper.lastPolicyNodeMaskMax);
     EXPECT_EQ(memPolicy, mockIoctlHelper.lastPolicyNodeMask);
 }
 

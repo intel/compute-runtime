@@ -61,6 +61,9 @@ struct SvmAllocationData : NEO::NonCopyableAndNonMovableClass {
                 this->gpuAllocations.addAllocation(allocation);
             }
         }
+        if (auto storageOwnerRootDeviceIndex = svmAllocData.gpuAllocations.getStorageOwnerRootDeviceIndex()) {
+            this->gpuAllocations.setStorageOwnerRootDeviceIndex(*storageOwnerRootDeviceIndex);
+        }
         this->mappedAllocData = svmAllocData.mappedAllocData;
         this->virtualReservationData = svmAllocData.virtualReservationData;
         this->ipcHandleTypeFlags = svmAllocData.ipcHandleTypeFlags;

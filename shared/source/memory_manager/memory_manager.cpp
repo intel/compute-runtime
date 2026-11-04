@@ -351,6 +351,7 @@ void *MemoryManager::createMultiGraphicsAllocationInSystemMemoryPool(RootDeviceI
                 return nullptr;
             }
             multiGraphicsAllocation.addAllocation(graphicsAllocation);
+            multiGraphicsAllocation.setStorageOwnerRootDeviceIndex(rootDeviceIndex);
             ptr = reinterpret_cast<void *>(graphicsAllocation->getUnderlyingBuffer());
         } else {
             properties.flags.allocateMemory = false;

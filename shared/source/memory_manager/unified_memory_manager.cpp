@@ -164,6 +164,10 @@ bool SVMAllocsManager::SvmAllocationCache::isInUse(SvmCacheAllocationInfo &cache
 }
 
 void *SVMAllocsManager::SvmAllocationCache::get(size_t size, const UnifiedMemoryProperties &unifiedMemoryProperties) {
+    return get(size, unifiedMemoryProperties, std::nullopt);
+}
+
+void *SVMAllocsManager::SvmAllocationCache::get(size_t size, const UnifiedMemoryProperties &unifiedMemoryProperties, std::optional<uint32_t> storageOwnerRootDeviceIndex) {
     if (false == sizeAllowed(size)) {
         return nullptr;
     }
@@ -191,11 +195,16 @@ void *SVMAllocsManager::SvmAllocationCache::get(size_t size, const UnifiedMemory
             }
             return true;
         };
+        auto hasStorageOwner = [&]() {
+            return !storageOwnerRootDeviceIndex ||
+                   allocationIter->svmData->gpuAllocations.getDefaultGraphicsAllocation()->getRootDeviceIndex() == *storageOwnerRootDeviceIndex;
+        };
         if (allocationIter->svmData->device == unifiedMemoryProperties.device &&
             allocationIter->svmData->allocationFlagsProperty.allFlags == unifiedMemoryProperties.allocationFlags.allFlags &&
             allocationIter->svmData->allocationFlagsProperty.allAllocFlags == unifiedMemoryProperties.allocationFlags.allAllocFlags &&
             alignmentAllows(allocationIter->allocation, unifiedMemoryProperties.alignment) &&
             hasAllRootDeviceMappings() &&
+            hasStorageOwner() &&
             false == isInUse(*allocationIter)) {
             {
                 auto &usmReuseInfo = getUsmReuseInfo(*allocationIter->svmData);
@@ -485,6 +494,14 @@ void *SVMAllocsManager::createHostUnifiedMemoryAllocation(size_t size,
     AllocationType allocationType = getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled);
 
     RootDeviceIndicesContainer rootDeviceIndicesVector(memoryProperties.rootDeviceIndices);
+    std::optional<uint32_t> numaRootDeviceIndex;
+    if (!useExternalHostPtrForCpu) {
+        numaRootDeviceIndex = this->memoryManager->getRootDeviceIndexClosestToPreferredNumaNode(rootDeviceIndicesVector);
+    }
+    if (numaRootDeviceIndex) {
+        auto numaRootDeviceIndexIt = std::find(rootDeviceIndicesVector.begin(), rootDeviceIndicesVector.end(), *numaRootDeviceIndex);
+        std::rotate(rootDeviceIndicesVector.begin(), numaRootDeviceIndexIt, numaRootDeviceIndexIt + 1);
+    }
 
     uint32_t rootDeviceIndex = rootDeviceIndicesVector.at(0);
     auto &deviceBitfield = memoryProperties.subdeviceBitfields.at(rootDeviceIndex);
@@ -506,7 +523,7 @@ void *SVMAllocsManager::createHostUnifiedMemoryAllocation(size_t size,
     unifiedMemoryProperties.cacheRegion = MemoryPropertiesHelper::getCacheRegion(memoryProperties.allocationFlags);
 
     if (this->usmHostAllocationsCache) {
-        void *allocationFromCache = this->usmHostAllocationsCache->get(size, memoryProperties);
+        void *allocationFromCache = this->usmHostAllocationsCache->get(size, memoryProperties, numaRootDeviceIndex);
         if (allocationFromCache) {
             if (memoryProperties.ipcHandleTypeFlags & NEO::unifiedMemoryPropertiesIpcHandleTypeFlagFabricAccessible) {
                 auto svmData = getSVMAlloc(allocationFromCache);

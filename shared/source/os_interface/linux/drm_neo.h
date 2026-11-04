@@ -288,6 +288,7 @@ class Drm : public DriverModel {
     bool readSysFsAsString(const std::string &relativeFilePath, std::string &readString);
     MOCKABLE_VIRTUAL std::string getSysFsPciPath();
     MOCKABLE_VIRTUAL std::string getSysFsPciPathBaseName();
+    int getNumaNode();
     std::unique_ptr<HwDeviceIdDrm> &getHwDeviceId() { return hwDeviceId; }
 
     template <typename DataType>
@@ -354,6 +355,7 @@ class Drm : public DriverModel {
     GemContextParamSseu sseu{};
     AdapterBdf adapterBDF{};
     uint32_t pciDomain = 0;
+    std::optional<int> numaNode;
 
     struct IoctlStatisticsEntry {
         long long totalTime = 0;

@@ -31,6 +31,7 @@ set(NEO_CORE_OS_INTERFACE_TESTS_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_bindless_heap_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_local_memory_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_meminfo_parsing_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_numa_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_operations_handler_bind_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_operations_handler_default_tests.cpp

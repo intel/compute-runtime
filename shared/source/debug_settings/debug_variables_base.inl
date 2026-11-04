@@ -673,6 +673,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, EnableImmediateCmdListHeapSharing, -1, "Immediat
 DECLARE_DEBUG_VARIABLE(int32_t, CompactL3FlushEventPacket, -1, "Compact COMPUTE_WALKER event packet and L3 Flush signal packet into single event packet, -1: default , 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableBcsSwControlWa, -1, "Enable BCS WA via BCSSWCONTROL MMIO. -1: default, 0: disabled, 1: if src in system mem, 2: if dst in system mem, 3: if src and dst in system mem, 4: always")
 DECLARE_DEBUG_VARIABLE(bool, EnableHostAllocationMemPolicy, false, "Enables Memory Policy for host allocation")
+DECLARE_DEBUG_VARIABLE(int32_t, EnableNumaAwareHostUsmPlacement, -1, "In a multi device context, create host USM through the device closest to the NUMA node of the memory policy of the calling thread, -1: default (disabled), 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideHostAllocationMemPolicyMode, -1, "Override Memory Policy mode for host allocation -1: default (use the system configuration), 0: MPOL_DEFAULT, 1: MPOL_PREFERRED, 2: MPOL_BIND, 3: MPOL_INTERLEAVED, 4: MPOL_LOCAL, 5: MPOL_PREFERRED_MANY")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableFtrTile64Optimization, 0, "Control feature Tile64 Optimization flag passed to gmmlib. -1: pass as-is, 0: disable flag(default due to NEO-10623), 1: enable flag");
 DECLARE_DEBUG_VARIABLE(int32_t, ForceTheMaximumNumberOfOutstandingRayqueriesPerSs, -1, "Set the maximum number of outstanding RayQueries per SS, -1: default, 0: 128, 1: 256, 2: 512, 3: 1024")

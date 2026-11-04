@@ -17,6 +17,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <mutex>
+#include <optional>
 #include <vector>
 
 namespace NEO {
@@ -79,6 +80,7 @@ struct SVMAllocsManager::SvmAllocationCache : AllocationReuseCache {
     bool isInUse(SvmCacheAllocationInfo &cacheAllocInfo);
     bool isEmpty() override { return empty; };
     void *get(size_t size, const UnifiedMemoryProperties &unifiedMemoryProperties);
+    void *get(size_t size, const UnifiedMemoryProperties &unifiedMemoryProperties, std::optional<uint32_t> storageOwnerRootDeviceIndex);
     void trim();
     void trimOldAllocs(std::chrono::high_resolution_clock::time_point trimTimePoint, bool trimAll) override;
     MemoryManager *getMemoryManager() const override { return memoryManager; }

@@ -28,6 +28,7 @@
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/i915_prelim.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
+#include "shared/source/os_interface/linux/numa_library.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/product_helper.h"
@@ -181,7 +182,7 @@ int IoctlHelperPrelim20::createGemExt(const MemRegionsVec &memClassInstances, si
         memPolicy.base.name = PRELIM_I915_GEM_CREATE_EXT_MEMORY_POLICY;
         memPolicy.mode = memPolicyMode.value();
         memPolicy.flags = 0;
-        memPolicy.nodemask_max = static_cast<uint32_t>(memPolicyNodemask.value().size());
+        memPolicy.nodemask_max = static_cast<uint32_t>(memPolicyNodemask.value().size() * Linux::NumaLibrary::bitsPerNodeMaskElement);
         memPolicy.nodemask_ptr = reinterpret_cast<uintptr_t>(memPolicyNodemask.value().data());
     }
 

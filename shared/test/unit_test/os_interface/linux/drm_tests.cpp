@@ -3171,3 +3171,68 @@ TEST(DrmTest, givenQueryIoctlReturningDataWhenQueryingThenDataSizedToReturnedLen
     EXPECT_EQ(2u, data.size());
     EXPECT_EQ(2u, ioctlHelper->queryCalled);
 }
+
+TEST(DrmTest, givenNumaNodeInSysfsWhenGettingNumaNodeThenItIsReadOnceFromPciDeviceAndCached) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.setPciPath("0000:03:00.0");
+
+    static bool numaNodeFileOpened = false;
+    numaNodeFileOpened = false;
+    VariableBackup<uint32_t> openCalledBackup(&SysCalls::openFuncCalled, 0u);
+    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        numaNodeFileOpened = std::string_view(pathname).starts_with(Os::sysFsPciPathPrefix) &&
+                             std::string_view(pathname).ends_with("0000:03:00.0/numa_node");
+        return 1;
+    });
+    VariableBackup<decltype(SysCalls::sysCallsPread)> mockPread(&SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        const std::string numaNode("1\n");
+        memcpy(buf, numaNode.data(), numaNode.length());
+        return static_cast<ssize_t>(numaNode.length());
+    });
+
+    EXPECT_EQ(1, drm.getNumaNode());
+    EXPECT_EQ(1, drm.getNumaNode());
+    EXPECT_EQ(1u, SysCalls::openFuncCalled);
+    EXPECT_TRUE(numaNodeFileOpened);
+}
+
+TEST(DrmTest, givenNumaNodeNotReadableWhenGettingNumaNodeThenMinusOneIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    {
+        DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+        VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+            return -1;
+        });
+        EXPECT_EQ(-1, drm.getNumaNode());
+    }
+    {
+        DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+        VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+            return 1;
+        });
+        VariableBackup<decltype(SysCalls::sysCallsPread)> mockPread(&SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+            return 0;
+        });
+        EXPECT_EQ(-1, drm.getNumaNode());
+    }
+}
+
+TEST(DrmTest, givenInvalidNumaNodeInSysfsWhenGettingNumaNodeThenMinusOneIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return 1;
+    });
+    static const char *numaNodeContent = nullptr;
+    VariableBackup<decltype(SysCalls::sysCallsPread)> mockPread(&SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        const auto length = std::min(strlen(numaNodeContent), count);
+        memcpy(buf, numaNodeContent, length);
+        return static_cast<ssize_t>(length);
+    });
+
+    for (const auto *content : {"-1\n", "node\n", "2147483648\n"}) {
+        numaNodeContent = content;
+        DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+        EXPECT_EQ(-1, drm.getNumaNode()) << content;
+    }
+}

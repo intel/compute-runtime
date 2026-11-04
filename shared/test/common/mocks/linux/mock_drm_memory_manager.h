@@ -87,6 +87,7 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using DrmMemoryManager::releaseGpuRange;
     using DrmMemoryManager::releaseLocalMemoryReservation;
     using DrmMemoryManager::reserveLocalMemory;
+    using DrmMemoryManager::rootDevicesOnMultipleNumaNodes;
     using DrmMemoryManager::secondaryEngines;
     using DrmMemoryManager::selectAlignmentAndHeap;
     using DrmMemoryManager::setDomainCpu;

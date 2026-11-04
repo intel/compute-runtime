@@ -41,6 +41,7 @@
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/os_interface/linux/i915_prelim.h"
 #include "shared/source/os_interface/linux/memory_info.h"
+#include "shared/source/os_interface/linux/numa_library.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/linux/xe/ioctl_helper_xe.h"
@@ -2186,6 +2187,64 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromExistingStorag
     } else {
         return allocateGraphicsMemoryWithProperties(properties, ptr);
     }
+}
+
+/**
+ * @brief Selects the root device that should create a host allocation shared by several root devices,
+ * so that its system memory pages are taken from the NUMA node of the memory policy of the calling thread.
+ * The first root device on the policy node is selected. If no root device is on that node, the root device
+ * on the node with the smallest NUMA distance to it is selected.
+ *
+ * @param[in] rootDeviceIndices root devices that share the host allocation
+ *
+ * @return Index of the selected root device, or std::nullopt if no root device is selected.
+ */
+std::optional<uint32_t> DrmMemoryManager::getRootDeviceIndexClosestToPreferredNumaNode(const RootDeviceIndicesContainer &rootDeviceIndices) {
+    if (rootDeviceIndices.size() < 2 ||
+        debugManager.flags.EnableNumaAwareHostUsmPlacement.get() != 1 ||
+        debugManager.flags.EnableHostAllocationMemPolicy.get()) {
+        return std::nullopt;
+    }
+    std::call_once(this->numaAwarePlacementInitFlag, [this]() { this->initNumaAwarePlacement(); });
+    if (!this->rootDevicesOnMultipleNumaNodes) {
+        return std::nullopt;
+    }
+
+    const auto preferredNode = Linux::NumaLibrary::getSinglePreferredNode();
+    if (!preferredNode) {
+        return std::nullopt;
+    }
+
+    std::optional<uint32_t> closestRootDeviceIndex;
+    int closestDistance = std::numeric_limits<int>::max();
+    for (const auto rootDeviceIndex : rootDeviceIndices) {
+        const auto deviceNode = getDrm(rootDeviceIndex).getNumaNode();
+        if (deviceNode < 0) {
+            continue;
+        }
+        const auto distance = (static_cast<uint32_t>(deviceNode) == *preferredNode) ? 0 : Linux::NumaLibrary::getDistance(*preferredNode, static_cast<uint32_t>(deviceNode));
+        if (distance >= 0 && distance < closestDistance) {
+            closestDistance = distance;
+            closestRootDeviceIndex = rootDeviceIndex;
+        }
+    }
+    return closestRootDeviceIndex;
+}
+
+void DrmMemoryManager::initNumaAwarePlacement() {
+    std::optional<int> firstKnownNode;
+    bool multipleNodes = false;
+    for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < executionEnvironment.rootDeviceEnvironments.size(); rootDeviceIndex++) {
+        const auto deviceNode = getDrm(rootDeviceIndex).getNumaNode();
+        if (deviceNode < 0) {
+            continue;
+        }
+        if (!firstKnownNode) {
+            firstKnownNode = deviceNode;
+        }
+        multipleNodes |= (*firstKnownNode != deviceNode);
+    }
+    this->rootDevicesOnMultipleNumaNodes = multipleNodes && (Linux::NumaLibrary::isLoaded() || Linux::NumaLibrary::init());
 }
 
 uint64_t DrmMemoryManager::getSystemSharedMemory(uint32_t rootDeviceIndex) {

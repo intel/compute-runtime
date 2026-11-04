@@ -4093,6 +4093,26 @@ TEST(MemoryManagerTest, givenFailureForLaterRootDeviceFromExistingStorageWhenCre
     EXPECT_EQ(1u, memoryManager.freeGraphicsMemoryCalled);
 }
 
+TEST(MemoryManagerTest, givenFirstRootDeviceIndexHigherThanNextWhenCreatingMultiGraphicsAllocationInSystemMemoryThenAllocationOfFirstRootDeviceIsDefault) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get(), false, 2u);
+    MockMemoryManager memoryManager(false, false, executionEnvironment);
+
+    AllocationProperties allocationProperties{1u, MemoryConstants::pageSize, AllocationType::bufferHostMemory, systemMemoryBitfield};
+    RootDeviceIndicesContainer rootDeviceIndices = {1u, 0u};
+    MultiGraphicsAllocation multiGraphicsAllocation(1u);
+
+    auto ptr = memoryManager.createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndices, allocationProperties, multiGraphicsAllocation);
+
+    ASSERT_NE(nullptr, ptr);
+    ASSERT_NE(nullptr, multiGraphicsAllocation.getGraphicsAllocation(0u));
+    ASSERT_NE(nullptr, multiGraphicsAllocation.getGraphicsAllocation(1u));
+    EXPECT_EQ(multiGraphicsAllocation.getGraphicsAllocation(1u), multiGraphicsAllocation.getDefaultGraphicsAllocation());
+
+    for (auto allocation : multiGraphicsAllocation.getGraphicsAllocations()) {
+        memoryManager.freeGraphicsMemory(allocation);
+    }
+}
+
 TEST(MemoryManagerTest, givenAllocationFailureForLaterRootDeviceWhenCreatingMultiGraphicsAllocationInSystemMemoryThenEarlierAllocationsAreFreedAndRemoved) {
     class NoCpuPtrThenFailMemoryManager : public MockMemoryManager {
       public:

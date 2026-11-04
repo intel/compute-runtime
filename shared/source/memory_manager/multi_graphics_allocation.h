@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "shared/source/utilities/stackvec.h"
 
 #include <functional>
+#include <optional>
 
 namespace NEO {
 
@@ -32,6 +33,9 @@ class MultiGraphicsAllocation {
 
     void removeAllocation(uint32_t rootDeviceIndex);
 
+    void setStorageOwnerRootDeviceIndex(uint32_t rootDeviceIndex);
+    std::optional<uint32_t> getStorageOwnerRootDeviceIndex() const { return storageOwnerRootDeviceIndex; }
+
     GraphicsAllocation *getGraphicsAllocation(uint32_t rootDeviceIndex) const;
 
     AllocationType getAllocationType() const;
@@ -50,6 +54,7 @@ class MultiGraphicsAllocation {
     bool isMultiStorage = false;
     MigrationSyncData *migrationSyncData = nullptr;
     StackVec<GraphicsAllocation *, 1> graphicsAllocations;
+    std::optional<uint32_t> storageOwnerRootDeviceIndex;
 };
 
 } // namespace NEO

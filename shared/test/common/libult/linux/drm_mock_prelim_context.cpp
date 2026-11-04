@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@
 #include "shared/source/os_interface/linux/cache_info.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/os_interface/linux/i915_prelim.h"
+#include "shared/source/os_interface/linux/numa_library.h"
 #include "shared/test/common/libult/linux/drm_mock_helper.h"
 
 #include <gtest/gtest.h>
@@ -212,7 +213,7 @@ int DrmMockPrelimContext::handlePrelimRequest(DrmIoctl request, void *arg) {
         if (memPolicyExt != nullptr) {
             receivedCreateGemExt->memPolicyExt = CreateGemExt::MemPolicy{memPolicyExt->mode, std::vector<unsigned long>()};
             auto *memPolicyPtr = reinterpret_cast<unsigned long *>(memPolicyExt->nodemask_ptr);
-            for (auto i = 0u; i < memPolicyExt->nodemask_max; i++) {
+            for (auto i = 0u; i < memPolicyExt->nodemask_max / Linux::NumaLibrary::bitsPerNodeMaskElement; i++) {
                 receivedCreateGemExt->memPolicyExt.nodeMask.value().push_back(memPolicyPtr[i]);
             }
         }

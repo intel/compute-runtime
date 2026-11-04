@@ -135,6 +135,7 @@ class DrmMock : public Drm {
     using Drm::memoryInfoQueried;
     using Drm::minimalChunkingSize;
     using Drm::nonPersistentContextsSupported;
+    using Drm::numaNode;
     using Drm::pageFaultSupported;
     using Drm::pagingFence;
     using Drm::preemptionSupported;

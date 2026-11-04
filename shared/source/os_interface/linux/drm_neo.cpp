@@ -223,6 +223,32 @@ std::string Drm::getSysFsPciPath() {
     return {};
 }
 
+int Drm::getNumaNode() {
+    if (this->numaNode) {
+        return *this->numaNode;
+    }
+    this->numaNode = -1;
+
+    const std::string fileName = std::string(Os::sysFsPciPathPrefix) + this->hwDeviceId->getPciPath() + "/numa_node";
+    int fd = SysCalls::open(fileName.c_str(), O_RDONLY);
+    if (fd < 0) {
+        return *this->numaNode;
+    }
+    std::array<char, 16> readBuffer{};
+    ssize_t bytesRead = SysCalls::pread(fd, readBuffer.data(), readBuffer.size() - 1, 0);
+    SysCalls::close(fd);
+    if (bytesRead <= 0) {
+        return *this->numaNode;
+    }
+
+    char *endPtr = nullptr;
+    const long long node = std::strtoll(readBuffer.data(), &endPtr, 10);
+    if (endPtr != readBuffer.data() && node >= 0 && node <= std::numeric_limits<int>::max()) {
+        this->numaNode = static_cast<int>(node);
+    }
+    return *this->numaNode;
+}
+
 bool Drm::readSysFsAsString(const std::string &relativeFilePath, std::string &readString) {
 
     auto devicePath = getSysFsPciPath();

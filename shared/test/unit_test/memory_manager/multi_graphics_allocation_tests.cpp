@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -107,6 +107,60 @@ TEST(MultiGraphicsAllocationTest, givenMultiGraphicsAllocationWhenRemovingGraphi
     multiGraphicsAllocation.removeAllocation(rootDeviceIndex);
 
     EXPECT_EQ(nullptr, multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex));
+}
+
+TEST(MultiGraphicsAllocationTest, givenStorageOwnerRootDeviceIndexSetWhenGettingDefaultAllocationThenStorageOwnerAllocationIsReturned) {
+    GraphicsAllocation graphicsAllocation0(0, 1u /*num gmms*/, AllocationType::bufferHostMemory, nullptr, 0, 0, MemoryPool::system4KBPages, 0, 0llu);
+    GraphicsAllocation graphicsAllocation1(1, 1u /*num gmms*/, AllocationType::bufferHostMemory, nullptr, 0, 0, MemoryPool::system4KBPages, 0, 0llu);
+
+    MultiGraphicsAllocation multiGraphicsAllocation(1);
+    multiGraphicsAllocation.addAllocation(&graphicsAllocation1);
+    multiGraphicsAllocation.setStorageOwnerRootDeviceIndex(1u);
+    multiGraphicsAllocation.addAllocation(&graphicsAllocation0);
+
+    EXPECT_EQ(&graphicsAllocation1, multiGraphicsAllocation.getDefaultGraphicsAllocation());
+}
+
+TEST(MultiGraphicsAllocationTest, givenStorageOwnerAllocationRemovedWhenGettingDefaultAllocationThenAllocationWithLowestRootDeviceIndexIsReturned) {
+    GraphicsAllocation graphicsAllocation0(0, 1u /*num gmms*/, AllocationType::bufferHostMemory, nullptr, 0, 0, MemoryPool::system4KBPages, 0, 0llu);
+    GraphicsAllocation graphicsAllocation1(1, 1u /*num gmms*/, AllocationType::bufferHostMemory, nullptr, 0, 0, MemoryPool::system4KBPages, 0, 0llu);
+    GraphicsAllocation graphicsAllocation2(2, 1u /*num gmms*/, AllocationType::bufferHostMemory, nullptr, 0, 0, MemoryPool::system4KBPages, 0, 0llu);
+
+    MultiGraphicsAllocation multiGraphicsAllocation(2);
+    multiGraphicsAllocation.addAllocation(&graphicsAllocation2);
+    multiGraphicsAllocation.setStorageOwnerRootDeviceIndex(2u);
+    multiGraphicsAllocation.addAllocation(&graphicsAllocation0);
+    multiGraphicsAllocation.addAllocation(&graphicsAllocation1);
+
+    multiGraphicsAllocation.removeAllocation(1u);
+    EXPECT_EQ(&graphicsAllocation2, multiGraphicsAllocation.getDefaultGraphicsAllocation());
+
+    multiGraphicsAllocation.removeAllocation(2u);
+    EXPECT_EQ(&graphicsAllocation0, multiGraphicsAllocation.getDefaultGraphicsAllocation());
+
+    multiGraphicsAllocation.addAllocation(&graphicsAllocation2);
+    EXPECT_EQ(&graphicsAllocation0, multiGraphicsAllocation.getDefaultGraphicsAllocation());
+}
+
+TEST(MultiGraphicsAllocationTest, givenStorageOwnerRootDeviceIndexSetWhenCopyingOrMovingMultiGraphicsAllocationThenStorageOwnerAllocationIsStillDefault) {
+    GraphicsAllocation graphicsAllocation0(0, 1u /*num gmms*/, AllocationType::bufferHostMemory, nullptr, 0, 0, MemoryPool::system4KBPages, 0, 0llu);
+    GraphicsAllocation graphicsAllocation1(1, 1u /*num gmms*/, AllocationType::bufferHostMemory, nullptr, 0, 0, MemoryPool::system4KBPages, 0, 0llu);
+
+    MultiGraphicsAllocation multiGraphicsAllocation(1);
+    multiGraphicsAllocation.addAllocation(&graphicsAllocation0);
+    multiGraphicsAllocation.addAllocation(&graphicsAllocation1);
+    multiGraphicsAllocation.setStorageOwnerRootDeviceIndex(1u);
+
+    auto copiedMultiGraphicsAllocation(multiGraphicsAllocation);
+    EXPECT_EQ(&graphicsAllocation1, copiedMultiGraphicsAllocation.getDefaultGraphicsAllocation());
+
+    auto movedMultiGraphicsAllocation(std::move(copiedMultiGraphicsAllocation));
+    EXPECT_EQ(&graphicsAllocation1, movedMultiGraphicsAllocation.getDefaultGraphicsAllocation());
+}
+
+TEST(MultiGraphicsAllocationTest, givenNoAllocationForRootDeviceIndexWhenSettingItAsStorageOwnerThenAbortIsCalled) {
+    MultiGraphicsAllocation multiGraphicsAllocation(1);
+    EXPECT_THROW(multiGraphicsAllocation.setStorageOwnerRootDeviceIndex(1u), std::exception);
 }
 
 struct MultiGraphicsAllocationTests : ::testing::Test {
