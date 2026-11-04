@@ -2323,18 +2323,30 @@ bool testWrappedMultipleEngines(ze_context_handle_t &context,
     }
 
     ze_event_pool_handle_t eventPool = nullptr;
+    ze_event_pool_handle_t eventPoolInitEvents = nullptr;
     ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
     eventPoolDesc.count = sequenceCount;
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
 
     SUCCESS_OR_TERMINATE(zeEventPoolCreate(context, &eventPoolDesc, 1, &device, &eventPool));
 
+    eventPoolDesc.count = queueCount;
+    SUCCESS_OR_TERMINATE(zeEventPoolCreate(context, &eventPoolDesc, 1, &device, &eventPoolInitEvents));
+
     ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC};
     std::vector<ze_event_handle_t> events(sequenceCount);
+    std::vector<ze_event_handle_t> initEvents(queueCount);
 
     for (uint32_t i = 0; i < sequenceCount; i++) {
         eventDesc.index = i;
         SUCCESS_OR_TERMINATE(zeEventCreate(eventPool, &eventDesc, &events[i]));
+    }
+
+    for (uint32_t i = 0; i < queueCount; i++) {
+        eventDesc.index = i;
+        SUCCESS_OR_TERMINATE(zeEventCreate(eventPoolInitEvents, &eventDesc, &initEvents[i]));
+        SUCCESS_OR_TERMINATE(zeCommandListAppendEventReset(cmdListCreated[i], initEvents[i]));
+        SUCCESS_OR_TERMINATE(zeCommandListHostSynchronize(cmdListCreated[i], std::numeric_limits<uint64_t>::max()));
     }
 
     if (useInOrder) {
@@ -2393,11 +2405,13 @@ bool testWrappedMultipleEngines(ze_context_handle_t &context,
     SUCCESS_OR_TERMINATE(zeMemFree(context, zeBuffer));
     for (uint32_t i = 0; i < queueCount; i++) {
         SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdListCreated[i]));
+        SUCCESS_OR_TERMINATE(zeEventDestroy(initEvents[i]));
     }
     for (uint32_t i = 0; i < sequenceCount; i++) {
         SUCCESS_OR_TERMINATE(zeEventDestroy(events[i]));
     }
     SUCCESS_OR_TERMINATE(zeEventPoolDestroy(eventPool));
+    SUCCESS_OR_TERMINATE(zeEventPoolDestroy(eventPoolInitEvents));
     return validRet;
 }
 
@@ -2453,18 +2467,29 @@ bool testSingleWrappedEngineDeepFork(ze_context_handle_t &context,
     cmdListSequence[10] = cmdListCreated[0];               // join root
 
     ze_event_pool_handle_t eventPool = nullptr;
+    ze_event_pool_handle_t eventPoolInitEvents = nullptr;
     ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
     eventPoolDesc.count = kernelsAppendCount;
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
 
     SUCCESS_OR_TERMINATE(zeEventPoolCreate(context, &eventPoolDesc, 1, &device, &eventPool));
 
+    eventPoolDesc.count = queueCount;
+    SUCCESS_OR_TERMINATE(zeEventPoolCreate(context, &eventPoolDesc, 1, &device, &eventPoolInitEvents));
+
     ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC};
     std::vector<ze_event_handle_t> events(kernelsAppendCount);
+    std::vector<ze_event_handle_t> initEvents(queueCount);
 
     for (uint32_t i = 0; i < kernelsAppendCount; i++) {
         eventDesc.index = i;
         SUCCESS_OR_TERMINATE(zeEventCreate(eventPool, &eventDesc, &events[i]));
+    }
+
+    for (uint32_t i = 0; i < queueCount; i++) {
+        eventDesc.index = i;
+        SUCCESS_OR_TERMINATE(zeEventCreate(eventPoolInitEvents, &eventDesc, &initEvents[i]));
+        SUCCESS_OR_TERMINATE(zeCommandListAppendEventReset(cmdListCreated[i], initEvents[i]));
     }
 
     if (useInOrder) {
@@ -2523,10 +2548,12 @@ bool testSingleWrappedEngineDeepFork(ze_context_handle_t &context,
     SUCCESS_OR_TERMINATE(zeMemFree(context, zeBuffer));
     for (uint32_t i = 0; i < queueCount; i++) {
         SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdListCreated[i]));
+        SUCCESS_OR_TERMINATE(zeEventDestroy(initEvents[i]));
     }
     for (uint32_t i = 0; i < kernelsAppendCount; i++) {
         SUCCESS_OR_TERMINATE(zeEventDestroy(events[i]));
     }
+    SUCCESS_OR_TERMINATE(zeEventPoolDestroy(eventPoolInitEvents));
     SUCCESS_OR_TERMINATE(zeEventPoolDestroy(eventPool));
     return validRet;
 }
