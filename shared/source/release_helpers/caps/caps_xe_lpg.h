@@ -70,6 +70,10 @@ struct CapsMtlHA0 : CapsMtlH {
 struct CapsMtlHB0 : CapsMtlH {};
 
 struct CapsArlH : CapsXeLpgCore {
+    static constexpr uint32_t systolicDotProductInputTypes = DotProductInputTypeFlags::int8Pack4 | DotProductInputTypeFlags::int4Pack8 | DotProductInputTypeFlags::int2Pack8 | DotProductInputTypeFlags::fp16Pack2 | DotProductInputTypeFlags::bf16Pack2;
+    static constexpr uint32_t systolicDotProductOutputTypes = DotProductOutputTypeFlags::int32 | DotProductOutputTypeFlags::fp32;
+    static constexpr uint32_t systolicDotProductSimdLaneCount = 8u;
+
     static constexpr bool adjustWalkOrderAvailable = true;
     static constexpr bool dotProductAccumulateSystolicSupported = true;
     static constexpr bool pipeControlPriorToPipelineSelectWaRequired = true;

@@ -15,6 +15,8 @@
 namespace NEO {
 
 #define NEO_CAP_FIELDS(NEO_COPY_CAP_FUNC)                                        \
+    NEO_COPY_CAP_FUNC(blockScaledSystolicDotProductInputTypes)                   \
+    NEO_COPY_CAP_FUNC(blockScaledSystolicDotProductOutputTypes)                  \
     NEO_COPY_CAP_FUNC(cacheLineSize)                                             \
     NEO_COPY_CAP_FUNC(commandBuffersPreallocatedPerCommandQueue)                 \
     NEO_COPY_CAP_FUNC(defaultMidthreadPreemptionDelayTimer)                      \
@@ -30,6 +32,9 @@ namespace NEO {
     NEO_COPY_CAP_FUNC(rtasFormat)                                                \
     NEO_COPY_CAP_FUNC(shareMemoryWithoutNTHandle)                                \
     NEO_COPY_CAP_FUNC(stackSizePerRay)                                           \
+    NEO_COPY_CAP_FUNC(systolicDotProductInputTypes)                              \
+    NEO_COPY_CAP_FUNC(systolicDotProductOutputTypes)                             \
+    NEO_COPY_CAP_FUNC(systolicDotProductSimdLaneCount)                           \
                                                                                  \
     NEO_COPY_CAP_FUNC(max3dImageWidthOrHeight)                                   \
     NEO_COPY_CAP_FUNC(svmCpuAlignment)                                           \

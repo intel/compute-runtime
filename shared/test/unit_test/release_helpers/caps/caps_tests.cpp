@@ -37,6 +37,8 @@ TEST(CapsSetupTest, givenEveryEnabledProductConfigWhenSettingUpCapsThenHwInfoIsI
 
         auto expectedCaps = resolveCaps(deviceAotInfo.aotConfig);
         ASSERT_TRUE(expectedCaps.has_value());
+        EXPECT_EQ(expectedCaps->blockScaledSystolicDotProductInputTypes, hwInfo.caps.blockScaledSystolicDotProductInputTypes);
+        EXPECT_EQ(expectedCaps->blockScaledSystolicDotProductOutputTypes, hwInfo.caps.blockScaledSystolicDotProductOutputTypes);
         EXPECT_EQ(expectedCaps->cacheLineSize, hwInfo.caps.cacheLineSize);
         EXPECT_EQ(expectedCaps->commandBuffersPreallocatedPerCommandQueue, hwInfo.caps.commandBuffersPreallocatedPerCommandQueue);
         EXPECT_EQ(expectedCaps->defaultMidthreadPreemptionDelayTimer, hwInfo.caps.defaultMidthreadPreemptionDelayTimer);
@@ -52,6 +54,9 @@ TEST(CapsSetupTest, givenEveryEnabledProductConfigWhenSettingUpCapsThenHwInfoIsI
         EXPECT_EQ(expectedCaps->rtasFormat, hwInfo.caps.rtasFormat);
         EXPECT_EQ(expectedCaps->shareMemoryWithoutNTHandle, hwInfo.caps.shareMemoryWithoutNTHandle);
         EXPECT_EQ(expectedCaps->stackSizePerRay, hwInfo.caps.stackSizePerRay);
+        EXPECT_EQ(expectedCaps->systolicDotProductInputTypes, hwInfo.caps.systolicDotProductInputTypes);
+        EXPECT_EQ(expectedCaps->systolicDotProductOutputTypes, hwInfo.caps.systolicDotProductOutputTypes);
+        EXPECT_EQ(expectedCaps->systolicDotProductSimdLaneCount, hwInfo.caps.systolicDotProductSimdLaneCount);
         EXPECT_EQ(expectedCaps->max3dImageWidthOrHeight, hwInfo.caps.max3dImageWidthOrHeight);
         EXPECT_EQ(expectedCaps->svmCpuAlignment, hwInfo.caps.svmCpuAlignment);
         EXPECT_EQ(expectedCaps->adjustWalkOrderAvailable, hwInfo.caps.adjustWalkOrderAvailable);
@@ -119,6 +124,8 @@ TEST(CapsSetupTest, givenUnknownIpVersionWhenResolvingCapsThenNulloptIsReturned)
 TEST(CapsTest, givenDefaultCapsThenValuesAreCorrect) {
     constexpr Caps caps{};
 
+    EXPECT_EQ(0u, caps.blockScaledSystolicDotProductInputTypes);
+    EXPECT_EQ(0u, caps.blockScaledSystolicDotProductOutputTypes);
     EXPECT_EQ(0u, caps.cacheLineSize);
     EXPECT_EQ(0u, caps.commandBuffersPreallocatedPerCommandQueue);
     EXPECT_EQ(0u, caps.defaultMidthreadPreemptionDelayTimer);
@@ -134,6 +141,9 @@ TEST(CapsTest, givenDefaultCapsThenValuesAreCorrect) {
     EXPECT_EQ(0u, caps.rtasFormat);
     EXPECT_EQ(0u, caps.shareMemoryWithoutNTHandle);
     EXPECT_EQ(0u, caps.stackSizePerRay);
+    EXPECT_EQ(0u, caps.systolicDotProductInputTypes);
+    EXPECT_EQ(0u, caps.systolicDotProductOutputTypes);
+    EXPECT_EQ(0u, caps.systolicDotProductSimdLaneCount);
     EXPECT_EQ(0u, caps.max3dImageWidthOrHeight);
     EXPECT_EQ(0u, caps.svmCpuAlignment);
     EXPECT_FALSE(caps.adjustWalkOrderAvailable);
