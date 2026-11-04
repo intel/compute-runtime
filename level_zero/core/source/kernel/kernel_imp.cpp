@@ -618,7 +618,8 @@ uint32_t KernelImp::suggestMaxCooperativeGroupCount(NEO::EngineGroupType engineG
                                                    localWorkSize,
                                                    engineGroupType,
                                                    this->sharedState->implicitScalingEnabled,
-                                                   forceSingleTileQuery);
+                                                   forceSingleTileQuery,
+                                                   helper.isSingleWorkGroupPerDssRequired(descriptor));
 }
 
 ze_result_t KernelImp::setIndirectAccess(ze_kernel_indirect_access_flags_t flags) {

@@ -224,6 +224,7 @@ KernelData *MutableCommandListImp::getKernelData(L0::Kernel *kernel) {
         kernelDataEntry->requiredThreadGroupDispatchSize = kernelDescriptor.kernelMetadata.requiredThreadGroupDispatchSize;
         kernelDataEntry->grfCount = kernelDescriptor.kernelAttributes.numGrfRequired;
         kernelDataEntry->barrierCount = kernelDescriptor.kernelAttributes.barrierCount;
+        kernelDataEntry->singleWorkGroupPerDss = this->base->getDevice()->getGfxCoreHelper().isSingleWorkGroupPerDssRequired(kernelDescriptor);
         kernelDataEntry->slmAllocationMode = kernelDescriptor.kernelAttributes.slmAllocationMode;
         kernelDataEntry->kernelStartOffset = isa->getAllocationOffset() + isaOffsetWithinAllocation;
         if (this->base->isHeaplessModeEnabled()) {

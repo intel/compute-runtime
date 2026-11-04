@@ -855,6 +855,11 @@ void GfxCoreHelperHw<GfxFamily>::alignThreadGroupCountToDssSize(uint32_t &thread
     threadCount = std::min(threadCount, availableTreadCount);
 }
 
+template <typename GfxFamily>
+bool GfxCoreHelperHw<GfxFamily>::isSingleWorkGroupPerDssRequired(const KernelDescriptor &kernelDescriptor) const {
+    return false;
+}
+
 template <typename Family>
 uint32_t GfxCoreHelperHw<Family>::getInternalCopyEngineIndex(const HardwareInfo &hwInfo) const {
     if (debugManager.flags.ForceBCSForInternalCopyEngine.get() != -1) {

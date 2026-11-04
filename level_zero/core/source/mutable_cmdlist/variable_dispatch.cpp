@@ -108,7 +108,8 @@ VariableDispatch::VariableDispatch(KernelDispatch *kernelDispatch,
                                                                                  localWorkSize,
                                                                                  this->cmdListEngineType,
                                                                                  this->partitionCount > 1,
-                                                                                 false);
+                                                                                 false,
+                                                                                 kernelDispatch->kernelData->singleWorkGroupPerDss);
     }
 
     // SLM kernel is when SLM arguments or SLM inline is present
@@ -163,7 +164,8 @@ void VariableDispatch::setGroupSize(const MaxChannelsCArray groupSize, NEO::Devi
                                                                                  localWorkSize,
                                                                                  this->cmdListEngineType,
                                                                                  this->partitionCount > 1,
-                                                                                 false);
+                                                                                 false,
+                                                                                 kernelDispatch->kernelData->singleWorkGroupPerDss);
     }
 
     if (stageData) {
@@ -416,7 +418,8 @@ void VariableDispatch::setSlmSize(const uint32_t slmArgTotalSize, NEO::Device &d
                                                                                  localWorkSize,
                                                                                  this->cmdListEngineType,
                                                                                  this->partitionCount > 1,
-                                                                                 false);
+                                                                                 false,
+                                                                                 kernelDispatch->kernelData->singleWorkGroupPerDss);
     }
 
     if (stageData) {

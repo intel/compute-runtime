@@ -194,6 +194,7 @@ class GfxCoreHelper {
     virtual bool usmCompressionSupported(const NEO::HardwareInfo &hwInfo) const = 0;
 
     virtual void alignThreadGroupCountToDssSize(uint32_t &threadCount, uint32_t dssCount, uint32_t threadsPerDss, uint32_t threadGroupSize) const = 0;
+    virtual bool isSingleWorkGroupPerDssRequired(const KernelDescriptor &kernelDescriptor) const = 0;
     virtual bool isSipExternalLibRequired() const = 0;
 
     virtual uint32_t getQueuePriorityLevels() const = 0;
@@ -326,6 +327,7 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     uint32_t calculateAvailableThreadCount(const HardwareInfo &hwInfo, uint32_t grfCount, const RootDeviceEnvironment &rootDeviceEnvironment) const override;
 
     void alignThreadGroupCountToDssSize(uint32_t &threadCount, uint32_t dssCount, uint32_t threadsPerDss, uint32_t threadGroupSize) const override;
+    bool isSingleWorkGroupPerDssRequired(const KernelDescriptor &kernelDescriptor) const override;
 
     uint32_t calculateMaxWorkGroupSize(const KernelDescriptor &kernelDescriptor, uint32_t defaultMaxGroupSize, const RootDeviceEnvironment &rootDeviceEnvironment) const override;
 

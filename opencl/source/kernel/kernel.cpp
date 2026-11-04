@@ -1148,7 +1148,8 @@ uint32_t Kernel::getMaxWorkGroupCount(const cl_uint workDim, const size_t *local
                                                                 localWorkSize,
                                                                 engineGroupType,
                                                                 isImplicitScalingEnabled,
-                                                                forceSingleTileQuery);
+                                                                forceSingleTileQuery,
+                                                                helper.isSingleWorkGroupPerDssRequired(kernelInfo.kernelDescriptor));
 
     return maxWorkGroupCount;
 }

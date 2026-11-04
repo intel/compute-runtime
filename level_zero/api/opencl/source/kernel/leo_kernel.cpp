@@ -632,7 +632,8 @@ cl_int Kernel::getMaxConcurrentWorkGroupCount(cl_uint workDim, const size_t *loc
                                                                        localWorkSize,
                                                                        NEO::EngineGroupType::compute,
                                                                        isImplicitScalingEnabled,
-                                                                       false);
+                                                                       false,
+                                                                       helper.isSingleWorkGroupPerDssRequired(descriptor));
 
     return CL_SUCCESS;
 }

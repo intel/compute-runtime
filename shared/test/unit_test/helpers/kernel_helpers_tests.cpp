@@ -42,6 +42,7 @@ struct KernelHelperMaxWorkGroupsFixture : public DeviceFixture {
 
     bool implicitScalingEnabled = false;
     bool forceSingleTileQuery = true;
+    bool singleWorkGroupPerDss = false;
 
     void setUp() {
         DeviceFixture::setUp();
@@ -61,7 +62,7 @@ struct KernelHelperMaxWorkGroupsFixture : public DeviceFixture {
             }
         }
 
-        return KernelHelper::getMaxWorkGroupCount(*pDevice, grf, simd, numberOfBarriers, usedSlm, workDim, lws, engineType, implicitScalingEnabled, forceSingleTileQuery);
+        return KernelHelper::getMaxWorkGroupCount(*pDevice, grf, simd, numberOfBarriers, usedSlm, workDim, lws, engineType, implicitScalingEnabled, forceSingleTileQuery, singleWorkGroupPerDss);
     }
 
     RootDeviceEnvironment *rootDeviceEnvironment = nullptr;
@@ -217,6 +218,24 @@ TEST_F(KernelHelperMaxWorkGroupsSlmPerDssTests, GivenVariousSlmSizesWhenCalculat
         EXPECT_EQ(dssCount * groupsPerDss, actual) << "usedSlm = " << slmSize;
         EXPECT_LE((actual / dssCount) * slmSize, slmPerDss) << "usedSlm = " << slmSize;
     }
+}
+
+TEST_F(KernelHelperMaxWorkGroupsSlmPerDssTests, GivenSingleWorkGroupPerDssWhenCalculatingMaxWorkGroupsCountThenOneGroupPerDssIsReported) {
+    setSlmLayout(20, slmPerDss, 0);
+    EXPECT_LT(dssCount, getMaxWorkGroupCount());
+
+    singleWorkGroupPerDss = true;
+    EXPECT_EQ(dssCount, getMaxWorkGroupCount());
+}
+
+TEST_F(KernelHelperMaxWorkGroupsSlmPerDssTests, GivenSingleWorkGroupPerDssAndMultipleSubdevicesWhenCalculatingMaxWorkGroupsCountThenOneGroupPerDssOfEachSubdeviceIsReported) {
+    auto &helper = rootDeviceEnvironment->getHelper<NEO::GfxCoreHelper>();
+    setSlmLayout(20, slmPerDss, 0);
+    singleWorkGroupPerDss = true;
+    numSubdevices = 2;
+
+    auto expectedCount = helper.singleTileExecImplicitScalingRequired(true) ? dssCount : dssCount * numSubdevices;
+    EXPECT_EQ(expectedCount, getMaxWorkGroupCount());
 }
 
 HWTEST_F(KernelHelperMaxWorkGroupsTests, givenUsedSlmSizeWhenCalculatingMaxWorkGroupsCountThenAlignToDssSizeCalled) {

@@ -20,7 +20,7 @@
 namespace NEO {
 
 uint32_t KernelHelper::getMaxWorkGroupCount(Device &device, uint16_t numGrfRequired, uint8_t simdSize, uint8_t barrierCount, uint32_t alignedSlmSize, uint32_t workDim, const size_t *localWorkSize,
-                                            EngineGroupType engineGroupType, bool implicitScalingEnabled, bool forceSingleTileQuery) {
+                                            EngineGroupType engineGroupType, bool implicitScalingEnabled, bool forceSingleTileQuery, bool singleWorkGroupPerDss) {
     uint32_t numSubDevicesForExecution = 1;
 
     if (!forceSingleTileQuery && implicitScalingEnabled) {
@@ -28,11 +28,11 @@ uint32_t KernelHelper::getMaxWorkGroupCount(Device &device, uint16_t numGrfRequi
         numSubDevicesForExecution = static_cast<uint32_t>(deviceBitfield.count());
     }
 
-    return KernelHelper::getMaxWorkGroupCount(device.getRootDeviceEnvironment(), numGrfRequired, simdSize, barrierCount, numSubDevicesForExecution, alignedSlmSize, workDim, localWorkSize, engineGroupType);
+    return KernelHelper::getMaxWorkGroupCount(device.getRootDeviceEnvironment(), numGrfRequired, simdSize, barrierCount, numSubDevicesForExecution, alignedSlmSize, workDim, localWorkSize, engineGroupType, singleWorkGroupPerDss);
 }
 
 uint32_t KernelHelper::getMaxWorkGroupCount(const RootDeviceEnvironment &rootDeviceEnvironment, uint16_t numGrfRequired, uint8_t simdSize, uint8_t barrierCount,
-                                            uint32_t numSubDevices, uint32_t usedSlmSize, uint32_t workDim, const size_t *localWorkSize, EngineGroupType engineGroupType) {
+                                            uint32_t numSubDevices, uint32_t usedSlmSize, uint32_t workDim, const size_t *localWorkSize, EngineGroupType engineGroupType, bool singleWorkGroupPerDss) {
     if (debugManager.flags.OverrideMaxWorkGroupCount.get() != -1) {
         return static_cast<uint32_t>(debugManager.flags.OverrideMaxWorkGroupCount.get());
     }
@@ -67,6 +67,9 @@ uint32_t KernelHelper::getMaxWorkGroupCount(const RootDeviceEnvironment &rootDev
         auto slmSizePerDss = static_cast<uint32_t>(MemoryConstants::kiloByte * hwInfo.capabilityTable.maxProgrammableSlmSize);
         auto maxWorkGroupsCountDueToSlm = dssCount * (slmSizePerDss / usedSlmSize);
         maxWorkGroupsCount = std::min(maxWorkGroupsCount, maxWorkGroupsCountDueToSlm);
+    }
+    if (singleWorkGroupPerDss) {
+        maxWorkGroupsCount = std::min(maxWorkGroupsCount, dssCount);
     }
 
     maxWorkGroupsCount = helper.adjustMaxWorkGroupCount(maxWorkGroupsCount, engineGroupType, rootDeviceEnvironment);

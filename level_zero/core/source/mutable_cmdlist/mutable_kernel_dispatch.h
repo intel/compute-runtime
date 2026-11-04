@@ -56,6 +56,7 @@ struct KernelData {
     bool passInlineData = false;
     bool requiresWorkgroupWalkOrder = false;
     bool usesSyncBuffer = false;
+    bool singleWorkGroupPerDss = false;
 };
 
 struct KernelDispatchOffsets {
