@@ -2247,7 +2247,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromExistingStorag
  */
 std::optional<uint32_t> DrmMemoryManager::getRootDeviceIndexClosestToPreferredNumaNode(const RootDeviceIndicesContainer &rootDeviceIndices) {
     if (rootDeviceIndices.size() < 2 ||
-        debugManager.flags.EnableNumaAwareHostUsmPlacement.get() != 1 ||
+        debugManager.flags.EnableNumaAwareHostUsmPlacement.get() == 0 ||
         debugManager.flags.EnableHostAllocationMemPolicy.get()) {
         return std::nullopt;
     }

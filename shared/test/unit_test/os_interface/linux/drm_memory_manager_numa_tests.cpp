@@ -20,10 +20,6 @@ using namespace NEO;
 
 class DrmMemoryManagerNumaTest : public ::testing::Test {
   public:
-    void SetUp() override {
-        debugManager.flags.EnableNumaAwareHostUsmPlacement.set(1);
-    }
-
     void createMemoryManager(std::initializer_list<int> deviceNumaNodes) {
         executionEnvironment = std::make_unique<MockExecutionEnvironment>(defaultHwInfo.get(), false, static_cast<uint32_t>(deviceNumaNodes.size()));
         uint32_t rootDeviceIndex = 0u;
@@ -113,14 +109,11 @@ TEST_F(DrmMemoryManagerNumaTest, givenSingleRootDeviceIndexWhenGettingRootDevice
     EXPECT_EQ(std::nullopt, memoryManager->getRootDeviceIndexClosestToPreferredNumaNode(rootDeviceIndices));
 }
 
-TEST_F(DrmMemoryManagerNumaTest, givenPlacementNotEnabledByDebugKeyOrMemPolicyPassedToKmdWhenGettingRootDeviceIndexClosestToPreferredNumaNodeThenNoIndexIsReturned) {
+TEST_F(DrmMemoryManagerNumaTest, givenPlacementDisabledByDebugKeyOrMemPolicyPassedToKmdWhenGettingRootDeviceIndexClosestToPreferredNumaNodeThenNoIndexIsReturned) {
     MockNumaLibrary numaLibrary(true);
     createMemoryManager({0, 1});
     numaLibrary.setPolicy(MockNumaLibrary::mpolBind, {1u});
     RootDeviceIndicesContainer rootDeviceIndices = {0u, 1u};
-
-    debugManager.flags.EnableNumaAwareHostUsmPlacement.set(-1);
-    EXPECT_EQ(std::nullopt, memoryManager->getRootDeviceIndexClosestToPreferredNumaNode(rootDeviceIndices));
 
     debugManager.flags.EnableNumaAwareHostUsmPlacement.set(0);
     EXPECT_EQ(std::nullopt, memoryManager->getRootDeviceIndexClosestToPreferredNumaNode(rootDeviceIndices));
@@ -130,6 +123,16 @@ TEST_F(DrmMemoryManagerNumaTest, givenPlacementNotEnabledByDebugKeyOrMemPolicyPa
     EXPECT_EQ(std::nullopt, memoryManager->getRootDeviceIndexClosestToPreferredNumaNode(rootDeviceIndices));
 
     debugManager.flags.EnableHostAllocationMemPolicy.set(false);
+    EXPECT_EQ(std::optional<uint32_t>(1u), memoryManager->getRootDeviceIndexClosestToPreferredNumaNode(rootDeviceIndices));
+}
+
+TEST_F(DrmMemoryManagerNumaTest, givenDefaultDebugKeyValueWhenGettingRootDeviceIndexClosestToPreferredNumaNodeThenPlacementIsEnabled) {
+    MockNumaLibrary numaLibrary(true);
+    createMemoryManager({0, 1});
+    numaLibrary.setPolicy(MockNumaLibrary::mpolBind, {1u});
+    RootDeviceIndicesContainer rootDeviceIndices = {0u, 1u};
+
+    EXPECT_EQ(-1, debugManager.flags.EnableNumaAwareHostUsmPlacement.get());
     EXPECT_EQ(std::optional<uint32_t>(1u), memoryManager->getRootDeviceIndexClosestToPreferredNumaNode(rootDeviceIndices));
 }
 
