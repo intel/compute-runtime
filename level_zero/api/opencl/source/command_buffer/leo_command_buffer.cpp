@@ -52,7 +52,7 @@ CommandBuffer::~CommandBuffer() {
 }
 
 bool CommandBuffer::isSupported() {
-    return debugManager.flags.EnableClKhrCommandBuffer.get() == 1;
+    return debugManager.flags.EnableClKhrCommandBuffer.get() != 0;
 }
 
 cl_int CommandBuffer::finalize() {

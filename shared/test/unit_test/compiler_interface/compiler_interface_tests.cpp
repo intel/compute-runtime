@@ -1605,10 +1605,10 @@ TEST(getOclCExtensionVersion, whenCheckingVersionOfExternalMemoryExtensionThenRe
     EXPECT_EQ(expectedVer, ver);
 }
 
-TEST(getOclCExtensionVersion, whenCheckingVersionOfCommandBufferExtensionThenReturns098) {
+TEST(getOclCExtensionVersion, whenCheckingVersionOfCommandBufferExtensionThenReturns100) {
     cl_version defaultVer = CL_MAKE_VERSION(7, 2, 5);
     cl_version ver = NEO::getOclCExtensionVersion("cl_khr_command_buffer", defaultVer);
-    cl_version expectedVer = CL_MAKE_VERSION(0, 9, 8);
+    cl_version expectedVer = CL_MAKE_VERSION(1, 0, 0);
     EXPECT_EQ(expectedVer, ver);
 }
 

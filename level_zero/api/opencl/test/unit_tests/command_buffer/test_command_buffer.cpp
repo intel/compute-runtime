@@ -92,7 +92,8 @@ struct LeoCommandBufferFixtureBase : public Test<OclFixture> {
 };
 
 using LeoCommandBufferTest = LeoCommandBufferFixtureBase<1>;
-using LeoCommandBufferDisabledTest = LeoCommandBufferFixtureBase<-1>;
+using LeoCommandBufferDisabledTest = LeoCommandBufferFixtureBase<0>;
+using LeoCommandBufferDefaultTest = LeoCommandBufferFixtureBase<-1>;
 
 struct LeoCommandBufferCaptureTest : public Test<LeoCaptureFixture> {
     void SetUp() override {
@@ -110,11 +111,16 @@ TEST_F(LeoCommandBufferTest, givenCommandBufferEnabledWhenGettingDeviceExtension
     EXPECT_NE(std::string::npos, getDeviceExtensions().find("cl_khr_command_buffer"));
 }
 
+TEST_F(LeoCommandBufferDefaultTest, givenDefaultSettingsWhenGettingDeviceExtensionsAndEntryPointsThenCommandBufferIsSupported) {
+    EXPECT_NE(std::string::npos, getDeviceExtensions().find("cl_khr_command_buffer"));
+    EXPECT_NE(nullptr, clGetExtensionFunctionAddress("clCreateCommandBufferKHR"));
+}
+
 TEST_F(LeoCommandBufferDisabledTest, givenCommandBufferDisabledWhenGettingDeviceExtensionsThenCommandBufferExtensionIsNotReported) {
     EXPECT_EQ(std::string::npos, getDeviceExtensions().find("cl_khr_command_buffer"));
 }
 
-TEST_F(LeoCommandBufferTest, givenCommandBufferEnabledWhenGettingExtensionsWithVersionThenProvisionalVersionIsReported) {
+TEST_F(LeoCommandBufferTest, givenCommandBufferEnabledWhenGettingExtensionsWithVersionThenVersion100IsReported) {
     size_t size = 0;
     ASSERT_EQ(CL_SUCCESS, clGetDeviceInfo(clDeviceId, CL_DEVICE_EXTENSIONS_WITH_VERSION, 0, nullptr, &size));
     std::vector<cl_name_version> extensions(size / sizeof(cl_name_version));
@@ -124,7 +130,7 @@ TEST_F(LeoCommandBufferTest, givenCommandBufferEnabledWhenGettingExtensionsWithV
     for (const auto &extension : extensions) {
         if (strcmp(extension.name, CL_KHR_COMMAND_BUFFER_EXTENSION_NAME) == 0) {
             found = true;
-            EXPECT_EQ(static_cast<cl_version>(CL_KHR_COMMAND_BUFFER_EXTENSION_VERSION), extension.version);
+            EXPECT_EQ(static_cast<cl_version>(CL_MAKE_VERSION(1, 0, 0)), extension.version);
         }
     }
     EXPECT_TRUE(found);

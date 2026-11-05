@@ -17,9 +17,7 @@ Replay appends that list onto the immediate command list backing the target
 OpenCL command queue, so a command buffer is a translation of an existing Level
 Zero primitive rather than a new execution engine.
 
-## Status: incomplete, off by default
-
-> **Partially implemented** -- do not enable outside development.
+## Status: on by default
 
 Implemented: the command buffer object, creation, finalization, reference
 counting, the info queries, replay, sync points, and recording with
@@ -38,23 +36,17 @@ migration is decided when a command is appended), and
 
 ## Enabling it
 
-A consumer decides whether to use command buffers from what the driver
-advertises. Advertising the extension before recording works would make such a
-consumer enable command-graph support and then fail, instead of falling back to
-plain enqueues. Everything that could reveal the extension is therefore gated
-behind the `EnableClKhrCommandBuffer` debug variable, which defaults to disabled
-and must stay disabled until the extension is complete and validated.
-
-Being a debug variable does not prevent validating the extension on a release
-build: set `NEOReadDebugKeys=1` (see [FAQ.md](FAQ.md)).
+Everything that could reveal the extension is gated behind the
+`EnableClKhrCommandBuffer` debug variable, which defaults to enabled. Setting it
+to `0` on a release build needs `NEOReadDebugKeys=1` (see [FAQ.md](FAQ.md)).
 
 | Value | Meaning |
 |-------|---------|
-| `-1` | Default -- extension not advertised |
+| `-1` | Default -- enabled |
 | `0` | Disabled |
 | `1` | Enabled -- `cl_khr_command_buffer` is added to `CL_DEVICE_EXTENSIONS` and the `CL_DEVICE_COMMAND_BUFFER_*` queries answer |
 
-With the default, the driver is indistinguishable from one without the feature:
+When disabled, the driver is indistinguishable from one without the feature:
 
 | Route | Behaviour when disabled |
 |-------|-------------------------|
@@ -65,6 +57,8 @@ With the default, the driver is indistinguishable from one without the feature:
 
 ## What is reported when enabled
 
+`CL_DEVICE_EXTENSIONS_WITH_VERSION` reports `cl_khr_command_buffer` version
+1.0.0.
 `CL_DEVICE_COMMAND_BUFFER_CAPABILITIES_KHR` reports no optional capability.
 `CL_DEVICE_COMMAND_BUFFER_SUPPORTED_QUEUE_PROPERTIES_KHR` reports
 `CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE` and `CL_QUEUE_PROFILING_ENABLE`, and

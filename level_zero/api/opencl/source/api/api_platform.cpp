@@ -192,9 +192,8 @@ void *CL_API_CALL clGetExtensionFunctionAddress(const char *funcName) {
     RETURN_FUNC_PTR_IF_EXIST(clEnqueueAcquireExternalMemObjectsKHR);
     RETURN_FUNC_PTR_IF_EXIST(clEnqueueReleaseExternalMemObjectsKHR);
 
-    // cl_khr_command_buffer is incomplete, so its entry points resolve only when the
-    // EnableClKhrCommandBuffer debug variable enables it. A client probing for the
-    // function pointer must not be able to mistake it for support.
+    // Resolved only while cl_khr_command_buffer is advertised, so a client probing for a
+    // function pointer cannot mistake it for support.
     if (NEO::LEO::CommandBuffer::isSupported()) {
         RETURN_FUNC_PTR_IF_EXIST(clCreateCommandBufferKHR);
         RETURN_FUNC_PTR_IF_EXIST(clFinalizeCommandBufferKHR);

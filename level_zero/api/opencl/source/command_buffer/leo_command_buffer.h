@@ -36,8 +36,6 @@ class CommandBuffer : public BaseObject<_cl_command_buffer_khr> {
     CommandBuffer() = delete;
     ~CommandBuffer() override;
 
-    // cl_khr_command_buffer is incomplete and therefore not advertised unless the
-    // EnableClKhrCommandBuffer debug variable is explicitly set to 1.
     static bool isSupported();
 
     cl_int finalize();
