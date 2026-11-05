@@ -77,10 +77,10 @@ inline std::string getFileExtension(IGC::CodeType::CodeType_t codeType) {
 
 class OfflineCompiler : NEO::NonCopyableAndNonMovableClass {
   public:
-    static std::vector<NameVersionPair> getExtensions(ConstStringRef product, bool needVersions, OclocArgHelper *helper);
-    static std::vector<NameVersionPair> getOpenCLCVersions(ConstStringRef product, OclocArgHelper *helper);
-    static std::vector<NameVersionPair> getOpenCLCFeatures(ConstStringRef product, OclocArgHelper *helper);
-    static int getSpirvExtensions(ConstStringRef product, std::vector<NameVersionPair> &spirvExtensions, OclocArgHelper *helper);
+    static std::pair<int, std::vector<NameVersionPair>> getExtensions(ConstStringRef product, bool needVersions, OclocArgHelper *helper);
+    static std::pair<int, std::vector<NameVersionPair>> getOpenCLCVersions(ConstStringRef product, OclocArgHelper *helper);
+    static std::pair<int, std::vector<NameVersionPair>> getOpenCLCFeatures(ConstStringRef product, OclocArgHelper *helper);
+    static std::pair<int, std::vector<NameVersionPair>> getSpirvExtensions(ConstStringRef product, OclocArgHelper *helper);
     static int query(size_t numArgs, const std::vector<std::string> &allArgs, OclocArgHelper *helper);
     static int queryAcronymIds(size_t numArgs, const std::vector<std::string> &allArgs, OclocArgHelper *helper);
     static int querySupportedDevices(Ocloc::SupportedDevicesMode mode, OclocArgHelper *helper);

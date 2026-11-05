@@ -153,16 +153,16 @@ NameVersionPair::NameVersionPair(ConstStringRef name, unsigned int version) {
     strncpy_s(this->name, sizeof(this->name), name.data(), name.size());
 };
 
-std::vector<NameVersionPair> OfflineCompiler::getExtensions(ConstStringRef product, bool needVersions, OclocArgHelper *helper) {
+std::pair<int, std::vector<NameVersionPair>> OfflineCompiler::getExtensions(ConstStringRef product, bool needVersions, OclocArgHelper *helper) {
     std::vector<NameVersionPair> ret;
     std::vector<std::string> args;
     args.push_back("ocloc");
     args.push_back("-device");
     args.push_back(product.str());
-    int retVal = 0;
+    int retVal = OCLOC_SUCCESS;
     std::unique_ptr<OfflineCompiler> compiler{OfflineCompiler::create(args.size(), args, true, retVal, helper)};
     if (nullptr == compiler) {
-        return {};
+        return {retVal, {}};
     }
     auto extensionsStr = compiler->compilerProductHelper->getDeviceExtensions(compiler->hwInfo);
     auto extensions = NEO::CompilerOptions::tokenize(extensionsStr, ' ');
@@ -174,18 +174,18 @@ std::vector<NameVersionPair> OfflineCompiler::getExtensions(ConstStringRef produ
         }
         ret.emplace_back(ext, version);
     }
-    return ret;
+    return {OCLOC_SUCCESS, std::move(ret)};
 }
 
-std::vector<NameVersionPair> OfflineCompiler::getOpenCLCVersions(ConstStringRef product, OclocArgHelper *helper) {
+std::pair<int, std::vector<NameVersionPair>> OfflineCompiler::getOpenCLCVersions(ConstStringRef product, OclocArgHelper *helper) {
     std::vector<std::string> args;
     args.push_back("ocloc");
     args.push_back("-device");
     args.push_back(product.str());
-    int retVal = 0;
+    int retVal = OCLOC_SUCCESS;
     std::unique_ptr<OfflineCompiler> compiler{OfflineCompiler::create(args.size(), args, true, retVal, helper)};
     if (nullptr == compiler) {
-        return {};
+        return {retVal, {}};
     }
 
     auto deviceOpenCLCVersions = compiler->compilerProductHelper->getDeviceOpenCLCVersions({});
@@ -196,18 +196,18 @@ std::vector<NameVersionPair> OfflineCompiler::getOpenCLCVersions(ConstStringRef 
         openClCVersion.version = CL_MAKE_VERSION(ver.major, ver.minor, 0);
         allSupportedVersions.push_back(openClCVersion);
     }
-    return allSupportedVersions;
+    return {OCLOC_SUCCESS, std::move(allSupportedVersions)};
 }
 
-std::vector<NameVersionPair> OfflineCompiler::getOpenCLCFeatures(ConstStringRef product, OclocArgHelper *helper) {
+std::pair<int, std::vector<NameVersionPair>> OfflineCompiler::getOpenCLCFeatures(ConstStringRef product, OclocArgHelper *helper) {
     std::vector<std::string> args;
     args.push_back("ocloc");
     args.push_back("-device");
     args.push_back(product.str());
-    int retVal = 0;
+    int retVal = OCLOC_SUCCESS;
     std::unique_ptr<OfflineCompiler> compiler{OfflineCompiler::create(args.size(), args, true, retVal, helper)};
     if (nullptr == compiler) {
-        return {};
+        return {retVal, {}};
     }
 
     OpenClCFeaturesContainer availableFeatures;
@@ -217,24 +217,24 @@ std::vector<NameVersionPair> OfflineCompiler::getOpenCLCFeatures(ConstStringRef 
     for (auto &feature : availableFeatures) {
         allSupportedFeatures.emplace_back(feature.name, feature.version);
     }
-    return allSupportedFeatures;
+    return {OCLOC_SUCCESS, std::move(allSupportedFeatures)};
 }
 
-int OfflineCompiler::getSpirvExtensions(ConstStringRef product, std::vector<NameVersionPair> &spirvExtensions, OclocArgHelper *helper) {
+std::pair<int, std::vector<NameVersionPair>> OfflineCompiler::getSpirvExtensions(ConstStringRef product, OclocArgHelper *helper) {
     std::vector<std::string> args{"ocloc", "-device", product.str()};
     int retVal = OCLOC_SUCCESS;
     std::unique_ptr<OfflineCompiler> compiler{OfflineCompiler::create(args.size(), args, true, retVal, helper)};
     if (nullptr == compiler) {
-        return retVal;
+        return {retVal, {}};
     }
     retVal = compiler->igcFacade->initialize(compiler->hwInfo);
     if (OCLOC_SUCCESS != retVal) {
-        return retVal;
+        return {retVal, {}};
     }
 
     const auto yaml = compiler->igcFacade->getSpirvExtensionsYAML();
     if (yaml.empty()) {
-        return OCLOC_SUCCESS;
+        return {OCLOC_SUCCESS, {}};
     }
 
     std::vector<SpirvExtensionInfo> extensions;
@@ -242,17 +242,18 @@ int OfflineCompiler::getSpirvExtensions(ConstStringRef product, std::vector<Name
     std::string warning;
     if (!SpirvCapabilitiesParser::parseSpirvExtensionsYAML(yaml, extensions, errReason, warning)) {
         helper->printf("Error! Cannot parse SPIR-V extensions reported by IGC:\n%s", errReason.c_str());
-        return OCLOC_OUT_OF_HOST_MEMORY;
+        return {OCLOC_OUT_OF_HOST_MEMORY, {}};
     }
     if (!warning.empty()) {
         helper->printf("Warning! Issues found while parsing SPIR-V extensions reported by IGC:\n%s", warning.c_str());
     }
 
+    std::vector<NameVersionPair> spirvExtensions;
     spirvExtensions.reserve(extensions.size());
     for (const auto &extension : extensions) {
         spirvExtensions.emplace_back(extension.name, 0);
     }
-    return OCLOC_SUCCESS;
+    return {OCLOC_SUCCESS, std::move(spirvExtensions)};
 }
 
 std::vector<NameVersionPair> getCommonNameVersion(const std::vector<std::vector<NameVersionPair>> &perTarget) {
@@ -278,48 +279,27 @@ std::vector<NameVersionPair> getCommonNameVersion(const std::vector<std::vector<
     return commonExtensionsVec;
 }
 
-std::vector<NameVersionPair> getCommonExtensions(std::vector<ConstStringRef> products, bool needVersions, OclocArgHelper *helper) {
+template <typename GetPerProductT>
+std::pair<int, std::vector<NameVersionPair>> getCommonNameVersionForProducts(const std::vector<ConstStringRef> &products, GetPerProductT getPerProduct, OclocArgHelper *helper) {
     std::vector<std::vector<NameVersionPair>> perTarget;
     perTarget.reserve(products.size());
-    for (const auto &targetProduct : products) {
-        perTarget.push_back(OfflineCompiler::getExtensions(targetProduct, needVersions, helper));
-    }
-
-    auto commonExtensions = getCommonNameVersion(perTarget);
-    return commonExtensions;
-}
-
-std::vector<NameVersionPair> getCommonOpenCLCVersions(std::vector<ConstStringRef> products, OclocArgHelper *helper) {
-    std::vector<std::vector<NameVersionPair>> perTarget;
-    for (const auto &targetProduct : products) {
-        auto versions = OfflineCompiler::getOpenCLCVersions(targetProduct, helper);
-        perTarget.push_back(versions);
-    }
-
-    return getCommonNameVersion(perTarget);
-}
-
-std::vector<NameVersionPair> getCommonOpenCLCFeatures(std::vector<ConstStringRef> products, OclocArgHelper *helper) {
-    std::vector<std::vector<NameVersionPair>> perTarget;
-    for (const auto &targetProduct : products) {
-        auto features = OfflineCompiler::getOpenCLCFeatures(targetProduct, helper);
-        perTarget.push_back(features);
-    }
-
-    return getCommonNameVersion(perTarget);
-}
-
-int getCommonSpirvExtensions(std::vector<ConstStringRef> products, std::vector<NameVersionPair> &commonExtensions, OclocArgHelper *helper) {
-    std::vector<std::vector<NameVersionPair>> perTarget(products.size());
-    for (size_t i = 0; i < products.size(); ++i) {
-        auto retVal = OfflineCompiler::getSpirvExtensions(products[i], perTarget[i], helper);
+    for (const auto &product : products) {
+        auto [retVal, nameVersions] = getPerProduct(product, helper);
         if (OCLOC_SUCCESS != retVal) {
-            return retVal;
+            return {retVal, {}};
         }
+        perTarget.push_back(std::move(nameVersions));
     }
 
-    commonExtensions = getCommonNameVersion(perTarget);
-    return OCLOC_SUCCESS;
+    return {OCLOC_SUCCESS, getCommonNameVersion(perTarget)};
+}
+
+std::pair<int, std::vector<NameVersionPair>> getExtensionsWithoutVersions(ConstStringRef product, OclocArgHelper *helper) {
+    return OfflineCompiler::getExtensions(product, false, helper);
+}
+
+std::pair<int, std::vector<NameVersionPair>> getExtensionsWithVersions(ConstStringRef product, OclocArgHelper *helper) {
+    return OfflineCompiler::getExtensions(product, true, helper);
 }
 
 std::string formatNameVersionString(std::vector<NameVersionPair> extensions, bool needVersions) {
@@ -365,6 +345,7 @@ int OfflineCompiler::query(size_t numArgs, const std::vector<std::string> &allAr
         if ("-device" == *argIt) {
             if (argIt + 1 == allArgs.end()) {
                 helper->printf("Error: Invalid command line : -device must be followed by device name\n");
+                return OCLOC_INVALID_COMMAND_LINE;
             }
             ++argIt;
             deviceArg = *argIt;
@@ -408,6 +389,9 @@ int OfflineCompiler::query(size_t numArgs, const std::vector<std::string> &allAr
 
     if (NEO::requestedFatBinary(deviceArg, helper)) {
         targetProducts = NEO::getTargetProductsForFatbinary(deviceArg, helper);
+        if (targetProducts.empty()) {
+            return OCLOC_INVALID_DEVICE;
+        }
     } else {
         targetProducts.push_back(deviceArg);
     }
@@ -438,13 +422,19 @@ int OfflineCompiler::query(size_t numArgs, const std::vector<std::string> &allAr
             }
         } break;
         case Queries::QueryType::oclDeviceExtensions: {
-            auto commonExtensionsVec = getCommonExtensions(targetProducts, false, helper);
+            auto [retVal, commonExtensionsVec] = getCommonNameVersionForProducts(targetProducts, getExtensionsWithoutVersions, helper);
+            if (OCLOC_SUCCESS != retVal) {
+                return retVal;
+            }
             auto commonExtString = formatNameVersionString(commonExtensionsVec, false);
             helper->saveOutput(Queries::queryOCLDeviceExtensions.str(), commonExtString.c_str(), commonExtString.size());
             helper->printf("%s\n", commonExtString.c_str());
         } break;
         case Queries::QueryType::oclDeviceExtensionsWithVersion: {
-            auto commonExtensionsVec = getCommonExtensions(targetProducts, true, helper);
+            auto [retVal, commonExtensionsVec] = getCommonNameVersionForProducts(targetProducts, getExtensionsWithVersions, helper);
+            if (OCLOC_SUCCESS != retVal) {
+                return retVal;
+            }
             auto commonExtString = formatNameVersionString(commonExtensionsVec, true);
             helper->saveOutput(Queries::queryOCLDeviceExtensionsWithVersion.str(), commonExtensionsVec.data(), commonExtensionsVec.size() * sizeof(NameVersionPair));
             helper->printf("%s\n", commonExtString.c_str());
@@ -455,20 +445,25 @@ int OfflineCompiler::query(size_t numArgs, const std::vector<std::string> &allAr
             helper->printf("%s\n", profile.data());
         } break;
         case Queries::QueryType::oclDeviceOpenCLCAllVersions: {
-            auto commonVersionsVec = getCommonOpenCLCVersions(targetProducts, helper);
+            auto [retVal, commonVersionsVec] = getCommonNameVersionForProducts(targetProducts, OfflineCompiler::getOpenCLCVersions, helper);
+            if (OCLOC_SUCCESS != retVal) {
+                return retVal;
+            }
             auto commonVersionsString = formatNameVersionString(commonVersionsVec, true);
             helper->saveOutput(Queries::queryOCLDeviceOpenCLCAllVersions.str(), commonVersionsVec.data(), commonVersionsVec.size() * sizeof(NameVersionPair));
             helper->printf("%s\n", commonVersionsString.c_str());
         } break;
         case Queries::QueryType::oclDeviceOpenCLCFeatures: {
-            auto commonFeaturesVec = getCommonOpenCLCFeatures(targetProducts, helper);
+            auto [retVal, commonFeaturesVec] = getCommonNameVersionForProducts(targetProducts, OfflineCompiler::getOpenCLCFeatures, helper);
+            if (OCLOC_SUCCESS != retVal) {
+                return retVal;
+            }
             auto commonFeaturesString = formatNameVersionString(commonFeaturesVec, true);
             helper->saveOutput(Queries::queryOCLDeviceOpenCLCFeatures.str(), commonFeaturesVec.data(), commonFeaturesVec.size() * sizeof(NameVersionPair));
             helper->printf("%s\n", commonFeaturesString.c_str());
         } break;
         case Queries::QueryType::spirvExtensions: {
-            std::vector<NameVersionPair> commonExtensionsVec;
-            auto retVal = getCommonSpirvExtensions(targetProducts, commonExtensionsVec, helper);
+            auto [retVal, commonExtensionsVec] = getCommonNameVersionForProducts(targetProducts, OfflineCompiler::getSpirvExtensions, helper);
             if (OCLOC_SUCCESS != retVal) {
                 return retVal;
             }

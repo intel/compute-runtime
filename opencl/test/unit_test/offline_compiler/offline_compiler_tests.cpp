@@ -5624,16 +5624,43 @@ TEST(OclocQuery, GivenIgcSpirvExtensionsWithParserWarningWhenQueryingSpirvExtens
     EXPECT_EQ("SPV_INTEL_2d_block_io", savedOutput->second);
 }
 
-TEST(OclocQuery, GivenUnknownDeviceWhenQueryingSpirvExtensionsThenErrorIsReturned) {
+TEST(OclocQuery, GivenUnknownDeviceWhenQueryingDeviceQueryThenInvalidDeviceIsReturned) {
+    const ConstStringRef deviceQueries[] = {Queries::queryOCLDeviceExtensions, Queries::queryOCLDeviceExtensionsWithVersion,
+                                            Queries::queryOCLDeviceOpenCLCAllVersions, Queries::queryOCLDeviceOpenCLCFeatures,
+                                            Queries::querySpirvExtensions};
+    for (const auto &query : deviceQueries) {
+        MockOclocArgHelper::FilesMap vfs;
+        MockOclocArgHelper argHelper{vfs};
+        argHelper.messagePrinter.setSuppressMessages(true);
+
+        std::vector<std::string> argv = {"ocloc", "query", query.str(), "-device", "unknown_device"};
+        int retVal = OfflineCompiler::query(argv.size(), argv, &argHelper);
+        EXPECT_EQ(OCLOC_INVALID_DEVICE, retVal);
+        EXPECT_FALSE(vfs.contains(query.str()));
+    }
+}
+
+TEST(OclocQuery, GivenMultiDeviceFilterWithUnknownDevicesWhenQueryingThenInvalidDeviceIsReturned) {
     MockOclocArgHelper::FilesMap vfs;
     MockOclocArgHelper argHelper{vfs};
     argHelper.messagePrinter.setSuppressMessages(true);
 
-    std::vector<std::string> argv = {"ocloc", "query", Queries::querySpirvExtensions.str(), "-device", "unknown_device"};
+    std::vector<std::string> argv = {"ocloc", "query", Queries::queryOCLDeviceExtensions.str(), "-device", "unknown_device,unknown_device"};
     int retVal = OfflineCompiler::query(argv.size(), argv, &argHelper);
     EXPECT_EQ(OCLOC_INVALID_DEVICE, retVal);
+    EXPECT_FALSE(vfs.contains(Queries::queryOCLDeviceExtensions.str()));
+}
 
-    EXPECT_FALSE(vfs.contains(Queries::querySpirvExtensions.str()));
+TEST(OclocQuery, GivenDeviceFlagWithoutValueWhenQueryingThenInvalidCommandLineIsReturned) {
+    MockOclocArgHelper::FilesMap vfs;
+    MockOclocArgHelper argHelper{vfs};
+    argHelper.messagePrinter.setSuppressMessages(true);
+
+    std::vector<std::string> argv = {"ocloc", "query", Queries::queryOCLDeviceExtensions.str(), "-device"};
+    int retVal = OfflineCompiler::query(argv.size(), argv, &argHelper);
+    EXPECT_EQ(OCLOC_INVALID_COMMAND_LINE, retVal);
+    EXPECT_TRUE(hasSubstr(argHelper.getPrinterRef().getLog().str(), "Error: Invalid command line : -device must be followed by device name\n"));
+    EXPECT_FALSE(vfs.contains(Queries::queryOCLDeviceExtensions.str()));
 }
 
 TEST(OclocOptionsTests, givenInvalidOclocOptionsFileWhenCmdlineIsPrintedThenTheyArePrinted) {
