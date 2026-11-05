@@ -1252,7 +1252,8 @@ TEST_F(SetIPCHandleDataSocketTest, givenOpaqueHandleWithFdTypeAndSocketFallbackE
     uint64_t ptrAddress = 0x1000;
     uint8_t type = static_cast<uint8_t>(InternalMemoryType::deviceUnifiedMemory);
 
-    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>(&mockAllocation, handle, opaqueIpcData, ptrAddress, type, nullptr, L0::IpcHandleType::fdHandle, nullptr);
+    contextWhitebox.settings.handleType = L0::IpcHandleType::fdHandle;
+    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>({.alloc = &mockAllocation, .handle = handle, .ptrAddress = ptrAddress, .memoryType = type}, opaqueIpcData);
 
     auto &ipcHandleMap = driverHandle->getIPCHandleMap();
     EXPECT_EQ(1u, ipcHandleMap.size());
@@ -1281,7 +1282,8 @@ TEST_F(SetIPCHandleDataSocketTest, givenOpaqueHandleWithFdTypeAndSocketFallbackD
     uint64_t ptrAddress = 0x2000;
     uint8_t type = static_cast<uint8_t>(InternalMemoryType::deviceUnifiedMemory);
 
-    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>(&mockAllocation, handle, opaqueIpcData, ptrAddress, type, nullptr, L0::IpcHandleType::fdHandle, nullptr);
+    contextWhitebox.settings.handleType = L0::IpcHandleType::fdHandle;
+    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>({.alloc = &mockAllocation, .handle = handle, .ptrAddress = ptrAddress, .memoryType = type}, opaqueIpcData);
 
     auto &ipcHandleMap = driverHandle->getIPCHandleMap();
     EXPECT_EQ(1u, ipcHandleMap.size());
@@ -1309,7 +1311,8 @@ TEST_F(SetIPCHandleDataSocketTest, givenOpaqueHandleWithNtHandleTypeAndSocketFal
     uint64_t ptrAddress = 0x3000;
     uint8_t type = static_cast<uint8_t>(InternalMemoryType::deviceUnifiedMemory);
 
-    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>(&mockAllocation, handle, opaqueIpcData, ptrAddress, type, nullptr, L0::IpcHandleType::ntHandle, nullptr);
+    contextWhitebox.settings.handleType = L0::IpcHandleType::ntHandle;
+    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>({.alloc = &mockAllocation, .handle = handle, .ptrAddress = ptrAddress, .memoryType = type}, opaqueIpcData);
 
     auto &ipcHandleMap = driverHandle->getIPCHandleMap();
     EXPECT_EQ(1u, ipcHandleMap.size());
@@ -1337,7 +1340,7 @@ TEST_F(SetIPCHandleDataSocketTest, givenNonOpaqueHandleWithSocketFallbackEnabled
     uint64_t ptrAddress = 0x4000;
     uint8_t type = static_cast<uint8_t>(InternalMemoryType::deviceUnifiedMemory);
 
-    contextWhitebox.setIPCHandleData<L0::IpcMemoryData>(&mockAllocation, handle, ipcData, ptrAddress, type, nullptr, L0::IpcHandleType::fdHandle, nullptr);
+    contextWhitebox.setIPCHandleData<L0::IpcMemoryData>({.alloc = &mockAllocation, .handle = handle, .ptrAddress = ptrAddress, .memoryType = type}, ipcData);
 
     auto &ipcHandleMap = driverHandle->getIPCHandleMap();
     EXPECT_EQ(1u, ipcHandleMap.size());
@@ -1367,7 +1370,8 @@ TEST_F(SetIPCHandleDataSocketTest, givenOpaqueHandleWithFdTypeAndSocketServerIni
     uint64_t ptrAddress = 0x5000;
     uint8_t type = static_cast<uint8_t>(InternalMemoryType::deviceUnifiedMemory);
 
-    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>(&mockAllocation, handle, opaqueIpcData, ptrAddress, type, nullptr, L0::IpcHandleType::fdHandle, nullptr);
+    contextWhitebox.settings.handleType = L0::IpcHandleType::fdHandle;
+    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>({.alloc = &mockAllocation, .handle = handle, .ptrAddress = ptrAddress, .memoryType = type}, opaqueIpcData);
 
     auto &ipcHandleMap = driverHandle->getIPCHandleMap();
     EXPECT_EQ(1u, ipcHandleMap.size());
@@ -1405,7 +1409,8 @@ TEST_F(SetIPCHandleDataSocketTest, givenOpaqueHandleWithFdTypeAndRegisterHandleF
     uint64_t ptrAddress = 0x6000;
     uint8_t type = static_cast<uint8_t>(InternalMemoryType::deviceUnifiedMemory);
 
-    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>(&mockAllocation, handle, opaqueIpcData, ptrAddress, type, nullptr, L0::IpcHandleType::fdHandle, nullptr);
+    contextWhitebox.settings.handleType = L0::IpcHandleType::fdHandle;
+    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>({.alloc = &mockAllocation, .handle = handle, .ptrAddress = ptrAddress, .memoryType = type}, opaqueIpcData);
 
     auto &ipcHandleMap = driverHandle->getIPCHandleMap();
     EXPECT_EQ(1u, ipcHandleMap.size());

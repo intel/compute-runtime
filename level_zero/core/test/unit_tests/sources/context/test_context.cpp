@@ -4981,7 +4981,7 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithIpcMemoryDataTypeThenIpcDataI
     EXPECT_TRUE(driverHandle->getIPCHandleMap().empty());
 
     // Call setIPCHandleData with IpcMemoryData type
-    contextWhitebox.setIPCHandleData<L0::IpcMemoryData>(&mockAllocation, handle, ipcData, ptrAddress, type, nullptr, L0::IpcHandleType::fdHandle, nullptr);
+    contextWhitebox.setIPCHandleData<L0::IpcMemoryData>({.alloc = &mockAllocation, .handle = handle, .ptrAddress = ptrAddress, .memoryType = type}, ipcData);
 
     // Verify the handle was added to the IPC handle map
     auto &ipcHandleMap = driverHandle->getIPCHandleMap();
@@ -5046,14 +5046,8 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithIpcOpaqueMemoryDataTypeThenIp
     // Create a mock graphics allocation
     NEO::MockGraphicsAllocation mockAllocation;
 
-    // Set up test data for IpcOpaqueMemoryData
     uint64_t handle = 67890;
-    L0::IpcOpaqueMemoryData opaqueIpcData;
-    opaqueIpcData.handle.fd = static_cast<int>(handle);
-    opaqueIpcData.memoryType = static_cast<uint8_t>(InternalMemoryType::sharedUnifiedMemory);
-    opaqueIpcData.processId = 1234;
-    opaqueIpcData.type = L0::IpcHandleType::fdHandle;
-    opaqueIpcData.poolOffset = 0;
+    L0::IpcOpaqueMemoryData opaqueIpcData = {};
 
     uint64_t ptrAddress = 0x2000;
     uint8_t type = static_cast<uint8_t>(InternalMemoryType::sharedUnifiedMemory);
@@ -5062,7 +5056,8 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithIpcOpaqueMemoryDataTypeThenIp
     EXPECT_TRUE(driverHandle->getIPCHandleMap().empty());
 
     // Call setIPCHandleData with IpcOpaqueMemoryData type
-    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>(&mockAllocation, handle, opaqueIpcData, ptrAddress, type, nullptr, L0::IpcHandleType::fdHandle, nullptr);
+    contextWhitebox.settings.handleType = L0::IpcHandleType::fdHandle;
+    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>({.alloc = &mockAllocation, .handle = handle, .ptrAddress = ptrAddress, .memoryType = type}, opaqueIpcData);
 
     // Verify the handle was added to the IPC handle map
     auto &ipcHandleMap = driverHandle->getIPCHandleMap();
@@ -5138,7 +5133,8 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithInvalidIpcHandleTypeThenHandl
     EXPECT_TRUE(driverHandle->getIPCHandleMap().empty());
 
     // Call setIPCHandleData with invalid handle type (maxHandle)
-    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>(&mockAllocation, handle, opaqueIpcData, ptrAddress, type, nullptr, invalidHandleType1, nullptr);
+    contextWhitebox.settings.handleType = invalidHandleType1;
+    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>({.alloc = &mockAllocation, .handle = handle, .ptrAddress = ptrAddress, .memoryType = type}, opaqueIpcData);
 
     // Verify the handle was added to the IPC handle map
     auto &ipcHandleMap = driverHandle->getIPCHandleMap();
@@ -5147,7 +5143,8 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithInvalidIpcHandleTypeThenHandl
     // Verify the IpcOpaqueMemoryData values
     EXPECT_EQ(type, opaqueIpcData.memoryType);
     EXPECT_EQ(invalidHandleType1, opaqueIpcData.type);
-    EXPECT_NE(0u, opaqueIpcData.processId); // Should be set to current process ID
+    const auto processId = opaqueIpcData.processId;
+    EXPECT_NE(0u, processId);
 
     auto handleIterator = ipcHandleMap.find(handle);
     ASSERT_NE(handleIterator, ipcHandleMap.end());
@@ -5157,9 +5154,10 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithInvalidIpcHandleTypeThenHandl
     // Test with completely invalid handle type (beyond enum range)
     handle = 22222;
     opaqueIpcData = {}; // Reset
-    L0::IpcHandleType invalidHandleType2 = L0::IpcHandleType::maxHandle;
+    const auto invalidHandleType2 = static_cast<L0::IpcHandleType>(static_cast<uint8_t>(L0::IpcHandleType::maxHandle) + 1);
 
-    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>(&mockAllocation, handle, opaqueIpcData, ptrAddress, type, nullptr, invalidHandleType2, nullptr);
+    contextWhitebox.settings.handleType = invalidHandleType2;
+    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>({.alloc = &mockAllocation, .handle = handle, .ptrAddress = ptrAddress, .memoryType = type}, opaqueIpcData);
 
     // Verify the handle was added to the IPC handle map
     EXPECT_EQ(1u, ipcHandleMap.size());
@@ -5167,7 +5165,8 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithInvalidIpcHandleTypeThenHandl
     // Verify the IpcOpaqueMemoryData values
     EXPECT_EQ(type, opaqueIpcData.memoryType);
     EXPECT_EQ(invalidHandleType2, opaqueIpcData.type);
-    EXPECT_NE(0u, opaqueIpcData.processId); // Should be set to current process ID
+    const auto processId2 = opaqueIpcData.processId;
+    EXPECT_NE(0u, processId2);
 
     handleIterator = ipcHandleMap.find(handle);
     ASSERT_NE(handleIterator, ipcHandleMap.end());
@@ -5207,7 +5206,8 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithNtHandleTypeThenHandleUnionIs
     EXPECT_TRUE(driverHandle->getIPCHandleMap().empty());
 
     // Call setIPCHandleData with ntHandle type
-    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>(&mockAllocation, handle, opaqueIpcData, ptrAddress, type, nullptr, L0::IpcHandleType::ntHandle, nullptr);
+    contextWhitebox.settings.handleType = L0::IpcHandleType::ntHandle;
+    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>({.alloc = &mockAllocation, .handle = handle, .ptrAddress = ptrAddress, .memoryType = type}, opaqueIpcData);
 
     // Verify the handle was added to the IPC handle map
     auto &ipcHandleMap = driverHandle->getIPCHandleMap();
@@ -6839,7 +6839,7 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithUsmPoolThenPoolOffsetIsSet) {
     // Call setIPCHandleData with a valid USM pool
     // Note: We pass usmPool pointer, but the mock implementation may not fully support offset calculation
     // This test primarily ensures the code path with usmPool != nullptr is executed
-    contextWhitebox.setIPCHandleData<L0::IpcMemoryData>(&mockAllocation, handle, ipcData, ptrAddress, type, &mockPool, L0::IpcHandleType::fdHandle, nullptr);
+    contextWhitebox.setIPCHandleData<L0::IpcMemoryData>({.alloc = &mockAllocation, .handle = handle, .ptrAddress = ptrAddress, .memoryType = type, .usmPool = &mockPool}, ipcData);
 
     // Verify the handle was added to the IPC handle map
     auto &ipcHandleMap = driverHandle->getIPCHandleMap();
@@ -6890,7 +6890,7 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithExistingHandleInMapThenRefCou
     }
 
     // Call setIPCHandleData with the same handle - should increment refcount
-    contextWhitebox.setIPCHandleData<L0::IpcMemoryData>(&mockAllocation, handle, ipcData, ptrAddress, type, nullptr, L0::IpcHandleType::fdHandle, nullptr);
+    contextWhitebox.setIPCHandleData<L0::IpcMemoryData>({.alloc = &mockAllocation, .handle = handle, .ptrAddress = ptrAddress, .memoryType = type}, ipcData);
 
     // Verify refcount was incremented
     {
@@ -7294,14 +7294,8 @@ TEST_F(ContextIpcSocketTest, whenCallingSetIPCHandleDataWithOpaqueSocketHandleTh
     // Create a mock graphics allocation
     NEO::MockGraphicsAllocation mockAllocation;
 
-    // Set up test data for IpcOpaqueMemoryData with fdHandle
     uint64_t handle = 12345;
-    L0::IpcOpaqueMemoryData opaqueIpcData;
-    opaqueIpcData.handle.fd = static_cast<int>(handle);
-    opaqueIpcData.memoryType = static_cast<uint8_t>(InternalMemoryType::sharedUnifiedMemory);
-    opaqueIpcData.processId = 1234;
-    opaqueIpcData.type = L0::IpcHandleType::fdHandle;
-    opaqueIpcData.poolOffset = 0;
+    L0::IpcOpaqueMemoryData opaqueIpcData = {};
 
     uint64_t ptrAddress = 0x3000;
     uint8_t type = static_cast<uint8_t>(InternalMemoryType::sharedUnifiedMemory);
@@ -7311,7 +7305,8 @@ TEST_F(ContextIpcSocketTest, whenCallingSetIPCHandleDataWithOpaqueSocketHandleTh
 
     // Call setIPCHandleData with fdHandle and sockets enabled
     // This should trigger the socket server initialization path (line 302)
-    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>(&mockAllocation, handle, opaqueIpcData, ptrAddress, type, nullptr, L0::IpcHandleType::fdHandle, nullptr);
+    contextWhitebox.settings.handleType = L0::IpcHandleType::fdHandle;
+    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>({.alloc = &mockAllocation, .handle = handle, .ptrAddress = ptrAddress, .memoryType = type}, opaqueIpcData);
 
     // Verify the handle was added to the IPC handle map
     auto &ipcHandleMap = driverHandle->getIPCHandleMap();
@@ -7343,14 +7338,8 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithOpaqueSocketHandleDisabledThe
     // Create a mock graphics allocation
     NEO::MockGraphicsAllocation mockAllocation;
 
-    // Set up test data for IpcOpaqueMemoryData with fdHandle
     uint64_t handle = 67890;
-    L0::IpcOpaqueMemoryData opaqueIpcData;
-    opaqueIpcData.handle.fd = static_cast<int>(handle);
-    opaqueIpcData.memoryType = static_cast<uint8_t>(InternalMemoryType::deviceUnifiedMemory);
-    opaqueIpcData.processId = 5678;
-    opaqueIpcData.type = L0::IpcHandleType::fdHandle;
-    opaqueIpcData.poolOffset = 0;
+    L0::IpcOpaqueMemoryData opaqueIpcData = {};
 
     uint64_t ptrAddress = 0x4000;
     uint8_t type = static_cast<uint8_t>(InternalMemoryType::deviceUnifiedMemory);
@@ -7360,7 +7349,8 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithOpaqueSocketHandleDisabledThe
 
     // Call setIPCHandleData with opaque handles disabled
     // This should NOT trigger the socket server initialization path (line 302 condition is false)
-    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>(&mockAllocation, handle, opaqueIpcData, ptrAddress, type, nullptr, L0::IpcHandleType::fdHandle, nullptr);
+    contextWhitebox.settings.handleType = L0::IpcHandleType::fdHandle;
+    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>({.alloc = &mockAllocation, .handle = handle, .ptrAddress = ptrAddress, .memoryType = type}, opaqueIpcData);
 
     // Verify the handle was added to the IPC handle map
     auto &ipcHandleMap = driverHandle->getIPCHandleMap();
@@ -7392,14 +7382,8 @@ TEST_F(ContextIpcSocketTest, whenCallingSetIPCHandleDataWithOpaqueNtHandleThenSo
     // Create a mock graphics allocation
     NEO::MockGraphicsAllocation mockAllocation;
 
-    // Set up test data for IpcOpaqueMemoryData with ntHandle (not fdHandle)
     uint64_t handle = 98765;
-    L0::IpcOpaqueMemoryData opaqueIpcData;
-    opaqueIpcData.handle.reserved = handle;
-    opaqueIpcData.memoryType = static_cast<uint8_t>(InternalMemoryType::sharedUnifiedMemory);
-    opaqueIpcData.processId = 9876;
-    opaqueIpcData.type = L0::IpcHandleType::ntHandle;
-    opaqueIpcData.poolOffset = 0;
+    L0::IpcOpaqueMemoryData opaqueIpcData = {};
 
     uint64_t ptrAddress = 0x5000;
     uint8_t type = static_cast<uint8_t>(InternalMemoryType::sharedUnifiedMemory);
@@ -7409,7 +7393,8 @@ TEST_F(ContextIpcSocketTest, whenCallingSetIPCHandleDataWithOpaqueNtHandleThenSo
 
     // Call setIPCHandleData with ntHandle (not fdHandle)
     // This should NOT trigger the socket server initialization path because handleType != fdHandle
-    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>(&mockAllocation, handle, opaqueIpcData, ptrAddress, type, nullptr, L0::IpcHandleType::ntHandle, nullptr);
+    contextWhitebox.settings.handleType = L0::IpcHandleType::ntHandle;
+    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>({.alloc = &mockAllocation, .handle = handle, .ptrAddress = ptrAddress, .memoryType = type}, opaqueIpcData);
 
     // Verify the handle was added to the IPC handle map
     auto &ipcHandleMap = driverHandle->getIPCHandleMap();
@@ -7449,7 +7434,7 @@ TEST_F(ContextIpcSocketTest, whenCallingSetIPCHandleDataWithOpaqueHandleAndSocke
     // This call should trigger the socket code path decision at line 306
     // Even if socket server initialization fails (which it will without proper setup),
     // the handle should still be added to the map
-    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>(&mockAllocation, handle, opaqueIpcData, ptrAddress, type, nullptr, L0::IpcHandleType::fdHandle, nullptr);
+    contextWhitebox.setIPCHandleData<L0::IpcOpaqueMemoryData>({.alloc = &mockAllocation, .handle = handle, .ptrAddress = ptrAddress, .memoryType = type}, opaqueIpcData);
 
     // Verify the handle was added to the IPC handle map
     auto &ipcHandleMap = driverHandle->getIPCHandleMap();
@@ -7594,7 +7579,7 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithHasReservedDataTrueThenHandle
     void *reservedDataPtr = reservedData;
 
     // Call setIPCHandleData with reserved data set.
-    whiteboxCast(contextImp)->setIPCHandleData<L0::IpcMemoryData>(&mockAllocation, testHandle, ipcData, ptrAddress, type, nullptr, L0::IpcHandleType::fdHandle, reservedDataPtr);
+    whiteboxCast(contextImp)->setIPCHandleData<L0::IpcMemoryData>({.alloc = &mockAllocation, .handle = testHandle, .ptrAddress = ptrAddress, .memoryType = type, .reservedHandleData = reservedDataPtr}, ipcData);
 
     // Verify the handle was added to the IPC handle map with hasReservedHandleData set
     auto &ipcHandleMap = driverHandle->getIPCHandleMap();
@@ -7633,7 +7618,7 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithHasReservedDataFalseThenHandl
     ipcData.handle = testHandle;
 
     // Call setIPCHandleData with empty reserved data (nullptr) and hasReservedHandleData should be false.
-    whiteboxCast(contextImp)->setIPCHandleData<L0::IpcMemoryData>(&mockAllocation, testHandle, ipcData, ptrAddress, type, nullptr, L0::IpcHandleType::fdHandle, nullptr);
+    whiteboxCast(contextImp)->setIPCHandleData<L0::IpcMemoryData>({.alloc = &mockAllocation, .handle = testHandle, .ptrAddress = ptrAddress, .memoryType = type}, ipcData);
 
     // Verify the handle was added to the IPC handle map with hasReservedHandleData not set
     auto &ipcHandleMap = driverHandle->getIPCHandleMap();
@@ -8090,13 +8075,14 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithPhysicalOffsetAndNoPoolThenPo
 
     EXPECT_TRUE(driverHandle->getIPCHandleMap().empty());
 
-    contextWhitebox.setIPCHandleData<L0::IpcMemoryData>(&mockAllocation, handle, ipcData, ptrAddress, type, nullptr, L0::IpcHandleType::fdHandle, nullptr, physicalOffset);
+    contextWhitebox.setIPCHandleData<L0::IpcMemoryData>({.alloc = &mockAllocation, .handle = handle, .ptrAddress = ptrAddress, .memoryType = type, .physicalOffset = physicalOffset}, ipcData);
 
     auto &ipcHandleMap = driverHandle->getIPCHandleMap();
     ASSERT_EQ(1u, ipcHandleMap.size());
     auto handleIterator = ipcHandleMap.find(handle);
     ASSERT_NE(handleIterator, ipcHandleMap.end());
-    EXPECT_EQ(physicalOffset, handleIterator->second->ipcData.poolOffset);
+    const uint64_t storedPoolOffset = handleIterator->second->ipcData.poolOffset;
+    EXPECT_EQ(physicalOffset, storedPoolOffset);
 
     delete handleIterator->second;
     driverHandle->getIPCHandleMap().clear();

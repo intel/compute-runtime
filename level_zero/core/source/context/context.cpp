@@ -1148,16 +1148,18 @@ ze_result_t Context::getIpcMemHandlesImpl(const void *ptr,
             usmPool->markChunkExported(ptr);
         }
 
+        const IpcHandleExportData exportData{
+            .alloc = alloc,
+            .handle = handle,
+            .ptrAddress = allocationBaseAddress,
+            .memoryType = ipcType,
+            .usmPool = usmPool,
+            .reservedHandleData = reservedHandleData,
+            .physicalOffset = physicalOffset};
         if (settings.useOpaqueHandle) {
-            using IpcDataT = IpcOpaqueMemoryData;
-            IpcDataT &ipcData = *reinterpret_cast<IpcDataT *>(pIpcHandles[i].data);
-            setIPCHandleData<IpcDataT>(alloc, handle, ipcData, allocationBaseAddress, ipcType,
-                                       usmPool, settings.handleType, reservedHandleData, physicalOffset);
+            setIPCHandleData(exportData, *reinterpret_cast<IpcOpaqueMemoryData *>(pIpcHandles[i].data));
         } else {
-            using IpcDataT = IpcMemoryData;
-            IpcDataT &ipcData = *reinterpret_cast<IpcDataT *>(pIpcHandles[i].data);
-            setIPCHandleData<IpcDataT>(alloc, handle, ipcData, allocationBaseAddress, ipcType,
-                                       usmPool, settings.handleType, nullptr, physicalOffset);
+            setIPCHandleData(exportData, *reinterpret_cast<IpcMemoryData *>(pIpcHandles[i].data));
         }
     }
     return ZE_RESULT_SUCCESS;
@@ -1319,9 +1321,14 @@ ze_result_t Context::encodeIpcHandleForRangeAllocation(NEO::GraphicsAllocation *
     this->markAllocationIpcExported(alloc, allocData);
 
     std::memset(ipcHandle.data, 0, sizeof(ipcHandle.data));
-    using IpcDataT = IpcOpaqueMemoryData;
-    IpcDataT &ipcData = *reinterpret_cast<IpcDataT *>(ipcHandle.data);
-    setIPCHandleData<IpcDataT>(alloc, handle, ipcData, ptrAddress, ipcType, nullptr, settings.handleType, reservedHandleData, physicalOffset);
+    const IpcHandleExportData exportData{
+        .alloc = alloc,
+        .handle = handle,
+        .ptrAddress = ptrAddress,
+        .memoryType = ipcType,
+        .reservedHandleData = reservedHandleData,
+        .physicalOffset = physicalOffset};
+    setIPCHandleData(exportData, *reinterpret_cast<IpcOpaqueMemoryData *>(ipcHandle.data));
     return ZE_RESULT_SUCCESS;
 }
 
@@ -2856,17 +2863,19 @@ ze_result_t Context::getPitchFor2dImage(
 }
 
 template <typename IpcDataT>
-void Context::setIPCHandleData(NEO::GraphicsAllocation *graphicsAllocation, uint64_t handle, IpcDataT &ipcData, uint64_t ptrAddress, uint8_t type, NEO::UsmMemAllocPool *usmPool, IpcHandleType handleType, void *reservedHandleData, uint64_t physicalOffset) {
+void Context::setIPCHandleData(const IpcHandleExportData &exportData, IpcDataT &ipcData) {
     std::map<uint64_t, IpcHandleTracking *>::iterator ipcHandleIterator;
 
+    const uint64_t handle = exportData.handle;
+    uint64_t ptrAddress = exportData.ptrAddress;
     ipcData = {};
-    bool hasReservedData = reservedHandleData != nullptr;
     if constexpr (std::is_same_v<IpcDataT, IpcMemoryData>) {
         ipcData.handle = handle;
-        ipcData.type = type;
+        ipcData.type = exportData.memoryType;
     }
     if constexpr (std::is_same_v<IpcDataT, IpcOpaqueMemoryData>) {
-        ipcData.memoryType = type;
+        const IpcHandleType handleType = this->settings.handleType;
+        ipcData.memoryType = exportData.memoryType;
         ipcData.processId = NEO::SysCalls::getCurrentProcessId();
         ipcData.type = handleType;
         if (handleType == IpcHandleType::ntHandle) {
@@ -2877,18 +2886,18 @@ void Context::setIPCHandleData(NEO::GraphicsAllocation *graphicsAllocation, uint
             ipcData.handle.fd = static_cast<int>(handle);
             ipcData.opaqueHandle.fd = static_cast<int>(handle);
         }
-        ipcData.compressedMemory = graphicsAllocation->isCompressionEnabled();
+        ipcData.compressedMemory = exportData.alloc->isCompressionEnabled();
         memset(ipcData.reservedHandleData, 0, sizeof(IpcOpaqueMemoryData::reservedHandleData));
-        if (reservedHandleData) {
-            std::memcpy(ipcData.reservedHandleData, reservedHandleData, sizeof(IpcOpaqueMemoryData::reservedHandleData));
+        if (exportData.reservedHandleData) {
+            std::memcpy(ipcData.reservedHandleData, exportData.reservedHandleData, sizeof(IpcOpaqueMemoryData::reservedHandleData));
         }
     }
 
-    if (usmPool) {
-        ipcData.poolOffset = usmPool->getOffsetInPool(addrToPtr(ptrAddress));
-        ptrAddress = usmPool->getPoolAddress();
-    } else if (physicalOffset != 0) {
-        ipcData.poolOffset = physicalOffset;
+    if (exportData.usmPool) {
+        ipcData.poolOffset = exportData.usmPool->getOffsetInPool(addrToPtr(ptrAddress));
+        ptrAddress = exportData.usmPool->getPoolAddress();
+    } else if (exportData.physicalOffset != 0) {
+        ipcData.poolOffset = exportData.physicalOffset;
     }
 
     auto lock = this->driverHandle->lockIPCHandleMap();
@@ -2897,11 +2906,11 @@ void Context::setIPCHandleData(NEO::GraphicsAllocation *graphicsAllocation, uint
         ipcHandleIterator->second->refcnt += 1;
     } else {
         IpcHandleTracking *handleTracking = new IpcHandleTracking;
-        handleTracking->alloc = graphicsAllocation;
+        handleTracking->alloc = exportData.alloc;
         handleTracking->refcnt = 1;
         handleTracking->ptr = ptrAddress;
-        handleTracking->hasReservedHandleData = hasReservedData;
-        handleTracking->pooled = usmPool != nullptr;
+        handleTracking->hasReservedHandleData = exportData.reservedHandleData != nullptr;
+        handleTracking->pooled = exportData.usmPool != nullptr;
         if constexpr (std::is_same_v<IpcDataT, IpcMemoryData>) {
             handleTracking->ipcData = ipcData;
         } else {
@@ -2928,6 +2937,6 @@ uint8_t Context::isWddmOpaqueHandleSupported(IpcHandleType *handleType) {
     return OpaqueHandlingType::nthandle;
 }
 
-template void Context::setIPCHandleData<IpcMemoryData>(NEO::GraphicsAllocation *, uint64_t, IpcMemoryData &, uint64_t, uint8_t, NEO::UsmMemAllocPool *, IpcHandleType, void *, uint64_t);
-template void Context::setIPCHandleData<IpcOpaqueMemoryData>(NEO::GraphicsAllocation *, uint64_t, IpcOpaqueMemoryData &, uint64_t, uint8_t, NEO::UsmMemAllocPool *, IpcHandleType, void *, uint64_t);
+template void Context::setIPCHandleData<IpcMemoryData>(const IpcHandleExportData &, IpcMemoryData &);
+template void Context::setIPCHandleData<IpcOpaqueMemoryData>(const IpcHandleExportData &, IpcOpaqueMemoryData &);
 } // namespace L0

@@ -136,6 +136,16 @@ struct IpcHandleTracking {
     bool pooled = false;
 };
 
+struct IpcHandleExportData {
+    NEO::GraphicsAllocation *alloc = nullptr;
+    uint64_t handle = 0;
+    uint64_t ptrAddress = 0;
+    uint8_t memoryType = 0;
+    NEO::UsmMemAllocPool *usmPool = nullptr;
+    void *reservedHandleData = nullptr;
+    uint64_t physicalOffset = 0;
+};
+
 #ifndef BIT
 #define BIT(x) (1u << (x))
 #endif
@@ -411,7 +421,7 @@ struct Context : _ze_context_handle_t, NEO::NonCopyableAndNonMovableClass {
   protected:
     ze_result_t getIpcMemHandlesImpl(const void *ptr, void *pNext, uint32_t *numIpcHandles, ze_ipc_mem_handle_t *pIpcHandles);
     template <typename IpcDataT>
-    void setIPCHandleData(NEO::GraphicsAllocation *graphicsAllocation, uint64_t handle, IpcDataT &ipcData, uint64_t ptrAddress, uint8_t type, NEO::UsmMemAllocPool *usmPool, IpcHandleType handleType, void *reservedHandleData, uint64_t physicalOffset = 0);
+    void setIPCHandleData(const IpcHandleExportData &exportData, IpcDataT &ipcData);
     bool isAllocationSuitableForCompression(const StructuresLookupTable &structuresLookupTable, Device &device, size_t allocSize);
     size_t getPageAlignedSizeRequired(size_t size, NEO::HeapIndex *heapRequired, size_t *pageSizeRequired) {
         return getPageAlignedSizeRequired(nullptr, size, heapRequired, pageSizeRequired);
