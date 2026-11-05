@@ -96,6 +96,8 @@ const std::string maxBwFileName("prelim_lmem_max_bw_Mbps");
 const std::string mockPhysicalSize = "0x00000040000000";
 
 constexpr uint32_t mockMemoryVendorIdValue = 0xADu;
+constexpr uint32_t mockSamsungMemoryVendorIdValue = 0x01u;
+constexpr uint32_t mockCxmtMemoryVendorIdValue = 0x13u;
 constexpr uint32_t mockMicronMemoryVendorIdValue = 0xFFu;
 
 struct MockMemoryNeoDrm : public NEO::Drm {

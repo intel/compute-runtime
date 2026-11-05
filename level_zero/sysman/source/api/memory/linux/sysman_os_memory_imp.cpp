@@ -29,6 +29,8 @@ namespace L0 {
 namespace Sysman {
 
 static const std::map<uint32_t, std::string> memoryVendorIdToNameMap = {
+    {0x01u, "Samsung"},
+    {0x13u, "CXMT"},
     {0xFFu, "Micron"},
 };
 

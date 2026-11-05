@@ -225,26 +225,36 @@ HWTEST2_F(SysmanDeviceMemoryFixtureI915, GivenMemoryVendorIdExtensionWhenCalling
 TEST_F(SysmanDeviceMemoryFixtureI915, GivenMemoryVendorIdExtensionAndVendorIdIsKnownWhenCallingZesMemoryGetPropertiesThenVendorNameIsReturned) {
     auto handles = getMemoryHandles(memoryHandleComponentCount);
 
+    static uint32_t mockVendorId = 0;
     struct MockSysmanProductHelperMemoryVendorId : L0::Sysman::SysmanProductHelperHw<IGFX_UNKNOWN> {
         ze_result_t getMemoryVendorId(L0::Sysman::LinuxSysmanImp *pLinuxSysmanImp, uint32_t *pVendorId) override {
-            *pVendorId = mockMicronMemoryVendorIdValue;
+            *pVendorId = mockVendorId;
             return ZE_RESULT_SUCCESS;
         }
     };
     std::unique_ptr<SysmanProductHelper> pSysmanProductHelper = std::make_unique<MockSysmanProductHelperMemoryVendorId>();
     std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
 
-    for (auto handle : handles) {
-        ASSERT_NE(nullptr, handle);
-        zes_mem_properties_t properties = {};
-        zes_memory_vendor_info_ext_properties_t vendorIdProperties = {ZES_STRUCTURE_TYPE_MEMORY_VENDOR_INFO_EXT_PROPERTIES};
-        properties.pNext = &vendorIdProperties;
+    const std::vector<std::pair<uint32_t, std::string>> knownVendors = {
+        {mockSamsungMemoryVendorIdValue, "Samsung"},
+        {mockCxmtMemoryVendorIdValue, "CXMT"},
+        {mockMicronMemoryVendorIdValue, "Micron"},
+    };
 
-        EXPECT_EQ(zesMemoryGetProperties(handle, &properties), ZE_RESULT_SUCCESS);
-        EXPECT_EQ(properties.pNext, &vendorIdProperties);
-        EXPECT_EQ(vendorIdProperties.vendorId, mockMicronMemoryVendorIdValue);
-        EXPECT_STREQ(vendorIdProperties.vendorName, "Micron");
-        EXPECT_EQ(vendorIdProperties.length, static_cast<uint16_t>(std::strlen("Micron")));
+    for (const auto &[vendorId, vendorName] : knownVendors) {
+        mockVendorId = vendorId;
+        for (auto handle : handles) {
+            ASSERT_NE(nullptr, handle);
+            zes_mem_properties_t properties = {};
+            zes_memory_vendor_info_ext_properties_t vendorIdProperties = {ZES_STRUCTURE_TYPE_MEMORY_VENDOR_INFO_EXT_PROPERTIES};
+            properties.pNext = &vendorIdProperties;
+
+            EXPECT_EQ(zesMemoryGetProperties(handle, &properties), ZE_RESULT_SUCCESS);
+            EXPECT_EQ(properties.pNext, &vendorIdProperties);
+            EXPECT_EQ(vendorIdProperties.vendorId, vendorId);
+            EXPECT_STREQ(vendorIdProperties.vendorName, vendorName.c_str());
+            EXPECT_EQ(vendorIdProperties.length, static_cast<uint16_t>(vendorName.length()));
+        }
     }
 }
 
