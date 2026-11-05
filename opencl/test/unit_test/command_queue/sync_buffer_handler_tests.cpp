@@ -7,7 +7,6 @@
 
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
-#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_sync_buffer_handler.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
@@ -152,18 +151,7 @@ HWTEST2_TEMPLATED_F(SyncBufferHandlerTest, GivenConcurrentKernelWithoutAllocateS
     EXPECT_EQ(nullptr, getSyncBufferHandler());
 }
 
-HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenDefaultKernelUsingSyncBufferWhenEnqueuingKernelThenErrorIsReturnedAndSyncBufferIsNotCreated) {
-    patchAllocateSyncBuffer();
-    kernel->executionType = KernelExecutionType::defaultType;
-
-    auto retVal = enqueueNDCount();
-    EXPECT_EQ(CL_INVALID_KERNEL, retVal);
-    EXPECT_EQ(nullptr, getSyncBufferHandler());
-}
-
-HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenNonCooperativeSyncBufferDispatchAllowedAndDefaultKernelUsingSyncBufferWhenEnqueuingKernelThenSyncBufferIsNotCreatedAndNullPointerIsPatched) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.AllowNonCooperativeSyncBufferDispatch.set(1);
+HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenDefaultKernelUsingSyncBufferWhenEnqueuingKernelThenSyncBufferIsNotCreatedAndNullPointerIsPatched) {
     patchAllocateSyncBuffer();
     kernel->executionType = KernelExecutionType::defaultType;
 
@@ -178,10 +166,8 @@ HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenNonCooperativeSyncBufferDispatchA
     EXPECT_EQ(0u, *patchedSyncBufferAddress);
 }
 
-HWTEST2_TEMPLATED_F(SyncBufferHandlerTest, GivenNonCooperativeSyncBufferDispatchAllowedAndDefaultKernelUsingBindfulSyncBufferWhenEnqueuingKernelThenNullSurfaceStateIsProgrammed, SupportsLegacyRenderSurfaceState) {
+HWTEST2_TEMPLATED_F(SyncBufferHandlerTest, GivenDefaultKernelUsingBindfulSyncBufferWhenEnqueuingKernelThenNullSurfaceStateIsProgrammed, SupportsLegacyRenderSurfaceState) {
     using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
-    DebugManagerStateRestore restorer;
-    debugManager.flags.AllowNonCooperativeSyncBufferDispatch.set(1);
 
     kernelInternals->kernelInfo.setBufferAddressingMode(KernelDescriptor::BindfulAndStateless);
     patchAllocateSyncBuffer();
@@ -200,9 +186,7 @@ HWTEST2_TEMPLATED_F(SyncBufferHandlerTest, GivenNonCooperativeSyncBufferDispatch
     EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_NULL, surfaceState->getSurfaceType());
 }
 
-HWTEST2_TEMPLATED_F(SyncBufferHandlerTest, GivenNonCooperativeSyncBufferDispatchAllowedAndSyncBufferKernelWithImplicitArgsEnqueuedAsConcurrentWhenEnqueuedAgainAsDefaultThenSyncBufferPointersAreCleared, HasDispatchAllSupport) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.AllowNonCooperativeSyncBufferDispatch.set(1);
+HWTEST2_TEMPLATED_F(SyncBufferHandlerTest, GivenSyncBufferKernelWithImplicitArgsEnqueuedAsConcurrentWhenEnqueuedAgainAsDefaultThenSyncBufferPointersAreCleared, HasDispatchAllSupport) {
     kernelInternals->kernelInfo.setSyncBuffer(sizeof(uint32_t), 0);
     UnitTestHelper<FamilyType>::adjustKernelDescriptorForImplicitArgs(kernelInternals->kernelInfo.kernelDescriptor);
     kernel->pImplicitArgs = std::make_unique<ImplicitArgs>();

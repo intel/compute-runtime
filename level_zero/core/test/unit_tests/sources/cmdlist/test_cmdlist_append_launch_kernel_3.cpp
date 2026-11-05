@@ -694,12 +694,6 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLau
         VariableBackup<bool> cooperative{&launchParams.isCooperative};
         cooperative = false;
         result = commandList->appendLaunchKernelWithParams(&kernel, groupCount, nullptr, launchParams);
-        EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
-        EXPECT_EQ(syncBufferAllocation, kernel.getSyncBufferAllocation());
-
-        DebugManagerStateRestore restorer;
-        debugManager.flags.AllowNonCooperativeSyncBufferDispatch.set(1);
-        result = commandList->appendLaunchKernelWithParams(&kernel, groupCount, nullptr, launchParams);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         EXPECT_EQ(expectedIndex, kernel.getSyncBufferIndex());
         EXPECT_EQ(nullptr, kernel.getSyncBufferAllocation());
@@ -718,9 +712,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLau
     EXPECT_EQ(syncBufferAllocation, kernel.getSyncBufferAllocation());
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, givenNonCooperativeSyncBufferDispatchAllowedAndKernelUsingSyncBufferWhenAppendedAlternatelyAsNonCooperativeAndCooperativeThenSyncBufferIsProgrammedOnlyForCooperativeLaunch, HasDispatchAllSupport) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.AllowNonCooperativeSyncBufferDispatch.set(1);
+HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendedAlternatelyAsNonCooperativeAndCooperativeThenSyncBufferIsProgrammedOnlyForCooperativeLaunch, HasDispatchAllSupport) {
     Mock<::L0::KernelImp> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();

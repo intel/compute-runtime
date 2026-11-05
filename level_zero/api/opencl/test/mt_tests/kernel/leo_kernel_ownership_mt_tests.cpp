@@ -178,32 +178,6 @@ TEST_F_DEFAULT(KernelOwnershipMtTests, givenEnqueueNDCountKernelWhenGroupSizeIsS
     EXPECT_TRUE(l0Kernel->clKernelOwnedDuringSetGroupSize);
 }
 
-TEST_F_DEFAULT(KernelOwnershipMtTests, givenEnqueueNDRangeKernelWhenExecutionTypeIsCheckedThenClKernelIsOwned) {
-    size_t globalWorkOffset[3] = {0, 0, 0};
-    size_t globalWorkSize[3] = {1, 1, 1};
-    size_t localWorkSize[3] = {1, 1, 1};
-    l0Kernel->resetDescriptorProbe();
-
-    auto retVal = clEnqueueNDRangeKernel(commandQueue.get(), kernel.get(), 1, globalWorkOffset, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
-
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_NE(0u, l0Kernel->descriptorReadCount);
-    EXPECT_TRUE(l0Kernel->allDescriptorReadsOwned);
-}
-
-TEST_F_DEFAULT(KernelOwnershipMtTests, givenEnqueueNDCountKernelWhenExecutionTypeIsCheckedThenClKernelIsOwned) {
-    size_t globalWorkOffset[3] = {0, 0, 0};
-    size_t workgroupCount[3] = {1, 1, 1};
-    size_t localWorkSize[3] = {1, 1, 1};
-    l0Kernel->resetDescriptorProbe();
-
-    auto retVal = clEnqueueNDCountKernelINTEL(commandQueue.get(), kernel.get(), 1, globalWorkOffset, workgroupCount, localWorkSize, 0, nullptr, nullptr);
-
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_NE(0u, l0Kernel->descriptorReadCount);
-    EXPECT_TRUE(l0Kernel->allDescriptorReadsOwned);
-}
-
 TEST_F_DEFAULT(KernelOwnershipMtTests, givenSetKernelExecInfoIndirectAccessThenClKernelIsOwned) {
     cl_bool enabled = CL_TRUE;
 

@@ -184,40 +184,8 @@ TEST_F(ClEnqueueNDRangeKernelTests, GivenConcurrentKernelWhenExecutingKernelThen
 
     EXPECT_EQ(CL_INVALID_KERNEL, retVal);
 }
-TEST_F(ClEnqueueNDRangeKernelTests, GivenKernelWithAllocateSyncBufferPatchWhenExecutingKernelThenInvalidKernelErrorIsReturned) {
-    cl_uint workDim = 1;
-    size_t globalWorkOffset[3] = {0, 0, 0};
-    size_t globalWorkSize[3] = {1, 1, 1};
-    size_t localWorkSize[3] = {1, 1, 1};
-    cl_uint numEventsInWaitList = 0;
-    cl_event *eventWaitList = nullptr;
-    cl_event *event = nullptr;
 
-    pProgram->mockKernelInfo.kernelDescriptor.kernelAttributes.flags.usesSyncBuffer = true;
-    auto &syncBufferAddress = pProgram->mockKernelInfo.kernelDescriptor.payloadMappings.implicitArgs.syncBufferAddress;
-    syncBufferAddress.pointerSize = sizeof(uint8_t);
-    syncBufferAddress.stateless = 0;
-    syncBufferAddress.bindful = 0;
-
-    EXPECT_TRUE(pKernel->usesSyncBuffer());
-
-    retVal = clEnqueueNDRangeKernel(
-        pCommandQueue,
-        pMultiDeviceKernel,
-        workDim,
-        globalWorkOffset,
-        globalWorkSize,
-        localWorkSize,
-        numEventsInWaitList,
-        eventWaitList,
-        event);
-
-    EXPECT_EQ(CL_INVALID_KERNEL, retVal);
-}
-
-TEST_F(ClEnqueueNDRangeKernelTests, GivenKernelWithAllocateSyncBufferPatchAndNonCooperativeSyncBufferDispatchAllowedWhenExecutingKernelThenSuccessIsReturned) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.AllowNonCooperativeSyncBufferDispatch.set(1);
+TEST_F(ClEnqueueNDRangeKernelTests, GivenKernelWithAllocateSyncBufferPatchWhenExecutingKernelThenSuccessIsReturned) {
     cl_uint workDim = 1;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {1, 1, 1};

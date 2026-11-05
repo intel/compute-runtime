@@ -274,8 +274,7 @@ void VariableDispatch::setGroupCount(const MaxChannelsCArray groupCount, const N
                 groupCountVar->updateCmdListNoopPatchData(kernelDispatch->syncBufferNoopPatchIndex, currentNoopPtr, kernelDispatch->syncBufferSize, this->syncBufferOffset, currentKernelPatchGpuAddress);
             }
         }
-    } else if (kernelDispatch->kernelData->usesSyncBuffer &&
-               NEO::debugManager.flags.AllowNonCooperativeSyncBufferDispatch.get() == 1) {
+    } else if (kernelDispatch->kernelData->usesSyncBuffer) {
         indirectData->setAddress(kernelDispatch->kernelData->syncBufferAddressOffset, 0u,
                                  kernelDispatch->kernelData->syncBufferPointerSize);
     }

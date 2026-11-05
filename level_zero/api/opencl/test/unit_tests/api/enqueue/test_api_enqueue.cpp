@@ -68,10 +68,6 @@ struct EnqueueKernelExecutionTypeFixture : public Test<OclFixture> {
         ASSERT_EQ(CL_SUCCESS, retVal);
     }
 
-    void setUsesSyncBuffer() {
-        l0Kernel->getDescriptor().kernelAttributes.flags.usesSyncBuffer = true;
-    }
-
     ClDevice *device = nullptr;
     std::unique_ptr<Context> context;
     std::unique_ptr<CommandQueue> commandQueue;
@@ -88,30 +84,6 @@ TEST_F(EnqueueKernelExecutionTypeFixture, givenConcurrentKernelWhenEnqueueNDRang
     size_t localWorkSize[3] = {1, 1, 1};
 
     auto retVal = clEnqueueNDRangeKernel(commandQueue.get(), kernel.get(), 1, globalWorkOffset, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
-
-    EXPECT_EQ(CL_INVALID_KERNEL, retVal);
-}
-
-TEST_F(EnqueueKernelExecutionTypeFixture, givenKernelUsingSyncBufferWhenEnqueueNDRangeKernelThenReturnsCLInvalidKernel) {
-    setUsesSyncBuffer();
-
-    size_t globalWorkOffset[3] = {0, 0, 0};
-    size_t globalWorkSize[3] = {1, 1, 1};
-    size_t localWorkSize[3] = {1, 1, 1};
-
-    auto retVal = clEnqueueNDRangeKernel(commandQueue.get(), kernel.get(), 1, globalWorkOffset, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
-
-    EXPECT_EQ(CL_INVALID_KERNEL, retVal);
-}
-
-TEST_F(EnqueueKernelExecutionTypeFixture, givenKernelUsingSyncBufferAndNotConcurrentWhenEnqueueNDCountKernelThenReturnsCLInvalidKernel) {
-    setUsesSyncBuffer();
-
-    size_t globalWorkOffset[3] = {0, 0, 0};
-    size_t workgroupCount[3] = {1, 1, 1};
-    size_t localWorkSize[3] = {1, 1, 1};
-
-    auto retVal = clEnqueueNDCountKernelINTEL(commandQueue.get(), kernel.get(), 1, globalWorkOffset, workgroupCount, localWorkSize, 0, nullptr, nullptr);
 
     EXPECT_EQ(CL_INVALID_KERNEL, retVal);
 }

@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/get_info.h"
@@ -1058,9 +1057,7 @@ cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
         return tracingRetVal;
     }
 
-    if (pKernel->getExecutionType() != NEO::KernelExecutionType::defaultType ||
-        (pKernel->getL0Object()->getKernelDescriptor().kernelAttributes.flags.usesSyncBuffer &&
-         NEO::debugManager.flags.AllowNonCooperativeSyncBufferDispatch.get() != 1)) [[unlikely]] {
+    if (pKernel->getExecutionType() != NEO::KernelExecutionType::defaultType) [[unlikely]] {
         cl_int tracingRetVal = CL_INVALID_KERNEL;
         TRACING_EXIT(ClEnqueueNdRangeKernel, &tracingRetVal);
         return tracingRetVal;
@@ -1781,13 +1778,6 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueNDCountKernelINTEL(
     }
 
     const bool isConcurrent = pKernel->getExecutionType() == NEO::KernelExecutionType::concurrent;
-
-    if (pKernel->getL0Object()->getKernelDescriptor().kernelAttributes.flags.usesSyncBuffer && !isConcurrent &&
-        NEO::debugManager.flags.AllowNonCooperativeSyncBufferDispatch.get() != 1) [[unlikely]] {
-        cl_int tracingRetVal = CL_INVALID_KERNEL;
-        TRACING_EXIT(ClEnqueueNDCountKernelINTEL, &tracingRetVal);
-        return tracingRetVal;
-    }
 
     if (pKernel->isUsingSharedObjArgs()) {
         pKernel->resetSharedObjectsPatchAddresses();

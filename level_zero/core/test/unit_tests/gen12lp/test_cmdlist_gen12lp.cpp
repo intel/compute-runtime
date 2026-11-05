@@ -459,7 +459,7 @@ GEN12LPTEST_F(CommandListGen12LpStateComputeModeTrackingTest,
     ASSERT_NE(0u, stateComputeModeList.size());
 }
 
-HWTEST2_F(CommandListCreateGen12Lp, givenKernelUsingSyncBufferWhenAppendingNonCooperativeLaunchThenErrorIsReturnedUnlessNonCooperativeSyncBufferDispatchIsAllowed, IsGen12LP) {
+HWTEST2_F(CommandListCreateGen12Lp, givenKernelUsingSyncBufferWhenAppendingNonCooperativeLaunchThenSuccessIsReturnedAndSyncBufferIsNotCreated, IsGen12LP) {
     Mock<::L0::KernelImp> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();
@@ -471,10 +471,6 @@ HWTEST2_F(CommandListCreateGen12Lp, givenKernelUsingSyncBufferWhenAppendingNonCo
     commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
     CmdListKernelLaunchParams launchParams = {};
 
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, commandList->appendLaunchKernelWithParams(&kernel, groupCount, nullptr, launchParams));
-
-    DebugManagerStateRestore restorer;
-    debugManager.flags.AllowNonCooperativeSyncBufferDispatch.set(1);
     EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendLaunchKernelWithParams(&kernel, groupCount, nullptr, launchParams));
     EXPECT_EQ(std::numeric_limits<size_t>::max(), kernel.getSyncBufferIndex());
     EXPECT_EQ(nullptr, kernel.getSyncBufferAllocation());

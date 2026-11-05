@@ -1384,8 +1384,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             MutableCommandListKernelTest,
-            givenNonCooperativeSyncBufferDispatchAllowedAndNonCooperativeKernelUsingSyncBufferWhenAppendingThenSyncBufferIsNotProgrammed) {
-    debugManager.flags.AllowNonCooperativeSyncBufferDispatch.set(1);
+            givenNonCooperativeKernelUsingSyncBufferWhenAppendingThenSyncBufferIsNotProgrammed) {
     enableCooperativeSyncBuffer(kernel1Bit);
 
     mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_COUNT;
@@ -1409,8 +1408,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             MutableCommandListKernelTest,
-            givenNonCooperativeSyncBufferDispatchAllowedAndMutationKernelWithStaleSyncBufferAddressWhenAppendingNonCooperativeAndMutatingIntoItWithGroupCountThenSyncBufferAddressInPayloadIsCleared) {
-    debugManager.flags.AllowNonCooperativeSyncBufferDispatch.set(1);
+            givenMutationKernelWithStaleSyncBufferAddressWhenAppendingNonCooperativeAndMutatingIntoItWithGroupCountThenSyncBufferAddressInPayloadIsCleared) {
     mutableCommandIdDesc.flags = kernelIsaMutationFlags;
 
     enableCooperativeSyncBuffer(kernel2Bit);

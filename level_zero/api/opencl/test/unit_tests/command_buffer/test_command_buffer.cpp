@@ -1581,9 +1581,7 @@ TEST_F(LeoCommandBufferKernelTest, givenKernelWithUnsetArgsWhenRecordingNDRangeK
     EXPECT_EQ(0u, recordedCmdList.totalCalls());
 }
 
-TEST_F(LeoCommandBufferKernelTest, givenNonCooperativeSyncBufferDispatchAllowedAndKernelUsingSyncBufferWhenEnqueuedOrRecordedThenKernelIsLaunchedAsNonCooperative) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.AllowNonCooperativeSyncBufferDispatch.set(1);
+TEST_F(LeoCommandBufferKernelTest, givenKernelUsingSyncBufferWhenEnqueuedOrRecordedThenKernelIsLaunchedAsNonCooperative) {
     l0Kernel->getDescriptor().kernelAttributes.flags.usesSyncBuffer = true;
     const size_t workgroupCount[3] = {4u, 2u, 1u};
 
@@ -1604,10 +1602,6 @@ TEST_F(LeoCommandBufferKernelTest, givenNonCooperativeSyncBufferDispatchAllowedA
 }
 
 TEST_F(LeoCommandBufferKernelTest, givenUnsupportedKernelWhenRecordingNDRangeKernelThenInvalidKernelIsReturned) {
-    l0Kernel->getDescriptor().kernelAttributes.flags.usesSyncBuffer = true;
-    EXPECT_EQ(CL_INVALID_KERNEL, recordKernel(globalWorkSize, localWorkSize, nullptr));
-    l0Kernel->getDescriptor().kernelAttributes.flags.usesSyncBuffer = false;
-
     cl_execution_info_kernel_type_intel type = CL_KERNEL_EXEC_INFO_CONCURRENT_TYPE_INTEL;
     ASSERT_EQ(CL_SUCCESS, clSetKernelExecInfo(kernel.get(), CL_KERNEL_EXEC_INFO_KERNEL_TYPE_INTEL, sizeof(type), &type));
     EXPECT_EQ(CL_INVALID_KERNEL, recordKernel(globalWorkSize, localWorkSize, nullptr));

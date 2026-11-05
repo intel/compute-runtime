@@ -3695,8 +3695,7 @@ cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
         return retVal;
     }
 
-    if ((pKernel->getExecutionType() != KernelExecutionType::defaultType) ||
-        (pKernel->usesSyncBuffer() && debugManager.flags.AllowNonCooperativeSyncBufferDispatch.get() != 1)) {
+    if (pKernel->getExecutionType() != KernelExecutionType::defaultType) {
         retVal = CL_INVALID_KERNEL;
         TRACING_EXIT(ClEnqueueNdRangeKernel, &retVal);
         return retVal;
@@ -6380,13 +6379,6 @@ cl_int CL_API_CALL clEnqueueNDCountKernelINTEL(cl_command_queue commandQueue,
             return retVal;
         }
         globalWorkSize[i] = workgroupCount[i] * localWorkSize[i];
-    }
-
-    if (pKernel->usesSyncBuffer() && (pKernel->getExecutionType() != KernelExecutionType::concurrent) &&
-        (debugManager.flags.AllowNonCooperativeSyncBufferDispatch.get() != 1)) {
-        retVal = CL_INVALID_KERNEL;
-        TRACING_EXIT(ClEnqueueNDCountKernelINTEL, &retVal);
-        return retVal;
     }
 
     if (pKernel->requiresSyncBufferSlot()) {

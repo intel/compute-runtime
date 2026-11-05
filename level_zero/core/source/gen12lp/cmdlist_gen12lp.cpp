@@ -174,10 +174,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
             if (retVal) {
                 return retVal;
             }
-        } else if (NEO::debugManager.flags.AllowNonCooperativeSyncBufferDispatch.get() == 1) {
-            kernel->resetSyncBuffer();
         } else {
-            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            kernel->resetSyncBuffer();
         }
     }
 
