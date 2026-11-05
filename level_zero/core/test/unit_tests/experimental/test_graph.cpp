@@ -8063,10 +8063,11 @@ TEST(GraphTestVisit, GivenConcreteVisitorWithNullFunctionNameWhenVisitingThenRet
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, graph.visit(&desc));
 }
 
-TEST(GraphTestVisit, GivenConcreteVisitorWithUnknownFunctionNameWhenVisitingThenReturnsInvalidArgument) {
+TEST(GraphTestVisit, GivenConcreteVisitorWithUnknownFunctionNameWhenVisitingThenVisitorIsIgnoredAndVisitSucceeds) {
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
     MockGraph graph{&ctx, true};
+    graph.stopCapturing();
     ze_concrete_visitor_ext_desc_t concreteVisitor{};
     concreteVisitor.stype = ZE_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC;
     concreteVisitor.fname = "unknownApiName";
@@ -8075,7 +8076,7 @@ TEST(GraphTestVisit, GivenConcreteVisitorWithUnknownFunctionNameWhenVisitingThen
     desc.stype = ZE_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC;
     desc.pNext = &concreteVisitor;
 
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, graph.visit(&desc));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, graph.visit(&desc));
 }
 
 TEST(GraphTestVisit, GivenConcreteVisitorForGetNextCommandIdWhenVisitingThenInitializationSucceeds) {

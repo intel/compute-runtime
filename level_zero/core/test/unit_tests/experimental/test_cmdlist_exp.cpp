@@ -189,22 +189,62 @@ HWTEST_F(CommandListExpTest, givenVisitExtWithConcreteVisitorNullFunctionNameThe
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, L0::zeCommandListVisitExt(cmdList.toHandle(), &desc));
 }
 
-HWTEST_F(CommandListExpTest, givenVisitExtWithConcreteVisitorUnknownFunctionNameThenInvalidArgumentIsReturned) {
+HWTEST_F(CommandListExpTest, givenVisitExtWithConcreteVisitorUnknownFunctionNameThenVisitorIsIgnoredAndDefaultOpIsExecuted) {
     Mock<CommandList> cmdList;
     cmdList.flatCapture = std::make_unique<RecordedApiCommands>();
     ASSERT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(cmdList.toHandle(), nullptr, 0, nullptr));
 
-    ze_concrete_visitor_ext_desc_t concreteVisitor{};
-    concreteVisitor.stype = ZE_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC;
-    concreteVisitor.fname = "unknownApiName";
-    concreteVisitor.callback = reinterpret_cast<void *>(barrierConcreteVisitor);
+    VisitExtCounters state{};
+
+    ze_concrete_visitor_ext_desc_t unknownVisitor{};
+    unknownVisitor.stype = ZE_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC;
+    unknownVisitor.fname = "unknownApiName";
+    unknownVisitor.callback = reinterpret_cast<void *>(barrierConcreteVisitorFail);
 
     ze_command_visit_ext_desc_t desc{};
     desc.stype = ZE_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC;
-    desc.pNext = &concreteVisitor;
+    desc.pNext = &unknownVisitor;
+    desc.userData = &state;
     desc.defaultOp = ZE_COMMAND_VISIT_EXT_DEFAULT_OP_IGNORE;
+    desc.beforeDefaultOpClb = beforeDefaultBarrierVisitor;
+    desc.afterDefaultOpClb = afterDefaultBarrierVisitor;
 
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, L0::zeCommandListVisitExt(cmdList.toHandle(), &desc));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListVisitExt(cmdList.toHandle(), &desc));
+    EXPECT_EQ(0u, state.concreteCalled);
+    EXPECT_EQ(1u, state.beforeCalled);
+    EXPECT_EQ(1u, state.afterCalled);
+}
+
+HWTEST_F(CommandListExpTest, givenVisitExtWithUnknownAndKnownConcreteVisitorsThenKnownVisitorIsInvoked) {
+    Mock<CommandList> cmdList;
+    cmdList.flatCapture = std::make_unique<RecordedApiCommands>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(cmdList.toHandle(), nullptr, 0, nullptr));
+
+    VisitExtCounters state{};
+
+    ze_concrete_visitor_ext_desc_t barrierVisitor{};
+    barrierVisitor.stype = ZE_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC;
+    barrierVisitor.fname = "zeCommandListAppendBarrier";
+    barrierVisitor.callback = reinterpret_cast<void *>(barrierConcreteVisitor);
+
+    ze_concrete_visitor_ext_desc_t unknownVisitor{};
+    unknownVisitor.stype = ZE_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC;
+    unknownVisitor.pNext = &barrierVisitor;
+    unknownVisitor.fname = "unknownApiName";
+    unknownVisitor.callback = reinterpret_cast<void *>(barrierConcreteVisitorFail);
+
+    ze_command_visit_ext_desc_t desc{};
+    desc.stype = ZE_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC;
+    desc.pNext = &unknownVisitor;
+    desc.userData = &state;
+    desc.defaultOp = ZE_COMMAND_VISIT_EXT_DEFAULT_OP_IGNORE;
+    desc.beforeDefaultOpClb = beforeDefaultBarrierVisitor;
+    desc.afterDefaultOpClb = afterDefaultBarrierVisitor;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListVisitExt(cmdList.toHandle(), &desc));
+    EXPECT_EQ(1u, state.concreteCalled);
+    EXPECT_EQ(0u, state.beforeCalled);
+    EXPECT_EQ(0u, state.afterCalled);
 }
 
 HWTEST_F(CommandListExpTest, givenVisitExtWithConcreteVisitorWhenCallbackMatchesThenConcreteVisitorIsInvokedAndDefaultOpIsSkipped) {

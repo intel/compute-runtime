@@ -2276,7 +2276,7 @@ struct VisitContext {
             if (nullptr == concreteVisitor.fname) {
                 return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
             }
-            while (true) {
+            do {
 #define RR_CAPTURED_API(X)                                                                   \
     {                                                                                        \
         constexpr std::string_view apiName = #X;                                             \
@@ -2287,8 +2287,7 @@ struct VisitContext {
     }
                 RR_CAPTURED_APIS()
 #undef RR_CAPTURED_API
-                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-            }
+            } while (false);
         }
 
         return ZE_RESULT_SUCCESS;
