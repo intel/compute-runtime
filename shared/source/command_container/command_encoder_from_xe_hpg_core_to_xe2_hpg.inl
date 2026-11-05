@@ -22,9 +22,4 @@ bool EncodeEnableRayTracing<Family>::is48bResourceNeededForRayTracing() {
     return true;
 }
 
-template <typename Family>
-template <typename InterfaceDescriptorType>
-void EncodeDispatchKernel<Family>::encodeEuSchedulingPolicy(InterfaceDescriptorType *pInterfaceDescriptor, ThreadArbitrationPolicy kernelThreadArbitrationPolicy, int32_t defaultPipelinedThreadArbitrationPolicy) {
-}
-
 } // namespace NEO

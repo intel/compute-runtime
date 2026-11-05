@@ -36,4 +36,9 @@ inline void EncodeComputeMode<Family>::programComputeModeCommandWithSynchronizat
     NEO::EncodeWA<Family>::encodeAdditionalPipelineSelect(csr, args, false, rootDeviceEnvironment, isRcs);
 }
 
+template <typename Family>
+template <typename InterfaceDescriptorType>
+void EncodeDispatchKernel<Family>::encodeEuSchedulingPolicy(InterfaceDescriptorType *pInterfaceDescriptor, ThreadArbitrationPolicy kernelThreadArbitrationPolicy, int32_t defaultPipelinedThreadArbitrationPolicy) {
+}
+
 } // namespace NEO
