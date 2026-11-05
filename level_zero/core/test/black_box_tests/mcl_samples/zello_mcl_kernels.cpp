@@ -277,7 +277,7 @@ bool testMutateKernelsWaitSignalEvents(MclTests::ExecEnv *execEnv, ze_module_han
     }
 
     // reset stage and destination buffers on the GPU first - synchronous immediate for simplicity
-    ElemType zero = 0;
+    const uint8_t zero = 0;
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(execEnv->immCmdList, stageBuffer1, &zero, sizeof(zero), allocSize, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(execEnv->immCmdList, dstBuffer1, &zero, sizeof(zero), allocSize, nullptr, 0, nullptr));
 
@@ -1930,7 +1930,7 @@ bool testMutateKernelsGlobalOffset(MclTests::ExecEnv *execEnv, ze_module_handle_
     constexpr size_t allocSize = elemSize * sizeof(ElemType);
     constexpr size_t offsetAllocSize = 1024;
 
-    ze_kernel_handle_t globalOffsetKernel = execEnv->getKernelHandle(module, "getGlobaOffset");
+    ze_kernel_handle_t globalOffsetKernel = execEnv->getKernelHandle(module, "getGlobalOffset");
     ze_kernel_handle_t copyKernel = execEnv->getKernelHandle(module, "copyKernel");
 
     ze_command_list_handle_t cmdList;
@@ -2287,7 +2287,7 @@ bool testDifferentKernelsMutateArgumentsShapesEvents(MclTests::ExecEnv *execEnv,
     bool isTsEvent = MclTests::isTimestampEvent(eventOptions);
 
     ze_kernel_handle_t gwsKernel = execEnv->getKernelHandle(module, "getGlobalWorkSize");
-    ze_kernel_handle_t offsetKernel = execEnv->getKernelHandle(module, "getGlobaOffset");
+    ze_kernel_handle_t offsetKernel = execEnv->getKernelHandle(module, "getGlobalOffset");
     ze_kernel_handle_t copyKernel = execEnv->getKernelHandle(module, "copyKernel");
 
     ze_event_pool_handle_t eventPool = nullptr;
@@ -2306,13 +2306,9 @@ bool testDifferentKernelsMutateArgumentsShapesEvents(MclTests::ExecEnv *execEnv,
     void *outputBuffer1 = nullptr;
     void *outputBuffer2 = nullptr;
 
-    void *patternBuffer = nullptr;
-
     ze_device_mem_alloc_desc_t deviceDesc = {ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
     deviceDesc.ordinal = 0;
     ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
-
-    SUCCESS_OR_TERMINATE(zeMemAllocHost(execEnv->context, &hostDesc, allocSize, 1, &patternBuffer));
 
     SUCCESS_OR_TERMINATE(zeMemAllocHost(execEnv->context, &hostDesc, allocSize, 1, &outputBuffer1));
     SUCCESS_OR_TERMINATE(zeMemAllocHost(execEnv->context, &hostDesc, allocSize, 1, &outputBuffer2));
@@ -2320,12 +2316,9 @@ bool testDifferentKernelsMutateArgumentsShapesEvents(MclTests::ExecEnv *execEnv,
     SUCCESS_OR_TERMINATE(zeMemAllocDevice(execEnv->context, &deviceDesc, allocSize, 1, execEnv->device, &offsetDstBuffer));
 
     // reset offset destination buffers on the GPU first - synchronous immediate for simplicity
-    uint64_t *zeroPtr = reinterpret_cast<uint64_t *>(patternBuffer);
-    *zeroPtr = 0;
-    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(execEnv->immCmdList, offsetDstBuffer, zeroPtr, sizeof(uint64_t), allocSize, nullptr, 0, nullptr));
-    uint64_t *tenPtr = zeroPtr + 1;
-    *tenPtr = 10;
-    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(execEnv->immCmdList, gwsDstBuffer, tenPtr, sizeof(uint64_t), allocSize, nullptr, 0, nullptr));
+    const uint8_t zero = 0;
+    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(execEnv->immCmdList, offsetDstBuffer, &zero, sizeof(zero), allocSize, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(execEnv->immCmdList, gwsDstBuffer, &zero, sizeof(zero), allocSize, nullptr, 0, nullptr));
 
     memset(outputBuffer1, 0, allocSize);
     memset(outputBuffer2, 0, allocSize);
@@ -2386,8 +2379,8 @@ bool testDifferentKernelsMutateArgumentsShapesEvents(MclTests::ExecEnv *execEnv,
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, firstKernel, firstDispatchTraits, events[0], 0, nullptr));
 
     ze_mutable_command_id_ext_desc_t commandIdDescCopy = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
-    commandIdDescMutableKernel.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS |
-                                       ZE_MUTABLE_COMMAND_EXT_FLAG_WAIT_EVENTS;
+    commandIdDescCopy.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS |
+                              ZE_MUTABLE_COMMAND_EXT_FLAG_WAIT_EVENTS;
 
     uint64_t commandIdCopy = 0;
     SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExt(cmdList, &commandIdDescCopy, &commandIdCopy));
@@ -2531,8 +2524,6 @@ bool testDifferentKernelsMutateArgumentsShapesEvents(MclTests::ExecEnv *execEnv,
         SUCCESS_OR_TERMINATE(zeEventDestroy(event));
     }
     MclTests::destroyEventPool(eventPool, eventOptions);
-
-    SUCCESS_OR_TERMINATE(zeMemFree(execEnv->context, patternBuffer));
 
     SUCCESS_OR_TERMINATE(zeMemFree(execEnv->context, gwsDstBuffer));
     SUCCESS_OR_TERMINATE(zeMemFree(execEnv->context, offsetDstBuffer));
@@ -2695,7 +2686,7 @@ bool testMutateGlobalBarrierKernels(MclTests::ExecEnv *execEnv, ze_module_handle
     SUCCESS_OR_TERMINATE(zeMemAllocDevice(execEnv->context, &deviceDesc, allocSize, 1, execEnv->device, &barrierStageBuffer));
     SUCCESS_OR_TERMINATE(zeMemAllocDevice(execEnv->context, &deviceDesc, allocSize, 1, execEnv->device, &barrierStageBufferMultiple));
 
-    ElemType zero = 0;
+    const uint8_t zero = 0;
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(execEnv->immCmdList, barrierStageBuffer, &zero, sizeof(zero), allocSize, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(execEnv->immCmdList, barrierStageBufferMultiple, &zero, sizeof(zero), allocSize, nullptr, 0, nullptr));
 
@@ -3283,7 +3274,7 @@ bool testMutateSlmKernels(MclTests::ExecEnv *execEnv, ze_module_handle_t module,
         }
     }
 
-    ElemType zero = 0;
+    const uint8_t zero = 0;
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(execEnv->immCmdList, outBuffer, &zero, sizeof(zero), allocSize, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(execEnv->immCmdList, outBuffer2, &zero, sizeof(zero), allocSize, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(execEnv->immCmdList, copyDstBuffer, &zero, sizeof(zero), allocSize, nullptr, 0, nullptr));
@@ -3740,7 +3731,7 @@ bool testMutateBackKernel(MclTests::ExecEnv *execEnv, ze_module_handle_t module,
         }
     }
 
-    ElemType zero = 0;
+    const uint8_t zero = 0;
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(execEnv->immCmdList, dstBufferFirst, &zero, sizeof(zero), allocSize, nullptr, 0, nullptr));
 
     // mutate back

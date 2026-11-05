@@ -62,11 +62,8 @@ ExecEnv::ExecEnv() {
     cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
     SUCCESS_OR_TERMINATE(zeCommandQueueCreate(context, device, &cmdQueueDesc, &queue));
 
-    // auxiliary immediate command list to reset/copy buffers on the GPU
-    LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(context, device,
-                                                           true,  // syncMode
-                                                           false, // copyEngine
-                                                           immCmdList);
+    // auxiliary immediate command list to reset/copy buffers on the GPU - synchronous mode, copy engine preferred
+    LevelZeroBlackBoxTests::createPreferredCopyEngineCmdList(context, device, 0, true, immCmdList);
 
     SUCCESS_OR_TERMINATE(zeDriverGetExtensionFunctionAddress(driverHandle, "zexVariableSetValue", reinterpret_cast<void **>(&zexVariableSetValueFunc)));
     SUCCESS_OR_TERMINATE(zeDriverGetExtensionFunctionAddress(driverHandle, "zexCommandListLoadNativeBinary", reinterpret_cast<void **>(&zexCommandListLoadNativeBinaryFunc)));
@@ -340,7 +337,7 @@ void getMclDeviceProperties(ze_device_handle_t device, ze_mutable_command_list_e
     ze_device_properties_t deviceProperties{ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     deviceProperties.pNext = &mclProperties;
 
-    zeDeviceGetProperties(device, &deviceProperties);
+    SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
 }
 
 void printMclDeviceSupportedMutations(MclMutationCapabilities &mutationCapabilities) {
@@ -648,7 +645,7 @@ __kernel void getLocalWorkSize(__global ulong *dst) {
     atomic_inc(atomicDst);
 }
 
-__kernel void getGlobaOffset(__global ulong *dst) {
+__kernel void getGlobalOffset(__global ulong *dst) {
     size_t globalSizeX = get_global_size(0);
     size_t globalSizeY = get_global_size(1);
     size_t globalSizeZ = get_global_size(2);

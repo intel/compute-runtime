@@ -213,10 +213,19 @@ inline void createImmediateCmdlistWithMode(ze_context_handle_t context,
 inline void createPreferredCopyEngineCmdList(ze_context_handle_t context,
                                              ze_device_handle_t device,
                                              ze_command_queue_flags_t flags,
+                                             bool syncMode,
                                              ze_command_list_handle_t &cmdList) {
     bool getUseCopyEngine = getCopyOnlyCommandQueueOrdinal(device) == undefinedQueueOrdinal ? false : true;
     std::cout << "Copy engine available for input/output operations: " << (getUseCopyEngine ? "yes" : "no") << std::endl;
-    createImmediateCmdlistWithMode(context, device, flags, false, getUseCopyEngine, cmdList);
+    createImmediateCmdlistWithMode(context, device, flags, syncMode, getUseCopyEngine, cmdList);
+}
+
+inline void createPreferredCopyEngineCmdList(ze_context_handle_t context,
+                                             ze_device_handle_t device,
+                                             ze_command_queue_flags_t flags,
+                                             ze_command_list_handle_t &cmdList) {
+    constexpr bool syncMode = false;
+    createPreferredCopyEngineCmdList(context, device, flags, syncMode, cmdList);
 }
 
 void createEventPoolAndEvents(ze_context_handle_t &context,

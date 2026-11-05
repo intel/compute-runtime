@@ -181,8 +181,6 @@ bool testMultiExecutionMutatedCbEvents(MclTests::ExecEnv *execEnv, ze_module_han
 
     void *dstBuffer = nullptr;
 
-    void *patternBuffer = nullptr;
-
     ze_device_mem_alloc_desc_t deviceDesc = {ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
     deviceDesc.ordinal = 0;
     ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
@@ -192,7 +190,6 @@ bool testMultiExecutionMutatedCbEvents(MclTests::ExecEnv *execEnv, ze_module_han
     SUCCESS_OR_TERMINATE(zeMemAllocDevice(execEnv->context, &deviceDesc, allocSize, 1, execEnv->device, &stageBuffer1));
     SUCCESS_OR_TERMINATE(zeMemAllocDevice(execEnv->context, &deviceDesc, allocSize, 1, execEnv->device, &stageBuffer2));
     SUCCESS_OR_TERMINATE(zeMemAllocHost(execEnv->context, &hostDesc, allocSize, 1, &dstBuffer));
-    SUCCESS_OR_TERMINATE(zeMemAllocHost(execEnv->context, &hostDesc, allocSize, 1, &patternBuffer));
 
     constexpr ElemType val1 = 10;
     constexpr ElemType val2 = 12;
@@ -202,10 +199,9 @@ bool testMultiExecutionMutatedCbEvents(MclTests::ExecEnv *execEnv, ze_module_han
     }
     memset(dstBuffer, 0, allocSize);
 
-    uint64_t *zeroPtr = reinterpret_cast<uint64_t *>(patternBuffer);
-    *zeroPtr = 0;
-    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(execEnv->immCmdList, stageBuffer1, zeroPtr, sizeof(uint64_t), allocSize, nullptr, 0, nullptr));
-    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(execEnv->immCmdList, stageBuffer2, zeroPtr, sizeof(uint64_t), allocSize, nullptr, 0, nullptr));
+    const uint8_t zero = 0;
+    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(execEnv->immCmdList, stageBuffer1, &zero, sizeof(zero), allocSize, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(execEnv->immCmdList, stageBuffer2, &zero, sizeof(zero), allocSize, nullptr, 0, nullptr));
 
     ze_kernel_handle_t copyKernel = execEnv->getKernelHandle(module, "copyKernel");
     ze_kernel_handle_t addKernel = execEnv->getKernelHandle(module, "addScalarKernel");
@@ -269,7 +265,7 @@ bool testMultiExecutionMutatedCbEvents(MclTests::ExecEnv *execEnv, ze_module_han
         }
     }
 
-    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(execEnv->immCmdList, stageBuffer1, zeroPtr, sizeof(uint64_t), allocSize, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(execEnv->immCmdList, stageBuffer1, &zero, sizeof(zero), allocSize, nullptr, 0, nullptr));
     memset(dstBuffer, 0, allocSize);
 
     // mutate into another signal event and arguments in copy command list
@@ -316,7 +312,7 @@ bool testMultiExecutionMutatedCbEvents(MclTests::ExecEnv *execEnv, ze_module_han
         }
     }
 
-    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(execEnv->immCmdList, stageBuffer2, zeroPtr, sizeof(uint64_t), allocSize, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(execEnv->immCmdList, stageBuffer2, &zero, sizeof(zero), allocSize, nullptr, 0, nullptr));
     memset(dstBuffer, 0, allocSize);
 
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(execEnv->queue, 2, cmdLists, nullptr));
@@ -335,7 +331,6 @@ bool testMultiExecutionMutatedCbEvents(MclTests::ExecEnv *execEnv, ze_module_han
     SUCCESS_OR_TERMINATE(zeMemFree(execEnv->context, srcBuffer2));
     SUCCESS_OR_TERMINATE(zeMemFree(execEnv->context, stageBuffer1));
     SUCCESS_OR_TERMINATE(zeMemFree(execEnv->context, stageBuffer2));
-    SUCCESS_OR_TERMINATE(zeMemFree(execEnv->context, patternBuffer));
     SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdListCopy));
     SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdListAdd));
     execEnv->destroyKernelHandle(copyKernel);
@@ -558,7 +553,7 @@ bool testMutateBufferToNullAndBack(MclTests::ExecEnv *execEnv, ze_module_handle_
     }
 
     // zero out dst buffer to later verify operation correctly sets the value
-    ElemType zero = 0;
+    const uint8_t zero = 0;
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(execEnv->immCmdList, dstBuffer, &zero, sizeof(zero), allocSize, nullptr, 0, nullptr));
 
     // set the same src argument
@@ -1034,7 +1029,7 @@ bool testGlobalOffsetBif(MclTests::ExecEnv *execEnv, ze_module_handle_t module, 
     memset(dstBuffer, 0, allocSize);
     uint64_t *outputData = reinterpret_cast<uint64_t *>(dstBuffer);
 
-    ze_kernel_handle_t globalOffsetKernel = execEnv->getKernelHandle(module, "getGlobaOffset");
+    ze_kernel_handle_t globalOffsetKernel = execEnv->getKernelHandle(module, "getGlobalOffset");
 
     ze_command_list_handle_t cmdList;
     MclTests::createMutableCmdList(execEnv->context, execEnv->device, cmdList, false, false);
@@ -1482,15 +1477,18 @@ bool testSignalExternalIncrementCbEvent(MclTests::ExecEnv *execEnv, ze_module_ha
     void *externalDeviceBuffer1 = nullptr;
     void *externalDeviceBuffer2 = nullptr;
 
-    SUCCESS_OR_TERMINATE(zeMemAllocDevice(execEnv->context, &deviceDesc, sizeof(uint64_t), 4096, execEnv->device, &externalDeviceBuffer1));
-    SUCCESS_OR_TERMINATE(zeMemAllocDevice(execEnv->context, &deviceDesc, sizeof(uint64_t), 4096, execEnv->device, &externalDeviceBuffer2));
+    constexpr size_t externalBufferSize = sizeof(uint64_t);
+    constexpr size_t externalBufferAlignment = 4096;
+
+    SUCCESS_OR_TERMINATE(zeMemAllocDevice(execEnv->context, &deviceDesc, externalBufferSize, externalBufferAlignment, execEnv->device, &externalDeviceBuffer1));
+    SUCCESS_OR_TERMINATE(zeMemAllocDevice(execEnv->context, &deviceDesc, externalBufferSize, externalBufferAlignment, execEnv->device, &externalDeviceBuffer2));
 
     uint64_t *counterValueBuffer1 = reinterpret_cast<uint64_t *>(externalDeviceBuffer1);
     uint64_t *counterValueBuffer2 = reinterpret_cast<uint64_t *>(externalDeviceBuffer2);
 
-    constexpr uint64_t zero = 0;
-    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(execEnv->immCmdList, externalDeviceBuffer1, &zero, sizeof(uint64_t), sizeof(uint64_t), nullptr, 0, nullptr));
-    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(execEnv->immCmdList, externalDeviceBuffer2, &zero, sizeof(uint64_t), sizeof(uint64_t), nullptr, 0, nullptr));
+    const uint8_t zero = 0;
+    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(execEnv->immCmdList, externalDeviceBuffer1, &zero, sizeof(zero), externalBufferSize, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(execEnv->immCmdList, externalDeviceBuffer2, &zero, sizeof(zero), externalBufferSize, nullptr, 0, nullptr));
 
     ze_event_counter_based_external_aggregate_storage_desc_t firstExternalStorageProperties = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_EXTERNAL_AGGREGATE_STORAGE_DESC};
     firstExternalStorageProperties.deviceAddress = counterValueBuffer1;
@@ -4158,15 +4156,11 @@ bool testMutateMixedSignalEventOnCommandList(MclTests::ExecEnv *execEnv, ze_modu
     void *stageBuffer3 = nullptr;
     void *dstBuffer1 = nullptr;
 
-    void *zeroPatternBuffer = nullptr;
-    size_t zeroPatternBufferSize = sizeof(uint32_t);
-
     ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
     ze_device_mem_alloc_desc_t deviceDesc = {ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
 
     SUCCESS_OR_TERMINATE(zeMemAllocHost(execEnv->context, &hostDesc, allocSize, 1, &srcBuffer1));
     SUCCESS_OR_TERMINATE(zeMemAllocHost(execEnv->context, &hostDesc, allocSize, 1, &dstBuffer1));
-    SUCCESS_OR_TERMINATE(zeMemAllocHost(execEnv->context, &hostDesc, zeroPatternBufferSize, 1, &zeroPatternBuffer));
     SUCCESS_OR_TERMINATE(zeMemAllocDevice(execEnv->context, &deviceDesc, allocSize, 1, execEnv->device, &stageBuffer1));
     SUCCESS_OR_TERMINATE(zeMemAllocDevice(execEnv->context, &deviceDesc, allocSize, 1, execEnv->device, &stageBuffer2));
     SUCCESS_OR_TERMINATE(zeMemAllocDevice(execEnv->context, &deviceDesc, allocSize, 1, execEnv->device, &stageBuffer3));
@@ -4175,7 +4169,6 @@ bool testMutateMixedSignalEventOnCommandList(MclTests::ExecEnv *execEnv, ze_modu
 
     memset(srcBuffer1, val1, allocSize);
     memset(dstBuffer1, 0, allocSize);
-    memset(zeroPatternBuffer, 0, zeroPatternBufferSize);
 
     uint32_t groupSizeX = 32u;
     uint32_t groupSizeY = 1u;
@@ -4258,11 +4251,11 @@ bool testMutateMixedSignalEventOnCommandList(MclTests::ExecEnv *execEnv, ze_modu
             SUCCESS_OR_TERMINATE(zeEventHostReset(secondEvents[1]));
         }
     }
-
-    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(execEnv->immCmdList, dstBuffer1, zeroPatternBuffer, zeroPatternBufferSize, allocSize, nullptr, 0, nullptr));
-    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(execEnv->immCmdList, stageBuffer1, zeroPatternBuffer, zeroPatternBufferSize, allocSize, nullptr, 0, nullptr));
-    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(execEnv->immCmdList, stageBuffer2, zeroPatternBuffer, zeroPatternBufferSize, allocSize, nullptr, 0, nullptr));
-    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(execEnv->immCmdList, stageBuffer3, zeroPatternBuffer, zeroPatternBufferSize, allocSize, nullptr, 0, nullptr));
+    const uint8_t zero = 0;
+    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(execEnv->immCmdList, dstBuffer1, &zero, sizeof(zero), allocSize, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(execEnv->immCmdList, stageBuffer1, &zero, sizeof(zero), allocSize, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(execEnv->immCmdList, stageBuffer2, &zero, sizeof(zero), allocSize, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(execEnv->immCmdList, stageBuffer3, &zero, sizeof(zero), allocSize, nullptr, 0, nullptr));
 
     // mutate events
     {
@@ -4305,7 +4298,6 @@ bool testMutateMixedSignalEventOnCommandList(MclTests::ExecEnv *execEnv, ze_modu
     SUCCESS_OR_TERMINATE(zeMemFree(execEnv->context, stageBuffer1));
     SUCCESS_OR_TERMINATE(zeMemFree(execEnv->context, stageBuffer2));
     SUCCESS_OR_TERMINATE(zeMemFree(execEnv->context, stageBuffer3));
-    SUCCESS_OR_TERMINATE(zeMemFree(execEnv->context, zeroPatternBuffer));
     SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
     execEnv->destroyKernelHandle(copyKernel);
 
@@ -4659,9 +4651,16 @@ bool testImmediateCmdListExecuteMcl(MclTests::ExecEnv *execEnv, bool aubMode, ui
     constexpr size_t elemSize = 64;
     constexpr size_t allocSize = elemSize * sizeof(ElemType);
 
-    // prepare
+    // mcl command list
     ze_command_list_handle_t cmdList;
     MclTests::createMutableCmdList(execEnv->context, execEnv->device, cmdList, false, false);
+
+    // executor immediate command list
+    ze_command_list_handle_t executeCmdList;
+    LevelZeroBlackBoxTests::createImmediateCmdlistWithMode(execEnv->context, execEnv->device,
+                                                           true,  // syncMode
+                                                           false, // copyEngine
+                                                           executeCmdList);
 
     ze_kernel_handle_t testKernel;
     {
@@ -4678,7 +4677,7 @@ bool testImmediateCmdListExecuteMcl(MclTests::ExecEnv *execEnv, bool aubMode, ui
     deviceDesc.ordinal = 0;
 
     SUCCESS_OR_TERMINATE(zeMemAllocDevice(execEnv->context, &deviceDesc, allocSize, 1, execEnv->device, &dstBuffer1));
-    ElemType zero = 0;
+    const uint8_t zero = 0;
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(execEnv->immCmdList, dstBuffer1, &zero, sizeof(zero), allocSize, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeMemAllocHost(execEnv->context, &hostDesc, allocSize, 1, &outBuffer1));
     memset(outBuffer1, 0, allocSize);
@@ -4696,6 +4695,7 @@ bool testImmediateCmdListExecuteMcl(MclTests::ExecEnv *execEnv, bool aubMode, ui
 
     ElemType appendCountT = appendCount;
 
+    // out of order command list allows to execute kernels concurently, each kernel instance increases atomically the same value
     for (ElemType i = 0; i < appendCountT; i++) {
         SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, testKernel, &dispatchTraits, nullptr, 0, nullptr));
     }
@@ -4703,8 +4703,7 @@ bool testImmediateCmdListExecuteMcl(MclTests::ExecEnv *execEnv, bool aubMode, ui
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, outBuffer1, dstBuffer1, allocSize, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
-    SUCCESS_OR_TERMINATE(zeCommandListImmediateAppendCommandListsExp(execEnv->immCmdList, 1, &cmdList, nullptr, 0, nullptr));
-    SUCCESS_OR_TERMINATE(zeCommandListHostSynchronize(execEnv->immCmdList, std::numeric_limits<uint64_t>::max()));
+    SUCCESS_OR_TERMINATE(zeCommandListImmediateAppendCommandListsWithParameters(executeCmdList, 1, &cmdList, nullptr, nullptr, 0, nullptr));
 
     bool valid = true;
 
@@ -4719,6 +4718,7 @@ bool testImmediateCmdListExecuteMcl(MclTests::ExecEnv *execEnv, bool aubMode, ui
     SUCCESS_OR_TERMINATE(zeMemFree(execEnv->context, dstBuffer1));
     SUCCESS_OR_TERMINATE(zeMemFree(execEnv->context, outBuffer1));
     SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
+    SUCCESS_OR_TERMINATE(zeCommandListDestroy(executeCmdList));
     execEnv->destroyKernelHandle(testKernel);
     SUCCESS_OR_TERMINATE(zeModuleDestroy(module));
 
@@ -4973,7 +4973,7 @@ bool testMutateSlmArgumentKernel(MclTests::ExecEnv *execEnv, ze_module_handle_t 
         }
     }
 
-    ElemType zero = 0;
+    const uint8_t zero = 0;
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(execEnv->immCmdList, dstBuffer, &zero, sizeof(zero), allocSize, nullptr, 0, nullptr));
 
     dataSize = mutateGroupSize * groupCount;
@@ -5126,7 +5126,7 @@ bool testSubmitGraphOnImmediate(MclTests::ExecEnv *execEnv, ze_module_handle_t m
 
         if (immediateSubmit) {
             // in order command list - no need to synchronize between appends
-            SUCCESS_OR_TERMINATE(zeCommandListImmediateAppendCommandListsExp(submitCmdList, 1, &cmdList, event, 0, nullptr));
+            SUCCESS_OR_TERMINATE(zeCommandListImmediateAppendCommandListsWithParameters(submitCmdList, 1, &cmdList, nullptr, event, 0, nullptr));
             // synchronization after workload is done
             SUCCESS_OR_TERMINATE(zeEventHostSynchronize(event, std::numeric_limits<uint64_t>::max()));
         } else {
@@ -5234,7 +5234,7 @@ bool testSubmitCopyCmdListOnCopyImmediateCmdList(MclTests::ExecEnv *execEnv, uin
 
     for (uint32_t i = 0; i < iteration; i++) {
         if (useImmediate) {
-            SUCCESS_OR_TERMINATE(zeCommandListImmediateAppendCommandListsExp(submitCmdList, 1, &cmdListCopy, event, 0, nullptr));
+            SUCCESS_OR_TERMINATE(zeCommandListImmediateAppendCommandListsWithParameters(submitCmdList, 1, &cmdListCopy, nullptr, event, 0, nullptr));
             SUCCESS_OR_TERMINATE(zeEventHostSynchronize(event, std::numeric_limits<uint64_t>::max()));
         } else {
             SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(submitQueue, 1, &cmdListCopy, nullptr));
@@ -5335,7 +5335,7 @@ bool testAppendRegularOnOutOfOrderImmediate(MclTests::ExecEnv *execEnv, ze_modul
 
     bool valid = true;
 
-    uint8_t zero = 0;
+    const uint8_t zero = 0;
 
     for (uint32_t i = 0; i < iterations; i++) {
         // execution - copy using dispatch immediate - signal event
@@ -5348,7 +5348,7 @@ bool testAppendRegularOnOutOfOrderImmediate(MclTests::ExecEnv *execEnv, ze_modul
         }
         SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(submitCmdList, deviceBuffer, srcBuffer, allocSize, copyEvent, 0, nullptr));
         // execution regular - wait for event
-        SUCCESS_OR_TERMINATE(zeCommandListImmediateAppendCommandListsExp(submitCmdList, 1, &cmdList, execSyncEvent, 1, &copyEvent));
+        SUCCESS_OR_TERMINATE(zeCommandListImmediateAppendCommandListsWithParameters(submitCmdList, 1, &cmdList, nullptr, execSyncEvent, 1, &copyEvent));
         if (useEvents) {
             SUCCESS_OR_TERMINATE(zeEventHostSynchronize(execSyncEvent, std::numeric_limits<uint64_t>::max()));
         } else {
@@ -5439,7 +5439,7 @@ bool testAppendMultipleRegularOnInOrderImmediate(MclTests::ExecEnv *execEnv, ze_
     for (uint32_t i = 0; i < iterations; i++) {
         uint32_t currentCmdListCount = std::min(i + 1, regularCount);
 
-        SUCCESS_OR_TERMINATE(zeCommandListImmediateAppendCommandListsExp(submitCmdLists[i], currentCmdListCount, cmdLists.data(), event, 0, nullptr));
+        SUCCESS_OR_TERMINATE(zeCommandListImmediateAppendCommandListsWithParameters(submitCmdLists[i], currentCmdListCount, cmdLists.data(), nullptr, event, 0, nullptr));
         SUCCESS_OR_TERMINATE(zeEventHostSynchronize(event, std::numeric_limits<uint64_t>::max()));
 
         if (!aubMode) {
