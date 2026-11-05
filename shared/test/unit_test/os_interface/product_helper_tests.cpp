@@ -1255,6 +1255,10 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenisPackedCopyFormatSupportedTh
     EXPECT_FALSE(productHelper->isPackedCopyFormatSupported());
 }
 
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenGettingMinMiddleSizeForBuiltinBufferCopyWith8ByteAccessThenMaxSizeIsReturned, IsNotCRI) {
+    EXPECT_EQ(std::numeric_limits<size_t>::max(), productHelper->getMinMiddleSizeForBuiltinBufferCopyWith8ByteAccess());
+}
+
 HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingShouldRegisterEnqueuedWalkerWithProfilingThenFalseReturned) {
     EXPECT_FALSE(productHelper->shouldRegisterEnqueuedWalkerWithProfiling());
 }

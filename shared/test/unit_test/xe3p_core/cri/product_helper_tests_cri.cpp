@@ -103,6 +103,10 @@ CRITEST_F(CriProductHelper, givenProductHelperWhenGettingDefaultCopyEngineThenEn
     EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS1, productHelper->getDefaultCopyEngine());
 }
 
+CRITEST_F(CriProductHelper, givenProductHelperWhenGettingMinMiddleSizeForBuiltinBufferCopyWith8ByteAccessThen32MegaBytesIsReturned) {
+    EXPECT_EQ(32 * MemoryConstants::megaByte, productHelper->getMinMiddleSizeForBuiltinBufferCopyWith8ByteAccess());
+}
+
 CRITEST_F(CriProductHelper, givenProductHelperWhenAdjustingEnginesGroupThenChangeEngineGroupToCopyFromLinkedCopyOnly) {
     for (uint32_t engineGroupIt = static_cast<uint32_t>(EngineGroupType::compute); engineGroupIt < static_cast<uint32_t>(EngineGroupType::maxEngineGroups); engineGroupIt++) {
         auto engineGroupType = static_cast<EngineGroupType>(engineGroupIt);
