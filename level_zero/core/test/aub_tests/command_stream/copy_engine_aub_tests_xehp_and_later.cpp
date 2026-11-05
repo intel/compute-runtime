@@ -1,0 +1,116 @@
+/*
+ * Copyright (C) 2026 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+#include "level_zero/core/test/aub_tests/command_stream/copy_engine_aub_tests_xehp_and_later.h"
+
+#include "shared/test/common/test_macros/hw_test.h"
+
+namespace L0 {
+namespace ult {
+
+using SingleTileCopyEngineTests = CopyEngineXeHPAndLater<1, true>;
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, SingleTileCopyEngineTests, givenNotCompressedBufferWhenBltExecutedThenCompressDataAndResolve) {
+    this->givenNotCompressedBufferWhenBltExecutedThenCompressDataAndResolveImpl<FamilyType>();
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, SingleTileCopyEngineTests, givenHostPtrWhenBlitCommandToCompressedBufferIsDispatchedThenCopiedDataIsValid) {
+    this->givenHostPtrWhenBlitCommandToCompressedBufferIsDispatchedThenCopiedDataIsValidImpl<FamilyType>();
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, SingleTileCopyEngineTests, givenDstHostPtrWhenBlitCommandFromCompressedBufferIsDispatchedThenCopiedDataIsValid) {
+    this->givenDstHostPtrWhenBlitCommandFromCompressedBufferIsDispatchedThenCopiedDataIsValidImpl<FamilyType>();
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, SingleTileCopyEngineTests, givenDstHostPtrWhenBlitCommandFromNotCompressedBufferIsDispatchedThenCopiedDataIsValid) {
+    this->givenDstHostPtrWhenBlitCommandFromNotCompressedBufferIsDispatchedThenCopiedDataIsValidImpl<FamilyType>();
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, SingleTileCopyEngineTests, givenSrcHostPtrWhenBlitCommandToNotCompressedBufferIsDispatchedThenCopiedDataIsValid) {
+    this->givenSrcHostPtrWhenBlitCommandToNotCompressedBufferIsDispatchedThenCopiedDataIsValidImpl<FamilyType>();
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, SingleTileCopyEngineTests, givenBufferWithOffsetWhenHostPtrBlitCommandIsDispatchedFromHostPtrThenDataIsCorrectlyCopied) {
+    this->givenBufferWithOffsetWhenHostPtrBlitCommandIsDispatchedFromHostPtrThenDataIsCorrectlyCopiedImpl<FamilyType>();
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, SingleTileCopyEngineTests, givenBufferWithOffsetWhenHostPtrBlitCommandIsDispatchedToHostPtrThenDataIsCorrectlyCopied) {
+    this->givenBufferWithOffsetWhenHostPtrBlitCommandIsDispatchedToHostPtrThenDataIsCorrectlyCopiedImpl<FamilyType>();
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, SingleTileCopyEngineTests, givenOffsetsWhenBltExecutedThenCopiedDataIsValid) {
+    this->givenOffsetsWhenBltExecutedThenCopiedDataIsValidImpl<FamilyType>();
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, SingleTileCopyEngineTests, givenSrcCompressedBufferWhenBlitCommandToDstCompressedBufferIsDispatchedThenCopiedDataIsValid) {
+    this->givenSrcCompressedBufferWhenBlitCommandToDstCompressedBufferIsDispatchedThenCopiedDataIsValidImpl<FamilyType>();
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, SingleTileCopyEngineTests, givenCompressedBufferWhenAuxTranslationCalledThenResolveAndCompress) {
+    this->givenCompressedBufferWhenAuxTranslationCalledThenResolveAndCompressImpl<FamilyType>();
+}
+
+using SingleTileCopyEngineSystemMemoryTests = CopyEngineXeHPAndLater<1, false>;
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, SingleTileCopyEngineSystemMemoryTests, givenSrcSystemBufferWhenBlitCommandToDstSystemBufferIsDispatchedThenCopiedDataIsValid) {
+    this->givenSrcSystemBufferWhenBlitCommandToDstSystemBufferIsDispatchedThenCopiedDataIsValidImpl<FamilyType>();
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, SingleTileCopyEngineSystemMemoryTests, givenNotCompressedBufferWhenBltExecutedThenCompressDataAndResolve) {
+    this->givenNotCompressedBufferWhenBltExecutedThenCompressDataAndResolveImpl<FamilyType>();
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, SingleTileCopyEngineSystemMemoryTests, givenHostPtrWhenBlitCommandToCompressedBufferIsDispatchedThenCopiedDataIsValid) {
+    this->givenHostPtrWhenBlitCommandToCompressedBufferIsDispatchedThenCopiedDataIsValidImpl<FamilyType>();
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, SingleTileCopyEngineSystemMemoryTests, givenDstHostPtrWhenBlitCommandFromCompressedBufferIsDispatchedThenCopiedDataIsValid) {
+    this->givenDstHostPtrWhenBlitCommandFromCompressedBufferIsDispatchedThenCopiedDataIsValidImpl<FamilyType>();
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, SingleTileCopyEngineSystemMemoryTests, givenDstHostPtrWhenBlitCommandFromNotCompressedBufferIsDispatchedThenCopiedDataIsValid) {
+    this->givenDstHostPtrWhenBlitCommandFromNotCompressedBufferIsDispatchedThenCopiedDataIsValidImpl<FamilyType>();
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, SingleTileCopyEngineSystemMemoryTests, givenSrcHostPtrWhenBlitCommandToNotCompressedBufferIsDispatchedThenCopiedDataIsValid) {
+    this->givenSrcHostPtrWhenBlitCommandToNotCompressedBufferIsDispatchedThenCopiedDataIsValidImpl<FamilyType>();
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, SingleTileCopyEngineSystemMemoryTests, givenBufferWithOffsetWhenHostPtrBlitCommandIsDispatchedFromHostPtrThenDataIsCorrectlyCopied) {
+    this->givenBufferWithOffsetWhenHostPtrBlitCommandIsDispatchedFromHostPtrThenDataIsCorrectlyCopiedImpl<FamilyType>();
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, SingleTileCopyEngineSystemMemoryTests, givenBufferWithOffsetWhenHostPtrBlitCommandIsDispatchedToHostPtrThenDataIsCorrectlyCopied) {
+    this->givenBufferWithOffsetWhenHostPtrBlitCommandIsDispatchedToHostPtrThenDataIsCorrectlyCopiedImpl<FamilyType>();
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, SingleTileCopyEngineSystemMemoryTests, givenOffsetsWhenBltExecutedThenCopiedDataIsValid) {
+    this->givenOffsetsWhenBltExecutedThenCopiedDataIsValidImpl<FamilyType>();
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, SingleTileCopyEngineSystemMemoryTests, givenSrcCompressedBufferWhenBlitCommandToDstCompressedBufferIsDispatchedThenCopiedDataIsValid) {
+    this->givenSrcCompressedBufferWhenBlitCommandToDstCompressedBufferIsDispatchedThenCopiedDataIsValidImpl<FamilyType>();
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, SingleTileCopyEngineTests, givenReadBufferRectWithOffsetWhenHostPtrBlitCommandIsDispatchedToHostPtrThenDataIsCorrectlyCopied) {
+    this->givenReadBufferRectWithOffsetWhenHostPtrBlitCommandIsDispatchedToHostPtrThenDataIsCorrectlyCopiedImpl<FamilyType>();
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, SingleTileCopyEngineTests, givenWriteBufferRectWithOffsetWhenHostPtrBlitCommandIsDispatchedToHostPtrThenDataIsCorrectlyCopied) {
+    this->givenWriteBufferRectWithOffsetWhenHostPtrBlitCommandIsDispatchedToHostPtrThenDataIsCorrectlyCopiedImpl<FamilyType>();
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, SingleTileCopyEngineTests, givenCopyBufferRectWithOffsetWhenHostPtrBlitCommandIsDispatchedToHostPtrThenDataIsCorrectlyCopied) {
+    this->givenCopyBufferRectWithOffsetWhenHostPtrBlitCommandIsDispatchedToHostPtrThenDataIsCorrectlyCopiedImpl<FamilyType>();
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, SingleTileCopyEngineTests, givenCopyBufferRectWithBigSizesWhenHostPtrBlitCommandIsDispatchedToHostPtrThenDataIsCorrectlyCopied) {
+    this->givenCopyBufferRectWithBigSizesWhenHostPtrBlitCommandIsDispatchedToHostPtrThenDataIsCorrectlyCopiedImpl<FamilyType>();
+}
+
+} // namespace ult
+} // namespace L0
