@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-__attribute__((intel_reqd_sub_group_size(32)))
+__attribute__((intel_reqd_sub_group_size(16)))
 __kernel void
 CopyBuffer(
     __global unsigned int* src,
