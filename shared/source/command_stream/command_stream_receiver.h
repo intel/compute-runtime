@@ -29,7 +29,6 @@
 #include "shared/source/utilities/spinlock.h"
 
 #include <atomic>
-#include <chrono>
 #include <cstdint>
 #include <functional>
 #include <mutex>
@@ -114,7 +113,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     };
 
     using MutexType = std::recursive_mutex;
-    using TimeType = std::chrono::high_resolution_clock::time_point;
+    using TimeType = int64_t;
 
     CommandStreamReceiver() = delete;
 
@@ -517,6 +516,8 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     const ReleaseHelper &getReleaseHelper() const;
 
     MOCKABLE_VIRTUAL bool isGpuHangDetected() const;
+    static TimeType getCurrentTimeInNs();
+    static int64_t getElapsedTimeInUs(TimeType startTimeInNs, TimeType endTimeInNs);
     MOCKABLE_VIRTUAL bool checkGpuHangDetected(TimeType currentTime, TimeType &lastHangCheckTime) const;
 
     uint64_t getCompletionAddress() const;
@@ -648,7 +649,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     }
 
     MOCKABLE_VIRTUAL bool isBusyWithoutHang(TimeType &lastHangCheckTime) {
-        return isBusy() && !this->checkGpuHangDetected(std::chrono::high_resolution_clock::now(), lastHangCheckTime);
+        return isBusy() && !this->checkGpuHangDetected(getCurrentTimeInNs(), lastHangCheckTime);
     }
 
     bool canUse4GbHeaps() const {
@@ -820,7 +821,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     SamplerCacheFlushState samplerCacheFlushRequired = SamplerCacheFlushState::samplerCacheFlushNotRequired;
     PreemptionMode lastPreemptionMode = PreemptionMode::Initial;
 
-    std::chrono::microseconds gpuHangCheckPeriod{CommonConstants::gpuHangCheckTimeInUS};
+    int64_t gpuHangCheckPeriodUs{CommonConstants::gpuHangCheckTimeInUS};
     uint32_t latestSentStatelessMocsConfig;
     uint64_t lastSentSliceCount;
     HostFunctionWorkerMode hostFunctionWorkerMode = HostFunctionWorkerMode::countingSemaphore;

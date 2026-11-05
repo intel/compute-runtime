@@ -82,7 +82,6 @@ extern ApiSpecificConfig::ApiType apiTypeForUlts;
 using namespace NEO;
 #include "shared/source/helpers/kmd_notify_helper.h"
 #include "shared/test/common/test_macros/heapless_matchers.h"
-using namespace std::chrono_literals;
 
 struct CommandStreamReceiverTest : public DeviceFixture,
                                    public ::testing::Test {
@@ -189,22 +188,22 @@ TEST_F(CommandStreamReceiverTest, givenCsrWhenGettingCompletionAddressThenUnderl
 
 HWTEST_F(CommandStreamReceiverTest, givenCsrWhenCheckingGpuHangBeforeCheckPeriodElapsedThenFalseIsReturnedAndLastHangCheckTimeIsNotUpdated) {
     auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    ultCsr.gpuHangCheckPeriod = std::chrono::microseconds{500};
+    ultCsr.gpuHangCheckPeriodUs = 500;
 
-    std::chrono::high_resolution_clock::time_point lastHangCheckTime{};
-    auto currentTime = lastHangCheckTime + ultCsr.gpuHangCheckPeriod - std::chrono::microseconds{1};
+    CommandStreamReceiver::TimeType lastHangCheckTime = 0;
+    const auto currentTime = lastHangCheckTime + std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::microseconds{ultCsr.gpuHangCheckPeriodUs - 1}).count();
 
     EXPECT_FALSE(ultCsr.checkGpuHangDetected(currentTime, lastHangCheckTime));
-    EXPECT_EQ(std::chrono::high_resolution_clock::time_point{}, lastHangCheckTime);
+    EXPECT_EQ(0, lastHangCheckTime);
 }
 
 HWTEST_F(CommandStreamReceiverTest, givenCsrWhenCheckingGpuHangAfterCheckPeriodElapsedAndNoHangDetectedThenFalseIsReturnedAndLastHangCheckTimeIsUpdated) {
     auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    ultCsr.gpuHangCheckPeriod = std::chrono::microseconds{500};
+    ultCsr.gpuHangCheckPeriodUs = 500;
     ultCsr.isGpuHangDetectedReturnValue = false;
 
-    std::chrono::high_resolution_clock::time_point lastHangCheckTime{};
-    auto currentTime = lastHangCheckTime + ultCsr.gpuHangCheckPeriod + std::chrono::microseconds{1};
+    CommandStreamReceiver::TimeType lastHangCheckTime = 0;
+    const auto currentTime = lastHangCheckTime + std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::microseconds{ultCsr.gpuHangCheckPeriodUs + 1}).count();
 
     EXPECT_FALSE(ultCsr.checkGpuHangDetected(currentTime, lastHangCheckTime));
     EXPECT_EQ(currentTime, lastHangCheckTime);
@@ -212,11 +211,11 @@ HWTEST_F(CommandStreamReceiverTest, givenCsrWhenCheckingGpuHangAfterCheckPeriodE
 
 HWTEST_F(CommandStreamReceiverTest, givenCsrWhenCheckingGpuHangAfterCheckPeriodElapsedAndHangDetectedThenTrueIsReturned) {
     auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    ultCsr.gpuHangCheckPeriod = std::chrono::microseconds{500};
+    ultCsr.gpuHangCheckPeriodUs = 500;
     ultCsr.isGpuHangDetectedReturnValue = true;
 
-    std::chrono::high_resolution_clock::time_point lastHangCheckTime{};
-    auto currentTime = lastHangCheckTime + ultCsr.gpuHangCheckPeriod + std::chrono::microseconds{1};
+    CommandStreamReceiver::TimeType lastHangCheckTime = 0;
+    const auto currentTime = lastHangCheckTime + std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::microseconds{ultCsr.gpuHangCheckPeriodUs + 1}).count();
 
     EXPECT_TRUE(ultCsr.checkGpuHangDetected(currentTime, lastHangCheckTime));
 }
@@ -585,7 +584,7 @@ HWTEST_F(CommandStreamReceiverTest, givenGpuHangWhenWaititingForCompletionWithTi
     csr.executionEnvironment.rootDeviceEnvironments[csr.rootDeviceIndex]->osInterface = std::move(osInterface);
     csr.callBaseWaitForCompletionWithTimeout = true;
     csr.activePartitions = 1;
-    csr.gpuHangCheckPeriod = 0us;
+    csr.gpuHangCheckPeriodUs = 0;
 
     TagAddressType tasksCount[16] = {};
     csr.tagAddress = tasksCount;
@@ -615,7 +614,7 @@ HWTEST_F(CommandStreamReceiverTest, givenNoGpuHangWhenWaititingForCompletionWith
     csr.callBaseWaitForCompletionWithTimeout = true;
     csr.tagAddress = tasksCount;
     csr.activePartitions = 1;
-    csr.gpuHangCheckPeriod = 0us;
+    csr.gpuHangCheckPeriodUs = 0;
 
     constexpr auto enableTimeout = false;
     constexpr auto timeoutMicroseconds = std::numeric_limits<std::int64_t>::max();
@@ -1054,7 +1053,7 @@ HWTEST_F(CommandStreamReceiverTest, givenGpuHangWhenWaitingForTaskCountThenGpuHa
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.executionEnvironment.rootDeviceEnvironments[csr.rootDeviceIndex]->osInterface = std::move(osInterface);
     csr.activePartitions = 1;
-    csr.gpuHangCheckPeriod = 0us;
+    csr.gpuHangCheckPeriodUs = 0;
 
     TagAddressType tasksCount[16] = {};
     csr.tagAddress = tasksCount;
@@ -1132,7 +1131,7 @@ HWTEST_F(CommandStreamReceiverTest, givenGpuHangAndNonEmptyAllocationsListWhenCa
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.executionEnvironment.rootDeviceEnvironments[csr.rootDeviceIndex]->osInterface = std::move(osInterface);
     csr.activePartitions = 1;
-    csr.gpuHangCheckPeriod = 0us;
+    csr.gpuHangCheckPeriodUs = 0;
 
     TagAddressType tasksCount[16] = {};
     VariableBackup<volatile TagAddressType *> csrTagAddressBackup(&csr.tagAddress);

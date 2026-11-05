@@ -35,6 +35,8 @@
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/fixtures/direct_submission_fixture.h"
 
+#include <chrono>
+
 namespace CpuIntrinsicsTests {
 extern std::atomic<uint32_t> sfenceCounter;
 extern std::atomic<uint32_t> mfenceCounter;

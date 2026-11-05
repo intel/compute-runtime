@@ -35,6 +35,7 @@
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 #include "shared/source/utilities/shared_pool_allocation.h"
 
+#include <chrono>
 #include <cstdarg>
 #include <cstdint>
 #include <cstring>

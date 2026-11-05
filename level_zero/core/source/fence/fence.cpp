@@ -50,7 +50,6 @@ ze_result_t Fence::reset(bool signaled) {
 }
 
 ze_result_t Fence::hostSynchronize(uint64_t timeout) {
-    std::chrono::high_resolution_clock::time_point waitStartTime, lastHangCheckTime, currentTime;
     uint64_t timeDiff = 0;
     ze_result_t ret = ZE_RESULT_NOT_READY;
     const auto csr = cmdQueue->getCsr();
@@ -63,8 +62,8 @@ ze_result_t Fence::hostSynchronize(uint64_t timeout) {
         return ZE_RESULT_NOT_READY;
     }
 
-    waitStartTime = std::chrono::high_resolution_clock::now();
-    lastHangCheckTime = waitStartTime;
+    const auto waitStartTime = NEO::CommandStreamReceiver::getCurrentTimeInNs();
+    auto lastHangCheckTime = waitStartTime;
     do {
         ret = queryStatus(timeout != 0);
         if (ret == ZE_RESULT_SUCCESS) {
@@ -73,7 +72,7 @@ ze_result_t Fence::hostSynchronize(uint64_t timeout) {
             return ZE_RESULT_SUCCESS;
         }
 
-        currentTime = std::chrono::high_resolution_clock::now();
+        const auto currentTime = NEO::CommandStreamReceiver::getCurrentTimeInNs();
         if (csr->checkGpuHangDetected(currentTime, lastHangCheckTime)) {
             cmdQueue->printKernelsPrintfOutput(true);
             cmdQueue->checkAssert();
@@ -86,7 +85,7 @@ ze_result_t Fence::hostSynchronize(uint64_t timeout) {
             break;
         }
 
-        timeDiff = std::chrono::duration_cast<std::chrono::nanoseconds>(currentTime - waitStartTime).count();
+        timeDiff = static_cast<uint64_t>(currentTime - waitStartTime);
     } while (timeDiff < timeout);
 
     return ret;

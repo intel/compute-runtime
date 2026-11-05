@@ -4322,7 +4322,7 @@ TEST(MemoryManagerTest, givenGpuHangWhenAllocInUseCalledThenReturnFalse) {
     EXPECT_TRUE(mockMemoryManager->allocInUse(allocation));
 
     csr->isGpuHangDetectedReturnValue = true;
-    csr->gpuHangCheckPeriod = std::chrono::microseconds::zero();
+    csr->gpuHangCheckPeriodUs = 0;
     EXPECT_FALSE(mockMemoryManager->allocInUse(allocation));
 }
 

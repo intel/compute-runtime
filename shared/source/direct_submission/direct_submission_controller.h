@@ -28,7 +28,6 @@ class Thread;
 class ProductHelper;
 
 using SteadyClock = std::chrono::steady_clock;
-using HighResolutionClock = std::chrono::high_resolution_clock;
 
 struct WaitForPagingFenceRequest {
     CommandStreamReceiver *csr;
@@ -131,7 +130,7 @@ class DirectSubmissionController {
     std::atomic_uint activeSubmissionsCount = 0;
 
     SteadyClock::time_point timeSinceLastCheck{};
-    HighResolutionClock::time_point lastHangCheckTime{};
+    int64_t lastHangCheckTime{};
     std::chrono::microseconds timeout{defaultTimeout};
     std::chrono::microseconds contextGroupTimeout{defaultContextGroupTimeout};
     int32_t bcsTimeoutDivisor = 1;

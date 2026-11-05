@@ -149,7 +149,7 @@ inline bool waitForTimestampsWithinContainer(TimestampPacketContainer *container
     status = WaitStatus::notReady;
 
     if (container) {
-        auto lastHangCheckTime = std::chrono::high_resolution_clock::now();
+        auto lastHangCheckTime = CommandStreamReceiver::getCurrentTimeInNs();
         auto waitStartTime = lastHangCheckTime;
         for (const auto &timestamp : container->peekNodes()) {
             for (uint32_t i = 0; i < timestamp->getPacketsUsed(); i++) {
@@ -159,8 +159,8 @@ inline bool waitForTimestampsWithinContainer(TimestampPacketContainer *container
                 while (timestamp->getContextEndValue(i) == 1) {
                     csr.downloadAllocation(*timestamp->getBaseGraphicsAllocation()->getGraphicsAllocation(csr.getRootDeviceIndex()));
 
-                    auto currentTime = std::chrono::high_resolution_clock::now();
-                    WaitUtils::waitFunctionWithPredicate<const TSPacketType>(static_cast<TSPacketType const *>(timestamp->getContextEndAddress(i)), 1u, std::not_equal_to<TSPacketType>(), std::chrono::duration_cast<std::chrono::microseconds>(currentTime - waitStartTime).count());
+                    auto currentTime = CommandStreamReceiver::getCurrentTimeInNs();
+                    WaitUtils::waitFunctionWithPredicate<const TSPacketType>(static_cast<TSPacketType const *>(timestamp->getContextEndAddress(i)), 1u, std::not_equal_to<TSPacketType>(), CommandStreamReceiver::getElapsedTimeInUs(waitStartTime, currentTime));
 
                     if (csr.checkGpuHangDetected(currentTime, lastHangCheckTime)) {
                         status = WaitStatus::gpuHang;

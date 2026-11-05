@@ -1222,7 +1222,7 @@ bool MemoryManager::allocInUse(GraphicsAllocation &graphicsAllocation) {
     uint32_t numEnginesChecked = 0;
     const uint32_t numContextsToCheck = graphicsAllocation.getNumRegisteredContexts();
 
-    static std::chrono::high_resolution_clock::time_point lastGpuHangCheck = std::chrono::high_resolution_clock::now();
+    static CommandStreamReceiver::TimeType lastGpuHangCheck = CommandStreamReceiver::getCurrentTimeInNs();
 
     for (auto &engine : getRegisteredEngines(graphicsAllocation.getRootDeviceIndex())) {
         auto osContextId = engine.osContext->getContextId();
@@ -1230,7 +1230,7 @@ bool MemoryManager::allocInUse(GraphicsAllocation &graphicsAllocation) {
 
         if (graphicsAllocation.isUsedByOsContext(osContextId)) {
             numEnginesChecked++;
-            if (engine.commandStreamReceiver->checkGpuHangDetected(std::chrono::high_resolution_clock::now(), lastGpuHangCheck)) {
+            if (engine.commandStreamReceiver->checkGpuHangDetected(CommandStreamReceiver::getCurrentTimeInNs(), lastGpuHangCheck)) {
                 return false;
             }
             if (engine.commandStreamReceiver->getTagAddress() &&

@@ -41,7 +41,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     using CommandStreamReceiver::CommandStreamReceiver;
     using CommandStreamReceiver::dcFlushSupport;
     using CommandStreamReceiver::globalFenceAllocation;
-    using CommandStreamReceiver::gpuHangCheckPeriod;
+    using CommandStreamReceiver::gpuHangCheckPeriodUs;
     using CommandStreamReceiver::heaplessModeEnabled;
     using CommandStreamReceiver::heaplessPrologProgrammed;
     using CommandStreamReceiver::immWritePostSyncWriteOffset;
@@ -68,7 +68,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         : CommandStreamReceiver(executionEnvironment, rootDeviceIndex, deviceBitfield) {
         CommandStreamReceiver::tagAddress = &mockTagAddress[0];
         memset(const_cast<TagAddressType *>(CommandStreamReceiver::tagAddress), 0xFFFFFFFF, tagSize * sizeof(TagAddressType));
-        gpuHangCheckPeriod = {};
+        gpuHangCheckPeriodUs = 0;
     }
     ~MockCommandStreamReceiver() override {
         if (initialOsContext) {

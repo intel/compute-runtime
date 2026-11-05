@@ -92,7 +92,7 @@ void *DirectSubmissionController::controlDirectSubmissionsState(void *self) {
     auto controller = reinterpret_cast<DirectSubmissionController *>(self);
 
     controller->timeSinceLastCheck = controller->getCpuTimestamp();
-    controller->lastHangCheckTime = std::chrono::high_resolution_clock::now();
+    controller->lastHangCheckTime = CommandStreamReceiver::getCurrentTimeInNs();
 
     while (controller->keepControlling.load()) {
         std::unique_lock<std::mutex> lock(controller->condVarMutex);

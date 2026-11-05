@@ -2269,15 +2269,14 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::checkAssert() {
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::synchronizeInOrderExecution(uint64_t timeout, bool copyOffloadSync) const {
-    std::chrono::high_resolution_clock::time_point waitStartTime, lastHangCheckTime, now;
     uint64_t timeDiff = 0;
 
     ze_result_t status = ZE_RESULT_NOT_READY;
 
     auto waitValue = inOrderExecInfo->getCounterValue();
 
-    lastHangCheckTime = std::chrono::high_resolution_clock::now();
-    waitStartTime = lastHangCheckTime;
+    const auto waitStartTime = NEO::CommandStreamReceiver::getCurrentTimeInNs();
+    auto lastHangCheckTime = waitStartTime;
 
     auto csr = getCsr(copyOffloadSync);
     std::vector<NEO::CommandStreamReceiver::TimeType> previousCsrsLastHangCheckTimes(this->previousCsrsAwaitingCompletion.size(), lastHangCheckTime);
@@ -2302,7 +2301,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::synchronizeInOrderExe
             break;
         }
 
-        const auto hangCheckTime = std::chrono::high_resolution_clock::now();
+        const auto hangCheckTime = NEO::CommandStreamReceiver::getCurrentTimeInNs();
         bool gpuHangDetected = csr->checkGpuHangDetected(hangCheckTime, lastHangCheckTime);
         for (size_t previousCsrIndex = 0; !gpuHangDetected && (previousCsrIndex < this->previousCsrsAwaitingCompletion.size()); previousCsrIndex++) {
             gpuHangDetected = this->previousCsrsAwaitingCompletion[previousCsrIndex].first->checkGpuHangDetected(hangCheckTime, previousCsrsLastHangCheckTimes[previousCsrIndex]);
@@ -2318,8 +2317,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::synchronizeInOrderExe
             break;
         }
 
-        now = std::chrono::high_resolution_clock::now();
-        timeDiff = std::chrono::duration_cast<std::chrono::nanoseconds>(now - waitStartTime).count();
+        const auto now = NEO::CommandStreamReceiver::getCurrentTimeInNs();
+        timeDiff = static_cast<uint64_t>(now - waitStartTime);
     } while (timeDiff < timeout);
 
     return status;

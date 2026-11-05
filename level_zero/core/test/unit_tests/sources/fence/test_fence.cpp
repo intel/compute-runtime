@@ -160,7 +160,7 @@ TEST_F(FenceTest, GivenGpuHangWhenHostSynchronizeIsCalledThenDeviceLostIsReturne
     const auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
     csr->isGpuHangDetectedReturnValue = true;
     csr->testTaskCountReadyReturnValue = false;
-    csr->gpuHangCheckPeriod = {};
+    csr->gpuHangCheckPeriodUs = 0;
 
     Mock<CommandQueue> cmdqueue(device, csr.get());
     ze_fence_desc_t desc = {};
@@ -479,7 +479,7 @@ HWTEST_F(FenceTest, givenPrintfKernelAndDetectedHangWhenSynchronizingFenceThenPr
     csr.latestWaitForCompletionWithTimeoutTaskCount = currentTaskCount;
     csr.returnWaitForCompletionWithTimeout = WaitStatus::gpuHang;
     *csr.tagAddress = 0;
-    csr.gpuHangCheckPeriod = 0us;
+    csr.gpuHangCheckPeriodUs = 0;
     commandQueue->printfKernelContainer.push_back(std::weak_ptr<Kernel>{kernel});
 
     ze_fence_desc_t fenceDesc = {ZE_STRUCTURE_TYPE_FENCE_DESC,

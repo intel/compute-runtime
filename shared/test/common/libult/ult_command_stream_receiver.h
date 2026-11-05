@@ -185,7 +185,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::CommandStreamReceiver::flushStamp;
     using BaseClass::CommandStreamReceiver::globalFenceAllocation;
     using BaseClass::CommandStreamReceiver::globalStatelessHeapAllocation;
-    using BaseClass::CommandStreamReceiver::gpuHangCheckPeriod;
+    using BaseClass::CommandStreamReceiver::gpuHangCheckPeriodUs;
     using BaseClass::CommandStreamReceiver::gsbaFor32BitProgrammed;
     using BaseClass::CommandStreamReceiver::heaplessModeEnabled;
     using BaseClass::CommandStreamReceiver::heaplessPrologProgrammed;
@@ -252,7 +252,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
         this->downloadAllocationImpl = [this](GraphicsAllocation &graphicsAllocation, uint64_t, size_t) {
             this->downloadAllocationUlt(graphicsAllocation);
         };
-        gpuHangCheckPeriod = {};
+        gpuHangCheckPeriodUs = 0;
     }
     ~UltCommandStreamReceiver() override {
         this->downloadAllocationImpl = nullptr;

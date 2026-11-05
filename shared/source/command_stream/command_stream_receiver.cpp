@@ -52,6 +52,7 @@
 #include "aubstream/hardware_context.h"
 
 #include <array>
+#include <chrono>
 #include <iostream>
 #include <thread>
 
@@ -651,10 +652,18 @@ WaitStatus CommandStreamReceiver::waitForCompletionWithTimeout(const WaitParams 
     return retCode;
 }
 
-bool CommandStreamReceiver::checkGpuHangDetected(TimeType currentTime, TimeType &lastHangCheckTime) const {
-    std::chrono::microseconds elapsedTimeSinceGpuHangCheck = std::chrono::duration_cast<std::chrono::microseconds>(currentTime - lastHangCheckTime);
+CommandStreamReceiver::TimeType CommandStreamReceiver::getCurrentTimeInNs() {
+    return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+}
 
-    if (elapsedTimeSinceGpuHangCheck.count() >= gpuHangCheckPeriod.count()) {
+int64_t CommandStreamReceiver::getElapsedTimeInUs(TimeType startTimeInNs, TimeType endTimeInNs) {
+    return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::nanoseconds{endTimeInNs - startTimeInNs}).count();
+}
+
+bool CommandStreamReceiver::checkGpuHangDetected(TimeType currentTime, TimeType &lastHangCheckTime) const {
+    const auto elapsedTimeSinceGpuHangCheckUs = getElapsedTimeInUs(lastHangCheckTime, currentTime);
+
+    if (elapsedTimeSinceGpuHangCheckUs >= this->gpuHangCheckPeriodUs) {
         lastHangCheckTime = currentTime;
         if (isGpuHangDetected()) {
             return true;
@@ -664,7 +673,6 @@ bool CommandStreamReceiver::checkGpuHangDetected(TimeType currentTime, TimeType 
 }
 
 WaitStatus CommandStreamReceiver::baseWaitFunction(volatile TagAddressType *pollAddress, const WaitParams &params, TaskCountType taskCountToWait) {
-    std::chrono::high_resolution_clock::time_point waitStartTime, lastHangCheckTime, currentTime;
     int64_t timeDiff = 0;
 
     TaskCountType latestSentTaskCount = this->latestFlushedTaskCount;
@@ -675,8 +683,8 @@ WaitStatus CommandStreamReceiver::baseWaitFunction(volatile TagAddressType *poll
     }
     volatile TagAddressType *partitionAddress = pollAddress;
 
-    waitStartTime = std::chrono::high_resolution_clock::now();
-    lastHangCheckTime = waitStartTime;
+    const auto waitStartTime = getCurrentTimeInNs();
+    auto lastHangCheckTime = waitStartTime;
     for (uint32_t i = 0; i < activePartitions; i++) {
         while (*partitionAddress < taskCountToWait && (!params.enableTimeout || timeDiff <= params.waitTimeout)) {
             this->downloadTagAllocation(taskCountToWait);
@@ -685,12 +693,12 @@ WaitStatus CommandStreamReceiver::baseWaitFunction(volatile TagAddressType *poll
                 break;
             }
 
-            currentTime = std::chrono::high_resolution_clock::now();
+            const auto currentTime = getCurrentTimeInNs();
             if (checkGpuHangDetected(currentTime, lastHangCheckTime)) {
                 return WaitStatus::gpuHang;
             }
 
-            timeDiff = std::chrono::duration_cast<std::chrono::microseconds>(currentTime - waitStartTime).count();
+            timeDiff = getElapsedTimeInUs(waitStartTime, currentTime);
         }
 
         partitionAddress = ptrOffset(partitionAddress, this->immWritePostSyncWriteOffset);
