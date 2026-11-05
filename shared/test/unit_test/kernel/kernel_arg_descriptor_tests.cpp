@@ -453,6 +453,19 @@ TEST(PatchNonPointer, GivenValidOffsetThenPatchProperly) {
     EXPECT_EQ(0, memcmp(expected, buffer, sizeof(buffer)));
 }
 
+TEST(PatchNonPointer, GivenOffsetNotAlignedToValueSizeThenPatchProperly) {
+    alignas(8) uint8_t buffer[64];
+    memset(buffer, 3, sizeof(buffer));
+    uint64_t value64 = 0x1122334455667788;
+    constexpr NEO::CrossThreadDataOffset offsetAlignedToDwordOnly = 20;
+    EXPECT_TRUE((NEO::patchNonPointer<uint64_t, uint64_t>(buffer, offsetAlignedToDwordOnly, value64)));
+
+    alignas(8) uint8_t expected[64];
+    memset(expected, 3, sizeof(expected));
+    memcpy(expected + offsetAlignedToDwordOnly, &value64, sizeof(value64));
+    EXPECT_EQ(0, memcmp(expected, buffer, sizeof(buffer)));
+}
+
 TEST(PatchVecNonPointer, GivenArrayOfOffsetsThenReturnsNumberOfValuesProperlyPatched) {
     alignas(8) uint8_t buffer[64];
     memset(buffer, 3, sizeof(buffer));

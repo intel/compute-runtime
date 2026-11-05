@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/string.h"
 #include "shared/source/kernel/kernel_arg_metadata.h"
 #include "shared/source/utilities/arrayref.h"
 
@@ -317,7 +318,8 @@ inline bool patchNonPointer(ArrayRef<uint8_t> buffer, CrossThreadDataOffset loca
         return false;
     }
     DEBUG_BREAK_IF(location + sizeof(DstT) > buffer.size());
-    *reinterpret_cast<DstT *>(buffer.begin() + location) = static_cast<DstT>(value);
+    const auto valueToPatch = static_cast<DstT>(value);
+    memcpy_s(buffer.begin() + location, sizeof(DstT), &valueToPatch, sizeof(DstT));
     return true;
 }
 
