@@ -947,6 +947,7 @@ struct CommandList : _ze_command_list_handle_t {
     uint32_t hostFunctionWithoutMemorySynchronizationCount = 0;
     uint32_t openMetricQueryCount = 0;
     uint32_t syncDispatchQueueId = std::numeric_limits<uint32_t>::max();
+    size_t minMiddleSizeForBuiltinBufferCopyWith8ByteAccess = std::numeric_limits<size_t>::max();
     uint32_t estimatedNumberOfCommands = 0;
     NEO::BuiltIn::AddressingMode defaultBuiltInMode;
     NEO::QueueThrottle queueThrottle = NEO::QueueThrottle::MEDIUM;

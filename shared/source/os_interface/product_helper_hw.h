@@ -114,6 +114,7 @@ class ProductHelperHw : public ProductHelper {
     bool overrideAllocationCpuCacheable(const AllocationData &allocationData) const override;
     bool is2MBLocalMemAlignmentEnabled() const override;
     bool isPackedCopyFormatSupported() const override;
+    size_t getMinMiddleSizeForBuiltinBufferCopyWith8ByteAccess() const override;
 
     bool getFrontEndPropertyComputeDispatchAllWalkerSupport() const override;
     bool getFrontEndPropertyDisableEuFusionSupport() const override;

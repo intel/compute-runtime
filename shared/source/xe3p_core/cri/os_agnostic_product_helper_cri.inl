@@ -39,6 +39,11 @@ aub_stream::EngineType ProductHelperHw<gfxProduct>::getDefaultCopyEngine() const
 }
 
 template <>
+size_t ProductHelperHw<gfxProduct>::getMinMiddleSizeForBuiltinBufferCopyWith8ByteAccess() const {
+    return 32 * MemoryConstants::megaByte;
+}
+
+template <>
 void ProductHelperHw<gfxProduct>::adjustEngineGroupType(EngineGroupType &engineGroupType) const {
     if (engineGroupType == EngineGroupType::linkedCopy) {
         engineGroupType = EngineGroupType::copy;

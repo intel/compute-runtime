@@ -339,6 +339,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     this->sharedSystemAllocationsAllowed = neoDevice->areSharedSystemAllocationsAllowed();
     this->compactL3FlushEventPacket = L0GfxCoreHelper::useCompactL3FlushEventPacket(hwInfo, this->l3FlushAfterPostSyncEnabled);
     this->useAdditionalBlitProperties = productHelper.useAdditionalBlitProperties();
+    this->minMiddleSizeForBuiltinBufferCopyWith8ByteAccess = productHelper.getMinMiddleSizeForBuiltinBufferCopyWith8ByteAccess();
     this->isPostImageWriteFlushRequired = hwInfo.caps.postImageWriteFlushRequired;
     this->isPreImageReadFlushRequired = hwInfo.caps.preImageReadFlushRequired;
     this->shouldRegisterEnqueuedWalkerWithProfiling = this->device->getNEODevice()->getProductHelper().shouldRegisterEnqueuedWalkerWithProfiling();
@@ -2580,6 +2581,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     uintptr_t rightSize = 0;
     uintptr_t middleSizeBytes = 0;
     size_t middleElSize = 0;
+    BufferBuiltIn middleCopyKernel = BufferBuiltIn::copyBufferToBufferMiddle;
     NEO::BuiltIn::AddressingMode builtInMode = this->defaultBuiltInMode;
 
     if (!isCopyOnlyEnabled) {
@@ -2621,6 +2623,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
             middleSizeBytes = 0;
             rightSize = 0;
             kernelCounter = 1;
+        }
+
+        if (middleSizeBytes >= this->minMiddleSizeForBuiltinBufferCopyWith8ByteAccess) {
+            middleElSize = sizeof(uint32_t) * 2;
+            middleCopyKernel = BufferBuiltIn::copyBufferToBufferMiddle8Bytes;
         }
     }
 
@@ -2697,16 +2704,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
         }
 
         if (ret == ZE_RESULT_SUCCESS && middleSizeBytes) {
-
-            BufferBuiltIn copyKernel = BufferBuiltIn::copyBufferToBufferMiddle;
-
             ret = appendMemoryCopyKernelWithGA(dstAllocationStruct.alignedAllocationPtr,
                                                dstAllocationStruct.alloc, leftSize + dstAllocationStruct.offset,
                                                srcAllocationStruct.alignedAllocationPtr,
                                                srcAllocationStruct.alloc, leftSize + srcAllocationStruct.offset,
                                                middleSizeBytes,
                                                middleElSize,
-                                               copyKernel,
+                                               middleCopyKernel,
                                                builtInMode,
                                                signalEvent,
                                                launchParams);

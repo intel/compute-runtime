@@ -955,6 +955,11 @@ bool ProductHelperHw<gfxProduct>::isPackedCopyFormatSupported() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+size_t ProductHelperHw<gfxProduct>::getMinMiddleSizeForBuiltinBufferCopyWith8ByteAccess() const {
+    return std::numeric_limits<size_t>::max();
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::getStorageInfoLocalOnlyFlag(LocalMemAllocationMode usmDeviceAllocationMode, bool defaultValue) const {
     return defaultValue;
 }

@@ -244,6 +244,7 @@ class ProductHelper {
     virtual bool isWriteSplitRequired(bool isDstSystemOrRemoteMemory) const = 0;
     virtual bool isNonCoherentTimestampsModeEnabled() const = 0;
     virtual bool isPackedCopyFormatSupported() const = 0;
+    virtual size_t getMinMiddleSizeForBuiltinBufferCopyWith8ByteAccess() const = 0;
     virtual bool checkBcsForDirectSubmissionStop() const = 0;
     virtual bool isDirectSubmissionContextGroupIdleDetectionEnabled() const = 0;
     virtual bool shouldRegisterEnqueuedWalkerWithProfiling() const = 0;
