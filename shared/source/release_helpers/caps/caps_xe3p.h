@@ -45,6 +45,7 @@ struct CapsXe3pCore {
     static constexpr bool dotProductAccumulateSystolicSupported = true;
     static constexpr bool exposingSubdevicesAllowed = true;
     static constexpr bool globalBindlessAllocatorEnabled = true;
+    static constexpr bool grfLimitedPreferredSlmSizeEnabled = true;
     static constexpr bool newCoherencyModelSupported = true;
     static constexpr bool newResidencyModelSupported = true;
     static constexpr bool postImageWriteFlushRequired = true;
@@ -56,7 +57,6 @@ struct CapsCri : CapsXe3pCore {
     static constexpr uint32_t numCacheRegions = toUnderlying(CacheRegion::count);
 
     static constexpr bool deviceConfigStringXeCuSegmentIncluded = true;
-    static constexpr bool grfLimitedPreferredSlmSizeEnabled = true;
     static constexpr bool readOnlyAllocationsSupported = true;
 };
 struct CapsNvlP : CapsXe3pCore {
