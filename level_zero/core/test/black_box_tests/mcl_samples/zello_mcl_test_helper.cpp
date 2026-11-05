@@ -18,7 +18,7 @@ const char *mclDisableInlineDataOption = "-igc_opts 'EnablePassInlineData=-1' ";
 const char *mclDisablePrivate2Scratch = "-igc_opts 'EnableOCLScratchPrivateMemory=0' ";
 std::string mclBuildOption("");
 
-std::string mclExtensionString("ZE_experimental_mutable_command_list");
+std::string mclExtensionString("ZE_extension_mutable_command_list");
 
 ExecEnv::ExecEnv() {
     this->startTime = std::chrono::high_resolution_clock::now();
@@ -29,7 +29,7 @@ ExecEnv::ExecEnv() {
     ze_driver_extension_properties_t mclExtension{};
 
     std::snprintf(mclExtension.name, sizeof(mclExtension.name), "%s", mclExtensionString.c_str());
-    mclExtension.version = ZE_MUTABLE_COMMAND_LIST_EXP_VERSION_1_0;
+    mclExtension.version = ZE_MUTABLE_COMMAND_LIST_EXT_VERSION_1_0;
 
     std::vector<ze_driver_extension_properties_t> extensionsToCheck;
     extensionsToCheck.push_back(mclExtension);
@@ -42,18 +42,14 @@ ExecEnv::ExecEnv() {
     getMclDeviceProperties(this->device, this->mclDeviceProperties);
 
     this->mutationCapabilities = {
-        isMclCapabilitySupported(mclDeviceProperties, ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS),
-        isMclCapabilitySupported(mclDeviceProperties, ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT),
-        isMclCapabilitySupported(mclDeviceProperties, ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_SIZE),
-        isMclCapabilitySupported(mclDeviceProperties, ZE_MUTABLE_COMMAND_EXP_FLAG_GLOBAL_OFFSET),
-        isMclCapabilitySupported(mclDeviceProperties, ZE_MUTABLE_COMMAND_EXP_FLAG_SIGNAL_EVENT),
-        isMclCapabilitySupported(mclDeviceProperties, ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS)};
+        isMclCapabilitySupported(mclDeviceProperties, ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS),
+        isMclCapabilitySupported(mclDeviceProperties, ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_COUNT),
+        isMclCapabilitySupported(mclDeviceProperties, ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_SIZE),
+        isMclCapabilitySupported(mclDeviceProperties, ZE_MUTABLE_COMMAND_EXT_FLAG_GLOBAL_OFFSET),
+        isMclCapabilitySupported(mclDeviceProperties, ZE_MUTABLE_COMMAND_EXT_FLAG_SIGNAL_EVENT),
+        isMclCapabilitySupported(mclDeviceProperties, ZE_MUTABLE_COMMAND_EXT_FLAG_WAIT_EVENTS),
+        isMclCapabilitySupported(mclDeviceProperties, ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_INSTRUCTION)};
 
-    extensionsToCheck[0].version = ZE_MUTABLE_COMMAND_LIST_EXP_VERSION_1_1;
-    bool mclKernelExtensionFound = LevelZeroBlackBoxTests::checkExtensionIsPresent(driverHandle, extensionsToCheck);
-    if (mclKernelExtensionFound) {
-        this->mutationCapabilities.kernelInstructions = isMclCapabilitySupported(mclDeviceProperties, ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_INSTRUCTION);
-    }
     printMclDeviceSupportedMutations(this->mutationCapabilities);
 
     cbEventsExtension = LevelZeroBlackBoxTests::counterBasedEventsExtensionPresent(driverHandle);
@@ -214,10 +210,10 @@ void createMutableCmdList(ze_context_handle_t hContext, ze_device_handle_t hDevi
     ze_command_list_desc_t descriptor = {};
     descriptor.stype = ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC;
 
-    ze_mutable_command_list_exp_desc_t mutableExpDesc{};
-    mutableExpDesc.stype = ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_LIST_EXP_DESC;
+    ze_mutable_command_list_ext_desc_t mutableExtDesc{};
+    mutableExtDesc.stype = ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_LIST_EXT_DESC;
 
-    descriptor.pNext = &mutableExpDesc;
+    descriptor.pNext = &mutableExtDesc;
     if (inOrder) {
         descriptor.flags = ZE_COMMAND_LIST_FLAG_IN_ORDER;
     } else {
@@ -337,8 +333,8 @@ zex_label_handle_t getLabel(ze_command_list_handle_t cmdList, const std::string 
     return label;
 }
 
-void getMclDeviceProperties(ze_device_handle_t device, ze_mutable_command_list_exp_properties_t &mclProperties) {
-    mclProperties.stype = ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_LIST_EXP_PROPERTIES;
+void getMclDeviceProperties(ze_device_handle_t device, ze_mutable_command_list_ext_properties_t &mclProperties) {
+    mclProperties.stype = ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_LIST_EXT_PROPERTIES;
     mclProperties.pNext = nullptr;
 
     ze_device_properties_t deviceProperties{ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
@@ -358,7 +354,7 @@ void printMclDeviceSupportedMutations(MclMutationCapabilities &mutationCapabilit
               << " * Kernel instruction : " << std::boolalpha << mutationCapabilities.kernelInstructions << std::endl;
 }
 
-bool isMclCapabilitySupported(ze_mutable_command_list_exp_properties_t &mclProperties, ze_mutable_command_exp_flag_t flag) {
+bool isMclCapabilitySupported(ze_mutable_command_list_ext_properties_t &mclProperties, ze_mutable_command_ext_flag_t flag) {
     return !!(mclProperties.mutableCommandFlags & flag);
 }
 

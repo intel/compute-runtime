@@ -104,7 +104,7 @@ int main(int argc, char *argv[]) {
     SUCCESS_OR_TERMINATE(zeCommandListGetOrdinal(cmdList, &cmdListOrdinal));
     SUCCESS_OR_TERMINATE(zeCommandListGetFlags(cmdList, &cmdListFlags));
     SUCCESS_OR_TERMINATE(zeCommandListIsImmediate(cmdList, &isImmediate));
-    SUCCESS_OR_TERMINATE(zeCommandListIsMutableExp(cmdList, &isMutable));
+    SUCCESS_OR_TERMINATE(zeCommandListIsMutableExt(cmdList, &isMutable));
 
     expect(cmdListDevice == device, "command list device mismatch");
     expect(cmdListContext == context, "command list context mismatch");
@@ -148,7 +148,7 @@ int main(int argc, char *argv[]) {
     SUCCESS_OR_TERMINATE(zeCommandListGetOrdinal(immediateCmdList, &immediateCmdListOrdinal));
     SUCCESS_OR_TERMINATE(zeCommandListGetFlags(immediateCmdList, &immediateCmdListFlags));
     SUCCESS_OR_TERMINATE(zeCommandListIsImmediate(immediateCmdList, &immediateCmdListIsImmediate));
-    SUCCESS_OR_TERMINATE(zeCommandListIsMutableExp(immediateCmdList, &immediateCmdListIsMutable));
+    SUCCESS_OR_TERMINATE(zeCommandListIsMutableExt(immediateCmdList, &immediateCmdListIsMutable));
 
     expect(immediateCmdListDevice == device, "immediate command list device mismatch");
     expect(immediateCmdListContext == context, "immediate command list context mismatch");

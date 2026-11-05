@@ -43,7 +43,7 @@ class ExecEnv {
     ze_module_handle_t slmModule = nullptr;
     ze_module_handle_t mainModule = nullptr;
     ze_command_list_handle_t immCmdList = nullptr;
-    ze_mutable_command_list_exp_properties_t mclDeviceProperties = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_LIST_EXP_PROPERTIES};
+    ze_mutable_command_list_ext_properties_t mclDeviceProperties = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_LIST_EXT_PROPERTIES};
     ze_device_compute_properties_t computeProperties = {ZE_STRUCTURE_TYPE_DEVICE_COMPUTE_PROPERTIES};
 
     MclMutationCapabilities mutationCapabilities;
@@ -185,11 +185,11 @@ zex_variable_handle_t getTmpVariable(ze_command_list_handle_t cmdList, size_t si
 
 zex_label_handle_t getLabel(ze_command_list_handle_t cmdList, const std::string &labelName, MclTests::ExecEnv *env);
 
-void getMclDeviceProperties(ze_device_handle_t device, ze_mutable_command_list_exp_properties_t &mclProperties);
+void getMclDeviceProperties(ze_device_handle_t device, ze_mutable_command_list_ext_properties_t &mclProperties);
 
 void printMclDeviceSupportedMutations(MclMutationCapabilities &mutationCapabilities);
 
-bool isMclCapabilitySupported(ze_mutable_command_list_exp_properties_t &mclProperties, ze_mutable_command_exp_flag_t flag);
+bool isMclCapabilitySupported(ze_mutable_command_list_ext_properties_t &mclProperties, ze_mutable_command_ext_flag_t flag);
 
 enum EventOptions {
     noEvent,

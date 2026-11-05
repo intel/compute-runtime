@@ -92,14 +92,14 @@ bool testMutateKernelsWaitSignalEvents(MclTests::ExecEnv *execEnv, ze_module_han
     copyKernelDispatchTraits.groupCountZ = copyKernelGroupSizeZ;
 
     uint64_t commandIdCopy = 0;
-    ze_mutable_command_id_exp_desc_t commandIdCopyDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
+    ze_mutable_command_id_ext_desc_t commandIdCopyDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
     commandIdCopyDesc.flags =
-        ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS |
-        ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT |
-        ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_SIZE |
-        ZE_MUTABLE_COMMAND_EXP_FLAG_SIGNAL_EVENT |
-        ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_INSTRUCTION;
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdWithKernelsExp(copyCmdList, &commandIdCopyDesc, 2, copyKernelGroup, &commandIdCopy));
+        ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS |
+        ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_COUNT |
+        ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_SIZE |
+        ZE_MUTABLE_COMMAND_EXT_FLAG_SIGNAL_EVENT |
+        ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_INSTRUCTION;
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdWithKernelsExt(copyCmdList, &commandIdCopyDesc, 2, copyKernelGroup, &commandIdCopy));
 
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(copyCmdList, copyKernel, &copyKernelDispatchTraits, events[0], 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListClose(copyCmdList));
@@ -122,15 +122,15 @@ bool testMutateKernelsWaitSignalEvents(MclTests::ExecEnv *execEnv, ze_module_han
     addKernelDispatchTraits.groupCountZ = addKernelGgroupSizeZ;
 
     uint64_t commandIdAdd = 0;
-    ze_mutable_command_id_exp_desc_t commandIdAddDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
+    ze_mutable_command_id_ext_desc_t commandIdAddDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
     commandIdAddDesc.flags =
-        ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS |
-        ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT |
-        ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_SIZE |
-        ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS |
-        ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_INSTRUCTION;
+        ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS |
+        ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_COUNT |
+        ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_SIZE |
+        ZE_MUTABLE_COMMAND_EXT_FLAG_WAIT_EVENTS |
+        ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_INSTRUCTION;
 
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdWithKernelsExp(addCmdList, &commandIdAddDesc, 2, addKernelGroup, &commandIdAdd));
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdWithKernelsExt(addCmdList, &commandIdAddDesc, 2, addKernelGroup, &commandIdAdd));
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(addCmdList, addKernel, &addKernelDispatchTraits, nullptr, 1, &events[0]));
     SUCCESS_OR_TERMINATE(zeCommandListClose(addCmdList));
 
@@ -158,18 +158,18 @@ bool testMutateKernelsWaitSignalEvents(MclTests::ExecEnv *execEnv, ze_module_han
     }
 
     // mutate copy command list into another copy kernel
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandKernelsExp(copyCmdList, 1, &commandIdCopy, &copyLinearKernel));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandKernelsExt(copyCmdList, 1, &commandIdCopy, &copyLinearKernel));
     // get new kernel arguments
     {
         SUCCESS_OR_TERMINATE(zeKernelSuggestGroupSize(copyLinearKernel, allocSize, 1U, 1U, &copyKernelGroupSizeX, &copyKernelGroupSizeY, &copyKernelGroupSizeZ));
 
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelSrcArg.commandId = commandIdCopy;
         mutateKernelSrcArg.argIndex = 0;
         mutateKernelSrcArg.argSize = sizeof(void *);
         mutateKernelSrcArg.pArgValue = &srcBuffer2;
 
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelDstArg.commandId = commandIdCopy;
         mutateKernelDstArg.argIndex = 1;
         mutateKernelDstArg.argSize = sizeof(void *);
@@ -180,47 +180,47 @@ bool testMutateKernelsWaitSignalEvents(MclTests::ExecEnv *execEnv, ze_module_han
         copyKernelDispatchTraits.groupCountY = copyKernelGroupSizeY;
         copyKernelDispatchTraits.groupCountZ = copyKernelGroupSizeZ;
 
-        ze_mutable_group_count_exp_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
+        ze_mutable_group_count_ext_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXT_DESC};
         mutateGroupCount.commandId = commandIdCopy;
         mutateGroupCount.pGroupCount = &copyKernelDispatchTraits;
         mutateGroupCount.pNext = &mutateKernelDstArg;
 
-        ze_mutable_group_size_exp_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXP_DESC};
+        ze_mutable_group_size_ext_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXT_DESC};
         mutateGroupSize.commandId = commandIdCopy;
         mutateGroupSize.groupSizeX = copyKernelGroupSizeX;
         mutateGroupSize.groupSizeY = copyKernelGroupSizeY;
         mutateGroupSize.groupSizeZ = copyKernelGroupSizeZ;
         mutateGroupSize.pNext = &mutateGroupCount;
 
-        ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+        ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
         mutateDesc.pNext = &mutateGroupSize;
 
-        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(copyCmdList, &mutateDesc));
+        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(copyCmdList, &mutateDesc));
     }
     // mutate new signal event
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandSignalEventExp(copyCmdList, commandIdCopy, events[1]));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandSignalEventExt(copyCmdList, commandIdCopy, events[1]));
     SUCCESS_OR_TERMINATE(zeCommandListClose(copyCmdList));
 
     // mutate add command list into another add kernel
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandKernelsExp(addCmdList, 1, &commandIdAdd, &addLinearKernel));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandKernelsExt(addCmdList, 1, &commandIdAdd, &addLinearKernel));
     // get new kernel arguments
     {
         SUCCESS_OR_TERMINATE(zeKernelSuggestGroupSize(addLinearKernel, elemSize, 1U, 1U, &addKernelGroupSizeX, &addKernelGroupSizeY, &addKernelGgroupSizeZ));
 
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelSrcArg.commandId = commandIdAdd;
         mutateKernelSrcArg.argIndex = 0;
         mutateKernelSrcArg.argSize = sizeof(void *);
         mutateKernelSrcArg.pArgValue = &stageBuffer2;
 
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelDstArg.commandId = commandIdAdd;
         mutateKernelDstArg.argIndex = 1;
         mutateKernelDstArg.argSize = sizeof(void *);
         mutateKernelDstArg.pArgValue = &dstBuffer2;
         mutateKernelDstArg.pNext = &mutateKernelSrcArg;
 
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelScalarArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelScalarArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelScalarArg.commandId = commandIdAdd;
         mutateKernelScalarArg.argIndex = 2;
         mutateKernelScalarArg.argSize = sizeof(ElemType);
@@ -231,25 +231,25 @@ bool testMutateKernelsWaitSignalEvents(MclTests::ExecEnv *execEnv, ze_module_han
         addKernelDispatchTraits.groupCountY = addKernelGroupSizeY;
         addKernelDispatchTraits.groupCountZ = addKernelGgroupSizeZ;
 
-        ze_mutable_group_count_exp_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
+        ze_mutable_group_count_ext_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXT_DESC};
         mutateGroupCount.commandId = commandIdAdd;
         mutateGroupCount.pGroupCount = &addKernelDispatchTraits;
         mutateGroupCount.pNext = &mutateKernelScalarArg;
 
-        ze_mutable_group_size_exp_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXP_DESC};
+        ze_mutable_group_size_ext_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXT_DESC};
         mutateGroupSize.commandId = commandIdAdd;
         mutateGroupSize.groupSizeX = addKernelGroupSizeX;
         mutateGroupSize.groupSizeY = addKernelGroupSizeY;
         mutateGroupSize.groupSizeZ = addKernelGgroupSizeZ;
         mutateGroupSize.pNext = &mutateGroupCount;
 
-        ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+        ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
         mutateDesc.pNext = &mutateGroupSize;
 
-        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(addCmdList, &mutateDesc));
+        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(addCmdList, &mutateDesc));
     }
     // mutate new wait event
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandWaitEventsExp(addCmdList, commandIdAdd, 1, &events[1]));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandWaitEventsExt(addCmdList, commandIdAdd, 1, &events[1]));
     SUCCESS_OR_TERMINATE(zeCommandListClose(addCmdList));
 
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(execEnv->queue, 2, batchCmdList, nullptr));
@@ -283,17 +283,17 @@ bool testMutateKernelsWaitSignalEvents(MclTests::ExecEnv *execEnv, ze_module_han
 
     // bring back old kernels and old arguments
     // copy command list
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandKernelsExp(copyCmdList, 1, &commandIdCopy, &copyKernel));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandKernelsExt(copyCmdList, 1, &commandIdCopy, &copyKernel));
     {
         SUCCESS_OR_TERMINATE(zeKernelSuggestGroupSize(copyKernel, allocSize, 1U, 1U, &copyKernelGroupSizeX, &copyKernelGroupSizeY, &copyKernelGroupSizeZ));
 
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelSrcArg.commandId = commandIdCopy;
         mutateKernelSrcArg.argIndex = 0;
         mutateKernelSrcArg.argSize = sizeof(void *);
         mutateKernelSrcArg.pArgValue = &srcBuffer1;
 
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelDstArg.commandId = commandIdCopy;
         mutateKernelDstArg.argIndex = 1;
         mutateKernelDstArg.argSize = sizeof(void *);
@@ -304,46 +304,46 @@ bool testMutateKernelsWaitSignalEvents(MclTests::ExecEnv *execEnv, ze_module_han
         copyKernelDispatchTraits.groupCountY = copyKernelGroupSizeY;
         copyKernelDispatchTraits.groupCountZ = copyKernelGroupSizeZ;
 
-        ze_mutable_group_count_exp_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
+        ze_mutable_group_count_ext_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXT_DESC};
         mutateGroupCount.commandId = commandIdCopy;
         mutateGroupCount.pGroupCount = &copyKernelDispatchTraits;
         mutateGroupCount.pNext = &mutateKernelDstArg;
 
-        ze_mutable_group_size_exp_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXP_DESC};
+        ze_mutable_group_size_ext_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXT_DESC};
         mutateGroupSize.commandId = commandIdCopy;
         mutateGroupSize.groupSizeX = copyKernelGroupSizeX;
         mutateGroupSize.groupSizeY = copyKernelGroupSizeY;
         mutateGroupSize.groupSizeZ = copyKernelGroupSizeZ;
         mutateGroupSize.pNext = &mutateGroupCount;
 
-        ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+        ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
         mutateDesc.pNext = &mutateGroupSize;
 
-        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(copyCmdList, &mutateDesc));
+        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(copyCmdList, &mutateDesc));
     }
     // mutate old signal event
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandSignalEventExp(copyCmdList, commandIdCopy, events[0]));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandSignalEventExt(copyCmdList, commandIdCopy, events[0]));
     SUCCESS_OR_TERMINATE(zeCommandListClose(copyCmdList));
 
     // add kernel
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandKernelsExp(addCmdList, 1, &commandIdAdd, &addKernel));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandKernelsExt(addCmdList, 1, &commandIdAdd, &addKernel));
     {
         SUCCESS_OR_TERMINATE(zeKernelSuggestGroupSize(addKernel, elemSize, 1U, 1U, &addKernelGroupSizeX, &addKernelGroupSizeY, &addKernelGgroupSizeZ));
 
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelSrcArg.commandId = commandIdAdd;
         mutateKernelSrcArg.argIndex = 0;
         mutateKernelSrcArg.argSize = sizeof(void *);
         mutateKernelSrcArg.pArgValue = &stageBuffer1;
 
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelDstArg.commandId = commandIdAdd;
         mutateKernelDstArg.argIndex = 1;
         mutateKernelDstArg.argSize = sizeof(void *);
         mutateKernelDstArg.pArgValue = &dstBuffer1;
         mutateKernelDstArg.pNext = &mutateKernelSrcArg;
 
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelScalarArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelScalarArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelScalarArg.commandId = commandIdAdd;
         mutateKernelScalarArg.argIndex = 2;
         mutateKernelScalarArg.argSize = sizeof(ElemType);
@@ -354,24 +354,24 @@ bool testMutateKernelsWaitSignalEvents(MclTests::ExecEnv *execEnv, ze_module_han
         addKernelDispatchTraits.groupCountY = addKernelGroupSizeY;
         addKernelDispatchTraits.groupCountZ = addKernelGgroupSizeZ;
 
-        ze_mutable_group_count_exp_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
+        ze_mutable_group_count_ext_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXT_DESC};
         mutateGroupCount.commandId = commandIdAdd;
         mutateGroupCount.pGroupCount = &addKernelDispatchTraits;
         mutateGroupCount.pNext = &mutateKernelScalarArg;
 
-        ze_mutable_group_size_exp_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXP_DESC};
+        ze_mutable_group_size_ext_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXT_DESC};
         mutateGroupSize.commandId = commandIdAdd;
         mutateGroupSize.groupSizeX = addKernelGroupSizeX;
         mutateGroupSize.groupSizeY = addKernelGroupSizeY;
         mutateGroupSize.groupSizeZ = addKernelGgroupSizeZ;
         mutateGroupSize.pNext = &mutateGroupCount;
 
-        ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+        ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
         mutateDesc.pNext = &mutateGroupSize;
 
-        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(addCmdList, &mutateDesc));
+        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(addCmdList, &mutateDesc));
     }
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandWaitEventsExp(addCmdList, commandIdAdd, 1, &events[0]));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandWaitEventsExt(addCmdList, commandIdAdd, 1, &events[0]));
     SUCCESS_OR_TERMINATE(zeCommandListClose(addCmdList));
 
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(execEnv->queue, 2, batchCmdList, nullptr));
@@ -489,13 +489,13 @@ bool testMutateSignalEventArgumentsThenKernelAndKernelBackMutateIntoThirdSignalE
     dispatchTraits.groupCountZ = 1u;
 
     uint64_t commandId = 0;
-    ze_mutable_command_id_exp_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
-    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS |
-                          ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT |
-                          ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_SIZE |
-                          ZE_MUTABLE_COMMAND_EXP_FLAG_SIGNAL_EVENT |
-                          ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_INSTRUCTION;
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdWithKernelsExp(cmdList, &commandIdDesc, 2, kernelGroup, &commandId));
+    ze_mutable_command_id_ext_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
+    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS |
+                          ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_COUNT |
+                          ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_SIZE |
+                          ZE_MUTABLE_COMMAND_EXT_FLAG_SIGNAL_EVENT |
+                          ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_INSTRUCTION;
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdWithKernelsExt(cmdList, &commandIdDesc, 2, kernelGroup, &commandId));
 
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, mulKernel, &dispatchTraits, signalEvents[0], 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
@@ -522,43 +522,43 @@ bool testMutateSignalEventArgumentsThenKernelAndKernelBackMutateIntoThirdSignalE
     }
 
     // 1st mutation step - update kernel arguments and signal event with the same mul kernel
-    ze_mutable_kernel_argument_exp_desc_t mutateKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t mutateKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     mutateKernelSrcArg.commandId = commandId;
     mutateKernelSrcArg.argIndex = 0;
     mutateKernelSrcArg.argSize = sizeof(void *);
     mutateKernelSrcArg.pArgValue = &srcBuffer2;
 
-    ze_mutable_kernel_argument_exp_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     mutateKernelDstArg.commandId = commandId;
     mutateKernelDstArg.argIndex = 1;
     mutateKernelDstArg.argSize = sizeof(void *);
     mutateKernelDstArg.pArgValue = &dstBuffer2;
     mutateKernelDstArg.pNext = &mutateKernelSrcArg;
 
-    ze_mutable_kernel_argument_exp_desc_t mutateKernelScalarArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t mutateKernelScalarArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     mutateKernelScalarArg.commandId = commandId;
     mutateKernelScalarArg.argIndex = 2;
     mutateKernelScalarArg.argSize = sizeof(ElemType);
     mutateKernelScalarArg.pArgValue = &scalarValue2;
     mutateKernelScalarArg.pNext = &mutateKernelDstArg;
 
-    ze_mutable_group_count_exp_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
+    ze_mutable_group_count_ext_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXT_DESC};
     mutateGroupCount.commandId = commandId;
     mutateGroupCount.pGroupCount = &dispatchTraits;
     mutateGroupCount.pNext = &mutateKernelScalarArg;
 
-    ze_mutable_group_size_exp_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXP_DESC};
+    ze_mutable_group_size_ext_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXT_DESC};
     mutateGroupSize.commandId = commandId;
     mutateGroupSize.groupSizeX = groupSizeX;
     mutateGroupSize.groupSizeY = groupSizeY;
     mutateGroupSize.groupSizeZ = groupSizeZ;
     mutateGroupSize.pNext = &mutateGroupCount;
 
-    ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+    ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
     mutateDesc.pNext = &mutateGroupSize;
 
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandSignalEventExp(cmdList, commandId, signalEvents[1]));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandSignalEventExt(cmdList, commandId, signalEvents[1]));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
     // set and run
@@ -584,9 +584,9 @@ bool testMutateSignalEventArgumentsThenKernelAndKernelBackMutateIntoThirdSignalE
     }
 
     // 2nd mutation step - select new kernel with the same arguments and signal event - no need to update signal event
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandKernelsExp(cmdList, 1, &commandId, &addKernel));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandKernelsExt(cmdList, 1, &commandId, &addKernel));
     // new kernel - invalidated arguments and dispatch parameters - provide them again
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
     // set and run
@@ -612,16 +612,16 @@ bool testMutateSignalEventArgumentsThenKernelAndKernelBackMutateIntoThirdSignalE
 
     // 3rd mutation step - select mul kernel back with new arguments and signal event
     // signal can be mutated before kernel
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandSignalEventExp(cmdList, commandId, signalEvents[2]));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandSignalEventExt(cmdList, commandId, signalEvents[2]));
     // select mul kernel back
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandKernelsExp(cmdList, 1, &commandId, &mulKernel));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandKernelsExt(cmdList, 1, &commandId, &mulKernel));
 
     // select arguments and dispatch parameters for mul kernel, use new arguments for mutation
     mutateKernelSrcArg.pArgValue = &srcBuffer3;
     mutateKernelDstArg.pArgValue = &dstBuffer3;
     mutateKernelScalarArg.pArgValue = &scalarValue3;
 
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
     // set and run
@@ -748,9 +748,9 @@ bool testMutateMulKernelIntoAddKernelBackMulKernel(MclTests::ExecEnv *execEnv, z
     dispatchTraits.groupCountZ = 1u;
 
     uint64_t commandId = 0;
-    ze_mutable_command_id_exp_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
-    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS | ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT | ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_SIZE | ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_INSTRUCTION;
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdWithKernelsExp(cmdList, &commandIdDesc, 2, kernelGroup, &commandId));
+    ze_mutable_command_id_ext_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
+    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS | ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_COUNT | ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_SIZE | ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_INSTRUCTION;
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdWithKernelsExt(cmdList, &commandIdDesc, 2, kernelGroup, &commandId));
 
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, mulKernel, &dispatchTraits, signalEvent, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
@@ -779,45 +779,45 @@ bool testMutateMulKernelIntoAddKernelBackMulKernel(MclTests::ExecEnv *execEnv, z
     }
 
     // select new kernel
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandKernelsExp(cmdList, 1, &commandId, &addKernel));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandKernelsExt(cmdList, 1, &commandId, &addKernel));
 
     // select arguments and dispatch parameters for new kernel
-    ze_mutable_kernel_argument_exp_desc_t mutateKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t mutateKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     mutateKernelSrcArg.commandId = commandId;
     mutateKernelSrcArg.argIndex = 0;
     mutateKernelSrcArg.argSize = sizeof(void *);
     mutateKernelSrcArg.pArgValue = &mutableSrcBuffer;
 
-    ze_mutable_kernel_argument_exp_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     mutateKernelDstArg.commandId = commandId;
     mutateKernelDstArg.argIndex = 1;
     mutateKernelDstArg.argSize = sizeof(void *);
     mutateKernelDstArg.pArgValue = &mutableDstBuffer;
     mutateKernelDstArg.pNext = &mutateKernelSrcArg;
 
-    ze_mutable_kernel_argument_exp_desc_t mutateKernelScalarArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t mutateKernelScalarArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     mutateKernelScalarArg.commandId = commandId;
     mutateKernelScalarArg.argIndex = 2;
     mutateKernelScalarArg.argSize = sizeof(ElemType);
     mutateKernelScalarArg.pArgValue = &mutableScalarValue;
     mutateKernelScalarArg.pNext = &mutateKernelDstArg;
 
-    ze_mutable_group_count_exp_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
+    ze_mutable_group_count_ext_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXT_DESC};
     mutateGroupCount.commandId = commandId;
     mutateGroupCount.pGroupCount = &dispatchTraits;
     mutateGroupCount.pNext = &mutateKernelScalarArg;
 
-    ze_mutable_group_size_exp_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXP_DESC};
+    ze_mutable_group_size_ext_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXT_DESC};
     mutateGroupSize.commandId = commandId;
     mutateGroupSize.groupSizeX = groupSizeX;
     mutateGroupSize.groupSizeY = groupSizeY;
     mutateGroupSize.groupSizeZ = groupSizeZ;
     mutateGroupSize.pNext = &mutateGroupCount;
 
-    ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+    ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
     mutateDesc.pNext = &mutateGroupSize;
 
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
     // set and run
@@ -845,10 +845,10 @@ bool testMutateMulKernelIntoAddKernelBackMulKernel(MclTests::ExecEnv *execEnv, z
     }
 
     // select mul kernel back
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandKernelsExp(cmdList, 1, &commandId, &mulKernel));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandKernelsExt(cmdList, 1, &commandId, &mulKernel));
 
     // select arguments and dispatch parameters for mul kernel, use the same arguments for mutation and kernels use the same layout of arguments
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
     // set and run
@@ -993,12 +993,12 @@ bool testMutateKernelsScratch(MclTests::ExecEnv *execEnv, ze_module_handle_t mod
     ze_kernel_handle_t kernelGroup[] = {scratchKernel, copyKernel};
 
     uint64_t commandId = 0;
-    ze_mutable_command_id_exp_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
-    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS |
-                          ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT |
-                          ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_SIZE |
-                          ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_INSTRUCTION;
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdWithKernelsExp(cmdList, &commandIdDesc, 2, kernelGroup, &commandId));
+    ze_mutable_command_id_ext_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
+    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS |
+                          ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_COUNT |
+                          ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_SIZE |
+                          ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_INSTRUCTION;
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdWithKernelsExt(cmdList, &commandIdDesc, 2, kernelGroup, &commandId));
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, firstKernel, firstDispatchTraits, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
@@ -1023,73 +1023,73 @@ bool testMutateKernelsScratch(MclTests::ExecEnv *execEnv, ze_module_handle_t mod
     }
 
     // mutate kernels and replace arguments
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandKernelsExp(cmdList, 1, &commandId, &mutableKernel));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandKernelsExt(cmdList, 1, &commandId, &mutableKernel));
     if (scratchKernelFirst) {
         // change into copy kernel arguments
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelSrcArg.commandId = commandId;
         mutateKernelSrcArg.argIndex = 0;
         mutateKernelSrcArg.argSize = sizeof(void *);
         mutateKernelSrcArg.pArgValue = &copySrcBuffer;
 
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelDstArg.commandId = commandId;
         mutateKernelDstArg.argIndex = 1;
         mutateKernelDstArg.argSize = sizeof(void *);
         mutateKernelDstArg.pArgValue = &copyDstBuffer;
         mutateKernelDstArg.pNext = &mutateKernelSrcArg;
 
-        ze_mutable_group_count_exp_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
+        ze_mutable_group_count_ext_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXT_DESC};
         mutateGroupCount.commandId = commandId;
         mutateGroupCount.pGroupCount = mutableDispatchTraits;
         mutateGroupCount.pNext = &mutateKernelDstArg;
 
-        ze_mutable_group_size_exp_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXP_DESC};
+        ze_mutable_group_size_ext_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXT_DESC};
         mutateGroupSize.commandId = commandId;
         mutateGroupSize.groupSizeX = copyKernelGroupSizeX;
         mutateGroupSize.groupSizeY = copyKernelGroupSizeY;
         mutateGroupSize.groupSizeZ = copyKernelGroupSizeZ;
         mutateGroupSize.pNext = &mutateGroupCount;
 
-        ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+        ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
         mutateDesc.pNext = &mutateGroupSize;
-        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
     } else {
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelIdxArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelIdxArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelIdxArg.commandId = commandId;
         mutateKernelIdxArg.argIndex = 0;
         mutateKernelIdxArg.argSize = sizeof(void *);
         mutateKernelIdxArg.pArgValue = &scratchIdxBuffer;
 
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelSrcArg.commandId = commandId;
         mutateKernelSrcArg.argIndex = 1;
         mutateKernelSrcArg.argSize = sizeof(void *);
         mutateKernelSrcArg.pArgValue = &scratchSrcBuffer;
         mutateKernelSrcArg.pNext = &mutateKernelIdxArg;
 
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelDstArg.commandId = commandId;
         mutateKernelDstArg.argIndex = 2;
         mutateKernelDstArg.argSize = sizeof(void *);
         mutateKernelDstArg.pArgValue = &scratchDstBuffer;
         mutateKernelDstArg.pNext = &mutateKernelSrcArg;
 
-        ze_mutable_group_count_exp_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
+        ze_mutable_group_count_ext_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXT_DESC};
         mutateGroupCount.commandId = commandId;
         mutateGroupCount.pGroupCount = mutableDispatchTraits;
         mutateGroupCount.pNext = &mutateKernelDstArg;
 
-        ze_mutable_group_size_exp_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXP_DESC};
+        ze_mutable_group_size_ext_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXT_DESC};
         mutateGroupSize.commandId = commandId;
         mutateGroupSize.groupSizeX = scratchGroupSizeX;
         mutateGroupSize.groupSizeY = scratchGroupSizeY;
         mutateGroupSize.groupSizeZ = scratchGroupSizeZ;
         mutateGroupSize.pNext = &mutateGroupCount;
 
-        ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+        ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
         mutateDesc.pNext = &mutateGroupSize;
-        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
     }
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
@@ -1209,12 +1209,12 @@ bool testMutateKernelsSlm(MclTests::ExecEnv *execEnv, ze_module_handle_t module,
     ze_kernel_handle_t kernelGroup[] = {addSlmKernel, copyKernel};
 
     uint64_t commandId = 0;
-    ze_mutable_command_id_exp_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
-    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS |
-                          ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT |
-                          ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_SIZE |
-                          ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_INSTRUCTION;
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdWithKernelsExp(cmdList, &commandIdDesc, 2, kernelGroup, &commandId));
+    ze_mutable_command_id_ext_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
+    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS |
+                          ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_COUNT |
+                          ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_SIZE |
+                          ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_INSTRUCTION;
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdWithKernelsExt(cmdList, &commandIdDesc, 2, kernelGroup, &commandId));
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, firstKernel, firstDispatchTraits, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
@@ -1240,73 +1240,73 @@ bool testMutateKernelsSlm(MclTests::ExecEnv *execEnv, ze_module_handle_t module,
     }
 
     // mutate kernels and replace arguments
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandKernelsExp(cmdList, 1, &commandId, &mutableKernel));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandKernelsExt(cmdList, 1, &commandId, &mutableKernel));
     if (slmKernelFirst) {
         // change into copy kernel arguments
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelSrcArg.commandId = commandId;
         mutateKernelSrcArg.argIndex = 0;
         mutateKernelSrcArg.argSize = sizeof(void *);
         mutateKernelSrcArg.pArgValue = &copySrcBuffer;
 
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelDstArg.commandId = commandId;
         mutateKernelDstArg.argIndex = 1;
         mutateKernelDstArg.argSize = sizeof(void *);
         mutateKernelDstArg.pArgValue = &copyDstBuffer;
         mutateKernelDstArg.pNext = &mutateKernelSrcArg;
 
-        ze_mutable_group_count_exp_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
+        ze_mutable_group_count_ext_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXT_DESC};
         mutateGroupCount.commandId = commandId;
         mutateGroupCount.pGroupCount = mutableDispatchTraits;
         mutateGroupCount.pNext = &mutateKernelDstArg;
 
-        ze_mutable_group_size_exp_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXP_DESC};
+        ze_mutable_group_size_ext_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXT_DESC};
         mutateGroupSize.commandId = commandId;
         mutateGroupSize.groupSizeX = copyKernelGroupSizeX;
         mutateGroupSize.groupSizeY = copyKernelGroupSizeY;
         mutateGroupSize.groupSizeZ = copyKernelGroupSizeZ;
         mutateGroupSize.pNext = &mutateGroupCount;
 
-        ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+        ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
         mutateDesc.pNext = &mutateGroupSize;
-        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
     } else {
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelIdxArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelIdxArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelIdxArg.commandId = commandId;
         mutateKernelIdxArg.argIndex = 0;
         mutateKernelIdxArg.argSize = sizeof(void *);
         mutateKernelIdxArg.pArgValue = &addSrcBuffer;
 
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelSrcArg.commandId = commandId;
         mutateKernelSrcArg.argIndex = 1;
         mutateKernelSrcArg.argSize = sizeof(void *);
         mutateKernelSrcArg.pArgValue = &addDstBuffer;
         mutateKernelSrcArg.pNext = &mutateKernelIdxArg;
 
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelDstArg.commandId = commandId;
         mutateKernelDstArg.argIndex = 2;
         mutateKernelDstArg.argSize = sizeof(addScalarValue);
         mutateKernelDstArg.pArgValue = &addScalarValue;
         mutateKernelDstArg.pNext = &mutateKernelSrcArg;
 
-        ze_mutable_group_count_exp_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
+        ze_mutable_group_count_ext_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXT_DESC};
         mutateGroupCount.commandId = commandId;
         mutateGroupCount.pGroupCount = mutableDispatchTraits;
         mutateGroupCount.pNext = &mutateKernelDstArg;
 
-        ze_mutable_group_size_exp_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXP_DESC};
+        ze_mutable_group_size_ext_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXT_DESC};
         mutateGroupSize.commandId = commandId;
         mutateGroupSize.groupSizeX = addGroupSizeX;
         mutateGroupSize.groupSizeY = addGroupSizeY;
         mutateGroupSize.groupSizeZ = addGroupSizeZ;
         mutateGroupSize.pNext = &mutateGroupCount;
 
-        ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+        ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
         mutateDesc.pNext = &mutateGroupSize;
-        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
     }
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
@@ -1428,12 +1428,12 @@ bool testMutateKernelsPrivateMemory(MclTests::ExecEnv *execEnv, ze_module_handle
     ze_kernel_handle_t kernelGroup[] = {privateMemoryKernel, copyKernel};
 
     uint64_t commandId = 0;
-    ze_mutable_command_id_exp_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
-    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS |
-                          ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT |
-                          ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_SIZE |
-                          ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_INSTRUCTION;
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdWithKernelsExp(cmdList, &commandIdDesc, 2, kernelGroup, &commandId));
+    ze_mutable_command_id_ext_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
+    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS |
+                          ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_COUNT |
+                          ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_SIZE |
+                          ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_INSTRUCTION;
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdWithKernelsExt(cmdList, &commandIdDesc, 2, kernelGroup, &commandId));
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, firstKernel, firstDispatchTraits, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
@@ -1461,73 +1461,73 @@ bool testMutateKernelsPrivateMemory(MclTests::ExecEnv *execEnv, ze_module_handle
     }
 
     // mutate kernels and replace arguments
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandKernelsExp(cmdList, 1, &commandId, &mutableKernel));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandKernelsExt(cmdList, 1, &commandId, &mutableKernel));
     if (privateMemoryKernelFirst) {
         // change into copy kernel arguments
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelSrcArg.commandId = commandId;
         mutateKernelSrcArg.argIndex = 0;
         mutateKernelSrcArg.argSize = sizeof(void *);
         mutateKernelSrcArg.pArgValue = &copySrcBuffer;
 
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelDstArg.commandId = commandId;
         mutateKernelDstArg.argIndex = 1;
         mutateKernelDstArg.argSize = sizeof(void *);
         mutateKernelDstArg.pArgValue = &copyDstBuffer;
         mutateKernelDstArg.pNext = &mutateKernelSrcArg;
 
-        ze_mutable_group_count_exp_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
+        ze_mutable_group_count_ext_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXT_DESC};
         mutateGroupCount.commandId = commandId;
         mutateGroupCount.pGroupCount = mutableDispatchTraits;
         mutateGroupCount.pNext = &mutateKernelDstArg;
 
-        ze_mutable_group_size_exp_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXP_DESC};
+        ze_mutable_group_size_ext_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXT_DESC};
         mutateGroupSize.commandId = commandId;
         mutateGroupSize.groupSizeX = copyKernelGroupSizeX;
         mutateGroupSize.groupSizeY = copyKernelGroupSizeY;
         mutateGroupSize.groupSizeZ = copyKernelGroupSizeZ;
         mutateGroupSize.pNext = &mutateGroupCount;
 
-        ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+        ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
         mutateDesc.pNext = &mutateGroupSize;
-        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
     } else {
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelIdxArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelIdxArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelIdxArg.commandId = commandId;
         mutateKernelIdxArg.argIndex = 0;
         mutateKernelIdxArg.argSize = sizeof(void *);
         mutateKernelIdxArg.pArgValue = &privateSrcBuffer;
 
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelSrcArg.commandId = commandId;
         mutateKernelSrcArg.argIndex = 1;
         mutateKernelSrcArg.argSize = sizeof(void *);
         mutateKernelSrcArg.pArgValue = &privateDstBuffer;
         mutateKernelSrcArg.pNext = &mutateKernelIdxArg;
 
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelDstArg.commandId = commandId;
         mutateKernelDstArg.argIndex = 2;
         mutateKernelDstArg.argSize = sizeof(privateScalarValue);
         mutateKernelDstArg.pArgValue = &privateScalarValue;
         mutateKernelDstArg.pNext = &mutateKernelSrcArg;
 
-        ze_mutable_group_count_exp_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
+        ze_mutable_group_count_ext_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXT_DESC};
         mutateGroupCount.commandId = commandId;
         mutateGroupCount.pGroupCount = mutableDispatchTraits;
         mutateGroupCount.pNext = &mutateKernelDstArg;
 
-        ze_mutable_group_size_exp_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXP_DESC};
+        ze_mutable_group_size_ext_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXT_DESC};
         mutateGroupSize.commandId = commandId;
         mutateGroupSize.groupSizeX = privateGroupSizeX;
         mutateGroupSize.groupSizeY = privateGroupSizeY;
         mutateGroupSize.groupSizeZ = privateGroupSizeZ;
         mutateGroupSize.pNext = &mutateGroupCount;
 
-        ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+        ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
         mutateDesc.pNext = &mutateGroupSize;
-        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
     }
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
@@ -1622,12 +1622,12 @@ bool testMutateKernelsLocalWorkSize(MclTests::ExecEnv *execEnv, ze_module_handle
     dispatchTraits.groupCountZ = 1;
 
     uint64_t commandId = 0;
-    ze_mutable_command_id_exp_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
-    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS |
-                          ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT |
-                          ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_SIZE |
-                          ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_INSTRUCTION;
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdWithKernelsExp(cmdList, &commandIdDesc, 2, kernelGroup, &commandId));
+    ze_mutable_command_id_ext_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
+    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS |
+                          ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_COUNT |
+                          ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_SIZE |
+                          ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_INSTRUCTION;
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdWithKernelsExt(cmdList, &commandIdDesc, 2, kernelGroup, &commandId));
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, firstKernel, &dispatchTraits, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
@@ -1652,65 +1652,65 @@ bool testMutateKernelsLocalWorkSize(MclTests::ExecEnv *execEnv, ze_module_handle
     }
 
     // mutate kernels and replace arguments
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandKernelsExp(cmdList, 1, &commandId, &mutableKernel));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandKernelsExt(cmdList, 1, &commandId, &mutableKernel));
     if (localWorkSizeKernelFirst) {
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelSrcArg.commandId = commandId;
         mutateKernelSrcArg.argIndex = 0;
         mutateKernelSrcArg.argSize = sizeof(void *);
         mutateKernelSrcArg.pArgValue = &addSrcBuffer;
 
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelDstArg.commandId = commandId;
         mutateKernelDstArg.argIndex = 1;
         mutateKernelDstArg.argSize = sizeof(void *);
         mutateKernelDstArg.pArgValue = &addDstBuffer;
         mutateKernelDstArg.pNext = &mutateKernelSrcArg;
 
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelScalarArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelScalarArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelScalarArg.commandId = commandId;
         mutateKernelScalarArg.argIndex = 2;
         mutateKernelScalarArg.argSize = sizeof(ElemType);
         mutateKernelScalarArg.pArgValue = &scalarValue;
         mutateKernelScalarArg.pNext = &mutateKernelDstArg;
 
-        ze_mutable_group_count_exp_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
+        ze_mutable_group_count_ext_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXT_DESC};
         mutateGroupCount.commandId = commandId;
         mutateGroupCount.pGroupCount = &dispatchTraits;
         mutateGroupCount.pNext = &mutateKernelScalarArg;
 
-        ze_mutable_group_size_exp_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXP_DESC};
+        ze_mutable_group_size_ext_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXT_DESC};
         mutateGroupSize.commandId = commandId;
         mutateGroupSize.groupSizeX = addScalarLinearKernelGroupSize[0];
         mutateGroupSize.groupSizeY = addScalarLinearKernelGroupSize[1];
         mutateGroupSize.groupSizeZ = addScalarLinearKernelGroupSize[2];
         mutateGroupSize.pNext = &mutateGroupCount;
 
-        ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+        ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
         mutateDesc.pNext = &mutateGroupSize;
-        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
     } else {
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelDstArg.commandId = commandId;
         mutateKernelDstArg.argIndex = 0;
         mutateKernelDstArg.argSize = sizeof(void *);
         mutateKernelDstArg.pArgValue = &lwsDataBuffer;
 
-        ze_mutable_group_count_exp_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
+        ze_mutable_group_count_ext_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXT_DESC};
         mutateGroupCount.commandId = commandId;
         mutateGroupCount.pGroupCount = &dispatchTraits;
         mutateGroupCount.pNext = &mutateKernelDstArg;
 
-        ze_mutable_group_size_exp_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXP_DESC};
+        ze_mutable_group_size_ext_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXT_DESC};
         mutateGroupSize.commandId = commandId;
         mutateGroupSize.groupSizeX = localWorkSizeKernelGroupSize[0];
         mutateGroupSize.groupSizeY = localWorkSizeKernelGroupSize[1];
         mutateGroupSize.groupSizeZ = localWorkSizeKernelGroupSize[2];
         mutateGroupSize.pNext = &mutateGroupCount;
 
-        ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+        ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
         mutateDesc.pNext = &mutateGroupSize;
-        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
     }
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
@@ -1806,12 +1806,12 @@ bool testMutateKernelsGlobalWorkSize(MclTests::ExecEnv *execEnv, ze_module_handl
     ze_group_count_t *firstDispatchTraits = globalWorkSizeKernelFirst ? &gwsDispatchTraits : &addScalarDispatchTraits;
 
     uint64_t commandId = 0;
-    ze_mutable_command_id_exp_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
-    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS |
-                          ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT |
-                          ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_SIZE |
-                          ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_INSTRUCTION;
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdWithKernelsExp(cmdList, &commandIdDesc, 2, kernelGroup, &commandId));
+    ze_mutable_command_id_ext_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
+    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS |
+                          ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_COUNT |
+                          ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_SIZE |
+                          ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_INSTRUCTION;
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdWithKernelsExt(cmdList, &commandIdDesc, 2, kernelGroup, &commandId));
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, firstKernel, firstDispatchTraits, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
@@ -1834,65 +1834,65 @@ bool testMutateKernelsGlobalWorkSize(MclTests::ExecEnv *execEnv, ze_module_handl
     }
 
     // mutate kernels and replace arguments
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandKernelsExp(cmdList, 1, &commandId, &mutableKernel));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandKernelsExt(cmdList, 1, &commandId, &mutableKernel));
     if (globalWorkSizeKernelFirst) {
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelSrcArg.commandId = commandId;
         mutateKernelSrcArg.argIndex = 0;
         mutateKernelSrcArg.argSize = sizeof(void *);
         mutateKernelSrcArg.pArgValue = &addSrcBuffer;
 
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelDstArg.commandId = commandId;
         mutateKernelDstArg.argIndex = 1;
         mutateKernelDstArg.argSize = sizeof(void *);
         mutateKernelDstArg.pArgValue = &addDstBuffer;
         mutateKernelDstArg.pNext = &mutateKernelSrcArg;
 
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelScalarArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelScalarArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelScalarArg.commandId = commandId;
         mutateKernelScalarArg.argIndex = 2;
         mutateKernelScalarArg.argSize = sizeof(ElemType);
         mutateKernelScalarArg.pArgValue = &scalarValue;
         mutateKernelScalarArg.pNext = &mutateKernelDstArg;
 
-        ze_mutable_group_count_exp_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
+        ze_mutable_group_count_ext_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXT_DESC};
         mutateGroupCount.commandId = commandId;
         mutateGroupCount.pGroupCount = &addScalarDispatchTraits;
         mutateGroupCount.pNext = &mutateKernelScalarArg;
 
-        ze_mutable_group_size_exp_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXP_DESC};
+        ze_mutable_group_size_ext_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXT_DESC};
         mutateGroupSize.commandId = commandId;
         mutateGroupSize.groupSizeX = 1;
         mutateGroupSize.groupSizeY = 1;
         mutateGroupSize.groupSizeZ = 1;
         mutateGroupSize.pNext = &mutateGroupCount;
 
-        ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+        ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
         mutateDesc.pNext = &mutateGroupSize;
-        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
     } else {
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelDstArg.commandId = commandId;
         mutateKernelDstArg.argIndex = 0;
         mutateKernelDstArg.argSize = sizeof(void *);
         mutateKernelDstArg.pArgValue = &gwsDstBuffer;
 
-        ze_mutable_group_count_exp_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
+        ze_mutable_group_count_ext_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXT_DESC};
         mutateGroupCount.commandId = commandId;
         mutateGroupCount.pGroupCount = &gwsDispatchTraits;
         mutateGroupCount.pNext = &mutateKernelDstArg;
 
-        ze_mutable_group_size_exp_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXP_DESC};
+        ze_mutable_group_size_ext_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXT_DESC};
         mutateGroupSize.commandId = commandId;
         mutateGroupSize.groupSizeX = 1;
         mutateGroupSize.groupSizeY = 1;
         mutateGroupSize.groupSizeZ = 1;
         mutateGroupSize.pNext = &mutateGroupCount;
 
-        ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+        ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
         mutateDesc.pNext = &mutateGroupSize;
-        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
     }
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
@@ -1989,13 +1989,13 @@ bool testMutateKernelsGlobalOffset(MclTests::ExecEnv *execEnv, ze_module_handle_
     ze_group_count_t *firstDispatchTraits = globalOffsetKernelFirst ? &offsetDispatchTraits : &copyDispatchTraits;
 
     uint64_t commandId = 0;
-    ze_mutable_command_id_exp_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
-    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS |
-                          ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT |
-                          ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_SIZE |
-                          ZE_MUTABLE_COMMAND_EXP_FLAG_GLOBAL_OFFSET |
-                          ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_INSTRUCTION;
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdWithKernelsExp(cmdList, &commandIdDesc, 2, kernelGroup, &commandId));
+    ze_mutable_command_id_ext_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
+    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS |
+                          ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_COUNT |
+                          ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_SIZE |
+                          ZE_MUTABLE_COMMAND_EXT_FLAG_GLOBAL_OFFSET |
+                          ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_INSTRUCTION;
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdWithKernelsExt(cmdList, &commandIdDesc, 2, kernelGroup, &commandId));
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, firstKernel, firstDispatchTraits, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
@@ -2018,65 +2018,65 @@ bool testMutateKernelsGlobalOffset(MclTests::ExecEnv *execEnv, ze_module_handle_
     }
 
     // mutate kernels and replace arguments
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandKernelsExp(cmdList, 1, &commandId, &mutableKernel));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandKernelsExt(cmdList, 1, &commandId, &mutableKernel));
     if (globalOffsetKernelFirst) {
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelSrcArg.commandId = commandId;
         mutateKernelSrcArg.argIndex = 0;
         mutateKernelSrcArg.argSize = sizeof(void *);
         mutateKernelSrcArg.pArgValue = &copySrcBuffer;
 
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelDstArg.commandId = commandId;
         mutateKernelDstArg.argIndex = 1;
         mutateKernelDstArg.argSize = sizeof(void *);
         mutateKernelDstArg.pArgValue = &copyDstBuffer;
         mutateKernelDstArg.pNext = &mutateKernelSrcArg;
 
-        ze_mutable_group_count_exp_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
+        ze_mutable_group_count_ext_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXT_DESC};
         mutateGroupCount.commandId = commandId;
         mutateGroupCount.pGroupCount = &copyDispatchTraits;
         mutateGroupCount.pNext = &mutateKernelDstArg;
 
-        ze_mutable_group_size_exp_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXP_DESC};
+        ze_mutable_group_size_ext_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXT_DESC};
         mutateGroupSize.commandId = commandId;
         mutateGroupSize.groupSizeX = copyGroupSizeX;
         mutateGroupSize.groupSizeY = copyGroupSizeY;
         mutateGroupSize.groupSizeZ = copyGroupSizeZ;
         mutateGroupSize.pNext = &mutateGroupCount;
 
-        ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+        ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
         mutateDesc.pNext = &mutateGroupSize;
-        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
     } else {
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelDstArg.commandId = commandId;
         mutateKernelDstArg.argIndex = 0;
         mutateKernelDstArg.argSize = sizeof(void *);
         mutateKernelDstArg.pArgValue = &offsetDstBuffer;
 
-        ze_mutable_group_count_exp_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
+        ze_mutable_group_count_ext_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXT_DESC};
         mutateGroupCount.commandId = commandId;
         mutateGroupCount.pGroupCount = &offsetDispatchTraits;
         mutateGroupCount.pNext = &mutateKernelDstArg;
 
-        ze_mutable_group_size_exp_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXP_DESC};
+        ze_mutable_group_size_ext_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXT_DESC};
         mutateGroupSize.commandId = commandId;
         mutateGroupSize.groupSizeX = 1;
         mutateGroupSize.groupSizeY = 1;
         mutateGroupSize.groupSizeZ = 1;
         mutateGroupSize.pNext = &mutateGroupCount;
 
-        ze_mutable_global_offset_exp_desc_t mutateGlobalOffset = {ZE_STRUCTURE_TYPE_MUTABLE_GLOBAL_OFFSET_EXP_DESC};
+        ze_mutable_global_offset_ext_desc_t mutateGlobalOffset = {ZE_STRUCTURE_TYPE_MUTABLE_GLOBAL_OFFSET_EXT_DESC};
         mutateGlobalOffset.commandId = commandId;
         mutateGlobalOffset.offsetX = globalOffsets[0];
         mutateGlobalOffset.offsetY = globalOffsets[1];
         mutateGlobalOffset.offsetZ = globalOffsets[2];
         mutateGlobalOffset.pNext = &mutateGroupSize;
 
-        ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+        ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
         mutateDesc.pNext = &mutateGlobalOffset;
-        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
     }
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
@@ -2170,20 +2170,20 @@ bool testSameKernelsMutateArgumentsShapesEvents(MclTests::ExecEnv *execEnv, ze_m
 
     ze_kernel_handle_t kernelGroup[] = {copyKernel, lwsKernel};
 
-    ze_mutable_command_id_exp_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
-    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS |
-                          ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT |
-                          ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_SIZE |
-                          ZE_MUTABLE_COMMAND_EXP_FLAG_SIGNAL_EVENT |
-                          ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS |
-                          ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_INSTRUCTION;
+    ze_mutable_command_id_ext_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
+    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS |
+                          ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_COUNT |
+                          ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_SIZE |
+                          ZE_MUTABLE_COMMAND_EXT_FLAG_SIGNAL_EVENT |
+                          ZE_MUTABLE_COMMAND_EXT_FLAG_WAIT_EVENTS |
+                          ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_INSTRUCTION;
 
     uint64_t commandIdLws = 0;
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdWithKernelsExp(cmdList, &commandIdDesc, 2, kernelGroup, &commandIdLws));
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdWithKernelsExt(cmdList, &commandIdDesc, 2, kernelGroup, &commandIdLws));
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, lwsKernel, &lwsDispatchTraits, events[0], 0, nullptr));
 
     uint64_t commandIdCopy = 0;
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdWithKernelsExp(cmdList, &commandIdDesc, 2, kernelGroup, &commandIdCopy));
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdWithKernelsExt(cmdList, &commandIdDesc, 2, kernelGroup, &commandIdCopy));
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, copyKernel, &copyKernelDispatchTraits, nullptr, 1, &events[0]));
 
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
@@ -2206,39 +2206,39 @@ bool testSameKernelsMutateArgumentsShapesEvents(MclTests::ExecEnv *execEnv, ze_m
         }
     }
 
-    ze_mutable_kernel_argument_exp_desc_t mutateKernelCopySrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t mutateKernelCopySrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     mutateKernelCopySrcArg.commandId = commandIdCopy;
     mutateKernelCopySrcArg.argIndex = 0;
     mutateKernelCopySrcArg.argSize = sizeof(void *);
     mutateKernelCopySrcArg.pArgValue = &lwsDstBuffer2;
 
-    ze_mutable_kernel_argument_exp_desc_t mutateKernelCopyDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t mutateKernelCopyDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     mutateKernelCopyDstArg.commandId = commandIdCopy;
     mutateKernelCopyDstArg.argIndex = 1;
     mutateKernelCopyDstArg.argSize = sizeof(void *);
     mutateKernelCopyDstArg.pArgValue = &outputBuffer2;
     mutateKernelCopyDstArg.pNext = &mutateKernelCopySrcArg;
 
-    ze_mutable_kernel_argument_exp_desc_t mutateKernelLwsDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t mutateKernelLwsDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     mutateKernelLwsDstArg.commandId = commandIdLws;
     mutateKernelLwsDstArg.argIndex = 0;
     mutateKernelLwsDstArg.argSize = sizeof(void *);
     mutateKernelLwsDstArg.pArgValue = &lwsDstBuffer2;
     mutateKernelLwsDstArg.pNext = &mutateKernelCopyDstArg;
 
-    ze_mutable_group_size_exp_desc_t mutateKernelLwsGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXP_DESC};
+    ze_mutable_group_size_ext_desc_t mutateKernelLwsGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXT_DESC};
     mutateKernelLwsGroupSize.commandId = commandIdLws;
     mutateKernelLwsGroupSize.groupSizeX = mutateGroupSize[0];
     mutateKernelLwsGroupSize.groupSizeY = mutateGroupSize[1];
     mutateKernelLwsGroupSize.groupSizeZ = mutateGroupSize[2];
     mutateKernelLwsGroupSize.pNext = &mutateKernelLwsDstArg;
 
-    ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+    ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
     mutateDesc.pNext = &mutateKernelLwsGroupSize;
 
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandSignalEventExp(cmdList, commandIdLws, events[1]));
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandWaitEventsExp(cmdList, commandIdCopy, 1, &events[1]));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandSignalEventExt(cmdList, commandIdLws, events[1]));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandWaitEventsExt(cmdList, commandIdCopy, 1, &events[1]));
 
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
@@ -2373,24 +2373,24 @@ bool testDifferentKernelsMutateArgumentsShapesEvents(MclTests::ExecEnv *execEnv,
 
     ze_group_count_t *firstDispatchTraits = globalOffsetFirst ? &offsetDispatchTraits : &gwsDispatchTraits;
 
-    ze_mutable_command_id_exp_desc_t commandIdDescMutableKernel = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
-    commandIdDescMutableKernel.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS |
-                                       ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT |
-                                       ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_SIZE |
-                                       ZE_MUTABLE_COMMAND_EXP_FLAG_GLOBAL_OFFSET |
-                                       ZE_MUTABLE_COMMAND_EXP_FLAG_SIGNAL_EVENT |
-                                       ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_INSTRUCTION;
+    ze_mutable_command_id_ext_desc_t commandIdDescMutableKernel = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
+    commandIdDescMutableKernel.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS |
+                                       ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_COUNT |
+                                       ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_SIZE |
+                                       ZE_MUTABLE_COMMAND_EXT_FLAG_GLOBAL_OFFSET |
+                                       ZE_MUTABLE_COMMAND_EXT_FLAG_SIGNAL_EVENT |
+                                       ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_INSTRUCTION;
 
     uint64_t commandIdMutableKernel = 0;
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdWithKernelsExp(cmdList, &commandIdDescMutableKernel, 2, kernelGroup, &commandIdMutableKernel));
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdWithKernelsExt(cmdList, &commandIdDescMutableKernel, 2, kernelGroup, &commandIdMutableKernel));
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, firstKernel, firstDispatchTraits, events[0], 0, nullptr));
 
-    ze_mutable_command_id_exp_desc_t commandIdDescCopy = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
-    commandIdDescMutableKernel.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS |
-                                       ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS;
+    ze_mutable_command_id_ext_desc_t commandIdDescCopy = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
+    commandIdDescMutableKernel.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS |
+                                       ZE_MUTABLE_COMMAND_EXT_FLAG_WAIT_EVENTS;
 
     uint64_t commandIdCopy = 0;
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExp(cmdList, &commandIdDescCopy, &commandIdCopy));
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExt(cmdList, &commandIdDescCopy, &commandIdCopy));
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, copyKernel, &copyKernelDispatchTraits, nullptr, 1, &events[0]));
 
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
@@ -2418,89 +2418,89 @@ bool testDifferentKernelsMutateArgumentsShapesEvents(MclTests::ExecEnv *execEnv,
     }
 
     // mutate events - can be done before kernel mutation
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandSignalEventExp(cmdList, commandIdMutableKernel, events[1]));
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandWaitEventsExp(cmdList, commandIdCopy, 1, &events[1]));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandSignalEventExt(cmdList, commandIdMutableKernel, events[1]));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandWaitEventsExt(cmdList, commandIdCopy, 1, &events[1]));
     // mutate first kernel
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandKernelsExp(cmdList, 1, &commandIdMutableKernel, &mutableKernel));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandKernelsExt(cmdList, 1, &commandIdMutableKernel, &mutableKernel));
     if (globalOffsetFirst) {
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelDstArg.commandId = commandIdMutableKernel;
         mutateKernelDstArg.argIndex = 0;
         mutateKernelDstArg.argSize = sizeof(void *);
         mutateKernelDstArg.pArgValue = &gwsDstBuffer;
 
-        ze_mutable_group_count_exp_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
+        ze_mutable_group_count_ext_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXT_DESC};
         mutateGroupCount.commandId = commandIdMutableKernel;
         mutateGroupCount.pGroupCount = &gwsDispatchTraits;
         mutateGroupCount.pNext = &mutateKernelDstArg;
 
-        ze_mutable_group_size_exp_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXP_DESC};
+        ze_mutable_group_size_ext_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXT_DESC};
         mutateGroupSize.commandId = commandIdMutableKernel;
         mutateGroupSize.groupSizeX = 1;
         mutateGroupSize.groupSizeY = 1;
         mutateGroupSize.groupSizeZ = 1;
         mutateGroupSize.pNext = &mutateGroupCount;
 
-        ze_mutable_kernel_argument_exp_desc_t mutateCopyKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateCopyKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateCopyKernelDstArg.commandId = commandIdCopy;
         mutateCopyKernelDstArg.argIndex = 1;
         mutateCopyKernelDstArg.argSize = sizeof(void *);
         mutateCopyKernelDstArg.pArgValue = &outputBuffer2;
         mutateCopyKernelDstArg.pNext = &mutateGroupSize;
 
-        ze_mutable_kernel_argument_exp_desc_t mutateCopyKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateCopyKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateCopyKernelSrcArg.commandId = commandIdCopy;
         mutateCopyKernelSrcArg.argIndex = 0;
         mutateCopyKernelSrcArg.argSize = sizeof(void *);
         mutateCopyKernelSrcArg.pArgValue = &gwsDstBuffer;
         mutateCopyKernelSrcArg.pNext = &mutateCopyKernelDstArg;
 
-        ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+        ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
         mutateDesc.pNext = &mutateCopyKernelSrcArg;
-        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
     } else {
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelDstArg.commandId = commandIdMutableKernel;
         mutateKernelDstArg.argIndex = 0;
         mutateKernelDstArg.argSize = sizeof(void *);
         mutateKernelDstArg.pArgValue = &offsetDstBuffer;
 
-        ze_mutable_group_count_exp_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
+        ze_mutable_group_count_ext_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXT_DESC};
         mutateGroupCount.commandId = commandIdMutableKernel;
         mutateGroupCount.pGroupCount = &offsetDispatchTraits;
         mutateGroupCount.pNext = &mutateKernelDstArg;
 
-        ze_mutable_group_size_exp_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXP_DESC};
+        ze_mutable_group_size_ext_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXT_DESC};
         mutateGroupSize.commandId = commandIdMutableKernel;
         mutateGroupSize.groupSizeX = 1;
         mutateGroupSize.groupSizeY = 1;
         mutateGroupSize.groupSizeZ = 1;
         mutateGroupSize.pNext = &mutateGroupCount;
 
-        ze_mutable_global_offset_exp_desc_t mutateGlobalOffset = {ZE_STRUCTURE_TYPE_MUTABLE_GLOBAL_OFFSET_EXP_DESC};
+        ze_mutable_global_offset_ext_desc_t mutateGlobalOffset = {ZE_STRUCTURE_TYPE_MUTABLE_GLOBAL_OFFSET_EXT_DESC};
         mutateGlobalOffset.commandId = commandIdMutableKernel;
         mutateGlobalOffset.offsetX = globalOffset[0];
         mutateGlobalOffset.offsetY = globalOffset[1];
         mutateGlobalOffset.offsetZ = globalOffset[2];
         mutateGlobalOffset.pNext = &mutateGroupSize;
 
-        ze_mutable_kernel_argument_exp_desc_t mutateCopyKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateCopyKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateCopyKernelDstArg.commandId = commandIdCopy;
         mutateCopyKernelDstArg.argIndex = 1;
         mutateCopyKernelDstArg.argSize = sizeof(void *);
         mutateCopyKernelDstArg.pArgValue = &outputBuffer2;
         mutateCopyKernelDstArg.pNext = &mutateGlobalOffset;
 
-        ze_mutable_kernel_argument_exp_desc_t mutateCopyKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateCopyKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateCopyKernelSrcArg.commandId = commandIdCopy;
         mutateCopyKernelSrcArg.argIndex = 0;
         mutateCopyKernelSrcArg.argSize = sizeof(void *);
         mutateCopyKernelSrcArg.pArgValue = &offsetDstBuffer;
         mutateCopyKernelSrcArg.pNext = &mutateCopyKernelDstArg;
 
-        ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+        ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
         mutateDesc.pNext = &mutateCopyKernelSrcArg;
-        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
     }
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
@@ -2581,9 +2581,9 @@ bool testMutateSingleTaskKernelArgumentsAndKeepGroupCount(MclTests::ExecEnv *exe
     dispatchTraits.groupCountZ = 1u;
 
     uint64_t commandId = 0;
-    ze_mutable_command_id_exp_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
-    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS | ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT | ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_SIZE;
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExp(cmdList, &commandIdDesc, &commandId));
+    ze_mutable_command_id_ext_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
+    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS | ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_COUNT | ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_SIZE;
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExt(cmdList, &commandIdDesc, &commandId));
 
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, taskKernel, &dispatchTraits, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
@@ -2604,32 +2604,32 @@ bool testMutateSingleTaskKernelArgumentsAndKeepGroupCount(MclTests::ExecEnv *exe
         }
     }
 
-    ze_mutable_kernel_argument_exp_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     mutateKernelDstArg.commandId = commandId;
     mutateKernelDstArg.argIndex = 0;
     mutateKernelDstArg.argSize = sizeof(void *);
     mutateKernelDstArg.pArgValue = &dstBuffer2;
 
-    ze_mutable_group_count_exp_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
+    ze_mutable_group_count_ext_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXT_DESC};
     mutateGroupCount.commandId = commandId;
     mutateGroupCount.pGroupCount = &dispatchTraits;
     mutateGroupCount.pNext = &mutateKernelDstArg;
 
-    ze_mutable_group_size_exp_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXP_DESC};
+    ze_mutable_group_size_ext_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXT_DESC};
     mutateGroupSize.commandId = commandId;
     mutateGroupSize.groupSizeX = groupSizeX;
     mutateGroupSize.groupSizeY = groupSizeY;
     mutateGroupSize.groupSizeZ = groupSizeZ;
     mutateGroupSize.pNext = &mutateGroupCount;
 
-    ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+    ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
     if (passGroupCountDesc) {
         mutateDesc.pNext = &mutateGroupSize;
     } else {
         mutateDesc.pNext = &mutateKernelDstArg;
     }
 
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
     // set and run
@@ -2817,12 +2817,12 @@ bool testMutateGlobalBarrierKernels(MclTests::ExecEnv *execEnv, ze_module_handle
     ze_kernel_handle_t kernelGroup[] = {copyKernel, barrierKernel};
 
     uint64_t commandId = 0;
-    ze_mutable_command_id_exp_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
-    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS |
-                          ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT |
-                          ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_SIZE |
-                          ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_INSTRUCTION;
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdWithKernelsExp(cmdList, &commandIdDesc, 2, kernelGroup, &commandId));
+    ze_mutable_command_id_ext_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
+    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS |
+                          ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_COUNT |
+                          ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_SIZE |
+                          ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_INSTRUCTION;
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdWithKernelsExt(cmdList, &commandIdDesc, 2, kernelGroup, &commandId));
     ze_command_list_append_launch_kernel_param_cooperative_desc_t coopDesc = {ZE_STRUCTURE_TYPE_COMMAND_LIST_APPEND_PARAM_COOPERATIVE_DESC};
     coopDesc.isCooperative = true;
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernelWithParameters(cmdList, firstKernel, firstDispatchTraits, &coopDesc, nullptr, 0, nullptr));
@@ -2858,35 +2858,35 @@ bool testMutateGlobalBarrierKernels(MclTests::ExecEnv *execEnv, ze_module_handle
     // mutate kernels and replace arguments
     if (firstKernel != mutableKernel) {
         // mutation of kernels => update mutable kernel
-        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandKernelsExp(cmdList, 1, &commandId, &mutableKernel));
+        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandKernelsExt(cmdList, 1, &commandId, &mutableKernel));
 
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelStageArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelStageArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelStageArg.commandId = commandId;
         mutateKernelStageArg.argIndex = 2;
         mutateKernelStageArg.argSize = sizeof(void *);
 
         // mutate group count / size / arg
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelDstArg.commandId = commandId;
         mutateKernelDstArg.argIndex = 1;
         mutateKernelDstArg.argSize = sizeof(void *);
 
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelSrcArg.commandId = commandId;
         mutateKernelSrcArg.argIndex = 0;
         mutateKernelSrcArg.argSize = sizeof(void *);
         mutateKernelSrcArg.pNext = &mutateKernelDstArg;
 
-        ze_mutable_group_count_exp_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
+        ze_mutable_group_count_ext_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXT_DESC};
         mutateGroupCount.commandId = commandId;
         mutateGroupCount.pGroupCount = mutableDispatchTraits;
         mutateGroupCount.pNext = &mutateKernelSrcArg;
 
-        ze_mutable_group_size_exp_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXP_DESC};
+        ze_mutable_group_size_ext_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXT_DESC};
         mutateGroupSize.commandId = commandId;
         mutateGroupSize.pNext = &mutateGroupCount;
 
-        ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+        ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
         mutateDesc.pNext = &mutateGroupSize;
 
         if (mutateKernelType == KernelType::copy) {
@@ -2914,32 +2914,32 @@ bool testMutateGlobalBarrierKernels(MclTests::ExecEnv *execEnv, ze_module_handle
             }
         }
 
-        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
     } else {
         // same kernel => mutate group count and args only
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelStageArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelStageArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelStageArg.commandId = commandId;
         mutateKernelStageArg.argIndex = 2;
         mutateKernelStageArg.argSize = sizeof(void *);
 
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelDstArg.commandId = commandId;
         mutateKernelDstArg.argIndex = 1;
         mutateKernelDstArg.argSize = sizeof(void *);
         mutateKernelDstArg.pNext = &mutateKernelStageArg;
 
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelSrcArg.commandId = commandId;
         mutateKernelSrcArg.argIndex = 0;
         mutateKernelSrcArg.argSize = sizeof(void *);
         mutateKernelSrcArg.pNext = &mutateKernelDstArg;
 
-        ze_mutable_group_count_exp_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
+        ze_mutable_group_count_ext_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXT_DESC};
         mutateGroupCount.commandId = commandId;
         mutateGroupCount.pGroupCount = mutableDispatchTraits;
         mutateGroupCount.pNext = &mutateKernelSrcArg;
 
-        ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+        ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
         mutateDesc.pNext = &mutateGroupCount;
 
         if (mutateKernelType == KernelType::globalBarrier) {
@@ -2952,7 +2952,7 @@ bool testMutateGlobalBarrierKernels(MclTests::ExecEnv *execEnv, ze_module_handle
             mutateKernelStageArg.pArgValue = &barrierStageBufferMultiple;
         }
 
-        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
     }
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
@@ -2999,35 +2999,35 @@ bool testMutateGlobalBarrierKernels(MclTests::ExecEnv *execEnv, ze_module_handle
 
     if (mutableKernel != mutableBackKernel) {
         // mutation of kernels => update mutable kernel
-        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandKernelsExp(cmdList, 1, &commandId, &mutableBackKernel));
+        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandKernelsExt(cmdList, 1, &commandId, &mutableBackKernel));
 
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelStageArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelStageArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelStageArg.commandId = commandId;
         mutateKernelStageArg.argIndex = 2;
         mutateKernelStageArg.argSize = sizeof(void *);
 
         // mutate group count / size / arg
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelDstArg.commandId = commandId;
         mutateKernelDstArg.argIndex = 1;
         mutateKernelDstArg.argSize = sizeof(void *);
 
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelSrcArg.commandId = commandId;
         mutateKernelSrcArg.argIndex = 0;
         mutateKernelSrcArg.argSize = sizeof(void *);
         mutateKernelSrcArg.pNext = &mutateKernelDstArg;
 
-        ze_mutable_group_count_exp_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
+        ze_mutable_group_count_ext_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXT_DESC};
         mutateGroupCount.commandId = commandId;
         mutateGroupCount.pGroupCount = mutableBackDispatchTraits;
         mutateGroupCount.pNext = &mutateKernelSrcArg;
 
-        ze_mutable_group_size_exp_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXP_DESC};
+        ze_mutable_group_size_ext_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXT_DESC};
         mutateGroupSize.commandId = commandId;
         mutateGroupSize.pNext = &mutateGroupCount;
 
-        ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+        ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
         mutateDesc.pNext = &mutateGroupSize;
 
         if (mutateBackKernelType == KernelType::copy) {
@@ -3055,32 +3055,32 @@ bool testMutateGlobalBarrierKernels(MclTests::ExecEnv *execEnv, ze_module_handle
             }
         }
 
-        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
     } else {
         // same kernel => mutate group count and args only
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelStageArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelStageArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelStageArg.commandId = commandId;
         mutateKernelStageArg.argIndex = 2;
         mutateKernelStageArg.argSize = sizeof(void *);
 
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelDstArg.commandId = commandId;
         mutateKernelDstArg.argIndex = 1;
         mutateKernelDstArg.argSize = sizeof(void *);
         mutateKernelDstArg.pNext = &mutateKernelStageArg;
 
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelSrcArg.commandId = commandId;
         mutateKernelSrcArg.argIndex = 0;
         mutateKernelSrcArg.argSize = sizeof(void *);
         mutateKernelSrcArg.pNext = &mutateKernelDstArg;
 
-        ze_mutable_group_count_exp_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
+        ze_mutable_group_count_ext_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXT_DESC};
         mutateGroupCount.commandId = commandId;
         mutateGroupCount.pGroupCount = mutableBackDispatchTraits;
         mutateGroupCount.pNext = &mutateKernelSrcArg;
 
-        ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+        ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
         mutateDesc.pNext = &mutateGroupCount;
 
         if (mutateBackKernelType == KernelType::globalBarrier) {
@@ -3093,7 +3093,7 @@ bool testMutateGlobalBarrierKernels(MclTests::ExecEnv *execEnv, ze_module_handle
             mutateKernelStageArg.pArgValue = &barrierStageBufferMultiple;
         }
 
-        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
     }
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
@@ -3251,14 +3251,14 @@ bool testMutateSlmKernels(MclTests::ExecEnv *execEnv, ze_module_handle_t module,
     }
 
     uint64_t commandId = 0;
-    ze_mutable_command_id_exp_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
-    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS |
-                          ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT |
-                          ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_SIZE |
-                          ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_INSTRUCTION;
+    ze_mutable_command_id_ext_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
+    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS |
+                          ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_COUNT |
+                          ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_SIZE |
+                          ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_INSTRUCTION;
 
     ze_kernel_handle_t kernels[] = {slmOneArgKernel, slmTwoArgsKernel, copyKernel};
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdWithKernelsExp(cmdList, &commandIdDesc, 3, kernels, &commandId));
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdWithKernelsExt(cmdList, &commandIdDesc, 3, kernels, &commandId));
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, firstKernelHandle, firstDispatchTraits, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
@@ -3293,108 +3293,108 @@ bool testMutateSlmKernels(MclTests::ExecEnv *execEnv, ze_module_handle_t module,
     dispatchTraits.groupCountX = slmGroupCountArray[slmStep];
     dataSize = slmGroupSizeArray[slmStep] * slmGroupCountArray[slmStep];
 
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandKernelsExp(cmdList, 1, &commandId, &mutateKernelHandle));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandKernelsExt(cmdList, 1, &commandId, &mutateKernelHandle));
 
     if (mutateKernel == KernelType::copy) {
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelDstArg.commandId = commandId;
         mutateKernelDstArg.argIndex = 1;
         mutateKernelDstArg.argSize = sizeof(void *);
         mutateKernelDstArg.pArgValue = &copyDstBuffer;
 
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelSrcArg.commandId = commandId;
         mutateKernelSrcArg.argIndex = 0;
         mutateKernelSrcArg.argSize = sizeof(void *);
         mutateKernelSrcArg.pArgValue = &copySrcBuffer;
         mutateKernelSrcArg.pNext = &mutateKernelDstArg;
 
-        ze_mutable_group_count_exp_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
+        ze_mutable_group_count_ext_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXT_DESC};
         mutateGroupCount.commandId = commandId;
         mutateGroupCount.pGroupCount = &copyDispatchTraits;
         mutateGroupCount.pNext = &mutateKernelSrcArg;
 
-        ze_mutable_group_size_exp_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXP_DESC};
+        ze_mutable_group_size_ext_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXT_DESC};
         mutateGroupSize.commandId = commandId;
         mutateGroupSize.pNext = &mutateGroupCount;
         mutateGroupSize.groupSizeX = copyGroupSizeX;
         mutateGroupSize.groupSizeY = copyGroupSizeY;
         mutateGroupSize.groupSizeZ = copyGroupSizeZ;
 
-        ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+        ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
         mutateDesc.pNext = &mutateGroupSize;
 
-        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
     } else {
         if (mutateKernel == KernelType::slmKernelOneArgs) {
-            ze_mutable_kernel_argument_exp_desc_t mutateKernelSlmOneArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+            ze_mutable_kernel_argument_ext_desc_t mutateKernelSlmOneArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
             mutateKernelSlmOneArg.commandId = commandId;
             mutateKernelSlmOneArg.argIndex = 1;
             mutateKernelSlmOneArg.argSize = groupSizeX * sizeof(ElemType);
             mutateKernelSlmOneArg.pArgValue = nullptr;
 
-            ze_mutable_kernel_argument_exp_desc_t mutateKernelOutArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+            ze_mutable_kernel_argument_ext_desc_t mutateKernelOutArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
             mutateKernelOutArg.commandId = commandId;
             mutateKernelOutArg.argIndex = 0;
             mutateKernelOutArg.argSize = sizeof(void *);
             mutateKernelOutArg.pArgValue = &outBuffer;
             mutateKernelOutArg.pNext = &mutateKernelSlmOneArg;
 
-            ze_mutable_group_count_exp_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
+            ze_mutable_group_count_ext_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXT_DESC};
             mutateGroupCount.commandId = commandId;
             mutateGroupCount.pGroupCount = &dispatchTraits;
             mutateGroupCount.pNext = &mutateKernelOutArg;
 
-            ze_mutable_group_size_exp_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXP_DESC};
+            ze_mutable_group_size_ext_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXT_DESC};
             mutateGroupSize.commandId = commandId;
             mutateGroupSize.pNext = &mutateGroupCount;
             mutateGroupSize.groupSizeX = groupSizeX;
             mutateGroupSize.groupSizeY = groupSizeY;
             mutateGroupSize.groupSizeZ = groupSizeZ;
 
-            ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+            ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
             mutateDesc.pNext = &mutateGroupSize;
 
-            SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+            SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
 
             MclTests::prepareOutputSlmKernelOneArg(verificationData, groupSizeX, dispatchTraits.groupCountX);
         } else {
-            ze_mutable_kernel_argument_exp_desc_t mutateKernelSlmTwoArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+            ze_mutable_kernel_argument_ext_desc_t mutateKernelSlmTwoArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
             mutateKernelSlmTwoArg.commandId = commandId;
             mutateKernelSlmTwoArg.argIndex = 2;
             mutateKernelSlmTwoArg.argSize = groupSizeX * sizeof(ElemType);
             mutateKernelSlmTwoArg.pArgValue = nullptr;
 
-            ze_mutable_kernel_argument_exp_desc_t mutateKernelSlmOneArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+            ze_mutable_kernel_argument_ext_desc_t mutateKernelSlmOneArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
             mutateKernelSlmOneArg.commandId = commandId;
             mutateKernelSlmOneArg.argIndex = 1;
             mutateKernelSlmOneArg.argSize = groupSizeX * sizeof(ElemType);
             mutateKernelSlmOneArg.pArgValue = nullptr;
             mutateKernelSlmOneArg.pNext = &mutateKernelSlmTwoArg;
 
-            ze_mutable_kernel_argument_exp_desc_t mutateKernelOutArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+            ze_mutable_kernel_argument_ext_desc_t mutateKernelOutArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
             mutateKernelOutArg.commandId = commandId;
             mutateKernelOutArg.argIndex = 0;
             mutateKernelOutArg.argSize = sizeof(void *);
             mutateKernelOutArg.pArgValue = &outBuffer2;
             mutateKernelOutArg.pNext = &mutateKernelSlmOneArg;
 
-            ze_mutable_group_count_exp_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
+            ze_mutable_group_count_ext_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXT_DESC};
             mutateGroupCount.commandId = commandId;
             mutateGroupCount.pGroupCount = &dispatchTraits;
             mutateGroupCount.pNext = &mutateKernelOutArg;
 
-            ze_mutable_group_size_exp_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXP_DESC};
+            ze_mutable_group_size_ext_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXT_DESC};
             mutateGroupSize.commandId = commandId;
             mutateGroupSize.pNext = &mutateGroupCount;
             mutateGroupSize.groupSizeX = groupSizeX;
             mutateGroupSize.groupSizeY = groupSizeY;
             mutateGroupSize.groupSizeZ = groupSizeZ;
 
-            ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+            ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
             mutateDesc.pNext = &mutateGroupSize;
 
-            SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+            SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
 
             MclTests::prepareOutputSlmKernelTwoArgs(verificationData, groupSizeX, dispatchTraits.groupCountX);
         }
@@ -3429,108 +3429,108 @@ bool testMutateSlmKernels(MclTests::ExecEnv *execEnv, ze_module_handle_t module,
     dispatchTraits.groupCountX = slmGroupCountArray[slmStep];
     dataSize = slmGroupSizeArray[slmStep] * slmGroupCountArray[slmStep];
 
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandKernelsExp(cmdList, 1, &commandId, &mutateBackKernelHandle));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandKernelsExt(cmdList, 1, &commandId, &mutateBackKernelHandle));
 
     if (mutateBackKernel == KernelType::copy) {
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelDstArg.commandId = commandId;
         mutateKernelDstArg.argIndex = 1;
         mutateKernelDstArg.argSize = sizeof(void *);
         mutateKernelDstArg.pArgValue = &copyDstBuffer;
 
-        ze_mutable_kernel_argument_exp_desc_t mutateKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+        ze_mutable_kernel_argument_ext_desc_t mutateKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
         mutateKernelSrcArg.commandId = commandId;
         mutateKernelSrcArg.argIndex = 0;
         mutateKernelSrcArg.argSize = sizeof(void *);
         mutateKernelSrcArg.pArgValue = &copySrcBuffer;
         mutateKernelSrcArg.pNext = &mutateKernelDstArg;
 
-        ze_mutable_group_count_exp_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
+        ze_mutable_group_count_ext_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXT_DESC};
         mutateGroupCount.commandId = commandId;
         mutateGroupCount.pGroupCount = &copyDispatchTraits;
         mutateGroupCount.pNext = &mutateKernelSrcArg;
 
-        ze_mutable_group_size_exp_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXP_DESC};
+        ze_mutable_group_size_ext_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXT_DESC};
         mutateGroupSize.commandId = commandId;
         mutateGroupSize.pNext = &mutateGroupCount;
         mutateGroupSize.groupSizeX = copyGroupSizeX;
         mutateGroupSize.groupSizeY = copyGroupSizeY;
         mutateGroupSize.groupSizeZ = copyGroupSizeZ;
 
-        ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+        ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
         mutateDesc.pNext = &mutateGroupSize;
 
-        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
     } else {
         if (mutateBackKernel == KernelType::slmKernelOneArgs) {
-            ze_mutable_kernel_argument_exp_desc_t mutateKernelSlmOneArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+            ze_mutable_kernel_argument_ext_desc_t mutateKernelSlmOneArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
             mutateKernelSlmOneArg.commandId = commandId;
             mutateKernelSlmOneArg.argIndex = 1;
             mutateKernelSlmOneArg.argSize = groupSizeX * sizeof(ElemType);
             mutateKernelSlmOneArg.pArgValue = nullptr;
 
-            ze_mutable_kernel_argument_exp_desc_t mutateKernelOutArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+            ze_mutable_kernel_argument_ext_desc_t mutateKernelOutArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
             mutateKernelOutArg.commandId = commandId;
             mutateKernelOutArg.argIndex = 0;
             mutateKernelOutArg.argSize = sizeof(void *);
             mutateKernelOutArg.pArgValue = &outBuffer;
             mutateKernelOutArg.pNext = &mutateKernelSlmOneArg;
 
-            ze_mutable_group_count_exp_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
+            ze_mutable_group_count_ext_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXT_DESC};
             mutateGroupCount.commandId = commandId;
             mutateGroupCount.pGroupCount = &dispatchTraits;
             mutateGroupCount.pNext = &mutateKernelOutArg;
 
-            ze_mutable_group_size_exp_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXP_DESC};
+            ze_mutable_group_size_ext_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXT_DESC};
             mutateGroupSize.commandId = commandId;
             mutateGroupSize.pNext = &mutateGroupCount;
             mutateGroupSize.groupSizeX = groupSizeX;
             mutateGroupSize.groupSizeY = groupSizeY;
             mutateGroupSize.groupSizeZ = groupSizeZ;
 
-            ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+            ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
             mutateDesc.pNext = &mutateGroupSize;
 
-            SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+            SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
 
             MclTests::prepareOutputSlmKernelOneArg(verificationData, groupSizeX, dispatchTraits.groupCountX);
         } else {
-            ze_mutable_kernel_argument_exp_desc_t mutateKernelSlmTwoArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+            ze_mutable_kernel_argument_ext_desc_t mutateKernelSlmTwoArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
             mutateKernelSlmTwoArg.commandId = commandId;
             mutateKernelSlmTwoArg.argIndex = 2;
             mutateKernelSlmTwoArg.argSize = groupSizeX * sizeof(ElemType);
             mutateKernelSlmTwoArg.pArgValue = nullptr;
 
-            ze_mutable_kernel_argument_exp_desc_t mutateKernelSlmOneArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+            ze_mutable_kernel_argument_ext_desc_t mutateKernelSlmOneArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
             mutateKernelSlmOneArg.commandId = commandId;
             mutateKernelSlmOneArg.argIndex = 1;
             mutateKernelSlmOneArg.argSize = groupSizeX * sizeof(ElemType);
             mutateKernelSlmOneArg.pArgValue = nullptr;
             mutateKernelSlmOneArg.pNext = &mutateKernelSlmTwoArg;
 
-            ze_mutable_kernel_argument_exp_desc_t mutateKernelOutArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+            ze_mutable_kernel_argument_ext_desc_t mutateKernelOutArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
             mutateKernelOutArg.commandId = commandId;
             mutateKernelOutArg.argIndex = 0;
             mutateKernelOutArg.argSize = sizeof(void *);
             mutateKernelOutArg.pArgValue = &outBuffer2;
             mutateKernelOutArg.pNext = &mutateKernelSlmOneArg;
 
-            ze_mutable_group_count_exp_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
+            ze_mutable_group_count_ext_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXT_DESC};
             mutateGroupCount.commandId = commandId;
             mutateGroupCount.pGroupCount = &dispatchTraits;
             mutateGroupCount.pNext = &mutateKernelOutArg;
 
-            ze_mutable_group_size_exp_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXP_DESC};
+            ze_mutable_group_size_ext_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXT_DESC};
             mutateGroupSize.commandId = commandId;
             mutateGroupSize.pNext = &mutateGroupCount;
             mutateGroupSize.groupSizeX = groupSizeX;
             mutateGroupSize.groupSizeY = groupSizeY;
             mutateGroupSize.groupSizeZ = groupSizeZ;
 
-            ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+            ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
             mutateDesc.pNext = &mutateGroupSize;
 
-            SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+            SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
 
             MclTests::prepareOutputSlmKernelTwoArgs(verificationData, groupSizeX, dispatchTraits.groupCountX);
         }
@@ -3647,9 +3647,9 @@ bool testMutateBackKernel(MclTests::ExecEnv *execEnv, ze_module_handle_t module,
     ze_kernel_handle_t kernelGroup[] = {addKernel, mulKernel};
 
     uint64_t commandId = 0;
-    ze_mutable_command_id_exp_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
-    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS | ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT | ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_SIZE | ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_INSTRUCTION;
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdWithKernelsExp(cmdList, &commandIdDesc, 2, kernelGroup, &commandId));
+    ze_mutable_command_id_ext_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
+    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS | ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_COUNT | ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_SIZE | ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_INSTRUCTION;
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdWithKernelsExt(cmdList, &commandIdDesc, 2, kernelGroup, &commandId));
     if (firstMultiple) {
         SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, mulKernel, &dispatchTraits, nullptr, 0, nullptr));
     } else {
@@ -3678,26 +3678,26 @@ bool testMutateBackKernel(MclTests::ExecEnv *execEnv, ze_module_handle_t module,
 
     // select new kernel
     if (firstMultiple) {
-        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandKernelsExp(cmdList, 1, &commandId, &addKernel));
+        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandKernelsExt(cmdList, 1, &commandId, &addKernel));
     } else {
-        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandKernelsExp(cmdList, 1, &commandId, &mulKernel));
+        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandKernelsExt(cmdList, 1, &commandId, &mulKernel));
     }
 
     // select arguments and dispatch parameters for new kernel
-    ze_mutable_kernel_argument_exp_desc_t mutateKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t mutateKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     mutateKernelSrcArg.commandId = commandId;
     mutateKernelSrcArg.argIndex = 0;
     mutateKernelSrcArg.argSize = sizeof(void *);
     mutateKernelSrcArg.pArgValue = &srcBufferMutable;
 
-    ze_mutable_kernel_argument_exp_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     mutateKernelDstArg.commandId = commandId;
     mutateKernelDstArg.argIndex = 1;
     mutateKernelDstArg.argSize = sizeof(void *);
     mutateKernelDstArg.pArgValue = &dstBufferMutable;
     mutateKernelDstArg.pNext = &mutateKernelSrcArg;
 
-    ze_mutable_kernel_argument_exp_desc_t mutateKernelScalarArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t mutateKernelScalarArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     mutateKernelScalarArg.commandId = commandId;
     mutateKernelScalarArg.argIndex = 2;
     mutateKernelScalarArg.argSize = sizeof(ElemType);
@@ -3705,22 +3705,22 @@ bool testMutateBackKernel(MclTests::ExecEnv *execEnv, ze_module_handle_t module,
     mutateKernelScalarArg.pNext = &mutateKernelDstArg;
 
     dispatchTraits.groupCountX = mutateGroupCount;
-    ze_mutable_group_count_exp_desc_t mutateGroupCountDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
+    ze_mutable_group_count_ext_desc_t mutateGroupCountDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXT_DESC};
     mutateGroupCountDesc.commandId = commandId;
     mutateGroupCountDesc.pGroupCount = &dispatchTraits;
     mutateGroupCountDesc.pNext = &mutateKernelScalarArg;
 
-    ze_mutable_group_size_exp_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXP_DESC};
+    ze_mutable_group_size_ext_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXT_DESC};
     mutateGroupSize.commandId = commandId;
     mutateGroupSize.groupSizeX = groupSizeX;
     mutateGroupSize.groupSizeY = groupSizeY;
     mutateGroupSize.groupSizeZ = groupSizeZ;
     mutateGroupSize.pNext = &mutateGroupCountDesc;
 
-    ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+    ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
     mutateDesc.pNext = &mutateGroupSize;
 
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
     // set and run
@@ -3745,9 +3745,9 @@ bool testMutateBackKernel(MclTests::ExecEnv *execEnv, ze_module_handle_t module,
 
     // mutate back
     if (firstMultiple) {
-        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandKernelsExp(cmdList, 1, &commandId, &mulKernel));
+        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandKernelsExt(cmdList, 1, &commandId, &mulKernel));
     } else {
-        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandKernelsExp(cmdList, 1, &commandId, &addKernel));
+        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandKernelsExt(cmdList, 1, &commandId, &addKernel));
     }
 
     mutateKernelSrcArg.pArgValue = &srcBufferFirst;
@@ -3755,7 +3755,7 @@ bool testMutateBackKernel(MclTests::ExecEnv *execEnv, ze_module_handle_t module,
     mutateKernelScalarArg.pArgValue = &firstScalarValue;
     dispatchTraits.groupCountX = firstGroupCount;
 
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
     // set and run
@@ -3778,9 +3778,9 @@ bool testMutateBackKernel(MclTests::ExecEnv *execEnv, ze_module_handle_t module,
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(execEnv->immCmdList, dstBufferMutable, &zero, sizeof(zero), allocSize, nullptr, 0, nullptr));
 
     if (firstMultiple) {
-        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandKernelsExp(cmdList, 1, &commandId, &addKernel));
+        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandKernelsExt(cmdList, 1, &commandId, &addKernel));
     } else {
-        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandKernelsExp(cmdList, 1, &commandId, &mulKernel));
+        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandKernelsExt(cmdList, 1, &commandId, &mulKernel));
     }
 
     mutateKernelSrcArg.pArgValue = &srcBufferMutable;
@@ -3788,7 +3788,7 @@ bool testMutateBackKernel(MclTests::ExecEnv *execEnv, ze_module_handle_t module,
     mutateKernelScalarArg.pArgValue = &mutableScalarValue;
     dispatchTraits.groupCountX = mutateGroupCount;
 
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(execEnv->queue, 1, &cmdList, nullptr));

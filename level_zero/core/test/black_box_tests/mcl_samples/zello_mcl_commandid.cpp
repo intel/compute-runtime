@@ -225,10 +225,10 @@ bool testMultiExecutionMutatedCbEvents(MclTests::ExecEnv *execEnv, ze_module_han
     dispatchTraits.groupCountZ = 1u;
 
     uint64_t commandIdCopy = 0;
-    ze_mutable_command_id_exp_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
-    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_SIGNAL_EVENT | ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS;
+    ze_mutable_command_id_ext_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
+    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_SIGNAL_EVENT | ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS;
 
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExp(cmdListCopy, &commandIdDesc, &commandIdCopy));
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExt(cmdListCopy, &commandIdDesc, &commandIdCopy));
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdListCopy, copyKernel, &dispatchTraits, events[0], 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdListCopy));
 
@@ -250,9 +250,9 @@ bool testMultiExecutionMutatedCbEvents(MclTests::ExecEnv *execEnv, ze_module_han
     dispatchTraits.groupCountZ = 1u;
 
     uint64_t commandIdAdd = 0;
-    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS | ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS;
+    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_WAIT_EVENTS | ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS;
 
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExp(cmdListAdd, &commandIdDesc, &commandIdAdd));
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExt(cmdListAdd, &commandIdDesc, &commandIdAdd));
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdListAdd, addKernel, &dispatchTraits, nullptr, 1, &events[0]));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdListAdd));
 
@@ -273,24 +273,24 @@ bool testMultiExecutionMutatedCbEvents(MclTests::ExecEnv *execEnv, ze_module_han
     memset(dstBuffer, 0, allocSize);
 
     // mutate into another signal event and arguments in copy command list
-    ze_mutable_kernel_argument_exp_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     mutateKernelDstArg.commandId = commandIdCopy;
     mutateKernelDstArg.argIndex = 1;
     mutateKernelDstArg.argSize = sizeof(void *);
     mutateKernelDstArg.pArgValue = &stageBuffer2;
 
-    ze_mutable_kernel_argument_exp_desc_t mutateKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t mutateKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     mutateKernelSrcArg.commandId = commandIdCopy;
     mutateKernelSrcArg.argIndex = 0;
     mutateKernelSrcArg.argSize = sizeof(void *);
     mutateKernelSrcArg.pArgValue = &srcBuffer2;
     mutateKernelSrcArg.pNext = &mutateKernelDstArg;
 
-    ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+    ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
     mutateDesc.pNext = &mutateKernelSrcArg;
 
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdListCopy, &mutateDesc));
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandSignalEventExp(cmdListCopy, commandIdCopy, events[1]));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdListCopy, &mutateDesc));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandSignalEventExt(cmdListCopy, commandIdCopy, events[1]));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdListCopy));
 
     // mutate into another wait event and source in add command list
@@ -300,8 +300,8 @@ bool testMultiExecutionMutatedCbEvents(MclTests::ExecEnv *execEnv, ze_module_han
     mutateKernelDstArg.pArgValue = &stageBuffer2;
     mutateKernelSrcArg.pNext = nullptr; // unlink dst parameter as in add kernel remains the same
 
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdListAdd, &mutateDesc));
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandWaitEventsExp(cmdListAdd, commandIdAdd, 1, &events[1]));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdListAdd, &mutateDesc));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandWaitEventsExt(cmdListAdd, commandIdAdd, 1, &events[1]));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdListAdd));
 
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(execEnv->queue, 2, cmdLists, nullptr));
@@ -404,10 +404,10 @@ bool testGroupSizeDimensionsTotalConstant(MclTests::ExecEnv *execEnv, ze_module_
     dispatchTraits.groupCountZ = 1u;
 
     uint64_t commandId = 0;
-    ze_mutable_command_id_exp_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
-    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS | ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_SIZE;
+    ze_mutable_command_id_ext_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
+    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS | ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_SIZE;
 
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExp(cmdList, &commandIdDesc, &commandId));
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExt(cmdList, &commandIdDesc, &commandId));
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, addKernelLinear, &dispatchTraits, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
@@ -424,30 +424,30 @@ bool testGroupSizeDimensionsTotalConstant(MclTests::ExecEnv *execEnv, ze_module_
         }
     }
 
-    ze_mutable_group_size_exp_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXP_DESC};
+    ze_mutable_group_size_ext_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXT_DESC};
     mutateGroupSize.commandId = commandId;
     mutateGroupSize.groupSizeX = 1;
     mutateGroupSize.groupSizeY = elemSize;
     mutateGroupSize.groupSizeZ = 1;
 
-    ze_mutable_kernel_argument_exp_desc_t mutateKernelArgSrc = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t mutateKernelArgSrc = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     mutateKernelArgSrc.commandId = commandId;
     mutateKernelArgSrc.argIndex = 0;
     mutateKernelArgSrc.argSize = sizeof(void *);
     mutateKernelArgSrc.pArgValue = &mutatedSrcBuffer;
     mutateKernelArgSrc.pNext = &mutateGroupSize;
 
-    ze_mutable_kernel_argument_exp_desc_t mutateKernelArgDst = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t mutateKernelArgDst = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     mutateKernelArgDst.commandId = commandId;
     mutateKernelArgDst.argIndex = 1;
     mutateKernelArgDst.argSize = sizeof(void *);
     mutateKernelArgDst.pArgValue = &mutatedDstBuffer;
     mutateKernelArgDst.pNext = &mutateKernelArgSrc;
 
-    ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+    ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
     mutateDesc.pNext = &mutateKernelArgDst;
 
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(execEnv->queue, 1, &cmdList, nullptr));
@@ -470,7 +470,7 @@ bool testGroupSizeDimensionsTotalConstant(MclTests::ExecEnv *execEnv, ze_module_
 
     mutateKernelArgDst.pArgValue = &mutatedDstBuffer2;
 
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(execEnv->queue, 1, &cmdList, nullptr));
@@ -537,10 +537,10 @@ bool testMutateBufferToNullAndBack(MclTests::ExecEnv *execEnv, ze_module_handle_
     dispatchTraits.groupCountZ = 1u;
 
     uint64_t commandId = 0;
-    ze_mutable_command_id_exp_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
-    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS;
+    ze_mutable_command_id_ext_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
+    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS;
 
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExp(cmdList, &commandIdDesc, &commandId));
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExt(cmdList, &commandIdDesc, &commandId));
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, copyKernelOptional, &dispatchTraits, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
@@ -562,7 +562,7 @@ bool testMutateBufferToNullAndBack(MclTests::ExecEnv *execEnv, ze_module_handle_
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(execEnv->immCmdList, dstBuffer, &zero, sizeof(zero), allocSize, nullptr, 0, nullptr));
 
     // set the same src argument
-    ze_mutable_kernel_argument_exp_desc_t mutateKernelArgSrc = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t mutateKernelArgSrc = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     mutateKernelArgSrc.commandId = commandId;
     mutateKernelArgSrc.argIndex = 0;
     mutateKernelArgSrc.argSize = sizeof(void *);
@@ -572,10 +572,10 @@ bool testMutateBufferToNullAndBack(MclTests::ExecEnv *execEnv, ze_module_handle_
         mutateKernelArgSrc.pArgValue = &srcBuffer;
     }
 
-    ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+    ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
     mutateDesc.pNext = &mutateKernelArgSrc;
 
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(execEnv->queue, 1, &cmdList, nullptr));
@@ -591,7 +591,7 @@ bool testMutateBufferToNullAndBack(MclTests::ExecEnv *execEnv, ze_module_handle_
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(execEnv->immCmdList, dstBuffer, &zero, sizeof(zero), allocSize, nullptr, 0, nullptr));
 
     // set dst argument to the same value as before
-    ze_mutable_kernel_argument_exp_desc_t mutateKernelArgDst = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t mutateKernelArgDst = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     mutateKernelArgDst.commandId = commandId;
     mutateKernelArgDst.argIndex = 1;
     mutateKernelArgDst.argSize = sizeof(void *);
@@ -605,7 +605,7 @@ bool testMutateBufferToNullAndBack(MclTests::ExecEnv *execEnv, ze_module_handle_
     }
     mutateKernelArgSrc.pNext = &mutateKernelArgDst;
 
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(execEnv->queue, 1, &cmdList, nullptr));
@@ -633,7 +633,7 @@ bool testMutateBufferToNullAndBack(MclTests::ExecEnv *execEnv, ze_module_handle_
     // set null directly as argument value
     mutateKernelArgDst.pArgValue = nullPtrArgument;
 
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(execEnv->queue, 1, &cmdList, nullptr));
@@ -654,7 +654,7 @@ bool testMutateBufferToNullAndBack(MclTests::ExecEnv *execEnv, ze_module_handle_
     // set src to memory
     mutateKernelArgSrc.pArgValue = &srcBuffer;
 
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(execEnv->queue, 1, &cmdList, nullptr));
@@ -718,30 +718,30 @@ bool testSetNullPtrThenMutateToBuffer(MclTests::ExecEnv *execEnv, ze_module_hand
     SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(copyKernel, 1, sizeof(void *), &nullPtrArgument));
 
     uint64_t commandId = 0;
-    ze_mutable_command_id_exp_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
-    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS;
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExp(cmdList, &commandIdDesc, &commandId));
+    ze_mutable_command_id_ext_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
+    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS;
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExt(cmdList, &commandIdDesc, &commandId));
 
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, copyKernel, &dispatchTraits, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
-    ze_mutable_kernel_argument_exp_desc_t mutateKernelArgSrc = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t mutateKernelArgSrc = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     mutateKernelArgSrc.commandId = commandId;
     mutateKernelArgSrc.argIndex = 0;
     mutateKernelArgSrc.argSize = sizeof(void *);
     mutateKernelArgSrc.pArgValue = &srcBuffer;
 
-    ze_mutable_kernel_argument_exp_desc_t mutateKernelArgDst = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t mutateKernelArgDst = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     mutateKernelArgDst.commandId = commandId;
     mutateKernelArgDst.argIndex = 1;
     mutateKernelArgDst.argSize = sizeof(void *);
     mutateKernelArgDst.pArgValue = &dstBuffer;
     mutateKernelArgDst.pNext = &mutateKernelArgSrc;
 
-    ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+    ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
     mutateDesc.pNext = &mutateKernelArgDst;
 
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(execEnv->queue, 1, &cmdList, nullptr));
@@ -817,10 +817,10 @@ bool testMixedOffsetMemoryArgumentGlobalSize3DNonPow2(MclTests::ExecEnv *execEnv
     dispatchTraits.groupCountZ = 1u;
 
     uint64_t commandId = 0;
-    ze_mutable_command_id_exp_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
-    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS | ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_SIZE;
+    ze_mutable_command_id_ext_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
+    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS | ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_COUNT | ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_SIZE;
 
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExp(cmdList, &commandIdDesc, &commandId));
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExt(cmdList, &commandIdDesc, &commandId));
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, addKernelLinear, &dispatchTraits, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
@@ -837,30 +837,30 @@ bool testMixedOffsetMemoryArgumentGlobalSize3DNonPow2(MclTests::ExecEnv *execEnv
         }
     }
 
-    ze_mutable_group_size_exp_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXP_DESC};
+    ze_mutable_group_size_ext_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXT_DESC};
     mutateGroupSize.commandId = commandId;
     mutateGroupSize.groupSizeX = 7;
     mutateGroupSize.groupSizeY = 3;
     mutateGroupSize.groupSizeZ = 9;
 
-    ze_mutable_kernel_argument_exp_desc_t mutateKernelArgSrc = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t mutateKernelArgSrc = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     mutateKernelArgSrc.commandId = commandId;
     mutateKernelArgSrc.argIndex = 0;
     mutateKernelArgSrc.argSize = sizeof(void *);
     mutateKernelArgSrc.pArgValue = &mutatedSrcBuffer;
     mutateKernelArgSrc.pNext = &mutateGroupSize;
 
-    ze_mutable_kernel_argument_exp_desc_t mutateKernelArgDst = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t mutateKernelArgDst = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     mutateKernelArgDst.commandId = commandId;
     mutateKernelArgDst.argIndex = 1;
     mutateKernelArgDst.argSize = sizeof(void *);
     mutateKernelArgDst.pArgValue = &mutatedDstBuffer;
     mutateKernelArgDst.pNext = &mutateKernelArgSrc;
 
-    ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+    ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
     mutateDesc.pNext = &mutateKernelArgDst;
 
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(execEnv->queue, 1, &cmdList, nullptr));
@@ -942,16 +942,16 @@ bool testMutateSignalAndWaitEventsAndRemoveOldEvent(MclTests::ExecEnv *execEnv, 
     dispatchTraits.groupCountY = 1u;
     dispatchTraits.groupCountZ = 1u;
 
-    ze_mutable_command_id_exp_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
-    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_SIGNAL_EVENT;
+    ze_mutable_command_id_ext_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
+    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_SIGNAL_EVENT;
     uint64_t commandIdAdd = 0;
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExp(cmdList, &commandIdDesc, &commandIdAdd));
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExt(cmdList, &commandIdDesc, &commandIdAdd));
 
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, addKernel, &dispatchTraits, baseEvent, 0, nullptr));
 
-    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS;
+    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_WAIT_EVENTS;
     uint64_t commandIdCopy = 0;
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExp(cmdList, &commandIdDesc, &commandIdCopy));
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExt(cmdList, &commandIdDesc, &commandIdCopy));
 
     SUCCESS_OR_TERMINATE(zeKernelSuggestGroupSize(copyKernel, allocSize, 1U, 1U, &groupSizeX, &groupSizeY, &groupSizeZ));
     SUCCESS_OR_TERMINATE(zeKernelSetGroupSize(copyKernel, groupSizeX, groupSizeY, groupSizeZ));
@@ -988,9 +988,9 @@ bool testMutateSignalAndWaitEventsAndRemoveOldEvent(MclTests::ExecEnv *execEnv, 
         MclTests::destroyEventPool(eventPool, eventOptions);
     }
 
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandSignalEventExp(cmdList, commandIdAdd, mutableEvent));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandSignalEventExt(cmdList, commandIdAdd, mutableEvent));
 
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandWaitEventsExp(cmdList, commandIdCopy, 1, &mutableEvent));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandWaitEventsExt(cmdList, commandIdCopy, 1, &mutableEvent));
 
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
@@ -1056,10 +1056,10 @@ bool testGlobalOffsetBif(MclTests::ExecEnv *execEnv, ze_module_handle_t module, 
     SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdList, nullptr, 0, nullptr));
 
     uint64_t commandId = 0;
-    ze_mutable_command_id_exp_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
-    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_GLOBAL_OFFSET;
+    ze_mutable_command_id_ext_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
+    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_GLOBAL_OFFSET;
 
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExp(cmdList, &commandIdDesc, &commandId));
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExt(cmdList, &commandIdDesc, &commandId));
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, globalOffsetKernel, &offsetDispatchTraits, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
@@ -1073,16 +1073,16 @@ bool testGlobalOffsetBif(MclTests::ExecEnv *execEnv, ze_module_handle_t module, 
 
     memset(dstBuffer, 0, allocSize);
 
-    ze_mutable_global_offset_exp_desc_t mutateGlobalOffset = {ZE_STRUCTURE_TYPE_MUTABLE_GLOBAL_OFFSET_EXP_DESC};
+    ze_mutable_global_offset_ext_desc_t mutateGlobalOffset = {ZE_STRUCTURE_TYPE_MUTABLE_GLOBAL_OFFSET_EXT_DESC};
     mutateGlobalOffset.commandId = commandId;
     mutateGlobalOffset.offsetX = inputOffset[0];
     mutateGlobalOffset.offsetY = inputOffset[1];
     mutateGlobalOffset.offsetZ = inputOffset[2];
 
-    ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+    ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
     mutateDesc.pNext = &mutateGlobalOffset;
 
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(execEnv->queue, 1, &cmdList, nullptr));
@@ -1145,10 +1145,10 @@ bool testGlobalOffsetCopy(MclTests::ExecEnv *execEnv, ze_module_handle_t module,
     SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdList, nullptr, 0, nullptr));
 
     uint64_t commandId = 0;
-    ze_mutable_command_id_exp_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
-    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_GLOBAL_OFFSET;
+    ze_mutable_command_id_ext_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
+    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_GLOBAL_OFFSET;
 
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExp(cmdList, &commandIdDesc, &commandId));
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExt(cmdList, &commandIdDesc, &commandId));
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, copyKernel, &copyDispatchTraits, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
@@ -1173,16 +1173,16 @@ bool testGlobalOffsetCopy(MclTests::ExecEnv *execEnv, ze_module_handle_t module,
         }
     }
 
-    ze_mutable_global_offset_exp_desc_t mutateGlobalOffset = {ZE_STRUCTURE_TYPE_MUTABLE_GLOBAL_OFFSET_EXP_DESC};
+    ze_mutable_global_offset_ext_desc_t mutateGlobalOffset = {ZE_STRUCTURE_TYPE_MUTABLE_GLOBAL_OFFSET_EXT_DESC};
     mutateGlobalOffset.commandId = commandId;
     mutateGlobalOffset.offsetX = partitionSize;
     mutateGlobalOffset.offsetY = 0;
     mutateGlobalOffset.offsetZ = 0;
 
-    ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+    ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
     mutateDesc.pNext = &mutateGlobalOffset;
 
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(execEnv->queue, 1, &cmdList, nullptr));
@@ -1241,10 +1241,10 @@ bool testGroupSizeBif(MclTests::ExecEnv *execEnv, ze_module_handle_t module, uin
     SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(lwsKernel, 0, sizeof(void *), &stageBuffer));
 
     uint64_t commandId = 0;
-    ze_mutable_command_id_exp_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
-    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_SIZE;
+    ze_mutable_command_id_ext_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
+    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_SIZE;
 
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExp(cmdList, &commandIdDesc, &commandId));
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExt(cmdList, &commandIdDesc, &commandId));
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, lwsKernel, &lwsKernelDispatchTraits, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdList, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, dstBuffer, stageBuffer, allocSize, nullptr, 0, nullptr));
@@ -1260,16 +1260,16 @@ bool testGroupSizeBif(MclTests::ExecEnv *execEnv, ze_module_handle_t module, uin
 
     memset(dstBuffer, 0, allocSize);
 
-    ze_mutable_group_size_exp_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXP_DESC};
+    ze_mutable_group_size_ext_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXT_DESC};
     mutateGroupSize.commandId = commandId;
     mutateGroupSize.groupSizeX = groupSize[0];
     mutateGroupSize.groupSizeY = groupSize[1];
     mutateGroupSize.groupSizeZ = groupSize[2];
 
-    ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+    ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
     mutateDesc.pNext = &mutateGroupSize;
 
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(execEnv->queue, 1, &cmdList, nullptr));
@@ -1314,10 +1314,10 @@ bool testGroupCountBif(MclTests::ExecEnv *execEnv, ze_module_handle_t module, ui
     SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(gwsKernel, 0, sizeof(void *), &dstBuffer));
 
     uint64_t commandId = 0;
-    ze_mutable_command_id_exp_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
-    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT;
+    ze_mutable_command_id_ext_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
+    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_COUNT;
 
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExp(cmdList, &commandIdDesc, &commandId));
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExt(cmdList, &commandIdDesc, &commandId));
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, gwsKernel, &gwsKernelDispatchTraits, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
@@ -1336,14 +1336,14 @@ bool testGroupCountBif(MclTests::ExecEnv *execEnv, ze_module_handle_t module, ui
     newDispatchTraits.groupCountY = groupCount[1];
     newDispatchTraits.groupCountZ = groupCount[2];
 
-    ze_mutable_group_count_exp_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
+    ze_mutable_group_count_ext_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXT_DESC};
     mutateGroupCount.commandId = commandId;
     mutateGroupCount.pGroupCount = &newDispatchTraits;
 
-    ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+    ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
     mutateDesc.pNext = &mutateGroupCount;
 
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(execEnv->queue, 1, &cmdList, nullptr));
@@ -1401,10 +1401,10 @@ bool testGroupCountCopy(MclTests::ExecEnv *execEnv, ze_module_handle_t module, b
     SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(copyKernel, 1, sizeof(void *), &dstBuffer));
 
     uint64_t commandId = 0;
-    ze_mutable_command_id_exp_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
-    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT;
+    ze_mutable_command_id_ext_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
+    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_COUNT;
 
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExp(cmdList, &commandIdDesc, &commandId));
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExt(cmdList, &commandIdDesc, &commandId));
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, copyKernel, &copyDispatchTraits, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
@@ -1436,14 +1436,14 @@ bool testGroupCountCopy(MclTests::ExecEnv *execEnv, ze_module_handle_t module, b
     newDispatchTraits.groupCountX *= 2;
     currentElemSize *= 2;
 
-    ze_mutable_group_count_exp_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
+    ze_mutable_group_count_ext_desc_t mutateGroupCount = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXT_DESC};
     mutateGroupCount.commandId = commandId;
     mutateGroupCount.pGroupCount = &newDispatchTraits;
 
-    ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+    ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
     mutateDesc.pNext = &mutateGroupCount;
 
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(execEnv->queue, 1, &cmdList, nullptr));
@@ -1537,10 +1537,10 @@ bool testSignalExternalIncrementCbEvent(MclTests::ExecEnv *execEnv, ze_module_ha
     SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(copyKernel, 0, sizeof(void *), &srcBuffer));
     SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(copyKernel, 1, sizeof(void *), &dstBuffer));
 
-    ze_mutable_command_id_exp_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
-    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_SIGNAL_EVENT;
+    ze_mutable_command_id_ext_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
+    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_SIGNAL_EVENT;
     uint64_t commandId = 0;
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExp(cmdList, &commandIdDesc, &commandId));
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExt(cmdList, &commandIdDesc, &commandId));
 
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, copyKernel, &copyDispatchTraits, firstExternalEvent, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
@@ -1595,7 +1595,7 @@ bool testSignalExternalIncrementCbEvent(MclTests::ExecEnv *execEnv, ze_module_ha
         }
     }
 
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandSignalEventExp(cmdList, commandId, secondExternalEvent));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandSignalEventExt(cmdList, commandId, secondExternalEvent));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
     SUCCESS_OR_TERMINATE(zeContextMakeMemoryResident(execEnv->context, execEnv->device, externalDeviceBuffer2, sizeof(uint64_t)));
@@ -1812,13 +1812,13 @@ bool testExternalMemoryCbWaitEvent(MclTests::ExecEnv *execEnv, ze_module_handle_
 
     // mutable cmdlist
     uint64_t commandId = 0;
-    ze_mutable_command_id_exp_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
-    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS | ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS;
+    ze_mutable_command_id_ext_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
+    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_WAIT_EVENTS | ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS;
 
     SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(copyKernel, 0, sizeof(void *), &stageBuffer1));
     SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(copyKernel, 1, sizeof(void *), &dstBuffer));
 
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExp(dstCmdList, &commandIdDesc, &commandId));
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExt(dstCmdList, &commandIdDesc, &commandId));
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(dstCmdList, copyKernel, &copyDispatchTraits, nullptr, 1, &firstExternalEvent));
     SUCCESS_OR_TERMINATE(zeCommandListClose(dstCmdList));
 
@@ -1851,17 +1851,17 @@ bool testExternalMemoryCbWaitEvent(MclTests::ExecEnv *execEnv, ze_module_handle_
     memset(dstBuffer, 0, allocSize);
 
     // change argument and event
-    ze_mutable_kernel_argument_exp_desc_t mutateKernelArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t mutateKernelArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     mutateKernelArg.commandId = commandId;
     mutateKernelArg.argIndex = 0;
     mutateKernelArg.argSize = sizeof(void *);
     mutateKernelArg.pArgValue = &stageBuffer2;
 
-    ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+    ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
     mutateDesc.pNext = &mutateKernelArg;
 
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(dstCmdList, &mutateDesc));
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandWaitEventsExp(dstCmdList, commandId, 1, &secondExternalEvent));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(dstCmdList, &mutateDesc));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandWaitEventsExt(dstCmdList, commandId, 1, &secondExternalEvent));
     SUCCESS_OR_TERMINATE(zeCommandListClose(dstCmdList));
 
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(execEnv->queue, 2, mutableCmdListExecList, nullptr));
@@ -2020,10 +2020,10 @@ bool testMixedWaitEvent(MclTests::ExecEnv *execEnv, ze_module_handle_t module,
     SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(copyKernel, 1, sizeof(void *), &dstBuffer));
 
     uint64_t commandId = 0;
-    ze_mutable_command_id_exp_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
-    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS | ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS;
+    ze_mutable_command_id_ext_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
+    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_WAIT_EVENTS | ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS;
 
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExp(dstCmdList, &commandIdDesc, &commandId));
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExt(dstCmdList, &commandIdDesc, &commandId));
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(dstCmdList, copyKernel, &dispatchTraits, nullptr, 1, &baseEvent));
     SUCCESS_OR_TERMINATE(zeCommandListClose(dstCmdList));
 
@@ -2043,17 +2043,17 @@ bool testMixedWaitEvent(MclTests::ExecEnv *execEnv, ze_module_handle_t module,
     memset(dstBuffer, 0, allocSize);
 
     // mutate into another wait event and source
-    ze_mutable_kernel_argument_exp_desc_t mutateKernelArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t mutateKernelArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     mutateKernelArg.commandId = commandId;
     mutateKernelArg.argIndex = 0;
     mutateKernelArg.argSize = sizeof(void *);
     mutateKernelArg.pArgValue = &mutateBuffer;
 
-    ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+    ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
     mutateDesc.pNext = &mutateKernelArg;
 
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(dstCmdList, &mutateDesc));
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandWaitEventsExp(dstCmdList, commandId, 1, &mutableEvent));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(dstCmdList, &mutateDesc));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandWaitEventsExt(dstCmdList, commandId, 1, &mutableEvent));
     SUCCESS_OR_TERMINATE(zeCommandListClose(dstCmdList));
 
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(execEnv->queue, 2, mutableCmdListExecList, nullptr));
@@ -2256,10 +2256,10 @@ bool testCbWaitEventMutateNoopMutateBack(MclTests::ExecEnv *execEnv, ze_module_h
     dispatchTraits.groupCountZ = 1u;
 
     uint64_t commandId = 0;
-    ze_mutable_command_id_exp_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
-    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS | ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS;
+    ze_mutable_command_id_ext_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
+    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_WAIT_EVENTS | ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS;
 
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExp(cmdList1, &commandIdDesc, &commandId));
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExt(cmdList1, &commandIdDesc, &commandId));
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList1, addKernel, &dispatchTraits, nullptr, 1, &baseEvent));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList1));
 
@@ -2281,17 +2281,17 @@ bool testCbWaitEventMutateNoopMutateBack(MclTests::ExecEnv *execEnv, ze_module_h
     memset(dstBuffer, 0, allocSize);
 
     // mutate into another wait event and source
-    ze_mutable_kernel_argument_exp_desc_t mutateKernelArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t mutateKernelArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     mutateKernelArg.commandId = commandId;
     mutateKernelArg.argIndex = 0;
     mutateKernelArg.argSize = sizeof(void *);
     mutateKernelArg.pArgValue = &mutateBuffer;
 
-    ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+    ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
     mutateDesc.pNext = &mutateKernelArg;
 
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList1, &mutateDesc));
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandWaitEventsExp(cmdList1, commandId, 1, &mutableEvent));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList1, &mutateDesc));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandWaitEventsExt(cmdList1, commandId, 1, &mutableEvent));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList1));
 
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(execEnv->queue, mutableCmdListCount, mutableCmdLists.data(), nullptr));
@@ -2311,7 +2311,7 @@ bool testCbWaitEventMutateNoopMutateBack(MclTests::ExecEnv *execEnv, ze_module_h
     memset(dstBuffer, 0, allocSize);
 
     // mutate into null event, synchronize by queue
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandWaitEventsExp(cmdList1, commandId, 1, &nullHandleEvent));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandWaitEventsExt(cmdList1, commandId, 1, &nullHandleEvent));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList1));
 
     if (mutateIndex == 2) {
@@ -2338,8 +2338,8 @@ bool testCbWaitEventMutateNoopMutateBack(MclTests::ExecEnv *execEnv, ze_module_h
     // mutate back into original event and source
     mutateKernelArg.pArgValue = &baseBuffer;
 
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList1, &mutateDesc));
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandWaitEventsExp(cmdList1, commandId, 1, &baseEvent));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList1, &mutateDesc));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandWaitEventsExt(cmdList1, commandId, 1, &baseEvent));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList1));
 
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(execEnv->queue, baseCmdListCount, baseCmdLists.data(), nullptr));
@@ -2441,11 +2441,11 @@ bool testMutateNoopWaitEvent(MclTests::ExecEnv *execEnv, ze_module_handle_t modu
     dispatchTraits.groupCountY = 1u;
     dispatchTraits.groupCountZ = 1u;
 
-    ze_mutable_command_id_exp_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
-    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS;
+    ze_mutable_command_id_ext_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
+    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_WAIT_EVENTS;
 
     uint64_t commandId1 = 0;
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExp(cmdList, &commandIdDesc, &commandId1));
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExt(cmdList, &commandIdDesc, &commandId1));
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, copyKernel, &dispatchTraits, nullptr, numEvents, mutableEvents.data()));
 
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
@@ -2477,7 +2477,7 @@ bool testMutateNoopWaitEvent(MclTests::ExecEnv *execEnv, ze_module_handle_t modu
         auto poolIndex = poolIndices[i];
         mutableEvents[poolIndex] = nullptr;
     }
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandWaitEventsExp(cmdList, commandId1, numEvents, mutableEvents.data()));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandWaitEventsExt(cmdList, commandId1, numEvents, mutableEvents.data()));
 
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(execEnv->queue, 1, &cmdList, nullptr));
@@ -2510,7 +2510,7 @@ bool testMutateNoopWaitEvent(MclTests::ExecEnv *execEnv, ze_module_handle_t modu
         auto poolIndex = poolIndices[i];
         mutableEvents[poolIndex] = events2[poolIndex];
     }
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandWaitEventsExp(cmdList, commandId1, numEvents, mutableEvents.data()));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandWaitEventsExt(cmdList, commandId1, numEvents, mutableEvents.data()));
 
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(execEnv->queue, 1, &cmdList, nullptr));
@@ -2629,12 +2629,12 @@ bool testMutateWaitEvent(MclTests::ExecEnv *execEnv, ze_module_handle_t module,
     dispatchTraits.groupCountY = 1u;
     dispatchTraits.groupCountZ = 1u;
 
-    ze_mutable_command_id_exp_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
-    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS;
+    ze_mutable_command_id_ext_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
+    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_WAIT_EVENTS;
 
     uint64_t commandId1 = 0;
     if (mutateFirstAppend) {
-        SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExp(cmdList, &commandIdDesc, &commandId1));
+        SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExt(cmdList, &commandIdDesc, &commandId1));
     }
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, copyKernel, &dispatchTraits, nullptr, testMutableEventsCount, mutableEventsFirstAppend.data()));
 
@@ -2643,7 +2643,7 @@ bool testMutateWaitEvent(MclTests::ExecEnv *execEnv, ze_module_handle_t module,
 
     uint64_t commandId2 = 0;
     if (mutateSecondAppend) {
-        SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExp(cmdList, &commandIdDesc, &commandId2));
+        SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExt(cmdList, &commandIdDesc, &commandId2));
     }
 
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, copyKernel, &dispatchTraits, nullptr, testMutableEventsCount, mutableEventsSecondAppend.data()));
@@ -2688,7 +2688,7 @@ bool testMutateWaitEvent(MclTests::ExecEnv *execEnv, ze_module_handle_t module,
                 mutableEventsFirstAppend[i] = events[3 + poolIndex];
             }
         }
-        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandWaitEventsExp(cmdList, commandId1, testMutableEventsCount, mutableEventsFirstAppend.data()));
+        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandWaitEventsExt(cmdList, commandId1, testMutableEventsCount, mutableEventsFirstAppend.data()));
     }
 
     if (mutateSecondAppend) {
@@ -2700,7 +2700,7 @@ bool testMutateWaitEvent(MclTests::ExecEnv *execEnv, ze_module_handle_t module,
                 mutableEventsSecondAppend[i] = events[9 + poolIndex];
             }
         }
-        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandWaitEventsExp(cmdList, commandId2, testMutableEventsCount, mutableEventsSecondAppend.data()));
+        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandWaitEventsExt(cmdList, commandId2, testMutableEventsCount, mutableEventsSecondAppend.data()));
     }
 
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
@@ -2789,11 +2789,11 @@ bool testMutateSignalEventMutateOriginalBack(MclTests::ExecEnv *execEnv, ze_modu
     dispatchTraits.groupCountY = 1u;
     dispatchTraits.groupCountZ = 1u;
 
-    ze_mutable_command_id_exp_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
-    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_SIGNAL_EVENT;
+    ze_mutable_command_id_ext_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
+    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_SIGNAL_EVENT;
 
     uint64_t commandId1 = 0;
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExp(cmdList, &commandIdDesc, &commandId1));
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExt(cmdList, &commandIdDesc, &commandId1));
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, copyKernel, &dispatchTraits, events[0], 0, nullptr));
 
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
@@ -2818,7 +2818,7 @@ bool testMutateSignalEventMutateOriginalBack(MclTests::ExecEnv *execEnv, ze_modu
     }
     memset(dstBuffer1, 0, allocSize);
 
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandSignalEventExp(cmdList, commandId1, events[1]));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandSignalEventExt(cmdList, commandId1, events[1]));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(execEnv->queue, 1, &cmdList, nullptr));
@@ -2838,7 +2838,7 @@ bool testMutateSignalEventMutateOriginalBack(MclTests::ExecEnv *execEnv, ze_modu
     }
     memset(dstBuffer1, 0, allocSize);
 
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandSignalEventExp(cmdList, commandId1, events[0]));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandSignalEventExt(cmdList, commandId1, events[0]));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(execEnv->queue, 1, &cmdList, nullptr));
@@ -2924,12 +2924,12 @@ bool testMutateSignalEvent(MclTests::ExecEnv *execEnv, ze_module_handle_t module
     dispatchTraits.groupCountY = 1u;
     dispatchTraits.groupCountZ = 1u;
 
-    ze_mutable_command_id_exp_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
-    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_SIGNAL_EVENT;
+    ze_mutable_command_id_ext_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
+    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_SIGNAL_EVENT;
 
     uint64_t commandId1 = 0;
     if (mutateFirst) {
-        SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExp(cmdList, &commandIdDesc, &commandId1));
+        SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExt(cmdList, &commandIdDesc, &commandId1));
     }
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, copyKernel, &dispatchTraits, events[0], 0, nullptr));
 
@@ -2938,7 +2938,7 @@ bool testMutateSignalEvent(MclTests::ExecEnv *execEnv, ze_module_handle_t module
 
     uint64_t commandId2 = 0;
     if (mutateSecond) {
-        SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExp(cmdList, &commandIdDesc, &commandId2));
+        SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExt(cmdList, &commandIdDesc, &commandId2));
     }
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, copyKernel, &dispatchTraits, events[1], 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
@@ -2969,14 +2969,14 @@ bool testMutateSignalEvent(MclTests::ExecEnv *execEnv, ze_module_handle_t module
     ze_event_handle_t nextEvent1 = events[0];
     if (mutateFirst) {
         nextEvent1 = useDifferentEventPoolFirst ? eventsAlternative[0] : events[2];
-        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandSignalEventExp(cmdList, commandId1, nextEvent1));
+        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandSignalEventExt(cmdList, commandId1, nextEvent1));
     } else if (!cbEvents) {
         SUCCESS_OR_TERMINATE(zeEventHostReset(nextEvent1));
     }
     ze_event_handle_t nextEvent2 = events[1];
     if (mutateSecond) {
         nextEvent2 = useDifferentEventPoolSecond ? eventsAlternative[1] : events[3];
-        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandSignalEventExp(cmdList, commandId2, nextEvent2));
+        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandSignalEventExt(cmdList, commandId2, nextEvent2));
     } else if (!cbEvents) {
         SUCCESS_OR_TERMINATE(zeEventHostReset(nextEvent2));
     }
@@ -3063,11 +3063,11 @@ bool testMutateSignalEventOnInOrderCommandList(MclTests::ExecEnv *execEnv, ze_mo
     dispatchTraits.groupCountY = 1u;
     dispatchTraits.groupCountZ = 1u;
 
-    ze_mutable_command_id_exp_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
-    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_SIGNAL_EVENT;
+    ze_mutable_command_id_ext_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
+    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_SIGNAL_EVENT;
 
     uint64_t commandId1 = 0;
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExp(cmdList, &commandIdDesc, &commandId1));
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExt(cmdList, &commandIdDesc, &commandId1));
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, copyKernel, &dispatchTraits, events[0], 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
@@ -3090,7 +3090,7 @@ bool testMutateSignalEventOnInOrderCommandList(MclTests::ExecEnv *execEnv, ze_mo
     }
     memset(dstBuffer1, 0, allocSize);
 
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandSignalEventExp(cmdList, commandId1, events[1]));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandSignalEventExt(cmdList, commandId1, events[1]));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(execEnv->queue, 1, &cmdList, nullptr));
@@ -3111,7 +3111,7 @@ bool testMutateSignalEventOnInOrderCommandList(MclTests::ExecEnv *execEnv, ze_mo
 
     memset(dstBuffer1, 0, allocSize);
 
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandSignalEventExp(cmdList, commandId1, events2[0]));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandSignalEventExt(cmdList, commandId1, events2[0]));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(execEnv->queue, 1, &cmdList, nullptr));
@@ -3131,7 +3131,7 @@ bool testMutateSignalEventOnInOrderCommandList(MclTests::ExecEnv *execEnv, ze_mo
     }
     memset(dstBuffer1, 0, allocSize);
 
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandSignalEventExp(cmdList, commandId1, events2[1]));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandSignalEventExt(cmdList, commandId1, events2[1]));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(execEnv->queue, 1, &cmdList, nullptr));
@@ -3231,9 +3231,9 @@ bool testMutateMemoryArgument(MclTests::ExecEnv *execEnv, ze_module_handle_t mod
     dispatchTraits.groupCountZ = 1u;
 
     uint64_t commandId = 0;
-    ze_mutable_command_id_exp_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
-    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS;
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExp(sharedCmdList, &commandIdDesc, &commandId));
+    ze_mutable_command_id_ext_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
+    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS;
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExt(sharedCmdList, &commandIdDesc, &commandId));
 
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(sharedCmdList, addKernel, &dispatchTraits, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListClose(sharedCmdList));
@@ -3252,16 +3252,16 @@ bool testMutateMemoryArgument(MclTests::ExecEnv *execEnv, ze_module_handle_t mod
         }
     }
 
-    ze_mutable_kernel_argument_exp_desc_t mutateKernelArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t mutateKernelArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     mutateKernelArg.commandId = commandId;
     mutateKernelArg.argIndex = 0;
     mutateKernelArg.argSize = sizeof(void *);
     mutateKernelArg.pArgValue = &srcBuffer2;
 
-    ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+    ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
     mutateDesc.pNext = &mutateKernelArg;
 
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(sharedCmdList, &mutateDesc));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(sharedCmdList, &mutateDesc));
     SUCCESS_OR_TERMINATE(zeCommandListClose(sharedCmdList));
 
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(execEnv->queue, 1, &sharedCmdList, nullptr));
@@ -3326,9 +3326,9 @@ bool testResetCmdlistAndMutateScalarArgument(MclTests::ExecEnv *execEnv, ze_modu
     dispatchTraits.groupCountZ = 1u;
 
     uint64_t commandId = 0;
-    ze_mutable_command_id_exp_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
-    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS;
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExp(sharedCmdList, &commandIdDesc, &commandId));
+    ze_mutable_command_id_ext_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
+    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS;
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExt(sharedCmdList, &commandIdDesc, &commandId));
 
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(sharedCmdList, mulKernel, &dispatchTraits, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListClose(sharedCmdList));
@@ -3348,16 +3348,16 @@ bool testResetCmdlistAndMutateScalarArgument(MclTests::ExecEnv *execEnv, ze_modu
 
     scalarValue = 0x3;
 
-    ze_mutable_kernel_argument_exp_desc_t mutateKernelArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t mutateKernelArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     mutateKernelArg.commandId = commandId;
     mutateKernelArg.argIndex = 2;
     mutateKernelArg.argSize = sizeof(scalarValue);
     mutateKernelArg.pArgValue = &scalarValue;
 
-    ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+    ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
     mutateDesc.pNext = &mutateKernelArg;
 
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(sharedCmdList, &mutateDesc));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(sharedCmdList, &mutateDesc));
     SUCCESS_OR_TERMINATE(zeCommandListClose(sharedCmdList));
 
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(execEnv->queue, 1, &sharedCmdList, nullptr));
@@ -3488,10 +3488,10 @@ bool testMutateComplexStructurePassedAsImmediate(MclTests::ExecEnv *execEnv, ze_
     dispatchTraits.groupCountZ = 1u;
 
     uint64_t commandId = 0;
-    ze_mutable_command_id_exp_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
-    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS;
+    ze_mutable_command_id_ext_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
+    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS;
 
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExp(cmdList, &commandIdDesc, &commandId));
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExt(cmdList, &commandIdDesc, &commandId));
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, computeKernel, &dispatchTraits, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
@@ -3532,16 +3532,16 @@ bool testMutateComplexStructurePassedAsImmediate(MclTests::ExecEnv *execEnv, ze_
         input.valueAdd = valueAdd;
     }
 
-    ze_mutable_kernel_argument_exp_desc_t mutateKernelArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t mutateKernelArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     mutateKernelArg.commandId = commandId;
     mutateKernelArg.argIndex = 2;
     mutateKernelArg.argSize = sizeof(input);
     mutateKernelArg.pArgValue = &input;
 
-    ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+    ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
     mutateDesc.pNext = &mutateKernelArg;
 
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(execEnv->queue, 1, &cmdList, nullptr));
@@ -3619,10 +3619,10 @@ bool testMutateAfterFreedMemoryArgument(MclTests::ExecEnv *execEnv, ze_module_ha
     dispatchTraits.groupCountZ = 1u;
 
     uint64_t commandId = 0;
-    ze_mutable_command_id_exp_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
-    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS;
+    ze_mutable_command_id_ext_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
+    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS;
 
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExp(cmdList, &commandIdDesc, &commandId));
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExt(cmdList, &commandIdDesc, &commandId));
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, addKernel, &dispatchTraits, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
@@ -3642,16 +3642,16 @@ bool testMutateAfterFreedMemoryArgument(MclTests::ExecEnv *execEnv, ze_module_ha
     memset(dstBuffer, 0, allocSize);
     SUCCESS_OR_TERMINATE(zeMemFree(execEnv->context, srcBuffer1));
 
-    ze_mutable_kernel_argument_exp_desc_t mutateKernelArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t mutateKernelArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     mutateKernelArg.commandId = commandId;
     mutateKernelArg.argIndex = 0;
     mutateKernelArg.argSize = sizeof(void *);
     mutateKernelArg.pArgValue = &srcBuffer2;
 
-    ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+    ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
     mutateDesc.pNext = &mutateKernelArg;
 
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(execEnv->queue, 1, &cmdList, nullptr));
@@ -3723,10 +3723,10 @@ bool testOffsetMemoryArgument(MclTests::ExecEnv *execEnv, ze_module_handle_t mod
     dispatchTraits.groupCountZ = 1u;
 
     uint64_t commandId = 0;
-    ze_mutable_command_id_exp_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
-    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS;
+    ze_mutable_command_id_ext_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
+    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS;
 
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExp(cmdList, &commandIdDesc, &commandId));
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExt(cmdList, &commandIdDesc, &commandId));
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, addKernel, &dispatchTraits, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
@@ -3743,23 +3743,23 @@ bool testOffsetMemoryArgument(MclTests::ExecEnv *execEnv, ze_module_handle_t mod
         }
     }
 
-    ze_mutable_kernel_argument_exp_desc_t mutateKernelArgSrc = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t mutateKernelArgSrc = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     mutateKernelArgSrc.commandId = commandId;
     mutateKernelArgSrc.argIndex = 0;
     mutateKernelArgSrc.argSize = sizeof(void *);
     mutateKernelArgSrc.pArgValue = &mutatedSrcBuffer;
 
-    ze_mutable_kernel_argument_exp_desc_t mutateKernelArgDst = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t mutateKernelArgDst = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     mutateKernelArgDst.commandId = commandId;
     mutateKernelArgDst.argIndex = 1;
     mutateKernelArgDst.argSize = sizeof(void *);
     mutateKernelArgDst.pArgValue = &mutatedDstBuffer;
     mutateKernelArgDst.pNext = &mutateKernelArgSrc;
 
-    ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+    ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
     mutateDesc.pNext = &mutateKernelArgDst;
 
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(execEnv->queue, 1, &cmdList, nullptr));
@@ -3841,17 +3841,17 @@ bool testMutateMultipleMemoryArguments(MclTests::ExecEnv *execEnv, ze_module_han
     dispatchTraits.groupCountZ = 1u;
 
     uint64_t commandId = 0;
-    ze_mutable_command_id_exp_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
-    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS;
+    ze_mutable_command_id_ext_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
+    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS;
 
     // add 1st kernel optionally as immutable
     if (!firstImmutable) {
-        SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExp(cmdList, &commandIdDesc, &commandId));
+        SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExt(cmdList, &commandIdDesc, &commandId));
     }
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, addKernel, &dispatchTraits, nullptr, 0, nullptr));
 
     // add 2nd kernel as mutable
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExp(cmdList, &commandIdDesc, &commandId));
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExt(cmdList, &commandIdDesc, &commandId));
     uint64_t mulCommandId = commandId;
 
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, mulKernel, &dispatchTraits, nullptr, 0, nullptr));
@@ -3882,16 +3882,16 @@ bool testMutateMultipleMemoryArguments(MclTests::ExecEnv *execEnv, ze_module_han
     memset(dstBuffer1, 0, allocSize);
     memset(dstBuffer2, 0, allocSize);
 
-    ze_mutable_kernel_argument_exp_desc_t mutateKernelArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t mutateKernelArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     mutateKernelArg.commandId = mulCommandId;
     mutateKernelArg.argIndex = 0;
     mutateKernelArg.argSize = sizeof(void *);
     mutateKernelArg.pArgValue = &srcBuffer2;
 
-    ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+    ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
     mutateDesc.pNext = &mutateKernelArg;
 
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(execEnv->queue, 1, &cmdList, nullptr));
@@ -3995,16 +3995,16 @@ bool testMutateMemoryAndImmediateArgumentsSignalAndWaitEvents(MclTests::ExecEnv 
     dispatchTraits.groupCountY = 1u;
     dispatchTraits.groupCountZ = 1u;
 
-    ze_mutable_command_id_exp_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
+    ze_mutable_command_id_ext_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
     commandIdDesc.flags = 0; // allow to mutatate all
 
     uint64_t commandIdAdd = 0;
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExp(cmdList, &commandIdDesc, &commandIdAdd));
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExt(cmdList, &commandIdDesc, &commandIdAdd));
 
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, addKernel, &dispatchTraits, events[0], 0, nullptr));
 
     uint64_t commandIdMul = 0;
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExp(cmdList, &commandIdDesc, &commandIdMul));
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExt(cmdList, &commandIdDesc, &commandIdMul));
 
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, mulKernel, &dispatchTraits, events[1], 1, &events[0]));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
@@ -4029,56 +4029,56 @@ bool testMutateMemoryAndImmediateArgumentsSignalAndWaitEvents(MclTests::ExecEnv 
     SUCCESS_OR_TERMINATE(zeEventHostReset(events[0]));
     SUCCESS_OR_TERMINATE(zeEventHostReset(events[1]));
 
-    ze_mutable_kernel_argument_exp_desc_t mutateAddKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t mutateAddKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     mutateAddKernelSrcArg.commandId = commandIdAdd;
     mutateAddKernelSrcArg.argIndex = 0;
     mutateAddKernelSrcArg.argSize = sizeof(void *);
     mutateAddKernelSrcArg.pArgValue = &srcBuffer2;
 
-    ze_mutable_kernel_argument_exp_desc_t mutateAddKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t mutateAddKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     mutateAddKernelDstArg.commandId = commandIdAdd;
     mutateAddKernelDstArg.argIndex = 1;
     mutateAddKernelDstArg.argSize = sizeof(void *);
     mutateAddKernelDstArg.pArgValue = &stageBuffer2;
     mutateAddKernelDstArg.pNext = &mutateAddKernelSrcArg;
 
-    ze_mutable_kernel_argument_exp_desc_t mutateAddKernelScalarArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t mutateAddKernelScalarArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     mutateAddKernelScalarArg.commandId = commandIdAdd;
     mutateAddKernelScalarArg.argIndex = 2;
     mutateAddKernelScalarArg.argSize = sizeof(scalarValueAdd2);
     mutateAddKernelScalarArg.pArgValue = &scalarValueAdd2;
     mutateAddKernelScalarArg.pNext = &mutateAddKernelDstArg;
 
-    ze_mutable_kernel_argument_exp_desc_t mutateMulKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t mutateMulKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     mutateMulKernelSrcArg.commandId = commandIdMul;
     mutateMulKernelSrcArg.argIndex = 0;
     mutateMulKernelSrcArg.argSize = sizeof(void *);
     mutateMulKernelSrcArg.pArgValue = &stageBuffer2;
     mutateMulKernelSrcArg.pNext = &mutateAddKernelScalarArg;
 
-    ze_mutable_kernel_argument_exp_desc_t mutateMulKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t mutateMulKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     mutateMulKernelDstArg.commandId = commandIdMul;
     mutateMulKernelDstArg.argIndex = 1;
     mutateMulKernelDstArg.argSize = sizeof(void *);
     mutateMulKernelDstArg.pArgValue = &dstBuffer2;
     mutateMulKernelDstArg.pNext = &mutateMulKernelSrcArg;
 
-    ze_mutable_kernel_argument_exp_desc_t mutateMulKernelScalarArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t mutateMulKernelScalarArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     mutateMulKernelScalarArg.commandId = commandIdMul;
     mutateMulKernelScalarArg.argIndex = 2;
     mutateMulKernelScalarArg.argSize = sizeof(scalarValueMul2);
     mutateMulKernelScalarArg.pArgValue = &scalarValueMul2;
     mutateMulKernelScalarArg.pNext = &mutateMulKernelDstArg;
 
-    ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+    ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
     mutateDesc.pNext = &mutateMulKernelScalarArg;
 
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
 
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandSignalEventExp(cmdList, commandIdAdd, events[2]));
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandSignalEventExp(cmdList, commandIdMul, events[3]));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandSignalEventExt(cmdList, commandIdAdd, events[2]));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandSignalEventExt(cmdList, commandIdMul, events[3]));
 
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandWaitEventsExp(cmdList, commandIdMul, 1, &events[2]));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandWaitEventsExt(cmdList, commandIdMul, 1, &events[2]));
 
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
@@ -4191,26 +4191,26 @@ bool testMutateMixedSignalEventOnCommandList(MclTests::ExecEnv *execEnv, ze_modu
     dispatchTraits.groupCountY = 1u;
     dispatchTraits.groupCountZ = 1u;
 
-    ze_mutable_command_id_exp_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
-    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_SIGNAL_EVENT;
+    ze_mutable_command_id_ext_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
+    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_SIGNAL_EVENT;
     uint32_t numWaitEvents = 0;
 
     ze_event_handle_t *waitEventHandle = nullptr;
 
     // out of order command list needs explicit wait events and mutation of those
     if (!inOrder) {
-        commandIdDesc.flags |= ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS;
+        commandIdDesc.flags |= ZE_MUTABLE_COMMAND_EXT_FLAG_WAIT_EVENTS;
         numWaitEvents = 1;
     }
 
     uint64_t commandIds[4] = {};
 
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExp(cmdList, &commandIdDesc, &commandIds[0]));
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExt(cmdList, &commandIdDesc, &commandIds[0]));
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, copyKernel, &dispatchTraits, firstEvents[0], 0, nullptr));
 
     SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(copyKernel, 0, sizeof(void *), &stageBuffer1));
     SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(copyKernel, 1, sizeof(void *), &stageBuffer2));
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExp(cmdList, &commandIdDesc, &commandIds[1]));
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExt(cmdList, &commandIdDesc, &commandIds[1]));
 
     if (!inOrder) {
         waitEventHandle = &firstEvents[0];
@@ -4219,7 +4219,7 @@ bool testMutateMixedSignalEventOnCommandList(MclTests::ExecEnv *execEnv, ze_modu
 
     SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(copyKernel, 0, sizeof(void *), &stageBuffer2));
     SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(copyKernel, 1, sizeof(void *), &stageBuffer3));
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExp(cmdList, &commandIdDesc, &commandIds[2]));
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExt(cmdList, &commandIdDesc, &commandIds[2]));
 
     if (!inOrder) {
         waitEventHandle = &secondEvents[0];
@@ -4228,7 +4228,7 @@ bool testMutateMixedSignalEventOnCommandList(MclTests::ExecEnv *execEnv, ze_modu
 
     SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(copyKernel, 0, sizeof(void *), &stageBuffer3));
     SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(copyKernel, 1, sizeof(void *), &dstBuffer1));
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExp(cmdList, &commandIdDesc, &commandIds[3]));
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExt(cmdList, &commandIdDesc, &commandIds[3]));
 
     if (!inOrder) {
         waitEventHandle = &firstEvents[1];
@@ -4266,22 +4266,22 @@ bool testMutateMixedSignalEventOnCommandList(MclTests::ExecEnv *execEnv, ze_modu
 
     // mutate events
     {
-        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandSignalEventExp(cmdList, commandIds[0], firstEvents[2]));
+        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandSignalEventExt(cmdList, commandIds[0], firstEvents[2]));
 
         if (!inOrder) {
-            SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandWaitEventsExp(cmdList, commandIds[1], 1, &firstEvents[2]));
+            SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandWaitEventsExt(cmdList, commandIds[1], 1, &firstEvents[2]));
         }
-        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandSignalEventExp(cmdList, commandIds[1], secondEvents[2]));
+        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandSignalEventExt(cmdList, commandIds[1], secondEvents[2]));
 
         if (!inOrder) {
-            SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandWaitEventsExp(cmdList, commandIds[2], 1, &secondEvents[2]));
+            SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandWaitEventsExt(cmdList, commandIds[2], 1, &secondEvents[2]));
         }
-        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandSignalEventExp(cmdList, commandIds[2], firstEvents[3]));
+        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandSignalEventExt(cmdList, commandIds[2], firstEvents[3]));
 
         if (!inOrder) {
-            SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandWaitEventsExp(cmdList, commandIds[3], 1, &firstEvents[3]));
+            SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandWaitEventsExt(cmdList, commandIds[3], 1, &firstEvents[3]));
         }
-        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandSignalEventExp(cmdList, commandIds[3], secondEvents[3]));
+        SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandSignalEventExt(cmdList, commandIds[3], secondEvents[3]));
     }
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
@@ -4417,11 +4417,11 @@ bool testSimpleSlm(MclTests::ExecEnv *execEnv, bool aubMode) {
     dispatchTraits.groupCountY = 1u;
     dispatchTraits.groupCountZ = 1u;
 
-    ze_mutable_command_id_exp_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
-    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS | ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT | ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_SIZE;
+    ze_mutable_command_id_ext_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
+    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS | ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_COUNT | ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_SIZE;
 
     uint64_t commandId = 0;
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExp(cmdList, &commandIdDesc, &commandId));
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExt(cmdList, &commandIdDesc, &commandId));
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, testKernel, &dispatchTraits, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
@@ -4441,30 +4441,30 @@ bool testSimpleSlm(MclTests::ExecEnv *execEnv, bool aubMode) {
 
     slmSize = 64;
 
-    ze_mutable_kernel_argument_exp_desc_t mutateKernelSlmArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t mutateKernelSlmArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     mutateKernelSlmArg.commandId = commandId;
     mutateKernelSlmArg.argIndex = 0;
     mutateKernelSlmArg.argSize = slmSize * sizeof(ElemType);
     mutateKernelSlmArg.pArgValue = nullptr;
 
-    ze_mutable_kernel_argument_exp_desc_t mutateKernelSlmAuxArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t mutateKernelSlmAuxArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     mutateKernelSlmAuxArg.commandId = commandId;
     mutateKernelSlmAuxArg.argIndex = 3;
     mutateKernelSlmAuxArg.argSize = slmSize * sizeof(ElemType);
     mutateKernelSlmAuxArg.pArgValue = nullptr;
     mutateKernelSlmAuxArg.pNext = &mutateKernelSlmArg;
 
-    ze_mutable_group_size_exp_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXP_DESC};
+    ze_mutable_group_size_ext_desc_t mutateGroupSize = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXT_DESC};
     mutateGroupSize.commandId = commandId;
     mutateGroupSize.groupSizeX = slmSize;
     mutateGroupSize.groupSizeY = 1;
     mutateGroupSize.groupSizeZ = 1;
     mutateGroupSize.pNext = &mutateKernelSlmAuxArg;
 
-    ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+    ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
     mutateDesc.pNext = &mutateGroupSize;
 
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(execEnv->queue, 1, &cmdList, nullptr));
@@ -4550,11 +4550,11 @@ bool testMutateKernelArgSharedMemoryAndEventSync(MclTests::ExecEnv *execEnv, ze_
     dispatchTraits.groupCountY = 1u;
     dispatchTraits.groupCountZ = 1u;
 
-    ze_mutable_command_id_exp_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
-    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS | ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT | ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_SIZE;
+    ze_mutable_command_id_ext_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
+    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS | ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_COUNT | ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_SIZE;
 
     uint64_t commandIdAdd = 0;
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExp(cmdList, &commandIdDesc, &commandIdAdd));
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExt(cmdList, &commandIdDesc, &commandIdAdd));
 
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, addScalarKernel, &dispatchTraits, events[0], 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
@@ -4575,23 +4575,23 @@ bool testMutateKernelArgSharedMemoryAndEventSync(MclTests::ExecEnv *execEnv, ze_
 
     SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(execEnv->queue, std::numeric_limits<uint64_t>::max()));
 
-    ze_mutable_kernel_argument_exp_desc_t mutateKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t mutateKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     mutateKernelSrcArg.commandId = commandIdAdd;
     mutateKernelSrcArg.argIndex = 0;
     mutateKernelSrcArg.argSize = sizeof(void *);
     mutateKernelSrcArg.pArgValue = &srcBuffer2;
 
-    ze_mutable_kernel_argument_exp_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     mutateKernelDstArg.commandId = commandIdAdd;
     mutateKernelDstArg.argIndex = 1;
     mutateKernelDstArg.argSize = sizeof(void *);
     mutateKernelDstArg.pArgValue = &dstBuffer2;
     mutateKernelDstArg.pNext = &mutateKernelSrcArg;
 
-    ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+    ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
     mutateDesc.pNext = &mutateKernelDstArg;
 
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(execEnv->queue, 1, &cmdList, nullptr));
@@ -4787,11 +4787,11 @@ bool testProfileAppendOperationsUsingTsEvents(MclTests::ExecEnv *execEnv, ze_mod
     dispatchTraits.groupCountY = 1u;
     dispatchTraits.groupCountZ = 1u;
 
-    ze_mutable_command_id_exp_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
-    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS;
+    ze_mutable_command_id_ext_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
+    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS;
 
     uint64_t commandIdAdd = 0;
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExp(cmdList, &commandIdDesc, &commandIdAdd));
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdExt(cmdList, &commandIdDesc, &commandIdAdd));
 
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, mulScalarKernel, &dispatchTraits, events[1], 0, nullptr));
 
@@ -4817,23 +4817,23 @@ bool testProfileAppendOperationsUsingTsEvents(MclTests::ExecEnv *execEnv, ze_mod
         SUCCESS_OR_TERMINATE(zeEventHostReset(events[2]));
     }
 
-    ze_mutable_kernel_argument_exp_desc_t mutateKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t mutateKernelSrcArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     mutateKernelSrcArg.commandId = commandIdAdd;
     mutateKernelSrcArg.argIndex = 0;
     mutateKernelSrcArg.argSize = sizeof(void *);
     mutateKernelSrcArg.pArgValue = &srcBuffer2;
 
-    ze_mutable_kernel_argument_exp_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t mutateKernelDstArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     mutateKernelDstArg.commandId = commandIdAdd;
     mutateKernelDstArg.argIndex = 1;
     mutateKernelDstArg.argSize = sizeof(void *);
     mutateKernelDstArg.pArgValue = &dstBuffer2;
     mutateKernelDstArg.pNext = &mutateKernelSrcArg;
 
-    ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+    ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
     mutateDesc.pNext = &mutateKernelDstArg;
 
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(execEnv->queue, 1, &cmdList, nullptr));
@@ -4954,10 +4954,10 @@ bool testMutateSlmArgumentKernel(MclTests::ExecEnv *execEnv, ze_module_handle_t 
     }
 
     uint64_t commandId = 0;
-    ze_mutable_command_id_exp_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
-    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS |
-                          ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_SIZE;
-    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdWithKernelsExp(cmdList, &commandIdDesc, 0, nullptr, &commandId));
+    ze_mutable_command_id_ext_desc_t commandIdDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
+    commandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS |
+                          ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_COUNT | ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_SIZE;
+    SUCCESS_OR_TERMINATE(zeCommandListGetNextCommandIdWithKernelsExt(cmdList, &commandIdDesc, 0, nullptr, &commandId));
     SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(cmdList, slmKernel, &dispatchTraits, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
@@ -4983,7 +4983,7 @@ bool testMutateSlmArgumentKernel(MclTests::ExecEnv *execEnv, ze_module_handle_t 
         MclTests::prepareOutputSlmKernelTwoArgs(verificationData, mutateGroupSize, groupCount);
     }
 
-    ze_mutable_kernel_argument_exp_desc_t mutateKernelSlmReverseArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t mutateKernelSlmReverseArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     if (!kernelOneArg) {
         mutateKernelSlmReverseArg.commandId = commandId;
         mutateKernelSlmReverseArg.argIndex = 2;
@@ -4991,7 +4991,7 @@ bool testMutateSlmArgumentKernel(MclTests::ExecEnv *execEnv, ze_module_handle_t 
         mutateKernelSlmReverseArg.pArgValue = nullptr;
     }
 
-    ze_mutable_kernel_argument_exp_desc_t mutateKernelSlmArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_mutable_kernel_argument_ext_desc_t mutateKernelSlmArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC};
     mutateKernelSlmArg.commandId = commandId;
     mutateKernelSlmArg.argIndex = 1;
     mutateKernelSlmArg.argSize = mutateGroupSize * sizeof(ElemType);
@@ -5000,17 +5000,17 @@ bool testMutateSlmArgumentKernel(MclTests::ExecEnv *execEnv, ze_module_handle_t 
         mutateKernelSlmArg.pNext = &mutateKernelSlmReverseArg;
     }
 
-    ze_mutable_group_size_exp_desc_t mutateGroupSizeDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXP_DESC};
+    ze_mutable_group_size_ext_desc_t mutateGroupSizeDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXT_DESC};
     mutateGroupSizeDesc.commandId = commandId;
     mutateGroupSizeDesc.groupSizeX = mutateGroupSize;
     mutateGroupSizeDesc.groupSizeY = 1;
     mutateGroupSizeDesc.groupSizeZ = 1;
     mutateGroupSizeDesc.pNext = &mutateKernelSlmArg;
 
-    ze_mutable_commands_exp_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
+    ze_mutable_commands_ext_desc_t mutateDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXT_DESC};
     mutateDesc.pNext = &mutateGroupSizeDesc;
 
-    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExp(cmdList, &mutateDesc));
+    SUCCESS_OR_TERMINATE(zeCommandListUpdateMutableCommandsExt(cmdList, &mutateDesc));
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
 
     // set and run
