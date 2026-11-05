@@ -45,6 +45,52 @@ TEST_F(IoctlHelperXeTest, whenCallingDebuggerOpenIoctlThenProperValueIsReturned)
     EXPECT_EQ(ret, drm->debuggerOpenRetval);
 }
 
+TEST_F(IoctlHelperXeTest, givenDebuggerOpenIoctlWhenErrorEbusyReturnedThenErrorIsReturnedWithoutReinvokingIoctl) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXeDebug::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm->errnoRetVal = EBUSY;
+
+    static uint32_t ioctlCount = 0;
+    ioctlCount = 0;
+    VariableBackup<decltype(SysCalls::sysCallsIoctl)> mockIoctl(&SysCalls::sysCallsIoctl, [](int fileDescriptor, unsigned long int request, void *arg) -> int {
+        ioctlCount++;
+        return -1;
+    });
+
+    EuDebugConnect connect = {};
+    EXPECT_EQ(-1, drm->Drm::ioctl(DrmIoctl::debuggerOpen, &connect));
+    EXPECT_EQ(1u, ioctlCount);
+}
+
+TEST_F(IoctlHelperXeTest, givenDebuggerOpenIoctlWhenErrorEAgainOrEIntrReturnedThenIoctlIsCalledAgain) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXeDebug::create(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    static uint32_t ioctlCount = 0;
+    VariableBackup<decltype(SysCalls::sysCallsIoctl)> mockIoctl(&SysCalls::sysCallsIoctl, [](int fileDescriptor, unsigned long int request, void *arg) -> int {
+        constexpr uint32_t failingCallsCount = 3;
+        return (++ioctlCount <= failingCallsCount) ? -1 : 0;
+    });
+
+    for (auto error : {EAGAIN, EINTR}) {
+        ioctlCount = 0;
+        drm->errnoRetVal = error;
+        EuDebugConnect connect = {};
+        EXPECT_EQ(0, drm->Drm::ioctl(DrmIoctl::debuggerOpen, &connect));
+        EXPECT_EQ(4u, ioctlCount);
+    }
+}
+
+TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCheckingIfReinvokeRequiredOnEbusyThenOnlyDebuggerOpenIsNotReinvoked) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXeDebug::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = drm->getIoctlHelper();
+
+    EXPECT_FALSE(xeIoctlHelper->checkIfIoctlReinvokeRequired(EBUSY, DrmIoctl::debuggerOpen));
+    EXPECT_TRUE(xeIoctlHelper->checkIfIoctlReinvokeRequired(EBUSY, DrmIoctl::gemExecbuffer2));
+    EXPECT_TRUE(xeIoctlHelper->checkIfIoctlReinvokeRequired(-EBUSY, DrmIoctl::gemExecbuffer2));
+}
+
 TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingGetIoctForDebuggerThenCorrectValueReturned) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXeDebug::create(*executionEnvironment->rootDeviceEnvironments[0]);

@@ -116,6 +116,7 @@ class IoctlHelperXe : public IoctlHelper {
     int getDrmParamValue(DrmParam drmParam) const override;
     int getDrmParamValueBase(DrmParam drmParam) const override;
     std::string getIoctlString(DrmIoctl ioctlRequest) const override;
+    bool checkIfIoctlReinvokeRequired(int error, DrmIoctl ioctlRequest) const override;
     int createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_t drmVmId, uint32_t deviceIndex) override;
     std::string getDrmParamString(DrmParam param) const override;
     bool getTopologyDataAndMap(HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) override;

@@ -37,6 +37,7 @@
 #include "shared/source/utilities/logger.h"
 
 #include <algorithm>
+#include <cerrno>
 #include <iostream>
 #include <limits>
 #include <sstream>
@@ -2381,6 +2382,16 @@ unsigned int IoctlHelperXe::getIoctlRequestValue(DrmIoctl ioctlRequest) const {
 
 int IoctlHelperXe::ioctl(int fd, DrmIoctl request, void *arg) {
     return NEO::SysCalls::ioctl(fd, getIoctlRequestValue(request), arg);
+}
+
+bool IoctlHelperXe::checkIfIoctlReinvokeRequired(int error, DrmIoctl ioctlRequest) const {
+    switch (ioctlRequest) {
+    case DrmIoctl::debuggerOpen:
+        return (error == EINTR || error == EAGAIN);
+    default:
+        break;
+    }
+    return IoctlHelper::checkIfIoctlReinvokeRequired(error, ioctlRequest);
 }
 
 std::string IoctlHelperXe::getIoctlString(DrmIoctl ioctlRequest) const {
