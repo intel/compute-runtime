@@ -7,16 +7,28 @@
 
 #include "level_zero/api/opencl/source/mem_obj/leo_image.h"
 
+#include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/get_info.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 
+#include "level_zero/api/opencl/source/cl_device/leo_cl_device.h"
 #include "level_zero/api/opencl/source/context/leo_context.h"
+#include "level_zero/api/opencl/source/helpers/image_enqueue_helpers.h"
+#include "level_zero/api/opencl/source/helpers/leo_convert_color.h"
 #include "level_zero/api/opencl/source/helpers/leo_get_info_status_mapper.h"
 #include "level_zero/api/opencl/source/helpers/leo_surface_formats.h"
 #include "level_zero/api/opencl/source/l0_dispatch/leo_l0_dispatch.h"
+#include "level_zero/core/source/builtin/builtin_functions_lib.h"
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/image/image_format_desc_helper.h"
+#include "level_zero/core/source/kernel/kernel.h"
 #include <level_zero/ze_api.h>
 
 #include "CL/cl_gl.h"
+
+#include <algorithm>
+#include <cstring>
 
 namespace NEO {
 namespace LEO {
@@ -639,6 +651,60 @@ void Image::migrateTo(ze_command_list_handle_t cmdList, uint32_t targetRootDevic
     }
 
     this->currentOwnerRootDeviceIndex = targetRootDeviceIndex;
+}
+
+ze_result_t Image::appendFill(ze_command_list_handle_t cmdList, ClDevice *device, const void *fillColor, const size_t *origin, const size_t *region,
+                              ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
+    const auto rootDeviceIndex = device->getRootDeviceIndex();
+    auto l0ImageImp = this->getL0Object(rootDeviceIndex);
+    auto imgInfo = l0ImageImp->getImageInfo();
+
+    int32_t convertedFillColor[4] = {0};
+    NEO::convertFillColor(fillColor, convertedFillColor, this->getOriginalFormat(), NEO::redescribeFillColor(imgInfo));
+
+    auto numChannels = imgInfo.surfaceFormat->numChannels;
+    auto perChannelSize = imgInfo.surfaceFormat->perChannelSizeInBytes;
+    uint8_t packedFillColor[16] = {0};
+    for (uint32_t ch = 0; ch < numChannels; ch++) {
+        memcpy(&packedFillColor[ch * perChannelSize], &convertedFillColor[ch], perChannelSize);
+    }
+
+    if (this->getClObjectType() == CL_MEM_OBJECT_IMAGE1D_BUFFER) {
+        auto elementSize = imgInfo.surfaceFormat->imageElementSizeInBytes;
+        auto dstPtr = reinterpret_cast<void *>(l0ImageImp->getAllocation()->getGpuAddress() + imgInfo.offset + origin[0] * elementSize);
+        auto fillSize = region[0] * elementSize;
+
+        return zeCommandListAppendMemoryFill(cmdList, dstPtr, packedFillColor, elementSize, fillSize, hSignalEvent, numWaitEvents, phWaitEvents);
+    }
+
+    auto l0Device = device->getL0Object();
+    auto builtInMode = l0Device->getCompilerProductHelper().getDefaultBuiltInAddressingMode(
+        NEO::ApiSpecificConfig::getBindlessMode(*l0Device->getNEODevice()));
+
+    auto lock = l0Device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
+    auto *builtinKernel = l0Device->getBuiltinFunctionsLib()->getImageFunction(L0::ImageBuiltIn::fillImage3d, builtInMode);
+
+    auto fillRegion = createZeImageRegionWithMipLevel(this, origin, region);
+
+    builtinKernel->setArgRedescribedImage(0u, this->getL0Handle(rootDeviceIndex), false, fillRegion.mipLevel);
+    builtinKernel->setArgumentValue(1u, sizeof(packedFillColor), packedFillColor);
+
+    uint32_t dstOffset[] = {fillRegion.originX, fillRegion.originY, fillRegion.originZ, 0u};
+    builtinKernel->setArgumentValue(2u, sizeof(dstOffset), dstOffset);
+
+    uint32_t groupSizeX = static_cast<uint32_t>(region[0]);
+    uint32_t groupSizeY = static_cast<uint32_t>(std::max(region[1], static_cast<size_t>(1)));
+    uint32_t groupSizeZ = static_cast<uint32_t>(std::max(region[2], static_cast<size_t>(1)));
+
+    builtinKernel->suggestGroupSize(groupSizeX, groupSizeY, groupSizeZ, &groupSizeX, &groupSizeY, &groupSizeZ);
+    builtinKernel->setGroupSize(groupSizeX, groupSizeY, groupSizeZ);
+
+    uint32_t dispatchX = static_cast<uint32_t>(region[0]) / groupSizeX;
+    uint32_t dispatchY = static_cast<uint32_t>(std::max(region[1], static_cast<size_t>(1))) / groupSizeY;
+    uint32_t dispatchZ = static_cast<uint32_t>(std::max(region[2], static_cast<size_t>(1))) / groupSizeZ;
+    ze_group_count_t groupCount{dispatchX, dispatchY, dispatchZ};
+
+    return zeCommandListAppendLaunchKernel(cmdList, builtinKernel->toHandle(), &groupCount, hSignalEvent, numWaitEvents, phWaitEvents);
 }
 
 } // namespace LEO

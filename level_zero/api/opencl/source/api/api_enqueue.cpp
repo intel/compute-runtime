@@ -6,9 +6,7 @@
  */
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
-#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/bit_helpers.h"
-#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/ptr_math.h"
@@ -24,13 +22,11 @@
 #include "level_zero/api/opencl/source/helpers/l0_to_cl_return_types_mapper.h"
 #include "level_zero/api/opencl/source/helpers/leo_base_object.h"
 #include "level_zero/api/opencl/source/helpers/leo_cl_validators.h"
-#include "level_zero/api/opencl/source/helpers/leo_convert_color.h"
 #include "level_zero/api/opencl/source/kernel/leo_kernel.h"
 #include "level_zero/api/opencl/source/l0_dispatch/leo_l0_dispatch.h"
 #include "level_zero/api/opencl/source/mem_obj/leo_buffer.h"
 #include "level_zero/api/opencl/source/mem_obj/leo_image.h"
 #include "level_zero/api/opencl/source/tracing/leo_tracing_notify.h"
-#include "level_zero/core/source/builtin/builtin_functions_lib.h"
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/cmdlist/cmdlist_memory_copy_params.h"
 #include "level_zero/core/source/context/context.h"
@@ -44,89 +40,9 @@
 #include "CL/cl.h"
 
 #include <algorithm>
-#include <cstring>
 
 namespace NEO {
 namespace LEO {
-
-inline uint32_t getOclMipLevel(NEO::LEO::Image *pImage, const size_t *origin) {
-    if (pImage == nullptr || origin == nullptr) {
-        return 0u;
-    }
-    auto numMipLevels = pImage->getL0Object()->getImageInfo().imgDesc.numMipLevels;
-    if (numMipLevels <= 1u) {
-        return 0u;
-    }
-    switch (pImage->getClObjectType()) {
-    case CL_MEM_OBJECT_IMAGE1D:
-    case CL_MEM_OBJECT_IMAGE1D_BUFFER:
-        return static_cast<uint32_t>(origin[1]);
-    case CL_MEM_OBJECT_IMAGE2D:
-    case CL_MEM_OBJECT_IMAGE1D_ARRAY:
-        return static_cast<uint32_t>(origin[2]);
-    case CL_MEM_OBJECT_IMAGE3D:
-    case CL_MEM_OBJECT_IMAGE2D_ARRAY:
-        return static_cast<uint32_t>(origin[3]);
-    default:
-        return 0u;
-    }
-}
-
-inline L0::ze_image_region_mip_level_exp_desc_t createZeImageRegionWithMipLevel(
-    NEO::LEO::Image *pImage,
-    const size_t *origin,
-    const size_t *region) {
-
-    L0::ze_image_region_mip_level_exp_desc_t desc{};
-    uint32_t mipLevel = getOclMipLevel(pImage, origin);
-
-    switch (pImage->getClObjectType()) {
-    case CL_MEM_OBJECT_IMAGE1D:
-    case CL_MEM_OBJECT_IMAGE1D_BUFFER:
-        desc.originX = static_cast<uint32_t>(origin[0]);
-        desc.originY = 0u;
-        desc.originZ = 0u;
-        desc.width = static_cast<uint32_t>(region[0]);
-        desc.height = 1u;
-        desc.depth = 1u;
-        break;
-    case CL_MEM_OBJECT_IMAGE2D:
-        desc.originX = static_cast<uint32_t>(origin[0]);
-        desc.originY = static_cast<uint32_t>(origin[1]);
-        desc.originZ = 0u;
-        desc.width = static_cast<uint32_t>(region[0]);
-        desc.height = static_cast<uint32_t>(region[1]);
-        desc.depth = 1u;
-        break;
-    case CL_MEM_OBJECT_IMAGE1D_ARRAY:
-        desc.originX = static_cast<uint32_t>(origin[0]);
-        desc.originY = static_cast<uint32_t>(origin[1]);
-        desc.originZ = 0u;
-        desc.width = static_cast<uint32_t>(region[0]);
-        desc.height = static_cast<uint32_t>(region[1]);
-        desc.depth = 1u;
-        break;
-    case CL_MEM_OBJECT_IMAGE3D:
-    case CL_MEM_OBJECT_IMAGE2D_ARRAY:
-        desc.originX = static_cast<uint32_t>(origin[0]);
-        desc.originY = static_cast<uint32_t>(origin[1]);
-        desc.originZ = static_cast<uint32_t>(origin[2]);
-        desc.width = static_cast<uint32_t>(region[0]);
-        desc.height = static_cast<uint32_t>(region[1]);
-        desc.depth = static_cast<uint32_t>(region[2]);
-        break;
-    default:
-        desc.originX = static_cast<uint32_t>(origin[0]);
-        desc.originY = static_cast<uint32_t>(origin[1]);
-        desc.originZ = static_cast<uint32_t>(origin[2]);
-        desc.width = static_cast<uint32_t>(region[0]);
-        desc.height = static_cast<uint32_t>(region[1]);
-        desc.depth = static_cast<uint32_t>(region[2]);
-        break;
-    }
-    desc.mipLevel = mipLevel;
-    return desc;
-}
 
 extern "C" {
 
@@ -602,75 +518,14 @@ cl_int CL_API_CALL clEnqueueFillImage(cl_command_queue commandQueue,
         return retVal;
     }
 
-    auto l0ImageImp = pImage->getL0Object(pCommandQueue->getDevice()->getRootDeviceIndex());
-    auto imgInfo = l0ImageImp->getImageInfo();
-
-    int32_t convertedFillColor[4] = {0};
-    NEO::convertFillColor(fillColor, convertedFillColor, pImage->getOriginalFormat(), NEO::redescribeFillColor(imgInfo));
-
-    auto numChannels = imgInfo.surfaceFormat->numChannels;
-    auto perChannelSize = imgInfo.surfaceFormat->perChannelSizeInBytes;
-    uint8_t packedFillColor[16] = {0};
-    for (uint32_t ch = 0; ch < numChannels; ch++) {
-        memcpy(&packedFillColor[ch * perChannelSize], &convertedFillColor[ch], perChannelSize);
-    }
-
     auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_FILL_IMAGE, pCommandQueue);
 
-    if (pImage->getClObjectType() == CL_MEM_OBJECT_IMAGE1D_BUFFER) {
-        auto elementSize = imgInfo.surfaceFormat->imageElementSizeInBytes;
-        auto dstPtr = reinterpret_cast<void *>(l0ImageImp->getAllocation()->getGpuAddress() + imgInfo.offset + origin[0] * elementSize);
-        auto fillSize = region[0] * elementSize;
-
-        auto queueLock = pCommandQueue->takeOwnership();
-        ze_result_t ret = zeCommandListAppendMemoryFill(pCommandQueue->getL0Handle(),
-                                                        dstPtr,
-                                                        packedFillColor,
-                                                        elementSize,
-                                                        fillSize,
-                                                        hSignalEvent,
-                                                        waitEvents.size(),
-                                                        waitEvents.data());
-        cl_int tracingRetVal = L0ToClResultMapper(ret);
-        TRACING_EXIT(ClEnqueueFillImage, &tracingRetVal);
-        return tracingRetVal;
-    }
-
-    auto l0Device = pCommandQueue->getDevice()->getL0Object();
-    auto builtInMode = l0Device->getCompilerProductHelper().getDefaultBuiltInAddressingMode(
-        NEO::ApiSpecificConfig::getBindlessMode(*l0Device->getNEODevice()));
-
-    auto lock = l0Device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
-    auto *builtinKernel = l0Device->getBuiltinFunctionsLib()->getImageFunction(L0::ImageBuiltIn::fillImage3d, builtInMode);
-
-    auto fillRegion = createZeImageRegionWithMipLevel(pImage, origin, region);
-
-    builtinKernel->setArgRedescribedImage(0u, pImage->getL0Handle(pCommandQueue->getDevice()->getRootDeviceIndex()), false, fillRegion.mipLevel);
-    builtinKernel->setArgumentValue(1u, sizeof(packedFillColor), packedFillColor);
-
-    uint32_t dstOffset[] = {fillRegion.originX, fillRegion.originY, fillRegion.originZ, 0u};
-    builtinKernel->setArgumentValue(2u, sizeof(dstOffset), dstOffset);
-
-    uint32_t groupSizeX = static_cast<uint32_t>(region[0]);
-    uint32_t groupSizeY = static_cast<uint32_t>(std::max(region[1], static_cast<size_t>(1)));
-    uint32_t groupSizeZ = static_cast<uint32_t>(std::max(region[2], static_cast<size_t>(1)));
-
-    builtinKernel->suggestGroupSize(groupSizeX, groupSizeY, groupSizeZ, &groupSizeX, &groupSizeY, &groupSizeZ);
-    builtinKernel->setGroupSize(groupSizeX, groupSizeY, groupSizeZ);
-
-    uint32_t dispatchX = static_cast<uint32_t>(region[0]) / groupSizeX;
-    uint32_t dispatchY = static_cast<uint32_t>(std::max(region[1], static_cast<size_t>(1))) / groupSizeY;
-    uint32_t dispatchZ = static_cast<uint32_t>(std::max(region[2], static_cast<size_t>(1))) / groupSizeZ;
-    ze_group_count_t groupCount{dispatchX, dispatchY, dispatchZ};
-
     auto queueLock = pCommandQueue->takeOwnership();
-    pImage->migrateTo(pCommandQueue->getL0Handle(), pCommandQueue->getDevice()->getRootDeviceIndex(), pCommandQueue->isOutOfOrder(), static_cast<uint32_t>(waitEvents.size()), waitEvents.data());
-    ze_result_t ret = zeCommandListAppendLaunchKernel(pCommandQueue->getL0Handle(),
-                                                      builtinKernel->toHandle(),
-                                                      &groupCount,
-                                                      hSignalEvent,
-                                                      waitEvents.size(),
-                                                      waitEvents.data());
+    if (pImage->getClObjectType() != CL_MEM_OBJECT_IMAGE1D_BUFFER) {
+        pImage->migrateTo(pCommandQueue->getL0Handle(), pCommandQueue->getDevice()->getRootDeviceIndex(), pCommandQueue->isOutOfOrder(), static_cast<uint32_t>(waitEvents.size()), waitEvents.data());
+    }
+    ze_result_t ret = pImage->appendFill(pCommandQueue->getL0Handle(), pCommandQueue->getDevice(), fillColor, origin, region,
+                                         hSignalEvent, static_cast<uint32_t>(waitEvents.size()), waitEvents.data());
 
     cl_int tracingRetVal = L0ToClResultMapper(ret);
     TRACING_EXIT(ClEnqueueFillImage, &tracingRetVal);

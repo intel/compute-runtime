@@ -16,6 +16,7 @@
 namespace NEO {
 namespace LEO {
 
+class ClDevice;
 struct ClSurfaceFormatInfo;
 
 struct MipLevelHostLayout {
@@ -77,6 +78,8 @@ class Image : public MemObj {
     void setOwnerRootDeviceIndex(uint32_t rootDeviceIndex) { this->currentOwnerRootDeviceIndex = rootDeviceIndex; }
     void migrateTo(ze_command_list_handle_t cmdList, uint32_t targetRootDeviceIndex, bool outOfOrder,
                    uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
+    ze_result_t appendFill(ze_command_list_handle_t cmdList, ClDevice *device, const void *fillColor, const size_t *origin, const size_t *region,
+                           ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
 
     size_t getHostPtrRowPitch() const { return hostPtrRowPitch; }
     size_t getHostPtrSlicePitch() const { return hostPtrSlicePitch; }

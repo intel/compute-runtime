@@ -25,11 +25,16 @@ Implemented: the command buffer object, creation, finalization, reference
 counting, the info queries, replay, sync points, and recording with
 `clCommandNDRangeKernelKHR`, `clCommandCopyBufferKHR`,
 `clCommandCopyBufferRectKHR`, `clCommandFillBufferKHR`,
-`clCommandBarrierWithWaitListKHR`, `clCommandSVMMemcpyKHR` and
-`clCommandSVMMemFillKHR`.
+`clCommandBarrierWithWaitListKHR`, `clCommandSVMMemcpyKHR`,
+`clCommandSVMMemFillKHR`, `clCommandCopyImageKHR`,
+`clCommandCopyImageToBufferKHR`, `clCommandCopyBufferToImageKHR` and
+`clCommandFillImageKHR`.
 
-Not implemented: the image commands, kernels using printf or with image or
-shared object arguments, and `cl_khr_command_buffer_mutable_dispatch`.
+Not implemented: kernels using printf or with image or shared object
+arguments, images in a context with more than one root device (an image
+command on such an image returns `CL_INVALID_OPERATION`, because image
+migration is decided when a command is appended), and
+`cl_khr_command_buffer_mutable_dispatch`.
 
 ## Enabling it
 

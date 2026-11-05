@@ -17,12 +17,14 @@
 #include "level_zero/api/opencl/source/context/leo_context.h"
 #include "level_zero/api/opencl/source/event/leo_event.h"
 #include "level_zero/api/opencl/source/helpers/cl_to_l0_handles.h"
+#include "level_zero/api/opencl/source/helpers/image_enqueue_helpers.h"
 #include "level_zero/api/opencl/source/helpers/l0_to_cl_return_types_mapper.h"
 #include "level_zero/api/opencl/source/helpers/leo_base_object.h"
 #include "level_zero/api/opencl/source/helpers/leo_cl_validators.h"
 #include "level_zero/api/opencl/source/kernel/leo_kernel.h"
 #include "level_zero/api/opencl/source/l0_dispatch/leo_l0_dispatch.h"
 #include "level_zero/api/opencl/source/mem_obj/leo_buffer.h"
+#include "level_zero/api/opencl/source/mem_obj/leo_image.h"
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include <level_zero/ze_api.h>
 
@@ -137,6 +139,7 @@ CL_API_ENTRY cl_command_buffer_khr CL_API_CALL clCreateCommandBufferKHR(
     if (false == pCommandQueue->isOutOfOrder()) {
         L0::CommandList::fromHandle(cmdListHandle)->setupPatchPreambleEnabled(true);
     }
+    L0::CommandList::fromHandle(cmdListHandle)->setImageCopyOffloadAllowed(false);
 
     return new NEO::LEO::CommandBuffer(pCommandQueue->getContext(), pCommandQueue, cmdListHandle, properties);
 }
@@ -400,6 +403,194 @@ CL_API_ENTRY cl_int CL_API_CALL clCommandFillBufferKHR(
     result = zeCommandListAppendMemoryFill(pCommandBuffer->getL0Handle(), ptrOffset(pBuffer->getUsmPtr(), offset),
                                            pattern, patternSize, size, nullptr, 0u, nullptr);
     return recordAndRetain(*pCommandBuffer, result, syncPoint, {pBuffer});
+}
+
+CL_API_ENTRY cl_int CL_API_CALL clCommandCopyImageKHR(
+    cl_command_buffer_khr commandBuffer,
+    cl_command_queue commandQueue,
+    const cl_command_properties_khr *properties,
+    cl_mem srcImage,
+    cl_mem dstImage,
+    const size_t *srcOrigin,
+    const size_t *dstOrigin,
+    const size_t *region,
+    cl_uint numSyncPointsInWaitList,
+    const cl_sync_point_khr *syncPointWaitList,
+    cl_sync_point_khr *syncPoint,
+    cl_mutable_command_khr *mutableHandle) {
+    auto [retVal, pCommandBuffer, pSrcImage, pDstImage] = NEO::LEO::validateAndCast(
+        std::make_tuple(commandBuffer, NEO::LEO::ImageObj{srcImage}, NEO::LEO::ImageObj{dstImage}));
+    if (retVal != CL_SUCCESS) [[unlikely]] {
+        return retVal;
+    }
+
+    auto lock = pCommandBuffer->takeOwnership();
+    retVal = pCommandBuffer->validateCommand(commandQueue, properties, numSyncPointsInWaitList, syncPointWaitList, mutableHandle);
+    if (retVal != CL_SUCCESS) {
+        return retVal;
+    }
+    if (!isInContext(*pCommandBuffer, {pSrcImage, pDstImage})) {
+        return CL_INVALID_CONTEXT;
+    }
+    if (pSrcImage->isMultiDevice() || pDstImage->isMultiDevice()) {
+        return CL_INVALID_OPERATION;
+    }
+    retVal = NEO::LEO::validateImageCopy(pSrcImage->getOriginalFormat(), pDstImage->getOriginalFormat(), srcOrigin, dstOrigin, region);
+    if (retVal != CL_SUCCESS) {
+        return retVal;
+    }
+
+    auto srcMipDesc = createZeImageRegionWithMipLevel(pSrcImage, srcOrigin, region);
+    auto dstMipDesc = createZeImageRegionWithMipLevel(pDstImage, dstOrigin, region);
+
+    auto result = pCommandBuffer->appendSyncPointBarrier(numSyncPointsInWaitList);
+    if (result != ZE_RESULT_SUCCESS) {
+        return L0ToClResultMapper(result);
+    }
+
+    result = zeCommandListAppendImageCopyRegion(pCommandBuffer->getL0Handle(), pDstImage->getL0Handle(), pSrcImage->getL0Handle(),
+                                                &dstMipDesc, &srcMipDesc, nullptr, 0u, nullptr);
+    return recordAndRetain(*pCommandBuffer, result, syncPoint, {pSrcImage, pDstImage});
+}
+
+CL_API_ENTRY cl_int CL_API_CALL clCommandCopyImageToBufferKHR(
+    cl_command_buffer_khr commandBuffer,
+    cl_command_queue commandQueue,
+    const cl_command_properties_khr *properties,
+    cl_mem srcImage,
+    cl_mem dstBuffer,
+    const size_t *srcOrigin,
+    const size_t *region,
+    size_t dstOffset,
+    cl_uint numSyncPointsInWaitList,
+    const cl_sync_point_khr *syncPointWaitList,
+    cl_sync_point_khr *syncPoint,
+    cl_mutable_command_khr *mutableHandle) {
+    auto [retVal, pCommandBuffer, pSrcImage, pDstBuffer] = NEO::LEO::validateAndCast(
+        std::make_tuple(commandBuffer, NEO::LEO::ImageObj{srcImage}, NEO::LEO::BufferObj{dstBuffer}));
+    if (retVal != CL_SUCCESS) [[unlikely]] {
+        return retVal;
+    }
+
+    auto lock = pCommandBuffer->takeOwnership();
+    retVal = pCommandBuffer->validateCommand(commandQueue, properties, numSyncPointsInWaitList, syncPointWaitList, mutableHandle);
+    if (retVal != CL_SUCCESS) {
+        return retVal;
+    }
+    if (!isInContext(*pCommandBuffer, {pSrcImage, pDstBuffer})) {
+        return CL_INVALID_CONTEXT;
+    }
+    if (pSrcImage->isMultiDevice()) {
+        return CL_INVALID_OPERATION;
+    }
+    const auto srcFormat = pSrcImage->getOriginalFormat();
+    if (NEO::LEO::isPackedYuvImage(&srcFormat)) {
+        retVal = NEO::LEO::validateYuvOperation(srcOrigin, region);
+        if (retVal != CL_SUCCESS) {
+            return retVal;
+        }
+    }
+
+    auto mipDesc = createZeImageRegionWithMipLevel(pSrcImage, srcOrigin, region);
+
+    auto result = pCommandBuffer->appendSyncPointBarrier(numSyncPointsInWaitList);
+    if (result != ZE_RESULT_SUCCESS) {
+        return L0ToClResultMapper(result);
+    }
+
+    result = zeCommandListAppendImageCopyToMemory(pCommandBuffer->getL0Handle(), ptrOffset(pDstBuffer->getUsmPtr(), dstOffset),
+                                                  pSrcImage->getL0Handle(), &mipDesc, nullptr, 0u, nullptr);
+    return recordAndRetain(*pCommandBuffer, result, syncPoint, {pSrcImage, pDstBuffer});
+}
+
+CL_API_ENTRY cl_int CL_API_CALL clCommandCopyBufferToImageKHR(
+    cl_command_buffer_khr commandBuffer,
+    cl_command_queue commandQueue,
+    const cl_command_properties_khr *properties,
+    cl_mem srcBuffer,
+    cl_mem dstImage,
+    size_t srcOffset,
+    const size_t *dstOrigin,
+    const size_t *region,
+    cl_uint numSyncPointsInWaitList,
+    const cl_sync_point_khr *syncPointWaitList,
+    cl_sync_point_khr *syncPoint,
+    cl_mutable_command_khr *mutableHandle) {
+    auto [retVal, pCommandBuffer, pSrcBuffer, pDstImage] = NEO::LEO::validateAndCast(
+        std::make_tuple(commandBuffer, NEO::LEO::BufferObj{srcBuffer}, NEO::LEO::ImageObj{dstImage}));
+    if (retVal != CL_SUCCESS) [[unlikely]] {
+        return retVal;
+    }
+
+    auto lock = pCommandBuffer->takeOwnership();
+    retVal = pCommandBuffer->validateCommand(commandQueue, properties, numSyncPointsInWaitList, syncPointWaitList, mutableHandle);
+    if (retVal != CL_SUCCESS) {
+        return retVal;
+    }
+    if (!isInContext(*pCommandBuffer, {pSrcBuffer, pDstImage})) {
+        return CL_INVALID_CONTEXT;
+    }
+    if (pDstImage->isMultiDevice()) {
+        return CL_INVALID_OPERATION;
+    }
+    const auto dstFormat = pDstImage->getOriginalFormat();
+    if (NEO::LEO::isPackedYuvImage(&dstFormat)) {
+        retVal = NEO::LEO::validateYuvOperation(dstOrigin, region);
+        if (retVal != CL_SUCCESS) {
+            return retVal;
+        }
+    }
+
+    auto mipDesc = createZeImageRegionWithMipLevel(pDstImage, dstOrigin, region);
+
+    auto result = pCommandBuffer->appendSyncPointBarrier(numSyncPointsInWaitList);
+    if (result != ZE_RESULT_SUCCESS) {
+        return L0ToClResultMapper(result);
+    }
+
+    result = zeCommandListAppendImageCopyFromMemory(pCommandBuffer->getL0Handle(), pDstImage->getL0Handle(),
+                                                    ptrOffset(pSrcBuffer->getUsmPtr(), srcOffset), &mipDesc, nullptr, 0u, nullptr);
+    return recordAndRetain(*pCommandBuffer, result, syncPoint, {pSrcBuffer, pDstImage});
+}
+
+CL_API_ENTRY cl_int CL_API_CALL clCommandFillImageKHR(
+    cl_command_buffer_khr commandBuffer,
+    cl_command_queue commandQueue,
+    const cl_command_properties_khr *properties,
+    cl_mem image,
+    const void *fillColor,
+    const size_t *origin,
+    const size_t *region,
+    cl_uint numSyncPointsInWaitList,
+    const cl_sync_point_khr *syncPointWaitList,
+    cl_sync_point_khr *syncPoint,
+    cl_mutable_command_khr *mutableHandle) {
+    auto [retVal, pCommandBuffer, pImage] = NEO::LEO::validateAndCast(
+        std::make_tuple(commandBuffer, NEO::LEO::ImageObj{image}),
+        std::make_tuple(const_cast<void *>(fillColor)));
+    if (retVal != CL_SUCCESS) [[unlikely]] {
+        return retVal;
+    }
+
+    auto lock = pCommandBuffer->takeOwnership();
+    retVal = pCommandBuffer->validateCommand(commandQueue, properties, numSyncPointsInWaitList, syncPointWaitList, mutableHandle);
+    if (retVal != CL_SUCCESS) {
+        return retVal;
+    }
+    if (!isInContext(*pCommandBuffer, {pImage})) {
+        return CL_INVALID_CONTEXT;
+    }
+    if (pImage->isMultiDevice()) {
+        return CL_INVALID_OPERATION;
+    }
+
+    auto result = pCommandBuffer->appendSyncPointBarrier(numSyncPointsInWaitList);
+    if (result != ZE_RESULT_SUCCESS) {
+        return L0ToClResultMapper(result);
+    }
+
+    result = pImage->appendFill(pCommandBuffer->getL0Handle(), pCommandBuffer->getCommandQueue()->getDevice(), fillColor, origin, region, nullptr, 0u, nullptr);
+    return recordAndRetain(*pCommandBuffer, result, syncPoint, {pImage});
 }
 
 CL_API_ENTRY cl_int CL_API_CALL clCommandSVMMemcpyKHR(

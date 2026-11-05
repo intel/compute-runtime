@@ -6,7 +6,10 @@
  */
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/hw_info.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/api/opencl/source/api/leo_api.h"
@@ -17,8 +20,10 @@
 #include "level_zero/api/opencl/source/helpers/leo_base_object.h"
 #include "level_zero/api/opencl/source/kernel/leo_kernel.h"
 #include "level_zero/api/opencl/source/mem_obj/leo_buffer.h"
+#include "level_zero/api/opencl/source/mem_obj/leo_image.h"
 #include "level_zero/api/opencl/source/program/leo_program.h"
 #include "level_zero/api/opencl/test/common/fixtures/command_list_create_hook.h"
+#include "level_zero/api/opencl/test/common/fixtures/fill_image_builtin_kernel_lib.h"
 #include "level_zero/api/opencl/test/common/fixtures/leo_capture_fixture.h"
 #include "level_zero/api/opencl/test/common/fixtures/ocl_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
@@ -26,8 +31,10 @@
 
 #include "CL/cl.h"
 
+#include <array>
 #include <cstring>
 #include <limits>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -161,7 +168,11 @@ TEST_F(LeoCommandBufferTest, givenCommandBufferEnabledWhenGettingExtensionFuncti
     EXPECT_NE(nullptr, clGetExtensionFunctionAddress("clCommandBarrierWithWaitListKHR"));
     EXPECT_NE(nullptr, clGetExtensionFunctionAddress("clCommandCopyBufferKHR"));
     EXPECT_NE(nullptr, clGetExtensionFunctionAddress("clCommandCopyBufferRectKHR"));
+    EXPECT_NE(nullptr, clGetExtensionFunctionAddress("clCommandCopyBufferToImageKHR"));
+    EXPECT_NE(nullptr, clGetExtensionFunctionAddress("clCommandCopyImageKHR"));
+    EXPECT_NE(nullptr, clGetExtensionFunctionAddress("clCommandCopyImageToBufferKHR"));
     EXPECT_NE(nullptr, clGetExtensionFunctionAddress("clCommandFillBufferKHR"));
+    EXPECT_NE(nullptr, clGetExtensionFunctionAddress("clCommandFillImageKHR"));
     EXPECT_NE(nullptr, clGetExtensionFunctionAddress("clCommandSVMMemcpyKHR"));
     EXPECT_NE(nullptr, clGetExtensionFunctionAddress("clCommandSVMMemFillKHR"));
     EXPECT_NE(nullptr, clGetExtensionFunctionAddress("clCommandNDRangeKernelKHR"));
@@ -177,7 +188,11 @@ TEST_F(LeoCommandBufferDisabledTest, givenCommandBufferDisabledWhenGettingExtens
     EXPECT_EQ(nullptr, clGetExtensionFunctionAddress("clCommandBarrierWithWaitListKHR"));
     EXPECT_EQ(nullptr, clGetExtensionFunctionAddress("clCommandCopyBufferKHR"));
     EXPECT_EQ(nullptr, clGetExtensionFunctionAddress("clCommandCopyBufferRectKHR"));
+    EXPECT_EQ(nullptr, clGetExtensionFunctionAddress("clCommandCopyBufferToImageKHR"));
+    EXPECT_EQ(nullptr, clGetExtensionFunctionAddress("clCommandCopyImageKHR"));
+    EXPECT_EQ(nullptr, clGetExtensionFunctionAddress("clCommandCopyImageToBufferKHR"));
     EXPECT_EQ(nullptr, clGetExtensionFunctionAddress("clCommandFillBufferKHR"));
+    EXPECT_EQ(nullptr, clGetExtensionFunctionAddress("clCommandFillImageKHR"));
     EXPECT_EQ(nullptr, clGetExtensionFunctionAddress("clCommandSVMMemcpyKHR"));
     EXPECT_EQ(nullptr, clGetExtensionFunctionAddress("clCommandSVMMemFillKHR"));
     EXPECT_EQ(nullptr, clGetExtensionFunctionAddress("clCommandNDRangeKernelKHR"));
@@ -1145,6 +1160,306 @@ TEST_F(LeoCommandBufferOutOfOrderRecordTest, givenBarrierAppendFailureWhenRecord
     EXPECT_EQ(1u, syncPoint);
 
     clReleaseMemObject(buffer);
+}
+
+struct WhiteBoxLeoImage : public Image {
+    using Image::perDeviceImageHandles;
+};
+
+struct LeoCommandBufferImageTest : public LeoCommandBufferRecordTest {
+    void SetUp() override {
+        LeoCommandBufferRecordTest::SetUp();
+        if (!neoDevice->getHardwareInfo().capabilityTable.supportsImages) {
+            GTEST_SKIP();
+        }
+
+        auto l0Device = clDevice->getL0Object();
+        auto builtInKernelLib = std::make_unique<FillImageBuiltInKernelLib>(l0Device, neoDevice->getBuiltIns());
+        recordingKernel = &builtInKernelLib->recordingKernel;
+        l0Device->builtins = std::move(builtInKernelLib);
+
+        srcImage = createImage2d(clContext, rgbaFormat);
+        dstImage = createImage2d(clContext, rgbaFormat);
+        buffer = createBuffer(imageWidth * imageHeight * pixelSize);
+        ASSERT_NE(nullptr, srcImage);
+        ASSERT_NE(nullptr, dstImage);
+        ASSERT_NE(nullptr, buffer);
+    }
+
+    void TearDown() override {
+        releaseCommandBuffer();
+        for (auto memObj : {srcImage, dstImage, buffer}) {
+            if (memObj != nullptr) {
+                clReleaseMemObject(memObj);
+            }
+        }
+        LeoCommandBufferRecordTest::TearDown();
+    }
+
+    cl_mem createImage2d(cl_context imageContext, cl_image_format format) {
+        cl_image_desc desc{};
+        desc.image_type = CL_MEM_OBJECT_IMAGE2D;
+        desc.image_width = imageWidth;
+        desc.image_height = imageHeight;
+        cl_int errcode = CL_INVALID_VALUE;
+        auto image = clCreateImage(imageContext, CL_MEM_READ_WRITE, &format, &desc, nullptr, &errcode);
+        EXPECT_EQ(CL_SUCCESS, errcode);
+        return image;
+    }
+
+    std::vector<cl_int> recordImageCommands(cl_uint numSyncPoints, const cl_sync_point_khr *syncPointWaitList) {
+        return {clCommandCopyImageKHR(commandBuffer, nullptr, nullptr, srcImage, dstImage, origin, origin, region, numSyncPoints, syncPointWaitList, nullptr, nullptr),
+                clCommandCopyImageToBufferKHR(commandBuffer, nullptr, nullptr, srcImage, buffer, origin, region, 0u, numSyncPoints, syncPointWaitList, nullptr, nullptr),
+                clCommandCopyBufferToImageKHR(commandBuffer, nullptr, nullptr, buffer, dstImage, 0u, origin, region, numSyncPoints, syncPointWaitList, nullptr, nullptr),
+                clCommandFillImageKHR(commandBuffer, nullptr, nullptr, dstImage, fillColor, origin, region, numSyncPoints, syncPointWaitList, nullptr, nullptr)};
+    }
+
+    size_t countImageAppends() const {
+        return recordedCmdList.appendImageCopyRegionCalled + recordedCmdList.appendImageCopyToMemoryCalled +
+               recordedCmdList.appendImageCopyFromMemoryCalled + recordedCmdList.appendLaunchKernelArgs.count();
+    }
+
+    static constexpr size_t imageWidth = 8u;
+    static constexpr size_t imageHeight = 8u;
+    static constexpr size_t pixelSize = 4u;
+    static constexpr cl_image_format rgbaFormat{CL_RGBA, CL_UNSIGNED_INT8};
+    const size_t origin[3] = {0u, 0u, 0u};
+    const size_t region[3] = {4u, 4u, 1u};
+    const uint32_t fillColor[4] = {1u, 2u, 3u, 4u};
+
+    FillImageRecordingKernel *recordingKernel = nullptr;
+    cl_mem srcImage = nullptr;
+    cl_mem dstImage = nullptr;
+    cl_mem buffer = nullptr;
+};
+
+struct LeoCommandBufferOutOfOrderImageTest : public LeoCommandBufferImageTest {
+    LeoCommandBufferOutOfOrderImageTest() { outOfOrderQueue = true; }
+};
+
+TEST_F(LeoCommandBufferImageTest, givenImagesWhenRecordingCopyImageThenImageCopyIsAppendedAndImagesAreRetained) {
+    auto pSrcImage = castToObject<Image>(srcImage);
+    auto pDstImage = castToObject<Image>(dstImage);
+    const auto srcRefCount = pSrcImage->getRefInternalCount();
+    const auto dstRefCount = pDstImage->getRefInternalCount();
+
+    cl_sync_point_khr syncPoint = 7u;
+    EXPECT_EQ(CL_SUCCESS, clCommandCopyImageKHR(commandBuffer, nullptr, nullptr, srcImage, dstImage, origin, origin, region, 0u, nullptr, &syncPoint, nullptr));
+    EXPECT_EQ(0u, syncPoint);
+    EXPECT_EQ(1u, recordedCmdList.appendImageCopyRegionCalled);
+    EXPECT_EQ(srcRefCount + 1, pSrcImage->getRefInternalCount());
+    EXPECT_EQ(dstRefCount + 1, pDstImage->getRefInternalCount());
+
+    releaseCommandBuffer();
+    EXPECT_EQ(srcRefCount, pSrcImage->getRefInternalCount());
+    EXPECT_EQ(dstRefCount, pDstImage->getRefInternalCount());
+}
+
+TEST_F(LeoCommandBufferImageTest, givenImageAndBufferWhenRecordingCopiesBetweenThemThenCopiesAreAppendedWithoutImageCopyOffloadAndObjectsAreRetained) {
+    auto pSrcImage = castToObject<Image>(srcImage);
+    auto pDstImage = castToObject<Image>(dstImage);
+    auto pBuffer = castToObject<Buffer>(buffer);
+    const auto srcRefCount = pSrcImage->getRefInternalCount();
+    const auto dstRefCount = pDstImage->getRefInternalCount();
+    const auto bufferRefCount = pBuffer->getRefInternalCount();
+
+    cl_sync_point_khr syncPoints[2] = {7u, 7u};
+    EXPECT_EQ(CL_SUCCESS, clCommandCopyImageToBufferKHR(commandBuffer, nullptr, nullptr, srcImage, buffer, origin, region, 16u, 0u, nullptr, &syncPoints[0], nullptr));
+    EXPECT_EQ(CL_SUCCESS, clCommandCopyBufferToImageKHR(commandBuffer, nullptr, nullptr, buffer, dstImage, 16u, origin, region, 0u, nullptr, &syncPoints[1], nullptr));
+    EXPECT_EQ(0u, syncPoints[0]);
+    EXPECT_EQ(1u, syncPoints[1]);
+
+    EXPECT_EQ(1u, recordedCmdList.appendImageCopyToMemoryCalled);
+    EXPECT_EQ(1u, recordedCmdList.appendImageCopyFromMemoryCalled);
+    EXPECT_EQ((std::vector<bool>{false, false}), recordedCmdList.imageCopyOffloadAllowedAtImageCopy);
+    EXPECT_EQ(srcRefCount + 1, pSrcImage->getRefInternalCount());
+    EXPECT_EQ(dstRefCount + 1, pDstImage->getRefInternalCount());
+    EXPECT_EQ(bufferRefCount + 2, pBuffer->getRefInternalCount());
+
+    releaseCommandBuffer();
+    EXPECT_EQ(srcRefCount, pSrcImage->getRefInternalCount());
+    EXPECT_EQ(dstRefCount, pDstImage->getRefInternalCount());
+    EXPECT_EQ(bufferRefCount, pBuffer->getRefInternalCount());
+}
+
+TEST_F(LeoCommandBufferImageTest, givenImageWhenRecordingFillImageThenFillKernelIsAppendedAndImageIsRetained) {
+    auto pDstImage = castToObject<Image>(dstImage);
+    const auto refCount = pDstImage->getRefInternalCount();
+    const size_t fillOrigin[3] = {1u, 2u, 0u};
+
+    cl_sync_point_khr syncPoint = 7u;
+    EXPECT_EQ(CL_SUCCESS, clCommandFillImageKHR(commandBuffer, nullptr, nullptr, dstImage, fillColor, fillOrigin, region, 0u, nullptr, &syncPoint, nullptr));
+    EXPECT_EQ(0u, syncPoint);
+
+    ASSERT_EQ(1u, recordedCmdList.appendLaunchKernelArgs.count());
+    EXPECT_EQ(recordingKernel->toHandle(), recordedCmdList.appendLaunchKernelArgs[0].kernel);
+    EXPECT_EQ(nullptr, recordedCmdList.appendLaunchKernelArgs[0].signalEvent);
+    const std::array<uint32_t, 4> expectedDstOffset{1u, 2u, 0u, 0u};
+    EXPECT_EQ(expectedDstOffset, recordingKernel->dstOffset);
+    EXPECT_EQ(refCount + 1, pDstImage->getRefInternalCount());
+
+    releaseCommandBuffer();
+    EXPECT_EQ(refCount, pDstImage->getRefInternalCount());
+}
+
+TEST_F(LeoCommandBufferImageTest, givenImageFromBufferWhenRecordingFillImageThenMemoryFillWithPackedColorIsAppended) {
+    cl_image_desc desc{};
+    desc.image_type = CL_MEM_OBJECT_IMAGE1D_BUFFER;
+    desc.image_width = imageWidth;
+    desc.mem_object = buffer;
+    cl_int errcode = CL_INVALID_VALUE;
+    auto imageFromBuffer = clCreateImage(clContext, CL_MEM_READ_WRITE, &rgbaFormat, &desc, nullptr, &errcode);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+    auto l0Image = castToObject<Image>(imageFromBuffer)->getL0Object();
+    const size_t fillOrigin[3] = {2u, 0u, 0u};
+    const size_t fillRegion[3] = {3u, 1u, 1u};
+
+    EXPECT_EQ(CL_SUCCESS, clCommandFillImageKHR(commandBuffer, nullptr, nullptr, imageFromBuffer, fillColor, fillOrigin, fillRegion, 0u, nullptr, nullptr, nullptr));
+
+    ASSERT_EQ(1u, recordedCmdList.appendMemoryFillArgs.count());
+    const auto &args = recordedCmdList.appendMemoryFillArgs[0];
+    EXPECT_EQ(reinterpret_cast<void *>(l0Image->getAllocation()->getGpuAddress() + l0Image->getImageInfo().offset + 2u * pixelSize), args.ptr);
+    const std::vector<uint8_t> expectedPattern{1u, 2u, 3u, 4u};
+    EXPECT_EQ(expectedPattern, args.pattern);
+    EXPECT_EQ(pixelSize, args.patternSize);
+    EXPECT_EQ(3u * pixelSize, args.size);
+    EXPECT_EQ(0u, recordedCmdList.appendLaunchKernelArgs.count());
+
+    releaseCommandBuffer();
+    clReleaseMemObject(imageFromBuffer);
+}
+
+TEST_F(LeoCommandBufferImageTest, givenAppendFailureWhenRecordingImageCommandsThenErrorIsReturnedAndObjectsAreNotRetained) {
+    auto pSrcImage = castToObject<Image>(srcImage);
+    auto pDstImage = castToObject<Image>(dstImage);
+    auto pBuffer = castToObject<Buffer>(buffer);
+    const auto srcRefCount = pSrcImage->getRefInternalCount();
+    const auto dstRefCount = pDstImage->getRefInternalCount();
+    const auto bufferRefCount = pBuffer->getRefInternalCount();
+
+    recordedCmdList.appendImageCopyRegionResult = ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    recordedCmdList.appendImageCopyToMemoryResult = ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    recordedCmdList.appendImageCopyFromMemoryResult = ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    recordedCmdList.appendLaunchKernelResult = ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    const std::vector<cl_int> allFailed(4u, CL_INVALID_VALUE);
+    EXPECT_EQ(allFailed, recordImageCommands(0u, nullptr));
+
+    EXPECT_EQ(srcRefCount, pSrcImage->getRefInternalCount());
+    EXPECT_EQ(dstRefCount, pDstImage->getRefInternalCount());
+    EXPECT_EQ(bufferRefCount, pBuffer->getRefInternalCount());
+
+    cl_sync_point_khr syncPoint = 7u;
+    EXPECT_EQ(CL_SUCCESS, recordBarrier(0u, nullptr, &syncPoint));
+    EXPECT_EQ(0u, syncPoint);
+}
+
+TEST_F(LeoCommandBufferImageTest, givenObjectsFromAnotherContextWhenRecordingImageCommandsThenInvalidContextIsReturned) {
+    cl_device_id clDeviceId = clDevice;
+    cl_int errcode = CL_SUCCESS;
+    auto otherContext = clCreateContext(nullptr, 1, &clDeviceId, nullptr, nullptr, &errcode);
+    ASSERT_NE(nullptr, otherContext);
+    auto otherImage = createImage2d(otherContext, rgbaFormat);
+    auto otherBuffer = clCreateBuffer(otherContext, CL_MEM_READ_WRITE, imageWidth * imageHeight * pixelSize, nullptr, &errcode);
+    ASSERT_NE(nullptr, otherImage);
+    ASSERT_NE(nullptr, otherBuffer);
+
+    EXPECT_EQ(CL_INVALID_CONTEXT, clCommandCopyImageKHR(commandBuffer, nullptr, nullptr, otherImage, dstImage, origin, origin, region, 0u, nullptr, nullptr, nullptr));
+    EXPECT_EQ(CL_INVALID_CONTEXT, clCommandCopyImageKHR(commandBuffer, nullptr, nullptr, srcImage, otherImage, origin, origin, region, 0u, nullptr, nullptr, nullptr));
+    EXPECT_EQ(CL_INVALID_CONTEXT, clCommandCopyImageToBufferKHR(commandBuffer, nullptr, nullptr, srcImage, otherBuffer, origin, region, 0u, 0u, nullptr, nullptr, nullptr));
+    EXPECT_EQ(CL_INVALID_CONTEXT, clCommandCopyBufferToImageKHR(commandBuffer, nullptr, nullptr, buffer, otherImage, 0u, origin, region, 0u, nullptr, nullptr, nullptr));
+    EXPECT_EQ(CL_INVALID_CONTEXT, clCommandFillImageKHR(commandBuffer, nullptr, nullptr, otherImage, fillColor, origin, region, 0u, nullptr, nullptr, nullptr));
+    EXPECT_EQ(0u, countImageAppends());
+
+    clReleaseMemObject(otherBuffer);
+    clReleaseMemObject(otherImage);
+    clReleaseContext(otherContext);
+}
+
+TEST_F(LeoCommandBufferImageTest, givenMultiDeviceImageWhenRecordingImageCommandsThenInvalidOperationIsReturned) {
+    for (auto image : {srcImage, dstImage}) {
+        auto pImage = static_cast<WhiteBoxLeoImage *>(castToObject<Image>(image));
+        pImage->addPerDeviceHandle(1u, pImage->getL0Handle());
+
+        const std::vector<cl_int> expected = image == srcImage ? std::vector<cl_int>{CL_INVALID_OPERATION, CL_INVALID_OPERATION, CL_SUCCESS, CL_SUCCESS}
+                                                               : std::vector<cl_int>{CL_INVALID_OPERATION, CL_SUCCESS, CL_INVALID_OPERATION, CL_INVALID_OPERATION};
+        EXPECT_EQ(expected, recordImageCommands(0u, nullptr));
+
+        pImage->perDeviceImageHandles.clear();
+    }
+    EXPECT_EQ(3u, countImageAppends());
+}
+
+TEST_F(LeoCommandBufferImageTest, givenInvalidImageCommandArgumentsWhenRecordingThenCommandIsRejected) {
+    cl_command_queue clQueue = commandQueue;
+
+    EXPECT_EQ(CL_INVALID_MEM_OBJECT, clCommandCopyImageKHR(commandBuffer, nullptr, nullptr, srcImage, buffer, origin, origin, region, 0u, nullptr, nullptr, nullptr));
+    EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, clCommandCopyImageKHR(commandBuffer, clQueue, nullptr, srcImage, dstImage, origin, origin, region, 0u, nullptr, nullptr, nullptr));
+    EXPECT_EQ(CL_INVALID_MEM_OBJECT, clCommandCopyImageToBufferKHR(commandBuffer, nullptr, nullptr, buffer, buffer, origin, region, 0u, 0u, nullptr, nullptr, nullptr));
+    EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, clCommandCopyImageToBufferKHR(commandBuffer, clQueue, nullptr, srcImage, buffer, origin, region, 0u, 0u, nullptr, nullptr, nullptr));
+    EXPECT_EQ(CL_INVALID_MEM_OBJECT, clCommandCopyBufferToImageKHR(commandBuffer, nullptr, nullptr, srcImage, dstImage, 0u, origin, region, 0u, nullptr, nullptr, nullptr));
+    EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, clCommandCopyBufferToImageKHR(commandBuffer, clQueue, nullptr, buffer, dstImage, 0u, origin, region, 0u, nullptr, nullptr, nullptr));
+    EXPECT_EQ(CL_INVALID_VALUE, clCommandFillImageKHR(commandBuffer, nullptr, nullptr, dstImage, nullptr, origin, region, 0u, nullptr, nullptr, nullptr));
+    EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, clCommandFillImageKHR(commandBuffer, clQueue, nullptr, dstImage, fillColor, origin, region, 0u, nullptr, nullptr, nullptr));
+    EXPECT_EQ(CL_INVALID_COMMAND_BUFFER_KHR, clCommandFillImageKHR(nullptr, nullptr, nullptr, dstImage, fillColor, origin, region, 0u, nullptr, nullptr, nullptr));
+    EXPECT_EQ(0u, countImageAppends());
+}
+
+TEST_F(LeoCommandBufferImageTest, givenMismatchedFormatsWhenRecordingCopyImageThenImageFormatMismatchIsReturned) {
+    auto otherFormatImage = createImage2d(clContext, cl_image_format{CL_RGBA, CL_UNORM_INT8});
+    ASSERT_NE(nullptr, otherFormatImage);
+
+    EXPECT_EQ(CL_IMAGE_FORMAT_MISMATCH, clCommandCopyImageKHR(commandBuffer, nullptr, nullptr, srcImage, otherFormatImage, origin, origin, region, 0u, nullptr, nullptr, nullptr));
+    EXPECT_EQ(0u, countImageAppends());
+
+    clReleaseMemObject(otherFormatImage);
+}
+
+TEST_F(LeoCommandBufferImageTest, givenPackedYuvImageWithOddOriginWhenRecordingCopiesWithBufferThenInvalidValueIsReturned) {
+    cl_image_desc desc{};
+    desc.image_type = CL_MEM_OBJECT_IMAGE2D;
+    desc.image_width = imageWidth;
+    desc.image_height = imageHeight;
+    const cl_image_format yuvFormat{CL_YUYV_INTEL, CL_UNORM_INT8};
+    cl_int errcode = CL_INVALID_VALUE;
+    auto yuvImage = clCreateImage(clContext, CL_MEM_READ_ONLY, &yuvFormat, &desc, nullptr, &errcode);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+    const size_t oddOrigin[3] = {1u, 0u, 0u};
+    const size_t evenRegion[3] = {2u, 2u, 1u};
+
+    EXPECT_EQ(CL_INVALID_VALUE, clCommandCopyImageToBufferKHR(commandBuffer, nullptr, nullptr, yuvImage, buffer, oddOrigin, evenRegion, 0u, 0u, nullptr, nullptr, nullptr));
+    EXPECT_EQ(CL_INVALID_VALUE, clCommandCopyBufferToImageKHR(commandBuffer, nullptr, nullptr, buffer, yuvImage, 0u, oddOrigin, evenRegion, 0u, nullptr, nullptr, nullptr));
+    EXPECT_EQ(0u, countImageAppends());
+
+    EXPECT_EQ(CL_SUCCESS, clCommandCopyImageToBufferKHR(commandBuffer, nullptr, nullptr, yuvImage, buffer, origin, evenRegion, 0u, 0u, nullptr, nullptr, nullptr));
+    EXPECT_EQ(CL_SUCCESS, clCommandCopyBufferToImageKHR(commandBuffer, nullptr, nullptr, buffer, yuvImage, 0u, origin, evenRegion, 0u, nullptr, nullptr, nullptr));
+    EXPECT_EQ(2u, countImageAppends());
+
+    releaseCommandBuffer();
+    clReleaseMemObject(yuvImage);
+}
+
+TEST_F(LeoCommandBufferOutOfOrderImageTest, givenOutOfOrderCommandBufferWhenRecordingImageCommandsWithSyncPointsThenBarrierIsAppendedBeforeEachOfThem) {
+    cl_sync_point_khr syncPoint = 7u;
+    ASSERT_EQ(CL_SUCCESS, recordBarrier(0u, nullptr, &syncPoint));
+    recordedCmdList.clearCaptures();
+
+    const cl_sync_point_khr waitList[] = {syncPoint};
+    const std::vector<cl_int> allSucceeded(4u, CL_SUCCESS);
+    EXPECT_EQ(allSucceeded, recordImageCommands(1u, waitList));
+    EXPECT_EQ(4u, recordedCmdList.appendBarrierArgs.count());
+    EXPECT_EQ(4u, countImageAppends());
+}
+
+TEST_F(LeoCommandBufferOutOfOrderImageTest, givenBarrierAppendFailureWhenRecordingImageCommandsWithSyncPointsThenErrorIsReturnedAndCommandsAreNotAppended) {
+    cl_sync_point_khr syncPoint = 7u;
+    ASSERT_EQ(CL_SUCCESS, recordBarrier(0u, nullptr, &syncPoint));
+    recordedCmdList.clearCaptures();
+
+    recordedCmdList.appendBarrierResult = ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    const cl_sync_point_khr waitList[] = {syncPoint};
+    const std::vector<cl_int> allFailed(4u, CL_INVALID_VALUE);
+    EXPECT_EQ(allFailed, recordImageCommands(1u, waitList));
+    EXPECT_EQ(0u, countImageAppends());
 }
 
 struct WhiteBoxLeoKernel : public Kernel {
