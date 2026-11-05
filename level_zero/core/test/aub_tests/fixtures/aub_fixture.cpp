@@ -153,6 +153,10 @@ void AUBFixtureL0::executeAndSynchronize() {
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandQueueSynchronize(this->pCmdq->toHandle(), std::numeric_limits<uint64_t>::max()));
 }
 
+void AUBFixtureL0::appendBarrier() {
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(this->commandList->toHandle(), nullptr, 0, nullptr));
+}
+
 ze_kernel_handle_t AUBFixtureL0::createKernel(const std::string &moduleFileName, const std::string &kernelName, bool useSharedFile) {
     const auto moduleKey = std::make_pair(moduleFileName, useSharedFile);
     auto moduleIt = this->modules.find(moduleKey);

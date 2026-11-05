@@ -108,6 +108,7 @@ class AUBFixtureL0 {
     void *allocateHostMemory(size_t size, size_t alignment);
     void *allocateDeviceMemory(size_t size, size_t alignment);
     void executeAndSynchronize();
+    void appendBarrier();
     ze_kernel_handle_t createKernel(const std::string &moduleFileName, const std::string &kernelName, bool useSharedFile);
 
     static ze_module_handle_t createModuleFromFile(const std::string &fileName, ze_context_handle_t context, ze_device_handle_t device, const std::string &buildFlags, bool useSharedFile = false);

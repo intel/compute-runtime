@@ -93,10 +93,6 @@ struct MemoryAubFixture : public AUBFixtureL0 {
         EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendMemoryCopy(this->commandList->toHandle(), dst, src, size, nullptr, 0, nullptr));
     }
 
-    void appendBarrier() {
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(this->commandList->toHandle(), nullptr, 0, nullptr));
-    }
-
     void initialize(AubMemoryType type, void *dst, const void *src, size_t size) {
         if (type == AubMemoryType::deviceUsm) {
             this->appendCopy(dst, src, size);
