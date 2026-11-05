@@ -25,9 +25,11 @@
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/raii_gfx_core_helper.h"
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_gfx_core_helper.h"
 #include "shared/test/common/mocks/mock_l0_debugger.h"
 #include "shared/test/common/test_macros/header/heapful_test_definitions.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -1887,6 +1889,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenWorkloadAndThreadGroupSizeWhenCalculatin
     hwInfo.gtSystemInfo.ThreadCount = 64;
     hwInfo.gtSystemInfo.EUCount = 1024;
     hwInfo.gtSystemInfo.SubSliceCount = 8;
+    hwInfo.caps.preferredSlmThreadGroupHeadroom = 0;
 
     constexpr uint32_t maxConcurrentThreadCountPerSubslice = 8;
     ASSERT_EQ(maxConcurrentThreadCountPerSubslice, NEO::EncodeDispatchKernel<FamilyType>::getMaxConcurrentThreadCountPerSubslice(rootDeviceEnvironment, GrfConfig::defaultGrfNumber));
@@ -1919,10 +1922,127 @@ HWTEST2_F(CommandEncodeStatesTest, givenWorkloadAndThreadGroupSizeWhenCalculatin
     EXPECT_EQ(2u, calculateThreadGroupCountSharingSubsliceSlm(4, 16));
 }
 
+HWTEST2_F(CommandEncodeStatesTest, givenThreadGroupHeadroomWhenCalculatingThreadGroupCountSharingSubsliceSlmThenHeadroomIsAddedOnlyWhenWorkloadExceedsResidencyLimit, IsAtLeastXe2HpgCore) {
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironmentRef();
+    auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelperHw<FamilyType>> gfxCoreHelperBackup{rootDeviceEnvironment};
+
+    hwInfo.gtSystemInfo.ThreadCount = 64;
+    hwInfo.gtSystemInfo.SubSliceCount = 8;
+    hwInfo.caps.grfLimitedPreferredSlmSizeEnabled = true;
+    hwInfo.caps.preferredSlmThreadGroupHeadroom = 1;
+    gfxCoreHelperBackup.mockGfxCoreHelper->availableThreadCount = 32;
+
+    constexpr uint32_t maxConcurrentThreadCountPerSubslice = 4;
+    ASSERT_EQ(maxConcurrentThreadCountPerSubslice, NEO::EncodeDispatchKernel<FamilyType>::getMaxConcurrentThreadCountPerSubslice(rootDeviceEnvironment, GrfConfig::defaultGrfNumber));
+
+    auto calculateThreadGroupCountSharingSubsliceSlm = [&](uint32_t threadsPerThreadGroup, uint32_t workloadThreadGroupCount) {
+        NEO::EncodeSlmSizePerSubSliceArgs slmArgs{
+            .threadsPerThreadGroup = threadsPerThreadGroup,
+            .workloadThreadGroupCount = workloadThreadGroupCount,
+            .slmTotalSizePerThreadGroup = 0,
+            .grfCount = GrfConfig::defaultGrfNumber,
+            .slmPolicy = NEO::SlmPolicy::slmPolicyNone};
+
+        return NEO::EncodeDispatchKernel<FamilyType>::calculateThreadGroupCountSharingSubsliceSlm(rootDeviceEnvironment, slmArgs);
+    };
+
+    EXPECT_EQ(1u, calculateThreadGroupCountSharingSubsliceSlm(1, 8));
+    EXPECT_EQ(4u, calculateThreadGroupCountSharingSubsliceSlm(1, 32));
+    EXPECT_EQ(1u, calculateThreadGroupCountSharingSubsliceSlm(4, 8));
+
+    EXPECT_EQ(5u, calculateThreadGroupCountSharingSubsliceSlm(1, 40));
+    EXPECT_EQ(5u, calculateThreadGroupCountSharingSubsliceSlm(1, 1024));
+    EXPECT_EQ(3u, calculateThreadGroupCountSharingSubsliceSlm(2, 1024));
+    EXPECT_EQ(2u, calculateThreadGroupCountSharingSubsliceSlm(4, 1024));
+
+    hwInfo.caps.preferredSlmThreadGroupHeadroom = 2;
+    EXPECT_EQ(6u, calculateThreadGroupCountSharingSubsliceSlm(1, 48));
+    EXPECT_EQ(6u, calculateThreadGroupCountSharingSubsliceSlm(1, 1024));
+    EXPECT_EQ(4u, calculateThreadGroupCountSharingSubsliceSlm(2, 1024));
+}
+
+HWTEST2_F(CommandEncodeStatesTest, givenThreadGroupHeadroomWhenCalculatingThreadGroupCountSharingSubsliceSlmThenCountDoesNotExceedResidentThreadGroupsWithoutGrfLimit, IsAtLeastXe2HpgCore) {
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironmentRef();
+    auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelperHw<FamilyType>> gfxCoreHelperBackup{rootDeviceEnvironment};
+
+    hwInfo.gtSystemInfo.ThreadCount = 64;
+    hwInfo.gtSystemInfo.SubSliceCount = 8;
+    hwInfo.caps.grfLimitedPreferredSlmSizeEnabled = true;
+    hwInfo.caps.preferredSlmThreadGroupHeadroom = 8;
+    gfxCoreHelperBackup.mockGfxCoreHelper->availableThreadCount = 32;
+    ASSERT_EQ(4u, NEO::EncodeDispatchKernel<FamilyType>::getMaxConcurrentThreadCountPerSubslice(rootDeviceEnvironment, GrfConfig::defaultGrfNumber));
+
+    auto calculateThreadGroupCountSharingSubsliceSlm = [&](uint32_t threadsPerThreadGroup) {
+        NEO::EncodeSlmSizePerSubSliceArgs slmArgs{
+            .threadsPerThreadGroup = threadsPerThreadGroup,
+            .workloadThreadGroupCount = 1024,
+            .slmTotalSizePerThreadGroup = 0,
+            .grfCount = GrfConfig::defaultGrfNumber,
+            .slmPolicy = NEO::SlmPolicy::slmPolicyNone};
+
+        return NEO::EncodeDispatchKernel<FamilyType>::calculateThreadGroupCountSharingSubsliceSlm(rootDeviceEnvironment, slmArgs);
+    };
+
+    EXPECT_EQ(8u, calculateThreadGroupCountSharingSubsliceSlm(1));
+    EXPECT_EQ(4u, calculateThreadGroupCountSharingSubsliceSlm(2));
+    EXPECT_EQ(2u, calculateThreadGroupCountSharingSubsliceSlm(4));
+
+    hwInfo.caps.preferredSlmThreadGroupHeadroom = 1;
+    gfxCoreHelperBackup.mockGfxCoreHelper->availableThreadCount = 64;
+    ASSERT_EQ(8u, NEO::EncodeDispatchKernel<FamilyType>::getMaxConcurrentThreadCountPerSubslice(rootDeviceEnvironment, GrfConfig::defaultGrfNumber));
+
+    EXPECT_EQ(8u, calculateThreadGroupCountSharingSubsliceSlm(1));
+    EXPECT_EQ(4u, calculateThreadGroupCountSharingSubsliceSlm(2));
+}
+
+HWTEST2_F(CommandEncodeStatesTest, givenOverridePreferredSlmThreadGroupHeadroomWhenCalculatingThreadGroupCountSharingSubsliceSlmThenOverriddenHeadroomIsUsedInsteadOfCaps, IsAtLeastXe2HpgCore) {
+    DebugManagerStateRestore restore;
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironmentRef();
+    auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelperHw<FamilyType>> gfxCoreHelperBackup{rootDeviceEnvironment};
+
+    hwInfo.gtSystemInfo.ThreadCount = 64;
+    hwInfo.gtSystemInfo.SubSliceCount = 8;
+    hwInfo.caps.grfLimitedPreferredSlmSizeEnabled = true;
+    gfxCoreHelperBackup.mockGfxCoreHelper->availableThreadCount = 32;
+
+    constexpr uint32_t maxConcurrentThreadCountPerSubslice = 4;
+    ASSERT_EQ(maxConcurrentThreadCountPerSubslice, NEO::EncodeDispatchKernel<FamilyType>::getMaxConcurrentThreadCountPerSubslice(rootDeviceEnvironment, GrfConfig::defaultGrfNumber));
+
+    auto calculateThreadGroupCountSharingSubsliceSlm = [&](uint32_t workloadThreadGroupCount) {
+        NEO::EncodeSlmSizePerSubSliceArgs slmArgs{
+            .threadsPerThreadGroup = 1,
+            .workloadThreadGroupCount = workloadThreadGroupCount,
+            .slmTotalSizePerThreadGroup = 0,
+            .grfCount = GrfConfig::defaultGrfNumber,
+            .slmPolicy = NEO::SlmPolicy::slmPolicyNone};
+
+        return NEO::EncodeDispatchKernel<FamilyType>::calculateThreadGroupCountSharingSubsliceSlm(rootDeviceEnvironment, slmArgs);
+    };
+
+    hwInfo.caps.preferredSlmThreadGroupHeadroom = 1;
+    debugManager.flags.OverridePreferredSlmThreadGroupHeadroom.set(0);
+    EXPECT_EQ(4u, calculateThreadGroupCountSharingSubsliceSlm(1024));
+
+    hwInfo.caps.preferredSlmThreadGroupHeadroom = 0;
+    debugManager.flags.OverridePreferredSlmThreadGroupHeadroom.set(3);
+    EXPECT_EQ(4u, calculateThreadGroupCountSharingSubsliceSlm(32));
+    EXPECT_EQ(7u, calculateThreadGroupCountSharingSubsliceSlm(1024));
+
+    debugManager.flags.OverridePreferredSlmThreadGroupHeadroom.set(6);
+    EXPECT_EQ(8u, calculateThreadGroupCountSharingSubsliceSlm(1024));
+
+    debugManager.flags.OverridePreferredSlmThreadGroupHeadroom.set(-1);
+    EXPECT_EQ(4u, calculateThreadGroupCountSharingSubsliceSlm(1024));
+}
+
 HWTEST2_F(CommandEncodeStatesTest, GivenEveryDispatchableThreadGroupSizeWhenCalculatingThreadGroupCountSharingSubsliceSlmThenAtLeastOneThreadGroupSharesTheSubslice, IsAtLeastXe2HpgCore) {
     auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
     rootDeviceEnvironment.getMutableHardwareInfo()->caps.grfLimitedPreferredSlmSizeEnabled = true;
+    rootDeviceEnvironment.getMutableHardwareInfo()->caps.preferredSlmThreadGroupHeadroom = 0;
     const auto &hwInfo = pDevice->getHardwareInfo();
     const auto grfCounts = rootDeviceEnvironment.getProductHelper().getSupportedNumGrfs(rootDeviceEnvironment.getReleaseHelper());
 

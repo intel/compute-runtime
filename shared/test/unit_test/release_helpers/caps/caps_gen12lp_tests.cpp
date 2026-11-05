@@ -35,6 +35,7 @@ TEST(CapsGen12LpTest, givenTglReleaseWhenMaterializingCapsThenCapabilitiesAreCor
     EXPECT_EQ(8u, capsTgl.minimalSimdSize);
     EXPECT_EQ(0u, capsTgl.numCacheRegions);
     EXPECT_EQ(16352u, capsTgl.planarYuvMaxHeight);
+    EXPECT_EQ(0u, capsTgl.preferredSlmThreadGroupHeadroom);
     EXPECT_EQ(0u, capsTgl.preferredWorkgroupCountPerSubslice);
     EXPECT_EQ(0u, capsTgl.rtasFormat);
     EXPECT_EQ(1u, capsTgl.shareMemoryWithoutNTHandle);
@@ -107,6 +108,7 @@ TEST(CapsGen12LpTest, givenRklReleaseWhenMaterializingCapsThenCapabilitiesAreCor
     EXPECT_EQ(8u, capsRkl.minimalSimdSize);
     EXPECT_EQ(0u, capsRkl.numCacheRegions);
     EXPECT_EQ(16352u, capsRkl.planarYuvMaxHeight);
+    EXPECT_EQ(0u, capsRkl.preferredSlmThreadGroupHeadroom);
     EXPECT_EQ(0u, capsRkl.preferredWorkgroupCountPerSubslice);
     EXPECT_EQ(0u, capsRkl.rtasFormat);
     EXPECT_EQ(1u, capsRkl.shareMemoryWithoutNTHandle);
@@ -179,6 +181,7 @@ TEST(CapsGen12LpTest, givenAdlSReleaseWhenMaterializingCapsThenCapabilitiesAreCo
     EXPECT_EQ(8u, capsAdlS.minimalSimdSize);
     EXPECT_EQ(0u, capsAdlS.numCacheRegions);
     EXPECT_EQ(16352u, capsAdlS.planarYuvMaxHeight);
+    EXPECT_EQ(0u, capsAdlS.preferredSlmThreadGroupHeadroom);
     EXPECT_EQ(0u, capsAdlS.preferredWorkgroupCountPerSubslice);
     EXPECT_EQ(0u, capsAdlS.rtasFormat);
     EXPECT_EQ(1u, capsAdlS.shareMemoryWithoutNTHandle);
@@ -251,6 +254,7 @@ TEST(CapsGen12LpTest, givenAdlPReleaseWhenMaterializingCapsThenCapabilitiesAreCo
     EXPECT_EQ(8u, capsAdlP.minimalSimdSize);
     EXPECT_EQ(0u, capsAdlP.numCacheRegions);
     EXPECT_EQ(16352u, capsAdlP.planarYuvMaxHeight);
+    EXPECT_EQ(0u, capsAdlP.preferredSlmThreadGroupHeadroom);
     EXPECT_EQ(0u, capsAdlP.preferredWorkgroupCountPerSubslice);
     EXPECT_EQ(0u, capsAdlP.rtasFormat);
     EXPECT_EQ(1u, capsAdlP.shareMemoryWithoutNTHandle);
@@ -323,6 +327,7 @@ TEST(CapsGen12LpTest, givenAdlNReleaseWhenMaterializingCapsThenCapabilitiesAreCo
     EXPECT_EQ(8u, capsAdlN.minimalSimdSize);
     EXPECT_EQ(0u, capsAdlN.numCacheRegions);
     EXPECT_EQ(16352u, capsAdlN.planarYuvMaxHeight);
+    EXPECT_EQ(0u, capsAdlN.preferredSlmThreadGroupHeadroom);
     EXPECT_EQ(0u, capsAdlN.preferredWorkgroupCountPerSubslice);
     EXPECT_EQ(0u, capsAdlN.rtasFormat);
     EXPECT_EQ(1u, capsAdlN.shareMemoryWithoutNTHandle);
@@ -395,6 +400,7 @@ TEST(CapsGen12LpTest, givenDg1ReleaseWhenMaterializingCapsThenCapabilitiesAreCor
     EXPECT_EQ(8u, capsDg1.minimalSimdSize);
     EXPECT_EQ(0u, capsDg1.numCacheRegions);
     EXPECT_EQ(16352u, capsDg1.planarYuvMaxHeight);
+    EXPECT_EQ(0u, capsDg1.preferredSlmThreadGroupHeadroom);
     EXPECT_EQ(0u, capsDg1.preferredWorkgroupCountPerSubslice);
     EXPECT_EQ(0u, capsDg1.rtasFormat);
     EXPECT_EQ(0u, capsDg1.shareMemoryWithoutNTHandle);

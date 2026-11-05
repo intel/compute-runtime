@@ -48,6 +48,7 @@ TEST(CapsSetupTest, givenEveryEnabledProductConfigWhenSettingUpCapsThenHwInfoIsI
         EXPECT_EQ(expectedCaps->minimalSimdSize, hwInfo.caps.minimalSimdSize);
         EXPECT_EQ(expectedCaps->numCacheRegions, hwInfo.caps.numCacheRegions);
         EXPECT_EQ(expectedCaps->planarYuvMaxHeight, hwInfo.caps.planarYuvMaxHeight);
+        EXPECT_EQ(expectedCaps->preferredSlmThreadGroupHeadroom, hwInfo.caps.preferredSlmThreadGroupHeadroom);
         EXPECT_EQ(expectedCaps->preferredWorkgroupCountPerSubslice, hwInfo.caps.preferredWorkgroupCountPerSubslice);
         EXPECT_EQ(expectedCaps->rtasFormat, hwInfo.caps.rtasFormat);
         EXPECT_EQ(expectedCaps->shareMemoryWithoutNTHandle, hwInfo.caps.shareMemoryWithoutNTHandle);
@@ -130,6 +131,7 @@ TEST(CapsTest, givenDefaultCapsThenValuesAreCorrect) {
     EXPECT_EQ(0u, caps.minimalSimdSize);
     EXPECT_EQ(0u, caps.numCacheRegions);
     EXPECT_EQ(0u, caps.planarYuvMaxHeight);
+    EXPECT_EQ(0u, caps.preferredSlmThreadGroupHeadroom);
     EXPECT_EQ(0u, caps.preferredWorkgroupCountPerSubslice);
     EXPECT_EQ(0u, caps.rtasFormat);
     EXPECT_EQ(0u, caps.shareMemoryWithoutNTHandle);

@@ -26,6 +26,7 @@ namespace NEO {
     NEO_COPY_CAP_FUNC(minimalSimdSize)                                           \
     NEO_COPY_CAP_FUNC(numCacheRegions)                                           \
     NEO_COPY_CAP_FUNC(planarYuvMaxHeight)                                        \
+    NEO_COPY_CAP_FUNC(preferredSlmThreadGroupHeadroom)                           \
     NEO_COPY_CAP_FUNC(preferredWorkgroupCountPerSubslice)                        \
     NEO_COPY_CAP_FUNC(rtasFormat)                                                \
     NEO_COPY_CAP_FUNC(shareMemoryWithoutNTHandle)                                \

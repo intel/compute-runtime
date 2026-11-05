@@ -52,6 +52,7 @@ TEST(CapsXeHpcTest, givenPvcReleaseWhenMaterializingCapsThenCapabilitiesAreCorre
     EXPECT_EQ(16u, capsPvc.minimalSimdSize);
     EXPECT_EQ(toUnderlying(CacheRegion::region3), capsPvc.numCacheRegions);
     EXPECT_EQ(16128u, capsPvc.planarYuvMaxHeight);
+    EXPECT_EQ(0u, capsPvc.preferredSlmThreadGroupHeadroom);
     EXPECT_EQ(0u, capsPvc.preferredWorkgroupCountPerSubslice);
     EXPECT_EQ(1u, capsPvc.rtasFormat);
     EXPECT_EQ(1u, capsPvc.shareMemoryWithoutNTHandle);
@@ -124,6 +125,7 @@ TEST(CapsXeHpcTest, givenPvcVgReleaseWhenMaterializingCapsThenCapabilitiesAreCor
     EXPECT_EQ(16u, capsPvcVg.minimalSimdSize);
     EXPECT_EQ(toUnderlying(CacheRegion::region3), capsPvcVg.numCacheRegions);
     EXPECT_EQ(16128u, capsPvcVg.planarYuvMaxHeight);
+    EXPECT_EQ(0u, capsPvcVg.preferredSlmThreadGroupHeadroom);
     EXPECT_EQ(0u, capsPvcVg.preferredWorkgroupCountPerSubslice);
     EXPECT_EQ(1u, capsPvcVg.rtasFormat);
     EXPECT_EQ(1u, capsPvcVg.shareMemoryWithoutNTHandle);

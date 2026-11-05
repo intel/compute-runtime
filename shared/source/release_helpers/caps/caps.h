@@ -24,6 +24,7 @@ struct Caps {
     uint32_t minimalSimdSize = 0u;
     uint32_t numCacheRegions = 0u;
     uint32_t planarYuvMaxHeight = 0u;
+    uint32_t preferredSlmThreadGroupHeadroom = 0u;
     uint32_t preferredWorkgroupCountPerSubslice = 0u;
     uint32_t rtasFormat = 0u;
     uint32_t shareMemoryWithoutNTHandle = 0u;

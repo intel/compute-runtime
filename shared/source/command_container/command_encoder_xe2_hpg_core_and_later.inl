@@ -49,9 +49,16 @@ uint32_t EncodeDispatchKernel<Family>::calculateThreadGroupCountSharingSubsliceS
 
     const uint32_t maxConcurrentThreadCountPerSubslice = EncodeDispatchKernel<Family>::getMaxConcurrentThreadCountPerSubslice(rootDeviceEnvironment, slmArgs.grfCount);
     const uint32_t maxConcurrentThreadGroupCountPerSubslice = maxConcurrentThreadCountPerSubslice / slmArgs.threadsPerThreadGroup;
+    const uint32_t threadGroupCountPerSubsliceWithoutGrfLimit = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.SubSliceCount / slmArgs.threadsPerThreadGroup;
     const uint32_t workloadThreadGroupCountPerSubslice = EncodeDispatchKernel<Family>::calculateThreadGroupCountPerSubslice(hwInfo, slmArgs.workloadThreadGroupCount);
 
-    return std::min(workloadThreadGroupCountPerSubslice, maxConcurrentThreadGroupCountPerSubslice);
+    uint32_t threadGroupHeadroom = hwInfo.caps.preferredSlmThreadGroupHeadroom;
+    if (debugManager.flags.OverridePreferredSlmThreadGroupHeadroom.get() != -1) {
+        threadGroupHeadroom = static_cast<uint32_t>(debugManager.flags.OverridePreferredSlmThreadGroupHeadroom.get());
+    }
+    const uint32_t cappedThreadGroupCountWithHeadroom = std::min(maxConcurrentThreadGroupCountPerSubslice + threadGroupHeadroom, threadGroupCountPerSubsliceWithoutGrfLimit);
+
+    return std::min(workloadThreadGroupCountPerSubslice, cappedThreadGroupCountWithHeadroom);
 }
 
 template <typename Family>

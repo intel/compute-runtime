@@ -10,6 +10,8 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 
+#include <optional>
+
 namespace NEO {
 
 template <typename GfxFamily>
@@ -30,9 +32,16 @@ class MockGfxCoreHelperHw : public GfxCoreHelperHw<GfxFamily> {
     bool isSipExternalLibRequired() const override {
         return sipExternalLibRequired;
     }
+    uint32_t calculateAvailableThreadCount(const HardwareInfo &hwInfo, uint32_t grfCount, const RootDeviceEnvironment &rootDeviceEnvironment) const override {
+        if (this->availableThreadCount.has_value()) {
+            return this->availableThreadCount.value();
+        }
+        return GfxCoreHelperHw<GfxFamily>::calculateAvailableThreadCount(hwInfo, grfCount, rootDeviceEnvironment);
+    }
     mutable uint32_t alignThreadGroupCountToDssSizeCalledTimes = 0;
     bool setIsLockable = true;
     bool perContextSipRequired = false;
     bool sipExternalLibRequired = false;
+    std::optional<uint32_t> availableThreadCount;
 };
 } // namespace NEO

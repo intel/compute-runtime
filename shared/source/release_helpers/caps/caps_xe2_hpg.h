@@ -27,6 +27,7 @@ struct CapsXe2HpgCore {
     static constexpr uint32_t maxNumSamplers = 16u;
     static constexpr uint32_t minimalSimdSize = 16u;
     static constexpr uint32_t planarYuvMaxHeight = 16128u;
+    static constexpr uint32_t preferredSlmThreadGroupHeadroom = 1u;
     static constexpr uint32_t rtasFormat = 1u;
     static constexpr uint32_t shareMemoryWithoutNTHandle = 1u;
 
@@ -44,6 +45,7 @@ struct CapsXe2HpgCore {
     static constexpr bool dotProductAccumulateSystolicSupported = true;
     static constexpr bool exposingSubdevicesAllowed = true;
     static constexpr bool globalBindlessAllocatorEnabled = true;
+    static constexpr bool grfLimitedPreferredSlmSizeEnabled = true;
     static constexpr bool latePreemptionStartSupported = true;
     static constexpr bool newCoherencyModelSupported = true;
     static constexpr bool newResidencyModelSupported = true;
