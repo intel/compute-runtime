@@ -22,11 +22,6 @@
 namespace NEO {
 
 template <typename GfxFamily>
-std::vector<int32_t> PreambleHelper<GfxFamily>::getSupportedThreadArbitrationPolicies() {
-    return {};
-}
-
-template <typename GfxFamily>
 void PreambleHelper<GfxFamily>::programGenSpecificPreambleWorkArounds(LinearStream *pCommandStream, const HardwareInfo &hwInfo) {
 }
 

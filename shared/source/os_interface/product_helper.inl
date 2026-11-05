@@ -59,8 +59,12 @@ int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, O
 
 template <PRODUCT_FAMILY gfxProduct>
 std::vector<int32_t> ProductHelperHw<gfxProduct>::getKernelSupportedThreadArbitrationPolicies() const {
-    using GfxFamily = typename HwMapper<gfxProduct>::GfxFamily;
-    return PreambleHelper<GfxFamily>::getSupportedThreadArbitrationPolicies();
+    StateComputeModePropertiesSupport scmPropertiesSupport = {};
+    fillScmPropertiesSupportStructure(scmPropertiesSupport);
+    if (scmPropertiesSupport.threadArbitrationPolicy || scmPropertiesSupport.pipelinedEuThreadArbitration) {
+        return {ThreadArbitrationPolicy::AgeBased, ThreadArbitrationPolicy::RoundRobin, ThreadArbitrationPolicy::RoundRobinAfterDependency};
+    }
+    return {};
 }
 
 template <PRODUCT_FAMILY gfxProduct>

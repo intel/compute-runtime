@@ -699,6 +699,32 @@ HWTEST2_F(ProductHelperTest, givenForceThreadArbitrationPolicyProgrammingWithScm
     EXPECT_TRUE(productHelper->isThreadArbitrationPolicyReportedWithScm());
 }
 
+HWTEST2_F(ProductHelperTest, givenThreadArbitrationPolicyProgrammedWithScmWhenGettingKernelSupportedThreadArbitrationPoliciesThenAllPoliciesAreReturned, IsAtMostXe3Core) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);
+    debugManager.flags.PipelinedEuThreadArbitration.set(0);
+
+    std::vector<int32_t> expectedPolicies = {ThreadArbitrationPolicy::AgeBased, ThreadArbitrationPolicy::RoundRobin, ThreadArbitrationPolicy::RoundRobinAfterDependency};
+    EXPECT_EQ(expectedPolicies, productHelper->getKernelSupportedThreadArbitrationPolicies());
+}
+
+HWTEST2_F(ProductHelperTest, givenPipelinedEuThreadArbitrationWhenGettingKernelSupportedThreadArbitrationPoliciesThenAllPoliciesAreReturned, IsAtLeastXe3Core) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(0);
+    debugManager.flags.PipelinedEuThreadArbitration.set(1);
+
+    std::vector<int32_t> expectedPolicies = {ThreadArbitrationPolicy::AgeBased, ThreadArbitrationPolicy::RoundRobin, ThreadArbitrationPolicy::RoundRobinAfterDependency};
+    EXPECT_EQ(expectedPolicies, productHelper->getKernelSupportedThreadArbitrationPolicies());
+}
+
+HWTEST_F(ProductHelperTest, givenThreadArbitrationPolicyNotProgrammedWithScmAndNoPipelinedEuThreadArbitrationWhenGettingKernelSupportedThreadArbitrationPoliciesThenNoPolicyIsReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(0);
+    debugManager.flags.PipelinedEuThreadArbitration.set(0);
+
+    EXPECT_TRUE(productHelper->getKernelSupportedThreadArbitrationPolicies().empty());
+}
+
 HWTEST_F(ProductHelperTest, givenProductHelperWhenIsPrefetcherDisablingInDirectSubmissionRequiredThenTrueIsReturned) {
     EXPECT_TRUE(productHelper->isPrefetcherDisablingInDirectSubmissionRequired());
 }
