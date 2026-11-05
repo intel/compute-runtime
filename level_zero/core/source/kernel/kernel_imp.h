@@ -105,6 +105,8 @@ struct KernelImp : Kernel {
 
     ze_result_t setArgBuffer(uint32_t argIndex, size_t argSize, const void *argVal);
 
+    ze_result_t setArgSlm(uint32_t argIndex, size_t argSize, const void *argVal);
+
     ze_result_t setArgUnknown(uint32_t argIndex, size_t argSize, const void *argVal);
 
     ze_result_t setArgRedescribedImage(uint32_t argIndex, ze_image_handle_t argVal, bool isPacked, uint32_t mipLevel) override;
@@ -260,6 +262,7 @@ struct KernelImp : Kernel {
     uint32_t getSurfaceStateIndexForBindlessOffset(NEO::CrossThreadDataOffset bindlessOffset) const;
     ze_result_t validateWorkgroupSize() const;
     ze_result_t applyGroupSize(uint32_t groupSizeX, uint32_t groupSizeY, uint32_t groupSizeZ, bool validateRequiredWorkgroupSize);
+    ze_result_t setArgSystemPointer(uint32_t argIndex, const void *requestedAddress, uint32_t allocId, uint32_t allocationsCounter);
     ArrayRef<uint8_t> getCrossThreadDataSpan() { return ArrayRef<uint8_t>(privateState.crossThreadData.data(), privateState.crossThreadData.size()); }
     ArrayRef<uint8_t> getSurfaceStateHeapDataSpan() { return ArrayRef<uint8_t>(privateState.surfaceStateHeapData.data(), privateState.surfaceStateHeapData.size()); }
     ArrayRef<uint8_t> getDynamicStateHeapDataSpan() { return ArrayRef<uint8_t>(privateState.dynamicStateHeapData.data(), privateState.dynamicStateHeapData.size()); }

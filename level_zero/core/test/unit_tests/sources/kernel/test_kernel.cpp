@@ -111,6 +111,28 @@ TEST_F(KernelInitTest, givenKernelToInitWhenItHasUnknownArgThenUnknowKernelArgHa
     EXPECT_EQ(gfxCoreHelper.getDefaultWalkerInlineDataSize(), kernel->sharedState->walkerInlineDataSize);
 }
 
+TEST_F(KernelInitTest, givenKernelToInitWhenItHasPointerArgsThenLocalArgGetsSlmHandlerAndGlobalArgGetsBufferHandler) {
+    uint32_t perHwThreadPrivateMemorySizeRequested = 32u;
+
+    std::unique_ptr<MockImmutableData> mockKernelImmData =
+        std::make_unique<MockImmutableData>(perHwThreadPrivateMemorySizeRequested);
+
+    createModuleFromMockBinary(perHwThreadPrivateMemorySizeRequested, false, mockKernelImmData.get());
+    std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
+    kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
+    ze_kernel_desc_t desc = {};
+    desc.pKernelName = kernelName.c_str();
+    mockKernelImmData->resizeExplicitArgs(2);
+    auto &explicitArgs = mockKernelImmData->kernelDescriptor->payloadMappings.explicitArgs;
+    explicitArgs[0] = NEO::ArgDescriptor{NEO::ArgDescriptor::argTPointer};
+    explicitArgs[0].getTraits().addressQualifier = NEO::KernelArgMetadata::AddrLocal;
+    explicitArgs[1] = NEO::ArgDescriptor{NEO::ArgDescriptor::argTPointer};
+    explicitArgs[1].getTraits().addressQualifier = NEO::KernelArgMetadata::AddrGlobal;
+    kernel->initialize(&desc);
+    EXPECT_EQ(kernel->privateState.kernelArgHandlers[0], &KernelImp::setArgSlm);
+    EXPECT_EQ(kernel->privateState.kernelArgHandlers[1], &KernelImp::setArgBuffer);
+}
+
 TEST_F(KernelInitTest, givenKernelToInitAndPreemptionEnabledWhenItHasUnknownArgThenUnknowKernelArgHandlerAssigned) {
     uint32_t perHwThreadPrivateMemorySizeRequested = 32u;
 
@@ -347,20 +369,7 @@ TEST_F(SetKernelArgCacheTest, givenValidBufferArgumentWhenSetMultipleTimesThenSe
 
     size_t callCounter = 0u;
     auto allocCounterBackup = svmAllocsManager->allocationsCounter.load();
-    svmAllocsManager->allocationsCounter = 0u;
     // first setArg - called
-    EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgBuffer(0, sizeof(svmAllocation), &svmAllocation));
-    EXPECT_EQ(++callCounter, mockKernel.setArgBufferWithAllocCalled);
-
-    // same setArg but allocationCounter == 0 - called
-    ASSERT_EQ(svmAllocsManager->allocationsCounter, 0u);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgBuffer(0, sizeof(svmAllocation), &svmAllocation));
-    EXPECT_EQ(++callCounter, mockKernel.setArgBufferWithAllocCalled);
-
-    // same setArg, saved counter older than alloc id - called
-    svmAllocsManager->allocationsCounter = allocCounterBackup;
-    ASSERT_EQ(mockKernel.privateState.kernelArgInfos[0].allocIdMemoryManagerCounter, 0u);
-    EXPECT_EQ(mockKernel.privateState.kernelArgInfos[0].allocIdMemoryManagerCounter, kernelArgInfos[0].allocIdMemoryManagerCounter);
     EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgBuffer(0, sizeof(svmAllocation), &svmAllocation));
     EXPECT_EQ(++callCounter, mockKernel.setArgBufferWithAllocCalled);
     EXPECT_EQ(mockKernel.privateState.kernelArgInfos[0].allocIdMemoryManagerCounter, allocCounterBackup);
@@ -421,15 +430,9 @@ TEST_F(SetKernelArgCacheTest, givenValidBufferArgumentWhenSetMultipleTimesThenSe
     EXPECT_FALSE(mockKernel.privateState.kernelArgInfos[0].isSetToNullptr);
     EXPECT_NE(nullptr, argumentsResidencyContainer[0]);
 
-    // allocations counter == 0 called
-    allocCounterBackup = svmAllocsManager->allocationsCounter.load();
-    svmAllocsManager->allocationsCounter = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgBuffer(0, sizeof(secondSvmAllocation), &secondSvmAllocation));
-    EXPECT_EQ(++callCounter, mockKernel.setArgBufferWithAllocCalled);
-
     // same value but no svmData - ZE_RESULT_SUCCESS with allocId as 0
     svmAllocsManager->freeSVMAlloc(secondSvmAllocation);
-    svmAllocsManager->allocationsCounter = allocCounterBackup;
+    ++svmAllocsManager->allocationsCounter;
     ASSERT_GT(mockKernel.privateState.kernelArgInfos[0].allocId, 0u);
     ASSERT_LT(mockKernel.privateState.kernelArgInfos[0].allocId, SvmAllocationData::uninitializedAllocId);
     ASSERT_EQ(mockKernel.privateState.kernelArgInfos[0].value, secondSvmAllocation);
@@ -4203,10 +4206,10 @@ HWTEST_F(SetKernelArg, givenSlmPointerWhenSettingKernelArgThenPropertyIsSaved) {
         arg.slmOffset = 0x40;
     }
 
-    auto ret = mockKernel.setArgBuffer(0, 64, nullptr);
+    auto ret = mockKernel.setArgSlm(0, 64, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 
-    ret = mockKernel.setArgBuffer(1, 32, nullptr);
+    ret = mockKernel.setArgSlm(1, 32, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 
     auto slmArgOffsetValues = mockKernel.getSlmArgOffsetValues();
@@ -4257,10 +4260,10 @@ HWTEST_F(SetKernelArg, givenSlmPointersSetInReverseOrderWhenSettingKernelArgThen
         arg.slmOffset = 0x40;
     }
 
-    auto ret = mockKernel.setArgBuffer(1, 32, nullptr);
+    auto ret = mockKernel.setArgSlm(1, 32, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 
-    ret = mockKernel.setArgBuffer(0, 64, nullptr);
+    ret = mockKernel.setArgSlm(0, 64, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 
     auto slmArgOffsetValues = mockKernel.getSlmArgOffsetValues();
@@ -4305,8 +4308,8 @@ HWTEST_F(SetKernelArg, givenCompilerResolvedSlmAllocationModeWhenSettingLocalArg
     *reinterpret_cast<uint32_t *>(&crossThreadData[arg0SlmOffset]) = 0u;
     descriptor.patchOffsetInSlmIfRequired(mockKernel.getCrossThreadDataSpan());
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgBuffer(0, 64, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgBuffer(1, 32, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgSlm(0, 64, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgSlm(1, 32, nullptr));
 
     auto readSlmOffset = [&crossThreadData](NEO::CrossThreadDataOffset offset) {
         return *reinterpret_cast<uint32_t *>(&crossThreadData[offset]);
@@ -4353,8 +4356,8 @@ HWTEST_F(SetKernelArg, givenRuntimeAdjustedSlmAllocationModeWhenSettingLocalArgs
     *reinterpret_cast<uint32_t *>(&crossThreadData[arg0SlmOffset]) = 0u;
     descriptor.patchOffsetInSlmIfRequired(mockKernel.getCrossThreadDataSpan());
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgBuffer(0, 64, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgBuffer(1, 32, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgSlm(0, 64, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgSlm(1, 32, nullptr));
 
     auto readSlmOffset = [&crossThreadData](NEO::CrossThreadDataOffset offset) {
         return *reinterpret_cast<uint32_t *>(&crossThreadData[offset]);

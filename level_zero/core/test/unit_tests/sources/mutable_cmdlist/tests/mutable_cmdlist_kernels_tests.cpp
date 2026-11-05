@@ -323,7 +323,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     auto result = kernel->setArgBuffer(0, sizeof(void *), nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    result = kernel->setArgBuffer(1, 0, nullptr);
+    result = kernel->setArgSlm(1, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     mutableCommandIdDesc.flags = kernelIsaMutationFlags;
@@ -2095,14 +2095,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     uint32_t slmSize = 512;
 
-    auto result = kernel->setArgBuffer(0, slmSize, nullptr);
+    auto result = kernel->setArgSlm(0, slmSize, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    result = kernel->setArgBuffer(1, slmSize, nullptr);
+    result = kernel->setArgSlm(1, slmSize, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    result = kernel2->setArgBuffer(0, slmSize, nullptr);
+    result = kernel2->setArgSlm(0, slmSize, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    result = kernel2->setArgBuffer(1, slmSize, nullptr);
+    result = kernel2->setArgSlm(1, slmSize, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     mutableCommandIdDesc.flags = kernelIsaMutationFlags;
@@ -2152,14 +2152,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     uint32_t slmSize1 = 512;
     uint32_t slmSize2 = 256;
 
-    auto result = kernel->setArgBuffer(1, slmSize2, nullptr);
+    auto result = kernel->setArgSlm(1, slmSize2, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    result = kernel->setArgBuffer(0, slmSize1, nullptr);
+    result = kernel->setArgSlm(0, slmSize1, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    result = kernel2->setArgBuffer(0, slmSize1, nullptr);
+    result = kernel2->setArgSlm(0, slmSize1, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    result = kernel2->setArgBuffer(1, slmSize2, nullptr);
+    result = kernel2->setArgSlm(1, slmSize2, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     mutableCommandIdDesc.flags = kernelIsaMutationFlags;
@@ -2206,10 +2206,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     mockKernelImmData->kernelDescriptor->patchOffsetInSlmIfRequired(kernel->getCrossThreadDataSpan());
     mockKernelImmData2->kernelDescriptor->patchOffsetInSlmIfRequired(kernel2->getCrossThreadDataSpan());
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, kernel->setArgBuffer(0, initialSlmArg0Size, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, kernel->setArgBuffer(1, initialSlmArg1Size, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, kernel2->setArgBuffer(0, initialSlmArg0Size, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, kernel2->setArgBuffer(1, initialSlmArg1Size, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, kernel->setArgSlm(0, initialSlmArg0Size, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, kernel->setArgSlm(1, initialSlmArg1Size, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, kernel2->setArgSlm(0, initialSlmArg0Size, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, kernel2->setArgSlm(1, initialSlmArg1Size, nullptr));
 
     mutableCommandIdDesc.flags = kernelIsaMutationFlags;
     auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, kernelMutationGroup, &commandId);
@@ -2279,8 +2279,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     }
     mockKernelImmData->kernelDescriptor->patchOffsetInSlmIfRequired(kernel->getCrossThreadDataSpan());
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, kernel->setArgBuffer(0, initialSlmArg0Size, nullptr));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, kernel->setArgBuffer(1, initialSlmArg1Size, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, kernel->setArgSlm(0, initialSlmArg0Size, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, kernel->setArgSlm(1, initialSlmArg1Size, nullptr));
     EXPECT_EQ(0u, kernel2->getSlmArgSizes()[0]);
     EXPECT_EQ(0u, kernel2->getSlmArgSizes()[1]);
 

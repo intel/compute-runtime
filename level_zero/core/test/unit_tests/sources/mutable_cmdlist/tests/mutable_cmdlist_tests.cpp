@@ -208,9 +208,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     result = kernel->setArgImmediate(1, sizeof(value1), &value1);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    result = kernel->setArgBuffer(2, slm1arg1, nullptr);
+    result = kernel->setArgSlm(2, slm1arg1, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    result = kernel->setArgBuffer(3, slm1arg2, nullptr);
+    result = kernel->setArgSlm(3, slm1arg2, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);

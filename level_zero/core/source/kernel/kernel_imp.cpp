@@ -767,11 +767,10 @@ std::optional<size_t> KernelImp::getPooledAllocationEndOffsetForSurfaceState(con
 
 ze_result_t KernelImp::setArgBufferWithAlloc(uint32_t argIndex, uintptr_t argVal, NEO::GraphicsAllocation *allocation, NEO::SvmAllocationData *allocData) {
     const auto &arg = getImmutableData()->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>();
-    const auto val = argVal;
     const int64_t bufferSize = static_cast<int64_t>(allocation->getUnderlyingBufferSize() - (ptrDiff(argVal, allocation->getGpuAddress())));
     NEO::patchNonPointer<int64_t, int64_t>(getCrossThreadDataSpan(), arg.bufferSize, bufferSize);
 
-    NEO::patchPointer(getCrossThreadDataSpan(), arg, val);
+    NEO::patchPointer(getCrossThreadDataSpan(), arg, argVal);
     if (NEO::isValidOffset(arg.bindful) || NEO::isValidOffset(arg.bindless)) {
 
         if (NEO::isValidOffset(arg.bindless)) {
@@ -780,7 +779,7 @@ ze_result_t KernelImp::setArgBufferWithAlloc(uint32_t argIndex, uintptr_t argVal
             }
         }
 
-        setBufferSurfaceState(argIndex, reinterpret_cast<void *>(val), allocation);
+        setBufferSurfaceState(argIndex, reinterpret_cast<void *>(argVal), allocation);
     }
 
     if (!allocData) {
@@ -810,77 +809,37 @@ ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const voi
     const auto driverHandle = device->getDriverHandle();
     const auto svmAllocsManager = driverHandle->getSvmAllocsManager();
     const auto allocationsCounter = svmAllocsManager->allocationsCounter.load();
-    const auto &argInfo = this->privateState.kernelArgInfos[argIndex];
-    NEO::SvmAllocationData *allocData = nullptr;
-    if (argVal != nullptr) {
-        const auto requestedAddress = *reinterpret_cast<void *const *>(argVal);
-        PRINT_STRING(NEO::debugManager.flags.PrintL0SetKernelArg.get(), stderr, "set arg buffer index : %u requested address : %p\n", argIndex, requestedAddress);
-        if (argInfo.allocId > 0 &&
-            argInfo.allocId < NEO::SvmAllocationData::uninitializedAllocId &&
-            requestedAddress == argInfo.value) {
-            bool reuseFromCache = false;
-            if (allocationsCounter > 0) {
-                if (allocationsCounter == argInfo.allocIdMemoryManagerCounter) {
-                    reuseFromCache = true;
-                } else {
-                    allocData = svmAllocsManager->getSVMAlloc(requestedAddress);
-                    if (allocData && allocData->existedAtCounter(requestedAddress, argInfo.allocIdMemoryManagerCounter)) {
-                        reuseFromCache = true;
-                        this->privateState.kernelArgInfos[argIndex].allocIdMemoryManagerCounter = allocationsCounter;
-                    }
-                }
-                if (reuseFromCache) {
-                    return ZE_RESULT_SUCCESS;
-                }
-            }
-        }
-    } else if (argInfo.isSetToNullptr) {
-        return ZE_RESULT_SUCCESS;
-    }
-
-    const auto &allArgs = getImmutableData()->getDescriptor().payloadMappings.explicitArgs;
-    const auto &currArg = allArgs[argIndex];
-    if (currArg.getTraits().getAddressQualifier() == NEO::KernelArgMetadata::AddrLocal) {
-        NEO::patchNonPointer<int64_t, int64_t>(getCrossThreadDataSpan(), currArg.as<NEO::ArgDescPointer>().bufferSize, static_cast<int64_t>(argSize));
-        privateState.slmArgSizes[argIndex] = static_cast<uint32_t>(argSize);
-        privateState.kernelArgInfos[argIndex] = KernelArgInfo{nullptr, 0, 0, false};
-        UNRECOVERABLE_IF(NEO::isUndefinedOffset(currArg.as<NEO::ArgDescPointer>().slmOffset));
-        auto offsetInSlm = *reinterpret_cast<uint32_t *>(&getCrossThreadDataSpan()[currArg.as<NEO::ArgDescPointer>().slmOffset]);
-        privateState.slmArgOffsetValues[argIndex] = offsetInSlm;
-        offsetInSlm += static_cast<uint32_t>(argSize);
-        ++argIndex;
-        while (argIndex < getImmutableData()->getDescriptor().payloadMappings.explicitArgs.size()) {
-            if (allArgs[argIndex].getTraits().getAddressQualifier() != NEO::KernelArgMetadata::AddrLocal) {
-                ++argIndex;
-                continue;
-            }
-            const auto &nextArg = allArgs[argIndex].as<NEO::ArgDescPointer>();
-            UNRECOVERABLE_IF(0 == nextArg.requiredSlmAlignment);
-            offsetInSlm = alignUp<uint32_t>(offsetInSlm, nextArg.requiredSlmAlignment);
-            NEO::patchNonPointer<uint32_t, uint32_t>(getCrossThreadDataSpan(), nextArg.slmOffset, offsetInSlm);
-            privateState.slmArgOffsetValues[argIndex] = offsetInSlm;
-
-            offsetInSlm += static_cast<uint32_t>(privateState.slmArgSizes[argIndex]);
-            ++argIndex;
-        }
-        privateState.slmArgsTotalSize = static_cast<uint32_t>(alignUp(offsetInSlm, MemoryConstants::kiloByte));
-        return ZE_RESULT_SUCCESS;
-    }
+    auto &argInfo = this->privateState.kernelArgInfos[argIndex];
 
     if (nullptr == argVal) {
+        if (argInfo.isSetToNullptr) {
+            return ZE_RESULT_SUCCESS;
+        }
         privateState.argumentsResidencyContainer[argIndex] = nullptr;
         const auto &arg = getImmutableData()->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>();
         uintptr_t nullBufferValue = 0;
         NEO::patchPointer(getCrossThreadDataSpan(), arg, nullBufferValue);
-        privateState.kernelArgInfos[argIndex] = KernelArgInfo{nullptr, 0, 0, true};
+        argInfo = KernelArgInfo{nullptr, 0, 0, true};
         return ZE_RESULT_SUCCESS;
     }
+
     const auto requestedAddress = *reinterpret_cast<void *const *>(argVal);
+    PRINT_STRING(NEO::debugManager.flags.PrintL0SetKernelArg.get(), stderr, "set arg buffer index : %u requested address : %p\n", argIndex, requestedAddress);
+    const bool recordNamesRequestedAddress = argInfo.allocId > 0 &&
+                                             argInfo.allocId < NEO::SvmAllocationData::uninitializedAllocId &&
+                                             requestedAddress == argInfo.value;
+    if (recordNamesRequestedAddress && allocationsCounter == argInfo.allocIdMemoryManagerCounter) {
+        return ZE_RESULT_SUCCESS;
+    }
+
+    auto allocData = svmAllocsManager->getSVMAlloc(requestedAddress);
+    if (recordNamesRequestedAddress && allocData && allocData->existedAtCounter(requestedAddress, argInfo.allocIdMemoryManagerCounter)) {
+        argInfo.allocIdMemoryManagerCounter = allocationsCounter;
+        return ZE_RESULT_SUCCESS;
+    }
+
     uintptr_t gpuAddress = 0u;
     NEO::GraphicsAllocation *alloc = nullptr;
-    if (!allocData) {
-        allocData = svmAllocsManager->getSVMAlloc(requestedAddress);
-    }
     if (allocData) {
         gpuAddress = reinterpret_cast<uintptr_t>(requestedAddress);
         alloc = allocData->gpuAllocations.getGraphicsAllocation(module->getDevice()->getRootDeviceIndex());
@@ -894,48 +853,67 @@ ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const voi
 
     NEO::SvmAllocationData *peerAllocData = nullptr;
     if (allocData && driverHandle->isRemoteResourceNeeded(*allocData, device)) {
-
         uint64_t pbase = allocData->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress();
-        uint64_t offset = (uint64_t)requestedAddress - pbase;
+        uint64_t offset = castToUint64(requestedAddress) - pbase;
         alloc = driverHandle->getPeerAllocation(device, allocData, reinterpret_cast<void *>(pbase), &gpuAddress, &peerAllocData, true);
         if (alloc == nullptr) {
-            if (NEO::debugManager.flags.DisableSystemPointerKernelArgument.get() != 1) {
-                privateState.argumentsResidencyContainer[argIndex] = nullptr;
-                const auto &argAsPtr = getImmutableData()->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>();
-                auto patchLocation = ptrOffset(getCrossThreadData(), argAsPtr.stateless);
-                NEO::patchNonPointer<int64_t, int64_t>(getCrossThreadDataSpan(), argAsPtr.bufferSize, 0);
-                patchWithRequiredSize(const_cast<uint8_t *>(patchLocation), argAsPtr.pointerSize, reinterpret_cast<uintptr_t>(requestedAddress));
-                const uint32_t allocId = allocData->getAllocId();
-                privateState.kernelArgInfos[argIndex] = KernelArgInfo{requestedAddress, allocId, allocationsCounter, false};
-                return ZE_RESULT_SUCCESS;
-            } else {
-                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-            }
+            return setArgSystemPointer(argIndex, requestedAddress, allocData->getAllocId(), allocationsCounter);
         }
         gpuAddress += offset;
     }
 
     if (allocData == nullptr) {
-        if (NEO::debugManager.flags.DisableSystemPointerKernelArgument.get() != 1) {
-            privateState.argumentsResidencyContainer[argIndex] = nullptr;
-            const auto &argAsPtr = getImmutableData()->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>();
-            auto patchLocation = ptrOffset(getCrossThreadData(), argAsPtr.stateless);
-            NEO::patchNonPointer<int64_t, int64_t>(getCrossThreadDataSpan(), argAsPtr.bufferSize, 0);
-            patchWithRequiredSize(const_cast<uint8_t *>(patchLocation), argAsPtr.pointerSize, reinterpret_cast<uintptr_t>(requestedAddress));
-            privateState.kernelArgInfos[argIndex] = KernelArgInfo{requestedAddress, 0, 0, false};
-            return ZE_RESULT_SUCCESS;
-        } else {
-            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-        }
+        return setArgSystemPointer(argIndex, requestedAddress, 0, 0);
     }
 
     const auto result = setArgBufferWithAlloc(argIndex, gpuAddress, alloc, peerAllocData ? peerAllocData : allocData);
     if (result != ZE_RESULT_SUCCESS) {
-        privateState.kernelArgInfos[argIndex] = {};
+        argInfo = {};
         return result;
     }
 
-    privateState.kernelArgInfos[argIndex] = KernelArgInfo{requestedAddress, allocData->getAllocId(), allocationsCounter, false};
+    argInfo = KernelArgInfo{requestedAddress, allocData->getAllocId(), allocationsCounter, false};
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t KernelImp::setArgSystemPointer(uint32_t argIndex, const void *requestedAddress, uint32_t allocId, uint32_t allocationsCounter) {
+    if (NEO::debugManager.flags.DisableSystemPointerKernelArgument.get() == 1) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    privateState.argumentsResidencyContainer[argIndex] = nullptr;
+    const auto &argAsPtr = getImmutableData()->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>();
+    auto patchLocation = ptrOffset(getCrossThreadData(), argAsPtr.stateless);
+    NEO::patchNonPointer<int64_t, int64_t>(getCrossThreadDataSpan(), argAsPtr.bufferSize, 0);
+    patchWithRequiredSize(const_cast<uint8_t *>(patchLocation), argAsPtr.pointerSize, reinterpret_cast<uintptr_t>(requestedAddress));
+    privateState.kernelArgInfos[argIndex] = KernelArgInfo{requestedAddress, allocId, allocationsCounter, false};
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t KernelImp::setArgSlm(uint32_t argIndex, size_t argSize, const void *argVal) {
+    const auto &explicitArgs = getImmutableData()->getDescriptor().payloadMappings.explicitArgs;
+    const auto &slmArg = explicitArgs[argIndex].as<NEO::ArgDescPointer>();
+    NEO::patchNonPointer<int64_t, int64_t>(getCrossThreadDataSpan(), slmArg.bufferSize, static_cast<int64_t>(argSize));
+    privateState.slmArgSizes[argIndex] = static_cast<uint32_t>(argSize);
+    UNRECOVERABLE_IF(NEO::isUndefinedOffset(slmArg.slmOffset));
+    auto offsetInSlm = *reinterpret_cast<uint32_t *>(&getCrossThreadDataSpan()[slmArg.slmOffset]);
+    privateState.slmArgOffsetValues[argIndex] = offsetInSlm;
+    offsetInSlm += static_cast<uint32_t>(argSize);
+    ++argIndex;
+    while (argIndex < explicitArgs.size()) {
+        if (explicitArgs[argIndex].getTraits().getAddressQualifier() != NEO::KernelArgMetadata::AddrLocal) {
+            ++argIndex;
+            continue;
+        }
+        const auto &nextArg = explicitArgs[argIndex].as<NEO::ArgDescPointer>();
+        UNRECOVERABLE_IF(0 == nextArg.requiredSlmAlignment);
+        offsetInSlm = alignUp<uint32_t>(offsetInSlm, nextArg.requiredSlmAlignment);
+        NEO::patchNonPointer<uint32_t, uint32_t>(getCrossThreadDataSpan(), nextArg.slmOffset, offsetInSlm);
+        privateState.slmArgOffsetValues[argIndex] = offsetInSlm;
+
+        offsetInSlm += static_cast<uint32_t>(privateState.slmArgSizes[argIndex]);
+        ++argIndex;
+    }
+    privateState.slmArgsTotalSize = static_cast<uint32_t>(alignUp(offsetInSlm, MemoryConstants::kiloByte));
     return ZE_RESULT_SUCCESS;
 }
 
@@ -1237,7 +1215,11 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
             this->privateState.kernelArgHandlers.push_back(&KernelImp::setArgUnknown);
             break;
         case NEO::ArgDescriptor::argTPointer:
-            this->privateState.kernelArgHandlers.push_back(&KernelImp::setArgBuffer);
+            if (argT.getTraits().getAddressQualifier() == NEO::KernelArgMetadata::AddrLocal) {
+                this->privateState.kernelArgHandlers.push_back(&KernelImp::setArgSlm);
+            } else {
+                this->privateState.kernelArgHandlers.push_back(&KernelImp::setArgBuffer);
+            }
             break;
         case NEO::ArgDescriptor::argTImage:
             this->privateState.kernelArgHandlers.push_back(&KernelImp::setArgImage);
