@@ -152,7 +152,6 @@ ze_result_t Context::allocHostMem(const ze_host_mem_alloc_desc_t *hostMemDesc,
                                    true,
                                    0u,
                                    flags,
-                                   0u,
                                    nullptr, false, false, 0u)
                        .second;
             if (nullptr == *ptr) {
@@ -316,7 +315,6 @@ ze_result_t Context::allocDeviceMem(ze_device_handle_t hDevice,
                                    false,
                                    0u,
                                    flags,
-                                   0u,
                                    nullptr, false, false, 0u)
                        .second;
             if (nullptr == *ptr) {
@@ -1231,7 +1229,6 @@ ze_result_t Context::openIpcMemHandle(ze_device_handle_t hDevice,
     uint8_t type;
     unsigned int processId;
     uint64_t poolOffset;
-    uint64_t cacheID;
     bool compressedMemory = false;
     void *reservedHandleData = nullptr;
 
@@ -1240,7 +1237,7 @@ ze_result_t Context::openIpcMemHandle(ze_device_handle_t hDevice,
     }
 
     bool isOpaqueHandle = false;
-    getDataFromIpcHandle(hDevice, pIpcHandle, handle, type, processId, poolOffset, cacheID, reservedHandleData, compressedMemory, isOpaqueHandle);
+    getDataFromIpcHandle(hDevice, pIpcHandle, handle, type, processId, poolOffset, reservedHandleData, compressedMemory, isOpaqueHandle);
 
     NEO::AllocationType allocationType = NEO::AllocationType::unknown;
     uint64_t physicalOffset = 0;
@@ -1269,7 +1266,6 @@ ze_result_t Context::openIpcMemHandle(ze_device_handle_t hDevice,
                            allocationType == NEO::AllocationType::bufferHostMemory,
                            processId,
                            flags,
-                           cacheID,
                            reservedHandleData,
                            compressedMemory,
                            isOpaqueHandle,
@@ -1299,11 +1295,10 @@ ze_result_t Context::openIpcMemHandles(ze_device_handle_t hDevice,
         uint64_t handle;
         uint8_t type;
         unsigned int processId;
-        uint64_t cacheID;
         bool compressedMemory = false;
         bool isOpaqueHandle = false;
         void *reservedHandleData = nullptr;
-        getDataFromIpcHandle(hDevice, pIpcHandles[i], handle, type, processId, poolOffset, cacheID, reservedHandleData, compressedMemory, isOpaqueHandle);
+        getDataFromIpcHandle(hDevice, pIpcHandles[i], handle, type, processId, poolOffset, reservedHandleData, compressedMemory, isOpaqueHandle);
 
         if (type != static_cast<uint8_t>(InternalIpcMemoryType::deviceUnifiedMemory)) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -1635,11 +1630,10 @@ ze_result_t Context::openIpcRangeHandle(ze_device_handle_t hDevice,
     uint8_t transportType = 0;
     unsigned int transportProcessId = 0;
     uint64_t transportPoolOffset = 0;
-    uint64_t transportCacheID = 0;
     bool transportCompressed = false;
     bool transportIsOpaque = false;
     void *transportReservedHandleData = nullptr;
-    getDataFromIpcHandle(hDevice, ipcHandle, transportHandle, transportType, transportProcessId, transportPoolOffset, transportCacheID, transportReservedHandleData, transportCompressed, transportIsOpaque);
+    getDataFromIpcHandle(hDevice, ipcHandle, transportHandle, transportType, transportProcessId, transportPoolOffset, transportReservedHandleData, transportCompressed, transportIsOpaque);
 
     auto transportImport = getMemHandlePtr(hDevice,
                                            transportHandle,
@@ -1647,7 +1641,6 @@ ze_result_t Context::openIpcRangeHandle(ze_device_handle_t hDevice,
                                            true,
                                            transportProcessId,
                                            flags,
-                                           transportCacheID,
                                            transportReservedHandleData,
                                            transportCompressed,
                                            transportIsOpaque,
@@ -1699,12 +1692,11 @@ ze_result_t Context::openIpcRangeHandle(ze_device_handle_t hDevice,
         uint64_t handle;
         uint8_t type;
         unsigned int processId;
-        uint64_t cacheID;
         uint64_t chunkPoolOffset = 0u;
         bool compressedMemory = false;
         bool isOpaqueHandle = false;
         void *reservedHandleData = nullptr;
-        getDataFromIpcHandle(hDevice, ipcHandles[i], handle, type, processId, chunkPoolOffset, cacheID, reservedHandleData, compressedMemory, isOpaqueHandle);
+        getDataFromIpcHandle(hDevice, ipcHandles[i], handle, type, processId, chunkPoolOffset, reservedHandleData, compressedMemory, isOpaqueHandle);
 
         // Each chunk must match the range's memory class (reserved or plain variant of it).
         const bool chunkIsHost = (type == static_cast<uint8_t>(InternalIpcMemoryType::hostUnifiedMemory)) ||
@@ -1722,7 +1714,10 @@ ze_result_t Context::openIpcRangeHandle(ze_device_handle_t hDevice,
             releaseImportedRangeChunkHandles(importedChunks);
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
-        auto importResult = importOpaqueHandleWithFallback(handle, processId, cacheID, reservedHandleData, neoDevice, true);
+        IpcOpaqueMemoryData chunkData{};
+        std::memcpy(&chunkData, ipcHandles[i].data, sizeof(chunkData));
+        const uint64_t cacheID = chunkData.computeCacheID();
+        auto importResult = importOpaqueHandleWithFallback(handle, processId, cacheID, reservedHandleData, neoDevice);
         if (!importResult.success) {
             releaseImportedRangeChunkHandles(importedChunks);
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;

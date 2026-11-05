@@ -114,8 +114,6 @@ static_assert(sizeof(IpcCounterBasedEventData) <= ZE_MAX_IPC_HANDLE_SIZE, "IpcCo
 struct ImportedCbAllocationsForIpc {
     NEO::GraphicsAllocation *deviceAlloc = nullptr;
     NEO::GraphicsAllocation *hostAlloc = nullptr;
-    uint64_t deviceCacheId = 0;
-    uint64_t hostCacheId = 0;
     ze_result_t result = ZE_RESULT_SUCCESS;
 };
 
@@ -483,8 +481,6 @@ struct Event : _ze_event_handle_t {
     ze_result_t exportCbAllocationsFor2WayIpcSharing(bool allowEventWithoutAssignedData);
     bool isCbIpcCommunicationUpdateNeeded(uint64_t newCounterDeviceGpuVa) const;
     void unregisterExportedIpcHandles();
-    void clearDeviceHostIpcCacheEntries();
-    void clearCommunicationAllocIpcCacheEntry();
     MOCKABLE_VIRTUAL uint64_t getCompletionTimeout() const { return completionTimeoutMs; }
 
     void unsetCmdQueue();

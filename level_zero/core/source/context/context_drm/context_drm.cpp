@@ -45,11 +45,11 @@ void Context::closeExternalHandle(uint64_t handle) {
     NEO::SysCalls::close(static_cast<int>(handle));
 }
 
-std::pair<NEO::GraphicsAllocation *, void *> Context::getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, unsigned int processId, ze_ipc_memory_flags_t flags, uint64_t cacheID, void *reservedHandleData, bool compressedMemory, bool isOpaqueHandle, uint64_t physicalOffset) {
+std::pair<NEO::GraphicsAllocation *, void *> Context::getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, unsigned int processId, ze_ipc_memory_flags_t flags, void *reservedHandleData, bool compressedMemory, bool isOpaqueHandle, uint64_t physicalOffset) {
     auto neoDevice = Device::fromHandle(hDevice)->getNEODevice();
     if (isOpaqueHandle && settings.useOpaqueHandle) {
         // Use helper to import opaque handle with fallback
-        return importOpaqueFdHandle(neoDevice, handle, allocationType, isHostIpcAllocation, processId, flags, cacheID, reservedHandleData, compressedMemory, physicalOffset);
+        return importOpaqueFdHandle(neoDevice, handle, allocationType, isHostIpcAllocation, processId, flags, reservedHandleData, compressedMemory, physicalOffset);
     }
     NEO::GraphicsAllocation *alloc = nullptr;
     NEO::SvmAllocationData allocDataInternal(neoDevice->getRootDeviceIndex());

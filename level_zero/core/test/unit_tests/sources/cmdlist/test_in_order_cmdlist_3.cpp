@@ -80,13 +80,12 @@ struct CounterBasedIpcImportTrackingContext : public Context {
         NEO::AllocationType allocationType = NEO::AllocationType::unknown;
         bool isHostIpcAllocation = false;
         unsigned int processId = 0;
-        uint64_t cacheId = 0;
         bool isOpaqueHandle = false;
         bool hadReservedHandleData = false;
     };
 
-    std::pair<NEO::GraphicsAllocation *, void *> getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, unsigned int processId, ze_ipc_memory_flags_t flags, uint64_t cacheId, void *reservedHandleData, bool compressedMemory, bool isOpaqueHandle, uint64_t physicalOffset) override {
-        importCalls.push_back({handle, allocationType, isHostIpcAllocation, processId, cacheId, isOpaqueHandle, reservedHandleData != nullptr});
+    std::pair<NEO::GraphicsAllocation *, void *> getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, unsigned int processId, ze_ipc_memory_flags_t flags, void *reservedHandleData, bool compressedMemory, bool isOpaqueHandle, uint64_t physicalOffset) override {
+        importCalls.push_back({handle, allocationType, isHostIpcAllocation, processId, isOpaqueHandle, reservedHandleData != nullptr});
 
         auto allocationIt = allocations.find(handle);
         if (allocationIt == allocations.end()) {
@@ -624,19 +623,16 @@ HWTEST_F(InOrderIpcTests, givenOpaqueIpcHandleWhenOpeningThenImportCommunication
     EXPECT_EQ(NEO::InOrderExecEventDataNodeType::getAllocationType(), trackingContext.importCalls[0].allocationType);
     EXPECT_TRUE(trackingContext.importCalls[0].isHostIpcAllocation);
     EXPECT_TRUE(trackingContext.importCalls[0].isOpaqueHandle);
-    EXPECT_NE(0u, trackingContext.importCalls[0].cacheId);
 
     EXPECT_EQ(deviceCounterHandle, trackingContext.importCalls[1].handle);
     EXPECT_EQ(NEO::DeviceAllocNodeType<true>::getAllocationType(), trackingContext.importCalls[1].allocationType);
     EXPECT_FALSE(trackingContext.importCalls[1].isHostIpcAllocation);
     EXPECT_TRUE(trackingContext.importCalls[1].isOpaqueHandle);
-    EXPECT_NE(0u, trackingContext.importCalls[1].cacheId);
 
     EXPECT_EQ(hostCounterHandle, trackingContext.importCalls[2].handle);
     EXPECT_EQ(NEO::DeviceAllocNodeType<false>::getAllocationType(), trackingContext.importCalls[2].allocationType);
     EXPECT_TRUE(trackingContext.importCalls[2].isHostIpcAllocation);
     EXPECT_TRUE(trackingContext.importCalls[2].isOpaqueHandle);
-    EXPECT_NE(0u, trackingContext.importCalls[2].cacheId);
 
     for (const auto &importCall : trackingContext.importCalls) {
         EXPECT_EQ(exporterProcessId, importCall.processId);
@@ -1613,69 +1609,7 @@ HWTEST_F(InOrderIpcTests, givenSocketHandleSharingNotSupportedWhenGettingCounter
     EXPECT_TRUE(events[0]->exportedIpcServerHandles.empty());
 }
 
-HWTEST_F(InOrderIpcTests, givenOpaqueHandleWhenOpenIpcHandleThenCacheIdsAreStored) {
-    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
-
-    auto pool = createEvents<FamilyType>(1, false);
-
-    auto &exporterHelper = static_cast<WhiteboxInOrderExecEventHelper &>(events[0]->getInOrderExecEventHelper());
-
-    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
-
-    enableEventSharing(*events[0]);
-
-    static_cast<WhiteboxInOrderExecInfo *>(exporterHelper.inOrderExecInfo.get())->initializeAllocationsFromHost();
-
-    ze_ipc_event_counter_based_handle_t zeIpcData = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedGetIpcHandle(events[0]->toHandle(), &zeIpcData));
-
-    ze_event_handle_t importedEventHandle = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedOpenIpcHandle(context->toHandle(), zeIpcData, &importedEventHandle));
-
-    auto importedEvent = static_cast<InOrderFixtureMockEvent *>(Event::fromHandle(importedEventHandle));
-    auto &importedHelper = static_cast<WhiteboxInOrderExecEventHelper &>(importedEvent->getInOrderExecEventHelper());
-
-    EXPECT_NE(0u, importedHelper.getCommunicationAllocCacheId());
-    EXPECT_NE(0u, importedHelper.getImported2WayDeviceCacheId());
-
-    zeEventCounterBasedCloseIpcHandle(importedEventHandle);
-
-    completeHostAddress<FamilyType::gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>(immCmdList.get());
-}
-
-HWTEST_F(InOrderIpcTests, givenCacheIdsWhenUpdateInOrderExecStateWithDifferentAddressThenDeviceHostCacheIdsAreCleared) {
-    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
-
-    auto pool = createEvents<FamilyType>(2, false);
-
-    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
-    enableEventSharing(*events[0]);
-
-    ze_ipc_event_counter_based_handle_t zeIpcData = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedGetIpcHandle(events[0]->toHandle(), &zeIpcData));
-
-    auto &helper = static_cast<WhiteboxInOrderExecEventHelper &>(events[0]->getInOrderExecEventHelper());
-
-    const uint64_t testDeviceCacheId = 0x1234;
-    const uint64_t testHostCacheId = 0x5678;
-    helper.setImported2WayCacheIds(testDeviceCacheId, testHostCacheId);
-
-    EXPECT_EQ(testDeviceCacheId, helper.getImported2WayDeviceCacheId());
-    EXPECT_EQ(testHostCacheId, helper.getImported2WayHostCacheId());
-
-    auto immCmdList2 = createImmCmdList<FamilyType::gfxCoreFamily>();
-    immCmdList2->appendLaunchKernel(kernel->toHandle(), groupCount, events[1]->toHandle(), 0, nullptr, launchParams);
-
-    auto newInOrderExecInfo = immCmdList2->inOrderExecInfo;
-    EXPECT_NE(newInOrderExecInfo->getBaseDeviceAddress(), events[0]->getInOrderExecEventHelper().getBaseDeviceAddress());
-
-    events[0]->updateInOrderExecState(newInOrderExecInfo, 1, 0);
-
-    EXPECT_EQ(0u, helper.getImported2WayDeviceCacheId());
-    EXPECT_EQ(0u, helper.getImported2WayHostCacheId());
-}
-
-HWTEST_F(InOrderIpcTests, givenValidEventDataWhenImportCbAllocationsCalledThenReturnsAllocsAndCacheIds) {
+HWTEST_F(InOrderIpcTests, givenValidEventDataWhenImportCbAllocationsCalledThenReturnsAllocs) {
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
 
     auto pool = createEvents<FamilyType>(1, false);
@@ -1696,7 +1630,6 @@ HWTEST_F(InOrderIpcTests, givenValidEventDataWhenImportCbAllocationsCalledThenRe
     auto result = Event::importCbAllocationsForIpcFor2WaySharing(*device, *exporterEventDataPtr, true);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result.result);
-    EXPECT_NE(0u, result.deviceCacheId);
     EXPECT_NE(nullptr, result.deviceAlloc);
     EXPECT_NE(nullptr, result.hostAlloc);
 

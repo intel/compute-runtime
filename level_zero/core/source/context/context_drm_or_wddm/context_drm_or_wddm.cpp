@@ -73,7 +73,6 @@ std::pair<NEO::GraphicsAllocation *, void *> Context::getMemHandlePtr(ze_device_
                                                                       bool isHostIpcAllocation,
                                                                       unsigned int processId,
                                                                       ze_ipc_memory_flags_t flags,
-                                                                      uint64_t cacheID,
                                                                       void *reservedHandleData,
                                                                       bool compressedMemory,
                                                                       bool isOpaqueHandle,
@@ -101,7 +100,7 @@ std::pair<NEO::GraphicsAllocation *, void *> Context::getMemHandlePtr(ze_device_
         NEO::SvmAllocationData allocDataInternal(neoDevice->getRootDeviceIndex());
         if (isOpaqueHandle && settings.useOpaqueHandle) {
             // Use helper to import opaque handle with fallback
-            return importOpaqueFdHandle(neoDevice, handle, allocationType, isHostIpcAllocation, processId, flags, cacheID, reservedHandleData, compressedMemory, physicalOffset);
+            return importOpaqueFdHandle(neoDevice, handle, allocationType, isHostIpcAllocation, processId, flags, reservedHandleData, compressedMemory, physicalOffset);
         }
         NEO::GraphicsAllocation *alloc = nullptr;
         auto result = driverHandle->importFdHandle(neoDevice, flags, handle, allocationType, isHostIpcAllocation, nullptr, &alloc, allocDataInternal, compressedMemory, physicalOffset);

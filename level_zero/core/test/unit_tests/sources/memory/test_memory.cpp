@@ -3879,7 +3879,7 @@ struct ContextRecordPhysicalOffsetMock : public L0::Context {
     ContextRecordPhysicalOffsetMock(DriverHandleFailGetFdMock *inDriverHandle) : L0::Context(static_cast<L0::DriverHandle *>(inDriverHandle)) {
         driverHandle = inDriverHandle;
     }
-    std::pair<NEO::GraphicsAllocation *, void *> getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, unsigned int processId, ze_ipc_memory_flags_t flags, uint64_t cacheID, void *reservedHandleData, bool compressedMemory, bool isOpaqueHandle, uint64_t physicalOffset) override {
+    std::pair<NEO::GraphicsAllocation *, void *> getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, unsigned int processId, ze_ipc_memory_flags_t flags, void *reservedHandleData, bool compressedMemory, bool isOpaqueHandle, uint64_t physicalOffset) override {
         capturedPhysicalOffset = physicalOffset;
         capturedAllocationType = allocationType;
         getMemHandlePtrCalledTimes++;

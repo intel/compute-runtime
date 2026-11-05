@@ -140,25 +140,24 @@ struct CommonRangeContext : public L0::Context {
         return Context::freeMem(ptr);
     }
 
-    std::pair<NEO::GraphicsAllocation *, void *> getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, unsigned int processId, ze_ipc_memory_flags_t flags, uint64_t cacheID, void *reservedHandleData, bool compressedMemory, bool isOpaqueHandle, uint64_t physicalOffset) override {
+    std::pair<NEO::GraphicsAllocation *, void *> getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, unsigned int processId, ze_ipc_memory_flags_t flags, void *reservedHandleData, bool compressedMemory, bool isOpaqueHandle, uint64_t physicalOffset) override {
         transportAllocation = std::make_unique<NEO::MockGraphicsAllocation>(0u, gCommonTransportStorage, sizeof(gCommonTransportStorage));
         return {transportAllocation.get(), gCommonTransportStorage};
     }
 
-    void getDataFromIpcHandle(ze_device_handle_t hDevice, const ze_ipc_mem_handle_t &ipcHandle, uint64_t &handle, uint8_t &type, unsigned int &processId, uint64_t &poolOffset, uint64_t &cacheID, void *&reservedHandleData, bool &compressedMemory, bool &isOpaqueHandle) override {
+    void getDataFromIpcHandle(ze_device_handle_t hDevice, const ze_ipc_mem_handle_t &ipcHandle, uint64_t &handle, uint8_t &type, unsigned int &processId, uint64_t &poolOffset, void *&reservedHandleData, bool &compressedMemory, bool &isOpaqueHandle) override {
         IpcOpaqueMemoryData opaqueData{};
         std::memcpy(&opaqueData, ipcHandle.data, sizeof(opaqueData));
         handle = opaqueData.handle.reserved;
         type = opaqueData.memoryType;
         processId = opaqueData.processId;
         poolOffset = opaqueData.poolOffset;
-        cacheID = 0u;
         reservedHandleData = nullptr;
         compressedMemory = false;
         isOpaqueHandle = true;
     }
 
-    OpaqueHandleImportResult importOpaqueHandleWithFallback(uint64_t handle, unsigned int processId, uint64_t cacheID, void *reservedHandleData, NEO::Device *neoDevice, bool useCache) override {
+    OpaqueHandleImportResult importOpaqueHandleWithFallback(uint64_t handle, unsigned int processId, std::optional<uint64_t> cacheID, void *reservedHandleData, NEO::Device *neoDevice) override {
         return {handle, true};
     }
 

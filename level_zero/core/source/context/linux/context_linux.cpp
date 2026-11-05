@@ -77,17 +77,16 @@ uint8_t Context::isDrmOpaqueHandleSupported(IpcHandleType *handleType) {
 
 Context::OpaqueHandleImportResult Context::importOpaqueHandleWithFallback(uint64_t handle,
                                                                           unsigned int processId,
-                                                                          uint64_t cacheID,
+                                                                          std::optional<uint64_t> cacheID,
                                                                           void *reservedHandleData,
-                                                                          NEO::Device *neoDevice,
-                                                                          bool useCache) {
+                                                                          NEO::Device *neoDevice) {
     uint64_t importHandle = handle;
     bool handleRetrieved = false;
     bool socketFallbackSuccess = false;
     bool opaqueHandlesAttempted = false;
 
     // Check cache first for opaque handles
-    if (useCache && this->driverHandle->tryGetCachedImportHandle(cacheID, importHandle)) {
+    if (cacheID && this->driverHandle->tryGetCachedImportHandle(*cacheID, importHandle)) {
         handleRetrieved = true; // Mark as successful to skip import logic
     }
 
@@ -109,8 +108,8 @@ Context::OpaqueHandleImportResult Context::importOpaqueHandleWithFallback(uint64
                 handleRetrieved = true;
                 opaqueHandlesAttempted = true;
                 // Cache the imported handle for future use
-                if (useCache) {
-                    this->driverHandle->setCachedImportHandle(cacheID, importHandle);
+                if (cacheID) {
+                    this->driverHandle->setCachedImportHandle(*cacheID, importHandle);
                 }
             }
         }
@@ -129,8 +128,8 @@ Context::OpaqueHandleImportResult Context::importOpaqueHandleWithFallback(uint64
                 socketFallbackSuccess = true;
                 opaqueHandlesAttempted = true;
                 // Cache the imported handle for future use
-                if (useCache) {
-                    this->driverHandle->setCachedImportHandle(cacheID, importHandle);
+                if (cacheID) {
+                    this->driverHandle->setCachedImportHandle(*cacheID, importHandle);
                 }
                 PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                              "IPC socket fallback successful for handle %lu, imported as %lu\n",
@@ -155,8 +154,8 @@ Context::OpaqueHandleImportResult Context::importOpaqueHandleWithFallback(uint64
     return {importHandle, handleRetrieved || socketFallbackSuccess, opaqueHandlesAttempted};
 }
 
-std::pair<NEO::GraphicsAllocation *, void *> Context::importOpaqueFdHandle(NEO::Device *neoDevice, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, unsigned int processId, ze_ipc_memory_flags_t flags, uint64_t cacheID, void *reservedHandleData, bool compressedMemory, uint64_t physicalOffset) {
-    const auto imported = importOpaqueHandleWithFallback(handle, processId, cacheID, reservedHandleData, neoDevice, false);
+std::pair<NEO::GraphicsAllocation *, void *> Context::importOpaqueFdHandle(NEO::Device *neoDevice, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation, unsigned int processId, ze_ipc_memory_flags_t flags, void *reservedHandleData, bool compressedMemory, uint64_t physicalOffset) {
+    const auto imported = importOpaqueHandleWithFallback(handle, processId, std::nullopt, reservedHandleData, neoDevice);
     if (!imported.success) {
         return {nullptr, nullptr};
     }
@@ -201,14 +200,13 @@ void Context::releaseImportedRangeChunkHandles(const std::vector<std::pair<uint6
     }
 }
 
-void Context::getDataFromIpcHandle(ze_device_handle_t hDevice, const ze_ipc_mem_handle_t &ipcHandle, uint64_t &handle, uint8_t &type, unsigned int &processId, uint64_t &poolOffset, uint64_t &cacheID, void *&reservedHandleData, bool &compressedMemory, bool &isOpaqueHandle) {
+void Context::getDataFromIpcHandle(ze_device_handle_t hDevice, const ze_ipc_mem_handle_t &ipcHandle, uint64_t &handle, uint8_t &type, unsigned int &processId, uint64_t &poolOffset, void *&reservedHandleData, bool &compressedMemory, bool &isOpaqueHandle) {
     if (settings.useOpaqueHandle) {
         const IpcOpaqueMemoryData *ipcData = reinterpret_cast<const IpcOpaqueMemoryData *>(ipcHandle.data);
         handle = static_cast<uint64_t>(ipcData->handle.fd);
         type = ipcData->memoryType;
         processId = ipcData->processId;
         poolOffset = ipcData->poolOffset;
-        cacheID = ipcData->computeCacheID();
         compressedMemory = ipcData->compressedMemory;
         uint8_t emptyReservedData[32] = {0};
         if (std::memcmp(ipcData->reservedHandleData, emptyReservedData, sizeof(emptyReservedData)) != 0) {
@@ -237,7 +235,6 @@ void Context::getDataFromIpcHandle(ze_device_handle_t hDevice, const ze_ipc_mem_
         type = ipcData->type;
         poolOffset = ipcData->poolOffset;
         processId = 0;
-        cacheID = 0;
         reservedHandleData = nullptr;
         isOpaqueHandle = false;
     }
