@@ -32,8 +32,6 @@ struct L0BindlessAub : Test<AUBFixtureL0> {
     void TearDown() override {
         AUBFixtureL0::tearDown();
     }
-
-    DebugManagerStateRestore restorer;
 };
 
 HWTEST2_F(L0BindlessAub, GivenBindlessKernelWhenExecutedThenOutputIsCorrect, IsAtLeastXeCore) {
@@ -90,6 +88,5 @@ HWTEST2_F(L0BindlessAub, GivenBindlessKernelWhenExecutedThenOutputIsCorrect, IsA
     driverHandle->svmAllocsManager->freeSVMAlloc(bufferDst);
     zeModuleDestroy(moduleHandle);
 }
-
 } // namespace ult
 } // namespace L0

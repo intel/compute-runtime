@@ -59,32 +59,23 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     ze_result_t returnValue;
 
-    ze_device_mem_alloc_desc_t deviceDesc = {ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
-    ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
-
     auto contextHandle = context->toHandle();
     auto deviceHandle = device->toHandle();
 
-    void *srcMemory1 = nullptr;
-    void *dstMemory1 = nullptr;
-    void *srcMemory2 = nullptr;
-    void *dstMemory2 = nullptr;
-    void *stageMemory = nullptr;
-
-    returnValue = zeMemAllocHost(contextHandle, &hostDesc, size, 1, &srcMemory1);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    void *srcMemory1 = this->allocateHostMemory(size, 1);
+    void *srcMemory2 = this->allocateHostMemory(size, 1);
+    void *dstMemory1 = this->allocateHostMemory(size, 1);
+    void *dstMemory2 = this->allocateHostMemory(size, 1);
+    void *stageMemory = this->allocateDeviceMemory(size, 1);
+    ASSERT_NE(nullptr, srcMemory1);
+    ASSERT_NE(nullptr, srcMemory2);
+    ASSERT_NE(nullptr, dstMemory1);
+    ASSERT_NE(nullptr, dstMemory2);
+    ASSERT_NE(nullptr, stageMemory);
     memset(srcMemory1, val1, size);
-    returnValue = zeMemAllocHost(contextHandle, &hostDesc, size, 1, &srcMemory2);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     memset(srcMemory2, val2, size);
-    returnValue = zeMemAllocHost(contextHandle, &hostDesc, size, 1, &dstMemory1);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    returnValue = zeMemAllocHost(contextHandle, &hostDesc, size, 1, &dstMemory2);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     memset(dstMemory1, 0, size);
     memset(dstMemory2, 0, size);
-    returnValue = zeMemAllocDevice(contextHandle, &deviceDesc, size, 1, deviceHandle, &stageMemory);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     ze_event_pool_handle_t eventPoolHandle = nullptr;
     ze_event_handle_t eventHandle = nullptr;
@@ -169,16 +160,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     returnValue = zeEventDestroy(eventHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     returnValue = zeEventPoolDestroy(eventPoolHandle);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    returnValue = zeMemFree(contextHandle, srcMemory1);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    returnValue = zeMemFree(contextHandle, srcMemory2);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    returnValue = zeMemFree(contextHandle, dstMemory1);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    returnValue = zeMemFree(contextHandle, dstMemory2);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    returnValue = zeMemFree(contextHandle, stageMemory);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     returnValue = zeCommandListDestroy(commandListHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);

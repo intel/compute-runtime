@@ -31,6 +31,8 @@
 #include "gtest/gtest.h"
 #include "test_mode.h"
 
+#include <limits>
+
 namespace L0 {
 AUBFixtureL0::AUBFixtureL0() = default;
 AUBFixtureL0::~AUBFixtureL0() = default;
@@ -104,15 +106,76 @@ void AUBFixtureL0::setUp(const NEO::HardwareInfo *hardwareInfo, bool debuggingEn
     returnValue = ZE_RESULT_ERROR_UNINITIALIZED;
     ze_command_queue_desc_t queueDesc = {};
     pCmdq = CommandQueue::create(device, csr, &queueDesc, false, false, false, returnValue);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 }
 void AUBFixtureL0::tearDown() {
-    context->destroy();
-    pCmdq->destroy();
+    for (auto kernel : this->kernels) {
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelDestroy(kernel));
+    }
+    for (auto &module : this->modules) {
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zeModuleDestroy(module.second));
+    }
+    for (auto ptr : this->usmAllocations) {
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zeMemFree(this->context->toHandle(), ptr));
+    }
+    if (this->context) {
+        this->context->destroy();
+    }
+    if (this->pCmdq) {
+        this->pCmdq->destroy();
+    }
+}
+
+void *AUBFixtureL0::allocateHostMemory(size_t size, size_t alignment) {
+    ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
+    void *ptr = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeMemAllocHost(this->context->toHandle(), &hostDesc, size, alignment, &ptr));
+    if (ptr) {
+        this->usmAllocations.push_back(ptr);
+    }
+    return ptr;
+}
+
+void *AUBFixtureL0::allocateDeviceMemory(size_t size, size_t alignment) {
+    ze_device_mem_alloc_desc_t deviceDesc = {ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
+    void *ptr = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeMemAllocDevice(this->context->toHandle(), &deviceDesc, size, alignment, this->device->toHandle(), &ptr));
+    if (ptr) {
+        this->usmAllocations.push_back(ptr);
+    }
+    return ptr;
+}
+
+void AUBFixtureL0::executeAndSynchronize() {
+    auto commandListHandle = this->commandList->toHandle();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListClose(commandListHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandQueueExecuteCommandLists(this->pCmdq->toHandle(), 1, &commandListHandle, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandQueueSynchronize(this->pCmdq->toHandle(), std::numeric_limits<uint64_t>::max()));
+}
+
+ze_kernel_handle_t AUBFixtureL0::createKernel(const std::string &moduleFileName, const std::string &kernelName, bool useSharedFile) {
+    const auto moduleKey = std::make_pair(moduleFileName, useSharedFile);
+    auto moduleIt = this->modules.find(moduleKey);
+    if (moduleIt == this->modules.end()) {
+        auto module = createModuleFromFile(moduleFileName, this->context->toHandle(), this->device->toHandle(), "", useSharedFile);
+        if (module == nullptr) {
+            return nullptr;
+        }
+        moduleIt = this->modules.emplace(moduleKey, module).first;
+    }
+
+    ze_kernel_desc_t kernelDesc = {ZE_STRUCTURE_TYPE_KERNEL_DESC};
+    kernelDesc.pKernelName = kernelName.c_str();
+    ze_kernel_handle_t kernel = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelCreate(moduleIt->second, &kernelDesc, &kernel));
+    if (kernel) {
+        this->kernels.push_back(kernel);
+    }
+    return kernel;
 }
 
 ze_module_handle_t AUBFixtureL0::createModuleFromFile(const std::string &fileName, ze_context_handle_t context, ze_device_handle_t device, const std::string &buildFlags, bool useSharedFile) {
-    ze_module_handle_t moduleHandle;
+    ze_module_handle_t moduleHandle = nullptr;
     std::string testFile;
     if (useSharedFile) {
         retrieveBinaryKernelFilename(testFile, fileName + "_", ".bin");

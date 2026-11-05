@@ -45,8 +45,6 @@ struct DebuggerAubFixture : AUBFixtureL0 {
         AUBFixtureL0::tearDown();
     }
 
-    DebugManagerStateRestore restorer;
-
     ModuleImp *module = nullptr;
     NEO::GmmHelper *gmmHelper = nullptr;
     NEO::MemoryManager *memoryManager = nullptr;
@@ -146,7 +144,6 @@ HWTEST2_F(DebuggerSingleAddressSpaceAub, GivenSingleAddressSpaceWhenCmdListIsExe
 
         expectMemory<FamilyType>(reinterpret_cast<void *>(sbaAddress + offsetof(NEO::SbaTrackedAddresses, dynamicStateBaseAddress)),
                                  &dynamicStateBaseAddress, sizeof(dynamicStateBaseAddress));
-
     } else {
         auto commandListSurfaceHeapAllocation = commandList->commandContainer.getIndirectHeap(HeapType::surfaceState);
         if (commandListSurfaceHeapAllocation) {
@@ -291,6 +288,5 @@ HWTEST2_F(DebuggerGlobalAllocatorAub, GivenKernelWithScratchWhenCmdListExecutedT
     driverHandle->svmAllocsManager->freeSVMAlloc(bufferSrc);
     driverHandle->svmAllocsManager->freeSVMAlloc(bufferOffset);
 }
-
 } // namespace ult
 } // namespace L0

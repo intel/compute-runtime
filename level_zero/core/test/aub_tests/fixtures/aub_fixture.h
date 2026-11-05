@@ -11,6 +11,7 @@
 #include "shared/source/command_stream/command_stream_receiver_simulated_common_hw.h"
 #include "shared/source/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "shared/source/command_stream/tbx_command_stream_receiver_hw.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/variable_backup.h"
 
@@ -20,8 +21,11 @@
 #include "test_mode.h"
 
 #include <cstdint>
+#include <map>
 #include <memory>
 #include <string>
+#include <utility>
+#include <vector>
 
 namespace NEO {
 class CommandStreamReceiver;
@@ -101,6 +105,11 @@ class AUBFixtureL0 {
         }
     }
 
+    void *allocateHostMemory(size_t size, size_t alignment);
+    void *allocateDeviceMemory(size_t size, size_t alignment);
+    void executeAndSynchronize();
+    ze_kernel_handle_t createKernel(const std::string &moduleFileName, const std::string &kernelName, bool useSharedFile);
+
     static ze_module_handle_t createModuleFromFile(const std::string &fileName, ze_context_handle_t context, ze_device_handle_t device, const std::string &buildFlags, bool useSharedFile = false);
 
     std::string aubFileName;
@@ -119,6 +128,11 @@ class AUBFixtureL0 {
     CommandQueue *pCmdq = nullptr;
 
     NEO::CommandStreamReceiver *csr = nullptr;
+
+    std::vector<void *> usmAllocations;
+    std::map<std::pair<std::string, bool>, ze_module_handle_t> modules;
+    std::vector<ze_kernel_handle_t> kernels;
+    DebugManagerStateRestore debugManagerStateRestore;
 };
 
 } // namespace L0

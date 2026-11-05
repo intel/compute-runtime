@@ -42,15 +42,10 @@ TEST_F(AUBAppendKernelIndirectL0, whenAppendKernelIndirectThenGlobalWorkSizeIsPr
                                                groupSize[2] * groupCount[2]};
     uint8_t size = 3 * sizeof(uint32_t);
 
-    NEO::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory,
-                                                         1,
-                                                         context->rootDeviceIndices,
-                                                         context->deviceBitfields);
-
-    auto pDispatchTraits = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(sizeof(ze_group_count_t), unifiedMemoryProperties);
-
-    auto outBuffer = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(size, unifiedMemoryProperties);
-
+    auto pDispatchTraits = this->allocateHostMemory(sizeof(ze_group_count_t), 0u);
+    auto outBuffer = this->allocateHostMemory(size, 0u);
+    ASSERT_NE(nullptr, pDispatchTraits);
+    ASSERT_NE(nullptr, outBuffer);
     memset(outBuffer, 0, size);
 
     ze_group_count_t &dispatchTraits = *reinterpret_cast<ze_group_count_t *>(pDispatchTraits);
@@ -58,29 +53,14 @@ TEST_F(AUBAppendKernelIndirectL0, whenAppendKernelIndirectThenGlobalWorkSizeIsPr
     dispatchTraits.groupCountY = groupCount[1];
     dispatchTraits.groupCountZ = groupCount[2];
 
-    ze_module_handle_t moduleHandle = createModuleFromFile("test_kernel", context, device, "");
-    ASSERT_NE(nullptr, moduleHandle);
-    ze_kernel_handle_t kernel;
-
-    ze_kernel_desc_t kernelDesc = {ZE_STRUCTURE_TYPE_KERNEL_DESC};
-    kernelDesc.pKernelName = "test_get_global_sizes";
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelCreate(moduleHandle, &kernelDesc, &kernel));
+    auto kernel = this->createKernel("test_kernel", "test_get_global_sizes", false);
+    ASSERT_NE(nullptr, kernel);
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelSetArgumentValue(kernel, 0, sizeof(void *), &outBuffer));
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelSetGroupSize(kernel, groupSize[0], groupSize[1], groupSize[2]));
-    ze_command_list_handle_t cmdListHandle = commandList->toHandle();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernelIndirect(cmdListHandle, kernel, &dispatchTraits, nullptr, 0, nullptr));
-    commandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernelIndirect(this->commandList->toHandle(), kernel, &dispatchTraits, nullptr, 0, nullptr));
+    this->executeAndSynchronize();
 
-    CommandListExecutionInternalOptions internalOptions = {};
-    pCmdq->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions);
-    pCmdq->synchronize(std::numeric_limits<uint32_t>::max());
-
-    EXPECT_TRUE(csr->expectMemory(outBuffer, expectedGlobalWorkSize, size, aub_stream::CompareOperationValues::CompareEqual));
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelDestroy(kernel));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeModuleDestroy(moduleHandle));
-    driverHandle->svmAllocsManager->freeSVMAlloc(outBuffer);
-    driverHandle->svmAllocsManager->freeSVMAlloc(pDispatchTraits);
+    EXPECT_TRUE(this->csr->expectMemory(outBuffer, expectedGlobalWorkSize, size, aub_stream::CompareOperationValues::CompareEqual));
 }
 
 TEST_F(AUBAppendKernelIndirectL0, whenAppendKernelIndirectThenGroupCountIsProperlyProgrammed) {
@@ -88,15 +68,10 @@ TEST_F(AUBAppendKernelIndirectL0, whenAppendKernelIndirectThenGroupCountIsProper
     const uint32_t groupCount[] = {4, 3, 1};
     uint8_t size = 3 * sizeof(uint32_t);
 
-    NEO::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory,
-                                                         1,
-                                                         context->rootDeviceIndices,
-                                                         context->deviceBitfields);
-
-    auto pDispatchTraits = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(sizeof(ze_group_count_t), unifiedMemoryProperties);
-
-    auto outBuffer = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(size, unifiedMemoryProperties);
-
+    auto pDispatchTraits = this->allocateHostMemory(sizeof(ze_group_count_t), 0u);
+    auto outBuffer = this->allocateHostMemory(size, 0u);
+    ASSERT_NE(nullptr, pDispatchTraits);
+    ASSERT_NE(nullptr, outBuffer);
     memset(outBuffer, 0, size);
 
     ze_group_count_t &dispatchTraits = *reinterpret_cast<ze_group_count_t *>(pDispatchTraits);
@@ -104,29 +79,14 @@ TEST_F(AUBAppendKernelIndirectL0, whenAppendKernelIndirectThenGroupCountIsProper
     dispatchTraits.groupCountY = groupCount[1];
     dispatchTraits.groupCountZ = groupCount[2];
 
-    ze_module_handle_t moduleHandle = createModuleFromFile("test_kernel", context, device, "");
-    ASSERT_NE(nullptr, moduleHandle);
-    ze_kernel_handle_t kernel;
-
-    ze_kernel_desc_t kernelDesc = {ZE_STRUCTURE_TYPE_KERNEL_DESC};
-    kernelDesc.pKernelName = "test_get_group_count";
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelCreate(moduleHandle, &kernelDesc, &kernel));
+    auto kernel = this->createKernel("test_kernel", "test_get_group_count", false);
+    ASSERT_NE(nullptr, kernel);
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelSetArgumentValue(kernel, 0, sizeof(void *), &outBuffer));
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelSetGroupSize(kernel, groupSize[0], groupSize[1], groupSize[2]));
-    ze_command_list_handle_t cmdListHandle = commandList->toHandle();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernelIndirect(cmdListHandle, kernel, &dispatchTraits, nullptr, 0, nullptr));
-    commandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernelIndirect(this->commandList->toHandle(), kernel, &dispatchTraits, nullptr, 0, nullptr));
+    this->executeAndSynchronize();
 
-    CommandListExecutionInternalOptions internalOptions = {};
-    pCmdq->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions);
-    pCmdq->synchronize(std::numeric_limits<uint32_t>::max());
-
-    EXPECT_TRUE(csr->expectMemory(outBuffer, groupCount, size, aub_stream::CompareOperationValues::CompareEqual));
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelDestroy(kernel));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeModuleDestroy(moduleHandle));
-    driverHandle->svmAllocsManager->freeSVMAlloc(outBuffer);
-    driverHandle->svmAllocsManager->freeSVMAlloc(pDispatchTraits);
+    EXPECT_TRUE(this->csr->expectMemory(outBuffer, groupCount, size, aub_stream::CompareOperationValues::CompareEqual));
 }
 
 TEST_F(AUBAppendKernelIndirectL0, whenAppendMultipleKernelsIndirectThenGroupCountIsProperlyProgrammed) {
@@ -135,19 +95,15 @@ TEST_F(AUBAppendKernelIndirectL0, whenAppendMultipleKernelsIndirectThenGroupCoun
     const uint32_t groupCount2[] = {7, 6, 4};
     uint8_t size = 3 * sizeof(uint32_t);
 
-    NEO::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory,
-                                                         1,
-                                                         context->rootDeviceIndices,
-                                                         context->deviceBitfields);
-
-    auto pDispatchTraits = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(2 * sizeof(ze_group_count_t), unifiedMemoryProperties);
-
-    auto kernelCount = reinterpret_cast<uint32_t *>(driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(sizeof(uint32_t), unifiedMemoryProperties));
+    auto pDispatchTraits = this->allocateHostMemory(2 * sizeof(ze_group_count_t), 0u);
+    auto kernelCount = static_cast<uint32_t *>(this->allocateHostMemory(sizeof(uint32_t), 0u));
+    auto outBuffer = this->allocateHostMemory(size, 0u);
+    auto outBuffer2 = this->allocateHostMemory(size, 0u);
+    ASSERT_NE(nullptr, pDispatchTraits);
+    ASSERT_NE(nullptr, kernelCount);
+    ASSERT_NE(nullptr, outBuffer);
+    ASSERT_NE(nullptr, outBuffer2);
     kernelCount[0] = 2;
-
-    auto outBuffer = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(size, unifiedMemoryProperties);
-    auto outBuffer2 = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(size, unifiedMemoryProperties);
-
     memset(outBuffer, 0, size);
     memset(outBuffer2, 0, size);
 
@@ -160,46 +116,23 @@ TEST_F(AUBAppendKernelIndirectL0, whenAppendMultipleKernelsIndirectThenGroupCoun
     dispatchTraits[1].groupCountY = groupCount2[1];
     dispatchTraits[1].groupCountZ = groupCount2[2];
 
-    ze_module_handle_t moduleHandle = createModuleFromFile("test_kernel", context, device, "");
-    ASSERT_NE(nullptr, moduleHandle);
-    ze_kernel_handle_t kernels[2];
-
-    ze_kernel_desc_t kernelDesc = {ZE_STRUCTURE_TYPE_KERNEL_DESC};
-    kernelDesc.pKernelName = "test_get_group_count";
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelCreate(moduleHandle, &kernelDesc, &kernels[0]));
+    ze_kernel_handle_t kernels[2] = {this->createKernel("test_kernel", "test_get_group_count", false),
+                                     this->createKernel("test_kernel", "test_get_group_count", false)};
+    ASSERT_NE(nullptr, kernels[0]);
+    ASSERT_NE(nullptr, kernels[1]);
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelSetArgumentValue(kernels[0], 0, sizeof(void *), &outBuffer));
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelSetGroupSize(kernels[0], groupSize[0], groupSize[1], groupSize[2]));
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelCreate(moduleHandle, &kernelDesc, &kernels[1]));
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelSetArgumentValue(kernels[1], 0, sizeof(void *), &outBuffer2));
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelSetGroupSize(kernels[1], groupSize[0], groupSize[1], groupSize[2]));
 
-    ze_command_list_handle_t cmdListHandle = commandList->toHandle();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchMultipleKernelsIndirect(cmdListHandle, 2, kernels, kernelCount, dispatchTraits, nullptr, 0, nullptr));
-    commandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchMultipleKernelsIndirect(this->commandList->toHandle(), 2, kernels, kernelCount, dispatchTraits, nullptr, 0, nullptr));
+    this->executeAndSynchronize();
 
-    CommandListExecutionInternalOptions internalOptions = {};
-    pCmdq->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions);
-    pCmdq->synchronize(std::numeric_limits<uint32_t>::max());
-
-    EXPECT_TRUE(csr->expectMemory(outBuffer, groupCount, size, aub_stream::CompareOperationValues::CompareEqual));
-    EXPECT_TRUE(csr->expectMemory(outBuffer2, groupCount2, size, aub_stream::CompareOperationValues::CompareEqual));
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelDestroy(kernels[0]));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelDestroy(kernels[1]));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeModuleDestroy(moduleHandle));
-    driverHandle->svmAllocsManager->freeSVMAlloc(outBuffer);
-    driverHandle->svmAllocsManager->freeSVMAlloc(outBuffer2);
-    driverHandle->svmAllocsManager->freeSVMAlloc(kernelCount);
-    driverHandle->svmAllocsManager->freeSVMAlloc(pDispatchTraits);
+    EXPECT_TRUE(this->csr->expectMemory(outBuffer, groupCount, size, aub_stream::CompareOperationValues::CompareEqual));
+    EXPECT_TRUE(this->csr->expectMemory(outBuffer2, groupCount2, size, aub_stream::CompareOperationValues::CompareEqual));
 }
 
 TEST_F(AUBAppendKernelIndirectL0, whenAppendKernelIndirectThenWorkDimIsProperlyProgrammed) {
-    NEO::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory,
-                                                         1,
-                                                         context->rootDeviceIndices,
-                                                         context->deviceBitfields);
-
     std::tuple<std::array<uint32_t, 3> /*groupSize*/, std::array<uint32_t, 3> /*groupCount*/, uint32_t /*expected workdim*/> testData[]{
         {{1, 1, 1}, {1, 1, 1}, 1},
         {{1, 1, 1}, {2, 1, 1}, 1},
@@ -218,18 +151,11 @@ TEST_F(AUBAppendKernelIndirectL0, whenAppendKernelIndirectThenWorkDimIsProperlyP
         {{1, 1, 2}, {1, 2, 1}, 3},
         {{1, 1, 2}, {1, 1, 2}, 3}};
 
-    ze_command_list_handle_t cmdListHandle = commandList->toHandle();
-    ze_module_handle_t moduleHandle = createModuleFromFile("test_kernel", context, device, "");
-    ASSERT_NE(nullptr, moduleHandle);
-    ze_kernel_handle_t kernel;
-
-    ze_kernel_desc_t kernelDesc = {ZE_STRUCTURE_TYPE_KERNEL_DESC};
-    kernelDesc.pKernelName = "test_get_work_dim";
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelCreate(moduleHandle, &kernelDesc, &kernel));
+    auto kernel = this->createKernel("test_kernel", "test_get_work_dim", false);
+    ASSERT_NE(nullptr, kernel);
 
     constexpr uint8_t size = sizeof(uint32_t);
     const auto testCount = arrayCount<>(testData);
-    std::vector<void *> dispatchTraitsBuffers(testCount, nullptr);
     std::vector<void *> outBuffers(testCount, nullptr);
     for (auto i = 0u; i < testCount; i++) {
         std::array<uint32_t, 3> groupSize;
@@ -238,12 +164,13 @@ TEST_F(AUBAppendKernelIndirectL0, whenAppendKernelIndirectThenWorkDimIsProperlyP
 
         std::tie(groupSize, groupCount, expectedWorkDim) = testData[i];
 
-        dispatchTraitsBuffers[i] = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(sizeof(ze_group_count_t), unifiedMemoryProperties);
-        outBuffers[i] = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(size, unifiedMemoryProperties);
-
+        auto dispatchTraitsBuffer = this->allocateHostMemory(sizeof(ze_group_count_t), 0u);
+        outBuffers[i] = this->allocateHostMemory(size, 0u);
+        ASSERT_NE(nullptr, dispatchTraitsBuffer);
+        ASSERT_NE(nullptr, outBuffers[i]);
         memset(outBuffers[i], 0, size);
 
-        ze_group_count_t &dispatchTraits = *reinterpret_cast<ze_group_count_t *>(dispatchTraitsBuffers[i]);
+        ze_group_count_t &dispatchTraits = *reinterpret_cast<ze_group_count_t *>(dispatchTraitsBuffer);
         dispatchTraits.groupCountX = groupCount[0];
         dispatchTraits.groupCountY = groupCount[1];
         dispatchTraits.groupCountZ = groupCount[2];
@@ -251,23 +178,14 @@ TEST_F(AUBAppendKernelIndirectL0, whenAppendKernelIndirectThenWorkDimIsProperlyP
         EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelSetArgumentValue(kernel, 0, sizeof(void *), &outBuffers[i]));
         EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelSetGroupSize(kernel, groupSize[0], groupSize[1], groupSize[2]));
 
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernelIndirect(cmdListHandle, kernel, &dispatchTraits, nullptr, 0, nullptr));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernelIndirect(this->commandList->toHandle(), kernel, &dispatchTraits, nullptr, 0, nullptr));
     }
-    commandList->close();
-
-    CommandListExecutionInternalOptions internalOptions = {};
-    pCmdq->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions);
-    pCmdq->synchronize(std::numeric_limits<uint32_t>::max());
+    this->executeAndSynchronize();
 
     for (auto i = 0u; i < testCount; i++) {
         const auto expectedWorkDim = std::get<2>(testData[i]);
-        EXPECT_TRUE(csr->expectMemory(outBuffers[i], &expectedWorkDim, size, aub_stream::CompareOperationValues::CompareEqual));
-
-        driverHandle->svmAllocsManager->freeSVMAlloc(outBuffers[i]);
-        driverHandle->svmAllocsManager->freeSVMAlloc(dispatchTraitsBuffers[i]);
+        EXPECT_TRUE(this->csr->expectMemory(outBuffers[i], &expectedWorkDim, size, aub_stream::CompareOperationValues::CompareEqual));
     }
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelDestroy(kernel));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeModuleDestroy(moduleHandle));
 }
 
 using AUBAppendQueryKernelTimestampsImmediateL0 = Test<AUBFixtureL0>;
@@ -639,7 +557,6 @@ HWTEST2_F(BcsSplitMultiTileAubTests, whenAppendingCopyWithAggregatedEventThenEve
 }
 
 struct AubDirectSubmissionImmCmdListFixture : AUBFixtureL0 {
-    DebugManagerStateRestore dbgRestore;
 
     void setUp() {
         debugManager.flags.EnableDirectSubmission.set(1);
@@ -709,6 +626,5 @@ HWTEST2_F(AubDirectSubmissionImmCmdListTests,
     driverHandle->svmAllocsManager->freeSVMAlloc(src2);
     driverHandle->svmAllocsManager->freeSVMAlloc(dst2);
 }
-
 } // namespace ult
 } // namespace L0

@@ -64,14 +64,6 @@ struct AUBVariableRegisterPerThreadL0 : Test<AUBFixtureL0> {
         return result;
     }
 
-    void *allocateDeviceMemory(ze_context_handle_t context, ze_device_handle_t device, size_t size, size_t alignment) {
-        void *result = nullptr;
-        ze_device_mem_alloc_desc_t descriptor{};
-        descriptor.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zeMemAllocDevice(context, &descriptor, size, alignment, device, &result));
-        return result;
-    }
-
     template <typename FamilyType>
     void executeKernelsWithGrfSizes(const NEO::SupportedNumGrfs &grfSizes) {
         constexpr uint32_t elementCount = 256u;
@@ -84,7 +76,7 @@ struct AUBVariableRegisterPerThreadL0 : Test<AUBFixtureL0> {
         ze_command_list_handle_t commandList{};
         EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreate(context, device, &commandListDescriptor, &commandList));
 
-        auto *inputBuffer = allocateDeviceMemory(context, device, bufferSize, 1u);
+        auto *inputBuffer = this->allocateDeviceMemory(bufferSize, 1u);
         EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendMemoryCopy(commandList, inputBuffer, input.data(), bufferSize, nullptr, 0u, nullptr));
         EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(commandList, nullptr, 0u, nullptr));
 
@@ -106,7 +98,7 @@ struct AUBVariableRegisterPerThreadL0 : Test<AUBFixtureL0> {
             const auto numGrfRequired = Kernel::fromHandle(execution.kernel)->getKernelDescriptor().kernelAttributes.numGrfRequired;
             EXPECT_EQ(grfSize, numGrfRequired);
 
-            execution.outputBuffer = allocateDeviceMemory(context, device, bufferSize, 1u);
+            execution.outputBuffer = this->allocateDeviceMemory(bufferSize, 1u);
             EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelSetArgumentValue(execution.kernel, 0u, sizeof(inputBuffer), &inputBuffer));
             EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelSetArgumentValue(execution.kernel, 1u, sizeof(execution.outputBuffer), &execution.outputBuffer));
             EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelSetGroupSize(execution.kernel, elementCount, 1u, 1u));
@@ -124,12 +116,10 @@ struct AUBVariableRegisterPerThreadL0 : Test<AUBFixtureL0> {
         for (auto &execution : executions) {
             expectMemory<FamilyType>(execution.outputBuffer, expectedOutput.data(), bufferSize);
 
-            EXPECT_EQ(ZE_RESULT_SUCCESS, zeMemFree(context, execution.outputBuffer));
             EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelDestroy(execution.kernel));
             EXPECT_EQ(ZE_RESULT_SUCCESS, zeModuleDestroy(execution.module));
         }
 
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zeMemFree(context, inputBuffer));
         EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListDestroy(commandList));
     }
 };
