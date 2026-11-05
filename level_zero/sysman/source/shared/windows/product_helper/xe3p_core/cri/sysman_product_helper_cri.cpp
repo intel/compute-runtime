@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,8 @@ constexpr static auto gfxProduct = IGFX_CRI;
 #include "level_zero/sysman/source/shared/product_helper/sysman_os_agnostic_product_helper_xe2_and_later.inl"
 
 template class SysmanProductHelperHw<gfxProduct>;
+
+static EnableSysmanProductHelper<gfxProduct> enableCri;
 
 } // namespace Sysman
 } // namespace L0

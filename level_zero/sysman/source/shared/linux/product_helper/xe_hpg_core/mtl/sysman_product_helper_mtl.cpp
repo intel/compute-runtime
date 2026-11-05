@@ -18,5 +18,7 @@ constexpr static auto gfxProduct = IGFX_METEORLAKE;
 
 template class SysmanProductHelperHw<gfxProduct>;
 
+static EnableSysmanProductHelper<gfxProduct> enableMTL;
+
 } // namespace Sysman
 } // namespace L0

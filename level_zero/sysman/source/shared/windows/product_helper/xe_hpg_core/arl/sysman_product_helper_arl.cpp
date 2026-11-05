@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,8 @@ namespace Sysman {
 constexpr static auto gfxProduct = IGFX_ARROWLAKE;
 
 template class SysmanProductHelperHw<gfxProduct>;
+
+static EnableSysmanProductHelper<gfxProduct> enableArl;
 
 } // namespace Sysman
 } // namespace L0

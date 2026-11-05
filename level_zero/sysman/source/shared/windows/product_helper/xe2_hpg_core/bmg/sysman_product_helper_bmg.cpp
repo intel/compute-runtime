@@ -1644,5 +1644,7 @@ bool SysmanProductHelperHw<gfxProduct>::isLateBindingSupported() {
 
 template class SysmanProductHelperHw<gfxProduct>;
 
+static EnableSysmanProductHelper<gfxProduct> enableBmg;
+
 } // namespace Sysman
 } // namespace L0

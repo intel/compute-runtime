@@ -18,5 +18,7 @@ constexpr static auto gfxProduct = IGFX_ARROWLAKE;
 
 template class SysmanProductHelperHw<gfxProduct>;
 
+static EnableSysmanProductHelper<gfxProduct> enableARL;
+
 } // namespace Sysman
 } // namespace L0

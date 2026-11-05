@@ -16,5 +16,7 @@ constexpr static auto gfxProduct = IGFX_ALDERLAKE_S;
 
 template class SysmanProductHelperHw<gfxProduct>;
 
+static EnableSysmanProductHelper<gfxProduct> enableAdls;
+
 } // namespace Sysman
 } // namespace L0

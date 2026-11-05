@@ -17,5 +17,7 @@ constexpr static auto gfxProduct = IGFX_TIGERLAKE_LP;
 
 template class SysmanProductHelperHw<gfxProduct>;
 
+static EnableSysmanProductHelper<gfxProduct> enableTgllp;
+
 } // namespace Sysman
 } // namespace L0

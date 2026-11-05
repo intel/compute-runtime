@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,8 @@ namespace Sysman {
 constexpr static auto gfxProduct = IGFX_PVC;
 
 template class SysmanProductHelperHw<gfxProduct>;
+
+static EnableSysmanProductHelper<gfxProduct> enablePvc;
 
 } // namespace Sysman
 } // namespace L0

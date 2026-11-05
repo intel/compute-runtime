@@ -17,5 +17,7 @@ constexpr static auto gfxProduct = IGFX_ROCKETLAKE;
 
 template class SysmanProductHelperHw<gfxProduct>;
 
+static EnableSysmanProductHelper<gfxProduct> enableRKL;
+
 } // namespace Sysman
 } // namespace L0

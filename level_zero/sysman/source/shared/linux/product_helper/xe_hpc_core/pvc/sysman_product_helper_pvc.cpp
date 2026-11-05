@@ -494,5 +494,7 @@ bool SysmanProductHelperHw<gfxProduct>::isUpstreamPortConnected() {
 
 template class SysmanProductHelperHw<gfxProduct>;
 
+static EnableSysmanProductHelper<gfxProduct> enablePVC;
+
 } // namespace Sysman
 } // namespace L0

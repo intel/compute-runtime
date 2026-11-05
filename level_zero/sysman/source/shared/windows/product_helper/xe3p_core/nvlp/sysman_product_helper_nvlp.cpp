@@ -16,5 +16,7 @@ constexpr static auto gfxProduct = IGFX_NVL;
 
 template class SysmanProductHelperHw<gfxProduct>;
 
+static EnableSysmanProductHelper<gfxProduct> enableNvl;
+
 } // namespace Sysman
 } // namespace L0

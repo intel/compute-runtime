@@ -262,5 +262,7 @@ bool SysmanProductHelperHw<gfxProduct>::isVfMemoryUtilizationSupported() {
 
 template class SysmanProductHelperHw<gfxProduct>;
 
+static EnableSysmanProductHelper<gfxProduct> enableDG2;
+
 } // namespace Sysman
 } // namespace L0

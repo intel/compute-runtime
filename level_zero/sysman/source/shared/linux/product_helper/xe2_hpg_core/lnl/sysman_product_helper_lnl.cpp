@@ -22,5 +22,7 @@ std::string SysmanProductHelperHw<gfxProduct>::getGpuGeneration() {
 
 template class SysmanProductHelperHw<gfxProduct>;
 
+static EnableSysmanProductHelper<gfxProduct> enableLNL;
+
 } // namespace Sysman
 } // namespace L0
