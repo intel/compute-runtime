@@ -305,7 +305,6 @@ struct Device : _ze_device_handle_t, NEO::NonCopyableAndNonMovableClass {
                                             bool sharedContextPriorityOverrideAllowed, bool *queueOwnershipTaken);
     bool tryAssignSecondaryContext(aub_stream::EngineType engineType, NEO::EngineUsage engineUsage, std::optional<uint32_t> priorityLevel, bool sharedContextPriorityOverrideAllowed, NEO::CommandStreamReceiver **csr);
     void getIntelXeDeviceProperties(ze_base_properties_t *extendedProperties) const;
-    void getDotProductProperties(ze_base_properties_t *extendedProperties) const;
     void getReadonlyMemoryExtProperties(ze_base_properties_t *extendedProperties);
     ze_result_t getIgcaTargetExtProperties(ze_base_desc_t *extendedProperties) const;
     MOCKABLE_VIRTUAL Module *createRequiredLibModule(const std::string &libName, ModuleBuildLog *buildLog, ze_result_t &result);

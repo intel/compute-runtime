@@ -41,8 +41,6 @@ TEST(CapsXeHpcTest, givenPvcVgIpVersionWhenResolvingCapsThenReleaseCapsAreReturn
 TEST(CapsXeHpcTest, givenPvcReleaseWhenMaterializingCapsThenCapabilitiesAreCorrect) {
     constexpr auto capsPvc = materializeCaps<CapsPvc>();
 
-    EXPECT_EQ(0u, capsPvc.blockScaledSystolicDotProductInputTypes);
-    EXPECT_EQ(0u, capsPvc.blockScaledSystolicDotProductOutputTypes);
     EXPECT_EQ(64u, capsPvc.cacheLineSize);
     EXPECT_EQ(2u, capsPvc.commandBuffersPreallocatedPerCommandQueue);
     EXPECT_EQ(0u, capsPvc.defaultMidthreadPreemptionDelayTimer);
@@ -58,9 +56,6 @@ TEST(CapsXeHpcTest, givenPvcReleaseWhenMaterializingCapsThenCapabilitiesAreCorre
     EXPECT_EQ(1u, capsPvc.rtasFormat);
     EXPECT_EQ(1u, capsPvc.shareMemoryWithoutNTHandle);
     EXPECT_EQ(0u, capsPvc.stackSizePerRay);
-    EXPECT_EQ(DotProductInputTypeFlags::int8Pack4 | DotProductInputTypeFlags::int4Pack8 | DotProductInputTypeFlags::int2Pack8 | DotProductInputTypeFlags::fp16Pack2 | DotProductInputTypeFlags::bf16Pack2, capsPvc.systolicDotProductInputTypes);
-    EXPECT_EQ(DotProductOutputTypeFlags::int32 | DotProductOutputTypeFlags::fp32 | DotProductOutputTypeFlags::fp16 | DotProductOutputTypeFlags::bf16, capsPvc.systolicDotProductOutputTypes);
-    EXPECT_EQ(16u, capsPvc.systolicDotProductSimdLaneCount);
     EXPECT_EQ(16384u, capsPvc.max3dImageWidthOrHeight);
     EXPECT_EQ(MemoryConstants::pageSize64k, capsPvc.svmCpuAlignment);
     EXPECT_FALSE(capsPvc.adjustWalkOrderAvailable);
@@ -118,8 +113,6 @@ TEST(CapsXeHpcTest, givenPvcReleaseWhenMaterializingCapsThenCapabilitiesAreCorre
 TEST(CapsXeHpcTest, givenPvcVgReleaseWhenMaterializingCapsThenCapabilitiesAreCorrect) {
     constexpr auto capsPvcVg = materializeCaps<CapsPvcVg>();
 
-    EXPECT_EQ(0u, capsPvcVg.blockScaledSystolicDotProductInputTypes);
-    EXPECT_EQ(0u, capsPvcVg.blockScaledSystolicDotProductOutputTypes);
     EXPECT_EQ(64u, capsPvcVg.cacheLineSize);
     EXPECT_EQ(2u, capsPvcVg.commandBuffersPreallocatedPerCommandQueue);
     EXPECT_EQ(0u, capsPvcVg.defaultMidthreadPreemptionDelayTimer);
@@ -135,9 +128,6 @@ TEST(CapsXeHpcTest, givenPvcVgReleaseWhenMaterializingCapsThenCapabilitiesAreCor
     EXPECT_EQ(1u, capsPvcVg.rtasFormat);
     EXPECT_EQ(1u, capsPvcVg.shareMemoryWithoutNTHandle);
     EXPECT_EQ(0u, capsPvcVg.stackSizePerRay);
-    EXPECT_EQ(0u, capsPvcVg.systolicDotProductInputTypes);
-    EXPECT_EQ(0u, capsPvcVg.systolicDotProductOutputTypes);
-    EXPECT_EQ(0u, capsPvcVg.systolicDotProductSimdLaneCount);
     EXPECT_EQ(16384u, capsPvcVg.max3dImageWidthOrHeight);
     EXPECT_EQ(MemoryConstants::pageSize64k, capsPvcVg.svmCpuAlignment);
     EXPECT_FALSE(capsPvcVg.adjustWalkOrderAvailable);

@@ -14,7 +14,6 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/ray_tracing_helper.h"
 #include "shared/source/helpers/required_libs_helpers.h"
-#include "shared/source/kernel/kernel_properties.h"
 #include "shared/source/os_interface/linux/hw_device_id.h"
 #include "shared/source/os_interface/os_inc_base.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -4893,7 +4892,7 @@ TEST_F(DeviceSimpleTests, WhenGettingMemoryPropertiesThenSuccessIsReturned) {
 }
 
 TEST_F(DeviceSimpleTests, givenDeviceWhenAskingForSubGroupSizesThenReturnCorrectValues) {
-    ze_device_compute_properties_t properties{.stype = ZE_STRUCTURE_TYPE_DEVICE_COMPUTE_PROPERTIES};
+    ze_device_compute_properties_t properties;
     auto result = device->getComputeProperties(&properties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -6161,161 +6160,6 @@ TEST_F(DeviceSimpleTests, whenWorkgroupSizeCheckedThenSizeLimitIs1kOrLess) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_LE(properties.maxTotalGroupSize, CommonConstants::maxWorkgroupSize);
-}
-
-constexpr ze_device_dp_capability_flags_t systolicDotProductCapabilities = ZE_DEVICE_DP_CAPABILITY_FLAG_DEVICE_SYSTOLIC_DPAS_SIMD8 |
-                                                                           ZE_DEVICE_DP_CAPABILITY_FLAG_DEVICE_SYSTOLIC_DPAS_SIMD16 |
-                                                                           ZE_DEVICE_DP_CAPABILITY_FLAG_DEVICE_SYSTOLIC_BDPAS_SIMD16 |
-                                                                           ZE_DEVICE_DP_CAPABILITY_FLAG_DEVICE_SYSTOLIC_DPAS_DEPTH4 |
-                                                                           ZE_DEVICE_DP_CAPABILITY_FLAG_DEVICE_SYSTOLIC_DPAS_DEPTH8 |
-                                                                           ZE_DEVICE_DP_CAPABILITY_FLAG_DEVICE_SYSTOLIC_BDPAS_DEPTH8 |
-                                                                           ZE_DEVICE_DP_CAPABILITY_FLAG_DEVICE_SYSTOLIC_OUTPUT_MATRIX_ROWCOUNT_UPTO8 |
-                                                                           ZE_DEVICE_DP_CAPABILITY_FLAG_DEVICE_SYSTOLIC_OUTPUT_MATRIX_ROWCOUNT_FIXED8;
-
-TEST_F(DeviceSimpleTests, givenDotProductPropertiesChainedWhenGettingComputePropertiesThenVectorDotProductIsReported) {
-    ze_device_compute_dotproduct_ext_properties_t dotProductProperties = {ZE_STRUCTURE_TYPE_DEVICE_COMPUTE_DOTPRODUCT_EXT_PROPERTIES};
-    dotProductProperties.dpv4_input_types = std::numeric_limits<ze_device_input_data_type_flags_t>::max();
-    dotProductProperties.dpv4_output_types = std::numeric_limits<ze_device_output_data_type_flags_t>::max();
-    ze_device_compute_properties_t computeProperties = {ZE_STRUCTURE_TYPE_DEVICE_COMPUTE_PROPERTIES};
-    computeProperties.pNext = &dotProductProperties;
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, device->getComputeProperties(&computeProperties));
-
-    EXPECT_NE(0u, dotProductProperties.dp_caps & ZE_DEVICE_DP_CAPABILITY_FLAG_DEVICE_NON_SYSTOLIC_DPA4_SIMD_ALL);
-    EXPECT_EQ(static_cast<ze_device_input_data_type_flags_t>(ZE_DEVICE_INPUT_DATA_TYPE_FLAG_DEVICE_INPUT_DATA_INT8_PACK4_PER_SIMD_LANE), dotProductProperties.dpv4_input_types);
-    EXPECT_EQ(static_cast<ze_device_output_data_type_flags_t>(ZE_DEVICE_OUTPUT_DATA_TYPE_FLAG_DEVICE_OUTPUT_DATA_INT32), dotProductProperties.dpv4_output_types);
-}
-
-TEST_F(DeviceSimpleTests, givenDotProductAccumulateSystolicSupportedWithSimd8LaneCountWhenGettingDotProductPropertiesThenSimd8DepthAndRowCountAreReported) {
-    auto &caps = neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->caps;
-    caps.dotProductAccumulateSystolicSupported = true;
-    caps.systolicDotProductSimdLaneCount = 8u;
-    caps.blockScaledSystolicDotProductInputTypes = 0u;
-    ze_device_compute_dotproduct_ext_properties_t dotProductProperties = {ZE_STRUCTURE_TYPE_DEVICE_COMPUTE_DOTPRODUCT_EXT_PROPERTIES};
-    ze_device_compute_properties_t computeProperties = {ZE_STRUCTURE_TYPE_DEVICE_COMPUTE_PROPERTIES};
-    computeProperties.pNext = &dotProductProperties;
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, device->getComputeProperties(&computeProperties));
-
-    EXPECT_EQ(static_cast<ze_device_dp_capability_flags_t>(ZE_DEVICE_DP_CAPABILITY_FLAG_DEVICE_SYSTOLIC_DPAS_SIMD8 |
-                                                           ZE_DEVICE_DP_CAPABILITY_FLAG_DEVICE_SYSTOLIC_DPAS_DEPTH8 |
-                                                           ZE_DEVICE_DP_CAPABILITY_FLAG_DEVICE_SYSTOLIC_OUTPUT_MATRIX_ROWCOUNT_UPTO8),
-              dotProductProperties.dp_caps & systolicDotProductCapabilities);
-}
-
-TEST_F(DeviceSimpleTests, givenDotProductAccumulateSystolicSupportedWithSimd16LaneCountWhenGettingDotProductPropertiesThenSimd16DepthAndRowCountAreReported) {
-    auto &caps = neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->caps;
-    caps.dotProductAccumulateSystolicSupported = true;
-    caps.systolicDotProductSimdLaneCount = 16u;
-    caps.blockScaledSystolicDotProductInputTypes = 0u;
-    ze_device_compute_dotproduct_ext_properties_t dotProductProperties = {ZE_STRUCTURE_TYPE_DEVICE_COMPUTE_DOTPRODUCT_EXT_PROPERTIES};
-    ze_device_compute_properties_t computeProperties = {ZE_STRUCTURE_TYPE_DEVICE_COMPUTE_PROPERTIES};
-    computeProperties.pNext = &dotProductProperties;
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, device->getComputeProperties(&computeProperties));
-
-    EXPECT_EQ(static_cast<ze_device_dp_capability_flags_t>(ZE_DEVICE_DP_CAPABILITY_FLAG_DEVICE_SYSTOLIC_DPAS_SIMD16 |
-                                                           ZE_DEVICE_DP_CAPABILITY_FLAG_DEVICE_SYSTOLIC_DPAS_DEPTH8 |
-                                                           ZE_DEVICE_DP_CAPABILITY_FLAG_DEVICE_SYSTOLIC_OUTPUT_MATRIX_ROWCOUNT_UPTO8),
-              dotProductProperties.dp_caps & systolicDotProductCapabilities);
-}
-
-TEST_F(DeviceSimpleTests, givenDotProductAccumulateSystolicSupportedWhenGettingDotProductPropertiesThenDpasTypesFromCapsAreReported) {
-    auto &caps = neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->caps;
-    caps.dotProductAccumulateSystolicSupported = true;
-    caps.systolicDotProductInputTypes = DotProductInputTypeFlags::int8Pack4 | DotProductInputTypeFlags::fp16Pack2;
-    caps.systolicDotProductOutputTypes = DotProductOutputTypeFlags::int32 | DotProductOutputTypeFlags::fp32;
-    auto mockCompilerProductHelper = std::make_unique<NEO::MockCompilerProductHelper>();
-    mockCompilerProductHelper->isMatrixMultiplyAccumulateTF32SupportedResult = false;
-    std::unique_ptr<NEO::CompilerProductHelper> compilerProductHelper = std::move(mockCompilerProductHelper);
-    neoDevice->getRootDeviceEnvironmentRef().compilerProductHelper.swap(compilerProductHelper);
-    ze_device_compute_dotproduct_ext_properties_t dotProductProperties = {ZE_STRUCTURE_TYPE_DEVICE_COMPUTE_DOTPRODUCT_EXT_PROPERTIES};
-    dotProductProperties.dpas_input_types = std::numeric_limits<ze_device_input_data_type_flags_t>::max();
-    dotProductProperties.dpas_output_types = std::numeric_limits<ze_device_output_data_type_flags_t>::max();
-    ze_device_compute_properties_t computeProperties = {ZE_STRUCTURE_TYPE_DEVICE_COMPUTE_PROPERTIES};
-    computeProperties.pNext = &dotProductProperties;
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, device->getComputeProperties(&computeProperties));
-    neoDevice->getRootDeviceEnvironmentRef().compilerProductHelper.swap(compilerProductHelper);
-
-    EXPECT_EQ(static_cast<ze_device_input_data_type_flags_t>(ZE_DEVICE_INPUT_DATA_TYPE_FLAG_DEVICE_INPUT_DATA_INT8_PACK4_PER_SIMD_LANE |
-                                                             ZE_DEVICE_INPUT_DATA_TYPE_FLAG_DEVICE_INPUT_DATA_FP16_PACK2_PER_SIMD_LANE),
-              dotProductProperties.dpas_input_types);
-    EXPECT_EQ(static_cast<ze_device_output_data_type_flags_t>(ZE_DEVICE_OUTPUT_DATA_TYPE_FLAG_DEVICE_OUTPUT_DATA_INT32 |
-                                                              ZE_DEVICE_OUTPUT_DATA_TYPE_FLAG_DEVICE_OUTPUT_DATA_FP32),
-              dotProductProperties.dpas_output_types);
-}
-
-TEST_F(DeviceSimpleTests, givenDotProductAccumulateSystolicAndTf32MatrixMultiplyAccumulateSupportedWhenGettingDotProductPropertiesThenTf32IsReportedAsDpasInputType) {
-    auto &caps = neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->caps;
-    caps.dotProductAccumulateSystolicSupported = true;
-    caps.systolicDotProductInputTypes = DotProductInputTypeFlags::fp16Pack2;
-    auto mockCompilerProductHelper = std::make_unique<NEO::MockCompilerProductHelper>();
-    mockCompilerProductHelper->isMatrixMultiplyAccumulateTF32SupportedResult = true;
-    std::unique_ptr<NEO::CompilerProductHelper> compilerProductHelper = std::move(mockCompilerProductHelper);
-    neoDevice->getRootDeviceEnvironmentRef().compilerProductHelper.swap(compilerProductHelper);
-    ze_device_compute_dotproduct_ext_properties_t dotProductProperties = {ZE_STRUCTURE_TYPE_DEVICE_COMPUTE_DOTPRODUCT_EXT_PROPERTIES};
-    ze_device_compute_properties_t computeProperties = {ZE_STRUCTURE_TYPE_DEVICE_COMPUTE_PROPERTIES};
-    computeProperties.pNext = &dotProductProperties;
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, device->getComputeProperties(&computeProperties));
-    neoDevice->getRootDeviceEnvironmentRef().compilerProductHelper.swap(compilerProductHelper);
-
-    EXPECT_EQ(static_cast<ze_device_input_data_type_flags_t>(ZE_DEVICE_INPUT_DATA_TYPE_FLAG_DEVICE_INPUT_DATA_FP16_PACK2_PER_SIMD_LANE |
-                                                             ZE_DEVICE_INPUT_DATA_TYPE_FLAG_DEVICE_INPUT_DATA_TF32_PACK1_PER_SIMD_LANE),
-              dotProductProperties.dpas_input_types);
-}
-
-TEST_F(DeviceSimpleTests, givenBlockScaledSystolicDotProductInputTypesWhenGettingDotProductPropertiesThenBdpasSimd16Depth8AndTypesAreReported) {
-    auto &caps = neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->caps;
-    caps.dotProductAccumulateSystolicSupported = false;
-    caps.blockScaledSystolicDotProductInputTypes = DotProductInputTypeFlags::fp8Pack4 | DotProductInputTypeFlags::scalingUint8;
-    caps.blockScaledSystolicDotProductOutputTypes = DotProductOutputTypeFlags::bf16;
-    ze_device_compute_dotproduct_ext_properties_t dotProductProperties = {ZE_STRUCTURE_TYPE_DEVICE_COMPUTE_DOTPRODUCT_EXT_PROPERTIES};
-    dotProductProperties.bdpas_input_types = std::numeric_limits<ze_device_input_data_type_flags_t>::max();
-    dotProductProperties.bdpas_output_types = std::numeric_limits<ze_device_output_data_type_flags_t>::max();
-    ze_device_compute_properties_t computeProperties = {ZE_STRUCTURE_TYPE_DEVICE_COMPUTE_PROPERTIES};
-    computeProperties.pNext = &dotProductProperties;
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, device->getComputeProperties(&computeProperties));
-
-    EXPECT_EQ(static_cast<ze_device_dp_capability_flags_t>(ZE_DEVICE_DP_CAPABILITY_FLAG_DEVICE_SYSTOLIC_BDPAS_SIMD16 |
-                                                           ZE_DEVICE_DP_CAPABILITY_FLAG_DEVICE_SYSTOLIC_BDPAS_DEPTH8),
-              dotProductProperties.dp_caps & systolicDotProductCapabilities);
-    EXPECT_EQ(static_cast<ze_device_input_data_type_flags_t>(ZE_DEVICE_INPUT_DATA_TYPE_FLAG_DEVICE_INPUT_DATA_FP8_PACK4_PER_SIMD_LANE |
-                                                             ZE_DEVICE_INPUT_DATA_TYPE_FLAG_DEVICE_INPUT_DATA_SCALING_UINT8),
-              dotProductProperties.bdpas_input_types);
-    EXPECT_EQ(static_cast<ze_device_output_data_type_flags_t>(ZE_DEVICE_OUTPUT_DATA_TYPE_FLAG_DEVICE_OUTPUT_DATA_BF16), dotProductProperties.bdpas_output_types);
-}
-
-TEST_F(DeviceSimpleTests, givenDotProductAccumulateSystolicAndBlockScaledSystolicNotSupportedWhenGettingDotProductPropertiesThenSystolicDotProductIsNotReported) {
-    auto &caps = neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->caps;
-    caps.dotProductAccumulateSystolicSupported = false;
-    caps.systolicDotProductInputTypes = DotProductInputTypeFlags::int8Pack4;
-    caps.systolicDotProductOutputTypes = DotProductOutputTypeFlags::int32;
-    caps.blockScaledSystolicDotProductInputTypes = 0u;
-    caps.blockScaledSystolicDotProductOutputTypes = 0u;
-    auto mockCompilerProductHelper = std::make_unique<NEO::MockCompilerProductHelper>();
-    mockCompilerProductHelper->isMatrixMultiplyAccumulateTF32SupportedResult = true;
-    std::unique_ptr<NEO::CompilerProductHelper> compilerProductHelper = std::move(mockCompilerProductHelper);
-    neoDevice->getRootDeviceEnvironmentRef().compilerProductHelper.swap(compilerProductHelper);
-    ze_device_compute_dotproduct_ext_properties_t dotProductProperties = {ZE_STRUCTURE_TYPE_DEVICE_COMPUTE_DOTPRODUCT_EXT_PROPERTIES};
-    dotProductProperties.dp_caps = std::numeric_limits<ze_device_dp_capability_flags_t>::max();
-    dotProductProperties.dpas_input_types = std::numeric_limits<ze_device_input_data_type_flags_t>::max();
-    dotProductProperties.dpas_output_types = std::numeric_limits<ze_device_output_data_type_flags_t>::max();
-    dotProductProperties.bdpas_input_types = std::numeric_limits<ze_device_input_data_type_flags_t>::max();
-    dotProductProperties.bdpas_output_types = std::numeric_limits<ze_device_output_data_type_flags_t>::max();
-    ze_device_compute_properties_t computeProperties = {ZE_STRUCTURE_TYPE_DEVICE_COMPUTE_PROPERTIES};
-    computeProperties.pNext = &dotProductProperties;
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, device->getComputeProperties(&computeProperties));
-    neoDevice->getRootDeviceEnvironmentRef().compilerProductHelper.swap(compilerProductHelper);
-
-    EXPECT_EQ(0u, dotProductProperties.dp_caps & systolicDotProductCapabilities);
-    EXPECT_EQ(0u, dotProductProperties.dpas_input_types);
-    EXPECT_EQ(0u, dotProductProperties.dpas_output_types);
-    EXPECT_EQ(0u, dotProductProperties.bdpas_input_types);
-    EXPECT_EQ(0u, dotProductProperties.bdpas_output_types);
 }
 
 HWTEST_F(DeviceSimpleTests, givenGpuHangWhenSynchronizingDeviceThenErrorIsPropagated) {

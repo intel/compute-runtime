@@ -21,8 +21,6 @@
 namespace NEO {
 
 struct CapsXe3pCore {
-    static constexpr uint32_t blockScaledSystolicDotProductInputTypes = DotProductInputTypeFlags::fp16Pack2 | DotProductInputTypeFlags::bf16Pack2 | DotProductInputTypeFlags::fp8Pack4 | DotProductInputTypeFlags::bf8Pack4 | DotProductInputTypeFlags::e2m1Pack8 | DotProductInputTypeFlags::scalingUint8;
-    static constexpr uint32_t blockScaledSystolicDotProductOutputTypes = DotProductOutputTypeFlags::fp32 | DotProductOutputTypeFlags::fp16 | DotProductOutputTypeFlags::bf16;
     static constexpr uint32_t cacheLineSize = 256u;
     static constexpr uint32_t commandBuffersPreallocatedPerCommandQueue = 2u;
     static constexpr int32_t defaultThreadArbitrationPolicy = ThreadArbitrationPolicy::RoundRobinAfterDependency;
@@ -32,9 +30,6 @@ struct CapsXe3pCore {
     static constexpr uint32_t planarYuvMaxHeight = 16128u;
     static constexpr uint32_t shareMemoryWithoutNTHandle = 1u;
     static constexpr uint32_t stackSizePerRay = 64u;
-    static constexpr uint32_t systolicDotProductInputTypes = DotProductInputTypeFlags::int8Pack4 | DotProductInputTypeFlags::int4Pack8 | DotProductInputTypeFlags::fp16Pack2 | DotProductInputTypeFlags::bf16Pack2 | DotProductInputTypeFlags::fp8Pack4 | DotProductInputTypeFlags::bf8Pack4 | DotProductInputTypeFlags::e2m1Pack8;
-    static constexpr uint32_t systolicDotProductOutputTypes = DotProductOutputTypeFlags::int32 | DotProductOutputTypeFlags::fp32 | DotProductOutputTypeFlags::fp16 | DotProductOutputTypeFlags::bf16;
-    static constexpr uint32_t systolicDotProductSimdLaneCount = 16u;
 
     static constexpr size_t max3dImageWidthOrHeight = 16384u;
     static constexpr size_t svmCpuAlignment = MemoryConstants::pageSize64k;

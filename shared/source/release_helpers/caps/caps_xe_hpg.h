@@ -29,9 +29,6 @@ struct CapsXeHpgCore {
     static constexpr uint32_t planarYuvMaxHeight = 16128u;
     static constexpr uint32_t rtasFormat = 1u;
     static constexpr uint32_t shareMemoryWithoutNTHandle = 1u;
-    static constexpr uint32_t systolicDotProductInputTypes = DotProductInputTypeFlags::int8Pack4 | DotProductInputTypeFlags::int4Pack8 | DotProductInputTypeFlags::int2Pack8 | DotProductInputTypeFlags::fp16Pack2 | DotProductInputTypeFlags::bf16Pack2;
-    static constexpr uint32_t systolicDotProductOutputTypes = DotProductOutputTypeFlags::int32 | DotProductOutputTypeFlags::fp32;
-    static constexpr uint32_t systolicDotProductSimdLaneCount = 8u;
 
     static constexpr size_t max3dImageWidthOrHeight = 16384u;
     static constexpr size_t svmCpuAlignment = MemoryConstants::pageSize2M;

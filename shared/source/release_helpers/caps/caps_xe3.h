@@ -30,9 +30,6 @@ struct CapsXe3Core {
     static constexpr uint32_t rtasFormat = 2u;
     static constexpr uint32_t shareMemoryWithoutNTHandle = 1u;
     static constexpr uint32_t stackSizePerRay = 64u;
-    static constexpr uint32_t systolicDotProductInputTypes = DotProductInputTypeFlags::int8Pack4 | DotProductInputTypeFlags::int4Pack8 | DotProductInputTypeFlags::int2Pack8 | DotProductInputTypeFlags::fp16Pack2 | DotProductInputTypeFlags::bf16Pack2;
-    static constexpr uint32_t systolicDotProductOutputTypes = DotProductOutputTypeFlags::int32 | DotProductOutputTypeFlags::fp32 | DotProductOutputTypeFlags::fp16 | DotProductOutputTypeFlags::bf16;
-    static constexpr uint32_t systolicDotProductSimdLaneCount = 16u;
 
     static constexpr size_t max3dImageWidthOrHeight = 16384u;
     static constexpr size_t svmCpuAlignment = MemoryConstants::pageSize64k;
