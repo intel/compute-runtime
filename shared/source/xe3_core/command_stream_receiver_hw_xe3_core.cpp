@@ -39,25 +39,8 @@ void populateFactoryTable<CommandStreamReceiverHw<Family>>() {
     commandStreamReceiverFactory[gfxCore] = DeviceCommandStreamReceiver<Family>::create;
 }
 
-#include "shared/source/helpers/blit_commands_helper_from_xe2_hpg_to_xe3p.inl"
-
-template <>
-template <typename T>
-void BlitCommandsHelper<Family>::appendBlitCommandsForBuffer(const BlitProperties &blitProperties, T &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment) {
-    appendBlitCommandsMemCopy(blitProperties, blitCmd, rootDeviceEnvironment);
-}
-
-template <>
-uint32_t BlitCommandsHelper<Family>::getAvailableBytesPerPixel(size_t copySize, uint32_t srcOrigin, uint32_t dstOrigin, size_t srcSize, size_t dstSize) {
-    return 1;
-}
-
 #include "shared/source/helpers/blit_commands_helper_from_xe2_hpg_to_xe3.inl"
-
-template <>
-size_t BlitCommandsHelper<Family>::getProfilingMmioCmdsSize() {
-    return 8 * sizeof(typename Family::MI_STORE_REGISTER_MEM);
-}
+#include "shared/source/helpers/blit_commands_helper_from_xe2_hpg_to_xe3p.inl"
 
 template <>
 void setCompressionParamsForFillOperation<Family>(typename Family::XY_COLOR_BLT &xyColorBlt) {

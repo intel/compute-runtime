@@ -112,4 +112,15 @@ BlitCommandsResult BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryByteFill(con
     return result;
 }
 
+template <>
+template <typename T>
+void BlitCommandsHelper<Family>::appendBlitCommandsForBuffer(const BlitProperties &blitProperties, T &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment) {
+    appendBlitCommandsMemCopy(blitProperties, blitCmd, rootDeviceEnvironment);
+}
+
+template <>
+uint32_t BlitCommandsHelper<Family>::getAvailableBytesPerPixel(size_t copySize, uint32_t srcOrigin, uint32_t dstOrigin, size_t srcSize, size_t dstSize) {
+    return 1;
+}
+
 } // namespace NEO

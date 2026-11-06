@@ -125,46 +125,7 @@ void CommandStreamReceiverHw<Family>::programStateBaseAddressHeapless(Device &de
 }
 
 #include "shared/source/helpers/blit_commands_helper_from_xe2_hpg_to_xe3p.inl"
-
-template <>
-template <typename T>
-void BlitCommandsHelper<Family>::appendBlitCommandsForBuffer(const BlitProperties &blitProperties, T &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment) {
-    appendBlitCommandsMemCopy(blitProperties, blitCmd, rootDeviceEnvironment);
-}
-
-template <>
-uint32_t BlitCommandsHelper<Family>::getAvailableBytesPerPixel(size_t copySize, uint32_t srcOrigin, uint32_t dstOrigin, size_t srcSize, size_t dstSize) {
-    return 1;
-}
-
-template <>
-void BlitCommandsHelper<Family>::encodeProfilingStartMmios(LinearStream &cmdStream, const TagNodeBase &timestampPacketNode) {
-    auto timestampContextStartGpuAddress = TimestampPacketHelper::getContextStartGpuAddress(timestampPacketNode);
-    auto timestampGlobalStartAddress = TimestampPacketHelper::getGlobalStartGpuAddress(timestampPacketNode);
-
-    EncodeStoreMMIO<Family>::encode(cmdStream, RegisterOffsets::queueTimestampRegAddressOffsetHigh, timestampContextStartGpuAddress + sizeof(uint32_t), false, nullptr, true);
-    EncodeStoreMMIO<Family>::encode(cmdStream, RegisterOffsets::globalTimestampUn, timestampGlobalStartAddress + sizeof(uint32_t), false, nullptr, true);
-
-    EncodeStoreMMIO<Family>::encode(cmdStream, RegisterOffsets::queueTimestampRegAddressOffsetLow, timestampContextStartGpuAddress, false, nullptr, true);
-    EncodeStoreMMIO<Family>::encode(cmdStream, RegisterOffsets::globalTimestampLdw, timestampGlobalStartAddress, false, nullptr, true);
-}
-
-template <>
-void BlitCommandsHelper<Family>::encodeProfilingEndMmios(LinearStream &cmdStream, const TagNodeBase &timestampPacketNode) {
-    auto timestampContextEndGpuAddress = TimestampPacketHelper::getContextEndGpuAddress(timestampPacketNode);
-    auto timestampGlobalEndAddress = TimestampPacketHelper::getGlobalEndGpuAddress(timestampPacketNode);
-
-    EncodeStoreMMIO<Family>::encode(cmdStream, RegisterOffsets::queueTimestampRegAddressOffsetHigh, timestampContextEndGpuAddress + sizeof(uint32_t), false, nullptr, true);
-    EncodeStoreMMIO<Family>::encode(cmdStream, RegisterOffsets::globalTimestampUn, timestampGlobalEndAddress + sizeof(uint32_t), false, nullptr, true);
-
-    EncodeStoreMMIO<Family>::encode(cmdStream, RegisterOffsets::queueTimestampRegAddressOffsetLow, timestampContextEndGpuAddress, false, nullptr, true);
-    EncodeStoreMMIO<Family>::encode(cmdStream, RegisterOffsets::globalTimestampLdw, timestampGlobalEndAddress, false, nullptr, true);
-}
-
-template <>
-size_t BlitCommandsHelper<Family>::getProfilingMmioCmdsSize() {
-    return 8 * sizeof(typename Family::MI_STORE_REGISTER_MEM);
-}
+#include "shared/source/helpers/blit_commands_helper_xe3p_and_later.inl"
 
 template <>
 template <typename CommandType>

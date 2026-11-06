@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,6 +22,11 @@ void BlitCommandsHelper<GfxFamily>::appendBlitMemSetCompressionFormat(void *blit
     if (debugManager.flags.BcsCompressionFormatForXe2Plus.get() != -1) {
         memSetCmd->setCompressionFormat(debugManager.flags.BcsCompressionFormatForXe2Plus.get());
     }
+}
+
+template <>
+size_t BlitCommandsHelper<Family>::getProfilingMmioCmdsSize() {
+    return 8 * sizeof(typename Family::MI_STORE_REGISTER_MEM);
 }
 
 } // namespace NEO
