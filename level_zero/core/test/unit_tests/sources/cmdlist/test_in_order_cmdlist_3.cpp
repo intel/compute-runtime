@@ -1978,5 +1978,149 @@ HWTEST2_F(MultiTileInOrderCmdListWaitSpaceTests, givenMultiTileDeviceAndCbEventW
     verifyEmittedWaitOnCbEventSize<FamilyType>();
 }
 
+HWTEST2_F(InOrderCmdListTests, givenInOrderCmdListWhenCheckingIfImplicitDependencyIsReplaceableThenOnlySingleQueueDependencyIsReplaceable, MatchAny) {
+    auto cmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
+    CmdListKernelLaunchParams params = {};
+
+    EXPECT_FALSE(cmdList->isImplicitInOrderDependencyReplaceable(params));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams));
+    cmdList->setTextureCacheFlushPending(false);
+    EXPECT_TRUE(cmdList->isImplicitInOrderDependencyReplaceable(params));
+
+    params.relaxedOrderingDispatch = true;
+    EXPECT_FALSE(cmdList->isImplicitInOrderDependencyReplaceable(params));
+    params.relaxedOrderingDispatch = false;
+
+    cmdList->partitionCount = 2;
+    EXPECT_FALSE(cmdList->isImplicitInOrderDependencyReplaceable(params));
+    cmdList->partitionCount = 1;
+
+    cmdList->latestFlushIsDualCopyOffload = true;
+    EXPECT_FALSE(cmdList->isImplicitInOrderDependencyReplaceable(params));
+    cmdList->latestFlushIsDualCopyOffload = false;
+
+    cmdList->implicitDependencyOnPreviousCsrPending = true;
+    EXPECT_FALSE(cmdList->isImplicitInOrderDependencyReplaceable(params));
+    cmdList->implicitDependencyOnPreviousCsrPending = false;
+
+    cmdList->setTextureCacheFlushPending(true);
+    EXPECT_FALSE(cmdList->isImplicitInOrderDependencyReplaceable(params));
+    cmdList->setTextureCacheFlushPending(false);
+
+    EXPECT_TRUE(cmdList->isImplicitInOrderDependencyReplaceable(params));
+
+    auto mutableCmdList = makeZeUniquePtr<MutableLikeCommandList<FamilyType::gfxCoreFamily>>();
+    mutableCmdList->initialize(device, NEO::EngineGroupType::renderCompute, ZE_COMMAND_LIST_FLAG_IN_ORDER);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, mutableCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams));
+    mutableCmdList->setTextureCacheFlushPending(false);
+    EXPECT_FALSE(mutableCmdList->isImplicitInOrderDependencyReplaceable(params));
+}
+
+HWTEST2_F(InOrderCmdListTests, givenPreviousOperationIsNotKernelWhenCheckingIfImplicitDependencyIsReplaceableThenItIsNotReplaceable, MatchAny) {
+    auto cmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
+    CmdListKernelLaunchParams params = {};
+    auto srcBuffer = allocDeviceMem(64);
+    auto dstBuffer = allocDeviceMem(64);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams));
+    cmdList->setTextureCacheFlushPending(false);
+    EXPECT_TRUE(cmdList->latestOperationIsComputeWalker);
+    EXPECT_TRUE(cmdList->isImplicitInOrderDependencyReplaceable(params));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList->appendMemoryCopy(dstBuffer, srcBuffer, 64, nullptr, 0, nullptr, copyParams));
+    cmdList->setTextureCacheFlushPending(false);
+    EXPECT_FALSE(cmdList->latestOperationIsComputeWalker);
+    EXPECT_FALSE(cmdList->isImplicitInOrderDependencyReplaceable(params));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams));
+    cmdList->setTextureCacheFlushPending(false);
+    EXPECT_TRUE(cmdList->isImplicitInOrderDependencyReplaceable(params));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(cmdList->toHandle(), nullptr, 0, nullptr));
+    EXPECT_FALSE(cmdList->latestOperationIsComputeWalker);
+    EXPECT_FALSE(cmdList->isImplicitInOrderDependencyReplaceable(params));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList->reset());
+    EXPECT_FALSE(cmdList->latestOperationIsComputeWalker);
+
+    context->freeMem(srcBuffer);
+    context->freeMem(dstBuffer);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+struct ImplicitDependencySkippingCmdList : public WhiteBox<L0::CommandListCoreFamily<gfxCoreFamily>> {
+    bool canSkipImplicitInOrderDependency(CmdListKernelLaunchParams &launchParams, const Kernel &kernel) override {
+        return this->isImplicitInOrderDependencyReplaceable(launchParams);
+    }
+};
+
+struct InOrderImplicitDependencySkipTests : public InOrderCmdListFixture {
+    template <GFXCORE_FAMILY gfxCoreFamily>
+    DestroyableZeUniquePtr<ImplicitDependencySkippingCmdList<gfxCoreFamily>> createSkippingCmdList() {
+        auto cmdList = makeZeUniquePtr<ImplicitDependencySkippingCmdList<gfxCoreFamily>>();
+        cmdList->initialize(device, NEO::EngineGroupType::renderCompute, ZE_COMMAND_LIST_FLAG_IN_ORDER);
+        return cmdList;
+    }
+
+    struct SyncCommands {
+        size_t semaphores = 0;
+        size_t barriers = 0;
+    };
+
+    template <typename FamilyType, typename CmdListT>
+    SyncCommands appendKernelAndCountSyncCommands(CmdListT &cmdList, uint32_t numWaitEvents, ze_event_handle_t *waitEvents) {
+        using WalkerType = typename FamilyType::DefaultWalkerType;
+        auto cmdStream = cmdList.getCmdContainer().getCommandStream();
+        auto offset = cmdStream->getUsed();
+        EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList.appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, numWaitEvents, waitEvents, launchParams));
+
+        GenCmdList commands;
+        EXPECT_TRUE(CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdStream->getCpuBase(), offset), cmdStream->getUsed() - offset));
+        auto walker = find<WalkerType *>(commands.begin(), commands.end());
+        EXPECT_NE(commands.end(), walker);
+
+        SyncCommands syncCommands = {};
+        syncCommands.semaphores = findAll<typename FamilyType::MI_SEMAPHORE_WAIT *>(commands.begin(), walker).size();
+        syncCommands.barriers = findAll<typename FamilyType::PIPE_CONTROL *>(commands.begin(), walker).size();
+        if constexpr (!std::is_same_v<typename FamilyType::StallingBarrierType, typename FamilyType::PIPE_CONTROL>) {
+            syncCommands.barriers += findAll<typename FamilyType::StallingBarrierType *>(commands.begin(), walker).size();
+        }
+        return syncCommands;
+    }
+};
+
+HWTEST2_F(InOrderImplicitDependencySkipTests, givenImplicitDependencySkippedWhenAppendingKernelThenNoImplicitWaitIsProgrammedAndProfilingStateIsCleared, IsAtLeastXeCore) {
+    auto regularCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
+    auto skippingCmdList = createSkippingCmdList<FamilyType::gfxCoreFamily>();
+
+    SyncCommands syncCommands[2];
+    uint32_t i = 0;
+    for (auto cmdList : {static_cast<WhiteBox<L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>> *>(regularCmdList.get()),
+                         static_cast<WhiteBox<L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>> *>(skippingCmdList.get())}) {
+        EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams));
+        cmdList->setTextureCacheFlushPending(false);
+        cmdList->latestOperationHasCbEventWithProfiling = true;
+        syncCommands[i++] = appendKernelAndCountSyncCommands<FamilyType>(*cmdList, 0, nullptr);
+    }
+
+    EXPECT_LT(syncCommands[1].semaphores + syncCommands[1].barriers, syncCommands[0].semaphores + syncCommands[0].barriers);
+    EXPECT_EQ(0u, syncCommands[1].semaphores);
+    EXPECT_FALSE(skippingCmdList->latestOperationHasCbEventWithProfiling);
+}
+
+HWTEST2_F(InOrderImplicitDependencySkipTests, givenImplicitDependencySkippedWhenAppendingKernelWaitingOnCounterBasedEventFromSameCmdListThenEventWaitIsProgrammed, IsAtLeastXeCore) {
+    auto eventPool = createEvents<FamilyType>(1, false);
+    auto eventHandle = events[0]->toHandle();
+
+    auto cmdList = createSkippingCmdList<FamilyType::gfxCoreFamily>();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams));
+    cmdList->setTextureCacheFlushPending(false);
+
+    auto syncCommands = appendKernelAndCountSyncCommands<FamilyType>(*cmdList, 1, &eventHandle);
+
+    EXPECT_NE(0u, syncCommands.semaphores);
+}
+
 } // namespace ult
 } // namespace L0

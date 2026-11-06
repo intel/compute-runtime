@@ -18,6 +18,10 @@ void CommandList::setAdditionalDispatchKernelArgsFromLaunchParams(NEO::EncodeDis
 void CommandList::setAdditionalDispatchKernelArgsFromKernel(NEO::EncodeDispatchKernelArgs &dispatchKernelArgs, const Kernel *kernel) const {
 }
 
+bool CommandList::canSkipImplicitInOrderDependency(CmdListKernelLaunchParams &launchParams, const Kernel &kernel) {
+    return false;
+}
+
 ze_result_t CommandList::validateLaunchParams(const Kernel &kernel, const CmdListKernelLaunchParams &launchParams, const ze_group_count_t &threadGroupDimensions) const {
     return ZE_RESULT_SUCCESS;
 }

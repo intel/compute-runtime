@@ -97,6 +97,7 @@ struct CmdListHandleInOrderDependencyParams {
     bool nonWalkerInOrderCmdsChaining = false;
     bool copyOffloadOperation = false;
     bool apiRequiredExternalGraphEvent = false;
+    bool computeWalkerOperation = false;
 };
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -301,6 +302,7 @@ struct CommandListCoreFamily : public CommandList {
     MOCKABLE_VIRTUAL bool handleCounterBasedEventOperations(Event *signalEvent, bool skipAddingEventToResidency);
     bool isCbEventBoundToCmdList(Event *event) const;
     bool kernelMemoryPrefetchEnabled() const override;
+    bool isImplicitInOrderDependencyReplaceable(const CmdListKernelLaunchParams &launchParams) override;
     void assignInOrderExecInfoToEvent(Event *event, bool apiRequiredExternalGraphEvent);
     bool hasInOrderDependencies() const;
     MOCKABLE_VIRTUAL void appendSignalEventPostWalker(Event *event, void **syncCmdBuffer, CommandToPatchContainer *outTimeStampSyncCmds, bool skipBarrierForEndProfiling, bool skipAddingEventToResidency, bool copyOperation);
@@ -573,6 +575,7 @@ struct CommandListCoreFamily : public CommandList {
     NEO::PauseOnGpuProperties::PendingSubmissionPauses pendingSubmissionPauses{};
     bool latestOperationHasCbEventWithProfiling = false;
     bool latestOperationRequiredNonWalkerInOrderCmdsChaining = false;
+    bool latestOperationIsComputeWalker = false;
     bool duplicatedInOrderCounterStorageEnabled = false;
     bool inOrderAtomicSignalingEnabled = false;
     bool copyOperationFenceSupported = false;

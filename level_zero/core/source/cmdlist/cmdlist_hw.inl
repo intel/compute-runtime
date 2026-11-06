@@ -176,6 +176,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
     }
 
     latestOperationRequiredNonWalkerInOrderCmdsChaining = false;
+    latestOperationIsComputeWalker = false;
     taskCountUpdateFenceRequired = false;
     textureCacheFlushPending = false;
     closedCmdList = false;
@@ -255,6 +256,7 @@ void CommandListCoreFamily<gfxCoreFamily>::handleInOrderDependencyCounter(Event 
     }
 
     this->latestOperationRequiredNonWalkerInOrderCmdsChaining = params.nonWalkerInOrderCmdsChaining;
+    this->latestOperationIsComputeWalker = params.computeWalkerOperation;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -591,13 +593,19 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
         prefetchKernelMemory(*commandContainer.getCommandStream(), *kernel, iohAllocation, iohOffset, launchParams.outListCommands, getPrefetchCmdId(), estimateSizeForPrefetch);
     }
 
+    const bool skipImplicitDependency = canSkipImplicitInOrderDependency(launchParams, *kernel);
+    if (skipImplicitDependency) {
+        this->latestOperationHasCbEventWithProfiling = false;
+    }
+
     CmdListWaitEventParameters waitEventsParameters = {
         .outWaitCmds = launchParams.outListCommands,
         .relaxedOrderingAllowed = launchParams.relaxedOrderingDispatch,
         .trackDependencies = true,
-        .waitForImplicitInOrderDependency = true,
+        .waitForImplicitInOrderDependency = !skipImplicitDependency,
         .skipAddingWaitEventsToResidency = launchParams.omitAddingWaitEventsResidency,
         .dualStreamCopyOffloadOperation = false,
+        .keepInOrderEventWaits = skipImplicitDependency,
     };
 
     ze_result_t ret = addEventsToCmdList(numWaitEvents, phWaitEvents, waitEventsParameters);
@@ -629,7 +637,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
     CmdListHandleInOrderDependencyParams inOrderDependencyParams{
         .nonWalkerInOrderCmdsChaining = launchParams.inOrderNonWalkerSignalingRequired && event && !event->isCounterBased(),
         .copyOffloadOperation = false,
-        .apiRequiredExternalGraphEvent = false};
+        .apiRequiredExternalGraphEvent = false,
+        .computeWalkerOperation = true};
     handleInOrderDependencyCounter(event, inOrderDependencyParams);
 
     if (this->synchronizedDispatchMode != NEO::SynchronizedDispatchMode::disabled) {
@@ -4211,7 +4220,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
         }
 
         if ((isImmediateType() && event->isAlreadyCompleted()) ||
-            canSkipInOrderEventWait(*event, this->allowCbWaitEventsNoopDispatch)) {
+            (!waitEventParams.keepInOrderEventWaits && canSkipInOrderEventWait(*event, this->allowCbWaitEventsNoopDispatch))) {
             continue;
         }
 
@@ -4231,7 +4240,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
                                                                                 waitEventParams.outWaitCmds,
                                                                                 event->getInOrderExecBaseSignalValue(), event->getInOrderAllocationOffset(),
                                                                                 waitEventParams.relaxedOrderingAllowed, false, waitEventParams.skipAddingWaitEventsToResidency,
-                                                                                isCbEventBoundToCmdList(event) || noopSkippedData, dualStreamCopyOffload);
+                                                                                (isCbEventBoundToCmdList(event) && !waitEventParams.keepInOrderEventWaits) || noopSkippedData, dualStreamCopyOffload);
 
             continue;
         }
@@ -5126,6 +5135,8 @@ bool CommandListCoreFamily<gfxCoreFamily>::isSkippingInOrderBarrierAllowed(ze_ev
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::setupEventParamsForInOrderBarrierSkip(ze_event_handle_t hSignalEvent, bool apiRequiredExternalGraphEvent) {
+    this->latestOperationIsComputeWalker = false;
+
     if (hSignalEvent) {
         auto event = Event::fromHandle(hSignalEvent);
         assignInOrderExecInfoToEvent(event, apiRequiredExternalGraphEvent);
@@ -5722,6 +5733,13 @@ bool CommandListCoreFamily<gfxCoreFamily>::hasInOrderDependencies() const {
     const bool skip = (NEO::debugManager.flags.SkipImplicitInOrderDependencies.get() == 1);
 
     return (!skip && inOrderExecInfo.get() && inOrderExecInfo->getCounterValue() > inOrderExecInfo->getInitialCounterValue());
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+bool CommandListCoreFamily<gfxCoreFamily>::isImplicitInOrderDependencyReplaceable(const CmdListKernelLaunchParams &launchParams) {
+    return hasInOrderDependencies() && this->latestOperationIsComputeWalker && (this->partitionCount == 1) && !launchParams.relaxedOrderingDispatch &&
+           !this->latestFlushIsDualCopyOffload && !this->implicitDependencyOnPreviousCsrPending &&
+           !isTextureCacheFlushPending() && (asMutable() == nullptr);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

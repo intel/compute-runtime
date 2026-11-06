@@ -21,6 +21,7 @@ struct CmdListWaitEventParameters {
     bool apiRequest = false;
     bool skipFlush = false;
     bool apiRequestForGraphExternal = false;
+    bool keepInOrderEventWaits = false;
 };
 
 } // namespace L0

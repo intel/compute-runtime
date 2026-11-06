@@ -117,6 +117,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::hostPtrMap;
     using BaseClass::immediateCmdListHeapSharing;
     using BaseClass::implicitCounterBasedEventPromotionAllowed;
+    using BaseClass::implicitDependencyOnPreviousCsrPending;
     using BaseClass::indirectAllocationsAllowed;
     using BaseClass::initialize;
     using BaseClass::inOrderAtomicSignalingEnabled;
@@ -137,6 +138,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::l3FlushAfterPostSyncEnabled;
     using BaseClass::latestFlushIsDualCopyOffload;
     using BaseClass::latestOperationHasCbEventWithProfiling;
+    using BaseClass::latestOperationIsComputeWalker;
     using BaseClass::latestOperationRequiredNonWalkerInOrderCmdsChaining;
     using BaseClass::maxFillPatternSizeForCopyEngine;
     using BaseClass::midThreadPreemptionKernelAppended;
@@ -297,6 +299,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::latestFlushIsDualCopyOffload;
     using BaseClass::latestFlushIsHostVisible;
     using BaseClass::latestOperationHasCbEventWithProfiling;
+    using BaseClass::latestOperationIsComputeWalker;
     using BaseClass::latestOperationRequiredNonWalkerInOrderCmdsChaining;
     using BaseClass::maxFillPatternSizeForCopyEngine;
     using BaseClass::minimalSizeForBcsSplit;
@@ -438,6 +441,7 @@ struct Mock<CommandList> : public CommandList {
     ADDMETHOD_NOBASE(destroy, ze_result_t, ZE_RESULT_SUCCESS, ());
 
     ADDMETHOD_CONST_NOBASE(kernelMemoryPrefetchEnabled, bool, false, (void));
+    ADDMETHOD_NOBASE(isImplicitInOrderDependencyReplaceable, bool, false, (const CmdListKernelLaunchParams &launchParams));
 
     ADDMETHOD_NOBASE(appendCustomOperation, ze_result_t, ZE_RESULT_SUCCESS,
                      (const void *pNext,
@@ -1096,6 +1100,11 @@ struct MockCommandListImmediateExtSem : public WhiteBox<::L0::CommandListCoreFam
     uint32_t appendHostFunctionCalledTimes = 0u;
     ze_host_function_callback_t capturedHostFunction = nullptr;
     void *capturedUserData = nullptr;
+};
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+struct MutableLikeCommandList : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>> {
+    void *asMutable() override { return this; }
 };
 
 } // namespace ult

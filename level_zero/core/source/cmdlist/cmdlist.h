@@ -365,6 +365,7 @@ struct CommandList : _ze_command_list_handle_t {
 
     MOCKABLE_VIRTUAL void setAdditionalDispatchKernelArgsFromLaunchParams(NEO::EncodeDispatchKernelArgs &dispatchKernelArgs, const CmdListKernelLaunchParams &launchParams) const;
     void setAdditionalDispatchKernelArgsFromKernel(NEO::EncodeDispatchKernelArgs &dispatchKernelArgs, const Kernel *kernel) const;
+    MOCKABLE_VIRTUAL bool canSkipImplicitInOrderDependency(CmdListKernelLaunchParams &launchParams, const Kernel &kernel);
 
     ze_result_t validateLaunchParams(const Kernel &kernel, const CmdListKernelLaunchParams &launchParams, const ze_group_count_t &threadGroupDimensions) const;
 
@@ -710,6 +711,7 @@ struct CommandList : _ze_command_list_handle_t {
     virtual void appendMultiPartitionPrologue(uint32_t partitionDataSize) = 0;
     virtual void appendMultiPartitionEpilogue() = 0;
     virtual bool kernelMemoryPrefetchEnabled() const = 0;
+    virtual bool isImplicitInOrderDependencyReplaceable(const CmdListKernelLaunchParams &launchParams) = 0;
 
     void setStreamPropertiesDefaultSettings(NEO::StreamProperties &streamProperties);
     void enableInOrderExecution();
