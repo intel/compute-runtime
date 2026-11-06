@@ -40,6 +40,7 @@
 #include "level_zero/core/test/unit_tests/sources/helper/ze_object_utils.h"
 #include "level_zero/core/test/unit_tests/white_box.h"
 
+#include <array>
 #include <limits>
 #include <memory>
 
@@ -196,6 +197,77 @@ HWTEST_F(AppendMemoryCopyTests, givenCommandListAndUnalignedHostPointersWhenMemo
     auto sshAlignmentMask = NEO::EncodeSurfaceState<FamilyType>::getSurfaceBaseAddressAlignmentMask();
     EXPECT_TRUE(cmdList.srcAlignedPtr == (cmdList.srcAlignedPtr & sshAlignmentMask));
     EXPECT_TRUE(cmdList.dstAlignedPtr == (cmdList.dstAlignedPtr & sshAlignmentMask));
+}
+
+struct AppendMemoryCopyRegionArgsTest : AppendMemoryCopyTests {
+    static constexpr uint32_t copyRegionDstPitchArgIndex = 5;
+    static constexpr uint32_t copyRegionArgCount = copyRegionDstPitchArgIndex + 1;
+
+    template <typename CoordinateT, typename FamilyType>
+    void appendCopyRegion2dAndExpectArgs(const NEO::BuiltIn::AddressingMode &builtInMode) {
+        auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(device->getBuiltinFunctionsLib()->getFunction(BufferBuiltIn::copyBufferRectBytes2d, builtInMode));
+        mockBuiltinKernel->checkPassedArgumentValues = true;
+        mockBuiltinKernel->passedArgumentValues.clear();
+        mockBuiltinKernel->passedArgumentValues.resize(copyRegionArgCount);
+
+        MockCommandListCoreFamily<FamilyType::gfxCoreFamily> cmdList;
+        cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+        AlignedAllocationData srcAllocation{};
+        AlignedAllocationData dstAllocation{};
+        const ze_copy_region_t srcRegion = {4, 5, 0, 2, 2, 1};
+        const ze_copy_region_t dstRegion = {6, 7, 0, 2, 2, 1};
+        constexpr uint32_t srcPitch = 32;
+        constexpr uint32_t dstPitch = 64;
+        constexpr uint32_t srcOffset = 1;
+        constexpr uint32_t dstOffset = 3;
+        CmdListWaitEventParameters waitEventParameters{};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList.appendMemoryCopyKernel2d(&dstAllocation, &srcAllocation, BufferBuiltIn::copyBufferRectBytes2d, builtInMode,
+                                                                      &dstRegion, dstPitch, dstOffset, &srcRegion, srcPitch, srcOffset, nullptr, 0, nullptr, waitEventParameters));
+
+        EXPECT_EQ(toArgumentBytes(std::array<CoordinateT, 2>{srcRegion.originX + srcOffset, srcRegion.originY}), mockBuiltinKernel->passedArgumentValues[2]);
+        EXPECT_EQ(toArgumentBytes(std::array<CoordinateT, 2>{dstRegion.originX + dstOffset, dstRegion.originY}), mockBuiltinKernel->passedArgumentValues[3]);
+        EXPECT_EQ(toArgumentBytes(std::array<CoordinateT, 1>{srcPitch}), mockBuiltinKernel->passedArgumentValues[4]);
+        EXPECT_EQ(toArgumentBytes(std::array<CoordinateT, 1>{dstPitch}), mockBuiltinKernel->passedArgumentValues[5]);
+    }
+
+    template <typename CoordinateT, typename FamilyType>
+    void appendCopyRegion3dAndExpectArgs(const NEO::BuiltIn::AddressingMode &builtInMode) {
+        auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(device->getBuiltinFunctionsLib()->getFunction(BufferBuiltIn::copyBufferRectBytes3d, builtInMode));
+        mockBuiltinKernel->checkPassedArgumentValues = true;
+        mockBuiltinKernel->passedArgumentValues.clear();
+        mockBuiltinKernel->passedArgumentValues.resize(copyRegionArgCount);
+
+        MockCommandListCoreFamily<FamilyType::gfxCoreFamily> cmdList;
+        cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+        AlignedAllocationData srcAllocation{};
+        AlignedAllocationData dstAllocation{};
+        const ze_copy_region_t srcRegion = {4, 5, 6, 2, 2, 2};
+        const ze_copy_region_t dstRegion = {7, 8, 9, 2, 2, 2};
+        constexpr uint32_t srcPitch = 32;
+        constexpr uint32_t dstPitch = 64;
+        constexpr uint32_t srcSlicePitch = 512;
+        constexpr uint32_t dstSlicePitch = 1024;
+        constexpr uint32_t srcOffset = 1;
+        constexpr uint32_t dstOffset = 3;
+        CmdListWaitEventParameters waitEventParameters{};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList.appendMemoryCopyKernel3d(&dstAllocation, &srcAllocation, BufferBuiltIn::copyBufferRectBytes3d, builtInMode,
+                                                                      &dstRegion, dstPitch, dstSlicePitch, dstOffset, &srcRegion, srcPitch, srcSlicePitch, srcOffset, nullptr, 0, nullptr, waitEventParameters));
+
+        EXPECT_EQ(toArgumentBytes(std::array<CoordinateT, 3>{srcRegion.originX + srcOffset, srcRegion.originY, srcRegion.originZ}), mockBuiltinKernel->passedArgumentValues[2]);
+        EXPECT_EQ(toArgumentBytes(std::array<CoordinateT, 3>{dstRegion.originX + dstOffset, dstRegion.originY, dstRegion.originZ}), mockBuiltinKernel->passedArgumentValues[3]);
+        EXPECT_EQ(toArgumentBytes(std::array<CoordinateT, 2>{srcPitch, srcSlicePitch}), mockBuiltinKernel->passedArgumentValues[4]);
+        EXPECT_EQ(toArgumentBytes(std::array<CoordinateT, 2>{dstPitch, dstSlicePitch}), mockBuiltinKernel->passedArgumentValues[5]);
+    }
+};
+
+HWTEST_F(AppendMemoryCopyRegionArgsTest, givenWideBuiltInModeWhenCopyRegionKernelsAreAppendedThenOriginsAndPitchesArePassedAs64BitValues) {
+    appendCopyRegion2dAndExpectArgs<uint64_t, FamilyType>(NEO::BuiltIn::bindfulImageStatelessBufferWide);
+    appendCopyRegion3dAndExpectArgs<uint64_t, FamilyType>(NEO::BuiltIn::bindfulImageStatelessBufferWide);
+}
+
+HWTEST_F(AppendMemoryCopyRegionArgsTest, givenNonWideBuiltInModeWhenCopyRegionKernelsAreAppendedThenOriginsAndPitchesArePassedAs32BitValues) {
+    appendCopyRegion2dAndExpectArgs<uint32_t, FamilyType>(NEO::BuiltIn::bindfulImageStatelessBuffer);
+    appendCopyRegion3dAndExpectArgs<uint32_t, FamilyType>(NEO::BuiltIn::bindfulImageStatelessBuffer);
 }
 
 HWTEST_F(AppendMemoryCopyTests, givenCommandListAndUnalignedHostPointersWhenBlitMemoryCopyRegion2DCalledThenSrcDstNotZeroOffsetsArePassed) {

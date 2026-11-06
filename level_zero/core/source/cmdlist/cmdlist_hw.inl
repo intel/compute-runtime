@@ -1170,7 +1170,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
 
     auto builtInMode = this->defaultBuiltInMode;
     device->getL0GfxCoreHelper().adjustBuiltInImageModeToBindful(builtInMode);
-    builtInMode.adjustToWideStatelessIfRequired(bufferSize);
+    builtInMode.adjustToWideStatelessIfRequired(bufferSize + allocationStruct.offset);
     ImageBuiltIn imageBuiltIn = ImageBuiltIn::copyBufferToImage3dBytes;
 
     switch (bytesPerPixel) {
@@ -1226,7 +1226,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
         uint32_t pitch[] = {srcRowPitch, static_cast<uint32_t>(srcSlicePitchCalculated)};
         builtinKernel->setArgumentValue(4u, sizeof(pitch), &pitch);
     } else {
-        size_t pitch[] = {srcRowPitch, srcSlicePitchCalculated};
+        uint64_t pitch[] = {srcRowPitch, srcSlicePitchCalculated};
         builtinKernel->setArgumentValue(4u, sizeof(pitch), &pitch);
     }
 
@@ -1390,7 +1390,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
 
     auto builtInMode = this->defaultBuiltInMode;
     device->getL0GfxCoreHelper().adjustBuiltInImageModeToBindful(builtInMode);
-    builtInMode.adjustToWideStatelessIfRequired(bufferSize);
+    builtInMode.adjustToWideStatelessIfRequired(bufferSize + allocationStruct.offset);
     ImageBuiltIn imageBuiltIn = ImageBuiltIn::copyImage3dToBufferBytes;
 
     switch (bytesPerPixel) {
@@ -1456,7 +1456,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
         uint32_t pitch[] = {destRowPitch, static_cast<uint32_t>(destSlicePitchCalculated)};
         builtinKernel->setArgumentValue(4u, sizeof(pitch), &pitch);
     } else {
-        size_t pitch[] = {destRowPitch, destSlicePitchCalculated};
+        uint64_t pitch[] = {destRowPitch, destSlicePitchCalculated};
         builtinKernel->setArgumentValue(4u, sizeof(pitch), &pitch);
     }
 
@@ -2219,7 +2219,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(NEO::Graph
     size_t middleElSize = sizeof(uint32_t) * 4;
     uintptr_t rightSize = size % middleElSize;
     auto builtInMode = this->defaultBuiltInMode;
-    builtInMode.adjustToWideStatelessIfRequired(size);
+    builtInMode.adjustToWideStatelessIfRequired(size + offset);
 
     uintptr_t dstAddress = static_cast<uintptr_t>(dstAllocation->getGpuAddress());
     uintptr_t srcAddress = static_cast<uintptr_t>(srcAllocation->getGpuAddress());
@@ -2594,7 +2594,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
 
         middleElSize = sizeof(uint32_t) * 4;
         builtInMode = this->defaultBuiltInMode;
-        builtInMode.adjustToWideStatelessIfRequired(size);
+        builtInMode.adjustToWideStatelessIfRequired(size + std::max(dstAllocationStruct.offset, srcAllocationStruct.offset));
 
         uintptr_t start = reinterpret_cast<uintptr_t>(dstptr);
 
@@ -2855,7 +2855,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
     const bool inOrderCopyOnlySignalingAllowed = this->isInOrderExecutionEnabled() && !memoryCopyParams.forceDisableCopyOnlyInOrderSignaling && isCopyOnlyEnabled;
 
     auto builtInMode = this->defaultBuiltInMode;
-    builtInMode.adjustToWideStatelessIfRequired(std::max(srcSize, dstSize));
+    builtInMode.adjustToWideStatelessIfRequired(std::max(srcSize + srcAllocationStruct.offset, dstSize + dstAllocationStruct.offset));
     ze_result_t result = ZE_RESULT_SUCCESS;
     memoryCopyParams.waitEventsParameters.relaxedOrderingAllowed = memoryCopyParams.relaxedOrderingDispatch;
     if (isCopyOnlyEnabled) {
@@ -2967,14 +2967,22 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel3d(Align
     builtinSetArg(builtinKernel, 0u, srcAlignedAllocation->alignedAllocationPtr, srcAlignedAllocation->alloc);
     builtinSetArg(builtinKernel, 1u, dstAlignedAllocation->alignedAllocationPtr, dstAlignedAllocation->alloc);
 
-    uint32_t srcOrigin32[3] = {(srcRegion->originX + static_cast<uint32_t>(srcOffset)), (srcRegion->originY), (srcRegion->originZ)};
-    uint32_t dstOrigin32[3] = {(dstRegion->originX + static_cast<uint32_t>(dstOffset)), (dstRegion->originY), (dstRegion->originZ)};
-    uint32_t srcPitches32[2] = {srcPitch, srcSlicePitch};
-    uint32_t dstPitches32[2] = {dstPitch, dstSlicePitch};
-    builtinKernel->setArgumentValue(2, sizeof(srcOrigin32), &srcOrigin32);
-    builtinKernel->setArgumentValue(3, sizeof(dstOrigin32), &dstOrigin32);
-    builtinKernel->setArgumentValue(4, sizeof(srcPitches32), &srcPitches32);
-    builtinKernel->setArgumentValue(5, sizeof(dstPitches32), &dstPitches32);
+    auto setOriginsAndPitches = [&](auto coordinateTypeTag) {
+        using CoordinateT = decltype(coordinateTypeTag);
+        CoordinateT srcOrigin[3] = {static_cast<CoordinateT>(srcRegion->originX + srcOffset), srcRegion->originY, srcRegion->originZ};
+        CoordinateT dstOrigin[3] = {static_cast<CoordinateT>(dstRegion->originX + dstOffset), dstRegion->originY, dstRegion->originZ};
+        CoordinateT srcPitches[2] = {srcPitch, srcSlicePitch};
+        CoordinateT dstPitches[2] = {dstPitch, dstSlicePitch};
+        builtinKernel->setArgumentValue(2, sizeof(srcOrigin), &srcOrigin);
+        builtinKernel->setArgumentValue(3, sizeof(dstOrigin), &dstOrigin);
+        builtinKernel->setArgumentValue(4, sizeof(srcPitches), &srcPitches);
+        builtinKernel->setArgumentValue(5, sizeof(dstPitches), &dstPitches);
+    };
+    if (builtInMode.wideMode) {
+        setOriginsAndPitches(uint64_t{});
+    } else {
+        setOriginsAndPitches(uint32_t{});
+    }
 
     CmdListKernelLaunchParams launchParams = {};
     launchParams.isBuiltInKernel = true;
@@ -3049,14 +3057,22 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel2d(Align
     builtinSetArg(builtinKernel, 0u, srcAlignedAllocation->alignedAllocationPtr, srcAlignedAllocation->alloc);
     builtinSetArg(builtinKernel, 1u, dstAlignedAllocation->alignedAllocationPtr, dstAlignedAllocation->alloc);
 
-    uint32_t srcOrigin32[2] = {(srcRegion->originX + static_cast<uint32_t>(srcOffset)), (srcRegion->originY)};
-    uint32_t dstOrigin32[2] = {(dstRegion->originX + static_cast<uint32_t>(dstOffset)), (dstRegion->originY)};
-    uint32_t srcPitch32 = static_cast<uint32_t>(srcPitch);
-    uint32_t dstPitch32 = static_cast<uint32_t>(dstPitch);
-    builtinKernel->setArgumentValue(2, sizeof(srcOrigin32), &srcOrigin32);
-    builtinKernel->setArgumentValue(3, sizeof(dstOrigin32), &dstOrigin32);
-    builtinKernel->setArgumentValue(4, sizeof(srcPitch32), &srcPitch32);
-    builtinKernel->setArgumentValue(5, sizeof(dstPitch32), &dstPitch32);
+    auto setOriginsAndPitches = [&](auto coordinateTypeTag) {
+        using CoordinateT = decltype(coordinateTypeTag);
+        CoordinateT srcOrigin[2] = {static_cast<CoordinateT>(srcRegion->originX + srcOffset), srcRegion->originY};
+        CoordinateT dstOrigin[2] = {static_cast<CoordinateT>(dstRegion->originX + dstOffset), dstRegion->originY};
+        CoordinateT srcPitchArg = srcPitch;
+        CoordinateT dstPitchArg = dstPitch;
+        builtinKernel->setArgumentValue(2, sizeof(srcOrigin), &srcOrigin);
+        builtinKernel->setArgumentValue(3, sizeof(dstOrigin), &dstOrigin);
+        builtinKernel->setArgumentValue(4, sizeof(srcPitchArg), &srcPitchArg);
+        builtinKernel->setArgumentValue(5, sizeof(dstPitchArg), &dstPitchArg);
+    };
+    if (builtInMode.wideMode) {
+        setOriginsAndPitches(uint64_t{});
+    } else {
+        setOriginsAndPitches(uint32_t{});
+    }
 
     CmdListKernelLaunchParams launchParams = {};
     launchParams.isBuiltInKernel = true;
@@ -3115,7 +3131,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendUnalignedFillKernel(bool isStateless, uint32_t unalignedSize, const AlignedAllocationData &dstAllocation, const void *pattern, Event *signalEvent, CmdListKernelLaunchParams &launchParams) {
 
     auto builtInMode = this->defaultBuiltInMode;
-    builtInMode.adjustToWideStatelessIfRequired(0);
+    builtInMode.adjustToWideStatelessIfRequired(unalignedSize + dstAllocation.offset);
     auto builtin = BufferBuiltIn::fillBufferImmediateLeftOver;
 
     Kernel *builtinKernel = device->getBuiltinFunctionsLib()->getFunction(builtin, builtInMode);
@@ -3168,7 +3184,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     }
     const auto isStateless = this->forceStateless(size);
     auto builtInMode = this->defaultBuiltInMode;
-    builtInMode.adjustToWideStatelessIfRequired(size);
     bool isWriteToImageFromBuffer = false;
     const bool shouldUseCopyOffload = (isCopyOffloadForFillOrStagingPreferred(isWriteToImageFromBuffer) && isCopyOffloadForFillPreferred(size)) || doParamsRequireCopyOnly(memoryCopyParams);
     memoryCopyParams.waitEventsParameters.relaxedOrderingAllowed = memoryCopyParams.relaxedOrderingDispatch;
@@ -3234,6 +3249,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     if ((dstAllocation.alloc == nullptr) && (sharedSystemEnabled == false)) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
+    builtInMode.adjustToWideStatelessIfRequired(size + dstAllocation.offset);
 
     emitMemAdviseForSystemCopy(dstAllocation, size);
 
@@ -3387,8 +3403,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
             }
             launchParams.numKernelsExecutedInSplitLaunch++;
         } else {
-            uint32_t dstOffsetRemainder = static_cast<uint32_t>(dstAllocation.offset);
-
             auto builtin = BufferBuiltIn::fillBufferRightLeftover;
             Kernel *builtinKernelRemainder = device->getBuiltinFunctionsLib()->getFunction(builtin, builtInMode);
 
@@ -3396,9 +3410,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
             ze_group_count_t dispatchKernelArgs{static_cast<uint32_t>(fillArguments.groups), 1u, 1u};
 
             builtinSetArg(builtinKernelRemainder, 0, dstAllocation.alignedAllocationPtr, dstAllocation.alloc);
-            builtinKernelRemainder->setArgumentValue(1,
-                                                     sizeof(dstOffsetRemainder),
-                                                     &dstOffsetRemainder);
+            builtinKernelRemainder->setArgumentValue(1, sizeof(dstAllocation.offset), &dstAllocation.offset);
             builtinKernelRemainder->setArgBufferWithAlloc(2,
                                                           reinterpret_cast<uintptr_t>(patternGfxAllocPtr),
                                                           patternGfxAlloc, nullptr);
@@ -3412,7 +3424,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
         }
 
         if (fillArguments.rightRemainingBytes > 0) {
-            uint32_t dstOffsetRemainder = static_cast<uint32_t>(fillArguments.rightOffset);
             uint64_t patternOffsetRemainder = fillArguments.patternOffsetRemainder;
 
             auto builtin = BufferBuiltIn::fillBufferRightLeftover;
@@ -3422,9 +3433,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
             ze_group_count_t dispatchKernelArgs{1u, 1u, 1u};
 
             builtinSetArg(builtinKernelRemainder, 0, dstAllocation.alignedAllocationPtr, dstAllocation.alloc);
-            builtinKernelRemainder->setArgumentValue(1,
-                                                     sizeof(dstOffsetRemainder),
-                                                     &dstOffsetRemainder);
+            builtinKernelRemainder->setArgumentValue(1, sizeof(fillArguments.rightOffset), &fillArguments.rightOffset);
             builtinKernelRemainder->setArgBufferWithAlloc(2,
                                                           reinterpret_cast<uintptr_t>(patternGfxAllocPtr) + patternOffsetRemainder,
                                                           patternGfxAlloc, nullptr);
@@ -5246,12 +5255,16 @@ void CommandListCoreFamily<gfxCoreFamily>::setupFillKernelArguments(size_t baseO
             elSize = sizeof(uint8_t);
         }
         size_t adjustedSize = dstSize / elSize;
-        uint32_t groupSizeX = static_cast<uint32_t>(adjustedSize);
-        uint32_t groupSizeY = 1, groupSizeZ = 1;
-        kernel->suggestGroupSize(groupSizeX, groupSizeY, groupSizeZ, &groupSizeX, &groupSizeY, &groupSizeZ);
+        const bool elementCountExceeds32Bit = adjustedSize > std::numeric_limits<uint32_t>::max();
+        const size_t maxMainGroupSizeKeepingRightLeftoverInOneGroup = maxWgSize / elSize;
+        uint32_t groupSizeX = static_cast<uint32_t>(elementCountExceeds32Bit ? maxMainGroupSizeKeepingRightLeftoverInOneGroup : adjustedSize);
+        if (!elementCountExceeds32Bit) {
+            uint32_t groupSizeY = 1, groupSizeZ = 1;
+            kernel->suggestGroupSize(groupSizeX, groupSizeY, groupSizeZ, &groupSizeX, &groupSizeY, &groupSizeZ);
+        }
         outArguments.mainGroupSize = groupSizeX;
 
-        outArguments.groups = static_cast<uint32_t>(adjustedSize) / outArguments.mainGroupSize;
+        outArguments.groups = adjustedSize / outArguments.mainGroupSize;
         outArguments.rightRemainingBytes = static_cast<uint32_t>((adjustedSize % outArguments.mainGroupSize) * elSize +
                                                                  dstSize % elSize);
 
@@ -5259,7 +5272,7 @@ void CommandListCoreFamily<gfxCoreFamily>::setupFillKernelArguments(size_t baseO
         outArguments.patternSizeInEls = static_cast<uint32_t>(patternAllocationSize / elSize);
 
         if (outArguments.rightRemainingBytes > 0) {
-            outArguments.rightOffset = outArguments.groups * outArguments.mainGroupSize * elSize;
+            outArguments.rightOffset = baseOffset + outArguments.groups * outArguments.mainGroupSize * elSize;
             outArguments.patternOffsetRemainder = (outArguments.mainGroupSize * outArguments.groups & (outArguments.patternSizeInEls - 1)) * elSize;
         }
     }

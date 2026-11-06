@@ -27,6 +27,8 @@ struct AddressingMode {
     BufferMode bufferMode = BufferMode::stateless;
     bool wideMode = false;
 
+    static constexpr uint64_t wideModeThreshold = MemoryConstants::fullStatefulRegion;
+
     constexpr AddressingMode() = default;
     constexpr AddressingMode(ImageMode img, BufferMode buf, bool wide)
         : imageMode(img), bufferMode(buf), wideMode(wide) {}
@@ -39,7 +41,7 @@ struct AddressingMode {
     }
 
     void adjustToWideStatelessIfRequired(uint64_t maxBufferSize) {
-        if (maxBufferSize >= 4ull * MemoryConstants::gigaByte) {
+        if (maxBufferSize >= wideModeThreshold) {
             this->bufferMode = BufferMode::stateless;
             this->wideMode = true;
         }

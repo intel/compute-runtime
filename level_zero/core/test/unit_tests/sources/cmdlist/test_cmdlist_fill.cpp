@@ -8,9 +8,12 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/core/source/builtin/builtin_functions_lib.h"
 #include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.inl"
+#include "level_zero/core/test/unit_tests/mocks/mock_builtin_functions_lib_impl.h"
 
 namespace L0 {
 namespace ult {
@@ -426,6 +429,229 @@ HWTEST_F(AppendFillTest, givenAppendMemoryFillWhenPtrWithOffsetAndFailAppendUnal
     ze_result_t result = commandList->appendMemoryFill(ptr + offset, &pattern, 1, size - offset, nullptr, 0, nullptr, copyParams);
     EXPECT_NE(ZE_RESULT_SUCCESS, result);
     delete[] ptr;
+}
+
+struct RecordingFillBuiltInKernelLib : MockBuiltInKernelLibImpl {
+    static constexpr uint32_t fillDstOffsetArgIndex = 1;
+    static constexpr uint32_t fillPatternSizeArgIndex = 3;
+    static constexpr uint32_t fillArgCount = fillPatternSizeArgIndex + 1;
+
+    RecordingFillBuiltInKernelLib(L0::Device *device, NEO::BuiltIns *builtInsLib) : MockBuiltInKernelLibImpl(device, builtInsLib) {
+        auto recordingKernel = static_cast<Mock<::L0::KernelImp> *>(dummyKernel.get());
+        recordingKernel->checkPassedArgumentValues = true;
+        recordingKernel->passedArgumentValues.resize(fillArgCount);
+    }
+
+    Kernel *getFunction(BufferBuiltIn func, const NEO::BuiltIn::AddressingMode &mode) override {
+        requests.push_back({func, mode});
+        return dummyKernel.get();
+    }
+
+    std::vector<NEO::BuiltIn::AddressingMode> modesOf(BufferBuiltIn func) const {
+        std::vector<NEO::BuiltIn::AddressingMode> modes;
+        for (const auto &request : requests) {
+            if (request.first == func) {
+                modes.push_back(request.second);
+            }
+        }
+        return modes;
+    }
+
+    std::vector<std::pair<BufferBuiltIn, NEO::BuiltIn::AddressingMode>> requests;
+};
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+class MockCommandListRecordingFillDispatches : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>> {
+  public:
+    ze_result_t appendLaunchKernelSplit(::L0::Kernel *kernel,
+                                        const ze_group_count_t &threadGroupDimensions,
+                                        ::L0::Event *event,
+                                        CmdListKernelLaunchParams &launchParams) override {
+        groupCounts.push_back(threadGroupDimensions.groupCountX);
+        groupSizes.push_back(kernel->getGroupSize()[0]);
+        dstOffsetArgs.push_back(static_cast<Mock<::L0::KernelImp> *>(kernel)->passedArgumentValues[RecordingFillBuiltInKernelLib::fillDstOffsetArgIndex]);
+        return ZE_RESULT_SUCCESS;
+    }
+
+    std::vector<uint32_t> groupCounts;
+    std::vector<uint32_t> groupSizes;
+    std::vector<std::vector<uint8_t>> dstOffsetArgs;
+};
+
+struct AppendFillRecordingTest : AppendFillTest {
+    static constexpr uintptr_t alignedFillDstAddress = 0x800000000 + 256;
+    static constexpr size_t immediateFillMiddleElSize = sizeof(uint32_t) * 4;
+
+    void SetUp() override {
+        AppendFillTest::SetUp();
+        auto recordingLib = std::make_unique<RecordingFillBuiltInKernelLib>(device, device->getNEODevice()->getBuiltIns());
+        builtIns = recordingLib.get();
+        builtInsBackup = std::make_unique<NonCopyableVariableBackup<std::unique_ptr<BuiltInKernelLib>>>(&device->builtins, std::move(recordingLib));
+    }
+
+    void TearDown() override {
+        builtInsBackup.reset();
+        AppendFillTest::TearDown();
+    }
+
+    template <typename FamilyType>
+    auto appendFill(void *ptr, const void *pattern, size_t patternSize, size_t size) {
+        auto commandList = std::make_unique<MockCommandListRecordingFillDispatches<FamilyType::gfxCoreFamily>>();
+        commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
+        CmdListMemoryCopyParams copyParams = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendMemoryFill(ptr, pattern, patternSize, size, nullptr, 0, nullptr, copyParams));
+        return commandList;
+    }
+
+    RecordingFillBuiltInKernelLib *builtIns = nullptr;
+    std::unique_ptr<NonCopyableVariableBackup<std::unique_ptr<BuiltInKernelLib>>> builtInsBackup;
+};
+
+HWTEST_F(AppendFillRecordingTest, givenOneBytePatternFillAbove16GBAtUnalignedPtrWhenAppendMemoryFillCalledThenRightLeftOverIsWide) {
+    constexpr uint64_t dstOffset = 1;
+    constexpr size_t leftLeftOverSize = sizeof(uint32_t) - dstOffset;
+    constexpr size_t mainFillSize = 16 * MemoryConstants::gigaByte;
+    constexpr size_t rightLeftOverSize = immediateFillMiddleElSize - 1;
+    constexpr size_t size = leftLeftOverSize + mainFillSize + rightLeftOverSize;
+    void *dstPtr = reinterpret_cast<void *>(alignedFillDstAddress + dstOffset);
+    uint8_t onePattern = 0x11;
+
+    auto commandList = appendFill<FamilyType>(dstPtr, &onePattern, sizeof(onePattern), size);
+    ASSERT_EQ(3u, commandList->groupCounts.size());
+    EXPECT_EQ(toArgumentBytes(uint64_t{dstOffset + leftLeftOverSize + mainFillSize}), commandList->dstOffsetArgs[2]);
+
+    auto mainModes = builtIns->modesOf(BufferBuiltIn::fillBufferImmediate);
+    ASSERT_EQ(1u, mainModes.size());
+    EXPECT_TRUE(mainModes[0].wideMode);
+
+    auto leftOverModes = builtIns->modesOf(BufferBuiltIn::fillBufferImmediateLeftOver);
+    ASSERT_EQ(2u, leftOverModes.size());
+    EXPECT_FALSE(leftOverModes[0].wideMode);
+    EXPECT_TRUE(leftOverModes[1].wideMode);
+}
+
+HWTEST2_F(AppendFillRecordingTest, givenStatefulBuiltInsAndOneBytePatternFillOf4GBPlusOneAtUnalignedPtrWhenAppendMemoryFillCalledThenRightLeftOverIsWideStateless, IsAtMostXeHpgCore) {
+    constexpr uint64_t dstOffset = 1;
+    constexpr size_t size = NEO::BuiltIn::AddressingMode::wideModeThreshold + 1;
+    void *dstPtr = reinterpret_cast<void *>(alignedFillDstAddress + dstOffset);
+    uint8_t onePattern = 0x11;
+
+    auto commandList = appendFill<FamilyType>(dstPtr, &onePattern, sizeof(onePattern), size);
+    ASSERT_NE(NEO::BuiltIn::AddressingMode::BufferMode::stateless, commandList->defaultBuiltInMode.bufferMode);
+
+    auto leftOverModes = builtIns->modesOf(BufferBuiltIn::fillBufferImmediateLeftOver);
+    ASSERT_EQ(2u, leftOverModes.size());
+    EXPECT_EQ(commandList->defaultBuiltInMode, leftOverModes[0]);
+    EXPECT_TRUE(leftOverModes[1].wideMode);
+    EXPECT_EQ(NEO::BuiltIn::AddressingMode::BufferMode::stateless, leftOverModes[1].bufferMode);
+}
+
+HWTEST_F(AppendFillRecordingTest, givenSixteenBytePatternFillOf17GBWhenAppendMemoryFillCalledThenMainDispatchCoversFullSize) {
+    constexpr size_t size = 17 * MemoryConstants::gigaByte;
+    void *dstPtr = reinterpret_cast<void *>(alignedFillDstAddress);
+    uint8_t pattern[immediateFillMiddleElSize] = {};
+    constexpr uint64_t workItems = size / sizeof(uint32_t);
+
+    auto commandList = appendFill<FamilyType>(dstPtr, pattern, sizeof(pattern), size);
+    ASSERT_EQ(1u, commandList->groupCounts.size());
+    auto middleModes = builtIns->modesOf(BufferBuiltIn::fillBufferMiddle);
+    ASSERT_EQ(1u, middleModes.size());
+    EXPECT_TRUE(middleModes[0].wideMode);
+
+    const uint64_t dispatchedWorkItems = static_cast<uint64_t>(commandList->groupCounts[0]) * commandList->groupSizes[0];
+    EXPECT_EQ(workItems, dispatchedWorkItems);
+}
+
+HWTEST_F(AppendFillRecordingTest, givenSixteenBytePatternFillAbove2To32ElementsWithElementRemainderWhenAppendMemoryFillCalledThenRightLeftOverFitsInOneGroup) {
+    const size_t maxWgSize = device->getDeviceInfo().maxWorkGroupSize;
+    const size_t mainGroupSize = maxWgSize / sizeof(uint32_t);
+    const size_t tailElementsLargerThanMaxWgSizeInBytes = mainGroupSize + 1;
+    const size_t rightLeftOverSize = (tailElementsLargerThanMaxWgSizeInBytes % mainGroupSize) * sizeof(uint32_t);
+    const size_t mainFillSize = 16 * MemoryConstants::gigaByte;
+    const size_t size = mainFillSize + tailElementsLargerThanMaxWgSizeInBytes * sizeof(uint32_t);
+    void *dstPtr = reinterpret_cast<void *>(alignedFillDstAddress);
+    uint8_t pattern[immediateFillMiddleElSize] = {};
+
+    auto commandList = appendFill<FamilyType>(dstPtr, pattern, sizeof(pattern), size);
+    ASSERT_EQ(2u, commandList->groupCounts.size());
+    ASSERT_EQ(1u, builtIns->modesOf(BufferBuiltIn::fillBufferRightLeftover).size());
+
+    EXPECT_EQ(size - rightLeftOverSize, static_cast<uint64_t>(commandList->groupCounts[0]) * commandList->groupSizes[0] * sizeof(uint32_t));
+    EXPECT_EQ(1u, commandList->groupCounts[1]);
+    EXPECT_EQ(rightLeftOverSize, commandList->groupSizes[1]);
+    EXPECT_EQ(toArgumentBytes(static_cast<uint64_t>(size - rightLeftOverSize)), commandList->dstOffsetArgs[1]);
+}
+
+HWTEST_F(AppendFillRecordingTest, givenSixteenBytePatternFillOf8GBPlusTwoAtAlignedPtrWhenAppendMemoryFillCalledThenRightLeftOverGetsFull64BitOffset) {
+    constexpr size_t mainFillSize = 8 * MemoryConstants::gigaByte;
+    constexpr size_t rightLeftOverSize = 2;
+    constexpr size_t size = mainFillSize + rightLeftOverSize;
+    void *dstPtr = reinterpret_cast<void *>(alignedFillDstAddress);
+    uint8_t pattern[immediateFillMiddleElSize] = {};
+
+    auto commandList = appendFill<FamilyType>(dstPtr, pattern, sizeof(pattern), size);
+    ASSERT_EQ(2u, commandList->groupCounts.size());
+
+    auto rightLeftOverModes = builtIns->modesOf(BufferBuiltIn::fillBufferRightLeftover);
+    ASSERT_EQ(1u, rightLeftOverModes.size());
+    EXPECT_TRUE(rightLeftOverModes[0].wideMode);
+
+    EXPECT_EQ(mainFillSize, static_cast<uint64_t>(commandList->groupCounts[0]) * commandList->groupSizes[0] * sizeof(uint32_t));
+    EXPECT_EQ(1u, commandList->groupCounts[1]);
+    EXPECT_EQ(rightLeftOverSize, commandList->groupSizes[1]);
+    EXPECT_EQ(toArgumentBytes(uint64_t{mainFillSize}), commandList->dstOffsetArgs[1]);
+}
+
+HWTEST_F(AppendFillRecordingTest, givenEightBytePatternFillOfTenBytesAtOffsetInImportedHostPtrWhenAppendMemoryFillCalledThenRightLeftOverOffsetIncludesBaseOffset) {
+    constexpr size_t size = 10;
+    constexpr uint64_t dstOffset = 4;
+    constexpr size_t mainFillSize = size - size % sizeof(uint32_t);
+    constexpr size_t rightLeftOverSize = size % sizeof(uint32_t);
+    void *importedPtr = reinterpret_cast<void *>(alignedFillDstAddress);
+    void *dstPtr = ptrOffset(importedPtr, dstOffset);
+    uint8_t pattern[8] = {};
+    driverHandle->forceFalseFromfindAllocationDataForRange = true;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, driverHandle->importExternalPointer(importedPtr, MemoryConstants::pageSize));
+
+    auto commandList = appendFill<FamilyType>(dstPtr, pattern, sizeof(pattern), size);
+    ASSERT_EQ(2u, commandList->groupCounts.size());
+    ASSERT_EQ(1u, builtIns->modesOf(BufferBuiltIn::fillBufferMiddle).size());
+    ASSERT_EQ(1u, builtIns->modesOf(BufferBuiltIn::fillBufferRightLeftover).size());
+
+    EXPECT_EQ(mainFillSize, static_cast<uint64_t>(commandList->groupCounts[0]) * commandList->groupSizes[0] * sizeof(uint32_t));
+    EXPECT_EQ(toArgumentBytes(uint64_t{dstOffset}), commandList->dstOffsetArgs[0]);
+
+    EXPECT_EQ(1u, commandList->groupCounts[1]);
+    EXPECT_EQ(rightLeftOverSize, commandList->groupSizes[1]);
+    EXPECT_EQ(toArgumentBytes(uint64_t{dstOffset + mainFillSize}), commandList->dstOffsetArgs[1]);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->releaseImportedPointer(importedPtr));
+}
+
+HWTEST_F(AppendFillRecordingTest, givenTwoBytePatternFillOf4GBPlusOneAtUnalignedPtrWhenAppendMemoryFillCalledThenDispatchesCoverFullSizeWith64BitOffsets) {
+    constexpr size_t size = NEO::BuiltIn::AddressingMode::wideModeThreshold + 1;
+    constexpr uint64_t dstOffset = 1;
+    void *dstPtr = reinterpret_cast<void *>(alignedFillDstAddress + dstOffset);
+    uint8_t pattern[2] = {0x11, 0x22};
+    const uint64_t maxWgSize = device->getDeviceInfo().maxWorkGroupSize;
+
+    auto commandList = appendFill<FamilyType>(dstPtr, pattern, sizeof(pattern), size);
+    ASSERT_EQ(2u, commandList->groupCounts.size());
+
+    auto rightLeftOverModes = builtIns->modesOf(BufferBuiltIn::fillBufferRightLeftover);
+    ASSERT_EQ(2u, rightLeftOverModes.size());
+    for (const auto &mode : rightLeftOverModes) {
+        EXPECT_TRUE(mode.wideMode);
+    }
+
+    const uint64_t mainBytes = static_cast<uint64_t>(commandList->groupCounts[0]) * commandList->groupSizes[0];
+    EXPECT_EQ(maxWgSize, commandList->groupSizes[0]);
+    EXPECT_EQ(toArgumentBytes(uint64_t{dstOffset}), commandList->dstOffsetArgs[0]);
+
+    EXPECT_EQ(1u, commandList->groupCounts[1]);
+    EXPECT_EQ(size - mainBytes, commandList->groupSizes[1]);
+    EXPECT_LT(commandList->groupSizes[1], maxWgSize);
+    EXPECT_EQ(toArgumentBytes(uint64_t{dstOffset + mainBytes}), commandList->dstOffsetArgs[1]);
 }
 
 HWTEST_F(AppendFillTest, givenCallToAppendMemoryFillWithDataSizeNotAlignedToSizeOfFillDataAndAppendLaunchKernelFailureOnRemainderThenSuccessIsNotReturned) {

@@ -52,6 +52,9 @@ class MockCommandListHw : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFam
         if (buffer && returnBaseAllocationStruct) {
             return WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>::resolveAlignedAllocation(device, buffer, bufferSize, bufferAllocInfo, flags);
         }
+        if (buffer && mockAllocationOffset > 0) {
+            return {nullptr, reinterpret_cast<uintptr_t>(buffer) - mockAllocationOffset, mockAllocationOffset, &alignedAlloc, hostPointerNeedsFlush};
+        }
         if (buffer && returnMockAllocationStruct) {
             auto alignedPtr = reinterpret_cast<uintptr_t>(alignDown(buffer, sizeof(uint32_t)));
             auto offset = reinterpret_cast<uintptr_t>(buffer) - alignedPtr;
@@ -76,6 +79,7 @@ class MockCommandListHw : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFam
                                              L0::Event *signalEvent,
                                              CmdListKernelLaunchParams &launchParams) override {
         appendMemoryCopyKernelWithGACalledTimes++;
+        appendMemoryCopyKernelWithGACalls.push_back({dstOffset, srcOffset, size, builtInMode});
         if (builtInMode.bufferMode == NEO::BuiltIn::AddressingMode::BufferMode::stateless) {
             appendMemoryCopyKernelWithGAStatelessCalledTimes++;
         }
@@ -131,6 +135,7 @@ class MockCommandListHw : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFam
                                          uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
                                          CmdListWaitEventParameters &waitEventParamters) override {
         appendMemoryCopyKernel2dCalledTimes++;
+        appendMemoryCopyKernel2dBuiltInModes.push_back(builtInMode);
         return ZE_RESULT_SUCCESS;
     }
 
@@ -211,6 +216,15 @@ class MockCommandListHw : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFam
 
     NEO::MockGraphicsAllocation alignedAlloc{alignedDataPtr, reinterpret_cast<uint64_t>(alignedDataPtr), MemoryConstants::pageSize};
 
+    struct CopyKernelWithGACall {
+        uint64_t dstOffset = 0;
+        uint64_t srcOffset = 0;
+        uint64_t size = 0;
+        NEO::BuiltIn::AddressingMode builtInMode;
+    };
+    std::vector<CopyKernelWithGACall> appendMemoryCopyKernelWithGACalls;
+    std::vector<NEO::BuiltIn::AddressingMode> appendMemoryCopyKernel2dBuiltInModes;
+
     uint32_t appendMemoryCopyKernelWithGACalledTimes = 0;
     uint32_t appendMemoryCopyKernelWithGAStatelessCalledTimes = 0;
     uint32_t appendMemoryCopyBlitCalledTimes = 0;
@@ -227,6 +241,7 @@ class MockCommandListHw : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFam
     bool returnMockAllocationStruct = false;
     bool returnBaseAllocationStruct = false;
     bool hostPointerNeedsFlush = true;
+    uint64_t mockAllocationOffset = 0;
 };
 
 HWTEST_F(CommandListAppend, givenCommandListWhenMemoryCopyCalledWithNullDstPtrThenAppendMemoryCopyWithappendMemoryCopyReturnsError) {
@@ -364,6 +379,119 @@ HWTEST_F(CommandListAppend, givenCommandListWhen4GByteMemoryCopyCalledThenAppend
     EXPECT_GT(cmdList.appendMemoryCopyKernelWithGACalledTimes, 0u);
     EXPECT_GT(cmdList.appendMemoryCopyKernelWithGAStatelessCalledTimes, 0u);
     EXPECT_EQ(cmdList.appendMemoryCopyBlitCalledTimes, 0u);
+}
+
+HWTEST_F(CommandListAppend, givenUnalignedCopyBelow4GBWhoseRightSplitOffsetReaches4GBWhenAppendMemoryCopyCalledThenWideBuiltInIsSelected) {
+    constexpr uint64_t wideModeThreshold = NEO::BuiltIn::AddressingMode::wideModeThreshold;
+    constexpr uint64_t srcAllocationOffset = 1;
+    constexpr uint64_t dstAllocationOffset = 3;
+    constexpr uintptr_t srcAddress = 0x200000000 + srcAllocationOffset;
+    constexpr uintptr_t dstAddress = 0x400000000 + dstAllocationOffset;
+    constexpr size_t copySize = wideModeThreshold - 1;
+    constexpr size_t belowThresholdCopySize = wideModeThreshold - dstAllocationOffset - 1;
+    constexpr size_t expectedRightSize = (dstAddress + copySize) % MemoryConstants::cacheLineSize;
+    constexpr size_t expectedLeftSize = copySize - expectedRightSize;
+    constexpr uint64_t expectedRightDstOffset = dstAllocationOffset + expectedLeftSize;
+
+    void *srcPtr = reinterpret_cast<void *>(srcAddress);
+    void *dstPtr = reinterpret_cast<void *>(dstAddress);
+
+    auto appendCopy = [&](size_t size) {
+        MockCommandListHw<FamilyType::gfxCoreFamily> cmdList;
+        cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+        cmdList.returnMockAllocationStruct = true;
+        CmdListMemoryCopyParams memoryCopyParams = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList.appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, memoryCopyParams));
+        EXPECT_EQ(0u, cmdList.appendMemoryCopyBlitCalledTimes);
+        return cmdList.appendMemoryCopyKernelWithGACalls;
+    };
+
+    const auto calls = appendCopy(copySize);
+    ASSERT_EQ(2u, calls.size());
+
+    const auto &left = calls[0];
+    EXPECT_EQ(dstAllocationOffset, left.dstOffset);
+    EXPECT_EQ(srcAllocationOffset, left.srcOffset);
+    EXPECT_EQ(expectedLeftSize, left.size);
+
+    const auto &right = calls[1];
+    EXPECT_EQ(expectedRightDstOffset, right.dstOffset);
+    EXPECT_EQ(srcAllocationOffset + expectedLeftSize, right.srcOffset);
+    EXPECT_EQ(expectedRightSize, right.size);
+
+    for (const auto &call : calls) {
+        EXPECT_TRUE(call.builtInMode.wideMode);
+        EXPECT_EQ(NEO::BuiltIn::AddressingMode::BufferMode::stateless, call.builtInMode.bufferMode);
+    }
+
+    const auto belowThresholdCalls = appendCopy(belowThresholdCopySize);
+    ASSERT_FALSE(belowThresholdCalls.empty());
+    for (const auto &call : belowThresholdCalls) {
+        EXPECT_LT(call.dstOffset + call.size, wideModeThreshold);
+        EXPECT_FALSE(call.builtInMode.wideMode);
+    }
+}
+
+HWTEST_F(CommandListAppend, givenUnalignedCopyRegionBelow4GBWhoseRangeEndWithAlignmentOffsetReaches4GBWhenAppendMemoryCopyRegionCalledThenWideBuiltInIsSelected) {
+    constexpr uint64_t wideModeThreshold = NEO::BuiltIn::AddressingMode::wideModeThreshold;
+    constexpr uint64_t srcAllocationOffset = 1;
+    constexpr uint64_t dstAllocationOffset = 3;
+    constexpr uintptr_t srcAddress = 0x200000000 + srcAllocationOffset;
+    constexpr uintptr_t dstAddress = 0x400000000 + dstAllocationOffset;
+    constexpr uint32_t regionWidthReachingThreshold = static_cast<uint32_t>(wideModeThreshold - dstAllocationOffset);
+    constexpr uint32_t regionWidthBelowThreshold = static_cast<uint32_t>(wideModeThreshold - dstAllocationOffset - 1);
+    void *srcPtr = reinterpret_cast<void *>(srcAddress);
+    void *dstPtr = reinterpret_cast<void *>(dstAddress);
+
+    auto appendCopyRegion = [&](uint32_t regionWidth) {
+        MockCommandListHw<FamilyType::gfxCoreFamily> cmdList;
+        cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+        cmdList.returnMockAllocationStruct = true;
+        ze_copy_region_t region = {0u, 0u, 0u, regionWidth, 1u, 1u};
+        CmdListMemoryCopyParams memoryCopyParams = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList.appendMemoryCopyRegion(dstPtr, &region, 0, 0, srcPtr, &region, 0, 0, nullptr, 0, nullptr, memoryCopyParams));
+        return cmdList.appendMemoryCopyKernel2dBuiltInModes;
+    };
+
+    const auto modes = appendCopyRegion(regionWidthReachingThreshold);
+    ASSERT_EQ(1u, modes.size());
+    EXPECT_TRUE(modes[0].wideMode);
+    EXPECT_EQ(NEO::BuiltIn::AddressingMode::BufferMode::stateless, modes[0].bufferMode);
+
+    const auto belowThresholdModes = appendCopyRegion(regionWidthBelowThreshold);
+    ASSERT_EQ(1u, belowThresholdModes.size());
+    EXPECT_FALSE(belowThresholdModes[0].wideMode);
+}
+
+HWTEST_F(CommandListAppend, givenPageFaultCopyBelow4GBWhoseOffsetPlusSizeReaches4GBWhenAppendPageFaultCopyCalledThenWideBuiltInIsSelected) {
+    constexpr size_t offset = 16;
+    constexpr size_t size = NEO::BuiltIn::AddressingMode::wideModeThreshold - offset;
+    auto ptr = reinterpret_cast<void *>(0x200000000);
+    auto canonizedGpuAddress = device->getNEODevice()->getGmmHelper()->canonize(castToUint64(ptr));
+    NEO::MockGraphicsAllocation mockAllocationSrc(0, 1u, AllocationType::internalHostMemory, ptr, MemoryConstants::pageSize, 0u,
+                                                  MemoryPool::system4KBPages, MemoryManager::maxOsContextCount, canonizedGpuAddress);
+    NEO::MockGraphicsAllocation mockAllocationDst(0, 1u, AllocationType::internalHostMemory, ptr, MemoryConstants::pageSize, 0u,
+                                                  MemoryPool::system4KBPages, MemoryManager::maxOsContextCount, canonizedGpuAddress);
+
+    auto appendPageFaultCopy = [&](size_t copyOffset) {
+        MockCommandListHw<FamilyType::gfxCoreFamily> cmdList;
+        cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList.appendPageFaultCopy(&mockAllocationDst, &mockAllocationSrc, size, false, copyOffset));
+        return cmdList.appendMemoryCopyKernelWithGACalls;
+    };
+
+    const auto calls = appendPageFaultCopy(offset);
+    ASSERT_FALSE(calls.empty());
+    for (const auto &call : calls) {
+        EXPECT_TRUE(call.builtInMode.wideMode);
+        EXPECT_EQ(NEO::BuiltIn::AddressingMode::BufferMode::stateless, call.builtInMode.bufferMode);
+    }
+
+    const auto zeroOffsetCalls = appendPageFaultCopy(0);
+    ASSERT_FALSE(zeroOffsetCalls.empty());
+    for (const auto &call : zeroOffsetCalls) {
+        EXPECT_FALSE(call.builtInMode.wideMode);
+    }
 }
 
 HWTEST_F(CommandListAppend, givenCommandListWhenMemoryCopyCalledThenAppendMemoryCopyWithappendMemoryCopyWithBliterCalled) {
@@ -3168,6 +3296,67 @@ HWTEST_F(CommandListAppend, givenCopyCommandListWhenImageCopyFromToMemoryExtThen
     EXPECT_EQ(cmdList.appendSrcPtr, ptrOffset(image->getAllocation()->getGpuAddress(), image->getImageInfo().offset));
     EXPECT_EQ(cmdList.appendSrcAlloc, image->getAllocation());
     context->freeMem(data);
+}
+
+struct CommandListAppendImageCopyExtWideMode : CommandListAppend {
+    static constexpr uint32_t imageWidth = 4;
+    static constexpr uint64_t rgba8BytesPerPixel = 4 * sizeof(uint8_t);
+    static constexpr uint64_t bufferSize = imageWidth * rgba8BytesPerPixel;
+    static constexpr uint64_t offsetReachingThreshold = NEO::BuiltIn::AddressingMode::wideModeThreshold - bufferSize;
+    static constexpr uint64_t offsetBelowThreshold = offsetReachingThreshold - 1;
+    static constexpr size_t widePitchArgSize = 2 * sizeof(uint64_t);
+    static constexpr size_t nonWidePitchArgSize = 2 * sizeof(uint32_t);
+    static constexpr uint32_t pitchArgIndex = 4;
+    static constexpr uintptr_t bufferAddress = 8 * MemoryConstants::gigaByte;
+
+    template <typename FamilyType>
+    void appendImageCopyExtAndExpectPitchArgSize(bool copyFromMemory, uint64_t allocationOffset, size_t expectedPitchArgSize) {
+        MockCommandListHw<FamilyType::gfxCoreFamily> cmdList;
+        cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+        cmdList.mockAllocationOffset = allocationOffset;
+
+        auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltIn::copyBufferToImage3dBytes, cmdList.defaultBuiltInMode);
+        auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
+        mockBuiltinKernel->checkPassedArgumentValues = true;
+        mockBuiltinKernel->setArgRedescribedImageCallBase = false;
+        mockBuiltinKernel->passedArgumentValues.clear();
+        mockBuiltinKernel->passedArgumentValues.resize(pitchArgIndex + 1);
+
+        ze_image_desc_t zeDesc = {};
+        zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+        zeDesc.type = ZE_IMAGE_TYPE_1D;
+        zeDesc.format = {ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8, ZE_IMAGE_FORMAT_TYPE_UINT,
+                         ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                         ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A};
+        zeDesc.width = imageWidth;
+        zeDesc.height = 1;
+        zeDesc.depth = 1;
+        auto image = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+        image->initialize(device, &zeDesc);
+
+        ze_image_region_t imgRegion = {0, 0, 0, imageWidth, 1, 1};
+        void *bufferPtr = reinterpret_cast<void *>(bufferAddress);
+        if (copyFromMemory) {
+            EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList.appendImageCopyFromMemoryExt(image->toHandle(), bufferPtr, &imgRegion, 0, 0, nullptr, 0, nullptr, copyParams));
+        } else {
+            EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList.appendImageCopyToMemoryExt(bufferPtr, image->toHandle(), &imgRegion, 0, 0, nullptr, 0, nullptr, copyParams));
+        }
+        EXPECT_EQ(expectedPitchArgSize, mockBuiltinKernel->passedArgumentValues[pitchArgIndex].size());
+    }
+};
+
+HWTEST_F(CommandListAppendImageCopyExtWideMode, givenBufferOffsetWhoseRangeEndReaches4GBWhenAppendImageCopyFromMemoryExtCalledThenWideBuiltInIsSelected) {
+    constexpr bool copyFromMemory = true;
+
+    appendImageCopyExtAndExpectPitchArgSize<FamilyType>(copyFromMemory, offsetReachingThreshold, widePitchArgSize);
+    appendImageCopyExtAndExpectPitchArgSize<FamilyType>(copyFromMemory, offsetBelowThreshold, nonWidePitchArgSize);
+}
+
+HWTEST_F(CommandListAppendImageCopyExtWideMode, givenBufferOffsetWhoseRangeEndReaches4GBWhenAppendImageCopyToMemoryExtCalledThenWideBuiltInIsSelected) {
+    constexpr bool copyFromMemory = false;
+
+    appendImageCopyExtAndExpectPitchArgSize<FamilyType>(copyFromMemory, offsetReachingThreshold, widePitchArgSize);
+    appendImageCopyExtAndExpectPitchArgSize<FamilyType>(copyFromMemory, offsetBelowThreshold, nonWidePitchArgSize);
 }
 
 HWTEST2_F(CommandListCreateTests, givenImmediateCopyCommandListWhenEstimatingImageCopyBlitSizeThenDepthIsAccountedFor, IsAtLeastXeCore) {

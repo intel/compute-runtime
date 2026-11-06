@@ -146,5 +146,11 @@ struct Mock<::L0::KernelImp> : public WhiteBox<::L0::KernelImp> {
     bool useExplicitArgs = false;
 };
 
+template <typename T>
+std::vector<uint8_t> toArgumentBytes(const T &value) {
+    auto bytes = reinterpret_cast<const uint8_t *>(&value);
+    return {bytes, bytes + sizeof(value)};
+}
+
 } // namespace ult
 } // namespace L0

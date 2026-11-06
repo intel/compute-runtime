@@ -826,10 +826,10 @@ HWTEST_F(CommandListTest, given4GBOrGreater2dSrcAndDstRegionsWhenAppendMemoryCop
     auto passedArgSizeSrcPitch = mockBuiltinKernel->passedArgumentValues[4u].size();
     auto passedArgSizeDstPitch = mockBuiltinKernel->passedArgumentValues[5u].size();
 
-    EXPECT_EQ(sizeof(uint32_t) * 2, passedArgSizeSrcOrigin);
-    EXPECT_EQ(sizeof(uint32_t) * 2, passedArgSizeDstOrigin);
-    EXPECT_EQ(sizeof(uint32_t), passedArgSizeSrcPitch);
-    EXPECT_EQ(sizeof(uint32_t), passedArgSizeDstPitch);
+    EXPECT_EQ(sizeof(uint64_t) * 2, passedArgSizeSrcOrigin);
+    EXPECT_EQ(sizeof(uint64_t) * 2, passedArgSizeDstOrigin);
+    EXPECT_EQ(sizeof(uint64_t), passedArgSizeSrcPitch);
+    EXPECT_EQ(sizeof(uint64_t), passedArgSizeDstPitch);
 }
 
 HWTEST_F(CommandListTest, given4GBOrGreater3dSrcAndDstRegionsWhenAppendMemoryCopyRegionThenOriginAndPitchArgumentsAreSetAs64Bit) {
@@ -863,10 +863,10 @@ HWTEST_F(CommandListTest, given4GBOrGreater3dSrcAndDstRegionsWhenAppendMemoryCop
     auto passedArgSizeSrcPitch = mockBuiltinKernel->passedArgumentValues[4u].size();
     auto passedArgSizeDstPitch = mockBuiltinKernel->passedArgumentValues[5u].size();
 
-    EXPECT_EQ(sizeof(uint32_t) * 3, passedArgSizeSrcOrigin);
-    EXPECT_EQ(sizeof(uint32_t) * 3, passedArgSizeDstOrigin);
-    EXPECT_EQ(sizeof(uint32_t) * 2, passedArgSizeSrcPitch);
-    EXPECT_EQ(sizeof(uint32_t) * 2, passedArgSizeDstPitch);
+    EXPECT_EQ(sizeof(uint64_t) * 3, passedArgSizeSrcOrigin);
+    EXPECT_EQ(sizeof(uint64_t) * 3, passedArgSizeDstOrigin);
+    EXPECT_EQ(sizeof(uint64_t) * 2, passedArgSizeSrcPitch);
+    EXPECT_EQ(sizeof(uint64_t) * 2, passedArgSizeDstPitch);
 }
 
 HWTEST_F(CommandListTest, given4GBOrGreater2dDstRegionWhenAppendMemoryCopyRegionThenOriginAndPitchArgumentsAreSetAs64Bit) {
@@ -899,10 +899,10 @@ HWTEST_F(CommandListTest, given4GBOrGreater2dDstRegionWhenAppendMemoryCopyRegion
     auto passedArgSizeSrcPitch = mockBuiltinKernel->passedArgumentValues[4u].size();
     auto passedArgSizeDstPitch = mockBuiltinKernel->passedArgumentValues[5u].size();
 
-    EXPECT_EQ(sizeof(uint32_t) * 2, passedArgSizeSrcOrigin);
-    EXPECT_EQ(sizeof(uint32_t) * 2, passedArgSizeDstOrigin);
-    EXPECT_EQ(sizeof(uint32_t), passedArgSizeSrcPitch);
-    EXPECT_EQ(sizeof(uint32_t), passedArgSizeDstPitch);
+    EXPECT_EQ(sizeof(uint64_t) * 2, passedArgSizeSrcOrigin);
+    EXPECT_EQ(sizeof(uint64_t) * 2, passedArgSizeDstOrigin);
+    EXPECT_EQ(sizeof(uint64_t), passedArgSizeSrcPitch);
+    EXPECT_EQ(sizeof(uint64_t), passedArgSizeDstPitch);
 }
 
 HWTEST_F(CommandListTest, given4GBOrGreater3dDstRegionWhenAppendMemoryCopyRegionThenOriginAndPitchArgumentsAreSetAs64Bit) {
@@ -936,10 +936,10 @@ HWTEST_F(CommandListTest, given4GBOrGreater3dDstRegionWhenAppendMemoryCopyRegion
     auto passedArgSizeSrcPitch = mockBuiltinKernel->passedArgumentValues[4u].size();
     auto passedArgSizeDstPitch = mockBuiltinKernel->passedArgumentValues[5u].size();
 
-    EXPECT_EQ(sizeof(uint32_t) * 3, passedArgSizeSrcOrigin);
-    EXPECT_EQ(sizeof(uint32_t) * 3, passedArgSizeDstOrigin);
-    EXPECT_EQ(sizeof(uint32_t) * 2, passedArgSizeSrcPitch);
-    EXPECT_EQ(sizeof(uint32_t) * 2, passedArgSizeDstPitch);
+    EXPECT_EQ(sizeof(uint64_t) * 3, passedArgSizeSrcOrigin);
+    EXPECT_EQ(sizeof(uint64_t) * 3, passedArgSizeDstOrigin);
+    EXPECT_EQ(sizeof(uint64_t) * 2, passedArgSizeSrcPitch);
+    EXPECT_EQ(sizeof(uint64_t) * 2, passedArgSizeDstPitch);
 }
 
 HWTEST2_F(CommandListTest, givenComputeCommandListWhenCopyFromImageToImageTheBuiltinFlagIsSet, ImageSupport) {
