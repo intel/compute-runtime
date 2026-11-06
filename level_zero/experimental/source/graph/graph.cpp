@@ -2052,6 +2052,7 @@ void GraphPatchPreambleBarrierCounter::prepareExecution(L0::Device &device, uint
         this->counterNode = device.getDeviceInOrderCounterAllocator()->getTag();
         this->counterAllocation = this->counterNode->getBaseGraphicsAllocation()->getGraphicsAllocation(device.getRootDeviceIndex());
         memset(this->counterNode->getCpuBase(), 0x0, sizeof(uint64_t));
+        device.getDeviceInOrderCounterAllocator()->notifyTagNodeUpdated(*this->counterNode, 0, sizeof(uint64_t));
         this->counterGpuAddress = this->counterNode->getGpuAddress();
     }
 

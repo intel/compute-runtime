@@ -35,6 +35,7 @@ void CommandQueuePatchPreambleCounter::getPatchPreambleFullData(Device *device,
         this->hostNodeGpuAddress = this->hostCounterNode->getGpuAddress();
         this->hostNodeAllocation = this->hostCounterNode->getBaseGraphicsAllocation()->getGraphicsAllocation(device->getRootDeviceIndex());
         memset(this->hostNodeCpuAddress, 0x0, tagAllocator->getTagSize());
+        tagAllocator->notifyTagNodeUpdated(*this->hostCounterNode, 0, tagAllocator->getTagSize());
 
         auto deviceTagAllocator = device->getDeviceInOrderCounterAllocator();
         this->deviceCounterNode = deviceTagAllocator->getTag();
@@ -42,6 +43,7 @@ void CommandQueuePatchPreambleCounter::getPatchPreambleFullData(Device *device,
         this->deviceNodeAllocation = this->deviceCounterNode->getBaseGraphicsAllocation()->getGraphicsAllocation(device->getRootDeviceIndex());
         this->deviceNodeSize = deviceTagAllocator->getTagSize();
         memset(this->deviceCounterNode->getCpuBase(), 0x0, this->deviceNodeSize);
+        deviceTagAllocator->notifyTagNodeUpdated(*this->deviceCounterNode, 0, this->deviceNodeSize);
     }
 
     ++this->counter;
@@ -56,6 +58,7 @@ void CommandQueuePatchPreambleCounter::getPatchPreambleFullData(Device *device,
             // now reset partial device node
             void *partialNode = ptrOffset(this->deviceCounterNode->getCpuBase(), this->offset);
             memset(partialNode, 0x0, this->deviceNodeSize / 2);
+            device->getDeviceInOrderCounterAllocator()->notifyTagNodeUpdated(*this->deviceCounterNode, this->offset, this->deviceNodeSize / 2);
         }
     }
     outCounterValue = this->counter;

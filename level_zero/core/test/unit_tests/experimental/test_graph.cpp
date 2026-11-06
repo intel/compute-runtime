@@ -12,6 +12,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -5850,6 +5851,46 @@ TEST_F(GraphTestInstantiationTest, givenGraphPatchPreambleBarrierCounterWhenExec
     EXPECT_EQ(barrier.counterGpuAddress, retriedBarrier.counterGpuAddress);
     EXPECT_EQ(weight, retriedBarrier.arriveValue);
     EXPECT_EQ(2 * weight, retriedBarrier.releaseValue);
+}
+
+HWTEST_F(GraphTestInstantiationTest, givenTbxCsrWhenPreparingGraphPatchPreambleBarrierThenCounterResetIsUploadedToSimulationOnlyWhenCounterIsAcquired) {
+    auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    ultCsr.commandStreamReceiverType = NEO::CommandStreamReceiverType::tbx;
+    ultCsr.chunkCopySupported = true;
+    device->getDeviceInOrderCounterAllocator();
+    ultCsr.writeMemoryParams.chunkWrites.clear();
+
+    GraphPatchPreambleBarrierCounter barrierCounter;
+    PatchPreambleBarrier barrier;
+    constexpr uint32_t weight = 2;
+
+    barrierCounter.prepareExecution(*device, weight, barrier);
+    ASSERT_EQ(1u, ultCsr.writeMemoryParams.chunkWrites.size());
+    const NEO::WrittenMemoryChunk expectedCounterReset{barrier.counterAllocation,
+                                                       ptrDiff(barrierCounter.counterNode->getCpuBase(), barrier.counterAllocation->getUnderlyingBuffer()),
+                                                       sizeof(uint64_t)};
+    EXPECT_EQ(expectedCounterReset, ultCsr.writeMemoryParams.chunkWrites[0]);
+    barrierCounter.commitExecution(barrier);
+
+    ultCsr.writeMemoryParams.chunkWrites.clear();
+    barrierCounter.prepareExecution(*device, weight, barrier);
+    EXPECT_TRUE(ultCsr.writeMemoryParams.chunkWrites.empty());
+
+    ultCsr.commandStreamReceiverType = NEO::CommandStreamReceiverType::hardware;
+}
+
+HWTEST_F(GraphTestInstantiationTest, givenHardwareCsrWhenPreparingGraphPatchPreambleBarrierThenCounterResetIsNotUploadedToSimulation) {
+    auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    ultCsr.chunkCopySupported = true;
+    device->getDeviceInOrderCounterAllocator();
+    const auto writeMemoryCallCount = ultCsr.writeMemoryParams.totalCallCount;
+
+    GraphPatchPreambleBarrierCounter barrierCounter;
+    PatchPreambleBarrier barrier;
+    barrierCounter.prepareExecution(*device, 2u, barrier);
+
+    EXPECT_EQ(0u, *reinterpret_cast<uint64_t *>(barrierCounter.counterNode->getCpuBase()));
+    EXPECT_EQ(writeMemoryCallCount, ultCsr.writeMemoryParams.totalCallCount);
 }
 
 TEST_F(GraphTestInstantiationTest, givenInOrderCmdListAndRegularCbEventRecordedWithoutApiGraphExternalFlagWhenInstantiateToGraphThenDoNotRecordAsExternalCbEvent) {

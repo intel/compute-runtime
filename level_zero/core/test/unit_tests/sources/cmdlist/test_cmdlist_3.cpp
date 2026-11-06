@@ -914,6 +914,68 @@ TEST_F(CommandListCreateTests, givenImmediateCommandListOnSemWait32bPreambleCoun
     EXPECT_EQ(0, memcmp(zeroBuffer.data(), ptrOffset(devNodeCpuBase, offset), tagSize / 2));
 }
 
+HWTEST_F(CommandListCreateTests, givenTbxCsrWhenGettingPatchPreambleDataThenResetCounterNodesAreUploadedToSimulation) {
+    auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    ultCsr.commandStreamReceiverType = NEO::CommandStreamReceiverType::tbx;
+    ultCsr.chunkCopySupported = true;
+    auto hostTagSize = device->getHostInOrderCounterAllocator()->getTagSize();
+    auto deviceTagSize = device->getDeviceInOrderCounterAllocator()->getTagSize();
+    ultCsr.writeMemoryParams.chunkWrites.clear();
+
+    CommandQueuePatchPreambleCounter patchPreambleCounter;
+    uint64_t *hostAddress = nullptr;
+    uint64_t counter = 0;
+    uint64_t hostNodeGpuAddress = 0;
+    NEO::GraphicsAllocation *hostNodeAllocation = nullptr;
+    uint64_t deviceNodeGpuAddress = 0;
+    NEO::GraphicsAllocation *deviceNodeAllocation = nullptr;
+
+    auto getNodeChunk = [](NEO::TagNodeBase &node, NEO::GraphicsAllocation &allocation, size_t chunkOffsetInNode, size_t chunkSize) {
+        return NEO::WrittenMemoryChunk{&allocation, ptrDiff(node.getCpuBase(), allocation.getUnderlyingBuffer()) + chunkOffsetInNode, chunkSize};
+    };
+
+    patchPreambleCounter.getPatchPreambleFullData(device, counter, hostAddress, hostNodeGpuAddress, hostNodeAllocation, deviceNodeGpuAddress, deviceNodeAllocation);
+    ASSERT_EQ(2u, ultCsr.writeMemoryParams.chunkWrites.size());
+    EXPECT_EQ(getNodeChunk(*patchPreambleCounter.hostCounterNode, *hostNodeAllocation, 0, hostTagSize), ultCsr.writeMemoryParams.chunkWrites[0]);
+    EXPECT_EQ(getNodeChunk(*patchPreambleCounter.deviceCounterNode, *deviceNodeAllocation, 0, deviceTagSize), ultCsr.writeMemoryParams.chunkWrites[1]);
+
+    ultCsr.writeMemoryParams.chunkWrites.clear();
+    patchPreambleCounter.getPatchPreambleFullData(device, counter, hostAddress, hostNodeGpuAddress, hostNodeAllocation, deviceNodeGpuAddress, deviceNodeAllocation);
+    EXPECT_TRUE(ultCsr.writeMemoryParams.chunkWrites.empty());
+
+    patchPreambleCounter.use32bSemaphore = true;
+    patchPreambleCounter.counter = std::numeric_limits<uint32_t>::max();
+    patchPreambleCounter.getPatchPreambleFullData(device, counter, hostAddress, hostNodeGpuAddress, hostNodeAllocation, deviceNodeGpuAddress, deviceNodeAllocation);
+    ASSERT_EQ(1u, ultCsr.writeMemoryParams.chunkWrites.size());
+    EXPECT_EQ(getNodeChunk(*patchPreambleCounter.deviceCounterNode, *deviceNodeAllocation, deviceTagSize / 2, deviceTagSize / 2), ultCsr.writeMemoryParams.chunkWrites[0]);
+
+    ultCsr.commandStreamReceiverType = NEO::CommandStreamReceiverType::hardware;
+}
+
+HWTEST_F(CommandListCreateTests, givenHardwareCsrWhenGettingPatchPreambleDataThenResetCounterNodesAreNotUploadedToSimulation) {
+    auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    ultCsr.chunkCopySupported = true;
+    device->getHostInOrderCounterAllocator();
+    device->getDeviceInOrderCounterAllocator();
+    const auto writeMemoryCallCount = ultCsr.writeMemoryParams.totalCallCount;
+
+    CommandQueuePatchPreambleCounter patchPreambleCounter;
+    uint64_t *hostAddress = nullptr;
+    uint64_t counter = 0;
+    uint64_t hostNodeGpuAddress = 0;
+    NEO::GraphicsAllocation *hostNodeAllocation = nullptr;
+    uint64_t deviceNodeGpuAddress = 0;
+    NEO::GraphicsAllocation *deviceNodeAllocation = nullptr;
+
+    patchPreambleCounter.getPatchPreambleFullData(device, counter, hostAddress, hostNodeGpuAddress, hostNodeAllocation, deviceNodeGpuAddress, deviceNodeAllocation);
+    patchPreambleCounter.use32bSemaphore = true;
+    patchPreambleCounter.counter = std::numeric_limits<uint32_t>::max();
+    patchPreambleCounter.getPatchPreambleFullData(device, counter, hostAddress, hostNodeGpuAddress, hostNodeAllocation, deviceNodeGpuAddress, deviceNodeAllocation);
+
+    EXPECT_NE(0u, patchPreambleCounter.offset);
+    EXPECT_EQ(writeMemoryCallCount, ultCsr.writeMemoryParams.totalCallCount);
+}
+
 HWTEST_F(CommandListCreateTests, givenImmediateCommandListWhenMemoryCopyRegionWithSignalAndWaitEventsUsingCopyEngineThenSuccessIsReturned) {
     const ze_command_queue_desc_t desc = {};
     bool internalEngine = true;
