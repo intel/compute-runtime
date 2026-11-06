@@ -264,21 +264,21 @@ static zes_pci_link_status_t getLinkStatusFromConfigHeader(const uint8_t *config
     constexpr uint8_t pciAllOnesByte = 0xffu;
 
     if (getPciConfigDword(configHeader, pciConfigVendorAndDeviceIdOffset) == pciAllOnesDword) {
-        return ZES_INTEL_PCI_LINK_STATUS_EXP_LINK_ERROR;
+        return ZES_PCI_LINK_STATUS_LINK_ERROR;
     }
 
     if (configHeader[pciConfigRevisionIdOffset] == pciAllOnesByte) {
-        return ZES_INTEL_PCI_LINK_STATUS_EXP_LINK_ERROR;
+        return ZES_PCI_LINK_STATUS_LINK_ERROR;
     }
 
     if ((configHeader[pciConfigHeaderTypeOffset] & pciHeaderTypeLayoutMask) != pciHeaderTypeEndpoint) {
-        return ZES_INTEL_PCI_LINK_STATUS_EXP_LINK_ERROR;
+        return ZES_PCI_LINK_STATUS_LINK_ERROR;
     }
 
     for (uint32_t barIndex = 0; barIndex < pciMaxStandardBars; barIndex++) {
         uint32_t bar = getPciConfigDword(configHeader, pciConfigBar0Offset + (barIndex * sizeof(uint32_t)));
         if (bar == pciAllOnesDword) {
-            return ZES_INTEL_PCI_LINK_STATUS_EXP_LINK_ERROR;
+            return ZES_PCI_LINK_STATUS_LINK_ERROR;
         }
     }
 
@@ -300,7 +300,7 @@ static zes_pci_link_status_t getPciDeviceLinkStatus(const std::string &devicePat
         if ((errorNum == EACCES) || (errorNum == EPERM)) {
             return ZES_PCI_LINK_STATUS_UNKNOWN;
         }
-        return ZES_INTEL_PCI_LINK_STATUS_EXP_LINK_ERROR;
+        return ZES_PCI_LINK_STATUS_LINK_ERROR;
     }
 
     uint8_t configHeader[pciStandardHeaderSize] = {};
@@ -313,7 +313,7 @@ static zes_pci_link_status_t getPciDeviceLinkStatus(const std::string &devicePat
         if ((savedErrorNum == EACCES) || (savedErrorNum == EPERM)) {
             return ZES_PCI_LINK_STATUS_UNKNOWN;
         }
-        return ZES_INTEL_PCI_LINK_STATUS_EXP_LINK_ERROR;
+        return ZES_PCI_LINK_STATUS_LINK_ERROR;
     }
 
     return getLinkStatusFromConfigHeader(configHeader);
@@ -426,7 +426,7 @@ static std::vector<PciDeviceCandidate> getIntelGpuDevices() {
     return devices;
 }
 
-ze_result_t LinuxSysmanDriverImp::getPciDeviceProperties(uint32_t *pCount, zes_intel_driver_pci_device_properties_exp_t *pProperties) {
+ze_result_t LinuxSysmanDriverImp::getPciDeviceProperties(uint32_t *pCount, zes_driver_pci_device_properties_t *pProperties) {
     if (pCount == nullptr) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): pCount is nullptr and returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_INVALID_NULL_POINTER);
         return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
@@ -456,7 +456,7 @@ ze_result_t LinuxSysmanDriverImp::getPciDeviceProperties(uint32_t *pCount, zes_i
         pProperties[index].status = device.status;
 
         auto &configProperties = pProperties[index].configProperties;
-        configProperties.stype = ZES_INTEL_STRUCTURE_TYPE_PCI_CONFIG_EXP_PROPERTIES_1_1;
+        configProperties.stype = ZES_STRUCTURE_TYPE_PCI_CONFIG_PROPERTIES;
         configProperties.pNext = nullptr;
         configProperties.vendorId = device.vendorId;
         configProperties.deviceId = device.deviceId;

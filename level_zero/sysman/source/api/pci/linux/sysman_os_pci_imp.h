@@ -52,10 +52,10 @@ class LinuxPciImp : public OsPci, NEO::NonCopyableAndNonMovableClass {
     void getPciLinkSpeed(zes_pci_speed_t &linkSpeed);
     void getPciDowngradeProperties(zes_pci_link_speed_downgrade_ext_properties_t *pDowngradeProperties);
     zes_pci_link_speed_downgrade_ext_properties_t pciDowngradeProperties = {};
-    zes_intel_pci_config_exp_properties_t pciConfigProperties = {};
+    zes_pci_config_properties_t pciConfigProperties = {};
     ze_result_t pciConfigPropertiesResult = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     static void getPcieLinkCapabilities(std::vector<uint8_t> &configMemory, uint32_t &capabilityVersion, uint32_t &supportedLinkSpeeds);
-    ze_result_t getPciConfigProperties(zes_intel_pci_config_exp_properties_t *pConfigProperties) override;
+    ze_result_t getPciConfigProperties(zes_pci_config_properties_t *pConfigProperties) override;
 };
 
 } // namespace Sysman

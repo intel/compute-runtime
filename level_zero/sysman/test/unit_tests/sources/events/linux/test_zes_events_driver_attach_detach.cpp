@@ -38,7 +38,7 @@ class MockLinuxSysmanDriverImpForAttachDetach : public PublicLinuxSysmanDriverIm
         return pciAddresses;
     }
 
-    ze_result_t getPciDeviceProperties(uint32_t *pCount, zes_intel_driver_pci_device_properties_exp_t *pProperties) override {
+    ze_result_t getPciDeviceProperties(uint32_t *pCount, zes_driver_pci_device_properties_t *pProperties) override {
         // Reading the PCI device properties wakes up the devices, so the events must not use it
         ADD_FAILURE() << "getPciDeviceProperties() must not be used for driver scoped attach/detach events";
         return ZE_RESULT_ERROR_UNKNOWN;

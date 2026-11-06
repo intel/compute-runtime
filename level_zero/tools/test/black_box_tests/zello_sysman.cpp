@@ -887,8 +887,8 @@ void testSysmanPci(ze_device_handle_t &device, std::vector<std::string> &buf, ui
     zes_pci_properties_t properties = {};
     zes_pci_link_speed_downgrade_ext_properties_t extProps = {};
     extProps.stype = ZES_STRUCTURE_TYPE_PCI_LINK_SPEED_DOWNGRADE_EXT_PROPERTIES;
-    zes_intel_pci_config_exp_properties_t configProps = {};
-    configProps.stype = ZES_INTEL_STRUCTURE_TYPE_PCI_CONFIG_EXP_PROPERTIES_1_1;
+    zes_pci_config_properties_t configProps = {};
+    configProps.stype = ZES_STRUCTURE_TYPE_PCI_CONFIG_PROPERTIES;
     extProps.pNext = &configProps;
     properties.pNext = &extProps;
     VALIDATECALL(zesDevicePciGetProperties(device, &properties));
@@ -2267,26 +2267,23 @@ void testSysmanGlobalOperations(ze_device_handle_t &device) {
     zes_device_properties_t properties = {};
     zes_oem_serial_id_ext_properties_t oemSerialId = {ZES_STRUCTURE_TYPE_OEM_SERIAL_ID_EXT_PROPERTIES};
     zes_intel_driver_name_exp_properties_t drvName = {ZES_INTEL_DRIVER_NAME_EXP_PROPERTIES};
-    zes_intel_device_index_exp_properties_t deviceIndex = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_INDEX_EXP_PROPERTIES};
-    zes_intel_device_compute_exp_properties_t computeProperties = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_COMPUTE_EXP_PROPERTIES};
-    zes_intel_device_generation_exp_properties_t generation = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_GENERATION_EXP_PROPERTIES};
+    zes_device_index_ext_properties_t deviceIndex = {ZES_STRUCTURE_TYPE_DEVICE_INDEX_EXT_PROPERTIES};
+    zes_device_gpu_topology_ext_properties_t gpuTopology = {ZES_STRUCTURE_TYPE_DEVICE_GPU_TOPOLOGY_EXT_PROPERTIES};
     zes_intel_device_soc_uid_exp_properties_t socUidProperties = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_SOC_UID_EXP_PROPERTIES};
-    generation.pNext = &socUidProperties;
-    computeProperties.pNext = &generation;
-    deviceIndex.pNext = &computeProperties;
+    gpuTopology.pNext = &socUidProperties;
+    deviceIndex.pNext = &gpuTopology;
     drvName.pNext = &deviceIndex;
     oemSerialId.pNext = &drvName;
     properties.pNext = &oemSerialId;
     VALIDATECALL(zesDeviceGetProperties(device, &properties));
     if (verbose) {
         std::cout << "deviceIndex.deviceIndex = " << deviceIndex.deviceIndex << std::endl;
-        std::cout << "computeProperties.numSlices = " << computeProperties.numSlices << std::endl;
-        std::cout << "computeProperties.numCores = " << computeProperties.numCores << std::endl;
-        std::cout << "computeProperties.numVectorEngines = " << computeProperties.numVectorEngines << std::endl;
-        std::cout << "computeProperties.numMatrixEngines = " << computeProperties.numMatrixEngines << std::endl;
-        std::cout << "computeProperties.numEUs = " << computeProperties.numEUs << std::endl;
-        std::cout << "computeProperties.numThreads = " << computeProperties.numThreads << std::endl;
-        std::cout << "generation.generationName = " << generation.generationName << std::endl;
+        std::cout << "gpuTopology.numSlices = " << gpuTopology.numSlices << std::endl;
+        std::cout << "gpuTopology.numXeCores = " << gpuTopology.numXeCores << std::endl;
+        std::cout << "gpuTopology.numVectorEngines = " << gpuTopology.numVectorEngines << std::endl;
+        std::cout << "gpuTopology.numMatrixEngines = " << gpuTopology.numMatrixEngines << std::endl;
+        std::cout << "gpuTopology.numThreads = " << gpuTopology.numThreads << std::endl;
+        std::cout << "gpuTopology.generationName = " << gpuTopology.generationName << std::endl;
         std::cout << "properties.numSubdevices = " << properties.numSubdevices << std::endl;
         std::cout << "properties.serialNumber = " << properties.serialNumber << std::endl;
         std::cout << "oemSerialId.oemSerialId = " << oemSerialId.oemSerialId << std::endl;
@@ -3006,7 +3003,7 @@ std::string pciLinkStatusToString(zes_pci_link_status_t status) {
     if (status == ZES_PCI_LINK_STATUS_GOOD) {
         return "alive";
     }
-    if (status == ZES_INTEL_PCI_LINK_STATUS_EXP_LINK_ERROR) {
+    if (status == ZES_PCI_LINK_STATUS_LINK_ERROR) {
         return "link error, the device does not respond on the bus";
     }
     return "unknown, the liveness of the device could not be determined";
@@ -3016,33 +3013,24 @@ void testSysmanDriverPciDeviceProperties(zes_driver_handle_t driver) {
     std::cout << std::endl
               << " ----  PCI device properties tests ---- " << std::endl;
 
-    using zesIntelDriverGetPciDevicePropertiesExp_pfn = ze_result_t(ZE_APICALL *)(zes_driver_handle_t, uint32_t *, zes_intel_driver_pci_device_properties_exp_t *);
-
-    zesIntelDriverGetPciDevicePropertiesExp_pfn zesIntelDriverGetPciDevicePropertiesExpPtr = nullptr;
-    VALIDATECALL(zesDriverGetExtensionFunctionAddress(driver, "zesIntelDriverGetPciDevicePropertiesExp", reinterpret_cast<void **>(&zesIntelDriverGetPciDevicePropertiesExpPtr)));
-    if (!zesIntelDriverGetPciDevicePropertiesExpPtr) {
-        std::cout << "PCI device properties EXP function pointer not available" << std::endl;
-        return;
-    }
-
     uint32_t count = 0;
-    VALIDATECALL(zesIntelDriverGetPciDevicePropertiesExpPtr(driver, &count, nullptr));
+    VALIDATECALL(zesDriverGetPciDeviceProperties(driver, &count, nullptr));
     std::cout << "Supported Intel GPU devices present on the PCI bus = " << count << std::endl;
     if (count == 0) {
         return;
     }
 
-    std::vector<zes_intel_driver_pci_device_properties_exp_t> properties(count);
+    std::vector<zes_driver_pci_device_properties_t> properties(count);
     for (auto &property : properties) {
-        property.stype = ZES_INTEL_STRUCTURE_TYPE_DRIVER_PCI_DEVICE_PROPERTIES_EXP;
+        property.stype = ZES_STRUCTURE_TYPE_DRIVER_PCI_DEVICE_PROPERTIES;
         property.pNext = nullptr;
     }
-    VALIDATECALL(zesIntelDriverGetPciDevicePropertiesExpPtr(driver, &count, properties.data()));
+    VALIDATECALL(zesDriverGetPciDeviceProperties(driver, &count, properties.data()));
 
     uint32_t devicesWithLinkErrorCount = 0;
     for (uint32_t i = 0; i < count; i++) {
         const auto &property = properties[i];
-        if (property.status == ZES_INTEL_PCI_LINK_STATUS_EXP_LINK_ERROR) {
+        if (property.status == ZES_PCI_LINK_STATUS_LINK_ERROR) {
             devicesWithLinkErrorCount++;
         }
         if (verbose) {

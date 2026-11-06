@@ -152,30 +152,27 @@ ze_result_t GlobalOperationsImp::deviceGetProperties(zes_device_properties_t *pP
                 memcpy_s(oemSerialIdProperties->oemSerialId, ZES_OEM_SERIAL_ID_SIZE, unknown.data(), unknown.length() + 1);
                 oemSerialIdProperties->length = static_cast<uint16_t>(unknown.length());
             }
-        } else if (pNext->stype == ZES_INTEL_STRUCTURE_TYPE_DEVICE_INDEX_EXP_PROPERTIES) {
-            auto deviceIndexProperties = reinterpret_cast<zes_intel_device_index_exp_properties_t *>(pNext);
+        } else if (pNext->stype == ZES_STRUCTURE_TYPE_DEVICE_INDEX_EXT_PROPERTIES) {
+            auto deviceIndexProperties = reinterpret_cast<zes_device_index_ext_properties_t *>(pNext);
             deviceIndexProperties->deviceIndex = pOsSysman->getRootDeviceIndex();
-        } else if (pNext->stype == ZES_INTEL_STRUCTURE_TYPE_DEVICE_GENERATION_EXP_PROPERTIES) {
-            auto generationProperties = reinterpret_cast<zes_intel_device_generation_exp_properties_t *>(pNext);
+        } else if (pNext->stype == ZES_STRUCTURE_TYPE_DEVICE_GPU_TOPOLOGY_EXT_PROPERTIES) {
+            auto gpuTopologyProperties = reinterpret_cast<zes_device_gpu_topology_ext_properties_t *>(pNext);
+            const uint32_t numEUs = hardwareInfo.gtSystemInfo.EUCount;
+            gpuTopologyProperties->numSlices = hardwareInfo.gtSystemInfo.SliceCount;
+            gpuTopologyProperties->numXeCores = hardwareInfo.gtSystemInfo.SubSliceCount;
+            gpuTopologyProperties->numVectorEngines = numEUs;
+            gpuTopologyProperties->numMatrixEngines = hardwareInfo.caps.dotProductAccumulateSystolicSupported ? numEUs : 0;
+            gpuTopologyProperties->numThreads = hardwareInfo.gtSystemInfo.ThreadCount;
             const std::string generationName = pOsGlobalOperations->getGpuGeneration();
             auto length = std::min(generationName.length(), static_cast<size_t>(ZES_STRING_PROPERTY_SIZE - 1));
-            memset(generationProperties->generationName, 0, ZES_STRING_PROPERTY_SIZE);
-            memcpy_s(generationProperties->generationName, ZES_STRING_PROPERTY_SIZE, generationName.data(), length);
+            memset(gpuTopologyProperties->generationName, 0, ZES_STRING_PROPERTY_SIZE);
+            memcpy_s(gpuTopologyProperties->generationName, ZES_STRING_PROPERTY_SIZE, generationName.data(), length);
         } else if (pNext->stype == ZES_INTEL_STRUCTURE_TYPE_MEMORY_PAGE_OFFLINE_PROPERTIES_EXP) {
             auto memPageOfflineProperties = reinterpret_cast<zes_intel_mem_page_offline_properties_exp_t *>(pNext);
             ze_result_t result = pOsGlobalOperations->getMaxMemoryOfflinePages(&memPageOfflineProperties->maxOfflinePages);
             if (result != ZE_RESULT_SUCCESS) {
                 memPageOfflineProperties->maxOfflinePages = 0;
             }
-        } else if (pNext->stype == ZES_INTEL_STRUCTURE_TYPE_DEVICE_COMPUTE_EXP_PROPERTIES) {
-            auto computeProperties = reinterpret_cast<zes_intel_device_compute_exp_properties_t *>(pNext);
-            const uint32_t numEUs = hardwareInfo.gtSystemInfo.EUCount;
-            computeProperties->numSlices = hardwareInfo.gtSystemInfo.SliceCount;
-            computeProperties->numCores = hardwareInfo.gtSystemInfo.SubSliceCount;
-            computeProperties->numVectorEngines = numEUs;
-            computeProperties->numMatrixEngines = hardwareInfo.caps.dotProductAccumulateSystolicSupported ? numEUs : 0;
-            computeProperties->numEUs = numEUs;
-            computeProperties->numThreads = hardwareInfo.gtSystemInfo.ThreadCount;
         } else if (pNext->stype == ZES_INTEL_STRUCTURE_TYPE_DEVICE_SOC_UID_EXP_PROPERTIES) {
             auto socUidProperties = reinterpret_cast<zes_intel_device_soc_uid_exp_properties_t *>(pNext);
             socUidProperties->socUid = {};

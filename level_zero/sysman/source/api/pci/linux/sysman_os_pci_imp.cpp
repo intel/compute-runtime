@@ -51,8 +51,8 @@ ze_result_t LinuxPciImp::getExtensionProperties(void *pNext) {
     if (pLinuxSysmanImp->isDeviceInSurvivabilityMode()) {
         while (pNext) {
             auto pExtProps = reinterpret_cast<zes_base_properties_t *>(pNext);
-            if (pExtProps->stype == ZES_INTEL_STRUCTURE_TYPE_PCI_CONFIG_EXP_PROPERTIES_1_1) {
-                ze_result_t result = getPciConfigProperties(reinterpret_cast<zes_intel_pci_config_exp_properties_t *>(pExtProps));
+            if (pExtProps->stype == ZES_STRUCTURE_TYPE_PCI_CONFIG_PROPERTIES) {
+                ze_result_t result = getPciConfigProperties(reinterpret_cast<zes_pci_config_properties_t *>(pExtProps));
                 if (result != ZE_RESULT_SUCCESS) {
                     return result;
                 }
@@ -72,11 +72,11 @@ ze_result_t LinuxPciImp::getExtensionProperties(void *pNext) {
             auto pDowngradeExpProps = reinterpret_cast<zes_intel_pci_link_speed_downgrade_exp_properties_t *>(pExtProps);
             pDowngradeExpProps->maxPciGenSupported = pciDowngradeProperties.maxPciGenSupported;
             pDowngradeExpProps->pciLinkSpeedUpdateCapable = pciDowngradeProperties.pciLinkSpeedUpdateCapable;
-        } else if (pExtProps->stype == ZES_INTEL_STRUCTURE_TYPE_PCI_CONFIG_EXP_PROPERTIES_1_1) {
+        } else if (pExtProps->stype == ZES_STRUCTURE_TYPE_PCI_CONFIG_PROPERTIES) {
             if (pciConfigPropertiesResult != ZE_RESULT_SUCCESS) {
                 return pciConfigPropertiesResult;
             }
-            auto pConfigProps = reinterpret_cast<zes_intel_pci_config_exp_properties_t *>(pExtProps);
+            auto pConfigProps = reinterpret_cast<zes_pci_config_properties_t *>(pExtProps);
             pConfigProps->vendorId = pciConfigProperties.vendorId;
             pConfigProps->deviceId = pciConfigProperties.deviceId;
             pConfigProps->subsystemVendorId = pciConfigProperties.subsystemVendorId;
@@ -112,7 +112,7 @@ void LinuxPciImp::getPcieLinkCapabilities(std::vector<uint8_t> &configMemory, ui
     }
 }
 
-ze_result_t LinuxPciImp::getPciConfigProperties(zes_intel_pci_config_exp_properties_t *pConfigProperties) {
+ze_result_t LinuxPciImp::getPciConfigProperties(zes_pci_config_properties_t *pConfigProperties) {
     std::string deviceConfigNode = pSysfsAccess->getDevicePciPath() + "/config";
     std::vector<uint8_t> deviceConfigMemory(PCI_CFG_SPACE_SIZE);
     ze_result_t result = getPciConfigMemory(deviceConfigNode, deviceConfigMemory);

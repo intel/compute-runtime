@@ -5,11 +5,12 @@
  *
  */
 
+#include "level_zero/core/source/driver/driver.h"
+#include "level_zero/sysman/source/driver/sysman_driver.h"
 #include "level_zero/sysman/source/driver/sysman_driver_handle_imp.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_driver_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/driver/linux/mock_sysman_pci_device_properties.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
-#include "level_zero/zes_intel_gpu_sysman.h"
 
 namespace L0 {
 namespace Sysman {
@@ -54,8 +55,8 @@ TEST_F(SysmanPciDevicePropertiesLinuxTest, GivenIntelGpuDeviceWhenCallingGetPciD
     ASSERT_EQ(ZE_RESULT_SUCCESS, pLinuxDriverImp->getPciDeviceProperties(&count, nullptr));
     ASSERT_EQ(1u, count);
 
-    zes_intel_driver_pci_device_properties_exp_t properties = {};
-    properties.stype = ZES_INTEL_STRUCTURE_TYPE_DRIVER_PCI_DEVICE_PROPERTIES_EXP;
+    zes_driver_pci_device_properties_t properties = {};
+    properties.stype = ZES_STRUCTURE_TYPE_DRIVER_PCI_DEVICE_PROPERTIES;
     EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxDriverImp->getPciDeviceProperties(&count, &properties));
     EXPECT_EQ(1u, count);
 
@@ -69,7 +70,7 @@ TEST_F(SysmanPciDevicePropertiesLinuxTest, GivenIntelGpuDeviceWhenCallingGetPciD
     EXPECT_EQ(-1, properties.maxSpeed.width);
     EXPECT_EQ(-1, properties.maxSpeed.maxBandwidth);
 
-    EXPECT_EQ(ZES_INTEL_STRUCTURE_TYPE_PCI_CONFIG_EXP_PROPERTIES_1_1, properties.configProperties.stype);
+    EXPECT_EQ(ZES_STRUCTURE_TYPE_PCI_CONFIG_PROPERTIES, properties.configProperties.stype);
     EXPECT_EQ(nullptr, properties.configProperties.pNext);
     EXPECT_EQ(mockPciIntelVendorId, properties.configProperties.vendorId);
     EXPECT_EQ(getMockPciDeviceId(), properties.configProperties.deviceId);
@@ -89,7 +90,7 @@ TEST_F(SysmanPciDevicePropertiesLinuxTest, GivenCountSmallerThanAvailableWhenCal
     auto pLinuxDriverImp = std::make_unique<PublicLinuxSysmanDriverImp>();
 
     uint32_t count = 1;
-    zes_intel_driver_pci_device_properties_exp_t properties[2] = {};
+    zes_driver_pci_device_properties_t properties[2] = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxDriverImp->getPciDeviceProperties(&count, properties));
     EXPECT_EQ(1u, count);
     EXPECT_EQ(3u, properties[0].address.bus);
@@ -105,7 +106,7 @@ TEST_F(SysmanPciDevicePropertiesLinuxTest, GivenCountLargerThanAvailableWhenCall
     auto pLinuxDriverImp = std::make_unique<PublicLinuxSysmanDriverImp>();
 
     uint32_t count = 5;
-    zes_intel_driver_pci_device_properties_exp_t properties[5] = {};
+    zes_driver_pci_device_properties_t properties[5] = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxDriverImp->getPciDeviceProperties(&count, properties));
     EXPECT_EQ(1u, count);
 }
@@ -128,9 +129,9 @@ TEST_F(SysmanPciDevicePropertiesLinuxTest, GivenNonNullPNextWhenCallingGetPciDev
     pciSysfs.setupDirectoryListing();
     auto pLinuxDriverImp = std::make_unique<PublicLinuxSysmanDriverImp>();
 
-    zes_intel_pci_config_exp_properties_t extension = {};
+    zes_pci_config_properties_t extension = {};
     uint32_t count = 2;
-    zes_intel_driver_pci_device_properties_exp_t properties[2] = {};
+    zes_driver_pci_device_properties_t properties[2] = {};
     properties[1].pNext = &extension;
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, pLinuxDriverImp->getPciDeviceProperties(&count, properties));
     EXPECT_EQ(2u, count);
@@ -144,9 +145,9 @@ TEST_F(SysmanPciDevicePropertiesLinuxTest, GivenNonNullPNextOnElementBeyondAvail
     pciSysfs.setupDirectoryListing();
     auto pLinuxDriverImp = std::make_unique<PublicLinuxSysmanDriverImp>();
 
-    zes_intel_pci_config_exp_properties_t extension = {};
+    zes_pci_config_properties_t extension = {};
     uint32_t count = 2;
-    zes_intel_driver_pci_device_properties_exp_t properties[2] = {};
+    zes_driver_pci_device_properties_t properties[2] = {};
     properties[1].pNext = &extension;
     EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxDriverImp->getPciDeviceProperties(&count, properties));
     EXPECT_EQ(1u, count);
@@ -226,8 +227,8 @@ TEST_F(SysmanPciDevicePropertiesLinuxTest, GivenProcessingAcceleratorWithUnknown
     ASSERT_EQ(ZE_RESULT_SUCCESS, pLinuxDriverImp->getPciDeviceProperties(&count, nullptr));
     ASSERT_EQ(1u, count);
 
-    zes_intel_driver_pci_device_properties_exp_t properties = {};
-    properties.stype = ZES_INTEL_STRUCTURE_TYPE_DRIVER_PCI_DEVICE_PROPERTIES_EXP;
+    zes_driver_pci_device_properties_t properties = {};
+    properties.stype = ZES_STRUCTURE_TYPE_DRIVER_PCI_DEVICE_PROPERTIES;
     EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxDriverImp->getPciDeviceProperties(&count, &properties));
     EXPECT_EQ(3u, properties.address.bus);
 }
@@ -254,7 +255,7 @@ TEST_F(SysmanPciDevicePropertiesLinuxTest, GivenUnreadableSubsystemAndRevisionAt
     auto pLinuxDriverImp = std::make_unique<PublicLinuxSysmanDriverImp>();
 
     uint32_t count = 1;
-    zes_intel_driver_pci_device_properties_exp_t properties = {};
+    zes_driver_pci_device_properties_t properties = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxDriverImp->getPciDeviceProperties(&count, &properties));
     EXPECT_EQ(1u, count);
     EXPECT_EQ(0u, properties.configProperties.subsystemVendorId);
@@ -278,7 +279,7 @@ TEST_F(SysmanPciDevicePropertiesLinuxTest, GivenUnreadableOrEmptyAttributesWhenC
     auto pLinuxDriverImp = std::make_unique<PublicLinuxSysmanDriverImp>();
 
     uint32_t count = 3;
-    zes_intel_driver_pci_device_properties_exp_t properties[3] = {};
+    zes_driver_pci_device_properties_t properties[3] = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxDriverImp->getPciDeviceProperties(&count, properties));
     ASSERT_EQ(1u, count);
     EXPECT_EQ(5u, properties[0].address.bus);
@@ -295,10 +296,10 @@ TEST_F(SysmanPciDevicePropertiesLinuxTest, GivenConfigSpaceReadingAllOnesWhenCal
     auto pLinuxDriverImp = std::make_unique<PublicLinuxSysmanDriverImp>();
 
     uint32_t count = 1;
-    zes_intel_driver_pci_device_properties_exp_t properties = {};
+    zes_driver_pci_device_properties_t properties = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxDriverImp->getPciDeviceProperties(&count, &properties));
     EXPECT_EQ(1u, count);
-    EXPECT_EQ(ZES_INTEL_PCI_LINK_STATUS_EXP_LINK_ERROR, properties.status);
+    EXPECT_EQ(ZES_PCI_LINK_STATUS_LINK_ERROR, properties.status);
     // The identity comes from the cached attributes, so it survives the device dying.
     EXPECT_EQ(mockPciIntelVendorId, properties.configProperties.vendorId);
     EXPECT_EQ(getMockPciDeviceId(), properties.configProperties.deviceId);
@@ -313,9 +314,9 @@ TEST_F(SysmanPciDevicePropertiesLinuxTest, GivenConfigSpaceWithAllOnesRevisionWh
     auto pLinuxDriverImp = std::make_unique<PublicLinuxSysmanDriverImp>();
 
     uint32_t count = 1;
-    zes_intel_driver_pci_device_properties_exp_t properties = {};
+    zes_driver_pci_device_properties_t properties = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxDriverImp->getPciDeviceProperties(&count, &properties));
-    EXPECT_EQ(ZES_INTEL_PCI_LINK_STATUS_EXP_LINK_ERROR, properties.status);
+    EXPECT_EQ(ZES_PCI_LINK_STATUS_LINK_ERROR, properties.status);
 }
 
 TEST_F(SysmanPciDevicePropertiesLinuxTest, GivenConfigSpaceWithNonEndpointHeaderTypeWhenCallingGetPciDevicePropertiesThenLinkErrorIsReported) {
@@ -327,9 +328,9 @@ TEST_F(SysmanPciDevicePropertiesLinuxTest, GivenConfigSpaceWithNonEndpointHeader
         auto pLinuxDriverImp = std::make_unique<PublicLinuxSysmanDriverImp>();
 
         uint32_t count = 1;
-        zes_intel_driver_pci_device_properties_exp_t properties = {};
+        zes_driver_pci_device_properties_t properties = {};
         EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxDriverImp->getPciDeviceProperties(&count, &properties));
-        EXPECT_EQ(ZES_INTEL_PCI_LINK_STATUS_EXP_LINK_ERROR, properties.status);
+        EXPECT_EQ(ZES_PCI_LINK_STATUS_LINK_ERROR, properties.status);
     }
 }
 
@@ -341,7 +342,7 @@ TEST_F(SysmanPciDevicePropertiesLinuxTest, GivenMultiFunctionEndpointWhenCalling
     auto pLinuxDriverImp = std::make_unique<PublicLinuxSysmanDriverImp>();
 
     uint32_t count = 1;
-    zes_intel_driver_pci_device_properties_exp_t properties = {};
+    zes_driver_pci_device_properties_t properties = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxDriverImp->getPciDeviceProperties(&count, &properties));
     EXPECT_EQ(ZES_PCI_LINK_STATUS_GOOD, properties.status);
 }
@@ -355,9 +356,9 @@ TEST_F(SysmanPciDevicePropertiesLinuxTest, GivenSingleBarReadingAllOnesWhenCalli
         auto pLinuxDriverImp = std::make_unique<PublicLinuxSysmanDriverImp>();
 
         uint32_t count = 1;
-        zes_intel_driver_pci_device_properties_exp_t properties = {};
+        zes_driver_pci_device_properties_t properties = {};
         EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxDriverImp->getPciDeviceProperties(&count, &properties));
-        EXPECT_EQ(ZES_INTEL_PCI_LINK_STATUS_EXP_LINK_ERROR, properties.status);
+        EXPECT_EQ(ZES_PCI_LINK_STATUS_LINK_ERROR, properties.status);
     }
 }
 
@@ -372,7 +373,7 @@ TEST_F(SysmanPciDevicePropertiesLinuxTest, GivenBarsWhichAreNotAMasterAbortSigna
         auto pLinuxDriverImp = std::make_unique<PublicLinuxSysmanDriverImp>();
 
         uint32_t count = 1;
-        zes_intel_driver_pci_device_properties_exp_t properties = {};
+        zes_driver_pci_device_properties_t properties = {};
         EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxDriverImp->getPciDeviceProperties(&count, &properties));
         EXPECT_EQ(ZES_PCI_LINK_STATUS_GOOD, properties.status);
     }
@@ -391,7 +392,7 @@ TEST_F(SysmanPciDevicePropertiesLinuxTest, GivenConfigNodeIsNotAvailableWhenCall
     EXPECT_EQ(1u, count);
 
     count = 2;
-    zes_intel_driver_pci_device_properties_exp_t properties[2] = {};
+    zes_driver_pci_device_properties_t properties[2] = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxDriverImp->getPciDeviceProperties(&count, properties));
     EXPECT_EQ(1u, count);
     EXPECT_EQ(3u, properties[0].address.bus);
@@ -406,7 +407,7 @@ TEST_F(SysmanPciDevicePropertiesLinuxTest, GivenConfigNodeOpenFailsForNonRootUse
         auto pLinuxDriverImp = std::make_unique<PublicLinuxSysmanDriverImp>();
 
         uint32_t count = 1;
-        zes_intel_driver_pci_device_properties_exp_t properties = {};
+        zes_driver_pci_device_properties_t properties = {};
         EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxDriverImp->getPciDeviceProperties(&count, &properties));
         EXPECT_EQ(1u, count);
         EXPECT_EQ(ZES_PCI_LINK_STATUS_UNKNOWN, properties.status);
@@ -421,9 +422,9 @@ TEST_F(SysmanPciDevicePropertiesLinuxTest, GivenConfigNodeOpenFailsWhenCallingGe
     auto pLinuxDriverImp = std::make_unique<PublicLinuxSysmanDriverImp>();
 
     uint32_t count = 1;
-    zes_intel_driver_pci_device_properties_exp_t properties = {};
+    zes_driver_pci_device_properties_t properties = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxDriverImp->getPciDeviceProperties(&count, &properties));
-    EXPECT_EQ(ZES_INTEL_PCI_LINK_STATUS_EXP_LINK_ERROR, properties.status);
+    EXPECT_EQ(ZES_PCI_LINK_STATUS_LINK_ERROR, properties.status);
 }
 
 TEST_F(SysmanPciDevicePropertiesLinuxTest, GivenShortConfigSpaceReadWhenCallingGetPciDevicePropertiesThenLinkErrorIsReported) {
@@ -434,9 +435,9 @@ TEST_F(SysmanPciDevicePropertiesLinuxTest, GivenShortConfigSpaceReadWhenCallingG
     auto pLinuxDriverImp = std::make_unique<PublicLinuxSysmanDriverImp>();
 
     uint32_t count = 1;
-    zes_intel_driver_pci_device_properties_exp_t properties = {};
+    zes_driver_pci_device_properties_t properties = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxDriverImp->getPciDeviceProperties(&count, &properties));
-    EXPECT_EQ(ZES_INTEL_PCI_LINK_STATUS_EXP_LINK_ERROR, properties.status);
+    EXPECT_EQ(ZES_PCI_LINK_STATUS_LINK_ERROR, properties.status);
 }
 
 TEST_F(SysmanPciDevicePropertiesLinuxTest, GivenConfigSpaceReadFailsForNonRootUserWhenCallingGetPciDevicePropertiesThenUnknownStatusIsReported) {
@@ -449,7 +450,7 @@ TEST_F(SysmanPciDevicePropertiesLinuxTest, GivenConfigSpaceReadFailsForNonRootUs
         auto pLinuxDriverImp = std::make_unique<PublicLinuxSysmanDriverImp>();
 
         uint32_t count = 1;
-        zes_intel_driver_pci_device_properties_exp_t properties = {};
+        zes_driver_pci_device_properties_t properties = {};
         EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxDriverImp->getPciDeviceProperties(&count, &properties));
         EXPECT_EQ(ZES_PCI_LINK_STATUS_UNKNOWN, properties.status);
     }
@@ -462,7 +463,7 @@ TEST_F(SysmanPciDevicePropertiesLinuxTest, GivenIntelGpuDeviceWhenCallingGetPciD
     auto pLinuxDriverImp = std::make_unique<PublicLinuxSysmanDriverImp>();
 
     uint32_t count = 1;
-    zes_intel_driver_pci_device_properties_exp_t properties = {};
+    zes_driver_pci_device_properties_t properties = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxDriverImp->getPciDeviceProperties(&count, &properties));
     // Reading beyond offset 0x3f needs CAP_SYS_ADMIN and is silently truncated for anybody else.
     EXPECT_LE(pciSysfs.largestConfigReadRequest, mockPciConfigHeaderSize);
@@ -482,6 +483,39 @@ TEST_F(SysmanPciDevicePropertiesLinuxTest, GivenDriverHandleWithoutOsSysmanDrive
     EXPECT_EQ(ZE_RESULT_SUCCESS, emptyDriverHandle->getPciDeviceProperties(&count, nullptr));
     EXPECT_EQ(1u, count);
     EXPECT_NE(nullptr, emptyDriverHandle->pOsSysmanDriver);
+}
+
+TEST_F(SysmanPciDevicePropertiesLinuxTest, GivenSysmanOnlyInitWhenCallingGetPciDevicePropertiesEntrypointThenPropertiesOfIntelGpuDevicesAreReturned) {
+    MockPciSysfs pciSysfs;
+    pciSysfs.addDevice("0000:03:00.0");
+    pciSysfs.setupDirectoryListing();
+
+    uint32_t count = 0;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesDriverGetPciDeviceProperties(driverHandle->toHandle(), &count, nullptr));
+    ASSERT_EQ(1u, count);
+
+    zes_driver_pci_device_properties_t properties = {ZES_STRUCTURE_TYPE_DRIVER_PCI_DEVICE_PROPERTIES};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverGetPciDeviceProperties(driverHandle->toHandle(), &count, &properties));
+    EXPECT_EQ(1u, count);
+    EXPECT_EQ(3u, properties.address.bus);
+    EXPECT_EQ(ZES_PCI_LINK_STATUS_GOOD, properties.status);
+    EXPECT_EQ(ZES_STRUCTURE_TYPE_PCI_CONFIG_PROPERTIES, properties.configProperties.stype);
+    EXPECT_EQ(getMockPciDeviceId(), properties.configProperties.deviceId);
+}
+
+TEST_F(SysmanPciDevicePropertiesLinuxTest, GivenSysmanInitFromCoreWhenCallingGetPciDevicePropertiesEntrypointThenUnsupportedFeatureIsReturned) {
+    VariableBackup<bool> sysmanInitFromCoreBackup(&L0::sysmanInitFromCore, true);
+
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDriverGetPciDeviceProperties(driverHandle->toHandle(), &count, nullptr));
+}
+
+TEST_F(SysmanPciDevicePropertiesLinuxTest, GivenNeitherInitFlagSetWhenCallingGetPciDevicePropertiesEntrypointThenUninitializedIsReturned) {
+    VariableBackup<bool> sysmanInitFromCoreBackup(&L0::sysmanInitFromCore, false);
+    VariableBackup<bool> sysmanOnlyInitBackup(&L0::Sysman::sysmanOnlyInit, false);
+
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDriverGetPciDeviceProperties(driverHandle->toHandle(), &count, nullptr));
 }
 
 TEST_F(SysmanPciDevicePropertiesLinuxTest, GivenNoPciDevicesWhenCallingGetPciDeviceAddressesThenNoAddressIsReturned) {

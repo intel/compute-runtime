@@ -71,7 +71,7 @@ ze_result_t WddmSysmanDriverImp::rescanDevices(SysmanDriverHandleImp *driverHand
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t WddmSysmanDriverImp::getPciDeviceProperties(uint32_t *pCount, zes_intel_driver_pci_device_properties_exp_t *pProperties) {
+ze_result_t WddmSysmanDriverImp::getPciDeviceProperties(uint32_t *pCount, zes_driver_pci_device_properties_t *pProperties) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 

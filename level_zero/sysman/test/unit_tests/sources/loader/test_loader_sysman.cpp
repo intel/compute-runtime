@@ -399,11 +399,5 @@ TEST(ZesGetProcAddrTableTest, givenNullDdiTableWhenGettingProcAddrTableThenInval
     givenNullDdiTableWhenGettingProcAddrTableThenInvalidArgumentIsReturnedFunction(ddiTables, ddiTablesCount);
 }
 
-TEST(ZesGetProcAddrTableTest, givenApiVersion1_20WhenCallingGetPciDevicePropertiesThenUnsupportedFeatureIsReturned) {
-    zes_driver_dditable_t driverTable = {};
-    ASSERT_EQ(ZE_RESULT_SUCCESS, zesGetDriverProcAddrTable(ZE_API_VERSION_1_20, &driverTable));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, driverTable.pfnGetPciDeviceProperties(nullptr, nullptr, nullptr));
-}
-
 } // namespace ult
 } // namespace L0

@@ -787,7 +787,7 @@ TEST_F(ZesPciFixture, GivenPciPropertiesStypeSetWhenCallingZesDevicePciGetProper
     EXPECT_EQ(ZES_STRUCTURE_TYPE_PCI_PROPERTIES, properties.stype);
 }
 
-namespace PciConfigExpMock {
+namespace PciConfigMock {
 constexpr int deviceConfigFd = 1;
 constexpr int cardBusConfigFd = 2;
 
@@ -797,9 +797,9 @@ constexpr uint16_t expectedSubsystemVendorId = 0x8086;
 constexpr uint16_t expectedSubsystemDeviceId = 0x1600;
 constexpr uint8_t expectedRevision = 0x07;
 constexpr uint32_t expectedCapabilityVersion = 2u;
-constexpr uint32_t expectedDeviceSpeedsVector = ZES_INTEL_PCI_LINK_SPEED_EXP_FLAG_GEN1;
-constexpr uint32_t expectedCardBusSpeedsVector = ZES_INTEL_PCI_LINK_SPEED_EXP_FLAG_GEN1 | ZES_INTEL_PCI_LINK_SPEED_EXP_FLAG_GEN2 |
-                                                 ZES_INTEL_PCI_LINK_SPEED_EXP_FLAG_GEN3 | ZES_INTEL_PCI_LINK_SPEED_EXP_FLAG_GEN4;
+constexpr uint32_t expectedDeviceSpeedsVector = ZES_PCI_LINK_SPEED_FLAG_GEN1;
+constexpr uint32_t expectedCardBusSpeedsVector = ZES_PCI_LINK_SPEED_FLAG_GEN1 | ZES_PCI_LINK_SPEED_FLAG_GEN2 |
+                                                 ZES_PCI_LINK_SPEED_FLAG_GEN3 | ZES_PCI_LINK_SPEED_FLAG_GEN4;
 
 constexpr uint8_t defaultPcieCapPos = 0x70;
 constexpr uint8_t truncatedPcieCapPos = 0xf0;
@@ -864,52 +864,52 @@ void writeCapabilityChain(uint8_t *mockBuf, size_t configSpaceSize) {
     writeByte(mockBuf, configSpaceSize, unrelatedCapPos + PCI_CAP_LIST_ID, unrelatedCapId);
     writeByte(mockBuf, configSpaceSize, unrelatedCapPos + PCI_CAP_LIST_NEXT, capabilityChainSelfReferences ? unrelatedCapPos : 0);
 }
-} // namespace PciConfigExpMock
+} // namespace PciConfigMock
 
 inline static int openMockPciConfigNodes(const char *pathname, int flags) {
     NEO::SysCalls::closeFuncCalled = 0;
     if (std::string(pathname) == mockRealPath2LevelsUpConfig) {
-        return PciConfigExpMock::cardBusConfigFd;
+        return PciConfigMock::cardBusConfigFd;
     }
-    return PciConfigExpMock::deviceConfigFd;
+    return PciConfigMock::deviceConfigFd;
 }
 
 ssize_t readMockPciConfig(int fd, void *buf, size_t count) {
-    if (PciConfigExpMock::readFailure || (PciConfigExpMock::cardBusReadFailure && fd == PciConfigExpMock::cardBusConfigFd)) {
+    if (PciConfigMock::readFailure || (PciConfigMock::cardBusReadFailure && fd == PciConfigMock::cardBusConfigFd)) {
         errno = ENOENT;
         return -1;
     }
 
     uint8_t *mockBuf = static_cast<uint8_t *>(buf);
-    const uint32_t pcieCapPos = PciConfigExpMock::pcieCapPos;
+    const uint32_t pcieCapPos = PciConfigMock::pcieCapPos;
 
-    PciConfigExpMock::writeByte(mockBuf, count, PCI_STATUS, PciConfigExpMock::status);
-    PciConfigExpMock::writeCapabilityChain(mockBuf, count);
+    PciConfigMock::writeByte(mockBuf, count, PCI_STATUS, PciConfigMock::status);
+    PciConfigMock::writeCapabilityChain(mockBuf, count);
 
-    if (fd == PciConfigExpMock::cardBusConfigFd) {
-        PciConfigExpMock::writeWord(mockBuf, count, pcieCapPos + PCI_CAP_FLAGS, 0x0052); // capability version 2, switch upstream port
-        PciConfigExpMock::writeDword(mockBuf, count, pcieCapPos + PCI_EXP_LNKCAP2, PciConfigExpMock::cardBusLinkCaps2);
+    if (fd == PciConfigMock::cardBusConfigFd) {
+        PciConfigMock::writeWord(mockBuf, count, pcieCapPos + PCI_CAP_FLAGS, 0x0052); // capability version 2, switch upstream port
+        PciConfigMock::writeDword(mockBuf, count, pcieCapPos + PCI_EXP_LNKCAP2, PciConfigMock::cardBusLinkCaps2);
         return count;
     }
 
-    PciConfigExpMock::writeWord(mockBuf, count, PCI_VENDOR_ID, PciConfigExpMock::vendorId);
-    PciConfigExpMock::writeWord(mockBuf, count, PCI_DEVICE_ID, PciConfigExpMock::expectedDeviceId);
-    PciConfigExpMock::writeWord(mockBuf, count, PCI_SUBSYSTEM_VENDOR_ID, PciConfigExpMock::expectedSubsystemVendorId);
-    PciConfigExpMock::writeWord(mockBuf, count, PCI_SUBSYSTEM_DEVICE_ID, PciConfigExpMock::expectedSubsystemDeviceId);
-    PciConfigExpMock::writeByte(mockBuf, count, PCI_REVISION_ID, PciConfigExpMock::expectedRevision);
-    PciConfigExpMock::writeWord(mockBuf, count, pcieCapPos + PCI_CAP_FLAGS, PciConfigExpMock::capRegister);
-    PciConfigExpMock::writeDword(mockBuf, count, pcieCapPos + PCI_EXP_LNKCAP2, PciConfigExpMock::linkCaps2);
+    PciConfigMock::writeWord(mockBuf, count, PCI_VENDOR_ID, PciConfigMock::vendorId);
+    PciConfigMock::writeWord(mockBuf, count, PCI_DEVICE_ID, PciConfigMock::expectedDeviceId);
+    PciConfigMock::writeWord(mockBuf, count, PCI_SUBSYSTEM_VENDOR_ID, PciConfigMock::expectedSubsystemVendorId);
+    PciConfigMock::writeWord(mockBuf, count, PCI_SUBSYSTEM_DEVICE_ID, PciConfigMock::expectedSubsystemDeviceId);
+    PciConfigMock::writeByte(mockBuf, count, PCI_REVISION_ID, PciConfigMock::expectedRevision);
+    PciConfigMock::writeWord(mockBuf, count, pcieCapPos + PCI_CAP_FLAGS, PciConfigMock::capRegister);
+    PciConfigMock::writeDword(mockBuf, count, pcieCapPos + PCI_EXP_LNKCAP2, PciConfigMock::linkCaps2);
     return count;
 }
 
-class ZesPciConfigExpFixtureXe : public ZesPciFixture {
+class ZesPciConfigFixtureXe : public ZesPciFixture {
   protected:
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> configOpenBackup{&NEO::SysCalls::sysCallsOpen, openMockPciConfigNodes};
     std::unique_ptr<SysmanProductHelper> pOriginalProductHelper;
 
     void SetUp() override {
         ZesPciFixture::SetUp();
-        PciConfigExpMock::reset();
+        PciConfigMock::reset();
 
         auto pSysmanKmdInterface = new MockSysmanKmdInterfaceXe(pLinuxSysmanImp->getSysmanProductHelper());
         pSysmanKmdInterface->pSysfsAccess = std::make_unique<MockPciSysfsAccess>();
@@ -919,7 +919,7 @@ class ZesPciConfigExpFixtureXe : public ZesPciFixture {
     }
 
     void TearDown() override {
-        PciConfigExpMock::reset();
+        PciConfigMock::reset();
         ZesPciFixture::TearDown();
     }
 
@@ -936,198 +936,198 @@ class ZesPciConfigExpFixtureXe : public ZesPciFixture {
         pLinuxSysmanImp->pciBdfInfo = NEO::PhysicalDevicePciBusInfo(0u, expectedBus, expectedDevice, expectedFunction);
     }
 
-    ze_result_t getPciConfigProperties(zes_intel_pci_config_exp_properties_t &configProps) {
+    ze_result_t getPciConfigProperties(zes_pci_config_properties_t &configProps) {
         zes_pci_properties_t properties = {};
-        configProps.stype = ZES_INTEL_STRUCTURE_TYPE_PCI_CONFIG_EXP_PROPERTIES_1_1;
+        configProps.stype = ZES_STRUCTURE_TYPE_PCI_CONFIG_PROPERTIES;
         properties.pNext = &configProps;
         return zesDevicePciGetProperties(device, &properties);
     }
 };
 
-TEST_F(ZesPciConfigExpFixtureXe, GivenPciConfigExtensionWhenDeviceIsNotBehindAnOnCardSwitchThenEveryRegisterIsReadFromTheDeviceFunction) {
+TEST_F(ZesPciConfigFixtureXe, GivenPciConfigExtensionWhenDeviceIsNotBehindAnOnCardSwitchThenEveryRegisterIsReadFromTheDeviceFunction) {
     setUpstreamPortConnected(false);
 
-    zes_intel_pci_config_exp_properties_t configProps = {};
+    zes_pci_config_properties_t configProps = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, getPciConfigProperties(configProps));
 
-    EXPECT_EQ(PciConfigExpMock::expectedVendorId, configProps.vendorId);
-    EXPECT_EQ(PciConfigExpMock::expectedDeviceId, configProps.deviceId);
-    EXPECT_EQ(PciConfigExpMock::expectedSubsystemVendorId, configProps.subsystemVendorId);
-    EXPECT_EQ(PciConfigExpMock::expectedSubsystemDeviceId, configProps.subsystemDeviceId);
-    EXPECT_EQ(PciConfigExpMock::expectedRevision, configProps.revision);
-    EXPECT_EQ(PciConfigExpMock::expectedCapabilityVersion, configProps.pcieCapabilityVersion);
-    EXPECT_EQ(PciConfigExpMock::expectedDeviceSpeedsVector, configProps.supportedLinkSpeeds);
+    EXPECT_EQ(PciConfigMock::expectedVendorId, configProps.vendorId);
+    EXPECT_EQ(PciConfigMock::expectedDeviceId, configProps.deviceId);
+    EXPECT_EQ(PciConfigMock::expectedSubsystemVendorId, configProps.subsystemVendorId);
+    EXPECT_EQ(PciConfigMock::expectedSubsystemDeviceId, configProps.subsystemDeviceId);
+    EXPECT_EQ(PciConfigMock::expectedRevision, configProps.revision);
+    EXPECT_EQ(PciConfigMock::expectedCapabilityVersion, configProps.pcieCapabilityVersion);
+    EXPECT_EQ(PciConfigMock::expectedDeviceSpeedsVector, configProps.supportedLinkSpeeds);
 }
 
-TEST_F(ZesPciConfigExpFixtureXe, GivenPciConfigExtensionWhenDeviceIsBehindAnOnCardSwitchThenLinkRegistersComeFromTheCardBusAndIdsFromTheDeviceFunction) {
+TEST_F(ZesPciConfigFixtureXe, GivenPciConfigExtensionWhenDeviceIsBehindAnOnCardSwitchThenLinkRegistersComeFromTheCardBusAndIdsFromTheDeviceFunction) {
     setUpstreamPortConnected(true);
 
-    zes_intel_pci_config_exp_properties_t configProps = {};
+    zes_pci_config_properties_t configProps = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, getPciConfigProperties(configProps));
 
-    EXPECT_EQ(PciConfigExpMock::expectedVendorId, configProps.vendorId);
-    EXPECT_EQ(PciConfigExpMock::expectedDeviceId, configProps.deviceId);
-    EXPECT_EQ(PciConfigExpMock::expectedSubsystemVendorId, configProps.subsystemVendorId);
-    EXPECT_EQ(PciConfigExpMock::expectedSubsystemDeviceId, configProps.subsystemDeviceId);
-    EXPECT_EQ(PciConfigExpMock::expectedRevision, configProps.revision);
-    EXPECT_EQ(PciConfigExpMock::expectedCapabilityVersion, configProps.pcieCapabilityVersion);
-    EXPECT_EQ(PciConfigExpMock::expectedCardBusSpeedsVector, configProps.supportedLinkSpeeds);
+    EXPECT_EQ(PciConfigMock::expectedVendorId, configProps.vendorId);
+    EXPECT_EQ(PciConfigMock::expectedDeviceId, configProps.deviceId);
+    EXPECT_EQ(PciConfigMock::expectedSubsystemVendorId, configProps.subsystemVendorId);
+    EXPECT_EQ(PciConfigMock::expectedSubsystemDeviceId, configProps.subsystemDeviceId);
+    EXPECT_EQ(PciConfigMock::expectedRevision, configProps.revision);
+    EXPECT_EQ(PciConfigMock::expectedCapabilityVersion, configProps.pcieCapabilityVersion);
+    EXPECT_EQ(PciConfigMock::expectedCardBusSpeedsVector, configProps.supportedLinkSpeeds);
 }
 
-TEST_F(ZesPciConfigExpFixtureXe, GivenPciConfigExtensionWhenCallerIsNotRootThenOnlyTheIdentificationRegistersAreReported) {
+TEST_F(ZesPciConfigFixtureXe, GivenPciConfigExtensionWhenCallerIsNotRootThenOnlyTheIdentificationRegistersAreReported) {
     setUpstreamPortConnected(false);
     VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> readMockBackup(&NEO::SysCalls::sysCallsRead, readMockTruncatedToStandardHeader<readMockPciConfig>);
 
-    zes_intel_pci_config_exp_properties_t configProps = {};
+    zes_pci_config_properties_t configProps = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, getPciConfigProperties(configProps));
 
-    EXPECT_EQ(PciConfigExpMock::expectedVendorId, configProps.vendorId);
-    EXPECT_EQ(PciConfigExpMock::expectedDeviceId, configProps.deviceId);
-    EXPECT_EQ(PciConfigExpMock::expectedSubsystemVendorId, configProps.subsystemVendorId);
-    EXPECT_EQ(PciConfigExpMock::expectedSubsystemDeviceId, configProps.subsystemDeviceId);
-    EXPECT_EQ(PciConfigExpMock::expectedRevision, configProps.revision);
+    EXPECT_EQ(PciConfigMock::expectedVendorId, configProps.vendorId);
+    EXPECT_EQ(PciConfigMock::expectedDeviceId, configProps.deviceId);
+    EXPECT_EQ(PciConfigMock::expectedSubsystemVendorId, configProps.subsystemVendorId);
+    EXPECT_EQ(PciConfigMock::expectedSubsystemDeviceId, configProps.subsystemDeviceId);
+    EXPECT_EQ(PciConfigMock::expectedRevision, configProps.revision);
 
     EXPECT_EQ(0u, configProps.pcieCapabilityVersion);
     EXPECT_EQ(0u, configProps.supportedLinkSpeeds);
 }
 
-TEST_F(ZesPciConfigExpFixtureXe, GivenPciConfigExtensionWhenCallerIsNotRootAndDeviceIsBehindAnOnCardSwitchThenTheIdentificationRegistersAreStillReported) {
+TEST_F(ZesPciConfigFixtureXe, GivenPciConfigExtensionWhenCallerIsNotRootAndDeviceIsBehindAnOnCardSwitchThenTheIdentificationRegistersAreStillReported) {
     setUpstreamPortConnected(true);
     VariableBackup<decltype(NEO::SysCalls::sysCallsRead)> readMockBackup(&NEO::SysCalls::sysCallsRead, readMockTruncatedToStandardHeader<readMockPciConfig>);
 
-    zes_intel_pci_config_exp_properties_t configProps = {};
+    zes_pci_config_properties_t configProps = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, getPciConfigProperties(configProps));
 
-    EXPECT_EQ(PciConfigExpMock::expectedVendorId, configProps.vendorId);
+    EXPECT_EQ(PciConfigMock::expectedVendorId, configProps.vendorId);
     EXPECT_EQ(0u, configProps.pcieCapabilityVersion);
     EXPECT_EQ(0u, configProps.supportedLinkSpeeds);
 }
 
-TEST_F(ZesPciConfigExpFixtureXe, GivenPciConfigExtensionWhenDeviceStoppedRespondingThenTheRegistersAreReportedAsRead) {
+TEST_F(ZesPciConfigFixtureXe, GivenPciConfigExtensionWhenDeviceStoppedRespondingThenTheRegistersAreReportedAsRead) {
     setUpstreamPortConnected(false);
-    PciConfigExpMock::vendorId = PCI_INVALID_VENDOR_ID;
+    PciConfigMock::vendorId = PCI_INVALID_VENDOR_ID;
 
-    zes_intel_pci_config_exp_properties_t configProps = {};
+    zes_pci_config_properties_t configProps = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, getPciConfigProperties(configProps));
 
     EXPECT_EQ(PCI_INVALID_VENDOR_ID, configProps.vendorId);
 }
 
-TEST_F(ZesPciConfigExpFixtureXe, GivenPciConfigExtensionWhenPciExpressCapabilityIsAbsentThenIdentificationRegistersAreStillReturned) {
+TEST_F(ZesPciConfigFixtureXe, GivenPciConfigExtensionWhenPciExpressCapabilityIsAbsentThenIdentificationRegistersAreStillReturned) {
     setUpstreamPortConnected(false);
-    PciConfigExpMock::status = 0; // capability list not supported
+    PciConfigMock::status = 0; // capability list not supported
 
-    zes_intel_pci_config_exp_properties_t configProps = {};
+    zes_pci_config_properties_t configProps = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, getPciConfigProperties(configProps));
 
-    EXPECT_EQ(PciConfigExpMock::expectedVendorId, configProps.vendorId);
-    EXPECT_EQ(PciConfigExpMock::expectedDeviceId, configProps.deviceId);
+    EXPECT_EQ(PciConfigMock::expectedVendorId, configProps.vendorId);
+    EXPECT_EQ(PciConfigMock::expectedDeviceId, configProps.deviceId);
     EXPECT_EQ(0u, configProps.pcieCapabilityVersion);
     EXPECT_EQ(0u, configProps.supportedLinkSpeeds);
 }
 
-TEST_F(ZesPciConfigExpFixtureXe, GivenPciConfigExtensionWhenCapabilityChainEndsWithoutThePciExpressCapabilityThenIdentificationRegistersAreStillReturned) {
+TEST_F(ZesPciConfigFixtureXe, GivenPciConfigExtensionWhenCapabilityChainEndsWithoutThePciExpressCapabilityThenIdentificationRegistersAreStillReturned) {
     setUpstreamPortConnected(false);
-    PciConfigExpMock::pcieCapabilityInChain = false;
+    PciConfigMock::pcieCapabilityInChain = false;
 
-    zes_intel_pci_config_exp_properties_t configProps = {};
+    zes_pci_config_properties_t configProps = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, getPciConfigProperties(configProps));
 
-    EXPECT_EQ(PciConfigExpMock::expectedVendorId, configProps.vendorId);
-    EXPECT_EQ(PciConfigExpMock::expectedDeviceId, configProps.deviceId);
+    EXPECT_EQ(PciConfigMock::expectedVendorId, configProps.vendorId);
+    EXPECT_EQ(PciConfigMock::expectedDeviceId, configProps.deviceId);
     EXPECT_EQ(0u, configProps.pcieCapabilityVersion);
     EXPECT_EQ(0u, configProps.supportedLinkSpeeds);
 }
 
-TEST_F(ZesPciConfigExpFixtureXe, GivenPciConfigExtensionWhenCapabilityChainNeverTerminatesThenTheWalkIsBoundedAndIdentificationRegistersAreStillReturned) {
+TEST_F(ZesPciConfigFixtureXe, GivenPciConfigExtensionWhenCapabilityChainNeverTerminatesThenTheWalkIsBoundedAndIdentificationRegistersAreStillReturned) {
     setUpstreamPortConnected(false);
-    PciConfigExpMock::pcieCapabilityInChain = false;
-    PciConfigExpMock::capabilityChainSelfReferences = true;
+    PciConfigMock::pcieCapabilityInChain = false;
+    PciConfigMock::capabilityChainSelfReferences = true;
 
-    zes_intel_pci_config_exp_properties_t configProps = {};
+    zes_pci_config_properties_t configProps = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, getPciConfigProperties(configProps));
 
-    EXPECT_EQ(PciConfigExpMock::expectedVendorId, configProps.vendorId);
-    EXPECT_EQ(PciConfigExpMock::expectedDeviceId, configProps.deviceId);
+    EXPECT_EQ(PciConfigMock::expectedVendorId, configProps.vendorId);
+    EXPECT_EQ(PciConfigMock::expectedDeviceId, configProps.deviceId);
     EXPECT_EQ(0u, configProps.pcieCapabilityVersion);
     EXPECT_EQ(0u, configProps.supportedLinkSpeeds);
 }
 
-TEST_F(ZesPciConfigExpFixtureXe, GivenPciConfigExtensionWhenLinkCapabilities2RegisterFallsOutsideConfigSpaceThenIdentificationRegistersAreStillReturned) {
+TEST_F(ZesPciConfigFixtureXe, GivenPciConfigExtensionWhenLinkCapabilities2RegisterFallsOutsideConfigSpaceThenIdentificationRegistersAreStillReturned) {
     setUpstreamPortConnected(false);
-    PciConfigExpMock::pcieCapPos = PciConfigExpMock::truncatedPcieCapPos;
+    PciConfigMock::pcieCapPos = PciConfigMock::truncatedPcieCapPos;
 
-    zes_intel_pci_config_exp_properties_t configProps = {};
+    zes_pci_config_properties_t configProps = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, getPciConfigProperties(configProps));
 
-    EXPECT_EQ(PciConfigExpMock::expectedVendorId, configProps.vendorId);
-    EXPECT_EQ(PciConfigExpMock::expectedDeviceId, configProps.deviceId);
+    EXPECT_EQ(PciConfigMock::expectedVendorId, configProps.vendorId);
+    EXPECT_EQ(PciConfigMock::expectedDeviceId, configProps.deviceId);
     EXPECT_EQ(0u, configProps.pcieCapabilityVersion);
     EXPECT_EQ(0u, configProps.supportedLinkSpeeds);
 }
 
-TEST_F(ZesPciConfigExpFixtureXe, GivenPciConfigExtensionWhenCapabilityVersionPredatesLinkCapabilities2ThenTheVersionIsReturnedWithoutTheSpeedsVector) {
+TEST_F(ZesPciConfigFixtureXe, GivenPciConfigExtensionWhenCapabilityVersionPredatesLinkCapabilities2ThenTheVersionIsReturnedWithoutTheSpeedsVector) {
     setUpstreamPortConnected(false);
-    PciConfigExpMock::capRegister = 0x0001; // capability version 1
+    PciConfigMock::capRegister = 0x0001; // capability version 1
 
-    zes_intel_pci_config_exp_properties_t configProps = {};
+    zes_pci_config_properties_t configProps = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, getPciConfigProperties(configProps));
 
-    EXPECT_EQ(PciConfigExpMock::expectedVendorId, configProps.vendorId);
+    EXPECT_EQ(PciConfigMock::expectedVendorId, configProps.vendorId);
     EXPECT_EQ(1u, configProps.pcieCapabilityVersion);
     EXPECT_EQ(0u, configProps.supportedLinkSpeeds);
 }
 
-TEST_F(ZesPciConfigExpFixtureXe, GivenPciConfigExtensionWhensupportedLinkSpeedsIsNotImplementedThenItIsReportedAsZero) {
+TEST_F(ZesPciConfigFixtureXe, GivenPciConfigExtensionWhensupportedLinkSpeedsIsNotImplementedThenItIsReportedAsZero) {
     setUpstreamPortConnected(false);
-    PciConfigExpMock::linkCaps2 = 0;
+    PciConfigMock::linkCaps2 = 0;
 
-    zes_intel_pci_config_exp_properties_t configProps = {};
+    zes_pci_config_properties_t configProps = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, getPciConfigProperties(configProps));
 
-    EXPECT_EQ(PciConfigExpMock::expectedVendorId, configProps.vendorId);
-    EXPECT_EQ(PciConfigExpMock::expectedCapabilityVersion, configProps.pcieCapabilityVersion);
+    EXPECT_EQ(PciConfigMock::expectedVendorId, configProps.vendorId);
+    EXPECT_EQ(PciConfigMock::expectedCapabilityVersion, configProps.pcieCapabilityVersion);
     EXPECT_EQ(0u, configProps.supportedLinkSpeeds);
 }
 
-TEST_F(ZesPciConfigExpFixtureXe, GivenPciConfigExtensionWhenDeviceIsIntegratedThenLinkCapabilitiesAreNotReadAndIdentificationRegistersAreReturned) {
+TEST_F(ZesPciConfigFixtureXe, GivenPciConfigExtensionWhenDeviceIsIntegratedThenLinkCapabilitiesAreNotReadAndIdentificationRegistersAreReturned) {
     setUpstreamPortConnected(false);
     pSysmanDeviceImp->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
 
-    zes_intel_pci_config_exp_properties_t configProps = {};
+    zes_pci_config_properties_t configProps = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, getPciConfigProperties(configProps));
 
-    EXPECT_EQ(PciConfigExpMock::expectedVendorId, configProps.vendorId);
-    EXPECT_EQ(PciConfigExpMock::expectedDeviceId, configProps.deviceId);
+    EXPECT_EQ(PciConfigMock::expectedVendorId, configProps.vendorId);
+    EXPECT_EQ(PciConfigMock::expectedDeviceId, configProps.deviceId);
     EXPECT_EQ(0u, configProps.pcieCapabilityVersion);
     EXPECT_EQ(0u, configProps.supportedLinkSpeeds);
 }
 
-TEST_F(ZesPciConfigExpFixtureXe, GivenPciConfigExtensionWhenCardBusConfigSpaceCannotBeReadThenNotAvailableIsReturned) {
+TEST_F(ZesPciConfigFixtureXe, GivenPciConfigExtensionWhenCardBusConfigSpaceCannotBeReadThenNotAvailableIsReturned) {
     setUpstreamPortConnected(true);
-    PciConfigExpMock::cardBusReadFailure = true;
+    PciConfigMock::cardBusReadFailure = true;
     VariableBackup<int> mockErrno(&errno);
 
-    zes_intel_pci_config_exp_properties_t configProps = {};
+    zes_pci_config_properties_t configProps = {};
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, getPciConfigProperties(configProps));
     EXPECT_EQ(0u, configProps.vendorId);
 }
 
-TEST_F(ZesPciConfigExpFixtureXe, GivenPciConfigExtensionWhenConfigSpaceCannotBeReadThenNotAvailableIsReturned) {
+TEST_F(ZesPciConfigFixtureXe, GivenPciConfigExtensionWhenConfigSpaceCannotBeReadThenNotAvailableIsReturned) {
     setUpstreamPortConnected(false);
-    PciConfigExpMock::readFailure = true;
+    PciConfigMock::readFailure = true;
     VariableBackup<int> mockErrno(&errno);
 
-    zes_intel_pci_config_exp_properties_t configProps = {};
+    zes_pci_config_properties_t configProps = {};
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, getPciConfigProperties(configProps));
     EXPECT_EQ(0u, configProps.vendorId);
 }
 
-TEST_F(ZesPciConfigExpFixtureXe, GivenPciConfigExtensionChainedAfterAnotherExtensionThenBothStructuresAreFilled) {
+TEST_F(ZesPciConfigFixtureXe, GivenPciConfigExtensionChainedAfterAnotherExtensionThenBothStructuresAreFilled) {
     setUpstreamPortConnected(false);
 
-    zes_intel_pci_config_exp_properties_t configProps = {};
-    configProps.stype = ZES_INTEL_STRUCTURE_TYPE_PCI_CONFIG_EXP_PROPERTIES_1_1;
+    zes_pci_config_properties_t configProps = {};
+    configProps.stype = ZES_STRUCTURE_TYPE_PCI_CONFIG_PROPERTIES;
     zes_pci_link_speed_downgrade_ext_properties_t downgradeProps = {};
     downgradeProps.stype = ZES_STRUCTURE_TYPE_PCI_LINK_SPEED_DOWNGRADE_EXT_PROPERTIES;
     downgradeProps.pNext = &configProps;
@@ -1137,15 +1137,15 @@ TEST_F(ZesPciConfigExpFixtureXe, GivenPciConfigExtensionChainedAfterAnotherExten
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDevicePciGetProperties(device, &properties));
 
     EXPECT_TRUE(downgradeProps.pciLinkSpeedUpdateCapable);
-    EXPECT_EQ(PciConfigExpMock::expectedVendorId, configProps.vendorId);
-    EXPECT_EQ(PciConfigExpMock::expectedDeviceSpeedsVector, configProps.supportedLinkSpeeds);
+    EXPECT_EQ(PciConfigMock::expectedVendorId, configProps.vendorId);
+    EXPECT_EQ(PciConfigMock::expectedDeviceSpeedsVector, configProps.supportedLinkSpeeds);
 }
 
-TEST_F(ZesPciConfigExpFixtureXe, GivenPciConfigExtensionChainedAfterAnUnknownExtensionThenInvalidArgumentIsReturnedWithoutFillingIt) {
+TEST_F(ZesPciConfigFixtureXe, GivenPciConfigExtensionChainedAfterAnUnknownExtensionThenInvalidArgumentIsReturnedWithoutFillingIt) {
     setUpstreamPortConnected(false);
 
-    zes_intel_pci_config_exp_properties_t configProps = {};
-    configProps.stype = ZES_INTEL_STRUCTURE_TYPE_PCI_CONFIG_EXP_PROPERTIES_1_1;
+    zes_pci_config_properties_t configProps = {};
+    configProps.stype = ZES_STRUCTURE_TYPE_PCI_CONFIG_PROPERTIES;
     zes_base_properties_t unknownProps = {};
     unknownProps.stype = ZES_STRUCTURE_TYPE_FORCE_UINT32;
     unknownProps.pNext = &configProps;
@@ -1156,15 +1156,15 @@ TEST_F(ZesPciConfigExpFixtureXe, GivenPciConfigExtensionChainedAfterAnUnknownExt
     EXPECT_EQ(0u, configProps.vendorId);
 }
 
-TEST_F(ZesPciConfigExpFixtureXe, GivenPciConfigExtensionCannotBeReadWhenAnotherExtensionIsChainedAfterItThenTheFailureIsReportedWithoutFillingIt) {
+TEST_F(ZesPciConfigFixtureXe, GivenPciConfigExtensionCannotBeReadWhenAnotherExtensionIsChainedAfterItThenTheFailureIsReportedWithoutFillingIt) {
     setUpstreamPortConnected(false);
-    PciConfigExpMock::readFailure = true;
+    PciConfigMock::readFailure = true;
     VariableBackup<int> mockErrno(&errno);
 
     zes_pci_link_speed_downgrade_ext_properties_t downgradeProps = {};
     downgradeProps.stype = ZES_STRUCTURE_TYPE_PCI_LINK_SPEED_DOWNGRADE_EXT_PROPERTIES;
-    zes_intel_pci_config_exp_properties_t configProps = {};
-    configProps.stype = ZES_INTEL_STRUCTURE_TYPE_PCI_CONFIG_EXP_PROPERTIES_1_1;
+    zes_pci_config_properties_t configProps = {};
+    configProps.stype = ZES_STRUCTURE_TYPE_PCI_CONFIG_PROPERTIES;
     configProps.pNext = &downgradeProps;
     zes_pci_properties_t properties = {};
     properties.pNext = &configProps;
@@ -1240,54 +1240,54 @@ TEST_F(ZesPciFixture, GivenProperPciBdfInfoObjectWhenPciGetPropertiesIsInvokedTh
     pMockSysman.reset();
 }
 
-TEST_F(ZesPciConfigExpFixtureXe, GivenPciConfigExtensionWhenTopologyPathCannotBeResolvedFromThePciDevicePathThenLinkRegistersComeFromTheDeviceFunction) {
+TEST_F(ZesPciConfigFixtureXe, GivenPciConfigExtensionWhenTopologyPathCannotBeResolvedFromThePciDevicePathThenLinkRegistersComeFromTheDeviceFunction) {
     setUpstreamPortConnected(true);
     pFsAccess->mockGetRealPathResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
 
-    zes_intel_pci_config_exp_properties_t configProps = {};
+    zes_pci_config_properties_t configProps = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, getPciConfigProperties(configProps));
 
-    EXPECT_EQ(PciConfigExpMock::expectedVendorId, configProps.vendorId);
-    EXPECT_EQ(PciConfigExpMock::expectedDeviceSpeedsVector, configProps.supportedLinkSpeeds);
+    EXPECT_EQ(PciConfigMock::expectedVendorId, configProps.vendorId);
+    EXPECT_EQ(PciConfigMock::expectedDeviceSpeedsVector, configProps.supportedLinkSpeeds);
 }
 
-TEST_F(ZesPciConfigExpFixtureXe, GivenDeviceInSurvivabilityModeWhenPciConfigExtensionIsRequestedThenLinkRegistersStillComeFromTheCardBus) {
+TEST_F(ZesPciConfigFixtureXe, GivenDeviceInSurvivabilityModeWhenPciConfigExtensionIsRequestedThenLinkRegistersStillComeFromTheCardBus) {
     setSurvivabilityMode();
     setUpstreamPortConnected(true);
 
     delete pPciImp->pOsPci;
     pPciImp->pOsPci = nullptr;
 
-    zes_intel_pci_config_exp_properties_t configProps = {};
+    zes_pci_config_properties_t configProps = {};
     zes_pci_properties_t properties = {};
-    configProps.stype = ZES_INTEL_STRUCTURE_TYPE_PCI_CONFIG_EXP_PROPERTIES_1_1;
+    configProps.stype = ZES_STRUCTURE_TYPE_PCI_CONFIG_PROPERTIES;
     properties.pNext = &configProps;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDevicePciGetProperties(device, &properties));
 
     EXPECT_EQ(expectedBus, properties.address.bus);
     EXPECT_EQ(expectedDevice, properties.address.device);
     EXPECT_EQ(expectedFunction, properties.address.function);
-    EXPECT_EQ(PciConfigExpMock::expectedVendorId, configProps.vendorId);
-    EXPECT_EQ(PciConfigExpMock::expectedDeviceId, configProps.deviceId);
-    EXPECT_EQ(PciConfigExpMock::expectedSubsystemVendorId, configProps.subsystemVendorId);
-    EXPECT_EQ(PciConfigExpMock::expectedSubsystemDeviceId, configProps.subsystemDeviceId);
-    EXPECT_EQ(PciConfigExpMock::expectedRevision, configProps.revision);
-    EXPECT_EQ(PciConfigExpMock::expectedCapabilityVersion, configProps.pcieCapabilityVersion);
-    EXPECT_EQ(PciConfigExpMock::expectedCardBusSpeedsVector, configProps.supportedLinkSpeeds);
+    EXPECT_EQ(PciConfigMock::expectedVendorId, configProps.vendorId);
+    EXPECT_EQ(PciConfigMock::expectedDeviceId, configProps.deviceId);
+    EXPECT_EQ(PciConfigMock::expectedSubsystemVendorId, configProps.subsystemVendorId);
+    EXPECT_EQ(PciConfigMock::expectedSubsystemDeviceId, configProps.subsystemDeviceId);
+    EXPECT_EQ(PciConfigMock::expectedRevision, configProps.revision);
+    EXPECT_EQ(PciConfigMock::expectedCapabilityVersion, configProps.pcieCapabilityVersion);
+    EXPECT_EQ(PciConfigMock::expectedCardBusSpeedsVector, configProps.supportedLinkSpeeds);
 }
 
-TEST_F(ZesPciConfigExpFixtureXe, GivenDeviceInSurvivabilityModeWhenPciConfigSpaceCannotBeReadThenTheFailureIsReported) {
+TEST_F(ZesPciConfigFixtureXe, GivenDeviceInSurvivabilityModeWhenPciConfigSpaceCannotBeReadThenTheFailureIsReported) {
     setSurvivabilityMode();
     setUpstreamPortConnected(false);
-    PciConfigExpMock::readFailure = true;
+    PciConfigMock::readFailure = true;
     VariableBackup<int> mockErrno(&errno);
 
-    zes_intel_pci_config_exp_properties_t configProps = {};
+    zes_pci_config_properties_t configProps = {};
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, getPciConfigProperties(configProps));
     EXPECT_EQ(0u, configProps.vendorId);
 }
 
-TEST_F(ZesPciConfigExpFixtureXe, GivenDeviceInSurvivabilityModeWhenAnUnsupportedExtensionIsChainedThenItIsLeftUnfilledAndSuccessIsReturned) {
+TEST_F(ZesPciConfigFixtureXe, GivenDeviceInSurvivabilityModeWhenAnUnsupportedExtensionIsChainedThenItIsLeftUnfilledAndSuccessIsReturned) {
     setSurvivabilityMode();
 
     zes_pci_link_speed_downgrade_ext_properties_t downgradeProps = {};

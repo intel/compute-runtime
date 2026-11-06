@@ -21,7 +21,7 @@ ze_result_t WddmPciImp::getProperties(zes_pci_properties_t *properties) {
     return pSysmanProductHelper->getPciProperties(properties);
 }
 
-ze_result_t WddmPciImp::getPciConfigProperties(zes_intel_pci_config_exp_properties_t *pConfigProperties) {
+ze_result_t WddmPciImp::getPciConfigProperties(zes_pci_config_properties_t *pConfigProperties) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 

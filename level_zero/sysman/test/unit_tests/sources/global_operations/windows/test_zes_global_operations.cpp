@@ -436,7 +436,7 @@ TEST_F(SysmanDevicePropertiesFixture,
        GivenValidDeviceHandleWhenCallingZesDeviceGetPropertiesForDeviceIndexThenValidDeviceIndexIsReturned) {
 
     zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    zes_intel_device_index_exp_properties_t deviceIndexProperties = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_INDEX_EXP_PROPERTIES};
+    zes_device_index_ext_properties_t deviceIndexProperties = {ZES_STRUCTURE_TYPE_DEVICE_INDEX_EXT_PROPERTIES};
     properties.pNext = &deviceIndexProperties;
 
     ze_result_t result = zesDeviceGetProperties(device, &properties);
@@ -445,14 +445,14 @@ TEST_F(SysmanDevicePropertiesFixture,
 }
 
 TEST_F(SysmanDevicePropertiesFixture,
-       GivenValidDeviceHandleWhenCallingZesDeviceGetPropertiesForDeviceGenerationThenUnknownGenerationNameIsReturned) {
+       GivenValidDeviceHandleWhenCallingZesDeviceGetPropertiesForGpuTopologyGenerationNameThenUnknownGenerationNameIsReturned) {
     zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    zes_intel_device_generation_exp_properties_t generationProperties = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_GENERATION_EXP_PROPERTIES};
-    properties.pNext = &generationProperties;
+    zes_device_gpu_topology_ext_properties_t gpuTopologyProperties = {ZES_STRUCTURE_TYPE_DEVICE_GPU_TOPOLOGY_EXT_PROPERTIES};
+    properties.pNext = &gpuTopologyProperties;
 
     ze_result_t result = zesDeviceGetProperties(device, &properties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_STREQ("unknown", generationProperties.generationName);
+    EXPECT_STREQ("unknown", gpuTopologyProperties.generationName);
 }
 
 HWTEST2_F(SysmanDevicePropertiesFixture,
@@ -642,7 +642,7 @@ TEST_F(SysmanGlobalOperationsSerialNumberFixture, GivenSerialNumberWithControlCh
 }
 
 TEST_F(SysmanDevicePropertiesFixture,
-       GivenValidDeviceHandleWhenCallingZesDeviceGetPropertiesForDeviceComputePropertiesThenValidComputePropertiesAreReturned) {
+       GivenValidDeviceHandleWhenCallingZesDeviceGetPropertiesForGpuTopologyThenValidGpuTopologyIsReturned) {
     auto mockHardwareInfo = device->getHardwareInfo();
     mockHardwareInfo.gtSystemInfo.SliceCount = 2;
     mockHardwareInfo.gtSystemInfo.SubSliceCount = 8;
@@ -653,21 +653,20 @@ TEST_F(SysmanDevicePropertiesFixture,
     device->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->setHwInfoAndInitHelpers(&mockHardwareInfo);
 
     zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    zes_intel_device_compute_exp_properties_t computeProperties = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_COMPUTE_EXP_PROPERTIES};
-    properties.pNext = &computeProperties;
+    zes_device_gpu_topology_ext_properties_t gpuTopologyProperties = {ZES_STRUCTURE_TYPE_DEVICE_GPU_TOPOLOGY_EXT_PROPERTIES};
+    properties.pNext = &gpuTopologyProperties;
 
     ze_result_t result = zesDeviceGetProperties(device, &properties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(2u, computeProperties.numSlices);
-    EXPECT_EQ(8u, computeProperties.numCores);
-    EXPECT_EQ(64u, computeProperties.numVectorEngines);
-    EXPECT_EQ(64u, computeProperties.numMatrixEngines);
-    EXPECT_EQ(64u, computeProperties.numEUs);
-    EXPECT_EQ(512u, computeProperties.numThreads);
+    EXPECT_EQ(2u, gpuTopologyProperties.numSlices);
+    EXPECT_EQ(8u, gpuTopologyProperties.numXeCores);
+    EXPECT_EQ(64u, gpuTopologyProperties.numVectorEngines);
+    EXPECT_EQ(64u, gpuTopologyProperties.numMatrixEngines);
+    EXPECT_EQ(512u, gpuTopologyProperties.numThreads);
 }
 
 TEST_F(SysmanDevicePropertiesFixture,
-       GivenMatrixMultiplyAccumulateNotSupportedWhenCallingZesDeviceGetPropertiesForDeviceComputePropertiesThenNumMatrixEnginesIsZero) {
+       GivenMatrixMultiplyAccumulateNotSupportedWhenCallingZesDeviceGetPropertiesForGpuTopologyThenNumMatrixEnginesIsZero) {
     auto mockHardwareInfo = device->getHardwareInfo();
     mockHardwareInfo.gtSystemInfo.SliceCount = 2;
     mockHardwareInfo.gtSystemInfo.SubSliceCount = 8;
@@ -678,21 +677,20 @@ TEST_F(SysmanDevicePropertiesFixture,
     device->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->setHwInfoAndInitHelpers(&mockHardwareInfo);
 
     zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    zes_intel_device_compute_exp_properties_t computeProperties = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_COMPUTE_EXP_PROPERTIES};
-    properties.pNext = &computeProperties;
+    zes_device_gpu_topology_ext_properties_t gpuTopologyProperties = {ZES_STRUCTURE_TYPE_DEVICE_GPU_TOPOLOGY_EXT_PROPERTIES};
+    properties.pNext = &gpuTopologyProperties;
 
     ze_result_t result = zesDeviceGetProperties(device, &properties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(2u, computeProperties.numSlices);
-    EXPECT_EQ(8u, computeProperties.numCores);
-    EXPECT_EQ(64u, computeProperties.numVectorEngines);
-    EXPECT_EQ(0u, computeProperties.numMatrixEngines);
-    EXPECT_EQ(64u, computeProperties.numEUs);
-    EXPECT_EQ(512u, computeProperties.numThreads);
+    EXPECT_EQ(2u, gpuTopologyProperties.numSlices);
+    EXPECT_EQ(8u, gpuTopologyProperties.numXeCores);
+    EXPECT_EQ(64u, gpuTopologyProperties.numVectorEngines);
+    EXPECT_EQ(0u, gpuTopologyProperties.numMatrixEngines);
+    EXPECT_EQ(512u, gpuTopologyProperties.numThreads);
 }
 
 TEST_F(SysmanDevicePropertiesFixture,
-       GivenFusedSubslicesAndEUsWhenCallingZesDeviceGetPropertiesForDeviceComputePropertiesThenEnabledTotalsAreReturned) {
+       GivenFusedSubslicesAndEUsWhenCallingZesDeviceGetPropertiesForGpuTopologyThenEnabledTotalsAreReturned) {
     auto mockHardwareInfo = device->getHardwareInfo();
     mockHardwareInfo.gtSystemInfo.SliceCount = 2;
     mockHardwareInfo.gtSystemInfo.SubSliceCount = 7;
@@ -703,21 +701,20 @@ TEST_F(SysmanDevicePropertiesFixture,
     device->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->setHwInfoAndInitHelpers(&mockHardwareInfo);
 
     zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    zes_intel_device_compute_exp_properties_t computeProperties = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_COMPUTE_EXP_PROPERTIES};
-    properties.pNext = &computeProperties;
+    zes_device_gpu_topology_ext_properties_t gpuTopologyProperties = {ZES_STRUCTURE_TYPE_DEVICE_GPU_TOPOLOGY_EXT_PROPERTIES};
+    properties.pNext = &gpuTopologyProperties;
 
     ze_result_t result = zesDeviceGetProperties(device, &properties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(2u, computeProperties.numSlices);
-    EXPECT_EQ(7u, computeProperties.numCores);
-    EXPECT_EQ(52u, computeProperties.numVectorEngines);
-    EXPECT_EQ(52u, computeProperties.numMatrixEngines);
-    EXPECT_EQ(52u, computeProperties.numEUs);
-    EXPECT_EQ(416u, computeProperties.numThreads);
+    EXPECT_EQ(2u, gpuTopologyProperties.numSlices);
+    EXPECT_EQ(7u, gpuTopologyProperties.numXeCores);
+    EXPECT_EQ(52u, gpuTopologyProperties.numVectorEngines);
+    EXPECT_EQ(52u, gpuTopologyProperties.numMatrixEngines);
+    EXPECT_EQ(416u, gpuTopologyProperties.numThreads);
 }
 
 TEST_F(SysmanDevicePropertiesFixture,
-       GivenDebugApiUsedWhenCallingZesDeviceGetPropertiesForDeviceComputePropertiesThenEnabledTotalsAreReturned) {
+       GivenDebugApiUsedWhenCallingZesDeviceGetPropertiesForGpuTopologyThenEnabledTotalsAreReturned) {
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.DebugApiUsed.set(1);
     auto mockHardwareInfo = device->getHardwareInfo();
@@ -730,15 +727,15 @@ TEST_F(SysmanDevicePropertiesFixture,
     device->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->setHwInfoAndInitHelpers(&mockHardwareInfo);
 
     zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    zes_intel_device_compute_exp_properties_t computeProperties = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_COMPUTE_EXP_PROPERTIES};
-    properties.pNext = &computeProperties;
+    zes_device_gpu_topology_ext_properties_t gpuTopologyProperties = {ZES_STRUCTURE_TYPE_DEVICE_GPU_TOPOLOGY_EXT_PROPERTIES};
+    properties.pNext = &gpuTopologyProperties;
 
     ze_result_t result = zesDeviceGetProperties(device, &properties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(0u, computeProperties.numSlices);
-    EXPECT_EQ(7u, computeProperties.numCores);
-    EXPECT_EQ(52u, computeProperties.numEUs);
-    EXPECT_EQ(416u, computeProperties.numThreads);
+    EXPECT_EQ(0u, gpuTopologyProperties.numSlices);
+    EXPECT_EQ(7u, gpuTopologyProperties.numXeCores);
+    EXPECT_EQ(52u, gpuTopologyProperties.numVectorEngines);
+    EXPECT_EQ(416u, gpuTopologyProperties.numThreads);
 }
 
 TEST_F(SysmanDevicePropertiesFixture,

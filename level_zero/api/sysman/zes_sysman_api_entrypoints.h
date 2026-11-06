@@ -1445,7 +1445,9 @@ ze_result_t ZE_APICALL zesDriverGetPciDeviceProperties(
     zes_driver_handle_t hDriver,
     uint32_t *pCount,
     zes_driver_pci_device_properties_t *pProperties) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Sysman::dispatchSysmanApi(
+        [&]() { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; },
+        [&]() { return L0::Sysman::SysmanDriverHandle::fromHandle(hDriver)->getPciDeviceProperties(pCount, pProperties); });
 }
 
 } // namespace L0
