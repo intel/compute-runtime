@@ -40,6 +40,7 @@ class PublicLinuxSysmanImp : public L0::Sysman::LinuxSysmanImp {
   public:
     using LinuxSysmanImp::pciBdfInfo;
     using LinuxSysmanImp::pFsAccess;
+    using LinuxSysmanImp::pFwctlInterface;
     using LinuxSysmanImp::pFwUtilInterface;
     using LinuxSysmanImp::pPmuInterface;
     using LinuxSysmanImp::pProcfsAccess;
