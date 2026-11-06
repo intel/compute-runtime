@@ -606,7 +606,7 @@ void Context::eraseIpcHandleTrackingsIf(ShouldEraseT shouldErase) {
     auto lockIPC = this->driverHandle->lockIPCHandleMap();
     auto &ipcMap = this->driverHandle->getIPCHandleMap();
     for (auto ipcHandleIterator = ipcMap.begin(); ipcHandleIterator != ipcMap.end();) {
-        if (shouldErase(*ipcHandleIterator->second)) {
+        if (shouldErase(ipcHandleIterator->first, *ipcHandleIterator->second)) {
             ipcHandleIterator = this->eraseIpcHandleTracking(ipcHandleIterator);
         } else {
             ipcHandleIterator++;
@@ -619,12 +619,29 @@ void Context::releaseIpcHandle(const void *ptr, const NEO::SvmAllocationData &al
         return;
     }
     const uint64_t addressForIpc = reinterpret_cast<uint64_t>(ptr);
-    this->eraseIpcHandleTrackingsIf([addressForIpc](const IpcHandleTracking &tracking) { return tracking.ptr == addressForIpc; });
+    this->eraseIpcHandleTrackingsIf([addressForIpc](uint64_t, const IpcHandleTracking &tracking) { return tracking.ptr == addressForIpc; });
+}
+
+void Context::releaseIpcHandlesOfAllocation(const NEO::GraphicsAllocation *allocation) {
+    std::lock_guard<std::mutex> lock(this->ipcRangeTransportMutex);
+    std::vector<uint64_t> releasedHandles;
+    this->eraseIpcHandleTrackingsIf([allocation, &releasedHandles](uint64_t handle, const IpcHandleTracking &tracking) {
+        if (tracking.alloc != allocation) {
+            return false;
+        }
+        releasedHandles.push_back(handle);
+        return true;
+    });
+    for (auto &rangeTransport : this->ipcRangeTransports) {
+        std::erase_if(rangeTransport.handleKeys, [&releasedHandles](uint64_t handleKey) {
+            return std::find(releasedHandles.begin(), releasedHandles.end(), handleKey) != releasedHandles.end();
+        });
+    }
 }
 
 void Context::releasePooledIpcHandles(const void *poolPtr) {
     const uint64_t poolAddress = castToUint64(poolPtr);
-    this->eraseIpcHandleTrackingsIf([poolAddress](const IpcHandleTracking &tracking) { return tracking.pooled && tracking.ptr == poolAddress; });
+    this->eraseIpcHandleTrackingsIf([poolAddress](uint64_t, const IpcHandleTracking &tracking) { return tracking.pooled && tracking.ptr == poolAddress; });
 }
 
 void Context::eraseSharedMakeResidentAllocations(const NEO::SvmAllocationData &svmData) {
@@ -2467,6 +2484,7 @@ ze_result_t Context::destroyPhysicalMem(ze_physical_mem_handle_t hPhysicalMemory
     it = this->driverHandle->getMemoryManager()->getPhysicalMemoryAllocationMap().find(static_cast<void *>(hPhysicalMemory));
     if (it != this->driverHandle->getMemoryManager()->getPhysicalMemoryAllocationMap().end()) {
         NEO::PhysicalMemoryAllocation *allocationNode = it->second;
+        this->releaseIpcHandlesOfAllocation(allocationNode->allocation);
         this->driverHandle->getMemoryManager()->freeGraphicsMemoryImpl(allocationNode->allocation);
         this->driverHandle->getMemoryManager()->getPhysicalMemoryAllocationMap().erase(it);
         delete allocationNode;

@@ -491,6 +491,52 @@ TEST_F(IpcMemHandleRangeTest, givenExportedRangeHandleWhenPuttingItThenIpcHandle
     clearReservation();
 }
 
+TEST_F(IpcMemHandleRangeTest, givenExportedRangeHandleWhenChunkAllocationIsReleasedAndItsHandleIsReusedThenPuttingRangeHandleKeepsReusedHandleTracking) {
+    installExportSvmManager();
+    auto exportContext = createExportContext();
+
+    void *basePtr = reinterpret_cast<void *>(0x100000);
+    const size_t mappingSize = 4096u;
+    void *secondPtr = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(basePtr) + mappingSize);
+
+    FixedHandleAllocation alloc0(neoDevice->getRootDeviceIndex(), basePtr, mappingSize, 101u);
+    FixedHandleAllocation alloc1(neoDevice->getRootDeviceIndex(), secondPtr, mappingSize, 102u);
+
+    NEO::MemoryMappedRange range0{};
+    range0.ptr = basePtr;
+    range0.size = mappingSize;
+    range0.mappedAllocation.allocation = &alloc0;
+
+    NEO::MemoryMappedRange range1{};
+    range1.ptr = secondPtr;
+    range1.size = mappingSize;
+    range1.mappedAllocation.allocation = &alloc1;
+
+    installReservation(basePtr, {&range0, &range1});
+
+    auto desc = buildRangeDesc(2u * mappingSize);
+    ze_ipc_mem_handle_t rangeIpcHandle = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, exportContext->getIpcMemHandle(basePtr, &desc, &rangeIpcHandle));
+
+    exportContext->releaseIpcHandlesOfAllocation(&alloc0);
+    auto &ipcMap = driverHandle->getIPCHandleMap();
+    EXPECT_FALSE(ipcMap.contains(101u));
+
+    FixedHandleAllocation reusingAlloc(neoDevice->getRootDeviceIndex(), basePtr, mappingSize, 101u);
+    ze_ipc_mem_handle_t reusingIpcHandle = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, exportContext->callEncodeIpcHandleForRangeAllocation(&reusingAlloc, castToUint64(basePtr), reusingIpcHandle));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, exportContext->putIpcMemHandle(rangeIpcHandle));
+    ASSERT_EQ(1u, ipcMap.size());
+    auto reusedHandleIt = ipcMap.find(101u);
+    ASSERT_NE(ipcMap.end(), reusedHandleIt);
+    EXPECT_EQ(&reusingAlloc, reusedHandleIt->second->alloc);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, exportContext->putIpcMemHandle(reusingIpcHandle));
+    EXPECT_TRUE(ipcMap.empty());
+    clearReservation();
+}
+
 TEST_F(IpcMemHandleRangeTest, givenPtrOffsetIntoReservationWithContiguousMappingsWhenGettingRangeHandleThenRangeHandleAndTransportAreCreated) {
     installExportSvmManager();
     auto exportContext = createExportContext();

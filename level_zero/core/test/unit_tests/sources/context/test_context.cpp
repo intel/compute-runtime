@@ -7902,18 +7902,9 @@ TEST_F(ContextTest, whenCallingGetIpcMemHandleWithDevicePhysicalMemoryHandleThen
     EXPECT_EQ(expectedHandle, ipcData->handle);
     EXPECT_EQ(static_cast<uint8_t>(InternalIpcMemoryType::deviceUnifiedMemory), ipcData->type);
 
-    {
-        auto lock = driverHandle->lockIPCHandleMap();
-        auto &ipcHandleMap = driverHandle->getIPCHandleMap();
-        auto it = ipcHandleMap.find(expectedHandle);
-        if (it != ipcHandleMap.end()) {
-            delete it->second;
-        }
-        ipcHandleMap.clear();
-    }
-
     res = contextImp->destroyPhysicalMem(mem);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_TRUE(driverHandle->getIPCHandleMap().empty());
 
     res = contextImp->destroy();
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -7959,18 +7950,9 @@ TEST_F(ContextTest, whenCallingGetIpcMemHandleWithHostPhysicalMemoryHandleThenSu
     EXPECT_EQ(expectedHandle, ipcData->handle);
     EXPECT_EQ(static_cast<uint8_t>(InternalIpcMemoryType::deviceUnifiedMemory), ipcData->type);
 
-    {
-        auto lock = driverHandle->lockIPCHandleMap();
-        auto &ipcHandleMap = driverHandle->getIPCHandleMap();
-        auto it = ipcHandleMap.find(expectedHandle);
-        if (it != ipcHandleMap.end()) {
-            delete it->second;
-        }
-        ipcHandleMap.clear();
-    }
-
     res = contextImp->destroyPhysicalMem(mem);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_TRUE(driverHandle->getIPCHandleMap().empty());
 
     res = contextImp->destroy();
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
