@@ -145,6 +145,11 @@ uint32_t GfxCoreHelperHw<Family>::getAmountOfAllocationsToFill() const {
 }
 
 template <>
+size_t GfxCoreHelperHw<Family>::getIsaPoolAllocationLimit(const RootDeviceEnvironment &rootDeviceEnvironment) const {
+    return MemoryConstants::pageSize2M;
+}
+
+template <>
 bool GfxCoreHelperHw<Family>::copyThroughLockedPtrEnabled(const HardwareInfo &hwInfo, const ProductHelper &productHelper) const {
     if (debugManager.flags.ExperimentalCopyThroughLock.get() != -1) {
         return debugManager.flags.ExperimentalCopyThroughLock.get() == 1;

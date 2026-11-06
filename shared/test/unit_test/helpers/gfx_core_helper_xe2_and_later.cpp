@@ -20,6 +20,7 @@
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
+#include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 namespace NEO {
@@ -35,6 +36,23 @@ HWTEST2_F(GfxCoreHelperXe2AndLaterTests, givenAtLeastXe2HpgWhenCallIsTimestampSh
 
     auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
     EXPECT_FALSE(gfxCoreHelper.isTimestampShiftRequired());
+}
+
+HWTEST2_F(GfxCoreHelperXe2AndLaterTests, givenLocalMemoryEnabledOrDisabledAnd2MBAlignmentEnabledOrDisabledWhenGettingIsaPoolAllocationLimitThenPageSize2MIsReturned, IsAtLeastXe2HpgCore) {
+    DebugManagerStateRestore restorer;
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+    auto mockProductHelper = new MockProductHelper;
+    rootDeviceEnvironment.productHelper.reset(mockProductHelper);
+    const auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+
+    for (const auto enableLocalMemory : {0, 1}) {
+        for (const auto is2MBLocalMemAlignmentEnabled : {false, true}) {
+            debugManager.flags.EnableLocalMemory.set(enableLocalMemory);
+            mockProductHelper->is2MBLocalMemAlignmentEnabledResult = is2MBLocalMemAlignmentEnabled;
+            EXPECT_EQ(MemoryConstants::pageSize2M, gfxCoreHelper.getIsaPoolAllocationLimit(rootDeviceEnvironment));
+        }
+    }
 }
 
 HWTEST2_F(GfxCoreHelperXe2AndLaterTests, givenAtLeastXe2HpgWhenCallIsNonCoherentTimestampsModeEnabledThenReturnCorrectValue, IsAtLeastXe2HpgCore) {

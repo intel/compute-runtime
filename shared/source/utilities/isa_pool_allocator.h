@@ -56,7 +56,7 @@ class ISAPoolAllocator : public AbstractBuffersAllocator<ISAPool, GraphicsAlloca
     Device *device;
     size_t userAllocationSize = MemoryConstants::pageSize2M * 2;
     size_t builtinAllocationSize = MemoryConstants::pageSize64k;
-    size_t poolAlignment = 1u;
+    size_t poolAlignment = MemoryConstants::pageSize;
     std::mutex allocatorMtx;
 };
 

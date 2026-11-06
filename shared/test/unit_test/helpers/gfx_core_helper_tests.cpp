@@ -25,6 +25,7 @@
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
+#include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
 
@@ -1148,6 +1149,25 @@ HWTEST2_F(GfxCoreHelperTest, givenGfxCoreHelperWhenFlagSetAndCallGetAmountOfAllo
 
     debugManager.flags.SetAmountOfReusableAllocations.set(1);
     EXPECT_EQ(gfxCoreHelper.getAmountOfAllocationsToFill(), 1u);
+}
+
+HWTEST2_F(GfxCoreHelperTest, givenLocalMemoryEnabledOrDisabledAnd2MBAlignmentEnabledOrDisabledWhenGettingIsaPoolAllocationLimitThenCorrectValueIsReturned, IsAtMostXeCore) {
+    DebugManagerStateRestore restorer;
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+    auto mockProductHelper = new MockProductHelper;
+    rootDeviceEnvironment.productHelper.reset(mockProductHelper);
+    const auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+
+    debugManager.flags.EnableLocalMemory.set(0);
+    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
+    EXPECT_EQ(MemoryConstants::pageSize, gfxCoreHelper.getIsaPoolAllocationLimit(rootDeviceEnvironment));
+
+    debugManager.flags.EnableLocalMemory.set(1);
+    EXPECT_EQ(MemoryConstants::pageSize2M, gfxCoreHelper.getIsaPoolAllocationLimit(rootDeviceEnvironment));
+
+    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = false;
+    EXPECT_EQ(MemoryConstants::pageSize64k, gfxCoreHelper.getIsaPoolAllocationLimit(rootDeviceEnvironment));
 }
 
 HWTEST2_F(GfxCoreHelperTest, givenAtMostGen12lpPlatformWhenGettingMinimalScratchSpaceSizeThen1024IsReturned, IsGen12LP) {

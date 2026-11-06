@@ -682,6 +682,17 @@ bool GfxCoreHelperHw<GfxFamily>::copyThroughLockedPtrEnabled(const HardwareInfo 
 }
 
 template <typename GfxFamily>
+size_t GfxCoreHelperHw<GfxFamily>::getIsaPoolAllocationLimit(const RootDeviceEnvironment &rootDeviceEnvironment) const {
+    if (this->useSystemMemoryPlacementForISA(*rootDeviceEnvironment.getHardwareInfo())) {
+        return MemoryConstants::pageSize;
+    }
+    if (rootDeviceEnvironment.getProductHelper().is2MBLocalMemAlignmentEnabled()) {
+        return MemoryConstants::pageSize2M;
+    }
+    return MemoryConstants::pageSize64k;
+}
+
+template <typename GfxFamily>
 bool GfxCoreHelperHw<GfxFamily>::isChipsetUniqueUUIDSupported() const {
     return false;
 }

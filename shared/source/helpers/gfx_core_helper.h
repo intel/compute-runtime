@@ -157,6 +157,7 @@ class GfxCoreHelper {
     virtual uint32_t getMinimalScratchSpaceSize() const = 0;
     virtual bool copyThroughLockedPtrEnabled(const HardwareInfo &hwInfo, const ProductHelper &productHelper) const = 0;
     virtual uint32_t getAmountOfAllocationsToFill() const = 0;
+    virtual size_t getIsaPoolAllocationLimit(const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual bool isChipsetUniqueUUIDSupported() const = 0;
     virtual bool isTimestampShiftRequired() const = 0;
     virtual std::optional<uint32_t> getTimestampMmioOffset() const = 0;
@@ -396,6 +397,7 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     uint32_t getMinimalScratchSpaceSize() const override;
     bool copyThroughLockedPtrEnabled(const HardwareInfo &hwInfo, const ProductHelper &productHelper) const override;
     uint32_t getAmountOfAllocationsToFill() const override;
+    size_t getIsaPoolAllocationLimit(const RootDeviceEnvironment &rootDeviceEnvironment) const override;
     bool isChipsetUniqueUUIDSupported() const override;
     bool isTimestampShiftRequired() const override;
     std::optional<uint32_t> getTimestampMmioOffset() const override;
