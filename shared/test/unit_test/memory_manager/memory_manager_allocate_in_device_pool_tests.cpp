@@ -20,7 +20,6 @@
 #include "shared/test/common/mocks/mock_gfx_partition.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
-#include "shared/test/common/mocks/mock_memory_operations_handler.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -462,14 +461,6 @@ class MockAgnosticMemoryManager : public OsAgnosticMemoryManager {
     using OsAgnosticMemoryManager::mapPhysicalDeviceMemoryToVirtualMemory;
     using OsAgnosticMemoryManager::unMapPhysicalDeviceMemoryFromVirtualMemory;
     MockAgnosticMemoryManager(ExecutionEnvironment &executionEnvironment) : OsAgnosticMemoryManager(executionEnvironment) {}
-    void removeAllocationFromDownloadAllocationsInCsr(GraphicsAllocation *alloc) override {
-        releasedAllocations.push_back(alloc);
-        OsAgnosticMemoryManager::removeAllocationFromDownloadAllocationsInCsr(alloc);
-    }
-    bool wasReleased(GraphicsAllocation *alloc) const {
-        return std::find(releasedAllocations.begin(), releasedAllocations.end(), alloc) != releasedAllocations.end();
-    }
-    std::vector<GraphicsAllocation *> releasedAllocations;
 };
 
 TEST(BaseMemoryManagerTest, givenCalltoMapAndUnMapThenVirtialAddressSetUnSetOnPhysicalMemoryReturned) {
@@ -485,192 +476,11 @@ TEST(BaseMemoryManagerTest, givenCalltoMapAndUnMapThenVirtialAddressSetUnSetOnPh
     uint64_t gpuAddress = 0x1234;
     size_t size = 4096;
     MemoryFlags flags = {};
-    MultiGraphicsAllocation multiGraphicsAllocation(allocationBuffer->getRootDeviceIndex());
-    EXPECT_TRUE(memoryManager.mapPhysicalDeviceMemoryToVirtualMemory(multiGraphicsAllocation, allocationBuffer, gpuAddress, size, &flags, 0u));
-    auto mappedAllocation = multiGraphicsAllocation.getGraphicsAllocation(allocationBuffer->getRootDeviceIndex());
-    ASSERT_NE(nullptr, mappedAllocation);
-    EXPECT_NE(allocationBuffer, mappedAllocation);
-    EXPECT_EQ(gpuAddress, mappedAllocation->getGpuAddress());
+    EXPECT_TRUE(memoryManager.mapPhysicalDeviceMemoryToVirtualMemory(allocationBuffer, gpuAddress, size, &flags, 0u));
+    EXPECT_EQ(gpuAddress, allocationBuffer->getGpuAddress());
 
-    EXPECT_TRUE(memoryManager.unMapPhysicalDeviceMemoryFromVirtualMemory(multiGraphicsAllocation, allocationBuffer, gpuAddress, size, nullptr, 0u));
-    memoryManager.freeGraphicsMemory(allocationBuffer);
-}
-
-TEST(BaseMemoryManagerTest, givenCalltoUnmapWithNoMappedAllocationThenFalseReturned) {
-    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    executionEnvironment.initGmm();
-    MemoryManagerCreate<MockAgnosticMemoryManager> memoryManager(false, true, executionEnvironment);
-
-    AllocationProperties allocPropertiesBuffer(mockRootDeviceIndex, 1, AllocationType::buffer, mockDeviceBitfield);
-    allocPropertiesBuffer.flags.isHostInaccessibleAllocation = true;
-
-    auto allocationBuffer = memoryManager.allocatePhysicalGraphicsMemory(allocPropertiesBuffer);
-    ASSERT_NE(nullptr, allocationBuffer);
-
-    MultiGraphicsAllocation multiGraphicsAllocation(allocationBuffer->getRootDeviceIndex());
-    EXPECT_FALSE(memoryManager.unMapPhysicalDeviceMemoryFromVirtualMemory(multiGraphicsAllocation, allocationBuffer, 0x1234, 4096, nullptr, 0u));
-
-    memoryManager.freeGraphicsMemory(allocationBuffer);
-}
-
-TEST(BaseMemoryManagerTest, givenCalltoMapSamePhysicalAllocationTwiceThenEachMappingIsIndependent) {
-    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    executionEnvironment.initGmm();
-    MemoryManagerCreate<MockAgnosticMemoryManager> memoryManager(false, true, executionEnvironment);
-
-    AllocationProperties allocPropertiesBuffer(mockRootDeviceIndex, 1, AllocationType::buffer, mockDeviceBitfield);
-    allocPropertiesBuffer.flags.isHostInaccessibleAllocation = true;
-
-    auto allocationBuffer = memoryManager.allocatePhysicalGraphicsMemory(allocPropertiesBuffer);
-    ASSERT_NE(nullptr, allocationBuffer);
-
-    size_t size = 4096;
-    MemoryFlags flags = {};
-
-    MultiGraphicsAllocation firstMapping(allocationBuffer->getRootDeviceIndex());
-    MultiGraphicsAllocation secondMapping(allocationBuffer->getRootDeviceIndex());
-
-    uint64_t firstGpuAddress = 0x1234;
-    uint64_t secondGpuAddress = 0x5678;
-
-    EXPECT_TRUE(memoryManager.mapPhysicalDeviceMemoryToVirtualMemory(firstMapping, allocationBuffer, firstGpuAddress, size, &flags, 0u));
-    EXPECT_TRUE(memoryManager.mapPhysicalDeviceMemoryToVirtualMemory(secondMapping, allocationBuffer, secondGpuAddress, size, &flags, 0u));
-
-    auto mappedAllocationA = firstMapping.getGraphicsAllocation(allocationBuffer->getRootDeviceIndex());
-    auto mappedAllocationB = secondMapping.getGraphicsAllocation(allocationBuffer->getRootDeviceIndex());
-    ASSERT_NE(nullptr, mappedAllocationA);
-    ASSERT_NE(nullptr, mappedAllocationB);
-    EXPECT_NE(mappedAllocationA, mappedAllocationB);
-    EXPECT_NE(allocationBuffer, mappedAllocationA);
-    EXPECT_NE(allocationBuffer, mappedAllocationB);
-    EXPECT_EQ(firstGpuAddress, mappedAllocationA->getGpuAddress());
-    EXPECT_EQ(secondGpuAddress, mappedAllocationB->getGpuAddress());
-
-    EXPECT_TRUE(memoryManager.unMapPhysicalDeviceMemoryFromVirtualMemory(firstMapping, allocationBuffer, firstGpuAddress, size, nullptr, 0u));
-    EXPECT_TRUE(memoryManager.unMapPhysicalDeviceMemoryFromVirtualMemory(secondMapping, allocationBuffer, secondGpuAddress, size, nullptr, 0u));
-
-    memoryManager.freeGraphicsMemory(allocationBuffer);
-}
-
-TEST(BaseMemoryManagerTest, givenPhysicalDeviceMemoryWhenMappedThenMappingUsesPhysicalBackingStorageAsCpuPointer) {
-    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    executionEnvironment.initGmm();
-    MemoryManagerCreate<MockAgnosticMemoryManager> memoryManager(false, true, executionEnvironment);
-
-    AllocationProperties allocPropertiesBuffer(mockRootDeviceIndex, 1, AllocationType::buffer, mockDeviceBitfield);
-    allocPropertiesBuffer.flags.isHostInaccessibleAllocation = true;
-
-    auto allocationBuffer = memoryManager.allocatePhysicalGraphicsMemory(allocPropertiesBuffer);
-    ASSERT_NE(nullptr, allocationBuffer);
-    ASSERT_NE(nullptr, allocationBuffer->getUnderlyingBuffer());
-
-    const uint64_t gpuAddress = 0x100000;
-    const size_t size = 4096;
-    MemoryFlags flags = {};
-    MultiGraphicsAllocation multiGraphicsAllocation(allocationBuffer->getRootDeviceIndex());
-    EXPECT_TRUE(memoryManager.mapPhysicalDeviceMemoryToVirtualMemory(multiGraphicsAllocation, allocationBuffer, gpuAddress, size, &flags, 0u));
-    auto mappedAllocation = multiGraphicsAllocation.getGraphicsAllocation(allocationBuffer->getRootDeviceIndex());
-    ASSERT_NE(nullptr, mappedAllocation);
-
-    EXPECT_EQ(allocationBuffer->getUnderlyingBuffer(), mappedAllocation->getUnderlyingBuffer());
-    EXPECT_EQ(gpuAddress, mappedAllocation->getGpuAddress());
-
-    EXPECT_TRUE(memoryManager.unMapPhysicalDeviceMemoryFromVirtualMemory(multiGraphicsAllocation, allocationBuffer, gpuAddress, size, nullptr, 0u));
-    memoryManager.freeGraphicsMemory(allocationBuffer);
-}
-
-TEST(BaseMemoryManagerTest, givenPhysicalDeviceMemoryWhenMappedThenMappingSharesPhysicalGmmsAndStorageInfo) {
-    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    executionEnvironment.initGmm();
-    MemoryManagerCreate<MockAgnosticMemoryManager> memoryManager(false, true, executionEnvironment);
-
-    AllocationProperties allocPropertiesBuffer(mockRootDeviceIndex, 1, AllocationType::buffer, mockDeviceBitfield);
-    allocPropertiesBuffer.flags.isHostInaccessibleAllocation = true;
-
-    auto allocationBuffer = memoryManager.allocatePhysicalGraphicsMemory(allocPropertiesBuffer);
-    ASSERT_NE(nullptr, allocationBuffer);
-    ASSERT_NE(nullptr, allocationBuffer->getDefaultGmm());
-    allocationBuffer->storageInfo.memoryBanks = 0b1;
-
-    const uint64_t gpuAddress = 0x100000;
-    const size_t size = 4096;
-    MemoryFlags flags = {};
-    MultiGraphicsAllocation multiGraphicsAllocation(allocationBuffer->getRootDeviceIndex());
-    EXPECT_TRUE(memoryManager.mapPhysicalDeviceMemoryToVirtualMemory(multiGraphicsAllocation, allocationBuffer, gpuAddress, size, &flags, 0u));
-    auto mappedAllocation = multiGraphicsAllocation.getGraphicsAllocation(allocationBuffer->getRootDeviceIndex());
-    ASSERT_NE(nullptr, mappedAllocation);
-
-    EXPECT_EQ(allocationBuffer->getNumGmms(), mappedAllocation->getNumGmms());
-    EXPECT_EQ(allocationBuffer->getDefaultGmm(), mappedAllocation->getDefaultGmm());
-    EXPECT_EQ(allocationBuffer->storageInfo.memoryBanks, mappedAllocation->storageInfo.memoryBanks);
-
-    EXPECT_TRUE(memoryManager.unMapPhysicalDeviceMemoryFromVirtualMemory(multiGraphicsAllocation, allocationBuffer, gpuAddress, size, nullptr, 0u));
-    memoryManager.freeGraphicsMemory(allocationBuffer);
-}
-
-TEST(BaseMemoryManagerTest, givenMappedPhysicalDeviceMemoryWhenPhysicalAllocationIsFreedFirstThenItIsReleasedWithTheLastMapping) {
-    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    executionEnvironment.initGmm();
-    MemoryManagerCreate<MockAgnosticMemoryManager> memoryManager(false, true, executionEnvironment);
-
-    AllocationProperties allocPropertiesBuffer(mockRootDeviceIndex, 1, AllocationType::buffer, mockDeviceBitfield);
-    allocPropertiesBuffer.flags.isHostInaccessibleAllocation = true;
-
-    auto allocationBuffer = memoryManager.allocatePhysicalGraphicsMemory(allocPropertiesBuffer);
-    ASSERT_NE(nullptr, allocationBuffer);
-
-    const size_t size = 4096;
-    MemoryFlags flags = {};
-    const uint64_t firstGpuAddress = 0x100000;
-    const uint64_t secondGpuAddress = 0x200000;
-    MultiGraphicsAllocation firstMapping(allocationBuffer->getRootDeviceIndex());
-    MultiGraphicsAllocation secondMapping(allocationBuffer->getRootDeviceIndex());
-    EXPECT_TRUE(memoryManager.mapPhysicalDeviceMemoryToVirtualMemory(firstMapping, allocationBuffer, firstGpuAddress, size, &flags, 0u));
-    EXPECT_TRUE(memoryManager.mapPhysicalDeviceMemoryToVirtualMemory(secondMapping, allocationBuffer, secondGpuAddress, size, &flags, 0u));
-    auto secondMappedAllocation = secondMapping.getGraphicsAllocation(allocationBuffer->getRootDeviceIndex());
-    ASSERT_NE(nullptr, secondMappedAllocation);
-
-    memoryManager.freeGraphicsMemory(allocationBuffer);
-    EXPECT_FALSE(memoryManager.wasReleased(allocationBuffer));
-
-    EXPECT_TRUE(memoryManager.unMapPhysicalDeviceMemoryFromVirtualMemory(firstMapping, allocationBuffer, firstGpuAddress, size, nullptr, 0u));
-    EXPECT_FALSE(memoryManager.wasReleased(allocationBuffer));
-    memset(secondMappedAllocation->getUnderlyingBuffer(), 0xAB, size);
-    EXPECT_EQ(0xAB, *static_cast<uint8_t *>(secondMappedAllocation->getUnderlyingBuffer()));
-
-    EXPECT_TRUE(memoryManager.unMapPhysicalDeviceMemoryFromVirtualMemory(secondMapping, allocationBuffer, secondGpuAddress, size, nullptr, 0u));
-    EXPECT_TRUE(memoryManager.wasReleased(allocationBuffer));
-}
-
-TEST(BaseMemoryManagerTest, givenMappedPhysicalDeviceMemoryMadeResidentWhenUnmappedThenMappingIsReleasedFromMemoryOperationsInterface) {
-    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    executionEnvironment.initGmm();
-    auto memoryOperationsInterface = new MockMemoryOperations();
-    memoryOperationsInterface->captureGfxAllocationsForMakeResident = true;
-    executionEnvironment.rootDeviceEnvironments[mockRootDeviceIndex]->memoryOperationsInterface.reset(memoryOperationsInterface);
-    MemoryManagerCreate<MockAgnosticMemoryManager> memoryManager(false, true, executionEnvironment);
-
-    AllocationProperties allocPropertiesBuffer(mockRootDeviceIndex, 1, AllocationType::buffer, mockDeviceBitfield);
-    allocPropertiesBuffer.flags.isHostInaccessibleAllocation = true;
-
-    auto allocationBuffer = memoryManager.allocatePhysicalGraphicsMemory(allocPropertiesBuffer);
-    ASSERT_NE(nullptr, allocationBuffer);
-
-    const uint64_t gpuAddress = 0x100000;
-    const size_t size = 4096;
-    MemoryFlags flags = {};
-    MultiGraphicsAllocation multiGraphicsAllocation(allocationBuffer->getRootDeviceIndex());
-    EXPECT_TRUE(memoryManager.mapPhysicalDeviceMemoryToVirtualMemory(multiGraphicsAllocation, allocationBuffer, gpuAddress, size, &flags, 0u));
-    auto mappedAllocation = multiGraphicsAllocation.getGraphicsAllocation(allocationBuffer->getRootDeviceIndex());
-    ASSERT_NE(nullptr, mappedAllocation);
-
-    EXPECT_EQ(MemoryOperationsStatus::success, memoryOperationsInterface->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&mappedAllocation, 1), false, false));
-    ASSERT_EQ(1u, memoryOperationsInterface->gfxAllocationsForMakeResident.size());
-    EXPECT_EQ(mappedAllocation, memoryOperationsInterface->gfxAllocationsForMakeResident[0]);
-
-    EXPECT_TRUE(memoryManager.unMapPhysicalDeviceMemoryFromVirtualMemory(multiGraphicsAllocation, allocationBuffer, gpuAddress, size, nullptr, 0u));
-    EXPECT_TRUE(memoryOperationsInterface->gfxAllocationsForMakeResident.empty());
-
+    EXPECT_TRUE(memoryManager.unMapPhysicalDeviceMemoryFromVirtualMemory(allocationBuffer, gpuAddress, size, nullptr, 0u));
+    EXPECT_NE(gpuAddress, allocationBuffer->getGpuAddress());
     memoryManager.freeGraphicsMemory(allocationBuffer);
 }
 

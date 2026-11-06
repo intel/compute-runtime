@@ -3081,7 +3081,7 @@ class MultiDeviceModuleSetArgBufferTest : public MultiDeviceModuleFixture, publi
 };
 
 HWTEST_F(MultiDeviceModuleSetArgBufferTest,
-         givenCallsToSetArgBufferWithReservedMemoryThenKernelResidencyContainerHasKernelArgMappedAllocationAndPhysicalMemoryIsNotForcedResidentAtMapTime) {
+         givenCallsToSetArgBufferWithReservedMemoryThenKernelResidencyContainerHasKernelArgMappedAllocationAndMemoryInterfaceHasAllMappedAllocations) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < numRootDevices; rootDeviceIndex++) {
         createModuleFromMockBinary(rootDeviceIndex);
@@ -3147,11 +3147,11 @@ HWTEST_F(MultiDeviceModuleSetArgBufferTest,
 
         auto physicalIt = driverHandle->getMemoryManager()->getPhysicalMemoryAllocationMap().find(static_cast<void *>(phPhysicalMemory));
         auto physical1Allocation = physicalIt->second->allocation;
-        EXPECT_EQ(NEO::MemoryOperationsStatus::memoryNotFound, mockMemoryInterface->isResident(neoDevice, *physical1Allocation));
+        EXPECT_EQ(NEO::MemoryOperationsStatus::success, mockMemoryInterface->isResident(neoDevice, *physical1Allocation));
 
         physicalIt = driverHandle->getMemoryManager()->getPhysicalMemoryAllocationMap().find(static_cast<void *>(phPhysicalMemory2));
         auto physical2Allocation = physicalIt->second->allocation;
-        EXPECT_EQ(NEO::MemoryOperationsStatus::memoryNotFound, mockMemoryInterface->isResident(neoDevice, *physical2Allocation));
+        EXPECT_EQ(NEO::MemoryOperationsStatus::success, mockMemoryInterface->isResident(neoDevice, *physical2Allocation));
 
         res = context->unMapVirtualMem(ptr, size);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -3168,7 +3168,7 @@ HWTEST_F(MultiDeviceModuleSetArgBufferTest,
 }
 
 HWTEST_F(MultiDeviceModuleSetArgBufferTest,
-         givenCallsToSetArgBufferWithOffsetReservedMemoryThenKernelResidencyHasArgMappedAllocationAndPhysicalMemoryIsNotForcedResidentAtMapTime) {
+         givenCallsToSetArgBufferWithOffsetReservedMemoryThenKernelResidencyHasArgMappedAllocationAndMemoryInterfaceHasAllMappedAllocations) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < numRootDevices; rootDeviceIndex++) {
         createModuleFromMockBinary(rootDeviceIndex);
@@ -3234,11 +3234,11 @@ HWTEST_F(MultiDeviceModuleSetArgBufferTest,
 
         auto physicalIt = driverHandle->getMemoryManager()->getPhysicalMemoryAllocationMap().find(static_cast<void *>(phPhysicalMemory));
         auto physical1Allocation = physicalIt->second->allocation;
-        EXPECT_EQ(NEO::MemoryOperationsStatus::memoryNotFound, mockMemoryInterface->isResident(neoDevice, *physical1Allocation));
+        EXPECT_EQ(NEO::MemoryOperationsStatus::success, mockMemoryInterface->isResident(neoDevice, *physical1Allocation));
 
         physicalIt = driverHandle->getMemoryManager()->getPhysicalMemoryAllocationMap().find(static_cast<void *>(phPhysicalMemory2));
         auto physical2Allocation = physicalIt->second->allocation;
-        EXPECT_EQ(NEO::MemoryOperationsStatus::memoryNotFound, mockMemoryInterface->isResident(neoDevice, *physical2Allocation));
+        EXPECT_EQ(NEO::MemoryOperationsStatus::success, mockMemoryInterface->isResident(neoDevice, *physical2Allocation));
 
         res = context->unMapVirtualMem(ptr, size);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);

@@ -83,9 +83,6 @@ class WddmAllocation : public GraphicsAllocation {
         if (parentAllocation) {
             return static_cast<WddmAllocation *>(parentAllocation)->peekInternalHandle(memoryManager, handle, reservedHandleData);
         }
-        if (mappedPhysicalAllocation) {
-            return createInternalHandle(memoryManager, 0u, handle, reservedHandleData);
-        }
         handle = ntSecureHandle;
         return handle == 0;
     }
@@ -121,7 +118,6 @@ class WddmAllocation : public GraphicsAllocation {
     uint64_t getReservedSizeForGpuVirtualAddress() const { return reservedSizeForGpuVirtualAddress; }
     void setReservedSizeForGpuVirtualAddress(uint64_t reservedSizeForGpuVirtualAddress) { this->reservedSizeForGpuVirtualAddress = reservedSizeForGpuVirtualAddress; }
 
-    uint64_t getNtSecureHandle() const { return ntSecureHandle; }
     D3DKMT_HANDLE getResourceHandle() const { return resourceHandle; }
     D3DKMT_HANDLE &getResourceHandleToModify() { return resourceHandle; }
     void setResourceHandle(D3DKMT_HANDLE resourceHandle) { this->resourceHandle = resourceHandle; }

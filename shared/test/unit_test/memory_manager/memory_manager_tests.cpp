@@ -135,12 +135,6 @@ TEST(MemoryManagerTest, WhenCallingReserveExactCpuAddressThenReturnFalse) {
     EXPECT_FALSE(memoryManager.reserveExactCpuAddress(0x1000u, MemoryConstants::pageSize));
 }
 
-TEST(MemoryManagerTest, WhenCallingSupportsPhysicalDeviceMemoryMultiMappingThenReturnTrue) {
-    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    OsAgnosticMemoryManager memoryManager(executionEnvironment);
-    EXPECT_TRUE(memoryManager.supportsPhysicalDeviceMemoryMultiMapping(0u));
-}
-
 TEST(MemoryManagerTest, WhenCallingHasPageFaultsEnabledThenReturnFalse) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     OsAgnosticMemoryManager memoryManager(executionEnvironment);
@@ -258,31 +252,13 @@ TEST(MemoryManagerTest, givenDeviceGraphicsAllocationWhenMapCalledThenDontResetC
     MockGraphicsAllocation allocation{&allocationStorage, 1};
     EXPECT_NE(nullptr, allocation.getUnderlyingBuffer());
 
-    MultiGraphicsAllocation multiGraphicsAllocation(allocation.getRootDeviceIndex());
-    EXPECT_TRUE(memoryManager.mapPhysicalDeviceMemoryToVirtualMemory(multiGraphicsAllocation, &allocation, 0x12300, 0, nullptr, 0u));
-    auto mapping = multiGraphicsAllocation.getGraphicsAllocation(allocation.getRootDeviceIndex());
-    ASSERT_NE(nullptr, mapping);
+    EXPECT_TRUE(memoryManager.mapPhysicalDeviceMemoryToVirtualMemory(&allocation, 0x12300, 0, nullptr, 0u));
     EXPECT_EQ(&allocationStorage, allocation.getUnderlyingBuffer());
-    EXPECT_EQ(0x12300u, mapping->getGpuAddress());
+    EXPECT_EQ(0x12300u, allocation.getGpuAddress());
 
-    EXPECT_TRUE(memoryManager.unMapPhysicalDeviceMemoryFromVirtualMemory(multiGraphicsAllocation, &allocation, 1, 1, nullptr, 0));
+    EXPECT_TRUE(memoryManager.unMapPhysicalDeviceMemoryFromVirtualMemory(&allocation, 1, 1, nullptr, 0));
     EXPECT_EQ(&allocationStorage, allocation.getUnderlyingBuffer());
-    EXPECT_EQ(nullptr, multiGraphicsAllocation.getGraphicsAllocation(allocation.getRootDeviceIndex()));
-}
-
-TEST(MemoryManagerTest, givenMappingAllocationPassedAsPhysicalAllocationWhenUnMapPhysicalDeviceMemoryFromVirtualMemoryThenMappingAllocationIsDeletedWithoutUseAfterFree) {
-    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    MockMemoryManager memoryManager(false, false, executionEnvironment);
-
-    uint8_t allocationStorage = 0;
-    auto allocation = new MockGraphicsAllocation{&allocationStorage, 1};
-    allocation->setReservedAddressRange(reinterpret_cast<void *>(0x40000), 1);
-
-    MultiGraphicsAllocation multiGraphicsAllocation(allocation->getRootDeviceIndex());
-    multiGraphicsAllocation.addAllocation(allocation);
-
-    EXPECT_TRUE(memoryManager.unMapPhysicalDeviceMemoryFromVirtualMemory(multiGraphicsAllocation, allocation, 0x40000, 1, nullptr, 0));
-    EXPECT_EQ(nullptr, multiGraphicsAllocation.getGraphicsAllocation(0));
+    EXPECT_EQ(0u, allocation.getGpuAddress());
 }
 
 TEST(MemoryManagerTest, givenHostGraphicsAllocationWhenMapCalledThenDontResetCpuAddress) {
@@ -533,22 +509,6 @@ TEST(MemoryManagerTest, givenFailureOnRegisterLocalMemoryAllocationWhenAllocatin
     MockMemoryManager memoryManager(true, true);
     memoryManager.registerLocalMemAllocResult = MemoryManager::AllocationStatus::Error;
     EXPECT_EQ(nullptr, memoryManager.allocateGraphicsMemoryWithProperties(properties));
-}
-
-TEST(MemoryManagerTest, givenSharedPhysicalMemoryMappingWhenRegisteringSysMemAllocThenUsedSystemMemorySizeIsNotAccounted) {
-    MockExecutionEnvironment executionEnvironment;
-    OsAgnosticMemoryManager memoryManager(executionEnvironment);
-
-    MockGraphicsAllocation allocation(nullptr, MemoryConstants::pageSize);
-    allocation.setSharedPhysicalMemoryMapping(true);
-
-    EXPECT_EQ(MemoryManager::AllocationStatus::Success, memoryManager.registerSysMemAlloc(&allocation));
-    EXPECT_EQ(0u, memoryManager.getUsedSystemMemorySize());
-
-    allocation.setSharedPhysicalMemoryMapping(false);
-
-    EXPECT_EQ(MemoryManager::AllocationStatus::Success, memoryManager.registerSysMemAlloc(&allocation));
-    EXPECT_EQ(MemoryConstants::pageSize, memoryManager.getUsedSystemMemorySize());
 }
 
 using MemoryhManagerMultiContextResourceTests = ::testing::Test;

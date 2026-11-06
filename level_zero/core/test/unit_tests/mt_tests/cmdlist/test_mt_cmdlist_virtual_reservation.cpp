@@ -56,6 +56,7 @@ HWTEST_F(CommandListVirtualReservationMtTest, givenSiblingMappingRemappedWhileRe
 
     constexpr uint32_t iterationCount = 200;
     std::atomic_bool started = false;
+    std::atomic_bool resolverDone = false;
 
     auto resolverBody = [&]() {
         while (!started.load()) {
@@ -65,17 +66,16 @@ HWTEST_F(CommandListVirtualReservationMtTest, givenSiblingMappingRemappedWhileRe
             auto outData = commandList->resolveAlignedAllocation(device, reservedBase, size, nullptr, {});
             EXPECT_NE(nullptr, outData.alloc);
         }
+        resolverDone = true;
     };
 
     // Map and unmap the sibling sub-range underneath the resolver. The application never references
     // this range through the command list, so this sequence is legal while an append is in flight.
-    // Bounded because each map/unmap allocates a per-mapping allocation, and an unbounded loop
-    // overflows the fast leak detector's per-test event buffer.
     auto remapperBody = [&]() {
         while (!started.load()) {
             std::this_thread::yield();
         }
-        for (uint32_t i = 0; i < iterationCount; i++) {
+        while (!resolverDone.load()) {
             if (ZE_RESULT_SUCCESS != context->mapVirtualMem(churnedAddress, size, phPhysicalMemoryChurned, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE)) {
                 continue;
             }

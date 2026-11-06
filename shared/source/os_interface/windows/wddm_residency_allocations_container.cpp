@@ -100,12 +100,4 @@ void WddmResidentAllocationsContainer::removeResource(const D3DKMT_HANDLE &handl
     }
 }
 
-void WddmResidentAllocationsContainer::removeResourceReference(const D3DKMT_HANDLE &handle) {
-    auto lock = acquireLock(resourcesLock);
-    auto position = std::find(resourceHandles.begin(), resourceHandles.end(), handle);
-    if (position != resourceHandles.end()) {
-        resourceHandles.erase(position);
-    }
-}
-
 } // namespace NEO

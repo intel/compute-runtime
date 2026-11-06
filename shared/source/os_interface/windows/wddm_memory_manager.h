@@ -77,7 +77,6 @@ class WddmMemoryManager : public MemoryManager, NEO::NonCopyableAndNonMovableCla
     AddressRange reserveCpuAddress(const uint64_t requiredStartAddress, size_t size) override;
     void freeCpuAddress(AddressRange addressRange) override;
     bool appliesVirtualMemoryAccessFlags(const GraphicsAllocation &physicalAllocation) override;
-    bool updatePhysicalDeviceMemoryMappingAccess(GraphicsAllocation &mappedAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryFlags, size_t offset, uint32_t rootDeviceIndex) override;
     bool verifyHandle(osHandle handle, uint32_t rootDeviceIndex, bool ntHandle) override;
     bool isNTHandle(osHandle handle, uint32_t rootDeviceIndex) override;
     void releaseDeviceSpecificMemResources(uint32_t rootDeviceIndex) override {};
@@ -97,9 +96,9 @@ class WddmMemoryManager : public MemoryManager, NEO::NonCopyableAndNonMovableCla
     GraphicsAllocation *allocatePhysicalDeviceMemory(const AllocationData &allocationData, AllocationStatus &status) override;
     GraphicsAllocation *allocatePhysicalLocalDeviceMemory(const AllocationData &allocationData, AllocationStatus &status) override;
     GraphicsAllocation *allocatePhysicalHostMemory(const AllocationData &allocationData, AllocationStatus &status) override;
-    bool unMapPhysicalDeviceMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, OsContext *osContext, uint32_t rootDeviceIndex) override;
+    bool unMapPhysicalDeviceMemoryFromVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, OsContext *osContext, uint32_t rootDeviceIndex) override;
     bool unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, bool keepReservationPlaceholder) override;
-    bool mapPhysicalDeviceMemoryToVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryflags, size_t offset) override;
+    bool mapPhysicalDeviceMemoryToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryflags, size_t offset) override;
     bool mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, size_t offset, bool keepReservationPlaceholder) override;
     GraphicsAllocation *allocateGraphicsMemoryForImageImpl(const AllocationData &allocationData, std::unique_ptr<Gmm> gmm) override;
     GraphicsAllocation *allocateGraphicsMemoryWithGpuVa(const AllocationData &allocationData) override { return nullptr; }
@@ -122,8 +121,6 @@ class WddmMemoryManager : public MemoryManager, NEO::NonCopyableAndNonMovableCla
     MOCKABLE_VIRTUAL bool createWddmAllocation(WddmAllocation *allocation, void *requiredGpuPtr);
     MOCKABLE_VIRTUAL bool mapGpuVirtualAddress(WddmAllocation *graphicsAllocation, const void *requiredGpuPtr, const MemoryFlags *flags, size_t offset);
     MOCKABLE_VIRTUAL bool createPhysicalAllocation(WddmAllocation *allocation);
-    bool restoreGpuVirtualAddressReservation(Wddm &wddm, uint64_t gpuRange, size_t bufferSize, uint32_t rootDeviceIndex);
-    bool mapPhysicalMemoryToGpuVa(WddmAllocation *wddmAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryFlags, size_t offset);
     bool mapGpuVaForOneHandleAllocation(WddmAllocation *graphicsAllocation, const void *requiredGpuPtr, const MemoryFlags *flags, size_t offset = 0);
     bool mapMultiHandleAllocationWithRetry(WddmAllocation *allocation, const void *requiredGpuPtr, const MemoryFlags *flags);
     bool createGpuAllocationsWithRetry(WddmAllocation *graphicsAllocation);

@@ -34,7 +34,6 @@ class MockWddmMemoryManager : public MemoryManagerCreate<WddmMemoryManager> {
     using BaseClass::getWddm;
     using BaseClass::gfxPartitions;
     using BaseClass::localMemorySupported;
-    using BaseClass::mapGpuVirtualAddress;
     using BaseClass::mapPhysicalDeviceMemoryToVirtualMemory;
     using BaseClass::mapPhysicalHostMemoryToVirtualMemory;
     using BaseClass::supportsMultiStorageResources;

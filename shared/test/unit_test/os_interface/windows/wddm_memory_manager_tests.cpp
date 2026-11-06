@@ -31,7 +31,6 @@
 #include "shared/test/common/mocks/mock_gmm_page_table_mngr.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
-#include "shared/test/common/mocks/mock_memory_operations_handler.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/mocks/windows/mock_wddm_allocation.h"
@@ -1449,637 +1448,13 @@ TEST_F(WddmMemoryManagerSimpleTest, GivenPhysicalDeviceMemoryAndVirtualMemoryThe
     memoryManager->hugeGfxMemoryChunkSize = MemoryConstants::pageSize64k;
     AllocationData allocationData;
     allocationData.size = 2ULL * MemoryConstants::pageSize64k;
-    uint64_t gpuRange = 0x100000;
+    uint64_t gpuRange = 0x1234;
     MemoryManager::AllocationStatus status;
     auto allocation = memoryManager->allocatePhysicalLocalDeviceMemory(allocationData, status);
     EXPECT_NE(nullptr, allocation);
-    MultiGraphicsAllocation multiGraphicsAllocation(allocation->getRootDeviceIndex());
-    EXPECT_TRUE(memoryManager->mapPhysicalDeviceMemoryToVirtualMemory(multiGraphicsAllocation, allocation, gpuRange, allocationData.size, nullptr, 0u));
-    EXPECT_TRUE(memoryManager->unMapPhysicalDeviceMemoryFromVirtualMemory(multiGraphicsAllocation, allocation, gpuRange, allocationData.size, osContext, 0u));
+    EXPECT_TRUE(memoryManager->mapPhysicalDeviceMemoryToVirtualMemory(allocation, gpuRange, allocationData.size, nullptr, 0u));
+    EXPECT_TRUE(memoryManager->unMapPhysicalDeviceMemoryFromVirtualMemory(allocation, gpuRange, allocationData.size, osContext, 0u));
     memoryManager->freeGraphicsMemory(allocation);
-}
-
-TEST_F(WddmMemoryManagerSimpleTest, givenPhysicalDeviceMemoryWhenUnmappingWithoutMappedAllocationThenFalseIsReturned) {
-    memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
-    memoryManager->hugeGfxMemoryChunkSize = MemoryConstants::pageSize64k;
-
-    AllocationData allocationData;
-    allocationData.size = 2ULL * MemoryConstants::pageSize64k;
-    MemoryManager::AllocationStatus status;
-    auto allocation = memoryManager->allocatePhysicalLocalDeviceMemory(allocationData, status);
-    ASSERT_NE(nullptr, allocation);
-
-    MultiGraphicsAllocation emptyMapping(allocation->getRootDeviceIndex());
-    EXPECT_FALSE(memoryManager->unMapPhysicalDeviceMemoryFromVirtualMemory(emptyMapping, allocation, 0x1234, allocationData.size, osContext, 0u));
-
-    memoryManager->freeGraphicsMemory(allocation);
-}
-
-TEST_F(WddmMemoryManagerSimpleTest, givenPhysicalReservationWhenValidateAllocationIsCalledThenItReturnsTrueRegardlessMappedReservationFlag) {
-    memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
-
-    MockWddmAllocation allocation(rootDeviceEnvironment->getGmmHelper(), 1u);
-    allocation.setPhysicalMemoryReservation(true);
-    allocation.setMappedPhysicalMemoryReservation(false);
-    EXPECT_TRUE(memoryManager->validateAllocationMock(&allocation));
-
-    allocation.setMappedPhysicalMemoryReservation(true);
-    EXPECT_TRUE(memoryManager->validateAllocationMock(&allocation));
-}
-
-TEST_F(WddmMemoryManagerSimpleTest, GivenPhysicalDeviceMemoryWhenMappedToVirtualMemoryThenOnlyMappingAllocationIsMarkedAsMappedReservation) {
-    memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
-    memoryManager->hugeGfxMemoryChunkSize = MemoryConstants::pageSize64k;
-    AllocationData allocationData;
-    allocationData.size = 2ULL * MemoryConstants::pageSize64k;
-    MemoryManager::AllocationStatus status;
-    auto physicalAllocation = memoryManager->allocatePhysicalLocalDeviceMemory(allocationData, status);
-    ASSERT_NE(nullptr, physicalAllocation);
-    EXPECT_FALSE(static_cast<WddmAllocation *>(physicalAllocation)->isMappedPhysicalMemoryReservation());
-
-    const uint64_t gpuRange = 0x100000;
-    MultiGraphicsAllocation mapping(physicalAllocation->getRootDeviceIndex());
-    EXPECT_TRUE(memoryManager->mapPhysicalDeviceMemoryToVirtualMemory(mapping, physicalAllocation, gpuRange, allocationData.size, nullptr, 0u));
-
-    auto mappedAllocation = static_cast<WddmAllocation *>(mapping.getGraphicsAllocation(physicalAllocation->getRootDeviceIndex()));
-    ASSERT_NE(nullptr, mappedAllocation);
-    EXPECT_NE(physicalAllocation, mappedAllocation);
-    EXPECT_TRUE(mappedAllocation->isMappedPhysicalMemoryReservation());
-    EXPECT_FALSE(static_cast<WddmAllocation *>(physicalAllocation)->isMappedPhysicalMemoryReservation());
-
-    EXPECT_TRUE(memoryManager->unMapPhysicalDeviceMemoryFromVirtualMemory(mapping, physicalAllocation, gpuRange, allocationData.size, osContext, 0u));
-
-    memoryManager->freeGraphicsMemory(physicalAllocation);
-}
-
-TEST_F(WddmMemoryManagerSimpleTest, GivenPhysicalDeviceMemoryWhenMappedToMultipleVirtualRangesThenEachMappingCanBeUnmappedIndependently) {
-    memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
-    memoryManager->hugeGfxMemoryChunkSize = MemoryConstants::pageSize64k;
-    AllocationData allocationData;
-    allocationData.size = 2ULL * MemoryConstants::pageSize64k;
-    MemoryManager::AllocationStatus status;
-    auto physicalAllocation = memoryManager->allocatePhysicalLocalDeviceMemory(allocationData, status);
-    ASSERT_NE(nullptr, physicalAllocation);
-
-    uint64_t firstGpuRange = 0x100000;
-    uint64_t secondGpuRange = 0x200000;
-
-    MultiGraphicsAllocation firstMapping(physicalAllocation->getRootDeviceIndex());
-    MultiGraphicsAllocation secondMapping(physicalAllocation->getRootDeviceIndex());
-
-    EXPECT_TRUE(memoryManager->mapPhysicalDeviceMemoryToVirtualMemory(firstMapping, physicalAllocation, firstGpuRange, allocationData.size, nullptr, 0u));
-    EXPECT_TRUE(memoryManager->mapPhysicalDeviceMemoryToVirtualMemory(secondMapping, physicalAllocation, secondGpuRange, allocationData.size, nullptr, 0u));
-
-    auto mappedAllocationA = firstMapping.getGraphicsAllocation(physicalAllocation->getRootDeviceIndex());
-    auto mappedAllocationB = secondMapping.getGraphicsAllocation(physicalAllocation->getRootDeviceIndex());
-    EXPECT_NE(nullptr, mappedAllocationA);
-    EXPECT_NE(nullptr, mappedAllocationB);
-    EXPECT_NE(physicalAllocation, mappedAllocationA);
-    EXPECT_NE(physicalAllocation, mappedAllocationB);
-    EXPECT_NE(mappedAllocationA, mappedAllocationB);
-
-    EXPECT_TRUE(memoryManager->unMapPhysicalDeviceMemoryFromVirtualMemory(firstMapping, physicalAllocation, firstGpuRange, allocationData.size, osContext, 0u));
-    EXPECT_TRUE(memoryManager->unMapPhysicalDeviceMemoryFromVirtualMemory(secondMapping, physicalAllocation, secondGpuRange, allocationData.size, osContext, 0u));
-
-    memoryManager->freeGraphicsMemory(physicalAllocation);
-}
-
-TEST_F(WddmMemoryManagerSimpleTest, GivenDedicatedMappingAllocationPassedAsPhysicalAllocationWhenUnmappingPhysicalDeviceMemoryThenMappingAllocationIsFreed) {
-    memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
-    memoryManager->hugeGfxMemoryChunkSize = MemoryConstants::pageSize64k;
-    AllocationData allocationData;
-    allocationData.size = 2ULL * MemoryConstants::pageSize64k;
-    MemoryManager::AllocationStatus status;
-    auto physicalAllocation = memoryManager->allocatePhysicalLocalDeviceMemory(allocationData, status);
-    ASSERT_NE(nullptr, physicalAllocation);
-
-    MultiGraphicsAllocation multiGraphicsAllocation(physicalAllocation->getRootDeviceIndex());
-
-    const uint64_t gpuRange = 0x100000;
-    EXPECT_TRUE(memoryManager->mapPhysicalDeviceMemoryToVirtualMemory(multiGraphicsAllocation, physicalAllocation, gpuRange, allocationData.size, nullptr, 0u));
-
-    auto mappedAllocation = multiGraphicsAllocation.getGraphicsAllocation(physicalAllocation->getRootDeviceIndex());
-    ASSERT_NE(nullptr, mappedAllocation);
-    EXPECT_NE(physicalAllocation, mappedAllocation);
-    EXPECT_FALSE(static_cast<WddmAllocation *>(mappedAllocation)->isPhysicalMemoryReservation());
-
-    EXPECT_TRUE(memoryManager->unMapPhysicalDeviceMemoryFromVirtualMemory(multiGraphicsAllocation, mappedAllocation, gpuRange, allocationData.size, osContext, 0u));
-    EXPECT_EQ(nullptr, multiGraphicsAllocation.getGraphicsAllocation(physicalAllocation->getRootDeviceIndex()));
-
-    memoryManager->freeGraphicsMemory(physicalAllocation);
-}
-
-TEST_F(WddmMemoryManagerSimpleTest, GivenMappedDeviceMemoryMadeResidentWhenUnmappingThenMappingIsReleasedFromMemoryOperationsInterface) {
-    memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
-    memoryManager->hugeGfxMemoryChunkSize = MemoryConstants::pageSize64k;
-    AllocationData allocationData;
-    allocationData.size = 2ULL * MemoryConstants::pageSize64k;
-    MemoryManager::AllocationStatus status;
-    auto physicalAllocation = memoryManager->allocatePhysicalLocalDeviceMemory(allocationData, status);
-    ASSERT_NE(nullptr, physicalAllocation);
-
-    MultiGraphicsAllocation multiGraphicsAllocation(physicalAllocation->getRootDeviceIndex());
-    const uint64_t gpuRange = 0x100000;
-    EXPECT_TRUE(memoryManager->mapPhysicalDeviceMemoryToVirtualMemory(multiGraphicsAllocation, physicalAllocation, gpuRange, allocationData.size, nullptr, 0u));
-
-    auto mappedAllocation = multiGraphicsAllocation.getGraphicsAllocation(physicalAllocation->getRootDeviceIndex());
-    ASSERT_NE(nullptr, mappedAllocation);
-    EXPECT_FALSE(static_cast<WddmAllocation *>(mappedAllocation)->isPhysicalMemoryReservation());
-
-    auto memoryOperationsInterface = executionEnvironment.rootDeviceEnvironments[physicalAllocation->getRootDeviceIndex()]->memoryOperationsInterface.get();
-    EXPECT_EQ(MemoryOperationsStatus::success, memoryOperationsInterface->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&mappedAllocation, 1), false, true));
-    EXPECT_EQ(MemoryOperationsStatus::success, memoryOperationsInterface->isResident(nullptr, *physicalAllocation));
-
-    EXPECT_TRUE(memoryManager->unMapPhysicalDeviceMemoryFromVirtualMemory(multiGraphicsAllocation, mappedAllocation, gpuRange, allocationData.size, osContext, physicalAllocation->getRootDeviceIndex()));
-
-    EXPECT_EQ(MemoryOperationsStatus::memoryNotFound, memoryOperationsInterface->isResident(nullptr, *physicalAllocation));
-
-    memoryManager->freeGraphicsMemory(physicalAllocation);
-}
-
-TEST_F(WddmMemoryManagerSimpleTest, GivenNoMemoryOperationsInterfaceWhenUnmappingDedicatedMappingThenMappingIsFreedAndUnmapSucceeds) {
-    memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
-    memoryManager->hugeGfxMemoryChunkSize = MemoryConstants::pageSize64k;
-    AllocationData allocationData;
-    allocationData.size = 2ULL * MemoryConstants::pageSize64k;
-    MemoryManager::AllocationStatus status;
-    auto physicalAllocation = memoryManager->allocatePhysicalLocalDeviceMemory(allocationData, status);
-    ASSERT_NE(nullptr, physicalAllocation);
-
-    MultiGraphicsAllocation multiGraphicsAllocation(physicalAllocation->getRootDeviceIndex());
-    const uint64_t gpuRange = 0x100000;
-    EXPECT_TRUE(memoryManager->mapPhysicalDeviceMemoryToVirtualMemory(multiGraphicsAllocation, physicalAllocation, gpuRange, allocationData.size, nullptr, 0u));
-
-    auto mappedAllocation = multiGraphicsAllocation.getGraphicsAllocation(physicalAllocation->getRootDeviceIndex());
-    ASSERT_NE(nullptr, mappedAllocation);
-    EXPECT_FALSE(static_cast<WddmAllocation *>(mappedAllocation)->isPhysicalMemoryReservation());
-
-    executionEnvironment.rootDeviceEnvironments[physicalAllocation->getRootDeviceIndex()]->memoryOperationsInterface.reset();
-
-    EXPECT_TRUE(memoryManager->unMapPhysicalDeviceMemoryFromVirtualMemory(multiGraphicsAllocation, mappedAllocation, gpuRange, allocationData.size, osContext, physicalAllocation->getRootDeviceIndex()));
-    EXPECT_EQ(nullptr, multiGraphicsAllocation.getGraphicsAllocation(physicalAllocation->getRootDeviceIndex()));
-
-    memoryManager->freeGraphicsMemory(physicalAllocation);
-}
-
-TEST_F(WddmMemoryManagerSimpleTest, GivenTwoResidentMappingsOfPhysicalDeviceMemoryWhenOneIsUnmappedThenTheOtherStaysResident) {
-    memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
-    memoryManager->hugeGfxMemoryChunkSize = MemoryConstants::pageSize64k;
-    AllocationData allocationData;
-    allocationData.size = 2ULL * MemoryConstants::pageSize64k;
-    MemoryManager::AllocationStatus status;
-    auto physicalAllocation = memoryManager->allocatePhysicalLocalDeviceMemory(allocationData, status);
-    ASSERT_NE(nullptr, physicalAllocation);
-    const auto rootDeviceIndex = physicalAllocation->getRootDeviceIndex();
-
-    const uint64_t firstGpuRange = 0x100000;
-    const uint64_t secondGpuRange = 0x200000;
-    MultiGraphicsAllocation firstMapping(rootDeviceIndex);
-    MultiGraphicsAllocation secondMapping(rootDeviceIndex);
-    EXPECT_TRUE(memoryManager->mapPhysicalDeviceMemoryToVirtualMemory(firstMapping, physicalAllocation, firstGpuRange, allocationData.size, nullptr, 0u));
-    EXPECT_TRUE(memoryManager->mapPhysicalDeviceMemoryToVirtualMemory(secondMapping, physicalAllocation, secondGpuRange, allocationData.size, nullptr, 0u));
-    auto firstMappedAllocation = firstMapping.getGraphicsAllocation(rootDeviceIndex);
-    auto secondMappedAllocation = secondMapping.getGraphicsAllocation(rootDeviceIndex);
-    ASSERT_NE(nullptr, firstMappedAllocation);
-    ASSERT_NE(nullptr, secondMappedAllocation);
-
-    auto memoryOperationsInterface = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface.get();
-    EXPECT_EQ(MemoryOperationsStatus::success, memoryOperationsInterface->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&firstMappedAllocation, 1), false, true));
-    EXPECT_EQ(MemoryOperationsStatus::success, memoryOperationsInterface->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&secondMappedAllocation, 1), false, true));
-
-    EXPECT_TRUE(memoryManager->unMapPhysicalDeviceMemoryFromVirtualMemory(firstMapping, firstMappedAllocation, firstGpuRange, allocationData.size, osContext, rootDeviceIndex));
-    EXPECT_EQ(MemoryOperationsStatus::success, memoryOperationsInterface->isResident(nullptr, *secondMappedAllocation));
-
-    EXPECT_TRUE(memoryManager->unMapPhysicalDeviceMemoryFromVirtualMemory(secondMapping, secondMappedAllocation, secondGpuRange, allocationData.size, osContext, rootDeviceIndex));
-    EXPECT_EQ(MemoryOperationsStatus::memoryNotFound, memoryOperationsInterface->isResident(nullptr, *physicalAllocation));
-
-    memoryManager->freeGraphicsMemory(physicalAllocation);
-}
-
-TEST_F(WddmMemoryManagerSimpleTest, GivenTwoResidentMappingsOfPhysicalDeviceMemoryWhenOneIsUnmappedThenItIsReleasedFromMemoryOperationsInterface) {
-    memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
-    memoryManager->hugeGfxMemoryChunkSize = MemoryConstants::pageSize64k;
-    AllocationData allocationData;
-    allocationData.size = 2ULL * MemoryConstants::pageSize64k;
-    MemoryManager::AllocationStatus status;
-    auto physicalAllocation = memoryManager->allocatePhysicalLocalDeviceMemory(allocationData, status);
-    ASSERT_NE(nullptr, physicalAllocation);
-    const auto rootDeviceIndex = physicalAllocation->getRootDeviceIndex();
-
-    auto mockMemoryOperations = new MockMemoryOperations();
-    mockMemoryOperations->captureGfxAllocationsForMakeResident = true;
-    executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface.reset(mockMemoryOperations);
-
-    const uint64_t firstGpuRange = 0x100000;
-    const uint64_t secondGpuRange = 0x200000;
-    MultiGraphicsAllocation firstMapping(rootDeviceIndex);
-    MultiGraphicsAllocation secondMapping(rootDeviceIndex);
-    EXPECT_TRUE(memoryManager->mapPhysicalDeviceMemoryToVirtualMemory(firstMapping, physicalAllocation, firstGpuRange, allocationData.size, nullptr, 0u));
-    EXPECT_TRUE(memoryManager->mapPhysicalDeviceMemoryToVirtualMemory(secondMapping, physicalAllocation, secondGpuRange, allocationData.size, nullptr, 0u));
-    auto firstMappedAllocation = firstMapping.getGraphicsAllocation(rootDeviceIndex);
-    auto secondMappedAllocation = secondMapping.getGraphicsAllocation(rootDeviceIndex);
-    ASSERT_NE(nullptr, firstMappedAllocation);
-    ASSERT_NE(nullptr, secondMappedAllocation);
-    EXPECT_EQ(MemoryOperationsStatus::success, mockMemoryOperations->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&firstMappedAllocation, 1), false, true));
-    EXPECT_EQ(MemoryOperationsStatus::success, mockMemoryOperations->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&secondMappedAllocation, 1), false, true));
-
-    EXPECT_TRUE(memoryManager->unMapPhysicalDeviceMemoryFromVirtualMemory(firstMapping, firstMappedAllocation, firstGpuRange, allocationData.size, osContext, rootDeviceIndex));
-    ASSERT_EQ(1u, mockMemoryOperations->gfxAllocationsForMakeResident.size());
-    EXPECT_EQ(secondMappedAllocation, mockMemoryOperations->gfxAllocationsForMakeResident[0]);
-
-    EXPECT_TRUE(memoryManager->unMapPhysicalDeviceMemoryFromVirtualMemory(secondMapping, secondMappedAllocation, secondGpuRange, allocationData.size, osContext, rootDeviceIndex));
-    EXPECT_TRUE(mockMemoryOperations->gfxAllocationsForMakeResident.empty());
-
-    memoryManager->freeGraphicsMemory(physicalAllocation);
-}
-
-TEST_F(WddmMemoryManagerSimpleTest, GivenResidentMappingOfPhysicalDeviceMemoryWhenSecondMappingIsRepeatedlyMappedAndUnmappedThenEvictingTheFirstMappingLeavesNoResidency) {
-    memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
-    memoryManager->hugeGfxMemoryChunkSize = MemoryConstants::pageSize64k;
-    AllocationData allocationData;
-    allocationData.size = 2ULL * MemoryConstants::pageSize64k;
-    MemoryManager::AllocationStatus status;
-    auto physicalAllocation = memoryManager->allocatePhysicalLocalDeviceMemory(allocationData, status);
-    ASSERT_NE(nullptr, physicalAllocation);
-    const auto rootDeviceIndex = physicalAllocation->getRootDeviceIndex();
-    auto memoryOperationsInterface = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface.get();
-
-    const uint64_t firstGpuRange = 0x100000;
-    const uint64_t secondGpuRange = 0x200000;
-    MultiGraphicsAllocation firstMapping(rootDeviceIndex);
-    EXPECT_TRUE(memoryManager->mapPhysicalDeviceMemoryToVirtualMemory(firstMapping, physicalAllocation, firstGpuRange, allocationData.size, nullptr, 0u));
-    auto firstMappedAllocation = firstMapping.getGraphicsAllocation(rootDeviceIndex);
-    ASSERT_NE(nullptr, firstMappedAllocation);
-    EXPECT_EQ(MemoryOperationsStatus::success, memoryOperationsInterface->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&firstMappedAllocation, 1), false, true));
-
-    for (uint32_t iteration = 0; iteration < 3u; iteration++) {
-        MultiGraphicsAllocation secondMapping(rootDeviceIndex);
-        EXPECT_TRUE(memoryManager->mapPhysicalDeviceMemoryToVirtualMemory(secondMapping, physicalAllocation, secondGpuRange, allocationData.size, nullptr, 0u));
-        auto secondMappedAllocation = secondMapping.getGraphicsAllocation(rootDeviceIndex);
-        ASSERT_NE(nullptr, secondMappedAllocation);
-        EXPECT_EQ(MemoryOperationsStatus::success, memoryOperationsInterface->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&secondMappedAllocation, 1), false, true));
-        EXPECT_TRUE(memoryManager->unMapPhysicalDeviceMemoryFromVirtualMemory(secondMapping, secondMappedAllocation, secondGpuRange, allocationData.size, osContext, rootDeviceIndex));
-        EXPECT_EQ(MemoryOperationsStatus::success, memoryOperationsInterface->isResident(nullptr, *firstMappedAllocation));
-    }
-
-    EXPECT_EQ(MemoryOperationsStatus::success, memoryOperationsInterface->evict(nullptr, *firstMappedAllocation));
-    EXPECT_EQ(MemoryOperationsStatus::memoryNotFound, memoryOperationsInterface->isResident(nullptr, *physicalAllocation));
-
-    EXPECT_TRUE(memoryManager->unMapPhysicalDeviceMemoryFromVirtualMemory(firstMapping, firstMappedAllocation, firstGpuRange, allocationData.size, osContext, rootDeviceIndex));
-    memoryManager->freeGraphicsMemory(physicalAllocation);
-}
-
-TEST_F(WddmMemoryManagerSimpleTest, GivenMappingOfPhysicalDeviceMemoryAtCanonicalUpperHalfAddressWhenUnmappingThenReservationIsRestoredAtDecanonizedAddress) {
-    memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
-    memoryManager->hugeGfxMemoryChunkSize = MemoryConstants::pageSize64k;
-    AllocationData allocationData;
-    allocationData.size = 2ULL * MemoryConstants::pageSize64k;
-    MemoryManager::AllocationStatus status;
-    auto physicalAllocation = memoryManager->allocatePhysicalLocalDeviceMemory(allocationData, status);
-    ASSERT_NE(nullptr, physicalAllocation);
-    const auto rootDeviceIndex = physicalAllocation->getRootDeviceIndex();
-    auto gmmHelper = memoryManager->getGmmHelper(rootDeviceIndex);
-
-    const uint64_t decanonizedGpuRange = (1ull << (gmmHelper->getAddressWidth() - 1)) + 0x100000;
-    const uint64_t gpuRange = gmmHelper->canonize(decanonizedGpuRange);
-    ASSERT_NE(decanonizedGpuRange, gpuRange);
-    VariableBackup<bool> callBaseMapGpuVaBackup(&wddm->callBaseMapGpuVa, false);
-    MultiGraphicsAllocation multiGraphicsAllocation(rootDeviceIndex);
-    EXPECT_TRUE(memoryManager->mapPhysicalDeviceMemoryToVirtualMemory(multiGraphicsAllocation, physicalAllocation, gpuRange, allocationData.size, nullptr, 0u));
-    auto mappedAllocation = multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex);
-    ASSERT_NE(nullptr, mappedAllocation);
-
-    const auto reserveCalledBefore = wddm->reserveGpuVirtualAddressResult.called;
-    EXPECT_TRUE(memoryManager->unMapPhysicalDeviceMemoryFromVirtualMemory(multiGraphicsAllocation, mappedAllocation, gpuRange, allocationData.size, osContext, rootDeviceIndex));
-    EXPECT_EQ(reserveCalledBefore + 1u, wddm->reserveGpuVirtualAddressResult.called);
-    EXPECT_EQ(decanonizedGpuRange, wddm->reserveGpuVirtualAddressResult.uint64ParamPassed);
-    memoryManager->freeGraphicsMemory(physicalAllocation);
-}
-
-TEST_F(WddmMemoryManagerSimpleTest, GivenReservationOnOtherRootDeviceWhenUnmappingResidentMappingThenResidencyIsReleasedOnMappingRootDevice) {
-    memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
-    memoryManager->hugeGfxMemoryChunkSize = MemoryConstants::pageSize64k;
-    AllocationData allocationData;
-    allocationData.size = 2ULL * MemoryConstants::pageSize64k;
-    MemoryManager::AllocationStatus status;
-    auto physicalAllocation = memoryManager->allocatePhysicalLocalDeviceMemory(allocationData, status);
-    ASSERT_NE(nullptr, physicalAllocation);
-    const auto mappingRootDeviceIndex = physicalAllocation->getRootDeviceIndex();
-    const uint32_t reservationRootDeviceIndex = 1u;
-    ASSERT_NE(mappingRootDeviceIndex, reservationRootDeviceIndex);
-
-    const uint64_t gpuRange = 0x100000;
-    MultiGraphicsAllocation multiGraphicsAllocation(mappingRootDeviceIndex);
-    EXPECT_TRUE(memoryManager->mapPhysicalDeviceMemoryToVirtualMemory(multiGraphicsAllocation, physicalAllocation, gpuRange, allocationData.size, nullptr, 0u));
-    auto mappedAllocation = multiGraphicsAllocation.getGraphicsAllocation(mappingRootDeviceIndex);
-    ASSERT_NE(nullptr, mappedAllocation);
-
-    auto memoryOperationsInterface = executionEnvironment.rootDeviceEnvironments[mappingRootDeviceIndex]->memoryOperationsInterface.get();
-    EXPECT_EQ(MemoryOperationsStatus::success, memoryOperationsInterface->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&mappedAllocation, 1), false, true));
-
-    EXPECT_TRUE(memoryManager->unMapPhysicalDeviceMemoryFromVirtualMemory(multiGraphicsAllocation, mappedAllocation, gpuRange, allocationData.size, osContext, reservationRootDeviceIndex));
-    EXPECT_EQ(MemoryOperationsStatus::memoryNotFound, memoryOperationsInterface->isResident(nullptr, *physicalAllocation));
-
-    memoryManager->freeGraphicsMemory(physicalAllocation);
-}
-
-TEST_F(WddmMemoryManagerSimpleTest, GivenMappingOfPhysicalDeviceMemoryInEvictionContainerWhenUnmappedThenItIsRemovedFromEvictionContainer) {
-    memoryManager->hugeGfxMemoryChunkSize = MemoryConstants::pageSize64k;
-    AllocationData allocationData;
-    allocationData.size = 2ULL * MemoryConstants::pageSize64k;
-    MemoryManager::AllocationStatus status;
-    auto physicalAllocation = memoryManager->allocatePhysicalLocalDeviceMemory(allocationData, status);
-    ASSERT_NE(nullptr, physicalAllocation);
-    const auto rootDeviceIndex = physicalAllocation->getRootDeviceIndex();
-
-    const uint64_t gpuRange = 0x100000;
-    MultiGraphicsAllocation multiGraphicsAllocation(rootDeviceIndex);
-    EXPECT_TRUE(memoryManager->mapPhysicalDeviceMemoryToVirtualMemory(multiGraphicsAllocation, physicalAllocation, gpuRange, allocationData.size, nullptr, 0u));
-    auto mappedAllocation = multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex);
-    ASSERT_NE(nullptr, mappedAllocation);
-
-    auto &residencyController = static_cast<OsContextWin *>(osContext)->getResidencyController();
-    auto &evictionAllocations = residencyController.getEvictionAllocations();
-    evictionAllocations.push_back(mappedAllocation);
-
-    EXPECT_TRUE(memoryManager->unMapPhysicalDeviceMemoryFromVirtualMemory(multiGraphicsAllocation, mappedAllocation, gpuRange, allocationData.size, osContext, rootDeviceIndex));
-    EXPECT_EQ(evictionAllocations.end(), std::find(evictionAllocations.begin(), evictionAllocations.end(), mappedAllocation));
-
-    memoryManager->freeGraphicsMemory(physicalAllocation);
-}
-
-TEST_F(WddmMemoryManagerSimpleTest, GivenMappedPhysicalDeviceMemoryWhenPhysicalAllocationIsFreedFirstThenItsResourcesAreReleasedWithTheLastMapping) {
-    memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
-    memoryManager->hugeGfxMemoryChunkSize = MemoryConstants::pageSize64k;
-    AllocationData allocationData;
-    allocationData.size = 2ULL * MemoryConstants::pageSize64k;
-    MemoryManager::AllocationStatus status;
-    auto physicalAllocation = static_cast<WddmAllocation *>(memoryManager->allocatePhysicalLocalDeviceMemory(allocationData, status));
-    ASSERT_NE(nullptr, physicalAllocation);
-    const auto rootDeviceIndex = physicalAllocation->getRootDeviceIndex();
-    const auto physicalHandle = physicalAllocation->getDefaultHandle();
-
-    const uint64_t firstGpuRange = 0x100000;
-    const uint64_t secondGpuRange = 0x200000;
-    MultiGraphicsAllocation firstMapping(rootDeviceIndex);
-    MultiGraphicsAllocation secondMapping(rootDeviceIndex);
-    EXPECT_TRUE(memoryManager->mapPhysicalDeviceMemoryToVirtualMemory(firstMapping, physicalAllocation, firstGpuRange, allocationData.size, nullptr, 0u));
-    EXPECT_TRUE(memoryManager->mapPhysicalDeviceMemoryToVirtualMemory(secondMapping, physicalAllocation, secondGpuRange, allocationData.size, nullptr, 0u));
-    auto firstMappedAllocation = firstMapping.getGraphicsAllocation(rootDeviceIndex);
-    auto secondMappedAllocation = static_cast<WddmAllocation *>(secondMapping.getGraphicsAllocation(rootDeviceIndex));
-    ASSERT_NE(nullptr, firstMappedAllocation);
-    ASSERT_NE(nullptr, secondMappedAllocation);
-
-    const auto destroyCalledBefore = wddm->destroyAllocationResult.called;
-    memoryManager->freeGraphicsMemory(physicalAllocation);
-    EXPECT_EQ(destroyCalledBefore, wddm->destroyAllocationResult.called);
-
-    EXPECT_TRUE(memoryManager->unMapPhysicalDeviceMemoryFromVirtualMemory(firstMapping, firstMappedAllocation, firstGpuRange, allocationData.size, osContext, rootDeviceIndex));
-    EXPECT_EQ(destroyCalledBefore, wddm->destroyAllocationResult.called);
-    EXPECT_NE(nullptr, secondMappedAllocation->getDefaultGmm());
-    EXPECT_EQ(physicalHandle, secondMappedAllocation->getDefaultHandle());
-
-    EXPECT_TRUE(memoryManager->unMapPhysicalDeviceMemoryFromVirtualMemory(secondMapping, secondMappedAllocation, secondGpuRange, allocationData.size, osContext, rootDeviceIndex));
-    EXPECT_EQ(destroyCalledBefore + 1u, wddm->destroyAllocationResult.called);
-}
-
-class NtHandleRecordingWddmMemoryManager : public MockWddmMemoryManager {
-  public:
-    using MockWddmMemoryManager::MockWddmMemoryManager;
-
-    NTSTATUS createInternalNTHandle(D3DKMT_HANDLE *resourceHandle, HANDLE *ntHandle, uint32_t rootDeviceIndex) override {
-        exportedResourceHandles.push_back(*resourceHandle);
-        *ntHandle = reinterpret_cast<HANDLE>(static_cast<uintptr_t>(++lastCreatedNtHandle));
-        return STATUS_SUCCESS;
-    }
-
-    void closeInternalHandle(uint64_t &handle, uint32_t handleId, GraphicsAllocation *graphicsAllocation) override {
-        closedHandles.push_back(handle);
-        MockWddmMemoryManager::closeInternalHandle(handle, handleId, graphicsAllocation);
-    }
-
-    std::vector<uint64_t> closedHandles;
-    std::vector<D3DKMT_HANDLE> exportedResourceHandles;
-    uint64_t lastCreatedNtHandle = 0x1000u;
-};
-
-TEST_F(WddmMemoryManagerSimpleTest, GivenTwoMappingsOfPhysicalDeviceMemoryWhenCreatingInternalHandlesThenEachMappingOwnsItsHandleToThePhysicalResource) {
-    auto recordingMemoryManager = new NtHandleRecordingWddmMemoryManager(false, false, executionEnvironment);
-    memoryManager.reset(recordingMemoryManager);
-    memoryManager->hugeGfxMemoryChunkSize = MemoryConstants::pageSize64k;
-    AllocationData allocationData;
-    allocationData.size = 2ULL * MemoryConstants::pageSize64k;
-    MemoryManager::AllocationStatus status;
-    auto physicalAllocation = static_cast<WddmAllocation *>(memoryManager->allocatePhysicalLocalDeviceMemory(allocationData, status));
-    ASSERT_NE(nullptr, physicalAllocation);
-    const auto rootDeviceIndex = physicalAllocation->getRootDeviceIndex();
-
-    const uint64_t firstGpuRange = 0x100000;
-    const uint64_t secondGpuRange = firstGpuRange + allocationData.size;
-    MultiGraphicsAllocation firstMultiGraphicsAllocation(rootDeviceIndex);
-    MultiGraphicsAllocation secondMultiGraphicsAllocation(rootDeviceIndex);
-    EXPECT_TRUE(memoryManager->mapPhysicalDeviceMemoryToVirtualMemory(firstMultiGraphicsAllocation, physicalAllocation, firstGpuRange, allocationData.size, nullptr, 0u));
-    EXPECT_TRUE(memoryManager->mapPhysicalDeviceMemoryToVirtualMemory(secondMultiGraphicsAllocation, physicalAllocation, secondGpuRange, allocationData.size, nullptr, 0u));
-    auto firstMapping = firstMultiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex);
-    auto secondMapping = secondMultiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex);
-    ASSERT_NE(nullptr, firstMapping);
-    ASSERT_NE(nullptr, secondMapping);
-
-    uint64_t physicalHandleBefore = 0u;
-    physicalAllocation->peekInternalHandle(memoryManager.get(), physicalHandleBefore, nullptr);
-
-    uint64_t firstHandle = 0u;
-    uint64_t secondHandle = 0u;
-    EXPECT_EQ(0, firstMapping->createInternalHandle(memoryManager.get(), 0u, firstHandle, nullptr));
-    EXPECT_EQ(0, secondMapping->createInternalHandle(memoryManager.get(), 0u, secondHandle, nullptr));
-    EXPECT_NE(0u, firstHandle);
-    EXPECT_NE(0u, secondHandle);
-    EXPECT_NE(firstHandle, secondHandle);
-    EXPECT_NE(physicalHandleBefore, firstHandle);
-    EXPECT_NE(physicalHandleBefore, secondHandle);
-    ASSERT_EQ(2u, recordingMemoryManager->exportedResourceHandles.size());
-    EXPECT_EQ(physicalAllocation->getResourceHandle(), recordingMemoryManager->exportedResourceHandles[0]);
-    EXPECT_EQ(physicalAllocation->getResourceHandle(), recordingMemoryManager->exportedResourceHandles[1]);
-
-    memoryManager->closeInternalHandle(firstHandle, 0u, firstMapping);
-
-    uint64_t secondHandleAfterClose = 0u;
-    EXPECT_EQ(0, secondMapping->createInternalHandle(memoryManager.get(), 0u, secondHandleAfterClose, nullptr));
-    EXPECT_EQ(secondHandle, secondHandleAfterClose);
-    uint64_t physicalHandleAfter = 0u;
-    physicalAllocation->peekInternalHandle(memoryManager.get(), physicalHandleAfter, nullptr);
-    EXPECT_EQ(physicalHandleBefore, physicalHandleAfter);
-    EXPECT_EQ(2u, recordingMemoryManager->exportedResourceHandles.size());
-
-    uint64_t firstHandleAfterClose = 0u;
-    EXPECT_EQ(0, firstMapping->createInternalHandle(memoryManager.get(), 0u, firstHandleAfterClose, nullptr));
-    EXPECT_NE(0u, firstHandleAfterClose);
-    EXPECT_EQ(3u, recordingMemoryManager->exportedResourceHandles.size());
-
-    memoryManager->closeInternalHandle(firstHandleAfterClose, 0u, firstMapping);
-    memoryManager->closeInternalHandle(secondHandle, 0u, secondMapping);
-    EXPECT_TRUE(memoryManager->unMapPhysicalDeviceMemoryFromVirtualMemory(firstMultiGraphicsAllocation, firstMapping, firstGpuRange, allocationData.size, osContext, rootDeviceIndex));
-    EXPECT_TRUE(memoryManager->unMapPhysicalDeviceMemoryFromVirtualMemory(secondMultiGraphicsAllocation, secondMapping, secondGpuRange, allocationData.size, osContext, rootDeviceIndex));
-    memoryManager->freeGraphicsMemory(physicalAllocation);
-}
-
-TEST_F(WddmMemoryManagerSimpleTest, GivenMappingOfPhysicalDeviceMemoryWhenItsPeekedHandleIsClosedThenPhysicalHandleIsKeptAndHandleLeftOpenIsClosedOnUnmap) {
-    auto recordingMemoryManager = new NtHandleRecordingWddmMemoryManager(false, false, executionEnvironment);
-    memoryManager.reset(recordingMemoryManager);
-    memoryManager->hugeGfxMemoryChunkSize = MemoryConstants::pageSize64k;
-    AllocationData allocationData;
-    allocationData.size = 2ULL * MemoryConstants::pageSize64k;
-    MemoryManager::AllocationStatus status;
-    auto physicalAllocation = static_cast<WddmAllocation *>(memoryManager->allocatePhysicalLocalDeviceMemory(allocationData, status));
-    ASSERT_NE(nullptr, physicalAllocation);
-    const auto rootDeviceIndex = physicalAllocation->getRootDeviceIndex();
-
-    const uint64_t gpuRange = 0x100000;
-    MultiGraphicsAllocation multiGraphicsAllocation(rootDeviceIndex);
-    EXPECT_TRUE(memoryManager->mapPhysicalDeviceMemoryToVirtualMemory(multiGraphicsAllocation, physicalAllocation, gpuRange, allocationData.size, nullptr, 0u));
-    auto mappedAllocation = multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex);
-    ASSERT_NE(nullptr, mappedAllocation);
-
-    uint64_t physicalHandleBefore = 0u;
-    physicalAllocation->peekInternalHandle(memoryManager.get(), physicalHandleBefore, nullptr);
-
-    uint64_t peekedHandle = 0u;
-    EXPECT_EQ(0, mappedAllocation->peekInternalHandle(memoryManager.get(), peekedHandle, nullptr));
-    EXPECT_NE(0u, peekedHandle);
-    EXPECT_NE(physicalHandleBefore, peekedHandle);
-    ASSERT_EQ(1u, recordingMemoryManager->exportedResourceHandles.size());
-    EXPECT_EQ(physicalAllocation->getResourceHandle(), recordingMemoryManager->exportedResourceHandles[0]);
-
-    memoryManager->closeInternalHandle(peekedHandle, 0u, mappedAllocation);
-    uint64_t physicalHandleAfter = 0u;
-    physicalAllocation->peekInternalHandle(memoryManager.get(), physicalHandleAfter, nullptr);
-    EXPECT_EQ(physicalHandleBefore, physicalHandleAfter);
-
-    uint64_t handleLeftOpen = 0u;
-    EXPECT_EQ(0, mappedAllocation->peekInternalHandle(memoryManager.get(), handleLeftOpen, nullptr));
-    EXPECT_EQ(2u, recordingMemoryManager->exportedResourceHandles.size());
-
-    recordingMemoryManager->closedHandles.clear();
-    EXPECT_TRUE(memoryManager->unMapPhysicalDeviceMemoryFromVirtualMemory(multiGraphicsAllocation, mappedAllocation, gpuRange, allocationData.size, osContext, rootDeviceIndex));
-    ASSERT_EQ(1u, recordingMemoryManager->closedHandles.size());
-    EXPECT_EQ(handleLeftOpen, recordingMemoryManager->closedHandles[0]);
-    memoryManager->freeGraphicsMemory(physicalAllocation);
-}
-
-TEST_F(WddmMemoryManagerSimpleTest, GivenMappingOfPhysicalDeviceMemoryWhenUnmappingThenCallerReservationIsRestoredAtMappedAddress) {
-    memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
-    memoryManager->hugeGfxMemoryChunkSize = MemoryConstants::pageSize64k;
-    AllocationData allocationData;
-    allocationData.size = 2ULL * MemoryConstants::pageSize64k;
-    MemoryManager::AllocationStatus status;
-    auto physicalAllocation = memoryManager->allocatePhysicalLocalDeviceMemory(allocationData, status);
-    ASSERT_NE(nullptr, physicalAllocation);
-    const auto rootDeviceIndex = physicalAllocation->getRootDeviceIndex();
-
-    const uint64_t gpuRange = 0x100000;
-    MultiGraphicsAllocation multiGraphicsAllocation(rootDeviceIndex);
-    EXPECT_TRUE(memoryManager->mapPhysicalDeviceMemoryToVirtualMemory(multiGraphicsAllocation, physicalAllocation, gpuRange, allocationData.size, nullptr, 0u));
-    auto mappedAllocation = multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex);
-    ASSERT_NE(nullptr, mappedAllocation);
-
-    const auto reserveCalledBefore = wddm->reserveGpuVirtualAddressResult.called;
-    EXPECT_TRUE(memoryManager->unMapPhysicalDeviceMemoryFromVirtualMemory(multiGraphicsAllocation, mappedAllocation, gpuRange, allocationData.size, osContext, rootDeviceIndex));
-    EXPECT_EQ(reserveCalledBefore + 1u, wddm->reserveGpuVirtualAddressResult.called);
-    EXPECT_EQ(gpuRange, wddm->reserveGpuVirtualAddressResult.uint64ParamPassed);
-    memoryManager->freeGraphicsMemory(physicalAllocation);
-}
-
-TEST_F(WddmMemoryManagerSimpleTest, GivenMappingOfPhysicalDeviceMemoryWhenUpdatingItsAccessThenTheSameMappingIsMappedAgainAtItsAddressWithNewFlags) {
-    memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
-    memoryManager->hugeGfxMemoryChunkSize = MemoryConstants::pageSize64k;
-    AllocationData allocationData;
-    allocationData.size = 2ULL * MemoryConstants::pageSize64k;
-    MemoryManager::AllocationStatus status;
-    auto physicalAllocation = memoryManager->allocatePhysicalLocalDeviceMemory(allocationData, status);
-    ASSERT_NE(nullptr, physicalAllocation);
-    const auto rootDeviceIndex = physicalAllocation->getRootDeviceIndex();
-
-    const uint64_t gpuRange = 0x100000;
-    MultiGraphicsAllocation multiGraphicsAllocation(rootDeviceIndex);
-    EXPECT_TRUE(memoryManager->mapPhysicalDeviceMemoryToVirtualMemory(multiGraphicsAllocation, physicalAllocation, gpuRange, allocationData.size, nullptr, 0u));
-    auto mappedAllocation = multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex);
-    ASSERT_NE(nullptr, mappedAllocation);
-
-    MemoryFlags readOnlyFlags{};
-    readOnlyFlags.readOnly = true;
-    const auto freeCalledBefore = wddm->freeGpuVirtualAddressResult.called;
-    const auto mapCalledBefore = wddm->mapGpuVirtualAddressResult.called;
-    EXPECT_TRUE(memoryManager->updatePhysicalDeviceMemoryMappingAccess(*mappedAllocation, gpuRange, allocationData.size, &readOnlyFlags, 0u, rootDeviceIndex));
-
-    EXPECT_EQ(freeCalledBefore + 1u, wddm->freeGpuVirtualAddressResult.called);
-    EXPECT_EQ(gpuRange, wddm->freeGpuVirtualAddressResult.uint64ParamPassed);
-    EXPECT_EQ(gpuRange, wddm->reserveGpuVirtualAddressResult.uint64ParamPassed);
-    EXPECT_EQ(mapCalledBefore + mappedAllocation->getNumGmms(), wddm->mapGpuVirtualAddressResult.called);
-    EXPECT_EQ(mappedAllocation, multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex));
-    EXPECT_EQ(gpuRange, mappedAllocation->getGpuAddress());
-
-    EXPECT_TRUE(memoryManager->unMapPhysicalDeviceMemoryFromVirtualMemory(multiGraphicsAllocation, mappedAllocation, gpuRange, allocationData.size, osContext, rootDeviceIndex));
-    memoryManager->freeGraphicsMemory(physicalAllocation);
-}
-
-TEST_F(WddmMemoryManagerSimpleTest, GivenMapFailureWhenUpdatingAccessOfMappingOfPhysicalDeviceMemoryThenFalseIsReturnedAndSharedHandlesAreKept) {
-    memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
-    memoryManager->hugeGfxMemoryChunkSize = MemoryConstants::pageSize64k;
-    AllocationData allocationData;
-    allocationData.size = 2ULL * MemoryConstants::pageSize64k;
-    MemoryManager::AllocationStatus status;
-    auto physicalAllocation = memoryManager->allocatePhysicalLocalDeviceMemory(allocationData, status);
-    ASSERT_NE(nullptr, physicalAllocation);
-    const auto rootDeviceIndex = physicalAllocation->getRootDeviceIndex();
-
-    const uint64_t gpuRange = 0x100000;
-    MultiGraphicsAllocation multiGraphicsAllocation(rootDeviceIndex);
-    EXPECT_TRUE(memoryManager->mapPhysicalDeviceMemoryToVirtualMemory(multiGraphicsAllocation, physicalAllocation, gpuRange, allocationData.size, nullptr, 0u));
-    auto mappedAllocation = static_cast<WddmAllocation *>(multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex));
-    ASSERT_NE(nullptr, mappedAllocation);
-
-    wddm->callBaseMapGpuVa = false;
-    wddm->mapGpuVaStatus = false;
-    MemoryFlags readOnlyFlags{};
-    readOnlyFlags.readOnly = true;
-    const auto destroyCalledBefore = wddm->destroyAllocationResult.called;
-    EXPECT_FALSE(memoryManager->updatePhysicalDeviceMemoryMappingAccess(*mappedAllocation, gpuRange, allocationData.size, &readOnlyFlags, 0u, rootDeviceIndex));
-    EXPECT_EQ(destroyCalledBefore, wddm->destroyAllocationResult.called);
-    EXPECT_TRUE(mappedAllocation->isMappedPhysicalMemoryReservation());
-    EXPECT_EQ(gpuRange, mappedAllocation->getGpuAddress());
-
-    wddm->callBaseMapGpuVa = true;
-    wddm->mapGpuVaStatus = true;
-    EXPECT_TRUE(memoryManager->unMapPhysicalDeviceMemoryFromVirtualMemory(multiGraphicsAllocation, mappedAllocation, gpuRange, allocationData.size, osContext, rootDeviceIndex));
-    memoryManager->freeGraphicsMemory(physicalAllocation);
-}
-
-TEST_F(WddmMemoryManagerSimpleTest, GivenReservationFailureWhenUpdatingAccessOfMappingOfPhysicalDeviceMemoryThenFalseIsReturnedWithoutMapping) {
-    memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
-    memoryManager->hugeGfxMemoryChunkSize = MemoryConstants::pageSize64k;
-    AllocationData allocationData;
-    allocationData.size = 2ULL * MemoryConstants::pageSize64k;
-    MemoryManager::AllocationStatus status;
-    auto physicalAllocation = memoryManager->allocatePhysicalLocalDeviceMemory(allocationData, status);
-    ASSERT_NE(nullptr, physicalAllocation);
-    const auto rootDeviceIndex = physicalAllocation->getRootDeviceIndex();
-
-    const uint64_t gpuRange = 0x100000;
-    MultiGraphicsAllocation multiGraphicsAllocation(rootDeviceIndex);
-    EXPECT_TRUE(memoryManager->mapPhysicalDeviceMemoryToVirtualMemory(multiGraphicsAllocation, physicalAllocation, gpuRange, allocationData.size, nullptr, 0u));
-    auto mappedAllocation = multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex);
-    ASSERT_NE(nullptr, mappedAllocation);
-
-    wddm->failReserveGpuVirtualAddress = true;
-    MemoryFlags readOnlyFlags{};
-    readOnlyFlags.readOnly = true;
-    const auto mapCalledBefore = wddm->mapGpuVirtualAddressResult.called;
-    EXPECT_FALSE(memoryManager->updatePhysicalDeviceMemoryMappingAccess(*mappedAllocation, gpuRange, allocationData.size, &readOnlyFlags, 0u, rootDeviceIndex));
-    EXPECT_EQ(mapCalledBefore, wddm->mapGpuVirtualAddressResult.called);
-
-    wddm->failReserveGpuVirtualAddress = false;
-    memoryManager->unMapPhysicalDeviceMemoryFromVirtualMemory(multiGraphicsAllocation, mappedAllocation, gpuRange, allocationData.size, osContext, rootDeviceIndex);
-    memoryManager->freeGraphicsMemory(physicalAllocation);
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, GivenPhysicalHostMemoryAndVirtualMemoryThenMapSucceeds) {
@@ -2614,6 +1989,8 @@ TEST_F(WddmMemoryManagerSimpleTest, givenWddmMemoryManagerWhenSelectAlignmentAnd
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenWddmMemoryManagerWhenSelectAlignmentAndHeapCalledWithInvalidAddressThenAlignmentBasedOnSizeReturned) {
+    RootDeviceIndicesContainer rootDeviceIndices;
+    rootDeviceIndices.pushUnique(0);
 
     auto gfxPartition = new MockGfxPartition();
     gfxPartition->getHeapIndexAndPageSizeBasedOnAddressCalled = 0u;
@@ -2970,12 +2347,11 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMultiStorageAllocationWhenMappingPhysic
     size_t offset = MemoryConstants::pageSize;
 
     uint32_t calledBefore = wddm->mapGpuVirtualAddressResult.called;
-    MultiGraphicsAllocation multiGraphicsAllocation(allocation.getRootDeviceIndex());
-    EXPECT_FALSE(memoryManager->mapPhysicalDeviceMemoryToVirtualMemory(multiGraphicsAllocation, &allocation, gpuRange, size, nullptr, offset));
+    EXPECT_FALSE(memoryManager->mapPhysicalDeviceMemoryToVirtualMemory(&allocation, gpuRange, size, nullptr, offset));
     EXPECT_EQ(calledBefore, wddm->mapGpuVirtualAddressResult.called);
 }
 
-TEST_F(WddmMemoryManagerSimpleTest, givenSingleHandleAllocationWhenMapGpuVirtualAddressFailsThenHandlesAreDestroyedOnlyIfNotSharedWithPhysicalAllocation) {
+TEST_F(WddmMemoryManagerSimpleTest, givenSingleHandleAllocationWhenMapGpuVirtualAddressFailsThenHandlesAreDestroyedOnlyForNonPhysicalAllocation) {
     wddm->callBaseMapGpuVa = false;
     wddm->mapGpuVaStatus = false;
     uint64_t gpuRange = 0x1234;
@@ -2985,18 +2361,16 @@ TEST_F(WddmMemoryManagerSimpleTest, givenSingleHandleAllocationWhenMapGpuVirtual
     physicalAllocation.setAllocationType(AllocationType::buffer);
     physicalAllocation.setPhysicalMemoryReservation(true);
     auto destroyCalledBefore = wddm->destroyAllocationResult.called;
-    MultiGraphicsAllocation physicalMultiGraphicsAllocation(physicalAllocation.getRootDeviceIndex());
-    EXPECT_FALSE(memoryManager->mapPhysicalDeviceMemoryToVirtualMemory(physicalMultiGraphicsAllocation, &physicalAllocation, gpuRange, size, nullptr, 0u));
+    EXPECT_FALSE(memoryManager->mapPhysicalDeviceMemoryToVirtualMemory(&physicalAllocation, gpuRange, size, nullptr, 0u));
     EXPECT_EQ(destroyCalledBefore, wddm->destroyAllocationResult.called);
-    EXPECT_EQ(nullptr, physicalMultiGraphicsAllocation.getGraphicsAllocation(physicalAllocation.getRootDeviceIndex()));
 
     MockWddmAllocation allocation(rootDeviceEnvironment->getGmmHelper(), 1u);
     allocation.setAllocationType(AllocationType::buffer);
-    EXPECT_FALSE(memoryManager->mapGpuVirtualAddress(&allocation, reinterpret_cast<void *>(gpuRange), nullptr, 0u));
+    EXPECT_FALSE(memoryManager->mapPhysicalDeviceMemoryToVirtualMemory(&allocation, gpuRange, size, nullptr, 0u));
     EXPECT_EQ(destroyCalledBefore + 1u, wddm->destroyAllocationResult.called);
 }
 
-TEST_F(WddmMemoryManagerSimpleTest, givenMultiHandleAllocationWhenMapGpuVirtualAddressFailsThenHandlesAreDestroyedOnlyIfNotSharedWithPhysicalAllocation) {
+TEST_F(WddmMemoryManagerSimpleTest, givenMultiHandleAllocationWhenMapGpuVirtualAddressFailsThenHandlesAreDestroyedOnlyForNonPhysicalAllocation) {
     if (memoryManager->isLimitedRange(0)) {
         GTEST_SKIP();
     }
@@ -3011,82 +2385,14 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMultiHandleAllocationWhenMapGpuVirtualA
     physicalAllocation.storageInfo.multiStorage = true;
     physicalAllocation.setPhysicalMemoryReservation(true);
     auto destroyCalledBefore = wddm->destroyAllocationResult.called;
-    MultiGraphicsAllocation physicalMultiGraphicsAllocation(physicalAllocation.getRootDeviceIndex());
-    EXPECT_FALSE(memoryManager->mapPhysicalDeviceMemoryToVirtualMemory(physicalMultiGraphicsAllocation, &physicalAllocation, gpuRange, size, nullptr, 0u));
+    EXPECT_FALSE(memoryManager->mapPhysicalDeviceMemoryToVirtualMemory(&physicalAllocation, gpuRange, size, nullptr, 0u));
     EXPECT_EQ(destroyCalledBefore, wddm->destroyAllocationResult.called);
-    EXPECT_EQ(nullptr, physicalMultiGraphicsAllocation.getGraphicsAllocation(physicalAllocation.getRootDeviceIndex()));
 
     MockWddmAllocation allocation(rootDeviceEnvironment->getGmmHelper(), 2u);
     allocation.setAllocationType(AllocationType::buffer);
     allocation.storageInfo.multiStorage = true;
-    EXPECT_FALSE(memoryManager->mapGpuVirtualAddress(&allocation, reinterpret_cast<void *>(gpuRange), nullptr, 0u));
+    EXPECT_FALSE(memoryManager->mapPhysicalDeviceMemoryToVirtualMemory(&allocation, gpuRange, size, nullptr, 0u));
     EXPECT_EQ(destroyCalledBefore + 1u, wddm->destroyAllocationResult.called);
-}
-
-TEST_F(WddmMemoryManagerSimpleTest, givenMultiHandlePhysicalAllocationWhenMappingSecondHandleFailsThenCallerReservationIsRestoredWithoutDestroyingHandles) {
-    if (memoryManager->isLimitedRange(0)) {
-        GTEST_SKIP();
-    }
-
-    wddm->callBaseMapGpuVa = false;
-    uint64_t gpuRange = 0x10000;
-    size_t size = 2 * MemoryConstants::pageSize64k;
-
-    MockWddmAllocation physicalAllocation(rootDeviceEnvironment->getGmmHelper(), 2u);
-    physicalAllocation.setAllocationType(AllocationType::buffer);
-    physicalAllocation.storageInfo.multiStorage = true;
-    physicalAllocation.setPhysicalMemoryReservation(true);
-
-    const auto mapCalledBefore = wddm->mapGpuVirtualAddressResult.called;
-    const auto freeCalledBefore = wddm->freeGpuVirtualAddressResult.called;
-    const auto reserveCalledBefore = wddm->reserveGpuVirtualAddressResult.called;
-    const auto destroyCalledBefore = wddm->destroyAllocationResult.called;
-    wddm->mapGpuVaFailFromCall = mapCalledBefore + 2u;
-
-    MultiGraphicsAllocation multiGraphicsAllocation(physicalAllocation.getRootDeviceIndex());
-    EXPECT_FALSE(memoryManager->mapPhysicalDeviceMemoryToVirtualMemory(multiGraphicsAllocation, &physicalAllocation, gpuRange, size, nullptr, 0u));
-    wddm->mapGpuVaFailFromCall = 0u;
-
-    EXPECT_EQ(mapCalledBefore + 3u, wddm->mapGpuVirtualAddressResult.called);
-    EXPECT_EQ(freeCalledBefore + 1u, wddm->freeGpuVirtualAddressResult.called);
-    EXPECT_EQ(gpuRange, wddm->freeGpuVirtualAddressResult.uint64ParamPassed);
-    EXPECT_EQ(size, wddm->freeGpuVirtualAddressResult.sizePassed);
-    EXPECT_EQ(reserveCalledBefore + 1u, wddm->reserveGpuVirtualAddressResult.called);
-    EXPECT_EQ(gpuRange, wddm->reserveGpuVirtualAddressResult.uint64ParamPassed);
-    EXPECT_EQ(destroyCalledBefore, wddm->destroyAllocationResult.called);
-    EXPECT_EQ(nullptr, multiGraphicsAllocation.getGraphicsAllocation(physicalAllocation.getRootDeviceIndex()));
-}
-
-TEST_F(WddmMemoryManagerSimpleTest, givenPhysicalAllocationWithMultipleHandlesWhenMappingToVirtualMemoryThenMappingAllocationTakesOverEveryPhysicalHandle) {
-    if (memoryManager->isLimitedRange(0)) {
-        GTEST_SKIP();
-    }
-
-    wddm->callBaseMapGpuVa = false;
-
-    constexpr uint32_t numGmms = 2u;
-    MockWddmAllocation physicalAllocation(rootDeviceEnvironment->getGmmHelper(), numGmms);
-    physicalAllocation.setAllocationType(AllocationType::buffer);
-    physicalAllocation.storageInfo.multiStorage = false;
-    physicalAllocation.setHandle(0x1234u, 0u);
-    physicalAllocation.setHandle(0x5678u, 1u);
-
-    uint64_t gpuRange = 0x1000;
-    size_t size = 2 * MemoryConstants::pageSize;
-
-    MultiGraphicsAllocation multiGraphicsAllocation(physicalAllocation.getRootDeviceIndex());
-    EXPECT_TRUE(memoryManager->mapPhysicalDeviceMemoryToVirtualMemory(multiGraphicsAllocation, &physicalAllocation, gpuRange, size, nullptr, 0u));
-
-    auto mappedAllocation = static_cast<WddmAllocation *>(multiGraphicsAllocation.getGraphicsAllocation(physicalAllocation.getRootDeviceIndex()));
-    ASSERT_NE(nullptr, mappedAllocation);
-    ASSERT_EQ(numGmms, mappedAllocation->getNumGmms());
-    for (uint32_t handleId = 0; handleId < numGmms; handleId++) {
-        EXPECT_EQ(physicalAllocation.getHandle(handleId), mappedAllocation->getHandle(handleId));
-        EXPECT_EQ(physicalAllocation.getGmm(handleId), mappedAllocation->getGmm(handleId));
-    }
-
-    multiGraphicsAllocation.removeAllocation(physicalAllocation.getRootDeviceIndex());
-    delete mappedAllocation;
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenNonFullRangeSvmAndNot32BitWhenMapGpuVaForOneHandleAllocationThenAddressToMapIsZero) {
@@ -4541,6 +3847,8 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenSelectAlignmentWithInval
 }
 
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenSelectAlignmentAndHeapWithValidStartAddressHintThenCorrectHeapAndAlignmentSizeReturned) {
+    RootDeviceIndicesContainer rootDeviceIndices;
+    rootDeviceIndices.pushUnique(0);
 
     auto gfxPartition = new MockGfxPartition();
     gfxPartition->getHeapIndexAndPageSizeBasedOnAddressCalled = 0u;
@@ -6573,15 +5881,18 @@ TEST_F(WddmMemoryManagerSimpleTest, givenPhysicalDeviceMemoryAndVirtualMemoryThe
     MemoryManager::AllocationStatus status;
     auto allocation = memoryManager->allocatePhysicalLocalDeviceMemory(allocationData, status);
     EXPECT_NE(nullptr, allocation);
-    MultiGraphicsAllocation multiGraphicsAllocation(allocation->getRootDeviceIndex());
-    EXPECT_TRUE(memoryManager->mapPhysicalDeviceMemoryToVirtualMemory(multiGraphicsAllocation, allocation, gpuRange, allocationData.size, nullptr, 0u));
+    EXPECT_TRUE(memoryManager->mapPhysicalDeviceMemoryToVirtualMemory(allocation, gpuRange, allocationData.size, nullptr, 0u));
 
     // Set the mock WDDM to return an error for reserveGpuVirtualAddress in the unMapPhysicalDeviceMemoryFromVirtualMemory call.
     wddm->failReserveGpuVirtualAddress = true;
-    EXPECT_FALSE(memoryManager->unMapPhysicalDeviceMemoryFromVirtualMemory(multiGraphicsAllocation, allocation, gpuRange, allocationData.size, osContext, 0u));
+    EXPECT_FALSE(memoryManager->unMapPhysicalDeviceMemoryFromVirtualMemory(allocation, gpuRange, allocationData.size, osContext, 0u));
     wddm->failReserveGpuVirtualAddress = false;
 
-    EXPECT_EQ(nullptr, multiGraphicsAllocation.getGraphicsAllocation(allocation->getRootDeviceIndex()));
+    // Complete the cleanup that was skipped in unMapPhysicalDeviceMemoryFromVirtualMemory.
+    allocation->setCpuPtrAndGpuAddress(nullptr, 0u);
+    allocation->setReservedAddressRange(nullptr, 0u);
+    WddmAllocation *wddmAllocation = reinterpret_cast<WddmAllocation *>(allocation);
+    wddmAllocation->setMappedPhysicalMemoryReservation(false);
 
     memoryManager->freeGraphicsMemory(allocation);
 }

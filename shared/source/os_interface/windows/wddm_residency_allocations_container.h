@@ -30,7 +30,6 @@ class WddmResidentAllocationsContainer {
     MOCKABLE_VIRTUAL MemoryOperationsStatus makeResidentResource(const D3DKMT_HANDLE &handle, size_t size);
     MemoryOperationsStatus makeResidentResources(const D3DKMT_HANDLE *handles, const uint32_t count, size_t size);
     MOCKABLE_VIRTUAL void removeResource(const D3DKMT_HANDLE &handle);
-    void removeResourceReference(const D3DKMT_HANDLE &handle);
 
   protected:
     [[nodiscard]] MOCKABLE_VIRTUAL std::unique_lock<SpinLock> acquireLock(SpinLock &lock) {
