@@ -21,7 +21,6 @@
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/resource_info.h"
-#include "shared/source/helpers/alignment_helper.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/compiler_product_helper.h"
@@ -53,12 +52,6 @@
 #include <type_traits>
 
 namespace NEO {
-
-template <typename Family>
-size_t EncodeDispatchKernel<Family>::getCrossThreadDataAlignment(bool isLocalMemory, const HardwareInfo &hwInfo) {
-    const bool useReducedAlignment = isLocalMemory && AlignmentHelper::isReducedAlignmentAllowed(hwInfo);
-    return useReducedAlignment ? MemoryConstants::cacheLineSize : Family::cacheLineSize;
-}
 
 template <typename Family>
 template <typename WalkerType>
@@ -291,7 +284,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                 }
             }
             if (!cachedThreadDataOffset) {
-                heap->align(EncodeDispatchKernel<Family>::getCrossThreadDataAlignment(container.isIndirectHeapInLocalMemory(), hwInfo));
+                heap->align(Family::cacheLineSize);
 
                 if (args.isKernelDispatchedFromImmediateCmdList) {
                     ptr = container.getHeapWithRequiredSizeAndAlignment(HeapType::indirectObject, iohRequiredSize, Family::indirectDataAlignment)->getSpace(iohRequiredSize);
@@ -408,7 +401,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
             walkerCmd.setIndirectDataLength(sizeThreadData);
         }
     }
-    container.getIndirectHeap(HeapType::indirectObject)->align(NEO::EncodeDispatchKernel<Family>::getDefaultIOHAlignment(container.isIndirectHeapInLocalMemory(), hwInfo));
+    container.getIndirectHeap(HeapType::indirectObject)->align(NEO::EncodeDispatchKernel<Family>::getDefaultIOHAlignment());
 
     EncodeDispatchKernel<Family>::encodeThreadData(walkerCmd,
                                                    args.threadGroupStart,

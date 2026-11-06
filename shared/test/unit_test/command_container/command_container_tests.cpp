@@ -3542,44 +3542,6 @@ TEST_F(CommandContainerTest, givenIOHCacheEnabledWhenMakeThreadDataCacheResident
     allocList.freeAllGraphicsAllocations(pDevice);
 }
 
-TEST_F(CommandContainerTest, givenIndirectHeapInLocalMemoryWhenThreadDataInsertedThenOffsetsAreCacheLineAligned) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.EnableLocalMemory.set(1);
-
-    auto executionEnvironment = new NEO::ExecutionEnvironment();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
-    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
-    executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->featureTable.flags.ftrLocalMemory = true;
-    auto device = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
-
-    auto cmdContainer = std::make_unique<MockContainerIOHCache>();
-    cmdContainer->setImmediateCmdListCsr(device->getDefaultEngine().commandStreamReceiver);
-    AllocationsList allocList;
-    cmdContainer->initialize(device.get(), &allocList, HeapSize::getDefaultHeapSize(IndirectHeapType::surfaceState), true, false);
-
-    const uint8_t data1[] = {1, 2, 3};
-    auto hash1 = ThreadDataHash::computeThreadDataHash({data1, sizeof(data1)}, {});
-    cmdContainer->registerThreadData(hash1, {data1, sizeof(data1)}, {});
-    cmdContainer->extractCommonThreadData();
-
-    auto offset1 = cmdContainer->getCachedIohOffset(hash1, {data1, sizeof(data1)}, {});
-    ASSERT_TRUE(offset1.has_value());
-
-    // Insert 5-byte data; align() pads from 3 to MemoryConstants::cacheLineSize before writing
-    const uint8_t data2[] = {4, 5, 6, 7, 8};
-    auto hash2 = ThreadDataHash::computeThreadDataHash({data2, sizeof(data2)}, {});
-    cmdContainer->registerThreadData(hash2, {data2, sizeof(data2)}, {});
-    cmdContainer->extractCommonThreadData();
-
-    auto offset2 = cmdContainer->getCachedIohOffset(hash2, {data2, sizeof(data2)}, {});
-    ASSERT_TRUE(offset2.has_value());
-    EXPECT_EQ(static_cast<size_t>(MemoryConstants::cacheLineSize), offset2.value() - offset1.value());
-
-    cmdContainer.reset();
-    allocList.freeAllGraphicsAllocations(device.get());
-}
-
 TEST_F(CommandContainerTest, givenThreadDataMapWhenStorageHasSpaceThenPreviousEntriesRetainedAfterInsert) {
     auto cmdContainer = std::make_unique<MockContainerIOHCache>();
     cmdContainer->setImmediateCmdListCsr(pDevice->getDefaultEngine().commandStreamReceiver);

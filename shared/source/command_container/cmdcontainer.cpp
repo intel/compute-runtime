@@ -14,7 +14,6 @@
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/helpers/alignment_helper.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
@@ -201,13 +200,8 @@ CommandContainer::ErrorCode CommandContainer::initialize(Device *device, Allocat
 
         iddBlock = nullptr;
         nextIddInBlock = this->getNumIddPerBlock();
-        const auto &hwInfo = device->getHardwareInfo();
-        auto heapAlignment = hwInfo.caps.cacheLineSize;
-        if (indirectHeapInLocalMemory && AlignmentHelper::isReducedAlignmentAllowed(hwInfo)) {
-            heapAlignment = MemoryConstants::cacheLineSize;
-        }
         this->threadDataTracker = std::make_unique<ThreadDataTracker>();
-        this->threadDataMap = std::make_unique<ThreadDataMap>(heapHelper.get(), device->getRootDeviceIndex(), heapAlignment);
+        this->threadDataMap = std::make_unique<ThreadDataMap>(heapHelper.get(), device->getRootDeviceIndex(), device->getHardwareInfo().caps.cacheLineSize);
     }
     return ErrorCode::success;
 }

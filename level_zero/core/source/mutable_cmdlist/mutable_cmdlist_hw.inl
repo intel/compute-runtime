@@ -108,7 +108,7 @@ ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::initialize(Device *devi
 
     auto ret = CommandListCoreFamily<gfxCoreFamily>::initialize(device, engineGroupType, flags);
     this->maxPerThreadDataSize = static_cast<uint32_t>(device->getDeviceInfo().maxWorkGroupSize * 3 * sizeof(uint16_t));
-    this->iohAlignment = NEO::EncodeDispatchKernel<GfxFamily>::getDefaultIOHAlignment(this->commandContainer.isIndirectHeapInLocalMemory(), device->getHwInfo());
+    this->iohAlignment = NEO::EncodeDispatchKernel<GfxFamily>::getDefaultIOHAlignment();
     this->inlineDataSize = getInlineDataSize();
     this->semaphore64bCmdSupported = device->getDeviceInfo().semaphore64bCmdSupport;
 

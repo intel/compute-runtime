@@ -635,7 +635,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenInlineDataRequiredWhe
     size_t expectedSizeIOH = alignUp(dispatchInterface->getCrossThreadDataSize() +
                                          dispatchInterface->getPerThreadDataSizeForWholeThreadGroup() -
                                          inlineDataSize,
-                                     NEO::EncodeDispatchKernel<FamilyType>::getDefaultIOHAlignment(false, pDevice->getHardwareInfo()));
+                                     NEO::EncodeDispatchKernel<FamilyType>::getDefaultIOHAlignment());
     auto heap = cmdContainer->getIndirectHeap(HeapType::indirectObject);
     EXPECT_EQ(expectedSizeIOH, heap->getUsed());
 }
@@ -662,7 +662,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenInlineDataRequiredIsF
 
     size_t expectedSizeIOH = alignUp(dispatchInterface->getCrossThreadDataSize() +
                                          dispatchInterface->getPerThreadDataSizeForWholeThreadGroup(),
-                                     NEO::EncodeDispatchKernel<FamilyType>::getDefaultIOHAlignment(false, pDevice->getHardwareInfo()));
+                                     NEO::EncodeDispatchKernel<FamilyType>::getDefaultIOHAlignment());
     auto heap = cmdContainer->getIndirectHeap(HeapType::indirectObject);
     EXPECT_EQ(expectedSizeIOH, heap->getUsed());
 }
@@ -1716,7 +1716,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenRequestingExtraP
     auto heap = cmdContainer->getIndirectHeap(HeapType::indirectObject);
 
     size_t expectedConsumedSize = 64 + 1024;
-    expectedConsumedSize = alignUp(expectedConsumedSize, NEO::EncodeDispatchKernel<FamilyType>::getDefaultIOHAlignment(false, pDevice->getHardwareInfo()));
+    expectedConsumedSize = alignUp(expectedConsumedSize, NEO::EncodeDispatchKernel<FamilyType>::getDefaultIOHAlignment());
     EXPECT_EQ(expectedConsumedSize, heap->getUsed());
 }
 
