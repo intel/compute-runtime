@@ -21,6 +21,6 @@ DECLARE_RELEASE_VARIABLE(bool, ZET_ENABLE_METRICS, false, "Refer to the Level Ze
 DECLARE_RELEASE_VARIABLE(bool, ZET_ENABLE_PROGRAM_INSTRUMENTATION, false, "Refer to the Level Zero Specification for a description. Enables GTPin instrumentation.")
 DECLARE_RELEASE_VARIABLE(bool, ZES_ENABLE_SYSMAN, false, "Refer to the Level Zero Specification for a description. Enables the sysman API.")
 DECLARE_RELEASE_VARIABLE(std::string, ZE_FLAT_DEVICE_HIERARCHY, std::string(""), "Refer to the Level Zero Specification for a description. Device hierarchy exposure mode: COMPOSITE, FLAT, or COMBINED.")
-DECLARE_RELEASE_VARIABLE(int32_t, NEO_LOCAL_MEMORY_ALLOCATION_MODE, 0, "Specify device-USM allocation policy. 0: default for given HW; 1: require local-memory (return out-of-memory error otherwise); 2: prefer local-memory but refer to system-memory as a fallback")
+DECLARE_RELEASE_VARIABLE(int32_t, NEO_LOCAL_MEMORY_ALLOCATION_MODE, 0, "Specify device-USM allocation policy. 0: default for given HW; 1: require local-memory for device-USM and for internal allocations placed in local-memory, on Windows only for internal allocations that are not CPU-lockable (return out-of-memory error otherwise); 2: prefer local-memory but refer to system-memory as a fallback")
 DECLARE_RELEASE_VARIABLE(bool, NEO_FP64_EMULATION, false, "Enables FP64 emulation.")
 DECLARE_RELEASE_VARIABLE(bool, NEO_L0_SYSMAN_NO_CONTEXT_MODE, false, "Disables OS context/engine creation for sysman-only process usage on Windows.")

@@ -2933,6 +2933,34 @@ TEST_F(WddmMemoryManagerSimpleTest, givenShareableAllocationWhenAllocateGraphics
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+TEST_F(WddmMemoryManagerSimpleTest, givenLocalOnlyModeWhenAllocatingInternalAllocationInPreferredPoolThenLocalOnlyIsRequiredAndGmmLocalOnlyIsSetForNotLockableAllocation) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.NEO_LOCAL_MEMORY_ALLOCATION_MODE.set(static_cast<int32_t>(LocalMemAllocationMode::localOnly));
+    const bool localMemoryEnabled = true;
+
+    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
+    hwInfo.featureTable.flags.ftrLocalMemory = true;
+    executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hwInfo);
+    executionEnvironment.rootDeviceEnvironments[0]->initGmm();
+
+    memoryManager = std::make_unique<MockWddmMemoryManager>(false, localMemoryEnabled, executionEnvironment);
+    ASSERT_TRUE(memoryManager->isLocalOnlyAllocationMode());
+
+    for (const auto allocationType : {AllocationType::scratchSurface, AllocationType::kernelIsaInternal}) {
+        AllocationProperties properties{mockRootDeviceIndex, MemoryConstants::pageSize, allocationType, mockDeviceBitfield};
+
+        auto allocation = memoryManager->allocateGraphicsMemoryInPreferredPool(properties, nullptr);
+        ASSERT_NE(nullptr, allocation);
+        EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
+        EXPECT_TRUE(allocation->storageInfo.localOnlyRequired);
+        auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(allocation->getDefaultGmm()->resourceParamsData.data());
+        EXPECT_EQ(0u, gmmResourceParams->Flags.Info.NonLocalOnly);
+        EXPECT_EQ(allocation->storageInfo.isLockable ? 0u : 1u, gmmResourceParams->Flags.Info.LocalOnly);
+
+        memoryManager->freeGraphicsMemory(allocation);
+    }
+}
+
 TEST_F(WddmMemoryManagerSimpleTest, givenCustomAlignmentAndAllocationAsBigAsTheAlignmentWhenAllocationInDevicePoolIsCreatedThenUseCustomAlignment) {
     const uint32_t customAlignment = 4 * MemoryConstants::pageSize64k;
     const uint32_t expectedAlignment = customAlignment;

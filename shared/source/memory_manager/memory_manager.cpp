@@ -21,6 +21,7 @@
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/helpers/app_resource_classification.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/blit_helper.h"
@@ -112,6 +113,11 @@ void MemoryManager::storeTemporaryAllocation(std::unique_ptr<GraphicsAllocation>
 }
 
 using CsrLocks = StackVec<std::unique_lock<CommandStreamReceiver::MutexType>, 8>;
+
+static bool isDriverInternalAllocationType(AllocationType allocationType) {
+    return !AppResourceClassification::isApplicationResource(allocationType) ||
+           GraphicsAllocation::isKernelIsaAllocationType(allocationType);
+}
 
 static bool needsCsrLockBeforeFree(const GraphicsAllocation &allocation) {
     const auto allocationType = allocation.getAllocationType();
@@ -827,6 +833,10 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
         break;
     default:
         break;
+    }
+
+    if (isLocalOnlyAllocationMode() && !allocationData.flags.useSystemMemory && isDriverInternalAllocationType(properties.allocationType)) {
+        allocationData.storageInfo.localOnlyRequired = true;
     }
 
     return true;

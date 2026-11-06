@@ -2885,8 +2885,10 @@ AllocationStatus DrmMemoryManager::registerLocalMemAlloc(GraphicsAllocation *all
 
 void DrmMemoryManager::unregisterAllocation(GraphicsAllocation *allocation) {
     if (allocation->isAllocatedInLocalMemoryPool()) {
-        DEBUG_BREAK_IF(allocation->getUnderlyingBufferSize() > localMemAllocsSize[allocation->getRootDeviceIndex()]);
-        localMemAllocsSize[allocation->getRootDeviceIndex()] -= allocation->getUnderlyingBufferSize();
+        auto drmAllocation = static_cast<DrmAllocation *>(allocation);
+        const auto localMemorySize = drmAllocation->isLocalMemoryReserved() ? getLocalMemoryReservationSize(*drmAllocation) : allocation->getUnderlyingBufferSize();
+        DEBUG_BREAK_IF(localMemorySize > localMemAllocsSize[allocation->getRootDeviceIndex()]);
+        localMemAllocsSize[allocation->getRootDeviceIndex()] -= localMemorySize;
     } else if (MemoryPool::memoryNull != allocation->getMemoryPool()) {
         DEBUG_BREAK_IF(allocation->getUnderlyingBufferSize() > sysMemAllocsSize);
         sysMemAllocsSize -= allocation->getUnderlyingBufferSize();
@@ -3356,7 +3358,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
     allocation->setReservedAddressRange(reinterpret_cast<void *>(gpuAddress), sizeAllocated);
     auto *drmAllocation = static_cast<DrmAllocation *>(allocation.get());
 
-    const bool localMemoryReservationRequired = isLocalOnlyAllocationMode() && isUsmDeviceAllocationType(allocationData.type);
+    const bool localMemoryReservationRequired = isLocalOnlyAllocationMode() && allocationData.storageInfo.localOnlyRequired;
     if ((localMemoryReservationRequired && !reserveLocalMemory(*drmAllocation)) ||
         !createDrmAllocation(&getDrm(allocationData.rootDeviceIndex), allocation.get(), gpuAddress, maxOsContextCount, finalAlignment)) {
         releaseLocalMemoryReservation(*drmAllocation);
@@ -4285,20 +4287,25 @@ bool DrmMemoryManager::getLocalOnlyRequired(AllocationType allocationType, const
     return MemoryManager::getLocalOnlyRequired(allocationType, productHelper, hwInfo, preferCompressed);
 }
 
+size_t DrmMemoryManager::getLocalMemoryReservationSize(const DrmAllocation &allocation) {
+    const auto size = allocation.getUnderlyingBufferSize();
+    return allocation.storageInfo.tileInstanced ? size * allocation.storageInfo.getNumBanks() : size;
+}
+
 bool DrmMemoryManager::reserveLocalMemory(DrmAllocation &allocation) {
     const auto rootDeviceIndex = allocation.getRootDeviceIndex();
-    const auto size = allocation.getUnderlyingBufferSize();
+    const auto reservationSize = getLocalMemoryReservationSize(allocation);
     auto &usedLocalMemory = localMemAllocsSize[rootDeviceIndex];
     auto used = usedLocalMemory.load();
     do {
-        if (static_cast<uint64_t>(used) + size > cachedMaxLocalMemory[rootDeviceIndex]) {
+        if (static_cast<uint64_t>(used) + reservationSize > cachedMaxLocalMemory[rootDeviceIndex]) {
             return false;
         }
-    } while (!usedLocalMemory.compare_exchange_weak(used, used + size));
+    } while (!usedLocalMemory.compare_exchange_weak(used, used + reservationSize));
 
     const auto memoryBanks = static_cast<uint32_t>(allocation.storageInfo.memoryBanks.to_ulong());
-    if (!getDrm(rootDeviceIndex).getIoctlHelper()->hasEnoughDeviceMemory(size, memoryBanks)) {
-        usedLocalMemory -= size;
+    if (!getDrm(rootDeviceIndex).getIoctlHelper()->hasEnoughDeviceMemory(allocation.getUnderlyingBufferSize(), memoryBanks)) {
+        usedLocalMemory -= reservationSize;
         return false;
     }
 
@@ -4308,7 +4315,7 @@ bool DrmMemoryManager::reserveLocalMemory(DrmAllocation &allocation) {
 
 void DrmMemoryManager::releaseLocalMemoryReservation(DrmAllocation &allocation) {
     if (allocation.isLocalMemoryReserved()) {
-        localMemAllocsSize[allocation.getRootDeviceIndex()] -= allocation.getUnderlyingBufferSize();
+        localMemAllocsSize[allocation.getRootDeviceIndex()] -= getLocalMemoryReservationSize(allocation);
     }
 }
 } // namespace NEO

@@ -235,6 +235,7 @@ class DrmMemoryManager : public MemoryManager {
     bool reserveLocalMemory(DrmAllocation &allocation);
     void releaseLocalMemoryReservation(DrmAllocation &allocation);
     bool overlapsFragmentBackedImport(uint32_t rootDeviceIndex, uintptr_t start, size_t size) const;
+    static size_t getLocalMemoryReservationSize(const DrmAllocation &allocation);
 
     template <typename Func>
     bool processOverAllocationBanks(GraphicsAllocation *graphicsAllocation, DeviceBitfield handleMask, Func funcToProcess);

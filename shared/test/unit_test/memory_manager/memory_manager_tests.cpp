@@ -3866,6 +3866,73 @@ HWTEST_F(MemoryAllocatorTest, givenNonDefaultLocalMemoryAllocationModeAndLocalPr
     }
 }
 
+TEST(MemoryManagerTest, givenLocalOnlyModeWhenGettingAllocDataForInternalAllocationPlacedInLocalMemoryThenLocalOnlyIsRequired) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableLocalMemory.set(1);
+    MockMemoryManager mockMemoryManager;
+    mockMemoryManager.usmDeviceAllocationMode = LocalMemAllocationMode::localOnly;
+
+    for (const auto allocationType : {AllocationType::scratchSurface, AllocationType::preemption, AllocationType::kernelIsa, AllocationType::kernelIsaInternal}) {
+        AllocationProperties properties(mockRootDeviceIndex, 1, allocationType, mockDeviceBitfield);
+        AllocationData allocData;
+        mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
+        EXPECT_FALSE(allocData.flags.useSystemMemory);
+        EXPECT_TRUE(allocData.storageInfo.localOnlyRequired);
+    }
+}
+
+TEST(MemoryManagerTest, givenLocalOnlyModeWhenGettingAllocDataForInternalAllocationPlacedInSystemMemoryThenLocalOnlyIsNotRequired) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableLocalMemory.set(1);
+    MockMemoryManager mockMemoryManager;
+    mockMemoryManager.usmDeviceAllocationMode = LocalMemAllocationMode::localOnly;
+
+    for (const auto allocationType : {AllocationType::tagBuffer, AllocationType::internalHostMemory}) {
+        AllocationProperties properties(mockRootDeviceIndex, 1, allocationType, mockDeviceBitfield);
+        AllocationData allocData;
+        mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
+        EXPECT_TRUE(allocData.flags.useSystemMemory);
+        EXPECT_FALSE(allocData.storageInfo.localOnlyRequired);
+    }
+
+    AllocationProperties properties(mockRootDeviceIndex, 1, AllocationType::scratchSurface, mockDeviceBitfield);
+    properties.flags.forceSystemMemory = true;
+    AllocationData allocData;
+    mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
+    EXPECT_TRUE(allocData.flags.useSystemMemory);
+    EXPECT_FALSE(allocData.storageInfo.localOnlyRequired);
+}
+
+TEST(MemoryManagerTest, givenLocalOnlyModeWhenGettingAllocDataForApplicationNonUsmAllocationThenLocalOnlyIsNotRequired) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableLocalMemory.set(1);
+    MockMemoryManager mockMemoryManager;
+    mockMemoryManager.usmDeviceAllocationMode = LocalMemAllocationMode::localOnly;
+
+    for (const auto allocationType : {AllocationType::constantSurface, AllocationType::globalSurface, AllocationType::privateSurface}) {
+        AllocationProperties properties(mockRootDeviceIndex, 1, allocationType, mockDeviceBitfield);
+        AllocationData allocData;
+        mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
+        EXPECT_FALSE(allocData.flags.useSystemMemory);
+        EXPECT_FALSE(allocData.storageInfo.localOnlyRequired);
+    }
+}
+
+TEST(MemoryManagerTest, givenModeOtherThanLocalOnlyWhenGettingAllocDataForInternalAllocationPlacedInLocalMemoryThenLocalOnlyIsNotRequired) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableLocalMemory.set(1);
+    MockMemoryManager mockMemoryManager;
+
+    for (const auto mode : {LocalMemAllocationMode::hwDefault, LocalMemAllocationMode::localPreferred}) {
+        mockMemoryManager.usmDeviceAllocationMode = mode;
+        AllocationProperties properties(mockRootDeviceIndex, 1, AllocationType::scratchSurface, mockDeviceBitfield);
+        AllocationData allocData;
+        mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
+        EXPECT_FALSE(allocData.flags.useSystemMemory);
+        EXPECT_FALSE(allocData.storageInfo.localOnlyRequired);
+    }
+}
+
 TEST(MemoryTransferHelperTest, WhenBlitterIsSelectedButBlitCopyFailsThenFallbackToCopyOnCPU) {
     constexpr uint32_t dataSize = 16;
     uint8_t destData[dataSize] = {};
