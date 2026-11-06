@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/product_helper_hw.h"
 
@@ -17,5 +18,9 @@ uint32_t ProductHelperHw<gfxProduct>::getAvailableSlmSizePerSubslice(const RootD
 
 template <PRODUCT_FAMILY gfxProduct>
 void ProductHelperHw<gfxProduct>::overrideDirectSubmissionTimeouts(uint64_t &timeoutUs) const {
+    timeoutUs = 1'000;
+    if (debugManager.flags.DirectSubmissionControllerTimeout.get() != -1) {
+        timeoutUs = debugManager.flags.DirectSubmissionControllerTimeout.get();
+    }
 }
 } // namespace NEO

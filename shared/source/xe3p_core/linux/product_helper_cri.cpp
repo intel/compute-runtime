@@ -55,5 +55,9 @@ bool ProductHelperHw<gfxProduct>::useSharedSystemUsm() const {
     return true;
 }
 
+template <>
+void ProductHelperHw<gfxProduct>::overrideDirectSubmissionTimeouts(uint64_t &timeoutUs) const {
+}
+
 template class ProductHelperHw<gfxProduct>;
 } // namespace NEO

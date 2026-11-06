@@ -27,6 +27,12 @@ struct CriProductHelperLinux : ProductHelperTestLinux {
     }
 };
 
+CRITEST_F(CriProductHelperLinux, givenProductHelperWhenOverrideDirectSubmissionTimeoutsThenTimeoutsAreNotChanged) {
+    uint64_t timeoutUs{5000};
+    productHelper->overrideDirectSubmissionTimeouts(timeoutUs);
+    EXPECT_EQ(5000ull, timeoutUs);
+}
+
 CRITEST_F(CriProductHelperLinux, WhenConfiguringHwInfoThenZeroIsReturned) {
 
     int ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());

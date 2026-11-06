@@ -379,8 +379,20 @@ HWTEST2_F(ProductHelperTestLinux, givenSuccessfulDrmQueryWhenGettingDeviceMemory
     EXPECT_EQ(800u, productHelper->getDeviceMemoryMaxClkRate(pInHwInfo, osInterface, 0));
 }
 
-HWTEST2_F(ProductHelperTestLinux, givenProductHelperWhenOverrideDirectSubmissionTimeoutsThenTimeoutsAreNotChanged, IsNotLNL) {
+HWTEST2_F(ProductHelperTestLinux, givenProductHelperBeforeXe2WhenOverrideDirectSubmissionTimeoutsThenTimeoutsAreNotChanged, IsAtMostXeCore) {
     uint64_t timeoutUs{5000};
     productHelper->overrideDirectSubmissionTimeouts(timeoutUs);
     EXPECT_EQ(5000ull, timeoutUs);
+}
+
+HWTEST2_F(ProductHelperTestLinux, givenProductHelperFromXe2WhenOverrideDirectSubmissionTimeoutsThenTimeoutIsSetToOneMillisecondUnlessDebugFlagIsSet, IsAtLeastXe2HpgCoreExceptCri) {
+    DebugManagerStateRestore restorer;
+
+    uint64_t timeoutUs{5000};
+    productHelper->overrideDirectSubmissionTimeouts(timeoutUs);
+    EXPECT_EQ(1000ull, timeoutUs);
+
+    debugManager.flags.DirectSubmissionControllerTimeout.set(10000);
+    productHelper->overrideDirectSubmissionTimeouts(timeoutUs);
+    EXPECT_EQ(10000ull, timeoutUs);
 }

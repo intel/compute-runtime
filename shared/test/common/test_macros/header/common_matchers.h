@@ -292,6 +292,20 @@ struct IsXe3pLpg {
     }
 };
 
+struct IsAtLeastXe2HpgCoreExceptCri {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return IsAtLeastXe2HpgCore::isMatched<productFamily>() && IsNotCRI::isMatched<productFamily>();
+    }
+};
+
+struct IsBeforeXe2HpgCoreOrCri {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return !IsAtLeastXe2HpgCoreExceptCri::isMatched<productFamily>();
+    }
+};
+
 struct IsStatefulBufferPreferredForProduct {
     template <PRODUCT_FAMILY productFamily>
     static constexpr bool isMatched() {

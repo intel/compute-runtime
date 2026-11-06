@@ -144,7 +144,7 @@ struct MockDrmMemoryManagerForcePin : public DrmMemoryManager {
     using DrmMemoryManager::forcePinEnabled;
 };
 
-HWTEST2_F(DrmDirectSubmissionTest, givenProductRequiringTimeoutOverrideOnLinuxWhenRegisteringCsrThenControllerTimeoutsAreOverridden, IsLNL) {
+HWTEST2_F(DrmDirectSubmissionTest, givenProductRequiringTimeoutOverrideOnLinuxWhenRegisteringCsrThenControllerTimeoutsAreOverridden, IsAtLeastXe2HpgCoreExceptCri) {
     auto csr = device->getDefaultEngine().commandStreamReceiver;
     DirectSubmissionControllerMock controller;
     controller.registerDirectSubmission(csr);
@@ -152,7 +152,7 @@ HWTEST2_F(DrmDirectSubmissionTest, givenProductRequiringTimeoutOverrideOnLinuxWh
     controller.unregisterDirectSubmission(csr);
 }
 
-HWTEST2_F(DrmDirectSubmissionTest, givenProductNotRequiringTimeoutOverrideOnLinuxWhenRegisteringCsrThenControllerTimeoutsAreNotChanged, IsNotLNL) {
+HWTEST2_F(DrmDirectSubmissionTest, givenProductNotRequiringTimeoutOverrideOnLinuxWhenRegisteringCsrThenControllerTimeoutsAreNotChanged, IsBeforeXe2HpgCoreOrCri) {
     auto csr = device->getDefaultEngine().commandStreamReceiver;
     DirectSubmissionControllerMock controller;
     controller.registerDirectSubmission(csr);

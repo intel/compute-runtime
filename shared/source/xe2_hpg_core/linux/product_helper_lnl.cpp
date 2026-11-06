@@ -50,13 +50,5 @@ bool ProductHelperHw<gfxProduct>::useSharedSystemUsm() const {
     return false;
 }
 
-template <>
-void ProductHelperHw<gfxProduct>::overrideDirectSubmissionTimeouts(uint64_t &timeoutUs) const {
-    timeoutUs = 1'000;
-    if (debugManager.flags.DirectSubmissionControllerTimeout.get() != -1) {
-        timeoutUs = debugManager.flags.DirectSubmissionControllerTimeout.get();
-    }
-}
-
 template class ProductHelperHw<gfxProduct>;
 } // namespace NEO
