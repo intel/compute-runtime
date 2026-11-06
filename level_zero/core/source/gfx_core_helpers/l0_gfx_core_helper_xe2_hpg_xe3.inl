@@ -209,9 +209,4 @@ uint64_t L0GfxCoreHelperHw<Family>::getIpSamplingIpMask() const {
     return ipSamplingIpMaskXe2Xe3;
 }
 
-template <typename Family>
-bool L0GfxCoreHelperHw<Family>::supportMetricsAggregation() const {
-    return false;
-}
-
 } // namespace L0

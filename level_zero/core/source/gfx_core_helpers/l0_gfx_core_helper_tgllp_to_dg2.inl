@@ -154,11 +154,6 @@ uint64_t L0GfxCoreHelperHw<Family>::getIpSamplingIpMask() const {
 }
 
 template <typename Family>
-bool L0GfxCoreHelperHw<Family>::supportMetricsAggregation() const {
-    return false;
-}
-
-template <typename Family>
 size_t L0GfxCoreHelperHw<Family>::getMaxFillPatternSizeForCopyEngine() const {
     return 4 * sizeof(uint32_t);
 }
