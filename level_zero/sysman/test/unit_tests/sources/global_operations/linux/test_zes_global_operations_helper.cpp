@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/test/common/test_macros/hw_test.h"
+
 #include "level_zero/sysman/test/unit_tests/sources/global_operations/linux/mock_global_operations.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 

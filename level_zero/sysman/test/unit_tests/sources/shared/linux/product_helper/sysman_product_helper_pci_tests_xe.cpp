@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/test/common/test_macros/hw_test.h"
+
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/sysman/source/api/pci/sysman_pci_utils.h"

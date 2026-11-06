@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/test/common/test_macros/hw_test.h"
+
 #include "level_zero/sysman/source/api/events/linux/sysman_os_events_imp.h"
 #include "level_zero/sysman/source/api/events/linux/sysman_os_events_netlink.h"
 #include "level_zero/sysman/source/api/ras/linux/ras_util/sysman_ras_util.h"

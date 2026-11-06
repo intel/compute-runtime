@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/test/common/test_macros/hw_test.h"
+
 #include "level_zero/sysman/source/shared/linux/kmd_interface/sysman_kmd_interface.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/test/unit_tests/sources/engine/linux/mock_engine_prelim.h"

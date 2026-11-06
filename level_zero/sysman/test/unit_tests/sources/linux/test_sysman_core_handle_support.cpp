@@ -6,6 +6,7 @@
  */
 
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"

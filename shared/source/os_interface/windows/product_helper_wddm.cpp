@@ -11,8 +11,6 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/product_helper.h"
 
-#include "hw_cmds.h"
-
 namespace NEO {
 
 int ProductHelper::configureHwInfoWddm(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, const RootDeviceEnvironment &rootDeviceEnvironment) {

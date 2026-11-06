@@ -7,6 +7,7 @@
 
 #include "shared/source/os_interface/linux/xe/ioctl_helper_xe.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/test/unit_tests/sources/engine/linux/mock_engine_xe.h"

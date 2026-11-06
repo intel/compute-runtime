@@ -56,8 +56,6 @@
 #include "shared/source/utilities/io_functions.h"
 #include "shared/source/utilities/logger.h"
 
-#include "hw_cmds.h"
-
 #include <cstdio>
 #include <cstring>
 #include <fcntl.h>

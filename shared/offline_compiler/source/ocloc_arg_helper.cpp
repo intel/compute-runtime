@@ -13,7 +13,6 @@
 #include "shared/source/helpers/product_config_helper_former.h"
 #include "shared/source/helpers/string.h"
 
-#include "hw_cmds.h"
 #include "platforms.h"
 
 #include <algorithm>

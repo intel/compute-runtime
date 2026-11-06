@@ -6,6 +6,7 @@
  */
 
 #include "shared/test/common/test_macros/header/common_matchers.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/sysman/test/unit_tests/sources/ecc/linux/mock_ecc.h"
 

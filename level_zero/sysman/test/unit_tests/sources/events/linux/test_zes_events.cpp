@@ -6,6 +6,7 @@
  */
 
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/sysman/source/api/info_log/linux/sysman_os_info_log_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/events/linux/mock_events.h"

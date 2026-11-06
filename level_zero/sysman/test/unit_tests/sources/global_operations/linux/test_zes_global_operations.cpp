@@ -10,6 +10,7 @@
 #include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/include/level_zero/zes_intel_gpu_sysman.h"
 #include "level_zero/sysman/source/api/pci/sysman_pci_utils.h"

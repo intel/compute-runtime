@@ -10,7 +10,6 @@
 #include "shared/source/helpers/hw_info.h"
 
 #include "device_ids_configs.h"
-#include "hw_cmds.h"
 #include "platforms.h"
 
 FormerProductConfigHelper::FormerProductConfigHelper()
