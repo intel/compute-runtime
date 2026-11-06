@@ -21,7 +21,7 @@ class ScratchSpaceControllerXeHPAndLater : public ScratchSpaceController {
                                        InternalAllocationStorage &allocationStorage);
     void setNewSshPtr(void *newSsh, bool &cfeDirty);
 
-    void setRequiredScratchSpace(void *sshBaseAddress,
+    bool setRequiredScratchSpace(void *sshBaseAddress,
                                  uint32_t scratchSlot,
                                  uint32_t requiredPerThreadScratchSizeSlot0,
                                  uint32_t requiredPerThreadScratchSizeSlot1,
@@ -29,13 +29,17 @@ class ScratchSpaceControllerXeHPAndLater : public ScratchSpaceController {
                                  bool &stateBaseAddressDirty,
                                  bool &vfeStateDirty) override;
 
+    bool reserveScratchSpace(uint32_t requiredPerThreadScratchSizeSlot0,
+                             uint32_t requiredPerThreadScratchSizeSlot1,
+                             OsContext &osContext) override;
+
     uint64_t calculateNewGSH() override;
     uint64_t getScratchPatchAddress() override;
 
     size_t getReservedSshSize() const override;
     void reserveHeap(IndirectHeap::Type heapType, IndirectHeap *&indirectHeap) override;
 
-    void programHeaps(HeapContainer &heapContainer,
+    bool programHeaps(HeapContainer &heapContainer,
                       uint32_t scratchSlot,
                       uint32_t requiredPerThreadScratchSizeSlot0,
                       uint32_t requiredPerThreadScratchSizeSlot1,
@@ -53,12 +57,11 @@ class ScratchSpaceControllerXeHPAndLater : public ScratchSpaceController {
   protected:
     MOCKABLE_VIRTUAL void programSurfaceState();
     MOCKABLE_VIRTUAL void programSurfaceStateAtPtr(void *surfaceStateForScratchAllocation);
-    MOCKABLE_VIRTUAL void prepareScratchAllocation(uint32_t requiredPerThreadScratchSizeSlot0,
+    MOCKABLE_VIRTUAL bool prepareScratchAllocation(uint32_t requiredPerThreadScratchSizeSlot0,
                                                    uint32_t requiredPerThreadScratchSizeSlot1,
                                                    OsContext &osContext,
-                                                   bool &stateBaseAddressDirty,
-                                                   bool &scratchSurfaceDirty,
-                                                   bool &vfeStateDirty);
+                                                   bool &scratchSurfaceDirty);
+    GraphicsAllocation *allocateScratchSurface(size_t scratchSizeInBytes, OsContext &osContext);
     size_t getOffsetToSurfaceState(uint32_t requiredSlotCount) const;
 
     uint32_t stateSlotsCount = 0;

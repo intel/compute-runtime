@@ -57,7 +57,7 @@ struct CommandQueueHw : public CommandQueue {
 
     void programPipelineSelectIfGpgpuDisabled(NEO::LinearStream &commandStream);
 
-    MOCKABLE_VIRTUAL void handleScratchSpace(NEO::HeapContainer &heapContainer,
+    MOCKABLE_VIRTUAL bool handleScratchSpace(NEO::HeapContainer &heapContainer,
                                              NEO::ScratchSpaceController *scratchController,
                                              NEO::GraphicsAllocation *globalStatelessAllocation,
                                              bool &gsbaState, bool &frontEndState,
@@ -133,7 +133,7 @@ struct CommandQueueHw : public CommandQueue {
     inline void ensurePatchPreambleCounterForCopyOffload(CommandListExecutionContext &ctx, ze_command_list_handle_t *phCommandLists, uint32_t numCommandLists);
     inline size_t estimateCommandListResidencySize(CommandList *commandList);
     inline void setFrontEndStateProperties(CommandListExecutionContext &ctx);
-    inline void handleScratchSpaceAndUpdateGSBAStateDirtyFlag(CommandListExecutionContext &ctx);
+    inline ze_result_t handleScratchSpaceAndUpdateGSBAStateDirtyFlag(CommandListExecutionContext &ctx);
     MOCKABLE_VIRTUAL ze_result_t makeAlignedChildStreamAndSetGpuBase(NEO::LinearStream &child, size_t requiredSize, CommandListExecutionContext &ctx, NEO::LinearStream *&streamForDispatch);
     inline void getGlobalFenceAndMakeItResident();
     inline void getWorkPartitionAndMakeItResident();

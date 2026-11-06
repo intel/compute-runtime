@@ -151,6 +151,10 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     TagNodeBase *hwTimeStamps = nullptr;
     CommandStreamReceiver &computeCommandStreamReceiver = getGpgpuCommandStreamReceiver();
 
+    if (!computeCommandStreamReceiver.reserveScratchSpace(multiDispatchInfo.getRequiredScratchSize(0u), multiDispatchInfo.getRequiredScratchSize(1u))) {
+        return CL_OUT_OF_RESOURCES;
+    }
+
     if (NEO::debugManager.flags.DeferStateInitSubmissionToFirstRegularUsage.get() == 1) {
         computeCommandStreamReceiver.ensurePrimaryCsrInitialized(this->device->getDevice());
     }

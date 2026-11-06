@@ -601,7 +601,7 @@ struct MockScratchController : public ScratchSpaceController {
     using ScratchSpaceController::scratchSlot0Allocation;
     using ScratchSpaceController::scratchSlot1Allocation;
     using ScratchSpaceController::ScratchSpaceController;
-    void setRequiredScratchSpace(void *sshBaseAddress,
+    bool setRequiredScratchSpace(void *sshBaseAddress,
                                  uint32_t scratchSlot,
                                  uint32_t requiredPerThreadScratchSizeSlot0,
                                  uint32_t requiredPerThreadScratchSizeSlot1,
@@ -616,16 +616,23 @@ struct MockScratchController : public ScratchSpaceController {
             scratchSlot1SizeInBytes = requiredPerThreadScratchSizeSlot1;
             scratchSlot1Allocation = getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, requiredPerThreadScratchSizeSlot1});
         }
+        return true;
+    }
+    bool reserveScratchSpace(uint32_t requiredPerThreadScratchSizeSlot0,
+                             uint32_t requiredPerThreadScratchSizeSlot1,
+                             OsContext &osContext) override {
+        return true;
     }
     uint64_t calculateNewGSH() override { return 0u; };
     uint64_t getScratchPatchAddress() override { return 0u; };
-    void programHeaps(HeapContainer &heapContainer,
+    bool programHeaps(HeapContainer &heapContainer,
                       uint32_t scratchSlot,
                       uint32_t requiredPerThreadScratchSizeSlot0,
                       uint32_t requiredPerThreadScratchSizeSlot1,
                       OsContext &osContext,
                       bool &stateBaseAddressDirty,
                       bool &vfeStateDirty) override {
+        return true;
     }
     void programBindlessSurfaceStateForScratch(BindlessHeapsHelper *heapsHelper,
                                                uint32_t requiredPerThreadScratchSizeSlot0,

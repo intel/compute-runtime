@@ -344,13 +344,15 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushImmediateTask(
         if (!this->heaplessModeEnabled && dispatchFlags.sshCpuBase != nullptr && (this->requiredScratchSlot0Size > 0 || this->requiredScratchSlot1Size > 0)) {
             bool checkFeStateDirty = false;
             bool checkSbaStateDirty = false;
-            scratchSpaceController->setRequiredScratchSpace(dispatchFlags.sshCpuBase,
-                                                            0u,
-                                                            this->requiredScratchSlot0Size,
-                                                            this->requiredScratchSlot1Size,
-                                                            *this->osContext,
-                                                            checkSbaStateDirty,
-                                                            checkFeStateDirty);
+            if (!scratchSpaceController->setRequiredScratchSpace(dispatchFlags.sshCpuBase,
+                                                                 0u,
+                                                                 this->requiredScratchSlot0Size,
+                                                                 this->requiredScratchSlot1Size,
+                                                                 *this->osContext,
+                                                                 checkSbaStateDirty,
+                                                                 checkFeStateDirty)) {
+                return CompletionStamp{CompletionStamp::outOfDeviceMemory};
+            }
             flushData.frontEndFullConfigurationNeeded |= checkFeStateDirty;
             flushData.stateBaseAddressFullConfigurationNeeded |= checkSbaStateDirty;
 
@@ -480,6 +482,31 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTaskHeapful(
         initProgrammingFlags();
     }
 
+    bool stateBaseAddressDirty = false;
+    bool checkVfeStateDirty = false;
+    if (heaplessModeEnabled == false) {
+        if (ssh && (requiredScratchSlot0Size || requiredScratchSlot1Size)) {
+            if (!scratchSpaceController->setRequiredScratchSpace(ssh->getCpuBase(),
+                                                                 0u,
+                                                                 requiredScratchSlot0Size,
+                                                                 requiredScratchSlot1Size,
+                                                                 *this->osContext,
+                                                                 stateBaseAddressDirty,
+                                                                 checkVfeStateDirty)) {
+                return CompletionStamp{CompletionStamp::outOfDeviceMemory};
+            }
+            if (checkVfeStateDirty) {
+                setMediaVFEStateDirty(true);
+            }
+            if (scratchSpaceController->getScratchSpaceSlot0Allocation()) {
+                makeResident(*scratchSpaceController->getScratchSpaceSlot0Allocation());
+            }
+            if (scratchSpaceController->getScratchSpaceSlot1Allocation()) {
+                makeResident(*scratchSpaceController->getScratchSpaceSlot1Allocation());
+            }
+        }
+    }
+
     // a regular command list dispatched as the primary batch buffer has no space left in
     // the task stream, so commands following the task go into the epilogue stream
     LinearStream &epilogueCommandStream = dispatchFlags.optionalEpilogueCmdStream != nullptr ? *dispatchFlags.optionalEpilogueCmdStream : commandStreamTask;
@@ -516,29 +543,6 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTaskHeapful(
     csrSizeRequestFlags.preemptionRequestChanged = this->lastPreemptionMode != dispatchFlags.preemptionMode;
 
     csrSizeRequestFlags.activePartitionsChanged = isProgramActivePartitionConfigRequired();
-    bool stateBaseAddressDirty = false;
-
-    bool checkVfeStateDirty = false;
-    if (heaplessModeEnabled == false) {
-        if (ssh && (requiredScratchSlot0Size || requiredScratchSlot1Size)) {
-            scratchSpaceController->setRequiredScratchSpace(ssh->getCpuBase(),
-                                                            0u,
-                                                            requiredScratchSlot0Size,
-                                                            requiredScratchSlot1Size,
-                                                            *this->osContext,
-                                                            stateBaseAddressDirty,
-                                                            checkVfeStateDirty);
-            if (checkVfeStateDirty) {
-                setMediaVFEStateDirty(true);
-            }
-            if (scratchSpaceController->getScratchSpaceSlot0Allocation()) {
-                makeResident(*scratchSpaceController->getScratchSpaceSlot0Allocation());
-            }
-            if (scratchSpaceController->getScratchSpaceSlot1Allocation()) {
-                makeResident(*scratchSpaceController->getScratchSpaceSlot1Allocation());
-            }
-        }
-    }
 
     handleFrontEndStateTransition(dispatchFlags);
 

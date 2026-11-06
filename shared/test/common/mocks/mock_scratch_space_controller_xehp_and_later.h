@@ -23,5 +23,6 @@ struct MockScratchSpaceControllerXeHPAndLater : public ScratchSpaceControllerXeH
     using ScratchSpaceControllerXeHPAndLater::slotId;
     using ScratchSpaceControllerXeHPAndLater::stateSlotsCount;
     using ScratchSpaceControllerXeHPAndLater::surfaceStateHeap;
+    using ScratchSpaceControllerXeHPAndLater::twoSlotScratchSpaceSupported;
 };
 } // namespace NEO

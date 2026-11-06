@@ -42,13 +42,17 @@ class ScratchSpaceController : NonCopyableAndNonMovableClass {
     GraphicsAllocation *getScratchSpaceSlot1Allocation() {
         return scratchSlot1Allocation;
     }
-    virtual void setRequiredScratchSpace(void *sshBaseAddress,
+    virtual bool setRequiredScratchSpace(void *sshBaseAddress,
                                          uint32_t scratchSlot,
                                          uint32_t requiredPerThreadScratchSizeSlot0,
                                          uint32_t requiredPerThreadScratchSizeSlot1,
                                          OsContext &osContext,
                                          bool &stateBaseAddressDirty,
                                          bool &vfeStateDirty) = 0;
+
+    virtual bool reserveScratchSpace(uint32_t requiredPerThreadScratchSizeSlot0,
+                                     uint32_t requiredPerThreadScratchSizeSlot1,
+                                     OsContext &osContext) = 0;
 
     virtual uint64_t calculateNewGSH() = 0;
     virtual uint64_t getScratchPatchAddress() = 0;
@@ -62,7 +66,7 @@ class ScratchSpaceController : NonCopyableAndNonMovableClass {
 
     virtual size_t getReservedSshSize() const = 0;
     virtual void reserveHeap(IndirectHeap::Type heapType, IndirectHeap *&indirectHeap) = 0;
-    virtual void programHeaps(HeapContainer &heapContainer,
+    virtual bool programHeaps(HeapContainer &heapContainer,
                               uint32_t scratchSlot,
                               uint32_t requiredPerThreadScratchSizeSlot0,
                               uint32_t requiredPerThreadScratchSizeSlot1,
@@ -90,6 +94,7 @@ class ScratchSpaceController : NonCopyableAndNonMovableClass {
     uint32_t perThreadScratchSpaceSlot0Size = 0;
     uint32_t perThreadScratchSpaceSlot1Size = 0;
     bool force32BitAllocation = false;
+    bool scratchSurfaceStateProgrammingPending = false;
     uint32_t computeUnitsUsedForScratch = 0;
 };
 } // namespace NEO

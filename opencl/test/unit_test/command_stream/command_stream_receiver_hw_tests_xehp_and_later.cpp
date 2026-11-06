@@ -367,7 +367,7 @@ HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLaterWi
 
         using ScratchSpaceControllerXeHPAndLater::scratchSlot0Allocation;
 
-        void setRequiredScratchSpace(void *sshBaseAddress,
+        bool setRequiredScratchSpace(void *sshBaseAddress,
                                      uint32_t scratchSlot,
                                      uint32_t requiredPerThreadScratchSizeSlot0,
                                      uint32_t requiredPerThreadScratchSizeSlot1,
@@ -376,6 +376,7 @@ HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLaterWi
                                      bool &stateBaseAddressDirty,
                                      bool &vfeStateDirty) override {
             requiredScratchSpaceCalledTimes++;
+            return true;
         }
 
       protected:

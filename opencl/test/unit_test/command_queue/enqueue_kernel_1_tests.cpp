@@ -2408,3 +2408,28 @@ HWTEST_F(PauseOnGpuTests, givenTimestampPacketWriteDisabledAndMarkerWithProfilin
 
     EXPECT_EQ(baseCommandStreamSize + 2 * EncodeStoreMMIO<FamilyType>::size, extendedCommandStreamSize);
 }
+
+HWTEST_F(EnqueueKernelTest, givenScratchAllocationFailureWhenEnqueueingKernelThenOutOfResourcesIsReturnedBeforeAnythingIsSubmitted) {
+    MockKernelWithInternals mockKernel(*context);
+    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.perThreadScratchSize[0] = 4096u;
+    size_t gws[3] = {1, 1, 1};
+
+    auto memoryManager = static_cast<MockMemoryManager *>(context->getMemoryManager());
+    memoryManager->isMockHostMemoryManager = true;
+    memoryManager->validateAllocateProperties = [memoryManager](const AllocationProperties &properties) {
+        memoryManager->forceFailureInPrimaryAllocation = (properties.allocationType == AllocationType::scratchSurface);
+    };
+
+    auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
+    const auto taskCountBefore = csr.peekTaskCount();
+    const auto taskLevelBefore = pCmdQ->taskLevel;
+    const auto residencyCountBefore = csr.getResidencyAllocations().size();
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr));
+    EXPECT_EQ(taskCountBefore, csr.peekTaskCount());
+    EXPECT_EQ(taskLevelBefore, pCmdQ->taskLevel);
+    EXPECT_EQ(residencyCountBefore, csr.getResidencyAllocations().size());
+
+    memoryManager->validateAllocateProperties = [](const AllocationProperties &) -> void {};
+    memoryManager->forceFailureInPrimaryAllocation = false;
+    EXPECT_EQ(CL_SUCCESS, pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr));
+}

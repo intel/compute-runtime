@@ -15,6 +15,7 @@
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_scratch_space_controller_xehp_and_later.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -37,18 +38,18 @@ class MockBindlessScratchSpaceControllerXeHPAndLater : public ScratchSpaceContro
     void programSurfaceStateAtPtr(void *surfaceStateForScratchAllocation) override {
         wasProgramSurfaceStateAtPtrCalled = true;
     }
-    void prepareScratchAllocation(uint32_t requiredPerThreadScratchSizeSlot0,
+    bool prepareScratchAllocation(uint32_t requiredPerThreadScratchSizeSlot0,
                                   uint32_t requiredPerThreadScratchSizeSlot1,
                                   OsContext &osContext,
-                                  bool &stateBaseAddressDirty,
-                                  bool &scratchSurfaceDirty,
-                                  bool &vfeStateDirty) override {
+                                  bool &scratchSurfaceDirty) override {
         scratchSurfaceDirty = scratchDirty;
+        return prepareScratchAllocationResult;
     }
     ResidencyContainer residencyContainer;
     MockGraphicsAllocation alloc;
     bool wasProgramSurfaceStateAtPtrCalled = false;
     bool scratchDirty = false;
+    bool prepareScratchAllocationResult = true;
 };
 
 using ScratchControllerTests = Test<DeviceFixture>;
@@ -247,4 +248,191 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ScratchControllerTests, givenAlternatingSshWhenScra
         alignedFree(heapBuffers[0]);
         alignedFree(heapBuffers[1]);
     }
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, ScratchControllerTests, givenScratchAllocationFailureWhenSettingRequiredScratchSpaceThenFalseIsReturnedAndPreviousScratchStateIsKept) {
+    auto &csr = *pDevice->getDefaultEngine().commandStreamReceiver;
+    auto &osContext = *pDevice->getDefaultEngine().osContext;
+    auto memoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
+    memoryManager->isMockHostMemoryManager = true;
+
+    MockScratchSpaceControllerXeHPAndLater scratchController(pDevice->getRootDeviceIndex(), *pDevice->getExecutionEnvironment(), *csr.getInternalAllocationStorage());
+    std::vector<uint8_t> surfaceStateHeap(scratchController.getReservedSshSize());
+    bool stateBaseAddressDirty = false;
+    bool frontEndStateDirty = false;
+
+    EXPECT_TRUE(scratchController.setRequiredScratchSpace(surfaceStateHeap.data(), 0u, 0x40u, 0u, osContext, stateBaseAddressDirty, frontEndStateDirty));
+    auto initialScratchAllocation = scratchController.scratchSlot0Allocation;
+    ASSERT_NE(nullptr, initialScratchAllocation);
+    const auto initialScratchSizeInBytes = scratchController.scratchSlot0SizeInBytes;
+    const auto initialPerThreadScratchSize = scratchController.perThreadScratchSpaceSlot0Size;
+    const auto initialSlotId = scratchController.slotId;
+
+    memoryManager->forceFailureInPrimaryAllocation = true;
+    frontEndStateDirty = false;
+    EXPECT_FALSE(scratchController.setRequiredScratchSpace(surfaceStateHeap.data(), 0u, 0x400u, 0u, osContext, stateBaseAddressDirty, frontEndStateDirty));
+    EXPECT_FALSE(frontEndStateDirty);
+    EXPECT_EQ(initialScratchAllocation, scratchController.scratchSlot0Allocation);
+    EXPECT_EQ(initialScratchSizeInBytes, scratchController.scratchSlot0SizeInBytes);
+    EXPECT_EQ(initialPerThreadScratchSize, scratchController.perThreadScratchSpaceSlot0Size);
+    EXPECT_EQ(initialSlotId, scratchController.slotId);
+
+    memoryManager->forceFailureInPrimaryAllocation = false;
+    EXPECT_TRUE(scratchController.setRequiredScratchSpace(surfaceStateHeap.data(), 0u, 0x400u, 0u, osContext, stateBaseAddressDirty, frontEndStateDirty));
+    EXPECT_TRUE(frontEndStateDirty);
+    EXPECT_NE(nullptr, scratchController.scratchSlot0Allocation);
+    EXPECT_NE(initialScratchAllocation, scratchController.scratchSlot0Allocation);
+    EXPECT_LT(initialScratchSizeInBytes, scratchController.scratchSlot0SizeInBytes);
+    EXPECT_EQ(initialSlotId + 1, scratchController.slotId);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, ScratchControllerTests, givenSlot1ScratchAllocationFailureWhenSettingRequiredScratchSpaceThenNewSlot0AllocationIsReleasedAndScratchStateIsNotChanged) {
+    auto &csr = *pDevice->getDefaultEngine().commandStreamReceiver;
+    auto &osContext = *pDevice->getDefaultEngine().osContext;
+    auto memoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
+    memoryManager->isMockHostMemoryManager = true;
+
+    MockScratchSpaceControllerXeHPAndLater scratchController(pDevice->getRootDeviceIndex(), *pDevice->getExecutionEnvironment(), *csr.getInternalAllocationStorage());
+    scratchController.twoSlotScratchSpaceSupported = true;
+    std::vector<uint8_t> surfaceStateHeap(scratchController.getReservedSshSize());
+    bool stateBaseAddressDirty = false;
+    bool frontEndStateDirty = false;
+
+    uint32_t scratchAllocationsCount = 0u;
+    memoryManager->validateAllocateProperties = [&](const AllocationProperties &properties) {
+        if (properties.allocationType == AllocationType::scratchSurface) {
+            scratchAllocationsCount++;
+            memoryManager->forceFailureInPrimaryAllocation = (scratchAllocationsCount == 2u);
+        }
+    };
+
+    EXPECT_FALSE(scratchController.setRequiredScratchSpace(surfaceStateHeap.data(), 0u, 0x40u, 0x40u, osContext, stateBaseAddressDirty, frontEndStateDirty));
+    EXPECT_EQ(2u, scratchAllocationsCount);
+    EXPECT_FALSE(frontEndStateDirty);
+    EXPECT_EQ(nullptr, scratchController.scratchSlot0Allocation);
+    EXPECT_EQ(nullptr, scratchController.scratchSlot1Allocation);
+    EXPECT_EQ(0u, scratchController.scratchSlot0SizeInBytes);
+    EXPECT_EQ(0u, scratchController.scratchSlot1SizeInBytes);
+    EXPECT_EQ(0u, scratchController.perThreadScratchSpaceSlot0Size);
+    EXPECT_EQ(0u, scratchController.perThreadScratchSpaceSlot1Size);
+
+    memoryManager->validateAllocateProperties = [](const AllocationProperties &) -> void {};
+    memoryManager->forceFailureInPrimaryAllocation = false;
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, ScratchControllerTests, givenScratchAllocationFailureWhenProgrammingHeapsThenFalseIsReturned) {
+    auto &csr = *pDevice->getDefaultEngine().commandStreamReceiver;
+    auto &osContext = *pDevice->getDefaultEngine().osContext;
+    auto memoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
+    memoryManager->isMockHostMemoryManager = true;
+    memoryManager->forceFailureInPrimaryAllocation = true;
+
+    MockScratchSpaceControllerXeHPAndLater scratchController(pDevice->getRootDeviceIndex(), *pDevice->getExecutionEnvironment(), *csr.getInternalAllocationStorage());
+    std::vector<uint8_t> surfaceStateHeap(scratchController.getReservedSshSize() * 2);
+    MockGraphicsAllocation heapAllocation(surfaceStateHeap.data(), surfaceStateHeap.size());
+    HeapContainer heapContainer{&heapAllocation};
+    bool stateBaseAddressDirty = false;
+    bool frontEndStateDirty = false;
+
+    EXPECT_FALSE(scratchController.programHeaps(heapContainer, 1u, 0x40u, 0u, osContext, stateBaseAddressDirty, frontEndStateDirty));
+    EXPECT_FALSE(frontEndStateDirty);
+    EXPECT_EQ(nullptr, scratchController.scratchSlot0Allocation);
+
+    memoryManager->forceFailureInPrimaryAllocation = false;
+    EXPECT_TRUE(scratchController.programHeaps(heapContainer, 1u, 0x40u, 0u, osContext, stateBaseAddressDirty, frontEndStateDirty));
+    EXPECT_TRUE(frontEndStateDirty);
+    EXPECT_NE(nullptr, scratchController.scratchSlot0Allocation);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, ScratchControllerTests, givenReservedScratchSpaceWhenSettingRequiredScratchSpaceThenSurfaceStateIsProgrammedOnlyOnce) {
+    auto &csr = *pDevice->getDefaultEngine().commandStreamReceiver;
+    auto &osContext = *pDevice->getDefaultEngine().osContext;
+
+    MockScratchSpaceControllerXeHPAndLater scratchController(pDevice->getRootDeviceIndex(), *pDevice->getExecutionEnvironment(), *csr.getInternalAllocationStorage());
+    std::vector<uint8_t> surfaceStateHeap(scratchController.getReservedSshSize());
+    bool stateBaseAddressDirty = false;
+    bool frontEndStateDirty = false;
+
+    EXPECT_TRUE(scratchController.reserveScratchSpace(0x40u, 0u, osContext));
+    auto reservedScratchAllocation = scratchController.scratchSlot0Allocation;
+    ASSERT_NE(nullptr, reservedScratchAllocation);
+    EXPECT_EQ(0u, scratchController.slotId);
+
+    EXPECT_TRUE(scratchController.setRequiredScratchSpace(surfaceStateHeap.data(), 0u, 0x40u, 0u, osContext, stateBaseAddressDirty, frontEndStateDirty));
+    EXPECT_TRUE(frontEndStateDirty);
+    EXPECT_EQ(1u, scratchController.slotId);
+    EXPECT_EQ(reservedScratchAllocation, scratchController.scratchSlot0Allocation);
+
+    frontEndStateDirty = false;
+    EXPECT_TRUE(scratchController.setRequiredScratchSpace(surfaceStateHeap.data(), 0u, 0x40u, 0u, osContext, stateBaseAddressDirty, frontEndStateDirty));
+    EXPECT_FALSE(frontEndStateDirty);
+    EXPECT_EQ(1u, scratchController.slotId);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, ScratchControllerTests, givenScratchAllocationFailureWhenReservingScratchSpaceThenFalseIsReturnedAndNothingIsPendingForProgramming) {
+    auto &csr = *pDevice->getDefaultEngine().commandStreamReceiver;
+    auto &osContext = *pDevice->getDefaultEngine().osContext;
+    auto memoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
+    memoryManager->isMockHostMemoryManager = true;
+    memoryManager->forceFailureInPrimaryAllocation = true;
+
+    MockScratchSpaceControllerXeHPAndLater scratchController(pDevice->getRootDeviceIndex(), *pDevice->getExecutionEnvironment(), *csr.getInternalAllocationStorage());
+    std::vector<uint8_t> surfaceStateHeap(scratchController.getReservedSshSize());
+    bool stateBaseAddressDirty = false;
+    bool frontEndStateDirty = false;
+
+    EXPECT_FALSE(scratchController.reserveScratchSpace(0x40u, 0u, osContext));
+    EXPECT_EQ(nullptr, scratchController.scratchSlot0Allocation);
+
+    memoryManager->forceFailureInPrimaryAllocation = false;
+    EXPECT_TRUE(scratchController.setRequiredScratchSpace(surfaceStateHeap.data(), 0u, 0u, 0u, osContext, stateBaseAddressDirty, frontEndStateDirty));
+    EXPECT_FALSE(frontEndStateDirty);
+    EXPECT_EQ(0u, scratchController.slotId);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, ScratchControllerTests, givenReservedLargerScratchWhenSwitchingBackToPreviouslyUsedHeapThenItsUsedSlotIsNotOverwritten) {
+    auto &csr = *pDevice->getDefaultEngine().commandStreamReceiver;
+    auto &osContext = *pDevice->getDefaultEngine().osContext;
+
+    MockScratchSpaceControllerXeHPAndLater scratchController(pDevice->getRootDeviceIndex(), *pDevice->getExecutionEnvironment(), *csr.getInternalAllocationStorage());
+    std::vector<uint8_t> surfaceStateHeapA(scratchController.getReservedSshSize());
+    std::vector<uint8_t> surfaceStateHeapB(scratchController.getReservedSshSize());
+    bool stateBaseAddressDirty = false;
+    bool frontEndStateDirty = false;
+
+    EXPECT_TRUE(scratchController.setRequiredScratchSpace(surfaceStateHeapA.data(), 0u, 0x40u, 0u, osContext, stateBaseAddressDirty, frontEndStateDirty));
+    EXPECT_TRUE(scratchController.setRequiredScratchSpace(surfaceStateHeapB.data(), 0u, 0x40u, 0u, osContext, stateBaseAddressDirty, frontEndStateDirty));
+    const auto usedSlotId = scratchController.slotId;
+    const auto usedSlotBegin = scratchController.getOffsetToSurfaceState(usedSlotId);
+    const auto usedSlotEnd = scratchController.getOffsetToSurfaceState(usedSlotId + 1);
+    const std::vector<uint8_t> usedSlotInHeapA(surfaceStateHeapA.begin() + usedSlotBegin, surfaceStateHeapA.begin() + usedSlotEnd);
+
+    EXPECT_TRUE(scratchController.reserveScratchSpace(0x400u, 0u, osContext));
+    frontEndStateDirty = false;
+    EXPECT_TRUE(scratchController.setRequiredScratchSpace(surfaceStateHeapA.data(), 0u, 0x400u, 0u, osContext, stateBaseAddressDirty, frontEndStateDirty));
+
+    EXPECT_TRUE(frontEndStateDirty);
+    EXPECT_EQ(usedSlotId + 1, scratchController.slotId);
+    EXPECT_EQ(surfaceStateHeapA.data(), reinterpret_cast<uint8_t *>(scratchController.surfaceStateHeap));
+    EXPECT_TRUE(std::equal(usedSlotInHeapA.begin(), usedSlotInHeapA.end(), surfaceStateHeapA.begin() + usedSlotBegin));
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, ScratchControllerTests, givenScratchReservationFailureWhenProgramBindlessHeapThenSurfaceStateIsNotProgrammed) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
+    MockCommandStreamReceiver csr(*pDevice->getExecutionEnvironment(), 0, pDevice->getDeviceBitfield());
+    csr.initializeTagAllocation();
+    csr.setupContext(*pDevice->getDefaultEngine().osContext);
+
+    auto scratchController = std::make_unique<MockBindlessScratchSpaceControllerXeHPAndLater>(pDevice->getRootDeviceIndex(), *pDevice->getExecutionEnvironment(), *csr.getInternalAllocationStorage());
+    auto bindlessHeapHelper = std::make_unique<BindlessHeapsHelper>(pDevice, pDevice->getNumGenericSubDevices() > 1);
+    bool gsbaStateDirty = false;
+    bool frontEndStateDirty = false;
+    scratchController->scratchDirty = true;
+    scratchController->prepareScratchAllocationResult = false;
+
+    scratchController->programBindlessSurfaceStateForScratch(bindlessHeapHelper.get(), 0x40u, 0u, *pDevice->getDefaultEngine().osContext, gsbaStateDirty, frontEndStateDirty, &csr);
+    EXPECT_FALSE(scratchController->wasProgramSurfaceStateAtPtrCalled);
+    EXPECT_FALSE(frontEndStateDirty);
+    EXPECT_EQ(nullptr, scratchController->bindlessSS.ssPtr);
 }

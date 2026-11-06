@@ -204,10 +204,6 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegularHeapless(
     std::unique_lock<std::mutex> lockForIndirect;
     handleIndirectMigration(ctx, lockForIndirect);
 
-    if (ctx.cmdListScratchAddressPatchingEnabled == true) {
-        this->handleScratchSpaceAndUpdateGSBAStateDirtyFlag(ctx);
-    }
-
     size_t linearStreamSizeEstimate = this->estimateLinearStreamSizeTotal(ctx, commandListHandles, numCommandLists);
 
     NEO::LinearStream child(nullptr);
@@ -296,9 +292,6 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
     std::unique_lock<std::mutex> lockForIndirect;
     handleIndirectMigration(ctx, lockForIndirect);
 
-    if (this->heaplessModeEnabled == false || ctx.cmdListScratchAddressPatchingEnabled == true) {
-        this->handleScratchSpaceAndUpdateGSBAStateDirtyFlag(ctx);
-    }
     this->setFrontEndStateProperties(ctx);
 
     size_t linearStreamSizeEstimate = this->estimateLinearStreamSizeTotal(ctx, commandListHandles, numCommandLists);
@@ -764,6 +757,13 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::setupCmdListsAndContextParams(
         ctx.spaceForResidency += estimateCommandListResidencySize(commandList);
 
         this->isWalkerWithProfilingEnqueued = commandList->getIsWalkerWithProfilingEnqueued();
+    }
+
+    if (!isCopyOnlyCommandQueue && (this->heaplessModeEnabled == false || ctx.cmdListScratchAddressPatchingEnabled == true)) {
+        if (const auto ret = this->handleScratchSpaceAndUpdateGSBAStateDirtyFlag(ctx); ret != ZE_RESULT_SUCCESS) {
+            this->heapContainer.clear();
+            return ret;
+        }
     }
 
     this->ensurePatchPreambleCounterForCopyOffload(ctx, phCommandLists, numCommandLists);
@@ -1272,7 +1272,7 @@ void CommandQueueHw<gfxCoreFamily>::setFrontEndStateProperties(CommandListExecut
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandQueueHw<gfxCoreFamily>::handleScratchSpaceAndUpdateGSBAStateDirtyFlag(CommandListExecutionContext &ctx) {
+ze_result_t CommandQueueHw<gfxCoreFamily>::handleScratchSpaceAndUpdateGSBAStateDirtyFlag(CommandListExecutionContext &ctx) {
     std::unique_lock<NEO::CommandStreamReceiver::MutexType> defaultCsrLock;
     if (ctx.lockScratchController) {
         defaultCsrLock = device->getNEODevice()->getDefaultEngine().commandStreamReceiver->obtainUniqueOwnership();
@@ -1280,20 +1280,27 @@ void CommandQueueHw<gfxCoreFamily>::handleScratchSpaceAndUpdateGSBAStateDirtyFla
 
     bool localGsbaDirty = false;
     bool localFrontEndDirty = false;
-    handleScratchSpace(this->heapContainer,
-                       ctx.scratchSpaceController,
-                       ctx.globalStatelessAllocation,
-                       localGsbaDirty, localFrontEndDirty,
-                       ctx.perThreadScratchSpaceSlot0Size, ctx.perThreadScratchSpaceSlot1Size);
+    if (!handleScratchSpace(this->heapContainer,
+                            ctx.scratchSpaceController,
+                            ctx.globalStatelessAllocation,
+                            localGsbaDirty, localFrontEndDirty,
+                            ctx.perThreadScratchSpaceSlot0Size, ctx.perThreadScratchSpaceSlot1Size)) {
+        return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+    }
 
     if (this->heaplessModeEnabled == false) {
-        ctx.gsbaStateDirty |= localGsbaDirty;
-        ctx.frontEndStateDirty |= localFrontEndDirty;
+        if (localGsbaDirty) {
+            this->csr->setGSBAStateDirty(true);
+        }
+        if (localFrontEndDirty) {
+            this->csr->setMediaVFEStateDirty(true);
+        }
 
         ctx.gsbaStateDirty |= this->csr->getGSBAStateDirty();
         ctx.pipelineCmdsDispatch |= ctx.gsbaStateDirty;
     }
     ctx.scratchGsba = ctx.scratchSpaceController->calculateNewGSH();
+    return ZE_RESULT_SUCCESS;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

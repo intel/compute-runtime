@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_stream/scratch_space_controller_base.h"
 #include "shared/source/command_stream/scratch_space_controller_xehp_and_later.h"
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/helpers/compiler_product_helper.h"
@@ -874,7 +875,7 @@ HWTEST2_F(CommandQueueScratchTests, givenCommandQueueWhenHandleScratchSpaceThenP
                                                NEO::ExecutionEnvironment &environment,
                                                InternalAllocationStorage &allocationStorage) : NEO::ScratchSpaceControllerXeHPAndLater(rootDeviceIndex, environment, allocationStorage) {}
 
-        void programHeaps(HeapContainer &heapContainer,
+        bool programHeaps(HeapContainer &heapContainer,
                           uint32_t scratchSlot,
                           uint32_t requiredPerThreadScratchSizeSlot0,
                           uint32_t requiredPerThreadScratchSizeSlot1,
@@ -883,6 +884,7 @@ HWTEST2_F(CommandQueueScratchTests, givenCommandQueueWhenHandleScratchSpaceThenP
                           bool &vfeStateDirty) override {
             this->scratchSlot = scratchSlot;
             programHeapsCalled = true;
+            return true;
         }
 
         NEO::GraphicsAllocation *getScratchSpaceSlot0Allocation() override {
@@ -936,7 +938,7 @@ HWTEST2_F(CommandQueueScratchTests, givenCommandQueueWhenHandleScratchSpaceAndHe
                                                NEO::ExecutionEnvironment &environment,
                                                InternalAllocationStorage &allocationStorage) : NEO::ScratchSpaceControllerXeHPAndLater(rootDeviceIndex, environment, allocationStorage) {}
 
-        void programHeaps(HeapContainer &heapContainer,
+        bool programHeaps(HeapContainer &heapContainer,
                           uint32_t scratchSlot,
                           uint32_t requiredPerThreadScratchSizeSlot0,
                           uint32_t requiredPerThreadScratchSizeSlot1,
@@ -944,6 +946,7 @@ HWTEST2_F(CommandQueueScratchTests, givenCommandQueueWhenHandleScratchSpaceAndHe
                           bool &stateBaseAddressDirty,
                           bool &vfeStateDirty) override {
             programHeapsCalled = true;
+            return true;
         }
 
       protected:
@@ -976,6 +979,114 @@ HWTEST2_F(CommandQueueScratchTests, givenCommandQueueWhenHandleScratchSpaceAndHe
 
     EXPECT_FALSE(scratch->programHeapsCalled);
     scratch->scratchSlot0Allocation = nullptr;
+}
+
+class MockFailingScratchSpaceControllerXeHPAndLater : public NEO::ScratchSpaceControllerXeHPAndLater {
+  public:
+    using NEO::ScratchSpaceControllerXeHPAndLater::ScratchSpaceControllerXeHPAndLater;
+
+    bool setRequiredScratchSpace(void *sshBaseAddress,
+                                 uint32_t scratchSlot,
+                                 uint32_t requiredPerThreadScratchSizeSlot0,
+                                 uint32_t requiredPerThreadScratchSizeSlot1,
+                                 OsContext &osContext,
+                                 bool &stateBaseAddressDirty,
+                                 bool &vfeStateDirty) override {
+        setRequiredScratchSpaceCalled = true;
+        return false;
+    }
+
+    bool programHeaps(HeapContainer &heapContainer,
+                      uint32_t scratchSlot,
+                      uint32_t requiredPerThreadScratchSizeSlot0,
+                      uint32_t requiredPerThreadScratchSizeSlot1,
+                      OsContext &osContext,
+                      bool &stateBaseAddressDirty,
+                      bool &vfeStateDirty) override {
+        programHeapsCalled = true;
+        return false;
+    }
+
+    bool setRequiredScratchSpaceCalled = false;
+    bool programHeapsCalled = false;
+};
+
+HWTEST2_F(CommandQueueScratchTests, givenProgramHeapsFailureWhenHandleScratchSpaceThenFalseIsReturnedAndNothingIsMadeResident, Platforms) {
+    MockCommandStreamReceiver csr(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+    csr.initializeTagAllocation();
+    csr.setupContext(*neoDevice->getDefaultEngine().osContext);
+
+    MockFailingScratchSpaceControllerXeHPAndLater scratchController(device->getRootDeviceIndex(), *neoDevice->getExecutionEnvironment(), *csr.getInternalAllocationStorage());
+
+    const ze_command_queue_desc_t desc = {};
+    auto commandQueue = std::make_unique<MockCommandQueueHw<FamilyType::gfxCoreFamily>>(device, &csr, &desc);
+    commandQueue->cmdListHeapAddressModel = NEO::HeapAddressModel::privateHeaps;
+
+    void *surfaceHeap = alignedMalloc(0x1000, 0x1000);
+    NEO::GraphicsAllocation graphicsAllocationHeap(0, 1u /*num gmms*/, NEO::AllocationType::buffer, surfaceHeap, 0u, 0u, 1u, MemoryPool::system4KBPages, 1u);
+    NEO::HeapContainer heapContainer{&graphicsAllocationHeap};
+    bool gsbaStateDirty = false;
+    bool frontEndStateDirty = false;
+
+    EXPECT_FALSE(commandQueue->handleScratchSpace(heapContainer, &scratchController, nullptr, gsbaStateDirty, frontEndStateDirty, 0x1000, 0u));
+    EXPECT_TRUE(scratchController.programHeapsCalled);
+    EXPECT_FALSE(scratchController.setRequiredScratchSpaceCalled);
+    EXPECT_EQ(0u, csr.makeResidentCalledTimes);
+
+    alignedFree(surfaceHeap);
+}
+
+HWTEST2_F(CommandQueueScratchTests, givenGlobalStatelessScratchFailureWhenHandleScratchSpaceThenFalseIsReturnedAndHeapsAreNotProgrammed, Platforms) {
+    MockCommandStreamReceiver csr(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+    csr.initializeTagAllocation();
+    csr.setupContext(*neoDevice->getDefaultEngine().osContext);
+
+    MockFailingScratchSpaceControllerXeHPAndLater scratchController(device->getRootDeviceIndex(), *neoDevice->getExecutionEnvironment(), *csr.getInternalAllocationStorage());
+
+    const ze_command_queue_desc_t desc = {};
+    auto commandQueue = std::make_unique<MockCommandQueueHw<FamilyType::gfxCoreFamily>>(device, &csr, &desc);
+    commandQueue->cmdListHeapAddressModel = NEO::HeapAddressModel::globalStateless;
+
+    void *surfaceHeap = alignedMalloc(0x1000, 0x1000);
+    NEO::GraphicsAllocation globalStatelessAllocation(0, 1u /*num gmms*/, NEO::AllocationType::buffer, surfaceHeap, 0u, 0u, 1u, MemoryPool::system4KBPages, 1u);
+    NEO::HeapContainer heapContainer{&globalStatelessAllocation};
+    bool gsbaStateDirty = false;
+    bool frontEndStateDirty = false;
+
+    EXPECT_FALSE(commandQueue->handleScratchSpace(heapContainer, &scratchController, &globalStatelessAllocation, gsbaStateDirty, frontEndStateDirty, 0x1000, 0u));
+    EXPECT_TRUE(scratchController.setRequiredScratchSpaceCalled);
+    EXPECT_FALSE(scratchController.programHeapsCalled);
+    EXPECT_EQ(0u, csr.makeResidentCalledTimes);
+
+    alignedFree(surfaceHeap);
+}
+
+HWTEST2_F(CommandQueueScratchTests, givenScratchAllocationFailureWhenHandleScratchSpaceThenFalseIsReturnedAndNothingIsMadeResident, IsGen12LP) {
+    MockCommandStreamReceiver csr(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+    csr.initializeTagAllocation();
+    csr.setupContext(*neoDevice->getDefaultEngine().osContext);
+
+    auto memoryManager = static_cast<NEO::MockMemoryManager *>(neoDevice->getMemoryManager());
+    memoryManager->isMockHostMemoryManager = true;
+    memoryManager->forceFailureInPrimaryAllocation = true;
+
+    NEO::ScratchSpaceControllerBase scratchController(device->getRootDeviceIndex(), *neoDevice->getExecutionEnvironment(), *csr.getInternalAllocationStorage());
+
+    const ze_command_queue_desc_t desc = {};
+    auto commandQueue = std::make_unique<MockCommandQueueHw<FamilyType::gfxCoreFamily>>(device, &csr, &desc);
+
+    NEO::HeapContainer heapContainer;
+    bool gsbaStateDirty = false;
+    bool frontEndStateDirty = false;
+
+    EXPECT_FALSE(commandQueue->handleScratchSpace(heapContainer, &scratchController, nullptr, gsbaStateDirty, frontEndStateDirty, 0x1000, 0u));
+    EXPECT_EQ(nullptr, scratchController.getScratchSpaceSlot0Allocation());
+    EXPECT_EQ(0u, csr.makeResidentCalledTimes);
+
+    memoryManager->forceFailureInPrimaryAllocation = false;
+    EXPECT_TRUE(commandQueue->handleScratchSpace(heapContainer, &scratchController, nullptr, gsbaStateDirty, frontEndStateDirty, 0x1000, 0u));
+    EXPECT_NE(nullptr, scratchController.getScratchSpaceSlot0Allocation());
+    EXPECT_GT(csr.makeResidentCalledTimes, 0u);
 }
 
 HWTEST2_F(CommandQueueScratchTests, whenPatchCommandsIsCalledThenCommandsAreCorrectlyPatched, IsAtLeastXeCore) {

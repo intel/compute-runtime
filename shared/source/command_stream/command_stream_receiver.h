@@ -227,6 +227,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     bool isRayTracingStateProgramingNeeded(Device &device) const;
 
     void setRequiredScratchSizes(uint32_t newRequiredScratchSlot0Size, uint32_t newRequiredPrivateScratchSlot1Size);
+    bool reserveScratchSpace(uint32_t requiredScratchSlot0Size, uint32_t requiredScratchSlot1Size);
     GraphicsAllocation *getScratchAllocation();
     GraphicsAllocation *getDebugSurfaceAllocation() const {
         if (primaryCsr) {

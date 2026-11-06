@@ -3540,7 +3540,7 @@ struct MockRequiredScratchSpaceController : public ScratchSpaceControllerBase {
     MockRequiredScratchSpaceController(uint32_t rootDeviceIndex,
                                        ExecutionEnvironment &environment,
                                        InternalAllocationStorage &allocationStorage) : ScratchSpaceControllerBase(rootDeviceIndex, environment, allocationStorage) {}
-    void setRequiredScratchSpace(void *sshBaseAddress,
+    bool setRequiredScratchSpace(void *sshBaseAddress,
                                  uint32_t scratchSlot,
                                  uint32_t requiredPerThreadScratchSizeSlot0,
                                  uint32_t requiredPerThreadScratchSizeSlot1,
@@ -3549,6 +3549,7 @@ struct MockRequiredScratchSpaceController : public ScratchSpaceControllerBase {
                                  bool &stateBaseAddressDirty,
                                  bool &vfeStateDirty) override {
         setRequiredScratchSpaceCalled = true;
+        return true;
     }
     bool setRequiredScratchSpaceCalled = false;
 };
@@ -9418,4 +9419,92 @@ HWTEST_F(CommandStreamReceiverHwTest, givenAuxTableRegistersSubmissionFailureWhe
     EXPECT_EQ(2u, pageTableManager->initContextAuxTableRegisterCalled);
     EXPECT_FALSE(commandStreamReceiver.isPageTableManagerInitializationRequired());
     EXPECT_EQ(2u, AuxTableLriWritingPageTableMngr<FamilyType>::countLris(commandStreamReceiver.commandStream, usedSize));
+}
+
+HWTEST2_F(CommandStreamReceiverHwTest, givenScratchAllocationFailureWhenFlushingTaskThenOutOfDeviceMemoryIsReturnedAndNothingIsDispatched, IsHeapfulRequiredAndAtLeastXeCore) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.heaplessModeEnabled = false;
+    auto memoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
+    memoryManager->isMockHostMemoryManager = true;
+    memoryManager->forceFailureInPrimaryAllocation = true;
+
+    commandStreamReceiver.setRequiredScratchSizes(0x100, 0);
+    const auto taskCountBefore = commandStreamReceiver.peekTaskCount();
+    const auto taskStreamUsedBefore = commandStream.getUsed();
+    const auto csrStreamUsedBefore = commandStreamReceiver.commandStream.getUsed();
+
+    auto completionStamp = commandStreamReceiver.flushTask(commandStream, 0, &dsh, &ioh, &ssh, taskLevel, flushTaskFlags, *pDevice);
+    EXPECT_EQ(CompletionStamp::outOfDeviceMemory, completionStamp.taskCount);
+    EXPECT_EQ(taskCountBefore, commandStreamReceiver.peekTaskCount());
+    EXPECT_EQ(taskStreamUsedBefore, commandStream.getUsed());
+    EXPECT_EQ(csrStreamUsedBefore, commandStreamReceiver.commandStream.getUsed());
+    EXPECT_EQ(nullptr, commandStreamReceiver.getScratchSpaceController()->getScratchSpaceSlot0Allocation());
+
+    memoryManager->forceFailureInPrimaryAllocation = false;
+    completionStamp = commandStreamReceiver.flushTask(commandStream, 0, &dsh, &ioh, &ssh, taskLevel, flushTaskFlags, *pDevice);
+    EXPECT_EQ(taskCountBefore + 1, completionStamp.taskCount);
+    EXPECT_NE(nullptr, commandStreamReceiver.getScratchSpaceController()->getScratchSpaceSlot0Allocation());
+}
+
+HWTEST2_F(CommandStreamReceiverHwTest, givenScratchAllocationFailureWhenFlushingImmediateTaskThenOutOfDeviceMemoryIsReturnedAndNothingIsDispatched, IsHeapfulRequiredAndAtLeastXeCore) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.heaplessModeEnabled = false;
+    commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
+
+    auto memoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
+    memoryManager->isMockHostMemoryManager = true;
+    memoryManager->forceFailureInPrimaryAllocation = true;
+
+    commandStreamReceiver.setRequiredScratchSizes(0x100, 0);
+    const auto taskCountBefore = commandStreamReceiver.peekTaskCount();
+    const auto csrStreamUsedBefore = commandStreamReceiver.commandStream.getUsed();
+
+    auto completionStamp = commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
+    EXPECT_EQ(CompletionStamp::outOfDeviceMemory, completionStamp.taskCount);
+    EXPECT_EQ(taskCountBefore, commandStreamReceiver.peekTaskCount());
+    EXPECT_EQ(csrStreamUsedBefore, commandStreamReceiver.commandStream.getUsed());
+    EXPECT_EQ(nullptr, commandStreamReceiver.getScratchSpaceController()->getScratchSpaceSlot0Allocation());
+
+    memoryManager->forceFailureInPrimaryAllocation = false;
+    completionStamp = commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
+    EXPECT_EQ(taskCountBefore + 1, completionStamp.taskCount);
+    EXPECT_NE(nullptr, commandStreamReceiver.getScratchSpaceController()->getScratchSpaceSlot0Allocation());
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenNoScratchRequiredWhenReservingScratchSpaceThenNothingIsAllocated) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    EXPECT_TRUE(commandStreamReceiver.reserveScratchSpace(0u, 0u));
+    EXPECT_EQ(nullptr, commandStreamReceiver.getScratchSpaceController()->getScratchSpaceSlot0Allocation());
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenScratchRequiredWhenReservingScratchSpaceThenScratchOfCsrUsedForFlushIsAllocated) {
+    auto &primaryCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    UltCommandStreamReceiver<FamilyType> secondaryCsr(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    secondaryCsr.setupContext(*pDevice->getDefaultEngine().osContext);
+    secondaryCsr.setPrimaryCsr(&primaryCsr);
+
+    secondaryCsr.heaplessModeEnabled = false;
+    EXPECT_TRUE(secondaryCsr.reserveScratchSpace(0u, 0x100u));
+    EXPECT_TRUE(secondaryCsr.reserveScratchSpace(0x100u, 0u));
+    EXPECT_NE(nullptr, secondaryCsr.getScratchSpaceController()->getScratchSpaceSlot0Allocation());
+    EXPECT_EQ(nullptr, primaryCsr.getScratchSpaceController()->getScratchSpaceSlot0Allocation());
+
+    secondaryCsr.heaplessModeEnabled = true;
+    EXPECT_TRUE(secondaryCsr.reserveScratchSpace(0x100u, 0u));
+    EXPECT_NE(nullptr, primaryCsr.getScratchSpaceController()->getScratchSpaceSlot0Allocation());
+
+    secondaryCsr.setPrimaryCsr(nullptr);
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenScratchAllocationFailureWhenReservingScratchSpaceThenFalseIsReturned) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto memoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
+    memoryManager->isMockHostMemoryManager = true;
+    memoryManager->forceFailureInPrimaryAllocation = true;
+
+    EXPECT_FALSE(commandStreamReceiver.reserveScratchSpace(0x100u, 0u));
+    EXPECT_EQ(nullptr, commandStreamReceiver.getScratchSpaceController()->getScratchSpaceSlot0Allocation());
+
+    memoryManager->forceFailureInPrimaryAllocation = false;
 }

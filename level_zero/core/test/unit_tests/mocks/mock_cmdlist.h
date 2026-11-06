@@ -310,6 +310,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::releasePreviousCsrCompletionTarget;
     using BaseClass::requiredStreamState;
     using BaseClass::requiresQueueUncachedMocs;
+    using BaseClass::reserveScratchSpaceForKernel;
     using BaseClass::resolveImagePitchesAndBufferSize;
     using BaseClass::stateBaseAddressTracking;
     using BaseClass::stateComputeModeTracking;

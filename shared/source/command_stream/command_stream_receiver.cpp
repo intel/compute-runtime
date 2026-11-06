@@ -760,6 +760,15 @@ FlushStamp CommandStreamReceiver::obtainCurrentFlushStamp() const {
     return flushStamp->peekStamp();
 }
 
+bool CommandStreamReceiver::reserveScratchSpace(uint32_t requiredScratchSlot0Size, uint32_t requiredScratchSlot1Size) {
+    if (requiredScratchSlot0Size == 0u && requiredScratchSlot1Size == 0u) {
+        return true;
+    }
+    auto &scratchOwnerCsr = (heaplessModeEnabled && primaryCsr) ? *primaryCsr : *this;
+    auto scratchOwnerLock = scratchOwnerCsr.obtainUniqueOwnership();
+    return scratchOwnerCsr.getScratchSpaceController()->reserveScratchSpace(requiredScratchSlot0Size, requiredScratchSlot1Size, *osContext);
+}
+
 void CommandStreamReceiver::setRequiredScratchSizes(uint32_t newRequiredScratchSlot0Size, uint32_t newRequiredScratchSlot1Size) {
     if (newRequiredScratchSlot0Size > requiredScratchSlot0Size) {
         requiredScratchSlot0Size = newRequiredScratchSlot0Size;

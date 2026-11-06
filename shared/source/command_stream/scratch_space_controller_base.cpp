@@ -19,35 +19,54 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
 
+#include <utility>
+
 namespace NEO {
 ScratchSpaceControllerBase::ScratchSpaceControllerBase(uint32_t rootDeviceIndex, ExecutionEnvironment &environment, InternalAllocationStorage &allocationStorage)
     : ScratchSpaceController(rootDeviceIndex, environment, allocationStorage) {
 }
 
-void ScratchSpaceControllerBase::setRequiredScratchSpace(void *sshBaseAddress,
+bool ScratchSpaceControllerBase::setRequiredScratchSpace(void *sshBaseAddress,
                                                          uint32_t scratchSlot,
                                                          uint32_t requiredPerThreadScratchSizeSlot0,
                                                          uint32_t requiredPerThreadScratchSizeSlot1,
                                                          OsContext &osContext,
                                                          bool &stateBaseAddressDirty,
                                                          bool &vfeStateDirty) {
-    if (requiredPerThreadScratchSizeSlot0 && (perThreadScratchSpaceSlot0Size < requiredPerThreadScratchSizeSlot0)) {
-        perThreadScratchSpaceSlot0Size = requiredPerThreadScratchSizeSlot0;
-        scratchSlot0SizeInBytes = perThreadScratchSpaceSlot0Size * computeUnitsUsedForScratch;
-        if (scratchSlot0Allocation) {
-            csrAllocationStorage.storeAllocation(std::unique_ptr<GraphicsAllocation>(scratchSlot0Allocation), TEMPORARY_ALLOCATION);
-        }
-        createScratchSpaceAllocation();
+    if (!reserveScratchSpace(requiredPerThreadScratchSizeSlot0, requiredPerThreadScratchSizeSlot1, osContext)) {
+        return false;
+    }
+    if (std::exchange(scratchSurfaceStateProgrammingPending, false)) {
         vfeStateDirty = true;
         if (is64bit) {
             stateBaseAddressDirty = true;
         }
     }
+    return true;
 }
 
-void ScratchSpaceControllerBase::createScratchSpaceAllocation() {
-    scratchSlot0Allocation = getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, scratchSlot0SizeInBytes, AllocationType::scratchSurface, this->csrAllocationStorage.getDeviceBitfield()});
-    UNRECOVERABLE_IF(scratchSlot0Allocation == nullptr);
+bool ScratchSpaceControllerBase::reserveScratchSpace(uint32_t requiredPerThreadScratchSizeSlot0,
+                                                     uint32_t requiredPerThreadScratchSizeSlot1,
+                                                     OsContext &osContext) {
+    if (requiredPerThreadScratchSizeSlot0 && (perThreadScratchSpaceSlot0Size < requiredPerThreadScratchSizeSlot0)) {
+        const size_t requiredScratchSizeInBytes = requiredPerThreadScratchSizeSlot0 * computeUnitsUsedForScratch;
+        auto newScratchAllocation = createScratchSpaceAllocation(requiredScratchSizeInBytes);
+        if (newScratchAllocation == nullptr) {
+            return false;
+        }
+        if (scratchSlot0Allocation) {
+            csrAllocationStorage.storeAllocation(std::unique_ptr<GraphicsAllocation>(scratchSlot0Allocation), TEMPORARY_ALLOCATION);
+        }
+        scratchSlot0Allocation = newScratchAllocation;
+        perThreadScratchSpaceSlot0Size = requiredPerThreadScratchSizeSlot0;
+        scratchSlot0SizeInBytes = requiredScratchSizeInBytes;
+        scratchSurfaceStateProgrammingPending = true;
+    }
+    return true;
+}
+
+GraphicsAllocation *ScratchSpaceControllerBase::createScratchSpaceAllocation(size_t scratchSizeInBytes) {
+    return getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, scratchSizeInBytes, AllocationType::scratchSurface, this->csrAllocationStorage.getDeviceBitfield()});
 }
 
 uint64_t ScratchSpaceControllerBase::calculateNewGSH() {
@@ -84,13 +103,14 @@ void ScratchSpaceControllerBase::reserveHeap(IndirectHeap::Type heapType, Indire
     }
 }
 
-void ScratchSpaceControllerBase::programHeaps(HeapContainer &heapContainer,
+bool ScratchSpaceControllerBase::programHeaps(HeapContainer &heapContainer,
                                               uint32_t offset,
                                               uint32_t requiredPerThreadScratchSizeSlot0,
                                               uint32_t requiredPerThreadScratchSizeSlot1,
                                               OsContext &osContext,
                                               bool &stateBaseAddressDirty,
                                               bool &vfeStateDirty) {
+    return true;
 }
 
 void ScratchSpaceControllerBase::programBindlessSurfaceStateForScratch(BindlessHeapsHelper *heapsHelper,

@@ -746,12 +746,27 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchKernel(
     if (spaceCheckStatus != ZE_RESULT_SUCCESS) {
         return spaceCheckStatus;
     }
+    auto scratchReservationStatus = reserveScratchSpaceForKernel(kernelHandle, launchParams.externalPerThreadScratchSize[0], launchParams.externalPerThreadScratchSize[1]);
+    if (scratchReservationStatus != ZE_RESULT_SUCCESS) {
+        return scratchReservationStatus;
+    }
     launchParams.relaxedOrderingDispatch = relaxedOrderingDispatch;
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(kernelHandle, threadGroupDimensions,
                                                                         hSignalEvent, numWaitEvents, phWaitEvents,
                                                                         launchParams);
 
     return flushImmediate(ret, true, stallingCmdsForRelaxedOrdering, relaxedOrderingDispatch, NEO::AppendOperations::kernel, false, hSignalEvent, false, nullptr, nullptr);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::reserveScratchSpaceForKernel(ze_kernel_handle_t kernelHandle, uint32_t externalPerThreadScratchSizeSlot0, uint32_t externalPerThreadScratchSizeSlot1) {
+    const auto &kernelAttributes = Kernel::fromHandle(kernelHandle)->getKernelDescriptor().kernelAttributes;
+    const auto requiredScratchSlot0Size = std::max(kernelAttributes.perThreadScratchSize[0], externalPerThreadScratchSizeSlot0);
+    const auto requiredScratchSlot1Size = std::max(kernelAttributes.perThreadScratchSize[1], externalPerThreadScratchSizeSlot1);
+    if (!this->getCsr(false)->reserveScratchSpace(requiredScratchSlot0Size, requiredScratchSlot1Size)) {
+        return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+    }
+    return ZE_RESULT_SUCCESS;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -794,6 +809,10 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchKernelNon
     if (spaceCheckStatus != ZE_RESULT_SUCCESS) {
         return spaceCheckStatus;
     }
+    auto scratchReservationStatus = reserveScratchSpaceForKernel(kernelHandle, 0u, 0u);
+    if (scratchReservationStatus != ZE_RESULT_SUCCESS) {
+        return scratchReservationStatus;
+    }
 
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelNonUniform(kernelHandle, launchArgs,
                                                                                   hSignalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
@@ -811,6 +830,10 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchKernelInd
     auto spaceCheckStatus = checkAvailableSpace(numWaitEvents, relaxedOrderingDispatch, commonImmediateCommandSize, false);
     if (spaceCheckStatus != ZE_RESULT_SUCCESS) {
         return spaceCheckStatus;
+    }
+    auto scratchReservationStatus = reserveScratchSpaceForKernel(kernelHandle, 0u, 0u);
+    if (scratchReservationStatus != ZE_RESULT_SUCCESS) {
+        return scratchReservationStatus;
     }
 
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelIndirect(kernelHandle, pDispatchArgumentsBuffer,

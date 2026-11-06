@@ -1531,5 +1531,47 @@ HWTEST2_F(RegularCmdListCopyOffloadContextGroupTests, givenCopyEngineSecondaryCo
     EXPECT_EQ(0u, FailingQueue::allocatedCsr->getOwningQueueCount());
 }
 
+HWTEST2_F(RegularCmdListCopyOffloadTests, givenScratchAllocationFailureWhenExecutingCmdListWithCopyOffloadThenOutOfDeviceMemoryIsReturnedAndCopyOffloadIsNotSubmitted, IsAtLeastXeCore) {
+    auto cmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendCopy(*cmdList, nullptr));
+    cmdList->setCommandListPerThreadScratchSize(0u, 0x100u);
+    cmdList->scratchAddressPatchingEnabled = true;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdList->close());
+
+    void *surfaceStateHeap = alignedMalloc(MemoryConstants::pageSize64k, MemoryConstants::pageSize);
+    NEO::GraphicsAllocation sshAllocation(0, 1u /*num gmms*/, NEO::AllocationType::buffer, surfaceStateHeap, 0u, 0u, MemoryConstants::pageSize64k, MemoryPool::system4KBPages, 1u);
+    cmdList->getCmdContainer().getSshAllocations().push_back(&sshAllocation);
+    ASSERT_NE(nullptr, getCopyOffloadCmdList(*cmdList));
+    auto cmdListHandle = cmdList->toHandle();
+
+    auto cmdQueue = createComputeQueue<FamilyType::gfxCoreFamily>();
+    ASSERT_EQ(nullptr, cmdQueue->copyOffloadQueue);
+
+    auto memoryManager = static_cast<NEO::MockMemoryManager *>(device->getNEODevice()->getMemoryManager());
+    memoryManager->isMockHostMemoryManager = true;
+    memoryManager->validateAllocateProperties = [memoryManager](const NEO::AllocationProperties &properties) {
+        memoryManager->forceFailureInPrimaryAllocation = (properties.allocationType == NEO::AllocationType::scratchSurface);
+    };
+
+    CommandListExecutionInternalOptions internalOptions = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, cmdQueue->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions));
+    ASSERT_NE(nullptr, cmdQueue->copyOffloadQueue);
+    auto copyOffloadCsr = cmdQueue->copyOffloadQueue->getCsr();
+    const auto copyOffloadTaskCountAfterFailure = copyOffloadCsr->peekTaskCount();
+    EXPECT_TRUE(cmdQueue->heapContainer.empty());
+    EXPECT_TRUE(cmdQueue->getCsr()->getResidencyAllocations().empty());
+
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, cmdQueue->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions));
+    EXPECT_EQ(copyOffloadTaskCountAfterFailure, copyOffloadCsr->peekTaskCount());
+
+    memoryManager->validateAllocateProperties = [](const NEO::AllocationProperties &) -> void {};
+    memoryManager->forceFailureInPrimaryAllocation = false;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdQueue->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions));
+    EXPECT_LT(copyOffloadTaskCountAfterFailure, copyOffloadCsr->peekTaskCount());
+
+    cmdList->getCmdContainer().getSshAllocations().clear();
+    alignedFree(surfaceStateHeap);
+}
+
 } // namespace ult
 } // namespace L0

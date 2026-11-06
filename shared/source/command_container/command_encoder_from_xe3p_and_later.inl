@@ -70,8 +70,9 @@ void EncodeDispatchKernel<Family>::setScratchAddress(uint64_t &scratchAddress, u
         UNRECOVERABLE_IF(scratchController == nullptr);
         bool sbaStateDirty = false;
         bool frontEndStateDirty = false;
-        scratchController->setRequiredScratchSpace(ssh->getCpuBase(), 0, requiredScratchSlot0Size, requiredScratchSlot1Size,
-                                                   submissionCsr.getOsContext(), sbaStateDirty, frontEndStateDirty);
+        const bool scratchSpaceReady = scratchController->setRequiredScratchSpace(ssh->getCpuBase(), 0, requiredScratchSlot0Size, requiredScratchSlot1Size,
+                                                                                  submissionCsr.getOsContext(), sbaStateDirty, frontEndStateDirty);
+        UNRECOVERABLE_IF(!scratchSpaceReady);
         if (scratchController->getScratchSpaceSlot0Allocation()) {
             submissionCsr.makeResident(*scratchController->getScratchSpaceSlot0Allocation());
         }

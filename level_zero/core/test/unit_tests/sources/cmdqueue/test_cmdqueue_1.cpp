@@ -516,6 +516,34 @@ HWTEST_F(CommandQueueCreate, GivenDispatchTaskCountPostSyncRequiredWhenExecuteCo
     commandQueue->destroy();
 }
 
+HWTEST2_F(CommandQueueCreate, givenScratchGrowthAndLaterExecutionFailureWhenExecutingCommandListsThenFrontEndStateStaysDirtyInCsr, IsHeapfulRequired) {
+    const ze_command_queue_desc_t desc = {};
+    auto csr = neoDevice->getDefaultEngine().commandStreamReceiver;
+    auto commandQueue = new MockCommandQueueHwEstimateSizeTest<FamilyType::gfxCoreFamily>(device, csr, &desc);
+    commandQueue->initialize(false, false, false);
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    commandList->setCommandListPerThreadScratchSize(0u, 0x100u);
+    void *surfaceStateHeap = alignedMalloc(MemoryConstants::pageSize64k, MemoryConstants::pageSize);
+    NEO::GraphicsAllocation sshAllocation(0, 1u /*num gmms*/, NEO::AllocationType::buffer, surfaceStateHeap, 0u, 0u, MemoryConstants::pageSize64k, MemoryPool::system4KBPages, 1u);
+    commandList->getCmdContainer().getSshAllocations().push_back(&sshAllocation);
+    commandList->close();
+    ze_command_list_handle_t cmdListHandle = commandList->toHandle();
+
+    csr->setMediaVFEStateDirty(false);
+    csr->setGSBAStateDirty(false);
+
+    CommandListExecutionInternalOptions internalOptions = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions));
+    EXPECT_NE(nullptr, csr->getScratchSpaceController()->getScratchSpaceSlot0Allocation());
+    EXPECT_TRUE(csr->getMediaVFEStateDirty());
+
+    commandList->getCmdContainer().getSshAllocations().clear();
+    commandQueue->destroy();
+    alignedFree(surfaceStateHeap);
+}
+
 HWTEST_F(CommandQueueCreate, givenUpdateTaskCountFromWaitAndRegularCmdListWhenDispatchTaskCountWriteThenPipeControlFlushed) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION;
@@ -1090,14 +1118,18 @@ class MockCommandQueue : public L0::CommandQueueHw<gfxCoreFamily> {
     using BaseClass::isCopyOnlyCommandQueue;
 
     NEO::HeapContainer mockHeapContainer;
-    void handleScratchSpace(NEO::HeapContainer &heapContainer,
+    bool handleScratchSpace(NEO::HeapContainer &heapContainer,
                             NEO::ScratchSpaceController *scratchController,
                             NEO::GraphicsAllocation *globalStatelessAllocation,
                             bool &gsbaState, bool &frontEndState,
                             uint32_t perThreadScratchSpaceSlot0Size,
                             uint32_t perThreadScratchSpaceSlot1Size) override {
         this->mockHeapContainer = heapContainer;
+        handleScratchSpaceCalled++;
+        return handleScratchSpaceResult;
     }
+    bool handleScratchSpaceResult = true;
+    uint32_t handleScratchSpaceCalled = 0u;
 
     void programFrontEnd(uint64_t scratchAddress, uint32_t perThreadScratchSpaceSlot0Size, NEO::LinearStream &commandStream, NEO::StreamProperties &streamProperties) override {
         return;
@@ -1141,6 +1173,62 @@ HWTEST_F(ExecuteCommandListTests, givenExecuteCommandListWhenItReturnsThenContai
     commandQueue->destroy();
     commandList->destroy();
     alignedFree(alloc);
+}
+
+HWTEST_F(ExecuteCommandListTests, givenScratchSpaceHandlingFailureWhenExecutingCommandListsThenOutOfDeviceMemoryIsReturned) {
+    ze_command_queue_desc_t desc = {};
+    NEO::CommandStreamReceiver *csr;
+    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0);
+    auto commandQueue = new MockCommandQueue<FamilyType::gfxCoreFamily>(device, csr, &desc);
+    commandQueue->initialize(false, false, false);
+    commandQueue->handleScratchSpaceResult = false;
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
+    commandList->scratchAddressPatchingEnabled = true;
+    commandList->close();
+    auto commandListHandle = commandList->toHandle();
+
+    void *alloc = alignedMalloc(0x100, 0x100);
+    NEO::GraphicsAllocation sshAllocation(0, 1u /*num gmms*/, NEO::AllocationType::buffer, alloc, 0u, 0u, 1u, MemoryPool::system4KBPages, 1u);
+    commandList->commandContainer.getSshAllocations().push_back(&sshAllocation);
+    commandList->setCommandListPerThreadScratchSize(0u, 100u);
+
+    CommandListExecutionInternalOptions internalOptions = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, commandQueue->executeCommandLists(1, &commandListHandle, nullptr, internalOptions));
+    EXPECT_EQ(0u, commandQueue->heapContainer.size());
+    EXPECT_EQ(0u, commandQueue->csr->getResidencyAllocations().size());
+
+    commandQueue->handleScratchSpaceResult = true;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandLists(1, &commandListHandle, nullptr, internalOptions));
+
+    commandList->commandContainer.getSshAllocations().clear();
+    commandQueue->destroy();
+    alignedFree(alloc);
+}
+
+HWTEST2_F(ExecuteCommandListTests, givenHeaplessQueueWhenExecutingCommandListsThenScratchIsHandledOnlyForScratchAddressPatching, IsHeaplessRequired) {
+    ze_command_queue_desc_t desc = {};
+    NEO::CommandStreamReceiver *csr;
+    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, 0);
+    auto commandQueue = new MockCommandQueue<FamilyType::gfxCoreFamily>(device, csr, &desc);
+    commandQueue->initialize(false, false, false);
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
+    commandList->close();
+    auto commandListHandle = commandList->toHandle();
+    CommandListExecutionInternalOptions internalOptions = {};
+
+    commandList->scratchAddressPatchingEnabled = false;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandLists(1, &commandListHandle, nullptr, internalOptions));
+    EXPECT_EQ(0u, commandQueue->handleScratchSpaceCalled);
+
+    commandList->scratchAddressPatchingEnabled = true;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandLists(1, &commandListHandle, nullptr, internalOptions));
+    EXPECT_EQ(1u, commandQueue->handleScratchSpaceCalled);
+
+    commandQueue->destroy();
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
