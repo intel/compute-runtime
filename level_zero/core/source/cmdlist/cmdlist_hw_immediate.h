@@ -259,7 +259,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
                                                             CmdListWaitEventParameters &waitEventsParameters, bool isStallingOperation);
     void programCrossEngineTaskCountWait(NEO::CommandStreamReceiver *waitedCsr, TaskCountType taskCountToWait);
 
-    bool preferCopyThroughLockedPtr(CpuMemCopyInfo &cpuMemCopyInfo, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
+    bool preferCopyThroughLockedPtr(CpuMemCopyInfo &cpuMemCopyInfo, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
     bool isSuitableUSMHostAlloc(NEO::SvmAllocationData *alloc);
     bool isSuitableUSMDeviceAlloc(NEO::SvmAllocationData *alloc);
     bool isSuitableUSMSharedAlloc(NEO::SvmAllocationData *alloc);

@@ -6461,6 +6461,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenAubModeWhenSyncCalledAlwa
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenProfilingEventWhenDoingCpuCopyThenSetProfilingData) {
+    debugManager.flags.ExperimentalForceCopyThroughLock.set(1);
     auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
     immCmdList->copyThroughLockedPtrEnabled = true;
 

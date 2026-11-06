@@ -8258,6 +8258,8 @@ struct LocalMemoryEnabledDeviceFixture : public DeviceFixture {
 
 using EventTimestampTest = Test<LocalMemoryEnabledDeviceFixture>;
 HWTEST2_F(EventTimestampTest, givenAppendMemoryCopyIsCalledWhenCpuCopyIsUsedAndCopyTimeIsLessThanDeviceTimestampResolutionThenReturnTimstampDifferenceAsOne, IsXeHpcCore) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.ExperimentalForceCopyThroughLock.set(1);
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     queue->isCopyOnlyCommandQueue = true;

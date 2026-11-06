@@ -125,7 +125,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndImportedHostPtr
         EXPECT_NE(nullptr, copyInfoDeviceUsmToHostImported.srcAllocInfo.svmAlloc);
         EXPECT_EQ(nullptr, copyInfoDeviceUsmToHostImported.dstAllocInfo.svmAlloc);
 
-        EXPECT_EQ(cmdList.preferCopyThroughLockedPtr(copyInfoDeviceUsmToHostUsm, 0, nullptr), cmdList.preferCopyThroughLockedPtr(copyInfoDeviceUsmToHostImported, 0, nullptr));
+        EXPECT_EQ(cmdList.preferCopyThroughLockedPtr(copyInfoDeviceUsmToHostUsm, nullptr, 0, nullptr), cmdList.preferCopyThroughLockedPtr(copyInfoDeviceUsmToHostImported, nullptr, 0, nullptr));
         EXPECT_TRUE(copyInfoDeviceUsmToHostImported.dstIsImportedHostPtr);
 
         CpuMemCopyInfo copyInfoHostUsmToDeviceUsm(devicePtr, hostPtr, sizes[i]);
@@ -138,7 +138,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndImportedHostPtr
         EXPECT_EQ(nullptr, copyInfoHostImportedToDeviceUsm.srcAllocInfo.svmAlloc);
         EXPECT_NE(nullptr, copyInfoHostImportedToDeviceUsm.dstAllocInfo.svmAlloc);
 
-        EXPECT_EQ(cmdList.preferCopyThroughLockedPtr(copyInfoHostUsmToDeviceUsm, 0, nullptr), cmdList.preferCopyThroughLockedPtr(copyInfoHostImportedToDeviceUsm, 0, nullptr));
+        EXPECT_EQ(cmdList.preferCopyThroughLockedPtr(copyInfoHostUsmToDeviceUsm, nullptr, 0, nullptr), cmdList.preferCopyThroughLockedPtr(copyInfoHostImportedToDeviceUsm, nullptr, 0, nullptr));
         EXPECT_TRUE(copyInfoHostImportedToDeviceUsm.srcIsImportedHostPtr);
 
         CpuMemCopyInfo copyInfoSharedUsmToHostUsm(hostPtr, sharedPtr, sizes[i]);
@@ -153,7 +153,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndImportedHostPtr
         EXPECT_NE(nullptr, copyInfoSharedUsmToHostImported.srcAllocInfo.svmAlloc);
         EXPECT_EQ(nullptr, copyInfoSharedUsmToHostImported.dstAllocInfo.svmAlloc);
 
-        EXPECT_EQ(cmdList.preferCopyThroughLockedPtr(copyInfoSharedUsmToHostUsm, 0, nullptr), cmdList.preferCopyThroughLockedPtr(copyInfoSharedUsmToHostImported, 0, nullptr));
+        EXPECT_EQ(cmdList.preferCopyThroughLockedPtr(copyInfoSharedUsmToHostUsm, nullptr, 0, nullptr), cmdList.preferCopyThroughLockedPtr(copyInfoSharedUsmToHostImported, nullptr, 0, nullptr));
         EXPECT_TRUE(copyInfoSharedUsmToHostImported.dstIsImportedHostPtr);
 
         CpuMemCopyInfo copyInfoHostUsmToSharedUsm(sharedPtr, hostPtr, sizes[i]);
@@ -166,7 +166,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndImportedHostPtr
         EXPECT_EQ(nullptr, copyInfoHostImportedToSharedUsm.srcAllocInfo.svmAlloc);
         EXPECT_NE(nullptr, copyInfoHostImportedToSharedUsm.dstAllocInfo.svmAlloc);
 
-        EXPECT_EQ(cmdList.preferCopyThroughLockedPtr(copyInfoHostUsmToSharedUsm, 0, nullptr), cmdList.preferCopyThroughLockedPtr(copyInfoHostImportedToSharedUsm, 0, nullptr));
+        EXPECT_EQ(cmdList.preferCopyThroughLockedPtr(copyInfoHostUsmToSharedUsm, nullptr, 0, nullptr), cmdList.preferCopyThroughLockedPtr(copyInfoHostImportedToSharedUsm, nullptr, 0, nullptr));
         EXPECT_TRUE(copyInfoHostImportedToSharedUsm.srcIsImportedHostPtr);
 
         CpuMemCopyInfo copyInfoHostUsmToHostUsm(hostPtr, hostPtr, sizes[i]);
@@ -181,7 +181,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndImportedHostPtr
         EXPECT_NE(nullptr, copyInfoHostUsmToHostImported.srcAllocInfo.svmAlloc);
         EXPECT_EQ(nullptr, copyInfoHostUsmToHostImported.dstAllocInfo.svmAlloc);
 
-        EXPECT_EQ(cmdList.preferCopyThroughLockedPtr(copyInfoHostUsmToHostUsm, 0, nullptr), cmdList.preferCopyThroughLockedPtr(copyInfoHostUsmToHostImported, 0, nullptr));
+        EXPECT_EQ(cmdList.preferCopyThroughLockedPtr(copyInfoHostUsmToHostUsm, nullptr, 0, nullptr), cmdList.preferCopyThroughLockedPtr(copyInfoHostUsmToHostImported, nullptr, 0, nullptr));
         EXPECT_TRUE(copyInfoHostUsmToHostImported.dstIsImportedHostPtr);
 
         CpuMemCopyInfo copyInfoHostImportedToHostUsm(hostPtr, importedPtr, sizes[i]);
@@ -189,7 +189,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndImportedHostPtr
         EXPECT_EQ(nullptr, copyInfoHostImportedToHostUsm.srcAllocInfo.svmAlloc);
         EXPECT_NE(nullptr, copyInfoHostImportedToHostUsm.dstAllocInfo.svmAlloc);
 
-        EXPECT_EQ(cmdList.preferCopyThroughLockedPtr(copyInfoHostUsmToHostUsm, 0, nullptr), cmdList.preferCopyThroughLockedPtr(copyInfoHostImportedToHostUsm, 0, nullptr));
+        EXPECT_EQ(cmdList.preferCopyThroughLockedPtr(copyInfoHostUsmToHostUsm, nullptr, 0, nullptr), cmdList.preferCopyThroughLockedPtr(copyInfoHostImportedToHostUsm, nullptr, 0, nullptr));
         EXPECT_TRUE(copyInfoHostImportedToHostUsm.srcIsImportedHostPtr);
 
         CpuMemCopyInfo copyInfoHostImportedToHostImported(importedPtr, importedPtr, sizes[i]);
@@ -197,7 +197,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndImportedHostPtr
         EXPECT_EQ(nullptr, copyInfoHostImportedToHostImported.srcAllocInfo.svmAlloc);
         EXPECT_EQ(nullptr, copyInfoHostImportedToHostImported.dstAllocInfo.svmAlloc);
 
-        EXPECT_EQ(cmdList.preferCopyThroughLockedPtr(copyInfoHostUsmToHostUsm, 0, nullptr), cmdList.preferCopyThroughLockedPtr(copyInfoHostImportedToHostImported, 0, nullptr));
+        EXPECT_EQ(cmdList.preferCopyThroughLockedPtr(copyInfoHostUsmToHostUsm, nullptr, 0, nullptr), cmdList.preferCopyThroughLockedPtr(copyInfoHostImportedToHostImported, nullptr, 0, nullptr));
         EXPECT_TRUE(copyInfoHostImportedToHostImported.srcIsImportedHostPtr);
     }
 
@@ -218,7 +218,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrWh
     ASSERT_FALSE(srcFound);
     auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, cpuMemCopyInfo.dstAllocInfo.svmAlloc);
     ASSERT_TRUE(dstFound);
-    EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
+    EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, nullptr, 0, nullptr));
 }
 
 HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrWhenPreferCopyThroughLockedPtrCalledForD2HThenReturnTrue) {
@@ -236,7 +236,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrWh
     ASSERT_TRUE(srcFound);
     auto dstFound = device->getDriverHandle()->findAllocationDataForRange(nonUsmHostPtr, copySize, cpuMemCopyInfo.dstAllocInfo.svmAlloc);
     ASSERT_FALSE(dstFound);
-    EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
+    EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, nullptr, 0, nullptr));
 }
 
 HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndPtrOutsideCpuVirtualAddressRangeWhenPreferCopyThroughLockedPtrCalledThenReturnFalse) {
@@ -256,12 +256,12 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndPtrOutsideCpuVi
     CpuMemCopyInfo hostToDeviceCopyInfo(devicePtr, foreignDeviceUsmPtr, 1024);
     ASSERT_FALSE(device->getDriverHandle()->findAllocationDataForRange(foreignDeviceUsmPtr, 1024, hostToDeviceCopyInfo.srcAllocInfo.svmAlloc));
     ASSERT_TRUE(device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, hostToDeviceCopyInfo.dstAllocInfo.svmAlloc));
-    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(hostToDeviceCopyInfo, 0, nullptr));
+    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(hostToDeviceCopyInfo, nullptr, 0, nullptr));
 
     CpuMemCopyInfo deviceToHostCopyInfo(foreignDeviceUsmPtr, devicePtr, 1024);
     ASSERT_TRUE(device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, deviceToHostCopyInfo.srcAllocInfo.svmAlloc));
     ASSERT_FALSE(device->getDriverHandle()->findAllocationDataForRange(foreignDeviceUsmPtr, 1024, deviceToHostCopyInfo.dstAllocInfo.svmAlloc));
-    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(deviceToHostCopyInfo, 0, nullptr));
+    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(deviceToHostCopyInfo, nullptr, 0, nullptr));
 }
 
 HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndUsmHostPtrWhenPreferCopyThroughLockedPtrCalledForH2DThenReturnTrue) {
@@ -278,7 +278,41 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndUsmHostPtrWhenP
     ASSERT_TRUE(srcFound);
     auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, cpuMemCopyInfo.dstAllocInfo.svmAlloc);
     ASSERT_TRUE(dstFound);
-    EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
+    EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, nullptr, 0, nullptr));
+}
+
+HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndSignalEventWithProfilingWhenPreferCopyThroughLockedPtrCalledThenReturnFalse) {
+    allocateHostBuffer();
+    allocateDeviceBuffer();
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.copyThroughLockedPtrEnabled = true;
+    cmdList.cmdQImmediate = queue.get();
+    cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    CpuMemCopyInfo cpuMemCopyInfo(devicePtr, hostPtr, 1024);
+    auto srcFound = device->getDriverHandle()->findAllocationDataForRange(hostPtr, 1024, cpuMemCopyInfo.srcAllocInfo.svmAlloc);
+    ASSERT_TRUE(srcFound);
+    auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, cpuMemCopyInfo.dstAllocInfo.svmAlloc);
+    ASSERT_TRUE(dstFound);
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+
+    auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device, returnValue));
+    EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, event->toHandle(), 0, nullptr));
+
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+    auto timestampEventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto timestampEvent = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(timestampEventPool.get(), &eventDesc, device, returnValue));
+    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, timestampEvent->toHandle(), 0, nullptr));
 }
 
 HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndUsmHostPtrWhenPreferCopyThroughLockedPtrCalledForH2DWhenCopyCantBePerformedImmediatelyThenReturnFalse) {
@@ -313,17 +347,17 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndUsmHostPtrWhenP
     std::unique_ptr<L0::Event> eventObject(L0::Event::fromHandle(event));
 
     cmdList.dependenciesPresent = false;
-    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 1, &event));
+    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, nullptr, 1, &event));
 
     cmdList.dependenciesPresent = true;
-    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
+    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, nullptr, 0, nullptr));
 
     cmdList.dependenciesPresent = true;
-    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 1, &event));
+    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, nullptr, 1, &event));
 
     eventObject->setIsCompleted();
     cmdList.dependenciesPresent = false;
-    EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 1, &event));
+    EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, nullptr, 1, &event));
 }
 
 HWTEST_F(AppendMemoryLockedCopyTest, givenInOrderImmediateCommandListAndUsmHostPtrWhenPreferCopyThroughLockedPtrCalledForH2DThenFollowInOrderCounterState) {
@@ -352,17 +386,17 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenInOrderImmediateCommandListAndUsmHostP
     auto yieldCountBefore = CpuIntrinsicsTests::yieldCounter.load();
 
     EXPECT_TRUE(cmdList.hasPendingInOrderWork());
-    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
+    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, nullptr, 0, nullptr));
     EXPECT_EQ(yieldCountBefore, CpuIntrinsicsTests::yieldCounter.load());
 
     *hostCounter = inOrderExecInfo->getCounterValue();
     EXPECT_FALSE(cmdList.hasPendingInOrderWork());
-    EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
+    EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, nullptr, 0, nullptr));
 
     *hostCounter = 0;
     inOrderExecInfo->setLastWaitedCounterValue(inOrderExecInfo->getCounterValue(), inOrderExecInfo->getAllocationOffset());
     EXPECT_FALSE(cmdList.hasPendingInOrderWork());
-    EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
+    EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, nullptr, 0, nullptr));
 }
 
 HWTEST_F(AppendMemoryLockedCopyTest, givenInOrderImmediateCommandListAndUsmHostPtrWhenPreferCopyThroughLockedPtrCalledForD2HThenFollowInOrderCounterState) {
@@ -387,10 +421,10 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenInOrderImmediateCommandListAndUsmHostP
 
     inOrderExecInfo->addCounterValue(1);
     *hostCounter = 0;
-    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
+    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, nullptr, 0, nullptr));
 
     *hostCounter = inOrderExecInfo->getCounterValue();
-    EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
+    EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, nullptr, 0, nullptr));
 }
 
 HWTEST_F(AppendMemoryLockedCopyTest, givenSyncModeInOrderImmediateCommandListWhenPreferCopyThroughLockedPtrCalledWithPendingCounterThenReturnTrue) {
@@ -418,7 +452,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenSyncModeInOrderImmediateCommandListWhe
     *hostCounter = 0;
 
     EXPECT_TRUE(cmdList.hasPendingInOrderWork());
-    EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
+    EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, nullptr, 0, nullptr));
 }
 
 HWTEST_F(AppendMemoryLockedCopyTest, givenNotInOrderImmediateCommandListWhenHasPendingInOrderWorkCalledThenReturnFalse) {
@@ -486,7 +520,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenInOrderImmediateCommandListWhenCopySiz
 
     auto pauseCountBefore = CpuIntrinsicsTests::pauseCounter.load();
 
-    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
+    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, nullptr, 0, nullptr));
     EXPECT_EQ(pauseCountBefore, CpuIntrinsicsTests::pauseCounter.load());
 }
 
@@ -508,7 +542,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenInOrderImmediateCommandListAndNonUsmHo
     *ptrOffset(inOrderExecInfo->getBaseHostAddress(), inOrderExecInfo->getAllocationOffset()) = 0;
 
     EXPECT_TRUE(cmdList.hasPendingInOrderWork());
-    EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
+    EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, nullptr, 0, nullptr));
 }
 
 HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndUsmHostPtrWhenPreferCopyThroughLockedPtrCalledForD2HWhenCopyCantBePerformedImmediatelyThenReturnFalse) {
@@ -543,17 +577,17 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndUsmHostPtrWhenP
     std::unique_ptr<L0::Event> eventObject(L0::Event::fromHandle(event));
 
     cmdList.dependenciesPresent = false;
-    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 1, &event));
+    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, nullptr, 1, &event));
 
     cmdList.dependenciesPresent = true;
-    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
+    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, nullptr, 0, nullptr));
 
     cmdList.dependenciesPresent = true;
-    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 1, &event));
+    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, nullptr, 1, &event));
 
     eventObject->setIsCompleted();
     cmdList.dependenciesPresent = false;
-    EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 1, &event));
+    EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, nullptr, 1, &event));
 }
 
 HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndIpcDevicePtrWhenPreferCopyThroughLockedPtrCalledForD2HThenReturnFalse) {
@@ -581,7 +615,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndIpcDevicePtrWhe
     ASSERT_TRUE(srcFound);
     auto dstFound = device->getDriverHandle()->findAllocationDataForRange(hostPtr, 1024, cpuMemCopyInfo.dstAllocInfo.svmAlloc);
     ASSERT_TRUE(dstFound);
-    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
+    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, nullptr, 0, nullptr));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, context->closeIpcMemHandle(ipcDevicePtr));
 }
@@ -611,7 +645,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndIpcDevicePtrWhe
     ASSERT_TRUE(srcFound);
     auto dstFound = device->getDriverHandle()->findAllocationDataForRange(ipcDevicePtr, 1024, cpuMemCopyInfo.dstAllocInfo.svmAlloc);
     ASSERT_TRUE(dstFound);
-    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
+    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, nullptr, 0, nullptr));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, context->closeIpcMemHandle(ipcDevicePtr));
 }
@@ -734,7 +768,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndForcingLockPtrV
     ASSERT_FALSE(srcFound);
     auto dstFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, 1024, cpuMemCopyInfo.dstAllocInfo.svmAlloc);
     ASSERT_TRUE(dstFound);
-    EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
+    EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, nullptr, 0, nullptr));
 }
 
 HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenPreferCopyThroughLockPointerCalledAndFeatureDisabledThenFalseIsReturned) {
@@ -752,15 +786,15 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenPreferCopyThro
 
     cmdList.copyThroughLockedPtrEnabled = false;
     cmdList.isSmallBarConfigPresent = true;
-    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
+    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, nullptr, 0, nullptr));
 
     cmdList.copyThroughLockedPtrEnabled = true;
     cmdList.isSmallBarConfigPresent = true;
-    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
+    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, nullptr, 0, nullptr));
 
     cmdList.copyThroughLockedPtrEnabled = false;
     cmdList.isSmallBarConfigPresent = false;
-    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
+    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, nullptr, 0, nullptr));
 }
 
 HWTEST_F(AppendMemoryLockedCopyTest, givenNonHardwareCsrWhenPreferCopyThroughLockPointerCalledThenReturnFalse) {
@@ -782,22 +816,22 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenNonHardwareCsrWhenPreferCopyThroughLoc
     auto originalType = ultCsr->getType();
 
     ultCsr->setType(NEO::CommandStreamReceiverType::hardware);
-    EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
+    EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, nullptr, 0, nullptr));
 
     ultCsr->setType(NEO::CommandStreamReceiverType::aub);
-    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
+    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, nullptr, 0, nullptr));
 
     ultCsr->setType(NEO::CommandStreamReceiverType::tbx);
-    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
+    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, nullptr, 0, nullptr));
 
     ultCsr->setType(NEO::CommandStreamReceiverType::hardwareWithAub);
-    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
+    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, nullptr, 0, nullptr));
 
     ultCsr->setType(NEO::CommandStreamReceiverType::tbxWithAub);
-    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
+    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, nullptr, 0, nullptr));
 
     ultCsr->setType(NEO::CommandStreamReceiverType::nullAub);
-    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
+    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, nullptr, 0, nullptr));
 
     ultCsr->setType(originalType);
 }
@@ -857,10 +891,10 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenDeviceUsmAllocationWhenPreferCopyThrou
     }
 
     deviceAllocation->getDefaultGmm()->setCompressionEnabled(false);
-    EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
+    EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, nullptr, 0, nullptr));
 
     deviceAllocation->getDefaultGmm()->setCompressionEnabled(true);
-    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
+    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, nullptr, 0, nullptr));
 }
 
 HWTEST_F(AppendMemoryLockedCopyTest, givenCompressedSourceUsmAllocationWhenPreferCopyThroughLockPointerCalledThenReturnFalse) {
@@ -889,7 +923,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenCompressedSourceUsmAllocationWhenPrefe
     }
 
     deviceAllocation->getDefaultGmm()->setCompressionEnabled(true);
-    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
+    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, nullptr, 0, nullptr));
 }
 
 HWTEST_F(AppendMemoryLockedCopyTest, givenAllocationWithNullGraphicsAllocationWhenCheckingCompressionThenTreatedAsUncompressed) {
@@ -907,7 +941,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenAllocationWithNullGraphicsAllocationWh
     cpuMemCopyInfo.srcAllocInfo.svmAlloc = &svmAllocWithNullGraphics;
 
     ASSERT_EQ(nullptr, svmAllocWithNullGraphics.gpuAllocations.getDefaultGraphicsAllocation());
-    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
+    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, nullptr, 0, nullptr));
 }
 
 HWTEST_F(AppendMemoryLockedCopyTest, givenCounterBasedWaitEventWithoutHostAddressWhenPreferCopyThroughLockPointerCalledThenReturnFalse) {
@@ -942,11 +976,11 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenCounterBasedWaitEventWithoutHostAddres
     std::unique_ptr<L0::Event> eventObject(L0::Event::fromHandle(eventHandle));
     ASSERT_TRUE(eventObject->isCounterBased());
 
-    EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 1, &eventHandle));
+    EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, nullptr, 1, &eventHandle));
 
     eventObject->getInOrderExecEventHelper().assignData(1, 0, 1, 1, nullptr, nullptr, 0xABCDULL, 0, nullptr, 1, 0, false, true);
 
-    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 1, &eventHandle));
+    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, nullptr, 1, &eventHandle));
 }
 
 HWTEST_F(AppendMemoryLockedCopyTest, givenAggregatedSignalEventWhenPerformCpuMemcpyCalledThenFallbackToGpuCopy) {
@@ -1472,7 +1506,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndSignalEventAndN
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
-    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
 
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;
@@ -1505,7 +1539,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndSignalEventAndC
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
-    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
 
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;
@@ -1930,6 +1964,8 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndCpuMemcpyWithou
 }
 
 HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndTimestampFlagSetWhenCpuMemcpyThenSetCorrectGpuTimestamps) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ExperimentalForceCopyThroughLock.set(1);
     allocateDeviceBuffer();
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);

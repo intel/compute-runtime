@@ -967,7 +967,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
     CpuMemCopyInfo cpuMemCopyInfo(dstptr, const_cast<void *>(srcptr), size);
     if (!hasExplicitAllocs) {
         this->obtainAllocData(cpuMemCopyInfo, isCopyOffloadEnabled());
-        if (preferCopyThroughLockedPtr(cpuMemCopyInfo, numWaitEvents, phWaitEvents)) {
+        if (preferCopyThroughLockedPtr(cpuMemCopyInfo, hSignalEvent, numWaitEvents, phWaitEvents)) {
             ret = performCpuMemcpy(cpuMemCopyInfo, hSignalEvent, numWaitEvents, phWaitEvents);
             if (ret == ZE_RESULT_SUCCESS || ret == ZE_RESULT_ERROR_DEVICE_LOST) {
                 return ret;
@@ -1902,9 +1902,13 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::hasPendingInOrderWork() cons
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandListCoreFamilyImmediate<gfxCoreFamily>::preferCopyThroughLockedPtr(CpuMemCopyInfo &cpuMemCopyInfo, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
+bool CommandListCoreFamilyImmediate<gfxCoreFamily>::preferCopyThroughLockedPtr(CpuMemCopyInfo &cpuMemCopyInfo, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
     if (NEO::debugManager.flags.ExperimentalForceCopyThroughLock.get() == 1) {
         return true;
+    }
+
+    if (hSignalEvent != nullptr && Event::fromHandle(hSignalEvent)->isEventTimestampFlagSet()) {
+        return false;
     }
 
     if (!this->copyThroughLockedPtrEnabled || this->isSmallBarConfigPresent) {
