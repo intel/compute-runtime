@@ -64,6 +64,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::arePostBlitWACmdsRequired;
     using BaseClass::bcsSplitMode;
     using BaseClass::beginCopyOffloadStreamRecording;
+    using BaseClass::bytesToPeerReservationBlockEnd;
     using BaseClass::clearCommandsToPatch;
     using BaseClass::closedCmdList;
     using BaseClass::cmdListHeapAddressModel;
