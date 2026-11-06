@@ -173,6 +173,35 @@ TEST(OSContext, givenPowerHintSetToMaxWhenCheckingDirectSubmissionAvailabilityTh
     }
 }
 
+TEST(OSContext, givenSimulationCsrTypeWhenCheckingDirectSubmissionAvailabilityThenItIsAvailableByDefaultOnlyInTbxMode) {
+    DebugManagerStateRestore debugFlagsStateRestorer;
+    auto engineDescriptor = EngineDescriptorHelper::getDefaultDescriptor();
+    auto pOsContext = std::make_unique<OsContextMock>(0, 0, engineDescriptor);
+    pOsContext->callBaseIsDirectSubmissionSupported = false;
+    pOsContext->mockDirectSubmissionSupported = true;
+    pOsContext->setDefaultContext(true);
+    pOsContext->setUmdPowerHintValue(OsContextMock::getUmdPowerHintMax() / 2);
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.directSubmissionEngines.data[pOsContext->getEngineType()].engineSupported = true;
+    bool submitOnInit = false;
+
+    debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::tbx));
+    EXPECT_TRUE(pOsContext->isDirectSubmissionAvailable(hwInfo, submitOnInit));
+
+    for (auto csrType : {CommandStreamReceiverType::aub, CommandStreamReceiverType::tbxWithAub, CommandStreamReceiverType::hardwareWithAub, CommandStreamReceiverType::nullAub}) {
+        debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(csrType));
+        EXPECT_FALSE(pOsContext->isDirectSubmissionAvailable(hwInfo, submitOnInit));
+    }
+
+    debugManager.flags.EnableDirectSubmissionInSimulationMode.set(1);
+    debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::aub));
+    EXPECT_TRUE(pOsContext->isDirectSubmissionAvailable(hwInfo, submitOnInit));
+
+    debugManager.flags.EnableDirectSubmissionInSimulationMode.set(0);
+    debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::tbx));
+    EXPECT_FALSE(pOsContext->isDirectSubmissionAvailable(hwInfo, submitOnInit));
+}
+
 TEST(OSContext, givenOsContextWhenQueryingForOfflineDumpContextIdThenCorrectValueIsReturned) {
     OsContext *osContext = OsContext::create(nullptr, 0, 0, EngineDescriptorHelper::getDefaultDescriptor());
     EXPECT_EQ(0u, osContext->getOfflineDumpContextId(0));

@@ -77,7 +77,7 @@ bool OsContext::isDirectSubmissionAvailable(const HardwareInfo &hwInfo, bool &su
     bool enableDirectSubmission = this->isDirectSubmissionSupported() &&
                                   this->getUmdPowerHintValue() < NEO::OsContext::getUmdPowerHintMax();
 
-    if (debugManager.flags.SetCommandStreamReceiver.get() > 0 && !debugManager.flags.EnableDirectSubmissionInSimulationMode.get()) {
+    if (debugManager.flags.SetCommandStreamReceiver.get() > 0 && !debugManager.isDirectSubmissionInSimulationModeEnabled()) {
         enableDirectSubmission = false;
     }
 
