@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
-#include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/kernel/dispatch_kernel_encoder_interface.h"
 #include "shared/source/kernel/grf_config.h"
@@ -18,10 +17,6 @@
 using namespace NEO;
 
 using Gen12LpCommandEncodeTest = testing::Test;
-GEN12LPTEST_F(Gen12LpCommandEncodeTest, givenGen12LpPlatformWhenDoBindingTablePrefetchIsCalledThenReturnsTrue) {
-    EXPECT_FALSE(EncodeSurfaceState<FamilyType>::doBindingTablePrefetch());
-}
-
 GEN12LPTEST_F(Gen12LpCommandEncodeTest, givenGen12LpPlatformWhenEncodeSlmSizePerSubSliceThenInterfaceDescriptorIsNotModified) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 

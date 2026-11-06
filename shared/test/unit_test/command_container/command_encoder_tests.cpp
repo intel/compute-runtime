@@ -51,6 +51,10 @@ HWTEST2_F(CommandEncoderTests, whenPushBindingTableAndSurfaceStatesIsCalledAndHe
     EXPECT_ANY_THROW(EncodeSurfaceState<FamilyType>::pushBindingTableAndSurfaceStates(reinterpret_cast<IndirectHeap &>(mockHeap), nullptr, 0, 0, 0));
 }
 
+HWTEST_F(CommandEncoderTests, whenDoBindingTablePrefetchIsCalledThenReturnsFalse) {
+    EXPECT_FALSE(EncodeSurfaceState<FamilyType>::doBindingTablePrefetch());
+}
+
 HWTEST_F(CommandEncoderTests, givenMisalignedSizeWhenProgrammingSurfaceStateForBufferThenAlignedSizeIsProgrammed) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 

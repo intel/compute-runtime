@@ -111,33 +111,6 @@ XE3P_CORETEST_F(Xe3pCoreCommandEncoderTest, givenDebugVariableSetWhenProgramming
     EXPECT_EQ(DYNAMIC_PREF_SLM_INCREASE::DYNAMIC_PREF_SLM_INCREASE_MAX_2X, idd.getDynamicPrefSlmIncrease());
 }
 
-XE3P_CORETEST_F(Xe3pCoreCommandEncoderTest, givenXe3pWhenEncodeAdditionalWalkerFieldsIsCalledThenComputeOverdispatchDisableIsCorrectlySet) {
-    DebugManagerStateRestore debugRestorer;
-
-    using WalkerType = typename FamilyType::DefaultWalkerType;
-    using INTERFACE_DESCRIPTOR_DATA_2 = typename FamilyType::INTERFACE_DESCRIPTOR_DATA_2;
-
-    WalkerType walkerCmd = FamilyType::cmdInitGpgpuWalker2;
-    INTERFACE_DESCRIPTOR_DATA_2 idd = FamilyType::cmdInitInterfaceDescriptorData2;
-
-    {
-        debugManager.flags.ComputeOverdispatchDisable.set(-1);
-        EncodeDispatchKernel<FamilyType>::overrideDefaultValues(walkerCmd, idd);
-        EXPECT_TRUE(walkerCmd.getComputeOverdispatchDisable());
-    }
-    {
-        debugManager.flags.ComputeOverdispatchDisable.set(0);
-        EncodeDispatchKernel<FamilyType>::overrideDefaultValues(walkerCmd, idd);
-        EXPECT_FALSE(walkerCmd.getComputeOverdispatchDisable());
-    }
-
-    {
-        debugManager.flags.ComputeOverdispatchDisable.set(1);
-        EncodeDispatchKernel<FamilyType>::overrideDefaultValues(walkerCmd, idd);
-        EXPECT_TRUE(walkerCmd.getComputeOverdispatchDisable());
-    }
-}
-
 using Xe3pCoreCommandEncoderTests = Test<CommandEncodeStatesFixture>;
 
 XE3P_CORETEST_F(Xe3pCoreCommandEncoderTests, whenEncodeDispatchKernelThenCorrectGrfInfoIsProgrammedInInterfaceDescriptorData) {

@@ -26,10 +26,6 @@ using namespace NEO;
 
 using XeHPAndLaterHardwareCommandsTest = testing::Test;
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterHardwareCommandsTest, givenXeHPAndLaterPlatformWhenDoBindingTablePrefetchIsCalledThenReturnsFalse) {
-    EXPECT_FALSE(EncodeSurfaceState<FamilyType>::doBindingTablePrefetch());
-}
-
 HWTEST2_F(XeHPAndLaterHardwareCommandsTest, GivenXeHPAndLaterPlatformWhenSetCoherencyTypeIsCalledThenOnlyEncodingSupportedIsSingleGpuCoherent, IsXeCore) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using COHERENCY_TYPE = typename RENDER_SURFACE_STATE::COHERENCY_TYPE;

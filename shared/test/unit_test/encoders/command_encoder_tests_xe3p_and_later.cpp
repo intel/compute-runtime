@@ -1640,3 +1640,30 @@ HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenEncodeDispatchKernelWhenGett
 
     EXPECT_EQ(expectedOffset, EncodeDispatchKernel<FamilyType>::getInlineDataOffset(dispatchArgs));
 }
+
+HWTEST2_F(CommandEncoderTestXe3pAndLater, whenEncodeAdditionalWalkerFieldsIsCalledThenComputeOverdispatchDisableIsCorrectlySet, IsAtLeastXe3pCore) {
+    DebugManagerStateRestore debugRestorer;
+
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+    using INTERFACE_DESCRIPTOR_DATA_2 = typename FamilyType::INTERFACE_DESCRIPTOR_DATA_2;
+
+    WalkerType walkerCmd = FamilyType::cmdInitGpgpuWalker2;
+    INTERFACE_DESCRIPTOR_DATA_2 idd = FamilyType::cmdInitInterfaceDescriptorData2;
+
+    {
+        debugManager.flags.ComputeOverdispatchDisable.set(-1);
+        EncodeDispatchKernel<FamilyType>::overrideDefaultValues(walkerCmd, idd);
+        EXPECT_TRUE(walkerCmd.getComputeOverdispatchDisable());
+    }
+    {
+        debugManager.flags.ComputeOverdispatchDisable.set(0);
+        EncodeDispatchKernel<FamilyType>::overrideDefaultValues(walkerCmd, idd);
+        EXPECT_FALSE(walkerCmd.getComputeOverdispatchDisable());
+    }
+
+    {
+        debugManager.flags.ComputeOverdispatchDisable.set(1);
+        EncodeDispatchKernel<FamilyType>::overrideDefaultValues(walkerCmd, idd);
+        EXPECT_TRUE(walkerCmd.getComputeOverdispatchDisable());
+    }
+}
