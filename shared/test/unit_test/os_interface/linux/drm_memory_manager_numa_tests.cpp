@@ -85,10 +85,24 @@ TEST_F(DrmMemoryManagerNumaTest, givenDeviceWithUnknownNumaNodeWhenGettingRootDe
     EXPECT_EQ(std::nullopt, memoryManager->getRootDeviceIndexClosestToPreferredNumaNode(unknownNodeRootDeviceIndices));
 }
 
+TEST_F(DrmMemoryManagerNumaTest, givenDefaultPolicyAndAffinityToSingleNodeWhenGettingRootDeviceIndexClosestToPreferredNumaNodeThenDeviceOnRunNodeIsReturned) {
+    MockNumaLibrary numaLibrary(true);
+    createMemoryManager({0, 1});
+    RootDeviceIndicesContainer rootDeviceIndices = {0u, 1u};
+    numaLibrary.setPolicy(MockNumaLibrary::mpolDefault, {});
+
+    numaLibrary.setRunNodes({1u});
+    EXPECT_EQ(std::optional<uint32_t>(1u), memoryManager->getRootDeviceIndexClosestToPreferredNumaNode(rootDeviceIndices));
+
+    numaLibrary.setRunNodes({0u});
+    EXPECT_EQ(std::optional<uint32_t>(0u), memoryManager->getRootDeviceIndexClosestToPreferredNumaNode(rootDeviceIndices));
+}
+
 TEST_F(DrmMemoryManagerNumaTest, givenPolicyWithoutSingleNodeWhenGettingRootDeviceIndexClosestToPreferredNumaNodeThenNoIndexIsReturned) {
     MockNumaLibrary numaLibrary(true);
     createMemoryManager({0, 1});
     RootDeviceIndicesContainer rootDeviceIndices = {0u, 1u};
+    numaLibrary.setRunNodes({0u, 1u});
 
     numaLibrary.setPolicy(MockNumaLibrary::mpolDefault, {});
     EXPECT_EQ(std::nullopt, memoryManager->getRootDeviceIndexClosestToPreferredNumaNode(rootDeviceIndices));

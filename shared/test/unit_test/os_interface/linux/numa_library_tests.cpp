@@ -186,8 +186,6 @@ TEST(NumaLibraryTests, givenPolicyWithoutSingleNodeWhenGettingSinglePreferredNod
     ASSERT_TRUE(MockNumaLibrary::isLoaded());
 
     const std::pair<int, std::vector<uint32_t>> policies[] = {
-        {MockNumaLibrary::mpolDefault, {}},
-        {MockNumaLibrary::mpolPreferred, {}},
         {MockNumaLibrary::mpolInterleave, {1u}},
         {MockNumaLibrary::mpolBind | MockNumaLibrary::mpolFRelativeNodes, {1u}},
         {MockNumaLibrary::mpolPreferred | MockNumaLibrary::mpolFRelativeNodes, {0u}},
@@ -197,6 +195,70 @@ TEST(NumaLibraryTests, givenPolicyWithoutSingleNodeWhenGettingSinglePreferredNod
         numaLibrary.setPolicy(mode, nodes);
         EXPECT_EQ(std::nullopt, MockNumaLibrary::getSinglePreferredNode()) << mode;
     }
+}
+
+TEST(NumaLibraryTests, givenLocalAllocationPolicyAndAffinityToSingleNodeWhenGettingSinglePreferredNodeThenRunNodeIsReturnedAndMaskIsFreed) {
+    MockNumaLibrary numaLibrary(true);
+    ASSERT_TRUE(MockNumaLibrary::isLoaded());
+
+    const std::pair<int, uint32_t> policies[] = {
+        {MockNumaLibrary::mpolDefault, 1u},
+        {MockNumaLibrary::mpolLocal, 0u},
+        {MockNumaLibrary::mpolPreferred, 2u},
+        {MockNumaLibrary::mpolDefault, MockNumaLibrary::bitsPerNodeMaskElement + 1}};
+    uint32_t expectedFreeCalls = 0;
+    for (const auto &[mode, expectedNode] : policies) {
+        numaLibrary.setPolicy(mode, {});
+        numaLibrary.setRunNodes({expectedNode});
+        EXPECT_EQ(std::optional<uint32_t>(expectedNode), MockNumaLibrary::getSinglePreferredNode()) << mode;
+        EXPECT_EQ(++expectedFreeCalls, MockNumaLibrary::runNodeMaskFreeCalls) << mode;
+    }
+}
+
+TEST(NumaLibraryTests, givenLocalAllocationPolicyAndAffinityToMultipleNodesWhenGettingSinglePreferredNodeThenNoNodeIsReturnedAndMaskIsFreed) {
+    MockNumaLibrary numaLibrary(true);
+    ASSERT_TRUE(MockNumaLibrary::isLoaded());
+    numaLibrary.setRunNodes({0u, MockNumaLibrary::bitsPerNodeMaskElement});
+
+    const int modes[] = {MockNumaLibrary::mpolDefault, MockNumaLibrary::mpolLocal, MockNumaLibrary::mpolPreferred};
+    uint32_t expectedFreeCalls = 0;
+    for (const auto mode : modes) {
+        numaLibrary.setPolicy(mode, {});
+        EXPECT_EQ(std::nullopt, MockNumaLibrary::getSinglePreferredNode()) << mode;
+        EXPECT_EQ(++expectedFreeCalls, MockNumaLibrary::runNodeMaskFreeCalls) << mode;
+    }
+}
+
+TEST(NumaLibraryTests, givenSingleNodePolicyWhenGettingSinglePreferredNodeThenRunNodeMaskIsNotQueried) {
+    MockNumaLibrary numaLibrary(true);
+    ASSERT_TRUE(MockNumaLibrary::isLoaded());
+    numaLibrary.setPolicy(MockNumaLibrary::mpolBind, {1u});
+    numaLibrary.setRunNodes({0u});
+
+    EXPECT_EQ(std::optional<uint32_t>(1u), MockNumaLibrary::getSinglePreferredNode());
+    EXPECT_EQ(0u, MockNumaLibrary::runNodeMaskFreeCalls);
+}
+
+TEST(NumaLibraryTests, givenLocalAllocationPolicyAndRunNodeMaskUnavailableWhenGettingSinglePreferredNodeThenNoNodeIsReturned) {
+    MockNumaLibrary numaLibrary(true);
+    ASSERT_TRUE(MockNumaLibrary::isLoaded());
+    numaLibrary.setPolicy(MockNumaLibrary::mpolDefault, {});
+    numaLibrary.setRunNodes({1u});
+
+    MockNumaLibrary::getRunNodeMaskFails = true;
+    EXPECT_EQ(std::nullopt, MockNumaLibrary::getSinglePreferredNode());
+    EXPECT_EQ(0u, MockNumaLibrary::runNodeMaskFreeCalls);
+    MockNumaLibrary::getRunNodeMaskFails = false;
+
+    {
+        VariableBackup<decltype(MockNumaLibrary::numaGetRunNodeMaskFunction)> getRunNodeMaskBackup{&MockNumaLibrary::numaGetRunNodeMaskFunction, nullptr};
+        EXPECT_EQ(std::nullopt, MockNumaLibrary::getSinglePreferredNode());
+    }
+    {
+        VariableBackup<decltype(MockNumaLibrary::numaBitmaskFreeFunction)> bitmaskFreeBackup{&MockNumaLibrary::numaBitmaskFreeFunction, nullptr};
+        EXPECT_EQ(std::nullopt, MockNumaLibrary::getSinglePreferredNode());
+    }
+    EXPECT_EQ(std::optional<uint32_t>(1u), MockNumaLibrary::getSinglePreferredNode());
 }
 
 TEST(NumaLibraryTests, givenGetMemPolicyFailsWhenGettingSinglePreferredNodeThenNoNodeIsReturned) {
