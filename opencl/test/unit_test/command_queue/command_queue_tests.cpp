@@ -3871,7 +3871,7 @@ HWTEST2_F(CommandQueueTests, givenCmdQueueWhenNotStatelessPlatformThenStatelessI
     EXPECT_FALSE(mockCmdQ->isForceStateless);
 }
 
-HWTEST2_F(CommandQueueTests, givenCmdQueueWhenPlatformWithStatelessNotDisableWithDebugKeyThenStatelessIsDisabled, IsAtMostXeHpgCore) {
+HWTEST2_F(CommandQueueTests, givenCmdQueueWhenPlatformWithStatelessDisableWithDebugKeyThenStatelessIsDisabled, IsAtMostXe3pCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.DisableForceToStateless.set(1);
 

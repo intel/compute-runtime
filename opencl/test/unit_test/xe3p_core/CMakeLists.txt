@@ -13,7 +13,6 @@ if(TESTS_XE3P_CORE)
   set(IGDRCL_SRCS_tests_xe3p_core
       ${IGDRCL_SRCS_tests_xe3p_core_excludes}
       ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-      ${CMAKE_CURRENT_SOURCE_DIR}/cl_gfx_core_helper_tests_xe3p_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_tests_xe3p_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw_tests_xe3p_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/copy_engine_tests_xe3p_core.cpp

@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/program/kernel_info.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -41,4 +42,11 @@ HWTEST2_F(ClGfxCoreHelperTestXeHpAndLater, WhenGettingSupportedDeviceFeatureCapa
         cl_device_feature_capabilities_intel expectedCapabilities = CL_DEVICE_FEATURE_FLAG_DPAS_INTEL | CL_DEVICE_FEATURE_FLAG_DP4A_INTEL;
         EXPECT_EQ(expectedCapabilities, clGfxCoreHelper.getSupportedDeviceFeatureCapabilities(hwInfo));
     }
+}
+
+HWTEST2_F(ClGfxCoreHelperTestXeHpAndLater, whenCheckingRequiresAuxResolvesThenAuxTranslationIsNotRequired, IsAtLeastXeHpcCore) {
+    auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
+    KernelInfo kernelInfo{};
+
+    EXPECT_FALSE(clGfxCoreHelper.requiresAuxResolves(kernelInfo));
 }

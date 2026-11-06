@@ -1021,16 +1021,3 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenCmdQueueWhenStatelessPlatformThenSt
 
     EXPECT_TRUE(mockCmdQ->isForceStateless);
 }
-
-using CommandQueueWithinXeHpcAndXe3Tests = ::testing::Test;
-
-HWTEST2_F(CommandQueueWithinXeHpcAndXe3Tests, givenCmdQueueWhenPlatformWithStatelessDisableWithDebugKeyThenStatelessIsDisabled, IsWithinXeHpcCoreAndXe3Core) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.DisableForceToStateless.set(1);
-
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    MockContext context(device.get());
-    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(&context, context.getDevice(0), nullptr);
-
-    EXPECT_FALSE(mockCmdQ->isForceStateless);
-}

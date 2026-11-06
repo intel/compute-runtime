@@ -29,15 +29,6 @@
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
-using ClGfxCoreHelperTestsXeHpcCore = Test<ClDeviceFixture>;
-
-XE_HPC_CORETEST_F(ClGfxCoreHelperTestsXeHpcCore, givenXeHpcThenAuxTranslationIsNotRequired) {
-    auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
-    KernelInfo kernelInfo{};
-
-    EXPECT_FALSE(clGfxCoreHelper.requiresAuxResolves(kernelInfo));
-}
-
 using GfxCoreHelperTestsXeHpcCore = Test<ClDeviceFixture>;
 
 XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenGfxCoreHelperwhenAskingForDcFlushThenReturnFalse) {

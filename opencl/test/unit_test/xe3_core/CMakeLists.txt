@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2025 Intel Corporation
+# Copyright (C) 2025-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -13,7 +13,6 @@ if(TESTS_XE3_CORE)
   set(IGDRCL_SRCS_tests_xe3_core
       ${IGDRCL_SRCS_tests_xe3_core_excludes}
       ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-      ${CMAKE_CURRENT_SOURCE_DIR}/cl_gfx_core_helper_tests_xe3_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_tests_xe3_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw_tests_xe3_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/copy_engine_tests_xe3_core.cpp
