@@ -627,15 +627,35 @@ void DrmMemoryManager::obtainGpuAddress(const AllocationData &allocationData, Bu
 }
 
 GraphicsAllocation *DrmMemoryManager::allocateUSMHostGraphicsMemory(const AllocationData &allocationData) {
+    const bool usmHostPtrFragmentsEnabled = debugManager.flags.EnableUsmHostPtrFragments.get() == 1;
+    const bool gpuAddressEqualsHostPtr = !isLimitedRange(allocationData.rootDeviceIndex) && allocationData.type != AllocationType::svmCpu;
+    const bool hostPtrRangePageAligned = isAligned<MemoryConstants::pageSize>(allocationData.hostPtr) && isAligned<MemoryConstants::pageSize>(allocationData.size);
+    if (usmHostPtrFragmentsEnabled && gpuAddressEqualsHostPtr && !hostPtrRangePageAligned) {
+        auto hostPtrManagerLock = hostPtrManager->obtainOwnership();
+        const auto importStart = reinterpret_cast<uintptr_t>(allocationData.hostPtr);
+        if (overlapsFragmentBackedImport(allocationData.rootDeviceIndex, importStart, allocationData.size) ||
+            !hostPtrManager->canStoreFragments(allocationData.size, allocationData.hostPtr, allocationData.rootDeviceIndex)) {
+            return nullptr;
+        }
+        auto allocation = allocateUSMHostGraphicsMemoryFromFragments(allocationData);
+        if (allocation) {
+            fragmentBackedImportRanges.emplace(std::make_pair(allocationData.rootDeviceIndex, importStart), std::make_pair(importStart + allocationData.size, allocation));
+        }
+        return allocation;
+    }
+
     const size_t minAlignment = getUserptrAlignment();
+    const auto hostPtrAddress = reinterpret_cast<uintptr_t>(allocationData.hostPtr);
+    const auto alignedHostPtrAddress = usmHostPtrFragmentsEnabled ? alignDown(hostPtrAddress, minAlignment) : hostPtrAddress;
+    const auto offsetInPage = hostPtrAddress - alignedHostPtrAddress;
     // When size == 0 allocate allocationAlignment
     // It's needed to prevent overlapping pages with user pointers
-    size_t cSize = std::max(alignUp(allocationData.size, minAlignment), minAlignment);
+    size_t cSize = std::max(alignUp(allocationData.size + offsetInPage, minAlignment), minAlignment);
 
     void *bufferPtr = const_cast<void *>(allocationData.hostPtr);
     DEBUG_BREAK_IF(nullptr == bufferPtr);
 
-    std::unique_ptr<BufferObject, BufferObject::Deleter> bo(allocUserptr(reinterpret_cast<uintptr_t>(bufferPtr),
+    std::unique_ptr<BufferObject, BufferObject::Deleter> bo(allocUserptr(alignedHostPtrAddress,
                                                                          cSize,
                                                                          allocationData.type,
                                                                          allocationData.rootDeviceIndex));
@@ -662,14 +682,44 @@ GraphicsAllocation *DrmMemoryManager::allocateUSMHostGraphicsMemory(const Alloca
                                         bo.get(),
                                         bufferPtr,
                                         bo->peekAddress(),
-                                        cSize,
+                                        cSize - offsetInPage,
                                         MemoryPool::system4KBPages);
+    allocation->setAllocationOffset(offsetInPage);
     if (debugManager.flags.EnableHostAllocationMemPolicy.get()) {
         allocation->setUsmHostAllocation(true);
     }
     allocation->setReservedAddressRange(reinterpret_cast<void *>(gpuAddress), cSize);
     bo.release();
 
+    return allocation;
+}
+
+bool DrmMemoryManager::overlapsFragmentBackedImport(uint32_t rootDeviceIndex, uintptr_t start, size_t size) const {
+    auto next = fragmentBackedImportRanges.lower_bound(std::make_pair(rootDeviceIndex, start + size));
+    if (next == fragmentBackedImportRanges.begin()) {
+        return false;
+    }
+    auto previous = std::prev(next);
+    return previous->first.first == rootDeviceIndex && previous->second.first > start;
+}
+
+GraphicsAllocation *DrmMemoryManager::allocateUSMHostGraphicsMemoryFromFragments(const AllocationData &allocationData) {
+    const auto rootDeviceIndex = allocationData.rootDeviceIndex;
+    auto osStorage = hostPtrManager->prepareOsStorageForAllocation(*this, allocationData.size, allocationData.hostPtr, rootDeviceIndex);
+    if (osStorage.fragmentCount == 0) {
+        return nullptr;
+    }
+    auto fragmentsAllocationData = allocationData;
+    fragmentsAllocationData.cacheRegion = static_cast<uint32_t>(CacheRegion::defaultRegion);
+    auto allocation = static_cast<DrmAllocation *>(createGraphicsAllocation(osStorage, fragmentsAllocationData));
+    if (!validateHostPtrMemory || getDrm(rootDeviceIndex).isVmBindAvailable()) {
+        for (auto bo : allocation->getBOsForResidency(0u)) {
+            emitPinningRequest(bo, allocationData);
+        }
+    }
+    if (debugManager.flags.EnableHostAllocationMemPolicy.get()) {
+        allocation->setUsmHostAllocation(true);
+    }
     return allocation;
 }
 
@@ -2137,6 +2187,14 @@ void DrmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation,
     }
 
     if (gfxAllocation->fragmentsStorage.fragmentCount) {
+        std::unique_lock<std::recursive_mutex> hostPtrManagerLock;
+        if (debugManager.flags.EnableUsmHostPtrFragments.get() == 1) {
+            hostPtrManagerLock = hostPtrManager->obtainOwnership();
+            auto importRange = fragmentBackedImportRanges.find(std::make_pair(rootDeviceIndex, reinterpret_cast<uintptr_t>(gfxAllocation->getUnderlyingBuffer())));
+            if (importRange != fragmentBackedImportRanges.end() && importRange->second.second == gfxAllocation) {
+                fragmentBackedImportRanges.erase(importRange);
+            }
+        }
         cleanGraphicsMemoryCreatedFromHostPtr(gfxAllocation);
     } else {
         auto &bos = static_cast<DrmAllocation *>(gfxAllocation)->getBOs();
@@ -2166,7 +2224,9 @@ void DrmMemoryManager::handleFenceCompletion(GraphicsAllocation *allocation) {
             waitForEnginesCompletion(*allocation);
         }
     } else {
-        static_cast<DrmAllocation *>(allocation)->getBO()->wait(-1);
+        for (auto bo : static_cast<DrmAllocation *>(allocation)->getBOsForResidency(0u)) {
+            bo->wait(-1);
+        }
     }
 }
 
@@ -2467,6 +2527,16 @@ void DrmMemoryManager::cleanOsHandles(OsHandleStorage &handleStorage, uint32_t r
             if (osHandle->bo) {
                 BufferObject *search = osHandle->bo;
                 search->wait(-1);
+                if (debugManager.flags.EnableUsmHostPtrFragments.get() == 1) {
+                    for (auto &engine : getRegisteredEngines(rootDeviceIndex)) {
+                        const auto &deviceBitfield = engine.osContext->getDeviceBitfield();
+                        for (auto vmHandleId = 0u; vmHandleId < deviceBitfield.size(); vmHandleId++) {
+                            if (deviceBitfield.test(vmHandleId)) {
+                                search->unbind(engine.osContext, vmHandleId);
+                            }
+                        }
+                    }
+                }
                 [[maybe_unused]] auto refCount = unreference(search, true);
                 DEBUG_BREAK_IF(refCount != 1u);
             }

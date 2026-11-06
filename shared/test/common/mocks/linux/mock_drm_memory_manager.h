@@ -17,6 +17,7 @@
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include <atomic>
+#include <vector>
 
 namespace NEO {
 extern std::atomic<int> closeInputFd;
@@ -115,6 +116,15 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
                            bool validateHostPtrMemory,
                            ExecutionEnvironment &executionEnvironment);
     void injectPinBB(BufferObject *newPinBB, uint32_t rootDeviceIndex);
+    SubmissionStatus emitPinningRequestForBoContainer(BufferObject **bo, uint32_t boCount, uint32_t rootDeviceIndex) const override {
+        emitPinningRequestForBoContainerCalled++;
+        if (emitPinningRequestForBoContainerCallBase) {
+            return BaseClass::emitPinningRequestForBoContainer(bo, boCount, rootDeviceIndex);
+        }
+        return SubmissionStatus::success;
+    }
+    bool emitPinningRequestForBoContainerCallBase = true;
+    mutable uint32_t emitPinningRequestForBoContainerCalled = 0u;
 
     DrmGemCloseWorker *getgemCloseWorker();
     void forceLimitedRangeAllocator(uint64_t range);
@@ -296,7 +306,18 @@ struct MockDrmMemoryManager : DrmMemoryManager {
     using DrmMemoryManager::gemCloseWorker;
     using DrmMemoryManager::mmapFunction;
     using DrmMemoryManager::munmapFunction;
-    ADDMETHOD_CONST(emitPinningRequestForBoContainer, SubmissionStatus, true, SubmissionStatus::success, (BufferObject * *bo, uint32_t boCount, uint32_t rootDeviceIndex), (bo, boCount, rootDeviceIndex));
+    SubmissionStatus emitPinningRequestForBoContainer(BufferObject **bo, uint32_t boCount, uint32_t rootDeviceIndex) const override {
+        this->emitPinningRequestForBoContainerCalled++;
+        this->emitPinningRequestForBoContainerBos.assign(bo, bo + boCount);
+        if (this->emitPinningRequestForBoContainerCallBase) {
+            return BaseClass::emitPinningRequestForBoContainer(bo, boCount, rootDeviceIndex);
+        }
+        return this->emitPinningRequestForBoContainerResult;
+    }
+    SubmissionStatus emitPinningRequestForBoContainerResult = SubmissionStatus::success;
+    bool emitPinningRequestForBoContainerCallBase = true;
+    mutable uint32_t emitPinningRequestForBoContainerCalled = 0u;
+    mutable std::vector<BufferObject *> emitPinningRequestForBoContainerBos;
 
     int getImportHandleFromReservedHandleData(void *reservedHandleData, uint32_t rootDeviceIndex) override {
         if (getImportHandleFromReservedHandleDataCallBase) {

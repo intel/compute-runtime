@@ -66,6 +66,13 @@ class DrmAllocation : public GraphicsAllocation {
         }
         return this->getBO();
     }
+    StackVec<BufferObject *, maxFragmentsCount> getBOsForResidency(uint32_t vmHandleId) const {
+        if (this->fragmentsStorage.fragmentCount > 0) {
+            return this->getFragmentBOsForResidency(vmHandleId);
+        }
+        return {this->getBOForVmHandle(vmHandleId)};
+    }
+    StackVec<BufferObject *, maxFragmentsCount> getFragmentBOsForResidency(uint32_t vmHandleId) const;
     const BufferObjects &getBOs() const {
         return this->bufferObjects;
     }

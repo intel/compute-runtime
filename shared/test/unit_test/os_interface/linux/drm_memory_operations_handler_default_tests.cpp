@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/os_interface/linux/drm_memory_operations_handler_default.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
@@ -267,6 +268,41 @@ TEST_F(DrmMemoryOperationsHandlerBaseTestFlushDummyExec, givenOperationsHandlerW
     pMemManager->emitPinningRequestForBoContainerResult = SubmissionStatus::outOfMemory;
     auto ret = drmMemoryOperationsHandler->flushDummyExec(device.get(), ArrayRef<GraphicsAllocation *>(&allocationPtr, 1));
     EXPECT_EQ(ret, MemoryOperationsStatus::outOfMemory);
+}
+
+TEST_F(DrmMemoryOperationsHandlerBaseTestFlushDummyExec, givenUsmHostPtrFragmentsEnabledAndResidentAllocationsSharingFragmentWhenFlushingDummyExecThenEveryBufferObjectIsPinnedOnce) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableUsmHostPtrFragments.set(1);
+    MockBufferObject firstFragmentBo(0, mock, 3, 0, 0, 1);
+    MockBufferObject sharedFragmentBo(0, mock, 3, 0, 0, 1);
+    MockBufferObject secondFragmentBo(0, mock, 3, 0, 0, 1);
+    OsHandleLinux firstFragmentHandle;
+    OsHandleLinux sharedFragmentHandle;
+    OsHandleLinux secondFragmentHandle;
+    firstFragmentHandle.bo = &firstFragmentBo;
+    sharedFragmentHandle.bo = &sharedFragmentBo;
+    secondFragmentHandle.bo = &secondFragmentBo;
+    MockDrmAllocation firstAllocation(0u, AllocationType::bufferHostMemory, MemoryPool::system4KBPages);
+    firstAllocation.fragmentsStorage.fragmentCount = 2;
+    firstAllocation.fragmentsStorage.fragmentStorageData[0].osHandleStorage = &firstFragmentHandle;
+    firstAllocation.fragmentsStorage.fragmentStorageData[1].osHandleStorage = &sharedFragmentHandle;
+    MockDrmAllocation secondAllocation(0u, AllocationType::bufferHostMemory, MemoryPool::system4KBPages);
+    secondAllocation.fragmentsStorage.fragmentCount = 2;
+    secondAllocation.fragmentsStorage.fragmentStorageData[0].osHandleStorage = &sharedFragmentHandle;
+    secondAllocation.fragmentsStorage.fragmentStorageData[1].osHandleStorage = &secondFragmentHandle;
+    drmMemoryOperationsHandler->residency = {drmAllocation, &firstAllocation, &secondAllocation};
+
+    EXPECT_EQ(MemoryOperationsStatus::success, drmMemoryOperationsHandler->flushDummyExec(device.get(), ArrayRef<GraphicsAllocation *>(&allocationPtr, 1)));
+
+    const auto &pinnedBos = pMemManager->emitPinningRequestForBoContainerBos;
+    EXPECT_EQ(4u, pinnedBos.size());
+    for (BufferObject *bo : {mockBos[0], static_cast<BufferObject *>(&firstFragmentBo), static_cast<BufferObject *>(&sharedFragmentBo), static_cast<BufferObject *>(&secondFragmentBo)}) {
+        EXPECT_EQ(1, std::count(pinnedBos.begin(), pinnedBos.end(), bo));
+    }
+
+    drmMemoryOperationsHandler->residency.clear();
+    firstAllocation.fragmentsStorage.fragmentCount = 0;
+    secondAllocation.fragmentsStorage.fragmentCount = 0;
 }
 
 HWTEST2_F(DrmMemoryOperationsHandlerBaseTestFlushDummyExec, givenDirectSubmissionLightWhenFreeGraphicsMemoryThenStopDirectSubmission, IsXeLpg) {

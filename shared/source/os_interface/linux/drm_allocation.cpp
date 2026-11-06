@@ -25,6 +25,7 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/product_helper.h"
 
+#include <algorithm>
 #include <sstream>
 
 namespace NEO {
@@ -132,7 +133,11 @@ int DrmAllocation::peekInternalHandle(MemoryManager *memoryManager, uint32_t han
         return 0;
     }
 
-    int64_t ret = static_cast<int64_t>((static_cast<DrmMemoryManager *>(memoryManager))->obtainFdFromHandle(getBufferObjectToModify(handleId)->peekHandle(), this->rootDeviceIndex));
+    auto bufferObject = getBufferObjectToModify(handleId);
+    if (bufferObject == nullptr) {
+        return -1;
+    }
+    int64_t ret = static_cast<int64_t>((static_cast<DrmMemoryManager *>(memoryManager))->obtainFdFromHandle(bufferObject->peekHandle(), this->rootDeviceIndex));
     if (ret < 0) {
         return -1;
     }
@@ -302,11 +307,34 @@ bool DrmAllocation::prefetchBOWithChunking(Drm *drm) {
     return success;
 }
 
+StackVec<BufferObject *, maxFragmentsCount> DrmAllocation::getFragmentBOsForResidency(uint32_t vmHandleId) const {
+    StackVec<BufferObject *, maxFragmentsCount> residencyBufferObjects;
+    if (debugManager.flags.EnableUsmHostPtrFragments.get() == 1) {
+        for (auto fragmentId = 0u; fragmentId < fragmentsStorage.fragmentCount; fragmentId++) {
+            residencyBufferObjects.push_back(static_cast<OsHandleLinux *>(fragmentsStorage.fragmentStorageData[fragmentId].osHandleStorage)->bo);
+        }
+    } else {
+        residencyBufferObjects.push_back(getBOForVmHandle(vmHandleId));
+    }
+    return residencyBufferObjects;
+}
+
 int DrmAllocation::makeBOsResident(OsContext *osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind, const bool forcePagingFence) {
     if (this->fragmentsStorage.fragmentCount) {
+        const bool usmHostPtrFragmentsEnabled = debugManager.flags.EnableUsmHostPtrFragments.get() == 1;
+        const bool fragmentsBoundInEveryVm = bufferObjects == nullptr && usmHostPtrFragmentsEnabled;
+        const bool fragmentsCollectedPerSubmission = bufferObjects != nullptr && usmHostPtrFragmentsEnabled;
         for (unsigned int f = 0; f < this->fragmentsStorage.fragmentCount; f++) {
-            if (!this->fragmentsStorage.fragmentStorageData[f].residency->resident[osContext->getContextId()]) {
-                int retVal = bindBO(static_cast<OsHandleLinux *>(this->fragmentsStorage.fragmentStorageData[f].osHandleStorage)->bo, osContext, vmHandleId, bufferObjects, bind, forcePagingFence);
+            if (fragmentsBoundInEveryVm && !bind) {
+                continue;
+            }
+            auto bo = static_cast<OsHandleLinux *>(this->fragmentsStorage.fragmentStorageData[f].osHandleStorage)->bo;
+            bool fragmentNeedsBinding = fragmentsBoundInEveryVm || !this->fragmentsStorage.fragmentStorageData[f].residency->resident[osContext->getContextId()];
+            if (fragmentsCollectedPerSubmission) {
+                fragmentNeedsBinding = std::find(bufferObjects->begin(), bufferObjects->end(), bo) == bufferObjects->end();
+            }
+            if (fragmentNeedsBinding) {
+                int retVal = bindBO(bo, osContext, vmHandleId, bufferObjects, bind, forcePagingFence);
                 if (retVal) {
                     return retVal;
                 }

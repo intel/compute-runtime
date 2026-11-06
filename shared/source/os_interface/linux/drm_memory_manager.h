@@ -193,6 +193,7 @@ class DrmMemoryManager : public MemoryManager {
     DrmAllocation *createMultiHostDebugSurfaceAllocation(const AllocationData &allocationData);
     void obtainGpuAddress(const AllocationData &allocationData, BufferObject *bo, uint64_t gpuAddress);
     GraphicsAllocation *allocateUSMHostGraphicsMemory(const AllocationData &allocationData) override;
+    GraphicsAllocation *allocateUSMHostGraphicsMemoryFromFragments(const AllocationData &allocationData);
     GraphicsAllocation *allocateGraphicsMemoryWithHostPtr(const AllocationData &allocationData) override;
     GraphicsAllocation *allocateGraphicsMemory64kb(const AllocationData &allocationData) override;
     GraphicsAllocation *allocateMemoryByKMD(const AllocationData &allocationData) override;
@@ -231,6 +232,7 @@ class DrmMemoryManager : public MemoryManager {
     bool getLocalOnlyRequired(AllocationType allocationType, const ProductHelper &productHelper, const HardwareInfo &hwInfo, bool preferCompressed) const override;
     bool reserveLocalMemory(DrmAllocation &allocation);
     void releaseLocalMemoryReservation(DrmAllocation &allocation);
+    bool overlapsFragmentBackedImport(uint32_t rootDeviceIndex, uintptr_t start, size_t size) const;
 
     template <typename Func>
     bool processOverAllocationBanks(GraphicsAllocation *graphicsAllocation, DeviceBitfield handleMask, Func funcToProcess);
@@ -247,6 +249,7 @@ class DrmMemoryManager : public MemoryManager {
     std::mutex mtx;
 
     std::map<std::pair<int, uint32_t>, BufferObjectHandleWrapper, BoHandleDeviceIndexPairComparer> sharedBoHandles;
+    std::map<std::pair<uint32_t, uintptr_t>, std::pair<uintptr_t, GraphicsAllocation *>> fragmentBackedImportRanges;
     std::vector<std::vector<GraphicsAllocation *>> localMemAllocs;
     std::vector<size_t> localMemBanksCount;
     std::unique_ptr<uint64_t[]> cachedMaxLocalMemory;

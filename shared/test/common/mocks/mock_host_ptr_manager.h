@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 namespace NEO {
 class MockHostPtrManager : public HostPtrManager {
   public:
+    using HostPtrManager::allocationsMutex;
     using HostPtrManager::checkAllocationsForOverlapping;
     using HostPtrManager::getAllocationRequirements;
     using HostPtrManager::getFragmentAndCheckForOverlaps;

@@ -9,6 +9,7 @@
 #include "shared/source/direct_submission/linux/drm_direct_submission.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/os_interface/linux/cache_info.h"
 #include "shared/source/os_interface/linux/drm_allocation.h"
@@ -1943,4 +1944,47 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenSecondTileOsContextWhenMakeResid
     EXPECT_GT(mock->getMockIoctlHelper()->waitUserFenceCalled, initialWaitUserFenceCalls);
 
     memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryOperationsHandlerBindTest, givenUsmHostAllocationBackedByFragmentsWhenMadeResidentAndEvictedThenFragmentsStayBoundInEveryVmUntilAllocationIsFreed) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableUsmHostPtrFragments.set(1);
+    auto buffer = alignedMalloc(4 * MemoryConstants::pageSize, MemoryConstants::pageSize);
+    AllocationProperties properties(device->getRootDeviceIndex(), false, 2 * MemoryConstants::pageSize, AllocationType::bufferHostMemory, false, device->getDeviceBitfield());
+    properties.flags.isUSMHostAllocation = true;
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, ptrOffset(buffer, 0x40));
+    ASSERT_NE(nullptr, allocation);
+    ASSERT_EQ(3u, allocation->fragmentsStorage.fragmentCount);
+
+    EXPECT_EQ(MemoryOperationsStatus::success, operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&allocation, 1), false, false));
+    EXPECT_EQ(6u, mock->getMockIoctlHelper()->vmBindCalled);
+
+    EXPECT_EQ(MemoryOperationsStatus::success, operationHandler->evict(device, *allocation));
+    EXPECT_EQ(0u, mock->getMockIoctlHelper()->vmUnbindCalled);
+
+    memoryManager->freeGraphicsMemory(allocation);
+    EXPECT_EQ(6u, mock->getMockIoctlHelper()->vmUnbindCalled);
+    alignedFree(buffer);
+}
+
+TEST_F(DrmMemoryOperationsHandlerBindTest, givenUsmHostAllocationBackedByFragmentsWhenMadeResidentAsyncThenEveryFragmentWaitsForPagingFence) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableUsmHostPtrFragments.set(1);
+    auto buffer = alignedMalloc(4 * MemoryConstants::pageSize, MemoryConstants::pageSize);
+    AllocationProperties properties(device->getRootDeviceIndex(), false, 2 * MemoryConstants::pageSize, AllocationType::bufferHostMemory, false, device->getDeviceBitfield());
+    properties.flags.isUSMHostAllocation = true;
+    auto allocation = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(properties, ptrOffset(buffer, 0x40)));
+    ASSERT_NE(nullptr, allocation);
+    ASSERT_EQ(3u, allocation->fragmentsStorage.fragmentCount);
+
+    auto osContext = device->getDefaultEngine().osContext;
+    EXPECT_EQ(MemoryOperationsStatus::success, operationHandler->makeResidentAsync(osContext, allocation));
+    for (auto fragmentId = 0u; fragmentId < allocation->fragmentsStorage.fragmentCount; fragmentId++) {
+        auto bo = static_cast<OsHandleLinux *>(allocation->fragmentsStorage.fragmentStorageData[fragmentId].osHandleStorage)->bo;
+        EXPECT_TRUE(bo->isAsyncPagingFenceRequired());
+    }
+    EXPECT_EQ(MemoryOperationsStatus::success, operationHandler->waitForAsyncResidency(osContext, allocation));
+
+    memoryManager->freeGraphicsMemory(allocation);
+    alignedFree(buffer);
 }

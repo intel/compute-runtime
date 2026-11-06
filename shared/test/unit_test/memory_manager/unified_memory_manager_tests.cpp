@@ -587,6 +587,44 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenExternalHostPointerWhenCreatingHostUnif
     alignedFree(externalHostPointer);
 }
 
+TEST_F(SVMLocalMemoryAllocatorTest, givenDefaultSettingsAndExternalHostPointerWhenCreatingUnifiedMemoryAllocationThenRequestedSizeIsAlignedUpToPage) {
+    constexpr size_t requestedSize = MemoryConstants::pageSize + 1;
+    auto externalHostPointer = alignedMalloc(2 * MemoryConstants::pageSize, MemoryConstants::pageSize);
+    ASSERT_NE(nullptr, externalHostPointer);
+
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, MemoryConstants::pageSize64k, rootDeviceIndices, deviceBitfields);
+    unifiedMemoryProperties.allocationFlags.hostptr = reinterpret_cast<uintptr_t>(externalHostPointer);
+
+    auto ptr = svmManager->createUnifiedMemoryAllocation(requestedSize, unifiedMemoryProperties);
+    ASSERT_EQ(externalHostPointer, ptr);
+
+    ASSERT_NE(nullptr, memoryManager->lastAllocationProperties);
+    EXPECT_EQ(2 * MemoryConstants::pageSize, memoryManager->lastAllocationProperties->size);
+
+    svmManager->freeSVMAlloc(ptr);
+    alignedFree(externalHostPointer);
+}
+
+TEST_F(SVMLocalMemoryAllocatorTest, givenUsmHostPtrFragmentsEnabledAndExternalHostPointerWhenCreatingUnifiedMemoryAllocationThenRequestedSizeIsNotAlignedUp) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableUsmHostPtrFragments.set(1);
+    constexpr size_t requestedSize = MemoryConstants::pageSize + 1;
+    auto externalHostPointer = alignedMalloc(requestedSize, MemoryConstants::pageSize);
+    ASSERT_NE(nullptr, externalHostPointer);
+
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, MemoryConstants::pageSize64k, rootDeviceIndices, deviceBitfields);
+    unifiedMemoryProperties.allocationFlags.hostptr = reinterpret_cast<uintptr_t>(externalHostPointer);
+
+    auto ptr = svmManager->createUnifiedMemoryAllocation(requestedSize, unifiedMemoryProperties);
+    ASSERT_EQ(externalHostPointer, ptr);
+
+    ASSERT_NE(nullptr, memoryManager->lastAllocationProperties);
+    EXPECT_EQ(requestedSize, memoryManager->lastAllocationProperties->size);
+
+    svmManager->freeSVMAlloc(ptr);
+    alignedFree(externalHostPointer);
+}
+
 TEST_F(SVMLocalMemoryAllocatorTest, givenShareableHostUnifiedMemoryPropertiesWhenCreatingAllocationThenShareableAndIpcSupportedFlagsArePassedToAllocationProperties) {
     UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
     unifiedMemoryProperties.allocationFlags.flags.shareable = 1u;

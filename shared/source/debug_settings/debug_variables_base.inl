@@ -485,6 +485,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, EnableReusingGpuTimestamps, -1, "Reuse GPU times
 DECLARE_DEBUG_VARIABLE(int32_t, EnableTimestampMmioRead, -1, "Read GPU timestamp directly from mapped MMIO instead of calling KMD. -1: default, 0: disable, 1: enable")
 DECLARE_DEBUG_VARIABLE(int32_t, AllowZeroCopyWithoutCoherency, -1, "Use cacheline flush instead of memory copy for map/unmap mem object")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableHostPtrTracking, -1, "Enable host ptr tracking: -1 - default platform setting, 0 - disabled, 1 - enabled")
+DECLARE_DEBUG_VARIABLE(int32_t, EnableUsmHostPtrFragments, -1, "Back USM host allocations created from an external host pointer with page fragments shared between allocations, overlapping unaligned imports are then rejected and read-only imports have to be page aligned: -1 - default (disabled), 0 - disabled, 1 - enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, MaxHwThreadsPercent, 0, "If not zero then maximum number of used HW threads is capped to max * MaxHwThreadsPercent / 100")
 DECLARE_DEBUG_VARIABLE(int32_t, MinHwThreadsUnoccupied, 0, "If not zero then maximum number of used HW threads is reduced by MinHwThreadsUnoccupied")
 DECLARE_DEBUG_VARIABLE(int32_t, PerformImplicitFlushEveryEnqueueCount, -1, "If greater than 0, driver performs implicit flush every N submissions.")

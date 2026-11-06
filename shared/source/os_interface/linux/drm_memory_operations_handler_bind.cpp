@@ -20,6 +20,8 @@
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/os_context.h"
 
+#include <algorithm>
+
 namespace NEO {
 
 DrmMemoryOperationsHandlerBind::DrmMemoryOperationsHandlerBind(const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t rootDeviceIndex)
@@ -111,11 +113,16 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::makeResidentWithinOsConte
 
         for (auto gfxAllocation = gfxAllocations.begin(); gfxAllocation != gfxAllocations.end(); gfxAllocation++) {
             auto drmAllocation = static_cast<DrmAllocation *>(*gfxAllocation);
-            auto bo = drmAllocation->getBOForVmHandle(drmIterator);
+            const auto bufferObjects = drmAllocation->getBOsForResidency(drmIterator);
+            const bool allBound = std::all_of(bufferObjects.begin(), bufferObjects.end(), [&](BufferObject *bo) {
+                return bo->getBindInfo()[bo->getOsContextId(osContext)][drmIterator];
+            });
 
-            if (!bo->getBindInfo()[bo->getOsContextId(osContext)][drmIterator]) {
-                bo->requireExplicitLockedMemory(drmAllocation->isLockedMemory());
-                bo->requireImmediateBinding(true);
+            if (!allBound) {
+                for (auto bo : bufferObjects) {
+                    bo->requireExplicitLockedMemory(drmAllocation->isLockedMemory());
+                    bo->requireImmediateBinding(true);
+                }
 
                 int result = drmAllocation->makeBOsResident(osContext, drmIterator, nullptr, true, forcePagingFence);
                 if (result) {
@@ -169,8 +176,9 @@ int DrmMemoryOperationsHandlerBind::evictImpl(OsContext *osContext, GraphicsAllo
             if (retVal) {
                 return retVal;
             }
-            auto bo = drmAllocation->getBOForVmHandle(drmIterator);
-            bo->requireImmediateBinding(false);
+            for (auto bo : drmAllocation->getBOsForResidency(drmIterator)) {
+                bo->requireImmediateBinding(false);
+            }
         }
     }
     drmAllocation->updateResidencyTaskCount(GraphicsAllocation::objectNotResident, osContext->getContextId());
@@ -253,10 +261,11 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::makeResidentAsync(OsConte
         }
         devicesDone++;
         auto &drmAllocation = *static_cast<DrmAllocation *>(gfxAllocation);
-        auto bo = drmAllocation.getBOForVmHandle(drmIterator);
-        bo->requireExplicitLockedMemory(drmAllocation.isLockedMemory());
-        bo->requireImmediateBinding(true);
-        bo->setAsyncPagingFenceRequired();
+        for (auto bo : drmAllocation.getBOsForResidency(drmIterator)) {
+            bo->requireExplicitLockedMemory(drmAllocation.isLockedMemory());
+            bo->requireImmediateBinding(true);
+            bo->setAsyncPagingFenceRequired();
+        }
 
         int result = drmAllocation.makeBOsResident(osContext, drmIterator, nullptr, true, false);
         if (result) {
@@ -278,11 +287,12 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::waitForAsyncResidency(OsC
         devicesDone++;
 
         auto &drmAllocation = *static_cast<DrmAllocation *>(gfxAllocation);
-        auto bo = drmAllocation.getBOForVmHandle(drmIterator);
-        UNRECOVERABLE_IF(!bo->isAsyncPagingFenceRequired());
-        auto ret = bo->waitOnAsyncPagingFence(osContext, drmIterator);
-        if (ret != 0) {
-            return MemoryOperationsStatus::gpuHangDetectedDuringOperation;
+        for (auto bo : drmAllocation.getBOsForResidency(drmIterator)) {
+            UNRECOVERABLE_IF(!bo->isAsyncPagingFenceRequired());
+            auto ret = bo->waitOnAsyncPagingFence(osContext, drmIterator);
+            if (ret != 0) {
+                return MemoryOperationsStatus::gpuHangDetectedDuringOperation;
+            }
         }
     }
     return MemoryOperationsStatus::success;

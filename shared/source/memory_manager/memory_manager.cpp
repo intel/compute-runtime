@@ -318,6 +318,10 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemoryForImageFromHostPtr(con
 }
 
 void MemoryManager::cleanGraphicsMemoryCreatedFromHostPtr(GraphicsAllocation *graphicsAllocation) {
+    std::unique_lock<std::recursive_mutex> hostPtrManagerLock;
+    if (debugManager.flags.EnableUsmHostPtrFragments.get() == 1) {
+        hostPtrManagerLock = hostPtrManager->obtainOwnership();
+    }
     hostPtrManager->releaseHandleStorage(graphicsAllocation->getRootDeviceIndex(), graphicsAllocation->fragmentsStorage);
     cleanOsHandles(graphicsAllocation->fragmentsStorage, graphicsAllocation->getRootDeviceIndex());
 }
@@ -419,7 +423,7 @@ void MemoryManager::freeGraphicsMemory(GraphicsAllocation *gfxAllocation, bool i
     const bool isLocked = gfxAllocation->isLocked();
     DEBUG_BREAK_IF(hasFragments && isLocked);
 
-    if (!hasFragments) {
+    if (!hasFragments || debugManager.flags.EnableUsmHostPtrFragments.get() == 1) {
         handleFenceCompletion(gfxAllocation);
     }
     if (isLocked) {

@@ -134,7 +134,17 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::flushDummyExec(Device 
     std::vector<BufferObject *> boArray;
     uint32_t boCount = 0;
     for (auto &alloc : this->residency) {
-        for (auto &bo : reinterpret_cast<DrmAllocation *>(alloc)->getBOs()) {
+        auto drmAllocation = reinterpret_cast<DrmAllocation *>(alloc);
+        if (drmAllocation->fragmentsStorage.fragmentCount > 0 && debugManager.flags.EnableUsmHostPtrFragments.get() == 1) {
+            for (auto bo : drmAllocation->getBOsForResidency(0u)) {
+                if (std::find(boArray.begin(), boArray.end(), bo) == boArray.end()) {
+                    boArray.push_back(bo);
+                    boCount++;
+                }
+            }
+            continue;
+        }
+        for (auto &bo : drmAllocation->getBOs()) {
             if (bo != 0) {
                 boArray.push_back(bo);
                 boCount++;
