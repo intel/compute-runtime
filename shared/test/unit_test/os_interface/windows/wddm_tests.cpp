@@ -19,6 +19,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_gmm_client_context_base.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
+#include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"
 
@@ -1811,6 +1812,25 @@ TEST_F(WddmCreateNTHandleAccessTests, givenShareObjectsFailureWhenCreatingNTHand
     EXPECT_EQ(STATUS_UNSUCCESSFUL, wddm->createNTHandle(&resourceHandle, &ntHandle));
     EXPECT_EQ(1u, ShareObjectsCapture::callCount);
     EXPECT_EQ(expectedSharedResourceAccess, ShareObjectsCapture::lastDesiredAccess);
+}
+
+TEST(WddmEnginesTest, givenEngineControlWhenCheckingIfEngineIsInitializedThenOsContextInitializationStateIsReturned) {
+    EXPECT_FALSE(Wddm::isEngineInitialized(EngineControl{}));
+
+    MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor());
+    EngineControl engine{nullptr, &osContext};
+    osContext.contextInitialized = false;
+    EXPECT_FALSE(Wddm::isEngineInitialized(engine));
+
+    osContext.contextInitialized = true;
+    EXPECT_TRUE(Wddm::isEngineInitialized(engine));
+}
+
+TEST(WddmEnginesTest, givenRootDeviceEnvironmentNotOwnedByExecutionEnvironmentWhenGettingRegisteredEnginesThenNullptrIsReturned) {
+    MockExecutionEnvironment executionEnvironment;
+    RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
+    WddmMock wddm(rootDeviceEnvironment);
+    EXPECT_EQ(nullptr, wddm.getRegisteredEnginesForThisDevice());
 }
 
 } // namespace NEO

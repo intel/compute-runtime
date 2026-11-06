@@ -134,6 +134,17 @@ bool memsetAllocation(bool useBlitter, const Device &device, GraphicsAllocation 
                       int value, size_t size);
 } // namespace MemoryTransferHelper
 
+struct OsHandleData {
+    osHandle handle;
+    uint32_t arrayIndex;
+    uint32_t parentProcessId = 0;
+    uint64_t physicalOffset = 0;
+
+    OsHandleData(uint64_t handle, uint32_t arrayIndex = 0) : handle(static_cast<osHandle>(handle)), arrayIndex(arrayIndex) {};
+    OsHandleData(void *handle, uint32_t arrayIndex = 0) : handle(toOsHandle(handle)), arrayIndex(arrayIndex) {};
+    OsHandleData(osHandle handle, uint32_t arrayIndex = 0) : handle(handle), arrayIndex(arrayIndex) {};
+};
+
 class MemoryManager {
   public:
     enum AllocationStatus {
@@ -144,16 +155,7 @@ class MemoryManager {
         InvalidName
     };
 
-    struct OsHandleData {
-        osHandle handle;
-        uint32_t arrayIndex;
-        uint32_t parentProcessId = 0;
-        uint64_t physicalOffset = 0;
-
-        OsHandleData(uint64_t handle, uint32_t arrayIndex = 0) : handle(static_cast<osHandle>(handle)), arrayIndex(arrayIndex) {};
-        OsHandleData(void *handle, uint32_t arrayIndex = 0) : handle(toOsHandle(handle)), arrayIndex(arrayIndex) {};
-        OsHandleData(osHandle handle, uint32_t arrayIndex = 0) : handle(handle), arrayIndex(arrayIndex) {};
-    };
+    using OsHandleData = NEO::OsHandleData;
 
     MemoryManager(ExecutionEnvironment &executionEnvironment);
     bool isInitialized() const { return initialized; }

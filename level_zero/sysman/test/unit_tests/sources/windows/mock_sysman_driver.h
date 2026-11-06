@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 
 #include "level_zero/sysman/source/driver/sysman_driver.h"

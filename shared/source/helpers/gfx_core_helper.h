@@ -20,6 +20,7 @@
 #include "aubstream/aubstream.h"
 #include "neo_igfxfmid.h"
 
+#include <array>
 #include <cstdint>
 #include <memory>
 #include <optional>

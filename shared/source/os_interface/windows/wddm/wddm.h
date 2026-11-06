@@ -6,16 +6,13 @@
  */
 
 #pragma once
-#include "shared/source/execution_environment/execution_environment.h"
-#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/adapter_bdf.h"
 #include "shared/source/helpers/driver_model_type.h"
+#include "shared/source/helpers/engine_control.h"
 #include "shared/source/os_interface/os_interface.h"
-#include "shared/source/os_interface/os_time.h"
 #include "shared/source/os_interface/windows/d3dkmthk_wrapper.h"
 #include "shared/source/os_interface/windows/sharedata_wrapper.h"
 #include "shared/source/os_interface/windows/wddm/wddm_defs.h"
-#include "shared/source/os_interface/windows/wddm_memory_manager.h"
 #include "shared/source/os_interface/windows/wddm_residency_controller.h"
 #include "shared/source/utilities/mockable_virtual_defaults.h"
 #include "shared/source/utilities/stackvec.h"
@@ -30,13 +27,19 @@ typedef struct _SYSTEM_INFO SYSTEM_INFO;
 
 namespace NEO {
 enum PreemptionMode : uint32_t;
+enum class AllocationType;
 enum class WaitStatus;
+class CommandStreamReceiver;
+class ExecutionEnvironment;
 class Gdi;
+class HwDeviceId;
 class HwDeviceIdWddm;
 class GfxPartition;
 class Gmm;
 class GmmMemory;
 class KmdWaiter;
+class MmioTimestampPtrHelper;
+class OsContext;
 class OsContextWin;
 class ProductHelper;
 class SettingsReader;
@@ -48,9 +51,12 @@ class WddmResidentAllocationsContainer;
 struct AllocationStorageData;
 struct FeatureTable;
 struct HardwareInfo;
+struct MemoryFlags;
 struct MonitoredFence;
+struct OsHandleData;
 struct OsHandleStorage;
 struct OSMemory;
+struct RootDeviceEnvironment;
 struct WorkaroundTable;
 
 enum class HeapIndex : uint32_t;
@@ -89,9 +95,9 @@ class Wddm : public DriverModel {
     MOCKABLE_VIRTUAL NTSTATUS createAllocationsAndMapGpuVa(OsHandleStorage &osHandles);
     MOCKABLE_VIRTUAL bool destroyAllocations(const D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle);
     MOCKABLE_VIRTUAL bool verifySharedHandle(D3DKMT_HANDLE osHandle);
-    MOCKABLE_VIRTUAL bool openSharedHandle(const MemoryManager::OsHandleData &osHandleData, WddmAllocation *alloc);
+    MOCKABLE_VIRTUAL bool openSharedHandle(const OsHandleData &osHandleData, WddmAllocation *alloc);
     MOCKABLE_VIRTUAL bool verifyNTHandle(HANDLE handle);
-    bool openNTHandle(const MemoryManager::OsHandleData &osHandleData, WddmAllocation *alloc);
+    bool openNTHandle(const OsHandleData &osHandleData, WddmAllocation *alloc);
     MOCKABLE_VIRTUAL void *lockResource(const D3DKMT_HANDLE &handle, bool applyMakeResidentPriorToLock, size_t size);
     MOCKABLE_VIRTUAL void unlockResource(const D3DKMT_HANDLE &handle, bool applyMakeResidentPriorToLock);
 
@@ -101,7 +107,7 @@ class Wddm : public DriverModel {
     MOCKABLE_VIRTUAL bool queryAdapterInfo();
     MOCKABLE_VIRTUAL void translateFromKmd(PLATFORM &platform);
     MOCKABLE_VIRTUAL NTSTATUS createNTHandle(const D3DKMT_HANDLE *resourceHandle, HANDLE *ntHandle);
-    MOCKABLE_VIRTUAL HANDLE getSharedHandle(const MemoryManager::OsHandleData &osHandleData);
+    MOCKABLE_VIRTUAL HANDLE getSharedHandle(const OsHandleData &osHandleData);
     MOCKABLE_VIRTUAL HANDLE openNTHandleFromName(const void *name, bool forceGlobal);
 
     MOCKABLE_VIRTUAL bool submit(uint64_t commandBuffer, size_t size, void *commandHeader, WddmSubmitArguments &submitArguments);
@@ -221,7 +227,7 @@ class Wddm : public DriverModel {
     }
 
     const RootDeviceEnvironment &getRootDeviceEnvironment() const { return rootDeviceEnvironment; }
-    const HardwareInfo *getHardwareInfo() const override { return rootDeviceEnvironment.getHardwareInfo(); }
+    const HardwareInfo *getHardwareInfo() const override;
 
     MOCKABLE_VIRTUAL uint32_t getTimestampFrequency() const { return timestampFrequency; }
 
@@ -245,20 +251,21 @@ class Wddm : public DriverModel {
 
     template <bool onlyInitialized, typename F>
     void forEachContextWithinWddm(F func) {
-        for (auto rootDeviceIndex = 0u; rootDeviceIndex < rootDeviceEnvironment.executionEnvironment.rootDeviceEnvironments.size(); rootDeviceIndex++) {
-            if (rootDeviceEnvironment.executionEnvironment.rootDeviceEnvironments[rootDeviceIndex].get() == &rootDeviceEnvironment) {
-                for (auto &engine : rootDeviceEnvironment.executionEnvironment.memoryManager->getRegisteredEngines(rootDeviceIndex)) {
-                    if constexpr (onlyInitialized) {
-                        if (engine.osContext && engine.osContext->isInitialized()) {
-                            func(engine);
-                        }
-                    } else {
-                        func(engine);
-                    }
+        auto engines = getRegisteredEnginesForThisDevice();
+        if (engines == nullptr) {
+            return;
+        }
+        for (auto &engine : *engines) {
+            if constexpr (onlyInitialized) {
+                if (!isEngineInitialized(engine)) {
+                    continue;
                 }
             }
+            func(engine);
         }
     }
+    const std::vector<EngineControl> *getRegisteredEnginesForThisDevice() const;
+    static bool isEngineInitialized(const EngineControl &engine);
 
     bool getDeviceExecutionState(D3DKMT_DEVICESTATE_TYPE stateType, void *privateData);
     bool getDeviceState() override;

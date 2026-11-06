@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/indirect_heap/heap_size.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/hw_device_id.h"

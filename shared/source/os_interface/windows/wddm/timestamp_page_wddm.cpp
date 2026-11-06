@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/os_interface/os_time.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 
 namespace NEO {

@@ -8,6 +8,7 @@
 #include "shared/test/unit_test/os_interface/windows/product_helper_win_tests.h"
 
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"

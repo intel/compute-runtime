@@ -10,6 +10,8 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/command_stream/wait_status.h"
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/gmm_helper/client_context/gmm_handle_allocator.h"
 #include "shared/source/gmm_helper/client_context/map_gpu_va_gmm.h"
@@ -28,8 +30,10 @@
 #include "shared/source/helpers/preprocessor.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/gfx_partition.h"
+#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/external_semaphore.h"
+#include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/os_interface/sys_calls_common.h"
 #include "shared/source/os_interface/windows/gdi_interface.h"
@@ -80,6 +84,24 @@ Wddm::Wddm(std::unique_ptr<HwDeviceIdWddm> &&hwDeviceIdIn, RootDeviceEnvironment
 #endif
     checkDeviceState = (debugManager.flags.EnableDeviceStateVerification.get() != -1) ? debugManager.flags.EnableDeviceStateVerification.get() : forceCheck;
     pagingFenceDelayTime = debugManager.flags.WddmPagingFenceCpuWaitDelayTime.get();
+}
+
+const HardwareInfo *Wddm::getHardwareInfo() const {
+    return rootDeviceEnvironment.getHardwareInfo();
+}
+
+const std::vector<EngineControl> *Wddm::getRegisteredEnginesForThisDevice() const {
+    auto &executionEnvironment = rootDeviceEnvironment.executionEnvironment;
+    for (auto rootDeviceIndex = 0u; rootDeviceIndex < executionEnvironment.rootDeviceEnvironments.size(); rootDeviceIndex++) {
+        if (executionEnvironment.rootDeviceEnvironments[rootDeviceIndex].get() == &rootDeviceEnvironment) {
+            return &executionEnvironment.memoryManager->getRegisteredEngines(rootDeviceIndex);
+        }
+    }
+    return nullptr;
+}
+
+bool Wddm::isEngineInitialized(const EngineControl &engine) {
+    return engine.osContext && engine.osContext->isInitialized();
 }
 
 Wddm::~Wddm() {
