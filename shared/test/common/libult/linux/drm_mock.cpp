@@ -287,6 +287,9 @@ int DrmMock::ioctl(DrmIoctl request, void *arg) {
         ioctlCount.handleToPrimeFd++;
         auto primeToFdParams = static_cast<PrimeHandle *>(arg);
         primeToFdParams->fileDescriptor = outputFd;
+        if (incrementOutputFdAfterCall) {
+            outputFd++;
+        }
         return 0;
     }
     if (request == DrmIoctl::gemWait) {

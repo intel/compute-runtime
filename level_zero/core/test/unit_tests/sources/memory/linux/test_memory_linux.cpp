@@ -306,6 +306,78 @@ TEST_F(MemoryExportImportObtainFdTest,
 }
 
 TEST_F(MemoryExportImportObtainFdTest,
+       givenAllocationWithTwoHandlesWhenGettingIpcHandlesThenEachHandleIsTrackedWithItsHandleId) {
+    auto drm = static_cast<DrmMockResources *>(executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<NEO::Drm>());
+    drm->outputFd = 100;
+    drm->incrementOutputFdAfterCall = true;
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device->toHandle(), &deviceDesc, 10u, 1u, &ptr));
+
+    uint32_t numIpcHandles = 0;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->getIpcMemHandles(ptr, &numIpcHandles, nullptr));
+    ASSERT_EQ(2u, numIpcHandles);
+    std::vector<ze_ipc_mem_handle_t> ipcHandles(numIpcHandles);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->getIpcMemHandles(ptr, &numIpcHandles, ipcHandles.data()));
+
+    auto &ipcMap = driverHandle->getIPCHandleMap();
+    ASSERT_EQ(2u, ipcMap.size());
+    EXPECT_EQ(0u, ipcMap.begin()->second->handleId);
+    EXPECT_EQ(1u, ipcMap.rbegin()->second->handleId);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+}
+
+TEST_F(MemoryExportImportObtainFdTest,
+       givenAllocationWithTwoExportedHandlesWhenFreeingItThenAllHandleTrackingsAreReleased) {
+    auto drm = static_cast<DrmMockResources *>(executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<NEO::Drm>());
+    drm->outputFd = 100;
+    drm->incrementOutputFdAfterCall = true;
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device->toHandle(), &deviceDesc, 10u, 1u, &ptr));
+
+    uint32_t numIpcHandles = 0;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->getIpcMemHandles(ptr, &numIpcHandles, nullptr));
+    ASSERT_EQ(2u, numIpcHandles);
+    std::vector<ze_ipc_mem_handle_t> ipcHandles(numIpcHandles);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->getIpcMemHandles(ptr, &numIpcHandles, ipcHandles.data()));
+    ASSERT_EQ(2u, driverHandle->getIPCHandleMap().size());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+    EXPECT_TRUE(driverHandle->getIPCHandleMap().empty());
+}
+
+TEST_F(MemoryExportImportObtainFdTest,
+       givenAllocationWithTwoExportedHandlesWhenPuttingSecondHandleAndExportingAgainThenOnlySecondHandleIsReexported) {
+    auto drm = static_cast<DrmMockResources *>(executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<NEO::Drm>());
+    drm->outputFd = 100;
+    drm->incrementOutputFdAfterCall = true;
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device->toHandle(), &deviceDesc, 10u, 1u, &ptr));
+
+    uint32_t numIpcHandles = 2u;
+    std::vector<ze_ipc_mem_handle_t> ipcHandles(numIpcHandles);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->getIpcMemHandles(ptr, &numIpcHandles, ipcHandles.data()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->putIpcMemHandle(ipcHandles[1]));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->getIpcMemHandles(ptr, &numIpcHandles, ipcHandles.data()));
+
+    auto &ipcMap = driverHandle->getIPCHandleMap();
+    ASSERT_EQ(2u, ipcMap.size());
+    auto firstHandleIt = ipcMap.find(100u);
+    ASSERT_NE(ipcMap.end(), firstHandleIt);
+    EXPECT_EQ(0u, firstHandleIt->second->handleId);
+    EXPECT_EQ(2u, firstHandleIt->second->refcnt);
+    auto secondHandleIt = ipcMap.find(102u);
+    ASSERT_NE(ipcMap.end(), secondHandleIt);
+    EXPECT_EQ(1u, secondHandleIt->second->handleId);
+    EXPECT_EQ(1u, secondHandleIt->second->refcnt);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+}
+
+TEST_F(MemoryExportImportObtainFdTest,
        givenCallToGetIpcHandleWithFailureToGetFdHandleThenOutOfHostMemoryIsReturned) {
     size_t size = 10;
     size_t alignment = 1u;

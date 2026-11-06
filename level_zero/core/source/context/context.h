@@ -139,6 +139,7 @@ struct IpcHandleTracking {
 struct IpcHandleExportData {
     NEO::GraphicsAllocation *alloc = nullptr;
     uint64_t handle = 0;
+    uint32_t handleId = 0;
     uint64_t ptrAddress = 0;
     uint8_t memoryType = 0;
     NEO::UsmMemAllocPool *usmPool = nullptr;
@@ -445,6 +446,8 @@ struct Context : _ze_context_handle_t, NEO::NonCopyableAndNonMovableClass {
     uint64_t getIpcHandleKey(const ze_ipc_mem_handle_t &ipcHandle) const;
     void closeIpcHandleTracking(uint64_t handle);
     std::map<uint64_t, IpcHandleTracking *>::iterator eraseIpcHandleTracking(std::map<uint64_t, IpcHandleTracking *>::iterator ipcHandleIterator);
+    template <typename ShouldEraseT>
+    void eraseIpcHandleTrackingsIf(ShouldEraseT shouldErase);
     void releaseIpcRangeChunkHandles(const std::vector<uint64_t> &handleKeys);
     void releaseIpcRangeTransport(const void *transportPtr);
 
