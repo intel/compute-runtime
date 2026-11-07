@@ -522,6 +522,8 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
 
     uint64_t getCompletionAddress() const;
 
+    bool isGpuHangCheckPeriodElapsed(int64_t elapsedTimeUs) const { return elapsedTimeUs >= this->gpuHangCheckPeriodUs; }
+
     TaskCountType getCompletionValue(const GraphicsAllocation &gfxAllocation);
     DispatchMode getDispatchMode() const {
         return this->dispatchMode;

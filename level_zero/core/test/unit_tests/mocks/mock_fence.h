@@ -20,7 +20,6 @@ struct WhiteBox<::L0::Fence> : public ::L0::Fence {
     WhiteBox() : Fence(nullptr) {}
     ~WhiteBox() override = default;
 
-    using ::L0::Fence::gpuHangCheckPeriod;
     using ::L0::Fence::taskCount;
 };
 

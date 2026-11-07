@@ -25,8 +25,6 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
-#include <chrono>
-
 namespace L0 {
 namespace ult {
 
@@ -681,7 +679,6 @@ HWTEST_F(EventAssertTest, GivenGpuHangWhenHostSynchronizeIsCalledThenAssertIsChe
     auto &csr = this->neoDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.isGpuHangDetectedReturnValue = true;
 
-    event->gpuHangCheckPeriod = std::chrono::microseconds::zero();
     auto assertHandler = new MockAssertHandler(device->getNEODevice());
     neoDevice->getRootDeviceEnvironmentRef().assertHandler.reset(assertHandler);
 
@@ -697,7 +694,6 @@ TEST_F(EventAssertTest, GivenNoGpuHangAndOneNanosecondTimeoutWhenHostSynchronize
     csr->isGpuHangDetectedReturnValue = false;
 
     event->csrs[0] = csr.get();
-    event->gpuHangCheckPeriod = std::chrono::microseconds::zero();
     auto assertHandler = new MockAssertHandler(device->getNEODevice());
     neoDevice->getRootDeviceEnvironmentRef().assertHandler.reset(assertHandler);
 

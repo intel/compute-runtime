@@ -32,6 +32,8 @@
 #include "level_zero/driver_experimental/zex_common.h"
 #include "level_zero/tools/source/metrics/metric.h"
 
+#include <chrono>
+
 namespace L0 {
 template <typename TagSizeT>
 Event *Event::create(const EventDescriptor &eventDescriptor, Device *device, ze_result_t &result) {
@@ -1097,7 +1099,7 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
 
         elapsedTimeSinceGpuHangCheck = std::chrono::duration_cast<std::chrono::microseconds>(currentTime - lastHangCheckTime);
 
-        if (elapsedTimeSinceGpuHangCheck.count() >= this->gpuHangCheckPeriod.count()) {
+        if (csrForCacheFlush->isGpuHangCheckPeriodElapsed(elapsedTimeSinceGpuHangCheck.count())) {
             lastHangCheckTime = currentTime;
             if (this->isGpuHangDetectedOnSignalingContexts(*csrForCacheFlush)) {
                 if (assertHndlr) {

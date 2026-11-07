@@ -25,12 +25,9 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_fence.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 
-#include <chrono>
 #include <cstdint>
 #include <limits>
 #include <memory>
-
-using namespace std::chrono_literals;
 
 namespace CpuIntrinsicsTests {
 extern std::atomic<uint32_t> pauseCounter;
@@ -128,7 +125,6 @@ TEST_F(FenceTest, GivenNotReadyFenceWhenHostSynchronizeWithZeroTimeoutThenCoreIs
     ASSERT_NE(nullptr, fence);
 
     fence->taskCount = 1;
-    fence->gpuHangCheckPeriod = 0ms;
     *csr->getTagAddress() = 0u;
 
     const auto yieldCountBefore = CpuIntrinsicsTests::yieldCounter.load();
@@ -148,7 +144,6 @@ TEST_F(FenceTest, GivenNotReadyFenceWhenHostSynchronizeWithTimeoutThenCoreIsYiel
     ASSERT_NE(nullptr, fence);
 
     fence->taskCount = 1;
-    fence->gpuHangCheckPeriod = 0ms;
     *csr->getTagAddress() = 0u;
 
     const auto yieldCountBefore = CpuIntrinsicsTests::yieldCounter.load();
@@ -170,7 +165,6 @@ TEST_F(FenceTest, GivenGpuHangWhenHostSynchronizeIsCalledThenDeviceLostIsReturne
     ASSERT_NE(nullptr, fence);
 
     fence->taskCount = 1;
-    fence->gpuHangCheckPeriod = 0ms;
 
     constexpr uint64_t timeout = std::numeric_limits<std::uint64_t>::max();
     auto result = fence->hostSynchronize(timeout);
@@ -191,7 +185,6 @@ TEST_F(FenceTest, GivenNoGpuHangAndOneNanosecondTimeoutWhenHostSynchronizeIsCall
     ASSERT_NE(nullptr, fence);
 
     fence->taskCount = 1;
-    fence->gpuHangCheckPeriod = 0ms;
 
     constexpr uint64_t timeoutNanoseconds = 1;
     auto result = fence->hostSynchronize(timeoutNanoseconds);
@@ -199,9 +192,11 @@ TEST_F(FenceTest, GivenNoGpuHangAndOneNanosecondTimeoutWhenHostSynchronizeIsCall
     EXPECT_EQ(ZE_RESULT_NOT_READY, result);
 }
 
-TEST_F(FenceTest, GivenLongPeriodOfGpuCheckAndOneNanosecondTimeoutWhenHostSynchronizeIsCalledThenResultNotReadyIsReturnedDueToTimeout) {
+TEST_F(FenceTest, GivenGpuHangAndOneNanosecondTimeoutWhenHostSynchronizeIsCalledThenCsrHangCheckPeriodIsRespected) {
     const auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+    csr->isGpuHangDetectedReturnValue = true;
     csr->testTaskCountReadyReturnValue = false;
+    csr->gpuHangCheckPeriodUs = std::numeric_limits<int64_t>::max();
 
     Mock<CommandQueue> cmdqueue(device, csr.get());
     ze_fence_desc_t desc = {};
@@ -211,12 +206,14 @@ TEST_F(FenceTest, GivenLongPeriodOfGpuCheckAndOneNanosecondTimeoutWhenHostSynchr
     ASSERT_NE(nullptr, fence);
 
     fence->taskCount = 1;
-    fence->gpuHangCheckPeriod = 50000000ms;
 
     constexpr uint64_t timeoutNanoseconds = 1;
     auto result = fence->hostSynchronize(timeoutNanoseconds);
 
     EXPECT_EQ(ZE_RESULT_NOT_READY, result);
+
+    csr->gpuHangCheckPeriodUs = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, fence->hostSynchronize(timeoutNanoseconds));
 }
 
 TEST_F(FenceTest, GivenSuccessfulQueryResultAndNoTimeoutWhenHostSynchronizeIsCalledThenResultSuccessIsReturned) {

@@ -663,7 +663,7 @@ int64_t CommandStreamReceiver::getElapsedTimeInUs(TimeType startTimeInNs, TimeTy
 bool CommandStreamReceiver::checkGpuHangDetected(TimeType currentTime, TimeType &lastHangCheckTime) const {
     const auto elapsedTimeSinceGpuHangCheckUs = getElapsedTimeInUs(lastHangCheckTime, currentTime);
 
-    if (elapsedTimeSinceGpuHangCheckUs >= this->gpuHangCheckPeriodUs) {
+    if (this->isGpuHangCheckPeriodElapsed(elapsedTimeSinceGpuHangCheckUs)) {
         lastHangCheckTime = currentTime;
         if (isGpuHangDetected()) {
             return true;

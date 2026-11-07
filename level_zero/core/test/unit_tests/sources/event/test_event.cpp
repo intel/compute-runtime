@@ -2861,8 +2861,6 @@ HWTEST_F(EventSynchronizeTest, GivenGpuHangWhenHostSynchronizeIsCalledThenDevice
     auto &csr = this->neoDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.isGpuHangDetectedReturnValue = true;
 
-    event->gpuHangCheckPeriod = 0ms;
-
     constexpr uint64_t timeout = std::numeric_limits<std::uint64_t>::max();
     auto result = event->hostSynchronize(timeout);
 
@@ -2901,7 +2899,6 @@ TEST_F(EventSynchronizeTest, GivenNoGpuHangAndOneNanosecondTimeoutWhenHostSynchr
     csr->isGpuHangDetectedReturnValue = false;
 
     event->csrs[0] = csr.get();
-    event->gpuHangCheckPeriod = 0ms;
 
     constexpr uint64_t timeoutNanoseconds = 1;
     auto result = event->hostSynchronize(timeoutNanoseconds);
@@ -2920,7 +2917,6 @@ TEST_F(EventSynchronizeTest, GivenShortTimeoutAndNotReadyEventWhenHostSynchroniz
     csr->isGpuHangDetectedReturnValue = false;
 
     event->csrs[0] = csr.get();
-    event->gpuHangCheckPeriod = 0ms;
 
     constexpr uint64_t timeoutNanoseconds = 1;
     EXPECT_EQ(CpuIntrinsicsTests::tpauseCounter, 0u);
@@ -2944,7 +2940,6 @@ TEST_F(EventSynchronizeTest, GivenUllsLightThresholdAndShortTimeoutWhenHostSynch
     csr->isGpuHangDetectedReturnValue = false;
 
     event->csrs[0] = csr.get();
-    event->gpuHangCheckPeriod = 0ms;
 
     constexpr uint64_t timeoutNanoseconds = 1;
     EXPECT_EQ(CpuIntrinsicsTests::tpauseCounter, 0u);
@@ -3027,15 +3022,18 @@ HWTEST_F(EventSynchronizeTest, GivenNotReadyEventAndInfiniteTimeoutWhenHostSynch
     CpuIntrinsicsTests::lastTpauseCounter = 0u;
 }
 
-TEST_F(EventSynchronizeTest, GivenLongPeriodOfGpuCheckAndOneNanosecondTimeoutWhenHostSynchronizeIsCalledThenResultNotReadyIsReturnedDueToTimeout) {
-    const auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
-    event->csrs[0] = csr.get();
-    event->gpuHangCheckPeriod = 50000000ms;
+HWTEST_F(EventSynchronizeTest, GivenGpuHangAndOneNanosecondTimeoutWhenHostSynchronizeIsCalledThenCsrHangCheckPeriodIsRespected) {
+    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.isGpuHangDetectedReturnValue = true;
+    csr.gpuHangCheckPeriodUs = std::numeric_limits<int64_t>::max();
 
     constexpr uint64_t timeoutNanoseconds = 1;
     auto result = event->hostSynchronize(timeoutNanoseconds);
 
     EXPECT_EQ(ZE_RESULT_NOT_READY, result);
+
+    csr.gpuHangCheckPeriodUs = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, event->hostSynchronize(timeoutNanoseconds));
 }
 
 TEST_F(EventSynchronizeTest, givenCallToEventHostSynchronizeWithTimeoutZeroAndStateInitialHostSynchronizeReturnsNotReady) {
@@ -6398,7 +6396,6 @@ HWTEST_F(EventSignalerPreviousContextsTests, givenNotSignaledRegularEventWhenHos
             ze_result_t result;
             auto event = zeUniquePtr(whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device, result)));
             ASSERT_NE(nullptr, event);
-            event->gpuHangCheckPeriod = 0ms;
             if (previousContextAttached) {
                 event->setSignalerPreviousContexts({{previousContextCsr, previousContextTaskCount}});
             }
@@ -6421,7 +6418,6 @@ HWTEST_F(EventSignalerPreviousContextsTests, givenNotCompletedCounterBasedEventW
             ze_result_t result;
             auto event = zeUniquePtr(whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device, result)));
             ASSERT_NE(nullptr, event);
-            event->gpuHangCheckPeriod = 0ms;
 
             auto inOrderExecInfo = std::make_shared<NEO::InOrderExecInfo>(tagAllocator.getTag(), nullptr, *neoDevice, 1, false);
             *inOrderExecInfo->getBaseHostAddress() = 0;

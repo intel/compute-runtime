@@ -8,12 +8,9 @@
 #pragma once
 
 #include "shared/source/command_stream/task_count_helper.h"
-#include "shared/source/helpers/constants.h"
 #include "shared/source/utilities/mockable_virtual_defaults.h"
 
 #include "level_zero/core/source/helpers/api_handle_helper.h"
-
-#include <chrono>
 
 struct _ze_fence_handle_t : BaseHandle {};
 static_assert(IsCompliantWithDdiHandlesExt<_ze_fence_handle_t>);
@@ -45,7 +42,6 @@ struct Fence : _ze_fence_handle_t {
   protected:
     Fence(CommandQueue *cmdQueueImp) : cmdQueue(cmdQueueImp) {}
 
-    std::chrono::microseconds gpuHangCheckPeriod{CommonConstants::gpuHangCheckTimeInUS};
     CommandQueue *cmdQueue;
     TaskCountType taskCount = 0;
 };

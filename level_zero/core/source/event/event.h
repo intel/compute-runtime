@@ -9,7 +9,6 @@
 #include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/completion_stamp.h"
-#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/timestamp_packet_constants.h"
@@ -22,7 +21,6 @@
 #include "level_zero/core/source/helpers/api_handle_helper.h"
 
 #include <atomic>
-#include <chrono>
 #include <limits>
 #include <memory>
 #include <mutex>
@@ -497,8 +495,6 @@ struct Event : _ze_event_handle_t {
     uint64_t globalEndTS = 1;
     uint64_t contextStartTS = 1;
     uint64_t contextEndTS = 1;
-
-    std::chrono::microseconds gpuHangCheckPeriod{CommonConstants::gpuHangCheckTimeInUS};
 
     size_t contextStartOffset = 0u;
     size_t contextEndOffset = 0u;

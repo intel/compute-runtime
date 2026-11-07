@@ -29,7 +29,6 @@ struct WhiteBox<::L0::Event> : public ::L0::Event {
     using BaseClass::externalEvent;
     using BaseClass::globalEndTS;
     using BaseClass::globalStartTS;
-    using BaseClass::gpuHangCheckPeriod;
     using BaseClass::hostAddressFromPool;
     using BaseClass::inOrderExecHelper;
     using BaseClass::isFromIpcPool;
@@ -53,7 +52,6 @@ struct WhiteBox<::L0::EventImp<TagSizeT>> : public L0::EventImp<TagSizeT> {
     using BaseClass::globalEndTS;
     using BaseClass::globalStartTS;
     using BaseClass::gpuEndTimestamp;
-    using BaseClass::gpuHangCheckPeriod;
     using BaseClass::gpuStartTimestamp;
     using BaseClass::hostAddressFromPool;
     using BaseClass::hostEventSetValueTimestamps;
