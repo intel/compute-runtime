@@ -120,6 +120,7 @@ struct MutableCommandListImp : public MutableCommandList {
     ze_result_t getNextCommandId(const ze_mutable_command_id_ext_desc_t *desc, uint32_t numKernels, ze_kernel_handle_t *phKernels, uint64_t *pCommandId) override;
     ze_result_t getNextCommandId(const ze_mutable_command_id_exp_desc_t *desc, uint32_t numKernels, ze_kernel_handle_t *phKernels, uint64_t *pCommandId) override;
     ze_result_t updateMutableCommands(const ze_mutable_commands_ext_desc_t *desc) override;
+    ze_result_t updateMutableCommands(const ze_mutable_commands_exp_desc_t *desc) override;
     ze_result_t updateMutableCommandSignalEvent(uint64_t commandId, ze_event_handle_t signalEvent) override;
     ze_result_t updateMutableCommandWaitEvents(uint64_t commandId, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override;
     ze_result_t updateMutableCommandKernels(uint32_t numKernels, uint64_t *pCommandId, ze_kernel_handle_t *phKernels) override;
@@ -173,6 +174,11 @@ struct MutableCommandListImp : public MutableCommandList {
 
   protected:
     auto getNextCommandIdImpl(const MutableCommandIdDescriptor &commandIdDesc, uint32_t numKernels, ze_kernel_handle_t *phKernels, uint64_t *pCommandId) -> ze_result_t;
+    auto updateMutableCommandsImpl() -> ze_result_t;
+    auto applyMutation(const KernelArgumentMutationDescriptor &mutation) -> ze_result_t;
+    auto applyMutation(const GroupCountMutationDescriptor &mutation) -> ze_result_t;
+    auto applyMutation(const GroupSizeMutationDescriptor &mutation) -> ze_result_t;
+    auto applyMutation(const GlobalOffsetMutationDescriptor &mutation) -> ze_result_t;
     ze_result_t parseDispatchedKernel(L0::Kernel *kernel, MutableComputeWalker *mutableComputeWalker,
                                       size_t extraHeapSize, NEO::GraphicsAllocation *syncBuffer,
                                       Variable *firstSlmArgumentVariable, bool resetSlmArgumentValues);
@@ -224,6 +230,7 @@ struct MutableCommandListImp : public MutableCommandList {
     KernelMutationsContainer kernelMutations;
     EventMutationsContainer eventMutations;
     CooperativeKernelDispatchContainer cooperativeKernelVariableDispatches;
+    MutationDescriptorContainer mutationDescriptors;
 
     MutableComputeWalker *appendKernelMutableComputeWalker = nullptr;
 

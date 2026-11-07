@@ -110,7 +110,7 @@ ze_result_t ZE_APICALL zeCommandListGetNextCommandIdExp(
 ze_result_t ZE_APICALL zeCommandListUpdateMutableCommandsExp(
     ze_command_list_handle_t hCommandList,
     const ze_mutable_commands_exp_desc_t *desc) {
-    return L0::zeCommandListUpdateMutableCommandsExt(hCommandList, reinterpret_cast<const ze_mutable_commands_ext_desc_t *>(desc));
+    return L0::MCL::MutableCommandList::fromHandle(hCommandList)->updateMutableCommands(desc);
 }
 
 ze_result_t ZE_APICALL zeCommandListUpdateMutableCommandSignalEventExp(

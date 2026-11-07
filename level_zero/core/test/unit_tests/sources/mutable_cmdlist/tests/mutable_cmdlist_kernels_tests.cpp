@@ -23,6 +23,7 @@
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/api/core/ze_mutable_cmdlist_api_entrypoints.h"
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/cmdlist/cmdlist_launch_params.h"
 #include "level_zero/core/source/context/context.h"
@@ -249,9 +250,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     auto result = kernel->setArgBuffer(0, sizeof(void *), &usm1);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    mutableCommandIdDesc.flags = kernelIsaMutationFlags;
-
-    result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 2, kernelMutationGroup, &commandId);
+    ze_mutable_command_id_exp_desc_t mutableCommandIdExpDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
+    mutableCommandIdExpDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS |
+                                    ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT |
+                                    ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_SIZE |
+                                    ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_INSTRUCTION;
+    result = L0::zeCommandListGetNextCommandIdWithKernelsExp(mutableCommandList->toHandle(), &mutableCommandIdExpDesc, 2, kernelMutationGroup, &commandId);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->appendLaunchKernel(kernelHandle, this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
@@ -275,15 +279,16 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = mutableCommandList->updateMutableCommandKernels(1, &commandId, &kernel2Handle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
+    ze_mutable_commands_exp_desc_t mutableCommandsExpDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
     ze_mutable_kernel_argument_exp_desc_t kernelBufferArg = {ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC};
-    mutableCommandsDesc.pNext = &kernelBufferArg;
+    mutableCommandsExpDesc.pNext = &kernelBufferArg;
 
     kernelBufferArg.argIndex = 0;
     kernelBufferArg.argSize = sizeof(void *);
     kernelBufferArg.commandId = commandId;
     kernelBufferArg.pArgValue = &usm2;
 
-    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
+    result = L0::zeCommandListUpdateMutableCommandsExp(mutableCommandList->toHandle(), &mutableCommandsExpDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();

@@ -916,8 +916,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             MutableCommandListTest,
             givenMutableCommandListWhenKernelWithoutLocalIDsIsDispatchedToMutateGroupCountThenUpdatePayloadUponMutation) {
-    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT;
-
     auto &dispatchTraits = mockKernelImmData->kernelDescriptor->payloadMappings.dispatchTraits;
     mockKernelImmData->kernelDescriptor->kernelAttributes.numLocalIdChannels = 0;
     dispatchTraits.globalWorkSize[0] = this->crossThreadOffset + 3 * sizeof(uint32_t);
@@ -928,7 +926,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     dispatchTraits.numWorkGroups[2] = dispatchTraits.globalWorkSize[0] + 5 * sizeof(uint32_t);
     dispatchTraits.workDim = dispatchTraits.numWorkGroups[0] + 3 * sizeof(uint32_t);
 
-    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
+    ze_mutable_command_id_exp_desc_t mutableCommandIdExpDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
+    mutableCommandIdExpDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT;
+    auto result = L0::zeCommandListGetNextCommandIdExp(mutableCommandList->toHandle(), &mutableCommandIdExpDesc, &commandId);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
@@ -946,16 +946,17 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(crossThreadInitSize, crossThreadDataSize);
     auto &offsets = varDispatchGc->getIndirectDataOffsets();
 
+    ze_mutable_commands_exp_desc_t mutableCommandsExpDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
     ze_mutable_group_count_exp_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC};
 
-    mutableCommandsDesc.pNext = &groupCountDesc;
+    mutableCommandsExpDesc.pNext = &groupCountDesc;
 
     ze_group_count_t mutatedGroupCount = {8, 2, 2};
 
     groupCountDesc.commandId = commandId;
     groupCountDesc.pGroupCount = &mutatedGroupCount;
 
-    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
+    result = L0::zeCommandListUpdateMutableCommandsExp(mutableCommandList->toHandle(), &mutableCommandsExpDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -1010,8 +1011,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             MutableCommandListTest,
             givenSingleDimensionImplicitArgsWhenKernelDispatchMutatesGroupCountThenOnlySingleOffsetsAreMutated) {
-    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_SIZE;
-
     auto &dispatchTraits = mockKernelImmData->kernelDescriptor->payloadMappings.dispatchTraits;
     dispatchTraits.enqueuedLocalWorkSize[0] = this->crossThreadOffset;
     dispatchTraits.enqueuedLocalWorkSize[1] = undefined<CrossThreadDataOffset>;
@@ -1021,7 +1020,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     dispatchTraits.globalWorkSize[2] = undefined<CrossThreadDataOffset>;
     dispatchTraits.workDim = dispatchTraits.globalWorkSize[0] + 3 * sizeof(uint32_t);
 
-    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
+    ze_mutable_command_id_exp_desc_t mutableCommandIdExpDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
+    mutableCommandIdExpDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_SIZE;
+    auto result = L0::zeCommandListGetNextCommandIdExp(mutableCommandList->toHandle(), &mutableCommandIdExpDesc, &commandId);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
@@ -1039,9 +1040,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(crossThreadInitSize, crossThreadDataSize);
     auto &offsets = varDispatchGs->getIndirectDataOffsets();
 
+    ze_mutable_commands_exp_desc_t mutableCommandsExpDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
     ze_mutable_group_size_exp_desc_t groupSizeDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXP_DESC};
 
-    mutableCommandsDesc.pNext = &groupSizeDesc;
+    mutableCommandsExpDesc.pNext = &groupSizeDesc;
 
     uint32_t mutatedGroupSizeX = 4;
     uint32_t mutatedGroupSizeY = 9;
@@ -1052,7 +1054,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     groupSizeDesc.groupSizeY = mutatedGroupSizeY;
     groupSizeDesc.groupSizeZ = mutatedGroupSizeZ;
 
-    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
+    result = L0::zeCommandListUpdateMutableCommandsExp(mutableCommandList->toHandle(), &mutableCommandsExpDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();
@@ -1167,14 +1169,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             MutableCommandListTest,
             givenMutableCommandListWhenKernelDispatchIsSelectedToMutateGlobalOffsetThenUpdatePayloadUponMutation) {
-    mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_GLOBAL_OFFSET;
-
     auto &dispatchTraits = mockKernelImmData->kernelDescriptor->payloadMappings.dispatchTraits;
     dispatchTraits.globalWorkOffset[0] = this->crossThreadOffset;
     dispatchTraits.globalWorkOffset[1] = this->crossThreadOffset + sizeof(uint32_t);
     dispatchTraits.globalWorkOffset[2] = this->crossThreadOffset + 2 * sizeof(uint32_t);
 
-    auto result = mutableCommandList->getNextCommandId(&mutableCommandIdDesc, 0, nullptr, &commandId);
+    ze_mutable_command_id_exp_desc_t mutableCommandIdExpDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
+    mutableCommandIdExpDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_GLOBAL_OFFSET;
+    auto result = L0::zeCommandListGetNextCommandIdExp(mutableCommandList->toHandle(), &mutableCommandIdExpDesc, &commandId);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
@@ -1192,9 +1194,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(crossThreadInitSize, crossThreadDataSize);
     auto &offsets = varDispatchGo->getIndirectDataOffsets();
 
+    ze_mutable_commands_exp_desc_t mutableCommandsExpDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMANDS_EXP_DESC};
     ze_mutable_global_offset_exp_desc_t globalOffsetDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GLOBAL_OFFSET_EXP_DESC};
 
-    mutableCommandsDesc.pNext = &globalOffsetDesc;
+    mutableCommandsExpDesc.pNext = &globalOffsetDesc;
 
     uint32_t mutatedGlobalOffsetX = 2;
     uint32_t mutatedGlobalOffsetY = 3;
@@ -1205,7 +1208,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     globalOffsetDesc.offsetY = mutatedGlobalOffsetY;
     globalOffsetDesc.offsetZ = mutatedGlobalOffsetZ;
 
-    result = mutableCommandList->updateMutableCommands(&mutableCommandsDesc);
+    result = L0::zeCommandListUpdateMutableCommandsExp(mutableCommandList->toHandle(), &mutableCommandsExpDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = mutableCommandList->close();

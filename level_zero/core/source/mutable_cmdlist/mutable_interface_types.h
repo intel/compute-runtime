@@ -6,7 +6,11 @@
  */
 
 #pragma once
+#include <level_zero/ze_api.h>
+
 #include <cstdint>
+#include <variant>
+#include <vector>
 
 #ifndef BIT
 #define BIT(x) (1u << (x))
@@ -30,5 +34,30 @@ struct MutableFlag {
 struct MutableCommandIdDescriptor {
     MutableFlags flags = 0;
 };
+
+struct KernelArgumentMutationDescriptor {
+    uint64_t commandId = 0;
+    uint32_t argIndex = 0;
+    size_t argSize = 0;
+    const void *argValue = nullptr;
+};
+
+struct GroupCountMutationDescriptor {
+    uint64_t commandId = 0;
+    ze_group_count_t groupCount = {};
+};
+
+struct GroupSizeMutationDescriptor {
+    uint64_t commandId = 0;
+    uint32_t groupSize[3] = {0, 0, 0};
+};
+
+struct GlobalOffsetMutationDescriptor {
+    uint64_t commandId = 0;
+    uint32_t globalOffset[3] = {0, 0, 0};
+};
+
+using MutationDescriptor = std::variant<KernelArgumentMutationDescriptor, GroupCountMutationDescriptor, GroupSizeMutationDescriptor, GlobalOffsetMutationDescriptor>;
+using MutationDescriptorContainer = std::vector<MutationDescriptor>;
 
 } // namespace L0::MCL

@@ -428,114 +428,194 @@ auto MutableCommandListImp::getNextCommandIdImpl(const MutableCommandIdDescripto
 }
 
 ze_result_t MutableCommandListImp::updateMutableCommands(const ze_mutable_commands_ext_desc_t *desc) {
-    PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL updateMutableCommands cmdlist: %p\n", this);
-    ze_result_t result = ZE_RESULT_SUCCESS;
     const void *next = desc->pNext;
+    this->mutationDescriptors.clear();
     while (next != nullptr) {
-        KernelVariableDescriptor *currentVariables = nullptr;
         const ze_base_desc_t *extendedDesc = reinterpret_cast<const ze_base_desc_t *>(next);
-        if (extendedDesc->stype == ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC || extendedDesc->stype == ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC) {
+        if (extendedDesc->stype == ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXT_DESC) {
             const ze_mutable_kernel_argument_ext_desc_t *apiKernelArgumentDesc = reinterpret_cast<const ze_mutable_kernel_argument_ext_desc_t *>(next);
-            AppendKernelMutation &selectedAppend = this->kernelMutations[(apiKernelArgumentDesc->commandId - 1)];
-            currentVariables = getVariableDescriptorContainer(selectedAppend);
-            if (apiKernelArgumentDesc->argIndex + 1 > currentVariables->kernelArguments.size()) {
-                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-            }
-            KernelArgumentVariableDescriptor &kernelArgDesc = currentVariables->kernelArguments[apiKernelArgumentDesc->argIndex];
-            UNRECOVERABLE_IF(kernelArgDesc.argIndex != apiKernelArgumentDesc->argIndex);
-            if (kernelArgDesc.kernelArgumentVariable == nullptr) {
-                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-            }
-            result = kernelArgDesc.kernelArgumentVariable->setValue(apiKernelArgumentDesc->argSize, 0, apiKernelArgumentDesc->pArgValue);
-            if (result != ZE_RESULT_SUCCESS) {
-                return result;
-            }
-            this->updatedCommandList = true;
-            if (kernelArgDesc.kernelArgumentVariable->getType() == VariableType::slmBuffer && kernelArgDesc.kernelArgumentVariable->isCooperativeVariable()) {
-                auto varDispatch = kernelArgDesc.kernelArgumentVariable->getInitialVariableDispatch();
-                cooperativeKernelVariableDispatches.insert(varDispatch);
-            }
-            if (base->getFlatCapture()) {
-                base->getFlatCapture()->updateKernelArgument(apiKernelArgumentDesc->commandId, apiKernelArgumentDesc->argIndex, apiKernelArgumentDesc->argSize, apiKernelArgumentDesc->pArgValue);
-            }
-            PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL update kernel arg commandId: %" PRIu64 " argument idx: %u, size: %zu, val: %p\n",
-                         apiKernelArgumentDesc->commandId, apiKernelArgumentDesc->argIndex, apiKernelArgumentDesc->argSize, kernelArgDesc.kernelArgumentVariable->getDesc().argValue);
+            this->mutationDescriptors.emplace_back(KernelArgumentMutationDescriptor{
+                .commandId = apiKernelArgumentDesc->commandId,
+                .argIndex = apiKernelArgumentDesc->argIndex,
+                .argSize = apiKernelArgumentDesc->argSize,
+                .argValue = apiKernelArgumentDesc->pArgValue,
+            });
         }
-        if (extendedDesc->stype == ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC || extendedDesc->stype == ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXT_DESC) {
+        if (extendedDesc->stype == ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXT_DESC) {
             const ze_mutable_group_count_ext_desc_t *groupCountDesc = reinterpret_cast<const ze_mutable_group_count_ext_desc_t *>(next);
-            AppendKernelMutation &selectedAppend = this->kernelMutations[(groupCountDesc->commandId - 1)];
-            currentVariables = getVariableDescriptorContainer(selectedAppend);
-            if (currentVariables->groupCount == nullptr) {
-                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-            }
-            result = currentVariables->groupCount->setValue(sizeof(ze_group_count_t), 0, groupCountDesc->pGroupCount);
-            if (result != ZE_RESULT_SUCCESS) {
-                return result;
-            }
-            this->updatedCommandList = true;
-            if (currentVariables->groupCount->isCooperativeVariable()) {
-                auto varDispatch = currentVariables->groupCount->getInitialVariableDispatch();
-                cooperativeKernelVariableDispatches.insert(varDispatch);
-            }
-            if (base->getFlatCapture()) {
-                base->getFlatCapture()->updateKernelGroupCount(groupCountDesc->commandId, groupCountDesc->pGroupCount);
-            }
-            PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL update group count commandId: %" PRIu64 " x: %u y: %u z: %u\n",
-                         groupCountDesc->commandId, groupCountDesc->pGroupCount->groupCountX, groupCountDesc->pGroupCount->groupCountY, groupCountDesc->pGroupCount->groupCountZ);
+            this->mutationDescriptors.emplace_back(GroupCountMutationDescriptor{
+                .commandId = groupCountDesc->commandId,
+                .groupCount = *groupCountDesc->pGroupCount,
+            });
         }
-        if (extendedDesc->stype == ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXP_DESC || extendedDesc->stype == ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXT_DESC) {
+        if (extendedDesc->stype == ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXT_DESC) {
             const ze_mutable_group_size_ext_desc_t *groupSizeDesc = reinterpret_cast<const ze_mutable_group_size_ext_desc_t *>(next);
-            uint32_t groupSize[3] = {groupSizeDesc->groupSizeX, groupSizeDesc->groupSizeY, groupSizeDesc->groupSizeZ};
-            AppendKernelMutation &selectedAppend = this->kernelMutations[(groupSizeDesc->commandId - 1)];
-            currentVariables = getVariableDescriptorContainer(selectedAppend);
-            if (currentVariables->groupSize == nullptr) {
-                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-            }
-            result = currentVariables->groupSize->setValue(sizeof(groupSize), 0, groupSize);
-            if (result != ZE_RESULT_SUCCESS) {
-                return result;
-            }
-            this->updatedCommandList = true;
-            if (currentVariables->groupSize->isCooperativeVariable()) {
-                auto varDispatch = currentVariables->groupSize->getInitialVariableDispatch();
-                cooperativeKernelVariableDispatches.insert(varDispatch);
-            }
-            if (base->getFlatCapture()) {
-                base->getFlatCapture()->updateKernelGroupSize(groupSizeDesc->commandId, groupSize);
-            }
-            PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL update group size commandId: %" PRIu64 " x: %u y: %u z: %u\n",
-                         groupSizeDesc->commandId, groupSizeDesc->groupSizeX, groupSizeDesc->groupSizeY, groupSizeDesc->groupSizeZ);
+            this->mutationDescriptors.emplace_back(GroupSizeMutationDescriptor{
+                .commandId = groupSizeDesc->commandId,
+                .groupSize = {groupSizeDesc->groupSizeX, groupSizeDesc->groupSizeY, groupSizeDesc->groupSizeZ},
+            });
         }
-        if (extendedDesc->stype == ZE_STRUCTURE_TYPE_MUTABLE_GLOBAL_OFFSET_EXP_DESC || extendedDesc->stype == ZE_STRUCTURE_TYPE_MUTABLE_GLOBAL_OFFSET_EXT_DESC) {
+        if (extendedDesc->stype == ZE_STRUCTURE_TYPE_MUTABLE_GLOBAL_OFFSET_EXT_DESC) {
             const ze_mutable_global_offset_ext_desc_t *globalOffsetDesc = reinterpret_cast<const ze_mutable_global_offset_ext_desc_t *>(next);
-            uint32_t globalOffset[3] = {globalOffsetDesc->offsetX, globalOffsetDesc->offsetY, globalOffsetDesc->offsetZ};
-            AppendKernelMutation &selectedAppend = this->kernelMutations[(globalOffsetDesc->commandId - 1)];
-            currentVariables = getVariableDescriptorContainer(selectedAppend);
-            if (currentVariables->globalOffset == nullptr) {
-                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-            }
-            result = currentVariables->globalOffset->setValue(sizeof(globalOffset), 0, globalOffset);
-            if (result != ZE_RESULT_SUCCESS) {
-                return result;
-            }
-            this->updatedCommandList = true;
-            if (base->getFlatCapture()) {
-                base->getFlatCapture()->updateKernelGlobalOffset(globalOffsetDesc->commandId, globalOffset);
-            }
-            PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL update global offset commandId: %" PRIu64 " x: %u y: %u z: %u\n",
-                         globalOffsetDesc->commandId, globalOffsetDesc->offsetX, globalOffsetDesc->offsetY, globalOffsetDesc->offsetZ);
+            this->mutationDescriptors.emplace_back(GlobalOffsetMutationDescriptor{
+                .commandId = globalOffsetDesc->commandId,
+                .globalOffset = {globalOffsetDesc->offsetX, globalOffsetDesc->offsetY, globalOffsetDesc->offsetZ},
+            });
         }
         next = extendedDesc->pNext;
     }
 
-    if (cooperativeKernelVariableDispatches.size() > 0) {
-        for (auto &varDispatch : cooperativeKernelVariableDispatches) {
-            if (varDispatch->getMaxCooperativeGroupCount() < varDispatch->getTotalGroupCount()) {
-                return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
-            }
+    return updateMutableCommandsImpl();
+}
+
+ze_result_t MutableCommandListImp::updateMutableCommands(const ze_mutable_commands_exp_desc_t *desc) {
+    const void *next = desc->pNext;
+    this->mutationDescriptors.clear();
+    while (next != nullptr) {
+        const ze_base_desc_t *extendedDesc = reinterpret_cast<const ze_base_desc_t *>(next);
+        if (extendedDesc->stype == ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_ARGUMENT_EXP_DESC) {
+            const ze_mutable_kernel_argument_exp_desc_t *apiKernelArgumentDesc = reinterpret_cast<const ze_mutable_kernel_argument_exp_desc_t *>(next);
+            this->mutationDescriptors.emplace_back(KernelArgumentMutationDescriptor{
+                .commandId = apiKernelArgumentDesc->commandId,
+                .argIndex = apiKernelArgumentDesc->argIndex,
+                .argSize = apiKernelArgumentDesc->argSize,
+                .argValue = apiKernelArgumentDesc->pArgValue,
+            });
+        }
+        if (extendedDesc->stype == ZE_STRUCTURE_TYPE_MUTABLE_GROUP_COUNT_EXP_DESC) {
+            const ze_mutable_group_count_exp_desc_t *groupCountDesc = reinterpret_cast<const ze_mutable_group_count_exp_desc_t *>(next);
+            this->mutationDescriptors.emplace_back(GroupCountMutationDescriptor{
+                .commandId = groupCountDesc->commandId,
+                .groupCount = *groupCountDesc->pGroupCount,
+            });
+        }
+        if (extendedDesc->stype == ZE_STRUCTURE_TYPE_MUTABLE_GROUP_SIZE_EXP_DESC) {
+            const ze_mutable_group_size_exp_desc_t *groupSizeDesc = reinterpret_cast<const ze_mutable_group_size_exp_desc_t *>(next);
+            this->mutationDescriptors.emplace_back(GroupSizeMutationDescriptor{
+                .commandId = groupSizeDesc->commandId,
+                .groupSize = {groupSizeDesc->groupSizeX, groupSizeDesc->groupSizeY, groupSizeDesc->groupSizeZ},
+            });
+        }
+        if (extendedDesc->stype == ZE_STRUCTURE_TYPE_MUTABLE_GLOBAL_OFFSET_EXP_DESC) {
+            const ze_mutable_global_offset_exp_desc_t *globalOffsetDesc = reinterpret_cast<const ze_mutable_global_offset_exp_desc_t *>(next);
+            this->mutationDescriptors.emplace_back(GlobalOffsetMutationDescriptor{
+                .commandId = globalOffsetDesc->commandId,
+                .globalOffset = {globalOffsetDesc->offsetX, globalOffsetDesc->offsetY, globalOffsetDesc->offsetZ},
+            });
+        }
+        next = extendedDesc->pNext;
+    }
+
+    return updateMutableCommandsImpl();
+}
+
+auto MutableCommandListImp::applyMutation(const KernelArgumentMutationDescriptor &mutation) -> ze_result_t {
+    AppendKernelMutation &selectedAppend = this->kernelMutations[(mutation.commandId - 1)];
+    auto currentVariables = getVariableDescriptorContainer(selectedAppend);
+    if (mutation.argIndex + 1 > currentVariables->kernelArguments.size()) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    KernelArgumentVariableDescriptor &kernelArgDesc = currentVariables->kernelArguments[mutation.argIndex];
+    UNRECOVERABLE_IF(kernelArgDesc.argIndex != mutation.argIndex);
+    if (kernelArgDesc.kernelArgumentVariable == nullptr) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    auto result = kernelArgDesc.kernelArgumentVariable->setValue(mutation.argSize, 0, mutation.argValue);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+    this->updatedCommandList = true;
+    if (kernelArgDesc.kernelArgumentVariable->getType() == VariableType::slmBuffer && kernelArgDesc.kernelArgumentVariable->isCooperativeVariable()) {
+        this->cooperativeKernelVariableDispatches.insert(kernelArgDesc.kernelArgumentVariable->getInitialVariableDispatch());
+    }
+    if (base->getFlatCapture()) {
+        base->getFlatCapture()->updateKernelArgument(mutation.commandId, mutation.argIndex, mutation.argSize, mutation.argValue);
+    }
+    PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL update kernel arg commandId: %" PRIu64 " argument idx: %u, size: %zu, val: %p\n",
+                 mutation.commandId, mutation.argIndex, mutation.argSize, kernelArgDesc.kernelArgumentVariable->getDesc().argValue);
+    return ZE_RESULT_SUCCESS;
+}
+
+auto MutableCommandListImp::applyMutation(const GroupCountMutationDescriptor &mutation) -> ze_result_t {
+    AppendKernelMutation &selectedAppend = this->kernelMutations[(mutation.commandId - 1)];
+    auto currentVariables = getVariableDescriptorContainer(selectedAppend);
+    if (currentVariables->groupCount == nullptr) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    auto result = currentVariables->groupCount->setValue(sizeof(ze_group_count_t), 0, &mutation.groupCount);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+    this->updatedCommandList = true;
+    if (currentVariables->groupCount->isCooperativeVariable()) {
+        this->cooperativeKernelVariableDispatches.insert(currentVariables->groupCount->getInitialVariableDispatch());
+    }
+    if (base->getFlatCapture()) {
+        base->getFlatCapture()->updateKernelGroupCount(mutation.commandId, &mutation.groupCount);
+    }
+    PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL update group count commandId: %" PRIu64 " x: %u y: %u z: %u\n",
+                 mutation.commandId, mutation.groupCount.groupCountX, mutation.groupCount.groupCountY, mutation.groupCount.groupCountZ);
+    return ZE_RESULT_SUCCESS;
+}
+
+auto MutableCommandListImp::applyMutation(const GroupSizeMutationDescriptor &mutation) -> ze_result_t {
+    AppendKernelMutation &selectedAppend = this->kernelMutations[(mutation.commandId - 1)];
+    auto currentVariables = getVariableDescriptorContainer(selectedAppend);
+    if (currentVariables->groupSize == nullptr) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    auto result = currentVariables->groupSize->setValue(sizeof(mutation.groupSize), 0, mutation.groupSize);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+    this->updatedCommandList = true;
+    if (currentVariables->groupSize->isCooperativeVariable()) {
+        this->cooperativeKernelVariableDispatches.insert(currentVariables->groupSize->getInitialVariableDispatch());
+    }
+    if (base->getFlatCapture()) {
+        base->getFlatCapture()->updateKernelGroupSize(mutation.commandId, mutation.groupSize);
+    }
+    PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL update group size commandId: %" PRIu64 " x: %u y: %u z: %u\n",
+                 mutation.commandId, mutation.groupSize[0], mutation.groupSize[1], mutation.groupSize[2]);
+    return ZE_RESULT_SUCCESS;
+}
+
+auto MutableCommandListImp::applyMutation(const GlobalOffsetMutationDescriptor &mutation) -> ze_result_t {
+    AppendKernelMutation &selectedAppend = this->kernelMutations[(mutation.commandId - 1)];
+    auto currentVariables = getVariableDescriptorContainer(selectedAppend);
+    if (currentVariables->globalOffset == nullptr) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    auto result = currentVariables->globalOffset->setValue(sizeof(mutation.globalOffset), 0, mutation.globalOffset);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+    this->updatedCommandList = true;
+    if (base->getFlatCapture()) {
+        base->getFlatCapture()->updateKernelGlobalOffset(mutation.commandId, mutation.globalOffset);
+    }
+    PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL update global offset commandId: %" PRIu64 " x: %u y: %u z: %u\n",
+                 mutation.commandId, mutation.globalOffset[0], mutation.globalOffset[1], mutation.globalOffset[2]);
+    return ZE_RESULT_SUCCESS;
+}
+
+auto MutableCommandListImp::updateMutableCommandsImpl() -> ze_result_t {
+    PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL updateMutableCommandsImpl cmdlist: %p\n", this);
+    for (const auto &mutationDesc : this->mutationDescriptors) {
+        auto result = std::visit([this](const auto &mutation) -> ze_result_t {
+            return this->applyMutation(mutation);
+        },
+                                 mutationDesc);
+        if (result != ZE_RESULT_SUCCESS) {
+            return result;
         }
     }
 
+    for (auto &varDispatch : this->cooperativeKernelVariableDispatches) {
+        if (varDispatch->getMaxCooperativeGroupCount() < varDispatch->getTotalGroupCount()) {
+            return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
+        }
+    }
     return ZE_RESULT_SUCCESS;
 }
 
