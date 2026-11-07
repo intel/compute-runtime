@@ -525,53 +525,6 @@ TEST(DebugSettingsManager, GivenTbxOrTbxWithAubCsrTypeAndAllElseDefaultWhenCalli
     EXPECT_TRUE(NEO::debugManager.isTbxPageFaultManagerEnabled());
 }
 
-TEST(DebugSettingsManager, GivenDefaultDirectSubmissionInSimulationModeWhenCheckingIfItIsEnabledThenReturnTrueOnlyForTbxCsrType) {
-    DebugManagerStateRestore restorer;
-    EXPECT_EQ(-1, NEO::debugManager.flags.EnableDirectSubmissionInSimulationMode.get());
-
-    NEO::debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::tbx));
-    EXPECT_TRUE(NEO::debugManager.isDirectSubmissionInSimulationModeEnabled());
-
-    for (auto csrType : {CommandStreamReceiverType::hardware, CommandStreamReceiverType::aub, CommandStreamReceiverType::tbxWithAub, CommandStreamReceiverType::hardwareWithAub, CommandStreamReceiverType::nullAub}) {
-        NEO::debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(csrType));
-        EXPECT_FALSE(NEO::debugManager.isDirectSubmissionInSimulationModeEnabled());
-    }
-}
-
-TEST(DebugSettingsManager, GivenTbxCsrTypeAndAllocationDumpSelectedWhenCheckingIfDirectSubmissionInSimulationModeIsEnabledThenReturnTrueOnlyWhenForced) {
-    DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::tbx));
-
-    NEO::debugManager.flags.AUBDumpBufferFormat.set("BIN");
-    EXPECT_TRUE(NEO::debugManager.isAllocationDumpSelected());
-    EXPECT_FALSE(NEO::debugManager.isDirectSubmissionInSimulationModeEnabled());
-
-    NEO::debugManager.flags.AUBDumpBufferFormat.set("unk");
-    NEO::debugManager.flags.AUBDumpImageFormat.set("BMP");
-    EXPECT_TRUE(NEO::debugManager.isAllocationDumpSelected());
-    EXPECT_FALSE(NEO::debugManager.isDirectSubmissionInSimulationModeEnabled());
-
-    NEO::debugManager.flags.EnableDirectSubmissionInSimulationMode.set(1);
-    EXPECT_TRUE(NEO::debugManager.isDirectSubmissionInSimulationModeEnabled());
-
-    NEO::debugManager.flags.AUBDumpImageFormat.set("unk");
-    EXPECT_FALSE(NEO::debugManager.isAllocationDumpSelected());
-}
-
-TEST(DebugSettingsManager, GivenDirectSubmissionInSimulationModeSetWhenCheckingIfItIsEnabledThenReturnSetValueForAnyCsrType) {
-    DebugManagerStateRestore restorer;
-
-    for (auto csrType : {CommandStreamReceiverType::aub, CommandStreamReceiverType::tbx, CommandStreamReceiverType::tbxWithAub, CommandStreamReceiverType::nullAub}) {
-        NEO::debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(csrType));
-
-        NEO::debugManager.flags.EnableDirectSubmissionInSimulationMode.set(0);
-        EXPECT_FALSE(NEO::debugManager.isDirectSubmissionInSimulationModeEnabled());
-
-        NEO::debugManager.flags.EnableDirectSubmissionInSimulationMode.set(1);
-        EXPECT_TRUE(NEO::debugManager.isDirectSubmissionInSimulationModeEnabled());
-    }
-}
-
 TEST(DebugSettingsManager, givenFlushAllCachesWhenTranslateDebugSettingsThenOverrideEnv) {
     DebugManagerStateRestore restorer;
     {

@@ -375,32 +375,6 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenFlushIsCalledTh
     memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
-HWTEST_F(TbxCommandSteamSimpleTest, givenDirectSubmissionEnabledAndDefaultSimulationModeSettingWhenTbxCommandStreamReceiverIsCreatedThenPollForCompletionIsDisabledOnlyInTbxModeWithoutAllocationDump) {
-    DebugManagerStateRestore dbgRestore;
-    debugManager.flags.EnableDirectSubmission.set(1);
-    auto hwInfo = pDevice->executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
-    hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_CCS].engineSupported = true;
-
-    debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::tbx));
-    {
-        MockTbxCsr<FamilyType> tbxCsr(*pDevice->executionEnvironment, pDevice->getDeviceBitfield());
-        EXPECT_FALSE(tbxCsr.pollForCompletionEnabled);
-    }
-
-    debugManager.flags.AUBDumpBufferFormat.set("BIN");
-    {
-        MockTbxCsr<FamilyType> tbxCsr(*pDevice->executionEnvironment, pDevice->getDeviceBitfield());
-        EXPECT_TRUE(tbxCsr.pollForCompletionEnabled);
-    }
-
-    debugManager.flags.AUBDumpBufferFormat.set("unk");
-    debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::tbxWithAub));
-    {
-        MockTbxCsr<FamilyType> tbxCsr(*pDevice->executionEnvironment, pDevice->getDeviceBitfield());
-        EXPECT_TRUE(tbxCsr.pollForCompletionEnabled);
-    }
-}
-
 HWTEST_F(TbxCommandSteamSimpleTest, givenDirectSubmissionEngineSupportedWhenTbxCommandStreamReceiverIsCreatedThenPollForCompletionIsDisabledOnlyWhenDirectSubmissionIsEnabledInSimulationMode) {
     DebugManagerStateRestore dbgRestore;
     auto hwInfo = pDevice->executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();

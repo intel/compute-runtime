@@ -305,19 +305,6 @@ class DebugSettingsManager : NEO::NonCopyableAndNonMovableClass {
         return isFaultManagerEnabledInEnvVars && isTbxMode;
     }
 
-    inline bool isDirectSubmissionInSimulationModeEnabled() {
-        auto directSubmissionInSimulationMode = flags.EnableDirectSubmissionInSimulationMode.get();
-        if (directSubmissionInSimulationMode != -1) {
-            return directSubmissionInSimulationMode > 0;
-        }
-        auto isTbxOnlyMode = flags.SetCommandStreamReceiver.get() == static_cast<int32_t>(CommandStreamReceiverType::tbx);
-        return isTbxOnlyMode && !isAllocationDumpSelected();
-    }
-
-    inline bool isAllocationDumpSelected() {
-        return flags.AUBDumpBufferFormat.get() != "unk" || flags.AUBDumpImageFormat.get() != "unk";
-    }
-
   protected:
     DVarsScopeMask scope = 0;
     std::unique_ptr<SettingsReader> readerImpl;
