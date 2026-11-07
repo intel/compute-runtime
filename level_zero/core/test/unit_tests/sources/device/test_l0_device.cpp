@@ -12,6 +12,7 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/preamble.h"
 #include "shared/source/helpers/ray_tracing_helper.h"
 #include "shared/source/helpers/required_libs_helpers.h"
 #include "shared/source/os_interface/linux/hw_device_id.h"
@@ -1234,25 +1235,40 @@ TEST_F(DeviceTest, givenKernelExtendedPropertiesStructureWhenKernelPropertiesCal
     EXPECT_EQ(maxValue, kernelExtendedProperties.fp64Flags);
 }
 
-ze_scheduling_hint_exp_flags_t getSchedulingHintFlagsFromKernelProperties(L0::Device &device) {
-    ze_scheduling_hint_exp_properties_t schedulingHintProperties = {ZE_STRUCTURE_TYPE_SCHEDULING_HINT_EXP_PROPERTIES};
+HWTEST_F(DeviceTest, whenPassingSchedulingHintExpStructToGetPropertiesThenPropertiesWithCorrectFlagIsReturned) {
+
+    ze_device_module_properties_t kernelProperties = {};
+    kernelProperties.stype = ZE_STRUCTURE_TYPE_KERNEL_PROPERTIES;
+
+    ze_scheduling_hint_exp_properties_t schedulingHintProperties = {};
+    schedulingHintProperties.stype = ZE_STRUCTURE_TYPE_SCHEDULING_HINT_EXP_PROPERTIES;
     schedulingHintProperties.schedulingHintFlags = ZE_SCHEDULING_HINT_EXP_FLAG_FORCE_UINT32;
-    ze_device_module_properties_t kernelProperties = {ZE_STRUCTURE_TYPE_DEVICE_MODULE_PROPERTIES};
+
     kernelProperties.pNext = &schedulingHintProperties;
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, device.getKernelProperties(&kernelProperties));
-    return schedulingHintProperties.schedulingHintFlags;
-}
+    ze_result_t res = device->getKernelProperties(&kernelProperties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-HWTEST2_F(DeviceTest, givenPlatformProgrammingThreadArbitrationPolicyWhenPassingSchedulingHintExpStructToGetPropertiesThenAllSchedulingHintsAreReturned, IsAtLeastXeHpcCore) {
-    ze_scheduling_hint_exp_flags_t expectedFlags = ZE_SCHEDULING_HINT_EXP_FLAG_OLDEST_FIRST |
-                                                   ZE_SCHEDULING_HINT_EXP_FLAG_ROUND_ROBIN |
-                                                   ZE_SCHEDULING_HINT_EXP_FLAG_STALL_BASED_ROUND_ROBIN;
-    EXPECT_EQ(expectedFlags, getSchedulingHintFlagsFromKernelProperties(*device));
-}
-
-HWTEST2_F(DeviceTest, givenPlatformNotProgrammingThreadArbitrationPolicyWhenPassingSchedulingHintExpStructToGetPropertiesThenNoSchedulingHintIsReturned, IsAtMostXeHpgCore) {
-    EXPECT_EQ(0u, getSchedulingHintFlagsFromKernelProperties(*device));
+    EXPECT_NE(ZE_SCHEDULING_HINT_EXP_FLAG_FORCE_UINT32, schedulingHintProperties.schedulingHintFlags);
+    auto supportedThreadArbitrationPolicies = NEO::PreambleHelper<FamilyType>::getSupportedThreadArbitrationPolicies();
+    for (auto &p : supportedThreadArbitrationPolicies) {
+        switch (p) {
+        case ThreadArbitrationPolicy::AgeBased:
+            EXPECT_NE(0u, (schedulingHintProperties.schedulingHintFlags &
+                           ZE_SCHEDULING_HINT_EXP_FLAG_OLDEST_FIRST));
+            break;
+        case ThreadArbitrationPolicy::RoundRobin:
+            EXPECT_NE(0u, (schedulingHintProperties.schedulingHintFlags &
+                           ZE_SCHEDULING_HINT_EXP_FLAG_ROUND_ROBIN));
+            break;
+        case ThreadArbitrationPolicy::RoundRobinAfterDependency:
+            EXPECT_NE(0u, (schedulingHintProperties.schedulingHintFlags &
+                           ZE_SCHEDULING_HINT_EXP_FLAG_STALL_BASED_ROUND_ROBIN));
+            break;
+        default:
+            FAIL();
+        }
+    }
 }
 
 HWTEST2_PRODUCT_F(DeviceTest, givenAllThreadArbitrationPoliciesWhenPassingSchedulingHintExpStructToGetPropertiesThenPropertiesWithAllFlagsAreReturned, MatchAny) {
