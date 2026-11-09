@@ -153,28 +153,6 @@ HWTEST2_F(ComputeModeRequirements, givenSharedHandlesWhenComputeModeIsProgrammed
     EXPECT_TRUE(memcmp(&expectedPcCmd, pcCmd, sizeof(PIPE_CONTROL)) == 0);
 }
 
-HWTEST2_F(ComputeModeRequirements, givenFlushWithoutSharedHandlesWhenPreviouslyUsedThenPcAndSCMAreNotProgrammed, IsXeCore) {
-    setUpImpl<FamilyType>();
-
-    auto graphicAlloc = csr->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
-    IndirectHeap stream(graphicAlloc);
-
-    makeResidentSharedAlloc();
-    csr->flushTask(stream, 0, &stream, &stream, &stream, 0, flags, *device);
-    EXPECT_TRUE(getCsrHw<FamilyType>()->getCsrRequestFlags()->hasSharedHandles);
-    auto startOffset = getCsrHw<FamilyType>()->commandStream.getUsed();
-
-    csr->flushTask(stream, 0, &stream, &stream, &stream, 0, flags, *device);
-    EXPECT_TRUE(getCsrHw<FamilyType>()->getCsrRequestFlags()->hasSharedHandles);
-
-    HardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(getCsrHw<FamilyType>()->commandStream, startOffset);
-
-    EXPECT_EQ(0u, hwParser.cmdList.size());
-
-    csr->getMemoryManager()->freeGraphicsMemory(graphicAlloc);
-}
-
 HWCMDTEST_F(IGFX_XE_HP_CORE, ComputeModeRequirements, givenComputeModeCmdSizeWhenLargeGrfModeChangeIsRequiredThenSCMCommandSizeIsCalculated) {
     setUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
@@ -413,4 +391,28 @@ HWTEST2_F(ComputeModeRequirements, givenComputeModeProgrammingWhenRequiredGRFNum
     EXPECT_TRUE(isValueSet(scmCmd->getMaskBits(), expectedBitsMask));
     expectedScmCmd.setMaskBits(scmCmd->getMaskBits());
     EXPECT_TRUE(memcmp(&expectedScmCmd, scmCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
+}
+
+using ComputeModeXeHpgToXe2HpgTests = ComputeModeRequirements;
+
+HWTEST2_F(ComputeModeXeHpgToXe2HpgTests, givenFlushWithoutSharedHandlesWhenPreviouslyUsedThenPcAndSCMAreNotProgrammed, IsWithinXeCoreAndXe2HpgCore) {
+    setUpImpl<FamilyType>();
+
+    auto graphicAlloc = csr->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
+    IndirectHeap stream(graphicAlloc);
+
+    makeResidentSharedAlloc();
+    csr->flushTask(stream, 0, &stream, &stream, &stream, 0, flags, *device);
+    EXPECT_TRUE(getCsrHw<FamilyType>()->getCsrRequestFlags()->hasSharedHandles);
+    auto startOffset = getCsrHw<FamilyType>()->commandStream.getUsed();
+
+    csr->flushTask(stream, 0, &stream, &stream, &stream, 0, flags, *device);
+    EXPECT_TRUE(getCsrHw<FamilyType>()->getCsrRequestFlags()->hasSharedHandles);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(getCsrHw<FamilyType>()->commandStream, startOffset);
+
+    EXPECT_EQ(0u, hwParser.cmdList.size());
+
+    csr->getMemoryManager()->freeGraphicsMemory(graphicAlloc);
 }

@@ -7,7 +7,6 @@
 
 #include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/kernel/grf_config.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/xe2_hpg_core/hw_cmds_base.h"
 #include "shared/source/xe2_hpg_core/hw_info_xe2_hpg_core.h"
@@ -80,79 +79,6 @@ XE2_HPG_CORETEST_F(ComputeModeRequirementsXe2HpgCore, givenRequiredThreadArbitra
     EXPECT_FALSE(memcmp(&expectedScmCmd, scmCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
 
     EXPECT_NE(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE::EU_THREAD_SCHEDULING_MODE_ROUND_ROBIN, static_cast<STATE_COMPUTE_MODE *>(stream.getCpuBase())->getEuThreadSchedulingMode());
-}
-
-XE2_HPG_CORETEST_F(ComputeModeRequirementsXe2HpgCore, givenCoherencyWithoutSharedHandlesWhenCommandSizeIsCalculatedThenCorrectCommandSizeIsReturned) {
-    using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
-    setUpImpl<FamilyType>();
-
-    auto cmdsSize = sizeof(STATE_COMPUTE_MODE);
-
-    overrideComputeModeRequest<FamilyType>(false, false, false, false);
-    EXPECT_FALSE(getCsrHw<FamilyType>()->streamProperties.stateComputeMode.isDirty());
-
-    overrideComputeModeRequest<FamilyType>(false, false, false, true);
-    auto retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
-    EXPECT_TRUE(getCsrHw<FamilyType>()->streamProperties.stateComputeMode.isDirty());
-    EXPECT_EQ(cmdsSize, retSize);
-}
-
-XE2_HPG_CORETEST_F(ComputeModeRequirementsXe2HpgCore, givenNumGrfRequiredChangedWhenCommandSizeIsCalculatedThenCorrectCommandSizeIsReturned) {
-    using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
-    setUpImpl<FamilyType>();
-
-    auto numGrfRequired = 128u;
-    auto numGrfRequiredChanged = false;
-    overrideComputeModeRequest<FamilyType>(false, false, false, numGrfRequiredChanged, numGrfRequired);
-    EXPECT_FALSE(getCsrHw<FamilyType>()->streamProperties.stateComputeMode.isDirty());
-
-    numGrfRequiredChanged = true;
-    overrideComputeModeRequest<FamilyType>(false, false, false, numGrfRequiredChanged, numGrfRequired);
-    EXPECT_TRUE(getCsrHw<FamilyType>()->streamProperties.stateComputeMode.isDirty());
-    EXPECT_EQ(sizeof(STATE_COMPUTE_MODE), getCsrHw<FamilyType>()->getCmdSizeForComputeMode());
-}
-
-XE2_HPG_CORETEST_F(ComputeModeRequirementsXe2HpgCore, givenComputeModeProgrammingWhenLargeGrfModeDoesntChangeButRequiredThreadArbitrationPolicyIsNewThenSCMIsReloaded) {
-    setUpImpl<FamilyType>();
-    using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
-
-    char buff[1024];
-    LinearStream stream(buff, 1024);
-    auto cmdsSize = sizeof(STATE_COMPUTE_MODE);
-
-    overrideComputeModeRequest<FamilyType>(false, false, false, true);
-    getCsrHw<FamilyType>()->programComputeMode(stream, flags, *defaultHwInfo);
-    EXPECT_EQ(cmdsSize, stream.getUsed());
-}
-
-XE2_HPG_CORETEST_F(ComputeModeRequirementsXe2HpgCore, givenComputeModeProgrammingWhenLargeGrfModeChangedThenSCMIsReloadedAndLargeGrfModeProgrammed) {
-    setUpImpl<FamilyType>();
-    using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
-
-    char buff[1024];
-    LinearStream stream(buff, 1024);
-    auto cmdsSize = sizeof(STATE_COMPUTE_MODE);
-    uint32_t numGrfRequired = GrfConfig::largeGrfNumber;
-
-    overrideComputeModeRequest<FamilyType>(false, false, false, true, numGrfRequired);
-    getCsrHw<FamilyType>()->programComputeMode(stream, flags, *defaultHwInfo);
-    EXPECT_EQ(cmdsSize, stream.getUsed());
-    EXPECT_TRUE(static_cast<STATE_COMPUTE_MODE *>(stream.getCpuBase())->getLargeGrfMode());
-}
-
-XE2_HPG_CORETEST_F(ComputeModeRequirementsXe2HpgCore, givenComputeModeProgrammingWhenLargeGrfRequiredChangedButValueIsDefaultThenSCMIsReloadedButLargeGrfModeNotProgrammed) {
-    setUpImpl<FamilyType>();
-    using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
-
-    char buff[1024];
-    LinearStream stream(buff, 1024);
-    auto cmdsSize = sizeof(STATE_COMPUTE_MODE);
-    uint32_t numGrfRequired = GrfConfig::defaultGrfNumber;
-
-    overrideComputeModeRequest<FamilyType>(false, false, false, true, numGrfRequired);
-    getCsrHw<FamilyType>()->programComputeMode(stream, flags, *defaultHwInfo);
-    EXPECT_EQ(cmdsSize, stream.getUsed());
-    EXPECT_FALSE(static_cast<STATE_COMPUTE_MODE *>(stream.getCpuBase())->getLargeGrfMode());
 }
 
 XE2_HPG_CORETEST_F(ComputeModeRequirementsXe2HpgCore, giventhreadArbitrationPolicyWithoutSharedHandlesWhenFlushTaskCalledThenProgramCmdOnlyIfChanged) {
@@ -288,28 +214,6 @@ XE2_HPG_CORETEST_F(ComputeModeRequirementsXe2HpgCore, givenComputeModeProgrammin
     EXPECT_TRUE(isValueSet(scmCmd->getMask1(), expectedBitsMask));
     expectedScmCmd.setMask1(scmCmd->getMask1());
     EXPECT_TRUE(memcmp(&expectedScmCmd, scmCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
-}
-
-XE2_HPG_CORETEST_F(ComputeModeRequirementsXe2HpgCore, givenFlushWithoutSharedHandlesWhenPreviouslyUsedThenPcAndSCMAreNotProgrammed) {
-    setUpImpl<FamilyType>();
-
-    auto graphicAlloc = csr->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
-    IndirectHeap stream(graphicAlloc);
-
-    makeResidentSharedAlloc();
-    csr->flushTask(stream, 0, &stream, &stream, &stream, 0, flags, *device);
-    EXPECT_TRUE(getCsrHw<FamilyType>()->getCsrRequestFlags()->hasSharedHandles);
-    auto startOffset = getCsrHw<FamilyType>()->commandStream.getUsed();
-
-    csr->flushTask(stream, 0, &stream, &stream, &stream, 0, flags, *device);
-    EXPECT_TRUE(getCsrHw<FamilyType>()->getCsrRequestFlags()->hasSharedHandles);
-
-    HardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(getCsrHw<FamilyType>()->commandStream, startOffset);
-
-    EXPECT_EQ(0u, hwParser.cmdList.size());
-
-    csr->getMemoryManager()->freeGraphicsMemory(graphicAlloc);
 }
 
 XE2_HPG_CORETEST_F(ComputeModeRequirementsXe2HpgCore, givenComputeModeCmdSizeWhenLargeGrfModeChangeIsRequiredThenSCMCommandSizeIsCalculated) {
