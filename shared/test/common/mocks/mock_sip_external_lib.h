@@ -17,7 +17,11 @@ class MockSipExternalLib : public NEO::SipExternalLib {
     std::vector<char> getSipKernelBinaryRetBinary = {'t', 's', 's', 'a', 'r', 'e', 'a'};
     std::vector<char> getSipKernelBinaryStateSaveAreaHeader;
     int getSipKernelBinaryRetValue = 0;
+    uint32_t getSipKernelBinaryCalled = 0;
+    std::optional<NEO::SipKernelType> getSipKernelBinaryCapturedType;
     int getSipKernelBinary(NEO::Device &device, NEO::SipKernelType type, std::vector<char> &retBinary, std::vector<char> &stateSaveAreaHeader) override {
+        ++getSipKernelBinaryCalled;
+        getSipKernelBinaryCapturedType = type;
         retBinary = getSipKernelBinaryRetBinary;
         stateSaveAreaHeader = getSipKernelBinaryStateSaveAreaHeader;
         return getSipKernelBinaryRetValue;
