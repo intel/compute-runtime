@@ -20,6 +20,7 @@
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/path.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
@@ -188,8 +189,7 @@ bool SipKernel::initRawBinaryFromFileKernel(SipKernelType type, Device &device, 
 
         alignedFree(alignedBuffer);
 
-        auto headerFilename = createHeaderFilename(fileName);
-        std::vector<char> stateSaveAreaHeader = readStateSaveAreaHeaderFromFile(headerFilename);
+        std::vector<char> stateSaveAreaHeader = readStateSaveAreaHeaderFromFile(addSuffixBeforeExtension(fileName, "_header"));
 
         device.getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->sipKernels[sipIndex] =
             std::make_unique<SipKernel>(type, sipAllocation, std::move(stateSaveAreaHeader));
@@ -203,21 +203,6 @@ std::vector<char> SipKernel::readStateSaveAreaHeaderFromFile(const std::string &
     size_t bytesRead = 0u;
     data = readFile(fileName, bytesRead);
     return data;
-}
-
-std::string SipKernel::createHeaderFilename(const std::string &fileName) {
-    std::string_view coreName(fileName);
-    auto extensionPos = coreName.find('.');
-    std::string ext = "";
-
-    if (extensionPos != coreName.npos) {
-        ext = coreName.substr(extensionPos, coreName.size() - extensionPos);
-        coreName.remove_suffix(coreName.size() - extensionPos);
-    }
-
-    std::string headerFilename(coreName);
-    headerFilename += "_header" + ext;
-    return headerFilename;
 }
 
 bool SipKernel::initSipKernelFromExternalLib(SipKernelType type, Device &device) {

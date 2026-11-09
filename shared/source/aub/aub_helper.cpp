@@ -13,6 +13,7 @@
 #include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/path.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 
@@ -95,11 +96,7 @@ std::string AubHelper::getTbxSharedMemoryFileName(const std::string &fileName, u
     if (rootDeviceIndex == 0) {
         return fileName;
     }
-    const auto fileNameStart = fileName.find_last_of("/\\");
-    const auto extensionStart = fileName.rfind('.');
-    const bool hasExtension = extensionStart != std::string::npos && (fileNameStart == std::string::npos || extensionStart > fileNameStart);
-    const auto suffixPosition = hasExtension ? extensionStart : fileName.size();
-    return fileName.substr(0, suffixPosition) + "_" + std::to_string(rootDeviceIndex) + fileName.substr(suffixPosition);
+    return addSuffixBeforeExtension(fileName, "_" + std::to_string(rootDeviceIndex));
 }
 
 } // namespace NEO

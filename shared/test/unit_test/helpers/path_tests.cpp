@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,4 +42,19 @@ TEST(PathTests, givenLhsNotEndingWithPathSeparatorAndNonEmptyRhsWhenJoinPathThen
     const std::string expected = std::string("folder") + PATH_SEPARATOR + std::string("file.txt");
     const std::string result = joinPath(lhs, rhs);
     EXPECT_EQ(expected, result);
+}
+
+TEST(PathTests, givenFileNameWithExtensionWhenAddingSuffixBeforeExtensionThenSuffixIsAddedBeforeLastExtension) {
+    EXPECT_EQ("sip_header.bin", addSuffixBeforeExtension("sip.bin", "_header"));
+    EXPECT_EQ("sip.v2_header.bin", addSuffixBeforeExtension("sip.v2.bin", "_header"));
+}
+
+TEST(PathTests, givenFileNameWithoutExtensionWhenAddingSuffixBeforeExtensionThenSuffixIsAppended) {
+    EXPECT_EQ("sip_header", addSuffixBeforeExtension("sip", "_header"));
+}
+
+TEST(PathTests, givenDirectoryWithDotWhenAddingSuffixBeforeExtensionThenOnlyFileNameIsChanged) {
+    EXPECT_EQ("./sip_header.bin", addSuffixBeforeExtension("./sip.bin", "_header"));
+    EXPECT_EQ("build.1/sip_header", addSuffixBeforeExtension("build.1/sip", "_header"));
+    EXPECT_EQ("build.1\\sip_header", addSuffixBeforeExtension("build.1\\sip", "_header"));
 }

@@ -82,18 +82,6 @@ struct RawBinarySipFixture : public DeviceWithoutSipFixture {
     std::unique_ptr<VariableBackup<uint32_t>> backupFailAfterNFopenCount;
 };
 
-TEST(SipBinaryFromFile, givenFilenameWhenCreatingHeaderFilenameThenSuffixIsAddedBeforeExtension) {
-    std::string fileName = "abc.bin";
-    auto headerName = MockSipKernel::createHeaderFilename(fileName);
-    EXPECT_EQ("abc_header.bin", headerName);
-}
-
-TEST(SipBinaryFromFile, givenFilenameWithoutExtnesionWhenCreatingHeaderFilenameThenSuffixIsAdded) {
-    std::string fileName = "abc";
-    auto headerName = MockSipKernel::createHeaderFilename(fileName);
-    EXPECT_EQ("abc_header", headerName);
-}
-
 using RawBinarySipTest = Test<RawBinarySipFixture>;
 
 TEST_F(RawBinarySipTest, givenRawBinaryFileWhenInitSipKernelThenSipIsLoadedFromFile) {
@@ -120,6 +108,22 @@ TEST_F(RawBinarySipTest, givenRawBinaryFileWhenInitSipKernelThenSipIsLoadedFromF
 
     auto header = SipKernel::getSipKernel(*pDevice, nullptr).getStateSaveAreaHeader();
     EXPECT_NE(0u, header.size());
+
+    SipKernel::freeSipKernels(&pDevice->getRootDeviceEnvironmentRef(), pDevice->getMemoryManager());
+}
+
+TEST_F(RawBinarySipTest, givenRawBinaryFilePathWithDotWhenInitSipKernelThenHeaderIsLoadedFromFileNextToIt) {
+    static std::vector<std::string> *openedFileNamesPtr;
+    std::vector<std::string> openedFileNames;
+    VariableBackup<std::vector<std::string> *> openedFileNamesBackup{&openedFileNamesPtr, &openedFileNames};
+    VariableBackup<IoFunctions::fopenFuncPtr> fopenBackup{&IoFunctions::fopenPtr, [](const char *filename, const char *mode) -> FILE * {
+                                                              openedFileNamesPtr->push_back(filename);
+                                                              return IoFunctions::mockFopen(filename, mode);
+                                                          }};
+    debugManager.flags.LoadBinarySipFromFile.set("./sip");
+
+    EXPECT_TRUE(SipKernel::initSipKernel(SipKernelType::csr, *pDevice));
+    EXPECT_EQ((std::vector<std::string>{"./sip", "./sip_header"}), openedFileNames);
 
     SipKernel::freeSipKernels(&pDevice->getRootDeviceEnvironmentRef(), pDevice->getMemoryManager());
 }
