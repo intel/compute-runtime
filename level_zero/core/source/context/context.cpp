@@ -1156,37 +1156,19 @@ ze_result_t Context::getIpcMemHandlesImpl(const void *ptr,
 
     uint32_t loopCount = numIpcHandles ? *numIpcHandles : 1u;
     for (uint32_t i = 0u; i < loopCount; i++) {
-        uint8_t reservedHandleDataStorage[32] = {0};
-        void *reservedHandleData = nullptr;
-        uint64_t handle = 0;
-        if (settings.useOpaqueHandle) {
-            if (fabricAccessibleHandle) {
-                reservedHandleData = reservedHandleDataStorage;
-            }
-        }
-        int ret = alloc->createInternalHandle(memoryManager, i, handle, reservedHandleData);
-        if (ret < 0) {
-            return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
-        }
-
-        this->markAllocationIpcExported(alloc, allocData);
-        if (usmPool) {
-            usmPool->markChunkExported(ptr);
-        }
-
+        uint8_t reservedHandleDataStorage[sizeof(IpcOpaqueMemoryData::reservedHandleData)] = {0};
+        void *reservedHandleData = fabricAccessibleHandle ? reservedHandleDataStorage : nullptr;
         const IpcHandleExportData exportData{
             .alloc = alloc,
-            .handle = handle,
             .handleId = i,
             .ptrAddress = allocationBaseAddress,
             .memoryType = ipcType,
             .usmPool = usmPool,
             .reservedHandleData = reservedHandleData,
             .physicalOffset = physicalOffset};
-        if (settings.useOpaqueHandle) {
-            setIPCHandleData(exportData, *reinterpret_cast<IpcOpaqueMemoryData *>(pIpcHandles[i].data));
-        } else {
-            setIPCHandleData(exportData, *reinterpret_cast<IpcMemoryData *>(pIpcHandles[i].data));
+        auto result = this->exportIpcHandle(exportData, allocData, pIpcHandles[i]);
+        if (result != ZE_RESULT_SUCCESS) {
+            return result;
         }
     }
     return ZE_RESULT_SUCCESS;
@@ -1336,26 +1318,32 @@ bool Context::isIpcRangeHandle(const ze_ipc_mem_handle_t &ipcHandle) const {
     return validHandleType && (opaqueData.memoryType == static_cast<uint8_t>(InternalIpcMemoryType::ipcRangeTransport));
 }
 
-ze_result_t Context::encodeIpcHandleForRangeAllocation(NEO::GraphicsAllocation *alloc, NEO::SvmAllocationData *allocData, uint64_t ptrAddress, uint8_t ipcType, uint64_t physicalOffset, void *reservedHandleData, ze_ipc_mem_handle_t &ipcHandle) {
-    auto memoryManager = this->driverHandle->getMemoryManager();
-    uint64_t handle = 0;
+ze_result_t Context::exportIpcHandle(IpcHandleExportData exportData, NEO::SvmAllocationData *allocData, ze_ipc_mem_handle_t &ipcHandle) {
+    const bool useOpaqueFormat = this->settings.useOpaqueHandle != OpaqueHandlingType::none;
+    if (!useOpaqueFormat) {
+        exportData.reservedHandleData = nullptr;
+    }
     // A non-null reservedHandleData requests fabric (cross-OS) handle data; createInternalHandle fills it
     // and setIPCHandleData stores it in the handle so it can be imported on another OS.
-    int ret = alloc->createInternalHandle(memoryManager, 0u, handle, reservedHandleData);
+    int ret = exportData.alloc->createInternalHandle(this->driverHandle->getMemoryManager(), exportData.handleId, exportData.handle, exportData.reservedHandleData);
     if (ret < 0) {
         return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
     }
-    this->markAllocationIpcExported(alloc, allocData);
+    this->markAllocationIpcExported(exportData.alloc, allocData);
+    if (exportData.usmPool) {
+        exportData.usmPool->markChunkExported(addrToPtr(exportData.ptrAddress));
+    }
 
     std::memset(ipcHandle.data, 0, sizeof(ipcHandle.data));
-    const IpcHandleExportData exportData{
-        .alloc = alloc,
-        .handle = handle,
-        .ptrAddress = ptrAddress,
-        .memoryType = ipcType,
-        .reservedHandleData = reservedHandleData,
-        .physicalOffset = physicalOffset};
-    setIPCHandleData(exportData, *reinterpret_cast<IpcOpaqueMemoryData *>(ipcHandle.data));
+    auto writeIpcHandle = [&](auto ipcData) {
+        this->setIPCHandleData(exportData, ipcData);
+        std::memcpy(ipcHandle.data, &ipcData, sizeof(ipcData));
+    };
+    if (useOpaqueFormat) {
+        writeIpcHandle(IpcOpaqueMemoryData{});
+    } else {
+        writeIpcHandle(IpcMemoryData{});
+    }
     return ZE_RESULT_SUCCESS;
 }
 
@@ -1541,7 +1529,13 @@ ze_result_t Context::getIpcRangeHandle(const void *ptr,
         uint8_t reservedHandleDataStorage[sizeof(IpcOpaqueMemoryData::reservedHandleData)] = {0};
         void *reservedHandleData = fabricAccessible ? reservedHandleDataStorage : nullptr;
         ze_ipc_mem_handle_t ipcHandle = {};
-        auto result = encodeIpcHandleForRangeAllocation(chunk.alloc, nullptr, chunk.mappedStart, ipcType, chunk.physicalOffset, reservedHandleData, ipcHandle);
+        const IpcHandleExportData chunkExportData{
+            .alloc = chunk.alloc,
+            .ptrAddress = chunk.mappedStart,
+            .memoryType = ipcType,
+            .reservedHandleData = reservedHandleData,
+            .physicalOffset = chunk.physicalOffset};
+        auto result = this->exportIpcHandle(chunkExportData, nullptr, ipcHandle);
         if (result != ZE_RESULT_SUCCESS) {
             releaseIpcRangeChunkHandles(handleKeys);
             return result;
@@ -1576,13 +1570,16 @@ ze_result_t Context::getIpcRangeHandle(const void *ptr,
     }
 
     uint8_t transportReservedHandleData[sizeof(IpcOpaqueMemoryData::reservedHandleData)] = {0};
-    auto encodeResult = encodeIpcHandleForRangeAllocation(transportAlloc, transportSvmData, reinterpret_cast<uint64_t>(transportPtr),
-                                                          static_cast<uint8_t>(InternalIpcMemoryType::hostUnifiedMemory), 0u,
-                                                          fabricAccessible ? transportReservedHandleData : nullptr, *pIpcHandle);
-    if (encodeResult != ZE_RESULT_SUCCESS) {
+    const IpcHandleExportData transportExportData{
+        .alloc = transportAlloc,
+        .ptrAddress = reinterpret_cast<uint64_t>(transportPtr),
+        .memoryType = static_cast<uint8_t>(InternalIpcMemoryType::hostUnifiedMemory),
+        .reservedHandleData = fabricAccessible ? transportReservedHandleData : nullptr};
+    auto result = this->exportIpcHandle(transportExportData, transportSvmData, *pIpcHandle);
+    if (result != ZE_RESULT_SUCCESS) {
         this->freeMem(transportPtr);
         releaseIpcRangeChunkHandles(handleKeys);
-        return encodeResult;
+        return result;
     }
     // Stamp the discriminator read back by isIpcRangeHandle. The real host-vs-device merge path is
     // carried in the header (rangeIsHost), so this byte is free to mark the handle as a range transport.

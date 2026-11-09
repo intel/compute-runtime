@@ -439,7 +439,7 @@ struct Context : _ze_context_handle_t, NEO::NonCopyableAndNonMovableClass {
     void eraseSharedMakeResidentAllocations(const NEO::SvmAllocationData &svmData);
 
     ze_result_t getIpcRangeHandle(const void *ptr, const ze_ipc_phys_mem_handle_range_ext_desc_t *desc, ze_ipc_mem_handle_t *pIpcHandle);
-    ze_result_t encodeIpcHandleForRangeAllocation(NEO::GraphicsAllocation *alloc, NEO::SvmAllocationData *allocData, uint64_t ptrAddress, uint8_t ipcType, uint64_t physicalOffset, void *reservedHandleData, ze_ipc_mem_handle_t &ipcHandle);
+    ze_result_t exportIpcHandle(IpcHandleExportData exportData, NEO::SvmAllocationData *allocData, ze_ipc_mem_handle_t &ipcHandle);
     ze_result_t openIpcRangeHandle(ze_device_handle_t hDevice, const ze_ipc_mem_handle_t &ipcHandle, ze_ipc_memory_flags_t flags, void **pptr);
     ze_result_t putIpcRangeHandle(const ze_ipc_mem_handle_t &ipcHandle);
     bool releaseIpcRangeTransportForPtr(const void *ptr);

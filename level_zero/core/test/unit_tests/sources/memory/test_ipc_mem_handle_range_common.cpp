@@ -119,8 +119,8 @@ struct CommonRangeContext : public L0::Context {
     using L0::Context::ipcRangeTransports;
     using L0::Context::ipcRangeTransportsPresent;
 
-    ze_result_t callEncode(NEO::GraphicsAllocation *alloc, ze_ipc_mem_handle_t &ipcHandle) {
-        return encodeIpcHandleForRangeAllocation(alloc, nullptr, 0x1000u, static_cast<uint8_t>(InternalIpcMemoryType::deviceUnifiedMemory), 0u, nullptr, ipcHandle);
+    ze_result_t callExportIpcHandle(NEO::GraphicsAllocation *alloc, ze_ipc_mem_handle_t &ipcHandle) {
+        return exportIpcHandle({.alloc = alloc, .ptrAddress = 0x1000u, .memoryType = static_cast<uint8_t>(InternalIpcMemoryType::deviceUnifiedMemory)}, nullptr, ipcHandle);
     }
     ze_result_t callOpenIpcRangeHandle(ze_device_handle_t hDevice, const ze_ipc_mem_handle_t &ipcHandle, ze_ipc_memory_flags_t flags, void **pptr) {
         return openIpcRangeHandle(hDevice, ipcHandle, flags, pptr);
@@ -331,18 +331,18 @@ TEST_F(IpcMemHandleRangeCommonTest, givenNonRangeMemoryTypeWhenCheckingIsIpcRang
     EXPECT_FALSE(rangeContext->callIsIpcRangeHandle(handle));
 }
 
-TEST_F(IpcMemHandleRangeCommonTest, givenAllocationWhenEncodingRangeHandleThenSuccessIsReturned) {
+TEST_F(IpcMemHandleRangeCommonTest, givenAllocationWhenExportingIpcHandleThenSuccessIsReturned) {
     NEO::MockGraphicsAllocation alloc(neoDevice->getRootDeviceIndex(), reinterpret_cast<void *>(0x1000), MemoryConstants::pageSize);
     ze_ipc_mem_handle_t ipcHandle = {};
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, rangeContext->callEncode(&alloc, ipcHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, rangeContext->callExportIpcHandle(&alloc, ipcHandle));
 }
 
-TEST_F(IpcMemHandleRangeCommonTest, givenAllocationFailingInternalHandleWhenEncodingRangeHandleThenOutOfHostMemoryIsReturned) {
+TEST_F(IpcMemHandleRangeCommonTest, givenAllocationFailingInternalHandleWhenExportingIpcHandleThenOutOfHostMemoryIsReturned) {
     FailingInternalHandleAllocation alloc(neoDevice->getRootDeviceIndex(), reinterpret_cast<void *>(0x1000), MemoryConstants::pageSize);
     ze_ipc_mem_handle_t ipcHandle = {};
 
-    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, rangeContext->callEncode(&alloc, ipcHandle));
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, rangeContext->callExportIpcHandle(&alloc, ipcHandle));
 }
 
 TEST_F(IpcMemHandleRangeCommonTest, givenZeroMaxHandleCountWhenGettingRangeHandleThenUnsupportedFeatureIsReturned) {
@@ -523,7 +523,7 @@ TEST_F(IpcMemHandleRangeCommonTest, whenQueryingRealMaxIpcRangeHandleCountThenEx
     }
 }
 
-TEST_F(IpcMemHandleRangeCommonTest, givenTransportEncodeFailingWhenGettingRangeHandleThenOutOfHostMemoryIsReturned) {
+TEST_F(IpcMemHandleRangeCommonTest, givenTransportExportFailingWhenGettingRangeHandleThenOutOfHostMemoryIsReturned) {
     void *basePtr = reinterpret_cast<void *>(0x600000);
     const size_t mappingSize = MemoryConstants::pageSize;
     NEO::MockGraphicsAllocation alloc0(neoDevice->getRootDeviceIndex(), basePtr, mappingSize);

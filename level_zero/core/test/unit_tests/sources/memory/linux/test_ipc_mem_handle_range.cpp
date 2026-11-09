@@ -173,11 +173,11 @@ struct RangeExportContext : public L0::Context {
     ze_result_t callGetIpcRangeHandle(const void *ptr, const ze_ipc_phys_mem_handle_range_ext_desc_t *desc, ze_ipc_mem_handle_t *pIpcHandle) {
         return getIpcRangeHandle(ptr, desc, pIpcHandle);
     }
-    ze_result_t callEncodeIpcHandleForRangeAllocation(NEO::GraphicsAllocation *alloc, uint64_t ptrAddress, ze_ipc_mem_handle_t &ipcHandle,
-                                                      uint8_t ipcType = static_cast<uint8_t>(InternalIpcMemoryType::deviceUnifiedMemory),
-                                                      uint64_t physicalOffset = 0u,
-                                                      void *reservedHandleData = nullptr) {
-        return encodeIpcHandleForRangeAllocation(alloc, nullptr, ptrAddress, ipcType, physicalOffset, reservedHandleData, ipcHandle);
+    ze_result_t callExportIpcHandle(NEO::GraphicsAllocation *alloc, uint64_t ptrAddress, ze_ipc_mem_handle_t &ipcHandle,
+                                    uint8_t ipcType = static_cast<uint8_t>(InternalIpcMemoryType::deviceUnifiedMemory),
+                                    uint64_t physicalOffset = 0u,
+                                    void *reservedHandleData = nullptr) {
+        return exportIpcHandle({.alloc = alloc, .ptrAddress = ptrAddress, .memoryType = ipcType, .reservedHandleData = reservedHandleData, .physicalOffset = physicalOffset}, nullptr, ipcHandle);
     }
     ze_result_t callOpenIpcRangeHandle(ze_device_handle_t hDevice, const ze_ipc_mem_handle_t &ipcHandle, ze_ipc_memory_flags_t flags, void **pptr) {
         return openIpcRangeHandle(hDevice, ipcHandle, flags, pptr);
@@ -524,7 +524,7 @@ TEST_F(IpcMemHandleRangeTest, givenExportedRangeHandleWhenChunkAllocationIsRelea
 
     FixedHandleAllocation reusingAlloc(neoDevice->getRootDeviceIndex(), basePtr, mappingSize, 101u);
     ze_ipc_mem_handle_t reusingIpcHandle = {};
-    ASSERT_EQ(ZE_RESULT_SUCCESS, exportContext->callEncodeIpcHandleForRangeAllocation(&reusingAlloc, castToUint64(basePtr), reusingIpcHandle));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, exportContext->callExportIpcHandle(&reusingAlloc, castToUint64(basePtr), reusingIpcHandle));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, exportContext->putIpcMemHandle(rangeIpcHandle));
     ASSERT_EQ(1u, ipcMap.size());
@@ -1027,43 +1027,43 @@ TEST_F(IpcMemHandleRangeTest, givenFabricAccessibleRangeDescWhenGettingRangeHand
     clearReservation();
 }
 
-TEST_F(IpcMemHandleRangeTest, givenAllocationWhenEncodingRangeHandleWithOpaqueSettingsThenSuccessIsReturned) {
+TEST_F(IpcMemHandleRangeTest, givenAllocationWhenExportingIpcHandleWithOpaqueSettingsThenSuccessIsReturned) {
     auto exportContext = createExportContext();
     NEO::MockGraphicsAllocation alloc(neoDevice->getRootDeviceIndex(), reinterpret_cast<void *>(0x700000), 4096u);
     ze_ipc_mem_handle_t ipcHandle = {};
-    auto result = exportContext->callEncodeIpcHandleForRangeAllocation(&alloc, 0x700000u, ipcHandle);
+    auto result = exportContext->callExportIpcHandle(&alloc, 0x700000u, ipcHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST_F(IpcMemHandleRangeTest, givenOpaqueHandlingDisabledWhenEncodingRangeAllocationThenOpaqueHandleDataIsStillProduced) {
-    auto exportContext = createExportContext();
-    exportContext->setUseOpaqueHandle(0u);
-    NEO::MockGraphicsAllocation alloc(neoDevice->getRootDeviceIndex(), reinterpret_cast<void *>(0x800000), 4096u);
-    ze_ipc_mem_handle_t ipcHandle = {};
-    auto result = exportContext->callEncodeIpcHandleForRangeAllocation(&alloc, 0x800000u, ipcHandle);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    auto &opaqueData = *reinterpret_cast<IpcOpaqueMemoryData *>(ipcHandle.data);
-    EXPECT_EQ(NEO::SysCalls::getCurrentProcessId(), opaqueData.processId);
-}
-
-TEST_F(IpcMemHandleRangeTest, givenAllocationFailingInternalHandleWhenEncodingRangeHandleThenOutOfHostMemoryIsReturned) {
+TEST_F(IpcMemHandleRangeTest, givenAllocationFailingInternalHandleWhenExportingIpcHandleThenOutOfHostMemoryIsReturned) {
     auto exportContext = createExportContext();
     MockRangeFailingGraphicsAllocation alloc(neoDevice->getRootDeviceIndex(), reinterpret_cast<void *>(0x900000), 4096u);
     ze_ipc_mem_handle_t ipcHandle = {};
-    auto result = exportContext->callEncodeIpcHandleForRangeAllocation(&alloc, 0x900000u, ipcHandle);
+    auto result = exportContext->callExportIpcHandle(&alloc, 0x900000u, ipcHandle);
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, result);
 }
 
-TEST_F(IpcMemHandleRangeTest, givenReservedHandleDataWhenEncodingRangeAllocationThenReservedDataIsForwarded) {
+TEST_F(IpcMemHandleRangeTest, givenReservedHandleDataWhenExportingIpcHandleThenReservedDataIsForwarded) {
     auto exportContext = createExportContext();
     ReservedDataRecordingAllocation alloc(neoDevice->getRootDeviceIndex(), reinterpret_cast<void *>(0x950000), 4096u);
     ze_ipc_mem_handle_t ipcHandle = {};
     uint8_t reservedHandleData[sizeof(IpcOpaqueMemoryData::reservedHandleData)] = {0};
-    auto result = exportContext->callEncodeIpcHandleForRangeAllocation(&alloc, 0x950000u, ipcHandle,
-                                                                       static_cast<uint8_t>(InternalIpcMemoryType::deviceUnifiedMemory), 0u, reservedHandleData);
+    auto result = exportContext->callExportIpcHandle(&alloc, 0x950000u, ipcHandle,
+                                                     static_cast<uint8_t>(InternalIpcMemoryType::deviceUnifiedMemory), 0u, reservedHandleData);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_TRUE(alloc.reservedHandleDataWasSet);
+}
+
+TEST_F(IpcMemHandleRangeTest, givenOpaqueHandlingDisabledAndReservedHandleDataWhenExportingIpcHandleThenReservedDataIsNotForwarded) {
+    auto exportContext = createExportContext();
+    exportContext->setUseOpaqueHandle(OpaqueHandlingType::none);
+    ReservedDataRecordingAllocation alloc(neoDevice->getRootDeviceIndex(), reinterpret_cast<void *>(0x950000), 4096u);
+    ze_ipc_mem_handle_t ipcHandle = {};
+    uint8_t reservedHandleData[sizeof(IpcOpaqueMemoryData::reservedHandleData)] = {0};
+    auto result = exportContext->callExportIpcHandle(&alloc, 0x950000u, ipcHandle,
+                                                     static_cast<uint8_t>(InternalIpcMemoryType::deviceUnifiedMemory), 0u, reservedHandleData);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_FALSE(alloc.reservedHandleDataWasSet);
 }
 
 TEST_F(IpcMemHandleRangeTest, givenRangeHandleWhenPuttingIpcMemHandleThenSuccessIsReturned) {
