@@ -475,6 +475,17 @@ ze_result_t Device::getComputeProperties(ze_device_compute_properties_t *pComput
         pComputeProperties->subGroupSizes[i] = static_cast<uint32_t>(deviceInfo.maxSubGroups[i]);
     }
 
+    void *pNext = pComputeProperties->pNext;
+    while (pNext) {
+        auto extendedProperties = reinterpret_cast<ze_base_properties_t *>(pNext);
+        if (extendedProperties->stype == ZE_STRUCTURE_TYPE_DEVICE_COMPUTE_DOTPRODUCT_EXT_PROPERTIES) {
+            getDotProductProperties(extendedProperties);
+        } else {
+            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
+        pNext = extendedProperties->pNext;
+    }
+
     return ZE_RESULT_SUCCESS;
 }
 
@@ -2379,6 +2390,55 @@ void Device::getIntelXeDeviceProperties(ze_base_properties_t *extendedProperties
     properties->numExecutionEnginesPerXeCore = gtSysInfo.MaxEuPerSubSlice;
     properties->maxNumHwThreadsPerExecutionEngine = getNEODevice()->getDeviceInfo().numThreadsPerEU;
     properties->maxNumLanesPerHwThread = CommonConstants::maximalSimdSize;
+}
+
+void Device::getDotProductProperties(ze_base_properties_t *extendedProperties) const {
+    static_assert(ZE_DEVICE_INPUT_DATA_TYPE_FLAG_DEVICE_INPUT_DATA_INT4_PACK8_PER_SIMD_LANE == DotProductInputTypeFlags::int4Pack8, "Mismatch between internal and API - specific capabilities.");
+    static_assert(ZE_DEVICE_INPUT_DATA_TYPE_FLAG_DEVICE_INPUT_DATA_INT2_PACK8_PER_SIMD_LANE == DotProductInputTypeFlags::int2Pack8, "Mismatch between internal and API - specific capabilities.");
+    static_assert(ZE_DEVICE_INPUT_DATA_TYPE_FLAG_DEVICE_INPUT_DATA_FP16_PACK2_PER_SIMD_LANE == DotProductInputTypeFlags::fp16Pack2, "Mismatch between internal and API - specific capabilities.");
+    static_assert(ZE_DEVICE_INPUT_DATA_TYPE_FLAG_DEVICE_INPUT_DATA_BF16_PACK2_PER_SIMD_LANE == DotProductInputTypeFlags::bf16Pack2, "Mismatch between internal and API - specific capabilities.");
+    static_assert(ZE_DEVICE_INPUT_DATA_TYPE_FLAG_DEVICE_INPUT_DATA_FP8_PACK4_PER_SIMD_LANE == DotProductInputTypeFlags::fp8Pack4, "Mismatch between internal and API - specific capabilities.");
+    static_assert(ZE_DEVICE_INPUT_DATA_TYPE_FLAG_DEVICE_INPUT_DATA_BF8_PACK4_PER_SIMD_LANE == DotProductInputTypeFlags::bf8Pack4, "Mismatch between internal and API - specific capabilities.");
+    static_assert(ZE_DEVICE_INPUT_DATA_TYPE_FLAG_DEVICE_INPUT_DATA_E2M1_PACK8_PER_SIMD_LANE == DotProductInputTypeFlags::e2m1Pack8, "Mismatch between internal and API - specific capabilities.");
+    static_assert(ZE_DEVICE_INPUT_DATA_TYPE_FLAG_DEVICE_INPUT_DATA_INT8_PACK4_PER_SIMD_LANE == DotProductInputTypeFlags::int8Pack4, "Mismatch between internal and API - specific capabilities.");
+    static_assert(ZE_DEVICE_INPUT_DATA_TYPE_FLAG_DEVICE_INPUT_DATA_SCALING_UINT8 == DotProductInputTypeFlags::scalingUint8, "Mismatch between internal and API - specific capabilities.");
+    static_assert(ZE_DEVICE_OUTPUT_DATA_TYPE_FLAG_DEVICE_OUTPUT_DATA_INT32 == DotProductOutputTypeFlags::int32, "Mismatch between internal and API - specific capabilities.");
+    static_assert(ZE_DEVICE_OUTPUT_DATA_TYPE_FLAG_DEVICE_OUTPUT_DATA_FP32 == DotProductOutputTypeFlags::fp32, "Mismatch between internal and API - specific capabilities.");
+    static_assert(ZE_DEVICE_OUTPUT_DATA_TYPE_FLAG_DEVICE_OUTPUT_DATA_FP16 == DotProductOutputTypeFlags::fp16, "Mismatch between internal and API - specific capabilities.");
+    static_assert(ZE_DEVICE_OUTPUT_DATA_TYPE_FLAG_DEVICE_OUTPUT_DATA_BF16 == DotProductOutputTypeFlags::bf16, "Mismatch between internal and API - specific capabilities.");
+
+    auto dotProductProperties = reinterpret_cast<ze_device_compute_dotproduct_ext_properties_t *>(extendedProperties);
+    dotProductProperties->dp_caps = ZE_DEVICE_DP_CAPABILITY_FLAG_DEVICE_NON_SYSTOLIC_DPA4_SIMD_ALL;
+    dotProductProperties->dpv4_input_types = ZE_DEVICE_INPUT_DATA_TYPE_FLAG_DEVICE_INPUT_DATA_INT8_PACK4_PER_SIMD_LANE;
+    dotProductProperties->dpv4_output_types = ZE_DEVICE_OUTPUT_DATA_TYPE_FLAG_DEVICE_OUTPUT_DATA_INT32;
+    dotProductProperties->dpas_input_types = 0u;
+    dotProductProperties->dpas_output_types = 0u;
+    dotProductProperties->bdpas_input_types = 0u;
+    dotProductProperties->bdpas_output_types = 0u;
+
+    const auto &hwInfo = this->neoDevice->getHardwareInfo();
+    const auto &caps = hwInfo.caps;
+    if (caps.dotProductAccumulateSystolicSupported) {
+        dotProductProperties->dp_caps |= ZE_DEVICE_DP_CAPABILITY_FLAG_DEVICE_SYSTOLIC_DPAS_DEPTH8 |
+                                         ZE_DEVICE_DP_CAPABILITY_FLAG_DEVICE_SYSTOLIC_OUTPUT_MATRIX_ROWCOUNT_UPTO8;
+        if (caps.systolicDotProductSimdLaneCount == 8u) {
+            dotProductProperties->dp_caps |= ZE_DEVICE_DP_CAPABILITY_FLAG_DEVICE_SYSTOLIC_DPAS_SIMD8;
+        }
+        if (caps.systolicDotProductSimdLaneCount == 16u) {
+            dotProductProperties->dp_caps |= ZE_DEVICE_DP_CAPABILITY_FLAG_DEVICE_SYSTOLIC_DPAS_SIMD16;
+        }
+        dotProductProperties->dpas_input_types = caps.systolicDotProductInputTypes;
+        dotProductProperties->dpas_output_types = caps.systolicDotProductOutputTypes;
+        if (this->neoDevice->getCompilerProductHelper().isMatrixMultiplyAccumulateTF32Supported(hwInfo)) {
+            dotProductProperties->dpas_input_types |= ZE_DEVICE_INPUT_DATA_TYPE_FLAG_DEVICE_INPUT_DATA_TF32_PACK1_PER_SIMD_LANE;
+        }
+    }
+    if (caps.blockScaledSystolicDotProductInputTypes != 0u) {
+        dotProductProperties->dp_caps |= ZE_DEVICE_DP_CAPABILITY_FLAG_DEVICE_SYSTOLIC_BDPAS_SIMD16 |
+                                         ZE_DEVICE_DP_CAPABILITY_FLAG_DEVICE_SYSTOLIC_BDPAS_DEPTH8;
+        dotProductProperties->bdpas_input_types = caps.blockScaledSystolicDotProductInputTypes;
+        dotProductProperties->bdpas_output_types = caps.blockScaledSystolicDotProductOutputTypes;
+    }
 }
 
 void Device::getReadonlyMemoryExtProperties(ze_base_properties_t *extendedProperties) {

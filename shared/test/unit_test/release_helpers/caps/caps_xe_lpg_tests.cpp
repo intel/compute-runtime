@@ -44,6 +44,8 @@ TEST(CapsXeLpgTest, givenMtlUReleaseWhenMaterializingCapsThenCapabilitiesAreCorr
     constexpr auto capsMtlUA0 = materializeCaps<CapsMtlUA0>();
     constexpr auto capsMtlUB0 = materializeCaps<CapsMtlUB0>();
 
+    EXPECT_EQ(0u, capsMtlUA0.blockScaledSystolicDotProductInputTypes);
+    EXPECT_EQ(0u, capsMtlUA0.blockScaledSystolicDotProductOutputTypes);
     EXPECT_EQ(64u, capsMtlUA0.cacheLineSize);
     EXPECT_EQ(2u, capsMtlUA0.commandBuffersPreallocatedPerCommandQueue);
     EXPECT_EQ(0u, capsMtlUA0.defaultMidthreadPreemptionDelayTimer);
@@ -60,6 +62,9 @@ TEST(CapsXeLpgTest, givenMtlUReleaseWhenMaterializingCapsThenCapabilitiesAreCorr
     EXPECT_EQ(1u, capsMtlUA0.rtasFormat);
     EXPECT_EQ(1u, capsMtlUA0.shareMemoryWithoutNTHandle);
     EXPECT_EQ(0u, capsMtlUA0.stackSizePerRay);
+    EXPECT_EQ(0u, capsMtlUA0.systolicDotProductInputTypes);
+    EXPECT_EQ(0u, capsMtlUA0.systolicDotProductOutputTypes);
+    EXPECT_EQ(0u, capsMtlUA0.systolicDotProductSimdLaneCount);
     EXPECT_EQ(16384u, capsMtlUA0.max3dImageWidthOrHeight);
     EXPECT_EQ(MemoryConstants::pageSize2M, capsMtlUA0.svmCpuAlignment);
     EXPECT_FALSE(capsMtlUA0.adjustWalkOrderAvailable);
@@ -117,6 +122,8 @@ TEST(CapsXeLpgTest, givenMtlUReleaseWhenMaterializingCapsThenCapabilitiesAreCorr
     EXPECT_FALSE(capsMtlUA0.storageInfoAdjustmentRequired);
     EXPECT_FALSE(capsMtlUA0.useLocalPreferredForCacheableBuffers);
 
+    EXPECT_EQ(0u, capsMtlUB0.blockScaledSystolicDotProductInputTypes);
+    EXPECT_EQ(0u, capsMtlUB0.blockScaledSystolicDotProductOutputTypes);
     EXPECT_EQ(64u, capsMtlUB0.cacheLineSize);
     EXPECT_EQ(2u, capsMtlUB0.commandBuffersPreallocatedPerCommandQueue);
     EXPECT_EQ(0u, capsMtlUB0.defaultMidthreadPreemptionDelayTimer);
@@ -133,6 +140,9 @@ TEST(CapsXeLpgTest, givenMtlUReleaseWhenMaterializingCapsThenCapabilitiesAreCorr
     EXPECT_EQ(1u, capsMtlUB0.rtasFormat);
     EXPECT_EQ(1u, capsMtlUB0.shareMemoryWithoutNTHandle);
     EXPECT_EQ(0u, capsMtlUB0.stackSizePerRay);
+    EXPECT_EQ(0u, capsMtlUB0.systolicDotProductInputTypes);
+    EXPECT_EQ(0u, capsMtlUB0.systolicDotProductOutputTypes);
+    EXPECT_EQ(0u, capsMtlUB0.systolicDotProductSimdLaneCount);
     EXPECT_EQ(16384u, capsMtlUB0.max3dImageWidthOrHeight);
     EXPECT_EQ(MemoryConstants::pageSize2M, capsMtlUB0.svmCpuAlignment);
     EXPECT_FALSE(capsMtlUB0.adjustWalkOrderAvailable);
@@ -187,6 +197,8 @@ TEST(CapsXeLpgTest, givenMtlHReleaseWhenMaterializingCapsThenCapabilitiesAreCorr
     constexpr auto capsMtlHA0 = materializeCaps<CapsMtlHA0>();
     constexpr auto capsMtlHB0 = materializeCaps<CapsMtlHB0>();
 
+    EXPECT_EQ(0u, capsMtlHA0.blockScaledSystolicDotProductInputTypes);
+    EXPECT_EQ(0u, capsMtlHA0.blockScaledSystolicDotProductOutputTypes);
     EXPECT_EQ(64u, capsMtlHA0.cacheLineSize);
     EXPECT_EQ(2u, capsMtlHA0.commandBuffersPreallocatedPerCommandQueue);
     EXPECT_EQ(0u, capsMtlHA0.defaultMidthreadPreemptionDelayTimer);
@@ -203,6 +215,9 @@ TEST(CapsXeLpgTest, givenMtlHReleaseWhenMaterializingCapsThenCapabilitiesAreCorr
     EXPECT_EQ(1u, capsMtlHA0.rtasFormat);
     EXPECT_EQ(1u, capsMtlHA0.shareMemoryWithoutNTHandle);
     EXPECT_EQ(0u, capsMtlHA0.stackSizePerRay);
+    EXPECT_EQ(0u, capsMtlHA0.systolicDotProductInputTypes);
+    EXPECT_EQ(0u, capsMtlHA0.systolicDotProductOutputTypes);
+    EXPECT_EQ(0u, capsMtlHA0.systolicDotProductSimdLaneCount);
     EXPECT_EQ(16384u, capsMtlHA0.max3dImageWidthOrHeight);
     EXPECT_EQ(MemoryConstants::pageSize2M, capsMtlHA0.svmCpuAlignment);
     EXPECT_FALSE(capsMtlHA0.adjustWalkOrderAvailable);
@@ -260,6 +275,8 @@ TEST(CapsXeLpgTest, givenMtlHReleaseWhenMaterializingCapsThenCapabilitiesAreCorr
     EXPECT_FALSE(capsMtlHA0.storageInfoAdjustmentRequired);
     EXPECT_FALSE(capsMtlHA0.useLocalPreferredForCacheableBuffers);
 
+    EXPECT_EQ(0u, capsMtlHB0.blockScaledSystolicDotProductInputTypes);
+    EXPECT_EQ(0u, capsMtlHB0.blockScaledSystolicDotProductOutputTypes);
     EXPECT_EQ(64u, capsMtlHB0.cacheLineSize);
     EXPECT_EQ(2u, capsMtlHB0.commandBuffersPreallocatedPerCommandQueue);
     EXPECT_EQ(0u, capsMtlHB0.defaultMidthreadPreemptionDelayTimer);
@@ -276,6 +293,9 @@ TEST(CapsXeLpgTest, givenMtlHReleaseWhenMaterializingCapsThenCapabilitiesAreCorr
     EXPECT_EQ(1u, capsMtlHB0.rtasFormat);
     EXPECT_EQ(1u, capsMtlHB0.shareMemoryWithoutNTHandle);
     EXPECT_EQ(0u, capsMtlHB0.stackSizePerRay);
+    EXPECT_EQ(0u, capsMtlHB0.systolicDotProductInputTypes);
+    EXPECT_EQ(0u, capsMtlHB0.systolicDotProductOutputTypes);
+    EXPECT_EQ(0u, capsMtlHB0.systolicDotProductSimdLaneCount);
     EXPECT_EQ(16384u, capsMtlHB0.max3dImageWidthOrHeight);
     EXPECT_EQ(MemoryConstants::pageSize2M, capsMtlHB0.svmCpuAlignment);
     EXPECT_FALSE(capsMtlHB0.adjustWalkOrderAvailable);
@@ -329,6 +349,8 @@ TEST(CapsXeLpgTest, givenMtlHReleaseWhenMaterializingCapsThenCapabilitiesAreCorr
 TEST(CapsXeLpgTest, givenArlHReleaseWhenMaterializingCapsThenCapabilitiesAreCorrect) {
     constexpr auto capsArlH = materializeCaps<CapsArlH>();
 
+    EXPECT_EQ(0u, capsArlH.blockScaledSystolicDotProductInputTypes);
+    EXPECT_EQ(0u, capsArlH.blockScaledSystolicDotProductOutputTypes);
     EXPECT_EQ(64u, capsArlH.cacheLineSize);
     EXPECT_EQ(2u, capsArlH.commandBuffersPreallocatedPerCommandQueue);
     EXPECT_EQ(0u, capsArlH.defaultMidthreadPreemptionDelayTimer);
@@ -345,6 +367,9 @@ TEST(CapsXeLpgTest, givenArlHReleaseWhenMaterializingCapsThenCapabilitiesAreCorr
     EXPECT_EQ(1u, capsArlH.rtasFormat);
     EXPECT_EQ(1u, capsArlH.shareMemoryWithoutNTHandle);
     EXPECT_EQ(0u, capsArlH.stackSizePerRay);
+    EXPECT_EQ(DotProductInputTypeFlags::int8Pack4 | DotProductInputTypeFlags::int4Pack8 | DotProductInputTypeFlags::int2Pack8 | DotProductInputTypeFlags::fp16Pack2 | DotProductInputTypeFlags::bf16Pack2, capsArlH.systolicDotProductInputTypes);
+    EXPECT_EQ(DotProductOutputTypeFlags::int32 | DotProductOutputTypeFlags::fp32, capsArlH.systolicDotProductOutputTypes);
+    EXPECT_EQ(8u, capsArlH.systolicDotProductSimdLaneCount);
     EXPECT_EQ(16384u, capsArlH.max3dImageWidthOrHeight);
     EXPECT_EQ(MemoryConstants::pageSize2M, capsArlH.svmCpuAlignment);
     EXPECT_TRUE(capsArlH.adjustWalkOrderAvailable);

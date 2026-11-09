@@ -13,6 +13,8 @@
 namespace NEO {
 
 struct Caps {
+    uint32_t blockScaledSystolicDotProductInputTypes = 0u;
+    uint32_t blockScaledSystolicDotProductOutputTypes = 0u;
     uint32_t cacheLineSize = 0u;
     uint32_t commandBuffersPreallocatedPerCommandQueue = 0u;
     uint32_t defaultMidthreadPreemptionDelayTimer = 0u; // STATE_COMPUTE_MODE field encoding, not microseconds
@@ -29,6 +31,9 @@ struct Caps {
     uint32_t rtasFormat = 0u;
     uint32_t shareMemoryWithoutNTHandle = 0u;
     uint32_t stackSizePerRay = 0u;
+    uint32_t systolicDotProductInputTypes = 0u;
+    uint32_t systolicDotProductOutputTypes = 0u;
+    uint32_t systolicDotProductSimdLaneCount = 0u;
 
     size_t max3dImageWidthOrHeight = 0u;
     size_t svmCpuAlignment = 0u;

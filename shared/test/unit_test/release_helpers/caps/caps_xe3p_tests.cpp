@@ -37,6 +37,8 @@ TEST(CapsXe3pTest, givenNvlPIpVersionWhenResolvingCapsThenReleaseCapsAreReturned
 TEST(CapsXe3pTest, givenCriReleaseWhenMaterializingCapsThenCapabilitiesAreCorrect) {
     constexpr auto capsCri = materializeCaps<CapsCri>();
 
+    EXPECT_EQ(DotProductInputTypeFlags::fp16Pack2 | DotProductInputTypeFlags::bf16Pack2 | DotProductInputTypeFlags::fp8Pack4 | DotProductInputTypeFlags::bf8Pack4 | DotProductInputTypeFlags::e2m1Pack8 | DotProductInputTypeFlags::scalingUint8, capsCri.blockScaledSystolicDotProductInputTypes);
+    EXPECT_EQ(DotProductOutputTypeFlags::fp32 | DotProductOutputTypeFlags::fp16 | DotProductOutputTypeFlags::bf16, capsCri.blockScaledSystolicDotProductOutputTypes);
     EXPECT_EQ(256u, capsCri.cacheLineSize);
     EXPECT_EQ(2u, capsCri.commandBuffersPreallocatedPerCommandQueue);
     EXPECT_EQ(0u, capsCri.defaultMidthreadPreemptionDelayTimer);
@@ -53,6 +55,9 @@ TEST(CapsXe3pTest, givenCriReleaseWhenMaterializingCapsThenCapabilitiesAreCorrec
     EXPECT_EQ(0u, capsCri.rtasFormat);
     EXPECT_EQ(1u, capsCri.shareMemoryWithoutNTHandle);
     EXPECT_EQ(64u, capsCri.stackSizePerRay);
+    EXPECT_EQ(DotProductInputTypeFlags::int8Pack4 | DotProductInputTypeFlags::int4Pack8 | DotProductInputTypeFlags::fp16Pack2 | DotProductInputTypeFlags::bf16Pack2 | DotProductInputTypeFlags::fp8Pack4 | DotProductInputTypeFlags::bf8Pack4 | DotProductInputTypeFlags::e2m1Pack8, capsCri.systolicDotProductInputTypes);
+    EXPECT_EQ(DotProductOutputTypeFlags::int32 | DotProductOutputTypeFlags::fp32 | DotProductOutputTypeFlags::fp16 | DotProductOutputTypeFlags::bf16, capsCri.systolicDotProductOutputTypes);
+    EXPECT_EQ(16u, capsCri.systolicDotProductSimdLaneCount);
     EXPECT_EQ(16384u, capsCri.max3dImageWidthOrHeight);
     EXPECT_EQ(MemoryConstants::pageSize64k, capsCri.svmCpuAlignment);
     EXPECT_FALSE(capsCri.adjustWalkOrderAvailable);
@@ -111,6 +116,8 @@ TEST(CapsXe3pTest, givenNvlPReleaseWhenMaterializingCapsThenCapabilitiesAreCorre
     constexpr auto capsNvlPA0 = materializeCaps<CapsNvlPA0>();
     constexpr auto capsNvlPB0 = materializeCaps<CapsNvlPB0>();
 
+    EXPECT_EQ(DotProductInputTypeFlags::fp16Pack2 | DotProductInputTypeFlags::bf16Pack2 | DotProductInputTypeFlags::fp8Pack4 | DotProductInputTypeFlags::bf8Pack4 | DotProductInputTypeFlags::e2m1Pack8 | DotProductInputTypeFlags::scalingUint8, capsNvlPA0.blockScaledSystolicDotProductInputTypes);
+    EXPECT_EQ(DotProductOutputTypeFlags::fp32 | DotProductOutputTypeFlags::fp16 | DotProductOutputTypeFlags::bf16, capsNvlPA0.blockScaledSystolicDotProductOutputTypes);
     EXPECT_EQ(256u, capsNvlPA0.cacheLineSize);
     EXPECT_EQ(2u, capsNvlPA0.commandBuffersPreallocatedPerCommandQueue);
     EXPECT_EQ(0u, capsNvlPA0.defaultMidthreadPreemptionDelayTimer);
@@ -127,6 +134,9 @@ TEST(CapsXe3pTest, givenNvlPReleaseWhenMaterializingCapsThenCapabilitiesAreCorre
     EXPECT_EQ(3u, capsNvlPA0.rtasFormat);
     EXPECT_EQ(1u, capsNvlPA0.shareMemoryWithoutNTHandle);
     EXPECT_EQ(64u, capsNvlPA0.stackSizePerRay);
+    EXPECT_EQ(DotProductInputTypeFlags::int8Pack4 | DotProductInputTypeFlags::int4Pack8 | DotProductInputTypeFlags::fp16Pack2 | DotProductInputTypeFlags::bf16Pack2 | DotProductInputTypeFlags::fp8Pack4 | DotProductInputTypeFlags::bf8Pack4 | DotProductInputTypeFlags::e2m1Pack8, capsNvlPA0.systolicDotProductInputTypes);
+    EXPECT_EQ(DotProductOutputTypeFlags::int32 | DotProductOutputTypeFlags::fp32 | DotProductOutputTypeFlags::fp16 | DotProductOutputTypeFlags::bf16, capsNvlPA0.systolicDotProductOutputTypes);
+    EXPECT_EQ(16u, capsNvlPA0.systolicDotProductSimdLaneCount);
     EXPECT_EQ(16384u, capsNvlPA0.max3dImageWidthOrHeight);
     EXPECT_EQ(MemoryConstants::pageSize64k, capsNvlPA0.svmCpuAlignment);
     EXPECT_FALSE(capsNvlPA0.adjustWalkOrderAvailable);
@@ -184,6 +194,8 @@ TEST(CapsXe3pTest, givenNvlPReleaseWhenMaterializingCapsThenCapabilitiesAreCorre
     EXPECT_FALSE(capsNvlPA0.storageInfoAdjustmentRequired);
     EXPECT_FALSE(capsNvlPA0.useLocalPreferredForCacheableBuffers);
 
+    EXPECT_EQ(DotProductInputTypeFlags::fp16Pack2 | DotProductInputTypeFlags::bf16Pack2 | DotProductInputTypeFlags::fp8Pack4 | DotProductInputTypeFlags::bf8Pack4 | DotProductInputTypeFlags::e2m1Pack8 | DotProductInputTypeFlags::scalingUint8, capsNvlPB0.blockScaledSystolicDotProductInputTypes);
+    EXPECT_EQ(DotProductOutputTypeFlags::fp32 | DotProductOutputTypeFlags::fp16 | DotProductOutputTypeFlags::bf16, capsNvlPB0.blockScaledSystolicDotProductOutputTypes);
     EXPECT_EQ(256u, capsNvlPB0.cacheLineSize);
     EXPECT_EQ(2u, capsNvlPB0.commandBuffersPreallocatedPerCommandQueue);
     EXPECT_EQ(0u, capsNvlPB0.defaultMidthreadPreemptionDelayTimer);
@@ -200,6 +212,9 @@ TEST(CapsXe3pTest, givenNvlPReleaseWhenMaterializingCapsThenCapabilitiesAreCorre
     EXPECT_EQ(3u, capsNvlPB0.rtasFormat);
     EXPECT_EQ(1u, capsNvlPB0.shareMemoryWithoutNTHandle);
     EXPECT_EQ(64u, capsNvlPB0.stackSizePerRay);
+    EXPECT_EQ(DotProductInputTypeFlags::int8Pack4 | DotProductInputTypeFlags::int4Pack8 | DotProductInputTypeFlags::fp16Pack2 | DotProductInputTypeFlags::bf16Pack2 | DotProductInputTypeFlags::fp8Pack4 | DotProductInputTypeFlags::bf8Pack4 | DotProductInputTypeFlags::e2m1Pack8, capsNvlPB0.systolicDotProductInputTypes);
+    EXPECT_EQ(DotProductOutputTypeFlags::int32 | DotProductOutputTypeFlags::fp32 | DotProductOutputTypeFlags::fp16 | DotProductOutputTypeFlags::bf16, capsNvlPB0.systolicDotProductOutputTypes);
+    EXPECT_EQ(16u, capsNvlPB0.systolicDotProductSimdLaneCount);
     EXPECT_EQ(16384u, capsNvlPB0.max3dImageWidthOrHeight);
     EXPECT_EQ(MemoryConstants::pageSize64k, capsNvlPB0.svmCpuAlignment);
     EXPECT_FALSE(capsNvlPB0.adjustWalkOrderAvailable);
