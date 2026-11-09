@@ -8,13 +8,30 @@
 #pragma once
 #include "neo_igfxfmid.h"
 
-#include <string>
-
 namespace NEO {
 namespace TestExcludes {
 
-bool isTestExcluded(const std::string &testName, const PRODUCT_FAMILY productFamily, const GFXCORE_FAMILY gfxFamily);
+bool isTestExcluded(const char *testName, const PRODUCT_FAMILY productFamily, const GFXCORE_FAMILY gfxFamily);
 void addTestExclude(const char *testName, const PRODUCT_FAMILY family);
 void addTestExclude(const char *testName, const GFXCORE_FAMILY family);
 } // namespace TestExcludes
 } // namespace NEO
+
+#ifdef NEO_IGNORE_INVALID_TEST_EXCLUDES
+constexpr bool ignoreInvalidTestExcludes = true;
+#else
+constexpr bool ignoreInvalidTestExcludes = false;
+#endif
+
+#define TEST_EXCLUDE_VARIABLE(test_suite_name, test_name) Test_##test_suite_name##_##test_name##_NotFound_PleaseConsiderRemovingExclude
+
+#define HWTEST_EXCLUDE_PRODUCT(test_suite_name, test_name, family)                  \
+    extern bool TEST_EXCLUDE_VARIABLE(test_suite_name, test_name);                  \
+    struct test_suite_name##test_name##_PLATFORM_EXCLUDES_EXCLUDE_##family {        \
+        test_suite_name##test_name##_PLATFORM_EXCLUDES_EXCLUDE_##family() {         \
+            NEO::TestExcludes::addTestExclude(#test_suite_name #test_name, family); \
+            if constexpr (!ignoreInvalidTestExcludes) {                             \
+                TEST_EXCLUDE_VARIABLE(test_suite_name, test_name) = true;           \
+            }                                                                       \
+        }                                                                           \
+    } test_suite_name##test_name##_PLATFORM_EXCLUDES_EXCLUDE_##family##_init;

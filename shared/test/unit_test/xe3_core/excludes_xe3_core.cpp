@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/test/common/test_macros/hw_test_base.h"
+#include "shared/test/common/test_macros/test_excludes.h"
 
 HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, givenProductHelperWhenAskedIfBlitterForImagesIsSupportedThenFalseIsReturned, IGFX_XE3_CORE);
 HWTEST_EXCLUDE_PRODUCT(CommandEncodeStatesTest, givenOverrideSlmTotalSizeDebugVariableWhenDispatchingKernelThenSharedMemorySizeIsSetCorrectly, IGFX_XE3_CORE);

@@ -57,7 +57,7 @@ bool TestMatcherRegistry::willRunForCurrentProduct(const ::testing::TestInfo &te
     std::string testCaseName;
     testCaseName.reserve(suiteName.size() + testName.size());
     testCaseName.append(suiteName).append(testName);
-    if (NEO::TestExcludes::isTestExcluded(testCaseName, productFamily, ::renderCoreFamily)) {
+    if (NEO::TestExcludes::isTestExcluded(testCaseName.c_str(), productFamily, ::renderCoreFamily)) {
         return false;
     }
     return willRunForCurrentProduct(testCaseName, productFamily);

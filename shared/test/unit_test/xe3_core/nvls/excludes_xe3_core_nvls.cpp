@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/test/common/test_macros/hw_test_base.h"
+#include "shared/test/common/test_macros/test_excludes.h"
 
 using namespace NEO;
 

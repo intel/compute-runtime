@@ -40,8 +40,9 @@ void addExclude(const char *testName, const uint32_t family, std::unique_ptr<Exc
     (*pExcludesPerTest)[testName].insert(family);
 }
 
-bool TestExcludes::isTestExcluded(const std::string &testName, const PRODUCT_FAMILY productFamily, const GFXCORE_FAMILY gfxFamily) {
-    return (isExcluded(testName, productFamily, pProductExcludesPerTest) || isExcluded(testName, gfxFamily, pGfxExcludesPerTest));
+bool TestExcludes::isTestExcluded(const char *testName, const PRODUCT_FAMILY productFamily, const GFXCORE_FAMILY gfxFamily) {
+    const std::string name(testName);
+    return (isExcluded(name, productFamily, pProductExcludesPerTest) || isExcluded(name, gfxFamily, pGfxExcludesPerTest));
 }
 
 void TestExcludes::addTestExclude(const char *testName, const PRODUCT_FAMILY family) {

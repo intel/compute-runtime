@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/xe3p_core/hw_cmds_cri.h"
-#include "shared/test/common/test_macros/hw_test_base.h"
+#include "shared/test/common/test_macros/test_excludes.h"
 using namespace NEO;
 
 HWTEST_EXCLUDE_PRODUCT(AUBWriteImageBCSParam, GivenUnalignedMemoryWhenWritingImageWithBlitterEnabledThenExpectationsAreMet, IGFX_CRI);

@@ -11,25 +11,6 @@
 #include "shared/test/common/test_macros/test_excludes.h"
 #include "shared/test/common/test_macros/test_matcher_registry.h"
 
-#ifdef NEO_IGNORE_INVALID_TEST_EXCLUDES
-constexpr bool ignoreInvalidTestExcludes = true;
-#else
-constexpr bool ignoreInvalidTestExcludes = false;
-#endif
-
-#define TEST_EXCLUDE_VARIABLE(test_suite_name, test_name) Test_##test_suite_name##_##test_name##_NotFound_PleaseConsiderRemovingExclude
-
-#define HWTEST_EXCLUDE_PRODUCT(test_suite_name, test_name, family)                  \
-    extern bool TEST_EXCLUDE_VARIABLE(test_suite_name, test_name);                  \
-    struct test_suite_name##test_name##_PLATFORM_EXCLUDES_EXCLUDE_##family {        \
-        test_suite_name##test_name##_PLATFORM_EXCLUDES_EXCLUDE_##family() {         \
-            NEO::TestExcludes::addTestExclude(#test_suite_name #test_name, family); \
-            if constexpr (!ignoreInvalidTestExcludes) {                             \
-                TEST_EXCLUDE_VARIABLE(test_suite_name, test_name) = true;           \
-            }                                                                       \
-        }                                                                           \
-    } test_suite_name##test_name##_PLATFORM_EXCLUDES_EXCLUDE_##family##_init;
-
 #define GENTEST_F(gfx_core, test_fixture, test_name)                 \
     FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \
                      ::testing::internal::GetTypeId<test_fixture>(), \
