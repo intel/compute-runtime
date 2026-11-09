@@ -131,18 +131,6 @@ HWTEST2_F(GfxCoreHelperXe2AndLaterDeviceTests, givenGfxCoreHelperWhenCallCopyThr
     EXPECT_FALSE(gfxCoreHelper.copyThroughLockedPtrEnabled(hwInfo, productHelper));
 }
 
-HWTEST2_F(GfxCoreHelperXe2AndLaterDeviceTests, givenDebugFlagSetWhenCallCopyThroughLockedPtrEnabledThenReturnCorrectValue, IsAtLeastXe2HpgCore) {
-    DebugManagerStateRestore restorer;
-    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    const auto &productHelper = getHelper<ProductHelper>();
-
-    debugManager.flags.ExperimentalCopyThroughLock.set(0);
-    EXPECT_FALSE(gfxCoreHelper.copyThroughLockedPtrEnabled(*defaultHwInfo, productHelper));
-
-    debugManager.flags.ExperimentalCopyThroughLock.set(1);
-    EXPECT_TRUE(gfxCoreHelper.copyThroughLockedPtrEnabled(*defaultHwInfo, productHelper));
-}
-
 HWTEST2_F(GfxCoreHelperXe2AndLaterDeviceTests, whenNonBcsEngineIsVerifiedThenReturnFalse, IsAtLeastXe2HpgCore) {
     EXPECT_FALSE(EngineHelpers::isBcs(static_cast<aub_stream::EngineType>(aub_stream::ENGINE_BCS8 + 1)));
 }

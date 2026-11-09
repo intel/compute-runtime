@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/command_stream/stream_properties.h"
-#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/memory_manager/allocation_properties.h"
@@ -100,27 +99,6 @@ XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenAllocDataWhenSetExtraAllocati
             EXPECT_FALSE(allocData.flags.requiresCpuAccess);
         }
     }
-}
-
-XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, GivenVariousValuesWhenAlignSlmSizePerThreadGroupIsCalledThenCorrectValueIsReturned) {
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    const auto &releaseHelper = pDevice->getReleaseHelper();
-
-    EXPECT_EQ(0u, gfxCoreHelper.alignSlmSizePerThreadGroup(0, releaseHelper));
-    EXPECT_EQ(MemoryConstants::kiloByte, gfxCoreHelper.alignSlmSizePerThreadGroup(1, releaseHelper));
-    EXPECT_EQ(MemoryConstants::kiloByte, gfxCoreHelper.alignSlmSizePerThreadGroup(MemoryConstants::kiloByte, releaseHelper));
-    EXPECT_EQ(2 * MemoryConstants::kiloByte, gfxCoreHelper.alignSlmSizePerThreadGroup(MemoryConstants::kiloByte + 1, releaseHelper));
-    EXPECT_EQ(2 * MemoryConstants::kiloByte, gfxCoreHelper.alignSlmSizePerThreadGroup(2 * MemoryConstants::kiloByte, releaseHelper));
-    EXPECT_EQ(4 * MemoryConstants::kiloByte, gfxCoreHelper.alignSlmSizePerThreadGroup(2 * MemoryConstants::kiloByte + 1, releaseHelper));
-    EXPECT_EQ(4 * MemoryConstants::kiloByte, gfxCoreHelper.alignSlmSizePerThreadGroup(4 * MemoryConstants::kiloByte, releaseHelper));
-    EXPECT_EQ(8 * MemoryConstants::kiloByte, gfxCoreHelper.alignSlmSizePerThreadGroup(4 * MemoryConstants::kiloByte + 1, releaseHelper));
-    EXPECT_EQ(8 * MemoryConstants::kiloByte, gfxCoreHelper.alignSlmSizePerThreadGroup(8 * MemoryConstants::kiloByte, releaseHelper));
-    EXPECT_EQ(16 * MemoryConstants::kiloByte, gfxCoreHelper.alignSlmSizePerThreadGroup(8 * MemoryConstants::kiloByte + 1, releaseHelper));
-    EXPECT_EQ(16 * MemoryConstants::kiloByte, gfxCoreHelper.alignSlmSizePerThreadGroup(16 * MemoryConstants::kiloByte, releaseHelper));
-    EXPECT_EQ(32 * MemoryConstants::kiloByte, gfxCoreHelper.alignSlmSizePerThreadGroup(16 * MemoryConstants::kiloByte + 1, releaseHelper));
-    EXPECT_EQ(32 * MemoryConstants::kiloByte, gfxCoreHelper.alignSlmSizePerThreadGroup(32 * MemoryConstants::kiloByte, releaseHelper));
-    EXPECT_EQ(64 * MemoryConstants::kiloByte, gfxCoreHelper.alignSlmSizePerThreadGroup(32 * MemoryConstants::kiloByte + 1, releaseHelper));
-    EXPECT_EQ(64 * MemoryConstants::kiloByte, gfxCoreHelper.alignSlmSizePerThreadGroup(64 * MemoryConstants::kiloByte, releaseHelper));
 }
 
 XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenXeHpgCoreWhenCheckingIfEngineTypeRemappingIsRequiredThenReturnTrue) {

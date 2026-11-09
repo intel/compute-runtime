@@ -984,28 +984,6 @@ HWTEST_F(ProductHelperCommonTest, givenDebugFlagSetWhenEnablingBlitterOperations
     EXPECT_FALSE(hardwareInfo.capabilityTable.blitterOperationsSupported);
 }
 
-HWCMDTEST_F(IGFX_GEN12LP_CORE, GfxCoreHelperTest, GivenVariousValuesWhenAlignSlmSizePerThreadGroupIsCalledThenCorrectValueIsReturned) {
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-
-    const auto &releaseHelper = pDevice->getReleaseHelper();
-
-    EXPECT_EQ(0u, gfxCoreHelper.alignSlmSizePerThreadGroup(0, releaseHelper));
-    EXPECT_EQ(MemoryConstants::kiloByte, gfxCoreHelper.alignSlmSizePerThreadGroup(1, releaseHelper));
-    EXPECT_EQ(MemoryConstants::kiloByte, gfxCoreHelper.alignSlmSizePerThreadGroup(MemoryConstants::kiloByte, releaseHelper));
-    EXPECT_EQ(2 * MemoryConstants::kiloByte, gfxCoreHelper.alignSlmSizePerThreadGroup(MemoryConstants::kiloByte + 1, releaseHelper));
-    EXPECT_EQ(2 * MemoryConstants::kiloByte, gfxCoreHelper.alignSlmSizePerThreadGroup(2 * MemoryConstants::kiloByte, releaseHelper));
-    EXPECT_EQ(4 * MemoryConstants::kiloByte, gfxCoreHelper.alignSlmSizePerThreadGroup(2 * MemoryConstants::kiloByte + 1, releaseHelper));
-    EXPECT_EQ(4 * MemoryConstants::kiloByte, gfxCoreHelper.alignSlmSizePerThreadGroup(4 * MemoryConstants::kiloByte, releaseHelper));
-    EXPECT_EQ(8 * MemoryConstants::kiloByte, gfxCoreHelper.alignSlmSizePerThreadGroup(4 * MemoryConstants::kiloByte + 1, releaseHelper));
-    EXPECT_EQ(8 * MemoryConstants::kiloByte, gfxCoreHelper.alignSlmSizePerThreadGroup(8 * MemoryConstants::kiloByte, releaseHelper));
-    EXPECT_EQ(16 * MemoryConstants::kiloByte, gfxCoreHelper.alignSlmSizePerThreadGroup(8 * MemoryConstants::kiloByte + 1, releaseHelper));
-    EXPECT_EQ(16 * MemoryConstants::kiloByte, gfxCoreHelper.alignSlmSizePerThreadGroup(16 * MemoryConstants::kiloByte, releaseHelper));
-    EXPECT_EQ(32 * MemoryConstants::kiloByte, gfxCoreHelper.alignSlmSizePerThreadGroup(16 * MemoryConstants::kiloByte + 1, releaseHelper));
-    EXPECT_EQ(32 * MemoryConstants::kiloByte, gfxCoreHelper.alignSlmSizePerThreadGroup(32 * MemoryConstants::kiloByte, releaseHelper));
-    EXPECT_EQ(64 * MemoryConstants::kiloByte, gfxCoreHelper.alignSlmSizePerThreadGroup(32 * MemoryConstants::kiloByte + 1, releaseHelper));
-    EXPECT_EQ(64 * MemoryConstants::kiloByte, gfxCoreHelper.alignSlmSizePerThreadGroup(64 * MemoryConstants::kiloByte, releaseHelper));
-}
-
 TEST_F(GfxCoreHelperTest, WhenGettingIsCpuImageTransferPreferredThenFalseIsReturned) {
     REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
@@ -1838,8 +1816,31 @@ HWTEST2_F(GfxCoreHelperTestWithEnginesCheck, whenGetEnginesCalledThenRegularCcsI
 }
 
 using IsNotXe2HpgCore = IsNotGfxCore<IGFX_XE2_HPG_CORE>;
+using IsWithinGen12lpCoreAndXeHpgCore = IsWithinGfxCore<IGFX_GEN12LP_CORE, IGFX_XE_HPG_CORE>;
 
 HWTEST2_F(GfxCoreHelperTest, givenNotXe2HpgCoreWhenAskedForMidThreadPreemptionAllocationOnDemandSupportThenFalseIsReturned, IsNotXe2HpgCore) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     EXPECT_FALSE(gfxCoreHelper.isMidThreadPreemptionAllocationOnDemandSupported());
+}
+
+HWTEST2_F(GfxCoreHelperTest, GivenVariousValuesWhenAlignSlmSizePerThreadGroupIsCalledThenCorrectValueIsReturned, IsWithinGen12lpCoreAndXeHpgCore) {
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+
+    const auto &releaseHelper = pDevice->getReleaseHelper();
+
+    EXPECT_EQ(0u, gfxCoreHelper.alignSlmSizePerThreadGroup(0, releaseHelper));
+    EXPECT_EQ(MemoryConstants::kiloByte, gfxCoreHelper.alignSlmSizePerThreadGroup(1, releaseHelper));
+    EXPECT_EQ(MemoryConstants::kiloByte, gfxCoreHelper.alignSlmSizePerThreadGroup(MemoryConstants::kiloByte, releaseHelper));
+    EXPECT_EQ(2 * MemoryConstants::kiloByte, gfxCoreHelper.alignSlmSizePerThreadGroup(MemoryConstants::kiloByte + 1, releaseHelper));
+    EXPECT_EQ(2 * MemoryConstants::kiloByte, gfxCoreHelper.alignSlmSizePerThreadGroup(2 * MemoryConstants::kiloByte, releaseHelper));
+    EXPECT_EQ(4 * MemoryConstants::kiloByte, gfxCoreHelper.alignSlmSizePerThreadGroup(2 * MemoryConstants::kiloByte + 1, releaseHelper));
+    EXPECT_EQ(4 * MemoryConstants::kiloByte, gfxCoreHelper.alignSlmSizePerThreadGroup(4 * MemoryConstants::kiloByte, releaseHelper));
+    EXPECT_EQ(8 * MemoryConstants::kiloByte, gfxCoreHelper.alignSlmSizePerThreadGroup(4 * MemoryConstants::kiloByte + 1, releaseHelper));
+    EXPECT_EQ(8 * MemoryConstants::kiloByte, gfxCoreHelper.alignSlmSizePerThreadGroup(8 * MemoryConstants::kiloByte, releaseHelper));
+    EXPECT_EQ(16 * MemoryConstants::kiloByte, gfxCoreHelper.alignSlmSizePerThreadGroup(8 * MemoryConstants::kiloByte + 1, releaseHelper));
+    EXPECT_EQ(16 * MemoryConstants::kiloByte, gfxCoreHelper.alignSlmSizePerThreadGroup(16 * MemoryConstants::kiloByte, releaseHelper));
+    EXPECT_EQ(32 * MemoryConstants::kiloByte, gfxCoreHelper.alignSlmSizePerThreadGroup(16 * MemoryConstants::kiloByte + 1, releaseHelper));
+    EXPECT_EQ(32 * MemoryConstants::kiloByte, gfxCoreHelper.alignSlmSizePerThreadGroup(32 * MemoryConstants::kiloByte, releaseHelper));
+    EXPECT_EQ(64 * MemoryConstants::kiloByte, gfxCoreHelper.alignSlmSizePerThreadGroup(32 * MemoryConstants::kiloByte + 1, releaseHelper));
+    EXPECT_EQ(64 * MemoryConstants::kiloByte, gfxCoreHelper.alignSlmSizePerThreadGroup(64 * MemoryConstants::kiloByte, releaseHelper));
 }
