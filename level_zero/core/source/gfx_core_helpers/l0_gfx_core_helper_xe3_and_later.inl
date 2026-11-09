@@ -74,11 +74,6 @@ std::vector<EuThread::ThreadId> L0GfxCoreHelperHw<Family>::getThreadsFromAttenti
 }
 
 template <typename Family>
-zet_debug_regset_type_intel_gpu_t L0GfxCoreHelperHw<Family>::getRegsetTypeForLargeGrfDetection() const {
-    return ZET_DEBUG_REGSET_TYPE_SR_INTEL_GPU;
-}
-
-template <typename Family>
 void L0GfxCoreHelperHw<Family>::p2pDecompressBufferIfRequired(NEO::GraphicsAllocation *alloc, DriverHandle *driverHandle) const {
 }
 

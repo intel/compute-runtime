@@ -30,11 +30,6 @@ bool L0GfxCoreHelperHw<Family>::platformSupportsPipelineSelectTracking() const {
 }
 
 template <typename Family>
-bool L0GfxCoreHelperHw<Family>::platformSupportsStateBaseAddressTracking(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const {
-    return false;
-}
-
-template <typename Family>
 uint32_t L0GfxCoreHelperHw<Family>::getEventBaseMaxPacketCount(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const {
 
     auto &productHelper = rootDeviceEnvironment.getProductHelper();
@@ -47,11 +42,6 @@ uint32_t L0GfxCoreHelperHw<Family>::getEventBaseMaxPacketCount(const NEO::RootDe
     }
 
     return basePackets;
-}
-
-template <typename Family>
-NEO::HeapAddressModel L0GfxCoreHelperHw<Family>::getPlatformHeapAddressModel(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const {
-    return NEO::HeapAddressModel::privateHeaps;
 }
 
 template <typename Family>

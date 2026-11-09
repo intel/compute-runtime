@@ -43,6 +43,16 @@ L0::Event *L0GfxCoreHelperHw<Family>::createStandaloneEvent(const EventDescripto
 }
 
 template <typename Family>
+bool L0GfxCoreHelperHw<Family>::platformSupportsStateBaseAddressTracking(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const {
+    return false;
+}
+
+template <typename Family>
+NEO::HeapAddressModel L0GfxCoreHelperHw<Family>::getPlatformHeapAddressModel(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const {
+    return NEO::HeapAddressModel::privateHeaps;
+}
+
+template <typename Family>
 bool L0GfxCoreHelperHw<Family>::alwaysAllocateEventInLocalMem() const {
     return false;
 }

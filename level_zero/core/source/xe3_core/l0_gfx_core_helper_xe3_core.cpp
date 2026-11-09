@@ -9,7 +9,6 @@
 
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper_base.inl"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper_pvc_and_later.inl"
-#include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper_pvc_to_xe3p.inl"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper_xe2_hpg_and_later.inl"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper_xe2_hpg_xe3.inl"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper_xe3_and_later.inl"

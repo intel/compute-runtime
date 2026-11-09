@@ -25,4 +25,9 @@ bool L0GfxCoreHelperHw<Family>::synchronizedDispatchSupported() const {
     return true;
 }
 
+template <typename Family>
+size_t L0GfxCoreHelperHw<Family>::getMaxFillPatternSizeForCopyEngine() const {
+    return sizeof(uint8_t);
+}
+
 } // namespace L0

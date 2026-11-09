@@ -15,7 +15,6 @@
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper_base.inl"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper_pvc_and_later.inl"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper_pvc_to_xe2.inl"
-#include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper_pvc_to_xe3p.inl"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper_xe2_hpg_and_later.inl"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper_xe2_hpg_xe3.inl"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper_xehp_and_later.inl"
@@ -24,11 +23,6 @@
 namespace L0 {
 using Family = NEO::Xe2HpgCoreFamily;
 static auto gfxCore = IGFX_XE2_HPG_CORE;
-
-template <>
-zet_debug_regset_type_intel_gpu_t L0GfxCoreHelperHw<Family>::getRegsetTypeForLargeGrfDetection() const {
-    return ZET_DEBUG_REGSET_TYPE_SR_INTEL_GPU;
-}
 
 template <typename Family>
 uint32_t L0GfxCoreHelperHw<Family>::getGrfRegisterCount(uint32_t *regPtr) const {
