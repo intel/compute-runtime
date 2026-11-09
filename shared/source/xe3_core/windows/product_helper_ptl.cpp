@@ -17,5 +17,6 @@ constexpr static auto gfxProduct = IGFX_PTL;
 namespace NEO {
 
 template class ProductHelperHw<gfxProduct>;
+template struct EnableProductHelper<gfxProduct>;
 
 } // namespace NEO

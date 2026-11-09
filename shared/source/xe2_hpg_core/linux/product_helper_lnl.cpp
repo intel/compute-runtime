@@ -51,4 +51,5 @@ bool ProductHelperHw<gfxProduct>::useSharedSystemUsm() const {
 }
 
 template class ProductHelperHw<gfxProduct>;
+template struct EnableProductHelper<gfxProduct>;
 } // namespace NEO

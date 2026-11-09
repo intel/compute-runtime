@@ -31,4 +31,5 @@ int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, O
 }
 
 template class ProductHelperHw<gfxProduct>;
+template struct EnableProductHelper<gfxProduct>;
 } // namespace NEO

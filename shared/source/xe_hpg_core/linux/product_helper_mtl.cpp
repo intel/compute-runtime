@@ -17,5 +17,6 @@ constexpr static auto gfxProduct = IGFX_METEORLAKE;
 namespace NEO {
 
 template class NEO::ProductHelperHw<gfxProduct>;
+template struct NEO::EnableProductHelper<gfxProduct>;
 
 } // namespace NEO

@@ -27,6 +27,7 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/os_interface/product_helper_hw.h"
+#include "shared/source/os_interface/product_helper_registration.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/unified_memory/unified_memory.h"
 #include "shared/source/unified_memory/usm_memory_support.h"
@@ -40,6 +41,12 @@
 #include <bitset>
 
 namespace NEO {
+
+template <PRODUCT_FAMILY gfxProduct>
+EnableProductHelper<gfxProduct>::EnableProductHelper() {
+    auto productHelperCreateFunction = ProductHelperHw<gfxProduct>::create;
+    productHelperFactory[gfxProduct] = productHelperCreateFunction;
+}
 
 template <PRODUCT_FAMILY gfxProduct>
 std::unique_ptr<DeviceCapsReader> ProductHelperHw<gfxProduct>::getDeviceCapsReader(const DriverModel &driverModel) const { return nullptr; }

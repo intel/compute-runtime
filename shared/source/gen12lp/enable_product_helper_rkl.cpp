@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/os_interface/product_helper_hw.h"
+#include "shared/source/os_interface/product_helper_registration.h"
 
 namespace NEO {
 

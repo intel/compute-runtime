@@ -200,12 +200,4 @@ class ProductHelperHw : public ProductHelper {
     bool isCompressionForbiddenCommon(bool defaultValue) const;
 };
 
-template <PRODUCT_FAMILY gfxProduct>
-struct EnableProductHelper {
-    EnableProductHelper() {
-        auto productHelperCreateFunction = ProductHelperHw<gfxProduct>::create;
-        productHelperFactory[gfxProduct] = productHelperCreateFunction;
-    }
-};
-
 } // namespace NEO

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,4 +24,5 @@ bool ProductHelperHw<gfxProduct>::restartDirectSubmissionForHostptrFree() const 
 }
 
 template class ProductHelperHw<gfxProduct>;
+template struct EnableProductHelper<gfxProduct>;
 } // namespace NEO

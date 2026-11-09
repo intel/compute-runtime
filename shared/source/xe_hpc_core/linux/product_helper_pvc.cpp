@@ -140,3 +140,4 @@ bool ProductHelperHw<gfxProduct>::isDisableScratchPagesSupported() const {
 #include "shared/source/xe_hpc_core/linux/product_helper_xe_hpc_core.inl"
 
 template class NEO::ProductHelperHw<gfxProduct>;
+template struct NEO::EnableProductHelper<gfxProduct>;

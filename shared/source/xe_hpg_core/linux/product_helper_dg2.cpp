@@ -70,4 +70,5 @@ bool ProductHelperHw<gfxProduct>::isDisableScratchPagesRequiredForDebugger() con
 }
 
 template class ProductHelperHw<gfxProduct>;
+template struct EnableProductHelper<gfxProduct>;
 } // namespace NEO

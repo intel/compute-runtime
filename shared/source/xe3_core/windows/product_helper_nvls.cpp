@@ -22,5 +22,6 @@ bool ProductHelperHw<gfxProduct>::isLEOSupported() const {
 }
 
 template class ProductHelperHw<gfxProduct>;
+template struct EnableProductHelper<gfxProduct>;
 
 } // namespace NEO

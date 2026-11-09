@@ -24,5 +24,6 @@ bool ProductHelperHw<gfxProduct>::areSecondaryContextsSupported() const {
 }
 
 template class ProductHelperHw<gfxProduct>;
+template struct EnableProductHelper<gfxProduct>;
 
 } // namespace NEO

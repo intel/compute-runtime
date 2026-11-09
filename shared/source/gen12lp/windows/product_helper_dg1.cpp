@@ -24,4 +24,5 @@ void ProductHelperHw<gfxProduct>::setCapabilityCoherencyFlag(const HardwareInfo 
 }
 
 template class ProductHelperHw<gfxProduct>;
+template struct EnableProductHelper<gfxProduct>;
 } // namespace NEO

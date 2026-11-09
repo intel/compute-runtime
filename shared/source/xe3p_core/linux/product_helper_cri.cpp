@@ -60,4 +60,5 @@ void ProductHelperHw<gfxProduct>::overrideDirectSubmissionTimeouts(uint64_t &tim
 }
 
 template class ProductHelperHw<gfxProduct>;
+template struct EnableProductHelper<gfxProduct>;
 } // namespace NEO

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,3 +17,4 @@ constexpr static auto gfxProduct = IGFX_ALDERLAKE_S;
 #include "shared/source/os_interface/linux/product_helper_before_xe2_drm_slm.inl"
 
 template class NEO::ProductHelperHw<gfxProduct>;
+template struct NEO::EnableProductHelper<gfxProduct>;

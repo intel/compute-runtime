@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,3 +16,4 @@ constexpr static auto gfxProduct = IGFX_ARROWLAKE;
 #include "shared/source/xe_hpg_core/xe_lpg/windows/product_helper_xe_lpg_windows.inl"
 
 template class NEO::ProductHelperHw<gfxProduct>;
+template struct NEO::EnableProductHelper<gfxProduct>;

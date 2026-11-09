@@ -18,3 +18,4 @@ constexpr static auto gfxProduct = IGFX_CRI;
 #include "shared/source/xe3p_core/os_agnostic_product_helper_xe3p_core.inl"
 
 template class NEO::ProductHelperHw<gfxProduct>;
+template struct NEO::EnableProductHelper<gfxProduct>;

@@ -23,5 +23,6 @@ bool ProductHelperHw<gfxProduct>::isSvmHeapReservationSupported() const {
 }
 
 template class ProductHelperHw<gfxProduct>;
+template struct EnableProductHelper<gfxProduct>;
 
 } // namespace NEO
