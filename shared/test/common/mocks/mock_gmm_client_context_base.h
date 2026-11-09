@@ -45,6 +45,8 @@ class MockGmmClientContextBase : public GmmClientContext {
     bool passedCompressedSettingForGetPatIndexQuery = false;
     bool passedCpuCacheableSettingForGetPatIndexQuery = false;
     std::optional<GmmResourceUsageType> passedUsageTypeForGetPatIndexQuery;
+    GMM_RESOURCE_INFO *passedResourceInfoForGetPatIndexQuery = nullptr;
+    uint32_t getPatIndexQueryCalled = 0u;
 
   protected:
     using GmmClientContext::GmmClientContext;

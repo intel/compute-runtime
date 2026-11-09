@@ -7858,6 +7858,26 @@ TEST_F(DrmAllocationTests, givenForceCoherentTrueWithGmmWhenUncachedThenGmmCache
     EXPECT_EQ(gmm->getResourceUsageType(), mockClientContext->passedUsageTypeForGetPatIndexQuery.value());
 }
 
+TEST_F(DrmAllocationTests, givenGmmWhenGettingPatIndexThenResourceInfoOfGmmIsPassedToPatIndexQuery) {
+    const uint32_t rootDeviceIndex = 0u;
+    DrmMock drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
+    drm.vmBindPatIndexProgrammingSupported = true;
+
+    auto mockClientContext = static_cast<MockGmmClientContextBase *>(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getGmmClientContext());
+
+    GmmRequirements gmmRequirements{};
+    gmmRequirements.allowLargePages = true;
+    gmmRequirements.preferCompressed = false;
+    auto gmm = std::make_unique<Gmm>(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getGmmHelper(),
+                                     nullptr, 4096, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements);
+
+    const auto queriesBefore = mockClientContext->getPatIndexQueryCalled;
+    drm.getPatIndex(gmm.get(), AllocationType::buffer, CacheRegion::defaultRegion, CachePolicy::writeBack, false, false, false);
+
+    EXPECT_EQ(queriesBefore + 1u, mockClientContext->getPatIndexQueryCalled);
+    EXPECT_EQ(gmm->gmmResourceInfo->peekGmmResourceInfo(), mockClientContext->passedResourceInfoForGetPatIndexQuery);
+}
+
 TEST_F(DrmAllocationTests, givenGmmAndMemoryPropertiesWhenGettingPatThenPreserveGmmCacheabilityAndSelectCoherentUsageForCacheableSystemMemoryOrForcedCoherencyWithoutGmm) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableOverrideToPat19ForSystemMemory.set(-1);
