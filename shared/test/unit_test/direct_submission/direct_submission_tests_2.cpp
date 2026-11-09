@@ -1997,6 +1997,27 @@ HWTEST_F(DirectSubmissionRelaxedOrderingTests, givenDebugFlagSetWhenAskingForRel
     }
 }
 
+HWTEST_F(DirectSubmissionRelaxedOrderingTests, givenSimulationCsrWhenAskingForRelaxedOrderingSupportThenDisabledByDefaultAndDebugFlagIsRespected) {
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(pDevice->getDefaultEngine().commandStreamReceiver);
+    ultCsr->commandStreamReceiverType = CommandStreamReceiverType::tbx;
+
+    {
+        debugManager.flags.DirectSubmissionRelaxedOrdering.set(-1);
+
+        MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*ultCsr);
+        EXPECT_FALSE(directSubmission.isRelaxedOrderingEnabled());
+    }
+
+    {
+        debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
+
+        MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*ultCsr);
+        EXPECT_TRUE(directSubmission.isRelaxedOrderingEnabled());
+    }
+
+    ultCsr->commandStreamReceiverType = CommandStreamReceiverType::hardware;
+}
+
 HWTEST_F(DirectSubmissionRelaxedOrderingTests, givenSoftwareTagCountersEnabledWhenAskingForRelaxedOrderingSupportThenDisable) {
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(pDevice->getDefaultEngine().commandStreamReceiver);
 

@@ -123,7 +123,7 @@ CommandStreamReceiverSimulatedCommonHw<GfxFamily>::CommandStreamReceiverSimulate
         directSubmissionEnabled = debugManager.flags.EnableDirectSubmission.get() > 0;
     }
     this->pollForCompletionEnabled = !(directSubmissionEnabled &&
-                                       debugManager.flags.EnableDirectSubmissionInSimulationMode.get() > 0 &&
+                                       debugManager.isDirectSubmissionInSimulationModeEnabled() &&
                                        anyDirectSubmissionEngineSupported);
 }
 template <typename GfxFamily>
