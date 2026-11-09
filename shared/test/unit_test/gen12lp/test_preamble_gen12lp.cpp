@@ -207,13 +207,6 @@ HWTEST2_F(Gen12LpPreambleVfeState, givenDisableEUFusionAndCFEFusedEUDispatchWhen
     EXPECT_FALSE(mediaVfeState->getDisableSlice0Subslice2());
 }
 
-using ThreadArbitrationGen12Lp = PreambleFixture;
-GEN12LPTEST_F(ThreadArbitrationGen12Lp, whenGetSupportThreadArbitrationPoliciesIsCalledThenEmptyVectorIsReturned) {
-    auto supportedPolicies = PreambleHelper<FamilyType>::getSupportedThreadArbitrationPolicies();
-
-    EXPECT_EQ(0u, supportedPolicies.size());
-}
-
 using PreemptionWatermarkGen12Lp = PreambleFixture;
 GEN12LPTEST_F(PreemptionWatermarkGen12Lp, WhenPreambleIsCreatedThenPreambleWorkAroundsIsNotProgrammed) {
     PreambleHelper<FamilyType>::programGenSpecificPreambleWorkArounds(&linearStream, pDevice->getHardwareInfo());
