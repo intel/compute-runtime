@@ -104,7 +104,7 @@ struct DebugSessionImp : DebugSession {
     virtual void detachTile() = 0;
     virtual void cleanRootSessionAfterDetach(uint32_t deviceIndex) = 0;
 
-    static bool isHeaplessMode(L0::Device *device, const SIP::intelgt_state_save_area_V3 &ssa);
+    static bool isHeaplessMode(L0::Device *device, const NEO::StateSaveAreaHeader &stateSaveAreaHeader);
     static const SIP::regset_desc *getSbaRegsetDesc(L0::Device *device, const NEO::StateSaveAreaHeader &ssah);
     static const SIP::regset_desc *getModeFlagsRegsetDesc();
     static const SIP::regset_desc *getDebugScratchRegsetDesc();
@@ -201,7 +201,7 @@ struct DebugSessionImp : DebugSession {
     MOCKABLE_VIRTUAL ze_result_t readFifo(uint64_t vmHandle, std::vector<EuThread::ThreadId> &threadsWithAttention);
     MOCKABLE_VIRTUAL ze_result_t isValidNode(uint64_t vmHandle, uint64_t gpuVa, SIP::fifo_node &node);
     ze_result_t writeFifoTail(uint64_t vmHandle, uint64_t tailGpuVa, uint32_t fifoTailIndex);
-    void getFifoOffsets(const NEO::StateSaveAreaHeader *stateSaveAreaHeader, uint64_t &offsetTail, uint64_t &offsetFifoSize, uint64_t &offsetFifo, uint64_t gpuVa);
+    void getFifoOffsets(const NEO::StateSaveAreaHeader *stateSaveAreaHeader, uint64_t &offsetTail, uint64_t &offsetHead, uint64_t &offsetFifoSize, uint64_t &offsetFifo, uint64_t gpuVa);
 
     virtual uint64_t getContextStateSaveAreaGpuVa(uint64_t memoryHandle) = 0;
     virtual size_t getContextStateSaveAreaSize(uint64_t memoryHandle) = 0;

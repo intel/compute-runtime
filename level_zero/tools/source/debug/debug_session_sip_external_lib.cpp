@@ -7,6 +7,7 @@
 
 #include "level_zero/tools/source/debug/debug_session_sip_external_lib.h"
 
+#include "shared/source/debugger/state_save_area_header_v3.h"
 #include "shared/source/device/device.h"
 #include "shared/source/sip_external_lib/sip_external_lib.h"
 
@@ -63,10 +64,12 @@ bool DebugSessionImp::getThreadSipCounterWithMemHandle(const void *stateSaveArea
     return false;
 }
 
-void DebugSessionImp::getFifoOffsets(const NEO::StateSaveAreaHeader *stateSaveAreaHeader, uint64_t &offsetTail, uint64_t &offsetFifoSize, uint64_t &offsetFifo, uint64_t gpuVa) {
-    offsetTail = (sizeof(SIP::StateSaveArea)) + offsetof(struct SIP::intelgt_state_save_area_V3, fifo_tail);
-    offsetFifoSize = (sizeof(SIP::StateSaveArea)) + offsetof(struct SIP::intelgt_state_save_area_V3, fifo_size);
-    offsetFifo = gpuVa + (stateSaveAreaHeader->versionHeader.size * 8) + stateSaveAreaHeader->regHeaderV3.fifo_offset;
+void DebugSessionImp::getFifoOffsets(const NEO::StateSaveAreaHeader *stateSaveAreaHeader, uint64_t &offsetTail, uint64_t &offsetHead, uint64_t &offsetFifoSize, uint64_t &offsetFifo, uint64_t gpuVa) {
+    const auto fifoIndexOffsets = NEO::getStateSaveAreaV3FifoIndexOffsets(*stateSaveAreaHeader);
+    offsetTail = fifoIndexOffsets.fifoTail;
+    offsetHead = fifoIndexOffsets.fifoHead;
+    offsetFifoSize = fifoIndexOffsets.fifoSize;
+    offsetFifo = gpuVa + (stateSaveAreaHeader->versionHeader.size * 8) + NEO::getStateSaveAreaV3FifoOffset(*stateSaveAreaHeader);
 }
 
 } // namespace L0

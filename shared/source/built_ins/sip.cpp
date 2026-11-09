@@ -11,6 +11,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/debugger/debugger.h"
 #include "shared/source/debugger/debugger_l0.h"
+#include "shared/source/debugger/state_save_area_header_v3.h"
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
@@ -114,7 +115,7 @@ size_t SipKernel::getStateSaveAreaSize(Device *device) const {
                                 hdr->regHeaderV3.num_threads_per_eu *
                                 hdr->regHeaderV3.state_save_size +
                             hdr->versionHeader.size * 8 + hdr->regHeaderV3.state_area_offset;
-        stateSaveAreaSize += hdr->regHeaderV3.fifo_size * sizeof(SIP::fifo_node);
+        stateSaveAreaSize += NEO::getStateSaveAreaV3FifoSize(*hdr) * sizeof(SIP::fifo_node);
 
     } else if (hdr->versionHeader.version.major < 3) {
         stateSaveAreaSize = numSlices *

@@ -6,13 +6,17 @@
  */
 
 #include "shared/source/debugger/debugger.h"
+#include "shared/source/debugger/state_save_area_header_v3.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/memory_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/test/common/mocks/mock_sip.h"
 
 #include "StateSaveAreaHeaderWrapper.h"
+
+#include <limits>
 
 namespace NEO {
 
@@ -236,6 +240,37 @@ std::vector<char> createStateSaveAreaHeader(uint32_t version, uint16_t grfNum, u
 
 std::vector<char> createStateSaveAreaHeader(uint32_t version) {
     return createStateSaveAreaHeader(version, 128);
+}
+
+std::vector<char> createStateSaveAreaHeaderV3Minor1() {
+    auto stateSaveAreaHeader = createStateSaveAreaHeader(3);
+    auto pStateSaveAreaHeader = reinterpret_cast<NEO::StateSaveAreaHeader *>(stateSaveAreaHeader.data());
+    const SIP::intelgt_state_save_area_V3 regHeaderV3 = pStateSaveAreaHeader->regHeaderV3;
+    constexpr uint32_t srMagicOffsetSeenThroughV3Layout = std::numeric_limits<uint32_t>::max();
+
+    SIP::intelgt_state_save_area_V3_1 regHeaderV3Minor1 = {};
+    regHeaderV3Minor1.num_slices = regHeaderV3.num_slices;
+    regHeaderV3Minor1.num_subslices_per_slice = regHeaderV3.num_subslices_per_slice;
+    regHeaderV3Minor1.num_eus_per_subslice = regHeaderV3.num_eus_per_subslice;
+    regHeaderV3Minor1.num_threads_per_eu = regHeaderV3.num_threads_per_eu;
+    regHeaderV3Minor1.state_area_offset = regHeaderV3.state_area_offset;
+    regHeaderV3Minor1.state_save_size = regHeaderV3.state_save_size;
+    regHeaderV3Minor1.slm_area_offset = regHeaderV3.slm_area_offset;
+    regHeaderV3Minor1.slm_bank_size = regHeaderV3.slm_bank_size;
+    regHeaderV3Minor1.fifo_head = regHeaderV3.fifo_head;
+    regHeaderV3Minor1.reserved0 = srMagicOffsetSeenThroughV3Layout;
+    regHeaderV3Minor1.sr_magic_offset = regHeaderV3.sr_magic_offset;
+    regHeaderV3Minor1.fifo_offset = regHeaderV3.fifo_offset;
+    regHeaderV3Minor1.fifo_size = regHeaderV3.fifo_size;
+    regHeaderV3Minor1.fifo_version = regHeaderV3.fifo_version;
+    regHeaderV3Minor1.sip_flags = regHeaderV3.sip_flags;
+    regHeaderV3Minor1.fifo_tail = regHeaderV3.fifo_tail;
+    const size_t regsetsSize = sizeof(regHeaderV3Minor1) - offsetof(SIP::intelgt_state_save_area_V3_1, grf);
+    memcpy_s(&regHeaderV3Minor1.grf, regsetsSize, &regHeaderV3.grf, regsetsSize);
+
+    pStateSaveAreaHeader->regHeaderV3Minor1 = regHeaderV3Minor1;
+    pStateSaveAreaHeader->versionHeader.version.minor = NEO::stateSaveAreaV3Minor1LayoutMinorVersion;
+    return stateSaveAreaHeader;
 }
 
 std::vector<char> createStateSaveAreaHeader(uint32_t version, uint16_t grfNum) {

@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/debugger/state_save_area_header_v3.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/sip_external_lib/sip_external_lib.h"
 #include "shared/test/common/helpers/raii_gfx_core_helper.h"
@@ -2634,7 +2635,10 @@ TEST(DebugSessionTest, GivenBindlessSipVersion2WhenResumingThreadThenCheckIfThre
 
 struct DebugSessionTestSwFifoFixture : public ::testing::Test {
     void SetUp() override {
-        auto stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(3);
+        setUpFifo(MockSipData::createStateSaveAreaHeader(3));
+    }
+
+    void setUpFifo(std::vector<char> stateSaveAreaHeader) {
         zet_debug_config_t config = {};
         config.pid = 0x1234;
         auto hwInfo = *NEO::defaultHwInfo.get();
@@ -2643,11 +2647,16 @@ struct DebugSessionTestSwFifoFixture : public ::testing::Test {
         session = std::make_unique<MockDebugSession>(config, &mockDevice);
 
         stateSaveAreaHeaderPtr = reinterpret_cast<NEO::StateSaveAreaHeader *>(stateSaveAreaHeader.data());
-        stateSaveAreaHeaderPtr->regHeaderV3.fifo_head = fifoHead;
-        stateSaveAreaHeaderPtr->regHeaderV3.fifo_tail = fifoTail;
+        if (NEO::isStateSaveAreaV3Minor1Layout(*stateSaveAreaHeaderPtr)) {
+            stateSaveAreaHeaderPtr->regHeaderV3Minor1.fifo_head = fifoHead;
+            stateSaveAreaHeaderPtr->regHeaderV3Minor1.fifo_tail = fifoTail;
+        } else {
+            stateSaveAreaHeaderPtr->regHeaderV3.fifo_head = fifoHead;
+            stateSaveAreaHeaderPtr->regHeaderV3.fifo_tail = fifoTail;
+        }
 
-        offsetFifo = (stateSaveAreaHeaderPtr->versionHeader.size * 8) + stateSaveAreaHeaderPtr->regHeaderV3.fifo_offset;
-        stateSaveAreaHeader.resize(offsetFifo + stateSaveAreaHeaderPtr->regHeaderV3.fifo_size * (sizeof(SIP::fifo_node)));
+        offsetFifo = (stateSaveAreaHeaderPtr->versionHeader.size * 8) + NEO::getStateSaveAreaV3FifoOffset(*stateSaveAreaHeaderPtr);
+        stateSaveAreaHeader.resize(offsetFifo + NEO::getStateSaveAreaV3FifoSize(*stateSaveAreaHeaderPtr) * (sizeof(SIP::fifo_node)));
         memcpy_s(stateSaveAreaHeader.data() + offsetFifo,
                  fifoVecTillHead.size() * sizeof(SIP::fifo_node),
                  fifoVecTillHead.data(),
@@ -2708,6 +2717,25 @@ TEST_F(DebugSessionTestSwFifoFixture, GivenSwFifoWhenReadingSwFifoThenFifoIsCorr
         EXPECT_EQ(threadsWithAttention[index].eu, fifoVecTillHead[index].eu_id);
         EXPECT_EQ(threadsWithAttention[index].thread, fifoVecTillHead[index].thread_id);
     }
+}
+
+struct DebugSessionTestSwFifoV3Minor1Fixture : public DebugSessionTestSwFifoFixture {
+    void SetUp() override {
+        setUpFifo(MockSipData::createStateSaveAreaHeaderV3Minor1());
+    }
+};
+
+TEST_F(DebugSessionTestSwFifoV3Minor1Fixture, GivenSwFifoWithHeadAndTailSplitWhenReadingSwFifoThenFifoIsReadAndDrainedUsingV3Minor1Layout) {
+    std::vector<EuThread::ThreadId> threadsWithAttention;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, session->readFifo(0, threadsWithAttention));
+
+    stateSaveAreaHeaderPtr = reinterpret_cast<NEO::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data());
+    EXPECT_EQ(fifoVecFromTail.size() + fifoVecTillHead.size(), threadsWithAttention.size());
+    EXPECT_EQ(fifoHead, stateSaveAreaHeaderPtr->regHeaderV3Minor1.fifo_tail);
+    EXPECT_EQ(fifoHead, stateSaveAreaHeaderPtr->regHeaderV3Minor1.fifo_head);
+    ASSERT_FALSE(threadsWithAttention.empty());
+    EXPECT_EQ(fifoVecFromTail[0].eu_id, threadsWithAttention[0].eu);
+    EXPECT_EQ(fifoVecFromTail[0].thread_id, threadsWithAttention[0].thread);
 }
 
 TEST_F(DebugSessionTestSwFifoFixture, GivenSwFifoWithHeadIndexAtZeroWhenReadingSwFifoThenFifoIsCorrectlyReadAndDrained) {
@@ -3629,6 +3657,14 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenV3StateSaveHeaderWhenCalculatingS
     ASSERT_EQ(size, threadSlotOffset + pStateSaveAreaHeader->regHeaderV3.sr_magic_offset);
 }
 
+TEST_F(DebugSessionRegistersAccessTestV3, givenV3Minor1StateSaveHeaderWhenCalculatingSrMagicOffsetThenOffsetFromV3Minor1LayoutIsReturned) {
+    session->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeaderV3Minor1();
+    auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
+    EuThread::ThreadId thread0(0, 0, 0, 0, 0);
+    auto threadSlotOffset = session->calculateThreadSlotOffset(thread0);
+    EXPECT_EQ(threadSlotOffset + pStateSaveAreaHeader->regHeaderV3Minor1.sr_magic_offset, session->calculateSrMagicOffset(pStateSaveAreaHeader, session->allThreads[thread0].get()));
+}
+
 TEST_F(DebugSessionRegistersAccessTestV3, givenStateSaveHeaderGreaterThanV3WhenCalculatingSrMagicOffsetResultIsZero) {
     reinterpret_cast<NEO::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data())->versionHeader.version.major = 4;
     auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
@@ -4185,19 +4221,21 @@ TEST_F(DebugSessionRegistersAccessTest, GivenSipVersion2WhenWritingResumeCommand
 }
 
 TEST_F(DebugSessionRegistersAccessTestV3, givenHeaplessFlagSetWhenIsHeaplessModeCalledThenReturnsTrue) {
-    SIP::intelgt_state_save_area_V3 ssa = {};
-    ssa.sip_flags = SIP::SIP_FLAG_HEAPLESS; // Heapless flag set
+    NEO::StateSaveAreaHeader ssa = {};
+    ssa.versionHeader.version.major = 3;
+    ssa.regHeaderV3.sip_flags = SIP::SIP_FLAG_HEAPLESS;
 
     bool result = DebugSessionImp::isHeaplessMode(session->getConnectedDevice(), ssa);
-    EXPECT_TRUE(result); // Should return true when heapless flag is set
+    EXPECT_TRUE(result);
 }
 
 TEST_F(DebugSessionRegistersAccessTest, givenNoHeaplessFlagWhenIsHeaplessModeCalledThenReturnsFalse) {
-    SIP::intelgt_state_save_area_V3 ssa = {};
-    ssa.sip_flags = 0; // No heapless flag set
+    NEO::StateSaveAreaHeader ssa = {};
+    ssa.versionHeader.version.major = 3;
+    ssa.regHeaderV3.sip_flags = 0;
 
     bool result = DebugSessionImp::isHeaplessMode(session->getConnectedDevice(), ssa);
-    EXPECT_FALSE(result); // Should return false when no heapless flag
+    EXPECT_FALSE(result);
 }
 
 TEST_F(DebugSessionRegistersAccessTest, givenValidParametersWhenRegistersAccessHelperCalledForReadThenReturnsSuccess) {
@@ -4412,6 +4450,17 @@ HWTEST2_F(DebugSessionRegistersAccessTestV3, WhenReadingModeRegisterThenCorrectR
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, session->readModeFlags(0, 2, &modeFlags));
     EXPECT_EQ(ZE_RESULT_SUCCESS, session->readModeFlags(0, 1, &modeFlags));
     EXPECT_EQ(modeFlags, SIP::SIP_FLAG_HEAPLESS);
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset();
+}
+
+HWTEST2_F(DebugSessionRegistersAccessTestV3, givenStateSaveAreaHeaderV3Minor1WhenReadingModeRegisterThenSipFlagsFromV3Minor1LayoutAreReturned, IsDebugSipFromIgc) {
+    auto mockBuiltins = new MockBuiltins();
+    mockBuiltins->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeaderV3Minor1();
+    MockRootDeviceEnvironment::resetBuiltins(neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0].get(), mockBuiltins);
+
+    uint32_t modeFlags = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, session->readModeFlags(0, 1, &modeFlags));
+    EXPECT_EQ(static_cast<uint32_t>(SIP::SIP_FLAG_HEAPLESS), modeFlags);
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset();
 }
 
@@ -5777,32 +5826,39 @@ TEST_F(AffinityMaskForSingleSubDeviceTest, givenDeviceDebugSessionWhenSendingInt
 }
 
 TEST_F(DebugSessionRegistersAccessTestV3, givenDeviceWithSipExternalLibInterfaceWhenIsHeaplessModeCalledThenReturnsTrue) {
-    // Test with device that has no SIP external lib interface (default mockDevice)
-    SIP::intelgt_state_save_area_V3 ssa = {};
-    ssa.sip_flags = 0; // No heapless flag set
+    NEO::StateSaveAreaHeader ssa = {};
+    ssa.versionHeader.version.major = 3;
+    ssa.regHeaderV3.sip_flags = 0;
 
     bool result = DebugSessionImp::isHeaplessMode(mockDevice.get(), ssa);
-    EXPECT_FALSE(result); // Should return false because no SIP interface and no heapless flag
+    EXPECT_FALSE(result);
 }
 
 TEST_F(DebugSessionRegistersAccessTestV3, givenDeviceWithoutSipExternalLibInterfaceAndHeaplessFlagWhenIsHeaplessModeCalledThenReturnsTrue) {
-    SIP::intelgt_state_save_area_V3 ssa = {};
-    ssa.sip_flags = SIP::SIP_FLAG_HEAPLESS;
+    NEO::StateSaveAreaHeader ssa = {};
+    ssa.versionHeader.version.major = 3;
+    ssa.regHeaderV3.sip_flags = SIP::SIP_FLAG_HEAPLESS;
 
     bool result = DebugSessionImp::isHeaplessMode(mockDevice.get(), ssa);
-    EXPECT_TRUE(result); // Should return true because of heapless flag
+    EXPECT_TRUE(result);
+}
+
+TEST_F(DebugSessionRegistersAccessTestV3, givenStateSaveAreaHeaderV3Minor1WithHeaplessFlagWhenIsHeaplessModeCalledThenReturnsTrue) {
+    auto stateSaveAreaHeader = MockSipData::createStateSaveAreaHeaderV3Minor1();
+    auto pStateSaveAreaHeader = reinterpret_cast<NEO::StateSaveAreaHeader *>(stateSaveAreaHeader.data());
+    EXPECT_TRUE(DebugSessionImp::isHeaplessMode(mockDevice.get(), *pStateSaveAreaHeader));
 }
 
 TEST_F(DebugSessionRegistersAccessTestV3, givenDeviceWithoutSipExternalLibInterfaceAndNoHeaplessFlagWhenIsHeaplessModeCalledThenReturnsFalse) {
-    SIP::intelgt_state_save_area_V3 ssa = {};
-    ssa.sip_flags = 0; // No heapless flag set
+    NEO::StateSaveAreaHeader ssa = {};
+    ssa.versionHeader.version.major = 3;
+    ssa.regHeaderV3.sip_flags = 0;
 
     bool result = DebugSessionImp::isHeaplessMode(mockDevice.get(), ssa);
-    EXPECT_FALSE(result); // Should return false
+    EXPECT_FALSE(result);
 }
 
 TEST_F(DebugSessionRegistersAccessTestV3, givenDeviceWithMockSipExternalLibInterfaceWhenIsHeaplessModeCalledThenReturnsTrue) {
-    // Create a mock device that returns the mock SipExternalLib
     class MockDeviceWithSipLib : public NEO::MockDevice {
       public:
         MockDeviceWithSipLib() : NEO::MockDevice() {
@@ -5814,17 +5870,16 @@ TEST_F(DebugSessionRegistersAccessTestV3, givenDeviceWithMockSipExternalLibInter
         std::unique_ptr<MockSipExternalLib> mockSipLib;
     };
 
-    // Create the mock NEO device with SIP external lib interface
     auto mockNeoDevice = std::make_unique<MockDeviceWithSipLib>();
 
-    // Create a mock L0 device wrapper
     auto mockL0Device = std::make_unique<MockDeviceImp>(mockNeoDevice.release());
 
-    SIP::intelgt_state_save_area_V3 ssa = {};
-    ssa.sip_flags = 0; // No heapless flag set, but device has SIP external lib
+    NEO::StateSaveAreaHeader ssa = {};
+    ssa.versionHeader.version.major = 3;
+    ssa.regHeaderV3.sip_flags = 0;
 
     bool result = DebugSessionImp::isHeaplessMode(mockL0Device.get(), ssa);
-    EXPECT_TRUE(result); // Should return true because device has SIP external lib interface
+    EXPECT_TRUE(result);
 }
 
 TEST_F(DebugSessionRegistersAccessTest, givenRegistersAccessHelperWithInvalidStartIndexWhenCalledThenReturnsInvalidArgument) {
@@ -6252,7 +6307,6 @@ TEST_F(DebugSessionRegistersAccessTestV3, GivenGetSbaRegsetDescWhenVersionMajorI
 }
 
 HWTEST2_F(DebugSessionRegistersAccessTestV3, givenVersion3WithoutHeaplessModeWhenGetRegisterSetPropertiesCalledThenThreadScratchRegsetNotIncluded, IsDebugSipFromIgc) {
-    // Test the false branch of: isHeaplessMode(device, pStateSaveArea->regHeaderV3) || version.major == 5
     // Version 3, no heapless flag, no SIP external lib -> THREAD_SCRATCH should NOT be included
 
     auto neoDevice = mockDevice->getNEODevice();

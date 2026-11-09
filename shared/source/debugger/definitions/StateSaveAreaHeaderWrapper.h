@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,6 +17,7 @@ struct StateSaveAreaHeader {
     union {
         struct SIP::intelgt_state_save_area regHeader;
         struct SIP::intelgt_state_save_area_V3 regHeaderV3;
+        struct SIP::intelgt_state_save_area_V3_1 regHeaderV3Minor1;
         uint64_t totalWmtpDataSize;
     };
 };

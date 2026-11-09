@@ -53,6 +53,7 @@ void clearUseFlags();
 std::vector<char> createStateSaveAreaHeader(uint32_t version);
 std::vector<char> createStateSaveAreaHeader(uint32_t version, uint16_t grfNum);
 std::vector<char> createStateSaveAreaHeader(uint32_t version, uint16_t grfNum, uint16_t mmeNum);
+std::vector<char> createStateSaveAreaHeaderV3Minor1();
 } // namespace MockSipData
 
 } // namespace NEO

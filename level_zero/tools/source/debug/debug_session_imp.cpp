@@ -8,6 +8,7 @@
 #include "level_zero/tools/source/debug/debug_session_imp.h"
 
 #include "shared/source/built_ins/sip.h"
+#include "shared/source/debugger/state_save_area_header_v3.h"
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
@@ -26,6 +27,7 @@
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/zet_intel_gpu_debug.h"
 
+#include <algorithm>
 #include <cinttypes>
 
 namespace L0 {
@@ -769,7 +771,7 @@ size_t DebugSessionImp::calculateSrMagicOffset(const NEO::StateSaveAreaHeader *s
     auto threadSlotOffset = calculateThreadSlotOffset(thread->getThreadId());
     size_t srMagicOffset = 0;
     if (stateSaveAreaHeader->versionHeader.version.major == 3) {
-        srMagicOffset = threadSlotOffset + stateSaveAreaHeader->regHeaderV3.sr_magic_offset;
+        srMagicOffset = threadSlotOffset + NEO::getStateSaveAreaV3SrMagicOffset(*stateSaveAreaHeader);
     } else if (stateSaveAreaHeader->versionHeader.version.major < 3) {
         srMagicOffset = threadSlotOffset + stateSaveAreaHeader->regHeader.sr_magic_offset;
     } else {
@@ -1161,11 +1163,11 @@ const SIP::regset_desc *DebugSessionImp::getThreadScratchRegsetDesc() {
     return &threadScratch;
 }
 
-bool DebugSessionImp::isHeaplessMode(L0::Device *device, const SIP::intelgt_state_save_area_V3 &ssa) {
+bool DebugSessionImp::isHeaplessMode(L0::Device *device, const NEO::StateSaveAreaHeader &stateSaveAreaHeader) {
     if (device->getNEODevice()->getSipExternalLibInterface()) {
         return true;
     }
-    return (ssa.sip_flags & SIP::SIP_FLAG_HEAPLESS);
+    return (NEO::getStateSaveAreaV3SipFlags(stateSaveAreaHeader) & SIP::SIP_FLAG_HEAPLESS);
 }
 
 const SIP::regset_desc *DebugSessionImp::getSbaRegsetDesc(L0::Device *device, const NEO::StateSaveAreaHeader &ssah) {
@@ -1176,7 +1178,7 @@ const SIP::regset_desc *DebugSessionImp::getSbaRegsetDesc(L0::Device *device, co
         DEBUG_BREAK_IF(true);
         PRINT_DEBUGGER_ERROR_LOG("Unsupported version of State Save Area Header\n", "");
         return nullptr;
-    } else if (ssah.versionHeader.version.major == 3 && isHeaplessMode(device, ssah.regHeaderV3)) {
+    } else if (ssah.versionHeader.version.major == 3 && isHeaplessMode(device, ssah)) {
         return &sbaHeapless;
     } else if (ssah.versionHeader.version.major == 5) {
         return &sbaHeapless;
@@ -1455,8 +1457,8 @@ ze_result_t DebugSessionImp::readModeFlags(uint32_t start, uint32_t count, void 
         return ZE_RESULT_SUCCESS;
     }
 
-    const size_t size = 4;
-    memcpy_s(pRegisterValues, size, &pStateSaveArea->regHeaderV3.sip_flags, size);
+    const uint32_t sipFlags = NEO::getStateSaveAreaV3SipFlags(*pStateSaveArea);
+    memcpy_s(pRegisterValues, sizeof(sipFlags), &sipFlags, sizeof(sipFlags));
     return ZE_RESULT_SUCCESS;
 }
 ze_result_t DebugSessionImp::readDebugScratchRegisters(uint32_t start, uint32_t count, void *pRegisterValues) {
@@ -1691,7 +1693,7 @@ ze_result_t DebugSession::getRegisterSetProperties(Device *device, uint32_t *pCo
                                                ZET_DEBUG_REGSET_TYPE_DEBUG_SCRATCH_INTEL_GPU});
 
         // Conditionally add thread scratch for heapless mode
-        if (DebugSessionImp::isHeaplessMode(device, pStateSaveArea->regHeaderV3) || pStateSaveArea->versionHeader.version.major == 5) {
+        if (DebugSessionImp::isHeaplessMode(device, *pStateSaveArea) || pStateSaveArea->versionHeader.version.major == 5) {
             regsetTypes.push_back(ZET_DEBUG_REGSET_TYPE_THREAD_SCRATCH_INTEL_GPU);
         }
 
@@ -2206,25 +2208,29 @@ ze_result_t DebugSessionImp::readFifo(uint64_t vmHandle, std::vector<EuThread::T
     uint32_t drainRetries = 2, lastHead = ~0u;
 
     uint64_t offsetTail;
+    uint64_t offsetHead;
     uint64_t offsetFifoSize;
     uint64_t offsetFifo;
-    getFifoOffsets(stateSaveAreaHeader, offsetTail, offsetFifoSize, offsetFifo, gpuVa);
+    getFifoOffsets(stateSaveAreaHeader, offsetTail, offsetHead, offsetFifoSize, offsetFifo, gpuVa);
+
+    const uint64_t offsetFifoIndicesBegin = std::min({offsetFifoSize, offsetHead, offsetTail});
+    const uint64_t offsetFifoIndicesEnd = std::max({offsetFifoSize, offsetHead, offsetTail}) + sizeof(uint32_t);
+    std::vector<char> fifoIndices(static_cast<size_t>(offsetFifoIndicesEnd - offsetFifoIndicesBegin));
 
     const bool tailRevertWorkaroundEnabled = NEO::debugManager.flags.DebugUmdFifoTailRevertWorkaround.get() != 0;
 
     while (drainRetries--) {
         constexpr uint32_t failsafeTimeoutWait = 50;
-        std::vector<uint32_t> fifoIndices(3);
         uint32_t fifoHeadIndex = 0, fifoTailIndex = 0, fifoSize = 0;
 
-        auto retVal = readGpuMemory(vmHandle, reinterpret_cast<char *>(fifoIndices.data()), fifoIndices.size() * sizeof(uint32_t), gpuVa + offsetFifoSize);
+        auto retVal = readGpuMemory(vmHandle, fifoIndices.data(), fifoIndices.size(), gpuVa + offsetFifoIndicesBegin);
         if (retVal != ZE_RESULT_SUCCESS) {
             PRINT_DEBUGGER_ERROR_LOG("Reading FIFO indices failed, error = %d\n", retVal);
             return retVal;
         }
-        fifoSize = fifoIndices[0];
-        fifoHeadIndex = fifoIndices[1];
-        fifoTailIndex = fifoIndices[2];
+        memcpy_s(&fifoSize, sizeof(fifoSize), fifoIndices.data() + (offsetFifoSize - offsetFifoIndicesBegin), sizeof(fifoSize));
+        memcpy_s(&fifoHeadIndex, sizeof(fifoHeadIndex), fifoIndices.data() + (offsetHead - offsetFifoIndicesBegin), sizeof(fifoHeadIndex));
+        memcpy_s(&fifoTailIndex, sizeof(fifoTailIndex), fifoIndices.data() + (offsetTail - offsetFifoIndicesBegin), sizeof(fifoTailIndex));
 
         // Only the debugger writes the tail, so reading back the value it replaced means the write was reverted.
         auto tailState = fifoTailStates.find(vmHandle);

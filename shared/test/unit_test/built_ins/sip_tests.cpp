@@ -397,6 +397,16 @@ TEST_F(StateSaveAreaSipTest, givenEmptyStateSaveAreaHeaderWhenGetStateSaveAreaSi
     EXPECT_EQ(0u, SipKernel::getSipKernel(*pDevice, nullptr).getStateSaveAreaSize(pDevice));
 }
 
+TEST_F(StateSaveAreaSipTest, givenStateSaveAreaHeaderV3Minor1WhenGetStateSaveAreaSizeCalledThenFifoSizeFromV3Minor1LayoutIsUsed) {
+    auto hwInfo = pDevice->getHardwareInfo();
+    auto numSlices = std::max(hwInfo.gtSystemInfo.MaxSlicesSupported, NEO::GfxCoreHelper::getHighestEnabledSlice(hwInfo));
+    MockSipData::mockSipKernel->mockStateSaveAreaHeader = MockSipData::createStateSaveAreaHeaderV3Minor1();
+    auto pStateSaveAreaHeader = reinterpret_cast<const NEO::StateSaveAreaHeader *>(MockSipData::mockSipKernel->mockStateSaveAreaHeader.data());
+    auto fifoSize = pStateSaveAreaHeader->regHeaderV3Minor1.fifo_size * sizeof(SIP::fifo_node);
+    auto stateSaveSize = 0x1800u * numSlices * 8 * 7 + sizeof(NEO::StateSaveAreaHeader);
+    EXPECT_EQ(alignUp(fifoSize + stateSaveSize, MemoryConstants::pageSize), SipKernel::getSipKernel(*pDevice, nullptr).getStateSaveAreaSize(pDevice));
+}
+
 TEST_F(StateSaveAreaSipTest, givenCorruptedStateSaveAreaHeaderWhenGetStateSaveAreaSizeCalledThenZeroSizeIsReturned) {
     MockSipData::mockSipKernel->mockStateSaveAreaHeader = {'g', 'a', 'r', 'b', 'a', 'g', 'e'};
     EXPECT_EQ(0u, SipKernel::getSipKernel(*pDevice, nullptr).getStateSaveAreaSize(pDevice));
