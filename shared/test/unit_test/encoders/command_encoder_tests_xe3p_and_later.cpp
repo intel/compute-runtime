@@ -1667,3 +1667,23 @@ HWTEST2_F(CommandEncoderTestXe3pAndLater, whenEncodeAdditionalWalkerFieldsIsCall
         EXPECT_TRUE(walkerCmd.getComputeOverdispatchDisable());
     }
 }
+
+HWTEST2_F(Walker2DispatchTestsXe3pAndLater, givenDebugVariableSetWhenProgrammingInterfaceDescriptorThenSetDynamicSlmSizePerIncrease, IsAtLeastXe3pCore) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+    using INTERFACE_DESCRIPTOR_DATA_2 = typename FamilyType::INTERFACE_DESCRIPTOR_DATA_2;
+    using DYNAMIC_PREF_SLM_INCREASE = typename INTERFACE_DESCRIPTOR_DATA_2::DYNAMIC_PREF_SLM_INCREASE;
+
+    DebugManagerStateRestore debugRestorer;
+
+    WalkerType walker = FamilyType::cmdInitGpgpuWalker2;
+    INTERFACE_DESCRIPTOR_DATA_2 idd = FamilyType::cmdInitInterfaceDescriptorData2;
+    EXPECT_EQ(DYNAMIC_PREF_SLM_INCREASE::DYNAMIC_PREF_SLM_INCREASE_DISABLE, idd.getDynamicPrefSlmIncrease());
+
+    EncodeDispatchKernel<FamilyType>::overrideDefaultValues(walker, idd);
+    EXPECT_EQ(DYNAMIC_PREF_SLM_INCREASE::DYNAMIC_PREF_SLM_INCREASE_MAX_FULL, idd.getDynamicPrefSlmIncrease());
+
+    debugManager.flags.OverrideDynamicPrefSlmIncrease.set(static_cast<int32_t>(DYNAMIC_PREF_SLM_INCREASE::DYNAMIC_PREF_SLM_INCREASE_MAX_2X));
+
+    EncodeDispatchKernel<FamilyType>::overrideDefaultValues(walker, idd);
+    EXPECT_EQ(DYNAMIC_PREF_SLM_INCREASE::DYNAMIC_PREF_SLM_INCREASE_MAX_2X, idd.getDynamicPrefSlmIncrease());
+}
