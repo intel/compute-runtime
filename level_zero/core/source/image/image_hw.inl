@@ -20,6 +20,7 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_pooling.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/tag_allocator.h"
 
@@ -196,6 +197,12 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
                                                      lookupTable.glTextureExt.mcsNtHandle,
                                                      lookupTable.glTextureExt.pGmmResInfoMcs,
                                                      lookupTable.glTextureExt.hasUnifiedMcsSurface);
+                } else if (allocation != nullptr && allocation->getDefaultGmm()->unifiedAuxTranslationCapable()) {
+                    allocation->getDefaultGmm()->setCompressionEnabled(true);
+                    if (device->getProductHelper().isPageTableManagerSupported(device->getHwInfo()) &&
+                        !device->getNEODevice()->getMemoryManager()->mapAuxGpuVA(allocation)) {
+                        return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+                    }
                 }
                 if (allocation != nullptr) {
                     auto importedGmm = allocation->getDefaultGmm();
