@@ -18,24 +18,6 @@
 namespace L0 {
 namespace ult {
 
-using DeviceXe3pCoreTest = Test<DeviceFixture>;
-
-XE3P_CORETEST_F(DeviceXe3pCoreTest, whenCallingGetMemoryPropertiesWithNonNullPtrThenPropertiesAreReturned) {
-    uint32_t count = 0;
-    ze_result_t res = device->getMemoryProperties(&count, nullptr);
-    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
-    EXPECT_EQ(1u, count);
-
-    ze_device_memory_properties_t memProperties = {};
-    res = device->getMemoryProperties(&count, &memProperties);
-    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
-    EXPECT_EQ(1u, count);
-
-    EXPECT_EQ(memProperties.maxClockRate, 0u);
-    EXPECT_EQ(memProperties.maxBusWidth, this->neoDevice->getDeviceInfo().addressBits);
-    EXPECT_EQ(memProperties.totalSize, this->neoDevice->getDeviceInfo().globalMemSize);
-}
-
 using CommandQueueGroupTest = Test<DeviceFixture>;
 
 XE3P_CORETEST_F(CommandQueueGroupTest, givenNoBlitterSupportAndCCSThenOneQueueGroupIsReturned) {
@@ -301,13 +283,6 @@ XE3P_CORETEST_F(CommandQueueGroupTest, givenVaryingBlitterSupportAndCCSThenBCSGr
             }
         }
     }
-}
-
-XE3P_CORETEST_F(DeviceXe3pCoreTest, givenReturnedDevicePropertiesThenExpectedPageFaultSupportReturned) {
-    ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-
-    device->getProperties(&deviceProps);
-    EXPECT_NE(0u, deviceProps.flags & ZE_DEVICE_PROPERTY_FLAG_ONDEMANDPAGING);
 }
 } // namespace ult
 } // namespace L0

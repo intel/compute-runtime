@@ -37,21 +37,6 @@ HWTEST2_F(DeviceXe2HpgCoreTest, whenCallingGetMemoryPropertiesWithNonNullPtrThen
     EXPECT_EQ(memProperties.totalSize, this->neoDevice->getDeviceInfo().globalMemSize);
 }
 
-HWTEST2_F(DeviceXe2HpgCoreTest, GivenTargetXeHpgCoreWhenGettingDpSupportThenReturnsTrue, IsXe2HpgCore) {
-    ze_device_module_properties_t deviceModProps = {ZE_STRUCTURE_TYPE_DEVICE_MODULE_PROPERTIES};
-    ze_intel_device_module_dp_exp_properties_t moduleDpProps = {ZE_STRUCTURE_INTEL_DEVICE_MODULE_DP_EXP_PROPERTIES};
-    moduleDpProps.flags = 0u;
-    deviceModProps.pNext = &moduleDpProps;
-
-    ze_result_t res = device->getKernelProperties(&deviceModProps);
-    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
-
-    bool dp4a = moduleDpProps.flags & ZE_INTEL_DEVICE_MODULE_EXP_FLAG_DP4A;
-    bool dpas = moduleDpProps.flags & ZE_INTEL_DEVICE_MODULE_EXP_FLAG_DPAS;
-    EXPECT_TRUE(dp4a);
-    EXPECT_TRUE(dpas);
-}
-
 class DeviceCopyQueueGroupXe2HpgCoreFixture : public DeviceFixture {
   public:
     void setUp() {
@@ -88,13 +73,6 @@ HWTEST2_F(DeviceCopyQueueGroupXe2HpgCoreTest,
     for (auto &engineGroup : neoMockDevice->getRegularEngineGroups()) {
         EXPECT_NE(NEO::EngineGroupType::copy, engineGroup.engineGroupType);
     }
-}
-
-HWTEST2_F(DeviceXe2HpgCoreTest, givenReturnedDevicePropertiesThenExpectedPageFaultSupportReturned, IsXe2HpgCore) {
-    ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-
-    device->getProperties(&deviceProps);
-    EXPECT_NE(0u, deviceProps.flags & ZE_DEVICE_PROPERTY_FLAG_ONDEMANDPAGING);
 }
 } // namespace ult
 } // namespace L0

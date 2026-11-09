@@ -94,21 +94,6 @@ HWTEST2_F(DeviceTestXeHpc, givenXeHpcBStepWhenCreatingMultiTileDeviceThenExpectI
     delete device;
 }
 
-HWTEST2_F(DeviceTestXeHpc, GivenTargetXeHPCWhenGettingDpSupportThenReturnsTrue, IsXeHpcCore) {
-    ze_device_module_properties_t deviceModProps = {ZE_STRUCTURE_TYPE_DEVICE_MODULE_PROPERTIES};
-    ze_intel_device_module_dp_exp_properties_t moduleDpProps = {ZE_STRUCTURE_INTEL_DEVICE_MODULE_DP_EXP_PROPERTIES};
-    moduleDpProps.flags = 0u;
-    deviceModProps.pNext = &moduleDpProps;
-
-    ze_result_t res = device->getKernelProperties(&deviceModProps);
-    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
-
-    bool dp4a = moduleDpProps.flags & ZE_INTEL_DEVICE_MODULE_EXP_FLAG_DP4A;
-    bool dpas = moduleDpProps.flags & ZE_INTEL_DEVICE_MODULE_EXP_FLAG_DPAS;
-    EXPECT_TRUE(dp4a);
-    EXPECT_TRUE(dpas);
-}
-
 using MultiDeviceCommandQueueGroupWithNineCopyEnginesTest = Test<SingleRootMultiSubDeviceFixtureWithImplicitScaling<9, 1>>;
 
 HWTEST2_F(MultiDeviceCommandQueueGroupWithNineCopyEnginesTest, givenMainAndLinkCopyEngineSupportAndCCSAndImplicitScalingThenExpectedQueueGroupsAreReturned, IsXeHpcCore) {

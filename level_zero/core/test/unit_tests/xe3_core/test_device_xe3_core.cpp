@@ -15,24 +15,6 @@
 namespace L0 {
 namespace ult {
 
-using DeviceXe3CoreTest = Test<DeviceFixture>;
-
-HWTEST2_F(DeviceXe3CoreTest, whenCallingGetMemoryPropertiesWithNonNullPtrThenPropertiesAreReturned, IsXe3Core) {
-    uint32_t count = 0;
-    ze_result_t res = device->getMemoryProperties(&count, nullptr);
-    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
-    EXPECT_EQ(1u, count);
-
-    ze_device_memory_properties_t memProperties = {};
-    res = device->getMemoryProperties(&count, &memProperties);
-    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
-    EXPECT_EQ(1u, count);
-
-    EXPECT_EQ(memProperties.maxClockRate, 0u);
-    EXPECT_EQ(memProperties.maxBusWidth, this->neoDevice->getDeviceInfo().addressBits);
-    EXPECT_EQ(memProperties.totalSize, this->neoDevice->getDeviceInfo().globalMemSize);
-}
-
 class DeviceCopyQueueGroupXe3CoreFixture : public DeviceFixture {
   public:
     void setUp() {
@@ -69,13 +51,6 @@ HWTEST2_F(DeviceCopyQueueGroupXe3CoreTest,
     for (auto &engineGroup : neoMockDevice->getRegularEngineGroups()) {
         EXPECT_NE(NEO::EngineGroupType::copy, engineGroup.engineGroupType);
     }
-}
-
-HWTEST2_F(DeviceXe3CoreTest, givenReturnedDevicePropertiesThenExpectedPageFaultSupportReturned, IsXe3Core) {
-    ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-
-    device->getProperties(&deviceProps);
-    EXPECT_NE(0u, deviceProps.flags & ZE_DEVICE_PROPERTY_FLAG_ONDEMANDPAGING);
 }
 } // namespace ult
 } // namespace L0
