@@ -4134,6 +4134,60 @@ HWTEST2_F(ContextGroupStateBaseAddressGlobalStatelessTest,
     otherCommandQueue->destroy();
 }
 
+struct ContextGroupMultiCcsStateBaseAddressGlobalStatelessFixture : public ContextGroupStateBaseAddressGlobalStatelessFixture {
+    void setUp() {
+        hwInfoBackup = std::make_unique<VariableBackup<NEO::HardwareInfo>>(defaultHwInfo.get());
+        defaultHwInfo->featureTable.flags.ftrCCSNode = true;
+        defaultHwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 2;
+        ContextGroupStateBaseAddressGlobalStatelessFixture::setUp();
+    }
+    void tearDown() {
+        ContextGroupStateBaseAddressGlobalStatelessFixture::tearDown();
+        backupHwInfo.reset();
+    }
+    std::unique_ptr<VariableBackup<NEO::HardwareInfo>> hwInfoBackup;
+};
+
+using ContextGroupMultiCcsStateBaseAddressGlobalStatelessTest = Test<ContextGroupMultiCcsStateBaseAddressGlobalStatelessFixture>;
+HWTEST2_F(ContextGroupMultiCcsStateBaseAddressGlobalStatelessTest,
+          givenContextGroupEnabledAndCommandQueueOnSecondaryCsrWhenQueueInHeaplessModeExecutesThenPrimaryCsrOwningScratchControllerIsLockedInsteadOfDefaultEngineCsr,
+          IsHeaplessRequired) {
+    auto neoDevice = device->getNEODevice();
+    if (neoDevice->getHardwareInfo().capabilityTable.defaultEngineType != aub_stream::EngineType::ENGINE_CCS) {
+        GTEST_SKIP();
+    }
+
+    auto defaultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(neoDevice->getDefaultEngine().commandStreamReceiver);
+
+    NEO::EngineTypeUsage engineTypeUsage;
+    engineTypeUsage.first = aub_stream::ENGINE_CCS1;
+    engineTypeUsage.second = NEO::EngineUsage::regular;
+    auto primaryCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(neoDevice->getSecondaryEngineCsr(engineTypeUsage, std::nullopt)->commandStreamReceiver);
+    auto secondaryCsr = neoDevice->getSecondaryEngineCsr(engineTypeUsage, std::nullopt)->commandStreamReceiver;
+    ASSERT_NE(static_cast<NEO::CommandStreamReceiver *>(defaultCsr), static_cast<NEO::CommandStreamReceiver *>(primaryCsr));
+    ASSERT_EQ(static_cast<NEO::CommandStreamReceiver *>(primaryCsr), secondaryCsr->getPrimaryCsr());
+
+    ze_command_queue_desc_t desc = {};
+    auto otherCommandQueue = new MockCommandQueueHw<FamilyType::gfxCoreFamily>(device, secondaryCsr, &desc);
+    otherCommandQueue->initialize(false, false, false);
+    otherCommandQueue->heaplessModeEnabled = true;
+    ze_result_t returnValue;
+    commandList.reset(CommandList::whiteboxCast(CommandList::create(device, engineGroupType, 0u, returnValue, false)));
+    commandList->close();
+    ze_command_list_handle_t cmdListHandle = commandList->toHandle();
+    CommandListExecutionInternalOptions internalOptions = {};
+
+    const uint32_t defaultCsrLockCountBefore = defaultCsr->recursiveLockCounter.load();
+    const uint32_t primaryCsrLockCountBefore = primaryCsr->recursiveLockCounter.load();
+    auto result = otherCommandQueue->executeCommandLists(1, &cmdListHandle, nullptr, internalOptions);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_TRUE(otherCommandQueue->recordedLockScratchController);
+    EXPECT_EQ(defaultCsrLockCountBefore, defaultCsr->recursiveLockCounter.load());
+    EXPECT_LT(primaryCsrLockCountBefore, primaryCsr->recursiveLockCounter.load());
+    otherCommandQueue->destroy();
+}
+
 HWTEST2_F(ContextGroupStateBaseAddressGlobalStatelessTest,
           givenHeaplessModeAndContextGroupEnabledWhenExecutingImmCommandListThenScratchControllerAndHeapAllocationFromPrimaryCsrIsUsed,
           IsHeaplessRequired) {

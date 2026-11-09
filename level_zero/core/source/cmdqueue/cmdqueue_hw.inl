@@ -1273,9 +1273,9 @@ void CommandQueueHw<gfxCoreFamily>::setFrontEndStateProperties(CommandListExecut
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandQueueHw<gfxCoreFamily>::handleScratchSpaceAndUpdateGSBAStateDirtyFlag(CommandListExecutionContext &ctx) {
-    std::unique_lock<NEO::CommandStreamReceiver::MutexType> defaultCsrLock;
+    std::unique_lock<NEO::CommandStreamReceiver::MutexType> scratchOwnerLock;
     if (ctx.lockScratchController) {
-        defaultCsrLock = device->getNEODevice()->getDefaultEngine().commandStreamReceiver->obtainUniqueOwnership();
+        scratchOwnerLock = this->csr->getPrimaryCsr()->obtainUniqueOwnership();
     }
 
     bool localGsbaDirty = false;
