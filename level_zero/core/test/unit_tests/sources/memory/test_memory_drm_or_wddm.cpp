@@ -449,15 +449,17 @@ struct ContextOpaqueHandleMock : public L0::Context {
         settings.useOpaqueHandle = useOpaqueHandle;
 
         if (useOpaqueHandle) {
-            tracking->opaqueData.handle.fd = static_cast<int>(handle);
-            tracking->opaqueData.memoryType = static_cast<uint8_t>(InternalIpcMemoryType::deviceUnifiedMemory);
-            tracking->opaqueData.processId = 12345;
-            tracking->opaqueData.poolOffset = 0;
-            tracking->opaqueData.type = IpcHandleType::fdHandle;
+            auto &opaqueData = tracking->handleData.emplace<IpcOpaqueMemoryData>();
+            opaqueData.handle.fd = static_cast<int>(handle);
+            opaqueData.memoryType = static_cast<uint8_t>(InternalIpcMemoryType::deviceUnifiedMemory);
+            opaqueData.processId = 12345;
+            opaqueData.poolOffset = 0;
+            opaqueData.type = IpcHandleType::fdHandle;
         } else {
-            tracking->ipcData.handle = handle;
-            tracking->ipcData.type = static_cast<uint8_t>(InternalIpcMemoryType::deviceUnifiedMemory);
-            tracking->ipcData.poolOffset = 0;
+            auto &ipcData = tracking->handleData.emplace<IpcMemoryData>();
+            ipcData.handle = handle;
+            ipcData.type = static_cast<uint8_t>(InternalIpcMemoryType::deviceUnifiedMemory);
+            ipcData.poolOffset = 0;
         }
 
         this->driverHandle->getIPCHandleMap()[handle] = tracking;
@@ -541,6 +543,42 @@ TEST_F(MemoryIPCOpaqueHandleTests,
     EXPECT_EQ(static_cast<int>(ipcData.handle), static_cast<int>(testHandle));
     EXPECT_EQ(ipcData.type, static_cast<uint8_t>(InternalIpcMemoryType::deviceUnifiedMemory));
     EXPECT_EQ(ipcData.poolOffset, 0u);
+}
+
+TEST_F(MemoryIPCOpaqueHandleTests,
+       givenTrackingWithRegularIpcDataWhenGettingIpcHandleFromFdWithOpaqueHandlesThenDefaultOpaqueIpcDataIsReturned) {
+    uint64_t testHandle = 43;
+    context->addIpcHandleTracking(testHandle, false);
+    context->settings.useOpaqueHandle = OpaqueHandlingType::pidfd;
+
+    ze_ipc_mem_handle_t ipcHandle;
+    std::memset(ipcHandle.data, 0xff, sizeof(ipcHandle.data));
+    ze_result_t result = context->getIpcHandleFromFd(testHandle, &ipcHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    IpcOpaqueMemoryData ipcOpaqueData = {};
+    memcpy(&ipcOpaqueData, ipcHandle.data, sizeof(ipcOpaqueData));
+    EXPECT_EQ(0, static_cast<int>(ipcOpaqueData.handle.fd));
+    EXPECT_EQ(0u, static_cast<uint64_t>(ipcOpaqueData.poolOffset));
+    EXPECT_EQ(0u, static_cast<unsigned int>(ipcOpaqueData.processId));
+    EXPECT_EQ(IpcHandleType::maxHandle, ipcOpaqueData.type);
+    EXPECT_EQ(0u, ipcOpaqueData.memoryType);
+    EXPECT_FALSE(ipcOpaqueData.compressedMemory);
+}
+
+TEST_F(MemoryIPCOpaqueHandleTests,
+       givenTrackingWithOpaqueIpcDataWhenGettingIpcHandleFromFdWithoutOpaqueHandlesThenDefaultRegularIpcDataIsReturned) {
+    uint64_t testHandle = 58;
+    context->addIpcHandleTracking(testHandle, true);
+    context->settings.useOpaqueHandle = OpaqueHandlingType::none;
+
+    ze_ipc_mem_handle_t ipcHandle;
+    std::memset(ipcHandle.data, 0xff, sizeof(ipcHandle.data));
+    ze_result_t result = context->getIpcHandleFromFd(testHandle, &ipcHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    const IpcMemoryData defaultIpcData = {};
+    EXPECT_EQ(0, std::memcmp(ipcHandle.data, &defaultIpcData, sizeof(defaultIpcData)));
 }
 
 TEST_F(MemoryIPCOpaqueHandleTests,

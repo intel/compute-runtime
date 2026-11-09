@@ -29,6 +29,7 @@
 #include <optional>
 #include <string>
 #include <utility>
+#include <variant>
 #include <vector>
 
 struct _ze_context_handle_t : BaseHandle {};
@@ -130,8 +131,7 @@ struct IpcHandleTracking {
     NEO::GraphicsAllocation *alloc = nullptr;
     uint32_t handleId = 0;
     uint64_t ptr = 0;
-    struct IpcMemoryData ipcData = {};
-    struct IpcOpaqueMemoryData opaqueData = {};
+    std::variant<IpcMemoryData, IpcOpaqueMemoryData> handleData;
     bool hasReservedHandleData = false;
     bool pooled = false;
 };

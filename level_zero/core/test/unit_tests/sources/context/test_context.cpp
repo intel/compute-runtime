@@ -4998,12 +4998,13 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithIpcMemoryDataTypeThenIpcDataI
     EXPECT_EQ(ptrAddress, handleTracking->ptr);
 
     // Verify that the ipcData field is set
+    const auto &trackedIpcData = std::get<IpcMemoryData>(handleTracking->handleData);
     uint64_t handleValue = 0;
-    memcpy(&handleValue, &handleTracking->ipcData.handle, sizeof(handleValue));
+    memcpy(&handleValue, &trackedIpcData.handle, sizeof(handleValue));
     EXPECT_EQ(handle, handleValue);
 
     uint8_t typeValue = 0;
-    memcpy(&typeValue, &handleTracking->ipcData.type, sizeof(typeValue));
+    memcpy(&typeValue, &trackedIpcData.type, sizeof(typeValue));
     EXPECT_EQ(type, typeValue);
 
     // Clean up - remove the entry from the map to avoid issues in teardown
@@ -5032,6 +5033,24 @@ TEST_F(ContextTest, givenIpcHandleTrackingOfNotExportedAllocationWhenFreeingItTh
 
     delete handleTracking;
     ipcMap.clear();
+}
+
+TEST_F(ContextTest, givenReservedHandleDataWhenCallingSetIPCHandleDataWithIpcMemoryDataTypeThenTrackingHasNoReservedHandleData) {
+    ContextWhiteboxForIpcTesting contextWhitebox(driverHandle.get());
+    NEO::MockGraphicsAllocation mockAllocation;
+    uint8_t reservedHandleData[sizeof(IpcOpaqueMemoryData::reservedHandleData)] = {};
+    constexpr uint64_t handle = 12346;
+    L0::IpcMemoryData ipcData = {};
+
+    contextWhitebox.setIPCHandleData<L0::IpcMemoryData>({.alloc = &mockAllocation, .handle = handle, .ptrAddress = 0x1000, .reservedHandleData = reservedHandleData}, ipcData);
+
+    auto &ipcHandleMap = driverHandle->getIPCHandleMap();
+    auto handleIterator = ipcHandleMap.find(handle);
+    ASSERT_NE(ipcHandleMap.end(), handleIterator);
+    EXPECT_FALSE(handleIterator->second->hasReservedHandleData);
+
+    delete handleIterator->second;
+    ipcHandleMap.clear();
 }
 
 TEST_F(ContextTest, whenCallingSetIPCHandleDataWithIpcOpaqueMemoryDataTypeThenIpcDataIsNotSetInHandleTracking) {
@@ -5073,8 +5092,9 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithIpcOpaqueMemoryDataTypeThenIp
     EXPECT_EQ(1u, handleTracking->refcnt);
     EXPECT_EQ(ptrAddress, handleTracking->ptr);
 
+    const auto &trackedOpaqueData = std::get<IpcOpaqueMemoryData>(handleTracking->handleData);
     uint64_t handleTrackingFdValue = 0;
-    memcpy(&handleTrackingFdValue, &handleTracking->opaqueData.handle.fd, sizeof(handleTrackingFdValue));
+    memcpy(&handleTrackingFdValue, &trackedOpaqueData.handle.fd, sizeof(handleTrackingFdValue));
     uint64_t fdValue = 0;
     memcpy(&fdValue, &opaqueIpcData.handle.fd, sizeof(fdValue));
     EXPECT_EQ(fdValue, handleTrackingFdValue);
@@ -5082,19 +5102,19 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithIpcOpaqueMemoryDataTypeThenIp
     uint8_t memoryTypeValue = 0;
     memcpy(&memoryTypeValue, &opaqueIpcData.memoryType, sizeof(memoryTypeValue));
     uint8_t memoryTypeHandleValue = 0;
-    memcpy(&memoryTypeHandleValue, &handleTracking->opaqueData.memoryType, sizeof(memoryTypeHandleValue));
+    memcpy(&memoryTypeHandleValue, &trackedOpaqueData.memoryType, sizeof(memoryTypeHandleValue));
     EXPECT_EQ(memoryTypeValue, memoryTypeHandleValue);
 
     unsigned int processIdHandleValue = 0;
-    memcpy(&processIdHandleValue, &handleTracking->opaqueData.processId, sizeof(processIdHandleValue));
+    memcpy(&processIdHandleValue, &trackedOpaqueData.processId, sizeof(processIdHandleValue));
     unsigned int processIdValue = 0;
     memcpy(&processIdValue, &opaqueIpcData.processId, sizeof(processIdValue));
     EXPECT_EQ(processIdValue, processIdHandleValue);
 
-    EXPECT_EQ(opaqueIpcData.type, handleTracking->opaqueData.type);
+    EXPECT_EQ(opaqueIpcData.type, trackedOpaqueData.type);
 
     uint64_t poolOffsetHandleValue = 0;
-    memcpy(&poolOffsetHandleValue, &handleTracking->opaqueData.poolOffset, sizeof(poolOffsetHandleValue));
+    memcpy(&poolOffsetHandleValue, &trackedOpaqueData.poolOffset, sizeof(poolOffsetHandleValue));
     uint64_t poolOffsetValue = 0;
     memcpy(&poolOffsetValue, &opaqueIpcData.poolOffset, sizeof(poolOffsetValue));
     EXPECT_EQ(poolOffsetValue, poolOffsetHandleValue);
@@ -5223,8 +5243,9 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithNtHandleTypeThenHandleUnionIs
     EXPECT_EQ(1u, handleTracking->refcnt);
     EXPECT_EQ(ptrAddress, handleTracking->ptr);
 
+    const auto &trackedOpaqueData = std::get<IpcOpaqueMemoryData>(handleTracking->handleData);
     uint64_t handleTrackingReservedValue = 0;
-    memcpy(&handleTrackingReservedValue, &handleTracking->opaqueData.handle.reserved, sizeof(handleTrackingReservedValue));
+    memcpy(&handleTrackingReservedValue, &trackedOpaqueData.handle.reserved, sizeof(handleTrackingReservedValue));
     uint64_t reservedDataValue = 0;
     memcpy(&reservedDataValue, &opaqueIpcData.handle.reserved, sizeof(reservedDataValue));
     EXPECT_EQ(reservedDataValue, handleTrackingReservedValue);
@@ -5232,19 +5253,19 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithNtHandleTypeThenHandleUnionIs
     uint8_t memoryTypeValue = 0;
     memcpy(&memoryTypeValue, &opaqueIpcData.memoryType, sizeof(memoryTypeValue));
     uint8_t memoryTypeHandleValue = 0;
-    memcpy(&memoryTypeHandleValue, &handleTracking->opaqueData.memoryType, sizeof(memoryTypeHandleValue));
+    memcpy(&memoryTypeHandleValue, &trackedOpaqueData.memoryType, sizeof(memoryTypeHandleValue));
     EXPECT_EQ(memoryTypeValue, memoryTypeHandleValue);
 
     unsigned int processIdHandleValue = 0;
-    memcpy(&processIdHandleValue, &handleTracking->opaqueData.processId, sizeof(processIdHandleValue));
+    memcpy(&processIdHandleValue, &trackedOpaqueData.processId, sizeof(processIdHandleValue));
     unsigned int processIdValue = 0;
     memcpy(&processIdValue, &opaqueIpcData.processId, sizeof(processIdValue));
     EXPECT_EQ(processIdValue, processIdHandleValue);
 
-    EXPECT_EQ(opaqueIpcData.type, handleTracking->opaqueData.type);
+    EXPECT_EQ(opaqueIpcData.type, trackedOpaqueData.type);
 
     uint64_t poolOffsetHandleValue = 0;
-    memcpy(&poolOffsetHandleValue, &handleTracking->opaqueData.poolOffset, sizeof(poolOffsetHandleValue));
+    memcpy(&poolOffsetHandleValue, &trackedOpaqueData.poolOffset, sizeof(poolOffsetHandleValue));
     uint64_t poolOffsetValue = 0;
     memcpy(&poolOffsetValue, &opaqueIpcData.poolOffset, sizeof(poolOffsetValue));
     EXPECT_EQ(poolOffsetValue, poolOffsetHandleValue);
@@ -5289,8 +5310,6 @@ TEST_F(ContextTest, whenCallingGetFdFromIpcHandleWithOpaqueFdHandleThenCorrectHa
     handleTracking->alloc = &mockAllocation;
     handleTracking->refcnt = 1;
     handleTracking->ptr = 0x1000;
-    handleTracking->opaqueData.handle.fd = testFd;
-    handleTracking->opaqueData.type = IpcHandleType::fdHandle;
 
     {
         auto lock = driverHandle->lockIPCHandleMap();
@@ -5338,8 +5357,6 @@ TEST_F(ContextTest, whenCallingGetFdFromIpcHandleWithNonOpaqueHandleThenCorrectF
     handleTracking->alloc = &mockAllocation;
     handleTracking->refcnt = 1;
     handleTracking->ptr = 0x2000;
-    handleTracking->ipcData.handle = testHandle;
-    handleTracking->ipcData.type = static_cast<uint8_t>(InternalMemoryType::deviceUnifiedMemory);
 
     {
         auto lock = driverHandle->lockIPCHandleMap();
@@ -5476,8 +5493,6 @@ TEST_F(ContextTest, whenCallingPutIpcMemHandleWithOpaqueIpcHandleThenUnregisterI
     handleTracking->alloc = &mockAllocation;
     handleTracking->refcnt = 1;
     handleTracking->ptr = 0x1000;
-    handleTracking->opaqueData.handle.fd = static_cast<int>(testHandle);
-    handleTracking->opaqueData.type = IpcHandleType::fdHandle;
 
     {
         auto lock = driverHandle->lockIPCHandleMap();
@@ -5518,7 +5533,6 @@ TEST_F(ContextTest, whenCallingPutIpcMemHandleWithNonOpaqueIpcHandleThenUnregist
     handleTracking->alloc = &mockAllocation;
     handleTracking->refcnt = 1;
     handleTracking->ptr = 0x2000;
-    handleTracking->ipcData.handle = testHandle;
 
     {
         auto lock = driverHandle->lockIPCHandleMap();
@@ -5599,7 +5613,6 @@ TEST_F(ContextTest, whenCallingPutIpcMemHandleWithMultipleRefCountThenHandleNotR
     handleTracking->alloc = &mockAllocation;
     handleTracking->refcnt = 2;
     handleTracking->ptr = 0x3000;
-    handleTracking->opaqueData.handle.fd = static_cast<int>(testHandle);
 
     {
         auto lock = driverHandle->lockIPCHandleMap();
@@ -6552,8 +6565,6 @@ TEST_F(ContextTest, givenExportedAllocationWithOpaqueIpcHandleWhenCallingFreeMem
     handleTracking->alloc = nullptr;
     handleTracking->refcnt = 1;
     handleTracking->ptr = reinterpret_cast<uint64_t>(ptr);
-    handleTracking->opaqueData.handle.fd = static_cast<int>(testHandle);
-    handleTracking->opaqueData.type = IpcHandleType::fdHandle;
 
     {
         auto lock = driverHandle->lockIPCHandleMap();
@@ -6600,7 +6611,6 @@ TEST_F(ContextTest, givenExportedAllocationWithNonOpaqueIpcHandleWhenCallingFree
     handleTracking->alloc = nullptr;
     handleTracking->refcnt = 1;
     handleTracking->ptr = reinterpret_cast<uint64_t>(ptr);
-    handleTracking->ipcData.handle = testHandle;
 
     {
         auto lock = driverHandle->lockIPCHandleMap();
@@ -6647,8 +6657,6 @@ TEST_F(ContextTest, givenExportedAllocationWithOpaqueNtHandleWhenCallingFreeMemT
     handleTracking->alloc = nullptr;
     handleTracking->refcnt = 1;
     handleTracking->ptr = reinterpret_cast<uint64_t>(ptr);
-    handleTracking->opaqueData.handle.reserved = testHandle;
-    handleTracking->opaqueData.type = IpcHandleType::ntHandle;
 
     {
         auto lock = driverHandle->lockIPCHandleMap();
@@ -6739,7 +6747,6 @@ TEST_F(ContextTest, givenExportedAllocationWithIpcHandleAndNullUsmPoolWhenCallin
     handleTracking->refcnt = 1;
     handleTracking->ptr = reinterpret_cast<uint64_t>(ptr);
     handleTracking->handleId = 0;
-    handleTracking->opaqueData.handle.fd = static_cast<int>(testHandle);
 
     {
         auto lock = driverHandle->lockIPCHandleMap();
@@ -6780,7 +6787,6 @@ TEST_F(ContextTest, whenCallingPutIpcMemHandleWithNonSocketsOpaqueHandleThenUnre
     handleTracking->alloc = &mockAllocation;
     handleTracking->refcnt = 1;
     handleTracking->ptr = 0x5000;
-    handleTracking->opaqueData.handle.fd = static_cast<int>(testHandle);
 
     {
         auto lock = driverHandle->lockIPCHandleMap();
@@ -7016,7 +7022,6 @@ TEST_F(ContextTest, whenCallingPutIpcMemHandleWithNtHandleTypeThenUnregisterIsNo
     handleTracking->alloc = &mockAllocation;
     handleTracking->refcnt = 1;
     handleTracking->ptr = 0x6000;
-    handleTracking->opaqueData.handle.reserved = testHandle;
 
     {
         auto lock = driverHandle->lockIPCHandleMap();
@@ -7069,7 +7074,6 @@ TEST_F(ContextIpcSocketTest, givenExportedAllocationWithIpcHandleAndSocketsAndFd
     handleTracking->refcnt = 1;
     handleTracking->ptr = reinterpret_cast<uint64_t>(ptr);
     handleTracking->handleId = 0;
-    handleTracking->opaqueData.handle.fd = static_cast<int>(testHandle);
 
     {
         auto lock = driverHandle->lockIPCHandleMap();
@@ -7113,8 +7117,6 @@ TEST_F(ContextIpcSocketTest, whenCallingPutIpcMemHandleWithExactlySocketsOpaqueH
     handleTracking->refcnt = 1;
     handleTracking->ptr = 0x1000;
     handleTracking->handleId = 0;
-    handleTracking->opaqueData.handle.fd = static_cast<int>(testHandle);
-    handleTracking->opaqueData.type = IpcHandleType::fdHandle;
 
     {
         auto lock = driverHandle->lockIPCHandleMap();
@@ -7258,8 +7260,6 @@ TEST_F(ContextTest, givenExportedAllocationWithSocketsOpaqueHandleButNtHandleTyp
     handleTracking->refcnt = 1;
     handleTracking->ptr = reinterpret_cast<uint64_t>(ptr);
     handleTracking->handleId = 0;
-    handleTracking->opaqueData.handle.reserved = testHandle;
-    handleTracking->opaqueData.type = IpcHandleType::ntHandle;
 
     {
         auto lock = driverHandle->lockIPCHandleMap();
@@ -7468,13 +7468,13 @@ TEST_F(ContextTest, whenCallingPutIpcMemHandleWithReservedHandleDataThenCloseInt
     void *testReservedData = reinterpret_cast<void *>(static_cast<uintptr_t>(0xDEADBEEF));
 
     L0::IpcHandleTracking *handleTracking = new L0::IpcHandleTracking();
+    auto &trackedOpaqueData = handleTracking->handleData.emplace<IpcOpaqueMemoryData>();
     handleTracking->alloc = &mockAllocation;
     handleTracking->refcnt = 1;
     handleTracking->ptr = 0x1000;
     handleTracking->handleId = 0;
     handleTracking->hasReservedHandleData = true;
-    memcpy(handleTracking->opaqueData.reservedHandleData, &testReservedData, sizeof(void *));
-    handleTracking->ipcData.handle = testHandle;
+    memcpy(trackedOpaqueData.reservedHandleData, &testReservedData, sizeof(void *));
 
     {
         auto lock = driverHandle->lockIPCHandleMap();
@@ -7514,13 +7514,13 @@ TEST_F(ContextTest, whenCallingPutIpcMemHandleWithReservedHandleDataAndMultipleR
     void *testReservedData = reinterpret_cast<void *>(static_cast<uintptr_t>(0xCAFEBABE));
 
     L0::IpcHandleTracking *handleTracking = new L0::IpcHandleTracking();
+    auto &trackedOpaqueData = handleTracking->handleData.emplace<IpcOpaqueMemoryData>();
     handleTracking->alloc = &mockAllocation;
     handleTracking->refcnt = 2; // Multiple references
     handleTracking->ptr = 0x2000;
     handleTracking->handleId = 0;
     handleTracking->hasReservedHandleData = true;
-    memcpy(handleTracking->opaqueData.reservedHandleData, &testReservedData, sizeof(void *));
-    handleTracking->ipcData.handle = testHandle;
+    memcpy(trackedOpaqueData.reservedHandleData, &testReservedData, sizeof(void *));
 
     {
         auto lock = driverHandle->lockIPCHandleMap();
@@ -7565,7 +7565,7 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithHasReservedDataTrueThenHandle
 
     Context *contextImp = Context::fromHandle(L0::Context::fromHandle(hContext));
 
-    contextImp->settings.useOpaqueHandle = OpaqueHandlingType::none;
+    contextImp->settings.useOpaqueHandle = OpaqueHandlingType::pidfd;
     contextImp->settings.handleType = IpcHandleType::fdHandle;
 
     NEO::MockGraphicsAllocation mockAllocation;
@@ -7573,13 +7573,12 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithHasReservedDataTrueThenHandle
     uint64_t ptrAddress = 0x3000;
     uint8_t type = 1;
 
-    L0::IpcMemoryData ipcData = {};
-    ipcData.handle = testHandle;
+    L0::IpcOpaqueMemoryData ipcData = {};
     uint8_t reservedData[32] = {1, 2, 3, 4}; // Example reserved data
     void *reservedDataPtr = reservedData;
 
     // Call setIPCHandleData with reserved data set.
-    whiteboxCast(contextImp)->setIPCHandleData<L0::IpcMemoryData>({.alloc = &mockAllocation, .handle = testHandle, .ptrAddress = ptrAddress, .memoryType = type, .reservedHandleData = reservedDataPtr}, ipcData);
+    whiteboxCast(contextImp)->setIPCHandleData<L0::IpcOpaqueMemoryData>({.alloc = &mockAllocation, .handle = testHandle, .ptrAddress = ptrAddress, .memoryType = type, .reservedHandleData = reservedDataPtr}, ipcData);
 
     // Verify the handle was added to the IPC handle map with hasReservedHandleData set
     auto &ipcHandleMap = driverHandle->getIPCHandleMap();
@@ -7653,13 +7652,13 @@ TEST_F(ContextTest, whenCallingPutIpcMemHandleWithReservedHandleDataThenHandleTr
     void *testReservedData = reinterpret_cast<void *>(static_cast<uintptr_t>(0xBEEFCAFE));
 
     L0::IpcHandleTracking *handleTracking = new L0::IpcHandleTracking();
+    auto &trackedOpaqueData = handleTracking->handleData.emplace<IpcOpaqueMemoryData>();
     handleTracking->alloc = &mockAllocation;
     handleTracking->refcnt = 1;
     handleTracking->ptr = 0x5000;
     handleTracking->handleId = 42;
     handleTracking->hasReservedHandleData = true;
-    memcpy(handleTracking->opaqueData.reservedHandleData, &testReservedData, sizeof(void *));
-    handleTracking->ipcData.handle = testHandle;
+    memcpy(trackedOpaqueData.reservedHandleData, &testReservedData, sizeof(void *));
 
     {
         auto lock = driverHandle->lockIPCHandleMap();
@@ -7673,7 +7672,7 @@ TEST_F(ContextTest, whenCallingPutIpcMemHandleWithReservedHandleDataThenHandleTr
         ASSERT_NE(iter, driverHandle->getIPCHandleMap().end());
         EXPECT_TRUE(iter->second->hasReservedHandleData);
         void *storedReservedData = nullptr;
-        memcpy(&storedReservedData, iter->second->opaqueData.reservedHandleData, sizeof(void *));
+        memcpy(&storedReservedData, std::get<IpcOpaqueMemoryData>(iter->second->handleData).reservedHandleData, sizeof(void *));
         EXPECT_EQ(testReservedData, storedReservedData);
     }
 
@@ -7715,7 +7714,6 @@ TEST_F(ContextTest, whenCallingPutIpcMemHandleWithoutReservedHandleDataThenHandl
     handleTracking->ptr = 0x6000;
     handleTracking->handleId = 33;
     handleTracking->hasReservedHandleData = false; // No reserved data
-    handleTracking->ipcData.handle = testHandle;
 
     {
         auto lock = driverHandle->lockIPCHandleMap();
@@ -8063,7 +8061,7 @@ TEST_F(ContextTest, whenCallingSetIPCHandleDataWithPhysicalOffsetAndNoPoolThenPo
     ASSERT_EQ(1u, ipcHandleMap.size());
     auto handleIterator = ipcHandleMap.find(handle);
     ASSERT_NE(handleIterator, ipcHandleMap.end());
-    const uint64_t storedPoolOffset = handleIterator->second->ipcData.poolOffset;
+    const uint64_t storedPoolOffset = std::get<IpcMemoryData>(handleIterator->second->handleData).poolOffset;
     EXPECT_EQ(physicalOffset, storedPoolOffset);
 
     delete handleIterator->second;

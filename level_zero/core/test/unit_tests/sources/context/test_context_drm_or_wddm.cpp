@@ -1262,7 +1262,7 @@ TEST_F(SetIPCHandleDataSocketTest, givenOpaqueHandleWithFdTypeAndSocketFallbackE
     ASSERT_NE(handleIterator, ipcHandleMap.end());
 
     int fdValue = 0;
-    memcpy(&fdValue, &handleIterator->second->opaqueData.handle.fd, sizeof(fdValue));
+    memcpy(&fdValue, &std::get<IpcOpaqueMemoryData>(handleIterator->second->handleData).handle.fd, sizeof(fdValue));
     EXPECT_EQ(handle, static_cast<uint64_t>(fdValue));
 
     delete handleIterator->second;
@@ -1292,7 +1292,7 @@ TEST_F(SetIPCHandleDataSocketTest, givenOpaqueHandleWithFdTypeAndSocketFallbackD
     ASSERT_NE(handleIterator, ipcHandleMap.end());
 
     int fdValue = 0;
-    memcpy(&fdValue, &handleIterator->second->opaqueData.handle.fd, sizeof(fdValue));
+    memcpy(&fdValue, &std::get<IpcOpaqueMemoryData>(handleIterator->second->handleData).handle.fd, sizeof(fdValue));
     EXPECT_EQ(handle, static_cast<uint64_t>(fdValue));
 
     delete handleIterator->second;
@@ -1321,7 +1321,7 @@ TEST_F(SetIPCHandleDataSocketTest, givenOpaqueHandleWithNtHandleTypeAndSocketFal
     ASSERT_NE(handleIterator, ipcHandleMap.end());
 
     uint64_t reservedValue = 0;
-    memcpy(&reservedValue, &handleIterator->second->opaqueData.handle.reserved, sizeof(reservedValue));
+    memcpy(&reservedValue, &std::get<IpcOpaqueMemoryData>(handleIterator->second->handleData).handle.reserved, sizeof(reservedValue));
     EXPECT_EQ(handle, reservedValue);
 
     delete handleIterator->second;
@@ -1348,7 +1348,7 @@ TEST_F(SetIPCHandleDataSocketTest, givenNonOpaqueHandleWithSocketFallbackEnabled
     auto handleIterator = ipcHandleMap.find(handle);
     ASSERT_NE(handleIterator, ipcHandleMap.end());
 
-    EXPECT_EQ(handle, handleIterator->second->ipcData.handle);
+    EXPECT_EQ(handle, std::get<IpcMemoryData>(handleIterator->second->handleData).handle);
 
     delete handleIterator->second;
     driverHandle->getIPCHandleMap().clear();
@@ -1380,7 +1380,7 @@ TEST_F(SetIPCHandleDataSocketTest, givenOpaqueHandleWithFdTypeAndSocketServerIni
     ASSERT_NE(handleIterator, ipcHandleMap.end());
 
     int fdValue = 0;
-    memcpy(&fdValue, &handleIterator->second->opaqueData.handle.fd, sizeof(fdValue));
+    memcpy(&fdValue, &std::get<IpcOpaqueMemoryData>(handleIterator->second->handleData).handle.fd, sizeof(fdValue));
     EXPECT_EQ(handle, static_cast<uint64_t>(fdValue));
 
     delete handleIterator->second;
@@ -1419,7 +1419,7 @@ TEST_F(SetIPCHandleDataSocketTest, givenOpaqueHandleWithFdTypeAndRegisterHandleF
     ASSERT_NE(handleIterator, ipcHandleMap.end());
 
     int fdValue = 0;
-    memcpy(&fdValue, &handleIterator->second->opaqueData.handle.fd, sizeof(fdValue));
+    memcpy(&fdValue, &std::get<IpcOpaqueMemoryData>(handleIterator->second->handleData).handle.fd, sizeof(fdValue));
     EXPECT_EQ(handle, static_cast<uint64_t>(fdValue));
 
     delete handleIterator->second;

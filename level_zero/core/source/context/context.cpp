@@ -961,7 +961,7 @@ std::map<uint64_t, IpcHandleTracking *>::iterator Context::eraseIpcHandleTrackin
     IpcHandleTracking *handleTracking = ipcHandleIterator->second;
     auto *memoryManager = this->driverHandle->getMemoryManager();
     if (handleTracking->hasReservedHandleData) {
-        memoryManager->closeInternalHandleWithReservedData(handle, handleTracking->handleId, handleTracking->alloc, handleTracking->opaqueData.reservedHandleData);
+        memoryManager->closeInternalHandleWithReservedData(handle, handleTracking->handleId, handleTracking->alloc, std::get<IpcOpaqueMemoryData>(handleTracking->handleData).reservedHandleData);
     } else {
         memoryManager->closeInternalHandle(handle, handleTracking->handleId, handleTracking->alloc);
     }
@@ -1017,11 +1017,13 @@ ze_result_t Context::getIpcHandleFromFd(uint64_t handle, ze_ipc_mem_handle_t *pI
         if (settings.useOpaqueHandle) {
             using IpcDataT = IpcOpaqueMemoryData;
             IpcDataT &ipcData = *reinterpret_cast<IpcDataT *>(pIpcHandle->data);
-            ipcData = trackIPC->opaqueData;
+            const auto *trackedIpcData = std::get_if<IpcDataT>(&trackIPC->handleData);
+            ipcData = trackedIpcData ? *trackedIpcData : IpcDataT{};
         } else {
             using IpcDataT = IpcMemoryData;
             IpcDataT &ipcData = *reinterpret_cast<IpcDataT *>(pIpcHandle->data);
-            ipcData = trackIPC->ipcData;
+            const auto *trackedIpcData = std::get_if<IpcDataT>(&trackIPC->handleData);
+            ipcData = trackedIpcData ? *trackedIpcData : IpcDataT{};
         }
     } else {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -2936,16 +2938,12 @@ void Context::setIPCHandleData(const IpcHandleExportData &exportData, IpcDataT &
         handleTracking->handleId = exportData.handleId;
         handleTracking->refcnt = 1;
         handleTracking->ptr = ptrAddress;
-        handleTracking->hasReservedHandleData = exportData.reservedHandleData != nullptr;
         handleTracking->pooled = exportData.usmPool != nullptr;
-        if constexpr (std::is_same_v<IpcDataT, IpcMemoryData>) {
-            handleTracking->ipcData = ipcData;
-        } else {
-            handleTracking->opaqueData = ipcData;
-        }
+        handleTracking->handleData = ipcData;
         this->driverHandle->getIPCHandleMap().emplace(handle, handleTracking);
 
         if constexpr (std::is_same_v<IpcDataT, IpcOpaqueMemoryData>) {
+            handleTracking->hasReservedHandleData = exportData.reservedHandleData != nullptr;
             registerIpcHandleWithServer(handle);
         }
     }

@@ -86,7 +86,7 @@ TEST_F(DriverHandleIpcSocketWindowsTest, givenOpaqueHandleWithFdTypeAndSocketFal
     EXPECT_EQ(ptrAddress, handleIterator->second->ptr);
 
     int fdValue = 0;
-    memcpy(&fdValue, &handleIterator->second->opaqueData.handle.fd, sizeof(fdValue));
+    memcpy(&fdValue, &std::get<IpcOpaqueMemoryData>(handleIterator->second->handleData).handle.fd, sizeof(fdValue));
     EXPECT_EQ(handle, static_cast<uint64_t>(fdValue));
 
     delete handleIterator->second;
@@ -117,7 +117,7 @@ TEST_F(DriverHandleIpcSocketWindowsTest, givenOpaqueHandleWithNtHandleTypeAndSoc
     ASSERT_NE(handleIterator, ipcHandleMap.end());
 
     uint64_t reservedValue = 0;
-    memcpy(&reservedValue, &handleIterator->second->opaqueData.handle.reserved, sizeof(reservedValue));
+    memcpy(&reservedValue, &std::get<IpcOpaqueMemoryData>(handleIterator->second->handleData).handle.reserved, sizeof(reservedValue));
     EXPECT_EQ(handle, reservedValue);
 
     delete handleIterator->second;
@@ -147,7 +147,7 @@ TEST_F(DriverHandleIpcSocketWindowsTest, givenOpaqueHandleWithFdTypeAndSocketFal
     ASSERT_NE(handleIterator, ipcHandleMap.end());
 
     int fdValue = 0;
-    memcpy(&fdValue, &handleIterator->second->opaqueData.handle.fd, sizeof(fdValue));
+    memcpy(&fdValue, &std::get<IpcOpaqueMemoryData>(handleIterator->second->handleData).handle.fd, sizeof(fdValue));
     EXPECT_EQ(handle, static_cast<uint64_t>(fdValue));
 
     delete handleIterator->second;
