@@ -92,6 +92,7 @@ class StagingBufferManager : NEO::NonCopyableAndNonMovableClass {
 
     bool isValidForCopy(const Device &device, void *dstPtr, const void *srcPtr, size_t size, bool hasDependencies);
     bool isValidForStagingTransfer(const Device &device, const void *ptr, size_t size, bool hasDependencies);
+    bool isStagingEnabled(const Device &device) const;
 
     StagingTransferStatus performCopy(void *dstPtr, const void *srcPtr, size_t size, ChunkCopyFunction &chunkCopyFunc, CommandStreamReceiver *csr, bool isRead);
     StagingTransferStatus performImageTransfer(const void *ptr, const size_t *globalOrigin, const size_t *globalRegion, size_t rowPitch, size_t slicePitch, size_t bytesPerPixel, bool isMipMapped3DImage, ChunkTransferImageFunc &chunkTransferImageFunc, CommandStreamReceiver *csr, bool isRead);

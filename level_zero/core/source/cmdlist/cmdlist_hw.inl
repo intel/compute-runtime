@@ -173,6 +173,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
     textureCacheFlushPending = false;
     closedCmdList = false;
     isWalkerWithProfilingEnqueued = false;
+    externalDependencyProgrammed = false;
 
     this->totalNoopSpace = 0;
     this->latesTagGpuAllocation = nullptr;
@@ -2383,6 +2384,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendHostFunction(
     appendEventForProfiling(signalEvent, nullptr, beforeWalker, skipBarrierForEndProfiling, skipAddingSignalEventsToResidency, copyQueue);
 
     dispatchHostFunction(pHostFunction, pUserData, parameters.memorySynchronizationRequired);
+    this->externalDependencyProgrammed = true;
 
     appendSignalEventPostWalker(signalEvent, nullptr, nullptr, skipBarrierForEndProfiling, skipAddingSignalEventsToResidency, copyQueue);
 
@@ -4192,6 +4194,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
             continue;
         }
 
+        this->externalDependencyProgrammed = true;
+
         // patch preamble should be used for
         // 1. external events (created with external flag)
         // 2. API request for external graph events (passed external flag - used to during recording a graph, so reserved space for OR dispatched commands can be made)
@@ -5323,6 +5327,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnMemory(void *desc,
     }
 
     NEO::EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(*commandContainer.getCommandStream(), gpuAddress, data, comparator, false, useQwordData, indirectMode, false, useSemaphore64bCmd, nullptr);
+    this->externalDependencyProgrammed = true;
 
     const auto &rootDeviceEnvironment = this->device->getNEODevice()->getRootDeviceEnvironment();
     auto allocType = srcAllocationStruct.alloc->getAllocationType();

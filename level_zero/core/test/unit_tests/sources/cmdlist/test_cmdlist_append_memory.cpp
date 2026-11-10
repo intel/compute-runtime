@@ -39,6 +39,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/sources/helper/ze_object_utils.h"
 #include "level_zero/core/test/unit_tests/white_box.h"
+#include "level_zero/driver_experimental/zex_common.h"
 
 #include <limits>
 #include <memory>
@@ -1714,6 +1715,316 @@ HWTEST_F(StagingBuffersFixture, givenSharedSystemAllowedAndCmdListWithDependenci
     EXPECT_EQ(1u, cmdList.appendStagingMemoryCopyCalledCount);
 }
 
+template <typename BaseFixture>
+struct StagingHostSignaledEventFixture : public BaseFixture {
+    void SetUp() override {
+        BaseFixture::SetUp();
+        if (this->IsSkipped()) {
+            return;
+        }
+        ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
+        eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+        eventPoolDesc.count = 1;
+        ze_result_t result = ZE_RESULT_SUCCESS;
+        this->eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(this->driverHandle.get(), this->context, 0, nullptr, &eventPoolDesc, result));
+        ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+        ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC};
+        eventDesc.index = 0;
+        eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+        eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
+        ASSERT_EQ(ZE_RESULT_SUCCESS, this->eventPool->createEvent(&eventDesc, &this->hostSignaledEvent));
+    }
+
+    void TearDown() override {
+        if (this->hostSignaledEvent) {
+            L0::Event::fromHandle(this->hostSignaledEvent)->destroy();
+        }
+        this->eventPool.reset();
+        BaseFixture::TearDown();
+    }
+
+    template <typename CmdListT>
+    void initializeCmdList(CmdListT &cmdList, bool inOrder) {
+        cmdList.cmdQImmediate = this->queue.get();
+        cmdList.initialize(this->device, NEO::EngineGroupType::compute, 0u);
+        if (inOrder) {
+            cmdList.enableInOrderExecution();
+        }
+    }
+
+    template <typename CmdListT>
+    ze_result_t appendApiWaitOnHostSignaledEvent(CmdListT &cmdList) {
+        CmdListWaitEventParameters waitEventsParameters{.apiRequest = true};
+        return cmdList.appendWaitOnEvents(1, &this->hostSignaledEvent, waitEventsParameters);
+    }
+
+    std::unique_ptr<L0::EventPool> eventPool;
+    ze_event_handle_t hostSignaledEvent = nullptr;
+};
+
+struct StagingBuffersExternalDependencyFixture : public StagingHostSignaledEventFixture<StagingBuffersFixture> {
+    void SetUp() override {
+        StagingHostSignaledEventFixture<StagingBuffersFixture>::SetUp();
+        if (IsSkipped()) {
+            return;
+        }
+        ze_device_mem_alloc_desc_t deviceDesc = {};
+        ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device->toHandle(), &deviceDesc, size, size, &usmDeviceDst));
+    }
+
+    void TearDown() override {
+        if (usmDeviceDst) {
+            context->freeMem(usmDeviceDst);
+        }
+        StagingHostSignaledEventFixture<StagingBuffersFixture>::TearDown();
+    }
+
+    template <typename CmdListT>
+    void completeInOrderWork(CmdListT &cmdList) {
+        *cmdList.inOrderExecInfo->getBaseHostAddress() = cmdList.inOrderExecInfo->getCounterValue();
+    }
+
+    template <typename CmdListT>
+    void makeQueueTaskCountPending(CmdListT &cmdList) {
+        queue->setTaskCount(static_cast<TaskCountType>(*cmdList.getCsr(false)->getTagAddress()) + 1);
+    }
+
+    void *usmDeviceDst = nullptr;
+};
+
+HWTEST_F(StagingBuffersExternalDependencyFixture, givenInOrderCmdListWithPendingWaitOnEventWhenAppendMemoryCopyFromHostThenStagingNotUsed) {
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    initializeCmdList(cmdList, true);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendApiWaitOnHostSignaledEvent(cmdList));
+
+    size_t src[size] = {};
+    auto res = cmdList.appendMemoryCopy(usmDevice, &src, size, nullptr, 0, nullptr, copyParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(0u, cmdList.appendStagingMemoryCopyCalledCount);
+}
+
+HWTEST_F(StagingBuffersExternalDependencyFixture, givenInOrderCmdListWithPendingBarrierOnEventWhenAppendMemoryCopyFromHostThenStagingNotUsed) {
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    initializeCmdList(cmdList, true);
+    CmdListWaitEventParameters waitEventsParameters{};
+    CmdListSignalEventParameters signalEventParameters{};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdList.appendBarrier(nullptr, 1, &hostSignaledEvent, waitEventsParameters, signalEventParameters));
+
+    size_t src[size] = {};
+    auto res = cmdList.appendMemoryCopy(usmDevice, &src, size, nullptr, 0, nullptr, copyParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(0u, cmdList.appendStagingMemoryCopyCalledCount);
+}
+
+HWTEST_F(StagingBuffersExternalDependencyFixture, givenInOrderCmdListWithPendingDeviceCopyWaitingOnEventWhenAppendMemoryCopyFromHostThenStagingNotUsed) {
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    initializeCmdList(cmdList, true);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdList.appendMemoryCopy(usmDeviceDst, usmDevice, size, nullptr, 1, &hostSignaledEvent, copyParams));
+
+    size_t src[size] = {};
+    auto res = cmdList.appendMemoryCopy(usmDevice, &src, size, nullptr, 0, nullptr, copyParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(0u, cmdList.appendStagingMemoryCopyCalledCount);
+}
+
+HWTEST_F(StagingBuffersExternalDependencyFixture, givenInOrderCmdListWithPendingHostFunctionWhenAppendMemoryCopyFromHostThenStagingNotUsed) {
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    initializeCmdList(cmdList, true);
+    auto pHostFunction = reinterpret_cast<ze_host_function_callback_t>(0xa'0000);
+    CmdListHostFunctionParameters parameters{};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdList.appendHostFunction(pHostFunction, nullptr, nullptr, nullptr, 0, nullptr, parameters));
+
+    size_t src[size] = {};
+    auto res = cmdList.appendMemoryCopy(usmDevice, &src, size, nullptr, 0, nullptr, copyParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(0u, cmdList.appendStagingMemoryCopyCalledCount);
+}
+
+HWTEST_F(StagingBuffersExternalDependencyFixture, givenInOrderCmdListWithPendingWaitOnMemoryWhenAppendMemoryCopyFromHostThenStagingNotUsed) {
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    initializeCmdList(cmdList, true);
+    zex_wait_on_mem_desc_t desc = {};
+    desc.actionFlag = ZEX_WAIT_ON_MEMORY_FLAG_NOT_EQUAL;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdList.appendWaitOnMemory(reinterpret_cast<void *>(&desc), usmDevice, 1, nullptr, false));
+
+    size_t src[size] = {};
+    auto res = cmdList.appendMemoryCopy(usmDevice, &src, size, nullptr, 0, nullptr, copyParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(0u, cmdList.appendStagingMemoryCopyCalledCount);
+}
+
+HWTEST_F(StagingBuffersExternalDependencyFixture, givenInOrderCmdListWithCompletedWaitOnEventWhenAppendMemoryCopyFromHostThenStagingUsed) {
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    initializeCmdList(cmdList, true);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendApiWaitOnHostSignaledEvent(cmdList));
+    completeInOrderWork(cmdList);
+
+    size_t src[size] = {};
+    auto res = cmdList.appendMemoryCopy(usmDevice, &src, size, nullptr, 0, nullptr, copyParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(1u, cmdList.appendStagingMemoryCopyCalledCount);
+}
+
+HWTEST_F(StagingBuffersExternalDependencyFixture, givenInOrderCmdListWithWaitOnAlreadySignaledEventWhenAppendMemoryCopyFromHostThenStagingUsed) {
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    initializeCmdList(cmdList, true);
+    L0::Event::fromHandle(hostSignaledEvent)->hostSignal(false);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendApiWaitOnHostSignaledEvent(cmdList));
+
+    size_t src[size] = {};
+    auto res = cmdList.appendMemoryCopy(usmDevice, &src, size, nullptr, 0, nullptr, copyParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(1u, cmdList.appendStagingMemoryCopyCalledCount);
+}
+
+HWTEST_F(StagingBuffersExternalDependencyFixture, givenInOrderCmdListWithPendingWaitOnEventWhenAppendMemoryCopyToHostThenStagingNotUsed) {
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    initializeCmdList(cmdList, true);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendApiWaitOnHostSignaledEvent(cmdList));
+
+    size_t dst[size] = {};
+    auto res = cmdList.appendMemoryCopy(&dst, usmDevice, size, nullptr, 0, nullptr, copyParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(0u, cmdList.appendStagingMemoryCopyCalledCount);
+}
+
+HWTEST_F(StagingBuffersExternalDependencyFixture, givenInOrderCmdListWithPendingWorkWithoutExternalWaitWhenAppendMemoryCopyFromHostThenStagingUsed) {
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    initializeCmdList(cmdList, true);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdList.appendMemoryCopy(usmDeviceDst, usmDevice, size, nullptr, 0, nullptr, copyParams));
+
+    size_t src[size] = {};
+    auto res = cmdList.appendMemoryCopy(usmDevice, &src, size, nullptr, 0, nullptr, copyParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(1u, cmdList.appendStagingMemoryCopyCalledCount);
+}
+
+HWTEST_F(StagingBuffersExternalDependencyFixture, givenInOrderCounterRestartedAfterRecordedWaitWhenAppendMemoryCopyFromHostThenStagingUsed) {
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    initializeCmdList(cmdList, true);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendApiWaitOnHostSignaledEvent(cmdList));
+    cmdList.inOrderExecInfo->resetCounterValue();
+
+    size_t src[size] = {};
+    auto res = cmdList.appendMemoryCopy(usmDevice, &src, size, nullptr, 0, nullptr, copyParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(1u, cmdList.appendStagingMemoryCopyCalledCount);
+}
+
+HWTEST_F(StagingBuffersExternalDependencyFixture, givenInOrderCounterMovedToNewOffsetAfterRecordedWaitAndWaitPendingWhenAppendMemoryCopyFromHostThenStagingNotUsed) {
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    initializeCmdList(cmdList, true);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendApiWaitOnHostSignaledEvent(cmdList));
+    cmdList.inOrderExecInfo->setAllocationOffset(MemoryConstants::cacheLineSize * 4);
+    cmdList.inOrderExecInfo->resetCounterValue();
+
+    size_t src[size] = {};
+    auto res = cmdList.appendMemoryCopy(usmDevice, &src, size, nullptr, 0, nullptr, copyParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(0u, cmdList.appendStagingMemoryCopyCalledCount);
+}
+
+HWTEST_F(StagingBuffersExternalDependencyFixture, givenInOrderCounterMovedToNewOffsetAfterRecordedWaitAndWaitCompletedWhenAppendMemoryCopyFromHostThenStagingUsed) {
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    initializeCmdList(cmdList, true);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendApiWaitOnHostSignaledEvent(cmdList));
+    completeInOrderWork(cmdList);
+    cmdList.inOrderExecInfo->setAllocationOffset(MemoryConstants::cacheLineSize * 4);
+    cmdList.inOrderExecInfo->resetCounterValue();
+
+    size_t src[size] = {};
+    auto res = cmdList.appendMemoryCopy(usmDevice, &src, size, nullptr, 0, nullptr, copyParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(1u, cmdList.appendStagingMemoryCopyCalledCount);
+}
+
+HWTEST_F(StagingBuffersExternalDependencyFixture, givenOutOfOrderCmdListWithPendingWaitOnEventWhenAppendMemoryCopyFromHostThenStagingNotUsed) {
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    initializeCmdList(cmdList, false);
+    makeQueueTaskCountPending(cmdList);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendApiWaitOnHostSignaledEvent(cmdList));
+
+    size_t src[size] = {};
+    auto res = cmdList.appendMemoryCopy(usmDevice, &src, size, nullptr, 0, nullptr, copyParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(0u, cmdList.appendStagingMemoryCopyCalledCount);
+}
+
+HWTEST_F(StagingBuffersExternalDependencyFixture, givenOutOfOrderCmdListWithCompletedWaitOnEventWhenAppendMemoryCopyFromHostThenStagingUsed) {
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    initializeCmdList(cmdList, false);
+    auto csr = cmdList.getCsr(false);
+    makeQueueTaskCountPending(cmdList);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendApiWaitOnHostSignaledEvent(cmdList));
+    *csr->getTagAddress() = cmdList.cmdQImmediate->getTaskCount();
+
+    size_t src[size] = {};
+    auto res = cmdList.appendMemoryCopy(usmDevice, &src, size, nullptr, 0, nullptr, copyParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(1u, cmdList.appendStagingMemoryCopyCalledCount);
+}
+
+HWTEST_F(StagingBuffersExternalDependencyFixture, givenRegularCmdListWithWaitOnEventAppendedToInOrderCmdListWhenAppendMemoryCopyFromHostThenStagingNotUsed) {
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> regularCmdList(CommandList::create(device, NEO::EngineGroupType::compute, 0u, returnValue, false));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    CmdListWaitEventParameters waitEventsParameters{.apiRequest = true};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, regularCmdList->appendWaitOnEvents(1, &hostSignaledEvent, waitEventsParameters));
+    regularCmdList->close();
+
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    initializeCmdList(cmdList, true);
+    auto regularCmdListHandle = regularCmdList->toHandle();
+    CommandListExecutionInternalOptions internalOptions = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdList.appendCommandLists(1, &regularCmdListHandle, nullptr, 0, nullptr, internalOptions));
+
+    size_t src[size] = {};
+    auto res = cmdList.appendMemoryCopy(usmDevice, &src, size, nullptr, 0, nullptr, copyParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(0u, cmdList.appendStagingMemoryCopyCalledCount);
+}
+
+HWTEST_F(StagingBuffersExternalDependencyFixture, givenRegularCmdListWithWaitOnEventAppendedToOutOfOrderDualStreamCmdListAndOnlyCopyOffloadTaskCountPendingWhenAppendMemoryCopyFromHostThenStagingUsedOnlyAfterCopyOffloadTaskCountCompletes) {
+    auto copyOffloadCsr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
+    ASSERT_NE(queue->getCsr(), copyOffloadCsr);
+    ze_command_queue_desc_t queueDesc = {};
+    auto copyOffloadQueue = std::make_unique<Mock<CommandQueue>>(device, copyOffloadCsr, &queueDesc);
+    copyOffloadQueue->setTaskCount(static_cast<TaskCountType>(*copyOffloadCsr->getTagAddress()) + 1);
+
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> regularCmdList(CommandList::create(device, NEO::EngineGroupType::compute, 0u, returnValue, false));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    CmdListWaitEventParameters waitEventsParameters{.apiRequest = true};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, regularCmdList->appendWaitOnEvents(1, &hostSignaledEvent, waitEventsParameters));
+    regularCmdList->close();
+
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    initializeCmdList(cmdList, false);
+    cmdList.cmdQImmediateCopyOffload = copyOffloadQueue.get();
+    cmdList.copyOffloadMode = CopyOffloadModes::dualStream;
+
+    auto regularCmdListHandle = regularCmdList->toHandle();
+    CommandListExecutionInternalOptions internalOptions = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdList.appendCommandLists(1, &regularCmdListHandle, nullptr, 0, nullptr, internalOptions));
+    *cmdList.getCsr(false)->getTagAddress() = cmdList.cmdQImmediate->getTaskCount();
+
+    size_t src[size] = {};
+    auto res = cmdList.appendMemoryCopy(usmDevice, &src, size, nullptr, 0, nullptr, copyParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(0u, cmdList.appendStagingMemoryCopyCalledCount);
+
+    *copyOffloadCsr->getTagAddress() = copyOffloadQueue->getTaskCount();
+
+    auto srcNotImported = alignedMalloc(size, MemoryConstants::cacheLineSize);
+    res = cmdList.appendMemoryCopy(usmDevice, srcNotImported, size, nullptr, 0, nullptr, copyParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(1u, cmdList.appendStagingMemoryCopyCalledCount);
+
+    alignedFree(srcNotImported);
+    cmdList.cmdQImmediateCopyOffload = nullptr;
+}
+
 HWTEST_F(StagingBuffersFixture, givenAppendMemoryCopyWithDstNonUsmThenDontImportAllocation) {
     MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
     cmdList.callBaseExecute = true;
@@ -2155,6 +2466,63 @@ HWTEST2_F(StagingImageBuffersFixture, givenSharedSystemAllowedAndInOrderCmdListW
     alignedFree(hostBuf);
 }
 
+struct StagingImageBuffersExternalDependencyFixture : public StagingHostSignaledEventFixture<StagingImageBuffersFixture> {
+    void SetUp() override {
+        StagingHostSignaledEventFixture<StagingImageBuffersFixture>::SetUp();
+        if (IsSkipped()) {
+            return;
+        }
+        auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
+        sharedSystemMemCapabilitiesBackup = std::make_unique<VariableBackup<uint64_t>>(&hwInfo.capabilityTable.sharedSystemMemCapabilities, 0);
+        hostBuf = alignedMalloc(size, MemoryConstants::cacheLineSize);
+    }
+
+    void TearDown() override {
+        alignedFree(hostBuf);
+        sharedSystemMemCapabilitiesBackup.reset();
+        StagingHostSignaledEventFixture<StagingImageBuffersFixture>::TearDown();
+    }
+
+    template <GFXCORE_FAMILY gfxCoreFamily>
+    std::unique_ptr<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>> createImage() {
+        ze_image_desc_t imgDesc = {};
+        imgDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+        imgDesc.type = ZE_IMAGE_TYPE_3D;
+        imgDesc.width = 8;
+        imgDesc.height = 4;
+        imgDesc.depth = 1;
+        auto imageHw = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+        imageHw->initialize(device, &imgDesc);
+        return imageHw;
+    }
+
+    std::unique_ptr<VariableBackup<uint64_t>> sharedSystemMemCapabilitiesBackup;
+    ze_image_region_t region = {0, 0, 0, 8, 4, 1};
+    void *hostBuf = nullptr;
+};
+
+HWTEST2_F(StagingImageBuffersExternalDependencyFixture, givenSharedSystemNotAllowedAndInOrderCmdListWithPendingWaitOnEventWhenAppendImageCopyFromMemoryThenStagingNotUsed, ImageStagingSupport) {
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    initializeCmdList(cmdList, true);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendApiWaitOnHostSignaledEvent(cmdList));
+    auto imageHw = createImage<FamilyType::gfxCoreFamily>();
+
+    auto res = cmdList.appendImageCopyFromMemory(imageHw->toHandle(), hostBuf, &region, nullptr, 0, nullptr, copyParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(0u, cmdList.appendStagingImageTransferCalledCount);
+}
+
+HWTEST2_F(StagingImageBuffersExternalDependencyFixture, givenSharedSystemNotAllowedAndInOrderCmdListWithPendingWaitOnEventWhenAppendImageCopyToMemoryThenStagingNotUsed, ImageStagingSupport) {
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    initializeCmdList(cmdList, true);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, appendApiWaitOnHostSignaledEvent(cmdList));
+    auto imageHw = createImage<FamilyType::gfxCoreFamily>();
+
+    auto res = cmdList.appendImageCopyToMemory(hostBuf, imageHw->toHandle(), &region, nullptr, 0, nullptr, copyParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(0u, cmdList.appendStagingImageTransferCalledCount);
+}
+
 HWTEST2_F(StagingImageBuffersFixture, givenSharedSystemNotAllowedAndInOrderCmdListWithPendingWorkWhenAppendImageCopyFromMemoryThenStagingUsed, ImageStagingSupport) {
     debugManager.flags.EnableSharedSystemUsmSupport.set(1);
     auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
@@ -2393,10 +2761,10 @@ HWTEST2_F(StagingImageBuffersFixture, givenAppendImageCopyFromMemoryWithoutStagi
     cmdList.initialize(device, NEO::EngineGroupType::compute, 0u);
 
     auto hostBuf = alignedMalloc(size, MemoryConstants::cacheLineSize);
-    EXPECT_TRUE(cmdList.isValidForStagingImageTransfer(hostBuf, size, false));
+    EXPECT_TRUE(cmdList.isValidForStagingImageTransfer(hostBuf, size, 0u));
 
     debugManager.flags.EnableCopyWithStagingBuffers.set(0);
-    EXPECT_FALSE(cmdList.isValidForStagingImageTransfer(hostBuf, size, false));
+    EXPECT_FALSE(cmdList.isValidForStagingImageTransfer(hostBuf, size, 0u));
 
     alignedFree(hostBuf);
 }
@@ -2415,7 +2783,7 @@ HWTEST2_F(StagingImageBuffersFixture, givenSharedSystemUsmThenDontUseStagingBuff
     sharedSystemMemCapabilities = 0xf;
 
     auto hostBuf = alignedMalloc(size, MemoryConstants::cacheLineSize);
-    EXPECT_FALSE(cmdList.isValidForStagingImageTransfer(hostBuf, size, false));
+    EXPECT_FALSE(cmdList.isValidForStagingImageTransfer(hostBuf, size, 0u));
     alignedFree(hostBuf);
 }
 
@@ -2424,7 +2792,7 @@ HWTEST2_F(StagingImageBuffersFixture, givenAppendImageCopyFromMemoryWithUsmPtrTh
     cmdList.cmdQImmediate = queue.get();
     cmdList.initialize(device, NEO::EngineGroupType::compute, 0u);
 
-    EXPECT_FALSE(cmdList.isValidForStagingImageTransfer(usmDevice, size, false));
+    EXPECT_FALSE(cmdList.isValidForStagingImageTransfer(usmDevice, size, 0u));
 }
 
 using ImageStagingBaseSupport = IsNotAnyGfxCores<IGFX_GEN12LP_CORE, IGFX_XE_HPC_CORE>;

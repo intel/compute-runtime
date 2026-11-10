@@ -417,12 +417,16 @@ bool StagingBufferManager::isValidForStagingTransfer(const Device &device, const
     return nonUsmPtr && this->isValidForStaging(device, ptr, size, hasDependencies);
 }
 
+bool StagingBufferManager::isStagingEnabled(const Device &device) const {
+    if (debugManager.flags.EnableCopyWithStagingBuffers.get() != -1) {
+        return debugManager.flags.EnableCopyWithStagingBuffers.get();
+    }
+    return device.getProductHelper().isStagingBuffersEnabled();
+}
+
 // Common checks for usm, buffers and images
 bool StagingBufferManager::isValidForStaging(const Device &device, const void *ptr, size_t size, bool hasDependencies) {
-    auto stagingCopyEnabled = device.getProductHelper().isStagingBuffersEnabled();
-    if (debugManager.flags.EnableCopyWithStagingBuffers.get() != -1) {
-        stagingCopyEnabled = debugManager.flags.EnableCopyWithStagingBuffers.get();
-    }
+    auto stagingCopyEnabled = isStagingEnabled(device);
     auto isValidCpuVirtualAddress = isValidCpuVirtualAddressRange(ptr, size);
     auto osInterface = device.getRootDeviceEnvironment().osInterface.get();
     bool sizeWithinThreshold = osInterface ? osInterface->isSizeWithinThresholdForStaging(ptr, size) : true;
