@@ -13,7 +13,9 @@
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/os_interface/linux/drm_allocation.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
@@ -54,15 +56,24 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::decompress(Device *device
         return MemoryOperationsStatus::success;
     }
 
+    auto gmm = drmAllocation->getDefaultGmm();
+    constexpr bool compressed = false;
+    const uint64_t decompressPatIndex = rootDeviceEnvironment.getGmmClientContext()->cachePolicyGetPATIndex(gmm->gmmResourceInfo->peekGmmResourceInfo(), gmm->getResourceUsageType(), compressed, gmm->gmmResourceInfo->isCacheable());
+
+    auto setDecompressOnBO = [&](BufferObject &bo, bool value) {
+        bo.requireResourceDecompress(value);
+        bo.setResourceDecompressPatIndex(value ? decompressPatIndex : CommonConstants::unsupportedPatIndex);
+    };
+
     auto setDecompressOnBOs = [&](bool value) {
         if (drmAllocation->storageInfo.isChunked) {
             if (auto bo = drmAllocation->getBO()) {
-                bo->requireResourceDecompress(value);
+                setDecompressOnBO(*bo, value);
             }
         } else {
             for (auto &bo : drmAllocation->getBOs()) {
                 if (bo) {
-                    bo->requireResourceDecompress(value);
+                    setDecompressOnBO(*bo, value);
                 }
             }
         }

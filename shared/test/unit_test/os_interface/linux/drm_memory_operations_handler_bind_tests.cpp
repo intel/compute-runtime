@@ -9,6 +9,8 @@
 #include "shared/source/direct_submission/linux/drm_direct_submission.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/os_interface/linux/cache_info.h"
@@ -1735,6 +1737,51 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenDecompressCalledThenPagingFenceI
     ASSERT_GT(vmBindIssued, 0u);
 
     EXPECT_EQ(waitUserFenceCalledBefore + vmBindIssued, mock->getMockIoctlHelper()->waitUserFenceCalled);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryOperationsHandlerBindTest, givenPatIndexProgrammingSupportedWhenDecompressCalledThenBindUsesUncompressedPatIndexQueriedWithResourceInfoOfAllocationGmm) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableLocalMemory.set(1);
+    constexpr uint64_t boPatIndex = 0xba;
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
+    ASSERT_NE(nullptr, allocation);
+    GmmRequirements gmmRequirements{};
+    gmmRequirements.allowLargePages = true;
+    gmmRequirements.preferCompressed = false;
+    auto ownedGmm = std::make_unique<Gmm>(executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper(), nullptr, MemoryConstants::pageSize, 0, GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED, StorageInfo{}, gmmRequirements);
+    ownedGmm->setCompressionEnabled(true);
+    auto gmm = ownedGmm.get();
+    std::unique_ptr<Gmm> previousGmm(allocation->getDefaultGmm());
+    allocation->setDefaultGmm(ownedGmm.release());
+
+    auto drmAllocation = static_cast<DrmAllocation *>(allocation);
+    for (auto bo : drmAllocation->getBOs()) {
+        if (bo) {
+            bo->setPatIndex(boPatIndex);
+        }
+    }
+    mock->vmBindPatIndexProgrammingSupported = true;
+    mock->getMockIoctlHelper()->receivedVmBind.reset();
+    auto mockClientContext = static_cast<MockGmmClientContextBase *>(executionEnvironment->rootDeviceEnvironments[0]->getGmmClientContext());
+
+    EXPECT_EQ(MemoryOperationsStatus::success, operationHandler->decompress(device, *allocation));
+
+    EXPECT_EQ(gmm->gmmResourceInfo->peekGmmResourceInfo(), mockClientContext->passedResourceInfoForGetPatIndexQuery);
+    EXPECT_FALSE(mockClientContext->passedCompressedSettingForGetPatIndexQuery);
+    EXPECT_EQ(gmm->gmmResourceInfo->isCacheable(), mockClientContext->passedCpuCacheableSettingForGetPatIndexQuery);
+    ASSERT_TRUE(mockClientContext->passedUsageTypeForGetPatIndexQuery.has_value());
+    EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED, mockClientContext->passedUsageTypeForGetPatIndexQuery.value());
+    ASSERT_TRUE(mock->getMockIoctlHelper()->receivedVmBind.has_value());
+    EXPECT_EQ(static_cast<uint64_t>(MockGmmClientContextBase::MockPatIndex::uncached), mock->getMockIoctlHelper()->receivedVmBind->patIndex);
+    for (auto bo : drmAllocation->getBOs()) {
+        if (bo) {
+            EXPECT_FALSE(bo->isResourceDecompressRequired());
+            EXPECT_EQ(static_cast<uint64_t>(MockGmmClientContextBase::MockPatIndex::uncached), bo->peekPatIndex());
+        }
+    }
 
     memoryManager->freeGraphicsMemory(allocation);
 }

@@ -198,6 +198,8 @@ class BufferObject {
     void requireResourceDecompress(bool required) {
         requiresResourceDecompress = required;
     }
+    uint64_t peekResourceDecompressPatIndex() const { return resourceDecompressPatIndex; }
+    void setResourceDecompressPatIndex(uint64_t newPatIndex) { this->resourceDecompressPatIndex = newPatIndex; }
 
     bool isExplicitResidencyRequired() {
         return requiresExplicitResidency;
@@ -334,6 +336,7 @@ class BufferObject {
     uint64_t size = 0;
     uint64_t unmapSize = 0;
     uint64_t patIndex = CommonConstants::unsupportedPatIndex;
+    uint64_t resourceDecompressPatIndex = CommonConstants::unsupportedPatIndex;
     uint64_t userptr = 0u;
     uint64_t mmapOffset = 0u;
     uint64_t physicalMemoryOffset = 0u;

@@ -1834,10 +1834,7 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
             }
 
             if (bo->isResourceDecompressRequired()) {
-                GMM_RESOURCE_USAGE_TYPE usageType = GMM_RESOURCE_USAGE_OCL_BUFFER;
-                bool compressed = false;
-                bool cpuCacheable = false;
-                vmBind.patIndex = static_cast<uint16_t>(drm->getRootDeviceEnvironment().getGmmClientContext()->cachePolicyGetPATIndex(nullptr, usageType, compressed, cpuCacheable));
+                vmBind.patIndex = bo->peekResourceDecompressPatIndex();
             } else {
                 vmBind.patIndex = bo->peekPatIndex();
             }
