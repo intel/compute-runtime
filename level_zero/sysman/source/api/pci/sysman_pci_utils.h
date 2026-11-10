@@ -38,12 +38,15 @@ namespace Sysman {
 #define PCI_CAP_FLAGS 2          // Capability defined flags (16 bits)
 
 // Express Capabilities
-#define PCI_EXP_TYPE_RC_END 0x9    // Root Complex Integrated Endpoint
-#define PCI_EXP_TYPE_RC_EC 0xa     // Root Complex Event Collector
-#define PCI_EXP_SLTCTL 24          // Slot Control
-#define PCI_EXP_SLTCTL_HPIE 0x0020 // Hot-Plug Interrupt Enable
-#define PCI_EXP_FLAGS_VERS 0x000f  // capability version bits of the PCI Express capabilities register
-#define PCI_EXP_VERS_LNKCAP2 2     // capability version that introduced the Link Capabilities 2 register
+#define PCI_EXP_TYPE_RC_END 0x9     // Root Complex Integrated Endpoint
+#define PCI_EXP_TYPE_RC_EC 0xa      // Root Complex Event Collector
+#define PCI_EXP_SLTCTL 24           // Slot Control
+#define PCI_EXP_SLTCTL_HPIE 0x0020  // Hot-Plug Interrupt Enable
+#define PCI_EXP_SLTSTA 26           // Slot Status
+#define PCI_EXP_SLTSTA_PDC 0x0008   // Presence Detect Changed
+#define PCI_EXP_SLTSTA_DLLSC 0x0100 // Data Link Layer State Changed
+#define PCI_EXP_FLAGS_VERS 0x000f   // capability version bits of the PCI Express capabilities register
+#define PCI_EXP_VERS_LNKCAP2 2      // capability version that introduced the Link Capabilities 2 register
 
 // Bridge control
 #define PCI_BRIDGE_CONTROL 0x3e       // Bridge control register

@@ -489,13 +489,46 @@ uint16_t LinuxSysmanImp::getSlotControlPos(int fd) {
 
 // function to clear Hot-Plug interrupt enable bit in the slot control register
 // this is required to prevent interrupts from being raised in the warm reset path.
-void LinuxSysmanImp::clearHPIE(int fd, uint16_t slotControlPos) {
+ze_result_t LinuxSysmanImp::clearHPIE(int fd, uint16_t slotControlPos, bool &isHotPlugInterruptEnabled) {
+    isHotPlugInterruptEnabled = false;
     uint8_t value = 0x00;
-    uint8_t resetValue = 0x00;
-    this->preadFunction(fd, &value, 0x01, slotControlPos);
-    resetValue = value & (~PCI_EXP_SLTCTL_HPIE);
-    this->pwriteFunction(fd, &resetValue, 0x01, slotControlPos);
+    if (this->preadFunction(fd, &value, 0x01, slotControlPos) != 0x01) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): pread of slot control register at offset 0x%x on fd=%d failed, errno=%d \n", NEO_FUNCTION_NAME, slotControlPos, fd, errno);
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+    if (!(value & PCI_EXP_SLTCTL_HPIE)) {
+        return ZE_RESULT_SUCCESS;
+    }
+    const uint8_t resetValue = value & (~PCI_EXP_SLTCTL_HPIE);
+    if (this->pwriteFunction(fd, &resetValue, 0x01, slotControlPos) != 0x01) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): pwrite of slot control register at offset 0x%x on fd=%d failed, errno=%d \n", NEO_FUNCTION_NAME, slotControlPos, fd, errno);
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
     NEO::sleep(std::chrono::seconds(10)); // Sleep for 10seconds just to make sure the change is propagated.
+    isHotPlugInterruptEnabled = true;
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t LinuxSysmanImp::restoreHPIE(int fd, uint16_t slotControlPos) {
+    uint8_t value = 0x00;
+    if (this->preadFunction(fd, &value, 0x01, slotControlPos) != 0x01) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): pread of slot control register at offset 0x%x on fd=%d failed, errno=%d \n", NEO_FUNCTION_NAME, slotControlPos, fd, errno);
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
+    const uint16_t slotStatusPos = slotControlPos - PCI_EXP_SLTCTL + PCI_EXP_SLTSTA;
+    const uint16_t resetEventsMask = PCI_EXP_SLTSTA_PDC | PCI_EXP_SLTSTA_DLLSC;
+    if (this->pwriteFunction(fd, &resetEventsMask, sizeof(resetEventsMask), slotStatusPos) != sizeof(resetEventsMask)) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): pwrite of slot status register at offset 0x%x on fd=%d failed, errno=%d \n", NEO_FUNCTION_NAME, slotStatusPos, fd, errno);
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
+    value |= PCI_EXP_SLTCTL_HPIE;
+    if (this->pwriteFunction(fd, &value, 0x01, slotControlPos) != 0x01) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): pwrite of slot control register at offset 0x%x on fd=%d failed, errno=%d \n", NEO_FUNCTION_NAME, slotControlPos, fd, errno);
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+    return ZE_RESULT_SUCCESS;
 }
 
 // A 'warm reset' is a conventional reset that is triggered across a PCI express link.
@@ -519,6 +552,12 @@ ze_result_t LinuxSysmanImp::osWarmReset() {
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
+    bool isHotPlugInterruptEnabled = false;
+    ze_result_t result = this->clearHPIE(fd, slotControlPos, isHotPlugInterruptEnabled);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+
     std::string devicePath = {};
     if (pSysmanProductHelper->isUpstreamPortConnected()) {
         devicePath = getPciCardBusDirectoryPath(gtDevicePath);
@@ -526,13 +565,14 @@ ze_result_t LinuxSysmanImp::osWarmReset() {
         devicePath = gtDevicePath;
     }
 
-    ze_result_t result = pFsAccess->write(devicePath + '/' + "remove", "1");
-    if (ZE_RESULT_SUCCESS != result) {
+    result = pFsAccess->write(devicePath + '/' + "remove", "1");
+    if (result != ZE_RESULT_SUCCESS) {
+        if (isHotPlugInterruptEnabled) {
+            this->restoreHPIE(fd, slotControlPos);
+        }
         return result;
     }
     NEO::sleep(std::chrono::seconds(10)); // Sleep for 10seconds to make sure that the config spaces of all devices are saved correctly.
-
-    clearHPIE(fd, slotControlPos);
 
     uint8_t offset = PCI_BRIDGE_CONTROL; // Bridge control offset in Header of PCI config space
     uint8_t value = 0x00;
@@ -557,11 +597,16 @@ ze_result_t LinuxSysmanImp::osWarmReset() {
     }
 
     result = pFsAccess->write(rootPortPath + '/' + "rescan", "1");
-    if (ZE_RESULT_SUCCESS != result) {
-        return result;
+    if (ZE_RESULT_SUCCESS == result) {
+        NEO::sleep(std::chrono::seconds(10)); // Sleep for 10seconds, allows the rescan to complete on all devices attached to the root port.
     }
-    NEO::sleep(std::chrono::seconds(10)); // Sleep for 10seconds, allows the rescan to complete on all devices attached to the root port.
 
+    if (isHotPlugInterruptEnabled) {
+        const auto restoreResult = this->restoreHPIE(fd, slotControlPos);
+        if (result == ZE_RESULT_SUCCESS) {
+            result = restoreResult;
+        }
+    }
     return result;
 }
 

@@ -11,6 +11,10 @@
 #include "level_zero/sysman/source/api/pci/sysman_pci_utils.h"
 #include "level_zero/sysman/test/unit_tests/sources/diagnostics/linux/mock_zes_sysman_diagnostics.h"
 
+#include <array>
+#include <cstring>
+#include <vector>
+
 namespace L0 {
 namespace Sysman {
 namespace ult {
@@ -35,9 +39,41 @@ constexpr uint8_t mockPowerManagementCapabilityId = 0x01;
 constexpr uint8_t mockRootPortPowerManagementCapabilityPos = 0x40;
 constexpr uint8_t mockRootPortPcieCapabilityPos = 0x50;
 constexpr uint16_t mockRootPortSlotControlPos = mockRootPortPcieCapabilityPos + PCI_EXP_SLTCTL;
-constexpr uint8_t mockRootPortSlotControlValue = 0x2f;
+constexpr uint16_t mockRootPortSlotStatusPos = mockRootPortPcieCapabilityPos + PCI_EXP_SLTSTA;
+constexpr uint8_t mockRootPortSlotControlValueWithHotPlugInterrupt = 0x2f;
+constexpr uint8_t mockRootPortSlotControlValueWithoutHotPlugInterrupt = mockRootPortSlotControlValueWithHotPlugInterrupt & ~PCI_EXP_SLTCTL_HPIE;
+static uint8_t mockRootPortSlotControlValue = mockRootPortSlotControlValueWithHotPlugInterrupt;
 static bool mockRootPortHasPcieCapability = true;
-static uint8_t mockRootPortSlotControlWriteValue = 0;
+static int mockRootPortSlotControlReadsBeforeFailure = -1;
+static off_t mockRootPortFailingWriteOffset = -1;
+static size_t mockRootPortWritesBeforeFailure = 0;
+
+struct MockConfigWrite {
+    off_t offset;
+    uint16_t value;
+};
+constexpr size_t mockRootPortConfigWritesCapacity = 16;
+static std::array<MockConfigWrite, mockRootPortConfigWritesCapacity> mockRootPortConfigWrites = {};
+static size_t mockRootPortConfigWritesCount = 0;
+
+std::vector<uint16_t> getMockRootPortConfigWrites(off_t offset) {
+    std::vector<uint16_t> values;
+    for (size_t i = 0; i < mockRootPortConfigWritesCount; i++) {
+        if (mockRootPortConfigWrites[i].offset == offset) {
+            values.push_back(mockRootPortConfigWrites[i].value);
+        }
+    }
+    return values;
+}
+
+size_t getLastMockRootPortConfigWriteIndex(off_t offset) {
+    for (size_t i = mockRootPortConfigWritesCount; i > 0; i--) {
+        if (mockRootPortConfigWrites[i - 1].offset == offset) {
+            return i - 1;
+        }
+    }
+    return mockRootPortConfigWritesCount;
+}
 
 ssize_t preadMockRootPortConfig(void *buf, size_t count, off_t offset) {
     std::array<uint8_t, PCI_CFG_SPACE_SIZE> config = {};
@@ -51,6 +87,12 @@ ssize_t preadMockRootPortConfig(void *buf, size_t count, off_t offset) {
     }
     if (offset < 0 || static_cast<size_t>(offset) + count > config.size()) {
         return -1;
+    }
+    if (offset == mockRootPortSlotControlPos && count == 1 && mockRootPortSlotControlReadsBeforeFailure >= 0) {
+        if (mockRootPortSlotControlReadsBeforeFailure == 0) {
+            return -1;
+        }
+        mockRootPortSlotControlReadsBeforeFailure--;
     }
     memcpy(buf, config.data() + offset, count);
     return count;
@@ -101,8 +143,16 @@ ssize_t preadMockRootPortConfigFail(int fd, void *buf, size_t count, off_t offse
 }
 
 ssize_t pwriteMockDiag(int fd, const void *buf, size_t count, off_t offset) {
-    if (fd == mockFileDescriptor && offset == mockRootPortSlotControlPos) {
-        mockRootPortSlotControlWriteValue = *static_cast<const uint8_t *>(buf);
+    if (fd == mockFileDescriptor && offset == mockRootPortFailingWriteOffset) {
+        if (mockRootPortWritesBeforeFailure == 0) {
+            return -1;
+        }
+        mockRootPortWritesBeforeFailure--;
+    }
+    if (fd == mockFileDescriptor && count <= sizeof(uint16_t) && mockRootPortConfigWritesCount < mockRootPortConfigWritesCapacity) {
+        uint16_t value = 0;
+        memcpy(&value, buf, count);
+        mockRootPortConfigWrites[mockRootPortConfigWritesCount++] = {offset, value};
     }
     return count;
 }
@@ -616,14 +666,134 @@ TEST_F(ZesDiagnosticsFixture, GivenValidSysmanImpPointerWhenCallingWarmResetAndR
 }
 
 TEST_F(ZesDiagnosticsFixture, GivenRootPortListingPowerManagementCapabilityFirstWhenCallingWarmResetThenHotPlugInterruptIsDisabledInSlotControlOfPcieCapability) {
-    VariableBackup<uint8_t> slotControlWriteValueBackup(&mockRootPortSlotControlWriteValue, 0);
+    VariableBackup<size_t> configWritesCountBackup(&mockRootPortConfigWritesCount, 0u);
     pLinuxSysmanImp->gtDevicePath = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0";
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup(&NEO::SysCalls::sysCallsOpen, openMockDiag);
     pLinuxSysmanImp->preadFunction = preadMockDiag;
     pLinuxSysmanImp->pwriteFunction = pwriteMockDiag;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxSysmanImp->osWarmReset());
-    EXPECT_EQ(mockRootPortSlotControlValue & ~PCI_EXP_SLTCTL_HPIE, mockRootPortSlotControlWriteValue);
+    const auto slotControlWrites = getMockRootPortConfigWrites(mockRootPortSlotControlPos);
+    ASSERT_FALSE(slotControlWrites.empty());
+    EXPECT_EQ(mockRootPortSlotControlValueWithoutHotPlugInterrupt, slotControlWrites.front());
+}
+
+TEST_F(ZesDiagnosticsFixture, GivenHotPlugInterruptEnabledOnRootPortWhenCallingWarmResetThenSlotStatusEventsAreClearedAndHotPlugInterruptIsEnabledAgainAfterBusReset) {
+    VariableBackup<size_t> configWritesCountBackup(&mockRootPortConfigWritesCount, 0u);
+    pLinuxSysmanImp->gtDevicePath = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0";
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup(&NEO::SysCalls::sysCallsOpen, openMockDiag);
+    pLinuxSysmanImp->preadFunction = preadMockDiag;
+    pLinuxSysmanImp->pwriteFunction = pwriteMockDiag;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxSysmanImp->osWarmReset());
+
+    const auto slotControlWrites = getMockRootPortConfigWrites(mockRootPortSlotControlPos);
+    ASSERT_EQ(2u, slotControlWrites.size());
+    EXPECT_EQ(mockRootPortSlotControlValueWithHotPlugInterrupt, slotControlWrites.back());
+
+    const auto slotStatusWrites = getMockRootPortConfigWrites(mockRootPortSlotStatusPos);
+    ASSERT_EQ(1u, slotStatusWrites.size());
+    EXPECT_EQ(static_cast<uint16_t>(PCI_EXP_SLTSTA_PDC | PCI_EXP_SLTSTA_DLLSC), slotStatusWrites.front());
+
+    const auto lastBridgeControlWrite = getLastMockRootPortConfigWriteIndex(PCI_BRIDGE_CONTROL);
+    const auto slotStatusWrite = getLastMockRootPortConfigWriteIndex(mockRootPortSlotStatusPos);
+    const auto hotPlugInterruptEnableWrite = getLastMockRootPortConfigWriteIndex(mockRootPortSlotControlPos);
+    EXPECT_LT(lastBridgeControlWrite, slotStatusWrite);
+    EXPECT_LT(slotStatusWrite, hotPlugInterruptEnableWrite);
+}
+
+TEST_F(ZesDiagnosticsFixture, GivenHotPlugInterruptDisabledOnRootPortWhenCallingWarmResetThenSlotControlIsNotWrittenAndResetProceeds) {
+    VariableBackup<size_t> configWritesCountBackup(&mockRootPortConfigWritesCount, 0u);
+    VariableBackup<uint8_t> slotControlValueBackup(&mockRootPortSlotControlValue, uint8_t{mockRootPortSlotControlValueWithoutHotPlugInterrupt});
+    pLinuxSysmanImp->gtDevicePath = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0";
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup(&NEO::SysCalls::sysCallsOpen, openMockDiag);
+    pLinuxSysmanImp->preadFunction = preadMockDiag;
+    pLinuxSysmanImp->pwriteFunction = pwriteMockDiag;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxSysmanImp->osWarmReset());
+
+    EXPECT_TRUE(getMockRootPortConfigWrites(mockRootPortSlotControlPos).empty());
+    EXPECT_TRUE(getMockRootPortConfigWrites(mockRootPortSlotStatusPos).empty());
+    EXPECT_FALSE(getMockRootPortConfigWrites(PCI_BRIDGE_CONTROL).empty());
+}
+
+TEST_F(ZesDiagnosticsFixture, GivenSlotControlReadFailsWhenCallingWarmResetThenCallFailsBeforeDeviceIsRemoved) {
+    VariableBackup<size_t> configWritesCountBackup(&mockRootPortConfigWritesCount, 0u);
+    VariableBackup<int> slotControlReadsBackup(&mockRootPortSlotControlReadsBeforeFailure, 0);
+    pLinuxSysmanImp->gtDevicePath = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0";
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup(&NEO::SysCalls::sysCallsOpen, openMockDiag);
+    pLinuxSysmanImp->preadFunction = preadMockDiag;
+    pLinuxSysmanImp->pwriteFunction = pwriteMockDiag;
+
+    pMockFsAccess->mockWriteError = ZE_RESULT_ERROR_NOT_AVAILABLE;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pLinuxSysmanImp->osWarmReset());
+
+    EXPECT_TRUE(getMockRootPortConfigWrites(mockRootPortSlotControlPos).empty());
+    EXPECT_TRUE(getMockRootPortConfigWrites(mockRootPortSlotStatusPos).empty());
+    EXPECT_TRUE(getMockRootPortConfigWrites(PCI_BRIDGE_CONTROL).empty());
+}
+
+TEST_F(ZesDiagnosticsFixture, GivenSlotControlReadFailsAfterBusResetWhenCallingWarmResetThenCallFailsAndHotPlugInterruptIsNotRestored) {
+    VariableBackup<size_t> configWritesCountBackup(&mockRootPortConfigWritesCount, 0u);
+    VariableBackup<int> slotControlReadsBackup(&mockRootPortSlotControlReadsBeforeFailure, 1);
+    pLinuxSysmanImp->gtDevicePath = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0";
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup(&NEO::SysCalls::sysCallsOpen, openMockDiag);
+    pLinuxSysmanImp->preadFunction = preadMockDiag;
+    pLinuxSysmanImp->pwriteFunction = pwriteMockDiag;
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pLinuxSysmanImp->osWarmReset());
+
+    const auto slotControlWrites = getMockRootPortConfigWrites(mockRootPortSlotControlPos);
+    ASSERT_EQ(1u, slotControlWrites.size());
+    EXPECT_EQ(mockRootPortSlotControlValueWithoutHotPlugInterrupt, slotControlWrites.front());
+    EXPECT_TRUE(getMockRootPortConfigWrites(mockRootPortSlotStatusPos).empty());
+}
+
+TEST_F(ZesDiagnosticsFixture, GivenSlotControlWriteFailsWhenCallingWarmResetThenCallFailsBeforeDeviceIsRemoved) {
+    VariableBackup<size_t> configWritesCountBackup(&mockRootPortConfigWritesCount, 0u);
+    VariableBackup<off_t> failingWriteOffsetBackup(&mockRootPortFailingWriteOffset, mockRootPortSlotControlPos);
+    pLinuxSysmanImp->gtDevicePath = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0";
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup(&NEO::SysCalls::sysCallsOpen, openMockDiag);
+    pLinuxSysmanImp->preadFunction = preadMockDiag;
+    pLinuxSysmanImp->pwriteFunction = pwriteMockDiag;
+
+    pMockFsAccess->mockWriteError = ZE_RESULT_ERROR_NOT_AVAILABLE;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pLinuxSysmanImp->osWarmReset());
+
+    EXPECT_TRUE(getMockRootPortConfigWrites(mockRootPortSlotStatusPos).empty());
+    EXPECT_TRUE(getMockRootPortConfigWrites(PCI_BRIDGE_CONTROL).empty());
+}
+
+TEST_F(ZesDiagnosticsFixture, GivenSlotControlWriteFailsAfterBusResetWhenCallingWarmResetThenCallFails) {
+    VariableBackup<size_t> configWritesCountBackup(&mockRootPortConfigWritesCount, 0u);
+    VariableBackup<off_t> failingWriteOffsetBackup(&mockRootPortFailingWriteOffset, mockRootPortSlotControlPos);
+    VariableBackup<size_t> writesBeforeFailureBackup(&mockRootPortWritesBeforeFailure, 1u);
+    pLinuxSysmanImp->gtDevicePath = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0";
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup(&NEO::SysCalls::sysCallsOpen, openMockDiag);
+    pLinuxSysmanImp->preadFunction = preadMockDiag;
+    pLinuxSysmanImp->pwriteFunction = pwriteMockDiag;
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pLinuxSysmanImp->osWarmReset());
+
+    const auto slotControlWrites = getMockRootPortConfigWrites(mockRootPortSlotControlPos);
+    ASSERT_EQ(1u, slotControlWrites.size());
+    EXPECT_EQ(mockRootPortSlotControlValueWithoutHotPlugInterrupt, slotControlWrites.front());
+    EXPECT_EQ(1u, getMockRootPortConfigWrites(mockRootPortSlotStatusPos).size());
+}
+
+TEST_F(ZesDiagnosticsFixture, GivenSlotStatusWriteFailsWhenCallingWarmResetThenCallFailsAndHotPlugInterruptIsNotEnabledAgain) {
+    VariableBackup<size_t> configWritesCountBackup(&mockRootPortConfigWritesCount, 0u);
+    VariableBackup<off_t> failingWriteOffsetBackup(&mockRootPortFailingWriteOffset, mockRootPortSlotStatusPos);
+    pLinuxSysmanImp->gtDevicePath = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0";
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup(&NEO::SysCalls::sysCallsOpen, openMockDiag);
+    pLinuxSysmanImp->preadFunction = preadMockDiag;
+    pLinuxSysmanImp->pwriteFunction = pwriteMockDiag;
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pLinuxSysmanImp->osWarmReset());
+
+    const auto slotControlWrites = getMockRootPortConfigWrites(mockRootPortSlotControlPos);
+    ASSERT_EQ(1u, slotControlWrites.size());
+    EXPECT_EQ(mockRootPortSlotControlValueWithoutHotPlugInterrupt, slotControlWrites.front());
 }
 
 TEST_F(ZesDiagnosticsFixture, GivenRootPortWithoutPcieCapabilityWhenCallingWarmResetThenCallFailsBeforeDeviceIsRemoved) {
@@ -659,9 +829,41 @@ TEST_F(ZesDiagnosticsFixture, GivenValidSysmanImpPointerWhenCallingWarmResetAndC
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pLinuxSysmanImp->osWarmReset());
 }
 
-TEST_F(ZesDiagnosticsFixture, GivenValidSysmanImpPointerWhenCallingWarmResetAndRootPortRescanFailsThenCallFails) {
+TEST_F(ZesDiagnosticsFixture, GivenHotPlugInterruptEnabledOnRootPortWhenCallingWarmResetAndDeviceRemoveFailsThenCallFailsAndHotPlugInterruptIsEnabledAgain) {
+    VariableBackup<size_t> configWritesCountBackup(&mockRootPortConfigWritesCount, 0u);
+    pLinuxSysmanImp->gtDevicePath = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0";
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup(&NEO::SysCalls::sysCallsOpen, openMockDiag);
+    pLinuxSysmanImp->preadFunction = preadMockDiag;
+    pLinuxSysmanImp->pwriteFunction = pwriteMockDiag;
+
+    pMockFsAccess->mockWriteError = ZE_RESULT_ERROR_NOT_AVAILABLE;
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pLinuxSysmanImp->osWarmReset());
+
+    const auto slotControlWrites = getMockRootPortConfigWrites(mockRootPortSlotControlPos);
+    ASSERT_EQ(2u, slotControlWrites.size());
+    EXPECT_EQ(mockRootPortSlotControlValueWithHotPlugInterrupt, slotControlWrites.back());
+    EXPECT_TRUE(getMockRootPortConfigWrites(PCI_BRIDGE_CONTROL).empty());
+}
+
+TEST_F(ZesDiagnosticsFixture, GivenHotPlugInterruptDisabledOnRootPortWhenCallingWarmResetAndDeviceRemoveFailsThenCallFailsAndSlotControlIsNotWritten) {
+    VariableBackup<size_t> configWritesCountBackup(&mockRootPortConfigWritesCount, 0u);
+    VariableBackup<uint8_t> slotControlValueBackup(&mockRootPortSlotControlValue, uint8_t{mockRootPortSlotControlValueWithoutHotPlugInterrupt});
+    pLinuxSysmanImp->gtDevicePath = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0";
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup(&NEO::SysCalls::sysCallsOpen, openMockDiag);
+    pLinuxSysmanImp->preadFunction = preadMockDiag;
+    pLinuxSysmanImp->pwriteFunction = pwriteMockDiag;
+
+    pMockFsAccess->mockWriteError = ZE_RESULT_ERROR_NOT_AVAILABLE;
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pLinuxSysmanImp->osWarmReset());
+
+    EXPECT_TRUE(getMockRootPortConfigWrites(mockRootPortSlotControlPos).empty());
+    EXPECT_TRUE(getMockRootPortConfigWrites(mockRootPortSlotStatusPos).empty());
+}
+
+TEST_F(ZesDiagnosticsFixture, GivenValidSysmanImpPointerWhenCallingWarmResetAndRootPortRescanFailsThenCallFailsAndHotPlugInterruptIsEnabledAgain) {
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.VfBarResourceAllocationWa.set(false);
+    VariableBackup<size_t> configWritesCountBackup(&mockRootPortConfigWritesCount, 0u);
     pLinuxSysmanImp->gtDevicePath = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0";
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup(&NEO::SysCalls::sysCallsOpen, openMockDiag);
     pLinuxSysmanImp->preadFunction = preadMockDiag;
@@ -670,6 +872,10 @@ TEST_F(ZesDiagnosticsFixture, GivenValidSysmanImpPointerWhenCallingWarmResetAndR
     pMockFsAccess->checkErrorAfterCount = 1;
     pMockFsAccess->mockWriteError = ZE_RESULT_ERROR_NOT_AVAILABLE;
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pLinuxSysmanImp->osWarmReset());
+
+    const auto slotControlWrites = getMockRootPortConfigWrites(mockRootPortSlotControlPos);
+    ASSERT_EQ(2u, slotControlWrites.size());
+    EXPECT_EQ(mockRootPortSlotControlValueWithHotPlugInterrupt, slotControlWrites.back());
 }
 
 TEST_F(ZesDiagnosticsFixture, GivenValidSysmanImpPointerWhenCallingColdResetThenCallSucceeds) {

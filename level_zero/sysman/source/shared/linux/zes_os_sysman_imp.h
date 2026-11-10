@@ -140,7 +140,8 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableAndNonMovableClass {
     static const std::string deviceDir;
     void createFwUtilInterface();
     uint16_t getSlotControlPos(int fd);
-    void clearHPIE(int fd, uint16_t slotControlPos);
+    ze_result_t clearHPIE(int fd, uint16_t slotControlPos, bool &isHotPlugInterruptEnabled);
+    ze_result_t restoreHPIE(int fd, uint16_t slotControlPos);
     ze_result_t resizeVfBar(uint8_t size);
     std::mutex fwLock;
     std::string devicePciBdf = "";
