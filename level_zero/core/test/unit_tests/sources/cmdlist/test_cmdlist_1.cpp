@@ -1664,8 +1664,7 @@ HWTEST2_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatch
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = false};
+        .apiRequest = false};
     verifyFlags(commandList->appendWaitOnEvents(1, &event, waitEventsParameters), true, true);
     CmdListWaitEventParameters waitEventsParametersForGlobalTs = {
         .outWaitCmds = nullptr,
@@ -2102,8 +2101,7 @@ HWTEST2_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatch
             .waitForImplicitInOrderDependency = false,
             .skipAddingWaitEventsToResidency = false,
             .dualStreamCopyOffloadOperation = false,
-            .apiRequest = false,
-            .skipFlush = false};
+            .apiRequest = false};
         verifyFlags(commandList->appendWaitOnEvents(1, &event, waitEventsParameters), false, false);
         CmdListWaitEventParameters waitEventsParametersForGlobalTs = {
             .outWaitCmds = nullptr,
@@ -2575,8 +2573,7 @@ HWTEST2_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatch
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = false};
+        .apiRequest = false};
     verifyWalkerWithProfilingEnqueued(commandList->appendWaitOnEvents(1, &event, waitEventsParameters), false);
     CmdListWaitEventParameters waitEventsParametersForGlobalTs = {
         .outWaitCmds = nullptr,
@@ -2713,8 +2710,7 @@ HWTEST2_F(CommandListCreateTests, givenCmdListWhenDispatchingWalkerWithProfiling
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = false};
+        .apiRequest = false};
     verifyFlag(commandList->appendWaitOnEvents(1, &event, waitEventsParameters), false);
     CmdListWaitEventParameters waitEventsParametersForGlobalTs = {
         .outWaitCmds = nullptr,
@@ -2867,8 +2863,7 @@ HWTEST_F(CommandListCreateTests, GivenGpuHangWhenCreatingImmediateCommandListAnd
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = false};
+        .apiRequest = false};
     returnValue = commandList->appendWaitOnEvents(1, &event, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
@@ -2994,8 +2989,7 @@ HWTEST_F(CommandListCreateTests, GivenGpuHangWhenCreatingImmediateCommandListAnd
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = false};
+        .apiRequest = false};
     returnValue = commandList->appendWaitOnEvents(1, &event, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
@@ -3099,8 +3093,7 @@ HWTEST_F(CommandListCreateTests, GivenGpuHangAndEnabledFlushTaskSubmissionFlagWh
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = false};
+        .apiRequest = false};
     returnValue = commandList->appendWaitOnEvents(1, &event, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, returnValue);
 

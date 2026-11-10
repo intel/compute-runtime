@@ -64,8 +64,7 @@ HWTEST_F(CommandListCreate, givenCommandListWithInvalidWaitEventArgWhenAppendQue
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = true};
+        .apiRequest = false};
     result = commandList->appendQueryKernelTimestamps(1u, &eventHandle, alloc, nullptr, nullptr, 1u, nullptr, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 
@@ -110,8 +109,7 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = true};
+        .apiRequest = false};
     result = commandList.appendQueryKernelTimestamps(2u, events, dstPtr, nullptr, nullptr, 0u, nullptr, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -193,8 +191,7 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = true};
+        .apiRequest = false};
     result = commandList.appendQueryKernelTimestamps(2u, events, alloc, offsetSizes, nullptr, 0u, nullptr, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -277,8 +274,7 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = true};
+        .apiRequest = false};
 
     result = commandList.appendQueryKernelTimestamps(static_cast<uint32_t>(eventCount), events.get(), alloc, nullptr, nullptr, 0u, nullptr, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -349,8 +345,7 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = true};
+        .apiRequest = false};
 
     auto result = commandList.appendQueryKernelTimestamps(static_cast<uint32_t>(eventCount), events.get(), alloc.get(), nullptr, nullptr, 0u, nullptr, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -461,8 +456,7 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = true};
+        .apiRequest = false};
     result = commandList.appendQueryKernelTimestamps(2u, events, alloc, nullptr, nullptr, 0u, nullptr, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
 
@@ -558,8 +552,7 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = true};
+        .apiRequest = false};
 
     result = commandList.appendQueryKernelTimestamps(2u, events, alloc, nullptr, nullptr, 0u, nullptr, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
@@ -670,8 +663,7 @@ HWTEST_F(AppendQueryKernelTimestamps, givenEventWhenAppendQueryIsCalledThenSetAl
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = true};
+        .apiRequest = false};
     result = commandList.appendQueryKernelTimestamps(2u, events, dstPtr, nullptr, nullptr, 0u, nullptr, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -790,8 +782,7 @@ HWTEST_F(AppendQueryKernelTimestampsImmediate, givenImmediateCommandListWhenAppe
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = true};
+        .apiRequest = false};
     result = commandList.appendQueryKernelTimestamps(2u, events, dstPtr, nullptr, nullptr, 0u, nullptr, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(1u, commandList.executeCommandListImmediateWithFlushTaskCalledCount);
@@ -854,8 +845,7 @@ HWTEST_F(AppendQueryKernelTimestampsImmediate, givenImmediateCommandListWhenAppe
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = true};
+        .apiRequest = false};
     result = commandList.appendQueryKernelTimestamps(2u, events, dstPtr, offsets, nullptr, 0u, nullptr, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(1u, commandList.executeCommandListImmediateWithFlushTaskCalledCount);
@@ -895,8 +885,7 @@ HWTEST_F(AppendQueryKernelTimestampsImmediate, givenImmediateCommandListWhenAppe
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = true};
+        .apiRequest = false};
     result = commandList.appendQueryKernelTimestamps(0u, nullptr, dstPtr, nullptr, signalEvent.toHandle(), 0u, nullptr, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(1u, commandList.executeCommandListImmediateWithFlushTaskCalledCount);
@@ -934,8 +923,7 @@ HWTEST_F(AppendQueryKernelTimestampsImmediate, givenImmediateCommandListWhenAppe
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = true};
+        .apiRequest = false};
     result = commandList.appendQueryKernelTimestamps(0u, nullptr, dstPtr, nullptr, nullptr, 1u, &waitEventHandle, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(1u, commandList.executeCommandListImmediateWithFlushTaskCalledCount);
@@ -977,8 +965,7 @@ HWTEST_F(AppendQueryKernelTimestampsImmediate, givenImmediateCommandListWhenAppe
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = true};
+        .apiRequest = false};
     result = commandList.appendQueryKernelTimestamps(0u, nullptr, dstPtr, nullptr, signalEvent.toHandle(), 1u, &waitEventHandle, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(1u, commandList.executeCommandListImmediateWithFlushTaskCalledCount);
@@ -1017,8 +1004,7 @@ HWTEST_F(AppendQueryKernelTimestampsImmediate, givenImmediateCommandListWithRela
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = true};
+        .apiRequest = false};
     result = commandList.appendQueryKernelTimestamps(0u, nullptr, dstPtr, nullptr, nullptr, 1u, &waitEventHandle, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_TRUE(waitEventsParameters.relaxedOrderingAllowed);
@@ -1060,8 +1046,7 @@ HWTEST_F(AppendQueryKernelTimestampsImmediate, givenImmediateCommandListWithoutR
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = true};
+        .apiRequest = false};
     result = commandList.appendQueryKernelTimestamps(0u, nullptr, dstPtr, nullptr, nullptr, 1u, &waitEventHandle, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_FALSE(waitEventsParameters.relaxedOrderingAllowed);
@@ -1103,8 +1088,7 @@ HWTEST_F(AppendQueryKernelTimestampsImmediate, givenImmediateCommandListWhenAppe
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = true};
+        .apiRequest = false};
     result = commandList.appendQueryKernelTimestamps(2u, events, dstPtr, nullptr, nullptr, 0u, nullptr, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -1157,8 +1141,7 @@ HWTEST_F(AppendQueryKernelTimestampsImmediate, givenImmediateCommandListWhenAppe
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = true};
+        .apiRequest = false};
     result = commandList.appendQueryKernelTimestamps(2u, events, dstPtr, nullptr, nullptr, 0u, nullptr, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
     EXPECT_EQ(0u, commandList.executeCommandListImmediateWithFlushTaskCalledCount);
@@ -1275,8 +1258,7 @@ HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndImmediateCommandListWhenAppendW
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = false};
+        .apiRequest = false};
     commandList->appendWaitOnEvents(2, events, waitEventsParameters);
     size_t endOffset = commandContainer.getCommandStream()->getUsed();
 
@@ -1329,8 +1311,7 @@ HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndImmediateCommandListWhenAppendW
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = false};
+        .apiRequest = false};
     commandList->appendWaitOnEvents(2, events, waitEventsParameters);
     size_t endOffset = commandContainer.getCommandStream()->getUsed();
 
@@ -1377,8 +1358,7 @@ HWTEST_F(CommandListCreate, givenFlushTaskFlagEnabledAndAsyncCmdQueueAndCopyOnly
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = false};
+        .apiRequest = false};
     commandList->appendWaitOnEvents(2, events, waitEventsParameters);
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -1725,8 +1705,7 @@ HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndCopyOnlyImmediateCommandListWhe
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = false};
+        .apiRequest = false};
     commandList->appendWaitOnEvents(2, events, waitEventsParameters);
 
     GenCmdList cmdList;
@@ -1764,8 +1743,7 @@ HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndTbxCsrWithCopyOnlyImmediateComm
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = false};
+        .apiRequest = false};
     auto ret = commandList->appendWaitOnEvents(2, events, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 }
@@ -4052,8 +4030,7 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = true};
+        .apiRequest = false};
 
     auto result = commandList.appendQueryKernelTimestamps(0u, nullptr, alloc, nullptr, nullptr, 0u, nullptr, waitEventsParameters);
     EXPECT_EQ(commandList.appendWaitOnEventsCalled, 0u);
@@ -4081,8 +4058,7 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = true};
+        .apiRequest = false};
     auto usedSpaceBefore = commandList.commandContainer.getCommandStream()->getUsed();
     auto result = commandList.appendQueryKernelTimestamps(0u, nullptr, alloc, nullptr, nullptr, 1u, &waitEventHandle, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -4111,8 +4087,7 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = true};
+        .apiRequest = false};
 
     auto usedSpaceBefore = commandList.commandContainer.getCommandStream()->getUsed();
     auto result = commandList.appendQueryKernelTimestamps(0u, nullptr, alloc, nullptr, signalEventHandle, 0u, nullptr, waitEventsParameters);
@@ -4147,8 +4122,7 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimes
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = true};
+        .apiRequest = false};
 
     auto usedSpaceBefore = commandList.commandContainer.getCommandStream()->getUsed();
     auto result = commandList.appendQueryKernelTimestamps(0u, nullptr, alloc, nullptr, signalEventHandle, 1u, &waitEventHandle, waitEventsParameters);
@@ -4177,8 +4151,7 @@ HWTEST_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendWaitEventReturnE
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = true};
+        .apiRequest = false};
     auto usedSpaceBefore = commandList.commandContainer.getCommandStream()->getUsed();
     auto result = commandList.appendQueryKernelTimestamps(0u, nullptr, alloc, nullptr, signalEventHandle, 1u, &invalidWaitEventHandle, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);

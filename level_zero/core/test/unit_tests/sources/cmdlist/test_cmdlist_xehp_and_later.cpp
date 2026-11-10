@@ -1042,8 +1042,7 @@ struct CommandListCompactL3FlushEventPacketFixture : public ModuleFixture {
             .waitForImplicitInOrderDependency = false,
             .skipAddingWaitEventsToResidency = false,
             .dualStreamCopyOffloadOperation = false,
-            .apiRequest = false,
-            .skipFlush = false};
+            .apiRequest = false};
         result = commandList->appendWaitOnEvents(1, &eventHandle, waitEventsParameters);
         size_t sizeAfter = cmdStream->getUsed();
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);

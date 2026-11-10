@@ -1000,8 +1000,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, whenAppendLaunchCooperativeKernelAndQue
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = true};
+        .apiRequest = false};
 
     result = pCommandList->appendQueryKernelTimestamps(1u, &eventHandle, alloc, nullptr, nullptr, 1u, &eventHandle, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);

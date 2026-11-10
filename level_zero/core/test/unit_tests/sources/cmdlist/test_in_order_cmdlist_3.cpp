@@ -1089,8 +1089,7 @@ HWTEST_F(InOrderIpcTests, givenNon2WayIpcEventWhenQueryingStatusAndWaitingThenNo
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = true,
-        .skipFlush = false};
+        .apiRequest = true};
     EXPECT_EQ(ZE_RESULT_SUCCESS, waitCmdList->appendWaitOnEvents(1, &eventHandle, waitEventsParameters));
     EXPECT_FALSE(helper.is2WayIpcImportRefreshNeeded());
 
@@ -1288,8 +1287,7 @@ HWTEST_F(InOrderIpcTests, givenImportedEventWhenAppendWaitOnEventsThenImplicitly
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = true,
-        .skipFlush = false};
+        .apiRequest = true};
     EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList3->appendWaitOnEvents(1, &importedEventHandle, waitEventsParameters));
 
     // verify refresh happened
@@ -1503,8 +1501,7 @@ HWTEST_F(InOrderIpcTests, givenUnsignaledSharedEventWhenExporterSignalsThenImpor
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = true,
-        .skipFlush = false};
+        .apiRequest = true};
     EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList2->appendWaitOnEvents(1, &importedEventHandle, waitEventsParameters));
 
     // verify refresh happened: allocs populated, hostStorageDuplicated correct
@@ -1570,8 +1567,7 @@ HWTEST_F(InOrderIpcTests, givenUnsignaledSharedEventWhenImporterSignalsThenExpor
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = true,
-        .skipFlush = false};
+        .apiRequest = true};
     EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList2->appendWaitOnEvents(1, &exporterEventHandle, waitEventsParameters));
 
     // verify exporter refresh happened
@@ -1951,8 +1947,7 @@ struct InOrderCmdListWaitSpaceFixture : public BaseFixture {
         const size_t usedBefore = cmdStream->getUsed();
 
         CmdListWaitEventParameters waitEventParams = {};
-        waitEventParams.skipFlush = true;
-        EXPECT_EQ(ZE_RESULT_SUCCESS, waitCmdList->appendWaitOnEvents(1, &eventHandle, waitEventParams));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, waitCmdList->::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>::appendWaitOnEvents(1, &eventHandle, waitEventParams));
 
         EXPECT_EQ(getWaitEventSize<FamilyType>(), cmdStream->getUsed() - usedBefore);
     }

@@ -44,8 +44,7 @@ HWTEST_F(CommandListAppendWaitOnEvent, WhenAppendingWaitOnEventThenSemaphoreWait
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = false};
+        .apiRequest = false};
     auto result = commandList->appendWaitOnEvents(1, &hEventHandle, waitEventsParameters);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -523,8 +522,7 @@ HWTEST_F(CommandListAppendWaitOnEvent, givenTwoEventsWhenWaitOnEventsAppendedThe
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = false};
+        .apiRequest = false};
     auto result = commandList->appendWaitOnEvents(2, handles, waitEventsParameters);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -563,8 +561,7 @@ HWTEST_F(CommandListAppendWaitOnEvent, WhenAppendingWaitOnEventsThenEventGraphic
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = false};
+        .apiRequest = false};
     auto result = commandList->appendWaitOnEvents(1, &hEventHandle, waitEventsParameters);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -603,8 +600,7 @@ HWTEST_F(CommandListAppendWaitOnUsedPacketSignalEvent, WhenAppendingWaitOnTimest
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = false};
+        .apiRequest = false};
     result = commandList->appendWaitOnEvents(1, &hEventHandle, waitEventsParameters);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
@@ -732,8 +728,7 @@ HWTEST_F(CommandListAppendWaitOnSecondaryBatchBufferEvent, givenCommandBufferIsE
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = false};
+        .apiRequest = false};
     result = commandList->appendWaitOnEvents(1, &hEventHandle, waitEventsParameters);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -788,8 +783,7 @@ HWTEST2_F(MultTileCommandListAppendWaitOnEvent,
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = false};
+        .apiRequest = false};
     auto result = commandList->appendWaitOnEvents(1, &eventHandle, waitEventsParameters);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -839,8 +833,7 @@ HWTEST_F(CommandListAppendWaitOnEvent, givenImmediateCommandListWhenAppendWaitOn
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = false};
+        .apiRequest = false};
     EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList.appendWaitOnEvents(1, &eventHandle, waitEventsParameters));
     EXPECT_TRUE(cmdList.dependenciesPresent);
 }
@@ -865,8 +858,7 @@ HWTEST_F(CommandListAppendWaitOnEvent, givenImmediateCommandListWhenAppendWaitOn
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = false};
+        .apiRequest = false};
     EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList.appendWaitOnEvents(1, &eventHandle, waitEventsParameters));
     EXPECT_FALSE(cmdList.dependenciesPresent);
 }
@@ -905,8 +897,7 @@ HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediate
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = false};
+        .apiRequest = false};
     CmdListSignalEventParameters signalEventParameters = {
         .relaxedOrderingDispatch = false,
     };
@@ -972,8 +963,7 @@ HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediate
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = false};
+        .apiRequest = false};
     commandListImmediate->appendWaitOnEvents(1, &eventHandle, waitEventsParameters);
 
     EXPECT_EQ(0u, ultCsr.downloadAllocationsCalledCount);
@@ -1158,8 +1148,7 @@ HWTEST_F(CommandListAppendWaitOnEvent, GivenOutCmdListProvidedAndSkipResidencyFl
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = skipResidency,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = false};
+        .apiRequest = false};
     result = commandList->appendWaitOnEvents(eventCount, eventHandles.data(), waitEventsParameters);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 

@@ -1163,14 +1163,13 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendSignalEvent(ze_
     }
 
     signalEventParameters.relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(0, false);
-    bool hasStallingCmds = !signalEvent->isCounterBased() || hasStallingCmdsForRelaxedOrdering(0, signalEventParameters.relaxedOrderingDispatch);
 
     ret = checkAvailableSpace(0, false, commonImmediateCommandSize, false);
     if (ret != ZE_RESULT_SUCCESS) {
         return ret;
     }
     ret = CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(hSignalEvent, signalEventParameters);
-    return flushImmediate(ret, true, hasStallingCmds, signalEventParameters.relaxedOrderingDispatch, NEO::AppendOperations::nonKernel, false, hSignalEvent, false, nullptr, nullptr);
+    return flushImmediate(ret, true, true, signalEventParameters.relaxedOrderingDispatch, NEO::AppendOperations::nonKernel, false, hSignalEvent, false, nullptr, nullptr);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -1203,8 +1202,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMetricCommandsA
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = false};
+        .apiRequest = false};
     ret = CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(numWaitEvents, phWaitEvents, waitEventsParameters);
     if (numWaitEvents > 0) {
         this->dependenciesPresent = true;
@@ -1324,19 +1322,13 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWaitOnEvents(ui
         return ZE_RESULT_SUCCESS;
     }
 
-    if (!waitEventParams.skipFlush) {
-        auto spaceCheckStatus = checkAvailableSpace(numEvents, false, commonImmediateCommandSize, false);
-        if (spaceCheckStatus != ZE_RESULT_SUCCESS) {
-            return spaceCheckStatus;
-        }
+    auto spaceCheckStatus = checkAvailableSpace(numEvents, false, commonImmediateCommandSize, false);
+    if (spaceCheckStatus != ZE_RESULT_SUCCESS) {
+        return spaceCheckStatus;
     }
 
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(numEvents, phWaitEvents, waitEventParams);
     this->dependenciesPresent = true;
-
-    if (waitEventParams.skipFlush) {
-        return ret;
-    }
 
     return flushImmediate(ret, true, true, false, NEO::AppendOperations::nonKernel, false, nullptr, false, nullptr, nullptr);
 }

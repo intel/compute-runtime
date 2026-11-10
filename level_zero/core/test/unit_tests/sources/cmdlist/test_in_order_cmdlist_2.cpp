@@ -4921,8 +4921,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenAtomicSignallingEnabledWhenSignalli
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = true,
-        .skipFlush = false};
+        .apiRequest = true};
     immCmdList->appendWaitOnEvents(1, &handle, waitEventsParameters);
 
     EXPECT_EQ(partitionCount * 2, immCmdList->inOrderExecInfo->getCounterValue());
@@ -4977,8 +4976,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenDuplicatedCounterStorageAndAtomicSi
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = true,
-        .skipFlush = false};
+        .apiRequest = true};
     immCmdList->appendWaitOnEvents(1, &handle, waitEventsParameters);
 
     EXPECT_EQ(partitionCount * 2, immCmdList->inOrderExecInfo->getCounterValue());
@@ -5041,8 +5039,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenDuplicatedCounterStorageAndWithoutA
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = true,
-        .skipFlush = false};
+        .apiRequest = true};
     immCmdList->appendWaitOnEvents(1, &handle, waitEventsParameters);
 
     expectedCounter += counterIncrement;

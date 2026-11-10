@@ -28,7 +28,6 @@ const static CmdListWaitEventParameters defaultWaitEventsParameters{
     .skipAddingWaitEventsToResidency = false,
     .dualStreamCopyOffloadOperation = false,
     .apiRequest = true,
-    .skipFlush = false,
     .apiRequestForGraphExternal = false};
 
 const static CmdListSignalEventParameters defaultSignalEventParameters{
@@ -130,8 +129,7 @@ ze_result_t ZE_APICALL zeCommandListAppendQueryKernelTimestamps(
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = true};
+        .apiRequest = false};
     return cmdList->appendQueryKernelTimestamps(numEvents, phEvents, dstptr, pOffsets, hSignalEvent, numWaitEvents, phWaitEvents, waitEventsParameters);
 }
 

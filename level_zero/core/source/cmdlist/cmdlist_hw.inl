@@ -3909,7 +3909,6 @@ inline ze_result_t CommandListCoreFamily<gfxCoreFamily>::addEventsToCmdList(uint
     if (numWaitEvents > 0) {
         if (phWaitEvents) {
             waitEventsParameters.apiRequest = false;
-            waitEventsParameters.skipFlush = false;
             return CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(numWaitEvents, phWaitEvents, waitEventsParameters);
         } else {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;

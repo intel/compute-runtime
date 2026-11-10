@@ -981,8 +981,7 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenNormalPriorityCommandListWhe
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = false};
+        .apiRequest = false};
     returnValue = consCmdList->appendWaitOnEvents(1, &event, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
@@ -1012,8 +1011,7 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenHighPriorityCommandListWhenA
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = false};
+        .apiRequest = false};
     returnValue = consCmdList->appendWaitOnEvents(1, &event, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
@@ -1043,8 +1041,7 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenRegularEventAndNormalPriorit
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = false};
+        .apiRequest = false};
     returnValue = consCmdList->appendWaitOnEvents(1, &event, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
@@ -1075,8 +1072,7 @@ HWTEST2_F(InOrderCmdListTestsXe3pCoreAndLater, givenRegularEventAndHighPriorityC
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = false};
+        .apiRequest = false};
     returnValue = consCmdList->appendWaitOnEvents(1, &event, waitEventsParameters);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 

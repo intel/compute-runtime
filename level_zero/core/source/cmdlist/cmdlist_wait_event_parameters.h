@@ -19,7 +19,6 @@ struct CmdListWaitEventParameters {
     bool skipAddingWaitEventsToResidency = false;
     bool dualStreamCopyOffloadOperation = false;
     bool apiRequest = false;
-    bool skipFlush = false;
     bool apiRequestForGraphExternal = false;
     bool keepInOrderEventWaits = false;
 };

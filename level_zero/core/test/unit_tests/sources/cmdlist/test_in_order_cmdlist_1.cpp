@@ -740,8 +740,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenRegularCmdListWhenAppendQ
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = true};
+        .apiRequest = false};
     regularCmdList->appendQueryKernelTimestamps(2, queryEvents, deviceMem, nullptr, nullptr, 0, nullptr, waitEventsParameters);
 
     GenCmdList cmdList;
@@ -2863,8 +2862,7 @@ HWTEST_F(InOrderCmdListTests, givenEmptyCounterBasedEventWhenPassedAsWaitEventTo
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = true,
-        .skipFlush = false};
+        .apiRequest = true};
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendWaitOnEvents(1, &eventHandle, waitEventsParameters));
 
@@ -2893,8 +2891,7 @@ HWTEST_F(InOrderCmdListTests, givenEmptyCounterBasedEventWhenPassedAsWaitEventTo
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = true,
-        .skipFlush = false};
+        .apiRequest = true};
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, regularCmdList->appendWaitOnEvents(1, &eventHandle, waitEventsParameters));
 

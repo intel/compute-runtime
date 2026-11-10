@@ -679,8 +679,7 @@ HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendWaitOnE
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = false};
+        .apiRequest = false};
     auto result = commandList->appendWaitOnEvents(1, &hEvent, waitEventsParameters);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 

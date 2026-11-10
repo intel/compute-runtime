@@ -1755,8 +1755,7 @@ void ExecGraphBuilder::finalize(const GraphInstatiateSettings &settings) {
                 .waitForImplicitInOrderDependency = false,
                 .skipAddingWaitEventsToResidency = false,
                 .dualStreamCopyOffloadOperation = false,
-                .apiRequest = true,
-                .skipFlush = false};
+                .apiRequest = true};
             this->subgraphs[&rootSrc].currCmdList->appendWaitOnEvents(static_cast<uint32_t>(this->trailingEvents.size()), this->trailingEvents.data(), waitEventsParameters);
             for (auto &ev : this->trailingEvents) {
                 this->subgraphs[&rootSrc].currCmdList->appendEventReset(ev);

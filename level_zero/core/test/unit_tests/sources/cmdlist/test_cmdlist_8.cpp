@@ -1680,8 +1680,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenAppendWaitOnEv
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = false};
+        .apiRequest = false};
     cmdList.appendWaitOnEvents(1, &eventHandle, waitEventsParameters);
 
     EXPECT_TRUE(cmdList.dependenciesPresent);

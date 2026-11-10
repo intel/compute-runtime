@@ -833,8 +833,7 @@ ze_result_t OaMetricQueryImp::writeMetricQuery(CommandList &commandList, ze_even
         .waitForImplicitInOrderDependency = false,
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
-        .apiRequest = false,
-        .skipFlush = false};
+        .apiRequest = false};
     commandList.appendWaitOnEvents(numWaitEvents, phWaitEvents, waitEventsParameters);
 
     if (metricQueriesSize) {

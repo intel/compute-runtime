@@ -394,8 +394,7 @@ void ImmediateCmdListSharedHeapsFlushTaskFixtureInit::appendNonKernelOperation(L
             .waitForImplicitInOrderDependency = false,
             .skipAddingWaitEventsToResidency = false,
             .dualStreamCopyOffloadOperation = false,
-            .apiRequest = false,
-            .skipFlush = false};
+            .apiRequest = false};
         result = currentCmdList->appendWaitOnEvents(1, &eventHandle, waitEventsParameters);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     } else if (operation == NonKernelOperation::WriteGlobalTimestamp) {
