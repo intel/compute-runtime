@@ -25,10 +25,6 @@ bool DebugSessionImp::closeSipWrapper(NEO::Device *neoDevice, uint64_t contextHa
 void DebugSessionImp::closeExternalSipHandles() {
 }
 
-SIP::regset_desc *DebugSessionImp::getRegsetDesc(zet_debug_regset_type_intel_gpu_t type, NEO::SipExternalLib *sipExternalLib) {
-    return nullptr;
-}
-
 void *DebugSessionImp::getSipHandle(uint64_t contextHandle) {
     return nullptr;
 }

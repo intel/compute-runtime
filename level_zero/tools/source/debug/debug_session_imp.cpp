@@ -1212,7 +1212,7 @@ const SIP::regset_desc *DebugSessionImp::typeToRegsetDesc(const NEO::StateSaveAr
             return DebugSessionImp::getSbaRegsetDesc(device, *pStateSaveArea);
         }
         default:
-            return DebugSessionImp::getRegsetDesc(type, sipLibInterface);
+            return sipLibInterface->getRegsetDescFromMap(getSipRegisterType(type));
         }
     }
 

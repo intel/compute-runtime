@@ -29,9 +29,7 @@ class MockSipExternalLib : public NEO::SipExternalLib {
     }
 
     std::map<NEO::SipRegisterType, SIP::regset_desc *> mockRegsetDescMap;
-    std::optional<NEO::SipRegisterType> getRegsetDescFromMapCapturedType;
     SIP::regset_desc *getRegsetDescFromMap(NEO::SipRegisterType type) override {
-        getRegsetDescFromMapCapturedType = type;
         return mockRegsetDescMap[type];
     }
 

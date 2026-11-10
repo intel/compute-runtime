@@ -112,7 +112,6 @@ struct DebugSessionImp : DebugSession {
     static const SIP::regset_desc *typeToRegsetDesc(const NEO::StateSaveAreaHeader *pStateSaveAreaHeader, zet_debug_regset_type_intel_gpu_t type, L0::Device *device);
     static std::optional<NEO::RegsetDescExt> typeToRegsetDescExt(zet_debug_regset_type_intel_gpu_t type, L0::Device *device);
     static uint32_t typeToRegsetFlags(zet_debug_regset_type_intel_gpu_t type);
-    static SIP::regset_desc *getRegsetDesc(zet_debug_regset_type_intel_gpu_t type, NEO::SipExternalLib *sipExternalLib);
     static NEO::SipRegisterType getSipRegisterType(zet_debug_regset_type_intel_gpu_t type);
     struct SipMemoryAccessArgs {
         struct DebugSessionImp *debugSession;
