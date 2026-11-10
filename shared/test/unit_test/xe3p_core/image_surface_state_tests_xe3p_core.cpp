@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/image/image_surface_state.h"
@@ -13,7 +12,6 @@
 #include "shared/source/xe3p_core/hw_info_xe3p_core.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_gmm.h"
-#include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/unit_test/image/image_surface_state_fixture.h"
 
@@ -37,21 +35,4 @@ XE3P_CORETEST_F(ImageSurfaceStateTestsXe3pCore, givenGmmWithMediaCompressedWhenS
     ImageSurfaceStateHelper<FamilyType>::setMipTailStartLOD(castSurfaceState, mockGmm.get());
 
     EXPECT_EQ(castSurfaceState->getMipTailStartLOD(), mockGmm->gmmResourceInfo->getMipTailStartLODSurfaceState());
-}
-
-XE3P_CORETEST_F(ImageSurfaceStateTestsXe3pCore, givenNotMediaCompressedImageWhenAppendingSurfaceStateParamsForCompressionThenCallAppriopriateFunction) {
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
-
-    RENDER_SURFACE_STATE rss = {};
-
-    mockGmm->setCompressionEnabled(true);
-
-    MockGraphicsAllocation allocation;
-    allocation.setDefaultGmm(mockGmm.get());
-
-    auto gmmClientContext = static_cast<MockGmmClientContext *>(pDevice->getGmmHelper()->getClientContext());
-
-    EncodeSurfaceState<FamilyType>::appendImageCompressionParams(&rss, &allocation, pDevice->getGmmHelper(), false, ImagePlane::noPlane);
-
-    EXPECT_EQ(gmmClientContext->compressionFormatToReturn, rss.getCompressionFormat());
 }

@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/kernel/kernel_properties.h"
@@ -13,6 +14,7 @@
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/test_macros/heapless_matchers.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 using namespace NEO;
@@ -337,6 +339,30 @@ TEST_F(CompilerProductHelperFixture, givenEnable64BitSemaphoreFlagSetWhenIsAvail
 HWTEST2_F(CompilerProductHelperFixture, givenCompilerProductHelperWhenIsHeaplessModeEnabledThenFalseIsReturned, IsAtMostXe3Core) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
     EXPECT_FALSE(compilerProductHelper.isHeaplessModeEnabled(*defaultHwInfo));
+}
+
+HWTEST2_F(CompilerProductHelperFixture, givenHeaplessModeWhenApplyExtraInternalOptionsIsCalledThenInternalOptionsAreCorrect, IsHeaplessRequired) {
+    std::string enable64bitAddressing = "-ze-intel-64bit-addressing";
+
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+
+    {
+        std::string internalOptions;
+        NEO::CompilerOptions::applyExtraInternalOptions(internalOptions, *defaultHwInfo, compilerProductHelper, NEO::CompilerOptions::HeaplessMode::defaultMode);
+        EXPECT_TRUE(hasSubstr(internalOptions, enable64bitAddressing));
+    }
+    {
+        std::string internalOptions;
+        NEO::CompilerOptions::HeaplessMode heaplessMode = NEO::CompilerOptions::HeaplessMode::disabled;
+        NEO::CompilerOptions::applyExtraInternalOptions(internalOptions, *defaultHwInfo, compilerProductHelper, heaplessMode);
+        EXPECT_FALSE(hasSubstr(internalOptions, enable64bitAddressing));
+    }
+    {
+        std::string internalOptions;
+        NEO::CompilerOptions::HeaplessMode heaplessMode = NEO::CompilerOptions::HeaplessMode::enabled;
+        NEO::CompilerOptions::applyExtraInternalOptions(internalOptions, *defaultHwInfo, compilerProductHelper, heaplessMode);
+        EXPECT_TRUE(hasSubstr(internalOptions, enable64bitAddressing));
+    }
 }
 
 HWTEST_F(CompilerProductHelperFixture, WhenFullListOfSupportedOpenCLCVersionsIsRequestedThenReturnsListOfAllSupportedVersionsByTheAssociatedDevice) {

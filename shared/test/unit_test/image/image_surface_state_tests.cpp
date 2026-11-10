@@ -12,7 +12,9 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/stream_capture.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_gmm.h"
+#include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/image/image_surface_state_fixture.h"
 
@@ -400,4 +402,41 @@ HWTEST2_F(ImageSurfaceStateTests, givenImage1dBufferWithLargeWidthWhenSetImageSu
                                   ((surfaceState.getHeight() - 1) << 7) |
                                   ((surfaceState.getDepth() - 1) << 21);
     EXPECT_EQ(reconstructedWidth + 1, static_cast<uint32_t>(largeWidth));
+}
+
+HWTEST2_F(ImageSurfaceStateTests, givenSurfaceStateAndAuxSurfaceModeOverrideRequiredIsFalseWhenAuxParamsForMCSCCSAreSetThenCorrectAuxModeIsSet, IsXeCore) {
+    auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.caps.auxSurfaceModeOverrideRequired = false;
+
+    EncodeSurfaceState<FamilyType>::setAuxParamsForMCSCCS(&surfaceState, hwInfo);
+
+    EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), EncodeSurfaceState<FamilyType>::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_MCS_LCE);
+}
+
+HWTEST2_F(ImageSurfaceStateTests, givenSurfaceStateAndAuxSurfaceModeOverrideRequiredIsTrueWhenAuxParamsForMCSCCSAreSetThenCorrectAuxModeIsSet, IsXeCore) {
+    auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.caps.auxSurfaceModeOverrideRequired = true;
+
+    EncodeSurfaceState<FamilyType>::setAuxParamsForMCSCCS(&surfaceState, hwInfo);
+
+    EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), EncodeSurfaceState<FamilyType>::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
+}
+
+HWTEST2_F(ImageSurfaceStateTests, givenNotMediaCompressedImageWhenAppendingSurfaceStateParamsForCompressionThenCallAppriopriateFunction, IsAtLeastXe2HpgCore) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    RENDER_SURFACE_STATE rss = {};
+
+    mockGmm->setCompressionEnabled(true);
+
+    MockGraphicsAllocation allocation;
+    allocation.setDefaultGmm(mockGmm.get());
+
+    auto gmmClientContext = static_cast<MockGmmClientContext *>(pDevice->getGmmHelper()->getClientContext());
+
+    EncodeSurfaceState<FamilyType>::appendImageCompressionParams(&rss, &allocation, pDevice->getGmmHelper(), false, ImagePlane::noPlane);
+
+    EXPECT_EQ(gmmClientContext->compressionFormatToReturn, rss.getCompressionFormat());
 }

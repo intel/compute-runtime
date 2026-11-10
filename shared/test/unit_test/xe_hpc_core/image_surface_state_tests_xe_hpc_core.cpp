@@ -63,23 +63,3 @@ XE_HPC_CORETEST_F(ImageSurfaceStateTestsXeHpcCore, givenGmmWithMediaCompressedWh
 
     EXPECT_EQ(castSurfaceState->getMipTailStartLOD(), mockGmm->gmmResourceInfo->getMipTailStartLODSurfaceState());
 }
-
-XE_HPC_CORETEST_F(ImageSurfaceStateTestsXeHpcCore, givenSurfaceStateAndAuxSurfaceModeOverrideRequiredIsFalseWhenAuxParamsForMCSCCSAreSetThenCorrectAuxModeIsSet) {
-    auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
-    auto hwInfo = *defaultHwInfo;
-    hwInfo.caps.auxSurfaceModeOverrideRequired = false;
-
-    EncodeSurfaceState<FamilyType>::setAuxParamsForMCSCCS(&surfaceState, hwInfo);
-
-    EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), EncodeSurfaceState<FamilyType>::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_MCS_LCE);
-}
-
-XE_HPC_CORETEST_F(ImageSurfaceStateTestsXeHpcCore, givenSurfaceStateAndAuxSurfaceModeOverrideRequiredIsTrueWhenAuxParamsForMCSCCSAreSetThenCorrectAuxModeIsSet) {
-    auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
-    auto hwInfo = *defaultHwInfo;
-    hwInfo.caps.auxSurfaceModeOverrideRequired = true;
-
-    EncodeSurfaceState<FamilyType>::setAuxParamsForMCSCCS(&surfaceState, hwInfo);
-
-    EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), EncodeSurfaceState<FamilyType>::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
-}
