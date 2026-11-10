@@ -19,11 +19,6 @@ bool ProductHelperHw<gfxProduct>::isBlitterForImagesSupported() const {
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isReleaseGlobalFenceInCommandStreamRequired(const HardwareInfo &hwInfo) const {
-    return false;
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::isAcquireGlobalFenceInDirectSubmissionRequired(const HardwareInfo &hwInfo) const {
     return !hwInfo.capabilityTable.isIntegratedDevice;
 }

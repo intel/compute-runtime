@@ -39,11 +39,6 @@ bool ProductHelperHw<gfxProduct>::isLEOSupported() const {
     return true;
 }
 
-template <>
-bool ProductHelperHw<gfxProduct>::useSharedSystemUsm() const {
-    return false;
-}
-
 template class ProductHelperHw<gfxProduct>;
 template struct EnableProductHelper<gfxProduct>;
 } // namespace NEO

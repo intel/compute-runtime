@@ -37,11 +37,6 @@ uint64_t ProductHelperHw<gfxProduct>::getSharedSystemPatIndex() const {
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::useSharedSystemUsm() const {
-    return false;
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::areSecondaryContextsSupported() const {
     return true;
 }

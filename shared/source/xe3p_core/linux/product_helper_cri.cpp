@@ -46,11 +46,6 @@ bool ProductHelperHw<gfxProduct>::isEuDebugPageFaultSupported() const {
 }
 
 template <>
-uint64_t ProductHelperHw<gfxProduct>::getSharedSystemPatIndex() const {
-    return 0;
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::useSharedSystemUsm() const {
     return true;
 }

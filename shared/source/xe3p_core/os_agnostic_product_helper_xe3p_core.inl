@@ -19,11 +19,6 @@ bool ProductHelperHw<gfxProduct>::isBlitterForImagesSupported() const {
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isReleaseGlobalFenceInCommandStreamRequired(const HardwareInfo &hwInfo) const {
-    return false;
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::isAcquireGlobalFenceInDirectSubmissionRequired(const HardwareInfo &hwInfo) const {
     return !hwInfo.capabilityTable.isIntegratedDevice;
 }
@@ -101,16 +96,6 @@ bool ProductHelperHw<gfxProduct>::isDeviceUsmAllocationReuseSupported() const {
 
 template <>
 bool ProductHelperHw<gfxProduct>::isHostUsmAllocationReuseSupported() const {
-    return true;
-}
-
-template <>
-bool ProductHelperHw<gfxProduct>::isDeviceUsmPoolAllocatorSupported() const {
-    return true;
-}
-
-template <>
-bool ProductHelperHw<gfxProduct>::isHostUsmPoolAllocatorSupported() const {
     return true;
 }
 

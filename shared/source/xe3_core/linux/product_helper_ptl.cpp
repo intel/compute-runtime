@@ -39,11 +39,6 @@ uint64_t ProductHelperHw<gfxProduct>::getSharedSystemPatIndex() const {
     return 1;
 }
 
-template <>
-bool ProductHelperHw<gfxProduct>::useSharedSystemUsm() const {
-    return false;
-}
-
 template class ProductHelperHw<gfxProduct>;
 template struct EnableProductHelper<gfxProduct>;
 } // namespace NEO
