@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/os_interface/gl_wrapper.h"
 
 #include "opencl/source/api/leo_forwarding.h"
 #include "opencl/source/command_queue/command_queue.h"
@@ -14,8 +15,6 @@
 #include "opencl/source/mem_obj/mem_obj.h"
 #include "opencl/source/sharings/gl/gl_arb_sync_event.h"
 #include "opencl/source/sharings/gl/linux/gl_sharing_linux.h"
-
-#include <GL/gl.h>
 
 namespace NEO {
 

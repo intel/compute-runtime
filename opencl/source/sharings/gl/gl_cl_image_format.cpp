@@ -1,14 +1,15 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/os_interface/gl_wrapper.h"
+
 #include "opencl/source/sharings/gl/gl_sharing.h"
 #include "opencl/source/sharings/gl/gl_texture.h"
 
-#include "GL/gl.h"
 #include "config.h"
 
 namespace NEO {

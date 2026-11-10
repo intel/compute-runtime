@@ -26,7 +26,8 @@ using GLFunctionType = PROC(__stdcall *)(LPCSTR arg1);
 #pragma clang diagnostic ignored "-Wmacro-redefined"
 #pragma clang diagnostic ignored "-Wnonportable-include-path"
 #endif
-#include "GL/gl.h"
+#include "shared/source/os_interface/gl_wrapper.h"
+
 #include "GL/glext.h"
 #if __clang__
 #pragma clang diagnostic pop

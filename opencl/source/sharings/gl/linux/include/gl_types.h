@@ -13,5 +13,6 @@ typedef void *GLContext;
 using GLType = uint32_t;
 using GLFunctionType = decltype(&eglGetProcAddress);
 
-#include "GL/gl.h"
+#include "shared/source/os_interface/gl_wrapper.h"
+
 #include "GL/glext.h"

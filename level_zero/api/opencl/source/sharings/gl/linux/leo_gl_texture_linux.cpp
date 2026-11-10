@@ -14,6 +14,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/memory_manager/allocation_properties.h"
+#include "shared/source/os_interface/gl_wrapper.h"
 #include "shared/source/os_interface/product_helper.h"
 
 #include "level_zero/api/opencl/source/cl_device/leo_cl_device.h"
@@ -30,7 +31,6 @@
 #include "CL/cl_gl.h"
 #include "config.h"
 #include "drm_fourcc.h"
-#include <GL/gl.h>
 
 namespace NEO {
 namespace LEO {

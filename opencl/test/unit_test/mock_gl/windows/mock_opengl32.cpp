@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,10 +7,10 @@
 
 #define _GDI32_ // It causes that definitions of functions are not loaded from dll in file wingdi.h because they are in this file.
 
+#include "shared/source/os_interface/gl_wrapper.h"
+
 #include "opencl/test/unit_test/helpers/windows/mock_function.h"
 #include "opencl/test/unit_test/mocks/gl/windows/mock_gl_sharing_windows.h"
-
-#include "GL/gl.h"
 
 extern "C" {
 const char *glString = "Intel";

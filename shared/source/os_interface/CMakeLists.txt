@@ -26,6 +26,7 @@ set(NEO_CORE_OS_INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/device_time_tbx.h
     ${CMAKE_CURRENT_SOURCE_DIR}/driver_info.h
     ${CMAKE_CURRENT_SOURCE_DIR}/external_semaphore.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/gl_wrapper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_device_id.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mapped_file.h
     ${CMAKE_CURRENT_SOURCE_DIR}/metrics_library.cpp

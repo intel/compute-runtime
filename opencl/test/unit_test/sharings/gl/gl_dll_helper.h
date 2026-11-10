@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,11 +8,10 @@
 #pragma once
 
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/os_interface/gl_wrapper.h"
 #include "shared/source/os_interface/os_library.h"
 
 #include "opencl/extensions/public/cl_gl_private_intel.h"
-
-#include "GL/gl.h"
 
 #include <memory>
 

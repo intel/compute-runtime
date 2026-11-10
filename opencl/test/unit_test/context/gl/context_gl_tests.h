@@ -7,12 +7,13 @@
 
 #pragma once
 
+#include "shared/source/os_interface/gl_wrapper.h"
+
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
 #include "gtest/gtest.h"
-#include <GL/gl.h>
 
 namespace NEO {
 

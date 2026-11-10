@@ -5,10 +5,11 @@
  *
  */
 
+#include "shared/source/os_interface/gl_wrapper.h"
+
 #include "level_zero/api/opencl/source/sharings/gl/leo_gl_sharing.h"
 #include "level_zero/api/opencl/source/sharings/gl/leo_gl_texture.h"
 
-#include "GL/gl.h"
 #include "config.h"
 
 namespace NEO {

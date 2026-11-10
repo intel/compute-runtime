@@ -6,14 +6,13 @@
  */
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/os_interface/gl_wrapper.h"
 
 #include "level_zero/api/opencl/source/command_queue/leo_command_queue.h"
 #include "level_zero/api/opencl/source/context/leo_context.h"
 #include "level_zero/api/opencl/source/helpers/leo_base_object.h"
 #include "level_zero/api/opencl/source/sharings/gl/leo_gl_arb_sync_event.h"
 #include "level_zero/api/opencl/source/sharings/gl/linux/leo_gl_sharing_linux.h"
-
-#include <GL/gl.h>
 
 namespace NEO {
 namespace LEO {

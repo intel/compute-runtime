@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/device/device.h"
+#include "shared/source/os_interface/gl_wrapper.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/gdi_interface.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
@@ -21,8 +22,6 @@
 #include "opencl/source/mem_obj/mem_obj.h"
 #include "opencl/source/sharings/gl/gl_arb_sync_event.h"
 #include "opencl/source/sharings/gl/windows/gl_sharing_windows.h"
-
-#include <GL/gl.h>
 
 namespace NEO {
 

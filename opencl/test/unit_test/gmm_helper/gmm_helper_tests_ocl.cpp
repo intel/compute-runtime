@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/os_interface/gl_wrapper.h"
 #include "shared/test/common/fixtures/mock_execution_environment_gmm_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
@@ -18,7 +19,6 @@
 #include "opencl/source/helpers/gmm_types_converter.h"
 #include "opencl/source/mem_obj/image.h"
 
-#include "GL/gl.h"
 #include "GL/glext.h"
 #include "gtest/gtest.h"
 

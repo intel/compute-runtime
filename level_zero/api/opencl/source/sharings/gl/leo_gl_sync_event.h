@@ -6,10 +6,10 @@
  */
 
 #pragma once
+#include "shared/source/os_interface/gl_wrapper.h"
+
 #include "level_zero/api/opencl/extensions/public/cl_gl_private_intel.h"
 #include "level_zero/api/opencl/source/event/leo_event.h"
-
-#include <GL/gl.h>
 
 struct _tagGLCLSyncInfo;
 typedef _tagGLCLSyncInfo GL_CL_SYNC_INFO;

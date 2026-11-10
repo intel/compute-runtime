@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,8 +11,8 @@
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/os_interface/gl_wrapper.h"
 
-#include "GL/gl.h"
 #include "GL/glext.h"
 
 using namespace NEO;

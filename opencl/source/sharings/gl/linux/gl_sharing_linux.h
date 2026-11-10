@@ -7,12 +7,13 @@
 
 #pragma once
 
+#include "shared/source/os_interface/gl_wrapper.h"
+
 #include "opencl/extensions/public/cl_gl_private_intel.h"
 #include "opencl/source/sharings/gl/gl_sharing.h"
 #include "opencl/source/sharings/gl/linux/include/gl_types.h"
 
 #include "third_party/opengl_headers/GL/mesa_glinterop.h"
-#include <GL/gl.h>
 
 #include <EGL/eglext.h>
 

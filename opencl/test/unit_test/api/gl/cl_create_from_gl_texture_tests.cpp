@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "opencl/test/unit_test/api/cl_api_tests.h"
+#include "shared/source/os_interface/gl_wrapper.h"
 
-#include <GL/gl.h>
+#include "opencl/test/unit_test/api/cl_api_tests.h"
 
 using namespace NEO;
 

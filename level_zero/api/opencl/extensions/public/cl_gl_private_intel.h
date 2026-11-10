@@ -7,8 +7,8 @@
 
 #pragma once
 #include "shared/source/gmm_helper/gmm_lib.h"
+#include "shared/source/os_interface/gl_wrapper.h"
 
-#include "GL/gl.h"
 #include "third_party/opencl_headers/CL/cl_gl.h"
 
 // header with structures shared with opengl

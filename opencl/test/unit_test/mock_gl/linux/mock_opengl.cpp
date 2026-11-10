@@ -5,9 +5,9 @@
  *
  */
 
-#include "opencl/test/unit_test/mocks/gl/linux/mock_gl_sharing_linux.h"
+#include "shared/source/os_interface/gl_wrapper.h"
 
-#include "GL/gl.h"
+#include "opencl/test/unit_test/mocks/gl/linux/mock_gl_sharing_linux.h"
 
 extern "C" {
 const char *glString = "Intel";
