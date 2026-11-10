@@ -1,16 +1,15 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/gen12lp/hw_cmds.h"
-
-#include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/helpers/l0_populate_factory.h"
 
 namespace NEO {
+
+struct Gen12LpFamily;
 
 using Family = Gen12LpFamily;
 

@@ -1,15 +1,15 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/xe2_hpg_core/hw_cmds.h"
-
 #include "opencl/source/helpers/enable_family_full_ocl.h"
 
 namespace NEO {
+struct Xe2HpgCoreFamily;
+
 using Family = Xe2HpgCoreFamily;
 
 struct EnableOCLXe2HpgCore {

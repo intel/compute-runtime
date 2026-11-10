@@ -1,15 +1,15 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/xe3_core/hw_cmds_base.h"
-
 #include "level_zero/core/source/helpers/l0_populate_factory.h"
 
 namespace NEO {
+
+struct Xe3CoreFamily;
 
 using Family = Xe3CoreFamily;
 

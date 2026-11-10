@@ -1,15 +1,15 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/gen12lp/hw_cmds.h"
-
 #include "opencl/source/helpers/enable_family_full_ocl.h"
 
 namespace NEO {
+struct Gen12LpFamily;
+
 using Family = Gen12LpFamily;
 
 struct EnableOCLGen12LP {

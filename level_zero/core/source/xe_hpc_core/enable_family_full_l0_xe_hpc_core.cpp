@@ -1,15 +1,15 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
-
 #include "level_zero/core/source/helpers/l0_populate_factory.h"
 
 namespace NEO {
+
+struct XeHpcCoreFamily;
 
 using Family = XeHpcCoreFamily;
 

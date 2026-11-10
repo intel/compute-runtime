@@ -1,15 +1,15 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/xe3_core/hw_cmds_base.h"
-
 #include "opencl/source/helpers/enable_family_full_ocl.h"
 
 namespace NEO {
+struct Xe3CoreFamily;
+
 using Family = Xe3CoreFamily;
 
 struct EnableOCLXe3Core {
