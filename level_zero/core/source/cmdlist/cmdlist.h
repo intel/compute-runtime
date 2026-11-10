@@ -548,6 +548,10 @@ struct CommandList : _ze_command_list_handle_t {
         return midThreadPreemptionKernelAppended;
     }
 
+    bool hasExternalDependency() const {
+        return externalDependencyProgrammed;
+    }
+
     bool isHeaplessModeEnabled() const {
         return heaplessModeEnabled;
     }
@@ -979,6 +983,7 @@ struct CommandList : _ze_command_list_handle_t {
     bool dynamicHeapRequired = false;
     bool kernelWithAssertAppended = false;
     bool midThreadPreemptionKernelAppended = false;
+    bool externalDependencyProgrammed = false;
     bool dispatchCmdListBatchBufferAsPrimary = false;
     bool copyThroughLockedPtrEnabled = false;
     bool stagingCopiesAllowed = true;

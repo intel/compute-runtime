@@ -2362,6 +2362,26 @@ HWTEST_F(CommandListCsrReassignmentTests, givenSynchronizationTaskCountsStoredWh
     commandList->destroy();
 }
 
+HWTEST_F(CommandListCsrReassignmentTests, givenStagingDependencyTaskCountsStoredWhenCsrIsReassignedThenStagingDependencyTaskCountsAreCleared) {
+    ze_command_queue_desc_t desc = {};
+    auto commandList = createInitializedImmediateCommandList(desc);
+    auto immediateCommandList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(static_cast<L0::CommandList *>(commandList));
+    auto initialCsr = commandList->getCsr(false);
+
+    immediateCommandList->stagingDependencyTaskCounts.store(loadedCsrSubmittedTaskCount, loadedCsrSubmittedTaskCount);
+    initialCsr->retainQueueOwnership();
+    setCsrProgress<FamilyType>(initialCsr, loadedCsrSubmittedTaskCount, 0u);
+
+    immediateCommandList->tryReassignCsrAtSafeTransitionPoint();
+    ASSERT_NE(initialCsr, commandList->getCsr(false));
+
+    EXPECT_TRUE(immediateCommandList->stagingDependencyTaskCounts.matches(0u, 0u));
+
+    initialCsr->releaseQueueOwnership();
+    markCsrIdle(initialCsr);
+    commandList->destroy();
+}
+
 HWTEST_F(CommandListCsrReassignmentTests, givenInOrderCommandListReassignedBeforeDependencyIsDispatchedWhenHostSynchronizingWithTaskCountWaitThenPreviousCsrIsWaited) {
     ze_command_queue_desc_t desc = {};
     desc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;

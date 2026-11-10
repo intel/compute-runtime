@@ -315,6 +315,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::requiresQueueUncachedMocs;
     using BaseClass::reserveScratchSpaceForKernel;
     using BaseClass::resolveImagePitchesAndBufferSize;
+    using BaseClass::stagingDependencyTaskCounts;
     using BaseClass::stateBaseAddressTracking;
     using BaseClass::stateComputeModeTracking;
     using BaseClass::statelessBuiltinsEnabled;

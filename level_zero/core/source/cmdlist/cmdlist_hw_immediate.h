@@ -269,6 +269,8 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     size_t getCpuCopyThreshold(TransferType transferType);
     bool isBarrierRequired();
     bool hasPendingInOrderWork() const;
+    bool hasPendingStagingDependency() const;
+    void recordStagingDependency();
     bool isRelaxedOrderingDispatchAllowed(uint32_t numWaitEvents, bool copyOffload) override;
     void handlePostSyncPrintfAndAssert(bool hangDetected) final;
 
@@ -289,8 +291,8 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     NEO::LinearStream *getOptionalEpilogueCmdStream(NEO::LinearStream *taskCmdStream, NEO::AppendOperations appendOperation);
 
     bool hasDependenciesForStaging(uint32_t numWaitEvents) const;
-    bool isValidForStagingTransfer(const CpuMemCopyInfo &cpuMemCopyInfo, bool hasDependencies);
-    bool isValidForStagingImageTransfer(const void *ptr, size_t size, bool hasDependencies);
+    bool isValidForStagingTransfer(const CpuMemCopyInfo &cpuMemCopyInfo, uint32_t numWaitEvents);
+    bool isValidForStagingImageTransfer(const void *ptr, size_t size, uint32_t numWaitEvents);
     MOCKABLE_VIRTUAL ze_result_t appendStagingMemoryCopy(const CpuMemCopyInfo &cpuMemCopyInfo, ze_event_handle_t hSignalEvent, CmdListMemoryCopyParams &memoryCopyParams);
     MOCKABLE_VIRTUAL ze_result_t appendStagingImageTransfer(ze_image_handle_t hImage, const void *ptr, const ze_image_region_t *pRegion, size_t rowPitch, size_t slicePitch, bool isRead, ze_event_handle_t hSignalEvent, CmdListMemoryCopyParams &memoryCopyParams);
     bool tryAppendStagingImageTransfer(ze_image_handle_t hImage, const void *ptr, const ze_image_region_t *&pRegion, ze_image_region_t &tmpRegion, uint32_t rowPitch, uint64_t slicePitch, bool isRead, uint32_t numWaitEvents, ze_event_handle_t hSignalEvent, CmdListMemoryCopyParams &memoryCopyParams, ze_result_t &result);
@@ -308,6 +310,8 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     ComputeFlushMethodType computeFlushMethod = nullptr;
     uint64_t relaxedOrderingCounter = 0;
     std::atomic<bool> dependenciesPresent{false};
+    uint64_t stagingDependencyCounterValue = 0;
+    uint32_t stagingDependencyAllocationOffset = 0;
     struct SynchronizationTaskCounts {
         bool matches(TaskCountType mainTaskCount, TaskCountType copyOffloadTaskCount) const {
             return main.load() == mainTaskCount && copyOffload.load() == copyOffloadTaskCount;
@@ -328,6 +332,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     };
     SynchronizationTaskCounts lastBarrierTaskCounts;
     SynchronizationTaskCounts lastHostSynchronizeTaskCounts;
+    SynchronizationTaskCounts stagingDependencyTaskCounts;
     NEO::CommandStreamReceiver *csrBeforeReassignment = nullptr;
     std::vector<std::pair<NEO::CommandStreamReceiver *, TaskCountType>> previousCsrsAwaitingCompletion;
     TaskCountType taskCountBeforeReassignment = 0;

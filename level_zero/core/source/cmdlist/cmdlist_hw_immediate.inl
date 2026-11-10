@@ -84,6 +84,7 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::tryReassignCsrAtSafeTransiti
     this->commandContainer.setImmediateCmdListCsr(reassignedCsr);
     this->lastHostSynchronizeTaskCounts.invalidate();
     this->lastBarrierTaskCounts.invalidate();
+    this->stagingDependencyTaskCounts.store(0, 0);
     if (this->inOrderExecInfo) {
         // non-walker in-order signaling waits for completion on the previous context's ring only, so it is not validated with dynamic context reassignment
         DEBUG_BREAK_IF(!this->duplicatedInOrderCounterStorageEnabled || (this->compactL3FlushEventPacket && this->dcFlushSupport));
@@ -1012,7 +1013,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
         BcsSplitParams::CopyParams copyParams = BcsSplitParams::MemCopy{dstptr, srcptr};
         ret = this->device->bcsSplit->template appendImmediateSplitCall<gfxCoreFamily>(this, copyParams, size, hSignalEvent, numWaitEvents, phWaitEvents, true, memoryCopyParams.relaxedOrderingDispatch, direction, estimatedSize, splitCall);
 
-    } else if (!hasExplicitAllocs && this->isValidForStagingTransfer(cpuMemCopyInfo, numWaitEvents > 0)) {
+    } else if (!hasExplicitAllocs && this->isValidForStagingTransfer(cpuMemCopyInfo, numWaitEvents)) {
         return this->appendStagingMemoryCopy(cpuMemCopyInfo, hSignalEvent, memoryCopyParams);
     } else {
         ret = CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(dstptr, srcptr, size, hSignalEvent,
@@ -1415,7 +1416,7 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::tryAppendStagingImageTransfe
     uint64_t totalSize = 0;
     this->resolveImagePitchesAndBufferSize(image, pRegion, resolvedRowPitch, resolvedSlicePitch, totalSize);
 
-    if (isValidForStagingImageTransfer(ptr, totalSize, hasDependenciesForStaging(numWaitEvents))) {
+    if (isValidForStagingImageTransfer(ptr, totalSize, numWaitEvents)) {
         result = this->appendStagingImageTransfer(hImage, ptr, pRegion, resolvedRowPitch, resolvedSlicePitch, isRead, hSignalEvent, memoryCopyParams);
         return true;
     }
@@ -1656,6 +1657,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWaitExternalSem
     if (!this->getCsr(copyOffload)->submitExternalSemaphoreWaits(operationData.operations)) {
         return ZE_RESULT_ERROR_UNKNOWN;
     }
+    this->externalDependencyProgrammed = true;
 
     this->appendSynchronizedDispatchInitializationSection();
 
@@ -1910,6 +1912,9 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_res
             signalEvent->setCleanupTaskCount(queue->getCsr(), queue->getTaskCount());
             signalEvent->setSignalFlushStamp(queue->getFlushStamp());
         }
+        if (inputRet == ZE_RESULT_SUCCESS && this->externalDependencyProgrammed) {
+            recordStagingDependency();
+        }
     }
 
     return inputRet;
@@ -1922,6 +1927,52 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::hasPendingInOrderWork() cons
     }
 
     return !this->inOrderExecInfo->isCounterDone(this->inOrderExecInfo->getCounterValue(), this->inOrderExecInfo->getAllocationOffset());
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamilyImmediate<gfxCoreFamily>::recordStagingDependency() {
+    this->externalDependencyProgrammed = false;
+    if (isInOrderExecutionEnabled()) {
+        this->stagingDependencyCounterValue = this->inOrderExecInfo->getCounterValue();
+        this->stagingDependencyAllocationOffset = this->inOrderExecInfo->getAllocationOffset();
+        return;
+    }
+
+    const bool dualStreamCopyOffload = isDualStreamCopyOffloadOperation(true) && this->cmdQImmediateCopyOffload != nullptr;
+    this->stagingDependencyTaskCounts.store(this->cmdQImmediate->getTaskCount(),
+                                            dualStreamCopyOffload ? this->cmdQImmediateCopyOffload->getTaskCount() : 0);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+bool CommandListCoreFamilyImmediate<gfxCoreFamily>::hasPendingStagingDependency() const {
+    if (isInOrderExecutionEnabled()) {
+        if (this->stagingDependencyCounterValue == 0) {
+            return false;
+        }
+        const bool counterRestartedAfterRecord = this->stagingDependencyAllocationOffset == this->inOrderExecInfo->getAllocationOffset() &&
+                                                 this->stagingDependencyCounterValue > this->inOrderExecInfo->getCounterValue();
+        if (counterRestartedAfterRecord) {
+            return false;
+        }
+        return !this->inOrderExecInfo->isCounterDone(this->stagingDependencyCounterValue, this->stagingDependencyAllocationOffset);
+    }
+
+    const auto mainTaskCount = this->stagingDependencyTaskCounts.main.load();
+    if (mainTaskCount != 0) {
+        auto mainCsr = getCsr(false);
+        if (!mainCsr->testTaskCountReady(mainCsr->getTagAddress(), mainTaskCount)) {
+            return true;
+        }
+    }
+
+    const auto copyOffloadTaskCount = this->stagingDependencyTaskCounts.copyOffload.load();
+    if (copyOffloadTaskCount != 0 && this->cmdQImmediateCopyOffload != nullptr) {
+        auto copyOffloadCsr = this->cmdQImmediateCopyOffload->getCsr();
+        if (!copyOffloadCsr->testTaskCountReady(copyOffloadCsr->getTagAddress(), copyOffloadTaskCount)) {
+            return true;
+        }
+    }
+    return false;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -2454,6 +2505,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendCommandLists(ui
     this->isWalkerWithProfilingEnqueued |= this->cmdQImmediate->getAndClearIsWalkerWithProfilingEnqueued();
     for (uint32_t i = 0; i < numCommandLists; i++) {
         this->midThreadPreemptionKernelAppended |= CommandList::fromHandle(phCommandLists[i])->hasMidThreadPreemptionKernel();
+        this->externalDependencyProgrammed |= CommandList::fromHandle(phCommandLists[i])->hasExternalDependency();
     }
 
     CommandListCoreFamily<gfxCoreFamily>::appendSignalEventPostWalker(signalEvent,
@@ -2592,7 +2644,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::handlePostStagingTran
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isValidForStagingTransfer(const CpuMemCopyInfo &cpuMemCopyInfo, bool hasDependencies) {
+bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isValidForStagingTransfer(const CpuMemCopyInfo &cpuMemCopyInfo, uint32_t numWaitEvents) {
     if (!this->stagingCopiesAllowed) {
         return false;
     }
@@ -2606,8 +2658,12 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isValidForStagingTransfer(co
         return false;
     }
     auto neoDevice = this->getDevice()->getNEODevice();
-    auto driver = this->getDevice()->getDriverHandle();
-    return driver->getStagingBufferManager()->isValidForCopy(*neoDevice, cpuMemCopyInfo.dstPtr, cpuMemCopyInfo.srcPtr, cpuMemCopyInfo.size, hasDependencies);
+    auto stagingBufferManager = this->getDevice()->getDriverHandle()->getStagingBufferManager();
+    if (!stagingBufferManager->isStagingEnabled(*neoDevice)) {
+        return false;
+    }
+    const bool hasDependencies = numWaitEvents > 0 || hasPendingStagingDependency();
+    return stagingBufferManager->isValidForCopy(*neoDevice, cpuMemCopyInfo.dstPtr, cpuMemCopyInfo.srcPtr, cpuMemCopyInfo.size, hasDependencies);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -2619,7 +2675,7 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::hasDependenciesForStaging(ui
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isValidForStagingImageTransfer(const void *ptr, size_t size, bool hasDependencies) {
+bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isValidForStagingImageTransfer(const void *ptr, size_t size, uint32_t numWaitEvents) {
     if (!this->stagingCopiesAllowed) {
         return false;
     }
@@ -2628,6 +2684,10 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isValidForStagingImageTransf
     }
     auto stagingBufferManager = this->getDevice()->getDriverHandle()->getStagingBufferManager();
     auto neoDevice = this->getDevice()->getNEODevice();
+    if (!stagingBufferManager->isStagingEnabled(*neoDevice)) {
+        return false;
+    }
+    const bool hasDependencies = hasDependenciesForStaging(numWaitEvents) || hasPendingStagingDependency();
     return stagingBufferManager->isValidForStagingTransfer(*neoDevice, ptr, size, hasDependencies);
 }
 

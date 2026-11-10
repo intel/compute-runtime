@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/stream_capture.h"
@@ -794,6 +796,39 @@ HWTEST_F(ExternalSemaphoreKmdWaitTest, givenExternalSemaphoreGpuWaitAllowedWhenA
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(1u, cmdList.appendHostFunctionCalledTimes);
     EXPECT_EQ(0u, csr.submitExternalSemaphoreWaitsCalled);
+}
+
+HWTEST_F(ExternalSemaphoreKmdWaitTest, givenPendingExternalSemaphoreGpuWaitOnInOrderImmediateCmdListWhenAppendMemoryCopyFromHostThenStagingNotUsed) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableCopyWithStagingBuffers.set(1);
+    debugManager.flags.ExperimentalCopyThroughLock.set(0);
+    if (device->getProductHelper().useAdditionalBlitProperties()) {
+        GTEST_SKIP();
+    }
+    auto cmdList = createImmediateCmdList(ZE_COMMAND_QUEUE_FLAG_IN_ORDER);
+    ASSERT_NE(nullptr, cmdList);
+    auto &csr = getCsrWithExternalSemaphoreGpuWaitAllowed<FamilyType>(*cmdList);
+
+    ExternalSemaphoreImp semaphore;
+    semaphore.neoExternalSemaphore = std::make_unique<MockNeoExtSemaphore>(device->getOsInterface());
+    ze_external_semaphore_ext_handle_t hSemaphore = semaphore.toHandle();
+    ze_external_semaphore_wait_params_ext_t waitParams = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, cmdList->appendWaitExternalSemaphores(1, &hSemaphore, &waitParams, nullptr, 0, nullptr));
+    ASSERT_EQ(1u, csr.submitExternalSemaphoreWaitsCalled);
+
+    constexpr size_t size = MemoryConstants::pageSize * 2;
+    void *usmDevice = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device->toHandle(), &deviceDesc, size, size, &usmDevice));
+    auto hostSrc = alignedMalloc(size, MemoryConstants::cacheLineSize);
+    ASSERT_TRUE(csr.getInternalAllocationStorage()->getTemporaryAllocations().peekIsEmpty());
+
+    CmdListMemoryCopyParams copyParams = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList->appendMemoryCopy(usmDevice, hostSrc, size, nullptr, 0, nullptr, copyParams));
+    EXPECT_FALSE(csr.getInternalAllocationStorage()->getTemporaryAllocations().peekIsEmpty());
+
+    alignedFree(hostSrc);
+    context->freeMem(usmDevice);
 }
 
 } // namespace ult
