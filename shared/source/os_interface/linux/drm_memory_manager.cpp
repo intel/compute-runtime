@@ -1087,7 +1087,7 @@ bool DrmMemoryManager::mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesCon
 
         auto &drmToImport = this->getDrm(rootDeviceIndices[i]);
 
-        auto ioctlHelper = drm.getIoctlHelper();
+        auto ioctlHelper = drmToImport.getIoctlHelper();
         if (0 != ioctlHelper->ioctl(DrmIoctl::primeFdToHandle, &openFd)) {
             for (auto allocation : multiGraphicsAllocation.getGraphicsAllocations()) {
                 if (allocation != nullptr) {

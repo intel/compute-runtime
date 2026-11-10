@@ -10796,6 +10796,54 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDeviceBitfieldWithHole
     memoryManager->freeGraphicsMemory(physicalAllocation);
 }
 
+namespace {
+DrmMockCustom *getRootDeviceDrmMock(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) {
+    return static_cast<DrmMockCustom *>(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface->getDriverModel()->as<Drm>());
+}
+} // namespace
+
+TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenMultipleRootDevicesWhenMappingPhysicalHostMemoryThenSharedHandleIsImportedThroughEachImportingDeviceDrm) {
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
+    AllocationData allocData;
+    allocData.allFlags = 0;
+    allocData.size = MemoryConstants::pageSize;
+    allocData.flags.allocateMemory = true;
+    allocData.flags.isUSMHostAllocation = true;
+    allocData.type = AllocationType::bufferHostMemory;
+    allocData.storageInfo.multiStorage = false;
+    allocData.rootDeviceIndex = rootDeviceIndex;
+    uint64_t gpuAddress = 0x1234;
+
+    auto physicalAllocation = static_cast<DrmAllocation *>(memoryManager->allocatePhysicalHostMemory(allocData, status));
+    ASSERT_NE(nullptr, physicalAllocation);
+
+    auto ownerDrm = getRootDeviceDrmMock(*executionEnvironment, rootDeviceIndex);
+    auto importDrm0 = getRootDeviceDrmMock(*executionEnvironment, 0u);
+    auto importDrm2 = getRootDeviceDrmMock(*executionEnvironment, 2u);
+    const auto ownerImportsBefore = ownerDrm->ioctlCnt.primeFdToHandle.load();
+    const auto importDrm0ImportsBefore = importDrm0->ioctlCnt.primeFdToHandle.load();
+    const auto importDrm2ImportsBefore = importDrm2->ioctlCnt.primeFdToHandle.load();
+
+    RootDeviceIndicesContainer rootDeviceIndices;
+    rootDeviceIndices.pushUnique(0);
+    rootDeviceIndices.pushUnique(1);
+    rootDeviceIndices.pushUnique(2);
+    MultiGraphicsAllocation multiGraphicsAllocation{static_cast<uint32_t>(rootDeviceIndices.size())};
+    ASSERT_TRUE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuAddress, allocData.size, 0u, true));
+
+    EXPECT_EQ(ownerImportsBefore, ownerDrm->ioctlCnt.primeFdToHandle.load());
+    EXPECT_EQ(importDrm0ImportsBefore + 1, importDrm0->ioctlCnt.primeFdToHandle.load());
+    EXPECT_EQ(importDrm2ImportsBefore + 1, importDrm2->ioctlCnt.primeFdToHandle.load());
+    for (uint32_t i = 0; i < static_cast<uint32_t>(rootDeviceIndices.size()); i++) {
+        auto allocation = static_cast<DrmAllocation *>(multiGraphicsAllocation.getGraphicsAllocation(i));
+        ASSERT_NE(nullptr, allocation);
+        EXPECT_EQ(getRootDeviceDrmMock(*executionEnvironment, i), allocation->getBO()->peekDrm());
+    }
+
+    EXPECT_TRUE(memoryManager->unMapPhysicalHostMemoryFromVirtualMemory(multiGraphicsAllocation, physicalAllocation, gpuAddress, allocData.size, true));
+    memoryManager->freeGraphicsMemory(physicalAllocation);
+}
+
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenMultipleRootDevicesWhenMappingPhysicalHostMemoryWithOffsetThenEachDeviceBufferObjectCarriesTheOffsetAndMappingSize) {
     mock->isVmBindAvailableCall.callParent = false;
     mock->isVmBindAvailableCall.returnValue = true;
@@ -10993,7 +11041,8 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenPrimeFdToHandleFailing
     capturedHostMmapLen = 0u;
     capturedHostMmapProt = -1;
     capturedHostMmapFlags = 0;
-    mock->failOnPrimeFdToHandle = true;
+    auto importDrm = getRootDeviceDrmMock(*executionEnvironment, 0u);
+    importDrm->failOnPrimeFdToHandle = true;
 
     EXPECT_FALSE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuAddress, mappingSize, 0u, true));
 
@@ -11003,7 +11052,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenPrimeFdToHandleFailing
     EXPECT_NE(0, capturedHostMmapFlags & MAP_ANONYMOUS);
     EXPECT_NE(0, capturedHostMmapFlags & MAP_FIXED);
 
-    mock->failOnPrimeFdToHandle = false;
+    importDrm->failOnPrimeFdToHandle = false;
     memoryManager->mmapFunction = originalMmap;
     mock->isVmBindAvailableCall.callParent = true;
     memoryManager->freeGraphicsMemory(physicalAllocation);
@@ -11038,7 +11087,8 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenNonSvmReservationAndPr
     MultiGraphicsAllocation multiGraphicsAllocation{static_cast<uint32_t>(rootDeviceIndices.size())};
 
     capturedHostMmapProt = -1;
-    mock->failOnPrimeFdToHandle = true;
+    auto importDrm = getRootDeviceDrmMock(*executionEnvironment, 0u);
+    importDrm->failOnPrimeFdToHandle = true;
     auto munmapCallsBefore = SysCalls::munmapFuncCalled;
 
     EXPECT_FALSE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuAddress, mappingSize, 0u, false));
@@ -11046,7 +11096,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenNonSvmReservationAndPr
     EXPECT_EQ(munmapCallsBefore + 1u, SysCalls::munmapFuncCalled);
     EXPECT_EQ(PROT_READ | PROT_WRITE, capturedHostMmapProt);
 
-    mock->failOnPrimeFdToHandle = false;
+    importDrm->failOnPrimeFdToHandle = false;
     memoryManager->mmapFunction = originalMmap;
     mock->isVmBindAvailableCall.callParent = true;
     memoryManager->freeGraphicsMemory(physicalAllocation);
@@ -11341,7 +11391,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDeviceBitfieldWithHole
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDeviceBitfieldWithHolesAndPrimeFdToHandleFailsWhenMappingPhysicalHostMemoryThenMappingFails) {
-    mock->failOnPrimeFdToHandle = true;
+    getRootDeviceDrmMock(*executionEnvironment, 0u)->failOnPrimeFdToHandle = true;
 
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
     AllocationData allocData;
@@ -11372,7 +11422,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDeviceBitfieldWithHole
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDeviceBitfieldWithHolesAndSecondPrimeFdToHandleFailsWhenMappingPhysicalHostMemoryThenMappingFails) {
-    mock->failOnSecondPrimeFdToHandle = true;
+    getRootDeviceDrmMock(*executionEnvironment, 2u)->failOnPrimeFdToHandle = true;
 
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
     AllocationData allocData;
