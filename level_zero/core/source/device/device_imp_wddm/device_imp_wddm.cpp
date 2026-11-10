@@ -38,6 +38,7 @@ ze_result_t Device::getExternalMemoryProperties(ze_device_external_memory_proper
     pExternalMemoryProperties->memoryAllocationImportTypes = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32 |
                                                              ZE_EXTERNAL_MEMORY_TYPE_FLAG_D3D12_HEAP |
                                                              ZE_EXTERNAL_MEMORY_TYPE_FLAG_D3D12_RESOURCE;
+    this->getMemRangeHandleProperties(pExternalMemoryProperties, 0u);
 
     return ZE_RESULT_SUCCESS;
 }

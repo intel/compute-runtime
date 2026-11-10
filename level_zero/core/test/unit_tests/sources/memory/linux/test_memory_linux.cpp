@@ -762,6 +762,36 @@ struct MemoryObtainFdTest : public ::testing::Test {
     std::unique_ptr<L0::Context> context;
 };
 
+TEST_F(MemoryObtainFdTest, givenDeviceAllocationWhenGettingHandleForAddressRangeThenBufferObjectIsExportedWithPrimeHandleToFdOnEachCall) {
+    auto drmMock = executionEnvironment->rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<DrmMockResources>();
+    drmMock->outputFd = 1337;
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device->toHandle(), &deviceDesc, 10u, 1u, &ptr));
+
+    int fd = -1;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->getHandleForAddressRange(&fd, ptr, 10u, ZE_INTEL_MEM_RANGE_HANDLE_TYPE_EXP_DMA_BUF_FD, nullptr));
+    EXPECT_EQ(1337, fd);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->getHandleForAddressRange(&fd, ptr, 10u, ZE_INTEL_MEM_RANGE_HANDLE_TYPE_EXP_DMA_BUF_FD, nullptr));
+    EXPECT_EQ(2, drmMock->ioctlCount.handleToPrimeFd.load());
+
+    currMemoryManager->failOnObtainFdFromHandle = true;
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, context->getHandleForAddressRange(&fd, ptr, 10u, ZE_INTEL_MEM_RANGE_HANDLE_TYPE_EXP_DMA_BUF_FD, nullptr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+}
+
+TEST_F(MemoryExportImportObtainFdTest, givenAllocationSplitAcrossBufferObjectsWhenGettingHandleForAddressRangeThenIncompatibleResourceIsReturned) {
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device->toHandle(), &deviceDesc, 10u, 1u, &ptr));
+
+    int fd = -1;
+    EXPECT_EQ(ZE_RESULT_ERROR_INCOMPATIBLE_RESOURCE, context->getHandleForAddressRange(&fd, ptr, 10u, ZE_INTEL_MEM_RANGE_HANDLE_TYPE_EXP_DMA_BUF_FD, nullptr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+}
+
 TEST_F(MemoryObtainFdTest,
        whenPeerAllocationForDeviceAllocationIsRequestedThenNullptrIsReturned) {
     L0::Device *device0 = driverHandle->devices[0];

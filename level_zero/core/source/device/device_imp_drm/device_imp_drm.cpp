@@ -24,6 +24,7 @@ ze_result_t Device::getExternalMemoryProperties(ze_device_external_memory_proper
                                                              ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_FD;
     pExternalMemoryProperties->memoryAllocationImportTypes = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF |
                                                              ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_FD;
+    this->getMemRangeHandleProperties(pExternalMemoryProperties, ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF);
 
     return ZE_RESULT_SUCCESS;
 }

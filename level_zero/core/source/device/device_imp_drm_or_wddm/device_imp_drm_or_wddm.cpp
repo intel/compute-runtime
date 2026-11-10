@@ -50,6 +50,7 @@ uint32_t Device::queryDeviceNodeMask() {
 
 ze_result_t Device::getExternalMemoryProperties(ze_device_external_memory_properties_t *pExternalMemoryProperties) {
     NEO::Device *activeDevice = getActiveDevice();
+    ze_external_memory_type_flags_t rangeExportTypes = 0u;
     if (activeDevice->getRootDeviceEnvironment().osInterface) {
         NEO::DriverModelType driverType = neoDevice->getRootDeviceEnvironment().osInterface->getDriverModel()->getDriverModelType();
         if (driverType == NEO::DriverModelType::wddm) {
@@ -64,8 +65,10 @@ ze_result_t Device::getExternalMemoryProperties(ze_device_external_memory_proper
                                                                      ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_FD;
             pExternalMemoryProperties->memoryAllocationImportTypes = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF |
                                                                      ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_FD;
+            rangeExportTypes = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
         }
     }
+    this->getMemRangeHandleProperties(pExternalMemoryProperties, rangeExportTypes);
     return ZE_RESULT_SUCCESS;
 }
 

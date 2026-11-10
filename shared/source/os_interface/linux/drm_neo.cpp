@@ -1865,6 +1865,10 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
                 break;
             }
             drm->setNewResourceBoundToVM(bo, vmHandleId);
+            if (bo->isResourceDecompressRequired() && drm->isVmBindPatIndexProgrammingSupported()) {
+                // The object is no longer compressed, so every later bind has to keep the no-compression PAT.
+                bo->setPatIndex(vmBind.patIndex);
+            }
 
         } else {
             vmBind.handle = 0u;

@@ -385,6 +385,8 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
         return 0lu;
     }
     virtual bool isMapped() { return false; }
+    // True when the GPU address range maps only part of the backing object or starts past its beginning.
+    virtual bool isPartialObjectMapping() const { return false; }
 
     static bool isCpuAccessRequired(AllocationType allocationType) {
         return allocationType == AllocationType::commandBuffer ||

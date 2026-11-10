@@ -57,6 +57,11 @@ TEST(GraphicsAllocationTest, givenGraphicsAllocationGetDefaultHandleAddressAndHa
     EXPECT_EQ(0lu, graphicsAllocation.getHandleSize(0));
 }
 
+TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenCheckingPartialObjectMappingThenDefaultImplementationReturnsFalse) {
+    MockGraphicsAllocation graphicsAllocation;
+    EXPECT_FALSE(graphicsAllocation.isPartialObjectMapping());
+}
+
 TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenUpdatedTaskCountThenOnlyOneTaskCountIsUpdated) {
     MockGraphicsAllocation graphicsAllocation;
     graphicsAllocation.updateTaskCount(1u, 0u);

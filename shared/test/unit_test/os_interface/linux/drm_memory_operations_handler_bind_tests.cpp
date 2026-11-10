@@ -33,6 +33,7 @@
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -1552,6 +1553,16 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenDrmMemoryOperationBindWhenCallin
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+static void markCompressed(GraphicsAllocation &allocation, GmmHelper *gmmHelper) {
+    if (allocation.getNumGmms() == 0u) {
+        allocation.resizeGmms(1u);
+    }
+    if (allocation.getDefaultGmm() == nullptr) {
+        allocation.setGmm(new MockGmm(gmmHelper), 0u);
+    }
+    allocation.getDefaultGmm()->setCompressionEnabled(true);
+}
+
 TEST_F(DrmMemoryOperationsHandlerBindTest, givenMultipleBufferObjectsAllocationWhenDecompressCalledThenDecompressFlagsAreCleared) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableLocalMemory.set(1);
@@ -1569,6 +1580,7 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenMultipleBufferObjectsAllocationW
     EXPECT_EQ(2u, mockDrmAllocation->storageInfo.getNumBanks());
 
     auto drmAllocation = static_cast<DrmAllocation *>(mockDrmAllocation);
+    markCompressed(*mockDrmAllocation, device->getGmmHelper());
 
     auto status = operationHandler->decompress(device, *mockDrmAllocation);
     EXPECT_EQ(MemoryOperationsStatus::success, status);
@@ -1605,6 +1617,7 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenAllocationSharedAcrossEnginesW
 
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
     ASSERT_NE(nullptr, allocation);
+    markCompressed(*allocation, device->getGmmHelper());
 
     auto &engines = device->getAllEngines();
     ASSERT_GT(engines.size(), 1u);
@@ -1647,6 +1660,7 @@ HWTEST_F(DrmMemoryOperationsHandlerBindPerContextVmDecompressTest, givenPerConte
 
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
     ASSERT_NE(nullptr, allocation);
+    markCompressed(*allocation, device->getGmmHelper());
 
     auto &engines = device->getAllEngines();
     ASSERT_GT(engines.size(), 1u);
@@ -1686,6 +1700,7 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenAllocationWithPendingGpuWorkWh
     csr->callBaseWaitForCompletionWithTimeout = false;
     *csr->getTagAddress() = 0u;
     allocation->updateTaskCount(1u, engine.osContext->getContextId());
+    markCompressed(*allocation, device->getGmmHelper());
 
     auto waitCalledBefore = csr->waitForCompletionWithTimeoutTaskCountCalled.load();
     auto vmBindCalledBefore = mock->getMockIoctlHelper()->vmBindCalled;
@@ -1706,10 +1721,12 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenDecompressCalledThenPagingFenceI
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
     ASSERT_NE(nullptr, allocation);
 
+    markCompressed(*allocation, device->getGmmHelper());
     ASSERT_EQ(MemoryOperationsStatus::success, operationHandler->decompress(device, *allocation));
 
     auto vmBindCalledBefore = mock->getMockIoctlHelper()->vmBindCalled;
     auto waitUserFenceCalledBefore = mock->getMockIoctlHelper()->waitUserFenceCalled;
+    markCompressed(*allocation, device->getGmmHelper());
 
     auto status = operationHandler->decompress(device, *allocation);
     EXPECT_EQ(MemoryOperationsStatus::success, status);
@@ -1718,6 +1735,54 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenDecompressCalledThenPagingFenceI
     ASSERT_GT(vmBindIssued, 0u);
 
     EXPECT_EQ(waitUserFenceCalledBefore + vmBindIssued, mock->getMockIoctlHelper()->waitUserFenceCalled);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryOperationsHandlerBindTest, givenCompressedPatWhenDecompressSucceedsThenBindsAfterEvictionKeepNoCompressionPat) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableLocalMemory.set(1);
+    mock->vmBindPatIndexProgrammingSupported = true;
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
+    ASSERT_NE(nullptr, allocation);
+    auto bo = static_cast<DrmAllocation *>(allocation)->getBO();
+    const uint64_t noCompressionPat = device->getRootDeviceEnvironment().getGmmClientContext()->cachePolicyGetPATIndex(nullptr, GMM_RESOURCE_USAGE_OCL_BUFFER, false, false);
+    const uint64_t compressedPat = noCompressionPat + 1;
+    bo->setPatIndex(compressedPat);
+    markCompressed(*allocation, device->getGmmHelper());
+
+    mock->getMockIoctlHelper()->vmBindResult = -1;
+    EXPECT_EQ(MemoryOperationsStatus::failed, operationHandler->decompress(device, *allocation));
+    EXPECT_EQ(compressedPat, bo->peekPatIndex());
+    EXPECT_TRUE(allocation->isCompressionEnabled());
+
+    mock->getMockIoctlHelper()->vmBindResult = 0;
+    EXPECT_EQ(MemoryOperationsStatus::success, operationHandler->decompress(device, *allocation));
+    EXPECT_EQ(noCompressionPat, bo->peekPatIndex());
+    EXPECT_FALSE(allocation->isCompressionEnabled());
+
+    EXPECT_EQ(MemoryOperationsStatus::success, operationHandler->evict(device, *allocation));
+    EXPECT_EQ(MemoryOperationsStatus::success, operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&allocation, 1), false, false));
+    ASSERT_TRUE(mock->getMockIoctlHelper()->receivedVmBind.has_value());
+    EXPECT_EQ(noCompressionPat, mock->getMockIoctlHelper()->receivedVmBind->patIndex);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryOperationsHandlerBindTest, givenDecompressedAllocationWhenDecompressCalledAgainThenSuccessIsReturnedWithoutBinding) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableLocalMemory.set(1);
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
+    ASSERT_NE(nullptr, allocation);
+    markCompressed(*allocation, device->getGmmHelper());
+    ASSERT_EQ(MemoryOperationsStatus::success, operationHandler->decompress(device, *allocation));
+    EXPECT_FALSE(allocation->isCompressionEnabled());
+
+    auto vmBindCalledBefore = mock->getMockIoctlHelper()->vmBindCalled;
+    EXPECT_EQ(MemoryOperationsStatus::success, operationHandler->decompress(device, *allocation));
+    EXPECT_EQ(vmBindCalledBefore, mock->getMockIoctlHelper()->vmBindCalled);
 
     memoryManager->freeGraphicsMemory(allocation);
 }

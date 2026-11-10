@@ -13,6 +13,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/os_interface/linux/drm_allocation.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
@@ -47,7 +48,11 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::decompress(Device *device
     auto &engines = device->getAllEngines();
     const auto drm = rootDeviceEnvironment.osInterface->getDriverModel()->as<Drm>();
 
+    // The compression state is read and changed only under this lock, so concurrent callers decompress once.
     std::lock_guard<std::mutex> lock(mutex);
+    if (!gfxAllocation.isCompressionEnabled()) {
+        return MemoryOperationsStatus::success;
+    }
 
     auto setDecompressOnBOs = [&](bool value) {
         if (drmAllocation->storageInfo.isChunked) {
@@ -90,6 +95,7 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::decompress(Device *device
             break;
         }
     }
+    gfxAllocation.getDefaultGmm()->applyAuxFlagsForBuffer(false);
     return MemoryOperationsStatus::success;
 }
 

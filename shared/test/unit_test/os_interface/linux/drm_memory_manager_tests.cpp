@@ -1074,6 +1074,44 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, whenPeekInternalHandleIsCalledThenBoIsR
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, whenObtainDmaBufFdIsCalledThenBoIsExportedOnEachCallAndInternalHandleIsNotCached) {
+    mock->ioctlExpected.gemUserptr = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
+    mock->ioctlExpected.handleToPrimeFd = 3;
+    mock->outputFd = 1337;
+    auto allocation = static_cast<DrmAllocation *>(this->memoryManager->allocateGraphicsMemoryWithProperties(createAllocationProperties(rootDeviceIndex, 10 * MemoryConstants::pageSize, true)));
+    ASSERT_NE(allocation->getBO(), nullptr);
+
+    EXPECT_EQ(1337, this->memoryManager->obtainDmaBufFd(*allocation));
+    EXPECT_EQ(static_cast<uint32_t>(allocation->getBO()->peekHandle()), mock->inputHandle);
+    EXPECT_EQ(1337, this->memoryManager->obtainDmaBufFd(*allocation));
+
+    uint64_t internalHandle = 0;
+    EXPECT_EQ(0, allocation->peekInternalHandle(this->memoryManager, internalHandle, nullptr));
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenBufferObjectMappedFromOffsetOrOnlyInPartWhenCheckingPartialObjectMappingThenTrueIsReturned) {
+    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::buffer, MemoryPool::localMemory);
+    EXPECT_FALSE(allocation.isPartialObjectMapping());
+
+    MockBufferObject bo(rootDeviceIndex, mock, 3, 0, MemoryConstants::pageSize64k, 1);
+    allocation.bufferObjects[0] = &bo;
+    EXPECT_FALSE(allocation.isPartialObjectMapping());
+
+    bo.setVirtualMappingSize(MemoryConstants::pageSize64k);
+    EXPECT_FALSE(allocation.isPartialObjectMapping());
+
+    bo.setVirtualMappingSize(MemoryConstants::pageSize);
+    EXPECT_TRUE(allocation.isPartialObjectMapping());
+
+    bo.setVirtualMappingSize(0u);
+    bo.setPhysicalMemoryOffset(MemoryConstants::pageSize);
+    EXPECT_TRUE(allocation.isPartialObjectMapping());
+}
+
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, whenCreateInternalHandleIsCalledThenBoIsReturned) {
     mock->ioctlExpected.gemUserptr = 1;
     mock->ioctlExpected.gemWait = 1;
@@ -6618,7 +6656,7 @@ TEST_F(DrmMemoryManagerMultipleSharedHandlesTest, givenPrimeFdToHandleFailingAnd
     EXPECT_EQ(nullptr, gfxAllocation);
 }
 
-TEST_F(DrmMemoryManagerMultipleSharedHandlesTest, givenNoVmBindAndSingleHandleWithOffsetWhenCreateGraphicsAllocationFromMultipleSharedHandlesThenOffsetIsFoldedIntoReportedBase) {
+TEST_F(DrmMemoryManagerMultipleSharedHandlesTest, givenNoVmBindAndSingleHandleWithOffsetWhenCreateGraphicsAllocationFromMultipleSharedHandlesThenOffsetIsFoldedIntoReportedBaseAndKeptOnBufferObject) {
     drm->bindAvailable = false;
     VariableBackup<off_t> lseekBackup(&SysCalls::lseekReturn, static_cast<off_t>(2 * MemoryConstants::pageSize));
 
@@ -6630,6 +6668,12 @@ TEST_F(DrmMemoryManagerMultipleSharedHandlesTest, givenNoVmBindAndSingleHandleWi
 
     auto gfxAllocation = memoryManager->createGraphicsAllocationFromMultipleSharedHandles(handles, properties, false, false, false, nullptr);
     ASSERT_NE(nullptr, gfxAllocation);
+    auto bo = static_cast<DrmAllocation *>(gfxAllocation)->getBufferObjectToModify(0);
+    ASSERT_NE(nullptr, bo);
+    EXPECT_EQ(physicalOffset, bo->getPhysicalMemoryOffset());
+    EXPECT_EQ(static_cast<size_t>(2 * MemoryConstants::pageSize - physicalOffset), bo->getVirtualMappingSize());
+    EXPECT_EQ(static_cast<size_t>(2 * MemoryConstants::pageSize), bo->peekUnmapSize());
+    EXPECT_TRUE(gfxAllocation->isPartialObjectMapping());
 
     memoryManager->freeGraphicsMemory(gfxAllocation);
 }

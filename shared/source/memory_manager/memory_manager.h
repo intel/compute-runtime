@@ -191,6 +191,8 @@ class MemoryManager {
     virtual void closeSharedHandle(GraphicsAllocation *graphicsAllocation) {};
     virtual void closeInternalHandle(uint64_t &handle, uint32_t handleId, GraphicsAllocation *graphicsAllocation) {};
     virtual void closeInternalHandleWithReservedData(uint64_t &handle, uint32_t handleId, GraphicsAllocation *graphicsAllocation, void *reservedHandleData) { closeInternalHandle(handle, handleId, graphicsAllocation); };
+    // Returns a new DMA-BUF fd owned by the caller, or -1; the allocation does not cache or close it.
+    virtual int obtainDmaBufFd(GraphicsAllocation &graphicsAllocation) { return -1; }
 
     MOCKABLE_VIRTUAL void *importFdHandle(Device *neoDevice,
                                           SVMAllocsManager *svmAllocsManager,

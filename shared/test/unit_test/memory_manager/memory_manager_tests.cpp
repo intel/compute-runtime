@@ -180,6 +180,14 @@ TEST(MemoryManagerTest, whenCallingGetImportHandleFromReservedHandleDataThenDefa
     EXPECT_EQ(-1, result);
 }
 
+TEST(MemoryManagerTest, whenObtainingDmaBufFdThenDefaultImplementationReturnsFailure) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    OsAgnosticMemoryManager memoryManager(executionEnvironment);
+    MockGraphicsAllocation allocation;
+
+    EXPECT_EQ(-1, memoryManager.obtainDmaBufFd(allocation));
+}
+
 TEST(MemoryManagerTest, whenGettingPreferredAllocationMethodThenNotDefinedIsReturned) {
     MockMemoryManager memoryManager;
     for (auto i = 0; i < static_cast<int>(AllocationType::count); i++) {

@@ -59,6 +59,7 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
     RETURN_L0_FUNC_PTR_IF_EXIST(zexMemGetIpcHandles);
     RETURN_L0_FUNC_PTR_IF_EXIST(zexMemOpenIpcHandles);
     RETURN_L0_FUNC_PTR_IF_EXIST(zeIntelMemMapDeviceMemToHost);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zeIntelMemGetHandleForAddressRange);
 
     // command list
     RETURN_L0_FUNC_PTR_IF_EXIST(zexCommandListAppendWaitOnMemory);

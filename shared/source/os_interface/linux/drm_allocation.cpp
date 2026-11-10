@@ -587,4 +587,13 @@ size_t DrmAllocation::getHandleSize(uint32_t handleIndex) {
     return bufferObjects[handleIndex]->peekSize();
 }
 
+bool DrmAllocation::isPartialObjectMapping() const {
+    auto bo = this->getBO();
+    if (bo == nullptr) {
+        return false;
+    }
+    const auto mappedSize = bo->getVirtualMappingSize();
+    return bo->getPhysicalMemoryOffset() != 0u || (mappedSize != 0u && mappedSize != bo->peekSize());
+}
+
 } // namespace NEO

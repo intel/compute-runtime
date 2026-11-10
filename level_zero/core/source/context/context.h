@@ -19,6 +19,7 @@
 
 #include "level_zero/core/source/helpers/api_handle_helper.h"
 #include "level_zero/driver_experimental/zex_context.h"
+#include "level_zero/driver_experimental/zex_memory.h"
 #include <level_zero/ze_api.h>
 #include <level_zero/zet_api.h>
 
@@ -331,6 +332,7 @@ struct Context : _ze_context_handle_t, NEO::NonCopyableAndNonMovableClass {
     MOCKABLE_VIRTUAL ze_result_t putVirtualAddressSpaceIpcHandle(ze_ipc_mem_handle_t ipcHandle);
 
     MOCKABLE_VIRTUAL ze_result_t mapDeviceMemToHost(const void *ptr, void **pptr, void *pNext);
+    MOCKABLE_VIRTUAL ze_result_t getHandleForAddressRange(void *pHandle, const void *ptr, size_t size, ze_intel_mem_range_handle_type_exp_t handleType, void *pNext);
 
     MOCKABLE_VIRTUAL ze_result_t getPitchFor2dImage(
         ze_device_handle_t hDevice,

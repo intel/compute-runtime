@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/blit_properties.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/xe2_hpg_core/hw_cmds.h"
@@ -41,20 +40,17 @@ bool L0GfxCoreHelperHw<Family>::alwaysAllocateEventInLocalMem() const {
 
 template <>
 void L0GfxCoreHelperHw<Family>::p2pDecompressBufferIfRequired(NEO::GraphicsAllocation *alloc, DriverHandle *driverHandle) const {
-    if (not alloc->isCompressionEnabled()) {
-        return;
-    }
-
-    auto rootDeviceIndex = alloc->getRootDeviceIndex();
-    auto neoDevice = driverHandle->devices[rootDeviceIndex]->getNEODevice();
-    auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironment();
-
-    NEO::MemoryOperationsHandler *memoryOperationsIface = rootDeviceEnvironment.memoryOperationsInterface.get();
-    if (memoryOperationsIface) {
-        auto status = memoryOperationsIface->decompress(neoDevice, *alloc);
-        if (status == NEO::MemoryOperationsStatus::success) {
-            alloc->getDefaultGmm()->applyAuxFlagsForBuffer(false);
+    // Devices of a driver handle are one product family, so they are not indexed by root device index.
+    for (auto device : driverHandle->devices) {
+        auto neoDevice = device->getNEODevice();
+        if (neoDevice->getRootDeviceIndex() != alloc->getRootDeviceIndex()) {
+            continue;
         }
+        auto memoryOperationsIface = neoDevice->getRootDeviceEnvironment().memoryOperationsInterface.get();
+        if (memoryOperationsIface) {
+            memoryOperationsIface->decompress(neoDevice, *alloc);
+        }
+        break;
     }
 }
 

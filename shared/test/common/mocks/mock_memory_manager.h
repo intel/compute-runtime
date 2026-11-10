@@ -86,6 +86,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
         return registerSysMemAllocResult;
     }
     ADDMETHOD_NOBASE(registerLocalMemAlloc, AllocationStatus, AllocationStatus::Success, (GraphicsAllocation * allocation, uint32_t rootDeviceIndex));
+    ADDMETHOD_NOBASE(obtainDmaBufFd, int, -1, (GraphicsAllocation & graphicsAllocation));
 
     GraphicsAllocation *allocateGraphicsMemory64kb(const AllocationData &allocationData) override;
     void setDeferredDeleter(DeferredDeleter *deleter);

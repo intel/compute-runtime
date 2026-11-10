@@ -132,6 +132,7 @@ struct Device : _ze_device_handle_t, NEO::NonCopyableAndNonMovableClass {
     MOCKABLE_VIRTUAL ze_result_t imageGetProperties(const ze_image_desc_t *desc, ze_image_properties_t *pImageProperties);
     MOCKABLE_VIRTUAL ze_result_t getDeviceImageProperties(ze_device_image_properties_t *pDeviceImageProperties);
     MOCKABLE_VIRTUAL ze_result_t getExternalMemoryProperties(ze_device_external_memory_properties_t *pExternalMemoryProperties);
+    void getMemRangeHandleProperties(ze_device_external_memory_properties_t *pExternalMemoryProperties, ze_external_memory_type_flags_t rangeExportTypes);
     MOCKABLE_VIRTUAL ze_result_t getGlobalTimestamps(uint64_t *hostTimestamp, uint64_t *deviceTimestamp);
     uint32_t getCopyQueueGroupsFromSubDevice(uint32_t numberOfSubDeviceCopyEngineGroupsRequested,
                                              ze_command_queue_group_properties_t *pCommandQueueGroupProperties);

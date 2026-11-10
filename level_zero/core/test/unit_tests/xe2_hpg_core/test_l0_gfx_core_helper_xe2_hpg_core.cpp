@@ -8,13 +8,18 @@
 #include "shared/source/xe2_hpg_core/hw_cmds.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/mocks/mock_memory_operations_handler.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/source/device/device.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/core/test/unit_tests/fixtures/device_fixture_extended.h"
 
 namespace L0 {
 namespace ult {
@@ -285,6 +290,35 @@ XE2_HPG_CORETEST_F(L0GfxCoreHelperTestXe2Hpg, GivenL0GfxCoreHelperWhenCheckingMe
     auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
 
     EXPECT_FALSE(l0GfxCoreHelper.supportMetricsAggregation());
+}
+
+struct DecompressRecordingMemoryOperations : NEO::MockMemoryOperationsHandler {
+    NEO::MemoryOperationsStatus decompress(NEO::Device *device, NEO::GraphicsAllocation &gfxAllocation) override {
+        decompressDevices.push_back(device);
+        return NEO::MemoryOperationsStatus::success;
+    }
+    std::vector<NEO::Device *> decompressDevices;
+};
+
+using L0GfxCoreHelperMultiDeviceTestXe2Hpg = Test<MultiDeviceFixture>;
+
+XE2_HPG_CORETEST_F(L0GfxCoreHelperMultiDeviceTestXe2Hpg, givenDriverHandleWhoseOnlyDeviceIsRootDeviceOneWhenDecompressingForP2pThenThatDeviceIsUsed) {
+    auto deviceOfRootOne = driverHandle->devices[1];
+    ASSERT_EQ(1u, deviceOfRootOne->getNEODevice()->getRootDeviceIndex());
+    VariableBackup<std::vector<L0::Device *>> devicesBackup(&driverHandle->devices, std::vector<L0::Device *>{deviceOfRootOne});
+
+    auto memoryOperations = new DecompressRecordingMemoryOperations;
+    deviceOfRootOne->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[1]->memoryOperationsInterface.reset(memoryOperations);
+    auto &l0GfxCoreHelper = deviceOfRootOne->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+
+    NEO::MockGraphicsAllocation allocation(1u, nullptr, MemoryConstants::pageSize);
+    l0GfxCoreHelper.p2pDecompressBufferIfRequired(&allocation, driverHandle.get());
+    ASSERT_EQ(1u, memoryOperations->decompressDevices.size());
+    EXPECT_EQ(deviceOfRootOne->getNEODevice(), memoryOperations->decompressDevices[0]);
+
+    NEO::MockGraphicsAllocation allocationOfRootOutsideDriverHandle(0u, nullptr, MemoryConstants::pageSize);
+    l0GfxCoreHelper.p2pDecompressBufferIfRequired(&allocationOfRootOutsideDriverHandle, driverHandle.get());
+    EXPECT_EQ(1u, memoryOperations->decompressDevices.size());
 }
 
 } // namespace ult

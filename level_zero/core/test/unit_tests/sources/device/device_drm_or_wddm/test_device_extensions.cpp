@@ -19,6 +19,7 @@
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
+#include "level_zero/driver_experimental/zex_memory.h"
 
 #include "gtest/gtest.h"
 
@@ -55,7 +56,7 @@ struct DeviceWddmExtensionTest : public ::testing::Test {
 };
 
 TEST_F(DeviceWddmExtensionTest, whenGetExternalMemoryPropertiesIsCalledThenSuccessIsReturnedAndWin32OpaquePropertiesAreReturned) {
-    ze_device_external_memory_properties_t externalMemoryProperties;
+    ze_device_external_memory_properties_t externalMemoryProperties{};
 
     ze_result_t result = device->getExternalMemoryProperties(&externalMemoryProperties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -96,7 +97,7 @@ struct DeviceDrmExtensionTest : public ::testing::Test {
 };
 
 TEST_F(DeviceDrmExtensionTest, whenGetExternalMemoryPropertiesIsCalledThenSuccessIsReturnedAndDmaBufAndOpaqueFdPropertiesAreReturned) {
-    ze_device_external_memory_properties_t externalMemoryProperties;
+    ze_device_external_memory_properties_t externalMemoryProperties{};
 
     ze_result_t result = device->getExternalMemoryProperties(&externalMemoryProperties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -110,6 +111,23 @@ TEST_F(DeviceDrmExtensionTest, whenGetExternalMemoryPropertiesIsCalledThenSucces
     EXPECT_FALSE(externalMemoryProperties.memoryAllocationImportTypes & ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32);
     EXPECT_TRUE(externalMemoryProperties.memoryAllocationImportTypes & ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF);
     EXPECT_TRUE(externalMemoryProperties.memoryAllocationImportTypes & ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_FD);
+}
+
+TEST_F(DeviceDrmExtensionTest, givenMemRangeHandlePropertiesChainedWhenGetExternalMemoryPropertiesIsCalledThenDmaBufRangeExportIsReported) {
+    ze_intel_device_mem_range_handle_exp_properties_t rangeHandleProperties{ZE_INTEL_STRUCTURE_TYPE_DEVICE_MEM_RANGE_HANDLE_EXP_PROPERTIES};
+    ze_device_external_memory_properties_t externalMemoryProperties{ZE_STRUCTURE_TYPE_DEVICE_EXTERNAL_MEMORY_PROPERTIES, &rangeHandleProperties};
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, device->getExternalMemoryProperties(&externalMemoryProperties));
+    EXPECT_EQ(static_cast<ze_external_memory_type_flags_t>(ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF), rangeHandleProperties.rangeExportTypes);
+}
+
+TEST_F(DeviceWddmExtensionTest, givenMemRangeHandlePropertiesChainedWhenGetExternalMemoryPropertiesIsCalledThenNoRangeExportIsReported) {
+    ze_intel_device_mem_range_handle_exp_properties_t rangeHandleProperties{ZE_INTEL_STRUCTURE_TYPE_DEVICE_MEM_RANGE_HANDLE_EXP_PROPERTIES};
+    rangeHandleProperties.rangeExportTypes = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
+    ze_device_external_memory_properties_t externalMemoryProperties{ZE_STRUCTURE_TYPE_DEVICE_EXTERNAL_MEMORY_PROPERTIES, &rangeHandleProperties};
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, device->getExternalMemoryProperties(&externalMemoryProperties));
+    EXPECT_EQ(0u, rangeHandleProperties.rangeExportTypes);
 }
 
 struct DeviceExtensionTest : public ::testing::Test {

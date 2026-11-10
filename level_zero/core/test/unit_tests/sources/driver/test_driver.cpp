@@ -1755,6 +1755,7 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
     using pfnMemGetIpcHandles = decltype(&zexMemGetIpcHandles);
     using pfnMemOpenIpcHandles = decltype(&zexMemOpenIpcHandles);
     using pfnIntelMemMapDeviceMemToHost = decltype(&zeIntelMemMapDeviceMemToHost);
+    using pfnIntelMemGetHandleForAddressRange = decltype(&zeIntelMemGetHandleForAddressRange);
 
     // command list function types
     using pfnCommandListSetCleanupCallback = decltype(&zexCommandListSetCleanupCallback);
@@ -1792,6 +1793,7 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
     pfnMemGetIpcHandles expectedMemGetIpcHandles = L0::zexMemGetIpcHandles;
     pfnMemOpenIpcHandles expectedMemOpenIpcHandles = L0::zexMemOpenIpcHandles;
     pfnIntelMemMapDeviceMemToHost expectedIntelMemMapDeviceMemToHost = L0::zeIntelMemMapDeviceMemToHost;
+    pfnIntelMemGetHandleForAddressRange expectedIntelMemGetHandleForAddressRange = L0::zeIntelMemGetHandleForAddressRange;
 
     // command list function addresses
     decltype(&::zexCommandListAppendWaitOnMemory) expectedCommandListAppendWaitOnMemory = L0::zexCommandListAppendWaitOnMemory;
@@ -2035,6 +2037,9 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeIntelMemMapDeviceMemToHost", &funPtr));
     EXPECT_EQ(expectedIntelMemMapDeviceMemToHost, reinterpret_cast<pfnIntelMemMapDeviceMemToHost>(funPtr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeIntelMemGetHandleForAddressRange", &funPtr));
+    EXPECT_EQ(expectedIntelMemGetHandleForAddressRange, reinterpret_cast<pfnIntelMemGetHandleForAddressRange>(funPtr));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeEventGetCounterBasedFlags", &funPtr));
     EXPECT_EQ(expectedEventGetCounterBasedFlags, reinterpret_cast<pfnEventGetCounterBasedFlags>(funPtr));
@@ -2536,6 +2541,7 @@ TEST_F(DriverExtensionsTest, givenDriverHandleWhenAskingForExtensionsThenReturnC
     verifyExtensionDefinition(ZE_INTEL_DEVICE_MODULE_DP_PROPERTIES_EXP_NAME, ZE_INTEL_DEVICE_MODULE_DP_PROPERTIES_EXP_VERSION_CURRENT);
     verifyExtensionDefinition(ZE_INTEL_GET_DRIVER_VERSION_STRING_EXP_NAME, ZE_INTEL_GET_DRIVER_VERSION_STRING_EXP_VERSION_CURRENT);
     verifyExtensionDefinition(ZE_INTEL_KERNEL_GET_PROGRAM_BINARY_EXP_NAME, ZE_INTEL_KERNEL_GET_PROGRAM_BINARY_EXP_VERSION_CURRENT);
+    verifyExtensionDefinition(ZE_INTEL_MEM_GET_HANDLE_FOR_ADDRESS_RANGE_EXP_NAME, ZE_INTEL_MEM_GET_HANDLE_FOR_ADDRESS_RANGE_EXP_VERSION_CURRENT);
     verifyExtensionDefinition(ZE_INTEL_XE_DEVICE_PROPERTIES_EXP_NAME, ZE_INTEL_XE_DEVICE_EXP_PROPERTIES_VERSION_CURRENT);
     verifyExtensionDefinition(ZEX_INTEL_QUEUE_COPY_OPERATIONS_OFFLOAD_HINT_EXP_NAME, ZEX_INTEL_QUEUE_COPY_OPERATIONS_OFFLOAD_HINT_EXP_VERSION_CURRENT);
 }

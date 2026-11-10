@@ -21,6 +21,7 @@
 #include "shared/test/common/helpers/raii_product_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
@@ -29,6 +30,7 @@
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/api/internal/l0_memory.h"
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
 #include "level_zero/core/source/cmdlist/cmdlist_memory_copy_params.h"
 #include "level_zero/core/source/context/context.h"
@@ -7742,6 +7744,213 @@ TEST_F(MemoryTest, givenDeviceMemoryWithExtenstionWhenCallingMapDeviceMemToHostT
 
     result = context->freeMem(ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+struct GetHandleForAddressRangeTest : public MemoryTest {
+    void SetUp() override {
+        debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
+        MemoryTest::SetUp();
+        auto &rootDeviceEnvironment = *neoDevice->executionEnvironment->rootDeviceEnvironments[0];
+        rootDeviceEnvironment.osInterface = std::make_unique<NEO::OSInterface>();
+        rootDeviceEnvironment.osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
+        rootDeviceEnvironment.memoryOperationsInterface = std::make_unique<NEO::MockMemoryOperations>();
+        memoryManager = static_cast<MockMemoryManager *>(driverHandle->getMemoryManager());
+        memoryManager->obtainDmaBufFdResult = exportedFd;
+    }
+
+    void *allocDeviceMem(size_t size) {
+        void *ptr = nullptr;
+        ze_device_mem_alloc_desc_t deviceDesc = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device->toHandle(), &deviceDesc, size, 0u, &ptr));
+        return ptr;
+    }
+
+    ze_physical_mem_handle_t createPhysicalMem(size_t size) {
+        ze_physical_mem_desc_t physicalDesc = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, nullptr, 0, size};
+        ze_physical_mem_handle_t physical = nullptr;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, context->createPhysicalMem(device->toHandle(), &physicalDesc, &physical));
+        return physical;
+    }
+
+    DebugManagerStateRestore restorer;
+    MockMemoryManager *memoryManager = nullptr;
+    int fd = -1;
+    ze_intel_mem_range_location_exp_properties_t location{ZE_INTEL_STRUCTURE_TYPE_MEM_RANGE_LOCATION_EXP_PROPERTIES};
+    static constexpr int exportedFd = 42;
+    static constexpr auto dmaBufFd = ZE_INTEL_MEM_RANGE_HANDLE_TYPE_EXP_DMA_BUF_FD;
+};
+
+TEST_F(GetHandleForAddressRangeTest, givenInteriorPointerOfDeviceAllocationWhenGettingHandleForAddressRangeThenNewFdAndLocationInAllocationAreReturned) {
+    auto ptr = allocDeviceMem(MemoryConstants::pageSize64k);
+    auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
+    auto allocation = allocData->gpuAllocations.getDefaultGraphicsAllocation();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeIntelMemGetHandleForAddressRange(context->toHandle(), &fd, ptrOffset(ptr, 0x100), 0x10, dmaBufFd, &location));
+    EXPECT_EQ(exportedFd, fd);
+    EXPECT_EQ(1u, memoryManager->obtainDmaBufFdCalled);
+    EXPECT_EQ(ptr, location.base);
+    EXPECT_EQ(0x100u, location.offset);
+    EXPECT_EQ(allocation->getUnderlyingBufferSize(), location.size);
+    EXPECT_TRUE(allocData->isExportedAllocation);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+}
+
+TEST_F(GetHandleForAddressRangeTest, givenInvalidArgumentsWhenGettingHandleForAddressRangeThenErrorIsReturnedAndNoFdIsCreated) {
+    auto ptr = allocDeviceMem(MemoryConstants::pageSize64k);
+    uint64_t notAllocatedMemory = 0u;
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, context->getHandleForAddressRange(nullptr, ptr, 1u, dmaBufFd, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, context->getHandleForAddressRange(&fd, nullptr, 1u, dmaBufFd, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_SIZE, context->getHandleForAddressRange(&fd, ptr, 0u, dmaBufFd, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ENUMERATION, context->getHandleForAddressRange(&fd, ptr, 1u, ZE_INTEL_MEM_RANGE_HANDLE_TYPE_EXP_FORCE_UINT32, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, context->getHandleForAddressRange(&fd, &notAllocatedMemory, 1u, dmaBufFd, nullptr));
+    EXPECT_EQ(0u, memoryManager->obtainDmaBufFdCalled);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+}
+
+TEST_F(GetHandleForAddressRangeTest, givenDriverModelOtherThanDrmWhenGettingHandleForAddressRangeThenUnsupportedFeatureIsReturned) {
+    auto ptr = allocDeviceMem(MemoryConstants::pageSize64k);
+    auto &osInterface = neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface;
+
+    osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelWDDM>());
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, context->getHandleForAddressRange(&fd, ptr, 1u, dmaBufFd, nullptr));
+    osInterface.reset();
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, context->getHandleForAddressRange(&fd, ptr, 1u, dmaBufFd, nullptr));
+    EXPECT_EQ(0u, memoryManager->obtainDmaBufFdCalled);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+}
+
+TEST_F(GetHandleForAddressRangeTest, givenHostOrSharedAllocationWhenGettingHandleForAddressRangeThenIncompatibleResourceIsReturned) {
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    void *hostPtr = nullptr;
+    void *sharedPtr = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, MemoryConstants::pageSize64k, 0u, &hostPtr));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocSharedMem(device->toHandle(), &deviceDesc, &hostDesc, MemoryConstants::pageSize64k, 0u, &sharedPtr));
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INCOMPATIBLE_RESOURCE, context->getHandleForAddressRange(&fd, hostPtr, 1u, dmaBufFd, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_INCOMPATIBLE_RESOURCE, context->getHandleForAddressRange(&fd, sharedPtr, 1u, dmaBufFd, nullptr));
+    EXPECT_EQ(0u, memoryManager->obtainDmaBufFdCalled);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(hostPtr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(sharedPtr));
+}
+
+struct GetHandleForAddressRangeMemoryOperations : public NEO::MockMemoryOperations {
+    NEO::MemoryOperationsStatus decompress(NEO::Device *device, NEO::GraphicsAllocation &gfxAllocation) override {
+        decompressDevices.push_back(device);
+        return decompressResult;
+    }
+    std::vector<NEO::Device *> decompressDevices;
+    NEO::MemoryOperationsStatus decompressResult = NEO::MemoryOperationsStatus::success;
+};
+
+struct GetHandleForAddressRangeCompressedTest : public GetHandleForAddressRangeTest {
+    void SetUp() override {
+        GetHandleForAddressRangeTest::SetUp();
+        memoryOperations = new GetHandleForAddressRangeMemoryOperations;
+        neoDevice->executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface.reset(memoryOperations);
+
+        ze_memory_compression_hints_ext_desc_t compressionHint{ZE_STRUCTURE_TYPE_MEMORY_COMPRESSION_HINTS_EXT_DESC};
+        compressionHint.flags = ZE_MEMORY_COMPRESSION_HINTS_EXT_FLAG_COMPRESSED;
+        ze_device_mem_alloc_desc_t deviceDesc{ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC, &compressionHint};
+        ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device->toHandle(), &deviceDesc, MemoryConstants::pageSize64k, 0u, &ptr));
+        allocation = driverHandle->svmAllocsManager->getSVMAlloc(ptr)->gpuAllocations.getDefaultGraphicsAllocation();
+        allocation->getDefaultGmm()->setCompressionEnabled(true);
+    }
+
+    void TearDown() override {
+        EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+        GetHandleForAddressRangeTest::TearDown();
+    }
+
+    GetHandleForAddressRangeMemoryOperations *memoryOperations = nullptr;
+    NEO::GraphicsAllocation *allocation = nullptr;
+    void *ptr = nullptr;
+};
+
+TEST_F(GetHandleForAddressRangeCompressedTest, givenNoDecompressionSupportWhenGettingHandleForAddressRangeOfCompressedAllocationThenIncompatibleResourceIsReturnedWithoutDecompressing) {
+    neoDevice->getExecutionEnvironment()->setResourceDecompressionEnabled(false);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INCOMPATIBLE_RESOURCE, context->getHandleForAddressRange(&fd, ptr, 1u, dmaBufFd, nullptr));
+    EXPECT_TRUE(memoryOperations->decompressDevices.empty());
+    EXPECT_EQ(0u, memoryManager->obtainDmaBufFdCalled);
+
+    allocation->getDefaultGmm()->setCompressionEnabled(false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->getHandleForAddressRange(&fd, ptr, 1u, dmaBufFd, nullptr));
+    EXPECT_TRUE(memoryOperations->decompressDevices.empty());
+}
+
+TEST_F(GetHandleForAddressRangeCompressedTest, givenDecompressionSupportWhenGettingHandleForAddressRangeThenDecompressionResultOnRootDeviceDecidesWithoutReadingCompressionStateAgain) {
+    neoDevice->getExecutionEnvironment()->setResourceDecompressionEnabled(true);
+
+    memoryOperations->decompressResult = NEO::MemoryOperationsStatus::failed;
+    EXPECT_EQ(ZE_RESULT_ERROR_INCOMPATIBLE_RESOURCE, context->getHandleForAddressRange(&fd, ptr, 1u, dmaBufFd, nullptr));
+    EXPECT_EQ(0u, memoryManager->obtainDmaBufFdCalled);
+
+    memoryOperations->decompressResult = NEO::MemoryOperationsStatus::success;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->getHandleForAddressRange(&fd, ptr, 1u, dmaBufFd, nullptr));
+    EXPECT_EQ(1u, memoryManager->obtainDmaBufFdCalled);
+
+    memoryOperations->decompressResult = NEO::MemoryOperationsStatus::unsupported;
+    EXPECT_EQ(ZE_RESULT_ERROR_INCOMPATIBLE_RESOURCE, context->getHandleForAddressRange(&fd, ptr, 1u, dmaBufFd, nullptr));
+    allocation->getDefaultGmm()->setCompressionEnabled(false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->getHandleForAddressRange(&fd, ptr, 1u, dmaBufFd, nullptr));
+
+    ASSERT_EQ(4u, memoryOperations->decompressDevices.size());
+    for (auto decompressDevice : memoryOperations->decompressDevices) {
+        EXPECT_EQ(neoDevice, decompressDevice);
+    }
+}
+
+TEST_F(GetHandleForAddressRangeTest, givenFdExportFailureWhenGettingHandleForAddressRangeThenOutOfHostMemoryIsReturnedAndAllocationIsNotMarkedExported) {
+    auto ptr = allocDeviceMem(MemoryConstants::pageSize64k);
+    memoryManager->obtainDmaBufFdResult = -1;
+
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, context->getHandleForAddressRange(&fd, ptr, 1u, dmaBufFd, nullptr));
+    EXPECT_FALSE(driverHandle->svmAllocsManager->getSVMAlloc(ptr)->isExportedAllocation);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+}
+
+TEST_F(GetHandleForAddressRangeTest, givenVirtualMemoryMappedToWholePhysicalMemoryWhenGettingHandleForAddressRangeThenLocationIsRelativeToMapping) {
+    size_t pageSize = 0u;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->queryVirtualMemPageSize(device->toHandle(), MemoryConstants::pageSize64k, &pageSize));
+    void *reservation = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->reserveVirtualMem(nullptr, 2 * pageSize, &reservation));
+    auto physical = createPhysicalMem(pageSize);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->mapVirtualMem(reservation, pageSize, physical, 0u, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->getHandleForAddressRange(&fd, ptrOffset(reservation, 0x100), 2 * pageSize, dmaBufFd, &location));
+    EXPECT_EQ(exportedFd, fd);
+    EXPECT_EQ(reservation, location.base);
+    EXPECT_EQ(0x100u, location.offset);
+    EXPECT_EQ(pageSize, location.size);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->unMapVirtualMem(reservation, pageSize));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->destroyPhysicalMem(physical));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeVirtualMem(reservation, 2 * pageSize));
+}
+
+TEST_F(GetHandleForAddressRangeTest, givenAllocationMappingOnlyPartOfItsBackingObjectWhenGettingHandleForAddressRangeThenIncompatibleResourceIsReturned) {
+    struct PartiallyMappedAllocation : public NEO::MockGraphicsAllocation {
+        using NEO::MockGraphicsAllocation::MockGraphicsAllocation;
+        bool isPartialObjectMapping() const override { return true; }
+    };
+    auto ptr = allocDeviceMem(MemoryConstants::pageSize64k);
+    auto allocData = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
+    auto allocation = allocData->gpuAllocations.getDefaultGraphicsAllocation();
+    PartiallyMappedAllocation partiallyMapped(allocation->getRootDeviceIndex(), ptr, MemoryConstants::pageSize64k);
+    allocData->gpuAllocations.addAllocation(&partiallyMapped);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INCOMPATIBLE_RESOURCE, context->getHandleForAddressRange(&fd, ptr, 1u, dmaBufFd, nullptr));
+    EXPECT_EQ(0u, memoryManager->obtainDmaBufFdCalled);
+
+    allocData->gpuAllocations.addAllocation(allocation);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
 }
 
 } // namespace ult

@@ -120,6 +120,109 @@ zeIntelMemMapDeviceMemToHost(
     void *pNext                   ///< [in][optional] must be null or a pointer to an extension-specific structure
 );
 
+///////////////////////////////////////////////////////////////////////////////
+#ifndef ZE_INTEL_MEM_GET_HANDLE_FOR_ADDRESS_RANGE_EXP_NAME
+/// @brief Get handle for address range extension name
+#define ZE_INTEL_MEM_GET_HANDLE_FOR_ADDRESS_RANGE_EXP_NAME "ZE_intel_experimental_mem_get_handle_for_address_range"
+#endif // ZE_INTEL_MEM_GET_HANDLE_FOR_ADDRESS_RANGE_EXP_NAME
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Get handle for address range extension Version(s)
+typedef enum _ze_intel_mem_get_handle_for_address_range_exp_version_t {
+    ZE_INTEL_MEM_GET_HANDLE_FOR_ADDRESS_RANGE_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
+    ZE_INTEL_MEM_GET_HANDLE_FOR_ADDRESS_RANGE_EXP_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
+    ZE_INTEL_MEM_GET_HANDLE_FOR_ADDRESS_RANGE_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
+} ze_intel_mem_get_handle_for_address_range_exp_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Type of the handle returned by ::zeIntelMemGetHandleForAddressRange
+typedef enum _ze_intel_mem_range_handle_type_exp_t {
+    ZE_INTEL_MEM_RANGE_HANDLE_TYPE_EXP_DMA_BUF_FD = 0, ///< Linux DMA-BUF file descriptor, returned as an int
+    ZE_INTEL_MEM_RANGE_HANDLE_TYPE_EXP_FORCE_UINT32 = 0x7fffffff
+} ze_intel_mem_range_handle_type_exp_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Location of a pointer within the object named by the returned handle
+///
+/// @details
+///     - This structure may be passed as pNext member of ::zeIntelMemGetHandleForAddressRange.
+///     - base and size describe the whole object named by the handle, which may be larger than
+///       the requested range, e.g. a pool holding many allocations.
+///     - The object ends size - offset bytes after ptr.
+typedef struct _ze_intel_mem_range_location_exp_properties_t {
+    ze_structure_type_ext_t stype; ///< [in] type of this structure
+    void *pNext;                   ///< [in,out][optional] must be null or a pointer to an extension-specific
+                                   ///< structure (i.e. contains stype and pNext).
+    uint64_t offset;               ///< [out] byte offset of ptr within the handle
+    void *base;                    ///< [out] address that maps to offset 0 of the handle
+    size_t size;                   ///< [out] size in bytes of the object named by the handle
+} ze_intel_mem_range_location_exp_properties_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Device support for ::zeIntelMemGetHandleForAddressRange
+///
+/// @details
+///     - This structure may be passed as pNext member of ::ze_device_external_memory_properties_t.
+typedef struct _ze_intel_device_mem_range_handle_exp_properties_t {
+    ze_structure_type_ext_t stype;                    ///< [in] type of this structure
+    void *pNext;                                      ///< [in,out][optional] must be null or a pointer to an extension-specific
+                                                      ///< structure (i.e. contains stype and pNext).
+    ze_external_memory_type_flags_t rangeExportTypes; ///< [out] handle types that can be returned for an existing allocation,
+                                                      ///< 0 when the device does not support it
+} ze_intel_device_mem_range_handle_exp_properties_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Returns a handle to the memory backing an address range of an existing allocation
+///
+/// @details
+///     - The allocation does not need to be created with an external memory export descriptor.
+///     - ptr may point anywhere inside a device allocation, a pooled device allocation or a
+///       virtual memory range mapped to a whole physical memory object from its start.
+///     - The handle names the whole object backing ptr; chain
+///       ::ze_intel_mem_range_location_exp_properties_t to locate ptr in it.
+///     - When size - offset is smaller than the requested size, the handle covers only the
+///       beginning of the range; call again with base + size to export the rest.
+///     - Compressed memory is decompressed before the handle is returned; when that is not
+///       possible the call fails with ::ZE_RESULT_ERROR_INCOMPATIBLE_RESOURCE. The whole object
+///       is decompressed, so GPU work that accesses any allocation in it must be complete
+///       before the call.
+///     - GPU writes are visible through the handle once the host has synchronized with the GPU
+///       work that made them. Writes made through the handle are visible to GPU work submitted
+///       after those writes have completed.
+///     - The application owns the returned handle and is responsible for closing it.
+///     - The application must not free, unmap or remap the memory, or destroy its physical
+///       memory, while the handle or anything created from it is in use; the driver may then
+///       reuse the memory.
+///     - The application may call this function from simultaneous threads.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == pHandle`
+///         + `nullptr == ptr`
+///     - ::ZE_RESULT_ERROR_INVALID_SIZE
+///         + `0 == size`
+///     - ::ZE_RESULT_ERROR_INVALID_ENUMERATION
+///         + `handleType` is not a valid ::ze_intel_mem_range_handle_type_exp_t
+///     - ::ZE_RESULT_ERROR_INVALID_ARGUMENT
+///         + `ptr` is not part of an allocation
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE
+///         + the device does not report the handle type in
+///           ::ze_intel_device_mem_range_handle_exp_properties_t
+///     - ::ZE_RESULT_ERROR_INCOMPATIBLE_RESOURCE
+///         + the memory is not device memory, is split across several objects, maps only part
+///           of a physical memory object or cannot be decompressed
+///     - ::ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY
+ze_result_t ZE_APICALL
+zeIntelMemGetHandleForAddressRange(
+    ze_context_handle_t hContext,                    ///< [in] handle of the context
+    void *pHandle,                                   ///< [out] returned handle, an int for ::ZE_INTEL_MEM_RANGE_HANDLE_TYPE_EXP_DMA_BUF_FD
+    const void *ptr,                                 ///< [in] start of the address range
+    size_t size,                                     ///< [in] size in bytes of the address range
+    ze_intel_mem_range_handle_type_exp_t handleType, ///< [in] type of the handle to return
+    void *pNext                                      ///< [in,out][optional] must be null or a pointer to an extension-specific structure
+);
+
 #if defined(__cplusplus)
 } // extern "C"
 #endif

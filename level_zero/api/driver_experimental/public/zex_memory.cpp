@@ -39,4 +39,15 @@ zeIntelMemMapDeviceMemToHost(
     return L0::Context::fromHandle(hContext)->mapDeviceMemToHost(ptr, pptr, pNext);
 }
 
+ze_result_t ZE_APICALL
+zeIntelMemGetHandleForAddressRange(
+    ze_context_handle_t hContext,
+    void *pHandle,
+    const void *ptr,
+    size_t size,
+    ze_intel_mem_range_handle_type_exp_t handleType,
+    void *pNext) {
+    return L0::Context::fromHandle(hContext)->getHandleForAddressRange(pHandle, ptr, size, handleType, pNext);
+}
+
 } // namespace L0

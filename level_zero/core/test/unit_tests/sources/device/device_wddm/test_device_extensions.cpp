@@ -16,6 +16,7 @@
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/test/unit_tests/mock.h"
+#include "level_zero/driver_experimental/zex_memory.h"
 #include "level_zero/ze_api.h"
 
 #include "gtest/gtest.h"
@@ -58,7 +59,7 @@ struct DeviceExtensionTest : public ::testing::Test {
 };
 
 TEST_F(DeviceExtensionTest, whenGetExternalMemoryPropertiesIsCalledThenSuccessIsReturnedAndWin32OpaquePropertiesAreReturned) {
-    ze_device_external_memory_properties_t externalMemoryProperties;
+    ze_device_external_memory_properties_t externalMemoryProperties{};
 
     ze_result_t result = device->getExternalMemoryProperties(&externalMemoryProperties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -75,6 +76,16 @@ TEST_F(DeviceExtensionTest, whenGetExternalMemoryPropertiesIsCalledThenSuccessIs
     EXPECT_TRUE(externalMemoryProperties.memoryAllocationImportTypes & ZE_EXTERNAL_MEMORY_TYPE_FLAG_D3D12_HEAP);
     EXPECT_TRUE(externalMemoryProperties.memoryAllocationImportTypes & ZE_EXTERNAL_MEMORY_TYPE_FLAG_D3D12_RESOURCE);
     EXPECT_FALSE(externalMemoryProperties.memoryAllocationImportTypes & ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF);
+}
+
+TEST_F(DeviceExtensionTest, givenMemRangeHandlePropertiesChainedAfterUnknownStructureWhenGetExternalMemoryPropertiesIsCalledThenRangeExportTypesAreReported) {
+    ze_intel_device_mem_range_handle_exp_properties_t rangeHandleProperties{ZE_INTEL_STRUCTURE_TYPE_DEVICE_MEM_RANGE_HANDLE_EXP_PROPERTIES};
+    rangeHandleProperties.rangeExportTypes = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
+    ze_base_properties_t unknownProperties{static_cast<ze_structure_type_t>(0x7ffffff0), &rangeHandleProperties};
+    ze_device_external_memory_properties_t externalMemoryProperties{ZE_STRUCTURE_TYPE_DEVICE_EXTERNAL_MEMORY_PROPERTIES, &unknownProperties};
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, device->getExternalMemoryProperties(&externalMemoryProperties));
+    EXPECT_EQ(0u, rangeHandleProperties.rangeExportTypes);
 }
 
 TEST_F(DeviceExtensionTest, givenDeviceCacheLineSizeExtensionThenGetCachePropertiesReturnsDeviceCachLineSizeGreaterThanZeroOnWddm) {

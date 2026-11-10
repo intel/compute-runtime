@@ -14,6 +14,7 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/driver_model_type.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
@@ -2125,6 +2126,69 @@ ze_result_t Context::mapDeviceMemToHost(const void *ptr, void **pptr, void *pNex
     auto poolLookup = getUsmPoolOwningPtr(ptr, allocData);
     *pptr = ptrOffset(cpuPtr, poolLookup.pool ? poolLookup.pool->getOffsetInPool(ptr) : 0u);
 
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t Context::getHandleForAddressRange(void *pHandle, const void *ptr, size_t size, ze_intel_mem_range_handle_type_exp_t handleType, void *pNext) {
+    if (pHandle == nullptr || ptr == nullptr) {
+        return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
+    }
+    if (size == 0u) {
+        return ZE_RESULT_ERROR_INVALID_SIZE;
+    }
+    if (handleType != ZE_INTEL_MEM_RANGE_HANDLE_TYPE_EXP_DMA_BUF_FD) {
+        return ZE_RESULT_ERROR_INVALID_ENUMERATION;
+    }
+
+    auto allocData = this->driverHandle->svmAllocsManager->getSVMAlloc(ptr);
+    if (allocData == nullptr) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    auto poolLookup = this->getUsmPoolOwningPtr(ptr, allocData);
+    if (poolLookup.pool && false == poolLookup.isAllocatedInPool()) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    auto alloc = allocData->gpuAllocations.getDefaultGraphicsAllocation();
+    auto memoryManager = this->driverHandle->getMemoryManager();
+    auto &rootDeviceEnvironment = *memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[alloc->getRootDeviceIndex()];
+    auto osInterface = rootDeviceEnvironment.osInterface.get();
+    if (!osInterface || osInterface->getDriverModel()->getDriverModelType() != NEO::DriverModelType::drm) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    // The handle names the whole backing object, so the allocation has to map all of it from its start for the reported location to hold.
+    const bool isDeviceMemory = allocData->memoryType == InternalMemoryType::deviceUnifiedMemory ||
+                                allocData->memoryType == InternalMemoryType::reservedDeviceMemory;
+    if (!isDeviceMemory || alloc->getNumHandles() > 1u || alloc->isPartialObjectMapping()) {
+        return ZE_RESULT_ERROR_INCOMPATIBLE_RESOURCE;
+    }
+
+    auto decompressStatus = NEO::MemoryOperationsStatus::unsupported;
+    if (memoryManager->peekExecutionEnvironment().isResourceDecompressionEnabled()) {
+        decompressStatus = rootDeviceEnvironment.memoryOperationsInterface->decompress(allocData->device->getRootDevice(), *alloc);
+    }
+    const bool uncompressed = decompressStatus == NEO::MemoryOperationsStatus::unsupported ? !alloc->isCompressionEnabled()
+                                                                                           : decompressStatus == NEO::MemoryOperationsStatus::success;
+    if (!uncompressed) {
+        return ZE_RESULT_ERROR_INCOMPATIBLE_RESOURCE;
+    }
+
+    const int fd = memoryManager->obtainDmaBufFd(*alloc);
+    if (fd < 0) {
+        return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+    }
+    this->markAllocationIpcExported(alloc, allocData);
+
+    *static_cast<int *>(pHandle) = fd;
+    for (auto extension = static_cast<ze_base_properties_t *>(pNext); extension != nullptr; extension = static_cast<ze_base_properties_t *>(extension->pNext)) {
+        if (static_cast<ze_structure_type_ext_t>(extension->stype) == ZE_INTEL_STRUCTURE_TYPE_MEM_RANGE_LOCATION_EXP_PROPERTIES) {
+            auto location = reinterpret_cast<ze_intel_mem_range_location_exp_properties_t *>(extension);
+            location->base = addrToPtr(alloc->getGpuAddress());
+            location->offset = ptrDiff(ptr, location->base);
+            location->size = alloc->getUnderlyingBufferSize();
+        }
+    }
     return ZE_RESULT_SUCCESS;
 }
 

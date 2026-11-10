@@ -1026,6 +1026,49 @@ TEST_F(AllocUsmDeviceEnabledSinglePoolMemoryTest, givenInteriorPointerOfPooledAl
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
+TEST_F(AllocUsmDeviceEnabledSinglePoolMemoryTest, givenInteriorPointerOfPooledAllocationWhenGettingHandleForAddressRangeThenLocationIsWithinPoolAndChunkStaysReusable) {
+    auto mockDeviceMemAllocPool = reinterpret_cast<MockUsmMemAllocPool *>(l0Devices[0]->getNEODevice()->getDeviceUsmMemAllocPoolFacade().getPool());
+    ASSERT_NE(nullptr, mockDeviceMemAllocPool);
+    auto &osInterface = executionEnvironment->rootDeviceEnvironments[0]->osInterface;
+    osInterface = std::make_unique<NEO::OSInterface>();
+    osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
+    auto mockMemoryManager = static_cast<MockMemoryManager *>(driverHandle->getMemoryManager());
+    mockMemoryManager->obtainDmaBufFdResult = 42;
+
+    void *pooledAllocation = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(l0Devices[0], &deviceDesc, 64u, 0u, &pooledAllocation));
+    ASSERT_TRUE(mockDeviceMemAllocPool->isInPoolRange(pooledAllocation));
+
+    int fd = -1;
+    ze_intel_mem_range_location_exp_properties_t location{ZE_INTEL_STRUCTURE_TYPE_MEM_RANGE_LOCATION_EXP_PROPERTIES};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->getHandleForAddressRange(&fd, ptrOffset(pooledAllocation, 8u), 8u, ZE_INTEL_MEM_RANGE_HANDLE_TYPE_EXP_DMA_BUF_FD, &location));
+    EXPECT_EQ(42, fd);
+    EXPECT_EQ(mockDeviceMemAllocPool->pool, location.base);
+    EXPECT_EQ(mockDeviceMemAllocPool->getOffsetInPool(pooledAllocation) + 8u, location.offset);
+    EXPECT_EQ(mockDeviceMemAllocPool->allocation->getUnderlyingBufferSize(), location.size);
+    EXPECT_FALSE(mockDeviceMemAllocPool->allocations.get(pooledAllocation)->isExported);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(pooledAllocation));
+}
+
+TEST_F(AllocUsmDeviceEnabledSinglePoolMemoryTest, givenPointerToFreeSpaceOfPoolWhenGettingHandleForAddressRangeThenInvalidArgumentIsReturned) {
+    auto mockDeviceMemAllocPool = reinterpret_cast<MockUsmMemAllocPool *>(l0Devices[0]->getNEODevice()->getDeviceUsmMemAllocPoolFacade().getPool());
+    ASSERT_NE(nullptr, mockDeviceMemAllocPool);
+    void *pooledAllocation = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(l0Devices[0], &deviceDesc, 64u, 0u, &pooledAllocation));
+    ASSERT_TRUE(mockDeviceMemAllocPool->isInPoolRange(pooledAllocation));
+    auto freeSpaceInPool = pooledAllocation == mockDeviceMemAllocPool->pool ? ptrOffset(pooledAllocation, MemoryConstants::pageSize64k) : mockDeviceMemAllocPool->pool;
+    ASSERT_TRUE(mockDeviceMemAllocPool->isInPoolRange(freeSpaceInPool));
+    ASSERT_FALSE(mockDeviceMemAllocPool->lookupAlloc(freeSpaceInPool).isAllocatedInPool());
+
+    int fd = -1;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, context->getHandleForAddressRange(&fd, freeSpaceInPool, 1u, ZE_INTEL_MEM_RANGE_HANDLE_TYPE_EXP_DMA_BUF_FD, nullptr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(pooledAllocation));
+}
+
 TEST_F(AllocUsmDeviceEnabledSinglePoolMemoryTest, givenIpcHandleFromInteriorPointerOfNotPooledAllocationWhenFreeingAllocationThenIpcHandleIsReleased) {
     auto mockDeviceMemAllocPool = reinterpret_cast<MockUsmMemAllocPool *>(l0Devices[0]->getNEODevice()->getDeviceUsmMemAllocPoolFacade().getPool());
     ASSERT_NE(nullptr, mockDeviceMemAllocPool);

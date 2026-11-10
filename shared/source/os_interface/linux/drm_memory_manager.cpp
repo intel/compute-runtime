@@ -1664,6 +1664,11 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromMultipleShared
             const uint64_t physicalOffset = offsetForHandle(i);
             const size_t boSize = bo->peekSize();
             bo->setAddress(gpuRange);
+            // Recorded in both modes, as for a single handle, so the mapped window of the object stays known.
+            if (physicalOffset != 0) {
+                bo->setPhysicalMemoryOffset(physicalOffset);
+                bo->setVirtualMappingSize(sizes[i]);
+            }
             if (legacyFold) {
                 // Whole object softpinned; offset already folded into the reported base.
                 gpuRange += boSize;
@@ -1672,10 +1677,6 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromMultipleShared
                 // Pack by mapped remainder; the offset (if any) is bound by vm_bind (vmBind.offset/length).
                 gpuRange += sizes[i];
                 bo->setUnmapSize(sizes[i]);
-                if (physicalOffset != 0) {
-                    bo->setPhysicalMemoryOffset(physicalOffset);
-                    bo->setVirtualMappingSize(sizes[i]);
-                }
             }
             pushSharedBufferObject(bo);
         }
@@ -2604,6 +2605,11 @@ int DrmMemoryManager::obtainFdFromHandle(int boHandle, uint32_t rootDeviceIndex)
     }
 
     return openFd.fileDescriptor;
+}
+
+int DrmMemoryManager::obtainDmaBufFd(GraphicsAllocation &graphicsAllocation) {
+    auto boHandle = static_cast<DrmAllocation &>(graphicsAllocation).getBO()->peekHandle();
+    return this->obtainFdFromHandle(boHandle, graphicsAllocation.getRootDeviceIndex());
 }
 
 OsContextLinux *DrmMemoryManager::getDefaultOsContext(uint32_t rootDeviceIndex) const {

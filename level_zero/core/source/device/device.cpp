@@ -69,6 +69,7 @@
 #include "level_zero/core/source/mutable_cmdlist/mutable_cmdlist.h"
 #include "level_zero/core/source/sampler/sampler.h"
 #include "level_zero/driver_experimental/zex_graph.h"
+#include "level_zero/driver_experimental/zex_memory.h"
 #include "level_zero/driver_experimental/zex_module.h"
 #include "level_zero/tools/source/debug/debug_session.h"
 #include "level_zero/tools/source/metrics/metric.h"
@@ -1309,6 +1310,14 @@ ze_result_t Device::getCacheProperties(uint32_t *pCount, ze_device_cache_propert
     }
 
     return ZE_RESULT_SUCCESS;
+}
+
+void Device::getMemRangeHandleProperties(ze_device_external_memory_properties_t *pExternalMemoryProperties, ze_external_memory_type_flags_t rangeExportTypes) {
+    for (auto extension = static_cast<ze_base_properties_t *>(pExternalMemoryProperties->pNext); extension != nullptr; extension = static_cast<ze_base_properties_t *>(extension->pNext)) {
+        if (static_cast<ze_structure_type_ext_t>(extension->stype) == ZE_INTEL_STRUCTURE_TYPE_DEVICE_MEM_RANGE_HANDLE_EXP_PROPERTIES) {
+            reinterpret_cast<ze_intel_device_mem_range_handle_exp_properties_t *>(extension)->rangeExportTypes = rangeExportTypes;
+        }
+    }
 }
 
 ze_result_t Device::reserveCache(size_t cacheLevel, size_t cacheReservationSize) {
