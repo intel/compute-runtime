@@ -65,6 +65,27 @@ struct ClSvmAllocTest : public Test<OclFixture> {
     static constexpr size_t validSize = 4096u * sizeof(cl_long);
 };
 
+TEST_F(ClSvmAllocTest, givenDeviceHandleListWithNonDeviceObjectWhenHostMemAllocThenInvalidValueIsReturned) {
+    cl_mem_properties_intel properties[] = {CL_MEM_DEVICE_HANDLE_LIST_KHR, reinterpret_cast<cl_mem_properties_intel>(clContext),
+                                            CL_MEM_DEVICE_HANDLE_LIST_END_KHR, 0};
+    cl_int errcode = CL_SUCCESS;
+
+    auto ptr = clHostMemAllocINTEL(clContext, properties, validSize, 0, &errcode);
+
+    EXPECT_EQ(nullptr, ptr);
+    EXPECT_EQ(CL_INVALID_VALUE, errcode);
+}
+
+TEST_F(ClSvmAllocTest, givenExternalMemoryHandleWhenHostMemAllocThenInvalidValueIsReturned) {
+    cl_mem_properties_intel properties[] = {CL_EXTERNAL_MEMORY_HANDLE_DMA_BUF_KHR, 0x10, 0};
+    cl_int errcode = CL_SUCCESS;
+
+    auto ptr = clHostMemAllocINTEL(clContext, properties, validSize, 0, &errcode);
+
+    EXPECT_EQ(nullptr, ptr);
+    EXPECT_EQ(CL_INVALID_VALUE, errcode);
+}
+
 TEST_F(ClSvmAllocTest, givenAtomicsWithoutFineGrainBufferFlagWhenClSvmAllocThenReturnsNull) {
     auto ptr = clSVMAlloc(getContext(), CL_MEM_SVM_ATOMICS, validSize, 0);
     EXPECT_EQ(nullptr, ptr);

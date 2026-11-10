@@ -334,10 +334,7 @@ TEST_F(ParseMemoryPropertiesFixture, givenNoUseHostPtrPropertyWhenParsingThenHos
 }
 
 TEST_F(ParseMemoryPropertiesFixture, givenAcceptedButUnusedPropertiesWhenParsingThenTheyAreSkippedWithoutFailing) {
-    cl_mem_properties_intel properties[] = {CL_EXTERNAL_MEMORY_HANDLE_DMA_BUF_KHR, 0x10,
-                                            CL_EXTERNAL_MEMORY_HANDLE_OPAQUE_WIN32_KHR, 0x20,
-                                            CL_MEM_DEVICE_HANDLE_LIST_KHR, 0x30, CL_MEM_DEVICE_HANDLE_LIST_END_KHR,
-                                            CL_MEM_DEVICE_ID_INTEL_DEPRECATED, 0x40,
+    cl_mem_properties_intel properties[] = {CL_MEM_DEVICE_ID_INTEL_DEPRECATED, 0x40,
                                             CL_MEM_DEVICE_ID_INTEL, 0x50,
                                             CL_MEM_L0_HANDLE_INTEL, 0x60,
                                             0};
@@ -348,6 +345,47 @@ TEST_F(ParseMemoryPropertiesFixture, givenAcceptedButUnusedPropertiesWhenParsing
     EXPECT_EQ(0u, memoryProperties.handle);
     EXPECT_EQ(0u, memoryProperties.handleType);
     EXPECT_TRUE(memoryProperties.associatedDevices.empty());
+}
+
+TEST_F(ParseMemoryPropertiesFixture, givenExternalMemoryHandleWhenParsingForAnyObjectTypeThenReturnsFalse) {
+    cl_mem_properties_intel dmaBufProperties[] = {CL_EXTERNAL_MEMORY_HANDLE_DMA_BUF_KHR, 0x10, 0};
+    cl_mem_properties_intel win32Properties[] = {CL_EXTERNAL_MEMORY_HANDLE_OPAQUE_WIN32_KHR, 0x20, 0};
+
+    for (auto objType : {ClMemoryPropertiesHelper::ObjType::buffer, ClMemoryPropertiesHelper::ObjType::image, ClMemoryPropertiesHelper::ObjType::unknown}) {
+        EXPECT_FALSE(parse(dmaBufProperties, objType));
+        EXPECT_FALSE(parse(win32Properties, objType));
+    }
+}
+
+TEST_F(ParseMemoryPropertiesFixture, givenDeviceHandleListWithContextDeviceWhenParsingThenDeviceIsAssociated) {
+    cl_mem_properties_intel properties[] = {CL_MEM_DEVICE_HANDLE_LIST_KHR, reinterpret_cast<cl_mem_properties_intel>(static_cast<cl_device_id>(clDevice)),
+                                            CL_MEM_DEVICE_HANDLE_LIST_END_KHR,
+                                            CL_MEM_FLAGS, CL_MEM_READ_ONLY,
+                                            0};
+
+    EXPECT_TRUE(parse(properties));
+
+    ASSERT_EQ(1u, memoryProperties.associatedDevices.size());
+    EXPECT_EQ(&clDevice->getDevice(), memoryProperties.associatedDevices[0]);
+    EXPECT_EQ(static_cast<cl_mem_flags>(CL_MEM_READ_ONLY), flags);
+}
+
+TEST_F(ParseMemoryPropertiesFixture, givenEmptyDeviceHandleListWhenParsingThenNoDeviceIsAssociated) {
+    cl_mem_properties_intel properties[] = {CL_MEM_DEVICE_HANDLE_LIST_KHR, CL_MEM_DEVICE_HANDLE_LIST_END_KHR,
+                                            CL_MEM_FLAGS, CL_MEM_WRITE_ONLY,
+                                            0};
+
+    EXPECT_TRUE(parse(properties));
+
+    EXPECT_TRUE(memoryProperties.associatedDevices.empty());
+    EXPECT_EQ(static_cast<cl_mem_flags>(CL_MEM_WRITE_ONLY), flags);
+}
+
+TEST_F(ParseMemoryPropertiesFixture, givenDeviceHandleListWithNonDeviceObjectWhenParsingThenReturnsFalse) {
+    cl_mem_properties_intel properties[] = {CL_MEM_DEVICE_HANDLE_LIST_KHR, reinterpret_cast<cl_mem_properties_intel>(static_cast<cl_context>(leoContext.get())),
+                                            CL_MEM_DEVICE_HANDLE_LIST_END_KHR, 0};
+
+    EXPECT_FALSE(parse(properties));
 }
 
 TEST_F(ParseMemoryPropertiesFixture, givenUnknownPropertyWhenParsingThenReturnsFalse) {

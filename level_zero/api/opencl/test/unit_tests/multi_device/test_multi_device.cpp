@@ -10,7 +10,9 @@
 #include "level_zero/api/opencl/source/cl_device/leo_cl_device.h"
 #include "level_zero/api/opencl/source/context/leo_context.h"
 #include "level_zero/api/opencl/source/helpers/leo_base_object.h"
+#include "level_zero/api/opencl/source/helpers/leo_cl_memory_properties_helpers.h"
 #include "level_zero/api/opencl/source/platform/leo_platform.h"
+#include "level_zero/core/source/context/context.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture_extended.h"
 
 #include "CL/cl.h"
@@ -149,6 +151,21 @@ TEST_F(LeoMultiDeviceContextTests, givenSingleDeviceWhenCreatingContextThenItIsS
     EXPECT_TRUE(clContext.isSingleDeviceContext());
     EXPECT_EQ(1u, clContext.getRootDeviceIndices().size());
     EXPECT_EQ(clContext.getClDevices()[0]->getRootDeviceIndex(), clContext.getDefaultRootDeviceIndex());
+}
+
+TEST_F(LeoMultiDevicePlatformTests, givenDeviceHandleListWithDeviceOutsideContextWhenParsingMemoryPropertiesThenReturnsFalse) {
+    auto clDeviceIds = getClDeviceIds();
+    ASSERT_LE(2u, clDeviceIds.size());
+    auto leoContext = std::make_unique<Context>(nullptr, context->toHandle(), 1, clDeviceIds.data(), true);
+    cl_mem_properties_intel properties[] = {CL_MEM_DEVICE_HANDLE_LIST_KHR, reinterpret_cast<cl_mem_properties_intel>(clDeviceIds[1]),
+                                            CL_MEM_DEVICE_HANDLE_LIST_END_KHR, 0};
+    MemoryProperties memoryProperties{};
+    cl_mem_flags flags = 0;
+    cl_mem_flags_intel flagsIntel = 0;
+    cl_mem_alloc_flags_intel allocFlags = 0;
+
+    EXPECT_FALSE(ClMemoryPropertiesHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocFlags,
+                                                                 ClMemoryPropertiesHelper::ObjType::buffer, *leoContext));
 }
 
 } // namespace ult

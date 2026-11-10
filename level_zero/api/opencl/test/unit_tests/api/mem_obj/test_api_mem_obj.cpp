@@ -703,6 +703,15 @@ TEST_F(CreateImageValidationTest, givenUnsupportedPropertyWhenCreateImageWithPro
     EXPECT_FALSE(mockL0Context.createImageCalled);
 }
 
+TEST_F(CreateImageValidationTest, givenExternalMemoryHandleWhenCreateImageWithPropertiesThenInvalidPropertyReturned) {
+    const cl_mem_properties properties[] = {CL_EXTERNAL_MEMORY_HANDLE_DMA_BUF_KHR, 0x10, 0};
+    retVal = CL_SUCCESS;
+    EXPECT_EQ(nullptr, clCreateImageWithProperties(leoContext.get(), properties, CL_MEM_READ_ONLY,
+                                                   &imageFormat, &imageDesc, nullptr, &retVal));
+    EXPECT_EQ(CL_INVALID_PROPERTY, retVal);
+    EXPECT_FALSE(mockL0Context.createImageCalled);
+}
+
 struct CreateImageFromBufferValidationTest : CreateImageValidationTest {
     void SetUp() override {
         CreateImageValidationTest::SetUp();

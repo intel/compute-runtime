@@ -109,4 +109,5 @@ Querying `CL_DEVICE_VERSION` (for example via `clinfo`) and observing `OpenCL 3.
 - Core compute paths (kernel dispatch, memory operations) are functional.
 - Not all OpenCL extensions and edge cases are fully mapped.
 - `cl_khr_command_buffer` 1.0.0 is on by default; kernels with image or shared object arguments cannot be recorded yet -- see [LEO_COMMAND_BUFFER.md](LEO_COMMAND_BUFFER.md).
+- `cl_khr_external_memory` handles are not imported yet; buffer, image and USM allocation calls reject them.
 - Performance characterization is ongoing.

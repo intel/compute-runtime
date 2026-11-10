@@ -10,9 +10,16 @@
 #include "shared/source/helpers/memory_properties_flags.h"
 
 #include "level_zero/api/opencl/extensions/public/cl_ext_private.h"
+#include "level_zero/api/opencl/source/cl_device/leo_cl_device.h"
+#include "level_zero/api/opencl/source/context/leo_context.h"
 #include "level_zero/api/opencl/source/helpers/leo_cl_memory_properties_helpers.h"
+#include "level_zero/api/opencl/source/mem_obj/leo_mem_obj.h"
+#include "level_zero/core/source/context/context.h"
+#include "level_zero/core/source/device/device.h"
 
 #include "CL/cl_ext.h"
+
+#include <algorithm>
 
 namespace NEO {
 namespace LEO {
@@ -100,6 +107,78 @@ MemoryProperties ClMemoryPropertiesHelper::createMemoryProperties(cl_mem_flags f
     memoryProperties.pDevice = pDevice;
 
     return memoryProperties;
+}
+
+bool ClMemoryPropertiesHelper::parseMemoryProperties(const cl_mem_properties_intel *properties, MemoryProperties &memoryProperties,
+                                                     cl_mem_flags &flags, cl_mem_flags_intel &flagsIntel,
+                                                     cl_mem_alloc_flags_intel &allocflags, ClMemoryPropertiesHelper::ObjType objectType, Context &context) {
+    NEO::Device *pDevice = L0::Device::fromHandle(context.getL0Object()->getDevices().begin()->second)->getNEODevice();
+    uint64_t handle = 0;
+    uint64_t handleType = 0;
+    uintptr_t hostptr = 0;
+    std::vector<NEO::Device *> devices;
+
+    if (properties != nullptr) {
+        size_t i = 0;
+        while (properties[i] != 0) {
+            const auto propertyName = properties[i];
+
+            if (MemObj::isHandleListProperty(propertyName)) {
+                if ((propertyName == CL_IMAGE_L0_HANDLE_INTEL) && (objectType != ClMemoryPropertiesHelper::ObjType::image)) {
+                    return false;
+                }
+                const auto listEnd = MemObj::getHandleListEnd(properties, i);
+                if (propertyName == CL_MEM_DEVICE_HANDLE_LIST_KHR) {
+                    const auto &contextDevices = context.getClDevices();
+                    for (auto entry = i + 1; entry < listEnd; entry++) {
+                        auto pClDevice = castToObject<ClDevice>(reinterpret_cast<cl_device_id>(properties[entry]));
+                        if ((pClDevice == nullptr) || (std::find(contextDevices.begin(), contextDevices.end(), pClDevice) == contextDevices.end())) {
+                            return false;
+                        }
+                        devices.push_back(&pClDevice->getDevice());
+                    }
+                }
+                i = listEnd + 1;
+                continue;
+            }
+
+            switch (propertyName) {
+            case CL_MEM_FLAGS:
+                flags |= static_cast<cl_mem_flags>(properties[i + 1]);
+                break;
+            case CL_MEM_FLAGS_INTEL:
+                flagsIntel |= static_cast<cl_mem_flags_intel>(properties[i + 1]);
+                break;
+            case CL_MEM_ALLOC_FLAGS_INTEL:
+                allocflags |= static_cast<cl_mem_alloc_flags_intel>(properties[i + 1]);
+                break;
+            case CL_MEM_ALLOC_USE_HOST_PTR_INTEL:
+                hostptr = static_cast<uintptr_t>(properties[i + 1]);
+                break;
+            case CL_MEM_L0_HANDLE_INTEL:
+                if (objectType != ClMemoryPropertiesHelper::ObjType::buffer) {
+                    return false;
+                }
+                break;
+            case CL_EXTERNAL_MEMORY_HANDLE_DMA_BUF_KHR:
+            case CL_EXTERNAL_MEMORY_HANDLE_OPAQUE_WIN32_KHR:
+                return false;
+            case CL_MEM_DEVICE_ID_INTEL_DEPRECATED:
+            case CL_MEM_DEVICE_ID_INTEL:
+                break;
+            default:
+                return false;
+            }
+            i += 2;
+        }
+    }
+
+    memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, allocflags, pDevice);
+    memoryProperties.handleType = handleType;
+    memoryProperties.handle = handle;
+    memoryProperties.hostptr = hostptr;
+    memoryProperties.associatedDevices = std::move(devices);
+    return true;
 }
 
 } // namespace LEO

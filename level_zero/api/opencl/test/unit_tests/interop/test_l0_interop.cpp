@@ -230,12 +230,14 @@ TEST_F(LeoInteropParseFixture, givenMultipleImageHandlesFollowedByFlagsWhenParsi
     EXPECT_EQ(static_cast<cl_mem_flags>(CL_MEM_READ_ONLY), flags);
 }
 
-TEST_F(LeoInteropParseFixture, givenMultiEntryKhrDeviceListFollowedByFlagsWhenParsingThenListIsSkippedAndFlagsAreParsed) {
-    cl_mem_properties props[] = {CL_MEM_DEVICE_HANDLE_LIST_KHR, 0x1, 0x2, CL_MEM_DEVICE_HANDLE_LIST_END_KHR,
+TEST_F(LeoInteropParseFixture, givenMultiEntryKhrDeviceListFollowedByFlagsWhenParsingThenDevicesAreAssociatedAndFlagsAreParsed) {
+    cl_mem_properties props[] = {CL_MEM_DEVICE_HANDLE_LIST_KHR, reinterpret_cast<cl_mem_properties>(static_cast<cl_device_id>(clDevice)), reinterpret_cast<cl_mem_properties>(static_cast<cl_device_id>(clDevice)),
+                                 CL_MEM_DEVICE_HANDLE_LIST_END_KHR,
                                  CL_MEM_FLAGS, CL_MEM_WRITE_ONLY,
                                  0};
     ASSERT_TRUE(parse(props, ClMemoryPropertiesHelper::ObjType::buffer));
     EXPECT_EQ(static_cast<cl_mem_flags>(CL_MEM_WRITE_ONLY), flags);
+    EXPECT_EQ(2u, memoryProperties.associatedDevices.size());
 }
 
 TEST_F(LeoInteropParseFixture, givenBufferHandleFollowedByFlagsWhenParsingThenBothAreHandled) {
@@ -336,7 +338,7 @@ TEST_F(LeoInteropBufferFixture, givenImageHandleKeyWhenCreatingBufferThenInvalid
 
 TEST_F(LeoInteropBufferFixture, givenKhrDeviceListBeforeBufferHandleWhenCreatingBufferThenHandleIsStillImported) {
     void *usmPtr = &importedStorage;
-    cl_mem_properties props[] = {CL_MEM_DEVICE_HANDLE_LIST_KHR, reinterpret_cast<cl_mem_properties>(clDevice),
+    cl_mem_properties props[] = {CL_MEM_DEVICE_HANDLE_LIST_KHR, reinterpret_cast<cl_mem_properties>(static_cast<cl_device_id>(clDevice)),
                                  CL_MEM_DEVICE_HANDLE_LIST_END_KHR,
                                  CL_MEM_L0_HANDLE_INTEL, reinterpret_cast<cl_mem_properties>(usmPtr),
                                  0};
