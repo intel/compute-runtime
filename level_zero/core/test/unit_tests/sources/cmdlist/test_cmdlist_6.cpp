@@ -1113,6 +1113,39 @@ HWTEST_F(CommandListTest, given4GBOrGreater3dDstRegionWhenAppendMemoryCopyRegion
     EXPECT_EQ(sizeof(uint64_t) * 2, passedArgSizeDstPitch);
 }
 
+HWTEST2_F(CommandListTest, givenImmediateCommandListWhenCopyingBetweenImageAndMemoryThenEachCopyIsFlushedOnce, ImageSupport) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableCopyWithStagingBuffers.set(0);
+
+    for (auto builtIn : {ImageBuiltIn::copyBufferToImage3dBytes, ImageBuiltIn::copyImage3dToBufferBytes}) {
+        auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(builtIn, getDefaultBuiltInMode());
+        static_cast<Mock<::L0::KernelImp> *>(kernel)->setArgRedescribedImageCallBase = false;
+    }
+
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.cmdQImmediate = queue.get();
+    cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    ze_image_desc_t zeDesc = {};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    auto imageHw = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    imageHw->initialize(device, &zeDesc);
+
+    alignas(MemoryConstants::cacheLineSize) uint8_t hostData[MemoryConstants::cacheLineSize] = {};
+    ze_image_region_t region = {0, 0, 0, 1, 1, 1};
+    CmdListMemoryCopyParams copyParams = {};
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList.appendImageCopyFromMemory(imageHw->toHandle(), hostData, &region, nullptr, 0, nullptr, copyParams));
+    EXPECT_EQ(1u, cmdList.executeCommandListImmediateWithFlushTaskCalledCount);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList.appendImageCopyToMemory(hostData, imageHw->toHandle(), &region, nullptr, 0, nullptr, copyParams));
+    EXPECT_EQ(2u, cmdList.executeCommandListImmediateWithFlushTaskCalledCount);
+
+    cmdList.getCsr(false)->getInternalAllocationStorage()->getTemporaryAllocations().freeAllGraphicsAllocations(device->getNEODevice());
+}
+
 HWTEST2_F(CommandListTest, givenComputeCommandListWhenCopyFromImageToImageTheBuiltinFlagIsSet, ImageSupport) {
     auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltIn::copyImageRegion, getDefaultBuiltInMode());
     auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);

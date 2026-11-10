@@ -1502,62 +1502,6 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::tryAppendStagingImageTransfe
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendImageCopyFromMemory(
-    ze_image_handle_t hDstImage,
-    const void *srcPtr,
-    const ze_image_region_t *pDstRegion,
-    ze_event_handle_t hSignalEvent,
-    uint32_t numWaitEvents,
-    ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) {
-    memoryCopyParams.relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(numWaitEvents, false);
-
-    auto spaceCheckStatus = checkAvailableSpace(numWaitEvents, memoryCopyParams.relaxedOrderingDispatch, estimateCommandSizeForImageCopyBlit(hDstImage, pDstRegion), false);
-    if (spaceCheckStatus != ZE_RESULT_SUCCESS) {
-        return spaceCheckStatus;
-    }
-
-    ze_image_region_mip_level_exp_desc_t tmpRegion;
-    ze_result_t stagingResult = ZE_RESULT_SUCCESS;
-    if (tryAppendStagingImageTransfer(hDstImage, srcPtr, pDstRegion, tmpRegion, 0, 0, false, numWaitEvents, hSignalEvent, memoryCopyParams, stagingResult)) {
-        return stagingResult;
-    }
-
-    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemory(hDstImage, srcPtr, pDstRegion, hSignalEvent,
-                                                                               numWaitEvents, phWaitEvents, memoryCopyParams);
-
-    return flushImmediate(ret, true, hasStallingCmdsForRelaxedOrdering(numWaitEvents, memoryCopyParams.relaxedOrderingDispatch), memoryCopyParams.relaxedOrderingDispatch, NEO::AppendOperations::kernel,
-                          memoryCopyParams.copyOffloadAllowed, hSignalEvent, memoryCopyParams.taskCountUpdateRequired, nullptr, nullptr);
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendImageCopyToMemory(
-    void *dstPtr,
-    ze_image_handle_t hSrcImage,
-    const ze_image_region_t *pSrcRegion,
-    ze_event_handle_t hSignalEvent,
-    uint32_t numWaitEvents,
-    ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) {
-    memoryCopyParams.relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(numWaitEvents, false);
-
-    auto spaceCheckStatus = checkAvailableSpace(numWaitEvents, memoryCopyParams.relaxedOrderingDispatch, estimateCommandSizeForImageCopyBlit(hSrcImage, pSrcRegion), false);
-    if (spaceCheckStatus != ZE_RESULT_SUCCESS) {
-        return spaceCheckStatus;
-    }
-
-    ze_image_region_mip_level_exp_desc_t tmpRegion;
-    ze_result_t stagingResult = ZE_RESULT_SUCCESS;
-    if (tryAppendStagingImageTransfer(hSrcImage, dstPtr, pSrcRegion, tmpRegion, 0, 0, true, numWaitEvents, hSignalEvent, memoryCopyParams, stagingResult)) {
-        return stagingResult;
-    }
-
-    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemory(dstPtr, hSrcImage, pSrcRegion, hSignalEvent,
-                                                                             numWaitEvents, phWaitEvents, memoryCopyParams);
-
-    return flushImmediate(ret, true, hasStallingCmdsForRelaxedOrdering(numWaitEvents, memoryCopyParams.relaxedOrderingDispatch), memoryCopyParams.relaxedOrderingDispatch, NEO::AppendOperations::kernel,
-                          memoryCopyParams.copyOffloadAllowed, hSignalEvent, memoryCopyParams.taskCountUpdateRequired, nullptr, nullptr);
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendImageCopyFromMemoryExt(
     ze_image_handle_t hDstImage,
     const void *srcPtr,

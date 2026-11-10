@@ -155,20 +155,6 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
                                             size_t size, ze_event_handle_t hSignalEvent,
                                             uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) override;
 
-    ze_result_t appendImageCopyFromMemory(ze_image_handle_t hDstImage,
-                                          const void *srcPtr,
-                                          const ze_image_region_t *pDstRegion,
-                                          ze_event_handle_t hEvent,
-                                          uint32_t numWaitEvents,
-                                          ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) override;
-
-    ze_result_t appendImageCopyToMemory(void *dstPtr,
-                                        ze_image_handle_t hSrcImage,
-                                        const ze_image_region_t *pSrcRegion,
-                                        ze_event_handle_t hEvent,
-                                        uint32_t numWaitEvents,
-                                        ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) override;
-
     ze_result_t appendImageCopyFromMemoryExt(ze_image_handle_t hDstImage,
                                              const void *srcPtr,
                                              const ze_image_region_t *pDstRegion,
