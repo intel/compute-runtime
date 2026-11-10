@@ -10,6 +10,7 @@
 #include "shared/source/memory_manager/unified_memory_properties.h"
 #include "shared/source/os_interface/linux/drm_allocation.h"
 #include "shared/test/common/libult/linux/drm_mock_helper.h"
+#include "shared/test/common/mocks/linux/mock_os_context_linux.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/unit_test/os_interface/linux/drm_memory_manager_local_memory_fixture.h"
 
@@ -103,6 +104,188 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenUseKmdMigrationSetWhenCreateSharedU
     EXPECT_EQ(memRegions[0].memoryInstance, 1u);
     EXPECT_EQ(memRegions[1].memoryClass, drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE);
     EXPECT_EQ(memRegions[1].memoryInstance, regionInfo[1].region.memoryInstance);
+
+    unifiedMemoryManager.freeSVMAlloc(ptr);
+}
+
+TEST_F(DrmMemoryManagerLocalMemoryTest, givenNoVmBoAtomicAdviseWhenCreateSharedUnifiedMemoryAllocationThenBosAreBoundAndSystemAtomicAccessIsSetOnAllocationRange) {
+    ioctlHelper->vmAdviseAtomicAttribute = std::nullopt;
+    DebugManagerStateRestore restorer;
+    debugManager.flags.UseKmdMigration.set(1);
+    RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
+    std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
+
+    std::vector<MemoryRegion> regionInfo(2);
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 1};
+    regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
+
+    mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    mock->setBindAvailable();
+    ioctlHelper->vmBindAvailable = true;
+
+    executionEnvironment->calculateMaxOsContextCount();
+    SVMAllocsManager unifiedMemoryManager(memoryManager);
+
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    auto ptr = unifiedMemoryManager.createSharedUnifiedMemoryAllocation(MemoryConstants::pageSize64k, unifiedMemoryProperties, nullptr);
+    ASSERT_NE(ptr, nullptr);
+    auto allocation = unifiedMemoryManager.getSVMAlloc(ptr)->gpuAllocations.getDefaultGraphicsAllocation();
+    ASSERT_NE(allocation, nullptr);
+
+    EXPECT_EQ(1u, ioctlHelper->vmBindCalled);
+    EXPECT_EQ(0u, ioctlHelper->vmBoAdviseCalled);
+    ASSERT_EQ(1u, ioctlHelper->vmSharedSystemMemAdviseCalls.size());
+    const auto &adviseCall = ioctlHelper->vmSharedSystemMemAdviseCalls[0];
+    EXPECT_EQ(castToUint64(allocation->getUnderlyingBuffer()), adviseCall.handle);
+    EXPECT_EQ(allocation->getUnderlyingBufferSize(), adviseCall.size);
+    EXPECT_EQ(ioctlHelper->getAtomicAdvise(false), adviseCall.attribute);
+    EXPECT_EQ(ioctlHelper->getAtomicAccess(AtomicAccessMode::system), adviseCall.param);
+    ASSERT_EQ(1u, adviseCall.vmIds.size());
+    EXPECT_EQ(mock->getVirtualMemoryAddressSpace(0u), adviseCall.vmIds[0]);
+
+    unifiedMemoryManager.freeSVMAlloc(ptr);
+}
+
+TEST_F(DrmMemoryManagerLocalMemoryTest, givenNoVmBoAtomicAdviseAndPerContextVmsWhenCreateSharedUnifiedMemoryAllocationThenSystemAtomicAccessIsSetInDefaultContextVm) {
+    ioctlHelper->vmAdviseAtomicAttribute = std::nullopt;
+    DebugManagerStateRestore restorer;
+    debugManager.flags.UseKmdMigration.set(1);
+    RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
+    std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
+
+    std::vector<MemoryRegion> regionInfo(2);
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 1};
+    regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
+
+    mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    mock->setBindAvailable();
+    ioctlHelper->vmBindAvailable = true;
+    mock->setPerContextVMRequired(true);
+    constexpr uint32_t contextVmId = 0x45u;
+    auto osContext = static_cast<MockOsContextLinux *>(memoryManager->getDefaultOsContext(rootDeviceIndex));
+    osContext->drmVmIds = {contextVmId};
+
+    executionEnvironment->calculateMaxOsContextCount();
+    SVMAllocsManager unifiedMemoryManager(memoryManager);
+
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    auto ptr = unifiedMemoryManager.createSharedUnifiedMemoryAllocation(MemoryConstants::pageSize64k, unifiedMemoryProperties, nullptr);
+    ASSERT_NE(ptr, nullptr);
+
+    EXPECT_EQ(contextVmId, ioctlHelper->receivedVmBind->vmId);
+    ASSERT_EQ(1u, ioctlHelper->vmSharedSystemMemAdviseCalls.size());
+    ASSERT_EQ(1u, ioctlHelper->vmSharedSystemMemAdviseCalls[0].vmIds.size());
+    EXPECT_EQ(contextVmId, ioctlHelper->vmSharedSystemMemAdviseCalls[0].vmIds[0]);
+
+    unifiedMemoryManager.freeSVMAlloc(ptr);
+}
+
+TEST_F(DrmMemoryManagerLocalMemoryTest, givenNoVmBoAtomicAdviseAndBindOrAtomicAdviseFailsWhenCreateSharedUnifiedMemoryAllocationThenNullptrIsReturned) {
+    ioctlHelper->vmAdviseAtomicAttribute = std::nullopt;
+    DebugManagerStateRestore restorer;
+    debugManager.flags.UseKmdMigration.set(1);
+    RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
+    std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
+
+    std::vector<MemoryRegion> regionInfo(2);
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 1};
+    regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
+
+    mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    mock->setBindAvailable();
+    ioctlHelper->vmBindAvailable = true;
+
+    executionEnvironment->calculateMaxOsContextCount();
+    SVMAllocsManager unifiedMemoryManager(memoryManager);
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+
+    memoryManager->munmapFunction = [](void *addr, size_t len) throw() {
+        DrmMemoryManagerLocalMemoryTest::munmapCalledCount++;
+        return SysCalls::munmap(addr, len);
+    };
+
+    for (auto bindFails : {true, false}) {
+        ioctlHelper->vmBindResult = bindFails ? -1 : 0;
+        ioctlHelper->vmSharedSystemMemAdviseResult = bindFails;
+        ioctlHelper->vmSharedSystemMemAdviseCalls.clear();
+        ioctlHelper->vmUnbindCalled = 0u;
+        munmapCalledCount = 0u;
+
+        auto ptr = unifiedMemoryManager.createSharedUnifiedMemoryAllocation(MemoryConstants::pageSize64k, unifiedMemoryProperties, nullptr);
+        EXPECT_EQ(nullptr, ptr);
+        EXPECT_EQ(bindFails ? 0u : 1u, ioctlHelper->vmSharedSystemMemAdviseCalls.size());
+        EXPECT_EQ(bindFails ? 0u : 1u, ioctlHelper->vmUnbindCalled);
+        EXPECT_EQ(1u, munmapCalledCount);
+    }
+    munmapCalledCount = 0u;
+}
+
+TEST_F(DrmMemoryManagerLocalMemoryTest, givenNoVmBoAtomicAdviseAndAtomicAdviseAndUnbindFailWhenCreateSharedUnifiedMemoryAllocationThenEveryBoIsUnboundAndVaRangeIsNotReleased) {
+    ioctlHelper->vmAdviseAtomicAttribute = std::nullopt;
+    DebugManagerStateRestore restorer;
+    debugManager.flags.UseKmdMigration.set(1);
+    RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
+    std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
+
+    std::vector<MemoryRegion> regionInfo(3);
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 1};
+    regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
+    regionInfo[2].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(1, 0)};
+
+    auto hwInfo = mock->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo->gtSystemInfo.MultiTileArchInfo.IsValid = 1;
+    hwInfo->gtSystemInfo.MultiTileArchInfo.TileCount = 2;
+
+    mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    mock->setBindAvailable();
+    ioctlHelper->vmBindAvailable = true;
+    ioctlHelper->vmSharedSystemMemAdviseResult = false;
+    ioctlHelper->vmUnbindResult = -1;
+
+    executionEnvironment->calculateMaxOsContextCount();
+    SVMAllocsManager unifiedMemoryManager(memoryManager);
+
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    memoryManager->mmapFunction = [](void *addr, size_t len, int prot, int flags, int fd, off_t offset) throw() {
+        return addr ? addr : reinterpret_cast<void *>(0x12345678);
+    };
+    memoryManager->munmapFunction = [](void *addr, size_t len) throw() {
+        DrmMemoryManagerLocalMemoryTest::munmapCalledCount++;
+        return 0;
+    };
+    munmapCalledCount = 0u;
+    auto ptr = unifiedMemoryManager.createSharedUnifiedMemoryAllocation(2 * MemoryConstants::megaByte, unifiedMemoryProperties, nullptr);
+    EXPECT_EQ(nullptr, ptr);
+    EXPECT_EQ(2u, ioctlHelper->vmBindCalled);
+    EXPECT_EQ(2u, ioctlHelper->vmUnbindCalled);
+    EXPECT_EQ(0u, munmapCalledCount);
+
+    memoryManager->mmapFunction = SysCalls::mmap;
+    memoryManager->munmapFunction = SysCalls::munmap;
+}
+
+TEST_F(DrmMemoryManagerLocalMemoryTest, givenVmBoAtomicAdviseWhenCreateSharedUnifiedMemoryAllocationThenAtomicAccessIsNotSetOnAllocationRange) {
+    ioctlHelper->vmAdviseAtomicAttribute = 1u;
+    DebugManagerStateRestore restorer;
+    debugManager.flags.UseKmdMigration.set(1);
+    RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
+    std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
+
+    std::vector<MemoryRegion> regionInfo(2);
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 1};
+    regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
+
+    mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+
+    executionEnvironment->calculateMaxOsContextCount();
+    SVMAllocsManager unifiedMemoryManager(memoryManager);
+
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    auto ptr = unifiedMemoryManager.createSharedUnifiedMemoryAllocation(MemoryConstants::pageSize64k, unifiedMemoryProperties, nullptr);
+    ASSERT_NE(ptr, nullptr);
+
+    EXPECT_EQ(1u, ioctlHelper->vmBoAdviseCalled);
+    EXPECT_TRUE(ioctlHelper->vmSharedSystemMemAdviseCalls.empty());
 
     unifiedMemoryManager.freeSVMAlloc(ptr);
 }

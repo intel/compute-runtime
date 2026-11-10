@@ -13543,34 +13543,6 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenVmAdviseAtomicAttributeEqualZeroWh
     EXPECT_EQ(nullptr, sharedUSM);
 }
 
-HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenVmAdviseAtomicAttributeNotPresentWhenCreateSharedUnifiedMemoryAllocationIsCalledThenAllocationIsCreatedSuccessfully) {
-    mock->ioctlExpected.gemWait = 1;
-    mock->ioctlExpected.gemClose = 1;
-    mock->ioctlExpected.gemCreateExt = 1;
-    mock->ioctlExpected.gemMmapOffset = 1;
-
-    std::vector<MemoryRegion> regionInfo(1);
-    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
-
-    auto &drm = static_cast<DrmMockCustom &>(memoryManager->getDrm(mockRootDeviceIndex));
-    auto mockIoctlHelper = new MockIoctlHelper(*mock);
-    drm.memoryInfo.reset(new MemoryInfo(regionInfo, drm));
-    drm.ioctlHelper.reset(mockIoctlHelper);
-
-    AllocationData allocationData{};
-    allocationData.size = MemoryConstants::cacheLineSize;
-    allocationData.rootDeviceIndex = mockRootDeviceIndex;
-    allocationData.alignment = MemoryConstants::pageSize;
-
-    mockIoctlHelper->callBaseVmAdviseAtomicAttribute = false;
-    mockIoctlHelper->vmAdviseAtomicAttribute = std::nullopt;
-
-    auto sharedUSM = memoryManager->createSharedUnifiedMemoryAllocation(allocationData);
-    EXPECT_NE(nullptr, sharedUSM);
-
-    memoryManager->freeGraphicsMemory(sharedUSM);
-}
-
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenGfxPartitionWhenReleasedAndReinitializedThenNewGfxPartitionIsCorrect) {
 
     auto gfxPartition = memoryManager->getGfxPartition(0);

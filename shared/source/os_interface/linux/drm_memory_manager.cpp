@@ -3990,17 +3990,59 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
     [[maybe_unused]] auto success = allocation->setPreferredLocation(&drm, preferredLocation);
     DEBUG_BREAK_IF(!success);
 
-    if (allocationData.usmInitialPlacement == GraphicsAllocation::UsmInitialPlacement::GPU) {
-        auto getSubDeviceIds = [](const DeviceBitfield &subDeviceBitfield) {
-            SubDeviceIdsVec subDeviceIds;
-            for (auto subDeviceId = 0u; subDeviceId < subDeviceBitfield.size(); subDeviceId++) {
-                if (subDeviceBitfield.test(subDeviceId)) {
-                    subDeviceIds.push_back(subDeviceId);
+    auto getSubDeviceIds = [](const DeviceBitfield &subDeviceBitfield) {
+        SubDeviceIdsVec subDeviceIds;
+        for (auto subDeviceId = 0u; subDeviceId < subDeviceBitfield.size(); subDeviceId++) {
+            if (subDeviceBitfield.test(subDeviceId)) {
+                subDeviceIds.push_back(subDeviceId);
+            }
+        }
+        return subDeviceIds;
+    };
+    auto subDeviceIds = getSubDeviceIds(allocationData.storageInfo.subDeviceBitfield);
+
+    if (!vmAdviseAttribute.has_value()) {
+        // xe sets atomic access with madvise on a VA range, so the BOs must be bound first
+        auto osContext = getDefaultOsContext(allocationData.rootDeviceIndex);
+        auto bindBOs = [&]() {
+            return std::all_of(subDeviceIds.begin(), subDeviceIds.end(), [&](uint32_t subDeviceId) {
+                return allocation->bindBOs(osContext, subDeviceId, nullptr, true, false) == 0;
+            });
+        };
+        auto setAtomicAccess = [&]() {
+            StackVec<uint32_t, 2> vmIds;
+            for (auto subDeviceId : subDeviceIds) {
+                vmIds.push_back(drm.getVmIdForContext(*osContext, subDeviceId));
+            }
+            return ioctlHelper->setVmSharedSystemMemAdvise(castToUint64(cpuPointer), size, ioctlHelper->getAtomicAdvise(false), ioctlHelper->getAtomicAccess(AtomicAccessMode::system), vmIds, static_cast<uint32_t>(vmIds.size()));
+        };
+        bool atomicAccessSet = false;
+        bool unbindFailed = false;
+        {
+            auto handlerLock = static_cast<DrmMemoryOperationsHandler *>(drm.getRootDeviceEnvironment().memoryOperationsInterface.get())->lockHandlerIfUsed();
+            atomicAccessSet = bindBOs() && setAtomicAccess();
+            if (!atomicAccessSet) {
+                for (auto subDeviceId : subDeviceIds) {
+                    for (auto bo : bos) {
+                        unbindFailed |= (bo->unbind(osContext, subDeviceId) != 0);
+                    }
                 }
             }
-            return subDeviceIds;
-        };
-        auto subDeviceIds = getSubDeviceIds(allocationData.storageInfo.subDeviceBitfield);
+        }
+        if (!atomicAccessSet) {
+            // a BO left mapped in the VM keeps its VA range reserved, so the range is never reused
+            if (!unbindFailed) {
+                ioctlHelper->munmapFunction(*this, cpuBasePointer, totalSizeToAlloc);
+                ioctlHelper->releaseGpuRange(*this, reinterpret_cast<void *>(preferredAddress), totalSizeToAlloc, allocationData.rootDeviceIndex, allocationData.type);
+            }
+            for (auto bo : bos) {
+                unreference(bo, true);
+            }
+            return nullptr;
+        }
+    }
+
+    if (allocationData.usmInitialPlacement == GraphicsAllocation::UsmInitialPlacement::GPU) {
         success = setMemPrefetch(allocation.get(), subDeviceIds, allocationData.rootDeviceIndex);
         DEBUG_BREAK_IF(!success);
     }
