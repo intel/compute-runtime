@@ -2721,19 +2721,16 @@ TEST_F(IoctlHelperXeTest, givenUserptrVmBindWhenPatValidationLoggingIsToggledThe
     EXPECT_NE(std::string::npos, output.find("vm=17 userptr=0xabcdef000 gpu=0x12345000 size=0x4000 flags=0x55")) << output;
 }
 
-TEST_F(IoctlHelperXeTest, whenCallingVmUnbindThenPatIndexIsSetToDefault) {
+TEST_F(IoctlHelperXeTest, whenCallingVmUnbindThenPatIndexFromBindParamsIsUsedWithoutPatIndexQuery) {
     DebugManagerStateRestore restorer;
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
     auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    auto mockClientContext = static_cast<MockGmmClientContextBase *>(executionEnvironment->rootDeviceEnvironments[0]->getGmmClientContext());
 
     uint64_t fenceAddress = 0x4321;
     uint64_t fenceValue = 0x789;
     uint64_t bindPatIndex = 0xba;
-    GMM_RESOURCE_USAGE_TYPE usageType = GMM_RESOURCE_USAGE_OCL_BUFFER;
-    bool compressed = false;
-    bool cacheable = false;
-    uint64_t defaultPatIndex = executionEnvironment->rootDeviceEnvironments[0]->getGmmClientContext()->cachePolicyGetPATIndex(nullptr, usageType, compressed, cacheable);
 
     VmBindExtUserFenceT vmBindExtUserFence{};
 
@@ -2747,10 +2744,12 @@ TEST_F(IoctlHelperXeTest, whenCallingVmUnbindThenPatIndexIsSetToDefault) {
     drm->vmBindInputs.clear();
     drm->syncInputs.clear();
     drm->waitUserFenceInputs.clear();
+    const auto patIndexQueriesBefore = mockClientContext->getPatIndexQueryCalled;
     ASSERT_EQ(0, xeIoctlHelper->vmUnbind(vmBindParams));
     ASSERT_EQ(1u, drm->vmBindInputs.size());
 
-    EXPECT_EQ(drm->vmBindInputs[0].bind.pat_index, defaultPatIndex);
+    EXPECT_EQ(drm->vmBindInputs[0].bind.pat_index, bindPatIndex);
+    EXPECT_EQ(patIndexQueriesBefore, mockClientContext->getPatIndexQueryCalled);
 }
 
 TEST_F(IoctlHelperXeTest, whenCallingVmUnbindAndSharedSystemUsmDisabledThenOneBindOps) {
@@ -2845,6 +2844,7 @@ TEST_F(IoctlHelperXeTest, whenCallingVmUnbindAndSharedSystemUsmEnabledThenTwoBin
     vmBindParams.sharedSystemUsmEnabled = true;
     vmBindParams.start = 0x0;
     vmBindParams.length = 0x0;
+    vmBindParams.patIndex = 0xba;
     xeIoctlHelper->setVmBindUserFence(vmBindParams, vmBindExtUserFence);
 
     drm->vmBindInputs.clear();
@@ -2864,6 +2864,7 @@ TEST_F(IoctlHelperXeTest, whenCallingVmUnbindAndSharedSystemUsmEnabledThenTwoBin
     EXPECT_NE(drm->vmBindInputs[0].vector_of_binds, 0u);
     ASSERT_EQ(2u, drm->vmBindOpsInputs.size());
     EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_BIND_OP_UNMAP), drm->vmBindOpsInputs[0].op);
+    EXPECT_EQ(vmBindParams.patIndex, drm->vmBindOpsInputs[0].pat_index);
     EXPECT_EQ(static_cast<uint32_t>(DRM_XE_VM_BIND_OP_MAP), drm->vmBindOpsInputs[1].op);
     EXPECT_NE(0u, drm->vmBindOpsInputs[1].flags & DRM_XE_VM_BIND_FLAG_CPU_ADDR_MIRROR);
     EXPECT_EQ(executionEnvironment->rootDeviceEnvironments[0]->getProductHelper().getSharedSystemPatIndex(), drm->vmBindOpsInputs[1].pat_index);
@@ -3341,12 +3342,14 @@ struct MockIoctlHelperXeIsVmBindDecompress : MockIoctlHelperXe {
         vmBindCalled++;
         vmBindFlags = vmBindParams.flags;
         vmBindVmId = vmBindParams.vmId;
+        vmBindPatIndex = vmBindParams.patIndex;
         return vmBindResult;
     }
 
     int vmUnbind(const VmBindParams &vmBindParams) override {
         vmUnbindCalled++;
         vmUnbindVmId = vmBindParams.vmId;
+        vmUnbindPatIndex = vmBindParams.patIndex;
         return vmUnbindResult;
     }
 
@@ -3368,6 +3371,8 @@ struct MockIoctlHelperXeIsVmBindDecompress : MockIoctlHelperXe {
     uint64_t vmBindFlags = 0;
     uint32_t vmBindVmId = 0;
     uint32_t vmUnbindVmId = 0;
+    uint64_t vmBindPatIndex = 0;
+    uint64_t vmUnbindPatIndex = 0;
 };
 
 TEST_F(IoctlHelperXeTest, givenCreateGemFailsWhenIsVmBindDecompressAvailableThenReturnsFalseAndDoesNotBind) {
@@ -3416,6 +3421,8 @@ TEST_F(IoctlHelperXeTest, givenProbeVmBindSucceedsWhenIsVmBindDecompressAvailabl
     EXPECT_EQ(vmId, xeIoctlHelper->vmBindVmId);
     EXPECT_EQ(vmId, xeIoctlHelper->vmUnbindVmId);
     EXPECT_EQ(static_cast<uint64_t>(DRM_XE_VM_BIND_FLAG_IMMEDIATE | DRM_XE_VM_BIND_FLAG_DECOMPRESS), xeIoctlHelper->vmBindFlags);
+    EXPECT_NE(0u, xeIoctlHelper->vmBindPatIndex);
+    EXPECT_EQ(xeIoctlHelper->vmBindPatIndex, xeIoctlHelper->vmUnbindPatIndex);
 }
 
 TEST_F(IoctlHelperXeTest, givenIsVmBindDecompressAvailableAlreadyCheckedWhenCalledAgainThenCachedResultIsReturnedWithoutProbing) {

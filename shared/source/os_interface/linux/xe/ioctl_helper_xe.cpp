@@ -348,6 +348,7 @@ bool IoctlHelperXe::isVmBindDecompressAvailable(uint32_t vmId) {
                 probeUnbind.length = MemoryConstants::pageSize;
                 probeUnbind.sharedSystemUsmEnabled = false;
                 probeUnbind.extensions = 0u;
+                probeUnbind.patIndex = probeVmBind.patIndex;
 
                 VmBindExtUserFenceT unbindUserFence{};
                 fillVmBindExtUserFence(unbindUserFence, castToUint64(getPagingFenceAddress(0, nullptr)), drm.getNextFenceVal(0), probeUnbind.extensions);
@@ -1806,14 +1807,7 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool isBind) {
 
     bind.bind.range = vmBindParams.length;
     bind.bind.obj_offset = vmBindParams.offset;
-    if (isBind) {
-        bind.bind.pat_index = static_cast<uint16_t>(vmBindParams.patIndex);
-    } else {
-        GMM_RESOURCE_USAGE_TYPE usageType = GMM_RESOURCE_USAGE_OCL_BUFFER;
-        bool compressed = false;
-        bool cacheable = false;
-        bind.bind.pat_index = static_cast<uint16_t>(drm.getRootDeviceEnvironment().getGmmClientContext()->cachePolicyGetPATIndex(nullptr, usageType, compressed, cacheable));
-    }
+    bind.bind.pat_index = static_cast<uint16_t>(vmBindParams.patIndex);
     bind.bind.extensions = vmBindParams.extensions;
     bind.bind.flags = static_cast<uint32_t>(vmBindParams.flags);
 
