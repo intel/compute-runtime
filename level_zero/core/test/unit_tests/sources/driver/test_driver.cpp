@@ -37,6 +37,7 @@
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/source/driver/driver_handle.h"
+#include "level_zero/core/source/driver/extension_injector.h"
 #include "level_zero/core/source/driver/kernel_dispatch_stats_reporter.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture_extended.h"
@@ -201,6 +202,8 @@ TEST_F(DriverVersionTest, givenCallToGetExtensionPropertiesThenSupportedExtensio
     if (productHelper.isInterruptSupported(rootDeviceEnvironment)) {
         additionalExtensions.emplace_back(ZEX_INTEL_EVENT_SYNC_MODE_EXP_NAME, ZEX_INTEL_EVENT_SYNC_MODE_EXP_VERSION_CURRENT);
     }
+
+    ExtensionInjectorHelper::addAdditionalExtensions(additionalExtensions, device);
 
     uint32_t count = 0;
     ze_result_t res = driverHandle->getExtensionProperties(&count, nullptr);
