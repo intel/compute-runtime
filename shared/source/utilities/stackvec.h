@@ -155,7 +155,9 @@ class StackVec { // NOLINT(clang-analyzer-optin.performance.Padding)
     constexpr iterator insert(const_iterator pos, T &&value) {
         auto offset = pos - begin();
         push_back(std::forward<T>(value));
-        std::rotate(begin() + offset, end() - 1, end());
+        for (auto it = end() - 1; it != begin() + offset; --it) {
+            std::swap(*it, *(it - 1));
+        }
         return begin() + offset;
     }
 
@@ -392,7 +394,7 @@ class StackVec { // NOLINT(clang-analyzer-optin.performance.Padding)
             return;
         }
 
-        auto currentSize = std::min(onStackSize, onStackCaps);
+        auto currentSize = onStackSize;
         if (newSize <= currentSize) {
             // trim elements
             clearStackObjects(newSize, currentSize - newSize);
