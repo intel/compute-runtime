@@ -17,7 +17,7 @@ components:
     dest_dir: igc
     type: git
     branch: master
-    revision: cf102e8424bbcc81177978f9996958a023e32336
+    revision: e0cb933f924ca6bef12b502cb9f8c578ebdc54b0
     repository: https://github.com/intel/intelgraphicscompiler
   internal:
     branch: master
@@ -28,7 +28,7 @@ components:
     dest_dir: kernels_bin
     type: git
     branch: kernels_bin
-    revision: 4288-6851
+    revision: 4288-6852
   level_zero:
     asset_name: level_zero
     dest_dir: level_zero
