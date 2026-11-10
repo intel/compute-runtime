@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/populate_factory.h"
 #include "shared/source/xe3p_core/hw_cmds_base.h"
 using Family = NEO::Xe3pCoreFamily;
 #include "shared/source/helpers/flat_batch_buffer_helper_hw.inl"
@@ -64,6 +65,8 @@ uint32_t GfxCoreHelperHw<Family>::calculateNumThreadsPerThreadGroup(uint32_t sim
 } // namespace NEO
 
 namespace NEO {
+#include "shared/source/helpers/gfx_core_helper_factory_init.inl"
+
 template class GfxCoreHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;
 template struct MemorySynchronizationCommands<Family>;

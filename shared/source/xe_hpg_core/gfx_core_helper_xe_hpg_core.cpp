@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/populate_factory.h"
 #include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
 
 using Family = NEO::XeHpgCoreFamily;
@@ -179,6 +180,8 @@ const EngineInstancesContainer GfxCoreHelperHw<Family>::getGpgpuEngineInstances(
 
     return engines;
 };
+
+#include "shared/source/helpers/gfx_core_helper_factory_init.inl"
 
 template class GfxCoreHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;

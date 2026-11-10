@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/populate_factory.h"
 #include "shared/source/xe2_hpg_core/hw_cmds.h"
 
 using Family = NEO::Xe2HpgCoreFamily;
@@ -264,6 +265,8 @@ uint32_t GfxCoreHelperHw<Family>::getMetricsLibraryGenId() const {
 } // namespace NEO
 
 namespace NEO {
+#include "shared/source/helpers/gfx_core_helper_factory_init.inl"
+
 template class GfxCoreHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;
 template struct MemorySynchronizationCommands<Family>;

@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/gen12lp/hw_cmds_base.h"
+#include "shared/source/helpers/populate_factory.h"
 
 using Family = NEO::Gen12LpFamily;
 
@@ -287,6 +288,8 @@ void GfxCoreHelperHw<Family>::setExtraAllocationData(AllocationData &allocationD
         }
     }
 }
+
+#include "shared/source/helpers/gfx_core_helper_factory_init.inl"
 
 template class GfxCoreHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;

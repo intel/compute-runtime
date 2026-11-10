@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/populate_factory.h"
 #include "shared/source/xe3_core/hw_cmds_base.h"
 
 using Family = NEO::Xe3CoreFamily;
@@ -247,6 +248,8 @@ uint32_t GfxCoreHelperHw<Family>::adjustMaxWorkGroupSize(const uint32_t grfCount
 } // namespace NEO
 
 namespace NEO {
+#include "shared/source/helpers/gfx_core_helper_factory_init.inl"
+
 template class GfxCoreHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;
 template struct MemorySynchronizationCommands<Family>;
