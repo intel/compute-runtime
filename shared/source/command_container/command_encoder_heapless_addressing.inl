@@ -38,9 +38,9 @@ void EncodeDispatchKernel<Family>::programInlineDataHeapless(uint8_t *inlineData
 }
 
 template <typename Family>
-uint64_t EncodeDispatchKernel<Family>::getScratchAddressForImmediatePatching(CommandContainer &container, EncodeDispatchKernelArgs &args, uint32_t &scratchSlot0SizeAllocated) {
+bool EncodeDispatchKernel<Family>::getScratchAddressForImmediatePatching(CommandContainer &container, EncodeDispatchKernelArgs &args, uint64_t &scratchAddress, uint32_t &scratchSlot0SizeAllocated) {
 
-    uint64_t scratchAddress = 0u;
+    scratchAddress = 0u;
     scratchSlot0SizeAllocated = 0u;
 
     if (args.immediateScratchAddressPatching) {
@@ -55,12 +55,14 @@ uint64_t EncodeDispatchKernel<Family>::getScratchAddressForImmediatePatching(Com
             ssh = args.surfaceStateHeap ? args.surfaceStateHeap : container.getIndirectHeap(HeapType::surfaceState);
         }
 
-        EncodeDispatchKernel<Family>::setScratchAddress(scratchAddress, requiredScratchSlot0Size, requiredScratchSlot1Size, ssh, *csr);
+        if (!EncodeDispatchKernel<Family>::setScratchAddress(scratchAddress, requiredScratchSlot0Size, requiredScratchSlot1Size, ssh, *csr)) {
+            return false;
+        }
 
         scratchSlot0SizeAllocated = csr->getPerThreadScratchSizeSlot0Allocated();
     }
 
-    return scratchAddress;
+    return true;
 }
 
 template <typename Family>

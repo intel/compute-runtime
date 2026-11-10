@@ -280,6 +280,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::heaplessModeEnabled;
     using BaseClass::hostSynchronize;
     using BaseClass::immediateCmdListHeapSharing;
+    using BaseClass::immediateResourcesInitializationResult;
     using BaseClass::implicitCounterBasedEventPromotionAllowed;
     using BaseClass::implicitDependencyOnPreviousCsrPending;
     using BaseClass::inOrderAtomicSignalingEnabled;

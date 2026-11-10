@@ -29,6 +29,7 @@
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_submissions_aggregator.h"
 #include "shared/test/common/mocks/mock_zebin_wrapper.h"
+#include "shared/test/common/test_macros/heapless_matchers.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/utilities/base_object_utils.h"
 
@@ -2407,6 +2408,25 @@ HWTEST_F(PauseOnGpuTests, givenTimestampPacketWriteDisabledAndMarkerWithProfilin
     auto extendedCommandStreamSize = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, {}, false, false, false, *pCmdQ, multiDispatchInfo, true, false, true, nullptr);
 
     EXPECT_EQ(baseCommandStreamSize + 2 * EncodeStoreMMIO<FamilyType>::size, extendedCommandStreamSize);
+}
+
+HWTEST2_F(EnqueueKernelTest, givenRequiredScratchExceedingAllocatableSizeWhenDispatchingWalkerInHeaplessModeThenAbortIsCalled, IsHeaplessRequired) {
+    MockKernelWithInternals mockKernel(*context);
+    size_t gws[3] = {1, 1, 1};
+
+    auto &ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> &>(pCmdQ->getGpgpuCommandStreamReceiver());
+    ultCsr.requiredScratchSlot0Size = 4096u;
+
+    auto memoryManager = static_cast<MockMemoryManager *>(context->getMemoryManager());
+    memoryManager->isMockHostMemoryManager = true;
+    memoryManager->validateAllocateProperties = [memoryManager](const AllocationProperties &properties) {
+        memoryManager->forceFailureInPrimaryAllocation = (properties.allocationType == AllocationType::scratchSurface);
+    };
+
+    EXPECT_THROW(pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr), std::exception);
+
+    memoryManager->validateAllocateProperties = [](const AllocationProperties &) -> void {};
+    memoryManager->forceFailureInPrimaryAllocation = false;
 }
 
 HWTEST_F(EnqueueKernelTest, givenScratchAllocationFailureWhenEnqueueingKernelThenOutOfResourcesIsReturnedBeforeAnythingIsSubmitted) {

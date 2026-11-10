@@ -55,7 +55,7 @@ namespace NEO {
 
 template <typename Family>
 template <typename WalkerType>
-void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDispatchKernelArgs &args) {
+bool EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDispatchKernelArgs &args) {
 
     UNRECOVERABLE_IF(args.makeCommandView && (args.cpuWalkerBuffer == nullptr || args.cpuPayloadBuffer == nullptr));
 
@@ -254,8 +254,11 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     const auto &scratchPointerAddress = kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress;
     const bool scratchPointerInCrossThreadData = isValidOffset(scratchPointerAddress.offset) && isDefined(scratchPointerAddress.pointerSize) && (static_cast<uint32_t>(scratchPointerAddress.offset) >= inlineDataProgrammingOffset);
 
+    uint64_t scratchAddressForImmediatePatching = 0u;
     uint32_t scratchSlot0SizeAllocated = 0u;
-    auto scratchAddressForImmediatePatching = EncodeDispatchKernel<Family>::getScratchAddressForImmediatePatching(container, args, scratchSlot0SizeAllocated);
+    if (!EncodeDispatchKernel<Family>::getScratchAddressForImmediatePatching(container, args, scratchAddressForImmediatePatching, scratchSlot0SizeAllocated)) {
+        return false;
+    }
     uint32_t sizeThreadData = sizePerThreadDataForWholeGroup + sizeCrossThreadData;
     uint32_t sizeForImplicitArgsPatching = NEO::ImplicitArgsHelper::getSizeForImplicitArgsPatching(pImplicitArgs, kernelDescriptor, !localIdsGenerationByRuntime, rootDeviceEnvironment);
     uint32_t sizeForImplicitArgsStruct = NEO::ImplicitArgsHelper::getSizeForImplicitArgsStruct(pImplicitArgs, kernelDescriptor, true, rootDeviceEnvironment);
@@ -549,6 +552,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
             args.additionalCommands->push_back(pauseCommands);
         }
     }
+    return true;
 }
 
 template <typename Family>

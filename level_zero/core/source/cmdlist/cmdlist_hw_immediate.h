@@ -85,6 +85,13 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
                                              const CmdListNonUniformLaunchArgs &launchArgs,
                                              ze_event_handle_t hEvent, uint32_t numWaitEvents,
                                              ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override;
+    ze_result_t appendLaunchMultipleKernelsIndirect(uint32_t numKernels,
+                                                    const ze_kernel_handle_t *kernelHandles,
+                                                    const uint32_t *pNumLaunchArguments,
+                                                    const ze_group_count_t *pLaunchArgumentsBuffer,
+                                                    ze_event_handle_t hEvent,
+                                                    uint32_t numWaitEvents,
+                                                    ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override;
 
     ze_result_t appendBarrier(ze_event_handle_t hSignalEvent,
                               uint32_t numWaitEvents,

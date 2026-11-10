@@ -740,6 +740,126 @@ HWTEST2_F(CmdlistAppendLaunchKernelTests,
 }
 
 HWTEST2_F(CmdlistAppendLaunchKernelTests,
+          givenScratchAllocationFailureWhenAppendingMultipleKernelsIndirectWithScratchToImmediateCommandListThenOutOfDeviceMemoryIsReturnedAndNothingIsRecorded, IsAtLeastXeCore) {
+    constexpr uint32_t scratchPerThreadSize = 0x200;
+
+    std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(0u);
+    auto kernelDescriptor = mockKernelImmData->kernelDescriptor;
+    kernelDescriptor->kernelAttributes.flags.requiresImplicitArgs = false;
+    kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = scratchPerThreadSize;
+    createModuleFromMockBinary(0u, false, mockKernelImmData.get());
+
+    auto kernel = std::make_unique<MockKernel>(module.get());
+    ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
+    kernel->initialize(&kernelDesc);
+    kernel->setGroupSize(4, 5, 6);
+
+    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>();
+    commandList->device = device;
+    commandList->cmdListType = CommandList::CommandListType::typeImmediate;
+    ze_result_t ret = ZE_RESULT_SUCCESS;
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+    auto csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+    commandList->cmdQImmediate = CommandQueue::create(device, csr, &desc, false, false, false, ret);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u));
+    commandList->getCmdContainer().setImmediateCmdListCsr(csr);
+
+    uint32_t *numLaunchArgs = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device->toHandle(), &deviceDesc, MemoryConstants::pageSize, MemoryConstants::pageSize, reinterpret_cast<void **>(&numLaunchArgs)));
+
+    auto memoryManager = static_cast<NEO::MockMemoryManager *>(device->getNEODevice()->getMemoryManager());
+    memoryManager->isMockHostMemoryManager = true;
+    memoryManager->validateAllocateProperties = [memoryManager](const NEO::AllocationProperties &properties) {
+        memoryManager->forceFailureInPrimaryAllocation = (properties.allocationType == NEO::AllocationType::scratchSurface);
+    };
+
+    auto commandStream = commandList->getCmdContainer().getCommandStream();
+    const auto commandStreamUsedBefore = commandStream->getUsed();
+
+    const ze_kernel_handle_t launchKernels = kernel->toHandle();
+    const ze_group_count_t launchKernelArgs = {1, 1, 1};
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, commandList->appendLaunchMultipleKernelsIndirect(1, &launchKernels, numLaunchArgs, &launchKernelArgs, nullptr, 0, nullptr, false));
+    EXPECT_EQ(commandStreamUsedBefore, commandStream->getUsed());
+    EXPECT_EQ(0u, commandList->getCommandListPerThreadScratchSize(0u));
+
+    memoryManager->validateAllocateProperties = [](const NEO::AllocationProperties &) -> void {};
+    memoryManager->forceFailureInPrimaryAllocation = false;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendLaunchMultipleKernelsIndirect(1, &launchKernels, numLaunchArgs, &launchKernelArgs, nullptr, 0, nullptr, false));
+    EXPECT_LT(commandStreamUsedBefore, commandStream->getUsed());
+    EXPECT_EQ(scratchPerThreadSize, commandList->getCommandListPerThreadScratchSize(0u));
+
+    context->freeMem(numLaunchArgs);
+}
+
+HWTEST2_F(CmdlistAppendLaunchKernelTests,
+          givenImmediateCommandListWithDeferredResourcesInitializationWhenReservingScratchSpaceForKernelThenResourcesAreInitializedOnlyWhenScratchIsRequired, IsAtLeastXeCore) {
+    std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(0u);
+    auto kernelDescriptor = mockKernelImmData->kernelDescriptor;
+    kernelDescriptor->kernelAttributes.flags.requiresImplicitArgs = false;
+    kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = 0u;
+    createModuleFromMockBinary(0u, false, mockKernelImmData.get());
+
+    auto kernel = std::make_unique<MockKernel>(module.get());
+    ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
+    kernel->initialize(&kernelDesc);
+
+    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>();
+    commandList->device = device;
+    commandList->cmdListType = CommandList::CommandListType::typeImmediate;
+    commandList->immediateResourcesInitializationResult = ZE_RESULT_ERROR_DEVICE_LOST;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->reserveScratchSpaceForKernel(kernel->toHandle(), 0u, 0u));
+    EXPECT_EQ(nullptr, commandList->cmdQImmediate);
+
+    kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = 0x200;
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, commandList->reserveScratchSpaceForKernel(kernel->toHandle(), 0u, 0u));
+    EXPECT_EQ(nullptr, commandList->cmdQImmediate);
+}
+
+HWTEST2_F(CmdlistAppendLaunchKernelTests,
+          givenHeaplessImmediateCommandListAndScratchAllocationFailureWhenEncodingKernelWithScratchThenOutOfDeviceMemoryIsReturned, IsHeaplessRequired) {
+    constexpr uint32_t scratchPerThreadSize = 0x200;
+
+    std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(0u);
+    auto kernelDescriptor = mockKernelImmData->kernelDescriptor;
+    kernelDescriptor->kernelAttributes.flags.requiresImplicitArgs = false;
+    kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = scratchPerThreadSize;
+    createModuleFromMockBinary(0u, false, mockKernelImmData.get());
+
+    auto kernel = std::make_unique<MockKernel>(module.get());
+    ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
+    kernel->initialize(&kernelDesc);
+    kernel->setGroupSize(4, 5, 6);
+
+    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>();
+    commandList->device = device;
+    commandList->cmdListType = CommandList::CommandListType::typeImmediate;
+    ze_result_t ret = ZE_RESULT_SUCCESS;
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+    auto csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+    commandList->cmdQImmediate = CommandQueue::create(device, csr, &desc, false, false, false, ret);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u));
+    commandList->getCmdContainer().setImmediateCmdListCsr(csr);
+
+    auto memoryManager = static_cast<NEO::MockMemoryManager *>(device->getNEODevice()->getMemoryManager());
+    memoryManager->isMockHostMemoryManager = true;
+    memoryManager->validateAllocateProperties = [memoryManager](const NEO::AllocationProperties &properties) {
+        memoryManager->forceFailureInPrimaryAllocation = (properties.allocationType == NEO::AllocationType::scratchSurface);
+    };
+
+    ze_group_count_t groupCount = {1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, commandList->appendLaunchKernelWithParams(kernel.get(), groupCount, nullptr, launchParams));
+
+    memoryManager->validateAllocateProperties = [](const NEO::AllocationProperties &) -> void {};
+    memoryManager->forceFailureInPrimaryAllocation = false;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendLaunchKernelWithParams(kernel.get(), groupCount, nullptr, launchParams));
+}
+
+HWTEST2_F(CmdlistAppendLaunchKernelTests,
           givenCommandListScratchSizeAndScratchAllocationFailureWhenReservingScratchSpaceForKernelThenOnlyKernelAndExternalScratchSizesAreReserved, IsAtLeastXeCore) {
     constexpr uint32_t scratchPerThreadSize = 0x200;
 

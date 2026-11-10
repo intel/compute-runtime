@@ -146,7 +146,8 @@ inline void HardwareInterface<GfxFamily>::programWalker(
 
     uint64_t scratchAddress = 0u;
 
-    EncodeDispatchKernel<GfxFamily>::setScratchAddress(scratchAddress, requiredScratchSlot0Size, requiredScratchSlot1Size, &ssh, queueCsr);
+    const bool scratchAddressSet = EncodeDispatchKernel<GfxFamily>::setScratchAddress(scratchAddress, requiredScratchSlot0Size, requiredScratchSlot1Size, &ssh, queueCsr);
+    UNRECOVERABLE_IF(!scratchAddressSet);
 
     auto *implicitArgs = kernel.getImplicitArgs();
     if (implicitArgs != nullptr) {

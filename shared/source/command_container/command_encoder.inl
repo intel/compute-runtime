@@ -588,9 +588,9 @@ void EncodeSurfaceState<Family>::appendParamsForImageFromBuffer(R_SURFACE_STATE 
 }
 
 template <typename Family>
-inline void EncodeDispatchKernel<Family>::encodeCommon(CommandContainer &container, EncodeDispatchKernelArgs &args) {
+inline bool EncodeDispatchKernel<Family>::encodeCommon(CommandContainer &container, EncodeDispatchKernelArgs &args) {
     using DefaultWalkerType = typename Family::DefaultWalkerType;
-    EncodeDispatchKernel<Family>::template encode<DefaultWalkerType>(container, args);
+    return EncodeDispatchKernel<Family>::template encode<DefaultWalkerType>(container, args);
 }
 
 template <typename Family>

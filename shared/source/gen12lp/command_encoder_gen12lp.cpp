@@ -66,7 +66,7 @@ void EncodeDispatchKernel<Family>::setGrfInfo(InterfaceDescriptorType *pInterfac
 
 template <typename Family>
 template <typename WalkerType>
-void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDispatchKernelArgs &args) {
+bool EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDispatchKernelArgs &args) {
     using MEDIA_STATE_FLUSH = typename Family::MEDIA_STATE_FLUSH;
     using STATE_BASE_ADDRESS = typename Family::STATE_BASE_ADDRESS;
 
@@ -328,6 +328,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         memset(pauseCommands, 0, pauseSize);
         args.additionalCommands->push_back(pauseCommands);
     }
+    return true;
 }
 
 template <typename Family>
@@ -699,7 +700,8 @@ void EncodeSurfaceState<Family>::convertSurfaceStateToPacked(R_SURFACE_STATE *su
 }
 
 template <typename Family>
-void EncodeDispatchKernel<Family>::setScratchAddress(uint64_t &scratchAddress, uint32_t requiredScratchSlot0Size, uint32_t requiredScratchSlot1Size, IndirectHeap *ssh, CommandStreamReceiver &submissionCsr) {
+bool EncodeDispatchKernel<Family>::setScratchAddress(uint64_t &scratchAddress, uint32_t requiredScratchSlot0Size, uint32_t requiredScratchSlot1Size, IndirectHeap *ssh, CommandStreamReceiver &submissionCsr) {
+    return true;
 }
 
 template <typename Family>

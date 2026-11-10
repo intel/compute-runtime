@@ -765,7 +765,15 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::reserveScratchSpaceFo
     const auto &kernelAttributes = Kernel::fromHandle(kernelHandle)->getKernelDescriptor().kernelAttributes;
     const auto requiredScratchSlot0Size = std::max(kernelAttributes.perThreadScratchSize[0], externalPerThreadScratchSizeSlot0);
     const auto requiredScratchSlot1Size = std::max(kernelAttributes.perThreadScratchSize[1], externalPerThreadScratchSizeSlot1);
-    if (!this->getCsr(false)->reserveScratchSpace(requiredScratchSlot0Size, requiredScratchSlot1Size)) {
+    if (requiredScratchSlot0Size == 0u && requiredScratchSlot1Size == 0u) {
+        return ZE_RESULT_SUCCESS;
+    }
+    ze_result_t initializationResult = ZE_RESULT_SUCCESS;
+    auto scratchCsr = this->getCsr(false, initializationResult);
+    if (scratchCsr == nullptr) {
+        return initializationResult;
+    }
+    if (!scratchCsr->reserveScratchSpace(requiredScratchSlot0Size, requiredScratchSlot1Size)) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
     return ZE_RESULT_SUCCESS;
@@ -842,6 +850,24 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchKernelInd
                                                                                 hSignalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
 
     return flushImmediate(ret, true, hasStallingCmdsForRelaxedOrdering(numWaitEvents, relaxedOrderingDispatch), relaxedOrderingDispatch, NEO::AppendOperations::kernel, false, hSignalEvent, false, nullptr, nullptr);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchMultipleKernelsIndirect(uint32_t numKernels,
+                                                                                               const ze_kernel_handle_t *kernelHandles,
+                                                                                               const uint32_t *pNumLaunchArguments,
+                                                                                               const ze_group_count_t *pLaunchArgumentsBuffer,
+                                                                                               ze_event_handle_t hEvent,
+                                                                                               uint32_t numWaitEvents,
+                                                                                               ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
+    for (uint32_t kernelIndex = 0; kernelIndex < numKernels; kernelIndex++) {
+        auto scratchReservationStatus = reserveScratchSpaceForKernel(kernelHandles[kernelIndex], 0u, 0u);
+        if (scratchReservationStatus != ZE_RESULT_SUCCESS) {
+            return scratchReservationStatus;
+        }
+    }
+    return CommandListCoreFamily<gfxCoreFamily>::appendLaunchMultipleKernelsIndirect(numKernels, kernelHandles, pNumLaunchArguments, pLaunchArgumentsBuffer,
+                                                                                     hEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

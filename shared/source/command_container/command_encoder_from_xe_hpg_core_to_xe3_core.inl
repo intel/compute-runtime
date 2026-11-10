@@ -61,7 +61,8 @@ void EncodeSemaphore<Family>::deallocateSemaphoreWaitCommand(void *cmdBuffer, bo
 }
 
 template <typename Family>
-void EncodeDispatchKernel<Family>::setScratchAddress(uint64_t &scratchAddress, uint32_t requiredScratchSlot0Size, uint32_t requiredScratchSlot1Size, IndirectHeap *ssh, CommandStreamReceiver &submissionCsr) {
+bool EncodeDispatchKernel<Family>::setScratchAddress(uint64_t &scratchAddress, uint32_t requiredScratchSlot0Size, uint32_t requiredScratchSlot1Size, IndirectHeap *ssh, CommandStreamReceiver &submissionCsr) {
+    return true;
 }
 
 template <typename Family>

@@ -30,8 +30,8 @@ using Family = NEO::Xe3pCoreFamily;
 namespace NEO {
 
 template <>
-void EncodeDispatchKernel<Family>::encodeCommon(CommandContainer &container, EncodeDispatchKernelArgs &args) {
-    EncodeDispatchKernel<Family>::template encode<typename Family::COMPUTE_WALKER_2>(container, args);
+bool EncodeDispatchKernel<Family>::encodeCommon(CommandContainer &container, EncodeDispatchKernelArgs &args) {
+    return EncodeDispatchKernel<Family>::template encode<typename Family::COMPUTE_WALKER_2>(container, args);
 }
 
 template <>

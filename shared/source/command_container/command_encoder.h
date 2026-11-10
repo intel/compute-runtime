@@ -226,10 +226,10 @@ struct EncodeDispatchKernel : public EncodeDispatchKernelBase<GfxFamily> {
 
     using DefaultWalkerType = typename GfxFamily::DefaultWalkerType;
 
-    static void encodeCommon(CommandContainer &container, EncodeDispatchKernelArgs &args);
+    static bool encodeCommon(CommandContainer &container, EncodeDispatchKernelArgs &args);
 
     template <typename WalkerType>
-    static void encode(CommandContainer &container, EncodeDispatchKernelArgs &args);
+    static bool encode(CommandContainer &container, EncodeDispatchKernelArgs &args);
 
     template <typename WalkerType>
     static void encodeAdditionalWalkerFields(const RootDeviceEnvironment &rootDeviceEnvironment, WalkerType &walkerCmd, const EncodeWalkerArgs &walkerArgs);
@@ -303,8 +303,8 @@ struct EncodeDispatchKernel : public EncodeDispatchKernelBase<GfxFamily> {
 
     static size_t getDefaultIOHAlignment();
 
-    static void setScratchAddress(uint64_t &scratchAddress, uint32_t requiredScratchSlot0Size, uint32_t requiredScratchSlot1Size, IndirectHeap *ssh, CommandStreamReceiver &submissionCsr);
-    static uint64_t getScratchAddressForImmediatePatching(CommandContainer &container, EncodeDispatchKernelArgs &args, uint32_t &scratchSlot0SizeAllocated);
+    static bool setScratchAddress(uint64_t &scratchAddress, uint32_t requiredScratchSlot0Size, uint32_t requiredScratchSlot1Size, IndirectHeap *ssh, CommandStreamReceiver &submissionCsr);
+    static bool getScratchAddressForImmediatePatching(CommandContainer &container, EncodeDispatchKernelArgs &args, uint64_t &scratchAddress, uint32_t &scratchSlot0SizeAllocated);
     static void patchScratchAddressInImplicitArgs(ImplicitArgs &implicitArgs, uint64_t scratchAddress, bool scratchPtrPatchingRequired);
 
     static size_t getInlineDataOffset(EncodeDispatchKernelArgs &args);

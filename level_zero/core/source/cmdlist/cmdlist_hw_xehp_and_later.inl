@@ -436,7 +436,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         appendPerfCountersCommands(*perfCounters, *perfCounterNode, true);
     }
 
-    NEO::EncodeDispatchKernel<GfxFamily>::encodeCommon(commandContainer, dispatchKernelArgs);
+    if (!NEO::EncodeDispatchKernel<GfxFamily>::encodeCommon(commandContainer, dispatchKernelArgs)) {
+        return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+    }
     launchParams.outWalker = dispatchKernelArgs.outWalkerPtr;
 
     if (dispatchPerfCounters) {

@@ -27,6 +27,7 @@
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/test_macros/test.h"
@@ -1303,6 +1304,57 @@ XE3P_CORETEST_F(EncodeKernelScratchProgrammingXe3pCoreTest, givenPrimaryCsrAsSub
 }
 
 using Xe3pSbaTest = SbaTest;
+
+XE3P_CORETEST_F(EncodeKernelScratchProgrammingXe3pCoreTest, givenScratchAllocationFailureWhenSetScratchAddressIsCalledThenFalseIsReturnedAndScratchAddressIsNotSet) {
+    auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto memoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
+    memoryManager->isMockHostMemoryManager = true;
+    memoryManager->forceFailureInPrimaryAllocation = true;
+
+    uint64_t scratchAddress = 0u;
+    EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::setScratchAddress(scratchAddress, 64u, 0u, ssh, ultCsr));
+    EXPECT_EQ(0u, scratchAddress);
+    EXPECT_EQ(nullptr, ultCsr.getScratchSpaceController()->getScratchSpaceSlot0Allocation());
+
+    memoryManager->forceFailureInPrimaryAllocation = false;
+    EXPECT_TRUE(EncodeDispatchKernel<FamilyType>::setScratchAddress(scratchAddress, 64u, 0u, ssh, ultCsr));
+    EXPECT_EQ(ssh->getGpuBase() + ultCsr.getScratchSpaceController()->getScratchPatchAddress(), scratchAddress);
+}
+
+XE3P_CORETEST_F(EncodeKernelXe3pCoreTest, givenScratchAllocationFailureWhenEncodingKernelWithImmediateScratchAddressPatchingThenFalseIsReturnedAndNothingIsEncoded) {
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+
+    uint32_t dims[] = {1, 1, 1};
+    std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
+    dispatchInterface->getCrossThreadDataSizeResult = 256u;
+    dispatchInterface->kernelDescriptor.kernelAttributes.perThreadScratchSize[0] = 1024u;
+    dispatchInterface->kernelDescriptor.kernelAttributes.flags.passInlineData = true;
+    dispatchInterface->kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress.offset = 8u;
+    dispatchInterface->kernelDescriptor.payloadMappings.implicitArgs.scratchPointerAddress.pointerSize = 8u;
+
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, false);
+    dispatchArgs.isHeaplessModeEnabled = true;
+    dispatchArgs.immediateScratchAddressPatching = true;
+
+    auto *csr = dispatchArgs.device->getDefaultEngine().commandStreamReceiver;
+    cmdContainer->setImmediateCmdListCsr(csr);
+
+    auto memoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
+    memoryManager->isMockHostMemoryManager = true;
+    memoryManager->validateAllocateProperties = [memoryManager](const AllocationProperties &properties) {
+        memoryManager->forceFailureInPrimaryAllocation = (properties.allocationType == AllocationType::scratchSurface);
+    };
+
+    auto commandStream = cmdContainer->getCommandStream();
+    const auto commandStreamUsedBefore = commandStream->getUsed();
+    EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::template encode<WalkerType>(*cmdContainer.get(), dispatchArgs));
+    EXPECT_EQ(commandStreamUsedBefore, commandStream->getUsed());
+
+    memoryManager->validateAllocateProperties = [](const AllocationProperties &) -> void {};
+    memoryManager->forceFailureInPrimaryAllocation = false;
+    EXPECT_TRUE(EncodeDispatchKernel<FamilyType>::template encode<WalkerType>(*cmdContainer.get(), dispatchArgs));
+    EXPECT_LT(commandStreamUsedBefore, commandStream->getUsed());
+}
 
 XE3P_CORETEST_F(Xe3pSbaTest, givenSpecificProductFamilyWhenAppendingSbaThenProgramWtL1CachePolicy) {
     auto sbaCmd = FamilyType::cmdInitStateBaseAddress;

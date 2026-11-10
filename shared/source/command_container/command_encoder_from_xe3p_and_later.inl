@@ -59,7 +59,7 @@ uint32_t EncodeSurfaceState<Family>::getPitchForScratchInBytes(R_SURFACE_STATE *
 }
 
 template <typename Family>
-void EncodeDispatchKernel<Family>::setScratchAddress(uint64_t &scratchAddress, uint32_t requiredScratchSlot0Size, uint32_t requiredScratchSlot1Size, IndirectHeap *ssh, CommandStreamReceiver &submissionCsr) {
+bool EncodeDispatchKernel<Family>::setScratchAddress(uint64_t &scratchAddress, uint32_t requiredScratchSlot0Size, uint32_t requiredScratchSlot1Size, IndirectHeap *ssh, CommandStreamReceiver &submissionCsr) {
 
     if (requiredScratchSlot0Size > 0u || requiredScratchSlot1Size > 0u) {
         auto primaryCsr = submissionCsr.getPrimaryCsr();
@@ -72,7 +72,9 @@ void EncodeDispatchKernel<Family>::setScratchAddress(uint64_t &scratchAddress, u
         bool frontEndStateDirty = false;
         const bool scratchSpaceReady = scratchController->setRequiredScratchSpace(ssh->getCpuBase(), 0, requiredScratchSlot0Size, requiredScratchSlot1Size,
                                                                                   submissionCsr.getOsContext(), sbaStateDirty, frontEndStateDirty);
-        UNRECOVERABLE_IF(!scratchSpaceReady);
+        if (!scratchSpaceReady) {
+            return false;
+        }
         if (scratchController->getScratchSpaceSlot0Allocation()) {
             submissionCsr.makeResident(*scratchController->getScratchSpaceSlot0Allocation());
         }
@@ -82,6 +84,7 @@ void EncodeDispatchKernel<Family>::setScratchAddress(uint64_t &scratchAddress, u
 
         scratchAddress = ssh->getGpuBase() + scratchController->getScratchPatchAddress();
     }
+    return true;
 }
 
 template <typename Family>
