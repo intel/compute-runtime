@@ -14,6 +14,8 @@
 
 #include "drm.h"
 
+#include <algorithm>
+
 namespace L0 {
 
 namespace Sysman {

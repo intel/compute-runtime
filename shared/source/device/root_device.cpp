@@ -21,6 +21,8 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/utilities/software_tags_manager.h"
 
+#include <algorithm>
+
 namespace NEO {
 extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment,
                                                   uint32_t rootDeviceIndex,

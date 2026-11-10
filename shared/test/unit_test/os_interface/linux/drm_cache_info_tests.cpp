@@ -18,6 +18,8 @@
 
 #include "clos_matchers.h"
 
+#include <algorithm>
+
 using namespace NEO;
 
 struct DrmCacheInfoFixture {

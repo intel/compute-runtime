@@ -19,6 +19,7 @@
 
 #include "gtest/gtest.h"
 
+#include <algorithm>
 #include <cstring>
 
 namespace L0 {

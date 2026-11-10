@@ -43,6 +43,7 @@
 
 #include "gtest/gtest.h"
 
+#include <algorithm>
 #include <fcntl.h>
 #include <memory>
 

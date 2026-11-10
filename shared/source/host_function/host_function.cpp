@@ -16,6 +16,8 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 
+#include <algorithm>
+
 namespace NEO {
 HostFunctionStreamer::HostFunctionStreamer(CommandStreamReceiver *csr,
                                            GraphicsAllocation *allocation,

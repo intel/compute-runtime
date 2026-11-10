@@ -10,6 +10,8 @@
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 #include "level_zero/sysman/test/unit_tests/sources/temperature/linux/mock_sysfs_temperature.h"
 
+#include <algorithm>
+
 namespace L0 {
 namespace Sysman {
 namespace ult {

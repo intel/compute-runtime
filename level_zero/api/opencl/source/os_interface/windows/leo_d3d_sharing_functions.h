@@ -27,6 +27,8 @@
 #include <d3d11_4.h>
 #include <d3d9.h>
 
+#include <algorithm>
+
 #if __clang__
 #pragma clang diagnostic pop
 #endif

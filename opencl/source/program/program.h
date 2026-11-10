@@ -21,6 +21,7 @@
 #include "cif/common/cif.h"
 #include "ocl_igc_interface/code_type.h"
 
+#include <algorithm>
 #include <functional>
 
 namespace NEO {

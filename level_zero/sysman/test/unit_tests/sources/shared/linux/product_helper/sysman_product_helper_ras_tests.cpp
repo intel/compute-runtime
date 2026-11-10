@@ -11,6 +11,8 @@
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 #include "level_zero/sysman/test/unit_tests/sources/ras/linux/mock_sysman_ras.h"
 
+#include <algorithm>
+
 namespace L0 {
 namespace Sysman {
 namespace ult {

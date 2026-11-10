@@ -15,6 +15,8 @@
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 #include "shared/test/common/test_macros/test.h"
 
+#include <algorithm>
+
 using namespace NEO;
 
 struct DrmPciSpeedInfoTest : public ::testing::Test {

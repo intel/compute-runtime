@@ -13,6 +13,7 @@
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
+#include <algorithm>
 #include <atomic>
 #include <functional>
 #include <mutex>

@@ -21,6 +21,8 @@
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/os_interface/os_context.h"
 
+#include <algorithm>
+
 namespace NEO {
 
 DebugerL0CreateFn debuggerL0Factory[NEO::maxCoreEnumValue] = {};

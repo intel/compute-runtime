@@ -16,6 +16,8 @@
 
 #include <climits>
 
+#include <algorithm>
+
 namespace L0 {
 namespace Sysman {
 namespace ult {

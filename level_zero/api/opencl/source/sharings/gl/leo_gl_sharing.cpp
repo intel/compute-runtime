@@ -13,6 +13,7 @@
 #include "level_zero/api/opencl/source/sharings/gl/leo_gl_context_guard.h"
 #include "level_zero/api/opencl/source/sharings/leo_sharing_factory.h"
 
+#include <algorithm>
 #include <unordered_map>
 
 namespace NEO {

@@ -24,6 +24,7 @@
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_rescan.h"
 #include "level_zero/zes_intel_gpu_sysman.h"
 
+#include <algorithm>
 #include <fcntl.h>
 
 namespace NEO {

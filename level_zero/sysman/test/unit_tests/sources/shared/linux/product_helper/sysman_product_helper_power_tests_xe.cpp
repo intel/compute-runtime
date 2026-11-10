@@ -12,6 +12,8 @@
 #include "level_zero/sysman/test/unit_tests/sources/linux/mocks/mock_sysman_product_helper.h"
 #include "level_zero/sysman/test/unit_tests/sources/power/linux/mock_sysfs_power_xe.h"
 
+#include <algorithm>
+
 namespace L0 {
 namespace Sysman {
 namespace ult {

@@ -24,6 +24,8 @@
 
 #include "config.h"
 
+#include <algorithm>
+
 using namespace NEO::LEO;
 
 namespace NEO {

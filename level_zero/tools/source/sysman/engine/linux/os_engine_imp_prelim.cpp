@@ -16,6 +16,7 @@
 #include "level_zero/tools/source/sysman/linux/pmu/pmu.h"
 #include "level_zero/tools/source/sysman/sysman.h"
 
+#include <algorithm>
 #include <linux/perf_event.h>
 
 namespace L0 {

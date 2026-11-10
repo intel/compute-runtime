@@ -19,6 +19,8 @@
 #include "shared/source/utilities/logger.h"
 #include "shared/source/utilities/spinlock.h"
 
+#include <algorithm>
+
 namespace NEO {
 
 WddmResidencyController::WddmResidencyController(Wddm &wddm) : wddm(wddm) {

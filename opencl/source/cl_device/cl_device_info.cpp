@@ -20,6 +20,8 @@
 #include "opencl/source/helpers/cl_gfx_core_helper.h"
 #include "opencl/source/helpers/get_info_status_mapper.h"
 
+#include <algorithm>
+
 namespace NEO {
 
 using ClDeviceInfoTable::Map;

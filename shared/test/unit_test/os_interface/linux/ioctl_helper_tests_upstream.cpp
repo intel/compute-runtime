@@ -20,6 +20,8 @@
 #include "shared/test/unit_test/os_interface/linux/drm_mock_impl.h"
 #include "shared/test/unit_test/os_interface/linux/ioctl_helper_i915_tests.h"
 
+#include <algorithm>
+
 using namespace NEO;
 
 INSTANTIATE_TYPED_TEST_SUITE_P(Upstream, IoctlHelperI915TablesTest, ::testing::Types<IoctlHelperUpstream>);

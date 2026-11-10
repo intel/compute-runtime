@@ -35,6 +35,7 @@
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 
+#include <algorithm>
 #include <cstdlib>
 
 namespace L0 {

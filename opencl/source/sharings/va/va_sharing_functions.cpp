@@ -11,6 +11,7 @@
 
 #include "opencl/source/sharings/va/va_surface.h"
 
+#include <algorithm>
 #include <dlfcn.h>
 
 namespace Os {

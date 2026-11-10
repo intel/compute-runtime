@@ -14,6 +14,8 @@
 #include "shared/source/helpers/options.h"
 #include "shared/source/os_interface/product_helper.h"
 
+#include <algorithm>
+
 namespace NEO {
 
 void adjustHwInfoForTests(HardwareInfo &hwInfoForTests, uint32_t euPerSubSlice, uint32_t sliceCount, uint32_t subSlicePerSliceCount, int dieRecovery) {

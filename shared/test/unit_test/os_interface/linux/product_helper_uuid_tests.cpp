@@ -16,6 +16,8 @@
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include <algorithm>
+
 namespace NEO {
 
 struct MultipleDeviceUuidTest : public ::testing::Test {

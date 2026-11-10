@@ -10,6 +10,8 @@
 
 #include "level_zero/sysman/test/unit_tests/sources/ecc/linux/mock_ecc.h"
 
+#include <algorithm>
+
 namespace L0 {
 namespace Sysman {
 namespace ult {

@@ -16,6 +16,8 @@
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_hw_device_id.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/pmu/mock_pmu.h"
 
+#include <algorithm>
+
 namespace L0 {
 namespace Sysman {
 namespace ult {

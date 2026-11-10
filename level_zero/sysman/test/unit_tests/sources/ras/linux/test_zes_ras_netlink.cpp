@@ -12,6 +12,7 @@
 #include "level_zero/sysman/test/unit_tests/sources/linux/nl_api/mock_nl_api.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/nl_api/mock_sysman_drm_nl_api.h"
 
+#include <algorithm>
 #include <map>
 
 namespace L0 {

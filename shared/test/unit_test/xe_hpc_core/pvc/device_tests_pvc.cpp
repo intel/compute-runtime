@@ -18,6 +18,8 @@
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
+
+#include <algorithm>
 using namespace NEO;
 
 using DeviceTestsPvc = ::testing::Test;

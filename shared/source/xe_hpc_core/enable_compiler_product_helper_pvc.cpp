@@ -14,6 +14,8 @@
 #include "shared/source/xe_hpc_core/pvc/device_ids_configs_pvc.h"
 
 #include "platforms.h"
+
+#include <algorithm>
 namespace NEO {
 template <>
 uint32_t CompilerProductHelperHw<IGFX_PVC>::getDefaultHwIpVersion() const {

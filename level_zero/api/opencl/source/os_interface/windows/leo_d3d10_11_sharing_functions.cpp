@@ -13,6 +13,8 @@
 
 #include "dxgi1_2.h"
 
+#include <algorithm>
+
 namespace NEO {
 namespace LEO {
 

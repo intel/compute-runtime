@@ -15,6 +15,7 @@
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mocks/mock_sysman_product_helper.h"
 
+#include <algorithm>
 #include <string_view>
 
 namespace NEO {
