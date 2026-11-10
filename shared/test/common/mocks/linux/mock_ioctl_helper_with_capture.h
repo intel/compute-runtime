@@ -25,6 +25,11 @@ class MockIoctlHelperWithCapture : public IoctlHelperUpstream {
     using IoctlHelperUpstream::IoctlHelperUpstream;
     using IoctlHelperUpstream::waitUserFence;
 
+    bool isDmaBufMmapPreferredForImportedHostMemory() const override {
+        return isDmaBufMmapPreferredForImportedHostMemoryResult.value_or(IoctlHelperUpstream::isDmaBufMmapPreferredForImportedHostMemory());
+    }
+    std::optional<bool> isDmaBufMmapPreferredForImportedHostMemoryResult;
+
     struct QueryResult {
         int ret = 0;
         int32_t length = 0;

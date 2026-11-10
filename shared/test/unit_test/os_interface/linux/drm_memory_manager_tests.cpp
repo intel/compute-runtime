@@ -6412,6 +6412,132 @@ TEST_F(DrmMemoryManagerMultipleSharedHandlesTest, givenMremapFailingWhenCreateHo
     failCapturedMremap = false;
 }
 
+struct RangeChunkCpuMapRecorder {
+    struct FileMap {
+        int fd;
+        off_t offset;
+        size_t size;
+        void *requestedAddress;
+    };
+    struct Remap {
+        void *oldAddress;
+        size_t size;
+        void *newAddress;
+    };
+    static constexpr size_t maxEntries = 8u;
+    static inline FileMap fileMaps[maxEntries] = {};
+    static inline size_t fileMapCount = 0u;
+    static inline Remap remaps[maxEntries] = {};
+    static inline size_t remapCount = 0u;
+    static inline int failingFd = -1;
+    static inline uint8_t reservation[3 * MemoryConstants::pageSize] = {};
+    static inline uint8_t temporaryMapping[2 * MemoryConstants::pageSize] = {};
+
+    static void reset() {
+        fileMapCount = 0u;
+        remapCount = 0u;
+        failingFd = -1;
+    }
+
+    static void *mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset) noexcept {
+        if (fd < 0) {
+            return reservation;
+        }
+        if (fileMapCount < maxEntries) {
+            fileMaps[fileMapCount++] = {fd, offset, len, addr};
+        }
+        if (fd == failingFd) {
+            return MAP_FAILED;
+        }
+        return addr ? addr : temporaryMapping;
+    }
+
+    static void *mremapFixed(void *oldAddress, size_t size, void *newAddress) noexcept {
+        if (remapCount < maxEntries) {
+            remaps[remapCount++] = {oldAddress, size, newAddress};
+        }
+        return newAddress;
+    }
+
+    static int munmap(void *, size_t) noexcept {
+        return 0;
+    }
+};
+
+template <typename DrmMockT>
+void enableDmaBufMmapWithWindowRelocation(DrmMockT *drm) {
+    auto ioctlHelper = std::make_unique<MockIoctlHelper>(*drm);
+    ioctlHelper->isMmapWindowRelocationSupportedResult = true;
+    ioctlHelper->isDmaBufMmapPreferredForImportedHostMemoryResult = true;
+    drm->ioctlHelper = std::move(ioctlHelper);
+}
+
+TEST_F(DrmMemoryManagerMultipleSharedHandlesTest, givenDmaBufMmapPreferredWhenCreateHostAllocationFromMultipleSharedHandlesThenEachChunkDmaBufIsMappedAtItsOffsetAndMovedIntoTheReservation) {
+    drm->bindAvailable = true;
+    installSystemMemoryInfo();
+    enableDmaBufMmapWithWindowRelocation(drm);
+    VariableBackup<off_t> lseekBackup(&SysCalls::lseekReturn, static_cast<off_t>(2 * MemoryConstants::pageSize));
+    RangeChunkCpuMapRecorder::reset();
+    memoryManager->mmapFunction = RangeChunkCpuMapRecorder::mmap;
+    memoryManager->mremapFixedFunction = RangeChunkCpuMapRecorder::mremapFixed;
+    memoryManager->munmapFunction = RangeChunkCpuMapRecorder::munmap;
+
+    std::vector<osHandle> handles = {11u, 12u};
+    std::vector<uint64_t> physicalOffsets = {0u, MemoryConstants::pageSize};
+    AllocationProperties properties(rootDeviceIndex, MemoryConstants::pageSize, AllocationType::bufferHostMemory, systemMemoryBitfield);
+
+    auto gfxAllocation = memoryManager->createHostAllocationFromMultipleSharedHandles(handles, properties, physicalOffsets, false);
+    ASSERT_NE(nullptr, gfxAllocation);
+
+    auto reservationBase = static_cast<void *>(RangeChunkCpuMapRecorder::reservation);
+    ASSERT_EQ(2u, RangeChunkCpuMapRecorder::fileMapCount);
+    EXPECT_EQ(11, RangeChunkCpuMapRecorder::fileMaps[0].fd);
+    EXPECT_EQ(0, RangeChunkCpuMapRecorder::fileMaps[0].offset);
+    EXPECT_EQ(2 * MemoryConstants::pageSize, RangeChunkCpuMapRecorder::fileMaps[0].size);
+    EXPECT_EQ(nullptr, RangeChunkCpuMapRecorder::fileMaps[0].requestedAddress);
+    EXPECT_EQ(12, RangeChunkCpuMapRecorder::fileMaps[1].fd);
+    EXPECT_EQ(static_cast<off_t>(MemoryConstants::pageSize), RangeChunkCpuMapRecorder::fileMaps[1].offset);
+    EXPECT_EQ(MemoryConstants::pageSize, RangeChunkCpuMapRecorder::fileMaps[1].size);
+    EXPECT_EQ(nullptr, RangeChunkCpuMapRecorder::fileMaps[1].requestedAddress);
+    ASSERT_EQ(2u, RangeChunkCpuMapRecorder::remapCount);
+    EXPECT_EQ(reservationBase, RangeChunkCpuMapRecorder::remaps[0].newAddress);
+    EXPECT_EQ(2 * MemoryConstants::pageSize, RangeChunkCpuMapRecorder::remaps[0].size);
+    EXPECT_EQ(ptrOffset(reservationBase, 2 * MemoryConstants::pageSize), RangeChunkCpuMapRecorder::remaps[1].newAddress);
+    EXPECT_EQ(MemoryConstants::pageSize, RangeChunkCpuMapRecorder::remaps[1].size);
+
+    memoryManager->freeGraphicsMemory(gfxAllocation);
+}
+
+TEST_F(DrmMemoryManagerMultipleSharedHandlesTest, givenDmaBufMmapFailingForChunkWithOffsetWhenCreateHostAllocationFromMultipleSharedHandlesThenThatChunkFallsBackToDeviceMmapOffsetWindow) {
+    drm->bindAvailable = true;
+    installSystemMemoryInfo();
+    enableDmaBufMmapWithWindowRelocation(drm);
+    VariableBackup<off_t> lseekBackup(&SysCalls::lseekReturn, static_cast<off_t>(2 * MemoryConstants::pageSize));
+    RangeChunkCpuMapRecorder::reset();
+    RangeChunkCpuMapRecorder::failingFd = 12;
+    memoryManager->mmapFunction = RangeChunkCpuMapRecorder::mmap;
+    memoryManager->mremapFixedFunction = RangeChunkCpuMapRecorder::mremapFixed;
+    memoryManager->munmapFunction = RangeChunkCpuMapRecorder::munmap;
+
+    std::vector<osHandle> handles = {11u, 12u};
+    std::vector<uint64_t> physicalOffsets = {0u, MemoryConstants::pageSize};
+    AllocationProperties properties(rootDeviceIndex, MemoryConstants::pageSize, AllocationType::bufferHostMemory, systemMemoryBitfield);
+
+    auto gfxAllocation = memoryManager->createHostAllocationFromMultipleSharedHandles(handles, properties, physicalOffsets, false);
+    ASSERT_NE(nullptr, gfxAllocation);
+
+    ASSERT_EQ(3u, RangeChunkCpuMapRecorder::fileMapCount);
+    EXPECT_EQ(12, RangeChunkCpuMapRecorder::fileMaps[1].fd);
+    EXPECT_EQ(drm->getFileDescriptor(), RangeChunkCpuMapRecorder::fileMaps[2].fd);
+    EXPECT_EQ(2 * MemoryConstants::pageSize, RangeChunkCpuMapRecorder::fileMaps[2].size);
+    EXPECT_EQ(nullptr, RangeChunkCpuMapRecorder::fileMaps[2].requestedAddress);
+    ASSERT_EQ(2u, RangeChunkCpuMapRecorder::remapCount);
+    EXPECT_EQ(ptrOffset(static_cast<void *>(RangeChunkCpuMapRecorder::temporaryMapping), MemoryConstants::pageSize), RangeChunkCpuMapRecorder::remaps[1].oldAddress);
+    EXPECT_EQ(ptrOffset(static_cast<void *>(RangeChunkCpuMapRecorder::reservation), 2 * MemoryConstants::pageSize), RangeChunkCpuMapRecorder::remaps[1].newAddress);
+
+    memoryManager->freeGraphicsMemory(gfxAllocation);
+}
+
 TEST_F(DrmMemoryManagerMultipleSharedHandlesTest, givenPhysicalOffsetsAndVmBindWhenCreateHostAllocationFromMultipleSharedHandlesThenAllocationIsCreatedWithPerObjectOffset) {
     static uint8_t hostRangeBuffer[3 * MemoryConstants::pageSize] = {};
     drm->bindAvailable = true;

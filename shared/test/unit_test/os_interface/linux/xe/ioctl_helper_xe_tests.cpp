@@ -66,6 +66,14 @@ TEST_F(IoctlHelperXeTest, whenGettingIfMmapWindowRelocationIsSupportedThenTrueIs
     EXPECT_TRUE(ioctlHelper.isMmapWindowRelocationSupported());
 }
 
+TEST_F(IoctlHelperXeTest, whenGettingIfDmaBufMmapIsPreferredForImportedHostMemoryThenTrueIsReturned) {
+    MockExecutionEnvironment executionEnvironment{};
+    std::unique_ptr<Drm> drm{Drm::create(std::make_unique<HwDeviceIdDrm>(0, ""), *executionEnvironment.rootDeviceEnvironments[0])};
+    IoctlHelperXe ioctlHelper{*drm};
+
+    EXPECT_TRUE(ioctlHelper.isDmaBufMmapPreferredForImportedHostMemory());
+}
+
 TEST_F(IoctlHelperXeTest, whenGettingIfWaitUserFenceNotEqualSupportedThenTrueIsReturned) {
     MockExecutionEnvironment executionEnvironment{};
     std::unique_ptr<Drm> drm{Drm::create(std::make_unique<HwDeviceIdDrm>(0, ""), *executionEnvironment.rootDeviceEnvironments[0])};

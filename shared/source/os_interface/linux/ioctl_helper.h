@@ -155,6 +155,8 @@ class IoctlHelper {
     virtual bool isMmapWindowRelocationSupported() const { return false; }
     virtual bool isVmBindDecompressAvailable(uint32_t vmId) { return false; }
     virtual bool isUserptrCoherencyRequired() const { return false; }
+    // True when the KMD refuses CPU faults on buffers imported from another device, so imported host memory is CPU-mapped through its dma-buf.
+    virtual bool isDmaBufMmapPreferredForImportedHostMemory() const { return false; }
     virtual bool useKmdAllocationForIsa() const { return false; }
     virtual int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, std::optional<uint32_t> memPolicyMode, std::optional<std::vector<unsigned long>> memPolicyNodemask, std::optional<bool> isCoherent, GemCreateExtHint hint, std::optional<bool> deferBacking) = 0;
     int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, std::optional<uint32_t> memPolicyMode, std::optional<std::vector<unsigned long>> memPolicyNodemask, std::optional<bool> isCoherent, GemCreateExtHint hint = GemCreateExtHint::none) {

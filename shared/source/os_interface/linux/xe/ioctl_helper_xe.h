@@ -96,6 +96,7 @@ class IoctlHelperXe : public IoctlHelper {
     int vmBind(const VmBindParams &vmBindParams) override;
     int vmUnbind(const VmBindParams &vmBindParams) override;
     bool isUserptrCoherencyRequired() const override { return true; }
+    bool isDmaBufMmapPreferredForImportedHostMemory() const override { return true; }
     int getContextHealth(ContextHealth &contextHealth) override;
     bool isEuStallSupported() override;
     uint32_t getEuStallFdParameter() override;

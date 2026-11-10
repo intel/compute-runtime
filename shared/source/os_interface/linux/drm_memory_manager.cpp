@@ -1794,17 +1794,8 @@ GraphicsAllocation *DrmMemoryManager::createHostAllocationFromMultipleSharedHand
         }
 
         const size_t mapSize = foldOffset ? chunk.size : chunk.mappedSize;
-        void *retPtr = nullptr;
-        if (relocateWindows && (chunk.offset != 0u)) {
-            auto wholeObject = this->mmapFunction(nullptr, chunk.size, PROT_READ | PROT_WRITE, MAP_SHARED, drm.getFileDescriptor(), static_cast<off_t>(mmapOffset));
-            if (wholeObject != MAP_FAILED) {
-                retPtr = this->mremapFixedFunction(ptrOffset(wholeObject, chunk.offset), chunk.mappedSize, addrToPtr(runningAddress));
-                this->munmapFunction(wholeObject, (retPtr == addrToPtr(runningAddress)) ? static_cast<size_t>(chunk.offset) : chunk.size);
-            }
-        } else {
-            retPtr = this->mmapFunction(addrToPtr(runningAddress), mapSize, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, drm.getFileDescriptor(), static_cast<off_t>(mmapOffset));
-        }
-        if (retPtr != addrToPtr(runningAddress)) {
+        const uint64_t windowOffset = foldOffset ? 0u : chunk.offset;
+        if (!mapImportedHostMemoryForCpu(handles[idx], drm, addrToPtr(runningAddress), mapSize, mmapOffset, windowOffset)) {
             pendingBo = bo;
             failed = true;
             break;
@@ -4015,6 +4006,42 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
     return allocation.release();
 }
 
+bool DrmMemoryManager::mapImportedHostMemoryForCpu(osHandle handle, Drm &drm, void *cpuPointer, size_t size, uint64_t mmapOffset, uint64_t objectOffset) {
+    bool mapThroughDmaBuf = drm.getIoctlHelper()->isDmaBufMmapPreferredForImportedHostMemory();
+    if (debugManager.flags.MapImportedHostMemoryThroughDmaBuf.get() != -1) {
+        mapThroughDmaBuf = debugManager.flags.MapImportedHostMemoryThroughDmaBuf.get() == 1;
+    }
+
+    if (mapThroughDmaBuf) {
+        // Map away from the reservation and move it in: a failed MAP_FIXED mmap would already have unmapped the reservation.
+        auto dmaBufMapping = this->mmapFunction(nullptr, size, PROT_READ | PROT_WRITE, MAP_SHARED, static_cast<int>(handle), static_cast<off_t>(objectOffset));
+        if (dmaBufMapping != MAP_FAILED) {
+            if (this->mremapFixedFunction(dmaBufMapping, size, cpuPointer) == cpuPointer) {
+                return true;
+            }
+            this->munmapFunction(dmaBufMapping, size);
+        }
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "mmap of dma-buf fd %d failed, mapping through device mmap offset\n", static_cast<int>(handle));
+    }
+
+    void *retPtr = nullptr;
+    if (objectOffset != 0u) {
+        const size_t wholeSize = static_cast<size_t>(objectOffset) + size;
+        auto wholeObject = this->mmapFunction(nullptr, wholeSize, PROT_READ | PROT_WRITE, MAP_SHARED, drm.getFileDescriptor(), static_cast<off_t>(mmapOffset));
+        if (wholeObject != MAP_FAILED) {
+            retPtr = this->mremapFixedFunction(ptrOffset(wholeObject, static_cast<size_t>(objectOffset)), size, cpuPointer);
+            this->munmapFunction(wholeObject, (retPtr == cpuPointer) ? static_cast<size_t>(objectOffset) : wholeSize);
+        }
+    } else {
+        retPtr = this->mmapFunction(cpuPointer, size, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, drm.getFileDescriptor(), static_cast<off_t>(mmapOffset));
+    }
+    if (retPtr == cpuPointer) {
+        return true;
+    }
+    PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "mmap of imported host memory through device mmap offset failed\n");
+    return false;
+}
+
 DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandle handle,
                                                                          const AllocationProperties &properties,
                                                                          void *mappedPtr,
@@ -4106,9 +4133,11 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
     if (bo == nullptr) {
         void *cpuPointer = nullptr;
         size_t size = SysCalls::lseek(handle, 0, SEEK_END);
-        if (consumeFd) {
-            SysCalls::close(handle);
-        }
+        auto closeConsumedFd = [&]() {
+            if (consumeFd) {
+                SysCalls::close(handle);
+            }
+        };
         UNRECOVERABLE_IF(size == std::numeric_limits<size_t>::max());
 
         memoryPool = MemoryPool::system4KBPages;
@@ -4129,6 +4158,7 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
 
         if (cpuPointer == MAP_FAILED) {
             PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "mmap return of MAP_FAILED\n");
+            closeConsumedFd();
             delete bo;
             return nullptr;
         }
@@ -4138,6 +4168,15 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
         uint64_t mmapOffsetWb = ioctlHelper->getDrmParamValue(DrmParam::mmapOffsetWb);
         uint64_t offset = 0;
         if (!ioctlHelper->retrieveMmapOffsetForBufferObject(*bo, mmapOffsetWb, offset)) {
+            closeConsumedFd();
+            this->munmapFunction(cpuPointer, size);
+            delete bo;
+            return nullptr;
+        }
+
+        const bool mapped = mapImportedHostMemoryForCpu(handle, drm, cpuPointer, size, offset, 0u);
+        closeConsumedFd();
+        if (!mapped) {
             this->munmapFunction(cpuPointer, size);
             delete bo;
             return nullptr;
@@ -4162,9 +4201,6 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
         auto drmAllocation = std::make_unique<DrmAllocation>(properties.rootDeviceIndex, 1u /*num gmms*/, properties.allocationType, bo, nullptr, bo->peekAddress(), bo->peekSize(), memoryPool);
 
         makeAllocationResidentIfNeeded(drmAllocation.get());
-
-        [[maybe_unused]] auto retPtr = this->mmapFunction(cpuPointer, size, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, drm.getFileDescriptor(), static_cast<off_t>(offset));
-        DEBUG_BREAK_IF(retPtr != cpuPointer);
 
         drmAllocation->setCpuPtrAndGpuAddress(cpuPointer, bo->peekAddress());
         drmAllocation->setMmapPtr(cpuPointer);

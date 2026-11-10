@@ -35,6 +35,18 @@ uint8_t gRangeTransportStorage[4096] = {};
 std::set<int> gClosedImportFds;
 } // namespace
 
+class TransportRecordingAllocation : public NEO::MockGraphicsAllocation {
+  public:
+    using NEO::MockGraphicsAllocation::MockGraphicsAllocation;
+
+    int createInternalHandle(NEO::MemoryManager *memoryManager, uint32_t handleId, uint64_t &handle, void *reservedHandleData) override {
+        reservedHandleDataWasSet = reservedHandleData != nullptr;
+        return NEO::MockGraphicsAllocation::createInternalHandle(memoryManager, handleId, handle, reservedHandleData);
+    }
+
+    bool reservedHandleDataWasSet = false;
+};
+
 class RangeTransportSvmManager : public NEO::MockSVMAllocsManager {
   public:
     RangeTransportSvmManager(NEO::MemoryManager *memoryManager) : NEO::MockSVMAllocsManager(memoryManager) {}
@@ -48,7 +60,8 @@ class RangeTransportSvmManager : public NEO::MockSVMAllocsManager {
         if (returnUntrackedTransport) {
             return gRangeTransportStorage;
         }
-        auto alloc = new NEO::MockGraphicsAllocation(0u, gRangeTransportStorage, size);
+        auto alloc = new TransportRecordingAllocation(0u, gRangeTransportStorage, size);
+        lastTransportAllocation = alloc;
         NEO::SvmAllocationData allocData(0u);
         allocData.gpuAllocations.addAllocation(alloc);
         allocData.cpuAllocation = nullptr;
@@ -64,6 +77,7 @@ class RangeTransportSvmManager : public NEO::MockSVMAllocsManager {
     bool failCreateHostUnified = false;
     bool returnUntrackedTransport = false;
     size_t lastRequestedSize = 0u;
+    TransportRecordingAllocation *lastTransportAllocation = nullptr;
 };
 
 class RecordingRangeMemoryManager : public MemoryManagerOpenIpcMock {
@@ -1027,7 +1041,74 @@ TEST_F(IpcMemHandleRangeTest, givenFabricAccessibleRangeDescWhenGettingRangeHand
     clearReservation();
 }
 
-TEST_F(IpcMemHandleRangeTest, givenAllocationWhenExportingIpcHandleWithOpaqueSettingsThenSuccessIsReturned) {
+TEST_F(IpcMemHandleRangeTest, givenRangeHandleWhenExportedThenTransportIsDevicelessHostUsmExportedThroughStandardHostIpcPath) {
+    installExportSvmManager();
+    auto exportContext = createExportContext();
+
+    void *basePtr = reinterpret_cast<void *>(0x1400000);
+    const size_t mappingSize = 4096u;
+
+    NEO::MockGraphicsAllocation alloc0(neoDevice->getRootDeviceIndex(), basePtr, mappingSize);
+    NEO::MemoryMappedRange range0{};
+    range0.ptr = basePtr;
+    range0.size = mappingSize;
+    range0.mappedAllocation.allocation = &alloc0;
+    installReservation(basePtr, {&range0});
+
+    auto desc = buildRangeDesc(mappingSize);
+    ze_ipc_mem_handle_t ipcHandle = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, exportContext->getIpcMemHandle(basePtr, &desc, &ipcHandle));
+
+    auto transportData = driverHandle->svmAllocsManager->getSVMAlloc(static_cast<void *>(gRangeTransportStorage));
+    ASSERT_NE(nullptr, transportData);
+    EXPECT_EQ(InternalMemoryType::hostUnifiedMemory, transportData->memoryType);
+    EXPECT_EQ(nullptr, transportData->device);
+    EXPECT_TRUE(transportData->isExportedAllocation.load());
+    ASSERT_NE(nullptr, rangeSvmManager->lastTransportAllocation);
+    EXPECT_FALSE(rangeSvmManager->lastTransportAllocation->reservedHandleDataWasSet);
+
+    const auto &opaqueData = *reinterpret_cast<const IpcOpaqueMemoryData *>(ipcHandle.data);
+    EXPECT_EQ(NEO::SysCalls::getCurrentProcessId(), opaqueData.processId);
+    EXPECT_EQ(static_cast<uint8_t>(InternalIpcMemoryType::ipcRangeTransport), opaqueData.memoryType);
+    EXPECT_EQ(0u, opaqueData.poolOffset);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, exportContext->putIpcMemHandle(ipcHandle));
+    clearReservation();
+}
+
+TEST_F(IpcMemHandleRangeTest, givenFabricAccessibleRangeDescWhenGettingRangeHandleThenTransportExportRequestsReservedHandleData) {
+    installExportSvmManager();
+    auto exportContext = createExportContext();
+
+    void *basePtr = reinterpret_cast<void *>(0x1500000);
+    const size_t mappingSize = 4096u;
+
+    NEO::MockGraphicsAllocation alloc0(neoDevice->getRootDeviceIndex(), basePtr, mappingSize);
+    NEO::MemoryMappedRange range0{};
+    range0.ptr = basePtr;
+    range0.size = mappingSize;
+    range0.mappedAllocation.allocation = &alloc0;
+    installReservation(basePtr, {&range0});
+
+    ze_ipc_mem_handle_type_ext_desc_t typeDesc = {};
+    typeDesc.stype = ZE_STRUCTURE_TYPE_IPC_MEM_HANDLE_TYPE_EXT_DESC;
+    typeDesc.pNext = nullptr;
+    typeDesc.typeFlags = ZE_IPC_MEM_HANDLE_TYPE_FLAG_FABRIC_ACCESSIBLE;
+
+    auto desc = buildRangeDesc(mappingSize);
+    desc.pNext = &typeDesc;
+    ze_ipc_mem_handle_t ipcHandle = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, exportContext->getIpcMemHandle(basePtr, &desc, &ipcHandle));
+
+    ASSERT_NE(nullptr, rangeSvmManager->lastTransportAllocation);
+    EXPECT_TRUE(rangeSvmManager->lastTransportAllocation->reservedHandleDataWasSet);
+    EXPECT_TRUE(exportContext->callIsIpcRangeHandle(ipcHandle));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, exportContext->putIpcMemHandle(ipcHandle));
+    clearReservation();
+}
+
+TEST_F(IpcMemHandleRangeTest, givenAllocationWhenEncodingRangeHandleWithOpaqueSettingsThenSuccessIsReturned) {
     auto exportContext = createExportContext();
     NEO::MockGraphicsAllocation alloc(neoDevice->getRootDeviceIndex(), reinterpret_cast<void *>(0x700000), 4096u);
     ze_ipc_mem_handle_t ipcHandle = {};
