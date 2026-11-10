@@ -57,12 +57,12 @@ StagingBufferManager::~StagingBufferManager() {
  * or tracking container for further reusage.
  */
 template <class Func, class... Args>
-StagingTransferStatus StagingBufferManager::performChunkTransfer(size_t chunkTransferId, bool isRead, const UserData &userData, StagingQueue &currentStagingBuffers, CommandStreamReceiver *csr, Func &func, Args... args) {
+StagingTransferStatus StagingBufferManager::performChunkTransfer(size_t chunkTransferId, bool isRead, const UserData &userData, StagingQueue &currentStagingBuffers, CommandStreamReceiver *csr, QueueThrottle throttle, Func &func, Args... args) {
     StagingTransferStatus result{};
     StagingBufferTracker tracker{};
     auto stagingBufferIndex = chunkTransferId % maxInFlightReads;
     if (isRead && chunkTransferId >= maxInFlightReads) {
-        if (copyStagingToHost(currentStagingBuffers[stagingBufferIndex], tracker) == WaitStatus::gpuHang) {
+        if (copyStagingToHost(currentStagingBuffers[stagingBufferIndex], tracker, throttle) == WaitStatus::gpuHang) {
             result.waitStatus = WaitStatus::gpuHang;
             return result;
         }
@@ -84,6 +84,7 @@ StagingTransferStatus StagingBufferManager::performChunkTransfer(size_t chunkTra
     result.chunkCopyStatus = func(stagingBuffer, args...);
 
     tracker.taskCountToWait = csr->peekTaskCount();
+    tracker.flushStampToWait = csr->obtainCurrentFlushStamp();
     if (isRead) {
         currentStagingBuffers[stagingBufferIndex] = {userData, tracker};
     } else {
@@ -103,7 +104,7 @@ StagingTransferStatus StagingBufferManager::performChunkTransfer(size_t chunkTra
  * Each chunk copy contains staging buffer which should be used instead of non-usm memory during transfers on GPU.
  * Caller provides actual function to transfer data for single chunk.
  */
-StagingTransferStatus StagingBufferManager::performCopy(void *dstPtr, const void *srcPtr, size_t size, ChunkCopyFunction &chunkCopyFunc, CommandStreamReceiver *csr, bool isRead) {
+StagingTransferStatus StagingBufferManager::performCopy(void *dstPtr, const void *srcPtr, size_t size, ChunkCopyFunction &chunkCopyFunc, CommandStreamReceiver *csr, bool isRead, QueueThrottle throttle) {
     StagingQueue stagingQueue;
     auto copiesNum = size / chunkSize;
     auto remainder = size % chunkSize;
@@ -116,7 +117,7 @@ StagingTransferStatus StagingBufferManager::performCopy(void *dstPtr, const void
             std::swap(userPtr, usmPtr);
         }
         UserData userData{userPtr, chunkSize};
-        result = performChunkTransfer(i, isRead, userData, stagingQueue, csr, chunkCopyFunc, usmPtr, chunkSize);
+        result = performChunkTransfer(i, isRead, userData, stagingQueue, csr, throttle, chunkCopyFunc, usmPtr, chunkSize);
         if (result.chunkCopyStatus != 0) {
             return result;
         }
@@ -129,13 +130,13 @@ StagingTransferStatus StagingBufferManager::performCopy(void *dstPtr, const void
             std::swap(userPtr, usmPtr);
         }
         UserData userData{userPtr, remainder};
-        result = performChunkTransfer(copiesNum, isRead, userData, stagingQueue, csr, chunkCopyFunc, usmPtr, remainder);
+        result = performChunkTransfer(copiesNum, isRead, userData, stagingQueue, csr, throttle, chunkCopyFunc, usmPtr, remainder);
         if (result.chunkCopyStatus != 0) {
             return result;
         }
     }
 
-    result.waitStatus = drainAndReleaseStagingQueue(isRead, stagingQueue, copiesNum + (remainder != 0 ? 1 : 0));
+    result.waitStatus = drainAndReleaseStagingQueue(isRead, stagingQueue, copiesNum + (remainder != 0 ? 1 : 0), throttle);
     return result;
 }
 
@@ -150,7 +151,7 @@ size_t calculateSizeForRegion(size_t region[3], const ImageMetadata &imageMetada
 
 StagingTransferStatus StagingBufferManager::performImageSlicesTransfer(StagingQueue &stagingQueue, size_t &submittedChunks, const void *ptr, auto sliceOffset,
                                                                        size_t baseRowOffset, size_t rowsToCopy, size_t origin[4], size_t region[3], ImageMetadata &imageMetadata,
-                                                                       ChunkTransferImageFunc &chunkTransferImageFunc, CommandStreamReceiver *csr, bool isRead) {
+                                                                       ChunkTransferImageFunc &chunkTransferImageFunc, CommandStreamReceiver *csr, bool isRead, QueueThrottle throttle) {
     auto rowPitch = imageMetadata.rowPitch;
     auto rowsPerChunk = std::max<size_t>(1ul, chunkSize / rowPitch);
     rowsPerChunk = std::min<size_t>(rowsPerChunk, rowsToCopy);
@@ -171,7 +172,7 @@ StagingTransferStatus StagingBufferManager::performImageSlicesTransfer(StagingQu
         imageMetadata.rowsInChunk = rowsPerChunk;
         UserData userData{chunkPtr, size, imageMetadata, true};
 
-        result = performChunkTransfer(submittedChunks++, isRead, userData, stagingQueue, csr, chunkTransferImageFunc, origin, region);
+        result = performChunkTransfer(submittedChunks++, isRead, userData, stagingQueue, csr, throttle, chunkTransferImageFunc, origin, region);
         if (result.chunkCopyStatus != 0 || result.waitStatus == WaitStatus::gpuHang) {
             return result;
         }
@@ -187,7 +188,7 @@ StagingTransferStatus StagingBufferManager::performImageSlicesTransfer(StagingQu
         imageMetadata.rowsInChunk = remainder;
         UserData userData{chunkPtr, size, imageMetadata, true};
 
-        result = performChunkTransfer(submittedChunks++, isRead, userData, stagingQueue, csr, chunkTransferImageFunc, origin, region);
+        result = performChunkTransfer(submittedChunks++, isRead, userData, stagingQueue, csr, throttle, chunkTransferImageFunc, origin, region);
         if (result.chunkCopyStatus != 0 || result.waitStatus == WaitStatus::gpuHang) {
             return result;
         }
@@ -202,7 +203,7 @@ StagingTransferStatus StagingBufferManager::performImageSlicesTransfer(StagingQu
  * Several slices and rows can be packed into single chunk if size of such chunk does not exceeds maximum chunk size (2MB).
  * Caller provides actual function to enqueue read/write operation for single chunk.
  */
-StagingTransferStatus StagingBufferManager::performImageTransfer(const void *ptr, const size_t *globalOrigin, const size_t *globalRegion, size_t rowPitch, size_t slicePitch, size_t bytesPerPixel, bool isMipMapped3DImage, ChunkTransferImageFunc &chunkTransferImageFunc, CommandStreamReceiver *csr, bool isRead) {
+StagingTransferStatus StagingBufferManager::performImageTransfer(const void *ptr, const size_t *globalOrigin, const size_t *globalRegion, size_t rowPitch, size_t slicePitch, size_t bytesPerPixel, bool isMipMapped3DImage, ChunkTransferImageFunc &chunkTransferImageFunc, CommandStreamReceiver *csr, bool isRead, QueueThrottle throttle) {
     StagingQueue stagingQueue;
     size_t origin[4] = {};
     size_t region[3] = {};
@@ -235,7 +236,7 @@ StagingTransferStatus StagingBufferManager::performImageTransfer(const void *ptr
         auto sliceOffset = sliceId * slicesPerStep;
         origin[2] = globalOrigin[2] + sliceOffset;
         region[2] = slicesPerStep;
-        result = performImageSlicesTransfer(stagingQueue, submittedChunks, ptr, sliceOffset, globalOrigin[1], globalRegion[1], origin, region, imageMetadata, chunkTransferImageFunc, csr, isRead);
+        result = performImageSlicesTransfer(stagingQueue, submittedChunks, ptr, sliceOffset, globalOrigin[1], globalRegion[1], origin, region, imageMetadata, chunkTransferImageFunc, csr, isRead, throttle);
         if (result.chunkCopyStatus != 0 || result.waitStatus == WaitStatus::gpuHang) {
             return result;
         }
@@ -245,17 +246,17 @@ StagingTransferStatus StagingBufferManager::performImageTransfer(const void *ptr
         auto sliceOffset = globalRegion[2] - remainderSlices;
         origin[2] = globalOrigin[2] + sliceOffset;
         region[2] = remainderSlices;
-        result = performImageSlicesTransfer(stagingQueue, submittedChunks, ptr, sliceOffset, globalOrigin[1], globalRegion[1], origin, region, imageMetadata, chunkTransferImageFunc, csr, isRead);
+        result = performImageSlicesTransfer(stagingQueue, submittedChunks, ptr, sliceOffset, globalOrigin[1], globalRegion[1], origin, region, imageMetadata, chunkTransferImageFunc, csr, isRead, throttle);
         if (result.chunkCopyStatus != 0 || result.waitStatus == WaitStatus::gpuHang) {
             return result;
         }
     }
 
-    result.waitStatus = drainAndReleaseStagingQueue(isRead, stagingQueue, submittedChunks);
+    result.waitStatus = drainAndReleaseStagingQueue(isRead, stagingQueue, submittedChunks, throttle);
     return result;
 }
 
-StagingTransferStatus StagingBufferManager::performBufferTransfer(const void *ptr, size_t globalOffset, size_t globalSize, ChunkTransferBufferFunc &chunkTransferBufferFunc, CommandStreamReceiver *csr, bool isRead) {
+StagingTransferStatus StagingBufferManager::performBufferTransfer(const void *ptr, size_t globalOffset, size_t globalSize, ChunkTransferBufferFunc &chunkTransferBufferFunc, CommandStreamReceiver *csr, bool isRead, QueueThrottle throttle) {
     StagingQueue stagingQueue;
     auto copiesNum = globalSize / chunkSize;
     auto remainder = globalSize % chunkSize;
@@ -264,7 +265,7 @@ StagingTransferStatus StagingBufferManager::performBufferTransfer(const void *pt
     for (auto i = 0u; i < copiesNum; i++) {
         auto chunkPtr = ptrOffset(ptr, i * chunkSize);
         UserData userData{chunkPtr, chunkSize};
-        result = performChunkTransfer(i, isRead, userData, stagingQueue, csr, chunkTransferBufferFunc, chunkOffset, chunkSize);
+        result = performChunkTransfer(i, isRead, userData, stagingQueue, csr, throttle, chunkTransferBufferFunc, chunkOffset, chunkSize);
         if (result.chunkCopyStatus != 0) {
             return result;
         }
@@ -274,13 +275,13 @@ StagingTransferStatus StagingBufferManager::performBufferTransfer(const void *pt
     if (remainder != 0) {
         auto chunkPtr = ptrOffset(ptr, copiesNum * chunkSize);
         UserData userData{chunkPtr, remainder};
-        result = performChunkTransfer(copiesNum, isRead, userData, stagingQueue, csr, chunkTransferBufferFunc, chunkOffset, remainder);
+        result = performChunkTransfer(copiesNum, isRead, userData, stagingQueue, csr, throttle, chunkTransferBufferFunc, chunkOffset, remainder);
         if (result.chunkCopyStatus != 0) {
             return result;
         }
     }
 
-    result.waitStatus = drainAndReleaseStagingQueue(isRead, stagingQueue, copiesNum + (remainder != 0 ? 1 : 0));
+    result.waitStatus = drainAndReleaseStagingQueue(isRead, stagingQueue, copiesNum + (remainder != 0 ? 1 : 0), throttle);
     return result;
 }
 
@@ -306,14 +307,19 @@ void StagingBufferManager::copyImageToHost(void *dst, const void *stagingBuffer,
  * and copies data associated with that transfer to host allocation.
  * Returned tracker contains staging buffer ready for reuse.
  */
-WaitStatus StagingBufferManager::copyStagingToHost(const std::pair<UserData, StagingBufferTracker> &transfer, StagingBufferTracker &tracker) const {
-    auto status = transfer.second.csr->waitForTaskCount(transfer.second.taskCountToWait);
+WaitStatus StagingBufferManager::copyStagingToHost(const std::pair<UserData, StagingBufferTracker> &transfer, StagingBufferTracker &tracker, QueueThrottle throttle) const {
+    auto &pendingTransfer = transfer.second;
+    auto flushStampToWait = pendingTransfer.flushStampToWait;
+    if (flushStampToWait == 0) {
+        flushStampToWait = pendingTransfer.taskCountToWait;
+    }
+    auto status = pendingTransfer.csr->waitForTaskCountWithKmdNotifyFallback(pendingTransfer.taskCountToWait, flushStampToWait, false, throttle);
     if (status == WaitStatus::gpuHang) {
         return status;
     }
-    transfer.second.csr->downloadAllocations(true);
+    pendingTransfer.csr->downloadAllocations(true);
     auto &userData = transfer.first;
-    tracker = transfer.second;
+    tracker = pendingTransfer;
     auto stagingBuffer = addrToPtr(tracker.chunkAddress);
     auto userDst = const_cast<void *>(userData.ptr);
     if (userData.isImageOperation) {
@@ -329,11 +335,11 @@ WaitStatus StagingBufferManager::copyStagingToHost(const std::pair<UserData, Sta
  * Waits for all pending transfers to finish.
  * Releases staging buffers back to pool for reuse.
  */
-WaitStatus StagingBufferManager::drainAndReleaseStagingQueue(bool isRead, const StagingQueue &stagingQueue, size_t numOfSubmittedTransfers) const {
+WaitStatus StagingBufferManager::drainAndReleaseStagingQueue(bool isRead, const StagingQueue &stagingQueue, size_t numOfSubmittedTransfers, QueueThrottle throttle) const {
     if (isRead) {
         StagingBufferTracker tracker{};
         for (auto i = 0u; i < std::min(numOfSubmittedTransfers, maxInFlightReads); i++) {
-            auto status = copyStagingToHost(stagingQueue[i], tracker);
+            auto status = copyStagingToHost(stagingQueue[i], tracker, throttle);
             if (status == WaitStatus::gpuHang) {
                 return status;
             }

@@ -310,6 +310,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::pipelineSelectStateTracking;
     using BaseClass::previousCsrsAwaitingCompletion;
     using BaseClass::programPauseOnEnqueueCommands;
+    using BaseClass::queueThrottle;
     using BaseClass::relaxedOrderingCounter;
     using BaseClass::releasePreviousCsrCompletionTarget;
     using BaseClass::requiredStreamState;

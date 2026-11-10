@@ -2647,7 +2647,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendStagingMemoryCo
     }
     auto stagingBufferManager = this->getDevice()->getDriverHandle()->getStagingBufferManager();
     this->csrReassignmentSuspended = true;
-    auto ret = stagingStatusToL0(stagingBufferManager->performCopy(cpuMemCopyInfo.dstPtr, cpuMemCopyInfo.srcPtr, cpuMemCopyInfo.size, chunkCopy, getCsr(memoryCopyParams.copyOffloadAllowed), isRead));
+    auto ret = stagingStatusToL0(stagingBufferManager->performCopy(cpuMemCopyInfo.dstPtr, cpuMemCopyInfo.srcPtr, cpuMemCopyInfo.size, chunkCopy, getCsr(memoryCopyParams.copyOffloadAllowed), isRead, this->queueThrottle));
     if (ret == ZE_RESULT_SUCCESS) {
         ret = handlePostStagingTransferSync(event, isSingleTransfer, hSignalEvent, relaxedOrdering);
     }
@@ -2821,7 +2821,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendStagingImageTra
 
     auto stagingBufferManager = this->getDevice()->getDriverHandle()->getStagingBufferManager();
     this->csrReassignmentSuspended = true;
-    auto ret = stagingStatusToL0(stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, rowPitch, slicePitch, bytesPerPixel, false, chunkTransfer, getCsr(memoryCopyParams.copyOffloadAllowed), isRead));
+    auto ret = stagingStatusToL0(stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, rowPitch, slicePitch, bytesPerPixel, false, chunkTransfer, getCsr(memoryCopyParams.copyOffloadAllowed), isRead, this->queueThrottle));
     if (ret == ZE_RESULT_SUCCESS) {
         ret = handlePostStagingTransferSync(event, isSingleTransfer, hSignalEvent, relaxedOrdering);
     }

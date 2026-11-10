@@ -35,6 +35,7 @@
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/command_queue/command_queue.h"
+#include "opencl/source/command_queue/csr_selection_args.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/kernel/kernel.h"
@@ -2863,6 +2864,28 @@ HWTEST_F(StagingBufferTest, givenIsValidForStagingBufferCopyWhenDstIsHostThenRet
     debugManager.flags.EnableCopyWithStagingBuffers.set(1);
     MockCommandQueueHw<FamilyType> myCmdQ(context, pClDevice, 0);
     EXPECT_TRUE(myCmdQ.isValidForStagingBufferCopy(pClDevice->getDevice(), hostPtr, usmPtr, stagingBufferSize, false));
+}
+
+HWTEST_F(StagingBufferTest, givenLowThrottleQueueWhenEnqueueStagingBufferMemcpyD2HThenEachChunkIsAwaitedWithKmdNotifyFallbackUsingQueueThrottle) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
+
+    MockCommandQueueHw<FamilyType> myCmdQ(context, pClDevice, 0);
+    myCmdQ.throttle = QueueThrottle::LOW;
+    size_t size = copySize;
+    CsrSelectionArgs csrSelectionArgs{CL_COMMAND_SVM_MEMCPY, &size};
+    csrSelectionArgs.direction = TransferDirection::localToHost;
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(&myCmdQ.selectCsrForBuiltinOperation(csrSelectionArgs));
+    ultCsr->captureWaitForTaskCountWithKmdNotifyInputParams = true;
+
+    retVal = myCmdQ.enqueueStagingBufferMemcpy(false, hostPtr, usmPtr, copySize, nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_FALSE(ultCsr->waitForTaskCountCalled);
+    ASSERT_EQ(expectedNumOfCopies, ultCsr->waitForTaskCountWithKmdNotifyInputParams.size());
+    for (const auto &waitParams : ultCsr->waitForTaskCountWithKmdNotifyInputParams) {
+        EXPECT_EQ(QueueThrottle::LOW, waitParams.throttle);
+    }
 }
 
 HWTEST_F(StagingBufferTest, givenIsValidForStagingBufferCopyWhenSrcIsMappedThenReturnFalse) {

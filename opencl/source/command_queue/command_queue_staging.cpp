@@ -51,7 +51,7 @@ cl_int CommandQueue::enqueueStagingBufferMemcpy(cl_bool blockingCopy, void *dstP
     };
 
     auto stagingBufferManager = this->context->getStagingBufferManager();
-    auto ret = stagingBufferManager->performCopy(dstPtr, srcPtr, size, chunkCopy, csr, isRead);
+    auto ret = stagingBufferManager->performCopy(dstPtr, srcPtr, size, chunkCopy, csr, isRead, this->getThrottle());
     return postStagingTransferSync(ret, event, profilingEvent, isSingleTransfer, blockingCopy, CL_COMMAND_SVM_MEMCPY);
 }
 
@@ -85,7 +85,7 @@ cl_int CommandQueue::enqueueStagingImageTransfer(cl_command_type commandType, Im
     auto isMipMap3D = isMipMapped(image->getImageDesc()) && image->getImageDesc().image_type == CL_MEM_OBJECT_IMAGE3D;
 
     auto stagingBufferManager = this->context->getStagingBufferManager();
-    auto ret = stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, dstRowPitch, dstSlicePitch, bytesPerPixel, isMipMap3D, chunkWrite, &csr, isRead);
+    auto ret = stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, dstRowPitch, dstSlicePitch, bytesPerPixel, isMipMap3D, chunkWrite, &csr, isRead, this->getThrottle());
 
     if (isRead && context->isProvidingPerformanceHints()) {
         auto hostPtrSize = calculateHostPtrSizeForImage(globalRegion, inputRowPitch, inputSlicePitch, image);
@@ -119,7 +119,7 @@ cl_int CommandQueue::enqueueStagingBufferTransfer(cl_command_type commandType, B
         return ret;
     };
     auto stagingBufferManager = this->context->getStagingBufferManager();
-    auto ret = stagingBufferManager->performBufferTransfer(ptr, offset, size, chunkWrite, &csr, isRead);
+    auto ret = stagingBufferManager->performBufferTransfer(ptr, offset, size, chunkWrite, &csr, isRead, this->getThrottle());
 
     if (isRead && context->isProvidingPerformanceHints()) {
         context->providePerformanceHintForMemoryTransfer(commandType, true, static_cast<cl_mem>(buffer), ptr);

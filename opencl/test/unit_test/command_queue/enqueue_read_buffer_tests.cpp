@@ -16,6 +16,7 @@
 #include "shared/test/common/utilities/base_object_utils.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
+#include "opencl/source/command_queue/csr_selection_args.h"
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
 #include "opencl/test/unit_test/command_queue/enqueue_read_buffer_fixture.h"
@@ -887,6 +888,22 @@ HWTEST_F(ReadBufferStagingBufferTest, whenEnqueueStagingReadBufferCalledThenRetu
     EXPECT_EQ(1ul, mockCommandQueueHw.enqueueReadBufferCounter);
     auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
     EXPECT_EQ(0u, csr.createAllocationForHostSurfaceCalled);
+}
+
+HWTEST_F(ReadBufferStagingBufferTest, givenLowThrottleQueueWhenEnqueueStagingReadBufferThenKmdNotifyFallbackWaitUsesQueueThrottle) {
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device, &props);
+    mockCommandQueueHw.throttle = QueueThrottle::LOW;
+    size_t size = buffer.getSize();
+    CsrSelectionArgs csrSelectionArgs{CL_COMMAND_READ_BUFFER, static_cast<Buffer *>(&buffer), static_cast<Buffer *>(nullptr), device->getRootDeviceIndex(), &size};
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(&mockCommandQueueHw.selectCsrForBuiltinOperation(csrSelectionArgs));
+    ultCsr->captureWaitForTaskCountWithKmdNotifyInputParams = true;
+
+    auto res = mockCommandQueueHw.enqueueStagingBufferTransfer(CL_COMMAND_READ_BUFFER, &buffer, false, 0, size, ptr, nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, res);
+    EXPECT_FALSE(ultCsr->waitForTaskCountCalled);
+    ASSERT_FALSE(ultCsr->waitForTaskCountWithKmdNotifyInputParams.empty());
+    EXPECT_EQ(QueueThrottle::LOW, ultCsr->waitForTaskCountWithKmdNotifyInputParams[0].throttle);
 }
 
 HWTEST_F(ReadBufferStagingBufferTest, whenHostPtrRegisteredThenDontUseStagingUntilEventCompleted) {

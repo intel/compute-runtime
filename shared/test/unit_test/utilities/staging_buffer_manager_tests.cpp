@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_stream/queue_throttle.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/utilities/cpu_info.h"
 #include "shared/source/utilities/staging_buffer_manager.h"
@@ -73,7 +74,7 @@ class StagingBufferManagerFixture : public DeviceFixture {
             return 0;
         };
         auto initialNumOfUsmAllocations = svmAllocsManager->svmAllocs.getNumAllocs();
-        auto ret = stagingBufferManager->performCopy(usmBuffer, nonUsmBuffer, copySize, chunkCopy, csr, false);
+        auto ret = stagingBufferManager->performCopy(usmBuffer, nonUsmBuffer, copySize, chunkCopy, csr, false, QueueThrottle::MEDIUM);
         auto newUsmAllocations = svmAllocsManager->svmAllocs.getNumAllocs() - initialNumOfUsmAllocations;
 
         EXPECT_EQ(0, ret.chunkCopyStatus);
@@ -135,7 +136,7 @@ class StagingBufferManagerFixture : public DeviceFixture {
             return 0;
         };
         auto initialNumOfUsmAllocations = svmAllocsManager->svmAllocs.getNumAllocs();
-        auto ret = stagingBufferManager->performImageTransfer(hostPtr, globalOrigin, globalRegion, rowPitch, rowPitch * globalRegion[1], pixelElemSize, false, chunkTransfer, csr, isRead);
+        auto ret = stagingBufferManager->performImageTransfer(hostPtr, globalOrigin, globalRegion, rowPitch, rowPitch * globalRegion[1], pixelElemSize, false, chunkTransfer, csr, isRead, QueueThrottle::MEDIUM);
         auto newUsmAllocations = svmAllocsManager->svmAllocs.getNumAllocs() - initialNumOfUsmAllocations;
 
         for (auto rowId = 0u; rowId < globalRegion[1]; rowId++) {
@@ -171,7 +172,7 @@ class StagingBufferManagerFixture : public DeviceFixture {
             return 0;
         };
         auto initialNumOfUsmAllocations = svmAllocsManager->svmAllocs.getNumAllocs();
-        auto ret = stagingBufferManager->performBufferTransfer(nonUsmBuffer, 0, copySize, chunkCopy, csr, false);
+        auto ret = stagingBufferManager->performBufferTransfer(nonUsmBuffer, 0, copySize, chunkCopy, csr, false, QueueThrottle::MEDIUM);
         auto newUsmAllocations = svmAllocsManager->svmAllocs.getNumAllocs() - initialNumOfUsmAllocations;
 
         EXPECT_EQ(0, ret.chunkCopyStatus);
@@ -417,7 +418,7 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferWhenFailedChunkCopyThenEarlyR
         return expectedErrorCode;
     };
     auto initialNumOfUsmAllocations = svmAllocsManager->svmAllocs.getNumAllocs();
-    auto ret = stagingBufferManager->performCopy(usmBuffer, nonUsmBuffer.get(), totalCopySize, chunkCopy, csr, false);
+    auto ret = stagingBufferManager->performCopy(usmBuffer, nonUsmBuffer.get(), totalCopySize, chunkCopy, csr, false, QueueThrottle::MEDIUM);
     auto newUsmAllocations = svmAllocsManager->svmAllocs.getNumAllocs() - initialNumOfUsmAllocations;
 
     EXPECT_EQ(expectedErrorCode, ret.chunkCopyStatus);
@@ -450,7 +451,7 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferWhenFailedRemainderCopyThenRe
         }
     };
     auto initialNumOfUsmAllocations = svmAllocsManager->svmAllocs.getNumAllocs();
-    auto ret = stagingBufferManager->performCopy(usmBuffer, nonUsmBuffer, totalCopySize, chunkCopy, csr, false);
+    auto ret = stagingBufferManager->performCopy(usmBuffer, nonUsmBuffer, totalCopySize, chunkCopy, csr, false, QueueThrottle::MEDIUM);
     auto newUsmAllocations = svmAllocsManager->svmAllocs.getNumAllocs() - initialNumOfUsmAllocations;
 
     EXPECT_EQ(expectedErrorCode, ret.chunkCopyStatus);
@@ -493,7 +494,7 @@ HWTEST_F(StagingBufferManagerTest, givenStagingBufferWhenDirectSubmissionEnabled
         reinterpret_cast<MockCommandStreamReceiver *>(csr)->taskCount++;
         return 0;
     };
-    stagingBufferManager->performCopy(usmBuffer, nonUsmBuffer, totalCopySize, chunkCopy, csr, false);
+    stagingBufferManager->performCopy(usmBuffer, nonUsmBuffer, totalCopySize, chunkCopy, csr, false, QueueThrottle::MEDIUM);
     if (ultCsr->flushTagUpdateCalled) {
         flushTagsCalled++;
     }
@@ -522,7 +523,7 @@ HWTEST_F(StagingBufferManagerTest, givenStagingBufferWhenUpdateTagFromWaitEnable
         return 0;
     };
 
-    auto ret = stagingBufferManager->performCopy(usmBuffer, nonUsmBuffer.get(), totalCopySize, chunkCopy, csr, false);
+    auto ret = stagingBufferManager->performCopy(usmBuffer, nonUsmBuffer.get(), totalCopySize, chunkCopy, csr, false, QueueThrottle::MEDIUM);
 
     EXPECT_EQ(0, ret.chunkCopyStatus);
     EXPECT_EQ(WaitStatus::ready, ret.waitStatus);
@@ -554,7 +555,7 @@ HWTEST_F(StagingBufferManagerTest, givenFailedStagingBufferAllocationWhenPerform
         chunkCounter++;
         return 0;
     };
-    auto ret = stagingBufferManager->performCopy(usmBuffer, nonUsmBuffer, totalCopySize, chunkCopy, csr, false);
+    auto ret = stagingBufferManager->performCopy(usmBuffer, nonUsmBuffer, totalCopySize, chunkCopy, csr, false, QueueThrottle::MEDIUM);
 
     EXPECT_EQ(stagingBufferAllocationFailedStatus, ret.chunkCopyStatus);
     EXPECT_EQ(WaitStatus::ready, ret.waitStatus);
@@ -582,7 +583,7 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferWhenPerformCopyD2HThenCopyDat
         return 0;
     };
     auto initialNumOfUsmAllocations = svmAllocsManager->svmAllocs.getNumAllocs();
-    auto ret = stagingBufferManager->performCopy(usmBuffer, nonUsmBuffer, totalCopySize, chunkCopy, csr, true);
+    auto ret = stagingBufferManager->performCopy(usmBuffer, nonUsmBuffer, totalCopySize, chunkCopy, csr, true, QueueThrottle::MEDIUM);
     auto newUsmAllocations = svmAllocsManager->svmAllocs.getNumAllocs() - initialNumOfUsmAllocations;
 
     EXPECT_EQ(0, ret.chunkCopyStatus);
@@ -685,8 +686,8 @@ HWTEST_F(StagingBufferManagerTest, givenStagingBufferWhenGpuHangDuringChunkReadF
         return 0;
     };
     auto ultCsr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr);
-    ultCsr->waitForTaskCountReturnValue = WaitStatus::gpuHang;
-    auto ret = stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, pitchSize, pitchSize, pixelElemSize, false, chunkWrite, csr, true);
+    ultCsr->waitForTaskCountWithKmdNotifyFallbackReturnValue = WaitStatus::gpuHang;
+    auto ret = stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, pitchSize, pitchSize, pixelElemSize, false, chunkWrite, csr, true, QueueThrottle::MEDIUM);
     EXPECT_EQ(0, ret.chunkCopyStatus);
     EXPECT_EQ(WaitStatus::gpuHang, ret.waitStatus);
     EXPECT_EQ(2u, chunkCounter);
@@ -704,11 +705,11 @@ HWTEST_F(StagingBufferManagerTest, givenStagingBufferWhenGpuHangAfterChunkReadFr
     ChunkTransferImageFunc chunkWrite = [&](void *stagingBuffer, const size_t *origin, const size_t *region) -> int32_t {
         ++chunkCounter;
         if (chunkCounter == expectedChunks) {
-            ultCsr->waitForTaskCountReturnValue = WaitStatus::gpuHang;
+            ultCsr->waitForTaskCountWithKmdNotifyFallbackReturnValue = WaitStatus::gpuHang;
         }
         return 0;
     };
-    auto ret = stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, pitchSize, pitchSize, pixelElemSize, false, chunkWrite, csr, true);
+    auto ret = stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, pitchSize, pitchSize, pixelElemSize, false, chunkWrite, csr, true, QueueThrottle::MEDIUM);
     EXPECT_EQ(0, ret.chunkCopyStatus);
     EXPECT_EQ(WaitStatus::gpuHang, ret.waitStatus);
     EXPECT_EQ(4u, chunkCounter);
@@ -727,11 +728,11 @@ HWTEST_F(StagingBufferManagerTest, givenStagingBufferWhenGpuHangDuringRemainderC
     ChunkTransferImageFunc chunkWrite = [&](void *stagingBuffer, const size_t *origin, const size_t *region) -> int32_t {
         ++chunkCounter;
         if (chunkCounter == remainderCounter - 1) {
-            ultCsr->waitForTaskCountReturnValue = WaitStatus::gpuHang;
+            ultCsr->waitForTaskCountWithKmdNotifyFallbackReturnValue = WaitStatus::gpuHang;
         }
         return 0;
     };
-    auto ret = stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, pitchSize, pitchSize, pixelElemSize, false, chunkWrite, csr, true);
+    auto ret = stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, pitchSize, pitchSize, pixelElemSize, false, chunkWrite, csr, true, QueueThrottle::MEDIUM);
     EXPECT_EQ(0, ret.chunkCopyStatus);
     EXPECT_EQ(WaitStatus::gpuHang, ret.waitStatus);
     EXPECT_EQ(remainderCounter - 1, chunkCounter);
@@ -750,7 +751,7 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferWhenFailedChunkImageWriteThen
         ++chunkCounter;
         return expectedErrorCode;
     };
-    auto ret = stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, pitchSize, pitchSize, pixelElemSize, false, chunkWrite, csr, false);
+    auto ret = stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, pitchSize, pitchSize, pixelElemSize, false, chunkWrite, csr, false, QueueThrottle::MEDIUM);
     EXPECT_EQ(expectedErrorCode, ret.chunkCopyStatus);
     EXPECT_EQ(WaitStatus::ready, ret.waitStatus);
     EXPECT_EQ(1u, chunkCounter);
@@ -773,7 +774,7 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferWhenFailedChunkImageWriteWith
         }
         return 0;
     };
-    auto ret = stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, pitchSize, pitchSize, pixelElemSize, false, chunkWrite, csr, false);
+    auto ret = stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, pitchSize, pitchSize, pixelElemSize, false, chunkWrite, csr, false, QueueThrottle::MEDIUM);
     EXPECT_EQ(expectedErrorCode, ret.chunkCopyStatus);
     EXPECT_EQ(WaitStatus::ready, ret.waitStatus);
     EXPECT_EQ(remainderCounter, chunkCounter);
@@ -809,7 +810,7 @@ HWTEST_P(StagingBufferManager3DImageTest, givenStagingBufferWhenPerformImageTran
         ++chunkCounter;
         return 0;
     };
-    auto ret = stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, rowPitch, slicePitch, pixelElemSize, false, chunkWrite, csr, false);
+    auto ret = stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, rowPitch, slicePitch, pixelElemSize, false, chunkWrite, csr, false, QueueThrottle::MEDIUM);
     EXPECT_EQ(0, ret.chunkCopyStatus);
     EXPECT_EQ(WaitStatus::ready, ret.waitStatus);
     EXPECT_EQ(expectedChunks, chunkCounter);
@@ -845,7 +846,7 @@ TEST_F(StagingBufferManager3DImageTest, givenStagingBufferWhenPerformImageTransf
         }
         return 0;
     };
-    auto ret = stagingBufferManager->performImageTransfer(userDst, globalOrigin, globalRegion, rowPitch, slicePitch, pixelElemSize, false, chunkWrite, csr, true);
+    auto ret = stagingBufferManager->performImageTransfer(userDst, globalOrigin, globalRegion, rowPitch, slicePitch, pixelElemSize, false, chunkWrite, csr, true, QueueThrottle::MEDIUM);
     EXPECT_EQ(0, ret.chunkCopyStatus);
     EXPECT_EQ(WaitStatus::ready, ret.waitStatus);
 
@@ -874,11 +875,11 @@ HWTEST_F(StagingBufferManagerTest, givenStagingBufferWhenGpuHangDuringSliceRemai
     ChunkTransferImageFunc chunkWrite = [&](void *stagingBuffer, const size_t *origin, const size_t *region) -> int32_t {
         ++chunkCounter;
         if (chunkCounter == expectedChunks - 1) {
-            ultCsr->waitForTaskCountReturnValue = WaitStatus::gpuHang;
+            ultCsr->waitForTaskCountWithKmdNotifyFallbackReturnValue = WaitStatus::gpuHang;
         }
         return 0;
     };
-    auto ret = stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, rowPitch, slicePitch, pixelElemSize, false, chunkWrite, csr, true);
+    auto ret = stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, rowPitch, slicePitch, pixelElemSize, false, chunkWrite, csr, true, QueueThrottle::MEDIUM);
     EXPECT_EQ(0, ret.chunkCopyStatus);
     EXPECT_EQ(WaitStatus::gpuHang, ret.waitStatus);
     EXPECT_EQ(expectedChunks - 1, chunkCounter);
@@ -904,7 +905,7 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferWhenFailedChunkImageWriteWith
         }
         return 0;
     };
-    auto ret = stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, rowPitch, slicePitch, pixelElemSize, false, chunkWrite, csr, false);
+    auto ret = stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, rowPitch, slicePitch, pixelElemSize, false, chunkWrite, csr, false, QueueThrottle::MEDIUM);
     EXPECT_EQ(expectedErrorCode, ret.chunkCopyStatus);
     EXPECT_EQ(WaitStatus::ready, ret.waitStatus);
     EXPECT_EQ(expectedChunks, chunkCounter);
@@ -931,7 +932,7 @@ TEST_P(StagingBufferManagerImageMipMapTest, givenStagingBufferWhenPerformImageTr
         EXPECT_EQ(mipMapLevel, origin[expectedMipMapIndex]);
         return 0;
     };
-    auto ret = stagingBufferManager->performImageTransfer(ptr, globalOrigin, region, region[0], region[0] * region[1], pixelElemSize, true, chunkWrite, csr, false);
+    auto ret = stagingBufferManager->performImageTransfer(ptr, globalOrigin, region, region[0], region[0] * region[1], pixelElemSize, true, chunkWrite, csr, false, QueueThrottle::MEDIUM);
     EXPECT_EQ(0, ret.chunkCopyStatus);
     EXPECT_EQ(WaitStatus::ready, ret.waitStatus);
 }
@@ -971,7 +972,7 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferWhenFailedChunkBufferWriteThe
         ++chunkCounter;
         return expectedErrorCode;
     };
-    auto ret = stagingBufferManager->performBufferTransfer(ptr, 0, stagingBufferSize * expectedChunks, chunkWrite, csr, false);
+    auto ret = stagingBufferManager->performBufferTransfer(ptr, 0, stagingBufferSize * expectedChunks, chunkWrite, csr, false, QueueThrottle::MEDIUM);
     EXPECT_EQ(expectedErrorCode, ret.chunkCopyStatus);
     EXPECT_EQ(WaitStatus::ready, ret.waitStatus);
     EXPECT_EQ(1u, chunkCounter);
@@ -989,7 +990,7 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferWhenReadBufferThenDataCopiedC
         memcpy(stagingBuffer, bufferData + offset, size);
         return 0;
     };
-    auto ret = stagingBufferManager->performBufferTransfer(ptr, 0, stagingBufferSize * expectedChunks, chunkWrite, csr, true);
+    auto ret = stagingBufferManager->performBufferTransfer(ptr, 0, stagingBufferSize * expectedChunks, chunkWrite, csr, true, QueueThrottle::MEDIUM);
     EXPECT_EQ(0, ret.chunkCopyStatus);
     EXPECT_EQ(WaitStatus::ready, ret.waitStatus);
     EXPECT_EQ(0, memcmp(ptr, bufferData, stagingBufferSize * expectedChunks));
@@ -1012,9 +1013,143 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferWhenFailedChunkBufferWriteWit
         }
         return 0;
     };
-    auto ret = stagingBufferManager->performBufferTransfer(ptr, 0, stagingBufferSize * expectedChunks + 512, chunkWrite, csr, false);
+    auto ret = stagingBufferManager->performBufferTransfer(ptr, 0, stagingBufferSize * expectedChunks + 512, chunkWrite, csr, false, QueueThrottle::MEDIUM);
     EXPECT_EQ(expectedErrorCode, ret.chunkCopyStatus);
     EXPECT_EQ(WaitStatus::ready, ret.waitStatus);
     EXPECT_EQ(remainderCounter, chunkCounter);
     delete[] ptr;
+}
+
+HWTEST_F(StagingBufferManagerTest, givenLowThrottleWhenPerformCopyD2HThenEachChunkIsAwaitedWithKmdNotifyFallbackUsingItsTaskCountAndFlushStamp) {
+    constexpr size_t numOfChunkCopies = 3;
+    constexpr size_t totalCopySize = stagingBufferSize * numOfChunkCopies;
+    constexpr FlushStamp flushStampMultiplier = 10;
+
+    auto usmBuffer = allocateDeviceBuffer(totalCopySize);
+    auto nonUsmBuffer = std::make_unique<unsigned char[]>(totalCopySize);
+    memset(usmBuffer, 0xFF, totalCopySize);
+
+    auto ultCsr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr);
+    ultCsr->captureWaitForTaskCountWithKmdNotifyInputParams = true;
+    std::vector<TaskCountType> submittedTaskCounts;
+    ChunkCopyFunction chunkCopy = [&](void *chunkSrc, void *chunkDst, size_t chunkSize) {
+        std::swap(chunkSrc, chunkDst);
+        memcpy(chunkDst, chunkSrc, chunkSize);
+        ultCsr->taskCount++;
+        ultCsr->flushStamp->setStamp(ultCsr->taskCount * flushStampMultiplier);
+        submittedTaskCounts.push_back(ultCsr->taskCount);
+        return 0;
+    };
+    auto ret = stagingBufferManager->performCopy(usmBuffer, nonUsmBuffer.get(), totalCopySize, chunkCopy, csr, true, QueueThrottle::LOW);
+
+    EXPECT_EQ(0, ret.chunkCopyStatus);
+    EXPECT_EQ(WaitStatus::ready, ret.waitStatus);
+    EXPECT_EQ(0, memcmp(usmBuffer, nonUsmBuffer.get(), totalCopySize));
+    EXPECT_FALSE(ultCsr->waitForTaskCountCalled);
+    ASSERT_EQ(numOfChunkCopies, ultCsr->waitForTaskCountWithKmdNotifyInputParams.size());
+
+    std::vector<TaskCountType> awaitedTaskCounts;
+    for (const auto &waitParams : ultCsr->waitForTaskCountWithKmdNotifyInputParams) {
+        EXPECT_EQ(waitParams.taskCountToWait * flushStampMultiplier, waitParams.flushStampToWait);
+        EXPECT_EQ(QueueThrottle::LOW, waitParams.throttle);
+        EXPECT_FALSE(waitParams.useQuickKmdSleep);
+        awaitedTaskCounts.push_back(waitParams.taskCountToWait);
+    }
+    std::sort(awaitedTaskCounts.begin(), awaitedTaskCounts.end());
+    EXPECT_EQ(submittedTaskCounts, awaitedTaskCounts);
+
+    svmAllocsManager->freeSVMAlloc(usmBuffer);
+}
+
+HWTEST_F(StagingBufferManagerTest, givenLowThrottleWhenPerformCopyH2DThenNoWaitIsPerformed) {
+    constexpr size_t totalCopySize = stagingBufferSize * 3;
+
+    auto usmBuffer = allocateDeviceBuffer(totalCopySize);
+    auto nonUsmBuffer = std::make_unique<unsigned char[]>(totalCopySize);
+
+    auto ultCsr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr);
+    ultCsr->captureWaitForTaskCountWithKmdNotifyInputParams = true;
+    ChunkCopyFunction chunkCopy = [&](void *chunkSrc, void *chunkDst, size_t chunkSize) {
+        ultCsr->taskCount++;
+        return 0;
+    };
+    auto ret = stagingBufferManager->performCopy(usmBuffer, nonUsmBuffer.get(), totalCopySize, chunkCopy, csr, false, QueueThrottle::LOW);
+
+    EXPECT_EQ(0, ret.chunkCopyStatus);
+    EXPECT_EQ(WaitStatus::ready, ret.waitStatus);
+    EXPECT_FALSE(ultCsr->waitForTaskCountCalled);
+    EXPECT_TRUE(ultCsr->waitForTaskCountWithKmdNotifyInputParams.empty());
+
+    svmAllocsManager->freeSVMAlloc(usmBuffer);
+}
+
+HWTEST_F(StagingBufferManagerTest, givenHighThrottleWhenPerformImageReadThenThrottleIsPassedToKmdNotifyFallbackWait) {
+    constexpr size_t expectedChunks = 4;
+    const size_t globalOrigin[3] = {0, 0, 0};
+    const size_t globalRegion[3] = {4, 8, 1};
+    auto ptr = std::make_unique<unsigned char[]>(stagingBufferSize * expectedChunks);
+
+    auto ultCsr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr);
+    ultCsr->captureWaitForTaskCountWithKmdNotifyInputParams = true;
+    ChunkTransferImageFunc chunkRead = [&](void *stagingBuffer, const size_t *origin, const size_t *region) -> int32_t {
+        ultCsr->taskCount++;
+        return 0;
+    };
+    auto ret = stagingBufferManager->performImageTransfer(ptr.get(), globalOrigin, globalRegion, pitchSize, pitchSize, pixelElemSize, false, chunkRead, csr, true, QueueThrottle::HIGH);
+
+    EXPECT_EQ(0, ret.chunkCopyStatus);
+    EXPECT_EQ(WaitStatus::ready, ret.waitStatus);
+    EXPECT_FALSE(ultCsr->waitForTaskCountCalled);
+    ASSERT_EQ(expectedChunks, ultCsr->waitForTaskCountWithKmdNotifyInputParams.size());
+    for (const auto &waitParams : ultCsr->waitForTaskCountWithKmdNotifyInputParams) {
+        EXPECT_EQ(QueueThrottle::HIGH, waitParams.throttle);
+    }
+}
+
+HWTEST_F(StagingBufferManagerTest, givenLowThrottleWhenPerformBufferReadThenThrottleIsPassedToKmdNotifyFallbackWait) {
+    constexpr size_t expectedChunks = 4;
+    auto ptr = std::make_unique<unsigned char[]>(stagingBufferSize * expectedChunks);
+
+    auto ultCsr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr);
+    ultCsr->captureWaitForTaskCountWithKmdNotifyInputParams = true;
+    ChunkTransferBufferFunc chunkRead = [&](void *stagingBuffer, size_t offset, size_t size) -> int32_t {
+        ultCsr->taskCount++;
+        return 0;
+    };
+    auto ret = stagingBufferManager->performBufferTransfer(ptr.get(), 0, stagingBufferSize * expectedChunks, chunkRead, csr, true, QueueThrottle::LOW);
+
+    EXPECT_EQ(0, ret.chunkCopyStatus);
+    EXPECT_EQ(WaitStatus::ready, ret.waitStatus);
+    EXPECT_FALSE(ultCsr->waitForTaskCountCalled);
+    ASSERT_EQ(expectedChunks, ultCsr->waitForTaskCountWithKmdNotifyInputParams.size());
+    for (const auto &waitParams : ultCsr->waitForTaskCountWithKmdNotifyInputParams) {
+        EXPECT_EQ(QueueThrottle::LOW, waitParams.throttle);
+    }
+}
+
+HWTEST_F(StagingBufferManagerTest, givenZeroFlushStampWhenPerformCopyD2HThenTaskCountIsUsedAsFlushStamp) {
+    constexpr size_t totalCopySize = stagingBufferSize;
+
+    auto usmBuffer = allocateDeviceBuffer(totalCopySize);
+    auto nonUsmBuffer = std::make_unique<unsigned char[]>(totalCopySize);
+
+    auto ultCsr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr);
+    ultCsr->captureWaitForTaskCountWithKmdNotifyInputParams = true;
+    TaskCountType submittedTaskCount = 0;
+    ChunkCopyFunction chunkCopy = [&](void *chunkSrc, void *chunkDst, size_t chunkSize) {
+        ultCsr->taskCount++;
+        ultCsr->flushStamp->setStamp(0);
+        submittedTaskCount = ultCsr->taskCount;
+        return 0;
+    };
+
+    auto ret = stagingBufferManager->performCopy(usmBuffer, nonUsmBuffer.get(), totalCopySize, chunkCopy, csr, true, QueueThrottle::LOW);
+
+    EXPECT_EQ(WaitStatus::ready, ret.waitStatus);
+    ASSERT_EQ(1u, ultCsr->waitForTaskCountWithKmdNotifyInputParams.size());
+    const auto &waitParams = ultCsr->waitForTaskCountWithKmdNotifyInputParams[0];
+    EXPECT_EQ(submittedTaskCount, waitParams.taskCountToWait);
+    EXPECT_EQ(submittedTaskCount, waitParams.flushStampToWait);
+
+    svmAllocsManager->freeSVMAlloc(usmBuffer);
 }

@@ -2211,6 +2211,26 @@ HWTEST_F(StagingBuffersFixture, givenAppendMemoryCopyWithDstNonUsmThenDontImport
     }
 }
 
+HWTEST_F(StagingBuffersFixture, givenLowThrottleCmdListWhenAppendMemoryCopyWithStagingToNonUsmDstThenKmdNotifyFallbackWaitUsesCmdListThrottle) {
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.callBaseExecute = true;
+    cmdList.cmdQImmediate = queue.get();
+    cmdList.initialize(device, NEO::EngineGroupType::compute, 0u);
+    cmdList.queueThrottle = NEO::QueueThrottle::LOW;
+
+    auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(cmdList.getCsr(false));
+    ultCsr->captureWaitForTaskCountWithKmdNotifyInputParams = true;
+
+    size_t dst[size] = {};
+    auto res = cmdList.appendMemoryCopy(&dst, usmDevice, size, nullptr, 0, nullptr, copyParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_FALSE(ultCsr->waitForTaskCountCalled);
+    ASSERT_FALSE(ultCsr->waitForTaskCountWithKmdNotifyInputParams.empty());
+    for (const auto &waitParams : ultCsr->waitForTaskCountWithKmdNotifyInputParams) {
+        EXPECT_EQ(NEO::QueueThrottle::LOW, waitParams.throttle);
+    }
+}
+
 HWTEST_F(StagingBuffersFixture, givenSharedSystemUsmThenDontUseStagingBuffers) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableSharedSystemUsmSupport.set(1);
@@ -3252,8 +3272,8 @@ HWTEST2_F(StagingImageBuffersFixture, givenMipMappedImageAndDualStreamCopyOffloa
 
     auto computeUltCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(queue->getCsr());
     auto copyOffloadUltCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(copyOffloadCsr);
-    computeUltCsr->waitForTaskCountCalled = false;
-    copyOffloadUltCsr->waitForTaskCountCalled = false;
+    computeUltCsr->captureWaitForTaskCountWithKmdNotifyInputParams = true;
+    copyOffloadUltCsr->captureWaitForTaskCountWithKmdNotifyInputParams = true;
 
     ze_image_region_mip_level_exp_desc_t region = {{0, 0, 0, 8, 4, 1}, 0};
     auto hostBufStorage = allocateAlignedMemory(size, MemoryConstants::cacheLineSize);
@@ -3262,8 +3282,8 @@ HWTEST2_F(StagingImageBuffersFixture, givenMipMappedImageAndDualStreamCopyOffloa
     ASSERT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(1u, cmdList.appendStagingImageTransferCalledCount);
     EXPECT_FALSE(copyParams.copyOffloadAllowed);
-    EXPECT_TRUE(computeUltCsr->waitForTaskCountCalled);
-    EXPECT_FALSE(copyOffloadUltCsr->waitForTaskCountCalled);
+    EXPECT_FALSE(computeUltCsr->waitForTaskCountWithKmdNotifyInputParams.empty());
+    EXPECT_TRUE(copyOffloadUltCsr->waitForTaskCountWithKmdNotifyInputParams.empty());
 
     cmdList.cmdQImmediateCopyOffload = nullptr;
 }

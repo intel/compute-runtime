@@ -1217,11 +1217,28 @@ HWTEST_F(ReadImageStagingBufferTest, whenEnqueueStagingReadImageFailedThenPropag
     EXPECT_EQ(1ul, mockCommandQueueHw.enqueueReadImageCounter);
 }
 
+HWTEST_F(ReadImageStagingBufferTest, givenLowThrottleQueueWhenEnqueueStagingReadImageThenEachChunkIsAwaitedWithKmdNotifyFallbackUsingQueueThrottle) {
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
+    mockCommandQueueHw.throttle = QueueThrottle::LOW;
+    CsrSelectionArgs csrSelectionArgs{CL_COMMAND_READ_IMAGE, srcImage, nullptr, pDevice->getRootDeviceIndex(), region, nullptr, origin};
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(&mockCommandQueueHw.selectCsrForBuiltinOperation(csrSelectionArgs));
+    ultCsr->captureWaitForTaskCountWithKmdNotifyInputParams = true;
+
+    auto res = mockCommandQueueHw.enqueueStagingImageTransfer(CL_COMMAND_READ_IMAGE, srcImage, false, origin, region, pitchSize, pitchSize, ptr, nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, res);
+    EXPECT_FALSE(ultCsr->waitForTaskCountCalled);
+    ASSERT_EQ(mockCommandQueueHw.enqueueReadImageCounter, ultCsr->waitForTaskCountWithKmdNotifyInputParams.size());
+    for (const auto &waitParams : ultCsr->waitForTaskCountWithKmdNotifyInputParams) {
+        EXPECT_EQ(QueueThrottle::LOW, waitParams.throttle);
+    }
+}
+
 HWTEST_F(ReadImageStagingBufferTest, whenEnqueueStagingReadImageCalledWithGpuHangThenReturnOutOfResources) {
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
     CsrSelectionArgs csrSelectionArgs{CL_COMMAND_READ_IMAGE, srcImage, nullptr, pDevice->getRootDeviceIndex(), region, nullptr, origin};
     auto ultCsr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(&mockCommandQueueHw.selectCsrForBuiltinOperation(csrSelectionArgs));
-    ultCsr->waitForTaskCountReturnValue = WaitStatus::gpuHang;
+    ultCsr->waitForTaskCountWithKmdNotifyFallbackReturnValue = WaitStatus::gpuHang;
     auto res = mockCommandQueueHw.enqueueStagingImageTransfer(CL_COMMAND_READ_IMAGE, srcImage, false, origin, region, pitchSize, pitchSize, ptr, nullptr);
 
     EXPECT_EQ(res, CL_OUT_OF_RESOURCES);

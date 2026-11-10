@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/command_stream/wait_status.h"
+#include "shared/source/helpers/completion_stamp.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/device_bitfield.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
@@ -20,6 +21,7 @@
 #include <set>
 
 namespace NEO {
+enum QueueThrottle : uint32_t;
 class SVMAllocsManager;
 class CommandStreamReceiver;
 class Device;
@@ -54,6 +56,7 @@ struct StagingBufferTracker {
     size_t size = 0;
     CommandStreamReceiver *csr = nullptr;
     uint64_t taskCountToWait = 0;
+    FlushStamp flushStampToWait = 0;
 
     bool isReady() const;
     void freeChunk() const;
@@ -94,9 +97,9 @@ class StagingBufferManager : NEO::NonCopyableAndNonMovableClass {
     bool isValidForStagingTransfer(const Device &device, const void *ptr, size_t size, bool hasDependencies);
     bool isStagingEnabled(const Device &device) const;
 
-    StagingTransferStatus performCopy(void *dstPtr, const void *srcPtr, size_t size, ChunkCopyFunction &chunkCopyFunc, CommandStreamReceiver *csr, bool isRead);
-    StagingTransferStatus performImageTransfer(const void *ptr, const size_t *globalOrigin, const size_t *globalRegion, size_t rowPitch, size_t slicePitch, size_t bytesPerPixel, bool isMipMapped3DImage, ChunkTransferImageFunc &chunkTransferImageFunc, CommandStreamReceiver *csr, bool isRead);
-    StagingTransferStatus performBufferTransfer(const void *ptr, size_t globalOffset, size_t globalSize, ChunkTransferBufferFunc &chunkTransferBufferFunc, CommandStreamReceiver *csr, bool isRead);
+    StagingTransferStatus performCopy(void *dstPtr, const void *srcPtr, size_t size, ChunkCopyFunction &chunkCopyFunc, CommandStreamReceiver *csr, bool isRead, QueueThrottle throttle);
+    StagingTransferStatus performImageTransfer(const void *ptr, const size_t *globalOrigin, const size_t *globalRegion, size_t rowPitch, size_t slicePitch, size_t bytesPerPixel, bool isMipMapped3DImage, ChunkTransferImageFunc &chunkTransferImageFunc, CommandStreamReceiver *csr, bool isRead, QueueThrottle throttle);
+    StagingTransferStatus performBufferTransfer(const void *ptr, size_t globalOffset, size_t globalSize, ChunkTransferBufferFunc &chunkTransferBufferFunc, CommandStreamReceiver *csr, bool isRead, QueueThrottle throttle);
 
     std::pair<HeapAllocator *, uint64_t> requestStagingBuffer(size_t &size);
     void trackChunk(const StagingBufferTracker &tracker);
@@ -111,13 +114,13 @@ class StagingBufferManager : NEO::NonCopyableAndNonMovableClass {
     void clearTrackedChunks();
 
     template <class Func, class... Args>
-    StagingTransferStatus performChunkTransfer(size_t chunkTransferId, bool isRead, const UserData &userData, StagingQueue &currentStagingBuffers, CommandStreamReceiver *csr, Func &func, Args... args);
+    StagingTransferStatus performChunkTransfer(size_t chunkTransferId, bool isRead, const UserData &userData, StagingQueue &currentStagingBuffers, CommandStreamReceiver *csr, QueueThrottle throttle, Func &func, Args... args);
     StagingTransferStatus performImageSlicesTransfer(StagingQueue &stagingQueue, size_t &submittedChunks, const void *ptr, auto sliceOffset,
                                                      size_t baseRowOffset, size_t rowsToCopy, size_t origin[4], size_t region[3], ImageMetadata &imageMetadata,
-                                                     ChunkTransferImageFunc &chunkTransferImageFunc, CommandStreamReceiver *csr, bool isRead);
+                                                     ChunkTransferImageFunc &chunkTransferImageFunc, CommandStreamReceiver *csr, bool isRead, QueueThrottle throttle);
 
-    WaitStatus copyStagingToHost(const std::pair<UserData, StagingBufferTracker> &transfer, StagingBufferTracker &tracker) const;
-    WaitStatus drainAndReleaseStagingQueue(bool isRead, const StagingQueue &stagingQueue, size_t numOfSubmittedTransfers) const;
+    WaitStatus copyStagingToHost(const std::pair<UserData, StagingBufferTracker> &transfer, StagingBufferTracker &tracker, QueueThrottle throttle) const;
+    WaitStatus drainAndReleaseStagingQueue(bool isRead, const StagingQueue &stagingQueue, size_t numOfSubmittedTransfers, QueueThrottle throttle) const;
     void copyImageToHost(void *dst, const void *stagingBuffer, size_t size, const ImageMetadata &imageData) const;
 
     bool isValidForStaging(const Device &device, const void *ptr, size_t size, bool hasDependencies);
