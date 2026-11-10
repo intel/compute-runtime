@@ -1689,6 +1689,90 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenAppendBarrierT
     EXPECT_FALSE(cmdList.dependenciesPresent);
 }
 
+HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenAppendBarrierWithoutRelaxedOrderingThenAvailableSpaceIsCheckedOnce) {
+    ze_command_queue_desc_t desc = {};
+    auto mockCmdQ = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getInternalEngine().commandStreamReceiver, &desc);
+
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.cmdQImmediate = mockCmdQ.get();
+    mockCmdQ->setTaskCount(1);
+    cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList.appendBarrier(nullptr, 0, nullptr, waitEventsParameters, signalEventParameters));
+
+    EXPECT_EQ(1u, cmdList.checkAvailableSpaceCalledCount);
+    EXPECT_EQ(0u, cmdList.checkAvailableSpaceWithRelaxedOrderingCalledCount);
+}
+
+HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenAppendBarrierWithRelaxedOrderingThenAvailableSpaceIsCheckedAgainForRelaxedOrdering) {
+    ze_command_queue_desc_t desc = {};
+    auto mockCmdQ = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getInternalEngine().commandStreamReceiver, &desc);
+
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.cmdQImmediate = mockCmdQ.get();
+    mockCmdQ->setTaskCount(1);
+    cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = true,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList.appendBarrier(nullptr, 0, nullptr, waitEventsParameters, signalEventParameters));
+
+    EXPECT_EQ(2u, cmdList.checkAvailableSpaceCalledCount);
+    EXPECT_EQ(1u, cmdList.checkAvailableSpaceWithRelaxedOrderingCalledCount);
+}
+
+HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWithDualStreamCopyOffloadWhenAppendBarrierThenAvailableSpaceIsCheckedOncePerSubmission) {
+    ze_command_queue_desc_t desc = {};
+    auto mockCmdQ = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getInternalEngine().commandStreamReceiver, &desc);
+    auto mockCopyOffloadCmdQ = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &desc);
+
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.cmdQImmediate = mockCmdQ.get();
+    mockCmdQ->setTaskCount(1);
+    cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    cmdList.cmdQImmediateCopyOffload = mockCopyOffloadCmdQ.get();
+    cmdList.copyOffloadMode = CopyOffloadModes::dualStream;
+
+    CmdListWaitEventParameters waitEventsParameters = {
+        .outWaitCmds = nullptr,
+        .relaxedOrderingAllowed = false,
+        .trackDependencies = true,
+        .waitForImplicitInOrderDependency = true,
+        .skipAddingWaitEventsToResidency = false,
+        .dualStreamCopyOffloadOperation = false,
+    };
+    CmdListSignalEventParameters signalEventParameters = {
+        .relaxedOrderingDispatch = false,
+    };
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList.appendBarrier(nullptr, 0, nullptr, waitEventsParameters, signalEventParameters));
+
+    EXPECT_EQ(2u, cmdList.checkAvailableSpaceCalledCount);
+    EXPECT_EQ(2u, cmdList.executeCommandListImmediateWithFlushTaskCalledCount);
+
+    cmdList.copyOffloadMode = CopyOffloadModes::disabled;
+    cmdList.cmdQImmediateCopyOffload = nullptr;
+}
+
 HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenAppendWaitOnEventsThenSetDependenciesPresent) {
     allocateDeviceBuffer();
     ze_command_queue_desc_t desc = {};

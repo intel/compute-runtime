@@ -931,7 +931,9 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrier(ze_even
     if (!isInOrderExecutionEnabled() && copyOffloadSynchronizationRequired) {
         ret = appendBarrierWithCopyOffloadSynchronization(hSignalEvent, numWaitEvents, phWaitEvents, waitEventsParameters, isStallingOperation);
     } else {
-        checkAvailableSpace(numWaitEvents, waitEventsParameters.relaxedOrderingAllowed, commonImmediateCommandSize, false);
+        if (waitEventsParameters.relaxedOrderingAllowed) {
+            checkAvailableSpace(numWaitEvents, true, commonImmediateCommandSize, false);
+        }
 
         ret = CommandListCoreFamily<gfxCoreFamily>::appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents, waitEventsParameters, signalEventParameters);
 
@@ -964,11 +966,6 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::programCrossEngineTaskCountW
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrierWithCopyOffloadSynchronization(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
                                                                                                        ze_event_handle_t *phWaitEvents, CmdListWaitEventParameters &waitEventsParameters, bool isStallingOperation) {
-    auto spaceCheckStatus = checkAvailableSpace(numWaitEvents, false, commonImmediateCommandSize, false);
-    if (spaceCheckStatus != ZE_RESULT_SUCCESS) {
-        return spaceCheckStatus;
-    }
-
     auto copyOffloadCsr = getCsr(true);
     const auto copyOffloadTaskCount = this->cmdQImmediateCopyOffload->getTaskCount();
 
@@ -984,7 +981,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrierWithCopy
     ret = flushImmediate(ret, true, isStallingOperation, waitEventsParameters.relaxedOrderingAllowed, NEO::AppendOperations::nonKernel, false, nullptr, true, nullptr, nullptr);
 
     this->csrReassignmentSuspended = true;
-    spaceCheckStatus = checkAvailableSpace(numWaitEvents, false, commonImmediateCommandSize, false);
+    auto spaceCheckStatus = checkAvailableSpace(numWaitEvents, false, commonImmediateCommandSize, false);
     this->csrReassignmentSuspended = false;
     if (spaceCheckStatus != ZE_RESULT_SUCCESS) {
         return spaceCheckStatus;

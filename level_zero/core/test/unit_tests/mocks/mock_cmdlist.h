@@ -907,6 +907,14 @@ class MockCommandListImmediateHw : public WhiteBox<::L0::CommandListCoreFamilyIm
         return executeCommandListImmediateWithFlushTaskReturnValue;
     }
 
+    ze_result_t checkAvailableSpace(uint32_t numEvents, bool hasRelaxedOrderingDependencies, size_t commandSize, bool requestCommandBufferInLocalMem) override {
+        ++checkAvailableSpaceCalledCount;
+        if (hasRelaxedOrderingDependencies) {
+            ++checkAvailableSpaceWithRelaxedOrderingCalledCount;
+        }
+        return BaseClass::checkAvailableSpace(numEvents, hasRelaxedOrderingDependencies, commandSize, requestCommandBufferInLocalMem);
+    }
+
     ze_result_t appendWriteToMemory(void *desc, void *ptr,
                                     uint64_t data) override {
         ++appendWriteToMemoryCalledCount;
@@ -970,6 +978,8 @@ class MockCommandListImmediateHw : public WhiteBox<::L0::CommandListCoreFamilyIm
 
     ze_result_t executeCommandListImmediateWithFlushTaskReturnValue = ZE_RESULT_SUCCESS;
     uint32_t executeCommandListImmediateWithFlushTaskCalledCount = 0;
+    uint32_t checkAvailableSpaceCalledCount = 0;
+    uint32_t checkAvailableSpaceWithRelaxedOrderingCalledCount = 0;
 
     bool callAppendWriteToMemoryBase = true;
     ze_result_t appendWriteToMemoryCalledCountReturnValue = ZE_RESULT_SUCCESS;

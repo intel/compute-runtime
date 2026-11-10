@@ -251,7 +251,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     void handleHeapsAndResidencyForImmediateRegularTask(void *&sshCpuBaseAddress);
     void handleDebugSurfaceStateUpdate(NEO::IndirectHeap *ssh);
 
-    ze_result_t checkAvailableSpace(uint32_t numEvents, bool hasRelaxedOrderingDependencies, size_t commandSize, bool requestCommandBufferInLocalMem);
+    MOCKABLE_VIRTUAL ze_result_t checkAvailableSpace(uint32_t numEvents, bool hasRelaxedOrderingDependencies, size_t commandSize, bool requestCommandBufferInLocalMem);
     template <typename AppendMetricCommandsFunctionT>
     ze_result_t appendMetricCommandsAndFlush(AppendMetricCommandsFunctionT &&appendMetricCommands, ze_event_handle_t hSignalEvent,
                                              uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
