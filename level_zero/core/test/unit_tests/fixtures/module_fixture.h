@@ -112,6 +112,13 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
         uint32_t getIndirectSize() const override {
             return getCrossThreadDataSize() + getPerThreadDataSizeForWholeThreadGroup();
         }
+
+        bool checkKernelContainsStatefulAccess() override {
+            checkKernelContainsStatefulAccessCalled++;
+            return WhiteBox<L0::KernelImp>::checkKernelContainsStatefulAccess();
+        }
+
+        uint32_t checkKernelContainsStatefulAccessCalled = 0;
     };
 
     void setUp();

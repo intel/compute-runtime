@@ -2452,6 +2452,46 @@ HWTEST2_F(CommandListAppendLaunchKernelMockModule,
 }
 
 HWTEST2_F(CommandListAppendLaunchKernelMockModule,
+          givenStateCacheInvalidationWaIsNotRequiredWhenKernelIsAppendedThenKernelArgumentsAreNotScannedForStatefulAccess, IsAtLeastXeCore) {
+    auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironmentRef();
+    auto releaseHelperBackup = std::move(rootDeviceEnvironment.releaseHelper);
+
+    auto releaseHelper = std::make_unique<MockReleaseHelper>();
+    releaseHelper->isStateCacheInvalidationWaRequiredResult = false;
+    rootDeviceEnvironment.releaseHelper = std::move(releaseHelper);
+
+    commandList->cmdListHeapAddressModel = NEO::HeapAddressModel::privateHeaps;
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams));
+
+    EXPECT_EQ(0u, kernel->checkKernelContainsStatefulAccessCalled);
+
+    rootDeviceEnvironment.releaseHelper = std::move(releaseHelperBackup);
+}
+
+HWTEST2_F(CommandListAppendLaunchKernelMockModule,
+          givenStateCacheInvalidationWaIsRequiredWhenKernelIsAppendedThenKernelArgumentsAreScannedForStatefulAccess, IsAtLeastXeCore) {
+    auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironmentRef();
+    auto releaseHelperBackup = std::move(rootDeviceEnvironment.releaseHelper);
+
+    auto releaseHelper = std::make_unique<MockReleaseHelper>();
+    releaseHelper->isStateCacheInvalidationWaRequiredResult = true;
+    rootDeviceEnvironment.releaseHelper = std::move(releaseHelper);
+
+    commandList->cmdListHeapAddressModel = NEO::HeapAddressModel::privateHeaps;
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams));
+
+    EXPECT_EQ(1u, kernel->checkKernelContainsStatefulAccessCalled);
+
+    rootDeviceEnvironment.releaseHelper = std::move(releaseHelperBackup);
+}
+
+HWTEST2_F(CommandListAppendLaunchKernelMockModule,
           givenStateCacheInvalidationWaIsRequiredWhenTwoKernelsWithoutStatefulAccessAreAppendedThenPipeControlWithStateCacheInvalidationIsNotInsertedBetweenWalkers, IsAtLeastXeCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using COMPUTE_WALKER = typename FamilyType::DefaultWalkerType;

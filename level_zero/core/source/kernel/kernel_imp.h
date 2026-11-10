@@ -222,7 +222,7 @@ struct KernelImp : Kernel {
 
     KernelExt *getExtension(uint32_t extensionType);
 
-    bool checkKernelContainsStatefulAccess();
+    MOCKABLE_VIRTUAL bool checkKernelContainsStatefulAccess();
 
     size_t getSyncBufferIndex() const {
         return privateState.syncBufferIndex;
