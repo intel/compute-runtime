@@ -107,20 +107,76 @@ GfxMemoryAllocationMethod WddmMemoryManager::getPreferredAllocationMethod(const 
     return preferredAllocationMethod;
 }
 
-bool WddmMemoryManager::unMapPhysicalDeviceMemoryFromVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, OsContext *osContext, uint32_t rootDeviceIndex) {
-    const auto wddm = static_cast<OsContextWin *>(osContext)->getWddm();
-    wddm->freeGpuVirtualAddress(gpuRange, bufferSize);
-    auto gfxPartition = getGfxPartition(rootDeviceIndex);
-    uint64_t reservedAddress = 0u;
-    auto status = wddm->reserveGpuVirtualAddress(gpuRange, gfxPartition->getHeapMinimalAddress(HeapIndex::heapStandard64KB), gfxPartition->getHeapLimit(HeapIndex::heapStandard64KB), bufferSize, &reservedAddress);
-    if (status != STATUS_SUCCESS) {
+bool WddmMemoryManager::unMapPhysicalDeviceMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, OsContext *osContext, uint32_t rootDeviceIndex) {
+    auto mappedAllocation = multiGraphicsAllocation.getGraphicsAllocation(physicalAllocation->getRootDeviceIndex());
+    if (mappedAllocation == nullptr) {
         return false;
     }
-    physicalAllocation->setCpuPtrAndGpuAddress(nullptr, 0u);
-    physicalAllocation->setReservedAddressRange(nullptr, 0u);
-    WddmAllocation *wddmAllocation = reinterpret_cast<WddmAllocation *>(physicalAllocation);
-    wddmAllocation->setMappedPhysicalMemoryReservation(false);
-    return true;
+
+    const auto wddm = static_cast<OsContextWin *>(osContext)->getWddm();
+    const bool isReservationRestored = restoreGpuVirtualAddressReservation(*wddm, gpuRange, bufferSize, rootDeviceIndex);
+
+    // Parked on both paths, as a re-reservation failure must not orphan the mapping allocation.
+    const auto mappedRootDeviceIndex = mappedAllocation->getRootDeviceIndex();
+    multiGraphicsAllocation.removeAllocation(mappedRootDeviceIndex);
+    removeAllocationFromResidencyControllers(*mappedAllocation);
+
+    // The resident container tracks the D3DKMT handles the mappings share, so while siblings remain only
+    // this mapping's reference to them is dropped; the last mapping drops every remaining reference.
+    auto &memoryOperationsInterface = executionEnvironment.rootDeviceEnvironments[mappedRootDeviceIndex]->memoryOperationsInterface;
+    if (memoryOperationsInterface) {
+        mappedAllocation->setSharedPhysicalMemoryMapping(!isLastLivePhysicalMemoryMapping(*mappedAllocation->getMappedPhysicalAllocation()));
+        memoryOperationsInterface->free(nullptr, *mappedAllocation);
+        mappedAllocation->setSharedPhysicalMemoryMapping(true);
+        mappedAllocation->setExplicitlyMadeResident(false);
+    }
+    closeNtSecureHandleOfMapping(*mappedAllocation);
+
+    const auto release = parkPhysicalMemoryMapping(*mappedAllocation, gpuRange, bufferSize);
+    if (release.physicalAllocationToRelease) {
+        freeGraphicsMemory(release.physicalAllocationToRelease);
+    }
+
+    return isReservationRestored;
+}
+
+bool WddmMemoryManager::restoreGpuVirtualAddressReservation(Wddm &wddm, uint64_t gpuRange, size_t bufferSize, uint32_t rootDeviceIndex) {
+    // freeGpuVirtualAddress clears the address it is given, and gpuRange is still needed below.
+    D3DGPU_VIRTUAL_ADDRESS addressToFree = gpuRange;
+    wddm.freeGpuVirtualAddress(addressToFree, bufferSize);
+
+    const auto decanonizedAddress = getGmmHelper(rootDeviceIndex)->decanonize(gpuRange);
+    auto gfxPartition = getGfxPartition(rootDeviceIndex);
+    HeapIndex heapIndex = HeapIndex::heapStandard64KB;
+    size_t heapPageSize = 0u;
+    // In the SVM range the GPU VA mirrors a CPU address reservation, so there is no GPU VA reservation to
+    // restore. The OS rejects freeing a mapping placed there; the next map at that address replaces it.
+    if (!gfxPartition->getHeapIndexAndPageSizeBasedOnAddress(decanonizedAddress, heapIndex, heapPageSize) || heapIndex == HeapIndex::heapSvm) {
+        return true;
+    }
+    uint64_t reservedAddress = 0u;
+    return wddm.reserveGpuVirtualAddress(decanonizedAddress, gfxPartition->getHeapMinimalAddress(heapIndex), gfxPartition->getHeapLimit(heapIndex), bufferSize, &reservedAddress) == STATUS_SUCCESS;
+}
+
+void WddmMemoryManager::removeAllocationFromResidencyControllers(GraphicsAllocation &allocation) {
+    for (auto &engine : getRegisteredEngines(allocation.getRootDeviceIndex())) {
+        auto &residencyController = static_cast<OsContextWin *>(engine.osContext)->getResidencyController();
+        residencyController.removeAllocation(residencyController.getEvictionAllocations(), &allocation);
+    }
+}
+
+void WddmMemoryManager::closeNtSecureHandleOfMapping(GraphicsAllocation &mappedAllocation) {
+    if (uint64_t ownedHandle = static_cast<WddmAllocation &>(mappedAllocation).getNtSecureHandle(); ownedHandle != 0u) {
+        closeInternalHandle(ownedHandle, 0u, &mappedAllocation);
+    }
+}
+
+// The mapping shares D3DKMT handles with the physical allocation, so it cannot go through
+// freeGraphicsMemory, which would close them.
+void WddmMemoryManager::destroyParkedPhysicalMemoryMapping(GraphicsAllocation &mappedAllocation) {
+    removeAllocationFromResidencyControllers(mappedAllocation);
+    closeNtSecureHandleOfMapping(mappedAllocation);
+    MemoryManager::destroyParkedPhysicalMemoryMapping(mappedAllocation);
 }
 
 bool WddmMemoryManager::unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, bool keepReservationPlaceholder) {
@@ -159,17 +215,76 @@ bool WddmMemoryManager::unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAl
     return success;
 }
 
-bool WddmMemoryManager::mapPhysicalDeviceMemoryToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryflags, size_t offset) {
-    WddmAllocation *wddmAllocation = reinterpret_cast<WddmAllocation *>(physicalAllocation);
-    auto decanonizedAddress = getGmmHelper(physicalAllocation->getRootDeviceIndex())->decanonize(gpuRange);
-    wddmAllocation->setMappedPhysicalMemoryReservation(mapGpuVirtualAddress(wddmAllocation, reinterpret_cast<void *>(decanonizedAddress), memoryflags, offset));
-    physicalAllocation->setCpuPtrAndGpuAddress(nullptr, gpuRange);
-    physicalAllocation->setReservedAddressRange(reinterpret_cast<void *>(gpuRange), bufferSize);
-    return wddmAllocation->isMappedPhysicalMemoryReservation();
+bool WddmMemoryManager::mapPhysicalDeviceMemoryToVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryflags, size_t offset) {
+    if (auto parkedAllocation = takeParkedPhysicalMemoryMapping(*physicalAllocation, gpuRange, bufferSize, false)) {
+        auto parkedWddmAllocation = static_cast<WddmAllocation *>(parkedAllocation);
+        // A failed map must not destroy the D3DKMT handles the mapping shares with the physical allocation.
+        parkedWddmAllocation->setMappedPhysicalMemoryReservation(true);
+        if (!mapPhysicalMemoryToGpuVa(parkedWddmAllocation, gpuRange, bufferSize, memoryflags, offset)) {
+            parkPhysicalMemoryMapping(*parkedAllocation, gpuRange, bufferSize);
+            return false;
+        }
+        multiGraphicsAllocation.addAllocation(parkedAllocation);
+        return true;
+    }
+    auto physicalWddmAllocation = reinterpret_cast<WddmAllocation *>(physicalAllocation);
+    std::unique_ptr<WddmAllocation> mappedAllocation(new WddmAllocation(physicalAllocation->getRootDeviceIndex(),
+                                                                        physicalAllocation->getNumGmms(),
+                                                                        physicalAllocation->getAllocationType(),
+                                                                        nullptr,
+                                                                        0,
+                                                                        bufferSize,
+                                                                        nullptr,
+                                                                        physicalAllocation->getMemoryPool(),
+                                                                        0u,
+                                                                        maxOsContextCount));
+    mappedAllocation->storageInfo = physicalWddmAllocation->storageInfo;
+    mappedAllocation->setMappedPhysicalMemoryReservation(true);
+    mappedAllocation->setSharedPhysicalMemoryMapping(true);
+    for (uint32_t handleId = 0; handleId < physicalAllocation->getNumGmms(); handleId++) {
+        mappedAllocation->setGmm(physicalAllocation->getGmm(handleId), handleId);
+        mappedAllocation->setHandle(physicalWddmAllocation->getHandle(handleId), handleId);
+    }
+
+    if (!mapPhysicalMemoryToGpuVa(mappedAllocation.get(), gpuRange, bufferSize, memoryflags, offset)) {
+        return false;
+    }
+
+    registerPhysicalMemoryMapping(*physicalAllocation, *mappedAllocation);
+    multiGraphicsAllocation.addAllocation(mappedAllocation.release());
+
+    return true;
+}
+
+bool WddmMemoryManager::mapPhysicalMemoryToGpuVa(WddmAllocation *wddmAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryFlags, size_t offset) {
+    auto decanonizedAddress = getGmmHelper(wddmAllocation->getRootDeviceIndex())->decanonize(gpuRange);
+    const bool isMapped = mapGpuVirtualAddress(wddmAllocation, reinterpret_cast<void *>(decanonizedAddress), memoryFlags, offset);
+    wddmAllocation->setMappedPhysicalMemoryReservation(isMapped);
+    if (!isMapped) {
+        return false;
+    }
+
+    wddmAllocation->setGpuPtr(gpuRange);
+    wddmAllocation->setReservedAddressRange(reinterpret_cast<void *>(gpuRange), bufferSize);
+    return true;
 }
 
 bool WddmMemoryManager::appliesVirtualMemoryAccessFlags(const GraphicsAllocation &physicalAllocation) {
     return physicalAllocation.getAllocationType() == AllocationType::buffer;
+}
+
+bool WddmMemoryManager::updatePhysicalDeviceMemoryMappingAccess(GraphicsAllocation &mappedAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryFlags, size_t offset, uint32_t rootDeviceIndex) {
+    auto &wddmMappedAllocation = static_cast<WddmAllocation &>(mappedAllocation);
+    if (!restoreGpuVirtualAddressReservation(getWddm(mappedAllocation.getRootDeviceIndex()), gpuRange, bufferSize, rootDeviceIndex)) {
+        return false;
+    }
+
+    // mapGpuVirtualAddress rather than mapPhysicalMemoryToGpuVa: a failed map must keep the mapping
+    // marked as such, or the failure path would destroy the handles it shares with the physical allocation.
+    auto decanonizedAddress = getGmmHelper(mappedAllocation.getRootDeviceIndex())->decanonize(gpuRange);
+    const bool isMapped = mapGpuVirtualAddress(&wddmMappedAllocation, reinterpret_cast<void *>(decanonizedAddress), memoryFlags, offset);
+    wddmMappedAllocation.setGpuPtr(gpuRange);
+    return isMapped;
 }
 
 bool WddmMemoryManager::mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, size_t offset, bool keepReservationPlaceholder) {
@@ -833,7 +948,7 @@ GraphicsAllocation *WddmMemoryManager::createGraphicsAllocationFromSharedHandle(
         }
         status = mapGpuVirtualAddress(allocation.get(), allocation->getReservedAddressPtr(), nullptr, 0u);
     } else {
-        status = mapPhysicalDeviceMemoryToVirtualMemory(allocation.get(), reinterpret_cast<uint64_t>(mapPointer), size, nullptr, static_cast<size_t>(osHandleData.physicalOffset));
+        status = mapPhysicalMemoryToGpuVa(allocation.get(), reinterpret_cast<uint64_t>(mapPointer), size, nullptr, static_cast<size_t>(osHandleData.physicalOffset));
     }
     this->registerSysMemAlloc(allocation.get());
     DEBUG_BREAK_IF(!status);
@@ -991,13 +1106,9 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
         freeAssociatedResourceImpl(*gfxAllocation);
     }
 
-    auto &registeredEngines = getRegisteredEngines(gfxAllocation->getRootDeviceIndex());
-    for (auto &engine : registeredEngines) {
-        auto &residencyController = static_cast<OsContextWin *>(engine.osContext)->getResidencyController();
-        auto &evictContainer = residencyController.getEvictionAllocations();
-        residencyController.removeAllocation(evictContainer, gfxAllocation);
-    }
+    removeAllocationFromResidencyControllers(*gfxAllocation);
 
+    auto &registeredEngines = getRegisteredEngines(gfxAllocation->getRootDeviceIndex());
     auto defaultGmm = gfxAllocation->getDefaultGmm();
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[gfxAllocation->getRootDeviceIndex()]->getHardwareInfo();
     auto &productHelper = executionEnvironment.rootDeviceEnvironments[gfxAllocation->getRootDeviceIndex()]->getHelper<ProductHelper>();
@@ -1110,7 +1221,8 @@ bool WddmMemoryManager::validateAllocation(WddmAllocation *alloc) {
     if (alloc == nullptr) {
         return false;
     }
-    if (alloc->isPhysicalMemoryReservation() && !alloc->isMappedPhysicalMemoryReservation()) {
+    // A physical reservation has no GPU VA of its own; its mappings are separate allocations.
+    if (alloc->isPhysicalMemoryReservation()) {
         return true;
     }
     if (alloc->getGpuAddress() == 0u || (alloc->getDefaultHandle() == 0 && alloc->fragmentsStorage.fragmentCount == 0)) {
@@ -1346,8 +1458,8 @@ bool WddmMemoryManager::mapGpuVaForOneHandleAllocation(WddmAllocation *allocatio
         if (allocation->getReservedGpuVirtualAddress()) {
             getWddm(allocation->getRootDeviceIndex()).freeGpuVirtualAddress(allocation->getReservedGpuVirtualAddressToModify(), allocation->getReservedSizeForGpuVirtualAddress());
         }
-        // A physical allocation outlives a failed map and keeps owning its handles.
-        if (!allocation->isPhysicalMemoryReservation()) {
+        // A physical allocation outlives a failed map and keeps owning its handles, also those its mappings share.
+        if (!allocation->isPhysicalMemoryReservation() && !allocation->isMappedPhysicalMemoryReservation()) {
             getWddm(allocation->getRootDeviceIndex()).destroyAllocations(&allocation->getHandles()[0], allocation->getNumGmms(), allocation->getResourceHandle());
         }
         return false;
@@ -1399,8 +1511,10 @@ bool WddmMemoryManager::mapMultiHandleAllocationWithRetry(WddmAllocation *alloca
             if (allocation->getReservedGpuVirtualAddress()) {
                 wddm.freeGpuVirtualAddress(allocation->getReservedGpuVirtualAddressToModify(), allocation->getReservedSizeForGpuVirtualAddress());
             }
-            if (!allocation->isPhysicalMemoryReservation()) {
+            if (!allocation->isPhysicalMemoryReservation() && !allocation->isMappedPhysicalMemoryReservation()) {
                 wddm.destroyAllocations(&allocation->getHandles()[0], allocation->getNumGmms(), allocation->getResourceHandle());
+            } else if (allocation->isMappedPhysicalMemoryReservation() && currentHandle > 0u) {
+                restoreGpuVirtualAddressReservation(wddm, castToUint64(preferredGpuVirtualAddress), allocation->getUnderlyingBufferSize(), allocation->getRootDeviceIndex());
             }
             return false;
         }

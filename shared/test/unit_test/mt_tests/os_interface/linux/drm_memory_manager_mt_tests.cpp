@@ -14,10 +14,12 @@
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 
 #include "gtest/gtest.h"
 
 #include <atomic>
+#include <functional>
 #include <memory>
 #include <thread>
 #include <vector>
@@ -85,6 +87,119 @@ TEST_F(DrmMemoryManagerMtTest, givenDrmMemoryManagerWhenSharedAllocationIsCreate
         memoryManager->freeGraphicsMemory(createdAllocations[i]);
     }
 }
+TEST_F(DrmMemoryManagerMtTest, givenTwoBufferObjectsSharingHandleWhenFirstIsUnreferencedThenItDropsHandleOwnershipUnderSharingLockAndSecondClosesHandle) {
+    class MockDrm : public Drm {
+      public:
+        using Drm::setupIoctlHelper;
+        MockDrm(int fd, RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(fd, ""), rootDeviceEnvironment) {}
+
+        int ioctl(DrmIoctl request, void *arg) override {
+            if (request == DrmIoctl::gemClose) {
+                gemCloseCalls++;
+            }
+            return 0;
+        }
+        std::atomic<uint32_t> gemCloseCalls{0u};
+    };
+    struct SharingLockExposingMemoryManager : public TestedDrmMemoryManager {
+        using DrmMemoryManager::mtx;
+        using TestedDrmMemoryManager::TestedDrmMemoryManager;
+    };
+    struct ObservedBufferObject : public BufferObject {
+        using BufferObject::BufferObject;
+        ~ObservedBufferObject() override {
+            if (onDestroy) {
+                onDestroy();
+            }
+        }
+        std::function<void()> onDestroy;
+    };
+
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
+    auto mock = new MockDrm(0, *executionEnvironment.rootDeviceEnvironments[0]);
+    mock->setupIoctlHelper(defaultHwInfo->platform.eProductFamily);
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
+    executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u, false);
+
+    auto memoryManager = std::make_unique<SharingLockExposingMemoryManager>(executionEnvironment);
+
+    constexpr int boHandle = 5;
+    BufferObjectHandleWrapper firstOwner{boHandle, 0u};
+    auto secondOwner = firstOwner.acquireSharedOwnership();
+    auto firstBo = new ObservedBufferObject(0u, mock, 0u, std::move(firstOwner), MemoryConstants::pageSize, 1u);
+    auto secondBo = new ObservedBufferObject(0u, mock, 0u, std::move(secondOwner), MemoryConstants::pageSize, 1u);
+    firstBo->markAsSharedBoHandle();
+    secondBo->markAsSharedBoHandle();
+
+    bool sharingLockHeldOnDestroy = false;
+    firstBo->onDestroy = [&]() {
+        std::thread([&]() {
+            std::unique_lock lock(memoryManager->mtx, std::try_to_lock);
+            sharingLockHeldOnDestroy = !lock.owns_lock();
+        }).join();
+    };
+
+    const auto gemCloseCallsBefore = mock->gemCloseCalls.load();
+    memoryManager->unreference(firstBo, false);
+    EXPECT_TRUE(sharingLockHeldOnDestroy);
+    EXPECT_EQ(gemCloseCallsBefore, mock->gemCloseCalls.load());
+
+    memoryManager->unreference(secondBo, false);
+    EXPECT_EQ(gemCloseCallsBefore + 1u, mock->gemCloseCalls.load());
+}
+
+TEST_F(DrmMemoryManagerMtTest, givenSharedHandleWhenImportingPhysicalMemoryThenPrimeFdToHandleIsIssuedUnderSharingLock) {
+    class MockDrm : public Drm {
+      public:
+        using Drm::setupIoctlHelper;
+        MockDrm(int fd, RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(fd, ""), rootDeviceEnvironment) {}
+
+        int ioctl(DrmIoctl request, void *arg) override {
+            if (request == DrmIoctl::primeFdToHandle) {
+                static_cast<PrimeHandle *>(arg)->handle = 1;
+                if (onPrimeFdToHandle) {
+                    onPrimeFdToHandle();
+                }
+            }
+            return 0;
+        }
+        std::function<void()> onPrimeFdToHandle;
+    };
+    struct SharingLockExposingMemoryManager : public TestedDrmMemoryManager {
+        using DrmMemoryManager::mtx;
+        using TestedDrmMemoryManager::TestedDrmMemoryManager;
+    };
+
+    VariableBackup<off_t> lseekBackup(&SysCalls::lseekReturn, static_cast<off_t>(MemoryConstants::pageSize));
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
+    auto mock = new MockDrm(0, *executionEnvironment.rootDeviceEnvironments[0]);
+    mock->setupIoctlHelper(defaultHwInfo->platform.eProductFamily);
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
+    executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u, false);
+
+    auto memoryManager = std::make_unique<SharingLockExposingMemoryManager>(executionEnvironment);
+
+    bool sharingLockHeldOnPrimeFdToHandle = false;
+    mock->onPrimeFdToHandle = [&]() {
+        std::thread([&]() {
+            std::unique_lock lock(memoryManager->mtx, std::try_to_lock);
+            sharingLockHeldOnPrimeFdToHandle = !lock.owns_lock();
+        }).join();
+    };
+
+    AllocationProperties properties(0, false, MemoryConstants::pageSize, AllocationType::buffer, false, {});
+    properties.flags.isHostInaccessibleAllocation = true;
+    TestedDrmMemoryManager::OsHandleData osHandleData{3u};
+    auto allocation = memoryManager->createPhysicalGraphicsMemoryFromSharedHandle(osHandleData, properties);
+    ASSERT_NE(nullptr, allocation);
+    EXPECT_TRUE(sharingLockHeldOnPrimeFdToHandle);
+
+    mock->onPrimeFdToHandle = nullptr;
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
 TEST_F(DrmMemoryManagerMtTest, givenMultipleThreadsWhenSharedAllocationIsCreatedThenPrimeFdToHandleDoesNotRaceWithClose) {
     class MockDrm : public Drm {
       public:

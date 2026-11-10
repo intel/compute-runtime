@@ -161,6 +161,54 @@ TEST_F(WddmMemoryOperationsHandlerTest, givenVariousAllocationsWhenFreeResidentA
     EXPECT_EQ(wddmMemoryOperationsHandler->isResident(nullptr, *wddmFragmentedAllocation), MemoryOperationsStatus::memoryNotFound);
 }
 
+TEST_F(WddmMemoryOperationsHandlerTest, givenResidentSharedPhysicalMemoryMappingsWithCommonHandleWhenFreeingOneThenTheOtherStaysResidentUntilItIsFreed) {
+    MockWddmAllocation siblingMapping(rootDeviceEnvironment->getGmmHelper());
+    siblingMapping.handle = wddmAllocation->handle;
+    wddmAllocation->setSharedPhysicalMemoryMapping(true);
+    siblingMapping.setSharedPhysicalMemoryMapping(true);
+    GraphicsAllocation *siblingMappingPtr = &siblingMapping;
+
+    EXPECT_EQ(MemoryOperationsStatus::success, wddmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1), false, false));
+    EXPECT_EQ(MemoryOperationsStatus::success, wddmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&siblingMappingPtr, 1), false, false));
+
+    EXPECT_EQ(MemoryOperationsStatus::success, wddmMemoryOperationsHandler->free(nullptr, *wddmAllocation));
+    EXPECT_EQ(MemoryOperationsStatus::success, wddmMemoryOperationsHandler->isResident(nullptr, siblingMapping));
+
+    EXPECT_EQ(MemoryOperationsStatus::success, wddmMemoryOperationsHandler->free(nullptr, siblingMapping));
+    EXPECT_EQ(MemoryOperationsStatus::memoryNotFound, wddmMemoryOperationsHandler->isResident(nullptr, siblingMapping));
+}
+
+TEST_F(WddmMemoryOperationsHandlerTest, givenNotResidentPhysicalAllocationWithHandlesSharedWithMappingsWhenFreeingItThenResidencyOfItsMappingsIsDropped) {
+    MockWddmAllocation mapping(rootDeviceEnvironment->getGmmHelper());
+    mapping.handle = wddmAllocation->handle;
+    mapping.setSharedPhysicalMemoryMapping(true);
+    GraphicsAllocation *mappingPtr = &mapping;
+    EXPECT_EQ(MemoryOperationsStatus::success, wddmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&mappingPtr, 1), false, false));
+
+    wddmAllocation->setExplicitlyMadeResident(false);
+    wddmAllocation->getPhysicalMappingsInfo().handlesSharedWithMappings = true;
+
+    EXPECT_EQ(MemoryOperationsStatus::success, wddmMemoryOperationsHandler->free(nullptr, *wddmAllocation));
+    EXPECT_EQ(MemoryOperationsStatus::memoryNotFound, wddmMemoryOperationsHandler->isResident(nullptr, mapping));
+}
+
+TEST_F(WddmMemoryOperationsHandlerTest, givenNotResidentPhysicalAllocationWithPhysicalMappingsInfoButHandlesNotSharedWithMappingsWhenFreeingItThenResidencyOfCommonHandleIsKept) {
+    MockWddmAllocation mapping(rootDeviceEnvironment->getGmmHelper());
+    mapping.handle = wddmAllocation->handle;
+    mapping.setSharedPhysicalMemoryMapping(true);
+    GraphicsAllocation *mappingPtr = &mapping;
+    EXPECT_EQ(MemoryOperationsStatus::success, wddmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&mappingPtr, 1), false, false));
+
+    wddmAllocation->setExplicitlyMadeResident(false);
+    ASSERT_FALSE(wddmAllocation->getPhysicalMappingsInfo().handlesSharedWithMappings);
+
+    EXPECT_EQ(MemoryOperationsStatus::success, wddmMemoryOperationsHandler->free(nullptr, *wddmAllocation));
+    EXPECT_EQ(MemoryOperationsStatus::success, wddmMemoryOperationsHandler->isResident(nullptr, mapping));
+
+    EXPECT_EQ(MemoryOperationsStatus::success, wddmMemoryOperationsHandler->free(nullptr, mapping));
+    EXPECT_EQ(MemoryOperationsStatus::memoryNotFound, wddmMemoryOperationsHandler->isResident(nullptr, mapping));
+}
+
 TEST_F(WddmMemoryOperationsHandlerTest, givenRegularAllocationWhenMakingAsyncResidentAllocationThenMakeResidentIsCalledAndAllocationIsMarkedAsExplicitlyResident) {
     wddmAllocation->setExplicitlyMadeResident(false);
     EXPECT_EQ(wddmMemoryOperationsHandler->makeResidentAsync(nullptr, allocationPtr), MemoryOperationsStatus::success);

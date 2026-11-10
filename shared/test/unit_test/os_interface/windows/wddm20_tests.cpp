@@ -1325,6 +1325,29 @@ TEST_F(WddmLockWithMakeResidentTests, whenRemovingResourceThenAllMatchingHandles
     EXPECT_EQ(handle1, mockTemporaryResources->resourceHandles.back());
 }
 
+TEST_F(WddmLockWithMakeResidentTests, whenRemovingResourceReferenceThenOneMatchingHandleIsRemovedAndUntrackedHandleIsIgnored) {
+    D3DKMT_HANDLE handle0 = ALLOCATION_HANDLE;
+    D3DKMT_HANDLE handle1 = ALLOCATION_HANDLE + 1;
+    D3DKMT_HANDLE untrackedHandle = ALLOCATION_HANDLE + 2;
+
+    wddm->temporaryResources->makeResidentResource(handle0, 0x1000);
+    wddm->temporaryResources->makeResidentResource(handle0, 0x1000);
+    wddm->temporaryResources->makeResidentResource(handle1, 0x1000);
+    ASSERT_EQ(3u, mockTemporaryResources->resourceHandles.size());
+
+    wddm->temporaryResources->removeResourceReference(untrackedHandle);
+    EXPECT_EQ(3u, mockTemporaryResources->resourceHandles.size());
+
+    wddm->temporaryResources->removeResourceReference(handle0);
+    ASSERT_EQ(2u, mockTemporaryResources->resourceHandles.size());
+    EXPECT_EQ(MemoryOperationsStatus::success, wddm->temporaryResources->isAllocationResident(handle0));
+    EXPECT_EQ(MemoryOperationsStatus::success, wddm->temporaryResources->isAllocationResident(handle1));
+
+    wddm->temporaryResources->removeResourceReference(handle0);
+    EXPECT_EQ(MemoryOperationsStatus::memoryNotFound, wddm->temporaryResources->isAllocationResident(handle0));
+    EXPECT_EQ(MemoryOperationsStatus::success, wddm->temporaryResources->isAllocationResident(handle1));
+}
+
 TEST_F(WddmLockWithMakeResidentTests, givenAllocationWhenApplyBlockingMakeResidentThenWaitForCurrentPagingFenceValue) {
     wddm->callBaseMakeResident = true;
     wddm->mockPagingFence = 0u;

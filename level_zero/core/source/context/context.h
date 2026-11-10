@@ -390,6 +390,7 @@ struct Context : _ze_context_handle_t, NEO::NonCopyableAndNonMovableClass {
         this->numDevices = static_cast<uint32_t>(this->deviceHandles.size());
     }
     NEO::VirtualMemoryReservation *findSupportedVirtualReservation(const void *ptr, size_t size);
+    bool unMapPhysicalMemoryMappingsLocked(NEO::VirtualMemoryReservation *virtualMemoryReservation, uint64_t rangeStart, uint64_t rangeEnd);
     ze_result_t checkMemSizeLimit(Device *inDevice, size_t size, bool relaxedSizeAllowed, void **ptr);
 
     uint32_t getNumDevices() const {

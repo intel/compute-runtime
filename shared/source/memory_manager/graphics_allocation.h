@@ -115,7 +115,8 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
                 uint32_t explicitlyMadeResident : 1;
                 uint32_t isImported : 1;
                 uint32_t qualifiedFor2MBPages : 1;
-                uint32_t reserved : 21;
+                uint32_t sharedPhysicalMemoryMapping : 1;
+                uint32_t reserved : 20;
             } flags;
             uint32_t allFlags = 0u;
         };
@@ -131,6 +132,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
             flags.explicitlyMadeResident = false;
             flags.isImported = false;
             flags.qualifiedFor2MBPages = false;
+            flags.sharedPhysicalMemoryMapping = false;
         }
     };
 
@@ -510,6 +512,36 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
     bool qualifiesFor2MBPages() const { return allocationInfo.flags.qualifiedFor2MBPages; }
     void setQualifiesFor2MBPages(bool value) { allocationInfo.flags.qualifiedFor2MBPages = value; }
 
+    // Set on a mapping that aliases another allocation's physical memory. Its bytes and GMMs belong to
+    // that physical allocation, so it is left out of the used-memory totals and memory bank usage and
+    // does not free the GMMs.
+    bool isSharedPhysicalMemoryMapping() const { return allocationInfo.flags.sharedPhysicalMemoryMapping; }
+    void setSharedPhysicalMemoryMapping(bool value) { allocationInfo.flags.sharedPhysicalMemoryMapping = value; }
+
+    struct ParkedPhysicalMemoryMapping {
+        GraphicsAllocation *mappedAllocation = nullptr;
+        uint64_t gpuRange = 0u;
+        size_t size = 0u;
+    };
+    struct PhysicalMappingsInfo {
+        std::atomic<uint32_t> liveMappingsCount{0u};
+        bool releasePending = false;
+        bool handlesSharedWithMappings = false;
+        // Unmapped mappings stay alive, as kernels and command lists keep referencing them, and are
+        // reused when the same range is mapped again.
+        std::vector<ParkedPhysicalMemoryMapping> parkedMappings;
+    };
+    // A mapping borrows the backing storage, GMMs and handles of the physical allocation it maps.
+    GraphicsAllocation *getMappedPhysicalAllocation() const { return mappedPhysicalAllocation; }
+    void setMappedPhysicalAllocation(GraphicsAllocation *physicalAllocation) { this->mappedPhysicalAllocation = physicalAllocation; }
+    PhysicalMappingsInfo &getPhysicalMappingsInfo() {
+        if (!this->physicalMappingsInfo) {
+            this->physicalMappingsInfo = std::make_unique<PhysicalMappingsInfo>();
+        }
+        return *this->physicalMappingsInfo;
+    }
+    PhysicalMappingsInfo *peekPhysicalMappingsInfo() const { return this->physicalMappingsInfo.get(); }
+
     bool isAllocatedInLocalMemoryPool() const { return (this->memoryPool == MemoryPool::localMemory); }
     bool isAllocationLockable() const;
 
@@ -636,6 +668,8 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
     ResidencyData residency;
     GraphicsAllocation *parentAllocation = nullptr;
     size_t offsetInParent = 0u;
+    GraphicsAllocation *mappedPhysicalAllocation = nullptr;
+    std::unique_ptr<PhysicalMappingsInfo> physicalMappingsInfo;
     std::atomic<uint32_t> hostPtrTaskCountAssignment{0};
     std::atomic<uint64_t> residencyContainerStamp{0};
     // Not {}: value-initializing the atomic zeroes the byte, but default MemAdviseFlags sets cachedMemory.

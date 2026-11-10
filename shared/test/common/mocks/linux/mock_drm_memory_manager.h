@@ -96,6 +96,7 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using DrmMemoryManager::sharedBoHandles;
     using DrmMemoryManager::sharingBufferObjects;
     using DrmMemoryManager::supportsMultiStorageResources;
+    using DrmMemoryManager::supportsPhysicalDeviceMemoryMultiMapping;
     using DrmMemoryManager::tryToGetBoHandleWrapperWithSharedOwnership;
     using DrmMemoryManager::unlockBufferObject;
     using DrmMemoryManager::unMapPhysicalDeviceMemoryFromVirtualMemory;

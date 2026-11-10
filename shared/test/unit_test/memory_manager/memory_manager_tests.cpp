@@ -135,6 +135,12 @@ TEST(MemoryManagerTest, WhenCallingReserveExactCpuAddressThenReturnFalse) {
     EXPECT_FALSE(memoryManager.reserveExactCpuAddress(0x1000u, MemoryConstants::pageSize));
 }
 
+TEST(MemoryManagerTest, WhenCallingSupportsPhysicalDeviceMemoryMultiMappingThenReturnTrue) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    OsAgnosticMemoryManager memoryManager(executionEnvironment);
+    EXPECT_TRUE(memoryManager.supportsPhysicalDeviceMemoryMultiMapping(0u));
+}
+
 TEST(MemoryManagerTest, WhenCallingHasPageFaultsEnabledThenReturnFalse) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     OsAgnosticMemoryManager memoryManager(executionEnvironment);
@@ -260,13 +266,330 @@ TEST(MemoryManagerTest, givenDeviceGraphicsAllocationWhenMapCalledThenDontResetC
     MockGraphicsAllocation allocation{&allocationStorage, 1};
     EXPECT_NE(nullptr, allocation.getUnderlyingBuffer());
 
-    EXPECT_TRUE(memoryManager.mapPhysicalDeviceMemoryToVirtualMemory(&allocation, 0x12300, 0, nullptr, 0u));
+    MultiGraphicsAllocation multiGraphicsAllocation(allocation.getRootDeviceIndex());
+    EXPECT_TRUE(memoryManager.mapPhysicalDeviceMemoryToVirtualMemory(multiGraphicsAllocation, &allocation, 0x12300, 0, nullptr, 0u));
+    auto mapping = multiGraphicsAllocation.getGraphicsAllocation(allocation.getRootDeviceIndex());
+    ASSERT_NE(nullptr, mapping);
     EXPECT_EQ(&allocationStorage, allocation.getUnderlyingBuffer());
-    EXPECT_EQ(0x12300u, allocation.getGpuAddress());
+    EXPECT_EQ(0x12300u, mapping->getGpuAddress());
 
-    EXPECT_TRUE(memoryManager.unMapPhysicalDeviceMemoryFromVirtualMemory(&allocation, 1, 1, nullptr, 0));
+    EXPECT_TRUE(memoryManager.unMapPhysicalDeviceMemoryFromVirtualMemory(multiGraphicsAllocation, &allocation, 1, 1, nullptr, 0));
     EXPECT_EQ(&allocationStorage, allocation.getUnderlyingBuffer());
-    EXPECT_EQ(0u, allocation.getGpuAddress());
+    EXPECT_EQ(nullptr, multiGraphicsAllocation.getGraphicsAllocation(allocation.getRootDeviceIndex()));
+    memoryManager.releaseParkedPhysicalMemoryMappings(0u, std::numeric_limits<uint64_t>::max());
+}
+
+TEST(MemoryManagerTest, givenMappingAllocationPassedAsPhysicalAllocationWhenUnMapPhysicalDeviceMemoryFromVirtualMemoryThenMappingAllocationIsDeletedWithoutUseAfterFree) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    MockMemoryManager memoryManager(false, false, executionEnvironment);
+
+    uint8_t allocationStorage = 0;
+    auto allocation = new MockGraphicsAllocation{&allocationStorage, 1};
+    allocation->setReservedAddressRange(reinterpret_cast<void *>(0x40000), 1);
+
+    MultiGraphicsAllocation multiGraphicsAllocation(allocation->getRootDeviceIndex());
+    multiGraphicsAllocation.addAllocation(allocation);
+
+    EXPECT_TRUE(memoryManager.unMapPhysicalDeviceMemoryFromVirtualMemory(multiGraphicsAllocation, allocation, 0x40000, 1, nullptr, 0));
+    EXPECT_EQ(nullptr, multiGraphicsAllocation.getGraphicsAllocation(0));
+}
+
+TEST(MemoryManagerTest, givenPhysicalAllocationWhenItIsFirstMappedThenPhysicalMappingsInfoIsCreatedAndNeverMappedAllocationIsFreedWithoutIt) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    MockMemoryManager memoryManager(false, false, executionEnvironment);
+
+    auto neverMappedAllocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{0u, MemoryConstants::pageSize});
+    ASSERT_NE(nullptr, neverMappedAllocation);
+    EXPECT_EQ(nullptr, neverMappedAllocation->peekPhysicalMappingsInfo());
+    memoryManager.freeGraphicsMemory(neverMappedAllocation);
+
+    uint8_t allocationStorage = 0;
+    MockGraphicsAllocation physicalAllocation{&allocationStorage, 1};
+    const auto rootDeviceIndex = physicalAllocation.getRootDeviceIndex();
+    constexpr uint64_t gpuRange = 0x120000;
+    constexpr size_t mappingSize = MemoryConstants::pageSize64k;
+    EXPECT_EQ(nullptr, physicalAllocation.peekPhysicalMappingsInfo());
+
+    MultiGraphicsAllocation multiGraphicsAllocation(rootDeviceIndex);
+    ASSERT_TRUE(memoryManager.mapPhysicalDeviceMemoryToVirtualMemory(multiGraphicsAllocation, &physicalAllocation, gpuRange, mappingSize, nullptr, 0u));
+    auto physicalMappingsInfo = physicalAllocation.peekPhysicalMappingsInfo();
+    ASSERT_NE(nullptr, physicalMappingsInfo);
+    EXPECT_EQ(1u, physicalMappingsInfo->liveMappingsCount);
+    EXPECT_EQ(nullptr, multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex)->peekPhysicalMappingsInfo());
+
+    EXPECT_TRUE(memoryManager.unMapPhysicalDeviceMemoryFromVirtualMemory(multiGraphicsAllocation, &physicalAllocation, gpuRange, mappingSize, nullptr, 0u));
+    memoryManager.releaseParkedPhysicalMemoryMappings(0u, std::numeric_limits<uint64_t>::max());
+}
+
+TEST(MemoryManagerTest, givenUnmappedPhysicalDeviceMemoryMappingWhenSameRangeIsMappedAgainThenMappingAllocationIsReused) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    MockMemoryManager memoryManager(false, false, executionEnvironment);
+
+    uint8_t allocationStorage = 0;
+    MockGraphicsAllocation physicalAllocation{&allocationStorage, 1};
+    const auto rootDeviceIndex = physicalAllocation.getRootDeviceIndex();
+    constexpr uint64_t gpuRange = 0x120000;
+    constexpr size_t mappingSize = MemoryConstants::pageSize64k;
+
+    MultiGraphicsAllocation multiGraphicsAllocation(rootDeviceIndex);
+    ASSERT_TRUE(memoryManager.mapPhysicalDeviceMemoryToVirtualMemory(multiGraphicsAllocation, &physicalAllocation, gpuRange, mappingSize, nullptr, 0u));
+    auto mappedAllocation = multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex);
+    ASSERT_NE(nullptr, mappedAllocation);
+
+    EXPECT_TRUE(memoryManager.unMapPhysicalDeviceMemoryFromVirtualMemory(multiGraphicsAllocation, &physicalAllocation, gpuRange, mappingSize, nullptr, 0u));
+    EXPECT_EQ(nullptr, multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex));
+    EXPECT_EQ(0u, physicalAllocation.getPhysicalMappingsInfo().liveMappingsCount);
+
+    ASSERT_TRUE(memoryManager.mapPhysicalDeviceMemoryToVirtualMemory(multiGraphicsAllocation, &physicalAllocation, gpuRange, mappingSize, nullptr, 0u));
+    EXPECT_EQ(mappedAllocation, multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex));
+    EXPECT_EQ(gpuRange, mappedAllocation->getGpuAddress());
+    EXPECT_EQ(1u, physicalAllocation.getPhysicalMappingsInfo().liveMappingsCount);
+    EXPECT_TRUE(physicalAllocation.getPhysicalMappingsInfo().parkedMappings.empty());
+
+    EXPECT_TRUE(memoryManager.unMapPhysicalDeviceMemoryFromVirtualMemory(multiGraphicsAllocation, &physicalAllocation, gpuRange, mappingSize, nullptr, 0u));
+    memoryManager.releaseParkedPhysicalMemoryMappings(gpuRange, gpuRange + mappingSize);
+}
+
+TEST(MemoryManagerTest, givenParkedPhysicalDeviceMemoryMappingsWhenReleasingRangeThenOnlyMappingsInsideRangeAreReleased) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    MockMemoryManager memoryManager(false, false, executionEnvironment);
+
+    uint8_t allocationStorage = 0;
+    MockGraphicsAllocation physicalAllocation{&allocationStorage, 1};
+    const auto rootDeviceIndex = physicalAllocation.getRootDeviceIndex();
+    constexpr uint64_t firstGpuRange = 0x120000;
+    constexpr size_t mappingSize = MemoryConstants::pageSize64k;
+    constexpr uint64_t secondGpuRange = firstGpuRange + mappingSize;
+
+    for (const auto gpuRange : {firstGpuRange, secondGpuRange}) {
+        MultiGraphicsAllocation multiGraphicsAllocation(rootDeviceIndex);
+        ASSERT_TRUE(memoryManager.mapPhysicalDeviceMemoryToVirtualMemory(multiGraphicsAllocation, &physicalAllocation, gpuRange, mappingSize, nullptr, 0u));
+        EXPECT_TRUE(memoryManager.unMapPhysicalDeviceMemoryFromVirtualMemory(multiGraphicsAllocation, &physicalAllocation, gpuRange, mappingSize, nullptr, 0u));
+    }
+    auto &parkedMappings = physicalAllocation.getPhysicalMappingsInfo().parkedMappings;
+    EXPECT_EQ(2u, parkedMappings.size());
+
+    memoryManager.releaseParkedPhysicalMemoryMappings(firstGpuRange, secondGpuRange);
+    ASSERT_EQ(1u, parkedMappings.size());
+    EXPECT_EQ(secondGpuRange, parkedMappings[0].gpuRange);
+
+    memoryManager.releaseParkedPhysicalMemoryMappings(secondGpuRange, secondGpuRange + mappingSize);
+    EXPECT_TRUE(parkedMappings.empty());
+}
+
+TEST(MemoryManagerTest, givenParkedPhysicalDeviceMemoryMappingsWhenReleasingRangeThenMappingsBelowOrCrossingRangeAreKept) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    MockMemoryManager memoryManager(false, false, executionEnvironment);
+
+    uint8_t allocationStorage = 0;
+    MockGraphicsAllocation physicalAllocation{&allocationStorage, 1};
+    const auto rootDeviceIndex = physicalAllocation.getRootDeviceIndex();
+    constexpr size_t mappingSize = MemoryConstants::pageSize64k;
+    constexpr uint64_t belowRangeGpuRange = 0x120000;
+    constexpr uint64_t insideRangeGpuRange = belowRangeGpuRange + mappingSize;
+    constexpr uint64_t crossingRangeEndGpuRange = insideRangeGpuRange + mappingSize;
+
+    for (const auto gpuRange : {belowRangeGpuRange, insideRangeGpuRange, crossingRangeEndGpuRange}) {
+        MultiGraphicsAllocation multiGraphicsAllocation(rootDeviceIndex);
+        ASSERT_TRUE(memoryManager.mapPhysicalDeviceMemoryToVirtualMemory(multiGraphicsAllocation, &physicalAllocation, gpuRange, mappingSize, nullptr, 0u));
+        EXPECT_TRUE(memoryManager.unMapPhysicalDeviceMemoryFromVirtualMemory(multiGraphicsAllocation, &physicalAllocation, gpuRange, mappingSize, nullptr, 0u));
+    }
+    auto &parkedMappings = physicalAllocation.getPhysicalMappingsInfo().parkedMappings;
+    ASSERT_EQ(3u, parkedMappings.size());
+
+    memoryManager.releaseParkedPhysicalMemoryMappings(insideRangeGpuRange, crossingRangeEndGpuRange + mappingSize / 2);
+    ASSERT_EQ(2u, parkedMappings.size());
+    EXPECT_EQ(belowRangeGpuRange, parkedMappings[0].gpuRange);
+    EXPECT_EQ(crossingRangeEndGpuRange, parkedMappings[1].gpuRange);
+
+    memoryManager.releaseParkedPhysicalMemoryMappings(0u, std::numeric_limits<uint64_t>::max());
+    EXPECT_TRUE(parkedMappings.empty());
+}
+
+TEST(MemoryManagerTest, givenParkedMappingsOfSeveralPhysicalAllocationsWhenReleasingRangeThenParkedMappingsOfEveryPhysicalAllocationInRangeAreReleased) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    MockMemoryManager memoryManager(false, false, executionEnvironment);
+
+    uint8_t firstStorage = 0;
+    uint8_t secondStorage = 0;
+    MockGraphicsAllocation firstPhysicalAllocation{&firstStorage, 1};
+    MockGraphicsAllocation secondPhysicalAllocation{&secondStorage, 1};
+    const auto rootDeviceIndex = firstPhysicalAllocation.getRootDeviceIndex();
+    constexpr size_t mappingSize = MemoryConstants::pageSize64k;
+    constexpr uint64_t rangeStart = 0x120000;
+    constexpr uint64_t outsideRangeGpuRange = rangeStart + 4 * mappingSize;
+
+    struct {
+        MockGraphicsAllocation *physicalAllocation;
+        uint64_t gpuRange;
+    } parkedPlacements[] = {{&firstPhysicalAllocation, rangeStart}, {&secondPhysicalAllocation, rangeStart + mappingSize}, {&secondPhysicalAllocation, outsideRangeGpuRange}};
+    for (const auto &placement : parkedPlacements) {
+        MultiGraphicsAllocation multiGraphicsAllocation(rootDeviceIndex);
+        ASSERT_TRUE(memoryManager.mapPhysicalDeviceMemoryToVirtualMemory(multiGraphicsAllocation, placement.physicalAllocation, placement.gpuRange, mappingSize, nullptr, 0u));
+        EXPECT_TRUE(memoryManager.unMapPhysicalDeviceMemoryFromVirtualMemory(multiGraphicsAllocation, placement.physicalAllocation, placement.gpuRange, mappingSize, nullptr, 0u));
+    }
+
+    memoryManager.releaseParkedPhysicalMemoryMappings(rangeStart, rangeStart + 2 * mappingSize);
+    EXPECT_TRUE(firstPhysicalAllocation.getPhysicalMappingsInfo().parkedMappings.empty());
+    ASSERT_EQ(1u, secondPhysicalAllocation.getPhysicalMappingsInfo().parkedMappings.size());
+    EXPECT_EQ(outsideRangeGpuRange, secondPhysicalAllocation.getPhysicalMappingsInfo().parkedMappings[0].gpuRange);
+
+    memoryManager.releaseParkedPhysicalMemoryMappings(0u, std::numeric_limits<uint64_t>::max());
+    EXPECT_TRUE(secondPhysicalAllocation.getPhysicalMappingsInfo().parkedMappings.empty());
+}
+
+TEST(MemoryManagerTest, givenParkedPhysicalDeviceMemoryMappingWhenMappingSameRangeWithDifferentSizeOrDifferentRangeWithSameSizeThenParkedMappingIsNotReused) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    MockMemoryManager memoryManager(false, false, executionEnvironment);
+
+    uint8_t allocationStorage = 0;
+    MockGraphicsAllocation physicalAllocation{&allocationStorage, 1};
+    const auto rootDeviceIndex = physicalAllocation.getRootDeviceIndex();
+    constexpr uint64_t parkedGpuRange = 0x120000;
+    constexpr size_t parkedMappingSize = MemoryConstants::pageSize64k;
+    constexpr uint64_t otherGpuRange = parkedGpuRange + 4 * parkedMappingSize;
+
+    MultiGraphicsAllocation parkedMultiGraphicsAllocation(rootDeviceIndex);
+    ASSERT_TRUE(memoryManager.mapPhysicalDeviceMemoryToVirtualMemory(parkedMultiGraphicsAllocation, &physicalAllocation, parkedGpuRange, parkedMappingSize, nullptr, 0u));
+    auto parkedMapping = parkedMultiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex);
+    EXPECT_TRUE(memoryManager.unMapPhysicalDeviceMemoryFromVirtualMemory(parkedMultiGraphicsAllocation, &physicalAllocation, parkedGpuRange, parkedMappingSize, nullptr, 0u));
+
+    struct {
+        uint64_t gpuRange;
+        size_t size;
+    } nonMatchingMappings[] = {{parkedGpuRange, 2 * parkedMappingSize}, {otherGpuRange, parkedMappingSize}};
+    for (const auto &nonMatchingMapping : nonMatchingMappings) {
+        MultiGraphicsAllocation multiGraphicsAllocation(rootDeviceIndex);
+        ASSERT_TRUE(memoryManager.mapPhysicalDeviceMemoryToVirtualMemory(multiGraphicsAllocation, &physicalAllocation, nonMatchingMapping.gpuRange, nonMatchingMapping.size, nullptr, 0u));
+        EXPECT_NE(parkedMapping, multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex));
+        EXPECT_EQ(1u, physicalAllocation.getPhysicalMappingsInfo().liveMappingsCount);
+        const auto &parkedMappings = physicalAllocation.getPhysicalMappingsInfo().parkedMappings;
+        EXPECT_TRUE(std::any_of(parkedMappings.begin(), parkedMappings.end(), [&](const auto &parked) { return parked.mappedAllocation == parkedMapping; }));
+        EXPECT_TRUE(memoryManager.unMapPhysicalDeviceMemoryFromVirtualMemory(multiGraphicsAllocation, &physicalAllocation, nonMatchingMapping.gpuRange, nonMatchingMapping.size, nullptr, 0u));
+    }
+
+    memoryManager.releaseParkedPhysicalMemoryMappings(0u, std::numeric_limits<uint64_t>::max());
+    EXPECT_TRUE(physicalAllocation.getPhysicalMappingsInfo().parkedMappings.empty());
+}
+
+class ParkedMappingsTrackingMemoryManager : public MockMemoryManager {
+  public:
+    using MemoryManager::physicalAllocationsWithParkedMappings;
+    using MockMemoryManager::MockMemoryManager;
+
+    void destroyParkedPhysicalMemoryMapping(GraphicsAllocation &mappedAllocation) override {
+        destroyedParkedMappings.push_back(&mappedAllocation);
+        MockMemoryManager::destroyParkedPhysicalMemoryMapping(mappedAllocation);
+    }
+
+    std::vector<GraphicsAllocation *> destroyedParkedMappings;
+};
+
+TEST(MemoryManagerTest, givenSeveralParkedPhysicalDeviceMemoryMappingsWhenOneIsReusedThenPhysicalAllocationStaysTrackedWithRemainingParkedMapping) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    ParkedMappingsTrackingMemoryManager memoryManager(false, false, executionEnvironment);
+
+    uint8_t allocationStorage = 0;
+    MockGraphicsAllocation physicalAllocation{&allocationStorage, 1};
+    const auto rootDeviceIndex = physicalAllocation.getRootDeviceIndex();
+    constexpr uint64_t firstGpuRange = 0x120000;
+    constexpr size_t mappingSize = MemoryConstants::pageSize64k;
+    constexpr uint64_t secondGpuRange = firstGpuRange + mappingSize;
+
+    for (const auto gpuRange : {firstGpuRange, secondGpuRange}) {
+        MultiGraphicsAllocation multiGraphicsAllocation(rootDeviceIndex);
+        ASSERT_TRUE(memoryManager.mapPhysicalDeviceMemoryToVirtualMemory(multiGraphicsAllocation, &physicalAllocation, gpuRange, mappingSize, nullptr, 0u));
+        EXPECT_TRUE(memoryManager.unMapPhysicalDeviceMemoryFromVirtualMemory(multiGraphicsAllocation, &physicalAllocation, gpuRange, mappingSize, nullptr, 0u));
+    }
+    auto &parkedMappings = physicalAllocation.getPhysicalMappingsInfo().parkedMappings;
+    ASSERT_EQ(2u, parkedMappings.size());
+    const auto firstParkedMapping = parkedMappings[0].mappedAllocation;
+
+    MultiGraphicsAllocation multiGraphicsAllocation(rootDeviceIndex);
+    ASSERT_TRUE(memoryManager.mapPhysicalDeviceMemoryToVirtualMemory(multiGraphicsAllocation, &physicalAllocation, firstGpuRange, mappingSize, nullptr, 0u));
+    EXPECT_EQ(firstParkedMapping, multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex));
+    EXPECT_EQ(1u, physicalAllocation.getPhysicalMappingsInfo().liveMappingsCount);
+    ASSERT_EQ(1u, parkedMappings.size());
+    EXPECT_EQ(secondGpuRange, parkedMappings[0].gpuRange);
+    ASSERT_EQ(1u, memoryManager.physicalAllocationsWithParkedMappings.size());
+    EXPECT_EQ(&physicalAllocation, memoryManager.physicalAllocationsWithParkedMappings[0]);
+
+    memoryManager.releaseParkedPhysicalMemoryMappings(secondGpuRange, secondGpuRange + mappingSize);
+    EXPECT_TRUE(parkedMappings.empty());
+    EXPECT_TRUE(memoryManager.physicalAllocationsWithParkedMappings.empty());
+
+    EXPECT_TRUE(memoryManager.unMapPhysicalDeviceMemoryFromVirtualMemory(multiGraphicsAllocation, &physicalAllocation, firstGpuRange, mappingSize, nullptr, 0u));
+    memoryManager.releaseParkedPhysicalMemoryMappings(0u, std::numeric_limits<uint64_t>::max());
+}
+
+TEST(MemoryManagerTest, givenPhysicalAllocationWithParkedMappingWhenFreeingItThenParkedMappingIsDestroyed) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    ParkedMappingsTrackingMemoryManager memoryManager(false, false, executionEnvironment);
+
+    auto physicalAllocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{0u, MemoryConstants::pageSize64k});
+    ASSERT_NE(nullptr, physicalAllocation);
+    const auto rootDeviceIndex = physicalAllocation->getRootDeviceIndex();
+    constexpr uint64_t gpuRange = 0x120000;
+    constexpr size_t mappingSize = MemoryConstants::pageSize64k;
+
+    MultiGraphicsAllocation multiGraphicsAllocation(rootDeviceIndex);
+    ASSERT_TRUE(memoryManager.mapPhysicalDeviceMemoryToVirtualMemory(multiGraphicsAllocation, physicalAllocation, gpuRange, mappingSize, nullptr, 0u));
+    const auto mappedAllocation = multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex);
+    EXPECT_TRUE(memoryManager.unMapPhysicalDeviceMemoryFromVirtualMemory(multiGraphicsAllocation, physicalAllocation, gpuRange, mappingSize, nullptr, 0u));
+    ASSERT_EQ(1u, memoryManager.physicalAllocationsWithParkedMappings.size());
+
+    memoryManager.freeGraphicsMemory(physicalAllocation);
+    ASSERT_EQ(1u, memoryManager.destroyedParkedMappings.size());
+    EXPECT_EQ(mappedAllocation, memoryManager.destroyedParkedMappings[0]);
+    EXPECT_TRUE(memoryManager.physicalAllocationsWithParkedMappings.empty());
+}
+
+TEST(MemoryManagerTest, givenPhysicalAllocationWhoseParkedMappingsWereReleasedWhenFreeingItThenNoParkedMappingIsDestroyed) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    ParkedMappingsTrackingMemoryManager memoryManager(false, false, executionEnvironment);
+
+    auto physicalAllocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{0u, MemoryConstants::pageSize64k});
+    ASSERT_NE(nullptr, physicalAllocation);
+    const auto rootDeviceIndex = physicalAllocation->getRootDeviceIndex();
+    constexpr uint64_t gpuRange = 0x120000;
+    constexpr size_t mappingSize = MemoryConstants::pageSize64k;
+
+    MultiGraphicsAllocation multiGraphicsAllocation(rootDeviceIndex);
+    ASSERT_TRUE(memoryManager.mapPhysicalDeviceMemoryToVirtualMemory(multiGraphicsAllocation, physicalAllocation, gpuRange, mappingSize, nullptr, 0u));
+    EXPECT_TRUE(memoryManager.unMapPhysicalDeviceMemoryFromVirtualMemory(multiGraphicsAllocation, physicalAllocation, gpuRange, mappingSize, nullptr, 0u));
+    memoryManager.releaseParkedPhysicalMemoryMappings(0u, std::numeric_limits<uint64_t>::max());
+    ASSERT_EQ(1u, memoryManager.destroyedParkedMappings.size());
+    ASSERT_NE(nullptr, physicalAllocation->peekPhysicalMappingsInfo());
+    EXPECT_TRUE(physicalAllocation->peekPhysicalMappingsInfo()->parkedMappings.empty());
+
+    memoryManager.freeGraphicsMemory(physicalAllocation);
+    EXPECT_EQ(1u, memoryManager.destroyedParkedMappings.size());
+}
+
+TEST(MemoryManagerTest, givenMemoryManagerWithoutVirtualMemoryAccessFlagsWhenUpdatingAccessOfPhysicalDeviceMemoryMappingThenMappingIsKeptAndUpdateSucceeds) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    MockMemoryManager memoryManager(false, false, executionEnvironment);
+
+    uint8_t allocationStorage = 0;
+    MockGraphicsAllocation physicalAllocation{&allocationStorage, 1};
+    const auto rootDeviceIndex = physicalAllocation.getRootDeviceIndex();
+    constexpr uint64_t gpuRange = 0x120000;
+    constexpr size_t mappingSize = MemoryConstants::pageSize64k;
+
+    MultiGraphicsAllocation multiGraphicsAllocation(rootDeviceIndex);
+    ASSERT_TRUE(memoryManager.mapPhysicalDeviceMemoryToVirtualMemory(multiGraphicsAllocation, &physicalAllocation, gpuRange, mappingSize, nullptr, 0u));
+    auto mappedAllocation = multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex);
+    ASSERT_NE(nullptr, mappedAllocation);
+
+    MemoryFlags readOnlyFlags{};
+    readOnlyFlags.readOnly = true;
+    EXPECT_FALSE(memoryManager.appliesVirtualMemoryAccessFlags(physicalAllocation));
+    EXPECT_TRUE(memoryManager.updatePhysicalDeviceMemoryMappingAccess(*mappedAllocation, gpuRange, mappingSize, &readOnlyFlags, 0u, rootDeviceIndex));
+    EXPECT_EQ(mappedAllocation, multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex));
+    EXPECT_EQ(gpuRange, mappedAllocation->getGpuAddress());
+
+    EXPECT_TRUE(memoryManager.unMapPhysicalDeviceMemoryFromVirtualMemory(multiGraphicsAllocation, &physicalAllocation, gpuRange, mappingSize, nullptr, 0u));
+    memoryManager.releaseParkedPhysicalMemoryMappings(0u, std::numeric_limits<uint64_t>::max());
 }
 
 TEST(MemoryManagerTest, givenHostGraphicsAllocationWhenMapCalledThenDontResetCpuAddress) {
@@ -517,6 +840,22 @@ TEST(MemoryManagerTest, givenFailureOnRegisterLocalMemoryAllocationWhenAllocatin
     MockMemoryManager memoryManager(true, true);
     memoryManager.registerLocalMemAllocResult = MemoryManager::AllocationStatus::Error;
     EXPECT_EQ(nullptr, memoryManager.allocateGraphicsMemoryWithProperties(properties));
+}
+
+TEST(MemoryManagerTest, givenSharedPhysicalMemoryMappingWhenRegisteringSysMemAllocThenUsedSystemMemorySizeIsNotAccounted) {
+    MockExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(executionEnvironment);
+
+    MockGraphicsAllocation allocation(nullptr, MemoryConstants::pageSize);
+    allocation.setSharedPhysicalMemoryMapping(true);
+
+    EXPECT_EQ(MemoryManager::AllocationStatus::Success, memoryManager.registerSysMemAlloc(&allocation));
+    EXPECT_EQ(0u, memoryManager.getUsedSystemMemorySize());
+
+    allocation.setSharedPhysicalMemoryMapping(false);
+
+    EXPECT_EQ(MemoryManager::AllocationStatus::Success, memoryManager.registerSysMemAlloc(&allocation));
+    EXPECT_EQ(MemoryConstants::pageSize, memoryManager.getUsedSystemMemorySize());
 }
 
 using MemoryhManagerMultiContextResourceTests = ::testing::Test;

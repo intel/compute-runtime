@@ -85,11 +85,12 @@ struct MemoryMappedRange {
     const void *ptr;
     size_t size;
     PhysicalMemoryAllocation mappedAllocation;
-    // Physical memory handle (BO) that backs this mapping. Tracked so that a given
-    // physical allocation can be guarded against being mapped to more than one VA.
+    // The ze_physical_mem_handle_t this mapping targets. Opaque - the physical allocation it names may
+    // already have been destroyed, so it must only ever be compared, never dereferenced.
     void *physicalHandle = nullptr;
     // Offset passed to zeVirtualMemMap; carried per chunk by range IPC export.
     uint64_t mappedPhysicalOffset = 0;
+    MemoryFlags flags = {};
 };
 
 struct VirtualMemoryReservation {
@@ -364,6 +365,9 @@ class MemoryManager {
     virtual void freeCpuAddress(AddressRange addressRange) = 0;
     virtual bool isPhysicalHostMemoryOffsetFoldRequired(uint32_t rootDeviceIndex) { return false; }
     virtual bool appliesVirtualMemoryAccessFlags(const GraphicsAllocation &physicalAllocation) { return false; }
+    // Re-applies access flags to a live mapping in place, so the mapping allocation that kernels and
+    // command lists may already reference stays valid.
+    virtual bool updatePhysicalDeviceMemoryMappingAccess(GraphicsAllocation &mappedAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryFlags, size_t offset, uint32_t rootDeviceIndex) { return true; }
     virtual bool reserveExactCpuAddress(uint64_t requiredStartAddress, size_t size) { return false; }
     static HeapIndex selectInternalHeap(bool useLocalMemory);
     static HeapIndex selectExternalHeap(bool useLocalMemory);
@@ -422,10 +426,13 @@ class MemoryManager {
     [[nodiscard]] MOCKABLE_VIRTUAL std::unique_lock<std::mutex> lockVirtualMemoryReservationMap() { return std::unique_lock<std::mutex>(this->virtualMemoryReservationMapMutex); };
     std::map<void *, PhysicalMemoryAllocation *> &getPhysicalMemoryAllocationMap() { return this->physicalMemoryAllocationMap; };
     [[nodiscard]] std::unique_lock<std::mutex> lockPhysicalMemoryAllocationMap() { return std::unique_lock<std::mutex>(this->physicalMemoryAllocationMapMutex); };
-    virtual bool mapPhysicalDeviceMemoryToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryflags, size_t offset) = 0;
+    virtual bool mapPhysicalDeviceMemoryToVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryflags, size_t offset) = 0;
     virtual bool mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, size_t offset, bool keepReservationPlaceholder) = 0;
-    virtual bool unMapPhysicalDeviceMemoryFromVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, OsContext *osContext, uint32_t rootDeviceIndex) = 0;
+    virtual bool unMapPhysicalDeviceMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, OsContext *osContext, uint32_t rootDeviceIndex) = 0;
     virtual bool unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, bool keepReservationPlaceholder) = 0;
+    // False when one GEM handle cannot be placed at several VAs at once, i.e. vm_bind is unavailable.
+    virtual bool supportsPhysicalDeviceMemoryMultiMapping(uint32_t rootDeviceIndex) const { return true; }
+    void releaseParkedPhysicalMemoryMappings(uint64_t rangeStart, uint64_t rangeEnd);
     bool allocateBindlessSlot(GraphicsAllocation *allocation);
     static uint64_t adjustToggleBitFlagForGpuVa(AllocationType inputAllocationType, uint64_t gpuAddress);
     virtual bool isCompressionSupportedForShareable(bool isShareable) { return true; }
@@ -458,6 +465,23 @@ class MemoryManager {
     void destroyPageFaultManager();
 
   protected:
+    struct PhysicalMappingRelease {
+        GraphicsAllocation *physicalAllocationToRelease = nullptr;
+        bool isLastMapping = true;
+    };
+    // A physical allocation outlives its mappings, which borrow its storage, GMMs and handles: a
+    // release requested while mappings remain is carried out by the unmap of the last one.
+    void registerPhysicalMemoryMapping(GraphicsAllocation &physicalAllocation, GraphicsAllocation &mappedAllocation);
+    // Parking and the count drop happen under one lock: once the count is zero the physical allocation, and
+    // with it every parked mapping, may be released by another thread.
+    PhysicalMappingRelease parkPhysicalMemoryMapping(GraphicsAllocation &mappedAllocation, uint64_t gpuRange, size_t size);
+    GraphicsAllocation *takeParkedPhysicalMemoryMapping(GraphicsAllocation &physicalAllocation, uint64_t gpuRange, size_t size, bool anyPlacement);
+    bool isLastLivePhysicalMemoryMapping(GraphicsAllocation &physicalAllocation);
+    void destroyParkedPhysicalMemoryMappings(GraphicsAllocation &physicalAllocation);
+    virtual void destroyParkedPhysicalMemoryMapping(GraphicsAllocation &mappedAllocation);
+    void releaseBindlessSlotAndMemoryOperations(GraphicsAllocation &allocation);
+    bool deferReleaseOfMappedPhysicalMemory(GraphicsAllocation &physicalAllocation);
+
     bool getAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const void *hostPtr, const StorageInfo &storageInfo);
     static void overrideAllocationData(AllocationData &allocationData, const AllocationProperties &properties);
 
@@ -527,6 +551,8 @@ class MemoryManager {
     std::mutex virtualMemoryReservationMapMutex;
     std::map<void *, PhysicalMemoryAllocation *> physicalMemoryAllocationMap;
     std::mutex physicalMemoryAllocationMapMutex;
+    std::mutex physicalMemoryMappingsMutex;
+    std::vector<GraphicsAllocation *> physicalAllocationsWithParkedMappings;
     std::unique_ptr<std::atomic<size_t>[]> localMemAllocsSize;
     std::atomic<size_t> sysMemAllocsSize;
     std::map<std::tuple<AllocationType, bool, uint32_t>, CustomHeapAllocatorConfig> customHeapAllocators;

@@ -56,7 +56,6 @@ HWTEST_F(CommandListVirtualReservationMtTest, givenSiblingMappingRemappedWhileRe
 
     constexpr uint32_t iterationCount = 200;
     std::atomic_bool started = false;
-    std::atomic_bool resolverDone = false;
 
     auto resolverBody = [&]() {
         while (!started.load()) {
@@ -66,16 +65,13 @@ HWTEST_F(CommandListVirtualReservationMtTest, givenSiblingMappingRemappedWhileRe
             auto outData = commandList->resolveAlignedAllocation(device, reservedBase, size, nullptr, {});
             EXPECT_NE(nullptr, outData.alloc);
         }
-        resolverDone = true;
     };
 
-    // Map and unmap the sibling sub-range underneath the resolver. The application never references
-    // this range through the command list, so this sequence is legal while an append is in flight.
     auto remapperBody = [&]() {
         while (!started.load()) {
             std::this_thread::yield();
         }
-        while (!resolverDone.load()) {
+        for (uint32_t i = 0; i < iterationCount; i++) {
             if (ZE_RESULT_SUCCESS != context->mapVirtualMem(churnedAddress, size, phPhysicalMemoryChurned, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE)) {
                 continue;
             }
