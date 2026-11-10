@@ -8575,13 +8575,6 @@ TEST(CaptureTestMclIdMapping, GivenBothMutableVariantsWithFollowingCommandsWhenM
     EXPECT_EQ(4U, graph.recordedApiCommands.size());
 }
 
-TEST_F(GraphTestApiPauseResume, GivenNullGraphWhenCallingGraphPauseResumeThenErrorIsReturned) {
-    GraphsCleanupGuard graphCleanup;
-
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_HANDLE, L0::zeGraphPauseCaptureExt(nullptr));
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_HANDLE, L0::zeGraphResumeCaptureExt(nullptr));
-}
-
 TEST_F(GraphTestApiPauseResume, GivenCapturePausedAndResumedWhenAppendingCommandsThenOnlyCommandsOutsidePauseAreCaptured) {
     GraphsCleanupGuard graphCleanup;
 

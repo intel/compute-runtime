@@ -343,21 +343,11 @@ ze_result_t ZE_APICALL zeGraphGetIdExt(ze_graph_handle_t hGraph, uint64_t *pGrap
 }
 
 ze_result_t ZE_APICALL zeGraphPauseCaptureExt(ze_graph_handle_t hGraph) {
-    auto graph = L0::Graph::fromHandle(hGraph);
-    if (nullptr == graph) {
-        return ZE_RESULT_ERROR_INVALID_NULL_HANDLE;
-    }
-
-    return graph->pauseCapturing();
+    return L0::Graph::fromHandle(hGraph)->pauseCapturing();
 }
 
 ze_result_t ZE_APICALL zeGraphResumeCaptureExt(ze_graph_handle_t hGraph) {
-    auto graph = L0::Graph::fromHandle(hGraph);
-    if (nullptr == graph) {
-        return ZE_RESULT_ERROR_INVALID_NULL_HANDLE;
-    }
-
-    return graph->resumeCapturing();
+    return L0::Graph::fromHandle(hGraph)->resumeCapturing();
 }
 
 } // namespace L0
