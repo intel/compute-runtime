@@ -78,6 +78,7 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::tryReassignCsrAtSafeTransiti
 
     if (!this->isInOrderExecutionEnabled()) {
         previousCsr->downloadAllocations(true, previousTaskCount);
+        previousCsr->getInternalAllocationStorage()->cleanAllocationList(previousTaskCount, NEO::AllocationUsage::TEMPORARY_ALLOCATION);
     }
 
     auto reassignedCsr = this->cmdQImmediate->getCsr();
@@ -1811,6 +1812,9 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
                 if (tempAllocsCleanupRequired) {
                     if (mainStorageCleanupNeeded) {
                         mainInternalAllocStorage->cleanAllocationList(mainQueueTaskCount, NEO::AllocationUsage::TEMPORARY_ALLOCATION);
+                        for (const auto &[previousCsr, previousTaskCount] : this->previousCsrsAwaitingCompletion) {
+                            previousCsr->getInternalAllocationStorage()->cleanAllocationList(previousTaskCount, NEO::AllocationUsage::TEMPORARY_ALLOCATION);
+                        }
                     }
                     if (copyOffloadStorageCleanupNeeded) {
                         copyOffloadInternalAllocStorage->cleanAllocationList(copyOffloadTaskCount, NEO::AllocationUsage::TEMPORARY_ALLOCATION);
@@ -1832,9 +1836,9 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
             // on hang the counter was never reached, marking it waited would make later waits succeed immediately
             inOrderExecInfo->setLastWaitedCounterValue(inOrderSyncValue, inOrderExecInfo->getAllocationOffset());
             this->csrBeforeReassignment = nullptr;
-            this->previousCsrsAwaitingCompletion.clear();
 
             if (handlePostWaitOperations) {
+                this->previousCsrsAwaitingCompletion.clear();
                 inOrderExecInfo->releaseNotUsedTempTimestampNodes(false);
             }
         }

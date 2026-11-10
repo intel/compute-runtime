@@ -8,11 +8,13 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_mapper.h"
+#include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/utilities/stackvec.h"
 #include "shared/test/common/helpers/test_traits.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
@@ -2247,6 +2249,12 @@ struct CommandListCsrReassignmentTests : public CommandListCsrReuseTests {
         *csr->getTagAddress() = csr->peekTaskCount();
     }
 
+    static GraphicsAllocation *storeTemporaryAllocation(NEO::CommandStreamReceiver *csr, TaskCountType taskCount) {
+        auto allocation = new MockGraphicsAllocation();
+        csr->getInternalAllocationStorage()->storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation>(allocation), NEO::AllocationUsage::TEMPORARY_ALLOCATION, taskCount);
+        return allocation;
+    }
+
     static ze_result_t appendBarrier(CommandList *commandList) {
         CmdListWaitEventParameters waitEventParameters{};
         waitEventParameters.apiRequest = true;
@@ -2684,6 +2692,131 @@ HWTEST_F(CommandListCsrReassignmentTests, givenCommandListReassignedWhenSwitchin
         markCsrIdle(initialCsr);
         commandList->destroy();
     }
+}
+
+HWTEST_F(CommandListCsrReassignmentTests, givenTemporaryAllocationsOnPreviousCsrWhenSwitchingCsrThenAllocationsOfCompletedWorkAreReleasedOnlyForNonInOrderCommandList) {
+    auto &temporaryAllocations = neoDevice->getMemoryManager()->getTemporaryAllocationsList();
+    for (const bool inOrder : {false, true}) {
+        ze_command_queue_desc_t desc = {};
+        desc.flags = inOrder ? static_cast<ze_command_queue_flags_t>(ZE_COMMAND_QUEUE_FLAG_IN_ORDER) : 0u;
+        auto commandList = createInitializedImmediateCommandList(desc);
+        auto immediateCommandList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(static_cast<L0::CommandList *>(commandList));
+        auto queue = getImmediateQueue(commandList);
+        auto initialCsr = commandList->getCsr(false);
+
+        constexpr TaskCountType previousQueueTaskCount = 2u;
+        initialCsr->retainQueueOwnership();
+        setCsrProgress<FamilyType>(initialCsr, loadedCsrSubmittedTaskCount, previousQueueTaskCount);
+        queue->taskCount = previousQueueTaskCount;
+
+        ASSERT_TRUE(temporaryAllocations.peekIsEmpty());
+        auto completedAllocation = storeTemporaryAllocation(initialCsr, previousQueueTaskCount);
+        auto pendingAllocation = storeTemporaryAllocation(initialCsr, previousQueueTaskCount + 1);
+
+        immediateCommandList->tryReassignCsrAtSafeTransitionPoint();
+        ASSERT_NE(initialCsr, commandList->getCsr(false));
+
+        EXPECT_TRUE(temporaryAllocations.peekContains(*pendingAllocation));
+        EXPECT_EQ(inOrder, temporaryAllocations.peekContains(*completedAllocation));
+
+        if (inOrder) {
+            immediateCommandList->implicitDependencyOnPreviousCsrPending = false;
+            immediateCommandList->releasePreviousCsrCompletionTarget();
+        }
+
+        initialCsr->releaseQueueOwnership();
+        markCsrIdle(initialCsr);
+        initialCsr->getInternalAllocationStorage()->cleanAllocationList(loadedCsrSubmittedTaskCount, NEO::AllocationUsage::TEMPORARY_ALLOCATION);
+        commandList->destroy();
+    }
+}
+
+HWTEST_F(CommandListCsrReassignmentTests, givenInOrderCommandListReassignedWithTemporaryAllocationsOnPreviousCsrWhenHostSynchronizeSucceedsThenAllocationsOfCompletedWorkOnPreviousCsrAreReleased) {
+    auto memoryManager = static_cast<MockMemoryManager *>(neoDevice->getMemoryManager());
+    memoryManager->callBaseAllocInUse = true;
+    auto &temporaryAllocations = memoryManager->getTemporaryAllocationsList();
+    ze_command_queue_desc_t desc = {};
+    desc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    auto commandList = createInitializedImmediateCommandList(desc);
+    auto immediateCommandList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(static_cast<L0::CommandList *>(commandList));
+    auto queue = getImmediateQueue(commandList);
+    auto &inOrderExecInfo = commandList->inOrderExecInfo;
+    auto initialCsr = commandList->getCsr(false);
+    auto initialUltCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(initialCsr);
+
+    initialCsr->retainQueueOwnership();
+    setCsrProgress<FamilyType>(initialCsr, loadedCsrSubmittedTaskCount + 1, 0u);
+    queue->taskCount = loadedCsrSubmittedTaskCount;
+    inOrderExecInfo->addCounterValue(1u);
+    inOrderExecInfo->setProgrammedCounterValue(inOrderExecInfo->getCounterValue());
+    initialUltCsr->callBaseWaitForCompletionWithTimeout = false;
+
+    immediateCommandList->tryReassignCsrAtSafeTransitionPoint();
+    ASSERT_NE(initialCsr, commandList->getCsr(false));
+    ASSERT_EQ(1u, immediateCommandList->previousCsrsAwaitingCompletion.size());
+    immediateCommandList->implicitDependencyOnPreviousCsrPending = false;
+
+    ASSERT_TRUE(temporaryAllocations.peekIsEmpty());
+    auto completedAllocation = storeTemporaryAllocation(initialCsr, loadedCsrSubmittedTaskCount);
+    auto pendingAllocation = storeTemporaryAllocation(initialCsr, loadedCsrSubmittedTaskCount + 1);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immediateCommandList->hostSynchronize(std::numeric_limits<uint64_t>::max(), false));
+    EXPECT_EQ(1u, immediateCommandList->previousCsrsAwaitingCompletion.size());
+    EXPECT_TRUE(temporaryAllocations.peekContains(*completedAllocation));
+    EXPECT_TRUE(temporaryAllocations.peekContains(*pendingAllocation));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->hostSynchronize(std::numeric_limits<uint64_t>::max()));
+    EXPECT_TRUE(immediateCommandList->previousCsrsAwaitingCompletion.empty());
+    EXPECT_EQ(pendingAllocation, temporaryAllocations.peekHead());
+    EXPECT_EQ(nullptr, pendingAllocation->next);
+    EXPECT_FALSE(temporaryAllocations.peekContains(*completedAllocation));
+
+    initialUltCsr->callBaseWaitForCompletionWithTimeout = true;
+    setInOrderCounterMemory(commandList, inOrderExecInfo->getCounterValue());
+    initialCsr->releaseQueueOwnership();
+    markCsrIdle(initialCsr);
+    initialCsr->getInternalAllocationStorage()->cleanAllocationList(loadedCsrSubmittedTaskCount + 1, NEO::AllocationUsage::TEMPORARY_ALLOCATION);
+    commandList->destroy();
+}
+
+HWTEST_F(CommandListCsrReassignmentTests, givenInOrderCommandListReassignedWithTemporaryAllocationsOnPreviousCsrWhenHostSynchronizeDetectsHangThenAllocationsOnPreviousCsrAreKept) {
+    auto &temporaryAllocations = neoDevice->getMemoryManager()->getTemporaryAllocationsList();
+    ze_command_queue_desc_t desc = {};
+    desc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    auto commandList = createInitializedImmediateCommandList(desc);
+    auto immediateCommandList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(static_cast<L0::CommandList *>(commandList));
+    auto queue = getImmediateQueue(commandList);
+    auto &inOrderExecInfo = commandList->inOrderExecInfo;
+    auto initialCsr = commandList->getCsr(false);
+    auto initialUltCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(initialCsr);
+
+    initialCsr->retainQueueOwnership();
+    setCsrProgress<FamilyType>(initialCsr, loadedCsrSubmittedTaskCount + 1, 0u);
+    queue->taskCount = loadedCsrSubmittedTaskCount;
+    inOrderExecInfo->addCounterValue(1u);
+    inOrderExecInfo->setProgrammedCounterValue(inOrderExecInfo->getCounterValue());
+    initialUltCsr->callBaseWaitForCompletionWithTimeout = false;
+    initialUltCsr->returnWaitForCompletionWithTimeout = NEO::WaitStatus::gpuHang;
+
+    immediateCommandList->tryReassignCsrAtSafeTransitionPoint();
+    ASSERT_NE(initialCsr, commandList->getCsr(false));
+
+    ASSERT_TRUE(temporaryAllocations.peekIsEmpty());
+    auto completedAllocation = storeTemporaryAllocation(initialCsr, loadedCsrSubmittedTaskCount);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, commandList->hostSynchronize(std::numeric_limits<uint64_t>::max()));
+    EXPECT_EQ(1u, immediateCommandList->previousCsrsAwaitingCompletion.size());
+    EXPECT_TRUE(temporaryAllocations.peekContains(*completedAllocation));
+
+    initialUltCsr->returnWaitForCompletionWithTimeout = NEO::WaitStatus::ready;
+    initialUltCsr->callBaseWaitForCompletionWithTimeout = true;
+    immediateCommandList->implicitDependencyOnPreviousCsrPending = false;
+    immediateCommandList->releasePreviousCsrCompletionTarget();
+    setInOrderCounterMemory(commandList, inOrderExecInfo->getCounterValue());
+    initialCsr->releaseQueueOwnership();
+    markCsrIdle(initialCsr);
+    initialCsr->getInternalAllocationStorage()->cleanAllocationList(loadedCsrSubmittedTaskCount, NEO::AllocationUsage::TEMPORARY_ALLOCATION);
+    commandList->destroy();
 }
 
 HWTEST_F(CommandListCsrReassignmentTests, givenBarrierWithCopyOffloadSynchronizationWhenCsrBecomesSharedAndLoadedAfterFirstFlushThenCsrIsNotReassignedWithinOperation) {
