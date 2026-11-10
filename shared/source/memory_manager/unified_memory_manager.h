@@ -16,6 +16,7 @@
 #include "shared/source/memory_manager/mem_free_callback.h"
 #include "shared/source/memory_manager/memadvise_flags.h"
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
+#include "shared/source/memory_manager/peer_allocations_fn.h"
 #include "shared/source/memory_manager/residency_container.h"
 #include "shared/source/unified_memory/unified_memory.h"
 #include "shared/source/utilities/mockable_virtual_defaults.h"
@@ -212,6 +213,10 @@ class SVMAllocsManager {
 
     MOCKABLE_VIRTUAL bool freeSVMAlloc(void *ptr, bool blocking);
     MOCKABLE_VIRTUAL bool freeSVMAllocDefer(void *ptr);
+    bool tryFreeViaReuseCache(void *ptr, SvmAllocationData &svmData, FreePolicyType policy);
+    void setPeerAllocationsCallbacks(PeerAllocationsFn peerAllocationsFn, ReleasePeerAllocationsFn releasePeerAllocationsFn);
+    bool isAnyPeerAllocationInUse(const void *ptr);
+    void waitForPeerAllocationsCompletion(const void *ptr);
     MOCKABLE_VIRTUAL void freeSVMAllocImpl(void *ptr, FreePolicyType policy, SvmAllocationData *svmData);
     void freeSVMAllocDeferImpl() { this->freeSVMAllocDeferImpl(FreePolicyType::defer); }
     void freeSVMAllocDeferImplBlocking() { this->freeSVMAllocDeferImpl(FreePolicyType::blocking); }
@@ -262,6 +267,7 @@ class SVMAllocsManager {
     NonGpuDomainAllocsContainer nonGpuDomainAllocs;
 
     void initUsmAllocationsCaches(Device &device);
+    void initUsmAllocationsCaches(Device &device, bool enabledByDefault);
 
     bool submitIndirectAllocationsAsPack(CommandStreamReceiver &csr);
 
@@ -307,6 +313,8 @@ class SVMAllocsManager {
     MapOperationsTracker svmMapOperations;
     MapBasedAllocationTracker svmDeferFreeAllocs;
     std::atomic<size_t> deferFreeInFlight{0u};
+    PeerAllocationsFn peerAllocationsFn = nullptr;
+    ReleasePeerAllocationsFn releasePeerAllocationsFn = nullptr;
     MemoryManager *memoryManager;
     ContainerMutexType mtx;
     std::mutex mtxForIndirectAccess;

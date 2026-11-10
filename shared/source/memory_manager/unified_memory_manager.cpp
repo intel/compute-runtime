@@ -94,6 +94,7 @@ bool SVMAllocsManager::SvmAllocationCache::insert(size_t size, void *ptr, SvmAll
     svmAllocsManager->applyIndirectAccessTaskCountFloor(svmData);
     if (freePolicy == FreePolicyType::blocking) {
         svmAllocsManager->waitForEnginesCompletion(svmData);
+        svmAllocsManager->waitForPeerAllocationsCompletion(ptr);
     }
     std::unique_lock<std::mutex> lock(this->mtx);
     if (svmData->device ? svmData->device->shouldLimitAllocationsReuse() : memoryManager->shouldLimitAllocationsReuse()) {
@@ -160,7 +161,7 @@ bool SVMAllocsManager::SvmAllocationCache::isInUse(SvmCacheAllocationInfo &cache
             return true;
         }
     }
-    return false;
+    return svmAllocsManager->isAnyPeerAllocationInUse(cacheAllocInfo.allocation);
 }
 
 void *SVMAllocsManager::SvmAllocationCache::get(size_t size, const UnifiedMemoryProperties &unifiedMemoryProperties) {
@@ -249,11 +250,21 @@ void *SVMAllocsManager::SvmAllocationCache::get(size_t size, const UnifiedMemory
 }
 
 void SVMAllocsManager::SvmAllocationCache::trim() {
+    this->trim(true);
+}
+
+void SVMAllocsManager::SvmAllocationCache::trim(bool keepAllocationsWithPeerWorkInUse) {
     std::lock_guard<std::mutex> trimLock(this->trimMtx);
     std::unique_lock<std::mutex> lock(this->mtx);
-    std::vector<SvmCacheAllocationInfo> allocationsToFree(this->allocations.begin(), this->allocations.end());
-    this->allocations.clear();
-    empty = true;
+    std::vector<SvmCacheAllocationInfo> allocationsToFree;
+    std::erase_if(this->allocations, [&](SvmCacheAllocationInfo &cachedAllocationInfo) {
+        if (keepAllocationsWithPeerWorkInUse && svmAllocsManager->isAnyPeerAllocationInUse(cachedAllocationInfo.allocation)) {
+            return false;
+        }
+        allocationsToFree.push_back(cachedAllocationInfo);
+        return true;
+    });
+    empty = this->allocations.empty();
     for (auto &cachedAllocationInfo : allocationsToFree) {
         DEBUG_BREAK_IF(nullptr == cachedAllocationInfo.svmData);
         {
@@ -280,7 +291,7 @@ void SVMAllocsManager::SvmAllocationCache::cleanup() {
     if (auto usmReuseCleaner = this->memoryManager->peekExecutionEnvironment().unifiedMemoryReuseCleaner.get()) {
         usmReuseCleaner->unregisterAllocationCache(this);
     }
-    this->trim();
+    this->trim(false);
 }
 
 void SVMAllocsManager::SvmAllocationCache::logCacheOperation(const SvmAllocationCachePerfInfo &cachePerfEvent) const {
@@ -327,7 +338,8 @@ void SVMAllocsManager::SvmAllocationCache::logCacheOperation(const SvmAllocation
 }
 
 void SVMAllocsManager::SvmAllocationCache::trimOldAllocs(std::chrono::high_resolution_clock::time_point trimTimePoint, bool trimAll) {
-    std::lock_guard<std::mutex> lock(this->mtx);
+    std::unique_lock<std::mutex> lock(this->mtx);
+    std::vector<SvmCacheAllocationInfo> allocationsToFree;
     auto allocCleanCandidateIndex = allocations.size();
     while (0u != allocCleanCandidateIndex) {
         auto &allocCleanCandidate = allocations[--allocCleanCandidateIndex];
@@ -347,7 +359,7 @@ void SVMAllocsManager::SvmAllocationCache::trimOldAllocs(std::chrono::high_resol
                                .operationType = CacheOperationType::trimOld,
                                .isSuccess = true});
         }
-        svmAllocsManager->freeSVMAllocImpl(allocCleanCandidate.allocation, FreePolicyType::defer, allocCleanCandidate.svmData);
+        allocationsToFree.push_back(allocCleanCandidate);
         if (trimAll) {
             allocCleanCandidate.markForDelete();
         } else {
@@ -359,6 +371,10 @@ void SVMAllocsManager::SvmAllocationCache::trimOldAllocs(std::chrono::high_resol
         std::erase_if(allocations, SvmCacheAllocationInfo::isMarkedForDelete);
     }
     empty = allocations.empty();
+    lock.unlock();
+    for (auto &allocationToFree : allocationsToFree) {
+        svmAllocsManager->freeSVMAllocImpl(allocationToFree.allocation, FreePolicyType::defer, allocationToFree.svmData);
+    }
 }
 
 SvmAllocationData *SVMAllocsManager::MapBasedAllocationTracker::get(const void *ptr) {
@@ -841,32 +857,56 @@ bool SVMAllocsManager::freeSVMAlloc(void *ptr, bool blocking) {
     SvmAllocationData *svmData = getSVMAlloc(ptr);
     if (svmData) {
         const auto freePolicy = blocking ? FreePolicyType::blocking : FreePolicyType::none;
-        if (InternalMemoryType::deviceUnifiedMemory == svmData->memoryType &&
-            this->usmDeviceAllocationsCache) {
-            if (this->usmDeviceAllocationsCache->insert(svmData->gpuAllocations.getDefaultGraphicsAllocation()->getUnderlyingBufferSize(), ptr, svmData, freePolicy)) {
-                return true;
-            }
-        }
-        if (InternalMemoryType::hostUnifiedMemory == svmData->memoryType &&
-            this->usmHostAllocationsCache) {
-            if (this->usmHostAllocationsCache->insert(svmData->gpuAllocations.getDefaultGraphicsAllocation()->getUnderlyingBufferSize(), ptr, svmData, freePolicy)) {
-                return true;
-            }
-        }
-        if (InternalMemoryType::sharedUnifiedMemory == svmData->memoryType &&
-            this->usmSharedAllocationsCache) {
-            if (auto pageFaultManager = this->memoryManager->getPageFaultManager();
-                svmData->cpuAllocation && pageFaultManager) {
-                pageFaultManager->removeAllocation(ptr);
-            }
-            if (this->usmSharedAllocationsCache->insert(svmData->gpuAllocations.getDefaultGraphicsAllocation()->getUnderlyingBufferSize(), ptr, svmData, freePolicy)) {
-                return true;
-            }
+        if (this->tryFreeViaReuseCache(ptr, *svmData, freePolicy)) {
+            return true;
         }
         this->freeSVMAllocImpl(ptr, freePolicy, svmData);
         return true;
     }
     return false;
+}
+
+bool SVMAllocsManager::tryFreeViaReuseCache(void *ptr, SvmAllocationData &svmData, FreePolicyType policy) {
+    SvmAllocationCache *cache = nullptr;
+    if (InternalMemoryType::deviceUnifiedMemory == svmData.memoryType) {
+        cache = this->usmDeviceAllocationsCache.get();
+    } else if (InternalMemoryType::hostUnifiedMemory == svmData.memoryType) {
+        cache = this->usmHostAllocationsCache.get();
+    } else if (InternalMemoryType::sharedUnifiedMemory == svmData.memoryType) {
+        cache = this->usmSharedAllocationsCache.get();
+        if (auto pageFaultManager = this->memoryManager->getPageFaultManager();
+            cache && svmData.cpuAllocation && pageFaultManager) {
+            pageFaultManager->removeAllocation(ptr);
+        }
+    }
+    if (nullptr == cache) {
+        return false;
+    }
+    return cache->insert(svmData.gpuAllocations.getDefaultGraphicsAllocation()->getUnderlyingBufferSize(), ptr, &svmData, policy);
+}
+
+void SVMAllocsManager::setPeerAllocationsCallbacks(PeerAllocationsFn peerAllocationsFn, ReleasePeerAllocationsFn releasePeerAllocationsFn) {
+    this->peerAllocationsFn = std::move(peerAllocationsFn);
+    this->releasePeerAllocationsFn = std::move(releasePeerAllocationsFn);
+}
+
+bool SVMAllocsManager::isAnyPeerAllocationInUse(const void *ptr) {
+    if (this->peerAllocationsFn) {
+        for (auto peerAllocation : this->peerAllocationsFn(ptr)) {
+            if (this->memoryManager->allocInUse(*peerAllocation)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+void SVMAllocsManager::waitForPeerAllocationsCompletion(const void *ptr) {
+    if (this->peerAllocationsFn) {
+        for (auto peerAllocation : this->peerAllocationsFn(ptr)) {
+            this->memoryManager->waitForEnginesCompletion(*peerAllocation);
+        }
+    }
 }
 
 bool SVMAllocsManager::freeSVMAllocDefer(void *ptr) {
@@ -877,27 +917,8 @@ bool SVMAllocsManager::freeSVMAllocDefer(void *ptr) {
 
     SvmAllocationData *svmData = getSVMAlloc(ptr);
     if (svmData) {
-        if (InternalMemoryType::deviceUnifiedMemory == svmData->memoryType &&
-            this->usmDeviceAllocationsCache) {
-            if (this->usmDeviceAllocationsCache->insert(svmData->gpuAllocations.getDefaultGraphicsAllocation()->getUnderlyingBufferSize(), ptr, svmData, FreePolicyType::defer)) {
-                return true;
-            }
-        }
-        if (InternalMemoryType::hostUnifiedMemory == svmData->memoryType &&
-            this->usmHostAllocationsCache) {
-            if (this->usmHostAllocationsCache->insert(svmData->gpuAllocations.getDefaultGraphicsAllocation()->getUnderlyingBufferSize(), ptr, svmData, FreePolicyType::defer)) {
-                return true;
-            }
-        }
-        if (InternalMemoryType::sharedUnifiedMemory == svmData->memoryType &&
-            this->usmSharedAllocationsCache) {
-            if (auto pageFaultManager = this->memoryManager->getPageFaultManager();
-                svmData->cpuAllocation && pageFaultManager) {
-                pageFaultManager->removeAllocation(ptr);
-            }
-            if (this->usmSharedAllocationsCache->insert(svmData->gpuAllocations.getDefaultGraphicsAllocation()->getUnderlyingBufferSize(), ptr, svmData, FreePolicyType::defer)) {
-                return true;
-            }
+        if (this->tryFreeViaReuseCache(ptr, *svmData, FreePolicyType::defer)) {
+            return true;
         }
         this->freeSVMAllocImpl(ptr, FreePolicyType::defer, svmData);
         return true;
@@ -986,6 +1007,7 @@ void SVMAllocsManager::freeSVMAllocImpl(void *ptr, FreePolicyType policy, SvmAll
 
     if (policy == FreePolicyType::blocking) {
         this->waitForEnginesCompletion(svmData);
+        this->waitForPeerAllocationsCompletion(ptr);
     } else if (policy == FreePolicyType::defer) {
         if (svmData->cpuAllocation) {
             if (this->memoryManager->allocInUse(*svmData->cpuAllocation)) {
@@ -1007,6 +1029,16 @@ void SVMAllocsManager::freeSVMAllocImpl(void *ptr, FreePolicyType policy, SvmAll
                 }
             }
         }
+        if (this->isAnyPeerAllocationInUse(ptr)) {
+            std::lock_guard<ContainerMutexType> lock(mtx);
+            if (svmDeferFreeAllocs.get(ptr) == nullptr) {
+                this->svmDeferFreeAllocs.insert(*svmData);
+            }
+            return;
+        }
+    }
+    if (this->releasePeerAllocationsFn) {
+        this->releasePeerAllocationsFn(ptr);
     }
     auto pageFaultManager = this->memoryManager->getPageFaultManager();
     if (svmData->cpuAllocation && pageFaultManager) {
@@ -1267,11 +1299,16 @@ void SVMAllocsManager::initUsmSharedAllocationsCache(Device &device) {
 }
 
 void SVMAllocsManager::initUsmAllocationsCaches(Device &device) {
+    this->initUsmAllocationsCaches(device, true);
+}
+
+void SVMAllocsManager::initUsmAllocationsCaches(Device &device, bool enabledByDefault) {
     const auto &hwInfo = device.getHardwareInfo();
     const bool debuggerEnabled = nullptr != device.getDebugger();
     const bool isHwModeSelected = NEO::DeviceFactory::isHwModeSelected();
     const bool requireUpdatingAllocsForIndirectAccess = debugManager.flags.SetCommandStreamReceiver.get() > 0;
-    bool usmDeviceAllocationsCacheEnabled = NEO::ApiSpecificConfig::isDeviceAllocationCacheEnabled() &&
+    bool usmDeviceAllocationsCacheEnabled = enabledByDefault &&
+                                            NEO::ApiSpecificConfig::isDeviceAllocationCacheEnabled() &&
                                             device.getProductHelper().isDeviceUsmAllocationReuseSupported() &&
                                             !debuggerEnabled &&
                                             isHwModeSelected;
@@ -1284,7 +1321,8 @@ void SVMAllocsManager::initUsmAllocationsCaches(Device &device) {
         this->usmDeviceAllocationsCache->requireUpdatingAllocsForIndirectAccess = requireUpdatingAllocsForIndirectAccess;
     }
 
-    bool usmHostAllocationsCacheEnabled = NEO::ApiSpecificConfig::isHostAllocationCacheEnabled() &&
+    bool usmHostAllocationsCacheEnabled = enabledByDefault &&
+                                          NEO::ApiSpecificConfig::isHostAllocationCacheEnabled() &&
                                           device.getProductHelper().isHostUsmAllocationReuseSupported() &&
                                           !debuggerEnabled &&
                                           isHwModeSelected;
@@ -1297,7 +1335,8 @@ void SVMAllocsManager::initUsmAllocationsCaches(Device &device) {
         this->usmHostAllocationsCache->requireUpdatingAllocsForIndirectAccess = requireUpdatingAllocsForIndirectAccess;
     }
 
-    bool usmSharedAllocationsCacheEnabled = hwInfo.caps.sharedUsmAllocationReuseSupported &&
+    bool usmSharedAllocationsCacheEnabled = enabledByDefault &&
+                                            hwInfo.caps.sharedUsmAllocationReuseSupported &&
                                             !debuggerEnabled &&
                                             isHwModeSelected;
     if (debugManager.flags.ExperimentalEnableSharedAllocationCache.get() != -1) {

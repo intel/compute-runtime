@@ -9,9 +9,9 @@
 #include "shared/source/helpers/device_bitfield.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/memory_manager/free_policy_type.h"
+#include "shared/source/memory_manager/peer_allocations_fn.h"
 #include "shared/source/memory_manager/pool_info.h"
 #include "shared/source/unified_memory/unified_memory.h"
-#include "shared/source/utilities/stackvec.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -41,7 +41,7 @@ struct UsmPoolLookupResult {
 class UsmMemAllocPoolsFacade : NEO::NonCopyableAndNonMovableClass {
   public:
     using CustomCleanupFn = std::function<void(const void *)>;
-    using PeerAllocationsFn = std::function<StackVec<GraphicsAllocation *, 4>(const void *)>;
+    using PeerAllocationsFn = NEO::PeerAllocationsFn;
     struct InitParams {
         CustomCleanupFn customCleanup{};
         bool trackResidency{false};

@@ -2630,16 +2630,13 @@ HWTEST2_F(MemoryTest, whenAllocatingDeviceMemoryWithEnableipcSupportedAllocation
 
 struct SVMAllocsManagerFreeExtMock : public NEO::SVMAllocsManager {
     SVMAllocsManagerFreeExtMock(MemoryManager *memoryManager) : NEO::SVMAllocsManager(memoryManager) {}
-    bool freeSVMAlloc(void *ptr, bool blocking) override {
-        if (blocking) {
-            blockingCallsMade++;
+    void freeSVMAllocImpl(void *ptr, FreePolicyType policy, SvmAllocationData *svmData) override {
+        const bool calledByDeferFreeDrain = 0u != getDeferFreeAllocCounts().inFlight;
+        if (false == calledByDeferFreeDrain) {
+            blockingCallsMade += FreePolicyType::blocking == policy ? 1u : 0u;
+            deferFreeCallsMade += FreePolicyType::defer == policy ? 1u : 0u;
         }
-        return SVMAllocsManager::freeSVMAlloc(ptr, blocking);
-    }
-
-    bool freeSVMAllocDefer(void *ptr) override {
-        deferFreeCallsMade++;
-        return SVMAllocsManager::freeSVMAllocDefer(ptr);
+        SVMAllocsManager::freeSVMAllocImpl(ptr, policy, svmData);
     }
 
     uint32_t numDeferFreeAllocs() {
@@ -2885,7 +2882,7 @@ TEST_F(FreeExtTests,
     result = context->freeMemExt(&memFreeDesc, ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(0u, memManager->numDeferFreeAllocs());
-    EXPECT_EQ(4u, memManager->deferFreeCallsMade);
+    EXPECT_EQ(3u, memManager->deferFreeCallsMade);
 }
 
 TEST_F(FreeExtTests,
@@ -4874,6 +4871,9 @@ struct MultipleDevicePeerAllocationTest : public ::testing::Test {
         currSvmAllocsManager = new NEO::SVMAllocsManager(currMemoryManager);
         prevSvmAllocsManager = driverHandle->svmAllocsManager;
         driverHandle->svmAllocsManager = currSvmAllocsManager;
+        currSvmAllocsManager->setPeerAllocationsCallbacks(driverHandle->getPeerAllocationsFn(), [this](const void *ptr) {
+            context->freePeerAllocationsFromAll(ptr, false);
+        });
     }
 
     void createKernel() {

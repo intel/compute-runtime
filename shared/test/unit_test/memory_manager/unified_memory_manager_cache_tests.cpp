@@ -613,6 +613,46 @@ HWTEST_F(SvmDeviceAllocationCacheTest, givenOclApiSpecificConfigAndProductHelper
     }
 }
 
+HWTEST_F(SvmDeviceAllocationCacheTest, givenUsmReuseSupportedWhenInitializingCachesNotEnabledByDefaultThenNoCacheIsCreated) {
+    auto deviceFactory = std::make_unique<UltDeviceFactory>(1, 1);
+    MockDevice *device = deviceFactory->rootDevices[0];
+    RAIIProductHelperFactory<MockProductHelper> raii(*device->getExecutionEnvironment()->rootDeviceEnvironments[0]);
+    auto &hwInfo = *device->getRootDeviceEnvironmentRef().getMutableHardwareInfo();
+    raii.mockProductHelper->isDeviceUsmAllocationReuseSupportedResult = true;
+    raii.mockProductHelper->isHostUsmAllocationReuseSupportedResult = true;
+    hwInfo.caps.sharedUsmAllocationReuseSupported = true;
+    device->initUsmReuseLimits();
+    device->getMemoryManager()->initUsmReuseLimits();
+
+    auto enabledByDefaultSvmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager());
+    enabledByDefaultSvmManager->initUsmAllocationsCaches(*device, true);
+    EXPECT_NE(nullptr, enabledByDefaultSvmManager->usmDeviceAllocationsCache);
+    EXPECT_NE(nullptr, enabledByDefaultSvmManager->usmHostAllocationsCache);
+    EXPECT_NE(nullptr, enabledByDefaultSvmManager->usmSharedAllocationsCache);
+
+    auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager());
+    svmManager->initUsmAllocationsCaches(*device, false);
+    EXPECT_EQ(nullptr, svmManager->usmDeviceAllocationsCache);
+    EXPECT_EQ(nullptr, svmManager->usmHostAllocationsCache);
+    EXPECT_EQ(nullptr, svmManager->usmSharedAllocationsCache);
+}
+
+TEST_F(SvmDeviceAllocationCacheTest, givenDebugKeysSetWhenInitializingCachesNotEnabledByDefaultThenCachesAreCreated) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ExperimentalEnableDeviceAllocationCache.set(8);
+    debugManager.flags.ExperimentalEnableHostAllocationCache.set(2);
+    debugManager.flags.ExperimentalEnableSharedAllocationCache.set(8);
+    auto deviceFactory = std::make_unique<UltDeviceFactory>(1, 1);
+    MockDevice *device = deviceFactory->rootDevices[0];
+    device->initUsmReuseLimits();
+    device->getMemoryManager()->initUsmReuseLimits();
+    auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager());
+    svmManager->initUsmAllocationsCaches(*device, false);
+    EXPECT_NE(nullptr, svmManager->usmDeviceAllocationsCache);
+    EXPECT_NE(nullptr, svmManager->usmHostAllocationsCache);
+    EXPECT_NE(nullptr, svmManager->usmSharedAllocationsCache);
+}
+
 TEST_F(SvmDeviceAllocationCacheTest, givenAllocationCacheEnabledWhenDirectSubmissionLightActiveThenCleanerDisabled) {
     auto deviceFactory = std::make_unique<UltDeviceFactory>(1, 1);
     DebugManagerStateRestore restore;
@@ -1300,6 +1340,39 @@ TEST_F(SvmDeviceAllocationCacheTest, givenDeviceOutOfMemoryWhenAllocatingThenCac
     EXPECT_EQ(nullptr, svmManager->usmDeviceAllocationsCache);
 }
 
+TEST_F(SvmDeviceAllocationCacheTest, givenDeferFreedCachedAllocationWithPendingWorkWhenCacheIsTrimmedThenItIsFreedAfterThatWorkIsWaitedFor) {
+    auto deviceFactory = std::make_unique<UltDeviceFactory>(1, 1);
+    DebugManagerStateRestore restore;
+    debugManager.flags.ExperimentalEnableDeviceAllocationCache.set(1);
+    auto device = deviceFactory->rootDevices[0];
+    auto memoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());
+    auto svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager);
+    device->usmReuseInfo.init(1 * MemoryConstants::gigaByte, UsmReuseInfo::notLimited);
+    svmManager->initUsmAllocationsCaches(*device);
+    ASSERT_NE(nullptr, svmManager->usmDeviceAllocationsCache);
+    memoryManager->callBaseAllocInUse = true;
+    auto unifiedMemoryProperties = createMemoryProperties(InternalMemoryType::deviceUnifiedMemory, device);
+
+    auto allocationInCache = svmManager->createUnifiedMemoryAllocation(MemoryConstants::pageSize64k, unifiedMemoryProperties);
+    ASSERT_NE(nullptr, allocationInCache);
+    auto csr = device->getDefaultEngine().commandStreamReceiver;
+    constexpr TaskCountType taskCount = 1u;
+    svmManager->getSVMAlloc(allocationInCache)->gpuAllocations.getDefaultGraphicsAllocation()->updateTaskCount(taskCount, csr->getOsContext().getContextId());
+    *csr->getTagAddress() = taskCount - 1;
+    memoryManager->waitForEnginesCompletionCallback = [csr]() { *csr->getTagAddress() = taskCount; };
+    svmManager->freeSVMAllocDefer(allocationInCache);
+    ASSERT_EQ(1u, svmManager->usmDeviceAllocationsCache->allocations.size());
+    const auto waitsBefore = memoryManager->waitForEnginesCompletionCalled;
+
+    svmManager->trimUSMDeviceAllocCache();
+
+    EXPECT_TRUE(svmManager->usmDeviceAllocationsCache->allocations.empty());
+    EXPECT_LT(waitsBefore, memoryManager->waitForEnginesCompletionCalled);
+    EXPECT_EQ(nullptr, svmManager->getSVMAlloc(allocationInCache));
+
+    svmManager->cleanupUSMAllocCaches();
+}
+
 TEST_F(SvmDeviceAllocationCacheTest, givenAllocationWithIsInternalAllocationSetWhenAllocatingAfterFreeThenDoNotReuseAllocation) {
     auto deviceFactory = std::make_unique<UltDeviceFactory>(1, 1);
     DebugManagerStateRestore restore;
@@ -1356,6 +1429,250 @@ TEST_F(SvmDeviceAllocationCacheTest, givenAllocationInUsageWhenAllocatingAfterFr
     EXPECT_EQ(svmManager->usmDeviceAllocationsCache->allocations.size(), 2u);
 
     svmManager->cleanupUSMAllocCaches();
+}
+
+struct SvmDeviceAllocationCachePeerTest : public SvmDeviceAllocationCacheTest {
+    void SetUp() override {
+        SvmDeviceAllocationCacheTest::SetUp();
+        debugManager.flags.ExperimentalEnableDeviceAllocationCache.set(1);
+        deviceFactory = std::make_unique<UltDeviceFactory>(1, 1);
+        device = deviceFactory->rootDevices[0];
+        memoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());
+        svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager);
+        device->usmReuseInfo.init(1 * MemoryConstants::gigaByte, UsmReuseInfo::notLimited);
+        svmManager->initUsmAllocationsCaches(*device);
+        svmManager->setPeerAllocationsCallbacks(
+            [this](const void *peerOwnerPtr) {
+                StackVec<GraphicsAllocation *, 4> peerAllocations;
+                if (peerOwnerPtr == this->ptr) {
+                    peerAllocations.push_back(&this->peerAllocation);
+                }
+                return peerAllocations;
+            },
+            [this](const void *peerOwnerPtr) { this->releasedPeerOwnerPtrs.push_back(peerOwnerPtr); });
+
+        unifiedMemoryProperties = std::make_unique<UnifiedMemoryProperties>(createMemoryProperties(InternalMemoryType::deviceUnifiedMemory, device));
+        ptr = svmManager->createUnifiedMemoryAllocation(allocationSize, *unifiedMemoryProperties);
+        csr = device->getDefaultEngine().commandStreamReceiver;
+    }
+
+    void TearDown() override {
+        svmManager->cleanupUSMAllocCaches();
+        SvmDeviceAllocationCacheTest::TearDown();
+    }
+
+    static constexpr size_t allocationSize = MemoryConstants::pageSize64k;
+    DebugManagerStateRestore restore;
+    std::unique_ptr<UltDeviceFactory> deviceFactory;
+    Device *device = nullptr;
+    MockMemoryManager *memoryManager = nullptr;
+    std::unique_ptr<MockSVMAllocsManager> svmManager;
+    std::unique_ptr<UnifiedMemoryProperties> unifiedMemoryProperties;
+    void *ptr = nullptr;
+    CommandStreamReceiver *csr = nullptr;
+    MockGraphicsAllocation peerAllocation;
+    std::vector<const void *> releasedPeerOwnerPtrs;
+};
+
+TEST_F(SvmDeviceAllocationCachePeerTest, givenCachedAllocationWhenCacheIsTrimmedThenItsPeerAllocationsAreReleased) {
+    svmManager->freeSVMAlloc(ptr);
+    ASSERT_EQ(1u, svmManager->usmDeviceAllocationsCache->allocations.size());
+    EXPECT_TRUE(releasedPeerOwnerPtrs.empty());
+
+    svmManager->trimUSMDeviceAllocCache();
+
+    ASSERT_EQ(1u, releasedPeerOwnerPtrs.size());
+    EXPECT_EQ(ptr, releasedPeerOwnerPtrs[0]);
+}
+
+TEST_F(SvmDeviceAllocationCachePeerTest, givenCachedAllocationWhenOldAllocationsAreTrimmedThenItsPeerAllocationsAreReleased) {
+    svmManager->freeSVMAlloc(ptr);
+    ASSERT_EQ(1u, svmManager->usmDeviceAllocationsCache->allocations.size());
+
+    svmManager->usmDeviceAllocationsCache->trimOldAllocs(std::chrono::high_resolution_clock::now(), false);
+
+    EXPECT_TRUE(svmManager->usmDeviceAllocationsCache->allocations.empty());
+    ASSERT_EQ(1u, releasedPeerOwnerPtrs.size());
+    EXPECT_EQ(ptr, releasedPeerOwnerPtrs[0]);
+}
+
+TEST_F(SvmDeviceAllocationCachePeerTest, givenCachedAllocationWhenOldAllocationsAreTrimmedThenPeerAllocationsAreReleasedWithoutHoldingCacheLock) {
+    auto cache = svmManager->usmDeviceAllocationsCache.get();
+    bool cacheLockFreeDuringRelease = false;
+    svmManager->setPeerAllocationsCallbacks(
+        [](const void *) { return StackVec<GraphicsAllocation *, 4>{}; },
+        [cache, &cacheLockFreeDuringRelease](const void *) {
+            cacheLockFreeDuringRelease = cache->mtx.try_lock();
+            if (cacheLockFreeDuringRelease) {
+                cache->mtx.unlock();
+            }
+        });
+    svmManager->freeSVMAlloc(ptr);
+    ASSERT_EQ(1u, cache->allocations.size());
+
+    cache->trimOldAllocs(std::chrono::high_resolution_clock::now(), false);
+
+    EXPECT_TRUE(cache->allocations.empty());
+    EXPECT_TRUE(cacheLockFreeDuringRelease);
+}
+
+TEST_F(SvmDeviceAllocationCachePeerTest, givenAllocationWhenFreedBlockingThenItsPeerAllocationsAreWaitedFor) {
+    const auto waitsBefore = memoryManager->waitForEnginesCompletionCalled;
+
+    svmManager->freeSVMAlloc(ptr, true);
+
+    ASSERT_EQ(1u, svmManager->usmDeviceAllocationsCache->allocations.size());
+    EXPECT_EQ(waitsBefore + 2u, memoryManager->waitForEnginesCompletionCalled);
+}
+
+TEST_F(SvmDeviceAllocationCachePeerTest, givenPeerAllocationWithPendingWorkWhenDeferFreedAllocationIsRequestedThenItIsNotReusedUntilPeerWorkCompletes) {
+    memoryManager->callBaseAllocInUse = true;
+    constexpr TaskCountType peerTaskCount = 1u;
+    peerAllocation.updateTaskCount(peerTaskCount, csr->getOsContext().getContextId());
+    *csr->getTagAddress() = peerTaskCount - 1;
+
+    svmManager->freeSVMAllocDefer(ptr);
+    ASSERT_EQ(1u, svmManager->usmDeviceAllocationsCache->allocations.size());
+
+    auto newAllocation = svmManager->createUnifiedMemoryAllocation(allocationSize, *unifiedMemoryProperties);
+    EXPECT_NE(ptr, newAllocation);
+
+    *csr->getTagAddress() = peerTaskCount;
+    auto reusedAllocation = svmManager->createUnifiedMemoryAllocation(allocationSize, *unifiedMemoryProperties);
+    EXPECT_EQ(ptr, reusedAllocation);
+
+    svmManager->freeSVMAlloc(newAllocation);
+    svmManager->freeSVMAlloc(reusedAllocation);
+}
+
+struct SvmDeviceAllocationCachePendingPeerWorkTest : public SvmDeviceAllocationCachePeerTest {
+    void SetUp() override {
+        SvmDeviceAllocationCachePeerTest::SetUp();
+        memoryManager->callBaseAllocInUse = true;
+        peerAllocation.updateTaskCount(peerTaskCount, csr->getOsContext().getContextId());
+        *csr->getTagAddress() = peerTaskCount - 1;
+    }
+
+    void TearDown() override {
+        completePeerWork();
+        SvmDeviceAllocationCachePeerTest::TearDown();
+    }
+
+    void completePeerWork() {
+        *csr->getTagAddress() = peerTaskCount;
+    }
+
+    static constexpr TaskCountType peerTaskCount = 1u;
+};
+
+TEST_F(SvmDeviceAllocationCachePendingPeerWorkTest, givenDeferFreedCachedAllocationWithPendingPeerWorkWhenCacheIsTrimmedThenItIsKeptAndItsPeerAllocationsAreNotReleased) {
+    svmManager->freeSVMAllocDefer(ptr);
+    ASSERT_EQ(1u, svmManager->usmDeviceAllocationsCache->allocations.size());
+
+    svmManager->trimUSMDeviceAllocCache();
+
+    EXPECT_EQ(1u, svmManager->usmDeviceAllocationsCache->allocations.size());
+    EXPECT_TRUE(releasedPeerOwnerPtrs.empty());
+
+    completePeerWork();
+    svmManager->trimUSMDeviceAllocCache();
+
+    EXPECT_TRUE(svmManager->usmDeviceAllocationsCache->allocations.empty());
+    ASSERT_EQ(1u, releasedPeerOwnerPtrs.size());
+    EXPECT_EQ(ptr, releasedPeerOwnerPtrs[0]);
+}
+
+TEST_F(SvmDeviceAllocationCachePendingPeerWorkTest, givenDeferFreedCachedAllocationWithPendingPeerWorkWhenCachesAreCleanedUpThenPeerAllocationsAreWaitedForBeforeTheyAreReleased) {
+    svmManager->freeSVMAllocDefer(ptr);
+    ASSERT_EQ(1u, svmManager->usmDeviceAllocationsCache->allocations.size());
+    size_t releasesBeforeWait = std::numeric_limits<size_t>::max();
+    memoryManager->waitForEnginesCompletionCallback = [this, &releasesBeforeWait]() {
+        releasesBeforeWait = std::min(releasesBeforeWait, releasedPeerOwnerPtrs.size());
+        completePeerWork();
+    };
+    const auto waitsBefore = memoryManager->waitForEnginesCompletionCalled;
+
+    svmManager->cleanupUSMAllocCaches();
+
+    EXPECT_EQ(waitsBefore + 2u, memoryManager->waitForEnginesCompletionCalled);
+    EXPECT_EQ(0u, releasesBeforeWait);
+    ASSERT_EQ(1u, releasedPeerOwnerPtrs.size());
+    EXPECT_EQ(ptr, releasedPeerOwnerPtrs[0]);
+}
+
+TEST_F(SvmDeviceAllocationCachePendingPeerWorkTest, givenCachedAllocationWithPendingPeerWorkWhenOldAllocationsAreTrimmedThenItIsDeferredWithItsPeerAllocationsUntilPeerWorkCompletes) {
+    svmManager->freeSVMAllocDefer(ptr);
+    ASSERT_EQ(1u, svmManager->usmDeviceAllocationsCache->allocations.size());
+
+    svmManager->usmDeviceAllocationsCache->trimOldAllocs(std::chrono::high_resolution_clock::now(), false);
+
+    EXPECT_TRUE(svmManager->usmDeviceAllocationsCache->allocations.empty());
+    EXPECT_TRUE(releasedPeerOwnerPtrs.empty());
+    EXPECT_NE(nullptr, svmManager->getSVMAlloc(ptr));
+    EXPECT_EQ(1u, svmManager->getNumClaimableDeferFreeAllocs());
+
+    completePeerWork();
+    svmManager->freeSVMAllocDeferImpl();
+
+    EXPECT_EQ(nullptr, svmManager->getSVMAlloc(ptr));
+    ASSERT_EQ(1u, releasedPeerOwnerPtrs.size());
+    EXPECT_EQ(ptr, releasedPeerOwnerPtrs[0]);
+}
+
+TEST_F(SvmDeviceAllocationCachePendingPeerWorkTest, givenAllocationWithPendingPeerWorkWhenFreedDeferredOutsideCacheThenItIsDeferredWithItsPeerAllocationsUntilPeerWorkCompletes) {
+    svmManager->freeSVMAllocImpl(ptr, FreePolicyType::defer, svmManager->getSVMAlloc(ptr));
+
+    EXPECT_TRUE(releasedPeerOwnerPtrs.empty());
+    EXPECT_NE(nullptr, svmManager->getSVMAlloc(ptr));
+    EXPECT_EQ(1u, svmManager->getNumClaimableDeferFreeAllocs());
+
+    completePeerWork();
+    svmManager->freeSVMAllocDeferImpl();
+
+    EXPECT_EQ(nullptr, svmManager->getSVMAlloc(ptr));
+    ASSERT_EQ(1u, releasedPeerOwnerPtrs.size());
+    EXPECT_EQ(ptr, releasedPeerOwnerPtrs[0]);
+}
+
+TEST_F(SvmDeviceAllocationCachePendingPeerWorkTest, givenAllocationWithPendingPeerWorkWhenFreedBlockingOutsideCacheThenPeerAllocationsAreWaitedForBeforeTheyAreReleased) {
+    size_t releasesBeforeWait = std::numeric_limits<size_t>::max();
+    memoryManager->waitForEnginesCompletionCallback = [this, &releasesBeforeWait]() {
+        releasesBeforeWait = std::min(releasesBeforeWait, releasedPeerOwnerPtrs.size());
+        completePeerWork();
+    };
+    const auto waitsBefore = memoryManager->waitForEnginesCompletionCalled;
+
+    svmManager->freeSVMAllocImpl(ptr, FreePolicyType::blocking, svmManager->getSVMAlloc(ptr));
+
+    EXPECT_EQ(waitsBefore + 2u, memoryManager->waitForEnginesCompletionCalled);
+    EXPECT_EQ(0u, releasesBeforeWait);
+    EXPECT_EQ(nullptr, svmManager->getSVMAlloc(ptr));
+    ASSERT_EQ(1u, releasedPeerOwnerPtrs.size());
+    EXPECT_EQ(ptr, releasedPeerOwnerPtrs[0]);
+}
+
+TEST_F(SvmDeviceAllocationCachePeerTest, givenAllocationWhenFreedNonBlockingOutsideCacheThenPeerAllocationsAreReleasedWithoutWaiting) {
+    const auto waitsBefore = memoryManager->waitForEnginesCompletionCalled;
+
+    svmManager->freeSVMAllocImpl(ptr, FreePolicyType::none, svmManager->getSVMAlloc(ptr));
+
+    EXPECT_EQ(waitsBefore, memoryManager->waitForEnginesCompletionCalled);
+    EXPECT_EQ(nullptr, svmManager->getSVMAlloc(ptr));
+    ASSERT_EQ(1u, releasedPeerOwnerPtrs.size());
+    EXPECT_EQ(ptr, releasedPeerOwnerPtrs[0]);
+}
+
+TEST_F(SvmDeviceAllocationCachePeerTest, givenImportedAllocationWhenFreedBlockingThenItsPeerAllocationsAreWaitedForAndReleased) {
+    auto svmData = svmManager->getSVMAlloc(ptr);
+    svmData->isImportedAllocation = true;
+    const auto waitsBefore = memoryManager->waitForEnginesCompletionCalled;
+
+    svmManager->freeSVMAllocImpl(ptr, FreePolicyType::blocking, svmData);
+
+    EXPECT_EQ(waitsBefore + 2u, memoryManager->waitForEnginesCompletionCalled);
+    EXPECT_EQ(nullptr, svmManager->getSVMAlloc(ptr));
+    ASSERT_EQ(1u, releasedPeerOwnerPtrs.size());
+    EXPECT_EQ(ptr, releasedPeerOwnerPtrs[0]);
 }
 
 struct SvmDeviceAllocationCacheIndirectAccessTest : public SvmDeviceAllocationCacheTest {

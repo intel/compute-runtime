@@ -433,6 +433,7 @@ struct Context : _ze_context_handle_t, NEO::NonCopyableAndNonMovableClass {
 
     size_t getPageAlignedSizeRequired(const void *pStart, size_t size, NEO::HeapIndex *heapRequired, size_t *pageSizeRequired);
     bool tryFreeViaPooling(const void *ptr, NEO::SvmAllocationData *svmData, NEO::UsmMemAllocPool *usmPool, NEO::FreePolicyType policy);
+    void freeSvmAllocation(void *ptr, NEO::SvmAllocationData *svmData, NEO::FreePolicyType policy);
     void markAllocationIpcExported(NEO::GraphicsAllocation *alloc, NEO::SvmAllocationData *allocData);
     void releaseIpcHandle(const void *ptr, const NEO::SvmAllocationData &allocData, NEO::UsmMemAllocPool *usmPool);
     void invokeMemFreeCallbacks(const void *ptr, NEO::SvmAllocationData &svmData, NEO::UsmMemAllocPool *usmPool);

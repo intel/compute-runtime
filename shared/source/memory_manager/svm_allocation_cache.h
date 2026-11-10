@@ -77,6 +77,7 @@ struct SVMAllocsManager::SvmAllocationCache : AllocationReuseCache {
     void *get(size_t size, const UnifiedMemoryProperties &unifiedMemoryProperties);
     void *get(size_t size, const UnifiedMemoryProperties &unifiedMemoryProperties, std::optional<uint32_t> storageOwnerRootDeviceIndex);
     void trim();
+    void trim(bool keepAllocationsWithPeerWorkInUse);
     void trimOldAllocs(std::chrono::high_resolution_clock::time_point trimTimePoint, bool trimAll) override;
     MemoryManager *getMemoryManager() const override { return memoryManager; }
     void cleanup();

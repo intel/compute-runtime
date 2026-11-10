@@ -53,6 +53,7 @@ set(NEO_CORE_MEMORY_MANAGER
     ${CMAKE_CURRENT_SOURCE_DIR}/multi_graphics_allocation.h
     ${CMAKE_CURRENT_SOURCE_DIR}/os_agnostic_memory_manager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_agnostic_memory_manager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/peer_allocations_fn.h
     ${CMAKE_CURRENT_SOURCE_DIR}/physical_address_allocator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/residency.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/residency.h

@@ -258,6 +258,9 @@ DriverHandle::~DriverHandle() {
         L0::Context::fromHandle(this->defaultContext)->destroy();
         this->defaultContext = nullptr;
     }
+    if (this->svmAllocsManager) {
+        this->svmAllocsManager->setPeerAllocationsCallbacks(nullptr, nullptr);
+    }
 
     if (memoryManager != nullptr) {
         memoryManager->peekExecutionEnvironment().prepareForCleanup();
@@ -341,9 +344,13 @@ ze_result_t DriverHandle::initialize(std::vector<std::unique_ptr<NEO::Device>> n
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 
+    this->svmAllocsManager->initUsmAllocationsCaches(*this->devices[0]->getNEODevice(), this->numDevices == 1);
     if (this->numDevices == 1) {
-        this->svmAllocsManager->initUsmAllocationsCaches(*this->devices[0]->getNEODevice());
         this->imageAllocationCache = ImageAllocationCache::create(*this->devices[0]->getNEODevice());
+    } else {
+        this->svmAllocsManager->setPeerAllocationsCallbacks(this->getPeerAllocationsFn(), [this](const void *ptr) {
+            Context::fromHandle(this->defaultContext)->freePeerAllocationsFromAll(ptr, false);
+        });
     }
 
     uuidTimestamp = static_cast<uint64_t>(std::chrono::system_clock::now().time_since_epoch().count());
@@ -424,7 +431,7 @@ bool isAccessedByAnyPeer(const std::vector<Device *> &devices, NEO::Device &devi
 }
 } // namespace
 
-NEO::UsmMemAllocPool::PeerAllocationsFn DriverHandle::getPoolPeerAllocationsFn() {
+NEO::PeerAllocationsFn DriverHandle::getPeerAllocationsFn() {
     return [this](const void *ptr) {
         StackVec<NEO::GraphicsAllocation *, 4> peerAllocations;
         for (auto device : this->devices) {
@@ -474,7 +481,7 @@ void DriverHandle::initDeviceUsmAllocPool(NEO::Device &device, bool multiDevice)
         const bool uncompressedPool = isAccessedByAnyPeer(this->devices, device);
         device.getDeviceUsmMemAllocPoolFacade().initialize(InternalMemoryType::deviceUnifiedMemory, rootDeviceIndices, deviceBitfields,
                                                            &device, this->svmAllocsManager,
-                                                           {getPoolCleanupFn(), true, compressionEnabledByDefault, getPoolPeerAllocationsFn(), uncompressedPool});
+                                                           {getPoolCleanupFn(), true, compressionEnabledByDefault, getPeerAllocationsFn(), uncompressedPool});
     }
 }
 

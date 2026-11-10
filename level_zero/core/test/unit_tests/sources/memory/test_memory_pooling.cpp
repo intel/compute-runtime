@@ -725,7 +725,7 @@ TEST_F(PeerAccessedDevicePoolWithSubDevicesMemoryTest, givenChunkAccessedFromPee
     EXPECT_EQ(peerAllocation, accessFromPeer(l0Devices[1]->subDevices[0], ptr));
     EXPECT_EQ(peerAllocation, accessFromPeer(l0Devices[1]->subDevices[1], ptr));
 
-    auto peerAllocations = driverHandle->getPoolPeerAllocationsFn()(getDevicePool()->pool);
+    auto peerAllocations = driverHandle->getPeerAllocationsFn()(getDevicePool()->pool);
     ASSERT_EQ(1u, peerAllocations.size());
     EXPECT_EQ(peerAllocation, peerAllocations[0]);
 

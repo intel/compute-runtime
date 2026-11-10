@@ -538,10 +538,12 @@ void Context::freePeerAllocations(const void *ptr, bool blocking, Device *device
             for (const auto &graphicsAllocation : gpuAllocations.getGraphicsAllocations()) {
                 this->driverHandle->getMemoryManager()->freeGraphicsMemory(graphicsAllocation);
             }
+            peerAllocationsOwner->peerAllocations.allocations.erase(iter);
         } else {
+            peerAllocationsOwner->peerAllocations.allocations.erase(iter);
+            lock.unlock();
             this->driverHandle->svmAllocsManager->freeSVMAlloc(peerPtr, blocking);
         }
-        peerAllocationsOwner->peerAllocations.allocations.erase(iter);
     }
 
     for (auto &subDevice : device->subDevices) {
@@ -651,6 +653,21 @@ void Context::eraseSharedMakeResidentAllocations(const NEO::SvmAllocationData &s
     allocations.erase(allocations.lower_bound(basePtr), allocations.lower_bound(ptrOffset(basePtr, svmData.size)));
 }
 
+void Context::freeSvmAllocation(void *ptr, NEO::SvmAllocationData *svmData, NEO::FreePolicyType policy) {
+    auto svmAllocsManager = this->driverHandle->svmAllocsManager;
+    if (svmAllocsManager->getNumClaimableDeferFreeAllocs() > 0) {
+        svmAllocsManager->freeSVMAllocDeferImpl();
+        svmData = svmAllocsManager->getSVMAlloc(ptr);
+        if (nullptr == svmData) {
+            return;
+        }
+    }
+    if (svmAllocsManager->tryFreeViaReuseCache(ptr, *svmData, policy)) {
+        return;
+    }
+    svmAllocsManager->freeSVMAllocImpl(ptr, policy, svmData);
+}
+
 ze_result_t Context::freeMem(const void *ptr) {
     return this->freeMem(ptr, false);
 }
@@ -675,14 +692,12 @@ ze_result_t Context::freeMem(const void *ptr, bool blocking) {
         this->eraseSharedMakeResidentAllocations(*allocData);
     }
 
-    if (this->tryFreeViaPooling(ptr, allocData, poolLookup.pool,
-                                blocking ? NEO::FreePolicyType::blocking : NEO::FreePolicyType::none)) {
+    const auto freePolicy = blocking ? NEO::FreePolicyType::blocking : NEO::FreePolicyType::none;
+    if (this->tryFreeViaPooling(ptr, allocData, poolLookup.pool, freePolicy)) {
         return ZE_RESULT_SUCCESS;
     }
 
-    this->freePeerAllocationsFromAll(ptr, blocking);
-
-    this->driverHandle->svmAllocsManager->freeSVMAlloc(const_cast<void *>(ptr), blocking);
+    this->freeSvmAllocation(const_cast<void *>(ptr), allocData, freePolicy);
 
     return ZE_RESULT_SUCCESS;
 }
@@ -719,9 +734,7 @@ ze_result_t Context::freeMemExt(const ze_memory_free_ext_desc_t *pMemFreeDesc,
             return ZE_RESULT_SUCCESS;
         }
 
-        this->freePeerAllocationsFromAll(ptr, false);
-
-        this->driverHandle->svmAllocsManager->freeSVMAllocDefer(const_cast<void *>(ptr));
+        this->freeSvmAllocation(const_cast<void *>(ptr), allocData, NEO::FreePolicyType::defer);
         return ZE_RESULT_SUCCESS;
     }
     return this->freeMem(ptr, false);

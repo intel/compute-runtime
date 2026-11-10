@@ -209,6 +209,9 @@ struct MemoryExportImportObtainFdTest : public ::testing::Test {
         prevSvmAllocsManager = driverHandle->svmAllocsManager;
         currSvmAllocsManager = new NEO::SVMAllocsManager(currMemoryManager);
         driverHandle->svmAllocsManager = currSvmAllocsManager;
+        currSvmAllocsManager->setPeerAllocationsCallbacks(driverHandle->getPeerAllocationsFn(), [this](const void *ptr) {
+            context->freePeerAllocationsFromAll(ptr, false);
+        });
 
         context = std::make_unique<L0::Context>(driverHandle.get());
         EXPECT_NE(context, nullptr);
@@ -716,6 +719,9 @@ struct MemoryObtainFdTest : public ::testing::Test {
         prevSvmAllocsManager = driverHandle->svmAllocsManager;
         currSvmAllocsManager = new NEO::SVMAllocsManager(currMemoryManager);
         driverHandle->svmAllocsManager = currSvmAllocsManager;
+        currSvmAllocsManager->setPeerAllocationsCallbacks(driverHandle->getPeerAllocationsFn(), [this](const void *ptr) {
+            context->freePeerAllocationsFromAll(ptr, false);
+        });
 
         context = std::make_unique<L0::Context>(driverHandle.get());
         EXPECT_NE(context, nullptr);

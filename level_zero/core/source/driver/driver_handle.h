@@ -159,7 +159,7 @@ class DriverHandle : public BaseDriver, public NEO::NonCopyableAndNonMovableClas
     void initDeviceUsmAllocPoolOnce();
     void initUsmPooling();
     NEO::UsmMemAllocPoolsFacade::CustomCleanupFn getPoolCleanupFn();
-    NEO::UsmMemAllocPoolsFacade::PeerAllocationsFn getPoolPeerAllocationsFn();
+    NEO::PeerAllocationsFn getPeerAllocationsFn();
     NEO::UsmPoolLookupResult getHostUsmPoolOwningPtr(const void *ptr);
     NEO::UsmPoolLookupResult getUsmPoolOwningPtr(const void *ptr, NEO::SvmAllocationData *svmData);
 
