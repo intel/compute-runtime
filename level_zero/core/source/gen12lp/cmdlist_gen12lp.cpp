@@ -201,7 +201,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
             kernel->getKernelDescriptor().kernelMetadata.kernelName.c_str(), 0u);
     }
 
-    std::list<void *> additionalCommands;
     const auto pauseOnEnqueue = NEO::PauseOnGpuProperties::selectPauseSpace(NEO::debugManager.flags.PauseOnEnqueue.get(), neoDevice->debugExecutionCounter.load(), !this->isImmediateType());
 
     updateStreamProperties(*kernel, launchParams.isCooperative, threadGroupDimensions, launchParams.isIndirect);
@@ -218,7 +217,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         .cpuPayloadBuffer = nullptr,
         .outImplicitArgsPtr = nullptr,
         .outImplicitArgsGpuVa = 0,
-        .additionalCommands = &additionalCommands,
         .extendedArgs = nullptr,
         .postSyncArgs = {
             .eventPacketSize = 0,
@@ -305,7 +303,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     }
 
     if (pauseOnEnqueue.beforeWorkload || pauseOnEnqueue.afterWorkload) [[unlikely]] {
-        programPauseOnEnqueueCommands(additionalCommands, pauseOnEnqueue);
+        programPauseOnEnqueueCommands(dispatchKernelArgs.outPauseBeforeWorkloadPtr, dispatchKernelArgs.outPauseAfterWorkloadPtr);
     }
 
     if (event != nullptr && kernel->getPrintfBufferAllocation() != nullptr) {

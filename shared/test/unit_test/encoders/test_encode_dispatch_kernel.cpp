@@ -951,12 +951,11 @@ HWTEST_F(CommandEncodeStatesTest, givenPauseOnEnqueueSetToNeverWhenEncodingWalke
 
     uint32_t dims[] = {1, 1, 1};
     bool requiresUncachedMocs = false;
-    std::list<void *> cmdsToPatch;
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
-    dispatchArgs.additionalCommands = &cmdsToPatch;
     EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
-    EXPECT_EQ(cmdsToPatch.size(), 0u);
+    EXPECT_EQ(nullptr, dispatchArgs.outPauseBeforeWorkloadPtr);
+    EXPECT_EQ(nullptr, dispatchArgs.outPauseAfterWorkloadPtr);
 }
 
 HWTEST_F(CommandEncodeStatesTest, givenPauseOnEnqueueSelectedInArgsWhenEncodingWalkerThenZeroedPauseSpaceIsReserved) {
@@ -968,18 +967,52 @@ HWTEST_F(CommandEncodeStatesTest, givenPauseOnEnqueueSelectedInArgsWhenEncodingW
 
     uint32_t dims[] = {1, 1, 1};
     bool requiresUncachedMocs = false;
-    std::list<void *> cmdsToPatch;
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
-    dispatchArgs.additionalCommands = &cmdsToPatch;
     dispatchArgs.pauseOnEnqueue = {.beforeWorkload = true, .afterWorkload = true};
     EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
-    ASSERT_EQ(cmdsToPatch.size(), 2u);
+    ASSERT_NE(nullptr, dispatchArgs.outPauseBeforeWorkloadPtr);
+    ASSERT_NE(nullptr, dispatchArgs.outPauseAfterWorkloadPtr);
+    EXPECT_NE(dispatchArgs.outPauseBeforeWorkloadPtr, dispatchArgs.outPauseAfterWorkloadPtr);
     const auto pauseSize = EncodeDebugPause<FamilyType>::getSize(pDevice->getRootDeviceEnvironment(), false);
-    for (auto pauseCommands : cmdsToPatch) {
+    for (auto pauseCommands : {dispatchArgs.outPauseBeforeWorkloadPtr, dispatchArgs.outPauseAfterWorkloadPtr}) {
         auto bytes = static_cast<const uint8_t *>(pauseCommands);
         EXPECT_TRUE(std::all_of(bytes, bytes + pauseSize, [](uint8_t value) { return value == 0; }));
     }
+}
+
+HWTEST_F(CommandEncodeStatesTest, givenOnlyPauseBeforeWorkloadSelectedInArgsWhenEncodingWalkerThenOnlyBeforeWorkloadPauseSpaceIsReserved) {
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    DebugManagerStateRestore restorer;
+    debugManager.flags.PauseOnEnqueue.set(-2);
+
+    std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
+
+    uint32_t dims[] = {1, 1, 1};
+    bool requiresUncachedMocs = false;
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
+    dispatchArgs.pauseOnEnqueue = {.beforeWorkload = true, .afterWorkload = false};
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
+
+    EXPECT_NE(nullptr, dispatchArgs.outPauseBeforeWorkloadPtr);
+    EXPECT_EQ(nullptr, dispatchArgs.outPauseAfterWorkloadPtr);
+}
+
+HWTEST_F(CommandEncodeStatesTest, givenOnlyPauseAfterWorkloadSelectedInArgsWhenEncodingWalkerThenOnlyAfterWorkloadPauseSpaceIsReserved) {
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    DebugManagerStateRestore restorer;
+    debugManager.flags.PauseOnEnqueue.set(-2);
+
+    std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
+
+    uint32_t dims[] = {1, 1, 1};
+    bool requiresUncachedMocs = false;
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
+    dispatchArgs.pauseOnEnqueue = {.beforeWorkload = false, .afterWorkload = true};
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
+
+    EXPECT_EQ(nullptr, dispatchArgs.outPauseBeforeWorkloadPtr);
+    EXPECT_NE(nullptr, dispatchArgs.outPauseAfterWorkloadPtr);
 }
 
 HWTEST_F(CommandEncodeStatesTest, givenPauseOnEnqueueFlagWithoutSelectionInArgsWhenEncodingWalkerThenPauseSpaceIsNotReserved) {
@@ -991,12 +1024,11 @@ HWTEST_F(CommandEncodeStatesTest, givenPauseOnEnqueueFlagWithoutSelectionInArgsW
 
     uint32_t dims[] = {1, 1, 1};
     bool requiresUncachedMocs = false;
-    std::list<void *> cmdsToPatch;
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
-    dispatchArgs.additionalCommands = &cmdsToPatch;
     EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
 
-    EXPECT_EQ(cmdsToPatch.size(), 0u);
+    EXPECT_EQ(nullptr, dispatchArgs.outPauseBeforeWorkloadPtr);
+    EXPECT_EQ(nullptr, dispatchArgs.outPauseAfterWorkloadPtr);
 }
 
 template <typename FamilyType>

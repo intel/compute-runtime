@@ -1960,7 +1960,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, IOHCacheCommandEncodeStatesTest, givenIOHCacheEnabl
         .cpuPayloadBuffer = nullptr,
         .outImplicitArgsPtr = nullptr,
         .outImplicitArgsGpuVa = 0,
-        .additionalCommands = nullptr,
         .extendedArgs = nullptr,
         .postSyncArgs = {
             .eventPacketSize = 32,
@@ -2038,7 +2037,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, IOHCacheCommandEncodeStatesTest, givenIOHCacheEnabl
         .cpuPayloadBuffer = nullptr,
         .outImplicitArgsPtr = nullptr,
         .outImplicitArgsGpuVa = 0,
-        .additionalCommands = nullptr,
         .extendedArgs = nullptr,
         .postSyncArgs = {
             .eventPacketSize = 32,

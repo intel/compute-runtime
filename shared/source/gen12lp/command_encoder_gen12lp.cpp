@@ -309,7 +309,7 @@ bool EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         const auto pauseSize = EncodeDebugPause<Family>::getSize(args.device->getRootDeviceEnvironment(), false);
         void *pauseCommands = listCmdBufferStream->getSpace(pauseSize);
         memset(pauseCommands, 0, pauseSize);
-        args.additionalCommands->push_back(pauseCommands);
+        args.outPauseBeforeWorkloadPtr = pauseCommands;
     }
 
     auto buffer = listCmdBufferStream->getSpaceForCmd<DefaultWalkerType>();
@@ -326,7 +326,7 @@ bool EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         const auto pauseSize = EncodeDebugPause<Family>::getSize(args.device->getRootDeviceEnvironment(), false);
         void *pauseCommands = listCmdBufferStream->getSpace(pauseSize);
         memset(pauseCommands, 0, pauseSize);
-        args.additionalCommands->push_back(pauseCommands);
+        args.outPauseAfterWorkloadPtr = pauseCommands;
     }
     return true;
 }

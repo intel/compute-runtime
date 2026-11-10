@@ -1961,11 +1961,8 @@ void CommandListCoreFamily<gfxCoreFamily>::appendBlitPauseCommands(bool beforeBl
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::programPauseOnEnqueueCommands(std::list<void *> &additionalCommands, const NEO::PauseOnGpuProperties::PauseSelection &pauseSelection) {
-    auto programPause = [&](bool beforeWorkload) {
-        auto pauseCommands = additionalCommands.front();
-        additionalCommands.pop_front();
-
+void CommandListCoreFamily<gfxCoreFamily>::programPauseOnEnqueueCommands(void *beforeWorkloadCommands, void *afterWorkloadCommands) {
+    auto programPause = [&](void *pauseCommands, bool beforeWorkload) {
         if (!this->isImmediateType()) {
             this->commandsToPatch.push_back(PatchDebugPause{.pCommand = pauseCommands, .beforeWorkload = beforeWorkload, .isBlit = false});
             return;
@@ -1982,11 +1979,11 @@ void CommandListCoreFamily<gfxCoreFamily>::programPauseOnEnqueueCommands(std::li
         }
     };
 
-    if (pauseSelection.beforeWorkload) {
-        programPause(true);
+    if (beforeWorkloadCommands) {
+        programPause(beforeWorkloadCommands, true);
     }
-    if (pauseSelection.afterWorkload) {
-        programPause(false);
+    if (afterWorkloadCommands) {
+        programPause(afterWorkloadCommands, false);
     }
 }
 

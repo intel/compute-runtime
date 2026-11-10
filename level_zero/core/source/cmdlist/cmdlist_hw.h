@@ -328,7 +328,7 @@ struct CommandListCoreFamily : public CommandList {
 
     COLD_SECTION void appendBlitPauseCommands(bool beforeBlit, bool copyOffloadOperation);
     NEO::PauseOnGpuProperties::PauseSelection selectBlitPauses(bool copyOffloadOperation) const;
-    COLD_SECTION void programPauseOnEnqueueCommands(std::list<void *> &additionalCommands, const NEO::PauseOnGpuProperties::PauseSelection &pauseSelection);
+    COLD_SECTION void programPauseOnEnqueueCommands(void *beforeWorkloadCommands, void *afterWorkloadCommands);
 
     MOCKABLE_VIRTUAL ze_result_t appendMemoryCopyBlit(uintptr_t dstPtr,
                                                       NEO::GraphicsAllocation *dstPtrAlloc,

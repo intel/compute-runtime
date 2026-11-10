@@ -470,12 +470,9 @@ HWTEST2_F(PauseOnBlitCopyTests, givenNumberedPauseOnEnqueueWhenImmediateSubmissi
     const auto pauseSize = EncodeDebugPause<FamilyType>::getSize(device->getNEODevice()->getRootDeviceEnvironment(), false);
     std::vector<std::vector<uint8_t>> slots(4, std::vector<uint8_t>(pauseSize, 0));
     auto isNoop = [](const std::vector<uint8_t> &slot) { return std::all_of(slot.begin(), slot.end(), [](uint8_t value) { return value == 0; }); };
-    const PauseOnGpuProperties::PauseSelection bothPauses{.beforeWorkload = true, .afterWorkload = true};
 
-    std::list<void *> firstKernelSlots{slots[0].data(), slots[1].data()};
-    cmdList->programPauseOnEnqueueCommands(firstKernelSlots, bothPauses);
-    std::list<void *> secondKernelSlots{slots[2].data(), slots[3].data()};
-    cmdList->programPauseOnEnqueueCommands(secondKernelSlots, bothPauses);
+    cmdList->programPauseOnEnqueueCommands(slots[0].data(), slots[1].data());
+    cmdList->programPauseOnEnqueueCommands(slots[2].data(), slots[3].data());
 
     EXPECT_FALSE(isNoop(slots[0]));
     EXPECT_TRUE(isNoop(slots[1]));
@@ -512,12 +509,9 @@ HWTEST2_F(PauseOnBlitCopyTests, givenPauseOnEnqueueOnEachEnqueueWhenImmediateSub
     const auto pauseSize = EncodeDebugPause<FamilyType>::getSize(device->getNEODevice()->getRootDeviceEnvironment(), false);
     std::vector<std::vector<uint8_t>> slots(4, std::vector<uint8_t>(pauseSize, 0));
     auto isNoop = [](const std::vector<uint8_t> &slot) { return std::all_of(slot.begin(), slot.end(), [](uint8_t value) { return value == 0; }); };
-    const PauseOnGpuProperties::PauseSelection bothPauses{.beforeWorkload = true, .afterWorkload = true};
 
-    std::list<void *> firstKernelSlots{slots[0].data(), slots[1].data()};
-    cmdList->programPauseOnEnqueueCommands(firstKernelSlots, bothPauses);
-    std::list<void *> secondKernelSlots{slots[2].data(), slots[3].data()};
-    cmdList->programPauseOnEnqueueCommands(secondKernelSlots, bothPauses);
+    cmdList->programPauseOnEnqueueCommands(slots[0].data(), slots[1].data());
+    cmdList->programPauseOnEnqueueCommands(slots[2].data(), slots[3].data());
 
     for (const auto &slot : slots) {
         EXPECT_FALSE(isNoop(slot));
@@ -526,14 +520,29 @@ HWTEST2_F(PauseOnBlitCopyTests, givenPauseOnEnqueueOnEachEnqueueWhenImmediateSub
     EXPECT_EQ(nullptr, cmdList->pendingSubmissionPauses.afterWorkloadCommand);
 }
 
+HWTEST2_F(PauseOnBlitCopyTests, givenPauseOnEnqueueOnEachEnqueueWhenOnlyOnePauseSlotIsReservedThenOnlyThatPauseIsProgrammed, IsAtLeastXeHpcCore) {
+    auto cmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+    debugManager.flags.PauseOnEnqueue.set(-2);
+    const auto pauseSize = EncodeDebugPause<FamilyType>::getSize(device->getNEODevice()->getRootDeviceEnvironment(), false);
+    std::vector<uint8_t> beforeSlot(pauseSize, 0);
+    std::vector<uint8_t> afterSlot(pauseSize, 0);
+    auto isNoop = [](const std::vector<uint8_t> &slot) { return std::all_of(slot.begin(), slot.end(), [](uint8_t value) { return value == 0; }); };
+
+    cmdList->programPauseOnEnqueueCommands(beforeSlot.data(), nullptr);
+    EXPECT_FALSE(isNoop(beforeSlot));
+    EXPECT_TRUE(isNoop(afterSlot));
+
+    cmdList->programPauseOnEnqueueCommands(nullptr, afterSlot.data());
+    EXPECT_FALSE(isNoop(afterSlot));
+}
+
 HWTEST2_F(PauseOnBlitCopyTests, givenPendingSubmissionPausesWhenImmediateListFlushesThenNextSubmissionStartsNewPausePair, IsAtLeastXeHpcCore) {
     auto cmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
     debugManager.flags.PauseOnEnqueue.set(0);
     const auto pauseSize = EncodeDebugPause<FamilyType>::getSize(device->getNEODevice()->getRootDeviceEnvironment(), false);
     std::vector<uint8_t> beforeSlot(pauseSize, 0);
     std::vector<uint8_t> afterSlot(pauseSize, 0);
-    std::list<void *> kernelSlots{beforeSlot.data(), afterSlot.data()};
-    cmdList->programPauseOnEnqueueCommands(kernelSlots, {.beforeWorkload = true, .afterWorkload = true});
+    cmdList->programPauseOnEnqueueCommands(beforeSlot.data(), afterSlot.data());
     EXPECT_TRUE(cmdList->pendingSubmissionPauses.beforeWorkloadProgrammed);
     EXPECT_EQ(afterSlot.data(), cmdList->pendingSubmissionPauses.afterWorkloadCommand);
 

@@ -294,8 +294,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
 
-    std::list<void *> additionalCommands;
-
     if (compactEvent) {
         appendEventForProfilingAllWalkers(compactEvent, nullptr, launchParams.outListCommands, true, true, launchParams.omitAddingEventResidency, false);
     }
@@ -377,7 +375,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         .cpuPayloadBuffer = launchParams.hostPayloadBuffer,
         .outImplicitArgsPtr = nullptr,
         .outImplicitArgsGpuVa = 0,
-        .additionalCommands = &additionalCommands,
         .extendedArgs = &dispatchKernelArgsExt,
         .postSyncArgs = {
             .eventPacketSize = event ? event->getSinglePacketSize() : 0u,
@@ -562,7 +559,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     }
 
     if (pauseOnEnqueue.beforeWorkload || pauseOnEnqueue.afterWorkload) [[unlikely]] {
-        programPauseOnEnqueueCommands(additionalCommands, pauseOnEnqueue);
+        programPauseOnEnqueueCommands(dispatchKernelArgs.outPauseBeforeWorkloadPtr, dispatchKernelArgs.outPauseAfterWorkloadPtr);
     }
 
     return ZE_RESULT_SUCCESS;

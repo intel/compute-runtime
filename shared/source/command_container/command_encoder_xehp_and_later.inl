@@ -391,7 +391,7 @@ bool EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
             const auto pauseSize = EncodeDebugPause<Family>::getSize(rootDeviceEnvironment, false);
             void *pauseCommands = listCmdBufferStream->getSpace(pauseSize);
             memset(pauseCommands, 0, pauseSize);
-            args.additionalCommands->push_back(pauseCommands);
+            args.outPauseBeforeWorkloadPtr = pauseCommands;
         }
     }
 
@@ -549,7 +549,7 @@ bool EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
             const auto pauseSize = EncodeDebugPause<Family>::getSize(rootDeviceEnvironment, false);
             void *pauseCommands = listCmdBufferStream->getSpace(pauseSize);
             memset(pauseCommands, 0, pauseSize);
-            args.additionalCommands->push_back(pauseCommands);
+            args.outPauseAfterWorkloadPtr = pauseCommands;
         }
     }
     return true;

@@ -21,7 +21,6 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <list>
 #include <optional>
 
 namespace NEO {
@@ -116,7 +115,8 @@ struct EncodeDispatchKernelArgs {
     uint64_t outImplicitArgsGpuVa = 0;
     void *outCrossThreadDataPtr = nullptr;
     uint64_t outCrossThreadDataGpuVa = 0;
-    std::list<void *> *additionalCommands = nullptr;
+    void *outPauseBeforeWorkloadPtr = nullptr;
+    void *outPauseAfterWorkloadPtr = nullptr;
     EncodeKernelArgsExt *extendedArgs = nullptr;
     NEO::EncodePostSyncArgs postSyncArgs{};
     PauseOnGpuProperties::PauseSelection pauseOnEnqueue{};
