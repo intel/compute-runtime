@@ -13,6 +13,7 @@
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.inl"
 #include "shared/test/common/helpers/unit_test_helper_from_gen12lp_to_xe3_core.inl"
+#include "shared/test/common/helpers/unit_test_helper_from_gen12lp_to_xe_hpg.inl"
 #include "shared/test/common/libult/gen12lp/special_ult_helper_gen12lp.h"
 
 namespace NEO {
@@ -223,9 +224,6 @@ template <typename WalkerType>
 uint64_t UnitTestHelper<Family>::getWalkerActivePostSyncAddress(WalkerType *walkerCmd) {
     return 0;
 }
-
-template <>
-void UnitTestHelper<Family>::skipStatePrefetch(GenCmdList::iterator &iter) {}
 
 template struct UnitTestHelper<Family>;
 template struct UnitTestHelperWithHeap<Family>;

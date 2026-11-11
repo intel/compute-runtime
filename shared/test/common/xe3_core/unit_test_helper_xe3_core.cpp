@@ -17,9 +17,7 @@ using Family = NEO::Xe3CoreFamily;
 
 namespace NEO {
 
-template <>
-void UnitTestHelper<Family>::validateSbaMocs(uint32_t expectedMocs, CommandStreamReceiver &csr) {
-}
+#include "shared/test/common/helpers/unit_test_helper_xe3_and_later.inl"
 
 template <>
 uint32_t UnitTestHelper<Family>::getProgrammedGrfValue(CommandStreamReceiver &csr, LinearStream &linearStream) {

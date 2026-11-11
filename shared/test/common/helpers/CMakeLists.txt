@@ -18,6 +18,8 @@ target_sources(neo_libult_common PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/relaxed_ordering_commands_helper.h
                ${CMAKE_CURRENT_SOURCE_DIR}/static_size3.h
                ${CMAKE_CURRENT_SOURCE_DIR}/ult_limits.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/unit_test_helper_from_gen12lp_to_xe_hpg.inl
+               ${CMAKE_CURRENT_SOURCE_DIR}/unit_test_helper_xe3_and_later.inl
 )
 
 add_subdirectories()
