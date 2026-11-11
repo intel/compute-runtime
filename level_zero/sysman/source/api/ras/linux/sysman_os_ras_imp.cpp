@@ -12,6 +12,7 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/linux/system_info.h"
 
+#include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 
@@ -38,6 +39,16 @@ void OsRas::getSupportedRasErrorTypes(std::set<zes_ras_error_type_t> &errorType,
             LinuxRasSourceHbm::getSupportedRasErrorTypes(errorType, pOsSysman, isSubDevice, subDeviceId);
         }
     }
+}
+
+ze_result_t OsRas::getCperOnQuery(OsSysman *pOsSysman, ze_bool_t *pEnabled) {
+    auto pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
+    return pLinuxSysmanImp->getSysmanProductHelper()->getRasCperOnQuery(&pLinuxSysmanImp->getSysfsAccess(), pEnabled);
+}
+
+ze_result_t OsRas::setCperOnQuery(OsSysman *pOsSysman, ze_bool_t enable) {
+    auto pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
+    return pLinuxSysmanImp->getSysmanProductHelper()->setRasCperOnQuery(&pLinuxSysmanImp->getSysfsAccess(), enable);
 }
 
 ze_result_t LinuxRasImp::osRasGetConfig(zes_ras_config_t *config) {

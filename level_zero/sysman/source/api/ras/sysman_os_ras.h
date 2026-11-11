@@ -30,6 +30,8 @@ class OsRas {
     virtual void reInit() = 0;
     static OsRas *create(OsSysman *pOsSysman, zes_ras_error_type_t type, ze_bool_t onSubdevice, uint32_t subdeviceId);
     static void getSupportedRasErrorTypes(std::set<zes_ras_error_type_t> &errorType, OsSysman *pOsSysman, ze_bool_t isSubDevice, uint32_t subDeviceId);
+    static ze_result_t getCperOnQuery(OsSysman *pOsSysman, ze_bool_t *pEnabled);
+    static ze_result_t setCperOnQuery(OsSysman *pOsSysman, ze_bool_t enable);
     virtual ~OsRas() = default;
 };
 

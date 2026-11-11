@@ -55,6 +55,8 @@ class SysmanProductHelperHw : public SysmanProductHelper {
     // Ras
     RasInterfaceType getGtRasUtilInterface() override;
     RasInterfaceType getHbmRasUtilInterface() override;
+    ze_result_t getRasCperOnQuery(SysFsAccessInterface *pSysFsAccess, ze_bool_t *pEnabled) override;
+    ze_result_t setRasCperOnQuery(SysFsAccessInterface *pSysFsAccess, ze_bool_t enable) override;
 
     // global ops
     bool isRepairStatusSupported() override;

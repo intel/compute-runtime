@@ -304,7 +304,8 @@ bool verifyExtensionDefinition(std::vector<zes_driver_extension_properties_t> &e
         {ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_NAME, ZES_INTEL_DEVICE_POWER_OFF_REASON_EXP_VERSION_CURRENT},
         {ZES_INTEL_DRIVER_API_VERSION_EXP_NAME, ZES_INTEL_DRIVER_API_VERSION_EXP_VERSION_CURRENT},
         {ZES_INTEL_DEVICE_SOC_UID_EXP_PROPERTY_NAME, ZES_INTEL_DEVICE_SOC_UID_EXP_PROPERTIES_VERSION_CURRENT},
-        {ZES_INTEL_ENGINE_ACTIVITY_COLLECTION_EXP_NAME, ZES_INTEL_ENGINE_ACTIVITY_COLLECTION_EXP_VERSION_CURRENT}};
+        {ZES_INTEL_ENGINE_ACTIVITY_COLLECTION_EXP_NAME, ZES_INTEL_ENGINE_ACTIVITY_COLLECTION_EXP_VERSION_CURRENT},
+        {ZES_INTEL_DEVICE_RAS_CPER_ON_QUERY_EXP_NAME, ZES_INTEL_DEVICE_RAS_CPER_ON_QUERY_EXP_VERSION_CURRENT}};
 
     for (uint32_t i = 0; i < count; i++) {
         if (extensionsReturned[i].name != supportedExtensions[i].first) {
@@ -416,6 +417,12 @@ TEST_F(SysmanDriverHandleTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelEngineStopActivityCollectionExp", &funPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelDeviceRasGetCperOnQueryExp", &funPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelDeviceRasSetCperOnQueryExp", &funPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelDriverGetApiVersionExp", &funPtr);

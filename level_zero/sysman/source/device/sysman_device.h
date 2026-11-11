@@ -158,6 +158,12 @@ struct SysmanDevice : _ze_device_handle_t {
     virtual ze_result_t getPowerOffReasonExp(zes_intel_device_power_off_reason_exp_t *pReason) = 0;
     static ze_result_t getPowerOffReasonExp(zes_device_handle_t hDevice, zes_intel_device_power_off_reason_exp_t *pReason);
 
+    virtual ze_result_t rasGetCperOnQueryExp(ze_bool_t *pEnabled) = 0;
+    static ze_result_t rasGetCperOnQueryExp(zes_device_handle_t hDevice, ze_bool_t *pEnabled);
+
+    virtual ze_result_t rasSetCperOnQueryExp(ze_bool_t enable) = 0;
+    static ze_result_t rasSetCperOnQueryExp(zes_device_handle_t hDevice, ze_bool_t enable);
+
     virtual OsSysman *deviceGetOsInterface() = 0;
     virtual void getDeviceUuids(std::vector<std::string> &deviceUuids) = 0;
     std::atomic<bool> isDeviceInSurvivabilityMode = false;

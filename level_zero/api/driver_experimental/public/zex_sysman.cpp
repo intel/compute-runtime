@@ -196,6 +196,26 @@ ze_result_t ZE_APICALL zesIntelEngineStopActivityCollectionExp(zes_engine_handle
     }
 }
 
+ze_result_t ZE_APICALL zesIntelDeviceRasGetCperOnQueryExp(zes_device_handle_t hDevice, ze_bool_t *pEnabled) {
+    if (L0::sysmanInitFromCore) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    } else if (L0::Sysman::sysmanOnlyInit) {
+        return L0::Sysman::SysmanDevice::rasGetCperOnQueryExp(hDevice, pEnabled);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+}
+
+ze_result_t ZE_APICALL zesIntelDeviceRasSetCperOnQueryExp(zes_device_handle_t hDevice, ze_bool_t enable) {
+    if (L0::sysmanInitFromCore) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    } else if (L0::Sysman::sysmanOnlyInit) {
+        return L0::Sysman::SysmanDevice::rasSetCperOnQueryExp(hDevice, enable);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+}
+
 } // namespace L0
 
 extern "C" {
@@ -299,6 +319,14 @@ ze_result_t ZE_APICALL zesIntelEngineStartActivityCollectionExp(zes_engine_handl
 
 ze_result_t ZE_APICALL zesIntelEngineStopActivityCollectionExp(zes_engine_handle_t hEngine) {
     return L0::zesIntelEngineStopActivityCollectionExp(hEngine);
+}
+
+ze_result_t ZE_APICALL zesIntelDeviceRasGetCperOnQueryExp(zes_device_handle_t hDevice, ze_bool_t *pEnabled) {
+    return L0::zesIntelDeviceRasGetCperOnQueryExp(hDevice, pEnabled);
+}
+
+ze_result_t ZE_APICALL zesIntelDeviceRasSetCperOnQueryExp(zes_device_handle_t hDevice, ze_bool_t enable) {
+    return L0::zesIntelDeviceRasSetCperOnQueryExp(hDevice, enable);
 }
 
 } // extern "C"

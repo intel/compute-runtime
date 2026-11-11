@@ -841,6 +841,21 @@ HWTEST2_F(SysmanProductHelperRasTest, GivenValidRasHandleWhenCallingRasGetAndSet
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pRasImp->rasSetConfigExp(count, &config));
 }
 
+HWTEST2_F(SysmanProductHelperRasTest, GivenProductWithoutCperOnQuerySupportWhenCallingGetAndSetRasCperOnQueryThenUnsupportedFeatureIsReturned, IsPVC) {
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(NEO::defaultHwInfo->platform.eProductFamily);
+    auto pSysfsAccess = std::make_unique<MockRasSysfsAccess>();
+
+    ze_bool_t enabled = false;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pSysmanProductHelper->getRasCperOnQuery(pSysfsAccess.get(), &enabled));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pSysmanProductHelper->setRasCperOnQuery(pSysfsAccess.get(), true));
+}
+
+HWTEST2_F(SysmanProductHelperRasTest, GivenProductWithoutCperOnQuerySupportWhenCallingRasGetAndSetCperOnQueryExpThenUnsupportedFeatureIsReturned, IsPVC) {
+    ze_bool_t enabled = false;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, SysmanDevice::rasGetCperOnQueryExp(pSysmanDevice->toHandle(), &enabled));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, SysmanDevice::rasSetCperOnQueryExp(pSysmanDevice->toHandle(), true));
+}
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

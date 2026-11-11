@@ -26,6 +26,14 @@ class WddmRasImp : public OsRas {
 
 void OsRas::getSupportedRasErrorTypes(std::set<zes_ras_error_type_t> &errorType, OsSysman *pOsSysman, ze_bool_t isSubDevice, uint32_t subDeviceId) {}
 
+ze_result_t OsRas::getCperOnQuery(OsSysman *pOsSysman, ze_bool_t *pEnabled) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t OsRas::setCperOnQuery(OsSysman *pOsSysman, ze_bool_t enable) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 ze_result_t WddmRasImp::osRasGetProperties(zes_ras_properties_t &properties) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }

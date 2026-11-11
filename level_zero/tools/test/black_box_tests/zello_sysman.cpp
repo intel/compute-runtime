@@ -162,6 +162,8 @@ void usage() {
                  "\n  -h,   --help                                                                                    display help message"
                  "\n  -re,  --rasexp                                                                                  selectively run ras experimental API black box test"
                  "\n        [--set-threshold <value>]                                                                 optionally set threshold value for RAS exp test"
+                 "\n  -rq,  --rascperonquery                                                                          selectively run the ras CPER log on counter query EXP API black box test, toggling"
+                 "\n                                                                                                  the setting and restoring it (the set needs root)"
                  "\n  -v,   --vftelemetry                                                                             selectively run vf telemetry API black box test"
                  "\n  -H,   --health                                                                                  selectively run device health EXT API black box test"
                  "\n        [--set-health <ok|warning|critical|failed>]                                               optionally set device health status (requires root)"
@@ -1303,6 +1305,113 @@ void testSysmanRasExp(ze_device_handle_t &device, bool doSet = false, uint64_t s
             }
         }
     }
+}
+
+typedef ze_result_t(ZE_APICALL *zesIntelDeviceRasGetCperOnQueryExp_pfn)(
+    zes_device_handle_t hDevice,
+    ze_bool_t *pEnabled);
+
+typedef ze_result_t(ZE_APICALL *zesIntelDeviceRasSetCperOnQueryExp_pfn)(
+    zes_device_handle_t hDevice,
+    ze_bool_t enable);
+
+zesIntelDeviceRasGetCperOnQueryExp_pfn zesIntelDeviceRasGetCperOnQueryExpPtr = nullptr;
+zesIntelDeviceRasSetCperOnQueryExp_pfn zesIntelDeviceRasSetCperOnQueryExpPtr = nullptr;
+
+void getRasCperOnQueryExpFunctionPointers(zes_driver_handle_t driverHandle) {
+    VALIDATECALL(zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelDeviceRasGetCperOnQueryExp", reinterpret_cast<void **>(&zesIntelDeviceRasGetCperOnQueryExpPtr)));
+    VALIDATECALL(zesDriverGetExtensionFunctionAddress(driverHandle, "zesIntelDeviceRasSetCperOnQueryExp", reinterpret_cast<void **>(&zesIntelDeviceRasSetCperOnQueryExpPtr)));
+}
+
+void queryRasCountersOfFirstErrorSet(ze_device_handle_t &device) {
+    uint32_t count = 0;
+    VALIDATECALL(zesDeviceEnumRasErrorSets(device, &count, nullptr));
+    if (count == 0) {
+        std::cout << "  Could not retrieve Ras error sets to query the counters of" << std::endl;
+        return;
+    }
+
+    std::vector<zes_ras_handle_t> handles(count, nullptr);
+    VALIDATECALL(zesDeviceEnumRasErrorSets(device, &count, handles.data()));
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    uint32_t supportedCategoryCount = 0;
+    VALIDATECALL(result = zesRasGetSupportedCategoriesExp(handles[0], &supportedCategoryCount, nullptr));
+    if (result != ZE_RESULT_SUCCESS) {
+        return;
+    }
+    std::vector<zes_ras_error_category_exp_t> supportedCategories(supportedCategoryCount);
+    VALIDATECALL(result = zesRasGetSupportedCategoriesExp(handles[0], &supportedCategoryCount, supportedCategories.data()));
+    if (result != ZE_RESULT_SUCCESS) {
+        return;
+    }
+
+    std::vector<zes_ras_state_exp2_t> rasStates(supportedCategoryCount);
+    for (uint32_t i = 0; i < supportedCategoryCount; i++) {
+        rasStates[i].stype = ZES_STRUCTURE_TYPE_RAS_STATE_EXP2;
+        rasStates[i].pNext = nullptr;
+        rasStates[i].errorCounter = 0;
+    }
+    result = zesRasGetStateExp2(handles[0], supportedCategoryCount, supportedCategories.data(), rasStates.data());
+    std::cout << "  Counter query while started        : " << getErrorString(result)
+              << " (a CPER record is expected in the info log)" << std::endl;
+    if (result == ZE_RESULT_SUCCESS && verbose) {
+        std::cout << "  zesRasGetStateExp2 (" << supportedCategoryCount << " categories):" << std::endl;
+        for (uint32_t i = 0; i < supportedCategoryCount; i++) {
+            std::cout << "    " << getRasErrorCategoryExp(supportedCategories[i])
+                      << "  count=" << rasStates[i].errorCounter << std::endl;
+        }
+    }
+}
+
+void testSysmanRasCperOnQuery(ze_device_handle_t &device) {
+    std::cout << std::endl
+              << " ----  Ras CPER log on counter query tests ---- " << std::endl;
+
+    if ((zesIntelDeviceRasGetCperOnQueryExpPtr == nullptr) || (zesIntelDeviceRasSetCperOnQueryExpPtr == nullptr)) {
+        std::cout << "Ras CPER on query EXP function pointers not available" << std::endl;
+        return;
+    }
+
+    ze_bool_t originalEnabled = false;
+    ze_result_t result = zesIntelDeviceRasGetCperOnQueryExpPtr(device, &originalEnabled);
+    std::cout << "  zesIntelDeviceRasGetCperOnQueryExp : " << getErrorString(result) << std::endl;
+    if (result != ZE_RESULT_SUCCESS) {
+        return;
+    }
+    std::cout << "  CPER log on counter query          : " << (originalEnabled ? "started" : "stopped") << std::endl;
+
+    bool iamroot = (geteuid() == 0);
+    if (!iamroot) {
+        std::cout << "Not running as Root. Skipping the Ras CPER on query set test." << std::endl;
+        return;
+    }
+
+    const ze_bool_t toggledEnabled = originalEnabled ? false : true;
+    result = zesIntelDeviceRasSetCperOnQueryExpPtr(device, toggledEnabled);
+    std::cout << "  zesIntelDeviceRasSetCperOnQueryExp : " << getErrorString(result)
+              << " (" << (toggledEnabled ? "start" : "stop") << ")" << std::endl;
+    if (result != ZE_RESULT_SUCCESS) {
+        return;
+    }
+
+    ze_bool_t readBackEnabled = false;
+    result = zesIntelDeviceRasGetCperOnQueryExpPtr(device, &readBackEnabled);
+    const bool isSettingConfirmed = (result == ZE_RESULT_SUCCESS);
+    if (isSettingConfirmed) {
+        std::cout << "  Setting after the set              : " << (readBackEnabled ? "started" : "stopped")
+                  << ((readBackEnabled == toggledEnabled) ? " (as requested)" : " (NOT as requested)") << std::endl;
+    } else {
+        std::cout << "  zesIntelDeviceRasGetCperOnQueryExp : " << getErrorString(result)
+                  << ", skipping the counter query" << std::endl;
+    }
+
+    if (isSettingConfirmed && readBackEnabled) {
+        queryRasCountersOfFirstErrorSet(device);
+    }
+
+    std::cout << "  Restoring the original setting      : "
+              << getErrorString(zesIntelDeviceRasSetCperOnQueryExpPtr(device, originalEnabled)) << std::endl;
 }
 
 void testSysmanRas(ze_device_handle_t &device) {
@@ -4137,6 +4246,12 @@ int main(int argc, char *argv[]) {
             testSysmanRasExp(device, rasDoSet, rasSetThreshold);
         });
         buf.clear();
+    }
+    if (isParamEnabled(argc, argv, "-rq", "--rascperonquery", &optind)) {
+        getRasCperOnQueryExpFunctionPointers(driver);
+        std::for_each(devices.begin(), devices.end(), [&](auto device) {
+            testSysmanRasCperOnQuery(device);
+        });
     }
     if (isParamEnabled(argc, argv, "-i", "--firmware", &optind)) {
         optind = optind + 1;

@@ -378,6 +378,16 @@ RasInterfaceType SysmanProductHelperHw<gfxProduct>::getHbmRasUtilInterface() {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getRasCperOnQuery(SysFsAccessInterface *pSysFsAccess, ze_bool_t *pEnabled) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+ze_result_t SysmanProductHelperHw<gfxProduct>::setRasCperOnQuery(SysFsAccessInterface *pSysFsAccess, ze_bool_t enable) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool SysmanProductHelperHw<gfxProduct>::isRepairStatusSupported() {
     return false;
 }

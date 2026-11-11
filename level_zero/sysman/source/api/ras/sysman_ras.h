@@ -54,6 +54,9 @@ struct RasHandleContext {
 
     ze_result_t rasGet(uint32_t *pCount, zes_ras_handle_t *phRas);
 
+    ze_result_t rasGetCperOnQueryExp(ze_bool_t *pEnabled);
+    ze_result_t rasSetCperOnQueryExp(ze_bool_t enable);
+
     OsSysman *pOsSysman = nullptr;
     std::vector<Ras *> handleList = {};
     bool isRasInitDone() {

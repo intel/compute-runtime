@@ -1485,6 +1485,88 @@ ze_result_t ZE_APICALL zesIntelEngineStopActivityCollectionExp(
     zes_engine_handle_t hEngine ///< [in] handle of the engine
 );
 
+///////////////////////////////////////////////////////////////////////////////
+#ifndef ZES_INTEL_DEVICE_RAS_CPER_ON_QUERY_EXP_NAME
+/// @brief RAS CPER log generation on counter query extension name
+#define ZES_INTEL_DEVICE_RAS_CPER_ON_QUERY_EXP_NAME "ZES_intel_experimental_device_ras_cper_on_query"
+#endif // ZES_INTEL_DEVICE_RAS_CPER_ON_QUERY_EXP_NAME
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief RAS CPER log generation on counter query extension Version(s)
+typedef enum _zes_intel_device_ras_cper_on_query_exp_version_t {
+    ZES_INTEL_DEVICE_RAS_CPER_ON_QUERY_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),                                  ///< version 1.0
+    ZES_INTEL_DEVICE_RAS_CPER_ON_QUERY_EXP_VERSION_CURRENT = ZES_INTEL_DEVICE_RAS_CPER_ON_QUERY_EXP_VERSION_1_0, ///< latest known version
+    ZES_INTEL_DEVICE_RAS_CPER_ON_QUERY_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
+} zes_intel_device_ras_cper_on_query_exp_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Get whether a CPER log record is generated when a RAS error counter is queried
+///
+/// @details
+///     - A RAS error counter query is any call which reads the error counters of the device,
+///       for example ::zesRasGetState or ::zesRasGetStateExp2.
+///     - This setting is device scoped. It applies to every RAS error set of the device,
+///       and cannot be configured per sub-device.
+///     - This setting does not affect the records which the device generates when it reports
+///       an error. Those are always generated, whatever this setting is.
+///     - The setting is owned by the kernel driver and is shared by every consumer of the
+///       device on the system, so a value set by one process is observed by all of them and
+///       persists after the process which set it exits.
+///     - The application may call this function from simultaneous threads.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE
+///         + The product does not support generating CPER log records on a counter query.
+///     - ::ZE_RESULT_ERROR_NOT_AVAILABLE
+///         + The kernel driver of the device does not expose the setting.
+///     - ::ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS
+///         + User does not have permissions to read the setting.
+///     - ::ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hDevice`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == pEnabled`
+ze_result_t ZE_APICALL zesIntelDeviceRasGetCperOnQueryExp(
+    zes_device_handle_t hDevice, ///< [in] Sysman handle of the device.
+    ze_bool_t *pEnabled          ///< [out] true when a CPER log record is generated on a RAS
+                                 ///< error counter query, false when it is not.
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Start or stop the generation of a CPER log record when a RAS error counter is
+///        queried
+///
+/// @details
+///     - See ::zesIntelDeviceRasGetCperOnQueryExp for the scope and the lifetime of this
+///       setting. It is device scoped and shared by every consumer of the device on the
+///       system, so an application which changes it changes it for all of them.
+///     - Setting this does not affect the records which the device generates when it reports
+///       an error. Those are always generated, whatever this setting is.
+///     - Calling this function with the value which is already set leaves the setting
+///       unchanged. The call still needs the permissions to change the setting.
+///     - The application must not call this function from simultaneous threads with the same
+///       device handle.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE
+///         + The product does not support generating CPER log records on a counter query.
+///     - ::ZE_RESULT_ERROR_NOT_AVAILABLE
+///         + The kernel driver of the device does not expose the setting.
+///     - ::ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS
+///         + User does not have permissions to change the setting.
+///     - ::ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hDevice`
+ze_result_t ZE_APICALL zesIntelDeviceRasSetCperOnQueryExp(
+    zes_device_handle_t hDevice, ///< [in] Sysman handle of the device.
+    ze_bool_t enable             ///< [in] true starts, false stops the generation of a CPER
+                                 ///< log record on a RAS error counter query.
+);
+
 #if defined(__cplusplus)
 } // extern "C"
 #endif

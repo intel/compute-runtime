@@ -1346,6 +1346,22 @@ HWTEST2_F(SysmanRasExpMultiDeviceFixture, GivenValidRasHandleWhenCallingzesRasCl
     }
 }
 
+TEST_F(SysmanRasExpFixture, GivenNullDeviceHandleWhenCallingRasGetAndSetCperOnQueryExpThenUninitializedIsReturned) {
+    ze_bool_t enabled = false;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, SysmanDevice::rasGetCperOnQueryExp(nullptr, &enabled));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, SysmanDevice::rasSetCperOnQueryExp(nullptr, true));
+}
+
+TEST_F(SysmanRasExpFixture, GivenDeviceInSurvivabilityModeWhenCallingRasGetAndSetCperOnQueryExpThenSurvivabilityModeDetectedIsReturned) {
+    pSysmanDeviceImp->isDeviceInSurvivabilityMode = true;
+
+    ze_bool_t enabled = false;
+    EXPECT_EQ(ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED, SysmanDevice::rasGetCperOnQueryExp(device->toHandle(), &enabled));
+    EXPECT_EQ(ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED, SysmanDevice::rasSetCperOnQueryExp(device->toHandle(), true));
+
+    pSysmanDeviceImp->isDeviceInSurvivabilityMode = false;
+}
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

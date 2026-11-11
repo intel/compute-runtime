@@ -436,5 +436,27 @@ ze_result_t SysmanDevice::getPowerOffReasonExp(zes_device_handle_t hDevice, zes_
     return pSysmanDevice->getPowerOffReasonExp(pReason);
 }
 
+ze_result_t SysmanDevice::rasGetCperOnQueryExp(zes_device_handle_t hDevice, ze_bool_t *pEnabled) {
+    auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
+    if (pSysmanDevice == nullptr) {
+        return getUnresolvedHandleResult(hDevice);
+    }
+    if (pSysmanDevice->isDeviceInSurvivabilityMode) {
+        return ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED;
+    }
+    return pSysmanDevice->rasGetCperOnQueryExp(pEnabled);
+}
+
+ze_result_t SysmanDevice::rasSetCperOnQueryExp(zes_device_handle_t hDevice, ze_bool_t enable) {
+    auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
+    if (pSysmanDevice == nullptr) {
+        return getUnresolvedHandleResult(hDevice);
+    }
+    if (pSysmanDevice->isDeviceInSurvivabilityMode) {
+        return ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED;
+    }
+    return pSysmanDevice->rasSetCperOnQueryExp(enable);
+}
+
 } // namespace Sysman
 } // namespace L0

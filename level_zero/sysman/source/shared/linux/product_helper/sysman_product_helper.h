@@ -87,6 +87,8 @@ class SysmanProductHelper {
     // Ras
     virtual RasInterfaceType getGtRasUtilInterface() = 0;
     virtual RasInterfaceType getHbmRasUtilInterface() = 0;
+    virtual ze_result_t getRasCperOnQuery(SysFsAccessInterface *pSysFsAccess, ze_bool_t *pEnabled) = 0;
+    virtual ze_result_t setRasCperOnQuery(SysFsAccessInterface *pSysFsAccess, ze_bool_t enable) = 0;
 
     // Global Operations
     virtual bool isRepairStatusSupported() = 0;

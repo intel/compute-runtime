@@ -485,6 +485,34 @@ struct MockRasSysfsAccess : public L0::Sysman::SysFsAccessInterface {
         }
         return sysfsRead(file, val);
     }
+
+    ze_result_t mockCperOnQueryReadResult = ZE_RESULT_SUCCESS;
+    ze_result_t mockCperOnQueryWriteResult = ZE_RESULT_SUCCESS;
+    uint32_t mockCperOnQueryVal = 0;
+
+    ze_result_t read(const std::string file, uint32_t &val) override {
+        if (file.compare(cperOnQueryFile) != 0) {
+            return ZE_RESULT_ERROR_NOT_AVAILABLE;
+        }
+        if (mockCperOnQueryReadResult != ZE_RESULT_SUCCESS) {
+            return mockCperOnQueryReadResult;
+        }
+        val = mockCperOnQueryVal;
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t write(const std::string &file, const uint64_t val) override {
+        if (file.compare(cperOnQueryFile) != 0) {
+            return ZE_RESULT_ERROR_NOT_AVAILABLE;
+        }
+        if (mockCperOnQueryWriteResult != ZE_RESULT_SUCCESS) {
+            return mockCperOnQueryWriteResult;
+        }
+        mockCperOnQueryVal = static_cast<uint32_t>(val);
+        return ZE_RESULT_SUCCESS;
+    }
+
+    static inline const std::string cperOnQueryFile = "device/cper_on_query";
 };
 
 struct MockRasFsAccess : public L0::Sysman::FsAccessInterface {

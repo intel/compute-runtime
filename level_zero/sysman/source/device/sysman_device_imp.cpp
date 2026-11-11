@@ -248,6 +248,14 @@ ze_result_t SysmanDeviceImp::getPowerOffReasonExp(zes_intel_device_power_off_rea
     return pGlobalOperations->getPowerOffReasonExp(pReason);
 }
 
+ze_result_t SysmanDeviceImp::rasGetCperOnQueryExp(ze_bool_t *pEnabled) {
+    return pRasHandleContext->rasGetCperOnQueryExp(pEnabled);
+}
+
+ze_result_t SysmanDeviceImp::rasSetCperOnQueryExp(ze_bool_t enable) {
+    return pRasHandleContext->rasSetCperOnQueryExp(enable);
+}
+
 const NEO::HardwareInfo &SysmanDeviceImp::getHardwareInfo() const { return *getRootDeviceEnvironment().getHardwareInfo(); }
 
 } // namespace Sysman

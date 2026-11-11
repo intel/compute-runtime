@@ -68,5 +68,13 @@ ze_result_t RasHandleContext::rasGet(uint32_t *pCount,
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t RasHandleContext::rasGetCperOnQueryExp(ze_bool_t *pEnabled) {
+    return OsRas::getCperOnQuery(pOsSysman, pEnabled);
+}
+
+ze_result_t RasHandleContext::rasSetCperOnQueryExp(ze_bool_t enable) {
+    return OsRas::setCperOnQuery(pOsSysman, enable);
+}
+
 } // namespace Sysman
 } // namespace L0

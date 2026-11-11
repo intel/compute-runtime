@@ -47,6 +47,8 @@ constexpr static std::string_view standbyPowerControlDefault("auto");
 constexpr static std::string_view standbyPowerControlNever("on");
 static const std::string standbyPowerControlFile("device/power/control");
 
+static const std::string rasCperOnQueryFile("device/cper_on_query");
+
 // XTAL clock frequency is denoted as an integer between [0-3] with a predefined value for each number.
 // This vector defines the predefined value for each integer represented by the index of the vector.
 static const std::vector<double> indexToXtalClockFrequencyMap = {24, 19.2, 38.4, 25};
@@ -567,6 +569,29 @@ RasInterfaceType SysmanProductHelperHw<gfxProduct>::getGtRasUtilInterface() {
 template <>
 RasInterfaceType SysmanProductHelperHw<gfxProduct>::getHbmRasUtilInterface() {
     return RasInterfaceType::netlink;
+}
+
+template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getRasCperOnQuery(SysFsAccessInterface *pSysFsAccess, ze_bool_t *pEnabled) {
+    uint32_t cperOnQuery = 0;
+    ze_result_t result = pSysFsAccess->read(rasCperOnQueryFile, cperOnQuery);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read %s and returning error:0x%x \n", NEO_FUNCTION_NAME, rasCperOnQueryFile.c_str(), result);
+        return result;
+    }
+
+    *pEnabled = (cperOnQuery != 0);
+    return ZE_RESULT_SUCCESS;
+}
+
+template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::setRasCperOnQuery(SysFsAccessInterface *pSysFsAccess, ze_bool_t enable) {
+    const uint64_t cperOnQuery = enable ? 1u : 0u;
+    ze_result_t result = pSysFsAccess->write(rasCperOnQueryFile, cperOnQuery);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to write %s and returning error:0x%x \n", NEO_FUNCTION_NAME, rasCperOnQueryFile.c_str(), result);
+    }
+    return result;
 }
 
 template <>

@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/test/common/helpers/variable_backup.h"
+
 #include "level_zero/sysman/source/api/ras/sysman_ras_imp.h"
 #include "level_zero/sysman/test/unit_tests/sources/windows/mock_sysman_fixture.h"
 
@@ -107,6 +109,40 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingRasGetStateExp2ThenErrorI
     zes_ras_error_category_exp_t category = ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS;
     zes_ras_state_exp2_t state = {};
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pRasImp->rasGetStateExp2(count, &category, &state));
+}
+
+TEST_F(SysmanRasFixture, GivenNullDeviceHandleWhenCallingRasGetAndSetCperOnQueryExpThenUninitializedIsReturned) {
+    ze_bool_t enabled = false;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, L0::Sysman::SysmanDevice::rasGetCperOnQueryExp(nullptr, &enabled));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, L0::Sysman::SysmanDevice::rasSetCperOnQueryExp(nullptr, true));
+}
+
+TEST_F(SysmanRasFixture, GivenNoGlobalSysmanDriverWhenCallingRasGetAndSetCperOnQueryExpThenUninitializedIsReturned) {
+    VariableBackup<decltype(L0::Sysman::globalSysmanDriver)> globalSysmanDriverBackup(&L0::Sysman::globalSysmanDriver, nullptr);
+
+    ze_bool_t enabled = false;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, L0::Sysman::SysmanDevice::rasGetCperOnQueryExp(pSysmanDevice->toHandle(), &enabled));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, L0::Sysman::SysmanDevice::rasSetCperOnQueryExp(pSysmanDevice->toHandle(), true));
+}
+
+TEST_F(SysmanRasFixture, GivenDeviceInSurvivabilityModeWhenCallingRasGetAndSetCperOnQueryExpThenSurvivabilityModeDetectedIsReturned) {
+    pSysmanDevice->isDeviceInSurvivabilityMode = true;
+
+    ze_bool_t enabled = false;
+    EXPECT_EQ(ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED, L0::Sysman::SysmanDevice::rasGetCperOnQueryExp(pSysmanDevice->toHandle(), &enabled));
+    EXPECT_EQ(ZE_RESULT_ERROR_SURVIVABILITY_MODE_DETECTED, L0::Sysman::SysmanDevice::rasSetCperOnQueryExp(pSysmanDevice->toHandle(), true));
+
+    pSysmanDevice->isDeviceInSurvivabilityMode = false;
+}
+
+TEST_F(SysmanRasFixture, GivenValidDeviceHandleWhenCallingRasGetCperOnQueryExpThenUnsupportedFeatureIsReturned) {
+    ze_bool_t enabled = false;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::Sysman::SysmanDevice::rasGetCperOnQueryExp(pSysmanDevice->toHandle(), &enabled));
+}
+
+TEST_F(SysmanRasFixture, GivenValidDeviceHandleWhenCallingRasSetCperOnQueryExpThenUnsupportedFeatureIsReturnedForBothEnableAndDisable) {
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::Sysman::SysmanDevice::rasSetCperOnQueryExp(pSysmanDevice->toHandle(), true));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::Sysman::SysmanDevice::rasSetCperOnQueryExp(pSysmanDevice->toHandle(), false));
 }
 
 TEST_F(SysmanRasFixture, GivenValidRasHandlesWhenCallingReInitOnRasHandleContextThenHandlesRemainValid) {
