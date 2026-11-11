@@ -774,6 +774,7 @@ TEST(SysmanErrorCodeTest, GivenDifferentErrorCodesWhenCallingGetResultThenVerify
     EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, LinuxSysmanImp::getResult(EACCES));
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, LinuxSysmanImp::getResult(ENOENT));
     EXPECT_EQ(ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE, LinuxSysmanImp::getResult(EBUSY));
+    EXPECT_EQ(ZE_RESULT_NOT_READY, LinuxSysmanImp::getResult(EAGAIN));
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, LinuxSysmanImp::getResult(ENODATA));
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, LinuxSysmanImp::getResult(EEXIST));
 }

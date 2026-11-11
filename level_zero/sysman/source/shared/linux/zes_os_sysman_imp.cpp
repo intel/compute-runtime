@@ -112,6 +112,8 @@ ze_result_t LinuxSysmanImp::getResult(int err) {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     } else if (EBUSY == err) {
         return ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE;
+    } else if (EAGAIN == err) {
+        return ZE_RESULT_NOT_READY;
     } else {
         return ZE_RESULT_ERROR_UNKNOWN;
     }
