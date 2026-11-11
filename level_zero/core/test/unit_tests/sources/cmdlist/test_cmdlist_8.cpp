@@ -2908,6 +2908,108 @@ HWTEST_F(CommandListCreate, givenImmediateCmdListWhenPrivateAllocationIsReusedAf
     csrOwnedPrivateAllocs.clear();
 }
 
+HWTEST_F(CommandListCreate, givenForcePrivateMemoryPerDispatchWhenLargerAllocationsAreStoredThenSmallestSufficientOneIsReused) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ForcePrivateMemoryPerDispatch.set(1);
+
+    auto commandList = std::make_unique<MockCommandListCoreFamily<FamilyType::gfxCoreFamily>>();
+    commandList->allocateOrReuseKernelPrivateMemoryCallBase = true;
+    commandList->device = this->device;
+    uint32_t sizePerHwThread = 0x800;
+    Mock<Module> mockModule(this->device, nullptr);
+    Mock<KernelImp> mockKernel;
+    const_cast<uint32_t &>(mockKernel.sharedState->kernelImmData->getDescriptor().kernelAttributes.perHwThreadPrivateMemorySize) = sizePerHwThread;
+    mockKernel.module = &mockModule;
+
+    auto mockMem = std::make_unique<uint8_t[]>(0x1000);
+    MockGraphicsAllocation largeGA(mockMem.get(), 0x1000);
+    MockGraphicsAllocation smallGA(mockMem.get(), 0x1000);
+    MockGraphicsAllocation sufficientGA(mockMem.get(), 0x1000);
+    PrivateAllocsToReuseContainer mapForReuse;
+    mapForReuse.push_back({0x2000, &largeGA});
+    mapForReuse.push_back({0x400, &smallGA});
+    mapForReuse.push_back({0x1000, &sufficientGA});
+
+    commandList->allocateOrReuseKernelPrivateMemory(&mockKernel, sizePerHwThread, mapForReuse);
+
+    EXPECT_EQ(3u, mapForReuse.size());
+    const auto &residencyContainer = commandList->commandContainer.getResidencyContainer();
+    EXPECT_EQ(1u, getResidencyOccurrences(residencyContainer, &sufficientGA));
+    EXPECT_EQ(0u, getResidencyOccurrences(residencyContainer, &largeGA));
+    EXPECT_EQ(0u, getResidencyOccurrences(residencyContainer, &smallGA));
+}
+
+HWTEST_F(CommandListCreate, givenImmediateCmdListAndForcePrivateMemoryPerDispatchWhenLargerKernelIsDispatchedThenOnlyLargestPrivateAllocationIsKept) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ForcePrivateMemoryPerDispatch.set(1);
+
+    MockCommandStreamReceiver mockCommandStreamReceiver(*neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
+    mockCommandStreamReceiver.setupContext(*neoDevice->getDefaultEngine().osContext);
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, &mockCommandStreamReceiver, &queueDesc);
+
+    auto commandList = std::make_unique<MockCommandListImmediateHw<FamilyType::gfxCoreFamily>>();
+    commandList->cmdQImmediate = queue.get();
+    commandList->allocateOrReuseKernelPrivateMemoryIfNeededCallBase = true;
+    commandList->allocateOrReuseKernelPrivateMemoryCallBase = true;
+
+    Mock<Module> mockModule(this->device, nullptr);
+    mockModule.allocatePrivateMemoryPerDispatch = true;
+    Mock<KernelImp> smallKernel;
+    Mock<KernelImp> largeKernel;
+    const_cast<uint32_t &>(smallKernel.sharedState->kernelImmData->getDescriptor().kernelAttributes.perHwThreadPrivateMemorySize) = 0x1000;
+    const_cast<uint32_t &>(largeKernel.sharedState->kernelImmData->getDescriptor().kernelAttributes.perHwThreadPrivateMemorySize) = 0x2000;
+    smallKernel.module = &mockModule;
+    largeKernel.module = &mockModule;
+
+    auto &csrOwnedPrivateAllocs = mockCommandStreamReceiver.getOwnedPrivateAllocations();
+    commandList->allocateOrReuseKernelPrivateMemoryIfNeeded(&smallKernel, 0x1000);
+    ASSERT_EQ(1u, csrOwnedPrivateAllocs.size());
+    auto smallAlloc = csrOwnedPrivateAllocs[0].second;
+
+    commandList->allocateOrReuseKernelPrivateMemoryIfNeeded(&largeKernel, 0x2000);
+    ASSERT_EQ(1u, csrOwnedPrivateAllocs.size());
+    EXPECT_EQ(0x2000u, csrOwnedPrivateAllocs[0].first);
+    auto largeAlloc = csrOwnedPrivateAllocs[0].second;
+    EXPECT_NE(smallAlloc, largeAlloc);
+    EXPECT_TRUE(neoDevice->getMemoryManager()->getTemporaryAllocationsList().peekContains(*smallAlloc));
+
+    commandList->allocateOrReuseKernelPrivateMemoryIfNeeded(&smallKernel, 0x1000);
+    ASSERT_EQ(1u, csrOwnedPrivateAllocs.size());
+    EXPECT_EQ(largeAlloc, csrOwnedPrivateAllocs[0].second);
+    EXPECT_EQ(1u, getResidencyOccurrences(commandList->getCmdContainer().getResidencyContainer(), largeAlloc));
+}
+
+HWTEST_F(CommandListCreate, givenImmediateCmdListAndDefaultPrivateMemoryPerDispatchWhenKernelsOfDifferentSizesAreDispatchedThenEachSizeKeepsItsAllocation) {
+    MockCommandStreamReceiver mockCommandStreamReceiver(*neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, &mockCommandStreamReceiver, &queueDesc);
+
+    auto commandList = std::make_unique<MockCommandListImmediateHw<FamilyType::gfxCoreFamily>>();
+    commandList->cmdQImmediate = queue.get();
+    commandList->allocateOrReuseKernelPrivateMemoryIfNeededCallBase = true;
+    commandList->allocateOrReuseKernelPrivateMemoryCallBase = true;
+
+    Mock<Module> mockModule(this->device, nullptr);
+    mockModule.allocatePrivateMemoryPerDispatch = true;
+    Mock<KernelImp> smallKernel;
+    Mock<KernelImp> largeKernel;
+    const_cast<uint32_t &>(smallKernel.sharedState->kernelImmData->getDescriptor().kernelAttributes.perHwThreadPrivateMemorySize) = 0x1000;
+    const_cast<uint32_t &>(largeKernel.sharedState->kernelImmData->getDescriptor().kernelAttributes.perHwThreadPrivateMemorySize) = 0x2000;
+    smallKernel.module = &mockModule;
+    largeKernel.module = &mockModule;
+
+    auto &csrOwnedPrivateAllocs = mockCommandStreamReceiver.getOwnedPrivateAllocations();
+    commandList->allocateOrReuseKernelPrivateMemoryIfNeeded(&largeKernel, 0x2000);
+    commandList->allocateOrReuseKernelPrivateMemoryIfNeeded(&smallKernel, 0x1000);
+    ASSERT_EQ(2u, csrOwnedPrivateAllocs.size());
+    auto smallAlloc = csrOwnedPrivateAllocs[1].second;
+
+    commandList->allocateOrReuseKernelPrivateMemoryIfNeeded(&smallKernel, 0x1000);
+    EXPECT_EQ(2u, csrOwnedPrivateAllocs.size());
+    EXPECT_EQ(smallAlloc, csrOwnedPrivateAllocs[1].second);
+}
+
 HWTEST_F(CommandListCreate, givenCounterDeviceAllocWhenGetDeviceCounterAllocForResidencyThenReturnCorrectAllocation) {
     auto commandList = std::make_unique<MockCommandListCoreFamily<FamilyType::gfxCoreFamily>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);

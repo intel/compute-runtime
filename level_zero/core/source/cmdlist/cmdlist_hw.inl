@@ -5525,11 +5525,15 @@ void CommandListCoreFamily<gfxCoreFamily>::allocateOrReuseKernelPrivateMemory(Ke
 
     bool allocToReuseFound = false;
 
+    // Forced per-dispatch mode shares the smallest allocation at least this large; the kernel addresses it with its own per-thread size.
+    const bool reuseLarger = NEO::debugManager.flags.ForcePrivateMemoryPerDispatch.get() == 1;
+    uint32_t reusedSize = 0;
     for (auto &alloc : privateAllocsToReuse) {
-        if (sizePerHwThread == alloc.first) {
+        const bool fits = reuseLarger ? sizePerHwThread <= alloc.first : sizePerHwThread == alloc.first;
+        if (fits && (!allocToReuseFound || alloc.first < reusedSize)) {
             privateAlloc = alloc.second;
+            reusedSize = alloc.first;
             allocToReuseFound = true;
-            break;
         }
     }
     if (!allocToReuseFound) {
