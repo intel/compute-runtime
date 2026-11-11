@@ -664,7 +664,7 @@ ModuleImp::ModuleImp(Device *device, ModuleBuildLog *moduleBuildLog, ModuleType 
     : device(device), translationUnit(std::make_unique<ModuleTranslationUnit>(device)),
       moduleBuildLog(moduleBuildLog), type(type) {
     this->metadataGeneration = std::make_unique<NEO::MetadataGeneration>();
-    this->isaPoolAllocationLimit = getIsaPoolAllocationLimit();
+    this->isaAllocationPageSize = getIsaAllocationPageSize();
 }
 
 ModuleImp::~ModuleImp() {
@@ -1099,7 +1099,7 @@ ze_result_t ModuleImp::setIsaGraphicsAllocations() {
     }
 
     bool debuggerDisabled = (this->device->getL0Debugger() == nullptr);
-    if (debuggerDisabled && kernelsIsaTotalSize <= isaPoolAllocationLimit) {
+    if (debuggerDisabled && kernelsIsaTotalSize <= isaAllocationPageSize) {
         auto neoDevice = this->device->getNEODevice();
         auto &isaAllocator = neoDevice->getIsaPoolAllocator();
         auto crossModuleAllocation = isaAllocator.requestGraphicsAllocationForIsa(this->type == ModuleType::builtin, kernelsIsaTotalSize);
@@ -2057,8 +2057,19 @@ NEO::GraphicsAllocation *ModuleImp::getKernelsIsaParentAllocation() const {
     return nullptr;
 }
 
-size_t ModuleImp::getIsaPoolAllocationLimit() const {
-    return device->getGfxCoreHelper().getIsaPoolAllocationLimit(device->getNEODevice()->getRootDeviceEnvironment());
+size_t ModuleImp::getIsaAllocationPageSize() const {
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    auto &hwInfo = device->getHwInfo();
+
+    if (gfxCoreHelper.useSystemMemoryPlacementForISA(hwInfo)) {
+        return MemoryConstants::pageSize;
+    }
+
+    if (device->getProductHelper().is2MBLocalMemAlignmentEnabled()) {
+        return MemoryConstants::pageSize2M;
+    } else {
+        return MemoryConstants::pageSize64k;
+    }
 }
 
 FORCE_NOINLINE void ModuleImp::dumpKernelInfoToAubComments() {

@@ -255,7 +255,7 @@ struct ModuleImp : public Module {
     std::pair<const void *, size_t> getKernelHeapPointerAndSize(const std::unique_ptr<KernelImmutableData> &kernelImmData, const NEO::Linker::PatchableSegments *isaSegmentsForPatching);
     MOCKABLE_VIRTUAL NEO::GraphicsAllocation *allocateKernelsIsaMemory(size_t size);
     StackVec<NEO::GraphicsAllocation *, 32> getModuleAllocations();
-    size_t getIsaPoolAllocationLimit() const;
+    size_t getIsaAllocationPageSize() const;
 
     Device *device = nullptr;
     std::unique_ptr<ModuleTranslationUnit> translationUnit;
@@ -290,7 +290,7 @@ struct ModuleImp : public Module {
     uint32_t profileFlags = 0;
     uint64_t moduleLoadAddress = std::numeric_limits<uint64_t>::max();
     bool hasDeviceBinary = false;
-    size_t isaPoolAllocationLimit = 0;
+    size_t isaAllocationPageSize = 0;
 
     NEO::Linker::PatchableSegments isaSegmentsForPatching;
     std::vector<std::vector<char>> patchedIsaTempStorage;

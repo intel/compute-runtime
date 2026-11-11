@@ -83,7 +83,7 @@ struct WhiteBox<::L0::Module> : public ::L0::ModuleImp {
     using BaseClass::copyPatchedSegments;
     using BaseClass::device;
     using BaseClass::exportedFunctionsSurface;
-    using BaseClass::getIsaPoolAllocationLimit;
+    using BaseClass::getIsaAllocationPageSize;
     using BaseClass::importedSymbolAllocations;
     using BaseClass::isaSegmentsForPatching;
     using BaseClass::isFullyLinked;
@@ -152,10 +152,10 @@ struct MockModule : public L0::ModuleImp {
     using ModuleImp::allocateKernelImmutableData;
     using ModuleImp::allocateKernelsIsaMemory;
     using ModuleImp::debugModuleHandle;
-    using ModuleImp::getIsaPoolAllocationLimit;
+    using ModuleImp::getIsaAllocationPageSize;
     using ModuleImp::getModuleAllocations;
     using ModuleImp::initializeKernelImmutableData;
-    using ModuleImp::isaPoolAllocationLimit;
+    using ModuleImp::isaAllocationPageSize;
     using ModuleImp::isFunctionSymbolExportEnabled;
     using ModuleImp::isGlobalSymbolExportEnabled;
     using ModuleImp::kernelImmData;

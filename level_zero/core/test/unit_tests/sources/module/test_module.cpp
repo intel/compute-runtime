@@ -798,7 +798,7 @@ struct DerivedModuleImp : public L0::ModuleImp {
             auto chunkSize = NEO::KernelHelper::computeKernelIsaAllocationAlignedSizeWithPadding(*device->getNEODevice(), kernelInfo->heapInfo.kernelHeapSize, ((i + 1) == kernelsCount));
             kernelsIsaTotalSize += chunkSize;
         }
-        if (kernelsIsaTotalSize <= this->isaPoolAllocationLimit) {
+        if (kernelsIsaTotalSize <= this->isaAllocationPageSize) {
             return true;
         } else {
             return false;
@@ -879,57 +879,32 @@ HWTEST_F(ModuleTest, whenMultipleModulesCreatedThenModulesShareIsaAllocation) {
     }
 };
 
-HWTEST2_F(ModuleTest, GivenLocalMemoryEnabledOrDisabledAnd2MBAlignmentEnabledOrDisabledWhenGettingIsaPoolAllocationLimitThenCorrectValueIsReturned, IsAtMostXeCore) {
+TEST_F(ModuleTest, GivenLocalMemoryEnabledOrDisabledAnd2MBAlignmentEnabledOrDisabledWhenGettingIsaAllocationPageSizeThenCorrectValueIsReturned) {
     DebugManagerStateRestore restorer;
 
     auto mockProductHelper = new MockProductHelper;
     device->getNEODevice()->getRootDeviceEnvironmentRef().productHelper.reset(mockProductHelper);
 
     MockModule mockModule{device, nullptr, ModuleType::user};
+    mockModule.isaAllocationPageSize = mockModule.getIsaAllocationPageSize();
+
     {
         debugManager.flags.EnableLocalMemory.set(0);
         mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
 
-        EXPECT_EQ(MemoryConstants::pageSize, mockModule.getIsaPoolAllocationLimit());
+        EXPECT_EQ(MemoryConstants::pageSize, mockModule.getIsaAllocationPageSize());
     }
     {
         debugManager.flags.EnableLocalMemory.set(1);
         mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
 
-        EXPECT_EQ(MemoryConstants::pageSize2M, mockModule.getIsaPoolAllocationLimit());
+        EXPECT_EQ(MemoryConstants::pageSize2M, mockModule.getIsaAllocationPageSize());
     }
     {
         debugManager.flags.EnableLocalMemory.set(1);
         mockProductHelper->is2MBLocalMemAlignmentEnabledResult = false;
 
-        EXPECT_EQ(MemoryConstants::pageSize64k, mockModule.getIsaPoolAllocationLimit());
-    }
-}
-
-HWTEST2_F(ModuleTest, GivenLocalMemoryEnabledOrDisabledAnd2MBAlignmentEnabledOrDisabledWhenGettingIsaPoolAllocationLimitThenPageSize2MIsReturned, IsAtLeastXe2HpgCore) {
-    DebugManagerStateRestore restorer;
-
-    auto mockProductHelper = new MockProductHelper;
-    device->getNEODevice()->getRootDeviceEnvironmentRef().productHelper.reset(mockProductHelper);
-
-    MockModule mockModule{device, nullptr, ModuleType::user};
-    {
-        debugManager.flags.EnableLocalMemory.set(0);
-        mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
-
-        EXPECT_EQ(MemoryConstants::pageSize2M, mockModule.getIsaPoolAllocationLimit());
-    }
-    {
-        debugManager.flags.EnableLocalMemory.set(1);
-        mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
-
-        EXPECT_EQ(MemoryConstants::pageSize2M, mockModule.getIsaPoolAllocationLimit());
-    }
-    {
-        debugManager.flags.EnableLocalMemory.set(1);
-        mockProductHelper->is2MBLocalMemAlignmentEnabledResult = false;
-
-        EXPECT_EQ(MemoryConstants::pageSize2M, mockModule.getIsaPoolAllocationLimit());
+        EXPECT_EQ(MemoryConstants::pageSize64k, mockModule.getIsaAllocationPageSize());
     }
 }
 
@@ -5615,7 +5590,7 @@ struct ModuleIsaAllocationsFixture : public DeviceFixture {
         this->mockMemoryManager->localMemorySupported[this->neoDevice->getRootDeviceIndex()] = true;
         this->mockModule.reset(new MockModule{this->device, nullptr, ModuleType::user});
         this->mockModule->translationUnit.reset(new MockModuleTranslationUnit{this->device});
-        this->isaAllocationPageSize = this->mockModule->getIsaPoolAllocationLimit();
+        this->isaAllocationPageSize = this->mockModule->getIsaAllocationPageSize();
         this->maxIsaSizeInPage = this->isaAllocationPageSize > this->isaPadding
                                      ? alignDown(this->isaAllocationPageSize - this->isaPadding, this->kernelStartPointerAlignment)
                                      : this->kernelStartPointerAlignment;
@@ -5771,7 +5746,7 @@ struct ModuleIsaAllocationsFixture : public DeviceFixture {
 using ModuleIsaAllocationsInLocalMemoryTest = Test<ModuleIsaAllocationsFixture<true>>;
 
 TEST_F(ModuleIsaAllocationsInLocalMemoryTest, givenMultipleKernelIsasWhichFitInSinglePage64KWhenKernelImmutableDataInitializedThenKernelIsasShareParentAllocation) {
-    EXPECT_EQ(this->mockModule->isaPoolAllocationLimit, isaAllocationPageSize);
+    EXPECT_EQ(this->mockModule->isaAllocationPageSize, isaAllocationPageSize);
 
     auto requestedSize1 = 0x40;
     this->prepareKernelInfoAndAddToTranslationUnit(requestedSize1);
@@ -5848,7 +5823,7 @@ TEST_F(ModuleIsaAllocationsInLocalMemoryTest, givenMultipleKernelIsasWhenKernelI
 using ModuleIsaAllocationsInSystemMemoryTest = Test<ModuleIsaAllocationsFixture<false>>;
 
 TEST_F(ModuleIsaAllocationsInSystemMemoryTest, givenKernelIsaWhichCouldFitInPages4KBWhenKernelImmutableDataInitializedThenKernelIsasShareParentAllocationFromPoolOrModuleRegion) {
-    EXPECT_EQ(this->mockModule->isaPoolAllocationLimit, isaAllocationPageSize);
+    EXPECT_EQ(this->mockModule->isaAllocationPageSize, isaAllocationPageSize);
 
     const auto requestedSize1 = 0x8;
     this->prepareKernelInfoAndAddToTranslationUnit(requestedSize1);
@@ -6530,8 +6505,8 @@ TEST_F(ModuleTests, givenSharedIsaUsedOnlyBySecondaryWhenDestroyingModuleThenCom
     const auto requiredIsaSize =
         NEO::KernelHelper::computeKernelIsaAllocationAlignedSizeWithPadding(
             *neoDevice, sizeof(kernelHeap), true);
-    module->isaPoolAllocationLimit = std::max(
-        module->isaPoolAllocationLimit, requiredIsaSize);
+    module->isaAllocationPageSize = std::max(
+        module->isaAllocationPageSize, requiredIsaSize);
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, module->initializeKernelImmutableData());
     ASSERT_NE(nullptr, module->sharedIsaAllocation);

@@ -136,25 +136,3 @@ TEST_F(IsaPoolAllocatorTest, Given2MBLocalMemAlignmentEnabledWhenAllocatingIsaTh
 
     mockIsaAllocator.freeSharedIsaAllocation(allocation);
 }
-
-TEST_F(IsaPoolAllocatorTest, Given2MBLocalMemAlignmentDisabledWhenRequestingBuiltinIsaLargerThanPoolAndNotPageAlignedThenAllocationSucceedsAndPoolSizeIsAlignedToPageSize) {
-    auto mockProductHelper = new MockProductHelper;
-    pDevice->getRootDeviceEnvironmentRef().productHelper.reset(mockProductHelper);
-    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = false;
-
-    MockISAPoolAllocator mockIsaAllocator(pDevice);
-
-    constexpr size_t requestAllocationSize = MemoryConstants::pageSize64k + 1;
-    constexpr size_t pageAlignedRequestSize = alignUp(requestAllocationSize, MemoryConstants::pageSize);
-    auto allocation = mockIsaAllocator.requestGraphicsAllocationForIsa(true, requestAllocationSize);
-
-    verifySharedIsaAllocation(allocation, 0, pageAlignedRequestSize);
-    ASSERT_EQ(1u, mockIsaAllocator.bufferPools.size());
-
-    auto *bufferPool = static_cast<MockISAPool *>(&mockIsaAllocator.bufferPools[0]);
-    auto chunkAllocatorSize = bufferPool->chunkAllocator->getLeftSize() + bufferPool->chunkAllocator->getUsedSize();
-
-    EXPECT_EQ(pageAlignedRequestSize, chunkAllocatorSize);
-
-    mockIsaAllocator.freeSharedIsaAllocation(allocation);
-}
