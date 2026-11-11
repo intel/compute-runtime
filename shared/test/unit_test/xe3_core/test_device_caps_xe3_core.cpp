@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
-#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/xe3_core/hw_cmds_xe3_core.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -41,14 +40,4 @@ XE3_CORETEST_F(Xe3CoreDeviceCaps, givenXe3CoreWhenCheckingCoherencySupportThenRe
 
 XE3_CORETEST_F(Xe3CoreDeviceCaps, givenXe3CoreWhenCheckingDefaultPreemptionModeThenDefaultPreemptionModeIsMidThread) {
     EXPECT_EQ(PreemptionMode::MidThread, pDevice->getHardwareInfo().capabilityTable.defaultPreemptionMode);
-}
-
-XE3_CORETEST_F(Xe3CoreDeviceCaps, givenDeviceWhenAskingForSubGroupSizesThenReturnCorrectValues) {
-    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-
-    const auto deviceSubgroups = gfxCoreHelper.getDeviceSubGroupSizes();
-
-    EXPECT_EQ(2u, deviceSubgroups.size());
-    EXPECT_EQ(16u, deviceSubgroups[0]);
-    EXPECT_EQ(32u, deviceSubgroups[1]);
 }

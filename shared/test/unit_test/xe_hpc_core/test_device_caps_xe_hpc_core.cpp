@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
-#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/xe_hpc_core/hw_cmds.h"
 #include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
 #include "shared/test/common/fixtures/device_fixture.h"
@@ -31,16 +30,6 @@ XE_HPC_CORETEST_F(XeHpcCoreDeviceCaps, givenXeHpcCoreWhenCheckingCoherencySuppor
 
 XE_HPC_CORETEST_F(XeHpcCoreDeviceCaps, givenHwInfoWhenSlmSizeIsRequiredThenReturnCorrectValue) {
     EXPECT_EQ(128u, pDevice->getHardwareInfo().capabilityTable.maxProgrammableSlmSize);
-}
-
-XE_HPC_CORETEST_F(XeHpcCoreDeviceCaps, givenDeviceWhenAskingForSubGroupSizesThenReturnCorrectValues) {
-    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-
-    const auto deviceSubgroups = gfxCoreHelper.getDeviceSubGroupSizes();
-
-    EXPECT_EQ(2u, deviceSubgroups.size());
-    EXPECT_EQ(16u, deviceSubgroups[0]);
-    EXPECT_EQ(32u, deviceSubgroups[1]);
 }
 
 XE_HPC_CORETEST_F(XeHpcCoreDeviceCaps, givenSlmSizeWhenEncodingThenReturnCorrectValues) {

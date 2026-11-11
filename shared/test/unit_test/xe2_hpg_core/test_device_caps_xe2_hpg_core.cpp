@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
-#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/xe2_hpg_core/hw_cmds.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -30,16 +29,6 @@ XE2_HPG_CORETEST_F(Xe2HpgCoreDeviceCaps, givenXe2HpgCoreWhenCheckingCoherencySup
 
 XE2_HPG_CORETEST_F(Xe2HpgCoreDeviceCaps, givenXe2HpgCoreWhenCheckingDefaultPreemptionModeThenDefaultPreemptionModeIsMidThread) {
     EXPECT_EQ(PreemptionMode::MidThread, pDevice->getHardwareInfo().capabilityTable.defaultPreemptionMode);
-}
-
-XE2_HPG_CORETEST_F(Xe2HpgCoreDeviceCaps, givenDeviceWhenAskingForSubGroupSizesThenReturnCorrectValues) {
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-
-    const auto deviceSubgroups = gfxCoreHelper.getDeviceSubGroupSizes();
-
-    EXPECT_EQ(2u, deviceSubgroups.size());
-    EXPECT_EQ(16u, deviceSubgroups[0]);
-    EXPECT_EQ(32u, deviceSubgroups[1]);
 }
 
 XE2_HPG_CORETEST_F(Xe2HpgCoreDeviceCaps, givenSlmSizeWhenEncodingThenReturnCorrectValues) {

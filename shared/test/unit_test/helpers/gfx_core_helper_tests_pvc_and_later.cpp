@@ -144,6 +144,16 @@ HWTEST2_F(GfxCoreHelperTestPvcAndLater, whenCheckingCrossEngineCacheFlushRequire
     EXPECT_FALSE(gfxCoreHelper.crossEngineCacheFlushRequired());
 }
 
+HWTEST2_F(GfxCoreHelperTest, givenDeviceWhenAskingForSubGroupSizesThenReturnCorrectValues, IsWithinXeHpcCoreAndXe3pCore) {
+    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+
+    const auto deviceSubgroups = gfxCoreHelper.getDeviceSubGroupSizes();
+
+    EXPECT_EQ(2u, deviceSubgroups.size());
+    EXPECT_EQ(16u, deviceSubgroups[0]);
+    EXPECT_EQ(32u, deviceSubgroups[1]);
+}
+
 using GfxCoreHelperTestCooperativeEngine = GfxCoreHelperTestPvcAndLater;
 HWTEST2_F(GfxCoreHelperTestCooperativeEngine, givenCooperativeContextSupportedWhenGetEngineInstancesThenReturnCorrectAmountOfCooperativeCcs, IsXeHpcCore) {
     MockExecutionEnvironment mockExecutionEnvironment{};
