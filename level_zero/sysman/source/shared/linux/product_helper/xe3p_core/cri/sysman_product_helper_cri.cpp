@@ -769,7 +769,7 @@ static ze_result_t getDetailedThrottleReasons(SysmanKmdInterface *pSysmanKmdInte
         {"reason_iccmax", ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_POWER_ICCMAX},
         {"reason_soc_thermal", ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_SOC},
         {"reason_soc_avg_thermal", ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_SOC_AVG},
-        {"reason_memory_thermal", ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_MEMORY},
+        {"reason_mem_thermal", ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_MEMORY},
         {"reason_vr_thermal", ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_VR},
         {"reason_prochot", ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_THERMAL_PROCHOT},
         {"reason_p0_freq", ZES_INTEL_FREQ_THROTTLE_DETAILED_REASON_EXP_FLAG_VOLTAGE_P0_FREQ}};
@@ -800,13 +800,13 @@ zes_freq_throttle_reason_flags_t SysmanProductHelperHw<gfxProduct>::getThrottleR
 
     zes_freq_throttle_reason_flags_t aggregatedReasons = getAggregatedThrottleReasons(detailedThrottleReasons);
 
-    // "reason_ratl" maps directly to ZES_FREQ_THROTTLE_REASON_FLAG_PSU_ALERT and is not
+    // "reason_pwrbrk" maps directly to ZES_FREQ_THROTTLE_REASON_FLAG_PSU_ALERT and is not
     // part of the detailed reasons enum, so it is handled separately here.
-    const std::string ratlReasonFile = "reason_ratl";
-    uint32_t ratlVal = 0u;
+    const std::string pwrbrkReasonFile = "reason_pwrbrk";
+    uint32_t pwrbrkVal = 0u;
     if (baseDirectoryExists) {
-        const std::string ratlFilePath = baseDir + throttleReasonPath + ratlReasonFile;
-        if ((pSysfsAccess->read(ratlFilePath, ratlVal) == ZE_RESULT_SUCCESS) && ratlVal) {
+        const std::string pwrbrkFilePath = baseDir + throttleReasonPath + pwrbrkReasonFile;
+        if ((pSysfsAccess->read(pwrbrkFilePath, pwrbrkVal) == ZE_RESULT_SUCCESS) && pwrbrkVal) {
             aggregatedReasons |= ZES_FREQ_THROTTLE_REASON_FLAG_PSU_ALERT;
         }
     }

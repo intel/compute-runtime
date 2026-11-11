@@ -235,9 +235,9 @@ HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenValidFrequencyHandleWhen
     }
 }
 
-HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenRatlReasonIsSetWhenCallingGetThrottleReasonsThenPsuAlertFlagIsReturned, IsCRI) {
+HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenPwrbrkReasonIsSetWhenCallingGetThrottleReasonsThenPsuAlertFlagIsReturned, IsCRI) {
     pSysfsAccess->setValU32(detailedThrottleReasonStatusFile, validReasonValue);
-    pSysfsAccess->setValU32(ratlReasonFile, validReasonValue);
+    pSysfsAccess->setValU32(pwrbrkReasonFile, validReasonValue);
 
     zes_freq_throttle_reason_flags_t throttleReason = pSysmanProductHelper->getThrottleReasons(pSysmanKmdInterface, pSysfsAccess.get(), 0, nullptr);
 
@@ -246,18 +246,18 @@ HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenRatlReasonIsSetWhenCalli
     EXPECT_EQ(expectedReasons, throttleReason);
 }
 
-HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenRatlReasonIsZeroWhenCallingGetThrottleReasonsThenPsuAlertFlagIsNotReturned, IsBmgOrCri) {
+HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenPwrbrkReasonIsZeroWhenCallingGetThrottleReasonsThenPsuAlertFlagIsNotReturned, IsBmgOrCri) {
     pSysfsAccess->setValU32(detailedThrottleReasonStatusFile, validReasonValue);
-    pSysfsAccess->setValU32(ratlReasonFile, invalidReasonValue);
+    pSysfsAccess->setValU32(pwrbrkReasonFile, invalidReasonValue);
 
     zes_freq_throttle_reason_flags_t throttleReason = pSysmanProductHelper->getThrottleReasons(pSysmanKmdInterface, pSysfsAccess.get(), 0, nullptr);
 
     EXPECT_EQ(0u, throttleReason & ZES_FREQ_THROTTLE_REASON_FLAG_PSU_ALERT);
 }
 
-HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenRatlReasonReadFailsWhenCallingGetThrottleReasonsThenPsuAlertFlagIsNotReturned, IsBmgOrCri) {
+HWTEST2_F(SysmanProductHelperFrequencyTestFixture, GivenPwrbrkReasonReadFailsWhenCallingGetThrottleReasonsThenPsuAlertFlagIsNotReturned, IsBmgOrCri) {
     pSysfsAccess->setValU32(detailedThrottleReasonStatusFile, validReasonValue);
-    pSysfsAccess->mockRatlReasonReadError = true;
+    pSysfsAccess->mockPwrbrkReasonReadError = true;
 
     zes_freq_throttle_reason_flags_t throttleReason = pSysmanProductHelper->getThrottleReasons(pSysmanKmdInterface, pSysfsAccess.get(), 0, nullptr);
 

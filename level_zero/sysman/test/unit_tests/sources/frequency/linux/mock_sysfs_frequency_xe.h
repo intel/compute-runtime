@@ -50,9 +50,9 @@ const std::string throttleReasonFileMedia("device/tile0/gt1/freq0/throttle_reaso
 const std::string detailedThrottleReasonStatusFile("device/tile0/gt0/freq0/throttle/status");
 const std::string detailedThrottleReasonCardPL1File("device/tile0/gt0/freq0/throttle/reason_psys_pl1");
 const std::string detailedThrottleReasonFastVMode("device/tile0/gt0/freq0/throttle/reason_fastvmode");
-const std::string detailedThrottleReasonMemoryThermalFile("device/tile0/gt0/freq0/throttle/reason_memory_thermal");
+const std::string detailedThrottleReasonMemoryThermalFile("device/tile0/gt0/freq0/throttle/reason_mem_thermal");
 const std::string detailedThrottleReasonVoltageP0File("device/tile0/gt0/freq0/throttle/reason_p0_freq");
-const std::string ratlReasonFile("device/tile0/gt0/freq0/throttle/reason_ratl");
+const std::string pwrbrkReasonFile("device/tile0/gt0/freq0/throttle/reason_pwrbrk");
 
 struct MockXeFrequencySysfsAccess : public L0::Sysman::SysFsAccessInterface {
     std::string throttleReason = {};
@@ -71,8 +71,8 @@ struct MockXeFrequencySysfsAccess : public L0::Sysman::SysFsAccessInterface {
     uint32_t throttleReasonThermalVal = 0;
     uint32_t throttleReasonVal = 0;
     uint32_t detailedThrottleReasonVal = 0;
-    uint32_t throttleReasonRatlVal = 0;
-    bool mockRatlReasonReadError = false;
+    uint32_t throttleReasonPwrbrkVal = 0;
+    bool mockPwrbrkReasonReadError = false;
 
     ze_result_t mockReadDoubleValResult = ZE_RESULT_SUCCESS;
     ze_result_t mockReadRequestResult = ZE_RESULT_SUCCESS;
@@ -123,8 +123,8 @@ struct MockXeFrequencySysfsAccess : public L0::Sysman::SysFsAccessInterface {
             (file.compare(detailedThrottleReasonMemoryThermalFile) == 0) || (file.compare(detailedThrottleReasonVoltageP0File) == 0)) {
             detailedThrottleReasonVal = val;
         }
-        if (file.compare(ratlReasonFile) == 0) {
-            throttleReasonRatlVal = val;
+        if (file.compare(pwrbrkReasonFile) == 0) {
+            throttleReasonPwrbrkVal = val;
         }
         return ZE_RESULT_SUCCESS;
     }
@@ -231,11 +231,11 @@ struct MockXeFrequencySysfsAccess : public L0::Sysman::SysFsAccessInterface {
             }
             val = throttleReasonThermalVal;
         }
-        if (file.compare(ratlReasonFile) == 0) {
-            if (mockRatlReasonReadError) {
+        if (file.compare(pwrbrkReasonFile) == 0) {
+            if (mockPwrbrkReasonReadError) {
                 return ZE_RESULT_ERROR_NOT_AVAILABLE;
             }
-            val = throttleReasonRatlVal;
+            val = throttleReasonPwrbrkVal;
             return ZE_RESULT_SUCCESS;
         }
         if ((file.compare(detailedThrottleReasonStatusFile) == 0) || mockThrottleReasonStatusReadForceSuccess) {
