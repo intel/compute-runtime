@@ -24,16 +24,6 @@ static auto gfxCore = IGFX_XE_HPG_CORE;
 #include "opencl/source/helpers/cl_gfx_core_helper_factory_init.inl"
 
 template <>
-bool ClGfxCoreHelperHw<Family>::requiresNonAuxMode(const ArgDescPointer &argAsPtr) const {
-    return !argAsPtr.isPureStateful();
-}
-
-template <>
-bool ClGfxCoreHelperHw<Family>::requiresAuxResolves(const KernelInfo &kernelInfo) const {
-    return hasStatelessAccessToBuffer(kernelInfo);
-}
-
-template <>
 std::vector<uint32_t> ClGfxCoreHelperHw<Family>::getSupportedThreadArbitrationPolicies() const {
     return {};
 }
