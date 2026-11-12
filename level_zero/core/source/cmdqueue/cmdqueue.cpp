@@ -167,7 +167,7 @@ ze_result_t CommandQueue::initialize(bool copyOnly, bool isInternal, bool immedi
         this->dispatchCmdListBatchBufferAsPrimary = L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary(true);
         auto &compilerProductHelper = rootDeviceEnvironment.getHelper<NEO::CompilerProductHelper>();
         this->heaplessModeEnabled = compilerProductHelper.isHeaplessModeEnabled(hwInfo);
-        this->csrReassignmentEnabled = NEO::debugManager.flags.EnableDynamicQueueReassignment.get() == 1;
+        this->csrReassignmentEnabled = NEO::debugManager.flags.EnableDynamicQueueReassignment.get() != 0;
         this->saveWaitForPreamble = device->getGfxCoreHelper().getContextGroupContextsCount() > 1;
     }
     return returnValue;

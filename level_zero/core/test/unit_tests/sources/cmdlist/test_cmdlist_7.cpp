@@ -2302,7 +2302,7 @@ TEST_F(CommandListCsrReuseTests, givenInternalImmediateCommandListWhenDestroyedT
     EXPECT_EQ(0u, internalCsr->getOwningQueueCount());
 }
 
-TEST_F(CommandListCsrReuseTests, givenDynamicQueueReassignmentEnabledWhenCreatingImmediateCommandListsThenCsrReassignmentIsAllowedOnlyInHeaplessModeForListsOwningQueue) {
+TEST_F(CommandListCsrReuseTests, givenDynamicQueueReassignmentDebugKeyWhenCreatingImmediateCommandListsThenCsrReassignmentIsAllowedByDefaultOnlyInHeaplessModeForListsOwningQueue) {
     const bool heaplessModeEnabled = neoDevice->getCompilerProductHelper().isHeaplessModeEnabled(neoDevice->getHardwareInfo());
     auto createImmediateCommandList = [&](ze_command_queue_priority_t priority) {
         ze_command_queue_desc_t desc = {};
@@ -2314,19 +2314,22 @@ TEST_F(CommandListCsrReuseTests, givenDynamicQueueReassignmentEnabledWhenCreatin
         return commandList;
     };
 
+    debugManager.flags.EnableDynamicQueueReassignment.set(0);
     auto commandListWithReassignmentDisabled = createImmediateCommandList(ZE_COMMAND_QUEUE_PRIORITY_NORMAL);
     EXPECT_FALSE(commandListWithReassignmentDisabled->csrReassignmentAllowed);
     commandListWithReassignmentDisabled->destroy();
 
-    debugManager.flags.EnableDynamicQueueReassignment.set(1);
-    auto commandListOwningQueue = createImmediateCommandList(ZE_COMMAND_QUEUE_PRIORITY_NORMAL);
-    EXPECT_EQ(heaplessModeEnabled, commandListOwningQueue->csrReassignmentAllowed);
+    for (const int32_t reassignmentDebugKeyValue : {-1, 1}) {
+        debugManager.flags.EnableDynamicQueueReassignment.set(reassignmentDebugKeyValue);
+        auto commandListOwningQueue = createImmediateCommandList(ZE_COMMAND_QUEUE_PRIORITY_NORMAL);
+        EXPECT_EQ(heaplessModeEnabled, commandListOwningQueue->csrReassignmentAllowed);
 
-    auto lowPriorityCommandList = createImmediateCommandList(ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW);
-    EXPECT_FALSE(lowPriorityCommandList->csrReassignmentAllowed);
+        auto lowPriorityCommandList = createImmediateCommandList(ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW);
+        EXPECT_FALSE(lowPriorityCommandList->csrReassignmentAllowed);
 
-    lowPriorityCommandList->destroy();
-    commandListOwningQueue->destroy();
+        lowPriorityCommandList->destroy();
+        commandListOwningQueue->destroy();
+    }
 }
 
 struct CommandListCsrReassignmentTests : public CommandListCsrReuseTests {
@@ -2385,8 +2388,8 @@ struct CommandListCsrReassignmentTests : public CommandListCsrReuseTests {
     static constexpr TaskCountType loadedCsrSubmittedTaskCount = 4u;
 };
 
-HWTEST_F(CommandListCsrReassignmentTests, givenReassignmentNotEnabledWhenAppendingToSharedAndLoadedCsrThenCsrIsKept) {
-    debugManager.flags.EnableDynamicQueueReassignment.set(-1);
+HWTEST_F(CommandListCsrReassignmentTests, givenReassignmentDisabledWhenAppendingToSharedAndLoadedCsrThenCsrIsKept) {
+    debugManager.flags.EnableDynamicQueueReassignment.set(0);
     ze_command_queue_desc_t desc = {};
     auto commandList = createInitializedImmediateCommandList(desc);
     auto initialCsr = commandList->getCsr(false);
