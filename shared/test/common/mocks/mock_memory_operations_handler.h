@@ -63,7 +63,8 @@ class MockMemoryOperations : public MemoryOperationsHandler {
     }
 
     MemoryOperationsStatus decompress(Device *device, GraphicsAllocation &gfxAllocation) override {
-        return MemoryOperationsStatus::unsupported;
+        decompressDevices.push_back(device);
+        return decompressResult;
     }
 
     MemoryOperationsStatus lock(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) override {
@@ -131,6 +132,7 @@ class MockMemoryOperations : public MemoryOperationsHandler {
     }
 
     std::vector<GraphicsAllocation *> gfxAllocationsForMakeResident{};
+    std::vector<Device *> decompressDevices{};
     std::atomic<int> makeResidentCalledCount{0};
     std::atomic<bool> makeResidentForcePagingFenceValue{false};
     std::atomic<int> evictCalledCount{0};
@@ -141,6 +143,7 @@ class MockMemoryOperations : public MemoryOperationsHandler {
     uint32_t makeResidentContextId = std::numeric_limits<uint32_t>::max();
     bool captureGfxAllocationsForMakeResident = false;
     MemoryOperationsStatus makeResidentResult = MemoryOperationsStatus::success;
+    MemoryOperationsStatus decompressResult = MemoryOperationsStatus::unsupported;
 };
 
 } // namespace NEO

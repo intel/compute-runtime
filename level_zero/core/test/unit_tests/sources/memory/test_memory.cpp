@@ -7839,19 +7839,10 @@ TEST_F(GetHandleForAddressRangeTest, givenHostOrSharedAllocationWhenGettingHandl
     EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(sharedPtr));
 }
 
-struct GetHandleForAddressRangeMemoryOperations : public NEO::MockMemoryOperations {
-    NEO::MemoryOperationsStatus decompress(NEO::Device *device, NEO::GraphicsAllocation &gfxAllocation) override {
-        decompressDevices.push_back(device);
-        return decompressResult;
-    }
-    std::vector<NEO::Device *> decompressDevices;
-    NEO::MemoryOperationsStatus decompressResult = NEO::MemoryOperationsStatus::success;
-};
-
 struct GetHandleForAddressRangeCompressedTest : public GetHandleForAddressRangeTest {
     void SetUp() override {
         GetHandleForAddressRangeTest::SetUp();
-        memoryOperations = new GetHandleForAddressRangeMemoryOperations;
+        memoryOperations = new NEO::MockMemoryOperations;
         neoDevice->executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface.reset(memoryOperations);
 
         ze_memory_compression_hints_ext_desc_t compressionHint{ZE_STRUCTURE_TYPE_MEMORY_COMPRESSION_HINTS_EXT_DESC};
@@ -7867,7 +7858,7 @@ struct GetHandleForAddressRangeCompressedTest : public GetHandleForAddressRangeT
         GetHandleForAddressRangeTest::TearDown();
     }
 
-    GetHandleForAddressRangeMemoryOperations *memoryOperations = nullptr;
+    NEO::MockMemoryOperations *memoryOperations = nullptr;
     NEO::GraphicsAllocation *allocation = nullptr;
     void *ptr = nullptr;
 };
