@@ -30,6 +30,7 @@
 #include "shared/source/os_interface/performance_counters.h"
 #include "shared/source/utilities/cpu_info.h"
 #include "shared/source/utilities/cpuintrinsics.h"
+#include "shared/source/utilities/host_clock.h"
 #include "shared/source/utilities/staging_buffer_manager.h"
 #include "shared/source/utilities/wait_util.h"
 
@@ -2389,7 +2390,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::synchronizeInOrderExe
 
     auto waitValue = inOrderExecInfo->getCounterValue();
 
-    const auto waitStartTime = NEO::CommandStreamReceiver::getCurrentTimeInNs();
+    const auto waitStartTime = NEO::HostClock::getCurrentTimeInNs();
     auto lastHangCheckTime = waitStartTime;
 
     auto csr = getCsr(copyOffloadSync);
@@ -2415,7 +2416,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::synchronizeInOrderExe
             break;
         }
 
-        const auto hangCheckTime = NEO::CommandStreamReceiver::getCurrentTimeInNs();
+        const auto hangCheckTime = NEO::HostClock::getCurrentTimeInNs();
         bool gpuHangDetected = csr->checkGpuHangDetected(hangCheckTime, lastHangCheckTime);
         for (size_t previousCsrIndex = 0; !gpuHangDetected && (previousCsrIndex < this->previousCsrsAwaitingCompletion.size()); previousCsrIndex++) {
             gpuHangDetected = this->previousCsrsAwaitingCompletion[previousCsrIndex].first->checkGpuHangDetected(hangCheckTime, previousCsrsLastHangCheckTimes[previousCsrIndex]);
@@ -2431,7 +2432,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::synchronizeInOrderExe
             break;
         }
 
-        const auto now = NEO::CommandStreamReceiver::getCurrentTimeInNs();
+        const auto now = NEO::HostClock::getCurrentTimeInNs();
         timeDiff = static_cast<uint64_t>(now - waitStartTime);
     } while (timeDiff < timeout);
 

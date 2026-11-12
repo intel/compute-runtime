@@ -15,6 +15,7 @@
 #include "shared/source/os_interface/os_thread.h"
 #include "shared/source/os_interface/os_time.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/utilities/host_clock.h"
 
 #include <chrono>
 #include <thread>
@@ -92,7 +93,7 @@ void *DirectSubmissionController::controlDirectSubmissionsState(void *self) {
     auto controller = reinterpret_cast<DirectSubmissionController *>(self);
 
     controller->timeSinceLastCheck = controller->getCpuTimestamp();
-    controller->lastHangCheckTime = CommandStreamReceiver::getCurrentTimeInNs();
+    controller->lastHangCheckTime = HostClock::getCurrentTimeInNs();
 
     while (controller->keepControlling.load()) {
         std::unique_lock<std::mutex> lock(controller->condVarMutex);

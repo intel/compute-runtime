@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/blit_commands_helper.h"
+#include "shared/source/utilities/host_clock.h"
 #include "shared/source/utilities/wait_util.h"
 
 #include "opencl/source/built_ins/aux_translation_builtin.h"
@@ -149,7 +150,7 @@ inline bool waitForTimestampsWithinContainer(TimestampPacketContainer *container
     status = WaitStatus::notReady;
 
     if (container) {
-        auto lastHangCheckTime = CommandStreamReceiver::getCurrentTimeInNs();
+        auto lastHangCheckTime = HostClock::getCurrentTimeInNs();
         auto waitStartTime = lastHangCheckTime;
         for (const auto &timestamp : container->peekNodes()) {
             for (uint32_t i = 0; i < timestamp->getPacketsUsed(); i++) {
@@ -159,8 +160,8 @@ inline bool waitForTimestampsWithinContainer(TimestampPacketContainer *container
                 while (timestamp->getContextEndValue(i) == 1) {
                     csr.downloadAllocation(*timestamp->getBaseGraphicsAllocation()->getGraphicsAllocation(csr.getRootDeviceIndex()));
 
-                    auto currentTime = CommandStreamReceiver::getCurrentTimeInNs();
-                    WaitUtils::waitFunctionWithPredicate<const TSPacketType>(static_cast<TSPacketType const *>(timestamp->getContextEndAddress(i)), 1u, std::not_equal_to<TSPacketType>(), CommandStreamReceiver::getElapsedTimeInUs(waitStartTime, currentTime));
+                    auto currentTime = HostClock::getCurrentTimeInNs();
+                    WaitUtils::waitFunctionWithPredicate<const TSPacketType>(static_cast<TSPacketType const *>(timestamp->getContextEndAddress(i)), 1u, std::not_equal_to<TSPacketType>(), HostClock::getElapsedTimeInUs(waitStartTime, currentTime));
 
                     if (csr.checkGpuHangDetected(currentTime, lastHangCheckTime)) {
                         status = WaitStatus::gpuHang;

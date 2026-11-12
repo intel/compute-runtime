@@ -49,6 +49,7 @@
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 #include "shared/source/utilities/cpu_info.h"
+#include "shared/source/utilities/host_clock.h"
 #include "shared/source/utilities/logger_neo_only.h"
 
 #include <algorithm>
@@ -1236,7 +1237,7 @@ bool MemoryManager::allocInUse(GraphicsAllocation &graphicsAllocation) {
     uint32_t numEnginesChecked = 0;
     const uint32_t numContextsToCheck = graphicsAllocation.getNumRegisteredContexts();
 
-    static CommandStreamReceiver::TimeType lastGpuHangCheck = CommandStreamReceiver::getCurrentTimeInNs();
+    static CommandStreamReceiver::TimeType lastGpuHangCheck = HostClock::getCurrentTimeInNs();
 
     for (auto &engine : getRegisteredEngines(graphicsAllocation.getRootDeviceIndex())) {
         auto osContextId = engine.osContext->getContextId();
@@ -1244,7 +1245,7 @@ bool MemoryManager::allocInUse(GraphicsAllocation &graphicsAllocation) {
 
         if (graphicsAllocation.isUsedByOsContext(osContextId)) {
             numEnginesChecked++;
-            if (engine.commandStreamReceiver->checkGpuHangDetected(CommandStreamReceiver::getCurrentTimeInNs(), lastGpuHangCheck)) {
+            if (engine.commandStreamReceiver->checkGpuHangDetected(HostClock::getCurrentTimeInNs(), lastGpuHangCheck)) {
                 return false;
             }
             if (engine.commandStreamReceiver->getTagAddress() &&

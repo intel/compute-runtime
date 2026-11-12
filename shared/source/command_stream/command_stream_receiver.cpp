@@ -52,7 +52,6 @@
 #include "aubstream/hardware_context.h"
 
 #include <array>
-#include <chrono>
 #include <iostream>
 #include <thread>
 
@@ -652,16 +651,8 @@ WaitStatus CommandStreamReceiver::waitForCompletionWithTimeout(const WaitParams 
     return retCode;
 }
 
-CommandStreamReceiver::TimeType CommandStreamReceiver::getCurrentTimeInNs() {
-    return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
-}
-
-int64_t CommandStreamReceiver::getElapsedTimeInUs(TimeType startTimeInNs, TimeType endTimeInNs) {
-    return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::nanoseconds{endTimeInNs - startTimeInNs}).count();
-}
-
 bool CommandStreamReceiver::checkGpuHangDetected(TimeType currentTime, TimeType &lastHangCheckTime) const {
-    const auto elapsedTimeSinceGpuHangCheckUs = getElapsedTimeInUs(lastHangCheckTime, currentTime);
+    const auto elapsedTimeSinceGpuHangCheckUs = HostClock::getElapsedTimeInUs(lastHangCheckTime, currentTime);
 
     if (this->isGpuHangCheckPeriodElapsed(elapsedTimeSinceGpuHangCheckUs)) {
         lastHangCheckTime = currentTime;
@@ -683,7 +674,7 @@ WaitStatus CommandStreamReceiver::baseWaitFunction(volatile TagAddressType *poll
     }
     volatile TagAddressType *partitionAddress = pollAddress;
 
-    const auto waitStartTime = getCurrentTimeInNs();
+    const auto waitStartTime = HostClock::getCurrentTimeInNs();
     auto lastHangCheckTime = waitStartTime;
     for (uint32_t i = 0; i < activePartitions; i++) {
         while (*partitionAddress < taskCountToWait && (!params.enableTimeout || timeDiff <= params.waitTimeout)) {
@@ -693,12 +684,12 @@ WaitStatus CommandStreamReceiver::baseWaitFunction(volatile TagAddressType *poll
                 break;
             }
 
-            const auto currentTime = getCurrentTimeInNs();
+            const auto currentTime = HostClock::getCurrentTimeInNs();
             if (checkGpuHangDetected(currentTime, lastHangCheckTime)) {
                 return WaitStatus::gpuHang;
             }
 
-            timeDiff = getElapsedTimeInUs(waitStartTime, currentTime);
+            timeDiff = HostClock::getElapsedTimeInUs(waitStartTime, currentTime);
         }
 
         partitionAddress = ptrOffset(partitionAddress, this->immWritePostSyncWriteOffset);

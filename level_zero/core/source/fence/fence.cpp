@@ -8,6 +8,7 @@
 #include "level_zero/core/source/fence/fence.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/utilities/host_clock.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
 
@@ -62,7 +63,7 @@ ze_result_t Fence::hostSynchronize(uint64_t timeout) {
         return ZE_RESULT_NOT_READY;
     }
 
-    const auto waitStartTime = NEO::CommandStreamReceiver::getCurrentTimeInNs();
+    const auto waitStartTime = NEO::HostClock::getCurrentTimeInNs();
     auto lastHangCheckTime = waitStartTime;
     do {
         ret = queryStatus(timeout != 0);
@@ -72,7 +73,7 @@ ze_result_t Fence::hostSynchronize(uint64_t timeout) {
             return ZE_RESULT_SUCCESS;
         }
 
-        const auto currentTime = NEO::CommandStreamReceiver::getCurrentTimeInNs();
+        const auto currentTime = NEO::HostClock::getCurrentTimeInNs();
         if (csr->checkGpuHangDetected(currentTime, lastHangCheckTime)) {
             cmdQueue->printKernelsPrintfOutput(true);
             cmdQueue->checkAssert();

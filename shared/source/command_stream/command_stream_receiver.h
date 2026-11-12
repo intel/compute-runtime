@@ -25,6 +25,7 @@
 #include "shared/source/os_interface/defs.h"
 #include "shared/source/os_interface/external_semaphore.h"
 #include "shared/source/os_interface/user_fence.h"
+#include "shared/source/utilities/host_clock.h"
 #include "shared/source/utilities/mockable_virtual_defaults.h"
 #include "shared/source/utilities/spinlock.h"
 
@@ -113,7 +114,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     };
 
     using MutexType = std::recursive_mutex;
-    using TimeType = int64_t;
+    using TimeType = HostClock::TimestampNs;
 
     CommandStreamReceiver() = delete;
 
@@ -517,8 +518,6 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     const ReleaseHelper &getReleaseHelper() const;
 
     MOCKABLE_VIRTUAL bool isGpuHangDetected() const;
-    static TimeType getCurrentTimeInNs();
-    static int64_t getElapsedTimeInUs(TimeType startTimeInNs, TimeType endTimeInNs);
     MOCKABLE_VIRTUAL bool checkGpuHangDetected(TimeType currentTime, TimeType &lastHangCheckTime) const;
 
     uint64_t getCompletionAddress() const;
@@ -666,7 +665,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     }
 
     MOCKABLE_VIRTUAL bool isBusyWithoutHang(TimeType &lastHangCheckTime) {
-        return isBusy() && !this->checkGpuHangDetected(getCurrentTimeInNs(), lastHangCheckTime);
+        return isBusy() && !this->checkGpuHangDetected(HostClock::getCurrentTimeInNs(), lastHangCheckTime);
     }
 
     bool canUse4GbHeaps() const {

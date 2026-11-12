@@ -24,6 +24,8 @@ set(NEO_CORE_UTILITIES
     ${CMAKE_CURRENT_SOURCE_DIR}/generic_pool_allocator.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/heap_allocator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/heap_allocator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/host_clock.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/host_clock.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_timestamps.h
     ${CMAKE_CURRENT_SOURCE_DIR}/iflist.h
     ${CMAKE_CURRENT_SOURCE_DIR}/idlist.h
