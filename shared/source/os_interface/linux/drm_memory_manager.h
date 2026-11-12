@@ -30,12 +30,6 @@ enum class GemCloseWorkerMode;
 
 using BufferObjects = StackVec<BufferObject *, EngineLimits::maxHandleCount>;
 
-struct BoHandleDeviceIndexPairComparer {
-    bool operator()(std::pair<int, uint32_t> const &lhs, std::pair<int, uint32_t> const &rhs) const {
-        return (lhs.first < rhs.first) || (lhs.second < rhs.second);
-    }
-};
-
 class DrmMemoryManager : public MemoryManager {
   public:
     DrmMemoryManager(GemCloseWorkerMode mode,
@@ -252,7 +246,7 @@ class DrmMemoryManager : public MemoryManager {
     std::vector<BufferObject *> sharingBufferObjects;
     std::mutex mtx;
 
-    std::map<std::pair<int, uint32_t>, BufferObjectHandleWrapper, BoHandleDeviceIndexPairComparer> sharedBoHandles;
+    std::map<std::pair<int, uint32_t>, BufferObjectHandleWrapper> sharedBoHandles;
     std::map<std::pair<uint32_t, uintptr_t>, std::pair<uintptr_t, GraphicsAllocation *>> fragmentBackedImportRanges;
     std::vector<std::vector<GraphicsAllocation *>> localMemAllocs;
     std::vector<size_t> localMemBanksCount;

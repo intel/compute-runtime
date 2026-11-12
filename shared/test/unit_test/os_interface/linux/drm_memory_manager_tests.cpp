@@ -1961,6 +1961,27 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenWrapperInBoHandlesContainerWhenTry
     EXPECT_TRUE(boHandleWrapper.canCloseBoHandle());
 }
 
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenLowerBoHandleRegisteredOnHigherRootDeviceIndexWhenTryingToGetSharedOwnershipAndEraseThenRegisteredWrapperIsFound) {
+    const int higherBoHandle{5};
+    const int lowerBoHandle{3};
+    BufferObjectHandleWrapper firstBoHandleWrapper{higherBoHandle, rootDeviceIndex};
+    BufferObjectHandleWrapper secondBoHandleWrapper{lowerBoHandle, rootDeviceIndex + 1};
+
+    memoryManager->sharedBoHandles.emplace(std::make_pair(higherBoHandle, rootDeviceIndex), firstBoHandleWrapper.acquireWeakOwnership());
+    memoryManager->sharedBoHandles.emplace(std::make_pair(lowerBoHandle, rootDeviceIndex + 1), secondBoHandleWrapper.acquireWeakOwnership());
+    ASSERT_EQ(2u, memoryManager->sharedBoHandles.size());
+
+    {
+        auto newBoHandleWrapper = memoryManager->tryToGetBoHandleWrapperWithSharedOwnership(lowerBoHandle, rootDeviceIndex + 1);
+        EXPECT_EQ(lowerBoHandle, newBoHandleWrapper.getBoHandle());
+        EXPECT_FALSE(newBoHandleWrapper.canCloseBoHandle());
+    }
+
+    memoryManager->eraseSharedBoHandleWrapper(lowerBoHandle, rootDeviceIndex + 1);
+    EXPECT_EQ(1u, memoryManager->sharedBoHandles.size());
+    EXPECT_EQ(1u, memoryManager->sharedBoHandles.count(std::make_pair(higherBoHandle, rootDeviceIndex)));
+}
+
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenDeviceSharedAllocationWhichRequiresHostMapThenCorrectAlignmentReturned) {
     mock->ioctlExpected.primeFdToHandle = 1;
     mock->ioctlExpected.gemWait = 1;
