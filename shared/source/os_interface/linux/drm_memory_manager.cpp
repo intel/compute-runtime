@@ -3953,6 +3953,8 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
             return nullptr;
         }
 
+        bo->setAddress(castToUint64(currentAddress));
+
         bo->setDeferBackingUsed(deferBacking);
         if (deferBacking) {
             bo->requireImmediateBinding(true);
@@ -3961,8 +3963,6 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
         }
 
         ioctlHelper->mmapFunction(*this, currentAddress, currentSize, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, drm.getFileDescriptor(), static_cast<off_t>(offset));
-
-        bo->setAddress(castToUint64(currentAddress));
 
         bo->setChunked(useChunking);
 

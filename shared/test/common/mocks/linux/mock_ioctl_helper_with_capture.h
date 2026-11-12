@@ -229,6 +229,10 @@ class MockIoctlHelperWithCapture : public IoctlHelperUpstream {
         return vmBindResult;
     }
 
+    bool isDeferBackingEnabledForAllocation(size_t allocationSize, AllocationType allocationType) const override {
+        return deferBackingEnabledForAllocation;
+    }
+
     int vmUnbind(const VmBindParams &vmBindParams) override {
         vmUnbindCalled++;
         receivedVmUnbind = vmBindParams;
@@ -290,6 +294,7 @@ class MockIoctlHelperWithCapture : public IoctlHelperUpstream {
     std::vector<VmPrefetchCall> vmPrefetchCalls;
     std::vector<VmSharedSystemMemAdviseCall> vmSharedSystemMemAdviseCalls;
     bool vmSharedSystemMemAdviseResult = true;
+    bool deferBackingEnabledForAllocation = false;
     std::optional<uint32_t> vmAdviseAtomicAttribute = 0u;
     uint32_t vmBoAdviseCalled = 0u;
     uint32_t vmBoAdviseForChunkingCalled = 0u;

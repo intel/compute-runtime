@@ -146,6 +146,41 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenNoVmBoAtomicAdviseWhenCreateSharedU
     unifiedMemoryManager.freeSVMAlloc(ptr);
 }
 
+TEST_F(DrmMemoryManagerLocalMemoryTest, givenDeferBackingWhenCreateSharedUnifiedMemoryAllocationThenBoIsBoundAtAllocationAddress) {
+    ioctlHelper->vmAdviseAtomicAttribute = std::nullopt;
+    ioctlHelper->deferBackingEnabledForAllocation = true;
+    DebugManagerStateRestore restorer;
+    debugManager.flags.UseKmdMigration.set(1);
+    RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
+    std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
+
+    std::vector<MemoryRegion> regionInfo(2);
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 1};
+    regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
+
+    mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    mock->setBindAvailable();
+    ioctlHelper->vmBindAvailable = true;
+
+    executionEnvironment->calculateMaxOsContextCount();
+    SVMAllocsManager unifiedMemoryManager(memoryManager);
+
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    auto ptr = unifiedMemoryManager.createSharedUnifiedMemoryAllocation(MemoryConstants::pageSize64k, unifiedMemoryProperties, nullptr);
+    ASSERT_NE(ptr, nullptr);
+    auto allocation = static_cast<DrmAllocation *>(unifiedMemoryManager.getSVMAlloc(ptr)->gpuAllocations.getDefaultGraphicsAllocation());
+    ASSERT_NE(allocation, nullptr);
+    ASSERT_TRUE(allocation->getBO()->isDeferBackingUsed());
+
+    EXPECT_EQ(1u, ioctlHelper->vmBindCalled);
+    ASSERT_TRUE(ioctlHelper->receivedVmBind.has_value());
+    EXPECT_EQ(castToUint64(allocation->getUnderlyingBuffer()), ioctlHelper->receivedVmBind->start);
+    ASSERT_EQ(1u, ioctlHelper->vmSharedSystemMemAdviseCalls.size());
+    EXPECT_EQ(castToUint64(allocation->getUnderlyingBuffer()), ioctlHelper->vmSharedSystemMemAdviseCalls[0].handle);
+
+    unifiedMemoryManager.freeSVMAlloc(ptr);
+}
+
 TEST_F(DrmMemoryManagerLocalMemoryTest, givenNoVmBoAtomicAdviseAndPerContextVmsWhenCreateSharedUnifiedMemoryAllocationThenSystemAtomicAccessIsSetInDefaultContextVm) {
     ioctlHelper->vmAdviseAtomicAttribute = std::nullopt;
     DebugManagerStateRestore restorer;
