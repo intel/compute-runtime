@@ -281,6 +281,7 @@ class Drm : public DriverModel {
     bool isLatePreemptionStartSupported(const HardwareInfo &hwInfo) override;
 
     uint64_t getPatIndex(Gmm *gmm, AllocationType allocationType, CacheRegion cacheRegion, CachePolicy cachePolicy, bool closEnabled, bool isSystemMemory, bool forceCoherent) const;
+    uint64_t getDecompressPatIndex(Gmm &gmm) const;
     bool isVmBindPatIndexProgrammingSupported() const { return vmBindPatIndexProgrammingSupported; }
     uint32_t getDeviceMemoryMaxClockRateInMhz(uint32_t tileId) override;
     uint64_t getDeviceMemoryPhysicalSizeInBytes(uint32_t tileId) override;

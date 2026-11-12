@@ -10,16 +10,19 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
+#include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/options.h"
 #include "shared/source/helpers/preprocessor.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/topology.h"
+#include "shared/source/memory_manager/definitions/storage_info.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/linux/drm_allocation.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
@@ -314,11 +317,18 @@ bool IoctlHelperXe::isVmBindAvailable() {
 
 bool IoctlHelperXe::isVmBindDecompressAvailable(uint32_t vmId) {
     std::call_once(checkVmBindDecompressOnce, [this, vmId]() {
-        auto gemRet = createGem(MemoryConstants::pageSize, 1, std::nullopt);
+        constexpr uint32_t probeMemoryBanks = 1u;
+        auto gemRet = createGem(MemoryConstants::pageSize, probeMemoryBanks, std::nullopt);
 
         if (gemRet != 0) {
             auto &rootDeviceEnvironment = drm.getRootDeviceEnvironment();
             auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
+
+            StorageInfo probeStorageInfo{};
+            probeStorageInfo.memoryBanks = probeMemoryBanks;
+            probeStorageInfo.systemMemoryPlacement = !rootDeviceEnvironment.getHelper<GfxCoreHelper>().getEnableLocalMemory(*rootDeviceEnvironment.getHardwareInfo());
+            constexpr size_t probeAlignment = 0u;
+            Gmm probeGmm(gmmHelper, nullptr, MemoryConstants::pageSize, probeAlignment, GMM_RESOURCE_USAGE_OCL_BUFFER, probeStorageInfo, GmmRequirements{});
 
             uint64_t probeAddr = MemoryConstants::pageSize;
 
@@ -332,7 +342,7 @@ bool IoctlHelperXe::isVmBindDecompressAvailable(uint32_t vmId) {
             probeVmBind.sharedSystemUsmEnabled = false;
             probeVmBind.sharedSystemUsmBind = false;
             probeVmBind.extensions = 0u;
-            probeVmBind.patIndex = static_cast<uint16_t>(rootDeviceEnvironment.getGmmClientContext()->cachePolicyGetPATIndex(nullptr, GMM_RESOURCE_USAGE_OCL_BUFFER, false, false));
+            probeVmBind.patIndex = static_cast<uint16_t>(drm.getDecompressPatIndex(probeGmm));
 
             auto pagingFenceAddr = getPagingFenceAddress(0, nullptr);
             VmBindExtUserFenceT probeUserFence{};

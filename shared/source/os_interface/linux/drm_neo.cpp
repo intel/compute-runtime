@@ -1737,6 +1737,11 @@ uint64_t Drm::getPatIndex(Gmm *gmm, AllocationType allocationType, CacheRegion c
     return patIndex;
 }
 
+uint64_t Drm::getDecompressPatIndex(Gmm &gmm) const {
+    constexpr bool compressed = false;
+    return rootDeviceEnvironment.getGmmClientContext()->cachePolicyGetPATIndex(gmm.gmmResourceInfo->peekGmmResourceInfo(), gmm.getResourceUsageType(), compressed, gmm.gmmResourceInfo->isCacheable());
+}
+
 void programUserFence(Drm *drm, OsContext *osContext, BufferObject *bo, VmBindExtUserFenceT &vmBindExtUserFence, uint32_t vmHandleId, uint64_t nextExtension, bool isAsyncFence) {
     auto ioctlHelper = drm->getIoctlHelper();
     uint64_t address = 0;

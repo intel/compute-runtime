@@ -22,6 +22,7 @@
 #include "shared/test/common/mocks/linux/mock_os_context_linux.h"
 #include "shared/test/common/mocks/linux/mock_os_time_linux.h"
 #include "shared/test/common/mocks/mock_gmm_client_context_base.h"
+#include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/os_interface/linux/xe/mock_drm_xe.h"
@@ -3351,6 +3352,10 @@ struct MockIoctlHelperXeIsVmBindDecompress : MockIoctlHelperXe {
         vmBindFlags = vmBindParams.flags;
         vmBindVmId = vmBindParams.vmId;
         vmBindPatIndex = vmBindParams.patIndex;
+        auto mockClientContext = static_cast<MockGmmClientContextBase *>(this->drm.getRootDeviceEnvironment().getGmmClientContext());
+        if (mockClientContext->passedResourceInfoForGetPatIndexQuery != nullptr) {
+            this->vmBindPatResourceCreateParams = reinterpret_cast<MockGmmResourceInfo *>(mockClientContext->passedResourceInfoForGetPatIndexQuery)->mockResourceCreateParams;
+        }
         return vmBindResult;
     }
 
@@ -3381,6 +3386,7 @@ struct MockIoctlHelperXeIsVmBindDecompress : MockIoctlHelperXe {
     uint32_t vmUnbindVmId = 0;
     uint64_t vmBindPatIndex = 0;
     uint64_t vmUnbindPatIndex = 0;
+    std::optional<GMM_RESCREATE_PARAMS> vmBindPatResourceCreateParams;
 };
 
 TEST_F(IoctlHelperXeTest, givenCreateGemFailsWhenIsVmBindDecompressAvailableThenReturnsFalseAndDoesNotBind) {
@@ -3431,6 +3437,41 @@ TEST_F(IoctlHelperXeTest, givenProbeVmBindSucceedsWhenIsVmBindDecompressAvailabl
     EXPECT_EQ(static_cast<uint64_t>(DRM_XE_VM_BIND_FLAG_IMMEDIATE | DRM_XE_VM_BIND_FLAG_DECOMPRESS), xeIoctlHelper->vmBindFlags);
     EXPECT_NE(0u, xeIoctlHelper->vmBindPatIndex);
     EXPECT_EQ(xeIoctlHelper->vmBindPatIndex, xeIoctlHelper->vmUnbindPatIndex);
+}
+
+TEST_F(IoctlHelperXeTest, givenLocalMemoryEnabledWhenIsVmBindDecompressAvailableThenProbePatIsQueriedWithResourceInfoOfUncompressedLocalMemoryBuffer) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableLocalMemory.set(1);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->featureTable.flags.ftrLocalMemory = true;
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXeIsVmBindDecompress>(*drm);
+    auto mockClientContext = static_cast<MockGmmClientContextBase *>(executionEnvironment->rootDeviceEnvironments[0]->getGmmClientContext());
+
+    EXPECT_TRUE(xeIoctlHelper->isVmBindDecompressAvailable(0u));
+
+    ASSERT_TRUE(xeIoctlHelper->vmBindPatResourceCreateParams.has_value());
+    EXPECT_EQ(0u, xeIoctlHelper->vmBindPatResourceCreateParams->Flags.Info.NonLocalOnly);
+    ASSERT_TRUE(mockClientContext->passedUsageTypeForGetPatIndexQuery.has_value());
+    EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_BUFFER, mockClientContext->passedUsageTypeForGetPatIndexQuery.value());
+    EXPECT_FALSE(mockClientContext->passedCompressedSettingForGetPatIndexQuery);
+    EXPECT_FALSE(mockClientContext->passedCpuCacheableSettingForGetPatIndexQuery);
+}
+
+TEST_F(IoctlHelperXeTest, givenLocalMemoryDisabledWhenIsVmBindDecompressAvailableThenProbePatIsQueriedWithResourceInfoOfSystemMemoryBufferAndItsCacheability) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableLocalMemory.set(0);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->featureTable.flags.ftrLocalMemory = true;
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXeIsVmBindDecompress>(*drm);
+    auto mockClientContext = static_cast<MockGmmClientContextBase *>(executionEnvironment->rootDeviceEnvironments[0]->getGmmClientContext());
+
+    EXPECT_TRUE(xeIoctlHelper->isVmBindDecompressAvailable(0u));
+
+    ASSERT_TRUE(xeIoctlHelper->vmBindPatResourceCreateParams.has_value());
+    EXPECT_EQ(1u, xeIoctlHelper->vmBindPatResourceCreateParams->Flags.Info.NonLocalOnly);
+    EXPECT_EQ(static_cast<bool>(xeIoctlHelper->vmBindPatResourceCreateParams->Flags.Info.Cacheable), mockClientContext->passedCpuCacheableSettingForGetPatIndexQuery);
 }
 
 TEST_F(IoctlHelperXeTest, givenIsVmBindDecompressAvailableAlreadyCheckedWhenCalledAgainThenCachedResultIsReturnedWithoutProbing) {
