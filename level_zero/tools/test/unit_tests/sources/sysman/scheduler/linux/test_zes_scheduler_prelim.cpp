@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -86,7 +86,6 @@ class SysmanDeviceSchedulerFixture : public SysmanDeviceFixture {
         if (!sysmanUltsEnable) {
             GTEST_SKIP();
         }
-        pSysfsAccess->cleanUpMap();
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccessOld;
         SysmanDeviceFixture::TearDown();
     }
@@ -373,9 +372,8 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
 }
 
 TEST_F(SysmanDeviceSchedulerFixture, GivenCurrentModeIsDebugModeWhenCallingzesSchedulerSetTimeoutModeThenVerifyCallSucceeds) {
-    VariableBackup<ProcfsAccess *> backup(&pLinuxSysmanImp->pProcfsAccess);
-    auto pMockSchedulerProcfsAccess = new MockSchedulerProcfsAccess;
-    pLinuxSysmanImp->pProcfsAccess = pMockSchedulerProcfsAccess;
+    MockSchedulerProcfsAccess mockSchedulerProcfsAccess;
+    VariableBackup<ProcfsAccess *> backup(&pLinuxSysmanImp->pProcfsAccess, &mockSchedulerProcfsAccess);
 
     // First set compute unit debug mode
     auto handles = getSchedHandles(handleComponentCount);
@@ -392,15 +390,12 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenCurrentModeIsDebugModeWhenCallingzesSc
     EXPECT_EQ(getConfig.watchdogTimeout, setConfig.watchdogTimeout);
     auto mode = fixtureGetCurrentMode(handles[0]);
     EXPECT_EQ(mode, ZES_SCHED_MODE_TIMEOUT);
-
-    delete pMockSchedulerProcfsAccess;
 }
 
 TEST_F(SysmanDeviceSchedulerFixture, GivenCurrentModeIsDebugModeWhenSettingTimeoutModeAndDebugModeCantBeChangedThenVerifyCallFails) {
-    VariableBackup<ProcfsAccess *> backup(&pLinuxSysmanImp->pProcfsAccess);
-    auto pMockSchedulerProcfsAccess = new MockSchedulerProcfsAccess;
-    pLinuxSysmanImp->pProcfsAccess = pMockSchedulerProcfsAccess;
-    pMockSchedulerProcfsAccess->listProcessesResult = ZE_RESULT_ERROR_NOT_AVAILABLE; // Expect failure when calling gpuProcessCleanup()
+    MockSchedulerProcfsAccess mockSchedulerProcfsAccess;
+    VariableBackup<ProcfsAccess *> backup(&pLinuxSysmanImp->pProcfsAccess, &mockSchedulerProcfsAccess);
+    mockSchedulerProcfsAccess.listProcessesResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
 
     // First set compute unit debug mode
     auto handles = getSchedHandles(handleComponentCount);
@@ -414,8 +409,6 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenCurrentModeIsDebugModeWhenSettingTimeo
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesSchedulerSetTimeoutMode(handles[0], &setConfig, &needReboot));
     EXPECT_FALSE(needReboot);
     EXPECT_EQ(ZES_SCHED_MODE_COMPUTE_UNIT_DEBUG, fixtureGetCurrentMode(handles[0]));
-
-    delete pMockSchedulerProcfsAccess;
 }
 
 TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedulerSetTimeoutModeWhenTimeoutLessThanMinimumThenVerifyzesSchedulerSetTimeoutModeCallFails) {
@@ -524,9 +517,8 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
 }
 
 TEST_F(SysmanDeviceSchedulerFixture, GivenCurrentModeIsDebugModeWhenCallingzesSchedulerSetTimesliceModeThenVerifyCallSucceeds) {
-    VariableBackup<ProcfsAccess *> backup(&pLinuxSysmanImp->pProcfsAccess);
-    auto pMockSchedulerProcfsAccess = new MockSchedulerProcfsAccess;
-    pLinuxSysmanImp->pProcfsAccess = pMockSchedulerProcfsAccess;
+    MockSchedulerProcfsAccess mockSchedulerProcfsAccess;
+    VariableBackup<ProcfsAccess *> backup(&pLinuxSysmanImp->pProcfsAccess, &mockSchedulerProcfsAccess);
 
     // First set compute unit debug mode
     auto handles = getSchedHandles(handleComponentCount);
@@ -545,15 +537,12 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenCurrentModeIsDebugModeWhenCallingzesSc
     EXPECT_EQ(getConfig.yieldTimeout, setConfig.yieldTimeout);
     auto mode = fixtureGetCurrentMode(handles[0]);
     EXPECT_EQ(mode, ZES_SCHED_MODE_TIMESLICE);
-
-    delete pMockSchedulerProcfsAccess;
 }
 
 TEST_F(SysmanDeviceSchedulerFixture, GivenCurrentModeIsDebugModeWhenSettingTimesliceModeAndDebugModeCantBeChangedThenVerifyCallFails) {
-    VariableBackup<ProcfsAccess *> backup(&pLinuxSysmanImp->pProcfsAccess);
-    auto pMockSchedulerProcfsAccess = new MockSchedulerProcfsAccess;
-    pLinuxSysmanImp->pProcfsAccess = pMockSchedulerProcfsAccess;
-    pMockSchedulerProcfsAccess->listProcessesResult = ZE_RESULT_ERROR_NOT_AVAILABLE; // Expect failure when calling gpuProcessCleanup()
+    MockSchedulerProcfsAccess mockSchedulerProcfsAccess;
+    VariableBackup<ProcfsAccess *> backup(&pLinuxSysmanImp->pProcfsAccess, &mockSchedulerProcfsAccess);
+    mockSchedulerProcfsAccess.listProcessesResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
 
     // First set compute unit debug mode
     auto handles = getSchedHandles(handleComponentCount);
@@ -568,8 +557,6 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenCurrentModeIsDebugModeWhenSettingTimes
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesSchedulerSetTimesliceMode(handles[0], &setConfig, &needReboot));
     EXPECT_FALSE(needReboot);
     EXPECT_EQ(ZES_SCHED_MODE_COMPUTE_UNIT_DEBUG, fixtureGetCurrentMode(handles[0]));
-
-    delete pMockSchedulerProcfsAccess;
 }
 
 TEST_F(SysmanDeviceSchedulerFixture, GivenGetCurrentModeFailsWhenCallingzesSchedulerSetTimesliceModeThenVerifyzesSchedulerSetTimesliceModeCallFails) {
@@ -659,9 +646,8 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
 }
 
 TEST_F(SysmanDeviceSchedulerFixture, GivenCurrentModeIsDebugModeWhenCallingzesSchedulerSetExclusiveModeThenVerifyCallSucceeds) {
-    VariableBackup<ProcfsAccess *> backup(&pLinuxSysmanImp->pProcfsAccess);
-    auto pMockSchedulerProcfsAccess = new MockSchedulerProcfsAccess;
-    pLinuxSysmanImp->pProcfsAccess = pMockSchedulerProcfsAccess;
+    MockSchedulerProcfsAccess mockSchedulerProcfsAccess;
+    VariableBackup<ProcfsAccess *> backup(&pLinuxSysmanImp->pProcfsAccess, &mockSchedulerProcfsAccess);
 
     // First set compute unit debug mode
     auto handles = getSchedHandles(handleComponentCount);
@@ -673,15 +659,12 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenCurrentModeIsDebugModeWhenCallingzesSc
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesSchedulerSetExclusiveMode(handles[0], &needReload));
     EXPECT_FALSE(needReload);
     EXPECT_EQ(ZES_SCHED_MODE_EXCLUSIVE, fixtureGetCurrentMode(handles[0]));
-
-    delete pMockSchedulerProcfsAccess;
 }
 
 TEST_F(SysmanDeviceSchedulerFixture, GivenCurrentModeIsDebugModeWhenSettingExclusiveModeAndDebugModeCantBeChangedThenVerifyCallFails) {
-    VariableBackup<ProcfsAccess *> backup(&pLinuxSysmanImp->pProcfsAccess);
-    auto pMockSchedulerProcfsAccess = new MockSchedulerProcfsAccess;
-    pLinuxSysmanImp->pProcfsAccess = pMockSchedulerProcfsAccess;
-    pMockSchedulerProcfsAccess->listProcessesResult = ZE_RESULT_ERROR_NOT_AVAILABLE; // Expect failure when calling gpuProcessCleanup()
+    MockSchedulerProcfsAccess mockSchedulerProcfsAccess;
+    VariableBackup<ProcfsAccess *> backup(&pLinuxSysmanImp->pProcfsAccess, &mockSchedulerProcfsAccess);
+    mockSchedulerProcfsAccess.listProcessesResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
 
     // First set compute unit debug mode
     auto handles = getSchedHandles(handleComponentCount);
@@ -693,8 +676,6 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenCurrentModeIsDebugModeWhenSettingExclu
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesSchedulerSetExclusiveMode(handles[0], &needReload));
     EXPECT_FALSE(needReload);
     EXPECT_EQ(ZES_SCHED_MODE_COMPUTE_UNIT_DEBUG, fixtureGetCurrentMode(handles[0]));
-
-    delete pMockSchedulerProcfsAccess;
 }
 
 TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedulerSetExclusiveModeWhenPreEmptTimeoutNotAvailableThenVerifyzesSchedulerSetExclusiveModeCallFails) {
@@ -789,9 +770,8 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
 }
 
 TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedulerSetComputeUnitDebugModeThenSuccessIsReturned) {
-    VariableBackup<ProcfsAccess *> backup(&pLinuxSysmanImp->pProcfsAccess);
-    auto pMockSchedulerProcfsAccess = new MockSchedulerProcfsAccess;
-    pLinuxSysmanImp->pProcfsAccess = pMockSchedulerProcfsAccess;
+    MockSchedulerProcfsAccess mockSchedulerProcfsAccess;
+    VariableBackup<ProcfsAccess *> backup(&pLinuxSysmanImp->pProcfsAccess, &mockSchedulerProcfsAccess);
 
     auto handles = getSchedHandles(handleComponentCount);
     ASSERT_NE(nullptr, handles[0]);
@@ -806,14 +786,12 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     pSysfsAccess->read(enableEuDebug, val);
     EXPECT_EQ(val, 1u);
-    delete pMockSchedulerProcfsAccess;
 }
 
 TEST_F(SysmanDeviceSchedulerFixture, GivenGpuProcessCleanupFailedWhenCallingzesSchedulerSetComputeUnitDebugModeThenErrorIsReturned) {
-    VariableBackup<ProcfsAccess *> backup(&pLinuxSysmanImp->pProcfsAccess);
-    auto pMockSchedulerProcfsAccess = new MockSchedulerProcfsAccess;
-    pLinuxSysmanImp->pProcfsAccess = pMockSchedulerProcfsAccess;
-    pMockSchedulerProcfsAccess->listProcessesResult = ZE_RESULT_ERROR_NOT_AVAILABLE; // Expect failure when calling gpuProcessCleanup()
+    MockSchedulerProcfsAccess mockSchedulerProcfsAccess;
+    VariableBackup<ProcfsAccess *> backup(&pLinuxSysmanImp->pProcfsAccess, &mockSchedulerProcfsAccess);
+    mockSchedulerProcfsAccess.listProcessesResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
 
     auto handles = getSchedHandles(handleComponentCount);
     ASSERT_NE(nullptr, handles[0]);
@@ -828,13 +806,11 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenGpuProcessCleanupFailedWhenCallingzesS
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
     pSysfsAccess->read(enableEuDebug, val);
     EXPECT_EQ(val, 0u);
-    delete pMockSchedulerProcfsAccess;
 }
 
 TEST_F(SysmanDeviceSchedulerFixture, GivenEuDebugNodeWriteFailsWhenCallingzesSchedulerSetComputeUnitDebugModeThenErrorIsReturned) {
-    VariableBackup<ProcfsAccess *> backup(&pLinuxSysmanImp->pProcfsAccess);
-    auto pMockSchedulerProcfsAccess = new MockSchedulerProcfsAccess;
-    pLinuxSysmanImp->pProcfsAccess = pMockSchedulerProcfsAccess;
+    MockSchedulerProcfsAccess mockSchedulerProcfsAccess;
+    VariableBackup<ProcfsAccess *> backup(&pLinuxSysmanImp->pProcfsAccess, &mockSchedulerProcfsAccess);
 
     auto handles = getSchedHandles(handleComponentCount);
     ASSERT_NE(nullptr, handles[0]);
@@ -855,7 +831,6 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenEuDebugNodeWriteFailsWhenCallingzesSch
     EXPECT_EQ(ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE, result);
     pSysfsAccess->read(enableEuDebug, val);
     EXPECT_EQ(val, 0u);
-    delete pMockSchedulerProcfsAccess;
 }
 
 TEST_F(SysmanDeviceSchedulerFixture, GivenNodeRequiredToEnableEuDebugNotPresentWhenCheckingForDebugModeThenCallReturnsFalse) {

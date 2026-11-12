@@ -499,18 +499,8 @@ HWTEST2_F(SysmanDeviceMemoryFixture, GivenSysmanResourcesAreReleasedAndReInitial
     pLinuxSysmanImp->pDrm = pDrm;
     pLinuxSysmanImp->reInitSysmanDeviceResources();
 
-    VariableBackup<std::map<uint32_t, PlatformMonitoringTech *>> pmtBackup(&pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject);
-    pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.clear();
-    for (auto &deviceHandle : deviceHandles) {
-        ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-        Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
-        auto pPmt = new MockMemoryPmt(pFsAccess.get(), deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE,
-                                      deviceProperties.subdeviceId);
-        pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.emplace(deviceProperties.subdeviceId, pPmt);
-    }
-
-    VariableBackup<FirmwareUtil *> backup(&pLinuxSysmanImp->pFwUtilInterface);
-    pLinuxSysmanImp->pFwUtilInterface = new MockFwUtilInterface();
+    MockFwUtilInterface mockFwUtilInterface;
+    VariableBackup<FirmwareUtil *> backup(&pLinuxSysmanImp->pFwUtilInterface, &mockFwUtilInterface);
 
     auto handles = getMemoryHandles(memoryHandleComponentCount);
 
@@ -525,10 +515,6 @@ HWTEST2_F(SysmanDeviceMemoryFixture, GivenSysmanResourcesAreReleasedAndReInitial
         EXPECT_EQ(state.size, NEO::probedSizeRegionOne);
         EXPECT_EQ(state.free, NEO::unallocatedSizeRegionOne);
     }
-
-    pLinuxSysmanImp->releasePmtObject();
-    delete pLinuxSysmanImp->pFwUtilInterface;
-    pLinuxSysmanImp->pFwUtilInterface = nullptr;
 }
 
 HWTEST2_F(SysmanDeviceMemoryFixture, GivenSysmanResourcesAreReleasedAndReInitializedWhenCallingZesSysmanMemoryGetStateThenVerifySysmanMemoryGetStateCallSucceedsAndHealthIsUnknown, IsNotPVC) {
@@ -538,19 +524,6 @@ HWTEST2_F(SysmanDeviceMemoryFixture, GivenSysmanResourcesAreReleasedAndReInitial
     pLinuxSysmanImp->releaseSysmanDeviceResources();
     pLinuxSysmanImp->pDrm = pDrm;
     pLinuxSysmanImp->reInitSysmanDeviceResources();
-
-    VariableBackup<std::map<uint32_t, PlatformMonitoringTech *>> pmtBackup(&pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject);
-    pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.clear();
-    for (auto &deviceHandle : deviceHandles) {
-        ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-        Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
-        auto pPmt = new MockMemoryPmt(pFsAccess.get(), deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE,
-                                      deviceProperties.subdeviceId);
-        pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.emplace(deviceProperties.subdeviceId, pPmt);
-    }
-
-    VariableBackup<FirmwareUtil *> backup(&pLinuxSysmanImp->pFwUtilInterface);
-    pLinuxSysmanImp->pFwUtilInterface = new MockFwUtilInterface();
 
     auto handles = getMemoryHandles(memoryHandleComponentCount);
 
@@ -565,10 +538,6 @@ HWTEST2_F(SysmanDeviceMemoryFixture, GivenSysmanResourcesAreReleasedAndReInitial
         EXPECT_EQ(state.size, NEO::probedSizeRegionOne);
         EXPECT_EQ(state.free, NEO::unallocatedSizeRegionOne);
     }
-
-    pLinuxSysmanImp->releasePmtObject();
-    delete pLinuxSysmanImp->pFwUtilInterface;
-    pLinuxSysmanImp->pFwUtilInterface = nullptr;
 }
 
 TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanMemoryGetBandwidthWhenPmtObjectIsNullThenFailureRetuned) {

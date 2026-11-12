@@ -2740,10 +2740,9 @@ HWTEST2_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasUncorrec
 
 HWTEST2_F(SysmanEventsFixture, GivenRasGetStateReturnsFailureWhenListeningForRasUncorrectableErrorsCrossingTotalThresholdEventThenEventListenAPIReturnsNoEvents, IsPVC) {
     pFsAccess->mockListDirectoryResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
-    VariableBackup<FirmwareUtil *> backupFwUtil(&pLinuxSysmanImp->pFwUtilInterface);
-    auto pMockFwInterface = new MockEventsFwInterface;
-    pLinuxSysmanImp->pFwUtilInterface = pMockFwInterface;
-    pMockFwInterface->fwGetMemoryErrorCountResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+    MockEventsFwInterface mockFwInterface;
+    VariableBackup<FirmwareUtil *> backupFwUtil(&pLinuxSysmanImp->pFwUtilInterface, &mockFwInterface);
+    mockFwInterface.fwGetMemoryErrorCountResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS));
     for (const auto &handle : pSysmanDeviceImp->pRasHandleContext->handleList) {
         delete handle;
@@ -2770,7 +2769,6 @@ HWTEST2_F(SysmanEventsFixture, GivenRasGetStateReturnsFailureWhenListeningForRas
     EXPECT_EQ(0u, numDeviceEvents);
     delete[] phDevices;
     delete[] pDeviceEvents;
-    delete pMockFwInterface;
 }
 
 HWTEST2_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasCorrectableErrorsCrossingTotalThresholdEventThenEventListenAPIWaitForTimeoutIfEventNotReceived, IsPVC) {

@@ -90,8 +90,7 @@ HWTEST2_F(ZesSysmanProductHelperFirmwareFixture, GivenComponentCountZeroWhenCall
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(count, mockFwHandlesCount);
 
-    L0::Sysman::FirmwareImp *ptestFirmwareImp = new L0::Sysman::FirmwareImp(pSysmanDeviceImp->pFirmwareHandleContext->pOsSysman, mockSupportedFirmwareTypes[0]);
-    pSysmanDeviceImp->pFirmwareHandleContext->handleList.push_back(ptestFirmwareImp);
+    pSysmanDeviceImp->pFirmwareHandleContext->handleList.push_back(new L0::Sysman::FirmwareImp(pSysmanDeviceImp->pFirmwareHandleContext->pOsSysman, mockSupportedFirmwareTypes[0]));
     result = zesDeviceEnumFirmwares(device->toHandle(), &count, nullptr);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -105,16 +104,10 @@ HWTEST2_F(ZesSysmanProductHelperFirmwareFixture, GivenComponentCountZeroWhenCall
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, firmwareHandle.data());
     EXPECT_EQ(testCount, mockFwHandlesCount);
-
-    pSysmanDeviceImp->pFirmwareHandleContext->handleList.pop_back();
-    delete ptestFirmwareImp;
 }
 
 HWTEST2_F(ZesSysmanProductHelperFirmwareFixture, GivenValidFirmwareHandleWhenGettingFirmwarePropertiesThenVersionIsReturned, IsXeCore) {
     initFirmware();
-
-    L0::Sysman::FirmwareImp *ptestFirmwareImp = new L0::Sysman::FirmwareImp(pSysmanDeviceImp->pFirmwareHandleContext->pOsSysman, mockSupportedFirmwareTypes[0]);
-    pSysmanDeviceImp->pFirmwareHandleContext->handleList.push_back(ptestFirmwareImp);
 
     auto handles = getFirmwareHandles(mockFwHandlesCount);
     ASSERT_NE(nullptr, handles[0]);
@@ -122,16 +115,10 @@ HWTEST2_F(ZesSysmanProductHelperFirmwareFixture, GivenValidFirmwareHandleWhenGet
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesFirmwareGetProperties(handles[0], &properties));
     EXPECT_STREQ("GFX", properties.name);
     EXPECT_STREQ(mockFwVersion.c_str(), properties.version);
-
-    pSysmanDeviceImp->pFirmwareHandleContext->handleList.pop_back();
-    delete ptestFirmwareImp;
 }
 
 HWTEST2_F(ZesSysmanProductHelperFirmwareFixture, GivenValidFirmwareHandleWhenGettingPscPropertiesThenVersionIsReturned, IsXeCore) {
     initFirmware();
-
-    L0::Sysman::FirmwareImp *ptestFirmwareImp = new L0::Sysman::FirmwareImp(pSysmanDeviceImp->pFirmwareHandleContext->pOsSysman, mockSupportedFirmwareTypes[2]);
-    pSysmanDeviceImp->pFirmwareHandleContext->handleList.push_back(ptestFirmwareImp);
 
     auto handles = getFirmwareHandles(mockFwHandlesCount);
     ASSERT_NE(nullptr, handles[2]);
@@ -140,16 +127,10 @@ HWTEST2_F(ZesSysmanProductHelperFirmwareFixture, GivenValidFirmwareHandleWhenGet
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesFirmwareGetProperties(handles[2], &properties));
     EXPECT_STREQ(mockSupportedFirmwareTypes[2].c_str(), properties.name);
     EXPECT_STREQ(mockPscVersion.c_str(), properties.version);
-
-    pSysmanDeviceImp->pFirmwareHandleContext->handleList.pop_back();
-    delete ptestFirmwareImp;
 }
 
 HWTEST2_F(ZesSysmanProductHelperFirmwareFixture, GivenNullDirEntriesWhenGettingPscPropertiesThenUnknownVersionIsReturned, IsXeCore) {
     initFirmware();
-
-    L0::Sysman::FirmwareImp *ptestFirmwareImp = new L0::Sysman::FirmwareImp(pSysmanDeviceImp->pFirmwareHandleContext->pOsSysman, mockSupportedFirmwareTypes[2]);
-    pSysmanDeviceImp->pFirmwareHandleContext->handleList.push_back(ptestFirmwareImp);
 
     pMockSysfsAccess->isNullDirEntries = true;
     auto handles = getFirmwareHandles(mockFwHandlesCount);
@@ -159,16 +140,10 @@ HWTEST2_F(ZesSysmanProductHelperFirmwareFixture, GivenNullDirEntriesWhenGettingP
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesFirmwareGetProperties(handles[2], &properties));
     EXPECT_STREQ(mockSupportedFirmwareTypes[2].c_str(), properties.name);
     EXPECT_STREQ(mockUnknownVersion.c_str(), properties.version);
-
-    pSysmanDeviceImp->pFirmwareHandleContext->handleList.pop_back();
-    delete ptestFirmwareImp;
 }
 
 HWTEST2_F(ZesSysmanProductHelperFirmwareFixture, GivenValidFirmwareHandleWhenFailedToReadPSCVersionFromSysfsThenUnknownVersionIsReturned, IsXeCore) {
     initFirmware();
-
-    L0::Sysman::FirmwareImp *ptestFirmwareImp = new L0::Sysman::FirmwareImp(pSysmanDeviceImp->pFirmwareHandleContext->pOsSysman, mockSupportedFirmwareTypes[2]);
-    pSysmanDeviceImp->pFirmwareHandleContext->handleList.push_back(ptestFirmwareImp);
 
     pMockSysfsAccess->readResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
     auto handles = getFirmwareHandles(mockFwHandlesCount);
@@ -178,9 +153,6 @@ HWTEST2_F(ZesSysmanProductHelperFirmwareFixture, GivenValidFirmwareHandleWhenFai
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesFirmwareGetProperties(handles[2], &properties));
     EXPECT_STREQ(mockSupportedFirmwareTypes[2].c_str(), properties.name);
     EXPECT_STREQ(mockUnknownVersion.c_str(), properties.version);
-
-    pSysmanDeviceImp->pFirmwareHandleContext->handleList.pop_back();
-    delete ptestFirmwareImp;
 }
 
 HWTEST2_F(ZesSysmanProductHelperFirmwareFixture, GivenFwVersionsUnsupportedWhenInitializingFirmwareContextThenExpectZeroHandles, IsXeCore) {
@@ -198,9 +170,6 @@ HWTEST2_F(ZesSysmanProductHelperFirmwareFixture, GivenFwVersionsUnsupportedWhenI
 HWTEST2_F(ZesSysmanProductHelperFirmwareFixture, GivenValidFirmwareHandleWhenFlashingGscFirmwareThenSuccessIsReturned, IsXeCore) {
     initFirmware();
 
-    L0::Sysman::FirmwareImp *ptestFirmwareImp = new L0::Sysman::FirmwareImp(pSysmanDeviceImp->pFirmwareHandleContext->pOsSysman, mockSupportedFirmwareTypes[0]);
-    pSysmanDeviceImp->pFirmwareHandleContext->handleList.push_back(ptestFirmwareImp);
-
     auto handles = getFirmwareHandles(mockFwHandlesCount);
     uint8_t testImage[ZES_STRING_PROPERTY_SIZE] = {};
     memset(testImage, 0xA, ZES_STRING_PROPERTY_SIZE);
@@ -214,16 +183,11 @@ HWTEST2_F(ZesSysmanProductHelperFirmwareFixture, GivenValidFirmwareHandleWhenFla
         }
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesFirmwareFlash(handle, (void *)testImage, ZES_STRING_PROPERTY_SIZE));
     }
-    pSysmanDeviceImp->pFirmwareHandleContext->handleList.pop_back();
-    delete ptestFirmwareImp;
 }
 
 HWTEST2_F(ZesSysmanProductHelperFirmwareFixture, GivenValidFirmwareHandleWhenFlashingPscFirmwareThenSuccessIsReturned, IsXeCore) {
     initFirmware();
 
-    L0::Sysman::FirmwareImp *ptestFirmwareImp = new L0::Sysman::FirmwareImp(pSysmanDeviceImp->pFirmwareHandleContext->pOsSysman, mockSupportedFirmwareTypes[1]);
-    pSysmanDeviceImp->pFirmwareHandleContext->handleList.push_back(ptestFirmwareImp);
-
     auto handles = getFirmwareHandles(mockFwHandlesCount);
     uint8_t testImage[ZES_STRING_PROPERTY_SIZE] = {};
     memset(testImage, 0xA, ZES_STRING_PROPERTY_SIZE);
@@ -237,8 +201,6 @@ HWTEST2_F(ZesSysmanProductHelperFirmwareFixture, GivenValidFirmwareHandleWhenFla
         }
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesFirmwareFlash(handle, (void *)testImage, ZES_STRING_PROPERTY_SIZE));
     }
-    pSysmanDeviceImp->pFirmwareHandleContext->handleList.pop_back();
-    delete ptestFirmwareImp;
 }
 
 HWTEST2_F(ZesSysmanProductHelperFirmwareFixture, GivenValidFirmwareHandleFirmwareLibraryCallFailureWhenGettingFirmwarePropertiesThenUnknownIsReturned, IsXeCore) {
@@ -291,9 +253,6 @@ HWTEST2_F(ZesSysmanProductHelperFirmwareFixture, GivenNewFirmwareContextWithHand
 HWTEST2_F(ZesSysmanProductHelperFirmwareFixture, GivenValidFirmwareHandleWhenGettingFirmwareFlashProgressThenSuccessIsReturned, IsXeCore) {
     initFirmware();
 
-    L0::Sysman::FirmwareImp *ptestFirmwareImp = new L0::Sysman::FirmwareImp(pSysmanDeviceImp->pFirmwareHandleContext->pOsSysman, mockSupportedFirmwareTypes[1]);
-    pSysmanDeviceImp->pFirmwareHandleContext->handleList.push_back(ptestFirmwareImp);
-
     auto handles = getFirmwareHandles(mockFwHandlesCount);
     uint32_t completionPercent = 0;
 
@@ -304,9 +263,6 @@ HWTEST2_F(ZesSysmanProductHelperFirmwareFixture, GivenValidFirmwareHandleWhenGet
 HWTEST2_F(ZesSysmanProductHelperFirmwareFixture, GivenValidFirmwareHandleWhenGettingFirmwareSecurityVersionThenUnSupportedIsReturned, IsXeCore) {
     initFirmware();
 
-    L0::Sysman::FirmwareImp *ptestFirmwareImp = new L0::Sysman::FirmwareImp(pSysmanDeviceImp->pFirmwareHandleContext->pOsSysman, mockSupportedFirmwareTypes[1]);
-    pSysmanDeviceImp->pFirmwareHandleContext->handleList.push_back(ptestFirmwareImp);
-
     auto handles = getFirmwareHandles(mockFwHandlesCount);
     ASSERT_NE(nullptr, handles[1]);
     char pVersion[100];
@@ -316,9 +272,6 @@ HWTEST2_F(ZesSysmanProductHelperFirmwareFixture, GivenValidFirmwareHandleWhenGet
 HWTEST2_F(ZesSysmanProductHelperFirmwareFixture, GivenValidFirmwareHandleWhenSettingFirmwareSecurityVersionThenUnSupportedIsReturned, IsXeCore) {
     initFirmware();
 
-    L0::Sysman::FirmwareImp *ptestFirmwareImp = new L0::Sysman::FirmwareImp(pSysmanDeviceImp->pFirmwareHandleContext->pOsSysman, mockSupportedFirmwareTypes[1]);
-    pSysmanDeviceImp->pFirmwareHandleContext->handleList.push_back(ptestFirmwareImp);
-
     auto handles = getFirmwareHandles(mockFwHandlesCount);
     ASSERT_NE(nullptr, handles[1]);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesFirmwareSetSecurityVersionExp(handles[1]));
@@ -326,9 +279,6 @@ HWTEST2_F(ZesSysmanProductHelperFirmwareFixture, GivenValidFirmwareHandleWhenSet
 
 HWTEST2_F(ZesSysmanProductHelperFirmwareFixture, GivenValidFirmwareHandleWhenGettingFirmwareConsoleLogsThenUnSupportedIsReturned, IsXeCore) {
     initFirmware();
-
-    L0::Sysman::FirmwareImp *ptestFirmwareImp = new L0::Sysman::FirmwareImp(pSysmanDeviceImp->pFirmwareHandleContext->pOsSysman, mockSupportedFirmwareTypes[1]);
-    pSysmanDeviceImp->pFirmwareHandleContext->handleList.push_back(ptestFirmwareImp);
 
     auto handles = getFirmwareHandles(mockFwHandlesCount);
     ASSERT_NE(nullptr, handles[1]);

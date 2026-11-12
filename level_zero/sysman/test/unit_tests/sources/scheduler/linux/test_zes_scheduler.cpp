@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -76,7 +76,6 @@ class SysmanDeviceSchedulerFixtureI915 : public SysmanDeviceSchedulerFixture {
         pSysfsAccess = std::make_unique<MockSchedulerSysfsAccessI915>();
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
         pSysfsAccess->engineSchedFilePropertiesMap.clear();
-        pSysfsAccess->cleanUpMap();
         for (const auto &engineName : pSysfsAccess->listOfMockedEngines) {
             pSysfsAccess->setFileProperties(engineName, pSysfsAccess->defaultpreemptTimeout, true, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR);
             pSysfsAccess->setFileProperties(engineName, pSysfsAccess->defaulttimesliceDuration, true, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR);
@@ -98,7 +97,6 @@ class SysmanDeviceSchedulerFixtureI915 : public SysmanDeviceSchedulerFixture {
     }
 
     void TearDown() override {
-        pSysfsAccess->cleanUpMap();
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccessOld;
         SysmanDeviceFixture::TearDown();
     }
@@ -694,7 +692,6 @@ class SysmanDeviceSchedulerFixtureXe : public SysmanDeviceSchedulerFixture {
 
     void TearDown() override {
         pSysfsAccess->engineSchedFilePropertiesMap.clear();
-        pSysfsAccess->cleanUpMap();
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccessOld;
         SysmanDeviceFixture::TearDown();
     }
