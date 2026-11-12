@@ -172,6 +172,7 @@ class DrmMemoryManager : public MemoryManager {
     MOCKABLE_VIRTUAL BufferObject *findAndReferenceSharedBufferObject(int boHandle, uint32_t rootDeviceIndex);
     void eraseSharedBufferObject(BufferObject *bo);
     void pushSharedBufferObject(BufferObject *bo);
+    void unbindSharedBufferObject(BufferObject *bo);
     bool setDomainCpu(GraphicsAllocation &graphicsAllocation, bool writeEnable);
     MOCKABLE_VIRTUAL uint64_t acquireGpuRangeWithCustomAlignment(size_t &size, uint32_t rootDeviceIndex, HeapIndex heapIndex, size_t alignment);
     MOCKABLE_VIRTUAL uint64_t acquireGpuRangeWithCustomAlignmentWithStartAddressHint(const uint64_t requiredStartAddress, size_t &size, uint32_t rootDeviceIndex, HeapIndex heapIndex, size_t alignment);

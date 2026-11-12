@@ -782,6 +782,91 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, whenMakeResidentTwiceThenAllocIsBound
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+TEST_F(DrmMemoryOperationsHandlerBindTest, givenBufferObjectSharedByTwoImportsWhenFirstImportIsFreedThenBufferObjectStaysBoundUntilLastImportIsFreed) {
+    mock->outputHandle = 2u;
+    TestedDrmMemoryManager::OsHandleData osHandleData{1u};
+    AllocationProperties properties(device->getRootDeviceIndex(), false, MemoryConstants::pageSize, AllocationType::sharedBuffer, false, {});
+
+    auto firstImport = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
+    auto secondImport = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
+    ASSERT_NE(nullptr, firstImport);
+    ASSERT_NE(nullptr, secondImport);
+
+    auto bo = static_cast<DrmAllocation *>(firstImport)->getBO();
+    EXPECT_EQ(bo, static_cast<DrmAllocation *>(secondImport)->getBO());
+    EXPECT_EQ(2u, bo->getRefCount());
+
+    EXPECT_EQ(operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&secondImport, 1), false, false), MemoryOperationsStatus::success);
+    EXPECT_NE(0u, mock->getMockIoctlHelper()->vmBindCalled);
+
+    memoryManager->freeGraphicsMemory(firstImport);
+    EXPECT_EQ(0u, mock->getMockIoctlHelper()->vmUnbindCalled);
+    EXPECT_EQ(1u, bo->getRefCount());
+
+    memoryManager->freeGraphicsMemory(secondImport);
+    EXPECT_NE(0u, mock->getMockIoctlHelper()->vmUnbindCalled);
+}
+
+TEST_F(DrmMemoryOperationsHandlerBindTest, givenBoundSharedBufferObjectWhenLastReferenceIsReleasedAfterAllImportsSkippedUnbindThenBufferObjectIsUnbound) {
+    mock->outputHandle = 2u;
+    TestedDrmMemoryManager::OsHandleData osHandleData{1u};
+    AllocationProperties properties(device->getRootDeviceIndex(), false, MemoryConstants::pageSize, AllocationType::sharedBuffer, false, {});
+
+    auto firstImport = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
+    auto secondImport = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
+    ASSERT_NE(nullptr, firstImport);
+    ASSERT_NE(nullptr, secondImport);
+
+    auto bo = static_cast<DrmAllocation *>(firstImport)->getBO();
+    EXPECT_EQ(operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&secondImport, 1), false, false), MemoryOperationsStatus::success);
+
+    bo->reference();
+    memoryManager->freeGraphicsMemory(firstImport);
+    memoryManager->freeGraphicsMemory(secondImport);
+    EXPECT_EQ(0u, mock->getMockIoctlHelper()->vmUnbindCalled);
+    EXPECT_EQ(1u, bo->getRefCount());
+
+    memoryManager->unreference(bo, false);
+    EXPECT_NE(0u, mock->getMockIoctlHelper()->vmUnbindCalled);
+}
+
+TEST_F(DrmMemoryOperationsHandlerBindTest, givenBufferObjectSharedByTwoImportsWhenOneImportIsEvictedExplicitlyThenBufferObjectIsUnbound) {
+    mock->outputHandle = 2u;
+    TestedDrmMemoryManager::OsHandleData osHandleData{1u};
+    AllocationProperties properties(device->getRootDeviceIndex(), false, MemoryConstants::pageSize, AllocationType::sharedBuffer, false, {});
+
+    auto firstImport = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
+    auto secondImport = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
+    ASSERT_NE(nullptr, firstImport);
+    ASSERT_NE(nullptr, secondImport);
+
+    EXPECT_EQ(operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&secondImport, 1), false, false), MemoryOperationsStatus::success);
+    EXPECT_NE(0u, mock->getMockIoctlHelper()->vmBindCalled);
+
+    EXPECT_EQ(operationHandler->evict(device, *firstImport), MemoryOperationsStatus::success);
+    EXPECT_NE(0u, mock->getMockIoctlHelper()->vmUnbindCalled);
+
+    memoryManager->freeGraphicsMemory(firstImport);
+    memoryManager->freeGraphicsMemory(secondImport);
+}
+
+TEST_F(DrmMemoryOperationsHandlerBindTest, givenNonReusableBufferObjectWithAnotherReferenceWhenAllocationIsEvictedThenBufferObjectIsUnbound) {
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
+    ASSERT_NE(nullptr, allocation);
+    auto bo = static_cast<DrmAllocation *>(allocation)->getBO();
+    EXPECT_FALSE(bo->peekIsReusableAllocation());
+
+    EXPECT_EQ(operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&allocation, 1), false, false), MemoryOperationsStatus::success);
+    EXPECT_NE(0u, mock->getMockIoctlHelper()->vmBindCalled);
+
+    bo->reference();
+    EXPECT_EQ(operationHandler->evict(device, *allocation), MemoryOperationsStatus::success);
+    EXPECT_NE(0u, mock->getMockIoctlHelper()->vmUnbindCalled);
+
+    bo->unreference();
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
 TEST_F(DrmMemoryOperationsHandlerBindTest, WhenVmBindAvailableThenMemoryManagerReturnsSupportForIndirectAllocationsAsPack) {
     mock->bindAvailable = true;
     EXPECT_TRUE(memoryManager->allowIndirectAllocationsAsPack(0u));
