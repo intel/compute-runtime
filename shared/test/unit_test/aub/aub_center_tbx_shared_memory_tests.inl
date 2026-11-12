@@ -9,12 +9,14 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_aub_center.h"
 #include "shared/test/common/mocks/mock_aub_manager.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_os_library.h"
 #include "shared/test/common/mocks/mock_os_thread.h"
+#include "shared/test/common/mocks/mock_release_helper.h"
 
 #include "aubstream/aubstream.h"
 #include "gtest/gtest.h"
@@ -28,10 +30,16 @@ struct AubCenterTbxSharedMemoryTests : public ::testing::Test {
     void SetUp() override {
         debugManager.flags.UseAubStream.set(true);
         debugManager.flags.PrintDebugMessages.set(true);
-        debugManager.flags.HBMSizePerTileInGigabytes.set(1);
         debugManager.flags.TbxSharedSystemMemoryFile.set("system_memory.bin");
-        physicalMemorySize = GfxCoreHelper::getSubDevicesCount(rootDeviceEnvironment.getHardwareInfo()) * MemoryConstants::gigaByte;
+        useSmallMemoryBanks(rootDeviceEnvironment);
+        physicalMemorySize = GfxCoreHelper::getSubDevicesCount(rootDeviceEnvironment.getHardwareInfo()) * memoryBankSizePerTile;
         translationTableSize = physicalMemorySize / MemoryConstants::pageSize * sizeof(uint64_t);
+    }
+
+    static void useSmallMemoryBanks(RootDeviceEnvironment &environment) {
+        auto releaseHelper = std::make_unique<MockReleaseHelper>();
+        releaseHelper->getTotalMemBankSizeResult = GfxCoreHelper::getSubDevicesCount(environment.getHardwareInfo()) * memoryBankSizePerTile;
+        environment.releaseHelper = std::move(releaseHelper);
     }
 
     MockAubManager *getAubManager(MockAubCenter &aubCenter) {
@@ -49,6 +57,7 @@ struct AubCenterTbxSharedMemoryTests : public ::testing::Test {
     MappedFileSysCallsMock sysCallsMock;
     alignas(MemoryConstants::pageSize) uint8_t systemMemory[MemoryConstants::pageSize]{};
     alignas(MemoryConstants::pageSize) uint8_t localMemory[2 * MemoryConstants::pageSize]{};
+    static constexpr uint64_t memoryBankSizePerTile = 4 * MemoryConstants::pageSize;
     uint64_t physicalMemorySize = 0;
     uint64_t translationTableSize = 0;
 };
@@ -99,9 +108,10 @@ TEST_F(AubCenterTbxSharedMemoryTests, givenNotOpenableSharedSystemMemoryFileWhen
     debugManager.flags.TbxSharedLocalMemoryFile.set("local_memory.bin");
     sysCallsMock.makeFileNotOpenable(0u);
 
-    testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     MockAubCenter aubCenter(rootDeviceEnvironment, true, "", CommandStreamReceiverType::tbx);
-    EXPECT_EQ(std::string("Failed to map TBX shared system memory file: system_memory.bin, falling back to TBX socket mode\n"), testing::internal::GetCapturedStderr());
+    EXPECT_EQ(std::string("Failed to map TBX shared system memory file: system_memory.bin, falling back to TBX socket mode\n"), capture.getCapturedStderr());
     auto aubManager = getAubManager(aubCenter);
     ASSERT_NE(nullptr, aubManager);
 
@@ -116,9 +126,10 @@ TEST_F(AubCenterTbxSharedMemoryTests, givenPrintDebugMessagesDisabledAndNotOpena
     debugManager.flags.PrintDebugMessages.set(false);
     sysCallsMock.makeFileNotOpenable(0u);
 
-    testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     MockAubCenter aubCenter(rootDeviceEnvironment, false, "", CommandStreamReceiverType::tbx);
-    EXPECT_TRUE(testing::internal::GetCapturedStderr().empty());
+    EXPECT_TRUE(capture.getCapturedStderr().empty());
     auto aubManager = getAubManager(aubCenter);
     ASSERT_NE(nullptr, aubManager);
 
@@ -130,9 +141,10 @@ TEST_F(AubCenterTbxSharedMemoryTests, givenNotOpenableSharedLocalMemoryFileWhenC
     sysCallsMock.makeFileMappable(0u, systemMemory, sizeof(systemMemory));
     sysCallsMock.makeFileNotOpenable(1u);
 
-    testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     MockAubCenter aubCenter(rootDeviceEnvironment, true, "", CommandStreamReceiverType::tbx);
-    EXPECT_EQ(std::string("Failed to map TBX shared local memory file: local_memory.bin, falling back to TBX socket mode\n"), testing::internal::GetCapturedStderr());
+    EXPECT_EQ(std::string("Failed to map TBX shared local memory file: local_memory.bin, falling back to TBX socket mode\n"), capture.getCapturedStderr());
     auto aubManager = getAubManager(aubCenter);
     ASSERT_NE(nullptr, aubManager);
 
@@ -148,9 +160,10 @@ TEST_F(AubCenterTbxSharedMemoryTests, givenNotOpenableSharedLocalMemoryFileWhenC
 TEST_F(AubCenterTbxSharedMemoryTests, givenLocalMemoryEnabledAndSharedLocalMemoryFileNotSetWhenCreatingTbxAubCenterThenSharedSystemMemoryIsUnmappedAndTbxModeIsUsed) {
     sysCallsMock.makeFileMappable(0u, systemMemory, physicalMemorySize);
 
-    testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     MockAubCenter aubCenter(rootDeviceEnvironment, true, "", CommandStreamReceiverType::tbx);
-    EXPECT_EQ(std::string("TbxSharedLocalMemoryFile is required with local memory, falling back to TBX socket mode\n"), testing::internal::GetCapturedStderr());
+    EXPECT_EQ(std::string("TbxSharedLocalMemoryFile is required with local memory, falling back to TBX socket mode\n"), capture.getCapturedStderr());
     auto aubManager = getAubManager(aubCenter);
     ASSERT_NE(nullptr, aubManager);
 
@@ -165,9 +178,10 @@ TEST_F(AubCenterTbxSharedMemoryTests, givenLocalMemoryEnabledAndTooSmallSharedLo
     sysCallsMock.makeFileMappable(0u, systemMemory, sizeof(systemMemory));
     sysCallsMock.makeFileMappable(1u, localMemory, physicalMemorySize - MemoryConstants::pageSize);
 
-    testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     MockAubCenter aubCenter(rootDeviceEnvironment, true, "", CommandStreamReceiverType::tbx);
-    EXPECT_EQ(tooSmallFileMessage("local", physicalMemorySize - MemoryConstants::pageSize, physicalMemorySize), testing::internal::GetCapturedStderr());
+    EXPECT_EQ(tooSmallFileMessage("local", physicalMemorySize - MemoryConstants::pageSize, physicalMemorySize), capture.getCapturedStderr());
     auto aubManager = getAubManager(aubCenter);
     ASSERT_NE(nullptr, aubManager);
 
@@ -180,9 +194,10 @@ TEST_F(AubCenterTbxSharedMemoryTests, givenLocalMemoryEnabledAndTooSmallSharedLo
 TEST_F(AubCenterTbxSharedMemoryTests, givenLocalMemoryDisabledAndTooSmallSharedSystemMemoryFileWhenCreatingTbxAubCenterThenSharedSystemMemoryIsUnmappedAndTbxModeIsUsed) {
     sysCallsMock.makeFileMappable(0u, systemMemory, sizeof(systemMemory));
 
-    testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     MockAubCenter aubCenter(rootDeviceEnvironment, false, "", CommandStreamReceiverType::tbx);
-    EXPECT_EQ(tooSmallFileMessage("system", sizeof(systemMemory), physicalMemorySize), testing::internal::GetCapturedStderr());
+    EXPECT_EQ(tooSmallFileMessage("system", sizeof(systemMemory), physicalMemorySize), capture.getCapturedStderr());
     auto aubManager = getAubManager(aubCenter);
     ASSERT_NE(nullptr, aubManager);
 
@@ -197,9 +212,11 @@ TEST_F(AubCenterTbxSharedMemoryTests, givenSecondRootDeviceWhenCreatingTbxAubCen
     sysCallsMock.makeFileMappable(0u, systemMemory, sizeof(systemMemory));
     sysCallsMock.makeFileNotOpenable(1u);
 
-    testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
+    useSmallMemoryBanks(*multiRootDeviceExecutionEnvironment.rootDeviceEnvironments[1]);
     MockAubCenter aubCenter(*multiRootDeviceExecutionEnvironment.rootDeviceEnvironments[1], true, "", CommandStreamReceiverType::tbx);
-    EXPECT_EQ(std::string("Failed to map TBX shared local memory file: local_memory_1.bin, falling back to TBX socket mode\n"), testing::internal::GetCapturedStderr());
+    EXPECT_EQ(std::string("Failed to map TBX shared local memory file: local_memory_1.bin, falling back to TBX socket mode\n"), capture.getCapturedStderr());
     auto aubManager = getAubManager(aubCenter);
     ASSERT_NE(nullptr, aubManager);
 
@@ -211,9 +228,11 @@ TEST_F(AubCenterTbxSharedMemoryTests, givenSecondRootDeviceAndNotOpenableSharedS
     MockExecutionEnvironment multiRootDeviceExecutionEnvironment(defaultHwInfo.get(), true, 2u);
     sysCallsMock.makeFileNotOpenable(0u);
 
-    testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
+    useSmallMemoryBanks(*multiRootDeviceExecutionEnvironment.rootDeviceEnvironments[1]);
     MockAubCenter aubCenter(*multiRootDeviceExecutionEnvironment.rootDeviceEnvironments[1], false, "", CommandStreamReceiverType::tbx);
-    EXPECT_EQ(std::string("Failed to map TBX shared system memory file: system_memory_1.bin, falling back to TBX socket mode\n"), testing::internal::GetCapturedStderr());
+    EXPECT_EQ(std::string("Failed to map TBX shared system memory file: system_memory_1.bin, falling back to TBX socket mode\n"), capture.getCapturedStderr());
     auto aubManager = getAubManager(aubCenter);
     ASSERT_NE(nullptr, aubManager);
 
@@ -224,9 +243,10 @@ TEST_F(AubCenterTbxSharedMemoryTests, givenSharedSystemMemoryFileNotSetWhenCreat
     debugManager.flags.TbxSharedSystemMemoryFile.set("unk");
     debugManager.flags.TbxSharedLocalMemoryFile.set("local_memory.bin");
 
-    testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     MockAubCenter aubCenter(rootDeviceEnvironment, true, "", CommandStreamReceiverType::tbx);
-    EXPECT_TRUE(testing::internal::GetCapturedStderr().empty());
+    EXPECT_TRUE(capture.getCapturedStderr().empty());
     auto aubManager = getAubManager(aubCenter);
     ASSERT_NE(nullptr, aubManager);
 
@@ -328,9 +348,10 @@ TEST_F(AubCenterTbxInProcessSimulatorTests, givenInProcessSimulatorAndLocalMemor
     debugManager.flags.TbxSharedLocalMemoryFile.set("local_memory.bin");
     sysCallsMock.makeFileNotOpenable(1u);
 
-    testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     MockAubCenter aubCenter(rootDeviceEnvironment, true, "", CommandStreamReceiverType::tbx);
-    EXPECT_EQ(std::string("Failed to create TBX shared local memory file: local_memory.bin, falling back to TBX socket mode\n"), testing::internal::GetCapturedStderr());
+    EXPECT_EQ(std::string("Failed to create TBX shared local memory file: local_memory.bin, falling back to TBX socket mode\n"), capture.getCapturedStderr());
     auto aubManager = getAubManager(aubCenter);
     ASSERT_NE(nullptr, aubManager);
 
@@ -348,6 +369,7 @@ TEST_F(AubCenterTbxInProcessSimulatorTests, givenFirstRootDeviceWhenCreatingTbxA
     debugManager.flags.TbxInProcessSimulatorArguments.set("-socket;tcp:6000;-shmname;other.bin");
     MockExecutionEnvironment multiRootDeviceExecutionEnvironment(defaultHwInfo.get(), true, 2u);
 
+    useSmallMemoryBanks(*multiRootDeviceExecutionEnvironment.rootDeviceEnvironments[0]);
     MockAubCenter aubCenter(*multiRootDeviceExecutionEnvironment.rootDeviceEnvironments[0], false, "", CommandStreamReceiverType::tbx);
     ASSERT_NE(nullptr, threadFunction);
     threadFunction(threadArgument);
@@ -365,6 +387,7 @@ TEST_F(AubCenterTbxInProcessSimulatorTests, givenSecondRootDeviceWhenCreatingTbx
     sysCallsMock.makeFileMappable(1u, localMemory, translationTableSize);
     MockExecutionEnvironment multiRootDeviceExecutionEnvironment(defaultHwInfo.get(), true, 2u);
 
+    useSmallMemoryBanks(*multiRootDeviceExecutionEnvironment.rootDeviceEnvironments[1]);
     MockAubCenter aubCenter(*multiRootDeviceExecutionEnvironment.rootDeviceEnvironments[1], true, "", CommandStreamReceiverType::tbx);
     EXPECT_EQ(aub_stream::mode::tbxShm4, getAubManager(aubCenter)->options.mode);
     ASSERT_NE(nullptr, threadFunction);
@@ -390,9 +413,10 @@ TEST_F(AubCenterTbxInProcessSimulatorTests, givenInProcessSimulatorAndSharedSyst
     VariableBackup<decltype(OsLibrary::loadFunc)> loadFuncBackup{&OsLibrary::loadFunc, AubCenterTbxInProcessSimulatorTests::loadSimulatorLibrary};
     debugManager.flags.TbxSharedSystemMemoryFile.set("unk");
 
-    testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     MockAubCenter aubCenter(rootDeviceEnvironment, false, "", CommandStreamReceiverType::tbx);
-    EXPECT_EQ(std::string("TbxInProcessSimulatorLibrary requires TbxSharedSystemMemoryFile, falling back to TBX socket mode\n"), testing::internal::GetCapturedStderr());
+    EXPECT_EQ(std::string("TbxInProcessSimulatorLibrary requires TbxSharedSystemMemoryFile, falling back to TBX socket mode\n"), capture.getCapturedStderr());
     auto aubManager = getAubManager(aubCenter);
     ASSERT_NE(nullptr, aubManager);
 
@@ -403,9 +427,10 @@ TEST_F(AubCenterTbxInProcessSimulatorTests, givenInProcessSimulatorAndSharedSyst
 TEST_F(AubCenterTbxInProcessSimulatorTests, givenInProcessSimulatorWhichFailsToStartWhenCreatingTbxAubCenterThenSharedMemoryIsUnmappedAndTbxModeIsUsed) {
     VariableBackup<decltype(OsLibrary::loadFunc)> loadFuncBackup{&OsLibrary::loadFunc, AubCenterTbxInProcessSimulatorTests::failToLoadSimulatorLibrary};
 
-    testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     MockAubCenter aubCenter(rootDeviceEnvironment, false, "", CommandStreamReceiverType::tbx);
-    EXPECT_EQ(std::string("Failed to start TBX in-process simulator: simulator.dll, falling back to TBX socket mode\n"), testing::internal::GetCapturedStderr());
+    EXPECT_EQ(std::string("Failed to start TBX in-process simulator: simulator.dll, falling back to TBX socket mode\n"), capture.getCapturedStderr());
     auto aubManager = getAubManager(aubCenter);
     ASSERT_NE(nullptr, aubManager);
 
@@ -420,9 +445,10 @@ TEST_F(AubCenterTbxInProcessSimulatorTests, givenInProcessSimulatorAndSystemMemo
     VariableBackup<decltype(OsLibrary::loadFunc)> loadFuncBackup{&OsLibrary::loadFunc, AubCenterTbxInProcessSimulatorTests::failToLoadSimulatorLibrary};
     sysCallsMock.makeFileNotOpenable(0u);
 
-    testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     MockAubCenter aubCenter(rootDeviceEnvironment, false, "", CommandStreamReceiverType::tbx);
-    EXPECT_EQ(std::string("Failed to create TBX shared system memory file: system_memory.bin, falling back to TBX socket mode\n"), testing::internal::GetCapturedStderr());
+    EXPECT_EQ(std::string("Failed to create TBX shared system memory file: system_memory.bin, falling back to TBX socket mode\n"), capture.getCapturedStderr());
     auto aubManager = getAubManager(aubCenter);
     ASSERT_NE(nullptr, aubManager);
 

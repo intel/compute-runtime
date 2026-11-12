@@ -9,6 +9,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/os_interface/os_thread.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_os_library.h"
 
@@ -165,9 +166,10 @@ TEST_F(TbxInProcessSimulatorTests, givenPrintDebugMessagesDisabledAndSimulatorMa
 
     auto simulator = TbxInProcessSimulator::start("simulator.dll", TbxInProcessSimulator::splitArguments(""));
     ASSERT_NE(nullptr, simulator);
-    testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     threadFunction(threadArgument);
-    EXPECT_TRUE(testing::internal::GetCapturedStderr().empty());
+    EXPECT_TRUE(capture.getCapturedStderr().empty());
 }
 
 TEST_F(TbxInProcessSimulatorTests, givenPrintDebugMessagesEnabledAndSimulatorMainReturningZeroWhenSimulatorThreadFinishesThenNothingIsPrinted) {
@@ -177,9 +179,10 @@ TEST_F(TbxInProcessSimulatorTests, givenPrintDebugMessagesEnabledAndSimulatorMai
 
     auto simulator = TbxInProcessSimulator::start("simulator.dll", TbxInProcessSimulator::splitArguments(""));
     ASSERT_NE(nullptr, simulator);
-    testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     threadFunction(threadArgument);
-    EXPECT_TRUE(testing::internal::GetCapturedStderr().empty());
+    EXPECT_TRUE(capture.getCapturedStderr().empty());
 }
 
 TEST_F(TbxInProcessSimulatorTests, givenPrintDebugMessagesEnabledAndSimulatorMainReturningErrorWhenSimulatorThreadFinishesThenExitCodeIsPrinted) {
@@ -190,9 +193,10 @@ TEST_F(TbxInProcessSimulatorTests, givenPrintDebugMessagesEnabledAndSimulatorMai
 
     auto simulator = TbxInProcessSimulator::start("simulator.dll", TbxInProcessSimulator::splitArguments(""));
     ASSERT_NE(nullptr, simulator);
-    testing::internal::CaptureStderr();
+    StreamCapture capture;
+    capture.captureStderr();
     threadFunction(threadArgument);
-    EXPECT_EQ(std::string("TBX in-process simulator exited with code 3\n"), testing::internal::GetCapturedStderr());
+    EXPECT_EQ(std::string("TBX in-process simulator exited with code 3\n"), capture.getCapturedStderr());
 }
 
 TEST(TbxInProcessSimulatorArgumentsTests, givenSocketAndSingleSharedMemoryFileWhenReplacingRootDeviceArgumentsThenPortAndFileAreReplaced) {
