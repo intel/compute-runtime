@@ -199,7 +199,6 @@ class KernelArgBufferFixtureBindless : public KernelArgBufferFixture {
         KernelArgBufferFixture::setUp();
 
         pBuffer = new MockBuffer();
-        ASSERT_NE(nullptr, pBuffer);
 
         pKernelInfo->argAsPtr(0).bindless = bindlessOffset;
         pKernelInfo->argAsPtr(0).stateless = undefined<CrossThreadDataOffset>;

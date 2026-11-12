@@ -84,63 +84,52 @@ class DispatchInfoBuilderMock : DispatchInfoBuilder<dim, mode> {
 TEST_F(DispatchInfoBuilderTest, Given1dWhenSplittingMultiDispatchInfoThenMultiDispatchInfo) {
     MultiDispatchInfo multiDispatchInfo;
 
-    auto diBuilder = new DispatchInfoBuilderMock<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::noSplit>(*pClDevice);
-    ASSERT_NE(nullptr, diBuilder); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+    DispatchInfoBuilderMock<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::noSplit> diBuilder(*pClDevice);
 
     DispatchInfo dispatchInfo;
-    diBuilder->pushSplit(dispatchInfo, multiDispatchInfo);
+    diBuilder.pushSplit(dispatchInfo, multiDispatchInfo);
     EXPECT_TRUE(multiDispatchInfo.empty());
-
-    delete diBuilder;
 }
 
 TEST_F(DispatchInfoBuilderTest, WhenGettingDimensionThenCorrectDimensionIsReturned) {
     MultiDispatchInfo mdi1D, mdi2D, mdi3D;
 
-    DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::noSplit> *diBuilder1D = new DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::noSplit>(*pClDevice);
-    ASSERT_NE(nullptr, diBuilder1D); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+    DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::noSplit> diBuilder1D(*pClDevice);
 
-    DispatchInfoBuilder<SplitDispatch::Dim::d2D, SplitDispatch::SplitMode::noSplit> *diBuilder2D = new DispatchInfoBuilder<SplitDispatch::Dim::d2D, SplitDispatch::SplitMode::noSplit>(*pClDevice);
-    ASSERT_NE(nullptr, diBuilder2D); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+    DispatchInfoBuilder<SplitDispatch::Dim::d2D, SplitDispatch::SplitMode::noSplit> diBuilder2D(*pClDevice);
 
-    DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit> *diBuilder3D = new DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit>(*pClDevice);
-    ASSERT_NE(nullptr, diBuilder3D); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+    DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit> diBuilder3D(*pClDevice);
 
-    diBuilder1D->setDispatchGeometry(Vec3<size_t>(1, 0, 0), Vec3<size_t>(0, 0, 0), Vec3<size_t>(0, 0, 0));
-    diBuilder1D->bake(mdi1D);
+    diBuilder1D.setDispatchGeometry(Vec3<size_t>(1, 0, 0), Vec3<size_t>(0, 0, 0), Vec3<size_t>(0, 0, 0));
+    diBuilder1D.bake(mdi1D);
     for (auto &dispatchInfo : mdi1D) {
         EXPECT_EQ(1u, dispatchInfo.getDim());
     }
 
-    diBuilder2D->setDispatchGeometry(Vec3<size_t>(1, 2, 0), Vec3<size_t>(0, 0, 0), Vec3<size_t>(0, 0, 0));
-    diBuilder2D->bake(mdi2D);
+    diBuilder2D.setDispatchGeometry(Vec3<size_t>(1, 2, 0), Vec3<size_t>(0, 0, 0), Vec3<size_t>(0, 0, 0));
+    diBuilder2D.bake(mdi2D);
     for (auto &dispatchInfo : mdi2D) {
         EXPECT_EQ(2u, dispatchInfo.getDim());
     }
 
-    diBuilder3D->setDispatchGeometry(Vec3<size_t>(1, 2, 3), Vec3<size_t>(0, 0, 0), Vec3<size_t>(0, 0, 0));
-    diBuilder3D->bake(mdi3D);
+    diBuilder3D.setDispatchGeometry(Vec3<size_t>(1, 2, 3), Vec3<size_t>(0, 0, 0), Vec3<size_t>(0, 0, 0));
+    diBuilder3D.bake(mdi3D);
     for (auto &dispatchInfo : mdi3D) {
         EXPECT_EQ(3u, dispatchInfo.getDim());
     }
-
-    delete diBuilder3D;
-    delete diBuilder2D;
-    delete diBuilder1D;
 }
 
 TEST_F(DispatchInfoBuilderTest, WhenGettingGwsThenCorrectValuesAreReturned) {
-    DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit> *diBuilder = new DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit>(*pClDevice);
-    ASSERT_NE(nullptr, diBuilder); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+    DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit> diBuilder(*pClDevice);
 
     MultiDispatchInfo mdi0, mdi1, mdi2, mdi3;
 
-    diBuilder->setDispatchGeometry(Vec3<size_t>(0, 0, 0), Vec3<size_t>(0, 0, 0), Vec3<size_t>(0, 0, 0));
-    diBuilder->bake(mdi0);
+    diBuilder.setDispatchGeometry(Vec3<size_t>(0, 0, 0), Vec3<size_t>(0, 0, 0), Vec3<size_t>(0, 0, 0));
+    diBuilder.bake(mdi0);
     EXPECT_TRUE(mdi0.empty());
 
-    diBuilder->setDispatchGeometry(Vec3<size_t>(1, 0, 0), Vec3<size_t>(0, 0, 0), Vec3<size_t>(0, 0, 0));
-    diBuilder->bake(mdi1);
+    diBuilder.setDispatchGeometry(Vec3<size_t>(1, 0, 0), Vec3<size_t>(0, 0, 0), Vec3<size_t>(0, 0, 0));
+    diBuilder.bake(mdi1);
     for (auto &dispatchInfo : mdi1) {
         EXPECT_EQ(1u, dispatchInfo.getGWS().x);
         EXPECT_EQ(1u, dispatchInfo.getGWS().y);
@@ -150,8 +139,8 @@ TEST_F(DispatchInfoBuilderTest, WhenGettingGwsThenCorrectValuesAreReturned) {
         EXPECT_EQ(1u, dispatchInfo.getActualWorkgroupSize().z);
     }
 
-    diBuilder->setDispatchGeometry(Vec3<size_t>(1, 2, 0), Vec3<size_t>(0, 0, 0), Vec3<size_t>(0, 0, 0));
-    diBuilder->bake(mdi2);
+    diBuilder.setDispatchGeometry(Vec3<size_t>(1, 2, 0), Vec3<size_t>(0, 0, 0), Vec3<size_t>(0, 0, 0));
+    diBuilder.bake(mdi2);
     for (auto &dispatchInfo : mdi2) {
         EXPECT_EQ(1u, dispatchInfo.getGWS().x);
         EXPECT_EQ(2u, dispatchInfo.getGWS().y);
@@ -161,8 +150,8 @@ TEST_F(DispatchInfoBuilderTest, WhenGettingGwsThenCorrectValuesAreReturned) {
         EXPECT_EQ(1u, dispatchInfo.getActualWorkgroupSize().z);
     }
 
-    diBuilder->setDispatchGeometry(Vec3<size_t>(1, 2, 3), Vec3<size_t>(0, 0, 0), Vec3<size_t>(0, 0, 0));
-    diBuilder->bake(mdi3);
+    diBuilder.setDispatchGeometry(Vec3<size_t>(1, 2, 3), Vec3<size_t>(0, 0, 0), Vec3<size_t>(0, 0, 0));
+    diBuilder.bake(mdi3);
     for (auto &dispatchInfo : mdi3) {
         EXPECT_EQ(1u, dispatchInfo.getGWS().x);
         EXPECT_EQ(2u, dispatchInfo.getGWS().y);
@@ -171,22 +160,19 @@ TEST_F(DispatchInfoBuilderTest, WhenGettingGwsThenCorrectValuesAreReturned) {
         EXPECT_EQ(2u, dispatchInfo.getActualWorkgroupSize().y);
         EXPECT_EQ(3u, dispatchInfo.getActualWorkgroupSize().z);
     }
-
-    delete diBuilder;
 }
 
 TEST_F(DispatchInfoBuilderTest, WhenGettingElwsThenCorrectValuesAreReturned) {
-    DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit> *diBuilder = new DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit>(*pClDevice);
-    ASSERT_NE(nullptr, diBuilder); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+    DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit> diBuilder(*pClDevice);
 
     MultiDispatchInfo mdi0, mdi1, mdi2, mdi3;
 
-    diBuilder->setDispatchGeometry(Vec3<size_t>(0, 0, 0), Vec3<size_t>(1, 1, 1), Vec3<size_t>(0, 0, 0));
-    diBuilder->bake(mdi0);
+    diBuilder.setDispatchGeometry(Vec3<size_t>(0, 0, 0), Vec3<size_t>(1, 1, 1), Vec3<size_t>(0, 0, 0));
+    diBuilder.bake(mdi0);
     EXPECT_TRUE(mdi0.empty());
 
-    diBuilder->setDispatchGeometry(Vec3<size_t>(1, 0, 0), Vec3<size_t>(1, 0, 0), Vec3<size_t>(0, 0, 0));
-    diBuilder->bake(mdi1);
+    diBuilder.setDispatchGeometry(Vec3<size_t>(1, 0, 0), Vec3<size_t>(1, 0, 0), Vec3<size_t>(0, 0, 0));
+    diBuilder.bake(mdi1);
     for (auto &dispatchInfo : mdi1) {
         EXPECT_EQ(1u, dispatchInfo.getEnqueuedWorkgroupSize().x);
         EXPECT_EQ(1u, dispatchInfo.getEnqueuedWorkgroupSize().y);
@@ -196,8 +182,8 @@ TEST_F(DispatchInfoBuilderTest, WhenGettingElwsThenCorrectValuesAreReturned) {
         EXPECT_EQ(1u, dispatchInfo.getLocalWorkgroupSize().z);
     }
 
-    diBuilder->setDispatchGeometry(Vec3<size_t>(1, 1, 0), Vec3<size_t>(1, 2, 0), Vec3<size_t>(0, 0, 0));
-    diBuilder->bake(mdi2);
+    diBuilder.setDispatchGeometry(Vec3<size_t>(1, 1, 0), Vec3<size_t>(1, 2, 0), Vec3<size_t>(0, 0, 0));
+    diBuilder.bake(mdi2);
     for (auto &dispatchInfo : mdi2) {
         EXPECT_EQ(1u, dispatchInfo.getEnqueuedWorkgroupSize().x);
         EXPECT_EQ(2u, dispatchInfo.getEnqueuedWorkgroupSize().y);
@@ -207,8 +193,8 @@ TEST_F(DispatchInfoBuilderTest, WhenGettingElwsThenCorrectValuesAreReturned) {
         EXPECT_EQ(1u, dispatchInfo.getLocalWorkgroupSize().z);
     }
 
-    diBuilder->setDispatchGeometry(Vec3<size_t>(1, 1, 1), Vec3<size_t>(1, 2, 3), Vec3<size_t>(0, 0, 0));
-    diBuilder->bake(mdi3);
+    diBuilder.setDispatchGeometry(Vec3<size_t>(1, 1, 1), Vec3<size_t>(1, 2, 3), Vec3<size_t>(0, 0, 0));
+    diBuilder.bake(mdi3);
     for (auto &dispatchInfo : mdi3) {
         EXPECT_EQ(1u, dispatchInfo.getEnqueuedWorkgroupSize().x);
         EXPECT_EQ(2u, dispatchInfo.getEnqueuedWorkgroupSize().y);
@@ -217,42 +203,39 @@ TEST_F(DispatchInfoBuilderTest, WhenGettingElwsThenCorrectValuesAreReturned) {
         EXPECT_EQ(2u, dispatchInfo.getLocalWorkgroupSize().y);
         EXPECT_EQ(3u, dispatchInfo.getLocalWorkgroupSize().z);
     }
-
-    delete diBuilder;
 }
 
 TEST_F(DispatchInfoBuilderTest, WhenGettingLwsThenCorrectValuesAreReturned) {
-    auto diBuilder = std::make_unique<DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit>>(*pClDevice);
-    ASSERT_NE(nullptr, diBuilder);
+    DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit> diBuilder(*pClDevice);
 
     MultiDispatchInfo mdi0, mdi1, mdi2, mdi3;
 
-    diBuilder->setKernel(pKernel);
-    diBuilder->setDispatchGeometry(Vec3<size_t>(0, 0, 0), Vec3<size_t>(0, 0, 0), Vec3<size_t>(0, 0, 0));
-    diBuilder->bake(mdi0);
+    diBuilder.setKernel(pKernel);
+    diBuilder.setDispatchGeometry(Vec3<size_t>(0, 0, 0), Vec3<size_t>(0, 0, 0), Vec3<size_t>(0, 0, 0));
+    diBuilder.bake(mdi0);
     EXPECT_TRUE(mdi0.empty());
 
-    diBuilder->setKernel(pKernel);
-    diBuilder->setDispatchGeometry(Vec3<size_t>(4, 0, 0), Vec3<size_t>(0, 0, 0), Vec3<size_t>(0, 0, 0));
-    diBuilder->bake(mdi1);
+    diBuilder.setKernel(pKernel);
+    diBuilder.setDispatchGeometry(Vec3<size_t>(4, 0, 0), Vec3<size_t>(0, 0, 0), Vec3<size_t>(0, 0, 0));
+    diBuilder.bake(mdi1);
     for (auto &dispatchInfo : mdi1) {
         EXPECT_EQ(4u, dispatchInfo.getLocalWorkgroupSize().x);
         EXPECT_EQ(1u, dispatchInfo.getLocalWorkgroupSize().y);
         EXPECT_EQ(1u, dispatchInfo.getLocalWorkgroupSize().z);
     }
 
-    diBuilder->setKernel(pKernel);
-    diBuilder->setDispatchGeometry(Vec3<size_t>(4, 4, 0), Vec3<size_t>(0, 0, 0), Vec3<size_t>(0, 0, 0));
-    diBuilder->bake(mdi2);
+    diBuilder.setKernel(pKernel);
+    diBuilder.setDispatchGeometry(Vec3<size_t>(4, 4, 0), Vec3<size_t>(0, 0, 0), Vec3<size_t>(0, 0, 0));
+    diBuilder.bake(mdi2);
     for (auto &dispatchInfo : mdi2) {
         EXPECT_EQ(4u, dispatchInfo.getLocalWorkgroupSize().x);
         EXPECT_EQ(4u, dispatchInfo.getLocalWorkgroupSize().y);
         EXPECT_EQ(1u, dispatchInfo.getLocalWorkgroupSize().z);
     }
 
-    diBuilder->setKernel(pKernel);
-    diBuilder->setDispatchGeometry(Vec3<size_t>(4, 4, 4), Vec3<size_t>(0, 0, 0), Vec3<size_t>(0, 0, 0));
-    diBuilder->bake(mdi3);
+    diBuilder.setKernel(pKernel);
+    diBuilder.setDispatchGeometry(Vec3<size_t>(4, 4, 4), Vec3<size_t>(0, 0, 0), Vec3<size_t>(0, 0, 0));
+    diBuilder.bake(mdi3);
     for (auto &dispatchInfo : mdi3) {
         EXPECT_EQ(4u, dispatchInfo.getLocalWorkgroupSize().y);
         EXPECT_EQ(4u, dispatchInfo.getLocalWorkgroupSize().z);
@@ -261,37 +244,31 @@ TEST_F(DispatchInfoBuilderTest, WhenGettingLwsThenCorrectValuesAreReturned) {
 }
 
 TEST_F(DispatchInfoBuilderTest, GivenNoSplitWhenCheckingIfBuiltinThenReturnTrue) {
-    DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit> *diBuilder = new DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit>(*pClDevice);
-    ASSERT_NE(nullptr, diBuilder); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+    DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit> diBuilder(*pClDevice);
 
-    diBuilder->setKernel(pKernel);
-    diBuilder->setDispatchGeometry(Vec3<size_t>(256, 256, 256), Vec3<size_t>(16, 16, 16), Vec3<size_t>(0, 0, 0));
+    diBuilder.setKernel(pKernel);
+    diBuilder.setDispatchGeometry(Vec3<size_t>(256, 256, 256), Vec3<size_t>(16, 16, 16), Vec3<size_t>(0, 0, 0));
     MultiDispatchInfo multiDispatchInfo;
-    diBuilder->bake(multiDispatchInfo);
+    diBuilder.bake(multiDispatchInfo);
 
     for (auto &dispatchInfo : multiDispatchInfo) {
         ASSERT_EQ(pKernel, dispatchInfo.getKernel());
         EXPECT_TRUE(dispatchInfo.getKernel()->isBuiltInKernel());
     }
-
-    delete diBuilder;
 }
 
 TEST_F(DispatchInfoBuilderTest, GivenSplitWhenCheckingIfBuiltinThenReturnTrue) {
-    DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::kernelSplit> *diBuilder1D = new DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::kernelSplit>(*pClDevice);
-    ASSERT_NE(nullptr, diBuilder1D); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+    DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::kernelSplit> diBuilder1D(*pClDevice);
 
-    DispatchInfoBuilder<SplitDispatch::Dim::d2D, SplitDispatch::SplitMode::kernelSplit> *diBuilder2D = new DispatchInfoBuilder<SplitDispatch::Dim::d2D, SplitDispatch::SplitMode::kernelSplit>(*pClDevice);
-    ASSERT_NE(nullptr, diBuilder2D); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+    DispatchInfoBuilder<SplitDispatch::Dim::d2D, SplitDispatch::SplitMode::kernelSplit> diBuilder2D(*pClDevice);
 
-    DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::kernelSplit> *diBuilder3D = new DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::kernelSplit>(*pClDevice);
-    ASSERT_NE(nullptr, diBuilder3D); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+    DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::kernelSplit> diBuilder3D(*pClDevice);
 
     // 1D
-    diBuilder1D->setKernel(RegionCoordX::left, pKernel);
-    diBuilder1D->setDispatchGeometry(RegionCoordX::left, Vec3<size_t>(256, 0, 0), Vec3<size_t>(16, 0, 0), Vec3<size_t>(0, 0, 0));
+    diBuilder1D.setKernel(RegionCoordX::left, pKernel);
+    diBuilder1D.setDispatchGeometry(RegionCoordX::left, Vec3<size_t>(256, 0, 0), Vec3<size_t>(16, 0, 0), Vec3<size_t>(0, 0, 0));
     MultiDispatchInfo mdi1D;
-    diBuilder1D->bake(mdi1D);
+    diBuilder1D.bake(mdi1D);
 
     for (auto &dispatchInfo : mdi1D) {
         EXPECT_EQ(pKernel, dispatchInfo.getKernel());
@@ -299,46 +276,39 @@ TEST_F(DispatchInfoBuilderTest, GivenSplitWhenCheckingIfBuiltinThenReturnTrue) {
     }
 
     // 2D
-    diBuilder2D->setKernel(RegionCoordX::left, RegionCoordY::bottom, pKernel);
-    diBuilder2D->setDispatchGeometry(RegionCoordX::left, RegionCoordY::bottom, Vec3<size_t>(256, 256, 0), Vec3<size_t>(16, 16, 0), Vec3<size_t>(0, 0, 0));
+    diBuilder2D.setKernel(RegionCoordX::left, RegionCoordY::bottom, pKernel);
+    diBuilder2D.setDispatchGeometry(RegionCoordX::left, RegionCoordY::bottom, Vec3<size_t>(256, 256, 0), Vec3<size_t>(16, 16, 0), Vec3<size_t>(0, 0, 0));
     MultiDispatchInfo mdi2D;
-    diBuilder2D->bake(mdi2D);
+    diBuilder2D.bake(mdi2D);
     for (auto &dispatchInfo : mdi2D) {
         EXPECT_EQ(pKernel, dispatchInfo.getKernel());
         EXPECT_TRUE(dispatchInfo.getKernel()->isBuiltInKernel());
     }
 
     // 3D
-    diBuilder3D->setKernel(RegionCoordX::right, RegionCoordY::bottom, RegionCoordZ::back, pKernel);
-    diBuilder3D->setDispatchGeometry(RegionCoordX::right, RegionCoordY::bottom, RegionCoordZ::back, Vec3<size_t>(256, 256, 256), Vec3<size_t>(16, 16, 16), Vec3<size_t>(0, 0, 0));
+    diBuilder3D.setKernel(RegionCoordX::right, RegionCoordY::bottom, RegionCoordZ::back, pKernel);
+    diBuilder3D.setDispatchGeometry(RegionCoordX::right, RegionCoordY::bottom, RegionCoordZ::back, Vec3<size_t>(256, 256, 256), Vec3<size_t>(16, 16, 16), Vec3<size_t>(0, 0, 0));
     MultiDispatchInfo mdi3D;
-    diBuilder3D->bake(mdi3D);
+    diBuilder3D.bake(mdi3D);
 
     for (auto &dispatchInfo : mdi3D) {
         EXPECT_EQ(pKernel, dispatchInfo.getKernel());
         EXPECT_TRUE(dispatchInfo.getKernel()->isBuiltInKernel());
     }
-
-    delete diBuilder3D;
-    delete diBuilder2D;
-    delete diBuilder1D;
 }
 
 TEST_F(DispatchInfoBuilderTest, GivenNoSplitWhenGettingWalkerInfoThenCorrectValuesAreReturned) {
-    DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::walkerSplit> *diBuilder1D = new DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::walkerSplit>(*pClDevice);
-    ASSERT_NE(nullptr, diBuilder1D); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+    DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::walkerSplit> diBuilder1D(*pClDevice);
 
-    DispatchInfoBuilder<SplitDispatch::Dim::d2D, SplitDispatch::SplitMode::walkerSplit> *diBuilder2D = new DispatchInfoBuilder<SplitDispatch::Dim::d2D, SplitDispatch::SplitMode::walkerSplit>(*pClDevice);
-    ASSERT_NE(nullptr, diBuilder2D); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+    DispatchInfoBuilder<SplitDispatch::Dim::d2D, SplitDispatch::SplitMode::walkerSplit> diBuilder2D(*pClDevice);
 
-    DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::walkerSplit> *diBuilder3D = new DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::walkerSplit>(*pClDevice);
-    ASSERT_NE(nullptr, diBuilder3D); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+    DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::walkerSplit> diBuilder3D(*pClDevice);
 
     // 1D
-    diBuilder1D->setKernel(pKernel);
-    diBuilder1D->setDispatchGeometry(Vec3<size_t>(256, 0, 0), Vec3<size_t>(16, 0, 0), Vec3<size_t>(0, 0, 0));
+    diBuilder1D.setKernel(pKernel);
+    diBuilder1D.setDispatchGeometry(Vec3<size_t>(256, 0, 0), Vec3<size_t>(16, 0, 0), Vec3<size_t>(0, 0, 0));
     MultiDispatchInfo mdi1D;
-    diBuilder1D->bake(mdi1D);
+    diBuilder1D.bake(mdi1D);
     EXPECT_EQ(1u, mdi1D.size());
 
     const DispatchInfo *di1D = mdi1D.begin();
@@ -369,10 +339,10 @@ TEST_F(DispatchInfoBuilderTest, GivenNoSplitWhenGettingWalkerInfoThenCorrectValu
     EXPECT_EQ(0u, di1D->getStartOfWorkgroups().z);
 
     // 2D
-    diBuilder2D->setKernel(pKernel);
-    diBuilder2D->setDispatchGeometry(Vec3<size_t>(256, 256, 0), Vec3<size_t>(16, 16, 0), Vec3<size_t>(0, 0, 0));
+    diBuilder2D.setKernel(pKernel);
+    diBuilder2D.setDispatchGeometry(Vec3<size_t>(256, 256, 0), Vec3<size_t>(16, 16, 0), Vec3<size_t>(0, 0, 0));
     MultiDispatchInfo mdi2D;
-    diBuilder2D->bake(mdi2D);
+    diBuilder2D.bake(mdi2D);
     EXPECT_EQ(1u, mdi2D.size());
 
     const DispatchInfo *di2D = mdi2D.begin();
@@ -400,10 +370,10 @@ TEST_F(DispatchInfoBuilderTest, GivenNoSplitWhenGettingWalkerInfoThenCorrectValu
     EXPECT_EQ(0u, di2D->getStartOfWorkgroups().z);
 
     // 3D
-    diBuilder3D->setKernel(pKernel);
-    diBuilder3D->setDispatchGeometry(Vec3<size_t>(256, 256, 256), Vec3<size_t>(16, 16, 16), Vec3<size_t>(0, 0, 0));
+    diBuilder3D.setKernel(pKernel);
+    diBuilder3D.setDispatchGeometry(Vec3<size_t>(256, 256, 256), Vec3<size_t>(16, 16, 16), Vec3<size_t>(0, 0, 0));
     MultiDispatchInfo mdi3D;
-    diBuilder3D->bake(mdi3D);
+    diBuilder3D.bake(mdi3D);
     EXPECT_EQ(1u, mdi3D.size());
 
     const DispatchInfo *di3D = mdi3D.begin();
@@ -429,27 +399,20 @@ TEST_F(DispatchInfoBuilderTest, GivenNoSplitWhenGettingWalkerInfoThenCorrectValu
     EXPECT_EQ(0u, di3D->getStartOfWorkgroups().x);
     EXPECT_EQ(0u, di3D->getStartOfWorkgroups().y);
     EXPECT_EQ(0u, di3D->getStartOfWorkgroups().z);
-
-    delete diBuilder3D;
-    delete diBuilder2D;
-    delete diBuilder1D;
 }
 
 TEST_F(DispatchInfoBuilderTest, GivenSplitWhenGettingWalkerInfoThenCorrectValuesAreReturned) {
-    DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::walkerSplit> *diBuilder1D = new DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::walkerSplit>(*pClDevice);
-    ASSERT_NE(nullptr, diBuilder1D); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+    DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::walkerSplit> diBuilder1D(*pClDevice);
 
-    DispatchInfoBuilder<SplitDispatch::Dim::d2D, SplitDispatch::SplitMode::walkerSplit> *diBuilder2D = new DispatchInfoBuilder<SplitDispatch::Dim::d2D, SplitDispatch::SplitMode::walkerSplit>(*pClDevice);
-    ASSERT_NE(nullptr, diBuilder2D); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+    DispatchInfoBuilder<SplitDispatch::Dim::d2D, SplitDispatch::SplitMode::walkerSplit> diBuilder2D(*pClDevice);
 
-    DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::walkerSplit> *diBuilder3D = new DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::walkerSplit>(*pClDevice);
-    ASSERT_NE(nullptr, diBuilder3D); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+    DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::walkerSplit> diBuilder3D(*pClDevice);
 
     // 1D
-    diBuilder1D->setKernel(pKernel);
-    diBuilder1D->setDispatchGeometry(Vec3<size_t>(256, 0, 0), Vec3<size_t>(15, 0, 0), Vec3<size_t>(0, 0, 0));
+    diBuilder1D.setKernel(pKernel);
+    diBuilder1D.setDispatchGeometry(Vec3<size_t>(256, 0, 0), Vec3<size_t>(15, 0, 0), Vec3<size_t>(0, 0, 0));
     MultiDispatchInfo mdi1D;
-    diBuilder1D->bake(mdi1D);
+    diBuilder1D.bake(mdi1D);
     EXPECT_EQ(2u, mdi1D.size());
 
     auto dispatchId = 0;
@@ -501,10 +464,10 @@ TEST_F(DispatchInfoBuilderTest, GivenSplitWhenGettingWalkerInfoThenCorrectValues
     }
 
     // 2D
-    diBuilder2D->setKernel(pKernel);
-    diBuilder2D->setDispatchGeometry(Vec3<size_t>(256, 256, 0), Vec3<size_t>(15, 15, 0), Vec3<size_t>(0, 0, 0));
+    diBuilder2D.setKernel(pKernel);
+    diBuilder2D.setDispatchGeometry(Vec3<size_t>(256, 256, 0), Vec3<size_t>(15, 15, 0), Vec3<size_t>(0, 0, 0));
     MultiDispatchInfo mdi2D;
-    diBuilder2D->bake(mdi2D);
+    diBuilder2D.bake(mdi2D);
     EXPECT_EQ(4u, mdi2D.size());
 
     dispatchId = 0;
@@ -584,10 +547,10 @@ TEST_F(DispatchInfoBuilderTest, GivenSplitWhenGettingWalkerInfoThenCorrectValues
     }
 
     // 3D
-    diBuilder3D->setKernel(pKernel);
-    diBuilder3D->setDispatchGeometry(Vec3<size_t>(256, 256, 256), Vec3<size_t>(15, 15, 15), Vec3<size_t>(0, 0, 0));
+    diBuilder3D.setKernel(pKernel);
+    diBuilder3D.setDispatchGeometry(Vec3<size_t>(256, 256, 256), Vec3<size_t>(15, 15, 15), Vec3<size_t>(0, 0, 0));
     MultiDispatchInfo mdi3D;
-    diBuilder3D->bake(mdi3D);
+    diBuilder3D.bake(mdi3D);
     EXPECT_EQ(8u, mdi3D.size());
 
     dispatchId = 0;
@@ -721,115 +684,103 @@ TEST_F(DispatchInfoBuilderTest, GivenSplitWhenGettingWalkerInfoThenCorrectValues
         }
         dispatchId++;
     }
-    delete diBuilder3D;
-    delete diBuilder2D;
-    delete diBuilder1D;
 }
 
 TEST_F(DispatchInfoBuilderTest, GivenSplit1dWhenSettingDispatchGeometryThenMdiSizeIsCorrect) {
-    DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::walkerSplit> *diBuilder = new DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::walkerSplit>(*pClDevice);
-    ASSERT_NE(nullptr, diBuilder); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+    DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::walkerSplit> diBuilder(*pClDevice);
 
-    diBuilder->setDispatchGeometry(Vec3<size_t>(0, 0, 0), Vec3<size_t>(2, 0, 0), Vec3<size_t>(0, 0, 0));
+    diBuilder.setDispatchGeometry(Vec3<size_t>(0, 0, 0), Vec3<size_t>(2, 0, 0), Vec3<size_t>(0, 0, 0));
     MultiDispatchInfo mdiSize0;
-    diBuilder->bake(mdiSize0);
+    diBuilder.bake(mdiSize0);
     EXPECT_EQ(0u, mdiSize0.size());
 
-    diBuilder->setDispatchGeometry(Vec3<size_t>(2, 0, 0), Vec3<size_t>(2, 0, 0), Vec3<size_t>(0, 0, 0));
+    diBuilder.setDispatchGeometry(Vec3<size_t>(2, 0, 0), Vec3<size_t>(2, 0, 0), Vec3<size_t>(0, 0, 0));
     MultiDispatchInfo mdiSize1;
-    diBuilder->bake(mdiSize1);
+    diBuilder.bake(mdiSize1);
     EXPECT_EQ(1u, mdiSize1.size());
 
-    diBuilder->setDispatchGeometry(Vec3<size_t>(3, 0, 0), Vec3<size_t>(2, 0, 0), Vec3<size_t>(0, 0, 0));
+    diBuilder.setDispatchGeometry(Vec3<size_t>(3, 0, 0), Vec3<size_t>(2, 0, 0), Vec3<size_t>(0, 0, 0));
     MultiDispatchInfo mdiSize2;
-    diBuilder->bake(mdiSize2);
+    diBuilder.bake(mdiSize2);
     EXPECT_EQ(2u, mdiSize2.size());
-
-    delete diBuilder;
 }
 
 TEST_F(DispatchInfoBuilderTest, GivenSplit2dWhenSettingDispatchGeometryThenMdiSizeIsCorrect) {
-    DispatchInfoBuilder<SplitDispatch::Dim::d2D, SplitDispatch::SplitMode::walkerSplit> *diBuilder = new DispatchInfoBuilder<SplitDispatch::Dim::d2D, SplitDispatch::SplitMode::walkerSplit>(*pClDevice);
-    ASSERT_NE(nullptr, diBuilder); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+    DispatchInfoBuilder<SplitDispatch::Dim::d2D, SplitDispatch::SplitMode::walkerSplit> diBuilder(*pClDevice);
 
-    diBuilder->setDispatchGeometry(Vec3<size_t>(0, 0, 0), Vec3<size_t>(2, 2, 0), Vec3<size_t>(0, 0, 0));
+    diBuilder.setDispatchGeometry(Vec3<size_t>(0, 0, 0), Vec3<size_t>(2, 2, 0), Vec3<size_t>(0, 0, 0));
     MultiDispatchInfo mdiSize00;
-    diBuilder->bake(mdiSize00);
+    diBuilder.bake(mdiSize00);
     EXPECT_EQ(0u, mdiSize00.size());
 
-    diBuilder->setDispatchGeometry(Vec3<size_t>(2, 2, 0), Vec3<size_t>(2, 2, 0), Vec3<size_t>(0, 0, 0));
+    diBuilder.setDispatchGeometry(Vec3<size_t>(2, 2, 0), Vec3<size_t>(2, 2, 0), Vec3<size_t>(0, 0, 0));
     MultiDispatchInfo mdiSize11;
-    diBuilder->bake(mdiSize11);
+    diBuilder.bake(mdiSize11);
     EXPECT_EQ(1u, mdiSize11.size());
 
-    diBuilder->setDispatchGeometry(Vec3<size_t>(3, 2, 0), Vec3<size_t>(2, 2, 0), Vec3<size_t>(0, 0, 0));
+    diBuilder.setDispatchGeometry(Vec3<size_t>(3, 2, 0), Vec3<size_t>(2, 2, 0), Vec3<size_t>(0, 0, 0));
     MultiDispatchInfo mdiSize21;
-    diBuilder->bake(mdiSize21);
+    diBuilder.bake(mdiSize21);
     EXPECT_EQ(2u, mdiSize21.size());
 
-    diBuilder->setDispatchGeometry(Vec3<size_t>(2, 3, 0), Vec3<size_t>(2, 2, 0), Vec3<size_t>(0, 0, 0));
+    diBuilder.setDispatchGeometry(Vec3<size_t>(2, 3, 0), Vec3<size_t>(2, 2, 0), Vec3<size_t>(0, 0, 0));
     MultiDispatchInfo mdiSize12;
-    diBuilder->bake(mdiSize12);
+    diBuilder.bake(mdiSize12);
     EXPECT_EQ(2u, mdiSize12.size());
 
-    diBuilder->setDispatchGeometry(Vec3<size_t>(3, 3, 0), Vec3<size_t>(2, 2, 0), Vec3<size_t>(0, 0, 0));
+    diBuilder.setDispatchGeometry(Vec3<size_t>(3, 3, 0), Vec3<size_t>(2, 2, 0), Vec3<size_t>(0, 0, 0));
     MultiDispatchInfo mdiSize22;
-    diBuilder->bake(mdiSize22);
+    diBuilder.bake(mdiSize22);
     EXPECT_EQ(4u, mdiSize22.size());
-
-    delete diBuilder;
 }
 
 TEST_F(DispatchInfoBuilderTest, GivenSplit3dWhenSettingDispatchGeometryThenMdiSizeIsCorrect) {
-    DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::walkerSplit> *diBuilder = new DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::walkerSplit>(*pClDevice);
-    ASSERT_NE(nullptr, diBuilder); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+    DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::walkerSplit> diBuilder(*pClDevice);
 
-    diBuilder->setDispatchGeometry(Vec3<size_t>(0, 0, 0), Vec3<size_t>(2, 2, 2), Vec3<size_t>(0, 0, 0));
+    diBuilder.setDispatchGeometry(Vec3<size_t>(0, 0, 0), Vec3<size_t>(2, 2, 2), Vec3<size_t>(0, 0, 0));
     MultiDispatchInfo mdiSize000;
-    diBuilder->bake(mdiSize000);
+    diBuilder.bake(mdiSize000);
     EXPECT_EQ(0u, mdiSize000.size());
 
-    diBuilder->setDispatchGeometry(Vec3<size_t>(2, 2, 2), Vec3<size_t>(2, 2, 2), Vec3<size_t>(0, 0, 0));
+    diBuilder.setDispatchGeometry(Vec3<size_t>(2, 2, 2), Vec3<size_t>(2, 2, 2), Vec3<size_t>(0, 0, 0));
     MultiDispatchInfo mdiSize111;
-    diBuilder->bake(mdiSize111);
+    diBuilder.bake(mdiSize111);
     EXPECT_EQ(1u, mdiSize111.size());
 
-    diBuilder->setDispatchGeometry(Vec3<size_t>(3, 2, 2), Vec3<size_t>(2, 2, 2), Vec3<size_t>(0, 0, 0));
+    diBuilder.setDispatchGeometry(Vec3<size_t>(3, 2, 2), Vec3<size_t>(2, 2, 2), Vec3<size_t>(0, 0, 0));
     MultiDispatchInfo mdiSize211;
-    diBuilder->bake(mdiSize211);
+    diBuilder.bake(mdiSize211);
     EXPECT_EQ(2u, mdiSize211.size());
 
-    diBuilder->setDispatchGeometry(Vec3<size_t>(2, 3, 2), Vec3<size_t>(2, 2, 2), Vec3<size_t>(0, 0, 0));
+    diBuilder.setDispatchGeometry(Vec3<size_t>(2, 3, 2), Vec3<size_t>(2, 2, 2), Vec3<size_t>(0, 0, 0));
     MultiDispatchInfo mdiSize121;
-    diBuilder->bake(mdiSize121);
+    diBuilder.bake(mdiSize121);
     EXPECT_EQ(2u, mdiSize121.size());
 
-    diBuilder->setDispatchGeometry(Vec3<size_t>(2, 2, 3), Vec3<size_t>(2, 2, 2), Vec3<size_t>(0, 0, 0));
+    diBuilder.setDispatchGeometry(Vec3<size_t>(2, 2, 3), Vec3<size_t>(2, 2, 2), Vec3<size_t>(0, 0, 0));
     MultiDispatchInfo mdiSize112;
-    diBuilder->bake(mdiSize112);
+    diBuilder.bake(mdiSize112);
     EXPECT_EQ(2u, mdiSize112.size());
 
-    diBuilder->setDispatchGeometry(Vec3<size_t>(3, 3, 2), Vec3<size_t>(2, 2, 2), Vec3<size_t>(0, 0, 0));
+    diBuilder.setDispatchGeometry(Vec3<size_t>(3, 3, 2), Vec3<size_t>(2, 2, 2), Vec3<size_t>(0, 0, 0));
     MultiDispatchInfo mdiSize221;
-    diBuilder->bake(mdiSize221);
+    diBuilder.bake(mdiSize221);
     EXPECT_EQ(4u, mdiSize221.size());
 
-    diBuilder->setDispatchGeometry(Vec3<size_t>(3, 2, 3), Vec3<size_t>(2, 2, 2), Vec3<size_t>(0, 0, 0));
+    diBuilder.setDispatchGeometry(Vec3<size_t>(3, 2, 3), Vec3<size_t>(2, 2, 2), Vec3<size_t>(0, 0, 0));
     MultiDispatchInfo mdiSize212;
-    diBuilder->bake(mdiSize212);
+    diBuilder.bake(mdiSize212);
     EXPECT_EQ(4u, mdiSize212.size());
 
-    diBuilder->setDispatchGeometry(Vec3<size_t>(2, 3, 3), Vec3<size_t>(2, 2, 2), Vec3<size_t>(0, 0, 0));
+    diBuilder.setDispatchGeometry(Vec3<size_t>(2, 3, 3), Vec3<size_t>(2, 2, 2), Vec3<size_t>(0, 0, 0));
     MultiDispatchInfo mdiSize122;
-    diBuilder->bake(mdiSize122);
+    diBuilder.bake(mdiSize122);
     EXPECT_EQ(4u, mdiSize122.size());
 
-    diBuilder->setDispatchGeometry(Vec3<size_t>(3, 3, 3), Vec3<size_t>(2, 2, 2), Vec3<size_t>(0, 0, 0));
+    diBuilder.setDispatchGeometry(Vec3<size_t>(3, 3, 3), Vec3<size_t>(2, 2, 2), Vec3<size_t>(0, 0, 0));
     MultiDispatchInfo mdiSize222;
-    diBuilder->bake(mdiSize222);
+    diBuilder.bake(mdiSize222);
     EXPECT_EQ(8u, mdiSize222.size());
-
-    delete diBuilder;
 }
 
 TEST_F(DispatchInfoBuilderTest, WhenSettingKernelArgThenAddressesAreCorrect) {
@@ -838,38 +789,34 @@ TEST_F(DispatchInfoBuilderTest, WhenSettingKernelArgThenAddressesAreCorrect) {
         GTEST_SKIP();
     }
 
-    Buffer *buffer = new MockBuffer();
-    auto val = (cl_mem)buffer;
+    MockBuffer buffer;
+    cl_mem val = &buffer;
     auto pVal = &val;
 
-    DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit> *diBuilder = new DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit>(*pClDevice);
-    ASSERT_NE(nullptr, diBuilder); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+    DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit> diBuilder(*pClDevice);
 
-    diBuilder->setKernel(pKernel);
-    diBuilder->setDispatchGeometry(Vec3<size_t>(256, 256, 256), Vec3<size_t>(16, 16, 16), Vec3<size_t>(0, 0, 0));
+    diBuilder.setKernel(pKernel);
+    diBuilder.setDispatchGeometry(Vec3<size_t>(256, 256, 256), Vec3<size_t>(16, 16, 16), Vec3<size_t>(0, 0, 0));
     MultiDispatchInfo multiDispatchInfo;
 
-    diBuilder->bake(multiDispatchInfo);
+    diBuilder.bake(multiDispatchInfo);
     clearCrossThreadData();
 
-    EXPECT_EQ(CL_SUCCESS, diBuilder->setArg(0, sizeof(cl_mem *), pVal));
+    EXPECT_EQ(CL_SUCCESS, diBuilder.setArg(0, sizeof(cl_mem *), pVal));
     char data[128];
     void *svmPtr = &data;
-    EXPECT_EQ(CL_SUCCESS, diBuilder->setArgSvm(1, sizeof(svmPtr), svmPtr, nullptr, 0u));
+    EXPECT_EQ(CL_SUCCESS, diBuilder.setArgSvm(1, sizeof(svmPtr), svmPtr, nullptr, 0u));
     MockGraphicsAllocation svmAlloc(svmPtr, 128);
-    EXPECT_EQ(CL_SUCCESS, diBuilder->setArgSvmAlloc(2, svmPtr, &svmAlloc));
+    EXPECT_EQ(CL_SUCCESS, diBuilder.setArgSvmAlloc(2, svmPtr, &svmAlloc));
 
     for (auto &dispatchInfo : multiDispatchInfo) {
         auto crossthreadOffset0 = pKernelInfo->argAsPtr(0).stateless;
-        EXPECT_EQ(buffer->getCpuAddress(), *reinterpret_cast<void **>((dispatchInfo.getKernel()->getCrossThreadData() + crossthreadOffset0)));
+        EXPECT_EQ(buffer.getCpuAddress(), *reinterpret_cast<void **>((dispatchInfo.getKernel()->getCrossThreadData() + crossthreadOffset0)));
         auto crossthreadOffset1 = pKernelInfo->argAsPtr(1).stateless;
         EXPECT_EQ(svmPtr, *(reinterpret_cast<void **>(dispatchInfo.getKernel()->getCrossThreadData() + crossthreadOffset1)));
         auto crossthreadOffset2 = pKernelInfo->argAsPtr(2).stateless;
         EXPECT_EQ(svmPtr, *(reinterpret_cast<void **>(dispatchInfo.getKernel()->getCrossThreadData() + crossthreadOffset2)));
     }
-
-    delete buffer;
-    delete diBuilder;
 }
 
 TEST_F(DispatchInfoBuilderTest, GivenSplitWhenSettingKernelArgThenAddressesAreCorrect) {
@@ -877,8 +824,8 @@ TEST_F(DispatchInfoBuilderTest, GivenSplitWhenSettingKernelArgThenAddressesAreCo
     DispatchInfoBuilder<SplitDispatch::Dim::d2D, SplitDispatch::SplitMode::kernelSplit> builder2D(*pClDevice);
     DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::kernelSplit> builder3D(*pClDevice);
 
-    Buffer *buffer = new MockBuffer();
-    auto val = (cl_mem)buffer;
+    MockBuffer buffer;
+    cl_mem val = &buffer;
     auto pVal = &val;
 
     char data[128];
@@ -907,17 +854,17 @@ TEST_F(DispatchInfoBuilderTest, GivenSplitWhenSettingKernelArgThenAddressesAreCo
     clearCrossThreadData();
     builder1D.setArg(SplitDispatch::RegionCoordX::left, static_cast<uint32_t>(0), sizeof(cl_mem *), pVal);
     for (auto &dispatchInfo : mdi1D) {
-        EXPECT_EQ(buffer->getCpuAddress(), *reinterpret_cast<void **>((dispatchInfo.getKernel()->getCrossThreadData() + 0x10)));
+        EXPECT_EQ(buffer.getCpuAddress(), *reinterpret_cast<void **>((dispatchInfo.getKernel()->getCrossThreadData() + 0x10)));
     }
     clearCrossThreadData();
     builder2D.setArg(SplitDispatch::RegionCoordX::left, SplitDispatch::RegionCoordY::top, static_cast<uint32_t>(0), sizeof(cl_mem *), pVal);
     for (auto &dispatchInfo : mdi2D) {
-        EXPECT_EQ(buffer->getCpuAddress(), *reinterpret_cast<void **>((dispatchInfo.getKernel()->getCrossThreadData() + 0x10)));
+        EXPECT_EQ(buffer.getCpuAddress(), *reinterpret_cast<void **>((dispatchInfo.getKernel()->getCrossThreadData() + 0x10)));
     }
     clearCrossThreadData();
     builder3D.setArg(SplitDispatch::RegionCoordX::left, SplitDispatch::RegionCoordY::top, SplitDispatch::RegionCoordZ::front, static_cast<uint32_t>(0), sizeof(cl_mem *), pVal);
     for (auto &dispatchInfo : mdi3D) {
-        EXPECT_EQ(buffer->getCpuAddress(), *reinterpret_cast<void **>((dispatchInfo.getKernel()->getCrossThreadData() + 0x10)));
+        EXPECT_EQ(buffer.getCpuAddress(), *reinterpret_cast<void **>((dispatchInfo.getKernel()->getCrossThreadData() + 0x10)));
     }
 
     // Set arg SVM
@@ -936,29 +883,23 @@ TEST_F(DispatchInfoBuilderTest, GivenSplitWhenSettingKernelArgThenAddressesAreCo
     for (auto &dispatchInfo : mdi3D) {
         EXPECT_EQ(svmPtr, *(reinterpret_cast<void **>(dispatchInfo.getKernel()->getCrossThreadData() + 0x30)));
     }
-
-    delete buffer;
 }
 
 TEST_F(DispatchInfoBuilderTest, GivenInvalidInputWhenSettingKernelArgThenInvalidMemObjectErrorIsReturned) {
 
-    char *buffer = new char[sizeof(Buffer)];
-    auto val = (cl_mem)buffer;
+    char buffer[sizeof(Buffer)] = {};
+    auto val = reinterpret_cast<cl_mem>(buffer);
     auto pVal = &val;
 
-    DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit> *diBuilder = new DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit>(*pClDevice);
-    ASSERT_NE(nullptr, diBuilder); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+    DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit> diBuilder(*pClDevice);
 
-    diBuilder->setKernel(pKernel);
-    diBuilder->setDispatchGeometry(Vec3<size_t>(256, 256, 256), Vec3<size_t>(16, 16, 16), Vec3<size_t>(0, 0, 0));
+    diBuilder.setKernel(pKernel);
+    diBuilder.setDispatchGeometry(Vec3<size_t>(256, 256, 256), Vec3<size_t>(16, 16, 16), Vec3<size_t>(0, 0, 0));
     MultiDispatchInfo multiDispatchInfo;
 
-    diBuilder->bake(multiDispatchInfo);
-    EXPECT_EQ(CL_INVALID_MEM_OBJECT, diBuilder->setArg(0, sizeof(cl_mem *), pVal));
-    EXPECT_EQ(CL_SUCCESS, diBuilder->setArgSvm(1, sizeof(void *), nullptr, nullptr, 0u));
-
-    delete diBuilder;
-    delete[] buffer;
+    diBuilder.bake(multiDispatchInfo);
+    EXPECT_EQ(CL_INVALID_MEM_OBJECT, diBuilder.setArg(0, sizeof(cl_mem *), pVal));
+    EXPECT_EQ(CL_SUCCESS, diBuilder.setArgSvm(1, sizeof(void *), nullptr, nullptr, 0u));
 }
 
 TEST_F(DispatchInfoBuilderTest, GivenNullKernelWhenSettingKernelArgThenSuccessIsReturned) {
@@ -967,36 +908,31 @@ TEST_F(DispatchInfoBuilderTest, GivenNullKernelWhenSettingKernelArgThenSuccessIs
         GTEST_SKIP();
     }
 
-    Buffer *buffer = new MockBuffer();
-    auto val = (cl_mem)buffer;
+    MockBuffer buffer;
+    cl_mem val = &buffer;
     auto pVal = &val;
     char data[128];
     void *svmPtr = &data;
     MockGraphicsAllocation svmAlloc(svmPtr, 128);
 
-    DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit> *diBuilder = new DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit>(*pClDevice);
-    ASSERT_NE(nullptr, diBuilder); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+    DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit> diBuilder(*pClDevice);
 
-    diBuilder->setDispatchGeometry(Vec3<size_t>(256, 256, 256), Vec3<size_t>(16, 16, 16), Vec3<size_t>(0, 0, 0));
+    diBuilder.setDispatchGeometry(Vec3<size_t>(256, 256, 256), Vec3<size_t>(16, 16, 16), Vec3<size_t>(0, 0, 0));
     MultiDispatchInfo multiDispatchInfo;
 
-    diBuilder->bake(multiDispatchInfo);
-    EXPECT_EQ(CL_SUCCESS, diBuilder->setArg(0, sizeof(cl_mem *), pVal));
-    EXPECT_EQ(CL_SUCCESS, diBuilder->setArgSvm(1, sizeof(svmPtr), svmPtr, nullptr, 0u));
-    EXPECT_EQ(CL_SUCCESS, diBuilder->setArgSvmAlloc(2, svmPtr, &svmAlloc));
-
-    delete diBuilder;
-    delete buffer;
+    diBuilder.bake(multiDispatchInfo);
+    EXPECT_EQ(CL_SUCCESS, diBuilder.setArg(0, sizeof(cl_mem *), pVal));
+    EXPECT_EQ(CL_SUCCESS, diBuilder.setArgSvm(1, sizeof(svmPtr), svmPtr, nullptr, 0u));
+    EXPECT_EQ(CL_SUCCESS, diBuilder.setArgSvmAlloc(2, svmPtr, &svmAlloc));
 }
 
 TEST_F(DispatchInfoBuilderTest, WhenDimensionIsNotSetThenProperDimensionIsReturned) {
     MultiDispatchInfo mdi;
 
-    auto diBuilder = std::make_unique<DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit>>(*pClDevice);
-    ASSERT_NE(nullptr, diBuilder);
+    DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit> diBuilder(*pClDevice);
 
-    diBuilder->setDispatchGeometry(0u, Vec3<size_t>(128, 4, 1), Vec3<size_t>(0, 0, 0), Vec3<size_t>(0, 0, 0));
-    diBuilder->bake(mdi);
+    diBuilder.setDispatchGeometry(0u, Vec3<size_t>(128, 4, 1), Vec3<size_t>(0, 0, 0), Vec3<size_t>(0, 0, 0));
+    diBuilder.bake(mdi);
     for (auto &dispatchInfo : mdi) {
         EXPECT_EQ(2u, dispatchInfo.getDim());
     }
@@ -1005,11 +941,10 @@ TEST_F(DispatchInfoBuilderTest, WhenDimensionIsNotSetThenProperDimensionIsReturn
 TEST_F(DispatchInfoBuilderTest, WhengDimensionIsNotMatchingGWSThenDimensionPassedAsArgumentIsReturned) {
     MultiDispatchInfo mdi;
 
-    auto diBuilder = std::make_unique<DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit>>(*pClDevice);
-    ASSERT_NE(nullptr, diBuilder);
+    DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::noSplit> diBuilder(*pClDevice);
 
-    diBuilder->setDispatchGeometry(2u, Vec3<size_t>(128, 1, 1), Vec3<size_t>(0, 0, 0), Vec3<size_t>(0, 0, 0));
-    diBuilder->bake(mdi);
+    diBuilder.setDispatchGeometry(2u, Vec3<size_t>(128, 1, 1), Vec3<size_t>(0, 0, 0), Vec3<size_t>(0, 0, 0));
+    diBuilder.bake(mdi);
     for (auto &dispatchInfo : mdi) {
         EXPECT_EQ(2u, dispatchInfo.getDim());
     }

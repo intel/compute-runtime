@@ -48,7 +48,6 @@ class SyncBufferEnqueueHandlerTest : public EnqueueHandlerTest {
         pDevice = MockDevice::createWithNewExecutionEnvironment<MockDevice>(hardwareInfo);
         ASSERT_NE(nullptr, pDevice);
         pClDevice = new MockClDevice{pDevice};
-        ASSERT_NE(nullptr, pClDevice);
 
         auto &commandStreamReceiver = pDevice->getGpgpuCommandStreamReceiver();
         pTagMemory = commandStreamReceiver.getTagAddress();

@@ -5446,7 +5446,6 @@ class WddmMemoryManagerTest2 : public ::testing::Test {
         // wddm is deleted by memory manager
 
         wddm = new WddmMock(*executionEnvironment.rootDeviceEnvironments[0]);
-        ASSERT_NE(nullptr, wddm);
         auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo);
         wddm->init();
         executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);

@@ -53,7 +53,6 @@ HWTEST_F(DrmCommandStreamMMTest, GivenForcePinThenMemoryManagerCreatesPinBb) {
 
     auto memoryManager = new TestedDrmMemoryManager(false, true, false, executionEnvironment);
     executionEnvironment.memoryManager.reset(memoryManager);
-    ASSERT_NE(nullptr, memoryManager);
     EXPECT_NE(nullptr, memoryManager->pinBBs[0]);
 }
 
@@ -74,7 +73,6 @@ HWTEST_F(DrmCommandStreamMMTest, givenForcePinDisabledWhenMemoryManagerIsCreated
     auto memoryManager = new TestedDrmMemoryManager(false, true, false, executionEnvironment);
 
     executionEnvironment.memoryManager.reset(memoryManager);
-    ASSERT_NE(nullptr, memoryManager);
     EXPECT_NE(nullptr, memoryManager->pinBBs[0]);
 }
 
@@ -94,7 +92,6 @@ HWTEST_F(DrmCommandStreamMMTest, givenExecutionEnvironmentWithMoreThanOneRootDev
     auto memoryManager = new TestedDrmMemoryManager(false, true, false, executionEnvironment);
 
     executionEnvironment.memoryManager.reset(memoryManager);
-    ASSERT_NE(nullptr, memoryManager);
     for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < executionEnvironment.rootDeviceEnvironments.size(); rootDeviceIndex++) {
         EXPECT_NE(nullptr, memoryManager->pinBBs[rootDeviceIndex]);
     }

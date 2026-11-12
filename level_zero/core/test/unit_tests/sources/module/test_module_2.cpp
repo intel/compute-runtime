@@ -56,18 +56,15 @@ class ModuleOnlineCompiled : public DeviceFixture, public testing::Test {
 using ModuleTests = Test<DeviceFixture>;
 
 TEST_F(ModuleTests, WhenCreatingBuildOptionsThenOptionsParsedCorrectly) {
-    auto module = new ModuleImp(device, nullptr, ModuleType::user);
-    ASSERT_NE(nullptr, module); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+    ModuleImp module(device, nullptr, ModuleType::user);
 
     std::string buildOptions;
     std::string internalBuildOptions;
 
-    module->createBuildOptions("-ze-opt-disable -ze-opt-greater-than-4GB-buffer-required", buildOptions, internalBuildOptions);
+    module.createBuildOptions("-ze-opt-disable -ze-opt-greater-than-4GB-buffer-required", buildOptions, internalBuildOptions);
 
     EXPECT_TRUE(NEO::CompilerOptions::contains(buildOptions, NEO::CompilerOptions::optDisable));
     EXPECT_TRUE(NEO::CompilerOptions::contains(internalBuildOptions, NEO::CompilerOptions::greaterThan4gbBuffersRequired));
-
-    delete module;
 }
 
 TEST_F(ModuleTests, whenCreatingAutoGrfBuildOptionsThenOptionsParsedCorrectly) {

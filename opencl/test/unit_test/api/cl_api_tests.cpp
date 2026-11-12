@@ -76,7 +76,6 @@ void ApiFixtureUsingAlignedMemoryManager::setUp() {
     Program *prgPtr = reinterpret_cast<Program *>(program);
 
     kernel = new MockKernel(prgPtr, program->mockKernelInfo, *device);
-    ASSERT_NE(nullptr, kernel);
 }
 
 void ApiFixtureUsingAlignedMemoryManager::tearDown() {

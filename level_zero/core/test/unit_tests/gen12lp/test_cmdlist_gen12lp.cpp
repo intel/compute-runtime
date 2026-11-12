@@ -344,8 +344,7 @@ HWTEST2_F(CommandListCreateGen12Lp, givenAllocationsWhenApplyRangesBarrierWithIn
                                      &ranges);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto commandList = new CommandListAdjustStateComputeMode<FamilyType::gfxCoreFamily>();
-    ASSERT_NE(nullptr, commandList); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+    auto commandList = std::make_unique<CommandListAdjustStateComputeMode<FamilyType::gfxCoreFamily>>();
     bool ret = commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     ASSERT_FALSE(ret);
 
@@ -358,7 +357,6 @@ HWTEST2_F(CommandListCreateGen12Lp, givenAllocationsWhenApplyRangesBarrierWithIn
     auto itor = find<L3_CONTROL *>(cmdList.begin(), cmdList.end());
     EXPECT_EQ(cmdList.end(), itor);
 
-    commandList->destroy();
     context->freeMem(ranges);
 }
 
@@ -377,8 +375,7 @@ HWTEST2_F(CommandListCreateGen12Lp, givenAllocationsWhenApplyRangesBarrierWithIn
                                      &ranges);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto commandList = new CommandListAdjustStateComputeMode<FamilyType::gfxCoreFamily>();
-    ASSERT_NE(nullptr, commandList); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+    auto commandList = std::make_unique<CommandListAdjustStateComputeMode<FamilyType::gfxCoreFamily>>();
     bool ret = commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     ASSERT_FALSE(ret);
 
@@ -391,7 +388,6 @@ HWTEST2_F(CommandListCreateGen12Lp, givenAllocationsWhenApplyRangesBarrierWithIn
     auto itor = find<L3_CONTROL *>(cmdList.begin(), cmdList.end());
     EXPECT_EQ(cmdList.end(), itor);
 
-    commandList->destroy();
     context->freeMem(ranges);
 }
 

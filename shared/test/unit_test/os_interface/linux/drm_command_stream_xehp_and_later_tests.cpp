@@ -312,7 +312,6 @@ class DrmCommandStreamForceTileTest : public ::testing::Test {
                                                           rootDeviceIndex,
                                                           3,
                                                           expectedHandleId);
-        ASSERT_NE(nullptr, csr);
         csr->setupContext(*osContext);
 
         memoryManager = new DrmMemoryManager(GemCloseWorkerMode::gemCloseWorkerActive,
@@ -320,9 +319,6 @@ class DrmCommandStreamForceTileTest : public ::testing::Test {
                                              true,
                                              executionEnvironment);
         executionEnvironment.memoryManager.reset(memoryManager);
-
-        // assert we have memory manager
-        ASSERT_NE(nullptr, memoryManager);
     }
 
     template <typename GfxFamily>

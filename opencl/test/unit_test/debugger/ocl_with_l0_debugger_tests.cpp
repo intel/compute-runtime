@@ -41,7 +41,6 @@ struct DebuggerClFixture
         ASSERT_NE(nullptr, device);
         clExecutionEnvironment = static_cast<MockClExecutionEnvironment *>(device->getExecutionEnvironment());
         clDevice = new MockClDevice{device};
-        ASSERT_NE(nullptr, clDevice);
 
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->initDebuggerL0(device);
         device->getL0Debugger()->initialize();

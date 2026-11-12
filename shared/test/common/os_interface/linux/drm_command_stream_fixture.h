@@ -62,7 +62,6 @@ class DrmCommandStreamTest : public ::testing::Test {
         osContext->ensureContextInitialized();
 
         csr = new MockDrmCsr<GfxFamily>(executionEnvironment, 0, 1);
-        ASSERT_NE(nullptr, csr);
         csr->setupContext(*osContext);
 
         mock->ioctlCallsCount = 0u;
@@ -139,12 +138,10 @@ class DrmCommandStreamEnhancedTemplate : public ::testing::Test {
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, rootDeviceIndex, false);
 
         csr = new TestedDrmCommandStreamReceiver<GfxFamily>(*executionEnvironment, rootDeviceIndex, 1);
-        ASSERT_NE(nullptr, csr);
         mm = new DrmMemoryManager(GemCloseWorkerMode::gemCloseWorkerInactive,
                                   debugManager.flags.EnableForcePin.get(),
                                   true,
                                   *executionEnvironment);
-        ASSERT_NE(nullptr, mm);
         executionEnvironment->memoryManager.reset(mm);
         executionEnvironment->prepareRootDeviceEnvironments(1u);
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(NEO::defaultHwInfo.get());
@@ -220,12 +217,10 @@ class DrmCommandStreamEnhancedWithFailingExecTemplate : public ::testing::Test {
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, rootDeviceIndex, false);
 
         csr = new TestedDrmCommandStreamReceiverWithFailingExec<GfxFamily>(*executionEnvironment, rootDeviceIndex, 1);
-        ASSERT_NE(nullptr, csr);
         mm = new DrmMemoryManager(GemCloseWorkerMode::gemCloseWorkerInactive,
                                   debugManager.flags.EnableForcePin.get(),
                                   true,
                                   *executionEnvironment);
-        ASSERT_NE(nullptr, mm);
         executionEnvironment->memoryManager.reset(mm);
         executionEnvironment->prepareRootDeviceEnvironments(1u);
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(NEO::defaultHwInfo.get());

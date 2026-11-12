@@ -388,43 +388,37 @@ TEST_F(EventTest, GivenRetainedEventWhenGettingClEventReferenceCountThenTwoIsRet
 TEST_F(EventTest, GivenRetainAndReleaseEventWhenGettingClEventReferenceCountThenOneIsReturned) {
     uint32_t tagEvent = 5;
 
-    Event *pEvent = new Event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 3, tagEvent);
-    ASSERT_NE(nullptr, pEvent); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+    Event event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 3, tagEvent);
 
-    pEvent->retain();
-    auto retVal = pEvent->getReference();
+    event.retain();
+    auto retVal = event.getReference();
     EXPECT_EQ(2, retVal);
 
     cl_uint refCount = 0;
     size_t sizeReturned = 0;
-    auto result = clGetEventInfo(pEvent, CL_EVENT_REFERENCE_COUNT, sizeof(refCount), &refCount, &sizeReturned);
+    auto result = clGetEventInfo(&event, CL_EVENT_REFERENCE_COUNT, sizeof(refCount), &refCount, &sizeReturned);
     ASSERT_EQ(CL_SUCCESS, result);
     EXPECT_EQ(sizeof(refCount), sizeReturned);
     EXPECT_EQ(2u, refCount);
 
-    pEvent->release();
-    retVal = pEvent->getReference(); // NOLINT(clang-analyzer-cplusplus.NewDelete)
+    event.release();
+    retVal = event.getReference();
     EXPECT_EQ(1, retVal);
-
-    delete pEvent;
 }
 
 TEST_F(EventTest, WhenGettingClEventContextThenCorrectValueIsReturned) {
     uint32_t tagEvent = 5;
 
-    Event *pEvent = new Event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 3, tagEvent);
-    ASSERT_NE(nullptr, pEvent); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+    Event event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 3, tagEvent);
 
     cl_context context;
     size_t sizeReturned = 0;
-    auto result = clGetEventInfo(pEvent, CL_EVENT_CONTEXT, sizeof(context), &context, &sizeReturned);
+    auto result = clGetEventInfo(&event, CL_EVENT_CONTEXT, sizeof(context), &context, &sizeReturned);
     ASSERT_EQ(CL_SUCCESS, result);
     EXPECT_EQ(sizeof(context), sizeReturned);
 
     cl_context qCtx = mockContext.get();
     EXPECT_EQ(qCtx, context);
-
-    delete pEvent;
 }
 
 TEST_F(EventTest, GivenInvalidEventWhenGettingEventInfoThenInvalidValueErrorIsReturned) {
@@ -1522,7 +1516,6 @@ HWTEST_F(EventTest, WhenGettingHwTimeStampsThenValidPointerIsReturned) {
     auto myCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(pCmdQ->getContextPtr(), pClDevice, nullptr);
 
     std::unique_ptr<Event> event(new Event(myCmdQ.get(), CL_COMMAND_COPY_BUFFER, 0, 0));
-    ASSERT_NE(nullptr, event);
 
     HwTimeStamps *timeStamps = static_cast<TagNode<HwTimeStamps> *>(event->getHwTimeStampNode())->tagForCpuAccess;
     ASSERT_NE(nullptr, timeStamps);
@@ -1545,7 +1538,6 @@ HWTEST_F(EventTest, WhenGetHwTimeStampsAllocationThenValidPointerIsReturned) {
     auto myCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(pCmdQ->getContextPtr(), pClDevice, nullptr);
 
     std::unique_ptr<Event> event(new Event(myCmdQ.get(), CL_COMMAND_COPY_BUFFER, 0, 0));
-    ASSERT_NE(nullptr, event);
 
     GraphicsAllocation *allocation = event->getHwTimeStampNode()->getBaseGraphicsAllocation()->getDefaultGraphicsAllocation();
     ASSERT_NE(nullptr, allocation);
@@ -1563,7 +1555,6 @@ HWTEST_F(EventTest, WhenEventIsCreatedThenHwTimeStampsMemoryIsPlacedInGraphicsAl
     auto myCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(pCmdQ->getContextPtr(), pClDevice, nullptr);
 
     std::unique_ptr<Event> event(new Event(myCmdQ.get(), CL_COMMAND_COPY_BUFFER, 0, 0));
-    ASSERT_NE(nullptr, event);
 
     HwTimeStamps *timeStamps = static_cast<TagNode<HwTimeStamps> *>(event->getHwTimeStampNode())->tagForCpuAccess;
     ASSERT_NE(nullptr, timeStamps);

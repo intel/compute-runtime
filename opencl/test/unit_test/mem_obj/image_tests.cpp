@@ -868,7 +868,6 @@ class ImageTransfer : public ::testing::Test {
   public:
     void SetUp() override {
         context = new MockContext();
-        ASSERT_NE(context, nullptr);
         ModifyableImage::context = context;
         ModifyableImage::hostPtr = nullptr;
         ModifyableImage::imageFormat = {CL_R, CL_FLOAT};

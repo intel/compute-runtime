@@ -73,7 +73,6 @@ struct KernelCommandsXeHPAndLater : public PreambleVfeState {
         PreambleVfeState::SetUp();
         pDevice->incRefInternal();
         pClDevice = new MockClDevice{pDevice};
-        ASSERT_NE(nullptr, pClDevice);
 
         program = std::make_unique<MockProgram>(toClDeviceVector(*pClDevice));
     }

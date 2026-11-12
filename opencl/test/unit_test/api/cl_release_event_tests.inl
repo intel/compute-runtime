@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,9 +36,8 @@ TEST_F(clEventTests, GivenNullEventWhenReleasingEventThenClInvalidEventErrorIsRe
 
 TEST_F(clEventTests, GivenValidEventWhenReleasingEventThenSuccessIsReturned) {
     auto *pEvent = new Event(nullptr, 0, 0, 0);
-    ASSERT_NE(nullptr, pEvent);
 
-    cl_event event = (cl_event)pEvent;
+    cl_event event = pEvent;
     auto retVal = clReleaseEvent(event);
     EXPECT_EQ(CL_SUCCESS, retVal);
     // no delete operation. clReleaseEvent should do this for us
@@ -46,9 +45,8 @@ TEST_F(clEventTests, GivenValidEventWhenReleasingEventThenSuccessIsReturned) {
 
 TEST_F(clEventTests, GivenValidEventWhenRetainedAndReleasedThenReferenceCountIsUpdated) {
     auto *pEvent = new Event(nullptr, 0, 0, 0);
-    ASSERT_NE(nullptr, pEvent);
 
-    cl_event event = (cl_event)pEvent;
+    cl_event event = pEvent;
     auto retVal = clRetainEvent(event);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(pEvent->getReference(), 2);
@@ -62,9 +60,8 @@ TEST_F(clEventTests, GivenValidEventWhenRetainedAndReleasedThenReferenceCountIsU
 
 TEST_F(clEventTests, GivenValidEventWhenRetainedAndReleasedTwiceThenClSuccessIsReturned) {
     auto *pEvent = new Event(nullptr, 0, 0, 0);
-    ASSERT_NE(nullptr, pEvent);
 
-    cl_event event = (cl_event)pEvent;
+    cl_event event = pEvent;
     auto retVal = clRetainEvent(event);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(pEvent->getReference(), 2);
@@ -86,7 +83,7 @@ TEST_F(clEventTests, GivenValidEventWhenGettingEventInfoThenSuccessIsReturned) {
     cl_command_queue cmdQ;
     auto *pEvent = new Event(nullptr, 0, 0, 0);
 
-    cl_event event = (cl_event)pEvent;
+    cl_event event = pEvent;
     auto retVal = clGetEventInfo(event, CL_EVENT_COMMAND_QUEUE, sizeof(cmdQ), &cmdQ, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 

@@ -140,7 +140,6 @@ class WddmCommandStreamMockGdiTest : public ::testing::Test {
         auto mockCsr = new MockWddmCsr<FamilyType>(*executionEnvironment, 0, 1);
         this->csr = mockCsr;
         memoryManager = new WddmMemoryManager(*executionEnvironment);
-        ASSERT_NE(nullptr, memoryManager);
         executionEnvironment->memoryManager.reset(memoryManager);
         device = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
         device->resetCommandStreamReceiver(csr);

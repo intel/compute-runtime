@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -82,7 +82,6 @@ class DrmBufferObjectFixture {
         osContext.reset(new OsContextLinux(*this->mock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor()));
         this->mock->reset();
         bo = new TestedBufferObject(0, this->mock.get());
-        ASSERT_NE(nullptr, bo);
     }
 
     void tearDown() {

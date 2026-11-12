@@ -54,7 +54,6 @@ void DrmMemoryManagerFixtureWithoutQuietIoctlExpectation::setUp(bool enableLocal
     memoryManager = new TestedDrmMemoryManager(enableLocalMem, false, false, *executionEnvironment);
     executionEnvironment->memoryManager.reset(memoryManager);
 
-    ASSERT_NE(nullptr, memoryManager);
     if (memoryManager->getgemCloseWorker()) {
         memoryManager->getgemCloseWorker()->close(true);
     }
