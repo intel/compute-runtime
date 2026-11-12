@@ -525,17 +525,9 @@ TEST(DebugSettingsManager, GivenTbxOrTbxWithAubCsrTypeAndAllElseDefaultWhenCalli
     EXPECT_TRUE(NEO::debugManager.isTbxPageFaultManagerEnabled());
 }
 
-TEST(DebugSettingsManager, GivenDefaultDirectSubmissionInSimulationModeWhenCheckingIfItIsEnabledThenReturnFalse) {
+TEST(DebugSettingsManager, GivenDefaultDirectSubmissionInSimulationModeWhenCheckingIfItIsEnabledThenReturnTrueOnlyForTbxCsrType) {
     DebugManagerStateRestore restorer;
-    EXPECT_EQ(0, NEO::debugManager.flags.EnableDirectSubmissionInSimulationMode.get());
-
-    NEO::debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::tbx));
-    EXPECT_FALSE(NEO::debugManager.isDirectSubmissionInSimulationModeEnabled());
-}
-
-TEST(DebugSettingsManager, GivenTbxOnlyDirectSubmissionInSimulationModeWhenCheckingIfItIsEnabledThenReturnTrueOnlyForTbxCsrType) {
-    DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.EnableDirectSubmissionInSimulationMode.set(-1);
+    EXPECT_EQ(-1, NEO::debugManager.flags.EnableDirectSubmissionInSimulationMode.get());
 
     NEO::debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::tbx));
     EXPECT_TRUE(NEO::debugManager.isDirectSubmissionInSimulationModeEnabled());

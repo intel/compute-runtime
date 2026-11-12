@@ -173,7 +173,7 @@ TEST(OSContext, givenPowerHintSetToMaxWhenCheckingDirectSubmissionAvailabilityTh
     }
 }
 
-TEST(OSContext, givenSimulationCsrTypeWhenCheckingDirectSubmissionAvailabilityThenItIsNotAvailableByDefaultAndAvailableInTbxModeOnlyWhenTbxOnlyModeIsSelected) {
+TEST(OSContext, givenSimulationCsrTypeWhenCheckingDirectSubmissionAvailabilityThenByDefaultItIsAvailableOnlyInTbxMode) {
     DebugManagerStateRestore debugFlagsStateRestorer;
     auto engineDescriptor = EngineDescriptorHelper::getDefaultDescriptor();
     auto pOsContext = std::make_unique<OsContextMock>(0, 0, engineDescriptor);
@@ -186,9 +186,6 @@ TEST(OSContext, givenSimulationCsrTypeWhenCheckingDirectSubmissionAvailabilityTh
     bool submitOnInit = false;
 
     debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::tbx));
-    EXPECT_FALSE(pOsContext->isDirectSubmissionAvailable(hwInfo, submitOnInit));
-
-    debugManager.flags.EnableDirectSubmissionInSimulationMode.set(-1);
     EXPECT_TRUE(pOsContext->isDirectSubmissionAvailable(hwInfo, submitOnInit));
 
     for (auto csrType : {CommandStreamReceiverType::aub, CommandStreamReceiverType::tbxWithAub, CommandStreamReceiverType::hardwareWithAub, CommandStreamReceiverType::nullAub}) {
