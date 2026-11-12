@@ -1795,10 +1795,10 @@ HWTEST2_F(GfxCoreHelperTestWithEnginesCheck, whenGetEnginesCalledThenRegularCcsI
     EXPECT_EQ(1u, getEngineCount(aub_stream::ENGINE_CCS, EngineUsage::regular));
 }
 
-using IsNotXe2HpgCore = IsNotGfxCore<IGFX_XE2_HPG_CORE>;
+using IsNotWithinXe2HpgAndXe3Core = IsNotWithinGfxCore<IGFX_XE2_HPG_CORE, IGFX_XE3_CORE>;
 using IsWithinGen12lpCoreAndXeHpgCore = IsWithinGfxCore<IGFX_GEN12LP_CORE, IGFX_XE_HPG_CORE>;
 
-HWTEST2_F(GfxCoreHelperTest, givenNotXe2HpgCoreWhenAskedForMidThreadPreemptionAllocationOnDemandSupportThenFalseIsReturned, IsNotXe2HpgCore) {
+HWTEST2_F(GfxCoreHelperTest, whenAskedForMidThreadPreemptionAllocationOnDemandSupportThenFalseIsReturned, IsNotWithinXe2HpgAndXe3Core) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     EXPECT_FALSE(gfxCoreHelper.isMidThreadPreemptionAllocationOnDemandSupported());
 }

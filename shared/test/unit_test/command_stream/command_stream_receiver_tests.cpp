@@ -8906,7 +8906,7 @@ HWTEST_F(CommandStreamReceiverHwTest, givenPreemptionAllocationFailureWhenProgra
     EXPECT_THROW(commandStreamReceiver.programMidThreadPreemptionState(commandStream, *pDevice), std::exception);
 }
 
-HWTEST2_F(CommandStreamReceiverHwTest, givenMidThreadPreemptionAllocationOnDemandWhenFlushingTasksThenPreemptionStateIsProgrammedOnceOnFirstMidThreadPreemptionKernel, IsXe2HpgCore) {
+HWTEST2_F(CommandStreamReceiverHwTest, givenMidThreadPreemptionAllocationOnDemandWhenFlushingTasksThenPreemptionStateIsProgrammedOnceOnFirstMidThreadPreemptionKernel, IsWithinXe2HpgCoreAndXe3Core) {
     using STATE_CONTEXT_DATA_BASE_ADDRESS = typename FamilyType::STATE_CONTEXT_DATA_BASE_ADDRESS;
     using STATE_SIP = typename FamilyType::STATE_SIP;
 
@@ -8955,7 +8955,7 @@ HWTEST2_F(CommandStreamReceiverHwTest, givenMidThreadPreemptionAllocationOnDeman
     EXPECT_EQ(0u, hwParser.getCommandCount<STATE_SIP>());
 }
 
-HWTEST2_F(CommandStreamReceiverHwTest, givenMidThreadPreemptionAllocationOnDemandWhenFlushingImmediateTasksThenPreemptionStateIsProgrammedOnceOnFirstMidThreadPreemptionKernel, IsXe2HpgCore) {
+HWTEST2_F(CommandStreamReceiverHwTest, givenMidThreadPreemptionAllocationOnDemandWhenFlushingImmediateTasksThenPreemptionStateIsProgrammedOnceOnFirstMidThreadPreemptionKernel, IsWithinXe2HpgCoreAndXe3Core) {
     using STATE_CONTEXT_DATA_BASE_ADDRESS = typename FamilyType::STATE_CONTEXT_DATA_BASE_ADDRESS;
     using STATE_SIP = typename FamilyType::STATE_SIP;
 
