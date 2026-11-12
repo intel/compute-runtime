@@ -355,13 +355,44 @@ ze_result_t MutableCommandListImp::parseDispatchedKernel(L0::Kernel *kernel, Mut
 }
 
 ze_result_t MutableCommandListImp::getNextCommandId(const ze_mutable_command_id_ext_desc_t *desc, uint32_t numKernels, ze_kernel_handle_t *phKernels, uint64_t *pCommandId) {
+    static_assert(ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS == MutableFlag::kernelArgument, "ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS and MutableFlag::kernelArgument must be the same value");
+    static_assert(ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_SIZE == MutableFlag::groupSize, "ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_SIZE and MutableFlag::groupSize must be the same value");
+    static_assert(ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_COUNT == MutableFlag::groupCount, "ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_COUNT and MutableFlag::groupCount must be the same value");
+    static_assert(ZE_MUTABLE_COMMAND_EXT_FLAG_GLOBAL_OFFSET == MutableFlag::globalOffset, "ZE_MUTABLE_COMMAND_EXT_FLAG_GLOBAL_OFFSET and MutableFlag::globalOffset must be the same value");
+    static_assert(ZE_MUTABLE_COMMAND_EXT_FLAG_SIGNAL_EVENT == MutableFlag::signalEvent, "ZE_MUTABLE_COMMAND_EXT_FLAG_SIGNAL_EVENT and MutableFlag::signalEvent must be the same value");
+    static_assert(ZE_MUTABLE_COMMAND_EXT_FLAG_WAIT_EVENTS == MutableFlag::waitEvents, "ZE_MUTABLE_COMMAND_EXT_FLAG_WAIT_EVENTS and MutableFlag::waitEvents must be the same value");
+    static_assert(ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_INSTRUCTION == MutableFlag::kernelInstruction, "ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_INSTRUCTION and MutableFlag::kernelInstruction must be the same value");
+
     PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL getNextCommandId cmdlist: %p, flags: %u, numKernels: %u\n", this, desc->flags, numKernels);
+
+    MutableCommandIdDescriptor commandIdDesc;
+    commandIdDesc.flags = static_cast<MutableFlags>(desc->flags);
+    return getNextCommandIdImpl(commandIdDesc, numKernels, phKernels, pCommandId);
+}
+
+ze_result_t MutableCommandListImp::getNextCommandId(const ze_mutable_command_id_exp_desc_t *desc, uint32_t numKernels, ze_kernel_handle_t *phKernels, uint64_t *pCommandId) {
+    static_assert(ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS == MutableFlag::kernelArgument, "ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_ARGUMENTS and MutableFlag::kernelArgument must be the same value");
+    static_assert(ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_SIZE == MutableFlag::groupSize, "ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_SIZE and MutableFlag::groupSize must be the same value");
+    static_assert(ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT == MutableFlag::groupCount, "ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT and MutableFlag::groupCount must be the same value");
+    static_assert(ZE_MUTABLE_COMMAND_EXP_FLAG_GLOBAL_OFFSET == MutableFlag::globalOffset, "ZE_MUTABLE_COMMAND_EXP_FLAG_GLOBAL_OFFSET and MutableFlag::globalOffset must be the same value");
+    static_assert(ZE_MUTABLE_COMMAND_EXP_FLAG_SIGNAL_EVENT == MutableFlag::signalEvent, "ZE_MUTABLE_COMMAND_EXP_FLAG_SIGNAL_EVENT and MutableFlag::signalEvent must be the same value");
+    static_assert(ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS == MutableFlag::waitEvents, "ZE_MUTABLE_COMMAND_EXP_FLAG_WAIT_EVENTS and MutableFlag::waitEvents must be the same value");
+    static_assert(ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_INSTRUCTION == MutableFlag::kernelInstruction, "ZE_MUTABLE_COMMAND_EXP_FLAG_KERNEL_INSTRUCTION and MutableFlag::kernelInstruction must be the same value");
+
+    PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL getNextCommandId cmdlist: %p, flags: %u, numKernels: %u\n", this, desc->flags, numKernels);
+
+    MutableCommandIdDescriptor commandIdDesc;
+    commandIdDesc.flags = static_cast<MutableFlags>(desc->flags);
+    return getNextCommandIdImpl(commandIdDesc, numKernels, phKernels, pCommandId);
+}
+
+auto MutableCommandListImp::getNextCommandIdImpl(const MutableCommandIdDescriptor &commandIdDesc, uint32_t numKernels, ze_kernel_handle_t *phKernels, uint64_t *pCommandId) -> ze_result_t {
     AppendKernelMutation nextAppendKernel;
     AppendEventMutation nextAppendEvents;
-    if (desc->flags == 0) {
-        this->nextMutationFlags = ZE_MUTABLE_COMMAND_EXT_FLAG_FORCE_UINT32 & (~ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_INSTRUCTION);
+    if (commandIdDesc.flags == 0) {
+        this->nextMutationFlags = MutableFlag::all & (~MutableFlag::kernelInstruction);
     } else {
-        this->nextMutationFlags = desc->flags;
+        this->nextMutationFlags = commandIdDesc.flags;
     }
     if (kernelInstructionMutationEnabled(this->nextMutationFlags)) {
         if (numKernels == 0) {

@@ -236,9 +236,9 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendLaunchKern
         }
     }
 
-    constexpr ze_mutable_command_ext_flags_t notSupportedNonKernelMutationFlags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS | ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_SIZE |
-                                                                                  ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_COUNT | ZE_MUTABLE_COMMAND_EXT_FLAG_GLOBAL_OFFSET |
-                                                                                  ZE_MUTABLE_COMMAND_EXT_FLAG_SIGNAL_EVENT;
+    constexpr MutableFlags notSupportedNonKernelMutationFlags = MutableFlag::kernelArgument | MutableFlag::groupSize |
+                                                                MutableFlag::groupCount | MutableFlag::globalOffset |
+                                                                MutableFlag::signalEvent;
     const bool unsupportedCondition = this->nextAppendKernelMutable && (this->nextMutationFlags & notSupportedNonKernelMutationFlags) != 0;
     if (launchParams.isBuiltInKernel) {
         // builtin kernels are supported with only wait event mutation flags
@@ -769,14 +769,14 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::storeKernelArgumentAndDispatch
                                                                                           CmdListKernelLaunchParams &launchParams,
                                                                                           Kernel *kernel,
                                                                                           KernelVariableDescriptor *kernelVariables) {
-    if ((mutableParams.mutationFlags & ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_COUNT) == ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_COUNT) {
+    if ((mutableParams.mutationFlags & MutableFlag::groupCount) == MutableFlag::groupCount) {
         InterfaceVariableDescriptor varDesc = {};
         varDesc.isStageCommit = true;
         getVariable(&varDesc, &mutableParams.groupCountVariable);
 
         kernelVariables->groupCount = mutableParams.groupCountVariable;
     }
-    if ((mutableParams.mutationFlags & ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_SIZE) == ZE_MUTABLE_COMMAND_EXT_FLAG_GROUP_SIZE) {
+    if ((mutableParams.mutationFlags & MutableFlag::groupSize) == MutableFlag::groupSize) {
         InterfaceVariableDescriptor varDesc = {};
         varDesc.isStageCommit = true;
         getVariable(&varDesc, &mutableParams.groupSizeVariable);
@@ -786,13 +786,13 @@ void MutableCommandListCoreFamily<gfxCoreFamily>::storeKernelArgumentAndDispatch
         this->enableReservePerThreadForLocalId = true;
         launchParams.reserveExtraPayloadSpace = this->maxPerThreadDataSize;
     }
-    if ((mutableParams.mutationFlags & ZE_MUTABLE_COMMAND_EXT_FLAG_GLOBAL_OFFSET) == ZE_MUTABLE_COMMAND_EXT_FLAG_GLOBAL_OFFSET) {
+    if ((mutableParams.mutationFlags & MutableFlag::globalOffset) == MutableFlag::globalOffset) {
         InterfaceVariableDescriptor varDesc = {};
         getVariable(&varDesc, &mutableParams.globalOffsetVariable);
 
         kernelVariables->globalOffset = mutableParams.globalOffsetVariable;
     }
-    if ((mutableParams.mutationFlags & ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS) == ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS) {
+    if ((mutableParams.mutationFlags & MutableFlag::kernelArgument) == MutableFlag::kernelArgument) {
         // intercept kernel arguments
         auto &kernelArgs = kernel->getKernelDescriptor().payloadMappings.explicitArgs;
         kernelVariables->kernelArguments.reserve(kernelArgs.size());
@@ -854,7 +854,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void MutableCommandListCoreFamily<gfxCoreFamily>::storeSignalEventVariable(MutableAppendEvents &mutableEventParams,
                                                                            CmdListKernelLaunchParams &launchParams,
                                                                            Event *event) {
-    if ((this->nextMutationFlags & ZE_MUTABLE_COMMAND_EXT_FLAG_SIGNAL_EVENT) == ZE_MUTABLE_COMMAND_EXT_FLAG_SIGNAL_EVENT) {
+    if ((this->nextMutationFlags & MutableFlag::signalEvent) == MutableFlag::signalEvent) {
         if (event != nullptr) {
             AppendEventMutation &currentAppend = this->eventMutations[(nextCommandId - 1)];
 
@@ -1092,7 +1092,7 @@ inline void MutableCommandListCoreFamily<gfxCoreFamily>::storeWaitEventsVariable
                                                                                   ze_event_handle_t *phWaitEvents,
                                                                                   MutableAppendEvents &mutableEventParams) {
 
-    if ((this->nextMutationFlags & ZE_MUTABLE_COMMAND_EXT_FLAG_WAIT_EVENTS) == ZE_MUTABLE_COMMAND_EXT_FLAG_WAIT_EVENTS) {
+    if ((this->nextMutationFlags & MutableFlag::waitEvents) == MutableFlag::waitEvents) {
         if (numWaitEvents > 0) {
             AppendEventMutation &currentAppend = this->eventMutations[(this->nextCommandId - 1)];
 

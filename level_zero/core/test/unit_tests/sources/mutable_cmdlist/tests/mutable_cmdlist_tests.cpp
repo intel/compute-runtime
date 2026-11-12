@@ -122,7 +122,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     ASSERT_NE(0u, mutableCommandList->kernelMutations.size());
     ASSERT_NE(0u, mutableCommandList->eventMutations.size());
 
-    ze_mutable_command_ext_flags_t expectedFlags = ZE_MUTABLE_COMMAND_EXT_FLAG_FORCE_UINT32 & (~ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_INSTRUCTION);
+    L0::MCL::MutableFlags expectedFlags = L0::MCL::MutableFlag::all & (~L0::MCL::MutableFlag::kernelInstruction);
     EXPECT_EQ(expectedFlags, mutableCommandList->nextMutationFlags);
 }
 
@@ -139,7 +139,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     ASSERT_NE(0u, mutableCommandList->kernelMutations.size());
     ASSERT_NE(0u, mutableCommandList->eventMutations.size());
 
-    ze_mutable_command_ext_flags_t expectedFlags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS;
+    L0::MCL::MutableFlags expectedFlags = L0::MCL::MutableFlag::kernelArgument;
     EXPECT_EQ(expectedFlags, mutableCommandList->nextMutationFlags);
 
     result = mutableCommandList->reset();
@@ -156,7 +156,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     result = L0::zeCommandListGetNextCommandIdExp(mutableCommandList->toHandle(), &mutableCommandIdExpDesc, &commandId);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    ze_mutable_command_ext_flags_t expectedFlagsExp = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS;
+    L0::MCL::MutableFlags expectedFlagsExp = L0::MCL::MutableFlag::kernelArgument;
     EXPECT_EQ(expectedFlagsExp, mutableCommandList->nextMutationFlags);
 
     result = mutableCommandList->reset();

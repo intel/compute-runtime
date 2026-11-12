@@ -8,6 +8,7 @@
 #pragma once
 #include "level_zero/core/source/cmdlist/cmdlist_signal_event_parameters.h"
 #include "level_zero/core/source/helpers/api_handle_helper.h"
+#include "level_zero/core/source/mutable_cmdlist/mutable_interface_types.h"
 #include <level_zero/ze_api.h>
 
 namespace NEO {
@@ -77,10 +78,6 @@ enum MclAluReg : uint32_t {
     mclAluRegPredicateResult = 41,
     mclAluRegMax = 42
 };
-
-#ifndef BIT
-#define BIT(x) (1u << (x))
-#endif
 
 struct InterfaceOperandDescriptor {
     enum Flags : uint32_t {
@@ -208,6 +205,7 @@ struct MutableCommandList {
     virtual ze_result_t loadFromBinary(const uint8_t *binary, const size_t binarySize) = 0;
 
     virtual ze_result_t getNextCommandId(const ze_mutable_command_id_ext_desc_t *desc, uint32_t numKernels, ze_kernel_handle_t *phKernels, uint64_t *pCommandId) = 0;
+    virtual ze_result_t getNextCommandId(const ze_mutable_command_id_exp_desc_t *desc, uint32_t numKernels, ze_kernel_handle_t *phKernels, uint64_t *pCommandId) = 0;
     virtual ze_result_t updateMutableCommands(const ze_mutable_commands_ext_desc_t *desc) = 0;
     virtual ze_result_t updateMutableCommandSignalEvent(uint64_t commandId, ze_event_handle_t signalEvent) = 0;
     virtual ze_result_t updateMutableCommandWaitEvents(uint64_t commandId, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) = 0;

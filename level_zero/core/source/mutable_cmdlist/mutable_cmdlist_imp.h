@@ -118,6 +118,7 @@ struct MutableCommandListImp : public MutableCommandList {
     ze_result_t loadFromBinary(const uint8_t *pBinary, const size_t binarySize) override;
 
     ze_result_t getNextCommandId(const ze_mutable_command_id_ext_desc_t *desc, uint32_t numKernels, ze_kernel_handle_t *phKernels, uint64_t *pCommandId) override;
+    ze_result_t getNextCommandId(const ze_mutable_command_id_exp_desc_t *desc, uint32_t numKernels, ze_kernel_handle_t *phKernels, uint64_t *pCommandId) override;
     ze_result_t updateMutableCommands(const ze_mutable_commands_ext_desc_t *desc) override;
     ze_result_t updateMutableCommandSignalEvent(uint64_t commandId, ze_event_handle_t signalEvent) override;
     ze_result_t updateMutableCommandWaitEvents(uint64_t commandId, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override;
@@ -164,13 +165,14 @@ struct MutableCommandListImp : public MutableCommandList {
         return this->semaphore64bCmdSupported;
     }
 
-    static constexpr bool kernelInstructionMutationEnabled(ze_mutable_command_ext_flags_t flags) {
-        return (flags & ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_INSTRUCTION) == ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_INSTRUCTION;
+    static constexpr bool kernelInstructionMutationEnabled(MutableFlags flags) {
+        return (flags & MutableFlag::kernelInstruction) == MutableFlag::kernelInstruction;
     }
 
     void addAsyncMutationElement(uint64_t gpuDestination, void *hostSource, size_t size, bool redirectToCopyOffload) override;
 
   protected:
+    auto getNextCommandIdImpl(const MutableCommandIdDescriptor &commandIdDesc, uint32_t numKernels, ze_kernel_handle_t *phKernels, uint64_t *pCommandId) -> ze_result_t;
     ze_result_t parseDispatchedKernel(L0::Kernel *kernel, MutableComputeWalker *mutableComputeWalker,
                                       size_t extraHeapSize, NEO::GraphicsAllocation *syncBuffer,
                                       Variable *firstSlmArgumentVariable, bool resetSlmArgumentValues);
@@ -230,7 +232,7 @@ struct MutableCommandListImp : public MutableCommandList {
 
     uint32_t maxPerThreadDataSize = 0;
     uint32_t inlineDataSize = 0;
-    ze_mutable_command_ext_flags_t nextMutationFlags = 0;
+    MutableFlags nextMutationFlags = 0;
 
     bool nextAppendKernelMutable = false;
     bool baseCmdListClosed = false;
