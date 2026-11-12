@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,8 @@
 
 #include "opencl/source/sharings/gl/gl_sharing.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
+
+#include "CL/cl_gl.h"
 
 namespace NEO {
 

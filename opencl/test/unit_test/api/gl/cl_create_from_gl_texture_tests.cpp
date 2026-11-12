@@ -9,6 +9,8 @@
 
 #include "opencl/test/unit_test/api/cl_api_tests.h"
 
+#include "CL/cl_gl.h"
+
 using namespace NEO;
 
 using ClCreateFromGLTexture_ = ApiTests;

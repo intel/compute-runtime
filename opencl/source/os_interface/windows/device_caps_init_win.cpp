@@ -11,6 +11,10 @@
 #include "shared/source/device/device.h"
 
 #include "opencl/source/cl_device/cl_device.h"
+#include "opencl/source/sharings/d3d/cl_d3d_api.h"
+
+#include "CL/cl_ext.h"
+#include "CL/cl_gl.h"
 
 namespace NEO {
 

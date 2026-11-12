@@ -13,6 +13,7 @@
 #include "shared/source/os_interface/driver_info.h"
 
 #include "opencl/source/api/api.h"
+#include "opencl/source/api/dispatch.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/context/context.inl"
 #include "opencl/source/sharings/sharing_factory.h"

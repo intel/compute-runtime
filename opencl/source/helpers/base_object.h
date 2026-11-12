@@ -12,8 +12,9 @@
 #include "shared/source/utilities/mockable_virtual_defaults.h"
 #include "shared/source/utilities/reference_tracked_object.h"
 
-#include "opencl/source/api/dispatch.h"
+#include "opencl/source/api/dispatch_table_types.h"
 
+#include "CL/cl.h"
 #include <CL/cl_platform.h>
 
 #include <condition_variable>

@@ -15,6 +15,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/api/api.h"
+#include "opencl/source/api/dispatch.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"

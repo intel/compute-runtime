@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "opencl/source/api/dispatch_table_types.h"
+
 #include "CL/cl.h"
 #include "CL/cl_ext.h"
 #include "CL/cl_gl.h"
@@ -1350,17 +1352,7 @@ struct SCRTDispatchTable {
     INTELpfn_clSetPerformanceConfigurationINTEL clSetPerformanceConfigurationINTEL;
 };
 
-extern SDispatchTable icdGlobalDispatchTable;
-extern SCRTDispatchTable crtGlobalDispatchTable;
-
-struct SEntryPointsTable {
-    SDispatchTable *icdDispatch;
-    SCRTDispatchTable *crtDispatch;
-};
-
 struct SEntryPointsTableData {
     SDispatchTable icdDispatch;
     SCRTDispatchTable crtDispatch;
 };
-
-extern SEntryPointsTable globalDispatchTable;

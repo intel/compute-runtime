@@ -14,9 +14,12 @@
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/mocks/mock_device.h"
 
+#include "opencl/source/sharings/d3d/cl_d3d_api.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
+#include "CL/cl_ext.h"
+#include "CL/cl_gl.h"
 #include "gtest/gtest.h"
 
 using namespace ::testing;

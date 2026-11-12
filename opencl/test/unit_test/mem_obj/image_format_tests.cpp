@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "opencl/source/mem_obj/image.h"
 
+#include "CL/cl_gl.h"
 #include "gtest/gtest.h"
 
 using namespace NEO;

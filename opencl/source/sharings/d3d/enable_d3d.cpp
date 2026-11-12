@@ -13,6 +13,7 @@
 #include "shared/source/os_interface/windows/driver_info_windows.h"
 
 #include "opencl/source/api/api.h"
+#include "opencl/source/api/dispatch.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/context/context.inl"
 #include "opencl/source/os_interface/windows/d3d_sharing_functions.h"

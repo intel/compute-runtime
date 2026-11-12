@@ -17,6 +17,7 @@
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
+#include "CL/cl_gl.h"
 #include "gtest/gtest.h"
 
 using namespace NEO;

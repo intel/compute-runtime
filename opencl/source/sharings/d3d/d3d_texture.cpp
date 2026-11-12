@@ -22,6 +22,8 @@
 #include "opencl/source/helpers/gmm_types_converter.h"
 #include "opencl/source/mem_obj/image.h"
 
+#include "CL/cl_d3d11.h"
+
 using namespace NEO;
 
 template <typename D3D>

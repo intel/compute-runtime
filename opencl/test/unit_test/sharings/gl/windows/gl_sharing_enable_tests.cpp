@@ -7,6 +7,7 @@
 
 #include "shared/test/common/fixtures/memory_management_fixture.h"
 
+#include "opencl/source/api/dispatch.h"
 #include "opencl/source/sharings/gl/cl_gl_api_intel.h"
 #include "opencl/source/sharings/gl/windows/win_enable_gl.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"

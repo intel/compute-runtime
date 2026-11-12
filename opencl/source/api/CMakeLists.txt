@@ -14,6 +14,7 @@ set(RUNTIME_SRCS_API
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_types.h
     ${CMAKE_CURRENT_SOURCE_DIR}/dispatch.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/dispatch.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_table_types.h
     ${CMAKE_CURRENT_SOURCE_DIR}/leo_forwarding.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/leo_forwarding.h
 )

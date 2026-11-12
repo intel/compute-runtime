@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,8 @@
 
 #include "opencl/source/helpers/cl_validators.h"
 #include "opencl/source/mem_obj/image.h"
+
+#include "CL/cl_gl.h"
 
 namespace NEO {
 

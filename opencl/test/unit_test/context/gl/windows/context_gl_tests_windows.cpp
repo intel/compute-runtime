@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "opencl/test/unit_test/context/gl/context_gl_tests.h"
+
+#include "CL/cl_gl.h"
 
 namespace NEO {
 

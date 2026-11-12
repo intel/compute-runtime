@@ -1,12 +1,14 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "opencl/source/api/dispatch.h"
+#include "opencl/source/api/dispatch_table_types.h"
+
+#include "CL/cl.h"
 
 struct ClDispatch {
     SEntryPointsTable dispatch;

@@ -24,6 +24,8 @@
 #include "opencl/source/helpers/enqueue_properties.h"
 #include "opencl/source/helpers/properties_helper.h"
 
+#include "CL/cl_ext.h"
+
 #include <cstdint>
 #include <mutex>
 #include <optional>

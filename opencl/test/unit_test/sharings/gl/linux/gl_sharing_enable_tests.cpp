@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/test/common/fixtures/memory_management_fixture.h"
 
+#include "opencl/source/api/dispatch.h"
 #include "opencl/source/sharings/gl/linux/gl_sharing_linux.h"
 #include "opencl/source/sharings/gl/linux/lin_enable_gl.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"

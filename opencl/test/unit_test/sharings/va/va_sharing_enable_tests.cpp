@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "shared/test/common/fixtures/memory_management_fixture.h"
 #include "shared/test/common/helpers/variable_backup.h"
 
+#include "opencl/source/api/dispatch.h"
 #include "opencl/source/sharings/va/enable_va.h"
 #include "opencl/source/sharings/va/va_sharing_functions.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
