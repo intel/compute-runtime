@@ -9,12 +9,10 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
-#include "shared/source/helpers/addressing_mode_helper.h"
 #include "shared/source/helpers/cache_flush_xehp_and_later.inl"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/l3_range.h"
 #include "shared/source/helpers/simd_helper.h"
-#include "shared/source/release_helpers/release_helper/release_helper.h"
 
 #include "opencl/source/command_queue/gpgpu_walker_base.inl"
 #include "opencl/source/kernel/kernel.h"
@@ -149,10 +147,7 @@ size_t EnqueueOperation<GfxFamily>::getSizeRequiredCSKernel(bool reserveProfilin
                   HardwareCommandsHelper<GfxFamily>::getSizeRequiredCS() +
                   EncodeMemoryPrefetch<GfxFamily>::getSizeForMemoryPrefetch(pKernel->getKernelInfo().heapInfo.kernelHeapSize, commandQueue.getDevice().getRootDeviceEnvironment());
 
-    const auto &releaseHelper = commandQueue.getDevice().getReleaseHelper();
-    const bool kernelUsesImageOrSampler = pKernel->getDescriptor().kernelAttributes.usesImageOrSamplerState();
-    if (releaseHelper.isStateCacheInvalidationWaRequired(true, kernelUsesImageOrSampler) &&
-        AddressingModeHelper::containsStatefulAccess(pKernel->getDescriptor())) {
+    if (pKernel->requiresStateCacheInvalidationWa()) {
         size += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
     }
 

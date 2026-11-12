@@ -2336,8 +2336,7 @@ HWTEST2_F(CommandListAppendLaunchKernelMockModule,
     EXPECT_NE(eventAllocationIt, cmdlistResidency.end());
 }
 
-HWTEST2_F(CommandListAppendLaunchKernelMockModule,
-          givenStateCacheInvalidationWaIsRequiredWhenTwoKernelsWithStatefulAccessAreAppendedThenPipeControlWithStateCacheInvalidationAndCsStallIsInsertedBetweenWalkers, IsAtLeastXeCore) {
+HWTEST_F(CommandListAppendLaunchKernelMockModule, givenStateCacheInvalidationWaIsRequiredWhenTwoKernelsWithStatefulAccessAreAppendedThenPipeControlWithStateCacheInvalidationAndCsStallIsInsertedBetweenWalkers) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using COMPUTE_WALKER = typename FamilyType::DefaultWalkerType;
 
@@ -2393,8 +2392,7 @@ HWTEST2_F(CommandListAppendLaunchKernelMockModule,
     }
 }
 
-HWTEST2_F(CommandListAppendLaunchKernelMockModule,
-          givenStateCacheInvalidationWaIsNotRequiredWhenTwoKernelsWithStatefulAccessAreAppendedToImmediateCmdListThenPipeControlWithStateCacheInvalidationIsNotInsertedBetweenWalkers, IsAtLeastXeCore) {
+HWTEST_F(CommandListAppendLaunchKernelMockModule, givenStateCacheInvalidationWaIsNotRequiredWhenTwoKernelsWithStatefulAccessAreAppendedToImmediateCmdListThenPipeControlWithStateCacheInvalidationIsNotInsertedBetweenWalkers) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using COMPUTE_WALKER = typename FamilyType::DefaultWalkerType;
 
@@ -2451,8 +2449,7 @@ HWTEST2_F(CommandListAppendLaunchKernelMockModule,
     rootDeviceEnvironment.releaseHelper = std::move(releaseHelperBackup);
 }
 
-HWTEST2_F(CommandListAppendLaunchKernelMockModule,
-          givenStateCacheInvalidationWaIsNotRequiredWhenKernelIsAppendedThenKernelArgumentsAreNotScannedForStatefulAccess, IsAtLeastXeCore) {
+HWTEST_F(CommandListAppendLaunchKernelMockModule, givenStateCacheInvalidationWaIsNotRequiredWhenKernelIsAppendedThenKernelArgumentsAreNotScannedForStatefulAccess) {
     auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironmentRef();
     auto releaseHelperBackup = std::move(rootDeviceEnvironment.releaseHelper);
 
@@ -2471,8 +2468,7 @@ HWTEST2_F(CommandListAppendLaunchKernelMockModule,
     rootDeviceEnvironment.releaseHelper = std::move(releaseHelperBackup);
 }
 
-HWTEST2_F(CommandListAppendLaunchKernelMockModule,
-          givenStateCacheInvalidationWaIsRequiredWhenKernelIsAppendedThenKernelArgumentsAreScannedForStatefulAccess, IsAtLeastXeCore) {
+HWTEST_F(CommandListAppendLaunchKernelMockModule, givenStateCacheInvalidationWaIsRequiredWhenKernelIsAppendedThenKernelArgumentsAreScannedForStatefulAccess) {
     auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironmentRef();
     auto releaseHelperBackup = std::move(rootDeviceEnvironment.releaseHelper);
 
@@ -2491,8 +2487,7 @@ HWTEST2_F(CommandListAppendLaunchKernelMockModule,
     rootDeviceEnvironment.releaseHelper = std::move(releaseHelperBackup);
 }
 
-HWTEST2_F(CommandListAppendLaunchKernelMockModule,
-          givenStateCacheInvalidationWaIsRequiredWhenTwoKernelsWithoutStatefulAccessAreAppendedThenPipeControlWithStateCacheInvalidationIsNotInsertedBetweenWalkers, IsAtLeastXeCore) {
+HWTEST_F(CommandListAppendLaunchKernelMockModule, givenStateCacheInvalidationWaIsRequiredWhenTwoKernelsWithoutStatefulAccessAreAppendedThenPipeControlWithStateCacheInvalidationIsNotInsertedBetweenWalkers) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using COMPUTE_WALKER = typename FamilyType::DefaultWalkerType;
 
@@ -2532,6 +2527,63 @@ HWTEST2_F(CommandListAppendLaunchKernelMockModule,
     }
 
     EXPECT_FALSE(foundStateCacheInvalidation);
+}
+
+HWTEST_F(CommandListAppendLaunchKernelMockModule, givenStateCacheInvalidationWaIsRequiredWhenTwoKernelsUsingImagesAreAppendedToImmediateCmdListThenPipeControlWithStateCacheInvalidationAndCsStallIsInsertedBetweenWalkers) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using COMPUTE_WALKER = typename FamilyType::DefaultWalkerType;
+
+    auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironmentRef();
+    auto releaseHelperBackup = std::move(rootDeviceEnvironment.releaseHelper);
+
+    auto releaseHelper = std::make_unique<MockReleaseHelper>();
+    releaseHelper->isStateCacheInvalidationWaRequiredResult = true;
+    rootDeviceEnvironment.releaseHelper = std::move(releaseHelper);
+
+    static_cast<ModuleImp *>(module.get())->getTranslationUnit()->isGeneratedByIgc = true;
+    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.usesImages = true;
+    NEO::ArgDescriptor imageArg(NEO::ArgDescriptor::argTImage);
+    imageArg.as<NEO::ArgDescImage>().bindful = 0x0;
+    mockKernelImmData->kernelDescriptor->payloadMappings.explicitArgs.push_back(imageArg);
+    commandListImmediate->cmdListHeapAddressModel = NEO::HeapAddressModel::privateHeaps;
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+
+    auto usedSpaceBefore = commandListImmediate->getCmdContainer().getCommandStream()->getUsed();
+    auto returnValue = commandListImmediate->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    returnValue = commandListImmediate->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto usedSpaceAfter = commandListImmediate->getCmdContainer().getCommandStream()->getUsed();
+    EXPECT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList,
+        ptrOffset(commandListImmediate->getCmdContainer().getCommandStream()->getCpuBase(), usedSpaceBefore),
+        usedSpaceAfter - usedSpaceBefore));
+
+    auto walkers = findAll<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(2u, walkers.size());
+
+    auto itorPC = findAll<PIPE_CONTROL *>(walkers[0], walkers[1]);
+
+    PIPE_CONTROL *stateCacheInvalidationPipeControl = nullptr;
+    for (auto it : itorPC) {
+        auto pcCmd = genCmdCast<PIPE_CONTROL *>(*it);
+        if (pcCmd->getStateCacheInvalidationEnable()) {
+            stateCacheInvalidationPipeControl = pcCmd;
+            break;
+        }
+    }
+
+    ASSERT_NE(nullptr, stateCacheInvalidationPipeControl);
+    EXPECT_TRUE(stateCacheInvalidationPipeControl->getCommandStreamerStallEnable());
+
+    rootDeviceEnvironment.releaseHelper = std::move(releaseHelperBackup);
 }
 
 } // namespace ult

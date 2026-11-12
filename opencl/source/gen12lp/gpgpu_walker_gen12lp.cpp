@@ -172,6 +172,9 @@ size_t EnqueueOperation<GfxFamily>::getSizeRequiredCSKernel(bool reserveProfilin
     }
     size += PerformanceCounters::getGpuCommandsSize(commandQueue.getPerfCounters(), commandQueue.getGpgpuEngine().osContext->getEngineType(), reservePerfCounters);
     size += GpgpuWalkerHelper<GfxFamily>::getSizeForWaDisableRccRhwoOptimization(pKernel);
+    if (pKernel->requiresStateCacheInvalidationWa()) {
+        size += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier();
+    }
 
     return size;
 }
@@ -274,6 +277,12 @@ void HardwareInterface<Family>::dispatchWorkarounds(
                                         value,
                                         false,
                                         commandQueue.isBcs());
+    }
+
+    if (!enable && kernel.requiresStateCacheInvalidationWa()) {
+        PipeControlArgs args{};
+        args.stateCacheInvalidationEnable = true;
+        MemorySynchronizationCommands<Family>::addSingleBarrier(*commandStream, args);
     }
 }
 

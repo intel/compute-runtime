@@ -697,7 +697,11 @@ HWTEST2_F(EnqueueReadImageTest, GivenBlockingEnqueueWhenReadingImageThenPipeCont
 
     auto itorWalker = find<typename FamilyType::GPGPU_WALKER *>(cmdList.begin(), cmdList.end());
 
-    auto itorCmd = find<PIPE_CONTROL *>(itorWalker, cmdList.end());
+    auto itorStateCacheInvalidation = find<PIPE_CONTROL *>(itorWalker, cmdList.end());
+    ASSERT_NE(cmdList.end(), itorStateCacheInvalidation);
+    EXPECT_TRUE(genCmdCast<PIPE_CONTROL *>(*itorStateCacheInvalidation)->getStateCacheInvalidationEnable());
+
+    auto itorCmd = find<PIPE_CONTROL *>(++itorStateCacheInvalidation, cmdList.end());
     auto *cmd = (PIPE_CONTROL *)*itorCmd;
     EXPECT_NE(cmdList.end(), itorCmd);
 

@@ -49,6 +49,7 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/performance_counters.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/utilities/logger.h"
 #include "shared/source/utilities/stackvec.h"
 #include "shared/source/utilities/tag_allocator.h"
@@ -6037,6 +6038,13 @@ bool CommandListCoreFamily<gfxCoreFamily>::isKernelUncachedMocsRequired(bool ker
         return false;
     }
     return this->containsStatelessUncachedResource;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+bool CommandListCoreFamily<gfxCoreFamily>::isStateCacheInvalidationWaRequired(KernelImp &kernel) const {
+    const auto &releaseHelper = this->device->getNEODevice()->getReleaseHelper();
+    return releaseHelper.isStateCacheInvalidationWaRequired(this->isImmediateType(), kernel.getKernelDescriptor().kernelAttributes.usesImageOrSamplerState()) &&
+           kernel.checkKernelContainsStatefulAccess();
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

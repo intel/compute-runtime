@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 
 namespace NEO {
@@ -17,5 +18,14 @@ const SupportedNumGrfs ReleaseHelperHw<release>::getSupportedNumGrfs() const {
 template <>
 bool ReleaseHelperHw<release>::isResolvingSubDeviceIDNeeded() const {
     return true;
+}
+
+template <>
+bool ReleaseHelperHw<release>::isStateCacheInvalidationWaRequired(bool isImmediateCmdList, bool kernelUsesImageOrSampler) const {
+    auto enableStateCacheInvalidationWa = debugManager.flags.EnableStateCacheInvalidationWa.get();
+    if (enableStateCacheInvalidationWa != -1) {
+        return enableStateCacheInvalidationWa;
+    }
+    return isImmediateCmdList && kernelUsesImageOrSampler;
 }
 } // namespace NEO

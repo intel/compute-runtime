@@ -300,6 +300,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         kernelWithAssertAppended = true;
     }
 
+    if (isStateCacheInvalidationWaRequired(*kernelImp)) {
+        NEO::PipeControlArgs args{};
+        args.stateCacheInvalidationEnable = true;
+        NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
+    }
+
     if (pauseOnEnqueue.beforeWorkload || pauseOnEnqueue.afterWorkload) [[unlikely]] {
         programPauseOnEnqueueCommands(additionalCommands, pauseOnEnqueue);
     }

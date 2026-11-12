@@ -14,7 +14,6 @@
 #include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/program/kernel_info.h"
-#include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/unified_memory/unified_memory.h"
 #include "shared/source/utilities/software_tags_manager.h"
 #include "shared/source/utilities/tag_allocator.h"
@@ -556,12 +555,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         kernelWithAssertAppended = true;
     }
 
-    const auto &releaseHelper = neoDevice->getReleaseHelper();
-    bool kernelUsesRayTracing = kernelImp->usesRayTracing();
-    const bool programStateCacheInvalidation = kernelUsesRayTracing ||
-                                               (releaseHelper.isStateCacheInvalidationWaRequired(this->isImmediateType(),
-                                                                                                 kernelDescriptor.kernelAttributes.usesImageOrSamplerState()) &&
-                                                kernelImp->checkKernelContainsStatefulAccess());
+    const bool programStateCacheInvalidation = kernelImp->usesRayTracing() || isStateCacheInvalidationWaRequired(*kernelImp);
 
     if (!launchParams.makeKernelCommandView && programStateCacheInvalidation) {
         NEO::PipeControlArgs args{};

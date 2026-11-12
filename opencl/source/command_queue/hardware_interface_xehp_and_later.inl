@@ -11,12 +11,10 @@
 #include "shared/source/command_stream/scratch_space_controller.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
-#include "shared/source/helpers/addressing_mode_helper.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_interface.h"
-#include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/utilities/tag_allocator.h"
 
 #include "opencl/source/command_queue/hardware_interface_base.inl"
@@ -41,10 +39,7 @@ inline void HardwareInterface<GfxFamily>::dispatchWorkarounds(
     CommandQueue &commandQueue,
     Kernel &kernel,
     const bool &enable) {
-    bool containsStatefulAccess = AddressingModeHelper::containsStatefulAccess(kernel.getDescriptor());
-    bool kernelUseImageOrSampler = kernel.getDescriptor().kernelAttributes.usesImageOrSamplerState();
-    bool stateCacheInvalidationWaRequired = commandQueue.getDevice().getReleaseHelper().isStateCacheInvalidationWaRequired(true, kernelUseImageOrSampler) && containsStatefulAccess;
-    if (!enable && stateCacheInvalidationWaRequired) {
+    if (!enable && kernel.requiresStateCacheInvalidationWa()) {
         PipeControlArgs args{};
         args.stateCacheInvalidationEnable = true;
         MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandStream, args);

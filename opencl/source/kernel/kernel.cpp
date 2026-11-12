@@ -17,6 +17,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/address_patch.h"
+#include "shared/source/helpers/addressing_mode_helper.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
@@ -38,6 +39,7 @@
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 #include "shared/source/program/kernel_info.h"
+#include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/utilities/logger.h"
 #include "shared/source/utilities/lookup_array.h"
 #include "shared/source/utilities/shared_pool_allocation.h"
@@ -2133,6 +2135,14 @@ bool Kernel::requiresWaDisableRccRhwoOptimization() const {
         }
     }
     return false;
+}
+
+bool Kernel::requiresStateCacheInvalidationWa() const {
+    constexpr bool enqueueSubmitsImmediately = true;
+    const auto &kernelDescriptor = getDescriptor();
+    const auto &releaseHelper = getDevice().getRootDeviceEnvironment().getReleaseHelper();
+    return releaseHelper.isStateCacheInvalidationWaRequired(enqueueSubmitsImmediately, kernelDescriptor.kernelAttributes.usesImageOrSamplerState()) &&
+           AddressingModeHelper::containsStatefulAccess(kernelDescriptor);
 }
 
 const HardwareInfo &Kernel::getHardwareInfo() const {

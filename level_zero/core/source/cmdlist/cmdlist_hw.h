@@ -488,6 +488,7 @@ struct CommandListCoreFamily : public CommandList {
     static bool containsExternalAllocation(const NEO::ResidencyContainer &residencyContainer);
 
     bool isKernelUncachedMocsRequired(bool kernelState);
+    bool isStateCacheInvalidationWaRequired(KernelImp &kernel) const;
 
     void postInitComputeSetup();
     NEO::PreemptionMode obtainKernelPreemptionMode(Kernel *kernel);

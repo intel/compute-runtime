@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 
 #include "opencl/source/command_queue/gpgpu_walker.h"
 #include "opencl/source/command_queue/hardware_interface.h"
+#include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
@@ -44,7 +45,11 @@ class MockKernelWithApplicableWa : public MockKernel {
     bool requiresWaDisableRccRhwoOptimization() const override {
         return waApplicable;
     }
+    bool requiresStateCacheInvalidationWa() const override {
+        return stateCacheInvalidationWaRequired;
+    }
     bool waApplicable = false;
+    bool stateCacheInvalidationWaRequired = false;
 };
 
 struct HardwareInterfaceTests : public ClDeviceFixture, public LinearStreamFixture, public ::testing::Test {
@@ -150,6 +155,37 @@ GEN12LPTEST_F(HardwareInterfaceTests, GivenKernelWithoutApplicableWaDisableRccRh
     pKernel->waApplicable = false;
     auto cmdSize = GpgpuWalkerHelper<FamilyType>::getSizeForWaDisableRccRhwoOptimization(pKernel);
     EXPECT_EQ(0u, cmdSize);
+}
+
+GEN12LPTEST_F(HardwareInterfaceTests, GivenKernelRequiringStateCacheInvalidationWaWhenDispatchWorkaroundsIsCalledThenPipeControlWithStateCacheInvalidationAndCsStallIsProgrammedOnlyAfterWalker) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    pKernel->stateCacheInvalidationWaRequired = true;
+
+    HardwareInterface<FamilyType>::dispatchWorkarounds(&linearStream, *pCommandQueue, *pKernel, true);
+    EXPECT_EQ(0u, linearStream.getUsed());
+
+    HardwareInterface<FamilyType>::dispatchWorkarounds(&linearStream, *pCommandQueue, *pKernel, false);
+    ASSERT_EQ(MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier(), linearStream.getUsed());
+
+    HardwareParse hwParse;
+    hwParse.parseCommands<FamilyType>(linearStream);
+    auto itorPipeCtrl = find<PIPE_CONTROL *>(hwParse.cmdList.begin(), hwParse.cmdList.end());
+    ASSERT_NE(hwParse.cmdList.end(), itorPipeCtrl);
+    auto pipeControl = genCmdCast<PIPE_CONTROL *>(*itorPipeCtrl);
+    ASSERT_NE(nullptr, pipeControl);
+    EXPECT_TRUE(pipeControl->getStateCacheInvalidationEnable());
+    EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
+}
+
+GEN12LPTEST_F(HardwareInterfaceTests, GivenKernelRequiringStateCacheInvalidationWaWhenCalculatingKernelCommandsSizeThenSingleBarrierSizeIsAdded) {
+    DispatchInfo dispatchInfo{};
+    auto sizeWithoutWa = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, false, false, *pCommandQueue, pKernel, dispatchInfo);
+
+    pKernel->stateCacheInvalidationWaRequired = true;
+    auto sizeWithWa = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, false, false, *pCommandQueue, pKernel, dispatchInfo);
+
+    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier(), sizeWithWa - sizeWithoutWa);
 }
 
 } // namespace NEO
