@@ -1027,7 +1027,7 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemoryForImage(const Allocati
     auto hostPtrAllocation = allocateGraphicsMemoryForImageFromHostPtr(allocationDataWithSize);
 
     if (hostPtrAllocation) {
-        hostPtrAllocation->setDefaultGmm(gmm.release());
+        hostPtrAllocation->setDefaultGmm(std::move(gmm));
         return hostPtrAllocation;
     }
 

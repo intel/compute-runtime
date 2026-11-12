@@ -10,9 +10,11 @@
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_lib.h"
+#include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_allocation.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
+#include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/image/internal_core_image_ext.h"
@@ -35,9 +37,15 @@ class MemoryManagerGlExtNTHandleMock : public NEO::OsAgnosticMemoryManager {
         GmmRequirements gmmRequirements{};
         gmmRequirements.allowLargePages = true;
         gmmRequirements.preferCompressed = false;
-        graphicsAllocation->setDefaultGmm(new Gmm(executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
+        constexpr size_t importedGmmSize = 1u;
+        constexpr size_t importedGmmAlignment = 0u;
+        auto importedGmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper(), nullptr, importedGmmSize, importedGmmAlignment, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements);
+        this->importedGmms.push_back(importedGmm.get());
+        graphicsAllocation->setDefaultGmm(std::move(importedGmm));
         return graphicsAllocation;
     }
+
+    std::vector<Gmm *> importedGmms;
 };
 
 class ImageCreateGlTextureExtFixture : public DeviceFixtureWithCustomMemoryManager<MemoryManagerGlExtNTHandleMock> {
@@ -291,6 +299,41 @@ HWTEST2_F(ImageCreateGlTextureExtTest, givenGlTextureExtDescWithMsaaAndMcsHandle
     EXPECT_FALSE(imageHW->isUnifiedMcsSurface);
 
     imageHW.reset(nullptr);
+}
+
+HWTEST2_F(ImageCreateGlTextureExtTest, givenGmmResourceInfosOfTextureAndMcsWhenCreatingImageThenGmmsOfImportedAllocationsAreReplaced, SupportsLegacyRenderSurfaceState) {
+    ze_external_memory_import_win32_handle_t importNTHandle = {};
+    importNTHandle.handle = &imageHandle;
+    importNTHandle.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
+    importNTHandle.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_WIN32;
+
+    auto gmmHelper = neoDevice->getRootDeviceEnvironment().getGmmHelper();
+    auto textureGmm = std::make_unique<MockGmm>(gmmHelper);
+    auto mcsGmm = std::make_unique<MockGmm>(gmmHelper);
+
+    constexpr uint32_t numberOfSamples = 4u;
+    uint64_t mcsHandle = 0u;
+    ze_external_gl_texture_ext_desc_t glTextureExtDesc = {};
+    glTextureExtDesc.pNext = &importNTHandle;
+    glTextureExtDesc.pGmmResInfo = textureGmm->gmmResourceInfo->peekGmmResourceInfo();
+    glTextureExtDesc.numberOfSamples = numberOfSamples;
+    glTextureExtDesc.mcsNtHandle = &mcsHandle;
+    glTextureExtDesc.pGmmResInfoMcs = mcsGmm->gmmResourceInfo->peekGmmResourceInfo();
+
+    desc.type = ZE_IMAGE_TYPE_2D;
+    desc.pNext = &glTextureExtDesc;
+
+    auto memoryManager = static_cast<MemoryManagerGlExtNTHandleMock *>(execEnv->memoryManager.get());
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    auto ret = imageHW->initialize(device, &desc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    ASSERT_EQ(2u, memoryManager->importedGmms.size());
+    ASSERT_NE(nullptr, imageHW->getAllocation()->getDefaultGmm());
+    EXPECT_NE(memoryManager->importedGmms[0], imageHW->getAllocation()->getDefaultGmm());
+    ASSERT_NE(nullptr, imageHW->mcsAllocation);
+    ASSERT_NE(nullptr, imageHW->mcsAllocation->getDefaultGmm());
+    EXPECT_NE(memoryManager->importedGmms[1], imageHW->mcsAllocation->getDefaultGmm());
 }
 
 HWTEST2_F(ImageCreateGlTextureExtTest, givenGlTextureExtDescWithNoMsaaWhenCreatingImageThenMultisampleFieldsAreDefault, SupportsLegacyRenderSurfaceState) {

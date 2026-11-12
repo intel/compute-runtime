@@ -549,7 +549,7 @@ void ImageImp::applyGlTextureExtOverrides(NEO::GraphicsAllocation *allocation,
         auto gmmResInfo = gmmHelper->getClientContext()->getGmmResInfoFromExternalResourceHandle(pGmmResInfo);
         auto importedGmmResInfo = std::unique_ptr<NEO::GmmResourceInfo>(NEO::GmmResourceInfo::create(gmmHelper->getClientContext(), gmmResInfo));
         if (importedGmmResInfo) {
-            allocation->setDefaultGmm(new NEO::Gmm(gmmHelper, importedGmmResInfo.get()));
+            allocation->setDefaultGmm(std::make_unique<NEO::Gmm>(gmmHelper, importedGmmResInfo.get()));
         }
     }
 
@@ -613,7 +613,7 @@ void ImageImp::applyGlTextureExtOverrides(NEO::GraphicsAllocation *allocation,
             auto gmmResInfoMcs = gmmHelper->getClientContext()->getGmmResInfoFromExternalResourceHandle(pGmmResInfoMcs);
             auto mcsGmmResInfo = std::unique_ptr<NEO::GmmResourceInfo>(NEO::GmmResourceInfo::create(gmmHelper->getClientContext(), gmmResInfoMcs));
             if (mcsGmmResInfo) {
-                this->mcsAllocation->setDefaultGmm(new NEO::Gmm(gmmHelper, mcsGmmResInfo.get()));
+                this->mcsAllocation->setDefaultGmm(std::make_unique<NEO::Gmm>(gmmHelper, mcsGmmResInfo.get()));
             }
         }
 

@@ -226,19 +226,17 @@ GraphicsAllocation *GlBuffer::createGraphicsAllocation(Context *context, unsigne
 
     if (!reusedAllocation) {
         sharingFunctions->graphicsAllocationsForGlBufferReuse.push_back(std::make_pair(bufferId, graphicsAllocation));
+        auto helper = context->getDevice(0)->getRootDeviceEnvironment().getGmmHelper();
         if (bufferInfo.pGmmResInfo) {
-            DEBUG_BREAK_IF(graphicsAllocation->getDefaultGmm() != nullptr);
-            auto helper = context->getDevice(0)->getRootDeviceEnvironment().getGmmHelper();
             auto gmmResInfo = helper->getClientContext()->getGmmResInfoFromExternalResourceHandle(bufferInfo.pGmmResInfo);
             auto gmmResourceInfo = std::unique_ptr<GmmResourceInfo>(GmmResourceInfo::create(helper->getClientContext(), gmmResInfo));
-            graphicsAllocation->setDefaultGmm(new Gmm(helper, gmmResourceInfo.get()));
+            graphicsAllocation->setDefaultGmm(std::make_unique<Gmm>(helper, gmmResourceInfo.get()));
         } else {
-            auto helper = context->getDevice(0)->getRootDeviceEnvironment().getGmmHelper();
             StorageInfo storageInfo = {};
             GmmRequirements gmmRequirements{};
 
-            graphicsAllocation->setDefaultGmm(new Gmm(helper,
-                                                      nullptr, bufferInfo.bufferSize, 1, GMM_RESOURCE_USAGE_UNKNOWN, storageInfo, gmmRequirements));
+            constexpr size_t gmmAlignment = 1u;
+            graphicsAllocation->setDefaultGmm(std::make_unique<Gmm>(helper, nullptr, bufferInfo.bufferSize, gmmAlignment, GMM_RESOURCE_USAGE_UNKNOWN, storageInfo, gmmRequirements));
         }
     }
 

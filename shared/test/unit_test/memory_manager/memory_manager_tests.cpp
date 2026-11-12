@@ -1673,6 +1673,49 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenAllocateGraphicsMemor
     memoryManager.freeGraphicsMemory(imageAllocation);
 }
 
+TEST(OsAgnosticMemoryManager, givenHostPtrAllocationWithDefaultGmmWhenAllocateGraphicsMemoryForImageIsCalledThenImageGmmReplacesHostPtrAllocationGmm) {
+    class MemoryManagerWithGmmInHostPtrAllocation : public MockMemoryManager {
+      public:
+        using MockMemoryManager::MockMemoryManager;
+        GraphicsAllocation *allocateGraphicsMemoryWithHostPtr(const AllocationData &allocationData) override {
+            auto allocation = MockMemoryManager::allocateGraphicsMemoryWithHostPtr(allocationData);
+            allocation->setDefaultGmm(std::make_unique<MockGmm>(this->getGmmHelper(allocationData.rootDeviceIndex)));
+            return allocation;
+        }
+    };
+
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    MemoryManagerWithGmmInHostPtrAllocation memoryManager(executionEnvironment);
+    ImageDescriptor imgDesc = {};
+    imgDesc.imageWidth = MemoryConstants::pageSize;
+    imgDesc.imageHeight = 1u;
+    imgDesc.imageType = ImageType::image1D;
+    SurfaceFormatInfo surfaceFormat = {};
+    surfaceFormat.gmmSurfaceFormat = GMM_FORMAT_R8_UINT_TYPE;
+    surfaceFormat.genxSurfaceFormat = SurfaceFormat::GFX3DSTATE_SURFACEFORMAT_R8_UINT;
+    surfaceFormat.numChannels = 1u;
+    surfaceFormat.perChannelSizeInBytes = sizeof(uint8_t);
+    surfaceFormat.imageElementSizeInBytes = sizeof(uint8_t);
+    constexpr int baseMipLevel = 0;
+    auto imgInfo = MockGmm::initImgInfo(imgDesc, baseMipLevel, &surfaceFormat);
+    imgInfo.linearStorage = true;
+
+    alignas(MemoryConstants::pageSize) std::array<uint8_t, MemoryConstants::pageSize> hostMemory{};
+
+    AllocationData allocationData;
+    allocationData.imgInfo = &imgInfo;
+    allocationData.hostPtr = hostMemory.data();
+
+    auto imageAllocation = memoryManager.allocateGraphicsMemoryForImage(allocationData);
+    ASSERT_NE(nullptr, imageAllocation);
+    EXPECT_EQ(hostMemory.data(), imageAllocation->getUnderlyingBuffer());
+    ASSERT_NE(nullptr, imageAllocation->getDefaultGmm());
+    const auto *gmmResourceParams = reinterpret_cast<const GMM_RESCREATE_PARAMS *>(imageAllocation->getDefaultGmm()->resourceParamsData.data());
+    EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_IMAGE, gmmResourceParams->Usage);
+
+    memoryManager.freeGraphicsMemory(imageAllocation);
+}
+
 TEST(OsAgnosticMemoryManager, givenDestroyedTagAllocationWhenWaitForCompletiionThenWaitForTaskCountIsNotCalled) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     auto memoryManager = new OsAgnosticMemoryManager(executionEnvironment);

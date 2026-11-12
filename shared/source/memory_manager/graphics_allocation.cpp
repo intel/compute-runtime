@@ -110,6 +110,11 @@ uint32_t GraphicsAllocation::getUsedPageSize() const {
     }
 }
 
+void GraphicsAllocation::setDefaultGmm(std::unique_ptr<Gmm> gmm) {
+    delete this->getDefaultGmm();
+    this->setDefaultGmm(gmm.release());
+}
+
 bool GraphicsAllocation::isAllocationLockable() const {
     auto gmm = getDefaultGmm();
     if (!gmm) {

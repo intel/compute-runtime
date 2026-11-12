@@ -68,11 +68,9 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
         return nullptr;
     }
     if (texInfo.pGmmResInfo) {
-        DEBUG_BREAK_IF(alloc->getDefaultGmm() != nullptr);
-
         auto gmmResInfo = gmmHelper->getClientContext()->getGmmResInfoFromExternalResourceHandle(texInfo.pGmmResInfo);
         auto gmmResourceInfo = std::unique_ptr<GmmResourceInfo>(GmmResourceInfo::create(gmmHelper->getClientContext(), gmmResInfo));
-        alloc->setDefaultGmm(new Gmm(gmmHelper, gmmResourceInfo.get()));
+        alloc->setDefaultGmm(std::make_unique<Gmm>(gmmHelper, gmmResourceInfo.get()));
     }
 
     auto gmm = alloc->getDefaultGmm();
@@ -137,10 +135,9 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
         MemoryManager::OsHandleData osHandleData{texInfo.globalShareHandleMCS};
         mcsAlloc = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, allocProperties, false, false, true, nullptr);
         if (texInfo.pGmmResInfoMCS) {
-            DEBUG_BREAK_IF(mcsAlloc->getDefaultGmm() != nullptr);
             auto gmmResInfoMcs = gmmHelper->getClientContext()->getGmmResInfoFromExternalResourceHandle(texInfo.pGmmResInfoMCS);
             auto gmmResourceInfo = std::unique_ptr<GmmResourceInfo>(GmmResourceInfo::create(gmmHelper->getClientContext(), gmmResInfoMcs));
-            mcsAlloc->setDefaultGmm(new Gmm(gmmHelper, gmmResourceInfo.get()));
+            mcsAlloc->setDefaultGmm(std::make_unique<Gmm>(gmmHelper, gmmResourceInfo.get()));
         }
         mcsSurfaceInfo.pitch = getValidParam(static_cast<uint32_t>(mcsAlloc->getDefaultGmm()->gmmResourceInfo->getRenderPitch() / 128));
         mcsSurfaceInfo.qPitch = mcsAlloc->getDefaultGmm()->gmmResourceInfo->getQPitch();

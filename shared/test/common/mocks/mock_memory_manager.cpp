@@ -17,6 +17,7 @@
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
+#include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_host_ptr_manager.h"
 #include "shared/test/common/mocks/mock_os_context.h"
@@ -274,6 +275,11 @@ GraphicsAllocation *MockMemoryManager::createGraphicsAllocationFromSharedHandle(
         auto allocation = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(osHandleData, properties, requireSpecificBitness, isHostIpcAllocation, reuseSharedAllocation, mapPointer);
         this->capturedSharedHandle = osHandleData.handle;
         this->capturedIsHostIpcAllocation.push_back(isHostIpcAllocation);
+        if (this->setGmmInSharedHandleAllocation) {
+            auto gmm = std::make_unique<MockGmm>(this->getGmmHelper(properties.rootDeviceIndex));
+            this->sharedHandleAllocationGmm = gmm.get();
+            allocation->setDefaultGmm(std::move(gmm));
+        }
         return allocation;
     } else {
         this->capturedSharedHandle = osHandleData.handle;

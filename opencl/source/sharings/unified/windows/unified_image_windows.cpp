@@ -24,8 +24,7 @@ void *UnifiedImage::swapGmm(GraphicsAllocation *graphicsAllocation, Context *con
         auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
         auto gmm = std::make_unique<Gmm>(gmmHelper, *imgInfo, StorageInfo{}, false);
         gmm->updateImgInfoAndDesc(*imgInfo, 0, NEO::ImagePlane::noPlane);
-        delete graphicsAllocation->getDefaultGmm();
-        graphicsAllocation->setDefaultGmm(gmm.release());
+        graphicsAllocation->setDefaultGmm(std::move(gmm));
     } else {
         graphicsAllocation->getDefaultGmm()->updateImgInfoAndDesc(*imgInfo, 0, NEO::ImagePlane::noPlane);
     }

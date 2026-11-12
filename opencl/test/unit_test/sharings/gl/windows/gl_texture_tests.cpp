@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -214,6 +214,25 @@ TEST_F(GlSharingTextureTests, givenGmmResourceAsInputWhenTextureIsCreatedThenItH
     ASSERT_NE(nullptr, graphicsAllocation->getDefaultGmm()->gmmResourceInfo->peekHandle());
 
     delete glTexture;
+}
+
+TEST_F(GlSharingTextureTests, givenSharedHandleAllocationWithGmmAndGmmResourceAsInputWhenTextureIsCreatedThenGmmOfSharedHandleAllocationIsReplaced) {
+    cl_int retVal = CL_INVALID_VALUE;
+
+    glSharing->textureInfoOutput.globalShareHandle = textureId;
+    glSharing->textureInfoOutput.pGmmResInfo = this->tempMM->forceGmm->gmmResourceInfo->peekGmmResourceInfo();
+    glSharing->uploadDataToTextureInfo();
+
+    constexpr cl_GLint mipLevel = 0;
+    auto glTexture = std::unique_ptr<Image>(GlTexture::createSharedGlTexture(clContext.get(), CL_MEM_READ_WRITE, GL_TEXTURE_1D, mipLevel, textureId, &retVal));
+    auto sharedHandleAllocationGmm = this->tempMM->forceGmm.release();
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, glTexture);
+    auto graphicsAllocation = glTexture->getGraphicsAllocation(device->getRootDeviceIndex());
+    ASSERT_NE(nullptr, graphicsAllocation);
+    ASSERT_NE(nullptr, graphicsAllocation->getDefaultGmm());
+    EXPECT_NE(sharedHandleAllocationGmm, graphicsAllocation->getDefaultGmm());
+    EXPECT_NE(nullptr, graphicsAllocation->getDefaultGmm()->gmmResourceInfo->peekHandle());
 }
 
 TEST_F(GlSharingTextureTests, givenGmmResourceInfoWithMcsWhenMcsHandleIsNullAndMultisampleCountIsGreaterThanOneThenImageHasUnifiedMcs) {

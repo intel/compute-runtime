@@ -21,6 +21,7 @@
 #include "shared/source/utilities/idlist.h"
 #include "shared/source/utilities/mockable_virtual_defaults.h"
 
+#include <memory>
 #include <vector>
 
 namespace NEO {
@@ -492,6 +493,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
     void setDefaultGmm(Gmm *gmm) {
         setGmm(gmm, 0u);
     }
+    void setDefaultGmm(std::unique_ptr<Gmm> gmm);
     void setGmm(Gmm *gmm, uint32_t handleId) {
         gmms[handleId] = gmm;
     }

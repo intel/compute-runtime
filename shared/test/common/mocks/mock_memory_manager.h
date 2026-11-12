@@ -258,6 +258,8 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     uint32_t createGraphicsAllocationFromSharedHandleFailingRootDeviceIndex = std::numeric_limits<uint32_t>::max();
     uint64_t capturedPhysicalOffset = std::numeric_limits<uint64_t>::max();
     std::vector<bool> capturedIsHostIpcAllocation;
+    Gmm *sharedHandleAllocationGmm = nullptr;
+    bool setGmmInSharedHandleAllocation = false;
     std::atomic<bool> allocationCreated{false};
     bool allocation64kbPageCreated = false;
     std::atomic<bool> allocationInDevicePoolCreated{false};

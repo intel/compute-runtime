@@ -17,6 +17,7 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -304,9 +305,30 @@ TEST_F(GlSharingTests, givenClGlBufferWhenCreatingSharedBufferThenCreateOrDestro
 
 class MyGlBuffer : public GlBuffer {
   public:
+    using GlBuffer::createGraphicsAllocation;
     using GlBuffer::releaseResource;
     MyGlBuffer(GLSharingFunctions *sharingFunctions, unsigned int glObjectId) : GlBuffer(sharingFunctions, glObjectId) {}
 };
+
+TEST_F(GlSharingTests, givenSharedHandleAllocationWithGmmAndGmmResourceInfoWhenGraphicsAllocationIsCreatedThenGmmOfSharedHandleAllocationIsReplaced) {
+    MockMemoryManager memoryManager(*context.getDevice(0)->getExecutionEnvironment());
+    memoryManager.setGmmInSharedHandleAllocation = true;
+    VariableBackup<MemoryManager *> memoryManagerBackup(&context.memoryManager, &memoryManager);
+
+    auto gmmWithGlResourceInfo = std::make_unique<MockGmm>(context.getDevice(0)->getGmmHelper());
+    CL_GL_BUFFER_INFO bufferInfo = mockGlSharing->bufferInfoOutput;
+    bufferInfo.pGmmResInfo = gmmWithGlResourceInfo->gmmResourceInfo->peekGmmResourceInfo();
+
+    auto graphicsAllocation = MyGlBuffer::createGraphicsAllocation(&context, bufferId, bufferInfo);
+    ASSERT_NE(nullptr, graphicsAllocation);
+    ASSERT_NE(nullptr, memoryManager.sharedHandleAllocationGmm);
+    ASSERT_NE(nullptr, graphicsAllocation->getDefaultGmm());
+    EXPECT_NE(memoryManager.sharedHandleAllocationGmm, graphicsAllocation->getDefaultGmm());
+    EXPECT_NE(nullptr, graphicsAllocation->getDefaultGmm()->gmmResourceInfo->peekHandle());
+
+    mockGlSharingFunctions->graphicsAllocationsForGlBufferReuse.clear();
+    memoryManager.freeGraphicsMemory(graphicsAllocation);
+}
 
 TEST_F(GlSharingTests, givenClGlBufferWhenReleaseResourceCalledThenDoNotSetCreateOrDestroyFlag) {
     auto glSharingHandler = std::make_unique<MyGlBuffer>(context.getSharing<GLSharingFunctions>(), bufferId);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_gmm.h"
@@ -91,4 +92,49 @@ TEST_F(clGetSupportedGLTextureFormatsINTELTests, givenValidInputsWhenGettingForm
     for (uint32_t i = 0; i < glFormatsCount; i++) {
         EXPECT_NE(GlSharing::glToCLFormats.end(), GlSharing::glToCLFormats.find(glFormats[i]));
     }
+}
+
+class GlBufferWithGraphicsAllocationCreation : public GlBuffer {
+  public:
+    using GlBuffer::createGraphicsAllocation;
+};
+
+TEST_F(GlSharingTests, givenSharedHandleAllocationWithGmmAndGmmResourceInfoWhenGraphicsAllocationIsCreatedThenGmmOfSharedHandleAllocationIsReplaced) {
+    MockMemoryManager memoryManager(*context.getDevice(0)->getExecutionEnvironment());
+    memoryManager.setGmmInSharedHandleAllocation = true;
+    VariableBackup<MemoryManager *> memoryManagerBackup(&context.memoryManager, &memoryManager);
+
+    auto gmmWithGlResourceInfo = std::make_unique<MockGmm>(context.getDevice(0)->getGmmHelper());
+    CL_GL_BUFFER_INFO bufferInfo = mockGlSharing->bufferInfoOutput;
+    bufferInfo.pGmmResInfo = gmmWithGlResourceInfo->gmmResourceInfo->peekGmmResourceInfo();
+
+    auto graphicsAllocation = GlBufferWithGraphicsAllocationCreation::createGraphicsAllocation(&context, bufferId, bufferInfo);
+    ASSERT_NE(nullptr, graphicsAllocation);
+    ASSERT_NE(nullptr, memoryManager.sharedHandleAllocationGmm);
+    ASSERT_NE(nullptr, graphicsAllocation->getDefaultGmm());
+    EXPECT_NE(memoryManager.sharedHandleAllocationGmm, graphicsAllocation->getDefaultGmm());
+    EXPECT_NE(nullptr, graphicsAllocation->getDefaultGmm()->gmmResourceInfo->peekHandle());
+
+    mockGlSharingFunctions->graphicsAllocationsForGlBufferReuse.clear();
+    memoryManager.freeGraphicsMemory(graphicsAllocation);
+}
+
+TEST_F(GlSharingTests, givenSharedHandleAllocationWithGmmAndNoGmmResourceInfoWhenGraphicsAllocationIsCreatedThenGmmOfSharedHandleAllocationIsReplaced) {
+    MockMemoryManager memoryManager(*context.getDevice(0)->getExecutionEnvironment());
+    memoryManager.setGmmInSharedHandleAllocation = true;
+    VariableBackup<MemoryManager *> memoryManagerBackup(&context.memoryManager, &memoryManager);
+
+    CL_GL_BUFFER_INFO bufferInfo = mockGlSharing->bufferInfoOutput;
+    bufferInfo.pGmmResInfo = nullptr;
+
+    auto graphicsAllocation = GlBufferWithGraphicsAllocationCreation::createGraphicsAllocation(&context, bufferId, bufferInfo);
+    ASSERT_NE(nullptr, graphicsAllocation);
+    ASSERT_NE(nullptr, memoryManager.sharedHandleAllocationGmm);
+    ASSERT_NE(nullptr, graphicsAllocation->getDefaultGmm());
+    EXPECT_NE(memoryManager.sharedHandleAllocationGmm, graphicsAllocation->getDefaultGmm());
+    const auto *gmmResourceParams = reinterpret_cast<const GMM_RESCREATE_PARAMS *>(graphicsAllocation->getDefaultGmm()->resourceParamsData.data());
+    EXPECT_EQ(GMM_RESOURCE_USAGE_UNKNOWN, gmmResourceParams->Usage);
+
+    mockGlSharingFunctions->graphicsAllocationsForGlBufferReuse.clear();
+    memoryManager.freeGraphicsMemory(graphicsAllocation);
 }
