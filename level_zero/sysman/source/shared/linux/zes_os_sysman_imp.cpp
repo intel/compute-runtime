@@ -30,6 +30,7 @@
 #include "level_zero/sysman/source/api/pci/sysman_pci_utils.h"
 #include "level_zero/sysman/source/device/sysman_device_imp.h"
 #include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
+#include "level_zero/sysman/source/shared/linux/fwctl/sysman_fwctl.h"
 #include "level_zero/sysman/source/shared/linux/kmd_interface/sysman_kmd_interface.h"
 #include "level_zero/sysman/source/shared/linux/pmu/sysman_pmu.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
@@ -311,6 +312,19 @@ void LinuxSysmanImp::releaseFwUtilInterface() {
     }
 }
 
+FwctlInterface *LinuxSysmanImp::getFwctlInterface() {
+    const std::lock_guard<std::mutex> lock(this->fwctlLock);
+    if (pFwctlInterface == nullptr) {
+        pFwctlInterface = FwctlInterface::create(this);
+    }
+    return pFwctlInterface.get();
+}
+
+void LinuxSysmanImp::releaseFwctlInterface() {
+    const std::lock_guard<std::mutex> lock(this->fwctlLock);
+    pFwctlInterface.reset();
+}
+
 LinuxSysmanImp::~LinuxSysmanImp() {
     if (nullptr != pPmuInterface) {
         delete pPmuInterface;
@@ -394,6 +408,7 @@ void LinuxSysmanImp::releaseSysmanDeviceResources() {
     if (!diagnosticsReset) {
         releaseFwUtilInterface();
     }
+    releaseFwctlInterface();
 }
 
 ze_result_t LinuxSysmanImp::reInitSysmanDeviceResources() {
@@ -923,6 +938,7 @@ ze_result_t LinuxSysmanImp::updateBdfDependentData() {
     mapOfSubDeviceIdToTelemData.clear();
 
     releaseFwUtilInterface();
+    releaseFwctlInterface();
     reInitSysmanDeviceCache();
 
     return ZE_RESULT_SUCCESS;

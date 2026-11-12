@@ -9,6 +9,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/sysman/test/unit_tests/sources/ecc/linux/mock_ecc.h"
+#include "level_zero/sysman/test/unit_tests/sources/linux/fwctl/mock_fwctl.h"
 
 namespace L0 {
 namespace Sysman {
@@ -16,40 +17,21 @@ namespace ult {
 
 using isDg2OrBmg = IsAnyProducts<IGFX_DG2, IGFX_BMG>;
 
-static int mockReadLinkEccSingleTelemNodeSuccess(const char *path, char *buf, size_t bufsize) {
-    std::map<std::string, std::string> fileNameLinkMap = {
-        {std::string(eccSysfsPathTelem1), std::string(eccRealPathTelem1)},
-    };
-    auto it = fileNameLinkMap.find(std::string(path));
-    if (it != fileNameLinkMap.end()) {
-        size_t toCopy = std::min(bufsize, it->second.size());
-        std::memcpy(buf, it->second.c_str(), toCopy);
-        return static_cast<int>(toCopy);
+struct EccFwctlBackup {
+    EccFwctlBackup() {
+        resetMockFwctlSysCalls();
     }
-    return -1;
-}
-
-static int mockReadLinkNoTelemNodes(const char *path, char *buf, size_t bufsize) {
-    return -1;
-}
-
-inline constexpr int eccTelem1OffsetFd = 4;
-inline constexpr int eccTelem1GuidFd = 5;
-inline constexpr int eccTelem1TelemFd = 6;
-inline constexpr off_t mockEccStateOffset = 56;
-
-static int mockOpenEccSuccess(const char *pathname, int flags) {
-    int returnValue = -1;
-    std::string strPathName(pathname);
-    if (strPathName == std::string(eccTelem1OffsetFileName)) {
-        returnValue = eccTelem1OffsetFd;
-    } else if (strPathName == std::string(eccTelem1GuidFileName)) {
-        returnValue = eccTelem1GuidFd;
-    } else if (strPathName == std::string(eccTelem1TelemFileName)) {
-        returnValue = eccTelem1TelemFd;
+    ~EccFwctlBackup() {
+        clearMockFwctlSysCalls();
     }
-    return returnValue;
-}
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpendir)> opendirBackup{&NEO::SysCalls::sysCallsOpendir, &mockFwctlOpendir};
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReaddir)> readdirBackup{&NEO::SysCalls::sysCallsReaddir, &mockFwctlReaddir};
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClosedir)> closedirBackup{&NEO::SysCalls::sysCallsClosedir, &mockFwctlClosedir};
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup{&NEO::SysCalls::sysCallsOpen, &mockFwctlOpenSuccess};
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> closeBackup{&NEO::SysCalls::sysCallsClose, &mockFwctlCloseSuccess};
+    VariableBackup<decltype(NEO::SysCalls::sysCallsIoctl)> ioctlBackup{&NEO::SysCalls::sysCallsIoctl, &mockFwctlIoctlSuccess};
+};
 
 class ZesEccFixture : public SysmanDeviceFixture {
   protected:
@@ -245,290 +227,175 @@ HWTEST2_F(ZesEccFixture, GivenValidSysmanHandleWhenCallingEccSetStateAndEccGetSt
     EXPECT_EQ(ZES_DEVICE_ACTION_WARM_CARD_RESET, props.pendingAction);
 }
 
-HWTEST2_F(ZesEccFixture, GivenNoTelemNodesAvailableWhenGetEccStateIsCalledThenUnsupportedFeatureIsReturned, IsCRI) {
-    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkNoTelemNodes);
-    zes_device_ecc_properties_t state{};
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDeviceGetEccState(device, &state));
-}
-
-HWTEST2_F(ZesEccFixture, GivenEccStateKeyMissingFromTelemMapWhenGetEccStateIsCalledThenUnsupportedFeatureIsReturned, IsCRI) {
-    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkEccSingleTelemNodeSuccess);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenEccSuccess);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-        uint64_t telemOffset = 0;
-        std::string punitGuid = "0x1e2fa030";
-        if (fd == eccTelem1OffsetFd) {
-            size_t toCopy = std::min(count, sizeof(telemOffset));
-            memcpy(buf, &telemOffset, toCopy);
-            return static_cast<ssize_t>(toCopy);
-        } else if (fd == eccTelem1GuidFd) {
-            size_t toCopy = std::min(count, punitGuid.size());
-            memcpy(buf, punitGuid.data(), toCopy);
-            return static_cast<ssize_t>(toCopy);
-        }
-        return 0;
-    });
-
-    zes_device_ecc_properties_t state{};
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDeviceGetEccState(device, &state));
-}
-
-HWTEST2_F(ZesEccFixture, GivenGuidReadFailsWhenGetEccStateIsCalledThenUnsupportedFeatureIsReturned, IsCRI) {
-    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkEccSingleTelemNodeSuccess);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenEccSuccess);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-        if (fd == eccTelem1GuidFd) {
-            errno = ENOENT;
-            return -1;
-        }
-        return count;
-    });
-
-    zes_device_ecc_properties_t state{};
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDeviceGetEccState(device, &state));
-}
-
-HWTEST2_F(ZesEccFixture, GivenReadValueFailsWhenGetEccStateIsCalledThenNotAvailableIsReturned, IsCRI) {
-    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkEccSingleTelemNodeSuccess);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenEccSuccess);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-        uint64_t telemOffset = 0;
-        std::string validGuid = "0x5e2fa270";
-        if (fd == eccTelem1OffsetFd) {
-            size_t toCopy = std::min(count, sizeof(telemOffset));
-            memcpy(buf, &telemOffset, toCopy);
-            return static_cast<ssize_t>(toCopy);
-        } else if (fd == eccTelem1GuidFd) {
-            size_t toCopy = std::min(count, validGuid.size());
-            memcpy(buf, validGuid.data(), toCopy);
-            return static_cast<ssize_t>(toCopy);
-        } else if (fd == eccTelem1TelemFd) {
-            errno = ENOENT;
-            return -1;
-        }
-        return 0;
-    });
-
-    zes_device_ecc_properties_t state{};
-    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesDeviceGetEccState(device, &state));
-}
-
-HWTEST2_F(ZesEccFixture, GivenEccEnabledInPmtWhenGetEccStateIsCalledThenEnabledStateIsReturned, IsCRI) {
-    static uint32_t mockEccStateValue = 0x1u;
-    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkEccSingleTelemNodeSuccess);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenEccSuccess);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-        uint64_t telemOffset = 0;
-        std::string validGuid = "0x5e2fa270";
-        if (fd == eccTelem1OffsetFd) {
-            size_t toCopy = std::min(count, sizeof(telemOffset));
-            memcpy(buf, &telemOffset, toCopy);
-            return static_cast<ssize_t>(toCopy);
-        } else if (fd == eccTelem1GuidFd) {
-            size_t toCopy = std::min(count, validGuid.size());
-            memcpy(buf, validGuid.data(), toCopy);
-            return static_cast<ssize_t>(toCopy);
-        } else if (fd == eccTelem1TelemFd && offset == mockEccStateOffset) {
-            size_t toCopy = std::min(count, sizeof(mockEccStateValue));
-            memcpy(buf, &mockEccStateValue, toCopy);
-            return static_cast<ssize_t>(toCopy);
-        }
-        return 0;
-    });
+HWTEST2_F(ZesEccFixture, GivenEccSupportedAndEnabledWhenGetEccStateIsCalledThenEnabledStateIsReturned, IsCRI) {
+    EccFwctlBackup fwctlBackup;
+    mockFwctlSysCalls.responseData0 = 1u;
+    mockFwctlSysCalls.responseData1 = 1u;
 
     zes_device_ecc_properties_t state{};
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetEccState(device, &state));
     EXPECT_EQ(ZES_DEVICE_ECC_STATE_ENABLED, state.currentState);
     EXPECT_EQ(ZES_DEVICE_ECC_STATE_UNAVAILABLE, state.pendingState);
     EXPECT_EQ(ZES_DEVICE_ACTION_NONE, state.pendingAction);
+
+    EXPECT_EQ(static_cast<uint32_t>(FWCTL_XE_SYSCTRL_OP_ECC_STATUS_GET), mockFwctlSysCalls.capturedRpcOp);
+    EXPECT_EQ(static_cast<uint32_t>(FWCTL_RPC_CONFIGURATION), mockFwctlSysCalls.capturedRpcScope);
 }
 
-HWTEST2_F(ZesEccFixture, GivenEccDisabledInPmtWhenGetEccStateIsCalledThenDisabledStateIsReturned, IsCRI) {
-    static uint32_t mockEccStateValue = 0x0u;
-    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkEccSingleTelemNodeSuccess);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenEccSuccess);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-        uint64_t telemOffset = 0;
-        std::string validGuid = "0x5e2fa270";
-        if (fd == eccTelem1OffsetFd) {
-            size_t toCopy = std::min(count, sizeof(telemOffset));
-            memcpy(buf, &telemOffset, toCopy);
-            return static_cast<ssize_t>(toCopy);
-        } else if (fd == eccTelem1GuidFd) {
-            size_t toCopy = std::min(count, validGuid.size());
-            memcpy(buf, validGuid.data(), toCopy);
-            return static_cast<ssize_t>(toCopy);
-        } else if (fd == eccTelem1TelemFd && offset == mockEccStateOffset) {
-            size_t toCopy = std::min(count, sizeof(mockEccStateValue));
-            memcpy(buf, &mockEccStateValue, toCopy);
-            return static_cast<ssize_t>(toCopy);
-        }
-        return 0;
-    });
+HWTEST2_F(ZesEccFixture, GivenEccSupportedButDisabledWhenGetEccStateIsCalledThenDisabledStateIsReturned, IsCRI) {
+    EccFwctlBackup fwctlBackup;
+    mockFwctlSysCalls.responseData0 = 1u;
+    mockFwctlSysCalls.responseData1 = 0u;
 
     zes_device_ecc_properties_t state{};
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetEccState(device, &state));
     EXPECT_EQ(ZES_DEVICE_ECC_STATE_DISABLED, state.currentState);
+    EXPECT_EQ(ZES_DEVICE_ECC_STATE_UNAVAILABLE, state.pendingState);
+    EXPECT_EQ(ZES_DEVICE_ACTION_NONE, state.pendingAction);
 }
 
-HWTEST2_F(ZesEccFixture, GivenOnlyNonBit0SetInEccStateWhenGetEccStateIsCalledThenDisabledStateIsReturned, IsCRI) {
-    static uint32_t mockEccStateValue = 0x2u;
-    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkEccSingleTelemNodeSuccess);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenEccSuccess);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-        uint64_t telemOffset = 0;
-        std::string validGuid = "0x5e2fa270";
-        if (fd == eccTelem1OffsetFd) {
-            size_t toCopy = std::min(count, sizeof(telemOffset));
-            memcpy(buf, &telemOffset, toCopy);
-            return static_cast<ssize_t>(toCopy);
-        } else if (fd == eccTelem1GuidFd) {
-            size_t toCopy = std::min(count, validGuid.size());
-            memcpy(buf, validGuid.data(), toCopy);
-            return static_cast<ssize_t>(toCopy);
-        } else if (fd == eccTelem1TelemFd && offset == mockEccStateOffset) {
-            size_t toCopy = std::min(count, sizeof(mockEccStateValue));
-            memcpy(buf, &mockEccStateValue, toCopy);
-            return static_cast<ssize_t>(toCopy);
-        }
-        return 0;
-    });
+HWTEST2_F(ZesEccFixture, GivenEccNotSupportedByTheProductWhenGetEccStateIsCalledThenUnavailableStateIsReturned, IsCRI) {
+    EccFwctlBackup fwctlBackup;
+    mockFwctlSysCalls.responseData0 = 0u;
+    mockFwctlSysCalls.responseData1 = 0u;
 
     zes_device_ecc_properties_t state{};
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetEccState(device, &state));
-    EXPECT_EQ(ZES_DEVICE_ECC_STATE_DISABLED, state.currentState);
+    EXPECT_EQ(ZES_DEVICE_ECC_STATE_UNAVAILABLE, state.currentState);
 }
 
-HWTEST2_F(ZesEccFixture, GivenDefaultPropertiesExtInPNextWhenGetEccStateIsCalledThenExpectValidValues, IsCRI) {
-    static uint32_t mockEccStateValue = 0x1u;
-    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkEccSingleTelemNodeSuccess);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenEccSuccess);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-        uint64_t telemOffset = 0;
-        std::string validGuid = "0x5e2fa270";
-        if (fd == eccTelem1OffsetFd) {
-            size_t toCopy = std::min(count, sizeof(telemOffset));
-            memcpy(buf, &telemOffset, toCopy);
-            return static_cast<ssize_t>(toCopy);
-        } else if (fd == eccTelem1GuidFd) {
-            size_t toCopy = std::min(count, validGuid.size());
-            memcpy(buf, validGuid.data(), toCopy);
-            return static_cast<ssize_t>(toCopy);
-        } else if (fd == eccTelem1TelemFd && offset == mockEccStateOffset) {
-            size_t toCopy = std::min(count, sizeof(mockEccStateValue));
-            memcpy(buf, &mockEccStateValue, toCopy);
-            return static_cast<ssize_t>(toCopy);
-        }
-        return 0;
-    });
+HWTEST2_F(ZesEccFixture, GivenDefaultPropertiesExtInPNextWhenGetEccStateIsCalledThenDefaultStateIsReportedUnavailable, IsCRI) {
+    EccFwctlBackup fwctlBackup;
+    mockFwctlSysCalls.responseData0 = 1u;
+    mockFwctlSysCalls.responseData1 = 1u;
+
+    zes_device_ecc_default_properties_ext_t defaultProps = {};
+    defaultProps.stype = ZES_STRUCTURE_TYPE_DEVICE_ECC_DEFAULT_PROPERTIES_EXT;
+    defaultProps.defaultState = ZES_DEVICE_ECC_STATE_ENABLED;
 
     zes_device_ecc_properties_t state{};
-    zes_device_ecc_default_properties_ext_t extProps{};
-    extProps.stype = ZES_STRUCTURE_TYPE_DEVICE_ECC_DEFAULT_PROPERTIES_EXT;
-    state.pNext = &extProps;
+    state.pNext = &defaultProps;
+
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetEccState(device, &state));
     EXPECT_EQ(ZES_DEVICE_ECC_STATE_ENABLED, state.currentState);
-    EXPECT_EQ(ZES_DEVICE_ECC_STATE_ENABLED, extProps.defaultState);
+    EXPECT_EQ(ZES_DEVICE_ECC_STATE_UNAVAILABLE, defaultProps.defaultState);
 }
 
 HWTEST2_F(ZesEccFixture, GivenWrongStypeInPNextChainWhenGetEccStateIsCalledThenDefaultStateIsNotModified, IsCRI) {
-    static uint32_t mockEccStateValue = 0x1u;
-    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkEccSingleTelemNodeSuccess);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenEccSuccess);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-        uint64_t telemOffset = 0;
-        std::string validGuid = "0x5e2fa270";
-        if (fd == eccTelem1OffsetFd) {
-            size_t toCopy = std::min(count, sizeof(telemOffset));
-            memcpy(buf, &telemOffset, toCopy);
-            return static_cast<ssize_t>(toCopy);
-        } else if (fd == eccTelem1GuidFd) {
-            size_t toCopy = std::min(count, validGuid.size());
-            memcpy(buf, validGuid.data(), toCopy);
-            return static_cast<ssize_t>(toCopy);
-        } else if (fd == eccTelem1TelemFd && offset == mockEccStateOffset) {
-            size_t toCopy = std::min(count, sizeof(mockEccStateValue));
-            memcpy(buf, &mockEccStateValue, toCopy);
-            return static_cast<ssize_t>(toCopy);
-        }
-        return 0;
-    });
+    EccFwctlBackup fwctlBackup;
+    mockFwctlSysCalls.responseData0 = 1u;
+    mockFwctlSysCalls.responseData1 = 1u;
+
+    zes_device_ecc_default_properties_ext_t defaultProps = {};
+    defaultProps.stype = ZES_STRUCTURE_TYPE_DEVICE_ECC_PROPERTIES;
+    defaultProps.defaultState = ZES_DEVICE_ECC_STATE_ENABLED;
 
     zes_device_ecc_properties_t state{};
-    zes_device_ecc_default_properties_ext_t extProps{};
-    extProps.stype = ZES_STRUCTURE_TYPE_FORCE_UINT32;
-    extProps.defaultState = ZES_DEVICE_ECC_STATE_FORCE_UINT32;
-    state.pNext = &extProps;
+    state.pNext = &defaultProps;
+
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetEccState(device, &state));
-    EXPECT_EQ(ZES_DEVICE_ECC_STATE_FORCE_UINT32, extProps.defaultState);
+    EXPECT_EQ(ZES_DEVICE_ECC_STATE_ENABLED, defaultProps.defaultState);
 }
 
-HWTEST2_F(ZesEccFixture, GivenEccEnabledInPmtWhenGetEccAvailableIsCalledThenAvailableIsTrue, IsCRI) {
-    static uint32_t mockEccStateValue = 0x1u;
-    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkEccSingleTelemNodeSuccess);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenEccSuccess);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-        uint64_t telemOffset = 0;
-        std::string validGuid = "0x5e2fa270";
-        if (fd == eccTelem1OffsetFd) {
-            size_t toCopy = std::min(count, sizeof(telemOffset));
-            memcpy(buf, &telemOffset, toCopy);
-            return static_cast<ssize_t>(toCopy);
-        } else if (fd == eccTelem1GuidFd) {
-            size_t toCopy = std::min(count, validGuid.size());
-            memcpy(buf, validGuid.data(), toCopy);
-            return static_cast<ssize_t>(toCopy);
-        } else if (fd == eccTelem1TelemFd && offset == mockEccStateOffset) {
-            size_t toCopy = std::min(count, sizeof(mockEccStateValue));
-            memcpy(buf, &mockEccStateValue, toCopy);
-            return static_cast<ssize_t>(toCopy);
-        }
-        return 0;
-    });
+HWTEST2_F(ZesEccFixture, GivenEccSupportedButDisabledWhenGetEccAvailableIsCalledThenAvailableIsTrue, IsCRI) {
+    EccFwctlBackup fwctlBackup;
+    mockFwctlSysCalls.responseData0 = 1u;
+    mockFwctlSysCalls.responseData1 = 0u;
 
     ze_bool_t available = false;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEccAvailable(device, &available));
     EXPECT_TRUE(available);
 }
 
-HWTEST2_F(ZesEccFixture, GivenEccDisabledInPmtWhenGetEccAvailableIsCalledThenAvailableIsFalse, IsCRI) {
-    static uint32_t mockEccStateValue = 0x0u;
-    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkEccSingleTelemNodeSuccess);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenEccSuccess);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-        uint64_t telemOffset = 0;
-        std::string validGuid = "0x5e2fa270";
-        if (fd == eccTelem1OffsetFd) {
-            size_t toCopy = std::min(count, sizeof(telemOffset));
-            memcpy(buf, &telemOffset, toCopy);
-            return static_cast<ssize_t>(toCopy);
-        } else if (fd == eccTelem1GuidFd) {
-            size_t toCopy = std::min(count, validGuid.size());
-            memcpy(buf, validGuid.data(), toCopy);
-            return static_cast<ssize_t>(toCopy);
-        } else if (fd == eccTelem1TelemFd && offset == mockEccStateOffset) {
-            size_t toCopy = std::min(count, sizeof(mockEccStateValue));
-            memcpy(buf, &mockEccStateValue, toCopy);
-            return static_cast<ssize_t>(toCopy);
-        }
-        return 0;
-    });
+HWTEST2_F(ZesEccFixture, GivenEccSupportedAndEnabledWhenGetEccAvailableIsCalledThenAvailableIsTrue, IsCRI) {
+    EccFwctlBackup fwctlBackup;
+    mockFwctlSysCalls.responseData0 = 1u;
+    mockFwctlSysCalls.responseData1 = 1u;
+
+    ze_bool_t available = false;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEccAvailable(device, &available));
+    EXPECT_TRUE(available);
+}
+
+HWTEST2_F(ZesEccFixture, GivenEccNotSupportedByTheProductWhenGetEccAvailableIsCalledThenAvailableIsFalse, IsCRI) {
+    EccFwctlBackup fwctlBackup;
+    mockFwctlSysCalls.responseData0 = 0u;
+    mockFwctlSysCalls.responseData1 = 0u;
 
     ze_bool_t available = true;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEccAvailable(device, &available));
     EXPECT_FALSE(available);
 }
 
-HWTEST2_F(ZesEccFixture, GivenNoTelemNodesAvailableWhenGetEccAvailableIsCalledThenUnsupportedFeatureIsReturned, IsCRI) {
-    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkNoTelemNodes);
+HWTEST2_F(ZesEccFixture, GivenNoFwctlNodesAvailableWhenEccApisAreCalledThenUnsupportedFeatureIsReturned, IsCRI) {
+    EccFwctlBackup fwctlBackup;
+    mockFwctlSysCalls.opendirFails = true;
+
+    zes_device_ecc_properties_t state{};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDeviceGetEccState(device, &state));
+
     ze_bool_t available = true;
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDeviceEccAvailable(device, &available));
+}
+
+HWTEST2_F(ZesEccFixture, GivenOnlyNonSysctrlFwctlNodeIsPresentWhenGetEccStateIsCalledThenUnsupportedFeatureIsReturned, IsCRI) {
+    EccFwctlBackup fwctlBackup;
+    mockFwctlSysCalls.nodeNames = {mockFwctlNonSysctrlNodeName};
+
+    zes_device_ecc_properties_t state{};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDeviceGetEccState(device, &state));
+    EXPECT_EQ(0u, mockFwctlSysCalls.rpcCount);
+}
+
+HWTEST2_F(ZesEccFixture, GivenEccCapabilityIsNotReportedWhenGetEccStateIsCalledThenUnsupportedFeatureIsReturned, IsCRI) {
+    EccFwctlBackup fwctlBackup;
+    mockFwctlSysCalls.uctxCaps = FWCTL_XE_SYSCTRL_CAP_RAS_ERROR_INJECT;
+
+    zes_device_ecc_properties_t state{};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDeviceGetEccState(device, &state));
+    EXPECT_EQ(0u, mockFwctlSysCalls.rpcCount);
+}
+
+HWTEST2_F(ZesEccFixture, GivenNodeCannotBeOpenedWhenGetEccStateIsCalledThenInsufficientPermissionsIsReturned, IsCRI) {
+    EccFwctlBackup fwctlBackup;
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        errno = EACCES;
+        return -1;
+    });
+
+    zes_device_ecc_properties_t state{};
+    EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, zesDeviceGetEccState(device, &state));
+}
+
+HWTEST2_F(ZesEccFixture, GivenRpcFailsWhenGetEccStateIsCalledThenErrorIsPropagated, IsCRI) {
+    EccFwctlBackup fwctlBackup;
+    VariableBackup<decltype(NEO::SysCalls::sysCallsIoctl)> mockIoctl(&NEO::SysCalls::sysCallsIoctl, [](int fd, unsigned long request, void *arg) -> int {
+        if (request == fwctlRpcCmd) {
+            errno = EBADMSG;
+            return -1;
+        }
+        return mockFwctlIoctlSuccess(fd, request, arg);
+    });
+
+    zes_device_ecc_properties_t state{};
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zesDeviceGetEccState(device, &state));
 }
 
 HWTEST2_F(ZesEccFixture, GivenCriPlatformWhenGetEccConfigurableIsCalledThenReturnsFalse, IsCRI) {
     ze_bool_t configurable = true;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEccConfigurable(device, &configurable));
     EXPECT_FALSE(configurable);
+}
+
+HWTEST2_F(ZesEccFixture, GivenEccIsReadOverFwctlWhenSetEccStateIsCalledThenUnsupportedFeatureIsReturned, IsCRI) {
+    EccFwctlBackup fwctlBackup;
+
+    zes_device_ecc_desc_t newState = {};
+    newState.state = ZES_DEVICE_ECC_STATE_ENABLED;
+    zes_device_ecc_properties_t props = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDeviceSetEccState(device, &newState, &props));
+    EXPECT_EQ(0u, mockFwctlSysCalls.openCount);
+    EXPECT_EQ(0u, mockFwctlSysCalls.rpcCount);
 }
 
 } // namespace ult

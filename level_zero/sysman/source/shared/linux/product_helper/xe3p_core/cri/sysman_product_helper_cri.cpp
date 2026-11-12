@@ -11,6 +11,7 @@
 #include "shared/source/os_interface/linux/pmt_util.h"
 
 #include "level_zero/sysman/source/api/global_operations/linux/sysman_os_global_operations_imp.h"
+#include "level_zero/sysman/source/shared/linux/fwctl/sysman_fwctl.h"
 #include "level_zero/sysman/source/shared/linux/pmt/sysman_pmt.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_hw.inl"
@@ -162,8 +163,7 @@ static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap
       {"MEMSS18_PERF_CTR_MB1_CFI_NUM_WRITE_REQ", 2160},
       {"MEMSS19_PERF_CTR_MB1_CFI_NUM_WRITE_REQ", 2240}}},
     {"0x5e2fa270", // CRI GFSP Rev 0
-     {{"ECC_STATE", 56},
-      {"NUM_OF_MEM_CHANNEL", 80},
+     {{"NUM_OF_MEM_CHANNEL", 80},
       {"MSU_BITMASK", 108},
       {"MEM_VENDOR_ID", 132}}}};
 
@@ -227,29 +227,53 @@ static ze_result_t buildKeyOffsetMapFromTelemNodes(const std::string &rootPath,
     return ZE_RESULT_SUCCESS;
 }
 
-template <>
-ze_result_t SysmanProductHelperHw<gfxProduct>::getEccState(LinuxSysmanImp *pLinuxSysmanImp, zes_device_ecc_properties_t *pState) {
-    std::map<std::string, uint64_t> keyOffsetMap;
-    std::unordered_map<std::string, std::string> keyTelemInfoMap;
-    std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
+static ze_result_t getEccFeatureState(LinuxSysmanImp *pLinuxSysmanImp, bool &supported, bool &enabled) {
+    auto pFwctl = pLinuxSysmanImp->getFwctlInterface();
 
-    ze_result_t result = PlatformMonitoringTech::buildKeyOffsetMapFromTelemNodes(guidToKeyOffsetMap, rootPath, keyOffsetMap, keyTelemInfoMap);
-    if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to build key offset map from telemetry nodes, returning error:0x%x \n", NEO_FUNCTION_NAME, result);
-        return result;
-    }
+    fwctl_rpc_xe_sysctrl rpc = {};
+    rpc.op = FWCTL_XE_SYSCTRL_OP_ECC_STATUS_GET;
 
-    const std::string key = "ECC_STATE";
-    uint32_t eccState = 0;
-    result = PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, eccState);
+    ze_result_t result = pFwctl->sendSysctrlRpc(FWCTL_XE_SYSCTRL_CAP_ECC, FWCTL_RPC_CONFIGURATION, rpc);
     if (result != ZE_RESULT_SUCCESS) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "Error@ %s(): Failed to read ECC_STATE from PMT, returning error:0x%x \n",
+                     "Error@ %s(): Failed to read the ECC state over fwctl, returning error:0x%x \n",
                      NEO_FUNCTION_NAME, result);
         return result;
     }
 
-    pState->currentState = (eccState & 0x1u) ? ZES_DEVICE_ECC_STATE_ENABLED : ZES_DEVICE_ECC_STATE_DISABLED;
+    supported = (rpc.data[0] != 0);
+    enabled = (rpc.data[1] != 0);
+    return ZE_RESULT_SUCCESS;
+}
+
+template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getEccAvailable(LinuxSysmanImp *pLinuxSysmanImp, ze_bool_t *pAvailable) {
+    bool supported = false;
+    bool enabled = false;
+    ze_result_t result = getEccFeatureState(pLinuxSysmanImp, supported, enabled);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+
+    *pAvailable = supported;
+    return ZE_RESULT_SUCCESS;
+}
+
+template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getEccState(LinuxSysmanImp *pLinuxSysmanImp, zes_device_ecc_properties_t *pState) {
+    bool supported = false;
+    bool enabled = false;
+    ze_result_t result = getEccFeatureState(pLinuxSysmanImp, supported, enabled);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+
+    if (!supported) {
+        pState->currentState = ZES_DEVICE_ECC_STATE_UNAVAILABLE;
+    } else {
+        pState->currentState = enabled ? ZES_DEVICE_ECC_STATE_ENABLED : ZES_DEVICE_ECC_STATE_DISABLED;
+    }
+
     pState->pendingState = ZES_DEVICE_ECC_STATE_UNAVAILABLE;
     pState->pendingAction = ZES_DEVICE_ACTION_NONE;
 
@@ -257,23 +281,12 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getEccState(LinuxSysmanImp *pLinu
     while (pNext) {
         auto *pExtProps = reinterpret_cast<zes_device_ecc_default_properties_ext_t *>(pNext);
         if (pExtProps->stype == ZES_STRUCTURE_TYPE_DEVICE_ECC_DEFAULT_PROPERTIES_EXT) {
-            pExtProps->defaultState = pState->currentState;
+            pExtProps->defaultState = ZES_DEVICE_ECC_STATE_UNAVAILABLE;
             break;
         }
         pNext = pExtProps->pNext;
     }
 
-    return ZE_RESULT_SUCCESS;
-}
-
-template <>
-ze_result_t SysmanProductHelperHw<gfxProduct>::getEccAvailable(LinuxSysmanImp *pLinuxSysmanImp, ze_bool_t *pAvailable) {
-    zes_device_ecc_properties_t state{};
-    ze_result_t result = getEccState(pLinuxSysmanImp, &state);
-    if (result != ZE_RESULT_SUCCESS) {
-        return result;
-    }
-    *pAvailable = (state.currentState == ZES_DEVICE_ECC_STATE_ENABLED);
     return ZE_RESULT_SUCCESS;
 }
 
