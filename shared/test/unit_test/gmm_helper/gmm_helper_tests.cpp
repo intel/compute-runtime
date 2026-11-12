@@ -128,22 +128,17 @@ TEST_F(GmmHelperTests, givenHostPointerWithHighestBitSetWhenGmmIsCreatedThenItHa
 TEST_F(GmmHelperTests, GivenBufferSizeLargerThenMaxPitchWhenAskedForGmmCreationThenGmmResourceIsCreatedWithNoRestrictionsFlag) {
     auto maxSize = static_cast<size_t>(GmmHelper::maxPossiblePitch);
 
-    MemoryManager *mm = new MemoryManagerCreate<OsAgnosticMemoryManager>(false, false, *executionEnvironment);
-    void *pSysMem = mm->allocateSystemMemory(4096, 4096);
+    auto sysMem = reinterpret_cast<void *>(0x1000);
 
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
-    auto gmmRes = new Gmm(getGmmHelper(), pSysMem, maxSize, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
+    Gmm gmmRes(getGmmHelper(), sysMem, maxSize, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
 
-    ASSERT_TRUE(gmmRes->gmmResourceInfo.get() != nullptr); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+    ASSERT_NE(nullptr, gmmRes.gmmResourceInfo);
 
-    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmmRes->resourceParamsData.data());
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmmRes.resourceParamsData.data());
     EXPECT_EQ(gmmResourceParams->Flags.Gpu.NoRestriction, 1u);
-
-    mm->freeSystemMemory(pSysMem);
-    delete gmmRes;
-    delete mm;
 }
 
 TEST_F(GmmHelperTests, givenGmmCreatedFromExistingGmmThenHelperDoesNotReleaseParentGmm) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -50,30 +50,29 @@ HWTEST_P(AUBCopyBufferRect, WhenCopyingThenExpectationsMet) {
     static const size_t elementCount = slicePitch * rowPitch;
     MockContext context(this->pClDevice);
 
-    cl_uchar *srcMemory = new uint8_t[elementCount + 8];
-    cl_uchar *dstMemory = new uint8_t[elementCount + 8];
+    cl_uchar srcMemory[elementCount + 8] = {};
+    cl_uchar dstMemory[elementCount + 8] = {};
 
     for (size_t i = 0; i < elementCount; i++) {
         srcMemory[i] = static_cast<cl_uchar>(i + 1);
-        dstMemory[i] = 0;
     }
 
     auto retVal = CL_INVALID_VALUE;
 
-    auto srcBuffer = Buffer::create(
+    std::unique_ptr<Buffer> srcBuffer(Buffer::create(
         &context,
         CL_MEM_USE_HOST_PTR,
         elementCount * sizeof(uint8_t),
         srcMemory,
-        retVal);
+        retVal));
     ASSERT_NE(nullptr, srcBuffer);
 
-    auto dstBuffer = Buffer::create(
+    std::unique_ptr<Buffer> dstBuffer(Buffer::create(
         &context,
         CL_MEM_USE_HOST_PTR,
         elementCount * sizeof(uint8_t),
         dstMemory,
-        retVal);
+        retVal));
     ASSERT_NE(nullptr, dstBuffer);
 
     auto pSrcMemory = &srcMemory[0];
@@ -89,8 +88,8 @@ HWTEST_P(AUBCopyBufferRect, WhenCopyingThenExpectationsMet) {
     size_t region[] = {regionX, regionY, regionZ};
 
     retVal = pCmdQ->enqueueCopyBufferRect(
-        srcBuffer,
-        dstBuffer,
+        srcBuffer.get(),
+        dstBuffer.get(),
         srcOrigin,
         dstOrigin,
         region,
@@ -126,12 +125,6 @@ HWTEST_P(AUBCopyBufferRect, WhenCopyingThenExpectationsMet) {
         tRef += slicePitch;
     }
     expectMemory<FamilyType>(pDestMemory, src, rowPitch * slicePitch);
-
-    delete srcBuffer;
-    delete dstBuffer;
-
-    delete[] srcMemory;
-    delete[] dstMemory;
 }
 
 static size_t zero[] = {0};

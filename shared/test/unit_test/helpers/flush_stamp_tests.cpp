@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,9 +12,9 @@
 using namespace NEO;
 
 TEST(FlushStampTest, WhenAddingRemovingReferencesThenRefCountIsUpdated) {
-    FlushStampTracker *flushStampTracker = new FlushStampTracker(true);
+    auto flushStampTracker = std::make_unique<FlushStampTracker>(true);
     auto flushStampSharedHandle = flushStampTracker->getStampReference();
-    ASSERT_NE(nullptr, flushStampSharedHandle); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+    ASSERT_NE(nullptr, flushStampSharedHandle);
 
     EXPECT_EQ(1, flushStampSharedHandle->getRefInternalCount());
     EXPECT_EQ(0, flushStampSharedHandle->getRefApiCount());
@@ -22,7 +22,7 @@ TEST(FlushStampTest, WhenAddingRemovingReferencesThenRefCountIsUpdated) {
     flushStampSharedHandle->incRefInternal();
     EXPECT_EQ(2, flushStampSharedHandle->getRefInternalCount());
 
-    delete flushStampTracker;
+    flushStampTracker.reset();
     EXPECT_EQ(1, flushStampSharedHandle->getRefInternalCount());
 
     flushStampSharedHandle->decRefInternal();

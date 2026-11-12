@@ -55,11 +55,10 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, GivenUnalignedReadPtrWhenReadingBufferThenM
     debugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::defaultMode));
     cl_int retVal;
     size_t offset = 1;
-    size_t size = 4;
+    constexpr size_t size = 4;
 
-    auto alignedReadPtr = alignedMalloc(size + 1, MemoryConstants::cacheLineSize);
-    memset(alignedReadPtr, 0x00, size + 1);
-    auto unalignedReadPtr = ptrOffset(alignedReadPtr, 1);
+    alignas(MemoryConstants::cacheLineSize) uint8_t alignedReadMemory[size + 1] = {};
+    auto unalignedReadPtr = ptrOffset(alignedReadMemory, 1);
 
     std::unique_ptr<uint8_t[]> bufferPtr(new uint8_t[size]);
     for (uint8_t i = 0; i < size; i++) {
@@ -87,8 +86,6 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, GivenUnalignedReadPtrWhenReadingBufferThenM
 
     auto pBufferPtr = ptrOffset(bufferPtr.get(), offset);
     EXPECT_EQ(memcmp(unalignedReadPtr, pBufferPtr, size - offset), 0);
-
-    alignedFree(alignedReadPtr);
 }
 
 HWTEST_F(ReadWriteBufferCpuCopyTest, GivenUnalignedSrcPtrWhenWritingBufferThenMemoryIsWrittenCorrectly) {
@@ -96,12 +93,12 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, GivenUnalignedSrcPtrWhenWritingBufferThenMe
     debugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::defaultMode));
     cl_int retVal;
     size_t offset = 1;
-    size_t size = 4;
+    constexpr size_t size = 4;
 
-    auto alignedWritePtr = alignedMalloc(size + 1, MemoryConstants::cacheLineSize);
-    auto unalignedWritePtr = static_cast<uint8_t *>(ptrOffset(alignedWritePtr, 1));
-    auto bufferPtrBase = new uint8_t[size];
-    auto bufferPtr = new uint8_t[size];
+    alignas(MemoryConstants::cacheLineSize) uint8_t alignedWriteMemory[size + 1];
+    auto unalignedWritePtr = ptrOffset(alignedWriteMemory, 1);
+    uint8_t bufferPtrBase[size];
+    uint8_t bufferPtr[size];
     for (uint8_t i = 0; i < size; i++) {
         unalignedWritePtr[i] = i + 5;
         bufferPtrBase[i] = i + 1;
@@ -133,10 +130,6 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, GivenUnalignedSrcPtrWhenWritingBufferThenMe
     EXPECT_EQ(memcmp(pBufferPtr, bufferPtrBase, offset), 0); // untouched
     pBufferPtr = ptrOffset(pBufferPtr, offset);
     EXPECT_EQ(memcmp(pBufferPtr, unalignedWritePtr, size - offset), 0); // updated
-
-    alignedFree(alignedWritePtr);
-    delete[] bufferPtr;
-    delete[] bufferPtrBase;
 }
 
 HWTEST_F(ReadWriteBufferCpuCopyTest, GivenSpecificMemoryStructuresWhenReadingWritingMemoryThenCpuReadWriteIsAllowed) {

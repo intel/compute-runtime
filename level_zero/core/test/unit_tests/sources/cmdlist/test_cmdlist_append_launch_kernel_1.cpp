@@ -425,10 +425,8 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithThreadArbitrationPolicySe
     debugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);
 
     createKernel();
-    ze_scheduling_hint_exp_desc_t *pHint = new ze_scheduling_hint_exp_desc_t;
-    pHint->pNext = nullptr;
-    pHint->flags = ZE_SCHEDULING_HINT_EXP_FLAG_ROUND_ROBIN;
-    kernel->setSchedulingHintExp(pHint);
+    ze_scheduling_hint_exp_desc_t hint{.stype = ZE_STRUCTURE_TYPE_SCHEDULING_HINT_EXP_DESC, .flags = ZE_SCHEDULING_HINT_EXP_FLAG_ROUND_ROBIN};
+    kernel->setSchedulingHintExp(&hint);
 
     ze_group_count_t groupCount{1, 1, 1};
     ze_result_t returnValue;
@@ -438,7 +436,6 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithThreadArbitrationPolicySe
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     ASSERT_EQ(NEO::ThreadArbitrationPolicy::RoundRobin, commandList->getFinalStreamState().stateComputeMode.threadArbitrationPolicy.value);
-    delete (pHint);
 }
 
 struct CommandListAppendLaunchKernelNonHeapless {
@@ -450,10 +447,8 @@ struct CommandListAppendLaunchKernelNonHeapless {
 
 HWTEST2_F(CommandListAppendLaunchKernel, givenKernelWithThreadArbitrationPolicySetUsingSchedulingHintExtensionAndOverrideThreadArbitrationPolicyThenTheLatterIsUsedToSetCmdListThreadArbitrationPolicy, CommandListAppendLaunchKernelNonHeapless) {
     createKernel();
-    ze_scheduling_hint_exp_desc_t *pHint = new ze_scheduling_hint_exp_desc_t;
-    pHint->pNext = nullptr;
-    pHint->flags = ZE_SCHEDULING_HINT_EXP_FLAG_ROUND_ROBIN;
-    kernel->setSchedulingHintExp(pHint);
+    ze_scheduling_hint_exp_desc_t hint{.stype = ZE_STRUCTURE_TYPE_SCHEDULING_HINT_EXP_DESC, .flags = ZE_SCHEDULING_HINT_EXP_FLAG_ROUND_ROBIN};
+    kernel->setSchedulingHintExp(&hint);
 
     DebugManagerStateRestore restorer;
     debugManager.flags.OverrideThreadArbitrationPolicy.set(0);
@@ -467,7 +462,6 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelWithThreadArbitrationPolicyS
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     ASSERT_EQ(NEO::ThreadArbitrationPolicy::AgeBased, commandList->getFinalStreamState().stateComputeMode.threadArbitrationPolicy.value);
-    delete (pHint);
 }
 
 HWTEST_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenAppendingKernelThenBbEndIsAddedAndNewCmdBufferAllocated) {

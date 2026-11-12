@@ -361,7 +361,7 @@ TEST_F(CloneKernelTest, givenArgSamplerWhenCloningKernelThenKernelInfoIsCorrect)
 }
 
 TEST_F(CloneKernelTest, givenArgSvmWhenCloningKernelThenKernelInfoIsCorrect) {
-    char *svmPtr = new char[256];
+    char svmPtr[256] = {};
 
     pKernelInfo->addArgBuffer(0, 0x20, sizeof(void *));
 
@@ -394,8 +394,6 @@ TEST_F(CloneKernelTest, givenArgSvmWhenCloningKernelThenKernelInfoIsCorrect) {
                                     pClonedKernel[rootDeviceIndex]->getKernelInfo().getArgDescriptorAt(0).as<ArgDescPointer>().stateless);
         EXPECT_EQ(svmPtr, *pKernelArg);
     }
-
-    delete[] svmPtr;
 }
 
 TEST_F(CloneKernelTest, givenArgSvmAllocWhenCloningKernelThenKernelInfoIsCorrect) {

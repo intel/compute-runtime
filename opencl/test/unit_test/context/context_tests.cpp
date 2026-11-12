@@ -473,18 +473,19 @@ TEST(Context, WhenSettingContextDestructorCallbackThenCallOrderIsPreserved) {
         pUserData->vectorToModify.push_back(pUserData->valueToAdd);
     };
 
-    auto pContext = new MockContext{};
     std::vector<size_t> callbacksReturnValues;
     UserDataType userDataArray[]{
-        {pContext, callbacksReturnValues, 1},
-        {pContext, callbacksReturnValues, 2},
-        {pContext, callbacksReturnValues, 3}};
+        {nullptr, callbacksReturnValues, 1},
+        {nullptr, callbacksReturnValues, 2},
+        {nullptr, callbacksReturnValues, 3}};
+    auto pContext = std::make_unique<MockContext>();
 
     for (auto &userData : userDataArray) {
-        cl_int retVal = clSetContextDestructorCallback(pContext, callback, &userData);
+        userData.expectedContext = pContext.get();
+        cl_int retVal = clSetContextDestructorCallback(pContext.get(), callback, &userData);
         ASSERT_EQ(CL_SUCCESS, retVal);
     }
-    delete pContext;
+    pContext.reset();
 
     ASSERT_EQ(3u, callbacksReturnValues.size());
     EXPECT_EQ(3u, callbacksReturnValues[0]);

@@ -39,23 +39,21 @@ typedef WriteBufferHw AUBWriteBuffer;
 HWTEST_P(AUBWriteBuffer, WhenWritingBufferThenExpectationsAreMet) {
     MockContext context(this->pCmdQ->getDevice().getSpecializedDevice<ClDevice>());
 
-    cl_float *srcMemory = new float[1024];
-    cl_float *destMemory = new float[1024];
-    cl_float *zeroMemory = new float[1024];
+    cl_float srcMemory[1024];
+    cl_float destMemory[1024] = {};
+    cl_float zeroMemory[1024] = {};
 
     for (int i = 0; i < 1024; i++) {
-        srcMemory[i] = (float)i + 1.0f;
-        destMemory[i] = 0;
-        zeroMemory[i] = 0;
+        srcMemory[i] = static_cast<float>(i) + 1.0f;
     }
 
     auto retVal = CL_INVALID_VALUE;
-    auto dstBuffer = Buffer::create(
+    std::unique_ptr<Buffer> dstBuffer(Buffer::create(
         &context,
         CL_MEM_USE_HOST_PTR,
         1024 * sizeof(float),
         destMemory,
-        retVal);
+        retVal));
     ASSERT_NE(nullptr, dstBuffer);
 
     auto pSrcMemory = &srcMemory[0];
@@ -69,7 +67,7 @@ HWTEST_P(AUBWriteBuffer, WhenWritingBufferThenExpectationsAreMet) {
 
     dstBuffer->forceDisallowCPUCopy = true;
     retVal = pCmdQ->enqueueWriteBuffer(
-        dstBuffer,
+        dstBuffer.get(),
         blockingWrite,
         offset,
         sizeWritten,
@@ -79,7 +77,7 @@ HWTEST_P(AUBWriteBuffer, WhenWritingBufferThenExpectationsAreMet) {
         eventWaitList,
         event);
 
-    auto pDestMemory = reinterpret_cast<decltype(destMemory)>(ptrOffset(dstBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress(), dstBuffer->getOffset()));
+    auto pDestMemory = reinterpret_cast<cl_float *>(ptrOffset(dstBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress(), dstBuffer->getOffset()));
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -100,11 +98,6 @@ HWTEST_P(AUBWriteBuffer, WhenWritingBufferThenExpectationsAreMet) {
         size_t sizeRemaining = sizeUserMemory - sizeWritten - offset;
         expectMemory<FamilyType>(pDestMemory, zeroMemory, sizeRemaining);
     }
-
-    delete dstBuffer;
-    delete[] srcMemory;
-    delete[] destMemory;
-    delete[] zeroMemory;
 }
 
 INSTANTIATE_TEST_SUITE_P(AUBWriteBuffer_simple,

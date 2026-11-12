@@ -1428,8 +1428,8 @@ TEST_F(DebugApiWindowsTest, WhenCallingReadMemoryForElfThenElfisRead) {
     session->debugHandle = MockDebugSessionWindows::mockDebugHandle;
     session->allContexts.insert(0x12345);
 
-    uint64_t elfSize = 0xFF;
-    char *elfData = new char[elfSize];
+    constexpr uint64_t elfSize = 0xFF;
+    char elfData[elfSize];
     memset(elfData, 0xa, elfSize);
 
     uint64_t elfVaStart = reinterpret_cast<uint64_t>(elfData);
@@ -1464,8 +1464,6 @@ TEST_F(DebugApiWindowsTest, WhenCallingReadMemoryForElfThenElfisRead) {
     retVal = session->readMemory(thread, &desc, bufferSize, output);
     ASSERT_EQ(1u, mockWddm->dbgUmdEscapeActionCalled[DBGUMD_ACTION_READ_GFX_MEMORY]);
     EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
-
-    delete[] elfData;
 }
 
 TEST_F(DebugApiWindowsTest, WhenCallingWriteMemoryForExpectedFailureCasesThenErrorIsReturned) {

@@ -2812,11 +2812,11 @@ HWTEST2_F(ImageCreate, WhenImageIsCreatedThenDescMatchesSurface, IsAtMostDg2) {
     desc.height = 13;
     desc.depth = 17;
 
-    auto imageCore = new WhiteBox<ImageCoreFamily<FamilyType::gfxCoreFamily>>();
-    ze_result_t ret = imageCore->initialize(device, &desc);
+    WhiteBox<ImageCoreFamily<FamilyType::gfxCoreFamily>> imageCore;
+    ze_result_t ret = imageCore.initialize(device, &desc);
     ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
 
-    auto surfaceState = &imageCore->getSurfaceState();
+    auto surfaceState = &imageCore.getSurfaceState();
 
     ASSERT_EQ(surfaceState->getSurfaceType(), RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_3D);
     ASSERT_EQ(surfaceState->getSurfaceFormat(), RENDER_SURFACE_STATE::SURFACE_FORMAT_R8G8B8A8_UINT);
@@ -2831,8 +2831,6 @@ HWTEST2_F(ImageCreate, WhenImageIsCreatedThenDescMatchesSurface, IsAtMostDg2) {
               RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_BLUE);
     ASSERT_EQ(surfaceState->getShaderChannelSelectAlpha(),
               RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA);
-
-    delete imageCore;
 }
 
 HWTEST2_F(ImageCreate, WhenImageIsCreatedThenDescSwizzlesMatchSurface, IsAtMostDg2) {
@@ -2853,11 +2851,11 @@ HWTEST2_F(ImageCreate, WhenImageIsCreatedThenDescSwizzlesMatchSurface, IsAtMostD
     desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_1;
     desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_X;
 
-    auto imageCore = new WhiteBox<ImageCoreFamily<FamilyType::gfxCoreFamily>>();
-    ze_result_t ret = imageCore->initialize(device, &desc);
+    WhiteBox<ImageCoreFamily<FamilyType::gfxCoreFamily>> imageCore;
+    ze_result_t ret = imageCore.initialize(device, &desc);
     ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
 
-    auto surfaceState = &imageCore->getSurfaceState();
+    auto surfaceState = &imageCore.getSurfaceState();
 
     ASSERT_EQ(surfaceState->getShaderChannelSelectRed(),
               RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ALPHA);
@@ -2867,8 +2865,6 @@ HWTEST2_F(ImageCreate, WhenImageIsCreatedThenDescSwizzlesMatchSurface, IsAtMostD
               RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ONE);
     ASSERT_EQ(surfaceState->getShaderChannelSelectAlpha(),
               RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO);
-
-    delete imageCore;
 }
 
 HWTEST2_F(ImageCreate, WhenImageIsCreatedThenDescMatchesSurfaceFormats, IsAtMostDg2) {
@@ -2925,15 +2921,13 @@ HWTEST2_F(ImageCreate, WhenImageIsCreatedThenDescMatchesSurfaceFormats, IsAtMost
             desc->format.layout = testFormats[i].formatLayout;
             desc->format.type = testFormats[i].formatType;
 
-            auto imageCore = new WhiteBox<ImageCoreFamily<FamilyType::gfxCoreFamily>>();
-            ze_result_t ret = imageCore->initialize(device, desc);
+            WhiteBox<ImageCoreFamily<FamilyType::gfxCoreFamily>> imageCore;
+            ze_result_t ret = imageCore.initialize(device, desc);
             ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
 
-            auto surfaceState = &imageCore->getSurfaceState();
+            auto surfaceState = &imageCore.getSurfaceState();
 
             ASSERT_EQ(surfaceState->getSurfaceFormat(), testFormats[i].ssFormat);
-
-            delete imageCore;
         }
     }
 }
@@ -2953,8 +2947,8 @@ HWTEST2_F(ImageCreate, WhenCopyingToSshThenSurfacePropertiesAreRetained, IsAtMos
     desc.height = 13;
     desc.depth = 1;
 
-    auto imageA = new ImageCoreFamily<FamilyType::gfxCoreFamily>();
-    ze_result_t ret = imageA->initialize(device, &desc);
+    ImageCoreFamily<FamilyType::gfxCoreFamily> imageA;
+    ze_result_t ret = imageA.initialize(device, &desc);
     ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
 
     desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_32_32;
@@ -2963,12 +2957,12 @@ HWTEST2_F(ImageCreate, WhenCopyingToSshThenSurfacePropertiesAreRetained, IsAtMos
     desc.width = 10;
     desc.height = 10;
 
-    auto imageB = new ImageCoreFamily<FamilyType::gfxCoreFamily>();
-    ret = imageB->initialize(device, &desc);
+    ImageCoreFamily<FamilyType::gfxCoreFamily> imageB;
+    ret = imageB.initialize(device, &desc);
     ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
 
-    imageA->copySurfaceStateToSSH(mockSSH, 0, NEO::BindlessImageSlot::image, false, 0u);
-    imageB->copySurfaceStateToSSH(mockSSH, sizeof(RENDER_SURFACE_STATE), NEO::BindlessImageSlot::image, false, 0u);
+    imageA.copySurfaceStateToSSH(mockSSH, 0, NEO::BindlessImageSlot::image, false, 0u);
+    imageB.copySurfaceStateToSSH(mockSSH, sizeof(RENDER_SURFACE_STATE), NEO::BindlessImageSlot::image, false, 0u);
 
     auto surfaceStateA = reinterpret_cast<RENDER_SURFACE_STATE *>(mockSSH);
     ASSERT_EQ(surfaceStateA->getSurfaceType(), RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_2D);
@@ -2983,9 +2977,6 @@ HWTEST2_F(ImageCreate, WhenCopyingToSshThenSurfacePropertiesAreRetained, IsAtMos
     ASSERT_EQ(surfaceStateB->getSurfaceFormat(), RENDER_SURFACE_STATE::SURFACE_FORMAT_R32G32_UINT);
     ASSERT_EQ(surfaceStateB->getWidth(), 10u);
     ASSERT_EQ(surfaceStateB->getHeight(), 10u);
-
-    delete imageA;
-    delete imageB;
 }
 
 HWTEST_F(ImageCreate, WhenImageViewCreateExpThenSuccessIsReturned) {

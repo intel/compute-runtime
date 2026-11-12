@@ -945,23 +945,21 @@ TEST_F(KernelPrivateSurfaceTest, WhenChangingResidencyThenCsrResidencySizeIsUpda
     // create kernel
     MockContext context(pClDevice);
     MockProgram program(&context, false, toClDeviceVector(*pClDevice));
-    MockKernel *kernel = new MockKernel(&program, *pKernelInfo, *pClDevice);
-    ASSERT_EQ(CL_SUCCESS, kernel->initialize());
+    MockKernel kernel(&program, *pKernelInfo, *pClDevice);
+    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
     // Test it
     auto executionEnvironment = pDevice->getExecutionEnvironment();
-    std::unique_ptr<CommandStreamReceiverMock> csr(new CommandStreamReceiverMock(*executionEnvironment, 0, 1));
-    csr->setupContext(*pDevice->getDefaultEngine().osContext);
-    csr->residency.clear();
-    EXPECT_EQ(0u, csr->residency.size());
+    CommandStreamReceiverMock csr(*executionEnvironment, 0, 1);
+    csr.setupContext(*pDevice->getDefaultEngine().osContext);
+    csr.residency.clear();
+    EXPECT_EQ(0u, csr.residency.size());
 
-    kernel->makeResident(*csr.get());
-    EXPECT_EQ(1u, csr->residency.size());
+    kernel.makeResident(csr);
+    EXPECT_EQ(1u, csr.residency.size());
 
-    csr->makeSurfacePackNonResident(csr->getResidencyAllocations(), true);
-    EXPECT_EQ(0u, csr->residency.size());
-
-    delete kernel;
+    csr.makeSurfacePackNonResident(csr.getResidencyAllocations(), true);
+    EXPECT_EQ(0u, csr.residency.size());
 }
 
 TEST_F(KernelPrivateSurfaceTest, givenKernelWithPrivateSurfaceThatIsInUseByGpuWhenKernelIsBeingDestroyedThenAllocationIsAddedToDeferredFreeList) {
@@ -1030,28 +1028,26 @@ HWTEST_F(KernelPrivateSurfaceTest, givenStatefulKernelWhenKernelIsCreatedThenPri
     MockProgram program(&context, false, toClDeviceVector(*pClDevice));
 
     // create kernel
-    MockKernel *kernel = new MockKernel(&program, *pKernelInfo, *pClDevice);
+    MockKernel kernel(&program, *pKernelInfo, *pClDevice);
 
     // setup surface state heap
     char surfaceStateHeap[0x80];
     pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
     pKernelInfo->heapInfo.surfaceStateHeapSize = sizeof(surfaceStateHeap);
 
-    ASSERT_EQ(CL_SUCCESS, kernel->initialize());
+    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
-    EXPECT_NE(0u, kernel->getSurfaceStateHeapSize());
+    EXPECT_NE(0u, kernel.getSurfaceStateHeapSize());
 
-    auto bufferAddress = kernel->privateSurface->getGpuAddress();
+    auto bufferAddress = kernel.privateSurface->getGpuAddress();
 
     using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
-        ptrOffset(kernel->getSurfaceStateHeap(),
+        ptrOffset(kernel.getSurfaceStateHeap(),
                   pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.privateMemoryAddress.bindful));
     auto surfaceAddress = surfaceState->getSurfaceBaseAddress();
 
     EXPECT_EQ(bufferAddress, surfaceAddress);
-
-    delete kernel;
 }
 
 TEST_F(KernelPrivateSurfaceTest, givenStatelessKernelWhenKernelIsCreatedThenPrivateMemorySurfaceStateIsNotPatched) {
@@ -1070,15 +1066,14 @@ TEST_F(KernelPrivateSurfaceTest, givenStatelessKernelWhenKernelIsCreatedThenPriv
     program.setConstantSurface(&gfxAlloc);
 
     // create kernel
-    MockKernel *kernel = new MockKernel(&program, *pKernelInfo, *pClDevice);
+    MockKernel kernel(&program, *pKernelInfo, *pClDevice);
 
-    ASSERT_EQ(CL_SUCCESS, kernel->initialize());
+    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
-    EXPECT_EQ(0u, kernel->getSurfaceStateHeapSize());
-    EXPECT_EQ(nullptr, kernel->getSurfaceStateHeap());
+    EXPECT_EQ(0u, kernel.getSurfaceStateHeapSize());
+    EXPECT_EQ(nullptr, kernel.getSurfaceStateHeap());
 
     program.setConstantSurface(nullptr);
-    delete kernel;
 }
 
 TEST_F(KernelPrivateSurfaceTest, GivenKernelWhenScratchSizeIsGreaterThanMaxScratchSizeThenReturnInvalidKernel) {
@@ -1112,16 +1107,15 @@ TEST_F(KernelGlobalSurfaceTest, givenBuiltInKernelWhenKernelIsCreatedThenGlobalS
     MockContext context(pClDevice);
     MockProgram program(&context, true, toClDeviceVector(*pClDevice));
     program.setGlobalSurface(&gfxAlloc);
-    MockKernel *kernel = new MockKernel(&program, *pKernelInfo, *pClDevice);
+    MockKernel kernel(&program, *pKernelInfo, *pClDevice);
 
-    EXPECT_TRUE(kernel->isBuiltInKernel());
+    EXPECT_TRUE(kernel.isBuiltInKernel());
 
-    ASSERT_EQ(CL_SUCCESS, kernel->initialize());
+    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
-    EXPECT_EQ(bufferAddress, *(uint64_t *)kernel->getCrossThreadData());
+    EXPECT_EQ(bufferAddress, *reinterpret_cast<uint64_t *>(kernel.getCrossThreadData()));
 
     program.setGlobalSurface(nullptr);
-    delete kernel;
 }
 
 TEST_F(KernelGlobalSurfaceTest, givenNDRangeKernelWhenKernelIsCreatedThenGlobalSurfaceIsPatchedWithBaseAddressOffset) {
@@ -1139,15 +1133,13 @@ TEST_F(KernelGlobalSurfaceTest, givenNDRangeKernelWhenKernelIsCreatedThenGlobalS
     // create kernel
     MockProgram program(toClDeviceVector(*pClDevice));
     program.setGlobalSurface(&gfxAlloc);
-    MockKernel *kernel = new MockKernel(&program, *pKernelInfo, *pClDevice);
+    MockKernel kernel(&program, *pKernelInfo, *pClDevice);
 
-    ASSERT_EQ(CL_SUCCESS, kernel->initialize());
+    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
-    EXPECT_EQ(bufferAddress, *(uint64_t *)kernel->getCrossThreadData());
+    EXPECT_EQ(bufferAddress, *reinterpret_cast<uint64_t *>(kernel.getCrossThreadData()));
 
     program.setGlobalSurface(nullptr);
-
-    delete kernel;
 }
 
 HWTEST_F(KernelGlobalSurfaceTest, givenStatefulKernelWhenKernelIsCreatedThenGlobalMemorySurfaceStateIsPatchedWithCpuAddress) {
@@ -1169,27 +1161,26 @@ HWTEST_F(KernelGlobalSurfaceTest, givenStatefulKernelWhenKernelIsCreatedThenGlob
     program.setGlobalSurface(&gfxAlloc);
 
     // create kernel
-    MockKernel *kernel = new MockKernel(&program, *pKernelInfo, *pClDevice);
+    MockKernel kernel(&program, *pKernelInfo, *pClDevice);
 
     // setup surface state heap
     char surfaceStateHeap[0x80];
     pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
     pKernelInfo->heapInfo.surfaceStateHeapSize = sizeof(surfaceStateHeap);
 
-    ASSERT_EQ(CL_SUCCESS, kernel->initialize());
+    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
-    EXPECT_NE(0u, kernel->getSurfaceStateHeapSize());
+    EXPECT_NE(0u, kernel.getSurfaceStateHeapSize());
 
     using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
-        ptrOffset(kernel->getSurfaceStateHeap(),
+        ptrOffset(kernel.getSurfaceStateHeap(),
                   pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.bindful));
     auto surfaceAddress = surfaceState->getSurfaceBaseAddress();
 
     EXPECT_EQ(bufferAddress, surfaceAddress);
 
     program.setGlobalSurface(nullptr);
-    delete kernel;
 }
 
 TEST_F(KernelGlobalSurfaceTest, givenStatelessKernelWhenKernelIsCreatedThenGlobalMemorySurfaceStateIsNotPatched) {
@@ -1207,15 +1198,14 @@ TEST_F(KernelGlobalSurfaceTest, givenStatelessKernelWhenKernelIsCreatedThenGloba
     program.setGlobalSurface(&gfxAlloc);
 
     // create kernel
-    MockKernel *kernel = new MockKernel(&program, *pKernelInfo, *pClDevice);
+    MockKernel kernel(&program, *pKernelInfo, *pClDevice);
 
-    ASSERT_EQ(CL_SUCCESS, kernel->initialize());
+    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
-    EXPECT_EQ(0u, kernel->getSurfaceStateHeapSize());
-    EXPECT_EQ(nullptr, kernel->getSurfaceStateHeap());
+    EXPECT_EQ(0u, kernel.getSurfaceStateHeapSize());
+    EXPECT_EQ(nullptr, kernel.getSurfaceStateHeap());
 
     program.setGlobalSurface(nullptr);
-    delete kernel;
 }
 
 TEST_F(KernelConstantSurfaceTest, givenBuiltInKernelWhenKernelIsCreatedThenConstantSurfaceIsPatchedWithCpuAddress) {
@@ -1233,15 +1223,14 @@ TEST_F(KernelConstantSurfaceTest, givenBuiltInKernelWhenKernelIsCreatedThenConst
     MockContext context(pClDevice);
     MockProgram program(&context, true, toClDeviceVector(*pClDevice));
     program.setConstantSurface(&gfxAlloc);
-    MockKernel *kernel = new MockKernel(&program, *pKernelInfo, *pClDevice);
+    MockKernel kernel(&program, *pKernelInfo, *pClDevice);
 
-    EXPECT_TRUE(kernel->isBuiltInKernel());
-    ASSERT_EQ(CL_SUCCESS, kernel->initialize());
+    EXPECT_TRUE(kernel.isBuiltInKernel());
+    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
-    EXPECT_EQ(bufferAddress, *(uint64_t *)kernel->getCrossThreadData());
+    EXPECT_EQ(bufferAddress, *reinterpret_cast<uint64_t *>(kernel.getCrossThreadData()));
 
     program.setConstantSurface(nullptr);
-    delete kernel;
 }
 
 TEST_F(KernelConstantSurfaceTest, givenNDRangeKernelWhenKernelIsCreatedThenConstantSurfaceIsPatchedWithBaseAddressOffset) {
@@ -1259,15 +1248,13 @@ TEST_F(KernelConstantSurfaceTest, givenNDRangeKernelWhenKernelIsCreatedThenConst
     // create kernel
     MockProgram program(toClDeviceVector(*pClDevice));
     program.setConstantSurface(&gfxAlloc);
-    MockKernel *kernel = new MockKernel(&program, *pKernelInfo, *pClDevice);
+    MockKernel kernel(&program, *pKernelInfo, *pClDevice);
 
-    ASSERT_EQ(CL_SUCCESS, kernel->initialize());
+    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
-    EXPECT_EQ(bufferAddress, *(uint64_t *)kernel->getCrossThreadData());
+    EXPECT_EQ(bufferAddress, *reinterpret_cast<uint64_t *>(kernel.getCrossThreadData()));
 
     program.setConstantSurface(nullptr);
-
-    delete kernel;
 }
 
 HWTEST_F(KernelConstantSurfaceTest, givenStatefulKernelWhenKernelIsCreatedThenConstantMemorySurfaceStateIsPatchedWithCpuAddress) {
@@ -1286,27 +1273,26 @@ HWTEST_F(KernelConstantSurfaceTest, givenStatefulKernelWhenKernelIsCreatedThenCo
     program.setConstantSurface(&gfxAlloc);
 
     // create kernel
-    MockKernel *kernel = new MockKernel(&program, *pKernelInfo, *pClDevice);
+    MockKernel kernel(&program, *pKernelInfo, *pClDevice);
 
     // setup surface state heap
     char surfaceStateHeap[0x80];
     pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
     pKernelInfo->heapInfo.surfaceStateHeapSize = sizeof(surfaceStateHeap);
 
-    ASSERT_EQ(CL_SUCCESS, kernel->initialize());
+    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
-    EXPECT_NE(0u, kernel->getSurfaceStateHeapSize());
+    EXPECT_NE(0u, kernel.getSurfaceStateHeapSize());
 
     using RENDER_SURFACE_STATE = typename FamilyType::DefaultRenderSurfaceState;
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
-        ptrOffset(kernel->getSurfaceStateHeap(),
+        ptrOffset(kernel.getSurfaceStateHeap(),
                   pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.bindful));
     auto surfaceAddress = surfaceState->getSurfaceBaseAddress();
 
     EXPECT_EQ(bufferAddress, surfaceAddress);
 
     program.setConstantSurface(nullptr);
-    delete kernel;
 }
 
 TEST_F(KernelConstantSurfaceTest, givenStatelessKernelWhenKernelIsCreatedThenConstantMemorySurfaceStateIsNotPatched) {
@@ -1324,15 +1310,14 @@ TEST_F(KernelConstantSurfaceTest, givenStatelessKernelWhenKernelIsCreatedThenCon
     program.setConstantSurface(&gfxAlloc);
 
     // create kernel
-    MockKernel *kernel = new MockKernel(&program, *pKernelInfo, *pClDevice);
+    MockKernel kernel(&program, *pKernelInfo, *pClDevice);
 
-    ASSERT_EQ(CL_SUCCESS, kernel->initialize());
+    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
-    EXPECT_EQ(0u, kernel->getSurfaceStateHeapSize());
-    EXPECT_EQ(nullptr, kernel->getSurfaceStateHeap());
+    EXPECT_EQ(0u, kernel.getSurfaceStateHeapSize());
+    EXPECT_EQ(nullptr, kernel.getSurfaceStateHeap());
 
     program.setConstantSurface(nullptr);
-    delete kernel;
 }
 
 typedef Test<ClDeviceFixture> KernelResidencyTest;

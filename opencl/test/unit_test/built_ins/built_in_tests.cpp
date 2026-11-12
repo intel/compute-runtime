@@ -214,14 +214,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AuxBuiltInTests, givenXeHpCoreCommandsAndAuxTransla
 TEST_F(BuiltInTests, GivenCopyBufferToSystemMemoryBufferWhenDispatchInfoIsCreatedThenParamsAreCorrect) {
     BuiltIn::DispatchInfoBuilder &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::copyBufferToBuffer, defaultMode, *pClDevice);
 
-    MockBuffer *srcPtr = new MockBuffer();
-    MockBuffer *dstPtr = new MockBuffer();
+    MockBuffer src;
+    MockBuffer dst;
 
-    MockBuffer &src = *srcPtr;
-    MockBuffer &dst = *dstPtr;
-
-    srcPtr->mockGfxAllocation.setAllocationType(AllocationType::buffer);
-    dstPtr->mockGfxAllocation.setAllocationType(AllocationType::bufferHostMemory);
+    src.mockGfxAllocation.setAllocationType(AllocationType::buffer);
+    dst.mockGfxAllocation.setAllocationType(AllocationType::bufferHostMemory);
 
     BuiltIn::OpParams builtinOpsParams;
 
@@ -274,21 +271,16 @@ TEST_F(BuiltInTests, GivenCopyBufferToSystemMemoryBufferWhenDispatchInfoIsCreate
         EXPECT_TRUE(dispatchInfo.getKernel()->getDestinationAllocationInSystemMemory());
     }
     EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), builtinOpsParams));
-    delete srcPtr;
-    delete dstPtr;
 }
 
 TEST_F(BuiltInTests, GivenCopyBufferToLocalMemoryBufferWhenDispatchInfoIsCreatedThenParamsAreCorrect) {
     BuiltIn::DispatchInfoBuilder &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::copyBufferToBuffer, defaultMode, *pClDevice);
 
-    MockBuffer *srcPtr = new MockBuffer();
-    MockBuffer *dstPtr = new MockBuffer();
+    MockBuffer src;
+    MockBuffer dst;
 
-    MockBuffer &src = *srcPtr;
-    MockBuffer &dst = *dstPtr;
-
-    srcPtr->mockGfxAllocation.setAllocationType(AllocationType::bufferHostMemory);
-    dstPtr->mockGfxAllocation.setAllocationType(AllocationType::buffer);
+    src.mockGfxAllocation.setAllocationType(AllocationType::bufferHostMemory);
+    dst.mockGfxAllocation.setAllocationType(AllocationType::buffer);
 
     BuiltIn::OpParams builtinOpsParams;
 
@@ -304,9 +296,6 @@ TEST_F(BuiltInTests, GivenCopyBufferToLocalMemoryBufferWhenDispatchInfoIsCreated
     for (auto &dispatchInfo : multiDispatchInfo) {
         EXPECT_FALSE(dispatchInfo.getKernel()->getDestinationAllocationInSystemMemory());
     }
-
-    delete srcPtr;
-    delete dstPtr;
 }
 
 HWTEST2_F(AuxBuiltInTests, givenInputBufferWhenBuildingNonAuxDispatchInfoForAuxTranslationThenPickAndSetupCorrectKernels, AuxBuiltinsMatcher) {
@@ -1339,7 +1328,7 @@ TEST_F(BuiltInTests, GivenReadBufferAlignedWhenDispatchInfoIsCreatedThenParamsAr
 
     AlignedBuffer srcMemObj;
     auto size = 10 * MemoryConstants::cacheLineSize;
-    auto dstPtr = alignedMalloc(size, MemoryConstants::cacheLineSize);
+    auto dstPtr = reinterpret_cast<void *>(0x1000);
 
     BuiltIn::OpParams builtinOpsParams;
 
@@ -1370,14 +1359,13 @@ TEST_F(BuiltInTests, GivenReadBufferAlignedWhenDispatchInfoIsCreatedThenParamsAr
     for (auto &dispatchInfo : multiDispatchInfo) {
         EXPECT_TRUE(dispatchInfo.getKernel()->getDestinationAllocationInSystemMemory());
     }
-    alignedFree(dstPtr);
 }
 
 TEST_F(BuiltInTests, GivenWriteBufferAlignedWhenDispatchInfoIsCreatedThenParamsAreCorrect) {
     BuiltIn::DispatchInfoBuilder &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::copyBufferToBuffer, defaultMode, *pClDevice);
 
     auto size = 10 * MemoryConstants::cacheLineSize;
-    auto srcPtr = alignedMalloc(size, MemoryConstants::cacheLineSize);
+    auto srcPtr = reinterpret_cast<void *>(0x1000);
     AlignedBuffer dstMemObj;
 
     BuiltIn::OpParams builtinOpsParams;
@@ -1405,7 +1393,6 @@ TEST_F(BuiltInTests, GivenWriteBufferAlignedWhenDispatchInfoIsCreatedThenParamsA
     size_t middleSize = size / middleElSize;
     EXPECT_EQ(Vec3<size_t>(middleSize, 1, 1), dispatchInfo->getGWS());
     EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), builtinOpsParams));
-    alignedFree(srcPtr);
 }
 
 TEST_F(BuiltInTests, WhenGettingBuilderInfoTwiceThenPointerIsSame) {

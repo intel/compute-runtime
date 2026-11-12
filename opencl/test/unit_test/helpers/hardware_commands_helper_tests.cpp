@@ -708,12 +708,12 @@ HWTEST2_F(HardwareCommandsTest, WhenGettingBindingTableStateThenSurfaceStatePoin
     program.setConstantSurface(&gfxConstAlloc);
 
     // create kernel
-    MockKernel *pKernel = new MockKernel(&program, *pKernelInfo, *pClDevice);
+    MockKernel kernel(&program, *pKernelInfo, *pClDevice);
 
     // setup surface state heap
     constexpr uint32_t numSurfaces = 5;
     constexpr uint32_t sshSize = numSurfaces * sizeof(typename FamilyType::RENDER_SURFACE_STATE) + numSurfaces * sizeof(typename FamilyType::BINDING_TABLE_STATE);
-    unsigned char *surfaceStateHeap = reinterpret_cast<unsigned char *>(alignedMalloc(sshSize, sizeof(typename FamilyType::RENDER_SURFACE_STATE)));
+    alignas(sizeof(typename FamilyType::RENDER_SURFACE_STATE)) unsigned char surfaceStateHeap[sshSize];
 
     uint32_t btiOffset = static_cast<uint32_t>(numSurfaces * sizeof(typename FamilyType::RENDER_SURFACE_STATE));
     auto bti = reinterpret_cast<typename FamilyType::BINDING_TABLE_STATE *>(surfaceStateHeap + btiOffset);
@@ -732,11 +732,11 @@ HWTEST2_F(HardwareCommandsTest, WhenGettingBindingTableStateThenSurfaceStatePoin
     pKernelInfo->setLocalIds({1, 1, 1});
 
     // initialize kernel
-    ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
+    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
     // setup cross thread data
     char pCrossThreadData[64];
-    pKernel->setCrossThreadData(pCrossThreadData, sizeof(pCrossThreadData));
+    kernel.setCrossThreadData(pCrossThreadData, sizeof(pCrossThreadData));
 
     // try with different offsets to surface state base address
     for (uint32_t ssbaOffset : {0U, (uint32_t)sizeof(typename FamilyType::RENDER_SURFACE_STATE)}) {
@@ -751,7 +751,7 @@ HWTEST2_F(HardwareCommandsTest, WhenGettingBindingTableStateThenSurfaceStatePoin
         auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::Type::surfaceState, 8192);
 
         // Initialize binding table state pointers with pattern
-        EXPECT_EQ(numSurfaces, pKernel->getNumberOfBindingTableStates());
+        EXPECT_EQ(numSurfaces, kernel.getNumberOfBindingTableStates());
 
         const size_t localWorkSizes[3]{256, 1, 1};
         const uint32_t threadGroupCount = 1u;
@@ -765,16 +765,16 @@ HWTEST2_F(HardwareCommandsTest, WhenGettingBindingTableStateThenSurfaceStatePoin
         // push surfaces states and binding table to given ssh heap
         uint32_t interfaceDescriptorIndex = 0;
         auto isCcsUsed = EngineHelpers::isCcs(cmdQ.getGpgpuEngine().osContext->getEngineType());
-        auto kernelUsesLocalIds = HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(*pKernel);
+        auto kernelUsesLocalIds = HardwareCommandsHelper<FamilyType>::kernelUsesLocalIds(kernel);
 
         HardwareCommandsHelper<FamilyType>::template sendIndirectState<GPGPU_WALKER, INTERFACE_DESCRIPTOR_DATA>(
             commandStream,
             dsh,
             ioh,
             ssh,
-            *pKernel,
-            pKernel->getKernelStartAddress(true, kernelUsesLocalIds, isCcsUsed, false),
-            pKernel->getKernelInfo().getMaxSimdSize(),
+            kernel,
+            kernel.getKernelStartAddress(true, kernelUsesLocalIds, isCcsUsed, false),
+            kernel.getKernelInfo().getMaxSimdSize(),
             localWorkSizes,
             threadGroupCount,
             0,
@@ -800,8 +800,6 @@ HWTEST2_F(HardwareCommandsTest, WhenGettingBindingTableStateThenSurfaceStatePoin
         ssh.getSpace(ssh.getAvailableSpace());
         dsh.getSpace(dsh.getAvailableSpace());
     }
-    alignedFree(surfaceStateHeap);
-    delete pKernel;
 }
 
 HWTEST_F(HardwareCommandsTest, GivenBuffersNotRequiringSshWhenSettingBindingTableStatesForKernelThenSshIsNotUsed) {
@@ -814,7 +812,7 @@ HWTEST_F(HardwareCommandsTest, GivenBuffersNotRequiringSshWhenSettingBindingTabl
     MockProgram program(&context, false, toClDeviceVector(*pClDevice));
 
     // create kernel
-    MockKernel *pKernel = new MockKernel(&program, *pKernelInfo, *pClDevice);
+    MockKernel kernel(&program, *pKernelInfo, *pClDevice);
 
     // setup surface state heap
     char surfaceStateHeap[256];
@@ -825,7 +823,7 @@ HWTEST_F(HardwareCommandsTest, GivenBuffersNotRequiringSshWhenSettingBindingTabl
     pKernelInfo->setAddressQualifier(0, KernelArgMetadata::AddrGlobal);
 
     // initialize kernel
-    ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
+    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
     CommandQueueHw<FamilyType> cmdQ(nullptr, pClDevice, 0, false);
     auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::Type::surfaceState, 8192);
@@ -834,11 +832,11 @@ HWTEST_F(HardwareCommandsTest, GivenBuffersNotRequiringSshWhenSettingBindingTabl
     auto usedBefore = ssh.getUsed();
 
     // Initialize binding table state pointers with pattern
-    auto numSurfaceStates = pKernel->getNumberOfBindingTableStates();
+    auto numSurfaceStates = kernel.getNumberOfBindingTableStates();
     EXPECT_EQ(0u, numSurfaceStates);
 
     // set binding table states
-    auto dstBindingTablePointer = HardwareCommandsHelper<FamilyType>::checkForAdditionalBTAndSetBTPointer(ssh, *pKernel);
+    auto dstBindingTablePointer = HardwareCommandsHelper<FamilyType>::checkForAdditionalBTAndSetBTPointer(ssh, kernel);
     EXPECT_EQ(0u, dstBindingTablePointer);
 
     auto usedAfter = ssh.getUsed();
@@ -846,8 +844,6 @@ HWTEST_F(HardwareCommandsTest, GivenBuffersNotRequiringSshWhenSettingBindingTabl
     EXPECT_EQ(usedBefore, usedAfter);
     ssh.align(8);
     EXPECT_EQ(usedAfter, ssh.getUsed());
-
-    delete pKernel;
 }
 
 HWTEST_F(HardwareCommandsTest, GivenZeroSurfaceStatesWhenSettingBindingTableStatesThenPointerIsZero) {
@@ -860,7 +856,7 @@ HWTEST_F(HardwareCommandsTest, GivenZeroSurfaceStatesWhenSettingBindingTableStat
     MockProgram program(&context, false, toClDeviceVector(*pClDevice));
 
     // create kernel
-    MockKernel *pKernel = new MockKernel(&program, *pKernelInfo, *pClDevice);
+    MockKernel kernel(&program, *pKernelInfo, *pClDevice);
 
     // setup surface state heap
     char surfaceStateHeap[256];
@@ -868,27 +864,25 @@ HWTEST_F(HardwareCommandsTest, GivenZeroSurfaceStatesWhenSettingBindingTableStat
     pKernelInfo->heapInfo.surfaceStateHeapSize = sizeof(surfaceStateHeap);
 
     // initialize kernel
-    ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
+    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
     CommandQueueHw<FamilyType> cmdQ(nullptr, pClDevice, 0, false);
     auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::Type::surfaceState, 8192);
 
     // Initialize binding table state pointers with pattern
-    auto numSurfaceStates = pKernel->getNumberOfBindingTableStates();
+    auto numSurfaceStates = kernel.getNumberOfBindingTableStates();
     EXPECT_EQ(0u, numSurfaceStates);
 
-    auto dstBindingTablePointer = HardwareCommandsHelper<FamilyType>::checkForAdditionalBTAndSetBTPointer(ssh, *pKernel);
+    auto dstBindingTablePointer = HardwareCommandsHelper<FamilyType>::checkForAdditionalBTAndSetBTPointer(ssh, kernel);
     EXPECT_EQ(0u, dstBindingTablePointer);
 
-    dstBindingTablePointer = HardwareCommandsHelper<FamilyType>::checkForAdditionalBTAndSetBTPointer(ssh, *pKernel);
+    dstBindingTablePointer = HardwareCommandsHelper<FamilyType>::checkForAdditionalBTAndSetBTPointer(ssh, kernel);
     EXPECT_EQ(0u, dstBindingTablePointer);
 
     pKernelInfo->setBindingTable(64, 0);
 
-    dstBindingTablePointer = HardwareCommandsHelper<FamilyType>::checkForAdditionalBTAndSetBTPointer(ssh, *pKernel);
+    dstBindingTablePointer = HardwareCommandsHelper<FamilyType>::checkForAdditionalBTAndSetBTPointer(ssh, kernel);
     EXPECT_EQ(0u, dstBindingTablePointer);
-
-    delete pKernel;
 }
 
 HWTEST2_F(HardwareCommandsTest, GivenKernelWithInvalidSamplerStateArrayWhenSendIndirectStateIsCalledThenInterfaceDescriptorIsNotPopulated, IsGen12LP) {
@@ -1429,7 +1423,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HardwareCommandsTestXeHpAndLater, givenSendCrossThr
     MockProgram program(&context, false, toClDeviceVector(*pClDevice));
     auto kernelInfo = std::make_unique<KernelInfo>();
 
-    std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *kernelInfo, *pClDevice));
+    auto kernel = std::make_unique<MockKernel>(&program, *kernelInfo, *pClDevice);
 
     auto &indirectHeap = cmdQ.getIndirectHeap(IndirectHeap::Type::indirectObject, 8192);
     indirectHeap.getSpace(128u);

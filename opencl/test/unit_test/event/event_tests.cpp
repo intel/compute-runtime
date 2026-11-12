@@ -127,10 +127,10 @@ TEST(Event, WhenGettingTaskCountThenCorrectValueIsReturned) {
 
 TEST(Event, WhenGettingEventInfoThenCqIsReturned) {
     auto mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    auto ctx = std::unique_ptr<Context>(new MockContext());
-    auto cmdQ = std::unique_ptr<MockCommandQueue>(new MockCommandQueue(ctx.get(), mockDevice.get(), 0, false));
-    Event *event = new Event(cmdQ.get(), CL_COMMAND_NDRANGE_KERNEL, 1, 5);
-    cl_event clEvent = event;
+    MockContext ctx;
+    MockCommandQueue cmdQ(&ctx, mockDevice.get(), nullptr, false);
+    Event event(&cmdQ, CL_COMMAND_NDRANGE_KERNEL, 1, 5);
+    cl_event clEvent = &event;
     cl_command_queue cmdQResult = nullptr;
     size_t sizeReturned = 0;
 
@@ -140,9 +140,8 @@ TEST(Event, WhenGettingEventInfoThenCqIsReturned) {
 
     result = clGetEventInfo(clEvent, CL_EVENT_COMMAND_QUEUE, sizeof(cmdQResult), &cmdQResult, &sizeReturned);
     ASSERT_EQ(CL_SUCCESS, result);
-    EXPECT_EQ(cmdQ.get(), cmdQResult);
+    EXPECT_EQ(&cmdQ, cmdQResult);
     EXPECT_EQ(sizeReturned, sizeof(cmdQResult));
-    delete event;
 }
 
 TEST(Event, givenBcsCsrSetInEventWhenPeekingBcsTaskCountThenReturnCorrectTaskCount) {
@@ -1211,34 +1210,32 @@ HWTEST_F(InternalsEventWithPerfCountersTest, givenCpuProfilingPerfCountersPathWh
 
 HWTEST_F(InternalsEventWithPerfCountersTest, givenCpuProfilingPerfCountersPathWhenEnqueuedMarkerThenUseTimeStampNodePerfCounterNode) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
-    MockCommandQueue *pCmdQ = new MockCommandQueue(mockContext, pClDevice, props, false);
-    pCmdQ->setPerfCountersEnabled();
-    MockEvent<Event> *event = new MockEvent<Event>(pCmdQ, CL_COMMAND_MARKER, 0, 0);
-    event->setCPUProfilingPath(true);
-    HwPerfCounter *perfCounter = static_cast<TagNode<HwPerfCounter> *>(event->getHwPerfCounterNode())->tagForCpuAccess;
+    MockCommandQueue cmdQ(mockContext, pClDevice, props, false);
+    cmdQ.setPerfCountersEnabled();
+    MockEvent<Event> event(&cmdQ, CL_COMMAND_MARKER, 0, 0);
+    event.setCPUProfilingPath(true);
+    HwPerfCounter *perfCounter = static_cast<TagNode<HwPerfCounter> *>(event.getHwPerfCounterNode())->tagForCpuAccess;
     ASSERT_NE(nullptr, perfCounter);
 
-    auto hwTimeStampNode = static_cast<TagNode<HwTimeStamps> *>(event->getHwTimeStampNode());
-    if (pCmdQ->getTimestampPacketContainer()) {
+    auto hwTimeStampNode = static_cast<TagNode<HwTimeStamps> *>(event.getHwTimeStampNode());
+    if (cmdQ.getTimestampPacketContainer()) {
         EXPECT_EQ(nullptr, hwTimeStampNode);
     } else {
         ASSERT_NE(nullptr, hwTimeStampNode->tagForCpuAccess);
     }
 
-    event->setCommand(std::unique_ptr<Command>(new CommandWithoutKernel(*pCmdQ)));
+    event.setCommand(std::make_unique<CommandWithoutKernel>(cmdQ));
 
-    event->submitCommand(false);
+    event.submitCommand(false);
 
     uint64_t submit, start, end;
-    event->getEventProfilingInfo(CL_PROFILING_COMMAND_SUBMIT, sizeof(uint64_t), &submit, 0);
-    event->getEventProfilingInfo(CL_PROFILING_COMMAND_START, sizeof(uint64_t), &start, 0);
-    event->getEventProfilingInfo(CL_PROFILING_COMMAND_END, sizeof(uint64_t), &end, 0);
+    event.getEventProfilingInfo(CL_PROFILING_COMMAND_SUBMIT, sizeof(uint64_t), &submit, 0);
+    event.getEventProfilingInfo(CL_PROFILING_COMMAND_START, sizeof(uint64_t), &start, 0);
+    event.getEventProfilingInfo(CL_PROFILING_COMMAND_END, sizeof(uint64_t), &end, 0);
 
     EXPECT_LT(0u, submit);
     EXPECT_LT(submit, start);
     EXPECT_LT(start, end);
-    delete event;
-    delete pCmdQ;
 }
 
 TEST_F(InternalsEventWithPerfCountersTest, GivenPerfCountersEnabledWhenEventIsCreatedThenProfilingEnabledAndPerfCountersEnabledAreTrue) {
