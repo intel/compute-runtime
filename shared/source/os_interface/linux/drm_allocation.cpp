@@ -341,6 +341,8 @@ int DrmAllocation::bindBO(BufferObject *bo, OsContext *osContext, uint32_t vmHan
         } else {
             if (bind) {
                 retVal = bo->bind(osContext, vmHandleId, forcePagingFence);
+            } else if (sharedBoUnbindDeferred && bo->peekIsReusableAllocation() && bo->getRefCount() > 1) {
+                retVal = 0;
             } else {
                 retVal = bo->unbind(osContext, vmHandleId);
             }

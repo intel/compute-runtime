@@ -243,6 +243,17 @@ void DrmMemoryManager::pushSharedBufferObject(NEO::BufferObject *bo) {
     sharingBufferObjects.push_back(bo);
 }
 
+void DrmMemoryManager::unbindSharedBufferObject(NEO::BufferObject *bo) {
+    for (auto &engine : getRegisteredEngines(bo->getRootDeviceIndex())) {
+        auto deviceBitfield = engine.osContext->getDeviceBitfield();
+        for (auto vmHandleId = 0u; vmHandleId < deviceBitfield.size(); vmHandleId++) {
+            if (deviceBitfield.test(vmHandleId)) {
+                bo->unbind(engine.osContext, vmHandleId);
+            }
+        }
+    }
+}
+
 uint32_t DrmMemoryManager::unreference(NEO::BufferObject *bo, bool synchronousDestroy) {
     if (!bo) {
         return -1;
@@ -263,6 +274,7 @@ uint32_t DrmMemoryManager::unreference(NEO::BufferObject *bo, bool synchronousDe
 
     if (r == 1) {
         if (bo->peekIsReusableAllocation()) {
+            unbindSharedBufferObject(bo);
             eraseSharedBufferObject(bo);
         }
         auto rootDeviceIndex = bo->getRootDeviceIndex();
@@ -2074,6 +2086,7 @@ void DrmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation,
     if (unregister) {
         this->unregisterAllocation(gfxAllocation);
     }
+    drmAlloc->deferSharedBoUnbind();
     auto rootDeviceIndex = gfxAllocation->getRootDeviceIndex();
     for (auto &engine : getRegisteredEngines(rootDeviceIndex)) {
         std::unique_lock<CommandStreamReceiver::MutexType> lock;

@@ -141,6 +141,7 @@ class DrmAllocation : public GraphicsAllocation {
     void setAsReadOnly() override;
     void setIsaDebugDataHandle(uint32_t handle);
     void setDrmResourceClass(DrmResourceClass resourceClassToSet);
+    void deferSharedBoUnbind() { sharedBoUnbindDeferred = true; }
 
   protected:
     OsContextLinux *osContext = nullptr;
@@ -155,5 +156,6 @@ class DrmAllocation : public GraphicsAllocation {
     uint32_t numHandles = 0u;
 
     bool usmHostAllocation = false;
+    bool sharedBoUnbindDeferred = false;
 };
 } // namespace NEO
