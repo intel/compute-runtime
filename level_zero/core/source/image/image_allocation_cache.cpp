@@ -171,6 +171,12 @@ NEO::GraphicsAllocation *ImageAllocationCache::get(const ImageAllocationCacheKey
     return nullptr;
 }
 
+void ImageAllocationCache::trimOldAllocsUnderMemoryPressure(std::chrono::high_resolution_clock::time_point trimTimePoint) {
+    if (this->device.shouldLimitAllocationsReuse()) {
+        this->trimOldAllocs(trimTimePoint, true);
+    }
+}
+
 void ImageAllocationCache::releaseBindlessState(NEO::GraphicsAllocation &allocation, ImageBindlessState &bindlessState) {
     auto bindlessHeapsHelper = this->memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[allocation.getRootDeviceIndex()]->getBindlessHeapsHelper();
     if (bindlessHeapsHelper) {

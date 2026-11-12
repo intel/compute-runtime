@@ -443,7 +443,10 @@ class MemoryManager {
     static bool isUsmDeviceAllocationType(AllocationType allocationType) { return allocationType == AllocationType::buffer || allocationType == AllocationType::svmGpu; }
 
     bool shouldLimitAllocationsReuse() const {
-        return getUsedSystemMemorySize() >= usmReuseInfo.getLimitAllocationsReuseThreshold();
+        return shouldLimitAllocationsReuse(0u);
+    }
+    bool shouldLimitAllocationsReuse(size_t additionalSize) const {
+        return getUsedSystemMemorySize() + additionalSize >= usmReuseInfo.getLimitAllocationsReuseThreshold();
     }
 
     void addCustomHeapAllocatorConfig(AllocationType allocationType, bool isFrontWindowPool, uint32_t rootDeviceIndex, const CustomHeapAllocatorConfig &config);

@@ -301,11 +301,15 @@ void Device::initUsmReuseLimits() {
 }
 
 bool Device::shouldLimitAllocationsReuse() const {
+    return this->shouldLimitAllocationsReuse(0u);
+}
+
+bool Device::shouldLimitAllocationsReuse(size_t additionalSize) const {
     const bool isIntegratedDevice = getHardwareInfo().capabilityTable.isIntegratedDevice;
     if (isIntegratedDevice) {
-        return getMemoryManager()->shouldLimitAllocationsReuse();
+        return getMemoryManager()->shouldLimitAllocationsReuse(additionalSize);
     }
-    return getMemoryManager()->getUsedLocalMemorySize(getRootDeviceIndex()) >= this->usmReuseInfo.getLimitAllocationsReuseThreshold();
+    return getMemoryManager()->getUsedLocalMemorySize(getRootDeviceIndex()) + additionalSize >= this->getRootDevice()->usmReuseInfo.getLimitAllocationsReuseThreshold();
 }
 
 void Device::cleanupUsmAllocationPool() {

@@ -333,6 +333,26 @@ TEST_F(ImageAllocationCacheTest, givenOldAndNewAllocationsWhenTrimmingOldAllocat
     EXPECT_FALSE(this->cache->isEmpty());
 }
 
+TEST_F(ImageAllocationCacheTest, givenDiscreteDeviceAndOnlyHostMemoryPressureWhenTrimmingUnderMemoryPressureThenOldAllocationsAreKept) {
+    this->neoDevice->getRootDeviceEnvironmentRef().getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = false;
+    EXPECT_TRUE(this->cache->insert(createImageAllocationCacheKey(16u), {}, this->allocate()));
+    EXPECT_TRUE(this->cache->insert(createImageAllocationCacheKey(32u), {}, this->allocate()));
+
+    this->memoryManager->usmReuseInfo.init(MemoryConstants::gigaByte, 0u);
+    this->cache->trimOldAllocsUnderMemoryPressure(std::chrono::high_resolution_clock::now());
+    EXPECT_EQ(2u, this->cache->allocations.size());
+}
+
+TEST_F(ImageAllocationCacheTest, givenDiscreteDeviceAndDeviceMemoryPressureWhenTrimmingUnderMemoryPressureThenOldAllocationsAreFreed) {
+    this->neoDevice->getRootDeviceEnvironmentRef().getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = false;
+    EXPECT_TRUE(this->cache->insert(createImageAllocationCacheKey(16u), {}, this->allocate()));
+    EXPECT_TRUE(this->cache->insert(createImageAllocationCacheKey(32u), {}, this->allocate()));
+
+    this->usmReuseInfo->init(MemoryConstants::gigaByte, 0u);
+    this->cache->trimOldAllocsUnderMemoryPressure(std::chrono::high_resolution_clock::now());
+    EXPECT_TRUE(this->cache->isEmpty());
+}
+
 TEST_F(ImageAllocationCacheTest, givenOldAllocationInUseWhenTrimmingOldAllocationsThenItIsNotFreed) {
     EXPECT_TRUE(this->cache->insert(createImageAllocationCacheKey(16u), {}, this->allocate()));
     const auto now = std::chrono::high_resolution_clock::now();

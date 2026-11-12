@@ -280,6 +280,7 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     void stopDirectSubmissionForCopyEngine();
 
     bool shouldLimitAllocationsReuse() const;
+    bool shouldLimitAllocationsReuse(size_t additionalSize) const;
 
     uint32_t getMicrosecondResolution() const {
         return microsecondResolution;

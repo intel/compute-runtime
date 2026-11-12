@@ -102,7 +102,7 @@ bool SVMAllocsManager::SvmAllocationCache::insert(size_t size, void *ptr, SvmAll
         svmAllocsManager->waitForPeerAllocationsCompletion(ptr);
     }
     std::unique_lock<std::mutex> lock(this->mtx);
-    if (svmData->device ? svmData->device->shouldLimitAllocationsReuse() : memoryManager->shouldLimitAllocationsReuse()) {
+    if (this->shouldLimitAllocationsReuse(*svmData)) {
         return false;
     }
     if (svmData->isSavedForReuse) {
@@ -140,6 +140,14 @@ bool SVMAllocsManager::SvmAllocationCache::insert(size_t size, void *ptr, SvmAll
     }
 
     return isSuccess;
+}
+
+bool SVMAllocsManager::SvmAllocationCache::shouldLimitAllocationsReuse(const SvmAllocationData &svmData) const {
+    if (nullptr == svmData.device) {
+        return this->memoryManager->shouldLimitAllocationsReuse();
+    }
+    return svmData.device->shouldLimitAllocationsReuse() ||
+           (this->usesSharedUsmReuseInfo && this->memoryManager->shouldLimitAllocationsReuse());
 }
 
 bool SVMAllocsManager::SvmAllocationCache::allocUtilizationAllows(size_t requestedSize, size_t reuseCandidateSize) {
@@ -342,7 +350,8 @@ void SVMAllocsManager::SvmAllocationCache::logCacheOperation(const SvmAllocation
                                                                           isSuccessString);
 }
 
-void SVMAllocsManager::SvmAllocationCache::trimOldAllocs(std::chrono::high_resolution_clock::time_point trimTimePoint, bool trimAll) {
+template <typename ShouldTrimT>
+void SVMAllocsManager::SvmAllocationCache::trimOldAllocsIf(std::chrono::high_resolution_clock::time_point trimTimePoint, bool trimAll, const ShouldTrimT &shouldTrim) {
     std::unique_lock<std::mutex> lock(this->mtx);
     std::vector<SvmCacheAllocationInfo> allocationsToFree;
     auto allocCleanCandidateIndex = allocations.size();
@@ -352,6 +361,9 @@ void SVMAllocsManager::SvmAllocationCache::trimOldAllocs(std::chrono::high_resol
             continue;
         }
         DEBUG_BREAK_IF(nullptr == allocCleanCandidate.svmData);
+        if (false == shouldTrim(*allocCleanCandidate.svmData)) {
+            continue;
+        }
         {
             auto &usmReuseInfo = getUsmReuseInfo(*allocCleanCandidate.svmData);
             auto lock = usmReuseInfo.obtainAllocationsReuseLock();
@@ -380,6 +392,20 @@ void SVMAllocsManager::SvmAllocationCache::trimOldAllocs(std::chrono::high_resol
     for (auto &allocationToFree : allocationsToFree) {
         svmAllocsManager->freeSVMAllocImpl(allocationToFree.allocation, FreePolicyType::defer, allocationToFree.svmData);
     }
+}
+
+void SVMAllocsManager::SvmAllocationCache::trimOldAllocs(std::chrono::high_resolution_clock::time_point trimTimePoint, bool trimAll) {
+    this->trimOldAllocsIf(trimTimePoint, trimAll, [](const SvmAllocationData &) { return true; });
+}
+
+void SVMAllocsManager::SvmAllocationCache::trimAllocsOfRootDevice(uint32_t rootDeviceIndex) {
+    this->trimOldAllocsIf(std::chrono::high_resolution_clock::now(), true, [rootDeviceIndex](const SvmAllocationData &svmData) {
+        return svmData.device->getRootDeviceIndex() == rootDeviceIndex;
+    });
+}
+
+void SVMAllocsManager::SvmAllocationCache::trimOldAllocsUnderMemoryPressure(std::chrono::high_resolution_clock::time_point trimTimePoint) {
+    this->trimOldAllocsIf(trimTimePoint, true, [this](const SvmAllocationData &svmData) { return this->shouldLimitAllocationsReuse(svmData); });
 }
 
 SvmAllocationData *SVMAllocsManager::MapBasedAllocationTracker::get(const void *ptr) {
@@ -641,6 +667,9 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
                     }
                 }
                 return allocationFromCache;
+            }
+            if (memoryProperties.device->shouldLimitAllocationsReuse(alignedSize)) {
+                this->usmDeviceAllocationsCache->trimAllocsOfRootDevice(rootDeviceIndex);
             }
         }
     } else if (memoryProperties.memoryType == InternalMemoryType::hostUnifiedMemory) {

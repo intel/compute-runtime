@@ -74,11 +74,16 @@ struct SVMAllocsManager::SvmAllocationCache : AllocationReuseCache {
     static bool alignmentAllows(void *ptr, size_t alignment);
     bool isInUse(SvmCacheAllocationInfo &cacheAllocInfo);
     bool isEmpty() override { return empty; };
+    bool shouldLimitAllocationsReuse(const SvmAllocationData &svmData) const;
     void *get(size_t size, const UnifiedMemoryProperties &unifiedMemoryProperties);
     void *get(size_t size, const UnifiedMemoryProperties &unifiedMemoryProperties, std::optional<uint32_t> storageOwnerRootDeviceIndex);
     void trim();
     void trim(bool keepAllocationsWithPeerWorkInUse);
     void trimOldAllocs(std::chrono::high_resolution_clock::time_point trimTimePoint, bool trimAll) override;
+    void trimAllocsOfRootDevice(uint32_t rootDeviceIndex);
+    void trimOldAllocsUnderMemoryPressure(std::chrono::high_resolution_clock::time_point trimTimePoint) override;
+    template <typename ShouldTrimT>
+    void trimOldAllocsIf(std::chrono::high_resolution_clock::time_point trimTimePoint, bool trimAll, const ShouldTrimT &shouldTrim);
     MemoryManager *getMemoryManager() const override { return memoryManager; }
     void cleanup();
     void logCacheOperation(const SvmAllocationCachePerfInfo &cachePerfEvent) const;

@@ -62,21 +62,16 @@ void UnifiedMemoryReuseCleaner::unregisterAllocationCache(AllocationReuseCache *
 }
 
 void UnifiedMemoryReuseCleaner::trimOldInCaches() {
-    bool shouldLimitReuse = false;
-    auto trimTimePoint = std::chrono::high_resolution_clock::now() - maxHoldTime;
+    const auto now = std::chrono::high_resolution_clock::now();
     std::lock_guard<std::mutex> lockAllocationCaches(this->allocationCachesMutex);
     for (auto allocationCache : this->allocationCaches) {
-        shouldLimitReuse |= allocationCache->getMemoryManager()->shouldLimitAllocationsReuse();
-        if (shouldLimitReuse) {
-            trimTimePoint = std::chrono::high_resolution_clock::now() - limitedHoldTime;
-        } else {
-            if (auto deferredDeleter = allocationCache->getMemoryManager()->getDeferredDeleter()) {
-                if (false == deferredDeleter->areElementsReleased(false)) {
-                    continue;
-                }
+        allocationCache->trimOldAllocsUnderMemoryPressure(now - limitedHoldTime);
+        if (auto deferredDeleter = allocationCache->getMemoryManager()->getDeferredDeleter()) {
+            if (false == deferredDeleter->areElementsReleased(false)) {
+                continue;
             }
         }
-        allocationCache->trimOldAllocs(trimTimePoint, shouldLimitReuse || this->trimAllAllocations);
+        allocationCache->trimOldAllocs(now - maxHoldTime, this->trimAllAllocations);
     }
 }
 

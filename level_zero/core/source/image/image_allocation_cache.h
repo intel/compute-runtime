@@ -76,6 +76,7 @@ class ImageAllocationCache : public NEO::AllocationReuseCache {
     void cleanup();
 
     bool isEmpty() override { return this->empty; }
+    void trimOldAllocsUnderMemoryPressure(std::chrono::high_resolution_clock::time_point trimTimePoint) override;
     void trimOldAllocs(std::chrono::high_resolution_clock::time_point trimTimePoint, bool trimAll) override;
     NEO::MemoryManager *getMemoryManager() const override { return this->memoryManager; }
 
