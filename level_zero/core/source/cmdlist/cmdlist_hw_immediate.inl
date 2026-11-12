@@ -655,6 +655,12 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
         cmdQ->makeResidentForResidencyContainer(this->commandContainer.getResidencyContainer());
     }
 
+    auto epilogueCommandStream = this->commandContainer.getCommandStream();
+    const auto epilogueCommandStreamUsedBeforeFlush = epilogueCommandStream->getUsed();
+    const auto csrPendingSubmissionRequests = csr->peekPendingSubmissionRequests();
+    const bool walkerWithProfilingEnqueued = this->isWalkerWithProfilingEnqueued;
+    const bool copyOffloadTagUpdateRequired = this->copyOffloadTagUpdateRequired;
+
     NEO::CompletionStamp completionStamp;
     if (cmdQ->peekIsCopyOnlyCommandQueue()) {
         completionStamp = flushBcsTask(*commandStream, commandStreamStart, hasStallingCmds, hasRelaxedOrderingDependencies, requireTaskCountUpdate, appendOperation, csr);
@@ -667,6 +673,14 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
     }
 
     if (completionStamp.taskCount > NEO::CompletionStamp::notReady) {
+        // unless direct submission already copied them into its ring, commands stay pending for the next flush,
+        // which must not run the epilogue of the failed one; it must still program what the failed one requested
+        if (epilogueCommandStream->getUsed() > epilogueCommandStreamUsedBeforeFlush) {
+            epilogueCommandStream->reclaimSpace(epilogueCommandStream->getUsed() - epilogueCommandStreamUsedBeforeFlush);
+        }
+        csr->restorePendingSubmissionRequests(csrPendingSubmissionRequests);
+        this->isWalkerWithProfilingEnqueued |= walkerWithProfilingEnqueued;
+        this->copyOffloadTagUpdateRequired |= copyOffloadTagUpdateRequired;
         if (completionStamp.taskCount == NEO::CompletionStamp::outOfHostMemory) {
             return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
         }

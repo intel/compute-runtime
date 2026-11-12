@@ -120,6 +120,11 @@ bool WddmResidencyController::makeResidentResidencyAllocations(ResidencyContaine
             }
         }
     } else {
+        for (auto &allocation : backupResidencyContainer) {
+            if (!allocation->isAlwaysResident(osContextId)) {
+                allocation->releaseResidencyInOsContext(osContextId);
+            }
+        }
         allocationsForResidency.clear();
     }
 

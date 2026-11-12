@@ -353,6 +353,7 @@ struct MockCommandListImmediate : public CommandListCoreFamilyImmediate<gfxCoreF
     using BaseClass::internalUsage;
     using BaseClass::isSyncModeQueue;
     using BaseClass::isTbxMode;
+    using BaseClass::isWalkerWithProfilingEnqueued;
     using BaseClass::partitionCount;
     using BaseClass::requiredStreamState;
     using CommandList::kernelWithAssertAppended;

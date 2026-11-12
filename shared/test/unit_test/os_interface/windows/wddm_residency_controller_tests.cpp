@@ -1045,6 +1045,25 @@ TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsWhenCallin
     EXPECT_EQ(residencyPack.size(), 0u);
 }
 
+TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsWhenCsrMakesAllocationResidentAgainForSameTaskCountThenAllocationIsAddedToResidencyContainer) {
+    MockWddmAllocation allocation(gmmHelper);
+    MockWddmAllocation alwaysResidentAllocation(gmmHelper);
+    const auto contextId = osContext->getContextId();
+    alwaysResidentAllocation.updateResidencyTaskCount(GraphicsAllocation::objectAlwaysResident, contextId);
+    wddm->makeResidentNumberOfBytesToTrim = 4 * 4096;
+    wddm->makeResidentStatus = false;
+
+    csr->makeResident(allocation);
+    csr->getResidencyAllocations().push_back(&alwaysResidentAllocation);
+    bool requiresBlockingResidencyHandling = true;
+    EXPECT_FALSE(residencyController->makeResidentResidencyAllocations(csr->getResidencyAllocations(), requiresBlockingResidencyHandling, csr.get()));
+    EXPECT_TRUE(alwaysResidentAllocation.isAlwaysResident(contextId));
+
+    csr->makeResident(allocation);
+    ASSERT_EQ(1u, csr->getResidencyAllocations().size());
+    EXPECT_EQ(&allocation, csr->getResidencyAllocations()[0]);
+}
+
 TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsWhenCallingMakeResidentResidencyAllocationsThenDontMarkTripleAllocationsAsResident) {
     MockWddmAllocation allocation1(gmmHelper);
     MockWddmAllocation allocation2(gmmHelper);

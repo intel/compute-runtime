@@ -20,6 +20,7 @@
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_direct_submission_hw.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
@@ -234,6 +235,140 @@ HWTEST_F(CommandListExecuteImmediate, givenOutOfDeviceMemoryErrorOnFlushWhenExec
     auto &commandStreamReceiver = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.flushReturnValue = SubmissionStatus::outOfMemory;
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false, NEO::AppendOperations::nonKernel, false, false, nullptr, nullptr));
+}
+
+HWTEST_F(CommandListExecuteImmediate, givenFailedFlushWhenNextFlushSucceedsThenSubmittedCommandsEndWithSingleBatchBufferEnd) {
+    using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
+
+    std::unique_ptr<L0::CommandList> commandList;
+    const ze_command_queue_desc_t desc = {};
+    ze_result_t returnValue;
+    commandList.reset(CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
+    auto &commandListImmediate = static_cast<MockCommandListImmediate<FamilyType::gfxCoreFamily> &>(*commandList);
+    auto commandStream = commandListImmediate.getCmdContainer().getCommandStream();
+    const auto submissionStart = commandStream->getUsed();
+
+    auto &commandStreamReceiver = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::outOfMemory;
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false, NEO::AppendOperations::nonKernel, false, true, nullptr, nullptr));
+    EXPECT_EQ(submissionStart, commandStream->getUsed());
+
+    commandStreamReceiver.flushReturnValue.reset();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false, NEO::AppendOperations::nonKernel, false, true, nullptr, nullptr));
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(commandStream->getCpuBase(), submissionStart), commandStream->getUsed() - submissionStart));
+    EXPECT_EQ(1u, findAll<MI_BATCH_BUFFER_END *>(cmdList.begin(), cmdList.end()).size());
+}
+
+HWTEST_F(CommandListExecuteImmediate, givenDirectSubmissionCopiedCommandsIntoRingWhenFlushFailsThenNextFlushDoesNotCopyThemAgain) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+
+    struct DirectSubmissionCsr : UltCommandStreamReceiver<FamilyType> {
+        using UltCommandStreamReceiver<FamilyType>::UltCommandStreamReceiver;
+        SubmissionStatus flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
+            if (!this->directSubmission) {
+                return SubmissionStatus::success;
+            }
+            return this->directSubmission->dispatchCommandBuffer(batchBuffer, *this->flushStamp) ? SubmissionStatus::success : SubmissionStatus::failed;
+        }
+    };
+    auto csr = std::make_unique<DirectSubmissionCsr>(*neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
+    csr->setupContext(neoDevice->getUltCommandStreamReceiver<FamilyType>().getOsContext());
+    csr->setDevice(neoDevice);
+    csr->initializeResources(neoDevice->getPreemptionMode());
+    csr->initializeTagAllocation();
+    csr->createGlobalFenceAllocation();
+
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto &commandListImmediate = static_cast<MockCommandListImmediate<FamilyType::gfxCoreFamily> &>(*commandList);
+    auto commandQueue = static_cast<MockCommandQueueHw<FamilyType::gfxCoreFamily> *>(commandListImmediate.cmdQImmediate);
+    VariableBackup<CommandStreamReceiver *> csrBackup(&commandQueue->csr, csr.get());
+    LinearStream *commandStream = commandListImmediate.getCmdContainer().getCommandStream();
+    EncodeNoop<FamilyType>::emitNoop(*commandStream, sizeof(uint32_t));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false, NEO::AppendOperations::nonKernel, false, false, nullptr, nullptr));
+
+    auto directSubmission = std::make_unique<MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>>(*csr);
+    auto &ring = directSubmission->ringCommandStream;
+    ASSERT_TRUE(directSubmission->initialize(false));
+    directSubmission->updateTagValueReturn = std::numeric_limits<uint64_t>::max();
+    auto mockDirectSubmission = directSubmission.get();
+    csr->directSubmission = std::move(directSubmission);
+    csr->directSubmissionAvailable = true;
+
+    const auto submissionStart = commandStream->getUsed();
+    auto storeDataImm = commandStream->getSpaceForCmd<MI_STORE_DATA_IMM>();
+    *storeDataImm = FamilyType::cmdInitStoreDataImm;
+    storeDataImm->setDataDword0(0x1234);
+    EXPECT_NE(ZE_RESULT_SUCCESS, commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false, NEO::AppendOperations::nonKernel, false, false, nullptr, nullptr));
+    EXPECT_EQ(submissionStart, commandStream->getUsed());
+
+    mockDirectSubmission->updateTagValueReturn = 1;
+    EncodeNoop<FamilyType>::emitNoop(*commandStream, sizeof(uint32_t));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false, NEO::AppendOperations::nonKernel, false, false, nullptr, nullptr));
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ring.getCpuBase(), ring.getUsed()));
+    auto storeDataImms = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+    EXPECT_EQ(1, std::count_if(storeDataImms.begin(), storeDataImms.end(), [](auto it) {
+                  return genCmdCast<MI_STORE_DATA_IMM *>(*it)->getDataDword0() == 0x1234u;
+              }));
+}
+
+HWTEST_F(CommandListExecuteImmediate, givenHeapRecyclingRequestWhenFlushTaskFailsThenNextFlushProgramsCacheInvalidation) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.UseImmediateFlushTask.set(0);
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto &commandListImmediate = static_cast<MockCommandListImmediate<FamilyType::gfxCoreFamily> &>(*commandList);
+    auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandListImmediate.getCsr(false));
+    auto commandStream = commandListImmediate.getCmdContainer().getCommandStream();
+    EncodeNoop<FamilyType>::emitNoop(*commandStream, sizeof(uint32_t));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false, NEO::AppendOperations::nonKernel, false, false, nullptr, nullptr));
+
+    const auto submissionStart = commandStream->getUsed();
+    EncodeNoop<FamilyType>::emitNoop(*commandStream, sizeof(uint32_t));
+    csr->heapStorageRequiresRecyclingTag = true;
+    csr->flushReturnValue = SubmissionStatus::outOfMemory;
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false, NEO::AppendOperations::nonKernel, false, false, nullptr, nullptr));
+    csr->flushReturnValue.reset();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false, NEO::AppendOperations::nonKernel, false, false, nullptr, nullptr));
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(commandStream->getCpuBase(), submissionStart), commandStream->getUsed() - submissionStart));
+    auto pipeControls = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    EXPECT_EQ(1, std::count_if(pipeControls.begin(), pipeControls.end(), [](auto it) {
+                  auto pipeControl = genCmdCast<PIPE_CONTROL *>(*it);
+                  return pipeControl->getTextureCacheInvalidationEnable() && pipeControl->getStateCacheInvalidationEnable();
+              }));
+}
+
+HWTEST_F(CommandListExecuteImmediate, givenWalkerWithProfilingEnqueuedWhenFlushFailsThenNextFlushProgramsTaskCountUpdateForIt) {
+    std::unique_ptr<L0::CommandList> commandList;
+    const ze_command_queue_desc_t desc = {};
+    ze_result_t returnValue;
+    commandList.reset(CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
+    auto &commandListImmediate = static_cast<MockCommandListImmediate<FamilyType::gfxCoreFamily> &>(*commandList);
+    auto &commandStreamReceiver = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    commandListImmediate.isWalkerWithProfilingEnqueued = true;
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::outOfMemory;
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false, NEO::AppendOperations::nonKernel, false, true, nullptr, nullptr));
+    EXPECT_EQ(1u, commandStreamReceiver.walkerWithProfilingEnqueuedTimes);
+
+    commandStreamReceiver.walkerWithProfilingEnqueuedTimes = 0;
+    commandStreamReceiver.flushReturnValue.reset();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false, NEO::AppendOperations::nonKernel, false, true, nullptr, nullptr));
+    EXPECT_EQ(1u, commandStreamReceiver.walkerWithProfilingEnqueuedTimes);
 }
 
 HWTEST_F(CommandListExecuteImmediate, GivenImmediateCommandListWhenCommandListIsCreatedThenCsrStateIsNotSet) {

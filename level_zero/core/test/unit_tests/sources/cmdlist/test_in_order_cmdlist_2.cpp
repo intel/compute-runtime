@@ -539,6 +539,63 @@ HWTEST2_F(CopyOffloadInOrderTests, givenAsyncCopyInRetiredCommandBufferWhenNextC
     context->freeMem(dst);
 }
 
+HWTEST2_F(CopyOffloadInOrderTests, givenAsyncCopyInRetiredCommandBufferWhenFlushOfNextCopyFailsThenRetriedFlushUpdatesCopyTag, IsAtLeastXeCore) {
+    debugManager.flags.OverrideCopyOffloadMode.set(CopyOffloadModes::dualStream);
+    debugManager.flags.EnableCommandBufferPoolAllocator.set(0);
+    debugManager.flags.EnableCopyWithStagingBuffers.set(0);
+
+    auto immediate = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+    auto copyCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immediate->getCsr(true));
+
+    const auto src = allocHostMem(sizeof(copyData2));
+    const auto dst = allocDeviceMem(sizeof(copyData2));
+    const auto stream = immediate->commandContainer.getCommandStream();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, immediate->appendMemoryCopy(dst, src, sizeof(copyData2), nullptr, 0, nullptr, copyParams));
+    ASSERT_TRUE(stream->getGraphicsAllocation()->isUsedByOsContext(copyCsr->getOsContext().getContextId()));
+
+    stream->getSpace(stream->getAvailableSpace());
+    copyCsr->flushReturnValue = SubmissionStatus::outOfMemory;
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, immediate->appendMemoryCopy(dst, src, sizeof(copyData2), nullptr, 0, nullptr, copyParams));
+    copyCsr->flushReturnValue.reset();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, immediate->appendMemoryCopy(dst, src, sizeof(copyData2), nullptr, 0, nullptr, copyParams));
+
+    EXPECT_EQ(copyCsr->peekTaskCount(), copyCsr->peekLatestFlushedTaskCount());
+
+    context->freeMem(src);
+    context->freeMem(dst);
+}
+
+HWTEST2_F(CopyOffloadInOrderTests, givenUcResourceTagUpdateRequiredWhenCopyFlushFailsThenRetriedFlushProgramsUcTagUpdate, IsAtLeastXeCore) {
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+
+    debugManager.flags.OverrideCopyOffloadMode.set(CopyOffloadModes::dualStream);
+    debugManager.flags.EnableCopyWithStagingBuffers.set(0);
+
+    auto immediate = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+    auto copyCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immediate->getCsr(true));
+
+    const auto src = allocHostMem(sizeof(copyData2));
+    const auto dst = allocDeviceMem(sizeof(copyData2));
+    const auto stream = immediate->commandContainer.getCommandStream();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, immediate->appendMemoryCopy(dst, src, sizeof(copyData2), nullptr, 0, nullptr, copyParams));
+
+    const auto submissionStart = stream->getUsed();
+    copyCsr->ucResourceRequiresTagUpdate = true;
+    copyCsr->flushReturnValue = SubmissionStatus::outOfMemory;
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, immediate->appendMemoryCopy(dst, src, sizeof(copyData2), nullptr, 0, nullptr, copyParams));
+    copyCsr->flushReturnValue.reset();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, immediate->appendMemoryCopy(dst, src, sizeof(copyData2), nullptr, 0, nullptr, copyParams));
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(stream->getCpuBase(), submissionStart), stream->getUsed() - submissionStart));
+    auto flushes = findAll<MI_FLUSH_DW *>(cmdList.begin(), cmdList.end());
+    const auto ucTagAddress = copyCsr->getUcTagGPUAddress();
+    EXPECT_EQ(1, std::count_if(flushes.begin(), flushes.end(), [ucTagAddress](auto it) { return genCmdCast<MI_FLUSH_DW *>(*it)->getDestinationAddress() == ucTagAddress; }));
+
+    context->freeMem(src);
+    context->freeMem(dst);
+}
+
 HWTEST2_F(CopyOffloadInOrderTests, givenRetiredCommandBufferNotUsedByCopyEngineWhenNextCopyIsFlushedThenCopyTagIsNotUpdated, IsAtLeastXeCore) {
     debugManager.flags.OverrideCopyOffloadMode.set(CopyOffloadModes::dualStream);
     debugManager.flags.EnableCommandBufferPoolAllocator.set(0);

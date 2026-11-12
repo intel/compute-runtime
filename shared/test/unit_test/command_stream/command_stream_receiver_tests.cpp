@@ -6857,6 +6857,23 @@ HWTEST_F(CommandStreamReceiverHwTest, GivenFlushHeapStorageRequiresRecyclingTagW
     EXPECT_EQ(24u, commandStreamReceiver.peekLatestFlushedTaskCount());
 }
 
+HWTEST_F(CommandStreamReceiverHwTest, givenPendingSubmissionRequestsPeekedWhenRestoredThenConsumedRequestsArePendingAgainAndNewRequestsAreKept) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.ucResourceRequiresTagUpdate = true;
+    commandStreamReceiver.heapStorageRequiresRecyclingTag = false;
+    commandStreamReceiver.isWalkerWithProfilingEnqueued = true;
+    const auto pendingSubmissionRequests = commandStreamReceiver.peekPendingSubmissionRequests();
+
+    commandStreamReceiver.ucResourceRequiresTagUpdate = false;
+    commandStreamReceiver.heapStorageRequiresRecyclingTag = true;
+    commandStreamReceiver.isWalkerWithProfilingEnqueued = false;
+    commandStreamReceiver.restorePendingSubmissionRequests(pendingSubmissionRequests);
+
+    EXPECT_TRUE(commandStreamReceiver.ucResourceRequiresTagUpdate);
+    EXPECT_TRUE(commandStreamReceiver.heapStorageRequiresRecyclingTag);
+    EXPECT_TRUE(commandStreamReceiver.isWalkerWithProfilingEnqueued);
+}
+
 HWTEST_F(CommandStreamReceiverHwTest, givenEpilogueStreamAvailableWhenFlushTaskCalledThenDispachEpilogueCommandsIntoEpilogueStream) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     if (commandStreamReceiver.heaplessModeEnabled) {

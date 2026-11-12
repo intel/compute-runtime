@@ -613,6 +613,20 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
 
     bool isRecyclingTagForHeapStorageRequired() const { return heapStorageRequiresRecyclingTag; }
 
+    struct PendingSubmissionRequests {
+        bool ucResourceRequiresTagUpdate = false;
+        bool heapStorageRequiresRecyclingTag = false;
+        bool isWalkerWithProfilingEnqueued = false;
+    };
+    PendingSubmissionRequests peekPendingSubmissionRequests() const {
+        return {this->ucResourceRequiresTagUpdate, this->heapStorageRequiresRecyclingTag, this->isWalkerWithProfilingEnqueued};
+    }
+    void restorePendingSubmissionRequests(const PendingSubmissionRequests &requests) {
+        this->ucResourceRequiresTagUpdate |= requests.ucResourceRequiresTagUpdate;
+        this->heapStorageRequiresRecyclingTag |= requests.heapStorageRequiresRecyclingTag;
+        this->isWalkerWithProfilingEnqueued |= requests.isWalkerWithProfilingEnqueued;
+    }
+
     virtual bool waitUserFenceSupported(SyncFence *syncFence) { return false; }
     virtual bool isWaitUserFenceNotEqualSupported() { return false; }
     virtual bool waitUserFence(TaskCountType waitValue, uint64_t hostAddress, int64_t timeout, bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait, SyncFence *userFence) { return false; }
