@@ -80,16 +80,41 @@ struct MockCommandListRecordingCopyKernels : public MockCommandListCoreFamily<gf
     std::vector<RecordedCopyKernel> recordedCopyKernels;
 };
 
-HWTEST_F(AppendMemoryCopyTests, givenBuiltinBufferCopyWith8ByteAccessDisabledWhenAppendingAlignedMemoryCopyThenMiddleKernelWith16ByteElementsIsUsed) {
+struct AppendMemoryCopyWith8ByteAccessTests : public AppendMemoryCopyTests {
+    void SetUp() override {
+        debugManager.flags.EnableLocalMemory.set(1);
+        AppendMemoryCopyTests::SetUp();
+
+        ze_device_mem_alloc_desc_t deviceDesc = {};
+        ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device->toHandle(), &deviceDesc, bufferSize, MemoryConstants::pageSize, &deviceSrc));
+        ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device->toHandle(), &deviceDesc, bufferSize, MemoryConstants::pageSize, &deviceDst));
+        ze_host_mem_alloc_desc_t hostDesc = {};
+        ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocHostMem(&hostDesc, bufferSize, MemoryConstants::pageSize, &hostBuffer));
+    }
+
+    void TearDown() override {
+        context->freeMem(hostBuffer);
+        context->freeMem(deviceDst);
+        context->freeMem(deviceSrc);
+        AppendMemoryCopyTests::TearDown();
+    }
+
+    static constexpr size_t minMiddleSize = 8 * MemoryConstants::cacheLineSize;
+    static constexpr size_t bufferSize = MemoryConstants::pageSize;
+    void *deviceSrc = nullptr;
+    void *deviceDst = nullptr;
+    void *hostBuffer = nullptr;
+    DebugManagerStateRestore restore;
+};
+
+HWTEST_F(AppendMemoryCopyWith8ByteAccessTests, givenBuiltinBufferCopyWith8ByteAccessDisabledWhenAppendingAlignedMemoryCopyThenMiddleKernelWith16ByteElementsIsUsed) {
     MockCommandListRecordingCopyKernels<FamilyType::gfxCoreFamily> commandList;
     commandList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     commandList.minMiddleSizeForBuiltinBufferCopyWith8ByteAccess = std::numeric_limits<size_t>::max();
 
     constexpr size_t size = 4 * MemoryConstants::cacheLineSize;
-    void *srcPtr = reinterpret_cast<void *>(0x10000);
-    void *dstPtr = reinterpret_cast<void *>(0x20000);
 
-    auto result = commandList.appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, copyParams);
+    auto result = commandList.appendMemoryCopy(deviceDst, deviceSrc, size, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     ASSERT_EQ(1u, commandList.recordedCopyKernels.size());
@@ -98,17 +123,14 @@ HWTEST_F(AppendMemoryCopyTests, givenBuiltinBufferCopyWith8ByteAccessDisabledWhe
     EXPECT_EQ(16u, commandList.recordedCopyKernels[0].elementSize);
 }
 
-HWTEST_F(AppendMemoryCopyTests, givenMinMiddleSizeForBuiltinBufferCopyWith8ByteAccessWhenAppendingMemoryCopyBelowItThenMiddleKernelWith16ByteElementsIsUsed) {
+HWTEST_F(AppendMemoryCopyWith8ByteAccessTests, givenMinMiddleSizeForBuiltinBufferCopyWith8ByteAccessWhenAppendingMemoryCopyBelowItThenMiddleKernelWith16ByteElementsIsUsed) {
     MockCommandListRecordingCopyKernels<FamilyType::gfxCoreFamily> commandList;
     commandList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
-    constexpr size_t minMiddleSize = 8 * MemoryConstants::cacheLineSize;
     commandList.minMiddleSizeForBuiltinBufferCopyWith8ByteAccess = minMiddleSize;
 
     constexpr size_t size = minMiddleSize - MemoryConstants::cacheLineSize;
-    void *srcPtr = reinterpret_cast<void *>(0x10000);
-    void *dstPtr = reinterpret_cast<void *>(0x20000);
 
-    auto result = commandList.appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, copyParams);
+    auto result = commandList.appendMemoryCopy(deviceDst, deviceSrc, size, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     ASSERT_EQ(1u, commandList.recordedCopyKernels.size());
@@ -117,17 +139,14 @@ HWTEST_F(AppendMemoryCopyTests, givenMinMiddleSizeForBuiltinBufferCopyWith8ByteA
     EXPECT_EQ(16u, commandList.recordedCopyKernels[0].elementSize);
 }
 
-HWTEST_F(AppendMemoryCopyTests, givenMinMiddleSizeForBuiltinBufferCopyWith8ByteAccessWhenAppendingMemoryCopyOfThatSizeThenMiddleKernelWith8ByteElementsIsUsed) {
+HWTEST_F(AppendMemoryCopyWith8ByteAccessTests, givenMinMiddleSizeForBuiltinBufferCopyWith8ByteAccessWhenAppendingMemoryCopyOfThatSizeThenMiddleKernelWith8ByteElementsIsUsed) {
     MockCommandListRecordingCopyKernels<FamilyType::gfxCoreFamily> commandList;
     commandList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
-    constexpr size_t minMiddleSize = 8 * MemoryConstants::cacheLineSize;
     commandList.minMiddleSizeForBuiltinBufferCopyWith8ByteAccess = minMiddleSize;
 
     constexpr size_t size = minMiddleSize;
-    void *srcPtr = reinterpret_cast<void *>(0x10000);
-    void *dstPtr = reinterpret_cast<void *>(0x20000);
 
-    auto result = commandList.appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, copyParams);
+    auto result = commandList.appendMemoryCopy(deviceDst, deviceSrc, size, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     ASSERT_EQ(1u, commandList.recordedCopyKernels.size());
@@ -136,17 +155,92 @@ HWTEST_F(AppendMemoryCopyTests, givenMinMiddleSizeForBuiltinBufferCopyWith8ByteA
     EXPECT_EQ(8u, commandList.recordedCopyKernels[0].elementSize);
 }
 
-HWTEST_F(AppendMemoryCopyTests, givenMinMiddleSizeForBuiltinBufferCopyWith8ByteAccessWhenAppendingUnalignedMemoryCopyThenSideKernelsUseByteElements) {
+HWTEST_F(AppendMemoryCopyWith8ByteAccessTests, givenMinMiddleSizeForBuiltinBufferCopyWith8ByteAccessWhenAppendingMemoryCopyOfThatSizeFromHostMemoryThenMiddleKernelWith16ByteElementsIsUsed) {
     MockCommandListRecordingCopyKernels<FamilyType::gfxCoreFamily> commandList;
     commandList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
-    constexpr size_t minMiddleSize = 8 * MemoryConstants::cacheLineSize;
+    commandList.minMiddleSizeForBuiltinBufferCopyWith8ByteAccess = minMiddleSize;
+
+    constexpr size_t size = minMiddleSize;
+
+    auto result = commandList.appendMemoryCopy(deviceDst, hostBuffer, size, nullptr, 0, nullptr, copyParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ASSERT_EQ(1u, commandList.recordedCopyKernels.size());
+    EXPECT_EQ(BufferBuiltIn::copyBufferToBufferMiddle, commandList.recordedCopyKernels[0].builtin);
+    EXPECT_EQ(size, commandList.recordedCopyKernels[0].size);
+    EXPECT_EQ(16u, commandList.recordedCopyKernels[0].elementSize);
+}
+
+HWTEST_F(AppendMemoryCopyWith8ByteAccessTests, givenMinMiddleSizeForBuiltinBufferCopyWith8ByteAccessWhenAppendingMemoryCopyOfThatSizeToHostMemoryThenMiddleKernelWith16ByteElementsIsUsed) {
+    MockCommandListRecordingCopyKernels<FamilyType::gfxCoreFamily> commandList;
+    commandList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    commandList.minMiddleSizeForBuiltinBufferCopyWith8ByteAccess = minMiddleSize;
+
+    constexpr size_t size = minMiddleSize;
+
+    auto result = commandList.appendMemoryCopy(hostBuffer, deviceSrc, size, nullptr, 0, nullptr, copyParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ASSERT_EQ(1u, commandList.recordedCopyKernels.size());
+    EXPECT_EQ(BufferBuiltIn::copyBufferToBufferMiddle, commandList.recordedCopyKernels[0].builtin);
+    EXPECT_EQ(size, commandList.recordedCopyKernels[0].size);
+    EXPECT_EQ(16u, commandList.recordedCopyKernels[0].elementSize);
+}
+
+HWTEST_F(AppendMemoryCopyWith8ByteAccessTests, givenSharedSystemUsmAndMinMiddleSizeForBuiltinBufferCopyWith8ByteAccessWhenAppendingMemoryCopyOfThatSizeFromNonUsmMemoryThenMiddleKernelWith16ByteElementsIsUsed) {
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
+    debugManager.flags.TreatNonUsmForTransfersAsSharedSystem.set(1);
+    auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
+    VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities, 0xf};
+
+    MockCommandListRecordingCopyKernels<FamilyType::gfxCoreFamily> commandList;
+    commandList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    commandList.minMiddleSizeForBuiltinBufferCopyWith8ByteAccess = minMiddleSize;
+
+    constexpr size_t size = minMiddleSize;
+    alignas(MemoryConstants::cacheLineSize) uint8_t nonUsmBuffer[size] = {};
+
+    auto result = commandList.appendMemoryCopy(deviceDst, nonUsmBuffer, size, nullptr, 0, nullptr, copyParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ASSERT_EQ(1u, commandList.recordedCopyKernels.size());
+    EXPECT_EQ(BufferBuiltIn::copyBufferToBufferMiddle, commandList.recordedCopyKernels[0].builtin);
+    EXPECT_EQ(size, commandList.recordedCopyKernels[0].size);
+    EXPECT_EQ(16u, commandList.recordedCopyKernels[0].elementSize);
+}
+
+HWTEST_F(AppendMemoryCopyWith8ByteAccessTests, givenSharedSystemUsmAndMinMiddleSizeForBuiltinBufferCopyWith8ByteAccessWhenAppendingMemoryCopyOfThatSizeToNonUsmMemoryThenMiddleKernelWith16ByteElementsIsUsed) {
+    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
+    debugManager.flags.TreatNonUsmForTransfersAsSharedSystem.set(1);
+    auto &hwInfo = *device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
+    VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities, 0xf};
+
+    MockCommandListRecordingCopyKernels<FamilyType::gfxCoreFamily> commandList;
+    commandList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    commandList.minMiddleSizeForBuiltinBufferCopyWith8ByteAccess = minMiddleSize;
+
+    constexpr size_t size = minMiddleSize;
+    alignas(MemoryConstants::cacheLineSize) uint8_t nonUsmBuffer[size] = {};
+
+    auto result = commandList.appendMemoryCopy(nonUsmBuffer, deviceSrc, size, nullptr, 0, nullptr, copyParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ASSERT_EQ(1u, commandList.recordedCopyKernels.size());
+    EXPECT_EQ(BufferBuiltIn::copyBufferToBufferMiddle, commandList.recordedCopyKernels[0].builtin);
+    EXPECT_EQ(size, commandList.recordedCopyKernels[0].size);
+    EXPECT_EQ(16u, commandList.recordedCopyKernels[0].elementSize);
+}
+
+HWTEST_F(AppendMemoryCopyWith8ByteAccessTests, givenMinMiddleSizeForBuiltinBufferCopyWith8ByteAccessWhenAppendingUnalignedMemoryCopyThenSideKernelsUseByteElements) {
+    MockCommandListRecordingCopyKernels<FamilyType::gfxCoreFamily> commandList;
+    commandList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     commandList.minMiddleSizeForBuiltinBufferCopyWith8ByteAccess = minMiddleSize;
 
     constexpr size_t leftSize = 4;
     constexpr size_t middleSize = minMiddleSize;
     constexpr size_t rightSize = 12;
-    void *srcPtr = reinterpret_cast<void *>(0x10000 - leftSize);
-    void *dstPtr = reinterpret_cast<void *>(0x20000 - leftSize);
+    void *srcPtr = ptrOffset(deviceSrc, MemoryConstants::cacheLineSize - leftSize);
+    void *dstPtr = ptrOffset(deviceDst, MemoryConstants::cacheLineSize - leftSize);
 
     auto result = commandList.appendMemoryCopy(dstPtr, srcPtr, leftSize + middleSize + rightSize, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);

@@ -2637,7 +2637,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
             kernelCounter = 1;
         }
 
-        if (middleSizeBytes >= this->minMiddleSizeForBuiltinBufferCopyWith8ByteAccess) {
+        const bool localToLocalCopy = srcAllocationStruct.alloc && dstAllocationStruct.alloc &&
+                                      srcAllocationStruct.alloc->isAllocatedInLocalMemoryPool() &&
+                                      dstAllocationStruct.alloc->isAllocatedInLocalMemoryPool();
+        if (localToLocalCopy && middleSizeBytes >= this->minMiddleSizeForBuiltinBufferCopyWith8ByteAccess) {
             middleElSize = sizeof(uint32_t) * 2;
             middleCopyKernel = BufferBuiltIn::copyBufferToBufferMiddle8Bytes;
         }
