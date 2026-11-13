@@ -42,6 +42,7 @@ class SysmanProductHelperHw : public SysmanProductHelper {
 
     // Pmt
     std::map<unsigned long, std::map<std::string, uint32_t>> *getGuidToKeyOffsetMap() override;
+    uint32_t getPmtMaxInterfaces() override;
 
     // init
     bool isZesInitSupported() override;

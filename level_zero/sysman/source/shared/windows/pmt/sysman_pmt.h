@@ -37,7 +37,7 @@ class PlatformMonitoringTech : NEO::NonCopyableAndNonMovableClass {
   protected:
     std::wstring deviceInterface;
     std::map<std::string, std::pair<uint32_t, uint32_t>> keyOffsetMap;
-    unsigned long guidToIndexList[PmtSysman::PmtMaxInterfaces] = {0};
+    std::vector<unsigned long> guidToIndexList;
     ze_result_t ioctlReadWriteData(std::wstring &path, uint32_t ioctl, void *bufferIn, uint32_t inSize, void *bufferOut, uint32_t outSize, uint32_t *sizeReturned);
     ze_result_t getDeviceInterface();
     ze_result_t getDeviceRegistryProperty(HDEVINFO deviceInfoSet, SP_DEVINFO_DATA *pDeviceInfoData, DWORD devicePropertyType, std::vector<uint8_t> &dataBuffer);

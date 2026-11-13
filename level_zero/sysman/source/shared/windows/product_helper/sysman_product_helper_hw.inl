@@ -194,6 +194,11 @@ std::map<unsigned long, std::map<std::string, uint32_t>> *SysmanProductHelperHw<
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+uint32_t SysmanProductHelperHw<gfxProduct>::getPmtMaxInterfaces() {
+    return 2u; // PUNIT, OOBMSM
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool SysmanProductHelperHw<gfxProduct>::isLateBindingSupported() {
     return false;
 }

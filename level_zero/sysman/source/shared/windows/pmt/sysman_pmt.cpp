@@ -33,7 +33,7 @@ ze_result_t PlatformMonitoringTech::readValue(const std::string &key, uint32_t &
 
     uint32_t bytesReturned = 0;
 
-    auto res = ioctlReadWriteData(deviceInterface, PmtSysman::IoctlPmtGetTelemtryDword, (void *)&readRequest, sizeof(PmtSysman::PmtTelemetryRead), &value, sizeof(uint32_t), &bytesReturned);
+    auto res = ioctlReadWriteData(deviceInterface, PmtSysman::ioctlPmtGetTelemetryDword, (void *)&readRequest, sizeof(PmtSysman::PmtTelemetryRead), &value, sizeof(uint32_t), &bytesReturned);
 
     if (res == ZE_RESULT_SUCCESS && bytesReturned != 0) {
         return ZE_RESULT_SUCCESS;
@@ -62,7 +62,7 @@ ze_result_t PlatformMonitoringTech::readValue(const std::string &key, uint64_t &
 
     uint32_t bytesReturned = 0;
 
-    auto res = ioctlReadWriteData(deviceInterface, PmtSysman::IoctlPmtGetTelemtryQword, (void *)&readRequest, sizeof(PmtSysman::PmtTelemetryRead), &value, sizeof(uint64_t), &bytesReturned);
+    auto res = ioctlReadWriteData(deviceInterface, PmtSysman::ioctlPmtGetTelemetryQword, (void *)&readRequest, sizeof(PmtSysman::PmtTelemetryRead), &value, sizeof(uint64_t), &bytesReturned);
 
     if (res == ZE_RESULT_SUCCESS && bytesReturned != 0) {
         return ZE_RESULT_SUCCESS;
@@ -75,15 +75,16 @@ ze_result_t PlatformMonitoringTech::readValue(const std::string &key, uint64_t &
 }
 
 ze_result_t PlatformMonitoringTech::getGuid() {
+    const auto pmtMaxInterfaces = this->guidToIndexList.size();
     // arbitrary upper-bound, tune if needed
-    constexpr size_t sizeNeededMax = sizeof(PmtSysman::PmtTelemetryDiscovery) + (2 * PmtSysman::PmtMaxInterfaces - 1) * sizeof(PmtSysman::PmtTelemetryEntry);
+    const size_t sizeNeededMax = sizeof(PmtSysman::PmtTelemetryDiscovery) + (2 * pmtMaxInterfaces - 1) * sizeof(PmtSysman::PmtTelemetryEntry);
 
     ze_result_t status;
     unsigned long sizeNeeded;
     PmtSysman::PmtTelemetryDiscovery *telemetryDiscovery = nullptr;
 
     // Get Telmetry Discovery size
-    status = ioctlReadWriteData(deviceInterface, PmtSysman::IoctlPmtGetTelemetryDiscoverySize, NULL, 0, (void *)&sizeNeeded, sizeof(sizeNeeded), NULL);
+    status = ioctlReadWriteData(deviceInterface, PmtSysman::ioctlPmtGetTelemetryDiscoverySize, NULL, 0, (void *)&sizeNeeded, sizeof(sizeNeeded), NULL);
     if (status != ZE_RESULT_SUCCESS || sizeNeeded == 0 || sizeNeeded > sizeNeededMax) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                      "Ioctl call could not return a valid value for the PMT interface telemetry size needed\n");
@@ -97,7 +98,7 @@ ze_result_t PlatformMonitoringTech::getGuid() {
     }
 
     // Get Telmetry Discovery Structure
-    status = ioctlReadWriteData(deviceInterface, PmtSysman::IoctlPmtGetTelemetryDiscovery, NULL, 0, (void *)telemetryDiscovery, sizeNeeded, NULL);
+    status = ioctlReadWriteData(deviceInterface, PmtSysman::ioctlPmtGetTelemetryDiscovery, NULL, 0, (void *)telemetryDiscovery, sizeNeeded, NULL);
     if (status != ZE_RESULT_SUCCESS) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                      "Ioctl call could not return a valid value for the PMT telemetry structure which provides the guids supported.\n");
@@ -115,7 +116,7 @@ ze_result_t PlatformMonitoringTech::getGuid() {
     }
 
     for (uint32_t i = 0; i < telemetryDiscovery->count; i++) {
-        if (telemetryDiscovery->telemetry[i].index < PmtSysman::PmtMaxInterfaces) {
+        if (telemetryDiscovery->telemetry[i].index < pmtMaxInterfaces) {
             guidToIndexList[telemetryDiscovery->telemetry[i].index] = telemetryDiscovery->telemetry[i].guid;
         } else {
             PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
@@ -134,7 +135,7 @@ ze_result_t PlatformMonitoringTech::getKeyOffsetMap(std::map<std::string, std::p
     if (pGuidToKeyOffsetMap == nullptr) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
-    for (uint32_t index = 0; index < PmtSysman::PmtMaxInterfaces; index++) {
+    for (uint32_t index = 0; index < static_cast<uint32_t>(this->guidToIndexList.size()); index++) {
         std::map<std::string, uint32_t>::iterator it;
         auto keyOffsetMapEntry = pGuidToKeyOffsetMap->find(guidToIndexList[index]);
         if (keyOffsetMapEntry == pGuidToKeyOffsetMap->end()) {
@@ -154,6 +155,7 @@ ze_result_t PlatformMonitoringTech::getKeyOffsetMap(std::map<std::string, std::p
 }
 
 ze_result_t PlatformMonitoringTech::init() {
+    this->guidToIndexList.assign(this->pSysmanProductHelper->getPmtMaxInterfaces(), 0);
     ze_result_t result = getGuid();
     if (result != ZE_RESULT_SUCCESS) {
         return result;
@@ -286,8 +288,8 @@ void PlatformMonitoringTech::getAllChildDeviceInterfaces(HDEVINFO hDevInfo, DEVI
 
 ze_result_t PlatformMonitoringTech::getDeviceInterface() {
     std::wstring pmtDeviceInstanceId;
-    GUID displayAdapter = PmtSysman::GuidIntefaceDisplayAdapter;
-    GUID pmtTelemetry = PmtSysman::GuidIntefacePmtTelemetry;
+    GUID displayAdapter = PmtSysman::guidInterfaceDisplayAdapter;
+    GUID pmtTelemetry = PmtSysman::guidInterfacePmtTelemetry;
 
     HDEVINFO hDevInfo = NEO::SysCalls::setupDiGetClassDevs(&displayAdapter, NULL, NULL, DIGCF_PRESENT);
     if (hDevInfo == INVALID_HANDLE_VALUE) {

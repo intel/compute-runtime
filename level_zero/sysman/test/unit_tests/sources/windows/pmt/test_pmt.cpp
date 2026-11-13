@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,9 +35,9 @@ inline static BOOL mockDeviceIoControlSuccess(HANDLE hDevice, DWORD dwIoControlC
 }
 
 inline static BOOL mockDeviceIoControlExtendedSuccess(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped) {
-    if (static_cast<uint32_t>(dwIoControlCode) == PmtSysman::IoctlPmtGetTelemetryDiscoverySize) {
+    if (static_cast<uint32_t>(dwIoControlCode) == PmtSysman::ioctlPmtGetTelemetryDiscoverySize) {
         *static_cast<unsigned long *>(lpOutBuffer) = 40;
-    } else if (static_cast<uint32_t>(dwIoControlCode) == PmtSysman::IoctlPmtGetTelemetryDiscovery) {
+    } else if (static_cast<uint32_t>(dwIoControlCode) == PmtSysman::ioctlPmtGetTelemetryDiscovery) {
         PmtSysman::PmtTelemetryDiscovery temp = {1, 2, {{1, 1, 0x5e2f8210, 10}}};
         *static_cast<PmtSysman::PmtTelemetryDiscovery *>(lpOutBuffer) = temp;
     }
@@ -106,6 +106,23 @@ inline static BOOL mockSetupDiDestroyDeviceInfoListSuccess(HDEVINFO deviceInfoSe
 
 inline static HDEVINFO mockSetupDiGetClassDevsSuccess(GUID *classGuid, PCWSTR enumerator, HWND hwndParent, DWORD flags) {
     return reinterpret_cast<HDEVINFO>(static_cast<uintptr_t>(0x1));
+}
+
+inline static BOOL mockDeviceIoControlThreeInterfacesSuccess(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped) {
+    constexpr uint32_t entryCount = 3;
+    constexpr unsigned long guids[entryCount] = {0x1e2fa030, 0x5e2fa230, 0x5e2fa270};
+    constexpr unsigned long sizeNeeded = offsetof(PmtSysman::PmtTelemetryDiscovery, telemetry) + entryCount * sizeof(PmtSysman::PmtTelemetryEntry);
+    if (static_cast<uint32_t>(dwIoControlCode) == PmtSysman::ioctlPmtGetTelemetryDiscoverySize) {
+        *static_cast<unsigned long *>(lpOutBuffer) = sizeNeeded;
+    } else if (static_cast<uint32_t>(dwIoControlCode) == PmtSysman::ioctlPmtGetTelemetryDiscovery) {
+        auto pDiscovery = static_cast<PmtSysman::PmtTelemetryDiscovery *>(lpOutBuffer);
+        pDiscovery->version = 1;
+        pDiscovery->count = entryCount;
+        for (uint32_t i = 0; i < entryCount; i++) {
+            pDiscovery->telemetry[i] = {1, i, guids[i], 10};
+        }
+    }
+    return true;
 }
 
 class SysmanDevicePmtFixture : public SysmanDeviceFixture {
@@ -306,7 +323,7 @@ HWTEST2_F(SysmanDevicePmtFixture, GivenValidPmtInterfaceWhenCallingCreateWithNoG
     sysCallsCmGetSiblingCount = 1;
     VariableBackup<decltype(NEO::SysCalls::sysCallsCreateFile)> psysCallsCreateFile(&NEO::SysCalls::sysCallsCreateFile, &mockCreateFileSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsDeviceIoControl)> psysCallsDeviceIoControl(&NEO::SysCalls::sysCallsDeviceIoControl, [](HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped) -> BOOL {
-        if (static_cast<uint32_t>(dwIoControlCode) == PmtSysman::IoctlPmtGetTelemetryDiscoverySize) {
+        if (static_cast<uint32_t>(dwIoControlCode) == PmtSysman::ioctlPmtGetTelemetryDiscoverySize) {
             *static_cast<unsigned long *>(lpOutBuffer) = 40;
         }
         return true;
@@ -331,7 +348,7 @@ HWTEST2_F(SysmanDevicePmtFixture, GivenValidPmtInterfaceWhenCallingCreateAndTele
     sysCallsCmGetSiblingCount = 1;
     VariableBackup<decltype(NEO::SysCalls::sysCallsCreateFile)> psysCallsCreateFile(&NEO::SysCalls::sysCallsCreateFile, &mockCreateFileSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsDeviceIoControl)> psysCallsDeviceIoControl(&NEO::SysCalls::sysCallsDeviceIoControl, [](HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped) -> BOOL {
-        if (static_cast<uint32_t>(dwIoControlCode) == PmtSysman::IoctlPmtGetTelemetryDiscoverySize) {
+        if (static_cast<uint32_t>(dwIoControlCode) == PmtSysman::ioctlPmtGetTelemetryDiscoverySize) {
             *static_cast<unsigned long *>(lpOutBuffer) = 0;
         }
         return true;
@@ -356,9 +373,9 @@ HWTEST2_F(SysmanDevicePmtFixture, GivenValidPmtInterfaceWhenCallingCreateAndTele
     sysCallsCmGetSiblingCount = 1;
     VariableBackup<decltype(NEO::SysCalls::sysCallsCreateFile)> psysCallsCreateFile(&NEO::SysCalls::sysCallsCreateFile, &mockCreateFileSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsDeviceIoControl)> psysCallsDeviceIoControl(&NEO::SysCalls::sysCallsDeviceIoControl, [](HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped) -> BOOL {
-        if (static_cast<uint32_t>(dwIoControlCode) == PmtSysman::IoctlPmtGetTelemetryDiscoverySize) {
+        if (static_cast<uint32_t>(dwIoControlCode) == PmtSysman::ioctlPmtGetTelemetryDiscoverySize) {
             *static_cast<unsigned long *>(lpOutBuffer) = 40;
-        } else if (static_cast<uint32_t>(dwIoControlCode) == PmtSysman::IoctlPmtGetTelemetryDiscovery) {
+        } else if (static_cast<uint32_t>(dwIoControlCode) == PmtSysman::ioctlPmtGetTelemetryDiscovery) {
             return false;
         }
         return true;
@@ -484,7 +501,7 @@ HWTEST2_F(SysmanDevicePmtFixture, GivenValidPmtInterfaceWhenCallingCreateAndHeap
     sysCallsCmGetSiblingCount = 1;
     VariableBackup<decltype(NEO::SysCalls::sysCallsCreateFile)> psysCallsCreateFile(&NEO::SysCalls::sysCallsCreateFile, &mockCreateFileSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsDeviceIoControl)> mockDeviceIoControl(&NEO::SysCalls::sysCallsDeviceIoControl, [](HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped) -> BOOL {
-        if (static_cast<uint32_t>(dwIoControlCode) == PmtSysman::IoctlPmtGetTelemetryDiscoverySize) {
+        if (static_cast<uint32_t>(dwIoControlCode) == PmtSysman::ioctlPmtGetTelemetryDiscoverySize) {
             *static_cast<unsigned long *>(lpOutBuffer) = 40;
         }
         return true;
@@ -512,9 +529,9 @@ HWTEST2_F(SysmanDevicePmtFixture, GivenValidPmtInterfaceWhenCallingCreateAndTele
     sysCallsCmGetSiblingCount = 1;
     VariableBackup<decltype(NEO::SysCalls::sysCallsCreateFile)> psysCallsCreateFile(&NEO::SysCalls::sysCallsCreateFile, &mockCreateFileSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsDeviceIoControl)> mockDeviceIoControl(&NEO::SysCalls::sysCallsDeviceIoControl, [](HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped) -> BOOL {
-        if (static_cast<uint32_t>(dwIoControlCode) == PmtSysman::IoctlPmtGetTelemetryDiscoverySize) {
+        if (static_cast<uint32_t>(dwIoControlCode) == PmtSysman::ioctlPmtGetTelemetryDiscoverySize) {
             *static_cast<unsigned long *>(lpOutBuffer) = 40;
-        } else if (static_cast<uint32_t>(dwIoControlCode) == PmtSysman::IoctlPmtGetTelemetryDiscovery) {
+        } else if (static_cast<uint32_t>(dwIoControlCode) == PmtSysman::ioctlPmtGetTelemetryDiscovery) {
             // Initialize PmtTelemetryDiscovery 'temp' with {version = 1, interface count = 1, {{version = 1, index = 3, guid = 0x5e2f8210, dWordCount = 10}}}
             PmtSysman::PmtTelemetryDiscovery temp = {1, 1, {{1, 3, 0x5e2f8210, 10}}};
             *static_cast<PmtSysman::PmtTelemetryDiscovery *>(lpOutBuffer) = temp;
@@ -850,6 +867,38 @@ HWTEST2_F(SysmanDevicePmtFixture, GivenValidPmtInterfaceWhenCallingCreateAndCmGe
     VariableBackup<decltype(NEO::SysCalls::sysCallsSetupDiEnumDeviceInfo)> psysCallsSetupDiEnumDeviceInfo(&NEO::SysCalls::sysCallsSetupDiEnumDeviceInfo, &mockSetupDiEnumDeviceInfoSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsSetupDiDestroyDeviceInfoList)> psysCallsSetupDiDestroyDeviceInfoList(&NEO::SysCalls::sysCallsSetupDiDestroyDeviceInfoList, &mockSetupDiDestroyDeviceInfoListSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsSetupDiGetClassDevs)> psysCallsSetupDiGetClassDevs(&NEO::SysCalls::sysCallsSetupDiGetClassDevs, &mockSetupDiGetClassDevsSuccess);
+    std::unique_ptr<PlatformMonitoringTech> pPmt = PublicPlatformMonitoringTech::create(pWddmSysmanImp->getSysmanProductHelper(), 0, 0, 0);
+    EXPECT_EQ(nullptr, pPmt);
+}
+
+class SysmanDevicePmtMaxInterfacesFixture : public SysmanDevicePmtFixture {
+  protected:
+    void SetUp() override {
+        SysmanDevicePmtFixture::SetUp();
+        sysCallsCmGetChildCount = 1;
+        sysCallsCmGetSiblingCount = 1;
+    }
+    VariableBackup<decltype(NEO::SysCalls::sysCallsCreateFile)> psysCallsCreateFile{&NEO::SysCalls::sysCallsCreateFile, &mockCreateFileSuccess};
+    VariableBackup<decltype(NEO::SysCalls::sysCallsDeviceIoControl)> psysCallsDeviceIoControl{&NEO::SysCalls::sysCallsDeviceIoControl, &mockDeviceIoControlThreeInterfacesSuccess};
+    VariableBackup<decltype(NEO::SysCalls::sysCallsCmGetDeviceInterfaceListSize)> psysCallsInterfaceListSize{&NEO::SysCalls::sysCallsCmGetDeviceInterfaceListSize, &mockCmGetDeviceInterfaceListSizeSuccess};
+    VariableBackup<decltype(NEO::SysCalls::sysCallsCmGetDeviceInterfaceList)> psysCallsInterfaceList{&NEO::SysCalls::sysCallsCmGetDeviceInterfaceList, &mockCmGetDeviceInterfaceListSuccess};
+    VariableBackup<decltype(NEO::SysCalls::sysCallsCmGetDeviceIdSize)> psysCallsCmGetDeviceIdSize{&NEO::SysCalls::sysCallsCmGetDeviceIdSize, &mockCmGetDeviceIdSizeSuccess};
+    VariableBackup<decltype(NEO::SysCalls::sysCallsCmGetDeviceId)> psysCallsCmGetDeviceId{&NEO::SysCalls::sysCallsCmGetDeviceId, &mockCmGetDeviceIdSuccess};
+    VariableBackup<decltype(NEO::SysCalls::sysCallsCmGetChild)> psysCallsCmGetChild{&NEO::SysCalls::sysCallsCmGetChild, &mockCmGetChildSuccess};
+    VariableBackup<decltype(NEO::SysCalls::sysCallsCmGetSibling)> psysCallsCmGetSibling{&NEO::SysCalls::sysCallsCmGetSibling, &mockCmGetSiblingSuccess};
+    VariableBackup<decltype(NEO::SysCalls::sysCallsSetupDiGetDeviceRegistryProperty)> psysCallsSetupDiGetDeviceRegistryProperty{&NEO::SysCalls::sysCallsSetupDiGetDeviceRegistryProperty, &mockSetupDiGetDeviceRegistryPropertySuccess};
+    VariableBackup<decltype(NEO::SysCalls::sysCallsSetupDiOpenDeviceInfo)> psysCallsSetupDiOpenDeviceInfo{&NEO::SysCalls::sysCallsSetupDiOpenDeviceInfo, &mockSetupDiOpenDeviceInfoSuccess};
+    VariableBackup<decltype(NEO::SysCalls::sysCallsSetupDiEnumDeviceInfo)> psysCallsSetupDiEnumDeviceInfo{&NEO::SysCalls::sysCallsSetupDiEnumDeviceInfo, &mockSetupDiEnumDeviceInfoSuccess};
+    VariableBackup<decltype(NEO::SysCalls::sysCallsSetupDiDestroyDeviceInfoList)> psysCallsSetupDiDestroyDeviceInfoList{&NEO::SysCalls::sysCallsSetupDiDestroyDeviceInfoList, &mockSetupDiDestroyDeviceInfoListSuccess};
+    VariableBackup<decltype(NEO::SysCalls::sysCallsSetupDiGetClassDevs)> psysCallsSetupDiGetClassDevs{&NEO::SysCalls::sysCallsSetupDiGetClassDevs, &mockSetupDiGetClassDevsSuccess};
+};
+
+HWTEST2_F(SysmanDevicePmtMaxInterfacesFixture, GivenProductSupportingThreePmtInterfacesWhenThreeTelemetryInterfacesAreDiscoveredThenCreateSucceeds, IsCRI) {
+    std::unique_ptr<PlatformMonitoringTech> pPmt = PublicPlatformMonitoringTech::create(pWddmSysmanImp->getSysmanProductHelper(), 0, 0, 0);
+    EXPECT_NE(nullptr, pPmt);
+}
+
+HWTEST2_F(SysmanDevicePmtMaxInterfacesFixture, GivenProductSupportingTwoPmtInterfacesWhenThreeTelemetryInterfacesAreDiscoveredThenCreateFails, IsBMG) {
     std::unique_ptr<PlatformMonitoringTech> pPmt = PublicPlatformMonitoringTech::create(pWddmSysmanImp->getSysmanProductHelper(), 0, 0, 0);
     EXPECT_EQ(nullptr, pPmt);
 }
