@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -231,7 +231,7 @@ bool testAppendImageCopyArray(ze_context_handle_t &context, ze_device_handle_t &
     if (useCopyEngine) {
         groupOrdinal = LevelZeroBlackBoxTests::getCopyOnlyCommandQueueOrdinal(device);
         if (groupOrdinal == LevelZeroBlackBoxTests::undefinedQueueOrdinal) {
-            std::cout << "No Copy queue group found. Skipping testAppendImageCopyExtArray run\n"; // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+            std::cout << "No Copy queue group found. Skipping testAppendImageCopyExtArray run\n";
             return true;
         }
     }

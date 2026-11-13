@@ -54,7 +54,7 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
         MockSipWrapper sipWrapper;
         executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), numRootDevices - 1);
         setUpT<GfxFamily>(DrmMockCustom::create(*executionEnvironment->rootDeviceEnvironments[0]).release(), false);
-    } // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+    }
 
     template <typename GfxFamily>
     void setUpT(DrmMockCustom *mock, bool localMemoryEnabled) {
@@ -172,7 +172,7 @@ class DrmMemoryManagerWithLocalMemoryFixture : public DrmMemoryManagerFixture {
         drmMock->memoryInfo.reset(new MockMemoryInfo{*drmMock});
         DrmMemoryManagerFixture::setUpT<GfxFamily>(drmMock, true);
         drmMock->reset();
-    } // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+    }
 
     template <typename GfxFamily>
     void tearDownT() {

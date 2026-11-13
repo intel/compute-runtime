@@ -937,7 +937,7 @@ TEST_F(CompilerInterfaceMockedBinaryFilesTest, givenUpdatedSpecConstValuesWhenBu
     auto err = pCompilerInterface->build(*pDevice, inputArgs, translationOutput);
 
     EXPECT_EQ(TranslationErrorCode::success, err);
-} // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks), NEO-14033
+}
 
 TEST_F(CompilerInterfaceTest, GivenRequestForNewFclTranslationCtxWhenDeviceCtxIsNotAvailableThenCreateNewDeviceCtxAndUseItToReturnValidTranslationCtx) {
     auto device = this->pDevice;
