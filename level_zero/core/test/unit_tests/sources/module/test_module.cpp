@@ -3465,10 +3465,10 @@ struct MockModuleTU : public L0::ModuleTranslationUnit {
         return buildFromIntermediate(IGC::CodeType::spirV, input, inputSize, buildOptions, internalBuildOptions, pConstants);
     }
 
-    ze_result_t createFromNativeBinary(const char *input, size_t inputSize, const char *internalBuildOptions) override {
+    ze_result_t createFromNativeBinary(const char *input, size_t inputSize, const char *internalBuildOptions, const ze_module_constants_t *pConstants) override {
         debugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
         wasCreateFromNativeBinaryCalled = true;
-        return L0::ModuleTranslationUnit::createFromNativeBinary(input, inputSize, internalBuildOptions);
+        return L0::ModuleTranslationUnit::createFromNativeBinary(input, inputSize, internalBuildOptions, pConstants);
     }
 
     ze_result_t processUnpackedBinary() override {
@@ -4190,7 +4190,7 @@ HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromNativeBinaryThenSetsUpRequir
     emptyProgram.elfHeader->machine = copyHwInfo.platform.eProductFamily;
     L0::ModuleTranslationUnit moduleTuValid(this->device);
     ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
-    result = moduleTuValid.createFromNativeBinary(reinterpret_cast<const char *>(emptyProgram.storage.data()), emptyProgram.storage.size(), "");
+    result = moduleTuValid.createFromNativeBinary(reinterpret_cast<const char *>(emptyProgram.storage.data()), emptyProgram.storage.size(), "", nullptr);
     const char *pStr = nullptr;
     std::string emptyString = "";
     zeDriverGetLastErrorDescription(this->device->getDriverHandle(), &pStr);
@@ -4200,7 +4200,7 @@ HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromNativeBinaryThenSetsUpRequir
     emptyProgram.elfHeader->machine = copyHwInfo.platform.eProductFamily;
     ++emptyProgram.elfHeader->machine;
     L0::ModuleTranslationUnit moduleTuInvalid(this->device);
-    result = moduleTuInvalid.createFromNativeBinary(reinterpret_cast<const char *>(emptyProgram.storage.data()), emptyProgram.storage.size(), "");
+    result = moduleTuInvalid.createFromNativeBinary(reinterpret_cast<const char *>(emptyProgram.storage.data()), emptyProgram.storage.size(), "", nullptr);
     zeDriverGetLastErrorDescription(this->device->getDriverHandle(), &pStr);
     EXPECT_NE(0, strcmp(pStr, emptyString.c_str()));
     EXPECT_EQ(ZE_RESULT_ERROR_MODULE_BUILD_FAILURE, result);
@@ -4238,7 +4238,7 @@ HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromNativeBinaryThenSetsUpPacked
     moduleTuValid.setDummyKernelInfo();
 
     ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
-    result = moduleTuValid.createFromNativeBinary(reinterpret_cast<const char *>(arData.data()), arData.size(), "");
+    result = moduleTuValid.createFromNativeBinary(reinterpret_cast<const char *>(arData.data()), arData.size(), "", nullptr);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(moduleTuValid.processUnpackedBinaryCalled, 1u);
     EXPECT_NE(moduleTuValid.packedDeviceBinarySize, arData.size());
@@ -4254,7 +4254,7 @@ HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromZebinThenDontAppendAllowZebi
     zebin.elfHeader->machine = copyHwInfo.platform.eProductFamily;
     L0::ModuleTranslationUnit moduleTu(this->device);
     ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
-    result = moduleTu.createFromNativeBinary(reinterpret_cast<const char *>(zebin.storage.data()), zebin.storage.size(), "");
+    result = moduleTu.createFromNativeBinary(reinterpret_cast<const char *>(zebin.storage.data()), zebin.storage.size(), "", nullptr);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
     auto expectedOptions = "";
@@ -4279,13 +4279,163 @@ HWTEST_F(ModuleTranslationUnitTest, GivenZebinWithSpecConstantsWhenCreatingFromN
 
     L0::ModuleTranslationUnit moduleTu(this->device);
     ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
-    result = moduleTu.createFromNativeBinary(reinterpret_cast<const char *>(zebin.storage.data()), zebin.storage.size(), "");
+    result = moduleTu.createFromNativeBinary(reinterpret_cast<const char *>(zebin.storage.data()), zebin.storage.size(), "", nullptr);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
     ASSERT_EQ(3u, moduleTu.specConstantsValues.size());
     EXPECT_EQ(100u, moduleTu.specConstantsValues[1u]);
     EXPECT_EQ(200u, moduleTu.specConstantsValues[2u]);
     EXPECT_EQ(300u, moduleTu.specConstantsValues[3u]);
+}
+
+struct NativeBinarySpecConstantsTest : public ModuleTranslationUnitTest {
+    void SetUp() override {
+        ModuleTranslationUnitTest::SetUp();
+
+        auto copyHwInfo = device->getNEODevice()->getHardwareInfo();
+        device->getCompilerProductHelper().adjustHwInfoForIgc(copyHwInfo);
+        zebin.elfHeader->machine = copyHwInfo.platform.eProductFamily;
+        zebin.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_MISC, NEO::Zebin::Elf::SectionNames::specConstantsIds,
+                            ArrayRef<const uint8_t>::fromAny(recordedSpecConstantsIds, std::size(recordedSpecConstantsIds)));
+        zebin.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_MISC, NEO::Zebin::Elf::SectionNames::specConstantsValues,
+                            ArrayRef<const uint8_t>::fromAny(recordedSpecConstantsValues, std::size(recordedSpecConstantsValues)));
+
+        mockCompiler = new MockCompilerInterfaceWithSpecConstants<uint32_t, uint64_t>(numModuleSpecConstants);
+        auto &rootDeviceEnvironment = this->neoDevice->executionEnvironment->rootDeviceEnvironments[this->neoDevice->getRootDeviceIndex()];
+        rootDeviceEnvironment->compilerInterface.reset(mockCompiler);
+
+        requestedSpecConstants.numConstants = 1;
+        requestedSpecConstants.pConstantIds = &requestedSpecConstantId;
+        requestedSpecConstants.pConstantValues = requestedSpecConstantValues;
+    }
+
+    ArrayRef<const uint8_t> getSpirv() const {
+        return ArrayRef<const uint8_t>::fromAny(spirv.data(), spirv.size());
+    }
+
+    ze_result_t createFromZebin(MockModuleTranslationUnit &moduleTu) {
+        return moduleTu.createFromNativeBinary(reinterpret_cast<const char *>(zebin.storage.data()), zebin.storage.size(), "", &requestedSpecConstants);
+    }
+
+    static constexpr uint32_t numModuleSpecConstants = 2u;
+    const uint32_t recordedSpecConstantsIds[2] = {0u, 2u};
+    const uint64_t recordedSpecConstantsValues[2] = {10u, 20u};
+    const std::string spirv{"\x07\x23\x02\x03SPIR-V module with specialization constants"};
+    ZebinTestData::ValidEmptyProgram<> zebin;
+    MockCompilerInterfaceWithSpecConstants<uint32_t, uint64_t> *mockCompiler = nullptr;
+    uint32_t requestedSpecConstantId = 2u;
+    uint64_t requestedSpecConstantValue = 20u;
+    const void *requestedSpecConstantValues[1] = {&requestedSpecConstantValue};
+    ze_module_constants_t requestedSpecConstants = {};
+};
+
+HWTEST_F(NativeBinarySpecConstantsTest, GivenNativeBinaryWithSpirvWhenCreatingWithSpecConstantsEqualToRecordedOnesThenNativeBinaryIsReused) {
+    zebin.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_SPIRV, NEO::Zebin::Elf::SectionNames::spv, getSpirv());
+
+    MockModuleTranslationUnit moduleTu(this->device);
+    moduleTu.processUnpackedBinaryCallBase = false;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, createFromZebin(moduleTu));
+    EXPECT_EQ(1u, mockCompiler->getSpecConstantsInfoCalled);
+    EXPECT_EQ(IGC::CodeType::invalid, moduleTu.passedSrcType);
+    EXPECT_EQ(1u, moduleTu.processUnpackedBinaryCalled);
+    EXPECT_EQ((NEO::specConstValuesMap{{0u, 10u}, {2u, 20u}}), moduleTu.specConstantsValues);
+}
+
+HWTEST_F(NativeBinarySpecConstantsTest, GivenNativeModuleWithSpirvWhenInitializingWithDifferentSpecConstantsThenModuleIsRebuiltFromSpirvWithMergedSpecConstants) {
+    zebin.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_SPIRV, NEO::Zebin::Elf::SectionNames::spv, getSpirv());
+    requestedSpecConstantValue = 30u;
+
+    ze_module_desc_t moduleDesc = {ZE_STRUCTURE_TYPE_MODULE_DESC};
+    moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
+    moduleDesc.pInputModule = zebin.storage.data();
+    moduleDesc.inputSize = zebin.storage.size();
+    moduleDesc.pConstants = &requestedSpecConstants;
+
+    Module module(device, nullptr, ModuleType::user);
+    auto moduleTu = new MockModuleTranslationUnit(device);
+    moduleTu->processUnpackedBinaryCallBase = false;
+    module.translationUnit.reset(moduleTu);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, module.initialize(&moduleDesc, neoDevice));
+    EXPECT_EQ(IGC::CodeType::spirV, moduleTu->passedSrcType);
+    EXPECT_EQ(ModuleTranslationUnit::CompilationMode::build, moduleTu->passedCompilationMode);
+    EXPECT_EQ((NEO::specConstValuesMap{{0u, 10u}, {2u, 30u}}), moduleTu->specConstantsValues);
+}
+
+HWTEST_F(NativeBinarySpecConstantsTest, GivenFatArchiveWithGenericIrWhenCreatingFromNativeBinaryWithDifferentSpecConstantsThenModuleIsRebuiltFromGenericIr) {
+    requestedSpecConstantValue = 30u;
+
+    MockElfEncoder<> genericIrEncoder;
+    genericIrEncoder.getElfFileHeader().type = NEO::Elf::ET_OPENCL_OBJECTS;
+    genericIrEncoder.appendSection(NEO::Elf::SHT_OPENCL_SPIRV, NEO::Elf::SectionNamesOpenCl::spirvObject, getSpirv());
+    const auto genericIr = genericIrEncoder.encode();
+
+    NEO::Ar::ArEncoder arEncoder{true};
+    const std::string productAbbreviation = NEO::hardwarePrefix[device->getHwInfo().platform.eProductFamily];
+    ASSERT_TRUE(arEncoder.appendFileEntry("64." + productAbbreviation, zebin.storage));
+    ASSERT_TRUE(arEncoder.appendFileEntry("generic_ir", genericIr));
+    const auto arData = arEncoder.encode();
+
+    MockModuleTranslationUnit moduleTu(this->device);
+    moduleTu.processUnpackedBinaryCallBase = false;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, moduleTu.createFromNativeBinary(reinterpret_cast<const char *>(arData.data()), arData.size(), "", &requestedSpecConstants));
+    EXPECT_EQ(IGC::CodeType::spirV, moduleTu.passedSrcType);
+    EXPECT_EQ((NEO::specConstValuesMap{{0u, 10u}, {2u, 30u}}), moduleTu.specConstantsValues);
+}
+
+HWTEST_F(NativeBinarySpecConstantsTest, GivenNativeBinaryWithoutIntermediateRepresentationWhenCreatingWithSpecConstantsThenInvalidArgumentIsReturned) {
+    MockModuleTranslationUnit moduleTu(this->device);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, createFromZebin(moduleTu));
+    EXPECT_EQ(0u, mockCompiler->getSpecConstantsInfoCalled);
+}
+
+HWTEST_F(NativeBinarySpecConstantsTest, GivenNativeBinaryWithPisaWhenCreatingWithDifferentSpecConstantsThenModuleIsRebuiltFromPisaWithMergedSpecConstants) {
+    const std::string pisa{"pisa module"};
+    zebin.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_PISA, NEO::Zebin::Elf::SectionNames::pisa, ArrayRef<const uint8_t>::fromAny(pisa.data(), pisa.size()));
+    requestedSpecConstantValue = 30u;
+
+    MockModuleTranslationUnit moduleTu(this->device);
+    moduleTu.processUnpackedBinaryCallBase = false;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, createFromZebin(moduleTu));
+    EXPECT_EQ(NEO::pisaCodeType, mockCompiler->receivedSpecConstantsCodeType);
+    EXPECT_EQ(NEO::pisaCodeType, moduleTu.passedSrcType);
+    EXPECT_EQ((NEO::specConstValuesMap{{0u, 10u}, {2u, 30u}}), moduleTu.specConstantsValues);
+}
+
+HWTEST_F(NativeBinarySpecConstantsTest, GivenNativeBinaryWithoutIntermediateRepresentationWhenCreatingWithEmptySpecConstantsThenNativeBinaryIsUsed) {
+    requestedSpecConstants.numConstants = 0;
+
+    MockModuleTranslationUnit moduleTu(this->device);
+    moduleTu.processUnpackedBinaryCallBase = false;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, createFromZebin(moduleTu));
+    EXPECT_EQ(1u, moduleTu.processUnpackedBinaryCalled);
+}
+
+HWTEST_F(NativeBinarySpecConstantsTest, GivenNativeBinaryWithSpirvWhenCreatingWithUnknownSpecConstantIdThenModuleBuildFailureIsReturned) {
+    zebin.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_SPIRV, NEO::Zebin::Elf::SectionNames::spv, getSpirv());
+    requestedSpecConstantId = 7u;
+
+    MockModuleTranslationUnit moduleTu(this->device);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_MODULE_BUILD_FAILURE, createFromZebin(moduleTu));
+    EXPECT_EQ(IGC::CodeType::invalid, moduleTu.passedSrcType);
+}
+
+HWTEST_F(NativeBinarySpecConstantsTest, GivenNoCompilerWhenCreatingFromNativeBinaryWithSpirvAndSpecConstantsThenDependencyUnavailableIsReturned) {
+    zebin.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_SPIRV, NEO::Zebin::Elf::SectionNames::spv, getSpirv());
+    auto &rootDeviceEnvironment = this->neoDevice->executionEnvironment->rootDeviceEnvironments[this->neoDevice->getRootDeviceIndex()];
+    rootDeviceEnvironment->compilerInterface.reset(nullptr);
+    VariableBackup<const char *> frontEndDllNameBackup(&Os::frontEndDllName, "_invalidFCL");
+    auto igcNameGuard = NEO::pushIgcDllName("_invalidIGC");
+
+    MockModuleTranslationUnit moduleTu(this->device);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, createFromZebin(moduleTu));
 }
 
 HWTEST_F(ModuleTranslationUnitTest, GivenOneApiPvcSendWarWaEnvFalseAndFileWithIntermediateCodeWhenCreatingModuleFromNativeBinaryThenModuleIsRecompiledWithInternalOption) {
@@ -4387,7 +4537,7 @@ kernels:
     MockModule mockModule{this->device, nullptr, ModuleType::user};
     auto maxWorkGroupSize = static_cast<uint32_t>(this->neoDevice->deviceInfo.maxWorkGroupSize);
     auto mockTU = mockModule.translationUnit.get();
-    auto result = mockTU->createFromNativeBinary(reinterpret_cast<const char *>(zebin.storage.data()), zebin.storage.size(), "");
+    auto result = mockTU->createFromNativeBinary(reinterpret_cast<const char *>(zebin.storage.data()), zebin.storage.size(), "", nullptr);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
     auto &defaultKernelDescriptor = mockTU->programInfo.kernelInfos[0]->kernelDescriptor;
@@ -4434,7 +4584,7 @@ kernels:
     MockModule mockModule{this->device, nullptr, ModuleType::user};
     auto maxWorkGroupSize = static_cast<uint32_t>(this->neoDevice->deviceInfo.maxWorkGroupSize);
     auto mockTU = mockModule.translationUnit.get();
-    auto result = mockTU->createFromNativeBinary(reinterpret_cast<const char *>(zebin.storage.data()), zebin.storage.size(), "");
+    auto result = mockTU->createFromNativeBinary(reinterpret_cast<const char *>(zebin.storage.data()), zebin.storage.size(), "", nullptr);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
     auto &defaultKernelDescriptor = mockTU->programInfo.kernelInfos[0]->kernelDescriptor;
@@ -5906,7 +6056,7 @@ TEST_F(ModuleInitializeTest, whenModuleInitializeIsCalledThenCorrectResultIsRetu
     class MyMockModuleTU : public MockModuleTU {
       public:
         using MockModuleTU::MockModuleTU;
-        ze_result_t createFromNativeBinary(const char *input, size_t inputSize, const char *internalBuildOptions) override {
+        ze_result_t createFromNativeBinary(const char *input, size_t inputSize, const char *internalBuildOptions, const ze_module_constants_t *pConstants) override {
             programInfo.kernelInfos[0]->heapInfo.pKernelHeap = &mockKernelHeap;
             programInfo.kernelInfos[0]->heapInfo.kernelHeapSize = 4;
             return ZE_RESULT_SUCCESS;
