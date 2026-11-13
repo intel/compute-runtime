@@ -2080,7 +2080,7 @@ HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesAlignedSrcPtrWhenBuilderIsUs
     cl_image_format imageFormat = {CL_RGBA, CL_FLOAT};
     cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
 
-    auto image = ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat);
+    std::unique_ptr<Image> image(ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat));
     ASSERT_NE(nullptr, image);
 
     constexpr size_t bufferSize = 1024;
@@ -2092,7 +2092,7 @@ HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesAlignedSrcPtrWhenBuilderIsUs
 
     BuiltIn::OpParams dc;
     dc.srcPtr = srcPtr;
-    dc.dstMemObj = image;
+    dc.dstMemObj = image.get();
     dc.srcOffset = {0, 0, 0};
     dc.dstOffset = {0, 0, 0};
     dc.size = {1, 1, 1};
@@ -2107,8 +2107,6 @@ HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesAlignedSrcPtrWhenBuilderIsUs
     ASSERT_NE(nullptr, kernel);
     EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("16Bytes") != std::string::npos);
     EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("Aligned") != std::string::npos);
-
-    delete image;
 }
 
 HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesAlignedSrcMemObjWhenBuilderIsUsedThenAlignedKernelIsSelected) {
@@ -2119,7 +2117,7 @@ HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesAlignedSrcMemObjWhenBuilderI
     cl_image_format imageFormat = {CL_RGBA, CL_FLOAT};
     cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
 
-    auto image = ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat);
+    std::unique_ptr<Image> image(ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat));
     ASSERT_NE(nullptr, image);
 
     MockBuffer srcBuffer;
@@ -2131,7 +2129,7 @@ HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesAlignedSrcMemObjWhenBuilderI
 
     BuiltIn::OpParams dc;
     dc.srcMemObj = &srcBuffer;
-    dc.dstMemObj = image;
+    dc.dstMemObj = image.get();
     dc.srcOffset = {0, 0, 0};
     dc.dstOffset = {0, 0, 0};
     dc.size = {1, 1, 1};
@@ -2146,8 +2144,6 @@ HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesAlignedSrcMemObjWhenBuilderI
     ASSERT_NE(nullptr, kernel);
     EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("16Bytes") != std::string::npos);
     EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("Aligned") != std::string::npos);
-
-    delete image;
 }
 
 HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesWithAddressMisalignedSrcPtrWhenBuilderIsUsedThenRegularKernelIsSelected) {
@@ -2158,7 +2154,7 @@ HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesWithAddressMisalignedSrcPtrW
     cl_image_format imageFormat = {CL_RGBA, CL_FLOAT};
     cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
 
-    auto image = ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat);
+    std::unique_ptr<Image> image(ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat));
     ASSERT_NE(nullptr, image);
 
     constexpr size_t bufferSize = 1024;
@@ -2170,7 +2166,7 @@ HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesWithAddressMisalignedSrcPtrW
 
     BuiltIn::OpParams dc;
     dc.srcPtr = srcPtr;
-    dc.dstMemObj = image;
+    dc.dstMemObj = image.get();
     dc.srcOffset = {0, 0, 0};
     dc.dstOffset = {0, 0, 0};
     dc.size = {1, 1, 1};
@@ -2185,8 +2181,6 @@ HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesWithAddressMisalignedSrcPtrW
     ASSERT_NE(nullptr, kernel);
     EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("16Bytes") != std::string::npos);
     EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("Aligned") == std::string::npos);
-
-    delete image;
 }
 
 HWTEST_F(BuiltInTests, givenCopyImage3dToBuffer16BytesAlignedDstPtrWhenBuilderIsUsedThenAlignedKernelIsSelected) {
@@ -2197,7 +2191,7 @@ HWTEST_F(BuiltInTests, givenCopyImage3dToBuffer16BytesAlignedDstPtrWhenBuilderIs
     cl_image_format imageFormat = {CL_RGBA, CL_FLOAT};
     cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
 
-    auto image = ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat);
+    std::unique_ptr<Image> image(ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat));
     ASSERT_NE(nullptr, image);
 
     constexpr size_t bufferSize = 1024;
@@ -2208,7 +2202,7 @@ HWTEST_F(BuiltInTests, givenCopyImage3dToBuffer16BytesAlignedDstPtrWhenBuilderIs
     auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::copyImage3dToBuffer, mode, *pClDevice);
 
     BuiltIn::OpParams dc;
-    dc.srcMemObj = image;
+    dc.srcMemObj = image.get();
     dc.dstPtr = dstPtr;
     dc.srcOffset = {0, 0, 0};
     dc.dstOffset = {0, 0, 0};
@@ -2224,8 +2218,6 @@ HWTEST_F(BuiltInTests, givenCopyImage3dToBuffer16BytesAlignedDstPtrWhenBuilderIs
     ASSERT_NE(nullptr, kernel);
     EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("16Bytes") != std::string::npos);
     EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("Aligned") != std::string::npos);
-
-    delete image;
 }
 
 HWTEST_F(BuiltInTests, givenCopyImage3dToBuffer16BytesAlignedDstMemObjWhenBuilderIsUsedThenAlignedKernelIsSelected) {
@@ -2236,7 +2228,7 @@ HWTEST_F(BuiltInTests, givenCopyImage3dToBuffer16BytesAlignedDstMemObjWhenBuilde
     cl_image_format imageFormat = {CL_RGBA, CL_FLOAT};
     cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
 
-    auto image = ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat);
+    std::unique_ptr<Image> image(ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat));
     ASSERT_NE(nullptr, image);
 
     MockBuffer dstBuffer;
@@ -2247,7 +2239,7 @@ HWTEST_F(BuiltInTests, givenCopyImage3dToBuffer16BytesAlignedDstMemObjWhenBuilde
     auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::copyImage3dToBuffer, mode, *pClDevice);
 
     BuiltIn::OpParams dc;
-    dc.srcMemObj = image;
+    dc.srcMemObj = image.get();
     dc.dstMemObj = &dstBuffer;
     dc.srcOffset = {0, 0, 0};
     dc.dstOffset = {0, 0, 0};
@@ -2263,8 +2255,6 @@ HWTEST_F(BuiltInTests, givenCopyImage3dToBuffer16BytesAlignedDstMemObjWhenBuilde
     ASSERT_NE(nullptr, kernel);
     EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("16Bytes") != std::string::npos);
     EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("Aligned") != std::string::npos);
-
-    delete image;
 }
 
 HWTEST_F(BuiltInTests, givenCopyImage3dToBuffer16BytesWithAddressMisalignedDstPtrWhenBuilderIsUsedThenRegularKernelIsSelected) {
@@ -2275,7 +2265,7 @@ HWTEST_F(BuiltInTests, givenCopyImage3dToBuffer16BytesWithAddressMisalignedDstPt
     cl_image_format imageFormat = {CL_RGBA, CL_FLOAT};
     cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
 
-    auto image = ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat);
+    std::unique_ptr<Image> image(ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat));
     ASSERT_NE(nullptr, image);
 
     constexpr size_t bufferSize = 1024;
@@ -2286,7 +2276,7 @@ HWTEST_F(BuiltInTests, givenCopyImage3dToBuffer16BytesWithAddressMisalignedDstPt
     auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::copyImage3dToBuffer, mode, *pClDevice);
 
     BuiltIn::OpParams dc;
-    dc.srcMemObj = image;
+    dc.srcMemObj = image.get();
     dc.dstPtr = dstPtr;
     dc.srcOffset = {0, 0, 0};
     dc.dstOffset = {0, 0, 0};
@@ -2302,8 +2292,6 @@ HWTEST_F(BuiltInTests, givenCopyImage3dToBuffer16BytesWithAddressMisalignedDstPt
     ASSERT_NE(nullptr, kernel);
     EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("16Bytes") != std::string::npos);
     EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("Aligned") == std::string::npos);
-
-    delete image;
 }
 
 HWTEST_F(BuiltInTests, givenCopyImage3dToBufferNon16BytesFormatWhenBuilderIsUsedThenAlignmentCheckIsSkipped) {
@@ -2314,7 +2302,7 @@ HWTEST_F(BuiltInTests, givenCopyImage3dToBufferNon16BytesFormatWhenBuilderIsUsed
     cl_image_format imageFormat = {CL_R, CL_FLOAT};
     cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
 
-    auto image = ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat);
+    std::unique_ptr<Image> image(ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat));
     ASSERT_NE(nullptr, image);
 
     constexpr size_t bufferSize = 1024;
@@ -2324,7 +2312,7 @@ HWTEST_F(BuiltInTests, givenCopyImage3dToBufferNon16BytesFormatWhenBuilderIsUsed
     auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::copyImage3dToBuffer, mode, *pClDevice);
 
     BuiltIn::OpParams dc;
-    dc.srcMemObj = image;
+    dc.srcMemObj = image.get();
     dc.dstPtr = dstPtr;
     dc.srcOffset = {0, 0, 0};
     dc.dstOffset = {0, 0, 0};
@@ -2341,8 +2329,6 @@ HWTEST_F(BuiltInTests, givenCopyImage3dToBufferNon16BytesFormatWhenBuilderIsUsed
     EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("4Bytes") != std::string::npos);
     EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("16Bytes") == std::string::npos);
     EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("Aligned") == std::string::npos);
-
-    delete image;
 }
 
 HWTEST_F(BuiltInTests, givenCopyBufferToImageNon16BytesFormatWhenBuilderIsUsedThenAlignmentCheckIsSkipped) {
@@ -2353,7 +2339,7 @@ HWTEST_F(BuiltInTests, givenCopyBufferToImageNon16BytesFormatWhenBuilderIsUsedTh
     cl_image_format imageFormat = {CL_R, CL_FLOAT};
     cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
 
-    auto image = ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat);
+    std::unique_ptr<Image> image(ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat));
     ASSERT_NE(nullptr, image);
 
     constexpr size_t bufferSize = 1024;
@@ -2364,7 +2350,7 @@ HWTEST_F(BuiltInTests, givenCopyBufferToImageNon16BytesFormatWhenBuilderIsUsedTh
 
     BuiltIn::OpParams dc;
     dc.srcPtr = srcPtr;
-    dc.dstMemObj = image;
+    dc.dstMemObj = image.get();
     dc.srcOffset = {0, 0, 0};
     dc.dstOffset = {0, 0, 0};
     dc.size = {1, 1, 1};
@@ -2380,8 +2366,6 @@ HWTEST_F(BuiltInTests, givenCopyBufferToImageNon16BytesFormatWhenBuilderIsUsedTh
     EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("4Bytes") != std::string::npos);
     EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("16Bytes") == std::string::npos);
     EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("Aligned") == std::string::npos);
-
-    delete image;
 }
 
 HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesWithImageAsSrcMemObjWhenBuilderIsUsedThenRegularKernelIsSelected) {
@@ -2392,17 +2376,17 @@ HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesWithImageAsSrcMemObjWhenBuil
     cl_image_format imageFormat = {CL_RGBA, CL_FLOAT};
     cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
 
-    auto dstImage = ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat);
+    std::unique_ptr<Image> dstImage(ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat));
     ASSERT_NE(nullptr, dstImage);
 
-    auto srcImage = ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat);
+    std::unique_ptr<Image> srcImage(ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat));
     ASSERT_NE(nullptr, srcImage);
 
     auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::copyBufferToImage3d, mode, *pClDevice);
 
     BuiltIn::OpParams dc;
-    dc.srcMemObj = srcImage;
-    dc.dstMemObj = dstImage;
+    dc.srcMemObj = srcImage.get();
+    dc.dstMemObj = dstImage.get();
     dc.srcOffset = {0, 0, 0};
     dc.dstOffset = {0, 0, 0};
     dc.size = {1, 1, 1};
@@ -2417,9 +2401,6 @@ HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesWithImageAsSrcMemObjWhenBuil
     ASSERT_NE(nullptr, kernel);
     EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("16Bytes") != std::string::npos);
     EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("Aligned") == std::string::npos);
-
-    delete dstImage;
-    delete srcImage;
 }
 
 HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesWithAlignedBufferWhenBuilderIsUsedThenAlignedKernelIsSelected) {
@@ -2430,20 +2411,20 @@ HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesWithAlignedBufferWhenBuilder
     cl_image_format imageFormat = {CL_RGBA, CL_FLOAT};
     cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
 
-    auto image = ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat);
+    std::unique_ptr<Image> image(ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat));
     ASSERT_NE(nullptr, image);
 
     constexpr size_t bufferSize = 1024;
     cl_int retVal = CL_SUCCESS;
-    auto srcBuffer = Buffer::create(pContext, 0, bufferSize, nullptr, retVal);
+    std::unique_ptr<Buffer> srcBuffer(Buffer::create(pContext, 0, bufferSize, nullptr, retVal));
     ASSERT_NE(nullptr, srcBuffer);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::copyBufferToImage3d, mode, *pClDevice);
 
     BuiltIn::OpParams dc;
-    dc.srcMemObj = srcBuffer;
-    dc.dstMemObj = image;
+    dc.srcMemObj = srcBuffer.get();
+    dc.dstMemObj = image.get();
     dc.srcOffset = {0, 0, 0};
     dc.dstOffset = {0, 0, 0};
     dc.size = {1, 1, 1};
@@ -2458,9 +2439,6 @@ HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesWithAlignedBufferWhenBuilder
     ASSERT_NE(nullptr, kernel);
     EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("16Bytes") != std::string::npos);
     EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("Aligned") != std::string::npos);
-
-    delete image;
-    delete srcBuffer;
 }
 
 HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesWithOffsetMisalignedBufferWhenBuilderIsUsedThenRegularKernelIsSelected) {
@@ -2471,20 +2449,20 @@ HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesWithOffsetMisalignedBufferWh
     cl_image_format imageFormat = {CL_RGBA, CL_FLOAT};
     cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
 
-    auto image = ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat);
+    std::unique_ptr<Image> image(ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat));
     ASSERT_NE(nullptr, image);
 
     constexpr size_t bufferSize = 1024;
     cl_int retVal = CL_SUCCESS;
-    auto srcBuffer = Buffer::create(pContext, 0, bufferSize, nullptr, retVal);
+    std::unique_ptr<Buffer> srcBuffer(Buffer::create(pContext, 0, bufferSize, nullptr, retVal));
     ASSERT_NE(nullptr, srcBuffer);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::copyBufferToImage3d, mode, *pClDevice);
 
     BuiltIn::OpParams dc;
-    dc.srcMemObj = srcBuffer;
-    dc.dstMemObj = image;
+    dc.srcMemObj = srcBuffer.get();
+    dc.dstMemObj = image.get();
     dc.srcOffset = {1, 0, 0};
     dc.dstOffset = {0, 0, 0};
     dc.size = {1, 1, 1};
@@ -2499,9 +2477,6 @@ HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesWithOffsetMisalignedBufferWh
     ASSERT_NE(nullptr, kernel);
     EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("16Bytes") != std::string::npos);
     EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("Aligned") == std::string::npos);
-
-    delete image;
-    delete srcBuffer;
 }
 
 HWTEST_F(BuiltInTests, givenCopyImageToBuffer16BytesWithImageAsDstMemObjWhenBuilderIsUsedThenRegularKernelIsSelected) {
@@ -2512,17 +2487,17 @@ HWTEST_F(BuiltInTests, givenCopyImageToBuffer16BytesWithImageAsDstMemObjWhenBuil
     cl_image_format imageFormat = {CL_RGBA, CL_FLOAT};
     cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
 
-    auto srcImage = ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat);
+    std::unique_ptr<Image> srcImage(ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat));
     ASSERT_NE(nullptr, srcImage);
 
-    auto dstImage = ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat);
+    std::unique_ptr<Image> dstImage(ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat));
     ASSERT_NE(nullptr, dstImage);
 
     auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::copyImage3dToBuffer, mode, *pClDevice);
 
     BuiltIn::OpParams dc;
-    dc.srcMemObj = srcImage;
-    dc.dstMemObj = dstImage;
+    dc.srcMemObj = srcImage.get();
+    dc.dstMemObj = dstImage.get();
     dc.srcOffset = {0, 0, 0};
     dc.dstOffset = {0, 0, 0};
     dc.size = {1, 1, 1};
@@ -2537,9 +2512,6 @@ HWTEST_F(BuiltInTests, givenCopyImageToBuffer16BytesWithImageAsDstMemObjWhenBuil
     ASSERT_NE(nullptr, kernel);
     EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("16Bytes") != std::string::npos);
     EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("Aligned") == std::string::npos);
-
-    delete srcImage;
-    delete dstImage;
 }
 
 HWTEST_F(BuiltInTests, givenCopyImageToBuffer16BytesWithAlignedBufferWhenBuilderIsUsedThenAlignedKernelIsSelected) {
@@ -2550,20 +2522,20 @@ HWTEST_F(BuiltInTests, givenCopyImageToBuffer16BytesWithAlignedBufferWhenBuilder
     cl_image_format imageFormat = {CL_RGBA, CL_FLOAT};
     cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
 
-    auto srcImage = ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat);
+    std::unique_ptr<Image> srcImage(ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat));
     ASSERT_NE(nullptr, srcImage);
 
     constexpr size_t bufferSize = 1024;
     cl_int retVal = CL_SUCCESS;
-    auto dstBuffer = Buffer::create(pContext, 0, bufferSize, nullptr, retVal);
+    std::unique_ptr<Buffer> dstBuffer(Buffer::create(pContext, 0, bufferSize, nullptr, retVal));
     ASSERT_NE(nullptr, dstBuffer);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::copyImage3dToBuffer, mode, *pClDevice);
 
     BuiltIn::OpParams dc;
-    dc.srcMemObj = srcImage;
-    dc.dstMemObj = dstBuffer;
+    dc.srcMemObj = srcImage.get();
+    dc.dstMemObj = dstBuffer.get();
     dc.srcOffset = {0, 0, 0};
     dc.dstOffset = {0, 0, 0};
     dc.size = {1, 1, 1};
@@ -2578,9 +2550,6 @@ HWTEST_F(BuiltInTests, givenCopyImageToBuffer16BytesWithAlignedBufferWhenBuilder
     ASSERT_NE(nullptr, kernel);
     EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("16Bytes") != std::string::npos);
     EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("Aligned") != std::string::npos);
-
-    delete srcImage;
-    delete dstBuffer;
 }
 
 HWTEST_F(BuiltInTests, givenCopyImageToBuffer16BytesWithOffsetMisalignedBufferWhenBuilderIsUsedThenRegularKernelIsSelected) {
@@ -2591,20 +2560,20 @@ HWTEST_F(BuiltInTests, givenCopyImageToBuffer16BytesWithOffsetMisalignedBufferWh
     cl_image_format imageFormat = {CL_RGBA, CL_FLOAT};
     cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
 
-    auto srcImage = ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat);
+    std::unique_ptr<Image> srcImage(ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat));
     ASSERT_NE(nullptr, srcImage);
 
     constexpr size_t bufferSize = 1024;
     cl_int retVal = CL_SUCCESS;
-    auto dstBuffer = Buffer::create(pContext, 0, bufferSize, nullptr, retVal);
+    std::unique_ptr<Buffer> dstBuffer(Buffer::create(pContext, 0, bufferSize, nullptr, retVal));
     ASSERT_NE(nullptr, dstBuffer);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::copyImage3dToBuffer, mode, *pClDevice);
 
     BuiltIn::OpParams dc;
-    dc.srcMemObj = srcImage;
-    dc.dstMemObj = dstBuffer;
+    dc.srcMemObj = srcImage.get();
+    dc.dstMemObj = dstBuffer.get();
     dc.srcOffset = {0, 0, 0};
     dc.dstOffset = {1, 0, 0};
     dc.size = {1, 1, 1};
@@ -2619,9 +2588,6 @@ HWTEST_F(BuiltInTests, givenCopyImageToBuffer16BytesWithOffsetMisalignedBufferWh
     ASSERT_NE(nullptr, kernel);
     EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("16Bytes") != std::string::npos);
     EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("Aligned") == std::string::npos);
-
-    delete srcImage;
-    delete dstBuffer;
 }
 
 HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesWithRowPitchMisalignedWhenBuilderIsUsedThenRegularKernelIsSelected) {
@@ -2632,7 +2598,7 @@ HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesWithRowPitchMisalignedWhenBu
     cl_image_format imageFormat = {CL_RGBA, CL_FLOAT};
     cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
 
-    auto image = ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat);
+    std::unique_ptr<Image> image(ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat));
     ASSERT_NE(nullptr, image);
 
     constexpr size_t bufferSize = 1024;
@@ -2644,7 +2610,7 @@ HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesWithRowPitchMisalignedWhenBu
 
     BuiltIn::OpParams dc;
     dc.srcPtr = srcPtr;
-    dc.dstMemObj = image;
+    dc.dstMemObj = image.get();
     dc.srcOffset = {0, 0, 0};
     dc.dstOffset = {0, 0, 0};
     dc.size = {1, 1, 1};
@@ -2659,8 +2625,6 @@ HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesWithRowPitchMisalignedWhenBu
     ASSERT_NE(nullptr, kernel);
     EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("16Bytes") != std::string::npos);
     EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("Aligned") == std::string::npos);
-
-    delete image;
 }
 
 HWTEST_F(BuiltInTests, givenCopyImage3dToBuffer16BytesWithSlicePitchMisalignedWhenBuilderIsUsedThenRegularKernelIsSelected) {
@@ -2671,7 +2635,7 @@ HWTEST_F(BuiltInTests, givenCopyImage3dToBuffer16BytesWithSlicePitchMisalignedWh
     cl_image_format imageFormat = {CL_RGBA, CL_FLOAT};
     cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
 
-    auto image = ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat);
+    std::unique_ptr<Image> image(ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat));
     ASSERT_NE(nullptr, image);
 
     constexpr size_t bufferSize = 1024;
@@ -2682,7 +2646,7 @@ HWTEST_F(BuiltInTests, givenCopyImage3dToBuffer16BytesWithSlicePitchMisalignedWh
     auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::copyImage3dToBuffer, mode, *pClDevice);
 
     BuiltIn::OpParams dc;
-    dc.srcMemObj = image;
+    dc.srcMemObj = image.get();
     dc.dstPtr = dstPtr;
     dc.srcOffset = {0, 0, 0};
     dc.dstOffset = {0, 0, 0};
@@ -2698,8 +2662,6 @@ HWTEST_F(BuiltInTests, givenCopyImage3dToBuffer16BytesWithSlicePitchMisalignedWh
     ASSERT_NE(nullptr, kernel);
     EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("16Bytes") != std::string::npos);
     EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("Aligned") == std::string::npos);
-
-    delete image;
 }
 
 HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesWithOffsetMisalignedWhenBuilderIsUsedThenRegularKernelIsSelected) {
@@ -2710,7 +2672,7 @@ HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesWithOffsetMisalignedWhenBuil
     cl_image_format imageFormat = {CL_RGBA, CL_FLOAT};
     cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
 
-    auto image = ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat);
+    std::unique_ptr<Image> image(ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat));
     ASSERT_NE(nullptr, image);
 
     constexpr size_t bufferSize = 1024;
@@ -2722,7 +2684,7 @@ HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesWithOffsetMisalignedWhenBuil
 
     BuiltIn::OpParams dc;
     dc.srcPtr = srcPtr;
-    dc.dstMemObj = image;
+    dc.dstMemObj = image.get();
     dc.srcOffset = {8, 0, 0}; // 16-byte misaligned offset
     dc.dstOffset = {0, 0, 0};
     dc.size = {1, 1, 1};
@@ -2737,8 +2699,6 @@ HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesWithOffsetMisalignedWhenBuil
     ASSERT_NE(nullptr, kernel);
     EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("16Bytes") != std::string::npos);
     EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("Aligned") == std::string::npos);
-
-    delete image;
 }
 
 HWTEST_F(BuiltInTests, givenCopyImage3dToBuffer16BytesWithNullAddressWhenBuilderIsUsedThenRegularKernelIsSelected) {
@@ -2749,7 +2709,7 @@ HWTEST_F(BuiltInTests, givenCopyImage3dToBuffer16BytesWithNullAddressWhenBuilder
     cl_image_format imageFormat = {CL_RGBA, CL_FLOAT};
     cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
 
-    auto image = ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat);
+    std::unique_ptr<Image> image(ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat));
     ASSERT_NE(nullptr, image);
 
     MockBuffer dstBuffer;
@@ -2759,7 +2719,7 @@ HWTEST_F(BuiltInTests, givenCopyImage3dToBuffer16BytesWithNullAddressWhenBuilder
     auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::copyImage3dToBuffer, mode, *pClDevice);
 
     BuiltIn::OpParams dc;
-    dc.srcMemObj = image;
+    dc.srcMemObj = image.get();
     dc.dstMemObj = &dstBuffer;
     dc.srcOffset = {0, 0, 0};
     dc.dstOffset = {0, 0, 0};
@@ -2775,8 +2735,6 @@ HWTEST_F(BuiltInTests, givenCopyImage3dToBuffer16BytesWithNullAddressWhenBuilder
     ASSERT_NE(nullptr, kernel);
     EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("16Bytes") != std::string::npos);
     EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("Aligned") == std::string::npos);
-
-    delete image;
 }
 
 HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesWithNullPtrAndNullMemObjWhenBuilderIsUsedThenRegularKernelIsSelected) {
@@ -2787,13 +2745,13 @@ HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesWithNullPtrAndNullMemObjWhen
     cl_image_format imageFormat = {CL_RGBA, CL_FLOAT};
     cl_image_desc imageDesc = {CL_MEM_OBJECT_IMAGE3D, 4, 4, 4, 1, 0, 0, 0, 0, {nullptr}};
 
-    auto image = ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat);
+    std::unique_ptr<Image> image(ImageHelperUlt<Image3dDefaults>::create(pContext, &imageDesc, &imageFormat));
     ASSERT_NE(nullptr, image);
 
     auto &builder = BuiltIn::DispatchBuilderOp::getBuiltinDispatchInfoBuilder(BuiltIn::BaseKernel::copyBufferToImage3d, mode, *pClDevice);
 
     BuiltIn::OpParams dc;
-    dc.dstMemObj = image;
+    dc.dstMemObj = image.get();
     dc.size = {1, 1, 1};
 
     MultiDispatchInfo multiDispatchInfo(dc);
@@ -2804,8 +2762,6 @@ HWTEST_F(BuiltInTests, givenCopyBufferToImage16BytesWithNullPtrAndNullMemObjWhen
     ASSERT_NE(nullptr, kernel);
     EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("16Bytes") != std::string::npos);
     EXPECT_TRUE(kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.find("Aligned") == std::string::npos);
-
-    delete image;
 }
 
 HWTEST_F(BuiltInTests, givenAdjustedCopyBufferToBufferWhenWidenessEnabledAndStatelessRequiredThenBuiltinOpParamsAndKernelArgsAreCorrect) {
