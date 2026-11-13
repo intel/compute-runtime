@@ -1285,149 +1285,132 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenMakeResidentIsCalledThenKernelIsaIs
     ASSERT_NE(nullptr, pDevice);
     char pCrossThreadData[64];
 
-    // define kernel info
-    auto pKernelInfo = std::make_unique<MockKernelInfo>();
-    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
+    MockKernelInfo kernelInfo;
+    kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 1;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.storeMakeResidentAllocations = true;
 
-    auto memoryManager = commandStreamReceiver.getMemoryManager();
-    pKernelInfo->kernelAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
+    MockGraphicsAllocation kernelIsa;
+    kernelInfo.kernelAllocation = &kernelIsa;
 
-    // setup kernel arg offsets
-    pKernelInfo->addArgBuffer(0, 0x10);
-    pKernelInfo->addArgBuffer(1, 0x20);
-    pKernelInfo->addArgBuffer(2, 0x30);
+    kernelInfo.addArgBuffer(0, 0x10);
+    kernelInfo.addArgBuffer(1, 0x20);
+    kernelInfo.addArgBuffer(2, 0x30);
 
     MockProgram program(toClDeviceVector(*pClDevice));
     MockContext ctx(pClDevice);
     program.setContext(&ctx);
-    std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *pKernelInfo, *pClDevice));
-    ASSERT_EQ(CL_SUCCESS, kernel->initialize());
-    kernel->setCrossThreadData(pCrossThreadData, sizeof(pCrossThreadData));
+    MockKernel kernel(&program, kernelInfo, *pClDevice);
+    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
+    kernel.setCrossThreadData(pCrossThreadData, sizeof(pCrossThreadData));
 
     EXPECT_EQ(0u, commandStreamReceiver.makeResidentAllocations.size());
-    kernel->makeResident(pDevice->getGpgpuCommandStreamReceiver());
+    kernel.makeResident(pDevice->getGpgpuCommandStreamReceiver());
     EXPECT_EQ(1u, commandStreamReceiver.makeResidentAllocations.size());
-    EXPECT_TRUE(commandStreamReceiver.isMadeResident(kernel->getKernelInfo().getGraphicsAllocation()));
-
-    memoryManager->freeGraphicsMemory(pKernelInfo->kernelAllocation);
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(kernel.getKernelInfo().getGraphicsAllocation()));
 }
 
 HWTEST_F(KernelResidencyTest, givenKernelWhenMakeResidentIsCalledThenExportedFunctionsIsaAllocationIsMadeResident) {
-    auto pKernelInfo = std::make_unique<KernelInfo>();
-    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
+    KernelInfo kernelInfo;
+    kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 1;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.storeMakeResidentAllocations = true;
 
-    auto memoryManager = commandStreamReceiver.getMemoryManager();
-    pKernelInfo->kernelAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
-
     MockProgram program(toClDeviceVector(*pClDevice));
-    auto exportedFunctionsSurface = std::make_unique<MockGraphicsAllocation>();
-    program.buildInfos[pDevice->getRootDeviceIndex()].exportedFunctionsSurface = exportedFunctionsSurface.get();
+    MockGraphicsAllocation exportedFunctionsSurface;
+    program.buildInfos[pDevice->getRootDeviceIndex()].exportedFunctionsSurface = &exportedFunctionsSurface;
     MockContext ctx(pClDevice);
     program.setContext(&ctx);
-    std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *pKernelInfo, *pClDevice));
-    ASSERT_EQ(CL_SUCCESS, kernel->initialize());
+    MockKernel kernel(&program, kernelInfo, *pClDevice);
+    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
     EXPECT_EQ(0u, commandStreamReceiver.makeResidentAllocations.size());
-    kernel->makeResident(pDevice->getGpgpuCommandStreamReceiver());
+    kernel.makeResident(pDevice->getGpgpuCommandStreamReceiver());
     EXPECT_TRUE(commandStreamReceiver.isMadeResident(program.buildInfos[pDevice->getRootDeviceIndex()].exportedFunctionsSurface));
 
     // check getResidency as well
     std::vector<NEO::Surface *> residencySurfaces;
-    kernel->getResidency(residencySurfaces);
-    std::unique_ptr<NEO::ExecutionEnvironment> mockCsrExecEnv = std::make_unique<ExecutionEnvironment>();
-    mockCsrExecEnv->prepareRootDeviceEnvironments(1);
-    mockCsrExecEnv->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
-    mockCsrExecEnv->initializeMemoryManager();
+    kernel.getResidency(residencySurfaces);
+    ExecutionEnvironment mockCsrExecEnv;
+    mockCsrExecEnv.prepareRootDeviceEnvironments(1);
+    mockCsrExecEnv.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
+    mockCsrExecEnv.initializeMemoryManager();
     {
-        CommandStreamReceiverMock csrMock(*mockCsrExecEnv.get(), 0, 1);
+        CommandStreamReceiverMock csrMock(mockCsrExecEnv, 0, 1);
         csrMock.passResidencyCallToBaseClass = false;
         for (const auto &s : residencySurfaces) {
             s->makeResident(csrMock);
             delete s;
         }
-        EXPECT_EQ(1U, csrMock.residency.count(exportedFunctionsSurface->getUnderlyingBuffer()));
+        EXPECT_EQ(1U, csrMock.residency.count(exportedFunctionsSurface.getUnderlyingBuffer()));
     }
-
-    memoryManager->freeGraphicsMemory(pKernelInfo->kernelAllocation);
 }
 
 HWTEST_F(KernelResidencyTest, givenKernelWhenMakeResidentIsCalledThenRequiredLibExportedFunctionsIsaAllocationIsMadeResident) {
-    auto pKernelInfo = std::make_unique<KernelInfo>();
-    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
+    KernelInfo kernelInfo;
+    kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 1;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.storeMakeResidentAllocations = true;
 
-    auto memoryManager = commandStreamReceiver.getMemoryManager();
-    pKernelInfo->kernelAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
-
     MockProgram program(toClDeviceVector(*pClDevice));
     MockProgram requiredLib(toClDeviceVector(*pClDevice));
-    auto exportedFunctionsSurface = std::make_unique<MockGraphicsAllocation>();
-    requiredLib.buildInfos[pDevice->getRootDeviceIndex()].exportedFunctionsSurface = exportedFunctionsSurface.get();
+    MockGraphicsAllocation exportedFunctionsSurface;
+    requiredLib.buildInfos[pDevice->getRootDeviceIndex()].exportedFunctionsSurface = &exportedFunctionsSurface;
     program.buildInfos[pDevice->getRootDeviceIndex()].requiredLibPrograms.push_back(&requiredLib);
     MockContext ctx(pClDevice);
     program.setContext(&ctx);
-    std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *pKernelInfo, *pClDevice));
-    ASSERT_EQ(CL_SUCCESS, kernel->initialize());
+    MockKernel kernel(&program, kernelInfo, *pClDevice);
+    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
-    kernel->makeResident(pDevice->getGpgpuCommandStreamReceiver());
-    EXPECT_TRUE(commandStreamReceiver.isMadeResident(exportedFunctionsSurface.get()));
+    kernel.makeResident(pDevice->getGpgpuCommandStreamReceiver());
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(&exportedFunctionsSurface));
 
     std::vector<NEO::Surface *> residencySurfaces;
-    kernel->getResidency(residencySurfaces);
-    std::unique_ptr<NEO::ExecutionEnvironment> mockCsrExecEnv = std::make_unique<ExecutionEnvironment>();
-    mockCsrExecEnv->prepareRootDeviceEnvironments(1);
-    mockCsrExecEnv->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
-    mockCsrExecEnv->initializeMemoryManager();
+    kernel.getResidency(residencySurfaces);
+    ExecutionEnvironment mockCsrExecEnv;
+    mockCsrExecEnv.prepareRootDeviceEnvironments(1);
+    mockCsrExecEnv.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
+    mockCsrExecEnv.initializeMemoryManager();
     {
-        CommandStreamReceiverMock csrMock(*mockCsrExecEnv.get(), 0, 1);
+        CommandStreamReceiverMock csrMock(mockCsrExecEnv, 0, 1);
         csrMock.passResidencyCallToBaseClass = false;
         for (const auto &surface : residencySurfaces) {
             surface->makeResident(csrMock);
             delete surface;
         }
-        EXPECT_EQ(1U, csrMock.residency.count(exportedFunctionsSurface->getUnderlyingBuffer()));
+        EXPECT_EQ(1U, csrMock.residency.count(exportedFunctionsSurface.getUnderlyingBuffer()));
     }
-
-    memoryManager->freeGraphicsMemory(pKernelInfo->kernelAllocation);
 }
 
 HWTEST_F(KernelResidencyTest, givenKernelWhenMakeResidentIsCalledThenGlobalBufferIsMadeResident) {
-    auto pKernelInfo = std::make_unique<KernelInfo>();
-    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
+    KernelInfo kernelInfo;
+    kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 1;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.storeMakeResidentAllocations = true;
-
-    auto memoryManager = commandStreamReceiver.getMemoryManager();
-    pKernelInfo->kernelAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
 
     MockProgram program(toClDeviceVector(*pClDevice));
     MockContext ctx(pClDevice);
     program.setContext(&ctx);
     program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface = std::make_unique<SharedPoolAllocation>(new MockGraphicsAllocation());
-    std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *pKernelInfo, *pClDevice));
-    ASSERT_EQ(CL_SUCCESS, kernel->initialize());
+    MockKernel kernel(&program, kernelInfo, *pClDevice);
+    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
     EXPECT_EQ(0u, commandStreamReceiver.makeResidentAllocations.size());
-    kernel->makeResident(pDevice->getGpgpuCommandStreamReceiver());
+    kernel.makeResident(pDevice->getGpgpuCommandStreamReceiver());
     EXPECT_TRUE(commandStreamReceiver.isMadeResident(program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface->getGraphicsAllocation()));
 
     std::vector<NEO::Surface *> residencySurfaces;
-    kernel->getResidency(residencySurfaces);
-    std::unique_ptr<NEO::ExecutionEnvironment> mockCsrExecEnv = std::make_unique<ExecutionEnvironment>();
-    mockCsrExecEnv->prepareRootDeviceEnvironments(1);
-    mockCsrExecEnv->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
-    mockCsrExecEnv->initializeMemoryManager();
+    kernel.getResidency(residencySurfaces);
+    ExecutionEnvironment mockCsrExecEnv;
+    mockCsrExecEnv.prepareRootDeviceEnvironments(1);
+    mockCsrExecEnv.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
+    mockCsrExecEnv.initializeMemoryManager();
     {
-        CommandStreamReceiverMock csrMock(*mockCsrExecEnv.get(), 0, 1);
+        CommandStreamReceiverMock csrMock(mockCsrExecEnv, 0, 1);
         csrMock.passResidencyCallToBaseClass = false;
         for (const auto &s : residencySurfaces) {
             s->makeResident(csrMock);
@@ -1435,22 +1418,18 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenMakeResidentIsCalledThenGlobalBuffe
         }
         EXPECT_EQ(1U, csrMock.residency.count(program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface->getGraphicsAllocation()->getUnderlyingBuffer()));
     }
-
-    memoryManager->freeGraphicsMemory(pKernelInfo->kernelAllocation);
 }
 
 HWTEST_F(KernelResidencyTest, givenBindlessHeapsHelperAndGlobalAndConstantBuffersWhenMakeResidentIsCalledThenGlobalAndConstantBufferHeapAllocationsAreMadeResident) {
-    auto bindlessHeapHelper = new MockBindlesHeapsHelper(pDevice, false);
-    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHeapHelper);
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->bindlessHeapsHelper = std::make_unique<MockBindlesHeapsHelper>(pDevice, false);
 
-    auto pKernelInfo = std::make_unique<KernelInfo>();
-    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
+    KernelInfo kernelInfo;
+    kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 1;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.storeMakeResidentAllocations = true;
 
     auto memoryManager = commandStreamReceiver.getMemoryManager();
-    pKernelInfo->kernelAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
 
     MockProgram program(toClDeviceVector(*pClDevice));
     MockContext ctx(pClDevice);
@@ -1460,19 +1439,17 @@ HWTEST_F(KernelResidencyTest, givenBindlessHeapsHelperAndGlobalAndConstantBuffer
     EXPECT_TRUE(memoryManager->allocateBindlessSlot(program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface->getGraphicsAllocation()));
     EXPECT_TRUE(memoryManager->allocateBindlessSlot(program.buildInfos[pDevice->getRootDeviceIndex()].constantSurface->getGraphicsAllocation()));
 
-    std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *pKernelInfo, *pClDevice));
-    ASSERT_EQ(CL_SUCCESS, kernel->initialize());
+    MockKernel kernel(&program, kernelInfo, *pClDevice);
+    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
     EXPECT_EQ(0u, commandStreamReceiver.makeResidentAllocations.size());
-    kernel->makeResident(pDevice->getGpgpuCommandStreamReceiver());
+    kernel.makeResident(pDevice->getGpgpuCommandStreamReceiver());
 
     EXPECT_TRUE(commandStreamReceiver.isMadeResident(program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface->getGraphicsAllocation()));
     EXPECT_TRUE(commandStreamReceiver.isMadeResident(program.getGlobalSurfaceGA(rootDeviceIndex)->getBindlessInfo().heapAllocation));
 
     EXPECT_TRUE(commandStreamReceiver.isMadeResident(program.buildInfos[pDevice->getRootDeviceIndex()].constantSurface->getGraphicsAllocation()));
     EXPECT_TRUE(commandStreamReceiver.isMadeResident(program.getConstantSurfaceGA(rootDeviceIndex)->getBindlessInfo().heapAllocation));
-
-    memoryManager->freeGraphicsMemory(pKernelInfo->kernelAllocation);
 }
 
 HWTEST_F(KernelResidencyTest, givenKernelWhenItUsesIndirectUnifiedMemoryDeviceAllocationThenTheyAreMadeResident) {
@@ -2104,296 +2081,216 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenclSetKernelExecInfoWithSystemPtrAnd
 HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgLoadNorKernelArgStoreNorKernelArgAtomicAndHasIndirectStatelessAccessAndDetectIndirectAccessInKernelEnabledThenKernelHasIndirectAccessIsSetToTrue) {
     DebugManagerStateRestore restorer;
     debugManager.flags.DetectIndirectAccessInKernel.set(1);
-    auto pKernelInfo = std::make_unique<KernelInfo>();
-    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgLoad = false;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgStore = false;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic = false;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess = true;
-
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    commandStreamReceiver.storeMakeResidentAllocations = true;
-
-    auto memoryManager = commandStreamReceiver.getMemoryManager();
-    pKernelInfo->kernelAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
+    KernelInfo kernelInfo;
+    kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 1;
+    kernelInfo.kernelDescriptor.kernelAttributes.hasNonKernelArgLoad = false;
+    kernelInfo.kernelDescriptor.kernelAttributes.hasNonKernelArgStore = false;
+    kernelInfo.kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic = false;
+    kernelInfo.kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess = true;
 
     MockProgram program(toClDeviceVector(*pClDevice));
     MockContext ctx(pClDevice);
     program.setContext(&ctx);
     program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface = std::make_unique<SharedPoolAllocation>(new MockGraphicsAllocation());
-    std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *pKernelInfo, *pClDevice));
-    ASSERT_EQ(CL_SUCCESS, kernel->initialize());
+    MockKernel kernel(&program, kernelInfo, *pClDevice);
+    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
-    EXPECT_TRUE(kernel->getHasIndirectAccess());
-
-    memoryManager->freeGraphicsMemory(pKernelInfo->kernelAllocation);
+    EXPECT_TRUE(kernel.getHasIndirectAccess());
 }
 
 HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgLoadNorKernelArgStoreNorKernelArgAtomicNorIndirectStatelessAccessAndDetectIndirectAccessInKernelEnabledThenKernelHasIndirectAccessIsSetToFalse) {
     DebugManagerStateRestore restorer;
     debugManager.flags.DetectIndirectAccessInKernel.set(1);
-    auto pKernelInfo = std::make_unique<KernelInfo>();
-    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgLoad = false;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgStore = false;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic = false;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess = false;
-
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    commandStreamReceiver.storeMakeResidentAllocations = true;
-
-    auto memoryManager = commandStreamReceiver.getMemoryManager();
-    pKernelInfo->kernelAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
+    KernelInfo kernelInfo;
+    kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 1;
+    kernelInfo.kernelDescriptor.kernelAttributes.hasNonKernelArgLoad = false;
+    kernelInfo.kernelDescriptor.kernelAttributes.hasNonKernelArgStore = false;
+    kernelInfo.kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic = false;
+    kernelInfo.kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess = false;
 
     MockProgram program(toClDeviceVector(*pClDevice));
     MockContext ctx(pClDevice);
     program.setContext(&ctx);
     program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface = std::make_unique<SharedPoolAllocation>(new MockGraphicsAllocation());
-    std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *pKernelInfo, *pClDevice));
-    ASSERT_EQ(CL_SUCCESS, kernel->initialize());
+    MockKernel kernel(&program, kernelInfo, *pClDevice);
+    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
-    EXPECT_FALSE(kernel->getHasIndirectAccess());
-
-    memoryManager->freeGraphicsMemory(pKernelInfo->kernelAllocation);
+    EXPECT_FALSE(kernel.getHasIndirectAccess());
 }
 
 HWTEST_F(KernelResidencyTest, givenKernelWithStackCallsAndDetectIndirectAccessInKernelEnabledThenKernelHasIndirectAccessIsSetToTrue) {
     DebugManagerStateRestore restorer;
     debugManager.flags.DetectIndirectAccessInKernel.set(1);
-    auto pKernelInfo = std::make_unique<KernelInfo>();
-    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgLoad = false;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgStore = false;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic = false;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess = false;
-    pKernelInfo->kernelDescriptor.kernelAttributes.flags.useStackCalls = true;
-
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    commandStreamReceiver.storeMakeResidentAllocations = true;
-
-    auto memoryManager = commandStreamReceiver.getMemoryManager();
-    pKernelInfo->kernelAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
+    KernelInfo kernelInfo;
+    kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 1;
+    kernelInfo.kernelDescriptor.kernelAttributes.hasNonKernelArgLoad = false;
+    kernelInfo.kernelDescriptor.kernelAttributes.hasNonKernelArgStore = false;
+    kernelInfo.kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic = false;
+    kernelInfo.kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess = false;
+    kernelInfo.kernelDescriptor.kernelAttributes.flags.useStackCalls = true;
 
     MockProgram program(toClDeviceVector(*pClDevice));
     MockContext ctx(pClDevice);
     program.setContext(&ctx);
     program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface = std::make_unique<SharedPoolAllocation>(new MockGraphicsAllocation());
-    std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *pKernelInfo, *pClDevice));
-    ASSERT_EQ(CL_SUCCESS, kernel->initialize());
+    MockKernel kernel(&program, kernelInfo, *pClDevice);
+    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
-    EXPECT_TRUE(kernel->getHasIndirectAccess());
-
-    memoryManager->freeGraphicsMemory(pKernelInfo->kernelAllocation);
+    EXPECT_TRUE(kernel.getHasIndirectAccess());
 }
 
 HWTEST_F(KernelResidencyTest, givenKernelWithoutStackCallsAndDetectIndirectAccessInKernelEnabledThenKernelHasIndirectAccessIsSetToFalse) {
     DebugManagerStateRestore restorer;
     debugManager.flags.DetectIndirectAccessInKernel.set(1);
-    auto pKernelInfo = std::make_unique<KernelInfo>();
-    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgLoad = false;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgStore = false;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic = false;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess = false;
-    pKernelInfo->kernelDescriptor.kernelAttributes.flags.useStackCalls = false;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasIndirectAccessInImplicitArg = false;
-
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    commandStreamReceiver.storeMakeResidentAllocations = true;
-
-    auto memoryManager = commandStreamReceiver.getMemoryManager();
-    pKernelInfo->kernelAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
+    KernelInfo kernelInfo;
+    kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 1;
+    kernelInfo.kernelDescriptor.kernelAttributes.hasNonKernelArgLoad = false;
+    kernelInfo.kernelDescriptor.kernelAttributes.hasNonKernelArgStore = false;
+    kernelInfo.kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic = false;
+    kernelInfo.kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess = false;
+    kernelInfo.kernelDescriptor.kernelAttributes.flags.useStackCalls = false;
+    kernelInfo.kernelDescriptor.kernelAttributes.hasIndirectAccessInImplicitArg = false;
 
     MockProgram program(toClDeviceVector(*pClDevice));
     MockContext ctx(pClDevice);
     program.setContext(&ctx);
     program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface = std::make_unique<SharedPoolAllocation>(new MockGraphicsAllocation());
-    std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *pKernelInfo, *pClDevice));
-    ASSERT_EQ(CL_SUCCESS, kernel->initialize());
+    MockKernel kernel(&program, kernelInfo, *pClDevice);
+    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
-    EXPECT_FALSE(kernel->getHasIndirectAccess());
-
-    memoryManager->freeGraphicsMemory(pKernelInfo->kernelAllocation);
+    EXPECT_FALSE(kernel.getHasIndirectAccess());
 }
 
 HWTEST_F(KernelResidencyTest, givenKernelWithPtrByValueArgumentAndDetectIndirectAccessInKernelEnabledThenKernelHasIndirectAccessIsSetToTrue) {
     DebugManagerStateRestore restorer;
     debugManager.flags.DetectIndirectAccessInKernel.set(1);
-    auto pKernelInfo = std::make_unique<KernelInfo>();
-    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgLoad = false;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgStore = false;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic = false;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess = false;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasIndirectAccessInImplicitArg = false;
+    KernelInfo kernelInfo;
+    kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 1;
+    kernelInfo.kernelDescriptor.kernelAttributes.hasNonKernelArgLoad = false;
+    kernelInfo.kernelDescriptor.kernelAttributes.hasNonKernelArgStore = false;
+    kernelInfo.kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic = false;
+    kernelInfo.kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess = false;
+    kernelInfo.kernelDescriptor.kernelAttributes.hasIndirectAccessInImplicitArg = false;
 
     auto ptrByValueArg = ArgDescriptor(ArgDescriptor::argTValue);
     ArgDescValue::Element element;
     element.isPtr = true;
     ptrByValueArg.as<ArgDescValue>().elements.push_back(element);
-    pKernelInfo->kernelDescriptor.payloadMappings.explicitArgs.push_back(ptrByValueArg);
-
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    commandStreamReceiver.storeMakeResidentAllocations = true;
-
-    auto memoryManager = commandStreamReceiver.getMemoryManager();
-    pKernelInfo->kernelAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
+    kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.push_back(ptrByValueArg);
 
     MockProgram program(toClDeviceVector(*pClDevice));
     MockContext ctx(pClDevice);
     program.setContext(&ctx);
     program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface = std::make_unique<SharedPoolAllocation>(new MockGraphicsAllocation());
-    std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *pKernelInfo, *pClDevice));
-    ASSERT_EQ(CL_SUCCESS, kernel->initialize());
+    MockKernel kernel(&program, kernelInfo, *pClDevice);
+    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
-    EXPECT_TRUE(kernel->getHasIndirectAccess());
-
-    memoryManager->freeGraphicsMemory(pKernelInfo->kernelAllocation);
+    EXPECT_TRUE(kernel.getHasIndirectAccess());
 }
 
 HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgLoadNorKernelArgStoreNorKernelArgAtomicNorHasIndirectStatelessAccessAndDetectIndirectAccessInKernelDisabledThenKernelHasIndirectAccessIsSetToTrue) {
     DebugManagerStateRestore restorer;
     debugManager.flags.DetectIndirectAccessInKernel.set(0);
-    auto pKernelInfo = std::make_unique<KernelInfo>();
-    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgLoad = false;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgStore = false;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic = false;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess = false;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasIndirectAccessInImplicitArg = false;
-
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    commandStreamReceiver.storeMakeResidentAllocations = true;
-
-    auto memoryManager = commandStreamReceiver.getMemoryManager();
-    pKernelInfo->kernelAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
+    KernelInfo kernelInfo;
+    kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 1;
+    kernelInfo.kernelDescriptor.kernelAttributes.hasNonKernelArgLoad = false;
+    kernelInfo.kernelDescriptor.kernelAttributes.hasNonKernelArgStore = false;
+    kernelInfo.kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic = false;
+    kernelInfo.kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess = false;
+    kernelInfo.kernelDescriptor.kernelAttributes.hasIndirectAccessInImplicitArg = false;
 
     MockProgram program(toClDeviceVector(*pClDevice));
     MockContext ctx(pClDevice);
     program.setContext(&ctx);
     program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface = std::make_unique<SharedPoolAllocation>(new MockGraphicsAllocation());
-    std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *pKernelInfo, *pClDevice));
-    ASSERT_EQ(CL_SUCCESS, kernel->initialize());
+    MockKernel kernel(&program, kernelInfo, *pClDevice);
+    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
-    EXPECT_TRUE(kernel->getHasIndirectAccess());
-
-    memoryManager->freeGraphicsMemory(pKernelInfo->kernelAllocation);
+    EXPECT_TRUE(kernel.getHasIndirectAccess());
 }
 
 HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgLoadAndDetectIndirectAccessInKernelEnabledThenKernelHasIndirectAccessIsSetToTrue) {
     DebugManagerStateRestore restorer;
     debugManager.flags.DetectIndirectAccessInKernel.set(1);
-    auto pKernelInfo = std::make_unique<KernelInfo>();
-    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgLoad = true;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgStore = false;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic = false;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess = false;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasIndirectAccessInImplicitArg = false;
-
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    commandStreamReceiver.storeMakeResidentAllocations = true;
-
-    auto memoryManager = commandStreamReceiver.getMemoryManager();
-    pKernelInfo->kernelAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
+    KernelInfo kernelInfo;
+    kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 1;
+    kernelInfo.kernelDescriptor.kernelAttributes.hasNonKernelArgLoad = true;
+    kernelInfo.kernelDescriptor.kernelAttributes.hasNonKernelArgStore = false;
+    kernelInfo.kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic = false;
+    kernelInfo.kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess = false;
+    kernelInfo.kernelDescriptor.kernelAttributes.hasIndirectAccessInImplicitArg = false;
 
     MockProgram program(toClDeviceVector(*pClDevice));
     MockContext ctx(pClDevice);
     program.setContext(&ctx);
     program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface = std::make_unique<SharedPoolAllocation>(new MockGraphicsAllocation());
-    std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *pKernelInfo, *pClDevice));
-    ASSERT_EQ(CL_SUCCESS, kernel->initialize());
+    MockKernel kernel(&program, kernelInfo, *pClDevice);
+    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
-    EXPECT_TRUE(kernel->getHasIndirectAccess());
-
-    memoryManager->freeGraphicsMemory(pKernelInfo->kernelAllocation);
+    EXPECT_TRUE(kernel.getHasIndirectAccess());
 }
 
 HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgStoreAndDetectIndirectAccessInKernelEnabledThenKernelHasIndirectAccessIsSetToTrue) {
     DebugManagerStateRestore restorer;
     debugManager.flags.DetectIndirectAccessInKernel.set(1);
-    auto pKernelInfo = std::make_unique<KernelInfo>();
-    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgLoad = false;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgStore = true;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic = false;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess = false;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasIndirectAccessInImplicitArg = false;
-
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    commandStreamReceiver.storeMakeResidentAllocations = true;
-
-    auto memoryManager = commandStreamReceiver.getMemoryManager();
-    pKernelInfo->kernelAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
+    KernelInfo kernelInfo;
+    kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 1;
+    kernelInfo.kernelDescriptor.kernelAttributes.hasNonKernelArgLoad = false;
+    kernelInfo.kernelDescriptor.kernelAttributes.hasNonKernelArgStore = true;
+    kernelInfo.kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic = false;
+    kernelInfo.kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess = false;
+    kernelInfo.kernelDescriptor.kernelAttributes.hasIndirectAccessInImplicitArg = false;
 
     MockProgram program(toClDeviceVector(*pClDevice));
     MockContext ctx(pClDevice);
     program.setContext(&ctx);
     program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface = std::make_unique<SharedPoolAllocation>(new MockGraphicsAllocation());
-    std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *pKernelInfo, *pClDevice));
-    ASSERT_EQ(CL_SUCCESS, kernel->initialize());
+    MockKernel kernel(&program, kernelInfo, *pClDevice);
+    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
-    EXPECT_TRUE(kernel->getHasIndirectAccess());
-
-    memoryManager->freeGraphicsMemory(pKernelInfo->kernelAllocation);
+    EXPECT_TRUE(kernel.getHasIndirectAccess());
 }
 
 HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgAtomicAndDetectIndirectAccessInKernelEnabledThenKernelHasIndirectAccessIsSetToTrue) {
     DebugManagerStateRestore restorer;
     debugManager.flags.DetectIndirectAccessInKernel.set(1);
-    auto pKernelInfo = std::make_unique<KernelInfo>();
-    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgLoad = false;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgStore = false;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic = true;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess = false;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasIndirectAccessInImplicitArg = false;
-
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    commandStreamReceiver.storeMakeResidentAllocations = true;
-
-    auto memoryManager = commandStreamReceiver.getMemoryManager();
-    pKernelInfo->kernelAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
+    KernelInfo kernelInfo;
+    kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 1;
+    kernelInfo.kernelDescriptor.kernelAttributes.hasNonKernelArgLoad = false;
+    kernelInfo.kernelDescriptor.kernelAttributes.hasNonKernelArgStore = false;
+    kernelInfo.kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic = true;
+    kernelInfo.kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess = false;
+    kernelInfo.kernelDescriptor.kernelAttributes.hasIndirectAccessInImplicitArg = false;
 
     MockProgram program(toClDeviceVector(*pClDevice));
     MockContext ctx(pClDevice);
     program.setContext(&ctx);
     program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface = std::make_unique<SharedPoolAllocation>(new MockGraphicsAllocation());
-    std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *pKernelInfo, *pClDevice));
-    ASSERT_EQ(CL_SUCCESS, kernel->initialize());
+    MockKernel kernel(&program, kernelInfo, *pClDevice);
+    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
-    EXPECT_TRUE(kernel->getHasIndirectAccess());
-
-    memoryManager->freeGraphicsMemory(pKernelInfo->kernelAllocation);
+    EXPECT_TRUE(kernel.getHasIndirectAccess());
 }
 
 HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgAtomicAndImplicitArgsHasIndirectAccessAndDetectIndirectAccessInKernelEnabledThenKernelHasIndirectAccessIsSetToTrue) {
     DebugManagerStateRestore restorer;
     debugManager.flags.DetectIndirectAccessInKernel.set(1);
-    auto pKernelInfo = std::make_unique<KernelInfo>();
-    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgLoad = false;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgStore = false;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic = false;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess = false;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasIndirectAccessInImplicitArg = true;
-
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    commandStreamReceiver.storeMakeResidentAllocations = true;
-
-    auto memoryManager = commandStreamReceiver.getMemoryManager();
-    pKernelInfo->kernelAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
+    KernelInfo kernelInfo;
+    kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 1;
+    kernelInfo.kernelDescriptor.kernelAttributes.hasNonKernelArgLoad = false;
+    kernelInfo.kernelDescriptor.kernelAttributes.hasNonKernelArgStore = false;
+    kernelInfo.kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic = false;
+    kernelInfo.kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess = false;
+    kernelInfo.kernelDescriptor.kernelAttributes.hasIndirectAccessInImplicitArg = true;
 
     MockProgram program(toClDeviceVector(*pClDevice));
     MockContext ctx(pClDevice);
     program.setContext(&ctx);
     program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface = std::make_unique<SharedPoolAllocation>(new MockGraphicsAllocation());
-    std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *pKernelInfo, *pClDevice));
-    ASSERT_EQ(CL_SUCCESS, kernel->initialize());
+    MockKernel kernel(&program, kernelInfo, *pClDevice);
+    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
-    EXPECT_TRUE(kernel->getHasIndirectAccess());
-
-    memoryManager->freeGraphicsMemory(pKernelInfo->kernelAllocation);
+    EXPECT_TRUE(kernel.getHasIndirectAccess());
 }
 
 HWTEST_F(KernelResidencyTest, givenSimpleKernelWhenExecEnvDoesNotHavePageFaultManagerThenPageFaultDoesNotMoveAllocation) {
