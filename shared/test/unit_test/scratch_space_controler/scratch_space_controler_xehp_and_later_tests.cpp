@@ -200,9 +200,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ScratchControllerTests, givenOnlyPrivateScratchAllo
     bool stateBaseAddressDirty = false;
     bool cfeStateDirty = false;
 
-    void *firstSurfaceHeap = alignedMalloc(0x1000, 0x1000);
-    void *secondSurfaceHeap = alignedMalloc(0x1000, 0x1000);
-    memset(secondSurfaceHeap, 0, 0x1000);
+    alignas(MemoryConstants::pageSize) uint8_t firstSurfaceHeap[MemoryConstants::pageSize] = {};
+    alignas(MemoryConstants::pageSize) uint8_t secondSurfaceHeap[MemoryConstants::pageSize] = {};
     scratchController.setRequiredScratchSpace(firstSurfaceHeap, 0u, 0u, 0x1000u, csr.getOsContext(), stateBaseAddressDirty, cfeStateDirty);
     ASSERT_EQ(nullptr, scratchController.scratchSlot0Allocation);
     ASSERT_NE(nullptr, scratchController.scratchSlot1Allocation);
@@ -212,9 +211,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ScratchControllerTests, givenOnlyPrivateScratchAllo
     EXPECT_TRUE(cfeStateDirty);
     auto slot1SurfaceState = ptrOffset(secondSurfaceHeap, scratchController.getOffsetToSurfaceState(scratchController.slotId) + scratchController.singleSurfaceStateSize);
     EXPECT_EQ(scratchController.scratchSlot1Allocation->getGpuAddress(), reinterpret_cast<const typename FamilyType::DefaultRenderSurfaceState *>(slot1SurfaceState)->getSurfaceBaseAddress());
-
-    alignedFree(firstSurfaceHeap);
-    alignedFree(secondSurfaceHeap);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, ScratchControllerTests, givenAlternatingSshWhenScratchGrowsThroughAllSupportedSizesThenEveryGrowthGetsNewSlot) {

@@ -75,8 +75,7 @@ struct GmmHelperTests : public MockExecutionEnvironmentGmmFixtureTest {
 };
 
 TEST_F(GmmHelperTests, WhenGmmIsCreatedThenAllResourceAreCreated) {
-    std::unique_ptr<MemoryManager> mm(new MemoryManagerCreate<OsAgnosticMemoryManager>(false, false, *executionEnvironment));
-    void *pSysMem = mm->allocateSystemMemory(4096, 4096);
+    void *pSysMem = reinterpret_cast<void *>(0x1000);
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
@@ -88,13 +87,10 @@ TEST_F(GmmHelperTests, WhenGmmIsCreatedThenAllResourceAreCreated) {
     auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
     EXPECT_EQ(gmmResourceParams->Flags.Gpu.NoRestriction, 0u);
     EXPECT_TRUE(pSysMem == pGmmSysMem);
-
-    mm->freeSystemMemory(pSysMem);
 }
 
 TEST_F(GmmHelperTests, GivenUncacheableWhenGmmIsCreatedThenAllResourceAreCreated) {
-    std::unique_ptr<MemoryManager> mm(new MemoryManagerCreate<OsAgnosticMemoryManager>(false, false, *executionEnvironment));
-    void *pSysMem = mm->allocateSystemMemory(4096, 4096);
+    void *pSysMem = reinterpret_cast<void *>(0x1000);
 
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
@@ -108,8 +104,6 @@ TEST_F(GmmHelperTests, GivenUncacheableWhenGmmIsCreatedThenAllResourceAreCreated
     EXPECT_EQ(gmmResourceParams->Flags.Gpu.NoRestriction, 0u);
     EXPECT_TRUE(pSysMem == pGmmSysMem);
     EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC, gmmResourceParams->Usage);
-
-    mm->freeSystemMemory(pSysMem);
 }
 
 TEST_F(GmmHelperTests, givenHostPointerWithHighestBitSetWhenGmmIsCreatedThenItHasTheSameAddress) {

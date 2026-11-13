@@ -3786,8 +3786,7 @@ TEST_F(SvmHostAllocationCacheTest, givenAllocationWrappingExternalHostPtrWhenFre
     svmManager->initUsmAllocationsCaches(*device);
     ASSERT_NE(nullptr, svmManager->usmHostAllocationsCache);
 
-    auto externalStorage = alignedMalloc(allocationSizeBasis, MemoryConstants::pageSize);
-    ASSERT_NE(nullptr, externalStorage);
+    auto externalStorage = reinterpret_cast<void *>(0x100000);
 
     auto unifiedMemoryProperties = createMemoryProperties(InternalMemoryType::hostUnifiedMemory, nullptr);
     unifiedMemoryProperties.allocationFlags.hostptr = reinterpret_cast<uintptr_t>(externalStorage);
@@ -3799,7 +3798,6 @@ TEST_F(SvmHostAllocationCacheTest, givenAllocationWrappingExternalHostPtrWhenFre
     EXPECT_EQ(0u, svmManager->usmHostAllocationsCache->allocations.size());
 
     svmManager->cleanupUSMAllocCaches();
-    alignedFree(externalStorage);
 }
 
 TEST_F(SvmHostAllocationCacheTest, givenCachedAllocationWhenAllocatingWithExternalHostPtrThenCacheIsNotUsed) {

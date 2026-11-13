@@ -571,8 +571,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenAlignmentThenHostUnifiedMemoryAllocatio
 
 TEST_F(SVMLocalMemoryAllocatorTest, givenExternalHostPointerWhenCreatingHostUnifiedMemoryAllocationThenRequestedSizeIsNotAlignedUpAndAlignmentIsNotSet) {
     constexpr size_t requestedSize = MemoryConstants::pageSize + 1;
-    auto externalHostPointer = alignedMalloc(requestedSize, MemoryConstants::pageSize);
-    ASSERT_NE(nullptr, externalHostPointer);
+    auto externalHostPointer = reinterpret_cast<void *>(0x100000);
 
     UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, MemoryConstants::pageSize64k, rootDeviceIndices, deviceBitfields);
     unifiedMemoryProperties.allocationFlags.hostptr = reinterpret_cast<uintptr_t>(externalHostPointer);
@@ -584,13 +583,11 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenExternalHostPointerWhenCreatingHostUnif
     EXPECT_EQ(requestedSize, memoryManager->lastAllocationProperties->size);
 
     svmManager->freeSVMAlloc(ptr);
-    alignedFree(externalHostPointer);
 }
 
 TEST_F(SVMLocalMemoryAllocatorTest, givenDefaultSettingsAndExternalHostPointerWhenCreatingUnifiedMemoryAllocationThenRequestedSizeIsAlignedUpToPage) {
     constexpr size_t requestedSize = MemoryConstants::pageSize + 1;
-    auto externalHostPointer = alignedMalloc(2 * MemoryConstants::pageSize, MemoryConstants::pageSize);
-    ASSERT_NE(nullptr, externalHostPointer);
+    auto externalHostPointer = reinterpret_cast<void *>(0x100000);
 
     UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, MemoryConstants::pageSize64k, rootDeviceIndices, deviceBitfields);
     unifiedMemoryProperties.allocationFlags.hostptr = reinterpret_cast<uintptr_t>(externalHostPointer);
@@ -602,15 +599,13 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenDefaultSettingsAndExternalHostPointerWh
     EXPECT_EQ(2 * MemoryConstants::pageSize, memoryManager->lastAllocationProperties->size);
 
     svmManager->freeSVMAlloc(ptr);
-    alignedFree(externalHostPointer);
 }
 
 TEST_F(SVMLocalMemoryAllocatorTest, givenUsmHostPtrFragmentsEnabledAndExternalHostPointerWhenCreatingUnifiedMemoryAllocationThenRequestedSizeIsNotAlignedUp) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableUsmHostPtrFragments.set(1);
     constexpr size_t requestedSize = MemoryConstants::pageSize + 1;
-    auto externalHostPointer = alignedMalloc(requestedSize, MemoryConstants::pageSize);
-    ASSERT_NE(nullptr, externalHostPointer);
+    auto externalHostPointer = reinterpret_cast<void *>(0x100000);
 
     UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, MemoryConstants::pageSize64k, rootDeviceIndices, deviceBitfields);
     unifiedMemoryProperties.allocationFlags.hostptr = reinterpret_cast<uintptr_t>(externalHostPointer);
@@ -622,7 +617,6 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenUsmHostPtrFragmentsEnabledAndExternalHo
     EXPECT_EQ(requestedSize, memoryManager->lastAllocationProperties->size);
 
     svmManager->freeSVMAlloc(ptr);
-    alignedFree(externalHostPointer);
 }
 
 TEST_F(SVMLocalMemoryAllocatorTest, givenShareableHostUnifiedMemoryPropertiesWhenCreatingAllocationThenShareableAndIpcSupportedFlagsArePassedToAllocationProperties) {
@@ -1285,7 +1279,7 @@ TEST_F(SvmHostAllocationNumaTest, givenNoRootDeviceClosestToPreferredNumaNodeWhe
 
 TEST_F(SvmHostAllocationNumaTest, givenExternalHostPointerWhenCreatingHostAllocationThenRootDeviceClosestToPreferredNumaNodeIsNotQueried) {
     memoryManager.numaRootDeviceIndex = 1u;
-    auto externalHostPointer = alignedMalloc(MemoryConstants::pageSize, MemoryConstants::pageSize);
+    auto externalHostPointer = reinterpret_cast<void *>(0x100000);
     unifiedMemoryProperties.allocationFlags.hostptr = reinterpret_cast<uintptr_t>(externalHostPointer);
 
     auto ptr = svmManager.createHostUnifiedMemoryAllocation(MemoryConstants::pageSize, unifiedMemoryProperties);
@@ -1295,7 +1289,6 @@ TEST_F(SvmHostAllocationNumaTest, givenExternalHostPointerWhenCreatingHostAlloca
     EXPECT_EQ(0u, svmManager.getSVMAlloc(ptr)->gpuAllocations.getDefaultGraphicsAllocation()->getRootDeviceIndex());
 
     svmManager.freeSVMAlloc(ptr);
-    alignedFree(externalHostPointer);
 }
 
 TEST_F(SvmHostAllocationNumaTest, givenHostAllocationCacheWhenRootDeviceClosestToPreferredNumaNodeChangesThenAllocationOwnedByOtherRootDeviceIsNotReused) {
