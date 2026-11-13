@@ -1699,7 +1699,7 @@ GraphicsAllocation *WddmMemoryManager::allocatePhysicalLocalDeviceMemory(const A
     auto &wddm = getWddm(allocationData.rootDeviceIndex);
 
     if (!createPhysicalAllocation(wddmAllocation.get())) {
-        for (auto handleId = 0u; handleId < allocationData.storageInfo.getNumBanks(); handleId++) {
+        for (auto handleId = 0u; handleId < wddmAllocation->getNumGmms(); handleId++) {
             delete wddmAllocation->getGmm(handleId);
         }
         status = AllocationStatus::Error;
@@ -1843,7 +1843,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryInDevicePool(const 
 
     if (!heapAssigners[allocationData.rootDeviceIndex]->use32BitHeap(allocationData.type)) {
         if (!adjustGpuPtrToHostAddressSpace(*wddmAllocation.get(), requiredGpuVa)) {
-            for (auto handleId = 0u; handleId < allocationData.storageInfo.getNumBanks(); handleId++) {
+            for (auto handleId = 0u; handleId < wddmAllocation->getNumGmms(); handleId++) {
                 delete wddmAllocation->getGmm(handleId);
             }
             status = AllocationStatus::Error;
@@ -1852,7 +1852,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryInDevicePool(const 
     }
 
     if (!createWddmAllocation(wddmAllocation.get(), requiredGpuVa)) {
-        for (auto handleId = 0u; handleId < allocationData.storageInfo.getNumBanks(); handleId++) {
+        for (auto handleId = 0u; handleId < wddmAllocation->getNumGmms(); handleId++) {
             delete wddmAllocation->getGmm(handleId);
         }
         status = AllocationStatus::Error;

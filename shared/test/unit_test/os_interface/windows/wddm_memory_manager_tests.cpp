@@ -1444,6 +1444,32 @@ TEST_F(WddmMemoryManagerSimpleTest, GivenShareableEnabledAndHugeSizeWhenAskedToC
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+TEST_F(WddmMemoryManagerSimpleTest, givenPhysicalLocalAllocationSplitIntoManyGmmsWhenCreatingItFailsThenNullptrIsReturnedAndAllGmmsAreFreed) {
+    constexpr size_t chunkSize = MemoryConstants::pageSize64k;
+    memoryManager = std::make_unique<MockWddmMemoryManager>(false, false, executionEnvironment);
+    memoryManager->hugeGfxMemoryChunkSize = chunkSize;
+    AllocationData allocationData;
+    allocationData.size = 2 * chunkSize;
+    wddm->failCreateAllocation = true;
+
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
+    EXPECT_EQ(nullptr, memoryManager->allocatePhysicalLocalDeviceMemory(allocationData, status));
+    EXPECT_EQ(MemoryManager::AllocationStatus::Error, status);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenDevicePoolAllocationSplitIntoManyGmmsWhenCreatingItFailsThenNullptrIsReturnedAndAllGmmsAreFreed) {
+    constexpr size_t chunkSize = MemoryConstants::pageSize64k;
+    memoryManager = std::make_unique<MockWddmMemoryManager>(false, true, executionEnvironment);
+    memoryManager->hugeGfxMemoryChunkSize = chunkSize;
+    AllocationData allocationData;
+    allocationData.size = 2 * chunkSize;
+    wddm->failCreateAllocation = true;
+
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
+    EXPECT_EQ(nullptr, memoryManager->allocateGraphicsMemoryInDevicePool(allocationData, status));
+    EXPECT_EQ(MemoryManager::AllocationStatus::Error, status);
+}
+
 TEST_F(WddmMemoryManagerSimpleTest, GivenPhysicalDeviceMemoryAndVirtualMemoryThenMapSucceeds) {
     memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
     memoryManager->hugeGfxMemoryChunkSize = MemoryConstants::pageSize64k;

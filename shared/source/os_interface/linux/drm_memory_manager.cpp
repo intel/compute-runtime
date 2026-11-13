@@ -3245,7 +3245,7 @@ GraphicsAllocation *DrmMemoryManager::allocatePhysicalLocalDeviceMemory(const Al
     auto *drmAllocation = static_cast<DrmAllocation *>(allocation.get());
 
     if (!createDrmAllocation(&getDrm(allocationData.rootDeviceIndex), allocation.get(), 0u, maxOsContextCount, MemoryConstants::pageSize64k)) {
-        for (auto handleId = 0u; handleId < allocationData.storageInfo.getNumBanks(); handleId++) {
+        for (auto handleId = 0u; handleId < allocation->getNumGmms(); handleId++) {
             delete allocation->getGmm(handleId);
         }
         status = AllocationStatus::Error;
@@ -3255,7 +3255,7 @@ GraphicsAllocation *DrmMemoryManager::allocatePhysicalLocalDeviceMemory(const Al
         for (auto bo : drmAllocation->getBOs()) {
             delete bo;
         }
-        for (auto handleId = 0u; handleId < allocationData.storageInfo.getNumBanks(); handleId++) {
+        for (auto handleId = 0u; handleId < allocation->getNumGmms(); handleId++) {
             delete allocation->getGmm(handleId);
         }
         status = AllocationStatus::Error;
@@ -3313,7 +3313,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
         for (auto bo : drmAllocation->getBOs()) {
             delete bo;
         }
-        for (auto handleId = 0u; handleId < allocationData.storageInfo.getNumBanks(); handleId++) {
+        for (auto handleId = 0u; handleId < drmAllocation->getNumGmms(); handleId++) {
             delete drmAllocation->getGmm(handleId);
         }
         auto gmmHelper = self->getGmmHelper(allocationData.rootDeviceIndex);
@@ -3382,7 +3382,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
     if ((localMemoryReservationRequired && !reserveLocalMemory(*drmAllocation)) ||
         !createDrmAllocation(&getDrm(allocationData.rootDeviceIndex), allocation.get(), gpuAddress, maxOsContextCount, finalAlignment)) {
         releaseLocalMemoryReservation(*drmAllocation);
-        for (auto handleId = 0u; handleId < allocationData.storageInfo.getNumBanks(); handleId++) {
+        for (auto handleId = 0u; handleId < allocation->getNumGmms(); handleId++) {
             delete allocation->getGmm(handleId);
         }
         gfxPartition->freeGpuAddressRange(gmmHelper->decanonize(gpuAddress), sizeAllocated);

@@ -801,6 +801,27 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenDebugVariableSetWhenAllocatingThenF
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+TEST_F(DrmMemoryManagerLocalMemoryMultiTileTest, givenChunkSizeBasedColouringPolicyWhenAllocatingInDevicePoolFailsThenNullptrIsReturnedAndAllGmmsAreFreed) {
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
+    AllocationData allocData;
+
+    auto &productHelper = *executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->productHelper;
+    auto alignmentSize = productHelper.is2MBLocalMemAlignmentEnabled() ? MemoryConstants::pageSize2M : MemoryConstants::pageSize64k;
+    constexpr size_t numAlignedChunks = 18u;
+    constexpr size_t colouringGranularity = 256 * MemoryConstants::kiloByte;
+    allocData.size = numAlignedChunks * alignmentSize;
+    allocData.type = AllocationType::buffer;
+    allocData.storageInfo.memoryBanks = maxNBitValue(MemoryBanks::getBankForLocalMemory(3));
+    allocData.storageInfo.multiStorage = true;
+    allocData.rootDeviceIndex = rootDeviceIndex;
+    allocData.storageInfo.colouringPolicy = ColouringPolicy::chunkSizeBased;
+    allocData.storageInfo.colouringGranularity = colouringGranularity;
+    ioctlHelper->createGemExtResult = -1;
+
+    EXPECT_EQ(nullptr, memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status));
+    EXPECT_EQ(MemoryManager::AllocationStatus::Error, status);
+}
+
 TEST_F(DrmMemoryManagerLocalMemoryMultiTileTest, givenChunkSizeBasedColouringPolicyWhenAllocatingInDevicePoolOnAllMemoryBanksThenDivideAllocationIntoEqualBufferObjectsWithGivenChunkSize) {
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
     AllocationData allocData;
