@@ -11,10 +11,13 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/test/common/fixtures/memory_allocator_multi_device_fixture.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include <algorithm>
+#include <map>
 
 using namespace NEO;
 
@@ -90,31 +93,35 @@ TEST_P(MemoryManagerMultiDeviceTest, givenRootDeviceIndexSpecifiedWhenAllocateGr
     delete tagsMultiAllocation;
 }
 
-TEST_P(MemoryManagerMultiDeviceTest, givenRootDeviceIndexSpecifiedWhenAllocateGraphicsMemoryIsCalledThenAllocationPropertiesUsmFlagIsSetAccordingToAddressRange) {
+TEST(MemoryManagerMultiRootDeviceTest, givenRootDeviceIndexSpecifiedWhenAllocateGraphicsMemoryIsCalledThenAllocationPropertiesUsmFlagIsSetAccordingToAddressRange) {
+    constexpr uint32_t numRootDevices = 4u;
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get(), true, numRootDevices);
     RootDeviceIndicesContainer rootDeviceIndices;
 
-    for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < getNumRootDevices(); ++rootDeviceIndex) {
+    for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < numRootDevices; ++rootDeviceIndex) {
         rootDeviceIndices.pushUnique(rootDeviceIndex);
     }
 
     auto maxRootDeviceIndex = *std::max_element(rootDeviceIndices.begin(), rootDeviceIndices.end(), std::less<uint32_t const>());
-    auto tagsMultiAllocation = new MultiGraphicsAllocation(maxRootDeviceIndex);
+    MultiGraphicsAllocation tagsMultiAllocation(maxRootDeviceIndex);
+
+    MockMemoryManager mockMemoryManager(executionEnvironment);
+    std::map<uint32_t, bool> usmHostAllocationFlagPerRootDevice;
+    mockMemoryManager.validateAllocateProperties = [&usmHostAllocationFlagPerRootDevice](const AllocationProperties &properties) {
+        usmHostAllocationFlagPerRootDevice[properties.rootDeviceIndex] = properties.flags.isUSMHostAllocation;
+    };
 
     AllocationProperties unifiedMemoryProperties{rootDeviceIndices.at(0), MemoryConstants::pageSize, AllocationType::tagBuffer, systemMemoryBitfield};
 
-    memoryManager->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndices, unifiedMemoryProperties, *tagsMultiAllocation);
-    EXPECT_NE(nullptr, tagsMultiAllocation);
+    EXPECT_NE(nullptr, mockMemoryManager.createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndices, unifiedMemoryProperties, tagsMultiAllocation));
+    EXPECT_FALSE(unifiedMemoryProperties.flags.isUSMHostAllocation);
 
+    EXPECT_EQ(rootDeviceIndices.size(), usmHostAllocationFlagPerRootDevice.size());
     for (auto rootDeviceIndex : rootDeviceIndices) {
-        if (memoryManager->isLimitedRange(rootDeviceIndex)) {
-            EXPECT_EQ(unifiedMemoryProperties.flags.isUSMHostAllocation, false);
-        } else {
-            EXPECT_EQ(unifiedMemoryProperties.flags.isUSMHostAllocation, true);
-        }
+        EXPECT_EQ(!mockMemoryManager.isLimitedRange(rootDeviceIndex), usmHostAllocationFlagPerRootDevice[rootDeviceIndex]);
     }
 
-    for (auto graphicsAllocation : tagsMultiAllocation->getGraphicsAllocations()) {
-        memoryManager->freeGraphicsMemory(graphicsAllocation);
+    for (auto graphicsAllocation : tagsMultiAllocation.getGraphicsAllocations()) {
+        mockMemoryManager.freeGraphicsMemory(graphicsAllocation);
     }
-    delete tagsMultiAllocation;
 }

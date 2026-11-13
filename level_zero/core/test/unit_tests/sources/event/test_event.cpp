@@ -85,7 +85,7 @@ using EventCreate = Test<DeviceFixture>;
 class MemoryManagerEventPoolFailMock : public NEO::MemoryManager {
   public:
     MemoryManagerEventPoolFailMock(NEO::ExecutionEnvironment &executionEnvironment) : NEO::MemoryManager(executionEnvironment) {}
-    void *createMultiGraphicsAllocationInSystemMemoryPool(RootDeviceIndicesContainer &rootDeviceIndices, AllocationProperties &properties, NEO::MultiGraphicsAllocation &multiGraphicsAllocation) override {
+    void *createMultiGraphicsAllocationInSystemMemoryPool(RootDeviceIndicesContainer &rootDeviceIndices, const AllocationProperties &properties, NEO::MultiGraphicsAllocation &multiGraphicsAllocation) override {
         return nullptr;
     };
     GraphicsAllocation *createGraphicsAllocationFromMultipleSharedHandles(const std::vector<osHandle> &handles, AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation, void *mapPointer) override { return nullptr; }
@@ -493,7 +493,7 @@ struct EventPoolIpcMockGraphicsAllocation : public NEO::MockGraphicsAllocation {
 class MemoryManagerEventPoolIpcMock : public NEO::MockMemoryManager {
   public:
     MemoryManagerEventPoolIpcMock(NEO::ExecutionEnvironment &executionEnvironment) : NEO::MockMemoryManager(executionEnvironment) {}
-    void *createMultiGraphicsAllocationInSystemMemoryPool(RootDeviceIndicesContainer &rootDeviceIndices, AllocationProperties &properties, NEO::MultiGraphicsAllocation &multiGraphicsAllocation) override {
+    void *createMultiGraphicsAllocationInSystemMemoryPool(RootDeviceIndicesContainer &rootDeviceIndices, const AllocationProperties &properties, NEO::MultiGraphicsAllocation &multiGraphicsAllocation) override {
         alloc = new EventPoolIpcMockGraphicsAllocation(&buffer, sizeof(buffer));
         alloc->setShareableHostMemory(true);
         multiGraphicsAllocation.addAllocation(alloc);

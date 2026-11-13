@@ -145,7 +145,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     }
 
     void *createMultiGraphicsAllocationInSystemMemoryPool(RootDeviceIndicesContainer &rootDeviceIndices,
-                                                          AllocationProperties &properties,
+                                                          const AllocationProperties &properties,
                                                           MultiGraphicsAllocation &multiGraphicsAllocation) override;
 
     bool isCpuCopyRequired(const void *ptr) override { return cpuCopyRequired; }

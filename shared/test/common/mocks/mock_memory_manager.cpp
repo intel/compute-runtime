@@ -456,7 +456,7 @@ AddressRange MockMemoryManager::reserveCpuAddress(const uint64_t requiredStartAd
 }
 
 void *MockMemoryManager::createMultiGraphicsAllocationInSystemMemoryPool(RootDeviceIndicesContainer &rootDeviceIndices,
-                                                                         AllocationProperties &properties,
+                                                                         const AllocationProperties &properties,
                                                                          MultiGraphicsAllocation &multiGraphicsAllocation) {
     if (isMockEventPoolCreateMemoryManager) {
         return nullptr;

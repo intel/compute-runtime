@@ -37,7 +37,7 @@ namespace ult {
 class MemoryManagerEventPoolIPCMockXeHpc : public NEO::MockMemoryManager {
   public:
     MemoryManagerEventPoolIPCMockXeHpc(NEO::ExecutionEnvironment &executionEnvironment) : NEO::MockMemoryManager(executionEnvironment) {}
-    void *createMultiGraphicsAllocationInSystemMemoryPool(RootDeviceIndicesContainer &rootDeviceIndices, AllocationProperties &properties, NEO::MultiGraphicsAllocation &multiGraphicsAllocation) override {
+    void *createMultiGraphicsAllocationInSystemMemoryPool(RootDeviceIndicesContainer &rootDeviceIndices, const AllocationProperties &properties, NEO::MultiGraphicsAllocation &multiGraphicsAllocation) override {
         alloc = new NEO::MockGraphicsAllocation(&buffer, sizeof(buffer));
         alloc->setShareableHostMemory(true);
         multiGraphicsAllocation.addAllocation(alloc);

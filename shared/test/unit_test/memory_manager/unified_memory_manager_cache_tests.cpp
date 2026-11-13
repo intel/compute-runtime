@@ -2615,6 +2615,41 @@ TEST_F(SvmHostAllocationCacheTest, givenHostOutOfMemoryWhenAllocatingThenCacheIs
     EXPECT_EQ(nullptr, svmManager->usmHostAllocationsCache);
 }
 
+TEST_F(SvmHostAllocationCacheTest, givenMultiRootHostAllocationFailingOnSecondRootDeviceWhenAllocatingThenRetryAfterCacheTrimAllocatesMemoryForAllRootDevices) {
+    auto deviceFactory = std::make_unique<UltDeviceFactory>(2, 1);
+    DebugManagerStateRestore restore;
+    debugManager.flags.ExperimentalEnableHostAllocationCache.set(1);
+    auto device = deviceFactory->rootDevices[0];
+    auto memoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());
+    auto svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager);
+    memoryManager->usmReuseInfo.init(1 * MemoryConstants::gigaByte, UsmReuseInfo::notLimited);
+    svmManager->initUsmAllocationsCaches(*device);
+    ASSERT_NE(nullptr, svmManager->usmHostAllocationsCache);
+
+    RootDeviceIndicesContainer multiRootDeviceIndices{0u, 1u};
+    std::map<uint32_t, DeviceBitfield> multiRootDeviceBitfields{{0u, mockDeviceBitfield}, {1u, mockDeviceBitfield}};
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, multiRootDeviceIndices, multiRootDeviceBitfields);
+
+    memoryManager->isMockHostMemoryManager = true;
+    memoryManager->forceFailureInAllocationWithHostPointer = true;
+    memoryManager->singleFailureInAllocationWithHostPointer = true;
+
+    auto ptr = svmManager->createHostUnifiedMemoryAllocation(MemoryConstants::pageSize64k, unifiedMemoryProperties);
+    ASSERT_NE(nullptr, ptr);
+    EXPECT_EQ(4u, memoryManager->allocateGraphicsMemoryWithPropertiesCount);
+
+    auto svmData = svmManager->getSVMAlloc(ptr);
+    ASSERT_NE(nullptr, svmData);
+    for (auto rootDeviceIndex : multiRootDeviceIndices) {
+        auto allocation = svmData->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
+        ASSERT_NE(nullptr, allocation);
+        EXPECT_EQ(ptr, allocation->getUnderlyingBuffer());
+    }
+
+    svmManager->freeSVMAlloc(ptr);
+    svmManager->cleanupUSMAllocCaches();
+}
+
 TEST_F(SvmHostAllocationCacheTest, givenAllocationInUsageWhenAllocatingAfterFreeThenDoNotReuseAllocation) {
     auto deviceFactory = std::make_unique<UltDeviceFactory>(1, 1);
     DebugManagerStateRestore restore;

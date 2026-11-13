@@ -333,7 +333,8 @@ void MemoryManager::cleanGraphicsMemoryCreatedFromHostPtr(GraphicsAllocation *gr
     cleanOsHandles(graphicsAllocation->fragmentsStorage, graphicsAllocation->getRootDeviceIndex());
 }
 
-void *MemoryManager::createMultiGraphicsAllocationInSystemMemoryPool(RootDeviceIndicesContainer &rootDeviceIndices, AllocationProperties &properties, MultiGraphicsAllocation &multiGraphicsAllocation, void *ptr) {
+void *MemoryManager::createMultiGraphicsAllocationInSystemMemoryPool(RootDeviceIndicesContainer &rootDeviceIndices, const AllocationProperties &requestedProperties, MultiGraphicsAllocation &multiGraphicsAllocation, void *ptr) {
+    auto properties = requestedProperties;
     auto releaseAllocations = [&]() {
         for (uint32_t index = 0u; index < multiGraphicsAllocation.getGraphicsAllocations().size(); index++) {
             auto graphicsAllocation = multiGraphicsAllocation.getGraphicsAllocation(index);
