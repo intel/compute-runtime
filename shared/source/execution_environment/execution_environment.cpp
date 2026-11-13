@@ -338,6 +338,12 @@ void ExecutionEnvironment::parseAffinityMask() {
         filteredEnvironments.emplace_back(rootDeviceEnvironments[i].release());
     }
 
+    // Peer access is evaluated only within a product family, so hidden devices of other families cannot import allocations.
+    rootDevicesHiddenByAffinityMask = std::any_of(rootDeviceEnvironments.begin(), rootDeviceEnvironments.end(), [&filteredEnvironments](const auto &hiddenEnvironment) {
+        return hiddenEnvironment && std::any_of(filteredEnvironments.begin(), filteredEnvironments.end(), [&hiddenEnvironment](const auto &keptEnvironment) {
+                   return hiddenEnvironment->getHardwareInfo()->platform.eProductFamily == keptEnvironment->getHardwareInfo()->platform.eProductFamily;
+               });
+    });
     rootDeviceEnvironments.swap(filteredEnvironments);
 }
 

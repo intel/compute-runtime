@@ -1019,7 +1019,27 @@ TEST_F(SVMLocalMemoryAllocatorUsmCompressionDisabledTest, givenUsmCompressionDis
     svmManager->freeSVMAlloc(ptr);
 }
 
-struct SVMLocalMemoryAllocatorPeerAccessCompressionTest : public SVMLocalMemoryAllocatorTest {
+struct SVMLocalMemoryAllocatorCompressionTest : public SVMLocalMemoryAllocatorTest {
+    bool isDeviceUsmCompressed(UnifiedMemoryProperties &unifiedMemoryProperties) {
+        auto ptr = svmManager->createUnifiedMemoryAllocation(MemoryConstants::pageSize64k, unifiedMemoryProperties);
+        EXPECT_NE(nullptr, ptr);
+        const bool compressed = svmManager->getSVMAlloc(ptr)->gpuAllocations.getDefaultGraphicsAllocation()->isCompressionEnabled();
+        svmManager->freeSVMAlloc(ptr);
+        return compressed;
+    }
+
+    bool isDeviceUsmCompressed() {
+        UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+        unifiedMemoryProperties.device = device;
+        return isDeviceUsmCompressed(unifiedMemoryProperties);
+    }
+
+    DebugManagerStateRestore restore;
+    std::unique_ptr<UltDeviceFactory> deviceFactory;
+    MockDevice *device = nullptr;
+};
+
+struct SVMLocalMemoryAllocatorPeerAccessCompressionTest : public SVMLocalMemoryAllocatorCompressionTest {
     void SetUp() override {
         debugManager.flags.RenderCompressedBuffersEnabled.set(1);
         SVMLocalMemoryAllocatorTest::SetUp();
@@ -1030,26 +1050,12 @@ struct SVMLocalMemoryAllocatorPeerAccessCompressionTest : public SVMLocalMemoryA
         }
         device->hasPeerAccess = true;
     }
-
-    bool isDeviceUsmCompressed(UnifiedMemoryProperties &unifiedMemoryProperties) {
-        auto ptr = svmManager->createUnifiedMemoryAllocation(MemoryConstants::pageSize64k, unifiedMemoryProperties);
-        EXPECT_NE(nullptr, ptr);
-        const bool compressed = svmManager->getSVMAlloc(ptr)->gpuAllocations.getDefaultGraphicsAllocation()->isCompressionEnabled();
-        svmManager->freeSVMAlloc(ptr);
-        return compressed;
-    }
-
-    DebugManagerStateRestore restore;
-    std::unique_ptr<UltDeviceFactory> deviceFactory;
-    MockDevice *device = nullptr;
 };
 
 TEST_F(SVMLocalMemoryAllocatorPeerAccessCompressionTest, givenPeerAccessAndResourceDecompressionDisabledWhenAllocatingDeviceUsmWithoutHintThenAllocationIsNotCompressed) {
     device->getExecutionEnvironment()->setResourceDecompressionEnabled(false);
-    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
-    unifiedMemoryProperties.device = device;
 
-    EXPECT_FALSE(isDeviceUsmCompressed(unifiedMemoryProperties));
+    EXPECT_FALSE(isDeviceUsmCompressed());
 }
 
 TEST_F(SVMLocalMemoryAllocatorPeerAccessCompressionTest, givenPeerAccessAndResourceDecompressionDisabledWhenAllocatingDeviceUsmWithCompressedHintThenAllocationIsCompressed) {
@@ -1063,10 +1069,57 @@ TEST_F(SVMLocalMemoryAllocatorPeerAccessCompressionTest, givenPeerAccessAndResou
 
 TEST_F(SVMLocalMemoryAllocatorPeerAccessCompressionTest, givenPeerAccessAndResourceDecompressionEnabledWhenAllocatingDeviceUsmWithoutHintThenAllocationIsCompressed) {
     device->getExecutionEnvironment()->setResourceDecompressionEnabled(true);
-    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
-    unifiedMemoryProperties.device = device;
 
-    EXPECT_TRUE(isDeviceUsmCompressed(unifiedMemoryProperties));
+    EXPECT_TRUE(isDeviceUsmCompressed());
+}
+
+TEST_F(SVMLocalMemoryAllocatorPeerAccessCompressionTest, givenNoPeerAccessAndNoHiddenRootDevicesAndResourceDecompressionDisabledWhenAllocatingDeviceUsmWithoutHintThenAllocationIsCompressed) {
+    device->hasPeerAccess = false;
+    device->getExecutionEnvironment()->setResourceDecompressionEnabled(false);
+    ASSERT_FALSE(device->getExecutionEnvironment()->areRootDevicesHiddenByAffinityMask());
+
+    EXPECT_TRUE(isDeviceUsmCompressed());
+}
+
+struct SVMLocalMemoryAllocatorHiddenRootDeviceCompressionTest : public SVMLocalMemoryAllocatorCompressionTest {
+    void SetUp() override {
+        debugManager.flags.RenderCompressedBuffersEnabled.set(1);
+        debugManager.flags.ZE_AFFINITY_MASK.set("0");
+        SVMLocalMemoryAllocatorTest::SetUp();
+        deviceFactory = std::make_unique<UltDeviceFactory>(2, 2);
+        ASSERT_EQ(1u, deviceFactory->rootDevices.size());
+        device = deviceFactory->rootDevices[0];
+        if (!device->getGfxCoreHelper().usmCompressionSupported(device->getHardwareInfo())) {
+            GTEST_SKIP();
+        }
+        ASSERT_TRUE(device->getExecutionEnvironment()->areRootDevicesHiddenByAffinityMask());
+        device->hasPeerAccess = false;
+    }
+};
+
+TEST_F(SVMLocalMemoryAllocatorHiddenRootDeviceCompressionTest, givenRootDevicesHiddenByAffinityMaskAndNoVisiblePeerAndResourceDecompressionDisabledWhenAllocatingDeviceUsmWithoutHintThenAllocationIsNotCompressed) {
+    device->getExecutionEnvironment()->setResourceDecompressionEnabled(false);
+
+    EXPECT_FALSE(isDeviceUsmCompressed());
+}
+
+TEST_F(SVMLocalMemoryAllocatorHiddenRootDeviceCompressionTest, givenRootDevicesHiddenByAffinityMaskAndResourceDecompressionEnabledWhenAllocatingDeviceUsmWithoutHintThenAllocationIsCompressed) {
+    device->getExecutionEnvironment()->setResourceDecompressionEnabled(true);
+
+    EXPECT_TRUE(isDeviceUsmCompressed());
+}
+
+TEST_F(SVMLocalMemoryAllocatorHiddenRootDeviceCompressionTest, givenRootDevicesHiddenByAffinityMaskAndPeerAccessNotQueriedWhenAllocatingDeviceUsmWithoutHintThenAllocationIsCompressed) {
+    device->hasPeerAccess = std::nullopt;
+    device->getExecutionEnvironment()->setResourceDecompressionEnabled(false);
+
+    EXPECT_TRUE(isDeviceUsmCompressed());
+}
+
+TEST_F(SVMLocalMemoryAllocatorHiddenRootDeviceCompressionTest, givenRootDevicesHiddenByAffinityMaskAndResourceDecompressionSupportNotQueriedWhenAllocatingDeviceUsmWithoutHintThenAllocationIsCompressed) {
+    ASSERT_FALSE(device->getExecutionEnvironment()->isResourceDecompressionSupportQueried());
+
+    EXPECT_TRUE(isDeviceUsmCompressed());
 }
 
 TEST_F(SVMLocalMemoryAllocatorTest, givenReadOnlyFlagSetInAllocationPropertiesWhenCreatingUnifiedMemoryAllocationThenAllocationIsNotWritable) {

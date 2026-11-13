@@ -620,8 +620,13 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
 
     bool preferCompressed = true;
     if (compressionEnabled && memoryProperties.device && !memoryProperties.allocationFlags.flags.compressedHint) {
-        if (not memoryProperties.device->getExecutionEnvironment()->isResourceDecompressionEnabled() &&
-            memoryProperties.device->hasAnyPeerAccess().value_or(false)) {
+        const auto executionEnvironment = memoryProperties.device->getExecutionEnvironment();
+        const auto peerAccess = memoryProperties.device->hasAnyPeerAccess();
+        // Devices hidden by the affinity mask may belong to other processes that import this allocation through IPC.
+        const bool peerAccessPossible = peerAccess.value_or(false) ||
+                                        (peerAccess.has_value() && executionEnvironment->isResourceDecompressionSupportQueried() &&
+                                         executionEnvironment->areRootDevicesHiddenByAffinityMask());
+        if (not executionEnvironment->isResourceDecompressionEnabled() && peerAccessPossible) {
             preferCompressed = false;
         }
     }

@@ -406,6 +406,7 @@ static_assert(sizeof(ExecutionEnvironment) == sizeof(std::unique_ptr<MemoryManag
                                                   sizeof(std::unordered_map<std::thread::id, std::string>) +
                                                   2 * sizeof(std::mutex) +
                                                   3 * sizeof(bool) +
+                                                  sizeof(std::optional<bool>) +
                                                   sizeof(DeviceHierarchyMode) +
                                                   sizeof(DebuggingMode) +
                                                   sizeof(std::unordered_map<uint32_t, uint32_t>) +
@@ -413,7 +414,7 @@ static_assert(sizeof(ExecutionEnvironment) == sizeof(std::unique_ptr<MemoryManag
                                                   sizeof(std::vector<std::tuple<std::string, uint32_t>>) +
                                                   sizeof(std::mutex) +
                                                   sizeof(std::vector<DeviceGroupSortKey>) +
-                                                  (is64bit ? 21 : 13),
+                                                  (is64bit ? 19 : 15),
               "New members detected in ExecutionEnvironment, please ensure that destruction sequence of objects is correct");
 
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDestroyedThenDeleteSequenceIsSpecified) {
@@ -745,6 +746,74 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenSetResourceDecompression
 
     executionEnvironment.setResourceDecompressionEnabled(false);
     EXPECT_FALSE(executionEnvironment.isResourceDecompressionEnabled());
+}
+
+TEST(ExecutionEnvironment, givenNoAffinityMaskWhenParsingAffinityMaskThenRootDevicesAreNotReportedAsHidden) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get(), true, 2u);
+
+    executionEnvironment.parseAffinityMask();
+
+    EXPECT_EQ(2u, executionEnvironment.rootDeviceEnvironments.size());
+    EXPECT_FALSE(executionEnvironment.areRootDevicesHiddenByAffinityMask());
+}
+
+TEST(ExecutionEnvironment, givenAffinityMaskSelectingAllRootDevicesWhenParsingAffinityMaskThenRootDevicesAreNotReportedAsHidden) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.ZE_AFFINITY_MASK.set("0,1");
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get(), true, 2u);
+
+    executionEnvironment.parseAffinityMask();
+
+    EXPECT_EQ(2u, executionEnvironment.rootDeviceEnvironments.size());
+    EXPECT_FALSE(executionEnvironment.areRootDevicesHiddenByAffinityMask());
+}
+
+TEST(ExecutionEnvironment, givenAffinityMaskHidingRootDeviceWhenParsingAffinityMaskThenRootDevicesAreReportedAsHidden) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.ZE_AFFINITY_MASK.set("1");
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get(), true, 2u);
+
+    executionEnvironment.parseAffinityMask();
+
+    EXPECT_EQ(1u, executionEnvironment.rootDeviceEnvironments.size());
+    EXPECT_TRUE(executionEnvironment.areRootDevicesHiddenByAffinityMask());
+}
+
+TEST(ExecutionEnvironment, givenAffinityMaskHidingOnlyRootDeviceOfDifferentProductFamilyWhenParsingAffinityMaskThenRootDevicesAreNotReportedAsHidden) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.ZE_AFFINITY_MASK.set("1");
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get(), true, 2u);
+    executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo()->platform.eProductFamily = IGFX_UNKNOWN;
+
+    executionEnvironment.parseAffinityMask();
+
+    EXPECT_EQ(1u, executionEnvironment.rootDeviceEnvironments.size());
+    EXPECT_FALSE(executionEnvironment.areRootDevicesHiddenByAffinityMask());
+}
+
+TEST(ExecutionEnvironment, givenAffinityMaskHidingRootDevicesOfDifferentAndSameProductFamilyWhenParsingAffinityMaskThenRootDevicesAreReportedAsHidden) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.ZE_AFFINITY_MASK.set("2");
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get(), true, 3u);
+    executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo()->platform.eProductFamily = IGFX_UNKNOWN;
+
+    executionEnvironment.parseAffinityMask();
+
+    EXPECT_EQ(1u, executionEnvironment.rootDeviceEnvironments.size());
+    EXPECT_TRUE(executionEnvironment.areRootDevicesHiddenByAffinityMask());
+}
+
+TEST(ExecutionEnvironment, givenAffinityMaskHidingOnlySubDevicesWhenParsingAffinityMaskThenRootDevicesAreNotReportedAsHidden) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.CreateMultipleSubDevices.set(2);
+    debugManager.flags.ZE_AFFINITY_MASK.set("0.0,1.1");
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get(), true, 2u);
+    executionEnvironment.setDeviceHierarchyMode(DeviceHierarchyMode::composite);
+
+    executionEnvironment.parseAffinityMask();
+
+    EXPECT_EQ(2u, executionEnvironment.rootDeviceEnvironments.size());
+    EXPECT_FALSE(executionEnvironment.areRootDevicesHiddenByAffinityMask());
 }
 
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenCcsNumberIsValidThenAdjustCcsCountReturnsTrue) {

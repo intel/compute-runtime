@@ -13,6 +13,7 @@
 #include "shared/source/utilities/reference_tracked_object.h"
 
 #include <mutex>
+#include <optional>
 #include <string>
 #include <thread>
 #include <unordered_map>
@@ -70,8 +71,10 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     void addLeoPlatformKey(const HardwareInfo &hwInfo);
     const std::vector<DeviceGroupSortKey> &getLeoPlatformKeys() const { return leoPlatformKeys; }
     bool isLeoRootDeviceDetected() const { return !leoPlatformKeys.empty(); }
-    bool isResourceDecompressionEnabled() const { return resourceDecompressionEnabled; };
+    bool isResourceDecompressionEnabled() const { return resourceDecompressionEnabled.value_or(false); };
+    bool isResourceDecompressionSupportQueried() const { return resourceDecompressionEnabled.has_value(); }
     void setResourceDecompressionEnabled(bool value) { resourceDecompressionEnabled = value; };
+    bool areRootDevicesHiddenByAffinityMask() const { return rootDevicesHiddenByAffinityMask; }
 
     DirectSubmissionController *initializeDirectSubmissionController();
     void initializeUnifiedMemoryReuseCleaner(bool isAnyDirectSubmissionLightEnabled);
@@ -109,7 +112,8 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     void restoreCcsMode();
     bool metricsEnabled = false;
     bool devicePermissionError = false;
-    bool resourceDecompressionEnabled = false;
+    std::optional<bool> resourceDecompressionEnabled;
+    bool rootDevicesHiddenByAffinityMask = false;
 
     DeviceHierarchyMode deviceHierarchyMode = DeviceHierarchyMode::composite;
     DebuggingMode debuggingEnabledMode = DebuggingMode::disabled;
