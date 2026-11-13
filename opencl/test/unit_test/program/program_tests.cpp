@@ -646,6 +646,93 @@ TEST_F(ProgramFromBinaryTest, GivenUsmPoolAnd2MBAlignmentEnabledWhenProgramIsBei
     EXPECT_EQ(1u, usmGlobalSurfaceAllocPool->freeSVMAllocCalled);
 }
 
+class ProgramFromBinaryGlobalSurfacesUsedByGpuTest : public ProgramFromBinaryTest {
+  public:
+    void SetUp() override {
+        ProgramFromBinaryFixture::SetUp();
+        this->svmAllocsManager = this->pContext->getSVMAllocsManager();
+        ASSERT_NE(nullptr, this->svmAllocsManager);
+
+        pProgram->build(pProgram->getDevices(), nullptr);
+
+        this->usmConstantSurfaceAllocPool = new MockUsmMemAllocPool;
+        this->usmGlobalSurfaceAllocPool = new MockUsmMemAllocPool;
+
+        pClDevice->getDevice().resetUsmConstantSurfaceAllocPool(this->usmConstantSurfaceAllocPool);
+        pClDevice->getDevice().resetUsmGlobalSurfaceAllocPool(this->usmGlobalSurfaceAllocPool);
+
+        auto mockProductHelper = new MockProductHelper;
+        pClDevice->getDevice().getRootDeviceEnvironmentRef().productHelper.reset(mockProductHelper);
+        mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
+
+        this->linkerInput.traits.exportsGlobalConstants = true;
+        this->linkerInput.traits.exportsGlobalVariables = true;
+
+        auto &device = pClDevice->getDevice();
+        auto &buildInfo = pProgram->buildInfos[pClDevice->getRootDeviceIndex()];
+        buildInfo.constantSurface.reset(allocateGlobalsSurface(this->svmAllocsManager, device, this->initData.size(), 0u, true, &this->linkerInput, this->initData.data()));
+        buildInfo.globalSurface.reset(allocateGlobalsSurface(this->svmAllocsManager, device, this->initData.size(), 0u, false, &this->linkerInput, this->initData.data()));
+        ASSERT_NE(nullptr, buildInfo.constantSurface);
+        ASSERT_NE(nullptr, buildInfo.globalSurface);
+        this->releasedConstantAddress = buildInfo.constantSurface->getGpuAddress();
+        this->releasedGlobalAddress = buildInfo.globalSurface->getGpuAddress();
+        EXPECT_TRUE(this->usmConstantSurfaceAllocPool->isInPoolRange(reinterpret_cast<void *>(this->releasedConstantAddress)));
+        EXPECT_TRUE(this->usmGlobalSurfaceAllocPool->isInPoolRange(reinterpret_cast<void *>(this->releasedGlobalAddress)));
+
+        this->csr = device.getDefaultEngine().commandStreamReceiver;
+        this->notReadyTaskCount = *this->csr->getTagAddress() + 1;
+        buildInfo.constantSurface->getGraphicsAllocation()->updateTaskCount(this->notReadyTaskCount, this->csr->getOsContext().getContextId());
+        buildInfo.globalSurface->getGraphicsAllocation()->updateTaskCount(this->notReadyTaskCount, this->csr->getOsContext().getContextId());
+    }
+
+    void expectReleasedPoolChunksAreNotReusedUntilGpuWorkCompletes() {
+        auto &device = pClDevice->getDevice();
+        std::unique_ptr<SharedPoolAllocation> newConstantSurface(allocateGlobalsSurface(this->svmAllocsManager, device, this->initData.size(), 0u, true, &this->linkerInput, this->initData.data()));
+        std::unique_ptr<SharedPoolAllocation> newGlobalSurface(allocateGlobalsSurface(this->svmAllocsManager, device, this->initData.size(), 0u, false, &this->linkerInput, this->initData.data()));
+        ASSERT_NE(nullptr, newConstantSurface);
+        ASSERT_NE(nullptr, newGlobalSurface);
+        EXPECT_TRUE(this->usmConstantSurfaceAllocPool->isInPoolRange(reinterpret_cast<void *>(newConstantSurface->getGpuAddress())));
+        EXPECT_TRUE(this->usmGlobalSurfaceAllocPool->isInPoolRange(reinterpret_cast<void *>(newGlobalSurface->getGpuAddress())));
+        EXPECT_NE(this->releasedConstantAddress, newConstantSurface->getGpuAddress());
+        EXPECT_NE(this->releasedGlobalAddress, newGlobalSurface->getGpuAddress());
+
+        EXPECT_EQ(1u, this->usmConstantSurfaceAllocPool->deferredFreeChunks.size());
+        EXPECT_EQ(1u, this->usmGlobalSurfaceAllocPool->deferredFreeChunks.size());
+
+        *this->csr->getTagAddress() = this->notReadyTaskCount;
+        this->usmConstantSurfaceAllocPool->reclaimDeferredFreeChunks();
+        this->usmGlobalSurfaceAllocPool->reclaimDeferredFreeChunks();
+        EXPECT_TRUE(this->usmConstantSurfaceAllocPool->deferredFreeChunks.empty());
+        EXPECT_TRUE(this->usmGlobalSurfaceAllocPool->deferredFreeChunks.empty());
+    }
+
+    SVMAllocsManager *svmAllocsManager = nullptr;
+    MockUsmMemAllocPool *usmConstantSurfaceAllocPool = nullptr;
+    MockUsmMemAllocPool *usmGlobalSurfaceAllocPool = nullptr;
+    std::vector<unsigned char> initData = std::vector<unsigned char>(1024, 0x5B);
+    WhiteBox<NEO::LinkerInput> linkerInput;
+    uint64_t releasedConstantAddress = 0;
+    uint64_t releasedGlobalAddress = 0;
+    CommandStreamReceiver *csr = nullptr;
+    TagAddressType notReadyTaskCount = 0;
+};
+
+TEST_F(ProgramFromBinaryGlobalSurfacesUsedByGpuTest, GivenUsmPoolAnd2MBAlignmentEnabledAndGlobalBuffersUsedByGpuWhenProgramIsBeingRebuildThenTheirPoolChunksAreNotReusedUntilGpuWorkCompletes) {
+    auto &buildInfo = pProgram->buildInfos[pClDevice->getRootDeviceIndex()];
+    pProgram->processGenBinary(*pClDevice);
+    EXPECT_EQ(nullptr, buildInfo.constantSurface);
+    EXPECT_EQ(nullptr, buildInfo.globalSurface);
+
+    this->expectReleasedPoolChunksAreNotReusedUntilGpuWorkCompletes();
+}
+
+TEST_F(ProgramFromBinaryGlobalSurfacesUsedByGpuTest, GivenUsmPoolAnd2MBAlignmentEnabledAndGlobalBuffersUsedByGpuWhenProgramIsDestroyedThenTheirPoolChunksAreNotReusedUntilGpuWorkCompletes) {
+    pProgram->release();
+    pProgram = nullptr;
+
+    this->expectReleasedPoolChunksAreNotReusedUntilGpuWorkCompletes();
+}
+
 TEST_F(ProgramFromBinaryTest, GivenExportedGlobalsAllocatedAsSvmWhenProgramIsBeingRebuildThenOutdatedGlobalBuffersAreFreedViaSvmManager) {
     auto svmAllocsManager = this->pContext->getSVMAllocsManager();
     ASSERT_NE(nullptr, svmAllocsManager);

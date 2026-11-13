@@ -26,6 +26,7 @@
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/os_interface/os_inc_base.h"
 #include "shared/source/program/kernel_info.h"
+#include "shared/source/program/program_initialization.h"
 #include "shared/source/utilities/isa_pool_allocator.h"
 #include "shared/test/common/compiler_interface/linker_mock.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -4737,6 +4738,59 @@ kernels:
 
     EXPECT_EQ(2u, usmConstantSurfaceAllocPool->freeSVMAllocCalled);
     EXPECT_EQ(2u, usmGlobalSurfaceAllocPool->freeSVMAllocCalled);
+}
+
+TEST_F(ModuleTranslationUnitTest, GivenUsmPoolsAnd2MBLocalMemAlignmentEnabledAndGlobalBuffersUsedByGpuWhenModuleTranslationUnitIsDestroyedThenTheirPoolChunksAreNotReusedUntilGpuWorkCompletes) {
+    auto usmConstantSurfaceAllocPool = new MockUsmMemAllocPool;
+    auto usmGlobalSurfaceAllocPool = new MockUsmMemAllocPool;
+
+    neoDevice->resetUsmConstantSurfaceAllocPool(usmConstantSurfaceAllocPool);
+    neoDevice->resetUsmGlobalSurfaceAllocPool(usmGlobalSurfaceAllocPool);
+
+    auto mockProductHelper = new MockProductHelper;
+    neoDevice->getRootDeviceEnvironmentRef().productHelper.reset(mockProductHelper);
+    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
+
+    auto svmAllocsManager = device->getDriverHandle()->getSvmAllocsManager();
+    std::vector<unsigned char> initData(1024, 0x5B);
+    ::WhiteBox<NEO::LinkerInput> linkerInput;
+    linkerInput.traits.exportsGlobalConstants = true;
+    linkerInput.traits.exportsGlobalVariables = true;
+
+    auto moduleTu = std::make_unique<L0::ModuleTranslationUnit>(this->device);
+    moduleTu->globalConstBuffer.reset(allocateGlobalsSurface(svmAllocsManager, *neoDevice, initData.size(), 0u, true, &linkerInput, initData.data()));
+    moduleTu->globalVarBuffer.reset(allocateGlobalsSurface(svmAllocsManager, *neoDevice, initData.size(), 0u, false, &linkerInput, initData.data()));
+    ASSERT_NE(nullptr, moduleTu->globalConstBuffer);
+    ASSERT_NE(nullptr, moduleTu->globalVarBuffer);
+    const auto releasedConstAddress = moduleTu->globalConstBuffer->getGpuAddress();
+    const auto releasedVarAddress = moduleTu->globalVarBuffer->getGpuAddress();
+    EXPECT_TRUE(usmConstantSurfaceAllocPool->isInPoolRange(reinterpret_cast<void *>(releasedConstAddress)));
+    EXPECT_TRUE(usmGlobalSurfaceAllocPool->isInPoolRange(reinterpret_cast<void *>(releasedVarAddress)));
+
+    auto csr = neoDevice->getDefaultEngine().commandStreamReceiver;
+    const auto notReadyTaskCount = *csr->getTagAddress() + 1;
+    moduleTu->globalConstBuffer->getGraphicsAllocation()->updateTaskCount(notReadyTaskCount, csr->getOsContext().getContextId());
+    moduleTu->globalVarBuffer->getGraphicsAllocation()->updateTaskCount(notReadyTaskCount, csr->getOsContext().getContextId());
+
+    moduleTu.reset();
+
+    std::unique_ptr<SharedPoolAllocation> newConstBuffer(allocateGlobalsSurface(svmAllocsManager, *neoDevice, initData.size(), 0u, true, &linkerInput, initData.data()));
+    std::unique_ptr<SharedPoolAllocation> newVarBuffer(allocateGlobalsSurface(svmAllocsManager, *neoDevice, initData.size(), 0u, false, &linkerInput, initData.data()));
+    ASSERT_NE(nullptr, newConstBuffer);
+    ASSERT_NE(nullptr, newVarBuffer);
+    EXPECT_TRUE(usmConstantSurfaceAllocPool->isInPoolRange(reinterpret_cast<void *>(newConstBuffer->getGpuAddress())));
+    EXPECT_TRUE(usmGlobalSurfaceAllocPool->isInPoolRange(reinterpret_cast<void *>(newVarBuffer->getGpuAddress())));
+    EXPECT_NE(releasedConstAddress, newConstBuffer->getGpuAddress());
+    EXPECT_NE(releasedVarAddress, newVarBuffer->getGpuAddress());
+
+    EXPECT_EQ(1u, usmConstantSurfaceAllocPool->deferredFreeChunks.size());
+    EXPECT_EQ(1u, usmGlobalSurfaceAllocPool->deferredFreeChunks.size());
+
+    *csr->getTagAddress() = notReadyTaskCount;
+    usmConstantSurfaceAllocPool->reclaimDeferredFreeChunks();
+    usmGlobalSurfaceAllocPool->reclaimDeferredFreeChunks();
+    EXPECT_TRUE(usmConstantSurfaceAllocPool->deferredFreeChunks.empty());
+    EXPECT_TRUE(usmGlobalSurfaceAllocPool->deferredFreeChunks.empty());
 }
 
 HWTEST_F(ModuleTranslationUnitTest, WithNoCompilerWhenCallingBuildFromSpirvThenFailureReturned) {

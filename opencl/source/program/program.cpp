@@ -152,11 +152,11 @@ void Program::freeGlobalBufferAllocation(std::unique_ptr<NEO::SharedPoolAllocati
     auto gpuAddress = reinterpret_cast<void *>(globalBuffer->getGpuAddress());
 
     for (const auto &device : clDevices) {
-        if (NEO::UsmMemAllocPool::freeIfOwned(device->getDevice().getUsmConstantSurfaceAllocPool(), gpuAddress, NEO::FreePolicyType::none)) {
+        if (NEO::UsmMemAllocPool::freeIfOwned(device->getDevice().getUsmConstantSurfaceAllocPool(), gpuAddress, NEO::FreePolicyType::defer)) {
             return;
         }
 
-        if (NEO::UsmMemAllocPool::freeIfOwned(device->getDevice().getUsmGlobalSurfaceAllocPool(), gpuAddress, NEO::FreePolicyType::none)) {
+        if (NEO::UsmMemAllocPool::freeIfOwned(device->getDevice().getUsmGlobalSurfaceAllocPool(), gpuAddress, NEO::FreePolicyType::defer)) {
             return;
         }
 

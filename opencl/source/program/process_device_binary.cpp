@@ -220,7 +220,7 @@ cl_int Program::processGenBinary(ClDevice &clDevice) {
         auto gpuAddress = reinterpret_cast<void *>(buildInfo.constantSurface->getGpuAddress());
         if (auto usmPool = clDevice.getDevice().getUsmConstantSurfaceAllocPool();
             usmPool && usmPool->isInPoolRange(gpuAddress)) {
-            [[maybe_unused]] auto ret = usmPool->freeSVMAlloc(gpuAddress, NEO::FreePolicyType::none);
+            [[maybe_unused]] auto ret = usmPool->freeSVMAlloc(gpuAddress, NEO::FreePolicyType::defer);
             DEBUG_BREAK_IF(!ret.freeSucceeded);
         } else if (auto &pool = clDevice.getDevice().getConstantSurfacePoolAllocator();
                    pool.isPoolBuffer(buildInfo.constantSurface->getGraphicsAllocation())) {
@@ -236,7 +236,7 @@ cl_int Program::processGenBinary(ClDevice &clDevice) {
         auto gpuAddress = reinterpret_cast<void *>(buildInfo.globalSurface->getGpuAddress());
         if (auto usmPool = clDevice.getDevice().getUsmGlobalSurfaceAllocPool();
             usmPool && usmPool->isInPoolRange(gpuAddress)) {
-            [[maybe_unused]] auto ret = usmPool->freeSVMAlloc(gpuAddress, NEO::FreePolicyType::none);
+            [[maybe_unused]] auto ret = usmPool->freeSVMAlloc(gpuAddress, NEO::FreePolicyType::defer);
             DEBUG_BREAK_IF(!ret.freeSucceeded);
         } else if (auto &pool = clDevice.getDevice().getGlobalSurfacePoolAllocator();
                    pool.isPoolBuffer(buildInfo.globalSurface->getGraphicsAllocation())) {

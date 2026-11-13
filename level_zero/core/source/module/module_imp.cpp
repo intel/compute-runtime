@@ -113,11 +113,11 @@ void ModuleTranslationUnit::freeGlobalBufferAllocation(std::unique_ptr<NEO::Shar
 
     auto gpuAddress = reinterpret_cast<void *>(globalBuffer->getGpuAddress());
 
-    if (NEO::UsmMemAllocPool::freeIfOwned(device->getNEODevice()->getUsmConstantSurfaceAllocPool(), gpuAddress, NEO::FreePolicyType::none)) {
+    if (NEO::UsmMemAllocPool::freeIfOwned(device->getNEODevice()->getUsmConstantSurfaceAllocPool(), gpuAddress, NEO::FreePolicyType::defer)) {
         return;
     }
 
-    if (NEO::UsmMemAllocPool::freeIfOwned(device->getNEODevice()->getUsmGlobalSurfaceAllocPool(), gpuAddress, NEO::FreePolicyType::none)) {
+    if (NEO::UsmMemAllocPool::freeIfOwned(device->getNEODevice()->getUsmGlobalSurfaceAllocPool(), gpuAddress, NEO::FreePolicyType::defer)) {
         return;
     }
 
