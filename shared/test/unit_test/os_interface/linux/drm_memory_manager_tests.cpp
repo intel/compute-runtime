@@ -3821,6 +3821,7 @@ struct DrmMemoryManagerUsmHostPtrFragmentsFixture : public DrmMemoryManagerFixtu
     }
 
     DebugManagerStateRestore restorer;
+    void *const hostPtrBase = reinterpret_cast<void *>(0x100000);
 };
 
 using DrmMemoryManagerUsmHostPtrFragmentsTests = Test<DrmMemoryManagerUsmHostPtrFragmentsFixture>;
@@ -3829,8 +3830,8 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUSMHostAllocationTests, givenDefaultSettingsW
     mock->ioctlExpected.gemUserptr = 1;
     mock->ioctlExpected.gemClose = 1;
 
-    void *buffer = alignedMalloc(2 * MemoryConstants::pageSize, MemoryConstants::pageSize);
-    void *hostPtr = ptrOffset(buffer, 0x40);
+    auto hostPtrBase = reinterpret_cast<void *>(0x100000);
+    void *hostPtr = ptrOffset(hostPtrBase, 0x40);
 
     AllocationData allocationData;
     allocationData.size = 0x100;
@@ -3850,7 +3851,6 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUSMHostAllocationTests, givenDefaultSettingsW
     EXPECT_EQ(MemoryConstants::pageSize, alloc->getUnderlyingBufferSize());
 
     memoryManager->freeGraphicsMemoryImpl(alloc);
-    alignedFree(buffer);
 }
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenUnalignedExternalHostPtrWhenAllocatingUsmHostAllocationThenPageAlignedFragmentsBackItAndGpuAddressEqualsHostPtr) {
@@ -3858,8 +3858,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenUnalignedExter
     mock->ioctlExpected.gemWait = 3;
     mock->ioctlExpected.gemClose = 3;
 
-    void *buffer = alignedMalloc(4 * MemoryConstants::pageSize, MemoryConstants::pageSize);
-    void *hostPtr = ptrOffset(buffer, 0x40);
+    void *hostPtr = ptrOffset(hostPtrBase, 0x40);
 
     AllocationData allocationData;
     allocationData.size = 2 * MemoryConstants::pageSize;
@@ -3875,13 +3874,12 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenUnalignedExter
     for (auto fragmentId = 0u; fragmentId < 3u; fragmentId++) {
         const auto &fragment = alloc->fragmentsStorage.fragmentStorageData[fragmentId];
         auto bo = static_cast<OsHandleLinux *>(fragment.osHandleStorage)->bo;
-        EXPECT_EQ(ptrOffset(buffer, fragmentId * MemoryConstants::pageSize), fragment.cpuPtr);
+        EXPECT_EQ(ptrOffset(hostPtrBase, fragmentId * MemoryConstants::pageSize), fragment.cpuPtr);
         EXPECT_EQ(MemoryConstants::pageSize, fragment.fragmentSize);
         EXPECT_EQ(castToUint64(fragment.cpuPtr), bo->peekAddress());
     }
 
     memoryManager->freeGraphicsMemoryImpl(alloc);
-    alignedFree(buffer);
 }
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenTwoUsmHostAllocationsInOnePageWhenFirstIsFreedThenSharedFragmentIsReleasedOnlyWithSecond) {
@@ -3889,15 +3887,13 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenTwoUsmHostAllo
     mock->ioctlExpected.gemWait = 1;
     mock->ioctlExpected.gemClose = 1;
 
-    void *buffer = alignedMalloc(MemoryConstants::pageSize, MemoryConstants::pageSize);
-
     AllocationData allocationData;
     allocationData.size = 0x100;
     allocationData.rootDeviceIndex = rootDeviceIndex;
     allocationData.flags.isUSMHostAllocation = true;
-    allocationData.hostPtr = ptrOffset(buffer, 0x40);
+    allocationData.hostPtr = ptrOffset(hostPtrBase, 0x40);
     auto firstAlloc = memoryManager->allocateGraphicsMemory(allocationData);
-    allocationData.hostPtr = ptrOffset(buffer, 0x800);
+    allocationData.hostPtr = ptrOffset(hostPtrBase, 0x800);
     auto secondAlloc = memoryManager->allocateGraphicsMemory(allocationData);
     ASSERT_NE(nullptr, firstAlloc);
     ASSERT_NE(nullptr, secondAlloc);
@@ -3910,7 +3906,6 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenTwoUsmHostAllo
     EXPECT_EQ(0, mock->ioctlCnt.gemClose.load());
 
     memoryManager->freeGraphicsMemoryImpl(secondAlloc);
-    alignedFree(buffer);
 }
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenUsmHostAllocationsSharingFragmentWhenCollectingBufferObjectsForTwoSubmissionsThenEachSubmissionGetsEveryFragmentOnce) {
@@ -3918,16 +3913,14 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenUsmHostAllocat
     mock->ioctlExpected.gemWait = 2;
     mock->ioctlExpected.gemClose = 2;
 
-    void *buffer = alignedMalloc(2 * MemoryConstants::pageSize, MemoryConstants::pageSize);
-
     AllocationData allocationData;
     allocationData.size = 0x100;
     allocationData.rootDeviceIndex = rootDeviceIndex;
     allocationData.flags.isUSMHostAllocation = true;
-    allocationData.hostPtr = ptrOffset(buffer, 0x40);
+    allocationData.hostPtr = ptrOffset(hostPtrBase, 0x40);
     auto firstAlloc = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemory(allocationData));
     allocationData.size = MemoryConstants::pageSize;
-    allocationData.hostPtr = ptrOffset(buffer, 0x800);
+    allocationData.hostPtr = ptrOffset(hostPtrBase, 0x800);
     auto secondAlloc = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemory(allocationData));
     ASSERT_NE(nullptr, firstAlloc);
     ASSERT_NE(nullptr, secondAlloc);
@@ -3949,7 +3942,6 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenUsmHostAllocat
 
     memoryManager->freeGraphicsMemoryImpl(firstAlloc);
     memoryManager->freeGraphicsMemoryImpl(secondAlloc);
-    alignedFree(buffer);
 }
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenUsmHostAllocationWhoseFragmentIsBiggerThanStoredFragmentWhenAllocatingThenAllocationFails) {
@@ -3957,32 +3949,28 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenUsmHostAllocat
     mock->ioctlExpected.gemWait = 1;
     mock->ioctlExpected.gemClose = 1;
 
-    void *buffer = alignedMalloc(5 * MemoryConstants::pageSize, MemoryConstants::pageSize);
-
     AllocationData allocationData;
     allocationData.size = MemoryConstants::pageSize;
     allocationData.rootDeviceIndex = rootDeviceIndex;
-    allocationData.hostPtr = ptrOffset(buffer, MemoryConstants::pageSize);
+    allocationData.hostPtr = ptrOffset(hostPtrBase, MemoryConstants::pageSize);
     auto storedAlloc = memoryManager->allocateGraphicsMemoryWithHostPtr(allocationData);
     ASSERT_NE(nullptr, storedAlloc);
     ASSERT_EQ(1u, storedAlloc->fragmentsStorage.fragmentCount);
 
     allocationData.size = 4 * MemoryConstants::pageSize - 0x80;
     allocationData.flags.isUSMHostAllocation = true;
-    allocationData.hostPtr = ptrOffset(buffer, 0x40);
+    allocationData.hostPtr = ptrOffset(hostPtrBase, 0x40);
     EXPECT_EQ(nullptr, memoryManager->allocateGraphicsMemory(allocationData));
     EXPECT_EQ(1u, static_cast<MockHostPtrManager *>(memoryManager->getHostPtrManager())->getFragmentCount());
 
     memoryManager->freeGraphicsMemoryImpl(storedAlloc);
-    alignedFree(buffer);
 }
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenSvmCpuUsmHostAllocationWithUnalignedExternalHostPtrWhenAllocatingThenSingleBufferObjectCoversWholePagesAndAllocationOffsetPointsToHostPtr) {
     mock->ioctlExpected.gemUserptr = 1;
     mock->ioctlExpected.gemClose = 1;
 
-    void *buffer = alignedMalloc(2 * MemoryConstants::pageSize, MemoryConstants::pageSize);
-    void *hostPtr = ptrOffset(buffer, 0x40);
+    void *hostPtr = ptrOffset(hostPtrBase, 0x40);
 
     AllocationData allocationData;
     allocationData.size = MemoryConstants::pageSize;
@@ -4002,7 +3990,6 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenSvmCpuUsmHostA
     EXPECT_EQ(hostPtr, alloc->getUnderlyingBuffer());
 
     memoryManager->freeGraphicsMemoryImpl(alloc);
-    alignedFree(buffer);
 }
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenUsmHostAllocationBackedByFragmentsWhenQueryingInternalHandleThenErrorIsReturned) {
@@ -4010,13 +3997,11 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenUsmHostAllocat
     mock->ioctlExpected.gemWait = 1;
     mock->ioctlExpected.gemClose = 1;
 
-    void *buffer = alignedMalloc(MemoryConstants::pageSize, MemoryConstants::pageSize);
-
     AllocationData allocationData;
     allocationData.size = 0x100;
     allocationData.rootDeviceIndex = rootDeviceIndex;
     allocationData.flags.isUSMHostAllocation = true;
-    allocationData.hostPtr = buffer;
+    allocationData.hostPtr = hostPtrBase;
     auto alloc = memoryManager->allocateGraphicsMemory(allocationData);
     ASSERT_NE(nullptr, alloc);
     ASSERT_EQ(1u, alloc->fragmentsStorage.fragmentCount);
@@ -4025,7 +4010,6 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenUsmHostAllocat
     EXPECT_EQ(-1, alloc->peekInternalHandle(memoryManager, handle, nullptr));
 
     memoryManager->freeGraphicsMemoryImpl(alloc);
-    alignedFree(buffer);
 }
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenFourUsmHostAllocationsInOnePageWhenFreedInAnyOrderThenSharedFragmentIsReleasedOnlyWithTheLastOne) {
@@ -4033,7 +4017,6 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenFourUsmHostAll
     mock->ioctlExpected.gemWait = 1;
     mock->ioctlExpected.gemClose = 1;
 
-    void *buffer = alignedMalloc(MemoryConstants::pageSize, MemoryConstants::pageSize);
     constexpr size_t offsets[] = {0x40, 0x400, 0x800, 0xc00};
 
     AllocationData allocationData;
@@ -4042,7 +4025,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenFourUsmHostAll
     allocationData.flags.isUSMHostAllocation = true;
     GraphicsAllocation *allocations[4] = {};
     for (auto i = 0u; i < 4u; i++) {
-        allocationData.hostPtr = ptrOffset(buffer, offsets[i]);
+        allocationData.hostPtr = ptrOffset(hostPtrBase, offsets[i]);
         allocations[i] = memoryManager->allocateGraphicsMemory(allocationData);
         ASSERT_NE(nullptr, allocations[i]);
         ASSERT_EQ(1u, allocations[i]->fragmentsStorage.fragmentCount);
@@ -4055,7 +4038,6 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenFourUsmHostAll
         EXPECT_EQ(0, mock->ioctlCnt.gemClose.load());
     }
     memoryManager->freeGraphicsMemoryImpl(allocations[2]);
-    alignedFree(buffer);
 }
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenUsmHostAllocationBackedByFragmentWhenAllocatingOverlappingRangeInSamePageThenAllocationFailsUntilOverlappedAllocationIsFreed) {
@@ -4063,34 +4045,31 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenUsmHostAllocat
     mock->ioctlExpected.gemWait = 1;
     mock->ioctlExpected.gemClose = 1;
 
-    void *buffer = alignedMalloc(MemoryConstants::pageSize, MemoryConstants::pageSize);
-
     AllocationData allocationData;
     allocationData.size = 0x100;
     allocationData.rootDeviceIndex = rootDeviceIndex;
     allocationData.flags.isUSMHostAllocation = true;
-    allocationData.hostPtr = ptrOffset(buffer, 0x40);
+    allocationData.hostPtr = ptrOffset(hostPtrBase, 0x40);
     auto firstAlloc = memoryManager->allocateGraphicsMemory(allocationData);
     ASSERT_NE(nullptr, firstAlloc);
 
-    allocationData.hostPtr = ptrOffset(buffer, 0x100);
+    allocationData.hostPtr = ptrOffset(hostPtrBase, 0x100);
     EXPECT_EQ(nullptr, memoryManager->allocateGraphicsMemory(allocationData));
-    allocationData.hostPtr = ptrOffset(buffer, 0x20);
+    allocationData.hostPtr = ptrOffset(hostPtrBase, 0x20);
     EXPECT_EQ(nullptr, memoryManager->allocateGraphicsMemory(allocationData));
 
-    allocationData.hostPtr = ptrOffset(buffer, 0x140);
+    allocationData.hostPtr = ptrOffset(hostPtrBase, 0x140);
     auto adjacentAlloc = memoryManager->allocateGraphicsMemory(allocationData);
     ASSERT_NE(nullptr, adjacentAlloc);
     EXPECT_EQ(1u, static_cast<MockHostPtrManager *>(memoryManager->getHostPtrManager())->getFragmentCount());
 
     memoryManager->freeGraphicsMemoryImpl(firstAlloc);
-    allocationData.hostPtr = ptrOffset(buffer, 0x40);
+    allocationData.hostPtr = ptrOffset(hostPtrBase, 0x40);
     auto reusedRangeAlloc = memoryManager->allocateGraphicsMemory(allocationData);
     ASSERT_NE(nullptr, reusedRangeAlloc);
 
     memoryManager->freeGraphicsMemoryImpl(reusedRangeAlloc);
     memoryManager->freeGraphicsMemoryImpl(adjacentAlloc);
-    alignedFree(buffer);
 }
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenUsmHostAllocationBackedByFragmentsWhenAllocatingOverlappingRangeWithSameFragmentsThenAllocationFails) {
@@ -4098,23 +4077,20 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenUsmHostAllocat
     mock->ioctlExpected.gemWait = 3;
     mock->ioctlExpected.gemClose = 3;
 
-    void *buffer = alignedMalloc(3 * MemoryConstants::pageSize, MemoryConstants::pageSize);
-
     AllocationData allocationData;
     allocationData.size = 2 * MemoryConstants::pageSize;
     allocationData.rootDeviceIndex = rootDeviceIndex;
     allocationData.flags.isUSMHostAllocation = true;
-    allocationData.hostPtr = ptrOffset(buffer, 0x40);
+    allocationData.hostPtr = ptrOffset(hostPtrBase, 0x40);
     auto alloc = memoryManager->allocateGraphicsMemory(allocationData);
     ASSERT_NE(nullptr, alloc);
     ASSERT_EQ(3u, alloc->fragmentsStorage.fragmentCount);
 
-    allocationData.hostPtr = ptrOffset(buffer, 0x80);
+    allocationData.hostPtr = ptrOffset(hostPtrBase, 0x80);
     EXPECT_EQ(nullptr, memoryManager->allocateGraphicsMemory(allocationData));
     EXPECT_EQ(3u, static_cast<MockHostPtrManager *>(memoryManager->getHostPtrManager())->getFragmentCount());
 
     memoryManager->freeGraphicsMemoryImpl(alloc);
-    alignedFree(buffer);
 }
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenUsmHostAllocationBackedByFragmentsWhenHandlingFenceCompletionWithoutVmBindThenEveryFragmentIsWaited) {
@@ -4124,13 +4100,11 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenUsmHostAllocat
     mock->isVmBindAvailableCall.callParent = false;
     mock->isVmBindAvailableCall.returnValue = false;
 
-    void *buffer = alignedMalloc(4 * MemoryConstants::pageSize, MemoryConstants::pageSize);
-
     AllocationData allocationData;
     allocationData.size = 2 * MemoryConstants::pageSize;
     allocationData.rootDeviceIndex = rootDeviceIndex;
     allocationData.flags.isUSMHostAllocation = true;
-    allocationData.hostPtr = ptrOffset(buffer, 0x40);
+    allocationData.hostPtr = ptrOffset(hostPtrBase, 0x40);
     auto alloc = memoryManager->allocateGraphicsMemory(allocationData);
     ASSERT_NE(nullptr, alloc);
     ASSERT_EQ(3u, alloc->fragmentsStorage.fragmentCount);
@@ -4139,7 +4113,6 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenUsmHostAllocat
     EXPECT_EQ(3, mock->ioctlCnt.gemWait.load());
 
     memoryManager->freeGraphicsMemoryImpl(alloc);
-    alignedFree(buffer);
 }
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenLiveAllocationWhenAllocationReusingItsPageFailsOnAnotherFragmentThenReusedPageIsReleasedTogetherWithLiveAllocation) {
@@ -4147,13 +4120,11 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenLiveAllocation
     mock->ioctlExpected.gemWait = 1;
     mock->ioctlExpected.gemClose = 1;
 
-    void *buffer = alignedMalloc(2 * MemoryConstants::pageSize, MemoryConstants::pageSize);
-
     AllocationData allocationData;
     allocationData.size = 0x40;
     allocationData.rootDeviceIndex = rootDeviceIndex;
     allocationData.flags.isUSMHostAllocation = true;
-    allocationData.hostPtr = buffer;
+    allocationData.hostPtr = hostPtrBase;
     auto liveAlloc = memoryManager->allocateGraphicsMemory(allocationData);
     ASSERT_NE(nullptr, liveAlloc);
     ASSERT_EQ(1u, liveAlloc->fragmentsStorage.fragmentCount);
@@ -4161,7 +4132,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenLiveAllocation
     DrmMockCustom::IoctlResExt ioctlResExt = {static_cast<int32_t>(mock->ioctlCnt.total.load()), -1};
     mock->ioctlResExt = &ioctlResExt;
     allocationData.size = MemoryConstants::pageSize;
-    allocationData.hostPtr = ptrOffset(buffer, 0x40);
+    allocationData.hostPtr = ptrOffset(hostPtrBase, 0x40);
     EXPECT_EQ(nullptr, memoryManager->allocateGraphicsMemory(allocationData));
     mock->ioctlResExt = &mock->none;
     EXPECT_EQ(1u, static_cast<MockHostPtrManager *>(memoryManager->getHostPtrManager())->getFragmentCount());
@@ -4169,7 +4140,6 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenLiveAllocation
     memoryManager->freeGraphicsMemoryImpl(liveAlloc);
     EXPECT_EQ(1, mock->ioctlCnt.gemClose.load());
     EXPECT_EQ(0u, static_cast<MockHostPtrManager *>(memoryManager->getHostPtrManager())->getFragmentCount());
-    alignedFree(buffer);
 }
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenCacheRegionRequestedForUsmHostAllocationSharingLiveFragmentWhenAllocatingThenFragmentBuffersKeepDefaultCacheRegionAndPatIndex) {
@@ -4177,20 +4147,18 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenCacheRegionReq
     mock->ioctlExpected.gemWait = 2;
     mock->ioctlExpected.gemClose = 2;
 
-    void *buffer = alignedMalloc(2 * MemoryConstants::pageSize, MemoryConstants::pageSize);
-
     AllocationData allocationData;
     allocationData.size = 0x100;
     allocationData.rootDeviceIndex = rootDeviceIndex;
     allocationData.flags.isUSMHostAllocation = true;
-    allocationData.hostPtr = ptrOffset(buffer, 0x40);
+    allocationData.hostPtr = ptrOffset(hostPtrBase, 0x40);
     auto liveAlloc = memoryManager->allocateGraphicsMemory(allocationData);
     ASSERT_NE(nullptr, liveAlloc);
     auto sharedBo = static_cast<OsHandleLinux *>(liveAlloc->fragmentsStorage.fragmentStorageData[0].osHandleStorage)->bo;
     const auto sharedBoPatIndex = sharedBo->peekPatIndex();
 
     allocationData.size = MemoryConstants::pageSize;
-    allocationData.hostPtr = ptrOffset(buffer, 0x800);
+    allocationData.hostPtr = ptrOffset(hostPtrBase, 0x800);
     allocationData.cacheRegion = static_cast<uint32_t>(CacheRegion::region1);
     auto alloc = memoryManager->allocateGraphicsMemory(allocationData);
     ASSERT_NE(nullptr, alloc);
@@ -4203,20 +4171,17 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenCacheRegionReq
 
     memoryManager->freeGraphicsMemoryImpl(alloc);
     memoryManager->freeGraphicsMemoryImpl(liveAlloc);
-    alignedFree(buffer);
 }
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenPageAlignedExternalHostPtrAndSizeWhenAllocatingUsmHostAllocationThenSingleBufferObjectStartsAtHostPtr) {
     mock->ioctlExpected.gemUserptr = 1;
     mock->ioctlExpected.gemClose = 1;
 
-    void *buffer = alignedMalloc(2 * MemoryConstants::pageSize, MemoryConstants::pageSize);
-
     AllocationData allocationData;
     allocationData.size = 2 * MemoryConstants::pageSize;
     allocationData.rootDeviceIndex = rootDeviceIndex;
     allocationData.flags.isUSMHostAllocation = true;
-    allocationData.hostPtr = buffer;
+    allocationData.hostPtr = hostPtrBase;
     auto alloc = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemory(allocationData));
     ASSERT_NE(nullptr, alloc);
 
@@ -4224,12 +4189,11 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenPageAlignedExt
     ASSERT_NE(nullptr, bo);
     EXPECT_EQ(0u, alloc->fragmentsStorage.fragmentCount);
     EXPECT_EQ(0u, static_cast<MockHostPtrManager *>(memoryManager->getHostPtrManager())->getFragmentCount());
-    EXPECT_EQ(castToUint64(buffer), bo->peekAddress());
+    EXPECT_EQ(castToUint64(hostPtrBase), bo->peekAddress());
     EXPECT_EQ(2 * MemoryConstants::pageSize, bo->peekSize());
-    EXPECT_EQ(castToUint64(buffer), alloc->getGpuAddress());
+    EXPECT_EQ(castToUint64(hostPtrBase), alloc->getGpuAddress());
 
     memoryManager->freeGraphicsMemoryImpl(alloc);
-    alignedFree(buffer);
 }
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenReadOnlyUsmHostAllocationWithPageAlignedExternalHostPtrAndSizeWhenAllocatingThenReadOnlyBufferObjectStartsAtHostPtr) {
@@ -4237,24 +4201,21 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenReadOnlyUsmHos
     mock->ioctlExpected.gemWait = 1;
     mock->ioctlExpected.gemClose = 1;
 
-    void *buffer = alignedMalloc(MemoryConstants::pageSize, MemoryConstants::pageSize);
-
     AllocationProperties properties(rootDeviceIndex, false, MemoryConstants::pageSize, AllocationType::bufferHostMemory, false, mockDeviceBitfield);
     properties.flags.isUSMHostAllocation = true;
     properties.flags.readOnly = true;
-    auto alloc = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(properties, buffer));
+    auto alloc = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(properties, hostPtrBase));
     ASSERT_NE(nullptr, alloc);
 
     auto bo = alloc->getBO();
     ASSERT_NE(nullptr, bo);
     EXPECT_EQ(0u, alloc->fragmentsStorage.fragmentCount);
-    EXPECT_EQ(castToUint64(buffer), bo->peekAddress());
+    EXPECT_EQ(castToUint64(hostPtrBase), bo->peekAddress());
     EXPECT_EQ(0u, alloc->getAllocationOffset());
     EXPECT_TRUE(bo->isReadOnlyGpuResource());
     EXPECT_EQ(0u, static_cast<MockHostPtrManager *>(memoryManager->getHostPtrManager())->getFragmentCount());
 
     memoryManager->freeGraphicsMemory(alloc);
-    alignedFree(buffer);
 }
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenUsmHostPtrFragmentsEnabledAndForcePinWhenAllocatingUnalignedUsmHostAllocationAboveThresholdThenEveryFragmentIsPinned) {
@@ -4272,9 +4233,9 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenUsmHostPtrFragmentsEnabledAndForce
     }
     ASSERT_NE(nullptr, memoryManager->pinBBs[rootDeviceIndex]);
 
-    void *buffer = alignedMalloc(memoryManager->pinThreshold + 2 * MemoryConstants::pageSize, MemoryConstants::pageSize);
+    auto hostPtrBase = reinterpret_cast<void *>(0x100000);
     allocationData.size = memoryManager->pinThreshold;
-    allocationData.hostPtr = ptrOffset(buffer, 0x40);
+    allocationData.hostPtr = ptrOffset(hostPtrBase, 0x40);
     allocationData.flags.isUSMHostAllocation = true;
     allocationData.flags.forcePin = true;
     auto alloc = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemory(allocationData));
@@ -4282,7 +4243,6 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenUsmHostPtrFragmentsEnabledAndForce
     EXPECT_EQ(3u, alloc->fragmentsStorage.fragmentCount);
 
     memoryManager->freeGraphicsMemoryImpl(alloc);
-    alignedFree(buffer);
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenUsmHostPtrFragmentsAndHostMemoryValidationEnabledWhenAllocatingUnalignedUsmHostAllocationAboveForcePinThresholdThenFragmentsArePinnedAfterValidationOnlyWithVmBind) {
@@ -4312,11 +4272,11 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenUsmHostPtrFragmentsAnd
         memoryManager->injectPinBB(pinBB, rootDeviceIndex);
         memoryManager->emitPinningRequestForBoContainerCallBase = false;
 
-        void *buffer = alignedMalloc(memoryManager->pinThreshold + 2 * MemoryConstants::pageSize, MemoryConstants::pageSize);
+        auto hostPtrBase = reinterpret_cast<void *>(0x100000);
         AllocationData allocationData;
         allocationData.size = memoryManager->pinThreshold;
         allocationData.rootDeviceIndex = rootDeviceIndex;
-        allocationData.hostPtr = ptrOffset(buffer, 0x40);
+        allocationData.hostPtr = ptrOffset(hostPtrBase, 0x40);
         allocationData.flags.isUSMHostAllocation = true;
         allocationData.flags.forcePin = true;
         auto alloc = memoryManager->allocateGraphicsMemory(allocationData);
@@ -4327,7 +4287,6 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenUsmHostPtrFragmentsAnd
         EXPECT_EQ(vmBindAvailable ? 3u : 0u, memoryManager->emitPinningRequestForBoContainerCalled);
 
         memoryManager->freeGraphicsMemoryImpl(alloc);
-        alignedFree(buffer);
     }
 }
 

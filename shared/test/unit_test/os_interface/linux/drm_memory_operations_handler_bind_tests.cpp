@@ -11,7 +11,6 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/resource_info.h"
-#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/os_interface/linux/cache_info.h"
 #include "shared/source/os_interface/linux/drm_allocation.h"
@@ -2146,10 +2145,10 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenSecondTileOsContextWhenMakeResid
 TEST_F(DrmMemoryOperationsHandlerBindTest, givenUsmHostAllocationBackedByFragmentsWhenMadeResidentAndEvictedThenFragmentsStayBoundInEveryVmUntilAllocationIsFreed) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableUsmHostPtrFragments.set(1);
-    auto buffer = alignedMalloc(4 * MemoryConstants::pageSize, MemoryConstants::pageSize);
+    auto hostPtrBase = reinterpret_cast<void *>(0x100000);
     AllocationProperties properties(device->getRootDeviceIndex(), false, 2 * MemoryConstants::pageSize, AllocationType::bufferHostMemory, false, device->getDeviceBitfield());
     properties.flags.isUSMHostAllocation = true;
-    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, ptrOffset(buffer, 0x40));
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, ptrOffset(hostPtrBase, 0x40));
     ASSERT_NE(nullptr, allocation);
     ASSERT_EQ(3u, allocation->fragmentsStorage.fragmentCount);
 
@@ -2161,16 +2160,15 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenUsmHostAllocationBackedByFragmen
 
     memoryManager->freeGraphicsMemory(allocation);
     EXPECT_EQ(6u, mock->getMockIoctlHelper()->vmUnbindCalled);
-    alignedFree(buffer);
 }
 
 TEST_F(DrmMemoryOperationsHandlerBindTest, givenUsmHostAllocationBackedByFragmentsWhenMadeResidentAsyncThenEveryFragmentWaitsForPagingFence) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableUsmHostPtrFragments.set(1);
-    auto buffer = alignedMalloc(4 * MemoryConstants::pageSize, MemoryConstants::pageSize);
+    auto hostPtrBase = reinterpret_cast<void *>(0x100000);
     AllocationProperties properties(device->getRootDeviceIndex(), false, 2 * MemoryConstants::pageSize, AllocationType::bufferHostMemory, false, device->getDeviceBitfield());
     properties.flags.isUSMHostAllocation = true;
-    auto allocation = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(properties, ptrOffset(buffer, 0x40)));
+    auto allocation = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(properties, ptrOffset(hostPtrBase, 0x40)));
     ASSERT_NE(nullptr, allocation);
     ASSERT_EQ(3u, allocation->fragmentsStorage.fragmentCount);
 
@@ -2183,5 +2181,4 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenUsmHostAllocationBackedByFragmen
     EXPECT_EQ(MemoryOperationsStatus::success, operationHandler->waitForAsyncResidency(osContext, allocation));
 
     memoryManager->freeGraphicsMemory(allocation);
-    alignedFree(buffer);
 }
