@@ -8032,6 +8032,62 @@ TEST_F(DrmAllocationTests, givenL3FlushAfterPostSyncSupportWhenGettingPatForCohe
     }
 }
 
+TEST_F(DrmAllocationTests, givenBufferGmmCreatedFromPatIndexInputsWhenGettingPatIndexWithItThenQueryArgumentsAndPatIndexAreSameAsWithoutGmm) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableOverrideToPat19ForSystemMemory.set(-1);
+
+    auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[0];
+    auto mockProductHelper = std::make_unique<MockProductHelper>();
+    mockProductHelper->isL3FlushAfterPostSyncSupportedResult = true;
+    rootDeviceEnvironment.productHelper = std::move(mockProductHelper);
+    auto mockReleaseHelper = std::make_unique<MockReleaseHelper>();
+    mockReleaseHelper->isAppTransientCoherentPatRequiredResult = false;
+    rootDeviceEnvironment.releaseHelper = std::move(mockReleaseHelper);
+
+    DrmMock drm(rootDeviceEnvironment);
+    drm.vmBindPatIndexProgrammingSupported = true;
+    auto mockClientContext = static_cast<MockGmmClientContextBase *>(rootDeviceEnvironment.getGmmClientContext());
+
+    for (const auto allocationType : {AllocationType::buffer, AllocationType::bufferHostMemory, AllocationType::externalHostPtr}) {
+        for (const auto cachePolicy : {CachePolicy::writeBack, CachePolicy::uncached}) {
+            for (const bool isSystemMemory : {false, true}) {
+                const auto patIndexWithoutGmm = drm.getPatIndex(nullptr, allocationType, CacheRegion::defaultRegion, cachePolicy, false, isSystemMemory, false);
+                ASSERT_TRUE(mockClientContext->passedUsageTypeForGetPatIndexQuery.has_value());
+                const auto usageWithoutGmm = mockClientContext->passedUsageTypeForGetPatIndexQuery.value();
+                const bool compressedWithoutGmm = mockClientContext->passedCompressedSettingForGetPatIndexQuery;
+                const bool cacheableWithoutGmm = mockClientContext->passedCpuCacheableSettingForGetPatIndexQuery;
+
+                auto gmm = drm.createBufferGmm(allocationType, cachePolicy, isSystemMemory, MemoryConstants::pageSize);
+                const auto patIndexWithGmm = drm.getPatIndex(gmm.get(), allocationType, CacheRegion::defaultRegion, cachePolicy, false, isSystemMemory, false);
+
+                EXPECT_EQ(gmm->gmmResourceInfo->peekGmmResourceInfo(), mockClientContext->passedResourceInfoForGetPatIndexQuery);
+                EXPECT_EQ(usageWithoutGmm, mockClientContext->passedUsageTypeForGetPatIndexQuery.value());
+                EXPECT_EQ(compressedWithoutGmm, mockClientContext->passedCompressedSettingForGetPatIndexQuery);
+                EXPECT_EQ(cacheableWithoutGmm, mockClientContext->passedCpuCacheableSettingForGetPatIndexQuery);
+                EXPECT_EQ(patIndexWithoutGmm, patIndexWithGmm);
+            }
+        }
+    }
+}
+
+TEST_F(DrmAllocationTests, givenPatIndexInputsWhenCreatingBufferGmmThenResourceFlagsFollowPlacementAndAllowCpuAccess) {
+    auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[0];
+    rootDeviceEnvironment.getMutableHardwareInfo()->featureTable.flags.ftrLocalMemory = true;
+    DrmMock drm(rootDeviceEnvironment);
+    const auto expectedUsage = CacheSettingsHelper::getGmmUsageType(AllocationType::buffer, false, rootDeviceEnvironment.getProductHelper(), *rootDeviceEnvironment.getHardwareInfo());
+
+    for (const bool isSystemMemory : {false, true}) {
+        auto gmm = drm.createBufferGmm(AllocationType::buffer, CachePolicy::writeBack, isSystemMemory, MemoryConstants::pageSize);
+
+        const auto *resourceParams = reinterpret_cast<const GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+        EXPECT_EQ(expectedUsage, static_cast<GmmResourceUsageType>(resourceParams->Usage));
+        EXPECT_EQ(isSystemMemory, static_cast<bool>(resourceParams->Flags.Info.NonLocalOnly));
+        EXPECT_FALSE(static_cast<bool>(resourceParams->Flags.Info.NotLockable));
+        EXPECT_FALSE(gmm->getPreferNoCpuAccess());
+        EXPECT_FALSE(gmm->isCompressionEnabled());
+    }
+}
+
 TEST_F(DrmAllocationTests, givenL3FlushAfterPostSyncSupportAndAppTransientUsageWhenGettingPatForCoherentUserptrThenPreserveAppTransientUsage) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableOverrideToPat19ForSystemMemory.set(-1);
@@ -11488,6 +11544,51 @@ DrmMockCustom *getRootDeviceDrmMock(ExecutionEnvironment &executionEnvironment, 
     return static_cast<DrmMockCustom *>(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface->getDriverModel()->as<Drm>());
 }
 } // namespace
+
+TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenMultipleRootDevicesWhenMappingPhysicalHostMemoryThenEachMappingAllocationHasOwnBufferGmmAndBoPatIsQueriedWithIt) {
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
+    AllocationData allocData;
+    allocData.allFlags = 0;
+    allocData.size = MemoryConstants::pageSize;
+    allocData.flags.allocateMemory = true;
+    allocData.flags.isUSMHostAllocation = true;
+    allocData.type = AllocationType::bufferHostMemory;
+    allocData.storageInfo.multiStorage = false;
+    allocData.rootDeviceIndex = rootDeviceIndex;
+    const uint64_t mappedGpuAddress = 0x1234;
+
+    auto freeAllocation = [this](GraphicsAllocation *allocation) { this->memoryManager->freeGraphicsMemory(allocation); };
+    std::unique_ptr<GraphicsAllocation, decltype(freeAllocation)> physicalAllocation(memoryManager->allocatePhysicalHostMemory(allocData, status), freeAllocation);
+    ASSERT_NE(nullptr, physicalAllocation);
+
+    RootDeviceIndicesContainer rootDeviceIndices;
+    rootDeviceIndices.pushUnique(0);
+    rootDeviceIndices.pushUnique(1);
+    rootDeviceIndices.pushUnique(2);
+    for (const auto index : rootDeviceIndices) {
+        getRootDeviceDrmMock(*executionEnvironment, index)->vmBindPatIndexProgrammingSupported = true;
+    }
+    MultiGraphicsAllocation multiGraphicsAllocation{static_cast<uint32_t>(rootDeviceIndices.size())};
+    ASSERT_TRUE(memoryManager->mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation.get(), mappedGpuAddress, allocData.size, 0u, true));
+    auto unmap = [&](MultiGraphicsAllocation *mapping) {
+        EXPECT_TRUE(this->memoryManager->unMapPhysicalHostMemoryFromVirtualMemory(*mapping, physicalAllocation.get(), mappedGpuAddress, allocData.size, true));
+    };
+    std::unique_ptr<MultiGraphicsAllocation, decltype(unmap)> mapping(&multiGraphicsAllocation, unmap);
+
+    for (const auto index : rootDeviceIndices) {
+        auto mappingAllocation = multiGraphicsAllocation.getGraphicsAllocation(index);
+        ASSERT_NE(nullptr, mappingAllocation);
+        auto gmm = mappingAllocation->getDefaultGmm();
+        ASSERT_NE(nullptr, gmm);
+        EXPECT_NE(physicalAllocation->getDefaultGmm(), gmm);
+        EXPECT_EQ(memoryManager->getGmmHelper(index), gmm->getGmmHelper());
+        auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[index];
+        const auto expectedUsage = CacheSettingsHelper::getGmmUsageType(AllocationType::bufferHostMemory, false, rootDeviceEnvironment.getProductHelper(), *rootDeviceEnvironment.getHardwareInfo());
+        EXPECT_EQ(expectedUsage, gmm->getResourceUsageType());
+        auto mockClientContext = static_cast<MockGmmClientContextBase *>(rootDeviceEnvironment.getGmmClientContext());
+        EXPECT_EQ(gmm->gmmResourceInfo->peekGmmResourceInfo(), mockClientContext->passedResourceInfoForGetPatIndexQuery);
+    }
+}
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenMultipleRootDevicesWhenMappingPhysicalHostMemoryThenSharedHandleIsImportedThroughEachImportingDeviceDrm) {
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;

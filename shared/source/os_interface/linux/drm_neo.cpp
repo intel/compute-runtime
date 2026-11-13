@@ -26,6 +26,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/memory_manager/definitions/storage_info.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/external_semaphore.h"
 #include "shared/source/os_interface/linux/cache_info.h"
@@ -1740,6 +1741,24 @@ uint64_t Drm::getPatIndex(Gmm *gmm, AllocationType allocationType, CacheRegion c
 uint64_t Drm::getDecompressPatIndex(Gmm &gmm) const {
     constexpr bool compressed = false;
     return rootDeviceEnvironment.getGmmClientContext()->cachePolicyGetPATIndex(gmm.gmmResourceInfo->peekGmmResourceInfo(), gmm.getResourceUsageType(), compressed, gmm.gmmResourceInfo->isCacheable());
+}
+
+std::unique_ptr<Gmm> Drm::createBufferGmm(AllocationType allocationType, CachePolicy cachePolicy, bool isSystemMemory, size_t size) const {
+    const bool forceUncached = (cachePolicy == CachePolicy::uncached);
+    const auto usageType = CacheSettingsHelper::getGmmUsageType(allocationType, forceUncached, rootDeviceEnvironment.getProductHelper(), *getHardwareInfo());
+
+    StorageInfo storageInfo{};
+    storageInfo.systemMemoryPlacement = isSystemMemory;
+    storageInfo.isLockable = true;
+
+    GmmRequirements gmmRequirements{};
+    gmmRequirements.allowLargePages = true;
+    gmmRequirements.preferCompressed = false;
+    gmmRequirements.overriderCpuCacheable = {true, !CacheSettingsHelper::isUncachedType(usageType)};
+    gmmRequirements.overriderPreferNoCpuAccess = {true, false};
+
+    constexpr size_t alignment = 0u;
+    return std::make_unique<Gmm>(rootDeviceEnvironment.getGmmHelper(), nullptr, size, alignment, usageType, storageInfo, gmmRequirements);
 }
 
 void programUserFence(Drm *drm, OsContext *osContext, BufferObject *bo, VmBindExtUserFenceT &vmBindExtUserFence, uint32_t vmHandleId, uint64_t nextExtension, bool isAsyncFence) {

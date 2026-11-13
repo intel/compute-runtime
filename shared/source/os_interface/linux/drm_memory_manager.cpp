@@ -960,6 +960,7 @@ bool DrmMemoryManager::unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAll
             for (auto bo : drmAlloc->getBOs()) {
                 unreference(bo, false);
             }
+            delete allocation->getDefaultGmm();
             delete allocation;
         }
     }
@@ -1142,7 +1143,9 @@ bool DrmMemoryManager::mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesCon
     }();
 
     auto memoryPool = MemoryPool::system4KBPages;
-    auto patIndex = drm.getPatIndex(nullptr, AllocationType::bufferHostMemory, CacheRegion::defaultRegion, CachePolicy::writeBack, false, MemoryPoolHelper::isSystemMemoryPool(memoryPool), false);
+    const bool isSystemMemory = MemoryPoolHelper::isSystemMemoryPool(memoryPool);
+    auto gmm = drm.createBufferGmm(AllocationType::bufferHostMemory, CachePolicy::writeBack, isSystemMemory, mappedSize);
+    auto patIndex = drm.getPatIndex(gmm.get(), AllocationType::bufferHostMemory, CacheRegion::defaultRegion, CachePolicy::writeBack, false, isSystemMemory, false);
     auto bo = new BufferObject(physicalAllocation->getRootDeviceIndex(), &drm, patIndex, std::move(physicalBoHandleWrapper), mappedSize, maxOsContextCount);
 
     bo->setMmapOffset(mmapOffset);
@@ -1152,6 +1155,7 @@ bool DrmMemoryManager::mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesCon
 
     auto drmAllocation = new DrmAllocation(drmPhysicalAllocation->getRootDeviceIndex(), 1u, AllocationType::bufferHostMemory, bo, addrToPtr(bo->peekAddress()), bo->peekSize(),
                                            static_cast<osHandle>(internalHandle), memoryPool, getGmmHelper(drmPhysicalAllocation->getRootDeviceIndex())->canonize(bo->peekAddress()));
+    drmAllocation->setDefaultGmm(std::move(gmm));
 
     if (vmBindAvailable) {
         // vm_bind carries the physical offset/length to the kernel, placing the BO at gpuRange.
@@ -1198,7 +1202,9 @@ bool DrmMemoryManager::mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesCon
             return false;
         }
 
-        auto bo = new BufferObject(rootDeviceIndices[i], &drmToImport, patIndex, openFd.handle, mappedSize, maxOsContextCount);
+        auto importedGmm = drmToImport.createBufferGmm(AllocationType::bufferHostMemory, CachePolicy::writeBack, isSystemMemory, mappedSize);
+        auto importedPatIndex = drmToImport.getPatIndex(importedGmm.get(), AllocationType::bufferHostMemory, CacheRegion::defaultRegion, CachePolicy::writeBack, false, isSystemMemory, false);
+        auto bo = new BufferObject(rootDeviceIndices[i], &drmToImport, importedPatIndex, openFd.handle, mappedSize, maxOsContextCount);
         bo->setAddress(baseAddress);
         bo->setPhysicalMemoryOffset(offset);
         bo->setVirtualMappingSize(bufferSize);
@@ -1206,6 +1212,7 @@ bool DrmMemoryManager::mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesCon
         auto canonizedGpuAddress = getGmmHelper(rootDeviceIndices[i])->canonize(bo->peekAddress());
         auto allocation = new DrmAllocation(rootDeviceIndices[i], 1u, AllocationType::bufferHostMemory, bo, addrToPtr(bo->peekAddress()), bo->peekSize(),
                                             static_cast<osHandle>(internalHandle), memoryPool, canonizedGpuAddress);
+        allocation->setDefaultGmm(std::move(importedGmm));
         allocation->setImportedMmapPtr(addrToPtr(gpuRange));
         multiGraphicsAllocation.addAllocation(allocation);
     }
