@@ -23,7 +23,6 @@
 
 #include <cstdint>
 #include <memory>
-#include <new>
 #include <tuple>
 
 using namespace NEO;
@@ -119,12 +118,10 @@ HWTEST_P(AUBMapImage, WhenMappingAndUnmappingThenExpectationsAreMet) {
 
     size_t elementSize = perChannelDataSize * numChannels;
     auto sizeMemory = testWidth * alignUp(testHeight, 4) * testDepth * elementSize;
-    auto srcMemory = new (std::nothrow) uint8_t[sizeMemory];
-    ASSERT_NE(nullptr, srcMemory); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+    std::vector<uint8_t> srcMemory(sizeMemory);
 
     for (unsigned i = 0; i < sizeMemory; ++i) {
-        uint8_t origValue = i;
-        memcpy(srcMemory + i, &origValue, sizeof(origValue));
+        srcMemory[i] = static_cast<uint8_t>(i);
     }
 
     auto retVal = CL_INVALID_VALUE;
@@ -137,7 +134,7 @@ HWTEST_P(AUBMapImage, WhenMappingAndUnmappingThenExpectationsAreMet) {
         0,
         surfaceFormat,
         &imageDesc,
-        srcMemory,
+        srcMemory.data(),
         retVal));
     ASSERT_NE(nullptr, srcImage.get());
 
@@ -164,7 +161,7 @@ HWTEST_P(AUBMapImage, WhenMappingAndUnmappingThenExpectationsAreMet) {
                                                           srcImage->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex())->getMemoryPool());
     if (isGpuCopy) {
         mappedPtrStart = static_cast<uint8_t *>(mappedPtr);
-        srcMemoryStart = srcMemory;
+        srcMemoryStart = srcMemory.data();
 
         // validate mapped region
         srcMemoryStart = ptrOffset(srcMemoryStart, inputSlicePitch * origin[2]);
@@ -193,19 +190,18 @@ HWTEST_P(AUBMapImage, WhenMappingAndUnmappingThenExpectationsAreMet) {
     pCmdQ->enqueueUnmapMemObject(srcImage.get(), mappedPtr, 0, nullptr, nullptr);
 
     // verify unmap
-    uint8_t *readMemory = new uint8_t[srcImage->getSize()];
+    std::vector<uint8_t> readMemory(srcImage->getSize());
     size_t imgOrigin[] = {0, 0, 0};
     size_t imgRegion[] = {testWidth, testHeight, testDepth};
-    retVal = pCmdQ->enqueueReadImage(srcImage.get(), CL_FALSE, imgOrigin, imgRegion, inputRowPitch, inputSlicePitch, readMemory, nullptr, 0, nullptr, nullptr);
+    retVal = pCmdQ->enqueueReadImage(srcImage.get(), CL_FALSE, imgOrigin, imgRegion, inputRowPitch, inputSlicePitch, readMemory.data(), nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     retVal = pCmdQ->flush();
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    srcMemoryStart = srcMemory;
-    auto readMemoryStart = readMemory;
-    uint8_t *expected = new uint8_t[elementSize];
-    memset(expected, 0xFF, elementSize);
+    srcMemoryStart = srcMemory.data();
+    auto readMemoryStart = readMemory.data();
+    std::vector<uint8_t> expected(elementSize, 0xFF);
 
     std::vector<uint8_t> expectedRow(testWidth * elementSize);
 
@@ -215,7 +211,7 @@ HWTEST_P(AUBMapImage, WhenMappingAndUnmappingThenExpectationsAreMet) {
                 if (z >= origin[2] && z < (origin[2] + region[2]) &&
                     y >= origin[1] && y < (origin[1] + region[1]) &&
                     x >= origin[0] && x < (origin[0] + region[0])) {
-                    memcpy_s(&expectedRow[x * elementSize], elementSize, expected, elementSize);
+                    memcpy_s(&expectedRow[x * elementSize], elementSize, expected.data(), elementSize);
                 } else {
                     memcpy_s(&expectedRow[x * elementSize], elementSize, &srcMemoryStart[x * elementSize], elementSize);
                 }
@@ -227,10 +223,6 @@ HWTEST_P(AUBMapImage, WhenMappingAndUnmappingThenExpectationsAreMet) {
         readMemoryStart = ptrOffset(readMemoryStart, inputSlicePitch - (inputRowPitch * (testHeight > 0 ? testHeight : 1)));
         srcMemoryStart = ptrOffset(srcMemoryStart, inputSlicePitch - (inputRowPitch * (testHeight > 0 ? testHeight : 1)));
     }
-
-    delete[] readMemory;
-    delete[] srcMemory;
-    delete[] expected;
 }
 
 INSTANTIATE_TEST_SUITE_P(

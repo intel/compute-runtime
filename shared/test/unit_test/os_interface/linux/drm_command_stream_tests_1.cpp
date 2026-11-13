@@ -299,19 +299,16 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenLowPriorityContextWhenFlushingThen
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenInvalidAddressWhenFlushingThenSucceeds) {
-    // allocate command buffer manually
-    char *commandBuffer = new (std::nothrow) char[1024];
-    ASSERT_NE(nullptr, commandBuffer); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+    char commandBuffer[MemoryConstants::cacheLineSize] = {};
 
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(commandBuffer));
-    DrmAllocation commandBufferAllocation(0, 1u /*num gmms*/, AllocationType::commandBuffer, nullptr, commandBuffer, 1024, static_cast<osHandle>(1u), MemoryPool::memoryNull, canonizedGpuAddress);
+    DrmAllocation commandBufferAllocation(0, 1u /*num gmms*/, AllocationType::commandBuffer, nullptr, commandBuffer, sizeof(commandBuffer), static_cast<osHandle>(1u), MemoryPool::memoryNull, canonizedGpuAddress);
     LinearStream cs(&commandBufferAllocation);
 
     CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
     EncodeNoop<FamilyType>::alignToCacheLine(cs);
     BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
     csr->flush(batchBuffer, csr->getResidencyAllocations());
-    delete[] commandBuffer;
 
     EXPECT_EQ(0, mock->ioctlCount.gemUserptr);
     EXPECT_EQ(0, mock->ioctlCount.execbuffer2);

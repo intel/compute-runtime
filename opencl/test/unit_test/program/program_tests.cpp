@@ -2602,27 +2602,23 @@ TEST_F(ProgramTests, WhenLinkingTwoValidSpirvProgramsThenValidProgramIsReturned)
     const uint32_t spirv[16] = {0x03022307};
     cl_int errCode = CL_SUCCESS;
 
-    auto node1 = Program::createFromIL<CreateProgramFromBinaryMock<CL_SUCCESS, false>>(pContext, reinterpret_cast<const void *>(spirv), sizeof(spirv), errCode);
-    ASSERT_NE(nullptr, node1); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+    auto node1 = clUniquePtr(Program::createFromIL<CreateProgramFromBinaryMock<CL_SUCCESS, false>>(pContext, reinterpret_cast<const void *>(spirv), sizeof(spirv), errCode));
+    ASSERT_NE(nullptr, node1);
     EXPECT_EQ(CL_SUCCESS, errCode);
 
-    auto node2 = Program::createFromIL<CreateProgramFromBinaryMock<CL_SUCCESS>>(pContext, reinterpret_cast<const void *>(spirv), sizeof(spirv), errCode);
-    ASSERT_NE(nullptr, node2); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+    auto node2 = clUniquePtr(Program::createFromIL<CreateProgramFromBinaryMock<CL_SUCCESS>>(pContext, reinterpret_cast<const void *>(spirv), sizeof(spirv), errCode));
+    ASSERT_NE(nullptr, node2);
     EXPECT_EQ(CL_SUCCESS, errCode);
 
-    auto prog = Program::createFromIL<CreateProgramFromBinaryMock<CL_SUCCESS>>(pContext, reinterpret_cast<const void *>(spirv), sizeof(spirv), errCode);
-    ASSERT_NE(nullptr, prog); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+    auto prog = clUniquePtr(Program::createFromIL<CreateProgramFromBinaryMock<CL_SUCCESS>>(pContext, reinterpret_cast<const void *>(spirv), sizeof(spirv), errCode));
+    ASSERT_NE(nullptr, prog);
     EXPECT_EQ(CL_SUCCESS, errCode);
 
-    cl_program linkNodes[] = {node1, node2};
+    cl_program linkNodes[] = {node1.get(), node2.get()};
     MockZebinWrapper zebin{*defaultHwInfo};
     zebin.setAsMockCompilerReturnedBinary();
     errCode = prog->link(prog->getDevices(), nullptr, 2, linkNodes);
     EXPECT_EQ(CL_SUCCESS, errCode);
-
-    prog->release();
-    node2->release();
-    node1->release();
 }
 
 TEST_F(ProgramTests, givenProgramWithSpirvWhenRebuildProgramIsCalledThenSpirvPathIsTaken) {
