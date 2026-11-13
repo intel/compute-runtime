@@ -11,6 +11,7 @@
 #include "level_zero/api/opencl/source/helpers/leo_base_object.h"
 #include "level_zero/core/source/module/module_imp.h"
 
+#include <atomic>
 #include <map>
 #include <span>
 #include <vector>
@@ -79,6 +80,12 @@ class Program : public BaseObject<_cl_program> {
     void setBuildStatus(cl_build_status buildStatus) { this->buildStatus = buildStatus; }
     void setBuildLogHandle(uint32_t rootDeviceIndex, ze_module_build_log_handle_t buildLogHandle) { this->buildLogHandles[rootDeviceIndex] = buildLogHandle; }
     void setModuleHandle(uint32_t rootDeviceIndex, ze_module_handle_t moduleHandle) { this->moduleHandles[rootDeviceIndex] = moduleHandle; }
+    void retainForKernel() { this->attachedKernelsCount++; }
+    void releaseForKernel() {
+        UNRECOVERABLE_IF(0u == this->attachedKernelsCount);
+        this->attachedKernelsCount--;
+    }
+    bool hasAttachedKernels() const { return 0u != this->attachedKernelsCount; }
 
     CreatedFrom getCreatedFrom() const;
     Context *getContext();
@@ -150,6 +157,7 @@ class Program : public BaseObject<_cl_program> {
     bool isSpirv = false;
     bool allowNonUniform = false;
     bool createdFromIrBinary = false;
+    std::atomic<uint32_t> attachedKernelsCount = 0u;
 };
 
 static_assert(NEO::NonCopyableAndNonMovable<Program>);

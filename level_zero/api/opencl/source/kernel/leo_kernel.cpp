@@ -32,6 +32,7 @@ Kernel::Kernel(std::map<uint32_t, ze_kernel_handle_t> kernelHandles, Program *pr
     : argsSet(static_cast<L0::KernelImp *>(L0::Kernel::fromHandle(kernelHandles.begin()->second))->getPrivateState().kernelArgHandlers.size(), false),
       kernelHandles(std::move(kernelHandles)), program(program) {
     program->incRefInternal();
+    program->retainForKernel();
 }
 
 Kernel::Kernel(Kernel *sourceKernel) : argsSet(sourceKernel->argsSet), imageArgs(sourceKernel->imageArgs), sharedObjArgs(sourceKernel->sharedObjArgs), program(sourceKernel->program), executionType(sourceKernel->executionType) {
@@ -41,6 +42,7 @@ Kernel::Kernel(Kernel *sourceKernel) : argsSet(sourceKernel->argsSet), imageArgs
     this->clonedFromKernel = sourceKernel;
     this->clonedFromKernel->incRefInternal();
     program->incRefInternal();
+    program->retainForKernel();
 }
 
 Kernel::~Kernel() {
@@ -50,6 +52,7 @@ Kernel::~Kernel() {
     if (this->clonedFromKernel) {
         this->clonedFromKernel->decRefInternal();
     }
+    program->releaseForKernel();
     program->decRefInternal();
 }
 

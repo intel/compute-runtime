@@ -671,6 +671,29 @@ TEST_F(ClProgramCompileLinkTests, givenProgramCreatedFromNativeBinaryWhenBuildPr
     clReleaseContext(clContext);
 }
 
+TEST_F(ClProgramCompileLinkTests, givenKernelCreatedFromProgramWhenBuildProgramThenInvalidOperationIsReturnedUntilKernelIsReleased) {
+    cl_device_id clDeviceId = nullptr;
+    cl_context clContext = createOclContext(platform, clDeviceId);
+
+    ZebinTestData::ZebinWithL0TestCommonModule zebin(device->getHwInfo());
+    const size_t length = zebin.storage.size();
+    const unsigned char *binary = zebin.storage.data();
+
+    cl_int errcode = CL_INVALID_VALUE;
+    auto program = clCreateProgramWithBinary(clContext, 1, &clDeviceId, &length, &binary, nullptr, &errcode);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+    auto kernel = clCreateKernel(program, "test", &errcode);
+    ASSERT_EQ(CL_SUCCESS, errcode);
+
+    EXPECT_EQ(CL_INVALID_OPERATION, clBuildProgram(program, 1, &clDeviceId, nullptr, nullptr, nullptr));
+
+    clReleaseKernel(kernel);
+    EXPECT_EQ(CL_SUCCESS, clBuildProgram(program, 1, &clDeviceId, nullptr, nullptr, nullptr));
+
+    clReleaseProgram(program);
+    clReleaseContext(clContext);
+}
+
 TEST_F(ClProgramCompileLinkTests, givenSpirvBinaryWhenCreateProgramWithBinaryThenBuildStatusStaysNone) {
     cl_device_id clDeviceId = nullptr;
     cl_context clContext = createOclContext(platform, clDeviceId);

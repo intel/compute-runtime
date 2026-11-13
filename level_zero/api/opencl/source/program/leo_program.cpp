@@ -373,6 +373,10 @@ cl_int Program::buildFromIL(const char *options) {
 
 cl_int Program::build(const char *options,
                       void(CL_CALLBACK *funcNotify)(cl_program program, void *userData), void *userData) {
+    if (this->hasAttachedKernels()) [[unlikely]] {
+        return CL_INVALID_OPERATION;
+    }
+
     if (this->createdFrom == CreatedFrom::binary && false == this->createdFromIrBinary) [[unlikely]] {
         // A program created from a native binary is already built; nothing to do.
         const cl_int retVal = this->requireModulesLinkedFullyForBuild();
@@ -402,6 +406,10 @@ cl_int Program::build(const char *options,
 cl_int Program::compile(const char *options, cl_uint numInputHeaders,
                         const cl_program *inputHeaders, const char **headerIncludeNames,
                         void(CL_CALLBACK *funcNotify)(cl_program program, void *userData), void *userData) {
+    if (this->hasAttachedKernels()) [[unlikely]] {
+        return CL_INVALID_OPERATION;
+    }
+
     if (this->createdFrom == CreatedFrom::binary) [[unlikely]] {
         // A program created from a native binary is already a compiled object; nothing to do.
         this->invokeCallback(funcNotify, userData);

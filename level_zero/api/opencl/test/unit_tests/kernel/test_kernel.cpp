@@ -17,6 +17,7 @@
 #include "level_zero/api/opencl/test/common/fixtures/ocl_fixture.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 #include <level_zero/ze_api.h>
 
 #include <CL/cl_ext.h>
@@ -510,6 +511,43 @@ TEST_F(LeoKernelFixture, givenIsaAllocatedInL0ImmutableDataWhenQueryingBinaryGpu
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(sizeof(gpuAddress), sizeRet);
     EXPECT_EQ(gmmHelper->decanonize(isaGpuAddress + isaOffset), gpuAddress);
+}
+
+struct LeoKernelAttachedToProgramTests : public LeoKernelFixture {
+    void createIlProgram() {
+        ASSERT_EQ(CL_SUCCESS, program->createFromBinaryOrIl(clDevice, sizeof(spirv), reinterpret_cast<const unsigned char *>(spirv)));
+    }
+
+    cl_int compileProgram() {
+        return program->compile(nullptr, 0u, nullptr, nullptr, nullptr, nullptr);
+    }
+
+    const uint32_t spirv[4] = {0x07230203, 0x00010000, 0u, 0u};
+};
+
+TEST_F(LeoKernelAttachedToProgramTests, givenKernelAttachedToProgramWhenCompilingProgramThenInvalidOperationIsReturnedUntilKernelIsReleased) {
+    createIlProgram();
+    createKernel();
+
+    EXPECT_EQ(CL_INVALID_OPERATION, compileProgram());
+
+    kernel.reset();
+    EXPECT_EQ(CL_SUCCESS, compileProgram());
+}
+
+TEST_F(LeoKernelAttachedToProgramTests, givenClonedKernelWhenSourceKernelIsReleasedThenProgramCannotBeCompiledUntilClonedKernelIsReleased) {
+    createIlProgram();
+    L0::ult::Mock<L0::ult::Module> l0Module(clDevice->getL0Object(), nullptr);
+    addL0Kernel(0u)->setModule(&l0Module);
+    std::map<uint32_t, ze_kernel_handle_t> kernelHandles{{0u, l0Kernels.back()->toHandle()}};
+    kernel = std::make_unique<Kernel>(std::move(kernelHandles), program.get());
+    auto clonedKernel = std::make_unique<Kernel>(kernel.get());
+
+    kernel.release()->release();
+    EXPECT_EQ(CL_INVALID_OPERATION, compileProgram());
+
+    clonedKernel.reset();
+    EXPECT_EQ(CL_SUCCESS, compileProgram());
 }
 
 } // namespace ult
