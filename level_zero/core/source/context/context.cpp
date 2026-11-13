@@ -19,6 +19,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/allocation_properties.h"
+#include "shared/source/memory_manager/compression_selector.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/memory_manager/pool_info.h"
@@ -3045,7 +3046,8 @@ bool Context::isAllocationSuitableForCompression(const StructuresLookupTable &st
     auto neoDevice = device.getNEODevice();
     auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
-    if (!l0GfxCoreHelper.usmCompressionSupported(hwInfo) || !gfxCoreHelper.isBufferSizeSuitableForCompression(allocSize) || structuresLookupTable.uncompressedHint) {
+    if (!NEO::CompressionSelector::isUsmCompressionAllowed() || !l0GfxCoreHelper.usmCompressionSupported(hwInfo) ||
+        !gfxCoreHelper.isBufferSizeSuitableForCompression(allocSize) || structuresLookupTable.uncompressedHint) {
         return false;
     }
 

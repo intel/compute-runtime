@@ -747,6 +747,22 @@ TEST_F(AllocUsmDeviceDisabledSinglePoolMemoryTest, givenDeviceWhenCallingAllocDe
 }
 
 using AllocUsmDeviceEnabledSinglePoolMemoryTest = AllocUsmPoolMemoryTest<0, 1, 0>;
+using AllocUsmDeviceEnabledSinglePoolNoInitMemoryTest = AllocUsmPoolMemoryTest<0, 1, 0, false, false>;
+
+TEST_F(AllocUsmDeviceEnabledSinglePoolNoInitMemoryTest, givenUsmCompressionDisabledByDebugFlagWhenInitializingDeviceUsmPoolThenPoolIsNotCompressed) {
+    NEO::debugManager.flags.RenderCompressedBuffersEnabled.set(1);
+    NEO::debugManager.flags.EnableUsmCompression.set(0);
+    initDriverImp();
+
+    auto devicePool = l0Devices[0]->getNEODevice()->getDeviceUsmMemAllocPoolFacade().getPool();
+    EXPECT_NE(nullptr, devicePool);
+    if (devicePool) {
+        EXPECT_TRUE(devicePool->isInitialized());
+        EXPECT_FALSE(devicePool->isCompressed().value_or(true));
+    }
+
+    context->destroy();
+}
 
 TEST_F(AllocUsmDeviceEnabledSinglePoolMemoryTest, givenDeviceWhenCallingAllocDeviceMemWithVariousParametersThenUsePoolIfAllowed) {
     auto mockDeviceMemAllocPool = reinterpret_cast<MockUsmMemAllocPool *>(l0Devices[0]->getNEODevice()->getDeviceUsmMemAllocPoolFacade().getPool());

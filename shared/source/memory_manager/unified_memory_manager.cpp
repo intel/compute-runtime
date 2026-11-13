@@ -38,6 +38,11 @@
 
 namespace NEO {
 
+static bool isUsmCompressionSupported(const Device &device) {
+    return CompressionSelector::isUsmCompressionAllowed() &&
+           device.getGfxCoreHelper().usmCompressionSupported(device.getHardwareInfo());
+}
+
 uint32_t UnifiedMemoryProperties::getRootDeviceIndex() const {
     if (device) {
         return device->getRootDeviceIndex();
@@ -616,6 +621,7 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
     unifiedMemoryProperties.cacheRegion = MemoryPropertiesHelper::getCacheRegion(memoryProperties.allocationFlags);
     unifiedMemoryProperties.flags.uncacheable = memoryProperties.allocationFlags.flags.locallyUncachedResource;
     unifiedMemoryProperties.flags.preferCompressed = compressionEnabled || memoryProperties.allocationFlags.flags.compressedHint;
+    unifiedMemoryProperties.flags.preferCompressed &= CompressionSelector::isUsmCompressionAllowed();
     unifiedMemoryProperties.flags.preferCompressed &= memoryManager->isCompressionSupportedForShareable(memoryProperties.allocationFlags.flags.shareable);
     unifiedMemoryProperties.flags.preferCompressed &= preferCompressed;
     unifiedMemoryProperties.flags.resource48Bit = memoryProperties.allocationFlags.flags.resource48Bit;
@@ -1218,9 +1224,7 @@ void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(size_t size, co
     gpuProperties.alignment = alignment;
     auto compressionSupported = false;
     if (unifiedMemoryProperties.device) {
-        auto &gfxCoreHelper = unifiedMemoryProperties.device->getGfxCoreHelper();
-        auto &hwInfo = unifiedMemoryProperties.device->getHardwareInfo();
-        compressionSupported = gfxCoreHelper.usmCompressionSupported(hwInfo);
+        compressionSupported = isUsmCompressionSupported(*unifiedMemoryProperties.device);
         compressionSupported &= memoryManager->isCompressionSupportedForShareable(unifiedMemoryProperties.allocationFlags.flags.shareable);
     }
     gpuProperties.flags.preferCompressed = compressionSupported;
@@ -1456,9 +1460,7 @@ AllocationType SVMAllocsManager::getGraphicsAllocationTypeAndCompressionPreferen
             allocationType = AllocationType::writeCombined;
         } else {
             UNRECOVERABLE_IF(nullptr == unifiedMemoryProperties.device);
-            auto &gfxCoreHelper = unifiedMemoryProperties.device->getGfxCoreHelper();
-            auto &hwInfo = unifiedMemoryProperties.device->getHardwareInfo();
-            if (gfxCoreHelper.usmCompressionSupported(hwInfo) && !unifiedMemoryProperties.allocationFlags.allocFlags.rtAllocation &&
+            if (isUsmCompressionSupported(*unifiedMemoryProperties.device) && !unifiedMemoryProperties.allocationFlags.allocFlags.rtAllocation &&
                 !unifiedMemoryProperties.allocationFlags.flags.uncompressedHint) {
                 compressionEnabled = true;
             }

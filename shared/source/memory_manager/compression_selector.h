@@ -14,6 +14,7 @@ struct AllocationProperties;
 class CompressionSelector {
   public:
     static bool preferCompressedAllocation(const AllocationProperties &properties);
+    static bool isUsmCompressionAllowed();
 };
 
 } // namespace NEO

@@ -575,6 +575,76 @@ HWTEST_F(CompressionMemoryTest, givenRayTracingDeviceUsmWithExplicitCompressedHi
     context->freeMem(ptr);
 }
 
+HWTEST_F(CompressionMemoryTest, givenUsmCompressionDisabledByDebugFlagWhenAllocatingDeviceUsmWithCompressedHintThenCompressionIsNotPreferred) {
+    DebugManagerStateRestore dbgRestore;
+    NEO::debugManager.flags.RenderCompressedBuffersEnabled.set(1);
+    NEO::debugManager.flags.OverrideBufferSuitableForRenderCompression.set(1);
+    NEO::debugManager.flags.EnableUsmCompression.set(0);
+
+    device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.ftrRenderCompressedBuffers = true;
+
+    ze_memory_compression_hints_ext_desc_t compressedHintDesc = {};
+    compressedHintDesc.stype = ZE_STRUCTURE_TYPE_MEMORY_COMPRESSION_HINTS_EXT_DESC;
+    compressedHintDesc.flags = ZE_MEMORY_COMPRESSION_HINTS_EXT_FLAG_COMPRESSED;
+    deviceDesc.pNext = &compressedHintDesc;
+
+    bool preferCompressed = true;
+    auto memoryManager = static_cast<MockMemoryManager *>(neoDevice->getMemoryManager());
+    memoryManager->validateAllocateProperties = [&preferCompressed](const AllocationProperties &properties) -> void {
+        preferCompressed = properties.flags.preferCompressed;
+    };
+
+    allocDeviceMem(2048);
+    context->freeMem(ptr);
+    memoryManager->validateAllocateProperties = {};
+
+    EXPECT_FALSE(preferCompressed);
+}
+
+HWTEST_F(CompressionMemoryTest, givenUsmCompressionDisabledByDebugFlagWhenAllocatingDeviceUsmThenCompressionIsNotPreferred) {
+    DebugManagerStateRestore dbgRestore;
+    NEO::debugManager.flags.RenderCompressedBuffersEnabled.set(1);
+    NEO::debugManager.flags.EnableUsmCompression.set(0);
+
+    bool preferCompressed = true;
+    auto memoryManager = static_cast<MockMemoryManager *>(neoDevice->getMemoryManager());
+    memoryManager->validateAllocateProperties = [&preferCompressed](const AllocationProperties &properties) -> void {
+        preferCompressed = properties.flags.preferCompressed;
+    };
+
+    allocDeviceMem(2048);
+    context->freeMem(ptr);
+    memoryManager->validateAllocateProperties = {};
+
+    EXPECT_FALSE(preferCompressed);
+}
+
+HWTEST_F(CompressionMemoryTest, givenUsmCompressionDisabledByDebugFlagWhenAllocatingSharedUsmThenDeviceStorageCompressionIsNotPreferred) {
+    DebugManagerStateRestore dbgRestore;
+    NEO::debugManager.flags.RenderCompressedBuffersEnabled.set(1);
+    NEO::debugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(1);
+    NEO::debugManager.flags.EnableUsmCompression.set(0);
+
+    uint32_t gpuAllocationsCount = 0u;
+    bool preferCompressed = false;
+    auto memoryManager = static_cast<MockMemoryManager *>(neoDevice->getMemoryManager());
+    memoryManager->validateAllocateProperties = [&](const AllocationProperties &properties) -> void {
+        if (properties.allocationType == AllocationType::svmGpu) {
+            gpuAllocationsCount++;
+            preferCompressed |= properties.flags.preferCompressed;
+        }
+    };
+
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ze_result_t result = context->allocSharedMem(device->toHandle(), &deviceDesc, &hostDesc, 2048, 4096, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    context->freeMem(ptr);
+    memoryManager->validateAllocateProperties = {};
+
+    EXPECT_NE(0u, gpuAllocationsCount);
+    EXPECT_FALSE(preferCompressed);
+}
+
 struct PeerAccessCompressionMemoryTest : public CompressionMemoryTest {
     void SetUp() override {
         debugManager.flags.RenderCompressedBuffersEnabled.set(1);

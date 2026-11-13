@@ -973,6 +973,58 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenLocalMemoryEnabledAndCompressionEnabled
     svmManager->freeSVMAlloc(ptr);
 }
 
+struct SVMLocalMemoryAllocatorUsmCompressionDisabledTest : public SVMLocalMemoryAllocatorTest {
+    void SetUp() override {
+        debugManager.flags.RenderCompressedBuffersEnabled.set(1);
+        debugManager.flags.EnableUsmCompression.set(0);
+        SVMLocalMemoryAllocatorTest::SetUp();
+        deviceFactory = std::make_unique<UltDeviceFactory>(1, 2);
+        device = deviceFactory->rootDevices[0];
+        if (!device->getGfxCoreHelper().usmCompressionSupported(device->getHardwareInfo())) {
+            GTEST_SKIP();
+        }
+    }
+
+    DebugManagerStateRestore restore;
+    std::unique_ptr<UltDeviceFactory> deviceFactory;
+    MockDevice *device = nullptr;
+};
+
+TEST_F(SVMLocalMemoryAllocatorUsmCompressionDisabledTest, givenUsmCompressionDisabledByDebugFlagWhenAllocatingDeviceUsmThenAllocationIsNotCompressed) {
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    unifiedMemoryProperties.device = device;
+    auto ptr = svmManager->createUnifiedMemoryAllocation(MemoryConstants::pageSize64k, unifiedMemoryProperties);
+    ASSERT_NE(nullptr, ptr);
+
+    EXPECT_FALSE(svmManager->getSVMAlloc(ptr)->gpuAllocations.getDefaultGraphicsAllocation()->isCompressionEnabled());
+
+    svmManager->freeSVMAlloc(ptr);
+}
+
+TEST_F(SVMLocalMemoryAllocatorUsmCompressionDisabledTest, givenUsmCompressionDisabledByDebugFlagWhenAllocatingDeviceUsmWithCompressedHintThenAllocationIsNotCompressed) {
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    unifiedMemoryProperties.device = device;
+    unifiedMemoryProperties.allocationFlags.flags.compressedHint = 1u;
+    auto ptr = svmManager->createUnifiedMemoryAllocation(MemoryConstants::pageSize64k, unifiedMemoryProperties);
+    ASSERT_NE(nullptr, ptr);
+
+    EXPECT_FALSE(svmManager->getSVMAlloc(ptr)->gpuAllocations.getDefaultGraphicsAllocation()->isCompressionEnabled());
+
+    svmManager->freeSVMAlloc(ptr);
+}
+
+TEST_F(SVMLocalMemoryAllocatorUsmCompressionDisabledTest, givenUsmCompressionDisabledByDebugFlagWhenAllocatingSharedUsmThenDeviceSideIsNotCompressed) {
+    void *cmdQ = reinterpret_cast<void *>(0x12345);
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    unifiedMemoryProperties.device = device;
+    auto ptr = svmManager->createSharedUnifiedMemoryAllocation(4096, unifiedMemoryProperties, &cmdQ);
+    ASSERT_NE(nullptr, ptr);
+
+    EXPECT_FALSE(svmManager->getSVMAlloc(ptr)->gpuAllocations.getDefaultGraphicsAllocation()->isCompressionEnabled());
+
+    svmManager->freeSVMAlloc(ptr);
+}
+
 struct SVMLocalMemoryAllocatorPeerAccessCompressionTest : public SVMLocalMemoryAllocatorTest {
     void SetUp() override {
         debugManager.flags.RenderCompressedBuffersEnabled.set(1);
