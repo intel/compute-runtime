@@ -83,7 +83,6 @@ struct Caps {
     bool reducedSurfaceStateSupported = false;
     bool scratchSpaceBasePointerInGrf = false;
     bool sharedUsmAllocationReuseSupported = false;
-    bool sharingWith3dOrMediaAllowed = false;
     bool singleDispatchRequiredForMultiCCS = false;
     bool splitMatrixMultiplyAccumulateSupported = false;
     bool storageInfoAdjustmentRequired = false;

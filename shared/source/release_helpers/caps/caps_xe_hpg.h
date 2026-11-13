@@ -51,7 +51,6 @@ struct CapsXeHpgCore {
     static constexpr bool rayTracingSupported = true;
     static constexpr bool rcsExposureDisabled = true;
     static constexpr bool scratchSpaceBasePointerInGrf = true;
-    static constexpr bool sharingWith3dOrMediaAllowed = true;
     static constexpr bool splitMatrixMultiplyAccumulateSupported = true;
     static constexpr bool storageInfoAdjustmentRequired = is32bit;
     static constexpr bool useLocalPreferredForCacheableBuffers = true;

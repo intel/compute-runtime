@@ -162,7 +162,7 @@ void ClDevice::initializeCaps() {
         deviceInfo.packedYuvExtension = true;
     }
 
-    auto sharingAllowed = (getNumGenericSubDevices() <= 1u) && hwInfo.caps.sharingWith3dOrMediaAllowed;
+    auto sharingAllowed = (getNumGenericSubDevices() <= 1u) && hwInfo.capabilityTable.supportsImages;
     if (sharingAllowed) {
         deviceExtensions += sharingFactory.getExtensions(getDriverInfo());
     }

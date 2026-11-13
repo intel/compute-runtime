@@ -55,7 +55,6 @@ struct CapsXe3Core {
     static constexpr bool preImageReadFlushRequired = true;
     static constexpr bool rcsExposureDisabled = true;
     static constexpr bool scratchSpaceBasePointerInGrf = true;
-    static constexpr bool sharingWith3dOrMediaAllowed = true;
 };
 
 struct CapsPtlH : CapsXe3Core {

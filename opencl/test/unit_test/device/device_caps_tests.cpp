@@ -418,7 +418,7 @@ TEST_F(DeviceGetCapsTest, givenEnableSharingFormatQuerySetTrueAndDisabledMultipl
     const auto &caps = device->getDeviceInfo();
 
     const auto &hwInfo = device->getHardwareInfo();
-    if (hwInfo.caps.sharingWith3dOrMediaAllowed) {
+    if (hwInfo.capabilityTable.supportsImages) {
         EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_intel_sharing_format_query ")));
     } else {
         EXPECT_FALSE(hasSubstr(caps.deviceExtensions, std::string("cl_intel_sharing_format_query ")));
@@ -448,7 +448,7 @@ TEST_F(DeviceGetCapsTest, givenEnableSharingFormatQuerySetTrueAndEnabledMultiple
     auto subDevice0 = rootDevice->getSubDevice(0);
     auto subDevice1 = rootDevice->getSubDevice(1);
 
-    if (hwInfo.caps.sharingWith3dOrMediaAllowed) {
+    if (hwInfo.capabilityTable.supportsImages) {
         EXPECT_TRUE(hasSubstr(subDevice0->getDeviceInfo().deviceExtensions, std::string("cl_intel_sharing_format_query ")));
         EXPECT_TRUE(hasSubstr(subDevice1->getDeviceInfo().deviceExtensions, std::string("cl_intel_sharing_format_query ")));
     } else {
@@ -947,6 +947,19 @@ TEST_F(DeviceGetCapsTest, givenNotSupporteImagesWhenCreateExtentionsListThenDevi
 
     EXPECT_FALSE(hasSubstr(extensions, std::string("cl_khr_image2d_from_buffer")));
     EXPECT_FALSE(hasSubstr(extensions, std::string("cl_khr_depth_images")));
+}
+
+TEST_F(DeviceGetCapsTest, givenNotSupportedImagesWhenCreateExtensionsListThenDeviceNotReportsSharingExtensions) {
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.AddClGlSharing.set(true);
+    debugManager.flags.EnableFormatQuery.set(true);
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.supportsImages = false;
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+    const auto extensions = device->getDeviceInfo().deviceExtensions;
+
+    EXPECT_FALSE(hasSubstr(extensions, std::string("cl_khr_gl_sharing ")));
+    EXPECT_FALSE(hasSubstr(extensions, std::string("cl_intel_sharing_format_query ")));
 }
 
 TEST_F(DeviceGetCapsTest, givenDeviceWhenGettingHostUnifiedMemoryCapThenItDependsOnLocalMemory) {

@@ -71,7 +71,6 @@ struct CapsNvlP : CapsXe3pCore {
     static constexpr bool ftrXe2Compression = true;
     static constexpr bool preImageReadFlushRequired = true;
     static constexpr bool rayTracingSupported = true;
-    static constexpr bool sharingWith3dOrMediaAllowed = true;
 };
 struct CapsNvlPA0 : CapsNvlP {};
 struct CapsNvlPB0 : CapsNvlP {

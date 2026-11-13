@@ -113,7 +113,6 @@ TEST(CapsXeHpgTest, givenDg2G10ReleaseWhenMaterializingCapsThenCapabilitiesAreCo
     EXPECT_FALSE(capsDg2G10.reducedSurfaceStateSupported);
     EXPECT_TRUE(capsDg2G10.scratchSpaceBasePointerInGrf);
     EXPECT_FALSE(capsDg2G10.sharedUsmAllocationReuseSupported);
-    EXPECT_TRUE(capsDg2G10.sharingWith3dOrMediaAllowed);
     EXPECT_FALSE(capsDg2G10.singleDispatchRequiredForMultiCCS);
     EXPECT_TRUE(capsDg2G10.splitMatrixMultiplyAccumulateSupported);
     EXPECT_EQ(is32bit, capsDg2G10.storageInfoAdjustmentRequired);
@@ -191,7 +190,6 @@ TEST(CapsXeHpgTest, givenDg2G11ReleaseWhenMaterializingCapsThenCapabilitiesAreCo
     EXPECT_FALSE(capsDg2G11.reducedSurfaceStateSupported);
     EXPECT_TRUE(capsDg2G11.scratchSpaceBasePointerInGrf);
     EXPECT_FALSE(capsDg2G11.sharedUsmAllocationReuseSupported);
-    EXPECT_TRUE(capsDg2G11.sharingWith3dOrMediaAllowed);
     EXPECT_FALSE(capsDg2G11.singleDispatchRequiredForMultiCCS);
     EXPECT_TRUE(capsDg2G11.splitMatrixMultiplyAccumulateSupported);
     EXPECT_EQ(is32bit, capsDg2G11.storageInfoAdjustmentRequired);
@@ -269,7 +267,6 @@ TEST(CapsXeHpgTest, givenDg2G12ReleaseWhenMaterializingCapsThenCapabilitiesAreCo
     EXPECT_FALSE(capsDg2G12.reducedSurfaceStateSupported);
     EXPECT_TRUE(capsDg2G12.scratchSpaceBasePointerInGrf);
     EXPECT_FALSE(capsDg2G12.sharedUsmAllocationReuseSupported);
-    EXPECT_TRUE(capsDg2G12.sharingWith3dOrMediaAllowed);
     EXPECT_FALSE(capsDg2G12.singleDispatchRequiredForMultiCCS);
     EXPECT_TRUE(capsDg2G12.splitMatrixMultiplyAccumulateSupported);
     EXPECT_EQ(is32bit, capsDg2G12.storageInfoAdjustmentRequired);

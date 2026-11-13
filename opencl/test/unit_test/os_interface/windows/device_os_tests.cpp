@@ -39,7 +39,7 @@ TEST(DeviceOsTest, GivenDefaultClDeviceWhenCheckingForOsSpecificExtensionsThenCo
 
     EXPECT_FALSE(hasSubstr(extensionString, std::string("cl_intel_va_api_media_sharing ")));
 
-    if (hwInfo.caps.sharingWith3dOrMediaAllowed) {
+    if (hwInfo.capabilityTable.supportsImages) {
         EXPECT_TRUE(hasSubstr(extensionString, std::string("cl_intel_dx9_media_sharing ")));
         EXPECT_TRUE(hasSubstr(extensionString, std::string("cl_khr_dx9_media_sharing ")));
         EXPECT_TRUE(hasSubstr(extensionString, std::string("cl_khr_d3d10_sharing ")));

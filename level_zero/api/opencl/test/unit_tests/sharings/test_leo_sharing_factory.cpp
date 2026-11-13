@@ -6,7 +6,9 @@
  */
 
 #include "shared/source/compiler_interface/oclc_extensions.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/api/opencl/source/context/leo_context.h"
@@ -483,6 +485,19 @@ TEST_F(SharingFactoryFixture, givenTwoSharingTypesWhenRegisteringSharingsThenThe
     EXPECT_NE(nullptr, builders[SharingType::VA_SHARING]);
     EXPECT_NE(nullptr, builders[SharingType::UNIFIED_SHARING]);
     EXPECT_NE(builders[SharingType::VA_SHARING], builders[SharingType::UNIFIED_SHARING]);
+}
+
+TEST_F(SharingFactoryFixture, givenRegisteredSharingAndNotSupportedImagesWhenDeviceCapsAreCreatedThenSharingExtensionsAreNotReported) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableFormatQuery.set(true);
+    installMock(SharingType::VA_SHARING)->extensions = "cl_mock_sharing ";
+    neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.supportsImages = false;
+
+    auto deviceWithoutImages = std::make_unique<ClDevice>(platform, clDevice->getL0Handle(), false);
+    const std::string extensions = deviceWithoutImages->getDeviceInfo().deviceExtensions;
+
+    EXPECT_EQ(std::string::npos, extensions.find("cl_mock_sharing "));
+    EXPECT_EQ(std::string::npos, extensions.find(Extensions::sharingFormatQuery));
 }
 
 TEST_F(SharingFactoryFixture, givenRegisteredSharingWhenBuildingThenItsContextBuilderIsUsed) {

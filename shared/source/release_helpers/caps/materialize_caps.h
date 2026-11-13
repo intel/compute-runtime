@@ -85,7 +85,6 @@ namespace NEO {
     NEO_COPY_CAP_FUNC(reducedSurfaceStateSupported)                              \
     NEO_COPY_CAP_FUNC(scratchSpaceBasePointerInGrf)                              \
     NEO_COPY_CAP_FUNC(sharedUsmAllocationReuseSupported)                         \
-    NEO_COPY_CAP_FUNC(sharingWith3dOrMediaAllowed)                               \
     NEO_COPY_CAP_FUNC(singleDispatchRequiredForMultiCCS)                         \
     NEO_COPY_CAP_FUNC(splitMatrixMultiplyAccumulateSupported)                    \
     NEO_COPY_CAP_FUNC(storageInfoAdjustmentRequired)                             \

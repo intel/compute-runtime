@@ -28,7 +28,7 @@ TEST(Device_GetCaps, givenForceClGlSharingWhenCapsAreCreatedThenDeviceReportsClG
 
         const auto &hwInfo = device->getHardwareInfo();
 
-        if (hwInfo.caps.sharingWith3dOrMediaAllowed) {
+        if (hwInfo.capabilityTable.supportsImages) {
             EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_gl_sharing ")));
         }
 

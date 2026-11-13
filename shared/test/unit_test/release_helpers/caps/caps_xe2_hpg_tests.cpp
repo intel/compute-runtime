@@ -115,7 +115,6 @@ TEST(CapsXe2HpgTest, givenBmgG21ReleaseWhenMaterializingCapsThenCapabilitiesAreC
     EXPECT_FALSE(capsBmgG21.reducedSurfaceStateSupported);
     EXPECT_TRUE(capsBmgG21.scratchSpaceBasePointerInGrf);
     EXPECT_FALSE(capsBmgG21.sharedUsmAllocationReuseSupported);
-    EXPECT_TRUE(capsBmgG21.sharingWith3dOrMediaAllowed);
     EXPECT_TRUE(capsBmgG21.singleDispatchRequiredForMultiCCS);
     EXPECT_FALSE(capsBmgG21.splitMatrixMultiplyAccumulateSupported);
     EXPECT_FALSE(capsBmgG21.storageInfoAdjustmentRequired);
@@ -193,7 +192,6 @@ TEST(CapsXe2HpgTest, givenBmgG31ReleaseWhenMaterializingCapsThenCapabilitiesAreC
     EXPECT_FALSE(capsBmgG31.reducedSurfaceStateSupported);
     EXPECT_TRUE(capsBmgG31.scratchSpaceBasePointerInGrf);
     EXPECT_FALSE(capsBmgG31.sharedUsmAllocationReuseSupported);
-    EXPECT_TRUE(capsBmgG31.sharingWith3dOrMediaAllowed);
     EXPECT_TRUE(capsBmgG31.singleDispatchRequiredForMultiCCS);
     EXPECT_FALSE(capsBmgG31.splitMatrixMultiplyAccumulateSupported);
     EXPECT_FALSE(capsBmgG31.storageInfoAdjustmentRequired);
@@ -271,7 +269,6 @@ TEST(CapsXe2HpgTest, givenLnlReleaseWhenMaterializingCapsThenCapabilitiesAreCorr
     EXPECT_FALSE(capsLnl.reducedSurfaceStateSupported);
     EXPECT_TRUE(capsLnl.scratchSpaceBasePointerInGrf);
     EXPECT_TRUE(capsLnl.sharedUsmAllocationReuseSupported);
-    EXPECT_TRUE(capsLnl.sharingWith3dOrMediaAllowed);
     EXPECT_FALSE(capsLnl.singleDispatchRequiredForMultiCCS);
     EXPECT_FALSE(capsLnl.splitMatrixMultiplyAccumulateSupported);
     EXPECT_FALSE(capsLnl.storageInfoAdjustmentRequired);

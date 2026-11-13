@@ -109,7 +109,6 @@ TEST(CapsXeHpcTest, givenPvcReleaseWhenMaterializingCapsThenCapabilitiesAreCorre
     EXPECT_FALSE(capsPvc.reducedSurfaceStateSupported);
     EXPECT_TRUE(capsPvc.scratchSpaceBasePointerInGrf);
     EXPECT_FALSE(capsPvc.sharedUsmAllocationReuseSupported);
-    EXPECT_FALSE(capsPvc.sharingWith3dOrMediaAllowed);
     EXPECT_FALSE(capsPvc.singleDispatchRequiredForMultiCCS);
     EXPECT_FALSE(capsPvc.splitMatrixMultiplyAccumulateSupported);
     EXPECT_FALSE(capsPvc.storageInfoAdjustmentRequired);
@@ -187,7 +186,6 @@ TEST(CapsXeHpcTest, givenPvcVgReleaseWhenMaterializingCapsThenCapabilitiesAreCor
     EXPECT_FALSE(capsPvcVg.reducedSurfaceStateSupported);
     EXPECT_TRUE(capsPvcVg.scratchSpaceBasePointerInGrf);
     EXPECT_FALSE(capsPvcVg.sharedUsmAllocationReuseSupported);
-    EXPECT_FALSE(capsPvcVg.sharingWith3dOrMediaAllowed);
     EXPECT_FALSE(capsPvcVg.singleDispatchRequiredForMultiCCS);
     EXPECT_FALSE(capsPvcVg.splitMatrixMultiplyAccumulateSupported);
     EXPECT_FALSE(capsPvcVg.storageInfoAdjustmentRequired);

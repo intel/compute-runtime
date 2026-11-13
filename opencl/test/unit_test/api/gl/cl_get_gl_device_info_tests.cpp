@@ -32,7 +32,7 @@ TEST_P(GetDeviceGlInfoStr, WhenGettingDeviceExtensionsThenExtensionsAreReportedC
     char *paramValue = nullptr;
     size_t paramRetSize = 0;
     const auto &hwInfo = pDevice->getHardwareInfo();
-    bool clGLSharingAllowed = hwInfo.caps.sharingWith3dOrMediaAllowed;
+    bool clGLSharingAllowed = hwInfo.capabilityTable.supportsImages;
 
     cl_int retVal = clGetDeviceInfo(testedClDevice, param, 0, nullptr, &paramRetSize);
     EXPECT_EQ(CL_SUCCESS, retVal);

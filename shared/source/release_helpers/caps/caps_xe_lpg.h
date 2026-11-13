@@ -44,7 +44,6 @@ struct CapsXeLpgCore {
     static constexpr bool numRtStacksPerDssFixedValue = true;
     static constexpr bool rayTracingSupported = true;
     static constexpr bool scratchSpaceBasePointerInGrf = true;
-    static constexpr bool sharingWith3dOrMediaAllowed = true;
 };
 
 struct CapsMtlU : CapsXeLpgCore {

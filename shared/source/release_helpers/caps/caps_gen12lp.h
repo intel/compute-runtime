@@ -35,7 +35,6 @@ struct CapsGen12Lp {
     static constexpr bool localOnlyAllowed = true;
     static constexpr bool numRtStacksPerDssFixedValue = true;
     static constexpr bool scratchSpaceBasePointerInGrf = true;
-    static constexpr bool sharingWith3dOrMediaAllowed = true;
 };
 
 struct CapsTgl : CapsGen12Lp {

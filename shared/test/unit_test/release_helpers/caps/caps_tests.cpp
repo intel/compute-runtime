@@ -105,7 +105,6 @@ TEST(CapsSetupTest, givenEveryEnabledProductConfigWhenSettingUpCapsThenHwInfoIsI
         EXPECT_EQ(expectedCaps->reducedSurfaceStateSupported, hwInfo.caps.reducedSurfaceStateSupported);
         EXPECT_EQ(expectedCaps->scratchSpaceBasePointerInGrf, hwInfo.caps.scratchSpaceBasePointerInGrf);
         EXPECT_EQ(expectedCaps->sharedUsmAllocationReuseSupported, hwInfo.caps.sharedUsmAllocationReuseSupported);
-        EXPECT_EQ(expectedCaps->sharingWith3dOrMediaAllowed, hwInfo.caps.sharingWith3dOrMediaAllowed);
         EXPECT_EQ(expectedCaps->singleDispatchRequiredForMultiCCS, hwInfo.caps.singleDispatchRequiredForMultiCCS);
         EXPECT_EQ(expectedCaps->splitMatrixMultiplyAccumulateSupported, hwInfo.caps.splitMatrixMultiplyAccumulateSupported);
         EXPECT_EQ(expectedCaps->storageInfoAdjustmentRequired, hwInfo.caps.storageInfoAdjustmentRequired);
@@ -193,7 +192,6 @@ TEST(CapsTest, givenDefaultCapsThenValuesAreCorrect) {
     EXPECT_FALSE(caps.reducedSurfaceStateSupported);
     EXPECT_FALSE(caps.scratchSpaceBasePointerInGrf);
     EXPECT_FALSE(caps.sharedUsmAllocationReuseSupported);
-    EXPECT_FALSE(caps.sharingWith3dOrMediaAllowed);
     EXPECT_FALSE(caps.singleDispatchRequiredForMultiCCS);
     EXPECT_FALSE(caps.splitMatrixMultiplyAccumulateSupported);
     EXPECT_FALSE(caps.storageInfoAdjustmentRequired);
