@@ -587,37 +587,6 @@ XE2_HPG_CORETEST_F(EncodeKernelXe2HpgCoreTest, givenRequiredWorkGroupOrderWhenCa
     EXPECT_EQ(currentDispatchWalkOrder, walkerCmd.getDispatchWalkOrder()); // no change
 }
 
-XE2_HPG_CORETEST_F(EncodeKernelXe2HpgCoreTest, givenRequiredWorkGroupOrderWhenCallEncodeThreadDataThenDispatchWalkOrderIsProgrammedCorrectly) {
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    DefaultWalkerType walkerCmd = FamilyType::cmdInitGpgpuWalker;
-
-    uint32_t startWorkGroup[3] = {1, 1, 1};
-    uint32_t numWorkGroups[3] = {1, 1, 1};
-    uint32_t workGroupSizes[3] = {1, 1, 1};
-
-    uint32_t yOrder = 2u;
-    EXPECT_EQ(HwWalkOrderHelper::compatibleDimensionOrders[yOrder], HwWalkOrderHelper::yOrderWalk);
-
-    auto &rootDeviceEnvironment = this->pDevice->getRootDeviceEnvironment();
-    EncodeDispatchKernel<FamilyType>::encodeThreadData(walkerCmd, startWorkGroup, numWorkGroups, workGroupSizes, 0, 3,
-                                                       0, 1, false, false, true, yOrder, rootDeviceEnvironment);
-    EXPECT_EQ(DefaultWalkerType::DISPATCH_WALK_ORDER::DISPATCH_WALK_ORDER_Y_ORDER_WALK, walkerCmd.getDispatchWalkOrder());
-
-    EncodeDispatchKernel<FamilyType>::encodeThreadData(walkerCmd, startWorkGroup, numWorkGroups, workGroupSizes, 0, 3,
-                                                       0, 1, true, false, true, yOrder, rootDeviceEnvironment);
-    EXPECT_EQ(DefaultWalkerType::DISPATCH_WALK_ORDER::DISPATCH_WALK_ORDER_Y_ORDER_WALK, walkerCmd.getDispatchWalkOrder());
-
-    uint32_t linearOrder = 0u;
-    EXPECT_EQ(HwWalkOrderHelper::compatibleDimensionOrders[linearOrder], HwWalkOrderHelper::linearWalk);
-    EncodeDispatchKernel<FamilyType>::encodeThreadData(walkerCmd, startWorkGroup, numWorkGroups, workGroupSizes, 0, 3,
-                                                       0, 1, false, false, true, linearOrder, rootDeviceEnvironment);
-    EXPECT_EQ(DefaultWalkerType::DISPATCH_WALK_ORDER::DISPATCH_WALK_ORDER_LINEAR_WALK, walkerCmd.getDispatchWalkOrder());
-
-    EncodeDispatchKernel<FamilyType>::encodeThreadData(walkerCmd, startWorkGroup, numWorkGroups, workGroupSizes, 0, 3,
-                                                       0, 1, true, false, true, linearOrder, rootDeviceEnvironment);
-    EXPECT_EQ(DefaultWalkerType::DISPATCH_WALK_ORDER::DISPATCH_WALK_ORDER_LINEAR_WALK, walkerCmd.getDispatchWalkOrder());
-}
-
 XE2_HPG_CORETEST_F(EncodeKernelXe2HpgCoreTest, givenSurfaceStateAndAuxSurfaceModeOverrideRequiredIsFalseWhenAuxParamsForMCSCCSAreSetThenCorrectAuxModeIsSet) {
     auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
     auto hwInfo = *defaultHwInfo;

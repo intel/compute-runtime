@@ -35,10 +35,6 @@ BMGTEST_F(BmgProductHelper, whenGettingAubstreamProductFamilyThenProperEnumValue
     EXPECT_EQ(aub_stream::ProductFamily::Bmg, productHelper->getAubStreamProductFamily());
 }
 
-BMGTEST_F(BmgProductHelper, givenProductHelperWhenCheckIsCopyBufferRectSplitSupportedThenReturnsTrue) {
-    EXPECT_TRUE(productHelper->isCopyBufferRectSplitSupported());
-}
-
 BMGTEST_F(BmgProductHelper, givenProductHelperWhenGetCommandsStreamPropertiesSupportThenExpectCorrectValues) {
 
     EXPECT_TRUE(productHelper->getScmPropertyThreadArbitrationPolicySupport());

@@ -9,6 +9,7 @@
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/gmm_lib.h"
+#include "shared/source/helpers/hw_walk_order.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/os_interface/product_helper_hw.h"
 #include "shared/source/xe2_hpg_core/hw_cmds.h"
@@ -231,4 +232,35 @@ HWTEST2_F(CommandEncodeStatesTestXe2AndLater, givenCapsDefaultWhenProgrammingSta
         EXPECT_EQ(MIDTHREAD_PREEMPTION_DELAY_TIMER::MIDTHREAD_PREEMPTION_DELAY_TIMER_MTP_TIMER_VAL_100, stateComputeModeCmd.getMidthreadPreemptionDelayTimer());
         EXPECT_EQ(midthreadPreemptionDelayTimerMask, stateComputeModeCmd.getMask2() & midthreadPreemptionDelayTimerMask);
     }
+}
+
+HWTEST2_F(CommandEncodeStatesTestXe2AndLater, givenRequiredWorkGroupOrderWhenCallEncodeThreadDataThenDispatchWalkOrderIsProgrammedCorrectly, IsAtLeastXe2HpgCore) {
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    DefaultWalkerType walkerCmd = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
+
+    uint32_t startWorkGroup[3] = {1, 1, 1};
+    uint32_t numWorkGroups[3] = {1, 1, 1};
+    uint32_t workGroupSizes[3] = {1, 1, 1};
+
+    uint32_t yOrder = 2u;
+    EXPECT_EQ(HwWalkOrderHelper::compatibleDimensionOrders[yOrder], HwWalkOrderHelper::yOrderWalk);
+
+    auto &rootDeviceEnvironment = this->pDevice->getRootDeviceEnvironment();
+    EncodeDispatchKernel<FamilyType>::encodeThreadData(walkerCmd, startWorkGroup, numWorkGroups, workGroupSizes, 0, 3,
+                                                       0, 1, false, false, true, yOrder, rootDeviceEnvironment);
+    EXPECT_EQ(DefaultWalkerType::DISPATCH_WALK_ORDER::DISPATCH_WALK_ORDER_Y_ORDER_WALK, walkerCmd.getDispatchWalkOrder());
+
+    EncodeDispatchKernel<FamilyType>::encodeThreadData(walkerCmd, startWorkGroup, numWorkGroups, workGroupSizes, 0, 3,
+                                                       0, 1, true, false, true, yOrder, rootDeviceEnvironment);
+    EXPECT_EQ(DefaultWalkerType::DISPATCH_WALK_ORDER::DISPATCH_WALK_ORDER_Y_ORDER_WALK, walkerCmd.getDispatchWalkOrder());
+
+    uint32_t linearOrder = 0u;
+    EXPECT_EQ(HwWalkOrderHelper::compatibleDimensionOrders[linearOrder], HwWalkOrderHelper::linearWalk);
+    EncodeDispatchKernel<FamilyType>::encodeThreadData(walkerCmd, startWorkGroup, numWorkGroups, workGroupSizes, 0, 3,
+                                                       0, 1, false, false, true, linearOrder, rootDeviceEnvironment);
+    EXPECT_EQ(DefaultWalkerType::DISPATCH_WALK_ORDER::DISPATCH_WALK_ORDER_LINEAR_WALK, walkerCmd.getDispatchWalkOrder());
+
+    EncodeDispatchKernel<FamilyType>::encodeThreadData(walkerCmd, startWorkGroup, numWorkGroups, workGroupSizes, 0, 3,
+                                                       0, 1, true, false, true, linearOrder, rootDeviceEnvironment);
+    EXPECT_EQ(DefaultWalkerType::DISPATCH_WALK_ORDER::DISPATCH_WALK_ORDER_LINEAR_WALK, walkerCmd.getDispatchWalkOrder());
 }

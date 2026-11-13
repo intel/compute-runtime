@@ -1367,3 +1367,15 @@ HWTEST_F(ProductHelperTest, givenLimitIsaPrefetchSizeDebugFlagSetToZeroWhenGetti
 
     EXPECT_EQ(0u, productHelper->getIsaPrefetchSize(static_cast<uint32_t>(4 * MemoryConstants::kiloByte)));
 }
+
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckIsCopyBufferRectSplitSupportedThenReturnsTrue, IsAtLeastXe2HpgCore) {
+    EXPECT_TRUE(productHelper->isCopyBufferRectSplitSupported());
+}
+
+HWTEST2_F(ProductHelperTest, WhenFillingScmPropertiesSupportThenExpectUseCorrectExtraGetters, IsWithinXe3CoreAndXe3pCore) {
+    StateComputeModePropertiesSupport scmPropertiesSupport = {};
+    productHelper->fillScmPropertiesSupportStructure(scmPropertiesSupport);
+
+    EXPECT_EQ(true, scmPropertiesSupport.allocationForScratchAndMidthreadPreemption);
+    EXPECT_EQ(true, scmPropertiesSupport.enableVariableRegisterSizeAllocation);
+}

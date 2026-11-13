@@ -57,14 +57,6 @@ CRITEST_F(CriProductHelper, givenProductHelperWhenGetCommandsStreamPropertiesSup
     EXPECT_FALSE(productHelper->getPipelineSelectPropertySystolicModeSupport());
 }
 
-CRITEST_F(CriProductHelper, WhenFillingScmPropertiesSupportThenExpectUseCorrectExtraGetters) {
-    StateComputeModePropertiesSupport scmPropertiesSupport = {};
-    productHelper->fillScmPropertiesSupportStructure(scmPropertiesSupport);
-
-    EXPECT_EQ(true, scmPropertiesSupport.allocationForScratchAndMidthreadPreemption);
-    EXPECT_EQ(true, scmPropertiesSupport.enableVariableRegisterSizeAllocation);
-}
-
 CRITEST_F(CriProductHelper, givenProductHelperWhenAdditionalKernelExecInfoSupportCheckedThenCorrectValueIsReturned) {
     EXPECT_TRUE(productHelper->isDisableOverdispatchAvailable(*defaultHwInfo));
 

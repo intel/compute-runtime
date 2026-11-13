@@ -70,14 +70,6 @@ NVLPTEST_F(NvlProductHelper, givenProductHelperWhenGetCommandsStreamPropertiesSu
     EXPECT_FALSE(productHelper->getPipelineSelectPropertySystolicModeSupport());
 }
 
-NVLPTEST_F(NvlProductHelper, WhenFillingScmPropertiesSupportThenExpectUseCorrectExtraGetters) {
-    StateComputeModePropertiesSupport scmPropertiesSupport = {};
-    productHelper->fillScmPropertiesSupportStructure(scmPropertiesSupport);
-
-    EXPECT_EQ(true, scmPropertiesSupport.allocationForScratchAndMidthreadPreemption);
-    EXPECT_EQ(true, scmPropertiesSupport.enableVariableRegisterSizeAllocation);
-}
-
 NVLPTEST_F(NvlProductHelper, WhenFillingScmPropertiesSupportExtraThenExpectUseCorrectExtraGetters) {
     StateComputeModePropertiesSupport scmPropertiesSupport{};
     MockExecutionEnvironment executionEnvironment{};

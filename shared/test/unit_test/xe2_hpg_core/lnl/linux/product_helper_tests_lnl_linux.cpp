@@ -75,10 +75,6 @@ LNLTEST_F(LnlProductHelperLinux, givenProductHelperWhenAskedIsPageFaultSupported
     EXPECT_FALSE(productHelper->isPageFaultSupported());
 }
 
-LNLTEST_F(LnlProductHelperLinux, givenProductHelperWhenCheckIsCopyBufferRectSplitSupportedThenReturnsTrue) {
-    EXPECT_TRUE(productHelper->isCopyBufferRectSplitSupported());
-}
-
 LNLTEST_F(LnlProductHelperLinux, givenProductHelperWhenCallDeferMOCSToPatOnWSLThenFalseIsReturned) {
     const auto &productHelper = getHelper<ProductHelper>();
     EXPECT_FALSE(productHelper.deferMOCSToPatIndex(true));

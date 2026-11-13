@@ -177,3 +177,24 @@ HWTEST2_F(Xe2MidThreadPreemptionTests, GivenStateSipNotRequiredWhenProgramStateS
     PreemptionHelper::programStateSip<FamilyType>(cmdStream, *device, nullptr);
     EXPECT_EQ(0U, cmdStream.getUsed());
 }
+
+using PreemptionTests = ::testing::Test;
+
+HWTEST2_F(PreemptionTests, givenInterfaceDescriptorDataWhenPreemptionModeIsMidThreadThenThreadPreemptionBitIsEnabled, IsWithinXe2HpgCoreAndXe3Core) {
+    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+
+    INTERFACE_DESCRIPTOR_DATA iddArg;
+    iddArg = FamilyType::cmdInitInterfaceDescriptorData;
+
+    PreemptionHelper::programInterfaceDescriptorDataPreemption<FamilyType>(&iddArg, PreemptionMode::Disabled);
+    EXPECT_FALSE(iddArg.getThreadPreemption());
+
+    PreemptionHelper::programInterfaceDescriptorDataPreemption<FamilyType>(&iddArg, PreemptionMode::MidBatch);
+    EXPECT_FALSE(iddArg.getThreadPreemption());
+
+    PreemptionHelper::programInterfaceDescriptorDataPreemption<FamilyType>(&iddArg, PreemptionMode::ThreadGroup);
+    EXPECT_FALSE(iddArg.getThreadPreemption());
+
+    PreemptionHelper::programInterfaceDescriptorDataPreemption<FamilyType>(&iddArg, PreemptionMode::MidThread);
+    EXPECT_TRUE(iddArg.getThreadPreemption());
+}

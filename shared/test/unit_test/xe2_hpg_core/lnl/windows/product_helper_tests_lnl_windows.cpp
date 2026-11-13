@@ -16,10 +16,6 @@ using namespace NEO;
 
 using LnlProductHelperWindows = ProductHelperTest;
 
-LNLTEST_F(LnlProductHelperWindows, givenProductHelperWhenCheckIsCopyBufferRectSplitSupportedThenReturnsTrue) {
-    EXPECT_TRUE(productHelper->isCopyBufferRectSplitSupported());
-}
-
 LNLTEST_F(LnlProductHelperWindows, givenOverrideDirectSubmissionTimeoutsCalledThenTimeoutsAreOverridden) {
     uint64_t timeoutUs{5'000};
     productHelper->overrideDirectSubmissionTimeouts(timeoutUs);
