@@ -7428,23 +7428,23 @@ HWTEST2_F(MultipleDevicePeerImageTest,
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
 
-    ze_image_desc_t desc = {};
-    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
-    desc.type = ZE_IMAGE_TYPE_3D;
-    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8;
-    desc.format.type = ZE_IMAGE_FORMAT_TYPE_UINT;
-    desc.width = 11;
-    desc.height = 13;
-    desc.depth = 17;
+    constexpr ze_image_desc_t desc = {
+        .stype = ZE_STRUCTURE_TYPE_IMAGE_DESC,
+        .type = ZE_IMAGE_TYPE_3D,
+        .format = {
+            .layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8,
+            .type = ZE_IMAGE_FORMAT_TYPE_UINT,
+            .x = ZE_IMAGE_FORMAT_SWIZZLE_A,
+            .y = ZE_IMAGE_FORMAT_SWIZZLE_0,
+            .z = ZE_IMAGE_FORMAT_SWIZZLE_1,
+            .w = ZE_IMAGE_FORMAT_SWIZZLE_X},
+        .width = 11,
+        .height = 13,
+        .depth = 17};
 
-    desc.format.x = ZE_IMAGE_FORMAT_SWIZZLE_A;
-    desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_0;
-    desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_1;
-    desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_X;
-
-    const size_t imageMemSize = desc.width * desc.height * desc.depth * 4u;
-    void *srcPtr = alignedMalloc(imageMemSize, MemoryConstants::cacheLineSize);
-    void *dstPtr = alignedMalloc(imageMemSize, MemoryConstants::cacheLineSize);
+    constexpr size_t imageMemSize = desc.width * desc.height * desc.depth * 4u;
+    uint8_t srcMemory[imageMemSize] = {};
+    uint8_t dstMemory[imageMemSize] = {};
 
     L0::Image *image0Src;
     L0::Image *image0Dst;
@@ -7473,9 +7473,9 @@ HWTEST2_F(MultipleDevicePeerImageTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     result = commandList0->appendImageCopy(image1Dst->toHandle(), image0Src->toHandle(), nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    result = commandList0->appendImageCopyFromMemory(image1Dst->toHandle(), srcPtr, nullptr, nullptr, 0, nullptr, copyParams);
+    result = commandList0->appendImageCopyFromMemory(image1Dst->toHandle(), srcMemory, nullptr, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    result = commandList0->appendImageCopyToMemory(dstPtr, image1Src->toHandle(), nullptr, nullptr, 0, nullptr, copyParams);
+    result = commandList0->appendImageCopyToMemory(dstMemory, image1Src->toHandle(), nullptr, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = image0Src->destroy();
@@ -7487,9 +7487,6 @@ HWTEST2_F(MultipleDevicePeerImageTest,
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
     result = image1Dst->destroy();
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
-
-    alignedFree(srcPtr);
-    alignedFree(dstPtr);
 }
 
 HWTEST2_F(MultipleDevicePeerImageTest,
@@ -7501,23 +7498,23 @@ HWTEST2_F(MultipleDevicePeerImageTest,
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
 
-    ze_image_desc_t desc = {};
-    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
-    desc.type = ZE_IMAGE_TYPE_3D;
-    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8;
-    desc.format.type = ZE_IMAGE_FORMAT_TYPE_UINT;
-    desc.width = 11;
-    desc.height = 13;
-    desc.depth = 17;
+    constexpr ze_image_desc_t desc = {
+        .stype = ZE_STRUCTURE_TYPE_IMAGE_DESC,
+        .type = ZE_IMAGE_TYPE_3D,
+        .format = {
+            .layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8,
+            .type = ZE_IMAGE_FORMAT_TYPE_UINT,
+            .x = ZE_IMAGE_FORMAT_SWIZZLE_A,
+            .y = ZE_IMAGE_FORMAT_SWIZZLE_0,
+            .z = ZE_IMAGE_FORMAT_SWIZZLE_1,
+            .w = ZE_IMAGE_FORMAT_SWIZZLE_X},
+        .width = 11,
+        .height = 13,
+        .depth = 17};
 
-    desc.format.x = ZE_IMAGE_FORMAT_SWIZZLE_A;
-    desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_0;
-    desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_1;
-    desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_X;
-
-    const size_t imageMemSize = desc.width * desc.height * desc.depth * 4u;
-    void *srcPtr = alignedMalloc(imageMemSize, MemoryConstants::cacheLineSize);
-    void *dstPtr = alignedMalloc(imageMemSize, MemoryConstants::cacheLineSize);
+    constexpr size_t imageMemSize = desc.width * desc.height * desc.depth * 4u;
+    uint8_t srcMemory[imageMemSize] = {};
+    void *dstPtr = reinterpret_cast<void *>(0x100000);
 
     L0::Image *image0Src;
     L0::Image *image0Dst;
@@ -7547,7 +7544,7 @@ HWTEST2_F(MultipleDevicePeerImageTest,
     EXPECT_NE(ZE_RESULT_SUCCESS, result);
     result = commandList0->appendImageCopy(image1Dst->toHandle(), image0Src->toHandle(), nullptr, 0, nullptr, copyParams);
     EXPECT_NE(ZE_RESULT_SUCCESS, result);
-    result = commandList0->appendImageCopyFromMemory(image1Dst->toHandle(), srcPtr, nullptr, nullptr, 0, nullptr, copyParams);
+    result = commandList0->appendImageCopyFromMemory(image1Dst->toHandle(), srcMemory, nullptr, nullptr, 0, nullptr, copyParams);
     EXPECT_NE(ZE_RESULT_SUCCESS, result);
     result = commandList0->appendImageCopyToMemory(dstPtr, image1Src->toHandle(), nullptr, nullptr, 0, nullptr, copyParams);
     EXPECT_NE(ZE_RESULT_SUCCESS, result);
@@ -7563,9 +7560,6 @@ HWTEST2_F(MultipleDevicePeerImageTest,
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 
     static_cast<L0::ult::CommandList *>(commandList0.get())->getCsr(false)->getInternalAllocationStorage()->getTemporaryAllocations().freeAllGraphicsAllocations(device0->getNEODevice());
-
-    alignedFree(srcPtr);
-    alignedFree(dstPtr);
 }
 
 HWTEST2_F(MultipleDevicePeerImageTest,

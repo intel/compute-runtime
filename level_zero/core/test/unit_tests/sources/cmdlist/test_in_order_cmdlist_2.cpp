@@ -3376,7 +3376,7 @@ HWTEST2_F(InOrderRegularCopyOnlyCmdListTests, givenInOrderModeWhenDispatchingReg
 
     size_t offset = cmdStream->getUsed();
 
-    auto alignedPtr = alignedMalloc(MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
+    auto alignedPtr = reinterpret_cast<void *>(0x100000);
 
     regularCmdList->appendMemoryCopy(alignedPtr, alignedPtr, MemoryConstants::cacheLineSize, nullptr, 0, nullptr, copyParams);
 
@@ -3438,8 +3438,6 @@ HWTEST2_F(InOrderRegularCopyOnlyCmdListTests, givenInOrderModeWhenDispatchingReg
         EXPECT_EQ(2u, sdiCmd->getDataDword0());
         EXPECT_EQ(0u, sdiCmd->getDataDword1());
     }
-
-    alignedFree(alignedPtr);
 }
 
 struct StandaloneInOrderTimestampAllocationTests : public InOrderCmdListFixture {

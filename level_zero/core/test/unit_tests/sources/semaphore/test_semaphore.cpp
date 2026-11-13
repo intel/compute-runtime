@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -820,14 +820,13 @@ HWTEST_F(ExternalSemaphoreKmdWaitTest, givenPendingExternalSemaphoreGpuWaitOnInO
     void *usmDevice = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
     ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device->toHandle(), &deviceDesc, size, size, &usmDevice));
-    auto hostSrc = alignedMalloc(size, MemoryConstants::cacheLineSize);
+    auto hostSrc = reinterpret_cast<void *>(0x100000);
     ASSERT_TRUE(csr.getInternalAllocationStorage()->getTemporaryAllocations().peekIsEmpty());
 
     CmdListMemoryCopyParams copyParams = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList->appendMemoryCopy(usmDevice, hostSrc, size, nullptr, 0, nullptr, copyParams));
     EXPECT_FALSE(csr.getInternalAllocationStorage()->getTemporaryAllocations().peekIsEmpty());
 
-    alignedFree(hostSrc);
     context->freeMem(usmDevice);
 }
 

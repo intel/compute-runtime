@@ -232,24 +232,24 @@ HWTEST_F(CommandListCreateTests, givenImmediateCommandListWhenAppendWriteGlobalT
 }
 
 HWTEST2_F(CommandListCreateTests, givenUseCsrImmediateSubmissionEnabledForCopyImmediateCommandListThenAppendImageCopyRegionReturnsSuccess, IsAtLeastXeCore) {
-    ze_image_desc_t desc = {};
-    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
-    desc.type = ZE_IMAGE_TYPE_3D;
-    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8;
-    desc.format.type = ZE_IMAGE_FORMAT_TYPE_UINT;
-    desc.width = 11;
-    desc.height = 13;
-    desc.depth = 17;
-
-    desc.format.x = ZE_IMAGE_FORMAT_SWIZZLE_A;
-    desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_0;
-    desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_1;
-    desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_X;
+    constexpr ze_image_desc_t desc = {
+        .stype = ZE_STRUCTURE_TYPE_IMAGE_DESC,
+        .type = ZE_IMAGE_TYPE_3D,
+        .format = {
+            .layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8,
+            .type = ZE_IMAGE_FORMAT_TYPE_UINT,
+            .x = ZE_IMAGE_FORMAT_SWIZZLE_A,
+            .y = ZE_IMAGE_FORMAT_SWIZZLE_0,
+            .z = ZE_IMAGE_FORMAT_SWIZZLE_1,
+            .w = ZE_IMAGE_FORMAT_SWIZZLE_X},
+        .width = 11,
+        .height = 13,
+        .depth = 17};
 
     const ze_command_queue_desc_t queueDesc = {};
-    const size_t imageMemSize = desc.width * desc.height * desc.depth * 4u;
-    void *srcPtr = alignedMalloc(imageMemSize, MemoryConstants::cacheLineSize);
-    void *dstPtr = alignedMalloc(imageMemSize, MemoryConstants::cacheLineSize);
+    constexpr size_t imageMemSize = desc.width * desc.height * desc.depth * 4u;
+    uint8_t srcMemory[imageMemSize] = {};
+    uint8_t dstMemory[imageMemSize] = {};
 
     neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
     ze_result_t returnValue;
@@ -267,12 +267,10 @@ HWTEST2_F(CommandListCreateTests, givenUseCsrImmediateSubmissionEnabledForCopyIm
     CmdListMemoryCopyParams copyParams = {};
     returnValue = commandList0->appendImageCopy(imageHWDst->toHandle(), imageHWSrc->toHandle(), nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    returnValue = commandList0->appendImageCopyFromMemory(imageHWDst->toHandle(), srcPtr, nullptr, nullptr, 0, nullptr, copyParams);
+    returnValue = commandList0->appendImageCopyFromMemory(imageHWDst->toHandle(), srcMemory, nullptr, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    returnValue = commandList0->appendImageCopyToMemory(dstPtr, imageHWSrc->toHandle(), nullptr, nullptr, 0, nullptr, copyParams);
+    returnValue = commandList0->appendImageCopyToMemory(dstMemory, imageHWSrc->toHandle(), nullptr, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    alignedFree(srcPtr);
-    alignedFree(dstPtr);
 }
 
 HWTEST_F(CommandListCreateTests, givenUseCsrImmediateSubmissionEnabledForCopyImmediateCommandListThenAppendMemoryCopyRegionReturnsSuccess) {

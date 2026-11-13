@@ -4711,7 +4711,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
 
     const size_t ptrBaseSize = 128;
     const size_t offset = 1;
-    auto alignedPtr = alignedMalloc(ptrBaseSize, MemoryConstants::cacheLineSize);
+    auto alignedPtr = reinterpret_cast<void *>(0x100000);
     auto unalignedPtr = ptrOffset(alignedPtr, offset);
 
     immCmdList->appendMemoryCopy(unalignedPtr, unalignedPtr, ptrBaseSize - offset, nullptr, 0, nullptr, copyParams);
@@ -4733,8 +4733,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
     }
 
     EXPECT_TRUE(walkersFound > 1);
-
-    alignedFree(alignedPtr);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenCopyOnlyInOrderModeWhenProgrammingCopyThenSignalInOrderAllocation) {
@@ -4860,7 +4858,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenAllocFlushRequiredWhenPro
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
-    auto alignedPtr = alignedMalloc(MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
+    auto alignedPtr = reinterpret_cast<void *>(0x100000);
 
     immCmdList->appendMemoryCopy(alignedPtr, alignedPtr, 1, nullptr, 0, nullptr, copyParams);
 
@@ -4890,8 +4888,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenAllocFlushRequiredWhenPro
     } else {
         EXPECT_EQ(cmdList.end(), miAtomicItor);
     }
-
-    alignedFree(alignedPtr);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenCopyOnlyInOrderModeWhenProgrammingFillThenSignalInOrderAllocation) {
@@ -7251,7 +7247,7 @@ HWTEST_F(InOrderCmdListTests, givenAggregatedEventWhenCallingSplitAppendThenSetC
 
     const size_t ptrBaseSize = 128;
     const size_t copyOffset = 1;
-    auto alignedPtr = alignedMalloc(ptrBaseSize, MemoryConstants::cacheLineSize);
+    auto alignedPtr = reinterpret_cast<void *>(0x100000);
     auto unalignedPtr = ptrOffset(alignedPtr, copyOffset);
 
     immCmdList->appendMemoryCopy(unalignedPtr, unalignedPtr, ptrBaseSize - copyOffset, handle, 0, nullptr, copyParams);
@@ -7287,7 +7283,6 @@ HWTEST_F(InOrderCmdListTests, givenAggregatedEventWhenCallingSplitAppendThenSetC
     }
 
     context->freeMem(devAddress);
-    alignedFree(alignedPtr);
 }
 
 HWTEST_F(InOrderCmdListTests, givenAggregatedEventWhenCallingAppendSignalInOrderDependencyCounterThenProgramAtomicOperation) {
@@ -7961,7 +7956,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
 
     const size_t ptrBaseSize = 128;
     const size_t offset = 1;
-    auto alignedPtr = alignedMalloc(ptrBaseSize, MemoryConstants::cacheLineSize);
+    auto alignedPtr = reinterpret_cast<void *>(0x100000);
     auto unalignedPtr = ptrOffset(alignedPtr, offset);
 
     immCmdList->appendMemoryCopy(unalignedPtr, unalignedPtr, ptrBaseSize - offset, nullptr, 0, nullptr, copyParams);
@@ -7989,8 +7984,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
     EXPECT_EQ(syncVa, sdiCmd->getAddress());
     EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
     EXPECT_EQ(1u, sdiCmd->getDataDword0());
-
-    alignedFree(alignedPtr);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenDebugFlagSetWhenKernelSplitIsExpectedThenDontSplit) {
@@ -8002,7 +7995,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenDebugFlagSetWhenKernelSpl
 
     const size_t ptrBaseSize = 128;
     const size_t offset = 1;
-    auto alignedPtr = alignedMalloc(ptrBaseSize, MemoryConstants::cacheLineSize);
+    auto alignedPtr = reinterpret_cast<void *>(0x100000);
     auto unalignedPtr = ptrOffset(alignedPtr, offset);
 
     immCmdList->appendMemoryCopy(unalignedPtr, unalignedPtr, ptrBaseSize - offset, nullptr, 0, nullptr, copyParams);
@@ -8012,8 +8005,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenDebugFlagSetWhenKernelSpl
 
     auto walkers = NEO::UnitTestHelper<FamilyType>::findAllWalkerTypeCmds(cmdList.begin(), cmdList.end());
     EXPECT_EQ(1u, walkers.size());
-
-    alignedFree(alignedPtr);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammingKernelSplitWithEventThenSignalCounter) {
@@ -8028,7 +8019,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
 
     const size_t ptrBaseSize = 128;
     const size_t offset = 1;
-    auto alignedPtr = alignedMalloc(ptrBaseSize, MemoryConstants::cacheLineSize);
+    auto alignedPtr = reinterpret_cast<void *>(0x100000);
     auto unalignedPtr = ptrOffset(alignedPtr, offset);
 
     immCmdList->appendMemoryCopy(unalignedPtr, unalignedPtr, ptrBaseSize - offset, eventHandle, 0, nullptr, copyParams);
@@ -8045,8 +8036,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
     EXPECT_EQ(syncVa, sdiCmd->getAddress());
     EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
     EXPECT_EQ(1u, sdiCmd->getDataDword0());
-
-    alignedFree(alignedPtr);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammingKernelSplitWithProfilingEventThenSignalCounter) {
@@ -8063,7 +8052,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
 
     const size_t ptrBaseSize = 128;
     const size_t offset = 1;
-    auto alignedPtr = alignedMalloc(ptrBaseSize, MemoryConstants::cacheLineSize);
+    auto alignedPtr = reinterpret_cast<void *>(0x100000);
     auto unalignedPtr = ptrOffset(alignedPtr, offset);
 
     immCmdList->appendMemoryCopy(unalignedPtr, unalignedPtr, ptrBaseSize - offset, eventHandle, 0, nullptr, copyParams);
@@ -8090,8 +8079,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenInOrderModeWhenProgrammin
     EXPECT_EQ(syncVa, sdiCmd->getAddress());
     EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
     EXPECT_EQ(1u, sdiCmd->getDataDword0());
-
-    alignedFree(alignedPtr);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, InOrderCmdListTests, givenImplicitScalingEnabledWhenAskingForExtensionsThenReturnSyncDispatchExtension) {

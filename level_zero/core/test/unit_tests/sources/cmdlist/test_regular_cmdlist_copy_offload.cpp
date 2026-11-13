@@ -1538,7 +1538,8 @@ HWTEST2_F(RegularCmdListCopyOffloadTests, givenScratchAllocationFailureWhenExecu
     cmdList->scratchAddressPatchingEnabled = true;
     ASSERT_EQ(ZE_RESULT_SUCCESS, cmdList->close());
 
-    void *surfaceStateHeap = alignedMalloc(MemoryConstants::pageSize64k, MemoryConstants::pageSize);
+    auto surfaceStateHeapStorage = allocateAlignedMemory(MemoryConstants::pageSize64k, MemoryConstants::pageSize);
+    auto surfaceStateHeap = surfaceStateHeapStorage.get();
     NEO::GraphicsAllocation sshAllocation(0, 1u /*num gmms*/, NEO::AllocationType::buffer, surfaceStateHeap, 0u, 0u, MemoryConstants::pageSize64k, MemoryPool::system4KBPages, 1u);
     cmdList->getCmdContainer().getSshAllocations().push_back(&sshAllocation);
     ASSERT_NE(nullptr, getCopyOffloadCmdList(*cmdList));
@@ -1570,7 +1571,6 @@ HWTEST2_F(RegularCmdListCopyOffloadTests, givenScratchAllocationFailureWhenExecu
     EXPECT_LT(copyOffloadTaskCountAfterFailure, copyOffloadCsr->peekTaskCount());
 
     cmdList->getCmdContainer().getSshAllocations().clear();
-    alignedFree(surfaceStateHeap);
 }
 
 } // namespace ult

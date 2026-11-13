@@ -1720,13 +1720,11 @@ HWTEST_F(StagingBuffersFixture, givenAppendMemoryCopyWithStagingAndNonUsmDstThen
     cmdList.cmdQImmediate = queue.get();
     cmdList.initialize(device, NEO::EngineGroupType::compute, 0u);
 
-    auto src = alignedMalloc(size, MemoryConstants::cacheLineSize);
-    auto dst = alignedMalloc(size, MemoryConstants::cacheLineSize);
+    size_t src[size] = {};
+    size_t dst[size] = {};
     auto res = cmdList.appendMemoryCopy(&dst, &src, size, nullptr, 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_FALSE(cmdList.getCsr(false)->getInternalAllocationStorage()->getTemporaryAllocations().peekIsEmpty());
-    alignedFree(src);
-    alignedFree(dst);
 }
 
 HWTEST_F(StagingBuffersFixture, givenAppendMemoryCopyWithStagingThenDontImportAllocation) {
@@ -2183,15 +2181,14 @@ HWTEST_F(StagingBuffersFixture, givenAppendMemoryCopyWithImportedDstAllocationTh
     cmdList.cmdQImmediate = queue.get();
     cmdList.initialize(device, NEO::EngineGroupType::compute, 0u);
 
-    auto dst = alignedMalloc(size, MemoryConstants::cacheLineSize);
+    auto dst = reinterpret_cast<void *>(0x100000);
     EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->importExternalPointer(dst, size));
     auto res = cmdList.appendMemoryCopy(dst, usmDevice, size, nullptr, 0, nullptr, copyParams);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(1u, cmdList.appendMemoryCopyKernelWithGACalledCount);
     EXPECT_TRUE(cmdList.getCsr(false)->getInternalAllocationStorage()->getTemporaryAllocations().peekIsEmpty());
 
     driverHandle->releaseImportedPointer(dst);
-    alignedFree(dst);
 }
 
 HWTEST_F(StagingBuffersFixture, givenAppendMemoryCopyWithImportedAllocationThenDontUseStaging) {
@@ -2202,7 +2199,7 @@ HWTEST_F(StagingBuffersFixture, givenAppendMemoryCopyWithImportedAllocationThenD
     size_t src[size] = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->importExternalPointer(&src, size));
     auto res = cmdList.appendMemoryCopy(usmDevice, &src, size, nullptr, 0, nullptr, copyParams);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_TRUE(cmdList.getCsr(false)->getInternalAllocationStorage()->getTemporaryAllocations().peekIsEmpty());
 
     driverHandle->releaseImportedPointer(src);
@@ -2477,12 +2474,11 @@ HWTEST2_F(StagingImageBuffersFixture, givenAppendImageCopyFromMemoryWithNonUsmPt
     imageHw->initialize(device, &imgDesc);
 
     ze_image_region_t region = {0, 0, 0, 8, 4, 1};
-    auto hostBuf = alignedMalloc(size, MemoryConstants::cacheLineSize);
+    auto hostBufStorage = allocateAlignedMemory(size, MemoryConstants::cacheLineSize);
+    auto hostBuf = hostBufStorage.get();
     auto res = cmdList.appendImageCopyFromMemory(imageHw->toHandle(), hostBuf, &region, nullptr, 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(1u, cmdList.appendStagingImageTransferCalledCount);
-
-    alignedFree(hostBuf);
 }
 
 HWTEST2_F(StagingImageBuffersFixture, givenAppendImageCopyToMemoryWithNonUsmPtrThenStagingUsed, ImageStagingSupport) {
@@ -2500,12 +2496,11 @@ HWTEST2_F(StagingImageBuffersFixture, givenAppendImageCopyToMemoryWithNonUsmPtrT
     imageHw->initialize(device, &imgDesc);
 
     ze_image_region_t region = {0, 0, 0, 8, 4, 1};
-    auto hostBuf = alignedMalloc(size, MemoryConstants::cacheLineSize);
+    auto hostBufStorage = allocateAlignedMemory(size, MemoryConstants::cacheLineSize);
+    auto hostBuf = hostBufStorage.get();
     auto res = cmdList.appendImageCopyToMemory(hostBuf, imageHw->toHandle(), &region, nullptr, 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(1u, cmdList.appendStagingImageTransferCalledCount);
-
-    alignedFree(hostBuf);
 }
 
 HWTEST2_F(StagingImageBuffersFixture, givenSharedSystemAllowedAndInOrderCmdListWithPendingWorkWhenAppendImageCopyFromMemoryThenStagingNotUsed, ImageStagingSupport) {
@@ -2530,12 +2525,10 @@ HWTEST2_F(StagingImageBuffersFixture, givenSharedSystemAllowedAndInOrderCmdListW
     imageHw->initialize(device, &imgDesc);
 
     ze_image_region_t region = {0, 0, 0, 8, 4, 1};
-    auto hostBuf = alignedMalloc(size, MemoryConstants::cacheLineSize);
+    auto hostBuf = reinterpret_cast<void *>(0x100000);
     auto res = cmdList.appendImageCopyFromMemory(imageHw->toHandle(), hostBuf, &region, nullptr, 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(0u, cmdList.appendStagingImageTransferCalledCount);
-
-    alignedFree(hostBuf);
 }
 
 struct StagingImageBuffersExternalDependencyFixture : public StagingHostSignaledEventFixture<StagingImageBuffersFixture> {
@@ -2617,12 +2610,11 @@ HWTEST2_F(StagingImageBuffersFixture, givenSharedSystemNotAllowedAndInOrderCmdLi
     imageHw->initialize(device, &imgDesc);
 
     ze_image_region_t region = {0, 0, 0, 8, 4, 1};
-    auto hostBuf = alignedMalloc(size, MemoryConstants::cacheLineSize);
+    auto hostBufStorage = allocateAlignedMemory(size, MemoryConstants::cacheLineSize);
+    auto hostBuf = hostBufStorage.get();
     auto res = cmdList.appendImageCopyFromMemory(imageHw->toHandle(), hostBuf, &region, nullptr, 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(1u, cmdList.appendStagingImageTransferCalledCount);
-
-    alignedFree(hostBuf);
 }
 
 HWTEST2_F(StagingImageBuffersFixture, givenSharedSystemAllowedAndInOrderCmdListWithCompletedWorkWhenAppendImageCopyFromMemoryThenStagingUsed, ImageStagingSupport) {
@@ -2647,12 +2639,11 @@ HWTEST2_F(StagingImageBuffersFixture, givenSharedSystemAllowedAndInOrderCmdListW
     imageHw->initialize(device, &imgDesc);
 
     ze_image_region_t region = {0, 0, 0, 8, 4, 1};
-    auto hostBuf = alignedMalloc(size, MemoryConstants::cacheLineSize);
+    auto hostBufStorage = allocateAlignedMemory(size, MemoryConstants::cacheLineSize);
+    auto hostBuf = hostBufStorage.get();
     auto res = cmdList.appendImageCopyFromMemory(imageHw->toHandle(), hostBuf, &region, nullptr, 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(1u, cmdList.appendStagingImageTransferCalledCount);
-
-    alignedFree(hostBuf);
 }
 
 HWTEST2_F(StagingImageBuffersFixture, givenSharedSystemAllowedAndCmdListWithDependenciesPresentWhenAppendImageCopyFromMemoryThenStagingNotUsed, ImageStagingSupport) {
@@ -2675,12 +2666,10 @@ HWTEST2_F(StagingImageBuffersFixture, givenSharedSystemAllowedAndCmdListWithDepe
     imageHw->initialize(device, &imgDesc);
 
     ze_image_region_t region = {0, 0, 0, 8, 4, 1};
-    auto hostBuf = alignedMalloc(size, MemoryConstants::cacheLineSize);
+    auto hostBuf = reinterpret_cast<void *>(0x100000);
     auto res = cmdList.appendImageCopyFromMemory(imageHw->toHandle(), hostBuf, &region, nullptr, 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(0u, cmdList.appendStagingImageTransferCalledCount);
-
-    alignedFree(hostBuf);
 }
 
 HWTEST2_F(StagingImageBuffersFixture, givenSharedSystemNotAllowedAndCmdListWithDependenciesPresentWhenAppendImageCopyFromMemoryThenStagingUsed, ImageStagingSupport) {
@@ -2703,12 +2692,11 @@ HWTEST2_F(StagingImageBuffersFixture, givenSharedSystemNotAllowedAndCmdListWithD
     imageHw->initialize(device, &imgDesc);
 
     ze_image_region_t region = {0, 0, 0, 8, 4, 1};
-    auto hostBuf = alignedMalloc(size, MemoryConstants::cacheLineSize);
+    auto hostBufStorage = allocateAlignedMemory(size, MemoryConstants::cacheLineSize);
+    auto hostBuf = hostBufStorage.get();
     auto res = cmdList.appendImageCopyFromMemory(imageHw->toHandle(), hostBuf, &region, nullptr, 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(1u, cmdList.appendStagingImageTransferCalledCount);
-
-    alignedFree(hostBuf);
 }
 
 HWTEST2_F(StagingImageBuffersFixture, givenStagingCopiesNotAllowedWhenAppendImageCopyFromMemoryThenStagingNotUsed, ImageStagingSupport) {
@@ -2727,12 +2715,10 @@ HWTEST2_F(StagingImageBuffersFixture, givenStagingCopiesNotAllowedWhenAppendImag
     imageHw->initialize(device, &imgDesc);
 
     ze_image_region_t region = {0, 0, 0, 8, 4, 1};
-    auto hostBuf = alignedMalloc(size, MemoryConstants::cacheLineSize);
+    auto hostBuf = reinterpret_cast<void *>(0x100000);
     auto res = cmdList.appendImageCopyFromMemory(imageHw->toHandle(), hostBuf, &region, nullptr, 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(0u, cmdList.appendStagingImageTransferCalledCount);
-
-    alignedFree(hostBuf);
 }
 
 HWTEST2_F(StagingImageBuffersFixture, givenStagingCopiesNotAllowedWhenAppendImageCopyToMemoryThenStagingNotUsed, ImageStagingSupport) {
@@ -2751,12 +2737,10 @@ HWTEST2_F(StagingImageBuffersFixture, givenStagingCopiesNotAllowedWhenAppendImag
     imageHw->initialize(device, &imgDesc);
 
     ze_image_region_t region = {0, 0, 0, 8, 4, 1};
-    auto hostBuf = alignedMalloc(size, MemoryConstants::cacheLineSize);
+    auto hostBuf = reinterpret_cast<void *>(0x100000);
     auto res = cmdList.appendImageCopyToMemory(hostBuf, imageHw->toHandle(), &region, nullptr, 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(0u, cmdList.appendStagingImageTransferCalledCount);
-
-    alignedFree(hostBuf);
 }
 
 HWTEST2_F(StagingImageBuffersFixture, givenAppendImageCopyFromMemoryExtWithNonUsmPtrThenStagingUsed, ImageStagingSupport) {
@@ -2774,12 +2758,11 @@ HWTEST2_F(StagingImageBuffersFixture, givenAppendImageCopyFromMemoryExtWithNonUs
     imageHw->initialize(device, &imgDesc);
 
     ze_image_region_t region = {0, 0, 0, 8, 4, 1};
-    auto hostBuf = alignedMalloc(size, MemoryConstants::cacheLineSize);
+    auto hostBufStorage = allocateAlignedMemory(size, MemoryConstants::cacheLineSize);
+    auto hostBuf = hostBufStorage.get();
     auto res = cmdList.appendImageCopyFromMemoryExt(imageHw->toHandle(), hostBuf, &region, 0, 0, nullptr, 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(1u, cmdList.appendStagingImageTransferCalledCount);
-
-    alignedFree(hostBuf);
 }
 
 HWTEST2_F(StagingImageBuffersFixture, givenAppendImageCopyToMemoryExtWithNonUsmPtrThenStagingUsed, ImageStagingSupport) {
@@ -2797,12 +2780,11 @@ HWTEST2_F(StagingImageBuffersFixture, givenAppendImageCopyToMemoryExtWithNonUsmP
     imageHw->initialize(device, &imgDesc);
 
     ze_image_region_t region = {0, 0, 0, 8, 4, 1};
-    auto hostBuf = alignedMalloc(size, MemoryConstants::cacheLineSize);
+    auto hostBufStorage = allocateAlignedMemory(size, MemoryConstants::cacheLineSize);
+    auto hostBuf = hostBufStorage.get();
     auto res = cmdList.appendImageCopyToMemoryExt(hostBuf, imageHw->toHandle(), &region, 0, 0, nullptr, 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(1u, cmdList.appendStagingImageTransferCalledCount);
-
-    alignedFree(hostBuf);
 }
 
 HWTEST2_F(StagingImageBuffersFixture, givenAppendImageCopyFromMemoryWithNullRegionAndNonUsmPtrThenStagingUsed, ImageStagingSupport) {
@@ -2819,12 +2801,11 @@ HWTEST2_F(StagingImageBuffersFixture, givenAppendImageCopyFromMemoryWithNullRegi
     auto imageHw = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
     imageHw->initialize(device, &imgDesc);
 
-    auto hostBuf = alignedMalloc(size, MemoryConstants::cacheLineSize);
+    auto hostBufStorage = allocateAlignedMemory(size, MemoryConstants::cacheLineSize);
+    auto hostBuf = hostBufStorage.get();
     auto res = cmdList.appendImageCopyFromMemory(imageHw->toHandle(), hostBuf, nullptr, nullptr, 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(1u, cmdList.appendStagingImageTransferCalledCount);
-
-    alignedFree(hostBuf);
 }
 
 HWTEST2_F(StagingImageBuffersFixture, givenAppendImageCopyFromMemoryWithoutStagingEnabledThenStagingNotUsed, ImageStagingSupport) {
@@ -2907,7 +2888,8 @@ HWTEST2_F(StagingImageBuffersFixture, givenInterruptModeEventAndMultiChunkStagin
 
     ze_image_region_t region = {0, 0, 0, 256, 16, 2};
     constexpr size_t hostBufSize = 256 * 16 * 2 * 4;
-    auto hostBuf = alignedMalloc(hostBufSize, MemoryConstants::cacheLineSize);
+    auto hostBufStorage = allocateAlignedMemory(hostBufSize, MemoryConstants::cacheLineSize);
+    auto hostBuf = hostBufStorage.get();
 
     auto offset = cmdStream->getUsed();
     auto res = cmdList.appendImageCopyFromMemory(imageHw->toHandle(), hostBuf, &region, event->toHandle(), 0, nullptr, copyParams);
@@ -2918,8 +2900,6 @@ HWTEST2_F(StagingImageBuffersFixture, givenInterruptModeEventAndMultiChunkStagin
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(parsedCmdList, ptrOffset(cmdStream->getCpuBase(), offset), cmdStream->getUsed() - offset));
     auto userInterruptCmds = findAll<MI_USER_INTERRUPT *>(parsedCmdList.begin(), parsedCmdList.end());
     EXPECT_EQ(1u, userInterruptCmds.size());
-
-    alignedFree(hostBuf);
 }
 
 HWTEST2_F(StagingImageBuffersFixture, givenSignalWithUserInterruptTimestampEventAndMultiChunkStagingImageTransferThenEncodeUserInterruptIsProgrammed, ImageStagingBaseSupport) {
@@ -2956,7 +2936,8 @@ HWTEST2_F(StagingImageBuffersFixture, givenSignalWithUserInterruptTimestampEvent
 
     ze_image_region_t region = {0, 0, 0, 256, 16, 2};
     constexpr size_t hostBufSize = 256 * 16 * 2 * 4;
-    auto hostBuf = alignedMalloc(hostBufSize, MemoryConstants::cacheLineSize);
+    auto hostBufStorage = allocateAlignedMemory(hostBufSize, MemoryConstants::cacheLineSize);
+    auto hostBuf = hostBufStorage.get();
 
     auto offset = cmdStream->getUsed();
     auto res = cmdList.appendImageCopyFromMemory(imageHw->toHandle(), hostBuf, &region, event->toHandle(), 0, nullptr, copyParams);
@@ -2967,8 +2948,6 @@ HWTEST2_F(StagingImageBuffersFixture, givenSignalWithUserInterruptTimestampEvent
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(parsedCmdList, ptrOffset(cmdStream->getCpuBase(), offset), cmdStream->getUsed() - offset));
     auto userInterruptCmds = findAll<MI_USER_INTERRUPT *>(parsedCmdList.begin(), parsedCmdList.end());
     EXPECT_EQ(1u, userInterruptCmds.size());
-
-    alignedFree(hostBuf);
 }
 
 HWTEST2_F(StagingImageBuffersFixture, givenOOQCmdListAndCounterBasedEventWhenMultiChunkStagingImageTransferThenInvalidArgumentReturned, ImageStagingBaseSupport) {
@@ -3050,7 +3029,8 @@ HWTEST2_F(StagingImageBuffersFixture, givenAggregatedEventAndMultiChunkStagingIm
 
     ze_image_region_t region = {0, 0, 0, 256, 16, 2};
     constexpr size_t hostBufSize = 256 * 16 * 2 * 4;
-    auto hostBuf = alignedMalloc(hostBufSize, MemoryConstants::cacheLineSize);
+    auto hostBufStorage = allocateAlignedMemory(hostBufSize, MemoryConstants::cacheLineSize);
+    auto hostBuf = hostBufStorage.get();
 
     auto cmdStream = cmdList.getCmdContainer().getCommandStream();
     auto offset = cmdStream->getUsed();
@@ -3062,8 +3042,6 @@ HWTEST2_F(StagingImageBuffersFixture, givenAggregatedEventAndMultiChunkStagingIm
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(parsedCmdList, ptrOffset(cmdStream->getCpuBase(), offset), cmdStream->getUsed() - offset));
     auto miAtomics = findAll<MI_ATOMIC *>(parsedCmdList.begin(), parsedCmdList.end());
     EXPECT_EQ(1u, miAtomics.size());
-
-    alignedFree(hostBuf);
 }
 
 HWTEST2_F(StagingImageBuffersFixture, givenCustomSlicePitchWhenResolveImagePitchesAndBufferSizeCalledThenCustomSlicePitchIsReturned, ImageStagingSupport) {
@@ -3116,12 +3094,11 @@ HWTEST2_F(StagingImageBuffersFixture, givenNullSrcRegionWhenAppendImageCopyToMem
     auto imageHw = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
     imageHw->initialize(device, &imgDesc);
 
-    auto hostBuf = alignedMalloc(size, MemoryConstants::cacheLineSize);
+    auto hostBufStorage = allocateAlignedMemory(size, MemoryConstants::cacheLineSize);
+    auto hostBuf = hostBufStorage.get();
     auto res = cmdList.appendImageCopyToMemoryExt(hostBuf, imageHw->toHandle(), nullptr, 0, 0, nullptr, 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(1u, cmdList.appendStagingImageTransferCalledCount);
-
-    alignedFree(hostBuf);
 }
 
 HWTEST2_F(StagingImageBuffersFixture, givenMimickedImageWhenAppendImageCopyToMemoryWithStagingThenHostMemoryOutsideOfRegionIsNotModified, ImageStagingSupport) {
@@ -3143,7 +3120,8 @@ HWTEST2_F(StagingImageBuffersFixture, givenMimickedImageWhenAppendImageCopyToMem
     constexpr size_t hostRegionSize = 8 * 4 * 3;
     constexpr size_t guardSize = 64;
     constexpr uint8_t guardPattern = 0xCD;
-    auto hostBuf = static_cast<uint8_t *>(alignedMalloc(hostRegionSize + guardSize, MemoryConstants::cacheLineSize));
+    auto hostBufStorage = allocateAlignedMemory(hostRegionSize + guardSize, MemoryConstants::cacheLineSize);
+    auto hostBuf = static_cast<uint8_t *>(hostBufStorage.get());
     memset(hostBuf + hostRegionSize, guardPattern, guardSize);
 
     ze_image_region_t region = {0, 0, 0, 8, 4, 1};
@@ -3154,8 +3132,6 @@ HWTEST2_F(StagingImageBuffersFixture, givenMimickedImageWhenAppendImageCopyToMem
     for (size_t i = 0; i < guardSize; i++) {
         EXPECT_EQ(guardPattern, hostBuf[hostRegionSize + i]);
     }
-
-    alignedFree(hostBuf);
 }
 
 HWTEST2_F(StagingImageBuffersFixture, givenMipMappedImageAndDualStreamCopyOffloadWhenAppendImageCopyToMemoryWithStagingThenStagingWaitsOnComputeCsr, ImageStagingSupport) {
@@ -3186,7 +3162,8 @@ HWTEST2_F(StagingImageBuffersFixture, givenMipMappedImageAndDualStreamCopyOffloa
     copyOffloadUltCsr->waitForTaskCountCalled = false;
 
     ze_image_region_mip_level_exp_desc_t region = {{0, 0, 0, 8, 4, 1}, 0};
-    auto hostBuf = alignedMalloc(size, MemoryConstants::cacheLineSize);
+    auto hostBufStorage = allocateAlignedMemory(size, MemoryConstants::cacheLineSize);
+    auto hostBuf = hostBufStorage.get();
     auto res = cmdList.appendImageCopyToMemory(hostBuf, imageHw->toHandle(), &region, nullptr, 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(1u, cmdList.appendStagingImageTransferCalledCount);
@@ -3195,7 +3172,6 @@ HWTEST2_F(StagingImageBuffersFixture, givenMipMappedImageAndDualStreamCopyOffloa
     EXPECT_FALSE(copyOffloadUltCsr->waitForTaskCountCalled);
 
     cmdList.cmdQImmediateCopyOffload = nullptr;
-    alignedFree(hostBuf);
 }
 
 } // namespace ult
