@@ -468,7 +468,7 @@ ze_result_t ModuleTranslationUnit::buildFromIntermediate(IGC::CodeType::CodeType
     return this->compileGenBinary(inputArgs, CompilationMode::build);
 }
 
-ze_result_t ModuleTranslationUnit::createFromNativeBinary(const char *input, size_t inputSize, const char *internalBuildOptions, const ze_module_constants_t *pConstants) {
+ze_result_t ModuleTranslationUnit::createFromNativeBinary(const char *input, size_t inputSize, const char *internalBuildOptions) {
     UNRECOVERABLE_IF((nullptr == device) || (nullptr == device->getNEODevice()));
     auto productAbbreviation = NEO::hardwarePrefix[device->getNEODevice()->getHardwareInfo().platform.eProductFamily];
 
@@ -524,27 +524,6 @@ ze_result_t ModuleTranslationUnit::createFromNativeBinary(const char *input, siz
             } else {
                 rebuild |= NEO::checkAndReplaceL1CachePolicy(this->options, singleDeviceBinary.generatorFeatureVersions.version,
                                                              rootDeviceEnvironment.getHelper<NEO::CompilerProductHelper>().getCachingPolicyOptions(debuggerActive));
-            }
-        }
-
-        if (pConstants && pConstants->numConstants > 0) {
-            if (this->irBinarySize == 0) {
-                driverHandle->clearErrorDescription();
-                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-            }
-            auto compilerInterface = device->getNEODevice()->getCompilerInterface();
-            if (!compilerInterface) {
-                driverHandle->clearErrorDescription();
-                return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
-            }
-            auto requestedSpecConstantsValues = this->specConstantsValues;
-            if (!this->processSpecConstantInfo(compilerInterface, pConstants, this->irBinary.get(), static_cast<uint32_t>(this->irBinarySize), this->irCodeType, requestedSpecConstantsValues)) {
-                driverHandle->clearErrorDescription();
-                return ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
-            }
-            if (requestedSpecConstantsValues != this->specConstantsValues) {
-                this->specConstantsValues = std::move(requestedSpecConstantsValues);
-                rebuild = true;
             }
         }
 
@@ -1012,7 +991,7 @@ inline ze_result_t ModuleImp::initializeTranslationUnit(const ze_module_desc_t *
             this->isFunctionSymbolExportEnabled = true;
             this->isGlobalSymbolExportEnabled = true;
             this->precompiled = true;
-            return this->translationUnit->createFromNativeBinary(reinterpret_cast<const char *>(desc->pInputModule), desc->inputSize, internalBuildOptions.c_str(), desc->pConstants);
+            return this->translationUnit->createFromNativeBinary(reinterpret_cast<const char *>(desc->pInputModule), desc->inputSize, internalBuildOptions.c_str());
         } else if (desc->format == ZE_MODULE_FORMAT_IL_SPIRV) {
             this->builtFromSpirv = true;
             if (oclExtensionsInternalOptions != nullptr) {
@@ -2129,9 +2108,6 @@ ze_result_t ModulesPackage::initialize(const ze_module_desc_t *desc, NEO::Device
     L0::PNextRange exts{desc->pNext};
     auto moduleProgamExt = exts.get<ze_module_program_exp_desc_t>(ZE_STRUCTURE_TYPE_MODULE_PROGRAM_EXP_DESC);
     if (nullptr == moduleProgamExt) {
-        if (desc->pConstants && desc->pConstants->numConstants > 0) {
-            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-        }
         // native modules package binary
         std::string decodeWarings;
         std::string decodeErrors;
@@ -2151,6 +2127,10 @@ ze_result_t ModulesPackage::initialize(const ze_module_desc_t *desc, NEO::Device
         }
         this->setNativeBinary(std::span(desc->pInputModule, desc->inputSize));
     } else {
+        if (ZE_MODULE_FORMAT_NATIVE == desc->format && moduleProgamExt->pConstants) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+
         for (decltype(moduleProgamExt->count) i = 0, e = moduleProgamExt->count; i != e; ++i) {
             auto baseDesc = *desc;
             baseDesc.pBuildFlags = nullptr;

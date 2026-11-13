@@ -88,7 +88,7 @@ struct ModuleTranslationUnit {
                                          const std::vector<const ze_module_constants_t *> &specConstants,
                                          const std::vector<const char *> &inputLlvmBcs,
                                          const std::vector<uint32_t> &inputLlvmBcSizes);
-    MOCKABLE_VIRTUAL ze_result_t createFromNativeBinary(const char *input, size_t inputSize, const char *internalBuildOptions, const ze_module_constants_t *pConstants);
+    MOCKABLE_VIRTUAL ze_result_t createFromNativeBinary(const char *input, size_t inputSize, const char *internalBuildOptions);
     MOCKABLE_VIRTUAL ze_result_t processUnpackedBinary();
     std::vector<uint8_t> generateElfFromSpirV(const std::vector<const char *> &inputSpirVs,
                                               const std::vector<uint32_t> &inputModuleSizes);
