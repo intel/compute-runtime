@@ -951,10 +951,12 @@ bool DebugSessionLinuxXe::handleVmBindUpstream(VmBindData &vmBindData) {
                 if (&entry == &vmBindData.vmBindOpDebugDataVec.back() && connection->isaMap[tileIndex][entry.addr]->validVMs.size() == 1) {
 
                     // send module load event
+                    auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
+                    auto loadAddress = gmmHelper->canonize(*std::min_element(module.loadAddresses[tileIndex].begin(), module.loadAddresses[tileIndex].end()));
                     zet_debug_event_t debugEvent = {};
                     debugEvent.type = ZET_DEBUG_EVENT_TYPE_MODULE_LOAD;
                     debugEvent.info.module.format = ZET_MODULE_DEBUG_INFO_FORMAT_ELF_DWARF;
-                    debugEvent.info.module.load = entry.addr;
+                    debugEvent.info.module.load = loadAddress;
                     auto &elfEntry = connection->elfInfoMap[elfHandle];
                     debugEvent.info.module.moduleBegin = reinterpret_cast<uint64_t>(elfEntry.elfData.get());
                     debugEvent.info.module.moduleEnd = reinterpret_cast<uint64_t>(elfEntry.elfData.get()) + elfEntry.elfSize;
