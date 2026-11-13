@@ -1021,6 +1021,45 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenAggregatedSignalEventWhenPerformCpuMem
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, cmdList.performCpuMemcpy(cpuMemCopyInfo, eventHandle, 0, nullptr));
 }
 
+HWTEST_F(AppendMemoryLockedCopyTest, givenAggregatedWaitEventWhenPreferCopyThroughLockPointerCalledThenReturnTrueOnlyWhenEventIsCompleted) {
+    allocateDeviceBuffer();
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.cmdQImmediate = queue.get();
+    cmdList.copyThroughLockedPtrEnabled = true;
+    cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    constexpr size_t copySize = 4;
+    CpuMemCopyInfo hostToDeviceCopyInfo(devicePtr, nonUsmHostPtr, copySize);
+    CpuMemCopyInfo deviceToHostCopyInfo(nonUsmHostPtr, devicePtr, copySize);
+    cmdList.obtainAllocData(hostToDeviceCopyInfo, false);
+    cmdList.obtainAllocData(deviceToHostCopyInfo, false);
+
+    ze_event_counter_based_external_aggregate_storage_desc_t externalStorageDesc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_EXTERNAL_AGGREGATE_STORAGE_DESC};
+    externalStorageDesc.deviceAddress = reinterpret_cast<uint64_t *>(ptrOffset(devicePtr, cpuCopyThresholdOverride));
+    externalStorageDesc.incrementValue = 1;
+    externalStorageDesc.completionValue = 3;
+    ze_event_counter_based_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC};
+    eventDesc.flags = ZE_EVENT_COUNTER_BASED_FLAG_IMMEDIATE;
+    eventDesc.pNext = &externalStorageDesc;
+    ze_event_handle_t eventHandle = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, Event::counterBasedCreate(context->toHandle(), device->toHandle(), &eventDesc, &eventHandle));
+    std::unique_ptr<L0::Event> eventObject(L0::Event::fromHandle(eventHandle));
+    ASSERT_TRUE(Event::isAggregatedEvent(eventObject.get()));
+
+    auto aggregatedCounter = eventObject->getInOrderExecEventHelper().getBaseHostCpuAddress();
+    ASSERT_NE(nullptr, aggregatedCounter);
+
+    *aggregatedCounter = externalStorageDesc.completionValue - externalStorageDesc.incrementValue;
+    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(hostToDeviceCopyInfo, nullptr, 1, &eventHandle));
+    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(deviceToHostCopyInfo, nullptr, 1, &eventHandle));
+
+    *aggregatedCounter = externalStorageDesc.completionValue;
+    EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(hostToDeviceCopyInfo, nullptr, 1, &eventHandle));
+    EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(deviceToHostCopyInfo, nullptr, 1, &eventHandle));
+}
+
 HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenGetTransferTypeThenReturnCorrectValue) {
     allocateHostBuffer();
     allocateDeviceBuffer();

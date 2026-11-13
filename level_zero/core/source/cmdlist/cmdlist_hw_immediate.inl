@@ -2056,6 +2056,10 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::preferCopyThroughLockedPtr(C
         if (waitEvent->isCounterBased() && waitEventHelper.isDataAssigned() && waitEventHelper.getBaseHostCpuAddress() == nullptr) {
             return false;
         }
+        // producers of an aggregated event may not be submitted yet, so a host wait for it could never finish
+        if (Event::isAggregatedEvent(waitEvent) && waitEvent->queryStatus(0) != ZE_RESULT_SUCCESS) {
+            return false;
+        }
     }
 
     const TransferType transferType = getTransferType(cpuMemCopyInfo);
