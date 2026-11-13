@@ -3524,32 +3524,10 @@ TEST_F(IoctlHelperXeTest, givenPageFaultSupportIsSetWhenCallingIsPageFaultSuppor
     }
 }
 
-TEST_F(IoctlHelperXeTest, givenKmdSupportingFaultModeVmWhenCheckingDebugAttachThenItIsAvailable) {
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    auto drm = DrmMockXePageFault::create(*executionEnvironment->rootDeviceEnvironments[0]);
-    drm->supportsRecoverablePageFault = true;
-    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(*drm);
-    xeIoctlHelper->initialize();
-
-    EXPECT_TRUE(xeIoctlHelper->isDebugAttachAvailable());
-}
-
-TEST_F(IoctlHelperXeTest, givenKmdRejectingFaultModeVmWhenCheckingDebugAttachThenItIsNotAvailable) {
+TEST_F(IoctlHelperXeTest, givenXeIoctlHelperWhenCheckingDebugAttachThenItIsAvailableWithoutProbingFaultModeVmSupport) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXePageFault::create(*executionEnvironment->rootDeviceEnvironments[0]);
     drm->supportsRecoverablePageFault = false;
-    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(*drm);
-    xeIoctlHelper->initialize();
-
-    EXPECT_FALSE(xeIoctlHelper->isDebugAttachAvailable());
-}
-
-TEST_F(IoctlHelperXeTest, givenRecoverablePageFaultsDisabledAndKmdSupportingFaultModeVmWhenCheckingDebugAttachThenItIsAvailable) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnableRecoverablePageFaults.set(0);
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    auto drm = DrmMockXePageFault::create(*executionEnvironment->rootDeviceEnvironments[0]);
-    drm->supportsRecoverablePageFault = true;
     auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(*drm);
     xeIoctlHelper->initialize();
 

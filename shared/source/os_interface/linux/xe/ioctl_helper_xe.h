@@ -225,8 +225,6 @@ class IoctlHelperXe : public IoctlHelper {
     std::mutex gemCloseLock;
     mutable std::once_flag checkDeferBackingOnce;
     mutable bool deferBackingSupported = false;
-    std::once_flag checkFaultModeVmSupportOnce;
-    bool faultModeVmSupported = false;
     mutable std::once_flag checkVmBindDecompressOnce;
     mutable bool vmBindDecompressAvailable = false;
     std::vector<BindInfo> bindInfo;

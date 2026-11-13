@@ -1449,10 +1449,7 @@ int IoctlHelperXe::setContextDebugFlag(uint32_t drmContextId) {
 }
 
 bool IoctlHelperXe::isDebugAttachAvailable() {
-    std::call_once(checkFaultModeVmSupportOnce, [this]() {
-        faultModeVmSupported = isPageFaultSupported();
-    });
-    return faultModeVmSupported;
+    return true;
 }
 
 int IoctlHelperXe::getDrmParamValue(DrmParam drmParam) const {
