@@ -1140,38 +1140,6 @@ TEST_F(SVMLocalMemoryAllocatorTest, givenFabricAccessibleIpcHandleRequestedWhenR
     svmManager->cleanupUSMAllocCaches();
 }
 
-TEST_F(SVMLocalMemoryAllocatorTest, givenFabricAccessibleIpcHandleRequestedWhenCachedHostAllocationNotInSvmAllocsThenPropertyIsNotSet) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.ExperimentalEnableHostAllocationCache.set(1);
-
-    std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 2));
-    auto device = deviceFactory->rootDevices[0];
-    auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager());
-    device->usmReuseInfo.init(1 * MemoryConstants::gigaByte, UsmReuseInfo::notLimited);
-    svmManager->initUsmAllocationsCaches(*device);
-    ASSERT_NE(nullptr, svmManager->usmHostAllocationsCache);
-
-    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
-    auto cachedPtr = svmManager->createHostUnifiedMemoryAllocation(4096, unifiedMemoryProperties);
-    ASSERT_NE(nullptr, cachedPtr);
-    svmManager->freeSVMAlloc(cachedPtr);
-    ASSERT_EQ(1u, svmManager->usmHostAllocationsCache->allocations.size());
-
-    // Replace the cached allocation pointer with one not tracked in svmAllocs so that
-    // getSVMAlloc returns null, exercising the defensive null check at the decision point.
-    void *unmappedPtr = reinterpret_cast<void *>(uintptr_t(1));
-    svmManager->usmHostAllocationsCache->allocations[0].allocation = unmappedPtr;
-
-    unifiedMemoryProperties.ipcHandleTypeFlags = NEO::unifiedMemoryPropertiesIpcHandleTypeFlagFabricAccessible;
-    auto ptr = svmManager->createHostUnifiedMemoryAllocation(4096, unifiedMemoryProperties);
-    EXPECT_EQ(unmappedPtr, ptr);
-    EXPECT_EQ(nullptr, svmManager->getSVMAlloc(unmappedPtr));
-    EXPECT_EQ(0u, svmManager->usmHostAllocationsCache->allocations.size());
-
-    svmManager->freeSVMAlloc(cachedPtr);
-    svmManager->cleanupUSMAllocCaches();
-}
-
 TEST_F(SVMLocalMemoryAllocatorTest, givenFabricAccessibleIpcHandleRequestedWhenReusingCachedDeviceAllocationThenPropertyIsSetOnSvmData) {
     DebugManagerStateRestore restore;
     debugManager.flags.ExperimentalEnableDeviceAllocationCache.set(1);

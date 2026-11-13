@@ -233,6 +233,7 @@ void *SVMAllocsManager::SvmAllocationCache::get(size_t size, const UnifiedMemory
                                    .isSuccess = true});
             }
             allocationIter->svmData->size = size;
+            allocationIter->svmData->ipcHandleTypeFlags = unifiedMemoryProperties.ipcHandleTypeFlags;
             allocationIter->svmData->isSavedForReuse = false;
             allocationIter->svmData->gpuAllocations.getDefaultGraphicsAllocation()->setAubWritable(true, std::numeric_limits<uint32_t>::max());
             allocationIter->svmData->gpuAllocations.getDefaultGraphicsAllocation()->setTbxWritable(true, std::numeric_limits<uint32_t>::max());
@@ -572,12 +573,6 @@ void *SVMAllocsManager::createHostUnifiedMemoryAllocation(size_t size,
     if (this->usmHostAllocationsCache) {
         void *allocationFromCache = this->usmHostAllocationsCache->get(size, memoryProperties, numaRootDeviceIndex);
         if (allocationFromCache) {
-            if (memoryProperties.ipcHandleTypeFlags & NEO::unifiedMemoryPropertiesIpcHandleTypeFlagFabricAccessible) {
-                auto svmData = getSVMAlloc(allocationFromCache);
-                if (svmData) {
-                    svmData->ipcHandleTypeFlags |= NEO::unifiedMemoryPropertiesIpcHandleTypeFlagFabricAccessible;
-                }
-            }
             return allocationFromCache;
         }
     }
@@ -660,12 +655,6 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
             false == memoryProperties.isInternalAllocation) {
             void *allocationFromCache = this->usmDeviceAllocationsCache->get(size, memoryProperties);
             if (allocationFromCache) {
-                if (memoryProperties.ipcHandleTypeFlags & NEO::unifiedMemoryPropertiesIpcHandleTypeFlagFabricAccessible) {
-                    auto svmData = getSVMAlloc(allocationFromCache);
-                    if (svmData) {
-                        svmData->ipcHandleTypeFlags |= NEO::unifiedMemoryPropertiesIpcHandleTypeFlagFabricAccessible;
-                    }
-                }
                 return allocationFromCache;
             }
             if (memoryProperties.device->shouldLimitAllocationsReuse(alignedSize)) {

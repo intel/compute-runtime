@@ -523,6 +523,38 @@ TEST_F(SingleDeviceReuseWithoutPoolingTest, givenIpcExportedHostAllocationWhenFr
     EXPECT_TRUE(svmAllocsManager->usmHostAllocationsCache->allocations.empty());
 }
 
+TEST_F(SingleDeviceReuseWithoutPoolingTest, givenCachedExportableDeviceAllocationWithoutIpcHandleTypeWhenReusedForIpcHandleTypeRequestThenGetIpcMemHandleSucceeds) {
+    constexpr size_t size = MemoryConstants::pageSize;
+    auto device = driverHandle->devices[0];
+    context->settings.enableIpcHandleSharingByDefault = false;
+
+    ze_external_memory_export_desc_t exportDesc = {ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_DESC};
+    exportDesc.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
+    ze_device_mem_alloc_desc_t exportDeviceDesc = {ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
+    exportDeviceDesc.pNext = &exportDesc;
+
+    void *cachedPtr = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device->toHandle(), &exportDeviceDesc, size, 0u, &cachedPtr));
+    ASSERT_NE(nullptr, cachedPtr);
+    auto cachedAllocData = svmAllocsManager->getSVMAlloc(cachedPtr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->freeMem(cachedPtr));
+    ASSERT_EQ(1u, svmAllocsManager->usmDeviceAllocationsCache->allocations.size());
+
+    ze_ipc_mem_handle_type_ext_desc_t ipcHandleTypeDesc = {ZE_STRUCTURE_TYPE_IPC_MEM_HANDLE_TYPE_EXT_DESC};
+    ipcHandleTypeDesc.typeFlags = ZE_IPC_MEM_HANDLE_TYPE_FLAG_DEFAULT;
+    ze_device_mem_alloc_desc_t ipcDeviceDesc = {ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
+    ipcDeviceDesc.pNext = &ipcHandleTypeDesc;
+
+    void *ptr = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device->toHandle(), &ipcDeviceDesc, size, 0u, &ptr));
+    ASSERT_EQ(cachedAllocData, svmAllocsManager->getSVMAlloc(ptr));
+
+    ze_ipc_mem_handle_t ipcHandle = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->getIpcMemHandle(ptr, nullptr, &ipcHandle));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+}
+
 struct SingleDeviceWithPoolingTest : public UsmReuseMemoryTest<2, 8, 1> {
     void SetUp() override {
         NEO::debugManager.flags.EnableHostUsmAllocationPool.set(1);
