@@ -361,7 +361,7 @@ TEST_F(CloneKernelTest, givenArgSamplerWhenCloningKernelThenKernelInfoIsCorrect)
 }
 
 TEST_F(CloneKernelTest, givenArgSvmWhenCloningKernelThenKernelInfoIsCorrect) {
-    char svmPtr[256] = {};
+    auto svmPtr = reinterpret_cast<void *>(0x1000);
 
     pKernelInfo->addArgBuffer(0, 0x20, sizeof(void *));
 

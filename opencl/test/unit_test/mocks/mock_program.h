@@ -11,6 +11,7 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/utilities/shared_pool_allocation.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include "opencl/source/cl_device/cl_device.h"
@@ -116,6 +117,9 @@ class MockProgram : public Program {
             }
         }
     }
+    [[nodiscard]] NonCopyableVariableBackup<std::unique_ptr<SharedPoolAllocation>> setScopedConstantSurface(GraphicsAllocation *gfxAllocation) {
+        return {&buildInfos[gfxAllocation->getRootDeviceIndex()].constantSurface, std::make_unique<SharedPoolAllocation>(gfxAllocation)};
+    }
     void setGlobalSurface(GraphicsAllocation *gfxAllocation) {
         if (gfxAllocation) {
             buildInfos[gfxAllocation->getRootDeviceIndex()].globalSurface = std::make_unique<SharedPoolAllocation>(gfxAllocation);
@@ -133,6 +137,9 @@ class MockProgram : public Program {
                 buildInfo.globalSurface.reset();
             }
         }
+    }
+    [[nodiscard]] NonCopyableVariableBackup<std::unique_ptr<SharedPoolAllocation>> setScopedGlobalSurface(GraphicsAllocation *gfxAllocation) {
+        return {&buildInfos[gfxAllocation->getRootDeviceIndex()].globalSurface, std::make_unique<SharedPoolAllocation>(gfxAllocation)};
     }
     std::vector<KernelInfo *> &getKernelInfoArray(uint32_t rootDeviceIndex) {
         return buildInfos[rootDeviceIndex].kernelInfoArray;

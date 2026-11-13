@@ -684,31 +684,28 @@ HWTEST2_F(HardwareCommandsTest, WhenGettingBindingTableStateThenSurfaceStatePoin
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
 
-    // define kernel info
-    auto pKernelInfo = std::make_unique<MockKernelInfo>();
-    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 32;
+    MockKernelInfo kernelInfo;
+    kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 32;
 
     // define patch offsets for global, constant and private surfaces
-    pKernelInfo->setGlobalVariablesSurface(8, 0, 0);
-    pKernelInfo->setGlobalConstantsSurface(8, 8, 64);
-    pKernelInfo->setPrivateMemory(32, false, 8, 16, 128);
+    kernelInfo.setGlobalVariablesSurface(8, 0, 0);
+    kernelInfo.setGlobalConstantsSurface(8, 8, 64);
+    kernelInfo.setPrivateMemory(32, false, 8, 16, 128);
 
-    // create program with valid context
     MockContext context;
     MockProgram program(&context, false, toClDeviceVector(*pClDevice));
 
-    // setup global memory
-    char globalBuffer[16];
-    GraphicsAllocation gfxGlobalAlloc(0, 1u /*num gmms*/, AllocationType::unknown, globalBuffer, castToUint64(globalBuffer), 0llu, sizeof(globalBuffer), MemoryPool::memoryNull, MemoryManager::maxOsContextCount);
-    program.setGlobalSurface(&gfxGlobalAlloc);
+    void *const globalSurfacePtr = reinterpret_cast<void *>(0x1000);
+    void *const constantSurfacePtr = reinterpret_cast<void *>(0x2000);
+    constexpr size_t surfaceSize = 16u;
 
-    // setup constant memory
-    char constBuffer[16];
-    GraphicsAllocation gfxConstAlloc(0, 1u /*num gmms*/, AllocationType::unknown, constBuffer, castToUint64(constBuffer), 0llu, sizeof(constBuffer), MemoryPool::memoryNull, MemoryManager::maxOsContextCount);
-    program.setConstantSurface(&gfxConstAlloc);
+    MockGraphicsAllocation gfxGlobalAlloc(globalSurfacePtr, surfaceSize);
+    auto globalSurfaceBackup = program.setScopedGlobalSurface(&gfxGlobalAlloc);
 
-    // create kernel
-    MockKernel kernel(&program, *pKernelInfo, *pClDevice);
+    MockGraphicsAllocation gfxConstAlloc(constantSurfacePtr, surfaceSize);
+    auto constantSurfaceBackup = program.setScopedConstantSurface(&gfxConstAlloc);
+
+    MockKernel kernel(&program, kernelInfo, *pClDevice);
 
     // setup surface state heap
     constexpr uint32_t numSurfaces = 5;
@@ -720,26 +717,23 @@ HWTEST2_F(HardwareCommandsTest, WhenGettingBindingTableStateThenSurfaceStatePoin
     for (uint32_t i = 0; i < numSurfaces; ++i) {
         bti[i].setSurfaceStatePointer(i * sizeof(typename FamilyType::RENDER_SURFACE_STATE));
     }
-    pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
-    pKernelInfo->heapInfo.surfaceStateHeapSize = sshSize;
+    kernelInfo.heapInfo.pSsh = surfaceStateHeap;
+    kernelInfo.heapInfo.surfaceStateHeapSize = sshSize;
 
-    // setup kernel heap
     uint32_t kernelIsa[32];
-    pKernelInfo->heapInfo.pKernelHeap = kernelIsa;
-    pKernelInfo->heapInfo.kernelHeapSize = sizeof(kernelIsa);
+    kernelInfo.heapInfo.pKernelHeap = kernelIsa;
+    kernelInfo.heapInfo.kernelHeapSize = sizeof(kernelIsa);
 
-    pKernelInfo->setBindingTable(btiOffset, 5);
-    pKernelInfo->setLocalIds({1, 1, 1});
+    kernelInfo.setBindingTable(btiOffset, 5);
+    kernelInfo.setLocalIds({1, 1, 1});
 
-    // initialize kernel
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
-    // setup cross thread data
     char pCrossThreadData[64];
     kernel.setCrossThreadData(pCrossThreadData, sizeof(pCrossThreadData));
 
     // try with different offsets to surface state base address
-    for (uint32_t ssbaOffset : {0U, (uint32_t)sizeof(typename FamilyType::RENDER_SURFACE_STATE)}) {
+    for (uint32_t ssbaOffset : {0U, static_cast<uint32_t>(sizeof(typename FamilyType::RENDER_SURFACE_STATE))}) {
         CommandQueueHw<FamilyType> cmdQ(nullptr, pClDevice, 0, false);
 
         auto &commandStream = cmdQ.getCS(1024);
@@ -750,7 +744,6 @@ HWTEST2_F(HardwareCommandsTest, WhenGettingBindingTableStateThenSurfaceStatePoin
         auto &ioh = cmdQ.getIndirectHeap(IndirectHeap::Type::indirectObject, 8192);
         auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::Type::surfaceState, 8192);
 
-        // Initialize binding table state pointers with pattern
         EXPECT_EQ(numSurfaces, kernel.getNumberOfBindingTableStates());
 
         const size_t localWorkSizes[3]{256, 1, 1};
@@ -792,9 +785,6 @@ HWTEST2_F(HardwareCommandsTest, WhenGettingBindingTableStateThenSurfaceStatePoin
             uint32_t expected = localSshOffset + i * sizeof(typename FamilyType::RENDER_SURFACE_STATE);
             EXPECT_EQ(expected, bti[i].getSurfaceStatePointer());
         }
-
-        program.setGlobalSurface(nullptr);
-        program.setConstantSurface(nullptr);
 
         // exhaust space to trigger reload
         ssh.getSpace(ssh.getAvailableSpace());
@@ -1421,9 +1411,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HardwareCommandsTestXeHpAndLater, givenSendCrossThr
     MockContext context;
 
     MockProgram program(&context, false, toClDeviceVector(*pClDevice));
-    auto kernelInfo = std::make_unique<KernelInfo>();
+    KernelInfo kernelInfo;
 
-    auto kernel = std::make_unique<MockKernel>(&program, *kernelInfo, *pClDevice);
+    MockKernel kernel(&program, kernelInfo, *pClDevice);
 
     auto &indirectHeap = cmdQ.getIndirectHeap(IndirectHeap::Type::indirectObject, 8192);
     indirectHeap.getSpace(128u);
@@ -1431,12 +1421,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HardwareCommandsTestXeHpAndLater, givenSendCrossThr
     PatchInfoData patchInfoData1 = {0xaaaaaaaa, 0, PatchInfoAllocationType::kernelArg, 0xbbbbbbbb, 0, PatchInfoAllocationType::indirectObjectHeap};
     PatchInfoData patchInfoData2 = {0xcccccccc, 0, PatchInfoAllocationType::indirectObjectHeap, 0xdddddddd, 0, PatchInfoAllocationType::defaultType};
 
-    kernel->getPatchInfoDataList().push_back(patchInfoData1);
-    kernel->getPatchInfoDataList().push_back(patchInfoData2);
-    auto sizeCrossThreadData = kernel->getCrossThreadDataSize();
+    kernel.getPatchInfoDataList().push_back(patchInfoData1);
+    kernel.getPatchInfoDataList().push_back(patchInfoData2);
+    auto sizeCrossThreadData = kernel.getCrossThreadDataSize();
     auto offsetCrossThreadData = HardwareCommandsHelper<FamilyType>::template sendCrossThreadData<DefaultWalkerType>(
         indirectHeap,
-        *kernel,
+        kernel,
         false,
         true,
         0u,
@@ -1451,13 +1441,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, HardwareCommandsTestXeHpAndLater, givenSendCrossThr
     ASSERT_NE(0u, offsetCrossThreadData);
     EXPECT_EQ(iohBaseAddress + expectedOffsetRelativeToIohBase, offsetCrossThreadData);
 
-    ASSERT_EQ(2u, kernel->getPatchInfoDataList().size());
-    EXPECT_EQ(0xaaaaaaaa, kernel->getPatchInfoDataList()[0].sourceAllocation);
-    EXPECT_EQ(0u, kernel->getPatchInfoDataList()[0].sourceAllocationOffset);
-    EXPECT_EQ(PatchInfoAllocationType::kernelArg, kernel->getPatchInfoDataList()[0].sourceType);
-    EXPECT_NE(0xbbbbbbbb, kernel->getPatchInfoDataList()[0].targetAllocation);
-    EXPECT_EQ(indirectHeap.getGraphicsAllocation()->getGpuAddress(), kernel->getPatchInfoDataList()[0].targetAllocation);
-    EXPECT_NE(0u, kernel->getPatchInfoDataList()[0].targetAllocationOffset);
-    EXPECT_EQ(expectedOffsetRelativeToIohBase, kernel->getPatchInfoDataList()[0].targetAllocationOffset);
-    EXPECT_EQ(PatchInfoAllocationType::indirectObjectHeap, kernel->getPatchInfoDataList()[0].targetType);
+    ASSERT_EQ(2u, kernel.getPatchInfoDataList().size());
+    EXPECT_EQ(0xaaaaaaaa, kernel.getPatchInfoDataList()[0].sourceAllocation);
+    EXPECT_EQ(0u, kernel.getPatchInfoDataList()[0].sourceAllocationOffset);
+    EXPECT_EQ(PatchInfoAllocationType::kernelArg, kernel.getPatchInfoDataList()[0].sourceType);
+    EXPECT_NE(0xbbbbbbbb, kernel.getPatchInfoDataList()[0].targetAllocation);
+    EXPECT_EQ(indirectHeap.getGraphicsAllocation()->getGpuAddress(), kernel.getPatchInfoDataList()[0].targetAllocation);
+    EXPECT_NE(0u, kernel.getPatchInfoDataList()[0].targetAllocationOffset);
+    EXPECT_EQ(expectedOffsetRelativeToIohBase, kernel.getPatchInfoDataList()[0].targetAllocationOffset);
+    EXPECT_EQ(PatchInfoAllocationType::indirectObjectHeap, kernel.getPatchInfoDataList()[0].targetType);
 }
