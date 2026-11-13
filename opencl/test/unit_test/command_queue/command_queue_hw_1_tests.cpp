@@ -583,6 +583,19 @@ HWTEST_F(CommandQueueHwTest, whenReleaseQueueCalledThenFlushIsCalled) {
     mockCmdQ->decRefInternal();
 }
 
+HWTEST_F(CommandQueueHwTest, givenCommandQueueWhenReleasedThenWaitForAllEngines) {
+    MockCommandQueueHw<FamilyType> cmdQ(context, pClDevice, nullptr);
+    cmdQ.waitForAllEnginesReturnValue = WaitStatus::ready;
+    cmdQ.incRefInternal();
+    EXPECT_EQ(0, cmdQ.waitForAllEnginesCalledCount);
+
+    cl_int retVal = CL_INVALID_VALUE;
+    releaseQueue(&cmdQ, retVal);
+
+    EXPECT_EQ(1, cmdQ.waitForAllEnginesCalledCount);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
 using BlockedCommandQueueTest = CommandQueueHwTest;
 
 HWTEST_F(BlockedCommandQueueTest, givenCommandQueueWhenBlockedCommandIsBeingSubmittedThenQueueHeapsAreNotUsed) {
