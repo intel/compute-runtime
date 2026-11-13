@@ -58,6 +58,7 @@ SharedPoolAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAll
         }
 
         if (allocPool && device.getProductHelper().is2MBLocalMemAlignmentEnabled()) {
+            std::unique_lock<std::mutex> initializationLock(allocPool->getMutex());
             if (!allocPool->isInitialized()) {
                 constexpr size_t alignment = MemoryConstants::pageSize2M;
                 constexpr size_t poolSize = MemoryConstants::pageSize2M;
@@ -71,8 +72,10 @@ SharedPoolAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAll
 
                 allocPool->initialize(svmAllocManager, poolMemoryProperties, poolSize, minServicedSize, maxServicedSize);
             }
+            const bool isPoolInitialized = allocPool->isInitialized();
+            initializationLock.unlock();
 
-            if (allocPool->isInitialized()) {
+            if (isPoolInitialized) {
                 unifiedMemoryProperties.alignment = MemoryConstants::pageSize;
                 auto pooledPtr = allocPool->createUnifiedMemoryAllocation(totalSize, unifiedMemoryProperties);
                 if (pooledPtr) {
