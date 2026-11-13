@@ -497,6 +497,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
     void setGmm(Gmm *gmm, uint32_t handleId) {
         gmms[handleId] = gmm;
     }
+    void setGmm(std::unique_ptr<Gmm> gmm, uint32_t handleId);
     void resizeGmms(uint32_t size) {
         gmms.resize(size);
     }

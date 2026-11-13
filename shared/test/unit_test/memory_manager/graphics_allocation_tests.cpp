@@ -6,13 +6,34 @@
  */
 
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_aub_csr.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 using namespace NEO;
+
+TEST(GraphicsAllocationTest, givenGmmOnHandleWhenSettingOwnedGmmOnThatHandleThenReplacedGmmIsFreed) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    MockMemoryManager memoryManager(executionEnvironment);
+    auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{mockRootDeviceIndex, MemoryConstants::pageSize});
+    ASSERT_NE(nullptr, allocation);
+    constexpr uint32_t handleId = 1u;
+    allocation->resizeGmms(handleId + 1);
+    auto gmmHelper = executionEnvironment.rootDeviceEnvironments[mockRootDeviceIndex]->getGmmHelper();
+    allocation->setGmm(std::make_unique<MockGmm>(gmmHelper), handleId);
+
+    auto newGmm = std::make_unique<MockGmm>(gmmHelper);
+    auto newGmmPtr = newGmm.get();
+    allocation->setGmm(std::move(newGmm), handleId);
+
+    EXPECT_EQ(newGmmPtr, allocation->getGmm(handleId));
+    memoryManager.freeGraphicsMemory(allocation);
+}
 
 TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenIsCreatedThenAllInspectionIdsAreSetToZero) {
     MockGraphicsAllocation graphicsAllocation(0, 1u /*num gmms*/, AllocationType::unknown, nullptr, 0u, 0u, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount);

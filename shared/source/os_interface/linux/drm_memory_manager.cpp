@@ -3078,14 +3078,14 @@ void createColouredGmms(GmmHelper *gmmHelper, DrmAllocation &allocation, bool co
         StorageInfo limitedStorageInfo = storageInfo;
         limitedStorageInfo.memoryBanks &= (1u << (handleId % banksCnt));
         auto &productHelper = gmmHelper->getRootDeviceEnvironment().getHelper<ProductHelper>();
-        auto gmm = new Gmm(gmmHelper,
-                           nullptr,
-                           currentSize,
-                           0u,
-                           CacheSettingsHelper::getGmmUsageType(allocation.getAllocationType(), false, productHelper, *gmmHelper->getHardwareInfo()),
-                           limitedStorageInfo,
-                           gmmRequirements);
-        allocation.setGmm(gmm, handleId);
+        allocation.setGmm(std::make_unique<Gmm>(gmmHelper,
+                                                nullptr,
+                                                currentSize,
+                                                0u,
+                                                CacheSettingsHelper::getGmmUsageType(allocation.getAllocationType(), false, productHelper, *gmmHelper->getHardwareInfo()),
+                                                limitedStorageInfo,
+                                                gmmRequirements),
+                          handleId);
     }
 }
 
@@ -3101,9 +3101,9 @@ void fillGmmsInAllocation(GmmHelper *gmmHelper, DrmAllocation *allocation) {
         StorageInfo limitedStorageInfo = storageInfo;
         limitedStorageInfo.memoryBanks &= 1u << handleId;
         limitedStorageInfo.pageTablesVisibility &= 1u << handleId;
-        auto gmm = new Gmm(gmmHelper, nullptr, alignedSize, 0u,
-                           CacheSettingsHelper::getGmmUsageType(allocation->getAllocationType(), false, productHelper, *gmmHelper->getHardwareInfo()), limitedStorageInfo, gmmRequirements);
-        allocation->setGmm(gmm, handleId);
+        allocation->setGmm(std::make_unique<Gmm>(gmmHelper, nullptr, alignedSize, 0u,
+                                                 CacheSettingsHelper::getGmmUsageType(allocation->getAllocationType(), false, productHelper, *gmmHelper->getHardwareInfo()), limitedStorageInfo, gmmRequirements),
+                           handleId);
     }
 }
 
@@ -3213,7 +3213,7 @@ inline std::unique_ptr<DrmAllocation> DrmMemoryManager::makeDrmAllocation(const 
     allocation->storageInfo = allocationData.storageInfo;
 
     if (createSingleHandle) {
-        allocation->setDefaultGmm(gmm.release());
+        allocation->setDefaultGmm(std::move(gmm));
     } else if (allocationData.storageInfo.multiStorage) {
         createColouredGmms(gmmHelper, *allocation, allocationData.flags.preferCompressed);
     } else {

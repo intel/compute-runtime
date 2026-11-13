@@ -1592,13 +1592,13 @@ void createColouredGmms(GmmHelper *gmmHelper, WddmAllocation &allocation, const 
         remainingSize -= currentSize;
         StorageInfo limitedStorageInfo = storageInfo;
         limitedStorageInfo.memoryBanks &= static_cast<uint32_t>(1u << handleId);
-        auto gmm = new Gmm(gmmHelper,
-                           nullptr,
-                           currentSize,
-                           0u,
-                           CacheSettingsHelper::getGmmUsageType(allocation.getAllocationType(), false, productHelper, *gmmHelper->getHardwareInfo()),
-                           limitedStorageInfo, gmmRequirements);
-        allocation.setGmm(gmm, handleId);
+        allocation.setGmm(std::make_unique<Gmm>(gmmHelper,
+                                                nullptr,
+                                                currentSize,
+                                                0u,
+                                                CacheSettingsHelper::getGmmUsageType(allocation.getAllocationType(), false, productHelper, *gmmHelper->getHardwareInfo()),
+                                                limitedStorageInfo, gmmRequirements),
+                          handleId);
     }
 }
 
@@ -1613,9 +1613,9 @@ void fillGmmsInAllocation(GmmHelper *gmmHelper, WddmAllocation *allocation, cons
         StorageInfo limitedStorageInfo = storageInfo;
         limitedStorageInfo.memoryBanks &= static_cast<uint32_t>(1u << handleId);
         limitedStorageInfo.pageTablesVisibility &= static_cast<uint32_t>(1u << handleId);
-        auto gmm = new Gmm(gmmHelper, nullptr, allocation->getAlignedSize(), 0u,
-                           CacheSettingsHelper::getGmmUsageType(allocation->getAllocationType(), false, productHelper, *gmmHelper->getHardwareInfo()), limitedStorageInfo, gmmRequirements);
-        allocation->setGmm(gmm, handleId);
+        allocation->setGmm(std::make_unique<Gmm>(gmmHelper, nullptr, allocation->getAlignedSize(), 0u,
+                                                 CacheSettingsHelper::getGmmUsageType(allocation->getAllocationType(), false, productHelper, *gmmHelper->getHardwareInfo()), limitedStorageInfo, gmmRequirements),
+                           handleId);
     }
 }
 
@@ -1629,9 +1629,9 @@ void splitGmmsInAllocation(GmmHelper *gmmHelper, WddmAllocation *wddmAllocation,
 
     for (auto gmmId = 0u; gmmId < wddmAllocation->getNumGmms(); ++gmmId) {
         auto size = sizeRemaining > chunkSize ? chunkSize : sizeRemaining;
-        auto gmm = new Gmm(gmmHelper, nullptr, size, alignment,
-                           CacheSettingsHelper::getGmmUsageType(wddmAllocation->getAllocationType(), false, productHelper, *gmmHelper->getHardwareInfo()), storageInfo, gmmRequirements);
-        wddmAllocation->setGmm(gmm, gmmId);
+        wddmAllocation->setGmm(std::make_unique<Gmm>(gmmHelper, nullptr, size, alignment,
+                                                     CacheSettingsHelper::getGmmUsageType(wddmAllocation->getAllocationType(), false, productHelper, *gmmHelper->getHardwareInfo()), storageInfo, gmmRequirements),
+                               gmmId);
         sizeRemaining -= size;
     }
     storageInfo.multiStorage = true;
@@ -1685,7 +1685,7 @@ GraphicsAllocation *WddmMemoryManager::allocatePhysicalLocalDeviceMemory(const A
         if (numGmms > 1) {
             splitGmmsInAllocation(gmmHelper, wddmAllocation.get(), alignment, chunkSize, const_cast<StorageInfo &>(allocationData.storageInfo), allocationData.flags.preferCompressed);
         } else {
-            wddmAllocation->setDefaultGmm(gmm.release());
+            wddmAllocation->setDefaultGmm(std::move(gmm));
         }
     } else if (allocationData.storageInfo.multiStorage) {
         createColouredGmms(gmmHelper, *wddmAllocation, allocationData.storageInfo, allocationData.flags.preferCompressed);
@@ -1820,7 +1820,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryInDevicePool(const 
         if (numGmms > 1) {
             splitGmmsInAllocation(gmmHelper, wddmAllocation.get(), alignment, chunkSize, const_cast<StorageInfo &>(allocationData.storageInfo), allocationData.flags.preferCompressed);
         } else {
-            wddmAllocation->setDefaultGmm(gmm.release());
+            wddmAllocation->setDefaultGmm(std::move(gmm));
         }
     } else if (allocationData.storageInfo.multiStorage) {
         createColouredGmms(gmmHelper, *wddmAllocation, allocationData.storageInfo, allocationData.flags.preferCompressed);
