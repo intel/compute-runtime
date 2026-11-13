@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,7 +26,7 @@ struct MemoryManagementFixture {
     void setFailingAllocation(size_t allocation);
     void clearFailingAllocation();
 
-    ::testing::AssertionResult assertLeak(
+    ::testing::AssertionResult assertNoLeak(
         const char *leakExpr,
         size_t leakIndex);
 

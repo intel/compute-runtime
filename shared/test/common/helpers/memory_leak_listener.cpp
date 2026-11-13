@@ -34,12 +34,7 @@ void MemoryLeakListener::OnTestEnd(const TestInfo &testInfo) {
     MemoryManagement::fastLeakDetectionEnabled = false;
 
     if (testInfo.result()->Passed()) {
-        if (MemoryManagement::fastLeaksDetectionMode != MemoryManagement::LeakDetectionMode::STANDARD) {
-            if (MemoryManagement::fastLeaksDetectionMode == MemoryManagement::LeakDetectionMode::EXPECT_TO_LEAK) {
-                EXPECT_GT(MemoryManagement::fastEventsAllocatedCount, MemoryManagement::fastEventsDeallocatedCount);
-            }
-            MemoryManagement::fastLeaksDetectionMode = MemoryManagement::LeakDetectionMode::STANDARD;
-        } else if (MemoryManagement::captureCallStacks && (MemoryManagement::fastEventsAllocatedCount != MemoryManagement::fastEventsDeallocatedCount)) {
+        if (MemoryManagement::captureCallStacks && (MemoryManagement::fastEventsAllocatedCount != MemoryManagement::fastEventsDeallocatedCount)) {
             auto leak = MemoryManagement::enumerateLeak(MemoryManagement::indexAllocation.load(), MemoryManagement::indexDeallocation.load(), true, true);
             if (leak != MemoryManagement::failingAllocation) {
                 printf("\n %s ", printCallStack(MemoryManagement::eventsAllocated[leak]).c_str());

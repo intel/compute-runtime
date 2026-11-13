@@ -19,12 +19,6 @@ namespace MemoryManagement {
 #define NO_SANITIZE
 #endif
 
-enum LeakDetectionMode {
-    STANDARD,
-    EXPECT_TO_LEAK,
-    TURN_OFF_LEAK_DETECTION
-};
-
 struct AllocationEvent { // NOLINT(clang-analyzer-optin.performance.Padding)
     enum {
         CallStackSize = 16
@@ -63,7 +57,6 @@ extern std::atomic<void *> fastEventsAllocated[maxEvents];
 extern std::atomic<void *> fastEventsDeallocated[maxEvents];
 extern std::atomic<int> fastEventsAllocatedCount;
 extern std::atomic<int> fastEventsDeallocatedCount;
-extern std::atomic<int> fastLeaksDetectionMode;
 extern size_t failingAllocation;
 extern std::atomic<size_t> numAllocations;
 extern std::atomic<size_t> indexAllocation;

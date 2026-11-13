@@ -2049,12 +2049,6 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenGraphicsAllocationCon
     memoryManager.freeGraphicsMemory(graphicsAllocation);
 }
 
-TEST(OsAgnosticMemoryManager, WhenPointerIsCreatedThenLeakIsDetected) {
-    void *ptr = new int[10];
-    EXPECT_NE(nullptr, ptr); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
-    MemoryManagement::fastLeaksDetectionMode = MemoryManagement::LeakDetectionMode::EXPECT_TO_LEAK;
-}
-
 TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenAllocateMemoryWithNoAlignmentProvidedThenAllocationIsAlignedToPageSize) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     MemoryManagerCreate<OsAgnosticMemoryManager> memoryManager(false, false, executionEnvironment);

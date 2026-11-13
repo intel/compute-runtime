@@ -74,64 +74,54 @@ TEST_F(MemoryManagementTest, GivenFailingAllocationOneWhenCreatingAllocationsThe
 TEST_F(MemoryManagementTest, GivenNoFailingAllocationWhenCreatingAllocationThenMemoryIsNotLeaked) {
     auto indexAllocationTop = indexAllocation.load();
     auto indexDellocationTop = indexDeallocation.load();
-    EXPECT_EQ(static_cast<size_t>(-1), MemoryManagement::enumerateLeak(indexAllocationTop, indexDellocationTop, false, false));
+    EXPECT_PRED_FORMAT1(assertNoLeak, MemoryManagement::enumerateLeak(indexAllocationTop, indexDellocationTop, false, false));
 }
 
 TEST_F(MemoryManagementTest, GivenOneFailingAllocationWhenCreatingAllocationThenMemoryIsLeaked) {
     size_t sizeBuffer = 10;
-    auto ptr = new (std::nothrow) char[sizeBuffer];
+    std::unique_ptr<char[]> ptr(new (std::nothrow) char[sizeBuffer]);
     auto indexAllocationTop = indexAllocation.load();
     auto indexDeallocationTop = indexDeallocation.load();
     auto leakIndex = MemoryManagement::enumerateLeak(indexAllocationTop, indexDeallocationTop, false, false);
-    ASSERT_NE(static_cast<size_t>(-1), leakIndex); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
-    EXPECT_EQ(ptr, eventsAllocated[leakIndex].address);
+    ASSERT_NE(static_cast<size_t>(-1), leakIndex);
+    EXPECT_EQ(ptr.get(), eventsAllocated[leakIndex].address);
     EXPECT_EQ(sizeBuffer, eventsAllocated[leakIndex].size);
 
-    // Not expecting any more failures
-    EXPECT_EQ(static_cast<size_t>(-1), MemoryManagement::enumerateLeak(indexAllocationTop, indexDeallocationTop, false, false));
-
-    delete[] ptr;
+    EXPECT_PRED_FORMAT1(assertNoLeak, MemoryManagement::enumerateLeak(indexAllocationTop, indexDeallocationTop, false, false));
 }
 
 TEST_F(MemoryManagementTest, GivenFourEventsWhenCreatingAllocationThenMemoryIsLeakedOnce) {
     size_t sizeBuffer = 10;
     delete new (std::nothrow) char;
-    auto ptr = new (std::nothrow) char[sizeBuffer];
+    std::unique_ptr<char[]> ptr(new (std::nothrow) char[sizeBuffer]);
     delete new (std::nothrow) char;
     auto indexAllocationTop = indexAllocation.load();
     auto indexDeallocationTop = indexDeallocation.load();
     auto leakIndex = MemoryManagement::enumerateLeak(indexAllocationTop, indexDeallocationTop, false, false);
-    ASSERT_NE(static_cast<size_t>(-1), leakIndex); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
-    EXPECT_EQ(ptr, eventsAllocated[leakIndex].address);
+    ASSERT_NE(static_cast<size_t>(-1), leakIndex);
+    EXPECT_EQ(ptr.get(), eventsAllocated[leakIndex].address);
     EXPECT_EQ(sizeBuffer, eventsAllocated[leakIndex].size);
 
-    // Not expecting any more failures
-    EXPECT_EQ(static_cast<size_t>(-1), MemoryManagement::enumerateLeak(indexAllocationTop, indexDeallocationTop, false, false));
-
-    delete[] ptr;
+    EXPECT_PRED_FORMAT1(assertNoLeak, MemoryManagement::enumerateLeak(indexAllocationTop, indexDeallocationTop, false, false));
 }
 
 TEST_F(MemoryManagementTest, GivenTwoFailingAllocationsWhenCreatingAllocationThenMemoryIsLeaked) {
     size_t sizeBuffer = 10;
-    auto ptr1 = new (std::nothrow) char[sizeBuffer];
-    auto ptr2 = new (std::nothrow) char[sizeBuffer];
+    std::unique_ptr<char[]> ptr1(new (std::nothrow) char[sizeBuffer]);
+    std::unique_ptr<char[]> ptr2(new (std::nothrow) char[sizeBuffer]);
     auto indexAllocationTop = indexAllocation.load();
     auto indexDeallocationTop = indexDeallocation.load();
     auto leakIndex1 = MemoryManagement::enumerateLeak(indexAllocationTop, indexDeallocationTop, false, false);
     auto leakIndex2 = MemoryManagement::enumerateLeak(indexAllocationTop, indexDeallocationTop, false, false);
-    ASSERT_NE(static_cast<size_t>(-1), leakIndex1); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
-    EXPECT_EQ(ptr1, eventsAllocated[leakIndex1].address);
+    ASSERT_NE(static_cast<size_t>(-1), leakIndex1);
+    EXPECT_EQ(ptr1.get(), eventsAllocated[leakIndex1].address);
     EXPECT_EQ(sizeBuffer, eventsAllocated[leakIndex1].size);
 
     ASSERT_NE(static_cast<size_t>(-1), leakIndex2);
-    EXPECT_EQ(ptr2, eventsAllocated[leakIndex2].address);
+    EXPECT_EQ(ptr2.get(), eventsAllocated[leakIndex2].address);
     EXPECT_EQ(sizeBuffer, eventsAllocated[leakIndex2].size);
 
-    // Not expecting any more failures
-    EXPECT_EQ(static_cast<size_t>(-1), MemoryManagement::enumerateLeak(indexAllocationTop, indexDeallocationTop, false, false));
-
-    delete[] ptr1;
-    delete[] ptr2;
+    EXPECT_PRED_FORMAT1(assertNoLeak, MemoryManagement::enumerateLeak(indexAllocationTop, indexDeallocationTop, false, false));
 }
 
 TEST_F(MemoryManagementTest, WhenDeletingNullPtrThenLeakIsNotReported) {
@@ -150,6 +140,16 @@ TEST_F(MemoryManagementTest, WhenPointerIsDeletedThenAllocationShouldbeVisible) 
     uintptr_t ptrCopy = reinterpret_cast<uintptr_t>(ptr);
     delete[] ptr;
     EXPECT_EQ(ptrCopy, reinterpret_cast<uintptr_t>(eventsDeallocated[index].address));
+}
+
+TEST(FastLeakDetectionTest, GivenFastLeakDetectionEnabledWhenAllocatingAndFreeingThenBothEventsAreRecorded) {
+    auto allocatedCount = MemoryManagement::fastEventsAllocatedCount.load();
+    auto deallocatedCount = MemoryManagement::fastEventsDeallocatedCount.load();
+    auto ptr = std::make_unique<char>();
+    ASSERT_EQ(allocatedCount + 1, MemoryManagement::fastEventsAllocatedCount.load());
+    EXPECT_EQ(ptr.get(), MemoryManagement::fastEventsAllocated[allocatedCount].load());
+    ptr.reset();
+    EXPECT_EQ(deallocatedCount + 1, MemoryManagement::fastEventsDeallocatedCount.load());
 }
 
 #if ENABLE_ME_FOR_LEAK_TESTING

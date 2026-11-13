@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -65,7 +65,7 @@ void MemoryManagementFixture::clearFailingAllocation() {
     MemoryManagement::failingAllocation = -1;
 }
 
-::testing::AssertionResult MemoryManagementFixture::assertLeak(
+::testing::AssertionResult MemoryManagementFixture::assertNoLeak(
     const char *leakExpr,
     size_t leakIndex) {
     using MemoryManagement::AllocationEvent;
@@ -137,7 +137,7 @@ void MemoryManagementFixture::checkForLeaks() {
             size_t leakEventIndex;
             do {
                 leakEventIndex = MemoryManagement::enumerateLeak(indexAllocationTop, indexDellocationTop, false, false);
-                EXPECT_PRED_FORMAT1(assertLeak, leakEventIndex);
+                EXPECT_PRED_FORMAT1(assertNoLeak, leakEventIndex);
                 auto invalidLeakIndexValues = MemoryManagement::invalidLeakIndex;
                 EXPECT_EQ(leakEventIndex, invalidLeakIndexValues);
             } while (leakEventIndex != MemoryManagement::invalidLeakIndex);
