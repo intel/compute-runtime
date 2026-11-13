@@ -3837,6 +3837,15 @@ HWTEST_F(CommandStreamReceiverHwTest, givenFailedFailureOnFlushWhenFlushingTaskT
     EXPECT_EQ(CompletionStamp::failed, completionStamp.taskCount);
 }
 
+HWTEST_F(CommandStreamReceiverHwTest, givenStreamWhenFlushingSmallTaskThenStreamAllocationTaskCountIsUpdated) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto &stream = commandStreamReceiver.getCS(4096u);
+
+    EXPECT_EQ(SubmissionStatus::success, commandStreamReceiver.flushSmallTask(stream, stream.getUsed()));
+
+    EXPECT_EQ(commandStreamReceiver.peekTaskCount(), stream.getGraphicsAllocation()->getTaskCount(commandStreamReceiver.getOsContext().getContextId()));
+}
+
 HWTEST_F(CommandStreamReceiverHwTest, givenUnsuccessOnFlushWhenFlushingSmallTaskThenTaskCountIsNotIncreased) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto &stream = commandStreamReceiver.getCS(4096u);
@@ -3872,6 +3881,16 @@ HWTEST_F(CommandStreamReceiverHwTest, givenOutOfMemoryFailureOnFlushWhenFlushing
 
     commandStreamReceiver.flushReturnValue = SubmissionStatus::outOfHostMemory;
     EXPECT_EQ(SubmissionStatus::outOfHostMemory, commandStreamReceiver.flushMiFlushDW(false));
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenCsrWhenFlushingMiFlushDwThenCommandStreamAllocationTaskCountIsUpdated) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    EXPECT_EQ(SubmissionStatus::success, commandStreamReceiver.flushMiFlushDW(false));
+
+    auto commandStreamAllocation = commandStreamReceiver.commandStream.getGraphicsAllocation();
+    ASSERT_NE(nullptr, commandStreamAllocation);
+    EXPECT_EQ(commandStreamReceiver.peekTaskCount(), commandStreamAllocation->getTaskCount(commandStreamReceiver.getOsContext().getContextId()));
 }
 
 HWTEST_F(CommandStreamReceiverHwTest, givenOutOfMemoryFailureOnFlushWhenFlushingPipeControlThenErrorIsPropagated) {
@@ -4689,6 +4708,18 @@ HWTEST_F(CommandStreamReceiverHwTest, givenFCommandStreamWhenSubmitingDependency
     auto cacheFlushTimestampPacketGpuAddress = TimestampPacketHelper::getContextEndGpuAddress(*tag);
     EXPECT_EQ(UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl), cacheFlushTimestampPacketGpuAddress);
     EXPECT_EQ(pipeControl->getDcFlushEnable(), MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, commandStreamReceiver.peekRootDeviceEnvironment()));
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenCsrWhenSubmittingDependencyUpdateThenCommandStreamAllocationTaskCountIsUpdated) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto mockTagAllocator = std::make_unique<MockTagAllocator<>>(pDevice->getRootDeviceIndex(), pDevice->getExecutionEnvironment()->memoryManager.get(), 10u);
+    auto tag = mockTagAllocator->getTag();
+
+    EXPECT_TRUE(commandStreamReceiver.submitDependencyUpdate(tag));
+
+    auto commandStreamAllocation = commandStreamReceiver.commandStream.getGraphicsAllocation();
+    ASSERT_NE(nullptr, commandStreamAllocation);
+    EXPECT_EQ(commandStreamReceiver.peekTaskCount(), commandStreamAllocation->getTaskCount(commandStreamReceiver.getOsContext().getContextId()));
 }
 
 HWTEST_F(CommandStreamReceiverHwTest, givenFlushPipeControlWhenFlushWithStateCacheFlushThenExpectStateCacheFlushFlagsSet) {

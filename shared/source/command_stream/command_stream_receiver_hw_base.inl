@@ -1389,7 +1389,6 @@ SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushPipeControl(bool state
                                                                               args);
 
     makeResident(*tagAllocation);
-    makeResident(*commandStream.getGraphicsAllocation());
 
     auto submissionStatus = this->flushSmallTask(commandStream, commandStreamStart);
     this->latestFlushedTaskCount = taskCount.load();
@@ -1437,6 +1436,8 @@ SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushSmallTask(LinearStream
     if (getFrontEndAllocation()) {
         makeResident(*getFrontEndAllocation());
     }
+
+    makeResident(*commandStreamTask.getGraphicsAllocation());
 
     uint64_t taskStartAddress = commandStreamTask.getGpuBase() + commandStreamStartTask;
 
@@ -2726,7 +2727,6 @@ void CommandStreamReceiverHw<GfxFamily>::submitLateMidThreadPreemptionStart() {
     auto &commandStream = getCS(this->lateMidThreadPreemptionStartCmdSize);
     auto commandStreamStart = commandStream.getUsed();
     dispatchLateMidThreadPreemptionStart(commandStream);
-    makeResident(*commandStream.getGraphicsAllocation());
     makeResidentPreemptionAllocation();
 
     this->flushSmallTask(commandStream, commandStreamStart);
