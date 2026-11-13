@@ -30,7 +30,6 @@ struct CapsGen12Lp {
 
     static constexpr bool bFloat16ConversionSupported = true;
     static constexpr bool bindlessAddressingDisabled = true;
-    static constexpr bool exposingSubdevicesAllowed = true;
     static constexpr bool hvAlign4Required = true;
     static constexpr bool localOnlyAllowed = true;
     static constexpr bool numRtStacksPerDssFixedValue = true;

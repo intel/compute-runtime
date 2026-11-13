@@ -46,7 +46,6 @@ struct CapsXe2HpgCore {
     static constexpr bool cacheFlushPriorToImageReadRequired = true;
     static constexpr bool deviceConfigStringTileCountIncluded = true;
     static constexpr bool dotProductAccumulateSystolicSupported = true;
-    static constexpr bool exposingSubdevicesAllowed = true;
     static constexpr bool globalBindlessAllocatorEnabled = true;
     static constexpr bool grfLimitedPreferredSlmSizeEnabled = true;
     static constexpr bool latePreemptionStartSupported = true;

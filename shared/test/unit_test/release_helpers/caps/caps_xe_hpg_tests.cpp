@@ -83,7 +83,6 @@ TEST(CapsXeHpgTest, givenDg2G10ReleaseWhenMaterializingCapsThenCapabilitiesAreCo
     EXPECT_FALSE(capsDg2G10.directSubmissionLightSupported);
     EXPECT_TRUE(capsDg2G10.dotProductAccumulateSystolicSupported);
     EXPECT_TRUE(capsDg2G10.dummyBlitWaRequired);
-    EXPECT_TRUE(capsDg2G10.exposingSubdevicesAllowed);
     EXPECT_FALSE(capsDg2G10.forceEmuInt32DivRemSPRequired);
     EXPECT_FALSE(capsDg2G10.ftrXe2Compression);
     EXPECT_TRUE(capsDg2G10.globalBindlessAllocatorEnabled);
@@ -160,7 +159,6 @@ TEST(CapsXeHpgTest, givenDg2G11ReleaseWhenMaterializingCapsThenCapabilitiesAreCo
     EXPECT_FALSE(capsDg2G11.directSubmissionLightSupported);
     EXPECT_TRUE(capsDg2G11.dotProductAccumulateSystolicSupported);
     EXPECT_TRUE(capsDg2G11.dummyBlitWaRequired);
-    EXPECT_TRUE(capsDg2G11.exposingSubdevicesAllowed);
     EXPECT_FALSE(capsDg2G11.forceEmuInt32DivRemSPRequired);
     EXPECT_FALSE(capsDg2G11.ftrXe2Compression);
     EXPECT_TRUE(capsDg2G11.globalBindlessAllocatorEnabled);
@@ -237,7 +235,6 @@ TEST(CapsXeHpgTest, givenDg2G12ReleaseWhenMaterializingCapsThenCapabilitiesAreCo
     EXPECT_FALSE(capsDg2G12.directSubmissionLightSupported);
     EXPECT_TRUE(capsDg2G12.dotProductAccumulateSystolicSupported);
     EXPECT_TRUE(capsDg2G12.dummyBlitWaRequired);
-    EXPECT_TRUE(capsDg2G12.exposingSubdevicesAllowed);
     EXPECT_FALSE(capsDg2G12.forceEmuInt32DivRemSPRequired);
     EXPECT_FALSE(capsDg2G12.ftrXe2Compression);
     EXPECT_TRUE(capsDg2G12.globalBindlessAllocatorEnabled);

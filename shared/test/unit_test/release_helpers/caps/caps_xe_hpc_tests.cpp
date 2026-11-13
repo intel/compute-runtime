@@ -79,7 +79,6 @@ TEST(CapsXeHpcTest, givenPvcReleaseWhenMaterializingCapsThenCapabilitiesAreCorre
     EXPECT_FALSE(capsPvc.directSubmissionLightSupported);
     EXPECT_TRUE(capsPvc.dotProductAccumulateSystolicSupported);
     EXPECT_TRUE(capsPvc.dummyBlitWaRequired);
-    EXPECT_TRUE(capsPvc.exposingSubdevicesAllowed);
     EXPECT_FALSE(capsPvc.forceEmuInt32DivRemSPRequired);
     EXPECT_FALSE(capsPvc.ftrXe2Compression);
     EXPECT_FALSE(capsPvc.globalBindlessAllocatorEnabled);
@@ -156,7 +155,6 @@ TEST(CapsXeHpcTest, givenPvcVgReleaseWhenMaterializingCapsThenCapabilitiesAreCor
     EXPECT_FALSE(capsPvcVg.directSubmissionLightSupported);
     EXPECT_FALSE(capsPvcVg.dotProductAccumulateSystolicSupported);
     EXPECT_TRUE(capsPvcVg.dummyBlitWaRequired);
-    EXPECT_TRUE(capsPvcVg.exposingSubdevicesAllowed);
     EXPECT_FALSE(capsPvcVg.forceEmuInt32DivRemSPRequired);
     EXPECT_FALSE(capsPvcVg.ftrXe2Compression);
     EXPECT_FALSE(capsPvcVg.globalBindlessAllocatorEnabled);

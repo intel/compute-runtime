@@ -48,7 +48,6 @@ struct CapsXe3pCore {
     static constexpr bool cacheFlushPriorToImageReadRequired = true;
     static constexpr bool deviceConfigStringTileCountIncluded = true;
     static constexpr bool dotProductAccumulateSystolicSupported = true;
-    static constexpr bool exposingSubdevicesAllowed = true;
     static constexpr bool globalBindlessAllocatorEnabled = true;
     static constexpr bool newCoherencyModelSupported = true;
     static constexpr bool newResidencyModelSupported = true;

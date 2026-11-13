@@ -40,7 +40,6 @@ struct CapsXeHpgCore {
     static constexpr bool bufferPoolAllocatorSupported = true;
     static constexpr bool dotProductAccumulateSystolicSupported = true;
     static constexpr bool dummyBlitWaRequired = true;
-    static constexpr bool exposingSubdevicesAllowed = true;
     static constexpr bool globalBindlessAllocatorEnabled = true;
     static constexpr bool localOnlyAllowed = true;
     static constexpr bool newResidencyModelSupported = true;

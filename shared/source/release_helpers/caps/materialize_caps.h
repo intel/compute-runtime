@@ -55,7 +55,6 @@ namespace NEO {
     NEO_COPY_CAP_FUNC(directSubmissionLightSupported)                            \
     NEO_COPY_CAP_FUNC(dotProductAccumulateSystolicSupported)                     \
     NEO_COPY_CAP_FUNC(dummyBlitWaRequired)                                       \
-    NEO_COPY_CAP_FUNC(exposingSubdevicesAllowed)                                 \
     NEO_COPY_CAP_FUNC(forceEmuInt32DivRemSPRequired)                             \
     NEO_COPY_CAP_FUNC(ftrXe2Compression)                                         \
     NEO_COPY_CAP_FUNC(globalBindlessAllocatorEnabled)                            \

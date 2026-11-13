@@ -36,7 +36,6 @@ struct CapsXeLpgCore {
     static constexpr bool bFloat16ConversionSupported = true;
     static constexpr bool bufferPoolAllocatorSupported = true;
     static constexpr bool directSubmissionLightSupported = true;
-    static constexpr bool exposingSubdevicesAllowed = true;
     static constexpr bool globalBindlessAllocatorEnabled = true;
     static constexpr bool localOnlyAllowed = true;
     static constexpr bool newCoherencyModelSupported = true;

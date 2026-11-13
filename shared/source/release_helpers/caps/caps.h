@@ -53,7 +53,6 @@ struct Caps {
     bool directSubmissionLightSupported = false;
     bool dotProductAccumulateSystolicSupported = false;
     bool dummyBlitWaRequired = false;
-    bool exposingSubdevicesAllowed = false;
     bool forceEmuInt32DivRemSPRequired = false;
     bool ftrXe2Compression = false;
     bool globalBindlessAllocatorEnabled = false;

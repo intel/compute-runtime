@@ -47,9 +47,6 @@ bool prepareDeviceEnvironments(ExecutionEnvironment &executionEnvironment, std::
             if (unsupportedDeviceDetected) {
                 executionEnvironment.rootDeviceEnvironments.erase(executionEnvironment.rootDeviceEnvironments.begin() + i);
             } else {
-                if (!hwInfo.caps.exposingSubdevicesAllowed) {
-                    executionEnvironment.rootDeviceEnvironments[i]->setExposeSingleDeviceMode(true);
-                }
                 if (debugManager.flags.ExposeSingleDevice.get() != -1) {
                     executionEnvironment.rootDeviceEnvironments[i]->setExposeSingleDeviceMode(!!debugManager.flags.ExposeSingleDevice.get());
                 }

@@ -75,7 +75,6 @@ TEST(CapsSetupTest, givenEveryEnabledProductConfigWhenSettingUpCapsThenHwInfoIsI
         EXPECT_EQ(expectedCaps->directSubmissionLightSupported, hwInfo.caps.directSubmissionLightSupported);
         EXPECT_EQ(expectedCaps->dotProductAccumulateSystolicSupported, hwInfo.caps.dotProductAccumulateSystolicSupported);
         EXPECT_EQ(expectedCaps->dummyBlitWaRequired, hwInfo.caps.dummyBlitWaRequired);
-        EXPECT_EQ(expectedCaps->exposingSubdevicesAllowed, hwInfo.caps.exposingSubdevicesAllowed);
         EXPECT_EQ(expectedCaps->forceEmuInt32DivRemSPRequired, hwInfo.caps.forceEmuInt32DivRemSPRequired);
         EXPECT_EQ(expectedCaps->ftrXe2Compression, hwInfo.caps.ftrXe2Compression);
         EXPECT_EQ(expectedCaps->globalBindlessAllocatorEnabled, hwInfo.caps.globalBindlessAllocatorEnabled);
@@ -162,7 +161,6 @@ TEST(CapsTest, givenDefaultCapsThenValuesAreCorrect) {
     EXPECT_FALSE(caps.directSubmissionLightSupported);
     EXPECT_FALSE(caps.dotProductAccumulateSystolicSupported);
     EXPECT_FALSE(caps.dummyBlitWaRequired);
-    EXPECT_FALSE(caps.exposingSubdevicesAllowed);
     EXPECT_FALSE(caps.forceEmuInt32DivRemSPRequired);
     EXPECT_FALSE(caps.ftrXe2Compression);
     EXPECT_FALSE(caps.globalBindlessAllocatorEnabled);
