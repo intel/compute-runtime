@@ -20,7 +20,7 @@ const SupportedNumGrfs ReleaseHelperHw<release>::getSupportedNumGrfs() const {
 
 template <>
 uint32_t ReleaseHelperHw<release>::adjustMaxThreadsPerEuCount([[maybe_unused]] uint32_t maxThreadsPerEuCount, uint32_t grfCount) const {
-    return 512u == grfCount ? 4u : 8u;
+    return grfCount <= 192u ? 8u : 4u;
 }
 
 template <>

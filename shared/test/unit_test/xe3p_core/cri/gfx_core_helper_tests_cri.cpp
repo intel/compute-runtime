@@ -217,7 +217,7 @@ CRITEST_F(GfxCoreHelperTestsCri, givenVariousGrfCountsWhenCallingCalculateAvaila
                                                                                  {128u, 8u},
                                                                                  {160u, 8u},
                                                                                  {192u, 8u},
-                                                                                 {256u, 8u},
+                                                                                 {256u, 4u},
                                                                                  {512u, 4u}});
 
     auto hwInfo = hardwareInfo;
@@ -240,7 +240,7 @@ CRITEST_F(GfxCoreHelperTestsCri, givenVariousGrfCountsWhenCallingCalculateAvaila
                                                                                  {128u, 8u},
                                                                                  {160u, 8u},
                                                                                  {192u, 8u},
-                                                                                 {256u, 8u},
+                                                                                 {256u, 4u},
                                                                                  {512u, 4u}});
 
     auto hwInfo = hardwareInfo;
@@ -256,9 +256,9 @@ CRITEST_F(GfxCoreHelperTestsCri, givenModifiedGtSystemInfoWhenCallingCalculateAv
     const auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
     const auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
 
-    constexpr auto testInputs = std::to_array<std::pair<uint32_t, uint32_t>>({{32u, 256u},
-                                                                              {48u, 384u},
-                                                                              {64u, 512u}});
+    constexpr auto testInputs = std::to_array<std::pair<uint32_t, uint32_t>>({{32u, 128u},
+                                                                              {48u, 192u},
+                                                                              {64u, 256u}});
 
     auto hwInfo = hardwareInfo;
     for (const auto &[euCount, expectedThreadCount] : testInputs) {

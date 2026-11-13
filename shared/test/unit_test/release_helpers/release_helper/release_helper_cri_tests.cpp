@@ -102,7 +102,7 @@ TEST_F(ReleaseHelperCriTests, whenCallingAdjustMaxThreadsPerEuCountThenCorrectVa
                                                                                  {128u, 8u},
                                                                                  {160u, 8u},
                                                                                  {192u, 8u},
-                                                                                 {256u, 8u},
+                                                                                 {256u, 4u},
                                                                                  {512u, 4u}});
 
     for (auto &revision : getRevisions()) {
