@@ -85,14 +85,9 @@ MemoryOperationsStatus WddmMemoryOperationsHandler::isResident(Device *device, G
 }
 
 MemoryOperationsStatus WddmMemoryOperationsHandler::free(Device *device, GraphicsAllocation &gfxAllocation) {
-    // Mappings of physical memory share its handles, and every mapping made resident adds its own references to
-    // them, so the release of the last owner must drop all of them whether or not it was made resident itself.
-    const auto physicalMappingsInfo = gfxAllocation.peekPhysicalMappingsInfo();
-    const bool handlesSharedWithMappings = physicalMappingsInfo != nullptr && physicalMappingsInfo->handlesSharedWithMappings;
-    const bool ownsPhysicalMemoryHandles = !gfxAllocation.isSharedPhysicalMemoryMapping() &&
-                                           (gfxAllocation.getMappedPhysicalAllocation() != nullptr || handlesSharedWithMappings);
-    if (gfxAllocation.isExplicitlyMadeResident() || ownsPhysicalMemoryHandles) {
+    if (gfxAllocation.isExplicitlyMadeResident()) {
         WddmAllocation &wddmAllocation = reinterpret_cast<WddmAllocation &>(gfxAllocation);
+
         if (wddmAllocation.fragmentsStorage.fragmentCount > 0) {
             OsHandleStorage &fragmentStorage = wddmAllocation.fragmentsStorage;
 
@@ -103,11 +98,7 @@ MemoryOperationsStatus WddmMemoryOperationsHandler::free(Device *device, Graphic
             const auto &handles = wddmAllocation.getHandles();
             size_t handleCount = wddmAllocation.getNumGmms();
             for (uint32_t i = 0; i < handleCount; i++) {
-                if (gfxAllocation.isSharedPhysicalMemoryMapping()) {
-                    residentAllocations->removeResourceReference(handles[i]);
-                } else {
-                    residentAllocations->removeResource(handles[i]);
-                }
+                residentAllocations->removeResource(handles[i]);
             }
         }
     }
