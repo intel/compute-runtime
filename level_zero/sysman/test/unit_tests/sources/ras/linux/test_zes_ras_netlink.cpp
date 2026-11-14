@@ -22,7 +22,6 @@ namespace ult {
 class MockRasNetlinkUtil : public NetlinkRasUtil {
   public:
     using NetlinkRasUtil::drmNl;
-    using NetlinkRasUtil::invalidRasNodeId;
     using NetlinkRasUtil::pLinuxSysmanImp;
     using NetlinkRasUtil::rasErrorList;
     using NetlinkRasUtil::rasNodeId;
@@ -34,8 +33,6 @@ class MockRasNetlinkUtil : public NetlinkRasUtil {
 class SysmanRasNetlinkFixture : public SysmanDeviceFixture {
 
   protected:
-    static constexpr uint32_t correctableNodeId = 3u;
-    static constexpr uint32_t uncorrectableNodeId = 4u;
     std::unique_ptr<MockRasNetlinkUtil> pRasNetlinkUtil = nullptr;
     std::unique_ptr<MockDrmNlApi> drmNlApi = nullptr;
     std::unique_ptr<DrmNlApi> pDrmNlApiOriginal = nullptr;
@@ -47,9 +44,6 @@ class SysmanRasNetlinkFixture : public SysmanDeviceFixture {
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
         errorType = ZES_RAS_ERROR_TYPE_CORRECTABLE;
-        std::string devicePciBdf = pLinuxSysmanImp->getDevicePciBdf();
-        MockRasNetlinkUtil::rasNodes = {{correctableNodeId, devicePciBdf, "correctable-errors", 1},
-                                        {uncorrectableNodeId, devicePciBdf, "uncorrectable-errors", 1}};
         drmNlApi = std::make_unique<MockDrmNlApi>("testCard");
         drmNlApi->getMockErrorList = true;
         pRasNetlinkUtil = std::make_unique<MockRasNetlinkUtil>(errorType, pLinuxSysmanImp, 0u);
@@ -193,28 +187,28 @@ TEST_F(SysmanRasNetlinkFixture, GivenRasNodesWithMatchingNodeNameAndDeviceNameWh
     EXPECT_EQ(rasUtil->rasNodeId, 1u);
 }
 
-TEST_F(SysmanRasNetlinkFixture, GivenRasNodesWithMatchingNodeNameButNonMatchingDeviceNameWhenConstructingNetlinkRasUtilThenRasNodeIdIsInvalid) {
+TEST_F(SysmanRasNetlinkFixture, GivenRasNodesWithMatchingNodeNameButNonMatchingDeviceNameWhenConstructingNetlinkRasUtilThenRasNodeIdIsZero) {
     MockRasNetlinkUtil::rasNodes = {{5, "0000:00:03.0", "correctable-errors", 1},
                                     {10, "0000:00:04.0", "uncorrectable-errors", 1}};
 
     auto rasUtil = std::make_unique<MockRasNetlinkUtil>(ZES_RAS_ERROR_TYPE_CORRECTABLE, pLinuxSysmanImp, 0u);
-    EXPECT_EQ(rasUtil->rasNodeId, MockRasNetlinkUtil::invalidRasNodeId);
+    EXPECT_EQ(rasUtil->rasNodeId, 0u);
 }
 
-TEST_F(SysmanRasNetlinkFixture, GivenRasNodesWithMatchingDeviceNameButNonMatchingNodeNameWhenConstructingNetlinkRasUtilThenRasNodeIdIsInvalid) {
+TEST_F(SysmanRasNetlinkFixture, GivenRasNodesWithMatchingDeviceNameButNonMatchingNodeNameWhenConstructingNetlinkRasUtilThenRasNodeIdIsZero) {
     MockRasNetlinkUtil::rasNodes = {{7, "0000:00:02.0", "nonfatal-errors", 1},
                                     {8, "0000:00:02.0", "some-other-errors", 1}};
 
     auto rasUtil = std::make_unique<MockRasNetlinkUtil>(ZES_RAS_ERROR_TYPE_CORRECTABLE, pLinuxSysmanImp, 0u);
-    EXPECT_EQ(rasUtil->rasNodeId, MockRasNetlinkUtil::invalidRasNodeId);
+    EXPECT_EQ(rasUtil->rasNodeId, 0u);
 }
 
-TEST_F(SysmanRasNetlinkFixture, GivenRasNodesWithNonMatchingNodeNameAndDeviceNameWhenConstructingNetlinkRasUtilThenRasNodeIdIsInvalid) {
+TEST_F(SysmanRasNetlinkFixture, GivenRasNodesWithNonMatchingNodeNameAndDeviceNameWhenConstructingNetlinkRasUtilThenRasNodeIdIsZero) {
     MockRasNetlinkUtil::rasNodes = {{11, "0000:00:05.0", "nonfatal-errors", 1},
                                     {12, "0000:00:06.0", "some-other-errors", 1}};
 
     auto rasUtil = std::make_unique<MockRasNetlinkUtil>(ZES_RAS_ERROR_TYPE_CORRECTABLE, pLinuxSysmanImp, 0u);
-    EXPECT_EQ(rasUtil->rasNodeId, MockRasNetlinkUtil::invalidRasNodeId);
+    EXPECT_EQ(rasUtil->rasNodeId, 0u);
 }
 
 TEST_F(SysmanRasNetlinkFixture, GivenRasNodesWithMatchingDeviceNameButUnknownNodeNameWhenCallingGetSupportedRasErrorTypesThenNoTypesAreAdded) {
@@ -596,13 +590,6 @@ TEST_F(SysmanRasNetlinkFixture, GivenUncorrectableNetlinkRasUtilWhenCallingRasGe
     EXPECT_EQ(configs[1].threshold, 1u);
 
     rasNetlinkUtil->drmNl = std::move(drmNlApiOriginal);
-}
-
-TEST_F(SysmanRasNetlinkFixture, GivenEmptyRasNodesWhenConstructingNetlinkRasUtilThenRasNodeIdIsInvalid) {
-    MockRasNetlinkUtil::rasNodes.clear();
-
-    auto rasUtil = std::make_unique<MockRasNetlinkUtil>(ZES_RAS_ERROR_TYPE_CORRECTABLE, pLinuxSysmanImp, 0u);
-    EXPECT_EQ(rasUtil->rasNodeId, MockRasNetlinkUtil::invalidRasNodeId);
 }
 
 } // namespace ult
