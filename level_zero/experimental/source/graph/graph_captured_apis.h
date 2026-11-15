@@ -17,6 +17,7 @@
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
 #include "level_zero/driver_experimental/zex_cmdlist.h"
+#include "level_zero/driver_experimental/zex_graph.h"
 #include "level_zero/ze_api.h"
 #include "level_zero/zet_api.h"
 
@@ -39,6 +40,7 @@ namespace L0 {
 
 struct Context;
 struct Event;
+struct GraphNode;
 
 #ifndef RR_CAPTURED_APIS_EXT
 #define RR_CAPTURED_APIS_EXT()
@@ -448,6 +450,13 @@ struct ClosureExternalStorage {
     static constexpr CopyRegionId invalidCopyRegionId = std::numeric_limits<CopyRegionId>::max();
     static constexpr KernelArgumentsId invalidKernelArgumentsId = std::numeric_limits<KernelArgumentsId>::max();
 
+    ClosureExternalStorage() = default;
+    ~ClosureExternalStorage();
+    ClosureExternalStorage(const ClosureExternalStorage &) = delete;
+    ClosureExternalStorage &operator=(const ClosureExternalStorage &) = delete;
+    ClosureExternalStorage(ClosureExternalStorage &&) = delete;
+    ClosureExternalStorage &operator=(ClosureExternalStorage &&) = delete;
+
     void reset() {
         waitEvents.clear();
         imageRegions.clear();
@@ -547,6 +556,8 @@ struct ClosureExternalStorage {
 
   public:
     ze_result_t lastResult = ZE_RESULT_SUCCESS;
+    std::unique_ptr<GraphNode> graphNode;
+    bool graphNodeCreationEnabled = false;
 };
 
 template <CaptureApi api>
@@ -705,6 +716,27 @@ inline bool getCommandsGraphExternalSignalFlag(TArgs... args) {
 template <CaptureApi api, typename... TArgs>
     requires(api != CaptureApi::zeCommandListAppendSignalEventWithParameters)
 inline bool getCommandsGraphExternalSignalFlag(TArgs... args) {
+    return false;
+}
+
+template <CaptureApi api>
+concept IsGraphNodeCreatingApi = (api == CaptureApi::zeCommandListAppendLaunchKernelWithParameters) ||
+                                 (api == CaptureApi::zeCommandListAppendLaunchKernelWithArguments);
+
+bool isGraphNodeDescriptorPresent(const void *pNext);
+void updateClonedGraphNodeHandlePointer(void *clonedPNext, ze_graph_node_handle_t *phNodeHandle);
+void updateGraphNodeReferences(ze_graph_node_handle_t graphNodeHandle, ze_group_count_t *groupCounts, ze_group_size_t *groupSizes);
+
+template <CaptureApi api, typename... TArgs>
+    requires IsGraphNodeCreatingApi<api>
+inline bool isCommandsGraphNodeDescriptorPresent(TArgs... args) {
+    typename Closure<api>::ApiArgs structuredApiArgs{args...};
+    return isGraphNodeDescriptorPresent(structuredApiArgs.pNext);
+}
+
+template <CaptureApi api, typename... TArgs>
+    requires(false == IsGraphNodeCreatingApi<api>)
+inline bool isCommandsGraphNodeDescriptorPresent(TArgs... args) {
     return false;
 }
 
@@ -1510,16 +1542,40 @@ struct Closure<CaptureApi::zeCommandListAppendLaunchKernelWithParameters> {
             : IndirectArgsWithWaitEvents(std::move(static_cast<IndirectArgsWithWaitEvents &>(other))),
               groupCounts(other.groupCounts),
               clonedPNext(std::exchange(other.clonedPNext, nullptr)),
-              capturedKernel(std::move(other.capturedKernel)) {
+              capturedKernel(std::move(other.capturedKernel)),
+              graphNodeHandle(other.graphNodeHandle) {
+            if (nullptr != this->graphNodeHandle) {
+                updateClonedGraphNodeHandlePointer(this->clonedPNext, &this->graphNodeHandle);
+            }
         }
         IndirectArgs &operator=(IndirectArgs &&other) noexcept;
         ~IndirectArgs();
         ze_group_count_t groupCounts;
         void *clonedPNext = nullptr;
         std::unique_ptr<KernelImp> capturedKernel;
+        ze_graph_node_handle_t graphNodeHandle = nullptr;
     } indirectArgs;
 
-    Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
+    Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {
+        this->linkGraphNode();
+    }
+    Closure(Closure &&other) noexcept : apiArgs(other.apiArgs), indirectArgs(std::move(other.indirectArgs)) {
+        this->linkGraphNode();
+    }
+    Closure &operator=(Closure &&other) noexcept {
+        if (this != &other) {
+            this->apiArgs = other.apiArgs;
+            this->indirectArgs = std::move(other.indirectArgs);
+            this->linkGraphNode();
+        }
+        return *this;
+    }
+
+    auto linkGraphNode() -> void {
+        if (nullptr != this->indirectArgs.graphNodeHandle) {
+            updateGraphNodeReferences(this->indirectArgs.graphNodeHandle, &this->indirectArgs.groupCounts, nullptr);
+        }
+    }
 
     ze_result_t instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, CbExternalEventInstantiateContext &cbEventContext, std::optional<EventParams> enforcedEvents) const;
     ze_result_t invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const;
@@ -1547,16 +1603,40 @@ struct Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments> {
             : IndirectArgsWithWaitEvents(std::move(static_cast<IndirectArgsWithWaitEvents &>(other))),
               clonedPNext(std::exchange(other.clonedPNext, nullptr)),
               argumentsId(other.argumentsId),
-              capturedKernel(std::move(other.capturedKernel)) {
+              capturedKernel(std::move(other.capturedKernel)),
+              graphNodeHandle(other.graphNodeHandle) {
+            if (nullptr != this->graphNodeHandle) {
+                updateClonedGraphNodeHandlePointer(this->clonedPNext, &this->graphNodeHandle);
+            }
         }
         IndirectArgs &operator=(IndirectArgs &&other) noexcept;
         ~IndirectArgs();
         void *clonedPNext = nullptr;
         ClosureExternalStorage::KernelArgumentsId argumentsId = ClosureExternalStorage::invalidKernelArgumentsId;
         std::unique_ptr<KernelImp> capturedKernel;
+        ze_graph_node_handle_t graphNodeHandle = nullptr;
     } indirectArgs;
 
-    Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {}
+    Closure(const ApiArgs &apiArgs, ClosureExternalStorage &externalStorage) : apiArgs(apiArgs), indirectArgs(apiArgs, externalStorage) {
+        this->linkGraphNode();
+    }
+    Closure(Closure &&other) noexcept : apiArgs(other.apiArgs), indirectArgs(std::move(other.indirectArgs)) {
+        this->linkGraphNode();
+    }
+    Closure &operator=(Closure &&other) noexcept {
+        if (this != &other) {
+            this->apiArgs = other.apiArgs;
+            this->indirectArgs = std::move(other.indirectArgs);
+            this->linkGraphNode();
+        }
+        return *this;
+    }
+
+    auto linkGraphNode() -> void {
+        if (nullptr != this->indirectArgs.graphNodeHandle) {
+            updateGraphNodeReferences(this->indirectArgs.graphNodeHandle, &this->apiArgs.groupCounts, &this->apiArgs.groupSizes);
+        }
+    }
 
     ze_result_t instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, CbExternalEventInstantiateContext &cbEventContext, std::optional<EventParams> enforcedEvents) const;
     ze_result_t invokeVisitor(void *visitorCallback, void *userData, ClosureExternalStorage &externalStorage) const;

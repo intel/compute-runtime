@@ -447,6 +447,29 @@ ze_result_t Graph::resumeCapturing() {
     return ZE_RESULT_SUCCESS;
 }
 
+auto Graph::getNodes(uint32_t *pGraphNodesCount, ze_graph_node_handle_t *phGraphNodes) -> ze_result_t {
+    if (false == this->mutableGraph) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    if (false == this->closed()) {
+        return ZE_RESULT_NOT_READY;
+    }
+
+    const auto graphNodesCount = static_cast<uint32_t>(this->graphNodes->size());
+    if (0U == *pGraphNodesCount) {
+        *pGraphNodesCount = graphNodesCount;
+        return ZE_RESULT_SUCCESS;
+    }
+
+    *pGraphNodesCount = std::min(*pGraphNodesCount, graphNodesCount);
+    if (nullptr != phGraphNodes) {
+        for (uint32_t i = 0U; i < *pGraphNodesCount; ++i) {
+            phGraphNodes[i] = (*this->graphNodes)[i]->toHandle();
+        }
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
 void Graph::tryJoinOnNextCommand(L0::CommandList &childCmdList, L0::Event &joinEvent) {
     // A fork is always registered in the direct parent graph of the forked (child) command list.
     // For a direct join, that parent is 'this'. Transitive joins additionally allow the join event
@@ -481,7 +504,7 @@ void Graph::tryJoinOnNextCommand(L0::CommandList &childCmdList, L0::Event &joinE
 
 void Graph::forkTo(L0::CommandList &childCmdList, Graph *&child, L0::Event &forkEvent) {
     UNRECOVERABLE_IF(child || childCmdList.getGraphCaptureTarget()); // should not be capturing already
-    child = new Graph(this->ctx, false, this->mutableGraph, this->orderedCommands.share());
+    child = new Graph(this->ctx, false, this->mutableGraph, this->orderedCommands.share(), this->graphNodes.share());
     child->parentGraph = this;
     child->startCapturingFrom(childCmdList, true);
     childCmdList.setGraphCaptureTarget(child);
@@ -834,6 +857,53 @@ void ExternalCbEventInfoContainer::commitMclForExternalCbWaitEvents() {
     for (auto &mcl : waitEventMclContainer) {
         mcl->close();
     }
+}
+
+ClosureExternalStorage::~ClosureExternalStorage() = default;
+
+inline const ze_graph_node_exp_desc_t *findGraphNodeDescriptor(const void *pNext) {
+    auto desc = static_cast<const ze_base_desc_t *>(pNext);
+    while (desc) {
+        if (desc->stype == ZE_STRUCTURE_TYPE_GRAPH_NODE_EXP_DESC) {
+            return reinterpret_cast<const ze_graph_node_exp_desc_t *>(desc);
+        }
+        desc = static_cast<const ze_base_desc_t *>(desc->pNext);
+    }
+    return nullptr;
+}
+
+void updateClonedGraphNodeHandlePointer(void *clonedPNext, ze_graph_node_handle_t *phNodeHandle) {
+    auto clonedGraphNodeDesc = const_cast<ze_graph_node_exp_desc_t *>(findGraphNodeDescriptor(clonedPNext));
+    UNRECOVERABLE_IF(nullptr == clonedGraphNodeDesc);
+    clonedGraphNodeDesc->phNodeHandle = phNodeHandle;
+}
+
+void updateGraphNodeReferences(ze_graph_node_handle_t graphNodeHandle, ze_group_count_t *groupCounts, ze_group_size_t *groupSizes) {
+    auto graphNode = GraphNode::fromHandle(graphNodeHandle);
+    graphNode->setGroupCounts(groupCounts);
+    graphNode->setGroupSizes(groupSizes);
+}
+
+inline ze_result_t createLaunchKernelGraphNode(const void *pNext, void *clonedPNext, ze_graph_node_handle_t &graphNodeHandle, KernelImp *kernel, ClosureExternalStorage &externalStorage) {
+    auto graphNodeDesc = findGraphNodeDescriptor(pNext);
+    if (nullptr == graphNodeDesc) {
+        return ZE_RESULT_SUCCESS;
+    }
+    if (false == externalStorage.graphNodeCreationEnabled) {
+        updateClonedGraphNodeHandlePointer(clonedPNext, nullptr);
+        return ZE_RESULT_SUCCESS;
+    }
+    if (nullptr == graphNodeDesc->phNodeHandle) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    auto graphNode = std::make_unique<GraphNode>(ZE_GRAPH_NODE_EXP_TYPE_LAUNCH_KERNEL, graphNodeDesc->flags);
+    graphNode->setKernel(kernel);
+    graphNodeHandle = graphNode->toHandle();
+    *graphNodeDesc->phNodeHandle = graphNodeHandle;
+    updateClonedGraphNodeHandlePointer(clonedPNext, &graphNodeHandle);
+
+    externalStorage.graphNode = std::move(graphNode);
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t Closure<CaptureApi::zeCommandListAppendMemoryCopy>::instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, CbExternalEventInstantiateContext &cbEventContext, std::optional<EventParams> enforcedEvents) const {
@@ -1192,6 +1262,7 @@ Closure<CaptureApi::zeCommandListAppendLaunchKernelWithParameters>::IndirectArgs
     if (externalStorage.lastResult == ZE_RESULT_SUCCESS) {
         auto kernel = static_cast<KernelImp *>(Kernel::fromHandle(apiArgs.kernelHandle));
         this->capturedKernel = kernel->makeDependentClone();
+        externalStorage.lastResult = createLaunchKernelGraphNode(apiArgs.pNext, this->clonedPNext, this->graphNodeHandle, this->capturedKernel.get(), externalStorage);
     }
 }
 
@@ -1202,6 +1273,10 @@ auto Closure<CaptureApi::zeCommandListAppendLaunchKernelWithParameters>::Indirec
         CommandList::freeClonedAppendKernelExtensions(clonedPNext);
         clonedPNext = std::exchange(other.clonedPNext, nullptr);
         capturedKernel = std::move(other.capturedKernel);
+        graphNodeHandle = other.graphNodeHandle;
+        if (nullptr != graphNodeHandle) {
+            updateClonedGraphNodeHandlePointer(clonedPNext, &graphNodeHandle);
+        }
     }
     return *this;
 }
@@ -1229,6 +1304,7 @@ Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments>::IndirectArgs:
             this->argumentsId = externalStorage.registerKernelArguments(std::span(explicitArgs.begin(), explicitArgs.end()), apiArgs.pArguments);
 
             this->capturedKernel = kernel->makeDependentClone();
+            externalStorage.lastResult = createLaunchKernelGraphNode(apiArgs.pNext, this->clonedPNext, this->graphNodeHandle, this->capturedKernel.get(), externalStorage);
         }
     }
 }
@@ -1240,6 +1316,10 @@ auto Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments>::Indirect
         clonedPNext = std::exchange(other.clonedPNext, nullptr);
         argumentsId = other.argumentsId;
         capturedKernel = std::move(other.capturedKernel);
+        graphNodeHandle = other.graphNodeHandle;
+        if (nullptr != graphNodeHandle) {
+            updateClonedGraphNodeHandlePointer(clonedPNext, &graphNodeHandle);
+        }
     }
     return *this;
 }
@@ -2201,6 +2281,18 @@ bool isGraphInstantiationTarget(const L0::CommandList &srcCmdList) {
     return srcCmdList.getIsGraphInstantiationTarget();
 }
 
+const Graph *getCaptureSessionGraph(const Graph *captureTarget, std::span<ze_event_handle_t> waitEvents) {
+    if (nullptr != captureTarget) {
+        return captureTarget;
+    }
+    for (const auto &event : waitEvents) {
+        if (const auto *signalFromCmdList = L0::Event::fromHandle(event)->getRecordedSignalFrom()) {
+            return signalFromCmdList->getGraphCaptureTarget();
+        }
+    }
+    return nullptr;
+}
+
 bool usesForkEvents(std::span<ze_event_handle_t> events) {
     for (const auto &event : events) {
         if (L0::Event::fromHandle(event)->getRecordedSignalFrom()) {
@@ -2263,6 +2355,10 @@ bool getGraphExternalSignalEventFlagFromPNext(const void *pNext) {
     [[maybe_unused]] auto ret = L0::CommandList::obtainSignalEventParamsFromExtensions(static_cast<const ze_base_desc_t *>(pNext), signalEventParameters);
     DEBUG_BREAK_IF(ret != ZE_RESULT_SUCCESS);
     return signalEventParameters.apiRequestForGraphExternal;
+}
+
+bool isGraphNodeDescriptorPresent(const void *pNext) {
+    return nullptr != findGraphNodeDescriptor(pNext);
 }
 
 struct VisitContext {

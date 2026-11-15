@@ -639,6 +639,117 @@ TEST_F(GraphTestApiCaptureWithDevice, GivenZeCommandListAppendLaunchKernelWithAr
     EXPECT_EQ(apiArgs.groupSizes.groupSizeZ, capture.groupSizes.groupSizeZ);
 }
 
+TEST_F(GraphTestApiCaptureWithDevice, GivenAppendKernelWithParametersClosureWithGraphNodeWhenMovedThenClonedGraphNodeDescriptorAndGraphNodeReferencesFollowMoveTarget) {
+    GraphsCleanupGuard graphCleanup;
+
+    Mock<Module> module(this->device, nullptr);
+    Mock<KernelImp> kernel;
+    kernel.setModule(&module);
+    L0::ClosureExternalStorage storage;
+    storage.graphNodeCreationEnabled = true;
+
+    ze_graph_node_handle_t nodeHandle = nullptr;
+    ze_graph_node_exp_desc_t graphNodeDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_EXP_DESC};
+    graphNodeDesc.phNodeHandle = &nodeHandle;
+    ze_group_count_t groupCount = {1, 1, 1};
+
+    constexpr auto apiValue = CaptureApi::zeCommandListAppendLaunchKernelWithParameters;
+    auto apiArgs = Closure<apiValue>::ApiArgs{
+        .hCommandList = immCmdListHandle,
+        .kernelHandle = kernel.toHandle(),
+        .pGroupCounts = &groupCount,
+        .pNext = &graphNodeDesc,
+        .hSignalEvent = nullptr,
+        .numWaitEvents = 0,
+        .phWaitEvents = nullptr};
+    auto apiArgsWithoutGraphNode = apiArgs;
+    apiArgsWithoutGraphNode.pNext = nullptr;
+
+    Closure<apiValue> closure(apiArgs, storage);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, storage.lastResult);
+    ASSERT_NE(nullptr, nodeHandle);
+    EXPECT_EQ(nodeHandle, closure.indirectArgs.graphNodeHandle);
+    auto clonedGraphNodeDesc = static_cast<ze_graph_node_exp_desc_t *>(closure.indirectArgs.clonedPNext);
+    EXPECT_EQ(&closure.indirectArgs.graphNodeHandle, clonedGraphNodeDesc->phNodeHandle);
+    auto graphNode = L0::GraphNode::fromHandle(nodeHandle);
+    EXPECT_EQ(&closure.indirectArgs.groupCounts, graphNode->getGroupCounts());
+    EXPECT_EQ(nullptr, graphNode->getGroupSizes());
+    EXPECT_EQ(closure.indirectArgs.capturedKernel.get(), graphNode->getKernel());
+
+    auto movedClosure = std::move(closure);
+    EXPECT_EQ(nodeHandle, movedClosure.indirectArgs.graphNodeHandle);
+    EXPECT_EQ(clonedGraphNodeDesc, movedClosure.indirectArgs.clonedPNext);
+    EXPECT_EQ(&movedClosure.indirectArgs.graphNodeHandle, clonedGraphNodeDesc->phNodeHandle);
+    EXPECT_EQ(&movedClosure.indirectArgs.groupCounts, graphNode->getGroupCounts());
+    EXPECT_EQ(nullptr, graphNode->getGroupSizes());
+    EXPECT_EQ(movedClosure.indirectArgs.capturedKernel.get(), graphNode->getKernel());
+
+    Closure<apiValue> assignedClosure(apiArgsWithoutGraphNode, storage);
+    assignedClosure = std::move(movedClosure);
+    EXPECT_EQ(nodeHandle, assignedClosure.indirectArgs.graphNodeHandle);
+    EXPECT_EQ(clonedGraphNodeDesc, assignedClosure.indirectArgs.clonedPNext);
+    EXPECT_EQ(&assignedClosure.indirectArgs.graphNodeHandle, clonedGraphNodeDesc->phNodeHandle);
+    EXPECT_EQ(&assignedClosure.indirectArgs.groupCounts, graphNode->getGroupCounts());
+    EXPECT_EQ(nullptr, graphNode->getGroupSizes());
+    EXPECT_EQ(assignedClosure.indirectArgs.capturedKernel.get(), graphNode->getKernel());
+}
+
+TEST_F(GraphTestApiCaptureWithDevice, GivenAppendKernelWithArgumentsClosureWithGraphNodeWhenMovedThenClonedGraphNodeDescriptorAndGraphNodeReferencesFollowMoveTarget) {
+    GraphsCleanupGuard graphCleanup;
+
+    Mock<Module> module(this->device, nullptr);
+    Mock<KernelImp> kernel;
+    kernel.setModule(&module);
+    L0::ClosureExternalStorage storage;
+    storage.graphNodeCreationEnabled = true;
+
+    ze_graph_node_handle_t nodeHandle = nullptr;
+    ze_graph_node_exp_desc_t graphNodeDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_EXP_DESC};
+    graphNodeDesc.phNodeHandle = &nodeHandle;
+
+    constexpr auto apiValue = CaptureApi::zeCommandListAppendLaunchKernelWithArguments;
+    auto apiArgs = Closure<apiValue>::ApiArgs{
+        .hCommandList = immCmdListHandle,
+        .kernelHandle = kernel.toHandle(),
+        .groupCounts = {1, 1, 1},
+        .groupSizes = {1, 1, 1},
+        .pArguments = nullptr,
+        .pNext = &graphNodeDesc,
+        .hSignalEvent = nullptr,
+        .numWaitEvents = 0,
+        .phWaitEvents = nullptr};
+    auto apiArgsWithoutGraphNode = apiArgs;
+    apiArgsWithoutGraphNode.pNext = nullptr;
+
+    Closure<apiValue> closure(apiArgs, storage);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, storage.lastResult);
+    ASSERT_NE(nullptr, nodeHandle);
+    EXPECT_EQ(nodeHandle, closure.indirectArgs.graphNodeHandle);
+    auto clonedGraphNodeDesc = static_cast<ze_graph_node_exp_desc_t *>(closure.indirectArgs.clonedPNext);
+    EXPECT_EQ(&closure.indirectArgs.graphNodeHandle, clonedGraphNodeDesc->phNodeHandle);
+    auto graphNode = L0::GraphNode::fromHandle(nodeHandle);
+    EXPECT_EQ(&closure.apiArgs.groupCounts, graphNode->getGroupCounts());
+    EXPECT_EQ(&closure.apiArgs.groupSizes, graphNode->getGroupSizes());
+    EXPECT_EQ(closure.indirectArgs.capturedKernel.get(), graphNode->getKernel());
+
+    auto movedClosure = std::move(closure);
+    EXPECT_EQ(nodeHandle, movedClosure.indirectArgs.graphNodeHandle);
+    EXPECT_EQ(clonedGraphNodeDesc, movedClosure.indirectArgs.clonedPNext);
+    EXPECT_EQ(&movedClosure.indirectArgs.graphNodeHandle, clonedGraphNodeDesc->phNodeHandle);
+    EXPECT_EQ(&movedClosure.apiArgs.groupCounts, graphNode->getGroupCounts());
+    EXPECT_EQ(&movedClosure.apiArgs.groupSizes, graphNode->getGroupSizes());
+    EXPECT_EQ(movedClosure.indirectArgs.capturedKernel.get(), graphNode->getKernel());
+
+    Closure<apiValue> assignedClosure(apiArgsWithoutGraphNode, storage);
+    assignedClosure = std::move(movedClosure);
+    EXPECT_EQ(nodeHandle, assignedClosure.indirectArgs.graphNodeHandle);
+    EXPECT_EQ(clonedGraphNodeDesc, assignedClosure.indirectArgs.clonedPNext);
+    EXPECT_EQ(&assignedClosure.indirectArgs.graphNodeHandle, clonedGraphNodeDesc->phNodeHandle);
+    EXPECT_EQ(&assignedClosure.apiArgs.groupCounts, graphNode->getGroupCounts());
+    EXPECT_EQ(&assignedClosure.apiArgs.groupSizes, graphNode->getGroupSizes());
+    EXPECT_EQ(assignedClosure.indirectArgs.capturedKernel.get(), graphNode->getKernel());
+}
+
 TEST_F(GraphTestApiInstantiate, GivenInvalidSourceGraphThenInstantiateGraphReturnsError) {
     GraphsCleanupGuard graphCleanup;
     ze_executable_graph_handle_t execGraphHandle = nullptr;
@@ -2204,6 +2315,404 @@ TEST_F(GraphTestInstantiationTest, GivenFailingAppendKernelWithParametersWhenRec
     EXPECT_EQ(srcGraph.recordedApiCommands.commands.size(), srcGraph.segments[0].numCommands);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(immCmdListHandle, &srcGraphHandle, nullptr));
+}
+
+TEST_F(GraphTestInstantiationTest, GivenNotMutableGraphWhenCapturingAppendKernelWithGraphNodeDescriptorThenInvalidOperationIsReturnedAndCommandIsNotRecorded) {
+    GraphsCleanupGuard graphCleanup;
+
+    MockGraphContextReturningSpecificCmdList ctx;
+    Mock<Module> module(this->device, nullptr);
+    Mock<KernelImp> kernel;
+    kernel.setModule(&module);
+    ze_kernel_handle_t kernelHandle = kernel.toHandle();
+
+    ze_graph_node_handle_t nodeHandle = nullptr;
+    ze_graph_node_exp_desc_t graphNodeDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_EXP_DESC};
+    graphNodeDesc.phNodeHandle = &nodeHandle;
+    ze_group_count_t groupCount = {1, 1, 1};
+    ze_group_size_t groupSize = {1, 1, 1};
+
+    MockGraph srcGraph(&ctx, true, false);
+    auto srcGraphHandle = srcGraph.toHandle();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(immCmdListHandle, srcGraphHandle, nullptr));
+    EXPECT_TRUE(immCmdList->isCapturingGraph());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(immCmdListHandle, nullptr, 0, nullptr));
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_OPERATION_EXP, zeCommandListAppendLaunchKernelWithParameters(immCmdListHandle, kernelHandle, &groupCount, &graphNodeDesc, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_OPERATION_EXP, zeCommandListAppendLaunchKernelWithArguments(immCmdListHandle, kernelHandle, groupCount, groupSize, nullptr, &graphNodeDesc, nullptr, 0, nullptr));
+
+    ASSERT_EQ(1u, srcGraph.segments.size());
+    EXPECT_EQ(1u, srcGraph.segments[0].numCommands);
+    EXPECT_EQ(1u, srcGraph.recordedApiCommands.commands.size());
+    EXPECT_EQ(nullptr, nodeHandle);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(immCmdListHandle, &srcGraphHandle, nullptr));
+}
+
+TEST_F(GraphTestInstantiationTest, GivenNotMutableGraphWhenCapturingAppendKernelWithGraphNodeDescriptorChainedAfterOtherDescriptorThenInvalidOperationIsReturned) {
+    GraphsCleanupGuard graphCleanup;
+
+    MockGraphContextReturningSpecificCmdList ctx;
+    Mock<Module> module(this->device, nullptr);
+    Mock<KernelImp> kernel;
+    kernel.setModule(&module);
+    ze_kernel_handle_t kernelHandle = kernel.toHandle();
+
+    ze_graph_node_handle_t nodeHandle = nullptr;
+    ze_graph_node_exp_desc_t graphNodeDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_EXP_DESC};
+    graphNodeDesc.phNodeHandle = &nodeHandle;
+    ze_command_list_append_launch_kernel_param_cooperative_desc_t cooperativeDesc = {ZE_STRUCTURE_TYPE_COMMAND_LIST_APPEND_PARAM_COOPERATIVE_DESC};
+    cooperativeDesc.pNext = &graphNodeDesc;
+    ze_group_count_t groupCount = {1, 1, 1};
+
+    MockGraph srcGraph(&ctx, true, false);
+    auto srcGraphHandle = srcGraph.toHandle();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(immCmdListHandle, srcGraphHandle, nullptr));
+    EXPECT_TRUE(immCmdList->isCapturingGraph());
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_OPERATION_EXP, zeCommandListAppendLaunchKernelWithParameters(immCmdListHandle, kernelHandle, &groupCount, &cooperativeDesc, nullptr, 0, nullptr));
+    EXPECT_EQ(0u, srcGraph.recordedApiCommands.commands.size());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(immCmdListHandle, &srcGraphHandle, nullptr));
+}
+
+TEST_F(GraphInstantiationValidation, GivenNotMutableGraphWhenForkingWithAppendKernelWithGraphNodeDescriptorThenInvalidOperationIsReturnedAndForkIsNotRecorded) {
+    GraphsCleanupGuard graphCleanup;
+    ContextStubMock ctx;
+    MockGraphCmdListWithContext cmdlist{&ctx};
+    cmdlist.device = this->device;
+    auto cmdListHandle = cmdlist.toHandle();
+    MockGraphCmdListWithContext childCmdlist{&ctx};
+    childCmdlist.device = this->device;
+    Mock<Event> forkEvent;
+    auto forkEventHandle = forkEvent.toHandle();
+    Mock<Module> module(this->device, nullptr);
+    Mock<KernelImp> kernel;
+    kernel.setModule(&module);
+
+    ze_graph_node_handle_t nodeHandle = nullptr;
+    ze_graph_node_exp_desc_t graphNodeDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_EXP_DESC};
+    graphNodeDesc.phNodeHandle = &nodeHandle;
+    ze_group_count_t groupCount = {1, 1, 1};
+
+    Graph srcGraph(&ctx, true, false);
+    Graph *srcGraphPtr = &srcGraph;
+    Graph *childGraph = nullptr;
+
+    srcGraph.startCapturingFrom(cmdlist, false);
+    cmdlist.setGraphCaptureTarget(&srcGraph);
+    L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(cmdlist, srcGraphPtr, nullptr, cmdListHandle, forkEventHandle, 0U, nullptr);
+
+    auto ret = L0::captureCommand<CaptureApi::zeCommandListAppendLaunchKernelWithParameters>(childCmdlist, childGraph, nullptr, &childCmdlist, kernel.toHandle(), &groupCount, &graphNodeDesc, nullptr, 1U, &forkEventHandle);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_OPERATION_EXP, ret);
+    EXPECT_EQ(nullptr, childGraph);
+    EXPECT_FALSE(childCmdlist.isCapturingGraph());
+    EXPECT_TRUE(srcGraph.getUnjoinedForks().empty());
+    EXPECT_TRUE(srcGraph.getSubgraphs().empty());
+    EXPECT_EQ(nullptr, nodeHandle);
+
+    srcGraph.stopCapturing();
+}
+
+TEST_F(GraphInstantiationValidation, GivenNotMutableGraphWhenJoiningWithAppendKernelWithGraphNodeDescriptorThenInvalidOperationIsReturnedAndJoinIsNotRecorded) {
+    GraphsCleanupGuard graphCleanup;
+    ContextStubMock ctx;
+    MockGraphCmdListWithContext cmdlist{&ctx};
+    cmdlist.device = this->device;
+    auto cmdListHandle = cmdlist.toHandle();
+    MockGraphCmdListWithContext childCmdlist{&ctx};
+    childCmdlist.device = this->device;
+    Mock<Event> forkEvent;
+    auto forkEventHandle = forkEvent.toHandle();
+    Mock<Event> joinEvent;
+    auto joinEventHandle = joinEvent.toHandle();
+    Mock<Module> module(this->device, nullptr);
+    Mock<KernelImp> kernel;
+    kernel.setModule(&module);
+
+    ze_graph_node_handle_t nodeHandle = nullptr;
+    ze_graph_node_exp_desc_t graphNodeDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_EXP_DESC};
+    graphNodeDesc.phNodeHandle = &nodeHandle;
+    ze_group_count_t groupCount = {1, 1, 1};
+
+    Graph srcGraph(&ctx, true, false);
+    Graph *srcGraphPtr = &srcGraph;
+    Graph *childGraph = nullptr;
+
+    srcGraph.startCapturingFrom(cmdlist, false);
+    cmdlist.setGraphCaptureTarget(&srcGraph);
+    L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(cmdlist, srcGraphPtr, nullptr, cmdListHandle, forkEventHandle, 0U, nullptr);
+    L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(childCmdlist, childGraph, nullptr, &childCmdlist, joinEventHandle, 1U, &forkEventHandle);
+
+    auto ret = L0::captureCommand<CaptureApi::zeCommandListAppendLaunchKernelWithParameters>(cmdlist, srcGraphPtr, nullptr, cmdListHandle, kernel.toHandle(), &groupCount, &graphNodeDesc, nullptr, 1U, &joinEventHandle);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_OPERATION_EXP, ret);
+    EXPECT_TRUE(srcGraph.getJoinedForks().empty());
+    EXPECT_EQ(1u, srcGraph.getCapturedCommands().size());
+    EXPECT_EQ(nullptr, nodeHandle);
+
+    L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(cmdlist, srcGraphPtr, nullptr, cmdListHandle, nullptr, 1U, &joinEventHandle);
+    srcGraph.stopCapturing();
+
+    EXPECT_TRUE(srcGraph.getUnjoinedForks().empty());
+}
+
+TEST_F(GraphInstantiationValidation, GivenMutableGraphWhenCapturingAppendKernelWithGraphNodeDescriptorInForkedSubgraphThenNodeIsReturnedByRootGraph) {
+    GraphsCleanupGuard graphCleanup;
+    ContextStubMock ctx;
+    MockGraphCmdListWithContext cmdlist{&ctx};
+    cmdlist.device = this->device;
+    auto cmdListHandle = cmdlist.toHandle();
+    MockGraphCmdListWithContext childCmdlist{&ctx};
+    childCmdlist.device = this->device;
+    Mock<Event> forkEvent;
+    auto forkEventHandle = forkEvent.toHandle();
+    Mock<Event> joinEvent;
+    auto joinEventHandle = joinEvent.toHandle();
+    Mock<Module> module(this->device, nullptr);
+    Mock<KernelImp> kernel;
+    kernel.setModule(&module);
+
+    ze_graph_node_handle_t nodeHandle = nullptr;
+    ze_graph_node_exp_desc_t graphNodeDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_EXP_DESC};
+    graphNodeDesc.phNodeHandle = &nodeHandle;
+    ze_group_count_t groupCount = {1, 1, 1};
+
+    Graph srcGraph(&ctx, true, true);
+    Graph *srcGraphPtr = &srcGraph;
+    Graph *childGraph = nullptr;
+
+    srcGraph.startCapturingFrom(cmdlist, false);
+    cmdlist.setGraphCaptureTarget(&srcGraph);
+    L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(cmdlist, srcGraphPtr, nullptr, cmdListHandle, forkEventHandle, 0U, nullptr);
+
+    auto ret = L0::captureCommand<CaptureApi::zeCommandListAppendLaunchKernelWithParameters>(childCmdlist, childGraph, nullptr, &childCmdlist, kernel.toHandle(), &groupCount, &graphNodeDesc, joinEventHandle, 1U, &forkEventHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    ASSERT_NE(nullptr, childGraph);
+    EXPECT_NE(nullptr, nodeHandle);
+
+    L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(cmdlist, srcGraphPtr, nullptr, cmdListHandle, nullptr, 1U, &joinEventHandle);
+    srcGraph.stopCapturing();
+
+    uint32_t nodesCount = 0U;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, srcGraph.getNodes(&nodesCount, nullptr));
+    ASSERT_EQ(1u, nodesCount);
+    ze_graph_node_handle_t rootGraphNodeHandle = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, srcGraph.getNodes(&nodesCount, &rootGraphNodeHandle));
+    EXPECT_EQ(nodeHandle, rootGraphNodeHandle);
+}
+
+TEST_F(GraphInstantiationValidation, GivenFlatCaptureWhenCapturingAppendKernelsWithGraphNodeDescriptorThenGraphNodesAreNotCreated) {
+    GraphsCleanupGuard graphCleanup;
+    processUsesGraphs.store(true);
+    ContextStubMock ctx;
+    MockGraphCmdListWithContext cmdlist{&ctx};
+    cmdlist.device = this->device;
+    Mock<Module> module(this->device, nullptr);
+    Mock<KernelImp> kernel;
+    kernel.setModule(&module);
+
+    ze_graph_node_handle_t nodeHandle = nullptr;
+    ze_graph_node_exp_desc_t graphNodeDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_EXP_DESC};
+    graphNodeDesc.phNodeHandle = &nodeHandle;
+    ze_group_count_t groupCount = {1, 1, 1};
+
+    RecordedApiCommands flatCapture;
+    Graph *graphCaptureTarget = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, L0::captureCommand<CaptureApi::zeCommandListAppendLaunchKernelWithParameters>(cmdlist, graphCaptureTarget, &flatCapture, &cmdlist, kernel.toHandle(), &groupCount, &graphNodeDesc, nullptr, 0U, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, L0::captureCommand<CaptureApi::zeCommandListAppendLaunchKernelWithParameters>(cmdlist, graphCaptureTarget, &flatCapture, &cmdlist, kernel.toHandle(), &groupCount, &graphNodeDesc, nullptr, 0U, nullptr));
+
+    EXPECT_EQ(nullptr, nodeHandle);
+    EXPECT_EQ(nullptr, flatCapture.externalStorage.graphNode);
+    ASSERT_EQ(2u, flatCapture.commands.size());
+    for (const auto &command : flatCapture.commands) {
+        const auto &closure = std::get<static_cast<size_t>(CaptureApi::zeCommandListAppendLaunchKernelWithParameters)>(command);
+        EXPECT_EQ(nullptr, closure.indirectArgs.graphNodeHandle);
+        EXPECT_EQ(nullptr, static_cast<const ze_graph_node_exp_desc_t *>(closure.indirectArgs.clonedPNext)->phNodeHandle);
+    }
+}
+
+TEST_F(GraphTestInstantiationTest, GivenMutableGraphWhenCapturingAppendKernelWithGraphNodeDescriptorThenCommandIsRecorded) {
+    GraphsCleanupGuard graphCleanup;
+
+    MockGraphContextReturningSpecificCmdList ctx;
+    Mock<Module> module(this->device, nullptr);
+    Mock<KernelImp> kernel;
+    kernel.setModule(&module);
+    ze_kernel_handle_t kernelHandle = kernel.toHandle();
+
+    ze_graph_node_handle_t nodeHandle = nullptr;
+    ze_graph_node_exp_desc_t graphNodeDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_EXP_DESC};
+    graphNodeDesc.phNodeHandle = &nodeHandle;
+    ze_group_count_t groupCount = {1, 1, 1};
+    ze_group_size_t groupSize = {1, 1, 1};
+
+    MockGraph srcGraph(&ctx, true, true);
+    auto srcGraphHandle = srcGraph.toHandle();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(immCmdListHandle, srcGraphHandle, nullptr));
+    EXPECT_TRUE(immCmdList->isCapturingGraph());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernelWithParameters(immCmdListHandle, kernelHandle, &groupCount, &graphNodeDesc, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernelWithArguments(immCmdListHandle, kernelHandle, groupCount, groupSize, nullptr, &graphNodeDesc, nullptr, 0, nullptr));
+
+    ASSERT_EQ(2u, srcGraph.recordedApiCommands.commands.size());
+    EXPECT_EQ(CaptureApi::zeCommandListAppendLaunchKernelWithParameters, static_cast<CaptureApi>(srcGraph.recordedApiCommands.commands[0].index()));
+    EXPECT_EQ(CaptureApi::zeCommandListAppendLaunchKernelWithArguments, static_cast<CaptureApi>(srcGraph.recordedApiCommands.commands[1].index()));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(immCmdListHandle, &srcGraphHandle, nullptr));
+}
+
+TEST_F(GraphTestInstantiationTest, GivenMutableGraphWhenCapturingAppendKernelWithGraphNodeDescriptorWithNullNodeHandlePointerThenInvalidArgumentIsReturned) {
+    GraphsCleanupGuard graphCleanup;
+
+    MockGraphContextReturningSpecificCmdList ctx;
+    Mock<Module> module(this->device, nullptr);
+    Mock<KernelImp> kernel;
+    kernel.setModule(&module);
+    ze_kernel_handle_t kernelHandle = kernel.toHandle();
+
+    ze_graph_node_exp_desc_t graphNodeDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_EXP_DESC};
+    graphNodeDesc.phNodeHandle = nullptr;
+    ze_group_count_t groupCount = {1, 1, 1};
+    ze_group_size_t groupSize = {1, 1, 1};
+
+    MockGraph srcGraph(&ctx, true, true);
+    auto srcGraphHandle = srcGraph.toHandle();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(immCmdListHandle, srcGraphHandle, nullptr));
+    EXPECT_TRUE(immCmdList->isCapturingGraph());
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeCommandListAppendLaunchKernelWithParameters(immCmdListHandle, kernelHandle, &groupCount, &graphNodeDesc, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zeCommandListAppendLaunchKernelWithArguments(immCmdListHandle, kernelHandle, groupCount, groupSize, nullptr, &graphNodeDesc, nullptr, 0, nullptr));
+    EXPECT_EQ(nullptr, srcGraph.recordedApiCommands.externalStorage.graphNode.get());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(immCmdListHandle, &srcGraphHandle, nullptr));
+}
+
+TEST_F(GraphTestInstantiationTest, GivenMutableGraphWhenCapturingAppendKernelsWithGraphNodeDescriptorsThenGraphNodesAreCreatedAndStoredInGraph) {
+    GraphsCleanupGuard graphCleanup;
+
+    MockGraphContextReturningSpecificCmdList ctx;
+    Mock<Module> module(this->device, nullptr);
+    Mock<KernelImp> kernel;
+    kernel.setModule(&module);
+    ze_kernel_handle_t kernelHandle = kernel.toHandle();
+
+    ze_graph_node_handle_t parametersNodeHandle = nullptr;
+    ze_graph_node_exp_desc_t parametersNodeDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_EXP_DESC};
+    parametersNodeDesc.flags = ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT;
+    parametersNodeDesc.phNodeHandle = &parametersNodeHandle;
+
+    ze_graph_node_handle_t argumentsNodeHandle = nullptr;
+    ze_graph_node_exp_desc_t argumentsNodeDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_EXP_DESC};
+    argumentsNodeDesc.flags = ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_ARGUMENT;
+    argumentsNodeDesc.phNodeHandle = &argumentsNodeHandle;
+
+    ze_group_count_t parametersGroupCount = {2, 3, 4};
+    ze_group_count_t argumentsGroupCount = {5, 6, 7};
+    ze_group_size_t groupSize = {4, 2, 1};
+
+    MockGraph srcGraph(&ctx, true, true);
+    auto srcGraphHandle = srcGraph.toHandle();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(immCmdListHandle, srcGraphHandle, nullptr));
+    EXPECT_TRUE(immCmdList->isCapturingGraph());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernelWithParameters(immCmdListHandle, kernelHandle, &parametersGroupCount, &parametersNodeDesc, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernelWithArguments(immCmdListHandle, kernelHandle, argumentsGroupCount, groupSize, nullptr, &argumentsNodeDesc, nullptr, 0, nullptr));
+
+    EXPECT_EQ(nullptr, srcGraph.recordedApiCommands.externalStorage.graphNode.get());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(immCmdListHandle, &srcGraphHandle, nullptr));
+
+    uint32_t graphNodesCount = 0U;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, srcGraph.getNodes(&graphNodesCount, nullptr));
+    ASSERT_EQ(2u, graphNodesCount);
+
+    std::array<ze_graph_node_handle_t, 2> graphNodes = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, srcGraph.getNodes(&graphNodesCount, graphNodes.data()));
+    EXPECT_EQ(2u, graphNodesCount);
+    EXPECT_EQ(parametersNodeHandle, graphNodes[0]);
+    EXPECT_EQ(argumentsNodeHandle, graphNodes[1]);
+
+    ze_graph_node_exp_properties_t nodeProperties = {ZE_STRUCTURE_TYPE_GRAPH_NODE_EXP_PROPERTIES};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::GraphNode::fromHandle(graphNodes[0])->getProperties(&nodeProperties));
+    EXPECT_EQ(ZE_GRAPH_NODE_EXP_TYPE_LAUNCH_KERNEL, nodeProperties.type);
+    EXPECT_EQ(static_cast<ze_mutable_graph_node_exp_flags_t>(ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT), nodeProperties.flags);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::GraphNode::fromHandle(graphNodes[1])->getProperties(&nodeProperties));
+    EXPECT_EQ(ZE_GRAPH_NODE_EXP_TYPE_LAUNCH_KERNEL, nodeProperties.type);
+    EXPECT_EQ(static_cast<ze_mutable_graph_node_exp_flags_t>(ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_ARGUMENT), nodeProperties.flags);
+
+    const auto &capturedCommands = srcGraph.getCapturedCommands();
+    ASSERT_EQ(2u, capturedCommands.size());
+    auto &parametersClosure = std::get<Closure<CaptureApi::zeCommandListAppendLaunchKernelWithParameters>>(capturedCommands[0]);
+    auto &argumentsClosure = std::get<Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments>>(capturedCommands[1]);
+
+    auto parametersNode = L0::GraphNode::fromHandle(graphNodes[0]);
+    ASSERT_EQ(&parametersClosure.indirectArgs.groupCounts, parametersNode->getGroupCounts());
+    EXPECT_EQ(parametersGroupCount.groupCountX, parametersNode->getGroupCounts()->groupCountX);
+    EXPECT_EQ(parametersGroupCount.groupCountY, parametersNode->getGroupCounts()->groupCountY);
+    EXPECT_EQ(parametersGroupCount.groupCountZ, parametersNode->getGroupCounts()->groupCountZ);
+    EXPECT_EQ(nullptr, parametersNode->getGroupSizes());
+    EXPECT_EQ(parametersClosure.indirectArgs.capturedKernel.get(), parametersNode->getKernel());
+
+    auto argumentsNode = L0::GraphNode::fromHandle(graphNodes[1]);
+    ASSERT_EQ(&argumentsClosure.apiArgs.groupCounts, argumentsNode->getGroupCounts());
+    EXPECT_EQ(argumentsGroupCount.groupCountX, argumentsNode->getGroupCounts()->groupCountX);
+    EXPECT_EQ(argumentsGroupCount.groupCountY, argumentsNode->getGroupCounts()->groupCountY);
+    EXPECT_EQ(argumentsGroupCount.groupCountZ, argumentsNode->getGroupCounts()->groupCountZ);
+    ASSERT_EQ(&argumentsClosure.apiArgs.groupSizes, argumentsNode->getGroupSizes());
+    EXPECT_EQ(groupSize.groupSizeX, argumentsNode->getGroupSizes()->groupSizeX);
+    EXPECT_EQ(groupSize.groupSizeY, argumentsNode->getGroupSizes()->groupSizeY);
+    EXPECT_EQ(groupSize.groupSizeZ, argumentsNode->getGroupSizes()->groupSizeZ);
+    EXPECT_EQ(argumentsClosure.indirectArgs.capturedKernel.get(), argumentsNode->getKernel());
+}
+
+TEST(GraphGetNodesTest, GivenNotMutableGraphWhenGettingNodesThenInvalidArgumentIsReturned) {
+    GraphsCleanupGuard graphCleanup;
+    ContextStubMock ctx;
+    MockGraph graph{&ctx, true, false};
+    graph.stopCapturing();
+
+    uint32_t graphNodesCount = 0U;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, graph.getNodes(&graphNodesCount, nullptr));
+}
+
+TEST(GraphGetNodesTest, GivenMutableGraphStillRecordingWhenGettingNodesThenNotReadyIsReturned) {
+    GraphsCleanupGuard graphCleanup;
+    ContextStubMock ctx;
+    MockGraph graph{&ctx, true, true};
+
+    uint32_t graphNodesCount = 0U;
+    EXPECT_EQ(ZE_RESULT_NOT_READY, graph.getNodes(&graphNodesCount, nullptr));
+}
+
+TEST(GraphGetNodesTest, GivenCountLessThanNumberOfNodesWhenGettingNodesThenOnlyRequestedNumberOfNodesIsRetrieved) {
+    GraphsCleanupGuard graphCleanup;
+    ContextStubMock ctx;
+    MockGraph graph{&ctx, true, true};
+    graph.graphNodes->push_back(std::make_unique<L0::GraphNode>(ZE_GRAPH_NODE_EXP_TYPE_LAUNCH_KERNEL, 0U));
+    graph.graphNodes->push_back(std::make_unique<L0::GraphNode>(ZE_GRAPH_NODE_EXP_TYPE_LAUNCH_KERNEL, 0U));
+    graph.stopCapturing();
+
+    uint32_t graphNodesCount = 1U;
+    std::array<ze_graph_node_handle_t, 2> graphNodes = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, graph.getNodes(&graphNodesCount, graphNodes.data()));
+    EXPECT_EQ(1u, graphNodesCount);
+    EXPECT_EQ((*graph.graphNodes)[0]->toHandle(), graphNodes[0]);
+    EXPECT_EQ(nullptr, graphNodes[1]);
+}
+
+TEST(GraphGetNodesTest, GivenCountGreaterThanNumberOfNodesWhenGettingNodesThenCountIsUpdatedAndAllNodesAreRetrieved) {
+    GraphsCleanupGuard graphCleanup;
+    ContextStubMock ctx;
+    MockGraph graph{&ctx, true, true};
+    graph.graphNodes->push_back(std::make_unique<L0::GraphNode>(ZE_GRAPH_NODE_EXP_TYPE_LAUNCH_KERNEL, 0U));
+    graph.stopCapturing();
+
+    uint32_t graphNodesCount = 3U;
+    std::array<ze_graph_node_handle_t, 3> graphNodes = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, graph.getNodes(&graphNodesCount, graphNodes.data()));
+    EXPECT_EQ(1u, graphNodesCount);
+    EXPECT_EQ((*graph.graphNodes)[0]->toHandle(), graphNodes[0]);
+    EXPECT_EQ(nullptr, graphNodes[1]);
 }
 
 TEST_F(GraphTestInstantiationTest, GivenGraphPatchPreambleDebugFlagWhenInstantiatingGraphThenUseDebugSettingForPatchPreamble) {
@@ -8404,12 +8913,6 @@ TEST(GraphTestMutableGraphNodeExp, GivenMutableGraphNodeExpFunctionsWhenCalledTh
     ze_executable_graph_handle_t hExecutableGraph = reinterpret_cast<ze_executable_graph_handle_t>(0x1234);
     ze_graph_node_handle_t hNode = reinterpret_cast<ze_graph_node_handle_t>(0x5678);
 
-    uint32_t nodesCount = 0;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeGraphGetNodesExp(graph.toHandle(), &nodesCount, nullptr));
-
-    ze_graph_node_exp_properties_t nodeProperties = {ZE_STRUCTURE_TYPE_GRAPH_NODE_EXP_PROPERTIES};
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeGraphNodeGetPropertiesExp(hNode, &nodeProperties));
-
     ze_graph_node_update_group_count_exp_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_GROUP_COUNT_EXP_DESC};
     const void *updateDescs[] = {&groupCountDesc};
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeGraphNodesUpdateExp(graph.toHandle(), 1, &hNode, updateDescs, nullptr));
@@ -8436,6 +8939,52 @@ TEST(GraphNodeTest, GivenGraphNodeWithoutFlagsWhenGettingPropertiesThenZeroFlags
     nodeProperties.flags = ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT;
     EXPECT_EQ(ZE_RESULT_SUCCESS, node.getProperties(&nodeProperties));
     EXPECT_EQ(0U, nodeProperties.flags);
+}
+
+TEST(GraphNodeTest, GivenInvalidParametersWhenGettingNodePropertiesThroughApiThenInvalidArgumentIsReturned) {
+    L0::GraphNode node{ZE_GRAPH_NODE_EXP_TYPE_LAUNCH_KERNEL, 0U};
+    ze_graph_node_exp_properties_t nodeProperties = {ZE_STRUCTURE_TYPE_GRAPH_NODE_EXP_PROPERTIES};
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, L0::zeGraphNodeGetPropertiesExp(nullptr, &nodeProperties));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, L0::zeGraphNodeGetPropertiesExp(node.toHandle(), nullptr));
+}
+
+TEST(GraphNodeTest, GivenGraphNodeWhenGettingNodePropertiesThroughApiThenCreationTypeAndFlagsAreReturned) {
+    const ze_mutable_graph_node_exp_flags_t flags = ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_SIZE;
+    L0::GraphNode node{ZE_GRAPH_NODE_EXP_TYPE_LAUNCH_KERNEL, flags};
+
+    ze_graph_node_exp_properties_t nodeProperties = {ZE_STRUCTURE_TYPE_GRAPH_NODE_EXP_PROPERTIES};
+    nodeProperties.type = ZE_GRAPH_NODE_EXP_TYPE_FORCE_UINT32;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeGraphNodeGetPropertiesExp(node.toHandle(), &nodeProperties));
+    EXPECT_EQ(ZE_GRAPH_NODE_EXP_TYPE_LAUNCH_KERNEL, nodeProperties.type);
+    EXPECT_EQ(flags, nodeProperties.flags);
+}
+
+TEST(GraphGetNodesTest, GivenInvalidParametersWhenGettingNodesThroughApiThenInvalidArgumentIsReturned) {
+    GraphsCleanupGuard graphCleanup;
+    ContextStubMock ctx;
+    MockGraph graph{&ctx, true, true};
+    graph.stopCapturing();
+
+    uint32_t graphNodesCount = 0U;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, L0::zeGraphGetNodesExp(nullptr, &graphNodesCount, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, L0::zeGraphGetNodesExp(graph.toHandle(), nullptr, nullptr));
+}
+
+TEST(GraphGetNodesTest, GivenMutableGraphWithNodesWhenGettingNodesThroughApiThenNodesAreReturned) {
+    GraphsCleanupGuard graphCleanup;
+    ContextStubMock ctx;
+    MockGraph graph{&ctx, true, true};
+    graph.graphNodes->push_back(std::make_unique<L0::GraphNode>(ZE_GRAPH_NODE_EXP_TYPE_LAUNCH_KERNEL, 0U));
+    graph.stopCapturing();
+
+    uint32_t graphNodesCount = 0U;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeGraphGetNodesExp(graph.toHandle(), &graphNodesCount, nullptr));
+    ASSERT_EQ(1u, graphNodesCount);
+
+    ze_graph_node_handle_t graphNodeHandle = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeGraphGetNodesExp(graph.toHandle(), &graphNodesCount, &graphNodeHandle));
+    EXPECT_EQ((*graph.graphNodes)[0]->toHandle(), graphNodeHandle);
 }
 
 TEST(GraphTestCommandListDestruction, GivenPreallocatedCaptureTargetWhenCommandListIsDestroyedThenGraphIsNotDestroyed) {

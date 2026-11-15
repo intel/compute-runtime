@@ -9,6 +9,7 @@
 
 #include "level_zero/api/core/ze_graph_api_entrypoints.h"
 #include "level_zero/api/internal/l0_graph.h"
+#include "level_zero/experimental/source/graph/graph.h"
 
 namespace L0 {
 
@@ -86,12 +87,18 @@ ze_result_t ZE_APICALL zeGraphSetDestructionCallbackExp(ze_graph_handle_t hGraph
     return L0::zeGraphSetDestructionCallbackExt(hGraph, pfnCallback, pUserData, pNext);
 }
 
-ze_result_t ZE_APICALL zeGraphGetNodesExp([[maybe_unused]] ze_graph_handle_t hGraph, [[maybe_unused]] uint32_t *pGraphNodesCount, [[maybe_unused]] ze_graph_node_handle_t *phGraphNodes) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+ze_result_t ZE_APICALL zeGraphGetNodesExp(ze_graph_handle_t hGraph, uint32_t *pGraphNodesCount, ze_graph_node_handle_t *phGraphNodes) {
+    if ((nullptr == hGraph) || (nullptr == pGraphNodesCount)) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    return L0::Graph::fromHandle(hGraph)->getNodes(pGraphNodesCount, phGraphNodes);
 }
 
-ze_result_t ZE_APICALL zeGraphNodeGetPropertiesExp([[maybe_unused]] ze_graph_node_handle_t hNode, [[maybe_unused]] ze_graph_node_exp_properties_t *pProperties) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+ze_result_t ZE_APICALL zeGraphNodeGetPropertiesExp(ze_graph_node_handle_t hNode, ze_graph_node_exp_properties_t *pProperties) {
+    if ((nullptr == hNode) || (nullptr == pProperties)) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    return L0::GraphNode::fromHandle(hNode)->getProperties(pProperties);
 }
 
 ze_result_t ZE_APICALL zeGraphNodesUpdateExp([[maybe_unused]] ze_graph_handle_t hGraph, [[maybe_unused]] uint32_t numNodes, [[maybe_unused]] ze_graph_node_handle_t *phNodes, [[maybe_unused]] const void **ppUpdateDescs, [[maybe_unused]] const void *pNext) {

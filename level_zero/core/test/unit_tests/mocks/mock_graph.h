@@ -18,6 +18,7 @@ struct MockGraph : Graph {
     using Graph::captureTargetDesc;
     using Graph::executionTarget;
     using Graph::Graph;
+    using Graph::graphNodes;
     using Graph::parentGraph;
     using Graph::recordedApiCommands;
     using Graph::recordedSignals;

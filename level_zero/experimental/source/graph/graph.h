@@ -248,28 +248,60 @@ struct GraphNode : _ze_graph_node_handle_t {
         return ZE_RESULT_SUCCESS;
     }
 
+    auto setGroupCounts(ze_group_count_t *groupCounts) -> void {
+        this->groupCounts = groupCounts;
+    }
+
+    auto getGroupCounts() const -> ze_group_count_t * {
+        return this->groupCounts;
+    }
+
+    auto setGroupSizes(ze_group_size_t *groupSizes) -> void {
+        this->groupSizes = groupSizes;
+    }
+
+    auto getGroupSizes() const -> ze_group_size_t * {
+        return this->groupSizes;
+    }
+
+    auto setKernel(KernelImp *kernel) -> void {
+        this->kernel = kernel;
+    }
+
+    auto getKernel() const -> KernelImp * {
+        return this->kernel;
+    }
+
   protected:
     ze_mutable_graph_node_exp_flags_t flags;
     ze_graph_node_exp_type_t type;
+    ze_group_count_t *groupCounts = nullptr;
+    ze_group_size_t *groupSizes = nullptr;
+    KernelImp *kernel = nullptr;
 };
 
+using GraphNodesContainer = std::vector<std::unique_ptr<GraphNode>>;
+
 struct Graph : _ze_graph_handle_t {
-    Graph(L0::Context *ctx, bool preallocated, bool mutableGraph, WeaklyShared<OrderedCommandsRegistry> &&orderedCommandsRegistry)
+    Graph(L0::Context *ctx, bool preallocated, bool mutableGraph, WeaklyShared<OrderedCommandsRegistry> &&orderedCommandsRegistry, WeaklyShared<GraphNodesContainer> &&graphNodesContainer)
         : ctx(ctx),
           orderedCommands(std::move(orderedCommandsRegistry)),
+          graphNodes(std::move(graphNodesContainer)),
           preallocated(preallocated),
           mutableGraph(mutableGraph) {
         if (orderedCommands.empty()) {
             orderedCommands = WeaklyShared<OrderedCommandsRegistry>(new OrderedCommandsRegistry);
+            graphNodes = WeaklyShared<GraphNodesContainer>(new GraphNodesContainer);
             internalEvents = std::make_shared<GraphInternalEvents>();
         }
+        this->recordedApiCommands.externalStorage.graphNodeCreationEnabled = mutableGraph;
         if (mutableGraph) {
             enableMutableCommandList();
         }
         enabledGraphs();
     }
 
-    Graph(L0::Context *ctx, bool preallocated, bool mutableGraph) : Graph(ctx, preallocated, mutableGraph, {}) {
+    Graph(L0::Context *ctx, bool preallocated, bool mutableGraph) : Graph(ctx, preallocated, mutableGraph, {}, {}) {
     }
 
     MOCKABLE_VIRTUAL ~Graph();
@@ -309,6 +341,15 @@ struct Graph : _ze_graph_handle_t {
 
         return recordedApiCommands.capture<api>(apiArgs...);
     }
+
+    auto storeCreatedGraphNode() -> void {
+        auto &createdGraphNode = this->recordedApiCommands.externalStorage.graphNode;
+        if (createdGraphNode) {
+            this->graphNodes->push_back(std::move(createdGraphNode));
+        }
+    }
+
+    auto getNodes(uint32_t *pGraphNodesCount, ze_graph_node_handle_t *phGraphNodes) -> ze_result_t;
 
     const std::vector<CapturedCommand> &getCapturedCommands() const {
         return recordedApiCommands.commands;
@@ -530,6 +571,7 @@ struct Graph : _ze_graph_handle_t {
     const uint64_t id = getNextGraphId();
 
     WeaklyShared<OrderedCommandsRegistry> orderedCommands; // shared between graph and subgraphs
+    WeaklyShared<GraphNodesContainer> graphNodes;
     std::shared_ptr<GraphInternalEvents> internalEvents;
 
     struct DestructorCallbackEntry {
@@ -551,6 +593,7 @@ struct Graph : _ze_graph_handle_t {
 void recordHandleWaitEventsFromNextCommand(L0::CommandList &srcCmdList, Graph *&captureTarget, std::span<ze_event_handle_t> events);
 void recordHandleSignalEventFromPreviousCommand(L0::CommandList &srcCmdList, Graph &captureTarget, ze_event_handle_t event);
 void releaseRecordedSignalForEagerCommand(ze_event_handle_t event);
+const Graph *getCaptureSessionGraph(const Graph *captureTarget, std::span<ze_event_handle_t> waitEvents);
 
 bool isGraphCapturingAllowed(const L0::CommandList &srcCmdList);
 bool isGraphInstantiationTarget(const L0::CommandList &srcCmdList);
@@ -596,6 +639,12 @@ ze_result_t captureCommand(L0::CommandList &srcCmdList, Graph *&graphCaptureTarg
             return ZE_RESULT_ERROR_GRAPH_INTERNAL_EVENT;
         }
     }
+    if (isCommandsGraphNodeDescriptorPresent<api>(apiArgs...)) {
+        if (const auto *captureSessionGraph = getCaptureSessionGraph(graphCaptureTarget, eventsWaitList);
+            (nullptr != captureSessionGraph) && (false == captureSessionGraph->isMutableGraph())) {
+            return ZE_RESULT_ERROR_INVALID_OPERATION_EXP;
+        }
+    }
     if ((false == eventsWaitList.empty()) && ((nullptr == graphCaptureTarget) || (graphCaptureTarget->getRootGraph()->hasUnjoinedForks()))) { // either is not capturing and is potential fork or this can be a join operation (against any unjoined fork in the whole capture session)
         recordHandleWaitEventsFromNextCommand(srcCmdList, graphCaptureTarget, eventsWaitList);
     }
@@ -621,6 +670,9 @@ ze_result_t captureCommand(L0::CommandList &srcCmdList, Graph *&graphCaptureTarg
     auto ret = graphCaptureTarget->capture<api>(apiArgs...);
     if (ZE_RESULT_SUCCESS != ret) {
         return ret;
+    }
+    if constexpr (IsGraphNodeCreatingApi<api>) {
+        graphCaptureTarget->storeCreatedGraphNode();
     }
 
     if (apiExternalGraphFlag) {
