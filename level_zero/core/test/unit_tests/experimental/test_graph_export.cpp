@@ -37,13 +37,13 @@ namespace L0 {
 namespace ult {
 
 TEST_F(GraphDotExporterTest, GivenNullFilePathWhenExportToFileThenReturnsInvalidArgument) {
-    Graph testGraph{&ctx, true};
+    Graph testGraph{&ctx, true, false};
     auto result = exporter.exportToFile(testGraph, nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
 TEST_F(GraphDotExporterTest, GivenEmptyGraphWhenExportToStringThenContainsDigraphHeader) {
-    Graph testGraph{&ctx, true};
+    Graph testGraph{&ctx, true, false};
 
     std::string dot = exporter.exportToString(testGraph);
     EXPECT_NE(dot.find("digraph \"graph\" {"), std::string::npos);
@@ -57,7 +57,7 @@ TEST_F(GraphDotExporterTest, GivenEmptyGraphWhenExportToStringThenContainsDigrap
 }
 
 TEST_F(GraphDotExporterTest, GivenGraphWithSingleCommandWhenExportToStringThenContainsCommandNode) {
-    Graph testGraph{&ctx, true};
+    Graph testGraph{&ctx, true, false};
     Mock<Event> event;
 
     Mock<CommandList> cmdlist;
@@ -74,7 +74,7 @@ TEST_F(GraphDotExporterTest, GivenGraphWithSingleCommandWhenExportToStringThenCo
 }
 
 TEST_F(GraphDotExporterTest, GivenGraphWithMultipleCommandsWhenExportToStringThenContainsSequentialEdges) {
-    Graph testGraph{&ctx, true};
+    Graph testGraph{&ctx, true, false};
     Mock<Event> event;
     Mock<CommandList> cmdlist;
     auto cmdlistHandle = cmdlist.toHandle();
@@ -91,7 +91,7 @@ TEST_F(GraphDotExporterTest, GivenGraphWithMultipleCommandsWhenExportToStringThe
 }
 
 TEST_F(GraphDotExporterTest, WhenWriteHeaderThenGeneratesValidDotHeader) {
-    Graph testGraph{&ctx, true};
+    Graph testGraph{&ctx, true, false};
 
     std::ostringstream dot;
     exporter.writeHeader(dot);
@@ -106,7 +106,7 @@ TEST_F(GraphDotExporterTest, WhenWriteHeaderThenGeneratesValidDotHeader) {
 }
 
 TEST_F(GraphDotExporterTest, GivenGraphWithCommandWhenWriteNodesThenGeneratesNodeDefinitions) {
-    Graph testGraph{&ctx, true};
+    Graph testGraph{&ctx, true, false};
     Mock<Event> event;
     auto eventHandle = event.toHandle();
     Mock<CommandList> cmdlist;
@@ -126,7 +126,7 @@ TEST_F(GraphDotExporterTest, GivenGraphWithCommandWhenWriteNodesThenGeneratesNod
 }
 
 TEST_F(GraphDotExporterTest, GivenGraphWithMultipleCommandsWhenWriteEdgesThenGeneratesSequentialEdges) {
-    Graph testGraph{&ctx, true};
+    Graph testGraph{&ctx, true, false};
     Mock<Event> event;
     auto eventHandle = event.toHandle();
     Mock<CommandList> cmdlist;
@@ -146,7 +146,7 @@ TEST_F(GraphDotExporterTest, GivenGraphWithMultipleCommandsWhenWriteEdgesThenGen
 }
 
 TEST_F(GraphDotExporterTest, GivenGraphWithSingleCommandWhenWriteEdgesThenDoesNotGenerateSequentialSectionComment) {
-    Graph testGraph{&ctx, true};
+    Graph testGraph{&ctx, true, false};
     Mock<Event> event;
     auto eventHandle = event.toHandle();
     Mock<CommandList> cmdlist;
@@ -165,7 +165,7 @@ TEST_F(GraphDotExporterTest, GivenGraphWithSingleCommandWhenWriteEdgesThenDoesNo
 }
 
 TEST_F(GraphDotExporterTest, GivenGraphWithCommandWhenGetCommandNodeLabelThenReturnsCorrectLabel) {
-    Graph testGraph{&ctx, true};
+    Graph testGraph{&ctx, true, false};
     Mock<Event> event;
     auto eventHandle = event.toHandle();
     Mock<CommandList> cmdlist;
@@ -181,7 +181,7 @@ TEST_F(GraphDotExporterTest, GivenGraphWithCommandWhenGetCommandNodeLabelThenRet
 }
 
 TEST_F(GraphDotExporterTest, GivenDifferentCommandTypesWhenGetCommandNodeAttributesThenReturnsCorrectColors) {
-    Graph testGraph{&ctx, true};
+    Graph testGraph{&ctx, true, false};
     Mock<Event> event;
     auto eventHandle = event.toHandle();
     Mock<CommandList> cmdlist;
@@ -235,7 +235,7 @@ TEST_F(GraphDotExporterTest, GivenDeepLevelWhenGetSubgraphFillColorThenReturnsDe
 }
 
 TEST_F(GraphDotExporterTest, GivenGraphWithoutSubgraphsWhenWriteSubgraphsThenGeneratesNoOutput) {
-    Graph testGraph{&ctx, true};
+    Graph testGraph{&ctx, true, false};
     std::ostringstream dot;
     exporter.writeSubgraphs(dot, testGraph, 0);
     std::string output = dot.str();
@@ -244,7 +244,7 @@ TEST_F(GraphDotExporterTest, GivenGraphWithoutSubgraphsWhenWriteSubgraphsThenGen
 }
 
 TEST_F(GraphDotExporterTest, GivenGraphWithSubgraphsWhenWriteSubgraphsThenGeneratesSubgraphStructure) {
-    Graph testGraph{&ctx, true};
+    Graph testGraph{&ctx, true, false};
     Mock<Event> forkEvent;
     auto forkEventHandle = forkEvent.toHandle();
     Mock<Event> joinEvent;
@@ -285,7 +285,7 @@ TEST_F(GraphDotExporterTest, GivenGraphWithSubgraphsWhenWriteSubgraphsThenGenera
 }
 
 TEST_F(GraphDotExporterTest, GivenGraphWithNestedSubgraphsWhenWriteSubgraphsThenGeneratesNestedStructure) {
-    Graph testGraph{&ctx, true};
+    Graph testGraph{&ctx, true, false};
     Mock<Event> forkEvent1;
     Mock<Event> forkEvent2;
     Mock<Event> joinEvent1;
@@ -341,7 +341,7 @@ TEST_F(GraphDotExporterTest, GivenGraphWithNestedSubgraphsWhenWriteSubgraphsThen
 }
 
 TEST_F(GraphDotExporterTest, GivenGraphWithAdjacentSubgraphsWhenWriteSubgraphsThenGeneratesMultipleSubgraphs) {
-    Graph testGraph{&ctx, true};
+    Graph testGraph{&ctx, true, false};
     Mock<Event> forkEvent1;
     Mock<Event> forkEvent2;
     Mock<Event> joinEvent1;
@@ -401,14 +401,14 @@ TEST_F(GraphDotExporterTest, GivenGraphWithAdjacentSubgraphsWhenWriteSubgraphsTh
 
 TEST_F(GraphDotExporterTest, WhenFindSubgraphIndexOnEmptyGraphThenReturnsNullopt) {
     const StackVec<Graph *, 16> subGraphs;
-    Graph fakeSubgraph{&ctx, true};
+    Graph fakeSubgraph{&ctx, true, false};
     auto index = exporter.findSubgraphIndex(subGraphs, &fakeSubgraph);
 
     EXPECT_FALSE(index.has_value());
 }
 
 TEST_F(GraphDotExporterTest, WhenFindSubgraphIndexWithInvalidSubgraphThenReturnsNullopt) {
-    Graph testGraph{&ctx, true};
+    Graph testGraph{&ctx, true, false};
     Mock<Event> forkEvent;
     auto forkEventHandle = forkEvent.toHandle();
     Mock<Event> joinEvent;
@@ -434,14 +434,14 @@ TEST_F(GraphDotExporterTest, WhenFindSubgraphIndexWithInvalidSubgraphThenReturns
     testGraph.stopCapturing();
 
     const auto &subGraphs = testGraph.getSubgraphs();
-    Graph fakeSubgraph{&ctx, true};
+    Graph fakeSubgraph{&ctx, true, false};
     auto index = exporter.findSubgraphIndex(subGraphs, &fakeSubgraph);
 
     EXPECT_FALSE(index.has_value());
 }
 
 TEST_F(GraphDotExporterTest, WhenFindSubgraphIndexWithValidGraphThenReturnsCorrectIndex) {
-    Graph testGraph{&ctx, true};
+    Graph testGraph{&ctx, true, false};
     Mock<Event> forkEvent;
     auto forkEventHandle = forkEvent.toHandle();
     Mock<Event> joinEvent;
@@ -482,7 +482,7 @@ TEST_F(GraphDotExporterTest, WhenFindSubgraphIndexByCommandListOnEmptyGraphThenR
 }
 
 TEST_F(GraphDotExporterTest, WhenFindSubgraphIndexByCommandListWithInvalidCommandListThenReturnsNullopt) {
-    Graph testGraph{&ctx, true};
+    Graph testGraph{&ctx, true, false};
     Mock<Event> forkEvent;
     auto forkEventHandle = forkEvent.toHandle();
     Mock<Event> joinEvent;
@@ -516,7 +516,7 @@ TEST_F(GraphDotExporterTest, WhenFindSubgraphIndexByCommandListWithInvalidComman
 }
 
 TEST_F(GraphDotExporterTest, WhenFindSubgraphIndexByCommandListWithValidCommandListThenReturnsCorrectIndex) {
-    Graph testGraph{&ctx, true};
+    Graph testGraph{&ctx, true, false};
     Mock<Event> forkEvent;
     auto forkEventHandle = forkEvent.toHandle();
     Mock<Event> joinEvent;
@@ -550,7 +550,7 @@ TEST_F(GraphDotExporterTest, WhenFindSubgraphIndexByCommandListWithValidCommandL
 }
 
 TEST_F(GraphDotExporterTest, GivenGraphWithEmptySubgraphWhenWriteForkJoinEdgesThenNoEdges) {
-    Graph testGraph{&ctx, true};
+    Graph testGraph{&ctx, true, false};
     Mock<Event> forkEvent;
     auto forkEventHandle = forkEvent.toHandle();
     Mock<Event> joinEvent;
@@ -581,7 +581,7 @@ TEST_F(GraphDotExporterTest, GivenGraphWithEmptySubgraphWhenWriteForkJoinEdgesTh
 }
 
 TEST_F(GraphDotExporterTest, GivenGraphWithNoJoinedForksWhenWriteForkJoinEdgesThenNoSectionComment) {
-    Graph testGraph{&ctx, true};
+    Graph testGraph{&ctx, true, false};
 
     std::ostringstream dot;
     exporter.writeForkJoinEdges(dot, testGraph, 0, 0);
@@ -591,7 +591,7 @@ TEST_F(GraphDotExporterTest, GivenGraphWithNoJoinedForksWhenWriteForkJoinEdgesTh
 }
 
 TEST_F(GraphDotExporterTest, GivenGraphWithUnjoinedForksWhenWriteUnjoinedForkEdgesThenGeneratesUnjoinedEdges) {
-    Graph testGraph{&ctx, true};
+    Graph testGraph{&ctx, true, false};
     Mock<Event> forkEvent;
     auto forkEventHandle = forkEvent.toHandle();
     Mock<CommandList> mainCmdList;
@@ -624,7 +624,7 @@ TEST_F(GraphDotExporterTest, GivenGraphWithUnjoinedForksWhenWriteUnjoinedForkEdg
 }
 
 TEST_F(GraphDotExporterTest, GivenUnjoinedForkPrecededOnlyByForkSignalWhenWriteUnjoinedForkEdgesThenNoEdgeIsGenerated) {
-    Graph testGraph{&ctx, true};
+    Graph testGraph{&ctx, true, false};
     Mock<Event> forkEvent;
     auto forkEventHandle = forkEvent.toHandle();
     Mock<CommandList> mainCmdList;
@@ -655,7 +655,7 @@ TEST_F(GraphDotExporterTest, GivenUnjoinedForkPrecededOnlyByForkSignalWhenWriteU
 }
 
 TEST_F(GraphDotExporterTest, GivenGraphWithNoUnjoinedForksWhenWriteUnjoinedForkEdgesThenNoSectionComment) {
-    Graph testGraph{&ctx, true};
+    Graph testGraph{&ctx, true, false};
 
     std::ostringstream dot;
     exporter.writeUnjoinedForkEdges(dot, testGraph, 0, 0);
@@ -668,7 +668,7 @@ TEST_F(GraphDotExporterTest, GivenGraphWithNoUnjoinedForksWhenWriteUnjoinedForkE
 //   main graph (level 0) : C0 memory copy, C1 fork event record, C2 join event wait, C3 memory copy
 //   subgraph (level 1)   : C0 fork event wait, C1 memory copy, C2 join event record
 struct ForkJoinEventNodesScenario {
-    ForkJoinEventNodesScenario(L0::Context *ctx, L0::Device *device) : testGraph(ctx, true) {
+    ForkJoinEventNodesScenario(L0::Context *ctx, L0::Device *device) : testGraph(ctx, true, false) {
         mainCmdList.cmdListType = L0::CommandList::CommandListType::typeImmediate;
         mainCmdList.device = device;
         subCmdList.cmdListType = L0::CommandList::CommandListType::typeImmediate;
@@ -704,7 +704,7 @@ struct ForkJoinEventNodesScenario {
 };
 
 struct ForkJoinEventWithParametersNodesScenario {
-    ForkJoinEventWithParametersNodesScenario(L0::Context *ctx, L0::Device *device) : testGraph(ctx, true) {
+    ForkJoinEventWithParametersNodesScenario(L0::Context *ctx, L0::Device *device) : testGraph(ctx, true, false) {
         mainCmdList.cmdListType = L0::CommandList::CommandListType::typeImmediate;
         mainCmdList.device = device;
         subCmdList.cmdListType = L0::CommandList::CommandListType::typeImmediate;
@@ -857,7 +857,7 @@ TEST_F(GraphDotExporterTest, GivenMultiQueueForkJoinGraphWhenCollectVisibleComma
 //   main graph (level 0) : C0 memory copy, C1 fork event record, C2 join event wait, C3 memory copy
 //   subgraph (level 1)   : C0 fork event wait, C1 memory copy, C2 join event record
 struct MixedEventForkJoinScenario {
-    MixedEventForkJoinScenario(L0::Context *ctx, L0::Device *device) : testGraph(ctx, true) {
+    MixedEventForkJoinScenario(L0::Context *ctx, L0::Device *device) : testGraph(ctx, true, false) {
         mainCmdList.cmdListType = L0::CommandList::CommandListType::typeImmediate;
         mainCmdList.device = device;
         subCmdList.cmdListType = L0::CommandList::CommandListType::typeImmediate;
@@ -950,7 +950,7 @@ TEST_F(GraphDotExporterTest, GivenBothForkAndJoinOperationsWithAdditionalEventRe
 }
 
 TEST_F(GraphDotExporterSimpleStyleTest, GivenEmptyGraphWhenExportToStringThenHeaderUsesSimpleNodeStyle) {
-    Graph testGraph{&ctx, true};
+    Graph testGraph{&ctx, true, false};
 
     std::string dot = exporter.exportToString(testGraph);
     EXPECT_NE(dot.find("digraph \"graph\" {"), std::string::npos);
@@ -962,7 +962,7 @@ TEST_F(GraphDotExporterSimpleStyleTest, GivenEmptyGraphWhenExportToStringThenHea
 }
 
 TEST_F(GraphDotExporterSimpleStyleTest, GivenCommandWhenGetCommandNodeAttributesThenReturnsWhiteFill) {
-    Graph testGraph{&ctx, true};
+    Graph testGraph{&ctx, true, false};
     Mock<Event> event;
     Mock<CommandList> cmdlist;
     auto cmdlistHandle = cmdlist.toHandle();
@@ -976,7 +976,7 @@ TEST_F(GraphDotExporterSimpleStyleTest, GivenCommandWhenGetCommandNodeAttributes
 }
 
 TEST_F(GraphDotExporterSimpleStyleTest, GivenCommandWhenGetCommandNodeLabelThenLabelIncludesType) {
-    Graph testGraph{&ctx, true};
+    Graph testGraph{&ctx, true, false};
     Mock<Event> event;
     Mock<CommandList> cmdlist;
     auto cmdlistHandle = cmdlist.toHandle();
@@ -991,7 +991,7 @@ TEST_F(GraphDotExporterSimpleStyleTest, GivenCommandWhenGetCommandNodeLabelThenL
 }
 
 TEST_F(GraphDotExporterSimpleStyleTest, GivenKernelCommandWhenGetCommandNodeLabelThenLabelIncludesTypeAndName) {
-    Graph testGraph{&ctx, true};
+    Graph testGraph{&ctx, true, false};
     Mock<CommandList> cmdlist;
     auto cmdlistHandle = cmdlist.toHandle();
     cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
@@ -1032,7 +1032,7 @@ TEST_F(GraphDotExporterSimpleStyleTest, GivenKernelCommandWhenGetCommandNodeLabe
 }
 
 TEST_F(GraphDotExporterSimpleStyleTest, GivenGraphWithSubgraphsWhenWriteSubgraphsThenGeneratesSimpleSubgraphStructure) {
-    Graph testGraph{&ctx, true};
+    Graph testGraph{&ctx, true, false};
     Mock<Event> forkEvent;
     auto forkEventHandle = forkEvent.toHandle();
     Mock<Event> joinEvent;
@@ -1071,7 +1071,7 @@ TEST_F(GraphDotExporterSimpleStyleTest, GivenGraphWithSubgraphsWhenWriteSubgraph
 }
 
 TEST_F(GraphDotExporterFileTest, GivenEmptyGraphWhenExportToFileThenWritesValidDotContent) {
-    Graph testGraph{&ctx, true};
+    Graph testGraph{&ctx, true, false};
     setupSuccessfulWrite(testGraph);
 
     auto result = exporter.exportToFile(testGraph, testFilePath.c_str());
@@ -1090,7 +1090,7 @@ TEST_F(GraphDotExporterFileTest, GivenFailedFileOpenWhenExportToFileThenReturnsU
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.PrintDebugMessages.set(true);
 
-    Graph testGraph{&ctx, true};
+    Graph testGraph{&ctx, true, false};
     setupFailedOpen();
 
     StreamCapture capture;
@@ -1111,7 +1111,7 @@ TEST_F(GraphDotExporterFileTest, GivenFailedFileWriteWhenExportToFileThenReturns
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.PrintDebugMessages.set(true);
 
-    Graph testGraph{&ctx, true};
+    Graph testGraph{&ctx, true, false};
     setupFailedWrite();
 
     StreamCapture capture;
@@ -1131,7 +1131,7 @@ TEST_F(GraphDotExporterFileTest, GivenFailedFileWriteWhenExportToFileThenReturns
 
 TEST_F(GraphDotExporterFileTest, WhenGetGraphDumpDefaultFileNameThenComposedFromApplicationNamePidGraphIdAndHandles) {
     VariableBackup<std::string> processNameBackup(&NEO::SysCalls::getProcessNameResult, "myApp");
-    Graph testGraph{&ctx, true};
+    Graph testGraph{&ctx, true, false};
     ExecutableGraph execGraph;
     auto expectedFileName = "myApp_" +
                             std::to_string(NEO::SysCalls::getProcessId()) + "_" +
@@ -1143,7 +1143,7 @@ TEST_F(GraphDotExporterFileTest, WhenGetGraphDumpDefaultFileNameThenComposedFrom
 
 TEST_F(GraphDotExporterFileTest, GivenEmptyApplicationNameWhenGetGraphDumpDefaultFileNameThenFallsBackToUnknownPrefix) {
     VariableBackup<std::string> processNameBackup(&NEO::SysCalls::getProcessNameResult, std::string{});
-    Graph testGraph{&ctx, true};
+    Graph testGraph{&ctx, true, false};
     ExecutableGraph execGraph;
     auto expectedFileName = "unknown_" +
                             std::to_string(NEO::SysCalls::getProcessId()) + "_" +
@@ -1154,7 +1154,7 @@ TEST_F(GraphDotExporterFileTest, GivenEmptyApplicationNameWhenGetGraphDumpDefaul
 }
 
 TEST_F(GraphDotExporterFileTest, WhenDumpGraphOnInstantiateThenGraphContentWrittenToFile) {
-    Graph testGraph{&ctx, true};
+    Graph testGraph{&ctx, true, false};
     ExecutableGraph execGraph;
     setupSuccessfulWrite(testGraph, GraphExportStyle::detailed, GraphExportEventNodes::hideInternal);
 
@@ -2030,7 +2030,7 @@ TEST_F(GraphDumpApiTest, GivenNullGraphHandleWhenZeGraphDumpContentsExpIsCalledT
 }
 
 TEST_F(GraphDumpApiTest, GivenNullFilePathWhenZeGraphDumpContentsExpIsCalledThenReturnsInvalidArgument) {
-    Graph testGraph{&ctx, true};
+    Graph testGraph{&ctx, true, false};
     ze_graph_handle_t graphHandle = testGraph.toHandle();
 
     auto result = L0::zeGraphDumpContentsExp(graphHandle, nullptr, nullptr);
@@ -2038,7 +2038,7 @@ TEST_F(GraphDumpApiTest, GivenNullFilePathWhenZeGraphDumpContentsExpIsCalledThen
 }
 
 TEST_F(GraphDumpApiTest, GivenUnsupportedExtensionTypeWhenZeGraphDumpContentsExpIsCalledThenReturnsUnsupportedFeature) {
-    Graph testGraph{&ctx, true};
+    Graph testGraph{&ctx, true, false};
     ze_graph_handle_t graphHandle = testGraph.toHandle();
 
     ze_base_desc_t unsupportedDesc = {ZE_STRUCTURE_TYPE_FORCE_UINT32};
@@ -2048,7 +2048,7 @@ TEST_F(GraphDumpApiTest, GivenUnsupportedExtensionTypeWhenZeGraphDumpContentsExp
 }
 
 TEST_F(GraphDumpApiTest, GivenValidParametersWithNullpNextWhenZeGraphDumpContentsExpIsCalledThenUsesDetailedStyleByDefault) {
-    Graph testGraph{&ctx, true};
+    Graph testGraph{&ctx, true, false};
     Mock<Event> event;
     auto eventHandle = event.toHandle();
     Mock<CommandList> cmdlist;
@@ -2074,7 +2074,7 @@ TEST_F(GraphDumpApiTest, GivenValidParametersWithNullpNextWhenZeGraphDumpContent
 }
 
 TEST_F(GraphDumpApiTest, GivenSimpleStyleExpExtensionWhenZeGraphDumpContentsExpIsCalledThenUsesSimpleStyle) {
-    Graph testGraph{&ctx, true};
+    Graph testGraph{&ctx, true, false};
     Mock<Event> event;
     auto eventHandle = event.toHandle();
     Mock<CommandList> cmdlist;
@@ -2106,7 +2106,7 @@ TEST_F(GraphDumpApiTest, GivenSimpleStyleExpExtensionWhenZeGraphDumpContentsExpI
 }
 
 TEST_F(GraphDumpApiTest, GivenDetailedStyleExpExtensionWhenZeGraphDumpContentsExpIsCalledThenUsesDetailedStyle) {
-    Graph testGraph{&ctx, true};
+    Graph testGraph{&ctx, true, false};
     Mock<Event> event;
     auto eventHandle = event.toHandle();
     Mock<CommandList> cmdlist;
@@ -2190,7 +2190,7 @@ TEST_F(GraphDumpApiTest, GivenDefaultModeWhenZeGraphDumpContentsExpIsCalledThenI
 }
 
 TEST_F(GraphDumpApiTest, GivenInvalidStyleExpExtensionWhenZeGraphDumpContentsExpIsCalledThenReturnsInvalidArgument) {
-    Graph testGraph{&ctx, true};
+    Graph testGraph{&ctx, true, false};
     Mock<Event> event;
     auto eventHandle = event.toHandle();
     Mock<CommandList> cmdlist;
@@ -2216,7 +2216,7 @@ TEST_F(GraphDumpApiTest, GivenInvalidStyleExpExtensionWhenZeGraphDumpContentsExp
 }
 
 TEST_F(GraphDumpApiTest, GivenSimpleStyleExtensionWhenZeGraphDumpContentsExtIsCalledThenUsesSimpleStyle) {
-    Graph testGraph{&ctx, true};
+    Graph testGraph{&ctx, true, false};
     Mock<Event> event;
     auto eventHandle = event.toHandle();
     Mock<CommandList> cmdlist;
@@ -2248,7 +2248,7 @@ TEST_F(GraphDumpApiTest, GivenSimpleStyleExtensionWhenZeGraphDumpContentsExtIsCa
 }
 
 TEST_F(GraphDumpApiTest, GivenDetailedStyleExtensionWhenZeGraphDumpContentsExtIsCalledThenUsesDetailedStyle) {
-    Graph testGraph{&ctx, true};
+    Graph testGraph{&ctx, true, false};
     Mock<Event> event;
     auto eventHandle = event.toHandle();
     Mock<CommandList> cmdlist;
@@ -2317,7 +2317,7 @@ TEST_F(GraphDumpApiTest, GivenSimpleStyleWithEventNodesExtensionWhenZeGraphDumpC
 }
 
 TEST_F(GraphDumpApiTest, GivenInvalidStyleExtensionWhenZeGraphDumpContentsExtIsCalledThenReturnsInvalidArgument) {
-    Graph testGraph{&ctx, true};
+    Graph testGraph{&ctx, true, false};
     Mock<Event> event;
     auto eventHandle = event.toHandle();
     Mock<CommandList> cmdlist;

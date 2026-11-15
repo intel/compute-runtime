@@ -308,7 +308,7 @@ TEST_F(GraphExecution, GivenExecutableGraphSubmissionNodeWhenAllocatedThenFlatCa
     submissionCmdList->flatCapture = std::make_unique<RecordedApiCommands>();
     ctx.cmdListsToReturn.push_back(submissionCmdList);
 
-    ExposedGraph srcGraph(&ctx, true);
+    ExposedGraph srcGraph(&ctx, true, false);
     srcGraph.captureTargetDesc.hDevice = device->toHandle();
 
     ExposedExecutableGraph execGraph;
@@ -334,10 +334,100 @@ TEST_F(GraphTestApiCaptureBeginEnd, GivenNonNullPNextThenGraphBeginCaptureReturn
     auto err = L0::zeCommandListBeginGraphCaptureExp(cmdListHandle, &ext);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, err);
 
-    L0::Graph graph(&ctx, true);
+    L0::Graph graph(&ctx, true, false);
     auto graphHandle = graph.toHandle();
     err = L0::zeCommandListBeginCaptureIntoGraphExp(cmdListHandle, graphHandle, &ext);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, err);
+}
+
+TEST_F(GraphTestApiCaptureBeginEnd, GivenMutableGraphDescAndMutableGraphSupportedWhenGraphCreateIsCalledThenGraphAndItsCommandListsAreMutable) {
+    GraphsCleanupGuard graphCleanup;
+    DebugManagerStateRestore restorer;
+    debugManager.flags.OverrideRecordReplayGraphCapability.set(static_cast<int32_t>(ZE_RECORD_REPLAY_GRAPH_EXT_FLAG_MUTABLE_GRAPH));
+
+    ze_mutable_graph_exp_desc_t mutableGraphDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GRAPH_EXP_DESC};
+    ze_graph_handle_t graphHandle = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeGraphCreateExp(context->toHandle(), &graphHandle, &mutableGraphDesc));
+    ASSERT_NE(nullptr, graphHandle);
+
+    auto graph = L0::Graph::fromHandle(graphHandle);
+    EXPECT_TRUE(graph->isMutableGraph());
+    EXPECT_TRUE(graph->isMutableCommandList());
+    ASSERT_NE(nullptr, graph->getCaptureTargetDesc().desc.pNext);
+    EXPECT_EQ(ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_LIST_EXT_DESC, reinterpret_cast<const ze_base_desc_t *>(graph->getCaptureTargetDesc().desc.pNext)->stype);
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(immCmdListHandle, graphHandle, nullptr));
+    EXPECT_TRUE(graph->isMutableGraph());
+    EXPECT_TRUE(graph->isMutableCommandList());
+    ASSERT_NE(nullptr, graph->getCaptureTargetDesc().desc.pNext);
+    EXPECT_EQ(ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_LIST_EXT_DESC, reinterpret_cast<const ze_base_desc_t *>(graph->getCaptureTargetDesc().desc.pNext)->stype);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(immCmdListHandle, nullptr, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeGraphDestroyExp(graphHandle));
+}
+
+TEST_F(GraphTestApiCaptureBeginEnd, GivenMutableGraphDescAndMutableGraphNotSupportedWhenGraphCreateIsCalledThenUnsupportedFeatureIsReturned) {
+    GraphsCleanupGuard graphCleanup;
+    DebugManagerStateRestore restorer;
+    debugManager.flags.OverrideRecordReplayGraphCapability.set(static_cast<int32_t>(ZE_RECORD_REPLAY_GRAPH_EXT_FLAG_IMMUTABLE_GRAPH));
+
+    ze_mutable_graph_exp_desc_t mutableGraphDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GRAPH_EXP_DESC};
+    ze_graph_handle_t graphHandle = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeGraphCreateExp(context->toHandle(), &graphHandle, &mutableGraphDesc));
+    EXPECT_EQ(nullptr, graphHandle);
+}
+
+TEST_F(GraphTestApiCaptureBeginEnd, GivenMutableGraphDescAndMutableGraphSupportedWhenBeginGraphCaptureIsCalledThenGraphSubgraphAndTheirCommandListsAreMutable) {
+    GraphsCleanupGuard graphCleanup;
+    DebugManagerStateRestore restorer;
+    debugManager.flags.OverrideRecordReplayGraphCapability.set(static_cast<int32_t>(ZE_RECORD_REPLAY_GRAPH_EXT_FLAG_MUTABLE_GRAPH));
+
+    auto forkEventHandle = createCounterBasedEvent(context, device, false);
+    auto joinEventHandle = createCounterBasedEvent(context, device, false);
+
+    ze_command_list_handle_t childCmdListHandle = nullptr;
+    ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreateImmediate(context->toHandle(), device->toHandle(), &cmdQueueDesc, &childCmdListHandle));
+
+    ze_mutable_graph_exp_desc_t mutableGraphDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GRAPH_EXP_DESC};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginGraphCaptureExp(immCmdListHandle, &mutableGraphDesc));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(immCmdListHandle, forkEventHandle, 0U, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(childCmdListHandle, joinEventHandle, 1U, &forkEventHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(immCmdListHandle, nullptr, 1U, &joinEventHandle));
+
+    ze_graph_handle_t graphHandle = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(immCmdListHandle, &graphHandle, nullptr));
+    ASSERT_NE(nullptr, graphHandle);
+
+    auto graph = L0::Graph::fromHandle(graphHandle);
+    EXPECT_TRUE(graph->isMutableGraph());
+    EXPECT_TRUE(graph->isMutableCommandList());
+    ASSERT_NE(nullptr, graph->getCaptureTargetDesc().desc.pNext);
+    EXPECT_EQ(ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_LIST_EXT_DESC, reinterpret_cast<const ze_base_desc_t *>(graph->getCaptureTargetDesc().desc.pNext)->stype);
+
+    ASSERT_EQ(1U, graph->getSubgraphs().size());
+    auto subgraph = graph->getSubgraphs()[0];
+    EXPECT_TRUE(subgraph->isMutableGraph());
+    EXPECT_TRUE(subgraph->isMutableCommandList());
+    ASSERT_NE(nullptr, subgraph->getCaptureTargetDesc().desc.pNext);
+    EXPECT_EQ(ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_LIST_EXT_DESC, reinterpret_cast<const ze_base_desc_t *>(subgraph->getCaptureTargetDesc().desc.pNext)->stype);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeGraphDestroyExp(graphHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListDestroy(childCmdListHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventDestroy(forkEventHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventDestroy(joinEventHandle));
+}
+
+TEST_F(GraphTestApiCaptureBeginEnd, GivenMutableGraphDescAndMutableGraphNotSupportedWhenBeginGraphCaptureIsCalledThenUnsupportedFeatureIsReturned) {
+    GraphsCleanupGuard graphCleanup;
+    DebugManagerStateRestore restorer;
+    debugManager.flags.OverrideRecordReplayGraphCapability.set(static_cast<int32_t>(ZE_RECORD_REPLAY_GRAPH_EXT_FLAG_IMMUTABLE_GRAPH));
+
+    ze_mutable_graph_exp_desc_t mutableGraphDesc = {ZE_STRUCTURE_TYPE_MUTABLE_GRAPH_EXP_DESC};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeCommandListBeginGraphCaptureExp(immCmdListHandle, &mutableGraphDesc));
+    EXPECT_FALSE(immCmdList->isCapturingGraph());
+    EXPECT_EQ(nullptr, immCmdList->getGraphCaptureTarget());
 }
 
 TEST_F(GraphTestApiCaptureBeginEnd, GivenNullDestinyGraphThenBeginCaptureReturnsError) {
@@ -356,7 +446,7 @@ TEST_F(GraphTestApiCaptureBeginEnd, GivenValidDestinyGraphThenBeginCaptureReturn
     cmdlist.device = this->device;
     cmdlist.flags = ZE_COMMAND_LIST_FLAG_IN_ORDER;
     auto cmdListHandle = cmdlist.toHandle();
-    L0::Graph graph(&ctx, true);
+    L0::Graph graph(&ctx, true, false);
     auto graphHandle = graph.toHandle();
     auto err = L0::zeCommandListBeginCaptureIntoGraphExp(cmdListHandle, graphHandle, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, err);
@@ -437,7 +527,7 @@ TEST_F(GraphTestApiCaptureBeginEnd, WhenDestinyGraphProvidedThenEndCaptureDoesNo
     Mock<CommandList> cmdlist;
     cmdlist.device = this->device;
     auto cmdListHandle = cmdlist.toHandle();
-    L0::Graph graph(&ctx, true);
+    L0::Graph graph(&ctx, true, false);
     auto graphHandle = graph.toHandle();
     auto err = L0::zeCommandListBeginCaptureIntoGraphExp(cmdListHandle, graphHandle, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, err);
@@ -452,9 +542,9 @@ TEST_F(GraphTestApiCaptureBeginEnd, WhenCommandListIsAlreadyRecordingThenBeginCa
     Mock<CommandList> cmdlist;
     cmdlist.device = this->device;
 
-    L0::Graph graph1(&ctx, true);
+    L0::Graph graph1(&ctx, true, false);
     auto graphHandle1 = graph1.toHandle();
-    L0::Graph graph2(&ctx, true);
+    L0::Graph graph2(&ctx, true, false);
     auto graphHandle2 = graph2.toHandle();
     auto cmdlistHandle = cmdlist.toHandle();
     auto err = L0::zeCommandListBeginCaptureIntoGraphExp(cmdlistHandle, graphHandle1, nullptr);
@@ -560,7 +650,7 @@ TEST_F(GraphTestApiInstantiate, GivenInvalidSourceGraphThenInstantiateGraphRetur
 TEST_F(GraphTestApiInstantiate, GivenInvalidOutputGraphPlaceholderThenInstantiateGraphReturnsError) {
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
-    L0::Graph srcGraph(&ctx, true);
+    L0::Graph srcGraph(&ctx, true, false);
     srcGraph.stopCapturing();
     auto srcGraphHandle = srcGraph.toHandle();
 
@@ -571,7 +661,7 @@ TEST_F(GraphTestApiInstantiate, GivenInvalidOutputGraphPlaceholderThenInstantiat
 TEST_F(GraphTestApiInstantiate, GivenNonNullPNextThenInstantiateGraphReturnsError) {
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
-    L0::Graph srcGraph(&ctx, true);
+    L0::Graph srcGraph(&ctx, true, false);
     auto srcGraphHandle = srcGraph.toHandle();
     srcGraph.stopCapturing();
 
@@ -589,7 +679,7 @@ TEST_F(GraphTestApiInstantiate, GivenValidSourceGraphThenInstantiateReturnsValid
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
 
-    L0::Graph srcGraph(&ctx, true);
+    L0::Graph srcGraph(&ctx, true, false);
     srcGraph.startCapturingFrom(*immCmdList, false);
     auto srcGraphHandle = srcGraph.toHandle();
     srcGraph.stopCapturing();
@@ -618,7 +708,7 @@ TEST_F(GraphTestApiInstantiate, GivenDumpGraphOnInstantiateFlagSetWhenInstantiat
 
     const auto fopenCalledBefore = NEO::IoFunctions::mockFopenCalled;
 
-    L0::Graph srcGraph(&ctx, true);
+    L0::Graph srcGraph(&ctx, true, false);
     srcGraph.startCapturingFrom(*immCmdList, false);
     auto srcGraphHandle = srcGraph.toHandle();
     srcGraph.stopCapturing();
@@ -644,7 +734,7 @@ TEST_F(GraphTestApiInstantiate, GivenDumpGraphOnInstantiateFlagNotSetWhenInstant
 
     const auto fopenCalledBefore = NEO::IoFunctions::mockFopenCalled;
 
-    L0::Graph srcGraph(&ctx, true);
+    L0::Graph srcGraph(&ctx, true, false);
     srcGraph.startCapturingFrom(*immCmdList, false);
     auto srcGraphHandle = srcGraph.toHandle();
     srcGraph.stopCapturing();
@@ -667,7 +757,7 @@ TEST_F(GraphTestApiInstantiate, GivenInvalidExecutableGraphThenGraphDestroyRetur
 TEST_F(GraphTestApiInstantiate, GivenUnclosedGraphThenInstantiateFails) {
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
-    L0::Graph srcGraph(&ctx, true);
+    L0::Graph srcGraph(&ctx, true, false);
     auto srcGraphHandle = srcGraph.toHandle();
 
     ze_executable_graph_handle_t execGraphHandle = nullptr;
@@ -697,7 +787,7 @@ TEST_F(GraphTestDebugApis, GivenCommandListWithCaptureEnabledWhenIsGraphCaptureE
     cmdlist.device = this->device;
     auto cmdListHandle = cmdlist.toHandle();
 
-    Graph srcGraph(&ctx, true);
+    Graph srcGraph(&ctx, true, false);
     cmdlist.setGraphCaptureTarget(&srcGraph);
     srcGraph.startCapturingFrom(cmdlist, false);
 
@@ -729,7 +819,7 @@ TEST_F(GraphTestDebugApis, GivenInvalidGraphWhenGraphIsEmptyIsCalledThenErrorIsR
     Mock<Event> forkEvent;
     auto forkEventHandle = forkEvent.toHandle();
 
-    Graph srcGraph(&ctx, true);
+    Graph srcGraph(&ctx, true, false);
     auto srcGraphHandle = srcGraph.toHandle();
     cmdlist.setGraphCaptureTarget(&srcGraph);
     srcGraph.startCapturingFrom(cmdlist, false);
@@ -749,7 +839,7 @@ TEST_F(GraphTestDebugApis, GivenInvalidGraphWhenGraphIsEmptyIsCalledThenErrorIsR
 TEST_F(GraphTestDebugApis, GivenEmptyGraphWhenGraphIsEmptyIsCalledThenTrue) {
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
-    Graph srcGraph(&ctx, true);
+    Graph srcGraph(&ctx, true, false);
     auto srcGraphHandle = srcGraph.toHandle();
 
     EXPECT_EQ(ZE_RESULT_QUERY_TRUE_EXP, L0::zeGraphIsEmptyExp(srcGraphHandle));
@@ -763,7 +853,7 @@ TEST_F(GraphTestDebugApis, GivenNonEmptyGraphWhenGraphIsEmptyIsCalledThenErrorIs
     auto cmdListHandle = cmdlist.toHandle();
     cmdlist.device = this->device;
 
-    Graph srcGraph(&ctx, true);
+    Graph srcGraph(&ctx, true, false);
     auto srcGraphHandle = srcGraph.toHandle();
     cmdlist.setGraphCaptureTarget(&srcGraph);
     srcGraph.startCapturingFrom(cmdlist, false);
@@ -783,7 +873,7 @@ TEST_F(GraphTestApiSubmit, GivenNonNullPNextThenGraphAppendReturnsError) {
     Mock<CommandList> cmdlist;
     cmdlist.device = this->device;
     auto cmdListHandle = cmdlist.toHandle();
-    MockGraph srcGraph(&ctx, true);
+    MockGraph srcGraph(&ctx, true, false);
     srcGraph.stopCapturing();
 
     L0::ExecutableGraph execGraph;
@@ -802,7 +892,7 @@ TEST_F(GraphTestApiSubmit, GivenNonNullPNextThenGraphAppendReturnsError) {
 TEST_F(GraphTestApiSubmit, GivenInvalidCmdListThenGraphAppendReturnsError) {
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
-    MockGraph srcGraph(&ctx, true);
+    MockGraph srcGraph(&ctx, true, false);
     srcGraph.stopCapturing();
 
     L0::ExecutableGraph execGraph;
@@ -828,7 +918,7 @@ TEST_F(GraphTestApiSubmit, GivenValidCmdListAndGraphThenGraphAppendReturnsSucces
     ContextStubMock ctx;
     Mock<CommandList> cmdlist;
     auto cmdListHandle = cmdlist.toHandle();
-    MockGraph srcGraph(&ctx, true);
+    MockGraph srcGraph(&ctx, true, false);
     srcGraph.stopCapturing();
 
     L0::ExecutableGraph execGraph;
@@ -878,7 +968,7 @@ TEST_F(GraphTestApiCaptureWithDevice, GivenCommandListInRecordStateThenCaptureCo
     ze_group_count_t groupCount = {1, 1, 1};
     ze_group_size_t groupSize = {1, 1, 1};
 
-    L0::Graph graph(&ctx, true);
+    L0::Graph graph(&ctx, true, false);
     ze_graph_handle_t graphHandle = graph.toHandle();
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(immCmdListHandle, graphHandle, nullptr));
 
@@ -957,7 +1047,7 @@ TEST(GraphForks, GivenUnknownChildCommandlistThenJoinDoesNothing) {
     ContextStubMock ctx;
     Mock<CommandList> childCmdlist;
     Mock<Event> joinEvent;
-    Graph parent{&ctx, true};
+    Graph parent{&ctx, true, false};
     parent.tryJoinOnNextCommand(childCmdlist, joinEvent);
     EXPECT_TRUE(parent.getSubgraphs().empty());
 }
@@ -967,7 +1057,7 @@ TEST(GraphForks, GivenNullEventThenRecordHandleSignaleEventDoesNothing) {
     ContextStubMock ctx;
     Mock<CommandList> cmdlist;
     cmdlist.cmdListType = L0::CommandList::CommandListType::typeImmediate;
-    MockGraph graph{&ctx, true};
+    MockGraph graph{&ctx, true, false};
     recordHandleSignalEventFromPreviousCommand(cmdlist, graph, nullptr);
     EXPECT_TRUE(graph.recordedSignals.empty());
 }
@@ -975,7 +1065,7 @@ TEST(GraphForks, GivenNullEventThenRecordHandleSignaleEventDoesNothing) {
 TEST(GraphForks, GivenRegularEventDependencyThenCommandlistDoesNotStartRecording) {
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
-    Graph graph{&ctx, true};
+    Graph graph{&ctx, true, false};
 
     Mock<Event> regularEvent;
     ze_event_handle_t regularEventHandle = regularEvent.toHandle();
@@ -1000,7 +1090,7 @@ TEST_F(GraphInstantiationValidation, WhenJoinIsResolvedThenResolvedJoinTracksPar
     Mock<Event> joinEvent;
     auto joinEventHandle = joinEvent.toHandle();
 
-    Graph srcGraph(&ctx, true);
+    Graph srcGraph(&ctx, true, false);
     Graph *srcGraphPtr = &srcGraph;
     Graph *childGraph = nullptr;
 
@@ -1043,7 +1133,7 @@ TEST_F(GraphInstantiationValidation, WhenSingleForkEventIsAwaitedByMultipleComma
     Mock<Event> secondJoinEvent;
     auto secondJoinEventHandle = secondJoinEvent.toHandle();
 
-    Graph srcGraph(&ctx, true);
+    Graph srcGraph(&ctx, true, false);
     Graph *srcGraphPtr = &srcGraph;
     Graph *firstChildGraph = nullptr;
     Graph *secondChildGraph = nullptr;
@@ -1093,7 +1183,7 @@ TEST_F(GraphInstantiationValidation, WhenChildHasAllowedPostJoinCommandThenResol
     Mock<Event> postJoinSignalEvent;
     auto postJoinSignalEventHandle = postJoinSignalEvent.toHandle();
 
-    Graph srcGraph(&ctx, true);
+    Graph srcGraph(&ctx, true, false);
     Graph *srcGraphPtr = &srcGraph;
     Graph *childGraph = nullptr;
 
@@ -1138,7 +1228,7 @@ TEST_F(GraphInstantiation, GivenSourceGraphThenExecutableIsInstantiatedProperly)
     {
         ctx.cmdListsToReturn.push_back(new Mock<CommandList>());
         auto *graphCmdList = ctx.cmdListsToReturn[0];
-        MockGraph srcGraph(&ctx, true);
+        MockGraph srcGraph(&ctx, true, false);
         srcGraph.captureTargetDesc.hDevice = device->toHandle();
         cmdlist.setGraphCaptureTarget(&srcGraph);
         srcGraph.startCapturingFrom(cmdlist, false);
@@ -1164,7 +1254,7 @@ TEST_F(GraphInstantiation, GivenSourceGraphThenExecutableIsInstantiatedProperly)
         ctx.cmdListsToReturn.push_back(new Mock<CommandList>());
         ctx.cmdListsToReturn.push_back(new Mock<CommandList>());
         auto *graphCmdList = ctx.cmdListsToReturn[0];
-        MockGraph srcGraph(&ctx, true);
+        MockGraph srcGraph(&ctx, true, false);
         srcGraph.captureTargetDesc.hDevice = device->toHandle();
         cmdlist.setGraphCaptureTarget(&srcGraph);
         srcGraph.startCapturingFrom(cmdlist, false);
@@ -1213,7 +1303,7 @@ TEST_F(GraphInstantiation, GivenSourceGraphWithMetricCommandsThenExecutableRepla
 
     ctx.cmdListsToReturn.push_back(new Mock<CommandList>());
     auto *graphCmdList = ctx.cmdListsToReturn[0];
-    MockGraph srcGraph(&ctx, true);
+    MockGraph srcGraph(&ctx, true, false);
     srcGraph.captureTargetDesc.hDevice = device->toHandle();
     cmdlist.setGraphCaptureTarget(&srcGraph);
     srcGraph.startCapturingFrom(cmdlist, false);
@@ -1282,7 +1372,7 @@ TEST_F(GraphInstantiation, GivenSourceGraphThenExecutableIsInstantiatedWithPrese
     ze_event_handle_t forkEventHandle = forkEvent.toHandle();
     ze_event_handle_t joinEventHandle = joinEvent.toHandle();
 
-    MockGraph srcGraph(&ctx, true);
+    MockGraph srcGraph(&ctx, true, false);
     cmdlist.setGraphCaptureTarget(&srcGraph);
     srcGraph.startCapturingFrom(cmdlist, false);
     cmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(cmdListHandle, forkEventHandle, 0U, nullptr);
@@ -1335,7 +1425,7 @@ TEST_F(GraphInstantiation, GivenForkedGraphWhenVisitingWithReappendTargetCommand
     ze_event_handle_t forkEventHandle = forkEvent.toHandle();
     ze_event_handle_t joinEventHandle = joinEvent.toHandle();
 
-    MockGraph srcGraph(&ctx, true);
+    MockGraph srcGraph(&ctx, true, false);
     cmdlist.setGraphCaptureTarget(&srcGraph);
     srcGraph.startCapturingFrom(cmdlist, false);
     cmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(cmdListHandle, forkEventHandle, 0U, nullptr);
@@ -1376,7 +1466,7 @@ TEST_F(GraphInstantiation, GivenSourceGraphWhenPolicyIsSetToInterleaveThenExecut
     ze_event_handle_t forkEventHandle = forkEvent.toHandle();
     ze_event_handle_t joinEventHandle = joinEvent.toHandle();
 
-    MockGraph srcGraph(&ctx, true);
+    MockGraph srcGraph(&ctx, true, false);
     cmdlist.setGraphCaptureTarget(&srcGraph);
     srcGraph.startCapturingFrom(cmdlist, false);
     cmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(cmdListHandle, forkEventHandle, 0U, nullptr);
@@ -1423,7 +1513,7 @@ TEST_F(GraphInstantiation, GivenExecGraphBuilderWhenFlatCommandListSetThenGetter
     GraphsCleanupGuard graphCleanup;
 
     ContextStubMock ctx;
-    MockGraph srcGraph(&ctx, true);
+    MockGraph srcGraph(&ctx, true, false);
     MockExecutableGraph execGraph;
     ExecGraphBuilder builder(srcGraph, execGraph);
 
@@ -1449,7 +1539,7 @@ TEST_F(GraphInstantiation, GivenFlatPolicyWhenInstantiatingForkedGraphThenShared
     ze_event_handle_t forkEventHandle = forkEvent.toHandle();
     ze_event_handle_t joinEventHandle = joinEvent.toHandle();
 
-    MockGraph srcGraph(&ctx, true);
+    MockGraph srcGraph(&ctx, true, false);
     cmdlist.setGraphCaptureTarget(&srcGraph);
     srcGraph.startCapturingFrom(cmdlist, false);
     cmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(cmdListHandle, forkEventHandle, 0U, nullptr);
@@ -1489,7 +1579,7 @@ TEST_F(GraphInstantiation, GivenFlatPolicyWhenInstantiatingForkedGraphThenComman
     ze_event_handle_t forkEventHandle = forkEvent.toHandle();
     ze_event_handle_t joinEventHandle = joinEvent.toHandle();
 
-    MockGraph srcGraph(&ctx, true);
+    MockGraph srcGraph(&ctx, true, false);
     cmdlist.setGraphCaptureTarget(&srcGraph);
     srcGraph.startCapturingFrom(cmdlist, false);
     cmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(cmdListHandle, forkEventHandle, 0U, nullptr);
@@ -1534,7 +1624,7 @@ TEST_F(GraphInstantiation, GivenMonolithicPolicyWhenInstantiatingForkedGraphThen
     ze_event_handle_t forkEventHandle = forkEvent.toHandle();
     ze_event_handle_t joinEventHandle = joinEvent.toHandle();
 
-    MockGraph srcGraph(&ctx, true);
+    MockGraph srcGraph(&ctx, true, false);
     cmdlist.setGraphCaptureTarget(&srcGraph);
     srcGraph.startCapturingFrom(cmdlist, false);
     cmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(cmdListHandle, forkEventHandle, 0U, nullptr);
@@ -1580,7 +1670,7 @@ TEST_F(GraphInstantiation, GivenSplitPolicyWhenInstantiatingForkedGraphThenPerSe
     ze_event_handle_t forkEventHandle = forkEvent.toHandle();
     ze_event_handle_t joinEventHandle = joinEvent.toHandle();
 
-    MockGraph srcGraph(&ctx, true);
+    MockGraph srcGraph(&ctx, true, false);
     cmdlist.setGraphCaptureTarget(&srcGraph);
     srcGraph.startCapturingFrom(cmdlist, false);
     cmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(cmdListHandle, forkEventHandle, 0U, nullptr);
@@ -1636,7 +1726,7 @@ TEST_F(GraphInstantiation, GivenSingleLevelGraphWhenInstantiatingWithAnyForkPoli
         cmdlist.device = this->device;
         auto cmdListHandle = cmdlist.toHandle();
 
-        MockGraph srcGraph(&ctx, true);
+        MockGraph srcGraph(&ctx, true, false);
         srcGraph.captureTargetDesc.hDevice = device->toHandle();
         cmdlist.setGraphCaptureTarget(&srcGraph);
         srcGraph.startCapturingFrom(cmdlist, false);
@@ -1663,7 +1753,7 @@ TEST_F(GraphInstantiation, GivenSingleLevelGraphWhenInstantiatingWithAnyForkPoli
 TEST_F(GraphInstantiationValidation, WhenGraphIsStillCapturingThenItIsNotValidForInstantiation) {
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
-    Graph srcGraph(&ctx, true);
+    Graph srcGraph(&ctx, true, false);
     EXPECT_FALSE(srcGraph.validForInstantiation());
     srcGraph.stopCapturing();
     EXPECT_TRUE(srcGraph.validForInstantiation());
@@ -1684,7 +1774,7 @@ TEST_F(GraphInstantiationValidation, WhenGraphHasUnjoinedForksThenItIsNotValidFo
     Mock<Event> joinEvent;
     auto joinEventHandle = joinEvent.toHandle();
     { // correct graph (0->1->0->close)
-        Graph srcGraph(&ctx, true);
+        Graph srcGraph(&ctx, true, false);
         Graph *srcGraphPtr = &srcGraph;
 
         // lvl 0
@@ -1703,7 +1793,7 @@ TEST_F(GraphInstantiationValidation, WhenGraphHasUnjoinedForksThenItIsNotValidFo
     }
 
     { // missing join lvl (0->1 0->close)
-        Graph srcGraph(&ctx, true);
+        Graph srcGraph(&ctx, true, false);
         Graph *srcGraphPtr = &srcGraph;
 
         // lvl 0
@@ -1722,7 +1812,7 @@ TEST_F(GraphInstantiationValidation, WhenGraphHasUnjoinedForksThenItIsNotValidFo
     }
 
     { // unjoined work (false join on 1->0)   (0->1+! ->0->close)
-        Graph srcGraph(&ctx, true);
+        Graph srcGraph(&ctx, true, false);
         Graph *srcGraphPtr = &srcGraph;
 
         // lvl 0
@@ -1757,7 +1847,7 @@ TEST_F(GraphInstantiationValidation, WhenGraphHasOnlyAllowedPostJoinCommandsThen
     Mock<Event> postJoinSignalEvent;
     auto postJoinSignalEventHandle = postJoinSignalEvent.toHandle();
 
-    Graph srcGraph(&ctx, true);
+    Graph srcGraph(&ctx, true, false);
     Graph *srcGraphPtr = &srcGraph;
 
     srcGraph.startCapturingFrom(cmdlist, false);
@@ -1794,7 +1884,7 @@ TEST_F(GraphInstantiationValidation, WhenSubGraphsAreNotValidForInstantiationThe
     auto joinEventHandle = joinEvent.toHandle();
     auto joinEventHandleLvl2 = joinEventLvl2.toHandle();
     { // correct graph (0->1->2->1->0->close)
-        Graph srcGraph(&ctx, true);
+        Graph srcGraph(&ctx, true, false);
         Graph *srcGraphPtr = &srcGraph;
 
         // lvl 0
@@ -1819,7 +1909,7 @@ TEST_F(GraphInstantiationValidation, WhenSubGraphsAreNotValidForInstantiationThe
     }
 
     { // missing join lvl 2->1 (0->1->2 1->0->close)
-        Graph srcGraph(&ctx, true);
+        Graph srcGraph(&ctx, true, false);
         Graph *srcGraphPtr = &srcGraph;
 
         // lvl 0
@@ -1844,7 +1934,7 @@ TEST_F(GraphInstantiationValidation, WhenSubGraphsAreNotValidForInstantiationThe
     }
 
     { // unjoined work (false join on 2->1)   (0->1->2->2+!->1->0->close)
-        Graph srcGraph(&ctx, true);
+        Graph srcGraph(&ctx, true, false);
         Graph *srcGraphPtr = &srcGraph;
 
         // lvl 0
@@ -1891,7 +1981,7 @@ TEST_F(GraphInstantiationValidation, WhenSubGraphHasOnlyAllowedPostJoinCommandsT
     Mock<Event> postJoinSignalEvent;
     auto postJoinSignalEventHandle = postJoinSignalEvent.toHandle();
 
-    Graph srcGraph(&ctx, true);
+    Graph srcGraph(&ctx, true, false);
     Graph *srcGraphPtr = &srcGraph;
 
     srcGraph.startCapturingFrom(cmdlist, false);
@@ -1952,7 +2042,7 @@ TEST_F(GraphTestInstantiationTest, WhenInstantiatingGraphThenBakeCommandsIntoCom
     ze_group_count_t groupCount = {1, 1, 1};
     ze_group_size_t groupSize = {1, 1, 1};
 
-    L0::Graph srcGraph(&ctx, true);
+    L0::Graph srcGraph(&ctx, true, false);
     auto srcGraphHandle = srcGraph.toHandle();
     ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(immCmdListHandle, srcGraphHandle, nullptr));
 
@@ -2071,7 +2161,7 @@ TEST_F(GraphTestInstantiationTest, GivenInvalidAppendKernelArgumentWithParameter
     ze_group_size_t groupSize = {1, 1, 1};
     ze_group_size_t zeroGroupSize = {0, 0, 0};
 
-    L0::Graph srcGraph(&ctx, true);
+    L0::Graph srcGraph(&ctx, true, false);
     auto srcGraphHandle = srcGraph.toHandle();
     ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(immCmdListHandle, srcGraphHandle, nullptr));
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(immCmdListHandle, nullptr, 0, nullptr));
@@ -2097,7 +2187,7 @@ TEST_F(GraphTestInstantiationTest, GivenFailingAppendKernelWithParametersWhenRec
     ze_base_desc_t invalidDesc{ZE_STRUCTURE_TYPE_DRIVER_PROPERTIES};
     ze_group_count_t groupCount = {1, 1, 1};
 
-    MockGraph srcGraph(&ctx, true);
+    MockGraph srcGraph(&ctx, true, false);
     auto srcGraphHandle = srcGraph.toHandle();
     ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(immCmdListHandle, srcGraphHandle, nullptr));
 
@@ -2180,7 +2270,7 @@ TEST_F(GraphTestInstantiationTest, givenInOrderCmdListAndRegularCbEventWhenInsta
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context->toHandle(), device->toHandle(), &eventDesc, &eventHandle));
 
-    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t graphHandle = srcGraph->toHandle();
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(commandListHandle, graphHandle, nullptr));
@@ -2220,7 +2310,7 @@ TEST_F(GraphTestInstantiationTest, givenImmediateOnlyCbEventRecordedIntoGraphWhe
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context->toHandle(), device->toHandle(), &eventDesc, &eventHandle));
 
-    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t graphHandle = srcGraph->toHandle();
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(commandListHandle, graphHandle, nullptr));
@@ -2389,7 +2479,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, GraphInternalEventTest, givenTimestampQueriesWhenGr
     DriverBackedGraphContextReturningSpecificCmdList ctx(context->getDriverHandle());
     MockGraphCmdListWithContext recordingCmdList{&ctx};
     recordingCmdList.device = this->device;
-    auto srcGraph = std::make_unique<MockGraph>(&ctx, true);
+    auto srcGraph = std::make_unique<MockGraph>(&ctx, true, false);
     auto hGraph = srcGraph->toHandle();
     auto hCmdList = recordingCmdList.toHandle();
     ze_group_count_t groupCount = {1, 1, 1};
@@ -2452,7 +2542,7 @@ TEST_F(GraphInternalEventTest, givenCounterBasedEventWhenGraphIsInstantiatedThen
         ASSERT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context->toHandle(), device->toHandle(), &eventDesc, &hEvent));
         auto *event = L0::Event::fromHandle(hEvent);
 
-        auto srcGraph = std::make_unique<L0::Graph>(context, true);
+        auto srcGraph = std::make_unique<L0::Graph>(context, true, false);
         auto hGraph = srcGraph->toHandle();
         captureKernelSignalling(hGraph, hEvent);
 
@@ -2475,7 +2565,7 @@ TEST_F(GraphInternalEventTest, givenTimestampedCbEventWhenGraphIsInstantiatedTwi
     auto hEvent = createCounterBasedEvent(context, device, false, ZE_EVENT_COUNTER_BASED_FLAG_DEVICE_TIMESTAMP);
     auto *event = L0::Event::fromHandle(hEvent);
 
-    auto srcGraph = std::make_unique<L0::Graph>(context, true);
+    auto srcGraph = std::make_unique<L0::Graph>(context, true, false);
     auto hGraph = srcGraph->toHandle();
     captureKernelSignalling(hGraph, hEvent);
 
@@ -2513,7 +2603,7 @@ TEST_F(GraphInternalEventTest, givenTimestampedCbEventSignalledTwiceInGraphWhenI
     auto hEvent = createCounterBasedEvent(context, device, false, ZE_EVENT_COUNTER_BASED_FLAG_DEVICE_TIMESTAMP);
     auto *event = L0::Event::fromHandle(hEvent);
 
-    auto srcGraph = std::make_unique<L0::Graph>(context, true);
+    auto srcGraph = std::make_unique<L0::Graph>(context, true, false);
     auto hGraph = srcGraph->toHandle();
     auto hCmdList = inOrderCmdList->toHandle();
     ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(hCmdList, hGraph, nullptr));
@@ -2602,7 +2692,7 @@ TEST_F(GraphInternalEventTest, givenNonExternalCbEventSignalledInGraphWhenInstan
     auto *event = L0::Event::fromHandle(eventHandle);
     ASSERT_FALSE(event->getIsSignalledAsGraphInternalEvent());
 
-    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t graphHandle = srcGraph->toHandle();
     captureKernelSignalling(graphHandle, eventHandle);
 
@@ -2630,7 +2720,7 @@ TEST_F(GraphInternalEventTest, givenExternalCbEventSignalledInGraphWhenInstantia
     auto eventHandle = createCounterBasedEvent(context, device, true);
     auto *event = L0::Event::fromHandle(eventHandle);
 
-    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t graphHandle = srcGraph->toHandle();
     captureKernelSignalling(graphHandle, eventHandle);
 
@@ -2651,7 +2741,7 @@ TEST_F(GraphInternalEventTest, givenNonExternalCbEventSignalledInGraphWhenReSign
     auto eventHandle = createCounterBasedEvent(context, device, false);
     auto *event = L0::Event::fromHandle(eventHandle);
 
-    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t graphHandle = srcGraph->toHandle();
     captureKernelSignalling(graphHandle, eventHandle);
 
@@ -2675,7 +2765,7 @@ TEST_F(GraphInternalEventTest, givenNonExternalCbEventSignalledInGraphWhenCaptur
     auto hEvent = createCounterBasedEvent(context, device, false);
     auto *event = L0::Event::fromHandle(hEvent);
 
-    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t hGraph = srcGraph->toHandle();
     captureKernelSignalling(hGraph, hEvent);
 
@@ -2694,7 +2784,7 @@ TEST_F(GraphInternalEventTest, givenNonExternalCbEventSignalledInGraphWhenWaited
     auto hInternalEvent = createCounterBasedEvent(context, device, false);
     auto hExternalEvent = createCounterBasedEvent(context, device, true);
 
-    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t hGraph = srcGraph->toHandle();
     auto hCmdList = inOrderCmdList->toHandle();
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(hCmdList, hGraph, nullptr));
@@ -2716,7 +2806,7 @@ TEST_F(GraphInternalEventTest, givenNonExternalCbEventSignalledInGraphWhenReSign
     auto hEvent = createCounterBasedEvent(context, device, false);
     auto *event = L0::Event::fromHandle(hEvent);
 
-    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t hGraph = srcGraph->toHandle();
     captureKernelSignalling(hGraph, hEvent);
     EXPECT_TRUE(event->getIsSignalledAsGraphInternalEvent());
@@ -2738,7 +2828,7 @@ TEST_F(GraphInternalEventTest, givenNonExternalCbEventBothSignalledAndWaitedOnIn
     auto hEvent = createCounterBasedEvent(context, device, false);
     auto *event = L0::Event::fromHandle(hEvent);
 
-    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t hGraph = srcGraph->toHandle();
     auto hCmdList = inOrderCmdList->toHandle();
     ze_group_count_t groupCount = {1, 1, 1};
@@ -2769,7 +2859,7 @@ TEST_F(GraphInternalEventTest, givenAggregatedCbEventSignalledInGraphWhenCapture
     const auto incrementValue = event->getInOrderIncrementValue(1);
     const auto applicationAddress = event->getInOrderExecEventHelper().getBaseDeviceAddress();
 
-    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t graphHandle = srcGraph->toHandle();
     captureKernelSignalling(graphHandle, hEvent);
 
@@ -2802,7 +2892,7 @@ TEST_F(GraphInternalEventTest, givenRegularEventSignalledInGraphWhenInstantiated
     auto *event = L0::Event::fromHandle(eventHandle);
     ASSERT_FALSE(event->isCounterBasedExplicitlyEnabled());
 
-    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t graphHandle = srcGraph->toHandle();
     captureKernelSignalling(graphHandle, eventHandle);
 
@@ -2824,7 +2914,7 @@ TEST_F(GraphInternalEventTest, givenCbEventReSignalledOutsideAfterCaptureWhenIns
     auto hEvent = createCounterBasedEvent(context, device, false);
     auto *event = L0::Event::fromHandle(hEvent);
 
-    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t hGraph = srcGraph->toHandle();
     captureKernelSignalling(hGraph, hEvent);
 
@@ -2862,7 +2952,7 @@ TEST_F(GraphInternalEventTest, givenCbEventSignalledInsideForkedSubgraphWhenInst
     auto hSubgraphEvent = createCounterBasedEvent(context, device, false);
     auto *subgraphEvent = L0::Event::fromHandle(hSubgraphEvent);
 
-    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t hGraph = srcGraph->toHandle();
     auto hCmdList = inOrderCmdList->toHandle();
     auto hChildCmdList = childCmdList->toHandle();
@@ -2892,7 +2982,7 @@ TEST_F(GraphInternalEventTest, givenInstantiatedGraphWhenExecutableGraphIsDestro
     auto hEvent = createCounterBasedEvent(context, device, false);
     auto *event = L0::Event::fromHandle(hEvent);
 
-    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t hGraph = srcGraph->toHandle();
     captureKernelSignalling(hGraph, hEvent);
 
@@ -2926,7 +3016,7 @@ TEST_F(GraphInternalEventTest, givenCbEventsSignalledInRootAndForkedSubgraphWhen
     auto hForkEvent = createCounterBasedEvent(context, device, false);
     auto hSubgraphEvent = createCounterBasedEvent(context, device, false);
 
-    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t hGraph = srcGraph->toHandle();
     auto hCmdList = inOrderCmdList->toHandle();
     ze_group_count_t groupCount = {1, 1, 1};
@@ -2970,7 +3060,7 @@ TEST_F(GraphInternalEventTest, givenCbEventsDestroyedBeforeCaptureEndWhenGraphIs
     auto hForkEvent = createCounterBasedEvent(context, device, false);
     auto hJoinEvent = createCounterBasedEvent(context, device, false);
 
-    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t hGraph = srcGraph->toHandle();
     auto hCmdList = inOrderCmdList->toHandle();
     ze_group_count_t groupCount = {1, 1, 1};
@@ -3002,7 +3092,7 @@ TEST_F(GraphInternalEventTest,
 
     auto hEvent = createCounterBasedEvent(context, device, false);
 
-    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t hGraph = srcGraph->toHandle();
     auto hCmdList = inOrderCmdList->toHandle();
 
@@ -3031,7 +3121,7 @@ TEST_F(GraphInternalEventTest,
 
     auto hEvent = createCounterBasedEvent(context, device, false);
 
-    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t hGraph = srcGraph->toHandle();
     auto hCmdList = inOrderCmdList->toHandle();
 
@@ -3060,7 +3150,7 @@ TEST_F(GraphInternalEventTest, givenCbEventSignalledOnlyWithExternalSignalWhenCa
 
     auto hEvent = createCounterBasedEvent(context, device, false);
 
-    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t hGraph = srcGraph->toHandle();
     captureExternalSignal(hGraph, hEvent);
 
@@ -3082,7 +3172,7 @@ TEST_F(GraphInternalEventTest, givenCbEventSignalledOnlyWithExternalSignalWhenCa
     auto hEvent = createCounterBasedEvent(context, device, false);
     auto hCmdList = inOrderCmdList->toHandle();
 
-    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t hGraph = srcGraph->toHandle();
     ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(hCmdList, hGraph, nullptr));
     ASSERT_EQ(ZE_RESULT_SUCCESS, appendExternalSignal(hEvent));
@@ -3100,11 +3190,11 @@ TEST_F(GraphInternalEventTest, givenExternalSignalRecordedInOneGraphWhenAnotherG
 
     auto hEvent = createCounterBasedEvent(context, device, false);
 
-    std::unique_ptr<L0::Graph> externalSignalGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> externalSignalGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t hExternalSignalGraph = externalSignalGraph->toHandle();
     captureExternalSignal(hExternalSignalGraph, hEvent);
 
-    std::unique_ptr<L0::Graph> regularSignalGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> regularSignalGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t hRegularSignalGraph = regularSignalGraph->toHandle();
     captureKernelSignalling(hRegularSignalGraph, hEvent);
 
@@ -3125,7 +3215,7 @@ TEST_F(GraphInternalEventTest, givenRegularAndExternalSignalRecordedInOneGraphIn
     auto hExternalFirstEvent = createCounterBasedEvent(context, device, false);
     auto hCmdList = inOrderCmdList->toHandle();
 
-    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t hGraph = srcGraph->toHandle();
     ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(hCmdList, hGraph, nullptr));
     ASSERT_EQ(ZE_RESULT_SUCCESS, appendKernelSignalling(hRegularFirstEvent));
@@ -3152,11 +3242,11 @@ TEST_F(GraphInternalEventTest, givenExternalSignalEventNeverSignalledWhenRegular
     auto hEvent = createCounterBasedEvent(context, device, false);
     auto hCmdList = inOrderCmdList->toHandle();
 
-    std::unique_ptr<L0::Graph> externalSignalGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> externalSignalGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t hExternalSignalGraph = externalSignalGraph->toHandle();
     captureExternalSignal(hExternalSignalGraph, hEvent);
 
-    std::unique_ptr<L0::Graph> waitingGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> waitingGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t hWaitingGraph = waitingGraph->toHandle();
     ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(hCmdList, hWaitingGraph, nullptr));
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendWaitOnEvents(hCmdList, 1U, &hEvent));
@@ -3176,7 +3266,7 @@ TEST_F(GraphInternalEventTest, givenNonExternalCbEventSignalledOutsideGraphWhenW
     ASSERT_EQ(ZE_RESULT_SUCCESS, appendKernelSignalling(hExternalEvent));
     ASSERT_TRUE(L0::Event::fromHandle(hInternalEvent)->getInOrderExecEventHelper().isDataAssigned());
 
-    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t hGraph = srcGraph->toHandle();
     auto hCmdList = inOrderCmdList->toHandle();
     ze_group_count_t groupCount = {1, 1, 1};
@@ -3196,12 +3286,12 @@ TEST_F(GraphInternalEventTest, givenNonExternalCbEventSignalledOnlyInEndedGraphW
     GraphsCleanupGuard graphCleanup;
 
     auto hEvent = createCounterBasedEvent(context, device, false);
-    std::unique_ptr<L0::Graph> firstGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> firstGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t hFirstGraph = firstGraph->toHandle();
     captureKernelSignalling(hFirstGraph, hEvent);
     ASSERT_FALSE(L0::Event::fromHandle(hEvent)->getInOrderExecEventHelper().isDataAssigned());
 
-    std::unique_ptr<L0::Graph> secondGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> secondGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t hSecondGraph = secondGraph->toHandle();
     auto hCmdList = inOrderCmdList->toHandle();
     ze_group_count_t groupCount = {1, 1, 1};
@@ -3223,7 +3313,7 @@ TEST_F(GraphInternalEventTest, givenCbEventsSignalledInCaptureAndCapturePausedWh
     auto *internalEvent = L0::Event::fromHandle(hInternalEvent);
     auto *externalEvent = L0::Event::fromHandle(hExternalEvent);
 
-    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t hGraph = srcGraph->toHandle();
     auto hCmdList = inOrderCmdList->toHandle();
 
@@ -3253,7 +3343,7 @@ TEST_F(GraphInternalEventTest, givenCbEventsSignalledInCaptureWhenReSignalledOut
     auto *internalEvent = L0::Event::fromHandle(hInternalEvent);
     auto *externalEvent = L0::Event::fromHandle(hExternalEvent);
 
-    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t hGraph = srcGraph->toHandle();
     auto hCmdList = inOrderCmdList->toHandle();
 
@@ -3293,7 +3383,7 @@ TEST_F(GraphInternalEventTest, givenNeverSignalledCbEventWhenWaitedOnDuringCaptu
     ASSERT_FALSE(event->getInOrderExecEventHelper().isDataAssigned());
     ASSERT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendWaitOnEvents(hCmdList, 1U, &hEvent));
 
-    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t hGraph = srcGraph->toHandle();
     ze_group_count_t groupCount = {1, 1, 1};
 
@@ -3315,7 +3405,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, GraphInternalEventTest, givenWaitOnUnsignalledCbEve
     auto hEvent = createCounterBasedEvent(context, device, false);
     auto hCmdList = inOrderCmdList->toHandle();
 
-    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t hGraph = srcGraph->toHandle();
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(hCmdList, hGraph, nullptr));
@@ -3362,7 +3452,7 @@ TEST_F(GraphInternalEventTest, givenCbEventSignalledOutsideGraphWhenReSignalledD
     ASSERT_EQ(ZE_RESULT_SUCCESS, appendKernelSignalling(hEvent));
     ASSERT_TRUE(event->getInOrderExecEventHelper().isDataAssigned());
 
-    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t hGraph = srcGraph->toHandle();
     auto hCmdList = inOrderCmdList->toHandle();
     ze_group_count_t groupCount = {1, 1, 1};
@@ -3391,7 +3481,7 @@ TEST_F(GraphInternalEventTest, givenAggregatedCbEventSignalledOutsideGraphWhenWa
     ASSERT_TRUE(L0::Event::isAggregatedEvent(event));
     ASSERT_TRUE(event->getInOrderExecEventHelper().isDataAssigned());
 
-    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t hGraph = srcGraph->toHandle();
     auto hCmdList = inOrderCmdList->toHandle();
     ze_group_count_t groupCount = {1, 1, 1};
@@ -3424,7 +3514,7 @@ TEST_F(GraphInternalEventTest, givenRegularEventSignalledOutsideGraphWhenWaitedO
     ASSERT_FALSE(event->isCounterBasedExplicitlyEnabled());
     ASSERT_EQ(ZE_RESULT_SUCCESS, appendKernelSignalling(hEvent));
 
-    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t hGraph = srcGraph->toHandle();
     auto hCmdList = inOrderCmdList->toHandle();
     ze_group_count_t groupCount = {1, 1, 1};
@@ -3453,7 +3543,7 @@ TEST_F(GraphTestInstantiationTest, givenInOrderCmdListAndExternalCbEventWhenInst
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context->toHandle(), device->toHandle(), &eventDesc, &eventHandle));
 
-    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t graphHandle = srcGraph->toHandle();
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(commandListHandle, graphHandle, nullptr));
@@ -3505,7 +3595,7 @@ TEST_F(GraphTestInstantiationTest,
     eventDesc.flags |= ZE_EVENT_COUNTER_BASED_FLAG_HOST_TIMESTAMP;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context->toHandle(), device->toHandle(), &eventDesc, &eventHandle));
 
-    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t graphHandle = srcGraph->toHandle();
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(commandListHandle, graphHandle, nullptr));
@@ -3615,7 +3705,7 @@ TEST_F(GraphTestInstantiationTest, givenInOrderCmdListAndExternalCbEventWhenExec
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context->toHandle(), device->toHandle(), &eventDesc, &eventHandle));
 
-    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t graphHandle = srcGraph->toHandle();
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(commandListHandle, graphHandle, nullptr));
@@ -3712,7 +3802,7 @@ TEST_F(GraphTestInstantiationTest,
     auto immediateEventDeviceAddress = immediateEventInOrderExecHelper->getBaseDeviceAddress() + event->getInOrderAllocationOffset();
     auto immediateEventCounterValue = immediateEventInOrderExecHelper->getEventData()->counterValue;
 
-    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t graphHandle = srcGraph->toHandle();
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(commandListHandle, graphHandle, nullptr));
@@ -3792,7 +3882,7 @@ TEST_F(GraphTestInstantiationTest,
         immediateAdditionalTimestampNodes[i] = immediateEventInOrderExecHelper->getAdditionalTimestampNode(i);
     }
 
-    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t graphHandle = srcGraph->toHandle();
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(commandListHandle, graphHandle, nullptr));
@@ -3871,7 +3961,7 @@ TEST_F(GraphTestInstantiationTest,
     auto event = L0::Event::fromHandle(eventHandle);
     ze_event_exp_flags_desc_t eventFlagsDesc = {ZE_STRUCTURE_TYPE_EVENT_EXP_FLAGS_DESC, nullptr, ZE_EVENT_EXP_FLAG_APPEND_GRAPH_EXTERNAL};
 
-    std::unique_ptr<L0::Graph> otherGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> otherGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t otherGraphHandle = otherGraph->toHandle();
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExt(commandListHandle, otherGraphHandle, nullptr));
@@ -3893,7 +3983,7 @@ TEST_F(GraphTestInstantiationTest,
     auto otherGraphEventDeviceAddress = otherGraphEventInOrderExecHelper->getBaseDeviceAddress() + event->getInOrderAllocationOffset();
     auto otherGraphEventCounterValue = otherGraphEventInOrderExecHelper->getEventData()->counterValue;
 
-    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t graphHandle = srcGraph->toHandle();
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExt(commandListHandle, graphHandle, nullptr));
@@ -3959,7 +4049,7 @@ TEST_F(GraphTestInstantiationTest,
     auto immediateEventDeviceAddress = immediateEventInOrderExecHelper->getBaseDeviceAddress() + event->getInOrderAllocationOffset();
     auto immediateEventCounterValue = immediateEventInOrderExecHelper->getEventData()->counterValue;
 
-    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t graphHandle = srcGraph->toHandle();
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExt(commandListHandle, graphHandle, nullptr));
@@ -4027,7 +4117,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context->toHandle(), device->toHandle(), &eventDesc, &joinEventHandle));
     auto joinEvent = L0::Event::fromHandle(joinEventHandle);
 
-    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t graphHandle = srcGraph->toHandle();
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(commandListHandle, graphHandle, nullptr));
@@ -4179,7 +4269,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context->toHandle(), device->toHandle(), &eventDesc, &eventHandle));
     auto event = L0::Event::fromHandle(eventHandle);
 
-    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t graphHandle = srcGraph->toHandle();
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(commandListHandle, graphHandle, nullptr));
@@ -4345,7 +4435,7 @@ void GraphExternalWaitEventFixtureInit::testExternalWaitEventRootChild(bool exte
     ASSERT_EQ(ZE_RESULT_SUCCESS, zeEventCreate(hPool, &eventNonCbDesc, &eventHandleJoin));
     auto eventJoin = L0::Event::fromHandle(eventHandleJoin);
 
-    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t graphHandle = srcGraph->toHandle();
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(commandListHandle, graphHandle, nullptr));
@@ -4672,7 +4762,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context->toHandle(), device->toHandle(), &eventDesc, &eventHandle));
     auto event = L0::Event::fromHandle(eventHandle);
 
-    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t graphHandle = srcGraph->toHandle();
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(commandListHandle, graphHandle, nullptr));
@@ -4765,7 +4855,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context->toHandle(), device->toHandle(), &eventDesc, &eventHandle));
     auto event = L0::Event::fromHandle(eventHandle);
 
-    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t graphHandle = srcGraph->toHandle();
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(commandListHandle, graphHandle, nullptr));
@@ -4843,7 +4933,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     auto immCmdListHw = static_cast<CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily> *>(L0::CommandList::fromHandle(immCmdListHandle));
 
-    Graph srcGraph(context, true);
+    Graph srcGraph(context, true, false);
     immCmdListHw->setGraphCaptureTarget(&srcGraph);
     srcGraph.startCapturingFrom(*immCmdListHw, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(immCmdListHandle, nullptr, 0U, nullptr));
@@ -4903,7 +4993,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     GraphsCleanupGuard graphCleanup;
 
     auto immCmdListHw = static_cast<CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily> *>(L0::CommandList::fromHandle(immCmdListHandleMultiEngine));
-    Graph srcGraph(context, true);
+    Graph srcGraph(context, true, false);
     immCmdListHw->setGraphCaptureTarget(&srcGraph);
     srcGraph.startCapturingFrom(*immCmdListHw, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(immCmdListHandleMultiEngine, nullptr, 0U, nullptr));
@@ -4968,7 +5058,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     ze_event_ext_flags_desc_t eventFlagsDesc = {ZE_STRUCTURE_TYPE_EVENT_EXT_FLAGS_DESC, nullptr, ZE_EVENT_EXT_FLAG_APPEND_GRAPH_EXTERNAL};
 
-    std::unique_ptr<L0::Graph> outsideGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> outsideGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t outsideGraphHandle = outsideGraph->toHandle();
 
     // attach event to the outside graph, so when it runs, it will have its own patch preamble and in order counter when the outside graph is executed
@@ -4989,7 +5079,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     EXPECT_TRUE((*itSignalOutside).apiRequiredSignalEvent);
 
     // now record wait and signal on event with external flag
-    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t graphHandle = srcGraph->toHandle();
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(commandListHandle, graphHandle, nullptr));
@@ -5115,7 +5205,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     ze_event_exp_flags_desc_t eventFlagsDesc = {ZE_STRUCTURE_TYPE_EVENT_EXP_FLAGS_DESC, nullptr, ZE_EVENT_EXP_FLAG_APPEND_GRAPH_EXTERNAL};
 
-    std::unique_ptr<L0::Graph> graph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> graph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t graphHandle = graph->toHandle();
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(rootCommandListHandle, graphHandle, nullptr));
@@ -5165,7 +5255,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
     ze_event_exp_flags_desc_t eventFlagsDesc = {ZE_STRUCTURE_TYPE_EVENT_EXP_FLAGS_DESC, nullptr, ZE_EVENT_EXP_FLAG_APPEND_GRAPH_EXTERNAL};
 
-    std::unique_ptr<L0::Graph> graph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> graph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t graphHandle = graph->toHandle();
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(rootCommandListHandle, graphHandle, nullptr));
@@ -5220,7 +5310,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     ze_event_exp_flags_desc_t eventFlagsDesc = {ZE_STRUCTURE_TYPE_EVENT_EXP_FLAGS_DESC, nullptr, ZE_EVENT_EXP_FLAG_APPEND_GRAPH_EXTERNAL};
 
     // now record wait and signal on event with external flag
-    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t graphHandle = srcGraph->toHandle();
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(commandListHandle, graphHandle, nullptr));
@@ -5334,7 +5424,7 @@ struct ForkedGraphWithExternalSignalEventsTest {
         ASSERT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context->toHandle(), device->toHandle(), &eventDesc, &signalFromRootExternalEvent));
         ASSERT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context->toHandle(), device->toHandle(), &eventDesc, &signalFromForkExternalEvent));
 
-        srcGraph = std::make_unique<L0::Graph>(context, true);
+        srcGraph = std::make_unique<L0::Graph>(context, true, false);
         ze_graph_handle_t graphHandle = srcGraph->toHandle();
         ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(root->toHandle(), graphHandle, nullptr));
         EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(root->toHandle(), internalEvent, 0U, nullptr));
@@ -5449,7 +5539,7 @@ struct ForkedGraphForBarrierTest {
             EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context->toHandle(), device->toHandle(), &eventDesc, &joinEvent));
         }
 
-        srcGraph = std::make_unique<L0::Graph>(context, true);
+        srcGraph = std::make_unique<L0::Graph>(context, true, false);
         ze_graph_handle_t graphHandle = srcGraph->toHandle();
         EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(root->toHandle(), graphHandle, nullptr));
         EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendBarrier(root->toHandle(), forkEvent, 0U, nullptr));
@@ -5925,7 +6015,7 @@ TEST_F(GraphTestInstantiationTest, givenInOrderCmdListAndRegularCbEventRecordedW
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCreate(context->toHandle(), device->toHandle(), &eventDesc, &eventHandle));
 
-    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true);
+    std::unique_ptr<L0::Graph> srcGraph = std::make_unique<L0::Graph>(context, true, false);
     ze_graph_handle_t graphHandle = srcGraph->toHandle();
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(commandListHandle, graphHandle, nullptr));
@@ -6001,7 +6091,7 @@ TEST_F(GraphExecution, GivenExecutableGraphWhenSubmittingItToCommandListThenAppe
 
     ctx.cmdListsToReturn.push_back(new Mock<CommandList>());
 
-    MockGraph srcGraph(&ctx, true);
+    MockGraph srcGraph(&ctx, true, false);
     cmdlist.setGraphCaptureTarget(&srcGraph);
     srcGraph.startCapturingFrom(cmdlist, false);
     cmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(cmdListHandle, nullptr, 0U, nullptr);
@@ -6042,7 +6132,7 @@ TEST_F(GraphExecution, GivenExecutableGraphWithSubGraphsWhenSubmittingItToComman
     ze_event_handle_t signalEventParentHandle = signalEventParent.toHandle();
     ze_event_handle_t signalEventChildHandle = signalEventChild.toHandle();
 
-    MockGraph srcGraph(&ctx, true);
+    MockGraph srcGraph(&ctx, true, false);
     mainRecordCmdlist.setGraphCaptureTarget(&srcGraph);
     auto mainRecordCmdlistHandle = mainRecordCmdlist.toHandle();
     srcGraph.startCapturingFrom(mainRecordCmdlist, false);
@@ -6104,7 +6194,7 @@ TEST_F(GraphExecution, GivenMonolithicGraphWithoutPostJoinCommandsWhenInstantiat
     auto forkEventHandle = forkEvent.toHandle();
     auto joinEventHandle = joinEvent.toHandle();
 
-    MockGraph srcGraph(&ctx, true);
+    MockGraph srcGraph(&ctx, true, false);
     auto rootRecordCmdListHandle = rootRecordCmdList.toHandle();
     auto childRecordCmdListHandle = childRecordCmdList.toHandle();
     rootRecordCmdList.setGraphCaptureTarget(&srcGraph);
@@ -6152,7 +6242,7 @@ TEST_F(GraphExecution, GivenMonolithicGraphWithSingleForkEventAwaitedByMultipleC
     auto firstJoinEventHandle = firstJoinEvent.toHandle();
     auto secondJoinEventHandle = secondJoinEvent.toHandle();
 
-    MockGraph srcGraph(&ctx, true);
+    MockGraph srcGraph(&ctx, true, false);
     auto rootRecordCmdListHandle = rootRecordCmdList.toHandle();
     auto firstChildRecordCmdListHandle = firstChildRecordCmdList.toHandle();
     auto secondChildRecordCmdListHandle = secondChildRecordCmdList.toHandle();
@@ -6198,7 +6288,7 @@ TEST_F(GraphExecution, GivenMonolithicGraphWithPostJoinCommandsWhenInstantiatedT
     auto joinEventHandle = joinEvent.toHandle();
     auto postJoinSignalEventHandle = postJoinSignalEvent.toHandle();
 
-    MockGraph srcGraph(&ctx, true);
+    MockGraph srcGraph(&ctx, true, false);
     auto rootRecordCmdListHandle = rootRecordCmdList.toHandle();
     auto childRecordCmdListHandle = childRecordCmdList.toHandle();
     rootRecordCmdList.setGraphCaptureTarget(&srcGraph);
@@ -6257,7 +6347,7 @@ TEST_F(GraphExecution, GivenNestedPostJoinSubGraphsWhenInstantiatedMonolithicall
     auto childPostJoinSignalEventHandle = childPostJoinSignalEvent.toHandle();
     auto grandChildPostJoinSignalEventHandle = grandChildPostJoinSignalEvent.toHandle();
 
-    MockGraph srcGraph(&ctx, true);
+    MockGraph srcGraph(&ctx, true, false);
     auto rootRecordCmdListHandle = rootRecordCmdList.toHandle();
     auto childRecordCmdListHandle = childRecordCmdList.toHandle();
     auto grandChildRecordCmdListHandle = grandChildRecordCmdList.toHandle();
@@ -6317,7 +6407,7 @@ TEST_F(GraphExecution, GivenGraphWithForkWhenInstantiatingToExecutableAndAppendR
     ze_event_handle_t signalEventParentHandle = signalEventParent.toHandle();
     ze_event_handle_t signalEventChildHandle = signalEventChild.toHandle();
 
-    MockGraph srcGraph(&ctx, true);
+    MockGraph srcGraph(&ctx, true, false);
     mainRecordCmdlist.setGraphCaptureTarget(&srcGraph);
     auto mainRecordCmdlistHandle = mainRecordCmdlist.toHandle();
     srcGraph.startCapturingFrom(mainRecordCmdlist, false);
@@ -6403,7 +6493,7 @@ TEST_F(GraphExecution, GivenExecutableGraphWithSubGraphsWhenSubmittingItToComman
     ze_event_handle_t signalEventParentHandle = signalEventParent.toHandle();
     ze_event_handle_t signalEventChildHandle = signalEventChild.toHandle();
 
-    MockGraph srcGraph(&ctx, true);
+    MockGraph srcGraph(&ctx, true, false);
     mainRecordCmdlist.setGraphCaptureTarget(&srcGraph);
     auto mainRecordCmdlistHandle = mainRecordCmdlist.toHandle();
     srcGraph.startCapturingFrom(mainRecordCmdlist, false);
@@ -6482,7 +6572,7 @@ TEST_F(GraphExecution, GivenExecutableGraphWithSingleSegmentWhenSegmentSubmissio
 
     ctx.cmdListsToReturn.push_back(new Mock<CommandList>());
 
-    MockGraph srcGraph(&ctx, true);
+    MockGraph srcGraph(&ctx, true, false);
     cmdlist.setGraphCaptureTarget(&srcGraph);
     srcGraph.startCapturingFrom(cmdlist, false);
     cmdlist.capture<CaptureApi::zeCommandListAppendBarrier>(cmdListHandle, nullptr, 0U, nullptr);
@@ -6523,7 +6613,7 @@ TEST_F(GraphExecution, GivenExecutableGraphWithSubGraphsWhenFirstSegmentSubmissi
     ze_event_handle_t signalEventParentHandle = signalEventParent.toHandle();
     ze_event_handle_t signalEventChildHandle = signalEventChild.toHandle();
 
-    MockGraph srcGraph(&ctx, true);
+    MockGraph srcGraph(&ctx, true, false);
     mainRecordCmdlist.setGraphCaptureTarget(&srcGraph);
     auto mainRecordCmdlistHandle = mainRecordCmdlist.toHandle();
     srcGraph.startCapturingFrom(mainRecordCmdlist, false);
@@ -6573,7 +6663,7 @@ TEST_F(GraphExecution, GivenExecutableGraphWithSubGraphsWhenSubGraphSegmentSubmi
     ze_event_handle_t signalEventParentHandle = signalEventParent.toHandle();
     ze_event_handle_t signalEventChildHandle = signalEventChild.toHandle();
 
-    MockGraph srcGraph(&ctx, true);
+    MockGraph srcGraph(&ctx, true, false);
     mainRecordCmdlist.setGraphCaptureTarget(&srcGraph);
     auto mainRecordCmdlistHandle = mainRecordCmdlist.toHandle();
     srcGraph.startCapturingFrom(mainRecordCmdlist, false);
@@ -6623,7 +6713,7 @@ TEST_F(GraphExecution, GivenExecutableGraphSplitIntoThreeSegmentsWhenMiddleSegme
     ze_event_handle_t signalEventParentHandle = signalEventParent.toHandle();
     ze_event_handle_t signalEventChildHandle = signalEventChild.toHandle();
 
-    MockGraph srcGraph(&ctx, true);
+    MockGraph srcGraph(&ctx, true, false);
     mainRecordCmdlist.setGraphCaptureTarget(&srcGraph);
     auto mainRecordCmdlistHandle = mainRecordCmdlist.toHandle();
     srcGraph.startCapturingFrom(mainRecordCmdlist, false);
@@ -6689,7 +6779,7 @@ TEST_F(GraphExecution, GivenExecutableGraphSplitIntoThreeSegmentsWhenLastSegment
     ze_event_handle_t signalEventParentHandle = signalEventParent.toHandle();
     ze_event_handle_t signalEventChildHandle = signalEventChild.toHandle();
 
-    MockGraph srcGraph(&ctx, true);
+    MockGraph srcGraph(&ctx, true, false);
     mainRecordCmdlist.setGraphCaptureTarget(&srcGraph);
     auto mainRecordCmdlistHandle = mainRecordCmdlist.toHandle();
     srcGraph.startCapturingFrom(mainRecordCmdlist, false);
@@ -6836,7 +6926,7 @@ TEST_F(GraphTestCaptureRestrictions, GivenGraphWithUnjoinedForksWhenEndGraphCapt
     auto mainCmdlistHandle = mainCmdlist.toHandle();
     auto forkEventHandle = forkEvent.toHandle();
 
-    Graph srcGraph(&ctx, true);
+    Graph srcGraph(&ctx, true, false);
     mainCmdlist.setGraphCaptureTarget(&srcGraph);
     srcGraph.startCapturingFrom(mainCmdlist, false);
 
@@ -6877,7 +6967,7 @@ TEST_F(GraphTestCaptureRestrictions, GivenGraphWithUnjoinedForksWhenEndGraphCapt
     auto mainCmdlistHandle = mainCmdlist.toHandle();
     auto forkEventHandle = forkEvent.toHandle();
 
-    Graph srcGraph(&ctx, true); // preallocated, so that no output handle is needed when ending capture
+    Graph srcGraph(&ctx, true, false); // preallocated, so that no output handle is needed when ending capture
     ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExt(mainCmdlistHandle, srcGraph.toHandle(), nullptr));
 
     Graph *mainCaptureTarget = &srcGraph;
@@ -6912,7 +7002,7 @@ TEST_F(GraphTestCaptureRestrictions, GivenSubgraphWithUnjoinedForksWhenEndGraphC
     auto forkToGrandChildEventHandle = forkToGrandChildEvent.toHandle();
     auto joinChildEventHandle = joinChildEvent.toHandle();
 
-    Graph srcGraph(&ctx, true);
+    Graph srcGraph(&ctx, true, false);
     Graph *mainCaptureTarget = &srcGraph;
     mainCmdlist.setGraphCaptureTarget(&srcGraph);
     srcGraph.startCapturingFrom(mainCmdlist, false);
@@ -6962,7 +7052,7 @@ TEST_F(GraphTestCaptureRestrictions, GivenGrandchildForkJoinedTransitivelyToGran
     auto joinGrandChildToMainEventHandle = joinGrandChildToMainEvent.toHandle();
     auto joinChildToMainEventHandle = joinChildToMainEvent.toHandle();
 
-    Graph srcGraph(&ctx, true);
+    Graph srcGraph(&ctx, true, false);
     Graph *mainCaptureTarget = &srcGraph;
     mainCmdlist.setGraphCaptureTarget(&srcGraph);
     srcGraph.startCapturingFrom(mainCmdlist, false);
@@ -7027,7 +7117,7 @@ TEST_F(GraphTestCaptureRestrictions, GivenForkJoinedTransitivelyThroughSiblingWh
     auto e3Handle = e3.toHandle();
     auto e4Handle = e4.toHandle();
 
-    Graph srcGraph(&ctx, true);
+    Graph srcGraph(&ctx, true, false);
     Graph *qcapCaptureTarget = &srcGraph;
     qcap.setGraphCaptureTarget(&srcGraph);
     srcGraph.startCapturingFrom(qcap, false);
@@ -7085,12 +7175,12 @@ TEST_F(GraphTestCaptureRestrictions, GivenEventFromOtherCaptureSessionWhenCaptur
     auto eventFromBHandle = eventFromB.toHandle();
 
     // two independent capture sessions, each with its own primary command list
-    Graph graphA(&ctx, true);
+    Graph graphA(&ctx, true, false);
     Graph *captureTargetA = &graphA;
     cmdlistA.setGraphCaptureTarget(&graphA);
     graphA.startCapturingFrom(cmdlistA, false);
 
-    Graph graphB(&ctx, true);
+    Graph graphB(&ctx, true, false);
     Graph *captureTargetB = &graphB;
     cmdlistB.setGraphCaptureTarget(&graphB);
     graphB.startCapturingFrom(cmdlistB, false);
@@ -7124,12 +7214,12 @@ TEST_F(GraphTestCaptureRestrictions, GivenEventsFromOwnAndOtherCaptureSessionWhe
     auto eventFromAHandle = eventFromA.toHandle();
     auto eventFromBHandle = eventFromB.toHandle();
 
-    Graph graphA(&ctx, true);
+    Graph graphA(&ctx, true, false);
     Graph *captureTargetA = &graphA;
     cmdlistA.setGraphCaptureTarget(&graphA);
     graphA.startCapturingFrom(cmdlistA, false);
 
-    Graph graphB(&ctx, true);
+    Graph graphB(&ctx, true, false);
     Graph *captureTargetB = &graphB;
     cmdlistB.setGraphCaptureTarget(&graphB);
     graphB.startCapturingFrom(cmdlistB, false);
@@ -7167,7 +7257,7 @@ TEST_F(GraphTestCaptureRestrictions, GivenEventFromSameCaptureSessionWhenChildCo
     auto nextParentEventHandle = nextParentEvent.toHandle();
     auto joinEventHandle = joinEvent.toHandle();
 
-    Graph srcGraph(&ctx, true);
+    Graph srcGraph(&ctx, true, false);
     Graph *parentCaptureTarget = &srcGraph;
     parentCmdlist.setGraphCaptureTarget(&srcGraph);
     srcGraph.startCapturingFrom(parentCmdlist, false);
@@ -7211,7 +7301,7 @@ TEST_F(GraphTestCaptureRestrictions, GivenCommandListAlreadyCapturingWhenBeginGr
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, err);
 
     // check also zeCommandListBeginCaptureIntoGraphExp
-    Graph graph(&ctx, true);
+    Graph graph(&ctx, true, false);
     auto graphHandle = graph.toHandle();
     err = L0::zeCommandListBeginCaptureIntoGraphExp(cmdListHandle, graphHandle, nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, err);
@@ -7646,7 +7736,7 @@ TEST(GraphTestZeCommandListGetGraphExp, GivenInvalidParametersThenReturnsAppropr
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
     MockCommandList cmdlist;
-    MockGraph graph{&ctx, true};
+    MockGraph graph{&ctx, true, false};
     ze_graph_handle_t queryResult = {};
 
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, L0::zeCommandListGetGraphExp(nullptr, &queryResult)) << "Empty cmdlist is invalid";
@@ -7662,7 +7752,7 @@ TEST(GraphTestZeCommandListGetGraphExp, GivenValidParametersThenReturnsUnderlyin
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
     MockCommandList cmdlist;
-    MockGraph graph{&ctx, true};
+    MockGraph graph{&ctx, true, false};
     ze_graph_handle_t queryResult = {};
 
     cmdlist.setGraphCaptureTarget(&graph);
@@ -7686,8 +7776,8 @@ struct TestableGraphForCmdListQuery : public L0::Graph {
 TEST(GraphTestZeCommandListGetGraphExp, GivenForkedCommandListThenReturnsParentGraph) {
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
-    MockGraph parentGraph{&ctx, true};
-    TestableGraphForCmdListQuery subgraph{&ctx, true};
+    MockGraph parentGraph{&ctx, true, false};
+    TestableGraphForCmdListQuery subgraph{&ctx, true, false};
     MockCommandList parentCmdlist;
     MockCommandList childCmdlist;
     ze_graph_handle_t queryResult = {};
@@ -7715,9 +7805,9 @@ TEST(GraphTestZeCommandListGetGraphExp, GivenForkedCommandListThenReturnsParentG
 TEST(GraphTestZeCommandListGetGraphExp, GivenNestedSubgraphsThenReturnsRootParentGraph) {
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
-    MockGraph rootGraph{&ctx, true};
-    TestableGraphForCmdListQuery subgraph1{&ctx, true};
-    TestableGraphForCmdListQuery subgraph2{&ctx, true};
+    MockGraph rootGraph{&ctx, true, false};
+    TestableGraphForCmdListQuery subgraph1{&ctx, true, false};
+    TestableGraphForCmdListQuery subgraph2{&ctx, true, false};
     MockCommandList rootCmdlist;
     MockCommandList level1Cmdlist;
     MockCommandList level2Cmdlist;
@@ -7756,7 +7846,7 @@ TEST(GraphTestZeCommandListGetGraphExp, GivenNestedSubgraphsThenReturnsRootParen
 TEST(GraphTestZeGraphGetPrimaryCommandListExt, GivenInvalidParametersThenReturnsAppropriateErrorCode) {
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
-    MockGraph graph{&ctx, true};
+    MockGraph graph{&ctx, true, false};
     ze_command_list_handle_t queryResult = nullptr;
 
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, L0::zeGraphGetPrimaryCommandListExt(nullptr, &queryResult));
@@ -7779,7 +7869,7 @@ struct TestableGraphForPrimaryCommandListQuery : public L0::Graph {
 TEST(GraphTestZeGraphGetPrimaryCommandListExt, GivenActiveGraphCaptureWhenQueryingPrimaryCommandListThenReturnsCaptureSource) {
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
-    TestableGraphForPrimaryCommandListQuery graph{&ctx, true};
+    TestableGraphForPrimaryCommandListQuery graph{&ctx, true, false};
     MockCommandList cmdlist;
     ze_command_list_handle_t queryResult = nullptr;
 
@@ -7792,7 +7882,7 @@ TEST(GraphTestZeGraphGetPrimaryCommandListExt, GivenActiveGraphCaptureWhenQueryi
 TEST(GraphTestZeGraphGetPrimaryCommandListExt, GivenStoppedGraphCaptureWhenQueryingPrimaryCommandListThenReturnsCaptureSource) {
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
-    TestableGraphForPrimaryCommandListQuery graph{&ctx, true};
+    TestableGraphForPrimaryCommandListQuery graph{&ctx, true, false};
     MockCommandList cmdlist;
     ze_command_list_handle_t queryResult = nullptr;
 
@@ -7820,7 +7910,7 @@ struct TestableGraphForVisitApi : public L0::Graph {
 TEST(GraphTestZeGraphVisitExt, GivenInvalidParametersThenReturnsAppropriateErrorCode) {
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
-    TestableGraphForVisitApi graph{&ctx, true};
+    TestableGraphForVisitApi graph{&ctx, true, false};
     ze_command_visit_ext_desc_t desc{};
 
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_HANDLE, L0::zeGraphVisitExt(nullptr, &desc));
@@ -7830,7 +7920,7 @@ TEST(GraphTestZeGraphVisitExt, GivenInvalidParametersThenReturnsAppropriateError
 TEST(GraphTestZeGraphVisitExt, GivenValidParametersThenForwardsToGraphVisitAndReturnsItsStatus) {
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
-    TestableGraphForVisitApi graph{&ctx, true};
+    TestableGraphForVisitApi graph{&ctx, true, false};
     ze_command_visit_ext_desc_t desc{};
     desc.stype = ZE_STRUCTURE_TYPE_COMMAND_VISIT_EXT_DESC;
 
@@ -7860,7 +7950,7 @@ TEST(GraphTestEagerSubmit, GivenGraphEagerSubmitEnabledWhenAppendingGraphThenSou
 
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
-    TestableGraphForEagerSubmit srcGraph{&ctx, true};
+    TestableGraphForEagerSubmit srcGraph{&ctx, true, false};
     MockExecutableGraph execGraph;
     execGraph.src = &srcGraph;
     Mock<CommandList> cmdlist;
@@ -7884,7 +7974,7 @@ TEST(GraphTestEagerSubmit, GivenGraphEagerSubmitEnabledWhenAppendingGraphWithEve
 
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
-    TestableGraphForEagerSubmit srcGraph{&ctx, true};
+    TestableGraphForEagerSubmit srcGraph{&ctx, true, false};
     MockExecutableGraph execGraph;
     execGraph.src = &srcGraph;
     Mock<CommandList> cmdlist;
@@ -7905,7 +7995,7 @@ TEST(GraphTestEagerSubmit, GivenGraphEagerSubmitEnabledWhenWaitOnEventsFailsThen
 
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
-    TestableGraphForEagerSubmit srcGraph{&ctx, true};
+    TestableGraphForEagerSubmit srcGraph{&ctx, true, false};
     MockExecutableGraph execGraph;
     execGraph.src = &srcGraph;
     Mock<CommandList> cmdlist;
@@ -7925,7 +8015,7 @@ TEST(GraphTestEagerSubmit, GivenGraphEagerSubmitEnabledWhenVisitFailsThenSignalE
 
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
-    TestableGraphForEagerSubmit srcGraph{&ctx, true};
+    TestableGraphForEagerSubmit srcGraph{&ctx, true, false};
     srcGraph.returnValue = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     MockExecutableGraph execGraph;
     execGraph.src = &srcGraph;
@@ -7952,7 +8042,7 @@ TEST(GraphTestEagerSubmit, GivenGraphEagerSubmitEnabledAndNoSourceGraphWhenAppen
 TEST(GraphTestEagerSubmit, GivenGraphEagerSubmitDisabledWhenAppendingGraphThenSourceGraphIsNotVisitedAndExecutableGraphIsExecuted) {
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
-    TestableGraphForEagerSubmit srcGraph{&ctx, true};
+    TestableGraphForEagerSubmit srcGraph{&ctx, true, false};
     MockExecutableGraph execGraph;
     execGraph.src = &srcGraph;
     Mock<CommandList> cmdlist;
@@ -8055,7 +8145,7 @@ TEST(GraphTestVisit, GivenExternalCbEventsWhenReappendingThenPreserveEventsWitho
 TEST(GraphTestVisit, GivenInvalidPnextStypeWhenVisitingThenReturnsInvalidEnumeration) {
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
-    MockGraph graph{&ctx, true};
+    MockGraph graph{&ctx, true, false};
     ze_base_desc_t invalidDesc{};
     invalidDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES;
     ze_command_visit_ext_desc_t desc{};
@@ -8068,7 +8158,7 @@ TEST(GraphTestVisit, GivenInvalidPnextStypeWhenVisitingThenReturnsInvalidEnumera
 TEST(GraphTestVisit, GivenConcreteVisitorWithNullFunctionNameWhenVisitingThenReturnsInvalidNullPointer) {
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
-    MockGraph graph{&ctx, true};
+    MockGraph graph{&ctx, true, false};
     ze_concrete_visitor_ext_desc_t concreteVisitor{};
     concreteVisitor.stype = ZE_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC;
     concreteVisitor.fname = nullptr;
@@ -8082,7 +8172,7 @@ TEST(GraphTestVisit, GivenConcreteVisitorWithNullFunctionNameWhenVisitingThenRet
 TEST(GraphTestVisit, GivenConcreteVisitorWithUnknownFunctionNameWhenVisitingThenVisitorIsIgnoredAndVisitSucceeds) {
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
-    MockGraph graph{&ctx, true};
+    MockGraph graph{&ctx, true, false};
     graph.stopCapturing();
     ze_concrete_visitor_ext_desc_t concreteVisitor{};
     concreteVisitor.stype = ZE_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC;
@@ -8098,7 +8188,7 @@ TEST(GraphTestVisit, GivenConcreteVisitorWithUnknownFunctionNameWhenVisitingThen
 TEST(GraphTestVisit, GivenConcreteVisitorForGetNextCommandIdWhenVisitingThenInitializationSucceeds) {
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
-    MockGraph graph{&ctx, true};
+    MockGraph graph{&ctx, true, false};
     graph.stopCapturing();
     ze_concrete_visitor_ext_desc_t concreteVisitor{};
     concreteVisitor.stype = ZE_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC;
@@ -8114,7 +8204,7 @@ TEST(GraphTestVisit, GivenConcreteVisitorForGetNextCommandIdWhenVisitingThenInit
 TEST(GraphTestVisit, GivenConcreteVisitorForGetNextCommandIdExtWhenVisitingThenInitializationSucceeds) {
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
-    MockGraph graph{&ctx, true};
+    MockGraph graph{&ctx, true, false};
     graph.stopCapturing();
     ze_concrete_visitor_ext_desc_t concreteVisitor{};
     concreteVisitor.stype = ZE_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC;
@@ -8130,7 +8220,7 @@ TEST(GraphTestVisit, GivenConcreteVisitorForGetNextCommandIdExtWhenVisitingThenI
 TEST(GraphTestVisit, GivenConcreteVisitorWithLegacyStypeWhenVisitingThenInitializationSucceeds) {
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
-    MockGraph graph{&ctx, true};
+    MockGraph graph{&ctx, true, false};
     graph.stopCapturing();
     ze_concrete_visitor_ext_desc_t concreteVisitor{};
     concreteVisitor.stype = static_cast<ze_structure_type_t>(ZEX_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC);
@@ -8146,7 +8236,7 @@ TEST(GraphTestVisit, GivenConcreteVisitorWithLegacyStypeWhenVisitingThenInitiali
 TEST(GraphTestVisit, GivenConcreteVisitorWithLegacyStypeAndExtWhenVisitingThenInitializationSucceeds) {
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
-    MockGraph graph{&ctx, true};
+    MockGraph graph{&ctx, true, false};
     graph.stopCapturing();
     ze_concrete_visitor_ext_desc_t concreteVisitor{};
     concreteVisitor.stype = static_cast<ze_structure_type_t>(ZEX_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC);
@@ -8162,7 +8252,7 @@ TEST(GraphTestVisit, GivenConcreteVisitorWithLegacyStypeAndExtWhenVisitingThenIn
 TEST(GraphTestVisit, GivenConcreteVisitorForGetNextCommandIdWithKernelsWhenVisitingThenInitializationSucceeds) {
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
-    MockGraph graph{&ctx, true};
+    MockGraph graph{&ctx, true, false};
     graph.stopCapturing();
     ze_concrete_visitor_ext_desc_t concreteVisitor{};
     concreteVisitor.stype = ZE_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC;
@@ -8178,7 +8268,7 @@ TEST(GraphTestVisit, GivenConcreteVisitorForGetNextCommandIdWithKernelsWhenVisit
 TEST(GraphTestVisit, GivenConcreteVisitorForGetNextCommandIdWithKernelsExtWhenVisitingThenInitializationSucceeds) {
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
-    MockGraph graph{&ctx, true};
+    MockGraph graph{&ctx, true, false};
     graph.stopCapturing();
     ze_concrete_visitor_ext_desc_t concreteVisitor{};
     concreteVisitor.stype = ZE_STRUCTURE_TYPE_CONCRETE_VISITOR_EXT_DESC;
@@ -8198,7 +8288,7 @@ struct TestableExecutableGraphForSourceGraphQuery : public L0::ExecutableGraph {
 TEST(GraphTestZeExecutableGraphGetSourceGraphExt, GivenInvalidParametersThenReturnsAppropriateErrorCode) {
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
-    MockGraph graph{&ctx, true};
+    MockGraph graph{&ctx, true, false};
     TestableExecutableGraphForSourceGraphQuery execGraph;
     ze_graph_handle_t queryResult = nullptr;
 
@@ -8214,7 +8304,7 @@ TEST(GraphTestZeExecutableGraphGetSourceGraphExt, GivenInvalidParametersThenRetu
 TEST(GraphTestZeGraphGetIdExt, GivenInvalidParametersThenReturnsInvalidArgument) {
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
-    MockGraph graph{&ctx, true};
+    MockGraph graph{&ctx, true, false};
     uint64_t graphId = 0;
 
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_HANDLE, L0::zeGraphGetIdExt(nullptr, &graphId));
@@ -8224,7 +8314,7 @@ TEST(GraphTestZeGraphGetIdExt, GivenInvalidParametersThenReturnsInvalidArgument)
 TEST(GraphTestZeGraphGetIdExt, GivenValidGraphThenReturnsNonZeroStableId) {
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
-    MockGraph graph{&ctx, true};
+    MockGraph graph{&ctx, true, false};
     auto hGraph = graph.toHandle();
 
     uint64_t firstQuery = 0;
@@ -8239,8 +8329,8 @@ TEST(GraphTestZeGraphGetIdExt, GivenValidGraphThenReturnsNonZeroStableId) {
 TEST(GraphTestZeGraphGetIdExt, GivenMultipleGraphsThenIdsAreUniqueAndMonotonicallyIncreasing) {
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
-    MockGraph firstGraph{&ctx, true};
-    MockGraph secondGraph{&ctx, true};
+    MockGraph firstGraph{&ctx, true, false};
+    MockGraph secondGraph{&ctx, true, false};
 
     uint64_t firstQuery = 0;
     uint64_t secondQuery = 0;
@@ -8253,9 +8343,9 @@ TEST(GraphTestZeGraphGetIdExt, GivenMultipleGraphsThenIdsAreUniqueAndMonotonical
 TEST(GraphTestZeGraphGetIdExt, GivenSubgraphThenReturnsRootGraphId) {
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
-    MockGraph rootGraph{&ctx, true};
-    TestableGraphForCmdListQuery subgraph1{&ctx, true};
-    TestableGraphForCmdListQuery subgraph2{&ctx, true};
+    MockGraph rootGraph{&ctx, true, false};
+    TestableGraphForCmdListQuery subgraph1{&ctx, true, false};
+    TestableGraphForCmdListQuery subgraph2{&ctx, true, false};
     subgraph1.setParentGraph(&rootGraph);
     subgraph2.setParentGraph(&subgraph1);
 
@@ -8275,7 +8365,7 @@ TEST(GraphTestZeGraphSetDestructionCallbackExp, GivenInvalidParametersThenReturn
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
     MockCommandList cmdlist;
-    MockGraph graph{&ctx, true};
+    MockGraph graph{&ctx, true, false};
     ze_module_program_exp_desc_t progExp = {ZE_STRUCTURE_TYPE_MODULE_PROGRAM_EXP_DESC, nullptr};
 
     zex_mem_graph_free_callback_fn_t clb = +[](void *) {};
@@ -8298,7 +8388,7 @@ TEST(GraphTestZeGraphSetDestructionCallbackExp, GivenValidCallbacksThenInvokesTh
     zex_mem_graph_free_callback_fn_t clbMul2 = +[](void *p) { reinterpret_cast<UserDataT *>(p)[0] *= 2; };
     zex_mem_graph_free_callback_fn_t clbAdd1 = +[](void *p) { reinterpret_cast<UserDataT *>(p)[0] += 1; };
     {
-        MockGraph graph{&ctx, true};
+        MockGraph graph{&ctx, true, false};
         EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeGraphSetDestructionCallbackExp(&graph, clbAdd1, &userData, nullptr)); // 0+1
         EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeGraphSetDestructionCallbackExp(&graph, clbMul2, &userData, nullptr)); // 1*2
         EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeGraphSetDestructionCallbackExp(&graph, clbAdd1, &userData, nullptr)); // 2+1
@@ -8310,7 +8400,7 @@ TEST(GraphTestZeGraphSetDestructionCallbackExp, GivenValidCallbacksThenInvokesTh
 TEST(GraphTestMutableGraphNodeExp, GivenMutableGraphNodeExpFunctionsWhenCalledThenUnsupportedFeatureIsReturned) {
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
-    MockGraph graph{&ctx, true};
+    MockGraph graph{&ctx, true, false};
     ze_executable_graph_handle_t hExecutableGraph = reinterpret_cast<ze_executable_graph_handle_t>(0x1234);
     ze_graph_node_handle_t hNode = reinterpret_cast<ze_graph_node_handle_t>(0x5678);
 
@@ -8353,7 +8443,7 @@ TEST(GraphTestCommandListDestruction, GivenPreallocatedCaptureTargetWhenCommandL
     ContextStubMock ctx;
     bool graphDestroyed = false;
     zex_mem_graph_free_callback_fn_t markGraphDestroyed = +[](void *userData) { *static_cast<bool *>(userData) = true; };
-    Graph graph{&ctx, true};
+    Graph graph{&ctx, true, false};
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeGraphSetDestructionCallbackExp(&graph, markGraphDestroyed, &graphDestroyed, nullptr));
     {
         MockCommandList cmdlist;
@@ -8367,7 +8457,7 @@ TEST(GraphTestCommandListDestruction, GivenNotPreallocatedCaptureTargetWhenComma
     ContextStubMock ctx;
     bool graphDestroyed = false;
     zex_mem_graph_free_callback_fn_t markGraphDestroyed = +[](void *userData) { *static_cast<bool *>(userData) = true; };
-    auto graph = std::make_unique<Graph>(&ctx, false);
+    auto graph = std::make_unique<Graph>(&ctx, false, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeGraphSetDestructionCallbackExp(graph.get(), markGraphDestroyed, &graphDestroyed, nullptr));
     {
         MockCommandList cmdlist;
@@ -8382,7 +8472,7 @@ TEST(CaptureTestMclIdMapping, GivenGetNextCommandIdFollowedByAppendBarrierWhenGe
     Mock<CommandList> cmdlist;
     cmdlist.device = nullptr;
 
-    MockGraph graph{&ctx, true};
+    MockGraph graph{&ctx, true, false};
 
     ze_mutable_command_id_exp_desc_t desc{};
     uint64_t commandId = 0U;
@@ -8403,7 +8493,7 @@ TEST(CaptureTestMclIdMapping, GivenGetNextCommandExtIdFollowedByAppendBarrierWhe
     Mock<CommandList> cmdlist;
     cmdlist.device = nullptr;
 
-    MockGraph graph{&ctx, true};
+    MockGraph graph{&ctx, true, false};
 
     ze_mutable_command_id_ext_desc_t desc{};
     uint64_t commandId = 0U;
@@ -8424,7 +8514,7 @@ TEST(CaptureTestMclIdMapping, GivenMultipleMutableCommandsWithDifferentFollowing
     Mock<CommandList> cmdlist;
     cmdlist.device = nullptr;
 
-    MockGraph graph{&ctx, true};
+    MockGraph graph{&ctx, true, false};
 
     ze_mutable_command_id_exp_desc_t desc1{};
     uint64_t mclId1 = 100U;
@@ -8459,7 +8549,7 @@ TEST(CaptureTestMclIdMapping, GivenGetNextCommandIdWithKernelsFollowedByLaunchKe
     Mock<CommandList> cmdlist;
     cmdlist.device = nullptr;
 
-    MockGraph graph{&ctx, true};
+    MockGraph graph{&ctx, true, false};
 
     ze_mutable_command_id_exp_desc_t desc{};
     ze_kernel_handle_t kernels[] = {nullptr};
@@ -8481,7 +8571,7 @@ TEST(CaptureTestMclIdMapping, GivenGetNextCommandIdWithKernelExtsFollowedByLaunc
     Mock<CommandList> cmdlist;
     cmdlist.device = nullptr;
 
-    MockGraph graph{&ctx, true};
+    MockGraph graph{&ctx, true, false};
 
     ze_mutable_command_id_ext_desc_t desc{};
     ze_kernel_handle_t kernels[] = {nullptr};
@@ -8500,7 +8590,7 @@ TEST(CaptureTestMclIdMapping, GivenGetNextCommandIdWithKernelExtsFollowedByLaunc
 TEST(CaptureTestMclIdMapping, GivenInvalidMclIdWhenGettingCommandByMclIdThenReturnsNull) {
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
-    MockGraph graph{&ctx, true};
+    MockGraph graph{&ctx, true, false};
 
     uint64_t nonExistentMclId = 999U;
     auto *cmd = graph.recordedApiCommands.getCommandByMclId(nonExistentMclId);
@@ -8513,7 +8603,7 @@ TEST(CaptureTestMclIdMapping, GivenMutableCommandsBetweenRegularCommandsWhenMapp
     Mock<CommandList> cmdlist;
     cmdlist.device = nullptr;
 
-    MockGraph graph{&ctx, true};
+    MockGraph graph{&ctx, true, false};
 
     for (int i = 0; i < 2; ++i) {
         EXPECT_EQ(ZE_RESULT_SUCCESS, graph.recordedApiCommands.capture<L0::CaptureApi::zeCommandListAppendBarrier>(
@@ -8546,7 +8636,7 @@ TEST(CaptureTestMclIdMapping, GivenGetNextCommandIdFollowedBySpecificCommandWhen
     Mock<CommandList> cmdlist;
     cmdlist.device = nullptr;
 
-    MockGraph graph{&ctx, true};
+    MockGraph graph{&ctx, true, false};
 
     ze_mutable_command_id_exp_desc_t desc{};
     desc.flags = 42U;
@@ -8568,7 +8658,7 @@ TEST(CaptureTestMclIdMapping, GivenSequenceOfMutableCommandsWithFollowingCommand
     Mock<CommandList> cmdlist;
     cmdlist.device = nullptr;
 
-    MockGraph graph{&ctx, true};
+    MockGraph graph{&ctx, true, false};
 
     std::vector<uint64_t> mclIds;
     for (int i = 0; i < 3; ++i) {
@@ -8600,7 +8690,7 @@ TEST(CaptureTestMclIdMapping, GivenBothMutableVariantsWithFollowingCommandsWhenM
     Mock<CommandList> cmdlist;
     cmdlist.device = nullptr;
 
-    MockGraph graph{&ctx, true};
+    MockGraph graph{&ctx, true, false};
 
     ze_mutable_command_id_exp_desc_t desc1{};
     uint64_t mclId1 = 500U;
@@ -8677,7 +8767,7 @@ TEST_F(GraphTestApiPauseResume, GivenGraphNotCapturingWhenCallingGraphPauseResum
     GraphsCleanupGuard graphCleanup;
 
     ContextStubMock ctx;
-    MockGraph graph{&ctx, true};
+    MockGraph graph{&ctx, true, false};
     auto hGraph = graph.toHandle();
 
     EXPECT_EQ(ZE_RESULT_ERROR_COMMAND_LIST_NOT_CAPTURING, L0::zeGraphPauseCaptureExt(hGraph));
@@ -8689,7 +8779,7 @@ TEST_F(GraphTestApiPauseResume, GivenActiveCaptureWhenPausingAndResumingThenComm
 
     ContextStubMock ctx;
     MockCommandList cmdList;
-    TestableGraphForPrimaryCommandListQuery graph{&ctx, true};
+    TestableGraphForPrimaryCommandListQuery graph{&ctx, true, false};
     auto hGraph = graph.toHandle();
 
     graph.setCaptureSource(&cmdList);
@@ -8716,7 +8806,7 @@ TEST_F(GraphTestApiPauseResume, GivenRootGraphWithSubgraphWhenPausingRootThenAll
     MockCommandList childCmdlist;
     childCmdlist.device = this->device;
 
-    Graph rootGraph{&ctx, true};
+    Graph rootGraph{&ctx, true, false};
     rootGraph.startCapturingFrom(rootCmdlist, false);
 
     Mock<Event> forkEvent;
@@ -8761,7 +8851,7 @@ TEST_F(GraphTestApiPauseResume, GivenRootGraphWithSubgraphWhenPausingSubgraphOnl
     MockCommandList childCmdlist;
     childCmdlist.device = this->device;
 
-    Graph rootGraph{&ctx, true};
+    Graph rootGraph{&ctx, true, false};
     rootGraph.startCapturingFrom(rootCmdlist, false);
 
     Mock<Event> forkEvent;
@@ -8804,7 +8894,7 @@ TEST_F(GraphTestApiCaptureBeginEnd, GivenStoppedGraphWithSubgraphWhenSignallingE
     childCmdlist.device = this->device;
     MockCommandList unrelatedCmdlist;
 
-    auto rootGraph = std::make_unique<Graph>(&ctx, true);
+    auto rootGraph = std::make_unique<Graph>(&ctx, true, false);
     rootGraph->startCapturingFrom(rootCmdlist, false);
     rootCmdlist.setGraphCaptureTarget(rootGraph.get());
 
@@ -8842,7 +8932,7 @@ TEST_F(GraphTestApiCaptureBeginEnd, GivenGraphStillCapturingWhenGraphIsDestroyed
     MockCommandList cmdlist;
     cmdlist.device = this->device;
 
-    auto graph = std::make_unique<Graph>(&ctx, true);
+    auto graph = std::make_unique<Graph>(&ctx, true, false);
     graph->startCapturingFrom(cmdlist, false);
 
     Mock<Event> signalEvent;

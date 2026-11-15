@@ -13,16 +13,49 @@
 #include "level_zero/api/core/ze_cmdlist_api_entrypoints.h"
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/context/context.h"
+#include "level_zero/core/source/device/device.h"
+#include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
+#include "level_zero/driver_experimental/zex_graph.h"
 #include "level_zero/experimental/source/graph/graph.h"
 #include "level_zero/experimental/source/graph/graph_export.h"
 
 namespace L0 {
 
-ze_result_t ZE_APICALL zeGraphCreateExt(ze_context_handle_t hContext, const void *pNext, ze_graph_handle_t *phGraph) {
-    if (nullptr != pNext) {
+namespace {
+
+bool isMutableGraphSupported(L0::Context &ctx) {
+    for (const auto &contextDevice : ctx.getDevices()) {
+        auto device = L0::Device::fromHandle(contextDevice.second);
+        auto capabilities = L0GfxCoreHelper::getRecordReplayGraphCapabilities(device->getNEODevice()->getRootDeviceEnvironment());
+        if ((capabilities & ZE_RECORD_REPLAY_GRAPH_EXT_FLAG_MUTABLE_GRAPH) == 0) {
+            return false;
+        }
+    }
+    return true;
+}
+
+ze_result_t obtainGraphCreationParamsFromExtensions(const void *pNext, L0::Context *ctx, bool &mutableGraph) {
+    mutableGraph = false;
+    if (nullptr == pNext) {
+        return ZE_RESULT_SUCCESS;
+    }
+
+    auto extension = reinterpret_cast<const ze_base_desc_t *>(pNext);
+    if (ZE_STRUCTURE_TYPE_MUTABLE_GRAPH_EXP_DESC != extension->stype) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
+    if (false == isMutableGraphSupported(*ctx)) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    mutableGraph = true;
+    return ZE_RESULT_SUCCESS;
+}
+
+} // namespace
+
+ze_result_t ZE_APICALL zeGraphCreateExt(ze_context_handle_t hContext, const void *pNext, ze_graph_handle_t *phGraph) {
     auto ctx = L0::Context::fromHandle(hContext);
     if (nullptr == ctx) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -32,16 +65,17 @@ ze_result_t ZE_APICALL zeGraphCreateExt(ze_context_handle_t hContext, const void
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    *phGraph = new Graph(ctx, true);
+    bool mutableGraph = false;
+    if (auto ret = obtainGraphCreationParamsFromExtensions(pNext, ctx, mutableGraph); ZE_RESULT_SUCCESS != ret) {
+        return ret;
+    }
+
+    *phGraph = new Graph(ctx, true, mutableGraph);
 
     return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t ZE_APICALL zeCommandListBeginGraphCaptureExt(ze_command_list_handle_t hCommandList, const void *pNext) {
-    if (nullptr != pNext) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
-
     auto cmdList = L0::CommandList::fromHandle(hCommandList);
     if (nullptr == cmdList) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -55,7 +89,12 @@ ze_result_t ZE_APICALL zeCommandListBeginGraphCaptureExt(ze_command_list_handle_
     cmdList->getContextHandle(&hCtx);
     auto ctx = L0::Context::fromHandle(hCtx);
 
-    auto graph = new Graph(ctx, false);
+    bool mutableGraph = false;
+    if (auto ret = obtainGraphCreationParamsFromExtensions(pNext, ctx, mutableGraph); ZE_RESULT_SUCCESS != ret) {
+        return ret;
+    }
+
+    auto graph = new Graph(ctx, false, mutableGraph);
     cmdList->setGraphCaptureTarget(graph);
     graph->startCapturingFrom(*cmdList, false);
 

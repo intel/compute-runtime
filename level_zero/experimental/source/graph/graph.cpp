@@ -364,6 +364,9 @@ void Graph::startCapturingFrom(L0::CommandList &captureSrc, bool isSubGraph) {
     captureSrc.getDeviceHandle(&this->captureTargetDesc.hDevice);
     this->captureTargetDesc.desc.stype = ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC;
     this->captureTargetDesc.desc.pNext = nullptr;
+    if (this->mutableGraph) {
+        this->enableMutableCommandList();
+    }
     this->captureTargetDesc.desc.flags = captureSrc.getCmdListFlags();
     if (this->captureTargetDesc.desc.flags & ZE_COMMAND_LIST_FLAG_IN_ORDER) {
         this->enableInOrderGraph();
@@ -478,7 +481,7 @@ void Graph::tryJoinOnNextCommand(L0::CommandList &childCmdList, L0::Event &joinE
 
 void Graph::forkTo(L0::CommandList &childCmdList, Graph *&child, L0::Event &forkEvent) {
     UNRECOVERABLE_IF(child || childCmdList.getGraphCaptureTarget()); // should not be capturing already
-    child = new Graph(this->ctx, false, this->orderedCommands.share());
+    child = new Graph(this->ctx, false, this->mutableGraph, this->orderedCommands.share());
     child->parentGraph = this;
     child->startCapturingFrom(childCmdList, true);
     childCmdList.setGraphCaptureTarget(child);

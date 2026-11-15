@@ -254,18 +254,22 @@ struct GraphNode : _ze_graph_node_handle_t {
 };
 
 struct Graph : _ze_graph_handle_t {
-    Graph(L0::Context *ctx, bool preallocated, WeaklyShared<OrderedCommandsRegistry> &&orderedCommandsRegistry)
+    Graph(L0::Context *ctx, bool preallocated, bool mutableGraph, WeaklyShared<OrderedCommandsRegistry> &&orderedCommandsRegistry)
         : ctx(ctx),
           orderedCommands(std::move(orderedCommandsRegistry)),
-          preallocated(preallocated) {
+          preallocated(preallocated),
+          mutableGraph(mutableGraph) {
         if (orderedCommands.empty()) {
             orderedCommands = WeaklyShared<OrderedCommandsRegistry>(new OrderedCommandsRegistry);
             internalEvents = std::make_shared<GraphInternalEvents>();
         }
+        if (mutableGraph) {
+            enableMutableCommandList();
+        }
         enabledGraphs();
     }
 
-    Graph(L0::Context *ctx, bool preallocated) : Graph(ctx, preallocated, {}) {
+    Graph(L0::Context *ctx, bool preallocated, bool mutableGraph) : Graph(ctx, preallocated, mutableGraph, {}) {
     }
 
     MOCKABLE_VIRTUAL ~Graph();
@@ -281,6 +285,10 @@ struct Graph : _ze_graph_handle_t {
 
     bool wasPreallocated() const {
         return preallocated;
+    }
+
+    bool isMutableGraph() const {
+        return mutableGraph;
     }
 
     void startCapturingFrom(L0::CommandList &captureSrc, bool isSubGraph);
@@ -532,6 +540,7 @@ struct Graph : _ze_graph_handle_t {
     std::vector<DestructorCallbackEntry> destructorCallbacks;
 
     bool preallocated = false;
+    bool mutableGraph = false;
     bool wasCapturingStopped = false;
     bool multiEngineGraph = false;
     bool mutableCmdlist = false;

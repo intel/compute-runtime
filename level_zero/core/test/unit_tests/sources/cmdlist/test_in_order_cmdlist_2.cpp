@@ -50,7 +50,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenImmCmdListWhenGraphIsInstantiatedThenGra
         EXPECT_EQ(expectedOffload, NEO::isValueSet(immCmdList->getCmdListFlags(), ZE_COMMAND_LIST_FLAG_COPY_OFFLOAD_HINT));
 
         {
-            MockGraph graph(context, true);
+            MockGraph graph(context, true, false);
             ze_graph_handle_t graphHandle = graph.toHandle();
             ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(cmdListHandle, graphHandle, nullptr));
             ASSERT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendMemoryCopy(cmdListHandle, &copyData1, &copyData2, sizeof(copyData1), nullptr, 0, nullptr));
