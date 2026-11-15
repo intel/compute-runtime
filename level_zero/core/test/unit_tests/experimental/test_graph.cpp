@@ -8327,6 +8327,27 @@ TEST(GraphTestMutableGraphNodeExp, GivenMutableGraphNodeExpFunctionsWhenCalledTh
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeExecutableGraphUpdateExp(hExecutableGraph, graph.toHandle(), nullptr));
 }
 
+TEST(GraphNodeTest, GivenGraphNodeWithTypeAndFlagsWhenGettingPropertiesThenCreationTypeAndFlagsAreReturned) {
+    const ze_mutable_graph_node_exp_flags_t flags = ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_ARGUMENT | ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_SIGNAL_EVENT;
+    L0::GraphNode node{ZE_GRAPH_NODE_EXP_TYPE_LAUNCH_KERNEL, flags};
+
+    ze_graph_node_exp_properties_t nodeProperties = {ZE_STRUCTURE_TYPE_GRAPH_NODE_EXP_PROPERTIES};
+    nodeProperties.type = ZE_GRAPH_NODE_EXP_TYPE_FORCE_UINT32;
+    nodeProperties.flags = 0U;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::GraphNode::fromHandle(node.toHandle())->getProperties(&nodeProperties));
+    EXPECT_EQ(ZE_GRAPH_NODE_EXP_TYPE_LAUNCH_KERNEL, nodeProperties.type);
+    EXPECT_EQ(flags, nodeProperties.flags);
+}
+
+TEST(GraphNodeTest, GivenGraphNodeWithoutFlagsWhenGettingPropertiesThenZeroFlagsAreReturned) {
+    L0::GraphNode node{ZE_GRAPH_NODE_EXP_TYPE_LAUNCH_KERNEL, 0U};
+
+    ze_graph_node_exp_properties_t nodeProperties = {ZE_STRUCTURE_TYPE_GRAPH_NODE_EXP_PROPERTIES};
+    nodeProperties.flags = ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, node.getProperties(&nodeProperties));
+    EXPECT_EQ(0U, nodeProperties.flags);
+}
+
 TEST(GraphTestCommandListDestruction, GivenPreallocatedCaptureTargetWhenCommandListIsDestroyedThenGraphIsNotDestroyed) {
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;

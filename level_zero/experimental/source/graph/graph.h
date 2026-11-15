@@ -12,6 +12,7 @@
 #include "shared/source/utilities/stackvec.h"
 
 #include "level_zero/core/source/cmdqueue/counters_cross_sync_definitions.h"
+#include "level_zero/driver_experimental/zex_graph.h"
 #include "level_zero/driver_experimental/zex_visit.h"
 #include "level_zero/experimental/source/graph/graph_captured_apis.h"
 #include "level_zero/ze_api.h"
@@ -32,6 +33,9 @@ static_assert(IsCompliantWithDdiHandlesExt<_ze_graph_handle_t>);
 
 struct _ze_executable_graph_handle_t : BaseHandle {};
 static_assert(IsCompliantWithDdiHandlesExt<_ze_executable_graph_handle_t>);
+
+struct _ze_graph_node_handle_t : BaseHandle {};
+static_assert(IsCompliantWithDdiHandlesExt<_ze_graph_node_handle_t>);
 
 typedef void(ZE_CALLBACK *zex_mem_graph_free_callback_fn_t)(void *pUserData);
 
@@ -225,6 +229,28 @@ struct RecordedApiCommands {
     std::unordered_map<MclCommandId, CapturedCommandId> mclMap;
     ClosureExternalStorage externalStorage;
     bool brokenCapture = false;
+};
+
+struct GraphNode : _ze_graph_node_handle_t {
+    GraphNode(ze_graph_node_exp_type_t type, ze_mutable_graph_node_exp_flags_t flags)
+        : flags(flags),
+          type(type) {
+    }
+
+    static GraphNode *fromHandle(ze_graph_node_handle_t handle) {
+        return static_cast<GraphNode *>(handle);
+    }
+    inline ze_graph_node_handle_t toHandle() { return this; }
+
+    auto getProperties(ze_graph_node_exp_properties_t *pProperties) const -> ze_result_t {
+        pProperties->type = this->type;
+        pProperties->flags = this->flags;
+        return ZE_RESULT_SUCCESS;
+    }
+
+  protected:
+    ze_mutable_graph_node_exp_flags_t flags;
+    ze_graph_node_exp_type_t type;
 };
 
 struct Graph : _ze_graph_handle_t {
