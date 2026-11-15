@@ -34,6 +34,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 #include "level_zero/core/test/unit_tests/sources/helper/ze_object_utils.h"
+#include "level_zero/driver_experimental/zex_graph.h"
 
 #include <cstdint>
 #include <limits>
@@ -1969,6 +1970,83 @@ HWTEST_F(CommandListCreateTests, givenCooperativeDescriptorWhenCloneAppendKernel
     auto cloneExt = reinterpret_cast<ze_command_list_append_launch_kernel_param_cooperative_desc_t *>(outExtPtr);
     EXPECT_EQ(cooperativeDesc.stype, cloneExt->stype);
     EXPECT_EQ(cooperativeDesc.isCooperative, cloneExt->isCooperative);
+
+    CommandList::freeClonedAppendKernelExtensions(outExtPtr);
+}
+
+HWTEST_F(CommandListCreateTests, givenGraphNodeDescriptorWhenCloneAppendKernelIsCalledThenClonedDescriptorIsAvailable) {
+    ze_graph_node_handle_t nodeHandle = nullptr;
+    ze_graph_node_exp_desc_t graphNodeDesc{ZE_STRUCTURE_TYPE_GRAPH_NODE_EXP_DESC};
+    graphNodeDesc.flags = ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_ARGUMENT | ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT;
+    graphNodeDesc.phNodeHandle = &nodeHandle;
+
+    void *outExtPtr = nullptr;
+    auto result = CommandList::cloneAppendKernelExtensions(reinterpret_cast<ze_base_desc_t *>(&graphNodeDesc), outExtPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_NE(nullptr, outExtPtr);
+
+    auto cloneExt = reinterpret_cast<ze_graph_node_exp_desc_t *>(outExtPtr);
+    EXPECT_NE(&graphNodeDesc, cloneExt);
+    EXPECT_EQ(graphNodeDesc.stype, cloneExt->stype);
+    EXPECT_EQ(graphNodeDesc.flags, cloneExt->flags);
+    EXPECT_EQ(graphNodeDesc.phNodeHandle, cloneExt->phNodeHandle);
+    EXPECT_EQ(nullptr, cloneExt->pNext);
+
+    CommandList::freeClonedAppendKernelExtensions(outExtPtr);
+}
+
+HWTEST_F(CommandListCreateTests, givenMutableKernelDataDescriptorWhenCloneAppendKernelIsCalledThenClonedDescriptorIsAvailable) {
+    ze_kernel_handle_t kernelGroup[2] = {};
+    ze_mutable_kernel_data_exp_desc_t mutableKernelDataDesc{ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_DATA_EXP_DESC};
+    mutableKernelDataDesc.numKernels = 2;
+    mutableKernelDataDesc.phKernelGroup = kernelGroup;
+
+    void *outExtPtr = nullptr;
+    auto result = CommandList::cloneAppendKernelExtensions(reinterpret_cast<ze_base_desc_t *>(&mutableKernelDataDesc), outExtPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_NE(nullptr, outExtPtr);
+
+    auto cloneExt = reinterpret_cast<ze_mutable_kernel_data_exp_desc_t *>(outExtPtr);
+    EXPECT_NE(&mutableKernelDataDesc, cloneExt);
+    EXPECT_EQ(mutableKernelDataDesc.stype, cloneExt->stype);
+    EXPECT_EQ(mutableKernelDataDesc.numKernels, cloneExt->numKernels);
+    EXPECT_EQ(mutableKernelDataDesc.phKernelGroup, cloneExt->phKernelGroup);
+    EXPECT_EQ(nullptr, cloneExt->pNext);
+
+    CommandList::freeClonedAppendKernelExtensions(outExtPtr);
+}
+
+HWTEST_F(CommandListCreateTests, givenGraphNodeDescChainedWithMutableKernelDataDescWhenCloneIsCalledThenValuesAndOrderClonedDescriptorsAreCorrect) {
+    ze_kernel_handle_t kernelGroup[2] = {};
+    ze_mutable_kernel_data_exp_desc_t mutableKernelDataDesc{ZE_STRUCTURE_TYPE_MUTABLE_KERNEL_DATA_EXP_DESC};
+    mutableKernelDataDesc.numKernels = 2;
+    mutableKernelDataDesc.phKernelGroup = kernelGroup;
+
+    ze_graph_node_handle_t nodeHandle = nullptr;
+    ze_graph_node_exp_desc_t graphNodeDesc{ZE_STRUCTURE_TYPE_GRAPH_NODE_EXP_DESC};
+    graphNodeDesc.flags = ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_ARGUMENT | ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT |
+                          ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_SIZE | ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_INSTRUCTION;
+    graphNodeDesc.phNodeHandle = &nodeHandle;
+    graphNodeDesc.pNext = &mutableKernelDataDesc;
+
+    void *outExtPtr = nullptr;
+    auto result = CommandList::cloneAppendKernelExtensions(reinterpret_cast<ze_base_desc_t *>(&graphNodeDesc), outExtPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_NE(nullptr, outExtPtr);
+
+    auto cloneGraphNodeDesc = reinterpret_cast<const ze_graph_node_exp_desc_t *>(outExtPtr);
+    EXPECT_NE(&graphNodeDesc, cloneGraphNodeDesc);
+    EXPECT_EQ(graphNodeDesc.stype, cloneGraphNodeDesc->stype);
+    EXPECT_EQ(graphNodeDesc.flags, cloneGraphNodeDesc->flags);
+    EXPECT_EQ(graphNodeDesc.phNodeHandle, cloneGraphNodeDesc->phNodeHandle);
+    ASSERT_NE(nullptr, cloneGraphNodeDesc->pNext);
+
+    auto cloneMutableKernelDataDesc = reinterpret_cast<const ze_mutable_kernel_data_exp_desc_t *>(cloneGraphNodeDesc->pNext);
+    EXPECT_NE(&mutableKernelDataDesc, cloneMutableKernelDataDesc);
+    EXPECT_EQ(mutableKernelDataDesc.stype, cloneMutableKernelDataDesc->stype);
+    EXPECT_EQ(mutableKernelDataDesc.numKernels, cloneMutableKernelDataDesc->numKernels);
+    EXPECT_EQ(mutableKernelDataDesc.phKernelGroup, cloneMutableKernelDataDesc->phKernelGroup);
+    EXPECT_EQ(nullptr, cloneMutableKernelDataDesc->pNext);
 
     CommandList::freeClonedAppendKernelExtensions(outExtPtr);
 }
