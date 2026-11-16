@@ -13,6 +13,7 @@
 #include "shared/source/memory_manager/memory_allocation.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/fixtures/device_fixture.h"
+#include "shared/test/common/fixtures/sip_external_lib_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/raii_gfx_core_helper.h"
@@ -1159,16 +1160,15 @@ TEST_F(DebugExternalLibSipTest, givenSipExternalLibRequiredAndNotAvailableWhenIn
     EXPECT_THROW(SipKernel::initSipKernel(SipKernelType::dbgBindless, *pDevice), std::exception);
 }
 
-struct SipKernelFromSipExternalLibTest : public DebugExternalLibSipTest {
+struct SipKernelFromSipExternalLibTest : public DebugExternalLibSipTest, public SipExternalLibFixture {
     void SetUp() override {
         DebugExternalLibSipTest::SetUp();
         MockSipData::useMockSip = false;
         debugManager.flags.GetSipBinaryFromExternalLib.set(1);
-        this->sipExternalLib = new MockSipExternalLib();
+        this->injectSipLib(*this->pDevice);
         this->sipExternalLib->getSipKernelBinaryRetBinary = MockSipKernel::getDummyGenBinary();
         this->sipExternalLib->getSipKernelBinaryStateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(3);
         this->sipExternalLib->getStateSaveAreaSizeRetValue = MemoryConstants::pageSize;
-        this->pDevice->getRootDeviceEnvironmentRef().sipExternalLib.reset(this->sipExternalLib);
     }
 
     const SipKernel *getInitializedSipKernel(SipKernelType type) const {
@@ -1178,7 +1178,6 @@ struct SipKernelFromSipExternalLibTest : public DebugExternalLibSipTest {
     DebugManagerStateRestore restorer;
     VariableBackup<bool> mockSipBackup{&MockSipData::useMockSip};
     VariableBackup<SipClassType> sipClassBackup{&MockSipKernel::classType};
-    MockSipExternalLib *sipExternalLib = nullptr;
 };
 
 TEST_F(SipKernelFromSipExternalLibTest, givenSipExternalLibFailingToCreateSipKernelBinaryWhenInitSipKernelThenFalseIsReturned) {
@@ -1239,23 +1238,24 @@ TEST_F(DebugExternalLibSipTest, givenSipExternalLibRequiredWhenGetSipExternalLib
     EXPECT_EQ(nullptr, pDevice->getSipExternalLibInterface());
 }
 
-TEST_F(DebugExternalLibSipTest, givenSipExternalLibRequiredWhenGetStateSaveAreaSizeCalledThenSizeIsReturned) {
+struct DebugExternalLibSipWithMockLibFixture : public DeviceFixture, public SipExternalLibFixture {};
+using DebugExternalLibSipWithMockLibTest = Test<DebugExternalLibSipWithMockLibFixture>;
+
+TEST_F(DebugExternalLibSipWithMockLibTest, givenSipExternalLibRequiredWhenGetStateSaveAreaSizeCalledThenSizeIsReturned) {
     DebugManagerStateRestore restorer;
     debugManager.flags.GetSipBinaryFromExternalLib.set(1);
-    auto lib = new MockSipExternalLib();
-    lib->getStateSaveAreaSizeRetValue = 17381;
-    pDevice->getRootDeviceEnvironmentRef().sipExternalLib.reset(lib);
+    injectSipLib(*pDevice);
+    sipExternalLib->getStateSaveAreaSizeRetValue = 17381;
     EXPECT_EQ(alignUp(17381u, MemoryConstants::pageSize), SipKernel::getSipKernel(*pDevice, nullptr).getStateSaveAreaSize(pDevice));
 }
 
-TEST_F(DebugExternalLibSipTest, givenSipExternalLibRequiredAndDebugSipKernelWhenGetStateSaveAreaSizeCalledThenSizeIsReturned) {
+TEST_F(DebugExternalLibSipWithMockLibTest, givenSipExternalLibRequiredAndDebugSipKernelWhenGetStateSaveAreaSizeCalledThenSizeIsReturned) {
     DebugManagerStateRestore restorer;
     debugManager.flags.GetSipBinaryFromExternalLib.set(1);
-    auto lib = new MockSipExternalLib();
-    lib->getSipKernelBinaryRetBinary = std::vector<char>{0x1, 0x2, 0x3, 0x4};
-    lib->getSipKernelBinaryStateSaveAreaHeader = std::vector<char>{'t', 's', 's', 'a', 'r', 'e', 'a', 0};
-    lib->getSipKernelBinaryRetValue = 0;
-    lib->getStateSaveAreaSizeRetValue = 17381;
-    pDevice->getRootDeviceEnvironmentRef().sipExternalLib.reset(lib);
+    injectSipLib(*pDevice);
+    sipExternalLib->getSipKernelBinaryRetBinary = std::vector<char>{0x1, 0x2, 0x3, 0x4};
+    sipExternalLib->getSipKernelBinaryStateSaveAreaHeader = std::vector<char>{'t', 's', 's', 'a', 'r', 'e', 'a', 0};
+    sipExternalLib->getSipKernelBinaryRetValue = 0;
+    sipExternalLib->getStateSaveAreaSizeRetValue = 17381;
     EXPECT_EQ(alignUp(17381u, MemoryConstants::pageSize), SipKernel::getDebugSipKernel(*pDevice).getStateSaveAreaSize(pDevice));
 }

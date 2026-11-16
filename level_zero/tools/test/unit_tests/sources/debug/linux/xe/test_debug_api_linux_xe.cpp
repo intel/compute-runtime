@@ -16,6 +16,7 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/sip_external_lib/sip_external_lib.h"
+#include "shared/test/common/fixtures/sip_external_lib_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/stream_capture.h"
@@ -148,6 +149,15 @@ TEST(IoctlHandler, GivenHandlerWhenIoctlFailsWithEBUSYThenIoctlIsAgain) {
 }
 
 using DebugApiLinuxTestXe = Test<DebugApiLinuxXeFixture>;
+
+struct DebugApiLinuxXeSipExternalLibFixture : public DebugApiLinuxXeFixture, public NEO::SipExternalLibFixture {
+    void setUp() {
+        DebugApiLinuxXeFixture::setUp();
+        this->injectSipLib(*this->neoDevice);
+    }
+};
+
+using DebugApiLinuxSipExternalLibTestXe = Test<DebugApiLinuxXeSipExternalLibFixture>;
 
 TEST_F(DebugApiLinuxTestXe, GivenDebugSessionWhenCallingPollThenDefaultHandlerRedirectsToSysCall) {
     zet_debug_config_t config = {};
@@ -565,23 +575,8 @@ TEST_F(DebugApiLinuxTestXe, WhenOpenDebuggerFailsThenCorrectErrorIsReturned) {
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
 }
 
-TEST_F(DebugApiLinuxTestXe, GivenSipExternalLibWithFailingCreateRegisterDescriptorMapWhenCreatingDebugSessionThenNullptrIsReturned) {
-    // Mock SipExternalLib that fails to create register descriptor map
-    class MockSipExternalLibFailingCreateMap : public MockSipExternalLib {
-      public:
-        bool createRegisterDescriptorMap() override {
-            return false; // Fail to create register descriptor map
-        }
-    };
-
-    // Set up a mock SIP external lib on the NEO device
-    auto mockSipLib = std::make_unique<MockSipExternalLibFailingCreateMap>();
-    auto neoDevice = device->getNEODevice();
-    auto &rootDeviceEnvironment = *neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0];
-
-    // Store original SIP lib interface
-    auto originalSipLib = rootDeviceEnvironment.sipExternalLib.release();
-    rootDeviceEnvironment.sipExternalLib.reset(mockSipLib.release());
+TEST_F(DebugApiLinuxSipExternalLibTestXe, GivenSipExternalLibWithFailingCreateRegisterDescriptorMapWhenCreatingDebugSessionThenNullptrIsReturned) {
+    sipExternalLib->createRegisterDescriptorMapRetValue = false;
 
     zet_debug_config_t config = {};
     config.pid = 0x1234;
@@ -603,9 +598,6 @@ TEST_F(DebugApiLinuxTestXe, GivenSipExternalLibWithFailingCreateRegisterDescript
 
     // Verify that session creation failed and returned nullptr due to createRegisterDescriptorMap failure
     EXPECT_EQ(nullptr, session);
-
-    // Restore original SIP lib interface
-    rootDeviceEnvironment.sipExternalLib.reset(originalSipLib);
 }
 
 TEST_F(DebugApiLinuxTestXe, GivenDebugSessionWhenPollReturnsZeroThenNotReadyIsReturned) {

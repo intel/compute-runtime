@@ -9,6 +9,7 @@
 
 #include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/test/common/fixtures/sip_external_lib_fixture.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/common/mocks/mock_sip_external_lib.h"
@@ -23,7 +24,7 @@ using namespace NEO;
 namespace L0 {
 namespace ult {
 
-struct DebugApiFixture : public DeviceFixture {
+struct DebugApiFixture : public DeviceFixture, public NEO::SipExternalLibFixture {
     void setUp() {
         DeviceFixture::setUp();
         neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
@@ -35,10 +36,10 @@ struct DebugApiFixture : public DeviceFixture {
     void setUpV3Header() {
         mockBuiltins->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(3);
     }
-    void setUpV5Header(MockSipExternalLib *sipExternalLib) {
+    void setUpV5Header() {
         mockBuiltins->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(5);
-        sipExternalLib->getSipKernelBinaryStateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(5);
-        neoDevice->executionEnvironment->rootDeviceEnvironments[0]->sipExternalLib.reset(sipExternalLib);
+        this->injectSipLib(*neoDevice);
+        this->sipExternalLib->getSipKernelBinaryStateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(5);
     }
     void setUpV3HeaderWithoutHeapless() {
         mockBuiltins->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(3);

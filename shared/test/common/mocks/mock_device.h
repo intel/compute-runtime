@@ -207,10 +207,6 @@ class MockDevice : public RootDevice {
         return getGlobalMemorySizeReturn;
     }
 
-    NEO::SipExternalLib *getSipExternalLibInterface() const override {
-        return mockSipLib.has_value() ? mockSipLib.value() : RootDevice::getSipExternalLibInterface();
-    }
-
     EngineControl *getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, std::optional<uint32_t> priorityLevel) override;
     bool isDeferredImmediateCmdListEnabled() const override;
     bool areSecondaryEnginesAvailable() const override;
@@ -231,7 +227,6 @@ class MockDevice : public RootDevice {
     uint64_t getGlobalMemorySizeReturn = 0u;
     bool callBaseGetGlobalMemorySize = true;
     bool disableSecondaryEngines = false;
-    std::optional<NEO::SipExternalLib *> mockSipLib;
     MockQueryPeerAccessFunc queryPeerAccessFunc;
 };
 

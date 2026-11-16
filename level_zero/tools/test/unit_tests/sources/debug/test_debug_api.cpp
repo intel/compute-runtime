@@ -401,7 +401,7 @@ HWTEST2_F(DebugApiTest, givenGetRegisterSetPropertiesCalledWithV3HeaderCorrectPr
 }
 
 TEST_F(DebugApiTest, givenGetRegisterSetPropertiesCalledWithV5HeaderCorrectPropertiesReturned) {
-    MockSipExternalLib *sipExternalLib = new MockSipExternalLib(); // DeviceFixture takes ownership
+    setUpV5Header();
     sipExternalLib->getRegsetDescExtMap = {
         {NEO::SipRegisterType::eGRF, {.num = 128, .bytes = 64}},
         {NEO::SipRegisterType::eAddress, {.num = 1, .bytes = 32}},
@@ -421,7 +421,6 @@ TEST_F(DebugApiTest, givenGetRegisterSetPropertiesCalledWithV5HeaderCorrectPrope
         {NEO::SipRegisterType::eRandom, {.num = 1, .bytes = 16}},
         {NEO::SipRegisterType::eDirect, {.num = 1, .bytes = 8}},
     };
-    setUpV5Header(sipExternalLib);
     uint32_t count = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugGetRegisterSetProperties(device->toHandle(), &count, nullptr));
     EXPECT_EQ(20u, count);

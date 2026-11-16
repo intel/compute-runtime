@@ -40,6 +40,11 @@ void DebugSessionRegistersAccessScratchV3::setUp() {
     setIsScratchInGrf(neoDevice, true);
 }
 
+void DebugSessionRegistersAccessSipExternalLibV3::setUp() {
+    DebugSessionRegistersAccessV3::setUp();
+    this->injectSipLib(*this->neoDevice);
+}
+
 void DebugSessionRegistersAccess::setUp() {
     zet_debug_config_t config = {};
     config.pid = 0x1234;

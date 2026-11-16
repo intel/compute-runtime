@@ -6,7 +6,8 @@
  */
 
 #pragma once
-#include "shared/test/common/mocks/mock_sip_external_lib.h"
+
+#include "shared/test/common/fixtures/sip_external_lib_fixture.h"
 
 #include "level_zero/tools/source/debug/eu_thread.h"
 
@@ -32,7 +33,6 @@ struct DebugSessionRegistersAccess {
     EuThread::ThreadId stoppedThreadId{0, stoppedThread};
     std::unique_ptr<MockDebugSession> session;
     std::unique_ptr<MockDeviceImp> mockDevice;
-    MockSipExternalLib sipLib;
     NEO::MockDevice *neoDevice = nullptr;
 };
 
@@ -45,6 +45,10 @@ struct DebugSessionRegistersAccessScratch : public DebugSessionRegistersAccess {
 };
 
 struct DebugSessionRegistersAccessScratchV3 : public DebugSessionRegistersAccessV3 {
+    void setUp() override;
+};
+
+struct DebugSessionRegistersAccessSipExternalLibV3 : public DebugSessionRegistersAccessV3, public NEO::SipExternalLibFixture {
     void setUp() override;
 };
 
