@@ -247,6 +247,8 @@ struct KernelImp : Kernel {
         return privateState.kernelArgInfos;
     }
 
+    auto getArgumentValue(uint32_t argIndex, std::vector<uint8_t> &immediateValueBuffer) const -> KernelArgumentValue;
+
     uint32_t getIndirectSize() const override;
     KernelMutableState &getPrivateState() { return privateState; }
 

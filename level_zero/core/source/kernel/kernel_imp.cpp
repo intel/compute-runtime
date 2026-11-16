@@ -1030,6 +1030,39 @@ ze_result_t KernelImp::setArgSampler(uint32_t argIndex, size_t argSize, const vo
     return ZE_RESULT_SUCCESS;
 }
 
+auto KernelImp::getArgumentValue(uint32_t argIndex, std::vector<uint8_t> &immediateValueBuffer) const -> KernelArgumentValue {
+    const auto &arg = getImmutableData()->getDescriptor().payloadMappings.explicitArgs[argIndex];
+    switch (arg.type) {
+    case NEO::ArgDescriptor::argTPointer:
+        if (arg.getTraits().getAddressQualifier() == NEO::KernelArgMetadata::AddrLocal) {
+            return {nullptr, privateState.slmArgSizes[argIndex]};
+        }
+        return {&privateState.kernelArgInfos[argIndex].value, sizeof(void *)};
+    case NEO::ArgDescriptor::argTValue: {
+        const auto &elements = arg.as<NEO::ArgDescValue>().elements;
+        const size_t argSize = arg.getTraits().argByValSize;
+        if (elements.empty()) {
+            return {nullptr, argSize};
+        }
+        const auto firstElementOffset = elements[0].offset;
+        const bool isContiguousInCrossThreadData = std::all_of(elements.begin(), elements.end(), [firstElementOffset](const auto &element) {
+            return element.offset == firstElementOffset + element.sourceOffset;
+        });
+        if (isContiguousInCrossThreadData) {
+            return {ptrOffset(getCrossThreadData(), firstElementOffset), argSize};
+        }
+        immediateValueBuffer.assign(argSize, 0U);
+        for (const auto &element : elements) {
+            memcpy_s(immediateValueBuffer.data() + element.sourceOffset, argSize - element.sourceOffset,
+                     ptrOffset(getCrossThreadData(), element.offset), element.size);
+        }
+        return {immediateValueBuffer.data(), argSize};
+    }
+    default:
+        return {};
+    }
+}
+
 ze_result_t KernelImp::getKernelName(size_t *pSize, char *pName) {
     size_t kernelNameSize = this->getImmutableData()->getDescriptor().kernelMetadata.kernelName.size() + 1;
     if (0 == *pSize || nullptr == pName) {

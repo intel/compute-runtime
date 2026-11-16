@@ -17,6 +17,7 @@
 #include "level_zero/experimental/source/graph/graph_captured_apis.h"
 #include "level_zero/ze_api.h"
 
+#include <algorithm>
 #include <atomic>
 #include <memory>
 #include <mutex>
@@ -304,12 +305,52 @@ struct GraphNode : _ze_graph_node_handle_t {
         return this->kernel;
     }
 
+    auto setArgumentsId(ClosureExternalStorage::KernelArgumentsId argumentsId) -> void {
+        this->argumentsId = argumentsId;
+    }
+
+    auto setExternalStorage(ClosureExternalStorage *externalStorage) -> void {
+        this->externalStorage = externalStorage;
+    }
+
+    auto updateKernelArgument(const void *argValue, size_t argSize, uint32_t argIndex) -> ze_result_t;
+
+    auto getCurrentKernelArgument(uint32_t argIndex) -> KernelArgumentValue {
+        UNRECOVERABLE_IF(nullptr == this->kernel);
+        if (ClosureExternalStorage::invalidKernelArgumentsId == this->argumentsId) {
+            if (this->immediateValueBuffers.empty()) {
+                this->immediateValueBuffers.resize(this->kernel->getKernelDescriptor().payloadMappings.explicitArgs.size());
+            }
+            return this->kernel->getArgumentValue(argIndex, this->immediateValueBuffers[argIndex]);
+        }
+        const auto &argDescriptor = this->kernel->getKernelDescriptor().payloadMappings.explicitArgs[argIndex];
+        const auto storedArgument = this->getStoredKernelArgument(argIndex);
+        if (isSlmArgument(argDescriptor)) {
+            return {nullptr, *static_cast<const size_t *>(storedArgument)};
+        }
+        return {storedArgument, argDescriptor.getTraits().argByValSize};
+    }
+
   protected:
+    static auto isSlmArgument(const NEO::ArgDescriptor &argDescriptor) -> bool {
+        return argDescriptor.is<NEO::ArgDescriptor::argTPointer>() &&
+               (argDescriptor.getTraits().getAddressQualifier() == NEO::KernelArgMetadata::AddrLocal);
+    }
+
+    auto getStoredKernelArgument(uint32_t argIndex) const -> void * {
+        UNRECOVERABLE_IF(nullptr == this->externalStorage);
+        const auto &explicitArgs = this->kernel->getKernelDescriptor().payloadMappings.explicitArgs;
+        return this->externalStorage->getKernelArguments(std::span(explicitArgs.begin(), explicitArgs.end()), this->argumentsId)[argIndex];
+    }
+
     ze_mutable_graph_node_exp_flags_t flags;
     ze_graph_node_exp_type_t type;
     ze_group_count_t *groupCounts = nullptr;
     ze_group_size_t *groupSizes = nullptr;
     KernelImp *kernel = nullptr;
+    ClosureExternalStorage::KernelArgumentsId argumentsId = ClosureExternalStorage::invalidKernelArgumentsId;
+    ClosureExternalStorage *externalStorage = nullptr;
+    std::vector<std::vector<uint8_t>> immediateValueBuffers;
 };
 
 using GraphNodesContainer = std::vector<std::unique_ptr<GraphNode>>;

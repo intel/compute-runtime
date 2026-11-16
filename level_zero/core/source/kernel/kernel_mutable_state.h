@@ -36,6 +36,11 @@ struct KernelArgInfo {
     bool operator==(const KernelArgInfo &) const = default;
 };
 
+struct KernelArgumentValue {
+    const void *argValue = nullptr;
+    size_t argSize = 0U;
+};
+
 struct KernelMutableStateDefaultCopyableParams {
     using KernelArgHandler = ze_result_t (KernelImp::*)(uint32_t argIndex, size_t argSize, const void *argVal);
 

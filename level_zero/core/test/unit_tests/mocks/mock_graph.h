@@ -14,6 +14,11 @@
 namespace L0 {
 namespace ult {
 
+struct MockGraphNode : GraphNode {
+    using GraphNode::argumentsId;
+    using GraphNode::externalStorage;
+};
+
 struct MockGraph : Graph {
     using Graph::captureTargetDesc;
     using Graph::executionTarget;

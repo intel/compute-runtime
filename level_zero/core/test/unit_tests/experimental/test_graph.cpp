@@ -26,6 +26,7 @@
 #include "level_zero/core/source/mutable_cmdlist/mutable_semaphore_wait_hw.h"
 #include "level_zero/core/source/mutable_cmdlist/variable.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_graph.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
@@ -2855,15 +2856,17 @@ TEST_F(GraphTestInstantiationTest, GivenMutableGraphWhenCapturingAppendKernelsWi
     auto &parametersClosure = std::get<Closure<CaptureApi::zeCommandListAppendLaunchKernelWithParameters>>(capturedCommands[0]);
     auto &argumentsClosure = std::get<Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments>>(capturedCommands[1]);
 
-    auto parametersNode = L0::GraphNode::fromHandle(graphNodes[0]);
+    auto parametersNode = static_cast<MockGraphNode *>(L0::GraphNode::fromHandle(graphNodes[0]));
     ASSERT_EQ(&parametersClosure.indirectArgs.groupCounts, parametersNode->getGroupCounts());
     EXPECT_EQ(parametersGroupCount.groupCountX, parametersNode->getGroupCounts()->groupCountX);
     EXPECT_EQ(parametersGroupCount.groupCountY, parametersNode->getGroupCounts()->groupCountY);
     EXPECT_EQ(parametersGroupCount.groupCountZ, parametersNode->getGroupCounts()->groupCountZ);
     EXPECT_EQ(nullptr, parametersNode->getGroupSizes());
     EXPECT_EQ(parametersClosure.indirectArgs.capturedKernel.get(), parametersNode->getKernel());
+    EXPECT_EQ(L0::ClosureExternalStorage::invalidKernelArgumentsId, parametersNode->argumentsId);
+    EXPECT_EQ(nullptr, parametersNode->externalStorage);
 
-    auto argumentsNode = L0::GraphNode::fromHandle(graphNodes[1]);
+    auto argumentsNode = static_cast<MockGraphNode *>(L0::GraphNode::fromHandle(graphNodes[1]));
     ASSERT_EQ(&argumentsClosure.apiArgs.groupCounts, argumentsNode->getGroupCounts());
     EXPECT_EQ(argumentsGroupCount.groupCountX, argumentsNode->getGroupCounts()->groupCountX);
     EXPECT_EQ(argumentsGroupCount.groupCountY, argumentsNode->getGroupCounts()->groupCountY);
@@ -2873,6 +2876,9 @@ TEST_F(GraphTestInstantiationTest, GivenMutableGraphWhenCapturingAppendKernelsWi
     EXPECT_EQ(groupSize.groupSizeY, argumentsNode->getGroupSizes()->groupSizeY);
     EXPECT_EQ(groupSize.groupSizeZ, argumentsNode->getGroupSizes()->groupSizeZ);
     EXPECT_EQ(argumentsClosure.indirectArgs.capturedKernel.get(), argumentsNode->getKernel());
+    EXPECT_NE(L0::ClosureExternalStorage::invalidKernelArgumentsId, argumentsClosure.indirectArgs.argumentsId);
+    EXPECT_EQ(argumentsClosure.indirectArgs.argumentsId, argumentsNode->argumentsId);
+    EXPECT_EQ(&srcGraph.recordedApiCommands.externalStorage, argumentsNode->externalStorage);
 }
 
 TEST(GraphGetNodesTest, GivenNotMutableGraphWhenGettingNodesThenInvalidArgumentIsReturned) {
@@ -9409,6 +9415,278 @@ TEST_F(GraphTestApiCaptureWithDevice, GivenGraphNodeWithoutGroupSizeReferenceWhe
     EXPECT_EQ(4u, currentGroupSize.groupSizeX);
     EXPECT_EQ(2u, currentGroupSize.groupSizeY);
     EXPECT_EQ(1u, currentGroupSize.groupSizeZ);
+}
+
+TEST_F(GraphTestApiCaptureWithDevice, GivenGraphNodeWithStoredKernelArgumentsWhenUpdatingKernelArgumentsThenStoredValuesAreModifiedAndReturnedAsCurrent) {
+    Mock<Module> module(this->device, nullptr);
+    Mock<KernelImp> kernel;
+    kernel.setModule(&module);
+    auto &explicitArgs = kernel.descriptor.payloadMappings.explicitArgs;
+    explicitArgs.resize(3);
+    explicitArgs[0] = NEO::ArgDescriptor{NEO::ArgDescriptor::argTValue};
+    explicitArgs[0].getTraits().argByValSize = sizeof(uint32_t);
+    explicitArgs[1] = NEO::ArgDescriptor{NEO::ArgDescriptor::argTPointer};
+    explicitArgs[1].getTraits().argByValSize = sizeof(void *);
+    explicitArgs[1].getTraits().addressQualifier = NEO::KernelArgMetadata::AddrGlobal;
+    explicitArgs[2] = NEO::ArgDescriptor{NEO::ArgDescriptor::argTPointer};
+    explicitArgs[2].getTraits().argByValSize = sizeof(void *);
+    explicitArgs[2].getTraits().addressQualifier = NEO::KernelArgMetadata::AddrLocal;
+
+    uint32_t capturedValue = 1U;
+    void *capturedPointer = reinterpret_cast<void *>(0x1000);
+    size_t capturedSlmSize = 64U;
+    std::array<void *, 3> capturedArguments = {&capturedValue, &capturedPointer, &capturedSlmSize};
+
+    L0::ClosureExternalStorage storage;
+    auto argumentsId = storage.registerKernelArguments(std::span(explicitArgs.begin(), explicitArgs.end()), capturedArguments.data());
+
+    L0::GraphNode node{ZE_GRAPH_NODE_EXP_TYPE_LAUNCH_KERNEL, ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_ARGUMENT};
+    node.setKernel(&kernel);
+    node.setExternalStorage(&storage);
+    node.setArgumentsId(argumentsId);
+
+    auto currentValueArgument = node.getCurrentKernelArgument(0U);
+    ASSERT_NE(nullptr, currentValueArgument.argValue);
+    EXPECT_EQ(capturedValue, *static_cast<const uint32_t *>(currentValueArgument.argValue));
+    EXPECT_EQ(sizeof(uint32_t), currentValueArgument.argSize);
+    auto currentPointerArgument = node.getCurrentKernelArgument(1U);
+    ASSERT_NE(nullptr, currentPointerArgument.argValue);
+    EXPECT_EQ(capturedPointer, *static_cast<void *const *>(currentPointerArgument.argValue));
+    EXPECT_EQ(sizeof(void *), currentPointerArgument.argSize);
+    auto currentSlmArgument = node.getCurrentKernelArgument(2U);
+    EXPECT_EQ(nullptr, currentSlmArgument.argValue);
+    EXPECT_EQ(capturedSlmSize, currentSlmArgument.argSize);
+
+    const uint32_t newValue = 2U;
+    void *const newPointer = reinterpret_cast<void *>(0x2000);
+    const size_t newSlmSize = 128U;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, node.updateKernelArgument(&newValue, sizeof(newValue), 0U));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, node.updateKernelArgument(&newPointer, sizeof(newPointer), 1U));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, node.updateKernelArgument(nullptr, newSlmSize, 2U));
+
+    currentValueArgument = node.getCurrentKernelArgument(0U);
+    ASSERT_NE(nullptr, currentValueArgument.argValue);
+    EXPECT_EQ(newValue, *static_cast<const uint32_t *>(currentValueArgument.argValue));
+    EXPECT_EQ(sizeof(uint32_t), currentValueArgument.argSize);
+    currentPointerArgument = node.getCurrentKernelArgument(1U);
+    ASSERT_NE(nullptr, currentPointerArgument.argValue);
+    EXPECT_EQ(newPointer, *static_cast<void *const *>(currentPointerArgument.argValue));
+    EXPECT_EQ(sizeof(void *), currentPointerArgument.argSize);
+    currentSlmArgument = node.getCurrentKernelArgument(2U);
+    EXPECT_EQ(nullptr, currentSlmArgument.argValue);
+    EXPECT_EQ(newSlmSize, currentSlmArgument.argSize);
+
+    auto storedArguments = storage.getKernelArguments(std::span(explicitArgs.begin(), explicitArgs.end()), argumentsId);
+    EXPECT_EQ(newValue, *static_cast<uint32_t *>(storedArguments[0]));
+    EXPECT_EQ(newPointer, *static_cast<void **>(storedArguments[1]));
+    EXPECT_EQ(newSlmSize, *static_cast<size_t *>(storedArguments[2]));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, node.updateKernelArgument(nullptr, sizeof(void *), 1U));
+    currentPointerArgument = node.getCurrentKernelArgument(1U);
+    ASSERT_NE(nullptr, currentPointerArgument.argValue);
+    EXPECT_EQ(nullptr, *static_cast<void *const *>(currentPointerArgument.argValue));
+    EXPECT_EQ(sizeof(void *), currentPointerArgument.argSize);
+}
+
+TEST_F(GraphTestApiCaptureWithDevice, GivenGraphNodeWithStoredKernelArgumentsWhenUpdatingValueArgumentWithLargerSizeThenValueIsTruncatedToArgumentSize) {
+    Mock<Module> module(this->device, nullptr);
+    Mock<KernelImp> kernel;
+    kernel.setModule(&module);
+    auto &explicitArgs = kernel.descriptor.payloadMappings.explicitArgs;
+    explicitArgs.resize(1);
+    explicitArgs[0] = NEO::ArgDescriptor{NEO::ArgDescriptor::argTValue};
+    explicitArgs[0].getTraits().argByValSize = sizeof(uint32_t);
+    explicitArgs[0].as<NEO::ArgDescValue>().elements.push_back(NEO::ArgDescValue::Element{0U, sizeof(uint32_t), 0U});
+
+    uint32_t capturedValue = 1U;
+    std::array<void *, 1> capturedArguments = {&capturedValue};
+    L0::ClosureExternalStorage storage;
+    auto argumentsId = storage.registerKernelArguments(std::span(explicitArgs.begin(), explicitArgs.end()), capturedArguments.data());
+
+    L0::GraphNode node{ZE_GRAPH_NODE_EXP_TYPE_LAUNCH_KERNEL, ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_ARGUMENT};
+    node.setKernel(&kernel);
+    node.setExternalStorage(&storage);
+    node.setArgumentsId(argumentsId);
+
+    const std::array<uint32_t, 2> largerValue = {2U, 3U};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, node.updateKernelArgument(largerValue.data(), sizeof(largerValue), 0U));
+
+    auto storedArguments = storage.getKernelArguments(std::span(explicitArgs.begin(), explicitArgs.end()), argumentsId);
+    EXPECT_EQ(largerValue[0], *static_cast<uint32_t *>(storedArguments[0]));
+}
+
+TEST_F(GraphTestApiCaptureWithDevice, GivenGraphNodeWithStoredKernelArgumentsWhenUpdatingValueArgumentWithSizeNotCoveringAllElementsThenInvalidArgumentIsReturnedAndValueIsNotChanged) {
+    Mock<Module> module(this->device, nullptr);
+    Mock<KernelImp> kernel;
+    kernel.setModule(&module);
+    auto &explicitArgs = kernel.descriptor.payloadMappings.explicitArgs;
+    explicitArgs.resize(1);
+    explicitArgs[0] = NEO::ArgDescriptor{NEO::ArgDescriptor::argTValue};
+    explicitArgs[0].getTraits().argByValSize = 2 * sizeof(uint32_t);
+    explicitArgs[0].as<NEO::ArgDescValue>().elements.push_back(NEO::ArgDescValue::Element{0U, sizeof(uint32_t), 0U});
+    explicitArgs[0].as<NEO::ArgDescValue>().elements.push_back(NEO::ArgDescValue::Element{sizeof(uint32_t), sizeof(uint32_t), sizeof(uint32_t)});
+
+    std::array<uint32_t, 2> capturedValue = {1U, 2U};
+    std::array<void *, 1> capturedArguments = {capturedValue.data()};
+    L0::ClosureExternalStorage storage;
+    auto argumentsId = storage.registerKernelArguments(std::span(explicitArgs.begin(), explicitArgs.end()), capturedArguments.data());
+
+    L0::GraphNode node{ZE_GRAPH_NODE_EXP_TYPE_LAUNCH_KERNEL, ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_ARGUMENT};
+    node.setKernel(&kernel);
+    node.setExternalStorage(&storage);
+    node.setArgumentsId(argumentsId);
+
+    const uint32_t smallerValue = 3U;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, node.updateKernelArgument(&smallerValue, sizeof(smallerValue), 0U));
+
+    auto storedArguments = storage.getKernelArguments(std::span(explicitArgs.begin(), explicitArgs.end()), argumentsId);
+    EXPECT_EQ(0, memcmp(capturedValue.data(), storedArguments[0], sizeof(capturedValue)));
+}
+
+TEST_F(GraphTestApiCaptureWithDevice, GivenGraphNodeWithStoredKernelArgumentsWhenUpdatingArgumentWithIndexOutOfRangeThenInvalidArgumentIsReturned) {
+    Mock<Module> module(this->device, nullptr);
+    Mock<KernelImp> kernel;
+    kernel.setModule(&module);
+    auto &explicitArgs = kernel.descriptor.payloadMappings.explicitArgs;
+    explicitArgs.resize(1);
+    explicitArgs[0] = NEO::ArgDescriptor{NEO::ArgDescriptor::argTValue};
+    explicitArgs[0].getTraits().argByValSize = sizeof(uint32_t);
+
+    uint32_t capturedValue = 1U;
+    std::array<void *, 1> capturedArguments = {&capturedValue};
+    L0::ClosureExternalStorage storage;
+    auto argumentsId = storage.registerKernelArguments(std::span(explicitArgs.begin(), explicitArgs.end()), capturedArguments.data());
+
+    L0::GraphNode node{ZE_GRAPH_NODE_EXP_TYPE_LAUNCH_KERNEL, ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_ARGUMENT};
+    node.setKernel(&kernel);
+    node.setExternalStorage(&storage);
+    node.setArgumentsId(argumentsId);
+
+    const uint32_t newValue = 2U;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, node.updateKernelArgument(&newValue, sizeof(newValue), 1U));
+}
+
+using GraphFlatCaptureKernelArgumentTest = Test<ModuleImmutableDataFixture>;
+
+TEST_F(GraphFlatCaptureKernelArgumentTest, GivenFlatCapturedAppendKernelWithArgumentsWhenUpdatingSlmAndNullBufferArgumentsByMutableCommandIdThenKernelStateAndStoredArgumentsAreUpdated) {
+    GraphsCleanupGuard graphCleanup;
+    constexpr uint32_t perHwThreadPrivateMemorySize = 0u;
+    auto mockKernelImmData = std::make_unique<MockImmutableData>(perHwThreadPrivateMemorySize);
+    createModuleFromMockBinary(perHwThreadPrivateMemorySize, false, mockKernelImmData.get());
+    mockKernelImmData->resizeExplicitArgs(2);
+    auto &explicitArgs = mockKernelImmData->kernelDescriptor->payloadMappings.explicitArgs;
+    explicitArgs[0].as<NEO::ArgDescPointer>(true);
+    explicitArgs[0].getTraits().argByValSize = sizeof(void *);
+    explicitArgs[0].getTraits().addressQualifier = NEO::KernelArgMetadata::AddrGlobal;
+    auto &slmArg = explicitArgs[1].as<NEO::ArgDescPointer>(true);
+    slmArg.slmOffset = 0U;
+    slmArg.requiredSlmAlignment = 16U;
+    explicitArgs[1].getTraits().argByValSize = sizeof(void *);
+    explicitArgs[1].getTraits().addressQualifier = NEO::KernelArgMetadata::AddrLocal;
+    auto kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
+    ze_kernel_desc_t kernelDesc = {ZE_STRUCTURE_TYPE_KERNEL_DESC};
+    kernelDesc.pKernelName = kernelName.c_str();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, kernel->initialize(&kernelDesc));
+    kernel->setCrossThreadData(sizeof(uint32_t));
+
+    void *capturedBuffer = nullptr;
+    ze_device_mem_alloc_desc_t deviceMemDesc = {ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device->toHandle(), &deviceMemDesc, MemoryConstants::pageSize, 1u, &capturedBuffer));
+    size_t capturedSlmSize = 64U;
+    std::array<void *, 2> capturedArguments = {&capturedBuffer, &capturedSlmSize};
+
+    Mock<CommandList> cmdlist;
+    RecordedApiCommands flatCapture;
+    ze_mutable_command_id_exp_desc_t commandIdDesc{};
+    uint64_t commandId = 1U;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, flatCapture.capture<CaptureApi::zeCommandListGetNextCommandIdExp>(cmdlist.toHandle(), &commandIdDesc, &commandId));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, flatCapture.capture<CaptureApi::zeCommandListAppendLaunchKernelWithArguments>(cmdlist.toHandle(), kernel->toHandle(), ze_group_count_t{1, 1, 1}, ze_group_size_t{1, 1, 1}, capturedArguments.data(), nullptr, nullptr, 0U, nullptr));
+
+    const size_t newSlmSize = 128U;
+    flatCapture.updateKernelArgument(commandId, 0U, sizeof(void *), nullptr);
+    flatCapture.updateKernelArgument(commandId, 1U, newSlmSize, nullptr);
+
+    const auto &closure = std::get<Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments>>(flatCapture.commands[1]);
+    auto storedArguments = flatCapture.externalStorage.getKernelArguments(std::span(explicitArgs.begin(), explicitArgs.end()), closure.indirectArgs.argumentsId);
+    EXPECT_EQ(nullptr, *static_cast<void **>(storedArguments[0]));
+    EXPECT_EQ(newSlmSize, *static_cast<size_t *>(storedArguments[1]));
+
+    std::vector<uint8_t> immediateValueBuffer;
+    auto bufferArgument = closure.indirectArgs.capturedKernel->getArgumentValue(0U, immediateValueBuffer);
+    ASSERT_NE(nullptr, bufferArgument.argValue);
+    EXPECT_EQ(nullptr, *static_cast<const void *const *>(bufferArgument.argValue));
+    auto slmArgument = closure.indirectArgs.capturedKernel->getArgumentValue(1U, immediateValueBuffer);
+    EXPECT_EQ(newSlmSize, slmArgument.argSize);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(capturedBuffer));
+}
+
+TEST_F(GraphTestApiCaptureWithDevice, GivenGraphNodeWithoutStoredKernelArgumentsWhenUpdatingKernelArgumentThenKernelArgumentIsSet) {
+    Mock<Module> module(this->device, nullptr);
+    Mock<KernelImp> kernel;
+    kernel.setModule(&module);
+    kernel.checkPassedArgumentValues = true;
+    kernel.passedArgumentValues.resize(1);
+
+    L0::GraphNode node{ZE_GRAPH_NODE_EXP_TYPE_LAUNCH_KERNEL, ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_ARGUMENT};
+    node.setKernel(&kernel);
+
+    const uint32_t newValue = 2U;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, node.updateKernelArgument(&newValue, sizeof(newValue), 0U));
+    ASSERT_EQ(sizeof(newValue), kernel.passedArgumentValues[0].size());
+    EXPECT_EQ(newValue, *reinterpret_cast<const uint32_t *>(kernel.passedArgumentValues[0].data()));
+}
+
+TEST_F(GraphTestApiCaptureWithDevice, GivenGraphNodeWithoutStoredKernelArgumentsWhenGettingCurrentKernelArgumentThenValueIsReturnedFromKernel) {
+    Mock<Module> module(this->device, nullptr);
+    Mock<KernelImp> kernel;
+    kernel.setModule(&module);
+    auto &explicitArgs = kernel.descriptor.payloadMappings.explicitArgs;
+    explicitArgs.resize(3);
+    explicitArgs[0] = NEO::ArgDescriptor{NEO::ArgDescriptor::argTPointer};
+    explicitArgs[0].getTraits().addressQualifier = NEO::KernelArgMetadata::AddrLocal;
+    explicitArgs[1] = NEO::ArgDescriptor{NEO::ArgDescriptor::argTValue};
+    explicitArgs[1].getTraits().argByValSize = 2 * sizeof(uint32_t);
+    auto &firstImmediateElements = explicitArgs[1].as<NEO::ArgDescValue>().elements;
+    firstImmediateElements.push_back({.offset = 20U, .size = sizeof(uint32_t), .sourceOffset = 0U});
+    firstImmediateElements.push_back({.offset = 8U, .size = sizeof(uint32_t), .sourceOffset = sizeof(uint32_t)});
+    explicitArgs[2] = NEO::ArgDescriptor{NEO::ArgDescriptor::argTValue};
+    explicitArgs[2].getTraits().argByValSize = 2 * sizeof(uint32_t);
+    auto &secondImmediateElements = explicitArgs[2].as<NEO::ArgDescValue>().elements;
+    secondImmediateElements.push_back({.offset = 32U, .size = sizeof(uint32_t), .sourceOffset = 0U});
+    secondImmediateElements.push_back({.offset = 24U, .size = sizeof(uint32_t), .sourceOffset = sizeof(uint32_t)});
+    kernel.privateState.slmArgSizes.resize(3);
+    kernel.privateState.slmArgSizes[0] = 64U;
+    const uint32_t firstImmediateParts[] = {0x11223344U, 0x55667788U};
+    const uint32_t secondImmediateParts[] = {0x99aabbccU, 0xddeeff00U};
+    memcpy_s(&kernel.privateState.crossThreadData[20], sizeof(uint32_t), &firstImmediateParts[0], sizeof(uint32_t));
+    memcpy_s(&kernel.privateState.crossThreadData[8], sizeof(uint32_t), &firstImmediateParts[1], sizeof(uint32_t));
+    memcpy_s(&kernel.privateState.crossThreadData[32], sizeof(uint32_t), &secondImmediateParts[0], sizeof(uint32_t));
+    memcpy_s(&kernel.privateState.crossThreadData[24], sizeof(uint32_t), &secondImmediateParts[1], sizeof(uint32_t));
+
+    L0::GraphNode node{ZE_GRAPH_NODE_EXP_TYPE_LAUNCH_KERNEL, ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_ARGUMENT};
+    node.setKernel(&kernel);
+
+    auto slmArgument = node.getCurrentKernelArgument(0U);
+    EXPECT_EQ(nullptr, slmArgument.argValue);
+    EXPECT_EQ(64U, slmArgument.argSize);
+
+    auto firstImmediateArgument = node.getCurrentKernelArgument(1U);
+    auto secondImmediateArgument = node.getCurrentKernelArgument(2U);
+    ASSERT_NE(nullptr, firstImmediateArgument.argValue);
+    ASSERT_NE(nullptr, secondImmediateArgument.argValue);
+    EXPECT_NE(firstImmediateArgument.argValue, secondImmediateArgument.argValue);
+    EXPECT_EQ(2 * sizeof(uint32_t), firstImmediateArgument.argSize);
+    EXPECT_EQ(2 * sizeof(uint32_t), secondImmediateArgument.argSize);
+    const auto firstImmediateValue = static_cast<const uint32_t *>(firstImmediateArgument.argValue);
+    EXPECT_EQ(firstImmediateParts[0], firstImmediateValue[0]);
+    EXPECT_EQ(firstImmediateParts[1], firstImmediateValue[1]);
+    const auto secondImmediateValue = static_cast<const uint32_t *>(secondImmediateArgument.argValue);
+    EXPECT_EQ(secondImmediateParts[0], secondImmediateValue[0]);
+    EXPECT_EQ(secondImmediateParts[1], secondImmediateValue[1]);
+
+    auto repeatedFirstImmediateArgument = node.getCurrentKernelArgument(1U);
+    EXPECT_EQ(firstImmediateArgument.argValue, repeatedFirstImmediateArgument.argValue);
 }
 
 TEST(GraphNodeTest, GivenInvalidParametersWhenGettingNodePropertiesThroughApiThenInvalidArgumentIsReturned) {

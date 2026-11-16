@@ -87,7 +87,7 @@ inline void updateKernelArgumentForClosure(Closure<api> &closure, ClosureExterna
             auto kernel = static_cast<KernelImp *>(Kernel::fromHandle(kernelHandle));
             auto &explicitArgs = kernel->getKernelDescriptor().payloadMappings.explicitArgs;
             auto arguments = externalStorage.getKernelArguments(std::span(explicitArgs.begin(), explicitArgs.end()), closure.indirectArgs.argumentsId);
-            memcpy_s(arguments[argIndex], explicitArgs[argIndex].getTraits().argByValSize, argValue, argSize);
+            CommandList::setKernelStateArgument(explicitArgs[argIndex], arguments[argIndex], argSize, argValue);
         }
     }
 }
@@ -446,6 +446,18 @@ ze_result_t Graph::resumeCapturing() {
     this->setCaptureTargetRecursively(true);
     this->setRecordedSignalsRecursively(true);
     return ZE_RESULT_SUCCESS;
+}
+
+auto GraphNode::updateKernelArgument(const void *argValue, size_t argSize, uint32_t argIndex) -> ze_result_t {
+    UNRECOVERABLE_IF(nullptr == this->kernel);
+    if (ClosureExternalStorage::invalidKernelArgumentsId == this->argumentsId) {
+        return this->kernel->setArgumentValue(argIndex, argSize, argValue);
+    }
+    const auto &explicitArgs = this->kernel->getKernelDescriptor().payloadMappings.explicitArgs;
+    if (argIndex >= explicitArgs.size()) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    return CommandList::setKernelStateArgument(explicitArgs[argIndex], this->getStoredKernelArgument(argIndex), argSize, argValue);
 }
 
 auto Graph::getNodes(uint32_t *pGraphNodesCount, ze_graph_node_handle_t *phGraphNodes) -> ze_result_t {
@@ -1348,6 +1360,11 @@ Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments>::IndirectArgs:
 
             this->capturedKernel = kernel->makeDependentClone();
             externalStorage.lastResult = createLaunchKernelGraphNode(apiArgs.pNext, this->clonedPNext, this->graphNodeHandle, this->capturedKernel.get(), externalStorage);
+            if (nullptr != this->graphNodeHandle) {
+                auto graphNode = GraphNode::fromHandle(this->graphNodeHandle);
+                graphNode->setArgumentsId(this->argumentsId);
+                graphNode->setExternalStorage(&externalStorage);
+            }
         }
     }
 }

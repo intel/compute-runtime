@@ -772,6 +772,105 @@ HWTEST2_F(SetKernelArg, givenSamplerAndKernelWhenSetArgSamplerThenCrossThreadDat
     EXPECT_EQ(static_cast<uint32_t>(SamplerPatchValues::normalizedCoordsTrue), *pSamplerNormalizedCoords);
 }
 
+using KernelArgumentValueTest = Test<ModuleFixture>;
+
+TEST_F(KernelArgumentValueTest, givenBufferAndSlmArgumentsWhenGettingArgumentValueThenBufferAddressAndSlmSizeAreReturned) {
+    Mock<KernelImp> kernel;
+    kernel.setModule(module.get());
+    auto &explicitArgs = kernel.descriptor.payloadMappings.explicitArgs;
+    explicitArgs.resize(2);
+    explicitArgs[0] = NEO::ArgDescriptor{NEO::ArgDescriptor::argTPointer};
+    explicitArgs[0].getTraits().addressQualifier = NEO::KernelArgMetadata::AddrGlobal;
+    explicitArgs[1] = NEO::ArgDescriptor{NEO::ArgDescriptor::argTPointer};
+    explicitArgs[1].getTraits().addressQualifier = NEO::KernelArgMetadata::AddrLocal;
+
+    const void *bufferAddress = reinterpret_cast<const void *>(0x1000);
+    kernel.privateState.kernelArgInfos.resize(2);
+    kernel.privateState.kernelArgInfos[0].value = bufferAddress;
+    kernel.privateState.slmArgSizes.resize(2);
+    kernel.privateState.slmArgSizes[1] = 64U;
+
+    std::vector<uint8_t> immediateValueBuffer;
+    auto bufferArgument = kernel.getArgumentValue(0, immediateValueBuffer);
+    ASSERT_NE(nullptr, bufferArgument.argValue);
+    EXPECT_EQ(bufferAddress, *static_cast<const void *const *>(bufferArgument.argValue));
+    EXPECT_EQ(sizeof(void *), bufferArgument.argSize);
+
+    auto slmArgument = kernel.getArgumentValue(1, immediateValueBuffer);
+    EXPECT_EQ(nullptr, slmArgument.argValue);
+    EXPECT_EQ(64U, slmArgument.argSize);
+}
+
+TEST_F(KernelArgumentValueTest, givenImmediateArgumentContiguousInCrossThreadDataWhenGettingArgumentValueThenCrossThreadDataIsReturnedDirectly) {
+    Mock<KernelImp> kernel;
+    kernel.setModule(module.get());
+    auto &explicitArgs = kernel.descriptor.payloadMappings.explicitArgs;
+    explicitArgs.resize(1);
+    explicitArgs[0] = NEO::ArgDescriptor{NEO::ArgDescriptor::argTValue};
+    explicitArgs[0].getTraits().argByValSize = 2 * sizeof(uint32_t);
+    auto &elements = explicitArgs[0].as<NEO::ArgDescValue>().elements;
+    elements.push_back({.offset = 8U, .size = sizeof(uint32_t), .sourceOffset = 0U});
+    elements.push_back({.offset = 12U, .size = sizeof(uint32_t), .sourceOffset = sizeof(uint32_t)});
+
+    std::vector<uint8_t> immediateValueBuffer;
+    auto argument = kernel.getArgumentValue(0, immediateValueBuffer);
+    EXPECT_EQ(ptrOffset(kernel.getCrossThreadData(), 8U), argument.argValue);
+    EXPECT_EQ(2 * sizeof(uint32_t), argument.argSize);
+    EXPECT_TRUE(immediateValueBuffer.empty());
+}
+
+TEST_F(KernelArgumentValueTest, givenImmediateArgumentSplitInCrossThreadDataWhenGettingArgumentValueThenValueIsRebuiltInSourceLayout) {
+    Mock<KernelImp> kernel;
+    kernel.setModule(module.get());
+    auto &explicitArgs = kernel.descriptor.payloadMappings.explicitArgs;
+    explicitArgs.resize(1);
+    explicitArgs[0] = NEO::ArgDescriptor{NEO::ArgDescriptor::argTValue};
+    explicitArgs[0].getTraits().argByValSize = 2 * sizeof(uint32_t);
+    auto &elements = explicitArgs[0].as<NEO::ArgDescValue>().elements;
+    elements.push_back({.offset = 20U, .size = sizeof(uint32_t), .sourceOffset = 0U});
+    elements.push_back({.offset = 8U, .size = sizeof(uint32_t), .sourceOffset = sizeof(uint32_t)});
+
+    const uint32_t firstPart = 0x11223344U;
+    const uint32_t secondPart = 0x55667788U;
+    memcpy_s(&kernel.privateState.crossThreadData[20], sizeof(uint32_t), &firstPart, sizeof(firstPart));
+    memcpy_s(&kernel.privateState.crossThreadData[8], sizeof(uint32_t), &secondPart, sizeof(secondPart));
+
+    std::vector<uint8_t> immediateValueBuffer;
+    auto argument = kernel.getArgumentValue(0, immediateValueBuffer);
+    EXPECT_EQ(immediateValueBuffer.data(), argument.argValue);
+    EXPECT_EQ(2 * sizeof(uint32_t), argument.argSize);
+    ASSERT_EQ(2 * sizeof(uint32_t), immediateValueBuffer.size());
+    const auto rebuiltValue = static_cast<const uint32_t *>(argument.argValue);
+    EXPECT_EQ(firstPart, rebuiltValue[0]);
+    EXPECT_EQ(secondPart, rebuiltValue[1]);
+}
+
+TEST_F(KernelArgumentValueTest, givenImmediateArgumentWithoutElementsWhenGettingArgumentValueThenNullValueWithArgumentSizeIsReturned) {
+    Mock<KernelImp> kernel;
+    kernel.setModule(module.get());
+    auto &explicitArgs = kernel.descriptor.payloadMappings.explicitArgs;
+    explicitArgs.resize(1);
+    explicitArgs[0] = NEO::ArgDescriptor{NEO::ArgDescriptor::argTValue};
+    explicitArgs[0].getTraits().argByValSize = sizeof(uint32_t);
+
+    std::vector<uint8_t> immediateValueBuffer;
+    auto argument = kernel.getArgumentValue(0, immediateValueBuffer);
+    EXPECT_EQ(nullptr, argument.argValue);
+    EXPECT_EQ(sizeof(uint32_t), argument.argSize);
+}
+
+TEST_F(KernelArgumentValueTest, givenUnknownArgumentWhenGettingArgumentValueThenEmptyValueIsReturned) {
+    Mock<KernelImp> kernel;
+    kernel.setModule(module.get());
+    auto &explicitArgs = kernel.descriptor.payloadMappings.explicitArgs;
+    explicitArgs.resize(1);
+
+    std::vector<uint8_t> immediateValueBuffer;
+    auto argument = kernel.getArgumentValue(0, immediateValueBuffer);
+    EXPECT_EQ(nullptr, argument.argValue);
+    EXPECT_EQ(0U, argument.argSize);
+}
+
 TEST_F(SetKernelArg, givenBufferArgumentWhichHasNotBeenAllocatedByRuntimeThenSuccessIsReturned) {
     createKernel();
 
