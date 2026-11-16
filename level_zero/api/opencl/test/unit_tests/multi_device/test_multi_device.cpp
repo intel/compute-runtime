@@ -5,12 +5,15 @@
  *
  */
 
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/api/opencl/source/cl_device/leo_cl_device.h"
 #include "level_zero/api/opencl/source/context/leo_context.h"
 #include "level_zero/api/opencl/source/helpers/leo_base_object.h"
 #include "level_zero/api/opencl/source/helpers/leo_cl_memory_properties_helpers.h"
+#include "level_zero/api/opencl/source/l0_dispatch/leo_l0_dispatch.h"
 #include "level_zero/api/opencl/source/platform/leo_platform.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture_extended.h"
@@ -166,6 +169,130 @@ TEST_F(LeoMultiDevicePlatformTests, givenDeviceHandleListWithDeviceOutsideContex
 
     EXPECT_FALSE(ClMemoryPropertiesHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocFlags,
                                                                  ClMemoryPropertiesHelper::ObjType::buffer, *leoContext));
+}
+
+using LeoMultiDevicePeerInfoTests = Test<MultiDeviceOclFixture>;
+
+struct PeerInfoResult {
+    cl_int retVal;
+    cl_bool access;
+    cl_bool atomics;
+};
+
+PeerInfoResult queryAccessAndAtomics(cl_device_id device, cl_device_id peerDevice) {
+    PeerInfoResult result{CL_SUCCESS, CL_FALSE, CL_FALSE};
+    auto clDevice = castToObject<ClDevice>(device);
+    auto clPeerDevice = castToObject<ClDevice>(peerDevice);
+    auto accessRetVal = clDevice->getPeerInfo(*clPeerDevice, CL_DEVICE_PEER_ACCESS_SUPPORTED_INTEL, sizeof(cl_bool), &result.access, nullptr);
+    auto atomicsRetVal = clDevice->getPeerInfo(*clPeerDevice, CL_DEVICE_PEER_ATOMICS_SUPPORTED_INTEL, sizeof(cl_bool), &result.atomics, nullptr);
+    result.retVal = (accessRetVal != CL_SUCCESS) ? accessRetVal : atomicsRetVal;
+    return result;
+}
+
+TEST_F(LeoMultiDevicePeerInfoTests, givenPeerAccessForcedOnAndNoFabricWhenQueryingCrossRootPairThenAccessIsSupportedAndAtomicsAreNot) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ForceZeDeviceCanAccessPerReturnValue.set(1);
+    auto clDevices = getClDeviceIds();
+    ASSERT_LE(2u, clDevices.size());
+
+    for (size_t i = 0; i < clDevices.size(); i++) {
+        for (size_t j = 0; j < clDevices.size(); j++) {
+            if (i == j) {
+                continue;
+            }
+            auto result = queryAccessAndAtomics(clDevices[i], clDevices[j]);
+            EXPECT_EQ(CL_SUCCESS, result.retVal);
+            EXPECT_EQ(static_cast<cl_bool>(CL_TRUE), result.access) << i << " -> " << j;
+            EXPECT_EQ(static_cast<cl_bool>(CL_FALSE), result.atomics) << i << " -> " << j;
+        }
+    }
+}
+
+TEST_F(LeoMultiDevicePeerInfoTests, givenPeerAccessForcedOffWhenQueryingCrossRootPairThenNeitherAccessNorAtomicsAreSupported) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ForceZeDeviceCanAccessPerReturnValue.set(0);
+    auto clDevices = getClDeviceIds();
+    ASSERT_LE(2u, clDevices.size());
+
+    auto result = queryAccessAndAtomics(clDevices[0], clDevices[1]);
+    EXPECT_EQ(CL_SUCCESS, result.retVal);
+    EXPECT_EQ(static_cast<cl_bool>(CL_FALSE), result.access);
+    EXPECT_EQ(static_cast<cl_bool>(CL_FALSE), result.atomics);
+
+    result = queryAccessAndAtomics(clDevices[1], clDevices[0]);
+    EXPECT_EQ(CL_SUCCESS, result.retVal);
+    EXPECT_EQ(static_cast<cl_bool>(CL_FALSE), result.access);
+    EXPECT_EQ(static_cast<cl_bool>(CL_FALSE), result.atomics);
+}
+
+TEST_F(LeoMultiDevicePeerInfoTests, givenPeerAccessForcedOffWhenQueryingDeviceAgainstItselfThenAccessAndAtomicsAreSupported) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ForceZeDeviceCanAccessPerReturnValue.set(0);
+
+    for (auto clDevice : getClDeviceIds()) {
+        auto result = queryAccessAndAtomics(clDevice, clDevice);
+        EXPECT_EQ(CL_SUCCESS, result.retVal);
+        EXPECT_EQ(static_cast<cl_bool>(CL_TRUE), result.access);
+        EXPECT_EQ(static_cast<cl_bool>(CL_TRUE), result.atomics);
+    }
+}
+
+TEST_F(LeoMultiDevicePeerInfoTests, givenInvalidParamNameOrSizeWhenQueryingPeerInfoThenInvalidValueIsReturned) {
+    auto device = castToObject<ClDevice>(getClDeviceIds()[0]);
+    auto peerDevice = castToObject<ClDevice>(getClDeviceIds()[1]);
+    cl_bool value = CL_FALSE;
+    size_t retSize = 0;
+
+    EXPECT_EQ(CL_INVALID_VALUE, device->getPeerInfo(*peerDevice, CL_DEVICE_TYPE, sizeof(value), &value, &retSize));
+    EXPECT_EQ(0u, retSize);
+    EXPECT_EQ(CL_INVALID_VALUE, device->getPeerInfo(*peerDevice, CL_DEVICE_PEER_ACCESS_SUPPORTED_INTEL, sizeof(value) - 1, &value, &retSize));
+    EXPECT_EQ(0u, retSize);
+}
+
+TEST_F(LeoMultiDevicePeerInfoTests, givenNullValueWhenQueryingPeerInfoThenOnlySizeIsReturned) {
+    auto device = castToObject<ClDevice>(getClDeviceIds()[0]);
+    auto peerDevice = castToObject<ClDevice>(getClDeviceIds()[1]);
+    size_t retSize = 0;
+
+    EXPECT_EQ(CL_SUCCESS, device->getPeerInfo(*peerDevice, CL_DEVICE_PEER_ATOMICS_SUPPORTED_INTEL, 0, nullptr, &retSize));
+    EXPECT_EQ(sizeof(cl_bool), retSize);
+}
+
+struct P2PPropertiesStub {
+    static ze_result_t getP2PProperties(ze_device_handle_t hDevice, ze_device_handle_t hPeerDevice, ze_device_p2p_properties_t *pP2PProperties) {
+        calls++;
+        device = hDevice;
+        peerDevice = hPeerDevice;
+        stypeOnEntry = pP2PProperties->stype;
+        flagsOnEntry = pP2PProperties->flags;
+        pNextOnEntry = pP2PProperties->pNext;
+        return result;
+    }
+
+    static inline uint32_t calls = 0;
+    static inline ze_device_handle_t device = nullptr;
+    static inline ze_device_handle_t peerDevice = nullptr;
+    static inline ze_structure_type_t stypeOnEntry = ZE_STRUCTURE_TYPE_FORCE_UINT32;
+    static inline ze_device_p2p_property_flags_t flagsOnEntry = 0;
+    static inline void *pNextOnEntry = nullptr;
+    static inline ze_result_t result = ZE_RESULT_SUCCESS;
+};
+
+TEST_F(LeoMultiDevicePeerInfoTests, givenLevelZeroQueryFailsWhenQueryingPeerInfoThenBothHandlesAreForwardedAndResultIsConverted) {
+    VariableBackup<decltype(LEO::zeDeviceGetP2PProperties)> entryBackup{&LEO::zeDeviceGetP2PProperties, &P2PPropertiesStub::getP2PProperties};
+    VariableBackup<uint32_t> callsBackup{&P2PPropertiesStub::calls, 0u};
+    VariableBackup<ze_result_t> resultBackup{&P2PPropertiesStub::result, ZE_RESULT_ERROR_DEVICE_LOST};
+    auto device = castToObject<ClDevice>(getClDeviceIds()[0]);
+    auto peerDevice = castToObject<ClDevice>(getClDeviceIds()[1]);
+    cl_bool value = CL_FALSE;
+
+    EXPECT_EQ(CL_DEVICE_NOT_AVAILABLE, device->getPeerInfo(*peerDevice, CL_DEVICE_PEER_ACCESS_SUPPORTED_INTEL, sizeof(value), &value, nullptr));
+    EXPECT_EQ(1u, P2PPropertiesStub::calls);
+    EXPECT_EQ(device->getL0Handle(), P2PPropertiesStub::device);
+    EXPECT_EQ(peerDevice->getL0Handle(), P2PPropertiesStub::peerDevice);
+    EXPECT_EQ(ZE_STRUCTURE_TYPE_DEVICE_P2P_PROPERTIES, P2PPropertiesStub::stypeOnEntry);
+    EXPECT_EQ(0u, P2PPropertiesStub::flagsOnEntry);
+    EXPECT_EQ(nullptr, P2PPropertiesStub::pNextOnEntry);
 }
 
 } // namespace ult

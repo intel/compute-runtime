@@ -8,9 +8,13 @@
 #include "level_zero/api/opencl/source/cl_device/leo_cl_device.h"
 
 #include "shared/source/compiler_interface/oclc_extensions.h"
+#include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/driver_info.h"
 
+#include "level_zero/api/opencl/source/helpers/l0_to_cl_return_types_mapper.h"
+#include "level_zero/api/opencl/source/helpers/leo_get_info_status_mapper.h"
+#include "level_zero/api/opencl/source/l0_dispatch/leo_l0_dispatch.h"
 #include "level_zero/api/opencl/source/platform/leo_platform.h"
 #include "level_zero/core/source/device/device.h"
 
@@ -31,6 +35,37 @@ NEO::DriverInfo *ClDevice::getDriverInfo() {
 
 Platform *ClDevice::getPlatform() const {
     return castToObject<Platform>(this->platform);
+}
+
+cl_int ClDevice::getPeerInfo(const ClDevice &peer,
+                             cl_device_peer_info_intel paramName,
+                             size_t paramValueSize,
+                             void *paramValue,
+                             size_t *paramValueSizeRet) const {
+    ze_device_p2p_property_flags_t requestedFlag = 0u;
+    switch (paramName) {
+    case CL_DEVICE_PEER_ACCESS_SUPPORTED_INTEL:
+        requestedFlag = ZE_DEVICE_P2P_PROPERTY_FLAG_ACCESS;
+        break;
+    case CL_DEVICE_PEER_ATOMICS_SUPPORTED_INTEL:
+        requestedFlag = ZE_DEVICE_P2P_PROPERTY_FLAG_ATOMICS;
+        break;
+    default:
+        return CL_INVALID_VALUE;
+    }
+
+    // Value-initialised on purpose: the driver reads pNext unconditionally and
+    // leaves flags unwritten for a pair without peer access.
+    ze_device_p2p_properties_t p2pProperties{ZE_STRUCTURE_TYPE_DEVICE_P2P_PROPERTIES};
+    auto result = zeDeviceGetP2PProperties(getL0Handle(), peer.getL0Handle(), &p2pProperties);
+    if (result != ZE_RESULT_SUCCESS) {
+        return L0ToClResultMapper(result);
+    }
+
+    cl_bool value = ((p2pProperties.flags & requestedFlag) != 0u) ? CL_TRUE : CL_FALSE;
+    auto getInfoStatus = GetInfo::getInfo(paramValue, paramValueSize, &value, sizeof(value));
+    GetInfo::setParamValueReturnSize(paramValueSizeRet, sizeof(value), getInfoStatus);
+    return changeGetInfoStatusToCLResultType(getInfoStatus);
 }
 
 cl_command_queue_capabilities_intel ClDevice::getQueueFamilyCapabilitiesAll() {

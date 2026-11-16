@@ -428,3 +428,21 @@ typedef cl_bitfield cl_device_fp_atomic_capabilities_ext;
 #if !defined(CL_PLATFORM_UNLOADABLE_KHR)
 #define CL_PLATFORM_UNLOADABLE_KHR 0x0921
 #endif
+
+/*************************************************
+ *   cl_intel_peer_access extension              *
+ *************************************************/
+
+#if !defined(cl_intel_peer_access)
+
+#define cl_intel_peer_access 1
+#define CL_INTEL_PEER_ACCESS_EXTENSION_NAME "cl_intel_peer_access"
+
+typedef cl_uint cl_device_peer_info_intel;
+
+// Provisional values, pending a registry reservation.
+// cl_device_peer_info_intel, both cl_bool:
+#define CL_DEVICE_PEER_ACCESS_SUPPORTED_INTEL 0x4258
+#define CL_DEVICE_PEER_ATOMICS_SUPPORTED_INTEL 0x4259
+
+#endif

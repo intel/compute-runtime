@@ -42,6 +42,11 @@ class ClDevice : public BaseObject<_cl_device_id> {
                          size_t paramValueSize,
                          void *paramValue,
                          size_t *paramValueSizeRet);
+    cl_int getPeerInfo(const ClDevice &peer,
+                       cl_device_peer_info_intel paramName,
+                       size_t paramValueSize,
+                       void *paramValue,
+                       size_t *paramValueSizeRet) const;
 
     bool getDeviceInfoForImage(cl_device_info paramName,
                                const void *&src,
