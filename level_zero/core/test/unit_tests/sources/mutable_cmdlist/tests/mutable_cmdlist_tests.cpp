@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/blit_helper.h"
 #include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/register_offsets.h"
@@ -33,6 +34,7 @@
 #include "level_zero/core/test/unit_tests/sources/mutable_cmdlist/mocks/mock_mutable_store_data_imm_hw.h"
 #include "level_zero/core/test/unit_tests/sources/mutable_cmdlist/mocks/mock_mutable_store_register_mem_hw.h"
 #include "level_zero/core/test/unit_tests/sources/mutable_cmdlist/mocks/mock_variable.h"
+#include "level_zero/experimental/source/mutable_cmdlist/program/mcl_decoder.h"
 
 #include "copy_offload_mode.h"
 
@@ -5401,6 +5403,192 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
     for (auto &patch : copyAsyncPatchContainer) {
         EXPECT_NE(expectedHostSources.end(), std::find(expectedHostSources.begin(), expectedHostSources.end(), patch.hostSourceAddress));
     }
+}
+
+// ISA in local memory has no CPU pointer; with content it is also locked, as after a read back
+struct IsaInLocalMemory {
+    IsaInLocalMemory(NEO::GraphicsAllocation &allocation, size_t contentSize = 0u)
+        : allocation(allocation), cpuPtr(allocation.getUnderlyingBuffer()), content(contentSize) {
+        allocation.setCpuPtrAndGpuAddress(nullptr, allocation.getGpuAddress());
+        for (size_t i = 0; i < content.size(); i++) {
+            content[i] = static_cast<uint8_t>(i * 7 + 3);
+        }
+        if (false == content.empty()) {
+            allocation.lock(content.data());
+        }
+    }
+    ~IsaInLocalMemory() {
+        if (allocation.isLocked()) {
+            allocation.unlock();
+        }
+        allocation.setCpuPtrAndGpuAddress(cpuPtr, allocation.getGpuAddress());
+    }
+
+    NEO::GraphicsAllocation &allocation;
+    void *cpuPtr;
+    std::vector<uint8_t> content;
+};
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenKernelIsaAllocationWithCpuPointerWhenGettingKernelDataThenIsaIsReferencedInAllocation) {
+    auto isaAllocation = mockKernelImmData->getIsaGraphicsAllocation();
+
+    auto kernelData = mutableCommandList->getKernelData(kernel.get());
+    EXPECT_EQ(isaAllocation->getUnderlyingBuffer(), kernelData->kernelIsa.begin());
+    EXPECT_EQ(mockKernelImmData->getIsaSize(), kernelData->kernelIsa.size());
+    EXPECT_EQ(nullptr, kernelData->isaAllocation);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenKernelIsaAllocationWithoutCpuPointerWhenGettingKernelDataThenIsaAllocationIsKeptForReadBack) {
+    IsaInLocalMemory isa{*mockKernelImmData->getIsaGraphicsAllocation()};
+
+    auto kernelData = mutableCommandList->getKernelData(kernel.get());
+    EXPECT_TRUE(kernelData->kernelIsa.empty());
+    EXPECT_EQ(&isa.allocation, kernelData->isaAllocation);
+    EXPECT_EQ(mockKernelImmData->getIsaSize(), kernelData->isaSize);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenKernelIsaAllocationWithoutCpuPointerWhenReadingKernelIsaFromAllocationsThenIsaIsCopiedToHost) {
+    IsaInLocalMemory isa{*mockKernelImmData->getIsaGraphicsAllocation(), mockKernelImmData->getIsaSize()};
+    const auto &isaContent = isa.content;
+
+    auto kernelData = mutableCommandList->getKernelData(kernel.get());
+    auto kernelDataWithCpuIsa = mutableCommandList->getKernelData(kernel2.get());
+    auto cpuIsaBegin = kernelDataWithCpuIsa->kernelIsa.begin();
+
+    EXPECT_TRUE(mutableCommandList->readKernelIsaFromAllocations());
+    ASSERT_EQ(isaContent.size(), kernelData->kernelIsa.size());
+    EXPECT_EQ(kernelData->kernelIsaHostCopy.data(), kernelData->kernelIsa.begin());
+    EXPECT_EQ(0, memcmp(isaContent.data(), kernelData->kernelIsa.begin(), isaContent.size()));
+    EXPECT_EQ(cpuIsaBegin, kernelDataWithCpuIsa->kernelIsa.begin());
+    EXPECT_TRUE(kernelDataWithCpuIsa->kernelIsaHostCopy.empty());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenKernelIsaReadBackFailsWhenGettingNativeBinaryThenErrorIsReturned) {
+    IsaInLocalMemory isa{*mockKernelImmData->getIsaGraphicsAllocation()};
+
+    mutableCommandList->getKernelData(kernel.get());
+
+    size_t binarySize = 0u;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, mutableCommandList->getNativeBinary(nullptr, &binarySize, nullptr, 0u));
+    EXPECT_EQ(0u, binarySize);
+}
+
+struct IsaWithoutCpuPtrMemoryManager : public ModuleImmutableDataFixture::MockImmutableMemoryManager {
+    using MockImmutableMemoryManager::MockImmutableMemoryManager;
+    using NEO::MockMemoryManager::allocateGraphicsMemoryWithProperties;
+
+    NEO::GraphicsAllocation *allocateGraphicsMemoryWithProperties(const NEO::AllocationProperties &properties) override {
+        auto allocation = MockImmutableMemoryManager::allocateGraphicsMemoryWithProperties(properties);
+        if (allocation != nullptr && allocateKernelIsaWithoutCpuPtr && properties.allocationType == NEO::AllocationType::kernelIsa) {
+            allocationsWithoutCpuPtr.push_back({allocation, allocation->getUnderlyingBuffer()});
+            allocation->setCpuPtrAndGpuAddress(nullptr, allocation->getGpuAddress());
+        }
+        return allocation;
+    }
+
+    bool copyMemoryToAllocation(NEO::GraphicsAllocation *graphicsAllocation, size_t destinationOffset, const void *memoryToCopy, size_t sizeToCopy) override {
+        if (allocateKernelIsaWithoutCpuPtr && graphicsAllocation->getUnderlyingBuffer() == nullptr) {
+            auto src = reinterpret_cast<const uint8_t *>(memoryToCopy);
+            copiesToAllocationsWithoutCpuPtr.push_back({graphicsAllocation, destinationOffset, std::vector<uint8_t>(src, src + sizeToCopy)});
+        }
+        return MockImmutableMemoryManager::copyMemoryToAllocation(graphicsAllocation, destinationOffset, memoryToCopy, sizeToCopy);
+    }
+
+    void restoreCpuPtrs() {
+        for (auto &[allocation, cpuPtr] : allocationsWithoutCpuPtr) {
+            allocation->setCpuPtrAndGpuAddress(cpuPtr, allocation->getGpuAddress());
+        }
+        allocationsWithoutCpuPtr.clear();
+    }
+
+    struct CopyToAllocationWithoutCpuPtr {
+        NEO::GraphicsAllocation *allocation;
+        size_t offset;
+        std::vector<uint8_t> data;
+    };
+    std::vector<CopyToAllocationWithoutCpuPtr> copiesToAllocationsWithoutCpuPtr;
+    std::vector<std::pair<NEO::GraphicsAllocation *, void *>> allocationsWithoutCpuPtr;
+    bool allocateKernelIsaWithoutCpuPtr = false;
+};
+
+struct MutableCommandListIsaWithoutCpuPtrFixture : public MutableCommandListFixture<false, -1> {
+    MockImmutableMemoryManager *createMemoryManager(NEO::ExecutionEnvironment &executionEnvironment) override {
+        isaMemoryManager = new IsaWithoutCpuPtrMemoryManager(executionEnvironment);
+        return isaMemoryManager;
+    }
+
+    IsaWithoutCpuPtrMemoryManager *isaMemoryManager = nullptr;
+};
+
+using MutableCommandListIsaWithoutCpuPtrTest = Test<MutableCommandListIsaWithoutCpuPtrFixture>;
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListIsaWithoutCpuPtrTest,
+            givenKernelIsaWithoutCpuPointerWhenNativeBinaryIsSavedAndLoadedIntoInstructionHeapWithoutCpuPointerThenIsaIsSavedAndUploaded) {
+    const auto isaSize = mockKernelImmData->getIsaSize();
+    auto isa = std::make_unique<IsaInLocalMemory>(*mockKernelImmData->getIsaGraphicsAllocation(), isaSize);
+    const auto isaContent = isa->content;
+
+    ze_mutable_command_id_exp_desc_t mutableCommandIdExpDesc = {ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXP_DESC};
+    mutableCommandIdExpDesc.flags = ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_COUNT | ZE_MUTABLE_COMMAND_EXP_FLAG_GROUP_SIZE;
+    auto result = L0::zeCommandListGetNextCommandIdExp(mutableCommandList->toHandle(), &mutableCommandIdExpDesc, &commandId);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->close());
+
+    size_t binarySize = 0u;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->getNativeBinary(nullptr, &binarySize, nullptr, 0u));
+    ASSERT_NE(0u, binarySize);
+    std::vector<uint8_t> binary(binarySize);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, mutableCommandList->getNativeBinary(binary.data(), &binarySize, nullptr, 0u));
+
+    isa.reset();
+
+    L0::MCL::Program::Decoder::MclDecoder savedProgram;
+    ASSERT_TRUE(savedProgram.decodeElf({binary.data(), binary.size()}));
+    savedProgram.parseSymbols();
+    ASSERT_EQ(1u, savedProgram.getKernelData().size());
+    auto &savedKernel = savedProgram.getKernelData()[0];
+    ASSERT_EQ(isaSize, savedKernel.kernelIsa.size());
+    EXPECT_EQ(0, memcmp(isaContent.data(), savedKernel.kernelIsa.begin(), isaSize));
+
+    VariableBackup<NEO::BlitHelperFunctions::BlitMemoryToAllocationFunc> blitMemoryToAllocationBackup(
+        &NEO::BlitHelperFunctions::blitMemoryToAllocation,
+        [](const NEO::Device &device, NEO::GraphicsAllocation *memory, size_t offset, const void *hostPtr, const Vec3<size_t> &size) -> NEO::BlitOperationResult {
+            return NEO::BlitOperationResult::unsupported;
+        });
+
+    auto loadedCommandList = createMutableCmdList();
+    isaMemoryManager->copiesToAllocationsWithoutCpuPtr.clear();
+    isaMemoryManager->allocateKernelIsaWithoutCpuPtr = true;
+    result = loadedCommandList->loadFromBinary(binary.data(), binary.size());
+    isaMemoryManager->allocateKernelIsaWithoutCpuPtr = false;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ASSERT_EQ(1u, isaMemoryManager->allocationsWithoutCpuPtr.size());
+    auto instructionHeapAllocation = isaMemoryManager->allocationsWithoutCpuPtr[0].first;
+    EXPECT_EQ(instructionHeapAllocation, loadedCommandList->allocs.ihAlloc.get());
+
+    ASSERT_EQ(1u, isaMemoryManager->copiesToAllocationsWithoutCpuPtr.size());
+    auto &upload = isaMemoryManager->copiesToAllocationsWithoutCpuPtr[0];
+    EXPECT_EQ(instructionHeapAllocation, upload.allocation);
+    EXPECT_EQ(0u, upload.offset);
+
+    ASSERT_EQ(1u, loadedCommandList->kernelData.size());
+    auto &loadedKernel = *loadedCommandList->kernelData[0];
+    ASSERT_LE(loadedKernel.kernelStartOffset + isaSize, upload.data.size());
+    EXPECT_EQ(0, memcmp(isaContent.data(), upload.data.data() + loadedKernel.kernelStartOffset, isaSize));
+
+    isaMemoryManager->restoreCpuPtrs();
 }
 
 } // namespace ult

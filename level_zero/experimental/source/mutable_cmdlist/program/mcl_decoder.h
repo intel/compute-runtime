@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -111,6 +111,8 @@ class MclDecoder {
                                    std::unique_ptr<char[]> &outStringsAlloc, bool heapless);
     void parseSymbols();
     void parseRelocations();
+    void setInstructionHeapCpuPtr(NEO::GraphicsAllocation &instructionHeapAlloc);
+    void uploadInstructionHeapHostCopy(NEO::Device &device, NEO::GraphicsAllocation &instructionHeapAlloc);
 
     inline std::vector<VarInfo> &getVarInfo() { return varInfos; }
     inline std::vector<KernelData> &getKernelData() { return kernelDataVec; }
@@ -120,6 +122,7 @@ class MclDecoder {
 
   protected:
     Program program;
+    std::vector<uint8_t> instructionHeapHostCopy;
     std::vector<KernelData> kernelDataVec;
     std::vector<KernelDispatchInfo> dispatchInfos;
     std::vector<VarInfo> varInfos;

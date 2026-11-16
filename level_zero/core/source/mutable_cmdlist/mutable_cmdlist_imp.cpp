@@ -217,7 +217,13 @@ KernelData *MutableCommandListImp::getKernelData(L0::Kernel *kernel) {
         kernelData.emplace_back(std::make_unique<KernelData>());
         kernelDataEntry = (*kernelData.rbegin()).get();
 
-        kernelDataEntry->kernelIsa = ArrayRef<const uint8_t>{reinterpret_cast<const uint8_t *>(isa->getUnderlyingBuffer()) + isaOffsetWithinAllocation, isaSize};
+        auto isaCpuPtr = reinterpret_cast<const uint8_t *>(isa->getUnderlyingBuffer());
+        if (isaCpuPtr != nullptr) {
+            kernelDataEntry->kernelIsa = ArrayRef<const uint8_t>{isaCpuPtr + isaOffsetWithinAllocation, isaSize};
+        } else {
+            kernelDataEntry->isaAllocation = isa;
+            kernelDataEntry->isaSize = isaSize;
+        }
         kernelDataEntry->kernelName = kernelName;
         kernelDataEntry->module = module;
         kernelDataEntry->simdSize = kernelDescriptor.kernelAttributes.simdSize;

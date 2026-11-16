@@ -20,14 +20,9 @@ BlitMemoryToAllocationFunc blitMemoryToAllocation = BlitHelper::blitMemoryToAllo
 BlitMemsetAllocationFunc blitMemsetAllocation = BlitHelper::blitMemsetAllocation;
 } // namespace BlitHelperFunctions
 
-BlitOperationResult BlitHelper::blitMemoryToAllocation(const Device &device, GraphicsAllocation *memory, size_t offset, const void *hostPtr,
-                                                       const Vec3<size_t> &size) {
-    auto memoryBanks = memory->storageInfo.getMemoryBanks();
-    return blitMemoryToAllocationBanks(device, memory, offset, hostPtr, size, memoryBanks);
-}
-
-BlitOperationResult BlitHelper::blitMemoryToAllocationBanks(const Device &device, GraphicsAllocation *memory, size_t offset, const void *hostPtr,
-                                                            const Vec3<size_t> &size, DeviceBitfield memoryBanks) {
+namespace {
+BlitOperationResult blitMemoryBanks(const Device &device, GraphicsAllocation *memory, size_t offset, const void *hostPtr,
+                                    const Vec3<size_t> &size, DeviceBitfield memoryBanks, BlitterConstants::BlitDirection direction) {
     const auto &hwInfo = device.getHardwareInfo();
     if (!hwInfo.capabilityTable.blitterOperationsSupported) {
         return BlitOperationResult::unsupported;
@@ -52,7 +47,7 @@ BlitOperationResult BlitHelper::blitMemoryToAllocationBanks(const Device &device
         bcsEngine->commandStreamReceiver->initializeResourcesAndDirectSubmission(device.getPreemptionMode());
         BlitPropertiesContainer blitPropertiesContainer;
         blitPropertiesContainer.push_back(
-            BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::hostPtrToBuffer,
+            BlitProperties::constructPropertiesForReadWrite(direction,
                                                             *bcsEngine->commandStreamReceiver, memory, nullptr,
                                                             hostPtr,
                                                             (memory->getGpuAddress() + offset),
@@ -62,9 +57,29 @@ BlitOperationResult BlitHelper::blitMemoryToAllocationBanks(const Device &device
         if (newTaskCount == CompletionStamp::gpuHang) {
             return BlitOperationResult::gpuHang;
         }
+        if (direction == BlitterConstants::BlitDirection::bufferToHostPtr) {
+            break; // every bank holds the same content, reading one is enough
+        }
     }
 
     return BlitOperationResult::success;
+}
+} // namespace
+
+BlitOperationResult BlitHelper::blitMemoryToAllocation(const Device &device, GraphicsAllocation *memory, size_t offset, const void *hostPtr,
+                                                       const Vec3<size_t> &size) {
+    auto memoryBanks = memory->storageInfo.getMemoryBanks();
+    return blitMemoryToAllocationBanks(device, memory, offset, hostPtr, size, memoryBanks);
+}
+
+BlitOperationResult BlitHelper::blitMemoryToAllocationBanks(const Device &device, GraphicsAllocation *memory, size_t offset, const void *hostPtr,
+                                                            const Vec3<size_t> &size, DeviceBitfield memoryBanks) {
+    return blitMemoryBanks(device, memory, offset, hostPtr, size, memoryBanks, BlitterConstants::BlitDirection::hostPtrToBuffer);
+}
+
+BlitOperationResult BlitHelper::blitMemoryFromAllocation(const Device &device, GraphicsAllocation *memory, size_t offset, void *hostPtr,
+                                                         const Vec3<size_t> &size) {
+    return blitMemoryBanks(device, memory, offset, hostPtr, size, memory->storageInfo.getMemoryBanks(), BlitterConstants::BlitDirection::bufferToHostPtr);
 }
 
 BlitOperationResult BlitHelper::blitMemsetAllocation(const Device &device, GraphicsAllocation *memory, size_t offset, int value, size_t size) {

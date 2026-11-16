@@ -27,6 +27,7 @@
 #include "shared/test/common/helpers/raii_gfx_core_helper.h"
 #include "shared/test/common/helpers/raii_product_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_align_malloc_memory_manager.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_aub_center.h"
@@ -4616,4 +4617,149 @@ TEST_F(InstructionCacheFlushRegistrationTests, givenOneCsrClearsItsFlushWhenRegi
     registerFlush(allocation);
 
     expectPendingFlushes({engines->primary, engines->secondary, engines->sibling});
+}
+
+class MemoryTransferFromAllocationTest : public ::testing::Test {
+  public:
+    void SetUp() override {
+        for (uint8_t i = 0u; i < dataSize; i++) {
+            srcData[i] = i;
+        }
+    }
+
+    static constexpr uint32_t dataSize = 16;
+    uint8_t srcData[dataSize] = {};
+    uint8_t destData[dataSize] = {};
+};
+
+TEST_F(MemoryTransferFromAllocationTest, givenAllocationWithCpuPointerWhenBlitterIsNotSupportedThenTransferMemoryFromAllocationCopiesOnCpu) {
+    MockGraphicsAllocation graphicsAllocation{srcData, sizeof(srcData)};
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.blitterOperationsSupported = false;
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+
+    EXPECT_EQ(BlitOperationResult::unsupported, BlitHelper::blitMemoryFromAllocation(*device, &graphicsAllocation, 0, destData, {dataSize, 1, 1}));
+
+    constexpr size_t srcOffset = 4u;
+    EXPECT_TRUE(MemoryTransferHelper::transferMemoryFromAllocation(true, *device, &graphicsAllocation, srcOffset, destData, dataSize - srcOffset));
+    EXPECT_EQ(0, memcmp(destData, srcData + srcOffset, dataSize - srcOffset));
+}
+
+TEST_F(MemoryTransferFromAllocationTest, givenLockedAllocationWithoutCpuPointerWhenTransferringMemoryFromAllocationThenLockedMemoryIsCopiedAndAllocationStaysLocked) {
+    MockGraphicsAllocation graphicsAllocation{nullptr, sizeof(srcData)};
+    graphicsAllocation.lock(srcData);
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+
+    EXPECT_TRUE(MemoryTransferHelper::transferMemoryFromAllocation(false, *device, &graphicsAllocation, 0u, destData, dataSize));
+    EXPECT_EQ(0, memcmp(destData, srcData, dataSize));
+    EXPECT_TRUE(graphicsAllocation.isLocked());
+    graphicsAllocation.unlock();
+}
+
+TEST_F(MemoryTransferFromAllocationTest, givenUnlockedAllocationWithoutCpuPointerWhenTransferringMemoryFromAllocationThenAllocationIsLockedForCopyAndStaysLocked) {
+    struct LockingMemoryManager : public MockMemoryManager {
+        using MockMemoryManager::MockMemoryManager;
+        void *lockResourceImpl(GraphicsAllocation &gfxAllocation) override {
+            lockResourceCalled++;
+            return lockedMemory;
+        }
+        void *lockedMemory = nullptr;
+    };
+
+    auto executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
+    auto memoryManager = new LockingMemoryManager(*executionEnvironment);
+    memoryManager->lockedMemory = srcData;
+    executionEnvironment->memoryManager.reset(memoryManager);
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 0u));
+
+    MockGraphicsAllocation graphicsAllocation{nullptr, sizeof(srcData)};
+    EXPECT_TRUE(MemoryTransferHelper::transferMemoryFromAllocation(false, *device, &graphicsAllocation, 0u, destData, dataSize));
+    EXPECT_EQ(0, memcmp(destData, srcData, dataSize));
+    EXPECT_EQ(1u, memoryManager->lockResourceCalled);
+    EXPECT_EQ(0u, memoryManager->unlockResourceCalled);
+    EXPECT_TRUE(graphicsAllocation.isLocked());
+    graphicsAllocation.unlock();
+}
+
+TEST_F(MemoryTransferFromAllocationTest, givenAllocationWithoutCpuPointerWhenLockFailsThenTransferMemoryFromAllocationReturnsFalse) {
+    MockGraphicsAllocation graphicsAllocation{nullptr, dataSize};
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+
+    EXPECT_FALSE(MemoryTransferHelper::transferMemoryFromAllocation(false, *device, &graphicsAllocation, 0u, destData, dataSize));
+    EXPECT_FALSE(graphicsAllocation.isLocked());
+}
+
+TEST_F(MemoryTransferFromAllocationTest, givenBlitOperationSupportedWhenBcsEngineNotAvailableThenBlitMemoryFromAllocationReturnsUnsupported) {
+    MockGraphicsAllocation graphicsAllocation{srcData, sizeof(srcData)};
+    graphicsAllocation.storageInfo.memoryBanks = 1;
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    hwInfo.featureTable.ftrBcsInfo = 0;
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+
+    EXPECT_EQ(BlitOperationResult::unsupported, BlitHelper::blitMemoryFromAllocation(*device, &graphicsAllocation, 0, destData, {dataSize, 1, 1}));
+}
+
+class MemoryTransferFromAllocationBlitTest : public MemoryTransferFromAllocationTest {
+  public:
+    void SetUp() override {
+        MemoryTransferFromAllocationTest::SetUp();
+        backupHwInfo = std::make_unique<VariableBackup<HardwareInfo>>(defaultHwInfo.get());
+        defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
+        deviceFactory = std::make_unique<UltDeviceFactory>(1, 0);
+        REQUIRE_BLITTER_OR_SKIP(deviceFactory->rootDevices[0]->getRootDeviceEnvironment());
+        bcsEngine = deviceFactory->rootDevices[0]->getNearestGenericSubDevice(0)->getInternalLinkCopyEngine();
+        ASSERT_NE(nullptr, bcsEngine);
+        graphicsAllocation.storageInfo.memoryBanks = 1;
+    }
+
+    template <typename FamilyType>
+    UltCommandStreamReceiver<FamilyType> &getBcsCsr() {
+        auto &bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> &>(*bcsEngine->commandStreamReceiver);
+        bcsCsr.callBaseFlushBcsTask = false;
+        return bcsCsr;
+    }
+
+    void expectSingleBlitFromAllocationAndReleaseHostPtr(BlitPropertiesContainer &receivedBlitProperties) {
+        ASSERT_EQ(1u, receivedBlitProperties.size());
+        EXPECT_EQ(BlitterConstants::BlitDirection::bufferToHostPtr, receivedBlitProperties[0].blitDirection);
+        auto hostAllocation = receivedBlitProperties[0].dstAllocation;
+        ASSERT_NE(nullptr, hostAllocation);
+        EXPECT_EQ(1u, hostAllocation->getHostPtrTaskCountAssignment());
+        hostAllocation->decrementHostPtrTaskCountAssignment();
+    }
+
+    std::unique_ptr<VariableBackup<HardwareInfo>> backupHwInfo;
+    std::unique_ptr<UltDeviceFactory> deviceFactory;
+    EngineControl *bcsEngine = nullptr;
+    MockGraphicsAllocation graphicsAllocation{nullptr, 0x1000u, dataSize};
+};
+
+HWTEST_F(MemoryTransferFromAllocationBlitTest, givenBlitterWhenTransferringMemoryFromAllocationThenBufferToHostPtrBlitIsFlushedAndCpuCopyIsNotUsed) {
+    auto &bcsCsr = getBcsCsr<FamilyType>();
+    constexpr size_t srcOffset = 8u;
+
+    EXPECT_TRUE(MemoryTransferHelper::transferMemoryFromAllocation(true, *deviceFactory->rootDevices[0], &graphicsAllocation, srcOffset, destData, dataSize - srcOffset));
+
+    EXPECT_EQ(1u, bcsCsr.blitBufferCalled);
+    expectSingleBlitFromAllocationAndReleaseHostPtr(bcsCsr.receivedBlitProperties);
+    EXPECT_EQ(graphicsAllocation.getGpuAddress() + srcOffset, bcsCsr.receivedBlitProperties[0].srcGpuAddress);
+}
+
+HWTEST_F(MemoryTransferFromAllocationBlitTest, givenAllocationInMultipleBanksWhenBlitMemoryFromAllocationIsCalledThenOnlyOneBankIsRead) {
+    auto &bcsCsr = getBcsCsr<FamilyType>();
+    graphicsAllocation.storageInfo.memoryBanks = 0b11;
+
+    EXPECT_EQ(BlitOperationResult::success, BlitHelper::blitMemoryFromAllocation(*deviceFactory->rootDevices[0], &graphicsAllocation, 0u, destData, {dataSize, 1, 1}));
+
+    expectSingleBlitFromAllocationAndReleaseHostPtr(bcsCsr.receivedBlitProperties);
+}
+
+HWTEST_F(MemoryTransferFromAllocationBlitTest, givenGpuHangOnFlushBcsTaskWhenBlitMemoryFromAllocationIsCalledThenGpuHangIsReturned) {
+    auto &bcsCsr = getBcsCsr<FamilyType>();
+    bcsCsr.flushBcsTaskReturnValue = CompletionStamp::gpuHang;
+
+    EXPECT_EQ(BlitOperationResult::gpuHang, BlitHelper::blitMemoryFromAllocation(*deviceFactory->rootDevices[0], &graphicsAllocation, 0u, destData, {dataSize, 1, 1}));
+
+    expectSingleBlitFromAllocationAndReleaseHostPtr(bcsCsr.receivedBlitProperties);
 }

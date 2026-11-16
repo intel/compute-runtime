@@ -18,6 +18,7 @@
 #include "shared/source/kernel/grf_config.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/os_interface/product_helper.h"
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/mutable_cmdlist/mutable_cmdlist_imp.h"
@@ -33,6 +34,7 @@ void MclDecoder::decode(const MclDecoderArgs &args) {
                                       args.heapless);
     decoder.parseSymbols();
     decoder.parseRelocations();
+    decoder.uploadInstructionHeapHostCopy(*args.device->getNEODevice(), *args.allocs->ihAlloc);
 
     for (auto &varInfo : decoder.getVarInfo()) {
         Variable *var = Variable::createFromInfo(args.mcl->toHandle(), varInfo);
@@ -138,36 +140,42 @@ void MclDecoder::decode(const MclDecoderArgs &args) {
     }
 }
 
+// relocated fields follow the command layout, e.g. 64-bit SBA addresses are only dword aligned
+template <typename T>
+T readUnaligned(CpuAddress address) {
+    T value;
+    memcpy(&value, reinterpret_cast<const void *>(address), sizeof(T));
+    return value;
+}
+
+template <typename T>
+void writeUnaligned(CpuAddress address, T value) {
+    memcpy(reinterpret_cast<void *>(address), &value, sizeof(T));
+}
+
 void patchIncrement(CpuAddress address, uint64_t offset, uint64_t value, Relocations::RelocType type) {
     using RelocType = Relocations::RelocType;
     switch (type) {
     default:
         DEBUG_BREAK_IF(true);
         break;
-    case RelocType::address: {
-        uint64_t incrementValue = value;
-        auto currentVal = reinterpret_cast<uint64_t *>(address + offset);
-        *currentVal += incrementValue;
-    } break;
-    case RelocType::address32: {
-        uint32_t incrementValue = static_cast<uint32_t>(value & 0xffffffff);
-        auto currentVal = reinterpret_cast<uint32_t *>(address + offset);
-        *currentVal += incrementValue;
-    } break;
-    case RelocType::address32Hi: {
-        uint32_t incrementValue = static_cast<uint32_t>((value >> 32) & 0xffffffff);
-        auto currentVal = reinterpret_cast<uint32_t *>(address + offset);
-        *currentVal += incrementValue;
-    } break;
+    case RelocType::address:
+        writeUnaligned(address + offset, readUnaligned<uint64_t>(address + offset) + value);
+        break;
+    case RelocType::address32:
+        writeUnaligned(address + offset, readUnaligned<uint32_t>(address + offset) + static_cast<uint32_t>(value & 0xffffffff));
+        break;
+    case RelocType::address32Hi:
+        writeUnaligned(address + offset, readUnaligned<uint32_t>(address + offset) + static_cast<uint32_t>((value >> 32) & 0xffffffff));
+        break;
     }
 }
 
 template <typename T>
 void patch(CpuAddress address, uint64_t value, uint64_t shift = 0) {
-    auto addr = reinterpret_cast<T *>(address);
     auto val = static_cast<T>((value << shift) >> shift);
 
-    *addr = (*addr & maxNBitValue(shift)) | val;
+    writeUnaligned(address, static_cast<T>((readUnaligned<T>(address) & maxNBitValue(shift)) | val));
 }
 
 void patch(CpuAddress address, uint64_t offset, uint64_t value, int64_t addend, Relocations::RelocType type) {
@@ -236,7 +244,7 @@ void MclDecoder::createRequiredAllocations(NEO::Device *device, NEO::CommandCont
     } else {
         program.segments.ih.address = ihAllocPtr->getGpuAddressToPatch();
     }
-    program.segments.ih.cpuPtr = reinterpret_cast<CpuAddress>(ihAllocPtr->getUnderlyingBuffer());
+    setInstructionHeapCpuPtr(*ihAllocPtr);
     outIHAlloc = AllocPtrT(ihAllocPtr);
 
     if (false == program.segments.consts.initData.empty()) {
@@ -298,7 +306,9 @@ void MclDecoder::createRequiredAllocations(NEO::Device *device, NEO::CommandCont
     copyMemToAlloc(csStream->getGraphicsAllocation(), program.segments.cs.initData);
     UNRECOVERABLE_IF(csStream->getUsed() > program.segments.cs.initData.size());
     csStream->getSpace(program.segments.cs.initData.size() - csStream->getUsed());
-    copyMemToAlloc(outIHAlloc.get(), program.segments.ih.initData);
+    if (instructionHeapHostCopy.empty()) {
+        copyMemToAlloc(outIHAlloc.get(), program.segments.ih.initData);
+    }
     if (false == program.segments.ssh.initData.empty()) {
         UNRECOVERABLE_IF(ssh == nullptr);
         copyMemToAlloc(ioh->getGraphicsAllocation(), program.segments.ioh.initData);
@@ -314,6 +324,24 @@ void MclDecoder::createRequiredAllocations(NEO::Device *device, NEO::CommandCont
         memcpy_s(outStringsAlloc.get(), program.segments.strings.initData.size(),
                  program.segments.strings.initData.begin(), program.segments.strings.initData.size());
     }
+}
+
+void MclDecoder::setInstructionHeapCpuPtr(NEO::GraphicsAllocation &instructionHeapAlloc) {
+    auto cpuPtr = instructionHeapAlloc.getUnderlyingBuffer();
+    if (cpuPtr == nullptr) {
+        instructionHeapHostCopy.assign(program.segments.ih.initData.begin(), program.segments.ih.initData.end());
+        cpuPtr = instructionHeapHostCopy.data();
+    }
+    program.segments.ih.cpuPtr = reinterpret_cast<CpuAddress>(cpuPtr);
+}
+
+void MclDecoder::uploadInstructionHeapHostCopy(NEO::Device &device, NEO::GraphicsAllocation &instructionHeapAlloc) {
+    if (instructionHeapHostCopy.empty()) {
+        return;
+    }
+    auto useBlitter = device.getProductHelper().isBlitCopyRequiredForLocalMemory(device.getRootDeviceEnvironment(), instructionHeapAlloc);
+    auto uploaded = NEO::MemoryTransferHelper::transferMemoryToAllocation(useBlitter, device, &instructionHeapAlloc, 0u, instructionHeapHostCopy.data(), instructionHeapHostCopy.size());
+    UNRECOVERABLE_IF(false == uploaded);
 }
 
 void MclDecoder::parseSymbols() {
@@ -346,6 +374,7 @@ void MclDecoder::parseSymbols() {
             break;
         case SymType::heap: {
             if (symbol.section == Sections::SectionType::shtIh) {
+                UNRECOVERABLE_IF(symbol.size == 0u);
                 KernelData kernelData{};
                 kernelData.kernelName = symbolName.substr(Symbols::SymbolNames::kernelPrefix.length()).str();
                 kernelData.kernelStartOffset = symbol.value;

@@ -7,6 +7,8 @@
 
 #include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
+#include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/os_interface/product_helper.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/device/device.h"
@@ -146,6 +148,25 @@ ze_result_t MutableCommandListImp::tempMemSet(const void *pTempMem) {
     return ZE_RESULT_SUCCESS;
 }
 
+bool MutableCommandListImp::readKernelIsaFromAllocations() {
+    auto neoDevice = base->getDevice()->getNEODevice();
+    auto &productHelper = neoDevice->getProductHelper();
+    for (auto &kernelDataEntry : kernelData) {
+        if (kernelDataEntry->isaAllocation == nullptr || !kernelDataEntry->kernelIsa.empty()) {
+            continue;
+        }
+        auto &isaHostCopy = kernelDataEntry->kernelIsaHostCopy;
+        isaHostCopy.resize(kernelDataEntry->isaSize);
+        auto useBlitter = productHelper.isBlitCopyRequiredForLocalMemory(neoDevice->getRootDeviceEnvironment(), *kernelDataEntry->isaAllocation);
+        if (!NEO::MemoryTransferHelper::transferMemoryFromAllocation(useBlitter, *neoDevice, kernelDataEntry->isaAllocation,
+                                                                     kernelDataEntry->isaOffsetWithinAllocation, isaHostCopy.data(), isaHostCopy.size())) {
+            return false;
+        }
+        kernelDataEntry->kernelIsa = {isaHostCopy.data(), isaHostCopy.size()};
+    }
+    return true;
+}
+
 void MutableCommandListImp::createNativeBinary(ArrayRef<const uint8_t> module) {
     using namespace Program::Encoder;
     auto cs = base->getCmdContainer().getCommandStream();
@@ -169,6 +190,9 @@ void MutableCommandListImp::createNativeBinary(ArrayRef<const uint8_t> module) {
 
 ze_result_t MutableCommandListImp::getNativeBinary(uint8_t *pBinary, size_t *pBinarySize, const uint8_t *pModule, size_t moduleSize) {
     if (nativeBinary.empty()) {
+        if (!readKernelIsaFromAllocations()) {
+            return ZE_RESULT_ERROR_UNKNOWN;
+        }
         ArrayRef<const uint8_t> module = {pModule, moduleSize};
         createNativeBinary(module);
     }

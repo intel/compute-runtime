@@ -66,6 +66,7 @@ struct WhiteBox<::L0::MCL::MutableCommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::nextMutationFlags;
     using BaseClass::parseDispatchedKernel;
     using BaseClass::partitionCount;
+    using BaseClass::readKernelIsaFromAllocations;
     using BaseClass::semaphore64bCmdSupported;
     using BaseClass::stageCommitVariables;
     using BaseClass::variableStorage;
@@ -109,6 +110,7 @@ struct WhiteBox<::L0::MCL::MutableCommandListImp> : public ::L0::MCL::MutableCom
     using BaseClass::nextCommandId;
     using BaseClass::nextMutationFlags;
     using BaseClass::parseDispatchedKernel;
+    using BaseClass::readKernelIsaFromAllocations;
     using BaseClass::semaphore64bCmdSupported;
     using BaseClass::stageCommitVariables;
     using BaseClass::updatedCommandList;

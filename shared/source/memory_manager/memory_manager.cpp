@@ -1505,6 +1505,26 @@ bool MemoryTransferHelper::transferMemoryToAllocation(bool useBlitter, const Dev
     }
     return device.getMemoryManager()->copyMemoryToAllocation(dstAllocation, dstOffset, srcMemory, srcSize);
 }
+bool MemoryTransferHelper::transferMemoryFromAllocation(bool useBlitter, const Device &device, GraphicsAllocation *srcAllocation, size_t srcOffset, void *dstMemory, size_t size) {
+    if (useBlitter) {
+        if (BlitHelper::blitMemoryFromAllocation(device, srcAllocation, srcOffset, dstMemory, {size, 1, 1}) == BlitOperationResult::success) {
+            return true;
+        }
+    }
+
+    auto srcMemory = srcAllocation->getUnderlyingBuffer();
+    if (srcMemory == nullptr) {
+        // keep the allocation locked, it may be shared (e.g. an ISA pool) and is unlocked when it is freed
+        srcMemory = device.getMemoryManager()->lockResource(srcAllocation);
+    }
+    if (srcMemory == nullptr) {
+        return false;
+    }
+
+    memcpy_s(dstMemory, size, ptrOffset(srcMemory, srcOffset), size);
+    return true;
+}
+
 bool MemoryTransferHelper::transferMemoryToAllocationBanks(bool useBlitter, const Device &device, GraphicsAllocation *dstAllocation, size_t dstOffset, const void *srcMemory,
                                                            size_t srcSize, DeviceBitfield dstMemoryBanks) {
     auto blitSuccess = false;

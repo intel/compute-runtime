@@ -128,6 +128,7 @@ struct PeerAllocationDeps {
 
 namespace MemoryTransferHelper {
 bool transferMemoryToAllocation(bool useBlitter, const Device &device, GraphicsAllocation *dstAllocation, size_t dstOffset, const void *srcMemory, size_t srcSize);
+bool transferMemoryFromAllocation(bool useBlitter, const Device &device, GraphicsAllocation *srcAllocation, size_t srcOffset, void *dstMemory, size_t size);
 bool transferMemoryToAllocationBanks(bool useBlitter, const Device &device, GraphicsAllocation *dstAllocation, size_t dstOffset, const void *srcMemory,
                                      size_t srcSize, DeviceBitfield dstMemoryBanks);
 bool memsetAllocation(bool useBlitter, const Device &device, GraphicsAllocation *dstAllocation, size_t dstOffset,

@@ -122,6 +122,9 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
     };
 
     void setUp();
+    virtual MockImmutableMemoryManager *createMemoryManager(NEO::ExecutionEnvironment &executionEnvironment) {
+        return new MockImmutableMemoryManager(executionEnvironment);
+    }
 
     void createModuleFromMockBinary(uint32_t perHwThreadPrivateMemorySize, bool isInternal, MockImmutableData *mockKernelImmData,
                                     std::initializer_list<ZebinTestData::AppendElfAdditionalSection> additionalSections = {});

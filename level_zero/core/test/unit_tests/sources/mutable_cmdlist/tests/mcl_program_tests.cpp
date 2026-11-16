@@ -5,6 +5,9 @@
  *
  */
 
+#include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/source/mutable_cmdlist/mutable_kernel_dispatch.h"
@@ -24,6 +27,11 @@ using namespace L0::MCL::Program;
 struct MockMclEncoder : public Encoder::MclEncoder {
     using Encoder::MclEncoder::addSymbol;
     using Encoder::MclEncoder::program;
+};
+
+struct MockMclDecoder : public Decoder::MclDecoder {
+    using Decoder::MclDecoder::instructionHeapHostCopy;
+    using Decoder::MclDecoder::program;
 };
 
 class MclProgramKernelDataTest : public ::testing::Test {
@@ -98,6 +106,68 @@ TEST_F(MclProgramKernelDataTest, givenKernelSymbolWithoutNumLocalIdChannelsWhenD
     ASSERT_EQ(1u, decodedKernelData.size());
     EXPECT_EQ(simdSize, decodedKernelData[0].simdSize);
     EXPECT_EQ(KernelData{}.numLocalIdChannels, decodedKernelData[0].numLocalIdChannels);
+}
+
+class MclDecoderInstructionHeapTest : public ::testing::Test {
+  public:
+    void SetUp() override {
+        for (size_t i = 0; i < instructionHeapData.size(); i++) {
+            instructionHeapData[i] = static_cast<uint8_t>(i + 1);
+        }
+        decoder.program.segments.ih.initData = {instructionHeapData.data(), instructionHeapData.size()};
+        device.reset(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get()));
+    }
+
+    std::array<uint8_t, 16> instructionHeapData;
+    std::array<uint8_t, 16> instructionHeapMemory = {};
+    MockMclDecoder decoder;
+    std::unique_ptr<NEO::MockDevice> device;
+};
+
+TEST_F(MclDecoderInstructionHeapTest, givenInstructionHeapAllocationWithoutCpuPointerWhenSettingInstructionHeapCpuPtrThenHostCopyIsPatchedAndUploadedToAllocation) {
+    NEO::MockGraphicsAllocation allocationWithoutCpuPtr{nullptr, instructionHeapData.size()};
+    decoder.setInstructionHeapCpuPtr(allocationWithoutCpuPtr);
+    ASSERT_EQ(instructionHeapData.size(), decoder.instructionHeapHostCopy.size());
+    EXPECT_EQ(reinterpret_cast<CpuAddress>(decoder.instructionHeapHostCopy.data()), decoder.getSegments().ih.cpuPtr);
+    EXPECT_EQ(0, memcmp(instructionHeapData.data(), decoder.instructionHeapHostCopy.data(), instructionHeapData.size()));
+
+    constexpr uint8_t patchedValue = 0xab;
+    *reinterpret_cast<uint8_t *>(decoder.getSegments().ih.cpuPtr + 4) = patchedValue;
+
+    NEO::MockGraphicsAllocation uploadTarget{instructionHeapMemory.data(), instructionHeapMemory.size()};
+    decoder.uploadInstructionHeapHostCopy(*device, uploadTarget);
+    EXPECT_EQ(0, memcmp(decoder.instructionHeapHostCopy.data(), instructionHeapMemory.data(), instructionHeapMemory.size()));
+    EXPECT_EQ(patchedValue, instructionHeapMemory[4]);
+}
+
+TEST_F(MclDecoderInstructionHeapTest, givenInstructionHeapAllocationWithCpuPointerWhenSettingInstructionHeapCpuPtrThenAllocationIsPatchedInPlaceAndNothingIsUploaded) {
+    NEO::MockGraphicsAllocation allocationWithCpuPtr{instructionHeapMemory.data(), instructionHeapMemory.size()};
+    decoder.setInstructionHeapCpuPtr(allocationWithCpuPtr);
+    EXPECT_EQ(reinterpret_cast<CpuAddress>(instructionHeapMemory.data()), decoder.getSegments().ih.cpuPtr);
+    EXPECT_TRUE(decoder.instructionHeapHostCopy.empty());
+
+    decoder.uploadInstructionHeapHostCopy(*device, allocationWithCpuPtr);
+    for (auto byte : instructionHeapMemory) {
+        EXPECT_EQ(0u, byte);
+    }
+}
+
+TEST_F(MclDecoderInstructionHeapTest, givenInstructionHeapHostCopyWhenUploadToAllocationFailsThenAbortIsCalled) {
+    NEO::MockGraphicsAllocation allocationWithoutCpuPtr{nullptr, instructionHeapData.size()};
+    decoder.setInstructionHeapCpuPtr(allocationWithoutCpuPtr);
+    ASSERT_FALSE(decoder.instructionHeapHostCopy.empty());
+
+    EXPECT_THROW(decoder.uploadInstructionHeapHostCopy(*device, allocationWithoutCpuPtr), std::exception);
+}
+
+TEST_F(MclProgramKernelDataTest, givenKernelIsaSymbolWithZeroSizeWhenDecodedThenAbortIsCalled) {
+    MockMclEncoder encoder;
+    encoder.addSymbol(Symbols::SymbolNames::kernelPrefix.str() + kernelName, Sections::SectionType::shtIh, Symbols::SymbolType::heap, 0u, 0u);
+    auto binary = encoder.encodeProgram();
+
+    Decoder::MclDecoder decoder;
+    ASSERT_TRUE(decoder.decodeElf({binary.data(), binary.size()}));
+    EXPECT_THROW(decoder.parseSymbols(), std::exception);
 }
 
 } // namespace ult

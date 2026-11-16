@@ -185,6 +185,7 @@ struct MutableCommandListImp : public MutableCommandList {
     ze_result_t addVariableDispatch(const NEO::KernelDescriptor &kernelDescriptor, KernelDispatch &kernelDispatch, Variable *groupSize, Variable *groupCount, Variable *globalOffset,
                                     Variable *lastSlmArgumentVariable, const std::vector<Variable *> *buffersVariables, MutableComputeWalker *mutableComputeWalker, const MutableKernelDispatchParameters &dispatchParams);
 
+    bool readKernelIsaFromAllocations();
     void createNativeBinary(ArrayRef<const uint8_t> module);
     KernelData *getKernelData(L0::Kernel *kernel);
 

@@ -16,6 +16,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace NEO {
 class GraphicsAllocation;
@@ -31,6 +32,9 @@ struct KernelData {
     using LocalInstructionsOffset = uint16_t;
     std::string kernelName;
     ArrayRef<const uint8_t> kernelIsa;
+    std::vector<uint8_t> kernelIsaHostCopy;
+    NEO::GraphicsAllocation *isaAllocation = nullptr;
+    size_t isaSize = 0;
 
     GpuAddress kernelStartAddress = undefined<GpuAddress>;
     InstructionsOffset kernelStartOffset = undefined<InstructionsOffset>;
