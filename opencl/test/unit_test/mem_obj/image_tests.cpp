@@ -130,10 +130,10 @@ TEST(TestSliceAndRowPitch, Given1dImageWithZeroRowPitchAndZeroSlicePitchWhenGett
     cl_int retVal;
     MockContext context;
 
-    const size_t width = 5;
-    const size_t height = 3;
-    const size_t depth = 2;
-    char *hostPtr = (char *)alignedMalloc(width * height * depth * elementSize * 2, 64);
+    constexpr size_t width = 5;
+    constexpr size_t height = 3;
+    constexpr size_t depth = 2;
+    char hostPtr[width * height * depth * elementSize * 2] = {};
 
     imageFormat.image_channel_data_type = channelType;
     imageFormat.image_channel_order = channelOrder;
@@ -153,7 +153,7 @@ TEST(TestSliceAndRowPitch, Given1dImageWithZeroRowPitchAndZeroSlicePitchWhenGett
 
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
-    auto image = Image::create(
+    auto image = clUniquePtr(Image::create(
         &context,
         ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
         flags,
@@ -161,14 +161,11 @@ TEST(TestSliceAndRowPitch, Given1dImageWithZeroRowPitchAndZeroSlicePitchWhenGett
         surfaceFormat,
         &imageDesc,
         hostPtr,
-        retVal);
+        retVal));
     ASSERT_NE(nullptr, image);
 
     EXPECT_EQ(width * elementSize, image->getHostPtrRowPitch());
     EXPECT_EQ(0u, image->getHostPtrSlicePitch());
-
-    delete image;
-    alignedFree(hostPtr);
 }
 
 TEST(TestSliceAndRowPitch, Given1dImageWithNonZeroRowPitchAndZeroSlicePitchWhenGettingHostPtrSlicePitchAndRowPitchThenCorrectValuesAreReturned) {
@@ -180,10 +177,10 @@ TEST(TestSliceAndRowPitch, Given1dImageWithNonZeroRowPitchAndZeroSlicePitchWhenG
     cl_int retVal;
     MockContext context;
 
-    const size_t width = 5;
-    const size_t height = 3;
-    const size_t depth = 2;
-    char *hostPtr = (char *)alignedMalloc(width * height * depth * elementSize * 2, 64);
+    constexpr size_t width = 5;
+    constexpr size_t height = 3;
+    constexpr size_t depth = 2;
+    char hostPtr[width * height * depth * elementSize * 2] = {};
 
     imageFormat.image_channel_data_type = channelType;
     imageFormat.image_channel_order = channelOrder;
@@ -203,7 +200,7 @@ TEST(TestSliceAndRowPitch, Given1dImageWithNonZeroRowPitchAndZeroSlicePitchWhenG
 
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
-    auto image = Image::create(
+    auto image = clUniquePtr(Image::create(
         &context,
         ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
         flags,
@@ -211,14 +208,11 @@ TEST(TestSliceAndRowPitch, Given1dImageWithNonZeroRowPitchAndZeroSlicePitchWhenG
         surfaceFormat,
         &imageDesc,
         hostPtr,
-        retVal);
+        retVal));
     ASSERT_NE(nullptr, image);
 
     EXPECT_EQ((width + 1) * elementSize, image->getHostPtrRowPitch());
     EXPECT_EQ(0u, image->getHostPtrSlicePitch());
-
-    delete image;
-    alignedFree(hostPtr);
 }
 
 TEST(TestSliceAndRowPitch, Given2dImageWithNonZeroRowPitchAndZeroSlicePitchWhenGettingHostPtrSlicePitchAndRowPitchThenCorrectValuesAreReturned) {
@@ -230,10 +224,10 @@ TEST(TestSliceAndRowPitch, Given2dImageWithNonZeroRowPitchAndZeroSlicePitchWhenG
     cl_int retVal;
     MockContext context;
 
-    const size_t width = 5;
-    const size_t height = 3;
-    const size_t depth = 2;
-    char *hostPtr = (char *)alignedMalloc(width * height * depth * elementSize * 2, 64);
+    constexpr size_t width = 5;
+    constexpr size_t height = 3;
+    constexpr size_t depth = 2;
+    char hostPtr[width * height * depth * elementSize * 2] = {};
 
     imageFormat.image_channel_data_type = channelType;
     imageFormat.image_channel_order = channelOrder;
@@ -253,7 +247,7 @@ TEST(TestSliceAndRowPitch, Given2dImageWithNonZeroRowPitchAndZeroSlicePitchWhenG
 
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
-    auto image = Image::create(
+    auto image = clUniquePtr(Image::create(
         &context,
         ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
         flags,
@@ -261,14 +255,11 @@ TEST(TestSliceAndRowPitch, Given2dImageWithNonZeroRowPitchAndZeroSlicePitchWhenG
         surfaceFormat,
         &imageDesc,
         hostPtr,
-        retVal);
+        retVal));
     ASSERT_NE(nullptr, image);
 
     EXPECT_EQ((width + 1) * elementSize, image->getHostPtrRowPitch());
     EXPECT_EQ(0u, image->getHostPtrSlicePitch());
-
-    delete image;
-    alignedFree(hostPtr);
 }
 
 TEST(TestSliceAndRowPitch, Given1dArrayWithNonZeroRowPitchAndZeroSlicePitchWhenGettingHostPtrSlicePitchAndRowPitchThenCorrectValuesAreReturned) {
@@ -280,10 +271,10 @@ TEST(TestSliceAndRowPitch, Given1dArrayWithNonZeroRowPitchAndZeroSlicePitchWhenG
     cl_int retVal;
     MockContext context;
 
-    const size_t width = 5;
-    const size_t height = 3;
-    const size_t depth = 2;
-    char *hostPtr = (char *)alignedMalloc(width * height * depth * elementSize * 2, 64);
+    constexpr size_t width = 5;
+    constexpr size_t height = 3;
+    constexpr size_t depth = 2;
+    char hostPtr[width * height * depth * elementSize * 2] = {};
 
     imageFormat.image_channel_data_type = channelType;
     imageFormat.image_channel_order = channelOrder;
@@ -303,7 +294,7 @@ TEST(TestSliceAndRowPitch, Given1dArrayWithNonZeroRowPitchAndZeroSlicePitchWhenG
 
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
-    auto image = Image::create(
+    auto image = clUniquePtr(Image::create(
         &context,
         ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
         flags,
@@ -311,14 +302,11 @@ TEST(TestSliceAndRowPitch, Given1dArrayWithNonZeroRowPitchAndZeroSlicePitchWhenG
         surfaceFormat,
         &imageDesc,
         hostPtr,
-        retVal);
+        retVal));
     ASSERT_NE(nullptr, image);
 
     EXPECT_EQ((width + 1) * elementSize, image->getHostPtrRowPitch());
     EXPECT_EQ((width + 1) * elementSize, image->getHostPtrSlicePitch());
-
-    delete image;
-    alignedFree(hostPtr);
 }
 
 TEST(TestSliceAndRowPitch, Given2dArrayWithNonZeroRowPitchAndZeroSlicePitchWhenGettingHostPtrSlicePitchAndRowPitchThenCorrectValuesAreReturned) {
@@ -330,10 +318,10 @@ TEST(TestSliceAndRowPitch, Given2dArrayWithNonZeroRowPitchAndZeroSlicePitchWhenG
     cl_int retVal;
     MockContext context;
 
-    const size_t width = 5;
-    const size_t height = 3;
-    const size_t depth = 2;
-    char *hostPtr = (char *)alignedMalloc(width * height * depth * elementSize * 2, 64);
+    constexpr size_t width = 5;
+    constexpr size_t height = 3;
+    constexpr size_t depth = 2;
+    char hostPtr[width * height * depth * elementSize * 2] = {};
 
     imageFormat.image_channel_data_type = channelType;
     imageFormat.image_channel_order = channelOrder;
@@ -353,7 +341,7 @@ TEST(TestSliceAndRowPitch, Given2dArrayWithNonZeroRowPitchAndZeroSlicePitchWhenG
 
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
-    auto image = Image::create(
+    auto image = clUniquePtr(Image::create(
         &context,
         ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
         flags,
@@ -361,14 +349,11 @@ TEST(TestSliceAndRowPitch, Given2dArrayWithNonZeroRowPitchAndZeroSlicePitchWhenG
         surfaceFormat,
         &imageDesc,
         hostPtr,
-        retVal);
+        retVal));
     ASSERT_NE(nullptr, image);
 
     EXPECT_EQ((width + 1) * elementSize, image->getHostPtrRowPitch());
     EXPECT_EQ((width + 1) * elementSize * height, image->getHostPtrSlicePitch());
-
-    delete image;
-    alignedFree(hostPtr);
 }
 
 TEST(TestSliceAndRowPitch, Given2dArrayWithZeroRowPitchAndNonZeroSlicePitchWhenGettingHostPtrSlicePitchAndRowPitchThenCorrectValuesAreReturned) {
@@ -380,10 +365,10 @@ TEST(TestSliceAndRowPitch, Given2dArrayWithZeroRowPitchAndNonZeroSlicePitchWhenG
     cl_int retVal;
     MockContext context;
 
-    const size_t width = 5;
-    const size_t height = 3;
-    const size_t depth = 2;
-    char *hostPtr = (char *)alignedMalloc(width * height * depth * elementSize * 2, 64);
+    constexpr size_t width = 5;
+    constexpr size_t height = 3;
+    constexpr size_t depth = 2;
+    char hostPtr[width * height * depth * elementSize * 2] = {};
 
     imageFormat.image_channel_data_type = channelType;
     imageFormat.image_channel_order = channelOrder;
@@ -403,7 +388,7 @@ TEST(TestSliceAndRowPitch, Given2dArrayWithZeroRowPitchAndNonZeroSlicePitchWhenG
 
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
-    auto image = Image::create(
+    auto image = clUniquePtr(Image::create(
         &context,
         ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
         flags,
@@ -411,14 +396,11 @@ TEST(TestSliceAndRowPitch, Given2dArrayWithZeroRowPitchAndNonZeroSlicePitchWhenG
         surfaceFormat,
         &imageDesc,
         hostPtr,
-        retVal);
+        retVal));
     ASSERT_NE(nullptr, image);
 
     EXPECT_EQ(width * elementSize, image->getHostPtrRowPitch());
     EXPECT_EQ((width + 1) * elementSize * height, image->getHostPtrSlicePitch());
-
-    delete image;
-    alignedFree(hostPtr);
 }
 
 TEST(TestSliceAndRowPitch, Given2dArrayWithNonZeroRowPitchAndNonZeroSlicePitchWhenGettingHostPtrSlicePitchAndRowPitchThenCorrectValuesAreReturned) {
@@ -430,10 +412,10 @@ TEST(TestSliceAndRowPitch, Given2dArrayWithNonZeroRowPitchAndNonZeroSlicePitchWh
     cl_int retVal;
     MockContext context;
 
-    const size_t width = 5;
-    const size_t height = 3;
-    const size_t depth = 2;
-    char *hostPtr = (char *)alignedMalloc(width * height * depth * elementSize * 2, 64);
+    constexpr size_t width = 5;
+    constexpr size_t height = 3;
+    constexpr size_t depth = 2;
+    char hostPtr[width * height * depth * elementSize * 2] = {};
 
     imageFormat.image_channel_data_type = channelType;
     imageFormat.image_channel_order = channelOrder;
@@ -453,7 +435,7 @@ TEST(TestSliceAndRowPitch, Given2dArrayWithNonZeroRowPitchAndNonZeroSlicePitchWh
 
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
-    auto image = Image::create(
+    auto image = clUniquePtr(Image::create(
         &context,
         ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
         flags,
@@ -461,14 +443,11 @@ TEST(TestSliceAndRowPitch, Given2dArrayWithNonZeroRowPitchAndNonZeroSlicePitchWh
         surfaceFormat,
         &imageDesc,
         hostPtr,
-        retVal);
+        retVal));
     ASSERT_NE(nullptr, image);
 
     EXPECT_EQ((width + 1) * elementSize, image->getHostPtrRowPitch());
     EXPECT_EQ((width + 1) * elementSize * height, image->getHostPtrSlicePitch());
-
-    delete image;
-    alignedFree(hostPtr);
 }
 
 TEST(TestSliceAndRowPitch, Given2dArrayWithNonZeroRowPitchAndNonZeroSlicePitchGreaterThanRowPitchTimesHeightWhenGettingHostPtrSlicePitchAndRowPitchThenCorrectValuesAreReturned) {
@@ -480,10 +459,10 @@ TEST(TestSliceAndRowPitch, Given2dArrayWithNonZeroRowPitchAndNonZeroSlicePitchGr
     cl_int retVal;
     MockContext context;
 
-    const size_t width = 5;
-    const size_t height = 3;
-    const size_t depth = 2;
-    char *hostPtr = (char *)alignedMalloc(width * height * depth * elementSize * 2, 64);
+    constexpr size_t width = 5;
+    constexpr size_t height = 3;
+    constexpr size_t depth = 2;
+    char hostPtr[width * height * depth * elementSize * 2] = {};
 
     imageFormat.image_channel_data_type = channelType;
     imageFormat.image_channel_order = channelOrder;
@@ -503,7 +482,7 @@ TEST(TestSliceAndRowPitch, Given2dArrayWithNonZeroRowPitchAndNonZeroSlicePitchGr
 
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
-    auto image = Image::create(
+    auto image = clUniquePtr(Image::create(
         &context,
         ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
         flags,
@@ -511,14 +490,11 @@ TEST(TestSliceAndRowPitch, Given2dArrayWithNonZeroRowPitchAndNonZeroSlicePitchGr
         surfaceFormat,
         &imageDesc,
         hostPtr,
-        retVal);
+        retVal));
     ASSERT_NE(nullptr, image);
 
     EXPECT_EQ((width + 1) * elementSize, image->getHostPtrRowPitch());
     EXPECT_EQ((width + 1) * elementSize * (height + 1), image->getHostPtrSlicePitch());
-
-    delete image;
-    alignedFree(hostPtr);
 }
 
 TEST(TestCreateImageUseHostPtr, GivenDifferenHostPtrAlignmentsWhenCheckingMemoryALignmentThenCorrectValueIsReturned) {
@@ -527,8 +503,9 @@ TEST(TestCreateImageUseHostPtr, GivenDifferenHostPtrAlignmentsWhenCheckingMemory
     cl_int retVal;
     MockContext context;
 
-    const size_t width = 4;
-    const size_t height = 32;
+    constexpr size_t width = 4;
+    constexpr size_t height = 32;
+    constexpr size_t rowPitch = alignUp(alignUp(width, 4) * 4, 0x80);
 
     imageFormat.image_channel_data_type = channelType;
     imageFormat.image_channel_order = channelOrder;
@@ -543,10 +520,11 @@ TEST(TestCreateImageUseHostPtr, GivenDifferenHostPtrAlignmentsWhenCheckingMemory
     imageDesc.image_height = height;
     imageDesc.image_depth = 0;
     imageDesc.image_array_size = 0;
-    imageDesc.image_row_pitch = alignUp(alignUp(width, 4) * 4, 0x80); // row pitch for tiled img
+    imageDesc.image_row_pitch = rowPitch; // row pitch for tiled img
     imageDesc.image_slice_pitch = 0;
 
-    void *pageAlignedPointer = alignedMalloc(imageDesc.image_row_pitch * height * 1 * 4 + 256, 4096);
+    alignas(MemoryConstants::pageSize) uint8_t pageAlignedMemory[rowPitch * height * 1 * 4 + 256] = {};
+    void *pageAlignedPointer = pageAlignedMemory;
     void *hostPtr[] = {ptrOffset(pageAlignedPointer, 16),   // 16 - byte alignment
                        ptrOffset(pageAlignedPointer, 32),   // 32 - byte alignment
                        ptrOffset(pageAlignedPointer, 64),   // 64 - byte alignment
@@ -578,7 +556,6 @@ TEST(TestCreateImageUseHostPtr, GivenDifferenHostPtrAlignmentsWhenCheckingMemory
             EXPECT_NE(hostPtr[i], address);
         }
     }
-    alignedFree(pageAlignedPointer);
 }
 
 TEST(TestCreateImageUseHostPtr, givenZeroCopyImageValuesWhenUsingHostPtrThenZeroCopyImageIsCreated) {
@@ -1795,22 +1772,20 @@ TEST(ImageTest, givenMultiDeviceEnvironmentWhenReleaseImageFromBufferThenMainBuf
     MockDefaultContext context;
     int32_t retVal;
 
-    auto *buffer = Buffer::create(&context, CL_MEM_READ_WRITE,
-                                  MemoryConstants::pageSize, nullptr, retVal);
+    auto buffer = clUniquePtr(Buffer::create(&context, CL_MEM_READ_WRITE,
+                                             MemoryConstants::pageSize, nullptr, retVal));
 
     auto imageDesc = Image2dDefaults::imageDesc;
 
-    cl_mem clBuffer = buffer;
+    cl_mem clBuffer = buffer.get();
     imageDesc.mem_object = clBuffer;
-    auto image = Image2dHelperUlt<>::create(&context, &imageDesc);
+    auto image = clUniquePtr(Image2dHelperUlt<>::create(&context, &imageDesc));
     EXPECT_EQ(3u, buffer->getMultiGraphicsAllocation().getGraphicsAllocations().size());
     EXPECT_EQ(3u, image->getMultiGraphicsAllocation().getGraphicsAllocations().size());
 
     EXPECT_EQ(2, buffer->getRefInternalCount());
-    image->release();
+    image.reset();
     EXPECT_EQ(1, buffer->getRefInternalCount());
-
-    buffer->release();
 }
 
 TEST(ImageTest, givenPropertiesWithClDeviceHandleListKHRWhenCreateImageThenCorrectImageIsSet) {
@@ -1860,7 +1835,7 @@ TEST(ImageTest, givenPropertiesWithClDeviceHandleListKHRWhenCreateImageThenCorre
 
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
 
-    auto image = Image::create(
+    auto image = clUniquePtr(Image::create(
         &context,
         memoryProperties,
         flags,
@@ -1868,7 +1843,7 @@ TEST(ImageTest, givenPropertiesWithClDeviceHandleListKHRWhenCreateImageThenCorre
         surfaceFormat,
         &imageDesc,
         hostPtr,
-        retVal);
+        retVal));
 
     EXPECT_EQ(retVal, CL_SUCCESS);
     ASSERT_NE(nullptr, image);
@@ -1879,8 +1854,6 @@ TEST(ImageTest, givenPropertiesWithClDeviceHandleListKHRWhenCreateImageThenCorre
 
     EXPECT_EQ(static_cast<size_t>(elementSize), image->getHostPtrRowPitch());
     EXPECT_EQ(0u, image->getHostPtrSlicePitch());
-
-    delete image;
 }
 
 using MultiRootDeviceImageTest = ::testing::Test;

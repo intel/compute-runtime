@@ -16,6 +16,7 @@
 #include "shared/test/common/mocks/mock_sip_wrapper.h"
 #include "shared/test/common/os_interface/linux/drm_memory_manager_fixture.h"
 #include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/utilities/base_object_utils.h"
 
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/buffer.h"
@@ -63,21 +64,19 @@ HWTEST_TEMPLATED_F(ClDrmMemoryManagerTest, givenDrmBufferWhenItIsQueriedForInter
     size_t size = 1u;
     auto retVal = CL_SUCCESS;
 
-    auto buffer = Buffer::create(
+    auto buffer = clUniquePtr(Buffer::create(
         &context,
         CL_MEM_ALLOC_HOST_PTR,
         size,
         nullptr,
-        retVal);
+        retVal));
 
     uint64_t handle = 0llu;
 
-    retVal = clGetMemObjectInfo(buffer, CL_MEM_ALLOCATION_HANDLE_INTEL, sizeof(handle), &handle, nullptr);
+    retVal = clGetMemObjectInfo(buffer.get(), CL_MEM_ALLOCATION_HANDLE_INTEL, sizeof(handle), &handle, nullptr);
     EXPECT_EQ(retVal, CL_SUCCESS);
 
     EXPECT_EQ(static_cast<uint64_t>(1337), handle);
-
-    clReleaseMemObject(buffer);
 }
 
 HWTEST_TEMPLATED_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageWithMipCountZeroIsBeingCreatedThenallocateGraphicsMemoryForImageIsUsed) {
@@ -265,7 +264,7 @@ HWTEST2_TEMPLATED_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageI
     imageDesc.image_width = 64u;
     imageDesc.image_height = 64u;
 
-    auto data = alignedMalloc(64u * 64u * 4 * 8, MemoryConstants::pageSize);
+    auto data = reinterpret_cast<void *>(0x100000);
 
     auto retVal = CL_SUCCESS;
 
@@ -292,8 +291,6 @@ HWTEST2_TEMPLATED_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageI
     EXPECT_EQ(tilingMode, this->mock->setTilingMode);
     EXPECT_EQ(rowPitch, this->mock->setTilingStride);
     EXPECT_EQ(1u, this->mock->setTilingHandle);
-
-    alignedFree(data);
 }
 
 HWTEST_TEMPLATED_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenMemoryAllocatedForImageThenUnmapSizeCorrectlySetWhenLimitedRangeAllocationUsedOrNotUsed) {
@@ -312,7 +309,7 @@ HWTEST_TEMPLATED_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenMemoryAlloca
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
     imageDesc.image_width = 64u;
 
-    auto data = alignedMalloc(64u * 4 * 8, MemoryConstants::pageSize);
+    uint8_t data[64u * 4 * 8] = {};
 
     auto retVal = CL_SUCCESS;
 
@@ -325,8 +322,6 @@ HWTEST_TEMPLATED_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenMemoryAlloca
     ASSERT_NE(nullptr, dstImage);
     auto imageGraphicsAllocation = dstImage->getGraphicsAllocation(rootDeviceIndex);
     ASSERT_NE(nullptr, imageGraphicsAllocation);
-
-    alignedFree(data);
 }
 
 HWTEST_TEMPLATED_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenNonTiledImgWithMipCountZeroisBeingCreatedThenAllocateGraphicsMemoryIsUsed) {
@@ -345,7 +340,7 @@ HWTEST_TEMPLATED_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenNonTiledImgW
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
     imageDesc.image_width = 64u;
 
-    auto data = alignedMalloc(64u * 4 * 8, MemoryConstants::pageSize);
+    uint8_t data[64u * 4 * 8] = {};
 
     auto retVal = CL_SUCCESS;
     this->mock->createParamsHandle = 0;
@@ -372,8 +367,6 @@ HWTEST_TEMPLATED_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenNonTiledImgW
     EXPECT_EQ(0u, this->mock->setTilingHandle);
 
     EXPECT_EQ(Sharing::nonSharedResource, imageGraphicsAllocation->peekSharedHandle());
-
-    alignedFree(data);
 }
 
 HWTEST_TEMPLATED_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenNonTiledImgWithMipCountNonZeroisBeingCreatedThenAllocateGraphicsMemoryIsUsed) {
@@ -393,8 +386,6 @@ HWTEST_TEMPLATED_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenNonTiledImgW
     imageDesc.image_width = 64u;
     imageDesc.num_mip_levels = 1u;
 
-    auto data = alignedMalloc(64u * 4 * 8, MemoryConstants::pageSize);
-
     auto retVal = CL_SUCCESS;
 
     this->mock->createParamsHandle = 0;
@@ -404,7 +395,7 @@ HWTEST_TEMPLATED_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenNonTiledImgW
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
     std::unique_ptr<Image> dstImage(Image::create(
         &context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
-        flags, 0, surfaceFormat, &imageDesc, data, retVal));
+        flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, dstImage);
     EXPECT_EQ(static_cast<uint32_t>(imageDesc.num_mip_levels), dstImage->peekMipCount());
@@ -422,8 +413,6 @@ HWTEST_TEMPLATED_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenNonTiledImgW
     EXPECT_EQ(0u, this->mock->setTilingHandle);
 
     EXPECT_EQ(Sharing::nonSharedResource, imageGraphicsAllocation->peekSharedHandle());
-
-    alignedFree(data);
 }
 
 HWTEST_TEMPLATED_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhen1DarrayImageIsBeingCreatedFromHostPtrThenTilingIsNotCalled) {
@@ -442,7 +431,7 @@ HWTEST_TEMPLATED_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhen1DarrayImage
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
     imageDesc.image_width = 64u;
 
-    auto data = alignedMalloc(64u * 4 * 8, MemoryConstants::pageSize);
+    uint8_t data[64u * 4 * 8] = {};
 
     auto retVal = CL_SUCCESS;
     this->mock->createParamsHandle = 0;
@@ -465,8 +454,6 @@ HWTEST_TEMPLATED_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhen1DarrayImage
     EXPECT_EQ(0u, this->mock->setTilingHandle);
 
     EXPECT_EQ(Sharing::nonSharedResource, imageGraphicsAllocation->peekSharedHandle());
-
-    alignedFree(data);
 }
 
 HWTEST_TEMPLATED_F(ClDrmMemoryManagerTest, givenHostPointerNotRequiringCopyWhenAllocateGraphicsMemoryForImageIsCalledThenGraphicsAllocationIsReturned) {
@@ -493,7 +480,7 @@ HWTEST_TEMPLATED_F(ClDrmMemoryManagerTest, givenHostPointerNotRequiringCopyWhenA
     imgInfo.size = imgInfo.slicePitch;
     imgInfo.linearStorage = true;
 
-    auto hostPtr = alignedMalloc(imgDesc.imageWidth * imgDesc.imageHeight * 4, MemoryConstants::pageSize);
+    auto hostPtr = reinterpret_cast<void *>(0x100000);
     bool copyRequired = MockMemoryManager::isCopyRequired(imgInfo, hostPtr);
     EXPECT_FALSE(copyRequired);
 
@@ -507,7 +494,6 @@ HWTEST_TEMPLATED_F(ClDrmMemoryManagerTest, givenHostPointerNotRequiringCopyWhenA
     EXPECT_EQ(hostPtr, imageAllocation->getUnderlyingBuffer());
 
     memoryManager->freeGraphicsMemory(imageAllocation);
-    alignedFree(hostPtr);
 }
 
 HWTEST_TEMPLATED_F(ClDrmMemoryManagerTest, givenOsHandleWithNonTiledObjectWhenCreateFromSharedHandleIsCalledThenNonTiledGmmIsCreatedAndSetInAllocation) {

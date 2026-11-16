@@ -598,10 +598,9 @@ TEST_F(clCreateBufferWithMultiDeviceContextTests, GivenBufferCreatedWithContextd
 
         constexpr auto bufferSize = 64u;
 
-        auto hostBuffer = alignedMalloc(bufferSize, MemoryConstants::pageSize64k);
-        auto ptrHostBuffer = static_cast<uint8_t *>(hostBuffer);
+        uint8_t hostBuffer[bufferSize] = {};
 
-        auto buffer = clCreateBuffer(context, flags, bufferSize, flags == 0 ? nullptr : ptrHostBuffer, &retVal);
+        auto buffer = clCreateBuffer(context, flags, bufferSize, flags == 0 ? nullptr : hostBuffer, &retVal);
         ASSERT_EQ(CL_SUCCESS, retVal);
         EXPECT_NE(nullptr, buffer);
 
@@ -611,8 +610,6 @@ TEST_F(clCreateBufferWithMultiDeviceContextTests, GivenBufferCreatedWithContextd
         EXPECT_NE(bufferObj->getMultiGraphicsAllocation().getGraphicsAllocation(0u), nullptr);
         EXPECT_NE(bufferObj->getMultiGraphicsAllocation().getGraphicsAllocation(1u), nullptr);
         EXPECT_NE(bufferObj->getMultiGraphicsAllocation().getGraphicsAllocation(0u), bufferObj->getMultiGraphicsAllocation().getGraphicsAllocation(1u));
-
-        alignedFree(hostBuffer);
 
         retVal = clReleaseMemObject(buffer);
         EXPECT_EQ(CL_SUCCESS, retVal);
@@ -635,19 +632,16 @@ TEST_F(clCreateBufferWithMultiDeviceContextFaillingAllocationTests, GivenContext
 
     constexpr auto bufferSize = 64u;
 
-    auto hostBuffer = alignedMalloc(bufferSize, MemoryConstants::pageSize64k);
-    auto ptrHostBuffer = static_cast<uint8_t *>(hostBuffer);
+    auto hostBuffer = reinterpret_cast<void *>(0x100000);
 
     cl_mem_flags flags = CL_MEM_USE_HOST_PTR;
 
     static_cast<MockMemoryManager *>(pContext.memoryManager)->successAllocatedGraphicsMemoryIndex = 0u;
     static_cast<MockMemoryManager *>(pContext.memoryManager)->maxSuccessAllocatedGraphicsMemoryIndex = 2u;
 
-    auto buffer = clCreateBuffer(&pContext, flags, bufferSize, ptrHostBuffer, &retVal);
+    auto buffer = clCreateBuffer(&pContext, flags, bufferSize, hostBuffer, &retVal);
     ASSERT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
     EXPECT_EQ(nullptr, buffer);
-
-    alignedFree(hostBuffer);
 }
 
 struct SpyCommandQueue : public MockCommandQueue {

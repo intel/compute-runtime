@@ -200,14 +200,14 @@ TEST_F(ClWddmMemoryManagerTest, givenWddmMemoryManagerWhenNonTiledImgWithMipCoun
 TEST_F(BufferWithWddmMemory, WhenCreatingBufferThenBufferIsCreatedCorrectly) {
     flags = CL_MEM_USE_HOST_PTR | CL_MEM_FORCE_HOST_MEMORY_INTEL;
 
-    auto ptr = alignedMalloc(MemoryConstants::preferredAlignment, MemoryConstants::preferredAlignment);
+    alignas(MemoryConstants::cacheLineSize) uint8_t ptr[MemoryConstants::preferredAlignment] = {};
 
-    auto buffer = Buffer::create(
+    std::unique_ptr<Buffer> buffer(Buffer::create(
         &context,
         flags,
         MemoryConstants::preferredAlignment,
         ptr,
-        retVal);
+        retVal));
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, buffer);
@@ -220,9 +220,6 @@ TEST_F(BufferWithWddmMemory, WhenCreatingBufferThenBufferIsCreatedCorrectly) {
     }
     EXPECT_NE(nullptr, buffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex()));
     EXPECT_NE(nullptr, buffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getUnderlyingBuffer());
-
-    delete buffer;
-    alignedFree(ptr);
 }
 
 TEST_F(BufferWithWddmMemory, GivenNullOsHandleStorageWhenPopulatingThenFilledPointerIsReturned) {

@@ -27,9 +27,6 @@ typedef OOQTaskTypedTestsMt<EnqueueKernelHelper<>> OOQTaskTestsMt;
 TEST_F(OOQTaskTestsMt, GivenBlockingAndBlockedOnUserEventWhenReadingBufferThenTaskCountIsIncrementedAndTaskLevelIsUnchanged) {
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
 
-    auto alignedReadPtr = alignedMalloc(BufferDefaults::sizeInBytes, MemoryConstants::cacheLineSize);
-    ASSERT_NE(nullptr, alignedReadPtr);
-
     auto userEvent = clCreateUserEvent(pContext.get(), &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -51,7 +48,7 @@ TEST_F(OOQTaskTestsMt, GivenBlockingAndBlockedOnUserEventWhenReadingBufferThenTa
                                                           CL_TRUE,
                                                           0,
                                                           BufferDefaults::sizeInBytes,
-                                                          alignedReadPtr,
+                                                          EnqueueReadBufferTraits::hostPtr,
                                                           nullptr,
                                                           1,
                                                           &userEvent,
@@ -65,8 +62,6 @@ TEST_F(OOQTaskTestsMt, GivenBlockingAndBlockedOnUserEventWhenReadingBufferThenTa
 
     retVal = clReleaseEvent(userEvent);
     EXPECT_EQ(CL_SUCCESS, retVal);
-
-    alignedFree(alignedReadPtr);
 }
 
 TEST_F(OOQTaskTestsMt, GivenBlockedOnUserEventWhenEnqueingMarkerThenSuccessIsReturned) {

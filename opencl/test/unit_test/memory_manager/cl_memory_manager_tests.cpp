@@ -98,7 +98,7 @@ TEST(ClOsAgnosticMemoryManager, givenHostPointerNotRequiringCopyWhenAllocateGrap
     imgInfo.size = imgInfo.slicePitch;
     imgInfo.linearStorage = true;
 
-    auto hostPtr = alignedMalloc(imgDesc.imageWidth * imgDesc.imageHeight * 4, MemoryConstants::pageSize);
+    auto hostPtr = reinterpret_cast<void *>(0x100000);
 
     bool copyRequired = MockMemoryManager::isCopyRequired(imgInfo, hostPtr);
     EXPECT_FALSE(copyRequired);
@@ -113,7 +113,6 @@ TEST(ClOsAgnosticMemoryManager, givenHostPointerNotRequiringCopyWhenAllocateGrap
     EXPECT_EQ(hostPtr, imageAllocation->getUnderlyingBuffer());
 
     memoryManager.freeGraphicsMemory(imageAllocation);
-    alignedFree(hostPtr);
 }
 
 TEST(ClOsAgnosticMemoryManager, givenHostPointerRequiringCopyWhenAllocateGraphicsMemoryForImageFromHostPtrIsCalledThenNullptrIsReturned) {

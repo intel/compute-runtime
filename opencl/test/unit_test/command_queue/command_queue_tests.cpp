@@ -2104,7 +2104,7 @@ HWTEST_F(MultiRootDeviceCommandQueueTest, givenBuffersInLocalMemoryWhenMultiGrap
 
     std::unique_ptr<Buffer> srcBuffer(BufferHelper<>::create(&context));
     size_t size = MemoryConstants::kiloByte;
-    auto dstPtr = alignedMalloc(size, MemoryConstants::cacheLineSize);
+    auto dstPtr = reinterpret_cast<void *>(0x100000);
 
     BuiltIn::OpParams operationParams;
     operationParams.srcMemObj = srcBuffer.get();
@@ -2120,8 +2120,6 @@ HWTEST_F(MultiRootDeviceCommandQueueTest, givenBuffersInLocalMemoryWhenMultiGrap
     queue.migrateMultiGraphicsAllocationsIfRequired(operationParams, csr);
 
     EXPECT_EQ(targetRootDeviceIndex, srcBuffer->getMultiGraphicsAllocation().getMigrationSyncData()->getCurrentLocation());
-
-    alignedFree(dstPtr);
 }
 
 template <bool blitter, bool selectBlitterWithQueueFamilies>

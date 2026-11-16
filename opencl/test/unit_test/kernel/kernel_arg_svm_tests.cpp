@@ -603,7 +603,7 @@ HWTEST_TYPED_TEST(KernelArgSvmTestTyped, GivenBufferKernelArgWhenBufferOffsetIsN
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     uint32_t svmSize = MemoryConstants::pageSize;
-    char *svmPtr = reinterpret_cast<char *>(alignedMalloc(svmSize, MemoryConstants::pageSize));
+    char *svmPtr = reinterpret_cast<char *>(0x100000);
 
     auto &arg = this->pKernelInfo->argAsPtr(0);
     arg.bindful = 0;
@@ -653,8 +653,6 @@ HWTEST_TYPED_TEST(KernelArgSvmTestTyped, GivenBufferKernelArgWhenBufferOffsetIsN
         int32_t cmpResult = memcmp(&expectedSurfaceState, surfState, rendSurfSize);
         EXPECT_EQ(0, cmpResult);
     }
-
-    alignedFree(svmPtr);
 }
 
 TEST_F(KernelArgSvmTest, givenCpuAddressIsNullWhenGpuAddressIsValidThenExpectSvmArgUseGpuAddress) {

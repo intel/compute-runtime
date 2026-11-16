@@ -73,9 +73,6 @@ TEST_F(IOQ, WhenReadingBufferThenTaskCountIsIncremented) {
 TEST_F(IOQ, GivenUserEventWhenReadingBufferThenTaskCountAndTaskLevelAreIncremented) {
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
 
-    auto alignedReadPtr = alignedMalloc(BufferDefaults::sizeInBytes, MemoryConstants::cacheLineSize);
-    ASSERT_NE(nullptr, alignedReadPtr);
-
     auto previousTaskCount = pCmdQ->taskCount;
     auto previousTaskLevel = pCmdQ->taskLevel;
 
@@ -91,7 +88,7 @@ TEST_F(IOQ, GivenUserEventWhenReadingBufferThenTaskCountAndTaskLevelAreIncrement
                                                           CL_TRUE,
                                                           0,
                                                           BufferDefaults::sizeInBytes,
-                                                          alignedReadPtr,
+                                                          EnqueueReadBufferTraits::hostPtr,
                                                           nullptr,
                                                           1,
                                                           &userEvent,
@@ -103,6 +100,4 @@ TEST_F(IOQ, GivenUserEventWhenReadingBufferThenTaskCountAndTaskLevelAreIncrement
 
     retVal = clReleaseEvent(userEvent);
     EXPECT_EQ(CL_SUCCESS, retVal);
-
-    alignedFree(alignedReadPtr);
 }

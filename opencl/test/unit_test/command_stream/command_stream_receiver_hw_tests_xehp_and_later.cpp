@@ -141,7 +141,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, WhenComman
 
 HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLaterWithMockCsrHw, WhenScratchSpaceExistsThenReturnNonZeroGpuAddressToPatch) {
     auto commandStreamReceiver = static_cast<MockCsrHw<FamilyType> *>(&pDevice->getGpgpuCommandStreamReceiver());
-    void *ssh = alignedMalloc(512, 4096);
+    alignas(typename FamilyType::RENDER_SURFACE_STATE) uint8_t ssh[512] = {};
 
     uint32_t perThreadScratchSize = 0x400;
 
@@ -154,7 +154,6 @@ HWCMDTEST_TEMPLATED_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLaterWi
     auto scratchSpaceAddr = commandStreamReceiver->getScratchPatchAddress();
     constexpr uint64_t notExpectedScratchGpuAddr = 0;
     EXPECT_NE(notExpectedScratchGpuAddr, scratchSpaceAddr);
-    alignedFree(ssh);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, WhenOsContextSupportsMultipleDevicesThenScratchSpaceAllocationIsPlacedOnEachSupportedDevice) {

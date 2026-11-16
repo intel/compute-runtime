@@ -163,7 +163,7 @@ TEST_F(ClSvmAllocTest, givenSupportedAlignmentsWhenClSvmAllocThenAllocationSucce
 }
 
 TEST_F(ClSvmAllocTest, givenUseHostPtrPropertyWhenClHostMemAllocIntelThenGivenHostPtrIsUsed) {
-    auto hostStorage = alignedMalloc(validSize, MemoryConstants::pageSize64k);
+    auto hostStorage = reinterpret_cast<void *>(0x100000);
     cl_mem_properties_intel properties[] = {CL_MEM_ALLOC_USE_HOST_PTR_INTEL, reinterpret_cast<cl_mem_properties_intel>(hostStorage), 0};
     cl_int retVal = CL_INVALID_VALUE;
 
@@ -175,7 +175,6 @@ TEST_F(ClSvmAllocTest, givenUseHostPtrPropertyWhenClHostMemAllocIntelThenGivenHo
     EXPECT_EQ(reinterpret_cast<uintptr_t>(hostStorage), svmData->allocationFlagsProperty.hostptr);
 
     EXPECT_EQ(CL_SUCCESS, clMemBlockingFreeINTEL(getContext(), ptr));
-    alignedFree(hostStorage);
 }
 
 TEST_F(ClSvmAllocTest, givenNoUseHostPtrPropertyWhenClHostMemAllocIntelThenNoExternalHostPtrIsUsed) {
@@ -191,7 +190,7 @@ TEST_F(ClSvmAllocTest, givenNoUseHostPtrPropertyWhenClHostMemAllocIntelThenNoExt
 }
 
 TEST_F(ClSvmAllocTest, givenUseHostPtrPropertyWhenClSharedMemAllocIntelThenGivenHostPtrIsUsed) {
-    auto hostStorage = alignedMalloc(validSize, MemoryConstants::pageSize64k);
+    auto hostStorage = reinterpret_cast<void *>(0x100000);
     cl_mem_properties_intel properties[] = {CL_MEM_ALLOC_USE_HOST_PTR_INTEL, reinterpret_cast<cl_mem_properties_intel>(hostStorage), 0};
     cl_int retVal = CL_INVALID_VALUE;
 
@@ -203,7 +202,6 @@ TEST_F(ClSvmAllocTest, givenUseHostPtrPropertyWhenClSharedMemAllocIntelThenGiven
     EXPECT_EQ(reinterpret_cast<uintptr_t>(hostStorage), svmData->allocationFlagsProperty.hostptr);
 
     EXPECT_EQ(CL_SUCCESS, clMemBlockingFreeINTEL(getContext(), ptr));
-    alignedFree(hostStorage);
 }
 
 TEST_F(ClSvmAllocTest, givenNoUseHostPtrPropertyWhenClSharedMemAllocIntelThenNoExternalHostPtrIsUsed) {

@@ -28,6 +28,7 @@
 #include "shared/test/common/mocks/mock_host_ptr_manager.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/utilities/base_object_utils.h"
 
 #include "opencl/extensions/public/cl_ext_private.h"
 #include "opencl/source/command_queue/command_queue_hw.h"
@@ -226,15 +227,13 @@ TEST_F(BufferTailPatternTests, givenBufferFromHostPtrOrSubBufferWhenCheckingTail
 
     cl_int retVal = CL_INVALID_VALUE;
     const cl_buffer_region region{0u, 3 * MemoryConstants::pageSize};
-    auto subBuffer = parentBuffer->createSubBuffer(CL_MEM_READ_WRITE, 0, &region, retVal);
+    auto subBuffer = clUniquePtr(parentBuffer->createSubBuffer(CL_MEM_READ_WRITE, 0, &region, retVal));
     ASSERT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, subBuffer);
     ASSERT_TRUE(subBuffer->isSubBuffer());
 
     EXPECT_TRUE(subBuffer->isTailPatternValid());
     EXPECT_EQ(0u, this->spyQueue->enqueueReadBufferCallCount);
-
-    subBuffer->release();
 }
 
 TEST_F(BufferTailPatternTests, givenIntactTailPatternWhenCheckingTailPatternThenTailIsReadAtExtendedRegionAndNothingIsPrinted) {
@@ -752,10 +751,8 @@ TEST(Buffer, givenHostPtrPassedToBufferCreateWhenMemUseHostPtrFlagisSetAndBuffer
 
     cl_int retVal = 0;
     cl_mem_flags flags = CL_MEM_USE_HOST_PTR;
-    auto size = MemoryConstants::pageSize;
-    void *ptr = (void *)alignedMalloc(size * 2, MemoryConstants::pageSize);
-    auto ptrOffset = 1;
-    void *offsetPtr = (void *)((uintptr_t)ptr + ptrOffset);
+    uint8_t ptr[2 * MemoryConstants::pageSize] = {};
+    void *offsetPtr = ptrOffset(ptr, 1);
 
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, offsetPtr, retVal));
     ASSERT_NE(nullptr, buffer.get());
@@ -764,8 +761,6 @@ TEST(Buffer, givenHostPtrPassedToBufferCreateWhenMemUseHostPtrFlagisSetAndBuffer
     EXPECT_NE(nullptr, mapAllocation);
     EXPECT_EQ(offsetPtr, mapAllocation->getUnderlyingBuffer());
     EXPECT_EQ(AllocationType::mapAllocation, mapAllocation->getAllocationType());
-
-    alignedFree(ptr);
 }
 
 TEST(Buffer, givenAlignedHostPtrPassedToBufferCreateWhenNoSharedContextOrCompressedBuffersThenBuffersAllocationTypeIsBufferHostMemory) {
@@ -985,14 +980,12 @@ TEST(Buffer, givenPropertiesWithClDeviceHandleListKHRWhenCreateBufferThenCorrect
     ClMemoryPropertiesHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
                                                     ClMemoryPropertiesHelper::ObjType::buffer, context);
 
-    Buffer *buffer = Buffer::create(&context, memoryProperties, flags, flagsIntel, 1, &data, retVal);
+    auto buffer = clUniquePtr(Buffer::create(&context, memoryProperties, flags, flagsIntel, 1, &data, retVal));
 
     EXPECT_EQ(retVal, CL_SUCCESS);
     EXPECT_EQ(buffer->getGraphicsAllocation(0), nullptr);
     EXPECT_NE(buffer->getGraphicsAllocation(1), nullptr);
     EXPECT_NE(buffer->getGraphicsAllocation(2), nullptr);
-
-    clReleaseMemObject(buffer);
 }
 
 struct CompressedBuffersTests : public ::testing::Test {
@@ -1282,20 +1275,18 @@ typedef BufferTest NoHostPtr;
 TEST_F(NoHostPtr, GivenValidFlagsWhenCreatingBufferThenBufferIsCreated) {
     for (cl_mem_flags flagsParam : noHostPtrFlags) {
         this->flags = flagsParam;
-        auto buffer = Buffer::create(
+        auto buffer = std::unique_ptr<Buffer>(Buffer::create(
             context.get(),
             flags,
             testBufferSizeInBytes,
             nullptr,
-            retVal);
+            retVal));
 
         ASSERT_EQ(CL_SUCCESS, retVal);
         ASSERT_NE(nullptr, buffer);
 
         auto address = buffer->getCpuAddress();
         EXPECT_NE(nullptr, address);
-
-        delete buffer;
     }
 }
 
@@ -1339,44 +1330,40 @@ TEST_F(NoHostPtr, GivenNoHostPtrWhenHwBufferCreationFailsThenReturnNullptr) {
 TEST_F(NoHostPtr, GivenNoHostPtrWhenCreatingBufferWithMemUseHostPtrThenInvalidHostPtrErrorIsReturned) {
     for (cl_mem_flags flagsParam : noHostPtrFlags) {
         this->flags = flagsParam;
-        auto buffer = Buffer::create(
+        auto buffer = std::unique_ptr<Buffer>(Buffer::create(
             context.get(),
             flags | CL_MEM_USE_HOST_PTR,
             testBufferSizeInBytes,
             nullptr,
-            retVal);
+            retVal));
         EXPECT_EQ(CL_INVALID_HOST_PTR, retVal);
         EXPECT_EQ(nullptr, buffer);
-
-        delete buffer;
     }
 }
 
 TEST_F(NoHostPtr, GivenNoHostPtrWhenCreatingBufferWithMemCopyHostPtrThenInvalidHostPtrErrorIsReturned) {
     for (cl_mem_flags flagsParam : noHostPtrFlags) {
         this->flags = flagsParam;
-        auto buffer = Buffer::create(
+        auto buffer = std::unique_ptr<Buffer>(Buffer::create(
             context.get(),
             flags | CL_MEM_COPY_HOST_PTR,
             testBufferSizeInBytes,
             nullptr,
-            retVal);
+            retVal));
         EXPECT_EQ(CL_INVALID_HOST_PTR, retVal);
         EXPECT_EQ(nullptr, buffer);
-
-        delete buffer;
     }
 }
 
 TEST_F(NoHostPtr, WhenGettingAllocationTypeThenCorrectBufferTypeIsReturned) {
     for (cl_mem_flags flagsParam : noHostPtrFlags) {
         this->flags = flagsParam;
-        auto buffer = Buffer::create(
+        auto buffer = std::unique_ptr<Buffer>(Buffer::create(
             context.get(),
             flags,
             testBufferSizeInBytes,
             nullptr,
-            retVal);
+            retVal));
         ASSERT_EQ(CL_SUCCESS, retVal);
         ASSERT_NE(nullptr, buffer);
 
@@ -1390,8 +1377,6 @@ TEST_F(NoHostPtr, WhenGettingAllocationTypeThenCorrectBufferTypeIsReturned) {
 
         auto isBufferWritable = !(flags & (CL_MEM_READ_ONLY | CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS));
         EXPECT_EQ(isBufferWritable, allocation->isMemObjectsAllocationWithWritableFlags());
-
-        delete buffer;
     }
 }
 
@@ -1629,7 +1614,7 @@ TEST_F(ValidHostPtr, GivenSvmHostPtrWhenCreatingBufferThenBufferIsCreatedCorrect
         if (devInfo.svmCapabilities != 0) {
             auto ptr = context->getSVMAllocsManager()->createSVMAlloc(64, {}, context->getRootDeviceIndices(), context->getDeviceBitfields());
 
-            auto bufferSvm = Buffer::create(context.get(), CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, 64, ptr, retVal);
+            auto bufferSvm = std::unique_ptr<Buffer>(Buffer::create(context.get(), CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, 64, ptr, retVal));
             EXPECT_NE(nullptr, bufferSvm);
             EXPECT_TRUE(bufferSvm->isMemObjWithHostPtrSVM());
             auto svmData = context->getSVMAllocsManager()->getSVMAlloc(ptr);
@@ -1637,7 +1622,7 @@ TEST_F(ValidHostPtr, GivenSvmHostPtrWhenCreatingBufferThenBufferIsCreatedCorrect
             EXPECT_EQ(svmData->gpuAllocations.getGraphicsAllocation(pDevice->getRootDeviceIndex()), bufferSvm->getGraphicsAllocation(pDevice->getRootDeviceIndex()));
             EXPECT_EQ(CL_SUCCESS, retVal);
 
-            delete bufferSvm;
+            bufferSvm.reset();
             context->getSVMAllocsManager()->freeSVMAlloc(ptr);
         }
     }
@@ -1654,7 +1639,7 @@ TEST_F(ValidHostPtr, GivenUsmHostPtrWhenCreatingBufferThenBufferIsCreatedCorrect
             NEO::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, context->getRootDeviceIndices(), context->getDeviceBitfields());
             auto ptr = context->getSVMAllocsManager()->createHostUnifiedMemoryAllocation(MemoryConstants::pageSize64k, unifiedMemoryProperties);
 
-            auto buf = Buffer::create(context.get(), CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, 64, ptr, retVal);
+            auto buf = std::unique_ptr<Buffer>(Buffer::create(context.get(), CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, 64, ptr, retVal));
             EXPECT_NE(nullptr, buf);
 
             auto svmData = context->getSVMAllocsManager()->getSVMAlloc(ptr);
@@ -1666,7 +1651,7 @@ TEST_F(ValidHostPtr, GivenUsmHostPtrWhenCreatingBufferThenBufferIsCreatedCorrect
             ASSERT_NE(nullptr, mapAllocation);
             EXPECT_EQ(reinterpret_cast<void *>(mapAllocation->getGpuAddress()), ptr);
 
-            delete buf;
+            buf.reset();
             context->getSVMAllocsManager()->freeSVMAlloc(ptr);
         }
     }
@@ -1767,10 +1752,9 @@ TEST(SharedBuffersTest, whenBuffersIsCreatedWithSharingHandlerThenItIsSharedBuff
     auto memoryManager = context.getDevice(0)->getMemoryManager();
     auto handler = new SharingHandler();
     auto graphicsAlloaction = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{context.getDevice(0)->getRootDeviceIndex(), MemoryConstants::pageSize});
-    auto buffer = Buffer::createSharedBuffer(&context, CL_MEM_READ_ONLY, handler, GraphicsAllocationHelper::toMultiGraphicsAllocation(graphicsAlloaction));
+    auto buffer = clUniquePtr(Buffer::createSharedBuffer(&context, CL_MEM_READ_ONLY, handler, GraphicsAllocationHelper::toMultiGraphicsAllocation(graphicsAlloaction)));
     ASSERT_NE(nullptr, buffer);
     EXPECT_EQ(handler, buffer->peekSharingHandler());
-    buffer->release();
 }
 
 class BufferTests : public ::testing::Test {
@@ -1826,8 +1810,7 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferSetSurfaceThatMemoryPtrIsUnalignedToC
 
     auto size = MemoryConstants::pageSize;
     auto ptr = alignedMalloc(size * 2, MemoryConstants::pageSize);
-    auto ptrOffset = 1;
-    auto offsetPtr = (void *)((uintptr_t)ptr + ptrOffset);
+    auto offsetPtr = ptrOffset(ptr, 1);
 
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     RENDER_SURFACE_STATE surfaceState = {};
@@ -1952,20 +1935,20 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferWithOffsetWhenSetArgStatefulIsCalledT
     MockContext context;
     auto rootDeviceIndex = context.getDevice(0)->getRootDeviceIndex();
     auto size = MemoryConstants::pageSize;
-    auto ptr = (void *)alignedMalloc(size * 2, MemoryConstants::pageSize);
+    uint8_t ptr[2 * MemoryConstants::pageSize] = {};
     auto retVal = CL_SUCCESS;
 
-    auto buffer = Buffer::create(
+    std::unique_ptr<Buffer> buffer(Buffer::create(
         &context,
         CL_MEM_USE_HOST_PTR,
         size,
         ptr,
-        retVal);
+        retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     cl_buffer_region region = {4, 8};
     retVal = -1;
-    auto subBuffer = buffer->createSubBuffer(CL_MEM_READ_WRITE, 0, &region, retVal);
+    auto subBuffer = clUniquePtr(buffer->createSubBuffer(CL_MEM_READ_WRITE, 0, &region, retVal));
     ASSERT_NE(nullptr, subBuffer);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
@@ -1977,11 +1960,6 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferWithOffsetWhenSetArgStatefulIsCalledT
     auto surfBaseAddress = surfaceState.getSurfaceBaseAddress();
     auto bufferAddress = buffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress();
     EXPECT_EQ(bufferAddress + region.origin, surfBaseAddress);
-
-    subBuffer->release();
-
-    delete buffer;
-    alignedFree(ptr);
 }
 
 HWTEST_F(BufferSetSurfaceTests, givenBufferWhenSetArgStatefulWithL3ChacheDisabledIsCalledThenL3CacheShouldBeOffAndSizeIsAlignedTo512) {

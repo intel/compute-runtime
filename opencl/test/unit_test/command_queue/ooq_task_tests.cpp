@@ -317,9 +317,6 @@ HWTEST_F(OOQTaskTests, GivenBlockingAndNonBlockedOnUserEventWhenReadingBufferThe
 
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
 
-    auto alignedReadPtr = alignedMalloc(BufferDefaults::sizeInBytes, MemoryConstants::cacheLineSize);
-    ASSERT_NE(nullptr, alignedReadPtr);
-
     pCmdQ->taskLevel = 1;
 
     auto previousTaskCount = pCmdQ->taskCount;
@@ -337,7 +334,7 @@ HWTEST_F(OOQTaskTests, GivenBlockingAndNonBlockedOnUserEventWhenReadingBufferThe
                                                           CL_FALSE,
                                                           0,
                                                           BufferDefaults::sizeInBytes,
-                                                          alignedReadPtr,
+                                                          EnqueueReadBufferTraits::hostPtr,
                                                           nullptr,
                                                           1,
                                                           &userEvent,
@@ -351,7 +348,6 @@ HWTEST_F(OOQTaskTests, GivenBlockingAndNonBlockedOnUserEventWhenReadingBufferThe
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     pCmdQ->flush();
-    alignedFree(alignedReadPtr);
 }
 
 TEST_F(OOQTaskTests, givenOutOfOrderCommandQueueWhenBarrierIsCalledThenTaskLevelIsUpdated) {
