@@ -64,6 +64,7 @@ cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
             initResult = zeInitDrivers(&driverCount, nullptr, &desc);
 
             if (initResult == ZE_RESULT_SUCCESS) {
+                L0::levelZeroDriverInitializedByLeo = true;
                 std::vector<ze_driver_handle_t> driverHandles(driverCount);
                 initResult = zeInitDrivers(&driverCount, driverHandles.data(), &desc);
 

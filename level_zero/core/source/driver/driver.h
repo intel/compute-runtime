@@ -44,9 +44,13 @@ class Driver {
 
 ze_result_t init(ze_init_flags_t);
 ze_result_t initDrivers(uint32_t *pCount, ze_driver_handle_t *phDrivers, ze_init_driver_type_desc_t *desc);
+ze_result_t initByLoader(ze_init_flags_t flags);
+ze_result_t initDriversByLoader(uint32_t *pCount, ze_driver_handle_t *phDrivers, ze_init_driver_type_desc_t *desc);
 
 extern bool sysmanInitFromCore;
 extern uint32_t driverCount;
 extern std::vector<_ze_driver_handle_t *> *globalDriverHandles;
 extern bool levelZeroDriverInitialized;
+extern bool levelZeroDriverInitializedByLoader;
+extern bool levelZeroDriverInitializedByLeo;
 } // namespace L0

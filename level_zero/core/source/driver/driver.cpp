@@ -25,6 +25,8 @@ namespace L0 {
 
 std::vector<_ze_driver_handle_t *> *globalDriverHandles;
 bool levelZeroDriverInitialized = false;
+bool levelZeroDriverInitializedByLoader = false;
+bool levelZeroDriverInitializedByLeo = false;
 
 void Driver::initialize(ze_result_t *result) {
     NEO::debugManager.refreshEnvVariables();
@@ -187,6 +189,21 @@ ze_result_t initDrivers(uint32_t *pCount, ze_driver_handle_t *phDrivers, ze_init
         }
     }
     return result;
+}
+
+static ze_result_t markInitializedByLoaderOnSuccess(ze_result_t result) {
+    if (result == ZE_RESULT_SUCCESS) {
+        L0::levelZeroDriverInitializedByLoader = true;
+    }
+    return result;
+}
+
+ze_result_t initByLoader(ze_init_flags_t flags) {
+    return markInitializedByLoaderOnSuccess(init(flags));
+}
+
+ze_result_t initDriversByLoader(uint32_t *pCount, ze_driver_handle_t *phDrivers, ze_init_driver_type_desc_t *desc) {
+    return markInitializedByLoaderOnSuccess(initDrivers(pCount, phDrivers, desc));
 }
 
 } // namespace L0

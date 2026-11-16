@@ -53,7 +53,7 @@ void globalDriverTeardown() {
     NEO::LEO::platformsInitAttempted = false;
     NEO::LEO::SharingFactory::clearSharingBuilders();
 
-    if (levelZeroDriverInitialized) {
+    if (levelZeroDriverInitialized && (!levelZeroDriverInitializedByLeo || levelZeroDriverInitializedByLoader)) {
         NEO::OsLibraryCreateProperties loaderLibraryProperties("ze_loader.dll");
         loaderLibraryProperties.performSelfLoad = true;
         std::unique_ptr<NEO::OsLibrary> loaderLibrary = std::unique_ptr<NEO::OsLibrary>{NEO::OsLibrary::loadFunc(loaderLibraryProperties)};

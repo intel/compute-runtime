@@ -14,12 +14,12 @@ namespace L0 {
 
 ze_result_t ZE_APICALL zeInit(
     ze_init_flags_t flags) {
-    return L0::init(flags);
+    return L0::initByLoader(flags);
 }
 
 ze_result_t ZE_APICALL zeInitDrivers(
     uint32_t *pCount, ze_driver_handle_t *phDrivers, ze_init_driver_type_desc_t *desc) {
-    return L0::initDrivers(pCount, phDrivers, desc);
+    return L0::initDriversByLoader(pCount, phDrivers, desc);
 }
 
 ze_result_t ZE_APICALL zeDriverGet(
@@ -82,7 +82,7 @@ extern "C" {
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zeInit(
     ze_init_flags_t flags) {
-    return L0::zeInit(
+    return L0::init(
         flags);
 }
 

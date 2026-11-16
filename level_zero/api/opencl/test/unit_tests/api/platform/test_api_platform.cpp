@@ -14,6 +14,8 @@
 
 #include "level_zero/api/opencl/source/platform/leo_platform.h"
 #include "level_zero/api/opencl/test/common/fixtures/ocl_fixture.h"
+#include "level_zero/core/source/driver/driver.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_driver.h"
 
 #include "CL/cl.h"
 
@@ -136,6 +138,41 @@ TEST_F(LeoExposedDriverTests, whenPlatformIsBuiltThenItAdvertisesClKhrIcd) {
     std::string extensions(extensionsSize, '\0');
     EXPECT_EQ(CL_SUCCESS, platform->getInfo(CL_PLATFORM_EXTENSIONS, extensionsSize, extensions.data(), nullptr));
     EXPECT_NE(std::string::npos, extensions.find("cl_khr_icd"));
+}
+
+struct GetPlatformIDsDriverInitTests : public Test<OclFixture> {
+    void SetUp() override {
+        Test<OclFixture>::SetUp();
+        driverHandles.push_back(driverHandle->toHandle());
+    }
+
+    void TearDown() override {
+        platforms.clear();
+        Test<OclFixture>::TearDown();
+    }
+
+    L0::ult::Mock<L0::ult::Driver> driver;
+    std::vector<_ze_driver_handle_t *> driverHandles;
+    std::vector<std::unique_ptr<Platform>> platforms;
+    VariableBackup<decltype(L0::globalDriverHandles)> globalDriverHandlesBackup{&L0::globalDriverHandles, &driverHandles};
+    VariableBackup<bool> levelZeroDriverInitializedBackup{&L0::levelZeroDriverInitialized, false};
+    VariableBackup<bool> levelZeroDriverInitializedByLeoBackup{&L0::levelZeroDriverInitializedByLeo, false};
+    VariableBackup<decltype(platformsImpl)> platformsBackup{&platformsImpl, &platforms};
+    VariableBackup<bool> platformsInitAttemptedBackup{&platformsInitAttempted, false};
+};
+
+TEST_F(GetPlatformIDsDriverInitTests, givenNotInitializedDriverWhenGetPlatformIDsInitializesDriverThenDriverIsMarkedAsInitializedByLeo) {
+    cl_uint numPlatforms = 0;
+    EXPECT_EQ(CL_SUCCESS, clGetPlatformIDs(0, nullptr, &numPlatforms));
+    EXPECT_TRUE(L0::levelZeroDriverInitialized);
+    EXPECT_TRUE(L0::levelZeroDriverInitializedByLeo);
+}
+
+TEST_F(GetPlatformIDsDriverInitTests, givenDriverInitFailureWhenGetPlatformIDsThenDriverIsNotMarkedAsInitializedByLeo) {
+    driver.failInitDriver = true;
+    cl_uint numPlatforms = 0;
+    EXPECT_NE(CL_SUCCESS, clGetPlatformIDs(0, nullptr, &numPlatforms));
+    EXPECT_FALSE(L0::levelZeroDriverInitializedByLeo);
 }
 
 } // namespace ult

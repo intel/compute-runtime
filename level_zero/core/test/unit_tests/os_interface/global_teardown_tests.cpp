@@ -58,6 +58,8 @@ class LeoSharingFactoryStateRestore : public NEO::LEO::SharingFactory {
 struct GlobalTearDownTests : public ::testing::Test {
     VariableBackup<decltype(globalDriverHandles)> globalDriverHandlesBackup{&globalDriverHandles, nullptr};
     VariableBackup<decltype(NEO::LEO::platformsImpl)> platformsImplBackup{&NEO::LEO::platformsImpl, nullptr};
+    VariableBackup<bool> initializedByLoaderBackup{&levelZeroDriverInitializedByLoader, false};
+    VariableBackup<bool> initializedByLeoBackup{&levelZeroDriverInitializedByLeo, false};
     LeoSharingFactoryStateRestore leoSharingStateRestore;
 };
 
@@ -67,6 +69,54 @@ ze_result_t loaderTearDown() {
     loaderTearDownCalled++;
     return ZE_RESULT_ERROR_UNKNOWN;
 };
+
+struct GlobalTearDownWithLoaderTests : public GlobalTearDownTests {
+    void SetUp() override {
+        auto loaderLibrary = new MockOsLibraryCustom(nullptr, true);
+        loaderLibrary->procMap["zelSetDriverTeardown"] = reinterpret_cast<void *>(&loaderTearDown);
+        MockOsLibrary::loadLibraryNewObject = loaderLibrary;
+    }
+
+    void TearDown() override {
+        delete MockOsLibrary::loadLibraryNewObject;
+    }
+
+    VariableBackup<decltype(loaderTearDownCalled)> loaderTeardownCalledBackup{&loaderTearDownCalled, 0};
+    VariableBackup<decltype(levelZeroDriverInitialized)> driverInitializeBackup{&levelZeroDriverInitialized, true};
+    VariableBackup<decltype(setDriverTeardownFunc)> teardownFuncBackup{&setDriverTeardownFunc, nullptr};
+    VariableBackup<decltype(NEO::OsLibrary::loadFunc)> loadFuncBackup{&NEO::OsLibrary::loadFunc, MockOsLibraryCustom::load};
+    VariableBackup<decltype(MockOsLibrary::loadLibraryNewObject)> mockLibraryBackup{&MockOsLibrary::loadLibraryNewObject, nullptr};
+};
+
+TEST_F(GlobalTearDownWithLoaderTests, givenDriverInitializedOnlyByLeoWhenCallingGlobalDriverTeardownThenLoaderTeardownIsNotCalled) {
+    levelZeroDriverInitializedByLeo = true;
+    levelZeroDriverInitializedByLoader = false;
+
+    globalDriverTeardown();
+
+    EXPECT_EQ(nullptr, setDriverTeardownFunc);
+    EXPECT_EQ(0u, loaderTearDownCalled);
+}
+
+TEST_F(GlobalTearDownWithLoaderTests, givenDriverInitializedByLeoAndByLoaderWhenCallingGlobalDriverTeardownThenLoaderTeardownIsCalled) {
+    levelZeroDriverInitializedByLeo = true;
+    levelZeroDriverInitializedByLoader = true;
+
+    globalDriverTeardown();
+
+    EXPECT_EQ(&loaderTearDown, reinterpret_cast<void *>(setDriverTeardownFunc));
+    EXPECT_EQ(1u, loaderTearDownCalled);
+}
+
+TEST_F(GlobalTearDownWithLoaderTests, givenDriverInitializedOnlyByLoaderWhenCallingGlobalDriverTeardownThenLoaderTeardownIsCalled) {
+    levelZeroDriverInitializedByLeo = false;
+    levelZeroDriverInitializedByLoader = true;
+
+    globalDriverTeardown();
+
+    EXPECT_EQ(&loaderTearDown, reinterpret_cast<void *>(setDriverTeardownFunc));
+    EXPECT_EQ(1u, loaderTearDownCalled);
+}
 
 TEST_F(GlobalTearDownTests, givenInitializedDriverWhenCallingGlobalDriverTeardownThenLoaderFunctionForTeardownIsLoadedAndCalledIfAvailable) {
 

@@ -46,6 +46,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_context.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
+#include "level_zero/ddi/ze_ddi_tables.h"
 #include "level_zero/driver_experimental/mcl_ext/zex_mutable_cmdlist_ext.h"
 #include "level_zero/driver_experimental/zex_cmdlist.h"
 #include "level_zero/driver_experimental/zex_context.h"
@@ -105,6 +106,56 @@ TEST(zeInit, whenCallingZeInitWithVpuOnlyThenLevelZeroDriverInitializedIsSetToFa
     auto result = zeInit(ZE_INIT_FLAG_VPU_ONLY);
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, result);
     EXPECT_FALSE(levelZeroDriverInitialized);
+}
+
+struct DriverInitByLoaderTests : public ::testing::Test {
+    void SetUp() override {
+        ASSERT_EQ(ZE_RESULT_SUCCESS, ::zeGetGlobalProcAddrTable(ZE_API_VERSION_CURRENT, &loaderGlobalDdiTable));
+    }
+
+    VariableBackup<bool> initializedBackup{&levelZeroDriverInitialized, false};
+    VariableBackup<bool> initializedByLoaderBackup{&levelZeroDriverInitializedByLoader, false};
+    Mock<Driver> driver;
+    ze_global_dditable_t loaderGlobalDdiTable = {};
+    ze_init_driver_type_desc_t desc = {ZE_STRUCTURE_TYPE_INIT_DRIVER_TYPE_DESC, nullptr, ZE_INIT_DRIVER_TYPE_FLAG_GPU};
+    uint32_t driverCount = 0;
+};
+
+TEST_F(DriverInitByLoaderTests, givenGlobalDdiTableWhenInitIsCalledThroughItThenDriverIsMarkedAsInitializedByLoader) {
+    EXPECT_EQ(ZE_RESULT_SUCCESS, loaderGlobalDdiTable.pfnInit(ZE_INIT_FLAG_GPU_ONLY));
+    EXPECT_TRUE(levelZeroDriverInitialized);
+    EXPECT_TRUE(levelZeroDriverInitializedByLoader);
+}
+
+TEST_F(DriverInitByLoaderTests, givenGlobalDdiTableWhenInitDriversIsCalledThroughItThenDriverIsMarkedAsInitializedByLoader) {
+    EXPECT_EQ(ZE_RESULT_SUCCESS, loaderGlobalDdiTable.pfnInitDrivers(&driverCount, nullptr, &desc));
+    EXPECT_TRUE(levelZeroDriverInitialized);
+    EXPECT_TRUE(levelZeroDriverInitializedByLoader);
+}
+
+TEST_F(DriverInitByLoaderTests, givenGlobalDdiTableWhenInitWithVpuOnlyFlagIsCalledThroughItThenDriverIsNotMarkedAsInitializedByLoader) {
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, loaderGlobalDdiTable.pfnInit(ZE_INIT_FLAG_VPU_ONLY));
+    EXPECT_FALSE(levelZeroDriverInitializedByLoader);
+}
+
+TEST_F(DriverInitByLoaderTests, givenGlobalDdiTableWhenInitDriversForNpuIsCalledThroughItThenDriverIsNotMarkedAsInitializedByLoader) {
+    desc.flags = ZE_INIT_DRIVER_TYPE_FLAG_NPU;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, loaderGlobalDdiTable.pfnInitDrivers(&driverCount, nullptr, &desc));
+    EXPECT_FALSE(levelZeroDriverInitializedByLoader);
+}
+
+TEST_F(DriverInitByLoaderTests, givenGlobalDdiTableWhenDriverInitFailsThroughItThenDriverIsNotMarkedAsInitializedByLoader) {
+    driver.failInitDriver = true;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, loaderGlobalDdiTable.pfnInit(ZE_INIT_FLAG_GPU_ONLY));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, loaderGlobalDdiTable.pfnInitDrivers(&driverCount, nullptr, &desc));
+    EXPECT_FALSE(levelZeroDriverInitializedByLoader);
+}
+
+TEST_F(DriverInitByLoaderTests, givenExportedInitFunctionsWhenCalledDirectlyThenDriverIsInitializedButNotMarkedAsInitializedByLoader) {
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ::zeInit(ZE_INIT_FLAG_GPU_ONLY));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ::zeInitDrivers(&driverCount, nullptr, &desc));
+    EXPECT_TRUE(levelZeroDriverInitialized);
+    EXPECT_FALSE(levelZeroDriverInitializedByLoader);
 }
 
 TEST(zeInit, whenCallingZeInitWithNoFlagsThenInitializeOnDriverIsCalled) {
