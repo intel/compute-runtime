@@ -207,16 +207,14 @@ std::vector<char> SipKernel::readStateSaveAreaHeaderFromFile(const std::string &
 }
 
 bool SipKernel::initSipKernelFromExternalLib(SipKernelType type, Device &device) {
-    uint32_t sipIndex = static_cast<uint32_t>(type);
-    uint32_t rootDeviceIndex = device.getRootDeviceIndex();
-    auto sipKenel = device.getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->sipKernels[sipIndex].get();
-    if (sipKenel != nullptr) {
+    auto &rootDeviceEnvironment = device.getRootDeviceEnvironmentRef();
+    auto &sipKernel = rootDeviceEnvironment.sipKernels[static_cast<uint32_t>(type)];
+    if (sipKernel != nullptr) {
         return true;
     }
 
     std::vector<char> sipBinary;
     std::vector<char> stateSaveAreaHeader;
-    auto &rootDeviceEnvironment = device.getRootDeviceEnvironment();
 
     SipExternalLib *sipLib = device.getSipExternalLibInterface();
     UNRECOVERABLE_IF(!sipLib);
@@ -224,9 +222,7 @@ bool SipKernel::initSipKernelFromExternalLib(SipKernelType type, Device &device)
     if (ret != 0) {
         return false;
     }
-    if (sipBinary.empty()) {
-        UNRECOVERABLE_IF(true);
-    }
+    UNRECOVERABLE_IF(sipBinary.empty());
     if (!sipLib->createRegisterDescriptorMap()) {
         PRINT_DEBUGGER_ERROR_LOG("SIP external library failed to create register descriptor map\n", "");
         return false;
@@ -245,11 +241,12 @@ bool SipKernel::initSipKernelFromExternalLib(SipKernelType type, Device &device)
                                                      device, sipAllocation, 0, sipBinary.data(),
                                                      sipBinary.size());
 
-    device.getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->sipKernels[sipIndex] =
-        std::make_unique<SipKernel>(type, sipAllocation, std::move(stateSaveAreaHeader), std::move(sipBinary));
+    sipKernel = std::make_unique<SipKernel>(type, sipAllocation, std::move(stateSaveAreaHeader), std::move(sipBinary));
 
     if (type == SipKernelType::csr) {
-        rootDeviceEnvironment.getMutableHardwareInfo()->capabilityTable.requiredPreemptionSurfaceSize = device.getBuiltIns()->getSipKernel(type, device).getStateSaveAreaSize(&device);
+        auto preemptionSurfaceSize = sipKernel->getStateSaveAreaSize(&device);
+        UNRECOVERABLE_IF(preemptionSurfaceSize == 0);
+        rootDeviceEnvironment.getMutableHardwareInfo()->capabilityTable.requiredPreemptionSurfaceSize = preemptionSurfaceSize;
     }
     return true;
 }

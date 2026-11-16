@@ -1195,8 +1195,11 @@ TEST_F(SipKernelFromSipExternalLibTest, givenSipExternalLibFailingToCreateRegist
 }
 
 TEST_F(SipKernelFromSipExternalLibTest, givenCsrSipKernelTypeWhenInitSipKernelThenSipKernelIsCreatedFromSipExternalLibAndPreemptionSurfaceSizeIsSet) {
+    auto builtIns = new MockBuiltins();
+    MockRootDeviceEnvironment::resetBuiltins(&pDevice->getRootDeviceEnvironmentRef(), builtIns);
 
     EXPECT_TRUE(SipKernel::initSipKernel(SipKernelType::csr, *pDevice));
+    EXPECT_FALSE(builtIns->getSipKernelCalled);
     EXPECT_EQ(SipClassType::externalLib, MockSipKernel::classType);
     EXPECT_EQ(SipKernelType::csr, sipExternalLib->getSipKernelBinaryCapturedType);
     auto sipKernel = getInitializedSipKernel(SipKernelType::csr);
@@ -1204,6 +1207,12 @@ TEST_F(SipKernelFromSipExternalLibTest, givenCsrSipKernelTypeWhenInitSipKernelTh
     EXPECT_EQ(sipExternalLib->getSipKernelBinaryRetBinary, sipKernel->getBinary());
     EXPECT_EQ(sipExternalLib->getSipKernelBinaryStateSaveAreaHeader, sipKernel->getStateSaveAreaHeader());
     EXPECT_EQ(MemoryConstants::pageSize, pDevice->getHardwareInfo().capabilityTable.requiredPreemptionSurfaceSize);
+}
+
+TEST_F(SipKernelFromSipExternalLibTest, givenSipExternalLibKernelWithoutStateSaveAreaHeaderWhenInitCsrSipKernelThenAbortIsCalled) {
+    sipExternalLib->getSipKernelBinaryStateSaveAreaHeader = {};
+
+    EXPECT_THROW(SipKernel::initSipKernel(SipKernelType::csr, *pDevice), std::exception);
 }
 
 TEST_F(SipKernelFromSipExternalLibTest, givenDbgBindlessSipKernelTypeWhenInitSipKernelThenSipKernelIsCreatedFromSipExternalLib) {
