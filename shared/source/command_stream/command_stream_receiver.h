@@ -452,6 +452,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     }
 
     virtual void stopDirectSubmission(bool blocking, bool needsLock) {}
+    virtual bool isDirectSubmissionRingRunning() const = 0;
     virtual void unregisterDirectSubmissionFromController() {};
     virtual void resetDirectSubmission() {};
 

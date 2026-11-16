@@ -52,12 +52,15 @@ class OsContextMock : public OsContext {
         return mockDirectSubmissionSupported;
     }
 
+    bool isDirectSubmissionLightActive() const override { return mockDirectSubmissionLightActive; }
+
     bool isExternalSemaphoreGpuWaitSupported() const override { return mockExternalSemaphoreGpuWaitSupported; }
 
     uint64_t offlineDumpCtxId = 0;
 
     bool callBaseIsDirectSubmissionSupported = true;
     bool mockDirectSubmissionSupported = false;
+    bool mockDirectSubmissionLightActive = false;
     bool mockExternalSemaphoreGpuWaitSupported = false;
 };
 

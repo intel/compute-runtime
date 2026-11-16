@@ -8,7 +8,9 @@
 #include "shared/source/memory_manager/unified_memory_reuse_cleaner.h"
 
 namespace NEO {
+bool mockUnifiedMemoryReuseCleanerSupported = false;
+
 bool UnifiedMemoryReuseCleaner::isSupported() {
-    return false;
+    return mockUnifiedMemoryReuseCleanerSupported;
 }
 } // namespace NEO

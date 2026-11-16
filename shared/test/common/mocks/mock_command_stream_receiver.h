@@ -232,6 +232,10 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         stopDirectSubmissionCalledTimes++;
     }
 
+    bool isDirectSubmissionRingRunning() const override {
+        return isDirectSubmissionRingRunningReturnValue;
+    }
+
     bool createPreemptionAllocation() override {
         if (createPreemptionAllocationParentCall) {
             return CommandStreamReceiver::createPreemptionAllocation();
@@ -347,6 +351,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     bool programComputeBarrierCommandCalled = false;
     bool programStallingCommandsForBarrierCalled = false;
     bool blockingStopDirectSubmissionCalled = false;
+    bool isDirectSubmissionRingRunningReturnValue = false;
     std::optional<bool> isGpuHangDetectedReturnValue{};
     std::optional<bool> testTaskCountReadyReturnValue{};
     WaitStatus waitForCompletionWithTimeoutReturnValue{WaitStatus::ready};

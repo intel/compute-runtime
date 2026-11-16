@@ -8,9 +8,12 @@
 #pragma once
 #include "shared/source/memory_manager/unified_memory_reuse_cleaner.h"
 namespace NEO {
+extern bool mockUnifiedMemoryReuseCleanerSupported;
+
 struct MockUnifiedMemoryReuseCleaner : public UnifiedMemoryReuseCleaner {
   public:
     using UnifiedMemoryReuseCleaner::allocationCaches;
+    using UnifiedMemoryReuseCleaner::isAnyDirectSubmissionLightRingRunning;
     using UnifiedMemoryReuseCleaner::keepCleaning;
     using UnifiedMemoryReuseCleaner::UnifiedMemoryReuseCleaner;
     using UnifiedMemoryReuseCleaner::unifiedMemoryReuseCleanerThread;

@@ -36,6 +36,7 @@
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
+#include "shared/test/common/mocks/mock_usm_memory_reuse_cleaner.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/common/utilities/destructor_counted.h"
 
@@ -322,6 +323,15 @@ TEST(ExecutionEnvironment, givenExperimentalUSMAllocationReuseCleanerSetAndNotEn
     auto cleaner = executionEnvironment.unifiedMemoryReuseCleaner.get();
 
     EXPECT_NE(cleaner, nullptr);
+}
+
+TEST(ExecutionEnvironment, givenDirectSubmissionLightEnabledWhenInitializeUnifiedMemoryReuseCleanerThenCleanerIsCreated) {
+    VariableBackup<bool> supportedBackup{&mockUnifiedMemoryReuseCleanerSupported, true};
+    VariableBackup<decltype(NEO::Thread::createFunc)> funcBackup{&NEO::Thread::createFunc, [](void *(*func)(void *), void *arg) -> std::unique_ptr<Thread> { return nullptr; }};
+    MockExecutionEnvironment executionEnvironment{};
+    executionEnvironment.initializeUnifiedMemoryReuseCleaner(true);
+
+    EXPECT_NE(nullptr, executionEnvironment.unifiedMemoryReuseCleaner.get());
 }
 
 TEST(ExecutionEnvironment, givenNeoCalEnabledWhenCreateExecutionEnvironmentThenSetDebugVariables) {

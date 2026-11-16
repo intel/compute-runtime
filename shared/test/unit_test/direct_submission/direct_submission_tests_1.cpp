@@ -321,6 +321,46 @@ HWTEST_F(DirectSubmissionTest, givenBlitterDirectSubmissionWhenStopThenRingIsNot
     csr.blitterDirectSubmission.release();
 }
 
+HWTEST_F(DirectSubmissionTest, givenNoDirectSubmissionWhenCheckingIfDirectSubmissionRingIsRunningThenFalseIsReturned) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.directSubmission.reset();
+
+    EXPECT_FALSE(csr.isDirectSubmissionRingRunning());
+}
+
+HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenCheckingIfDirectSubmissionRingIsRunningThenRingStartIsReturned) {
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.directSubmission.reset(&directSubmission);
+
+    directSubmission.ringStart = true;
+    EXPECT_TRUE(csr.isDirectSubmissionRingRunning());
+    directSubmission.ringStart = false;
+    EXPECT_FALSE(csr.isDirectSubmissionRingRunning());
+
+    csr.directSubmission.release();
+}
+
+HWTEST_F(DirectSubmissionTest, givenBlitterDirectSubmissionWhenCheckingIfDirectSubmissionRingIsRunningThenBlitterRingStartIsReturned) {
+    MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    std::unique_ptr<OsContext> osContext(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,
+                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular},
+                                                                                                        PreemptionMode::ThreadGroup, pDevice->getDeviceBitfield())));
+    csr.osContext = nullptr;
+    csr.setupContext(*osContext);
+    csr.blitterDirectSubmission.reset();
+    EXPECT_FALSE(csr.isDirectSubmissionRingRunning());
+
+    csr.blitterDirectSubmission.reset(&directSubmission);
+    directSubmission.ringStart = true;
+    EXPECT_TRUE(csr.isDirectSubmissionRingRunning());
+    directSubmission.ringStart = false;
+    EXPECT_FALSE(csr.isDirectSubmissionRingRunning());
+
+    csr.blitterDirectSubmission.release();
+}
+
 HWTEST_F(DirectSubmissionTest, givenDeviceStopDirectSubmissionAndWaitForCompletionCalledThenCsrStopDirectSubmissionCalledBlocking) {
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.csrBaseCallDirectSubmissionAvailable = true;

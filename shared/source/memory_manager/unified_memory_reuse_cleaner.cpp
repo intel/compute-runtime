@@ -7,11 +7,14 @@
 
 #include "shared/source/memory_manager/unified_memory_reuse_cleaner.h"
 
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/sleep.h"
 #include "shared/source/memory_manager/deferred_deleter.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_thread.h"
 
+#include <algorithm>
 #include <thread>
 namespace NEO {
 
@@ -64,6 +67,9 @@ void UnifiedMemoryReuseCleaner::unregisterAllocationCache(AllocationReuseCache *
 void UnifiedMemoryReuseCleaner::trimOldInCaches() {
     const auto now = std::chrono::high_resolution_clock::now();
     std::lock_guard<std::mutex> lockAllocationCaches(this->allocationCachesMutex);
+    if (this->trimAllAllocations && this->isAnyDirectSubmissionLightRingRunning() && !this->isAnyCacheUnderMemoryPressure()) {
+        return;
+    }
     for (auto allocationCache : this->allocationCaches) {
         allocationCache->trimOldAllocsUnderMemoryPressure(now - limitedHoldTime);
         if (auto deferredDeleter = allocationCache->getMemoryManager()->getDeferredDeleter()) {
@@ -73,6 +79,30 @@ void UnifiedMemoryReuseCleaner::trimOldInCaches() {
         }
         allocationCache->trimOldAllocs(now - maxHoldTime, this->trimAllAllocations);
     }
+}
+
+bool UnifiedMemoryReuseCleaner::isAnyCacheUnderMemoryPressure() const {
+    return std::any_of(this->allocationCaches.begin(), this->allocationCaches.end(), [](const auto allocationCache) {
+        return allocationCache->getMemoryManager()->shouldLimitAllocationsReuse();
+    });
+}
+
+bool UnifiedMemoryReuseCleaner::isAnyDirectSubmissionLightRingRunning() const {
+    if (this->allocationCaches.empty()) {
+        return false;
+    }
+    for (const auto &engines : this->allocationCaches[0]->getMemoryManager()->getRegisteredEngines()) {
+        for (const auto &engine : engines) {
+            if (!engine.osContext->isDirectSubmissionLightActive()) {
+                continue;
+            }
+            auto lock = engine.commandStreamReceiver->tryObtainUniqueOwnership();
+            if (!lock.owns_lock() || engine.commandStreamReceiver->isDirectSubmissionRingRunning()) {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 void UnifiedMemoryReuseCleaner::startThread() {

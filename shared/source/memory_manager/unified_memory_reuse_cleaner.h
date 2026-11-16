@@ -48,6 +48,8 @@ class UnifiedMemoryReuseCleaner : NEO::NonCopyableAndNonMovableClass {
   protected:
     static void *cleanUnifiedMemoryReuse(void *self);
     MOCKABLE_VIRTUAL void trimOldInCaches();
+    bool isAnyCacheUnderMemoryPressure() const;
+    bool isAnyDirectSubmissionLightRingRunning() const;
     std::unique_ptr<Thread> unifiedMemoryReuseCleanerThread;
 
     std::vector<AllocationReuseCache *> allocationCaches;

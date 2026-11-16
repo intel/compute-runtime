@@ -1562,6 +1562,14 @@ size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForExceptions() const {
 }
 
 template <typename GfxFamily>
+inline bool CommandStreamReceiverHw<GfxFamily>::isDirectSubmissionRingRunning() const {
+    if (EngineHelpers::isBcs(this->osContext->getEngineType())) {
+        return this->blitterDirectSubmission && this->blitterDirectSubmission->isRingRunning();
+    }
+    return this->directSubmission && this->directSubmission->isRingRunning();
+}
+
+template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::stopDirectSubmission(bool blocking, bool needsLock) {
     if (this->isAnyDirectSubmissionEnabled()) {
         std::unique_lock<MutexType> lock;

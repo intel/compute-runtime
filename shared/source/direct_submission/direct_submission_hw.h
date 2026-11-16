@@ -73,6 +73,8 @@ class DirectSubmissionHw {
 
     MOCKABLE_VIRTUAL bool stopRingBuffer(bool blocking);
 
+    bool isRingRunning() const { return ringStart; }
+
     MOCKABLE_VIRTUAL bool dispatchCommandBuffer(BatchBuffer &batchBuffer, FlushStampTracker &flushStamp);
     uint32_t getDispatchErrorCode();
 
