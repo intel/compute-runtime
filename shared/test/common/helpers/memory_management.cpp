@@ -96,13 +96,13 @@ static void *allocateSystemMemory(size_t size) {
 #endif
 }
 
-static void freeSystemMemory(void *p) {
+static void freeSystemMemory(void *memory) {
 #if defined(_WIN32)
-    if (p) {
-        HeapFree(GetProcessHeap(), 0, p);
+    if (memory) {
+        HeapFree(GetProcessHeap(), 0, memory);
     }
 #else
-    free(p);
+    free(memory);
 #endif
 }
 
@@ -120,7 +120,7 @@ static void *allocate(size_t size) {
         return allocateSystemMemory(size);
     }
 
-    void *p;
+    void *allocatedMemory;
 
     if (detailedAllocationLoggingActive) {
 
@@ -130,13 +130,14 @@ static void *allocate(size_t size) {
         auto &eventAllocation = eventsAllocated[indexAllocation];
         eventAllocation.size = size;
 
-        if ((p = allocateSystemMemory(size)) == nullptr) {
+        allocatedMemory = allocateSystemMemory(size);
+        if (allocatedMemory == nullptr) {
             eventAllocation.address = nullptr;
             eventAllocation.event = typeFail;
             throw std::bad_alloc();
         }
 
-        eventAllocation.address = p;
+        eventAllocation.address = allocatedMemory;
         eventAllocation.event = typeValid;
 #if defined(__linux__)
         eventAllocation.frames = logTraces ? backtrace(eventAllocation.callstack, AllocationEvent::CallStackSize) : 0;
@@ -149,16 +150,16 @@ static void *allocate(size_t size) {
 
         numAllocations++;
     } else {
-        p = allocateSystemMemory(size);
+        allocatedMemory = allocateSystemMemory(size);
     }
 
-    if (p) {
+    if (allocatedMemory) {
         auto currentIndex = fastEventsAllocatedCount++;
-        fastEventsAllocated[currentIndex].store(p, std::memory_order_relaxed);
+        fastEventsAllocated[currentIndex].store(allocatedMemory, std::memory_order_relaxed);
         assert(currentIndex < maxEvents);
     }
 
-    return p;
+    return allocatedMemory;
 }
 
 template <AllocationEvent::EventType typeValid, AllocationEvent::EventType typeFail>
@@ -173,22 +174,22 @@ static void *allocate(size_t size, const std::nothrow_t &) {
         return allocateSystemMemory(size);
     }
 
-    void *p;
+    void *allocatedMemory;
 
     if (detailedAllocationLoggingActive) {
 
         auto indexAllocation = MemoryManagement::indexAllocation.fetch_add(1);
         indexAllocation %= maxEvents;
 
-        p = indexAllocation == failingAllocation
-                ? nullptr
-                : allocateSystemMemory(size);
+        allocatedMemory = indexAllocation == failingAllocation
+                              ? nullptr
+                              : allocateSystemMemory(size);
 
         auto &eventAllocation = eventsAllocated[indexAllocation];
-        eventAllocation.event = p
+        eventAllocation.event = allocatedMemory
                                     ? typeValid
                                     : typeFail;
-        eventAllocation.address = p;
+        eventAllocation.address = allocatedMemory;
         eventAllocation.size = size;
 #if defined(__linux__)
         eventAllocation.frames = logTraces ? backtrace(eventAllocation.callstack, AllocationEvent::CallStackSize) : 0;
@@ -198,30 +199,30 @@ static void *allocate(size_t size, const std::nothrow_t &) {
         eventAllocation.frames = 0;
 #endif
         eventAllocation.fastLeakDetectionEnabled = fastLeakDetectionEnabled;
-        numAllocations += p ? 1 : 0;
+        numAllocations += allocatedMemory ? 1 : 0;
     } else {
-        p = allocateSystemMemory(size);
+        allocatedMemory = allocateSystemMemory(size);
     }
 
-    if (p) {
+    if (allocatedMemory) {
         auto currentIndex = fastEventsAllocatedCount++;
-        fastEventsAllocated[currentIndex].store(p, std::memory_order_relaxed);
+        fastEventsAllocated[currentIndex].store(allocatedMemory, std::memory_order_relaxed);
         assert(currentIndex < maxEvents);
     }
 
-    return p;
+    return allocatedMemory;
 }
 
 template <AllocationEvent::EventType typeValid>
-static void deallocate(void *p) {
-    deleteCallback(p);
+static void deallocate(void *memory) {
+    deleteCallback(memory);
 
     if (!fastLeakDetectionEnabled) {
-        freeSystemMemory(p);
+        freeSystemMemory(memory);
         return;
     }
 
-    if (p) {
+    if (memory) {
         if (detailedAllocationLoggingActive) {
 
             auto indexDeallocation = MemoryManagement::indexDeallocation.fetch_add(1);
@@ -231,7 +232,7 @@ static void deallocate(void *p) {
 
             auto &eventDeallocation = eventsDeallocated[indexDeallocation];
             eventDeallocation.event = typeValid;
-            eventDeallocation.address = p;
+            eventDeallocation.address = memory;
             eventDeallocation.size = -1;
 #if defined(__linux__)
             eventDeallocation.frames = logTraces ? backtrace(eventDeallocation.callstack, AllocationEvent::CallStackSize) : 0;
@@ -244,9 +245,9 @@ static void deallocate(void *p) {
         }
 
         auto currentIndex = fastEventsDeallocatedCount++;
-        fastEventsDeallocated[currentIndex].store(p, std::memory_order_relaxed);
+        fastEventsDeallocated[currentIndex].store(memory, std::memory_order_relaxed);
         assert(currentIndex < maxEvents);
-        freeSystemMemory(p);
+        freeSystemMemory(memory);
     }
 }
 int detectLeaks() {
@@ -272,7 +273,7 @@ int detectLeaks() {
     return indexLeak;
 }
 
-size_t enumerateLeak(size_t indexAllocationTop, size_t indexDeallocationTop, bool lookFromBack, bool requireCallStack) {
+size_t enumerateLeak(size_t indexAllocationTop, size_t indexDeallocationTop, bool lookFromEnd, bool requireCallStack) {
     using MemoryManagement::AllocationEvent;
     using MemoryManagement::eventsAllocated;
     using MemoryManagement::eventsDeallocated;
@@ -283,7 +284,7 @@ size_t enumerateLeak(size_t indexAllocationTop, size_t indexDeallocationTop, boo
     auto potentialLeakIndex = newIndex;
 
     for (; newIndex < indexAllocationTop; ++newIndex) {
-        auto currentIndex = lookFromBack ? indexAllocationTop - newIndex - 1 : newIndex;
+        auto currentIndex = lookFromEnd ? indexAllocationTop - newIndex - 1 : newIndex;
         auto &eventAllocation = eventsAllocated[currentIndex];
 
         if (requireCallStack && eventAllocation.frames == 0) {
@@ -410,25 +411,25 @@ void *operator new[](size_t size) {
     return allocate<AllocationEvent::EVENT_NEW_ARRAY, AllocationEvent::EVENT_NEW_ARRAY_FAIL>(size);
 }
 
-void *operator new[](size_t size, const std::nothrow_t &t) noexcept {
+void *operator new[](size_t size, const std::nothrow_t &) noexcept {
     return allocate<AllocationEvent::EVENT_NEW_ARRAY_NOTHROW, AllocationEvent::EVENT_NEW_ARRAY_NOTHROW_FAIL>(size, std::nothrow);
 }
 
-void operator delete(void *p) noexcept {
-    deallocate<AllocationEvent::EVENT_DELETE>(p);
+void operator delete(void *memory) noexcept {
+    deallocate<AllocationEvent::EVENT_DELETE>(memory);
 }
 
-void operator delete(void *p, const std::nothrow_t &) noexcept {
-    deallocate<AllocationEvent::EVENT_DELETE>(p);
+void operator delete(void *memory, const std::nothrow_t &) noexcept {
+    deallocate<AllocationEvent::EVENT_DELETE>(memory);
 }
 
-void operator delete[](void *p) noexcept {
-    deallocate<AllocationEvent::EVENT_DELETE_ARRAY>(p);
+void operator delete[](void *memory) noexcept {
+    deallocate<AllocationEvent::EVENT_DELETE_ARRAY>(memory);
 }
-void operator delete(void *p, size_t size) noexcept {
-    deallocate<AllocationEvent::EVENT_DELETE>(p);
+void operator delete(void *memory, size_t size) noexcept {
+    deallocate<AllocationEvent::EVENT_DELETE>(memory);
 }
 
-void operator delete[](void *p, size_t size) noexcept {
-    deallocate<AllocationEvent::EVENT_DELETE_ARRAY>(p);
+void operator delete[](void *memory, size_t size) noexcept {
+    deallocate<AllocationEvent::EVENT_DELETE_ARRAY>(memory);
 }
