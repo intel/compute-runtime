@@ -51,11 +51,6 @@ XE_HPG_CORETEST_F(L0GfxCoreHelperTestXeHpg, GivenXeHpgWhenCheckingL0HelperForSta
     EXPECT_FALSE(l0GfxCoreHelper.platformSupportsStateBaseAddressTracking(device->getNEODevice()->getRootDeviceEnvironment()));
 }
 
-XE_HPG_CORETEST_F(L0GfxCoreHelperTestXeHpg, GivenXeHpgWhenGettingPlatformDefaultHeapAddressModelThenReturnPrivateHeaps) {
-    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
-    EXPECT_EQ(NEO::HeapAddressModel::privateHeaps, l0GfxCoreHelper.getPlatformHeapAddressModel(device->getNEODevice()->getRootDeviceEnvironment()));
-}
-
 XE_HPG_CORETEST_F(L0GfxCoreHelperTestXeHpg, GivenXeHpgWhenCheckingL0HelperForPlatformSupportsImmediateFlushTaskThenReturnTrue) {
     auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
     EXPECT_TRUE(l0GfxCoreHelper.platformSupportsImmediateComputeFlushTask());
@@ -69,54 +64,6 @@ XE_HPG_CORETEST_F(L0GfxCoreHelperTestXeHpg, GivenXeHpgWhenGettingCmdlistUpdateCa
 XE_HPG_CORETEST_F(L0GfxCoreHelperTestXeHpg, GivenXeHpgWhenGettingRecordReplayGraphCapabilityThenReturnCorrectValue) {
     const auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
     EXPECT_EQ(0u, l0GfxCoreHelper.getPlatformRecordReplayGraphCapabilities());
-}
-
-XE_HPG_CORETEST_F(L0GfxCoreHelperTestXeHpg, GivenXeHpgWhenGetIpSamplingMetricCountIsCalledThenProperValueIsReturned) {
-    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
-    EXPECT_EQ(0u, l0GfxCoreHelper.getIpSamplingMetricCount());
-}
-
-XE_HPG_CORETEST_F(L0GfxCoreHelperTestXeHpg, GivenXeHpgWhenGetStallSamplingReportMetricsThenEmptyListIsReturned) {
-    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
-    std::vector<std::pair<const char *, const char *>> expectedStallSamplingReportList = {};
-    EXPECT_EQ(expectedStallSamplingReportList, l0GfxCoreHelper.getStallSamplingReportMetrics());
-}
-
-XE_HPG_CORETEST_F(L0GfxCoreHelperTestXeHpg, GivenXeHpgWhenStallIpDataMapUpdateIsCalledThenFalseIsReturned) {
-    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
-    std::map<uint64_t, void *> stallSumIpDataMap;
-    EXPECT_FALSE(l0GfxCoreHelper.stallIpDataMapUpdateFromData(nullptr, stallSumIpDataMap));
-}
-
-XE_HPG_CORETEST_F(L0GfxCoreHelperTestXeHpg, GivenXeHpgWhenStallIpDataMapDeleteIsCalledThenMapisUnchanged) {
-    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
-    std::map<uint64_t, void *> stallSumIpDataMap;
-    size_t mapSizeBefore = stallSumIpDataMap.size();
-    l0GfxCoreHelper.stallIpDataMapDeleteSumData(stallSumIpDataMap);
-    EXPECT_EQ(mapSizeBefore, stallSumIpDataMap.size());
-}
-
-XE_HPG_CORETEST_F(L0GfxCoreHelperTestXeHpg, GivenXeHpgWhenStallIpDataMapDeleteEntryIsCalledThenMapisUnchanged) {
-    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
-    std::map<uint64_t, void *> stallSumIpDataMap;
-    size_t mapSizeBefore = stallSumIpDataMap.size();
-    std::map<uint64_t, void *>::iterator it = stallSumIpDataMap.begin();
-    l0GfxCoreHelper.stallIpDataMapDeleteSumDataEntry(it);
-    EXPECT_EQ(mapSizeBefore, stallSumIpDataMap.size());
-}
-
-XE_HPG_CORETEST_F(L0GfxCoreHelperTestXeHpg, GivenXeHpgWhenStallSumIpDataToTypedValuesIsCalledThenNoChangeToDataValues) {
-    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
-    uint64_t ip = 0ull;
-    void *sumIpData = nullptr;
-    std::vector<zet_typed_value_t> ipDataValues;
-    l0GfxCoreHelper.stallSumIpDataToTypedValues(ip, sumIpData, ipDataValues);
-    EXPECT_EQ(0u, ipDataValues.size());
-}
-
-XE_HPG_CORETEST_F(L0GfxCoreHelperTestXeHpg, GivenXeHpgWhenGetIpSamplingIpMaskIsCalledThenZeroIsReturned) {
-    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
-    EXPECT_EQ(0u, l0GfxCoreHelper.getIpSamplingIpMask());
 }
 
 XE_HPG_CORETEST_F(L0GfxCoreHelperTestXeHpg, GivenL0GfxCoreHelperWhenCheckingMetricsAggregationSupportThenReturnFalse) {

@@ -58,65 +58,12 @@ GEN12LPTEST_F(L0GfxCoreHelperTestGen12Lp, GivenGen12LpWhenCheckingL0HelperForSta
     EXPECT_FALSE(l0GfxCoreHelper.platformSupportsStateBaseAddressTracking(device->getNEODevice()->getRootDeviceEnvironment()));
 }
 
-GEN12LPTEST_F(L0GfxCoreHelperTestGen12Lp, GivenGen12LpWhenGettingPlatformDefaultHeapAddressModelThenReturnPrivateHeaps) {
-    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
-    EXPECT_EQ(NEO::HeapAddressModel::privateHeaps, l0GfxCoreHelper.getPlatformHeapAddressModel(device->getNEODevice()->getRootDeviceEnvironment()));
-}
-
-GEN12LPTEST_F(L0GfxCoreHelperTestGen12Lp, GivenGen12LpWhenGetIpSamplingMetricCountIsCalledThenProperValueIsReturned) {
-    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
-    EXPECT_EQ(0u, l0GfxCoreHelper.getIpSamplingMetricCount());
-}
-
-GEN12LPTEST_F(L0GfxCoreHelperTestGen12Lp, GivenGen12LpWhenGetStallSamplingReportMetricsThenEmptyListIsReturned) {
-    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
-    std::vector<std::pair<const char *, const char *>> expectedStallSamplingReportList = {};
-    EXPECT_EQ(expectedStallSamplingReportList, l0GfxCoreHelper.getStallSamplingReportMetrics());
-}
-
-GEN12LPTEST_F(L0GfxCoreHelperTestGen12Lp, GivenGen12LpWhenStallIpDataMapUpdateFromDataIsCalledThenFalseIsReturned) {
-    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
-    std::map<uint64_t, void *> stallSumIpDataMap;
-    EXPECT_FALSE(l0GfxCoreHelper.stallIpDataMapUpdateFromData(nullptr, stallSumIpDataMap));
-}
-
 GEN12LPTEST_F(L0GfxCoreHelperTestGen12Lp, GivenGen12LpWhenStallIpDataMapUpdateFromMapIsCalledThenDoesNothing) {
     auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
     std::map<uint64_t, void *> stallSourceIpDataMap;
     std::map<uint64_t, void *> stallSumIpDataMap;
     l0GfxCoreHelper.stallIpDataMapUpdateFromMap(stallSourceIpDataMap, stallSumIpDataMap);
 }
-
-GEN12LPTEST_F(L0GfxCoreHelperTestGen12Lp, GivenGen12LpWhenStallIpDataMapDeleteIsCalledThenMapisUnchanged) {
-    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
-    std::map<uint64_t, void *> stallSumIpDataMap;
-    size_t mapSizeBefore = stallSumIpDataMap.size();
-    l0GfxCoreHelper.stallIpDataMapDeleteSumData(stallSumIpDataMap);
-    EXPECT_EQ(mapSizeBefore, stallSumIpDataMap.size());
-}
-GEN12LPTEST_F(L0GfxCoreHelperTestGen12Lp, GivenGen12LpWhenStallIpDataMapDeleteEntryIsCalledThenMapisUnchanged) {
-    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
-    std::map<uint64_t, void *> stallSumIpDataMap;
-    size_t mapSizeBefore = stallSumIpDataMap.size();
-    std::map<uint64_t, void *>::iterator it = stallSumIpDataMap.begin();
-    l0GfxCoreHelper.stallIpDataMapDeleteSumDataEntry(it);
-    EXPECT_EQ(mapSizeBefore, stallSumIpDataMap.size());
-}
-
-GEN12LPTEST_F(L0GfxCoreHelperTestGen12Lp, GivenGen12LpWhenStallSumIpDataToTypedValuesIsCalledThenNoChangeToDataValues) {
-    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
-    uint64_t ip = 0ull;
-    void *sumIpData = nullptr;
-    std::vector<zet_typed_value_t> ipDataValues;
-    l0GfxCoreHelper.stallSumIpDataToTypedValues(ip, sumIpData, ipDataValues);
-    EXPECT_EQ(0u, ipDataValues.size());
-}
-
-GEN12LPTEST_F(L0GfxCoreHelperTestGen12Lp, GivenGen12LpWhenGetIpSamplingIpMaskIsCalledThenZeroIsReturned) {
-    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
-    EXPECT_EQ(0u, l0GfxCoreHelper.getIpSamplingIpMask());
-}
-
 GEN12LPTEST_F(L0GfxCoreHelperTestGen12Lp, GivenL0GfxCoreHelperWhenCheckingMetricsAggregationSupportThenReturnFalse) {
     MockExecutionEnvironment executionEnvironment;
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0].get();

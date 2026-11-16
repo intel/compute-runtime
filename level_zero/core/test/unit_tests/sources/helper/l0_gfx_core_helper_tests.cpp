@@ -19,7 +19,9 @@
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
+#include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 
 #include "multitile_matchers.h"
 
@@ -1321,6 +1323,61 @@ HWTEST2_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperFromXe3pWhenAskingForOutOfOrd
     auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
 
     EXPECT_TRUE(l0GfxCoreHelper.isCopyOffloadForOutOfOrderImmediateCmdListSupported());
+}
+
+using L0GfxCoreHelperDeviceTest = Test<DeviceFixture>;
+
+HWTEST2_F(L0GfxCoreHelperDeviceTest, whenGettingPlatformDefaultHeapAddressModelThenReturnPrivateHeaps, IsAtMostXe3Core) {
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    EXPECT_EQ(NEO::HeapAddressModel::privateHeaps, l0GfxCoreHelper.getPlatformHeapAddressModel(device->getNEODevice()->getRootDeviceEnvironment()));
+}
+
+HWTEST2_F(L0GfxCoreHelperDeviceTest, whenGetIpSamplingMetricCountIsCalledThenProperValueIsReturned, IsAtMostXeHpgCore) {
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    EXPECT_EQ(0u, l0GfxCoreHelper.getIpSamplingMetricCount());
+}
+
+HWTEST2_F(L0GfxCoreHelperDeviceTest, whenGetStallSamplingReportMetricsThenEmptyListIsReturned, IsAtMostXeHpgCore) {
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    std::vector<std::pair<const char *, const char *>> expectedStallSamplingReportList = {};
+    EXPECT_EQ(expectedStallSamplingReportList, l0GfxCoreHelper.getStallSamplingReportMetrics());
+}
+
+HWTEST2_F(L0GfxCoreHelperDeviceTest, whenStallIpDataMapUpdateFromDataIsCalledThenFalseIsReturned, IsAtMostXeHpgCore) {
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    std::map<uint64_t, void *> stallSumIpDataMap;
+    EXPECT_FALSE(l0GfxCoreHelper.stallIpDataMapUpdateFromData(nullptr, stallSumIpDataMap));
+}
+
+HWTEST2_F(L0GfxCoreHelperDeviceTest, whenStallIpDataMapDeleteIsCalledThenMapisUnchanged, IsAtMostXeHpgCore) {
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    std::map<uint64_t, void *> stallSumIpDataMap;
+    size_t mapSizeBefore = stallSumIpDataMap.size();
+    l0GfxCoreHelper.stallIpDataMapDeleteSumData(stallSumIpDataMap);
+    EXPECT_EQ(mapSizeBefore, stallSumIpDataMap.size());
+}
+
+HWTEST2_F(L0GfxCoreHelperDeviceTest, whenStallIpDataMapDeleteEntryIsCalledThenMapisUnchanged, IsAtMostXeHpgCore) {
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    std::map<uint64_t, void *> stallSumIpDataMap;
+    size_t mapSizeBefore = stallSumIpDataMap.size();
+    std::map<uint64_t, void *>::iterator it = stallSumIpDataMap.begin();
+    l0GfxCoreHelper.stallIpDataMapDeleteSumDataEntry(it);
+    EXPECT_EQ(mapSizeBefore, stallSumIpDataMap.size());
+}
+
+HWTEST2_F(L0GfxCoreHelperDeviceTest, whenStallSumIpDataToTypedValuesIsCalledThenNoChangeToDataValues, IsAtMostXeHpgCore) {
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    uint64_t ip = 0ull;
+    void *sumIpData = nullptr;
+    std::vector<zet_typed_value_t> ipDataValues;
+    l0GfxCoreHelper.stallSumIpDataToTypedValues(ip, sumIpData, ipDataValues);
+    EXPECT_EQ(0u, ipDataValues.size());
+}
+
+HWTEST2_F(L0GfxCoreHelperDeviceTest, whenGetIpSamplingIpMaskIsCalledThenZeroIsReturned, IsAtMostXeHpgCore) {
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    EXPECT_EQ(0u, l0GfxCoreHelper.getIpSamplingIpMask());
 }
 
 } // namespace ult
