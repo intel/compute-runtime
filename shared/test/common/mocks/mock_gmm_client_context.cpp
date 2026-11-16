@@ -10,6 +10,9 @@
 namespace NEO {
 
 MEMORY_OBJECT_CONTROL_STATE MockGmmClientContextBase::cachePolicyGetMemoryObject(GMM_RESOURCE_INFO *pResInfo, GmmResourceUsageType usage) {
+    passedResourceInfoForGetMemoryObjectQuery = pResInfo;
+    passedUsageTypeForGetMemoryObjectQuery = usage;
+
     MEMORY_OBJECT_CONTROL_STATE retVal = {};
     memset(&retVal, 0, sizeof(MEMORY_OBJECT_CONTROL_STATE));
     switch (usage) {

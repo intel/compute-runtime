@@ -10,6 +10,8 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
+#include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/gfx_core_helper.h"
@@ -41,6 +43,10 @@ void GmmHelper::initMocsDefaults() {
 }
 
 uint32_t GmmHelper::getMOCS(uint32_t type) const {
+    return this->getMOCS(nullptr, type);
+}
+
+uint32_t GmmHelper::getMOCS(const Gmm *gmm, uint32_t type) const {
     if (allResourcesUncached || (debugManager.flags.ForceAllResourcesUncached.get() == true)) {
         type = GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED;
     }
@@ -49,7 +55,8 @@ uint32_t GmmHelper::getMOCS(uint32_t type) const {
         return 0u;
     }
 
-    MEMORY_OBJECT_CONTROL_STATE mocs = gmmClientContext->cachePolicyGetMemoryObject(nullptr, static_cast<GMM_RESOURCE_USAGE_TYPE>(type));
+    auto *resourceInfo = gmm ? gmm->gmmResourceInfo->peekGmmResourceInfo() : nullptr;
+    MEMORY_OBJECT_CONTROL_STATE mocs = gmmClientContext->cachePolicyGetMemoryObject(resourceInfo, static_cast<GMM_RESOURCE_USAGE_TYPE>(type));
 
     return static_cast<uint32_t>(mocs.DwordValue);
 }

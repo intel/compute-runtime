@@ -12,12 +12,14 @@
 #include "shared/test/common/fixtures/mock_execution_environment_gmm_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/raii_product_helper.h"
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 using MockExecutionEnvironmentGmmFixtureTest = Test<NEO::MockExecutionEnvironmentGmmFixture>;
@@ -1304,6 +1306,20 @@ TEST(GmmHelperTest, givenGmmHelperAndForceAllResourcesUncachedDebugVariableSetTh
     EXPECT_EQ(uncachedMocs, gmmHelper->getL3EnabledMOCS());
     EXPECT_EQ(uncachedMocs, gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_INLINE_CONST_HDC));
     GmmHelper::createGmmContextWrapperFunc = createGmmContextSave;
+}
+
+TEST_F(MockExecutionEnvironmentGmmFixtureTest, givenGmmOrNoGmmWhenGettingMocsThenResourceInfoOfGmmOrNoResourceInfoIsPassedToMocsQuery) {
+    RAIIProductHelperFactory<MockProductHelper> productHelper(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto gmmClientContext = static_cast<MockGmmClientContextBase *>(getGmmClientContext());
+    const MockGmm gmm(getGmmHelper());
+
+    getGmmHelper()->getMOCS(&gmm, GMM_RESOURCE_USAGE_OCL_IMAGE);
+    EXPECT_EQ(gmm.gmmResourceInfo->peekGmmResourceInfo(), gmmClientContext->passedResourceInfoForGetMemoryObjectQuery.load());
+    EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_IMAGE, gmmClientContext->passedUsageTypeForGetMemoryObjectQuery.load());
+
+    getGmmHelper()->getMOCS(nullptr, GMM_RESOURCE_USAGE_OCL_BUFFER);
+    EXPECT_EQ(nullptr, gmmClientContext->passedResourceInfoForGetMemoryObjectQuery.load());
+    EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_BUFFER, gmmClientContext->passedUsageTypeForGetMemoryObjectQuery.load());
 }
 
 struct GmmCompressionTests : public MockExecutionEnvironmentGmmFixtureTest {

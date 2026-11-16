@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 
+#include <atomic>
 #include <optional>
 
 namespace NEO {
@@ -47,6 +48,9 @@ class MockGmmClientContextBase : public GmmClientContext {
     std::optional<GmmResourceUsageType> passedUsageTypeForGetPatIndexQuery;
     GMM_RESOURCE_INFO *passedResourceInfoForGetPatIndexQuery = nullptr;
     uint32_t getPatIndexQueryCalled = 0u;
+
+    std::atomic<GmmResourceUsageType> passedUsageTypeForGetMemoryObjectQuery = GMM_RESOURCE_USAGE_UNKNOWN;
+    std::atomic<GMM_RESOURCE_INFO *> passedResourceInfoForGetMemoryObjectQuery = nullptr;
 
   protected:
     using GmmClientContext::GmmClientContext;

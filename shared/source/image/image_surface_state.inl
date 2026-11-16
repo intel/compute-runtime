@@ -72,7 +72,7 @@ void ImageSurfaceStateHelper<GfxFamily>::setImageSurfaceState(RENDER_SURFACE_STA
 
     surfaceState->setTileMode(static_cast<typename RENDER_SURFACE_STATE::TILE_MODE>(tileMode));
 
-    surfaceState->setMemoryObjectControlState(gmmHelper.getMOCS(CacheSettingsHelper::getGmmUsageTypeForImage()));
+    surfaceState->setMemoryObjectControlState(gmmHelper.getMOCS(gmm, CacheSettingsHelper::getGmmUsageTypeForImage()));
 
     EncodeSurfaceState<GfxFamily>::setCoherencyType(surfaceState, RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT);
 

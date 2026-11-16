@@ -6,15 +6,18 @@
  */
 
 #include "shared/source/command_container/encode_surface_state.h"
+#include "shared/source/gmm_helper/cache_settings_helper.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/image/image_surface_state.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/raii_product_helper.h"
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
+#include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/image/image_surface_state_fixture.h"
 
@@ -110,6 +113,25 @@ HWTEST2_PRODUCT_F(ImageSurfaceStateTests, givenImageInfoWhenSetImageSurfaceState
     EXPECT_EQ(castSurfaceState->getDepth(), __GMM_MAX_CUBE_FACE - cubeFaceIndex);
     EXPECT_EQ(castSurfaceState->getSurfacePitch(), static_cast<uint32_t>(imageInfo.imgDesc.imageRowPitch));
     EXPECT_EQ(castSurfaceState->getSurfaceType(), surfaceType);
+}
+
+HWTEST_F(ImageSurfaceStateTests, givenGmmWhenSetImageSurfaceStateThenMocsIsQueriedWithResourceInfoOfGmm) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    RAIIProductHelperFactory<MockProductHelper> productHelper(*pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]);
+    auto gmmClientContext = static_cast<MockGmmClientContextBase *>(gmmHelper->getClientContext());
+
+    SurfaceFormatInfo surfaceFormatInfo{};
+    imageInfo.surfaceFormat = &surfaceFormatInfo;
+    const SurfaceOffsets surfaceOffsets{};
+    RENDER_SURFACE_STATE surfaceState = FamilyType::cmdInitRenderSurfaceState;
+    uint32_t minArrayElement = 0u;
+    uint32_t renderTargetViewExtent = 0u;
+
+    ImageSurfaceStateHelper<FamilyType>::setImageSurfaceState(&surfaceState, imageInfo, mockGmm.get(), *gmmHelper, gmmNoCubeMap, 0u, surfaceOffsets, false, minArrayElement, renderTargetViewExtent);
+
+    EXPECT_EQ(mockGmm->gmmResourceInfo->peekGmmResourceInfo(), gmmClientContext->passedResourceInfoForGetMemoryObjectQuery.load());
+    EXPECT_EQ(CacheSettingsHelper::getGmmUsageTypeForImage(), gmmClientContext->passedUsageTypeForGetMemoryObjectQuery.load());
 }
 
 HWTEST_F(ImageSurfaceStateTests, givenGmmWhenSetAuxParamsForCCSThenAuxiliarySurfaceModeIsSet) {

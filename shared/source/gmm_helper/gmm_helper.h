@@ -12,6 +12,7 @@
 #include <memory>
 
 namespace NEO {
+class Gmm;
 class GmmClientContext;
 struct HardwareInfo;
 struct RootDeviceEnvironment;
@@ -24,6 +25,7 @@ class GmmHelper {
 
     const HardwareInfo *getHardwareInfo();
     uint32_t getMOCS(uint32_t type) const;
+    uint32_t getMOCS(const Gmm *gmm, uint32_t type) const;
     uint32_t getL1EnabledMOCS() const;
     uint32_t getL3EnabledMOCS() const;
     uint32_t getUncachedMOCS() const;
