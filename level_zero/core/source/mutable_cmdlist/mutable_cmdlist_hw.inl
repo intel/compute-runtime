@@ -136,6 +136,24 @@ ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::initialize(Device *devi
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::validateKernelGroupLaunchParams(Kernel *kernel, const ze_group_count_t &threadGroupDimensions) {
+    auto kernelGroup = this->kernelMutations[(nextCommandId - 1)].kernelGroup;
+    if (kernelGroup == nullptr) {
+        return ZE_RESULT_SUCCESS;
+    }
+    for (auto &mutableViewKernel : kernelGroup->getKernelsInGroup()) {
+        if (mutableViewKernel->getKernel() == kernel) {
+            continue;
+        }
+        auto result = this->validateLaunchParams(*mutableViewKernel->getKernel(), CmdListKernelLaunchParams{}, threadGroupDimensions);
+        if (result != ZE_RESULT_SUCCESS) {
+            return result;
+        }
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_handle_t kernelHandle,
                                                                                    const ze_group_count_t &threadGroupDimensions,
                                                                                    ze_event_handle_t hEvent, uint32_t numWaitEvents,
@@ -144,6 +162,12 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendLaunchKern
     MutableAppendEvents mutableEventParams = {};
 
     if (this->nextAppendKernelMutable) {
+        auto result = validateKernelGroupLaunchParams(Kernel::fromHandle(kernelHandle), threadGroupDimensions);
+        if (result != ZE_RESULT_SUCCESS) {
+            clearMutableAppendData();
+            return result;
+        }
+
         if (kernelInstructionMutationEnabled(this->nextMutationFlags) && CommandListCoreFamily<gfxCoreFamily>::kernelMemoryPrefetchEnabled()) {
             this->appendCmdsToPatch.makeCommandView = CommandListCoreFamily<gfxCoreFamily>::isPatchPreambleEnabled();
             launchParams.outListCommands = &this->appendCmdsToPatch;

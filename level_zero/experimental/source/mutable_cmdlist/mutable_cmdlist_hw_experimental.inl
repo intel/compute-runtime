@@ -230,6 +230,20 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendSetPredica
 template <GFXCORE_FAMILY gfxCoreFamily>
 inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendVariableLaunchKernel(Kernel *kernel, Variable *groupCount, Event *signalEvent, uint32_t numWaitEvents, ze_event_handle_t *waitEvents) {
     bool relaxedOrderingDispatch = false;
+    CmdListKernelLaunchParams launchParams = {};
+    launchParams.omitAddingKernelArgumentResidency = true;
+    launchParams.relaxedOrderingDispatch = relaxedOrderingDispatch;
+
+    ze_group_count_t threadGroupDimensions = {1U, 1U, 1U};
+    ze_result_t ret = this->validateLaunchParams(*kernel, launchParams, threadGroupDimensions);
+    if (ret == ZE_RESULT_SUCCESS && this->nextAppendKernelMutable) {
+        ret = validateKernelGroupLaunchParams(kernel, threadGroupDimensions);
+    }
+    if (ret != ZE_RESULT_SUCCESS) {
+        clearMutableAppendData();
+        return ret;
+    }
+
     CmdListWaitEventParameters waitEventsParameters = {
         .outWaitCmds = nullptr,
         .relaxedOrderingAllowed = relaxedOrderingDispatch,
@@ -238,21 +252,16 @@ inline ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendVariableLa
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
     };
-    ze_result_t ret = CommandListCoreFamily<gfxCoreFamily>::addEventsToCmdList(numWaitEvents, waitEvents, waitEventsParameters);
+    ret = CommandListCoreFamily<gfxCoreFamily>::addEventsToCmdList(numWaitEvents, waitEvents, waitEventsParameters);
     if (ret) {
         return ret;
     }
-
-    CmdListKernelLaunchParams launchParams = {};
-    launchParams.omitAddingKernelArgumentResidency = true;
-    launchParams.relaxedOrderingDispatch = relaxedOrderingDispatch;
 
     auto &residencyContainer = kernel->getArgumentsResidencyContainer();
     for (auto resource : residencyContainer) {
         addToResidencyContainer(resource, false);
     }
 
-    ze_group_count_t threadGroupDimensions = {1U, 1U, 1U};
     ret = appendLaunchKernelWithParams(kernel, threadGroupDimensions,
                                        signalEvent, launchParams);
     if (ret) {

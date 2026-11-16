@@ -191,6 +191,7 @@ struct MutableCommandListCoreFamily : public MutableCommandListImp, public Comma
                                                           const ze_group_count_t &threadGroupDimensions,
                                                           Event *event,
                                                           MutableAppendLaunchKernelWithParams &parentMutableAppendLaunchParams);
+    ze_result_t validateKernelGroupLaunchParams(Kernel *kernel, const ze_group_count_t &threadGroupDimensions);
     void storeWaitEventsVariables(uint32_t numWaitEvents,
                                   ze_event_handle_t *phWaitEvents,
                                   MutableAppendEvents &mutableEventParams);

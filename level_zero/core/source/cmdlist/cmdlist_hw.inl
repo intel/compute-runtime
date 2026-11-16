@@ -662,6 +662,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelIndirect(ze_
 
     auto swTagScope = emplaceSWTagScope("zeCommandListAppendLaunchKernelIndirect", NEO::SWTags::CounterType::dispatch);
 
+    CmdListKernelLaunchParams launchParams = {};
+    ze_result_t ret = validateLaunchParams(*Kernel::fromHandle(kernelHandle), launchParams, pDispatchArgumentsBuffer);
+    if (ret != ZE_RESULT_SUCCESS) {
+        return ret;
+    }
+
     CmdListWaitEventParameters waitEventsParameters = {
         .outWaitCmds = nullptr,
         .relaxedOrderingAllowed = relaxedOrderingDispatch,
@@ -670,14 +676,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelIndirect(ze_
         .skipAddingWaitEventsToResidency = false,
         .dualStreamCopyOffloadOperation = false,
     };
-    ze_result_t ret = addEventsToCmdList(numWaitEvents, phWaitEvents, waitEventsParameters);
+    ret = addEventsToCmdList(numWaitEvents, phWaitEvents, waitEventsParameters);
     if (ret) {
         return ret;
     }
 
     appendSynchronizedDispatchInitializationSection();
 
-    CmdListKernelLaunchParams launchParams = {};
     Event *event = nullptr;
     if (hEvent) {
         event = Event::fromHandle(hEvent);
@@ -851,6 +856,18 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchMultipleKernelsInd
                                                                                       ze_event_handle_t hEvent,
                                                                                       uint32_t numWaitEvents,
                                                                                       ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
+    CmdListKernelLaunchParams launchParams = {};
+    launchParams.isIndirect = true;
+    launchParams.isPredicate = true;
+    launchParams.relaxedOrderingDispatch = relaxedOrderingDispatch;
+
+    for (uint32_t i = 0; i < numKernels; i++) {
+        auto validationStatus = validateLaunchParams(*Kernel::fromHandle(kernelHandles[i]), launchParams, pLaunchArgumentsBuffer[i]);
+        if (validationStatus != ZE_RESULT_SUCCESS) {
+            return validationStatus;
+        }
+    }
+
     auto immediateInitStatus = ensureImmediateResourcesInitialized();
     if (immediateInitStatus != ZE_RESULT_SUCCESS) {
         return immediateInitStatus;
@@ -870,11 +887,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchMultipleKernelsInd
     }
 
     appendSynchronizedDispatchInitializationSection();
-
-    CmdListKernelLaunchParams launchParams = {};
-    launchParams.isIndirect = true;
-    launchParams.isPredicate = true;
-    launchParams.relaxedOrderingDispatch = relaxedOrderingDispatch;
 
     Event *event = nullptr;
     if (hEvent) {
