@@ -2060,7 +2060,13 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::preferCopyThroughLockedPtr(C
     }
 
     const TransferType transferType = getTransferType(cpuMemCopyInfo);
-    const size_t transferThreshold = getCpuCopyThreshold(transferType);
+    bool isHostPtrStaged = true;
+    if (transferType == TransferType::hostNonUsmToDeviceUsm) {
+        isHostPtrStaged = isHostPtrStagedForCopy(cpuMemCopyInfo, cpuMemCopyInfo.srcPtr, numWaitEvents);
+    } else if (transferType == TransferType::deviceUsmToHostNonUsm) {
+        isHostPtrStaged = isHostPtrStagedForCopy(cpuMemCopyInfo, cpuMemCopyInfo.dstPtr, numWaitEvents);
+    }
+    const size_t transferThreshold = getCpuCopyThreshold(transferType, isHostPtrStaged);
     if (cpuMemCopyInfo.size > transferThreshold) {
         return false;
     }
@@ -2337,8 +2343,9 @@ TransferType CommandListCoreFamilyImmediate<gfxCoreFamily>::getTransferType(cons
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-size_t CommandListCoreFamilyImmediate<gfxCoreFamily>::getCpuCopyThreshold(TransferType transferType) {
-    size_t retVal = this->device->getProductHelper().getCpuCopyThreshold(transferType);
+size_t CommandListCoreFamilyImmediate<gfxCoreFamily>::getCpuCopyThreshold(TransferType transferType, bool isHostPtrStaged) {
+    const auto &productHelper = this->device->getProductHelper();
+    size_t retVal = isHostPtrStaged ? productHelper.getCpuCopyThreshold(transferType) : productHelper.getCpuCopyThresholdForNonStagedHostPtr(transferType);
 
     if (transferType == TransferType::hostNonUsmToDeviceUsm && NEO::debugManager.flags.ExperimentalH2DCpuCopyThreshold.get() != -1) {
         retVal = NEO::debugManager.flags.ExperimentalH2DCpuCopyThreshold.get();
@@ -2682,7 +2689,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::handlePostStagingTran
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isValidForStagingTransfer(const CpuMemCopyInfo &cpuMemCopyInfo, uint32_t numWaitEvents) {
+bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isStagingAllowedForCopy(const CpuMemCopyInfo &cpuMemCopyInfo) {
     if (!this->stagingCopiesAllowed) {
         return false;
     }
@@ -2695,13 +2702,30 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isValidForStagingTransfer(co
     if (cpuMemCopyInfo.dstIsPartialOverlapNonUsmHostPtr || cpuMemCopyInfo.srcIsPartialOverlapNonUsmHostPtr) {
         return false;
     }
-    auto neoDevice = this->getDevice()->getNEODevice();
     auto stagingBufferManager = this->getDevice()->getDriverHandle()->getStagingBufferManager();
-    if (!stagingBufferManager->isStagingEnabled(*neoDevice)) {
+    return stagingBufferManager->isStagingEnabled(*this->getDevice()->getNEODevice());
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isValidForStagingTransfer(const CpuMemCopyInfo &cpuMemCopyInfo, uint32_t numWaitEvents) {
+    if (!isStagingAllowedForCopy(cpuMemCopyInfo)) {
         return false;
     }
+    auto neoDevice = this->getDevice()->getNEODevice();
+    auto stagingBufferManager = this->getDevice()->getDriverHandle()->getStagingBufferManager();
     const bool hasDependencies = numWaitEvents > 0 || hasPendingStagingDependency();
     return stagingBufferManager->isValidForCopy(*neoDevice, cpuMemCopyInfo.dstPtr, cpuMemCopyInfo.srcPtr, cpuMemCopyInfo.size, hasDependencies);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isHostPtrStagedForCopy(const CpuMemCopyInfo &cpuMemCopyInfo, const void *hostPtr, uint32_t numWaitEvents) {
+    if (!isStagingAllowedForCopy(cpuMemCopyInfo)) {
+        return false;
+    }
+    auto neoDevice = this->getDevice()->getNEODevice();
+    auto stagingBufferManager = this->getDevice()->getDriverHandle()->getStagingBufferManager();
+    const bool hasDependencies = numWaitEvents > 0 || hasPendingStagingDependency();
+    return stagingBufferManager->isStagingPossible(*neoDevice, hostPtr, cpuMemCopyInfo.size, hasDependencies);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

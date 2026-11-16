@@ -471,6 +471,25 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenGetCpuCopyThresholdThenReturn
     EXPECT_EQ(0u, productHelper->getCpuCopyThreshold(TransferType::sharedUsmToSharedUsm));
 }
 
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenGetCpuCopyThresholdForNonStagedHostPtrThenReturnDefaultThresholds, IsNotCRI) {
+    constexpr TransferType transferTypes[] = {
+        TransferType::unknown,
+        TransferType::deviceUsmToDeviceUsm,
+        TransferType::deviceUsmToHostUsm,
+        TransferType::deviceUsmToHostNonUsm,
+        TransferType::hostUsmToDeviceUsm,
+        TransferType::hostUsmToHostUsm,
+        TransferType::hostUsmToHostNonUsm,
+        TransferType::hostNonUsmToDeviceUsm,
+        TransferType::hostNonUsmToHostUsm,
+        TransferType::hostNonUsmToHostNonUsm,
+        TransferType::sharedUsmToSharedUsm};
+
+    for (auto transferType : transferTypes) {
+        EXPECT_EQ(productHelper->getCpuCopyThreshold(transferType), productHelper->getCpuCopyThresholdForNonStagedHostPtr(transferType));
+    }
+}
+
 HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedIfDisableScratchPagesIsSupportedForDebuggerThenReturnTrue, IsNotDG2) {
     EXPECT_TRUE(productHelper->isDisableScratchPagesRequiredForDebugger());
 }

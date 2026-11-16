@@ -15,6 +15,7 @@
 #include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_ostime.h"
+#include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
 
@@ -230,7 +231,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrWh
     cmdList.cmdQImmediate = queue.get();
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     debugManager.flags.ExperimentalD2HCpuCopyThreshold.set(static_cast<int32_t>(cpuCopyThresholdOverride));
-    const size_t copySize = cmdList.getCpuCopyThreshold(TransferType::deviceUsmToHostNonUsm);
+    const size_t copySize = cmdList.getCpuCopyThreshold(TransferType::deviceUsmToHostNonUsm, true);
     CpuMemCopyInfo cpuMemCopyInfo(nonUsmHostPtr, devicePtr, copySize);
     auto srcFound = device->getDriverHandle()->findAllocationDataForRange(devicePtr, copySize, cpuMemCopyInfo.srcAllocInfo.svmAlloc);
     ASSERT_TRUE(srcFound);
@@ -1267,7 +1268,8 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenGetCpuCopyThre
         TransferType::sharedUsmToSharedUsm};
 
     for (auto transferType : transferTypes) {
-        EXPECT_EQ(productHelper.getCpuCopyThreshold(transferType), cmdList.getCpuCopyThreshold(transferType));
+        EXPECT_EQ(productHelper.getCpuCopyThreshold(transferType), cmdList.getCpuCopyThreshold(transferType, true));
+        EXPECT_EQ(productHelper.getCpuCopyThresholdForNonStagedHostPtr(transferType), cmdList.getCpuCopyThreshold(transferType, false));
     }
 }
 
@@ -1280,10 +1282,61 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndThresholdDebugF
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
     debugManager.flags.ExperimentalH2DCpuCopyThreshold.set(5 * MemoryConstants::megaByte);
-    EXPECT_EQ(5 * MemoryConstants::megaByte, cmdList.getCpuCopyThreshold(TransferType::hostNonUsmToDeviceUsm));
+    EXPECT_EQ(5 * MemoryConstants::megaByte, cmdList.getCpuCopyThreshold(TransferType::hostNonUsmToDeviceUsm, false));
+    EXPECT_EQ(5 * MemoryConstants::megaByte, cmdList.getCpuCopyThreshold(TransferType::hostNonUsmToDeviceUsm, true));
 
     debugManager.flags.ExperimentalD2HCpuCopyThreshold.set(6 * MemoryConstants::megaByte);
-    EXPECT_EQ(6 * MemoryConstants::megaByte, cmdList.getCpuCopyThreshold(TransferType::deviceUsmToHostNonUsm));
+    EXPECT_EQ(6 * MemoryConstants::megaByte, cmdList.getCpuCopyThreshold(TransferType::deviceUsmToHostNonUsm, false));
+    EXPECT_EQ(6 * MemoryConstants::megaByte, cmdList.getCpuCopyThreshold(TransferType::deviceUsmToHostNonUsm, true));
+}
+
+HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrThatIsNotStagedWhenCheckingCpuCopyThenThresholdForNonStagedHostPtrIsUsed) {
+    debugManager.flags.EnableCopyWithStagingBuffers.set(1);
+    allocateDeviceBuffer();
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.cmdQImmediate = queue.get();
+    cmdList.copyThroughLockedPtrEnabled = true;
+    cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    auto mockProductHelper = new MockProductHelper;
+    mockProductHelper->getCpuCopyThresholdForNonStagedHostPtrCallBase = false;
+    mockProductHelper->getCpuCopyThresholdForNonStagedHostPtrResult = 0u;
+    mockProductHelper->isStagingFor2MBAlignedHostPtrAllowedResult = false;
+    device->getNEODevice()->getRootDeviceEnvironmentRef().productHelper.reset(mockProductHelper);
+
+    constexpr size_t copySize = 64u;
+    ASSERT_LE(copySize, mockProductHelper->getCpuCopyThreshold(TransferType::deviceUsmToHostNonUsm));
+    ASSERT_LE(copySize, mockProductHelper->getCpuCopyThreshold(TransferType::hostNonUsmToDeviceUsm));
+
+    auto alignedHostPtr = alignedMalloc(2 * copySize, MemoryConstants::pageSize2M);
+    auto misalignedHostPtr = ptrOffset(alignedHostPtr, copySize);
+
+    CpuMemCopyInfo d2hAligned(alignedHostPtr, devicePtr, copySize);
+    CpuMemCopyInfo d2hMisaligned(misalignedHostPtr, devicePtr, copySize);
+    CpuMemCopyInfo h2dAligned(devicePtr, alignedHostPtr, copySize);
+    CpuMemCopyInfo h2dMisaligned(devicePtr, misalignedHostPtr, copySize);
+    for (auto copyInfo : {&d2hAligned, &d2hMisaligned, &h2dAligned, &h2dMisaligned}) {
+        cmdList.obtainAllocData(*copyInfo, false);
+    }
+
+    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(d2hAligned, nullptr, 0, nullptr));
+    EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(d2hMisaligned, nullptr, 0, nullptr));
+    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(h2dAligned, nullptr, 0, nullptr));
+    EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(h2dMisaligned, nullptr, 0, nullptr));
+    EXPECT_EQ(2u, mockProductHelper->getCpuCopyThresholdForNonStagedHostPtrCalled);
+
+    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(d2hMisaligned, nullptr, 1, nullptr));
+    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(h2dMisaligned, nullptr, 1, nullptr));
+    EXPECT_EQ(4u, mockProductHelper->getCpuCopyThresholdForNonStagedHostPtrCalled);
+
+    debugManager.flags.EnableCopyWithStagingBuffers.set(0);
+    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(d2hMisaligned, nullptr, 0, nullptr));
+    EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(h2dMisaligned, nullptr, 0, nullptr));
+    EXPECT_EQ(6u, mockProductHelper->getCpuCopyThresholdForNonStagedHostPtrCalled);
+
+    alignedFree(alignedHostPtr);
 }
 
 HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrWhenCopyH2DThenLockPtr) {
@@ -1319,7 +1372,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrWh
 
     NEO::SvmAllocationData *allocData;
     debugManager.flags.ExperimentalD2HCpuCopyThreshold.set(static_cast<int32_t>(cpuCopyThresholdOverride));
-    const size_t copySize = cmdList.getCpuCopyThreshold(TransferType::deviceUsmToHostNonUsm);
+    const size_t copySize = cmdList.getCpuCopyThreshold(TransferType::deviceUsmToHostNonUsm, true);
     device->getDriverHandle()->findAllocationDataForRange(devicePtr, copySize, allocData);
     auto dstAlloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
 
@@ -1919,7 +1972,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmDstHostPt
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
     debugManager.flags.ExperimentalD2HCpuCopyThreshold.set(static_cast<int32_t>(cpuCopyThresholdOverride));
-    const size_t copySize = cmdList.getCpuCopyThreshold(TransferType::deviceUsmToHostNonUsm) * 2;
+    const size_t copySize = cmdList.getCpuCopyThreshold(TransferType::deviceUsmToHostNonUsm, true) * 2;
 
     cmdList.appendMemoryCopy(nonUsmHostPtr, devicePtr, copySize, nullptr, 0, nullptr, copyParams);
     EXPECT_GE(cmdList.appendMemoryCopyKernelWithGACalled, 1u);

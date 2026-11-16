@@ -433,13 +433,17 @@ bool StagingBufferManager::isStagingEnabled(const Device &device) const {
 
 // Common checks for usm, buffers and images
 bool StagingBufferManager::isValidForStaging(const Device &device, const void *ptr, size_t size, bool hasDependencies) {
+    return this->isStagingPossible(device, ptr, size, hasDependencies) && !this->registerHostPtr(ptr);
+}
+
+bool StagingBufferManager::isStagingPossible(const Device &device, const void *ptr, size_t size, bool hasDependencies) const {
     const auto &productHelper = device.getProductHelper();
     auto stagingCopyEnabled = isStagingEnabled(device);
     auto isValidCpuVirtualAddress = isValidCpuVirtualAddressRange(ptr, size);
     auto osInterface = device.getRootDeviceEnvironment().osInterface.get();
     bool sizeWithinThreshold = osInterface ? osInterface->isSizeWithinThresholdForStaging(ptr, size) : true;
     bool alignmentAllowed = productHelper.isStagingFor2MBAlignedHostPtrAllowed() || !isAligned<MemoryConstants::pageSize2M>(ptr);
-    return stagingCopyEnabled && isValidCpuVirtualAddress && !hasDependencies && sizeWithinThreshold && alignmentAllowed && !this->registerHostPtr(ptr);
+    return stagingCopyEnabled && isValidCpuVirtualAddress && !hasDependencies && sizeWithinThreshold && alignmentAllowed;
 }
 
 void StagingBufferManager::clearTrackedChunks() {

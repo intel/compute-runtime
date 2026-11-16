@@ -157,6 +157,7 @@ class ProductHelperHw : public ProductHelper {
     bool isStagingBuffersEnabled() const override;
     bool isStagingFor2MBAlignedHostPtrAllowed() const override;
     size_t getCpuCopyThreshold(TransferType transferType) const override;
+    size_t getCpuCopyThresholdForNonStagedHostPtr(TransferType transferType) const override;
     uint32_t adjustMaxThreadsPerThreadGroup(const HardwareInfo &hwInfo, uint32_t maxThreadsPerThreadGroup, uint32_t simt, uint32_t grfCount) const override;
     uint64_t getPatIndex(CacheRegion cacheRegion, CachePolicy cachePolicy) const override;
     uint64_t getSharedSystemPatIndex() const override;

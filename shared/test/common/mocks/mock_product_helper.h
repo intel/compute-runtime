@@ -15,8 +15,11 @@ namespace NEO {
 enum class LocalMemAllocationMode : uint32_t;
 
 struct MockProductHelper : ProductHelperHw<IGFX_UNKNOWN> {
+    using BaseClass = ProductHelperHw<IGFX_UNKNOWN>;
     using ProductHelper::setupPreemptionSurfaceSize;
     MockProductHelper() = default;
+
+    ADDMETHOD_CONST(getCpuCopyThresholdForNonStagedHostPtr, size_t, true, 0u, (TransferType transferType), (transferType));
 
     ADDMETHOD_CONST_NOBASE(setupHardwareInfo, bool, true, (HardwareInfo & hwInfo, const DeviceCapsReader &capsReader));
     ADDMETHOD_CONST_NOBASE(is48bResourceNeededForRayTracing, bool, true, ());

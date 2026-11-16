@@ -273,7 +273,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     ze_result_t performCpuMemcpy(const CpuMemCopyInfo &cpuMemCopyInfo, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
     void *obtainLockedPtrFromDevice(NEO::SvmAllocationData *alloc, void *ptr, bool &lockingFailed);
     TransferType getTransferType(const CpuMemCopyInfo &cpuMemCopyInfo);
-    size_t getCpuCopyThreshold(TransferType transferType);
+    size_t getCpuCopyThreshold(TransferType transferType, bool isHostPtrStaged);
     bool isBarrierRequired();
     bool hasPendingInOrderWork() const;
     bool hasPendingStagingDependency() const;
@@ -299,6 +299,8 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
 
     bool hasDependenciesForStaging(uint32_t numWaitEvents) const;
     bool isValidForStagingTransfer(const CpuMemCopyInfo &cpuMemCopyInfo, uint32_t numWaitEvents);
+    bool isStagingAllowedForCopy(const CpuMemCopyInfo &cpuMemCopyInfo);
+    bool isHostPtrStagedForCopy(const CpuMemCopyInfo &cpuMemCopyInfo, const void *hostPtr, uint32_t numWaitEvents);
     bool isValidForStagingImageTransfer(const void *ptr, size_t size, uint32_t numWaitEvents);
     MOCKABLE_VIRTUAL ze_result_t appendStagingMemoryCopy(const CpuMemCopyInfo &cpuMemCopyInfo, ze_event_handle_t hSignalEvent, CmdListMemoryCopyParams &memoryCopyParams);
     MOCKABLE_VIRTUAL ze_result_t appendStagingImageTransfer(ze_image_handle_t hImage, const void *ptr, const ze_image_region_t *pRegion, size_t rowPitch, size_t slicePitch, bool isRead, ze_event_handle_t hSignalEvent, CmdListMemoryCopyParams &memoryCopyParams);

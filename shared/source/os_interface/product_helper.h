@@ -225,6 +225,7 @@ class ProductHelper {
     virtual bool isStagingBuffersEnabled() const = 0;
     virtual bool isStagingFor2MBAlignedHostPtrAllowed() const = 0;
     virtual size_t getCpuCopyThreshold(TransferType transferType) const = 0;
+    virtual size_t getCpuCopyThresholdForNonStagedHostPtr(TransferType transferType) const = 0;
     virtual uint32_t adjustMaxThreadsPerThreadGroup(const HardwareInfo &hwInfo, uint32_t maxThreadsPerThreadGroup, uint32_t simt, uint32_t grfCount) const = 0;
     virtual uint64_t getPatIndex(CacheRegion cacheRegion, CachePolicy cachePolicy) const = 0;
     virtual uint64_t getSharedSystemPatIndex() const = 0;

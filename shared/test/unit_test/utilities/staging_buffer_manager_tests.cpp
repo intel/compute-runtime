@@ -312,6 +312,19 @@ TEST_F(StagingBufferManagerTest, givenStagingFor2MBAlignedHostPtrNotAllowedWhenV
     EXPECT_TRUE(stagingBufferManager->isValidForStagingTransfer(*pDevice, notAlignedPtr, bufferSize, false));
 }
 
+TEST_F(StagingBufferManagerTest, givenNonUsmPtrWhenCheckingIfStagingIsPossibleThenPtrIsNotRegistered) {
+    constexpr size_t bufferSize = 1024;
+    const auto ptr = reinterpret_cast<const void *>(MemoryConstants::pageSize2M * 16 + MemoryConstants::pageSize64k);
+    stagingBufferManager->resetDetectedPtrs();
+
+    EXPECT_TRUE(stagingBufferManager->isStagingPossible(*pDevice, ptr, bufferSize, false));
+    EXPECT_TRUE(stagingBufferManager->isStagingPossible(*pDevice, ptr, bufferSize, false));
+    EXPECT_FALSE(stagingBufferManager->isStagingPossible(*pDevice, ptr, bufferSize, true));
+
+    EXPECT_TRUE(stagingBufferManager->isValidForStagingTransfer(*pDevice, ptr, bufferSize, false));
+    EXPECT_FALSE(stagingBufferManager->isValidForStagingTransfer(*pDevice, ptr, bufferSize, false));
+}
+
 TEST_F(StagingBufferManagerTest, givenStagingBufferWhenPerformCopyOnHwThenDontSetWritable) {
     constexpr size_t numOfChunkCopies = 8;
     constexpr size_t remainder = 1024;

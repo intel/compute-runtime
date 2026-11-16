@@ -124,7 +124,7 @@ size_t ProductHelperHw<gfxProduct>::getCpuCopyThreshold(TransferType transferTyp
         threshold = 4 * MemoryConstants::kiloByte;
         break;
     case TransferType::deviceUsmToHostNonUsm:
-        threshold = 64 * MemoryConstants::kiloByte;
+        threshold = 4 * MemoryConstants::kiloByte;
         break;
     case TransferType::hostUsmToDeviceUsm:
         threshold = 64 * MemoryConstants::kiloByte;
@@ -136,7 +136,7 @@ size_t ProductHelperHw<gfxProduct>::getCpuCopyThreshold(TransferType transferTyp
         threshold = 64 * MemoryConstants::megaByte;
         break;
     case TransferType::hostNonUsmToDeviceUsm:
-        threshold = 10 * MemoryConstants::megaByte;
+        threshold = 3 * MemoryConstants::megaByte;
         break;
     case TransferType::hostNonUsmToHostUsm:
         threshold = 64 * MemoryConstants::megaByte;
@@ -149,6 +149,18 @@ size_t ProductHelperHw<gfxProduct>::getCpuCopyThreshold(TransferType transferTyp
     }
 
     return threshold;
+}
+
+template <>
+size_t ProductHelperHw<gfxProduct>::getCpuCopyThresholdForNonStagedHostPtr(TransferType transferType) const {
+    switch (transferType) {
+    case TransferType::deviceUsmToHostNonUsm:
+        return 256 * MemoryConstants::kiloByte;
+    case TransferType::hostNonUsmToDeviceUsm:
+        return 8 * MemoryConstants::megaByte;
+    default:
+        return getCpuCopyThreshold(transferType);
+    }
 }
 
 template <>

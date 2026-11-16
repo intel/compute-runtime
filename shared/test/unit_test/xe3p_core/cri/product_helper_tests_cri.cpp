@@ -215,17 +215,37 @@ CRITEST_F(CriProductHelper, givenProductHelperWhenGetCpuCopyThresholdThenReturnC
 
     EXPECT_EQ(4 * MemoryConstants::kiloByte, productHelper->getCpuCopyThreshold(TransferType::deviceUsmToDeviceUsm));
     EXPECT_EQ(4 * MemoryConstants::kiloByte, productHelper->getCpuCopyThreshold(TransferType::deviceUsmToHostUsm));
-    EXPECT_EQ(64 * MemoryConstants::kiloByte, productHelper->getCpuCopyThreshold(TransferType::deviceUsmToHostNonUsm));
+    EXPECT_EQ(4 * MemoryConstants::kiloByte, productHelper->getCpuCopyThreshold(TransferType::deviceUsmToHostNonUsm));
 
     EXPECT_EQ(64 * MemoryConstants::kiloByte, productHelper->getCpuCopyThreshold(TransferType::hostUsmToDeviceUsm));
     EXPECT_EQ(1 * MemoryConstants::megaByte, productHelper->getCpuCopyThreshold(TransferType::hostUsmToHostUsm));
     EXPECT_EQ(64 * MemoryConstants::megaByte, productHelper->getCpuCopyThreshold(TransferType::hostUsmToHostNonUsm));
 
-    EXPECT_EQ(10 * MemoryConstants::megaByte, productHelper->getCpuCopyThreshold(TransferType::hostNonUsmToDeviceUsm));
+    EXPECT_EQ(3 * MemoryConstants::megaByte, productHelper->getCpuCopyThreshold(TransferType::hostNonUsmToDeviceUsm));
     EXPECT_EQ(64 * MemoryConstants::megaByte, productHelper->getCpuCopyThreshold(TransferType::hostNonUsmToHostUsm));
     EXPECT_EQ(64 * MemoryConstants::megaByte, productHelper->getCpuCopyThreshold(TransferType::hostNonUsmToHostNonUsm));
 
     EXPECT_EQ(0u, productHelper->getCpuCopyThreshold(TransferType::sharedUsmToSharedUsm));
+}
+
+CRITEST_F(CriProductHelper, givenProductHelperWhenGetCpuCopyThresholdForNonStagedHostPtrThenReturnHigherNonUsmThresholds) {
+    EXPECT_EQ(256 * MemoryConstants::kiloByte, productHelper->getCpuCopyThresholdForNonStagedHostPtr(TransferType::deviceUsmToHostNonUsm));
+    EXPECT_EQ(8 * MemoryConstants::megaByte, productHelper->getCpuCopyThresholdForNonStagedHostPtr(TransferType::hostNonUsmToDeviceUsm));
+
+    constexpr TransferType otherTransferTypes[] = {
+        TransferType::unknown,
+        TransferType::deviceUsmToDeviceUsm,
+        TransferType::deviceUsmToHostUsm,
+        TransferType::hostUsmToDeviceUsm,
+        TransferType::hostUsmToHostUsm,
+        TransferType::hostUsmToHostNonUsm,
+        TransferType::hostNonUsmToHostUsm,
+        TransferType::hostNonUsmToHostNonUsm,
+        TransferType::sharedUsmToSharedUsm};
+
+    for (auto transferType : otherTransferTypes) {
+        EXPECT_EQ(productHelper->getCpuCopyThreshold(transferType), productHelper->getCpuCopyThresholdForNonStagedHostPtr(transferType));
+    }
 }
 
 CRITEST_F(CriProductHelper, givenProductHelperWhenAskingIfWriteSplitIsRequiredThenTrueReturned) {

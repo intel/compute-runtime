@@ -812,6 +812,11 @@ size_t ProductHelperHw<gfxProduct>::getCpuCopyThreshold(TransferType transferTyp
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+size_t ProductHelperHw<gfxProduct>::getCpuCopyThresholdForNonStagedHostPtr(TransferType transferType) const {
+    return getCpuCopyThreshold(transferType);
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 uint64_t ProductHelperHw<gfxProduct>::getPatIndex(CacheRegion cacheRegion, CachePolicy cachePolicy) const {
     UNRECOVERABLE_IF(true);
     return -1;
