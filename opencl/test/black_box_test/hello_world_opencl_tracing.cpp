@@ -18,7 +18,6 @@
 // and a case which may lead to infinite recursive loop (nested API call in callback).
 // Traced API call: clCreateContext
 
-cl_int err = 0;
 std::stringstream callbackOutput{};
 
 #define SUCCESS_OR_ABORT_ERROR_PRINT(call, ...)                       \
@@ -46,7 +45,7 @@ auto contextNestedCallback = [](ClFunctionId fid,
     }
 
     auto deviceId = reinterpret_cast<cl_device_id *>(userData);
-    cl_context anotherContext = clCreateContext(0, 1, deviceId, NULL, NULL, &err);
+    cl_context anotherContext = clCreateContext(0, 1, deviceId, nullptr, nullptr, nullptr);
     clReleaseContext(anotherContext);
 };
 
@@ -64,6 +63,7 @@ bool validateOutput(const std::stringstream &out) {
 }
 
 int main(int argc, char **argv) {
+    cl_int err = CL_SUCCESS;
     std::unique_ptr<cl_platform_id[]> platforms;
     cl_device_id deviceId = 0;
     cl_uint platformsCount = 0;
@@ -73,11 +73,11 @@ int main(int argc, char **argv) {
     cl_tracing_handle tracingHandle = nullptr;
     cl_tracing_handle tracingHandleNestedCallback = nullptr;
 
-    SUCCESS_OR_ABORT_ERROR_PRINT(clGetPlatformIDs, 0, NULL, &platformsCount)
+    SUCCESS_OR_ABORT_ERROR_PRINT(clGetPlatformIDs, 0, nullptr, &platformsCount)
 
     platforms.reset(new cl_platform_id[platformsCount]);
-    SUCCESS_OR_ABORT_ERROR_PRINT(clGetPlatformIDs, platformsCount, platforms.get(), NULL)
-    SUCCESS_OR_ABORT_ERROR_PRINT(clGetDeviceIDs, platforms.get()[0], deviceType, 1, &deviceId, NULL)
+    SUCCESS_OR_ABORT_ERROR_PRINT(clGetPlatformIDs, platformsCount, platforms.get(), nullptr)
+    SUCCESS_OR_ABORT_ERROR_PRINT(clGetDeviceIDs, platforms.get()[0], deviceType, 1, &deviceId, nullptr)
 
     decltype(clCreateTracingHandleINTEL) *clCreateTracingHandleINTELFunction = reinterpret_cast<decltype(clCreateTracingHandleINTEL) *>(clGetExtensionFunctionAddressForPlatform(platforms.get()[0], "clCreateTracingHandleINTEL"));
 
@@ -92,7 +92,7 @@ int main(int argc, char **argv) {
     SUCCESS_OR_ABORT_ERROR_PRINT(clEnableTracingINTELFunction, tracingHandle)
     SUCCESS_OR_ABORT_ERROR_PRINT(clEnableTracingINTELFunction, tracingHandleNestedCallback)
 
-    context = clCreateContext(0, 1, &deviceId, NULL, NULL, &err);
+    context = clCreateContext(0, 1, &deviceId, nullptr, nullptr, &err);
 
     decltype(clDisableTracingINTEL) *clDisableTracingINTELFunction = reinterpret_cast<decltype(clDisableTracingINTEL) *>(clGetExtensionFunctionAddressForPlatform(platforms.get()[0], "clDisableTracingINTEL"));
     SUCCESS_OR_ABORT_ERROR_PRINT(clDisableTracingINTELFunction, tracingHandle)
