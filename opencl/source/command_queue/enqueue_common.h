@@ -471,7 +471,9 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
             eventBuilder.getEvent()->flushStamp->replaceStampObject(this->flushStamp->getStampReference());
         }
 
-        this->latestSentEnqueueType = enqueueProperties.operation;
+        if (enqueueProperties.operation != EnqueueProperties::Operation::enqueueWithoutSubmission) {
+            this->latestSentEnqueueType = enqueueProperties.operation;
+        }
     }
 
     if (completionStamp.taskCount > CompletionStamp::notReady) {

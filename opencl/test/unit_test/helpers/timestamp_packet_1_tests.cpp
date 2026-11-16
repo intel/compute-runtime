@@ -515,6 +515,54 @@ HWTEST_F(TimestampPacketTests, givenEnableWalkerPostSyncSkipEnabledWhenEnqueueKe
     hwParser.verifyL1FlushOnStallingBarrier<FamilyType>(false, true);
 }
 
+HWTEST2_F(TimestampPacketTests, givenEnableWalkerPostSyncSkipEnabledWhenMarkerWithoutEventIsEnqueuedBetweenKernelsThenProgramL1FlushingBarrierInSecondKernelSubmission, IsAtLeastXe2HpgCore) {
+    using RESOURCE_BARRIER = typename FamilyType::RESOURCE_BARRIER;
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+    DebugManagerStateRestore restorer{};
+    debugManager.flags.EnableWalkerPostSyncSkip.set(1);
+    debugManager.flags.ResolveDependenciesViaPipeControls.set(1);
+    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
+    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, device.get(), nullptr);
+
+    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    cmdQ->enqueueMarkerWithWaitList(0, nullptr, nullptr);
+    const auto secondKernelSubmissionStart = cmdQ->commandStream->getUsed();
+    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(*cmdQ->commandStream, secondKernelSubmissionStart);
+    auto walkerIt = find<WalkerType *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    ASSERT_NE(hwParser.cmdList.end(), walkerIt);
+    auto barrierIt = find<RESOURCE_BARRIER *>(hwParser.cmdList.begin(), walkerIt);
+    ASSERT_NE(walkerIt, barrierIt);
+    EXPECT_TRUE(genCmdCast<RESOURCE_BARRIER *>(*barrierIt)->getL1DataportUavFlush());
+}
+
+HWTEST2_F(TimestampPacketTests, givenEnableWalkerPostSyncSkipEnabledAndKernelWithEventWhenMarkerWithoutEventIsEnqueuedBetweenKernelsThenProgramBarrierWithoutL1FlushInSecondKernelSubmission, IsAtLeastXe2HpgCore) {
+    using RESOURCE_BARRIER = typename FamilyType::RESOURCE_BARRIER;
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+    DebugManagerStateRestore restorer{};
+    debugManager.flags.EnableWalkerPostSyncSkip.set(1);
+    debugManager.flags.ResolveDependenciesViaPipeControls.set(1);
+    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
+    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, device.get(), nullptr);
+
+    cl_event event{};
+    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &event);
+    cmdQ->enqueueMarkerWithWaitList(0, nullptr, nullptr);
+    const auto secondKernelSubmissionStart = cmdQ->commandStream->getUsed();
+    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(*cmdQ->commandStream, secondKernelSubmissionStart);
+    auto walkerIt = find<WalkerType *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    ASSERT_NE(hwParser.cmdList.end(), walkerIt);
+    auto barrierIt = find<RESOURCE_BARRIER *>(hwParser.cmdList.begin(), walkerIt);
+    ASSERT_NE(walkerIt, barrierIt);
+    EXPECT_FALSE(genCmdCast<RESOURCE_BARRIER *>(*barrierIt)->getL1DataportUavFlush());
+    clReleaseEvent(event);
+}
+
 HWTEST_F(TimestampPacketTests, givenEnableWalkerPostSyncSkipEnabledWhenEnqueueKernelsWithoutEventOnDifferentQueuesThenSubmitTimestampPacket) {
     DebugManagerStateRestore restorer{};
     debugManager.flags.EnableWalkerPostSyncSkip.set(1);
