@@ -65,7 +65,6 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using DrmMemoryManager::eraseSharedBufferObject;
     using DrmMemoryManager::getBOTypeFromPatIndex;
     using DrmMemoryManager::getDefaultDrmContextId;
-    using DrmMemoryManager::getDefaultOsContext;
     using DrmMemoryManager::getDrm;
     using DrmMemoryManager::getImportHandleFromReservedHandleData;
     using DrmMemoryManager::getLocalOnlyRequired;

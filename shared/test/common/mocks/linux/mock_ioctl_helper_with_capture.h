@@ -70,14 +70,6 @@ class MockIoctlHelperWithCapture : public IoctlHelperUpstream {
         uint32_t vmId = 0;
     };
 
-    struct VmSharedSystemMemAdviseCall {
-        uint64_t handle = 0;
-        size_t size = 0;
-        uint32_t attribute = 0;
-        uint64_t param = 0;
-        std::vector<uint32_t> vmIds;
-    };
-
     struct CreateGemExtCall {
         MemRegionsVec memClassInstances;
         std::optional<std::vector<unsigned long>> memPolicyNodemask;
@@ -122,15 +114,6 @@ class MockIoctlHelperWithCapture : public IoctlHelperUpstream {
     bool setVmBoAdviseForChunking(int32_t handle, uint64_t start, uint64_t length, uint32_t attribute, void *region) override {
         vmBoAdviseForChunkingCalled++;
         return vmBoAdviseResult;
-    }
-
-    bool setVmSharedSystemMemAdvise(uint64_t handle, const size_t size, const uint32_t attribute, const uint64_t param, const StackVec<uint32_t, 2> &vmIds, uint32_t numSubDevices) override {
-        VmSharedSystemMemAdviseCall call{handle, size, attribute, param, {}};
-        for (uint32_t i = 0; i < numSubDevices; i++) {
-            call.vmIds.push_back(vmIds[i]);
-        }
-        vmSharedSystemMemAdviseCalls.push_back(call);
-        return vmSharedSystemMemAdviseResult;
     }
 
     bool setVmPrefetch(uint64_t start, uint64_t length, uint32_t region, uint32_t vmId) override {
@@ -292,8 +275,6 @@ class MockIoctlHelperWithCapture : public IoctlHelperUpstream {
     std::optional<std::vector<MemoryRegion>> memoryRegionsToReturn;
 
     std::vector<VmPrefetchCall> vmPrefetchCalls;
-    std::vector<VmSharedSystemMemAdviseCall> vmSharedSystemMemAdviseCalls;
-    bool vmSharedSystemMemAdviseResult = true;
     bool deferBackingEnabledForAllocation = false;
     std::optional<uint32_t> vmAdviseAtomicAttribute = 0u;
     uint32_t vmBoAdviseCalled = 0u;
