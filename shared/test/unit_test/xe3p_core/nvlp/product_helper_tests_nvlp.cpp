@@ -113,10 +113,6 @@ NVLPTEST_F(NvlProductHelper, givenEnableExtendedScratchSurfaceSizeFlagWhenCallIs
     EXPECT_FALSE(productHelper->isAvailableExtendedScratch());
 }
 
-NVLPTEST_F(NvlProductHelper, givenProductHelperWhenCheckingIsLEOSupportedThenReturnTrue) {
-    EXPECT_TRUE(productHelper->isLEOSupported());
-}
-
 NVLPTEST_F(NvlProductHelper, givenProductHelperWhenCheckoverrideAllocationCpuCacheableThenTrueIsReturnedForCommandBuffer) {
     AllocationData allocationData{};
     allocationData.type = AllocationType::commandBuffer;

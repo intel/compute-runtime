@@ -11,7 +11,7 @@
 struct IsLeoSupported {
     template <PRODUCT_FAMILY productFamily>
     static constexpr bool isMatched() {
-        return IsCRI::isMatched<productFamily>() || IsNVLS::isMatched<productFamily>() || IsNVLP::isMatched<productFamily>();
+        return IsAtLeastXe3pCore::isMatched<productFamily>() || IsNVLS::isMatched<productFamily>();
     }
 };
 
