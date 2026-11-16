@@ -33,7 +33,8 @@ struct AllocationProperties {
             uint32_t cantBeReadOnly : 1;
             uint32_t readOnly : 1;
             uint32_t ipcSupportedAllocationByDefault : 1;
-            uint32_t reserved : 16;
+            uint32_t isImportedHostPtr : 1;
+            uint32_t reserved : 15;
         } flags;
         uint32_t allFlags = 0;
     };
@@ -121,7 +122,8 @@ struct AllocationData {
             uint32_t zeroMemory : 1;
             uint32_t cantBeReadOnly : 1;
             uint32_t ipcSupportedAllocationByDefault : 1;
-            uint32_t reserved : 14;
+            uint32_t isImportedHostPtr : 1;
+            uint32_t reserved : 13;
         } flags;
         uint32_t allFlags = 0;
     };

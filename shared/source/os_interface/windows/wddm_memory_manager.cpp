@@ -589,22 +589,27 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(co
         return allocateHugeGraphicsMemory(allocationData, false);
     }
 
-    auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
-    auto canonizedAddress = gmmHelper->canonize(castToUint64(const_cast<void *>(allocationData.hostPtr)));
-    auto wddmAllocation = std::make_unique<WddmAllocation>(allocationData.rootDeviceIndex,
-                                                           1u, // numGmms
-                                                           allocationData.type, const_cast<void *>(allocationData.hostPtr), canonizedAddress,
-                                                           allocationData.size, nullptr, MemoryPool::system4KBPages,
-                                                           0u, // shareable
-                                                           maxOsContextCount);
-
-    auto alignedPtr = alignDown(allocationData.hostPtr, MemoryConstants::pageSize);
-    auto offsetInPage = ptrDiff(allocationData.hostPtr, alignedPtr);
-    wddmAllocation->setAllocationOffset(offsetInPage);
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex];
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
     const auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+
+    auto alignedPtr = alignDown(allocationData.hostPtr, MemoryConstants::pageSize);
+    auto usageType = CacheSettingsHelper::getGmmUsageTypeForUserPtr(allocationData.flags.flushL3, allocationData.hostPtr, allocationData.size, hwInfo, releaseHelper);
+    // Only the first and last page can share a cacheline with memory outside the buffer.
+    // Imported host pointers are mapped once, so only they can afford the extra mappings.
+    const bool mapInnerPagesCached = allocationData.flags.isImportedHostPtr && CacheSettingsHelper::isUncachedType(usageType) && alignedSize > 2 * MemoryConstants::pageSize;
+
+    auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
+    auto canonizedAddress = gmmHelper->canonize(castToUint64(const_cast<void *>(allocationData.hostPtr)));
+    auto wddmAllocation = std::make_unique<WddmAllocation>(allocationData.rootDeviceIndex,
+                                                           mapInnerPagesCached ? 3u : 1u, // numGmms
+                                                           allocationData.type, const_cast<void *>(allocationData.hostPtr), canonizedAddress,
+                                                           allocationData.size, nullptr, MemoryPool::system4KBPages,
+                                                           0u, // shareable
+                                                           maxOsContextCount);
+    wddmAllocation->setAllocationOffset(ptrDiff(allocationData.hostPtr, alignedPtr));
+    wddmAllocation->storageInfo = allocationData.storageInfo;
 
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
@@ -613,15 +618,26 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(co
         gmmRequirements.overriderCpuCacheable.enableOverride = true;
         gmmRequirements.overriderCpuCacheable.value = true;
     }
+    auto createGmm = [&](const void *ptr, size_t size, GmmResourceUsageType usage) {
+        return new Gmm(rootDeviceEnvironment.getGmmHelper(), ptr, size, 0u, usage, allocationData.storageInfo, gmmRequirements);
+    };
 
-    auto gmm = new Gmm(rootDeviceEnvironment.getGmmHelper(), alignedPtr, alignedSize, 0u,
-                       CacheSettingsHelper::getGmmUsageTypeForUserPtr(allocationData.flags.flushL3, allocationData.hostPtr, allocationData.size, hwInfo, releaseHelper), allocationData.storageInfo, gmmRequirements);
-
-    wddmAllocation->setDefaultGmm(gmm);
-    wddmAllocation->storageInfo = allocationData.storageInfo;
+    if (mapInnerPagesCached) {
+        auto innerPtr = ptrOffset(alignedPtr, MemoryConstants::pageSize);
+        auto innerSize = alignedSize - 2 * MemoryConstants::pageSize;
+        auto innerUsageType = CacheSettingsHelper::getGmmUsageTypeForUserPtr(allocationData.flags.flushL3, innerPtr, innerSize, hwInfo, releaseHelper);
+        wddmAllocation->setGmm(createGmm(alignedPtr, MemoryConstants::pageSize, usageType), 0u);
+        wddmAllocation->setGmm(createGmm(innerPtr, innerSize, innerUsageType), 1u);
+        wddmAllocation->setGmm(createGmm(ptrOffset(innerPtr, innerSize), MemoryConstants::pageSize, usageType), 2u);
+        wddmAllocation->storageInfo.multiStorage = true;
+    } else {
+        wddmAllocation->setDefaultGmm(createGmm(alignedPtr, alignedSize, usageType));
+    }
 
     if (!createWddmAllocation(wddmAllocation.get(), nullptr)) {
-        delete gmm;
+        for (auto gmmId = 0u; gmmId < wddmAllocation->getNumGmms(); ++gmmId) {
+            delete wddmAllocation->getGmm(gmmId);
+        }
         return nullptr;
     }
 
@@ -1370,16 +1386,22 @@ bool WddmMemoryManager::mapMultiHandleAllocationWithRetry(WddmAllocation *alloca
 
     auto alignedSize = allocation->getAlignedSize();
     uint64_t addressToMap = 0;
-    HeapIndex heapIndex = preferredGpuVirtualAddress ? HeapIndex::heapSvm : HeapIndex::heapStandard64KB;
+    HeapIndex heapIndex = HeapIndex::heapSvm;
 
     if (preferredGpuVirtualAddress) {
         addressToMap = castToUint64(preferredGpuVirtualAddress);
         allocation->getGpuAddressToModify() = addressToMap;
     } else {
+        heapIndex = allocation->getMemoryPool() == MemoryPool::system4KBPages ? HeapIndex::heapStandard : HeapIndex::heapStandard64KB;
         allocation->setReservedSizeForGpuVirtualAddress(alignUp(alignedSize, MemoryConstants::pageSize64k));
         auto status = wddm.reserveGpuVirtualAddress(0ull, gfxPartition->getHeapMinimalAddress(heapIndex), gfxPartition->getHeapLimit(heapIndex),
                                                     allocation->getReservedSizeForGpuVirtualAddress(), &allocation->getReservedGpuVirtualAddressToModify());
-        UNRECOVERABLE_IF(status != STATUS_SUCCESS);
+        if (status != STATUS_SUCCESS) {
+            if (!allocation->isPhysicalMemoryReservation() && !allocation->isMappedPhysicalMemoryReservation()) {
+                wddm.destroyAllocations(&allocation->getHandles()[0], allocation->getNumGmms(), allocation->getResourceHandle());
+            }
+            return false;
+        }
         auto gmmHelper = getGmmHelper(allocation->getRootDeviceIndex());
         allocation->getGpuAddressToModify() = gmmHelper->canonize(allocation->getReservedGpuVirtualAddress());
         addressToMap = allocation->getReservedGpuVirtualAddress();

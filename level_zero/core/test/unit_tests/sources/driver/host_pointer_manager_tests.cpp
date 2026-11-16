@@ -48,6 +48,18 @@ TEST_F(HostPointerManagerTest,
     hostDriverHandle->getMemoryManager()->freeGraphicsMemory(gfxAllocation);
 }
 
+TEST_F(HostPointerManagerTest, givenHostPointerWhenImportingThenAllocationIsRequestedAsImportedHostPtr) {
+    auto memoryManager = static_cast<NEO::MockMemoryManager *>(hostDriverHandle->getMemoryManager());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, hostDriverHandle->importExternalPointer(heapPointer, MemoryConstants::pageSize));
+    ASSERT_NE(nullptr, memoryManager->lastAllocationProperties);
+    EXPECT_EQ(NEO::AllocationType::externalHostPtr, memoryManager->lastAllocationProperties->allocationType);
+    EXPECT_TRUE(memoryManager->lastAllocationProperties->flags.isImportedHostPtr);
+    EXPECT_TRUE(memoryManager->lastAllocationProperties->flags.flushL3RequiredForWrite);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, hostDriverHandle->releaseImportedPointer(heapPointer));
+}
+
 TEST_F(HostPointerManagerTest, givenHostPointerImportedWhenGettingExistingAllocationThenRetrieveProperGpuAddress) {
     EXPECT_NE(nullptr, hostDriverHandle->hostPointerManager.get());
 

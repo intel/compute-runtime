@@ -257,6 +257,21 @@ INSTANTIATE_TEST_SUITE_P(Disallow32BitAnd64kbPagesTypes,
                          MemoryManagerGetAlloctionData32BitAnd64kbPagesNotAllowedTest,
                          ::testing::ValuesIn(allocationTypesWith32BitAnd64KbPagesNotAllowed));
 
+TEST(MemoryManagerTest, givenImportedHostPtrPropertyWhenGettingAllocationDataThenItIsPassedToAllocationData) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    MockMemoryManager memoryManager(false, false, executionEnvironment);
+    int hostMemory = 0;
+
+    AllocationData allocData;
+    AllocationProperties properties(mockRootDeviceIndex, false, sizeof(hostMemory), AllocationType::externalHostPtr, false, mockDeviceBitfield);
+    memoryManager.getAllocationData(allocData, properties, &hostMemory, memoryManager.createStorageInfoFromProperties(properties));
+    EXPECT_EQ(0u, allocData.flags.isImportedHostPtr);
+
+    properties.flags.isImportedHostPtr = true;
+    memoryManager.getAllocationData(allocData, properties, &hostMemory, memoryManager.createStorageInfoFromProperties(properties));
+    EXPECT_EQ(1u, allocData.flags.isImportedHostPtr);
+}
+
 TEST(MemoryManagerTest, givenEnabledShareableWhenGraphicsAllocationIsAllocatedThenAllocationIsReturned) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     executionEnvironment.initGmm();

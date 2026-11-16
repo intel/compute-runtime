@@ -115,6 +115,7 @@ NEO::GraphicsAllocation *HostPointerManager::createHostPointerAllocation(uint32_
                                             NEO::AllocationType::externalHostPtr,
                                             false, deviceBitfield};
     properties.flags.flushL3RequiredForRead = properties.flags.flushL3RequiredForWrite = true;
+    properties.flags.isImportedHostPtr = true;
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties,
                                                                           ptr);
     return allocation;

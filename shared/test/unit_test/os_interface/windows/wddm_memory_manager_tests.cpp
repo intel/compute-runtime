@@ -1285,6 +1285,114 @@ TEST_F(WddmMemoryManagerSimpleTest, givenAllocateGraphicsMemoryForNonSvmHostPtrI
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+TEST_F(WddmMemoryManagerSimpleTest, givenAppTransientCoherentPatRequiredWhenImportedMisalignedHostPtrSpansMoreThanTwoPagesThenOnlyFirstAndLastPageAreUncachedAndGpuVaIsInStandardHeap) {
+    if (rootDeviceEnvironment->getHardwareInfo()->caps.overrideGfxPartitionLayoutForWsl) {
+        GTEST_SKIP();
+    }
+    auto releaseHelper = std::make_unique<MockReleaseHelper>();
+    releaseHelper->isAppTransientCoherentPatRequiredResult = true;
+    rootDeviceEnvironment->releaseHelper = std::move(releaseHelper);
+    memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
+
+    auto alignedPtr = reinterpret_cast<uint8_t *>(0x100000);
+    AllocationData allocationData;
+    allocationData.hostPtr = alignedPtr + 4;
+    allocationData.size = 3 * MemoryConstants::pageSize - 8;
+    allocationData.flags.flushL3 = true;
+    allocationData.flags.isImportedHostPtr = true;
+    auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData));
+    ASSERT_NE(nullptr, allocation);
+    EXPECT_EQ(allocationData.hostPtr, allocation->getUnderlyingBuffer());
+    EXPECT_EQ(4u, allocation->getAllocationOffset());
+    ASSERT_EQ(3u, allocation->getNumGmms());
+
+    const GmmResourceUsageType expectedUsages[] = {GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED,
+                                                   GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER,
+                                                   GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED};
+    for (auto gmmId = 0u; gmmId < 3u; gmmId++) {
+        auto gmm = allocation->getGmm(gmmId);
+        EXPECT_EQ(expectedUsages[gmmId], gmm->getResourceUsageType());
+        EXPECT_EQ(alignedPtr + gmmId * MemoryConstants::pageSize, gmm->gmmResourceInfo->getSystemMemPointer());
+        EXPECT_EQ(MemoryConstants::pageSize, gmm->gmmResourceInfo->getSizeAllocation());
+    }
+    EXPECT_EQ(memoryManager->getGfxPartition(0)->getHeapMinimalAddress(HeapIndex::heapStandard), allocation->getReservedGpuVirtualAddress());
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenImportedMisalignedHostPtrSplitIntoPagesWhenGpuVaReservationFailsThenNullptrIsReturned) {
+    auto releaseHelper = std::make_unique<MockReleaseHelper>();
+    releaseHelper->isAppTransientCoherentPatRequiredResult = true;
+    rootDeviceEnvironment->releaseHelper = std::move(releaseHelper);
+    memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
+    wddm->failReserveGpuVirtualAddress = true;
+
+    AllocationData allocationData;
+    allocationData.hostPtr = reinterpret_cast<void *>(0x100004);
+    allocationData.size = 3 * MemoryConstants::pageSize - 8;
+    allocationData.flags.flushL3 = true;
+    allocationData.flags.isImportedHostPtr = true;
+    const auto destroyCalledBefore = wddm->destroyAllocationResult.called;
+    EXPECT_EQ(nullptr, memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData));
+    EXPECT_EQ(destroyCalledBefore + 1u, wddm->destroyAllocationResult.called);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenAppTransientCoherentPatRequiredWhenImportedMisalignedHostPtrSpansTwoPagesThenWholeAllocationIsUncached) {
+    auto releaseHelper = std::make_unique<MockReleaseHelper>();
+    releaseHelper->isAppTransientCoherentPatRequiredResult = true;
+    rootDeviceEnvironment->releaseHelper = std::move(releaseHelper);
+    memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
+
+    AllocationData allocationData;
+    allocationData.hostPtr = reinterpret_cast<void *>(0x100004);
+    allocationData.size = 2 * MemoryConstants::pageSize - 8;
+    allocationData.flags.flushL3 = true;
+    allocationData.flags.isImportedHostPtr = true;
+    auto allocation = memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData);
+    ASSERT_NE(nullptr, allocation);
+    ASSERT_EQ(1u, allocation->getNumGmms());
+    EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED, allocation->getDefaultGmm()->getResourceUsageType());
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenAppTransientCoherentPatRequiredWhenImportedHostPtrIsCachelineAlignedThenWholeAllocationIsCached) {
+    auto releaseHelper = std::make_unique<MockReleaseHelper>();
+    releaseHelper->isAppTransientCoherentPatRequiredResult = true;
+    rootDeviceEnvironment->releaseHelper = std::move(releaseHelper);
+    memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
+
+    AllocationData allocationData;
+    allocationData.hostPtr = reinterpret_cast<void *>(0x100000);
+    allocationData.size = 3 * MemoryConstants::pageSize;
+    allocationData.flags.flushL3 = true;
+    allocationData.flags.isImportedHostPtr = true;
+    auto allocation = memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData);
+    ASSERT_NE(nullptr, allocation);
+    ASSERT_EQ(1u, allocation->getNumGmms());
+    EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER, allocation->getDefaultGmm()->getResourceUsageType());
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenAppTransientCoherentPatRequiredWhenMisalignedHostPtrDestinationIsNotImportedThenWholeAllocationIsUncached) {
+    auto releaseHelper = std::make_unique<MockReleaseHelper>();
+    releaseHelper->isAppTransientCoherentPatRequiredResult = true;
+    rootDeviceEnvironment->releaseHelper = std::move(releaseHelper);
+    memoryManager.reset(new MockWddmMemoryManager(false, false, executionEnvironment));
+
+    AllocationData allocationData;
+    allocationData.hostPtr = reinterpret_cast<void *>(0x100004);
+    allocationData.size = 3 * MemoryConstants::pageSize - 8;
+    allocationData.flags.flushL3 = true;
+    auto allocation = memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData);
+    ASSERT_NE(nullptr, allocation);
+    ASSERT_EQ(1u, allocation->getNumGmms());
+    EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED, allocation->getDefaultGmm()->getResourceUsageType());
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
 TEST_F(WddmMemoryManagerSimpleTest, givenDebugFlagSetWhenNotAlignedPtrIsPassedAndFlushL3RequiredThenSetCorrectGmmResource) {
     DebugManagerStateRestore restorer;
     debugManager.flags.Disable2WayCoherencyOverride.set(true);
