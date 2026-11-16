@@ -13,6 +13,7 @@
 #include "level_zero/sysman/source/sysman_const.h"
 #include <level_zero/zes_api.h>
 
+#include <limits>
 #include <map>
 #include <memory>
 #include <set>
@@ -144,10 +145,12 @@ class NetlinkRasUtil : public RasUtil {
     static ze_result_t initializeRasNodes(DrmNlApi *pDrmNl);
 
   protected:
+    static constexpr uint32_t invalidRasNodeId = std::numeric_limits<uint32_t>::max();
+    bool isRasNodeResolved() const { return this->rasNodeId != invalidRasNodeId; }
     LinuxSysmanImp *pLinuxSysmanImp = nullptr;
     zes_ras_error_type_t rasErrorType = {};
     std::unique_ptr<DrmNlApi> drmNl;
-    uint32_t rasNodeId = 0;
+    uint32_t rasNodeId = invalidRasNodeId;
     static std::vector<DrmRasNode> rasNodes;
     static std::map<uint32_t, std::vector<DrmErrorCounter>> rasErrorList;
 };
