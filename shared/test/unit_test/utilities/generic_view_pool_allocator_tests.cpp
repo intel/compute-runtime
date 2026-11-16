@@ -778,5 +778,5 @@ TEST_F(GenericViewPoolAllocatorTest, givenAllocatorWhenFreeWithTaskCountOnNonVie
     EXPECT_EQ(0u, allocator.deferredChunks.size());
 
     // Allocator does no-op on non-view allocation
-    pDevice->getMemoryManager()->freeGraphicsMemory(nonViewAllocation); // NOLINT(clang-analyzer-cplusplus.NewDelete)
+    pDevice->getMemoryManager()->freeGraphicsMemory(nonViewAllocation);
 }

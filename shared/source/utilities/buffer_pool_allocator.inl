@@ -87,7 +87,7 @@ template <typename BuffersPoolType, typename BufferType, typename BufferParentTy
 void AbstractBuffersAllocator<BuffersPoolType, BufferType, BufferParentType>::tryFreeFromPoolBuffer(BufferParentType *possiblePoolBuffer, size_t offset, size_t size, std::vector<BuffersPoolType> &bufferPoolsVec) {
     auto lock = std::unique_lock<std::mutex>(this->mutex);
     for (auto &bufferPool : bufferPoolsVec) {
-        bufferPool.tryFreeFromPoolBuffer(possiblePoolBuffer, offset, size); // NOLINT(clang-analyzer-cplusplus.NewDelete)
+        bufferPool.tryFreeFromPoolBuffer(possiblePoolBuffer, offset, size);
     }
 }
 

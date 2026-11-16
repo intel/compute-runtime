@@ -985,7 +985,7 @@ TEST_F_DEFAULT(IpcSocketServerMtTest, givenServerWhenHandleClientConnectionRecei
     SysCalls::sysCallsRecv = [](int sockfd, void *buf, size_t len, int flags) -> ssize_t {
         if (len == sizeof(IpcSocketMessage)) {
             IpcSocketMessage *msg = static_cast<IpcSocketMessage *>(buf);
-            msg->type = static_cast<IpcSocketMessageType>(255); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
+            msg->type = static_cast<IpcSocketMessageType>(255);
             msg->processId = 12345;
             msg->handleId = 100;
             msg->payloadSize = 0;

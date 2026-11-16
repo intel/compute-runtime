@@ -225,7 +225,7 @@ void EncodePostSync<Family>::setPostSyncData(PostSyncT &postSyncData, typename P
     postSyncData.setMocs(mocs);
     postSyncData.setSystemMemoryFenceRequest(requiresSystemMemoryFence);
 
-    postSyncData.setAtomicOpcode(static_cast<typename POSTSYNC_DATA_2::ATOMIC_OPCODE>(atomicOpcode)); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
+    postSyncData.setAtomicOpcode(static_cast<typename POSTSYNC_DATA_2::ATOMIC_OPCODE>(atomicOpcode));
     postSyncData.setAtomicDataSize(POSTSYNC_DATA_2::ATOMIC_DATA_SIZE_QWORD);
     postSyncData.setInterruptSignalEnable(interrupt);
 

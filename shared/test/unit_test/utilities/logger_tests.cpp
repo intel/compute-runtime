@@ -293,7 +293,7 @@ TEST(AllocationTypeLoggingSingle, givenGraphicsAllocationTypeWhenConvertingToStr
     std::string testFile = "testfile";
     FullyEnabledFileLogger fileLogger(testFile);
 
-    GraphicsAllocation graphicsAllocation(0, 1u /*num gmms*/, static_cast<AllocationType>(999), nullptr, 0, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount, 0llu); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
+    GraphicsAllocation graphicsAllocation(0, 1u /*num gmms*/, static_cast<AllocationType>(999), nullptr, 0, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount, 0llu);
 
     auto result = getAllocationTypeString(&graphicsAllocation);
 

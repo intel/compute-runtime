@@ -124,7 +124,6 @@ static zes_pci_address_t parseBdf(const std::string &devStr) {
 static zes_uuid_t parseUuid(const std::string &uuidStr) {
     zes_uuid_t uuid = {};
     unsigned int b[16] = {};
-    // NOLINTNEXTLINE(cert-err34-c)
     if (sscanf(uuidStr.c_str(),
                "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
                &b[0], &b[1], &b[2], &b[3], &b[4], &b[5], &b[6], &b[7],

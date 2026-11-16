@@ -77,7 +77,7 @@ void DebuggerL0::initialize() {
             device->getMemoryManager()->copyMemoryToAllocation(sbaAllocation, 0, &sbaHeader, sizeof(sbaHeader));
 
             perContextSbaAllocations[engine.osContext->getContextId()] = sbaAllocation;
-            registerAllocationType(sbaAllocation); // NOLINT(clang-analyzer-optin.cplusplus.VirtualCall)
+            registerAllocationType(sbaAllocation);
         }
     }
 
@@ -118,7 +118,7 @@ void DebuggerL0::initialize() {
             device->getGmmHelper()->forceAllResourcesUncached();
         }
 
-        registerAllocationType(moduleDebugArea); // NOLINT(clang-analyzer-optin.cplusplus.VirtualCall)
+        registerAllocationType(moduleDebugArea);
     }
 }
 

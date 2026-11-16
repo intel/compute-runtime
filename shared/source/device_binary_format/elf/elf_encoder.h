@@ -94,12 +94,12 @@ struct ElfEncoder {
 
     template <typename SectionHeaderEnumT>
     ElfSectionHeader<numBits> &appendSection(SectionHeaderEnumT sectionType, ConstStringRef sectionLabel, const ArrayRef<const uint8_t> sectionData) {
-        return appendSection(static_cast<SectionHeaderType>(sectionType), sectionLabel, sectionData); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
+        return appendSection(static_cast<SectionHeaderType>(sectionType), sectionLabel, sectionData);
     }
 
     template <typename SectionHeaderEnumT>
     ElfSectionHeader<numBits> &appendSection(SectionHeaderEnumT sectionType, ConstStringRef sectionLabel, const std::string &sectionData) {
-        return appendSection(static_cast<SectionHeaderType>(sectionType), sectionLabel, // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
+        return appendSection(static_cast<SectionHeaderType>(sectionType), sectionLabel,
                              ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(sectionData.c_str()), sectionData.size() + 1));
     }
 

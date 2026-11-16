@@ -7408,7 +7408,7 @@ TEST(ValidateTargetDeviceTests, givenMismatechAotConfigWhenValidatingTargetDevic
     targetDevice.aotConfig.value = 0x00001234;
     targetDevice.maxPointerSizeInBytes = 8u;
 
-    auto mismatchedAotConfig = static_cast<AOT::PRODUCT_CONFIG>(0x00004321); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
+    auto mismatchedAotConfig = static_cast<AOT::PRODUCT_CONFIG>(0x00004321);
     Zebin::Elf::ZebinTargetFlags targetMetadata;
     auto res = validateTargetDevice(targetDevice, Zebin::Elf::EI_CLASS_64, productFamily, renderCoreFamily, mismatchedAotConfig, targetMetadata);
     EXPECT_FALSE(res);

@@ -791,7 +791,7 @@ ze_result_t MetricDeviceContext::calcOperationCreate(zet_context_handle_t hConte
     filteredCalculationDesc.metricScopesCount = static_cast<uint32_t>(phMetricScopes.size());
     filteredCalculationDesc.phMetricScopes = phMetricScopes.empty() ? nullptr : phMetricScopes.data();
 
-    MetricSource &metricSource = (metricGroupImp) ? metricGroupImp->getMetricSource() : metricImp->getMetricSource(); // NOLINT(clang-analyzer-core.CallAndMessage)
+    MetricSource &metricSource = (metricGroupImp) ? metricGroupImp->getMetricSource() : metricImp->getMetricSource();
     ze_result_t status = metricSource.calcOperationCreate(*this, &filteredCalculationDesc, phCalculationOperation);
     if (status == ZE_INTEL_RESULT_WARNING_TIME_PARAMS_IGNORED_EXP) {
         pCalculationDesc->timeWindowsCount = filteredCalculationDesc.timeWindowsCount;

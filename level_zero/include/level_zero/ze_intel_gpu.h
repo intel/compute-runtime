@@ -36,8 +36,8 @@ extern "C" {
 ///       ze_module_program_exp_desc_t::pConstants is not nullptr, element i
 ///       is used when finalizing PISA unit i.
 #if ZE_API_VERSION_CURRENT_M <= ZE_MAKE_VERSION(1, 19)
-#define ZE_MODULE_FORMAT_PISA static_cast<ze_module_format_t>(2U) // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
-#define ZE_MODULE_FORMAT_OCLC static_cast<ze_module_format_t>(3U) // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
+#define ZE_MODULE_FORMAT_PISA static_cast<ze_module_format_t>(2U)
+#define ZE_MODULE_FORMAT_OCLC static_cast<ze_module_format_t>(3U)
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////

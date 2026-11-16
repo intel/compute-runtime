@@ -100,7 +100,7 @@ void PrintFormatter::printString(const char *formatString, const std::function<v
 }
 
 void PrintFormatter::stripVectorFormat(const char *format, char *stripped) {
-    while (*format != '\0') { // //NOLINT(clang-analyzer-core.UndefinedBinaryOperatorResult)
+    while (*format != '\0') {
         if (*format != 'v') {
             *stripped = *format;
         } else if (*(format + 1) != '1') {

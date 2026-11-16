@@ -258,7 +258,7 @@ TEST_P(SoftwareTagsParametrizedTests, whenGetOpCodeIsCalledThenCorrectValueIsRet
 }
 
 TEST(SoftwareTagsTests, whenGetMarkerNoopIDCalledThenCorectValueIsReturned) {
-    uint32_t id = SWTags::BaseTag::getMarkerNoopID(static_cast<OpCode>(testOpCode)); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
+    uint32_t id = SWTags::BaseTag::getMarkerNoopID(static_cast<OpCode>(testOpCode));
 
     EXPECT_EQ(testOpCode, id);
 }
