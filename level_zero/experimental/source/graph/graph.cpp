@@ -334,6 +334,13 @@ ze_result_t Graph::obtainGraphDumpSettings(const ze_base_desc_t *desc,
             case ZE_RECORD_REPLAY_GRAPH_EXT_DUMP_MODE_SIMPLE:
                 exportStyle = L0::GraphExportStyle::simple;
                 break;
+            case ZE_RECORD_REPLAY_GRAPH_EXT_DUMP_MODE_DETAILED_WITH_EVENT_NODES:
+                exportEventNodes = L0::GraphExportEventNodes::show;
+                break;
+            case ZE_RECORD_REPLAY_GRAPH_EXT_DUMP_MODE_SIMPLE_WITH_EVENT_NODES:
+                exportStyle = L0::GraphExportStyle::simple;
+                exportEventNodes = L0::GraphExportEventNodes::show;
+                break;
             default:
                 PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Could not recognize provided graph dump mode, mode: 0x%x.\n",
                              dumpDesc->mode);

@@ -2215,7 +2215,7 @@ TEST_F(GraphDumpApiTest, GivenInvalidStyleExpExtensionWhenZeGraphDumpContentsExp
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
-TEST_F(GraphDumpApiTest, GivenSimpleStyleExtensionWhenZeGraphDumpContentsExpIsCalledThenUsesSimpleStyle) {
+TEST_F(GraphDumpApiTest, GivenSimpleStyleExtensionWhenZeGraphDumpContentsExtIsCalledThenUsesSimpleStyle) {
     Graph testGraph{&ctx, true};
     Mock<Event> event;
     auto eventHandle = event.toHandle();
@@ -2236,7 +2236,7 @@ TEST_F(GraphDumpApiTest, GivenSimpleStyleExtensionWhenZeGraphDumpContentsExpIsCa
     dumpDesc.mode = ZE_RECORD_REPLAY_GRAPH_EXT_DUMP_MODE_SIMPLE;
 
     ze_graph_handle_t graphHandle = testGraph.toHandle();
-    auto result = L0::zeGraphDumpContentsExp(graphHandle, testFilePath.c_str(), &dumpDesc);
+    auto result = L0::zeGraphDumpContentsExt(graphHandle, testFilePath.c_str(), &dumpDesc);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(mockFopenCalledBefore + 1, NEO::IoFunctions::mockFopenCalled);
@@ -2247,7 +2247,7 @@ TEST_F(GraphDumpApiTest, GivenSimpleStyleExtensionWhenZeGraphDumpContentsExpIsCa
     EXPECT_NE(writtenContent.find("node [style=filled]"), std::string::npos);
 }
 
-TEST_F(GraphDumpApiTest, GivenDetailedStyleExtensionWhenZeGraphDumpContentsExpIsCalledThenUsesDetailedStyle) {
+TEST_F(GraphDumpApiTest, GivenDetailedStyleExtensionWhenZeGraphDumpContentsExtIsCalledThenUsesDetailedStyle) {
     Graph testGraph{&ctx, true};
     Mock<Event> event;
     auto eventHandle = event.toHandle();
@@ -2268,7 +2268,7 @@ TEST_F(GraphDumpApiTest, GivenDetailedStyleExtensionWhenZeGraphDumpContentsExpIs
     dumpDesc.mode = ZE_RECORD_REPLAY_GRAPH_EXT_DUMP_MODE_DETAILED;
 
     ze_graph_handle_t graphHandle = testGraph.toHandle();
-    auto result = L0::zeGraphDumpContentsExp(graphHandle, testFilePath.c_str(), &dumpDesc);
+    auto result = L0::zeGraphDumpContentsExt(graphHandle, testFilePath.c_str(), &dumpDesc);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -2276,7 +2276,47 @@ TEST_F(GraphDumpApiTest, GivenDetailedStyleExtensionWhenZeGraphDumpContentsExpIs
     EXPECT_NE(writtenContent.find("node [shape=box, style=filled]"), std::string::npos);
 }
 
-TEST_F(GraphDumpApiTest, GivenInvalidStyleExtensionWhenZeGraphDumpContentsExpIsCalledThenReturnsInvalidArgument) {
+TEST_F(GraphDumpApiTest, GivenDetailedStyleWithEventNodesExtensionWhenZeGraphDumpContentsExtIsCalledThenDumpsInternalEventOperations) {
+    ForkJoinEventNodesScenario scenario{&ctx, this->device};
+    scenario.capture();
+    ASSERT_NE(scenario.subGraph, nullptr);
+
+    setupSuccessfulWrite(scenario.testGraph, GraphExportStyle::detailed, GraphExportEventNodes::show);
+
+    ze_record_replay_graph_ext_dump_desc_t dumpDesc = {};
+    dumpDesc.stype = ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXT_DUMP_DESC;
+    dumpDesc.pNext = nullptr;
+    dumpDesc.mode = ZE_RECORD_REPLAY_GRAPH_EXT_DUMP_MODE_DETAILED_WITH_EVENT_NODES;
+
+    auto result = L0::zeGraphDumpContentsExt(scenario.testGraph.toHandle(), testFilePath.c_str(), &dumpDesc);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    std::string writtenContent(buffer.get());
+    EXPECT_NE(writtenContent.find("node [shape=box, style=filled]"), std::string::npos);
+    EXPECT_NE(writtenContent.find("zeCommandListAppendSignalEvent"), std::string::npos);
+}
+
+TEST_F(GraphDumpApiTest, GivenSimpleStyleWithEventNodesExtensionWhenZeGraphDumpContentsExtIsCalledThenDumpsInternalEventOperations) {
+    ForkJoinEventNodesScenario scenario{&ctx, this->device};
+    scenario.capture();
+    ASSERT_NE(scenario.subGraph, nullptr);
+
+    setupSuccessfulWrite(scenario.testGraph, GraphExportStyle::simple, GraphExportEventNodes::show);
+
+    ze_record_replay_graph_ext_dump_desc_t dumpDesc = {};
+    dumpDesc.stype = ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXT_DUMP_DESC;
+    dumpDesc.pNext = nullptr;
+    dumpDesc.mode = ZE_RECORD_REPLAY_GRAPH_EXT_DUMP_MODE_SIMPLE_WITH_EVENT_NODES;
+
+    auto result = L0::zeGraphDumpContentsExt(scenario.testGraph.toHandle(), testFilePath.c_str(), &dumpDesc);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    std::string writtenContent(buffer.get());
+    EXPECT_NE(writtenContent.find("node [style=filled]"), std::string::npos);
+    EXPECT_NE(writtenContent.find("zeCommandListAppendSignalEvent"), std::string::npos);
+}
+
+TEST_F(GraphDumpApiTest, GivenInvalidStyleExtensionWhenZeGraphDumpContentsExtIsCalledThenReturnsInvalidArgument) {
     Graph testGraph{&ctx, true};
     Mock<Event> event;
     auto eventHandle = event.toHandle();
@@ -2297,7 +2337,7 @@ TEST_F(GraphDumpApiTest, GivenInvalidStyleExtensionWhenZeGraphDumpContentsExpIsC
     dumpDesc.mode = ZE_RECORD_REPLAY_GRAPH_EXT_DUMP_MODE_FORCE_UINT32;
 
     ze_graph_handle_t graphHandle = testGraph.toHandle();
-    auto result = L0::zeGraphDumpContentsExp(graphHandle, testFilePath.c_str(), &dumpDesc);
+    auto result = L0::zeGraphDumpContentsExt(graphHandle, testFilePath.c_str(), &dumpDesc);
 
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
