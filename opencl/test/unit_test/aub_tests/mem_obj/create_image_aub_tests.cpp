@@ -140,7 +140,7 @@ HWTEST_F(AUBCreateImageArray, Given1DImageArrayThenExpectationsMet) {
     auto destGpuAddress = reinterpret_cast<uint32_t *>(allocation->getGpuAddress());
     pCmdQ->flush();
 
-    auto address = (int *)image->getCpuAddress();
+    auto address = static_cast<int *>(image->getCpuAddress());
     auto currentCounter = 0;
     bool isLocalMem = !MemoryPoolHelper::isSystemMemoryPool(image->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex())->getMemoryPool());
     for (auto array = 0u; array < imageDesc.image_array_size; array++) {
@@ -223,7 +223,7 @@ HWTEST_F(AUBCreateImageArray, Given2DImageArrayThenExpectationsMet) {
     auto destGpuAddress = reinterpret_cast<uint32_t *>(allocation->getGpuAddress());
     pCmdQ->flush();
 
-    auto address = (int *)image->getCpuAddress();
+    auto address = static_cast<int *>(image->getCpuAddress());
     auto currentCounter = 0;
     bool isLocalMem = !MemoryPoolHelper::isSystemMemoryPool(image->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex())->getMemoryPool());
     for (auto array = 0u; array < imageDesc.image_array_size; array++) {
@@ -301,7 +301,7 @@ HWTEST_P(CopyHostPtrTest, GivenImageWithDoubledRowPitchWhenCreatedWithCopyHostPt
 
     char counter = 0;
 
-    char *data = (char *)pHostPtr;
+    char *data = reinterpret_cast<char *>(pHostPtr);
     auto heightToCopy = imageDesc.image_height;
 
     while (heightToCopy--) {
@@ -327,19 +327,19 @@ HWTEST_P(CopyHostPtrTest, GivenImageWithDoubledRowPitchWhenCreatedWithCopyHostPt
 
     heightToCopy = imageDesc.image_height;
     auto imageStorage = static_cast<uint8_t *>(image->getCpuAddress());
-    data = (char *)pHostPtr;
+    data = reinterpret_cast<char *>(pHostPtr);
 
-    uint8_t *readMemory = nullptr;
+    std::vector<uint8_t> readMemory;
     bool isGpuCopy = image->isTiledAllocation() || !MemoryPoolHelper::isSystemMemoryPool(image->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex())->getMemoryPool());
     if (isGpuCopy) {
-        readMemory = new uint8_t[testImageDimensions * testImageDimensions * elementSize * 4];
+        readMemory.resize(testImageDimensions * testImageDimensions * elementSize * 4);
         size_t imgOrigin[] = {0, 0, 0};
         size_t imgRegion[] = {imageDesc.image_width, imageDesc.image_height, imageDesc.image_depth ? imageDesc.image_depth : 1};
-        retVal = pCmdQ->enqueueReadImage(image.get(), CL_FALSE, imgOrigin, imgRegion, 0, 0, readMemory, nullptr, 0, nullptr, nullptr);
+        retVal = pCmdQ->enqueueReadImage(image.get(), CL_FALSE, imgOrigin, imgRegion, 0, 0, readMemory.data(), nullptr, 0, nullptr, nullptr);
         EXPECT_EQ(CL_SUCCESS, retVal);
         retVal = pCmdQ->flush();
         EXPECT_EQ(CL_SUCCESS, retVal);
-        imageStorage = readMemory;
+        imageStorage = readMemory.data();
     }
 
     auto rowSize = imageDesc.image_width * elementSize;
@@ -354,10 +354,6 @@ HWTEST_P(CopyHostPtrTest, GivenImageWithDoubledRowPitchWhenCreatedWithCopyHostPt
         data += passedRowPitch;
         imageStorage += lineWidth;
     }
-
-    if (readMemory) {
-        delete[] readMemory;
-    }
 }
 
 HWTEST_P(UseHostPtrTest, GivenImageWithRowPitchWhenCreatedWithUseHostPtrFlagThenExpectationsMet) {
@@ -369,11 +365,11 @@ HWTEST_P(UseHostPtrTest, GivenImageWithRowPitchWhenCreatedWithUseHostPtrFlagThen
     MockGmm::queryImgParams(pDevice->getGmmHelper(), imgInfo, false);
     auto passedRowPitch = imgInfo.rowPitch + 32;
     imageDesc.image_row_pitch = passedRowPitch;
-    unsigned char *pUseHostPtr = new unsigned char[passedRowPitch * imageDesc.image_height * elementSize];
+    std::vector<char> hostMemory(passedRowPitch * imageDesc.image_height * elementSize);
 
     char counter = 0;
 
-    char *data = (char *)pUseHostPtr;
+    char *data = hostMemory.data();
     auto heightToCopy = imageDesc.image_height;
 
     while (heightToCopy--) {
@@ -390,7 +386,7 @@ HWTEST_P(UseHostPtrTest, GivenImageWithRowPitchWhenCreatedWithUseHostPtrFlagThen
         0,
         surfaceFormat,
         &imageDesc,
-        pUseHostPtr,
+        hostMemory.data(),
         retVal));
     ASSERT_EQ(CL_SUCCESS, retVal);
 
@@ -434,8 +430,8 @@ HWTEST_P(UseHostPtrTest, GivenImageWithRowPitchWhenCreatedWithUseHostPtrFlagThen
     }
 
     heightToCopy = imageDesc.image_height;
-    char *imageStorage = (char *)ptr;
-    data = (char *)pUseHostPtr;
+    char *imageStorage = static_cast<char *>(ptr);
+    data = hostMemory.data();
     bool isGpuCopy = image->isTiledAllocation() || !MemoryPoolHelper::isSystemMemoryPool(
                                                        image->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex())->getMemoryPool());
 
@@ -454,7 +450,7 @@ HWTEST_P(UseHostPtrTest, GivenImageWithRowPitchWhenCreatedWithUseHostPtrFlagThen
 
     retVal = clEnqueueUnmapMemObject(pCmdQ, image.get(), ptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    delete[] pUseHostPtr;
+    image.reset();
 }
 
 HWTEST_F(AUBCreateImage, GivenImage3DCreatedWithDoubledSlicePitchWhenQueriedForDataThenReturnsProperData) {
@@ -468,10 +464,10 @@ HWTEST_F(AUBCreateImage, GivenImage3DCreatedWithDoubledSlicePitchWhenQueriedForD
 
     imageDesc.image_slice_pitch = inputSlicePitch;
 
-    auto hostPtr = alignedMalloc(inputSlicePitch * imageDesc.image_depth, 4096);
+    std::vector<char> hostMemory(inputSlicePitch * imageDesc.image_depth);
 
     auto counter = 0;
-    char *data = (char *)hostPtr;
+    char *data = hostMemory.data();
     auto depthToCopy = imageDesc.image_depth;
 
     while (depthToCopy--) {
@@ -484,24 +480,24 @@ HWTEST_F(AUBCreateImage, GivenImage3DCreatedWithDoubledSlicePitchWhenQueriedForD
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
     image.reset(Image::create(context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
-                              flags, 0, surfaceFormat, &imageDesc, hostPtr, retVal));
+                              flags, 0, surfaceFormat, &imageDesc, hostMemory.data(), retVal));
 
     depthToCopy = imageDesc.image_depth;
-    auto imageStorage = (uint8_t *)image->getCpuAddress();
-    data = (char *)hostPtr;
+    auto imageStorage = static_cast<uint8_t *>(image->getCpuAddress());
+    data = hostMemory.data();
 
-    uint8_t *readMemory = nullptr;
+    std::vector<uint8_t> readMemory;
     bool isGpuCopy = image->isTiledAllocation() || !MemoryPoolHelper::isSystemMemoryPool(
                                                        image->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex())->getMemoryPool());
     if (isGpuCopy) {
-        readMemory = new uint8_t[imageSize];
+        readMemory.resize(imageSize);
         size_t imgOrigin[] = {0, 0, 0};
         size_t imgRegion[] = {imageDesc.image_width, imageDesc.image_height, imageDesc.image_depth};
-        retVal = pCmdQ->enqueueReadImage(image.get(), CL_FALSE, imgOrigin, imgRegion, 0, computedSlicePitch, readMemory, nullptr, 0, nullptr, nullptr);
+        retVal = pCmdQ->enqueueReadImage(image.get(), CL_FALSE, imgOrigin, imgRegion, 0, computedSlicePitch, readMemory.data(), nullptr, 0, nullptr, nullptr);
         EXPECT_EQ(CL_SUCCESS, retVal);
         retVal = pCmdQ->flush();
         EXPECT_EQ(CL_SUCCESS, retVal);
-        imageStorage = readMemory;
+        imageStorage = readMemory.data();
     }
 
     auto sliceDataSize = imageDesc.image_width * 4 * imageDesc.image_height;
@@ -515,10 +511,5 @@ HWTEST_F(AUBCreateImage, GivenImage3DCreatedWithDoubledSlicePitchWhenQueriedForD
         }
         data += inputSlicePitch;
         imageStorage += computedSlicePitch;
-    }
-
-    alignedFree(hostPtr);
-    if (readMemory) {
-        delete[] readMemory;
     }
 }

@@ -108,8 +108,8 @@ struct AUBWriteImage
         size_t inputSlicePitch = inputRowPitch * testHeight;
 
         // Generate initial src memory but make it unaligned to page size
-        auto srcMemoryAligned = alignedMalloc(4 + elementSize * numPixels, MemoryConstants::pageSize);
-        auto srcMemoryUnaligned = ptrOffset(reinterpret_cast<uint8_t *>(srcMemoryAligned), 4);
+        auto srcMemoryAligned = allocateAlignedMemory(4 + elementSize * numPixels, MemoryConstants::pageSize);
+        auto srcMemoryUnaligned = ptrOffset(static_cast<uint8_t *>(srcMemoryAligned.get()), 4);
 
         for (auto i = 0u; i < numPixels * elementSize; ++i) {
             srcMemoryUnaligned[i] = static_cast<uint8_t>(i);
@@ -151,16 +151,16 @@ struct AUBWriteImage
             nullptr);
         EXPECT_EQ(CL_SUCCESS, retVal);
 
-        auto readMemory = new uint8_t[dstImage->getSize()];
+        std::vector<uint8_t> readMemory(dstImage->getSize());
         size_t imgOrigin[] = {0, 0, 0};
         size_t imgRegion[] = {testWidth, testHeight, testDepth};
-        retVal = pCmdQ->enqueueReadImage(dstImage.get(), CL_TRUE, imgOrigin, imgRegion, 0, 0, readMemory, nullptr, 0, nullptr, nullptr);
+        retVal = pCmdQ->enqueueReadImage(dstImage.get(), CL_TRUE, imgOrigin, imgRegion, 0, 0, readMemory.data(), nullptr, 0, nullptr, nullptr);
         EXPECT_EQ(CL_SUCCESS, retVal);
 
         retVal = pCmdQ->finish(false);
         EXPECT_EQ(CL_SUCCESS, retVal);
 
-        auto pDstMemory = readMemory;
+        auto pDstMemory = readMemory.data();
         auto pSrcMemory = srcMemoryUnaligned;
         std::vector<uint8_t> referenceMemory(elementSize, 0xFF);
 
@@ -195,9 +195,6 @@ struct AUBWriteImage
                 pSrcMemory = ptrOffset(pSrcMemory, inputSlicePitch - (inputRowPitch * (region[1])));
             }
         }
-
-        alignedFree(srcMemoryAligned);
-        delete[] readMemory;
     }
 
     template <typename FamilyType>
@@ -237,9 +234,8 @@ struct AUBWriteImage
         imageDesc.num_samples = 0;
         imageDesc.mem_object = NULL;
 
-        auto srcMemoryAligned = alignedMalloc(4 + pixelSize * numPixels, MemoryConstants::cacheLineSize);
-        memset(srcMemoryAligned, 0x0, 4 + pixelSize * numPixels);
-        auto srcMemoryUnaligned = ptrOffset(reinterpret_cast<uint8_t *>(srcMemoryAligned), 4); // ensure non cacheline-aligned (but aligned to 4) hostPtr to create non-zerocopy image
+        std::vector<uint8_t> srcMemory(4 + pixelSize * numPixels);
+        auto srcMemoryUnaligned = ptrOffset(srcMemory.data(), 4); // ensure non cacheline-aligned (but aligned to 4) hostPtr to create non-zerocopy image
 
         cl_mem_flags flags = CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE;
         auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
@@ -292,8 +288,6 @@ struct AUBWriteImage
         for (uint32_t row = 2; row < testHeight; row++) {
             AUBCommandStreamFixture::expectMemory<FamilyType>(ptrOffset(dstMemoryGPUPtr, row * imageRowPitch), referenceMemory.data(), inputRowPitch); // validate the remaining rows are not written
         }
-
-        alignedFree(srcMemoryAligned);
     }
     DebugManagerStateRestore restorer;
     std::unique_ptr<Image> dstImage;

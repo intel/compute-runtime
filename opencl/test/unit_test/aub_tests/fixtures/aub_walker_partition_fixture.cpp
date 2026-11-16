@@ -37,13 +37,10 @@ void AubWalkerPartitionFixture::setUp() {
     }
 
     sizeUserMemory = userMemorySize;
-    auto destMemory = alignedMalloc(sizeUserMemory, 4096);
-    ASSERT_NE(nullptr, destMemory);
-    memset(destMemory, 0x0, sizeUserMemory);
+    std::vector<uint8_t> destMemory(sizeUserMemory);
 
-    dstBuffer.reset(Buffer::create(context, CL_MEM_COPY_HOST_PTR, sizeUserMemory, destMemory, retVal));
+    dstBuffer.reset(Buffer::create(context, CL_MEM_COPY_HOST_PTR, sizeUserMemory, destMemory.data(), retVal));
     ASSERT_NE(nullptr, dstBuffer);
-    alignedFree(destMemory);
 
     kernels[5]->setArg(0, dstBuffer.get());
 }

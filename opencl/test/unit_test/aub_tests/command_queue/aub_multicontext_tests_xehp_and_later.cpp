@@ -98,10 +98,10 @@ struct MultitileMulticontextTests : public MulticontextOclAubFixture, public ::t
         }
 
         cl_int retVal = CL_SUCCESS;
-        auto testWidth = 5u;
-        auto testHeight = 5u;
-        auto testDepth = 1u;
-        auto numPixels = testWidth * testHeight * testDepth;
+        constexpr auto testWidth = 5u;
+        constexpr auto testHeight = 5u;
+        constexpr auto testDepth = 1u;
+        constexpr auto numPixels = testWidth * testHeight * testDepth;
 
         cl_image_format imageFormat;
         imageFormat.image_channel_data_type = CL_FLOAT;
@@ -122,13 +122,12 @@ struct MultitileMulticontextTests : public MulticontextOclAubFixture, public ::t
         imageDesc.num_samples = 0;
         imageDesc.mem_object = NULL;
 
-        auto perChannelDataSize = 4u;
-        auto numChannels = 4u;
-        auto elementSize = perChannelDataSize * numChannels;
-        auto srcMemory = (uint8_t *)alignedMalloc(elementSize * numPixels, MemoryConstants::pageSize);
+        constexpr auto perChannelDataSize = 4u;
+        constexpr auto numChannels = 4u;
+        constexpr auto elementSize = perChannelDataSize * numChannels;
+        uint8_t srcMemory[elementSize * numPixels];
         for (size_t i = 0; i < numPixels * elementSize; ++i) {
-            auto origValue = static_cast<uint8_t>(i);
-            memcpy(srcMemory + i, &origValue, sizeof(origValue));
+            srcMemory[i] = static_cast<uint8_t>(i);
         }
 
         size_t origin[3] = {0, 0, 0};
@@ -141,7 +140,7 @@ struct MultitileMulticontextTests : public MulticontextOclAubFixture, public ::t
 
         for (uint32_t tile = 0; tile < tileDevices.size(); tile++) {
             for (uint32_t tileEngine = 0; tileEngine < commandQueues[tile].size(); tileEngine++) {
-                Image *dstImage = Image::create(
+                std::unique_ptr<Image> dstImage(Image::create(
                     context.get(),
                     ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
                     flags,
@@ -149,12 +148,17 @@ struct MultitileMulticontextTests : public MulticontextOclAubFixture, public ::t
                     surfaceFormat,
                     &imageDesc,
                     nullptr,
-                    retVal);
+                    retVal));
                 ASSERT_NE(nullptr, dstImage);
                 memset(dstImage->getCpuAddress(), 0xFF, dstImage->getSize());
+                images[tile].push_back(std::move(dstImage));
+            }
+        }
 
+        for (uint32_t tile = 0; tile < tileDevices.size(); tile++) {
+            for (uint32_t tileEngine = 0; tileEngine < commandQueues[tile].size(); tileEngine++) {
                 retVal = commandQueues[tile][tileEngine]->enqueueWriteImage(
-                    dstImage,
+                    images[tile][tileEngine].get(),
                     CL_FALSE,
                     origin,
                     region,
@@ -166,8 +170,6 @@ struct MultitileMulticontextTests : public MulticontextOclAubFixture, public ::t
                     nullptr,
                     nullptr);
                 EXPECT_EQ(CL_SUCCESS, retVal);
-
-                images[tile].push_back(std::unique_ptr<Image>(dstImage));
             }
         }
 
@@ -205,8 +207,6 @@ struct MultitileMulticontextTests : public MulticontextOclAubFixture, public ::t
                 }
             }
         }
-
-        alignedFree(srcMemory);
     }
 };
 

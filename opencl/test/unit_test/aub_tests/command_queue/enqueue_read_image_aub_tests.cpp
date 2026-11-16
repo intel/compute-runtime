@@ -103,12 +103,11 @@ struct AUBReadImage
         size_t slicePitch = rowPitch * testHeight;
 
         // Generate initial dst memory but make it unaligned to page size
-        auto dstMemoryAligned = alignedMalloc(4 + elementSize * numPixels, MemoryConstants::pageSize);
-        auto dstMemoryUnaligned = ptrOffset(reinterpret_cast<uint8_t *>(dstMemoryAligned), 4);
+        auto dstMemoryAligned = allocateAlignedMemory(4 + elementSize * numPixels, MemoryConstants::pageSize);
+        auto dstMemoryUnaligned = ptrOffset(dstMemoryAligned.get(), 4);
 
         auto sizeMemory = testWidth * alignUp(testHeight, 4) * testDepth * elementSize;
-        auto srcMemoryAligned = alignedMalloc(sizeMemory, 4);
-        auto srcMemory = reinterpret_cast<uint8_t *>(srcMemoryAligned);
+        std::vector<uint8_t> srcMemory(sizeMemory);
         for (auto i = 0u; i < sizeMemory; ++i) {
             srcMemory[i] = static_cast<uint8_t>(i);
         }
@@ -125,7 +124,7 @@ struct AUBReadImage
             0,
             surfaceFormat,
             &imageDesc,
-            srcMemory,
+            srcMemory.data(),
             retVal));
         ASSERT_NE(nullptr, srcImage.get());
 
@@ -153,7 +152,7 @@ struct AUBReadImage
         retVal = pCmdQ->finish(false);
         EXPECT_EQ(CL_SUCCESS, retVal);
 
-        auto imageMemory = srcMemory;
+        auto imageMemory = srcMemory.data();
         auto memoryPool = srcImage->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex())->getMemoryPool();
         bool isGpuCopy = srcImage->isTiledAllocation() || !MemoryPoolHelper::isSystemMemoryPool(memoryPool);
         if (!isGpuCopy) {
@@ -189,9 +188,6 @@ struct AUBReadImage
 
             pDstMemory = ptrOffset(dstMemoryUnaligned, testWidth * testHeight * elementSize);
         }
-
-        alignedFree(dstMemoryAligned);
-        alignedFree(srcMemoryAligned);
     }
 
     template <typename FamilyType>
@@ -236,8 +232,8 @@ struct AUBReadImage
         imageDesc.num_samples = 0;
         imageDesc.mem_object = NULL;
 
-        auto srcMemoryAligned = alignedMalloc(4 + pixelSize * numPixels, 4);
-        auto srcMemoryUnaligned = reinterpret_cast<uint8_t *>(ptrOffset(srcMemoryAligned, 4));
+        std::vector<uint8_t> srcMemory(4 + pixelSize * numPixels);
+        auto srcMemoryUnaligned = ptrOffset(srcMemory.data(), 4);
         for (auto i = 0u; i < pixelSize * numPixels; ++i) {
             srcMemoryUnaligned[i] = static_cast<uint8_t>(i);
         }
@@ -309,7 +305,6 @@ struct AUBReadImage
             AUBCommandStreamFixture::expectMemory<FamilyType>(ptrOffset(readCase.dstMemoryGpuPtr, readCase.offset + readCase.size * pixelSize), referenceMemory.data(), dstMemorySize - readCase.offset - readCase.size * pixelSize);
             alignedFree(readCase.dstMemory);
         }
-        alignedFree(srcMemoryAligned);
     }
     DebugManagerStateRestore restorer;
     std::unique_ptr<Image> srcImage;
