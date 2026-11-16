@@ -8307,6 +8307,26 @@ TEST(GraphTestZeGraphSetDestructionCallbackExp, GivenValidCallbacksThenInvokesTh
     EXPECT_EQ(3U, userData);
 }
 
+TEST(GraphTestMutableGraphNodeExp, GivenMutableGraphNodeExpFunctionsWhenCalledThenUnsupportedFeatureIsReturned) {
+    GraphsCleanupGuard graphCleanup;
+    ContextStubMock ctx;
+    MockGraph graph{&ctx, true};
+    ze_executable_graph_handle_t hExecutableGraph = reinterpret_cast<ze_executable_graph_handle_t>(0x1234);
+    ze_graph_node_handle_t hNode = reinterpret_cast<ze_graph_node_handle_t>(0x5678);
+
+    uint32_t nodesCount = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeGraphGetNodesExp(graph.toHandle(), &nodesCount, nullptr));
+
+    ze_graph_node_exp_properties_t nodeProperties = {ZE_STRUCTURE_TYPE_GRAPH_NODE_EXP_PROPERTIES};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeGraphNodeGetPropertiesExp(hNode, &nodeProperties));
+
+    ze_graph_node_update_group_count_exp_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_GROUP_COUNT_EXP_DESC};
+    const void *updateDescs[] = {&groupCountDesc};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeGraphNodesUpdateExp(graph.toHandle(), 1, &hNode, updateDescs, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeExecutableGraphNodesUpdateExp(hExecutableGraph, 1, &hNode, updateDescs, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeExecutableGraphUpdateExp(hExecutableGraph, graph.toHandle(), nullptr));
+}
+
 TEST(GraphTestCommandListDestruction, GivenPreallocatedCaptureTargetWhenCommandListIsDestroyedThenGraphIsNotDestroyed) {
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;

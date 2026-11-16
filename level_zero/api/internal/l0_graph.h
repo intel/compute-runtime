@@ -27,4 +27,9 @@ ze_result_t ZE_APICALL zeGraphIsEmptyExp(ze_graph_handle_t hGraph);
 ze_result_t ZE_APICALL zeGraphDumpContentsExp(ze_graph_handle_t hGraph, const char *filePath, void *pNext);
 ze_result_t ZE_APICALL zeCommandListGetGraphExp(ze_command_list_handle_t hCommandList, ze_graph_handle_t *phGraph);
 ze_result_t ZE_APICALL zeGraphSetDestructionCallbackExp(ze_graph_handle_t hGraph, zex_mem_graph_free_callback_fn_t pfnCallback, void *pUserData, void *pNext);
+ze_result_t ZE_APICALL zeGraphGetNodesExp(ze_graph_handle_t hGraph, uint32_t *pGraphNodesCount, ze_graph_node_handle_t *phGraphNodes);
+ze_result_t ZE_APICALL zeGraphNodeGetPropertiesExp(ze_graph_node_handle_t hNode, ze_graph_node_exp_properties_t *pProperties);
+ze_result_t ZE_APICALL zeGraphNodesUpdateExp(ze_graph_handle_t hGraph, uint32_t numNodes, ze_graph_node_handle_t *phNodes, const void **ppUpdateDescs, const void *pNext);
+ze_result_t ZE_APICALL zeExecutableGraphNodesUpdateExp(ze_executable_graph_handle_t hExecutableGraph, uint32_t numNodes, ze_graph_node_handle_t *phNodes, const void **ppUpdateDescs, const void *pNext);
+ze_result_t ZE_APICALL zeExecutableGraphUpdateExp(ze_executable_graph_handle_t hExecutableGraph, ze_graph_handle_t hSourceGraph, const void *pNext);
 } // namespace L0

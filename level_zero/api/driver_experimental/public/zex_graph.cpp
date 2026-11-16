@@ -86,4 +86,24 @@ ze_result_t ZE_APICALL zeGraphSetDestructionCallbackExp(ze_graph_handle_t hGraph
     return L0::zeGraphSetDestructionCallbackExt(hGraph, pfnCallback, pUserData, pNext);
 }
 
+ze_result_t ZE_APICALL zeGraphGetNodesExp([[maybe_unused]] ze_graph_handle_t hGraph, [[maybe_unused]] uint32_t *pGraphNodesCount, [[maybe_unused]] ze_graph_node_handle_t *phGraphNodes) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t ZE_APICALL zeGraphNodeGetPropertiesExp([[maybe_unused]] ze_graph_node_handle_t hNode, [[maybe_unused]] ze_graph_node_exp_properties_t *pProperties) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t ZE_APICALL zeGraphNodesUpdateExp([[maybe_unused]] ze_graph_handle_t hGraph, [[maybe_unused]] uint32_t numNodes, [[maybe_unused]] ze_graph_node_handle_t *phNodes, [[maybe_unused]] const void **ppUpdateDescs, [[maybe_unused]] const void *pNext) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t ZE_APICALL zeExecutableGraphNodesUpdateExp([[maybe_unused]] ze_executable_graph_handle_t hExecutableGraph, [[maybe_unused]] uint32_t numNodes, [[maybe_unused]] ze_graph_node_handle_t *phNodes, [[maybe_unused]] const void **ppUpdateDescs, [[maybe_unused]] const void *pNext) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t ZE_APICALL zeExecutableGraphUpdateExp([[maybe_unused]] ze_executable_graph_handle_t hExecutableGraph, [[maybe_unused]] ze_graph_handle_t hSourceGraph, [[maybe_unused]] const void *pNext) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 } // namespace L0

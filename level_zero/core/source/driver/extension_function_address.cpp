@@ -126,6 +126,11 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
     RETURN_L0_FUNC_PTR_IF_EXIST(zeGraphDumpContentsExp);
     RETURN_L0_FUNC_PTR_IF_EXIST(zeCommandListGetGraphExp);
     RETURN_L0_FUNC_PTR_IF_EXIST(zeGraphSetDestructionCallbackExp);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zeGraphGetNodesExp);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zeGraphNodeGetPropertiesExp);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zeGraphNodesUpdateExp);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zeExecutableGraphNodesUpdateExp);
+    RETURN_L0_FUNC_PTR_IF_EXIST(zeExecutableGraphUpdateExp);
 
     // core ext graphs without a graph ddi table entry
     RETURN_L0_FUNC_PTR_IF_EXIST(zeGraphPauseCaptureExt);
