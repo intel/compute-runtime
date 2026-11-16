@@ -22,6 +22,7 @@
 #include "level_zero/core/source/builtin/builtin_functions_lib.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/image/image_format_desc_helper.h"
+#include "level_zero/core/source/image/internal_core_image_ext.h"
 #include "level_zero/core/source/kernel/kernel.h"
 #include <level_zero/ze_api.h>
 
@@ -653,23 +654,28 @@ void Image::migrateTo(ze_command_list_handle_t cmdList, uint32_t targetRootDevic
     this->currentOwnerRootDeviceIndex = targetRootDeviceIndex;
 }
 
-ze_result_t Image::appendFill(ze_command_list_handle_t cmdList, ClDevice *device, const void *fillColor, const size_t *origin, const size_t *region,
-                              ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
-    const auto rootDeviceIndex = device->getRootDeviceIndex();
-    auto l0ImageImp = this->getL0Object(rootDeviceIndex);
-    auto imgInfo = l0ImageImp->getImageInfo();
-
+static void packFillColor(const ImageInfo &imgInfo, const cl_image_format &originalFormat, const void *fillColor, uint8_t (&packedFillColor)[16]) {
     int32_t convertedFillColor[4] = {0};
-    NEO::convertFillColor(fillColor, convertedFillColor, this->getOriginalFormat(), NEO::redescribeFillColor(imgInfo));
+    NEO::convertFillColor(fillColor, convertedFillColor, originalFormat, NEO::redescribeFillColor(imgInfo));
 
     auto numChannels = imgInfo.surfaceFormat->numChannels;
     auto perChannelSize = imgInfo.surfaceFormat->perChannelSizeInBytes;
-    uint8_t packedFillColor[16] = {0};
     for (uint32_t ch = 0; ch < numChannels; ch++) {
         memcpy(&packedFillColor[ch * perChannelSize], &convertedFillColor[ch], perChannelSize);
     }
+}
+
+ze_result_t Image::appendFill(ze_command_list_handle_t cmdList, ClDevice *device, const void *fillColor, const size_t *origin, const size_t *region,
+                              ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
+    const auto rootDeviceIndex = device->getRootDeviceIndex();
 
     if (this->getClObjectType() == CL_MEM_OBJECT_IMAGE1D_BUFFER) {
+        auto l0ImageImp = this->getL0Object(rootDeviceIndex);
+        auto imgInfo = l0ImageImp->getImageInfo();
+
+        uint8_t packedFillColor[16] = {0};
+        packFillColor(imgInfo, this->getOriginalFormat(), fillColor, packedFillColor);
+
         auto elementSize = imgInfo.surfaceFormat->imageElementSizeInBytes;
         auto dstPtr = reinterpret_cast<void *>(l0ImageImp->getAllocation()->getGpuAddress() + imgInfo.offset + origin[0] * elementSize);
         auto fillSize = region[0] * elementSize;
@@ -677,32 +683,41 @@ ze_result_t Image::appendFill(ze_command_list_handle_t cmdList, ClDevice *device
         return zeCommandListAppendMemoryFill(cmdList, dstPtr, packedFillColor, elementSize, fillSize, hSignalEvent, numWaitEvents, phWaitEvents);
     }
 
-    auto l0Device = device->getL0Object();
+    auto fillRegion = createZeImageRegionWithMipLevel(this, origin, region);
+    return appendFillWithBuiltin(cmdList, device->getL0Object(), this->getL0Handle(rootDeviceIndex), this->getOriginalFormat(), fillColor, fillRegion, fillRegion.mipLevel,
+                                 hSignalEvent, numWaitEvents, phWaitEvents);
+}
+
+ze_result_t Image::appendFillWithBuiltin(ze_command_list_handle_t cmdList, L0::Device *l0Device, ze_image_handle_t l0Image, const cl_image_format &originalFormat,
+                                         const void *fillColor, const ze_image_region_t &fillRegion, uint32_t mipLevel,
+                                         ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
+    uint8_t packedFillColor[16] = {0};
+    packFillColor(L0::Image::fromHandle(l0Image)->getImageInfo(), originalFormat, fillColor, packedFillColor);
+
     auto builtInMode = l0Device->getCompilerProductHelper().getDefaultBuiltInAddressingMode(
         NEO::ApiSpecificConfig::getBindlessMode(*l0Device->getNEODevice()));
 
     auto lock = l0Device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
     auto *builtinKernel = l0Device->getBuiltinFunctionsLib()->getImageFunction(L0::ImageBuiltIn::fillImage3d, builtInMode);
 
-    auto fillRegion = createZeImageRegionWithMipLevel(this, origin, region);
-
-    builtinKernel->setArgRedescribedImage(0u, this->getL0Handle(rootDeviceIndex), false, fillRegion.mipLevel);
+    builtinKernel->setArgRedescribedImage(0u, l0Image, false, mipLevel);
     builtinKernel->setArgumentValue(1u, sizeof(packedFillColor), packedFillColor);
 
     uint32_t dstOffset[] = {fillRegion.originX, fillRegion.originY, fillRegion.originZ, 0u};
     builtinKernel->setArgumentValue(2u, sizeof(dstOffset), dstOffset);
 
-    uint32_t groupSizeX = static_cast<uint32_t>(region[0]);
-    uint32_t groupSizeY = static_cast<uint32_t>(std::max(region[1], static_cast<size_t>(1)));
-    uint32_t groupSizeZ = static_cast<uint32_t>(std::max(region[2], static_cast<size_t>(1)));
+    const uint32_t regionX = fillRegion.width;
+    const uint32_t regionY = std::max(fillRegion.height, 1u);
+    const uint32_t regionZ = std::max(fillRegion.depth, 1u);
+
+    uint32_t groupSizeX = regionX;
+    uint32_t groupSizeY = regionY;
+    uint32_t groupSizeZ = regionZ;
 
     builtinKernel->suggestGroupSize(groupSizeX, groupSizeY, groupSizeZ, &groupSizeX, &groupSizeY, &groupSizeZ);
     builtinKernel->setGroupSize(groupSizeX, groupSizeY, groupSizeZ);
 
-    uint32_t dispatchX = static_cast<uint32_t>(region[0]) / groupSizeX;
-    uint32_t dispatchY = static_cast<uint32_t>(std::max(region[1], static_cast<size_t>(1))) / groupSizeY;
-    uint32_t dispatchZ = static_cast<uint32_t>(std::max(region[2], static_cast<size_t>(1))) / groupSizeZ;
-    ze_group_count_t groupCount{dispatchX, dispatchY, dispatchZ};
+    ze_group_count_t groupCount{regionX / groupSizeX, regionY / groupSizeY, regionZ / groupSizeZ};
 
     return zeCommandListAppendLaunchKernel(cmdList, builtinKernel->toHandle(), &groupCount, hSignalEvent, numWaitEvents, phWaitEvents);
 }

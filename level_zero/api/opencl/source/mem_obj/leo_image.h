@@ -80,6 +80,9 @@ class Image : public MemObj {
                    uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
     ze_result_t appendFill(ze_command_list_handle_t cmdList, ClDevice *device, const void *fillColor, const size_t *origin, const size_t *region,
                            ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
+    static ze_result_t appendFillWithBuiltin(ze_command_list_handle_t cmdList, L0::Device *l0Device, ze_image_handle_t l0Image, const cl_image_format &originalFormat,
+                                             const void *fillColor, const ze_image_region_t &fillRegion, uint32_t mipLevel,
+                                             ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
 
     size_t getHostPtrRowPitch() const { return hostPtrRowPitch; }
     size_t getHostPtrSlicePitch() const { return hostPtrSlicePitch; }
