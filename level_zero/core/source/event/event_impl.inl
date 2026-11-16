@@ -20,6 +20,7 @@
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_time.h"
+#include "shared/source/utilities/host_clock.h"
 #include "shared/source/utilities/shared_pool_allocation.h"
 #include "shared/source/utilities/staging_buffer_manager.h"
 #include "shared/source/utilities/wait_util.h"
@@ -31,8 +32,6 @@
 #include "level_zero/core/source/kernel/kernel.h"
 #include "level_zero/driver_experimental/zex_common.h"
 #include "level_zero/tools/source/metrics/metric.h"
-
-#include <chrono>
 
 namespace L0 {
 template <typename TagSizeT>
@@ -973,8 +972,7 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
         return ZE_RESULT_ERROR_GRAPH_INTERNAL_EVENT;
     }
 
-    std::chrono::microseconds elapsedTimeSinceGpuHangCheck{0};
-    std::chrono::high_resolution_clock::time_point waitStartTime, lastHangCheckTime, currentTime;
+    NEO::HostClock::TimestampNs waitStartTime = 0, lastHangCheckTime = 0, currentTime = 0;
     int64_t elapsedTimeSinceWaitStartUs = 0;
     uint64_t elapsedTimeSinceWaitStartNs = 0;
 
@@ -1033,7 +1031,7 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
         taskCountToWaitForCacheFlush = flushTagUpdateForHostSync(*csrForCacheFlush);
     }
 
-    waitStartTime = std::chrono::high_resolution_clock::now();
+    waitStartTime = NEO::HostClock::getCurrentTimeInNs();
     lastHangCheckTime = waitStartTime;
 
     const bool fenceWait = isKmdWaitModeEnabled() && isCounterBased() && !this->cbEventWithProfiling && csrs[0]->waitUserFenceSupported(inOrderExecHelper.getInterruptFence());
@@ -1092,14 +1090,11 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
             return ret;
         }
 
-        currentTime = std::chrono::high_resolution_clock::now();
-        auto elapsedTimeSinceWaitStart = currentTime - waitStartTime;
-        elapsedTimeSinceWaitStartUs = std::chrono::duration_cast<std::chrono::microseconds>(elapsedTimeSinceWaitStart).count();
-        elapsedTimeSinceWaitStartNs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(elapsedTimeSinceWaitStart).count());
+        currentTime = NEO::HostClock::getCurrentTimeInNs();
+        elapsedTimeSinceWaitStartUs = NEO::HostClock::getElapsedTimeInUs(waitStartTime, currentTime);
+        elapsedTimeSinceWaitStartNs = static_cast<uint64_t>(NEO::HostClock::getElapsedTimeInNs(waitStartTime, currentTime));
 
-        elapsedTimeSinceGpuHangCheck = std::chrono::duration_cast<std::chrono::microseconds>(currentTime - lastHangCheckTime);
-
-        if (csrForCacheFlush->isGpuHangCheckPeriodElapsed(elapsedTimeSinceGpuHangCheck.count())) {
+        if (csrForCacheFlush->isGpuHangCheckPeriodElapsed(NEO::HostClock::getElapsedTimeInUs(lastHangCheckTime, currentTime))) {
             lastHangCheckTime = currentTime;
             if (this->isGpuHangDetectedOnSignalingContexts(*csrForCacheFlush)) {
                 if (assertHndlr) {
@@ -1158,12 +1153,11 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
         if (!fenceWait) {
             auto waitAction = waitController.getAction(elapsedTimeSinceWaitStartUs, timeout, elapsedTimeSinceWaitStartNs);
             if (waitAction.sleepUs > 0) {
-                NEO::sleep(std::chrono::microseconds(waitAction.sleepUs));
+                NEO::sleepUs(waitAction.sleepUs);
 
-                currentTime = std::chrono::high_resolution_clock::now();
-                elapsedTimeSinceWaitStart = currentTime - waitStartTime;
-                elapsedTimeSinceWaitStartUs = std::chrono::duration_cast<std::chrono::microseconds>(elapsedTimeSinceWaitStart).count();
-                elapsedTimeSinceWaitStartNs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(elapsedTimeSinceWaitStart).count());
+                currentTime = NEO::HostClock::getCurrentTimeInNs();
+                elapsedTimeSinceWaitStartUs = NEO::HostClock::getElapsedTimeInUs(waitStartTime, currentTime);
+                elapsedTimeSinceWaitStartNs = static_cast<uint64_t>(NEO::HostClock::getElapsedTimeInNs(waitStartTime, currentTime));
             }
         }
 
@@ -1232,14 +1226,14 @@ void EventImp<TagSizeT>::refreshTimestampCompletionData() {
 
 template <typename TagSizeT>
 void EventImp<TagSizeT>::synchronizeTimestampCompletionWithTimeout() {
-    std::chrono::high_resolution_clock::time_point startTime = std::chrono::high_resolution_clock::now();
-    uint64_t timeDiff = 0;
+    const auto startTime = NEO::HostClock::getCurrentTimeInNs();
+    uint64_t timeDiffMs = 0;
 
     do {
         this->refreshTimestampCompletionData();
 
-        timeDiff = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - startTime).count();
-    } while (!isTimestampPopulated() && (timeDiff < getCompletionTimeout()));
+        timeDiffMs = NEO::HostClock::getElapsedTimeInMs(startTime, NEO::HostClock::getCurrentTimeInNs());
+    } while (!isTimestampPopulated() && (timeDiffMs < getCompletionTimeout()));
     DEBUG_BREAK_IF(!isTimestampPopulated());
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,11 @@ template <class T>
 void sleep(const T &sleepDuration) {
     // Do not sleep in ULTs
 }
+
+void sleepUs(int64_t sleepDurationUs) {
+    // Do not sleep in ULTs
+}
+
 template <class T>
 void waitOnCondition(std::condition_variable &condition, std::unique_lock<std::mutex> &lock, const T &duration) {
     // Do not wait in ULTs

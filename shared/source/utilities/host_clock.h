@@ -13,6 +13,8 @@ namespace HostClock {
 using TimestampNs = int64_t;
 
 TimestampNs getCurrentTimeInNs();
+int64_t getElapsedTimeInNs(TimestampNs startTimeInNs, TimestampNs endTimeInNs);
 int64_t getElapsedTimeInUs(TimestampNs startTimeInNs, TimestampNs endTimeInNs);
+int64_t getElapsedTimeInMs(TimestampNs startTimeInNs, TimestampNs endTimeInNs);
 } // namespace HostClock
 } // namespace NEO

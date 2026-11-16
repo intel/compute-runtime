@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,11 +7,14 @@
 
 #pragma once
 #include <condition_variable>
+#include <cstdint>
 #include <thread>
 
 namespace NEO {
 template <class T>
 void sleep(const T &sleepDuration);
+
+void sleepUs(int64_t sleepDurationUs);
 
 template <class T>
 void waitOnCondition(std::condition_variable &condition, std::unique_lock<std::mutex> &lock, const T &duration);
