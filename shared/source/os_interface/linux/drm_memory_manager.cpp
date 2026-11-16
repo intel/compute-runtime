@@ -3920,7 +3920,9 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
     }
 
     const auto memoryPool = MemoryPool::localMemory;
+    const bool isSystemMemory = MemoryPoolHelper::isSystemMemoryPool(memoryPool);
     auto &productHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHelper<ProductHelper>();
+    std::vector<std::unique_ptr<Gmm>> gmms;
     for (auto handleId = 0u; handleId < numHandles; handleId++) {
         uint32_t handle = 0;
 
@@ -3933,7 +3935,9 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
         auto memoryBanks = (debugManager.flags.KMDSupportForCrossTileMigrationPolicy.get() > 0 || useChunking) ? allocationData.storageInfo.memoryBanks : DeviceBitfield(1 << memoryInstance);
         auto memRegions = createMemoryRegionsForSharedAllocation(*pHwInfo, *memoryInfo, allocationData, memoryBanks);
 
-        auto patIndex = drm.getPatIndex(nullptr, allocationData.type, CacheRegion::defaultRegion, CachePolicy::writeBack, false, MemoryPoolHelper::isSystemMemoryPool(memoryPool), false);
+        auto gmm = drm.createBufferGmm(allocationData.type, CachePolicy::writeBack, isSystemMemory, currentSize);
+        auto patIndex = drm.getPatIndex(gmm.get(), allocationData.type, CacheRegion::defaultRegion, CachePolicy::writeBack, false, isSystemMemory, false);
+        gmms.push_back(std::move(gmm));
 
         int ret = memoryInfo->createGemExt(memRegions, currentSize, handle, patIndex, {}, -1, useChunking, numOfChunks, allocationData.flags.isUSMHostAllocation, GemCreateExtHint::none, deferBacking);
 
@@ -3982,7 +3986,10 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
 
     auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
     auto canonizedGpuAddress = gmmHelper->canonize(reinterpret_cast<uintptr_t>(cpuPointer));
-    auto allocation = std::make_unique<DrmAllocation>(allocationData.rootDeviceIndex, 1u /*num gmms*/, allocationData.type, bos, cpuPointer, canonizedGpuAddress, size, memoryPool);
+    auto allocation = std::make_unique<DrmAllocation>(allocationData.rootDeviceIndex, gmms.size(), allocationData.type, bos, cpuPointer, canonizedGpuAddress, size, memoryPool);
+    for (auto handleId = 0u; handleId < gmms.size(); handleId++) {
+        allocation->setGmm(gmms[handleId].get(), handleId);
+    }
     allocation->setMmapPtr(cpuBasePointer);
     allocation->setMmapSize(totalSizeToAlloc);
     allocation->setReservedAddressRange(reinterpret_cast<void *>(preferredAddress), totalSizeToAlloc);
@@ -4067,6 +4074,9 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
         DEBUG_BREAK_IF(!success);
     }
 
+    for (auto &gmm : gmms) {
+        gmm.release();
+    }
     return allocation.release();
 }
 

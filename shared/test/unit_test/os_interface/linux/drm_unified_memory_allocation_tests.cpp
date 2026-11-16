@@ -5,12 +5,16 @@
  *
  */
 
+#include "shared/source/gmm_helper/cache_settings_helper.h"
+#include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_properties.h"
 #include "shared/source/os_interface/linux/drm_allocation.h"
 #include "shared/test/common/libult/linux/drm_mock_helper.h"
 #include "shared/test/common/mocks/linux/mock_os_context_linux.h"
+#include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/unit_test/os_interface/linux/drm_memory_manager_local_memory_fixture.h"
 
@@ -561,6 +565,8 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenUseKmdMigrationSetWhenCreateSharedU
     auto size = 2 * MemoryConstants::megaByte;
     UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
     auto ptr = unifiedMemoryManager.createSharedUnifiedMemoryAllocation(size, unifiedMemoryProperties, nullptr);
+    auto freeSvmAlloc = [&unifiedMemoryManager](void *svmPtr) { unifiedMemoryManager.freeSVMAlloc(svmPtr); };
+    std::unique_ptr<void, decltype(freeSvmAlloc)> svmAllocGuard(ptr, freeSvmAlloc);
     EXPECT_NE(ptr, nullptr);
 
     auto allocation = unifiedMemoryManager.getSVMAlloc(ptr)->gpuAllocations.getDefaultGraphicsAllocation();
@@ -581,7 +587,15 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenUseKmdMigrationSetWhenCreateSharedU
         gpuAddress += size / 2;
     }
 
-    unifiedMemoryManager.freeSVMAlloc(ptr);
+    const auto &rootDeviceEnvironment = mock->getRootDeviceEnvironment();
+    const auto expectedUsage = CacheSettingsHelper::getGmmUsageType(drmAllocation->getAllocationType(), false, rootDeviceEnvironment.getProductHelper(), *rootDeviceEnvironment.getHardwareInfo());
+    ASSERT_EQ(bos.size(), drmAllocation->getNumGmms());
+    for (auto handleId = 0u; handleId < drmAllocation->getNumGmms(); handleId++) {
+        const auto gmm = drmAllocation->getGmm(handleId);
+        ASSERT_NE(nullptr, gmm);
+        EXPECT_EQ(expectedUsage, gmm->getResourceUsageType());
+        EXPECT_EQ(bos[handleId]->peekSize(), gmm->gmmResourceInfo->getSizeAllocation());
+    }
 }
 
 TEST_F(DrmMemoryManagerLocalMemoryTest, givenCreateKmdMigratedSharedAllocationWithMultipleBOsClearedWhenCreateSharedUnifiedMemoryAllocationIsCalledThenKmdMigratedAllocationWithSingleBOsIsCreated) {
@@ -589,6 +603,7 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenCreateKmdMigratedSharedAllocationWi
     DebugManagerStateRestore restorer;
     debugManager.flags.UseKmdMigration.set(1);
     debugManager.flags.CreateKmdMigratedSharedAllocationWithMultipleBOs.set(0);
+    mock->vmBindPatIndexProgrammingSupported = true;
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
 
@@ -608,6 +623,8 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenCreateKmdMigratedSharedAllocationWi
     auto size = 2 * MemoryConstants::megaByte;
     UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
     auto ptr = unifiedMemoryManager.createSharedUnifiedMemoryAllocation(size, unifiedMemoryProperties, nullptr);
+    auto freeSvmAlloc = [&unifiedMemoryManager](void *svmPtr) { unifiedMemoryManager.freeSVMAlloc(svmPtr); };
+    std::unique_ptr<void, decltype(freeSvmAlloc)> svmAllocGuard(ptr, freeSvmAlloc);
     EXPECT_NE(ptr, nullptr);
 
     auto allocation = unifiedMemoryManager.getSVMAlloc(ptr)->gpuAllocations.getDefaultGraphicsAllocation();
@@ -624,7 +641,13 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenCreateKmdMigratedSharedAllocationWi
     EXPECT_EQ(castToUint64(ptr), bos[0]->peekAddress());
     EXPECT_EQ(size, bos[0]->peekSize());
 
-    unifiedMemoryManager.freeSVMAlloc(ptr);
+    ASSERT_EQ(1u, drmAllocation->getNumGmms());
+    const auto gmm = drmAllocation->getDefaultGmm();
+    ASSERT_NE(nullptr, gmm);
+    EXPECT_EQ(bos[0]->peekSize(), gmm->gmmResourceInfo->getSizeAllocation());
+
+    const auto mockClientContext = static_cast<MockGmmClientContextBase *>(mock->getRootDeviceEnvironment().getGmmClientContext());
+    EXPECT_EQ(gmm->gmmResourceInfo->peekGmmResourceInfo(), mockClientContext->passedResourceInfoForGetPatIndexQuery);
 }
 
 TEST_F(DrmMemoryManagerLocalMemoryTest, givenKMDSupportForCrossTileMigrationPolicyWhenCreateUnifiedMemoryAllocationWithMultiMemoryRegionsThenGemCreateExtIsUsedWithAllRegions) {
