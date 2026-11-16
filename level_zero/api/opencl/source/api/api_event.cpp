@@ -155,6 +155,9 @@ cl_int CL_API_CALL clSetEventCallback(cl_event event,
     case CL_RUNNING:
     case CL_COMPLETE: {
         if (pEvent->queryAndUpdateEventStatus() == CL_COMPLETE) {
+            if (commandExecCallbackType == CL_COMPLETE) {
+                pEvent->makeResultsVisibleToHost();
+            }
             funcNotify(event, commandExecCallbackType, userData);
         } else {
             pEvent->addCallback(funcNotify, commandExecCallbackType, userData);

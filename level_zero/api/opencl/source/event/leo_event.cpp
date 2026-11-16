@@ -275,6 +275,12 @@ void Event::addCallback(Callback::ClbFuncT fn, cl_int type, void *data) {
     }
 }
 
+void Event::makeResultsVisibleToHost() {
+    if (!this->isUserEvent()) {
+        this->wait(0);
+    }
+}
+
 void Event::executeCallbacks(cl_int executionStatus) {
     bool terminated = executionStatus < 0;
 
@@ -282,6 +288,10 @@ void Event::executeCallbacks(cl_int executionStatus) {
     {
         auto lock = std::unique_lock<std::mutex>(callbacksMtx);
         detachedCallbacks.swap(callbacks);
+    }
+
+    if ((executionStatus == CL_COMPLETE) && !detachedCallbacks.empty()) {
+        this->makeResultsVisibleToHost();
     }
 
     for (auto &callback : detachedCallbacks) {

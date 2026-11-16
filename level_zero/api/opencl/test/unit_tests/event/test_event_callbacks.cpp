@@ -658,7 +658,7 @@ TEST_F(EventCallbacksTests, givenAlreadyCompletedEventWhenAsyncLoopRunsThenCallb
 
     mockHandler->runOneIteration();
 
-    EXPECT_EQ(0u, event->waitCalled);
+    EXPECT_EQ(1u, event->waitCalled);
     EXPECT_EQ(1u, tracker.count);
     EXPECT_EQ(CL_COMPLETE, tracker.lastStatus);
     EXPECT_TRUE(mockHandler->peekIsListEmpty());
@@ -687,6 +687,117 @@ TEST_F(EventCallbacksTests, givenStillPendingEventsWhenTheAsyncLoopStopsThenThei
 
     clReleaseEvent(firstEvent);
     clReleaseEvent(secondEvent);
+}
+
+struct MockEventRecordingWait : public Event {
+    using Event::Event;
+    using Event::wait;
+
+    ze_result_t wait(uint64_t timeout) override {
+        waitTimeouts.push_back(timeout);
+        callbacksExecutedBeforeWait.push_back(tracker ? tracker->count.load() : 0u);
+        return Event::wait(timeout);
+    }
+
+    CallbackTracker *tracker = nullptr;
+    std::vector<uint64_t> waitTimeouts;
+    std::vector<uint32_t> callbacksExecutedBeforeWait;
+};
+
+TEST_F(EventCallbacksTests, givenCompletedEventWithPendingCallbackWhenUpdatingExecutionStatusThenEventIsHostSynchronizedBeforeCallbackIsExecuted) {
+    installMockHandler(false);
+    auto event = new MockEventRecordingWait(CL_COMMAND_MARKER, commandQueue);
+    auto &tracker = createTracker();
+    event->tracker = &tracker;
+    event->addCallback(&CallbackTracker::callback, CL_COMPLETE, &tracker);
+    ASSERT_TRUE(event->waitTimeouts.empty());
+    signalEvent(event);
+
+    event->updateExecutionStatus();
+
+    ASSERT_EQ(1u, event->waitTimeouts.size());
+    EXPECT_EQ(0u, event->waitTimeouts[0]);
+    EXPECT_EQ(0u, event->callbacksExecutedBeforeWait[0]);
+    EXPECT_EQ(1u, tracker.count);
+    EXPECT_EQ(CL_COMPLETE, tracker.lastStatus);
+
+    clReleaseEvent(event);
+}
+
+TEST_F(EventCallbacksTests, givenEventCompletedByStatusQueryWhenSettingCallbackThenEventIsHostSynchronizedBeforeCallbackIsExecuted) {
+    installMockHandler(false);
+    auto event = new MockEventRecordingWait(CL_COMMAND_MARKER, commandQueue);
+    auto &tracker = createTracker();
+    event->tracker = &tracker;
+    signalEvent(event);
+    ASSERT_EQ(CL_COMPLETE, event->queryAndUpdateEventStatus());
+
+    EXPECT_EQ(CL_SUCCESS, clSetEventCallback(event, CL_COMPLETE, &CallbackTracker::callback, &tracker));
+
+    ASSERT_EQ(1u, event->waitTimeouts.size());
+    EXPECT_EQ(0u, event->waitTimeouts[0]);
+    EXPECT_EQ(0u, event->callbacksExecutedBeforeWait[0]);
+    EXPECT_EQ(1u, tracker.count);
+
+    clReleaseEvent(event);
+}
+
+TEST_F(EventCallbacksTests, givenEventCompletedByStatusQueryWhenSettingRunningCallbackThenEventIsNotHostSynchronized) {
+    installMockHandler(false);
+    auto event = new MockEventRecordingWait(CL_COMMAND_MARKER, commandQueue);
+    auto &tracker = createTracker();
+    signalEvent(event);
+    ASSERT_EQ(CL_COMPLETE, event->queryAndUpdateEventStatus());
+
+    EXPECT_EQ(CL_SUCCESS, clSetEventCallback(event, CL_RUNNING, &CallbackTracker::callback, &tracker));
+
+    EXPECT_EQ(1u, tracker.count);
+    EXPECT_TRUE(event->waitTimeouts.empty());
+
+    clReleaseEvent(event);
+}
+
+TEST_F(EventCallbacksTests, givenCompletedEventWithoutCallbacksWhenUpdatingExecutionStatusThenEventIsNotHostSynchronized) {
+    installMockHandler(false);
+    auto event = new MockEventRecordingWait(CL_COMMAND_MARKER, commandQueue);
+    signalEvent(event);
+
+    event->updateExecutionStatus();
+
+    EXPECT_EQ(CL_COMPLETE, event->peekExecutionStatus());
+    EXPECT_TRUE(event->waitTimeouts.empty());
+
+    clReleaseEvent(event);
+}
+
+TEST_F(EventCallbacksTests, givenEventWithPendingCallbackWhenAbortingDueToGpuHangThenEventIsNotHostSynchronized) {
+    installMockHandler(false);
+    auto event = new MockEventRecordingWait(CL_COMMAND_MARKER, commandQueue);
+    auto &tracker = createTracker();
+    event->addCallback(&CallbackTracker::callback, CL_COMPLETE, &tracker);
+
+    event->abortExecutionDueToGpuHang();
+
+    EXPECT_EQ(1u, tracker.count);
+    EXPECT_EQ(Event::executionAbortedDueToGpuHang, tracker.lastStatus);
+    EXPECT_TRUE(event->waitTimeouts.empty());
+
+    clReleaseEvent(event);
+}
+
+TEST_F(EventCallbacksTests, givenUserEventWithPendingCallbackWhenSetCompleteThenEventIsNotHostSynchronized) {
+    installMockHandler(false);
+    auto userEvent = new MockEventRecordingWait(context);
+    auto &tracker = createTracker();
+    userEvent->addCallback(&CallbackTracker::callback, CL_COMPLETE, &tracker);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, userEvent->signal(CL_COMPLETE));
+
+    EXPECT_EQ(1u, tracker.count);
+    EXPECT_EQ(CL_COMPLETE, tracker.lastStatus);
+    EXPECT_TRUE(userEvent->waitTimeouts.empty());
+
+    clReleaseEvent(userEvent);
 }
 
 struct WhiteBoxEventWithHandle : public Event {

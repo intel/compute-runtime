@@ -134,6 +134,7 @@ class Event : public BaseObject<_cl_event> {
     cl_int peekExecutionStatus() const { return this->eventStatus.load(); };
 
     void addCallback(Callback::ClbFuncT fn, cl_int type, void *data);
+    void makeResultsVisibleToHost();
     bool peekHasCallbacks();
     void updateExecutionStatus();
     void abortExecutionDueToGpuHang();
