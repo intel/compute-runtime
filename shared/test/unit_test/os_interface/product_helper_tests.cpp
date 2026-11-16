@@ -1326,6 +1326,10 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskingIsLEOSupportedThenFalse
     EXPECT_FALSE(productHelper->isLEOSupported());
 }
 
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskingIsLEOSupportedThenTrueReturned, IsLeoSupported) {
+    EXPECT_TRUE(productHelper->isLEOSupported());
+}
+
 HWTEST_F(ProductHelperTest, givenDefaultSettingsWhenAskingIsPostSyncRequiredForAllWalkersThenFalseReturned) {
     EXPECT_FALSE(productHelper->isPostSyncRequiredForAllWalkers());
 }
