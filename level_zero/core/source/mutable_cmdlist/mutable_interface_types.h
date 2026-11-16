@@ -9,8 +9,6 @@
 #include <level_zero/ze_api.h>
 
 #include <cstdint>
-#include <variant>
-#include <vector>
 
 #ifndef BIT
 #define BIT(x) (1u << (x))
@@ -56,8 +54,5 @@ struct GlobalOffsetMutationDescriptor {
     uint64_t commandId = 0;
     uint32_t globalOffset[3] = {0, 0, 0};
 };
-
-using MutationDescriptor = std::variant<KernelArgumentMutationDescriptor, GroupCountMutationDescriptor, GroupSizeMutationDescriptor, GlobalOffsetMutationDescriptor>;
-using MutationDescriptorContainer = std::vector<MutationDescriptor>;
 
 } // namespace L0::MCL

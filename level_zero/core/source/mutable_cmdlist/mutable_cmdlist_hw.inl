@@ -131,8 +131,6 @@ ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::initialize(Device *devi
 
     // this is a unique ptr storage for all kernel meta data - its ISA GPUVA, properties, etc.
     this->kernelData.reserve(estimatedDifferentKernelUsed);
-    constexpr size_t initialMutationDescriptorsCapacity = 16;
-    this->mutationDescriptors.reserve(initialMutationDescriptorsCapacity);
 
     return ret;
 }

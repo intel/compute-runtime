@@ -174,7 +174,7 @@ struct MutableCommandListImp : public MutableCommandList {
 
   protected:
     auto getNextCommandIdImpl(const MutableCommandIdDescriptor &commandIdDesc, uint32_t numKernels, ze_kernel_handle_t *phKernels, uint64_t *pCommandId) -> ze_result_t;
-    auto updateMutableCommandsImpl() -> ze_result_t;
+    auto validateCooperativeKernelDispatches() const -> ze_result_t;
     auto applyMutation(const KernelArgumentMutationDescriptor &mutation) -> ze_result_t;
     auto applyMutation(const GroupCountMutationDescriptor &mutation) -> ze_result_t;
     auto applyMutation(const GroupSizeMutationDescriptor &mutation) -> ze_result_t;
@@ -230,7 +230,6 @@ struct MutableCommandListImp : public MutableCommandList {
     KernelMutationsContainer kernelMutations;
     EventMutationsContainer eventMutations;
     CooperativeKernelDispatchContainer cooperativeKernelVariableDispatches;
-    MutationDescriptorContainer mutationDescriptors;
 
     MutableComputeWalker *appendKernelMutableComputeWalker = nullptr;
 
