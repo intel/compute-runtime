@@ -80,26 +80,7 @@ namespace InternalCmdListFunctions {
 CreateImmediateFunc createImmediate = static_cast<CreateImmediateFunc>(&L0::CommandList::createImmediate);
 } // namespace InternalCmdListFunctions
 
-ze_result_t Context::getInternalCopyCmdList(uint32_t rootDeviceIndex, ze_command_list_handle_t &cmdList) {
-    return obtainInternalCmdList(this->internalCopyCmdLists, rootDeviceIndex, ZE_COMMAND_QUEUE_FLAG_COPY_OFFLOAD_HINT | ZE_COMMAND_QUEUE_FLAG_IN_ORDER, NEO::EngineGroupType::copy, cmdList);
-}
-
-ze_result_t Context::getInternalComputeCmdList(uint32_t rootDeviceIndex, ze_command_list_handle_t &cmdList) {
-    return obtainInternalCmdList(this->internalComputeCmdLists, rootDeviceIndex, 0, NEO::EngineGroupType::compute, cmdList);
-}
-
-ze_result_t Context::obtainInternalCmdList(std::map<uint32_t, ze_command_list_handle_t> &internalCmdLists, uint32_t rootDeviceIndex, ze_command_queue_flags_t cmdListFlags, NEO::EngineGroupType engineGroupType, ze_command_list_handle_t &cmdList) {
-    std::lock_guard<std::mutex> lock(this->internalCmdListsCreationMtx);
-
-    auto internalCmdListIt = internalCmdLists.find(rootDeviceIndex);
-    if (internalCmdListIt != internalCmdLists.end()) {
-        cmdList = internalCmdListIt->second;
-        return ZE_RESULT_SUCCESS;
-    }
-
-    auto clDevice = getClDeviceByRootDeviceIndex(rootDeviceIndex);
-    UNRECOVERABLE_IF(clDevice == nullptr);
-
+ze_result_t Context::createInternalCmdList(ClDevice &clDevice, ze_command_queue_flags_t cmdListFlags, NEO::EngineGroupType engineGroupType, std::map<uint32_t, ze_command_list_handle_t> &internalCmdLists) {
     ze_command_queue_desc_t cmdListDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC,
                                            nullptr,
                                            0,
@@ -109,18 +90,31 @@ ze_result_t Context::obtainInternalCmdList(std::map<uint32_t, ze_command_list_ha
                                            ZE_COMMAND_QUEUE_PRIORITY_NORMAL};
     const auto internalUsage = true;
     auto resultValue = ZE_RESULT_SUCCESS;
-    auto createdCmdList = InternalCmdListFunctions::createImmediate(clDevice->getL0Object(), &cmdListDesc, internalUsage, engineGroupType, resultValue);
+    auto createdCmdList = InternalCmdListFunctions::createImmediate(clDevice.getL0Object(), &cmdListDesc, internalUsage, engineGroupType, resultValue);
     if (resultValue != ZE_RESULT_SUCCESS) {
         return resultValue;
     }
     createdCmdList->setCmdListContext(this->contextHandle);
 
-    internalCmdLists.emplace(rootDeviceIndex, createdCmdList->toHandle());
-    cmdList = createdCmdList->toHandle();
+    internalCmdLists.emplace(clDevice.getRootDeviceIndex(), createdCmdList->toHandle());
     return ZE_RESULT_SUCCESS;
 }
 
 cl_int Context::initialize() {
+    for (const auto clDevice : this->clDevices) {
+        if (this->internalCopyCmdLists.contains(clDevice->getRootDeviceIndex())) {
+            continue;
+        }
+        auto resultValue = createInternalCmdList(*clDevice, ZE_COMMAND_QUEUE_FLAG_COPY_OFFLOAD_HINT | ZE_COMMAND_QUEUE_FLAG_IN_ORDER, NEO::EngineGroupType::copy, this->internalCopyCmdLists);
+        if (resultValue != ZE_RESULT_SUCCESS) {
+            return L0ToClResultMapper(resultValue);
+        }
+        resultValue = createInternalCmdList(*clDevice, 0, NEO::EngineGroupType::compute, this->internalComputeCmdLists);
+        if (resultValue != ZE_RESULT_SUCCESS) {
+            return L0ToClResultMapper(resultValue);
+        }
+    }
+
     sharingFunctions.resize(SharingType::MAX_SHARING_VALUE);
 
     auto sharingBuilder = sharingFactory.build();

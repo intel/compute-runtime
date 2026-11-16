@@ -52,74 +52,30 @@ TEST_F(ContextImplFixture, givenNoPropertiesWhenInitializingThenSucceeds) {
     EXPECT_EQ(CL_SUCCESS, context->initialize());
 }
 
-TEST_F(ContextImplFixture, givenInitializedContextThenInternalCommandListsAreNotCreated) {
+TEST_F(ContextImplFixture, givenInitializedContextThenInternalCopyAndComputeCmdListsAreCreatedAsInternalListsOnTheirEngineGroups) {
     CommandListCreateImmediateHook createImmediateHook;
     auto context = createContext();
     ASSERT_EQ(CL_SUCCESS, context->initialize());
 
-    EXPECT_TRUE(context->internalCopyCmdLists.empty());
-    EXPECT_TRUE(context->internalComputeCmdLists.empty());
-    EXPECT_TRUE(createImmediateHook.requestedFlags.empty());
-}
-
-TEST_F(ContextImplFixture, givenInitializedContextWhenGettingInternalCopyCmdListThenInOrderCopyOffloadCmdListIsCreatedOnceAndReused) {
-    CommandListCreateImmediateHook createImmediateHook;
-    auto context = createContext();
-    ASSERT_EQ(CL_SUCCESS, context->initialize());
-
-    ze_command_list_handle_t firstCmdList = nullptr;
-    ze_command_list_handle_t secondCmdList = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, context->getInternalCopyCmdList(firstCmdList));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, context->getInternalCopyCmdList(secondCmdList));
-
-    EXPECT_NE(nullptr, firstCmdList);
-    EXPECT_EQ(firstCmdList, secondCmdList);
-    ASSERT_EQ(1u, createImmediateHook.requestedFlags.size());
+    ASSERT_EQ(2u, createImmediateHook.requestedFlags.size());
     EXPECT_EQ(static_cast<ze_command_queue_flags_t>(ZE_COMMAND_QUEUE_FLAG_COPY_OFFLOAD_HINT | ZE_COMMAND_QUEUE_FLAG_IN_ORDER), createImmediateHook.requestedFlags[0]);
     EXPECT_TRUE(createImmediateHook.requestedInternalUsage[0]);
     EXPECT_EQ(NEO::EngineGroupType::copy, createImmediateHook.requestedEngineGroupTypes[0]);
-    EXPECT_TRUE(context->internalComputeCmdLists.empty());
+    EXPECT_EQ(0u, createImmediateHook.requestedFlags[1]);
+    EXPECT_TRUE(createImmediateHook.requestedInternalUsage[1]);
+    EXPECT_EQ(NEO::EngineGroupType::compute, createImmediateHook.requestedEngineGroupTypes[1]);
 
-    auto l0CmdList = L0::CommandList::fromHandle(firstCmdList);
-    EXPECT_TRUE(l0CmdList->isInternal());
-    EXPECT_EQ(context->getL0Object()->toHandle(), l0CmdList->getCmdListContext());
-}
-
-TEST_F(ContextImplFixture, givenInitializedContextWhenGettingInternalComputeCmdListThenOutOfOrderCmdListIsCreatedOnceAndReused) {
-    CommandListCreateImmediateHook createImmediateHook;
-    auto context = createContext();
-    ASSERT_EQ(CL_SUCCESS, context->initialize());
-
-    ze_command_list_handle_t firstCmdList = nullptr;
-    ze_command_list_handle_t secondCmdList = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, context->getInternalComputeCmdList(firstCmdList));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, context->getInternalComputeCmdList(secondCmdList));
-
-    EXPECT_NE(nullptr, firstCmdList);
-    EXPECT_EQ(firstCmdList, secondCmdList);
-    ASSERT_EQ(1u, createImmediateHook.requestedFlags.size());
-    EXPECT_EQ(0u, createImmediateHook.requestedFlags[0]);
-    EXPECT_TRUE(createImmediateHook.requestedInternalUsage[0]);
-    EXPECT_EQ(NEO::EngineGroupType::compute, createImmediateHook.requestedEngineGroupTypes[0]);
-    EXPECT_TRUE(context->internalCopyCmdLists.empty());
-
-    auto l0CmdList = L0::CommandList::fromHandle(firstCmdList);
-    EXPECT_TRUE(l0CmdList->isInternal());
-    EXPECT_EQ(context->getL0Object()->toHandle(), l0CmdList->getCmdListContext());
-}
-
-TEST_F(ContextImplFixture, givenInitializedContextWhenGettingBothInternalCmdListsThenTheyAreDistinct) {
-    auto context = createContext();
-    ASSERT_EQ(CL_SUCCESS, context->initialize());
-
-    ze_command_list_handle_t copyCmdList = nullptr;
-    ze_command_list_handle_t computeCmdList = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, context->getInternalCopyCmdList(copyCmdList));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, context->getInternalComputeCmdList(computeCmdList));
-
+    auto copyCmdList = context->getInternalCopyCmdList();
+    auto computeCmdList = context->getInternalComputeCmdList();
     EXPECT_NE(nullptr, copyCmdList);
     EXPECT_NE(nullptr, computeCmdList);
     EXPECT_NE(copyCmdList, computeCmdList);
+
+    for (auto cmdList : {copyCmdList, computeCmdList}) {
+        auto l0CmdList = L0::CommandList::fromHandle(cmdList);
+        EXPECT_TRUE(l0CmdList->isInternal());
+        EXPECT_EQ(context->getL0Object()->toHandle(), l0CmdList->getCmdListContext());
+    }
 }
 
 TEST_F(ContextImplFixture, givenInitializedContextThenInternalCommandListsAreKeyedByRootDeviceIndex) {
@@ -127,61 +83,50 @@ TEST_F(ContextImplFixture, givenInitializedContextThenInternalCommandListsAreKey
     ASSERT_EQ(CL_SUCCESS, context->initialize());
 
     const auto rootDeviceIndex = clDevice->getRootDeviceIndex();
-    ze_command_list_handle_t defaultCopyCmdList = nullptr;
-    ze_command_list_handle_t indexedCopyCmdList = nullptr;
-    ze_command_list_handle_t defaultComputeCmdList = nullptr;
-    ze_command_list_handle_t indexedComputeCmdList = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, context->getInternalCopyCmdList(defaultCopyCmdList));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, context->getInternalCopyCmdList(rootDeviceIndex, indexedCopyCmdList));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, context->getInternalComputeCmdList(defaultComputeCmdList));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, context->getInternalComputeCmdList(rootDeviceIndex, indexedComputeCmdList));
-
-    EXPECT_EQ(defaultCopyCmdList, indexedCopyCmdList);
-    EXPECT_EQ(defaultComputeCmdList, indexedComputeCmdList);
+    EXPECT_EQ(context->getInternalCopyCmdList(), context->getInternalCopyCmdList(rootDeviceIndex));
+    EXPECT_EQ(context->getInternalComputeCmdList(), context->getInternalComputeCmdList(rootDeviceIndex));
     EXPECT_EQ(1u, context->internalCopyCmdLists.count(rootDeviceIndex));
     EXPECT_EQ(1u, context->internalComputeCmdLists.count(rootDeviceIndex));
     EXPECT_EQ(rootDeviceIndex, context->getDefaultRootDeviceIndex());
 }
 
-TEST_F(ContextImplFixture, givenRootDeviceIndexNotInContextWhenGettingInternalCmdListsThenUnrecoverableIsHitAndNothingIsCreated) {
+TEST_F(ContextImplFixture, givenInternalCmdListsAlreadyCreatedForRootDeviceWhenInitializingAgainThenTheyAreNotRecreated) {
     CommandListCreateImmediateHook createImmediateHook;
     auto context = createContext();
     ASSERT_EQ(CL_SUCCESS, context->initialize());
+    auto copyCmdList = context->getInternalCopyCmdList();
+    auto computeCmdList = context->getInternalComputeCmdList();
 
-    const auto unknownRootDeviceIndex = clDevice->getRootDeviceIndex() + 1;
-    ze_command_list_handle_t copyCmdList = nullptr;
-    ze_command_list_handle_t computeCmdList = nullptr;
-    EXPECT_THROW(context->getInternalCopyCmdList(unknownRootDeviceIndex, copyCmdList), std::exception);
-    EXPECT_THROW(context->getInternalComputeCmdList(unknownRootDeviceIndex, computeCmdList), std::exception);
+    EXPECT_EQ(CL_SUCCESS, context->initialize());
 
-    EXPECT_EQ(nullptr, copyCmdList);
-    EXPECT_EQ(nullptr, computeCmdList);
-    EXPECT_TRUE(context->internalCopyCmdLists.empty());
-    EXPECT_TRUE(context->internalComputeCmdLists.empty());
-    EXPECT_TRUE(createImmediateHook.requestedFlags.empty());
+    EXPECT_EQ(2u, createImmediateHook.requestedFlags.size());
+    EXPECT_EQ(copyCmdList, context->getInternalCopyCmdList());
+    EXPECT_EQ(computeCmdList, context->getInternalComputeCmdList());
 }
 
-TEST_F(ContextImplFixture, givenCmdListCreationFailureWhenGettingInternalCmdListsThenErrorIsReturnedAndCreationIsRetriedOnNextCall) {
+TEST_F(ContextImplFixture, givenCopyCmdListCreationFailureWhenInitializingThenErrorIsReturnedAndNoInternalCmdListIsCreated) {
     CommandListCreateImmediateHook createImmediateHook;
     createImmediateHook.resultToReturn = ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
     auto context = createContext();
-    ASSERT_EQ(CL_SUCCESS, context->initialize());
 
-    ze_command_list_handle_t copyCmdList = nullptr;
-    ze_command_list_handle_t computeCmdList = nullptr;
-    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, context->getInternalCopyCmdList(copyCmdList));
-    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, context->getInternalComputeCmdList(computeCmdList));
-    EXPECT_EQ(nullptr, copyCmdList);
-    EXPECT_EQ(nullptr, computeCmdList);
+    EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, context->initialize());
+
+    EXPECT_EQ(1u, createImmediateHook.requestedFlags.size());
     EXPECT_TRUE(context->internalCopyCmdLists.empty());
     EXPECT_TRUE(context->internalComputeCmdLists.empty());
+}
 
-    createImmediateHook.resultToReturn = ZE_RESULT_SUCCESS;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, context->getInternalCopyCmdList(copyCmdList));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, context->getInternalComputeCmdList(computeCmdList));
-    EXPECT_NE(nullptr, copyCmdList);
-    EXPECT_NE(nullptr, computeCmdList);
-    EXPECT_EQ(4u, createImmediateHook.requestedFlags.size());
+TEST_F(ContextImplFixture, givenComputeCmdListCreationFailureWhenInitializingThenErrorIsReturnedAndOnlyCopyCmdListIsCreated) {
+    CommandListCreateImmediateHook createImmediateHook;
+    createImmediateHook.resultToReturn = ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+    createImmediateHook.successfulCallsBeforeFailure = 1u;
+    auto context = createContext();
+
+    EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, context->initialize());
+
+    EXPECT_EQ(2u, createImmediateHook.requestedFlags.size());
+    EXPECT_EQ(1u, context->internalCopyCmdLists.size());
+    EXPECT_TRUE(context->internalComputeCmdLists.empty());
 }
 
 TEST_F(ContextImplFixture, givenValidPlatformPropertyWhenInitializingThenSucceeds) {

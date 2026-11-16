@@ -150,15 +150,6 @@ cl_mem CL_API_CALL clCreateBufferWithProperties(cl_context context,
         cpuPtr = hostPtr;
     }
 
-    auto pContext = NEO::LEO::castToObject<NEO::LEO::Context>(context);
-    ze_command_list_handle_t internalCopyCmdList = nullptr;
-    if (ret == ZE_RESULT_SUCCESS && copyFromHostPtr && !hostMemoryAllocated) {
-        ret = pContext->getInternalCopyCmdList(internalCopyCmdList);
-        if (ret != ZE_RESULT_SUCCESS && !inputMemObjFound) {
-            zeMemFree(pContext->getL0ContextHandle(), ptr);
-        }
-    }
-
     if (errcodeRet) {
         *errcodeRet = L0ToClResultMapper(ret);
     }
@@ -172,9 +163,10 @@ cl_mem CL_API_CALL clCreateBufferWithProperties(cl_context context,
     if (copyFromHostPtr && hostMemoryAllocated) {
         memcpy_s(ptr, size, hostPtr, size);
     } else if (copyFromHostPtr) {
+        auto pContext = NEO::LEO::castToObject<NEO::LEO::Context>(context);
         {
             auto lock = pContext->lockInternalCopy();
-            zeCommandListAppendMemoryCopy(internalCopyCmdList,
+            zeCommandListAppendMemoryCopy(pContext->getInternalCopyCmdList(),
                                           ptr,
                                           hostPtr,
                                           size,
@@ -182,9 +174,9 @@ cl_mem CL_API_CALL clCreateBufferWithProperties(cl_context context,
                                           0,
                                           nullptr);
         }
-        zeCommandListHostSynchronize(internalCopyCmdList, std::numeric_limits<uint64_t>::max());
+        zeCommandListHostSynchronize(pContext->getInternalCopyCmdList(), std::numeric_limits<uint64_t>::max());
     }
-    auto buffer = new NEO::LEO::Buffer(pContext, memoryProperties, flags, ptr, cpuPtr, size, inputMemObjFound);
+    auto buffer = new NEO::LEO::Buffer(NEO::LEO::castToObject<NEO::LEO::Context>(context), memoryProperties, flags, ptr, cpuPtr, size, inputMemObjFound);
     buffer->storeProperties(properties);
     buffer->setUsesSvm(usesSvm);
     buffer->setZeroCopy(zeroCopy);
@@ -465,12 +457,7 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
         cpuPtr = hostPtr;
     }
 
-    ze_command_list_handle_t internalCopyCmdList = nullptr;
     if (memoryProperties.flags.copyHostPtr || memoryProperties.flags.useHostPtr) {
-        ret = pContext->getInternalCopyCmdList(internalCopyCmdList);
-    }
-
-    if (internalCopyCmdList != nullptr) {
         {
             auto lock = pContext->lockInternalCopy();
             if (NEO::LEO::isNV12Image(imageFormat)) {
@@ -494,7 +481,7 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
                     ze_image_handle_t planeHandle{};
                     if (zeImageViewCreateExp(pContext->getL0ContextHandle(), device, &planeDesc, imageHandle, &planeHandle) == ZE_RESULT_SUCCESS) {
                         ze_image_region_t planeRegion{0u, 0u, 0u, planeWidth, planeHeight, 1u};
-                        ret = zeCommandListAppendImageCopyFromMemoryExt(internalCopyCmdList, planeHandle, planePtr, &planeRegion, rowPitch, 0, nullptr, 0, nullptr);
+                        ret = zeCommandListAppendImageCopyFromMemoryExt(pContext->getInternalCopyCmdList(), planeHandle, planePtr, &planeRegion, rowPitch, 0, nullptr, 0, nullptr);
                         zeImageDestroy(planeHandle);
                     }
                 };
@@ -511,7 +498,7 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
                 }
                 ze_image_region_t region{0u, 0u, 0u, static_cast<uint32_t>(l0imageDesc.width),
                                          regionHeight, regionDepth};
-                ret = zeCommandListAppendImageCopyFromMemoryExt(internalCopyCmdList,
+                ret = zeCommandListAppendImageCopyFromMemoryExt(pContext->getInternalCopyCmdList(),
                                                                 imageHandle,
                                                                 hostPtr,
                                                                 &region,
@@ -520,7 +507,7 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
                                                                 nullptr, 0, nullptr);
             }
         }
-        zeCommandListHostSynchronize(internalCopyCmdList, std::numeric_limits<uint64_t>::max());
+        zeCommandListHostSynchronize(pContext->getInternalCopyCmdList(), std::numeric_limits<uint64_t>::max());
     }
 
     if (ret != ZE_RESULT_SUCCESS) [[unlikely]] {

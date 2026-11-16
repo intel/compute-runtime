@@ -13,7 +13,6 @@
 #include "level_zero/api/opencl/source/sharings/gl/leo_gl_sync_event.h"
 #include "level_zero/api/opencl/source/sharings/gl/windows/leo_gl_sharing_windows.h"
 #include "level_zero/api/opencl/test/common/fixtures/capturing_command_list.h"
-#include "level_zero/api/opencl/test/common/fixtures/command_list_create_immediate_hook.h"
 #include "level_zero/api/opencl/test/common/fixtures/ocl_fixture.h"
 #include "level_zero/core/source/context/context.h"
 
@@ -91,22 +90,11 @@ struct LeoGlSyncEventWindowsTest : public Test<OclFixture> {
     cl_GLsync glSync = reinterpret_cast<cl_GLsync>(0x9abc);
 };
 
-TEST_F(LeoGlSyncEventWindowsTest, givenInternalComputeCmdListCreationFailureWhenCreatingGlSyncEventThenErrorIsReturnedAndGlSyncIsNotRetained) {
-    CommandListCreateImmediateHook createImmediateHook;
-    createImmediateHook.resultToReturn = ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
-
-    cl_int err = CL_SUCCESS;
-    auto glSyncEvent = GlSyncEvent::create(*leoContext, glSync, &err);
-
-    EXPECT_EQ(nullptr, glSyncEvent);
-    EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, err);
-    EXPECT_EQ(0u, StubGlSyncSharingFunctionsWindows::retainSyncCalled);
-    EXPECT_TRUE(leoContext->internalComputeCmdLists.empty());
-}
-
 TEST_F(LeoGlSyncEventWindowsTest, givenInternalComputeCmdListWhenCreatingGlSyncEventThenSignalHostFunctionIsAppendedToIt) {
     CapturingCommandList capturingCmdList{};
-    leoContext->internalComputeCmdLists[leoContext->getDefaultRootDeviceIndex()] = capturingCmdList.toHandle();
+    auto &internalComputeCmdList = leoContext->internalComputeCmdLists[leoContext->getDefaultRootDeviceIndex()];
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListDestroy(internalComputeCmdList));
+    internalComputeCmdList = capturingCmdList.toHandle();
 
     cl_int err = CL_INVALID_VALUE;
     auto glSyncEvent = GlSyncEvent::create(*leoContext, glSync, &err);

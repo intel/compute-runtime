@@ -32,13 +32,9 @@ struct CommandListCreateImmediateHook {
         activeHook->requestedFlags.push_back(desc->flags);
         activeHook->requestedInternalUsage.push_back(internalUsage);
         activeHook->requestedEngineGroupTypes.push_back(engineGroupType);
-        if (activeHook->resultToReturn != ZE_RESULT_SUCCESS) {
+        if (activeHook->resultToReturn != ZE_RESULT_SUCCESS && activeHook->requestedFlags.size() > activeHook->successfulCallsBeforeFailure) {
             resultValue = activeHook->resultToReturn;
             return nullptr;
-        }
-        if (activeHook->cmdListToReturn != nullptr) {
-            resultValue = ZE_RESULT_SUCCESS;
-            return L0::CommandList::fromHandle(activeHook->cmdListToReturn);
         }
         return L0::CommandList::createImmediate(device, desc, internalUsage, engineGroupType, resultValue);
     }
@@ -50,7 +46,7 @@ struct CommandListCreateImmediateHook {
     std::vector<bool> requestedInternalUsage;
     std::vector<NEO::EngineGroupType> requestedEngineGroupTypes;
     ze_result_t resultToReturn = ZE_RESULT_SUCCESS;
-    ze_command_list_handle_t cmdListToReturn = nullptr;
+    size_t successfulCallsBeforeFailure = 0u;
 };
 
 } // namespace ult
