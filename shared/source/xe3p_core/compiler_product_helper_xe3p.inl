@@ -20,9 +20,4 @@ bool CompilerProductHelperHw<gfxProduct>::isHeaplessModeEnabled(const HardwareIn
     return true;
 }
 
-template <>
-bool CompilerProductHelperHw<gfxProduct>::failBuildProgramWithBufferStatefulAccessPreference() const {
-    return true;
-}
-
 } // namespace NEO

@@ -36,6 +36,8 @@ struct XeHpgCore {
     static constexpr bool isUsingMiMemFence = false;
     static constexpr bool isUsingMiSetPredicate = true;
     static constexpr bool isUsingMiMathMocs = true;
+    static constexpr size_t deviceSubGroupSizes[] = {8u, 16u, 32u};
+    static constexpr uint32_t maxWorkGroupSizeLimit = 1024u;
 
     struct FrontEndStateSupport {
         static constexpr bool computeDispatchAllWalker = false;

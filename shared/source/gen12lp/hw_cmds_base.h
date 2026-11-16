@@ -27,6 +27,8 @@ struct Gen12Lp {
     static constexpr bool isUsingMiMemFence = false;
     static constexpr bool isUsingMiSetPredicate = false;
     static constexpr bool isUsingMiMathMocs = false;
+    static constexpr size_t deviceSubGroupSizes[] = {8u, 16u, 32u};
+    static constexpr uint32_t maxWorkGroupSizeLimit = 1024u;
     static constexpr uint32_t bcsEngineCount = 1u;
     static constexpr uint32_t timestampPacketCount = 1u;
 

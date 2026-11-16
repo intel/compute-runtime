@@ -568,7 +568,7 @@ void MemorySynchronizationCommands<GfxFamily>::addInstructionCacheFlush(LinearSt
 
 template <typename GfxFamily>
 const StackVec<size_t, 3> GfxCoreHelperHw<GfxFamily>::getDeviceSubGroupSizes() const {
-    return {8, 16, 32};
+    return {std::begin(GfxFamily::deviceSubGroupSizes), std::end(GfxFamily::deviceSubGroupSizes)};
 }
 
 template <typename GfxFamily>
@@ -703,7 +703,7 @@ bool GfxCoreHelperHw<GfxFamily>::isRelaxedOrderingSupported() const {
 
 template <typename GfxFamily>
 uint32_t GfxCoreHelperHw<GfxFamily>::overrideMaxWorkGroupSize(uint32_t maxWG) const {
-    return std::min(maxWG, 1024u);
+    return std::min(maxWG, GfxFamily::maxWorkGroupSizeLimit);
 }
 
 template <typename GfxFamily>

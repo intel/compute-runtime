@@ -84,41 +84,8 @@ const EngineInstancesContainer GfxCoreHelperHw<Family>::getGpgpuEngineInstances(
 };
 
 template <>
-EngineGroupType GfxCoreHelperHw<Family>::getEngineGroupType(aub_stream::EngineType engineType, EngineUsage engineUsage, const HardwareInfo &hwInfo) const {
-    if (engineType == aub_stream::ENGINE_CCCS) {
-        return EngineGroupType::renderCompute;
-    }
-    if (engineType >= aub_stream::ENGINE_CCS && engineType < (aub_stream::ENGINE_CCS + hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled)) {
-        if (engineUsage == EngineUsage::cooperative) {
-            return EngineGroupType::cooperativeCompute;
-        }
-        return EngineGroupType::compute;
-    }
-    if (engineType == aub_stream::ENGINE_BCS) {
-        return EngineGroupType::copy;
-    }
-    if (engineType >= aub_stream::ENGINE_BCS1 && engineType < aub_stream::ENGINE_BCS1 + hwInfo.featureTable.ftrBcsInfo.size() - 1) {
-        return EngineGroupType::linkedCopy;
-    }
-    UNRECOVERABLE_IF(true);
-}
-
-template <>
 uint32_t GfxCoreHelperHw<Family>::getMetricsLibraryGenId() const {
     return static_cast<uint32_t>(MetricsLibraryApi::ClientGen::XeHPC);
-}
-
-template <>
-uint32_t GfxCoreHelperHw<Family>::getMocsIndex(const GmmHelper &gmmHelper, bool l3enabled, bool l1enabled) const {
-    if (l3enabled) {
-        return gmmHelper.getL3EnabledMOCS() >> 1;
-    }
-    return gmmHelper.getUncachedMOCS() >> 1;
-}
-
-template <>
-const StackVec<size_t, 3> GfxCoreHelperHw<Family>::getDeviceSubGroupSizes() const {
-    return {16, 32};
 }
 
 template <>
@@ -172,27 +139,11 @@ void MemorySynchronizationCommands<Family>::setAdditionalSynchronization(void *&
     }
 }
 
-template <>
-bool MemorySynchronizationCommands<Family>::isBarrierWaRequired(const RootDeviceEnvironment &rootDeviceEnvironment) {
-    if (debugManager.flags.DisablePipeControlPrecedingPostSyncCommand.get() == 1) {
-        return true;
-    }
-    return false;
-}
+#include "shared/source/helpers/gfx_core_helper_from_xe_hpc_to_xe2_hpg.inl"
 
 template <>
 size_t MemorySynchronizationCommands<Family>::getSizeForAdditionalSynchronization(NEO::FenceType fenceType, const RootDeviceEnvironment &rootDeviceEnvironment) {
     return (debugManager.flags.DisablePipeControlPrecedingPostSyncCommand.get() == 1 ? 2 : 1) * getSizeForSingleAdditionalSynchronization(fenceType, rootDeviceEnvironment);
-}
-
-template <>
-void GfxCoreHelperHw<Family>::setL1CachePolicy(bool useL1Cache, typename Family::RENDER_SURFACE_STATE *surfaceState, const HardwareInfo *hwInfo) const {
-    if (useL1Cache) {
-        surfaceState->setL1CacheControlCachePolicy(Family::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WB);
-        if (debugManager.flags.OverrideL1CacheControlInSurfaceStateForScratchSpace.get() != -1) {
-            surfaceState->setL1CacheControlCachePolicy(static_cast<typename Family::RENDER_SURFACE_STATE::L1_CACHE_CONTROL>(debugManager.flags.OverrideL1CacheControlInSurfaceStateForScratchSpace.get()));
-        }
-    }
 }
 
 template <>
@@ -281,11 +232,6 @@ template <>
 DeviceHierarchyMode GfxCoreHelperHw<Family>::getDefaultDeviceHierarchy() const {
     return DeviceHierarchyMode::flat;
 }
-
-template <>
-bool GfxCoreHelperHw<Family>::crossEngineCacheFlushRequired() const {
-    return false;
-};
 
 template <>
 bool GfxCoreHelperHw<Family>::isPerContextDebugSipRequired() const {

@@ -50,6 +50,7 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_product_helper_base.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_product_helper_before_xe_hpc.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_product_helper_product_config_default.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_product_helper_xe3p_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_product_helper_xe_hp_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_product_helper_xe_hpc_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_product_helper_from_xe_hpc_to_xe3p.inl
@@ -85,6 +86,9 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/flush_stamp.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/flush_stamp.h
     ${CMAKE_CURRENT_SOURCE_DIR}/get_info.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_from_xe2_hpg_to_xe3.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_from_xe3_to_xe3p.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_from_xe_hpc_to_xe2_hpg.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/hardware_context_controller.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hardware_context_controller.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hash.h

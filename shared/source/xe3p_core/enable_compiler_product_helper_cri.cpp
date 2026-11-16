@@ -14,6 +14,7 @@
 
 #include "platforms.h"
 constexpr auto gfxProduct = IGFX_CRI;
+#include "shared/source/helpers/compiler_product_helper_xe3p_and_later.inl"
 #include "shared/source/xe3p_core/compiler_product_helper_xe3p.inl"
 namespace NEO {
 template <>

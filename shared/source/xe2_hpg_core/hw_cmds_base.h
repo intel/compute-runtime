@@ -34,6 +34,8 @@ struct Xe2HpgCore {
     static constexpr bool isUsingMiMemFence = true;
     static constexpr bool isUsingMiSetPredicate = true;
     static constexpr bool isUsingMiMathMocs = true;
+    static constexpr size_t deviceSubGroupSizes[] = {16u, 32u};
+    static constexpr uint32_t maxWorkGroupSizeLimit = 2048u;
     static constexpr uint32_t bcsEngineCount = 1u;
     static constexpr uint32_t timestampPacketCount = 1u;
 

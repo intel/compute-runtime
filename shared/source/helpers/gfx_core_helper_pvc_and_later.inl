@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 
@@ -95,6 +96,39 @@ void *MemorySynchronizationCommands<Family>::programMemoryFenceRelease(void *cmd
     miMemFence.setFenceType(Family::MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE_FENCE);
     *reinterpret_cast<MI_MEM_FENCE *>(cmdBuffer) = miMemFence;
     return ptrOffset(cmdBuffer, sizeof(MI_MEM_FENCE));
+}
+
+template <>
+bool GfxCoreHelperHw<Family>::crossEngineCacheFlushRequired() const {
+    return false;
+};
+
+template <>
+EngineGroupType GfxCoreHelperHw<Family>::getEngineGroupType(aub_stream::EngineType engineType, EngineUsage engineUsage, const HardwareInfo &hwInfo) const {
+    if (engineType == aub_stream::ENGINE_CCCS) {
+        return EngineGroupType::renderCompute;
+    }
+    if (engineType >= aub_stream::ENGINE_CCS && engineType < (aub_stream::ENGINE_CCS + hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled)) {
+        if (engineUsage == EngineUsage::cooperative) {
+            return EngineGroupType::cooperativeCompute;
+        }
+        return EngineGroupType::compute;
+    }
+    if (engineType == aub_stream::ENGINE_BCS) {
+        return EngineGroupType::copy;
+    }
+    if (engineType >= aub_stream::ENGINE_BCS1 && engineType < aub_stream::ENGINE_BCS1 + hwInfo.featureTable.ftrBcsInfo.size() - 1) {
+        return EngineGroupType::linkedCopy;
+    }
+    UNRECOVERABLE_IF(true);
+}
+
+template <>
+uint32_t GfxCoreHelperHw<Family>::getMocsIndex(const GmmHelper &gmmHelper, bool l3enabled, bool l1enabled) const {
+    if (l3enabled) {
+        return gmmHelper.getL3EnabledMOCS() >> 1;
+    }
+    return gmmHelper.getUncachedMOCS() >> 1;
 }
 
 } // namespace NEO

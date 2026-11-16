@@ -37,6 +37,8 @@ struct Xe3Core {
     static constexpr bool isUsingMiMemFence = true;
     static constexpr bool isUsingMiSetPredicate = true;
     static constexpr bool isUsingMiMathMocs = true;
+    static constexpr size_t deviceSubGroupSizes[] = {16u, 32u};
+    static constexpr uint32_t maxWorkGroupSizeLimit = 2048u;
 
     struct FrontEndStateSupport {
         static constexpr bool computeDispatchAllWalker = false;
