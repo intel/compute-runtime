@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2021 Intel Corporation
+# Copyright (C) 2018-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -14,6 +14,7 @@ set(IGDRCL_SRCS_mt_tests_api
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_get_platform_info_tests_mt.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_intel_tracing_tests_mt.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_set_mem_object_destructor_callback_tests_mt.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/leo_forwarding_tests_mt.cpp
 
     # necessary dependencies from igdrcl_tests
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/api/cl_api_tests.cpp

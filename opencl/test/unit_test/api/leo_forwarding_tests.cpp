@@ -407,4 +407,10 @@ TEST_F(L0LibraryLoadTest, givenSelfLoadWhenLibraryIsLoadedThenForwardFunctionsAr
     OsLibrary::loadFunc = savedLoadFunc;
 }
 
+TEST(AdditionalExtension, givenNoLeoForwardingStateWhenEnsuringLibraryIsLoadedThenReturnFalse) {
+    leoTeardown();
+    EXPECT_EQ(nullptr, l0ForwardingState);
+    EXPECT_FALSE(ensureLeoLibraryLoaded());
+}
+
 } // namespace NEO

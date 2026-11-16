@@ -27,8 +27,12 @@ bool isLeoForcedOff() {
 }
 
 bool ensureLeoLibraryLoaded() {
+    if (!l0ForwardingState) {
+        return false;
+    }
+    std::lock_guard<std::mutex> lock(l0ForwardingState->mutex);
     loadL0Library();
-    return l0ForwardingState && l0ForwardingState->library && l0ForwardingState->library->isLoaded();
+    return l0ForwardingState->library && l0ForwardingState->library->isLoaded();
 }
 
 bool isLeoPlatformHandle(cl_platform_id platform) {
@@ -75,12 +79,8 @@ void leoTeardown() {
     l0ForwardingState = nullptr;
 }
 
+// Requires l0ForwardingState->mutex to be held.
 static void loadL0Library() {
-    if (!l0ForwardingState || l0ForwardingState->loaded) {
-        return;
-    }
-
-    std::lock_guard<std::mutex> lock(l0ForwardingState->mutex);
     if (l0ForwardingState->loaded) {
         return;
     }
