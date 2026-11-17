@@ -387,7 +387,12 @@ class DrmMemoryManagerUsmSharedHandleCpuMapTest : public DrmMemoryManagerUsmShar
     }
 
     DrmAllocation *importSharedHandle() {
+        retrieveMmapOffsetCallsBeforeImport = ioctlHelper->retrieveMmapOffsetCalled;
         return memoryManager->createUSMHostAllocationFromSharedHandle(testFd, properties, nullptr, false, true);
+    }
+
+    uint32_t mmapOffsetLookupsDuringImport() const {
+        return ioctlHelper->retrieveMmapOffsetCalled - retrieveMmapOffsetCallsBeforeImport;
     }
 
     bool dmaBufMappingWasUnmapped() const {
@@ -396,6 +401,7 @@ class DrmMemoryManagerUsmSharedHandleCpuMapTest : public DrmMemoryManagerUsmShar
     }
 
     static constexpr int testFd = 123;
+    uint32_t retrieveMmapOffsetCallsBeforeImport = 0u;
     DebugManagerStateRestore restorer;
     VariableBackup<uint32_t> closeCalledBackup{&SysCalls::closeFuncCalled, 0u};
     VariableBackup<off_t> lseekRetValBackup{&SysCalls::lseekReturn, MemoryConstants::pageSize};
@@ -420,6 +426,7 @@ TEST_F(DrmMemoryManagerUsmSharedHandleCpuMapTest, givenIoctlHelperPreferringDmaB
     EXPECT_EQ(allocation->getUnderlyingBuffer(), SharedHandleCpuMapRecorder::remaps[0].newAddress);
     EXPECT_FALSE(dmaBufMappingWasUnmapped());
     EXPECT_EQ(1u, SysCalls::closeFuncCalled);
+    EXPECT_EQ(0u, mmapOffsetLookupsDuringImport());
     EXPECT_EQ(allocation->getUnderlyingBuffer(), allocation->getMmapPtr());
 
     memoryManager->freeGraphicsMemory(allocation);
@@ -434,6 +441,7 @@ TEST_F(DrmMemoryManagerUsmSharedHandleCpuMapTest, givenIoctlHelperNotPreferringD
     EXPECT_EQ(allocation->getUnderlyingBuffer(), SharedHandleCpuMapRecorder::fileMaps[0].requestedAddress);
     EXPECT_TRUE(SharedHandleCpuMapRecorder::remaps.empty());
     EXPECT_EQ(1u, SysCalls::closeFuncCalled);
+    EXPECT_EQ(1u, mmapOffsetLookupsDuringImport());
     EXPECT_EQ(allocation->getUnderlyingBuffer(), allocation->getMmapPtr());
 
     memoryManager->freeGraphicsMemory(allocation);
@@ -449,6 +457,7 @@ TEST_F(DrmMemoryManagerUsmSharedHandleCpuMapTest, givenDmaBufMmapDisabledByDebug
     ASSERT_EQ(1u, SharedHandleCpuMapRecorder::fileMaps.size());
     EXPECT_EQ(mock->getFileDescriptor(), SharedHandleCpuMapRecorder::fileMaps[0].fd);
     EXPECT_TRUE(SharedHandleCpuMapRecorder::remaps.empty());
+    EXPECT_EQ(1u, mmapOffsetLookupsDuringImport());
 
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -462,6 +471,7 @@ TEST_F(DrmMemoryManagerUsmSharedHandleCpuMapTest, givenDmaBufMmapEnabledByDebugF
     ASSERT_EQ(1u, SharedHandleCpuMapRecorder::fileMaps.size());
     EXPECT_EQ(testFd, SharedHandleCpuMapRecorder::fileMaps[0].fd);
     EXPECT_EQ(1u, SharedHandleCpuMapRecorder::remaps.size());
+    EXPECT_EQ(0u, mmapOffsetLookupsDuringImport());
 
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -482,6 +492,7 @@ TEST_F(DrmMemoryManagerUsmSharedHandleCpuMapTest, givenDmaBufMmapFailsWhenImport
     EXPECT_TRUE(SharedHandleCpuMapRecorder::remaps.empty());
     EXPECT_TRUE(SharedHandleCpuMapRecorder::unmaps.empty());
     EXPECT_EQ(1u, SysCalls::closeFuncCalled);
+    EXPECT_EQ(1u, mmapOffsetLookupsDuringImport());
     EXPECT_EQ(allocation->getUnderlyingBuffer(), allocation->getMmapPtr());
 
     memoryManager->freeGraphicsMemory(allocation);
@@ -497,12 +508,31 @@ TEST_F(DrmMemoryManagerUsmSharedHandleCpuMapTest, givenDmaBufRemapFailsWhenImpor
     EXPECT_EQ(1u, SharedHandleCpuMapRecorder::remaps.size());
     ASSERT_EQ(1u, SharedHandleCpuMapRecorder::unmaps.size());
     EXPECT_TRUE(dmaBufMappingWasUnmapped());
+    EXPECT_EQ(1u, mmapOffsetLookupsDuringImport());
     ASSERT_EQ(2u, SharedHandleCpuMapRecorder::fileMaps.size());
     EXPECT_EQ(mock->getFileDescriptor(), SharedHandleCpuMapRecorder::fileMaps[1].fd);
     EXPECT_EQ(allocation->getUnderlyingBuffer(), SharedHandleCpuMapRecorder::fileMaps[1].requestedAddress);
     EXPECT_EQ(allocation->getUnderlyingBuffer(), allocation->getMmapPtr());
 
     memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerUsmSharedHandleCpuMapTest, givenDmaBufMmapFailsAndDeviceMmapOffsetIsRefusedWhenImportingHostSharedHandleThenNullptrIsReturnedAndNothingIsRegistered) {
+    ioctlHelper->isDmaBufMmapPreferredForImportedHostMemoryResult = true;
+    ioctlHelper->retrieveMmapOffsetResult = false;
+    SharedHandleCpuMapRecorder::failingFds = {testFd};
+    const auto sysMemBefore = memoryManager->getUsedSystemMemorySize();
+    const auto sharedBosBefore = memoryManager->sharingBufferObjects.size();
+
+    auto allocation = importSharedHandle();
+
+    EXPECT_EQ(nullptr, allocation);
+    ASSERT_EQ(1u, SharedHandleCpuMapRecorder::fileMaps.size());
+    EXPECT_EQ(testFd, SharedHandleCpuMapRecorder::fileMaps[0].fd);
+    EXPECT_EQ(1u, mmapOffsetLookupsDuringImport());
+    EXPECT_EQ(1u, SysCalls::closeFuncCalled);
+    EXPECT_EQ(sysMemBefore, memoryManager->getUsedSystemMemorySize());
+    EXPECT_EQ(sharedBosBefore, memoryManager->sharingBufferObjects.size());
 }
 
 TEST_F(DrmMemoryManagerUsmSharedHandleCpuMapTest, givenAllCpuMappingsFailWhenImportingHostSharedHandleThenNullptrIsReturnedAndNothingIsRegistered) {

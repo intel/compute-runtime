@@ -171,7 +171,7 @@ class DrmMemoryManager : public MemoryManager {
     MOCKABLE_VIRTUAL uint64_t acquireGpuRangeWithCustomAlignment(size_t &size, uint32_t rootDeviceIndex, HeapIndex heapIndex, size_t alignment);
     MOCKABLE_VIRTUAL uint64_t acquireGpuRangeWithCustomAlignmentWithStartAddressHint(const uint64_t requiredStartAddress, size_t &size, uint32_t rootDeviceIndex, HeapIndex heapIndex, size_t alignment);
     void emitPinningRequest(BufferObject *bo, const AllocationData &allocationData) const;
-    bool mapImportedHostMemoryForCpu(osHandle handle, Drm &drm, void *cpuPointer, size_t size, uint64_t mmapOffset, uint64_t objectOffset);
+    bool mapImportedHostMemoryForCpu(osHandle handle, Drm &drm, BufferObject &bo, void *cpuPointer, size_t size, uint64_t objectOffset);
     uint32_t getDefaultDrmContextId(uint32_t rootDeviceIndex) const;
     OsContextLinux *getDefaultOsContext(uint32_t rootDeviceIndex) const;
     void makeAllocationResidentInDefaultContext(GraphicsAllocation *allocation);

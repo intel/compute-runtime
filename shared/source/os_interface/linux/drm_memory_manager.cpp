@@ -1723,7 +1723,6 @@ GraphicsAllocation *DrmMemoryManager::createHostAllocationFromMultipleSharedHand
         return nullptr;
     }
     auto ioctlHelper = drm.getIoctlHelper();
-    const uint64_t mmapOffsetWb = ioctlHelper->getDrmParamValue(DrmParam::mmapOffsetWb);
     const auto memoryPool = MemoryPool::system4KBPages;
     // Folding is safe here: the importer reserves the whole object extent itself, but only for one object.
     const bool relocateWindows = ioctlHelper->isMmapWindowRelocationSupported();
@@ -1805,16 +1804,9 @@ GraphicsAllocation *DrmMemoryManager::createHostAllocationFromMultipleSharedHand
         }
         bo->setAddress(runningAddress);
 
-        uint64_t mmapOffset = 0;
-        if (!ioctlHelper->retrieveMmapOffsetForBufferObject(*bo, mmapOffsetWb, mmapOffset)) {
-            pendingBo = bo;
-            failed = true;
-            break;
-        }
-
         const size_t mapSize = foldOffset ? chunk.size : chunk.mappedSize;
         const uint64_t windowOffset = foldOffset ? 0u : chunk.offset;
-        if (!mapImportedHostMemoryForCpu(handles[idx], drm, addrToPtr(runningAddress), mapSize, mmapOffset, windowOffset)) {
+        if (!mapImportedHostMemoryForCpu(handles[idx], drm, *bo, addrToPtr(runningAddress), mapSize, windowOffset)) {
             pendingBo = bo;
             failed = true;
             break;
@@ -4038,7 +4030,7 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
     return allocation.release();
 }
 
-bool DrmMemoryManager::mapImportedHostMemoryForCpu(osHandle handle, Drm &drm, void *cpuPointer, size_t size, uint64_t mmapOffset, uint64_t objectOffset) {
+bool DrmMemoryManager::mapImportedHostMemoryForCpu(osHandle handle, Drm &drm, BufferObject &bo, void *cpuPointer, size_t size, uint64_t objectOffset) {
     bool mapThroughDmaBuf = drm.getIoctlHelper()->isDmaBufMmapPreferredForImportedHostMemory();
     if (debugManager.flags.MapImportedHostMemoryThroughDmaBuf.get() != -1) {
         mapThroughDmaBuf = debugManager.flags.MapImportedHostMemoryThroughDmaBuf.get() == 1;
@@ -4054,6 +4046,12 @@ bool DrmMemoryManager::mapImportedHostMemoryForCpu(osHandle handle, Drm &drm, vo
             this->munmapFunction(dmaBufMapping, size);
         }
         PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "mmap of dma-buf fd %d failed, mapping through device mmap offset\n", static_cast<int>(handle));
+    }
+
+    auto ioctlHelper = drm.getIoctlHelper();
+    uint64_t mmapOffset = 0;
+    if (!ioctlHelper->retrieveMmapOffsetForBufferObject(bo, ioctlHelper->getDrmParamValue(DrmParam::mmapOffsetWb), mmapOffset)) {
+        return false;
     }
 
     void *retPtr = nullptr;
@@ -4197,16 +4195,7 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
 
         bo->setAddress(reinterpret_cast<uintptr_t>(cpuPointer));
 
-        uint64_t mmapOffsetWb = ioctlHelper->getDrmParamValue(DrmParam::mmapOffsetWb);
-        uint64_t offset = 0;
-        if (!ioctlHelper->retrieveMmapOffsetForBufferObject(*bo, mmapOffsetWb, offset)) {
-            closeConsumedFd();
-            this->munmapFunction(cpuPointer, size);
-            delete bo;
-            return nullptr;
-        }
-
-        const bool mapped = mapImportedHostMemoryForCpu(handle, drm, cpuPointer, size, offset, 0u);
+        const bool mapped = mapImportedHostMemoryForCpu(handle, drm, *bo, cpuPointer, size, 0u);
         closeConsumedFd();
         if (!mapped) {
             this->munmapFunction(cpuPointer, size);
