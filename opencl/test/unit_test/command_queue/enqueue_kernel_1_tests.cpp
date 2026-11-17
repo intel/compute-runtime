@@ -1663,6 +1663,14 @@ TEST_F(EnqueueKernelTest, givenEnqueueCommandWithWorkDimLargerThanAllowedWhenEnq
     EXPECT_EQ(CL_INVALID_WORK_DIMENSION, status);
 }
 
+TEST_F(EnqueueKernelTest, givenEnqueueCommandWithZeroWorkDimWhenEnqueueNDRangeKernelIsCalledThenClInvalidWorkDimensionIsReturned) {
+    size_t globalWorkSize[3] = {1, 1, 1};
+    size_t localWorkSize[3] = {1, 1, 1};
+    MockKernelWithInternals mockKernel(*context);
+    auto status = clEnqueueNDRangeKernel(pCmdQ, mockKernel.mockMultiDeviceKernel, 0, nullptr, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_INVALID_WORK_DIMENSION, status);
+}
+
 TEST_F(EnqueueKernelTest, givenEnqueueCommandWithWorkDimsResultingInMoreThan32BitMaxGroupsWhenEnqueueNDRangeKernelIsCalledThenOutOfResourcesIsReturned) {
 
     if (sizeof(size_t) < 8) {

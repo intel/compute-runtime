@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,7 +28,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueKernel(
     const cl_event *eventWaitList,
     cl_event *event) {
 
-    if (workDim > device->getDeviceInfo().maxWorkItemDimensions) {
+    if (workDim == 0 || workDim > device->getDeviceInfo().maxWorkItemDimensions) {
         return CL_INVALID_WORK_DIMENSION;
     }
 
