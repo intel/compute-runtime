@@ -11,6 +11,7 @@
 
 #include <cstring>
 #include <iostream>
+#include <vector>
 
 bool testAppendImageCopy(ze_context_handle_t &context, ze_device_handle_t &device) {
     const size_t width = 32;
@@ -333,9 +334,88 @@ bool testAppendImageCopyArray(ze_context_handle_t &context, ze_device_handle_t &
     return validRet;
 }
 
+bool testAppendImageBufferCopy(ze_context_handle_t &context, ze_device_handle_t &device, const uint32_t width) {
+    constexpr size_t bytesPerPixel = 4;
+    const size_t size = bytesPerPixel * width;
+
+    ze_command_queue_handle_t cmdQueue = nullptr;
+    ze_command_list_handle_t cmdList = nullptr;
+
+    ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    cmdQueueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
+    SUCCESS_OR_TERMINATE(zeCommandQueueCreate(context, device, &cmdQueueDesc, &cmdQueue));
+
+    ze_command_list_desc_t cmdListDesc = {ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC};
+    SUCCESS_OR_TERMINATE(zeCommandListCreate(context, device, &cmdListDesc, &cmdList));
+
+    ze_device_mem_alloc_desc_t deviceDesc = {ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
+    void *srcStorage = nullptr;
+    void *dstStorage = nullptr;
+    SUCCESS_OR_TERMINATE(zeMemAllocDevice(context, &deviceDesc, size, 0, device, &srcStorage));
+    SUCCESS_OR_TERMINATE(zeMemAllocDevice(context, &deviceDesc, size, 0, device, &dstStorage));
+
+    ze_image_pitched_exp_desc_t srcPitchedDesc = {ZE_STRUCTURE_TYPE_PITCHED_IMAGE_EXP_DESC};
+    srcPitchedDesc.ptr = srcStorage;
+    ze_image_pitched_exp_desc_t dstPitchedDesc = {ZE_STRUCTURE_TYPE_PITCHED_IMAGE_EXP_DESC};
+    dstPitchedDesc.ptr = dstStorage;
+
+    ze_image_desc_t imgDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                               &srcPitchedDesc,
+                               0,
+                               ZE_IMAGE_TYPE_BUFFER,
+                               {ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8, ZE_IMAGE_FORMAT_TYPE_UINT,
+                                ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                                ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A},
+                               width,
+                               1,
+                               1,
+                               0,
+                               0};
+    ze_image_handle_t srcImg;
+    SUCCESS_OR_TERMINATE(zeImageCreate(context, device, &imgDesc, &srcImg));
+
+    imgDesc.pNext = &dstPitchedDesc;
+    imgDesc.flags = ZE_IMAGE_FLAG_KERNEL_WRITE;
+    ze_image_handle_t dstImg;
+    SUCCESS_OR_TERMINATE(zeImageCreate(context, device, &imgDesc, &dstImg));
+
+    ze_image_region_t region = {0, 0, 0, width, 1, 1};
+
+    std::vector<uint8_t> srcBuffer(size);
+    std::vector<uint8_t> dstBuffer(size, 0xff);
+    for (size_t i = 0; i < size; ++i) {
+        srcBuffer[i] = static_cast<uint8_t>((i * 7) % 251);
+    }
+
+    SUCCESS_OR_TERMINATE(zeCommandListAppendImageCopyFromMemory(cmdList, srcImg, srcBuffer.data(), &region, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdList, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendImageCopyRegion(cmdList, dstImg, srcImg, &region, &region, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdList, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendImageCopyToMemory(cmdList, dstBuffer.data(), dstImg, &region, nullptr, 0, nullptr));
+
+    SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
+    SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
+
+    bool validRet = LevelZeroBlackBoxTests::validate(srcBuffer.data(), dstBuffer.data(), size);
+
+    SUCCESS_OR_TERMINATE(zeImageDestroy(dstImg));
+    SUCCESS_OR_TERMINATE(zeImageDestroy(srcImg));
+    SUCCESS_OR_TERMINATE(zeMemFree(context, dstStorage));
+    SUCCESS_OR_TERMINATE(zeMemFree(context, srcStorage));
+    SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
+    SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue));
+
+    return validRet;
+}
+
 int main(int argc, char *argv[]) {
     const std::string blackBoxName = "Zello Copy Image";
     const std::string blackBoxNameExt = "Zello Copy Image Ext";
+    const std::string blackBoxNameImageBuffer = "Zello Copy Image Buffer";
+    constexpr uint32_t max1dSurfaceWidth = 16384u;
+    constexpr uint32_t imageBufferWidth = 4 * max1dSurfaceWidth;
     LevelZeroBlackBoxTests::verbose = LevelZeroBlackBoxTests::isVerbose(argc, argv);
     bool aubMode = LevelZeroBlackBoxTests::isAubMode(argc, argv);
 
@@ -351,8 +431,11 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
+    bool resultImageBuffer = testAppendImageBufferCopy(context, device, imageBufferWidth);
+    LevelZeroBlackBoxTests::printResult(aubMode, resultImageBuffer, blackBoxNameImageBuffer);
+
     bool outputValidationSuccessful = testAppendImageCopy(context, device);
-    bool result = outputValidationSuccessful;
+    bool result = outputValidationSuccessful && resultImageBuffer;
     LevelZeroBlackBoxTests::printResult(aubMode, outputValidationSuccessful, blackBoxName);
     outputValidationSuccessful = testAppendImageCopyExt(context, device);
     result &= outputValidationSuccessful;
