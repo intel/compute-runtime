@@ -230,6 +230,114 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenGemCreateExtFailWhenCreateUnifiedMe
     EXPECT_EQ(allocation, nullptr);
 }
 
+TEST_F(DrmMemoryManagerLocalMemoryTest, givenMultipleBosAndSecondGemCreateExtFailsWhenCreateSharedUnifiedMemoryAllocationThenWholeReservedCpuRangeIsUnmappedAndCreatedBoIsClosed) {
+    ioctlHelper->vmAdviseAtomicAttribute = std::nullopt;
+    debugManager.flags.UseKmdMigration.set(1);
+    RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
+    std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
+
+    std::vector<MemoryRegion> regionInfo(3);
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 1};
+    regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
+    regionInfo[2].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(1, 0)};
+
+    auto hwInfo = mock->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo->gtSystemInfo.MultiTileArchInfo.IsValid = 1;
+    hwInfo->gtSystemInfo.MultiTileArchInfo.TileCount = 2;
+
+    mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    ioctlHelper->createGemExtFailingCallIndex = 1u;
+
+    static constexpr uintptr_t reservedCpuRangeNotAlignedToAllocationAlignment = 0x10000000u + MemoryConstants::pageSize64k;
+    static void *unmappedAddress;
+    VariableBackup<void *> unmappedAddressBackup(&unmappedAddress, nullptr);
+    VariableBackup<uint32_t> munmapCalledCountBackup(&munmapCalledCount, 0u);
+    VariableBackup<decltype(memoryManager->mmapFunction)> mmapBackup(&memoryManager->mmapFunction, [](void *addr, size_t len, int prot, int flags, int fd, off_t offset) throw() { return prot == PROT_NONE ? reinterpret_cast<void *>(reservedCpuRangeNotAlignedToAllocationAlignment) : addr; });
+    VariableBackup<decltype(memoryManager->munmapFunction)> munmapBackup(&memoryManager->munmapFunction, [](void *addr, size_t len) throw() {
+        munmapCalledCount++;
+        unmappedAddress = addr;
+        return 0; });
+    mock->ioctlCount.gemClose = 0;
+
+    SVMAllocsManager unifiedMemoryManager(memoryManager);
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    auto ptr = unifiedMemoryManager.createSharedUnifiedMemoryAllocation(2 * MemoryConstants::megaByte, unifiedMemoryProperties, nullptr);
+
+    EXPECT_EQ(nullptr, ptr);
+    EXPECT_EQ(2u, ioctlHelper->createGemExtCalls.size());
+    EXPECT_EQ(1u, munmapCalledCount);
+    EXPECT_EQ(reinterpret_cast<void *>(reservedCpuRangeNotAlignedToAllocationAlignment), unmappedAddress);
+    EXPECT_EQ(1, mock->ioctlCount.gemClose.load());
+}
+
+TEST_F(DrmMemoryManagerLocalMemoryTest, givenDeferBackingAndMultipleBosAndSecondGemCreateExtFailsWhenCreateSharedUnifiedMemoryAllocationThenCreatedBoIsUnboundAndVaRangeIsReleasedOnlyWhenUnbindSucceeds) {
+    ioctlHelper->vmAdviseAtomicAttribute = std::nullopt;
+    ioctlHelper->deferBackingEnabledForAllocation = true;
+    debugManager.flags.UseKmdMigration.set(1);
+    RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
+    std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
+
+    std::vector<MemoryRegion> regionInfo(3);
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 1};
+    regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
+    regionInfo[2].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(1, 0)};
+
+    auto hwInfo = mock->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo->gtSystemInfo.MultiTileArchInfo.IsValid = 1;
+    hwInfo->gtSystemInfo.MultiTileArchInfo.TileCount = 2;
+
+    mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
+    mock->setBindAvailable();
+    ioctlHelper->vmBindAvailable = true;
+    ioctlHelper->createGemExtFailingCallIndex = 1u;
+
+    executionEnvironment->calculateMaxOsContextCount();
+    SVMAllocsManager unifiedMemoryManager(memoryManager);
+    UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+
+    VariableBackup<uint32_t> munmapCalledCountBackup(&munmapCalledCount, 0u);
+    VariableBackup<decltype(memoryManager->mmapFunction)> mmapBackup(&memoryManager->mmapFunction, [](void *addr, size_t len, int prot, int flags, int fd, off_t offset) throw() { return addr; });
+    VariableBackup<decltype(memoryManager->munmapFunction)> munmapBackup(&memoryManager->munmapFunction, [](void *addr, size_t len) throw() {
+        munmapCalledCount++;
+        return 0; });
+
+    for (auto unbindFails : {true, false}) {
+        ioctlHelper->createGemExtCalls.clear();
+        ioctlHelper->vmUnbindResult = unbindFails ? -1 : 0;
+        ioctlHelper->vmUnbindCalled = 0u;
+        munmapCalledCount = 0u;
+        mock->ioctlCount.gemClose = 0;
+
+        auto ptr = unifiedMemoryManager.createSharedUnifiedMemoryAllocation(2 * MemoryConstants::megaByte, unifiedMemoryProperties, nullptr);
+
+        EXPECT_EQ(nullptr, ptr);
+        EXPECT_EQ(2u, ioctlHelper->createGemExtCalls.size());
+        EXPECT_EQ(1u, ioctlHelper->vmUnbindCalled);
+        EXPECT_EQ(unbindFails ? 0u : 1u, munmapCalledCount);
+        EXPECT_EQ(1, mock->ioctlCount.gemClose.load());
+    }
+}
+
+TEST_F(DrmMemoryManagerLocalMemoryTest, givenUnavailableCacheRegionWhenCreateSharedUnifiedMemoryAllocationThenBoIsClosed) {
+    ioctlHelper->vmAdviseAtomicAttribute = std::nullopt;
+    setUpSingleDeviceMemoryRegion(*mock);
+
+    mock->ioctlCount.gemClose = 0;
+
+    AllocationData allocationData{};
+    allocationData.size = MemoryConstants::pageSize64k;
+    allocationData.alignment = MemoryConstants::pageSize64k;
+    allocationData.type = AllocationType::unifiedSharedMemory;
+    allocationData.rootDeviceIndex = rootDeviceIndex;
+    allocationData.useMmapObject = true;
+    allocationData.cacheRegion = static_cast<uint32_t>(CacheRegion::region1);
+
+    auto allocation = memoryManager->createSharedUnifiedMemoryAllocation(allocationData);
+
+    EXPECT_EQ(nullptr, allocation);
+    EXPECT_EQ(1, mock->ioctlCount.gemClose.load());
+}
+
 TEST_F(DrmMemoryManagerLocalMemoryTest, givenAllocationWithUnifiedMemoryAllocationWithoutUseMmapObjectThenReturnNullptr) {
     ioctlHelper->vmAdviseAtomicAttribute = std::nullopt;
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;

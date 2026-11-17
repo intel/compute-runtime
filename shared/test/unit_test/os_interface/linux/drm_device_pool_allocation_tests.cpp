@@ -328,7 +328,7 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenAlignmentAndSizeWhenMmapReturnsUnal
     };
 
     memoryManager->munmapFunction = [](void *addr, size_t len) throw() {
-        DrmMemoryManagerLocalMemoryTest::munmapCalledCount++;
+        munmapCalledCount++;
         return 0;
     };
 
@@ -364,7 +364,7 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenAlignmentAndSizeWhenMmapReturnsAlig
     };
 
     memoryManager->munmapFunction = [](void *addr, size_t len) throw() {
-        DrmMemoryManagerLocalMemoryTest::munmapCalledCount++;
+        munmapCalledCount++;
         return 0;
     };
 
@@ -608,43 +608,70 @@ static const AllocationType allocation57Bit[] = {
     AllocationType::sharedBuffer,
 };
 
-TEST_F(DrmMemoryManagerLocalMemoryTest, givenInvalidCacheRegionWhenMmapReturnsUnalignedPointerThenReleaseUnalignedPartsEarly) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnableBOMmapCreate.set(-1);
+TEST_F(DrmMemoryManagerLocalMemoryTest, givenInvalidCacheRegionWhenAllocatingWithAlignmentThenBoIsNotBoundAndReservationIsReleased) {
+    setUpSingleDeviceMemoryRegion(*mock);
+    mock->setBindAvailable();
+    ioctlHelper->vmBindAvailable = true;
+    ioctlHelper->deferBackingEnabledForAllocation = true;
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, rootDeviceIndex, false);
 
-    std::vector<MemoryRegion> regionInfo(2);
-    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
-    regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
-
-    mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
-    mock->ioctlCallsCount = 0;
+    static size_t unmappedSize;
+    VariableBackup<uint32_t> munmapCalledCountBackup(&munmapCalledCount, 0u);
+    VariableBackup<size_t> unmappedSizeBackup(&unmappedSize, 0u);
+    VariableBackup<decltype(memoryManager->mmapFunction)> mmapBackup(&memoryManager->mmapFunction, [](void *addr, size_t len, int prot, int flags, int fd, off_t offset) throw() { return addr; });
+    VariableBackup<decltype(memoryManager->munmapFunction)> munmapBackup(&memoryManager->munmapFunction, [](void *addr, size_t len) throw() {
+        munmapCalledCount++;
+        unmappedSize = len;
+        return 0; });
 
     AllocationData allocationData;
     allocationData.size = MemoryConstants::pageSize64k;
-
-    memoryManager->mmapFunction = [](void *addr, size_t len, int prot,
-                                     int flags, int fd, off_t offset) throw() {
-        if (addr == 0) {
-            return reinterpret_cast<void *>(0x12345678);
-        } else {
-            return addr;
-        }
-    };
-
-    memoryManager->munmapFunction = [](void *addr, size_t len) throw() {
-        munmapCalledCount++;
-        return 0;
-    };
-    munmapCalledCount = 0;
     allocationData.cacheRegion = static_cast<uint32_t>(CacheRegion::none);
-    auto allocation = memoryManager->createAllocWithAlignment(allocationData, MemoryConstants::pageSize, MemoryConstants::pageSize64k, MemoryConstants::pageSize64k, 0u);
+    memoryManager->releaseGpuRangeCalled = 0u;
+
+    auto allocation = memoryManager->createAllocWithAlignment(allocationData, MemoryConstants::pageSize64k, MemoryConstants::pageSize2M, MemoryConstants::pageSize64k, 0u);
 
     EXPECT_EQ(nullptr, allocation);
-    EXPECT_EQ(2u, munmapCalledCount);
-    munmapCalledCount = 0u;
+    EXPECT_EQ(0u, ioctlHelper->vmBindCalled);
+    EXPECT_EQ(1u, memoryManager->releaseGpuRangeCalled);
+    EXPECT_EQ(1u, munmapCalledCount);
+    EXPECT_EQ(MemoryConstants::pageSize64k + MemoryConstants::pageSize2M, unmappedSize);
+}
 
-    memoryManager->mmapFunction = SysCalls::mmap;
-    memoryManager->munmapFunction = SysCalls::munmap;
+TEST_F(DrmMemoryManagerLocalMemoryTest, givenCacheRegionWhenAllocatingWithAlignmentThenBoIsBoundWithItsPatIndex) {
+    debugManager.flags.ClosEnabled.set(1);
+    if (defaultHwInfo->caps.numCacheRegions == 0) {
+        GTEST_SKIP();
+    }
+    setUpSingleDeviceMemoryRegion(*mock);
+    mock->setBindAvailable();
+    mock->vmBindPatIndexProgrammingSupported = true;
+    ioctlHelper->vmBindAvailable = true;
+    ioctlHelper->deferBackingEnabledForAllocation = true;
+    ioctlHelper->closSupported = true;
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, rootDeviceIndex, false);
+
+    CacheReservationParameters l2CacheParameters{};
+    CacheReservationParameters l3CacheParameters{};
+    l3CacheParameters.maxSize = 64 * MemoryConstants::kiloByte;
+    l3CacheParameters.maxNumRegions = 2;
+    l3CacheParameters.maxNumWays = 32;
+    mock->cacheInfo.reset(new CacheInfo(*ioctlHelper, l2CacheParameters, l3CacheParameters));
+
+    VariableBackup<decltype(memoryManager->mmapFunction)> mmapBackup(&memoryManager->mmapFunction, [](void *addr, size_t len, int prot, int flags, int fd, off_t offset) throw() { return addr; });
+    VariableBackup<decltype(memoryManager->munmapFunction)> munmapBackup(&memoryManager->munmapFunction, [](void *addr, size_t len) throw() { return 0; });
+
+    AllocationData allocationData;
+    allocationData.size = MemoryConstants::pageSize64k;
+    allocationData.cacheRegion = static_cast<uint32_t>(CacheRegion::region1);
+
+    auto allocation = memoryManager->createAllocWithAlignment(allocationData, MemoryConstants::pageSize64k, MemoryConstants::pageSize2M, MemoryConstants::pageSize64k, 0u);
+    ASSERT_NE(nullptr, allocation);
+
+    ASSERT_TRUE(ioctlHelper->receivedVmBind.has_value());
+    EXPECT_EQ(allocation->getBO()->peekPatIndex(), ioctlHelper->receivedVmBind->patIndex);
+    EXPECT_EQ(CacheRegion::region1, allocation->getBO()->peekCacheRegion());
+    memoryManager->freeGraphicsMemory(allocation);
 }
 
 HWTEST2_F(DrmMemoryManagerLocalMemoryTest, givenNotSetUseSystemMemoryWhenGraphicsAllocationInDevicePoolIsAllocatedForBufferAndBufferCompressedThenCreateGmmWithCorrectAuxFlags, IsAtMostXeHpgCore) {

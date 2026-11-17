@@ -85,6 +85,9 @@ class MockIoctlHelperWithCapture : public IoctlHelperUpstream {
     int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, std::optional<uint32_t> memPolicyMode, std::optional<std::vector<unsigned long>> memPolicyNodemask, std::optional<bool> isCoherent, GemCreateExtHint hint, std::optional<bool> deferBacking) override {
         createGemExtCalls.push_back({memClassInstances, memPolicyNodemask, allocSize, patIndex, vmId, memPolicyMode, pairHandle, numOfChunks, isChunked});
         handle = createGemExtHandle;
+        if (createGemExtFailingCallIndex == createGemExtCalls.size() - 1) {
+            return -1;
+        }
         return createGemExtResult;
     }
 
@@ -275,6 +278,7 @@ class MockIoctlHelperWithCapture : public IoctlHelperUpstream {
     std::vector<CreateGemExtCall> createGemExtCalls;
     uint32_t createGemExtHandle = 1u;
     int createGemExtResult = 0;
+    std::optional<size_t> createGemExtFailingCallIndex;
 
     std::optional<std::vector<MemoryRegion>> memoryRegionsToReturn;
 

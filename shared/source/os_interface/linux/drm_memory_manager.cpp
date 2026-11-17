@@ -3724,6 +3724,10 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &
         cpuPointer = alignUp(cpuPointer, alignment);
 
         auto pointerDiff = ptrDiff(cpuPointer, cpuBasePointer);
+        auto releaseReservation = [&]() {
+            ioctlHelper->releaseGpuRange(*this, reinterpret_cast<void *>(preferredAddress), totalSizeToAlloc, allocationData.rootDeviceIndex, allocationData.type);
+            ioctlHelper->munmapFunction(*this, cpuBasePointer, totalSizeToAlloc);
+        };
         auto gmm = makeGmmIfSingleHandle(allocationData, alignedSize);
         const bool deferBacking = ioctlHelper->isDeferBackingEnabledForAllocation(alignedSize, allocationData.type);
         std::unique_ptr<BufferObject, BufferObject::Deleter> bo(this->createBufferObjectInMemoryRegion(allocationData.rootDeviceIndex, gmm.get(), allocationData.type,
@@ -3731,16 +3735,14 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &
                                                                                                        MemoryPoolHelper::isSystemMemoryPool(memoryPool), allocationData.flags.isUSMHostAllocation, deferBacking));
 
         if (!bo) {
-            ioctlHelper->releaseGpuRange(*this, reinterpret_cast<void *>(preferredAddress), totalSizeToAlloc, allocationData.rootDeviceIndex, allocationData.type);
-            ioctlHelper->munmapFunction(*this, cpuBasePointer, totalSizeToAlloc);
+            releaseReservation();
             return nullptr;
         }
 
         uint64_t offset = 0;
         uint64_t mmapOffsetWb = ioctlHelper->getDrmParamValue(DrmParam::mmapOffsetWb);
         if (!ioctlHelper->retrieveMmapOffsetForBufferObject(*bo, mmapOffsetWb, offset)) {
-            ioctlHelper->releaseGpuRange(*this, reinterpret_cast<void *>(preferredAddress), totalSizeToAlloc, allocationData.rootDeviceIndex, allocationData.type);
-            ioctlHelper->munmapFunction(*this, cpuBasePointer, totalSizeToAlloc);
+            releaseReservation();
             return nullptr;
         }
 
@@ -3750,6 +3752,11 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &
         auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
         auto canonizedGpuAddress = gmmHelper->canonize(bo->peekAddress());
         auto allocation = std::make_unique<DrmAllocation>(allocationData.rootDeviceIndex, 1u /*num gmms*/, allocationData.type, bo.get(), nullptr, canonizedGpuAddress, alignedSize, memoryPool);
+
+        if (!allocation->setCacheRegion(&drm, static_cast<CacheRegion>(allocationData.cacheRegion))) {
+            releaseReservation();
+            return nullptr;
+        }
 
         makeAllocationResidentIfNeeded(allocation.get());
 
@@ -3769,13 +3776,6 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &
         } else {
             allocation->setReservedAddressRange(reinterpret_cast<void *>(gpuAddress), alignedSize);
         }
-        if (!allocation->setCacheRegion(&drm, static_cast<CacheRegion>(allocationData.cacheRegion))) {
-            if (pointerDiff == 0) {
-                ioctlHelper->registerMemoryToUnmap(*allocation.get(), cpuBasePointer, pointerDiff, this->munmapFunction);
-            }
-            return nullptr;
-        }
-
         bo.release();
         allocation->setDefaultGmm(std::move(gmm));
         allocation->setShareableHostMemory(true);
@@ -3900,6 +3900,23 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
     // recorded state, the immediate bind, and the always-resident marking so they cannot diverge.
     const bool deferBacking = ioctlHelper->isDeferBackingEnabledForAllocation(size, allocationData.type);
 
+    auto releaseResourcesOnFailure = [&]() {
+        bool unbindFailed = false;
+        if (deferBacking) {
+            for (auto bo : bos) {
+                unbindFailed |= (bo->unbind(this->getDefaultOsContext(allocationData.rootDeviceIndex), 0) != 0);
+            }
+        }
+        // a BO left mapped in the VM keeps its VA range reserved, so the range is never reused
+        if (!unbindFailed) {
+            ioctlHelper->munmapFunction(*this, cpuBasePointer, totalSizeToAlloc);
+            ioctlHelper->releaseGpuRange(*this, reinterpret_cast<void *>(preferredAddress), totalSizeToAlloc, allocationData.rootDeviceIndex, allocationData.type);
+        }
+        for (auto bo : bos) {
+            this->unreference(bo, true);
+        }
+    };
+
     bool useChunking = false;
     uint32_t numOfChunks = 0;
 
@@ -3934,16 +3951,14 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
         int ret = memoryInfo->createGemExt(memRegions, currentSize, handle, patIndex, {}, -1, useChunking, numOfChunks, allocationData.flags.isUSMHostAllocation, GemCreateExtHint::none, deferBacking);
 
         if (ret) {
-            ioctlHelper->munmapFunction(*this, cpuPointer, totalSizeToAlloc);
-            ioctlHelper->releaseGpuRange(*this, reinterpret_cast<void *>(preferredAddress), totalSizeToAlloc, allocationData.rootDeviceIndex, allocationData.type);
+            releaseResourcesOnFailure();
             return nullptr;
         }
 
         std::unique_ptr<BufferObject, BufferObject::Deleter> bo(new BufferObject(allocationData.rootDeviceIndex, &drm, patIndex, handle, currentSize, maxOsContextCount));
 
         if (vmAdviseAttribute.has_value() && !ioctlHelper->setVmBoAdvise(bo->peekHandle(), vmAdviseAttribute.value(), nullptr)) {
-            ioctlHelper->munmapFunction(*this, cpuBasePointer, totalSizeToAlloc);
-            ioctlHelper->releaseGpuRange(*this, reinterpret_cast<void *>(preferredAddress), totalSizeToAlloc, allocationData.rootDeviceIndex, allocationData.type);
+            releaseResourcesOnFailure();
             return nullptr;
         }
 
@@ -3951,8 +3966,7 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
         uint64_t offset = 0;
         bo->setBOType(getBOTypeFromPatIndex(patIndex, productHelper.isVmBindPatIndexProgrammingSupported()));
         if (!ioctlHelper->retrieveMmapOffsetForBufferObject(*bo, mmapOffsetWb, offset)) {
-            ioctlHelper->munmapFunction(*this, cpuBasePointer, totalSizeToAlloc);
-            ioctlHelper->releaseGpuRange(*this, reinterpret_cast<void *>(preferredAddress), totalSizeToAlloc, allocationData.rootDeviceIndex, allocationData.type);
+            releaseResourcesOnFailure();
             return nullptr;
         }
 
@@ -3995,10 +4009,7 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
     }
 
     if (!allocation->setCacheRegion(&drm, static_cast<CacheRegion>(allocationData.cacheRegion))) {
-        ioctlHelper->munmapFunction(*this, cpuBasePointer, totalSizeToAlloc);
-        for (auto bo : bos) {
-            delete bo;
-        }
+        releaseResourcesOnFailure();
         return nullptr;
     }
 
