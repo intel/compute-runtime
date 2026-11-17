@@ -53,6 +53,7 @@ inline constexpr ConstStringRef inlineSamplers("inline_samplers");
 
 namespace ExecutionEnv {
 inline constexpr ConstStringRef barrierCount("barrier_count");
+inline constexpr ConstStringRef crossThreadLoadSize("cross_thread_load_size");
 inline constexpr ConstStringRef disableMidThreadPreemption("disable_mid_thread_preemption");
 inline constexpr ConstStringRef euThreadCount("eu_thread_count");
 inline constexpr ConstStringRef grfCount("grf_count");
@@ -347,6 +348,7 @@ inline constexpr int32_t runtimeAdjusted = 1;
 
 using ActualKernelStartOffsetT = int32_t;
 using BarrierCountT = int32_t;
+using CrossThreadLoadSizeT = int32_t;
 using EuThreadCountT = int32_t;
 using DisableMidThreadPreemptionT = bool;
 using GrfCountT = int32_t;
@@ -388,6 +390,7 @@ using HasBindlessImageReadT = bool;
 
 namespace Defaults {
 inline constexpr BarrierCountT barrierCount = 0;
+inline constexpr CrossThreadLoadSizeT crossThreadLoadSize = 0;
 inline constexpr DisableMidThreadPreemptionT disableMidThreadPreemption = false;
 inline constexpr EuThreadCountT euThreadCount = 0;
 inline constexpr Has4GBBuffersT has4GBBuffers = false;
@@ -436,6 +439,7 @@ struct ExecutionEnvBaseT final : NEO::NonCopyableAndNonMovableClass {
     Ext<ExecutionEnvExt, true> execEnvExt;
 
     BarrierCountT barrierCount = Defaults::barrierCount;
+    CrossThreadLoadSizeT crossThreadLoadSize = Defaults::crossThreadLoadSize;
     DisableMidThreadPreemptionT disableMidThreadPreemption = Defaults::disableMidThreadPreemption;
     EuThreadCountT euThreadCount = Defaults::euThreadCount;
     GrfCountT grfCount = -1;

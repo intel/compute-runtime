@@ -659,6 +659,8 @@ DecodeError readZeInfoExecutionEnvironment(const Yaml::YamlParser &parser, const
         auto key = parser.readKey(execEnvMetadataNd);
         if (Tags::Kernel::ExecutionEnv::barrierCount == key) {
             validExecEnv &= readZeInfoValueChecked(parser, execEnvMetadataNd, outExecEnv.barrierCount, context, outErrReason);
+        } else if (Tags::Kernel::ExecutionEnv::crossThreadLoadSize == key) {
+            validExecEnv &= readZeInfoValueChecked(parser, execEnvMetadataNd, outExecEnv.crossThreadLoadSize, context, outErrReason);
         } else if (Tags::Kernel::ExecutionEnv::disableMidThreadPreemption == key) {
             validExecEnv &= readZeInfoValueChecked(parser, execEnvMetadataNd, outExecEnv.disableMidThreadPreemption, context, outErrReason);
         } else if (Tags::Kernel::ExecutionEnv::euThreadCount == key) {

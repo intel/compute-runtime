@@ -2167,6 +2167,7 @@ kernels:
     EXPECT_EQ(Defaults::requiredSubGroupSize, execEnv.requiredSubGroupSize);
     EXPECT_EQ(Defaults::slmSize, execEnv.slmSize);
     EXPECT_EQ(Defaults::slmAllocMode, execEnv.slmAllocMode);
+    EXPECT_EQ(Defaults::crossThreadLoadSize, execEnv.crossThreadLoadSize);
     EXPECT_EQ(Defaults::subgroupIndependentForwardProgress, execEnv.subgroupIndependentForwardProgress);
     EXPECT_EQ(Defaults::requiredWorkGroupSize[0], execEnv.requiredWorkGroupSize[0]);
     EXPECT_EQ(Defaults::requiredWorkGroupSize[1], execEnv.requiredWorkGroupSize[1]);
@@ -2323,6 +2324,32 @@ kernels:
 
     verifySlmAllocMode(yamlMode0, NEO::Zebin::ZeInfo::Types::Kernel::ExecutionEnv::Constants::compilerResolved);
     verifySlmAllocMode(yamlMode1, NEO::Zebin::ZeInfo::Types::Kernel::ExecutionEnv::Constants::runtimeAdjusted);
+}
+
+TEST(ReadZeInfoExecutionEnvironment, GivenCrossThreadLoadSizeThenSetProperValue) {
+    NEO::ConstStringRef yaml = R"===(---
+kernels:
+  - name:            some_kernel
+    execution_env:
+        simd_size : 32
+        cross_thread_load_size : 128
+...
+)===";
+    std::string parserErrors;
+    std::string parserWarnings;
+    NEO::Yaml::YamlParser parser;
+    bool success = parser.parse(yaml, parserErrors, parserWarnings);
+    ASSERT_TRUE(success);
+    auto &execEnvNode = *parser.findNodeWithKeyDfs("execution_env");
+    std::string errors;
+    std::string warnings;
+    NEO::Zebin::ZeInfo::Types::Kernel::ExecutionEnv::ExecutionEnvBaseT execEnv{};
+
+    auto err = NEO::Zebin::ZeInfo::readZeInfoExecutionEnvironment(parser, execEnvNode, execEnv, "some_kernel", errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::success, err);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    EXPECT_EQ(128, execEnv.crossThreadLoadSize);
 }
 
 TEST(ReadZeInfoAttributes, GivenValidYamlEntriesThenSetProperMembers) {
