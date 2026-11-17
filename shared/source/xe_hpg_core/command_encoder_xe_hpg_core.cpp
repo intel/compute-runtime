@@ -75,7 +75,7 @@ void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, Sta
     using Z_PASS_ASYNC_COMPUTE_THREAD_LIMIT = typename STATE_COMPUTE_MODE::Z_PASS_ASYNC_COMPUTE_THREAD_LIMIT;
 
     STATE_COMPUTE_MODE stateComputeMode = Family::cmdInitStateComputeMode;
-    auto maskBits = stateComputeMode.getMaskBits();
+    auto maskBits = stateComputeMode.getMask();
 
     const auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     bool ignoreIsDirty = hwInfo.caps.programAllStateComputeCommandFieldsWARequired;
@@ -99,7 +99,7 @@ void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, Sta
         maskBits |= Family::stateComputeModeLargeGrfModeMask;
     }
 
-    stateComputeMode.setMaskBits(maskBits);
+    stateComputeMode.setMask(maskBits);
 
     auto &productHelper = rootDeviceEnvironment.getProductHelper();
     productHelper.setForceNonCoherent(&stateComputeMode);

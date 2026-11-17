@@ -3120,12 +3120,12 @@ XE_HPG_CORETEST_F(CommandsXeHpgCoreTest, GivenStateComputeModeWhenInitCalledThen
     EXPECT_EQ(STATE_COMPUTE_MODE::COMMAND_SUBTYPE_GFXPIPE_COMMON, cmd.TheStructure.Common.CommandSubtype);
     EXPECT_EQ(STATE_COMPUTE_MODE::COMMAND_TYPE_GFXPIPE, cmd.TheStructure.Common.CommandType);
     EXPECT_EQ(STATE_COMPUTE_MODE::Z_PASS_ASYNC_COMPUTE_THREAD_LIMIT_MAX_60, cmd.TheStructure.Common.ZPassAsyncComputeThreadLimit);
-    EXPECT_EQ(STATE_COMPUTE_MODE::FAST_CLEAR_DISABLED_ON_COMPRESSED_SURFACE_ENABLED, cmd.TheStructure.Common.FastClearDisabledOnCompressedSurface);
-    EXPECT_EQ(STATE_COMPUTE_MODE::DISABLE_SLM_READ_MERGE_OPTIMIZATION_ENABLED, cmd.TheStructure.Common.DisableSlmReadMergeOptimization);
+    EXPECT_FALSE(cmd.TheStructure.Common.FastClearDisabledOnCompressedSurface);
+    EXPECT_FALSE(cmd.TheStructure.Common.DisableSlmReadMergeOptimization);
     EXPECT_EQ(STATE_COMPUTE_MODE::PIXEL_ASYNC_COMPUTE_THREAD_LIMIT_DISABLED, cmd.TheStructure.Common.PixelAsyncComputeThreadLimit);
-    EXPECT_EQ(STATE_COMPUTE_MODE::DISABLE_ATOMIC_ON_CLEAR_DATA_ENABLE, cmd.TheStructure.Common.DisableAtomicOnClearData);
+    EXPECT_FALSE(cmd.TheStructure.Common.DisableAtomicOnClearData);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.LargeGrfMode);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.MaskBits); // patched
+    EXPECT_EQ(0x0u, cmd.TheStructure.Common.Mask);
 }
 
 XE_HPG_CORETEST_F(CommandsXeHpgCoreTest, GivenStateComputeModeWhenSetterUsedThenGetterReturnsValidValue) { // patched
@@ -3145,17 +3145,17 @@ XE_HPG_CORETEST_F(CommandsXeHpgCoreTest, GivenStateComputeModeWhenSetterUsedThen
     cmd.setZPassAsyncComputeThreadLimit(STATE_COMPUTE_MODE::Z_PASS_ASYNC_COMPUTE_THREAD_LIMIT_MAX_48);
     EXPECT_EQ(STATE_COMPUTE_MODE::Z_PASS_ASYNC_COMPUTE_THREAD_LIMIT_MAX_48, cmd.getZPassAsyncComputeThreadLimit());
 
-    cmd.setFastClearDisabledOnCompressedSurface(STATE_COMPUTE_MODE::FAST_CLEAR_DISABLED_ON_COMPRESSED_SURFACE_ENABLED);
-    EXPECT_EQ(STATE_COMPUTE_MODE::FAST_CLEAR_DISABLED_ON_COMPRESSED_SURFACE_ENABLED, cmd.getFastClearDisabledOnCompressedSurface());
+    cmd.setFastClearDisabledOnCompressedSurface(false);
+    EXPECT_FALSE(cmd.getFastClearDisabledOnCompressedSurface());
 
-    cmd.setFastClearDisabledOnCompressedSurface(STATE_COMPUTE_MODE::FAST_CLEAR_DISABLED_ON_COMPRESSED_SURFACE_DISABLED);
-    EXPECT_EQ(STATE_COMPUTE_MODE::FAST_CLEAR_DISABLED_ON_COMPRESSED_SURFACE_DISABLED, cmd.getFastClearDisabledOnCompressedSurface());
+    cmd.setFastClearDisabledOnCompressedSurface(true);
+    EXPECT_TRUE(cmd.getFastClearDisabledOnCompressedSurface());
 
-    cmd.setDisableSlmReadMergeOptimization(STATE_COMPUTE_MODE::DISABLE_SLM_READ_MERGE_OPTIMIZATION_ENABLED);
-    EXPECT_EQ(STATE_COMPUTE_MODE::DISABLE_SLM_READ_MERGE_OPTIMIZATION_ENABLED, cmd.getDisableSlmReadMergeOptimization());
+    cmd.setDisableSlmReadMergeOptimization(false);
+    EXPECT_FALSE(cmd.getDisableSlmReadMergeOptimization());
 
-    cmd.setDisableSlmReadMergeOptimization(STATE_COMPUTE_MODE::DISABLE_SLM_READ_MERGE_OPTIMIZATION_DISABLED);
-    EXPECT_EQ(STATE_COMPUTE_MODE::DISABLE_SLM_READ_MERGE_OPTIMIZATION_DISABLED, cmd.getDisableSlmReadMergeOptimization());
+    cmd.setDisableSlmReadMergeOptimization(true);
+    EXPECT_TRUE(cmd.getDisableSlmReadMergeOptimization());
 
     cmd.setPixelAsyncComputeThreadLimit(STATE_COMPUTE_MODE::PIXEL_ASYNC_COMPUTE_THREAD_LIMIT_DISABLED);
     EXPECT_EQ(STATE_COMPUTE_MODE::PIXEL_ASYNC_COMPUTE_THREAD_LIMIT_DISABLED, cmd.getPixelAsyncComputeThreadLimit());
@@ -3181,21 +3181,21 @@ XE_HPG_CORETEST_F(CommandsXeHpgCoreTest, GivenStateComputeModeWhenSetterUsedThen
     cmd.setPixelAsyncComputeThreadLimit(STATE_COMPUTE_MODE::PIXEL_ASYNC_COMPUTE_THREAD_LIMIT_MAX_48);
     EXPECT_EQ(STATE_COMPUTE_MODE::PIXEL_ASYNC_COMPUTE_THREAD_LIMIT_MAX_48, cmd.getPixelAsyncComputeThreadLimit());
 
-    cmd.setDisableAtomicOnClearData(STATE_COMPUTE_MODE::DISABLE_ATOMIC_ON_CLEAR_DATA_ENABLE);
-    EXPECT_EQ(STATE_COMPUTE_MODE::DISABLE_ATOMIC_ON_CLEAR_DATA_ENABLE, cmd.getDisableAtomicOnClearData());
+    cmd.setDisableAtomicOnClearData(false);
+    EXPECT_FALSE(cmd.getDisableAtomicOnClearData());
 
-    cmd.setDisableAtomicOnClearData(STATE_COMPUTE_MODE::DISABLE_ATOMIC_ON_CLEAR_DATA_DISABLE);
-    EXPECT_EQ(STATE_COMPUTE_MODE::DISABLE_ATOMIC_ON_CLEAR_DATA_DISABLE, cmd.getDisableAtomicOnClearData());
+    cmd.setDisableAtomicOnClearData(true);
+    EXPECT_TRUE(cmd.getDisableAtomicOnClearData());
 
     cmd.setLargeGrfMode(0x0u);
     EXPECT_EQ(0x0u, cmd.getLargeGrfMode());
     cmd.setLargeGrfMode(0x1u);
     EXPECT_EQ(0x1u, cmd.getLargeGrfMode());
 
-    cmd.setMaskBits(0x0u);                 // patched
-    EXPECT_EQ(0x0u, cmd.getMaskBits());    // patched
-    cmd.setMaskBits(0xffffu);              // patched
-    EXPECT_EQ(0xffffu, cmd.getMaskBits()); // patched
+    cmd.setMask(0x0u);
+    EXPECT_EQ(0x0u, cmd.getMask());
+    cmd.setMask(0xffffu);
+    EXPECT_EQ(0xffffu, cmd.getMask());
 }
 
 XE_HPG_CORETEST_F(CommandsXeHpgCoreTest, Given3dstateBindingTablePoolAllocWhenInitCalledThenFieldsSetToDefault) {

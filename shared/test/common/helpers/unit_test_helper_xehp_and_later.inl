@@ -107,7 +107,11 @@ std::vector<bool> UnitTestHelper<GfxFamily>::getProgrammedLargeGrfValues(Command
     hwParser.parseCommands<GfxFamily>(csr, linearStream);
     auto commands = hwParser.getCommandsList<STATE_COMPUTE_MODE>();
     for (auto &cmd : commands) {
-        largeGrfValues.push_back(reinterpret_cast<STATE_COMPUTE_MODE *>(cmd)->getLargeGrfMode());
+        if constexpr (requires(STATE_COMPUTE_MODE &stateComputeMode) { stateComputeMode.getLargeGrfMode(); }) {
+            largeGrfValues.push_back(reinterpret_cast<STATE_COMPUTE_MODE *>(cmd)->getLargeGrfMode());
+        } else {
+            largeGrfValues.push_back(false);
+        }
     }
     return largeGrfValues;
 }
@@ -121,7 +125,11 @@ std::vector<bool> UnitTestHelper<GfxFamily>::getProgrammedLargeGrfValues(LinearS
     hwParser.parseCommands<GfxFamily>(linearStream);
     auto commands = hwParser.getCommandsList<STATE_COMPUTE_MODE>();
     for (auto &cmd : commands) {
-        largeGrfValues.push_back(reinterpret_cast<STATE_COMPUTE_MODE *>(cmd)->getLargeGrfMode());
+        if constexpr (requires(STATE_COMPUTE_MODE &stateComputeMode) { stateComputeMode.getLargeGrfMode(); }) {
+            largeGrfValues.push_back(reinterpret_cast<STATE_COMPUTE_MODE *>(cmd)->getLargeGrfMode());
+        } else {
+            largeGrfValues.push_back(false);
+        }
     }
     return largeGrfValues;
 }

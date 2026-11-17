@@ -6813,7 +6813,7 @@ typedef struct tagSTATE_COMPUTE_MODE {
             uint32_t NpZAsyncThrottleSettings : BITFIELD_RANGE(3, 4);
             uint32_t LscSamplerBackingThreshold : BITFIELD_RANGE(5, 6);
             uint32_t AsyncComputeThreadLimit : BITFIELD_RANGE(7, 9);
-            uint32_t EnableVariableRegisterSizeAllocation_Vrt : BITFIELD_RANGE(10, 10);
+            uint32_t EnableVariableRegisterSizeAllocationVrt : BITFIELD_RANGE(10, 10);
             uint32_t Reserved_43 : BITFIELD_RANGE(11, 11);
             uint32_t EnablePipelinedEuThreadArbitration : BITFIELD_RANGE(12, 12);
             uint32_t EuThreadSchedulingMode : BITFIELD_RANGE(13, 14);
@@ -6865,11 +6865,11 @@ typedef struct tagSTATE_COMPUTE_MODE {
         NP_Z_ASYNC_THROTTLE_SETTINGS_MAX_40 = 0x2,
         NP_Z_ASYNC_THROTTLE_SETTINGS_MAX_48 = 0x3,
     } NP_Z_ASYNC_THROTTLE_SETTINGS;
-    typedef enum tagLSC_SAMPLER_BACKING_THRESHOLD { // patched
-        LSC_SAMPLER_BACKING_THRESHOLD_LEVEL_0 = 0x0,
-        LSC_SAMPLER_BACKING_THRESHOLD_LEVEL_1 = 0x1,
-        LSC_SAMPLER_BACKING_THRESHOLD_LEVEL_2 = 0x2,
-        LSC_SAMPLER_BACKING_THRESHOLD_LEVEL_3 = 0x3,
+    typedef enum tagLSC_SAMPLER_BACKING_THRESHOLD {
+        LSC_SAMPLER_BACKING_THRESHOLD_THRESHOLD_LEVEL0 = 0x0,
+        LSC_SAMPLER_BACKING_THRESHOLD_THRESHOLD_LEVEL1 = 0x1,
+        LSC_SAMPLER_BACKING_THRESHOLD_THRESHOLD_LEVEL2 = 0x2,
+        LSC_SAMPLER_BACKING_THRESHOLD_THRESHOLD_LEVEL3 = 0x3,
     } LSC_SAMPLER_BACKING_THRESHOLD;
     typedef enum tagASYNC_COMPUTE_THREAD_LIMIT {
         ASYNC_COMPUTE_THREAD_LIMIT_DISABLED = 0x0,
@@ -6907,56 +6907,16 @@ typedef struct tagSTATE_COMPUTE_MODE {
         UAV_COHERENCY_MODE_DRAIN_DATAPORT_MODE = 0x0,
         UAV_COHERENCY_MODE_FLUSH_DATAPORT_L1 = 0x1,
     } UAV_COHERENCY_MODE;
-    typedef enum tagOUT_OF_BOUNDARIES_IN_TRANSLATION_EXCEPTION_ENABLE {
-        OUT_OF_BOUNDARIES_IN_TRANSLATION_EXCEPTION_ENABLE_DISABLE = 0x0,
-        OUT_OF_BOUNDARIES_IN_TRANSLATION_EXCEPTION_ENABLE_ENABLE = 0x1,
-    } OUT_OF_BOUNDARIES_IN_TRANSLATION_EXCEPTION_ENABLE;
-    typedef enum tagPAGE_FAULT_EXCEPTION_ENABLE {
-        PAGE_FAULT_EXCEPTION_ENABLE_DISABLE = 0x0,
-        PAGE_FAULT_EXCEPTION_ENABLE_ENABLE = 0x1,
-    } PAGE_FAULT_EXCEPTION_ENABLE;
-    typedef enum tagSYSTEM_MEMORY_READ_FENCE_ENABLE {
-        SYSTEM_MEMORY_READ_FENCE_ENABLE_DISABLE = 0x0,
-        SYSTEM_MEMORY_READ_FENCE_ENABLE_ENABLE = 0x1,
-    } SYSTEM_MEMORY_READ_FENCE_ENABLE;
     typedef enum tagTDL_ROW_ARBITRATION_POLICY {
         TDL_ROW_ARBITRATION_POLICY_LEGACY_ROUND_ROBIN = 0x0,
         TDL_ROW_ARBITRATION_POLICY_ORDERED_ROUND_ROBIN = 0x1,
     } TDL_ROW_ARBITRATION_POLICY;
-    typedef enum tagMEMORY_EXCEPTION_ENABLE {
-        MEMORY_EXCEPTION_ENABLE_DISABLE = 0x0,
-        MEMORY_EXCEPTION_ENABLE_ENABLE = 0x1,
-    } MEMORY_EXCEPTION_ENABLE;
-    typedef enum tagENABLE_BREAKPOINTS {
-        ENABLE_BREAKPOINTS_DISABLE = 0x0,
-        ENABLE_BREAKPOINTS_ENABLE = 0x1,
-    } ENABLE_BREAKPOINTS;
-    typedef enum tagENABLE_FORCE_EXTERNAL_HALT_AND_FORCE_EXCEPTION {
-        ENABLE_FORCE_EXTERNAL_HALT_AND_FORCE_EXCEPTION_DISABLE = 0x0,
-        ENABLE_FORCE_EXTERNAL_HALT_AND_FORCE_EXCEPTION_ENABLE = 0x1,
-    } ENABLE_FORCE_EXTERNAL_HALT_AND_FORCE_EXCEPTION;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_EXCLUDES_DWORD_0_1;
         TheStructure.Common._3DCommandSubOpcode = _3D_COMMAND_SUB_OPCODE_STATE_COMPUTE_MODE;
         TheStructure.Common._3DCommandOpcode = _3D_COMMAND_OPCODE_GFXPIPE_NONPIPELINED;
-        TheStructure.Common.CommandSubtype = COMMAND_SUBTYPE_GFXPIPE_COMMON;
         TheStructure.Common.CommandType = COMMAND_TYPE_GFXPIPE;
-        TheStructure.Common.ZPassAsyncComputeThreadLimit = Z_PASS_ASYNC_COMPUTE_THREAD_LIMIT_MAX_60;
-        TheStructure.Common.LscSamplerBackingThreshold = LSC_SAMPLER_BACKING_THRESHOLD_LEVEL_0; // patched
-        TheStructure.Common.AsyncComputeThreadLimit = ASYNC_COMPUTE_THREAD_LIMIT_DISABLED;
-        TheStructure.Common.EuThreadSchedulingMode = EU_THREAD_SCHEDULING_MODE_HW_DEFAULT;
-        TheStructure.Common.MidthreadPreemptionDelayTimer = MIDTHREAD_PREEMPTION_DELAY_TIMER_MTP_TIMER_VAL_0;
-        TheStructure.Common.MidthreadPreemptionOverdispatchThreadGroupCount = MIDTHREAD_PREEMPTION_OVERDISPATCH_THREAD_GROUP_COUNT_OD_TG_M2;
-        TheStructure.Common.MidthreadPreemptionOverdispatchTestMode = MIDTHREAD_PREEMPTION_OVERDISPATCH_TEST_MODE_REGULAR;
-        TheStructure.Common.UavCoherencyMode = UAV_COHERENCY_MODE_DRAIN_DATAPORT_MODE;
-        TheStructure.Common.OutOfBoundariesInTranslationExceptionEnable = OUT_OF_BOUNDARIES_IN_TRANSLATION_EXCEPTION_ENABLE_DISABLE;
-        TheStructure.Common.PageFaultExceptionEnable = PAGE_FAULT_EXCEPTION_ENABLE_DISABLE;
-        TheStructure.Common.SystemMemoryReadFenceEnable = SYSTEM_MEMORY_READ_FENCE_ENABLE_DISABLE;
-        TheStructure.Common.TdlRowArbitrationPolicy = TDL_ROW_ARBITRATION_POLICY_LEGACY_ROUND_ROBIN;
-        TheStructure.Common.MemoryExceptionEnable = MEMORY_EXCEPTION_ENABLE_DISABLE;
-        TheStructure.Common.EnableBreakpoints = ENABLE_BREAKPOINTS_DISABLE;
-        TheStructure.Common.EnableForceExternalHaltAndForceException = ENABLE_FORCE_EXTERNAL_HALT_AND_FORCE_EXCEPTION_DISABLE;
     }
     static tagSTATE_COMPUTE_MODE sInit() {
         STATE_COMPUTE_MODE state;
@@ -6966,6 +6926,30 @@ typedef struct tagSTATE_COMPUTE_MODE {
     inline uint32_t &getRawData(const uint32_t index) {
         UNRECOVERABLE_IF(index >= 3);
         return TheStructure.RawData[index];
+    }
+    inline void set3DCommandSubOpcode(const _3D_COMMAND_SUB_OPCODE value) {
+        TheStructure.Common._3DCommandSubOpcode = value;
+    }
+    inline _3D_COMMAND_SUB_OPCODE get3DCommandSubOpcode() const {
+        return static_cast<_3D_COMMAND_SUB_OPCODE>(TheStructure.Common._3DCommandSubOpcode);
+    }
+    inline void set3DCommandOpcode(const _3D_COMMAND_OPCODE value) {
+        TheStructure.Common._3DCommandOpcode = value;
+    }
+    inline _3D_COMMAND_OPCODE get3DCommandOpcode() const {
+        return static_cast<_3D_COMMAND_OPCODE>(TheStructure.Common._3DCommandOpcode);
+    }
+    inline void setCommandSubtype(const COMMAND_SUBTYPE value) {
+        TheStructure.Common.CommandSubtype = value;
+    }
+    inline COMMAND_SUBTYPE getCommandSubtype() const {
+        return static_cast<COMMAND_SUBTYPE>(TheStructure.Common.CommandSubtype);
+    }
+    inline void setCommandType(const COMMAND_TYPE value) {
+        TheStructure.Common.CommandType = value;
+    }
+    inline COMMAND_TYPE getCommandType() const {
+        return static_cast<COMMAND_TYPE>(TheStructure.Common.CommandType);
     }
     inline void setZPassAsyncComputeThreadLimit(const Z_PASS_ASYNC_COMPUTE_THREAD_LIMIT value) {
         TheStructure.Common.ZPassAsyncComputeThreadLimit = value;
@@ -6992,10 +6976,10 @@ typedef struct tagSTATE_COMPUTE_MODE {
         return static_cast<ASYNC_COMPUTE_THREAD_LIMIT>(TheStructure.Common.AsyncComputeThreadLimit);
     }
     inline void setEnableVariableRegisterSizeAllocationVrt(const bool value) {
-        TheStructure.Common.EnableVariableRegisterSizeAllocation_Vrt = value;
+        TheStructure.Common.EnableVariableRegisterSizeAllocationVrt = value;
     }
     inline bool getEnableVariableRegisterSizeAllocationVrt() const {
-        return TheStructure.Common.EnableVariableRegisterSizeAllocation_Vrt;
+        return TheStructure.Common.EnableVariableRegisterSizeAllocationVrt;
     }
     inline void setEnablePipelinedEuThreadArbitration(const bool value) {
         TheStructure.Common.EnablePipelinedEuThreadArbitration = value;
@@ -7016,7 +7000,7 @@ typedef struct tagSTATE_COMPUTE_MODE {
         return TheStructure.Common.LargeGrfMode;
     }
     inline void setMask1(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xffff);
+        UNRECOVERABLE_IF(value > 0xffffu);
         TheStructure.Common.Mask1 = value;
     }
     inline uint32_t getMask1() const {
@@ -7046,23 +7030,23 @@ typedef struct tagSTATE_COMPUTE_MODE {
     inline UAV_COHERENCY_MODE getUavCoherencyMode() const {
         return static_cast<UAV_COHERENCY_MODE>(TheStructure.Common.UavCoherencyMode);
     }
-    inline void setOutOfBoundariesInTranslationExceptionEnable(const bool value) { // patched
+    inline void setOutOfBoundariesInTranslationExceptionEnable(const bool value) {
         TheStructure.Common.OutOfBoundariesInTranslationExceptionEnable = value;
     }
-    inline bool getOutOfBoundariesInTranslationExceptionEnable() const { // patched
+    inline bool getOutOfBoundariesInTranslationExceptionEnable() const {
         return TheStructure.Common.OutOfBoundariesInTranslationExceptionEnable;
     }
-    inline void setPageFaultExceptionEnable(const bool value) { // patched
+    inline void setPageFaultExceptionEnable(const bool value) {
         TheStructure.Common.PageFaultExceptionEnable = value;
     }
-    inline bool getPageFaultExceptionEnable() const { // patched
+    inline bool getPageFaultExceptionEnable() const {
         return TheStructure.Common.PageFaultExceptionEnable;
     }
-    inline void setSystemMemoryReadFenceEnable(const bool value) { // patched
+    inline void setSystemMemoryReadFenceEnable(const bool value) {
         TheStructure.Common.SystemMemoryReadFenceEnable = value;
     }
-    inline SYSTEM_MEMORY_READ_FENCE_ENABLE getSystemMemoryReadFenceEnable() const {
-        return static_cast<SYSTEM_MEMORY_READ_FENCE_ENABLE>(TheStructure.Common.SystemMemoryReadFenceEnable);
+    inline bool getSystemMemoryReadFenceEnable() const {
+        return TheStructure.Common.SystemMemoryReadFenceEnable;
     }
     inline void setTdlRowArbitrationPolicy(const TDL_ROW_ARBITRATION_POLICY value) {
         TheStructure.Common.TdlRowArbitrationPolicy = value;
@@ -7070,26 +7054,26 @@ typedef struct tagSTATE_COMPUTE_MODE {
     inline TDL_ROW_ARBITRATION_POLICY getTdlRowArbitrationPolicy() const {
         return static_cast<TDL_ROW_ARBITRATION_POLICY>(TheStructure.Common.TdlRowArbitrationPolicy);
     }
-    inline void setMemoryExceptionEnable(const bool value) { // patched
+    inline void setMemoryExceptionEnable(const bool value) {
         TheStructure.Common.MemoryExceptionEnable = value;
     }
-    inline bool getMemoryExceptionEnable() const { // patched
+    inline bool getMemoryExceptionEnable() const {
         return TheStructure.Common.MemoryExceptionEnable;
     }
-    inline void setEnableBreakpoints(const bool value) { // patched
+    inline void setEnableBreakpoints(const bool value) {
         TheStructure.Common.EnableBreakpoints = value;
     }
-    inline bool getEnableBreakpoints() const { // patched
+    inline bool getEnableBreakpoints() const {
         return TheStructure.Common.EnableBreakpoints;
     }
-    inline void setEnableForceExternalHaltAndForceException(const bool value) { // patched
+    inline void setEnableForceExternalHaltAndForceException(const bool value) {
         TheStructure.Common.EnableForceExternalHaltAndForceException = value;
     }
-    inline bool getEnableForceExternalHaltAndForceException() const { // patched
+    inline bool getEnableForceExternalHaltAndForceException() const {
         return TheStructure.Common.EnableForceExternalHaltAndForceException;
     }
     inline void setMask2(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xffff);
+        UNRECOVERABLE_IF(value > 0xffffu);
         TheStructure.Common.Mask2 = value;
     }
     inline uint32_t getMask2() const {
@@ -7524,7 +7508,7 @@ typedef struct tagSTATE_SIP {
             uint32_t _3DCommandOpcode : BITFIELD_RANGE(24, 26);
             uint32_t CommandSubtype : BITFIELD_RANGE(27, 28);
             uint32_t CommandType : BITFIELD_RANGE(29, 31);
-            // DWORD 1
+            // DWORD 1-2
             uint64_t Reserved_32 : BITFIELD_RANGE(0, 3);
             uint64_t SystemInstructionPointer : BITFIELD_RANGE(4, 63);
         } Common;
@@ -7545,12 +7529,15 @@ typedef struct tagSTATE_SIP {
     typedef enum tagCOMMAND_TYPE {
         COMMAND_TYPE_GFXPIPE = 0x3,
     } COMMAND_TYPE;
+    typedef enum tagSYSTEMINSTRUCTIONPOINTER {
+        SYSTEMINSTRUCTIONPOINTER_BIT_SHIFT = 0x4,
+        SYSTEMINSTRUCTIONPOINTER_ALIGN_SIZE = 0x10,
+    } SYSTEMINSTRUCTIONPOINTER;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_DWORD_COUNT_N;
         TheStructure.Common._3DCommandSubOpcode = _3D_COMMAND_SUB_OPCODE_STATE_SIP;
         TheStructure.Common._3DCommandOpcode = _3D_COMMAND_OPCODE_GFXPIPE_NONPIPELINED;
-        TheStructure.Common.CommandSubtype = COMMAND_SUBTYPE_GFXPIPE_COMMON;
         TheStructure.Common.CommandType = COMMAND_TYPE_GFXPIPE;
     }
     static tagSTATE_SIP sInit() {
@@ -7562,12 +7549,31 @@ typedef struct tagSTATE_SIP {
         UNRECOVERABLE_IF(index >= 3);
         return TheStructure.RawData[index];
     }
-    typedef enum tagSYSTEMINSTRUCTIONPOINTER {
-        SYSTEMINSTRUCTIONPOINTER_BIT_SHIFT = 0x4,
-        SYSTEMINSTRUCTIONPOINTER_ALIGN_SIZE = 0x10,
-    } SYSTEMINSTRUCTIONPOINTER;
+    inline void set3DCommandSubOpcode(const _3D_COMMAND_SUB_OPCODE value) {
+        TheStructure.Common._3DCommandSubOpcode = value;
+    }
+    inline _3D_COMMAND_SUB_OPCODE get3DCommandSubOpcode() const {
+        return static_cast<_3D_COMMAND_SUB_OPCODE>(TheStructure.Common._3DCommandSubOpcode);
+    }
+    inline void set3DCommandOpcode(const _3D_COMMAND_OPCODE value) {
+        TheStructure.Common._3DCommandOpcode = value;
+    }
+    inline _3D_COMMAND_OPCODE get3DCommandOpcode() const {
+        return static_cast<_3D_COMMAND_OPCODE>(TheStructure.Common._3DCommandOpcode);
+    }
+    inline void setCommandSubtype(const COMMAND_SUBTYPE value) {
+        TheStructure.Common.CommandSubtype = value;
+    }
+    inline COMMAND_SUBTYPE getCommandSubtype() const {
+        return static_cast<COMMAND_SUBTYPE>(TheStructure.Common.CommandSubtype);
+    }
+    inline void setCommandType(const COMMAND_TYPE value) {
+        TheStructure.Common.CommandType = value;
+    }
+    inline COMMAND_TYPE getCommandType() const {
+        return static_cast<COMMAND_TYPE>(TheStructure.Common.CommandType);
+    }
     inline void setSystemInstructionPointer(const uint64_t value) {
-        UNRECOVERABLE_IF(value > 0xffffffffffffffffL);
         TheStructure.Common.SystemInstructionPointer = value >> SYSTEMINSTRUCTIONPOINTER_BIT_SHIFT;
     }
     inline uint64_t getSystemInstructionPointer() const {
@@ -7643,7 +7649,7 @@ typedef struct tagSTATE_CONTEXT_DATA_BASE_ADDRESS {
             uint32_t _3DCommandOpcode : BITFIELD_RANGE(24, 26);
             uint32_t CommandSubtype : BITFIELD_RANGE(27, 28);
             uint32_t CommandType : BITFIELD_RANGE(29, 31);
-            // DWORD 1
+            // DWORD 1-2
             uint64_t Reserved_32 : BITFIELD_RANGE(0, 11);
             uint64_t ContextDataBaseAddress : BITFIELD_RANGE(12, 63);
         } Common;
@@ -7659,17 +7665,20 @@ typedef struct tagSTATE_CONTEXT_DATA_BASE_ADDRESS {
         _3D_COMMAND_OPCODE_GFXPIPE_NONPIPELINED = 0x1,
     } _3D_COMMAND_OPCODE;
     typedef enum tagCOMMAND_SUBTYPE {
-        COMMAND_SUBTYPE_GFXPIPE_COMMON_ = 0x0,
+        COMMAND_SUBTYPE_GFXPIPE_COMMON = 0x0,
     } COMMAND_SUBTYPE;
     typedef enum tagCOMMAND_TYPE {
         COMMAND_TYPE_GFXPIPE = 0x3,
     } COMMAND_TYPE;
+    typedef enum tagCONTEXTDATABASEADDRESS {
+        CONTEXTDATABASEADDRESS_BIT_SHIFT = 0xc,
+        CONTEXTDATABASEADDRESS_ALIGN_SIZE = 0x1000,
+    } CONTEXTDATABASEADDRESS;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_LENGTH_1;
         TheStructure.Common._3DCommandSubOpcode = _3D_COMMAND_SUB_OPCODE_STATE_CONTEXT_DATA_BASE_ADDRESS;
         TheStructure.Common._3DCommandOpcode = _3D_COMMAND_OPCODE_GFXPIPE_NONPIPELINED;
-        TheStructure.Common.CommandSubtype = COMMAND_SUBTYPE_GFXPIPE_COMMON_;
         TheStructure.Common.CommandType = COMMAND_TYPE_GFXPIPE;
     }
     static tagSTATE_CONTEXT_DATA_BASE_ADDRESS sInit() {
@@ -7681,12 +7690,31 @@ typedef struct tagSTATE_CONTEXT_DATA_BASE_ADDRESS {
         UNRECOVERABLE_IF(index >= 3);
         return TheStructure.RawData[index];
     }
-    typedef enum tagCONTEXTDATABASEADDRESS {
-        CONTEXTDATABASEADDRESS_BIT_SHIFT = 0xc,
-        CONTEXTDATABASEADDRESS_ALIGN_SIZE = 0x1000,
-    } CONTEXTDATABASEADDRESS;
+    inline void set3DCommandSubOpcode(const _3D_COMMAND_SUB_OPCODE value) {
+        TheStructure.Common._3DCommandSubOpcode = value;
+    }
+    inline _3D_COMMAND_SUB_OPCODE get3DCommandSubOpcode() const {
+        return static_cast<_3D_COMMAND_SUB_OPCODE>(TheStructure.Common._3DCommandSubOpcode);
+    }
+    inline void set3DCommandOpcode(const _3D_COMMAND_OPCODE value) {
+        TheStructure.Common._3DCommandOpcode = value;
+    }
+    inline _3D_COMMAND_OPCODE get3DCommandOpcode() const {
+        return static_cast<_3D_COMMAND_OPCODE>(TheStructure.Common._3DCommandOpcode);
+    }
+    inline void setCommandSubtype(const COMMAND_SUBTYPE value) {
+        TheStructure.Common.CommandSubtype = value;
+    }
+    inline COMMAND_SUBTYPE getCommandSubtype() const {
+        return static_cast<COMMAND_SUBTYPE>(TheStructure.Common.CommandSubtype);
+    }
+    inline void setCommandType(const COMMAND_TYPE value) {
+        TheStructure.Common.CommandType = value;
+    }
+    inline COMMAND_TYPE getCommandType() const {
+        return static_cast<COMMAND_TYPE>(TheStructure.Common.CommandType);
+    }
     inline void setContextDataBaseAddress(const uint64_t value) {
-        UNRECOVERABLE_IF(value > 0xffffffffffffffffL);
         TheStructure.Common.ContextDataBaseAddress = value >> CONTEXTDATABASEADDRESS_BIT_SHIFT;
     }
     inline uint64_t getContextDataBaseAddress() const {

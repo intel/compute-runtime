@@ -36,7 +36,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenCommandContainerWhenN
 
     auto cmd = genCmdCast<STATE_COMPUTE_MODE *>(*itorCmd);
 
-    EXPECT_FALSE(cmd->getLargeGrfMode());
+    if constexpr (requires { cmd->getLargeGrfMode(); }) {
+        EXPECT_FALSE(cmd->getLargeGrfMode());
+    }
 }
 
 HWTEST2_F(CommandEncodeStatesTest, givenCommandContainerWhenAdjustPipelineSelectCalledThenCommandHasGpgpuType, IsXeCore) {

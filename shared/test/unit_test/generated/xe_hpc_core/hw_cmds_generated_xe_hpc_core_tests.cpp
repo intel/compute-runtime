@@ -2759,9 +2759,9 @@ XE_HPC_CORETEST_F(CommandsXeHpcCoreTest, GivenStateComputeModeWhenInitCalledThen
     EXPECT_EQ(STATE_COMPUTE_MODE::COMMAND_SUBTYPE_GFXPIPE_COMMON, cmd.TheStructure.Common.CommandSubtype);
     EXPECT_EQ(STATE_COMPUTE_MODE::COMMAND_TYPE_GFXPIPE, cmd.TheStructure.Common.CommandType);
     EXPECT_EQ(STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_DISABLED, cmd.TheStructure.Common.ForceNonCoherent);
-    EXPECT_EQ(STATE_COMPUTE_MODE::FAST_CLEAR_DISABLED_ON_COMPRESSED_SURFACE_ENABLED, cmd.TheStructure.Common.FastClearDisabledOnCompressedSurface);
-    EXPECT_EQ(STATE_COMPUTE_MODE::DISABLE_SLM_READ_MERGE_OPTIMIZATION_ENABLED, cmd.TheStructure.Common.DisableSlmReadMergeOptimization);
-    EXPECT_EQ(STATE_COMPUTE_MODE::DISABLE_ATOMIC_ON_CLEAR_DATA_ENABLE, cmd.TheStructure.Common.DisableAtomicOnClearData);
+    EXPECT_FALSE(cmd.TheStructure.Common.FastClearDisabledOnCompressedSurface);
+    EXPECT_FALSE(cmd.TheStructure.Common.DisableSlmReadMergeOptimization);
+    EXPECT_FALSE(cmd.TheStructure.Common.DisableAtomicOnClearData);
     EXPECT_EQ(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_HW_DEFAULT, cmd.TheStructure.Common.EuThreadSchedulingMode); // patched
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.LargeGrfMode);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.Mask);
@@ -2781,23 +2781,23 @@ XE_HPC_CORETEST_F(CommandsXeHpcCoreTest, GivenStateComputeModeWhenSetterUsedThen
     cmd.setForceNonCoherent(STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT);
     EXPECT_EQ(STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT, cmd.getForceNonCoherent());
 
-    cmd.setFastClearDisabledOnCompressedSurface(STATE_COMPUTE_MODE::FAST_CLEAR_DISABLED_ON_COMPRESSED_SURFACE_ENABLED);
-    EXPECT_EQ(STATE_COMPUTE_MODE::FAST_CLEAR_DISABLED_ON_COMPRESSED_SURFACE_ENABLED, cmd.getFastClearDisabledOnCompressedSurface());
+    cmd.setFastClearDisabledOnCompressedSurface(false);
+    EXPECT_FALSE(cmd.getFastClearDisabledOnCompressedSurface());
 
-    cmd.setFastClearDisabledOnCompressedSurface(STATE_COMPUTE_MODE::FAST_CLEAR_DISABLED_ON_COMPRESSED_SURFACE_DISABLED);
-    EXPECT_EQ(STATE_COMPUTE_MODE::FAST_CLEAR_DISABLED_ON_COMPRESSED_SURFACE_DISABLED, cmd.getFastClearDisabledOnCompressedSurface());
+    cmd.setFastClearDisabledOnCompressedSurface(true);
+    EXPECT_TRUE(cmd.getFastClearDisabledOnCompressedSurface());
 
-    cmd.setDisableSlmReadMergeOptimization(STATE_COMPUTE_MODE::DISABLE_SLM_READ_MERGE_OPTIMIZATION_ENABLED);
-    EXPECT_EQ(STATE_COMPUTE_MODE::DISABLE_SLM_READ_MERGE_OPTIMIZATION_ENABLED, cmd.getDisableSlmReadMergeOptimization());
+    cmd.setDisableSlmReadMergeOptimization(false);
+    EXPECT_FALSE(cmd.getDisableSlmReadMergeOptimization());
 
-    cmd.setDisableSlmReadMergeOptimization(STATE_COMPUTE_MODE::DISABLE_SLM_READ_MERGE_OPTIMIZATION_DISABLED);
-    EXPECT_EQ(STATE_COMPUTE_MODE::DISABLE_SLM_READ_MERGE_OPTIMIZATION_DISABLED, cmd.getDisableSlmReadMergeOptimization());
+    cmd.setDisableSlmReadMergeOptimization(true);
+    EXPECT_TRUE(cmd.getDisableSlmReadMergeOptimization());
 
-    cmd.setDisableAtomicOnClearData(STATE_COMPUTE_MODE::DISABLE_ATOMIC_ON_CLEAR_DATA_ENABLE);
-    EXPECT_EQ(STATE_COMPUTE_MODE::DISABLE_ATOMIC_ON_CLEAR_DATA_ENABLE, cmd.getDisableAtomicOnClearData());
+    cmd.setDisableAtomicOnClearData(false);
+    EXPECT_FALSE(cmd.getDisableAtomicOnClearData());
 
-    cmd.setDisableAtomicOnClearData(STATE_COMPUTE_MODE::DISABLE_ATOMIC_ON_CLEAR_DATA_DISABLE);
-    EXPECT_EQ(STATE_COMPUTE_MODE::DISABLE_ATOMIC_ON_CLEAR_DATA_DISABLE, cmd.getDisableAtomicOnClearData());
+    cmd.setDisableAtomicOnClearData(true);
+    EXPECT_TRUE(cmd.getDisableAtomicOnClearData());
 
     cmd.setEuThreadSchedulingMode(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_HW_DEFAULT);              // patched
     EXPECT_EQ(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_HW_DEFAULT, cmd.getEuThreadSchedulingMode()); // patched
@@ -2816,10 +2816,10 @@ XE_HPC_CORETEST_F(CommandsXeHpcCoreTest, GivenStateComputeModeWhenSetterUsedThen
     cmd.setLargeGrfMode(0x1u);
     EXPECT_EQ(0x1u, cmd.getLargeGrfMode());
 
-    cmd.setMaskBits(0x0u);                 // patched
-    EXPECT_EQ(0x0u, cmd.getMaskBits());    // patched
-    cmd.setMaskBits(0xffffu);              // patched
-    EXPECT_EQ(0xffffu, cmd.getMaskBits()); // patched
+    cmd.setMask(0x0u);
+    EXPECT_EQ(0x0u, cmd.getMask());
+    cmd.setMask(0xffffu);
+    EXPECT_EQ(0xffffu, cmd.getMask());
 }
 
 XE_HPC_CORETEST_F(CommandsXeHpcCoreTest, GivenMemSetWhenInitCalledThenFieldsSetToDefault) {

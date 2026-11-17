@@ -262,7 +262,7 @@ HWTEST2_F(XeLpgProductHelperTests, whenSetForceNonCoherentThenNothingChanged, Is
 
     productHelper->setForceNonCoherent(&stateComputeMode);
     EXPECT_EQ(FORCE_NON_COHERENT::FORCE_NON_COHERENT_FORCE_DISABLED, stateComputeMode.getForceNonCoherent());
-    EXPECT_EQ(0u, stateComputeMode.getMaskBits());
+    EXPECT_EQ(0u, stateComputeMode.getMask());
 }
 
 HWTEST2_F(XeLpgProductHelperTests, givenCompilerProductHelperWhenGetDefaultHwIpVersionThenCorrectValueIsSet, IsXeLpg) {

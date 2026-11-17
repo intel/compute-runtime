@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -61,8 +61,8 @@ HWTEST2_F(ComputeModeRequirements, GivenProgramExtendedPipeControlPriorToNonPipe
     EXPECT_FALSE(pipeControlCmd->getDcFlushEnable());
 
     auto stateComputeModeCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(ptrOffset(stream.getCpuBase(), sizeof(PIPE_CONTROL)));
-    EXPECT_TRUE(isValueSet(stateComputeModeCmd->getMaskBits(), expectedBitsMask));
-    expectedScmCmd.setMaskBits(stateComputeModeCmd->getMaskBits());
+    EXPECT_TRUE(isValueSet(stateComputeModeCmd->getMask(), expectedBitsMask));
+    expectedScmCmd.setMask(stateComputeModeCmd->getMask());
     EXPECT_TRUE(memcmp(&expectedScmCmd, stateComputeModeCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
 }
 
@@ -109,8 +109,8 @@ HWTEST2_F(ComputeModeRequirements, GivenMultipleCCSEnabledSetupThenCorrectComman
     EXPECT_FALSE(pipeControlCmd->getDcFlushEnable());
 
     auto stateComputeModeCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(ptrOffset(stream.getCpuBase(), sizeof(PIPE_CONTROL)));
-    EXPECT_TRUE(isValueSet(stateComputeModeCmd->getMaskBits(), expectedBitsMask));
-    expectedScmCmd.setMaskBits(stateComputeModeCmd->getMaskBits());
+    EXPECT_TRUE(isValueSet(stateComputeModeCmd->getMask(), expectedBitsMask));
+    expectedScmCmd.setMask(stateComputeModeCmd->getMask());
     EXPECT_TRUE(memcmp(&expectedScmCmd, stateComputeModeCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
 }
 
@@ -161,8 +161,8 @@ HWTEST2_F(ComputeModeRequirements, GivenSingleCCSEnabledSetupThenCorrectCommands
     EXPECT_FALSE(pipeControlCmd->getDcFlushEnable());
 
     auto stateComputeModeCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(ptrOffset(stream.getCpuBase(), sizeof(PIPE_CONTROL)));
-    EXPECT_TRUE(isValueSet(stateComputeModeCmd->getMaskBits(), expectedBitsMask));
-    expectedScmCmd.setMaskBits(stateComputeModeCmd->getMaskBits());
+    EXPECT_TRUE(isValueSet(stateComputeModeCmd->getMask(), expectedBitsMask));
+    expectedScmCmd.setMask(stateComputeModeCmd->getMask());
     EXPECT_TRUE(memcmp(&expectedScmCmd, stateComputeModeCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
 }
 

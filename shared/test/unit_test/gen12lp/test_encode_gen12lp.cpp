@@ -25,7 +25,7 @@ GEN12LPTEST_F(CommandEncodeGen12LpTest, whenProgrammingStateComputeModeThenPrope
     auto pLinearStream = std::make_unique<LinearStream>(buffer, sizeof(buffer));
     EncodeComputeMode<FamilyType>::programComputeModeCommand(*pLinearStream, properties, rootDeviceEnvironment);
     auto pScm = reinterpret_cast<STATE_COMPUTE_MODE *>(pLinearStream->getCpuBase());
-    EXPECT_EQ(FamilyType::stateComputeModeForceNonCoherentMask, pScm->getMaskBits());
+    EXPECT_EQ(FamilyType::stateComputeModeForceNonCoherentMask, pScm->getMask());
     EXPECT_EQ(STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT, pScm->getForceNonCoherent());
 }
 

@@ -82,7 +82,7 @@ XE_HPG_CORETEST_F(ComputeModeRequirementsXeHpgCore, GivenVariousSettingsWhenComp
 
         auto expectedFields = FamilyType::stateComputeModeZPassAsyncComputeThreadLimitMask |
                               FamilyType::stateComputeModePixelAsyncComputeThreadLimitMask;
-        EXPECT_TRUE(isValueSet(pScmCmd->getMaskBits(), expectedFields));
+        EXPECT_TRUE(isValueSet(pScmCmd->getMask(), expectedFields));
     }
 
     debugManager.flags.ForceZPassAsyncComputeThreadLimit.set(-1);
@@ -101,8 +101,8 @@ XE_HPG_CORETEST_F(ComputeModeRequirementsXeHpgCore, GivenVariousSettingsWhenComp
     }
     EXPECT_EQ(STATE_COMPUTE_MODE::Z_PASS_ASYNC_COMPUTE_THREAD_LIMIT_MAX_60, pScmCmd->getZPassAsyncComputeThreadLimit());
     EXPECT_EQ(STATE_COMPUTE_MODE::PIXEL_ASYNC_COMPUTE_THREAD_LIMIT_DISABLED, pScmCmd->getPixelAsyncComputeThreadLimit());
-    EXPECT_FALSE(isValueSet(pScmCmd->getMaskBits(), FamilyType::stateComputeModeZPassAsyncComputeThreadLimitMask));
-    EXPECT_FALSE(isValueSet(pScmCmd->getMaskBits(), FamilyType::stateComputeModePixelAsyncComputeThreadLimitMask));
+    EXPECT_FALSE(isValueSet(pScmCmd->getMask(), FamilyType::stateComputeModeZPassAsyncComputeThreadLimitMask));
+    EXPECT_FALSE(isValueSet(pScmCmd->getMask(), FamilyType::stateComputeModePixelAsyncComputeThreadLimitMask));
 }
 
 XE_HPG_CORETEST_F(ComputeModeRequirementsXeHpgCore, givenComputeModeCmdSizeWhenLargeGrfModeChangeIsRequiredThenSCMCommandSizeIsCalculated) {

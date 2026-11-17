@@ -5379,10 +5379,10 @@ typedef struct tagCFE_STATE {
             uint32_t Pipeline : BITFIELD_RANGE(27, 28);
             uint32_t CommandType : BITFIELD_RANGE(29, 31);
             // DWORD 1
-            uint64_t Reserved_32 : BITFIELD_RANGE(0, 9);
-            uint64_t ScratchSpaceBuffer : BITFIELD_RANGE(10, 31);
+            uint32_t Reserved_32 : BITFIELD_RANGE(0, 9);
+            uint32_t ScratchSpaceBuffer : BITFIELD_RANGE(10, 31);
             // DWORD 2
-            uint64_t Reserved_64 : BITFIELD_RANGE(32, 63);
+            uint32_t Reserved_64;
             // DWORD 3
             uint32_t StackIdControl : BITFIELD_RANGE(0, 1);
             uint32_t DynamicStackIdControl : BITFIELD_RANGE(2, 2);
@@ -5419,16 +5419,16 @@ typedef struct tagCFE_STATE {
     typedef enum tagCOMMAND_TYPE {
         COMMAND_TYPE_GFXPIPE = 0x3,
     } COMMAND_TYPE;
+    typedef enum tagSCRATCHSPACEBUFFER {
+        SCRATCHSPACEBUFFER_BIT_SHIFT = 0x6,
+        SCRATCHSPACEBUFFER_ALIGN_SIZE = 0x40,
+    } SCRATCHSPACEBUFFER;
     typedef enum tagSTACK_ID_CONTROL {
         STACK_ID_CONTROL_2K = 0x0,
         STACK_ID_CONTROL_1K = 0x1,
         STACK_ID_CONTROL_512 = 0x2,
         STACK_ID_CONTROL_256 = 0x3,
     } STACK_ID_CONTROL;
-    typedef enum tagDYNAMIC_STACK_ID_CONTROL {
-        DYNAMIC_STACK_ID_CONTROL_DISABLED = 0x0,
-        DYNAMIC_STACK_ID_CONTROL_ENABLED = 0x1,
-    } DYNAMIC_STACK_ID_CONTROL;
     typedef enum tagOVER_DISPATCH_CONTROL {
         OVER_DISPATCH_CONTROL_NONE = 0x0,
         OVER_DISPATCH_CONTROL_LOW = 0x1,
@@ -5438,13 +5438,10 @@ typedef struct tagCFE_STATE {
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_DWORD_COUNT_N;
-        TheStructure.Common.CfeSubopcodeVariant = CFE_SUBOPCODE_VARIANT_STANDARD;
-        TheStructure.Common.CfeSubopcode = CFE_SUBOPCODE_CFE_STATE;
         TheStructure.Common.ComputeCommandOpcode = COMPUTE_COMMAND_OPCODE_NEW_CFE_COMMAND;
         TheStructure.Common.Pipeline = PIPELINE_COMPUTE;
         TheStructure.Common.CommandType = COMMAND_TYPE_GFXPIPE;
-        TheStructure.Common.StackIdControl = STACK_ID_CONTROL_2K;
-        TheStructure.Common.DynamicStackIdControl = DYNAMIC_STACK_ID_CONTROL_ENABLED;
+        TheStructure.Common.DynamicStackIdControl = true;
         TheStructure.Common.OverDispatchControl = OVER_DISPATCH_CONTROL_NORMAL;
     }
     static tagCFE_STATE sInit() {
@@ -5474,15 +5471,23 @@ typedef struct tagCFE_STATE {
     inline COMPUTE_COMMAND_OPCODE getComputeCommandOpcode() const {
         return static_cast<COMPUTE_COMMAND_OPCODE>(TheStructure.Common.ComputeCommandOpcode);
     }
-    typedef enum tagSCRATCHSPACEBUFFER {
-        SCRATCHSPACEBUFFER_BIT_SHIFT = 0x6,
-        SCRATCHSPACEBUFFER_ALIGN_SIZE = 0x40,
-    } SCRATCHSPACEBUFFER;
-    inline void setScratchSpaceBuffer(const uint64_t value) {
-        UNRECOVERABLE_IF(value > 0xfffffff);
-        TheStructure.Common.ScratchSpaceBuffer = static_cast<uint32_t>(value) >> SCRATCHSPACEBUFFER_BIT_SHIFT;
+    inline void setPipeline(const PIPELINE value) {
+        TheStructure.Common.Pipeline = value;
     }
-    inline uint64_t getScratchSpaceBuffer() const {
+    inline PIPELINE getPipeline() const {
+        return static_cast<PIPELINE>(TheStructure.Common.Pipeline);
+    }
+    inline void setCommandType(const COMMAND_TYPE value) {
+        TheStructure.Common.CommandType = value;
+    }
+    inline COMMAND_TYPE getCommandType() const {
+        return static_cast<COMMAND_TYPE>(TheStructure.Common.CommandType);
+    }
+    inline void setScratchSpaceBuffer(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0xfffffffu);
+        TheStructure.Common.ScratchSpaceBuffer = value >> SCRATCHSPACEBUFFER_BIT_SHIFT;
+    }
+    inline uint32_t getScratchSpaceBuffer() const {
         return TheStructure.Common.ScratchSpaceBuffer << SCRATCHSPACEBUFFER_BIT_SHIFT;
     }
     inline void setStackIdControl(const STACK_ID_CONTROL value) {
@@ -5491,11 +5496,11 @@ typedef struct tagCFE_STATE {
     inline STACK_ID_CONTROL getStackIdControl() const {
         return static_cast<STACK_ID_CONTROL>(TheStructure.Common.StackIdControl);
     }
-    inline void setDynamicStackIdControl(const DYNAMIC_STACK_ID_CONTROL value) {
+    inline void setDynamicStackIdControl(const bool value) {
         TheStructure.Common.DynamicStackIdControl = value;
     }
-    inline DYNAMIC_STACK_ID_CONTROL getDynamicStackIdControl() const {
-        return static_cast<DYNAMIC_STACK_ID_CONTROL>(TheStructure.Common.DynamicStackIdControl);
+    inline bool getDynamicStackIdControl() const {
+        return TheStructure.Common.DynamicStackIdControl;
     }
     inline void setComputeOverdispatchDisable(const bool value) {
         TheStructure.Common.ComputeOverdispatchDisable = value;
@@ -5522,7 +5527,7 @@ typedef struct tagCFE_STATE {
         return static_cast<OVER_DISPATCH_CONTROL>(TheStructure.Common.OverDispatchControl);
     }
     inline void setMaximumNumberOfThreads(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xffff);
+        UNRECOVERABLE_IF(value > 0xffffu);
         TheStructure.Common.MaximumNumberOfThreads = value;
     }
     inline uint32_t getMaximumNumberOfThreads() const {
@@ -5535,7 +5540,7 @@ typedef struct tagCFE_STATE {
         return TheStructure.Common.ResumeIndicatorDebugkey;
     }
     inline void setWalkerNumberDebugkey(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x3ff);
+        UNRECOVERABLE_IF(value > 0x3ffu);
         TheStructure.Common.WalkerNumberDebugkey = value;
     }
     inline uint32_t getWalkerNumberDebugkey() const {
@@ -6440,7 +6445,7 @@ typedef struct tagSTATE_COMPUTE_MODE {
             uint32_t NpZAsyncThrottleSettings : BITFIELD_RANGE(3, 4);
             uint32_t Reserved_37 : BITFIELD_RANGE(5, 6);
             uint32_t AsyncComputeThreadLimit : BITFIELD_RANGE(7, 9);
-            uint32_t EnableVariableRegisterSizeAllocation_Vrt : BITFIELD_RANGE(10, 10);
+            uint32_t EnableVariableRegisterSizeAllocationVrt : BITFIELD_RANGE(10, 10);
             uint32_t Reserved_43 : BITFIELD_RANGE(11, 11);
             uint32_t EnablePipelinedEuThreadArbitration : BITFIELD_RANGE(12, 12);
             uint32_t EuThreadSchedulingMode : BITFIELD_RANGE(13, 14);
@@ -6525,15 +6530,7 @@ typedef struct tagSTATE_COMPUTE_MODE {
         TheStructure.Common.DwordLength = DWORD_LENGTH_EXCLUDES_DWORD_0_1;
         TheStructure.Common._3DCommandSubOpcode = _3D_COMMAND_SUB_OPCODE_STATE_COMPUTE_MODE;
         TheStructure.Common._3DCommandOpcode = _3D_COMMAND_OPCODE_GFXPIPE_NONPIPELINED;
-        TheStructure.Common.CommandSubtype = COMMAND_SUBTYPE_GFXPIPE_COMMON;
         TheStructure.Common.CommandType = COMMAND_TYPE_GFXPIPE;
-        TheStructure.Common.ZPassAsyncComputeThreadLimit = Z_PASS_ASYNC_COMPUTE_THREAD_LIMIT_MAX_60;
-        TheStructure.Common.AsyncComputeThreadLimit = ASYNC_COMPUTE_THREAD_LIMIT_DISABLED;
-        TheStructure.Common.EuThreadSchedulingMode = EU_THREAD_SCHEDULING_MODE_HW_DEFAULT;
-        TheStructure.Common.MidthreadPreemptionDelayTimer = MIDTHREAD_PREEMPTION_DELAY_TIMER_MTP_TIMER_VAL_0;
-        TheStructure.Common.MidthreadPreemptionOverdispatchThreadGroupCount = MIDTHREAD_PREEMPTION_OVERDISPATCH_THREAD_GROUP_COUNT_OD_TG_M2;
-        TheStructure.Common.MidthreadPreemptionOverdispatchTestMode = MIDTHREAD_PREEMPTION_OVERDISPATCH_TEST_MODE_REGULAR;
-        TheStructure.Common.UavCoherencyMode = UAV_COHERENCY_MODE_DRAIN_DATAPORT_MODE;
     }
     static tagSTATE_COMPUTE_MODE sInit() {
         STATE_COMPUTE_MODE state;
@@ -6543,6 +6540,30 @@ typedef struct tagSTATE_COMPUTE_MODE {
     inline uint32_t &getRawData(const uint32_t index) {
         UNRECOVERABLE_IF(index >= 3);
         return TheStructure.RawData[index];
+    }
+    inline void set3DCommandSubOpcode(const _3D_COMMAND_SUB_OPCODE value) {
+        TheStructure.Common._3DCommandSubOpcode = value;
+    }
+    inline _3D_COMMAND_SUB_OPCODE get3DCommandSubOpcode() const {
+        return static_cast<_3D_COMMAND_SUB_OPCODE>(TheStructure.Common._3DCommandSubOpcode);
+    }
+    inline void set3DCommandOpcode(const _3D_COMMAND_OPCODE value) {
+        TheStructure.Common._3DCommandOpcode = value;
+    }
+    inline _3D_COMMAND_OPCODE get3DCommandOpcode() const {
+        return static_cast<_3D_COMMAND_OPCODE>(TheStructure.Common._3DCommandOpcode);
+    }
+    inline void setCommandSubtype(const COMMAND_SUBTYPE value) {
+        TheStructure.Common.CommandSubtype = value;
+    }
+    inline COMMAND_SUBTYPE getCommandSubtype() const {
+        return static_cast<COMMAND_SUBTYPE>(TheStructure.Common.CommandSubtype);
+    }
+    inline void setCommandType(const COMMAND_TYPE value) {
+        TheStructure.Common.CommandType = value;
+    }
+    inline COMMAND_TYPE getCommandType() const {
+        return static_cast<COMMAND_TYPE>(TheStructure.Common.CommandType);
     }
     inline void setZPassAsyncComputeThreadLimit(const Z_PASS_ASYNC_COMPUTE_THREAD_LIMIT value) {
         TheStructure.Common.ZPassAsyncComputeThreadLimit = value;
@@ -6563,10 +6584,10 @@ typedef struct tagSTATE_COMPUTE_MODE {
         return static_cast<ASYNC_COMPUTE_THREAD_LIMIT>(TheStructure.Common.AsyncComputeThreadLimit);
     }
     inline void setEnableVariableRegisterSizeAllocationVrt(const bool value) {
-        TheStructure.Common.EnableVariableRegisterSizeAllocation_Vrt = value;
+        TheStructure.Common.EnableVariableRegisterSizeAllocationVrt = value;
     }
     inline bool getEnableVariableRegisterSizeAllocationVrt() const {
-        return TheStructure.Common.EnableVariableRegisterSizeAllocation_Vrt;
+        return TheStructure.Common.EnableVariableRegisterSizeAllocationVrt;
     }
     inline void setEnablePipelinedEuThreadArbitration(const bool value) {
         TheStructure.Common.EnablePipelinedEuThreadArbitration = value;
@@ -6587,7 +6608,7 @@ typedef struct tagSTATE_COMPUTE_MODE {
         return TheStructure.Common.LargeGrfMode;
     }
     inline void setMask1(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xffff);
+        UNRECOVERABLE_IF(value > 0xffffu);
         TheStructure.Common.Mask1 = value;
     }
     inline uint32_t getMask1() const {
@@ -6618,7 +6639,7 @@ typedef struct tagSTATE_COMPUTE_MODE {
         return static_cast<UAV_COHERENCY_MODE>(TheStructure.Common.UavCoherencyMode);
     }
     inline void setMask2(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xffff);
+        UNRECOVERABLE_IF(value > 0xffffu);
         TheStructure.Common.Mask2 = value;
     }
     inline uint32_t getMask2() const {
@@ -7135,7 +7156,7 @@ typedef struct tagSTATE_SIP {
             uint32_t _3DCommandOpcode : BITFIELD_RANGE(24, 26);
             uint32_t CommandSubtype : BITFIELD_RANGE(27, 28);
             uint32_t CommandType : BITFIELD_RANGE(29, 31);
-            // DWORD 1
+            // DWORD 1-2
             uint64_t Reserved_32 : BITFIELD_RANGE(0, 3);
             uint64_t SystemInstructionPointer : BITFIELD_RANGE(4, 63);
         } Common;
@@ -7156,12 +7177,15 @@ typedef struct tagSTATE_SIP {
     typedef enum tagCOMMAND_TYPE {
         COMMAND_TYPE_GFXPIPE = 0x3,
     } COMMAND_TYPE;
+    typedef enum tagSYSTEMINSTRUCTIONPOINTER {
+        SYSTEMINSTRUCTIONPOINTER_BIT_SHIFT = 0x4,
+        SYSTEMINSTRUCTIONPOINTER_ALIGN_SIZE = 0x10,
+    } SYSTEMINSTRUCTIONPOINTER;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_DWORD_COUNT_N;
         TheStructure.Common._3DCommandSubOpcode = _3D_COMMAND_SUB_OPCODE_STATE_SIP;
         TheStructure.Common._3DCommandOpcode = _3D_COMMAND_OPCODE_GFXPIPE_NONPIPELINED;
-        TheStructure.Common.CommandSubtype = COMMAND_SUBTYPE_GFXPIPE_COMMON;
         TheStructure.Common.CommandType = COMMAND_TYPE_GFXPIPE;
     }
     static tagSTATE_SIP sInit() {
@@ -7173,12 +7197,31 @@ typedef struct tagSTATE_SIP {
         UNRECOVERABLE_IF(index >= 3);
         return TheStructure.RawData[index];
     }
-    typedef enum tagSYSTEMINSTRUCTIONPOINTER {
-        SYSTEMINSTRUCTIONPOINTER_BIT_SHIFT = 0x4,
-        SYSTEMINSTRUCTIONPOINTER_ALIGN_SIZE = 0x10,
-    } SYSTEMINSTRUCTIONPOINTER;
+    inline void set3DCommandSubOpcode(const _3D_COMMAND_SUB_OPCODE value) {
+        TheStructure.Common._3DCommandSubOpcode = value;
+    }
+    inline _3D_COMMAND_SUB_OPCODE get3DCommandSubOpcode() const {
+        return static_cast<_3D_COMMAND_SUB_OPCODE>(TheStructure.Common._3DCommandSubOpcode);
+    }
+    inline void set3DCommandOpcode(const _3D_COMMAND_OPCODE value) {
+        TheStructure.Common._3DCommandOpcode = value;
+    }
+    inline _3D_COMMAND_OPCODE get3DCommandOpcode() const {
+        return static_cast<_3D_COMMAND_OPCODE>(TheStructure.Common._3DCommandOpcode);
+    }
+    inline void setCommandSubtype(const COMMAND_SUBTYPE value) {
+        TheStructure.Common.CommandSubtype = value;
+    }
+    inline COMMAND_SUBTYPE getCommandSubtype() const {
+        return static_cast<COMMAND_SUBTYPE>(TheStructure.Common.CommandSubtype);
+    }
+    inline void setCommandType(const COMMAND_TYPE value) {
+        TheStructure.Common.CommandType = value;
+    }
+    inline COMMAND_TYPE getCommandType() const {
+        return static_cast<COMMAND_TYPE>(TheStructure.Common.CommandType);
+    }
     inline void setSystemInstructionPointer(const uint64_t value) {
-        UNRECOVERABLE_IF(value > 0xffffffffffffffffL);
         TheStructure.Common.SystemInstructionPointer = value >> SYSTEMINSTRUCTIONPOINTER_BIT_SHIFT;
     }
     inline uint64_t getSystemInstructionPointer() const {
@@ -7254,7 +7297,7 @@ typedef struct tagSTATE_CONTEXT_DATA_BASE_ADDRESS {
             uint32_t _3DCommandOpcode : BITFIELD_RANGE(24, 26);
             uint32_t CommandSubtype : BITFIELD_RANGE(27, 28);
             uint32_t CommandType : BITFIELD_RANGE(29, 31);
-            // DWORD 1
+            // DWORD 1-2
             uint64_t Reserved_32 : BITFIELD_RANGE(0, 11);
             uint64_t ContextDataBaseAddress : BITFIELD_RANGE(12, 63);
         } Common;
@@ -7270,17 +7313,20 @@ typedef struct tagSTATE_CONTEXT_DATA_BASE_ADDRESS {
         _3D_COMMAND_OPCODE_GFXPIPE_NONPIPELINED = 0x1,
     } _3D_COMMAND_OPCODE;
     typedef enum tagCOMMAND_SUBTYPE {
-        COMMAND_SUBTYPE_GFXPIPE_COMMON_ = 0x0,
+        COMMAND_SUBTYPE_GFXPIPE_COMMON = 0x0,
     } COMMAND_SUBTYPE;
     typedef enum tagCOMMAND_TYPE {
         COMMAND_TYPE_GFXPIPE = 0x3,
     } COMMAND_TYPE;
+    typedef enum tagCONTEXTDATABASEADDRESS {
+        CONTEXTDATABASEADDRESS_BIT_SHIFT = 0xc,
+        CONTEXTDATABASEADDRESS_ALIGN_SIZE = 0x1000,
+    } CONTEXTDATABASEADDRESS;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_LENGTH_1;
         TheStructure.Common._3DCommandSubOpcode = _3D_COMMAND_SUB_OPCODE_STATE_CONTEXT_DATA_BASE_ADDRESS;
         TheStructure.Common._3DCommandOpcode = _3D_COMMAND_OPCODE_GFXPIPE_NONPIPELINED;
-        TheStructure.Common.CommandSubtype = COMMAND_SUBTYPE_GFXPIPE_COMMON_;
         TheStructure.Common.CommandType = COMMAND_TYPE_GFXPIPE;
     }
     static tagSTATE_CONTEXT_DATA_BASE_ADDRESS sInit() {
@@ -7292,12 +7338,31 @@ typedef struct tagSTATE_CONTEXT_DATA_BASE_ADDRESS {
         UNRECOVERABLE_IF(index >= 3);
         return TheStructure.RawData[index];
     }
-    typedef enum tagCONTEXTDATABASEADDRESS {
-        CONTEXTDATABASEADDRESS_BIT_SHIFT = 0xc,
-        CONTEXTDATABASEADDRESS_ALIGN_SIZE = 0x1000,
-    } CONTEXTDATABASEADDRESS;
+    inline void set3DCommandSubOpcode(const _3D_COMMAND_SUB_OPCODE value) {
+        TheStructure.Common._3DCommandSubOpcode = value;
+    }
+    inline _3D_COMMAND_SUB_OPCODE get3DCommandSubOpcode() const {
+        return static_cast<_3D_COMMAND_SUB_OPCODE>(TheStructure.Common._3DCommandSubOpcode);
+    }
+    inline void set3DCommandOpcode(const _3D_COMMAND_OPCODE value) {
+        TheStructure.Common._3DCommandOpcode = value;
+    }
+    inline _3D_COMMAND_OPCODE get3DCommandOpcode() const {
+        return static_cast<_3D_COMMAND_OPCODE>(TheStructure.Common._3DCommandOpcode);
+    }
+    inline void setCommandSubtype(const COMMAND_SUBTYPE value) {
+        TheStructure.Common.CommandSubtype = value;
+    }
+    inline COMMAND_SUBTYPE getCommandSubtype() const {
+        return static_cast<COMMAND_SUBTYPE>(TheStructure.Common.CommandSubtype);
+    }
+    inline void setCommandType(const COMMAND_TYPE value) {
+        TheStructure.Common.CommandType = value;
+    }
+    inline COMMAND_TYPE getCommandType() const {
+        return static_cast<COMMAND_TYPE>(TheStructure.Common.CommandType);
+    }
     inline void setContextDataBaseAddress(const uint64_t value) {
-        UNRECOVERABLE_IF(value > 0xffffffffffffffffL);
         TheStructure.Common.ContextDataBaseAddress = value >> CONTEXTDATABASEADDRESS_BIT_SHIFT;
     }
     inline uint64_t getContextDataBaseAddress() const {

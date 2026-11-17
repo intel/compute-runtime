@@ -38,7 +38,7 @@ void testProgrammingStateComputeModeXeLpgWithEnabledWa(ExecutionEnvironment &exe
     EncodeComputeMode<XeHpgCoreFamily>::programComputeModeCommand(*pLinearStream, properties, rootDeviceEnvironment);
     auto pScm = reinterpret_cast<STATE_COMPUTE_MODE *>(pLinearStream->getCpuBase());
     auto expectedMask = XeHpgCoreFamily::stateComputeModeLargeGrfModeMask;
-    EXPECT_EQ(expectedMask, pScm->getMaskBits());
+    EXPECT_EQ(expectedMask, pScm->getMask());
     EXPECT_EQ(STATE_COMPUTE_MODE::PIXEL_ASYNC_COMPUTE_THREAD_LIMIT_DISABLED, pScm->getPixelAsyncComputeThreadLimit());
     EXPECT_EQ(STATE_COMPUTE_MODE::Z_PASS_ASYNC_COMPUTE_THREAD_LIMIT_MAX_60, pScm->getZPassAsyncComputeThreadLimit());
     EXPECT_FALSE(pScm->getLargeGrfMode());
@@ -52,7 +52,7 @@ void testProgrammingStateComputeModeXeLpgWithEnabledWa(ExecutionEnvironment &exe
     pScm = reinterpret_cast<STATE_COMPUTE_MODE *>(pLinearStream->getCpuBase());
     expectedMask |= XeHpgCoreFamily::stateComputeModeZPassAsyncComputeThreadLimitMask |
                     XeHpgCoreFamily::stateComputeModePixelAsyncComputeThreadLimitMask;
-    EXPECT_EQ(expectedMask, pScm->getMaskBits());
+    EXPECT_EQ(expectedMask, pScm->getMask());
     EXPECT_EQ(STATE_COMPUTE_MODE::PIXEL_ASYNC_COMPUTE_THREAD_LIMIT_MAX_2, pScm->getPixelAsyncComputeThreadLimit());
     EXPECT_EQ(STATE_COMPUTE_MODE::Z_PASS_ASYNC_COMPUTE_THREAD_LIMIT_MAX_64, pScm->getZPassAsyncComputeThreadLimit());
     EXPECT_TRUE(pScm->getLargeGrfMode());
@@ -66,7 +66,7 @@ void testProgrammingStateComputeModeXeLpgWithDisabledWa(ExecutionEnvironment &ex
     auto pLinearStream = std::make_unique<LinearStream>(buffer, sizeof(buffer));
     EncodeComputeMode<XeHpgCoreFamily>::programComputeModeCommand(*pLinearStream, properties, rootDeviceEnvironment);
     auto pScm = reinterpret_cast<STATE_COMPUTE_MODE *>(pLinearStream->getCpuBase());
-    EXPECT_EQ(0u, pScm->getMaskBits());
+    EXPECT_EQ(0u, pScm->getMask());
     EXPECT_EQ(STATE_COMPUTE_MODE::PIXEL_ASYNC_COMPUTE_THREAD_LIMIT_DISABLED, pScm->getPixelAsyncComputeThreadLimit());
     EXPECT_EQ(STATE_COMPUTE_MODE::Z_PASS_ASYNC_COMPUTE_THREAD_LIMIT_MAX_60, pScm->getZPassAsyncComputeThreadLimit());
     EXPECT_FALSE(pScm->getLargeGrfMode());
@@ -78,7 +78,7 @@ void testProgrammingStateComputeModeXeLpgWithDisabledWa(ExecutionEnvironment &ex
     pLinearStream = std::make_unique<LinearStream>(buffer, sizeof(buffer));
     EncodeComputeMode<XeHpgCoreFamily>::programComputeModeCommand(*pLinearStream, properties, rootDeviceEnvironment);
     pScm = reinterpret_cast<STATE_COMPUTE_MODE *>(pLinearStream->getCpuBase());
-    EXPECT_EQ(0u, pScm->getMaskBits());
+    EXPECT_EQ(0u, pScm->getMask());
     EXPECT_EQ(STATE_COMPUTE_MODE::PIXEL_ASYNC_COMPUTE_THREAD_LIMIT_DISABLED, pScm->getPixelAsyncComputeThreadLimit());
     EXPECT_EQ(STATE_COMPUTE_MODE::Z_PASS_ASYNC_COMPUTE_THREAD_LIMIT_MAX_60, pScm->getZPassAsyncComputeThreadLimit());
     EXPECT_FALSE(pScm->getLargeGrfMode());
@@ -92,7 +92,7 @@ void testProgrammingStateComputeModeXeLpgWithDisabledWa(ExecutionEnvironment &ex
     pScm = reinterpret_cast<STATE_COMPUTE_MODE *>(pLinearStream->getCpuBase());
     auto expectedMask = XeHpgCoreFamily::stateComputeModeZPassAsyncComputeThreadLimitMask | XeHpgCoreFamily::stateComputeModePixelAsyncComputeThreadLimitMask |
                         XeHpgCoreFamily::stateComputeModeLargeGrfModeMask;
-    EXPECT_EQ(expectedMask, pScm->getMaskBits());
+    EXPECT_EQ(expectedMask, pScm->getMask());
     EXPECT_EQ(STATE_COMPUTE_MODE::PIXEL_ASYNC_COMPUTE_THREAD_LIMIT_MAX_2, pScm->getPixelAsyncComputeThreadLimit());
     EXPECT_EQ(STATE_COMPUTE_MODE::Z_PASS_ASYNC_COMPUTE_THREAD_LIMIT_MAX_64, pScm->getZPassAsyncComputeThreadLimit());
     EXPECT_TRUE(pScm->getLargeGrfMode());

@@ -2784,7 +2784,7 @@ XE3_CORETEST_F(CommandsXe3CoreTest, GivenCfeStateWhenInitCalledThenFieldsSetToDe
     EXPECT_EQ(CFE_STATE::PIPELINE_COMPUTE, cmd.TheStructure.Common.Pipeline);
     EXPECT_EQ(CFE_STATE::COMMAND_TYPE_GFXPIPE, cmd.TheStructure.Common.CommandType);
     EXPECT_EQ(CFE_STATE::STACK_ID_CONTROL_2K, cmd.TheStructure.Common.StackIdControl);
-    EXPECT_EQ(CFE_STATE::DYNAMIC_STACK_ID_CONTROL_ENABLED, cmd.TheStructure.Common.DynamicStackIdControl);
+    EXPECT_TRUE(cmd.TheStructure.Common.DynamicStackIdControl);
     EXPECT_EQ(CFE_STATE::OVER_DISPATCH_CONTROL_NORMAL, cmd.TheStructure.Common.OverDispatchControl);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.MaximumNumberOfThreads);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.ResumeIndicatorDebugkey);
@@ -2817,11 +2817,11 @@ XE3_CORETEST_F(CommandsXe3CoreTest, GivenCfeStateWhenSetterUsedThenGetterReturns
     cmd.setStackIdControl(CFE_STATE::STACK_ID_CONTROL_256);
     EXPECT_EQ(CFE_STATE::STACK_ID_CONTROL_256, cmd.getStackIdControl());
 
-    cmd.setDynamicStackIdControl(CFE_STATE::DYNAMIC_STACK_ID_CONTROL_DISABLED);
-    EXPECT_EQ(CFE_STATE::DYNAMIC_STACK_ID_CONTROL_DISABLED, cmd.getDynamicStackIdControl());
+    cmd.setDynamicStackIdControl(false);
+    EXPECT_FALSE(cmd.getDynamicStackIdControl());
 
-    cmd.setDynamicStackIdControl(CFE_STATE::DYNAMIC_STACK_ID_CONTROL_ENABLED);
-    EXPECT_EQ(CFE_STATE::DYNAMIC_STACK_ID_CONTROL_ENABLED, cmd.getDynamicStackIdControl());
+    cmd.setDynamicStackIdControl(true);
+    EXPECT_TRUE(cmd.getDynamicStackIdControl());
 
     cmd.setOverDispatchControl(CFE_STATE::OVER_DISPATCH_CONTROL_NONE);
     EXPECT_EQ(CFE_STATE::OVER_DISPATCH_CONTROL_NONE, cmd.getOverDispatchControl());
@@ -4401,7 +4401,7 @@ XE3_CORETEST_F(CommandsXe3CoreTest, GivenStateContextDataBaseAddressWhenInitCall
     EXPECT_EQ(STATE_CONTEXT_DATA_BASE_ADDRESS::DWORD_LENGTH_LENGTH_1, cmd.TheStructure.Common.DwordLength);
     EXPECT_EQ(STATE_CONTEXT_DATA_BASE_ADDRESS::_3D_COMMAND_SUB_OPCODE_STATE_CONTEXT_DATA_BASE_ADDRESS, cmd.TheStructure.Common._3DCommandSubOpcode);
     EXPECT_EQ(STATE_CONTEXT_DATA_BASE_ADDRESS::_3D_COMMAND_OPCODE_GFXPIPE_NONPIPELINED, cmd.TheStructure.Common._3DCommandOpcode);
-    EXPECT_EQ(STATE_CONTEXT_DATA_BASE_ADDRESS::COMMAND_SUBTYPE_GFXPIPE_COMMON_, cmd.TheStructure.Common.CommandSubtype); // patched
+    EXPECT_EQ(STATE_CONTEXT_DATA_BASE_ADDRESS::COMMAND_SUBTYPE_GFXPIPE_COMMON, cmd.TheStructure.Common.CommandSubtype);
     EXPECT_EQ(STATE_CONTEXT_DATA_BASE_ADDRESS::COMMAND_TYPE_GFXPIPE, cmd.TheStructure.Common.CommandType);
     EXPECT_EQ(0x0ull, cmd.TheStructure.Common.ContextDataBaseAddress);
 }

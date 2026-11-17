@@ -141,7 +141,7 @@ GEN12LPTEST_F(Gen12LpCoherencyRequirements, GivenNoSharedHandlesThenCoherencyCmd
 
     auto expectedScmCmd = FamilyType::cmdInitStateComputeMode;
     expectedScmCmd.setForceNonCoherent(STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT);
-    expectedScmCmd.setMaskBits(FamilyType::stateComputeModeForceNonCoherentMask);
+    expectedScmCmd.setMask(FamilyType::stateComputeModeForceNonCoherentMask);
 
     overrideCoherencyRequest(true, false, false);
     csr->programComputeMode(stream, flags, *defaultHwInfo);
@@ -170,7 +170,7 @@ GEN12LPTEST_F(Gen12LpCoherencyRequirements, GivenSharedHandlesThenCoherencyCmdVa
 
     auto expectedScmCmd = FamilyType::cmdInitStateComputeMode;
     expectedScmCmd.setForceNonCoherent(STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT);
-    expectedScmCmd.setMaskBits(FamilyType::stateComputeModeForceNonCoherentMask);
+    expectedScmCmd.setMask(FamilyType::stateComputeModeForceNonCoherentMask);
 
     auto expectedPcCmd = FamilyType::cmdInitPipeControl;
 
@@ -208,7 +208,7 @@ GEN12LPTEST_F(Gen12LpCoherencyRequirements, givenCoherencyRequirementWithoutShar
             auto cmd = genCmdCast<STATE_COMPUTE_MODE *>(*it);
             if (cmd) {
                 EXPECT_EQ(expectedCoherentValue, cmd->getForceNonCoherent());
-                EXPECT_EQ(expectedCoherentMask, cmd->getMaskBits());
+                EXPECT_EQ(expectedCoherentMask, cmd->getMask());
                 EXPECT_FALSE(foundOne);
                 foundOne = true;
             }
@@ -253,7 +253,7 @@ GEN12LPTEST_F(Gen12LpCoherencyRequirements, givenSharedHandlesWhenFlushTaskCalle
             auto cmd = genCmdCast<STATE_COMPUTE_MODE *>(*it);
             if (cmd) {
                 EXPECT_EQ(expectedCoherentValue, cmd->getForceNonCoherent());
-                EXPECT_EQ(expectedCoherentMask, cmd->getMaskBits());
+                EXPECT_EQ(expectedCoherentMask, cmd->getMask());
                 EXPECT_FALSE(foundOne);
                 foundOne = true;
                 auto pc = genCmdCast<PIPE_CONTROL *>(*(++it));
@@ -293,7 +293,7 @@ GEN12LPTEST_F(Gen12LpCoherencyRequirements, givenFlushWithoutSharedHandlesWhenPr
         auto cmd = genCmdCast<STATE_COMPUTE_MODE *>(*it);
         if (cmd) {
             EXPECT_EQ(expectedCoherentValue, cmd->getForceNonCoherent());
-            EXPECT_EQ(expectedCoherentMask, cmd->getMaskBits());
+            EXPECT_EQ(expectedCoherentMask, cmd->getMask());
             EXPECT_FALSE(foundOne);
             foundOne = true;
             auto pc = genCmdCast<PIPE_CONTROL *>(*(++it));

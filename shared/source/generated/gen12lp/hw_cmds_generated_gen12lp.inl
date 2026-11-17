@@ -3739,8 +3739,7 @@ typedef struct tagSTATE_COMPUTE_MODE {
             uint32_t ForceNonCoherent : BITFIELD_RANGE(3, 4);
             uint32_t Reserved_37 : BITFIELD_RANGE(5, 9);
             uint32_t BindingTableAlignment : BITFIELD_RANGE(10, 10);
-            uint32_t Reserved_43 : BITFIELD_RANGE(11, 11);
-            uint32_t CoherentAccessL1CacheDisable : BITFIELD_RANGE(12, 12);
+            uint32_t Reserved_43 : BITFIELD_RANGE(11, 12);
             uint32_t DisableL1InvalidateForNonL1CacheableWrites : BITFIELD_RANGE(13, 13);
             uint32_t Reserved_46 : BITFIELD_RANGE(14, 15);
             uint32_t Mask : BITFIELD_RANGE(16, 31);
@@ -3763,7 +3762,6 @@ typedef struct tagSTATE_COMPUTE_MODE {
         COMMAND_TYPE_GFXPIPE = 0x3,
     } COMMAND_TYPE;
     typedef enum tagFORCE_NON_COHERENT {
-        FORCE_NON_COHERENT_FORCE_DISABLED = 0x0,
         FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT = 0x2,
     } FORCE_NON_COHERENT;
     typedef enum tagBINDING_TABLE_ALIGNMENT {
@@ -3771,13 +3769,9 @@ typedef struct tagSTATE_COMPUTE_MODE {
     } BINDING_TABLE_ALIGNMENT;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
-        TheStructure.Common.DwordLength = DWORD_LENGTH_EXCLUDES_DWORD_0_1;
         TheStructure.Common._3DCommandSubOpcode = _3D_COMMAND_SUB_OPCODE_STATE_COMPUTE_MODE;
         TheStructure.Common._3DCommandOpcode = _3D_COMMAND_OPCODE_GFXPIPE_NONPIPELINED;
-        TheStructure.Common.CommandSubtype = COMMAND_SUBTYPE_GFXPIPE_COMMON;
         TheStructure.Common.CommandType = COMMAND_TYPE_GFXPIPE;
-        TheStructure.Common.ForceNonCoherent = FORCE_NON_COHERENT_FORCE_DISABLED;
-        TheStructure.Common.BindingTableAlignment = BINDING_TABLE_ALIGNMENT_LEGACY;
     }
     static tagSTATE_COMPUTE_MODE sInit() {
         STATE_COMPUTE_MODE state;
@@ -3787,6 +3781,30 @@ typedef struct tagSTATE_COMPUTE_MODE {
     inline uint32_t &getRawData(const uint32_t index) {
         UNRECOVERABLE_IF(index >= 2);
         return TheStructure.RawData[index];
+    }
+    inline void set3DCommandSubOpcode(const _3D_COMMAND_SUB_OPCODE value) {
+        TheStructure.Common._3DCommandSubOpcode = value;
+    }
+    inline _3D_COMMAND_SUB_OPCODE get3DCommandSubOpcode() const {
+        return static_cast<_3D_COMMAND_SUB_OPCODE>(TheStructure.Common._3DCommandSubOpcode);
+    }
+    inline void set3DCommandOpcode(const _3D_COMMAND_OPCODE value) {
+        TheStructure.Common._3DCommandOpcode = value;
+    }
+    inline _3D_COMMAND_OPCODE get3DCommandOpcode() const {
+        return static_cast<_3D_COMMAND_OPCODE>(TheStructure.Common._3DCommandOpcode);
+    }
+    inline void setCommandSubtype(const COMMAND_SUBTYPE value) {
+        TheStructure.Common.CommandSubtype = value;
+    }
+    inline COMMAND_SUBTYPE getCommandSubtype() const {
+        return static_cast<COMMAND_SUBTYPE>(TheStructure.Common.CommandSubtype);
+    }
+    inline void setCommandType(const COMMAND_TYPE value) {
+        TheStructure.Common.CommandType = value;
+    }
+    inline COMMAND_TYPE getCommandType() const {
+        return static_cast<COMMAND_TYPE>(TheStructure.Common.CommandType);
     }
     inline void setForceNonCoherent(const FORCE_NON_COHERENT value) {
         TheStructure.Common.ForceNonCoherent = value;
@@ -3800,23 +3818,17 @@ typedef struct tagSTATE_COMPUTE_MODE {
     inline BINDING_TABLE_ALIGNMENT getBindingTableAlignment() const {
         return static_cast<BINDING_TABLE_ALIGNMENT>(TheStructure.Common.BindingTableAlignment);
     }
-    inline void setCoherentAccessL1CacheDisable(const bool value) {
-        TheStructure.Common.CoherentAccessL1CacheDisable = value;
-    }
-    inline bool getCoherentAccessL1CacheDisable() const {
-        return TheStructure.Common.CoherentAccessL1CacheDisable;
-    }
     inline void setDisableL1InvalidateForNonL1CacheableWrites(const bool value) {
         TheStructure.Common.DisableL1InvalidateForNonL1CacheableWrites = value;
     }
     inline bool getDisableL1InvalidateForNonL1CacheableWrites() const {
         return TheStructure.Common.DisableL1InvalidateForNonL1CacheableWrites;
     }
-    inline void setMaskBits(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xffff);
+    inline void setMask(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0xffffu);
         TheStructure.Common.Mask = value;
     }
-    inline uint32_t getMaskBits() const {
+    inline uint32_t getMask() const {
         return TheStructure.Common.Mask;
     }
 } STATE_COMPUTE_MODE;
@@ -4614,12 +4626,15 @@ typedef struct tagSTATE_SIP {
     typedef enum tagCOMMAND_TYPE {
         COMMAND_TYPE_GFXPIPE = 0x3,
     } COMMAND_TYPE;
+    typedef enum tagSYSTEMINSTRUCTIONPOINTER {
+        SYSTEMINSTRUCTIONPOINTER_BIT_SHIFT = 0x4,
+        SYSTEMINSTRUCTIONPOINTER_ALIGN_SIZE = 0x10,
+    } SYSTEMINSTRUCTIONPOINTER;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_DWORD_COUNT_N;
         TheStructure.Common._3DCommandSubOpcode = _3D_COMMAND_SUB_OPCODE_STATE_SIP;
         TheStructure.Common._3DCommandOpcode = _3D_COMMAND_OPCODE_GFXPIPE_NONPIPELINED;
-        TheStructure.Common.CommandSubtype = COMMAND_SUBTYPE_GFXPIPE_COMMON;
         TheStructure.Common.CommandType = COMMAND_TYPE_GFXPIPE;
     }
     static tagSTATE_SIP sInit() {
@@ -4631,16 +4646,35 @@ typedef struct tagSTATE_SIP {
         UNRECOVERABLE_IF(index >= 3);
         return TheStructure.RawData[index];
     }
-    typedef enum tagSYSTEMINSTRUCTIONPOINTER {
-        SYSTEMINSTRUCTIONPOINTER_BIT_SHIFT = 0x4,
-        SYSTEMINSTRUCTIONPOINTER_ALIGN_SIZE = 0x10,
-    } SYSTEMINSTRUCTIONPOINTER;
+    inline void set3DCommandSubOpcode(const _3D_COMMAND_SUB_OPCODE value) {
+        TheStructure.Common._3DCommandSubOpcode = value;
+    }
+    inline _3D_COMMAND_SUB_OPCODE get3DCommandSubOpcode() const {
+        return static_cast<_3D_COMMAND_SUB_OPCODE>(TheStructure.Common._3DCommandSubOpcode);
+    }
+    inline void set3DCommandOpcode(const _3D_COMMAND_OPCODE value) {
+        TheStructure.Common._3DCommandOpcode = value;
+    }
+    inline _3D_COMMAND_OPCODE get3DCommandOpcode() const {
+        return static_cast<_3D_COMMAND_OPCODE>(TheStructure.Common._3DCommandOpcode);
+    }
+    inline void setCommandSubtype(const COMMAND_SUBTYPE value) {
+        TheStructure.Common.CommandSubtype = value;
+    }
+    inline COMMAND_SUBTYPE getCommandSubtype() const {
+        return static_cast<COMMAND_SUBTYPE>(TheStructure.Common.CommandSubtype);
+    }
+    inline void setCommandType(const COMMAND_TYPE value) {
+        TheStructure.Common.CommandType = value;
+    }
+    inline COMMAND_TYPE getCommandType() const {
+        return static_cast<COMMAND_TYPE>(TheStructure.Common.CommandType);
+    }
     inline void setSystemInstructionPointer(const uint64_t value) {
-        UNRECOVERABLE_IF(value > 0xffffffffffffffffL);
         TheStructure.Common.SystemInstructionPointer = value >> SYSTEMINSTRUCTIONPOINTER_BIT_SHIFT;
     }
     inline uint64_t getSystemInstructionPointer() const {
-        return (uint64_t)TheStructure.Common.SystemInstructionPointer << SYSTEMINSTRUCTIONPOINTER_BIT_SHIFT;
+        return TheStructure.Common.SystemInstructionPointer << SYSTEMINSTRUCTIONPOINTER_BIT_SHIFT;
     }
 } STATE_SIP;
 STATIC_ASSERT(12 == sizeof(STATE_SIP));

@@ -274,7 +274,7 @@ HWTEST2_F(CommandEncodeStatesTestXe3pAndLater, givenDebugFlagSetWhenLSCSamplerBa
         EncodeComputeMode<FamilyType>::programComputeModeCommand(linearStream, streamProperties.stateComputeMode, rootDeviceEnvironment);
 
         auto &stateComputeModeCmd = *reinterpret_cast<STATE_COMPUTE_MODE *>(linearStream.getCpuBase());
-        EXPECT_EQ(LSC_SAMPLER_BACKING_THRESHOLD::LSC_SAMPLER_BACKING_THRESHOLD_LEVEL_0, stateComputeModeCmd.getLscSamplerBackingThreshold());
+        EXPECT_EQ(static_cast<LSC_SAMPLER_BACKING_THRESHOLD>(0), stateComputeModeCmd.getLscSamplerBackingThreshold());
     }
 
     {

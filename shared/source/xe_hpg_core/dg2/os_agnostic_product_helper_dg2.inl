@@ -94,9 +94,9 @@ void ProductHelperHw<gfxProduct>::setForceNonCoherent(void *const statePtr) cons
     STATE_COMPUTE_MODE &stateComputeMode = *static_cast<STATE_COMPUTE_MODE *>(statePtr);
     stateComputeMode.setForceNonCoherent(FORCE_NON_COHERENT::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT);
 
-    auto mask = stateComputeMode.getMaskBits();
+    auto mask = stateComputeMode.getMask();
     mask |= XeHpgCoreFamily::stateComputeModeForceNonCoherentMask;
-    stateComputeMode.setMaskBits(mask);
+    stateComputeMode.setMask(mask);
 }
 
 template <>

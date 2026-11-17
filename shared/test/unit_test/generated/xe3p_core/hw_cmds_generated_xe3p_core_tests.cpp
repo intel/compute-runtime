@@ -4646,7 +4646,7 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenStateComputeModeWhenInitCalledThenFie
     EXPECT_EQ(STATE_COMPUTE_MODE::COMMAND_TYPE_GFXPIPE, cmd.TheStructure.Common.CommandType);
     EXPECT_EQ(STATE_COMPUTE_MODE::Z_PASS_ASYNC_COMPUTE_THREAD_LIMIT_MAX_60, cmd.TheStructure.Common.ZPassAsyncComputeThreadLimit);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.NpZAsyncThrottleSettings);
-    EXPECT_EQ(STATE_COMPUTE_MODE::LSC_SAMPLER_BACKING_THRESHOLD_LEVEL_0, cmd.TheStructure.Common.LscSamplerBackingThreshold); // patched
+    EXPECT_EQ(STATE_COMPUTE_MODE::LSC_SAMPLER_BACKING_THRESHOLD_THRESHOLD_LEVEL0, cmd.TheStructure.Common.LscSamplerBackingThreshold);
     EXPECT_EQ(STATE_COMPUTE_MODE::ASYNC_COMPUTE_THREAD_LIMIT_DISABLED, cmd.TheStructure.Common.AsyncComputeThreadLimit);
     EXPECT_EQ(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_HW_DEFAULT, cmd.TheStructure.Common.EuThreadSchedulingMode);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.LargeGrfMode);
@@ -4655,13 +4655,13 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenStateComputeModeWhenInitCalledThenFie
     EXPECT_EQ(STATE_COMPUTE_MODE::MIDTHREAD_PREEMPTION_OVERDISPATCH_THREAD_GROUP_COUNT_OD_TG_M2, cmd.TheStructure.Common.MidthreadPreemptionOverdispatchThreadGroupCount);
     EXPECT_EQ(STATE_COMPUTE_MODE::MIDTHREAD_PREEMPTION_OVERDISPATCH_TEST_MODE_REGULAR, cmd.TheStructure.Common.MidthreadPreemptionOverdispatchTestMode);
     EXPECT_EQ(STATE_COMPUTE_MODE::UAV_COHERENCY_MODE_DRAIN_DATAPORT_MODE, cmd.TheStructure.Common.UavCoherencyMode);
-    EXPECT_EQ(STATE_COMPUTE_MODE::OUT_OF_BOUNDARIES_IN_TRANSLATION_EXCEPTION_ENABLE_DISABLE, cmd.TheStructure.Common.OutOfBoundariesInTranslationExceptionEnable);
-    EXPECT_EQ(STATE_COMPUTE_MODE::PAGE_FAULT_EXCEPTION_ENABLE_DISABLE, cmd.TheStructure.Common.PageFaultExceptionEnable);
+    EXPECT_FALSE(cmd.TheStructure.Common.OutOfBoundariesInTranslationExceptionEnable);
+    EXPECT_FALSE(cmd.TheStructure.Common.PageFaultExceptionEnable);
     EXPECT_EQ(STATE_COMPUTE_MODE::TDL_ROW_ARBITRATION_POLICY_LEGACY_ROUND_ROBIN, cmd.TheStructure.Common.TdlRowArbitrationPolicy);
-    EXPECT_EQ(STATE_COMPUTE_MODE::MEMORY_EXCEPTION_ENABLE_DISABLE, cmd.TheStructure.Common.MemoryExceptionEnable);
-    EXPECT_EQ(STATE_COMPUTE_MODE::SYSTEM_MEMORY_READ_FENCE_ENABLE_DISABLE, cmd.TheStructure.Common.SystemMemoryReadFenceEnable);
-    EXPECT_EQ(STATE_COMPUTE_MODE::ENABLE_BREAKPOINTS_DISABLE, cmd.TheStructure.Common.EnableBreakpoints);
-    EXPECT_EQ(STATE_COMPUTE_MODE::ENABLE_FORCE_EXTERNAL_HALT_AND_FORCE_EXCEPTION_DISABLE, cmd.TheStructure.Common.EnableForceExternalHaltAndForceException);
+    EXPECT_FALSE(cmd.TheStructure.Common.MemoryExceptionEnable);
+    EXPECT_FALSE(cmd.TheStructure.Common.SystemMemoryReadFenceEnable);
+    EXPECT_FALSE(cmd.TheStructure.Common.EnableBreakpoints);
+    EXPECT_FALSE(cmd.TheStructure.Common.EnableForceExternalHaltAndForceException);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.Mask2);
 }
 
@@ -4697,17 +4697,17 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenStateComputeModeWhenSetterUsedThenGet
     cmd.setNpZAsyncThrottleSettings(STATE_COMPUTE_MODE::NP_Z_ASYNC_THROTTLE_SETTINGS_MAX_48);
     EXPECT_EQ(STATE_COMPUTE_MODE::NP_Z_ASYNC_THROTTLE_SETTINGS_MAX_48, cmd.getNpZAsyncThrottleSettings());
 
-    cmd.setLscSamplerBackingThreshold(STATE_COMPUTE_MODE::LSC_SAMPLER_BACKING_THRESHOLD_LEVEL_0);              // patched
-    EXPECT_EQ(STATE_COMPUTE_MODE::LSC_SAMPLER_BACKING_THRESHOLD_LEVEL_0, cmd.getLscSamplerBackingThreshold()); // patched
+    cmd.setLscSamplerBackingThreshold(STATE_COMPUTE_MODE::LSC_SAMPLER_BACKING_THRESHOLD_THRESHOLD_LEVEL0);
+    EXPECT_EQ(STATE_COMPUTE_MODE::LSC_SAMPLER_BACKING_THRESHOLD_THRESHOLD_LEVEL0, cmd.getLscSamplerBackingThreshold());
 
-    cmd.setLscSamplerBackingThreshold(STATE_COMPUTE_MODE::LSC_SAMPLER_BACKING_THRESHOLD_LEVEL_1);              // patched
-    EXPECT_EQ(STATE_COMPUTE_MODE::LSC_SAMPLER_BACKING_THRESHOLD_LEVEL_1, cmd.getLscSamplerBackingThreshold()); // patched
+    cmd.setLscSamplerBackingThreshold(STATE_COMPUTE_MODE::LSC_SAMPLER_BACKING_THRESHOLD_THRESHOLD_LEVEL1);
+    EXPECT_EQ(STATE_COMPUTE_MODE::LSC_SAMPLER_BACKING_THRESHOLD_THRESHOLD_LEVEL1, cmd.getLscSamplerBackingThreshold());
 
-    cmd.setLscSamplerBackingThreshold(STATE_COMPUTE_MODE::LSC_SAMPLER_BACKING_THRESHOLD_LEVEL_2);              // patched
-    EXPECT_EQ(STATE_COMPUTE_MODE::LSC_SAMPLER_BACKING_THRESHOLD_LEVEL_2, cmd.getLscSamplerBackingThreshold()); // patched
+    cmd.setLscSamplerBackingThreshold(STATE_COMPUTE_MODE::LSC_SAMPLER_BACKING_THRESHOLD_THRESHOLD_LEVEL2);
+    EXPECT_EQ(STATE_COMPUTE_MODE::LSC_SAMPLER_BACKING_THRESHOLD_THRESHOLD_LEVEL2, cmd.getLscSamplerBackingThreshold());
 
-    cmd.setLscSamplerBackingThreshold(STATE_COMPUTE_MODE::LSC_SAMPLER_BACKING_THRESHOLD_LEVEL_3);              // patched
-    EXPECT_EQ(STATE_COMPUTE_MODE::LSC_SAMPLER_BACKING_THRESHOLD_LEVEL_3, cmd.getLscSamplerBackingThreshold()); // patched
+    cmd.setLscSamplerBackingThreshold(STATE_COMPUTE_MODE::LSC_SAMPLER_BACKING_THRESHOLD_THRESHOLD_LEVEL3);
+    EXPECT_EQ(STATE_COMPUTE_MODE::LSC_SAMPLER_BACKING_THRESHOLD_THRESHOLD_LEVEL3, cmd.getLscSamplerBackingThreshold());
 
     cmd.setAsyncComputeThreadLimit(STATE_COMPUTE_MODE::ASYNC_COMPUTE_THREAD_LIMIT_DISABLED);
     EXPECT_EQ(STATE_COMPUTE_MODE::ASYNC_COMPUTE_THREAD_LIMIT_DISABLED, cmd.getAsyncComputeThreadLimit());
@@ -4791,17 +4791,17 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenStateComputeModeWhenSetterUsedThenGet
     cmd.setUavCoherencyMode(STATE_COMPUTE_MODE::UAV_COHERENCY_MODE_FLUSH_DATAPORT_L1);
     EXPECT_EQ(STATE_COMPUTE_MODE::UAV_COHERENCY_MODE_FLUSH_DATAPORT_L1, cmd.getUavCoherencyMode());
 
-    cmd.setOutOfBoundariesInTranslationExceptionEnable(STATE_COMPUTE_MODE::OUT_OF_BOUNDARIES_IN_TRANSLATION_EXCEPTION_ENABLE_DISABLE);
-    EXPECT_EQ(STATE_COMPUTE_MODE::OUT_OF_BOUNDARIES_IN_TRANSLATION_EXCEPTION_ENABLE_DISABLE, cmd.getOutOfBoundariesInTranslationExceptionEnable());
+    cmd.setOutOfBoundariesInTranslationExceptionEnable(false);
+    EXPECT_FALSE(cmd.getOutOfBoundariesInTranslationExceptionEnable());
 
-    cmd.setOutOfBoundariesInTranslationExceptionEnable(STATE_COMPUTE_MODE::OUT_OF_BOUNDARIES_IN_TRANSLATION_EXCEPTION_ENABLE_ENABLE);
-    EXPECT_EQ(STATE_COMPUTE_MODE::OUT_OF_BOUNDARIES_IN_TRANSLATION_EXCEPTION_ENABLE_ENABLE, cmd.getOutOfBoundariesInTranslationExceptionEnable());
+    cmd.setOutOfBoundariesInTranslationExceptionEnable(true);
+    EXPECT_TRUE(cmd.getOutOfBoundariesInTranslationExceptionEnable());
 
-    cmd.setPageFaultExceptionEnable(STATE_COMPUTE_MODE::PAGE_FAULT_EXCEPTION_ENABLE_DISABLE);
-    EXPECT_EQ(STATE_COMPUTE_MODE::PAGE_FAULT_EXCEPTION_ENABLE_DISABLE, cmd.getPageFaultExceptionEnable());
+    cmd.setPageFaultExceptionEnable(false);
+    EXPECT_FALSE(cmd.getPageFaultExceptionEnable());
 
-    cmd.setPageFaultExceptionEnable(STATE_COMPUTE_MODE::PAGE_FAULT_EXCEPTION_ENABLE_ENABLE);
-    EXPECT_EQ(STATE_COMPUTE_MODE::PAGE_FAULT_EXCEPTION_ENABLE_ENABLE, cmd.getPageFaultExceptionEnable());
+    cmd.setPageFaultExceptionEnable(true);
+    EXPECT_TRUE(cmd.getPageFaultExceptionEnable());
 
     cmd.setTdlRowArbitrationPolicy(STATE_COMPUTE_MODE::TDL_ROW_ARBITRATION_POLICY_LEGACY_ROUND_ROBIN);
     EXPECT_EQ(STATE_COMPUTE_MODE::TDL_ROW_ARBITRATION_POLICY_LEGACY_ROUND_ROBIN, cmd.getTdlRowArbitrationPolicy());
@@ -4809,29 +4809,29 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenStateComputeModeWhenSetterUsedThenGet
     cmd.setTdlRowArbitrationPolicy(STATE_COMPUTE_MODE::TDL_ROW_ARBITRATION_POLICY_ORDERED_ROUND_ROBIN);
     EXPECT_EQ(STATE_COMPUTE_MODE::TDL_ROW_ARBITRATION_POLICY_ORDERED_ROUND_ROBIN, cmd.getTdlRowArbitrationPolicy());
 
-    cmd.setMemoryExceptionEnable(STATE_COMPUTE_MODE::MEMORY_EXCEPTION_ENABLE_DISABLE);
-    EXPECT_EQ(STATE_COMPUTE_MODE::MEMORY_EXCEPTION_ENABLE_DISABLE, cmd.getMemoryExceptionEnable());
+    cmd.setMemoryExceptionEnable(false);
+    EXPECT_FALSE(cmd.getMemoryExceptionEnable());
 
-    cmd.setMemoryExceptionEnable(STATE_COMPUTE_MODE::MEMORY_EXCEPTION_ENABLE_ENABLE);
-    EXPECT_EQ(STATE_COMPUTE_MODE::MEMORY_EXCEPTION_ENABLE_ENABLE, cmd.getMemoryExceptionEnable());
+    cmd.setMemoryExceptionEnable(true);
+    EXPECT_TRUE(cmd.getMemoryExceptionEnable());
 
-    cmd.setSystemMemoryReadFenceEnable(STATE_COMPUTE_MODE::SYSTEM_MEMORY_READ_FENCE_ENABLE_DISABLE);
-    EXPECT_EQ(STATE_COMPUTE_MODE::SYSTEM_MEMORY_READ_FENCE_ENABLE_DISABLE, cmd.getSystemMemoryReadFenceEnable());
+    cmd.setSystemMemoryReadFenceEnable(false);
+    EXPECT_FALSE(cmd.getSystemMemoryReadFenceEnable());
 
-    cmd.setSystemMemoryReadFenceEnable(STATE_COMPUTE_MODE::SYSTEM_MEMORY_READ_FENCE_ENABLE_ENABLE);
-    EXPECT_EQ(STATE_COMPUTE_MODE::SYSTEM_MEMORY_READ_FENCE_ENABLE_ENABLE, cmd.getSystemMemoryReadFenceEnable());
+    cmd.setSystemMemoryReadFenceEnable(true);
+    EXPECT_TRUE(cmd.getSystemMemoryReadFenceEnable());
 
-    cmd.setEnableBreakpoints(STATE_COMPUTE_MODE::ENABLE_BREAKPOINTS_DISABLE);
-    EXPECT_EQ(STATE_COMPUTE_MODE::ENABLE_BREAKPOINTS_DISABLE, cmd.getEnableBreakpoints());
+    cmd.setEnableBreakpoints(false);
+    EXPECT_FALSE(cmd.getEnableBreakpoints());
 
-    cmd.setEnableBreakpoints(STATE_COMPUTE_MODE::ENABLE_BREAKPOINTS_ENABLE);
-    EXPECT_EQ(STATE_COMPUTE_MODE::ENABLE_BREAKPOINTS_ENABLE, cmd.getEnableBreakpoints());
+    cmd.setEnableBreakpoints(true);
+    EXPECT_TRUE(cmd.getEnableBreakpoints());
 
-    cmd.setEnableForceExternalHaltAndForceException(STATE_COMPUTE_MODE::ENABLE_FORCE_EXTERNAL_HALT_AND_FORCE_EXCEPTION_DISABLE);
-    EXPECT_EQ(STATE_COMPUTE_MODE::ENABLE_FORCE_EXTERNAL_HALT_AND_FORCE_EXCEPTION_DISABLE, cmd.getEnableForceExternalHaltAndForceException());
+    cmd.setEnableForceExternalHaltAndForceException(false);
+    EXPECT_FALSE(cmd.getEnableForceExternalHaltAndForceException());
 
-    cmd.setEnableForceExternalHaltAndForceException(STATE_COMPUTE_MODE::ENABLE_FORCE_EXTERNAL_HALT_AND_FORCE_EXCEPTION_ENABLE);
-    EXPECT_EQ(STATE_COMPUTE_MODE::ENABLE_FORCE_EXTERNAL_HALT_AND_FORCE_EXCEPTION_ENABLE, cmd.getEnableForceExternalHaltAndForceException());
+    cmd.setEnableForceExternalHaltAndForceException(true);
+    EXPECT_TRUE(cmd.getEnableForceExternalHaltAndForceException());
 
     cmd.setMask2(0x0u);
     EXPECT_EQ(0x0u, cmd.getMask2());
@@ -5052,7 +5052,7 @@ XE3P_CORETEST_F(CommandsXe3pCoreTest, GivenStateContextDataBaseAddressWhenInitCa
     EXPECT_EQ(STATE_CONTEXT_DATA_BASE_ADDRESS::DWORD_LENGTH_LENGTH_1, cmd.TheStructure.Common.DwordLength);
     EXPECT_EQ(STATE_CONTEXT_DATA_BASE_ADDRESS::_3D_COMMAND_SUB_OPCODE_STATE_CONTEXT_DATA_BASE_ADDRESS, cmd.TheStructure.Common._3DCommandSubOpcode);
     EXPECT_EQ(STATE_CONTEXT_DATA_BASE_ADDRESS::_3D_COMMAND_OPCODE_GFXPIPE_NONPIPELINED, cmd.TheStructure.Common._3DCommandOpcode);
-    EXPECT_EQ(STATE_CONTEXT_DATA_BASE_ADDRESS::COMMAND_SUBTYPE_GFXPIPE_COMMON_, cmd.TheStructure.Common.CommandSubtype); // patched
+    EXPECT_EQ(STATE_CONTEXT_DATA_BASE_ADDRESS::COMMAND_SUBTYPE_GFXPIPE_COMMON, cmd.TheStructure.Common.CommandSubtype);
     EXPECT_EQ(STATE_CONTEXT_DATA_BASE_ADDRESS::COMMAND_TYPE_GFXPIPE, cmd.TheStructure.Common.CommandType);
     EXPECT_EQ(0x0ull, cmd.TheStructure.Common.ContextDataBaseAddress);
 }

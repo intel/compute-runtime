@@ -724,12 +724,12 @@ void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, Sta
     using FORCE_NON_COHERENT = typename STATE_COMPUTE_MODE::FORCE_NON_COHERENT;
 
     STATE_COMPUTE_MODE stateComputeMode = Family::cmdInitStateComputeMode;
-    auto maskBits = stateComputeMode.getMaskBits();
+    auto maskBits = stateComputeMode.getMask();
 
     stateComputeMode.setForceNonCoherent(FORCE_NON_COHERENT::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT);
     maskBits |= Family::stateComputeModeForceNonCoherentMask;
 
-    stateComputeMode.setMaskBits(maskBits);
+    stateComputeMode.setMask(maskBits);
 
     auto buffer = csr.getSpace(sizeof(STATE_COMPUTE_MODE));
     *reinterpret_cast<STATE_COMPUTE_MODE *>(buffer) = stateComputeMode;

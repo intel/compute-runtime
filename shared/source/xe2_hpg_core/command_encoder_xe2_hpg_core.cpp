@@ -52,7 +52,7 @@ void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, Sta
     auto maskBits2 = stateComputeMode.getMask2();
 
     if (properties.memoryAllocationForScratchAndMidthreadPreemptionBuffers.isDirty) {
-        stateComputeMode.setMemoryAllocationForScratchAndMidthreadPreemptionBuffers(properties.memoryAllocationForScratchAndMidthreadPreemptionBuffers.value);
+        stateComputeMode.setMemoryAllocationForScratchAndMidthreadPreemptionBuffers(static_cast<STATE_COMPUTE_MODE::MEMORY_ALLOCATION_FOR_SCRATCH_AND_MIDTHREAD_PREEMPTION_BUFFERS>(properties.memoryAllocationForScratchAndMidthreadPreemptionBuffers.value));
         maskBits2 |= Family::stateComputeModeMemoryAllocationForScratchAndMidthreadPreemptionBuffersMask;
     }
 

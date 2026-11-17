@@ -121,7 +121,11 @@ struct LargeGrfTestL0 : public KernelAubFixtureL0,
             NEO::HardwareParse hwParser;
             hwParser.parseCommands<FamilyType>(*stream.first, stream.second);
             for (auto &cmd : hwParser.getCommandsList<STATE_COMPUTE_MODE>()) {
-                largeGrfValues.push_back(reinterpret_cast<STATE_COMPUTE_MODE *>(cmd)->getLargeGrfMode());
+                if constexpr (requires(STATE_COMPUTE_MODE &stateComputeMode) { stateComputeMode.getLargeGrfMode(); }) {
+                    largeGrfValues.push_back(reinterpret_cast<STATE_COMPUTE_MODE *>(cmd)->getLargeGrfMode());
+                } else {
+                    largeGrfValues.push_back(false);
+                }
             }
         }
         return largeGrfValues;

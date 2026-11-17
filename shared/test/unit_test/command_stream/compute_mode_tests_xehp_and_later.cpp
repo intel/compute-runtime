@@ -108,8 +108,8 @@ HWTEST2_F(ComputeModeRequirements, givenNoSharedHandlesWhenComputeModeIsProgramm
     if (isBasicWARequired) {
         scmCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(ptrOffset(stream.getCpuBase(), sizeof(PIPE_CONTROL)));
     }
-    EXPECT_TRUE(isValueSet(scmCmd->getMaskBits(), expectedBitsMask));
-    expectedScmCmd.setMaskBits(scmCmd->getMaskBits());
+    EXPECT_TRUE(isValueSet(scmCmd->getMask(), expectedBitsMask));
+    expectedScmCmd.setMask(scmCmd->getMask());
     EXPECT_TRUE(memcmp(&expectedScmCmd, scmCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
 }
 
@@ -142,8 +142,8 @@ HWTEST2_F(ComputeModeRequirements, givenSharedHandlesWhenComputeModeIsProgrammed
     if (isBasicWARequired) {
         scmCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(ptrOffset(stream.getCpuBase(), sizeof(PIPE_CONTROL)));
     }
-    EXPECT_TRUE(isValueSet(scmCmd->getMaskBits(), expectedBitsMask));
-    expectedScmCmd.setMaskBits(scmCmd->getMaskBits());
+    EXPECT_TRUE(isValueSet(scmCmd->getMask(), expectedBitsMask));
+    expectedScmCmd.setMask(scmCmd->getMask());
     EXPECT_TRUE(memcmp(&expectedScmCmd, scmCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
 
     auto pcCmd = reinterpret_cast<PIPE_CONTROL *>(ptrOffset(stream.getCpuBase(), sizeof(STATE_COMPUTE_MODE)));
@@ -209,8 +209,8 @@ HWTEST2_F(ComputeModeRequirements, givenComputeModeProgrammingWhenLargeGrfModeCh
     if (isBasicWARequired) {
         scmCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(ptrOffset(stream.getCpuBase(), sizeof(PIPE_CONTROL)));
     }
-    EXPECT_TRUE(isValueSet(scmCmd->getMaskBits(), expectedBitsMask));
-    expectedScmCmd.setMaskBits(scmCmd->getMaskBits());
+    EXPECT_TRUE(isValueSet(scmCmd->getMask(), expectedBitsMask));
+    expectedScmCmd.setMask(scmCmd->getMask());
     EXPECT_TRUE(memcmp(&expectedScmCmd, scmCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
 
     auto startOffset = stream.getUsed();
@@ -226,8 +226,8 @@ HWTEST2_F(ComputeModeRequirements, givenComputeModeProgrammingWhenLargeGrfModeCh
     if (isBasicWARequired) {
         scmCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(ptrOffset(stream.getCpuBase(), startOffset + sizeof(PIPE_CONTROL)));
     }
-    EXPECT_TRUE(isValueSet(scmCmd->getMaskBits(), expectedBitsMask));
-    expectedScmCmd.setMaskBits(scmCmd->getMaskBits());
+    EXPECT_TRUE(isValueSet(scmCmd->getMask(), expectedBitsMask));
+    expectedScmCmd.setMask(scmCmd->getMask());
     EXPECT_TRUE(memcmp(&expectedScmCmd, scmCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
 }
 
@@ -269,8 +269,8 @@ HWTEST2_F(ComputeModeRequirements, givenComputeModeProgrammingWhenRequiredGRFNum
     if (isBasicWARequired) {
         scmCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(ptrOffset(stream.getCpuBase(), sizeof(PIPE_CONTROL)));
     }
-    EXPECT_TRUE(isValueSet(scmCmd->getMaskBits(), expectedBitsMask));
-    expectedScmCmd.setMaskBits(scmCmd->getMaskBits());
+    EXPECT_TRUE(isValueSet(scmCmd->getMask(), expectedBitsMask));
+    expectedScmCmd.setMask(scmCmd->getMask());
     EXPECT_TRUE(memcmp(&expectedScmCmd, scmCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
 }
 
@@ -302,8 +302,8 @@ HWTEST2_F(ComputeModeRequirements, givenComputeModeProgrammingWhenRequiredGRFNum
     if (isBasicWARequired) {
         scmCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(ptrOffset(stream.getCpuBase(), sizeof(PIPE_CONTROL)));
     }
-    EXPECT_TRUE(isValueSet(scmCmd->getMaskBits(), expectedBitsMask));
-    expectedScmCmd.setMaskBits(scmCmd->getMaskBits());
+    EXPECT_TRUE(isValueSet(scmCmd->getMask(), expectedBitsMask));
+    expectedScmCmd.setMask(scmCmd->getMask());
     EXPECT_TRUE(memcmp(&expectedScmCmd, scmCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
 }
 
@@ -359,7 +359,7 @@ HWTEST2_F(ComputeModeRequirements, GivenSingleCCSEnabledSetupThenCorrectCommands
     }
 
     auto stateComputeModeCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(ptrOffset(stream.getCpuBase(), cmdOffset));
-    expectedScmCmd.setMaskBits(stateComputeModeCmd->getMaskBits());
+    expectedScmCmd.setMask(stateComputeModeCmd->getMask());
     EXPECT_TRUE(memcmp(&expectedScmCmd, stateComputeModeCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
 }
 
@@ -388,8 +388,8 @@ HWTEST2_F(ComputeModeRequirements, givenComputeModeProgrammingWhenRequiredGRFNum
     EXPECT_EQ(cmdsSize, stream.getUsed());
 
     auto scmCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(ptrOffset(stream.getCpuBase(), cmdOffset));
-    EXPECT_TRUE(isValueSet(scmCmd->getMaskBits(), expectedBitsMask));
-    expectedScmCmd.setMaskBits(scmCmd->getMaskBits());
+    EXPECT_TRUE(isValueSet(scmCmd->getMask(), expectedBitsMask));
+    expectedScmCmd.setMask(scmCmd->getMask());
     EXPECT_TRUE(memcmp(&expectedScmCmd, scmCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
 }
 
