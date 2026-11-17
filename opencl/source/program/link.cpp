@@ -137,6 +137,9 @@ cl_int Program::link(
 
                 retVal = processGenBinary(*device);
                 if (retVal != CL_SUCCESS) {
+                    if (retVal == CL_INVALID_BINARY) {
+                        retVal = CL_LINK_PROGRAM_FAILURE;
+                    }
                     break;
                 }
                 binaryType = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;

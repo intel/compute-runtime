@@ -112,6 +112,12 @@ class SucceedingGenBinaryProgram : public MockProgram {
     cl_int processGenBinary(ClDevice &clDevice) override { return CL_SUCCESS; }
 };
 
+class OutOfResourcesGenBinaryProgram : public MockProgram {
+  public:
+    using MockProgram::MockProgram;
+    cl_int processGenBinary(ClDevice &clDevice) override { return CL_OUT_OF_RESOURCES; }
+};
+
 using ProgramFromBinaryTest = ProgramFromBinaryFixture;
 
 TEST_F(ProgramFromBinaryTest, WhenBuildingProgramThenSuccessIsReturned) {
@@ -1855,13 +1861,25 @@ TEST_F(ProgramFromSourceTest, GivenSpecificParamatersWhenLinkingProgramThenSucce
     // fail linking - linked code is corrupted and cannot be postprocessed
     auto p2 = std::make_unique<FailingGenBinaryProgram>(pProgram->getDevices());
     retVal = p2->link(p2->getDevices(), nullptr, 1, &program);
-    EXPECT_EQ(CL_INVALID_BINARY, retVal);
+    EXPECT_EQ(CL_LINK_PROGRAM_FAILURE, retVal);
     p2.reset(nullptr);
 
     // link successfully
     zebinPtr->setAsMockCompilerReturnedBinary();
     retVal = pProgram->link(pProgram->getDevices(), nullptr, 1, &program);
     EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST_F(ProgramFromSourceTest, GivenProcessGenBinaryFailsWithOtherErrorThanInvalidBinaryWhenLinkingProgramThenThisErrorIsReturned) {
+    zebinPtr->setAsMockCompilerReturnedBinary();
+    cl_program program = pProgram;
+
+    retVal = pProgram->compile(pProgram->getDevices(), nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto failingProgram = std::make_unique<OutOfResourcesGenBinaryProgram>(pProgram->getDevices());
+    retVal = failingProgram->link(failingProgram->getDevices(), nullptr, 1, &program);
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, retVal);
 }
 
 TEST_F(ProgramFromSourceTest, GivenLinkFailureWhenCreatingLibraryThenCorrectErrorIsReturned) {
