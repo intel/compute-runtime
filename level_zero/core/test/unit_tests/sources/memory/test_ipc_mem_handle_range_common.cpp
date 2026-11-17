@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/unified_memory/unified_memory.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -18,6 +19,7 @@
 #include "level_zero/core/test/unit_tests/fixtures/memory_ipc_fixture.h"
 
 #include <cstring>
+#include <functional>
 #include <vector>
 
 namespace L0 {
@@ -25,6 +27,9 @@ namespace ult {
 
 namespace {
 constexpr uint32_t commonChunkHandleBase = 300u;
+constexpr uint64_t cachedChunkHandleBase = 401u;
+constexpr uint64_t distinctTransportHandleBase = 500u;
+constexpr size_t distinctTransportSlotSize = 1024u;
 uint8_t gCommonTransportStorage[4096] = {};
 } // namespace
 
@@ -57,9 +62,17 @@ class CommonRangeSvmManager : public NEO::MockSVMAllocsManager {
     CommonRangeSvmManager(NEO::MemoryManager *memoryManager) : NEO::MockSVMAllocsManager(memoryManager) {}
 
     void *createHostUnifiedMemoryAllocation(size_t size, const NEO::UnifiedMemoryProperties &memoryProperties) override {
-        NEO::MockGraphicsAllocation *alloc = failTransportInternalHandle
-                                                 ? new FailingInternalHandleAllocation(0u, gCommonTransportStorage, size)
-                                                 : new NEO::MockGraphicsAllocation(0u, gCommonTransportStorage, size);
+        void *transportPtr = gCommonTransportStorage;
+        NEO::MockGraphicsAllocation *alloc = nullptr;
+        if (distinctTransports) {
+            transportPtr = gCommonTransportStorage + distinctTransportCount * distinctTransportSlotSize;
+            alloc = new FixedHandleAllocation(0u, transportPtr, size, distinctTransportHandleBase + distinctTransportCount);
+            ++distinctTransportCount;
+        } else if (failTransportInternalHandle) {
+            alloc = new FailingInternalHandleAllocation(0u, transportPtr, size);
+        } else {
+            alloc = new NEO::MockGraphicsAllocation(0u, transportPtr, size);
+        }
         NEO::SvmAllocationData allocData(0u);
         allocData.gpuAllocations.addAllocation(alloc);
         allocData.cpuAllocation = nullptr;
@@ -67,11 +80,13 @@ class CommonRangeSvmManager : public NEO::MockSVMAllocsManager {
         allocData.memoryType = InternalMemoryType::hostUnifiedMemory;
         allocData.device = nullptr;
         allocData.setAllocId(++this->allocationsCounter);
-        this->insertSVMAlloc(gCommonTransportStorage, allocData);
-        return gCommonTransportStorage;
+        this->insertSVMAlloc(transportPtr, allocData);
+        return transportPtr;
     }
 
     bool failTransportInternalHandle = false;
+    bool distinctTransports = false;
+    uint32_t distinctTransportCount = 0u;
 };
 
 class CommonRangeMemoryManager : public MemoryManagerOpenIpcMock {
@@ -126,7 +141,7 @@ struct CommonRangeContext : public L0::Context {
         return openIpcRangeHandle(hDevice, ipcHandle, flags, pptr);
     }
     void callReleaseIpcRangeTransport(const void *transportPtr) { releaseIpcRangeTransport(transportPtr); }
-    bool callReleaseIpcRangeTransportForPtr(const void *ptr) { return releaseIpcRangeTransportForPtr(ptr); }
+    bool callReleaseIpcRangeTransportsInRange(const void *rangeBase, size_t rangeSize) { return releaseIpcRangeTransportsInRange(rangeBase, rangeSize); }
     bool callIsIpcRangeHandle(const ze_ipc_mem_handle_t &ipcHandle) const { return isIpcRangeHandle(ipcHandle); }
     uint32_t callRealMaxIpcRangeHandleCount() { return Context::getMaxIpcRangeHandleCount(); }
 
@@ -295,6 +310,53 @@ struct IpcMemHandleRangeCommonTest : public MemoryOpenIpcHandleTest {
         return desc;
     }
 
+    void installCachedRangeChunks() {
+        rangeSvmManager->distinctTransports = true;
+        for (uint32_t i = 0; i < 2u; i++) {
+            void *chunkPtr = ptrOffset(cachedRangeBase, i * MemoryConstants::pageSize);
+            cachedChunkAllocs[i] = std::make_unique<FixedHandleAllocation>(neoDevice->getRootDeviceIndex(), chunkPtr, MemoryConstants::pageSize, cachedChunkHandleBase + i);
+            cachedChunkRanges[i].ptr = chunkPtr;
+            cachedChunkRanges[i].size = MemoryConstants::pageSize;
+            cachedChunkRanges[i].mappedAllocation.allocation = cachedChunkAllocs[i].get();
+        }
+        installReservation(cachedRangeBase, {&cachedChunkRanges[0], &cachedChunkRanges[1]});
+        reservation->virtualAddressRange.address = castToUint64(cachedRangeBase);
+        reservation->virtualAddressRange.size = 2u * MemoryConstants::pageSize;
+    }
+
+    IpcHandleTracking *findIpcTracking(uint64_t handleKey) {
+        auto &ipcMap = driverHandle->getIPCHandleMap();
+        auto it = ipcMap.find(handleKey);
+        return it == ipcMap.end() ? nullptr : it->second;
+    }
+
+    void eraseIpcTracking(uint64_t handleKey) {
+        auto &ipcMap = driverHandle->getIPCHandleMap();
+        auto it = ipcMap.find(handleKey);
+        delete it->second;
+        ipcMap.erase(it);
+    }
+
+    void getTwoRangeHandles(const void *firstPtr, ze_ipc_phys_mem_handle_range_ext_desc_t *firstDesc,
+                            const void *secondPtr, ze_ipc_phys_mem_handle_range_ext_desc_t *secondDesc,
+                            const std::function<void()> &betweenGets) {
+        ASSERT_EQ(ZE_RESULT_SUCCESS, rangeContext->getIpcMemHandle(firstPtr, firstDesc, &firstRangeHandle));
+        betweenGets();
+        ASSERT_EQ(ZE_RESULT_SUCCESS, rangeContext->getIpcMemHandle(secondPtr, secondDesc, &secondRangeHandle));
+    }
+
+    void expectNewTransportCreatedAndReleasedOnPuts() {
+        EXPECT_NE(0, std::memcmp(firstRangeHandle.data, secondRangeHandle.data, sizeof(firstRangeHandle.data)));
+        EXPECT_EQ(2u, rangeSvmManager->distinctTransportCount);
+        EXPECT_EQ(2u, rangeContext->ipcRangeTransports.size());
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, rangeContext->putIpcMemHandle(firstRangeHandle));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, rangeContext->putIpcMemHandle(secondRangeHandle));
+        EXPECT_TRUE(rangeContext->ipcRangeTransports.empty());
+        EXPECT_EQ(2u, rangeContext->freeMemCalls);
+        EXPECT_TRUE(driverHandle->getIPCHandleMap().empty());
+    }
+
     CommonRangeMemoryManager *rangeMemoryManager = nullptr;
     NEO::SVMAllocsManager *previousSvmManager = nullptr;
     std::unique_ptr<CommonRangeSvmManager> rangeSvmManager;
@@ -303,6 +365,11 @@ struct IpcMemHandleRangeCommonTest : public MemoryOpenIpcHandleTest {
     std::unique_ptr<NEO::MockGraphicsAllocation> svmBackingAllocation;
     void *installedReservationBase = nullptr;
     NEO::MockUsmMemAllocPoolsFacade *installedPoolFacade = nullptr;
+    void *cachedRangeBase = reinterpret_cast<void *>(0x2000000);
+    std::unique_ptr<FixedHandleAllocation> cachedChunkAllocs[2];
+    NEO::MemoryMappedRange cachedChunkRanges[2] = {};
+    ze_ipc_mem_handle_t firstRangeHandle = {};
+    ze_ipc_mem_handle_t secondRangeHandle = {};
 };
 
 TEST_F(IpcMemHandleRangeCommonTest, givenFdTypeRangeHandleWhenCheckingIsIpcRangeHandleThenTrueIsReturned) {
@@ -485,11 +552,11 @@ TEST_F(IpcMemHandleRangeCommonTest, givenNullTransportPtrWhenReleasingRangeTrans
     EXPECT_EQ(0u, rangeContext->freeMemCalls);
 }
 
-TEST_F(IpcMemHandleRangeCommonTest, givenNoTrackedTransportsWhenReleasingTransportForPtrThenFalseIsReturned) {
-    EXPECT_FALSE(rangeContext->callReleaseIpcRangeTransportForPtr(reinterpret_cast<void *>(0x300000)));
+TEST_F(IpcMemHandleRangeCommonTest, givenNoTrackedTransportsWhenReleasingTransportsInRangeThenFalseIsReturned) {
+    EXPECT_FALSE(rangeContext->callReleaseIpcRangeTransportsInRange(reinterpret_cast<void *>(0x300000), MemoryConstants::pageSize));
 }
 
-TEST_F(IpcMemHandleRangeCommonTest, givenTrackedTransportsWhenReleasingTransportForPtrThenOnlyMatchingEntryIsReleased) {
+TEST_F(IpcMemHandleRangeCommonTest, givenEntriesInsideAndAboveRangeWhenReleasingTransportsInRangeThenOnlyEntryInsideIsReleased) {
     void *matchingBase = reinterpret_cast<void *>(0x300000);
 
     CommonRangeContext::IpcRangeTransportEntry matching;
@@ -503,7 +570,7 @@ TEST_F(IpcMemHandleRangeCommonTest, givenTrackedTransportsWhenReleasingTransport
     rangeContext->ipcRangeTransports.push_back(std::move(other));
     rangeContext->ipcRangeTransportsPresent.store(true, std::memory_order_release);
 
-    EXPECT_TRUE(rangeContext->callReleaseIpcRangeTransportForPtr(matchingBase));
+    EXPECT_TRUE(rangeContext->callReleaseIpcRangeTransportsInRange(matchingBase, MemoryConstants::pageSize));
     EXPECT_EQ(1u, rangeContext->ipcRangeTransports.size());
     EXPECT_EQ(1u, rangeContext->freeMemCalls);
 }
@@ -816,6 +883,214 @@ TEST_F(IpcMemHandleRangeCommonTest, givenRangeExtendingPastLastMappingWhenGettin
     ze_ipc_mem_handle_t ipcHandle = {};
 
     EXPECT_EQ(ZE_RESULT_ERROR_ADDRESS_NOT_FOUND, rangeContext->getIpcMemHandle(basePtr, &desc, &ipcHandle));
+}
+
+TEST_F(IpcMemHandleRangeCommonTest, givenSameRangeExportedTwiceWhenGettingRangeHandleThenCachedHandleIsReturnedAndReleasedOnLastPut) {
+    installCachedRangeChunks();
+    auto desc = buildRangeDesc(2u * MemoryConstants::pageSize);
+
+    getTwoRangeHandles(cachedRangeBase, &desc, cachedRangeBase, &desc, [] {});
+
+    EXPECT_EQ(0, std::memcmp(firstRangeHandle.data, secondRangeHandle.data, sizeof(firstRangeHandle.data)));
+    EXPECT_EQ(1u, cachedChunkAllocs[0]->handleExportCount);
+    EXPECT_EQ(1u, cachedChunkAllocs[1]->handleExportCount);
+    EXPECT_EQ(1u, rangeSvmManager->distinctTransportCount);
+    ASSERT_EQ(1u, rangeContext->ipcRangeTransports.size());
+    EXPECT_EQ(2u, rangeContext->ipcRangeTransports[0].refCount);
+    ASSERT_EQ(3u, driverHandle->getIPCHandleMap().size());
+    for (const auto &entry : driverHandle->getIPCHandleMap()) {
+        EXPECT_EQ(2u, entry.second->refcnt);
+    }
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, rangeContext->putIpcMemHandle(firstRangeHandle));
+    ASSERT_EQ(1u, rangeContext->ipcRangeTransports.size());
+    EXPECT_EQ(1u, rangeContext->ipcRangeTransports[0].refCount);
+    EXPECT_EQ(0u, rangeContext->freeMemCalls);
+    ASSERT_EQ(3u, driverHandle->getIPCHandleMap().size());
+    for (const auto &entry : driverHandle->getIPCHandleMap()) {
+        EXPECT_EQ(1u, entry.second->refcnt);
+    }
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, rangeContext->putIpcMemHandle(secondRangeHandle));
+    EXPECT_TRUE(rangeContext->ipcRangeTransports.empty());
+    EXPECT_EQ(1u, rangeContext->freeMemCalls);
+    EXPECT_TRUE(driverHandle->getIPCHandleMap().empty());
+}
+
+TEST_F(IpcMemHandleRangeCommonTest, givenCachedRangeWhenGettingRangeHandleFromDifferentPtrThenNewTransportIsCreatedAndLaterMatchingEntryIsReused) {
+    installCachedRangeChunks();
+    auto fullDesc = buildRangeDesc(2u * MemoryConstants::pageSize);
+    auto tailDesc = buildRangeDesc(MemoryConstants::pageSize);
+    void *tailPtr = ptrOffset(cachedRangeBase, MemoryConstants::pageSize);
+
+    getTwoRangeHandles(cachedRangeBase, &fullDesc, tailPtr, &tailDesc, [] {});
+
+    ze_ipc_mem_handle_t reusedTailHandle = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, rangeContext->getIpcMemHandle(tailPtr, &tailDesc, &reusedTailHandle));
+    EXPECT_EQ(0, std::memcmp(secondRangeHandle.data, reusedTailHandle.data, sizeof(reusedTailHandle.data)));
+    ASSERT_EQ(2u, rangeContext->ipcRangeTransports.size());
+    EXPECT_EQ(1u, rangeContext->ipcRangeTransports[0].refCount);
+    EXPECT_EQ(2u, rangeContext->ipcRangeTransports[1].refCount);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, rangeContext->putIpcMemHandle(reusedTailHandle));
+
+    expectNewTransportCreatedAndReleasedOnPuts();
+}
+
+TEST_F(IpcMemHandleRangeCommonTest, givenCachedRangeWhenGettingRangeHandleWithDifferentSizeThenNewTransportIsCreated) {
+    installCachedRangeChunks();
+    auto fullDesc = buildRangeDesc(2u * MemoryConstants::pageSize);
+    auto headDesc = buildRangeDesc(MemoryConstants::pageSize);
+
+    getTwoRangeHandles(cachedRangeBase, &fullDesc, cachedRangeBase, &headDesc, [] {});
+
+    expectNewTransportCreatedAndReleasedOnPuts();
+}
+
+TEST_F(IpcMemHandleRangeCommonTest, givenCachedRangeWhenGettingRangeHandleWithDifferentFabricAccessThenNewTransportIsCreated) {
+    installCachedRangeChunks();
+    auto plainDesc = buildRangeDesc(2u * MemoryConstants::pageSize);
+    ze_ipc_mem_handle_type_ext_desc_t typeDesc = {};
+    typeDesc.stype = ZE_STRUCTURE_TYPE_IPC_MEM_HANDLE_TYPE_EXT_DESC;
+    typeDesc.typeFlags = ZE_IPC_MEM_HANDLE_TYPE_FLAG_FABRIC_ACCESSIBLE;
+    auto fabricDesc = buildRangeDesc(2u * MemoryConstants::pageSize);
+    fabricDesc.pNext = &typeDesc;
+
+    getTwoRangeHandles(cachedRangeBase, &plainDesc, cachedRangeBase, &fabricDesc, [] {});
+
+    ASSERT_EQ(2u, rangeContext->ipcRangeTransports.size());
+    EXPECT_FALSE(rangeContext->ipcRangeTransports[0].fabricAccessible);
+    EXPECT_TRUE(rangeContext->ipcRangeTransports[1].fabricAccessible);
+    expectNewTransportCreatedAndReleasedOnPuts();
+}
+
+TEST_F(IpcMemHandleRangeCommonTest, givenCachedRangeWhenChunkIsRemappedToDifferentAllocationThenNewTransportIsCreated) {
+    installCachedRangeChunks();
+    auto desc = buildRangeDesc(2u * MemoryConstants::pageSize);
+    FixedHandleAllocation remappedAlloc(neoDevice->getRootDeviceIndex(), ptrOffset(cachedRangeBase, MemoryConstants::pageSize), MemoryConstants::pageSize, cachedChunkHandleBase + 2u);
+
+    getTwoRangeHandles(cachedRangeBase, &desc, cachedRangeBase, &desc, [&] {
+        cachedChunkRanges[1].mappedAllocation.allocation = &remappedAlloc;
+    });
+
+    EXPECT_EQ(1u, remappedAlloc.handleExportCount);
+    EXPECT_EQ(2u, cachedChunkAllocs[0]->handleExportCount);
+    expectNewTransportCreatedAndReleasedOnPuts();
+}
+
+TEST_F(IpcMemHandleRangeCommonTest, givenCachedRangeWhenChunkIpcHandlesOfAllocationAreReleasedThenNewTransportIsCreated) {
+    installCachedRangeChunks();
+    auto desc = buildRangeDesc(2u * MemoryConstants::pageSize);
+
+    getTwoRangeHandles(cachedRangeBase, &desc, cachedRangeBase, &desc, [&] {
+        rangeContext->releaseIpcHandlesOfAllocation(cachedChunkAllocs[1].get());
+        ASSERT_EQ(1u, rangeContext->ipcRangeTransports.size());
+        EXPECT_EQ(1u, rangeContext->ipcRangeTransports[0].handleKeys.size());
+    });
+
+    EXPECT_EQ(2u, cachedChunkAllocs[1]->handleExportCount);
+    expectNewTransportCreatedAndReleasedOnPuts();
+}
+
+TEST_F(IpcMemHandleRangeCommonTest, givenCachedRangeWhenTransportIpcTrackingIsMissingThenNewTransportIsCreated) {
+    installCachedRangeChunks();
+    auto desc = buildRangeDesc(2u * MemoryConstants::pageSize);
+
+    getTwoRangeHandles(cachedRangeBase, &desc, cachedRangeBase, &desc, [&] {
+        eraseIpcTracking(distinctTransportHandleBase);
+    });
+
+    expectNewTransportCreatedAndReleasedOnPuts();
+}
+
+TEST_F(IpcMemHandleRangeCommonTest, givenCachedRangeWhenTransportIpcTrackingPointsToDifferentPtrThenNewTransportIsCreated) {
+    installCachedRangeChunks();
+    auto desc = buildRangeDesc(2u * MemoryConstants::pageSize);
+
+    getTwoRangeHandles(cachedRangeBase, &desc, cachedRangeBase, &desc, [&] {
+        auto transportTracking = findIpcTracking(distinctTransportHandleBase);
+        ASSERT_NE(nullptr, transportTracking);
+        transportTracking->ptr += MemoryConstants::pageSize;
+    });
+
+    expectNewTransportCreatedAndReleasedOnPuts();
+}
+
+TEST_F(IpcMemHandleRangeCommonTest, givenCachedRangeWhenChunkIpcTrackingIsMissingThenNewTransportIsCreated) {
+    installCachedRangeChunks();
+    auto desc = buildRangeDesc(2u * MemoryConstants::pageSize);
+
+    getTwoRangeHandles(cachedRangeBase, &desc, cachedRangeBase, &desc, [&] {
+        eraseIpcTracking(cachedChunkHandleBase + 1u);
+    });
+
+    EXPECT_EQ(2u, cachedChunkAllocs[1]->handleExportCount);
+    expectNewTransportCreatedAndReleasedOnPuts();
+}
+
+TEST_F(IpcMemHandleRangeCommonTest, givenCachedRangeWhenChunkIpcTrackingBelongsToDifferentAllocationThenNewTransportIsCreated) {
+    installCachedRangeChunks();
+    auto desc = buildRangeDesc(2u * MemoryConstants::pageSize);
+
+    getTwoRangeHandles(cachedRangeBase, &desc, cachedRangeBase, &desc, [&] {
+        auto chunkTracking = findIpcTracking(cachedChunkHandleBase + 1u);
+        ASSERT_NE(nullptr, chunkTracking);
+        chunkTracking->alloc = cachedChunkAllocs[0].get();
+    });
+
+    expectNewTransportCreatedAndReleasedOnPuts();
+}
+
+TEST_F(IpcMemHandleRangeCommonTest, givenRangeHandleGotTwiceWhenReleasingRangeTransportsInRangeThenAllChunkReferencesAndTransportAreReleased) {
+    installCachedRangeChunks();
+    auto desc = buildRangeDesc(2u * MemoryConstants::pageSize);
+
+    getTwoRangeHandles(cachedRangeBase, &desc, cachedRangeBase, &desc, [] {});
+    ASSERT_EQ(1u, rangeContext->ipcRangeTransports.size());
+    EXPECT_EQ(2u, rangeContext->ipcRangeTransports[0].refCount);
+
+    EXPECT_TRUE(rangeContext->callReleaseIpcRangeTransportsInRange(cachedRangeBase, 2u * MemoryConstants::pageSize));
+    EXPECT_TRUE(rangeContext->ipcRangeTransports.empty());
+    EXPECT_EQ(1u, rangeContext->freeMemCalls);
+    EXPECT_TRUE(driverHandle->getIPCHandleMap().empty());
+}
+
+TEST_F(IpcMemHandleRangeCommonTest, givenRangeExportedFromInteriorPtrWhenFreeingReservedVirtualMemoryThenRangeExportIsReleased) {
+    installCachedRangeChunks();
+    reservation->reservationSize = 2u * MemoryConstants::pageSize;
+    reservation->isSvmReservation = true;
+    auto desc = buildRangeDesc(MemoryConstants::pageSize);
+    void *interiorPtr = ptrOffset(cachedRangeBase, MemoryConstants::pageSize);
+
+    getTwoRangeHandles(interiorPtr, &desc, interiorPtr, &desc, [] {});
+    ASSERT_EQ(1u, rangeContext->ipcRangeTransports.size());
+    EXPECT_EQ(2u, rangeContext->ipcRangeTransports[0].refCount);
+
+    EXPECT_NE(nullptr, reservation.release());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, rangeContext->freeVirtualMem(cachedRangeBase, 2u * MemoryConstants::pageSize));
+    installedReservationBase = nullptr;
+
+    EXPECT_TRUE(rangeContext->ipcRangeTransports.empty());
+    EXPECT_EQ(1u, rangeContext->freeMemCalls);
+    EXPECT_TRUE(driverHandle->getIPCHandleMap().empty());
+}
+
+TEST_F(IpcMemHandleRangeCommonTest, givenReservationAlignedBeyondRequestedSizeWhenFreeingItThenRangeExportedPastRequestedSizeIsReleased) {
+    installCachedRangeChunks();
+    reservation->reservationSize = MemoryConstants::pageSize;
+    reservation->isSvmReservation = false;
+    auto desc = buildRangeDesc(MemoryConstants::pageSize);
+    void *pastRequestedSizePtr = ptrOffset(cachedRangeBase, MemoryConstants::pageSize);
+
+    getTwoRangeHandles(pastRequestedSizePtr, &desc, pastRequestedSizePtr, &desc, [] {});
+    ASSERT_EQ(1u, rangeContext->ipcRangeTransports.size());
+
+    EXPECT_NE(nullptr, reservation.release());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, rangeContext->freeVirtualMem(cachedRangeBase, MemoryConstants::pageSize));
+    installedReservationBase = nullptr;
+
+    EXPECT_TRUE(rangeContext->ipcRangeTransports.empty());
+    EXPECT_EQ(1u, rangeContext->freeMemCalls);
+    EXPECT_TRUE(driverHandle->getIPCHandleMap().empty());
 }
 
 } // namespace ult

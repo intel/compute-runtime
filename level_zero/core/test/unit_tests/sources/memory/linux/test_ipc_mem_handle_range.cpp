@@ -151,19 +151,6 @@ class ReservedDataRecordingAllocation : public NEO::MockGraphicsAllocation {
     bool reservedHandleDataWasSet = false;
 };
 
-class FixedHandleAllocation : public NEO::MockGraphicsAllocation {
-  public:
-    FixedHandleAllocation(uint32_t rootDeviceIndex, void *buffer, size_t sizeIn, uint64_t handle)
-        : NEO::MockGraphicsAllocation(rootDeviceIndex, buffer, sizeIn) {
-        this->internalHandle = handle;
-    }
-
-    int createInternalHandle(NEO::MemoryManager *memoryManager, uint32_t handleId, uint64_t &handle, void *reservedHandleData) override {
-        handle = this->internalHandle;
-        return 0;
-    }
-};
-
 struct RangeExportContext : public L0::Context {
     RangeExportContext(L0::DriverHandle *inDriverHandle) : L0::Context(inDriverHandle) {
         driverHandle = inDriverHandle;
@@ -198,7 +185,7 @@ struct RangeExportContext : public L0::Context {
     }
     ze_result_t callPutIpcRangeHandle(const ze_ipc_mem_handle_t &ipcHandle) { return putIpcRangeHandle(ipcHandle); }
     bool callIsIpcRangeHandle(const ze_ipc_mem_handle_t &ipcHandle) const { return isIpcRangeHandle(ipcHandle); }
-    bool callReleaseIpcRangeTransportForPtr(const void *ptr) { return releaseIpcRangeTransportForPtr(ptr); }
+    bool callReleaseIpcRangeTransportsInRange(const void *rangeBase, size_t rangeSize) { return releaseIpcRangeTransportsInRange(rangeBase, rangeSize); }
     uint32_t getMaxIpcRangeHandleCount() override { return maxIpcRangeHandleCount; }
 
     uint32_t maxIpcRangeHandleCount = 1024u;
@@ -1209,6 +1196,7 @@ TEST_F(IpcMemHandleRangeTest, givenExportedRangeTransportWhenFreeingReservedVirt
     void *baseAddress = reinterpret_cast<void *>(0x1000);
     auto *heapReservation = new NEO::VirtualMemoryReservation();
     heapReservation->rootDeviceIndex = neoDevice->getRootDeviceIndex();
+    heapReservation->virtualAddressRange = {castToUint64(baseAddress), size};
     heapReservation->reservationSize = size;
     heapReservation->reservationBase = 0u;
     heapReservation->reservationTotalSize = 0u;
@@ -1227,7 +1215,7 @@ TEST_F(IpcMemHandleRangeTest, givenExportedRangeTransportWhenFreeingReservedVirt
     EXPECT_EQ(0u, exportContext->rangeTransportCount());
 }
 
-TEST_F(IpcMemHandleRangeTest, givenNonMatchingAndMatchingRangeEntriesWhenReleasingRangeTransportForPtrThenNonMatchingEntryIsSkippedAndMatchingIsReleased) {
+TEST_F(IpcMemHandleRangeTest, givenEntryBelowAndInsideRangeWhenReleasingRangeTransportsInRangeThenEntryBelowIsSkippedAndEntryInsideIsReleased) {
     auto exportContext = createExportContext();
 
     void *firstBase = reinterpret_cast<void *>(0x1000);
@@ -1236,7 +1224,7 @@ TEST_F(IpcMemHandleRangeTest, givenNonMatchingAndMatchingRangeEntriesWhenReleasi
     exportContext->injectRangeTransport(secondBase, reinterpret_cast<void *>(0x5000), 222u, {});
     ASSERT_EQ(2u, exportContext->rangeTransportCount());
 
-    auto released = exportContext->callReleaseIpcRangeTransportForPtr(secondBase);
+    auto released = exportContext->callReleaseIpcRangeTransportsInRange(secondBase, 0x1000u);
     EXPECT_TRUE(released);
     EXPECT_EQ(1u, exportContext->rangeTransportCount());
 }
@@ -1788,7 +1776,7 @@ TEST_F(IpcMemHandleRangeTest, givenRangeTransportWithNullTransportPtrWhenReleasi
     exportContext->injectRangeTransport(baseAddress, nullptr, 333u, {});
     ASSERT_EQ(1u, exportContext->rangeTransportCount());
 
-    auto released = exportContext->callReleaseIpcRangeTransportForPtr(baseAddress);
+    auto released = exportContext->callReleaseIpcRangeTransportsInRange(baseAddress, MemoryConstants::pageSize);
     EXPECT_TRUE(released);
     EXPECT_EQ(0u, exportContext->rangeTransportCount());
 }

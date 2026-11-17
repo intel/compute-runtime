@@ -12,6 +12,7 @@
 #include "shared/source/memory_manager/memory_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
 
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/driver/driver_handle.h"
@@ -305,6 +306,22 @@ class IpcImplicitScalingMockGraphicsAllocation : public NEO::MemoryAllocation {
     bool isResident(uint32_t contextId) const override {
         return false;
     }
+};
+
+class FixedHandleAllocation : public NEO::MockGraphicsAllocation {
+  public:
+    FixedHandleAllocation(uint32_t rootDeviceIndex, void *buffer, size_t sizeIn, uint64_t handle)
+        : NEO::MockGraphicsAllocation(rootDeviceIndex, buffer, sizeIn) {
+        this->internalHandle = handle;
+    }
+
+    int createInternalHandle(NEO::MemoryManager *memoryManager, uint32_t handleId, uint64_t &handle, void *reservedHandleData) override {
+        ++handleExportCount;
+        handle = this->internalHandle;
+        return 0;
+    }
+
+    uint32_t handleExportCount = 0u;
 };
 
 class MemoryManagerOpenIpcMock : public MemoryManagerIpcMock {

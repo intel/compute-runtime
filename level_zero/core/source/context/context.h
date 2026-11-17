@@ -445,7 +445,7 @@ struct Context : _ze_context_handle_t, NEO::NonCopyableAndNonMovableClass {
     ze_result_t exportIpcHandle(IpcHandleExportData exportData, NEO::SvmAllocationData *allocData, ze_ipc_mem_handle_t &ipcHandle);
     ze_result_t openIpcRangeHandle(ze_device_handle_t hDevice, const ze_ipc_mem_handle_t &ipcHandle, ze_ipc_memory_flags_t flags, void **pptr);
     ze_result_t putIpcRangeHandle(const ze_ipc_mem_handle_t &ipcHandle);
-    bool releaseIpcRangeTransportForPtr(const void *ptr);
+    bool releaseIpcRangeTransportsInRange(const void *rangeBase, size_t rangeSize);
     bool isIpcRangeHandle(const ze_ipc_mem_handle_t &ipcHandle) const;
     uint64_t getIpcHandleKey(const ze_ipc_mem_handle_t &ipcHandle) const;
     void closeIpcHandleTracking(uint64_t handle);
@@ -455,10 +455,25 @@ struct Context : _ze_context_handle_t, NEO::NonCopyableAndNonMovableClass {
     void releaseIpcRangeChunkHandles(const std::vector<uint64_t> &handleKeys);
     void releaseIpcRangeTransport(const void *transportPtr);
 
+    struct IpcRangeChunkCacheKey {
+        NEO::GraphicsAllocation *alloc = nullptr;
+        uint64_t mappedStart = 0;
+        uint64_t physicalOffset = 0;
+        bool isHost = false;
+
+        bool operator==(const IpcRangeChunkCacheKey &) const = default;
+    };
+    bool tryReuseIpcRangeExport(const void *ptr, size_t size, bool fabricAccessible, const std::vector<IpcRangeChunkCacheKey> &chunks, ze_ipc_mem_handle_t *pIpcHandle);
+
     struct IpcRangeTransportEntry {
         const void *baseAddress = nullptr;
+        size_t rangeSize = 0;
+        bool fabricAccessible = false;
         const void *transportPtr = nullptr;
         uint64_t transportHandleKey = 0;
+        ze_ipc_mem_handle_t ipcHandle = {};
+        uint64_t refCount = 1;
+        std::vector<IpcRangeChunkCacheKey> chunkCacheKeys;
         std::vector<uint64_t> handleKeys;
     };
     std::vector<IpcRangeTransportEntry> ipcRangeTransports;

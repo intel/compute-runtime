@@ -1364,6 +1364,44 @@ ze_result_t Context::exportIpcHandle(IpcHandleExportData exportData, NEO::SvmAll
     return ZE_RESULT_SUCCESS;
 }
 
+bool Context::tryReuseIpcRangeExport(const void *ptr, size_t size, bool fabricAccessible, const std::vector<IpcRangeChunkCacheKey> &chunks, ze_ipc_mem_handle_t *pIpcHandle) {
+    std::lock_guard<std::mutex> rangeLock(this->ipcRangeTransportMutex);
+    auto ipcLock = this->driverHandle->lockIPCHandleMap();
+    auto &ipcMap = this->driverHandle->getIPCHandleMap();
+    for (auto &entry : this->ipcRangeTransports) {
+        if (entry.baseAddress != ptr || entry.rangeSize != size || entry.fabricAccessible != fabricAccessible ||
+            entry.chunkCacheKeys != chunks || entry.handleKeys.size() != chunks.size()) {
+            continue;
+        }
+
+        auto transportIt = ipcMap.find(entry.transportHandleKey);
+        if (transportIt == ipcMap.end() || transportIt->second->ptr != castToUint64(entry.transportPtr)) {
+            continue;
+        }
+        std::vector<IpcHandleTracking *> chunkTrackings;
+        chunkTrackings.reserve(entry.handleKeys.size());
+        for (size_t i = 0; i < entry.handleKeys.size(); ++i) {
+            auto handleIt = ipcMap.find(entry.handleKeys[i]);
+            if (handleIt == ipcMap.end() || handleIt->second->alloc != chunks[i].alloc) {
+                break;
+            }
+            chunkTrackings.push_back(handleIt->second);
+        }
+        if (chunkTrackings.size() != entry.handleKeys.size()) {
+            continue;
+        }
+
+        ++transportIt->second->refcnt;
+        for (auto *tracking : chunkTrackings) {
+            ++tracking->refcnt;
+        }
+        ++entry.refCount;
+        *pIpcHandle = entry.ipcHandle;
+        return true;
+    }
+    return false;
+}
+
 ze_result_t Context::getIpcRangeHandle(const void *ptr,
                                        const ze_ipc_phys_mem_handle_range_ext_desc_t *desc,
                                        ze_ipc_mem_handle_t *pIpcHandle) {
@@ -1401,13 +1439,7 @@ ze_result_t Context::getIpcRangeHandle(const void *ptr,
     // Snapshot the contiguous mapped allocations of the range while holding the reservation-map
     // lock, then perform the fd export (createInternalHandle ioctl) outside the lock to avoid
     // holding a global lock across ioctls and any lock-order inversion with the memory manager mutex.
-    struct RangeChunk {
-        NEO::GraphicsAllocation *alloc;
-        uint64_t mappedStart;
-        uint64_t physicalOffset;
-        bool isHost;
-    };
-    std::vector<RangeChunk> chunkAllocations;
+    std::vector<IpcRangeChunkCacheKey> chunkAllocations;
     bool reservationFound = false;
     {
         auto lock = memoryManager->lockVirtualMemoryReservationMap();
@@ -1524,6 +1556,10 @@ ze_result_t Context::getIpcRangeHandle(const void *ptr,
         }
     }
 
+    if (tryReuseIpcRangeExport(ptr, desc->size, fabricAccessible, chunkAllocations, pIpcHandle)) {
+        return ZE_RESULT_SUCCESS;
+    }
+
     // Each chunk consumes an OS Handle on export/import, so reject a range that exceeds max handle count.
     if (chunkAllocations.size() > maxHandleCount) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
@@ -1618,8 +1654,12 @@ ze_result_t Context::getIpcRangeHandle(const void *ptr,
         std::lock_guard<std::mutex> lock(this->ipcRangeTransportMutex);
         IpcRangeTransportEntry entry;
         entry.baseAddress = ptr;
+        entry.rangeSize = desc->size;
+        entry.fabricAccessible = fabricAccessible;
         entry.transportPtr = transportPtr;
         entry.transportHandleKey = getIpcHandleKey(*pIpcHandle);
+        entry.ipcHandle = *pIpcHandle;
+        entry.chunkCacheKeys = chunkAllocations;
         entry.handleKeys = std::move(handleKeys);
         this->ipcRangeTransports.push_back(std::move(entry));
         this->ipcRangeTransportsPresent.store(true, std::memory_order_release);
@@ -1802,8 +1842,14 @@ ze_result_t Context::putIpcRangeHandle(const ze_ipc_mem_handle_t &ipcHandle) {
     for (auto it = this->ipcRangeTransports.begin(); it != this->ipcRangeTransports.end(); ++it) {
         if (it->transportHandleKey == transportHandleKey) {
             releaseIpcRangeChunkHandles(it->handleKeys);
-            releaseIpcRangeTransport(it->transportPtr);
-            this->ipcRangeTransports.erase(it);
+            {
+                auto ipcLock = driverHandle->lockIPCHandleMap();
+                closeIpcHandleTracking(it->transportHandleKey);
+            }
+            if (--it->refCount == 0) {
+                releaseIpcRangeTransport(it->transportPtr);
+                this->ipcRangeTransports.erase(it);
+            }
             break;
         }
     }
@@ -1831,15 +1877,20 @@ void Context::releaseIpcRangeTransport(const void *transportPtr) {
     this->freeMem(transportPtr);
 }
 
-bool Context::releaseIpcRangeTransportForPtr(const void *ptr) {
+bool Context::releaseIpcRangeTransportsInRange(const void *rangeBase, size_t rangeSize) {
     if (!this->ipcRangeTransportsPresent.load(std::memory_order_acquire)) {
         return false;
     }
+    const uint64_t rangeStart = castToUint64(rangeBase);
+    const uint64_t rangeEnd = rangeStart + rangeSize;
     std::lock_guard<std::mutex> lock(this->ipcRangeTransportMutex);
     bool released = false;
     for (auto it = this->ipcRangeTransports.begin(); it != this->ipcRangeTransports.end();) {
-        if (it->baseAddress == ptr) {
-            releaseIpcRangeChunkHandles(it->handleKeys);
+        const uint64_t exportAddress = castToUint64(it->baseAddress);
+        if (exportAddress >= rangeStart && exportAddress < rangeEnd) {
+            for (uint64_t i = 0; i < it->refCount; ++i) {
+                releaseIpcRangeChunkHandles(it->handleKeys);
+            }
             releaseIpcRangeTransport(it->transportPtr);
             it = this->ipcRangeTransports.erase(it);
             released = true;
@@ -2359,6 +2410,7 @@ ze_result_t Context::reserveVirtualMem(const void *pStart,
 ze_result_t Context::freeVirtualMem(const void *ptr,
                                     size_t size) {
     ze_result_t result = ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    size_t reservedRangeSize = 0u;
     {
         auto lock = this->driverHandle->getMemoryManager()->lockVirtualMemoryReservationMap();
         auto &reservationMap = this->driverHandle->getMemoryManager()->getVirtualMemoryReservationMap();
@@ -2377,6 +2429,7 @@ ze_result_t Context::freeVirtualMem(const void *ptr,
                 const uint64_t claimedBase = virtualMemoryReservation->virtualAddressRange.address - virtualMemoryReservation->foldPrefixSize;
                 this->driverHandle->getMemoryManager()->freeCpuAddress({claimedBase, claimedBelowReservation});
             }
+            reservedRangeSize = virtualMemoryReservation->virtualAddressRange.size;
             NEO::AddressRange addressRange{virtualMemoryReservation->reservationBase, virtualMemoryReservation->reservationTotalSize};
             if (virtualMemoryReservation->isSvmReservation) {
                 this->driverHandle->getMemoryManager()->freeCpuAddress(addressRange);
@@ -2389,10 +2442,10 @@ ze_result_t Context::freeVirtualMem(const void *ptr,
         }
     }
 
-    // Release the exported range transport outside the reservation-map lock to avoid holding it across
-    // the internal-handle close ioctls.
+    // Release range transports exported from this reservation outside the reservation-map lock to avoid
+    // holding it across the internal-handle close ioctls.
     if (result == ZE_RESULT_SUCCESS) {
-        this->releaseIpcRangeTransportForPtr(ptr);
+        this->releaseIpcRangeTransportsInRange(ptr, reservedRangeSize);
     }
 
     return result;
