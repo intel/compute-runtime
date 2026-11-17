@@ -1179,6 +1179,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
         return status;
     }
 
+    if (imgInfo.imgDesc.imageType == NEO::ImageType::image1DBuffer) {
+        const auto dstImage = Image::fromHandle(hDstImage);
+        auto dstAddress = dstImage->getAllocation()->getGpuAddress() + dstImage->getImageInfo().offset + static_cast<uint64_t>(pDstRegion->originX) * bytesPerPixel;
+        memoryCopyParams.copyOffloadDisallowed = true;
+        return CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(reinterpret_cast<void *>(dstAddress), srcPtr, static_cast<size_t>(pDstRegion->width) * bytesPerPixel,
+                                                                      hEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
+    }
+
     auto builtInMode = this->defaultBuiltInMode;
     device->getL0GfxCoreHelper().adjustBuiltInImageModeToBindful(builtInMode);
     builtInMode.adjustToWideStatelessIfRequired(bufferSize + allocationStruct.offset);
@@ -1397,6 +1405,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
                                           imgSizeBlit, region, event, numWaitEvents, phWaitEvents, memoryCopyParams, isImageFromBuffer);
         addToMappedEventList(event);
         return status;
+    }
+
+    if (imgInfo.imgDesc.imageType == NEO::ImageType::image1DBuffer) {
+        const auto srcImage = Image::fromHandle(hSrcImage);
+        auto srcAddress = srcImage->getAllocation()->getGpuAddress() + srcImage->getImageInfo().offset + static_cast<uint64_t>(pSrcRegion->originX) * bytesPerPixel;
+        memoryCopyParams.copyOffloadDisallowed = true;
+        return CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(dstPtr, reinterpret_cast<const void *>(srcAddress), static_cast<size_t>(pSrcRegion->width) * bytesPerPixel,
+                                                                      hEvent, numWaitEvents, phWaitEvents, memoryCopyParams);
     }
 
     auto builtInMode = this->defaultBuiltInMode;
@@ -1649,7 +1665,17 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
         return status;
     }
 
+    const bool src1dBuffer = (srcImgInfo.imgDesc.imageType == NEO::ImageType::image1DBuffer);
+    const bool dst1dBuffer = (dstImgInfo.imgDesc.imageType == NEO::ImageType::image1DBuffer);
+
     ImageBuiltIn imageBuiltIn = ImageBuiltIn::copyImageRegion;
+    if (src1dBuffer && dst1dBuffer) {
+        imageBuiltIn = ImageBuiltIn::copyImage1dBufferToImage1dBuffer;
+    } else if (src1dBuffer) {
+        imageBuiltIn = ImageBuiltIn::copyImage1dBufferToImage3d;
+    } else if (dst1dBuffer) {
+        imageBuiltIn = ImageBuiltIn::copyImage3dToImage1dBuffer;
+    }
     auto builtInMode = this->defaultBuiltInMode;
 
     auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
@@ -2578,7 +2604,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     emitMemAdviseForSystemCopy(dstAllocationStruct, size);
     emitMemAdviseForSystemCopy(srcAllocationStruct, size);
 
-    if (!memoryCopyParams.copyOffloadAllowed) {
+    if (!memoryCopyParams.copyOffloadAllowed && !memoryCopyParams.copyOffloadDisallowed) {
         bool imageToBuffer = false;
         bool shouldUseCopyOffload = this->isCopyOffloadForFillOrStagingPreferred(imageToBuffer) || doParamsRequireCopyOnly(memoryCopyParams);
         memoryCopyParams.copyOffloadAllowed = isCopyOffloadAllowed(srcAllocationStruct.alloc, dstAllocationStruct.alloc, remoteCopy, size <= BlitterConstants::maxD2DBcsCopySize, 0) && shouldUseCopyOffload;

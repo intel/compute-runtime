@@ -215,6 +215,78 @@ HWTEST_F(ImageCreate, givenBufferTypeWithoutPitchedPtrWhenImageCreateThenInvalid
     ASSERT_EQ(imagePtr, nullptr);
 }
 
+HWTEST2_F(ImageCreate, givenBufferTypeWithThreeChannelLayoutWhenImageCreateThenUnsupportedImageFormatReturned, ImageSupport) {
+    constexpr size_t width = 64u;
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device, &deviceDesc, width * 6, 0, &ptr));
+
+    ze_image_pitched_exp_desc_t pitchedDesc = {};
+    pitchedDesc.stype = ZE_STRUCTURE_TYPE_PITCHED_IMAGE_EXP_DESC;
+    pitchedDesc.ptr = ptr;
+
+    for (auto layout : {ZE_IMAGE_FORMAT_LAYOUT_8_8_8, ZE_IMAGE_FORMAT_LAYOUT_16_16_16}) {
+        ze_image_desc_t desc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                                &pitchedDesc,
+                                0,
+                                ZE_IMAGE_TYPE_BUFFER,
+                                {layout, ZE_IMAGE_FORMAT_TYPE_UINT,
+                                 ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                                 ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_1},
+                                width,
+                                1,
+                                1,
+                                0,
+                                0};
+
+        Image *imagePtr = nullptr;
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_IMAGE_FORMAT, Image::create(device, &desc, &imagePtr));
+        EXPECT_EQ(nullptr, imagePtr);
+    }
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+}
+
+HWTEST2_F(ImageCreate, givenBufferTypeWiderThanMax1dWidthWhenImageCreatedThenRedescribedSurfaceStateIsBufferMatchingImageSurfaceState, SupportsLegacyRenderSurfaceStateAndImageSupport) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    constexpr size_t width = 65536u;
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device, &deviceDesc, width, 0, &ptr));
+
+    ze_image_pitched_exp_desc_t pitchedDesc = {};
+    pitchedDesc.stype = ZE_STRUCTURE_TYPE_PITCHED_IMAGE_EXP_DESC;
+    pitchedDesc.ptr = ptr;
+
+    ze_image_desc_t desc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                            &pitchedDesc,
+                            0,
+                            ZE_IMAGE_TYPE_BUFFER,
+                            {ZE_IMAGE_FORMAT_LAYOUT_8, ZE_IMAGE_FORMAT_TYPE_UINT,
+                             ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_0,
+                             ZE_IMAGE_FORMAT_SWIZZLE_0, ZE_IMAGE_FORMAT_SWIZZLE_1},
+                            width,
+                            1,
+                            1,
+                            0,
+                            0};
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, imageHW->initialize(device, &desc));
+
+    const auto &imageSurfaceState = imageHW->getSurfaceState();
+    const auto &redescribedSurfaceState = imageHW->getRedescribedSurfaceState();
+    EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER, imageSurfaceState.getSurfaceType());
+    EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER, redescribedSurfaceState.getSurfaceType());
+    EXPECT_EQ(imageSurfaceState.getWidth(), redescribedSurfaceState.getWidth());
+    EXPECT_EQ(imageSurfaceState.getHeight(), redescribedSurfaceState.getHeight());
+    EXPECT_EQ(imageSurfaceState.getDepth(), redescribedSurfaceState.getDepth());
+    EXPECT_EQ(imageSurfaceState.getSurfacePitch(), redescribedSurfaceState.getSurfacePitch());
+
+    imageHW.reset();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+}
+
 HWTEST2_P(ImageCreateUsmPool, GivenBufferTypeWithPitchedPtrWhenImageCreatedThenImageFromBufferIsCreated, ImageSupport) {
     const size_t width = 256;
     const size_t depth = 1;

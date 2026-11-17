@@ -12,6 +12,7 @@
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/test_traits.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -23,6 +24,7 @@
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/image/image_hw.h"
 #include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_builtin_functions_lib_impl.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_image.h"
@@ -79,7 +81,7 @@ class MockCommandListHw : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFam
                                              L0::Event *signalEvent,
                                              CmdListKernelLaunchParams &launchParams) override {
         appendMemoryCopyKernelWithGACalledTimes++;
-        appendMemoryCopyKernelWithGACalls.push_back({dstOffset, srcOffset, size, builtInMode});
+        appendMemoryCopyKernelWithGACalls.push_back({dstOffset, srcOffset, size, builtInMode, dstPtr, srcPtr});
         if (builtInMode.bufferMode == NEO::BuiltIn::AddressingMode::BufferMode::stateless) {
             appendMemoryCopyKernelWithGAStatelessCalledTimes++;
         }
@@ -221,6 +223,8 @@ class MockCommandListHw : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFam
         uint64_t srcOffset = 0;
         uint64_t size = 0;
         NEO::BuiltIn::AddressingMode builtInMode;
+        uintptr_t dstPtr = 0;
+        uintptr_t srcPtr = 0;
     };
     std::vector<CopyKernelWithGACall> appendMemoryCopyKernelWithGACalls;
     std::vector<NEO::BuiltIn::AddressingMode> appendMemoryCopyKernel2dBuiltInModes;
@@ -1644,6 +1648,148 @@ HWTEST2_F(CommandListAppend, givenComputeCommandListAndEventIsUsedWhenCopyFromIm
     cmdList.appendImageCopyRegion(imageHWDst->toHandle(), imageHWSrc->toHandle(), &dstRegion, &srcRegion, event->toHandle(), 0, nullptr, copyParams);
     EXPECT_EQ(cmdList.appendCopyImageBlitCalledTimes, 0u);
     EXPECT_EQ(event.get(), cmdList.appendKernelEventValue);
+}
+
+struct RecordingImageBuiltInKernelLib : MockBuiltInKernelLibImpl {
+    using MockBuiltInKernelLibImpl::MockBuiltInKernelLibImpl;
+
+    Kernel *getImageFunction(ImageBuiltIn func, const NEO::BuiltIn::AddressingMode &mode) override {
+        requestedImageBuiltIns.push_back(func);
+        return dummyKernel.get();
+    }
+
+    std::vector<ImageBuiltIn> requestedImageBuiltIns;
+};
+
+struct CommandListAppendImage1dBuffer : public CommandListAppend {
+    static constexpr uint32_t imageWidth = 64u;
+    static constexpr uint32_t bytesPerPixel = 4u;
+
+    void SetUp() override {
+        CommandListAppend::SetUp();
+        auto recordingLib = std::make_unique<RecordingImageBuiltInKernelLib>(device, device->getNEODevice()->getBuiltIns());
+        builtInsLib = recordingLib.get();
+        builtInsBackup = std::make_unique<NonCopyableVariableBackup<std::unique_ptr<BuiltInKernelLib>>>(&device->builtins, std::move(recordingLib));
+    }
+
+    void TearDown() override {
+        images.clear();
+        for (auto ptr : usmAllocations) {
+            context->freeMem(ptr);
+        }
+        builtInsBackup.reset();
+        CommandListAppend::TearDown();
+    }
+
+    template <typename FamilyType>
+    L0::Image *createImage(ze_image_type_t type) {
+        ze_image_pitched_exp_desc_t pitchedDesc = {};
+        pitchedDesc.stype = ZE_STRUCTURE_TYPE_PITCHED_IMAGE_EXP_DESC;
+
+        ze_image_desc_t desc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                                nullptr,
+                                ZE_IMAGE_FLAG_KERNEL_WRITE,
+                                type,
+                                {ZE_IMAGE_FORMAT_LAYOUT_32, ZE_IMAGE_FORMAT_TYPE_UINT,
+                                 ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                                 ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A},
+                                imageWidth,
+                                1,
+                                1,
+                                0,
+                                0};
+
+        if (type == ZE_IMAGE_TYPE_BUFFER) {
+            void *ptr = nullptr;
+            ze_device_mem_alloc_desc_t deviceDesc = {};
+            EXPECT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device->toHandle(), &deviceDesc, imageWidth * bytesPerPixel, 0, &ptr));
+            usmAllocations.push_back(ptr);
+            pitchedDesc.ptr = ptr;
+            desc.pNext = &pitchedDesc;
+        }
+
+        auto image = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+        EXPECT_EQ(ZE_RESULT_SUCCESS, image->initialize(device, &desc));
+        images.push_back(std::move(image));
+        return images.back().get();
+    }
+
+    RecordingImageBuiltInKernelLib *builtInsLib = nullptr;
+    std::unique_ptr<NonCopyableVariableBackup<std::unique_ptr<BuiltInKernelLib>>> builtInsBackup;
+    std::vector<std::unique_ptr<L0::Image>> images;
+    std::vector<void *> usmAllocations;
+};
+
+HWTEST2_F(CommandListAppendImage1dBuffer, givenComputeCommandListWhenCopyingImageRegionWithImage1dBufferThenImage1dBufferCopyBuiltinIsUsed, ImageSupport) {
+    auto mockKernel = static_cast<Mock<::L0::KernelImp> *>(builtInsLib->dummyKernel.get());
+    mockKernel->setArgRedescribedImageCallBase = false;
+
+    MockCommandListHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::compute, 0u);
+
+    auto bufferImageA = createImage<FamilyType>(ZE_IMAGE_TYPE_BUFFER);
+    auto bufferImageB = createImage<FamilyType>(ZE_IMAGE_TYPE_BUFFER);
+    auto image1d = createImage<FamilyType>(ZE_IMAGE_TYPE_1D);
+
+    ze_image_region_t region = {0, 0, 0, imageWidth, 1, 1};
+    auto &requestedImageBuiltIns = builtInsLib->requestedImageBuiltIns;
+
+    requestedImageBuiltIns.clear();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList.appendImageCopyRegion(bufferImageB->toHandle(), bufferImageA->toHandle(), &region, &region, nullptr, 0, nullptr, copyParams));
+    ASSERT_EQ(1u, requestedImageBuiltIns.size());
+    EXPECT_EQ(ImageBuiltIn::copyImage1dBufferToImage1dBuffer, requestedImageBuiltIns[0]);
+
+    requestedImageBuiltIns.clear();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList.appendImageCopyRegion(image1d->toHandle(), bufferImageA->toHandle(), &region, &region, nullptr, 0, nullptr, copyParams));
+    ASSERT_EQ(1u, requestedImageBuiltIns.size());
+    EXPECT_EQ(ImageBuiltIn::copyImage1dBufferToImage3d, requestedImageBuiltIns[0]);
+
+    requestedImageBuiltIns.clear();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList.appendImageCopyRegion(bufferImageA->toHandle(), image1d->toHandle(), &region, &region, nullptr, 0, nullptr, copyParams));
+    ASSERT_EQ(1u, requestedImageBuiltIns.size());
+    EXPECT_EQ(ImageBuiltIn::copyImage3dToImage1dBuffer, requestedImageBuiltIns[0]);
+
+    requestedImageBuiltIns.clear();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList.appendImageCopyRegion(image1d->toHandle(), image1d->toHandle(), &region, &region, nullptr, 0, nullptr, copyParams));
+    ASSERT_EQ(1u, requestedImageBuiltIns.size());
+    EXPECT_EQ(ImageBuiltIn::copyImageRegion, requestedImageBuiltIns[0]);
+}
+
+HWTEST2_F(CommandListAppendImage1dBuffer, givenComputeCommandListWhenCopyingImage1dBufferFromAndToMemoryThenLinearMemoryCopyIsUsedInsteadOfImageBuiltin, ImageSupport) {
+    MockCommandListHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::compute, 0u);
+    cmdList.returnBaseAllocationStruct = true;
+
+    auto bufferImage = createImage<FamilyType>(ZE_IMAGE_TYPE_BUFFER);
+    const auto imageAddress = bufferImage->getAllocation()->getGpuAddress() + bufferImage->getImageInfo().offset;
+
+    constexpr uint32_t originX = 8u;
+    constexpr uint32_t copyWidth = 32u;
+    ze_image_region_t region = {originX, 0, 0, copyWidth, 1, 1};
+    uint32_t hostData[imageWidth] = {};
+    auto &requestedImageBuiltIns = builtInsLib->requestedImageBuiltIns;
+    auto &copyCalls = cmdList.appendMemoryCopyKernelWithGACalls;
+    auto copiedBytes = [&copyCalls]() {
+        uint64_t bytes = 0u;
+        for (const auto &call : copyCalls) {
+            bytes += call.size;
+        }
+        return bytes;
+    };
+
+    requestedImageBuiltIns.clear();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList.appendImageCopyFromMemory(bufferImage->toHandle(), hostData, &region, nullptr, 0, nullptr, copyParams));
+    EXPECT_TRUE(requestedImageBuiltIns.empty());
+    ASSERT_FALSE(copyCalls.empty());
+    EXPECT_EQ(copyWidth * bytesPerPixel, copiedBytes());
+    EXPECT_EQ(imageAddress + originX * bytesPerPixel, copyCalls[0].dstPtr + copyCalls[0].dstOffset);
+
+    copyCalls.clear();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList.appendImageCopyToMemory(hostData, bufferImage->toHandle(), &region, nullptr, 0, nullptr, copyParams));
+    EXPECT_TRUE(requestedImageBuiltIns.empty());
+    ASSERT_FALSE(copyCalls.empty());
+    EXPECT_EQ(copyWidth * bytesPerPixel, copiedBytes());
+    EXPECT_EQ(imageAddress + originX * bytesPerPixel, copyCalls[0].srcPtr + copyCalls[0].srcOffset);
 }
 
 struct IsAtLeastDg2AndSupportsImages {

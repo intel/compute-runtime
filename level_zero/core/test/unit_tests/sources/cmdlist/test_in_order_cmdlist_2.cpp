@@ -2019,6 +2019,73 @@ HWTEST2_F(CopyOffloadInOrderTests, givenImageCopyOffloadDisallowedWhenAppendingI
     context->freeMem(data);
 }
 
+HWTEST2_F(CopyOffloadInOrderTests, givenImageCopyOffloadDisallowedAndBlitPreferredWhenAppendingImage1dBufferCopyToAndFromMemoryThenComputeWalkerIsUsedInsteadOfCopyEngine, IsAtLeastXeCore) {
+    using XY_COPY_BLT = typename std::remove_const<decltype(FamilyType::cmdInitXyCopyBlt)>::type;
+    using WalkerType = typename FamilyType::DefaultWalkerType;
+
+    if (!device->getDeviceInfo().imageSupport) {
+        GTEST_SKIP();
+    }
+
+    debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+
+    auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+    immCmdList->setImageCopyOffloadAllowed(false);
+
+    auto copyQueueCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(true));
+    const auto initialCopyTaskCount = copyQueueCsr->taskCount.load();
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    constexpr size_t width = 64u;
+    auto data = allocHostMem(width * sizeof(uint32_t));
+    void *imageStorage = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device->toHandle(), &deviceDesc, width * sizeof(uint32_t), 0, &imageStorage));
+
+    ze_image_pitched_exp_desc_t pitchedDesc = {};
+    pitchedDesc.stype = ZE_STRUCTURE_TYPE_PITCHED_IMAGE_EXP_DESC;
+    pitchedDesc.ptr = imageStorage;
+
+    ze_image_desc_t zeDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC};
+    zeDesc.pNext = &pitchedDesc;
+    zeDesc.type = ZE_IMAGE_TYPE_BUFFER;
+    zeDesc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_32;
+    zeDesc.format.type = ZE_IMAGE_FORMAT_TYPE_UINT;
+    zeDesc.width = width;
+    zeDesc.height = 1;
+    zeDesc.depth = 1;
+    auto image = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, image->initialize(device, &zeDesc));
+
+    ze_image_region_t imgRegion = {0, 0, 0, static_cast<uint32_t>(width), 1, 1};
+
+    for (const bool imageToMemory : {false, true}) {
+        const auto offset = cmdStream->getUsed();
+
+        if (imageToMemory) {
+            EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendImageCopyToMemoryExt(data, image->toHandle(), &imgRegion, 0, 0, nullptr, 0, nullptr, copyParams));
+        } else {
+            EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendImageCopyFromMemoryExt(image->toHandle(), data, &imgRegion, 0, 0, nullptr, 0, nullptr, copyParams));
+        }
+
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
+                                                          ptrOffset(cmdStream->getCpuBase(), offset),
+                                                          (cmdStream->getUsed() - offset)));
+
+        EXPECT_EQ(cmdList.end(), find<XY_COPY_BLT *>(cmdList.begin(), cmdList.end()));
+        EXPECT_NE(cmdList.end(), find<WalkerType *>(cmdList.begin(), cmdList.end()));
+    }
+
+    if (!device->getProductHelper().useAdditionalBlitProperties()) {
+        EXPECT_EQ(initialCopyTaskCount, copyQueueCsr->taskCount);
+    }
+
+    image.reset();
+    context->freeMem(imageStorage);
+    context->freeMem(data);
+}
+
 HWTEST2_F(CopyOffloadInOrderTests, givenBlitEnqueuePreferenceWhenAppendFillCalledThenCopyOffloadUsed, IsAtLeastXeCore) {
     debugManager.flags.EnableBlitterForEnqueueOperations.set(-1);
     bool blitOffloadPreferred = device->getProductHelper().blitEnqueuePreferred(false);

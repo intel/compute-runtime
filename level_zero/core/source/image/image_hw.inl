@@ -411,9 +411,6 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
 
         imgInfoRedescirebed.imgDesc = imgInfo.imgDesc;
         imgInfoRedescirebed.qPitch = imgInfo.qPitch;
-        if (imgInfoRedescirebed.imgDesc.imageType == NEO::ImageType::image1DBuffer) {
-            imgInfoRedescirebed.imgDesc.imageType = NEO::ImageType::image1D;
-        }
     }
 
     const auto &productHelper = rootDeviceEnvironment.getHelper<NEO::ProductHelper>();

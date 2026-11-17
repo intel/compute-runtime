@@ -58,6 +58,9 @@ enum class ImageBuiltIn : uint32_t {
     copyImage3dToBuffer8To6Bytes,
     copyImage3dToBufferBytes,
     copyImageRegion,
+    copyImage1dBufferToImage3d,
+    copyImage3dToImage1dBuffer,
+    copyImage1dBufferToImage1dBuffer,
     fillImage3d,
     count
 };
@@ -159,6 +162,12 @@ constexpr const char *getKernelName(ImageBuiltIn func) {
         return "CopyImage3dToBufferBytes";
     case ImageBuiltIn::copyImageRegion:
         return "CopyImage3dToImage3d";
+    case ImageBuiltIn::copyImage1dBufferToImage3d:
+        return "CopyImage1dBufferToImage3d";
+    case ImageBuiltIn::copyImage3dToImage1dBuffer:
+        return "CopyImage3dToImage1dBuffer";
+    case ImageBuiltIn::copyImage1dBufferToImage1dBuffer:
+        return "CopyImage1dBufferToImage1dBuffer";
     case ImageBuiltIn::fillImage3d:
         return "FillImage3d";
     default:
@@ -189,6 +198,9 @@ constexpr NEO::BuiltIn::BaseKernel getBaseKernel(ImageBuiltIn func) {
     case ImageBuiltIn::copyImage3dToBufferBytes:
         return NEO::BuiltIn::BaseKernel::copyImage3dToBuffer;
     case ImageBuiltIn::copyImageRegion:
+    case ImageBuiltIn::copyImage1dBufferToImage3d:
+    case ImageBuiltIn::copyImage3dToImage1dBuffer:
+    case ImageBuiltIn::copyImage1dBufferToImage1dBuffer:
         return NEO::BuiltIn::BaseKernel::copyImageToImage3d;
     case ImageBuiltIn::fillImage3d:
         return NEO::BuiltIn::BaseKernel::fillImage3d;

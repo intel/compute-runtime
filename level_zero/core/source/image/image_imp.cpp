@@ -379,6 +379,8 @@ ze_result_t Image::create(Device *device, const ze_image_desc_t *desc, Image **p
         case ZE_IMAGE_FORMAT_LAYOUT_16_16_16:
             if (isImportedWin32Handle(desc)) {
                 result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+            } else if (desc->type == ZE_IMAGE_TYPE_BUFFER) {
+                result = ZE_RESULT_ERROR_UNSUPPORTED_IMAGE_FORMAT;
             } else {
                 ze_image_desc_t imgDesc = {};
                 getImageDescriptorFor3ChEmulation(desc, &imgDesc);
