@@ -34,7 +34,7 @@ void testAppendMemoryCopyFill(ze_context_handle_t &context, ze_device_handle_t &
         deviceDesc.flags = 0;
         deviceDesc.pNext = nullptr;
 
-        SUCCESS_OR_TERMINATE(zeMemAllocDevice(context, &deviceDesc, devBufferSize, devBufferSize, device, &devBuffer));
+        SUCCESS_OR_TERMINATE(zeMemAllocDevice(context, &deviceDesc, devBufferSize, 1, device, &devBuffer));
 
         memset(hostBuffer, 0xFF, devBufferSize);
 

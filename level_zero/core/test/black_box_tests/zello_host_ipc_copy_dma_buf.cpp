@@ -141,7 +141,7 @@ void runServer(bool &validRet) {
 
     void *zeBuffer = nullptr;
     ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
-    SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, allocSize, &zeBuffer));
+    SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, 1, &zeBuffer));
 
     for (uint32_t i = 0; i < CHILDPROCESSES; i++) {
         // Initialize the IPC buffer

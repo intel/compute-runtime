@@ -171,7 +171,7 @@ void runServer(bool &validRet) {
 
     void *zeBuffer = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
-    SUCCESS_OR_TERMINATE(zeMemAllocDevice(context, &deviceDesc, allocSize, allocSize, device, &zeBuffer));
+    SUCCESS_OR_TERMINATE(zeMemAllocDevice(context, &deviceDesc, allocSize, 1, device, &zeBuffer));
 
     for (uint32_t i = 0; i < CHILDPROCESSES; i++) {
         // Initialize the IPC buffer

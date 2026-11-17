@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -54,8 +54,8 @@ void testCopyBetweenHeapDeviceAndStack(ze_context_handle_t &context, ze_device_h
     deviceDesc.flags = 0;
     deviceDesc.pNext = nullptr;
 
-    SUCCESS_OR_TERMINATE(zeMemAllocDevice(context, &deviceDesc, allocSize, allocSize, device, &buffer1));
-    SUCCESS_OR_TERMINATE(zeMemAllocDevice(context, &deviceDesc, allocSize, allocSize, device, &buffer2));
+    SUCCESS_OR_TERMINATE(zeMemAllocDevice(context, &deviceDesc, allocSize, 1, device, &buffer1));
+    SUCCESS_OR_TERMINATE(zeMemAllocDevice(context, &deviceDesc, allocSize, 1, device, &buffer2));
 
     for (size_t i = 0; i < allocSize; ++i) {
         heapBuffer[i] = static_cast<char>(i + 1);
@@ -131,7 +131,7 @@ void testCopyBetweenHostMemAndDeviceMem(ze_context_handle_t &context, ze_device_
     deviceDesc.ordinal = 0;
     deviceDesc.flags = 0;
     deviceDesc.pNext = nullptr;
-    SUCCESS_OR_TERMINATE(zeMemAllocDevice(context, &deviceDesc, allocSize, allocSize, device, &deviceBuffer));
+    SUCCESS_OR_TERMINATE(zeMemAllocDevice(context, &deviceDesc, allocSize, 1, device, &deviceBuffer));
 
     for (size_t i = 0; i < allocSize; ++i) {
         hostBuffer[i] = static_cast<char>(i + 1);
