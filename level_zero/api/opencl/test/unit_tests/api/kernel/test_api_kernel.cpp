@@ -615,6 +615,30 @@ TEST_F(SvmKernelValidationFixture, givenKnownSvmPointerWhenSetKernelExecInfoSvmP
     context->getL0Object()->getDriverHandle()->getSvmAllocsManager()->removeSVMAlloc(allocData);
 }
 
+TEST_F(SvmKernelValidationFixture, givenSvmPointerSetWithKernelExecInfoSvmPtrsWhenIndirectAllocationsAreAddedToResidencyContainerThenSvmAllocationIsAdded) {
+    constexpr uint64_t gpuAddress = 0x1000u;
+    void *svmPtr = reinterpret_cast<void *>(gpuAddress);
+    NEO::MockGraphicsAllocation mockAllocation(svmPtr, gpuAddress, 0x1000u);
+    NEO::SvmAllocationData allocData(0u);
+    allocData.size = 0x1000u;
+    allocData.memoryType = InternalMemoryType::svm;
+    allocData.gpuAllocations.addAllocation(&mockAllocation);
+    auto svmAllocsManager = context->getL0Object()->getDriverHandle()->getSvmAllocsManager();
+    svmAllocsManager->insertSVMAlloc(allocData);
+
+    auto retVal = clSetKernelExecInfo(kernel.get(), CL_KERNEL_EXEC_INFO_SVM_PTRS, sizeof(void *), &svmPtr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    NEO::ResidencyContainer residencyContainer;
+    svmAllocsManager->addInternalAllocationsToResidencyContainer(mockAllocation.getRootDeviceIndex(),
+                                                                 residencyContainer,
+                                                                 l0Kernel->getUnifiedMemoryControls().generateMask());
+    ASSERT_EQ(1u, residencyContainer.size());
+    EXPECT_EQ(&mockAllocation, residencyContainer[0]);
+
+    svmAllocsManager->removeSVMAlloc(allocData);
+}
+
 struct ImmediateArgKernelFixture : public Test<OclFixture> {
     struct PaddedStruct {
         uint32_t a;
