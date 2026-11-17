@@ -48,6 +48,27 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenMemoryInfoWhenAllocateWithAlignment
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+TEST_F(DrmMemoryManagerLocalMemoryTest, givenMemoryInfoWhenAllocatingLinearImageThenImageGmmReplacesAndFreesBufferGmm) {
+    setUpSingleDeviceMemoryRegion(*mock);
+
+    ImageDescriptor imgDesc = {};
+    imgDesc.imageType = ImageType::image1D;
+    imgDesc.imageWidth = MemoryConstants::pageSize;
+    auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
+    imgInfo.linearStorage = true;
+
+    AllocationData allocationData;
+    allocationData.imgInfo = &imgInfo;
+
+    auto allocation = makeUniqueGraphicsAllocation(memoryManager, memoryManager->allocateGraphicsMemoryForImage(allocationData));
+
+    ASSERT_NE(nullptr, allocation);
+    EXPECT_EQ(1u, ioctlHelper->createGemExtCalls.size());
+    ASSERT_NE(nullptr, allocation->getDefaultGmm());
+    auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(allocation->getDefaultGmm()->resourceParamsData.data());
+    EXPECT_EQ(GMM_RESOURCE_TYPE::RESOURCE_1D, gmmResourceParams->Type);
+}
+
 TEST_F(DrmMemoryManagerLocalMemoryTest, givenMemoryInfoAndNotUseObjectMmapPropertyWhenAllocateWithAlignmentThenUserptrIsUsed) {
     debugManager.flags.EnableBOMmapCreate.set(-1);
     setUpSingleDeviceMemoryRegion(*mock);

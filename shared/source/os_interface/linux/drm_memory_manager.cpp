@@ -1158,7 +1158,7 @@ GraphicsAllocation *DrmMemoryManager::allocatePhysicalDeviceMemory(const Allocat
     std::unique_ptr<BufferObject, BufferObject::Deleter> bo(new BufferObject(allocationData.rootDeviceIndex, &drm, patIndex, handle, bufferSize, maxOsContextCount));
 
     auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, 1u /*num gmms*/, allocationData.type, bo.get(), nullptr, 0u, bufferSize, memoryPool);
-    allocation->setDefaultGmm(gmm.release());
+    allocation->setDefaultGmm(std::move(gmm));
 
     bo.release();
     status = AllocationStatus::Success;
@@ -1209,7 +1209,7 @@ GraphicsAllocation *DrmMemoryManager::createPhysicalGraphicsMemoryFromSharedHand
     auto allocation = new DrmAllocation(properties.rootDeviceIndex, 1u, properties.allocationType, bo.get(),
                                         nullptr, size, osHandleData.handle, memoryPool, 0u);
 
-    allocation->setDefaultGmm(gmm.release());
+    allocation->setDefaultGmm(std::move(gmm));
     bo.release();
 
     return allocation;
@@ -1269,7 +1269,7 @@ GraphicsAllocation *DrmMemoryManager::allocateMemoryByKMD(const AllocationData &
     }
     bo.release();
 
-    allocation->setDefaultGmm(gmm.release());
+    allocation->setDefaultGmm(std::move(gmm));
 
     allocation->setReservedAddressRange(reinterpret_cast<void *>(gpuRange), bufferSize);
 
@@ -1280,7 +1280,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForImageImpl(const A
     if (allocationData.imgInfo->linearStorage) {
         auto alloc = allocateGraphicsMemoryWithAlignment(allocationData);
         if (alloc) {
-            alloc->setDefaultGmm(gmm.release());
+            alloc->setDefaultGmm(std::move(gmm));
         }
         return alloc;
     }
@@ -1306,7 +1306,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForImageImpl(const A
     DEBUG_BREAK_IF(ret2 != true);
 
     auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, 1u /*num gmms*/, allocationData.type, bo.get(), nullptr, gpuRange, allocationData.imgInfo->size, memoryPool);
-    allocation->setDefaultGmm(gmm.release());
+    allocation->setDefaultGmm(std::move(gmm));
 
     allocation->setReservedAddressRange(reinterpret_cast<void *>(gpuRange), allocationData.imgInfo->size);
     bo.release();
@@ -1410,7 +1410,7 @@ DrmAllocation *DrmMemoryManager::allocateKmdMappedIsaIn32BitHeap(const Allocatio
     allocation->setMmapPtr(cpuPointer);
     allocation->setMmapSize(allocationSize);
     allocation->setReservedAddressRange(reinterpret_cast<void *>(gpuVA), reservedSize);
-    allocation->setDefaultGmm(gmm.release());
+    allocation->setDefaultGmm(std::move(gmm));
 
     bo.release();
     return allocation;
@@ -1670,14 +1670,14 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromMultipleShared
         StorageInfo limitedStorageInfo = allocationData.storageInfo;
         limitedStorageInfo.memoryBanks &= (1u << (i % handles.size()));
 
-        auto gmm = new Gmm(gmmHelper,
-                           nullptr,
-                           bo->peekSize(),
-                           0u,
-                           CacheSettingsHelper::getGmmUsageType(drmAllocation->getAllocationType(), properties.flags.uncacheable, productHelper, *gmmHelper->getHardwareInfo()),
-                           allocationData.storageInfo,
-                           gmmRequirements);
-        drmAllocation->setGmm(gmm, i);
+        drmAllocation->setGmm(std::make_unique<Gmm>(gmmHelper,
+                                                    nullptr,
+                                                    bo->peekSize(),
+                                                    0u,
+                                                    CacheSettingsHelper::getGmmUsageType(drmAllocation->getAllocationType(), properties.flags.uncacheable, productHelper, *gmmHelper->getHardwareInfo()),
+                                                    allocationData.storageInfo,
+                                                    gmmRequirements),
+                              i);
 
         if (areBosSharedObjects == false) {
             const uint64_t physicalOffset = offsetForHandle(i);
@@ -2060,7 +2060,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(c
     auto drmAllocation = new DrmAllocation(properties.rootDeviceIndex, 1u /*num gmms*/, properties.allocationType, bo, reinterpret_cast<void *>(reportedAddress), reportedSize,
                                            osHandleData.handle, memoryPool, canonizedGpuAddress);
 
-    drmAllocation->setDefaultGmm(gmm.release());
+    drmAllocation->setDefaultGmm(std::move(gmm));
     this->makeAllocationResident(drmAllocation);
 
     if (!reuseSharedAllocation) {
@@ -3294,7 +3294,7 @@ GraphicsAllocation *DrmMemoryManager::allocatePhysicalHostMemory(const Allocatio
     registerSharedBoHandleAllocation(allocation.get());
 
     bo.release();
-    allocation->setDefaultGmm(gmm.release());
+    allocation->setDefaultGmm(std::move(gmm));
     allocation->setUsmHostAllocation(true);
     allocation->setShareableHostMemory(true);
     allocation->storageInfo = allocationData.storageInfo;
@@ -3785,7 +3785,7 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &
         }
 
         bo.release();
-        allocation->setDefaultGmm(gmm.release());
+        allocation->setDefaultGmm(std::move(gmm));
         allocation->setShareableHostMemory(true);
         allocation->storageInfo = allocationData.storageInfo;
         return allocation.release();
