@@ -497,20 +497,24 @@ ze_result_t CommandList::setKernelState(Kernel *kernel, const ze_group_size_t gr
     return ZE_RESULT_SUCCESS;
 }
 
+bool CommandList::isKernelStateArgumentSizeValid(const NEO::ArgDescriptor &argDescriptor, size_t argSize) {
+    if (false == argDescriptor.is<NEO::ArgDescriptor::argTValue>()) {
+        return true;
+    }
+    const auto &elements = argDescriptor.as<NEO::ArgDescValue>().elements;
+    return std::none_of(elements.begin(), elements.end(), [argSize](const auto &element) {
+        return element.sourceOffset >= argSize;
+    });
+}
+
 ze_result_t CommandList::setKernelStateArgument(const NEO::ArgDescriptor &argDescriptor, void *argument, size_t argSize, const void *argValue) {
     const size_t argumentSize = argDescriptor.getTraits().argByValSize;
     if (argDescriptor.is<NEO::ArgDescriptor::argTPointer>() && (argDescriptor.getTraits().getAddressQualifier() == NEO::KernelArgMetadata::AddrLocal)) {
         memcpy_s(argument, argumentSize, &argSize, sizeof(argSize));
         return ZE_RESULT_SUCCESS;
     }
-    if (argDescriptor.is<NEO::ArgDescriptor::argTValue>()) {
-        const auto &elements = argDescriptor.as<NEO::ArgDescValue>().elements;
-        const bool valueTooSmall = std::any_of(elements.begin(), elements.end(), [argSize](const auto &element) {
-            return element.sourceOffset >= argSize;
-        });
-        if (valueTooSmall) {
-            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-        }
+    if (false == isKernelStateArgumentSizeValid(argDescriptor, argSize)) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
     if (nullptr == argValue) {
         memset(argument, 0, argumentSize);

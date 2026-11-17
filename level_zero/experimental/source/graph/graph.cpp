@@ -453,7 +453,7 @@ ze_result_t Graph::resumeCapturing() {
     return ZE_RESULT_SUCCESS;
 }
 
-auto GraphNode::updateKernelArgument(const void *argValue, size_t argSize, uint32_t argIndex) -> ze_result_t {
+auto GraphNode::updateKernelArgument(const ClosureExternalStorage::KernelArguments &storedKernelArguments, const void *argValue, size_t argSize, uint32_t argIndex) -> ze_result_t {
     UNRECOVERABLE_IF(nullptr == this->kernel);
     if (ClosureExternalStorage::invalidKernelArgumentsId == this->argumentsId) {
         return this->kernel->setArgumentValue(argIndex, argSize, argValue);
@@ -462,7 +462,7 @@ auto GraphNode::updateKernelArgument(const void *argValue, size_t argSize, uint3
     if (argIndex >= explicitArgs.size()) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
-    return CommandList::setKernelStateArgument(explicitArgs[argIndex], this->getStoredKernelArgument(argIndex), argSize, argValue);
+    return CommandList::setKernelStateArgument(explicitArgs[argIndex], storedKernelArguments[argIndex], argSize, argValue);
 }
 
 auto Graph::getNodes(uint32_t *pGraphNodesCount, ze_graph_node_handle_t *phGraphNodes) -> ze_result_t {
@@ -488,17 +488,57 @@ auto Graph::getNodes(uint32_t *pGraphNodesCount, ze_graph_node_handle_t *phGraph
     return ZE_RESULT_SUCCESS;
 }
 
+inline const auto &getKernelExplicitArgs(const GraphNode &graphNode) {
+    return graphNode.getKernel()->getKernelDescriptor().payloadMappings.explicitArgs;
+}
+
+inline ze_result_t validateLaunchKernelArgumentsUpdate(const GraphNode &graphNode, const ze_graph_node_update_launch_kernel_exp_desc_t &launchKernelDesc) {
+    if (0u == (graphNode.getEffectiveFlags() & ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_ARGUMENT)) {
+        return ZE_RESULT_SUCCESS;
+    }
+    const auto &explicitArgs = getKernelExplicitArgs(graphNode);
+    if ((false == explicitArgs.empty()) && ((nullptr == launchKernelDesc.pArgSizes) || (nullptr == launchKernelDesc.pArgValues))) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    for (uint32_t argIndex = 0U; argIndex < explicitArgs.size(); ++argIndex) {
+        if (false == CommandList::isKernelStateArgumentSizeValid(explicitArgs[argIndex], launchKernelDesc.pArgSizes[argIndex])) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
+inline ze_result_t validateKernelArgumentUpdate(const GraphNode &graphNode, const ze_graph_node_update_kernel_argument_exp_desc_t &kernelArgumentDesc) {
+    if (0u == (graphNode.getEffectiveFlags() & ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_ARGUMENT)) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    const auto &explicitArgs = getKernelExplicitArgs(graphNode);
+    if ((kernelArgumentDesc.argIndex >= explicitArgs.size()) ||
+        (false == CommandList::isKernelStateArgumentSizeValid(explicitArgs[kernelArgumentDesc.argIndex], kernelArgumentDesc.argSize))) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
 inline ze_result_t validateGraphNodeUpdateDescriptors(const GraphNode &graphNode, const void *pUpdateDesc) {
     if (nullptr == pUpdateDesc) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
-    constexpr ze_mutable_graph_node_exp_flags_t kernelFlags = ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_ARGUMENT | ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_INSTRUCTION;
     const auto nodeFlags = graphNode.getEffectiveFlags();
     auto desc = static_cast<const ze_base_desc_t *>(pUpdateDesc);
     while (desc) {
         if (desc->stype == ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_LAUNCH_KERNEL_EXP_DESC) {
-            if (0u != (nodeFlags & kernelFlags)) {
+            if (0u != (nodeFlags & ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_INSTRUCTION)) {
                 return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+            }
+            const auto result = validateLaunchKernelArgumentsUpdate(graphNode, *reinterpret_cast<const ze_graph_node_update_launch_kernel_exp_desc_t *>(desc));
+            if (ZE_RESULT_SUCCESS != result) {
+                return result;
+            }
+        } else if (desc->stype == ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_KERNEL_ARGUMENT_EXP_DESC) {
+            const auto result = validateKernelArgumentUpdate(graphNode, *reinterpret_cast<const ze_graph_node_update_kernel_argument_exp_desc_t *>(desc));
+            if (ZE_RESULT_SUCCESS != result) {
+                return result;
             }
         } else if (desc->stype == ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_GROUP_COUNT_EXP_DESC) {
             if (0u == (nodeFlags & ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT)) {
@@ -518,10 +558,20 @@ inline ze_result_t validateGraphNodeUpdateDescriptors(const GraphNode &graphNode
 
 inline ze_result_t applyGraphNodeUpdateDescriptors(GraphNode &graphNode, const void *pUpdateDesc) {
     const auto nodeFlags = graphNode.getEffectiveFlags();
+    const auto storedKernelArguments = graphNode.getStoredKernelArguments();
     auto desc = static_cast<const ze_base_desc_t *>(pUpdateDesc);
     while (desc) {
         if (desc->stype == ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_LAUNCH_KERNEL_EXP_DESC) {
             auto launchKernelDesc = reinterpret_cast<const ze_graph_node_update_launch_kernel_exp_desc_t *>(desc);
+            if (0u != (nodeFlags & ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_ARGUMENT)) {
+                const auto numKernelArguments = getKernelExplicitArgs(graphNode).size();
+                for (uint32_t argIndex = 0U; argIndex < numKernelArguments; ++argIndex) {
+                    const auto result = graphNode.updateKernelArgument(storedKernelArguments, launchKernelDesc->pArgValues[argIndex], launchKernelDesc->pArgSizes[argIndex], argIndex);
+                    if (ZE_RESULT_SUCCESS != result) {
+                        return result;
+                    }
+                }
+            }
             if (0u != (nodeFlags & ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT)) {
                 graphNode.updateGroupCount(launchKernelDesc->groupCount);
             }
@@ -530,6 +580,12 @@ inline ze_result_t applyGraphNodeUpdateDescriptors(GraphNode &graphNode, const v
                 if (ZE_RESULT_SUCCESS != result) {
                     return result;
                 }
+            }
+        } else if (desc->stype == ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_KERNEL_ARGUMENT_EXP_DESC) {
+            const auto kernelArgumentDesc = reinterpret_cast<const ze_graph_node_update_kernel_argument_exp_desc_t *>(desc);
+            const auto result = graphNode.updateKernelArgument(storedKernelArguments, kernelArgumentDesc->pArgValue, kernelArgumentDesc->argSize, kernelArgumentDesc->argIndex);
+            if (ZE_RESULT_SUCCESS != result) {
+                return result;
             }
         } else if (desc->stype == ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_GROUP_COUNT_EXP_DESC) {
             auto groupCountDesc = reinterpret_cast<const ze_graph_node_update_group_count_exp_desc_t *>(desc);
@@ -2088,25 +2144,20 @@ inline ze_result_t validateExecutableGraphNodeUpdateDescriptors(const GraphNode 
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
     const auto nodeFlags = graphNode.getEffectiveFlags();
-    const auto numKernelArguments = graphNode.getKernel()->getKernelDescriptor().payloadMappings.explicitArgs.size();
     auto desc = static_cast<const ze_base_desc_t *>(pUpdateDesc);
     while (desc) {
         if (desc->stype == ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_LAUNCH_KERNEL_EXP_DESC) {
             if (0u != (nodeFlags & ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_INSTRUCTION)) {
                 return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
             }
-            auto launchKernelDesc = reinterpret_cast<const ze_graph_node_update_launch_kernel_exp_desc_t *>(desc);
-            if ((0u != (nodeFlags & ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_ARGUMENT)) && (0u != numKernelArguments) &&
-                ((nullptr == launchKernelDesc->pArgSizes) || (nullptr == launchKernelDesc->pArgValues))) {
-                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            const auto result = validateLaunchKernelArgumentsUpdate(graphNode, *reinterpret_cast<const ze_graph_node_update_launch_kernel_exp_desc_t *>(desc));
+            if (ZE_RESULT_SUCCESS != result) {
+                return result;
             }
         } else if (desc->stype == ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_KERNEL_ARGUMENT_EXP_DESC) {
-            if (0u == (nodeFlags & ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_ARGUMENT)) {
-                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-            }
-            auto kernelArgumentDesc = reinterpret_cast<const ze_graph_node_update_kernel_argument_exp_desc_t *>(desc);
-            if (kernelArgumentDesc->argIndex >= numKernelArguments) {
-                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            const auto result = validateKernelArgumentUpdate(graphNode, *reinterpret_cast<const ze_graph_node_update_kernel_argument_exp_desc_t *>(desc));
+            if (ZE_RESULT_SUCCESS != result) {
+                return result;
             }
         } else if (desc->stype == ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_GROUP_COUNT_EXP_DESC) {
             if (0u == (nodeFlags & ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT)) {

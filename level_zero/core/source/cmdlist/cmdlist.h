@@ -353,6 +353,7 @@ struct CommandList : _ze_command_list_handle_t {
 
     static ze_result_t setKernelState(Kernel *kernel, const ze_group_size_t groupSizes, void **arguments);
     static ze_result_t setKernelStateArgument(const NEO::ArgDescriptor &argDescriptor, void *argument, size_t argSize, const void *argValue);
+    static bool isKernelStateArgumentSizeValid(const NEO::ArgDescriptor &argDescriptor, size_t argSize);
     static ze_result_t cloneAppendKernelExtensions(const ze_base_desc_t *desc, void *&outPnext);
     static void freeClonedAppendKernelExtensions(void *pNext);
     static ze_result_t cloneAppendMemoryCopyExtensions(const ze_base_desc_t *desc, void *&outPnext);

@@ -218,21 +218,17 @@ TEST(GraphNodesUpdateTest, GivenLaunchKernelDescriptorWhenUpdatingNodesThenOnlyG
     EXPECT_EQ(2u, capturedGroupSizes[1].groupSizeZ);
 }
 
-TEST(GraphNodesUpdateTest, GivenLaunchKernelDescriptorAndNodeWithKernelArgumentOrKernelInstructionFlagWhenUpdatingNodeThenUnsupportedFeatureIsReturned) {
+TEST(GraphNodesUpdateTest, GivenLaunchKernelDescriptorAndNodeWithKernelInstructionFlagWhenUpdatingNodeThenUnsupportedFeatureIsReturned) {
     GraphsCleanupGuard graphCleanup;
     ContextStubMock ctx;
     MockGraph graph{&ctx, true, true};
-    graph.graphNodes->push_back(std::make_unique<L0::GraphNode>(ZE_GRAPH_NODE_EXP_TYPE_LAUNCH_KERNEL, 0U));
-    graph.graphNodes->push_back(std::make_unique<L0::GraphNode>(ZE_GRAPH_NODE_EXP_TYPE_LAUNCH_KERNEL, ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT | ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_ARGUMENT));
     graph.graphNodes->push_back(std::make_unique<L0::GraphNode>(ZE_GRAPH_NODE_EXP_TYPE_LAUNCH_KERNEL, ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT | ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_INSTRUCTION));
     graph.stopCapturing();
 
     ze_graph_node_update_launch_kernel_exp_desc_t launchKernelDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_LAUNCH_KERNEL_EXP_DESC};
     const void *updateDesc = &launchKernelDesc;
-    for (const auto &node : *graph.graphNodes) {
-        ze_graph_node_handle_t hNode = node->toHandle();
-        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeGraphNodesUpdateExp(graph.toHandle(), 1, &hNode, &updateDesc, nullptr));
-    }
+    ze_graph_node_handle_t hNode = (*graph.graphNodes)[0]->toHandle();
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeGraphNodesUpdateExp(graph.toHandle(), 1, &hNode, &updateDesc, nullptr));
 }
 
 TEST(GraphNodesUpdateTest, GivenInvalidDescriptorForSecondNodeWhenUpdatingNodesThenErrorIsReturnedAndFirstNodeIsNotUpdated) {

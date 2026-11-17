@@ -168,6 +168,30 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ExecutableGraphNodesUpdateTest, givenKernelArgument
     EXPECT_TRUE(commandList.mutableCommandList.recordedGraphNodeUpdates.empty());
 }
 
+HWCMDTEST_F(IGFX_XE_HP_CORE, ExecutableGraphNodesUpdateTest, givenArgumentValueSmallerThanKernelArgumentRequiresWhenUpdatingWithKernelArgumentOrLaunchKernelDescriptorThenInvalidArgumentIsReturnedAndNothingIsPassedToMutableCommandList) {
+    CommandIdRecordingCommandList<FamilyType::gfxCoreFamily> commandList(this->device);
+    setNumKernelArguments(1u);
+    auto &valueArgument = kernel.descriptor.payloadMappings.explicitArgs[0];
+    valueArgument = NEO::ArgDescriptor{NEO::ArgDescriptor::argTValue};
+    valueArgument.as<NEO::ArgDescValue>().elements.push_back({.size = sizeof(uint32_t), .sourceOffset = sizeof(uint32_t)});
+    auto node = createInstantiatedNode(ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_ARGUMENT, 1u, &commandList);
+
+    ze_graph_node_update_kernel_argument_exp_desc_t kernelArgumentDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_KERNEL_ARGUMENT_EXP_DESC};
+    kernelArgumentDesc.argIndex = 0u;
+    kernelArgumentDesc.argSize = kernelArgumentSize;
+    kernelArgumentDesc.pArgValue = &kernelArgumentValue;
+    ze_graph_node_update_launch_kernel_exp_desc_t launchKernelDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_LAUNCH_KERNEL_EXP_DESC};
+    launchKernelDesc.pArgSizes = &kernelArgumentSize;
+    launchKernelDesc.pArgValues = &kernelArgumentValues;
+    const std::array<const void *, 2> tooSmallValueDescs = {&kernelArgumentDesc, &launchKernelDesc};
+
+    for (const void *updateDesc : tooSmallValueDescs) {
+        EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, updateNode(*node, updateDesc));
+    }
+    EXPECT_TRUE(commandList.mutableCommandList.recordedGraphNodeUpdates.empty());
+    EXPECT_TRUE(executableGraph.updatedNodeCommandLists.empty());
+}
+
 HWCMDTEST_F(IGFX_XE_HP_CORE, ExecutableGraphNodesUpdateTest, givenNodeWithKernelInstructionFlagWhenUpdatingWithLaunchKernelDescriptorThenUnsupportedFeatureIsReturned) {
     CommandIdRecordingCommandList<FamilyType::gfxCoreFamily> commandList(this->device);
     auto node = createInstantiatedNode(ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_INSTRUCTION, 1u, &commandList);

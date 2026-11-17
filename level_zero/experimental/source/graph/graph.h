@@ -331,7 +331,16 @@ struct GraphNode : _ze_graph_node_handle_t {
         this->externalStorage = externalStorage;
     }
 
-    auto updateKernelArgument(const void *argValue, size_t argSize, uint32_t argIndex) -> ze_result_t;
+    auto updateKernelArgument(const ClosureExternalStorage::KernelArguments &storedKernelArguments, const void *argValue, size_t argSize, uint32_t argIndex) -> ze_result_t;
+
+    auto getStoredKernelArguments() const -> ClosureExternalStorage::KernelArguments {
+        if (ClosureExternalStorage::invalidKernelArgumentsId == this->argumentsId) {
+            return {};
+        }
+        UNRECOVERABLE_IF(nullptr == this->externalStorage);
+        const auto &explicitArgs = this->kernel->getKernelDescriptor().payloadMappings.explicitArgs;
+        return this->externalStorage->getKernelArguments(std::span(explicitArgs.begin(), explicitArgs.end()), this->argumentsId);
+    }
 
     auto getCurrentKernelArgument(uint32_t argIndex) -> KernelArgumentValue {
         UNRECOVERABLE_IF(nullptr == this->kernel);
@@ -342,7 +351,7 @@ struct GraphNode : _ze_graph_node_handle_t {
             return this->kernel->getArgumentValue(argIndex, this->immediateValueBuffers[argIndex]);
         }
         const auto &argDescriptor = this->kernel->getKernelDescriptor().payloadMappings.explicitArgs[argIndex];
-        const auto storedArgument = this->getStoredKernelArgument(argIndex);
+        const auto storedArgument = this->getStoredKernelArguments()[argIndex];
         if (isSlmArgument(argDescriptor)) {
             return {nullptr, *static_cast<const size_t *>(storedArgument)};
         }
@@ -363,12 +372,6 @@ struct GraphNode : _ze_graph_node_handle_t {
     static auto isSlmArgument(const NEO::ArgDescriptor &argDescriptor) -> bool {
         return argDescriptor.is<NEO::ArgDescriptor::argTPointer>() &&
                (argDescriptor.getTraits().getAddressQualifier() == NEO::KernelArgMetadata::AddrLocal);
-    }
-
-    auto getStoredKernelArgument(uint32_t argIndex) const -> void * {
-        UNRECOVERABLE_IF(nullptr == this->externalStorage);
-        const auto &explicitArgs = this->kernel->getKernelDescriptor().payloadMappings.explicitArgs;
-        return this->externalStorage->getKernelArguments(std::span(explicitArgs.begin(), explicitArgs.end()), this->argumentsId)[argIndex];
     }
 
     ze_mutable_graph_node_exp_flags_t flags;

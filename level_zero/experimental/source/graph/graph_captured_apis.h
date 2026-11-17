@@ -458,6 +458,7 @@ struct ClosureExternalStorage {
     using ImageRegionId = uint32_t;
     using CopyRegionId = uint32_t;
     using KernelArgumentsId = uint32_t;
+    using KernelArguments = StackVec<void *, decltype(NEO::KernelDescriptor::PayloadMappings::explicitArgs)::onStackCaps>;
 
     static constexpr EventsListId invalidEventsListId = std::numeric_limits<EventsListId>::max();
     static constexpr ImageRegionId invalidImageRegionId = std::numeric_limits<ImageRegionId>::max();
@@ -547,12 +548,12 @@ struct ClosureExternalStorage {
         return copyRegions.data() + id;
     }
 
-    StackVec<void *, 16> getKernelArguments(std::span<const NEO::ArgDescriptor> argDescriptors, KernelArgumentsId id) {
+    KernelArguments getKernelArguments(std::span<const NEO::ArgDescriptor> argDescriptors, KernelArgumentsId id) {
         if (invalidKernelArgumentsId == id) {
             return {};
         }
         auto offset = id;
-        StackVec<void *, 16> ret;
+        KernelArguments ret;
         ret.reserve(argDescriptors.size());
         for (size_t i = 0; i < argDescriptors.size(); i++) {
             auto &argDesc = argDescriptors[i];
