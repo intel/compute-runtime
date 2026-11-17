@@ -339,6 +339,16 @@ struct GraphNode : _ze_graph_node_handle_t {
         return {storedArgument, argDescriptor.getTraits().argByValSize};
     }
 
+    auto updateGlobalOffset(uint32_t offsetX, uint32_t offsetY, uint32_t offsetZ) -> ze_result_t {
+        UNRECOVERABLE_IF(nullptr == this->kernel);
+        return this->kernel->setGlobalOffsetExp(offsetX, offsetY, offsetZ);
+    }
+
+    auto getCurrentGlobalOffset() const -> std::span<const uint32_t, 3> {
+        UNRECOVERABLE_IF(nullptr == this->kernel);
+        return std::span<const uint32_t, 3>{this->kernel->getGlobalOffsets(), 3U};
+    }
+
   protected:
     static auto isSlmArgument(const NEO::ArgDescriptor &argDescriptor) -> bool {
         return argDescriptor.is<NEO::ArgDescriptor::argTPointer>() &&
