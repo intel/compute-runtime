@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "shared/source/os_interface/hw_device_id.h"
+
 #include "level_zero/sysman/source/driver/sysman_os_driver.h"
 
 namespace L0 {

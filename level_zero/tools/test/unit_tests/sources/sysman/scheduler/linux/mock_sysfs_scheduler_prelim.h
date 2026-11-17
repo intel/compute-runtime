@@ -17,6 +17,8 @@
 #include "level_zero/tools/source/sysman/linux/fs_access.h"
 #include "level_zero/tools/source/sysman/scheduler/linux/os_scheduler_imp.h"
 
+#include <algorithm>
+
 namespace L0 {
 namespace ult {
 
