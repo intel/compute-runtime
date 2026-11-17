@@ -275,7 +275,7 @@ struct AubWalkerPartitionZeroFixture : public AubWalkerPartitionFixture {
     }
 
     template <typename FamilyType>
-    void runMiAtomic(GraphicsAllocation &surface, bool requireReturnValue, typename WalkerPartition::MI_ATOMIC<FamilyType>::ATOMIC_OPCODES opcode, uint32_t expectedValue) {
+    void runMiAtomic(GraphicsAllocation &surface, bool requireReturnValue, typename WalkerPartition::MI_ATOMIC<FamilyType>::ATOMIC_OPCODE opcode, uint32_t expectedValue) {
         auto writeAddress = surface.getGpuAddress();
         *reinterpret_cast<uint32_t *>(surface.getUnderlyingBuffer()) = atomicInitialValue;
 
@@ -375,11 +375,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, whenPipeControlIsBeingE
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenAtomicOperationDecOnLocalMemoryWhenItIsExecuteThenOperationUpdatesMemory) {
-    this->runMiAtomic<FamilyType>(*this->helperSurface, false, WalkerPartition::MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_DECREMENT, atomicInitialValue - 1);
+    this->runMiAtomic<FamilyType>(*this->helperSurface, false, WalkerPartition::MI_ATOMIC<FamilyType>::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_DEC, atomicInitialValue - 1);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenAtomicOperationIncOnLocalMemoryWhenItIsExecuteThenOperationUpdatesMemory) {
-    this->runMiAtomic<FamilyType>(*this->helperSurface, false, WalkerPartition::MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, atomicInitialValue + 1);
+    this->runMiAtomic<FamilyType>(*this->helperSurface, false, WalkerPartition::MI_ATOMIC<FamilyType>::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC, atomicInitialValue + 1);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenVariousCompareModesWhenConditionalBatchBufferEndIsEmittedThenHandlesCompareCorrectly) {
@@ -841,15 +841,15 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiLevelBatchTestsWithoutNesting, givenConditiona
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenBlockingAtomicOperationIncOnLocalMemoryWhenItIsExecutedThenOperationUpdatesMemory) {
-    this->runMiAtomic<FamilyType>(*this->helperSurface, true, WalkerPartition::MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, atomicInitialValue + 1);
+    this->runMiAtomic<FamilyType>(*this->helperSurface, true, WalkerPartition::MI_ATOMIC<FamilyType>::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC, atomicInitialValue + 1);
 }
 
 HWTEST2_F(AubWalkerPartitionZeroTest, givenBlockingAtomicIncOnSystemMemoryWhenExecutedThenMemoryIsUpdated, SystemMemoryAtomicsMatcher) {
-    this->runMiAtomic<FamilyType>(*this->systemSurface, true, WalkerPartition::MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, atomicInitialValue + 1);
+    this->runMiAtomic<FamilyType>(*this->systemSurface, true, WalkerPartition::MI_ATOMIC<FamilyType>::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC, atomicInitialValue + 1);
 }
 
 HWTEST2_F(AubWalkerPartitionZeroTest, givenNonBlockingAtomicIncOnSystemMemoryWhenExecutedThenMemoryIsUpdated, SystemMemoryAtomicsMatcher) {
-    this->runMiAtomic<FamilyType>(*this->systemSurface, false, WalkerPartition::MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, atomicInitialValue + 1);
+    this->runMiAtomic<FamilyType>(*this->systemSurface, false, WalkerPartition::MI_ATOMIC<FamilyType>::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC, atomicInitialValue + 1);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenPredicatedCommandBufferWhenItIsExecutedThenAtomicIsIncrementedEquallyToPartitionCountPlusOne) {

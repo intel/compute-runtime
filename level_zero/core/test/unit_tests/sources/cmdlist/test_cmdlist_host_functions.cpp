@@ -390,7 +390,7 @@ HWTEST_P(HostFunctionTestsImmediateCmdListTest, givenImmediateCmdListWhenDispatc
     EXPECT_EQ(hostFunctionIdAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miWaitTag));
     EXPECT_EQ(static_cast<uint32_t>(HostFunctionStatus::completed), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miWaitTag));
     EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION_SAD_EQUAL_SDD, miWaitTag->getCompareOperation());
-    EXPECT_EQ(MI_SEMAPHORE_WAIT::WAIT_MODE_POLLING_MODE, miWaitTag->getWaitMode());
+    EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::isSemaphoreWaitPollingMode(miWaitTag));
 
     *csr->getHostFunctionStreamer().getHostFunctionIdPtr(0u) = expectedHostFunctionId;
     auto hostFunction = csr->getHostFunctionStreamer().getHostFunction(expectedHostFunctionId);
@@ -471,7 +471,7 @@ HWTEST_P(HostFunctionTestsImmediateCmdListImplicitScalingTest, givenImmediateCmd
         EXPECT_EQ(expectedAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miWaitTag));
         EXPECT_EQ(static_cast<uint32_t>(HostFunctionStatus::completed), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miWaitTag));
         EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION_SAD_EQUAL_SDD, miWaitTag->getCompareOperation());
-        EXPECT_EQ(MI_SEMAPHORE_WAIT::WAIT_MODE_POLLING_MODE, miWaitTag->getWaitMode());
+        EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::isSemaphoreWaitPollingMode(miWaitTag));
 
         if constexpr (requires { &miWaitTag->getWorkloadPartitionIdOffsetEnable; }) {
             EXPECT_FALSE(miWaitTag->getWorkloadPartitionIdOffsetEnable());
@@ -558,7 +558,7 @@ HWTEST_F(HostFunctionsInOrderCmdListTests, givenInOrderModeWhenAppendHostFunctio
 
     if (immCmdList->inOrderAtomicSignalingEnabled) {
         auto miAtomicCmd = genCmdCast<MI_ATOMIC *>(*it);
-        EXPECT_EQ(gpuAddress, NEO::UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomicCmd));
+        EXPECT_EQ(gpuAddress, miAtomicCmd->getMemoryAddress());
 
     } else {
         auto miStoreCmd = genCmdCast<MI_STORE_DATA_IMM *>(*it);

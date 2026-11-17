@@ -34,18 +34,18 @@ HWTEST2_F(WalkerPartitionPvcAndLaterTests, givenMiAtomicWhenItIsProgrammedThenAl
 
     void *miAtomicAddress = cmdBufferAddress;
     programMiAtomic<FamilyType>(cmdBufferAddress,
-                                totalBytesProgrammed, gpuAddress, true, MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT);
+                                totalBytesProgrammed, gpuAddress, true, MI_ATOMIC<FamilyType>::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC);
 
     auto miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(miAtomicAddress);
     ASSERT_NE(nullptr, miAtomic);
     EXPECT_EQ(expectedUsedSize, totalBytesProgrammed);
-    EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomic->getAtomicOpcode());
+    EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC, miAtomic->getAtomicOpcode());
     EXPECT_EQ(0u, miAtomic->getDataSize());
     EXPECT_TRUE(miAtomic->getCsStall());
     EXPECT_EQ(MI_ATOMIC<FamilyType>::MEMORY_TYPE::MEMORY_TYPE_PER_PROCESS_GRAPHICS_ADDRESS, miAtomic->getMemoryType());
     EXPECT_TRUE(miAtomic->getReturnDataControl());
     EXPECT_FALSE(miAtomic->getWorkloadPartitionIdOffsetEnable());
-    auto memoryAddress = UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic);
+    auto memoryAddress = miAtomic->getMemoryAddress();
 
     EXPECT_EQ(gpuAddress, memoryAddress);
 }

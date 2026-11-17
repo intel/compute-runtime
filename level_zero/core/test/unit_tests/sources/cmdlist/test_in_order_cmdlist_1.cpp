@@ -7287,7 +7287,7 @@ HWTEST_F(InOrderCmdListTests, givenAggregatedEventWhenCallingSplitAppendThenSetC
 
 HWTEST_F(InOrderCmdListTests, givenAggregatedEventWhenCallingAppendSignalInOrderDependencyCounterThenProgramAtomicOperation) {
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
-    using ATOMIC_OPCODES = typename FamilyType::MI_ATOMIC::ATOMIC_OPCODES;
+    using ATOMIC_OPCODE = typename FamilyType::MI_ATOMIC::ATOMIC_OPCODE;
     using DATA_SIZE = typename FamilyType::MI_ATOMIC::DATA_SIZE;
 
     constexpr uint64_t incValue = static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) + 1234;
@@ -7310,12 +7310,12 @@ HWTEST_F(InOrderCmdListTests, givenAggregatedEventWhenCallingAppendSignalInOrder
     ASSERT_NE(cmdList.end(), it);
 
     auto miAtomic = genCmdCast<MI_ATOMIC *>(*it);
-    EXPECT_EQ(ATOMIC_OPCODES::ATOMIC_8B_ADD, miAtomic->getAtomicOpcode());
+    EXPECT_EQ(ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_ADD8B, miAtomic->getAtomicOpcode());
     EXPECT_EQ(DATA_SIZE::DATA_SIZE_QWORD, miAtomic->getDataSize());
     EXPECT_EQ(getLowPart(incValue), miAtomic->getOperand1DataDword0());
     EXPECT_EQ(getHighPart(incValue), miAtomic->getOperand1DataDword1());
 
-    EXPECT_EQ(castToUint64(devAddress), NEO::UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic));
+    EXPECT_EQ(castToUint64(devAddress), miAtomic->getMemoryAddress());
 
     context->freeMem(devAddress);
 }
@@ -7365,7 +7365,7 @@ HWTEST_F(InOrderCmdListTests, givenCopyOnlyCmdListAndDebugFlagWhenCounterSignale
 
 HWTEST_F(InOrderCmdListTests, givenAggregatedEventAndCopyOnlyCmdListWhenCallingAppendMemoryCopyWithDisabledInOrderSignalingThenSignalAtomicStorage) {
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
-    using ATOMIC_OPCODES = typename FamilyType::MI_ATOMIC::ATOMIC_OPCODES;
+    using ATOMIC_OPCODE = typename FamilyType::MI_ATOMIC::ATOMIC_OPCODE;
     using DATA_SIZE = typename FamilyType::MI_ATOMIC::DATA_SIZE;
 
     constexpr uint64_t incValue = static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) + 1234;
@@ -7397,12 +7397,12 @@ HWTEST_F(InOrderCmdListTests, givenAggregatedEventAndCopyOnlyCmdListWhenCallingA
             ASSERT_NE(cmdList.end(), it);
 
             auto miAtomic = genCmdCast<MI_ATOMIC *>(*it);
-            EXPECT_EQ(ATOMIC_OPCODES::ATOMIC_8B_ADD, miAtomic->getAtomicOpcode());
+            EXPECT_EQ(ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_ADD8B, miAtomic->getAtomicOpcode());
             EXPECT_EQ(DATA_SIZE::DATA_SIZE_QWORD, miAtomic->getDataSize());
             EXPECT_EQ(getLowPart(incValue), miAtomic->getOperand1DataDword0());
             EXPECT_EQ(getHighPart(incValue), miAtomic->getOperand1DataDword1());
 
-            EXPECT_EQ(castToUint64(devAddress), NEO::UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic));
+            EXPECT_EQ(castToUint64(devAddress), miAtomic->getMemoryAddress());
         }
     }
 
@@ -7423,12 +7423,12 @@ HWTEST_F(InOrderCmdListTests, givenAggregatedEventAndCopyOnlyCmdListWhenCallingA
             ASSERT_NE(cmdList.end(), it);
 
             auto miAtomic = genCmdCast<MI_ATOMIC *>(*it);
-            EXPECT_EQ(ATOMIC_OPCODES::ATOMIC_8B_ADD, miAtomic->getAtomicOpcode());
+            EXPECT_EQ(ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_ADD8B, miAtomic->getAtomicOpcode());
             EXPECT_EQ(DATA_SIZE::DATA_SIZE_QWORD, miAtomic->getDataSize());
             EXPECT_EQ(getLowPart(incValue), miAtomic->getOperand1DataDword0());
             EXPECT_EQ(getHighPart(incValue), miAtomic->getOperand1DataDword1());
 
-            EXPECT_EQ(castToUint64(devAddress), NEO::UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic));
+            EXPECT_EQ(castToUint64(devAddress), miAtomic->getMemoryAddress());
         }
     }
 

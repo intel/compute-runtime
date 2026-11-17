@@ -39,7 +39,7 @@ HWTEST_F(CommandEncodeSemaphore, WhenProgrammingThenMiSemaphoreWaitIsUsed) {
     EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, miSemaphore1.getCompareOperation());
     EXPECT_EQ(4u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(&miSemaphore1));
     EXPECT_EQ(0x123400u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(&miSemaphore1));
-    EXPECT_EQ(MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE, miSemaphore1.getWaitMode());
+    EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::isSemaphoreWaitPollingMode(&miSemaphore1));
 
     MI_SEMAPHORE_WAIT miSemaphore2;
     EncodeSemaphore<FamilyType>::programMiSemaphoreWait(&miSemaphore2,
@@ -52,13 +52,12 @@ HWTEST_F(CommandEncodeSemaphore, WhenProgrammingThenMiSemaphoreWaitIsUsed) {
                                                         false,
                                                         false,
                                                         useSemaphore64);
-    EXPECT_EQ(MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_SIGNAL_MODE, miSemaphore2.getWaitMode());
+    EXPECT_FALSE(NEO::UnitTestHelper<FamilyType>::isSemaphoreWaitPollingMode(&miSemaphore2));
 }
 
 HWTEST_F(CommandEncodeSemaphore, whenAddingMiSemaphoreCommandThenExpectCompareFieldsAreSetCorrectly) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using COMPARE_OPERATION = typename FamilyType::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
-    using WAIT_MODE = typename FamilyType::MI_SEMAPHORE_WAIT::WAIT_MODE;
 
     auto buffer = std::make_unique<uint8_t[]>(128);
     LinearStream stream(buffer.get(), 128);
@@ -79,7 +78,7 @@ HWTEST_F(CommandEncodeSemaphore, whenAddingMiSemaphoreCommandThenExpectCompareFi
     EXPECT_EQ(compareMode, miSemaphore->getCompareOperation());
     EXPECT_EQ(5u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miSemaphore));
     EXPECT_EQ(0xFF00FF000u, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miSemaphore));
-    EXPECT_EQ(WAIT_MODE::WAIT_MODE_POLLING_MODE, miSemaphore->getWaitMode());
+    EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::isSemaphoreWaitPollingMode(miSemaphore));
 }
 
 HWTEST2_F(CommandEncodeSemaphore, givenIndirectModeSetWhenProgrammingSemaphoreThenSetIndirectBit, IsAtLeastXeCore) {

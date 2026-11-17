@@ -21,11 +21,6 @@ namespace NEO {
 using Family = Gen12LpFamily;
 
 template <typename GfxFamily>
-uint64_t UnitTestHelper<GfxFamily>::getAtomicMemoryAddress(const typename GfxFamily::MI_ATOMIC &atomic) {
-    return atomic.getMemoryAddress() | ((static_cast<uint64_t>(atomic.getMemoryAddressHigh())) << 32);
-}
-
-template <typename GfxFamily>
 const uint32_t UnitTestHelper<GfxFamily>::smallestTestableSimdSize = 8;
 
 template <typename GfxFamily>

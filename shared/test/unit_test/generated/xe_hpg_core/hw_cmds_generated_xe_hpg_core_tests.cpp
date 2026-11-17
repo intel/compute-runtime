@@ -178,7 +178,6 @@ XE_HPG_CORETEST_F(CommandsXeHpgCoreTest, GivenMiAtomicWhenInitCalledThenFieldsSe
     EXPECT_EQ(MI_ATOMIC::COMMAND_TYPE_MI_COMMAND, cmd.TheStructure.Common.CommandType);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.WorkloadPartitionIdOffsetEnable);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.MemoryAddress);
-    EXPECT_EQ(0x0u, cmd.TheStructure.Common.MemoryAddressHigh);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.Operand1DataDword0);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.Operand2DataDword0);
     EXPECT_EQ(0x0u, cmd.TheStructure.Common.Operand1DataDword1);
@@ -200,29 +199,29 @@ XE_HPG_CORETEST_F(CommandsXeHpgCoreTest, GivenMiAtomicWhenSetterUsedThenGetterRe
     cmd.setDwordLength(MI_ATOMIC::DWORD_LENGTH_INLINE_DATA_1);
     EXPECT_EQ(MI_ATOMIC::DWORD_LENGTH_INLINE_DATA_1, cmd.getDwordLength());
 
-    cmd.setAtomicOpcode(MI_ATOMIC::ATOMIC_4B_MOVE);              // patched
-    EXPECT_EQ(MI_ATOMIC::ATOMIC_4B_MOVE, cmd.getAtomicOpcode()); // patched
+    cmd.setAtomicOpcode(MI_ATOMIC::ATOMIC_OPCODE_ATOMIC_MOVE);
+    EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODE_ATOMIC_MOVE, cmd.getAtomicOpcode());
 
-    cmd.setAtomicOpcode(MI_ATOMIC::ATOMIC_4B_INCREMENT);              // patched
-    EXPECT_EQ(MI_ATOMIC::ATOMIC_4B_INCREMENT, cmd.getAtomicOpcode()); // patched
+    cmd.setAtomicOpcode(MI_ATOMIC::ATOMIC_OPCODE_ATOMIC_INC);
+    EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODE_ATOMIC_INC, cmd.getAtomicOpcode());
 
-    cmd.setAtomicOpcode(MI_ATOMIC::ATOMIC_4B_DECREMENT);              // patched
-    EXPECT_EQ(MI_ATOMIC::ATOMIC_4B_DECREMENT, cmd.getAtomicOpcode()); // patched
+    cmd.setAtomicOpcode(MI_ATOMIC::ATOMIC_OPCODE_ATOMIC_DEC);
+    EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODE_ATOMIC_DEC, cmd.getAtomicOpcode());
 
-    cmd.setAtomicOpcode(MI_ATOMIC::ATOMIC_8B_MOVE);              // patched
-    EXPECT_EQ(MI_ATOMIC::ATOMIC_8B_MOVE, cmd.getAtomicOpcode()); // patched
+    cmd.setAtomicOpcode(MI_ATOMIC::ATOMIC_OPCODE_ATOMIC_MOVE8B);
+    EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODE_ATOMIC_MOVE8B, cmd.getAtomicOpcode());
 
-    cmd.setAtomicOpcode(MI_ATOMIC::ATOMIC_8B_INCREMENT);              // patched
-    EXPECT_EQ(MI_ATOMIC::ATOMIC_8B_INCREMENT, cmd.getAtomicOpcode()); // patched
+    cmd.setAtomicOpcode(MI_ATOMIC::ATOMIC_OPCODE_ATOMIC_INC8B);
+    EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODE_ATOMIC_INC8B, cmd.getAtomicOpcode());
 
-    cmd.setAtomicOpcode(MI_ATOMIC::ATOMIC_8B_DECREMENT);              // patched
-    EXPECT_EQ(MI_ATOMIC::ATOMIC_8B_DECREMENT, cmd.getAtomicOpcode()); // patched
+    cmd.setAtomicOpcode(MI_ATOMIC::ATOMIC_OPCODE_ATOMIC_DEC8B);
+    EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODE_ATOMIC_DEC8B, cmd.getAtomicOpcode());
 
-    cmd.setAtomicOpcode(MI_ATOMIC::ATOMIC_8B_ADD);              // patched
-    EXPECT_EQ(MI_ATOMIC::ATOMIC_8B_ADD, cmd.getAtomicOpcode()); // patched
+    cmd.setAtomicOpcode(MI_ATOMIC::ATOMIC_OPCODE_ATOMIC_ADD8B);
+    EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODE_ATOMIC_ADD8B, cmd.getAtomicOpcode());
 
-    cmd.setAtomicOpcode(MI_ATOMIC::ATOMIC_8B_CMP_WR);              // patched
-    EXPECT_EQ(MI_ATOMIC::ATOMIC_8B_CMP_WR, cmd.getAtomicOpcode()); // patched
+    cmd.setAtomicOpcode(MI_ATOMIC::ATOMIC_OPCODE_ATOMIC_CMPWR8B);
+    EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODE_ATOMIC_CMPWR8B, cmd.getAtomicOpcode());
 
     cmd.setReturnDataControl(0x0u);
     EXPECT_EQ(0x0u, cmd.getReturnDataControl());
@@ -269,11 +268,6 @@ XE_HPG_CORETEST_F(CommandsXeHpgCoreTest, GivenMiAtomicWhenSetterUsedThenGetterRe
     EXPECT_EQ(0x0u, cmd.getMemoryAddress());
     cmd.setMemoryAddress(0xfffffffcu);
     EXPECT_EQ(0xfffffffcu, cmd.getMemoryAddress());
-
-    cmd.setMemoryAddressHigh(0x0u);
-    EXPECT_EQ(0x0u, cmd.getMemoryAddressHigh());
-    cmd.setMemoryAddressHigh(0xffffu);
-    EXPECT_EQ(0xffffu, cmd.getMemoryAddressHigh());
 
     cmd.setOperand1DataDword0(0x0u);
     EXPECT_EQ(0x0u, cmd.getOperand1DataDword0());

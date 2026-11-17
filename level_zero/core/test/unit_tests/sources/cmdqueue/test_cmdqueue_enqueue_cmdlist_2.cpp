@@ -323,7 +323,7 @@ struct PauseOnGpuFixture : public Test<ModuleFixture> {
             (debugPauseStateAddress == NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd))) {
 
             EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, semaphoreCmd->getCompareOperation());
-            EXPECT_EQ(MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE, semaphoreCmd->getWaitMode());
+            EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::isSemaphoreWaitPollingMode(semaphoreCmd));
 
             return true;
         }

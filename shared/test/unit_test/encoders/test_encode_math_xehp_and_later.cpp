@@ -54,7 +54,7 @@ HWTEST2_F(XeHPAndLaterCommandEncoderMathTest, WhenAppendsAGreaterThanThenPredica
     ASSERT_NE(itor, commands.end());
 
     auto cmdMATH = genCmdCast<MI_MATH *>(*itor);
-    EXPECT_EQ(cmdMATH->DW0.BitField.DwordLength, 3u);
+    EXPECT_EQ(cmdMATH->getDwordLength(), 3u);
 
     itor = find<MI_LOAD_REGISTER_REG *>(itor, commands.end());
     ASSERT_NE(itor, commands.end());

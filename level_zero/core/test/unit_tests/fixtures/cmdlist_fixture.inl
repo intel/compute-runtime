@@ -65,7 +65,7 @@ void validateTimestampRegisters(GenCmdList &cmdList,
         {
             ASSERT_NE(cmdList.end(), itor);
             auto cmdMath = genCmdCast<MI_MATH *>(*itor);
-            EXPECT_EQ(3u, cmdMath->DW0.BitField.DwordLength);
+            EXPECT_EQ(3u, cmdMath->getDwordLength());
         }
 
         itor++;
@@ -113,7 +113,7 @@ void validateTimestampRegisters(GenCmdList &cmdList,
         {
             ASSERT_NE(cmdList.end(), itor);
             auto cmdMath = genCmdCast<MI_MATH *>(*itor);
-            EXPECT_EQ(3u, cmdMath->DW0.BitField.DwordLength);
+            EXPECT_EQ(3u, cmdMath->getDwordLength());
         }
 
         itor++;
@@ -185,7 +185,7 @@ void validateTimestampLongRegisters(GenCmdList &cmdList,
         {
             ASSERT_NE(cmdList.end(), itor);
             auto cmdMath = genCmdCast<MI_MATH *>(*itor);
-            EXPECT_EQ(3u, cmdMath->DW0.BitField.DwordLength);
+            EXPECT_EQ(3u, cmdMath->getDwordLength());
         }
 
         itor++;
@@ -243,7 +243,7 @@ void validateTimestampLongRegisters(GenCmdList &cmdList,
         {
             ASSERT_NE(cmdList.end(), itor);
             auto cmdMath = genCmdCast<MI_MATH *>(*itor);
-            EXPECT_EQ(3u, cmdMath->DW0.BitField.DwordLength);
+            EXPECT_EQ(3u, cmdMath->getDwordLength());
         }
 
         itor++;

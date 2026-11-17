@@ -70,8 +70,7 @@ HWTEST_F(CommandListAppendWaitOnEvent, WhenAppendingWaitOnEventThenSemaphoreWait
         uint64_t gpuAddress = event->getCompletionFieldGpuAddress(device);
 
         EXPECT_EQ(gpuAddress & addressSpace, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(cmd) & addressSpace);
-        EXPECT_EQ(cmd->getWaitMode(),
-                  MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE);
+        EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::isSemaphoreWaitPollingMode(cmd));
     }
 }
 
@@ -148,7 +147,7 @@ HWTEST2_F(CommandListAppendWaitOnEvent, givenImmediateCmdListWithDirectSubmissio
     EXPECT_EQ(lriCmd->getDataDword(), 0u);
 
     auto miMathCmd = reinterpret_cast<MI_MATH *>(++lriCmd);
-    EXPECT_EQ(miMathCmd->DW0.BitField.DwordLength, 3u);
+    EXPECT_EQ(miMathCmd->getDwordLength(), 3u);
 
     auto miAluCmd = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(++miMathCmd);
     EXPECT_EQ(static_cast<uint32_t>(AluRegisters::opcodeLoad), miAluCmd->DW0.BitField.ALUOpcode);
@@ -547,8 +546,7 @@ HWTEST_F(CommandListAppendWaitOnEvent, givenTwoEventsWhenWaitOnEventsAppendedThe
                   MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
         EXPECT_EQ(static_cast<uint32_t>(-1), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(cmd));
         EXPECT_EQ(gpuAddress & addressSpace, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(cmd) & addressSpace);
-        EXPECT_EQ(cmd->getWaitMode(),
-                  MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE);
+        EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::isSemaphoreWaitPollingMode(cmd));
     }
 }
 
@@ -625,7 +623,7 @@ HWTEST_F(CommandListAppendWaitOnUsedPacketSignalEvent, WhenAppendingWaitOnTimest
                   cmd->getCompareOperation());
         EXPECT_EQ(NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(cmd), static_cast<uint32_t>(-1));
         EXPECT_EQ(gpuAddress & addressSpace, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(cmd) & addressSpace);
-        EXPECT_EQ(MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE, cmd->getWaitMode());
+        EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::isSemaphoreWaitPollingMode(cmd));
 
         semaphoreWaitsFound++;
         gpuAddress += event->getSinglePacketSize();
@@ -680,8 +678,7 @@ HWTEST_F(CommandListAppendWaitOnEvent, givenCommandListWhenAppendWriteGlobalTime
     uint64_t gpuAddress = event->getCompletionFieldGpuAddress(device);
 
     EXPECT_EQ(gpuAddress & addressSpace, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(cmd) & addressSpace);
-    EXPECT_EQ(cmd->getWaitMode(),
-              MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE);
+    EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::isSemaphoreWaitPollingMode(cmd));
 
     itor++;
 
@@ -756,7 +753,7 @@ HWTEST_F(CommandListAppendWaitOnSecondaryBatchBufferEvent, givenCommandBufferIsE
                   cmd->getCompareOperation());
         EXPECT_EQ(NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(cmd), std::numeric_limits<uint32_t>::max());
         EXPECT_EQ(gpuAddress & addressSpace, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(cmd) & addressSpace);
-        EXPECT_EQ(MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE, cmd->getWaitMode());
+        EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::isSemaphoreWaitPollingMode(cmd));
 
         semaphoreWaitsFound++;
         gpuAddress += event->getSinglePacketSize();
@@ -807,7 +804,7 @@ HWTEST2_F(MultTileCommandListAppendWaitOnEvent,
                   cmd->getCompareOperation());
         EXPECT_EQ(NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(cmd), std::numeric_limits<uint32_t>::max());
         EXPECT_EQ(gpuAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(cmd));
-        EXPECT_EQ(MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE, cmd->getWaitMode());
+        EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::isSemaphoreWaitPollingMode(cmd));
 
         semaphoreWaitsFound++;
         gpuAddress += event->getSinglePacketSize();

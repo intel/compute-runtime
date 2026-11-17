@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Intel Corporation
+ * Copyright (C) 2021-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -98,13 +98,13 @@ HWTEST_F(MiAtomicAubTest, WhenDispatchingAtomicMoveOperationThenExpectCorrectEnd
 
     uint32_t operation1dword0 = 0x10;
     EncodeAtomic<FamilyType>::programMiAtomic(taskStream, expectedGpuAddressDwordOp1,
-                                              MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_MOVE,
+                                              MI_ATOMIC::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_MOVE,
                                               MI_ATOMIC::DATA_SIZE::DATA_SIZE_DWORD,
                                               0, 0, operation1dword0, 0u);
 
     uint32_t operation2dword0 = 0x22;
     EncodeAtomic<FamilyType>::programMiAtomic(taskStream, expectedGpuAddressDwordOp2,
-                                              MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_MOVE,
+                                              MI_ATOMIC::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_MOVE,
                                               MI_ATOMIC::DATA_SIZE::DATA_SIZE_DWORD,
                                               0, 0, operation2dword0, 0u);
 
@@ -113,7 +113,7 @@ HWTEST_F(MiAtomicAubTest, WhenDispatchingAtomicMoveOperationThenExpectCorrectEnd
     uint64_t operation3qword = (static_cast<uint64_t>(operation3dword1) << 32) | operation3dword0;
 
     EncodeAtomic<FamilyType>::programMiAtomic(taskStream, expectedGpuAddressQwordOp3,
-                                              MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_8B_MOVE,
+                                              MI_ATOMIC::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_MOVE8B,
                                               MI_ATOMIC::DATA_SIZE::DATA_SIZE_QWORD,
                                               0, 0, operation3qword, 0);
 
@@ -134,13 +134,13 @@ HWTEST_F(MiAtomicAubTest, GivenSystemMemoryWhenDispatchingAtomicMove4BytesOperat
 
     uint32_t operation1dword0 = 0x15;
     EncodeAtomic<FamilyType>::programMiAtomic(taskStream, expectedGpuAddressDwordOp1,
-                                              MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_MOVE,
+                                              MI_ATOMIC::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_MOVE,
                                               MI_ATOMIC::DATA_SIZE::DATA_SIZE_DWORD,
                                               0, 0, operation1dword0, 0u);
 
     uint32_t operation2dword0 = 0xFF;
     EncodeAtomic<FamilyType>::programMiAtomic(taskStream, expectedGpuAddressDwordOp2,
-                                              MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_MOVE,
+                                              MI_ATOMIC::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_MOVE,
                                               MI_ATOMIC::DATA_SIZE::DATA_SIZE_DWORD,
                                               0, 0, operation2dword0, 0u);
 

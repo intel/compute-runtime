@@ -52,4 +52,16 @@ uint64_t UnitTestHelper<GfxFamily>::getSemaphoreWaitData(const void *semWaitCmd)
     return 0u;
 }
 
+template <typename GfxFamily>
+bool UnitTestHelper<GfxFamily>::isSemaphoreWaitPollingMode(const void *semWaitCmd) {
+    if (auto legacyCmd = matchLegacySemaphoreWaitCmd<GfxFamily>(semWaitCmd)) {
+        return legacyCmd->getWaitMode() == GfxFamily::MI_SEMAPHORE_WAIT_LEGACY::WAIT_MODE_POLLING_MODE;
+    }
+    if (matchSemaphoreWait64Cmd<GfxFamily>(semWaitCmd)) {
+        return true;
+    }
+    DEBUG_BREAK_IF(true);
+    return false;
+}
+
 } // namespace NEO

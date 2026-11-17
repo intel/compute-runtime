@@ -124,10 +124,8 @@ HWTEST2_F(MiMath, givenLoadIndirectFromMemoryWhenUseMiMathToSimpleOperationThenS
     this->loadValueToRegister<FamilyType>(valueToAdd, RegisterOffsets::csGprR3);
 
     auto pCmd = reinterpret_cast<uint32_t *>(this->taskStream->getSpace(sizeof(MI_MATH)));
-    reinterpret_cast<MI_MATH *>(pCmd)->DW0.Value = 0x0;
-    reinterpret_cast<MI_MATH *>(pCmd)->DW0.BitField.InstructionType = MI_MATH::COMMAND_TYPE_MI_COMMAND;
-    reinterpret_cast<MI_MATH *>(pCmd)->DW0.BitField.InstructionOpcode = MI_MATH::MI_COMMAND_OPCODE_MI_MATH;
-    reinterpret_cast<MI_MATH *>(pCmd)->DW0.BitField.DwordLength = this->numberOfOperationToLoadAddressToMiMathAccu + 13 - 1;
+    *reinterpret_cast<MI_MATH *>(pCmd) = MI_MATH::sInit();
+    reinterpret_cast<MI_MATH *>(pCmd)->setDwordLength(this->numberOfOperationToLoadAddressToMiMathAccu + 13 - 1);
     this->loadAddressToMiMathAccu<FamilyType>(static_cast<uint32_t>(AluRegisters::gpr0), static_cast<uint32_t>(AluRegisters::gpr1), static_cast<uint32_t>(AluRegisters::gpr2));
     MI_MATH_ALU_INST_INLINE *pAluParam = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(this->taskStream->getSpace(13 * sizeof(MI_MATH_ALU_INST_INLINE)));
     pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(AluRegisters::opcodeFenceRd);
@@ -202,10 +200,8 @@ HWTEST2_F(MiMath, givenLoadIndirectFromMemoryWhenUseMiMathThenStoreIndirectToAno
     this->loadAddressToRegisters<FamilyType>(RegisterOffsets::csGprR3, RegisterOffsets::csGprR4, RegisterOffsets::csGprR2, bufferB->getGpuAddress());
 
     auto pCmd = reinterpret_cast<uint32_t *>(this->taskStream->getSpace(sizeof(MI_MATH)));
-    reinterpret_cast<MI_MATH *>(pCmd)->DW0.Value = 0x0;
-    reinterpret_cast<MI_MATH *>(pCmd)->DW0.BitField.InstructionType = MI_MATH::COMMAND_TYPE_MI_COMMAND;
-    reinterpret_cast<MI_MATH *>(pCmd)->DW0.BitField.InstructionOpcode = MI_MATH::MI_COMMAND_OPCODE_MI_MATH;
-    reinterpret_cast<MI_MATH *>(pCmd)->DW0.BitField.DwordLength = this->numberOfOperationToLoadAddressToMiMathAccu * 2 + 6 - 1;
+    *reinterpret_cast<MI_MATH *>(pCmd) = MI_MATH::sInit();
+    reinterpret_cast<MI_MATH *>(pCmd)->setDwordLength(this->numberOfOperationToLoadAddressToMiMathAccu * 2 + 6 - 1);
 
     this->loadAddressToMiMathAccu<FamilyType>(static_cast<uint32_t>(AluRegisters::gpr0), static_cast<uint32_t>(AluRegisters::gpr1), static_cast<uint32_t>(AluRegisters::gpr2));
 
@@ -259,10 +255,8 @@ HWTEST2_F(MiMath, givenValueToMakeLeftLogicalShiftWhenUseMiMathThenShiftIsDonePr
     this->loadValueToRegister<FamilyType>(shift, RegisterOffsets::csGprR1);
     this->loadValueToRegister<FamilyType>(notPowerOfTwoShift, RegisterOffsets::csGprR2);
     auto pCmd = reinterpret_cast<uint32_t *>(this->taskStream->getSpace(sizeof(MI_MATH)));
-    reinterpret_cast<MI_MATH *>(pCmd)->DW0.Value = 0x0;
-    reinterpret_cast<MI_MATH *>(pCmd)->DW0.BitField.InstructionType = MI_MATH::COMMAND_TYPE_MI_COMMAND;
-    reinterpret_cast<MI_MATH *>(pCmd)->DW0.BitField.InstructionOpcode = MI_MATH::MI_COMMAND_OPCODE_MI_MATH;
-    reinterpret_cast<MI_MATH *>(pCmd)->DW0.BitField.DwordLength = 7 - 1;
+    *reinterpret_cast<MI_MATH *>(pCmd) = MI_MATH::sInit();
+    reinterpret_cast<MI_MATH *>(pCmd)->setDwordLength(7 - 1);
 
     MI_MATH_ALU_INST_INLINE *pAluParam = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(this->taskStream->getSpace(7 * sizeof(MI_MATH_ALU_INST_INLINE)));
     pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(AluRegisters::opcodeLoad);
@@ -323,10 +317,8 @@ HWTEST2_F(MiMath, givenValueToMakeRightLogicalShiftWhenUseMiMathThenShiftIsDoneP
     this->loadValueToRegister<FamilyType>(shift, RegisterOffsets::csGprR1);
     this->loadValueToRegister<FamilyType>(notPowerOfTwoShift, RegisterOffsets::csGprR2);
     auto pCmd = reinterpret_cast<uint32_t *>(this->taskStream->getSpace(sizeof(MI_MATH)));
-    reinterpret_cast<MI_MATH *>(pCmd)->DW0.Value = 0x0;
-    reinterpret_cast<MI_MATH *>(pCmd)->DW0.BitField.InstructionType = MI_MATH::COMMAND_TYPE_MI_COMMAND;
-    reinterpret_cast<MI_MATH *>(pCmd)->DW0.BitField.InstructionOpcode = MI_MATH::MI_COMMAND_OPCODE_MI_MATH;
-    reinterpret_cast<MI_MATH *>(pCmd)->DW0.BitField.DwordLength = 7 - 1;
+    *reinterpret_cast<MI_MATH *>(pCmd) = MI_MATH::sInit();
+    reinterpret_cast<MI_MATH *>(pCmd)->setDwordLength(7 - 1);
 
     MI_MATH_ALU_INST_INLINE *pAluParam = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(this->taskStream->getSpace(7 * sizeof(MI_MATH_ALU_INST_INLINE)));
     pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(AluRegisters::opcodeLoad);
@@ -388,10 +380,8 @@ HWTEST2_F(MiMath, givenValueToMakeRightArithmeticShiftWhenUseMiMathThenShiftIsDo
     this->loadValueToRegister<FamilyType>(notPowerOfTwoShift, RegisterOffsets::csGprR5);
 
     auto pCmd = reinterpret_cast<uint32_t *>(this->taskStream->getSpace(sizeof(MI_MATH)));
-    reinterpret_cast<MI_MATH *>(pCmd)->DW0.Value = 0x0;
-    reinterpret_cast<MI_MATH *>(pCmd)->DW0.BitField.InstructionType = MI_MATH::COMMAND_TYPE_MI_COMMAND;
-    reinterpret_cast<MI_MATH *>(pCmd)->DW0.BitField.InstructionOpcode = MI_MATH::MI_COMMAND_OPCODE_MI_MATH;
-    reinterpret_cast<MI_MATH *>(pCmd)->DW0.BitField.DwordLength = this->numberOfOperationToLoadAddressToMiMathAccu + 9 - 1;
+    *reinterpret_cast<MI_MATH *>(pCmd) = MI_MATH::sInit();
+    reinterpret_cast<MI_MATH *>(pCmd)->setDwordLength(this->numberOfOperationToLoadAddressToMiMathAccu + 9 - 1);
     this->loadAddressToMiMathAccu<FamilyType>(static_cast<uint32_t>(AluRegisters::gpr0), static_cast<uint32_t>(AluRegisters::gpr1), static_cast<uint32_t>(AluRegisters::gpr2));
     MI_MATH_ALU_INST_INLINE *pAluParam = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(this->taskStream->getSpace(9 * sizeof(MI_MATH_ALU_INST_INLINE)));
     pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(AluRegisters::opcodeLoadind);
@@ -479,8 +469,8 @@ struct ConditionalBbStartTests : public MiMath {
     }
 
     template <typename AtomicT>
-    typename AtomicT::ATOMIC_OPCODES getAtomicOpcode() const {
-        return isQwordData ? AtomicT::ATOMIC_OPCODES::ATOMIC_8B_INCREMENT : AtomicT::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT;
+    typename AtomicT::ATOMIC_OPCODE getAtomicOpcode() const {
+        return isQwordData ? AtomicT::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC8B : AtomicT::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC;
     }
 
     template <typename AtomicT>

@@ -193,29 +193,29 @@ XE3_CORETEST_F(CommandsXe3CoreTest, GivenMiAtomicWhenSetterUsedThenGetterReturns
     cmd.setDwordLength(MI_ATOMIC::DWORD_LENGTH_INLINE_DATA_1);
     EXPECT_EQ(MI_ATOMIC::DWORD_LENGTH_INLINE_DATA_1, cmd.getDwordLength());
 
-    cmd.setAtomicOpcode(MI_ATOMIC::ATOMIC_4B_MOVE);              // patched
-    EXPECT_EQ(MI_ATOMIC::ATOMIC_4B_MOVE, cmd.getAtomicOpcode()); // patched
+    cmd.setAtomicOpcode(MI_ATOMIC::ATOMIC_OPCODE_ATOMIC_MOVE);
+    EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODE_ATOMIC_MOVE, cmd.getAtomicOpcode());
 
-    cmd.setAtomicOpcode(MI_ATOMIC::ATOMIC_4B_INCREMENT);              // patched
-    EXPECT_EQ(MI_ATOMIC::ATOMIC_4B_INCREMENT, cmd.getAtomicOpcode()); // patched
+    cmd.setAtomicOpcode(MI_ATOMIC::ATOMIC_OPCODE_ATOMIC_INC);
+    EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODE_ATOMIC_INC, cmd.getAtomicOpcode());
 
-    cmd.setAtomicOpcode(MI_ATOMIC::ATOMIC_4B_DECREMENT);              // patched
-    EXPECT_EQ(MI_ATOMIC::ATOMIC_4B_DECREMENT, cmd.getAtomicOpcode()); // patched
+    cmd.setAtomicOpcode(MI_ATOMIC::ATOMIC_OPCODE_ATOMIC_DEC);
+    EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODE_ATOMIC_DEC, cmd.getAtomicOpcode());
 
-    cmd.setAtomicOpcode(MI_ATOMIC::ATOMIC_8B_MOVE);              // patched
-    EXPECT_EQ(MI_ATOMIC::ATOMIC_8B_MOVE, cmd.getAtomicOpcode()); // patched
+    cmd.setAtomicOpcode(MI_ATOMIC::ATOMIC_OPCODE_ATOMIC_MOVE8B);
+    EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODE_ATOMIC_MOVE8B, cmd.getAtomicOpcode());
 
-    cmd.setAtomicOpcode(MI_ATOMIC::ATOMIC_8B_INCREMENT);              // patched
-    EXPECT_EQ(MI_ATOMIC::ATOMIC_8B_INCREMENT, cmd.getAtomicOpcode()); // patched
+    cmd.setAtomicOpcode(MI_ATOMIC::ATOMIC_OPCODE_ATOMIC_INC8B);
+    EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODE_ATOMIC_INC8B, cmd.getAtomicOpcode());
 
-    cmd.setAtomicOpcode(MI_ATOMIC::ATOMIC_8B_DECREMENT);              // patched
-    EXPECT_EQ(MI_ATOMIC::ATOMIC_8B_DECREMENT, cmd.getAtomicOpcode()); // patched
+    cmd.setAtomicOpcode(MI_ATOMIC::ATOMIC_OPCODE_ATOMIC_DEC8B);
+    EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODE_ATOMIC_DEC8B, cmd.getAtomicOpcode());
 
-    cmd.setAtomicOpcode(MI_ATOMIC::ATOMIC_8B_ADD);              // patched
-    EXPECT_EQ(MI_ATOMIC::ATOMIC_8B_ADD, cmd.getAtomicOpcode()); // patched
+    cmd.setAtomicOpcode(MI_ATOMIC::ATOMIC_OPCODE_ATOMIC_ADD8B);
+    EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODE_ATOMIC_ADD8B, cmd.getAtomicOpcode());
 
-    cmd.setAtomicOpcode(MI_ATOMIC::ATOMIC_8B_CMP_WR);              // patched
-    EXPECT_EQ(MI_ATOMIC::ATOMIC_8B_CMP_WR, cmd.getAtomicOpcode()); // patched
+    cmd.setAtomicOpcode(MI_ATOMIC::ATOMIC_OPCODE_ATOMIC_CMPWR8B);
+    EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODE_ATOMIC_CMPWR8B, cmd.getAtomicOpcode());
 
     cmd.setReturnDataControl(0x0u);
     EXPECT_EQ(0x0u, cmd.getReturnDataControl());
@@ -3972,7 +3972,7 @@ XE3_CORETEST_F(CommandsXe3CoreTest, GivenMiMemFenceWhenInitCalledThenFieldsSetTo
 
     EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE_RELEASE_FENCE, cmd.TheStructure.Common.FenceType);
     EXPECT_EQ(MI_MEM_FENCE::MI_COMMAND_SUB_OPCODE_MI_MEM_FENCE, cmd.TheStructure.Common.MiCommandSubOpcode);
-    EXPECT_EQ(MI_MEM_FENCE::MI_COMMAND_OPCODE_MI_EXTENDED, cmd.TheStructure.Common.MiCommandOpcode);
+    EXPECT_EQ(MI_MEM_FENCE::MI_COMMAND_OPCODE_MI_EXTENDED_1DW, cmd.TheStructure.Common.MiCommandOpcode);
     EXPECT_EQ(MI_MEM_FENCE::COMMAND_TYPE_MI_COMMAND, cmd.TheStructure.Common.CommandType);
 }
 

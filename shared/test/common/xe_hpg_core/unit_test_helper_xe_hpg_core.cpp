@@ -19,11 +19,6 @@ using Family = NEO::XeHpgCoreFamily;
 namespace NEO {
 
 template <>
-uint64_t UnitTestHelper<Family>::getAtomicMemoryAddress(const typename Family::MI_ATOMIC &atomic) {
-    return atomic.getMemoryAddress() | ((static_cast<uint64_t>(atomic.getMemoryAddressHigh())) << 32);
-}
-
-template <>
 uint32_t UnitTestHelper<Family>::getAppropriateThreadArbitrationPolicy(int32_t policy) {
     return static_cast<uint32_t>(policy);
 }

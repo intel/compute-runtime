@@ -166,11 +166,9 @@ HWTEST_F(CommandEncoderMathTest, WhenReservingCommandThenBitfieldSetCorrectly) {
 
     auto cmdMATH = genCmdCast<MI_MATH *>(*itor);
 
-    EXPECT_EQ(cmdMATH->DW0.BitField.InstructionType,
-              static_cast<uint32_t>(MI_MATH::COMMAND_TYPE_MI_COMMAND));
-    EXPECT_EQ(cmdMATH->DW0.BitField.InstructionOpcode,
-              static_cast<uint32_t>(MI_MATH::MI_COMMAND_OPCODE_MI_MATH));
-    EXPECT_EQ(cmdMATH->DW0.BitField.DwordLength,
+    EXPECT_EQ(MI_MATH::COMMAND_TYPE_MI_COMMAND, cmdMATH->getCommandType());
+    EXPECT_EQ(MI_MATH::MI_COMMAND_OPCODE_MI_MATH, cmdMATH->getMiCommandOpcode());
+    EXPECT_EQ(cmdMATH->getDwordLength(),
               static_cast<uint32_t>(RegisterConstants::numAluInstForReadModifyWrite - 1));
 }
 
@@ -213,7 +211,7 @@ HWTEST_F(CommandEncoderMathTest, givenOffsetAndValueWhenEncodeBitwiseAndValIsCal
     itor++;
     EXPECT_NE(commands.end(), itor);
     auto cmdMath = genCmdCast<MI_MATH *>(*itor);
-    EXPECT_EQ(cmdMath->DW0.BitField.DwordLength, 3u);
+    EXPECT_EQ(cmdMath->getDwordLength(), 3u);
 
     // store R15 to address
     itor++;
@@ -582,7 +580,7 @@ HWTEST_F(CommandEncodeAluTests, whenProgrammingIncrementOperationThenUseCorrectA
     EXPECT_EQ(0u, lriCmd->getDataDword());
 
     auto miMathCmd = reinterpret_cast<MI_MATH *>(++lriCmd);
-    EXPECT_EQ(3u, miMathCmd->DW0.BitField.DwordLength);
+    EXPECT_EQ(3u, miMathCmd->getDwordLength());
 
     auto miAluCmd = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(++miMathCmd);
     EXPECT_EQ(static_cast<uint32_t>(AluRegisters::opcodeLoad), miAluCmd->DW0.BitField.ALUOpcode);
@@ -629,7 +627,7 @@ HWTEST_F(CommandEncodeAluTests, whenProgrammingDecrementOperationThenUseCorrectA
     EXPECT_EQ(0u, lriCmd->getDataDword());
 
     auto miMathCmd = reinterpret_cast<MI_MATH *>(++lriCmd);
-    EXPECT_EQ(3u, miMathCmd->DW0.BitField.DwordLength);
+    EXPECT_EQ(3u, miMathCmd->getDwordLength());
 
     auto miAluCmd = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(++miMathCmd);
     EXPECT_EQ(static_cast<uint32_t>(AluRegisters::opcodeLoad), miAluCmd->DW0.BitField.ALUOpcode);

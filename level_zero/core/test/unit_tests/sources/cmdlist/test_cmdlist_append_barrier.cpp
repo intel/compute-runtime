@@ -200,10 +200,10 @@ void validateMultiTileBarrier(void *cmdBuffer, size_t &parsedOffset,
     {
         auto miAtomic = genCmdCast<MI_ATOMIC *>(ptrOffset(cmdBuffer, parsedOffset));
         ASSERT_NE(nullptr, miAtomic);
-        auto miAtomicProgrammedAddress = NEO::UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic);
+        auto miAtomicProgrammedAddress = miAtomic->getMemoryAddress();
         EXPECT_EQ(gpuCrossTileSyncAddress, miAtomicProgrammedAddress);
         EXPECT_FALSE(miAtomic->getReturnDataControl());
-        EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomic->getAtomicOpcode());
+        EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC, miAtomic->getAtomicOpcode());
         parsedOffset += sizeof(MI_ATOMIC);
     }
     {
@@ -238,10 +238,10 @@ void validateMultiTileBarrier(void *cmdBuffer, size_t &parsedOffset,
         {
             auto miAtomic = genCmdCast<MI_ATOMIC *>(ptrOffset(cmdBuffer, parsedOffset));
             ASSERT_NE(nullptr, miAtomic);
-            auto miAtomicProgrammedAddress = NEO::UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic);
+            auto miAtomicProgrammedAddress = miAtomic->getMemoryAddress();
             EXPECT_EQ(gpuFinalSyncAddress, miAtomicProgrammedAddress);
             EXPECT_FALSE(miAtomic->getReturnDataControl());
-            EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomic->getAtomicOpcode());
+            EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC, miAtomic->getAtomicOpcode());
             parsedOffset += sizeof(MI_ATOMIC);
         }
         {
@@ -262,10 +262,10 @@ void validateMultiTileBarrier(void *cmdBuffer, size_t &parsedOffset,
         {
             auto miAtomic = genCmdCast<MI_ATOMIC *>(ptrOffset(cmdBuffer, parsedOffset));
             ASSERT_NE(nullptr, miAtomic);
-            auto miAtomicProgrammedAddress = NEO::UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic);
+            auto miAtomicProgrammedAddress = miAtomic->getMemoryAddress();
             EXPECT_EQ(gpuFinalSyncAddress, miAtomicProgrammedAddress);
             EXPECT_FALSE(miAtomic->getReturnDataControl());
-            EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomic->getAtomicOpcode());
+            EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC, miAtomic->getAtomicOpcode());
             parsedOffset += sizeof(MI_ATOMIC);
         }
         {
@@ -774,10 +774,10 @@ HWTEST2_F(MultiTileImmediateCommandListAppendBarrier,
     auto itorAtomic = find<MI_ATOMIC *>(pipeControlList[0], cmdList.end());
     ASSERT_NE(cmdList.end(), itorAtomic);
     auto cmdAtomic = genCmdCast<MI_ATOMIC *>(*itorAtomic);
-    auto miAtomicProgrammedAddress = NEO::UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*cmdAtomic);
+    auto miAtomicProgrammedAddress = cmdAtomic->getMemoryAddress();
     EXPECT_EQ(crossTileSyncGpuAddress, miAtomicProgrammedAddress);
     EXPECT_FALSE(cmdAtomic->getReturnDataControl());
-    EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, cmdAtomic->getAtomicOpcode());
+    EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC, cmdAtomic->getAtomicOpcode());
 
     auto itorSemaphore = find<MI_SEMAPHORE_WAIT *>(itorAtomic, cmdList.end());
     ASSERT_NE(cmdList.end(), itorSemaphore);
@@ -904,7 +904,7 @@ HWTEST2_F(MultiTilePatchPreambleTest,
     auto itorAtomic = find<MI_ATOMIC *>(itorPipeControl, itorBbStart);
     ASSERT_NE(itorBbStart, itorAtomic);
     auto cmdAtomic = genCmdCast<MI_ATOMIC *>(*itorAtomic);
-    auto miAtomicProgrammedAddress = NEO::UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*cmdAtomic);
+    auto miAtomicProgrammedAddress = cmdAtomic->getMemoryAddress();
     EXPECT_EQ(expectedAtomicCounterAddress, miAtomicProgrammedAddress);
 
     auto itorSemaphore = find<MI_SEMAPHORE_WAIT *>(itorAtomic, itorBbStart);

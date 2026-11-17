@@ -930,7 +930,6 @@ HWTEST2_F(CommandEncoderTestXe3pAndLater, GivenMiSemaphoreWait64WhenProgrammingW
     EXPECT_EQ(MI_SEMAPHORE_WAIT_64::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, miSemaphore64->getCompareOperation());
     EXPECT_EQ(4u, miSemaphore64->getSemaphoreDataDword());
     EXPECT_EQ(0x123400u, miSemaphore64->getSemaphoreGraphicsAddress());
-    EXPECT_EQ(MI_SEMAPHORE_WAIT_64::WAIT_MODE::WAIT_MODE_POLLING_MODE, miSemaphore64->getWaitMode());
 
     memset(buffer, 0, sizeof(buffer));
     EXPECT_ANY_THROW(EncodeSemaphore<FamilyType>::programMiSemaphoreWait(miSemaphore,

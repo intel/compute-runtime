@@ -275,7 +275,7 @@ bool validateProgramming(const GenCmdList &cmdList, uint64_t compareData, uint64
 
     EXPECT_EQ(compareAddr, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphoreCmd));
     EXPECT_EQ(semaphoreCmd->getCompareOperation(), compareMode);
-    EXPECT_EQ(semaphoreCmd->getWaitMode(), MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE);
+    EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::isSemaphoreWaitPollingMode(semaphoreCmd));
 
     if (useQwordData) {
         if (expectLriForQwordData) {

@@ -38,7 +38,7 @@ struct EncodeConditionalBatchBufferStartTest : public ::testing::Test {
         using MI_MATH = typename FamilyType::MI_MATH;
 
         auto miMathCmd = reinterpret_cast<MI_MATH *>(currentCmd);
-        EXPECT_EQ(3u, miMathCmd->DW0.BitField.DwordLength);
+        EXPECT_EQ(3u, miMathCmd->getDwordLength());
 
         auto miAluCmd = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(++miMathCmd);
         EXPECT_EQ(static_cast<uint32_t>(AluRegisters::opcodeLoad), miAluCmd->DW0.BitField.ALUOpcode);

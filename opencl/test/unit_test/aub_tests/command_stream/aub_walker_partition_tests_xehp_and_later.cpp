@@ -130,7 +130,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenAtomicOperationDec
     auto streamCpuPointer = taskStream->getSpace(0);
     uint32_t totalBytesProgrammed = 0u;
     uint32_t expectedValue = 9u;
-    WalkerPartition::programMiAtomic<FamilyType>(streamCpuPointer, totalBytesProgrammed, writeAddress, false, WalkerPartition::MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_DECREMENT);
+    WalkerPartition::programMiAtomic<FamilyType>(streamCpuPointer, totalBytesProgrammed, writeAddress, false, WalkerPartition::MI_ATOMIC<FamilyType>::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_DEC);
     taskStream->getSpace(totalBytesProgrammed);
 
     flushStream();
@@ -145,7 +145,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenAtomicOperationInc
     auto streamCpuPointer = taskStream->getSpace(0);
     uint32_t totalBytesProgrammed = 0u;
     uint32_t expectedValue = 11u;
-    WalkerPartition::programMiAtomic<FamilyType>(streamCpuPointer, totalBytesProgrammed, writeAddress, false, WalkerPartition::MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT);
+    WalkerPartition::programMiAtomic<FamilyType>(streamCpuPointer, totalBytesProgrammed, writeAddress, false, WalkerPartition::MI_ATOMIC<FamilyType>::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC);
     taskStream->getSpace(totalBytesProgrammed);
 
     flushStream();
@@ -707,7 +707,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenBlockingAtomicOper
     auto streamCpuPointer = taskStream->getSpace(0);
     uint32_t totalBytesProgrammed = 0u;
     uint32_t expectedValue = 11u;
-    WalkerPartition::programMiAtomic<FamilyType>(streamCpuPointer, totalBytesProgrammed, writeAddress, true, WalkerPartition::MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT);
+    WalkerPartition::programMiAtomic<FamilyType>(streamCpuPointer, totalBytesProgrammed, writeAddress, true, WalkerPartition::MI_ATOMIC<FamilyType>::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC);
     taskStream->getSpace(totalBytesProgrammed);
 
     flushStream();
@@ -722,7 +722,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenBlockingAtomicOper
     auto streamCpuPointer = taskStream->getSpace(0);
     uint32_t totalBytesProgrammed = 0u;
     uint32_t expectedValue = 11u;
-    WalkerPartition::programMiAtomic<FamilyType>(streamCpuPointer, totalBytesProgrammed, writeAddress, true, WalkerPartition::MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT);
+    WalkerPartition::programMiAtomic<FamilyType>(streamCpuPointer, totalBytesProgrammed, writeAddress, true, WalkerPartition::MI_ATOMIC<FamilyType>::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC);
     taskStream->getSpace(totalBytesProgrammed);
 
     flushStream();
@@ -737,7 +737,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenNonBlockingAtomicO
     auto streamCpuPointer = taskStream->getSpace(0);
     uint32_t totalBytesProgrammed = 0u;
     uint32_t expectedValue = 11u;
-    WalkerPartition::programMiAtomic<FamilyType>(streamCpuPointer, totalBytesProgrammed, writeAddress, false, WalkerPartition::MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT);
+    WalkerPartition::programMiAtomic<FamilyType>(streamCpuPointer, totalBytesProgrammed, writeAddress, false, WalkerPartition::MI_ATOMIC<FamilyType>::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC);
     taskStream->getSpace(totalBytesProgrammed);
 
     flushStream();

@@ -247,11 +247,8 @@ uint32_t *EncodeMath<Family>::commandReserve(LinearStream &cmdStream) {
     size_t size = sizeof(MI_MATH) + sizeof(MI_MATH_ALU_INST_INLINE) * RegisterConstants::numAluInstForReadModifyWrite;
 
     auto cmd = reinterpret_cast<uint32_t *>(cmdStream.getSpace(size));
-    MI_MATH mathBuffer;
-    mathBuffer.DW0.Value = 0x0;
-    mathBuffer.DW0.BitField.InstructionType = MI_MATH::COMMAND_TYPE_MI_COMMAND;
-    mathBuffer.DW0.BitField.InstructionOpcode = MI_MATH::MI_COMMAND_OPCODE_MI_MATH;
-    mathBuffer.DW0.BitField.DwordLength = RegisterConstants::numAluInstForReadModifyWrite - 1;
+    MI_MATH mathBuffer = MI_MATH::sInit();
+    mathBuffer.setDwordLength(RegisterConstants::numAluInstForReadModifyWrite - 1);
     *reinterpret_cast<MI_MATH *>(cmd) = mathBuffer;
     cmd++;
 
@@ -971,7 +968,7 @@ void EncodeSemaphore<Family>::programMiSemaphoreWaitCommand(LinearStream *comman
 template <typename Family>
 void EncodeAtomic<Family>::programMiAtomic(MI_ATOMIC *atomic,
                                            uint64_t writeAddress,
-                                           ATOMIC_OPCODES opcode,
+                                           ATOMIC_OPCODE opcode,
                                            DATA_SIZE dataSize,
                                            uint32_t returnDataControl,
                                            uint32_t csStall,
@@ -980,11 +977,11 @@ void EncodeAtomic<Family>::programMiAtomic(MI_ATOMIC *atomic,
     MI_ATOMIC cmd = Family::cmdInitAtomic;
     cmd.setAtomicOpcode(opcode);
     cmd.setDataSize(dataSize);
-    EncodeAtomic<Family>::setMiAtomicAddress(cmd, writeAddress);
+    cmd.setMemoryAddress(writeAddress);
     cmd.setReturnDataControl(returnDataControl);
     cmd.setCsStall(csStall);
 
-    if (opcode == ATOMIC_OPCODES::ATOMIC_4B_MOVE || opcode == ATOMIC_OPCODES::ATOMIC_8B_MOVE || opcode == ATOMIC_OPCODES::ATOMIC_8B_CMP_WR || opcode == ATOMIC_OPCODES::ATOMIC_8B_ADD) {
+    if (opcode == ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_MOVE || opcode == ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_MOVE8B || opcode == ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_CMPWR8B || opcode == ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_ADD8B) {
         cmd.setDwordLength(MI_ATOMIC::DWORD_LENGTH::DWORD_LENGTH_INLINE_DATA_1);
         cmd.setInlineData(0x1);
 
@@ -1002,7 +999,7 @@ void EncodeAtomic<Family>::programMiAtomic(MI_ATOMIC *atomic,
 template <typename Family>
 void EncodeAtomic<Family>::programMiAtomic(LinearStream &commandStream,
                                            uint64_t writeAddress,
-                                           ATOMIC_OPCODES opcode,
+                                           ATOMIC_OPCODE opcode,
                                            DATA_SIZE dataSize,
                                            uint32_t returnDataControl,
                                            uint32_t csStall,

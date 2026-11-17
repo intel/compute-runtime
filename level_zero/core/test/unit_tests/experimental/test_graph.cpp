@@ -6154,7 +6154,7 @@ struct GraphBarrierStreamCommands {
         // in order counters might be signaled with atomics too, count only barrier ones
         size_t barrierAtomics = 0;
         for (auto &atomicIt : atomics) {
-            if (barrierAddress == NEO::UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*genCmdCast<MI_ATOMIC *>(*atomicIt))) {
+            if (barrierAddress == genCmdCast<MI_ATOMIC *>(*atomicIt)->getMemoryAddress()) {
                 barrierAtomics++;
             }
         }
@@ -6434,7 +6434,7 @@ HWTEST2_F(GraphPatchPreambleBarrierTest,
         GenCmdList cmdList;
         ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(stream->getCpuBase(), usedBefore[i]), stream->getUsed() - usedBefore[i]));
         for (auto &atomicIt : findAll<MI_ATOMIC *>(cmdList.begin(), cmdList.end())) {
-            EXPECT_NE(MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_8B_INCREMENT, genCmdCast<MI_ATOMIC *>(*atomicIt)->getAtomicOpcode());
+            EXPECT_NE(MI_ATOMIC::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC8B, genCmdCast<MI_ATOMIC *>(*atomicIt)->getAtomicOpcode());
         }
     }
 }

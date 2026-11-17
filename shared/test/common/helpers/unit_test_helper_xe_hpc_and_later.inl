@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,11 +9,6 @@
 #include "shared/test/common/helpers/unit_test_helper.h"
 
 namespace NEO {
-
-template <typename GfxFamily>
-uint64_t UnitTestHelper<GfxFamily>::getAtomicMemoryAddress(const typename GfxFamily::MI_ATOMIC &atomic) {
-    return atomic.getMemoryAddress();
-}
 
 template <typename GfxFamily>
 uint32_t UnitTestHelper<GfxFamily>::getAppropriateThreadArbitrationPolicy(int32_t policy) {

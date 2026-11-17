@@ -588,12 +588,12 @@ struct EncodeSemaphore {
 template <typename GfxFamily>
 struct EncodeAtomic {
     using MI_ATOMIC = typename GfxFamily::MI_ATOMIC;
-    using ATOMIC_OPCODES = typename GfxFamily::MI_ATOMIC::ATOMIC_OPCODES;
+    using ATOMIC_OPCODE = typename GfxFamily::MI_ATOMIC::ATOMIC_OPCODE;
     using DATA_SIZE = typename GfxFamily::MI_ATOMIC::DATA_SIZE;
 
     static void programMiAtomic(LinearStream &commandStream,
                                 uint64_t writeAddress,
-                                ATOMIC_OPCODES opcode,
+                                ATOMIC_OPCODE opcode,
                                 DATA_SIZE dataSize,
                                 uint32_t returnDataControl,
                                 uint32_t csStall,
@@ -602,14 +602,12 @@ struct EncodeAtomic {
 
     static void programMiAtomic(MI_ATOMIC *atomic,
                                 uint64_t writeAddress,
-                                ATOMIC_OPCODES opcode,
+                                ATOMIC_OPCODE opcode,
                                 DATA_SIZE dataSize,
                                 uint32_t returnDataControl,
                                 uint32_t csStall,
                                 uint64_t operand1Data,
                                 uint64_t operand2Data);
-
-    static void setMiAtomicAddress(MI_ATOMIC &atomic, uint64_t writeAddress);
 };
 
 template <typename GfxFamily>

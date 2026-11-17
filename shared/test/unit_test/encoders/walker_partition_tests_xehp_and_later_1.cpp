@@ -81,10 +81,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerPartitionWhenConst
     auto miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
     ASSERT_NE(nullptr, miAtomic);
     auto miAtomicAddress = gpuVirtualAddress + expectedCommandUsedSize;
-    auto miAtomicProgrammedAddress = UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic);
+    auto miAtomicProgrammedAddress = miAtomic->getMemoryAddress();
     EXPECT_EQ(miAtomicAddress, miAtomicProgrammedAddress);
     EXPECT_TRUE(miAtomic->getReturnDataControl());
-    EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomic->getAtomicOpcode());
+    EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC, miAtomic->getAtomicOpcode());
     parsedOffset += sizeof(WalkerPartition::MI_ATOMIC<FamilyType>);
 
     auto loadRegisterReg = genCmdCast<WalkerPartition::LOAD_REGISTER_REG<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
@@ -124,10 +124,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerPartitionWhenConst
     miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
     ASSERT_NE(nullptr, miAtomic);
     auto miAtomicTileAddress = gpuVirtualAddress + expectedCommandUsedSize + sizeof(uint32_t);
-    auto miAtomicTileProgrammedAddress = UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic);
+    auto miAtomicTileProgrammedAddress = miAtomic->getMemoryAddress();
     EXPECT_EQ(miAtomicTileAddress, miAtomicTileProgrammedAddress);
     EXPECT_FALSE(miAtomic->getReturnDataControl());
-    EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomic->getAtomicOpcode());
+    EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC, miAtomic->getAtomicOpcode());
 
     parsedOffset += sizeof(WalkerPartition::MI_ATOMIC<FamilyType>);
 
@@ -222,9 +222,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWhe
         auto miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
         ASSERT_NE(nullptr, miAtomic);
         parsedOffset += sizeof(WalkerPartition::MI_ATOMIC<FamilyType>);
-        EXPECT_EQ(postWalkerSyncAddress, UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic));
+        EXPECT_EQ(postWalkerSyncAddress, miAtomic->getMemoryAddress());
         EXPECT_FALSE(miAtomic->getReturnDataControl());
-        EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomic->getAtomicOpcode());
+        EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC, miAtomic->getAtomicOpcode());
         EXPECT_EQ(DATA_SIZE<FamilyType>::DATA_SIZE_DWORD, miAtomic->getDataSize());
         EXPECT_FALSE(miAtomic->getReturnDataControl());
         EXPECT_FALSE(miAtomic->getCsStall());
@@ -291,9 +291,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionAnd
         auto miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
         ASSERT_NE(nullptr, miAtomic);
         parsedOffset += sizeof(WalkerPartition::MI_ATOMIC<FamilyType>);
-        EXPECT_EQ(preWalkerSyncAddress, UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic));
+        EXPECT_EQ(preWalkerSyncAddress, miAtomic->getMemoryAddress());
         EXPECT_FALSE(miAtomic->getReturnDataControl());
-        EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomic->getAtomicOpcode());
+        EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC, miAtomic->getAtomicOpcode());
         EXPECT_EQ(DATA_SIZE<FamilyType>::DATA_SIZE_DWORD, miAtomic->getDataSize());
         EXPECT_FALSE(miAtomic->getReturnDataControl());
         EXPECT_FALSE(miAtomic->getCsStall());
@@ -331,9 +331,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionAnd
         auto miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
         ASSERT_NE(nullptr, miAtomic);
         parsedOffset += sizeof(WalkerPartition::MI_ATOMIC<FamilyType>);
-        EXPECT_EQ(postWalkerSyncAddress, UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic));
+        EXPECT_EQ(postWalkerSyncAddress, miAtomic->getMemoryAddress());
         EXPECT_FALSE(miAtomic->getReturnDataControl());
-        EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomic->getAtomicOpcode());
+        EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC, miAtomic->getAtomicOpcode());
         EXPECT_EQ(DATA_SIZE<FamilyType>::DATA_SIZE_DWORD, miAtomic->getDataSize());
         EXPECT_FALSE(miAtomic->getReturnDataControl());
         EXPECT_FALSE(miAtomic->getCsStall());
@@ -526,9 +526,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
         auto miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
         ASSERT_NE(nullptr, miAtomic);
         parsedOffset += sizeof(WalkerPartition::MI_ATOMIC<FamilyType>);
-        EXPECT_EQ(postWalkerSyncAddress, UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic));
+        EXPECT_EQ(postWalkerSyncAddress, miAtomic->getMemoryAddress());
         EXPECT_FALSE(miAtomic->getReturnDataControl());
-        EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomic->getAtomicOpcode());
+        EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC, miAtomic->getAtomicOpcode());
         EXPECT_EQ(DATA_SIZE<FamilyType>::DATA_SIZE_DWORD, miAtomic->getDataSize());
         EXPECT_FALSE(miAtomic->getReturnDataControl());
         EXPECT_FALSE(miAtomic->getCsStall());
@@ -559,9 +559,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
         auto miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
         ASSERT_NE(nullptr, miAtomic);
         parsedOffset += sizeof(WalkerPartition::MI_ATOMIC<FamilyType>);
-        EXPECT_EQ(finalSyncAddress, UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic));
+        EXPECT_EQ(finalSyncAddress, miAtomic->getMemoryAddress());
         EXPECT_FALSE(miAtomic->getReturnDataControl());
-        EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomic->getAtomicOpcode());
+        EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC, miAtomic->getAtomicOpcode());
         EXPECT_EQ(DATA_SIZE<FamilyType>::DATA_SIZE_DWORD, miAtomic->getDataSize());
         EXPECT_FALSE(miAtomic->getReturnDataControl());
         EXPECT_FALSE(miAtomic->getCsStall());
@@ -596,9 +596,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
         auto miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
         ASSERT_NE(nullptr, miAtomic);
         parsedOffset += sizeof(WalkerPartition::MI_ATOMIC<FamilyType>);
-        EXPECT_EQ(finalSyncAddress, UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic));
+        EXPECT_EQ(finalSyncAddress, miAtomic->getMemoryAddress());
         EXPECT_FALSE(miAtomic->getReturnDataControl());
-        EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomic->getAtomicOpcode());
+        EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC, miAtomic->getAtomicOpcode());
         EXPECT_EQ(DATA_SIZE<FamilyType>::DATA_SIZE_DWORD, miAtomic->getDataSize());
         EXPECT_FALSE(miAtomic->getReturnDataControl());
         EXPECT_FALSE(miAtomic->getCsStall());
@@ -685,9 +685,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
         auto miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
         ASSERT_NE(nullptr, miAtomic);
         parsedOffset += sizeof(WalkerPartition::MI_ATOMIC<FamilyType>);
-        EXPECT_EQ(postWalkerSyncAddress, UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic));
+        EXPECT_EQ(postWalkerSyncAddress, miAtomic->getMemoryAddress());
         EXPECT_FALSE(miAtomic->getReturnDataControl());
-        EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomic->getAtomicOpcode());
+        EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC, miAtomic->getAtomicOpcode());
         EXPECT_EQ(DATA_SIZE<FamilyType>::DATA_SIZE_DWORD, miAtomic->getDataSize());
         EXPECT_FALSE(miAtomic->getReturnDataControl());
         EXPECT_FALSE(miAtomic->getCsStall());
@@ -718,9 +718,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
         auto miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
         ASSERT_NE(nullptr, miAtomic);
         parsedOffset += sizeof(WalkerPartition::MI_ATOMIC<FamilyType>);
-        EXPECT_EQ(finalSyncAddress, UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic));
+        EXPECT_EQ(finalSyncAddress, miAtomic->getMemoryAddress());
         EXPECT_FALSE(miAtomic->getReturnDataControl());
-        EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomic->getAtomicOpcode());
+        EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC, miAtomic->getAtomicOpcode());
         EXPECT_EQ(DATA_SIZE<FamilyType>::DATA_SIZE_DWORD, miAtomic->getDataSize());
         EXPECT_FALSE(miAtomic->getReturnDataControl());
         EXPECT_FALSE(miAtomic->getCsStall());
@@ -755,9 +755,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
         auto miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
         ASSERT_NE(nullptr, miAtomic);
         parsedOffset += sizeof(WalkerPartition::MI_ATOMIC<FamilyType>);
-        EXPECT_EQ(finalSyncAddress, UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic));
+        EXPECT_EQ(finalSyncAddress, miAtomic->getMemoryAddress());
         EXPECT_FALSE(miAtomic->getReturnDataControl());
-        EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomic->getAtomicOpcode());
+        EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC, miAtomic->getAtomicOpcode());
         EXPECT_EQ(DATA_SIZE<FamilyType>::DATA_SIZE_DWORD, miAtomic->getDataSize());
         EXPECT_FALSE(miAtomic->getReturnDataControl());
         EXPECT_FALSE(miAtomic->getCsStall());
@@ -828,9 +828,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
         auto miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
         ASSERT_NE(nullptr, miAtomic);
         parsedOffset += sizeof(WalkerPartition::MI_ATOMIC<FamilyType>);
-        EXPECT_EQ(finalSyncAddress, UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic));
+        EXPECT_EQ(finalSyncAddress, miAtomic->getMemoryAddress());
         EXPECT_FALSE(miAtomic->getReturnDataControl());
-        EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_MOVE, miAtomic->getAtomicOpcode());
+        EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_MOVE, miAtomic->getAtomicOpcode());
         EXPECT_EQ(DATA_SIZE<FamilyType>::DATA_SIZE_DWORD, miAtomic->getDataSize());
         EXPECT_FALSE(miAtomic->getReturnDataControl());
         EXPECT_FALSE(miAtomic->getCsStall());
@@ -846,9 +846,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
         auto miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
         ASSERT_NE(nullptr, miAtomic);
         parsedOffset += sizeof(WalkerPartition::MI_ATOMIC<FamilyType>);
-        EXPECT_EQ(postWalkerSyncAddress, UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic));
+        EXPECT_EQ(postWalkerSyncAddress, miAtomic->getMemoryAddress());
         EXPECT_FALSE(miAtomic->getReturnDataControl());
-        EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomic->getAtomicOpcode());
+        EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC, miAtomic->getAtomicOpcode());
         EXPECT_EQ(DATA_SIZE<FamilyType>::DATA_SIZE_DWORD, miAtomic->getDataSize());
         EXPECT_FALSE(miAtomic->getReturnDataControl());
         EXPECT_FALSE(miAtomic->getCsStall());
@@ -879,9 +879,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
         auto miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
         ASSERT_NE(nullptr, miAtomic);
         parsedOffset += sizeof(WalkerPartition::MI_ATOMIC<FamilyType>);
-        EXPECT_EQ(finalSyncAddress, UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic));
+        EXPECT_EQ(finalSyncAddress, miAtomic->getMemoryAddress());
         EXPECT_FALSE(miAtomic->getReturnDataControl());
-        EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomic->getAtomicOpcode());
+        EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC, miAtomic->getAtomicOpcode());
         EXPECT_EQ(DATA_SIZE<FamilyType>::DATA_SIZE_DWORD, miAtomic->getDataSize());
         EXPECT_FALSE(miAtomic->getReturnDataControl());
         EXPECT_FALSE(miAtomic->getCsStall());
@@ -898,9 +898,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
         auto miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
         ASSERT_NE(nullptr, miAtomic);
         parsedOffset += sizeof(WalkerPartition::MI_ATOMIC<FamilyType>);
-        EXPECT_EQ(preWalkerSyncAddress, UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic));
+        EXPECT_EQ(preWalkerSyncAddress, miAtomic->getMemoryAddress());
         EXPECT_FALSE(miAtomic->getReturnDataControl());
-        EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_MOVE, miAtomic->getAtomicOpcode());
+        EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_MOVE, miAtomic->getAtomicOpcode());
         EXPECT_EQ(DATA_SIZE<FamilyType>::DATA_SIZE_DWORD, miAtomic->getDataSize());
         EXPECT_FALSE(miAtomic->getReturnDataControl());
         EXPECT_FALSE(miAtomic->getCsStall());
@@ -909,9 +909,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
         auto miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
         ASSERT_NE(nullptr, miAtomic);
         parsedOffset += sizeof(WalkerPartition::MI_ATOMIC<FamilyType>);
-        EXPECT_EQ(postWalkerSyncAddress, UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic));
+        EXPECT_EQ(postWalkerSyncAddress, miAtomic->getMemoryAddress());
         EXPECT_FALSE(miAtomic->getReturnDataControl());
-        EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_MOVE, miAtomic->getAtomicOpcode());
+        EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_MOVE, miAtomic->getAtomicOpcode());
         EXPECT_EQ(DATA_SIZE<FamilyType>::DATA_SIZE_DWORD, miAtomic->getDataSize());
         EXPECT_FALSE(miAtomic->getReturnDataControl());
         EXPECT_FALSE(miAtomic->getCsStall());
@@ -920,9 +920,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
         auto miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
         ASSERT_NE(nullptr, miAtomic);
         parsedOffset += sizeof(WalkerPartition::MI_ATOMIC<FamilyType>);
-        EXPECT_EQ(finalSyncAddress, UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic));
+        EXPECT_EQ(finalSyncAddress, miAtomic->getMemoryAddress());
         EXPECT_FALSE(miAtomic->getReturnDataControl());
-        EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomic->getAtomicOpcode());
+        EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC, miAtomic->getAtomicOpcode());
         EXPECT_EQ(DATA_SIZE<FamilyType>::DATA_SIZE_DWORD, miAtomic->getDataSize());
         EXPECT_FALSE(miAtomic->getReturnDataControl());
         EXPECT_FALSE(miAtomic->getCsStall());
@@ -994,9 +994,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
         auto miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
         ASSERT_NE(nullptr, miAtomic);
         parsedOffset += sizeof(WalkerPartition::MI_ATOMIC<FamilyType>);
-        EXPECT_EQ(finalSyncAddress, UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic));
+        EXPECT_EQ(finalSyncAddress, miAtomic->getMemoryAddress());
         EXPECT_FALSE(miAtomic->getReturnDataControl());
-        EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_MOVE, miAtomic->getAtomicOpcode());
+        EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_MOVE, miAtomic->getAtomicOpcode());
         EXPECT_EQ(DATA_SIZE<FamilyType>::DATA_SIZE_DWORD, miAtomic->getDataSize());
         EXPECT_FALSE(miAtomic->getReturnDataControl());
         EXPECT_FALSE(miAtomic->getCsStall());
@@ -1012,9 +1012,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
         auto miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
         ASSERT_NE(nullptr, miAtomic);
         parsedOffset += sizeof(WalkerPartition::MI_ATOMIC<FamilyType>);
-        EXPECT_EQ(postWalkerSyncAddress, UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic));
+        EXPECT_EQ(postWalkerSyncAddress, miAtomic->getMemoryAddress());
         EXPECT_FALSE(miAtomic->getReturnDataControl());
-        EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomic->getAtomicOpcode());
+        EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC, miAtomic->getAtomicOpcode());
         EXPECT_EQ(DATA_SIZE<FamilyType>::DATA_SIZE_DWORD, miAtomic->getDataSize());
         EXPECT_FALSE(miAtomic->getReturnDataControl());
         EXPECT_FALSE(miAtomic->getCsStall());
@@ -1045,9 +1045,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
         auto miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
         ASSERT_NE(nullptr, miAtomic);
         parsedOffset += sizeof(WalkerPartition::MI_ATOMIC<FamilyType>);
-        EXPECT_EQ(finalSyncAddress, UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic));
+        EXPECT_EQ(finalSyncAddress, miAtomic->getMemoryAddress());
         EXPECT_FALSE(miAtomic->getReturnDataControl());
-        EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomic->getAtomicOpcode());
+        EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC, miAtomic->getAtomicOpcode());
         EXPECT_EQ(DATA_SIZE<FamilyType>::DATA_SIZE_DWORD, miAtomic->getDataSize());
         EXPECT_FALSE(miAtomic->getReturnDataControl());
         EXPECT_FALSE(miAtomic->getCsStall());
@@ -1064,9 +1064,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
         auto miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
         ASSERT_NE(nullptr, miAtomic);
         parsedOffset += sizeof(WalkerPartition::MI_ATOMIC<FamilyType>);
-        EXPECT_EQ(preWalkerSyncAddress, UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic));
+        EXPECT_EQ(preWalkerSyncAddress, miAtomic->getMemoryAddress());
         EXPECT_FALSE(miAtomic->getReturnDataControl());
-        EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_MOVE, miAtomic->getAtomicOpcode());
+        EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_MOVE, miAtomic->getAtomicOpcode());
         EXPECT_EQ(DATA_SIZE<FamilyType>::DATA_SIZE_DWORD, miAtomic->getDataSize());
         EXPECT_FALSE(miAtomic->getReturnDataControl());
         EXPECT_FALSE(miAtomic->getCsStall());
@@ -1075,9 +1075,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
         auto miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
         ASSERT_NE(nullptr, miAtomic);
         parsedOffset += sizeof(WalkerPartition::MI_ATOMIC<FamilyType>);
-        EXPECT_EQ(postWalkerSyncAddress, UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic));
+        EXPECT_EQ(postWalkerSyncAddress, miAtomic->getMemoryAddress());
         EXPECT_FALSE(miAtomic->getReturnDataControl());
-        EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_MOVE, miAtomic->getAtomicOpcode());
+        EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_MOVE, miAtomic->getAtomicOpcode());
         EXPECT_EQ(DATA_SIZE<FamilyType>::DATA_SIZE_DWORD, miAtomic->getDataSize());
         EXPECT_FALSE(miAtomic->getReturnDataControl());
         EXPECT_FALSE(miAtomic->getCsStall());
@@ -1086,9 +1086,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
         auto miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
         ASSERT_NE(nullptr, miAtomic);
         parsedOffset += sizeof(WalkerPartition::MI_ATOMIC<FamilyType>);
-        EXPECT_EQ(finalSyncAddress, UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic));
+        EXPECT_EQ(finalSyncAddress, miAtomic->getMemoryAddress());
         EXPECT_FALSE(miAtomic->getReturnDataControl());
-        EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomic->getAtomicOpcode());
+        EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC, miAtomic->getAtomicOpcode());
         EXPECT_EQ(DATA_SIZE<FamilyType>::DATA_SIZE_DWORD, miAtomic->getDataSize());
         EXPECT_FALSE(miAtomic->getReturnDataControl());
         EXPECT_FALSE(miAtomic->getCsStall());
@@ -1173,10 +1173,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenDebugModesForWalkerParti
     auto miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
     ASSERT_NE(nullptr, miAtomic);
     auto miAtomicAddress = gpuVirtualAddress + expectedCommandUsedSize;
-    auto miAtomicProgrammedAddress = UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic);
+    auto miAtomicProgrammedAddress = miAtomic->getMemoryAddress();
     EXPECT_EQ(miAtomicAddress, miAtomicProgrammedAddress);
     EXPECT_TRUE(miAtomic->getReturnDataControl());
-    EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomic->getAtomicOpcode());
+    EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC, miAtomic->getAtomicOpcode());
     parsedOffset += sizeof(WalkerPartition::MI_ATOMIC<FamilyType>);
 
     auto loadRegisterReg = genCmdCast<WalkerPartition::LOAD_REGISTER_REG<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
@@ -1413,10 +1413,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitionIsPreferr
     auto miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
     ASSERT_NE(nullptr, miAtomic);
     auto miAtomicAddress = gpuVirtualAddress + expectedCommandUsedSize;
-    auto miAtomicProgrammedAddress = UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic);
+    auto miAtomicProgrammedAddress = miAtomic->getMemoryAddress();
     EXPECT_EQ(miAtomicAddress, miAtomicProgrammedAddress);
     EXPECT_TRUE(miAtomic->getReturnDataControl());
-    EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomic->getAtomicOpcode());
+    EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC, miAtomic->getAtomicOpcode());
     parsedOffset += sizeof(WalkerPartition::MI_ATOMIC<FamilyType>);
 
     auto loadRegisterReg = genCmdCast<WalkerPartition::LOAD_REGISTER_REG<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
@@ -1454,10 +1454,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitionIsPreferr
     miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
     ASSERT_NE(nullptr, miAtomic);
     auto miAtomicTileAddress = gpuVirtualAddress + expectedCommandUsedSize + sizeof(uint32_t);
-    auto miAtomicTileProgrammedAddress = UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic);
+    auto miAtomicTileProgrammedAddress = miAtomic->getMemoryAddress();
     EXPECT_EQ(miAtomicTileAddress, miAtomicTileProgrammedAddress);
     EXPECT_FALSE(miAtomic->getReturnDataControl());
-    EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomic->getAtomicOpcode());
+    EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC, miAtomic->getAtomicOpcode());
     parsedOffset += sizeof(WalkerPartition::MI_ATOMIC<FamilyType>);
 
     auto miSemaphoreWait = genCmdCast<WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
@@ -1553,10 +1553,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests,
     auto miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
     ASSERT_NE(nullptr, miAtomic);
     auto crossTileSyncAddress = gpuVirtualAddress + expectedOffsetSectionSize + offsetof(BarrierControlSection, crossTileSyncCount);
-    auto miAtomicProgrammedAddress = UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic);
+    auto miAtomicProgrammedAddress = miAtomic->getMemoryAddress();
     EXPECT_EQ(crossTileSyncAddress, miAtomicProgrammedAddress);
     EXPECT_FALSE(miAtomic->getReturnDataControl());
-    EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomic->getAtomicOpcode());
+    EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC, miAtomic->getAtomicOpcode());
     parsedOffset += sizeof(WalkerPartition::MI_ATOMIC<FamilyType>);
 
     auto miSemaphoreWait = genCmdCast<WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
@@ -1657,10 +1657,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests,
     auto miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
     ASSERT_NE(nullptr, miAtomic);
     auto crossTileSyncAddress = gpuVirtualAddress + expectedOffsetSectionSize + offsetof(BarrierControlSection, crossTileSyncCount);
-    auto miAtomicProgrammedAddress = UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic);
+    auto miAtomicProgrammedAddress = miAtomic->getMemoryAddress();
     EXPECT_EQ(crossTileSyncAddress, miAtomicProgrammedAddress);
     EXPECT_FALSE(miAtomic->getReturnDataControl());
-    EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomic->getAtomicOpcode());
+    EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC, miAtomic->getAtomicOpcode());
     parsedOffset += sizeof(WalkerPartition::MI_ATOMIC<FamilyType>);
 
     auto miSemaphoreWait = genCmdCast<WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
@@ -1683,10 +1683,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests,
 
     miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
     ASSERT_NE(nullptr, miAtomic);
-    miAtomicProgrammedAddress = UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic);
+    miAtomicProgrammedAddress = miAtomic->getMemoryAddress();
     EXPECT_EQ(finalSyncTileCountAddress, miAtomicProgrammedAddress);
     EXPECT_FALSE(miAtomic->getReturnDataControl());
-    EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomic->getAtomicOpcode());
+    EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC, miAtomic->getAtomicOpcode());
     parsedOffset += sizeof(WalkerPartition::MI_ATOMIC<FamilyType>);
 
     miSemaphoreWait = genCmdCast<WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
@@ -1704,10 +1704,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests,
 
     miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
     ASSERT_NE(nullptr, miAtomic);
-    miAtomicProgrammedAddress = UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic);
+    miAtomicProgrammedAddress = miAtomic->getMemoryAddress();
     EXPECT_EQ(finalSyncTileCountAddress, miAtomicProgrammedAddress);
     EXPECT_FALSE(miAtomic->getReturnDataControl());
-    EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomic->getAtomicOpcode());
+    EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC, miAtomic->getAtomicOpcode());
     parsedOffset += sizeof(WalkerPartition::MI_ATOMIC<FamilyType>);
 
     miSemaphoreWait = genCmdCast<WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
@@ -1772,10 +1772,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests,
 
     auto finalSyncTileCountFieldAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
     ASSERT_NE(nullptr, finalSyncTileCountFieldAtomic);
-    auto miAtomicProgrammedAddress = UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*finalSyncTileCountFieldAtomic);
+    auto miAtomicProgrammedAddress = finalSyncTileCountFieldAtomic->getMemoryAddress();
     EXPECT_EQ(finalSyncTileCountAddress, miAtomicProgrammedAddress);
     EXPECT_FALSE(finalSyncTileCountFieldAtomic->getReturnDataControl());
-    EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_MOVE, finalSyncTileCountFieldAtomic->getAtomicOpcode());
+    EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_MOVE, finalSyncTileCountFieldAtomic->getAtomicOpcode());
     EXPECT_EQ(MI_ATOMIC<FamilyType>::DWORD_LENGTH::DWORD_LENGTH_INLINE_DATA_1, finalSyncTileCountFieldAtomic->getDwordLength());
     EXPECT_TRUE(finalSyncTileCountFieldAtomic->getInlineData());
     EXPECT_EQ(expectedData, finalSyncTileCountFieldAtomic->getOperand1DataDword0());
@@ -1807,10 +1807,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests,
     auto miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
     ASSERT_NE(nullptr, miAtomic);
     auto crossTileSyncAddress = gpuVirtualAddress + expectedOffsetSectionSize + offsetof(BarrierControlSection, crossTileSyncCount);
-    miAtomicProgrammedAddress = UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic);
+    miAtomicProgrammedAddress = miAtomic->getMemoryAddress();
     EXPECT_EQ(crossTileSyncAddress, miAtomicProgrammedAddress);
     EXPECT_FALSE(miAtomic->getReturnDataControl());
-    EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomic->getAtomicOpcode());
+    EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC, miAtomic->getAtomicOpcode());
     parsedOffset += sizeof(WalkerPartition::MI_ATOMIC<FamilyType>);
 
     auto miSemaphoreWait = genCmdCast<WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
@@ -1833,10 +1833,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests,
 
     miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
     ASSERT_NE(nullptr, miAtomic);
-    miAtomicProgrammedAddress = UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic);
+    miAtomicProgrammedAddress = miAtomic->getMemoryAddress();
     EXPECT_EQ(finalSyncTileCountAddress, miAtomicProgrammedAddress);
     EXPECT_FALSE(miAtomic->getReturnDataControl());
-    EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomic->getAtomicOpcode());
+    EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC, miAtomic->getAtomicOpcode());
     parsedOffset += sizeof(WalkerPartition::MI_ATOMIC<FamilyType>);
 
     miSemaphoreWait = genCmdCast<WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
@@ -1848,10 +1848,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests,
 
     auto crossTileFieldAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
     ASSERT_NE(nullptr, crossTileFieldAtomic);
-    miAtomicProgrammedAddress = UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*crossTileFieldAtomic);
+    miAtomicProgrammedAddress = crossTileFieldAtomic->getMemoryAddress();
     EXPECT_EQ(crossTileSyncAddress, miAtomicProgrammedAddress);
     EXPECT_FALSE(crossTileFieldAtomic->getReturnDataControl());
-    EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_MOVE, crossTileFieldAtomic->getAtomicOpcode());
+    EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_MOVE, crossTileFieldAtomic->getAtomicOpcode());
     EXPECT_EQ(MI_ATOMIC<FamilyType>::DWORD_LENGTH::DWORD_LENGTH_INLINE_DATA_1, crossTileFieldAtomic->getDwordLength());
     EXPECT_TRUE(crossTileFieldAtomic->getInlineData());
     EXPECT_EQ(expectedData, crossTileFieldAtomic->getOperand1DataDword0());
@@ -1859,10 +1859,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests,
 
     miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
     ASSERT_NE(nullptr, miAtomic);
-    miAtomicProgrammedAddress = UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic);
+    miAtomicProgrammedAddress = miAtomic->getMemoryAddress();
     EXPECT_EQ(finalSyncTileCountAddress, miAtomicProgrammedAddress);
     EXPECT_FALSE(miAtomic->getReturnDataControl());
-    EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomic->getAtomicOpcode());
+    EXPECT_EQ(MI_ATOMIC<FamilyType>::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC, miAtomic->getAtomicOpcode());
     parsedOffset += sizeof(WalkerPartition::MI_ATOMIC<FamilyType>);
 
     miSemaphoreWait = genCmdCast<WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));

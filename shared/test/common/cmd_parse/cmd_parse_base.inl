@@ -143,8 +143,8 @@ MI_STORE_REGISTER_MEM *genCmdCast<MI_STORE_REGISTER_MEM *>(void *buffer) {
 template <>
 MI_MATH *genCmdCast<MI_MATH *>(void *buffer) {
     return matchCommandHeader<MI_MATH>(buffer, [](const MI_MATH &header) {
-        return MI_MATH::COMMAND_TYPE_MI_COMMAND == header.DW0.BitField.InstructionType &&
-               MI_MATH::MI_COMMAND_OPCODE_MI_MATH == header.DW0.BitField.InstructionOpcode;
+        return MI_MATH::COMMAND_TYPE_MI_COMMAND == header.TheStructure.Common.CommandType &&
+               MI_MATH::MI_COMMAND_OPCODE_MI_MATH == header.TheStructure.Common.MiCommandOpcode;
     });
 }
 
@@ -275,7 +275,7 @@ size_t CmdParse<T>::getCommandLength(void *cmd) {
     {
         auto pCmd = genCmdCast<MI_MATH *>(cmd);
         if (pCmd) {
-            return pCmd->DW0.BitField.DwordLength + 2;
+            return pCmd->getDwordLength() + 2;
         }
     }
     {

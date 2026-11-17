@@ -4353,20 +4353,20 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSdiInOrderCounterSignalling(uin
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::appendSignalAggregatedEventAtomic(Event &event, bool dualStreamCopyOffload) {
-    using ATOMIC_OPCODES = typename GfxFamily::MI_ATOMIC::ATOMIC_OPCODES;
+    using ATOMIC_OPCODE = typename GfxFamily::MI_ATOMIC::ATOMIC_OPCODE;
     using DATA_SIZE = typename GfxFamily::MI_ATOMIC::DATA_SIZE;
 
     auto partitionCountForAtomic = dualStreamCopyOffload ? 1u : this->partitionCount;
 
     auto incValue = event.getInOrderIncrementValue(partitionCountForAtomic);
 
-    NEO::EncodeAtomic<GfxFamily>::programMiAtomic(*commandContainer.getCommandStream(), event.getInOrderExecEventHelper().getBaseDeviceAddress(), ATOMIC_OPCODES::ATOMIC_8B_ADD,
+    NEO::EncodeAtomic<GfxFamily>::programMiAtomic(*commandContainer.getCommandStream(), event.getInOrderExecEventHelper().getBaseDeviceAddress(), ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_ADD8B,
                                                   DATA_SIZE::DATA_SIZE_QWORD, 0, 0, incValue, 0);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(Event *signalEvent, bool copyOffloadOperation, bool stall, bool textureFlushRequired, bool skipAggregatedEventSignaling) {
-    using ATOMIC_OPCODES = typename GfxFamily::MI_ATOMIC::ATOMIC_OPCODES;
+    using ATOMIC_OPCODE = typename GfxFamily::MI_ATOMIC::ATOMIC_OPCODE;
     using DATA_SIZE = typename GfxFamily::MI_ATOMIC::DATA_SIZE;
 
     UNRECOVERABLE_IF(isNonDualStreamCopyOffloadOperation(copyOffloadOperation));
@@ -4403,7 +4403,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(
         encodeMiFlush(deviceAllocGpuVa + inOrderExecInfo->getAllocationOffset(), signalValue, args);
 
     } else if (this->inOrderAtomicSignalingEnabled) {
-        NEO::EncodeAtomic<GfxFamily>::programMiAtomic(*cmdStream, deviceAllocGpuVa, ATOMIC_OPCODES::ATOMIC_8B_ADD,
+        NEO::EncodeAtomic<GfxFamily>::programMiAtomic(*cmdStream, deviceAllocGpuVa, ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_ADD8B,
                                                       DATA_SIZE::DATA_SIZE_QWORD, 0, 0, getInOrderAtomicSignallingValue(!copyOffloadOperation), 0);
 
     } else {
@@ -5919,7 +5919,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSynchronizedDispatchInitializat
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::appendFullSynchronizedDispatchInit() {
     using MI_ATOMIC = typename GfxFamily::MI_ATOMIC;
-    using ATOMIC_OPCODES = typename MI_ATOMIC::ATOMIC_OPCODES;
+    using ATOMIC_OPCODE = typename MI_ATOMIC::ATOMIC_OPCODE;
     using DATA_SIZE = typename MI_ATOMIC::DATA_SIZE;
 
     constexpr size_t conditionalDataMemBbStartSize = NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::getCmdSizeConditionalDataMemBatchBufferStart(false);
@@ -5945,7 +5945,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendFullSynchronizedDispatchInit() 
         // Try acquire token
         uint64_t acquireTokenCmdBufferVa = cmdStream->getCurrentGpuAddressPosition();
         NEO::EncodeMiPredicate<GfxFamily>::encode(*cmdStream, NEO::MiPredicateType::disable);
-        NEO::EncodeAtomic<GfxFamily>::programMiAtomic(*cmdStream, syncAllocationGpuVa, ATOMIC_OPCODES::ATOMIC_8B_CMP_WR,
+        NEO::EncodeAtomic<GfxFamily>::programMiAtomic(*cmdStream, syncAllocationGpuVa, ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_CMPWR8B,
                                                       DATA_SIZE::DATA_SIZE_QWORD, 1, 1, 0, tokenInitialValue);
 
         // If token acquired, jump to the end
@@ -5990,7 +5990,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSynchronizedDispatchCleanupSect
     }
 
     using MI_ATOMIC = typename GfxFamily::MI_ATOMIC;
-    using ATOMIC_OPCODES = typename MI_ATOMIC::ATOMIC_OPCODES;
+    using ATOMIC_OPCODE = typename MI_ATOMIC::ATOMIC_OPCODE;
     using DATA_SIZE = typename MI_ATOMIC::DATA_SIZE;
 
     auto cmdStream = commandContainer.getCommandStream();
@@ -5998,7 +5998,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSynchronizedDispatchCleanupSect
 
     const uint64_t queueIdToken = static_cast<uint64_t>(this->syncDispatchQueueId + 1) << 32;
 
-    NEO::EncodeAtomic<GfxFamily>::programMiAtomic(*cmdStream, syncAllocationGpuVa, ATOMIC_OPCODES::ATOMIC_8B_DECREMENT, DATA_SIZE::DATA_SIZE_QWORD, 1, 1, 0, 0);
+    NEO::EncodeAtomic<GfxFamily>::programMiAtomic(*cmdStream, syncAllocationGpuVa, ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_DEC8B, DATA_SIZE::DATA_SIZE_QWORD, 1, 1, 0, 0);
 
     if (!isInOrderExecutionEnabled()) {
         NEO::EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(*cmdStream, syncAllocationGpuVa, 0u,
@@ -6006,7 +6006,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSynchronizedDispatchCleanupSect
                                                                    false, false, false, true, this->device->getDeviceInfo().semaphore64bCmdSupport, nullptr);
     }
 
-    NEO::EncodeAtomic<GfxFamily>::programMiAtomic(*cmdStream, syncAllocationGpuVa, ATOMIC_OPCODES::ATOMIC_8B_CMP_WR, DATA_SIZE::DATA_SIZE_QWORD, 1, 1, queueIdToken, 0);
+    NEO::EncodeAtomic<GfxFamily>::programMiAtomic(*cmdStream, syncAllocationGpuVa, ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_CMPWR8B, DATA_SIZE::DATA_SIZE_QWORD, 1, 1, queueIdToken, 0);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

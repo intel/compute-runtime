@@ -1062,12 +1062,12 @@ bool DirectSubmissionRelaxedOrderingTests::verifyStaticSchedulerProgramming(Grap
     }
 
     auto miMathCmd = reinterpret_cast<MI_MATH *>(++lriCmd);
-    if (miMathCmd->DW0.BitField.DwordLength != 9) {
+    if (miMathCmd->getDwordLength() != 9) {
         return false;
     }
 
     if constexpr (FamilyType::isUsingMiMathMocs) {
-        if (miMathCmd->DW0.BitField.MemoryObjectControlState != miMathMocs) {
+        if (miMathCmd->getMemoryObjectControlState() != miMathMocs) {
             return false;
         }
     }
@@ -1167,12 +1167,12 @@ bool DirectSubmissionRelaxedOrderingTests::verifyStaticSchedulerProgramming(Grap
     }
 
     miMathCmd = reinterpret_cast<MI_MATH *>(++lriCmd);
-    if (miMathCmd->DW0.BitField.DwordLength != 13) {
+    if (miMathCmd->getDwordLength() != 13) {
         return false;
     }
 
     if constexpr (FamilyType::isUsingMiMathMocs) {
-        if (miMathCmd->DW0.BitField.MemoryObjectControlState != miMathMocs) {
+        if (miMathCmd->getMemoryObjectControlState() != miMathMocs) {
             return false;
         }
     }
@@ -1294,12 +1294,12 @@ bool DirectSubmissionRelaxedOrderingTests::verifyStaticSchedulerProgramming(Grap
     }
 
     miMathCmd = reinterpret_cast<MI_MATH *>(++lriCmd);
-    if (miMathCmd->DW0.BitField.DwordLength != 3) {
+    if (miMathCmd->getDwordLength() != 3) {
         return false;
     }
 
     if constexpr (FamilyType::isUsingMiMathMocs) {
-        if (miMathCmd->DW0.BitField.MemoryObjectControlState != miMathMocs) {
+        if (miMathCmd->getMemoryObjectControlState() != miMathMocs) {
             return false;
         }
     }
@@ -1691,10 +1691,10 @@ HWTEST_F(DirectSubmissionRelaxedOrderingTests, whenDispatchingWorkThenDispatchTa
     EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, RegisterOffsets::csGprR8 + 4, 0));
 
     auto miMathCmd = reinterpret_cast<MI_MATH *>(++lriCmd);
-    EXPECT_EQ(8u, miMathCmd->DW0.BitField.DwordLength);
+    EXPECT_EQ(8u, miMathCmd->getDwordLength());
 
     if constexpr (FamilyType::isUsingMiMathMocs) {
-        EXPECT_EQ(miMathCmd->DW0.BitField.MemoryObjectControlState, pDevice->getRootDeviceEnvironment().getGmmHelper()->getL3EnabledMOCS());
+        EXPECT_EQ(miMathCmd->getMemoryObjectControlState(), pDevice->getRootDeviceEnvironment().getGmmHelper()->getL3EnabledMOCS());
     }
 
     auto miAluCmd = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(++miMathCmd);

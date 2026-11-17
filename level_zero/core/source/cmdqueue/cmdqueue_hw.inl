@@ -1245,10 +1245,10 @@ size_t CommandQueueHw<gfxCoreFamily>::estimatePatchPreambleBarrierSize(const Cou
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::dispatchPatchPreambleBarrierSignalAndWait(const PatchPreambleBarrier &barrier, uint64_t waitValue, NEO::LinearStream &commandStream) {
-    using ATOMIC_OPCODES = typename GfxFamily::MI_ATOMIC::ATOMIC_OPCODES;
+    using ATOMIC_OPCODE = typename GfxFamily::MI_ATOMIC::ATOMIC_OPCODE;
     using DATA_SIZE = typename GfxFamily::MI_ATOMIC::DATA_SIZE;
 
-    NEO::EncodeAtomic<GfxFamily>::programMiAtomic(commandStream, barrier.counterGpuAddress, ATOMIC_OPCODES::ATOMIC_8B_INCREMENT,
+    NEO::EncodeAtomic<GfxFamily>::programMiAtomic(commandStream, barrier.counterGpuAddress, ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC8B,
                                                   DATA_SIZE::DATA_SIZE_QWORD, 0, 0, 0, 0);
     dispatchSingleSynchronizationCommand(commandStream, barrier.counterGpuAddress, waitValue, 1, 0, barrier.counterAllocation);
 }

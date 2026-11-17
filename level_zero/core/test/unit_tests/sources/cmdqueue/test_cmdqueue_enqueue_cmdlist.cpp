@@ -1965,8 +1965,8 @@ void testPatchPreambleBarrierDispatch(L0::Device *device, NEO::Device *neoDevice
     ASSERT_EQ(2u, atomicCmds.size());
     for (auto &atomicIt : atomicCmds) {
         auto atomic = genCmdCast<MI_ATOMIC *>(*atomicIt);
-        EXPECT_EQ(barrierGpuAddress, NEO::UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*atomic));
-        EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_8B_INCREMENT, atomic->getAtomicOpcode());
+        EXPECT_EQ(barrierGpuAddress, atomic->getMemoryAddress());
+        EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC8B, atomic->getAtomicOpcode());
         EXPECT_EQ(MI_ATOMIC::DATA_SIZE::DATA_SIZE_QWORD, atomic->getDataSize());
     }
 

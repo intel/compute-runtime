@@ -43,13 +43,13 @@ HWTEST_F(MiAtomicAubTest, WhenDispatchingAtomicMoveOperationThenExpectCorrectEnd
 
     uint32_t operation1dword0 = 0x10;
     NEO::EncodeAtomic<FamilyType>::programMiAtomic(*this->taskStream, expectedGpuAddressDwordOp1,
-                                                   MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_MOVE,
+                                                   MI_ATOMIC::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_MOVE,
                                                    MI_ATOMIC::DATA_SIZE::DATA_SIZE_DWORD,
                                                    0, 0, operation1dword0, 0u);
 
     uint32_t operation2dword0 = 0x22;
     NEO::EncodeAtomic<FamilyType>::programMiAtomic(*this->taskStream, expectedGpuAddressDwordOp2,
-                                                   MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_MOVE,
+                                                   MI_ATOMIC::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_MOVE,
                                                    MI_ATOMIC::DATA_SIZE::DATA_SIZE_DWORD,
                                                    0, 0, operation2dword0, 0u);
 
@@ -57,7 +57,7 @@ HWTEST_F(MiAtomicAubTest, WhenDispatchingAtomicMoveOperationThenExpectCorrectEnd
     uint32_t operation3dword1 = 0x1F;
     uint64_t operation3qword = (static_cast<uint64_t>(operation3dword1) << 32) | operation3dword0;
     NEO::EncodeAtomic<FamilyType>::programMiAtomic(*this->taskStream, expectedGpuAddressQwordOp3,
-                                                   MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_8B_MOVE,
+                                                   MI_ATOMIC::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_MOVE8B,
                                                    MI_ATOMIC::DATA_SIZE::DATA_SIZE_QWORD,
                                                    0, 0, operation3qword, 0);
 
@@ -77,13 +77,13 @@ HWTEST2_F(MiAtomicAubTest, GivenSystemMemoryWhenDispatchingAtomicMove4BytesOpera
 
     uint32_t operation1dword0 = 0x15;
     NEO::EncodeAtomic<FamilyType>::programMiAtomic(*this->taskStream, expectedGpuAddressDwordOp1,
-                                                   MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_MOVE,
+                                                   MI_ATOMIC::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_MOVE,
                                                    MI_ATOMIC::DATA_SIZE::DATA_SIZE_DWORD,
                                                    0, 0, operation1dword0, 0u);
 
     uint32_t operation2dword0 = 0xFF;
     NEO::EncodeAtomic<FamilyType>::programMiAtomic(*this->taskStream, expectedGpuAddressDwordOp2,
-                                                   MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_MOVE,
+                                                   MI_ATOMIC::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_MOVE,
                                                    MI_ATOMIC::DATA_SIZE::DATA_SIZE_DWORD,
                                                    0, 0, operation2dword0, 0u);
 

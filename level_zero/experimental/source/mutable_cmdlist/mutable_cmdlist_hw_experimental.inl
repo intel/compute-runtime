@@ -84,12 +84,9 @@ ze_result_t MutableCommandListCoreFamily<gfxCoreFamily>::appendMIMath(void *aluA
 
     // Add instruction MI_MATH with 4 MI_MATH_ALU_INST_INLINE operands
     auto pCmd3 = reinterpret_cast<uint32_t *>(this->commandContainer.getCommandStream()->getSpace(sizeof(MI_MATH) + aluCount * 4 * sizeof(MI_MATH_ALU_INST_INLINE)));
-    MI_MATH miMath;
-    miMath.DW0.Value = 0x0;
-    miMath.DW0.BitField.InstructionType = MI_MATH::COMMAND_TYPE_MI_COMMAND;
-    miMath.DW0.BitField.InstructionOpcode = MI_MATH::MI_COMMAND_OPCODE_MI_MATH;
+    MI_MATH miMath = MI_MATH::sInit();
     // 0x3 - 5 Dwords length cmd (-2): 1 for MI_MATH, 4 for MI_MATH_ALU_INST_INLINE
-    miMath.DW0.BitField.DwordLength = static_cast<uint32_t>(aluCount * 4 - 1);
+    miMath.setDwordLength(static_cast<uint32_t>(aluCount * 4 - 1));
     *reinterpret_cast<MI_MATH *>(pCmd3) = miMath;
     pCmd3++;
     MI_MATH_ALU_INST_INLINE *pAluParam = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(pCmd3);

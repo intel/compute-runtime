@@ -163,7 +163,7 @@ struct PauseOnBlitCopyTests : CopyOffloadInOrderFixture {
             auto semaphore = genCmdCast<MI_SEMAPHORE_WAIT *>(*it);
             if (semaphore && UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(semaphore) == pauseAddress) {
                 EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION_SAD_EQUAL_SDD, semaphore->getCompareOperation());
-                EXPECT_EQ(MI_SEMAPHORE_WAIT::WAIT_MODE_POLLING_MODE, semaphore->getWaitMode());
+                EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::isSemaphoreWaitPollingMode(semaphore));
                 if (UnitTestHelper<FamilyType>::getSemaphoreWaitData(semaphore) == static_cast<uint32_t>(DebugPauseState::hasUserStartConfirmation)) {
                     phases.push_back(Phase::startWait);
                 } else {

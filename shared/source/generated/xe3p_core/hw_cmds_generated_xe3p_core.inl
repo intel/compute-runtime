@@ -202,22 +202,72 @@ typedef struct tagMEM_COPY {
 STATIC_ASSERT(40 == sizeof(MEM_COPY));
 
 typedef struct tagMI_MATH {
-    union _DW0 {
-        struct _BitField {
+    union tagTheStructure {
+        struct tagCommon {
+            // DWORD 0
             uint32_t DwordLength : BITFIELD_RANGE(0, 7);
-            uint32_t MemoryObjectControlState : BITFIELD_RANGE(8, 14);
-            uint32_t Reserved : BITFIELD_RANGE(15, 22);
-            uint32_t InstructionOpcode : BITFIELD_RANGE(23, 28);
-            uint32_t InstructionType : BITFIELD_RANGE(29, 31);
-        } BitField;
-        uint32_t Value;
-    } DW0;
+            uint32_t EncryptedData : BITFIELD_RANGE(8, 8);
+            uint32_t IndexToMocsTables : BITFIELD_RANGE(9, 14);
+            uint32_t PredicationEnable : BITFIELD_RANGE(15, 15);
+            uint32_t Reserved_16 : BITFIELD_RANGE(16, 22);
+            uint32_t MiCommandOpcode : BITFIELD_RANGE(23, 28);
+            uint32_t CommandType : BITFIELD_RANGE(29, 31);
+        } Common;
+        uint32_t RawData[1];
+    } TheStructure;
     typedef enum tagMI_COMMAND_OPCODE {
-        MI_COMMAND_OPCODE_MI_MATH = 0x1A,
+        MI_COMMAND_OPCODE_MI_MATH = 0x1a,
     } MI_COMMAND_OPCODE;
     typedef enum tagCOMMAND_TYPE {
         COMMAND_TYPE_MI_COMMAND = 0x0,
     } COMMAND_TYPE;
+    inline void init() {
+        memset(&TheStructure, 0, sizeof(TheStructure));
+        TheStructure.Common.MiCommandOpcode = MI_COMMAND_OPCODE_MI_MATH;
+    }
+    static tagMI_MATH sInit() {
+        MI_MATH state;
+        state.init();
+        return state;
+    }
+    inline uint32_t &getRawData(const uint32_t index) {
+        UNRECOVERABLE_IF(index >= 1);
+        return TheStructure.RawData[index];
+    }
+    inline void setDwordLength(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0xffu);
+        TheStructure.Common.DwordLength = value;
+    }
+    inline uint32_t getDwordLength() const {
+        return TheStructure.Common.DwordLength;
+    }
+    // Manual generator override: MOCS includes the encryption bit.
+    inline void setMemoryObjectControlState(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x7fu);
+        TheStructure.Common.IndexToMocsTables = value >> 1;
+        TheStructure.Common.EncryptedData = value & 1;
+    }
+    inline uint32_t getMemoryObjectControlState() const {
+        return (TheStructure.Common.IndexToMocsTables << 1) | TheStructure.Common.EncryptedData;
+    }
+    inline void setPredicationEnable(const bool value) {
+        TheStructure.Common.PredicationEnable = value;
+    }
+    inline bool getPredicationEnable() const {
+        return TheStructure.Common.PredicationEnable;
+    }
+    inline void setMiCommandOpcode(const MI_COMMAND_OPCODE value) {
+        TheStructure.Common.MiCommandOpcode = value;
+    }
+    inline MI_COMMAND_OPCODE getMiCommandOpcode() const {
+        return static_cast<MI_COMMAND_OPCODE>(TheStructure.Common.MiCommandOpcode);
+    }
+    inline void setCommandType(const COMMAND_TYPE value) {
+        TheStructure.Common.CommandType = value;
+    }
+    inline COMMAND_TYPE getCommandType() const {
+        return static_cast<COMMAND_TYPE>(TheStructure.Common.CommandType);
+    }
 } MI_MATH;
 
 typedef struct tagMI_MATH_ALU_INST_INLINE {
@@ -596,7 +646,7 @@ typedef struct tagMI_ATOMIC {
             uint32_t MemoryType : BITFIELD_RANGE(22, 22);
             uint32_t MiCommandOpcode : BITFIELD_RANGE(23, 28);
             uint32_t CommandType : BITFIELD_RANGE(29, 31);
-            // DWORD 1
+            // DWORD 1-2
             uint64_t WorkloadPartitionIdOffsetEnable : BITFIELD_RANGE(0, 0);
             uint64_t Reserved_33 : BITFIELD_RANGE(1, 1);
             uint64_t MemoryAddress : BITFIELD_RANGE(2, 63);
@@ -623,6 +673,39 @@ typedef struct tagMI_ATOMIC {
         DWORD_LENGTH_INLINE_DATA_0 = 0x1,
         DWORD_LENGTH_INLINE_DATA_1 = 0x9,
     } DWORD_LENGTH;
+    typedef enum tagATOMIC_OPCODE {
+        ATOMIC_OPCODE_ATOMIC_AND = 0x1,
+        ATOMIC_OPCODE_ATOMIC_OR = 0x2,
+        ATOMIC_OPCODE_ATOMIC_XOR = 0x3,
+        ATOMIC_OPCODE_ATOMIC_MOVE = 0x4,
+        ATOMIC_OPCODE_ATOMIC_INC = 0x5,
+        ATOMIC_OPCODE_ATOMIC_DEC = 0x6,
+        ATOMIC_OPCODE_ATOMIC_ADD = 0x7,
+        ATOMIC_OPCODE_ATOMIC_SUB = 0x8,
+        ATOMIC_OPCODE_ATOMIC_IMAX = 0xa,
+        ATOMIC_OPCODE_ATOMIC_IMIN = 0xb,
+        ATOMIC_OPCODE_ATOMIC_UMAX = 0xc,
+        ATOMIC_OPCODE_ATOMIC_UMIN = 0xd,
+        ATOMIC_OPCODE_ATOMIC_CMPWR = 0xe,
+        ATOMIC_OPCODE_ATOMIC_AND8B = 0x21,
+        ATOMIC_OPCODE_ATOMIC_OR8B = 0x22,
+        ATOMIC_OPCODE_ATOMIC_XOR8B = 0x23,
+        ATOMIC_OPCODE_ATOMIC_MOVE8B = 0x24,
+        ATOMIC_OPCODE_ATOMIC_INC8B = 0x25,
+        ATOMIC_OPCODE_ATOMIC_DEC8B = 0x26,
+        ATOMIC_OPCODE_ATOMIC_ADD8B = 0x27,
+        ATOMIC_OPCODE_ATOMIC_SUB8B = 0x28,
+        ATOMIC_OPCODE_ATOMIC_IMAX8B = 0x2a,
+        ATOMIC_OPCODE_ATOMIC_IMIN8B = 0x2b,
+        ATOMIC_OPCODE_ATOMIC_UMAX8B = 0x2c,
+        ATOMIC_OPCODE_ATOMIC_UMIN8B = 0x2d,
+        ATOMIC_OPCODE_ATOMIC_CMPWR8B = 0x2e,
+        ATOMIC_OPCODE_ATOMIC_FADD = 0x87,
+        ATOMIC_OPCODE_ATOMIC_FSUB = 0x88,
+        ATOMIC_OPCODE_ATOMIC_MAX_FLOAT32 = 0x8a,
+        ATOMIC_OPCODE_ATOMIC_MIN_FLOAT32 = 0x8b,
+        ATOMIC_OPCODE_ATOMIC_CMPWR_FLOAT32 = 0x8e,
+    } ATOMIC_OPCODE;
     typedef enum tagDATA_SIZE {
         DATA_SIZE_DWORD = 0x0,
         DATA_SIZE_QWORD = 0x1,
@@ -642,24 +725,14 @@ typedef struct tagMI_ATOMIC {
     typedef enum tagCOMMAND_TYPE {
         COMMAND_TYPE_MI_COMMAND = 0x0,
     } COMMAND_TYPE;
-    typedef enum tagATOMIC_OPCODES { // patched
-        ATOMIC_4B_MOVE = 0x4,
-        ATOMIC_4B_INCREMENT = 0x5,
-        ATOMIC_4B_DECREMENT = 0x6,
-        ATOMIC_8B_MOVE = 0x24,
-        ATOMIC_8B_INCREMENT = 0x25,
-        ATOMIC_8B_DECREMENT = 0x26,
-        ATOMIC_8B_ADD = 0x27,
-        ATOMIC_8B_CMP_WR = 0x2E,
-    } ATOMIC_OPCODES;
+    typedef enum tagMEMORYADDRESS {
+        MEMORYADDRESS_BIT_SHIFT = 0x2,
+        MEMORYADDRESS_ALIGN_SIZE = 0x4,
+    } MEMORYADDRESS;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_INLINE_DATA_0;
-        TheStructure.Common.DataSize = DATA_SIZE_DWORD;
-        TheStructure.Common.PostSyncOperation = POST_SYNC_OPERATION_NO_POST_SYNC_OPERATION;
-        TheStructure.Common.MemoryType = MEMORY_TYPE_PER_PROCESS_GRAPHICS_ADDRESS;
         TheStructure.Common.MiCommandOpcode = MI_COMMAND_OPCODE_MI_ATOMIC;
-        TheStructure.Common.CommandType = COMMAND_TYPE_MI_COMMAND;
     }
     static tagMI_ATOMIC sInit() {
         MI_ATOMIC state;
@@ -677,7 +750,7 @@ typedef struct tagMI_ATOMIC {
         return static_cast<DWORD_LENGTH>(TheStructure.Common.DwordLength);
     }
     inline void setAtomicOpcode(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0xff);
+        UNRECOVERABLE_IF(value > 0xffu);
         TheStructure.Common.AtomicOpcode = value;
     }
     inline uint32_t getAtomicOpcode() const {
@@ -719,18 +792,25 @@ typedef struct tagMI_ATOMIC {
     inline MEMORY_TYPE getMemoryType() const {
         return static_cast<MEMORY_TYPE>(TheStructure.Common.MemoryType);
     }
+    inline void setMiCommandOpcode(const MI_COMMAND_OPCODE value) {
+        TheStructure.Common.MiCommandOpcode = value;
+    }
+    inline MI_COMMAND_OPCODE getMiCommandOpcode() const {
+        return static_cast<MI_COMMAND_OPCODE>(TheStructure.Common.MiCommandOpcode);
+    }
+    inline void setCommandType(const COMMAND_TYPE value) {
+        TheStructure.Common.CommandType = value;
+    }
+    inline COMMAND_TYPE getCommandType() const {
+        return static_cast<COMMAND_TYPE>(TheStructure.Common.CommandType);
+    }
     inline void setWorkloadPartitionIdOffsetEnable(const bool value) {
         TheStructure.Common.WorkloadPartitionIdOffsetEnable = value;
     }
     inline bool getWorkloadPartitionIdOffsetEnable() const {
         return TheStructure.Common.WorkloadPartitionIdOffsetEnable;
     }
-    typedef enum tagMEMORYADDRESS {
-        MEMORYADDRESS_BIT_SHIFT = 0x2,
-        MEMORYADDRESS_ALIGN_SIZE = 0x4,
-    } MEMORYADDRESS;
     inline void setMemoryAddress(const uint64_t value) {
-        UNRECOVERABLE_IF(value > 0xffffffffffffffffL);
         TheStructure.Common.MemoryAddress = value >> MEMORYADDRESS_BIT_SHIFT;
     }
     inline uint64_t getMemoryAddress() const {
@@ -6154,17 +6234,17 @@ typedef struct tagMI_SEMAPHORE_WAIT {
             uint32_t CommandType : BITFIELD_RANGE(29, 31);
             // DWORD 1
             uint32_t SemaphoreDataDword;
-            // DWORD 2
+            // DWORD 2-3
             uint64_t Reserved_64 : BITFIELD_RANGE(0, 1);
             uint64_t SemaphoreAddress : BITFIELD_RANGE(2, 63);
             // DWORD 4
             uint32_t Reserved_128 : BITFIELD_RANGE(0, 1);
             uint32_t WaitTokenNumber : BITFIELD_RANGE(2, 9);
             uint32_t Reserved_138 : BITFIELD_RANGE(10, 31);
-            // DWORD 5, 6
-            uint64_t Padding : BITFIELD_RANGE(0, 63); // patched: 2 bytes of MI_NOOP padding to match MI_SEMAPHORE_WAIT_64 in size
+            // DWORD 5-6
+            uint64_t Padding : BITFIELD_RANGE(0, 63); // MI_NOOPs that pad the command to the MI_SEMAPHORE_WAIT_64 size
         } Common;
-        uint32_t RawData[7]; // patched
+        uint32_t RawData[7];
     } TheStructure;
     typedef enum tagDWORD_LENGTH {
         DWORD_LENGTH_EXCLUDES_DWORD_0_1 = 0x3,
@@ -6208,7 +6288,7 @@ typedef struct tagMI_SEMAPHORE_WAIT {
         TheStructure.Common.QueueSwitchMode = QUEUE_SWITCH_MODE_SWITCH_AFTER_COMMAND_IS_PARSED;
         TheStructure.Common.CompareOperation = COMPARE_OPERATION_SAD_GREATER_THAN_SDD;
         TheStructure.Common.WaitMode = WAIT_MODE_SIGNAL_MODE;
-        TheStructure.Common.RegisterPollMode = REGISTER_POLL_MODE_MEMORY_POLL; // patched
+        TheStructure.Common.RegisterPollMode = REGISTER_POLL_MODE_MEMORY_POLL;
         TheStructure.Common.MemoryType = MEMORY_TYPE_PER_PROCESS_GRAPHICS_ADDRESS;
         TheStructure.Common.MiCommandOpcode = MI_COMMAND_OPCODE_MI_SEMAPHORE_WAIT;
         TheStructure.Common.CommandType = COMMAND_TYPE_MI_COMMAND;
@@ -6219,7 +6299,7 @@ typedef struct tagMI_SEMAPHORE_WAIT {
         return state;
     }
     inline uint32_t &getRawData(const uint32_t index) {
-        UNRECOVERABLE_IF(index >= 5);
+        UNRECOVERABLE_IF(index >= 7);
         return TheStructure.RawData[index];
     }
     inline void setQueueSwitchMode(const QUEUE_SWITCH_MODE value) {
@@ -6280,11 +6360,11 @@ typedef struct tagMI_SEMAPHORE_WAIT {
         SEMAPHOREADDRESS_BIT_SHIFT = 0x2,
         SEMAPHOREADDRESS_ALIGN_SIZE = 0x4,
     } SEMAPHOREADDRESS;
-    inline void setSemaphoreGraphicsAddress(const uint64_t value) {                    // patched
-        UNRECOVERABLE_IF((value >> SEMAPHOREADDRESS_BIT_SHIFT) > 0xffffffffffffffffL); // patched
+    inline void setSemaphoreGraphicsAddress(const uint64_t value) {
+        UNRECOVERABLE_IF((value >> SEMAPHOREADDRESS_BIT_SHIFT) > 0xffffffffffffffffL);
         TheStructure.Common.SemaphoreAddress = value >> SEMAPHOREADDRESS_BIT_SHIFT;
     }
-    inline uint64_t getSemaphoreGraphicsAddress() const { // patched
+    inline uint64_t getSemaphoreGraphicsAddress() const {
         return TheStructure.Common.SemaphoreAddress << SEMAPHOREADDRESS_BIT_SHIFT;
     }
     inline void setWaitTokenNumber(const uint32_t value) {
@@ -6315,12 +6395,12 @@ typedef struct tagMI_SEMAPHORE_WAIT_64 {
             uint32_t MemoryType : BITFIELD_RANGE(22, 22);
             uint32_t MiCommandOpcode : BITFIELD_RANGE(23, 28);
             uint32_t CommandType : BITFIELD_RANGE(29, 31);
-            // DWORD 1
+            // DWORD 1-2
             uint64_t SemaphoreDataDword;
-            // DWORD 3
+            // DWORD 3-4
             uint64_t Reserved_96 : BITFIELD_RANGE(0, 1);
             uint64_t SemaphoreAddress : BITFIELD_RANGE(2, 63);
-            // DWORD 5
+            // DWORD 5-6
             uint64_t SemaphoreToken;
         } Common;
         uint32_t RawData[7];
@@ -6340,10 +6420,6 @@ typedef struct tagMI_SEMAPHORE_WAIT_64 {
         COMPARE_OPERATION_SAD_EQUAL_SDD = 0x4,
         COMPARE_OPERATION_SAD_NOT_EQUAL_SDD = 0x5,
     } COMPARE_OPERATION;
-    typedef enum tagWAIT_MODE { // patched
-        WAIT_MODE_SIGNAL_MODE = 0x0,
-        WAIT_MODE_POLLING_MODE = 0x1,
-    } WAIT_MODE;
     typedef enum tagREGISTER_POLL_MODE {
         REGISTER_POLL_MODE_MEMORY_POLL = 0x0,
         REGISTER_POLL_MODE_REGISTER_POLL = 0x1,
@@ -6357,21 +6433,19 @@ typedef struct tagMI_SEMAPHORE_WAIT_64 {
         MEMORY_TYPE_GLOBAL_GRAPHICS_ADDRESS = 0x1,
     } MEMORY_TYPE;
     typedef enum tagMI_COMMAND_OPCODE {
-        MI_COMMAND_OPCODE_MI_SEMAPHORE_WAIT = 0x3b, // patched (name only): for compatibility between MI_SEMAPHORE_WAIT and MI_SEMAPHORE_WAIT_64
+        MI_COMMAND_OPCODE_MI_SEMAPHORE_WAIT = 0x3b,
     } MI_COMMAND_OPCODE;
     typedef enum tagCOMMAND_TYPE {
         COMMAND_TYPE_MI_COMMAND = 0x0,
     } COMMAND_TYPE;
+    typedef enum tagSEMAPHOREADDRESS {
+        SEMAPHOREADDRESS_BIT_SHIFT = 0x2,
+        SEMAPHOREADDRESS_ALIGN_SIZE = 0x4,
+    } SEMAPHOREADDRESS;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_EXCLUDES_DWORD_0_1;
-        TheStructure.Common.QueueSwitchMode = QUEUE_SWITCH_MODE_SWITCH_AFTER_COMMAND_IS_PARSED;
-        TheStructure.Common.CompareOperation = COMPARE_OPERATION_SAD_GREATER_THAN_SDD;
-        TheStructure.Common.RegisterPollMode = REGISTER_POLL_MODE_MEMORY_POLL; // patched
-        TheStructure.Common._64BCompareDisable = _64B_COMPARE_DISABLE_64B_COMPARE;
-        TheStructure.Common.MemoryType = MEMORY_TYPE_PER_PROCESS_GRAPHICS_ADDRESS;
-        TheStructure.Common.MiCommandOpcode = MI_COMMAND_OPCODE_MI_SEMAPHORE_WAIT; // patched
-        TheStructure.Common.CommandType = COMMAND_TYPE_MI_COMMAND;
+        TheStructure.Common.MiCommandOpcode = MI_COMMAND_OPCODE_MI_SEMAPHORE_WAIT;
     }
     static tagMI_SEMAPHORE_WAIT_64 sInit() {
         MI_SEMAPHORE_WAIT_64 state;
@@ -6383,7 +6457,7 @@ typedef struct tagMI_SEMAPHORE_WAIT_64 {
         return TheStructure.RawData[index];
     }
     inline void setSwTokenInfo(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x7);
+        UNRECOVERABLE_IF(value > 0x7u);
         TheStructure.Common.SwTokenInfo = value;
     }
     inline uint32_t getSwTokenInfo() const {
@@ -6449,20 +6523,28 @@ typedef struct tagMI_SEMAPHORE_WAIT_64 {
     inline MEMORY_TYPE getMemoryType() const {
         return static_cast<MEMORY_TYPE>(TheStructure.Common.MemoryType);
     }
+    inline void setMiCommandOpcode(const MI_COMMAND_OPCODE value) {
+        TheStructure.Common.MiCommandOpcode = value;
+    }
+    inline MI_COMMAND_OPCODE getMiCommandOpcode() const {
+        return static_cast<MI_COMMAND_OPCODE>(TheStructure.Common.MiCommandOpcode);
+    }
+    inline void setCommandType(const COMMAND_TYPE value) {
+        TheStructure.Common.CommandType = value;
+    }
+    inline COMMAND_TYPE getCommandType() const {
+        return static_cast<COMMAND_TYPE>(TheStructure.Common.CommandType);
+    }
     inline void setSemaphoreDataDword(const uint64_t value) {
         TheStructure.Common.SemaphoreDataDword = value;
     }
     inline uint64_t getSemaphoreDataDword() const {
         return TheStructure.Common.SemaphoreDataDword;
     }
-    typedef enum tagSEMAPHOREADDRESS {
-        SEMAPHOREADDRESS_BIT_SHIFT = 0x2,
-        SEMAPHOREADDRESS_ALIGN_SIZE = 0x4,
-    } SEMAPHOREADDRESS;
-    inline void setSemaphoreGraphicsAddress(const uint64_t value) { // patched
+    inline void setSemaphoreGraphicsAddress(const uint64_t value) {
         TheStructure.Common.SemaphoreAddress = value >> SEMAPHOREADDRESS_BIT_SHIFT;
     }
-    inline uint64_t getSemaphoreGraphicsAddress() const { // patched
+    inline uint64_t getSemaphoreGraphicsAddress() const {
         return TheStructure.Common.SemaphoreAddress << SEMAPHOREADDRESS_BIT_SHIFT;
     }
     inline void setSemaphoreToken(const uint64_t value) {
@@ -6471,10 +6553,6 @@ typedef struct tagMI_SEMAPHORE_WAIT_64 {
     inline uint64_t getSemaphoreToken() const {
         return TheStructure.Common.SemaphoreToken;
     }
-    inline WAIT_MODE getWaitMode() const {
-        return WAIT_MODE_POLLING_MODE; // patched - 64-bit semaphore always pool
-    }
-
 } MI_SEMAPHORE_WAIT_64;
 STATIC_ASSERT(28 == sizeof(MI_SEMAPHORE_WAIT_64));
 
@@ -7103,17 +7181,14 @@ typedef struct tagMI_MEM_FENCE {
         MI_COMMAND_SUB_OPCODE_MI_MEM_FENCE = 0x0,
     } MI_COMMAND_SUB_OPCODE;
     typedef enum tagMI_COMMAND_OPCODE {
-        MI_COMMAND_OPCODE_MI_EXTENDED = 0x9,
+        MI_COMMAND_OPCODE_MI_EXTENDED_1DW = 0x9,
     } MI_COMMAND_OPCODE;
     typedef enum tagCOMMAND_TYPE {
         COMMAND_TYPE_MI_COMMAND = 0x0,
     } COMMAND_TYPE;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
-        TheStructure.Common.FenceType = FENCE_TYPE_RELEASE_FENCE;
-        TheStructure.Common.MiCommandSubOpcode = MI_COMMAND_SUB_OPCODE_MI_MEM_FENCE;
-        TheStructure.Common.MiCommandOpcode = MI_COMMAND_OPCODE_MI_EXTENDED;
-        TheStructure.Common.CommandType = COMMAND_TYPE_MI_COMMAND;
+        TheStructure.Common.MiCommandOpcode = MI_COMMAND_OPCODE_MI_EXTENDED_1DW;
     }
     static tagMI_MEM_FENCE sInit() {
         MI_MEM_FENCE state;
@@ -7135,6 +7210,18 @@ typedef struct tagMI_MEM_FENCE {
     }
     inline MI_COMMAND_SUB_OPCODE getMiCommandSubOpcode() const {
         return static_cast<MI_COMMAND_SUB_OPCODE>(TheStructure.Common.MiCommandSubOpcode);
+    }
+    inline void setMiCommandOpcode(const MI_COMMAND_OPCODE value) {
+        TheStructure.Common.MiCommandOpcode = value;
+    }
+    inline MI_COMMAND_OPCODE getMiCommandOpcode() const {
+        return static_cast<MI_COMMAND_OPCODE>(TheStructure.Common.MiCommandOpcode);
+    }
+    inline void setCommandType(const COMMAND_TYPE value) {
+        TheStructure.Common.CommandType = value;
+    }
+    inline COMMAND_TYPE getCommandType() const {
+        return static_cast<COMMAND_TYPE>(TheStructure.Common.CommandType);
     }
 } MI_MEM_FENCE;
 STATIC_ASSERT(4 == sizeof(MI_MEM_FENCE));

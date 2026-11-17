@@ -1134,7 +1134,7 @@ HWTEST_F(CommandListAppendLaunchKernelSWTagCounters, givenExtendedSWTagsWhenAppe
             EXPECT_FALSE(isR12(lrm->getRegisterAddress()));
         } else if (auto math = genCmdCast<MI_MATH *>(cmd)) {
             auto aluInst = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(ptrOffset(cmd, sizeof(uint32_t)));
-            for (uint32_t i = 0; i <= math->DW0.BitField.DwordLength; i++) {
+            for (uint32_t i = 0; i <= math->getDwordLength(); i++) {
                 if (aluInst[i].DW0.BitField.ALUOpcode == static_cast<uint32_t>(AluRegisters::opcodeStore)) {
                     EXPECT_NE(static_cast<uint32_t>(AluRegisters::gpr12), aluInst[i].DW0.BitField.Operand1);
                 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -90,7 +90,7 @@ bool verifyIncrementOrDecrement(void *cmds, AluRegisters aluRegister, bool incre
     }
 
     auto miMathCmd = reinterpret_cast<MI_MATH *>(++lriCmd);
-    if (miMathCmd->DW0.BitField.DwordLength != 3) {
+    if (miMathCmd->getDwordLength() != 3) {
         return false;
     }
 
@@ -158,7 +158,7 @@ bool verifyBaseConditionalBbStart(void *cmd, CompareOperation compareOperation, 
     using MI_MATH = typename FamilyType::MI_MATH;
 
     auto miMathCmd = reinterpret_cast<MI_MATH *>(cmd);
-    if (miMathCmd->DW0.BitField.DwordLength != 3) {
+    if (miMathCmd->getDwordLength() != 3) {
         return false;
     }
 

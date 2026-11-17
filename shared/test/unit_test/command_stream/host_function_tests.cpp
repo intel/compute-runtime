@@ -109,7 +109,7 @@ HWTEST_F(HostFunctionTests, givenHostFunctionDataStoredWhenProgramHostFunctionIs
                 EXPECT_EQ(expectedAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miWaitTag));
                 EXPECT_EQ(static_cast<uint32_t>(HostFunctionStatus::completed), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miWaitTag));
                 EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION_SAD_EQUAL_SDD, miWaitTag->getCompareOperation());
-                EXPECT_EQ(MI_SEMAPHORE_WAIT::WAIT_MODE_POLLING_MODE, miWaitTag->getWaitMode());
+                EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::isSemaphoreWaitPollingMode(miWaitTag));
 
                 if constexpr (requires { &miWaitTag->getWorkloadPartitionIdOffsetEnable; }) {
                     EXPECT_FALSE(miWaitTag->getWorkloadPartitionIdOffsetEnable());
@@ -245,7 +245,7 @@ HWTEST_F(HostFunctionTests, givenCommandBufferPassedWhenProgramHostFunctionsAreC
                 EXPECT_EQ(expectedAddress, NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitAddress(miWaitTag));
                 EXPECT_EQ(static_cast<uint32_t>(HostFunctionStatus::completed), NEO::UnitTestHelper<FamilyType>::getSemaphoreWaitData(miWaitTag));
                 EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION_SAD_EQUAL_SDD, miWaitTag->getCompareOperation());
-                EXPECT_EQ(MI_SEMAPHORE_WAIT::WAIT_MODE_POLLING_MODE, miWaitTag->getWaitMode());
+                EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::isSemaphoreWaitPollingMode(miWaitTag));
 
                 if constexpr (requires { &miWaitTag->getWorkloadPartitionIdOffsetEnable; }) {
                     EXPECT_FALSE(miWaitTag->getWorkloadPartitionIdOffsetEnable());

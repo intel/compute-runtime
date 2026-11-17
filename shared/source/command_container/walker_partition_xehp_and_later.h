@@ -273,7 +273,7 @@ void programWparidPredication(void *&inputAddress, uint32_t &totalBytesProgramme
 }
 
 template <typename GfxFamily>
-void programMiAtomic(void *&inputAddress, uint32_t &totalBytesProgrammed, uint64_t gpuAddress, bool requireReturnValue, typename MI_ATOMIC<GfxFamily>::ATOMIC_OPCODES atomicOpcode) {
+void programMiAtomic(void *&inputAddress, uint32_t &totalBytesProgrammed, uint64_t gpuAddress, bool requireReturnValue, typename MI_ATOMIC<GfxFamily>::ATOMIC_OPCODE atomicOpcode) {
     auto miAtomic = putCommand<MI_ATOMIC<GfxFamily>>(inputAddress, totalBytesProgrammed);
     NEO::EncodeAtomic<GfxFamily>::programMiAtomic(miAtomic, gpuAddress, atomicOpcode, DATA_SIZE<GfxFamily>::DATA_SIZE_DWORD,
                                                   requireReturnValue, requireReturnValue, 0x0u, 0x0u);
@@ -378,7 +378,7 @@ void programSelfCleanupSection(void *&inputAddress,
                                    totalBytesProgrammed,
                                    address,
                                    false,
-                                   MI_ATOMIC<GfxFamily>::ATOMIC_OPCODES::ATOMIC_4B_MOVE);
+                                   MI_ATOMIC<GfxFamily>::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_MOVE);
     } else {
         programStoreMemImmediateDword<GfxFamily>(inputAddress,
                                                  totalBytesProgrammed,
@@ -399,7 +399,7 @@ void programTilesSynchronizationWithAtomics(void *&currentBatchBufferPointer,
                                             uint64_t atomicAddress,
                                             uint32_t tileCount,
                                             bool useSemaphore64bCmd) {
-    programMiAtomic<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, atomicAddress, false, MI_ATOMIC<GfxFamily>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT);
+    programMiAtomic<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, atomicAddress, false, MI_ATOMIC<GfxFamily>::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC);
     programWaitForSemaphore<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, atomicAddress, tileCount, MI_SEMAPHORE_WAIT<GfxFamily>::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, useSemaphore64bCmd);
 }
 
@@ -589,7 +589,7 @@ void constructDynamicallyPartitionedCommandBuffer(void *cpuPointer,
                                totalBytesProgrammed,
                                gpuAddressOfAllocation + controlSectionOffset,
                                true,
-                               MI_ATOMIC<GfxFamily>::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT);
+                               MI_ATOMIC<GfxFamily>::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC);
 
     // move atomic result to wparid
     programMiLoadRegisterReg<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, generalPurposeRegister4, wparidCCSOffset);

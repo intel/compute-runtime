@@ -86,8 +86,8 @@ static void verifyInOrderCounterUpdate(WhiteBox<L0::CommandListCoreFamily<Family
     ASSERT_EQ(atomicSignalling ? 1u : 0u, atomics.size());
     if (atomicSignalling) {
         auto *atomic = genCmdCast<MI_ATOMIC *>(*atomics[0]);
-        EXPECT_EQ(counterAddress, gmmHelper.canonize(NEO::UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*atomic)));
-        EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_8B_ADD, atomic->getAtomicOpcode());
+        EXPECT_EQ(counterAddress, gmmHelper.canonize(atomic->getMemoryAddress()));
+        EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_ADD8B, atomic->getAtomicOpcode());
         EXPECT_EQ(MI_ATOMIC::DATA_SIZE::DATA_SIZE_QWORD, atomic->getDataSize());
         EXPECT_EQ(1u, atomic->getOperand1DataDword0());
         EXPECT_EQ(0u, atomic->getOperand1DataDword1());
@@ -2642,7 +2642,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CopyOffloadInOrderTests, givenWalkerPostSyncSkipEna
 
 HWTEST2_F(CopyOffloadInOrderTests, givenAtomicSignalingModeWhenUpdatingCounterThenUseCorrectHwCommands, IsAtLeastXe2HpgCore) {
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
-    using ATOMIC_OPCODES = typename FamilyType::MI_ATOMIC::ATOMIC_OPCODES;
+    using ATOMIC_OPCODE = typename FamilyType::MI_ATOMIC::ATOMIC_OPCODE;
     using DATA_SIZE = typename FamilyType::MI_ATOMIC::DATA_SIZE;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
@@ -2678,8 +2678,8 @@ HWTEST2_F(CopyOffloadInOrderTests, givenAtomicSignalingModeWhenUpdatingCounterTh
 
         auto gpuAddress = immCmdList->inOrderExecInfo->getBaseDeviceAddress();
 
-        EXPECT_EQ(gpuAddress, gmmHelper->canonize(NEO::UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*atomicCmd)));
-        EXPECT_EQ(ATOMIC_OPCODES::ATOMIC_8B_ADD, atomicCmd->getAtomicOpcode());
+        EXPECT_EQ(gpuAddress, gmmHelper->canonize(atomicCmd->getMemoryAddress()));
+        EXPECT_EQ(ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_ADD8B, atomicCmd->getAtomicOpcode());
         EXPECT_EQ(DATA_SIZE::DATA_SIZE_QWORD, atomicCmd->getDataSize());
         EXPECT_EQ(getLowPart(partitionCount), atomicCmd->getOperand1DataDword0());
         EXPECT_EQ(getHighPart(partitionCount), atomicCmd->getOperand1DataDword1());
@@ -4360,10 +4360,10 @@ HWTEST2_F(MultiTileSynchronizedDispatchTests, givenFullSyncDispatchWhenAppending
         EXPECT_EQ(getLowPart(tokenInitialValue), miAtomic->getOperand2DataDword0());
         EXPECT_EQ(getHighPart(tokenInitialValue), miAtomic->getOperand2DataDword1());
 
-        EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_8B_CMP_WR, miAtomic->getAtomicOpcode());
+        EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_CMPWR8B, miAtomic->getAtomicOpcode());
         EXPECT_EQ(MI_ATOMIC::DATA_SIZE::DATA_SIZE_QWORD, miAtomic->getDataSize());
 
-        EXPECT_EQ(syncAllocGpuVa, NEO::UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic));
+        EXPECT_EQ(syncAllocGpuVa, miAtomic->getMemoryAddress());
 
         if (::testing::Test::HasFailure()) {
             return false;
@@ -4471,7 +4471,7 @@ HWTEST_F(MultiTileSynchronizedDispatchTests, givenFullSyncDispatchWhenAppendingT
 
             miAtomic = genCmdCast<MI_ATOMIC *>(*itor);
 
-            if (syncAllocGpuVa == NEO::UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic)) {
+            if (syncAllocGpuVa == miAtomic->getMemoryAddress()) {
                 atomicFound = true;
                 break;
             }
@@ -4491,7 +4491,7 @@ HWTEST_F(MultiTileSynchronizedDispatchTests, givenFullSyncDispatchWhenAppendingT
         EXPECT_EQ(0u, miAtomic->getOperand2DataDword0());
         EXPECT_EQ(0u, miAtomic->getOperand2DataDword1());
 
-        EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_8B_DECREMENT, miAtomic->getAtomicOpcode());
+        EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_DEC8B, miAtomic->getAtomicOpcode());
         EXPECT_EQ(MI_ATOMIC::DATA_SIZE::DATA_SIZE_QWORD, miAtomic->getDataSize());
 
         if (::testing::Test::HasFailure()) {
@@ -4508,10 +4508,10 @@ HWTEST_F(MultiTileSynchronizedDispatchTests, givenFullSyncDispatchWhenAppendingT
         EXPECT_EQ(0u, miAtomic->getOperand2DataDword0());
         EXPECT_EQ(0u, miAtomic->getOperand2DataDword1());
 
-        EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_8B_CMP_WR, miAtomic->getAtomicOpcode());
+        EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_CMPWR8B, miAtomic->getAtomicOpcode());
         EXPECT_EQ(MI_ATOMIC::DATA_SIZE::DATA_SIZE_QWORD, miAtomic->getDataSize());
 
-        EXPECT_EQ(syncAllocGpuVa, NEO::UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic));
+        EXPECT_EQ(syncAllocGpuVa, miAtomic->getMemoryAddress());
 
         return !::testing::Test::HasFailure();
     };
@@ -4565,7 +4565,7 @@ HWTEST_F(MultiTileSynchronizedDispatchTests, givenFullSyncDispatchAndOutOfOrderW
 
             miAtomic = genCmdCast<MI_ATOMIC *>(*itor);
 
-            if (syncAllocGpuVa == NEO::UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic)) {
+            if (syncAllocGpuVa == miAtomic->getMemoryAddress()) {
                 atomicFound = true;
                 break;
             }
@@ -4585,7 +4585,7 @@ HWTEST_F(MultiTileSynchronizedDispatchTests, givenFullSyncDispatchAndOutOfOrderW
         EXPECT_EQ(0u, miAtomic->getOperand2DataDword0());
         EXPECT_EQ(0u, miAtomic->getOperand2DataDword1());
 
-        EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_8B_DECREMENT, miAtomic->getAtomicOpcode());
+        EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_DEC8B, miAtomic->getAtomicOpcode());
         EXPECT_EQ(MI_ATOMIC::DATA_SIZE::DATA_SIZE_QWORD, miAtomic->getDataSize());
 
         if (::testing::Test::HasFailure()) {
@@ -4638,7 +4638,7 @@ HWTEST_F(MultiTileSynchronizedDispatchTests, givenLimitedSyncDispatchWhenAppendi
         for (auto &atomic : atomics) {
             auto miAtomic = genCmdCast<MI_ATOMIC *>(*atomic);
             EXPECT_NE(nullptr, miAtomic);
-            EXPECT_NE(syncAllocGpuVa, NEO::UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic));
+            EXPECT_NE(syncAllocGpuVa, miAtomic->getMemoryAddress());
         }
 
         return !::testing::Test::HasFailure();
@@ -4889,7 +4889,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenStandaloneEventAndCopyOnlyCmdListWh
 
 HWTEST2_F(MultiTileInOrderCmdListTests, givenAggregatedEventWhenCallingAppendSignalInOrderDependencyCounterThenProgramAtomicOperation, IsAtLeastXeHpcCore) {
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
-    using ATOMIC_OPCODES = typename FamilyType::MI_ATOMIC::ATOMIC_OPCODES;
+    using ATOMIC_OPCODE = typename FamilyType::MI_ATOMIC::ATOMIC_OPCODE;
     using DATA_SIZE = typename FamilyType::MI_ATOMIC::DATA_SIZE;
 
     const uint64_t incValue = (static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) + 1234) * partitionCount;
@@ -4913,19 +4913,19 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenAggregatedEventWhenCallingAppendSig
     ASSERT_NE(cmdList.end(), it);
 
     auto miAtomic = genCmdCast<MI_ATOMIC *>(*it);
-    EXPECT_EQ(ATOMIC_OPCODES::ATOMIC_8B_ADD, miAtomic->getAtomicOpcode());
+    EXPECT_EQ(ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_ADD8B, miAtomic->getAtomicOpcode());
     EXPECT_EQ(DATA_SIZE::DATA_SIZE_QWORD, miAtomic->getDataSize());
     EXPECT_EQ(getLowPart(programmedIncValue), miAtomic->getOperand1DataDword0());
     EXPECT_EQ(getHighPart(programmedIncValue), miAtomic->getOperand1DataDword1());
 
-    EXPECT_EQ(castToUint64(devAddress), NEO::UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic));
+    EXPECT_EQ(castToUint64(devAddress), miAtomic->getMemoryAddress());
 
     context->freeMem(devAddress);
 }
 
 HWTEST2_F(MultiTileInOrderCmdListTests, givenAggregatedEventAndCopyOnlyCmdListWhenCallingAppendMemoryCopyWithDisabledInOrderSignalingThenSignalAtomicStorage, IsAtLeastXeHpcCore) {
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
-    using ATOMIC_OPCODES = typename FamilyType::MI_ATOMIC::ATOMIC_OPCODES;
+    using ATOMIC_OPCODE = typename FamilyType::MI_ATOMIC::ATOMIC_OPCODE;
     using DATA_SIZE = typename FamilyType::MI_ATOMIC::DATA_SIZE;
 
     const uint64_t incValue = (static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) + 1234) * partitionCount;
@@ -4957,12 +4957,12 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenAggregatedEventAndCopyOnlyCmdListWh
             ASSERT_NE(cmdList.end(), it);
 
             auto miAtomic = genCmdCast<MI_ATOMIC *>(*it);
-            EXPECT_EQ(ATOMIC_OPCODES::ATOMIC_8B_ADD, miAtomic->getAtomicOpcode());
+            EXPECT_EQ(ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_ADD8B, miAtomic->getAtomicOpcode());
             EXPECT_EQ(DATA_SIZE::DATA_SIZE_QWORD, miAtomic->getDataSize());
             EXPECT_EQ(getLowPart(incValue), miAtomic->getOperand1DataDword0());
             EXPECT_EQ(getHighPart(incValue), miAtomic->getOperand1DataDword1());
 
-            EXPECT_EQ(castToUint64(devAddress), NEO::UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic));
+            EXPECT_EQ(castToUint64(devAddress), miAtomic->getMemoryAddress());
         }
     }
 
@@ -4983,12 +4983,12 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenAggregatedEventAndCopyOnlyCmdListWh
             ASSERT_NE(cmdList.end(), it);
 
             auto miAtomic = genCmdCast<MI_ATOMIC *>(*it);
-            EXPECT_EQ(ATOMIC_OPCODES::ATOMIC_8B_ADD, miAtomic->getAtomicOpcode());
+            EXPECT_EQ(ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_ADD8B, miAtomic->getAtomicOpcode());
             EXPECT_EQ(DATA_SIZE::DATA_SIZE_QWORD, miAtomic->getDataSize());
             EXPECT_EQ(getLowPart(incValue), miAtomic->getOperand1DataDword0());
             EXPECT_EQ(getHighPart(incValue), miAtomic->getOperand1DataDword1());
 
-            EXPECT_EQ(castToUint64(devAddress), NEO::UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic));
+            EXPECT_EQ(castToUint64(devAddress), miAtomic->getMemoryAddress());
         }
     }
 
@@ -5017,7 +5017,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenDebugFlagSetWhenAskingForAtomicSign
 
 HWTEST2_F(MultiTileInOrderCmdListTests, givenAtomicSignallingEnabledWhenSignallingCounterThenUseMiAtomicCmd, IsAtLeastXeCore) {
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
-    using ATOMIC_OPCODES = typename FamilyType::MI_ATOMIC::ATOMIC_OPCODES;
+    using ATOMIC_OPCODE = typename FamilyType::MI_ATOMIC::ATOMIC_OPCODE;
     using DATA_SIZE = typename FamilyType::MI_ATOMIC::DATA_SIZE;
 
     debugManager.flags.InOrderAtomicSignallingEnabled.set(1);
@@ -5060,8 +5060,8 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenAtomicSignallingEnabledWhenSignalli
 
     auto gpuAddress = immCmdList->inOrderExecInfo->getBaseDeviceAddress();
 
-    EXPECT_EQ(gpuAddress, NEO::UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*atomicCmd));
-    EXPECT_EQ(ATOMIC_OPCODES::ATOMIC_8B_ADD, atomicCmd->getAtomicOpcode());
+    EXPECT_EQ(gpuAddress, atomicCmd->getMemoryAddress());
+    EXPECT_EQ(ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_ADD8B, atomicCmd->getAtomicOpcode());
     EXPECT_EQ(1u, atomicCmd->getOperand1DataDword0());
     EXPECT_EQ(DATA_SIZE::DATA_SIZE_QWORD, atomicCmd->getDataSize());
     EXPECT_EQ(0u, atomicCmd->getReturnDataControl());
@@ -5071,7 +5071,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenAtomicSignallingEnabledWhenSignalli
 HWTEST2_F(MultiTileInOrderCmdListTests, givenDuplicatedCounterStorageAndAtomicSignallingEnabledWhenSignallingCounterThenUseMiAtomicAndSdiCmd, IsAtLeastXeCore) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
-    using ATOMIC_OPCODES = typename FamilyType::MI_ATOMIC::ATOMIC_OPCODES;
+    using ATOMIC_OPCODE = typename FamilyType::MI_ATOMIC::ATOMIC_OPCODE;
     using DATA_SIZE = typename FamilyType::MI_ATOMIC::DATA_SIZE;
 
     debugManager.flags.InOrderAtomicSignallingEnabled.set(1);
@@ -5115,8 +5115,8 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenDuplicatedCounterStorageAndAtomicSi
 
     auto gpuAddress = immCmdList->inOrderExecInfo->getBaseDeviceAddress();
 
-    EXPECT_EQ(gpuAddress, NEO::UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*atomicCmd));
-    EXPECT_EQ(ATOMIC_OPCODES::ATOMIC_8B_ADD, atomicCmd->getAtomicOpcode());
+    EXPECT_EQ(gpuAddress, atomicCmd->getMemoryAddress());
+    EXPECT_EQ(ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_ADD8B, atomicCmd->getAtomicOpcode());
     EXPECT_EQ(1u, atomicCmd->getOperand1DataDword0());
     EXPECT_EQ(DATA_SIZE::DATA_SIZE_QWORD, atomicCmd->getDataSize());
     EXPECT_EQ(0u, atomicCmd->getReturnDataControl());

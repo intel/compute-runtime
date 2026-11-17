@@ -71,8 +71,6 @@ struct UnitTestHelper : public UnitTestHelperBase<GfxFamily> {
 
     static bool isAdditionalMiSemaphoreWait(const typename GfxFamily::MI_SEMAPHORE_WAIT &semaphoreWait);
 
-    static uint64_t getAtomicMemoryAddress(const typename GfxFamily::MI_ATOMIC &atomic);
-
     static bool requiresTimestampPacketsInSystemMemory(HardwareInfo &hwInfo);
 
     static uint32_t getDebugModeRegisterOffset();
@@ -94,6 +92,7 @@ struct UnitTestHelper : public UnitTestHelperBase<GfxFamily> {
 
     static uint64_t getSemaphoreWaitAddress(const void *semWaitCmd);
     static uint64_t getSemaphoreWaitData(const void *semWaitCmd);
+    static bool isSemaphoreWaitPollingMode(const void *semWaitCmd);
 
     static bool getPipeControlHdcPipelineFlush(const typename GfxFamily::PIPE_CONTROL &pipeControl);
     static void setPipeControlHdcPipelineFlush(typename GfxFamily::PIPE_CONTROL &pipeControl, bool hdcPipelineFlush);

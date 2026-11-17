@@ -184,7 +184,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterCommandEncoderTest, givenOffsetAndValue
     itor++;
     ASSERT_NE(commands.end(), itor);
     auto cmdMath = genCmdCast<MI_MATH *>(*itor);
-    EXPECT_EQ(3u, cmdMath->DW0.BitField.DwordLength);
+    EXPECT_EQ(3u, cmdMath->getDwordLength());
 
     // store R15 to address
     itor++;

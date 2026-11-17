@@ -152,10 +152,8 @@ HWTEST2_F(MiMath, givenLoadIndirectFromMemoryWhenUseMiMathToSimpleOperationThenS
     loadValueToRegister<FamilyType>(valueToAdd, RegisterOffsets::csGprR3);
 
     auto pCmd = reinterpret_cast<uint32_t *>(taskStream->getSpace(sizeof(MI_MATH)));
-    reinterpret_cast<MI_MATH *>(pCmd)->DW0.Value = 0x0;
-    reinterpret_cast<MI_MATH *>(pCmd)->DW0.BitField.InstructionType = MI_MATH::COMMAND_TYPE_MI_COMMAND;
-    reinterpret_cast<MI_MATH *>(pCmd)->DW0.BitField.InstructionOpcode = MI_MATH::MI_COMMAND_OPCODE_MI_MATH;
-    reinterpret_cast<MI_MATH *>(pCmd)->DW0.BitField.DwordLength = numberOfOperationToLoadAddressToMiMathAccu + 13 - 1;
+    *reinterpret_cast<MI_MATH *>(pCmd) = MI_MATH::sInit();
+    reinterpret_cast<MI_MATH *>(pCmd)->setDwordLength(numberOfOperationToLoadAddressToMiMathAccu + 13 - 1);
     loadAddressToMiMathAccu<FamilyType>(static_cast<uint32_t>(AluRegisters::gpr0), static_cast<uint32_t>(AluRegisters::gpr1), static_cast<uint32_t>(AluRegisters::gpr2)); // GPU address of buffer load to ACCU register
     MI_MATH_ALU_INST_INLINE *pAluParam = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(taskStream->getSpace(13 * sizeof(MI_MATH_ALU_INST_INLINE)));
     pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(NewAluOpcodes::opcodeFence); // to be sure that all writes and reads are completed
@@ -240,10 +238,8 @@ HWTEST2_F(MiMath, givenLoadIndirectFromMemoryWhenUseMiMathThenStoreIndirectToAno
     loadAddressToRegisters<FamilyType>(RegisterOffsets::csGprR3, RegisterOffsets::csGprR4, RegisterOffsets::csGprR2, bufferB->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress()); // prepare registers to mi_math operation
 
     auto pCmd = reinterpret_cast<uint32_t *>(taskStream->getSpace(sizeof(MI_MATH)));
-    reinterpret_cast<MI_MATH *>(pCmd)->DW0.Value = 0x0;
-    reinterpret_cast<MI_MATH *>(pCmd)->DW0.BitField.InstructionType = MI_MATH::COMMAND_TYPE_MI_COMMAND;
-    reinterpret_cast<MI_MATH *>(pCmd)->DW0.BitField.InstructionOpcode = MI_MATH::MI_COMMAND_OPCODE_MI_MATH;
-    reinterpret_cast<MI_MATH *>(pCmd)->DW0.BitField.DwordLength = numberOfOperationToLoadAddressToMiMathAccu * 2 + 6 - 1;
+    *reinterpret_cast<MI_MATH *>(pCmd) = MI_MATH::sInit();
+    reinterpret_cast<MI_MATH *>(pCmd)->setDwordLength(numberOfOperationToLoadAddressToMiMathAccu * 2 + 6 - 1);
 
     loadAddressToMiMathAccu<FamilyType>(static_cast<uint32_t>(AluRegisters::gpr0), static_cast<uint32_t>(AluRegisters::gpr1), static_cast<uint32_t>(AluRegisters::gpr2)); // GPU address of buffer load to ACCU register
 
@@ -303,10 +299,8 @@ HWTEST2_F(MiMath, givenValueToMakeLeftLogicalShiftWhenUseMiMathThenShiftIsDonePr
     loadValueToRegister<FamilyType>(shift, RegisterOffsets::csGprR1);
     loadValueToRegister<FamilyType>(notPowerOfTwoShift, RegisterOffsets::csGprR2);
     auto pCmd = reinterpret_cast<uint32_t *>(taskStream->getSpace(sizeof(MI_MATH)));
-    reinterpret_cast<MI_MATH *>(pCmd)->DW0.Value = 0x0;
-    reinterpret_cast<MI_MATH *>(pCmd)->DW0.BitField.InstructionType = MI_MATH::COMMAND_TYPE_MI_COMMAND;
-    reinterpret_cast<MI_MATH *>(pCmd)->DW0.BitField.InstructionOpcode = MI_MATH::MI_COMMAND_OPCODE_MI_MATH;
-    reinterpret_cast<MI_MATH *>(pCmd)->DW0.BitField.DwordLength = 7 - 1;
+    *reinterpret_cast<MI_MATH *>(pCmd) = MI_MATH::sInit();
+    reinterpret_cast<MI_MATH *>(pCmd)->setDwordLength(7 - 1);
 
     MI_MATH_ALU_INST_INLINE *pAluParam = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(taskStream->getSpace(7 * sizeof(MI_MATH_ALU_INST_INLINE)));
     pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(AluRegisters::opcodeLoad); // load value from R0 to SRCA
@@ -374,10 +368,8 @@ HWTEST2_F(MiMath, givenValueToMakeRightLogicalShiftWhenUseMiMathThenShiftIsDoneP
     loadValueToRegister<FamilyType>(shift, RegisterOffsets::csGprR1);
     loadValueToRegister<FamilyType>(notPowerOfTwoShift, RegisterOffsets::csGprR2);
     auto pCmd = reinterpret_cast<uint32_t *>(taskStream->getSpace(sizeof(MI_MATH)));
-    reinterpret_cast<MI_MATH *>(pCmd)->DW0.Value = 0x0;
-    reinterpret_cast<MI_MATH *>(pCmd)->DW0.BitField.InstructionType = MI_MATH::COMMAND_TYPE_MI_COMMAND;
-    reinterpret_cast<MI_MATH *>(pCmd)->DW0.BitField.InstructionOpcode = MI_MATH::MI_COMMAND_OPCODE_MI_MATH;
-    reinterpret_cast<MI_MATH *>(pCmd)->DW0.BitField.DwordLength = 7 - 1;
+    *reinterpret_cast<MI_MATH *>(pCmd) = MI_MATH::sInit();
+    reinterpret_cast<MI_MATH *>(pCmd)->setDwordLength(7 - 1);
 
     MI_MATH_ALU_INST_INLINE *pAluParam = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(taskStream->getSpace(7 * sizeof(MI_MATH_ALU_INST_INLINE)));
     pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(AluRegisters::opcodeLoad); // load value from R0 to SRCA
@@ -446,10 +438,8 @@ HWTEST2_F(MiMath, givenValueToMakeRightAritmeticShiftWhenUseMiMathThenShiftIsDon
     loadValueToRegister<FamilyType>(notPowerOfTwoShift, RegisterOffsets::csGprR5);
 
     auto pCmd = reinterpret_cast<uint32_t *>(taskStream->getSpace(sizeof(MI_MATH)));
-    reinterpret_cast<MI_MATH *>(pCmd)->DW0.Value = 0x0;
-    reinterpret_cast<MI_MATH *>(pCmd)->DW0.BitField.InstructionType = MI_MATH::COMMAND_TYPE_MI_COMMAND;
-    reinterpret_cast<MI_MATH *>(pCmd)->DW0.BitField.InstructionOpcode = MI_MATH::MI_COMMAND_OPCODE_MI_MATH;
-    reinterpret_cast<MI_MATH *>(pCmd)->DW0.BitField.DwordLength = numberOfOperationToLoadAddressToMiMathAccu + 9 - 1;
+    *reinterpret_cast<MI_MATH *>(pCmd) = MI_MATH::sInit();
+    reinterpret_cast<MI_MATH *>(pCmd)->setDwordLength(numberOfOperationToLoadAddressToMiMathAccu + 9 - 1);
     loadAddressToMiMathAccu<FamilyType>(static_cast<uint32_t>(AluRegisters::gpr0), static_cast<uint32_t>(AluRegisters::gpr1), static_cast<uint32_t>(AluRegisters::gpr2)); // GPU address of buffer load to ACCU register
     MI_MATH_ALU_INST_INLINE *pAluParam = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(taskStream->getSpace(9 * sizeof(MI_MATH_ALU_INST_INLINE)));
     pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(NewAluOpcodes::opcodeLoadind); // load value from R0 to SRCA
@@ -543,8 +533,8 @@ struct ConditionalBbStartTests : public MiMath {
     }
 
     template <typename AtomicT>
-    typename AtomicT::ATOMIC_OPCODES getAtomicOpcode() const {
-        return isQwordData ? AtomicT::ATOMIC_OPCODES::ATOMIC_8B_INCREMENT : AtomicT::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT;
+    typename AtomicT::ATOMIC_OPCODE getAtomicOpcode() const {
+        return isQwordData ? AtomicT::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC8B : AtomicT::ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_INC;
     }
 
     template <typename AtomicT>

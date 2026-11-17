@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@ using CommandEncodeAtomic = Test<CommandEncodeStatesFixture>;
 
 HWTEST_F(CommandEncodeAtomic, WhenProgrammingMiAtomicThenExpectAllFieldsSetCorrectly) {
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
-    using ATOMIC_OPCODES = typename FamilyType::MI_ATOMIC::ATOMIC_OPCODES;
+    using ATOMIC_OPCODE = typename FamilyType::MI_ATOMIC::ATOMIC_OPCODE;
     using DATA_SIZE = typename FamilyType::MI_ATOMIC::DATA_SIZE;
 
     constexpr size_t bufferSize = 128u;
@@ -28,7 +28,7 @@ HWTEST_F(CommandEncodeAtomic, WhenProgrammingMiAtomicThenExpectAllFieldsSetCorre
 
     EncodeAtomic<FamilyType>::programMiAtomic(cmdbuffer,
                                               address,
-                                              ATOMIC_OPCODES::ATOMIC_4B_DECREMENT,
+                                              ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_DEC,
                                               DATA_SIZE::DATA_SIZE_DWORD,
                                               0x1u,
                                               0x1u,
@@ -37,16 +37,16 @@ HWTEST_F(CommandEncodeAtomic, WhenProgrammingMiAtomicThenExpectAllFieldsSetCorre
 
     MI_ATOMIC *miAtomicCmd = reinterpret_cast<MI_ATOMIC *>(cmdbuffer.getCpuBase());
 
-    EXPECT_EQ(ATOMIC_OPCODES::ATOMIC_4B_DECREMENT, miAtomicCmd->getAtomicOpcode());
+    EXPECT_EQ(ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_DEC, miAtomicCmd->getAtomicOpcode());
     EXPECT_EQ(DATA_SIZE::DATA_SIZE_DWORD, miAtomicCmd->getDataSize());
-    EXPECT_EQ(address, UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomicCmd));
+    EXPECT_EQ(address, miAtomicCmd->getMemoryAddress());
     EXPECT_EQ(0x1u, miAtomicCmd->getReturnDataControl());
     EXPECT_EQ(0x1u, miAtomicCmd->getCsStall());
 }
 
 HWTEST_F(CommandEncodeAtomic, WhenProgrammingMiAtomicMoveOperationThenExpectInlineDataSet) {
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
-    using ATOMIC_OPCODES = typename FamilyType::MI_ATOMIC::ATOMIC_OPCODES;
+    using ATOMIC_OPCODE = typename FamilyType::MI_ATOMIC::ATOMIC_OPCODE;
     using DATA_SIZE = typename FamilyType::MI_ATOMIC::DATA_SIZE;
     using DWORD_LENGTH = typename FamilyType::MI_ATOMIC::DWORD_LENGTH;
 
@@ -65,7 +65,7 @@ HWTEST_F(CommandEncodeAtomic, WhenProgrammingMiAtomicMoveOperationThenExpectInli
 
     EncodeAtomic<FamilyType>::programMiAtomic(cmdbuffer,
                                               address,
-                                              ATOMIC_OPCODES::ATOMIC_4B_MOVE,
+                                              ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_MOVE,
                                               DATA_SIZE::DATA_SIZE_DWORD,
                                               0x0u,
                                               0x0u,
@@ -74,7 +74,7 @@ HWTEST_F(CommandEncodeAtomic, WhenProgrammingMiAtomicMoveOperationThenExpectInli
 
     EncodeAtomic<FamilyType>::programMiAtomic(cmdbuffer,
                                               address,
-                                              ATOMIC_OPCODES::ATOMIC_8B_MOVE,
+                                              ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_MOVE8B,
                                               DATA_SIZE::DATA_SIZE_QWORD,
                                               0x0u,
                                               0x0u,
@@ -83,7 +83,7 @@ HWTEST_F(CommandEncodeAtomic, WhenProgrammingMiAtomicMoveOperationThenExpectInli
 
     EncodeAtomic<FamilyType>::programMiAtomic(cmdbuffer,
                                               address,
-                                              ATOMIC_OPCODES::ATOMIC_8B_CMP_WR,
+                                              ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_CMPWR8B,
                                               DATA_SIZE::DATA_SIZE_QWORD,
                                               0x0u,
                                               0x0u,
@@ -92,7 +92,7 @@ HWTEST_F(CommandEncodeAtomic, WhenProgrammingMiAtomicMoveOperationThenExpectInli
 
     EncodeAtomic<FamilyType>::programMiAtomic(cmdbuffer,
                                               address,
-                                              ATOMIC_OPCODES::ATOMIC_8B_ADD,
+                                              ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_ADD8B,
                                               DATA_SIZE::DATA_SIZE_QWORD,
                                               0x0u,
                                               0x0u,
@@ -101,9 +101,9 @@ HWTEST_F(CommandEncodeAtomic, WhenProgrammingMiAtomicMoveOperationThenExpectInli
 
     MI_ATOMIC *miAtomicCmd = reinterpret_cast<MI_ATOMIC *>(cmdbuffer.getCpuBase());
 
-    EXPECT_EQ(ATOMIC_OPCODES::ATOMIC_4B_MOVE, miAtomicCmd->getAtomicOpcode());
+    EXPECT_EQ(ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_MOVE, miAtomicCmd->getAtomicOpcode());
     EXPECT_EQ(DATA_SIZE::DATA_SIZE_DWORD, miAtomicCmd->getDataSize());
-    EXPECT_EQ(address, UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomicCmd));
+    EXPECT_EQ(address, miAtomicCmd->getMemoryAddress());
     EXPECT_EQ(0x0u, miAtomicCmd->getReturnDataControl());
     EXPECT_EQ(DWORD_LENGTH::DWORD_LENGTH_INLINE_DATA_1, miAtomicCmd->getDwordLength());
     EXPECT_EQ(0x1u, miAtomicCmd->getInlineData());
@@ -113,9 +113,9 @@ HWTEST_F(CommandEncodeAtomic, WhenProgrammingMiAtomicMoveOperationThenExpectInli
     EXPECT_EQ(operand2DataHigh, miAtomicCmd->getOperand2DataDword1());
 
     miAtomicCmd++;
-    EXPECT_EQ(ATOMIC_OPCODES::ATOMIC_8B_MOVE, miAtomicCmd->getAtomicOpcode());
+    EXPECT_EQ(ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_MOVE8B, miAtomicCmd->getAtomicOpcode());
     EXPECT_EQ(DATA_SIZE::DATA_SIZE_QWORD, miAtomicCmd->getDataSize());
-    EXPECT_EQ(address, UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomicCmd));
+    EXPECT_EQ(address, miAtomicCmd->getMemoryAddress());
     EXPECT_EQ(0x0u, miAtomicCmd->getReturnDataControl());
     EXPECT_EQ(DWORD_LENGTH::DWORD_LENGTH_INLINE_DATA_1, miAtomicCmd->getDwordLength());
     EXPECT_EQ(0x1u, miAtomicCmd->getInlineData());
@@ -125,9 +125,9 @@ HWTEST_F(CommandEncodeAtomic, WhenProgrammingMiAtomicMoveOperationThenExpectInli
     EXPECT_EQ(operand2DataHigh, miAtomicCmd->getOperand2DataDword1());
 
     miAtomicCmd++;
-    EXPECT_EQ(ATOMIC_OPCODES::ATOMIC_8B_CMP_WR, miAtomicCmd->getAtomicOpcode());
+    EXPECT_EQ(ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_CMPWR8B, miAtomicCmd->getAtomicOpcode());
     EXPECT_EQ(DATA_SIZE::DATA_SIZE_QWORD, miAtomicCmd->getDataSize());
-    EXPECT_EQ(address, UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomicCmd));
+    EXPECT_EQ(address, miAtomicCmd->getMemoryAddress());
     EXPECT_EQ(0x0u, miAtomicCmd->getReturnDataControl());
     EXPECT_EQ(DWORD_LENGTH::DWORD_LENGTH_INLINE_DATA_1, miAtomicCmd->getDwordLength());
     EXPECT_EQ(0x1u, miAtomicCmd->getInlineData());
@@ -137,9 +137,9 @@ HWTEST_F(CommandEncodeAtomic, WhenProgrammingMiAtomicMoveOperationThenExpectInli
     EXPECT_EQ(operand2DataHigh, miAtomicCmd->getOperand2DataDword1());
 
     miAtomicCmd++;
-    EXPECT_EQ(ATOMIC_OPCODES::ATOMIC_8B_ADD, miAtomicCmd->getAtomicOpcode());
+    EXPECT_EQ(ATOMIC_OPCODE::ATOMIC_OPCODE_ATOMIC_ADD8B, miAtomicCmd->getAtomicOpcode());
     EXPECT_EQ(DATA_SIZE::DATA_SIZE_QWORD, miAtomicCmd->getDataSize());
-    EXPECT_EQ(address, UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomicCmd));
+    EXPECT_EQ(address, miAtomicCmd->getMemoryAddress());
     EXPECT_EQ(0x0u, miAtomicCmd->getReturnDataControl());
     EXPECT_EQ(DWORD_LENGTH::DWORD_LENGTH_INLINE_DATA_1, miAtomicCmd->getDwordLength());
     EXPECT_EQ(0x1u, miAtomicCmd->getInlineData());

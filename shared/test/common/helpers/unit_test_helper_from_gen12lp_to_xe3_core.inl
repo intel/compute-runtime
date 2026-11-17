@@ -21,4 +21,10 @@ uint64_t UnitTestHelper<GfxFamily>::getSemaphoreWaitData(const void *semWaitCmd)
     return reinterpret_cast<const MI_SEMAPHORE_WAIT *>(semWaitCmd)->getSemaphoreDataDword();
 }
 
+template <typename GfxFamily>
+bool UnitTestHelper<GfxFamily>::isSemaphoreWaitPollingMode(const void *semWaitCmd) {
+    using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
+    return reinterpret_cast<const MI_SEMAPHORE_WAIT *>(semWaitCmd)->getWaitMode() == MI_SEMAPHORE_WAIT::WAIT_MODE_POLLING_MODE;
+}
+
 } // namespace NEO
