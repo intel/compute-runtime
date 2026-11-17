@@ -15,9 +15,11 @@
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
 #include "level_zero/core/source/cmdlist/cmdlist_memory_copy_params.h"
 
+#include <array>
 #include <atomic>
 #include <limits>
 #include <mutex>
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -295,6 +297,23 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     void setupFlushMethod(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) override;
     void allocateOrReuseKernelPrivateMemoryIfNeeded(Kernel *kernel, uint32_t sizePerHwThread) override;
     CommandQueue *getCmdQImmediate(CopyOffloadMode copyOffloadMode) const;
+    size_t selectCopyOffloadQueueIndex(const void *dstPtr, size_t dstSize, const NEO::GraphicsAllocation *explicitDstAlloc, std::optional<NEO::SvmAllocationData *> &dstSvmAlloc) const;
+
+    class CopyOffloadQueueSelectionScope : NEO::NonCopyableAndNonMovableClass {
+      public:
+        CopyOffloadQueueSelectionScope(CommandListCoreFamilyImmediate &cmdList, const void *dstPtr, size_t dstSize, const NEO::GraphicsAllocation *explicitDstAlloc) : cmdList(cmdList) {
+            this->cmdList.activeCopyOffloadQueueIndex = this->cmdList.selectCopyOffloadQueueIndex(dstPtr, dstSize, explicitDstAlloc, this->dstSvmAlloc);
+        }
+        ~CopyOffloadQueueSelectionScope() {
+            this->cmdList.activeCopyOffloadQueueIndex = CommandList::copyOffloadReadQueueIndex;
+        }
+        const std::optional<NEO::SvmAllocationData *> &getDstSvmAlloc() const { return this->dstSvmAlloc; }
+
+      protected:
+        CommandListCoreFamilyImmediate &cmdList;
+        std::optional<NEO::SvmAllocationData *> dstSvmAlloc;
+    };
+
     NEO::LinearStream *getOptionalEpilogueCmdStream(NEO::LinearStream *taskCmdStream, NEO::AppendOperations appendOperation);
 
     bool hasDependenciesForStaging(uint32_t numWaitEvents) const;
@@ -311,7 +330,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     void tryResetKernelWithAssertFlag();
     ze_result_t estimatePerfCountersCommandsSize(Event *signalEvent, size_t &perfCountersCommandsSize);
     ze_result_t reserveScratchSpaceForKernel(ze_kernel_handle_t kernelHandle, uint32_t externalPerThreadScratchSizeSlot0, uint32_t externalPerThreadScratchSizeSlot1);
-    void obtainAllocData(CpuMemCopyInfo &cpuMemCopyInfo, bool copyOffload);
+    void obtainAllocData(CpuMemCopyInfo &cpuMemCopyInfo, bool copyOffload, const std::optional<NEO::SvmAllocationData *> &dstSvmAlloc);
     size_t estimateCommandSizeForImageCopyBlit(ze_image_handle_t hImage, const ze_image_region_t *pRegion) const;
     size_t estimateCopyBlitCommandsSize(size_t nBlits, size_t sizePerBlit, bool isDstSystemOrRemoteMemory) const;
 
@@ -348,7 +367,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     bool csrReassignmentSuspended = false;
     bool latestFlushIsHostVisible = false;
     bool keepRelaxedOrderingEnabled = false;
-    bool copyOffloadTagUpdateRequired = false;
+    std::array<bool, CommandList::numCopyOffloadQueues> copyOffloadTagUpdateRequired{};
 };
 
 } // namespace L0

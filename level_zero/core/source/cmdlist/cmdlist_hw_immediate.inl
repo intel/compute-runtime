@@ -121,7 +121,8 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isCsrReassignmentSafe() cons
     if (!this->cmdQImmediate->isSubmittedWorkCompleted()) {
         return false;
     }
-    return (this->cmdQImmediateCopyOffload == nullptr) || this->cmdQImmediateCopyOffload->isSubmittedWorkCompleted();
+    return std::all_of(this->cmdQImmediateCopyOffload.begin(), this->cmdQImmediateCopyOffload.end(),
+                       [](CommandQueue *copyOffloadQueue) { return (copyOffloadQueue == nullptr) || copyOffloadQueue->isSubmittedWorkCompleted(); });
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -169,10 +170,12 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::checkAvailableSpace(u
     if (this->commandContainer.getCommandStream()->getAvailableSpace() < requiredSize) {
         bool requireSystemMemoryCommandBuffer = !hasRelaxedOrderingDependencies && !requestCommandBufferInLocalMem;
 
-        if (this->cmdQImmediateCopyOffload) {
-            const auto copyOffloadCsr = this->cmdQImmediateCopyOffload->getCsr();
-            const auto copyOffloadTaskCount = this->commandContainer.getCommandStream()->getGraphicsAllocation()->getTaskCount(copyOffloadCsr->getOsContext().getContextId());
-            this->copyOffloadTagUpdateRequired |= (copyOffloadTaskCount != NEO::GraphicsAllocation::objectNotUsed) && (copyOffloadTaskCount > copyOffloadCsr->peekLatestFlushedTaskCount());
+        for (size_t queueIndex = 0; queueIndex < this->cmdQImmediateCopyOffload.size(); queueIndex++) {
+            if (const auto copyOffloadQueue = this->cmdQImmediateCopyOffload[queueIndex]) {
+                const auto copyOffloadCsr = copyOffloadQueue->getCsr();
+                const auto copyOffloadTaskCount = this->commandContainer.getCommandStream()->getGraphicsAllocation()->getTaskCount(copyOffloadCsr->getOsContext().getContextId());
+                this->copyOffloadTagUpdateRequired[queueIndex] |= (copyOffloadTaskCount != NEO::GraphicsAllocation::objectNotUsed) && (copyOffloadTaskCount > copyOffloadCsr->peekLatestFlushedTaskCount());
+            }
         }
 
         auto alloc = this->commandContainer.reuseExistingCmdBuffer(requireSystemMemoryCommandBuffer, requiredSize);
@@ -248,12 +251,19 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::updateDispatchFlagsWithRequi
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushBcsTask(NEO::LinearStream &cmdStreamTask, size_t taskStartOffset, bool hasStallingCmds, bool hasRelaxedOrderingDependencies, bool requireTaskCountUpdate, NEO::AppendOperations appendOperation, NEO::CommandStreamReceiver *csr) {
+    bool copyOffloadTagUpdateRequired = false;
+    for (size_t queueIndex = 0; queueIndex < this->cmdQImmediateCopyOffload.size(); queueIndex++) {
+        if (this->cmdQImmediateCopyOffload[queueIndex] && (this->cmdQImmediateCopyOffload[queueIndex]->getCsr() == csr)) {
+            copyOffloadTagUpdateRequired = this->copyOffloadTagUpdateRequired[queueIndex];
+            this->copyOffloadTagUpdateRequired[queueIndex] = false;
+        }
+    }
+
     NEO::DispatchBcsFlags dispatchBcsFlags(
-        this->isSyncModeQueue || requireTaskCountUpdate || this->copyOffloadTagUpdateRequired, // flushTaskCount
-        hasStallingCmds,                                                                       // hasStallingCmds
-        hasRelaxedOrderingDependencies                                                         // hasRelaxedOrderingDependencies
+        this->isSyncModeQueue || requireTaskCountUpdate || copyOffloadTagUpdateRequired, // flushTaskCount
+        hasStallingCmds,                                                                 // hasStallingCmds
+        hasRelaxedOrderingDependencies                                                   // hasRelaxedOrderingDependencies
     );
-    this->copyOffloadTagUpdateRequired = false;
     dispatchBcsFlags.optionalEpilogueCmdStream = getOptionalEpilogueCmdStream(&cmdStreamTask, appendOperation);
     dispatchBcsFlags.optionalEpilogueCmdStreamStartOffset = this->cmdListCurrentStartOffset;
     dispatchBcsFlags.dispatchOperation = appendOperation;
@@ -621,7 +631,7 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
             }
         }
 
-        if (this->isInOrderExecutionEnabled() && this->inOrderExecInfo.get() && (cmdQ == this->cmdQImmediateCopyOffload)) {
+        if (this->isInOrderExecutionEnabled() && this->inOrderExecInfo.get() && this->isCopyOffloadCmdQImmediate(cmdQ)) {
             this->commandContainer.addToResidencyContainer(this->getDeviceCounterAllocForResidency(this->inOrderExecInfo->getDeviceCounterAllocation()));
             if (auto *hostCounterAllocation = this->inOrderExecInfo->getHostCounterAllocation()) {
                 this->commandContainer.addToResidencyContainer(hostCounterAllocation);
@@ -660,7 +670,7 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
     const auto epilogueCommandStreamUsedBeforeFlush = epilogueCommandStream->getUsed();
     const auto csrPendingSubmissionRequests = csr->peekPendingSubmissionRequests();
     const bool walkerWithProfilingEnqueued = this->isWalkerWithProfilingEnqueued;
-    const bool copyOffloadTagUpdateRequired = this->copyOffloadTagUpdateRequired;
+    const auto copyOffloadTagUpdateRequired = this->copyOffloadTagUpdateRequired;
 
     NEO::CompletionStamp completionStamp;
     if (cmdQ->peekIsCopyOnlyCommandQueue()) {
@@ -681,7 +691,9 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
         }
         csr->restorePendingSubmissionRequests(csrPendingSubmissionRequests);
         this->isWalkerWithProfilingEnqueued |= walkerWithProfilingEnqueued;
-        this->copyOffloadTagUpdateRequired |= copyOffloadTagUpdateRequired;
+        for (size_t queueIndex = 0; queueIndex < copyOffloadTagUpdateRequired.size(); queueIndex++) {
+            this->copyOffloadTagUpdateRequired[queueIndex] |= copyOffloadTagUpdateRequired[queueIndex];
+        }
         if (completionStamp.taskCount == NEO::CompletionStamp::outOfHostMemory) {
             return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
         }
@@ -711,7 +723,7 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
     cmdQ->setTaskCount(completionStamp.taskCount);
     cmdQ->setFlushStamp(completionStamp.flushStamp);
 
-    if (cmdQ == this->cmdQImmediate || cmdQ == this->cmdQImmediateCopyOffload) {
+    if (cmdQ == this->cmdQImmediate || this->isCopyOffloadCmdQImmediate(cmdQ)) {
         if (this->isSyncModeQueue) {
             status = hostSynchronize(std::numeric_limits<uint64_t>::max(), true);
         }
@@ -893,7 +905,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrier(ze_even
         return ret;
     }
 
-    const bool dualStreamCopyOffload = isDualStreamCopyOffloadOperation(true) && this->cmdQImmediateCopyOffload != nullptr;
+    const auto copyOffloadQueue = this->cmdQImmediateCopyOffload[this->copyOffloadReadQueueIndex];
+    const bool dualStreamCopyOffload = isDualStreamCopyOffloadOperation(true) && copyOffloadQueue != nullptr;
 
     bool isStallingOperation = true;
     bool copyOffloadSynchronizationRequired = dualStreamCopyOffload;
@@ -908,7 +921,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrier(ze_even
         isStallingOperation = hasStallingCmdsForRelaxedOrdering(numWaitEvents, waitEventsParameters.relaxedOrderingAllowed);
     } else {
         const auto mainTaskCount = this->cmdQImmediate->getTaskCount();
-        const auto copyOffloadTaskCount = dualStreamCopyOffload ? this->cmdQImmediateCopyOffload->getTaskCount() : 0;
+        const auto copyOffloadTaskCount = dualStreamCopyOffload ? copyOffloadQueue->getTaskCount() : 0;
         const bool pendingCommands = this->commandContainer.getCommandStream()->getUsed() != this->cmdListCurrentStartOffset;
         const bool redundantBarrier = !pendingCommands && this->lastBarrierTaskCounts.matches(mainTaskCount, copyOffloadTaskCount) && numWaitEvents == 0 &&
                                       !this->isCopyOnly(false) && this->synchronizedDispatchMode == NEO::SynchronizedDispatchMode::disabled;
@@ -942,7 +955,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrier(ze_even
     }
     if (ret == ZE_RESULT_SUCCESS && !isInOrderExecutionEnabled()) {
         this->lastBarrierTaskCounts.store(this->cmdQImmediate->getTaskCount(),
-                                          dualStreamCopyOffload ? this->cmdQImmediateCopyOffload->getTaskCount() : 0);
+                                          dualStreamCopyOffload ? copyOffloadQueue->getTaskCount() : 0);
     }
     return ret;
 }
@@ -966,8 +979,9 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::programCrossEngineTaskCountW
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrierWithCopyOffloadSynchronization(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
                                                                                                        ze_event_handle_t *phWaitEvents, CmdListWaitEventParameters &waitEventsParameters, bool isStallingOperation) {
-    auto copyOffloadCsr = getCsr(true);
-    const auto copyOffloadTaskCount = this->cmdQImmediateCopyOffload->getTaskCount();
+    auto copyOffloadQueue = this->cmdQImmediateCopyOffload[this->copyOffloadReadQueueIndex];
+    auto copyOffloadCsr = copyOffloadQueue->getCsr();
+    const auto copyOffloadTaskCount = copyOffloadQueue->getTaskCount();
 
     if (copyOffloadTaskCount > 0) {
         programCrossEngineTaskCountWait(copyOffloadCsr, copyOffloadTaskCount);
@@ -1006,6 +1020,13 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) {
+    auto immediateInitStatus = this->ensureImmediateResourcesInitialized();
+    if (immediateInitStatus != ZE_RESULT_SUCCESS) {
+        return immediateInitStatus;
+    }
+
+    CopyOffloadQueueSelectionScope copyOffloadQueueSelectionScope(*this, dstptr, size, memoryCopyParams.dstAllocInfo.explicitAlloc);
+
     memoryCopyParams.relaxedOrderingDispatch |= isRelaxedOrderingDispatchAllowed(numWaitEvents, isCopyOffloadEnabled());
     bool copyOffloadFlush = false;
 
@@ -1029,7 +1050,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
 
     CpuMemCopyInfo cpuMemCopyInfo(dstptr, const_cast<void *>(srcptr), size);
     if (!hasExplicitAllocs) {
-        this->obtainAllocData(cpuMemCopyInfo, isCopyOffloadEnabled());
+        this->obtainAllocData(cpuMemCopyInfo, isCopyOffloadEnabled(), copyOffloadQueueSelectionScope.getDstSvmAlloc());
         if (preferCopyThroughLockedPtr(cpuMemCopyInfo, hSignalEvent, numWaitEvents, phWaitEvents)) {
             ret = performCpuMemcpy(cpuMemCopyInfo, hSignalEvent, numWaitEvents, phWaitEvents);
             if (ret == ZE_RESULT_SUCCESS || ret == ZE_RESULT_ERROR_DEVICE_LOST) {
@@ -1079,6 +1100,13 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopyRegio
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) {
+    auto immediateInitStatus = this->ensureImmediateResourcesInitialized();
+    if (immediateInitStatus != ZE_RESULT_SUCCESS) {
+        return immediateInitStatus;
+    }
+
+    CopyOffloadQueueSelectionScope copyOffloadQueueSelectionScope(*this, dstPtr, this->getTotalSizeForCopyRegion(dstRegion, dstPitch, dstSlicePitch), nullptr);
+
     memoryCopyParams.relaxedOrderingDispatch |= isRelaxedOrderingDispatchAllowed(numWaitEvents, isCopyOffloadEnabled());
 
     auto estimatedSize = commonImmediateCommandSize;
@@ -1731,40 +1759,52 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
 
     const bool dualStreamCopyOffload = isDualStreamCopyOffloadOperation(isCopyOffloadEnabled());
     const TaskCountType mainQueueTaskCount = waitQueue->getTaskCount();
-    const TaskCountType copyOffloadTaskCount = dualStreamCopyOffload ? this->cmdQImmediateCopyOffload->getTaskCount() : 0;
+
+    std::array<TaskCountType, CommandList::numCopyOffloadQueues> copyOffloadTaskCounts{};
+    if (dualStreamCopyOffload) {
+        for (size_t queueIndex = 0; queueIndex < this->cmdQImmediateCopyOffload.size(); queueIndex++) {
+            if (const auto copyOffloadQueue = this->cmdQImmediateCopyOffload[queueIndex]) {
+                copyOffloadTaskCounts[queueIndex] = copyOffloadQueue->getTaskCount();
+            }
+        }
+    }
+    const TaskCountType copyOffloadTaskCount = copyOffloadTaskCounts[this->copyOffloadReadQueueIndex];
 
     if (!isInOrderExecutionEnabled() && this->lastHostSynchronizeTaskCounts.matches(mainQueueTaskCount, copyOffloadTaskCount)) {
         return ZE_RESULT_SUCCESS;
     }
 
     NEO::CommandStreamReceiver *mainQueueCsr = getCsr(false);
-    NEO::CommandStreamReceiver *copyOffloadCsr = nullptr;
 
     NEO::InternalAllocationStorage *mainInternalAllocStorage = mainQueueCsr->getInternalAllocationStorage();
-    NEO::InternalAllocationStorage *copyOffloadInternalAllocStorage = nullptr;
 
     bool mainStorageCleanupNeeded = !mainInternalAllocStorage->getTemporaryAllocations().peekIsEmpty();
-    bool copyOffloadStorageCleanupNeeded = false;
+    std::array<bool, CommandList::numCopyOffloadQueues> copyOffloadStorageCleanupNeeded{};
+
+    auto waitTaskCount = mainQueueTaskCount;
 
     if (dualStreamCopyOffload) {
-        copyOffloadCsr = getCsr(true);
-        copyOffloadInternalAllocStorage = copyOffloadCsr->getInternalAllocationStorage();
-        copyOffloadStorageCleanupNeeded = !copyOffloadInternalAllocStorage->getTemporaryAllocations().peekIsEmpty();
+        for (size_t queueIndex = 0; queueIndex < this->cmdQImmediateCopyOffload.size(); queueIndex++) {
+            if (const auto copyOffloadQueue = this->cmdQImmediateCopyOffload[queueIndex]) {
+                copyOffloadStorageCleanupNeeded[queueIndex] = !copyOffloadQueue->getCsr()->getInternalAllocationStorage()->getTemporaryAllocations().peekIsEmpty();
+            }
+        }
 
         if (this->latestFlushIsDualCopyOffload) {
-            waitQueue = this->cmdQImmediateCopyOffload;
+            waitQueue = this->cmdQImmediateCopyOffload[this->latestCopyOffloadQueueIndex];
+            waitTaskCount = waitQueue->getTaskCount();
         }
     }
 
-    auto waitTaskCount = waitQueue == this->cmdQImmediate ? mainQueueTaskCount : copyOffloadTaskCount;
+    const bool copyOffloadCleanupNeeded = std::any_of(copyOffloadStorageCleanupNeeded.begin(), copyOffloadStorageCleanupNeeded.end(), [](bool cleanupNeeded) { return cleanupNeeded; });
     auto waitCsr = waitQueue->getCsr();
 
-    auto tempAllocsCleanupRequired = handlePostWaitOperations && (mainStorageCleanupNeeded || copyOffloadStorageCleanupNeeded);
+    auto tempAllocsCleanupRequired = handlePostWaitOperations && (mainStorageCleanupNeeded || copyOffloadCleanupNeeded);
 
     bool inOrderWaitAllowed = (isInOrderExecutionEnabled() && !this->inOrderWaitsDisabled && !tempAllocsCleanupRequired && this->latestFlushIsHostVisible && !this->isInOrderCounterSignalPending());
 
     if (inOrderWaitAllowed && !inOrderExecInfo->isCounterAlreadyDone(inOrderExecInfo->getCounterValue(), inOrderExecInfo->getAllocationOffset())) {
-        status = synchronizeInOrderExecution(timeout, (waitQueue == this->cmdQImmediateCopyOffload));
+        status = synchronizeInOrderExecution(timeout, (waitQueue != this->cmdQImmediate));
     } else if (!inOrderWaitAllowed) {
         const auto indefinitelyPoll = timeout == std::numeric_limits<uint64_t>::max();
 
@@ -1802,10 +1842,14 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
 
         if (waitStatus == NEO::WaitStatus::ready) {
             if (waitOnBothQueues) {
-                const auto copyOffloadWaitStartTime = std::chrono::steady_clock::now();
                 mainQueueCsr->flushTagUpdateIfRequired(mainQueueTaskCount);
-                waitStatus = waitOnQueue(this->cmdQImmediateCopyOffload, copyOffloadTaskCount, copyOffloadCsr, remainingTimeoutNs);
-                consumeTimeout(copyOffloadWaitStartTime);
+                for (size_t queueIndex = 0; queueIndex < this->cmdQImmediateCopyOffload.size() && waitStatus == NEO::WaitStatus::ready; queueIndex++) {
+                    if (const auto copyOffloadQueue = this->cmdQImmediateCopyOffload[queueIndex]) {
+                        const auto copyOffloadWaitStartTime = std::chrono::steady_clock::now();
+                        waitStatus = waitOnQueue(copyOffloadQueue, copyOffloadTaskCounts[queueIndex], copyOffloadQueue->getCsr(), remainingTimeoutNs);
+                        consumeTimeout(copyOffloadWaitStartTime);
+                    }
+                }
                 if (waitStatus == NEO::WaitStatus::ready) {
                     waitStatus = waitOnQueue(this->cmdQImmediate, mainQueueTaskCount, mainQueueCsr, remainingTimeoutNs);
                 }
@@ -1828,7 +1872,11 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
             }
             this->cmdQImmediate->downloadAllocations();
             if (dualStreamCopyOffload) {
-                copyOffloadCsr->downloadAllocations(true);
+                for (const auto copyOffloadQueue : this->cmdQImmediateCopyOffload) {
+                    if (copyOffloadQueue) {
+                        copyOffloadQueue->getCsr()->downloadAllocations(true);
+                    }
+                }
             }
         }
 
@@ -1836,7 +1884,11 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
             if (status == ZE_RESULT_SUCCESS) {
                 this->cmdQImmediate->unregisterCsrClient();
                 if (dualStreamCopyOffload) {
-                    this->cmdQImmediateCopyOffload->unregisterCsrClient();
+                    for (const auto copyOffloadQueue : this->cmdQImmediateCopyOffload) {
+                        if (copyOffloadQueue) {
+                            copyOffloadQueue->unregisterCsrClient();
+                        }
+                    }
                 }
 
                 if (tempAllocsCleanupRequired) {
@@ -1846,8 +1898,10 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
                             previousCsr->getInternalAllocationStorage()->cleanAllocationList(previousTaskCount, NEO::AllocationUsage::TEMPORARY_ALLOCATION);
                         }
                     }
-                    if (copyOffloadStorageCleanupNeeded) {
-                        copyOffloadInternalAllocStorage->cleanAllocationList(copyOffloadTaskCount, NEO::AllocationUsage::TEMPORARY_ALLOCATION);
+                    for (size_t queueIndex = 0; queueIndex < this->cmdQImmediateCopyOffload.size(); queueIndex++) {
+                        if (copyOffloadStorageCleanupNeeded[queueIndex]) {
+                            this->cmdQImmediateCopyOffload[queueIndex]->getCsr()->getInternalAllocationStorage()->cleanAllocationList(copyOffloadTaskCounts[queueIndex], NEO::AllocationUsage::TEMPORARY_ALLOCATION);
+                        }
                     }
                 }
 
@@ -1891,8 +1945,27 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+size_t CommandListCoreFamilyImmediate<gfxCoreFamily>::selectCopyOffloadQueueIndex(const void *dstPtr, size_t dstSize, const NEO::GraphicsAllocation *explicitDstAlloc, std::optional<NEO::SvmAllocationData *> &dstSvmAlloc) const {
+    if (this->cmdQImmediateCopyOffload[this->copyOffloadWriteQueueIndex] == nullptr) {
+        return this->copyOffloadReadQueueIndex;
+    }
+
+    bool writeOutsideOfDevice = false;
+    if (explicitDstAlloc) {
+        writeOutsideOfDevice = NEO::MemoryPoolHelper::isSystemMemoryPool(explicitDstAlloc->getMemoryPool()) || (explicitDstAlloc->getRootDeviceIndex() != this->device->getRootDeviceIndex());
+    } else {
+        NEO::SvmAllocationData *dstAllocData = nullptr;
+        this->device->getDriverHandle()->findAllocationDataForRange(dstPtr, dstSize, dstAllocData);
+        dstSvmAlloc = dstAllocData;
+        writeOutsideOfDevice = (dstAllocData == nullptr) || this->isDstSystemOrRemoteAlloc(dstAllocData);
+    }
+
+    return writeOutsideOfDevice ? this->copyOffloadWriteQueueIndex : this->copyOffloadReadQueueIndex;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 CommandQueue *CommandListCoreFamilyImmediate<gfxCoreFamily>::getCmdQImmediate(CopyOffloadMode copyOffloadMode) const {
-    return (copyOffloadMode == CopyOffloadModes::dualStream) ? this->cmdQImmediateCopyOffload : this->cmdQImmediate;
+    return (copyOffloadMode == CopyOffloadModes::dualStream) ? this->cmdQImmediateCopyOffload[this->activeCopyOffloadQueueIndex] : this->cmdQImmediate;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -1917,6 +1990,9 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_res
     const auto copyOffloadModeForOperation = getCopyOffloadModeForOperation(copyOffloadSubmission);
     auto queue = getCmdQImmediate(copyOffloadModeForOperation);
     this->latestFlushIsDualCopyOffload = (copyOffloadModeForOperation == CopyOffloadModes::dualStream);
+    if (this->latestFlushIsDualCopyOffload) {
+        this->latestCopyOffloadQueueIndex = this->activeCopyOffloadQueueIndex;
+    }
     this->latestFlushIsHostVisible = !this->dcFlushSupport;
 
     if (NEO::debugManager.flags.DeferStateInitSubmissionToFirstRegularUsage.get() == 1) {
@@ -1972,9 +2048,10 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::recordStagingDependency() {
         return;
     }
 
-    const bool dualStreamCopyOffload = isDualStreamCopyOffloadOperation(true) && this->cmdQImmediateCopyOffload != nullptr;
+    const auto copyOffloadQueue = this->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex];
+    const bool dualStreamCopyOffload = isDualStreamCopyOffloadOperation(true) && copyOffloadQueue != nullptr;
     this->stagingDependencyTaskCounts.store(this->cmdQImmediate->getTaskCount(),
-                                            dualStreamCopyOffload ? this->cmdQImmediateCopyOffload->getTaskCount() : 0);
+                                            dualStreamCopyOffload ? copyOffloadQueue->getTaskCount() : 0);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -2000,8 +2077,9 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::hasPendingStagingDependency(
     }
 
     const auto copyOffloadTaskCount = this->stagingDependencyTaskCounts.copyOffload.load();
-    if (copyOffloadTaskCount != 0 && this->cmdQImmediateCopyOffload != nullptr) {
-        auto copyOffloadCsr = this->cmdQImmediateCopyOffload->getCsr();
+    const auto copyOffloadQueue = this->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex];
+    if (copyOffloadTaskCount != 0 && copyOffloadQueue != nullptr) {
+        auto copyOffloadCsr = copyOffloadQueue->getCsr();
         if (!copyOffloadCsr->testTaskCountReady(copyOffloadCsr->getTagAddress(), copyOffloadTaskCount)) {
             return true;
         }
@@ -2401,7 +2479,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::synchronizeInOrderExe
     const auto waitStartTime = NEO::HostClock::getCurrentTimeInNs();
     auto lastHangCheckTime = waitStartTime;
 
-    auto csr = getCsr(copyOffloadSync);
+    auto csr = copyOffloadSync ? this->cmdQImmediateCopyOffload[this->latestCopyOffloadQueueIndex]->getCsr() : getCsr(false);
     std::vector<NEO::CommandStreamReceiver::TimeType> previousCsrsLastHangCheckTimes(this->previousCsrsAwaitingCompletion.size(), lastHangCheckTime);
 
     do {
@@ -2896,9 +2974,13 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isRelaxedOrderingDispatchAll
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamilyImmediate<gfxCoreFamily>::obtainAllocData(CpuMemCopyInfo &cpuMemCopyInfo, bool copyOffload) {
+void CommandListCoreFamilyImmediate<gfxCoreFamily>::obtainAllocData(CpuMemCopyInfo &cpuMemCopyInfo, bool copyOffload, const std::optional<NEO::SvmAllocationData *> &dstSvmAlloc) {
     this->device->getDriverHandle()->findAllocationDataForRange(const_cast<void *>(cpuMemCopyInfo.srcPtr), cpuMemCopyInfo.size, cpuMemCopyInfo.srcAllocInfo.svmAlloc);
-    this->device->getDriverHandle()->findAllocationDataForRange(cpuMemCopyInfo.dstPtr, cpuMemCopyInfo.size, cpuMemCopyInfo.dstAllocInfo.svmAlloc);
+    if (dstSvmAlloc.has_value()) {
+        cpuMemCopyInfo.dstAllocInfo.svmAlloc = dstSvmAlloc.value();
+    } else {
+        this->device->getDriverHandle()->findAllocationDataForRange(cpuMemCopyInfo.dstPtr, cpuMemCopyInfo.size, cpuMemCopyInfo.dstAllocInfo.svmAlloc);
+    }
 
     if (cpuMemCopyInfo.srcAllocInfo.svmAlloc == nullptr) {
         auto hostAlloc = this->device->getDriverHandle()->findHostPointerAllocation(cpuMemCopyInfo.srcPtr, cpuMemCopyInfo.size, this->device->getRootDeviceIndex());

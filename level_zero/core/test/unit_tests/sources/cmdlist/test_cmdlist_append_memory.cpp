@@ -2165,7 +2165,7 @@ HWTEST_F(StagingBuffersExternalDependencyFixture, givenRegularCmdListWithWaitOnE
 
     MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
     initializeCmdList(cmdList, false);
-    cmdList.cmdQImmediateCopyOffload = copyOffloadQueue.get();
+    cmdList.cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex] = copyOffloadQueue.get();
     cmdList.copyOffloadMode = CopyOffloadModes::dualStream;
 
     auto regularCmdListHandle = regularCmdList->toHandle();
@@ -2186,7 +2186,7 @@ HWTEST_F(StagingBuffersExternalDependencyFixture, givenRegularCmdListWithWaitOnE
     EXPECT_EQ(1u, cmdList.appendStagingMemoryCopyCalledCount);
 
     alignedFree(srcNotImported);
-    cmdList.cmdQImmediateCopyOffload = nullptr;
+    cmdList.cmdQImmediateCopyOffload = {};
 }
 
 HWTEST_F(StagingBuffersFixture, givenAppendMemoryCopyWithDstNonUsmThenDontImportAllocation) {
@@ -3257,7 +3257,7 @@ HWTEST2_F(StagingImageBuffersFixture, givenMipMappedImageAndDualStreamCopyOffloa
     MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
     cmdList.cmdQImmediate = queue.get();
     cmdList.initialize(device, NEO::EngineGroupType::compute, 0u);
-    cmdList.cmdQImmediateCopyOffload = copyOffloadQueue.get();
+    cmdList.cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex] = copyOffloadQueue.get();
     cmdList.copyOffloadMode = CopyOffloadModes::dualStream;
 
     ze_image_desc_t imgDesc = {};
@@ -3285,7 +3285,7 @@ HWTEST2_F(StagingImageBuffersFixture, givenMipMappedImageAndDualStreamCopyOffloa
     EXPECT_FALSE(computeUltCsr->waitForTaskCountWithKmdNotifyInputParams.empty());
     EXPECT_TRUE(copyOffloadUltCsr->waitForTaskCountWithKmdNotifyInputParams.empty());
 
-    cmdList.cmdQImmediateCopyOffload = nullptr;
+    cmdList.cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex] = nullptr;
 }
 
 } // namespace ult

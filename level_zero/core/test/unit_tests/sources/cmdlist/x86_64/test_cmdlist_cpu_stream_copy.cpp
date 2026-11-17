@@ -77,7 +77,7 @@ HWTEST_F(CommandListCpuStreamCopyTest, givenLockedDeviceSourceWhenPerformCpuMemc
     }
 
     CpuMemCopyInfo cpuMemCopyInfo(hostBuffer.get(), ptrOffset(devicePtr, srcMisalignment), copySize);
-    cmdList.obtainAllocData(cpuMemCopyInfo, false);
+    cmdList.obtainAllocData(cpuMemCopyInfo, false, std::nullopt);
 
     NEO::StreamCopyBlocksUlt::reset();
     NEO::StreamCopyBlocksUlt::setSourceRange(lockedPtr + srcMisalignment, copySize);
@@ -97,7 +97,7 @@ HWTEST_F(CommandListCpuStreamCopyTest, givenNonUsmHostSourceWhenPerformCpuMemcpy
 
     auto *srcPtr = static_cast<uint8_t *>(hostBuffer.get()) + srcMisalignment;
     CpuMemCopyInfo cpuMemCopyInfo(devicePtr, srcPtr, copySize);
-    cmdList.obtainAllocData(cpuMemCopyInfo, false);
+    cmdList.obtainAllocData(cpuMemCopyInfo, false, std::nullopt);
 
     NEO::StreamCopyBlocksUlt::reset();
     NEO::StreamCopyBlocksUlt::setSourceRange(srcPtr, copySize);

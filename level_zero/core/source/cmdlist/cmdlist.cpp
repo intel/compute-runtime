@@ -124,8 +124,10 @@ CommandList::~CommandList() {
     if (cmdQImmediate) {
         cmdQImmediate->destroy();
     }
-    if (cmdQImmediateCopyOffload) {
-        cmdQImmediateCopyOffload->destroy();
+    for (auto copyOffloadQueue : cmdQImmediateCopyOffload) {
+        if (copyOffloadQueue) {
+            copyOffloadQueue->destroy();
+        }
     }
     if (copyOffloadSubCmdList) {
         copyOffloadSubCmdList->destroy();
@@ -362,7 +364,7 @@ NEO::CommandStreamReceiver *CommandList::getCsr(bool copyOffload, ze_result_t &r
 }
 
 NEO::CommandStreamReceiver *CommandList::getCsr(bool copyOffload) const {
-    auto queue = isDualStreamCopyOffloadOperation(copyOffload) ? this->cmdQImmediateCopyOffload : this->cmdQImmediate;
+    auto queue = isDualStreamCopyOffloadOperation(copyOffload) ? this->cmdQImmediateCopyOffload[this->activeCopyOffloadQueueIndex] : this->cmdQImmediate;
 
     return queue->getCsr();
 }
@@ -889,8 +891,6 @@ void CommandList::enableCopyOperationOffload() {
         return;
     }
 
-    ze_command_queue_mode_t immediateQueueMode = this->isSyncModeQueue ? ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS : ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
-
     NEO::CommandStreamReceiver *copyCsr = nullptr;
     uint32_t ordinal = device->getCopyEngineOrdinal();
 
@@ -914,9 +914,38 @@ void CommandList::enableCopyOperationOffload() {
         return;
     }
 
+    this->cmdQImmediateCopyOffload[copyOffloadReadQueueIndex] = createCopyOffloadCmdQImmediate(copyCsr, ordinal, queueOwnershipTaken);
+
+    if (isCopyOffloadWriteEngineAllowed(ordinal)) {
+        NEO::CommandStreamReceiver *writeCopyCsr = nullptr;
+        bool writeQueueOwnershipTaken = false;
+        device->getCsrForOrdinalAndIndex(&writeCopyCsr, ordinal, copyOffloadWriteEngineIndex, immediateQueuePriority, std::nullopt, this->powerHint, &writeQueueOwnershipTaken);
+        UNRECOVERABLE_IF(!writeCopyCsr);
+
+        if (writeCopyCsr->getOsContext().getEngineType() != copyCsr->getOsContext().getEngineType()) {
+            this->cmdQImmediateCopyOffload[copyOffloadWriteQueueIndex] = createCopyOffloadCmdQImmediate(writeCopyCsr, ordinal, writeQueueOwnershipTaken);
+        } else if (writeQueueOwnershipTaken) {
+            writeCopyCsr->releaseQueueOwnership();
+        }
+    }
+}
+
+bool CommandList::isCopyOffloadCmdQImmediate(const CommandQueue *cmdQ) const {
+    return (cmdQ != nullptr) && (std::find(this->cmdQImmediateCopyOffload.begin(), this->cmdQImmediateCopyOffload.end(), cmdQ) != this->cmdQImmediateCopyOffload.end());
+}
+
+bool CommandList::isCopyOffloadWriteEngineAllowed(uint32_t copyEngineOrdinal) const {
+    if (NEO::debugManager.flags.CopyOffloadWriteEngine.get() != 1 || !isInOrderExecutionEnabled()) {
+        return false;
+    }
+
+    return device->isQueueGroupOrdinalAndIndexValid(copyEngineOrdinal, copyOffloadWriteEngineIndex);
+}
+
+CommandQueue *CommandList::createCopyOffloadCmdQImmediate(NEO::CommandStreamReceiver *copyCsr, uint32_t ordinal, bool queueOwnershipTaken) {
     ze_command_queue_desc_t copyQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     copyQueueDesc.ordinal = ordinal;
-    copyQueueDesc.mode = immediateQueueMode;
+    copyQueueDesc.mode = this->isSyncModeQueue ? ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS : ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
     copyQueueDesc.priority = immediateQueuePriority;
 
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
@@ -926,11 +955,11 @@ void CommandList::enableCopyOperationOffload() {
         offloadCommandQueue->takeCsrQueueOwnership(std::nullopt, this->powerHint);
     }
 
-    this->cmdQImmediateCopyOffload = offloadCommandQueue;
-
     if (NEO::Debugger::isDebugEnabled(internalUsage) && device->getL0Debugger()) {
         device->getL0Debugger()->notifyCommandQueueCreated(device->getNEODevice());
     }
+
+    return offloadCommandQueue;
 }
 
 void CommandList::setStreamPropertiesDefaultSettings(NEO::StreamProperties &streamProperties) {

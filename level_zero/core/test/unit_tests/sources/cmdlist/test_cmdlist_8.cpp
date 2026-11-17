@@ -117,12 +117,12 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndImportedHostPtr
     for (size_t i = 0; i < sizes.size(); i++) {
 
         CpuMemCopyInfo copyInfoDeviceUsmToHostUsm(hostPtr, devicePtr, sizes[i]);
-        cmdList.obtainAllocData(copyInfoDeviceUsmToHostUsm, false);
+        cmdList.obtainAllocData(copyInfoDeviceUsmToHostUsm, false, std::nullopt);
         EXPECT_NE(nullptr, copyInfoDeviceUsmToHostUsm.srcAllocInfo.svmAlloc);
         EXPECT_NE(nullptr, copyInfoDeviceUsmToHostUsm.dstAllocInfo.svmAlloc);
 
         CpuMemCopyInfo copyInfoDeviceUsmToHostImported(importedPtr, devicePtr, sizes[i]);
-        cmdList.obtainAllocData(copyInfoDeviceUsmToHostImported, false);
+        cmdList.obtainAllocData(copyInfoDeviceUsmToHostImported, false, std::nullopt);
         EXPECT_NE(nullptr, copyInfoDeviceUsmToHostImported.srcAllocInfo.svmAlloc);
         EXPECT_EQ(nullptr, copyInfoDeviceUsmToHostImported.dstAllocInfo.svmAlloc);
 
@@ -130,12 +130,12 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndImportedHostPtr
         EXPECT_TRUE(copyInfoDeviceUsmToHostImported.dstIsImportedHostPtr);
 
         CpuMemCopyInfo copyInfoHostUsmToDeviceUsm(devicePtr, hostPtr, sizes[i]);
-        cmdList.obtainAllocData(copyInfoHostUsmToDeviceUsm, false);
+        cmdList.obtainAllocData(copyInfoHostUsmToDeviceUsm, false, std::nullopt);
         EXPECT_NE(nullptr, copyInfoHostUsmToDeviceUsm.srcAllocInfo.svmAlloc);
         EXPECT_NE(nullptr, copyInfoHostUsmToDeviceUsm.dstAllocInfo.svmAlloc);
 
         CpuMemCopyInfo copyInfoHostImportedToDeviceUsm(devicePtr, importedPtr, sizes[i]);
-        cmdList.obtainAllocData(copyInfoHostImportedToDeviceUsm, false);
+        cmdList.obtainAllocData(copyInfoHostImportedToDeviceUsm, false, std::nullopt);
         EXPECT_EQ(nullptr, copyInfoHostImportedToDeviceUsm.srcAllocInfo.svmAlloc);
         EXPECT_NE(nullptr, copyInfoHostImportedToDeviceUsm.dstAllocInfo.svmAlloc);
 
@@ -143,12 +143,12 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndImportedHostPtr
         EXPECT_TRUE(copyInfoHostImportedToDeviceUsm.srcIsImportedHostPtr);
 
         CpuMemCopyInfo copyInfoSharedUsmToHostUsm(hostPtr, sharedPtr, sizes[i]);
-        cmdList.obtainAllocData(copyInfoSharedUsmToHostUsm, false);
+        cmdList.obtainAllocData(copyInfoSharedUsmToHostUsm, false, std::nullopt);
         EXPECT_NE(nullptr, copyInfoSharedUsmToHostUsm.srcAllocInfo.svmAlloc);
         EXPECT_NE(nullptr, copyInfoSharedUsmToHostUsm.dstAllocInfo.svmAlloc);
 
         CpuMemCopyInfo copyInfoSharedUsmToHostImported(importedPtr, sharedPtr, sizes[i]);
-        cmdList.obtainAllocData(copyInfoSharedUsmToHostImported, false);
+        cmdList.obtainAllocData(copyInfoSharedUsmToHostImported, false, std::nullopt);
         EXPECT_NE(nullptr, copyInfoSharedUsmToHostImported.srcAllocInfo.svmAlloc);
         EXPECT_FALSE(device->getDriverHandle()->findAllocationDataForRange(importedPtr, sizes[i], copyInfoSharedUsmToHostImported.dstAllocInfo.svmAlloc));
         EXPECT_NE(nullptr, copyInfoSharedUsmToHostImported.srcAllocInfo.svmAlloc);
@@ -158,12 +158,12 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndImportedHostPtr
         EXPECT_TRUE(copyInfoSharedUsmToHostImported.dstIsImportedHostPtr);
 
         CpuMemCopyInfo copyInfoHostUsmToSharedUsm(sharedPtr, hostPtr, sizes[i]);
-        cmdList.obtainAllocData(copyInfoHostUsmToSharedUsm, false);
+        cmdList.obtainAllocData(copyInfoHostUsmToSharedUsm, false, std::nullopt);
         EXPECT_NE(nullptr, copyInfoHostUsmToSharedUsm.srcAllocInfo.svmAlloc);
         EXPECT_NE(nullptr, copyInfoHostUsmToSharedUsm.dstAllocInfo.svmAlloc);
 
         CpuMemCopyInfo copyInfoHostImportedToSharedUsm(sharedPtr, importedPtr, sizes[i]);
-        cmdList.obtainAllocData(copyInfoHostImportedToSharedUsm, false);
+        cmdList.obtainAllocData(copyInfoHostImportedToSharedUsm, false, std::nullopt);
         EXPECT_EQ(nullptr, copyInfoHostImportedToSharedUsm.srcAllocInfo.svmAlloc);
         EXPECT_NE(nullptr, copyInfoHostImportedToSharedUsm.dstAllocInfo.svmAlloc);
 
@@ -171,14 +171,14 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndImportedHostPtr
         EXPECT_TRUE(copyInfoHostImportedToSharedUsm.srcIsImportedHostPtr);
 
         CpuMemCopyInfo copyInfoHostUsmToHostUsm(hostPtr, hostPtr, sizes[i]);
-        cmdList.obtainAllocData(copyInfoHostUsmToHostUsm, false);
+        cmdList.obtainAllocData(copyInfoHostUsmToHostUsm, false, std::nullopt);
         EXPECT_TRUE(device->getDriverHandle()->findAllocationDataForRange(hostPtr, sizes[i], copyInfoHostUsmToHostUsm.srcAllocInfo.svmAlloc));
         EXPECT_TRUE(device->getDriverHandle()->findAllocationDataForRange(hostPtr, sizes[i], copyInfoHostUsmToHostUsm.dstAllocInfo.svmAlloc));
         EXPECT_NE(nullptr, copyInfoHostUsmToHostUsm.srcAllocInfo.svmAlloc);
         EXPECT_NE(nullptr, copyInfoHostUsmToHostUsm.dstAllocInfo.svmAlloc);
 
         CpuMemCopyInfo copyInfoHostUsmToHostImported(importedPtr, hostPtr, sizes[i]);
-        cmdList.obtainAllocData(copyInfoHostUsmToHostImported, false);
+        cmdList.obtainAllocData(copyInfoHostUsmToHostImported, false, std::nullopt);
         EXPECT_NE(nullptr, copyInfoHostUsmToHostImported.srcAllocInfo.svmAlloc);
         EXPECT_EQ(nullptr, copyInfoHostUsmToHostImported.dstAllocInfo.svmAlloc);
 
@@ -186,7 +186,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndImportedHostPtr
         EXPECT_TRUE(copyInfoHostUsmToHostImported.dstIsImportedHostPtr);
 
         CpuMemCopyInfo copyInfoHostImportedToHostUsm(hostPtr, importedPtr, sizes[i]);
-        cmdList.obtainAllocData(copyInfoHostImportedToHostUsm, false);
+        cmdList.obtainAllocData(copyInfoHostImportedToHostUsm, false, std::nullopt);
         EXPECT_EQ(nullptr, copyInfoHostImportedToHostUsm.srcAllocInfo.svmAlloc);
         EXPECT_NE(nullptr, copyInfoHostImportedToHostUsm.dstAllocInfo.svmAlloc);
 
@@ -194,7 +194,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndImportedHostPtr
         EXPECT_TRUE(copyInfoHostImportedToHostUsm.srcIsImportedHostPtr);
 
         CpuMemCopyInfo copyInfoHostImportedToHostImported(importedPtr, importedPtr, sizes[i]);
-        cmdList.obtainAllocData(copyInfoHostImportedToHostImported, false);
+        cmdList.obtainAllocData(copyInfoHostImportedToHostImported, false, std::nullopt);
         EXPECT_EQ(nullptr, copyInfoHostImportedToHostImported.srcAllocInfo.svmAlloc);
         EXPECT_EQ(nullptr, copyInfoHostImportedToHostImported.dstAllocInfo.svmAlloc);
 
@@ -203,6 +203,29 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndImportedHostPtr
     }
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, device->getDriverHandle()->releaseImportedPointer(importedPtr));
+}
+
+HWTEST_F(AppendMemoryLockedCopyTest, givenDstSvmAllocProvidedWhenObtainingAllocDataThenProvidedDstSvmAllocIsUsed) {
+    allocateHostBuffer();
+    allocateDeviceBuffer();
+    ze_command_queue_desc_t queueDesc = {};
+    auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+
+    MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.cmdQImmediate = queue.get();
+    cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    auto svmAllocsManager = device->getDriverHandle()->getSvmAllocsManager();
+    auto hostAllocData = svmAllocsManager->getSVMAlloc(hostPtr);
+    auto deviceAllocData = svmAllocsManager->getSVMAlloc(devicePtr);
+
+    CpuMemCopyInfo copyInfoWithProvidedDstSvmAlloc(devicePtr, hostPtr, storageSize);
+    cmdList.obtainAllocData(copyInfoWithProvidedDstSvmAlloc, false, hostAllocData);
+    EXPECT_EQ(hostAllocData, copyInfoWithProvidedDstSvmAlloc.dstAllocInfo.svmAlloc);
+
+    CpuMemCopyInfo copyInfoWithoutProvidedDstSvmAlloc(devicePtr, hostPtr, storageSize);
+    cmdList.obtainAllocData(copyInfoWithoutProvidedDstSvmAlloc, false, std::nullopt);
+    EXPECT_EQ(deviceAllocData, copyInfoWithoutProvidedDstSvmAlloc.dstAllocInfo.svmAlloc);
 }
 
 HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrWhenPreferCopyThroughLockedPtrCalledForH2DThenReturnTrue) {
@@ -1034,8 +1057,8 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenAggregatedWaitEventWhenPreferCopyThrou
     constexpr size_t copySize = 4;
     CpuMemCopyInfo hostToDeviceCopyInfo(devicePtr, nonUsmHostPtr, copySize);
     CpuMemCopyInfo deviceToHostCopyInfo(nonUsmHostPtr, devicePtr, copySize);
-    cmdList.obtainAllocData(hostToDeviceCopyInfo, false);
-    cmdList.obtainAllocData(deviceToHostCopyInfo, false);
+    cmdList.obtainAllocData(hostToDeviceCopyInfo, false, std::nullopt);
+    cmdList.obtainAllocData(deviceToHostCopyInfo, false, std::nullopt);
 
     ze_event_counter_based_external_aggregate_storage_desc_t externalStorageDesc = {ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_EXTERNAL_AGGREGATE_STORAGE_DESC};
     externalStorageDesc.deviceAddress = reinterpret_cast<uint64_t *>(ptrOffset(devicePtr, cpuCopyThresholdOverride));
@@ -1318,7 +1341,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrTh
     CpuMemCopyInfo h2dAligned(devicePtr, alignedHostPtr, copySize);
     CpuMemCopyInfo h2dMisaligned(devicePtr, misalignedHostPtr, copySize);
     for (auto copyInfo : {&d2hAligned, &d2hMisaligned, &h2dAligned, &h2dMisaligned}) {
-        cmdList.obtainAllocData(*copyInfo, false);
+        cmdList.obtainAllocData(*copyInfo, false, std::nullopt);
     }
 
     EXPECT_FALSE(cmdList.preferCopyThroughLockedPtr(d2hAligned, nullptr, 0, nullptr));
@@ -1505,7 +1528,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenLockedDeviceDestinationWhenPerformCpuM
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
     CpuMemCopyInfo cpuMemCopyInfo(devicePtr, nonUsmHostPtr, 1024);
-    cmdList.obtainAllocData(cpuMemCopyInfo, false);
+    cmdList.obtainAllocData(cpuMemCopyInfo, false, std::nullopt);
 
     CpuIntrinsicsTests::sfenceCounter.store(0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList.performCpuMemcpy(cpuMemCopyInfo, nullptr, 0, nullptr));
@@ -1523,14 +1546,14 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenHostDestinationWhenPerformCpuMemcpyThe
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
     CpuMemCopyInfo cpuMemCopyInfoToHostNonUsm(nonUsmHostPtr, devicePtr, 1024);
-    cmdList.obtainAllocData(cpuMemCopyInfoToHostNonUsm, false);
+    cmdList.obtainAllocData(cpuMemCopyInfoToHostNonUsm, false, std::nullopt);
 
     CpuIntrinsicsTests::sfenceCounter.store(0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList.performCpuMemcpy(cpuMemCopyInfoToHostNonUsm, nullptr, 0, nullptr));
     EXPECT_EQ(0u, CpuIntrinsicsTests::sfenceCounter.load());
 
     CpuMemCopyInfo cpuMemCopyInfoToHostUsm(hostPtr, nonUsmHostPtr, 1024);
-    cmdList.obtainAllocData(cpuMemCopyInfoToHostUsm, false);
+    cmdList.obtainAllocData(cpuMemCopyInfoToHostUsm, false, std::nullopt);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList.performCpuMemcpy(cpuMemCopyInfoToHostUsm, nullptr, 0, nullptr));
     EXPECT_EQ(0u, CpuIntrinsicsTests::sfenceCounter.load());
@@ -1803,7 +1826,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWithDualStreamCopy
     cmdList.cmdQImmediate = mockCmdQ.get();
     mockCmdQ->setTaskCount(1);
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
-    cmdList.cmdQImmediateCopyOffload = mockCopyOffloadCmdQ.get();
+    cmdList.cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex] = mockCopyOffloadCmdQ.get();
     cmdList.copyOffloadMode = CopyOffloadModes::dualStream;
 
     CmdListWaitEventParameters waitEventsParameters = {
@@ -1823,7 +1846,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWithDualStreamCopy
     EXPECT_EQ(2u, cmdList.executeCommandListImmediateWithFlushTaskCalledCount);
 
     cmdList.copyOffloadMode = CopyOffloadModes::disabled;
-    cmdList.cmdQImmediateCopyOffload = nullptr;
+    cmdList.cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex] = nullptr;
 }
 
 HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenAppendWaitOnEventsThenSetDependenciesPresent) {
@@ -2283,7 +2306,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmPtrWhenOb
     ASSERT_NE(nullptr, dstAllocation);
 
     CpuMemCopyInfo memCopyInfo(dstBuffer, srcBuffer, requestedSize);
-    cmdList.obtainAllocData(memCopyInfo, false);
+    cmdList.obtainAllocData(memCopyInfo, false, std::nullopt);
 
     EXPECT_TRUE(memCopyInfo.srcIsPartialOverlapNonUsmHostPtr);
     EXPECT_TRUE(memCopyInfo.dstIsPartialOverlapNonUsmHostPtr);
@@ -2309,7 +2332,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmPtrWhenOb
     ASSERT_NE(nullptr, dstAllocation);
 
     CpuMemCopyInfo memCopyInfo(dstBuffer, srcBuffer, requestedSize);
-    cmdList.obtainAllocData(memCopyInfo, false);
+    cmdList.obtainAllocData(memCopyInfo, false, std::nullopt);
 
     EXPECT_TRUE(memCopyInfo.srcIsPartialOverlapNonUsmHostPtr);
     EXPECT_TRUE(memCopyInfo.dstIsPartialOverlapNonUsmHostPtr);
@@ -2337,7 +2360,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmPtrWhenOb
     void *srcBufferOutsideRange = reinterpret_cast<void *>(0x7890);
     void *dstBufferOutsideRange = reinterpret_cast<void *>(0x8900);
     CpuMemCopyInfo memCopyInfo(dstBufferOutsideRange, srcBufferOutsideRange, requestedSize);
-    cmdList.obtainAllocData(memCopyInfo, false);
+    cmdList.obtainAllocData(memCopyInfo, false, std::nullopt);
 
     EXPECT_FALSE(memCopyInfo.srcIsPartialOverlapNonUsmHostPtr);
     EXPECT_FALSE(memCopyInfo.dstIsPartialOverlapNonUsmHostPtr);

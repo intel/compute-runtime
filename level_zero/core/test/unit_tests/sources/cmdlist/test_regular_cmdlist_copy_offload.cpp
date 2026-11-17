@@ -201,7 +201,7 @@ HWTEST2_F(RegularCmdListCopyOffloadTests, givenDualStreamCopyOffloadWhenCreating
     EXPECT_EQ(CopyOffloadModes::dualStream, inOrderCmdList->copyOffloadMode);
     EXPECT_TRUE(inOrderCmdList->isRegularDualStreamCopyOffloadOperation(true));
     EXPECT_FALSE(inOrderCmdList->isRegularDualStreamCopyOffloadOperation(false));
-    EXPECT_EQ(nullptr, inOrderCmdList->cmdQImmediateCopyOffload);
+    EXPECT_EQ(nullptr, inOrderCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
     EXPECT_EQ(nullptr, inOrderCmdList->copyOffloadSubCmdList);
     EXPECT_EQ(nullptr, inOrderCmdList->getCopyOffloadSubCmdList());
 
@@ -854,7 +854,7 @@ HWTEST2_F(RegularCmdListCopyOffloadTests, givenTbxModeWhenSynchronizingImmediate
     immCmdList->isTbxMode = true;
 
     // immediate cmd list own copy offload queue may use the same copy csr
-    const bool copyCsrSharedWithImmediateCopyOffload = immCmdList->cmdQImmediateCopyOffload && (immCmdList->cmdQImmediateCopyOffload->getCsr() == copyCsr);
+    const bool copyCsrSharedWithImmediateCopyOffload = immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex] && (immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]->getCsr() == copyCsr);
     const size_t expectedCopyCsrDownloads = copyCsrSharedWithImmediateCopyOffload ? 2u : 1u;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->hostSynchronize(std::numeric_limits<uint64_t>::max()));

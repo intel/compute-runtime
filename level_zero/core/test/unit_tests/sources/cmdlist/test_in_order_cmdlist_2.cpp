@@ -11,6 +11,7 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
+#include "shared/source/utilities/staging_buffer_manager.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/relaxed_ordering_commands_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
@@ -278,7 +279,7 @@ HWTEST_F(CopyOffloadInOrderTests, givenCopyOffloadWhenAskingForOperationModeThen
     EXPECT_EQ(CopyOffloadModes::disabled, immCmdList->getCopyOffloadModeForOperation(false));
 
     if (immCmdList->copyOffloadMode == CopyOffloadModes::dualStream) {
-        EXPECT_EQ(immCmdList->cmdQImmediateCopyOffload, immCmdList->getCmdQImmediate(immCmdList->copyOffloadMode));
+        EXPECT_EQ(immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex], immCmdList->getCmdQImmediate(immCmdList->copyOffloadMode));
     } else {
         EXPECT_EQ(immCmdList->cmdQImmediate, immCmdList->getCmdQImmediate(immCmdList->copyOffloadMode));
     }
@@ -311,7 +312,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenNonDualStreamModeWhenSubmittedThenUseDef
     auto eventHandle = events[0]->toHandle();
 
     EXPECT_TRUE(immCmdList->isCopyOffloadEnabled());
-    EXPECT_EQ(nullptr, immCmdList->cmdQImmediateCopyOffload);
+    EXPECT_EQ(nullptr, immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
 
     auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
     auto taskCount = csr->taskCount.load();
@@ -343,7 +344,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenStagingCopyEnabledWhenCopyCalledThenOffl
     immCmdList->useAdditionalBlitProperties = false;
 
     EXPECT_TRUE(immCmdList->isCopyOffloadEnabled());
-    EXPECT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload);
+    EXPECT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
 
     auto mainCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
     auto copyQueueCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(true));
@@ -373,7 +374,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenDualStreamCopyOffloadWhenHostSynchronize
     auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
     immCmdList->forceDisableInOrderWaits();
 
-    ASSERT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload);
+    ASSERT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
 
     auto mainCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
     auto copyCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(true));
@@ -384,7 +385,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenDualStreamCopyOffloadWhenHostSynchronize
     copyCsr->returnWaitForCompletionWithTimeout = NEO::WaitStatus::ready;
 
     immCmdList->cmdQImmediate->setTaskCount(10u);
-    immCmdList->cmdQImmediateCopyOffload->setTaskCount(20u);
+    immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]->setTaskCount(20u);
     immCmdList->latestFlushIsDualCopyOffload = true;
 
     mainCsr->waitForCompletionWithTimeoutTaskCountCalled.store(0u);
@@ -406,7 +407,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenDualStreamCopyOffloadWhenAppendingCopyTh
     debugManager.flags.OverrideCopyOffloadMode.set(CopyOffloadModes::dualStream);
 
     auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
-    ASSERT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload);
+    ASSERT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
 
     if (!device->getProductHelper().blitEnqueuePreferred(false)) {
         GTEST_SKIP();
@@ -441,7 +442,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenPendingCopyOffloadWhenMainCsrCompletesTh
     debugManager.flags.EnableCopyWithStagingBuffers.set(0);
 
     auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
-    ASSERT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload);
+    ASSERT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
 
     auto mainCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
     auto copyCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(true));
@@ -527,7 +528,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenAsyncCopyInRetiredCommandBufferWhenNextC
     ASSERT_EQ(ZE_RESULT_SUCCESS, immediate->appendMemoryCopy(dst, src, sizeof(copyData2), nullptr, 0, nullptr, copyParams));
 
     EXPECT_NE(retired, stream->getGraphicsAllocation());
-    EXPECT_FALSE(immediate->copyOffloadTagUpdateRequired);
+    EXPECT_FALSE(immediate->copyOffloadTagUpdateRequired[CommandList::copyOffloadReadQueueIndex]);
     EXPECT_EQ(copyCsr->peekTaskCount(), copyCsr->peekLatestFlushedTaskCount());
 
     *mainCsr->getTagAddress() = mainCsr->peekTaskCount();
@@ -616,7 +617,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenRetiredCommandBufferNotUsedByCopyEngineW
     ASSERT_FALSE(copyParams.taskCountUpdateRequired);
 
     EXPECT_NE(retired, stream->getGraphicsAllocation());
-    EXPECT_FALSE(immediate->copyOffloadTagUpdateRequired);
+    EXPECT_FALSE(immediate->copyOffloadTagUpdateRequired[CommandList::copyOffloadReadQueueIndex]);
     EXPECT_EQ(flushedTaskCount, copyCsr->peekLatestFlushedTaskCount());
 
     context->freeMem(src);
@@ -645,7 +646,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyTagAlreadyFlushedForRetiredCommandBu
     ASSERT_EQ(ZE_RESULT_SUCCESS, immediate->appendMemoryCopy(dst, src, sizeof(copyData2), nullptr, 0, nullptr, copyParams));
 
     EXPECT_NE(retired, stream->getGraphicsAllocation());
-    EXPECT_FALSE(immediate->copyOffloadTagUpdateRequired);
+    EXPECT_FALSE(immediate->copyOffloadTagUpdateRequired[CommandList::copyOffloadReadQueueIndex]);
     EXPECT_EQ(flushedTaskCount, copyCsr->peekLatestFlushedTaskCount());
 
     context->freeMem(src);
@@ -658,7 +659,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenDualStreamCopyOffloadWhenCopyEngineNotRe
     auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
     immCmdList->forceDisableInOrderWaits();
 
-    ASSERT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload);
+    ASSERT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
 
     auto mainCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
     auto copyCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(true));
@@ -669,7 +670,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenDualStreamCopyOffloadWhenCopyEngineNotRe
     copyCsr->returnWaitForCompletionWithTimeout = NEO::WaitStatus::notReady;
 
     immCmdList->cmdQImmediate->setTaskCount(10u);
-    immCmdList->cmdQImmediateCopyOffload->setTaskCount(20u);
+    immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]->setTaskCount(20u);
     immCmdList->latestFlushIsDualCopyOffload = true;
 
     mainCsr->waitForCompletionWithTimeoutTaskCountCalled.store(0u);
@@ -709,15 +710,15 @@ HWTEST2_F(CopyOffloadInOrderTests, givenOutOfOrderImmediateCmdListWithCopyOffloa
 
     if (crossEngineCacheFlushRequired) {
         EXPECT_EQ(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
-        EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
+        EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
     } else if (device->getProductHelper().useAdditionalBlitProperties()) {
         EXPECT_NE(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
-        EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
+        EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
     } else {
         EXPECT_NE(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
-        EXPECT_NE(nullptr, cmdList->cmdQImmediateCopyOffload);
+        EXPECT_NE(nullptr, cmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
 
-        auto copyQueue = static_cast<WhiteBox<L0::CommandQueue> *>(cmdList->cmdQImmediateCopyOffload);
+        auto copyQueue = static_cast<WhiteBox<L0::CommandQueue> *>(cmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
         EXPECT_TRUE(copyQueue->peekIsCopyOnlyCommandQueue());
         EXPECT_TRUE(NEO::EngineHelpers::isBcs(copyQueue->getCsr()->getOsContext().getEngineType()));
     }
@@ -729,7 +730,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenOutOfOrderDualStreamCopyOffloadWhenAppen
     debugManager.flags.OverrideCopyOffloadMode.set(CopyOffloadModes::dualStream);
 
     auto immCmdList = createOutOfOrderImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
-    ASSERT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload);
+    ASSERT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
     EXPECT_FALSE(immCmdList->isInOrderExecutionEnabled());
 
     if (!device->getProductHelper().blitEnqueuePreferred(false)) {
@@ -755,7 +756,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenOutOfOrderDualStreamCopyOffloadWhenHostS
     debugManager.flags.OverrideCopyOffloadMode.set(CopyOffloadModes::dualStream);
 
     auto immCmdList = createOutOfOrderImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
-    ASSERT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload);
+    ASSERT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
     ASSERT_FALSE(immCmdList->isInOrderExecutionEnabled());
 
     auto mainCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
@@ -767,7 +768,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenOutOfOrderDualStreamCopyOffloadWhenHostS
     copyCsr->returnWaitForCompletionWithTimeout = NEO::WaitStatus::ready;
 
     immCmdList->cmdQImmediate->setTaskCount(10u);
-    immCmdList->cmdQImmediateCopyOffload->setTaskCount(20u);
+    immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]->setTaskCount(20u);
     immCmdList->latestFlushIsDualCopyOffload = false;
 
     mainCsr->waitForCompletionWithTimeoutTaskCountCalled.store(0u);
@@ -785,7 +786,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenOutOfOrderDualStreamCopyOffloadWhenHostS
 HWTEST2_F(CopyOffloadInOrderTests, givenOutOfOrderDualStreamCopyOffloadWhenSynchronizingAgainThenOnlyUnchangedTaskCountsAreSkipped, IsAtLeastXe3pCore) {
     debugManager.flags.OverrideCopyOffloadMode.set(CopyOffloadModes::dualStream);
     auto immCmdList = createOutOfOrderImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
-    ASSERT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload);
+    ASSERT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
     ASSERT_FALSE(immCmdList->isInOrderExecutionEnabled());
 
     auto mainCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
@@ -795,7 +796,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenOutOfOrderDualStreamCopyOffloadWhenSynch
     mainCsr->returnWaitForCompletionWithTimeout = NEO::WaitStatus::ready;
     copyCsr->returnWaitForCompletionWithTimeout = NEO::WaitStatus::ready;
     immCmdList->cmdQImmediate->setTaskCount(10u);
-    immCmdList->cmdQImmediateCopyOffload->setTaskCount(20u);
+    immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]->setTaskCount(20u);
     immCmdList->latestFlushIsDualCopyOffload = false;
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, immCmdList->hostSynchronize(0));
@@ -811,9 +812,9 @@ HWTEST2_F(CopyOffloadInOrderTests, givenOutOfOrderDualStreamCopyOffloadWhenSynch
     EXPECT_EQ(copyWaitsBefore + 1, copyCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
     EXPECT_EQ(11u, mainCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
 
-    immCmdList->cmdQImmediateCopyOffload->setTaskCount(21u);
+    immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]->setTaskCount(21u);
     mainCsr->onWaitForCompletionWithTimeout = [&] {
-        immCmdList->cmdQImmediateCopyOffload->setTaskCount(22u);
+        immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]->setTaskCount(22u);
     };
     EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->hostSynchronize(0));
     mainCsr->onWaitForCompletionWithTimeout = nullptr;
@@ -830,7 +831,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenOutOfOrderDualStreamCopyOffloadWhenSynch
 HWTEST2_F(CopyOffloadInOrderTests, givenOutOfOrderDualStreamCopyOffloadWhenRepeatingBarriersThenNewCopyWorkRequiresAnotherBarrier, IsAtLeastXe3pCore) {
     debugManager.flags.OverrideCopyOffloadMode.set(CopyOffloadModes::dualStream);
     auto immCmdList = createOutOfOrderImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
-    ASSERT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload);
+    ASSERT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
     ASSERT_FALSE(immCmdList->isInOrderExecutionEnabled());
     if (!device->getProductHelper().blitEnqueuePreferred(false)) {
         GTEST_SKIP();
@@ -844,27 +845,27 @@ HWTEST2_F(CopyOffloadInOrderTests, givenOutOfOrderDualStreamCopyOffloadWhenRepea
     };
     ASSERT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters, signalEventParameters));
     const auto mainTaskCount = immCmdList->cmdQImmediate->getTaskCount();
-    const auto copyTaskCount = immCmdList->cmdQImmediateCopyOffload->getTaskCount();
+    const auto copyTaskCount = immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]->getTaskCount();
     EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters, signalEventParameters));
     EXPECT_EQ(mainTaskCount, immCmdList->cmdQImmediate->getTaskCount());
-    EXPECT_EQ(copyTaskCount, immCmdList->cmdQImmediateCopyOffload->getTaskCount());
+    EXPECT_EQ(copyTaskCount, immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]->getTaskCount());
 
     auto usmDevice = allocDeviceMem(1);
     EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendMemoryCopy(usmDevice, &copyData2, 1, nullptr, 0, nullptr, copyParams));
     EXPECT_EQ(mainTaskCount, immCmdList->cmdQImmediate->getTaskCount());
-    EXPECT_GT(immCmdList->cmdQImmediateCopyOffload->getTaskCount(), copyTaskCount);
-    const auto copyTaskCountAfterCopy = immCmdList->cmdQImmediateCopyOffload->getTaskCount();
+    EXPECT_GT(immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]->getTaskCount(), copyTaskCount);
+    const auto copyTaskCountAfterCopy = immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]->getTaskCount();
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters, signalEventParameters));
     EXPECT_GT(immCmdList->cmdQImmediate->getTaskCount(), mainTaskCount);
-    EXPECT_GT(immCmdList->cmdQImmediateCopyOffload->getTaskCount(), copyTaskCountAfterCopy);
+    EXPECT_GT(immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]->getTaskCount(), copyTaskCountAfterCopy);
     context->freeMem(usmDevice);
 }
 
 HWTEST2_F(CopyOffloadInOrderTests, givenOutOfOrderDualStreamCopyOffloadWhenAppendingBarrierWithSignalEventThenOnlySynchronizedWorkAllowsHostSignal, IsAtLeastXe3pCore) {
     debugManager.flags.OverrideCopyOffloadMode.set(CopyOffloadModes::dualStream);
     auto immCmdList = createOutOfOrderImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
-    ASSERT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload);
+    ASSERT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
     ASSERT_FALSE(immCmdList->isInOrderExecutionEnabled());
     if (!device->getProductHelper().blitEnqueuePreferred(false)) {
         GTEST_SKIP();
@@ -886,7 +887,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenOutOfOrderDualStreamCopyOffloadWhenAppen
     ASSERT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendMemoryCopy(usmDevice, &copyData2, 1, nullptr, 0, nullptr, copyParams));
     ASSERT_EQ(ZE_RESULT_SUCCESS, immCmdList->hostSynchronize(0));
     const auto mainTaskCount = immCmdList->cmdQImmediate->getTaskCount();
-    const auto copyTaskCount = immCmdList->cmdQImmediateCopyOffload->getTaskCount();
+    const auto copyTaskCount = immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]->getTaskCount();
     ASSERT_GT(copyTaskCount, 0u);
 
     CmdListWaitEventParameters waitEventsParameters{};
@@ -895,17 +896,17 @@ HWTEST2_F(CopyOffloadInOrderTests, givenOutOfOrderDualStreamCopyOffloadWhenAppen
     };
     EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendBarrier(events[0]->toHandle(), 0, nullptr, waitEventsParameters, signalEventParameters));
     EXPECT_EQ(mainTaskCount, immCmdList->cmdQImmediate->getTaskCount());
-    EXPECT_EQ(copyTaskCount, immCmdList->cmdQImmediateCopyOffload->getTaskCount());
+    EXPECT_EQ(copyTaskCount, immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]->getTaskCount());
     EXPECT_EQ(ZE_RESULT_SUCCESS, events[0]->queryStatus(0));
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendMemoryCopy(usmDevice, &copyData2, 1, nullptr, 0, nullptr, copyParams));
     EXPECT_EQ(mainTaskCount, immCmdList->cmdQImmediate->getTaskCount());
-    const auto copyTaskCountAfterCopy = immCmdList->cmdQImmediateCopyOffload->getTaskCount();
+    const auto copyTaskCountAfterCopy = immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]->getTaskCount();
     ASSERT_GT(copyTaskCountAfterCopy, copyTaskCount);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendBarrier(events[1]->toHandle(), 0, nullptr, waitEventsParameters, signalEventParameters));
     EXPECT_GT(immCmdList->cmdQImmediate->getTaskCount(), mainTaskCount);
-    EXPECT_GT(immCmdList->cmdQImmediateCopyOffload->getTaskCount(), copyTaskCountAfterCopy);
+    EXPECT_GT(immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]->getTaskCount(), copyTaskCountAfterCopy);
     EXPECT_EQ(ZE_RESULT_NOT_READY, events[1]->queryStatus(0));
     context->freeMem(usmDevice);
 }
@@ -916,7 +917,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenOutOfOrderDualStreamCopyOffloadWhenAppen
     debugManager.flags.OverrideCopyOffloadMode.set(CopyOffloadModes::dualStream);
 
     auto immCmdList = createOutOfOrderImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
-    ASSERT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload);
+    ASSERT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
     ASSERT_FALSE(immCmdList->isInOrderExecutionEnabled());
 
     if (!device->getProductHelper().blitEnqueuePreferred(false)) {
@@ -931,7 +932,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenOutOfOrderDualStreamCopyOffloadWhenAppen
 
     const auto mainTaskCount = mainCsr->taskCount.load();
     const auto copyTaskCount = copyCsr->taskCount.load();
-    const auto copyOffloadQueueTaskCount = immCmdList->cmdQImmediateCopyOffload->getTaskCount();
+    const auto copyOffloadQueueTaskCount = immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]->getTaskCount();
     ASSERT_GT(copyTaskCount, 0u);
     ASSERT_GT(copyOffloadQueueTaskCount, 0u);
 
@@ -1000,13 +1001,13 @@ HWTEST2_F(CopyOffloadInOrderTests, givenOutOfOrderDualStreamCopyOffloadWithoutPr
     debugManager.flags.OverrideCopyOffloadMode.set(CopyOffloadModes::dualStream);
 
     auto immCmdList = createOutOfOrderImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
-    ASSERT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload);
+    ASSERT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
     ASSERT_FALSE(immCmdList->isInOrderExecutionEnabled());
 
     auto mainCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
     auto copyCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(true));
 
-    ASSERT_EQ(0u, immCmdList->cmdQImmediateCopyOffload->getTaskCount());
+    ASSERT_EQ(0u, immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]->getTaskCount());
     immCmdList->cmdQImmediate->setTaskCount(1);
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
@@ -1052,12 +1053,12 @@ HWTEST2_F(CopyOffloadInOrderTests, givenOutOfOrderDualStreamCopyOffloadWhenAppen
     debugManager.flags.OverrideCopyOffloadMode.set(CopyOffloadModes::dualStream);
 
     auto immCmdList = createOutOfOrderImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
-    ASSERT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload);
+    ASSERT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
     ASSERT_FALSE(immCmdList->isInOrderExecutionEnabled());
 
     immCmdList->cmdQImmediate->setTaskCount(1);
     const auto mainQueueTaskCount = immCmdList->cmdQImmediate->getTaskCount();
-    const auto copyOffloadQueueTaskCount = immCmdList->cmdQImmediateCopyOffload->getTaskCount();
+    const auto copyOffloadQueueTaskCount = immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]->getTaskCount();
 
     immCmdList->latestFlushIsDualCopyOffload = false;
 
@@ -1075,7 +1076,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenOutOfOrderDualStreamCopyOffloadWhenAppen
     EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters, signalEventParameters));
 
     EXPECT_GT(immCmdList->cmdQImmediate->getTaskCount(), mainQueueTaskCount);
-    EXPECT_GT(immCmdList->cmdQImmediateCopyOffload->getTaskCount(), copyOffloadQueueTaskCount);
+    EXPECT_GT(immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]->getTaskCount(), copyOffloadQueueTaskCount);
 
     // copy offload queue is flushed as the last one
     EXPECT_TRUE(immCmdList->latestFlushIsDualCopyOffload);
@@ -1085,7 +1086,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenOutOfOrderDualStreamCopyOffloadWhenAppen
     debugManager.flags.OverrideCopyOffloadMode.set(CopyOffloadModes::dualStream);
 
     auto immCmdList = createOutOfOrderImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
-    ASSERT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload);
+    ASSERT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
     ASSERT_FALSE(immCmdList->isInOrderExecutionEnabled());
 
     auto mainCsr = immCmdList->getCsr(false);
@@ -1125,7 +1126,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenOutOfOrderDualStreamCopyOffloadWhenAppen
     TaskCountType cleanupTaskCount = 0;
     EXPECT_FALSE(event->getCleanupTaskCount(mainCsr, cleanupTaskCount));
     ASSERT_TRUE(event->getCleanupTaskCount(copyCsr, cleanupTaskCount));
-    EXPECT_EQ(immCmdList->cmdQImmediateCopyOffload->getTaskCount(), cleanupTaskCount);
+    EXPECT_EQ(immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]->getTaskCount(), cleanupTaskCount);
 
     EXPECT_EQ(mainCsr, event->getCsrForCacheFlush());
 }
@@ -1134,7 +1135,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenOutOfOrderDualStreamCopyOffloadAndNoWork
     debugManager.flags.OverrideCopyOffloadMode.set(CopyOffloadModes::dualStream);
 
     auto immCmdList = createOutOfOrderImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
-    ASSERT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload);
+    ASSERT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
     ASSERT_FALSE(immCmdList->isInOrderExecutionEnabled());
 
     auto mainCsr = immCmdList->getCsr(false);
@@ -1156,7 +1157,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenOutOfOrderDualStreamCopyOffloadAndNoWork
     ASSERT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters, signalEventParameters));
 
     const auto mainQueueTaskCount = immCmdList->cmdQImmediate->getTaskCount();
-    const auto copyOffloadQueueTaskCount = immCmdList->cmdQImmediateCopyOffload->getTaskCount();
+    const auto copyOffloadQueueTaskCount = immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]->getTaskCount();
 
     ze_result_t result = ZE_RESULT_SUCCESS;
 
@@ -1178,7 +1179,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenOutOfOrderDualStreamCopyOffloadAndNoWork
     EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendBarrier(event->toHandle(), 0, nullptr, waitEventsParameters, signalEventParameters));
 
     EXPECT_GT(immCmdList->cmdQImmediate->getTaskCount(), mainQueueTaskCount);
-    EXPECT_EQ(copyOffloadQueueTaskCount, immCmdList->cmdQImmediateCopyOffload->getTaskCount());
+    EXPECT_EQ(copyOffloadQueueTaskCount, immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]->getTaskCount());
     EXPECT_FALSE(immCmdList->latestFlushIsDualCopyOffload);
 
     TaskCountType cleanupTaskCount = 0;
@@ -1191,7 +1192,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenOutOfOrderDualStreamCopyOffloadAndComple
     debugManager.flags.OverrideCopyOffloadMode.set(CopyOffloadModes::dualStream);
 
     auto immCmdList = createOutOfOrderImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
-    ASSERT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload);
+    ASSERT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
     ASSERT_FALSE(immCmdList->isInOrderExecutionEnabled());
 
     auto mainCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
@@ -1213,7 +1214,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenOutOfOrderDualStreamCopyOffloadAndComple
     ASSERT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendBarrier(nullptr, 0, nullptr, waitEventsParameters, signalEventParameters));
 
     const auto mainQueueTaskCount = immCmdList->cmdQImmediate->getTaskCount();
-    const auto copyOffloadQueueTaskCount = immCmdList->cmdQImmediateCopyOffload->getTaskCount();
+    const auto copyOffloadQueueTaskCount = immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]->getTaskCount();
 
     ze_result_t result = ZE_RESULT_SUCCESS;
 
@@ -1236,7 +1237,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenOutOfOrderDualStreamCopyOffloadAndComple
     EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendBarrier(event->toHandle(), 0, nullptr, waitEventsParameters, signalEventParameters));
 
     EXPECT_EQ(mainQueueTaskCount, immCmdList->cmdQImmediate->getTaskCount());
-    EXPECT_EQ(copyOffloadQueueTaskCount, immCmdList->cmdQImmediateCopyOffload->getTaskCount());
+    EXPECT_EQ(copyOffloadQueueTaskCount, immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]->getTaskCount());
     EXPECT_EQ(ZE_RESULT_SUCCESS, event->queryStatus(0));
 }
 
@@ -1244,7 +1245,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenOutOfOrderDualStreamCopyOffloadWhenAppen
     debugManager.flags.OverrideCopyOffloadMode.set(CopyOffloadModes::dualStream);
 
     auto immCmdList = createOutOfOrderImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
-    ASSERT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload);
+    ASSERT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
     ASSERT_FALSE(immCmdList->isInOrderExecutionEnabled());
 
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -1286,7 +1287,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenLatestFlushIsDualCopyOffloadButCopyOfflo
     immCmdList->forceDisableInOrderWaits();
 
     // Without dual-stream copy offload the copy-offload queue and CSR are never created.
-    ASSERT_EQ(nullptr, immCmdList->cmdQImmediateCopyOffload);
+    ASSERT_EQ(nullptr, immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
     ASSERT_FALSE(immCmdList->isDualStreamCopyOffloadOperation(immCmdList->isCopyOffloadEnabled()));
 
     auto mainCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
@@ -1409,7 +1410,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenDebugFlagSetWhenCreatingRegularCmdListTh
 
     regularCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(false);
     EXPECT_NE(CopyOffloadModes::disabled, regularCmdList->copyOffloadMode);
-    EXPECT_EQ(nullptr, regularCmdList->cmdQImmediateCopyOffload);
+    EXPECT_EQ(nullptr, regularCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
 
     regularCmdList = createRegularCmdList<FamilyType::gfxCoreFamily>(true);
     EXPECT_EQ(CopyOffloadModes::disabled, regularCmdList->copyOffloadMode);
@@ -1433,15 +1434,15 @@ HWTEST2_F(CopyOffloadInOrderTests, givenDebugFlagSetWhenCreatingCmdListThenEnabl
 
         if (crossEngineCacheFlushRequired) {
             EXPECT_EQ(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
-            EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
+            EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
         } else if (device->getProductHelper().useAdditionalBlitProperties()) {
             EXPECT_NE(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
-            EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
+            EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
         } else {
             EXPECT_NE(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
-            EXPECT_NE(nullptr, cmdList->cmdQImmediateCopyOffload);
+            EXPECT_NE(nullptr, cmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
 
-            auto copyQueue = static_cast<WhiteBox<L0::CommandQueue> *>(cmdList->cmdQImmediateCopyOffload);
+            auto copyQueue = static_cast<WhiteBox<L0::CommandQueue> *>(cmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
             auto computeQueue = static_cast<WhiteBox<L0::CommandQueue> *>(cmdList->cmdQImmediate);
 
             EXPECT_EQ(computeQueue->getCsr()->getOsContext().isHighPriority(), copyQueue->getCsr()->getOsContext().isHighPriority());
@@ -1463,15 +1464,15 @@ HWTEST2_F(CopyOffloadInOrderTests, givenDebugFlagSetWhenCreatingCmdListThenEnabl
 
         if (crossEngineCacheFlushRequired) {
             EXPECT_EQ(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
-            EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
+            EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
         } else if (device->getProductHelper().useAdditionalBlitProperties()) {
             EXPECT_NE(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
-            EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
+            EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
         } else {
             EXPECT_NE(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
-            EXPECT_NE(nullptr, cmdList->cmdQImmediateCopyOffload);
+            EXPECT_NE(nullptr, cmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
 
-            auto copyQueue = static_cast<WhiteBox<L0::CommandQueue> *>(cmdList->cmdQImmediateCopyOffload);
+            auto copyQueue = static_cast<WhiteBox<L0::CommandQueue> *>(cmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
             auto computeQueue = static_cast<WhiteBox<L0::CommandQueue> *>(cmdList->cmdQImmediate);
             EXPECT_EQ(computeQueue->getCsr()->getOsContext().isHighPriority(), copyQueue->getCsr()->getOsContext().isHighPriority());
 
@@ -1494,13 +1495,13 @@ HWTEST2_F(CopyOffloadInOrderTests, givenDebugFlagSetWhenCreatingCmdListThenEnabl
 
         if (crossEngineCacheFlushRequired || !device->getL0GfxCoreHelper().isCopyOffloadForOutOfOrderImmediateCmdListSupported()) {
             EXPECT_EQ(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
-            EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
+            EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
         } else if (device->getProductHelper().useAdditionalBlitProperties()) {
             EXPECT_NE(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
-            EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
+            EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
         } else {
             EXPECT_NE(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
-            EXPECT_NE(nullptr, cmdList->cmdQImmediateCopyOffload);
+            EXPECT_NE(nullptr, cmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
         }
 
         zeCommandListDestroy(cmdListHandle);
@@ -1514,7 +1515,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenDebugFlagSetWhenCreatingCmdListThenEnabl
         EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdListHandle));
         auto cmdList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(CommandList::fromHandle(cmdListHandle));
         EXPECT_EQ(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
-        EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
+        EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
 
         zeCommandListDestroy(cmdListHandle);
 
@@ -1531,7 +1532,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenDebugFlagSetWhenCreatingCmdListThenEnabl
         } else {
             EXPECT_EQ(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
         }
-        EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
+        EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
 
         zeCommandListDestroy(cmdListHandle);
     }
@@ -1558,11 +1559,11 @@ HWTEST2_F(CopyOffloadInOrderTests, givenLowPriorityQueueWhenCopyEngineDoesNotSup
         GTEST_SKIP();
     }
 
-    if (cmdList->cmdQImmediateCopyOffload != nullptr) {
-        auto copyQueue = static_cast<WhiteBox<L0::CommandQueue> *>(cmdList->cmdQImmediateCopyOffload);
+    if (cmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex] != nullptr) {
+        auto copyQueue = static_cast<WhiteBox<L0::CommandQueue> *>(cmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
         EXPECT_TRUE(copyQueue->getCsr()->getOsContext().isLowPriority());
     } else if (cmdList->copyOffloadMode == CopyOffloadModes::disabled) {
-        EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
+        EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
     }
 
     zeCommandListDestroy(cmdListHandle);
@@ -1585,8 +1586,8 @@ HWTEST2_F(CopyOffloadInOrderTests, givenMaxPowerHintWhenCreatingDualStreamCopyOf
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdListHandle));
     auto cmdList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(CommandList::fromHandle(cmdListHandle));
 
-    if (cmdList->cmdQImmediateCopyOffload != nullptr) {
-        auto copyQueue = static_cast<WhiteBox<L0::CommandQueue> *>(cmdList->cmdQImmediateCopyOffload);
+    if (cmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex] != nullptr) {
+        auto copyQueue = static_cast<WhiteBox<L0::CommandQueue> *>(cmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
         EXPECT_TRUE(copyQueue->getCsr()->getOsContext().isPowerHint());
     } else {
         EXPECT_EQ(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
@@ -1617,13 +1618,13 @@ HWTEST2_F(CopyOffloadInOrderTests, givenQueueDescriptorWhenCreatingCmdListThenEn
         auto cmdList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(CommandList::fromHandle(cmdListHandle));
         if (crossEngineCacheFlushRequired) {
             EXPECT_EQ(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
-            EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
+            EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
         } else if (device->getProductHelper().useAdditionalBlitProperties()) {
             EXPECT_NE(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
-            EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
+            EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
         } else {
             EXPECT_NE(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
-            EXPECT_NE(nullptr, cmdList->cmdQImmediateCopyOffload);
+            EXPECT_NE(nullptr, cmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
         }
 
         zeCommandListDestroy(cmdListHandle);
@@ -1639,7 +1640,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenQueueDescriptorWhenCreatingCmdListThenEn
         } else {
             EXPECT_EQ(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
         }
-        EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
+        EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
 
         zeCommandListDestroy(cmdListHandle);
     }
@@ -1663,13 +1664,13 @@ HWTEST2_F(CopyOffloadInOrderTests, givenQueueDescriptorWithCopyOffloadFlagWhenCr
 
         if (crossEngineCacheFlushRequired) {
             EXPECT_EQ(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
-            EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
+            EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
         } else if (device->getProductHelper().useAdditionalBlitProperties()) {
             EXPECT_NE(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
-            EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
+            EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
         } else {
             EXPECT_NE(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
-            EXPECT_NE(nullptr, cmdList->cmdQImmediateCopyOffload);
+            EXPECT_NE(nullptr, cmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
         }
 
         zeCommandListDestroy(cmdListHandle);
@@ -1685,7 +1686,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenQueueDescriptorWithCopyOffloadFlagWhenCr
         } else {
             EXPECT_EQ(CopyOffloadModes::disabled, cmdList->copyOffloadMode);
         }
-        EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
+        EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
 
         zeCommandListDestroy(cmdListHandle);
     }
@@ -2735,7 +2736,7 @@ HWTEST2_F(CopyOffloadInOrderTests, whenDispatchingSelectCorrectQueueAndCsr, IsAt
     auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
     auto heaplessEnabled = immCmdList->isHeaplessModeEnabled();
     auto regularCsr = immCmdList->cmdQImmediate->getCsr();
-    auto copyCsr = immCmdList->cmdQImmediateCopyOffload->getCsr();
+    auto copyCsr = immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]->getCsr();
 
     auto expectedRegularCsrTaskCount = heaplessEnabled ? 1u : 0u;
     auto expectedCopyCsrTaskCount = heaplessEnabled ? 1u : 0u;
@@ -2745,7 +2746,7 @@ HWTEST2_F(CopyOffloadInOrderTests, whenDispatchingSelectCorrectQueueAndCsr, IsAt
     EXPECT_EQ(expectedRegularCsrTaskCount, regularCsr->peekTaskCount());
     EXPECT_EQ(expectedImmediateCmdTaskCount, immCmdList->cmdQImmediate->getTaskCount());
     EXPECT_EQ(expectedCopyCsrTaskCount, copyCsr->peekTaskCount());
-    EXPECT_EQ(expectedCopyOffloadTaskCount, immCmdList->cmdQImmediateCopyOffload->getTaskCount());
+    EXPECT_EQ(expectedCopyOffloadTaskCount, immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]->getTaskCount());
 
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0].get(), 0, nullptr, launchParams);
     expectedRegularCsrTaskCount++;
@@ -2754,7 +2755,7 @@ HWTEST2_F(CopyOffloadInOrderTests, whenDispatchingSelectCorrectQueueAndCsr, IsAt
     EXPECT_EQ(expectedRegularCsrTaskCount, regularCsr->peekTaskCount());
     EXPECT_EQ(expectedImmediateCmdTaskCount, immCmdList->cmdQImmediate->getTaskCount());
     EXPECT_EQ(expectedCopyCsrTaskCount, copyCsr->peekTaskCount());
-    EXPECT_EQ(expectedCopyOffloadTaskCount, immCmdList->cmdQImmediateCopyOffload->getTaskCount());
+    EXPECT_EQ(expectedCopyOffloadTaskCount, immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]->getTaskCount());
 
     EXPECT_EQ(regularCsr, events[0]->csrs[0]);
     EXPECT_EQ(immCmdList->cmdQImmediate, events[0]->latestUsedCmdQueue);
@@ -2766,10 +2767,10 @@ HWTEST2_F(CopyOffloadInOrderTests, whenDispatchingSelectCorrectQueueAndCsr, IsAt
     EXPECT_EQ(expectedRegularCsrTaskCount, regularCsr->peekTaskCount());
     EXPECT_EQ(expectedImmediateCmdTaskCount, immCmdList->cmdQImmediate->getTaskCount());
     EXPECT_EQ(expectedCopyCsrTaskCount, copyCsr->peekTaskCount());
-    EXPECT_EQ(expectedCopyOffloadTaskCount, immCmdList->cmdQImmediateCopyOffload->getTaskCount());
+    EXPECT_EQ(expectedCopyOffloadTaskCount, immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]->getTaskCount());
 
     EXPECT_EQ(copyCsr, events[0]->csrs[0]);
-    EXPECT_EQ(immCmdList->cmdQImmediateCopyOffload, events[0]->latestUsedCmdQueue);
+    EXPECT_EQ(immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex], events[0]->latestUsedCmdQueue);
 }
 
 HWTEST2_F(CopyOffloadInOrderTests, givenCopyOperationWithHostVisibleEventThenMarkAsNotHostVisibleSubmission, IsAtLeastXeHpcCore) {
@@ -5802,6 +5803,506 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadAndBcsDispatchAndCounterBased
     context->freeMem(srcAddress);
     context->freeMem(dstAddress);
     zeEventDestroy(handle);
+}
+
+using CopyOffloadWriteEngineInOrderTests = CopyOffloadWriteEngineInOrderFixture;
+
+HWTEST2_F(CopyOffloadWriteEngineInOrderTests, givenInOrderImmCmdListWithCopyOffloadWhenCreatedThenWriteQueueUsesSecondCopyEngine, IsCRI) {
+    auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+
+    auto readQueue = immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex];
+    auto writeQueue = immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadWriteQueueIndex];
+    ASSERT_NE(nullptr, readQueue);
+    ASSERT_NE(nullptr, writeQueue);
+
+    const auto &copyEngines = device->getNEODevice()->getRegularEngineGroups()[device->getCopyEngineOrdinal()].engines;
+    ASSERT_LE(2u, copyEngines.size());
+    EXPECT_EQ(copyEngines[0].getEngineType(), readQueue->getCsr()->getOsContext().getEngineType());
+    EXPECT_EQ(copyEngines[1].getEngineType(), writeQueue->getCsr()->getOsContext().getEngineType());
+}
+
+HWTEST2_F(CopyOffloadWriteEngineInOrderTests, givenCopyOffloadWriteEngineDebugKeyNotSetWhenInOrderImmCmdListCreatedThenWriteQueueIsNotCreated, IsCRI) {
+    debugManager.flags.CopyOffloadWriteEngine.set(-1);
+
+    auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+
+    EXPECT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
+    EXPECT_EQ(nullptr, immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadWriteQueueIndex]);
+}
+
+HWTEST2_F(CopyOffloadWriteEngineInOrderTests, givenCopyOffloadWriteEngineDisabledByDebugKeyWhenInOrderImmCmdListCreatedThenWriteQueueIsNotCreated, IsCRI) {
+    debugManager.flags.CopyOffloadWriteEngine.set(0);
+
+    auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+
+    EXPECT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
+    EXPECT_EQ(nullptr, immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadWriteQueueIndex]);
+}
+
+HWTEST2_F(CopyOffloadWriteEngineInOrderTests, givenOutOfOrderImmCmdListWithCopyOffloadWhenCreatedThenWriteQueueIsNotCreated, IsCRI) {
+    auto immCmdList = createOutOfOrderImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+
+    EXPECT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
+    EXPECT_EQ(nullptr, immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadWriteQueueIndex]);
+}
+
+HWTEST2_F(CopyOffloadWriteEngineInOrderTests, givenSecondCopyEngineIndexForcedToFirstEngineWhenInOrderImmCmdListCreatedThenWriteQueueIsNotCreated, IsCRI) {
+    debugManager.flags.ForceBcsEngineIndex.set(0);
+
+    auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+
+    EXPECT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
+    EXPECT_EQ(nullptr, immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadWriteQueueIndex]);
+}
+
+using CopyOffloadWriteEngineSingleCopyEngineInOrderTests = CopyOffloadWriteEngineSingleCopyEngineInOrderFixture;
+
+HWTEST2_F(CopyOffloadWriteEngineSingleCopyEngineInOrderTests, givenSingleCopyEngineInCopyEngineGroupWhenInOrderImmCmdListCreatedThenWriteQueueIsNotCreated, IsCRI) {
+    const auto &copyEngines = device->getNEODevice()->getRegularEngineGroups()[device->getCopyEngineOrdinal()].engines;
+    ASSERT_EQ(1u, copyEngines.size());
+
+    auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+
+    EXPECT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
+    EXPECT_EQ(nullptr, immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadWriteQueueIndex]);
+}
+
+HWTEST2_F(CopyOffloadWriteEngineInOrderTests, givenWriteQueueWhenCopyingFromHostToDeviceThenReadQueueIsUsed, IsCRI) {
+    auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+    auto readQueue = immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex];
+    auto writeQueue = immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadWriteQueueIndex];
+    ASSERT_NE(nullptr, writeQueue);
+
+    const auto src = allocHostMem(sizeof(copyData1));
+    const auto dst = allocDeviceMem(sizeof(copyData1));
+    const auto readTaskCount = readQueue->getTaskCount();
+    const auto writeTaskCount = writeQueue->getTaskCount();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendMemoryCopy(dst, src, sizeof(copyData1), nullptr, 0, nullptr, copyParams));
+
+    EXPECT_GT(readQueue->getTaskCount(), readTaskCount);
+    EXPECT_EQ(writeTaskCount, writeQueue->getTaskCount());
+    EXPECT_EQ(CommandList::copyOffloadReadQueueIndex, immCmdList->latestCopyOffloadQueueIndex);
+
+    context->freeMem(src);
+    context->freeMem(dst);
+}
+
+HWTEST2_F(CopyOffloadWriteEngineInOrderTests, givenWriteQueueWhenCopyingFromDeviceToDeviceThenReadQueueIsUsed, IsCRI) {
+    auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+    auto readQueue = immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex];
+    auto writeQueue = immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadWriteQueueIndex];
+    ASSERT_NE(nullptr, writeQueue);
+
+    const auto src = allocDeviceMem(sizeof(copyData1));
+    const auto dst = allocDeviceMem(sizeof(copyData1));
+    const auto readTaskCount = readQueue->getTaskCount();
+    const auto writeTaskCount = writeQueue->getTaskCount();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendMemoryCopy(dst, src, sizeof(copyData1), nullptr, 0, nullptr, copyParams));
+
+    EXPECT_GT(readQueue->getTaskCount(), readTaskCount);
+    EXPECT_EQ(writeTaskCount, writeQueue->getTaskCount());
+
+    context->freeMem(src);
+    context->freeMem(dst);
+}
+
+HWTEST2_F(CopyOffloadWriteEngineInOrderTests, givenWriteQueueWhenCopyingFromDeviceToHostUsmThenWriteQueueIsUsedAndReadQueueIsSelectedAfterCopy, IsCRI) {
+    auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+    auto readQueue = immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex];
+    auto writeQueue = immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadWriteQueueIndex];
+    ASSERT_NE(nullptr, writeQueue);
+
+    const auto src = allocDeviceMem(sizeof(copyData1));
+    const auto dst = allocHostMem(sizeof(copyData1));
+    const auto readTaskCount = readQueue->getTaskCount();
+    const auto writeTaskCount = writeQueue->getTaskCount();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendMemoryCopy(dst, src, sizeof(copyData1), nullptr, 0, nullptr, copyParams));
+
+    EXPECT_EQ(readTaskCount, readQueue->getTaskCount());
+    EXPECT_GT(writeQueue->getTaskCount(), writeTaskCount);
+    EXPECT_EQ(CommandList::copyOffloadWriteQueueIndex, immCmdList->latestCopyOffloadQueueIndex);
+    EXPECT_EQ(CommandList::copyOffloadReadQueueIndex, immCmdList->activeCopyOffloadQueueIndex);
+    EXPECT_EQ(readQueue->getCsr(), immCmdList->getCsr(true));
+
+    context->freeMem(src);
+    context->freeMem(dst);
+}
+
+HWTEST2_F(CopyOffloadWriteEngineInOrderTests, givenDeviceToHostCopyThroughLockedPtrWhenOffloadedFillToDeviceIsAppendedThenReadQueueIsUsed, IsCRI) {
+    auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+    auto readQueue = immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex];
+    auto writeQueue = immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadWriteQueueIndex];
+    ASSERT_NE(nullptr, writeQueue);
+
+    const auto src = allocDeviceMem(sizeof(copyData1));
+    const auto dst = allocHostMem(sizeof(copyData1));
+
+    debugManager.flags.ExperimentalForceCopyThroughLock.set(1);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendMemoryCopy(dst, src, sizeof(copyData1), nullptr, 0, nullptr, copyParams));
+    debugManager.flags.ExperimentalForceCopyThroughLock.set(-1);
+
+    const auto readTaskCount = readQueue->getTaskCount();
+    const auto writeTaskCount = writeQueue->getTaskCount();
+
+    const uint8_t pattern = 1u;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendMemoryFill(src, &pattern, sizeof(pattern), 1, nullptr, 0, nullptr, copyParams));
+
+    EXPECT_GT(readQueue->getTaskCount(), readTaskCount);
+    EXPECT_EQ(writeTaskCount, writeQueue->getTaskCount());
+
+    context->freeMem(src);
+    context->freeMem(dst);
+}
+
+HWTEST2_F(CopyOffloadWriteEngineInOrderTests, givenWriteQueueWhenCopyingFromDeviceToNonUsmHostPtrThenWriteQueueIsUsed, IsCRI) {
+    auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+    auto readQueue = immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex];
+    auto writeQueue = immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadWriteQueueIndex];
+    ASSERT_NE(nullptr, writeQueue);
+
+    const auto src = allocDeviceMem(sizeof(copyData1));
+    const auto readTaskCount = readQueue->getTaskCount();
+    const auto writeTaskCount = writeQueue->getTaskCount();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendMemoryCopy(&copyData1, src, sizeof(copyData1), nullptr, 0, nullptr, copyParams));
+
+    EXPECT_EQ(readTaskCount, readQueue->getTaskCount());
+    EXPECT_GT(writeQueue->getTaskCount(), writeTaskCount);
+
+    context->freeMem(src);
+}
+
+HWTEST2_F(CopyOffloadWriteEngineInOrderTests, givenWriteQueueWhenCopyingRegionFromDeviceToHostUsmThenWriteQueueIsUsed, IsCRI) {
+    auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+    auto readQueue = immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex];
+    auto writeQueue = immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadWriteQueueIndex];
+    ASSERT_NE(nullptr, writeQueue);
+
+    const auto src = allocDeviceMem(sizeof(copyData1));
+    const auto dst = allocHostMem(sizeof(copyData1));
+    ze_copy_region_t region = {0, 0, 0, sizeof(copyData1), 1, 1};
+    const auto readTaskCount = readQueue->getTaskCount();
+    const auto writeTaskCount = writeQueue->getTaskCount();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendMemoryCopyRegion(dst, &region, sizeof(copyData1), 0, src, &region, sizeof(copyData1), 0, nullptr, 0, nullptr, copyParams));
+
+    EXPECT_EQ(readTaskCount, readQueue->getTaskCount());
+    EXPECT_GT(writeQueue->getTaskCount(), writeTaskCount);
+
+    context->freeMem(src);
+    context->freeMem(dst);
+}
+
+HWTEST2_F(CopyOffloadWriteEngineInOrderTests, givenDeferredInitImmCmdListWhenFirstAppendIsCopyFromDeviceToHostUsmThenWriteQueueIsUsed, IsCRI) {
+    debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.set(1);
+    debugManager.flags.DeferCmdQGpgpuInitialization.set(1);
+    device->setFirstImmCmdlistCreated();
+
+    ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    cmdQueueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+
+    ze_command_list_handle_t cmdListHandle;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdListHandle));
+    auto immCmdList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(CommandList::fromHandle(cmdListHandle));
+    ASSERT_EQ(nullptr, immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadWriteQueueIndex]);
+
+    const auto src = allocDeviceMem(sizeof(copyData1));
+    const auto dst = allocHostMem(sizeof(copyData1));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendMemoryCopy(dst, src, sizeof(copyData1), nullptr, 0, nullptr, copyParams));
+
+    auto readQueue = immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex];
+    auto writeQueue = immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadWriteQueueIndex];
+    ASSERT_NE(nullptr, readQueue);
+    ASSERT_NE(nullptr, writeQueue);
+    EXPECT_EQ(0u, readQueue->getTaskCount());
+    EXPECT_GT(writeQueue->getTaskCount(), 0u);
+    EXPECT_EQ(CommandList::copyOffloadWriteQueueIndex, immCmdList->latestCopyOffloadQueueIndex);
+
+    context->freeMem(src);
+    context->freeMem(dst);
+    completeHostAddress<FamilyType::gfxCoreFamily>(immCmdList);
+    zeCommandListDestroy(cmdListHandle);
+}
+
+HWTEST2_F(CopyOffloadWriteEngineInOrderTests, givenDeferredInitImmCmdListWhenFirstAppendIsCopyRegionFromDeviceToHostUsmThenWriteQueueIsUsed, IsCRI) {
+    debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.set(1);
+    debugManager.flags.DeferCmdQGpgpuInitialization.set(1);
+    device->setFirstImmCmdlistCreated();
+
+    ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    cmdQueueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+    cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+
+    ze_command_list_handle_t cmdListHandle;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdListHandle));
+    auto immCmdList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>> *>(CommandList::fromHandle(cmdListHandle));
+    ASSERT_EQ(nullptr, immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadWriteQueueIndex]);
+
+    const auto src = allocDeviceMem(sizeof(copyData1));
+    const auto dst = allocHostMem(sizeof(copyData1));
+    ze_copy_region_t region = {0, 0, 0, sizeof(copyData1), 1, 1};
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendMemoryCopyRegion(dst, &region, sizeof(copyData1), 0, src, &region, sizeof(copyData1), 0, nullptr, 0, nullptr, copyParams));
+
+    auto readQueue = immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex];
+    auto writeQueue = immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadWriteQueueIndex];
+    ASSERT_NE(nullptr, readQueue);
+    ASSERT_NE(nullptr, writeQueue);
+    EXPECT_EQ(0u, readQueue->getTaskCount());
+    EXPECT_GT(writeQueue->getTaskCount(), 0u);
+
+    context->freeMem(src);
+    context->freeMem(dst);
+    completeHostAddress<FamilyType::gfxCoreFamily>(immCmdList);
+    zeCommandListDestroy(cmdListHandle);
+}
+
+HWTEST2_F(CopyOffloadWriteEngineInOrderTests, givenWriteQueueWhenCopyingWithExplicitAllocationsToHostThenWriteQueueIsUsed, IsCRI) {
+    auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+    auto readQueue = immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex];
+    auto writeQueue = immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadWriteQueueIndex];
+    ASSERT_NE(nullptr, writeQueue);
+
+    const auto src = allocDeviceMem(sizeof(copyData1));
+    const auto dst = allocHostMem(sizeof(copyData1));
+    auto svmManager = driverHandle->getSvmAllocsManager();
+    const auto rootDeviceIndex = device->getRootDeviceIndex();
+    copyParams.srcAllocInfo.explicitAlloc = svmManager->getSVMAlloc(src)->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
+    copyParams.dstAllocInfo.explicitAlloc = svmManager->getSVMAlloc(dst)->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
+    const auto readTaskCount = readQueue->getTaskCount();
+    const auto writeTaskCount = writeQueue->getTaskCount();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendMemoryCopy(dst, src, sizeof(copyData1), nullptr, 0, nullptr, copyParams));
+
+    EXPECT_EQ(readTaskCount, readQueue->getTaskCount());
+    EXPECT_GT(writeQueue->getTaskCount(), writeTaskCount);
+
+    context->freeMem(src);
+    context->freeMem(dst);
+}
+
+HWTEST2_F(CopyOffloadWriteEngineInOrderTests, givenWriteQueueWhenCopyingWithExplicitAllocationsToDeviceThenReadQueueIsUsed, IsCRI) {
+    auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+    auto readQueue = immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex];
+    auto writeQueue = immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadWriteQueueIndex];
+    ASSERT_NE(nullptr, writeQueue);
+
+    const auto src = allocHostMem(sizeof(copyData1));
+    const auto dst = allocDeviceMem(sizeof(copyData1));
+    auto svmManager = driverHandle->getSvmAllocsManager();
+    const auto rootDeviceIndex = device->getRootDeviceIndex();
+    copyParams.srcAllocInfo.explicitAlloc = svmManager->getSVMAlloc(src)->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
+    copyParams.dstAllocInfo.explicitAlloc = svmManager->getSVMAlloc(dst)->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
+    const auto readTaskCount = readQueue->getTaskCount();
+    const auto writeTaskCount = writeQueue->getTaskCount();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendMemoryCopy(dst, src, sizeof(copyData1), nullptr, 0, nullptr, copyParams));
+
+    EXPECT_GT(readQueue->getTaskCount(), readTaskCount);
+    EXPECT_EQ(writeTaskCount, writeQueue->getTaskCount());
+
+    context->freeMem(src);
+    context->freeMem(dst);
+}
+
+HWTEST2_F(CopyOffloadWriteEngineInOrderTests, givenRetiredCommandBufferUsedByWriteQueueWhenNextCopyIsFlushedToReadQueueThenWriteQueueTagUpdateStaysPending, IsCRI) {
+    debugManager.flags.EnableCommandBufferPoolAllocator.set(0);
+
+    auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+    ASSERT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadWriteQueueIndex]);
+    auto writeCsr = immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadWriteQueueIndex]->getCsr();
+
+    const auto hostAlloc = allocHostMem(sizeof(copyData1));
+    const auto deviceAlloc = allocDeviceMem(sizeof(copyData1));
+    const auto stream = immCmdList->commandContainer.getCommandStream();
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendMemoryCopy(hostAlloc, deviceAlloc, sizeof(copyData1), nullptr, 0, nullptr, copyParams));
+    ASSERT_FALSE(copyParams.taskCountUpdateRequired);
+    ASSERT_TRUE(stream->getGraphicsAllocation()->isUsedByOsContext(writeCsr->getOsContext().getContextId()));
+    const auto writeFlushedTaskCount = writeCsr->peekLatestFlushedTaskCount();
+
+    stream->getSpace(stream->getAvailableSpace());
+    ASSERT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendMemoryCopy(deviceAlloc, hostAlloc, sizeof(copyData1), nullptr, 0, nullptr, copyParams));
+
+    EXPECT_TRUE(immCmdList->copyOffloadTagUpdateRequired[CommandList::copyOffloadWriteQueueIndex]);
+    EXPECT_FALSE(immCmdList->copyOffloadTagUpdateRequired[CommandList::copyOffloadReadQueueIndex]);
+    EXPECT_EQ(writeFlushedTaskCount, writeCsr->peekLatestFlushedTaskCount());
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendMemoryCopy(hostAlloc, deviceAlloc, sizeof(copyData1), nullptr, 0, nullptr, copyParams));
+
+    EXPECT_FALSE(immCmdList->copyOffloadTagUpdateRequired[CommandList::copyOffloadWriteQueueIndex]);
+    EXPECT_EQ(writeCsr->peekTaskCount(), writeCsr->peekLatestFlushedTaskCount());
+
+    context->freeMem(hostAlloc);
+    context->freeMem(deviceAlloc);
+}
+
+HWTEST2_F(CopyOffloadWriteEngineInOrderTests, givenLatestCopyFlushedToWriteQueueWhenHostSynchronizingWithoutInOrderWaitsThenAllQueuesAreWaited, IsCRI) {
+    auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+    immCmdList->forceDisableInOrderWaits();
+    auto readQueue = immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex];
+    auto writeQueue = immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadWriteQueueIndex];
+    ASSERT_NE(nullptr, writeQueue);
+
+    auto mainCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
+    auto readCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(readQueue->getCsr());
+    auto writeCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(writeQueue->getCsr());
+
+    for (auto csr : {mainCsr, readCsr, writeCsr}) {
+        csr->callBaseWaitForCompletionWithTimeout = false;
+        csr->returnWaitForCompletionWithTimeout = NEO::WaitStatus::ready;
+        csr->waitForCompletionWithTimeoutTaskCountCalled.store(0u);
+    }
+
+    immCmdList->cmdQImmediate->setTaskCount(10u);
+    readQueue->setTaskCount(20u);
+    writeQueue->setTaskCount(30u);
+    immCmdList->latestFlushIsDualCopyOffload = true;
+    immCmdList->latestCopyOffloadQueueIndex = CommandList::copyOffloadWriteQueueIndex;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->hostSynchronize(0, false));
+
+    EXPECT_EQ(1u, mainCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
+    EXPECT_EQ(1u, readCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
+    EXPECT_EQ(1u, writeCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
+    EXPECT_EQ(10u, mainCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
+    EXPECT_EQ(20u, readCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
+    EXPECT_EQ(30u, writeCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
+}
+
+HWTEST2_F(CopyOffloadWriteEngineInOrderTests, givenReadQueueNotReadyWhenHostSynchronizingWithoutInOrderWaitsThenWriteAndMainQueuesAreNotWaited, IsCRI) {
+    auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+    immCmdList->forceDisableInOrderWaits();
+    auto readQueue = immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex];
+    auto writeQueue = immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadWriteQueueIndex];
+    ASSERT_NE(nullptr, writeQueue);
+
+    auto mainCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
+    auto readCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(readQueue->getCsr());
+    auto writeCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(writeQueue->getCsr());
+
+    for (auto csr : {mainCsr, readCsr, writeCsr}) {
+        csr->callBaseWaitForCompletionWithTimeout = false;
+        csr->returnWaitForCompletionWithTimeout = NEO::WaitStatus::ready;
+        csr->waitForCompletionWithTimeoutTaskCountCalled.store(0u);
+    }
+    readCsr->returnWaitForCompletionWithTimeout = NEO::WaitStatus::notReady;
+
+    immCmdList->cmdQImmediate->setTaskCount(10u);
+    readQueue->setTaskCount(20u);
+    writeQueue->setTaskCount(30u);
+    immCmdList->latestFlushIsDualCopyOffload = true;
+    immCmdList->latestCopyOffloadQueueIndex = CommandList::copyOffloadWriteQueueIndex;
+
+    EXPECT_EQ(ZE_RESULT_NOT_READY, immCmdList->hostSynchronize(1000, false));
+
+    EXPECT_EQ(0u, mainCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
+    EXPECT_EQ(1u, readCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
+    EXPECT_EQ(0u, writeCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
+}
+
+HWTEST2_F(CopyOffloadWriteEngineInOrderTests, givenLatestCopyFlushedToWriteQueueWhenSynchronizingInOrderExecutionThenWriteQueueCsrIsUsed, IsCRI) {
+    auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+    auto readQueue = immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex];
+    auto writeQueue = immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadWriteQueueIndex];
+    ASSERT_NE(nullptr, writeQueue);
+
+    auto readCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(readQueue->getCsr());
+    auto writeCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(writeQueue->getCsr());
+    readCsr->downloadAllocationCalled = false;
+    writeCsr->downloadAllocationCalled = false;
+
+    immCmdList->latestCopyOffloadQueueIndex = CommandList::copyOffloadWriteQueueIndex;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->synchronizeInOrderExecution(0, true));
+
+    EXPECT_FALSE(readCsr->downloadAllocationCalled);
+    EXPECT_TRUE(writeCsr->downloadAllocationCalled);
+}
+
+HWTEST2_F(CopyOffloadWriteEngineInOrderTests, givenWriteQueueWhenCopyingImageToHostUsmThenReadQueueIsUsed, IsCRI) {
+    auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+    auto readQueue = immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex];
+    auto writeQueue = immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadWriteQueueIndex];
+    ASSERT_NE(nullptr, writeQueue);
+
+    auto image = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ze_image_desc_t zeDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC};
+    zeDesc.type = ZE_IMAGE_TYPE_2D;
+    zeDesc.width = 10;
+    zeDesc.height = 10;
+    zeDesc.depth = 1;
+    image->initialize(device, &zeDesc);
+    static_cast<MemoryAllocation *>(image->getAllocation())->overrideMemoryPool(NEO::MemoryPool::system64KBPages);
+    ze_image_region_t imgRegion = {0, 0, 0, 1, 1, 1};
+
+    const auto dst = allocHostMem(MemoryConstants::pageSize);
+    const auto readTaskCount = readQueue->getTaskCount();
+    const auto writeTaskCount = writeQueue->getTaskCount();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendImageCopyToMemoryExt(dst, image->toHandle(), &imgRegion, 0, 0, nullptr, 0, nullptr, copyParams));
+
+    EXPECT_GT(readQueue->getTaskCount(), readTaskCount);
+    EXPECT_EQ(writeTaskCount, writeQueue->getTaskCount());
+
+    context->freeMem(dst);
+}
+
+HWTEST2_F(CopyOffloadWriteEngineInOrderTests, givenPendingInOrderCounterSignalWhenCopyingFromDeviceToHostThenCounterIsSignaledOnMainQueueAndCopyIsSubmittedToWriteQueue, IsCRI) {
+    auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+    auto readQueue = immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex];
+    auto writeQueue = immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadWriteQueueIndex];
+    ASSERT_NE(nullptr, writeQueue);
+
+    const auto src = allocDeviceMem(sizeof(copyData1));
+    const auto dst = allocHostMem(sizeof(copyData1));
+    auto mainCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
+    auto readCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(readQueue->getCsr());
+    auto writeCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(writeQueue->getCsr());
+    immCmdList->latestOperationHasCbEventWithProfiling = true;
+    const auto mainTaskCount = mainCsr->taskCount.load();
+    const auto readTaskCount = readCsr->taskCount.load();
+    const auto writeTaskCount = writeCsr->taskCount.load();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendMemoryCopy(dst, src, sizeof(copyData1), nullptr, 0, nullptr, copyParams));
+
+    EXPECT_EQ(mainTaskCount + 1, mainCsr->taskCount.load());
+    EXPECT_EQ(readTaskCount, readCsr->taskCount.load());
+    EXPECT_EQ(writeTaskCount + 1, writeCsr->taskCount.load());
+
+    context->freeMem(src);
+    context->freeMem(dst);
+}
+
+HWTEST2_F(CopyOffloadWriteEngineInOrderTests, givenStagingCopyFromDeviceToNonUsmHostPtrInMultipleChunksWhenCopyingThenAllChunksAreSubmittedToWriteQueue, IsCRI) {
+    debugManager.flags.EnableCopyWithStagingBuffers.set(1);
+
+    auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
+    auto readQueue = immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex];
+    auto writeQueue = immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadWriteQueueIndex];
+    ASSERT_NE(nullptr, writeQueue);
+
+    constexpr size_t numChunks = 3;
+    const size_t copySize = numChunks * NEO::getDefaultStagingBufferSize();
+    const auto src = allocDeviceMem(copySize);
+    std::vector<uint8_t> dst(copySize);
+    auto readCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(readQueue->getCsr());
+    auto writeCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(writeQueue->getCsr());
+    const auto readTaskCount = readCsr->taskCount.load();
+    const auto writeTaskCount = writeCsr->taskCount.load();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->appendMemoryCopy(dst.data(), src, copySize, nullptr, 0, nullptr, copyParams));
+
+    EXPECT_EQ(readTaskCount, readCsr->taskCount.load());
+    EXPECT_EQ(writeTaskCount + numChunks, writeCsr->taskCount.load());
+    EXPECT_EQ(CommandList::copyOffloadReadQueueIndex, immCmdList->activeCopyOffloadQueueIndex);
+
+    context->freeMem(src);
 }
 
 } // namespace ult

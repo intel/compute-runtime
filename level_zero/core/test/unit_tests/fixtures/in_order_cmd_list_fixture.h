@@ -8,7 +8,9 @@
 #pragma once
 
 #include "shared/source/command_stream/transfer_direction.h"
+#include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/in_order_cmd_helpers.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
@@ -578,7 +580,7 @@ struct CopyOffloadInOrderFixture : public InOrderCmdListFixture {
         debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
         backupHwInfo = std::make_unique<VariableBackup<NEO::HardwareInfo>>(defaultHwInfo.get());
         defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
-        defaultHwInfo->featureTable.ftrBcsInfo = 0b111;
+        defaultHwInfo->featureTable.ftrBcsInfo = bcsInfoMask;
         InOrderCmdListFixture::SetUp();
     }
 
@@ -603,6 +605,29 @@ struct CopyOffloadInOrderFixture : public InOrderCmdListFixture {
     uint32_t copyData2 = 0;
     const CopyOffloadMode nonDualStreamMode = CopyOffloadModes::dualStream + 1;
     std::unique_ptr<VariableBackup<NEO::HardwareInfo>> backupHwInfo;
+    NEO::BcsInfoMask bcsInfoMask = 0b111;
+};
+
+struct CopyOffloadWriteEngineInOrderFixture : public CopyOffloadInOrderFixture {
+    void SetUp() override {
+        debugManager.flags.OverrideCopyOffloadMode.set(CopyOffloadModes::dualStream);
+        debugManager.flags.EnableCopyWithStagingBuffers.set(0);
+        debugManager.flags.CopyOffloadWriteEngine.set(1);
+        bcsInfoMask = 0b1111;
+        CopyOffloadInOrderFixture::SetUp();
+    }
+};
+
+struct CopyOffloadWriteEngineSingleCopyEngineInOrderFixture : public CopyOffloadInOrderFixture {
+    void SetUp() override {
+        debugManager.flags.OverrideCopyOffloadMode.set(CopyOffloadModes::dualStream);
+        debugManager.flags.EnableCopyWithStagingBuffers.set(0);
+        debugManager.flags.CopyOffloadWriteEngine.set(1);
+        const auto productHelper = NEO::ProductHelper::create(defaultHwInfo->platform.eProductFamily);
+        bcsInfoMask = 0;
+        bcsInfoMask.set(NEO::EngineHelpers::getBcsIndex(productHelper->getDefaultCopyEngine()));
+        CopyOffloadInOrderFixture::SetUp();
+    }
 };
 
 } // namespace ult

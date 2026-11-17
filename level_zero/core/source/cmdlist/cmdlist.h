@@ -42,6 +42,7 @@
 
 #include "copy_offload_mode.h"
 
+#include <array>
 #include <list>
 #include <map>
 #include <mutex>
@@ -107,6 +108,10 @@ using AppendedMemAdviseOperations = std::vector<MemAdviseOperation>;
 struct CommandList : _ze_command_list_handle_t {
     static constexpr uint32_t defaultNumIddsPerBlock = 64u;
     static constexpr uint32_t commandListimmediateIddsPerBlock = 1u;
+    static constexpr size_t copyOffloadReadQueueIndex = 0u;
+    static constexpr size_t copyOffloadWriteQueueIndex = 1u;
+    static constexpr size_t numCopyOffloadQueues = copyOffloadWriteQueueIndex + 1;
+    static constexpr uint32_t copyOffloadWriteEngineIndex = 1u;
 
     static bool isUsingSystemAllocation(const NEO::AllocationType &allocType) {
         return ((allocType == NEO::AllocationType::bufferHostMemory) ||
@@ -728,6 +733,7 @@ struct CommandList : _ze_command_list_handle_t {
     void enableSynchronizedDispatch(NEO::SynchronizedDispatchMode mode);
     NEO::SynchronizedDispatchMode getSynchronizedDispatchMode() const { return synchronizedDispatchMode; }
     void enableCopyOperationOffload();
+    bool isCopyOffloadCmdQImmediate(const CommandQueue *cmdQ) const;
     void setInterruptEventsCsr(NEO::CommandStreamReceiver &csr);
     void addInterruptEvent(Event *event) { interruptEvents.push_back(event); }
     std::shared_ptr<NEO::InOrderExecInfo> &getInOrderExecInfo() { return inOrderExecInfo; }
@@ -794,6 +800,8 @@ struct CommandList : _ze_command_list_handle_t {
     }
 
   protected:
+    bool isCopyOffloadWriteEngineAllowed(uint32_t copyEngineOrdinal) const;
+    CommandQueue *createCopyOffloadCmdQImmediate(NEO::CommandStreamReceiver *copyCsr, uint32_t ordinal, bool queueOwnershipTaken);
     void initializeFlatCapture();
     void resetFlatCapture();
 
@@ -903,7 +911,9 @@ struct CommandList : _ze_command_list_handle_t {
     NEO::GraphicsAllocation *latesTagGpuAllocation = nullptr;
     ze_context_handle_t hContext = nullptr;
     CommandQueue *cmdQImmediate = nullptr;
-    CommandQueue *cmdQImmediateCopyOffload = nullptr;
+    std::array<CommandQueue *, numCopyOffloadQueues> cmdQImmediateCopyOffload{};
+    size_t activeCopyOffloadQueueIndex = copyOffloadReadQueueIndex;
+    size_t latestCopyOffloadQueueIndex = copyOffloadReadQueueIndex;
     NEO::CommandStreamReceiver *preassignedImmediateCsr = nullptr;
     Device *device = nullptr;
     NEO::ScratchSpaceController *usedScratchController = nullptr;

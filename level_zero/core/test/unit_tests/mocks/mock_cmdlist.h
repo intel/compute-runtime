@@ -234,6 +234,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     : public L0::CommandListCoreFamilyImmediate<gfxCoreFamily> {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using BaseClass = L0::CommandListCoreFamilyImmediate<gfxCoreFamily>;
+    using BaseClass::activeCopyOffloadQueueIndex;
     using BaseClass::allowCbWaitEventsNoopDispatch;
     using BaseClass::appendBlitFill;
     using BaseClass::appendLaunchKernelWithParams;
@@ -297,6 +298,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::isWalkerPostSyncSkipEnabled;
     using BaseClass::lastBarrierTaskCounts;
     using BaseClass::lastHostSynchronizeTaskCounts;
+    using BaseClass::latestCopyOffloadQueueIndex;
     using BaseClass::latestFlushIsDualCopyOffload;
     using BaseClass::latestFlushIsHostVisible;
     using BaseClass::latestOperationHasCbEventWithProfiling;
