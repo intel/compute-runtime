@@ -276,7 +276,3 @@ CRITEST_F(CriProductHelper, givenCriWhenAskingForGraphPatchPreambleBarrierSuppor
     debugManager.flags.OverrideGraphPatchPreambleBarrierSupport.set(1);
     EXPECT_TRUE(productHelper->isGraphPatchPreambleBarrierSupported());
 }
-
-CRITEST_F(CriProductHelper, givenCriWhenAskingIfDirectSubmissionContextGroupIdleDetectionIsEnabledThenFalseReturned) {
-    EXPECT_FALSE(productHelper->isDirectSubmissionContextGroupIdleDetectionEnabled());
-}

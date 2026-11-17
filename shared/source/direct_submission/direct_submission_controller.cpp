@@ -54,11 +54,6 @@ void DirectSubmissionController::registerDirectSubmission(CommandStreamReceiver 
         directSubmissions.emplace(csr, DirectSubmissionState());
     }
     this->overrideDirectSubmissionTimeouts(csr->getProductHelper());
-
-    if (debugManager.flags.DirectSubmissionControllerContextGroupIdleDetection.get() == -1 &&
-        !csr->getProductHelper().isDirectSubmissionContextGroupIdleDetectionEnabled()) {
-        isCsrsContextGroupIdleDetectionEnabled = false;
-    }
 }
 
 void DirectSubmissionController::overrideDirectSubmissionTimeouts(const ProductHelper &productHelper) {

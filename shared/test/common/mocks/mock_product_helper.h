@@ -45,6 +45,5 @@ struct MockProductHelper : ProductHelperHw<IGFX_UNKNOWN> {
     ADDMETHOD_CONST_NOBASE(isL3FlushAfterPostSyncSupported, bool, false, ());
     ADDMETHOD_CONST_NOBASE(useAdditionalBlitProperties, bool, false, (const BlitProperties &blitProperties));
     ADDMETHOD_CONST_NOBASE(isLEOSupported, bool, false, ());
-    ADDMETHOD_CONST_NOBASE(isDirectSubmissionContextGroupIdleDetectionEnabled, bool, true, ());
 };
 } // namespace NEO
