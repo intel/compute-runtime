@@ -52,7 +52,7 @@ ze_result_t NetlinkRasUtil::rasGetConfigExp(const uint32_t count, zes_ras_config
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-NetlinkRasUtil::NetlinkRasUtil(zes_ras_error_type_t type, LinuxSysmanImp *pLinuxSysmanImp, uint32_t subdeviceId) : pLinuxSysmanImp(pLinuxSysmanImp), rasErrorType(type) {
+NetlinkRasUtil::NetlinkRasUtil(zes_ras_error_type_t type, LinuxSysmanImp *pLinuxSysmanImp, uint32_t subdeviceId) : pLinuxSysmanImp(pLinuxSysmanImp), categoryToErrorNameMap(createCategoryToErrorNameMap(pLinuxSysmanImp)), rasErrorType(type) {
 }
 
 NetlinkRasUtil::~NetlinkRasUtil() {

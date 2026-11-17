@@ -14,6 +14,7 @@
 
 #include <algorithm>
 #include <map>
+#include <set>
 
 namespace L0 {
 namespace Sysman {
@@ -31,6 +32,17 @@ class MockRasNetlinkUtil : public NetlinkRasUtil {
     ~MockRasNetlinkUtil() override = default;
 };
 
+struct MockSysmanProductHelperRasNetlink : public L0::Sysman::SysmanProductHelperHw<IGFX_UNKNOWN> {
+    const std::set<zes_ras_error_category_exp_t> &getRasNetlinkSupportedErrorCategories() override { return mockSupportedErrorCategories; }
+    std::set<zes_ras_error_category_exp_t> mockSupportedErrorCategories = {
+        ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS,
+        ZES_RAS_ERROR_CATEGORY_EXP_FABRIC_ERRORS,
+        ZES_RAS_ERROR_CATEGORY_EXP_MEMORY_ERRORS,
+        ZES_RAS_ERROR_CATEGORY_EXP_PCIE_ERRORS,
+        ZES_RAS_ERROR_CATEGORY_EXP_SCALE_ERRORS,
+        ZES_RAS_ERROR_CATEGORY_EXP_SOC_INTERNAL_ERRORS};
+};
+
 class SysmanRasNetlinkFixture : public SysmanDeviceFixture {
 
   protected:
@@ -39,6 +51,7 @@ class SysmanRasNetlinkFixture : public SysmanDeviceFixture {
     std::unique_ptr<MockRasNetlinkUtil> pRasNetlinkUtil = nullptr;
     std::unique_ptr<MockDrmNlApi> drmNlApi = nullptr;
     std::unique_ptr<DrmNlApi> pDrmNlApiOriginal = nullptr;
+    std::unique_ptr<SysmanProductHelper> pSysmanProductHelper = std::make_unique<MockSysmanProductHelperRasNetlink>();
     zes_ras_error_type_t errorType;
     std::vector<DrmRasNode> originalRasNodes = MockRasNetlinkUtil::rasNodes;
     std::map<uint32_t, std::vector<DrmErrorCounter>> originalRasErrorList = MockRasNetlinkUtil::rasErrorList;
@@ -46,6 +59,7 @@ class SysmanRasNetlinkFixture : public SysmanDeviceFixture {
   public:
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
+        std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
         errorType = ZES_RAS_ERROR_TYPE_CORRECTABLE;
         std::string devicePciBdf = pLinuxSysmanImp->getDevicePciBdf();
         MockRasNetlinkUtil::rasNodes = {{correctableNodeId, devicePciBdf, "correctable-errors", 1},
@@ -61,6 +75,7 @@ class SysmanRasNetlinkFixture : public SysmanDeviceFixture {
         pRasNetlinkUtil->drmNl = std::move(pDrmNlApiOriginal);
         MockRasNetlinkUtil::rasNodes = std::move(originalRasNodes);
         MockRasNetlinkUtil::rasErrorList = std::move(originalRasErrorList);
+        std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
         SysmanDeviceFixture::TearDown();
     }
 };
@@ -124,6 +139,19 @@ TEST_F(SysmanRasNetlinkFixture, GivenRasNetlinkUtilInterfaceWhenCallingRasGetCat
     std::unique_ptr<NetlinkRasUtil> rasNetlinkUtil(new NetlinkRasUtil(errorType, pLinuxSysmanImp, 0u));
     auto errorCategoryCount = rasNetlinkUtil->rasGetCategoryCount();
     EXPECT_EQ(6u, errorCategoryCount);
+}
+
+TEST_F(SysmanRasNetlinkFixture, GivenProductHelperSupportingSubsetOfCategoriesWhenCreatingNetlinkRasUtilThenOnlySupportedCategoriesAreExposed) {
+    auto pMockProductHelper = static_cast<MockSysmanProductHelperRasNetlink *>(pLinuxSysmanImp->pSysmanProductHelper.get());
+    pMockProductHelper->mockSupportedErrorCategories = {ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS, ZES_RAS_ERROR_CATEGORY_EXP_PCIE_ERRORS};
+    auto rasNetlinkUtil = std::make_unique<MockRasNetlinkUtil>(ZES_RAS_ERROR_TYPE_CORRECTABLE, pLinuxSysmanImp, 0u);
+    MockRasNetlinkUtil::rasErrorList[rasNetlinkUtil->rasNodeId] = {
+        {0, "core-compute", 10, 0}, {0, "device-memory", 20, 0}, {0, "fabric", 30, 0}, {0, "scale", 40, 0}, {0, "pcie", 50, 0}, {0, "soc-internal", 60, 0}};
+
+    EXPECT_EQ(2u, rasNetlinkUtil->rasGetCategoryCount());
+    auto categories = rasNetlinkUtil->getSupportedErrorCategoriesExp();
+    EXPECT_EQ((std::vector<zes_ras_error_category_exp_t>{ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS, ZES_RAS_ERROR_CATEGORY_EXP_PCIE_ERRORS}), categories);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, rasNetlinkUtil->rasClearStateExp(ZES_RAS_ERROR_CATEGORY_EXP_SCALE_ERRORS));
 }
 
 TEST_F(SysmanRasNetlinkFixture, GivenNetlinkRasUtilInterfaceWhenRasNodesIsEmptyAndListNodesFailsThenGetSupportedRasErrorTypesReturnsEmptySet) {

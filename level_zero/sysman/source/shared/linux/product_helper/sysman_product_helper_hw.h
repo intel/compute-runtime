@@ -57,6 +57,7 @@ class SysmanProductHelperHw : public SysmanProductHelper {
     RasInterfaceType getHbmRasUtilInterface() override;
     ze_result_t getRasCperOnQuery(SysFsAccessInterface *pSysFsAccess, ze_bool_t *pEnabled) override;
     ze_result_t setRasCperOnQuery(SysFsAccessInterface *pSysFsAccess, ze_bool_t enable) override;
+    const std::set<zes_ras_error_category_exp_t> &getRasNetlinkSupportedErrorCategories() override;
 
     // global ops
     bool isRepairStatusSupported() override;

@@ -10,7 +10,6 @@
 #include "shared/source/helpers/preprocessor.h"
 
 #include "level_zero/sysman/source/api/ras/linux/ras_util/sysman_ras_util.h"
-#include "level_zero/sysman/source/api/ras/linux/ras_util/sysman_ras_util_netlink_category_map.h"
 #include "level_zero/sysman/source/api/ras/linux/sysman_os_ras_imp.h"
 #include "level_zero/sysman/source/shared/linux/nl_api/sysman_drm_nl_api.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
@@ -83,7 +82,7 @@ ze_result_t NetlinkRasUtil::rasGetStateExp(uint32_t numCategoriesRequested, zes_
 
     // Step 2: Aggregate error counts based on category
     uint32_t categoryIdx = 0u;
-    for (auto const &categoryToErrorPair : categoryToErrorNameMap) {
+    for (auto const &categoryToErrorPair : this->categoryToErrorNameMap) {
         if (categoryIdx >= numCategoriesRequested) {
             break;
         }
@@ -116,8 +115,8 @@ ze_result_t NetlinkRasUtil::rasGetStateExp2(const uint32_t count, const zes_ras_
 
     for (uint32_t i = 0; i < count; i++) {
         pStates[i].errorCounter = 0;
-        auto it = categoryToErrorNameMap.find(pCategories[i]);
-        if (it != categoryToErrorNameMap.end()) {
+        auto it = this->categoryToErrorNameMap.find(pCategories[i]);
+        if (it != this->categoryToErrorNameMap.end()) {
             auto err = std::find_if(errorList.begin(), errorList.end(),
                                     [&](const DrmErrorCounter &counter) -> bool {
                                         return counter.errorName == it->second;
@@ -132,8 +131,8 @@ ze_result_t NetlinkRasUtil::rasGetStateExp2(const uint32_t count, const zes_ras_
 }
 
 ze_result_t NetlinkRasUtil::rasClearStateExp(zes_ras_error_category_exp_t category) {
-    auto categoryToErrorNameIt = categoryToErrorNameMap.find(category);
-    if (categoryToErrorNameIt == categoryToErrorNameMap.end()) {
+    auto categoryToErrorNameIt = this->categoryToErrorNameMap.find(category);
+    if (categoryToErrorNameIt == this->categoryToErrorNameMap.end()) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): RAS error category not supported by Netlink and returning error:0x%x \n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
@@ -174,8 +173,8 @@ ze_result_t NetlinkRasUtil::rasGetConfigExp(const uint32_t count, zes_ras_config
     for (uint32_t i = 0; i < count; i++) {
         // Translate the requested RAS category into its corresponding Netlink error name.
         // Categories not supported by the netlink backend are skipped.
-        auto categoryIt = categoryToErrorNameMap.find(pConfig[i].category);
-        if (categoryIt == categoryToErrorNameMap.end()) {
+        auto categoryIt = this->categoryToErrorNameMap.find(pConfig[i].category);
+        if (categoryIt == this->categoryToErrorNameMap.end()) {
             PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout, "Debug@ %s(): RAS category 0x%x not supported by Netlink, skipping \n", NEO_FUNCTION_NAME, pConfig[i].category);
             continue;
         }
@@ -228,8 +227,8 @@ ze_result_t NetlinkRasUtil::rasSetConfigExp(const uint32_t count, const zes_ras_
     const auto &errorList = errListIt->second;
 
     for (uint32_t i = 0; i < count; i++) {
-        auto categoryIt = categoryToErrorNameMap.find(pConfig[i].category);
-        if (categoryIt == categoryToErrorNameMap.end()) {
+        auto categoryIt = this->categoryToErrorNameMap.find(pConfig[i].category);
+        if (categoryIt == this->categoryToErrorNameMap.end()) {
             PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout, "Debug@ %s(): RAS category 0x%x not supported by Netlink, skipping \n", NEO_FUNCTION_NAME, pConfig[i].category);
             continue;
         }
@@ -251,7 +250,7 @@ ze_result_t NetlinkRasUtil::rasSetConfigExp(const uint32_t count, const zes_ras_
     return ZE_RESULT_SUCCESS;
 }
 
-NetlinkRasUtil::NetlinkRasUtil(zes_ras_error_type_t type, LinuxSysmanImp *pLinuxSysmanImp, uint32_t subdeviceId) : pLinuxSysmanImp(pLinuxSysmanImp), rasErrorType(type) {
+NetlinkRasUtil::NetlinkRasUtil(zes_ras_error_type_t type, LinuxSysmanImp *pLinuxSysmanImp, uint32_t subdeviceId) : pLinuxSysmanImp(pLinuxSysmanImp), categoryToErrorNameMap(createCategoryToErrorNameMap(pLinuxSysmanImp)), rasErrorType(type) {
     std::string devicePciBdf = pLinuxSysmanImp->getDevicePciBdf();
 
     drmNl = std::make_unique<DrmNlApi>();

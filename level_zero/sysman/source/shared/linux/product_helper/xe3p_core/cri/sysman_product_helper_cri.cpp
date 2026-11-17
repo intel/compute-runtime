@@ -43,6 +43,13 @@ constexpr static uint32_t maxGpuBoardTemperatureSensorCount = 2;
 constexpr static uint32_t temperatureNotAvailable = 0xFFFFFFFF;
 const std::string throttleReasonPath = "freq0/throttle/";
 
+static const std::set<zes_ras_error_category_exp_t> rasNetlinkSupportedErrorCategories = {
+    ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS,
+    ZES_RAS_ERROR_CATEGORY_EXP_FABRIC_ERRORS,
+    ZES_RAS_ERROR_CATEGORY_EXP_MEMORY_ERRORS,
+    ZES_RAS_ERROR_CATEGORY_EXP_PCIE_ERRORS,
+    ZES_RAS_ERROR_CATEGORY_EXP_SOC_INTERNAL_ERRORS};
+
 constexpr static std::string_view standbyPowerControlDefault("auto");
 constexpr static std::string_view standbyPowerControlNever("on");
 static const std::string standbyPowerControlFile("device/power/control");
@@ -591,6 +598,11 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::setRasCperOnQuery(SysFsAccessInte
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to write %s and returning error:0x%x \n", NEO_FUNCTION_NAME, rasCperOnQueryFile.c_str(), result);
     }
     return result;
+}
+
+template <>
+const std::set<zes_ras_error_category_exp_t> &SysmanProductHelperHw<gfxProduct>::getRasNetlinkSupportedErrorCategories() {
+    return rasNetlinkSupportedErrorCategories;
 }
 
 template <>

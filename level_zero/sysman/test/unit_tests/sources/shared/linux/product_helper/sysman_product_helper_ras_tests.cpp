@@ -212,19 +212,24 @@ HWTEST2_F(SysmanProductHelperRasTest, GivenGscRasUtilWhenCallingGetSupportedErro
     EXPECT_EQ(ZES_RAS_ERROR_CATEGORY_EXP_MEMORY_ERRORS, categories[0]);
 }
 
-HWTEST2_F(SysmanProductHelperRasTest, GivenNetlinkRasUtilWhenCallingGetSupportedErrorCategoriesExpThenAllSixCategoriesAreReturned, IsCRI) {
+HWTEST2_F(SysmanProductHelperRasTest, GivenNetlinkRasUtilWhenCallingGetSupportedErrorCategoriesExpThenAllCategoriesExceptScaleErrorsAreReturned, IsCRI) {
     auto pRasUtil = std::make_unique<MockRasNetlinkUtil>(ZES_RAS_ERROR_TYPE_CORRECTABLE, pLinuxSysmanImp, 0u);
     MockRasNetlinkUtil::rasErrorList[pRasUtil->rasNodeId] = {
         {0, "core-compute", 10, 0}, {0, "device-memory", 20, 0}, {0, "fabric", 30, 0}, {0, "scale", 40, 0}, {0, "pcie", 50, 0}, {0, "soc-internal", 60, 0}};
     auto categories = pRasUtil->getSupportedErrorCategoriesExp();
-    EXPECT_EQ(6u, categories.size());
+    EXPECT_EQ(5u, categories.size());
     EXPECT_NE(categories.end(), std::find(categories.begin(), categories.end(), ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS));
     EXPECT_NE(categories.end(), std::find(categories.begin(), categories.end(), ZES_RAS_ERROR_CATEGORY_EXP_MEMORY_ERRORS));
     EXPECT_NE(categories.end(), std::find(categories.begin(), categories.end(), ZES_RAS_ERROR_CATEGORY_EXP_PCIE_ERRORS));
     EXPECT_NE(categories.end(), std::find(categories.begin(), categories.end(), ZES_RAS_ERROR_CATEGORY_EXP_FABRIC_ERRORS));
-    EXPECT_NE(categories.end(), std::find(categories.begin(), categories.end(), ZES_RAS_ERROR_CATEGORY_EXP_SCALE_ERRORS));
+    EXPECT_EQ(categories.end(), std::find(categories.begin(), categories.end(), ZES_RAS_ERROR_CATEGORY_EXP_SCALE_ERRORS));
     EXPECT_NE(categories.end(), std::find(categories.begin(), categories.end(), ZES_RAS_ERROR_CATEGORY_EXP_SOC_INTERNAL_ERRORS));
     MockRasNetlinkUtil::rasErrorList.erase(pRasUtil->rasNodeId);
+}
+
+HWTEST2_F(SysmanProductHelperRasTest, GivenSysmanProductHelperWhenCallingGetRasNetlinkSupportedErrorCategoriesThenEmptySetIsReturned, IsNotCRI) {
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(NEO::defaultHwInfo->platform.eProductFamily);
+    EXPECT_TRUE(pSysmanProductHelper->getRasNetlinkSupportedErrorCategories().empty());
 }
 
 HWTEST2_F(SysmanProductHelperRasTest, GivenLinuxRasImpWhenCallingOsRasGetSupportedCategoriesExpWithZeroCountThenCorrectCountIsReturned, IsGtRasSupportedProduct) {

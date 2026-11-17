@@ -17,6 +17,7 @@
 #include <map>
 #include <memory>
 #include <set>
+#include <string_view>
 #include <vector>
 
 namespace L0 {
@@ -145,9 +146,11 @@ class NetlinkRasUtil : public RasUtil {
     static ze_result_t initializeRasNodes(DrmNlApi *pDrmNl);
 
   protected:
+    static std::map<zes_ras_error_category_exp_t, std::string_view> createCategoryToErrorNameMap(LinuxSysmanImp *pLinuxSysmanImp);
     static constexpr uint32_t invalidRasNodeId = std::numeric_limits<uint32_t>::max();
     bool isRasNodeResolved() const { return this->rasNodeId != invalidRasNodeId; }
     LinuxSysmanImp *pLinuxSysmanImp = nullptr;
+    const std::map<zes_ras_error_category_exp_t, std::string_view> categoryToErrorNameMap;
     zes_ras_error_type_t rasErrorType = {};
     std::unique_ptr<DrmNlApi> drmNl;
     uint32_t rasNodeId = invalidRasNodeId;

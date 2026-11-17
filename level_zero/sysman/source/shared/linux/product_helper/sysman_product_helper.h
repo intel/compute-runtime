@@ -15,6 +15,7 @@
 
 #include <map>
 #include <memory>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -89,6 +90,7 @@ class SysmanProductHelper {
     virtual RasInterfaceType getHbmRasUtilInterface() = 0;
     virtual ze_result_t getRasCperOnQuery(SysFsAccessInterface *pSysFsAccess, ze_bool_t *pEnabled) = 0;
     virtual ze_result_t setRasCperOnQuery(SysFsAccessInterface *pSysFsAccess, ze_bool_t enable) = 0;
+    virtual const std::set<zes_ras_error_category_exp_t> &getRasNetlinkSupportedErrorCategories() = 0;
 
     // Global Operations
     virtual bool isRepairStatusSupported() = 0;

@@ -388,6 +388,12 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::setRasCperOnQuery(SysFsAccessInte
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+const std::set<zes_ras_error_category_exp_t> &SysmanProductHelperHw<gfxProduct>::getRasNetlinkSupportedErrorCategories() {
+    static const std::set<zes_ras_error_category_exp_t> noSupportedErrorCategories = {};
+    return noSupportedErrorCategories;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool SysmanProductHelperHw<gfxProduct>::isRepairStatusSupported() {
     return false;
 }
