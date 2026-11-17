@@ -107,7 +107,7 @@ std::string KernelDispatchStatsTracker::createReport() {
 }
 
 std::string getKernelDispatchStatsFileName() {
-    return "kernel_dispatch_stats_" + std::to_string(SysCalls::getProcessId()) + ".csv";
+    return "kernel_dispatch_stats_" + std::to_string(SysCalls::getCurrentProcessId()) + ".csv";
 }
 
 template <DebugFunctionalityLevel debugLevel>

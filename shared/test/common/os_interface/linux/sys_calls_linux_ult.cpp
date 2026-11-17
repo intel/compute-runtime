@@ -302,8 +302,9 @@ unsigned int getProcessId() {
     return 0xABCEDF;
 }
 
+unsigned int getCurrentProcessIdResult = 0xABCEDF;
 unsigned int getCurrentProcessId() {
-    return 0xABCEDF;
+    return getCurrentProcessIdResult;
 }
 
 std::string getProcessName() {

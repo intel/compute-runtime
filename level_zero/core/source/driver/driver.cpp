@@ -37,7 +37,9 @@ void Driver::initialize(ze_result_t *result) {
     auto &flags = NEO::debugManager.flags;
 
     if (flags.LogKernelDispatchStats.get()) {
-        kernelDispatchStatsReporter();
+        auto &reporter = kernelDispatchStatsReporter();
+        reporter.getKernelDispatchStats().clear();
+        reporter.writeReport();
     }
 
     auto executionEnvironment = new NEO::ExecutionEnvironment();

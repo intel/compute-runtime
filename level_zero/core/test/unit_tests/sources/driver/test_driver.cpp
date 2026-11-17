@@ -976,9 +976,11 @@ TEST_F(DriverImpTest, givenDriverImpWhenInitializedThenEnvVariablesAreRead) {
     globalDriverHandles->clear();
 }
 
-TEST_F(DriverImpTest, givenLogKernelDispatchStatsWhenDriverImpIsInitializedThenInitializationSucceeds) {
+TEST_F(DriverImpTest, givenLogKernelDispatchStatsAndStaleReportWhenDriverImpIsInitializedThenStaleReportIsOverwritten) {
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.LogKernelDispatchStats.set(true);
+    const auto reportFileName = NEO::getKernelDispatchStatsFileName();
+    NEO::writeDataToFile(reportFileName.c_str(), "staleReport", false);
 
     ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
     Driver driver;
@@ -987,9 +989,58 @@ TEST_F(DriverImpTest, givenLogKernelDispatchStatsWhenDriverImpIsInitializedThenI
 
     ASSERT_FALSE(globalDriverHandles->empty());
     auto driverHandle = static_cast<L0::DriverHandle *>((*globalDriverHandles)[0]);
-
     delete driverHandle;
     globalDriverHandles->clear();
+
+    ASSERT_TRUE(virtualFileExists(reportFileName));
+    const auto report = NEO::virtualFileList[reportFileName].str();
+    removeVirtualFile(reportFileName);
+    if (NEO::FileLogger<globalDebugFunctionalityLevel>::enabled()) {
+        EXPECT_TRUE(report.starts_with("kernelName,"));
+    } else {
+        EXPECT_EQ(std::string("staleReport"), report);
+    }
+}
+
+TEST_F(DriverImpTest, givenLogKernelDispatchStatsAndTrackedDispatchesWhenDriverImpIsInitializedThenTrackedDispatchesAreCleared) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.LogKernelDispatchStats.set(true);
+    auto &trackedDispatches = kernelDispatchStatsReporter().getKernelDispatchStats();
+    NEO::KernelDispatchStats stats{};
+    stats.kernelName = "inheritedKernel";
+    trackedDispatches.trackDispatch(stats);
+
+    ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
+    Driver driver;
+    driver.initialize(&result);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ASSERT_FALSE(globalDriverHandles->empty());
+    auto driverHandle = static_cast<L0::DriverHandle *>((*globalDriverHandles)[0]);
+    delete driverHandle;
+    globalDriverHandles->clear();
+
+    EXPECT_TRUE(trackedDispatches.isEmpty());
+    removeVirtualFile(NEO::getKernelDispatchStatsFileName());
+}
+
+TEST_F(DriverImpTest, givenLogKernelDispatchStatsDisabledWhenDriverImpIsInitializedThenReportIsNotWritten) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.LogKernelDispatchStats.set(false);
+    const auto reportFileName = NEO::getKernelDispatchStatsFileName();
+    removeVirtualFile(reportFileName);
+
+    ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
+    Driver driver;
+    driver.initialize(&result);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ASSERT_FALSE(globalDriverHandles->empty());
+    auto driverHandle = static_cast<L0::DriverHandle *>((*globalDriverHandles)[0]);
+    delete driverHandle;
+    globalDriverHandles->clear();
+
+    EXPECT_FALSE(virtualFileExists(reportFileName));
 }
 
 TEST(KernelDispatchStatsReporterTest, givenTrackedDispatchesWhenReporterIsDestroyedThenReportWithTrackedDispatchesIsWritten) {

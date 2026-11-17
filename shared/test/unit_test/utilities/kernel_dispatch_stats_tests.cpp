@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/utilities/kernel_dispatch_stats.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/utilities/logger_tests.h"
 
 #include "gtest/gtest.h"
@@ -14,6 +15,12 @@
 #include <string>
 
 using namespace NEO;
+
+namespace NEO {
+namespace SysCalls {
+extern unsigned int getCurrentProcessIdResult;
+} // namespace SysCalls
+} // namespace NEO
 
 namespace {
 KernelDispatchStats createKernelDispatchStats(const std::string &kernelName) {
@@ -154,6 +161,12 @@ TEST(KernelDispatchStatsTracker, givenNoCommandListStatsWhenCollectingThenNothin
     collectKernelDispatchStats(collectedStats, nullptr, true);
 
     EXPECT_TRUE(collectedStats.isEmpty());
+}
+
+TEST(KernelDispatchStatsReport, givenCurrentProcessIdWhenGettingReportFileNameThenCurrentProcessIdIsUsed) {
+    VariableBackup<unsigned int> processIdBackup{&SysCalls::getCurrentProcessIdResult, 0x1234u};
+
+    EXPECT_EQ(std::string("kernel_dispatch_stats_4660.csv"), getKernelDispatchStatsFileName());
 }
 
 TEST(KernelDispatchStatsReport, givenDisabledFileLoggerWhenWritingReportThenReportFileIsNotWritten) {
