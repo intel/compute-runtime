@@ -1797,11 +1797,11 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerAndUnifiedAuxCapableAlloc
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
-    auto gmm = new Gmm(executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper(), nullptr, 123, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
+    auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper(), nullptr, 123, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements);
     auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{0, MemoryConstants::pageSize});
-    allocation->setDefaultGmm(gmm);
+    allocation->setDefaultGmm(std::move(gmm));
 
-    auto mockGmmRes = reinterpret_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
+    auto mockGmmRes = reinterpret_cast<MockGmmResourceInfo *>(allocation->getDefaultGmm()->gmmResourceInfo.get());
     mockGmmRes->setUnifiedAuxTranslationCapable();
 
     EXPECT_FALSE(memoryManager.mapAuxGpuVA(allocation));

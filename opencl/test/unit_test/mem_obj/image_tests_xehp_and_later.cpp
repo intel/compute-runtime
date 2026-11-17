@@ -95,11 +95,11 @@ HWTEST2_F(XeHPAndLaterImageTests, givenCompressionWhenAppendingImageFromBufferTh
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
-    auto gmm = new Gmm(context.getDevice(0)->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
+    auto gmm = std::make_unique<Gmm>(context.getDevice(0)->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements);
     gmm->setCompressionEnabled(true);
 
     auto buffer = castToObject<Buffer>(imageDesc.mem_object);
-    buffer->getGraphicsAllocation(0)->setGmm(gmm, 0);
+    buffer->getGraphicsAllocation(0)->setGmm(std::move(gmm), 0);
 
     auto surfaceFormat = Image::getSurfaceFormatFromTable(CL_MEM_READ_WRITE, &imageFormat);
     auto image = std::unique_ptr<Image>(Image::create(
@@ -108,7 +108,7 @@ HWTEST2_F(XeHPAndLaterImageTests, givenCompressionWhenAppendingImageFromBufferTh
     auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
     auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
     imageHw->setImageArg(&surfaceState, false, 0, context.getDevice(0)->getRootDeviceIndex());
-    EXPECT_TRUE(EncodeSurfaceState<FamilyType>::isAuxModeEnabled(&surfaceState, gmm));
+    EXPECT_TRUE(EncodeSurfaceState<FamilyType>::isAuxModeEnabled(&surfaceState, buffer->getGraphicsAllocation(0)->getDefaultGmm()));
 
     EXPECT_EQ(compressionFormat, surfaceState.getCompressionFormat());
     clReleaseMemObject(imageDesc.mem_object);
@@ -136,11 +136,11 @@ HWTEST2_F(XeHPAndLaterImageTests, givenImageFromBufferWhenSettingSurfaceStateThe
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
-    auto gmm = new Gmm(context.getDevice(0)->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
+    auto gmm = std::make_unique<Gmm>(context.getDevice(0)->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements);
     gmm->setCompressionEnabled(true);
 
     auto buffer = castToObject<Buffer>(imageDesc.mem_object);
-    buffer->getGraphicsAllocation(0)->setGmm(gmm, 0);
+    buffer->getGraphicsAllocation(0)->setGmm(std::move(gmm), 0);
 
     auto surfaceFormat = Image::getSurfaceFormatFromTable(CL_MEM_READ_WRITE, &imageFormat);
     auto image = std::unique_ptr<Image>(Image::create(&context, ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &context.getDevice(0)->getDevice()),
@@ -149,7 +149,7 @@ HWTEST2_F(XeHPAndLaterImageTests, givenImageFromBufferWhenSettingSurfaceStateThe
 
     auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
     imageHw->setImageArg(&surfaceState, false, 0, context.getDevice(0)->getRootDeviceIndex());
-    EXPECT_TRUE(EncodeSurfaceState<FamilyType>::isAuxModeEnabled(&surfaceState, gmm));
+    EXPECT_TRUE(EncodeSurfaceState<FamilyType>::isAuxModeEnabled(&surfaceState, buffer->getGraphicsAllocation(0)->getDefaultGmm()));
 
     EXPECT_EQ(bufferCompressionFormat, surfaceState.getCompressionFormat());
     clReleaseMemObject(imageDesc.mem_object);
@@ -184,7 +184,7 @@ HWTEST2_F(XeHPAndLaterImageTests, givenMcsAllocationWhenSetArgIsCalledWithUnifie
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
-    mcsAlloc->setDefaultGmm(new Gmm(pClDevice->getRootDeviceEnvironment().getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
+    mcsAlloc->setDefaultGmm(std::make_unique<Gmm>(pClDevice->getRootDeviceEnvironment().getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements));
     surfaceState.setSurfaceBaseAddress(0xABCDEF1000);
     imageHw->setMcsSurfaceInfo(msi);
     imageHw->setMcsAllocation(mcsAlloc);
@@ -224,7 +224,7 @@ HWTEST2_F(XeHPAndLaterImageTests, givenMcsAllocationWhenSetAuxParamsForMultisamp
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
-    mcsAlloc->setDefaultGmm(new Gmm(pClDevice->getRootDeviceEnvironment().getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
+    mcsAlloc->setDefaultGmm(std::make_unique<Gmm>(pClDevice->getRootDeviceEnvironment().getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements));
     surfaceState.setSurfaceBaseAddress(0xABCDEF1000);
     imageHw->setMcsSurfaceInfo(msi);
     imageHw->setMcsAllocation(mcsAlloc);
@@ -444,14 +444,14 @@ HWTEST2_F(XeHPAndLaterImageTests, givenCompressionWhenAppendingNewAllocationThen
     static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get())->mockResourceCreateParams.Flags.Info.RenderCompressed = true;
     gmm->setCompressionEnabled(true);
 
-    auto mcsGmm = new MockGmm(context.getDevice(0)->getGmmHelper());
+    auto mcsGmm = std::make_unique<MockGmm>(context.getDevice(0)->getGmmHelper());
     mcsGmm->setCompressionEnabled(true);
     static_cast<MockGmmResourceInfo *>(mcsGmm->gmmResourceInfo.get())->mockResourceCreateParams.Flags.Info.RenderCompressed = true;
     static_cast<MockGmmResourceInfo *>(mcsGmm->gmmResourceInfo.get())->mockResourceCreateParams.Flags.Gpu.UnifiedAuxSurface = true;
     static_cast<MockGmmResourceInfo *>(mcsGmm->gmmResourceInfo.get())->mockResourceCreateParams.Flags.Gpu.CCS = true;
 
     auto mcsAlloc = context.getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, 1});
-    mcsAlloc->setDefaultGmm(mcsGmm);
+    mcsAlloc->setDefaultGmm(std::move(mcsGmm));
     imageHw->setMcsAllocation(mcsAlloc);
 
     imageHw->setImageArg(&surfaceState, false, 0, rootDeviceIndex);
@@ -612,7 +612,7 @@ HWTEST2_F(XeHPAndLaterImageTests, givenMcsAllocationWhenAuxCapableIsNotSetThenPr
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
-    mcsAlloc->setDefaultGmm(new Gmm(pClDevice->getRootDeviceEnvironment().getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
+    mcsAlloc->setDefaultGmm(std::make_unique<Gmm>(pClDevice->getRootDeviceEnvironment().getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements));
     surfaceState.setSurfaceBaseAddress(0xABCDEF1000);
     imageHw->setMcsSurfaceInfo(msi);
     imageHw->setMcsAllocation(mcsAlloc);

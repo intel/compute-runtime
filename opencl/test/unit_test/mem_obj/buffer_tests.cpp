@@ -2080,14 +2080,13 @@ HWTEST2_PRODUCT_F(BufferSetSurfaceTests, givenCompressedGmmResourceWhenSurfaceSt
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
-    auto gmm = new Gmm(context.getDevice(0)->getGmmHelper(), nullptr, 1, 0, gmmResourceUsageOclBuffer, {}, gmmRequirements);
-    graphicsAllocation->setDefaultGmm(gmm);
-    gmm->setCompressionEnabled(true);
+    graphicsAllocation->setDefaultGmm(std::make_unique<Gmm>(context.getDevice(0)->getGmmHelper(), nullptr, 1, 0, gmmResourceUsageOclBuffer, StorageInfo{}, gmmRequirements));
+    graphicsAllocation->getDefaultGmm()->setCompressionEnabled(true);
 
     buffer->setArgStateful(&surfaceState, false, false, false, false, context.getDevice(0)->getDevice(), false);
 
     EXPECT_EQ(0u, surfaceState.getAuxiliarySurfaceBaseAddress());
-    EXPECT_TRUE(EncodeSurfaceState<FamilyType>::isAuxModeEnabled(&surfaceState, gmm));
+    EXPECT_TRUE(EncodeSurfaceState<FamilyType>::isAuxModeEnabled(&surfaceState, graphicsAllocation->getDefaultGmm()));
     if constexpr (IsAtMostXeCore::isMatched<productFamily>()) {
         EXPECT_TRUE(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT == surfaceState.getCoherencyType());
     }
@@ -2106,9 +2105,8 @@ HWTEST2_PRODUCT_F(BufferSetSurfaceTests, givenNonCompressedGmmResourceWhenSurfac
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
-    auto gmm = new Gmm(context.getDevice(0)->getGmmHelper(), nullptr, 1, 0, gmmResourceUsageOclBuffer, {}, gmmRequirements);
-    buffer->getGraphicsAllocation(rootDeviceIndex)->setDefaultGmm(gmm);
-    gmm->setCompressionEnabled(false);
+    buffer->getGraphicsAllocation(rootDeviceIndex)->setDefaultGmm(std::make_unique<Gmm>(context.getDevice(0)->getGmmHelper(), nullptr, 1, 0, gmmResourceUsageOclBuffer, StorageInfo{}, gmmRequirements));
+    buffer->getGraphicsAllocation(rootDeviceIndex)->getDefaultGmm()->setCompressionEnabled(false);
 
     buffer->setArgStateful(&surfaceState, false, false, false, false, context.getDevice(0)->getDevice(), false);
 
@@ -2425,7 +2423,7 @@ HWTEST_F(BufferUnmapTest, givenBufferWithSharingHandlerWhenUnmappingThenUseNonBl
 
     auto gfxAllocation = buffer->getGraphicsAllocation(pDevice->getRootDeviceIndex());
     for (auto handleId = 0u; handleId < gfxAllocation->getNumGmms(); handleId++) {
-        gfxAllocation->setGmm(new MockGmm(pDevice->getGmmHelper()), handleId);
+        gfxAllocation->setGmm(std::make_unique<MockGmm>(pDevice->getGmmHelper()), handleId);
     }
 
     auto mappedPtr = clEnqueueMapBuffer(&cmdQ, buffer.get(), CL_TRUE, CL_MAP_WRITE, 0, 1, 0, nullptr, nullptr, &retVal);

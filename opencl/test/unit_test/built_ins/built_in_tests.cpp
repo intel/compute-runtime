@@ -701,7 +701,7 @@ HWTEST2_F(AuxBuiltInTests, givenAuxToNonAuxTranslationWhenSettingSurfaceStateThe
         GmmRequirements gmmRequirements{};
         gmmRequirements.allowLargePages = true;
         gmmRequirements.preferCompressed = false;
-        auto gmm = std::unique_ptr<Gmm>(new Gmm(pDevice->getGmmHelper(), nullptr, 1, 0, gmmResourceUsageOclBuffer, {}, gmmRequirements));
+        auto gmm = std::make_unique<Gmm>(pDevice->getGmmHelper(), nullptr, 1, 0, gmmResourceUsageOclBuffer, StorageInfo{}, gmmRequirements);
         gmm->setCompressionEnabled(true);
 
         auto kernelObjsForAuxTranslation = std::make_unique<KernelObjsForAuxTranslation>();
@@ -709,7 +709,7 @@ HWTEST2_F(AuxBuiltInTests, givenAuxToNonAuxTranslationWhenSettingSurfaceStateThe
         if (kernelObjType == MockKernelObjForAuxTranslation::Type::memObj) {
             cl_int retVal = CL_SUCCESS;
             buffer.reset(Buffer::create(pContext, 0, MemoryConstants::pageSize, nullptr, retVal));
-            buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->setDefaultGmm(gmm.release());
+            buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->setDefaultGmm(std::move(gmm));
 
             kernelObjsForAuxTranslation->insert({KernelObjForAuxTranslation::Type::memObj, buffer.get()});
         } else {
@@ -766,7 +766,7 @@ HWTEST2_F(AuxBuiltInTests, givenNonAuxToAuxTranslationWhenSettingSurfaceStateThe
         auto gmm = std::make_unique<Gmm>(pDevice->getGmmHelper(), nullptr, 1, 0, gmmResourceUsageOclBuffer, StorageInfo{}, gmmRequirements);
         gmm->setCompressionEnabled(true);
         if (kernelObjType == MockKernelObjForAuxTranslation::Type::memObj) {
-            mockKernelObjForAuxTranslation.mockBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->setDefaultGmm(gmm.release());
+            mockKernelObjForAuxTranslation.mockBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->setDefaultGmm(std::move(gmm));
         } else {
             mockKernelObjForAuxTranslation.mockGraphicsAllocation->setDefaultGmm(gmm.get());
         }

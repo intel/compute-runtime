@@ -554,7 +554,7 @@ class MemoryManagerNTHandleMock : public NEO::OsAgnosticMemoryManager {
         GmmRequirements gmmRequirements{};
         gmmRequirements.allowLargePages = true;
         gmmRequirements.preferCompressed = false;
-        graphicsAllocation->setDefaultGmm(new Gmm(executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper(), nullptr, 1, 0, gmmResourceUsageOclBuffer, {}, gmmRequirements));
+        graphicsAllocation->setDefaultGmm(std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper(), nullptr, 1, 0, gmmResourceUsageOclBuffer, StorageInfo{}, gmmRequirements));
         return graphicsAllocation;
     }
 

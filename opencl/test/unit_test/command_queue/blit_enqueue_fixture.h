@@ -169,7 +169,7 @@ struct BlitEnqueueTests : public ::testing::Test {
             GmmRequirements gmmRequirements{};
             gmmRequirements.allowLargePages = true;
             gmmRequirements.preferCompressed = false;
-            graphicsAllocation->setDefaultGmm(new Gmm(gmmHelper, nullptr, 0, 0, gmmResourceUsageOclBuffer, {}, gmmRequirements));
+            graphicsAllocation->setDefaultGmm(std::make_unique<Gmm>(gmmHelper, nullptr, 0, 0, gmmResourceUsageOclBuffer, StorageInfo{}, gmmRequirements));
         }
 
         if (graphicsAllocation->getDefaultGmm()) {

@@ -36,9 +36,7 @@ void MockBufferStorage::initDevice() {
 }
 
 MockBufferStorage::~MockBufferStorage() {
-    if (mockGfxAllocation.getDefaultGmm()) {
-        delete mockGfxAllocation.getDefaultGmm();
-    }
+    mockGfxAllocation.setDefaultGmm(std::unique_ptr<Gmm>{});
 }
 
 void MockBuffer::setAllocationType(uint32_t rootDeviceIndex, bool compressed) {
@@ -51,7 +49,7 @@ void MockBuffer::setAllocationType(GraphicsAllocation *graphicsAllocation, GmmHe
         GmmRequirements gmmRequirements{};
         gmmRequirements.allowLargePages = true;
         gmmRequirements.preferCompressed = compressed;
-        graphicsAllocation->setDefaultGmm(new Gmm(gmmHelper, nullptr, 0, 0, gmmResourceUsageOclBuffer, {}, gmmRequirements));
+        graphicsAllocation->setDefaultGmm(std::make_unique<Gmm>(gmmHelper, nullptr, 0, 0, gmmResourceUsageOclBuffer, StorageInfo{}, gmmRequirements));
     }
 
     if (graphicsAllocation->getDefaultGmm()) {

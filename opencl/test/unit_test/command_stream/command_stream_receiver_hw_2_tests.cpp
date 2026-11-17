@@ -2405,8 +2405,7 @@ HWTEST_F(BcsTests, given1DTiledArrayImageWhenConstructPropertiesThenImageTransfo
     resourceInfoSrc->mockResourceCreateParams.ArraySize = 8;
 
     std::unique_ptr<Image> image(Image2dHelperUlt<>::create(context.get()));
-    auto oldGmm = std::unique_ptr<Gmm>(image->getGraphicsAllocation(pDevice->getRootDeviceIndex())->getDefaultGmm());
-    image->getGraphicsAllocation(pDevice->getRootDeviceIndex())->setGmm(gmmSrc.release(), 0);
+    image->getGraphicsAllocation(pDevice->getRootDeviceIndex())->setGmm(std::move(gmmSrc), 0);
     BuiltIn::OpParams builtinOpParams{};
     builtinOpParams.srcMemObj = image.get();
     builtinOpParams.dstMemObj = image.get();
@@ -2432,8 +2431,7 @@ HWTEST_F(BcsTests, given1DNotTiledArrayImageWhenConstructPropertiesThenImageNotT
     resourceInfoSrc->mockResourceCreateParams.ArraySize = 8;
 
     std::unique_ptr<Image> image(Image2dHelperUlt<>::create(context.get()));
-    auto oldGmm = std::unique_ptr<Gmm>(image->getGraphicsAllocation(pDevice->getRootDeviceIndex())->getDefaultGmm());
-    image->getGraphicsAllocation(pDevice->getRootDeviceIndex())->setGmm(gmmSrc.release(), 0);
+    image->getGraphicsAllocation(pDevice->getRootDeviceIndex())->setGmm(std::move(gmmSrc), 0);
     BuiltIn::OpParams builtinOpParams{};
     builtinOpParams.srcMemObj = image.get();
     builtinOpParams.dstMemObj = image.get();

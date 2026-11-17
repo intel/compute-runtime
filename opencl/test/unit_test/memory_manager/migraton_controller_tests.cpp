@@ -123,10 +123,10 @@ HWTEST_F(MigrationControllerTests, givenNotLockableBufferAllocationWithDefinedLo
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
-    auto gmm0 = new Gmm(context.getDevice(0)->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
-    auto gmm1 = new Gmm(context.getDevice(1)->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
-    srcAllocation->setDefaultGmm(gmm0);
-    dstAllocation->setDefaultGmm(gmm1);
+    auto gmm0 = std::make_unique<Gmm>(context.getDevice(0)->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements);
+    auto gmm1 = std::make_unique<Gmm>(context.getDevice(1)->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements);
+    srcAllocation->setDefaultGmm(std::move(gmm0));
+    dstAllocation->setDefaultGmm(std::move(gmm1));
 
     auto *srcAllocationGmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(srcAllocation->getDefaultGmm()->resourceParamsData.data());
     srcAllocationGmmResourceParams->Flags.Info.NotLockable = 1;

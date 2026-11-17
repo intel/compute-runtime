@@ -10,7 +10,6 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
-#include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -415,11 +414,7 @@ TEST_F(EnqueueMapBufferTest, givenNonReadOnlyBufferWhenMappedOnGpuThenSetValidEv
     *pTagMemory = 5;
 
     std::unique_ptr<Buffer> buffer(Buffer::create(BufferDefaults::context, CL_MEM_READ_WRITE, 20, nullptr, retVal));
-    buffer->setSharingHandler(new SharingHandler());
-    auto gfxAllocation = buffer->getGraphicsAllocation(pDevice->getRootDeviceIndex());
-    for (auto handleId = 0u; handleId < gfxAllocation->getNumGmms(); handleId++) {
-        gfxAllocation->setGmm(new MockGmm(pDevice->getGmmHelper()), handleId);
-    }
+    forceMapBufferOnGpu(*buffer);
     buffer->forceDisallowCPUCopy = true;
 
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -466,11 +461,7 @@ TEST_F(EnqueueMapBufferTest, givenReadOnlyBufferWhenMappedOnGpuThenSetValidEvent
     *pTagMemory = 5;
 
     std::unique_ptr<Buffer> buffer(Buffer::create(BufferDefaults::context, CL_MEM_READ_WRITE, 20, nullptr, retVal));
-    buffer->setSharingHandler(new SharingHandler());
-    auto gfxAllocation = buffer->getGraphicsAllocation(pDevice->getRootDeviceIndex());
-    for (auto handleId = 0u; handleId < gfxAllocation->getNumGmms(); handleId++) {
-        gfxAllocation->setGmm(new MockGmm(pDevice->getGmmHelper()), handleId);
-    }
+    forceMapBufferOnGpu(*buffer);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, buffer.get());
 

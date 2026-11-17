@@ -522,7 +522,7 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenCallF
     EXPECT_NE(0u, output.size());
     EXPECT_TRUE(containsHint(expectedHint, userData));
 
-    delete gfxAllocation.getDefaultGmm();
+    gfxAllocation.setDefaultGmm(std::unique_ptr<Gmm>{});
 }
 
 TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenKernelObjectWithGraphicsAllocationAccessedStatefullyOnlyThenDontReportAnyHint) {
@@ -558,7 +558,7 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenKerne
     std::string output = capture.getCapturedStdout();
     EXPECT_EQ(0u, output.size());
 
-    delete gfxAllocation.getDefaultGmm();
+    gfxAllocation.setDefaultGmm(std::unique_ptr<Gmm>{});
 }
 
 TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeDisabledWhenCallFillWithKernelObjsForAuxTranslationOnGfxAllocationThenDontReportAnyHint) {
@@ -589,7 +589,7 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeDisabledWhenCall
     std::string output = capture.getCapturedStdout();
     EXPECT_EQ(0u, output.size());
 
-    delete gfxAllocation.getDefaultGmm();
+    gfxAllocation.setDefaultGmm(std::unique_ptr<Gmm>{});
 }
 
 TEST_F(PerformanceHintTest, whenCallingFillWithKernelObjsForAuxTranslationOnNullGfxAllocationThenDontReportAnyHint) {
@@ -707,12 +707,12 @@ HWTEST_F(PerformanceHintTest, givenCompressedImageWhenItsCreatedThenProperPerfor
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = true;
-    auto gmm = new Gmm(device->getGmmHelper(), static_cast<const void *>(nullptr), t, 0, gmmResourceUsageOclBuffer, info, gmmRequirements);
+    auto gmm = std::make_unique<Gmm>(device->getGmmHelper(), static_cast<const void *>(nullptr), t, 0, gmmResourceUsageOclBuffer, info, gmmRequirements);
     gmm->setCompressionEnabled(true);
 
     auto graphicsAllocation = mockBuffer->getGraphicsAllocation(device->getRootDeviceIndex());
 
-    graphicsAllocation->setDefaultGmm(gmm);
+    graphicsAllocation->setDefaultGmm(std::move(gmm));
     auto &gfxCoreHelper = device->getGfxCoreHelper();
     if (!gfxCoreHelper.checkResourceCompatibility(*graphicsAllocation)) {
         GTEST_SKIP();
@@ -780,10 +780,10 @@ TEST_F(PerformanceHintTest, givenUncompressedImageWhenItsCreatedThenProperPerfor
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = true;
-    auto gmm = new Gmm(device->getGmmHelper(), (const void *)nullptr, t, 0, gmmResourceUsageOclBuffer, info, gmmRequirements);
+    auto gmm = std::make_unique<Gmm>(device->getGmmHelper(), (const void *)nullptr, t, 0, gmmResourceUsageOclBuffer, info, gmmRequirements);
     gmm->setCompressionEnabled(false);
 
-    mockBuffer->getGraphicsAllocation(device->getRootDeviceIndex())->setDefaultGmm(gmm);
+    mockBuffer->getGraphicsAllocation(device->getRootDeviceIndex())->setDefaultGmm(std::move(gmm));
     cl_mem mem = mockBuffer.get();
     imageFormat.image_channel_data_type = CL_UNORM_INT8;
     imageFormat.image_channel_order = CL_RGBA;

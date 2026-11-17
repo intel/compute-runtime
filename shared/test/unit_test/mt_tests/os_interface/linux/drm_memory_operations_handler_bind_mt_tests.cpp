@@ -39,7 +39,7 @@ TEST(DrmMemoryOperationsHandlerBindMtTest, givenCompressedAllocationWhenThreadsD
     MockBufferObject bo(0u, drm);
     bo.setSize(MemoryConstants::pageSize);
     DrmAllocation allocation(0u, 1u, AllocationType::buffer, &bo, nullptr, 0x10000, MemoryConstants::pageSize, MemoryPool::localMemory);
-    allocation.setGmm(new MockGmm(device->getGmmHelper()), 0u);
+    allocation.setGmm(std::make_unique<MockGmm>(device->getGmmHelper()), 0u);
     allocation.getDefaultGmm()->setCompressionEnabled(true);
 
     auto bindsPerDecompression = static_cast<uint32_t>(device->getAllEngines()[0].osContext->getDeviceBitfield().count());
@@ -68,6 +68,5 @@ TEST(DrmMemoryOperationsHandlerBindMtTest, givenCompressedAllocationWhenThreadsD
     EXPECT_EQ(vmBindCalledBefore + bindsPerDecompression, drm->getMockIoctlHelper()->vmBindCalled);
     EXPECT_FALSE(allocation.isCompressionEnabled());
 
-    delete allocation.getDefaultGmm();
-    allocation.setGmm(nullptr, 0u);
+    allocation.setDefaultGmm(std::unique_ptr<Gmm>{});
 }

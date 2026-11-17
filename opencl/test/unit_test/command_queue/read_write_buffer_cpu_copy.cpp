@@ -32,10 +32,10 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, givenCompressedGmmWhenAskingForCpuOperation
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
-    auto gmm = new Gmm(pDevice->getGmmHelper(), nullptr, 1, 0, gmmResourceUsageOclBuffer, {}, gmmRequirements);
+    auto gmm = std::make_unique<Gmm>(pDevice->getGmmHelper(), nullptr, 1, 0, gmmResourceUsageOclBuffer, StorageInfo{}, gmmRequirements);
     gmm->setCompressionEnabled(false);
     auto allocation = buffer->getGraphicsAllocation(rootDeviceIndex);
-    allocation->setDefaultGmm(gmm);
+    allocation->setDefaultGmm(std::move(gmm));
 
     auto alignedPtr = alignedMalloc(2, MemoryConstants::cacheLineSize);
     auto unalignedPtr = ptrOffset(alignedPtr, 1);
@@ -43,7 +43,7 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, givenCompressedGmmWhenAskingForCpuOperation
     EXPECT_TRUE(buffer->isReadWriteOnCpuAllowed(*pDevice));
     EXPECT_TRUE(buffer->isReadWriteOnCpuPreferred(unalignedPtr, 1, *pDevice));
 
-    gmm->setCompressionEnabled(true);
+    allocation->getDefaultGmm()->setCompressionEnabled(true);
     EXPECT_FALSE(buffer->isReadWriteOnCpuAllowed(*pDevice));
     EXPECT_TRUE(buffer->isReadWriteOnCpuPreferred(unalignedPtr, 1, *pDevice));
 

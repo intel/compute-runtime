@@ -1482,7 +1482,7 @@ class MemoryManagerNTHandleMock : public NEO::OsAgnosticMemoryManager {
         GmmRequirements gmmRequirements{};
         gmmRequirements.allowLargePages = true;
         gmmRequirements.preferCompressed = false;
-        graphicsAllocation->setDefaultGmm(new Gmm(executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
+        graphicsAllocation->setDefaultGmm(std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements));
         if (compressedResource) {
             static_cast<MockGmmResourceInfo *>(graphicsAllocation->getDefaultGmm()->gmmResourceInfo.get())->setUnifiedAuxTranslationCapable();
         }

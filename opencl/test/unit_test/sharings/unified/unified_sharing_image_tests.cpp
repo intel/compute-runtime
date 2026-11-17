@@ -145,7 +145,7 @@ TEST_F(UnifiedSharingImageTestsWithMemoryManager, givenSharedBufferWhenSwappingG
     imgInfo.surfaceFormat = &Image::getSurfaceFormatFromTable(CL_MEM_READ_WRITE, &format)->surfaceFormat;
 
     MockGraphicsAllocation allocation;
-    allocation.setDefaultGmm(new MockGmm(context->getDevice(0)->getGmmHelper()));
+    allocation.setDefaultGmm(std::make_unique<MockGmm>(context->getDevice(0)->getGmmHelper()));
     ASSERT_EQ(RESOURCE_BUFFER, allocation.getDefaultGmm()->gmmResourceInfo->getResourceType());
 
     UnifiedImage::swapGmm(&allocation, context.get(), &imgInfo);

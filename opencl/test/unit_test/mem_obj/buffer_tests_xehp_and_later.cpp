@@ -38,11 +38,11 @@ HWTEST2_F(XeHPAndLaterBufferTests, givenDebugFlagSetWhenProgramingSurfaceStateTh
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
-    auto gmm = new Gmm(context.getDevice(0)->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
+    auto gmm = std::make_unique<Gmm>(context.getDevice(0)->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements);
     gmm->setCompressionEnabled(true);
 
     auto buffer = std::unique_ptr<Buffer>(Buffer::create(&context, CL_MEM_READ_WRITE, 1, nullptr, retVal));
-    buffer->getGraphicsAllocation(0)->setGmm(gmm, 0);
+    buffer->getGraphicsAllocation(0)->setGmm(std::move(gmm), 0);
 
     RENDER_SURFACE_STATE surfaceState = FamilyType::cmdInitRenderSurfaceState;
 

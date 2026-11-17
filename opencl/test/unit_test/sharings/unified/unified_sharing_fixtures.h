@@ -75,7 +75,7 @@ struct UnifiedSharingMockMemoryManager : MockMemoryManager {
                                                          properties.rootDeviceIndex, false, false, false);
         graphicsAllocation->setSharedHandle(osHandleData.handle);
         graphicsAllocation->set32BitAllocation(false);
-        graphicsAllocation->setDefaultGmm(new MockGmm(executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getGmmHelper()));
+        graphicsAllocation->setDefaultGmm(std::make_unique<MockGmm>(executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getGmmHelper()));
         return graphicsAllocation;
     }
 

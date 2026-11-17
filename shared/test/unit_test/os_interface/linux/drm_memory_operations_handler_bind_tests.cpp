@@ -1644,7 +1644,7 @@ static void markCompressed(GraphicsAllocation &allocation, GmmHelper *gmmHelper)
         allocation.resizeGmms(1u);
     }
     if (allocation.getDefaultGmm() == nullptr) {
-        allocation.setGmm(new MockGmm(gmmHelper), 0u);
+        allocation.setGmm(std::make_unique<MockGmm>(gmmHelper), 0u);
     }
     allocation.getDefaultGmm()->setCompressionEnabled(true);
 }
@@ -1835,11 +1835,9 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenPatIndexProgrammingSupportedWhen
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
-    auto ownedGmm = std::make_unique<Gmm>(executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper(), nullptr, MemoryConstants::pageSize, 0, GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED, StorageInfo{}, gmmRequirements);
-    ownedGmm->setCompressionEnabled(true);
-    auto gmm = ownedGmm.get();
-    std::unique_ptr<Gmm> previousGmm(allocation->getDefaultGmm());
-    allocation->setDefaultGmm(ownedGmm.release());
+    allocation->setDefaultGmm(std::make_unique<Gmm>(executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper(), nullptr, MemoryConstants::pageSize, 0, GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED, StorageInfo{}, gmmRequirements));
+    auto gmm = allocation->getDefaultGmm();
+    gmm->setCompressionEnabled(true);
 
     auto drmAllocation = static_cast<DrmAllocation *>(allocation);
     for (auto bo : drmAllocation->getBOs()) {

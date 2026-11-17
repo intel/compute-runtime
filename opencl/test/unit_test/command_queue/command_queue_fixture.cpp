@@ -65,7 +65,7 @@ void CommandQueueHwFixture::forceMapBufferOnGpu(Buffer &buffer) {
     buffer.setSharingHandler(new SharingHandler());
     auto gfxAllocation = buffer.getGraphicsAllocation(clDevice->getRootDeviceIndex());
     for (auto handleId = 0u; handleId < gfxAllocation->getNumGmms(); handleId++) {
-        gfxAllocation->setGmm(new MockGmm(clDevice->getGmmHelper()), handleId);
+        gfxAllocation->setGmm(std::make_unique<MockGmm>(clDevice->getGmmHelper()), handleId);
     }
 }
 

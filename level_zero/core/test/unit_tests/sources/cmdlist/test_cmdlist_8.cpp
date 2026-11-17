@@ -911,7 +911,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenDeviceUsmAllocationWhenPreferCopyThrou
         GmmRequirements gmmRequirements{};
         gmmRequirements.allowLargePages = true;
         gmmRequirements.preferCompressed = false;
-        deviceAllocation->setDefaultGmm(new Gmm(device->getNEODevice()->getRootDeviceEnvironment().getGmmHelper(), nullptr, 1, 0, gmmResourceUsageOclBuffer, {}, gmmRequirements));
+        deviceAllocation->setDefaultGmm(std::make_unique<Gmm>(device->getNEODevice()->getRootDeviceEnvironment().getGmmHelper(), nullptr, 1, 0, gmmResourceUsageOclBuffer, StorageInfo{}, gmmRequirements));
     }
 
     deviceAllocation->getDefaultGmm()->setCompressionEnabled(false);
@@ -943,7 +943,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenCompressedSourceUsmAllocationWhenPrefe
         GmmRequirements gmmRequirements{};
         gmmRequirements.allowLargePages = true;
         gmmRequirements.preferCompressed = false;
-        deviceAllocation->setDefaultGmm(new Gmm(device->getNEODevice()->getRootDeviceEnvironment().getGmmHelper(), nullptr, 1, 0, gmmResourceUsageOclBuffer, {}, gmmRequirements));
+        deviceAllocation->setDefaultGmm(std::make_unique<Gmm>(device->getNEODevice()->getRootDeviceEnvironment().getGmmHelper(), nullptr, 1, 0, gmmResourceUsageOclBuffer, StorageInfo{}, gmmRequirements));
     }
 
     deviceAllocation->getDefaultGmm()->setCompressionEnabled(true);

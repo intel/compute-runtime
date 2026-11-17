@@ -568,7 +568,7 @@ HWTEST2_PRODUCT_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenAllocatio
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
-    allocation.setDefaultGmm(new Gmm(pDevice->getGmmHelper(), allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
+    allocation.setDefaultGmm(std::make_unique<Gmm>(pDevice->getGmmHelper(), allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), 0, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements));
     SURFACE_TYPE type = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER;
     gfxCoreHelper.setRenderSurfaceStateForScratchResource(rootDeviceEnvironment, stateBuffer, size, addr, 0, pitch, &allocation, false, type, true, false);
     EXPECT_EQ(length.surfaceState.depth + 1u, state->getDepth());
@@ -582,7 +582,7 @@ HWTEST2_PRODUCT_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenAllocatio
     }
     EXPECT_EQ(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE, state->getAuxiliarySurfaceMode());
 
-    delete allocation.getDefaultGmm();
+    allocation.setDefaultGmm(std::unique_ptr<Gmm>{});
     alignedFree(stateBuffer);
 }
 
@@ -609,7 +609,7 @@ HWTEST2_PRODUCT_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenGmmAndAll
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
-    allocation.setDefaultGmm(new Gmm(rootDeviceEnvironment.getGmmHelper(), allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
+    allocation.setDefaultGmm(std::make_unique<Gmm>(rootDeviceEnvironment.getGmmHelper(), allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), 0, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements));
     allocation.getDefaultGmm()->setCompressionEnabled(true);
     SURFACE_TYPE type = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER;
     gfxCoreHelper.setRenderSurfaceStateForScratchResource(rootDeviceEnvironment, stateBuffer, size, addr, 0, pitch, &allocation, false, type, false, false);
@@ -618,7 +618,7 @@ HWTEST2_PRODUCT_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenGmmAndAll
     }
     EXPECT_TRUE(EncodeSurfaceState<FamilyType>::isAuxModeEnabled(state, allocation.getDefaultGmm()));
 
-    delete allocation.getDefaultGmm();
+    allocation.setDefaultGmm(std::unique_ptr<Gmm>{});
     alignedFree(stateBuffer);
 }
 
@@ -646,7 +646,7 @@ HWTEST2_PRODUCT_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenGmmCompre
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
-    allocation.setDefaultGmm(new Gmm(rootDeviceEnvironment.getGmmHelper(), allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
+    allocation.setDefaultGmm(std::make_unique<Gmm>(rootDeviceEnvironment.getGmmHelper(), allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), 0, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements));
     SURFACE_TYPE type = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER;
     gfxCoreHelper.setRenderSurfaceStateForScratchResource(rootDeviceEnvironment, stateBuffer, size, addr, 0, pitch, &allocation, false, type, false, false);
     if constexpr (IsAtMostXeCore::isMatched<productFamily>()) {
@@ -654,7 +654,7 @@ HWTEST2_PRODUCT_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenGmmCompre
     }
     EXPECT_EQ(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE, state->getAuxiliarySurfaceMode());
 
-    delete allocation.getDefaultGmm();
+    allocation.setDefaultGmm(std::unique_ptr<Gmm>{});
     alignedFree(stateBuffer);
 }
 
@@ -684,14 +684,14 @@ HWTEST2_F(GfxCoreHelperTest, givenOverrideMocsIndexForScratchSpaceWhenSurfaceSta
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
-    allocation.setDefaultGmm(new Gmm(rootDeviceEnvironment.getGmmHelper(), allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
+    allocation.setDefaultGmm(std::make_unique<Gmm>(rootDeviceEnvironment.getGmmHelper(), allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), 0, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements));
     SURFACE_TYPE type = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER;
     gfxCoreHelper.setRenderSurfaceStateForScratchResource(rootDeviceEnvironment, stateBuffer, size, addr, 0, pitch, &allocation, false, type, false, false);
 
     auto mocsProgrammed = state->getMemoryObjectControlState() >> 1;
     EXPECT_EQ(1u, mocsProgrammed);
 
-    delete allocation.getDefaultGmm();
+    allocation.setDefaultGmm(std::unique_ptr<Gmm>{});
     alignedFree(stateBuffer);
 }
 
@@ -719,7 +719,7 @@ HWTEST2_PRODUCT_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenGmmAndAll
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
-    allocation.setDefaultGmm(new Gmm(rootDeviceEnvironment.getGmmHelper(), allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
+    allocation.setDefaultGmm(std::make_unique<Gmm>(rootDeviceEnvironment.getGmmHelper(), allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), 0, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements));
     allocation.getDefaultGmm()->setCompressionEnabled(true);
     SURFACE_TYPE type = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER;
     gfxCoreHelper.setRenderSurfaceStateForScratchResource(rootDeviceEnvironment, stateBuffer, size, addr, 0, pitch, &allocation, false, type, true, false);
@@ -728,7 +728,7 @@ HWTEST2_PRODUCT_F(GfxCoreHelperTest, givenCreatedSurfaceStateBufferWhenGmmAndAll
     }
     EXPECT_EQ(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE, state->getAuxiliarySurfaceMode());
 
-    delete allocation.getDefaultGmm();
+    allocation.setDefaultGmm(std::unique_ptr<Gmm>{});
     alignedFree(stateBuffer);
 }
 

@@ -35,7 +35,7 @@ TEST(FileLogger, GivenLogAllocationMemoryPoolFlagThenLogsCorrectInfo) {
     MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::system64KBPages);
     auto gmmHelper = executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper();
 
-    allocation.setGmm(new MockGmm(gmmHelper), 0);
+    allocation.setGmm(std::make_unique<MockGmm>(gmmHelper), 0);
 
     auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(allocation.getDefaultGmm()->resourceParamsData.data());
     gmmResourceParams->Usage = GMM_RESOURCE_USAGE_TYPE_ENUM::GMM_RESOURCE_USAGE_OCL_BUFFER;
@@ -102,7 +102,7 @@ TEST(FileLogger, givenLogAllocationStdoutWhenLogAllocationThenLogToStdoutInstead
     MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::system64KBPages);
     auto gmmHelper = executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper();
 
-    allocation.setGmm(new MockGmm(gmmHelper), 0);
+    allocation.setGmm(std::make_unique<MockGmm>(gmmHelper), 0);
 
     auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(allocation.getDefaultGmm()->resourceParamsData.data());
     gmmResourceParams->Usage = GMM_RESOURCE_USAGE_TYPE_ENUM::GMM_RESOURCE_USAGE_OCL_BUFFER;
@@ -163,7 +163,7 @@ TEST(FileLogger, GivenDrmAllocationWithoutBOThenNoHandleLogged) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto gmmHelper = executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper();
 
-    allocation.setGmm(new MockGmm(gmmHelper), 0);
+    allocation.setGmm(std::make_unique<MockGmm>(gmmHelper), 0);
 
     auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(allocation.getDefaultGmm()->resourceParamsData.data());
     gmmResourceParams->Usage = GMM_RESOURCE_USAGE_TYPE_ENUM::GMM_RESOURCE_USAGE_OCL_BUFFER;
