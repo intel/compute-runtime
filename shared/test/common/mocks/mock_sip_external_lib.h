@@ -52,13 +52,23 @@ class MockSipExternalLib : public NEO::SipExternalLib {
     }
 
     std::optional<NEO::SipRegisterType> getSipLibRegisterAccessCapturedType;
+    std::vector<NEO::SipRegisterType> getSipLibRegisterAccessQueriedTypes;
+    std::vector<void *> getSipLibRegisterAccessQueriedHandles;
     bool getSipLibRegisterAccessRetValue = true;
+    std::optional<size_t> getSipLibRegisterAccessFailingCall;
     uint32_t getSipLibRegisterAccessCount;
+    std::vector<uint32_t> getSipLibRegisterAccessCountPerCall;
     uint32_t getSipLibRegisterAccessStartOffset;
     bool getSipLibRegisterAccess(void *sipHandle, NEO::SipLibThreadId sipThreadId, NEO::SipRegisterType sipRegisterType, uint32_t *registerCount, uint32_t *registerStartOffset) override {
+        const auto callIndex = getSipLibRegisterAccessQueriedTypes.size();
         getSipLibRegisterAccessCapturedType = sipRegisterType;
+        getSipLibRegisterAccessQueriedTypes.push_back(sipRegisterType);
+        getSipLibRegisterAccessQueriedHandles.push_back(sipHandle);
+        if (getSipLibRegisterAccessFailingCall == callIndex) {
+            return false;
+        }
         if (registerCount) {
-            *registerCount = getSipLibRegisterAccessCount;
+            *registerCount = callIndex < getSipLibRegisterAccessCountPerCall.size() ? getSipLibRegisterAccessCountPerCall[callIndex] : getSipLibRegisterAccessCount;
         }
         if (registerStartOffset) {
             *registerStartOffset = getSipLibRegisterAccessStartOffset;
@@ -82,5 +92,25 @@ class MockSipExternalLib : public NEO::SipExternalLib {
             *startOffset = getBarrierStartOffsetResult;
         }
         return getBarrierStartOffsetRetValue;
+    }
+
+    bool openSipSessionRetValue = true;
+    void *openSipSessionHandle = reinterpret_cast<void *>(0x1000);
+    NEO::SipReadMemoryFn openSipSessionCapturedReadMemory = nullptr;
+    NEO::SipWriteMemoryFn openSipSessionCapturedWriteMemory = nullptr;
+    void *openSipSessionCapturedUserArg = nullptr;
+    bool openSipSession(void **sipHandle, NEO::SipReadMemoryFn readMemory, NEO::SipWriteMemoryFn writeMemory, void *userArg) override {
+        openSipSessionCapturedReadMemory = readMemory;
+        openSipSessionCapturedWriteMemory = writeMemory;
+        openSipSessionCapturedUserArg = userArg;
+        if (openSipSessionRetValue) {
+            *sipHandle = openSipSessionHandle;
+        }
+        return openSipSessionRetValue;
+    }
+
+    std::vector<void *> closedSipHandles;
+    void closeSipSession(void *sipHandle) override {
+        closedSipHandles.push_back(sipHandle);
     }
 };

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2025 Intel Corporation
+# Copyright (C) 2021-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -15,7 +15,6 @@ target_sources(${L0_STATIC_LIB_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/eu_thread.h
                ${CMAKE_CURRENT_SOURCE_DIR}/thread_scratch_helper.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/${BRANCH_DIR_SUFFIX}debug_session_sip_external_lib.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/${BRANCH_DIR_SUFFIX}debug_session_sip_external_lib.h
 )
 
 add_subdirectories()

@@ -5,34 +5,14 @@
  *
  */
 
-#include "level_zero/tools/source/debug/debug_session_sip_external_lib.h"
-
 #include "shared/source/debugger/state_save_area_header_v3.h"
 #include "shared/source/device/device.h"
 #include "shared/source/sip_external_lib/sip_external_lib.h"
 
 #include "level_zero/core/source/device/device.h"
+#include "level_zero/tools/source/debug/debug_session_imp.h"
 
 namespace L0 {
-
-bool DebugSessionImp::openSipWrapper(NEO::Device *neoDevice, uint64_t contextHandle, uint64_t gpuVa) {
-    return true;
-}
-
-bool DebugSessionImp::closeSipWrapper(NEO::Device *neoDevice, uint64_t contextHandle) {
-    return true;
-}
-
-void DebugSessionImp::closeExternalSipHandles() {
-}
-
-void *DebugSessionImp::getSipHandle(uint64_t contextHandle) {
-    return nullptr;
-}
-
-bool DebugSessionImp::getRegisterAccessProperties(EuThread::ThreadId *threadId, uint32_t *pCount, zet_debug_regset_properties_t *pRegisterSetProperties) {
-    return true;
-}
 
 bool DebugSessionImp::getRegHeaderSize(const NEO::StateSaveAreaHeader *pStateSaveArea, size_t size, size_t &regHeaderSize) {
     if (pStateSaveArea->versionHeader.version.major == 3) {
@@ -54,10 +34,6 @@ size_t DebugSessionImp::getSipCommandRegisterSize(bool write, size_t size) {
 
 size_t DebugSessionImp::getSipCommandRegisterValues(NEO::SipCommandRegisterValues &command, bool write, size_t size) {
     return getSipCommandRegisterSize(write, size);
-}
-
-bool DebugSessionImp::getThreadSipCounter(const void *stateSaveArea, L0::EuThread *thread, const NEO::StateSaveAreaHeader *stateSaveAreaHeader, uint64_t *sipThreadCounter) {
-    return false;
 }
 
 bool DebugSessionImp::getThreadSipCounterWithMemHandle(const void *stateSaveArea, L0::EuThread *thread, const NEO::StateSaveAreaHeader *stateSaveAreaHeader, uint64_t *sipThreadCounter, uint64_t memoryHandle) {

@@ -1634,7 +1634,7 @@ TEST_P(DebugApiLinuxTestXeMetadataOpEventTest, GivenVmBindOpMetadataEventForMeta
 
     auto session = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
     ASSERT_NE(nullptr, session);
-    session->forceOpenSipWrapperResult = true;
+    neoDevice->getRootDeviceEnvironmentRef().sipExternalLib = std::make_unique<MockSipExternalLib>();
 
     auto handler = new MockIoctlHandlerXe;
     session->ioctlHandler.reset(handler);

@@ -382,11 +382,6 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
         mockEuDebugInterface->setCurrentInterfaceType(newType);
     }
 
-    std::optional<bool> forceOpenSipWrapperResult;
-    bool openSipWrapper(NEO::Device *neoDevice, uint64_t contextHandle, uint64_t gpuVa) override {
-        return forceOpenSipWrapperResult.has_value() ? forceOpenSipWrapperResult.value() : DebugSessionImp::openSipWrapper(neoDevice, contextHandle, gpuVa);
-    }
-
     uint32_t readSystemRoutineIdentCallCount = 0;
     uint32_t processPendingVmBindEventsCallCount = 0;
     uint32_t threadControlCallCount = 0;

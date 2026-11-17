@@ -39,7 +39,6 @@ DebugSessionLinuxXe::DebugSessionLinuxXe(const zet_debug_config_t &config, Devic
     }
 };
 DebugSessionLinuxXe::~DebugSessionLinuxXe() {
-    closeExternalSipHandles();
     closeAsyncThread();
     closeInternalEventsThread();
     closeVmFdCache();
@@ -694,7 +693,7 @@ bool DebugSessionLinuxXe::handleVmBind(VmBindData &vmBindData) {
                         auto neoDevice = connectedDevice->getNEODevice();
                         auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
                         if (NEO::SipKernel::isExternalLibRequired(gfxCoreHelper)) {
-                            if (!openSipWrapper(neoDevice, vmBindData.vmBind.vmHandle, vmBindOp.addr)) {
+                            if (!openSipWrapper(vmBindData.vmBind.vmHandle, vmBindOp.addr)) {
                                 return false;
                             }
                         }

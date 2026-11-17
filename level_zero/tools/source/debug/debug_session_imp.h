@@ -80,6 +80,7 @@ struct DebugSessionImp : DebugSession {
     DebugSessionImp(const zet_debug_config_t &config, Device *device) : DebugSession(config, device) {
         tileAttachEnabled = NEO::debugManager.flags.ExperimentalEnableTileAttach.get();
     }
+    ~DebugSessionImp() override;
 
     ze_result_t interrupt(ze_device_thread_t thread) override;
     ze_result_t resume(ze_device_thread_t thread) override;
@@ -118,9 +119,14 @@ struct DebugSessionImp : DebugSession {
         uint64_t contextHandle;
         uint64_t gpuVa;
     };
-    static uint32_t readSipMemory(void *userArg, uint32_t offset, uint32_t size, void *destination);
-    static uint32_t writeSipMemory(void *userArg, uint32_t offset, uint32_t size, void *source);
-    std::unordered_map<uint64_t, void *> pIGSipHandleMap;
+    static uint32_t NEO_SIP_MEMORY_CALLBACK readSipMemory(void *userArg, uint32_t offset, uint32_t size, void *destination);
+    static uint32_t NEO_SIP_MEMORY_CALLBACK writeSipMemory(void *userArg, uint32_t offset, uint32_t size, void *source);
+    static NEO::SipLibThreadId euThreadIdToSip(EuThread::ThreadId threadId);
+    struct SipSession {
+        void *handle;
+        SipMemoryAccessArgs args;
+    };
+    std::unordered_map<uint64_t, SipSession> sipSessions;
 
     using ApiEventQueue = std::queue<zet_debug_event_t>;
 
@@ -150,7 +156,7 @@ struct DebugSessionImp : DebugSession {
     template <class BufferType, bool write>
     ze_result_t slmMemoryAccess(EuThread::ThreadId threadId, const zet_debug_memory_space_desc_t *desc, size_t size, BufferType buffer);
 
-    MOCKABLE_VIRTUAL NEO::SipExternalLib *getSipExternalLibInterface() const;
+    NEO::SipExternalLib *getSipExternalLibInterface() const;
     MOCKABLE_VIRTUAL const NEO::ProductHelper &getProductHelper() const;
     MOCKABLE_VIRTUAL SlmAccessProtocol getSlmAccessProtocol() const;
     MOCKABLE_VIRTUAL bool getSlmStartOffset(uint64_t memoryHandle, EuThread::ThreadId threadId, uint32_t *slmStartOffset);
@@ -224,7 +230,7 @@ struct DebugSessionImp : DebugSession {
     MOCKABLE_VIRTUAL ze_result_t waitForCmdReady(EuThread::ThreadId threadId, uint16_t retryCount);
     ze_result_t getCommandRegisterDescriptor(const NEO::StateSaveAreaHeader *stateSaveAreaHeader, SIP::regset_desc *regdesc);
     // Returns the SIP thread counter from the state save area for the given thread ID by also verifying the thread ID exists in the SSA with the threadid
-    MOCKABLE_VIRTUAL bool getThreadSipCounter(const void *stateSaveArea, L0::EuThread *thread, const NEO::StateSaveAreaHeader *stateSaveAreaHeader, uint64_t *sipThreadCounter);
+    bool getThreadSipCounter(const void *stateSaveArea, L0::EuThread *thread, const NEO::StateSaveAreaHeader *stateSaveAreaHeader, uint64_t *sipThreadCounter);
     MOCKABLE_VIRTUAL bool getThreadSipCounterWithMemHandle(const void *stateSaveArea, L0::EuThread *thread, const NEO::StateSaveAreaHeader *stateSaveAreaHeader, uint64_t *sipThreadCounter, uint64_t memoryHandle);
 
     uint32_t getRegisterSize(zet_debug_regset_type_intel_gpu_t type) override;
@@ -234,9 +240,8 @@ struct DebugSessionImp : DebugSession {
     size_t getSipCommandRegisterSize(bool write, size_t size);
     size_t getSipCommandRegisterValues(NEO::SipCommandRegisterValues &command, bool write, size_t size);
 
-    bool openSipWrapper(NEO::Device *neoDevice, uint64_t contextHandle, uint64_t gpuVa) override;
-    bool closeSipWrapper(NEO::Device *neoDevice, uint64_t contextHandle) override;
-    void closeExternalSipHandles() override;
+    bool openSipWrapper(uint64_t contextHandle, uint64_t gpuVa);
+    void closeExternalSipHandles();
     void *getSipHandle(uint64_t contextHandle);
     bool getRegisterAccessProperties(EuThread::ThreadId *threadId, uint32_t *pCount, zet_debug_regset_properties_t *pRegisterSetProperties) override;
 

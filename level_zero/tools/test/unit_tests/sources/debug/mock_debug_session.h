@@ -136,11 +136,8 @@ struct DebugSessionMock : public L0::DebugSession {
     }
 
     bool getRegisterAccessProperties(EuThread::ThreadId *threadId, uint32_t *pCount, zet_debug_regset_properties_t *pRegisterSetProperties) override {
-        registerAccessPropertiesCalled = true;
-        return true; // ignore parameters for mock
+        return true;
     }
-
-    bool registerAccessPropertiesCalled = false;
 
     void detachTileDebugSession(DebugSession *tileSession) override {}
     bool areAllTileDebugSessionDetached() override { return true; }
@@ -153,18 +150,6 @@ struct DebugSessionMock : public L0::DebugSession {
 
     const NEO::TopologyMap &getTopologyMap() override {
         return this->topologyMap;
-    }
-
-    bool openSipWrapper(NEO::Device *neoDevice, uint64_t contextHandle, uint64_t gpuVa) override {
-        return true;
-    }
-
-    bool closeSipWrapper(NEO::Device *neoDevice, uint64_t contextHandle) override {
-        return true;
-    }
-
-    void closeExternalSipHandles() override {
-        // Mock implementation - no-op
     }
 
     NEO::TopologyMap topologyMap;
@@ -185,6 +170,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
     using L0::DebugSessionImp::calculateSrMagicOffset;
     using L0::DebugSessionImp::calculateThreadSlotOffset;
     using L0::DebugSessionImp::checkTriggerEventsForAttention;
+    using L0::DebugSessionImp::closeExternalSipHandles;
     using L0::DebugSessionImp::cmdRegisterAccessHelper;
     using L0::DebugSessionImp::dumpDebugSurfaceToFile;
     using L0::DebugSessionImp::fillResumeAndStoppedThreadsFromNewlyStopped;
@@ -195,12 +181,15 @@ struct MockDebugSession : public L0::DebugSessionImp {
     using L0::DebugSessionImp::getRegisterSize;
     using L0::DebugSessionImp::getSipCommandRegisterSize;
     using L0::DebugSessionImp::getSipCommandRegisterValues;
+    using L0::DebugSessionImp::getSipHandle;
     using L0::DebugSessionImp::getSlmAccessProtocol;
     using L0::DebugSessionImp::getStateSaveAreaHeader;
     using L0::DebugSessionImp::getStateSaveAreaMajorVersion;
+    using L0::DebugSessionImp::getThreadSipCounter;
     using L0::DebugSessionImp::interruptTimeout;
     using L0::DebugSessionImp::isValidNode;
     using L0::DebugSessionImp::newAttentionRaised;
+    using L0::DebugSessionImp::openSipWrapper;
     using L0::DebugSessionImp::pollFifo;
     using L0::DebugSessionImp::readDebugScratchRegisters;
     using L0::DebugSessionImp::readFifo;
@@ -567,16 +556,6 @@ struct MockDebugSession : public L0::DebugSessionImp {
         return L0::DebugSessionImp::getThreadSipCounterWithMemHandle(stateSaveArea, thread, stateSaveAreaHeader, sipThreadCounter, memoryHandle);
     }
 
-    bool getThreadSipCounter(const void *stateSaveArea, L0::EuThread *thread, const NEO::StateSaveAreaHeader *stateSaveAreaHeader, uint64_t *sipThreadCounter) override {
-        if (skipGetThreadSipCounter) {
-            if (sipThreadCounter) {
-                *sipThreadCounter = mockSipCounter;
-            }
-            return getThreadSipCounterRetVal;
-        }
-        return L0::DebugSessionImp::getThreadSipCounter(stateSaveArea, thread, stateSaveAreaHeader, sipThreadCounter);
-    }
-
     uint64_t getContextStateSaveAreaGpuVa(uint64_t memoryHandle) override {
         if (returnStateSaveAreaGpuVa && !this->stateSaveAreaHeader.empty()) {
             return reinterpret_cast<uint64_t>(this->stateSaveAreaHeader.data());
@@ -719,6 +698,14 @@ struct MockDebugSession : public L0::DebugSessionImp {
     char originalSlmMemory[slmSize];
 
     std::optional<const NEO::StateSaveAreaHeader *> getStateSaveAreaHeaderRetValue;
+};
+
+struct MockDebugSessionRegisterAccessProperties : public MockDebugSession {
+    using MockDebugSession::MockDebugSession;
+
+    bool getRegisterAccessProperties(EuThread::ThreadId *threadId, uint32_t *pCount, zet_debug_regset_properties_t *pRegisterSetProperties) override {
+        return L0::DebugSessionImp::getRegisterAccessProperties(threadId, pCount, pRegisterSetProperties);
+    }
 };
 
 } // namespace ult

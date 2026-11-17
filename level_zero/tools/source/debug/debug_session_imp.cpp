@@ -35,7 +35,7 @@ namespace L0 {
 using SipTransferAddr = DebugSessionImp::SipTransferAddr;
 using SipRegisterPacker = DebugSessionImp::SipRegisterPacker;
 
-static NEO::SipLibThreadId euThreadIdToSip(EuThread::ThreadId threadId) {
+NEO::SipLibThreadId DebugSessionImp::euThreadIdToSip(EuThread::ThreadId threadId) {
     return NEO::SipLibThreadId{
         .slice = static_cast<uint32_t>(threadId.slice),
         .subslice = static_cast<uint32_t>(threadId.subslice),
@@ -399,7 +399,7 @@ ze_result_t DebugSessionImp::interrupt(ze_device_thread_t thread) {
     return ZE_RESULT_SUCCESS;
 }
 
-uint32_t DebugSessionImp::readSipMemory(void *userArg, uint32_t offset, uint32_t size, void *destination) {
+uint32_t NEO_SIP_MEMORY_CALLBACK DebugSessionImp::readSipMemory(void *userArg, uint32_t offset, uint32_t size, void *destination) {
     struct SipMemoryAccessArgs *args = reinterpret_cast<struct SipMemoryAccessArgs *>(userArg);
     if (args->debugSession->readGpuMemory(args->contextHandle, static_cast<char *>(destination), size, offset + args->gpuVa) != ZE_RESULT_SUCCESS) {
         return 0;
@@ -407,7 +407,7 @@ uint32_t DebugSessionImp::readSipMemory(void *userArg, uint32_t offset, uint32_t
     return size;
 }
 
-uint32_t DebugSessionImp::writeSipMemory(void *userArg, uint32_t offset, uint32_t size, void *source) {
+uint32_t NEO_SIP_MEMORY_CALLBACK DebugSessionImp::writeSipMemory(void *userArg, uint32_t offset, uint32_t size, void *source) {
     struct SipMemoryAccessArgs *args = reinterpret_cast<struct SipMemoryAccessArgs *>(userArg);
     if (args->debugSession->writeGpuMemory(args->contextHandle, static_cast<const char *>(source), size, offset + args->gpuVa) != ZE_RESULT_SUCCESS) {
         return 0;
@@ -1353,6 +1353,74 @@ NEO::SipRegisterType DebugSessionImp::getSipRegisterType(zet_debug_regset_type_i
     return SipRegisterType::eInvalid;
 }
 
+static bool isRegisterCountThreadSpecific(NEO::SipRegisterType type) {
+    return (type == NEO::SipRegisterType::eGRF) ||
+           (type == NEO::SipRegisterType::eScalar);
+}
+
+bool DebugSessionImp::getRegisterAccessProperties(EuThread::ThreadId *threadId, uint32_t *pCount, zet_debug_regset_properties_t *pRegisterSetProperties) {
+    auto sipExternalLib = getSipExternalLibInterface();
+
+    for (uint32_t i = 0; i < *pCount; i++) {
+        auto sipRegisterType = getSipRegisterType(static_cast<zet_debug_regset_type_intel_gpu_t>(pRegisterSetProperties[i].type));
+        if (!isRegisterCountThreadSpecific(sipRegisterType)) {
+            continue;
+        }
+        uint32_t registerCount = 0;
+        uint32_t registerStartOffset = 0;
+        if (!sipExternalLib->getSipLibRegisterAccess(this->getSipHandle(allThreads[*threadId]->getMemoryHandle()), euThreadIdToSip(*threadId), sipRegisterType, &registerCount, &registerStartOffset)) {
+            return false;
+        }
+        pRegisterSetProperties[i].count = registerCount;
+    }
+
+    return true;
+}
+
+bool DebugSessionImp::openSipWrapper(uint64_t contextHandle, uint64_t gpuVa) {
+    auto sipExternalLib = getSipExternalLibInterface();
+    if (sipExternalLib == nullptr) {
+        return false;
+    }
+    auto sipSessionIt = sipSessions.try_emplace(contextHandle).first;
+    auto &sipSession = sipSessionIt->second;
+    if (sipSession.handle != nullptr) {
+        sipExternalLib->closeSipSession(sipSession.handle);
+    }
+    sipSession = {nullptr, {this, contextHandle, gpuVa}};
+    if (!sipExternalLib->openSipSession(&sipSession.handle, &DebugSessionImp::readSipMemory, &DebugSessionImp::writeSipMemory, &sipSession.args)) {
+        sipSessions.erase(sipSessionIt);
+        return false;
+    }
+    return true;
+}
+
+void *DebugSessionImp::getSipHandle(uint64_t contextHandle) {
+    if (auto it = sipSessions.find(contextHandle); it != sipSessions.end()) {
+        return it->second.handle;
+    }
+    return nullptr;
+}
+
+void DebugSessionImp::closeExternalSipHandles() {
+    if (sipSessions.empty()) {
+        return;
+    }
+    auto sipExternalLib = getSipExternalLibInterface();
+    for (auto &[contextHandle, sipSession] : sipSessions) {
+        sipExternalLib->closeSipSession(sipSession.handle);
+    }
+    sipSessions.clear();
+}
+
+DebugSessionImp::~DebugSessionImp() {
+    closeExternalSipHandles();
+}
+
+bool DebugSessionImp::getThreadSipCounter(const void *stateSaveArea, L0::EuThread *thread, const NEO::StateSaveAreaHeader *stateSaveAreaHeader, uint64_t *sipThreadCounter) {
+    return getThreadSipCounterWithMemHandle(stateSaveArea, thread, stateSaveAreaHeader, sipThreadCounter, thread->getMemoryHandle());
+}
+
 std::optional<NEO::RegsetDescExt> DebugSessionImp::typeToRegsetDescExt(zet_debug_regset_type_intel_gpu_t type, L0::Device *device) {
     auto sipLibInterface = device->getNEODevice()->getSipExternalLibInterface();
     switch (type) {
@@ -1761,7 +1829,7 @@ ze_result_t DebugSessionImp::registersAccessHelper(const EuThread *thread, const
     }
 
     size_t startRegOffset = 0;
-    auto sipLibInterface = connectedDevice->getNEODevice()->getSipExternalLibInterface();
+    auto sipLibInterface = getSipExternalLibInterface();
     if (sipLibInterface) {
         uint32_t registerCount = 0;
         uint32_t registerStartOffset = 0;
@@ -1969,7 +2037,7 @@ ze_result_t DebugSessionImp::cmdRegisterAccessHelperV5(const EuThread::ThreadId 
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
-    auto sipLibInterface = connectedDevice->getNEODevice()->getSipExternalLibInterface();
+    auto sipLibInterface = getSipExternalLibInterface();
     UNRECOVERABLE_IF(!sipLibInterface);
     uint32_t registerStartOffset = 0;
     bool ok = sipLibInterface->getSipLibRegisterAccess(this->getSipHandle(memoryHandle), euThreadIdToSip(thread.getThreadId()), NEO::SipRegisterType::eCommand, nullptr, &registerStartOffset);

@@ -18,6 +18,12 @@
 #include <string>
 #include <vector>
 
+#if defined(_WIN32)
+#define NEO_SIP_MEMORY_CALLBACK __stdcall
+#else
+#define NEO_SIP_MEMORY_CALLBACK
+#endif
+
 namespace NEO {
 class Device;
 
@@ -62,6 +68,9 @@ struct RegsetDescExt {
     std::array<uint8_t, 16> validMask;
 };
 
+using SipReadMemoryFn = uint32_t(NEO_SIP_MEMORY_CALLBACK *)(void *userArg, uint32_t offset, uint32_t size, void *destination);
+using SipWriteMemoryFn = uint32_t(NEO_SIP_MEMORY_CALLBACK *)(void *userArg, uint32_t offset, uint32_t size, void *source);
+
 class SipExternalLib : NonCopyableAndNonMovableClass {
   public:
     virtual ~SipExternalLib() {}
@@ -74,6 +83,8 @@ class SipExternalLib : NonCopyableAndNonMovableClass {
     virtual bool getSipLibRegisterAccess(void *sipHandle, SipLibThreadId sipThreadId, SipRegisterType type, uint32_t *registerCount, uint32_t *registerStartOffset) = 0;
     virtual bool getSlmStartOffset(void *siphandle, SipLibThreadId threadId, uint32_t *startOffset) = 0;
     virtual bool getBarrierStartOffset(void *siphandle, SipLibThreadId threadId, uint32_t *startOffset) = 0;
+    virtual bool openSipSession(void **sipHandle, SipReadMemoryFn readMemory, SipWriteMemoryFn writeMemory, void *userArg) = 0;
+    virtual void closeSipSession(void *sipHandle) = 0;
 };
 
 } // namespace NEO
