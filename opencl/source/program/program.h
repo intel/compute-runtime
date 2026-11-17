@@ -387,6 +387,7 @@ class Program : public BaseObject<_cl_program> {
     CIF::RAII::UPtr_t<CIF::Builtins::BufferSimple> specConstantsIds;
     CIF::RAII::UPtr_t<CIF::Builtins::BufferSimple> specConstantsSizes;
     specConstValuesMap specConstantsValues;
+    specConstValuesMap compiledSpecConstantsValues;
 
     ExecutionEnvironment &executionEnvironment;
     Context *context = nullptr;

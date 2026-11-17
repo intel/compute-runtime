@@ -81,12 +81,13 @@ cl_int Program::link(
                 break;
             }
 
-            if (pInputProgObj->areSpecializationConstantsInitialized) {
+            const auto &inputSpecConstants = pInputProgObj->compiledSpecConstantsValues;
+            if (!inputSpecConstants.empty()) {
                 specConstIds.clear();
                 specConstValues.clear();
-                specConstIds.reserve(pInputProgObj->specConstantsValues.size());
-                specConstValues.reserve(pInputProgObj->specConstantsValues.size());
-                for (const auto &specConst : pInputProgObj->specConstantsValues) {
+                specConstIds.reserve(inputSpecConstants.size());
+                specConstValues.reserve(inputSpecConstants.size());
+                for (const auto &specConst : inputSpecConstants) {
                     specConstIds.push_back(specConst.first);
                     specConstValues.push_back(specConst.second);
                 }

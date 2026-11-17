@@ -55,6 +55,7 @@ cl_int Program::compile(
         }
 
         if ((createdFrom == CreatedFrom::il) || std::all_of(deviceVector.begin(), deviceVector.end(), [&](auto device) { return CL_PROGRAM_BINARY_TYPE_INTERMEDIATE == deviceBuildInfos[device].programBinaryType; })) {
+            this->compiledSpecConstantsValues = this->specConstantsValues;
             retVal = CL_SUCCESS;
             break;
         }

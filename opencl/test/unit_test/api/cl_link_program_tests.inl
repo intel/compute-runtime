@@ -7,6 +7,7 @@
 
 #include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
+#include "shared/source/helpers/string.h"
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_zebin_wrapper.h"
 
@@ -154,16 +155,14 @@ TEST_F(ClLinkProgramTests, GivenProgramsWithSpecConstantsThenSpecConstantsAreEmb
     uint64_t prog2Values[1] = {13};
 
     auto progSrc1 = clUniquePtr(new MockProgram(pContext, false, toClDeviceVector(*pDevice)));
-    progSrc1->specConstantsValues[prog1Keys[0]] = prog1Values[0];
-    progSrc1->specConstantsValues[prog1Keys[1]] = prog1Values[1];
-    progSrc1->areSpecializationConstantsInitialized = true;
+    progSrc1->compiledSpecConstantsValues[prog1Keys[0]] = prog1Values[0];
+    progSrc1->compiledSpecConstantsValues[prog1Keys[1]] = prog1Values[1];
     progSrc1->irBinary = makeCopy(ir1, sizeof(ir1));
     progSrc1->irBinarySize = sizeof(ir1);
     progSrc1->isSpirV = true;
 
     auto progSrc2 = clUniquePtr(new MockProgram(pContext, false, toClDeviceVector(*pDevice)));
-    progSrc2->specConstantsValues[prog2Keys[0]] = prog2Values[0];
-    progSrc2->areSpecializationConstantsInitialized = true;
+    progSrc2->compiledSpecConstantsValues[prog2Keys[0]] = prog2Values[0];
     progSrc2->irBinary = makeCopy(ir2, sizeof(ir2));
     progSrc2->irBinarySize = sizeof(ir2);
     progSrc2->isSpirV = true;
@@ -198,11 +197,11 @@ TEST_F(ClLinkProgramTests, GivenProgramsWithSpecConstantsThenSpecConstantsAreEmb
     EXPECT_EQ(NEO::Elf::SHT_OPENCL_SPIRV, elf.sectionHeaders[6].header->type);
     EXPECT_EQ(NEO::Elf::SHT_OPENCL_SPIRV, elf.sectionHeaders[7].header->type);
 
-    ASSERT_EQ(sizeof(uint32_t) * progSrc1->specConstantsValues.size(), elf.sectionHeaders[1].data.size());
-    ASSERT_EQ(sizeof(uint64_t) * progSrc1->specConstantsValues.size(), elf.sectionHeaders[2].data.size());
+    ASSERT_EQ(sizeof(uint32_t) * progSrc1->compiledSpecConstantsValues.size(), elf.sectionHeaders[1].data.size());
+    ASSERT_EQ(sizeof(uint64_t) * progSrc1->compiledSpecConstantsValues.size(), elf.sectionHeaders[2].data.size());
     ASSERT_EQ(sizeof(ir1), elf.sectionHeaders[3].data.size());
-    ASSERT_EQ(sizeof(uint32_t) * progSrc2->specConstantsValues.size(), elf.sectionHeaders[4].data.size());
-    ASSERT_EQ(sizeof(uint64_t) * progSrc2->specConstantsValues.size(), elf.sectionHeaders[5].data.size());
+    ASSERT_EQ(sizeof(uint32_t) * progSrc2->compiledSpecConstantsValues.size(), elf.sectionHeaders[4].data.size());
+    ASSERT_EQ(sizeof(uint64_t) * progSrc2->compiledSpecConstantsValues.size(), elf.sectionHeaders[5].data.size());
     ASSERT_EQ(sizeof(ir2), elf.sectionHeaders[6].data.size());
     ASSERT_EQ(sizeof(ir3), elf.sectionHeaders[7].data.size());
 
@@ -214,17 +213,67 @@ TEST_F(ClLinkProgramTests, GivenProgramsWithSpecConstantsThenSpecConstantsAreEmb
         return *(reinterpret_cast<const uint64_t *>(section.data.begin()) + offset);
     };
 
-    ASSERT_EQ(1U, progSrc1->specConstantsValues.count(readSpecConstId(elf.sectionHeaders[1], 0)));
-    EXPECT_EQ(progSrc1->specConstantsValues[readSpecConstId(elf.sectionHeaders[1], 0)], readSpecConstValue(elf.sectionHeaders[2], 0));
-    ASSERT_EQ(1U, progSrc1->specConstantsValues.count(readSpecConstId(elf.sectionHeaders[1], 1)));
-    EXPECT_EQ(progSrc1->specConstantsValues[readSpecConstId(elf.sectionHeaders[1], 1)], readSpecConstValue(elf.sectionHeaders[2], 1));
+    auto prog1SpecConst0 = progSrc1->compiledSpecConstantsValues.find(readSpecConstId(elf.sectionHeaders[1], 0));
+    ASSERT_NE(progSrc1->compiledSpecConstantsValues.end(), prog1SpecConst0);
+    EXPECT_EQ(prog1SpecConst0->second, readSpecConstValue(elf.sectionHeaders[2], 0));
+    auto prog1SpecConst1 = progSrc1->compiledSpecConstantsValues.find(readSpecConstId(elf.sectionHeaders[1], 1));
+    ASSERT_NE(progSrc1->compiledSpecConstantsValues.end(), prog1SpecConst1);
+    EXPECT_EQ(prog1SpecConst1->second, readSpecConstValue(elf.sectionHeaders[2], 1));
     EXPECT_EQ(0, memcmp(ir1, elf.sectionHeaders[3].data.begin(), sizeof(ir1)));
 
-    ASSERT_EQ(1U, progSrc2->specConstantsValues.count(readSpecConstId(elf.sectionHeaders[4], 0)));
-    EXPECT_EQ(progSrc2->specConstantsValues[readSpecConstId(elf.sectionHeaders[4], 0)], readSpecConstValue(elf.sectionHeaders[5], 0));
+    auto prog2SpecConst0 = progSrc2->compiledSpecConstantsValues.find(readSpecConstId(elf.sectionHeaders[4], 0));
+    ASSERT_NE(progSrc2->compiledSpecConstantsValues.end(), prog2SpecConst0);
+    EXPECT_EQ(prog2SpecConst0->second, readSpecConstValue(elf.sectionHeaders[5], 0));
     EXPECT_EQ(0, memcmp(ir2, elf.sectionHeaders[6].data.begin(), sizeof(ir2)));
 
     EXPECT_EQ(0, memcmp(ir3, elf.sectionHeaders[7].data.begin(), sizeof(ir3)));
+}
+
+TEST_F(ClLinkProgramTests, givenSpecConstantChangedAfterCompilingIlProgramWhenLinkingThenValueFromCompileTimeIsEmbeddedIntoElf) {
+    uint8_t ir[] = {15, 17, 19, 23};
+    const uint32_t specId = 101;
+    const uint64_t compileTimeValue = 1;
+    const uint64_t valueSetAfterCompile = 999;
+
+    auto progSrc = clUniquePtr(new MockProgram(pContext, false, toClDeviceVector(*pDevice)));
+    progSrc->createdFrom = Program::CreatedFrom::il;
+    progSrc->irBinary = makeCopy(ir, sizeof(ir));
+    progSrc->irBinarySize = sizeof(ir);
+    progSrc->isSpirV = true;
+    progSrc->specConstantsValues[specId] = compileTimeValue;
+
+    ASSERT_EQ(CL_SUCCESS, progSrc->compile(progSrc->getDevices(), nullptr, 0, nullptr, nullptr));
+    progSrc->specConstantsValues[specId] = valueSetAfterCompile;
+
+    auto progDst = clUniquePtr(new MockProgram(pContext, false, toClDeviceVector(*pDevice)));
+    cl_program inputPrograms[1] = {progSrc.get()};
+
+    std::string receivedInput;
+    MockCompilerDebugVars igcDebugVars;
+    igcDebugVars.receivedInput = &receivedInput;
+    NEO::igcPushDebugVars(igcDebugVars);
+    progDst->link(progDst->getDevices(), "", 1, inputPrograms);
+    NEO::igcPopDebugVars();
+
+    std::string elfDecodeError;
+    std::string elfDecodeWarnings;
+    auto elf = NEO::Elf::decodeElf<NEO::Elf::EI_CLASS_64>(ArrayRef<const uint8_t>::fromAny(receivedInput.data(), receivedInput.size()),
+                                                          elfDecodeError, elfDecodeWarnings);
+    ASSERT_NE(nullptr, elf.elfFileHeader) << elfDecodeError;
+
+    ASSERT_EQ(4U, elf.sectionHeaders.size());
+    EXPECT_EQ(NEO::Elf::SHT_OPENCL_SPIRV_SC_IDS, elf.sectionHeaders[1].header->type);
+    EXPECT_EQ(NEO::Elf::SHT_OPENCL_SPIRV_SC_VALUES, elf.sectionHeaders[2].header->type);
+    EXPECT_EQ(NEO::Elf::SHT_OPENCL_SPIRV, elf.sectionHeaders[3].header->type);
+
+    ASSERT_EQ(sizeof(uint32_t), elf.sectionHeaders[1].data.size());
+    ASSERT_EQ(sizeof(uint64_t), elf.sectionHeaders[2].data.size());
+    uint32_t embeddedSpecId = 0;
+    uint64_t embeddedSpecValue = 0;
+    memcpy_s(&embeddedSpecId, sizeof(embeddedSpecId), elf.sectionHeaders[1].data.begin(), elf.sectionHeaders[1].data.size());
+    memcpy_s(&embeddedSpecValue, sizeof(embeddedSpecValue), elf.sectionHeaders[2].data.begin(), elf.sectionHeaders[2].data.size());
+    EXPECT_EQ(specId, embeddedSpecId);
+    EXPECT_EQ(compileTimeValue, embeddedSpecValue);
 }
 
 TEST_F(ClLinkProgramTests, GivenInvalidCallbackInputWhenLinkProgramThenInvalidValueErrorIsReturned) {
