@@ -548,6 +548,10 @@ inline ze_result_t validateGraphNodeUpdateDescriptors(const GraphNode &graphNode
             if (0u == (nodeFlags & ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_SIZE)) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }
+        } else if (desc->stype == ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_GLOBAL_OFFSET_EXP_DESC) {
+            if (0u == (nodeFlags & ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GLOBAL_OFFSET)) {
+                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            }
         } else {
             return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
@@ -590,6 +594,12 @@ inline ze_result_t applyGraphNodeUpdateDescriptors(GraphNode &graphNode, const v
         } else if (desc->stype == ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_GROUP_COUNT_EXP_DESC) {
             auto groupCountDesc = reinterpret_cast<const ze_graph_node_update_group_count_exp_desc_t *>(desc);
             graphNode.updateGroupCount(groupCountDesc->groupCount);
+        } else if (desc->stype == ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_GLOBAL_OFFSET_EXP_DESC) {
+            auto globalOffsetDesc = reinterpret_cast<const ze_graph_node_update_global_offset_exp_desc_t *>(desc);
+            auto result = graphNode.updateGlobalOffset(globalOffsetDesc->offsetX, globalOffsetDesc->offsetY, globalOffsetDesc->offsetZ);
+            if (ZE_RESULT_SUCCESS != result) {
+                return result;
+            }
         } else {
             auto groupSizeDesc = reinterpret_cast<const ze_graph_node_update_group_size_exp_desc_t *>(desc);
             auto result = graphNode.updateGroupSize(groupSizeDesc->groupSize);

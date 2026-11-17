@@ -177,9 +177,9 @@ TEST(GraphNodesUpdateTest, GivenUnsupportedUpdateDescriptorWhenUpdatingNodeThenU
     graph.graphNodes->push_back(std::make_unique<L0::GraphNode>(ZE_GRAPH_NODE_EXP_TYPE_LAUNCH_KERNEL, 0U));
     graph.stopCapturing();
 
-    ze_graph_node_update_global_offset_exp_desc_t globalOffsetDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_GLOBAL_OFFSET_EXP_DESC};
+    ze_base_desc_t unsupportedDesc = {ZE_STRUCTURE_TYPE_FORCE_UINT32};
     ze_graph_node_handle_t hNode = (*graph.graphNodes)[0]->toHandle();
-    const void *updateDesc = &globalOffsetDesc;
+    const void *updateDesc = &unsupportedDesc;
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeGraphNodesUpdateExp(graph.toHandle(), 1, &hNode, &updateDesc, nullptr));
 }
 

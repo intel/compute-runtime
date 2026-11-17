@@ -10445,6 +10445,55 @@ TEST_F(GraphTestApiCaptureWithDevice, GivenKernelArgumentRejectedByKernelWhenUpd
     }
 }
 
+TEST_F(GraphTestApiCaptureWithDevice, GivenGlobalOffsetDescriptorForNodeWithoutGlobalOffsetFlagWhenUpdatingNodeThenInvalidArgumentIsReturnedAndGlobalOffsetIsNotUpdated) {
+    Mock<Module> module(this->device, nullptr);
+    Mock<KernelImp> kernel;
+    kernel.setModule(&module);
+    kernel.setGlobalOffsetExp(1U, 2U, 3U);
+
+    GraphsCleanupGuard graphCleanup;
+    ContextStubMock ctx;
+    MockGraph graph{&ctx, true, true};
+    graph.graphNodes->push_back(std::make_unique<L0::GraphNode>(ZE_GRAPH_NODE_EXP_TYPE_LAUNCH_KERNEL, ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT));
+    graph.stopCapturing();
+    (*graph.graphNodes)[0]->setKernel(&kernel);
+
+    ze_graph_node_update_global_offset_exp_desc_t globalOffsetDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_GLOBAL_OFFSET_EXP_DESC};
+    globalOffsetDesc.offsetX = 4U;
+    globalOffsetDesc.offsetY = 5U;
+    globalOffsetDesc.offsetZ = 6U;
+    ze_graph_node_handle_t hNode = (*graph.graphNodes)[0]->toHandle();
+    const void *updateDesc = &globalOffsetDesc;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, L0::zeGraphNodesUpdateExp(graph.toHandle(), 1, &hNode, &updateDesc, nullptr));
+
+    EXPECT_EQ(1U, kernel.getGlobalOffsets()[0]);
+    EXPECT_EQ(2U, kernel.getGlobalOffsets()[1]);
+    EXPECT_EQ(3U, kernel.getGlobalOffsets()[2]);
+}
+
+TEST_F(GraphTestApiCaptureWithDevice, GivenGlobalOffsetRejectedByKernelWhenUpdatingNodeThenKernelErrorIsReturned) {
+    struct KernelRejectingGlobalOffset : Mock<KernelImp> {
+        ze_result_t setGlobalOffsetExp(uint32_t, uint32_t, uint32_t) override {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+    };
+    Mock<Module> module(this->device, nullptr);
+    KernelRejectingGlobalOffset kernel;
+    kernel.setModule(&module);
+
+    GraphsCleanupGuard graphCleanup;
+    ContextStubMock ctx;
+    MockGraph graph{&ctx, true, true};
+    graph.graphNodes->push_back(std::make_unique<L0::GraphNode>(ZE_GRAPH_NODE_EXP_TYPE_LAUNCH_KERNEL, ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GLOBAL_OFFSET));
+    graph.stopCapturing();
+    (*graph.graphNodes)[0]->setKernel(&kernel);
+
+    ze_graph_node_update_global_offset_exp_desc_t globalOffsetDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_GLOBAL_OFFSET_EXP_DESC};
+    ze_graph_node_handle_t hNode = (*graph.graphNodes)[0]->toHandle();
+    const void *updateDesc = &globalOffsetDesc;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, L0::zeGraphNodesUpdateExp(graph.toHandle(), 1, &hNode, &updateDesc, nullptr));
+}
+
 TEST_F(GraphTestApiCaptureWithDevice, GivenGroupSizeRejectedByKernelWhenUpdatingNodeThenKernelErrorIsReturned) {
     Mock<Module> module(this->device, nullptr);
     Mock<KernelImp> kernel;
@@ -10592,6 +10641,64 @@ TEST_F(GraphTestInstantiationTest, GivenCapturedAppendKernelsWithGraphNodeDescri
     EXPECT_EQ(1u, kernel.getGroupSize()[0]);
     EXPECT_EQ(1u, kernel.getGroupSize()[1]);
     EXPECT_EQ(1u, kernel.getGroupSize()[2]);
+}
+
+TEST_F(GraphTestInstantiationTest, GivenCapturedAppendKernelsWithGraphNodeDescriptorsWhenUpdatingGlobalOffsetOfNodesThenCapturedKernelsAreUpdated) {
+    GraphsCleanupGuard graphCleanup;
+    debugManager.flags.OverrideMutableGraphCapability.set(static_cast<int32_t>(ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GLOBAL_OFFSET));
+
+    MockGraphContextReturningSpecificCmdList ctx;
+    Mock<Module> module(this->device, nullptr);
+    Mock<KernelImp> kernel;
+    kernel.setModule(&module);
+    kernel.setGlobalOffsetExp(1U, 2U, 3U);
+    ze_kernel_handle_t kernelHandle = kernel.toHandle();
+
+    ze_graph_node_handle_t parametersNodeHandle = nullptr;
+    ze_graph_node_exp_desc_t parametersNodeDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_EXP_DESC};
+    parametersNodeDesc.flags = ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GLOBAL_OFFSET;
+    parametersNodeDesc.phNodeHandle = &parametersNodeHandle;
+    ze_graph_node_handle_t argumentsNodeHandle = nullptr;
+    ze_graph_node_exp_desc_t argumentsNodeDesc = parametersNodeDesc;
+    argumentsNodeDesc.phNodeHandle = &argumentsNodeHandle;
+    ze_group_count_t groupCount = {1, 1, 1};
+    ze_group_size_t groupSize = {1, 1, 1};
+
+    MockGraph srcGraph(&ctx, true, true);
+    auto srcGraphHandle = srcGraph.toHandle();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(immCmdListHandle, srcGraphHandle, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernelWithParameters(immCmdListHandle, kernelHandle, &groupCount, &parametersNodeDesc, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernelWithArguments(immCmdListHandle, kernelHandle, groupCount, groupSize, nullptr, &argumentsNodeDesc, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(immCmdListHandle, &srcGraphHandle, nullptr));
+
+    const auto &capturedCommands = srcGraph.getCapturedCommands();
+    ASSERT_EQ(2u, capturedCommands.size());
+    auto parametersKernel = std::get<Closure<CaptureApi::zeCommandListAppendLaunchKernelWithParameters>>(capturedCommands[0]).indirectArgs.capturedKernel.get();
+    auto argumentsKernel = std::get<Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments>>(capturedCommands[1]).indirectArgs.capturedKernel.get();
+
+    ze_graph_node_update_global_offset_exp_desc_t parametersGlobalOffsetDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_GLOBAL_OFFSET_EXP_DESC};
+    parametersGlobalOffsetDesc.offsetX = 4U;
+    parametersGlobalOffsetDesc.offsetY = 5U;
+    parametersGlobalOffsetDesc.offsetZ = 6U;
+    ze_graph_node_update_global_offset_exp_desc_t argumentsGlobalOffsetDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_GLOBAL_OFFSET_EXP_DESC};
+    argumentsGlobalOffsetDesc.offsetX = 7U;
+    argumentsGlobalOffsetDesc.offsetY = 8U;
+    argumentsGlobalOffsetDesc.offsetZ = 9U;
+
+    std::array<ze_graph_node_handle_t, 2> hNodes = {parametersNodeHandle, argumentsNodeHandle};
+    std::array<const void *, 2> updateDescs = {&parametersGlobalOffsetDesc, &argumentsGlobalOffsetDesc};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeGraphNodesUpdateExp(srcGraphHandle, 2, hNodes.data(), updateDescs.data(), nullptr));
+
+    EXPECT_EQ(4U, parametersKernel->getGlobalOffsets()[0]);
+    EXPECT_EQ(5U, parametersKernel->getGlobalOffsets()[1]);
+    EXPECT_EQ(6U, parametersKernel->getGlobalOffsets()[2]);
+    EXPECT_EQ(7U, argumentsKernel->getGlobalOffsets()[0]);
+    EXPECT_EQ(8U, argumentsKernel->getGlobalOffsets()[1]);
+    EXPECT_EQ(9U, argumentsKernel->getGlobalOffsets()[2]);
+
+    EXPECT_EQ(1U, kernel.getGlobalOffsets()[0]);
+    EXPECT_EQ(2U, kernel.getGlobalOffsets()[1]);
+    EXPECT_EQ(3U, kernel.getGlobalOffsets()[2]);
 }
 
 TEST(GraphTestCommandListDestruction, GivenPreallocatedCaptureTargetWhenCommandListIsDestroyedThenGraphIsNotDestroyed) {
