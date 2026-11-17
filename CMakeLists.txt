@@ -1062,6 +1062,7 @@ set(NEO_SCRIPT_PROJECTS_FOLDER "neo scripts")
 
 configure_file(config.h.in ${NEO_BUILD_DIR}/config.h)
 configure_file(driver_version.h.in ${NEO_BUILD_DIR}/driver_version.h) # Put Driver version into define
+configure_file(neo_file_version.h.in ${NEO_BUILD_DIR}/neo_file_version.h)
 configure_file(hw_cmds_default.h.in ${NEO_BUILD_DIR}/hw_cmds_default.h)
 
 if(BUILD_WITH_L0)
