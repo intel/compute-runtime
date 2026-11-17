@@ -24,9 +24,9 @@ void CpuPageFaultManager::transferToCpu(void *ptr, size_t size, void *device) {
     UNRECOVERABLE_IF(allocData == nullptr);
 
     auto ret =
-        l0Device->pageFaultCommandList->appendPageFaultCopy(allocData->cpuAllocation,
-                                                            allocData->gpuAllocations.getGraphicsAllocation(l0Device->getRootDeviceIndex()),
-                                                            allocData->size, true, 0);
+        l0Device->getPageFaultCommandList()->appendPageFaultCopy(allocData->cpuAllocation,
+                                                                 allocData->gpuAllocations.getGraphicsAllocation(l0Device->getRootDeviceIndex()),
+                                                                 allocData->size, true, 0);
     UNRECOVERABLE_IF(ret);
 }
 void CpuPageFaultManager::transferToGpu(void *ptr, void *device) {
@@ -37,9 +37,9 @@ void CpuPageFaultManager::transferToGpu(void *ptr, void *device) {
     UNRECOVERABLE_IF(allocData == nullptr);
 
     auto ret =
-        l0Device->pageFaultCommandList->appendPageFaultCopy(allocData->gpuAllocations.getGraphicsAllocation(l0Device->getRootDeviceIndex()),
-                                                            allocData->cpuAllocation,
-                                                            allocData->size, false, 0);
+        l0Device->getPageFaultCommandList()->appendPageFaultCopy(allocData->gpuAllocations.getGraphicsAllocation(l0Device->getRootDeviceIndex()),
+                                                                 allocData->cpuAllocation,
+                                                                 allocData->size, false, 0);
     UNRECOVERABLE_IF(ret);
 }
 void CpuPageFaultManager::allowCPUMemoryEviction(bool evict, void *ptr, PageFaultData &pageFaultData) {

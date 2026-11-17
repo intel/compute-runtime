@@ -40,6 +40,7 @@ struct MockSubDevice : public SubDevice {
     using Device::allEngines;
     using Device::createEngines;
     using Device::secondaryEngines;
+    using Device::tryGetInternalSecondaryEngine;
     using SubDevice::getDeviceBitfield;
     using SubDevice::getGlobalMemorySize;
     using SubDevice::SubDevice;

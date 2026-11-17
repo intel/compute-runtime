@@ -1456,13 +1456,21 @@ OsContext *MemoryManager::getDefaultEngineContext(uint32_t rootDeviceIndex, Devi
         }
     }
     if (!defaultContext && peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->isExposeSingleDeviceMode()) {
-        for (auto &engine : getRegisteredEngines(rootDeviceIndex)) {
-            auto osContext = engine.osContext;
-            const bool internalContext = osContext->isInternalEngine() || (osContext->isReservedForInternalEngine() && osContext->isInitialized());
-            if (internalContext && osContext->getDeviceBitfield() == subdevicesBitfield) {
-                defaultContext = osContext;
-                break;
+        auto findContext = [&](auto &&predicate) -> OsContext * {
+            for (auto &engine : getRegisteredEngines(rootDeviceIndex)) {
+                if (engine.osContext->getDeviceBitfield() == subdevicesBitfield && predicate(*engine.osContext)) {
+                    return engine.osContext;
+                }
             }
+            return nullptr;
+        };
+        defaultContext = findContext([](const OsContext &osContext) {
+            return osContext.isInternalEngine() || (osContext.isReservedForInternalEngine() && osContext.isInitialized());
+        });
+        if (!defaultContext) {
+            defaultContext = findContext([](const OsContext &osContext) {
+                return osContext.isPartOfContextGroup() && osContext.getIsPrimaryEngine() && osContext.isInitialized();
+            });
         }
     }
     if (!defaultContext) {

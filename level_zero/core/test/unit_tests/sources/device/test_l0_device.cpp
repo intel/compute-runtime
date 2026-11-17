@@ -123,7 +123,7 @@ TEST(L0DeviceTest, GivenCreatedDeviceHandleWhenCallingdeviceReinitThenNewDeviceH
     delete device;
 }
 
-TEST(L0DeviceTest, GivenDualStorageSharedMemorySupportedWhenCreatingDeviceThenPageFaultCmdListImmediateWithInitializedCmdQIsCreated) {
+TEST(L0DeviceTest, GivenDualStorageSharedMemorySupportedWhenPageFaultCmdListIsFirstUsedThenPageFaultCmdListImmediateWithInitializedCmdQIsCreated) {
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(1);
@@ -135,7 +135,9 @@ TEST(L0DeviceTest, GivenDualStorageSharedMemorySupportedWhenCreatingDeviceThenPa
 
     auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue));
     ASSERT_NE(nullptr, device);
-    ASSERT_NE(nullptr, device->pageFaultCommandList);
+    EXPECT_EQ(nullptr, device->pageFaultCommandList);
+    ASSERT_NE(nullptr, device->getPageFaultCommandList());
+    EXPECT_EQ(device->pageFaultCommandList, device->getPageFaultCommandList());
 
     ASSERT_NE(nullptr, CommandList::whiteboxCast(device->pageFaultCommandList)->cmdQImmediate);
     EXPECT_NE(nullptr, CommandList::whiteboxCast(device->pageFaultCommandList)->cmdQImmediate->getCsr());
@@ -155,7 +157,7 @@ TEST(L0DeviceTest, GivenPageFaultCmdListCreatedWhenCreatingFirstUserImmediateCmd
 
     auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue));
     ASSERT_NE(nullptr, device);
-    ASSERT_NE(nullptr, device->pageFaultCommandList);
+    ASSERT_NE(nullptr, device->getPageFaultCommandList());
     EXPECT_FALSE(device->getFirstImmCmdlistCreated());
 
     ze_command_queue_desc_t desc = {};
@@ -166,7 +168,7 @@ TEST(L0DeviceTest, GivenPageFaultCmdListCreatedWhenCreatingFirstUserImmediateCmd
     EXPECT_NE(nullptr, CommandList::whiteboxCast(userCommandList.get())->cmdQImmediate);
 }
 
-TEST(L0DeviceTest, GivenDualStorageSharedMemoryAndImplicitScalingThenPageFaultCmdListImmediateWithInitializedCmdQIsCreatedAgainstSubDeviceZero) {
+TEST(L0DeviceTest, GivenDualStorageSharedMemoryAndImplicitScalingWhenPageFaultCmdListIsFirstUsedThenPageFaultCmdListImmediateWithInitializedCmdQIsCreatedAgainstSubDeviceZero) {
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(1);
@@ -180,12 +182,27 @@ TEST(L0DeviceTest, GivenDualStorageSharedMemoryAndImplicitScalingThenPageFaultCm
 
     auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue));
     ASSERT_NE(nullptr, device);
-    ASSERT_NE(nullptr, device->pageFaultCommandList);
+    EXPECT_EQ(nullptr, device->pageFaultCommandList);
+    ASSERT_NE(nullptr, device->getPageFaultCommandList());
+    EXPECT_EQ(device->pageFaultCommandList, device->getPageFaultCommandList());
 
     ASSERT_NE(nullptr, CommandList::whiteboxCast(device->pageFaultCommandList)->cmdQImmediate);
     EXPECT_NE(nullptr, CommandList::whiteboxCast(device->pageFaultCommandList)->cmdQImmediate->getCsr());
     EXPECT_EQ(ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS, CommandList::whiteboxCast(device->pageFaultCommandList)->cmdQImmediate->getCommandQueueMode());
     EXPECT_EQ(CommandList::whiteboxCast(device->pageFaultCommandList)->device, device->subDevices[0]);
+}
+
+TEST(L0DeviceTest, GivenDualStorageSharedMemoryNotSupportedWhenGettingPageFaultCmdListThenNullptrIsReturned) {
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(0);
+
+    std::unique_ptr<DriverHandle> driverHandle(new DriverHandle);
+    auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
+
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue));
+    ASSERT_NE(nullptr, device);
+    EXPECT_EQ(nullptr, device->getPageFaultCommandList());
 }
 
 TEST(L0DeviceTest, givenMultipleMaskedSubDevicesWhenCreatingL0DeviceThenDontAddDisabledNeoDevies) {

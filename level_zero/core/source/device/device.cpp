@@ -497,6 +497,18 @@ NEO::EngineGroupType Device::getInternalEngineGroupType() {
     return gfxCoreHelper.getEngineGroupType(internalEngineType, internalEngineUsage, getHwInfo());
 }
 
+CommandList *Device::getPageFaultCommandList() {
+    std::lock_guard<std::mutex> lock(this->pageFaultCommandListMutex);
+    if (this->pageFaultCommandList == nullptr && this->pageFaultDevice != nullptr) {
+        ze_command_queue_desc_t cmdQueueDesc = {};
+        cmdQueueDesc.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;
+        cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+        ze_result_t resultValue = ZE_RESULT_SUCCESS;
+        this->pageFaultCommandList = CommandList::createImmediate(this->pageFaultDevice, &cmdQueueDesc, true, NEO::EngineGroupType::copy, resultValue, 0u);
+    }
+    return this->pageFaultCommandList;
+}
+
 void Device::getP2PPropertiesDirectFabricConnection(Device *peerDevice,
                                                     ze_device_p2p_bandwidth_exp_properties_t *bandwidthPropertiesDesc) {
 
@@ -1644,21 +1656,7 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
     }
 
     if (supportDualStorageSharedMemory) {
-        ze_command_queue_desc_t cmdQueueDesc = {};
-        cmdQueueDesc.ordinal = 0;
-        cmdQueueDesc.index = 0;
-        cmdQueueDesc.flags = 0;
-        cmdQueueDesc.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;
-        cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
-        ze_result_t resultValue = ZE_RESULT_SUCCESS;
-
-        Device *pageFaultDevice = device;
-        if (device->implicitScalingCapable) {
-            pageFaultDevice = device->subDevices[0];
-        }
-
-        device->pageFaultCommandList =
-            CommandList::createImmediate(pageFaultDevice, &cmdQueueDesc, true, NEO::EngineGroupType::copy, resultValue, 0u);
+        device->pageFaultDevice = device->implicitScalingCapable ? device->subDevices[0] : device;
     }
 
     if (osInterface) {
@@ -1715,9 +1713,13 @@ void Device::releaseResources() {
         debugSession->closeConnection();
     }
 
-    if (this->pageFaultCommandList) {
-        this->pageFaultCommandList->destroy();
-        this->pageFaultCommandList = nullptr;
+    {
+        std::lock_guard<std::mutex> lock(this->pageFaultCommandListMutex);
+        this->pageFaultDevice = nullptr;
+        if (this->pageFaultCommandList) {
+            this->pageFaultCommandList->destroy();
+            this->pageFaultCommandList = nullptr;
+        }
     }
 
     for (uint32_t i = 0; i < this->numSubDevices; i++) {

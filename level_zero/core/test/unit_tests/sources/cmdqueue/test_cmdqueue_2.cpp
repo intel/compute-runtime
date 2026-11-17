@@ -822,7 +822,7 @@ HWTEST2_F(DeviceWithDualStorage, givenCmdListWithAppendedKernelAndUsmTransferAnd
     auto l0Device = static_cast<Device *>(device);
     commandList->close();
 
-    auto pageFaultCmdQueue = whiteboxCast(CommandList::whiteboxCast(l0Device->pageFaultCommandList)->cmdQImmediate);
+    auto pageFaultCmdQueue = whiteboxCast(CommandList::whiteboxCast(l0Device->getPageFaultCommandList())->cmdQImmediate);
 
     auto pageFaultCsr = pageFaultCmdQueue->getCsr();
     auto &pageFaultCsrStream = pageFaultCsr->getCS(0);

@@ -2337,7 +2337,7 @@ HWTEST_F(InternalEngineFromSecondaryContextTests, givenUseSecondaryContextForInt
     EXPECT_NE(nullptr, device->tryGetEngine(aub_stream::EngineType::ENGINE_CCS, EngineUsage::internal));
 }
 
-HWTEST_F(InternalEngineFromSecondaryContextTests, givenUseSecondaryContextForInternalEngineEnabledAndExposeSingleDeviceModeAndReservedContextInitializationFailureWhenDeviceIsCreatedThenDeviceCreationFails) {
+HWTEST_F(InternalEngineFromSecondaryContextTests, givenUseSecondaryContextForInternalEngineEnabledAndExposeSingleDeviceModeWhenDeviceIsCreatedThenReservedSecondaryContextIsNotInitialized) {
     VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
     debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(1);
     debugManager.flags.CreateMultipleSubDevices.set(2);
@@ -2345,7 +2345,13 @@ HWTEST_F(InternalEngineFromSecondaryContextTests, givenUseSecondaryContextForInt
     auto executionEnvironment = MockDevice::prepareExecutionEnvironment(&hwInfo, 0);
     executionEnvironment->rootDeviceEnvironments[0]->setExposeSingleDeviceMode(true);
     auto device = std::unique_ptr<FailingSecondaryEngineInitializationMockDevice>(MockDevice::createWithExecutionEnvironment<FailingSecondaryEngineInitializationMockDevice>(&hwInfo, executionEnvironment, 0));
-    EXPECT_EQ(nullptr, device);
+    ASSERT_NE(nullptr, device);
+    EXPECT_EQ(0u, device->initializeSecondaryEngineCalled);
+
+    auto &secondaryEngines = device->secondaryEngines[aub_stream::EngineType::ENGINE_CCS];
+    ASSERT_EQ(reservedInternalEngineIndex, secondaryEngines.internalEngineIndex);
+    EXPECT_FALSE(secondaryEngines.engines[reservedInternalEngineIndex].osContext->isInitialized());
+    EXPECT_TRUE(secondaryEngines.engines[0].osContext->isInitialized());
 }
 
 HWTEST_F(InternalEngineFromSecondaryContextTests, givenUseSecondaryContextForInternalEngineEnabledAndContextGroupDisabledWhenDeviceIsCreatedThenDedicatedInternalEngineIsCreatedAndReturned) {
@@ -2423,7 +2429,7 @@ HWTEST_F(InternalEngineFromSecondaryContextMultiProcessTests, givenUseSecondaryC
     EXPECT_EQ(dedicatedInternalEngine, &device->getInternalEngine());
 }
 
-HWTEST_F(InternalEngineFromSecondaryContextTests, givenUseSecondaryContextForInternalEngineEnabledAndExposeSingleDeviceModeWhenDeviceIsCreatedThenReservedSecondaryContextsAreInitializedAndUsed) {
+HWTEST_F(InternalEngineFromSecondaryContextTests, givenUseSecondaryContextForInternalEngineEnabledAndExposeSingleDeviceModeWhenInternalEngineIsUsedThenReservedSecondaryContextIsInitializedAndUsed) {
     VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
     debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(1);
     debugManager.flags.CreateMultipleSubDevices.set(2);
@@ -2439,23 +2445,24 @@ HWTEST_F(InternalEngineFromSecondaryContextTests, givenUseSecondaryContextForInt
     ASSERT_EQ(reservedInternalEngineIndex, rootSecondaryEngines.internalEngineIndex);
     auto &reservedRootEngine = rootSecondaryEngines.engines[reservedInternalEngineIndex];
     EXPECT_TRUE(reservedRootEngine.osContext->isReservedForInternalEngine());
-    EXPECT_TRUE(reservedRootEngine.osContext->isInitialized());
-
-    auto &internalEngine = device->getInternalEngine();
-    EXPECT_EQ(reservedRootEngine.commandStreamReceiver, internalEngine.commandStreamReceiver);
-    EXPECT_EQ(2u, internalEngine.osContext->getDeviceBitfield().count());
+    EXPECT_FALSE(reservedRootEngine.osContext->isInitialized());
 
     auto memoryManager = device->getMemoryManager();
     for (auto subDevice : device->getSubDevices()) {
         auto subDeviceBitfield = subDevice->getDeviceBitfield();
         auto defaultEngineContext = memoryManager->getDefaultEngineContext(device->getRootDeviceIndex(), subDeviceBitfield);
         EXPECT_EQ(subDeviceBitfield, defaultEngineContext->getDeviceBitfield());
-        EXPECT_TRUE(defaultEngineContext->isInternalEngine() || defaultEngineContext->isReservedForInternalEngine());
+        EXPECT_FALSE(defaultEngineContext->isReservedForInternalEngine());
         EXPECT_TRUE(defaultEngineContext->isInitialized());
     }
+
+    auto &internalEngine = device->getInternalEngine();
+    EXPECT_EQ(reservedRootEngine.commandStreamReceiver, internalEngine.commandStreamReceiver);
+    EXPECT_TRUE(reservedRootEngine.osContext->isInitialized());
+    EXPECT_EQ(2u, internalEngine.osContext->getDeviceBitfield().count());
 }
 
-HWTEST_F(InternalEngineFromSecondaryContextTests, givenUseSecondaryContextForInternalEngineEnabledAndExposeSingleDeviceModeAndLevelZeroWhenDeviceIsCreatedThenPrimaryContextIsInitializedBeforeReservedSecondaryContext) {
+HWTEST_F(InternalEngineFromSecondaryContextTests, givenUseSecondaryContextForInternalEngineEnabledAndExposeSingleDeviceModeAndLevelZeroWhenReservedSecondaryContextIsInitializedOnFirstUseThenPrimaryContextIsAlreadyInitialized) {
     VariableBackup<ApiSpecificConfig::ApiType> apiTypeBackup(&NEO::apiTypeForUlts, ApiSpecificConfig::L0);
     VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
     debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(1);
@@ -2469,7 +2476,11 @@ HWTEST_F(InternalEngineFromSecondaryContextTests, givenUseSecondaryContextForInt
 
     uint32_t initializedReservedContexts = 0;
     for (auto subDevice : device->getSubDevices()) {
-        for (auto &[engineType, secondaryEnginesForType] : static_cast<MockSubDevice *>(subDevice)->secondaryEngines) {
+        auto mockSubDevice = static_cast<MockSubDevice *>(subDevice);
+        for (auto &[engineType, secondaryEnginesForType] : mockSubDevice->secondaryEngines) {
+            mockSubDevice->tryGetInternalSecondaryEngine(engineType);
+        }
+        for (auto &[engineType, secondaryEnginesForType] : mockSubDevice->secondaryEngines) {
             if (secondaryEnginesForType.internalEngineIndex == 0 ||
                 !secondaryEnginesForType.engines[secondaryEnginesForType.internalEngineIndex].osContext->isInitialized()) {
                 continue;

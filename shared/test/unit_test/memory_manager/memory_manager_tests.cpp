@@ -490,6 +490,43 @@ TEST(MemoryManagerTest, givenSingleDeviceModeAndContextsReservedForInternalEngin
     }
 }
 
+TEST(MemoryManagerTest, givenSingleDeviceModeAndUninitializedContextReservedForInternalEngineWhenGettingDefaultContextThenInitializedPrimaryContextOfGroupIsReturnedAsAFallback) {
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.CreateMultipleSubDevices.set(2);
+
+    auto executionEnvironment = std::unique_ptr<ExecutionEnvironment>(MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0));
+    executionEnvironment->rootDeviceEnvironments[0]->setExposeSingleDeviceMode(true);
+
+    auto mockMemoryManager = new MockMemoryManager(false, false, *executionEnvironment);
+    executionEnvironment->memoryManager.reset(mockMemoryManager);
+
+    {
+        auto csr = std::make_unique<MockCommandStreamReceiver>(*executionEnvironment, 0, 1);
+        auto primaryCsr = std::make_unique<MockCommandStreamReceiver>(*executionEnvironment, 0, 2);
+        auto reservedCsr = std::make_unique<MockCommandStreamReceiver>(*executionEnvironment, 0, 2);
+
+        csr->internalAllocationStorage.reset(new MockInternalAllocationStorage(*csr));
+        primaryCsr->internalAllocationStorage.reset(new MockInternalAllocationStorage(*primaryCsr));
+        reservedCsr->internalAllocationStorage.reset(new MockInternalAllocationStorage(*reservedCsr));
+
+        auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_CCS, EngineUsage::regular}, DeviceBitfield(0x1)));
+        osContext->setDefaultContext(false);
+
+        auto reservedOsContext = executionEnvironment->memoryManager->createAndRegisterOsContext(reservedCsr.get(), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_CCS, EngineUsage::regular}, DeviceBitfield(0x2)));
+        auto primaryOsContext = executionEnvironment->memoryManager->createAndRegisterOsContext(primaryCsr.get(), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_CCS, EngineUsage::regular}, DeviceBitfield(0x2)));
+        reservedOsContext->setDefaultContext(false);
+        primaryOsContext->setDefaultContext(false);
+        reservedOsContext->setReservedForInternalEngine(true);
+        reservedOsContext->setContextGroupCount(8);
+        primaryOsContext->setContextGroupCount(8);
+        primaryOsContext->setIsPrimaryEngine(true);
+        ASSERT_TRUE(primaryOsContext->ensureContextInitialized());
+
+        EXPECT_EQ(primaryOsContext, executionEnvironment->memoryManager->getDefaultEngineContext(0, 2));
+        EXPECT_FALSE(reservedOsContext->isInitialized());
+    }
+}
+
 TEST(MemoryManagerTest, givenProductHelperWhenCreatingInternalOsContextThenSettingsAreAdjusted) {
     auto executionEnvironment = std::unique_ptr<ExecutionEnvironment>(MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0));
     RAIIProductHelperFactory<MockProductHelper> productHelper(*executionEnvironment->rootDeviceEnvironments[0]);

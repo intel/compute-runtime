@@ -6,11 +6,14 @@
  */
 
 #include "shared/test/common/compiler_interface/spirv_extensions_yaml_igc_sample.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_compiler_interface.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/in_order_cmd_list_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
@@ -52,6 +55,42 @@ TEST_F(DeviceMtTest, givenConcurrentCompilerInfoQueriesWhenInitializingSpirvInfo
         thread.join();
     }
     EXPECT_EQ(1u, compilerPtr->getSpirvExtensionsYAMLCalled);
+}
+
+TEST(DeviceMtPageFaultTest, givenDualStorageSharedMemoryWhenMultipleThreadsGetPageFaultCmdListConcurrentlyThenSingleCmdListIsCreated) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(1);
+
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    std::unique_ptr<DriverHandle> driverHandle(new DriverHandle);
+    auto hwInfo = *NEO::defaultHwInfo;
+    hwInfo.featureTable.flags.ftrLocalMemory = true;
+    auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue));
+    ASSERT_NE(nullptr, device);
+    ASSERT_EQ(nullptr, device->pageFaultCommandList);
+
+    constexpr uint32_t numThreads = 8;
+    std::array<L0::CommandList *, numThreads> results = {};
+    std::atomic_bool started = false;
+    std::vector<std::thread> threads;
+    for (uint32_t i = 0; i < numThreads; ++i) {
+        threads.emplace_back([&, i]() {
+            while (!started.load()) {
+                std::this_thread::yield();
+            }
+            results[i] = device->getPageFaultCommandList();
+        });
+    }
+    started = true;
+    for (auto &thread : threads) {
+        thread.join();
+    }
+
+    ASSERT_NE(nullptr, device->pageFaultCommandList);
+    for (auto result : results) {
+        EXPECT_EQ(device->pageFaultCommandList, result);
+    }
 }
 
 HWTEST_F(DeviceMtTest, givenMultiThreadsExecutingCmdListAndSynchronizingDeviceWhenSynchronizeIsCalledThenTaskCountAndFlushStampAreTakenWithinSingleCriticalSection) {

@@ -530,8 +530,7 @@ bool Device::createSecondaryContexts(const EngineControl &primaryEngine, Seconda
         auto &reservedEngine = secondaryEnginesForType.engines[secondaryEnginesForType.internalEngineIndex];
         reservedEngine.osContext->setReservedForInternalEngine(true);
         if (getRootDeviceEnvironment().isExposeSingleDeviceMode()) {
-            return primaryEngine.commandStreamReceiver->initializeResources(this->getPreemptionMode()) &&
-                   this->initializeSecondaryEngine(reservedEngine);
+            return primaryEngine.commandStreamReceiver->initializeResources(this->getPreemptionMode());
         }
     }
     return true;

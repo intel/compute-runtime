@@ -253,6 +253,7 @@ struct Device : _ze_device_handle_t, NEO::NonCopyableAndNonMovableClass {
     ze_result_t queryDeviceLuid(ze_device_luid_ext_properties_t *deviceLuidProperties);
     uint32_t queryDeviceNodeMask();
     NEO::EngineGroupType getInternalEngineGroupType();
+    CommandList *getPageFaultCommandList();
     uint32_t getCopyEngineOrdinal() const;
     std::optional<uint32_t> tryGetCopyEngineOrdinal() const;
 
@@ -287,6 +288,8 @@ struct Device : _ze_device_handle_t, NEO::NonCopyableAndNonMovableClass {
     DriverHandle *driverHandle = nullptr;
     FabricVertex *fabricVertex = nullptr;
     CommandList *pageFaultCommandList = nullptr;
+    Device *pageFaultDevice = nullptr;
+    std::mutex pageFaultCommandListMutex;
     Device *rootDevice = nullptr;
     ze_pci_speed_ext_t pciMaxSpeed = {-1, -1, -1};
     uint32_t maxNumHwThreads = 0;
