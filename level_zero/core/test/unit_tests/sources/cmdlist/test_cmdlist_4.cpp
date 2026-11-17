@@ -2051,6 +2051,19 @@ HWTEST_F(CommandListCreateTests, givenGraphNodeDescChainedWithMutableKernelDataD
     CommandList::freeClonedAppendKernelExtensions(outExtPtr);
 }
 
+HWTEST_F(CommandListCreateTests, givenGraphNodeDescriptorWhenObtainingLaunchParamsThenIsGraphNodePresentIsSet) {
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    ze_graph_node_exp_desc_t graphNodeDesc{ZE_STRUCTURE_TYPE_GRAPH_NODE_EXP_DESC};
+    L0::CmdListKernelLaunchParams launchParams = {};
+    EXPECT_FALSE(launchParams.isGraphNodePresent);
+
+    auto result = commandList->obtainLaunchParamsFromExtensions(reinterpret_cast<ze_base_desc_t *>(&graphNodeDesc), launchParams, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_TRUE(launchParams.isGraphNodePresent);
+}
+
 HWTEST_F(CommandListCreateTests, givenUnsupportedDescriptorWhenCloneAppendKernelIsCalledThenErrorIsReturned) {
     ze_base_desc_t ext = {};
     ext.stype = ZE_STRUCTURE_TYPE_MUTABLE_GRAPH_ARGUMENT_EXP_DESC;

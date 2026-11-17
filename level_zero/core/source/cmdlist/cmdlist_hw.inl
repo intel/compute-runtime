@@ -960,6 +960,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParamete
         return result;
     }
 
+    if (launchParams.isGraphNodePresent && ((nullptr == this->asMutable()) || (false == this->getIsGraphInstantiationTarget()))) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
     return this->appendLaunchKernel(hKernel, *pGroupCounts, hSignalEvent, numWaitEvents, phWaitEvents, launchParams);
 }
 

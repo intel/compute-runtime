@@ -72,6 +72,8 @@ ze_result_t CommandList::obtainLaunchParamsFromExtensions(const ze_base_desc_t *
         if (desc->stype == ZE_STRUCTURE_TYPE_COMMAND_LIST_APPEND_PARAM_COOPERATIVE_DESC) {
             auto cooperativeDesc = reinterpret_cast<const ze_command_list_append_launch_kernel_param_cooperative_desc_t *>(desc);
             launchParams.isCooperative = cooperativeDesc->isCooperative;
+        } else if (desc->stype == ZE_STRUCTURE_TYPE_GRAPH_NODE_EXP_DESC) {
+            launchParams.isGraphNodePresent = true;
         } else {
             PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Could not recognize provided extension, stype: 0x%x.\n",
                          desc->stype);

@@ -43,6 +43,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
+#include "level_zero/driver_experimental/zex_graph.h"
 #include "level_zero/ze_api.h"
 
 #include "igfxfmid.h"
@@ -2578,6 +2579,41 @@ HWTEST_F(CommandListAppendLaunchKernelMockModule, givenStateCacheInvalidationWaI
     EXPECT_TRUE(stateCacheInvalidationPipeControl->getCommandStreamerStallEnable());
 
     rootDeviceEnvironment.releaseHelper = std::move(releaseHelperBackup);
+}
+
+HWTEST_F(CommandListAppendLaunchKernel, givenGraphNodeDescriptorAndNotMutableCommandListWhenAppendingLaunchKernelWithParametersThenUnsupportedFeatureIsReturned) {
+    createKernel();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    commandList->setIsGraphInstantiationTarget(true);
+
+    ze_group_count_t groupCount{1, 1, 1};
+    ze_graph_node_exp_desc_t graphNodeDesc{ZE_STRUCTURE_TYPE_GRAPH_NODE_EXP_DESC};
+    auto result = commandList->appendLaunchKernelWithParameters(kernel->toHandle(), &groupCount, &graphNodeDesc, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+}
+
+HWTEST_F(CommandListAppendLaunchKernel, givenGraphNodeDescriptorAndMutableCommandListNotBeingGraphInstantiationTargetWhenAppendingLaunchKernelWithParametersThenUnsupportedFeatureIsReturned) {
+    createKernel();
+    auto commandList = std::make_unique<MutableLikeCommandList<FamilyType::gfxCoreFamily>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    ze_group_count_t groupCount{1, 1, 1};
+    ze_graph_node_exp_desc_t graphNodeDesc{ZE_STRUCTURE_TYPE_GRAPH_NODE_EXP_DESC};
+    auto result = commandList->appendLaunchKernelWithParameters(kernel->toHandle(), &groupCount, &graphNodeDesc, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+}
+
+HWTEST_F(CommandListAppendLaunchKernel, givenGraphNodeDescriptorAndMutableCommandListBeingGraphInstantiationTargetWhenAppendingLaunchKernelWithParametersThenSuccessIsReturned) {
+    createKernel();
+    auto commandList = std::make_unique<MutableLikeCommandList<FamilyType::gfxCoreFamily>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+    commandList->setIsGraphInstantiationTarget(true);
+
+    ze_group_count_t groupCount{1, 1, 1};
+    ze_graph_node_exp_desc_t graphNodeDesc{ZE_STRUCTURE_TYPE_GRAPH_NODE_EXP_DESC};
+    auto result = commandList->appendLaunchKernelWithParameters(kernel->toHandle(), &groupCount, &graphNodeDesc, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
 } // namespace ult

@@ -78,5 +78,6 @@ struct CmdListKernelLaunchParams {
     bool relaxedOrderingDispatch = false;
     bool isKernelPatched = false;
     bool threadDataCacheHitOnPrefetch = false;
+    bool isGraphNodePresent = false;
 };
 } // namespace L0
