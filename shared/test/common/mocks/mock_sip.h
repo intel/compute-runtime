@@ -25,8 +25,10 @@ class MockSipKernel : public SipKernel {
     MockSipKernel();
     ~MockSipKernel() override;
 
-    static const char *dummyBinaryForSip;
-    static std::vector<char> getDummyGenBinary();
+    static constexpr char dummyBinaryForSip[] = "12345678";
+    static std::vector<char> getDummyGenBinary() {
+        return std::vector<char>(dummyBinaryForSip, dummyBinaryForSip + sizeof(dummyBinaryForSip) - 1);
+    }
 
     GraphicsAllocation *getSipAllocation() const override;
     const std::vector<char> &getStateSaveAreaHeader() const override;

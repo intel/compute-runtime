@@ -76,7 +76,6 @@ class SipKernel : NEO::NonCopyableAndNonMovableClass {
 
     static bool initBuiltinsSipKernel(SipKernelType type, Device &device, OsContext *context);
     static bool initRawBinaryFromFileKernel(SipKernelType type, Device &device, const std::string &fileName);
-    static std::vector<char> readStateSaveAreaHeaderFromFile(const std::string &fileName);
 
     static bool initSipKernelFromExternalLib(SipKernelType type, Device &device);
 

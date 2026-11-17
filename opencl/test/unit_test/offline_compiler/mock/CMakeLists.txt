@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2023-2024 Intel Corporation
+# Copyright (C) 2023-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -17,7 +17,6 @@ target_sources(ocloc_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/mock_offline_compiler.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/mock_offline_compiler.h
                ${CMAKE_CURRENT_SOURCE_DIR}/mock_offline_linker.h
-               ${CMAKE_CURRENT_SOURCE_DIR}/mock_sip_ocloc_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/mock_iga_dll.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/mock_iga_dll.h
 )

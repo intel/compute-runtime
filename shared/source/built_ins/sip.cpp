@@ -33,12 +33,11 @@ namespace NEO {
 
 SipClassType SipKernel::classType = SipClassType::init;
 
-std::vector<char> readFile(const std::string &fileName, size_t &retSize) {
+std::vector<char> readFile(const std::string &fileName) {
     std::vector<char> retBuf;
     FILE *fileDescriptor = nullptr;
     long int size = 0;
     size_t bytesRead = 0u;
-    retSize = 0;
 
     fileDescriptor = IoFunctions::fopenPtr(fileName.c_str(), "rb");
     if (fileDescriptor == NULL) {
@@ -57,8 +56,6 @@ std::vector<char> readFile(const std::string &fileName, size_t &retSize) {
 
     if (static_cast<long int>(bytesRead) != size || bytesRead == 0u) {
         retBuf.clear();
-    } else {
-        retSize = bytesRead;
     }
 
     return retBuf;
@@ -165,8 +162,8 @@ bool SipKernel::initRawBinaryFromFileKernel(SipKernelType type, Device &device, 
         return true;
     }
 
-    size_t bytesRead = 0u;
-    auto fileData = readFile(fileName, bytesRead);
+    auto fileData = readFile(fileName);
+    const size_t bytesRead = fileData.size();
 
     if (bytesRead) {
         void *alignedBuffer = alignedMalloc(bytesRead, MemoryConstants::pageSize);
@@ -190,20 +187,13 @@ bool SipKernel::initRawBinaryFromFileKernel(SipKernelType type, Device &device, 
 
         alignedFree(alignedBuffer);
 
-        std::vector<char> stateSaveAreaHeader = readStateSaveAreaHeaderFromFile(addSuffixBeforeExtension(fileName, "_header"));
+        std::vector<char> stateSaveAreaHeader = readFile(addSuffixBeforeExtension(fileName, "_header"));
 
         device.getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->sipKernels[sipIndex] =
             std::make_unique<SipKernel>(type, sipAllocation, std::move(stateSaveAreaHeader));
         return true;
     }
     return false;
-}
-
-std::vector<char> SipKernel::readStateSaveAreaHeaderFromFile(const std::string &fileName) {
-    std::vector<char> data;
-    size_t bytesRead = 0u;
-    data = readFile(fileName, bytesRead);
-    return data;
 }
 
 bool SipKernel::initSipKernelFromExternalLib(SipKernelType type, Device &device) {

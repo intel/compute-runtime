@@ -36,12 +36,6 @@ MockSipKernel::MockSipKernel() : MockSipKernel(SipKernelType::csr, nullptr) {
 
 MockSipKernel::~MockSipKernel() = default;
 
-const char *MockSipKernel::dummyBinaryForSip = "12345678";
-
-std::vector<char> MockSipKernel::getDummyGenBinary() {
-    return std::vector<char>(dummyBinaryForSip, dummyBinaryForSip + sizeof(MockSipKernel::dummyBinaryForSip));
-}
-
 GraphicsAllocation *MockSipKernel::getSipAllocation() const {
     if (tempSipMemoryAllocation) {
         return tempSipMemoryAllocation.get();
