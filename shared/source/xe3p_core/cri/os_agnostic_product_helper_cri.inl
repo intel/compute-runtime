@@ -113,6 +113,11 @@ bool ProductHelperHw<gfxProduct>::shouldRegisterEnqueuedWalkerWithProfiling() co
 }
 
 template <>
+bool ProductHelperHw<gfxProduct>::isLEOSupported() const {
+    return true;
+}
+
+template <>
 size_t ProductHelperHw<gfxProduct>::getCpuCopyThreshold(TransferType transferType) const {
     size_t threshold = 0u;
 

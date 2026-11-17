@@ -1030,4 +1030,9 @@ bool ProductHelperHw<gfxProduct>::isFrontEndControllerEnabled() const {
     return false;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isLEOSupported() const {
+    return false;
+}
+
 } // namespace NEO

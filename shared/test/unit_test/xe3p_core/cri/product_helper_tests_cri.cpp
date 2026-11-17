@@ -205,6 +205,10 @@ CRITEST_F(CriProductHelper, givenProductHelperWhenCheckingInitializeInternalEngi
     EXPECT_FALSE(productHelper->initializeInternalEngineImmediately());
 }
 
+CRITEST_F(CriProductHelper, givenProductHelperWhenCheckingIsLEOSupportedThenReturnTrue) {
+    EXPECT_TRUE(productHelper->isLEOSupported());
+}
+
 CRITEST_F(CriProductHelper, givenProductHelperWhenCheckingStagingBuffersThenEnabledButNotFor2MBAlignedHostPtr) {
     EXPECT_TRUE(productHelper->isStagingBuffersEnabled());
     EXPECT_FALSE(productHelper->isStagingFor2MBAlignedHostPtrAllowed());
