@@ -64,7 +64,7 @@ uint32_t GfxCoreHelperHw<Family>::adjustMaxWorkGroupCount(uint32_t maxWorkGroupC
     bool requiresLimitation = productHelper.isCooperativeEngineSupported(hwInfo) &&
                               (engineGroupType != EngineGroupType::cooperativeCompute);
 
-    auto ccsCount = hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
+    auto ccsCount = rootDeviceEnvironment.getNumberOfCcsExposedByKmd();
     auto numberOfpartsInTileForConcurrentKernels = productHelper.getNumberOfPartsInTileForConcurrentKernel(ccsCount);
     if (requiresLimitation) {
         UNRECOVERABLE_IF(ccsCount == 0);

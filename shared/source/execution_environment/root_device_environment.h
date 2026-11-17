@@ -92,6 +92,8 @@ struct RootDeviceEnvironment : NonCopyableClass {
     bool setNumberOfCcs(uint32_t numberOfCcs);
     uint32_t getNumberOfCcs() const;
     bool isNumberOfCcsLimited() const;
+    void setNumberOfCcsExposedByKmd(uint32_t numberOfCcs);
+    uint32_t getNumberOfCcsExposedByKmd() const;
     void initProductHelper();
     void initHelpers();
     void initGfxCoreHelper();
@@ -149,6 +151,7 @@ struct RootDeviceEnvironment : NonCopyableClass {
     using GraphicsAllocationUniquePtrType = std::unique_ptr<GraphicsAllocation, std::function<void(GraphicsAllocation *)>>;
     GraphicsAllocationUniquePtrType dummyAllocation = nullptr;
 
+    uint32_t numberOfCcsExposedByKmd = 0;
     bool limitedNumberOfCcs = false;
     bool isWddmOnLinuxEnable = false;
     bool exposeSingleDevice = false;

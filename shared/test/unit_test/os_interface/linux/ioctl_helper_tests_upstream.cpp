@@ -131,6 +131,13 @@ HWTEST2_F(IoctlHelperUpstreamTest, whenInitializeIsCalledThenInitializeGetGpuTim
     EXPECT_NE(nullptr, mockIoctlHelper.getGpuTime);
 }
 
+HWTEST2_F(IoctlHelperUpstreamTest, whenCheckingIfCcsModeIsReflectedInEngineQueryThenFalseIsReturned, IsAtMostXeCore) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    IoctlHelperUpstream ioctlHelper{*drm};
+    EXPECT_FALSE(ioctlHelper.isCcsModeReflectedInEngineQuery());
+}
+
 HWTEST2_F(IoctlHelperUpstreamTest, whenGettingVmBindAvailabilityThenFalseIsReturned, IsAtMostXeCore) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);

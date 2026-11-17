@@ -157,6 +157,7 @@ class IoctlHelperXe : public IoctlHelper {
     bool isDeferBackingEnabledForAllocation(size_t allocationSize, AllocationType allocationType) const override;
     bool isSmallBarConfigAllowed() const override { return false; }
     bool isLocalMemorySizeNetOfKmdReservations() const override { return true; }
+    bool isCcsModeReflectedInEngineQuery() const override { return true; }
     void *pciBarrierMmap() override;
     bool retrieveMmapOffsetForBufferObject(BufferObject &bo, uint64_t flags, uint64_t &offset) override;
     bool is2MBSizeAlignmentRequired(AllocationType allocationType) const override;

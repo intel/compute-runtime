@@ -6,6 +6,8 @@
  */
 
 #include "shared/source/command_stream/stream_properties.h"
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
@@ -169,24 +171,36 @@ BMGTEST_F(BmgProductHelper, givenProductHelperWhenCheckingInitializeInternalEngi
 }
 
 BMGTEST_F(BmgProductHelper, givenSingleCcsAndSliceCountAboveTwoWhenAdjustDispatchAllRequiredThenReturnTrue) {
-    auto hwInfo = *defaultHwInfo;
-    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1u;
-    hwInfo.gtSystemInfo.SliceCount = 3u;
-    EXPECT_TRUE(productHelper->adjustDispatchAllRequired(hwInfo));
+    auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[0];
+    auto hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
+    hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1u;
+    hwInfo->gtSystemInfo.SliceCount = 3u;
+    EXPECT_TRUE(productHelper->adjustDispatchAllRequired(rootDeviceEnvironment));
 }
 
 BMGTEST_F(BmgProductHelper, givenSingleCcsAndSliceCountNotAboveTwoWhenAdjustDispatchAllRequiredThenReturnFalse) {
-    auto hwInfo = *defaultHwInfo;
-    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1u;
-    hwInfo.gtSystemInfo.SliceCount = 2u;
-    EXPECT_FALSE(productHelper->adjustDispatchAllRequired(hwInfo));
+    auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[0];
+    auto hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
+    hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1u;
+    hwInfo->gtSystemInfo.SliceCount = 2u;
+    EXPECT_FALSE(productHelper->adjustDispatchAllRequired(rootDeviceEnvironment));
 }
 
 BMGTEST_F(BmgProductHelper, givenMultipleCcsEnabledWhenAdjustDispatchAllRequiredThenReturnFalse) {
-    auto hwInfo = *defaultHwInfo;
-    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 2u;
-    hwInfo.gtSystemInfo.SliceCount = 4u;
-    EXPECT_FALSE(productHelper->adjustDispatchAllRequired(hwInfo));
+    auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[0];
+    auto hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
+    hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 2u;
+    hwInfo->gtSystemInfo.SliceCount = 4u;
+    EXPECT_FALSE(productHelper->adjustDispatchAllRequired(rootDeviceEnvironment));
+}
+
+BMGTEST_F(BmgProductHelper, givenSingleCcsUsedAndMultipleCcsExposedByKmdWhenAdjustDispatchAllRequiredThenReturnFalse) {
+    auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[0];
+    auto hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
+    hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1u;
+    hwInfo->gtSystemInfo.SliceCount = 4u;
+    rootDeviceEnvironment.setNumberOfCcsExposedByKmd(2u);
+    EXPECT_FALSE(productHelper->adjustDispatchAllRequired(rootDeviceEnvironment));
 }
 
 BMGTEST_F(BmgProductHelper, givenProductHelperWhenGetCpuCopyThresholdThenReturnBmgThresholds) {

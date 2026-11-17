@@ -36,11 +36,11 @@ void ProductHelperHw<gfxProduct>::adjustNumberOfCcs(HardwareInfo &hwInfo) const 
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::adjustDispatchAllRequired(const HardwareInfo &hwInfo) const {
-    if (hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled > 1u) {
+bool ProductHelperHw<gfxProduct>::adjustDispatchAllRequired(const RootDeviceEnvironment &rootDeviceEnvironment) const {
+    if (rootDeviceEnvironment.getNumberOfCcsExposedByKmd() > 1u) {
         return false;
     }
-    return hwInfo.gtSystemInfo.SliceCount > 2u;
+    return rootDeviceEnvironment.getHardwareInfo()->gtSystemInfo.SliceCount > 2u;
 }
 
 template <>

@@ -456,7 +456,7 @@ void ProductHelperHw<gfxProduct>::adjustScratchSize(size_t &requiredScratchSize)
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::adjustDispatchAllRequired(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::adjustDispatchAllRequired(const RootDeviceEnvironment &rootDeviceEnvironment) const {
     return false;
 }
 

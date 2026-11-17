@@ -1385,6 +1385,25 @@ HWTEST2_F(GfxCoreHelperTest, GivenCooperativeEngineSupportedAndNotUsedWhenAdjust
     }
 }
 
+HWTEST2_F(GfxCoreHelperTest, givenSingleCcsUsedAndMultipleCcsExposedByKmdWhenAdjustMaxWorkGroupCountIsCalledThenCountIsDividedByCcsExposedByKmd, IsAtLeastXe2HpgCore) {
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+    const auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+    auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
+    if (!productHelper.isCooperativeEngineSupported(hwInfo)) {
+        GTEST_SKIP();
+    }
+
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::EngineType::ENGINE_CCS;
+    hwInfo.caps.rcsExposureDisabled = true;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1u;
+    EXPECT_EQ(1024u, gfxCoreHelper.adjustMaxWorkGroupCount(1024u, EngineGroupType::compute, rootDeviceEnvironment));
+
+    rootDeviceEnvironment.setNumberOfCcsExposedByKmd(2u);
+    EXPECT_EQ(512u, gfxCoreHelper.adjustMaxWorkGroupCount(1024u, EngineGroupType::compute, rootDeviceEnvironment));
+}
+
 HWTEST2_F(GfxCoreHelperTest, GivenGfxHelperWhenAdjustMaxWorkGroupSizeCalledThenOneReturned, DoesNotHaveDispatchAllSupport) {
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];

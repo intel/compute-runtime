@@ -48,7 +48,7 @@ XE2_HPG_CORETEST_F(WalkerDispatchTestsXe2HpGCore, whenEncodeAdditionalWalkerFiel
     {
         walkerArgs.kernelExecutionType = KernelExecutionType::defaultType;
         EncodeDispatchKernel<FamilyType>::encodeComputeDispatchAllWalker(walkerCmd, &walkerCmd.getInterfaceDescriptor(), *executionEnvironment.rootDeviceEnvironments[0], walkerArgs);
-        if (executionEnvironment.rootDeviceEnvironments[0]->getProductHelper().adjustDispatchAllRequired(*executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo())) {
+        if (executionEnvironment.rootDeviceEnvironments[0]->getProductHelper().adjustDispatchAllRequired(*executionEnvironment.rootDeviceEnvironments[0])) {
             EXPECT_TRUE(walkerCmd.getComputeDispatchAllWalkerEnable());
         } else {
             EXPECT_FALSE(walkerCmd.getComputeDispatchAllWalkerEnable());

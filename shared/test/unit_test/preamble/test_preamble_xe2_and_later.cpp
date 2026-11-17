@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Intel Corporation
+ * Copyright (C) 2024-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -61,6 +61,29 @@ HWTEST2_F(PreambleTest, givenAtLeastXe2HpgCoreAndSetDebugFlagWhenPreambleCfeStat
 
     auto &cfeState = *reinterpret_cast<CFE_STATE *>(feCmdPtr);
     EXPECT_EQ(cfeState.getStackIdControl(), static_cast<STACK_ID_CONTROL>(0b10u));
+}
+
+HWTEST2_F(PreambleTest, givenSingleCcsUsedAndMultipleCcsExposedByKmdWhenPreambleCfeStateIsProgrammedThenSingleSliceDispatchCcsModeIsEnabled, IsXe2HpgCore) {
+    using CFE_STATE = typename FamilyType::CFE_STATE;
+
+    char buffer[64];
+    MockGraphicsAllocation graphicsAllocation(buffer, sizeof(buffer));
+    LinearStream preambleStream(&graphicsAllocation, graphicsAllocation.getUnderlyingBuffer(), graphicsAllocation.getUnderlyingBufferSize());
+
+    MockExecutionEnvironment executionEnvironment{};
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+    rootDeviceEnvironment.getMutableHardwareInfo()->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1u;
+    rootDeviceEnvironment.getMutableHardwareInfo()->caps.singleDispatchRequiredForMultiCCS = true;
+    StreamProperties streamProperties{};
+
+    auto feCmdPtr = PreambleHelper<FamilyType>::getSpaceForVfeState(&preambleStream, *rootDeviceEnvironment.getHardwareInfo(), EngineGroupType::compute, nullptr);
+    PreambleHelper<FamilyType>::programVfeState(feCmdPtr, rootDeviceEnvironment, 0u, 0, 0, streamProperties);
+    EXPECT_FALSE(reinterpret_cast<CFE_STATE *>(feCmdPtr)->getSingleSliceDispatchCcsMode());
+
+    rootDeviceEnvironment.setNumberOfCcsExposedByKmd(2u);
+    feCmdPtr = PreambleHelper<FamilyType>::getSpaceForVfeState(&preambleStream, *rootDeviceEnvironment.getHardwareInfo(), EngineGroupType::compute, nullptr);
+    PreambleHelper<FamilyType>::programVfeState(feCmdPtr, rootDeviceEnvironment, 0u, 0, 0, streamProperties);
+    EXPECT_TRUE(reinterpret_cast<CFE_STATE *>(feCmdPtr)->getSingleSliceDispatchCcsMode());
 }
 
 HWTEST2_F(PreambleTest, givenPreambleHelperThenSystolicModeIsDisabled, atLeastXe2HpgCore) {

@@ -1337,6 +1337,9 @@ bool Drm::queryMemoryInfo() {
 
 bool Drm::queryEngineInfo(bool isSysmanEnabled) {
     this->engineInfo = ioctlHelper->createEngineInfo(isSysmanEnabled);
+    if (this->engineInfo && ioctlHelper->isCcsModeReflectedInEngineQuery()) {
+        rootDeviceEnvironment.setNumberOfCcsExposedByKmd(rootDeviceEnvironment.getNumberOfCcs());
+    }
     if (this->engineInfo && (this->engineInfo->hasEngines() == false)) {
         PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Engine info size is equal to 0.\n");
     }

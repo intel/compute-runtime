@@ -284,6 +284,41 @@ TEST(EngineInfoTest, givenIoctlHelperReturningEngineInfoWithoutEnginesWhenQueryi
     EXPECT_NE(std::string::npos, output.find("FATAL: Engine info size is equal to 0."));
 }
 
+TEST(EngineInfoTest, givenCcsModeReflectedInEngineQueryAndMultipleComputeEnginesWhenQueryingEngineInfoAndLimitingNumberOfCcsThenNumberOfCcsExposedByKmdIsKept) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[0];
+    DrmMockWithCaptureHelper drm{rootDeviceEnvironment};
+    auto ioctlHelper = drm.getMockIoctlHelper();
+    auto computeClass = static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::engineClassCompute));
+    auto copyClass = static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::engineClassCopy));
+    ioctlHelper->enginesToReturn = std::vector<EngineCapabilities>{{{computeClass, 0}, {}}, {{computeClass, 1}, {}}, {{copyClass, 0}, {}}};
+    ioctlHelper->ccsModeReflectedInEngineQuery = true;
+
+    EXPECT_TRUE(drm.queryEngineInfo(false));
+    EXPECT_EQ(2u, rootDeviceEnvironment.getNumberOfCcs());
+
+    EXPECT_TRUE(rootDeviceEnvironment.setNumberOfCcs(1u));
+    EXPECT_EQ(1u, rootDeviceEnvironment.getNumberOfCcs());
+    EXPECT_EQ(2u, rootDeviceEnvironment.getNumberOfCcsExposedByKmd());
+}
+
+TEST(EngineInfoTest, givenCcsModeNotReflectedInEngineQueryAndMultipleComputeEnginesWhenQueryingEngineInfoAndLimitingNumberOfCcsThenNumberOfCcsExposedByKmdFollowsNumberOfCcs) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[0];
+    DrmMockWithCaptureHelper drm{rootDeviceEnvironment};
+    auto ioctlHelper = drm.getMockIoctlHelper();
+    auto computeClass = static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::engineClassCompute));
+    auto copyClass = static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::engineClassCopy));
+    ioctlHelper->enginesToReturn = std::vector<EngineCapabilities>{{{computeClass, 0}, {}}, {{computeClass, 1}, {}}, {{copyClass, 0}, {}}};
+
+    EXPECT_TRUE(drm.queryEngineInfo(false));
+    EXPECT_EQ(2u, rootDeviceEnvironment.getNumberOfCcs());
+
+    EXPECT_TRUE(rootDeviceEnvironment.setNumberOfCcs(1u));
+    EXPECT_EQ(1u, rootDeviceEnvironment.getNumberOfCcs());
+    EXPECT_EQ(1u, rootDeviceEnvironment.getNumberOfCcsExposedByKmd());
+}
+
 TEST(EngineInfoTest, givenEnginesWithoutComputeEngineWhenQueryingEngineInfoThenCcsInfoIsResetAndDefaultEngineIsNotChanged) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMockWithCaptureHelper drm{*executionEnvironment->rootDeviceEnvironments[0]};

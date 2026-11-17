@@ -75,7 +75,7 @@ class ProductHelperHw : public ProductHelper {
     uint32_t getThreadEuRatioForScratch(const HardwareInfo &hwInfo) const override;
     void adjustScratchSize(size_t &requiredScratchSize) const override;
     bool isComputeDispatchAllWalkerEnableInCfeStateRequired(const HardwareInfo &hwInfo) const override;
-    bool adjustDispatchAllRequired(const HardwareInfo &hwInfo) const override;
+    bool adjustDispatchAllRequired(const RootDeviceEnvironment &rootDeviceEnvironment) const override;
     bool isVmBindPatIndexProgrammingSupported() const override;
     bool isVmBindDecompressionProbeAllowed(const HardwareInfo &hwInfo) const override;
     bool isIpSamplingSupported(const HardwareInfo &hwInfo) const override;

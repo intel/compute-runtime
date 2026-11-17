@@ -287,6 +287,14 @@ bool RootDeviceEnvironment::isNumberOfCcsLimited() const {
     return limitedNumberOfCcs;
 }
 
+void RootDeviceEnvironment::setNumberOfCcsExposedByKmd(uint32_t numberOfCcs) {
+    this->numberOfCcsExposedByKmd = numberOfCcs;
+}
+
+uint32_t RootDeviceEnvironment::getNumberOfCcsExposedByKmd() const {
+    return std::max(this->numberOfCcsExposedByKmd, getNumberOfCcs());
+}
+
 void RootDeviceEnvironment::initDummyAllocation() {
     std::call_once(isDummyAllocationInitialized, [this]() {
         auto customDeleter = [this](GraphicsAllocation *dummyAllocation) {

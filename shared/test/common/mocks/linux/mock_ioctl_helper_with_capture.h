@@ -251,6 +251,10 @@ class MockIoctlHelperWithCapture : public IoctlHelperUpstream {
         return chunkingAvailable;
     }
 
+    bool isCcsModeReflectedInEngineQuery() const override {
+        return ccsModeReflectedInEngineQuery;
+    }
+
     std::unique_ptr<EngineInfo> createEngineInfo(bool isSysmanEnabled) override {
         createEngineInfoCalled++;
         if (!enginesToReturn) {
@@ -323,6 +327,7 @@ class MockIoctlHelperWithCapture : public IoctlHelperUpstream {
 
     uint32_t createEngineInfoCalled = 0u;
     std::optional<std::vector<EngineCapabilities>> enginesToReturn;
+    bool ccsModeReflectedInEngineQuery = false;
 };
 
 class DrmMockWithCaptureHelper : public DrmMock {

@@ -67,7 +67,7 @@ void PreambleHelper<GfxFamily>::programVfeState(void *pVfeState,
         cmd.setComputeOverdispatchDisable(streamProperties.frontEndState.disableOverdispatch.value == 1);
 
         const auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-        auto singleSliceDispatchCcsMode = streamProperties.frontEndState.singleSliceDispatchCcsMode.value == 1 || (rootDeviceEnvironment.getNumberOfCcs() > 1 && hwInfo.caps.singleDispatchRequiredForMultiCCS);
+        auto singleSliceDispatchCcsMode = streamProperties.frontEndState.singleSliceDispatchCcsMode.value == 1 || (rootDeviceEnvironment.getNumberOfCcsExposedByKmd() > 1 && hwInfo.caps.singleDispatchRequiredForMultiCCS);
 
         PreambleHelper<GfxFamily>::setSingleSliceDispatchMode(&cmd, singleSliceDispatchCcsMode);
 

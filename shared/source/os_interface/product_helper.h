@@ -141,7 +141,7 @@ class ProductHelper {
     virtual uint32_t getThreadEuRatioForScratch(const HardwareInfo &hwInfo) const = 0;
     virtual void adjustScratchSize(size_t &requiredScratchSize) const = 0;
     virtual bool isComputeDispatchAllWalkerEnableInCfeStateRequired(const HardwareInfo &hwInfo) const = 0;
-    virtual bool adjustDispatchAllRequired(const HardwareInfo &hwInfo) const = 0;
+    virtual bool adjustDispatchAllRequired(const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual bool isVmBindPatIndexProgrammingSupported() const = 0;
     virtual bool isVmBindDecompressionProbeAllowed(const HardwareInfo &hwInfo) const = 0;
     virtual bool isIpSamplingSupported(const HardwareInfo &hwInfo) const = 0;

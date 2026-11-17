@@ -99,6 +99,14 @@ TEST_F(IoctlHelperXeTest, whenCheckingIfLocalMemorySizeIsNetOfKmdReservationsThe
     EXPECT_TRUE(ioctlHelper.isLocalMemorySizeNetOfKmdReservations());
 }
 
+TEST_F(IoctlHelperXeTest, whenCheckingIfCcsModeIsReflectedInEngineQueryThenTrueIsReturned) {
+    MockExecutionEnvironment executionEnvironment{};
+    std::unique_ptr<Drm> drm{Drm::create(std::make_unique<HwDeviceIdDrm>(0, ""), *executionEnvironment.rootDeviceEnvironments[0])};
+    IoctlHelperXe ioctlHelper{*drm};
+
+    EXPECT_TRUE(ioctlHelper.isCcsModeReflectedInEngineQuery());
+}
+
 TEST_F(IoctlHelperXeTest, givenXeDrmWhenGetPciBarrierMmapThenReturnsSuccess) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
