@@ -5888,13 +5888,13 @@ HWTEST2_F(CopyOffloadWriteEngineInOrderTests, givenInOrderImmCmdListWithCopyOffl
     EXPECT_EQ(copyEngines[1].getEngineType(), writeQueue->getCsr()->getOsContext().getEngineType());
 }
 
-HWTEST2_F(CopyOffloadWriteEngineInOrderTests, givenCopyOffloadWriteEngineDebugKeyNotSetWhenInOrderImmCmdListCreatedThenWriteQueueIsNotCreated, IsCRI) {
+HWTEST2_F(CopyOffloadWriteEngineInOrderTests, givenCopyOffloadWriteEngineDebugKeyNotSetWhenInOrderImmCmdListCreatedThenWriteQueueIsCreated, IsCRI) {
     debugManager.flags.CopyOffloadWriteEngine.set(-1);
 
     auto immCmdList = createImmCmdListWithOffload<FamilyType::gfxCoreFamily>();
 
     EXPECT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
-    EXPECT_EQ(nullptr, immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadWriteQueueIndex]);
+    EXPECT_NE(nullptr, immCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadWriteQueueIndex]);
 }
 
 HWTEST2_F(CopyOffloadWriteEngineInOrderTests, givenCopyOffloadWriteEngineDisabledByDebugKeyWhenInOrderImmCmdListCreatedThenWriteQueueIsNotCreated, IsCRI) {

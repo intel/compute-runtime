@@ -201,4 +201,12 @@ bool ProductHelperHw<gfxProduct>::isWriteSplitRequired(bool isDstSystemOrRemoteM
     }
 }
 
+template <>
+bool ProductHelperHw<gfxProduct>::isCopyOffloadWriteEngineSupported() const {
+    if (debugManager.flags.CopyOffloadWriteEngine.get() != -1) {
+        return (debugManager.flags.CopyOffloadWriteEngine.get() == 1);
+    }
+    return true;
+}
+
 } // namespace NEO

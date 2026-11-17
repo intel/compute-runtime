@@ -1016,6 +1016,7 @@ struct CommandList : _ze_command_list_handle_t {
     bool swTagScopeActive = false;
     bool patchPreambleEnabled = false;
     bool frontEndControllerEnabled = false;
+    bool copyOffloadWriteEngineSupported = false;
     bool copyOffloadHintRequested = false;
     bool copyOffloadStreamUsed = false;
     bool copyOffloadStreamRecordingActive = false;

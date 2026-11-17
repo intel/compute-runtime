@@ -253,6 +253,18 @@ CRITEST_F(CriProductHelper, givenProductHelperWhenAskingIfWriteSplitIsRequiredTh
     EXPECT_TRUE(productHelper->isWriteSplitRequired(true));
 }
 
+CRITEST_F(CriProductHelper, givenCriWhenAskingForCopyOffloadWriteEngineSupportThenReturnTrueByDefaultAndRespectDebugFlag) {
+    DebugManagerStateRestore restorer;
+
+    EXPECT_TRUE(productHelper->isCopyOffloadWriteEngineSupported());
+
+    debugManager.flags.CopyOffloadWriteEngine.set(0);
+    EXPECT_FALSE(productHelper->isCopyOffloadWriteEngineSupported());
+
+    debugManager.flags.CopyOffloadWriteEngine.set(1);
+    EXPECT_TRUE(productHelper->isCopyOffloadWriteEngineSupported());
+}
+
 CRITEST_F(CriProductHelper, givenCriWhenAskingForRegularCmdListDualStreamCopyOffloadSupportThenReturnTrueByDefaultAndRespectDebugFlag) {
     DebugManagerStateRestore restorer;
 

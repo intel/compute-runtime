@@ -1150,6 +1150,18 @@ HWTEST_F(ProductHelperTest, givenOverrideBcsWriteSplitDebugFlagWhenAskingIfWrite
     EXPECT_TRUE(productHelper->isWriteSplitRequired(true));
 }
 
+HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingForCopyOffloadWriteEngineSupportThenReturnValueBasedOnDebugFlag) {
+    DebugManagerStateRestore restorer;
+
+    EXPECT_FALSE(productHelper->isCopyOffloadWriteEngineSupported());
+
+    debugManager.flags.CopyOffloadWriteEngine.set(0);
+    EXPECT_FALSE(productHelper->isCopyOffloadWriteEngineSupported());
+
+    debugManager.flags.CopyOffloadWriteEngine.set(1);
+    EXPECT_TRUE(productHelper->isCopyOffloadWriteEngineSupported());
+}
+
 HWTEST_F(ProductHelperTest, givenProductHelperWhenCheckingIfWalkerPreemptionFallbackIsRequiredThenFalseReturned) {
     for (auto preemptionMode : {PreemptionMode::Disabled, PreemptionMode::MidBatch, PreemptionMode::ThreadGroup, PreemptionMode::MidThread}) {
         for (bool hostWaitablePostSync : {true, false}) {

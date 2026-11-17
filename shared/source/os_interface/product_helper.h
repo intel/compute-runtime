@@ -243,6 +243,7 @@ class ProductHelper {
     virtual bool useAdditionalBlitProperties(const BlitProperties &blitProperties) const = 0;
     virtual bool isFlushBetweenBlitsRequired() const = 0;
     virtual bool isWriteSplitRequired(bool isDstSystemOrRemoteMemory) const = 0;
+    virtual bool isCopyOffloadWriteEngineSupported() const = 0;
     virtual bool isNonCoherentTimestampsModeEnabled() const = 0;
     virtual bool isPackedCopyFormatSupported() const = 0;
     virtual size_t getMinMiddleSizeForBuiltinBufferCopyWith8ByteAccess() const = 0;

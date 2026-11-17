@@ -360,6 +360,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
         NEO::ApiSpecificConfig::getBindlessMode(*neoDevice));
     this->swTagsEnabled = NEO::debugManager.flags.EnableSWTags.get();
     this->frontEndControllerEnabled = productHelper.isFrontEndControllerEnabled();
+    this->copyOffloadWriteEngineSupported = productHelper.isCopyOffloadWriteEngineSupported();
     this->setupPatchPreambleEnabled(false);
     this->commandContainer.doubleSbaWaRef() = this->doubleSbaWa;
     this->commandContainer.l1CachePolicyDataRef() = &this->l1CachePolicyData;

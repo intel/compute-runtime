@@ -935,7 +935,7 @@ bool CommandList::isCopyOffloadCmdQImmediate(const CommandQueue *cmdQ) const {
 }
 
 bool CommandList::isCopyOffloadWriteEngineAllowed(uint32_t copyEngineOrdinal) const {
-    if (NEO::debugManager.flags.CopyOffloadWriteEngine.get() != 1 || !isInOrderExecutionEnabled()) {
+    if (!this->copyOffloadWriteEngineSupported || !isInOrderExecutionEnabled()) {
         return false;
     }
 

@@ -1695,6 +1695,7 @@ HWTEST2_F(AggregatedBcsSplitTests, givenCopyOffloadEnabledWhenAppendThenUseCopyQ
     }
 
     debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.set(1);
+    debugManager.flags.CopyOffloadWriteEngine.set(0);
 
     ze_result_t returnValue;
     auto computeCommandList = createCmdList(false);

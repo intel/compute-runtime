@@ -966,6 +966,11 @@ bool ProductHelperHw<gfxProduct>::isWriteSplitRequired(bool isDstSystemOrRemoteM
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isCopyOffloadWriteEngineSupported() const {
+    return (debugManager.flags.CopyOffloadWriteEngine.get() == 1);
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isPackedCopyFormatSupported() const {
     return false;
 }
