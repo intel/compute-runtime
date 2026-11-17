@@ -742,6 +742,13 @@ inline constexpr ze_mutable_graph_node_exp_flags_t allMutableGraphNodeFlagsExcep
                                                                                                      ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_SIGNAL_EVENT |
                                                                                                      ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_WAIT_EVENTS;
 
+inline ze_mutable_graph_node_exp_flags_t resolveGraphNodeFlags(ze_mutable_graph_node_exp_flags_t flags) {
+    if (0u == flags) {
+        return allMutableGraphNodeFlagsExceptKernelInstruction;
+    }
+    return flags;
+}
+
 bool isGraphNodeDescriptorPresent(const void *pNext);
 bool areGraphNodeDescriptorFlagsSupported(ze_command_list_handle_t hCommandList, const void *pNext);
 void updateGraphNodeReferences(ze_graph_node_handle_t graphNodeHandle, ze_group_count_t *groupCounts, ze_group_size_t *groupSizes);

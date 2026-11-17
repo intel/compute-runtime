@@ -101,8 +101,11 @@ ze_result_t ZE_APICALL zeGraphNodeGetPropertiesExp(ze_graph_node_handle_t hNode,
     return L0::GraphNode::fromHandle(hNode)->getProperties(pProperties);
 }
 
-ze_result_t ZE_APICALL zeGraphNodesUpdateExp([[maybe_unused]] ze_graph_handle_t hGraph, [[maybe_unused]] uint32_t numNodes, [[maybe_unused]] ze_graph_node_handle_t *phNodes, [[maybe_unused]] const void **ppUpdateDescs, [[maybe_unused]] const void *pNext) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+ze_result_t ZE_APICALL zeGraphNodesUpdateExp(ze_graph_handle_t hGraph, uint32_t numNodes, ze_graph_node_handle_t *phNodes, const void **ppUpdateDescs, [[maybe_unused]] const void *pNext) {
+    if ((nullptr == hGraph) || (0u == numNodes) || (nullptr == phNodes) || (nullptr == ppUpdateDescs)) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    return L0::Graph::fromHandle(hGraph)->updateNodes(numNodes, phNodes, ppUpdateDescs);
 }
 
 ze_result_t ZE_APICALL zeExecutableGraphNodesUpdateExp([[maybe_unused]] ze_executable_graph_handle_t hExecutableGraph, [[maybe_unused]] uint32_t numNodes, [[maybe_unused]] ze_graph_node_handle_t *phNodes, [[maybe_unused]] const void **ppUpdateDescs, [[maybe_unused]] const void *pNext) {

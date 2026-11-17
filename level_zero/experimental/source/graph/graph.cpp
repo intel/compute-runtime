@@ -483,6 +483,93 @@ auto Graph::getNodes(uint32_t *pGraphNodesCount, ze_graph_node_handle_t *phGraph
     return ZE_RESULT_SUCCESS;
 }
 
+inline ze_result_t validateGraphNodeUpdateDescriptors(const GraphNode &graphNode, const void *pUpdateDesc) {
+    if (nullptr == pUpdateDesc) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    constexpr ze_mutable_graph_node_exp_flags_t kernelFlags = ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_ARGUMENT | ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_INSTRUCTION;
+    const auto nodeFlags = graphNode.getEffectiveFlags();
+    auto desc = static_cast<const ze_base_desc_t *>(pUpdateDesc);
+    while (desc) {
+        if (desc->stype == ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_LAUNCH_KERNEL_EXP_DESC) {
+            if (0u != (nodeFlags & kernelFlags)) {
+                return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+            }
+        } else if (desc->stype == ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_GROUP_COUNT_EXP_DESC) {
+            if (0u == (nodeFlags & ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT)) {
+                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            }
+        } else if (desc->stype == ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_GROUP_SIZE_EXP_DESC) {
+            if (0u == (nodeFlags & ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_SIZE)) {
+                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            }
+        } else {
+            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
+        desc = static_cast<const ze_base_desc_t *>(desc->pNext);
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
+inline ze_result_t applyGraphNodeUpdateDescriptors(GraphNode &graphNode, const void *pUpdateDesc) {
+    const auto nodeFlags = graphNode.getEffectiveFlags();
+    auto desc = static_cast<const ze_base_desc_t *>(pUpdateDesc);
+    while (desc) {
+        if (desc->stype == ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_LAUNCH_KERNEL_EXP_DESC) {
+            auto launchKernelDesc = reinterpret_cast<const ze_graph_node_update_launch_kernel_exp_desc_t *>(desc);
+            if (0u != (nodeFlags & ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT)) {
+                graphNode.updateGroupCount(launchKernelDesc->groupCount);
+            }
+            if (0u != (nodeFlags & ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_SIZE)) {
+                auto result = graphNode.updateGroupSize(launchKernelDesc->groupSize);
+                if (ZE_RESULT_SUCCESS != result) {
+                    return result;
+                }
+            }
+        } else if (desc->stype == ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_GROUP_COUNT_EXP_DESC) {
+            auto groupCountDesc = reinterpret_cast<const ze_graph_node_update_group_count_exp_desc_t *>(desc);
+            graphNode.updateGroupCount(groupCountDesc->groupCount);
+        } else {
+            auto groupSizeDesc = reinterpret_cast<const ze_graph_node_update_group_size_exp_desc_t *>(desc);
+            auto result = graphNode.updateGroupSize(groupSizeDesc->groupSize);
+            if (ZE_RESULT_SUCCESS != result) {
+                return result;
+            }
+        }
+        desc = static_cast<const ze_base_desc_t *>(desc->pNext);
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
+auto Graph::updateNodes(uint32_t numNodes, ze_graph_node_handle_t *phNodes, const void **ppUpdateDescs) -> ze_result_t {
+    if (false == this->mutableGraph) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    if (false == this->closed()) {
+        return ZE_RESULT_NOT_READY;
+    }
+
+    for (uint32_t i = 0U; i < numNodes; ++i) {
+        auto graphNode = GraphNode::fromHandle(phNodes[i]);
+        auto ownedNode = std::find_if(this->graphNodes->begin(), this->graphNodes->end(), [graphNode](const auto &node) { return node.get() == graphNode; });
+        if (this->graphNodes->end() == ownedNode) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+        auto result = validateGraphNodeUpdateDescriptors(*graphNode, ppUpdateDescs[i]);
+        if (ZE_RESULT_SUCCESS != result) {
+            return result;
+        }
+    }
+
+    for (uint32_t i = 0U; i < numNodes; ++i) {
+        auto result = applyGraphNodeUpdateDescriptors(*GraphNode::fromHandle(phNodes[i]), ppUpdateDescs[i]);
+        if (ZE_RESULT_SUCCESS != result) {
+            return result;
+        }
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
 void Graph::tryJoinOnNextCommand(L0::CommandList &childCmdList, L0::Event &joinEvent) {
     // A fork is always registered in the direct parent graph of the forked (child) command list.
     // For a direct join, that parent is 'this'. Transitive joins additionally allow the join event
@@ -2406,12 +2493,7 @@ bool areGraphNodeDescriptorFlagsSupported(ze_command_list_handle_t hCommandList,
     if (nullptr == graphNodeDesc) {
         return true;
     }
-    ze_mutable_graph_node_exp_flags_t requestedFlags = 0u;
-    if (0u == graphNodeDesc->flags) {
-        requestedFlags = allMutableGraphNodeFlagsExceptKernelInstruction;
-    } else {
-        requestedFlags = graphNodeDesc->flags;
-    }
+    const auto requestedFlags = resolveGraphNodeFlags(graphNodeDesc->flags);
 
     auto &rootDeviceEnvironment = CommandList::fromHandle(hCommandList)->getDevice()->getNEODevice()->getRootDeviceEnvironment();
     const auto supportedFlags = L0GfxCoreHelper::getMutableGraphCapabilities(rootDeviceEnvironment);

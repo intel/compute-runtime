@@ -9549,7 +9549,6 @@ TEST(GraphTestMutableGraphNodeExp, GivenMutableGraphNodeExpFunctionsWhenCalledTh
 
     ze_graph_node_update_group_count_exp_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_GROUP_COUNT_EXP_DESC};
     const void *updateDescs[] = {&groupCountDesc};
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeGraphNodesUpdateExp(graph.toHandle(), 1, &hNode, updateDescs, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeExecutableGraphNodesUpdateExp(hExecutableGraph, 1, &hNode, updateDescs, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::zeExecutableGraphUpdateExp(hExecutableGraph, graph.toHandle(), nullptr));
 }
@@ -9988,6 +9987,155 @@ TEST(GraphGetNodesTest, GivenMutableGraphWithNodesWhenGettingNodesThroughApiThen
     ze_graph_node_handle_t graphNodeHandle = nullptr;
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeGraphGetNodesExp(graph.toHandle(), &graphNodesCount, &graphNodeHandle));
     EXPECT_EQ((*graph.graphNodes)[0]->toHandle(), graphNodeHandle);
+}
+
+TEST_F(GraphTestApiCaptureWithDevice, GivenGroupSizeRejectedByKernelWhenUpdatingNodeThenKernelErrorIsReturned) {
+    Mock<Module> module(this->device, nullptr);
+    Mock<KernelImp> kernel;
+    kernel.setModule(&module);
+
+    GraphsCleanupGuard graphCleanup;
+    ContextStubMock ctx;
+    MockGraph graph{&ctx, true, true};
+    graph.graphNodes->push_back(std::make_unique<L0::GraphNode>(ZE_GRAPH_NODE_EXP_TYPE_LAUNCH_KERNEL, ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_SIZE));
+    graph.stopCapturing();
+    (*graph.graphNodes)[0]->setKernel(&kernel);
+
+    ze_graph_node_update_group_size_exp_desc_t groupSizeDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_GROUP_SIZE_EXP_DESC};
+    groupSizeDesc.groupSize = {0, 1, 1};
+    ze_graph_node_update_launch_kernel_exp_desc_t launchKernelDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_LAUNCH_KERNEL_EXP_DESC};
+    launchKernelDesc.groupSize = {0, 1, 1};
+
+    ze_graph_node_handle_t hNode = (*graph.graphNodes)[0]->toHandle();
+    for (const void *updateDesc : {static_cast<const void *>(&groupSizeDesc), static_cast<const void *>(&launchKernelDesc)}) {
+        EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, L0::zeGraphNodesUpdateExp(graph.toHandle(), 1, &hNode, &updateDesc, nullptr));
+    }
+}
+
+TEST_F(GraphTestApiCaptureWithDevice, GivenNodesWithAndWithoutGroupSizeReferenceWhenUpdatingGroupSizeThenReferencedGroupSizeOrKernelGroupSizeIsUpdated) {
+    Mock<Module> module(this->device, nullptr);
+    Mock<KernelImp> parametersKernel;
+    parametersKernel.setModule(&module);
+    Mock<KernelImp> argumentsKernel;
+    argumentsKernel.setModule(&module);
+
+    ze_graph_node_update_group_size_exp_desc_t groupSizeDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_GROUP_SIZE_EXP_DESC};
+    groupSizeDesc.groupSize = {4, 2, 1};
+    ze_graph_node_update_launch_kernel_exp_desc_t launchKernelDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_LAUNCH_KERNEL_EXP_DESC};
+    launchKernelDesc.groupSize = {4, 2, 1};
+
+    for (const void *updateDesc : {static_cast<const void *>(&groupSizeDesc), static_cast<const void *>(&launchKernelDesc)}) {
+        GraphsCleanupGuard graphCleanup;
+        ContextStubMock ctx;
+        MockGraph graph{&ctx, true, true};
+        graph.graphNodes->push_back(std::make_unique<L0::GraphNode>(ZE_GRAPH_NODE_EXP_TYPE_LAUNCH_KERNEL, ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_SIZE));
+        graph.graphNodes->push_back(std::make_unique<L0::GraphNode>(ZE_GRAPH_NODE_EXP_TYPE_LAUNCH_KERNEL, ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_SIZE));
+        graph.stopCapturing();
+
+        parametersKernel.privateState.groupSize[0] = 1U;
+        parametersKernel.privateState.groupSize[1] = 1U;
+        parametersKernel.privateState.groupSize[2] = 1U;
+        argumentsKernel.privateState.groupSize[0] = 1U;
+        argumentsKernel.privateState.groupSize[1] = 1U;
+        argumentsKernel.privateState.groupSize[2] = 1U;
+        ze_group_size_t capturedGroupSize = {1, 1, 1};
+
+        auto &parametersNode = *(*graph.graphNodes)[0];
+        parametersNode.setKernel(&parametersKernel);
+        auto &argumentsNode = *(*graph.graphNodes)[1];
+        argumentsNode.setKernel(&argumentsKernel);
+        argumentsNode.setGroupSizes(&capturedGroupSize);
+
+        std::array<ze_graph_node_handle_t, 2> hNodes = {parametersNode.toHandle(), argumentsNode.toHandle()};
+        std::array<const void *, 2> updateDescs = {updateDesc, updateDesc};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeGraphNodesUpdateExp(graph.toHandle(), 2, hNodes.data(), updateDescs.data(), nullptr));
+
+        EXPECT_EQ(4u, parametersKernel.getGroupSize()[0]);
+        EXPECT_EQ(2u, parametersKernel.getGroupSize()[1]);
+        EXPECT_EQ(1u, parametersKernel.getGroupSize()[2]);
+
+        EXPECT_EQ(4u, capturedGroupSize.groupSizeX);
+        EXPECT_EQ(2u, capturedGroupSize.groupSizeY);
+        EXPECT_EQ(1u, capturedGroupSize.groupSizeZ);
+        EXPECT_EQ(1u, argumentsKernel.getGroupSize()[0]);
+        EXPECT_EQ(1u, argumentsKernel.getGroupSize()[1]);
+        EXPECT_EQ(1u, argumentsKernel.getGroupSize()[2]);
+    }
+}
+
+TEST_F(GraphTestInstantiationTest, GivenCapturedAppendKernelsWithGraphNodeDescriptorsWhenUpdatingGroupCountAndGroupSizeOfNodesThenCapturedCommandsAreUpdated) {
+    GraphsCleanupGuard graphCleanup;
+    DebugManagerStateRestore restorer;
+    debugManager.flags.OverrideMutableGraphCapability.set(static_cast<int32_t>(ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT | ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_SIZE));
+
+    MockGraphContextReturningSpecificCmdList ctx;
+    Mock<Module> module(this->device, nullptr);
+    Mock<KernelImp> kernel;
+    kernel.setModule(&module);
+    kernel.privateState.groupSize[0] = 1U;
+    kernel.privateState.groupSize[1] = 1U;
+    kernel.privateState.groupSize[2] = 1U;
+    ze_kernel_handle_t kernelHandle = kernel.toHandle();
+
+    ze_graph_node_handle_t parametersNodeHandle = nullptr;
+    ze_graph_node_exp_desc_t parametersNodeDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_EXP_DESC};
+    parametersNodeDesc.flags = ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT | ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_SIZE;
+    parametersNodeDesc.phNodeHandle = &parametersNodeHandle;
+
+    ze_graph_node_handle_t argumentsNodeHandle = nullptr;
+    ze_graph_node_exp_desc_t argumentsNodeDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_EXP_DESC};
+    argumentsNodeDesc.flags = ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT | ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_SIZE;
+    argumentsNodeDesc.phNodeHandle = &argumentsNodeHandle;
+
+    ze_group_count_t groupCount = {1, 1, 1};
+    ze_group_size_t groupSize = {1, 1, 1};
+
+    MockGraph srcGraph(&ctx, true, true);
+    auto srcGraphHandle = srcGraph.toHandle();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(immCmdListHandle, srcGraphHandle, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernelWithParameters(immCmdListHandle, kernelHandle, &groupCount, &parametersNodeDesc, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernelWithArguments(immCmdListHandle, kernelHandle, groupCount, groupSize, nullptr, &argumentsNodeDesc, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(immCmdListHandle, &srcGraphHandle, nullptr));
+
+    const auto &capturedCommands = srcGraph.getCapturedCommands();
+    ASSERT_EQ(2u, capturedCommands.size());
+    auto &parametersClosure = std::get<Closure<CaptureApi::zeCommandListAppendLaunchKernelWithParameters>>(capturedCommands[0]);
+    auto &argumentsClosure = std::get<Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments>>(capturedCommands[1]);
+    auto argumentsKernel = argumentsClosure.indirectArgs.capturedKernel.get();
+    const auto argumentsKernelGroupSize = argumentsKernel->getGroupSize();
+    const std::array<uint32_t, 3> argumentsKernelGroupSizeBeforeUpdate = {argumentsKernelGroupSize[0], argumentsKernelGroupSize[1], argumentsKernelGroupSize[2]};
+
+    ze_graph_node_update_group_size_exp_desc_t groupSizeDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_GROUP_SIZE_EXP_DESC};
+    groupSizeDesc.groupSize = {4, 2, 1};
+    ze_graph_node_update_group_count_exp_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_GROUP_COUNT_EXP_DESC};
+    groupCountDesc.pNext = &groupSizeDesc;
+    groupCountDesc.groupCount = {2, 3, 4};
+
+    std::array<ze_graph_node_handle_t, 2> hNodes = {parametersNodeHandle, argumentsNodeHandle};
+    std::array<const void *, 2> updateDescs = {&groupCountDesc, &groupCountDesc};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeGraphNodesUpdateExp(srcGraphHandle, 2, hNodes.data(), updateDescs.data(), nullptr));
+
+    EXPECT_EQ(2u, parametersClosure.indirectArgs.groupCounts.groupCountX);
+    EXPECT_EQ(3u, parametersClosure.indirectArgs.groupCounts.groupCountY);
+    EXPECT_EQ(4u, parametersClosure.indirectArgs.groupCounts.groupCountZ);
+    auto parametersKernel = parametersClosure.indirectArgs.capturedKernel.get();
+    EXPECT_EQ(4u, parametersKernel->getGroupSize()[0]);
+    EXPECT_EQ(2u, parametersKernel->getGroupSize()[1]);
+    EXPECT_EQ(1u, parametersKernel->getGroupSize()[2]);
+
+    EXPECT_EQ(2u, argumentsClosure.apiArgs.groupCounts.groupCountX);
+    EXPECT_EQ(3u, argumentsClosure.apiArgs.groupCounts.groupCountY);
+    EXPECT_EQ(4u, argumentsClosure.apiArgs.groupCounts.groupCountZ);
+    EXPECT_EQ(4u, argumentsClosure.apiArgs.groupSizes.groupSizeX);
+    EXPECT_EQ(2u, argumentsClosure.apiArgs.groupSizes.groupSizeY);
+    EXPECT_EQ(1u, argumentsClosure.apiArgs.groupSizes.groupSizeZ);
+    EXPECT_EQ(argumentsKernelGroupSizeBeforeUpdate[0], argumentsKernel->getGroupSize()[0]);
+    EXPECT_EQ(argumentsKernelGroupSizeBeforeUpdate[1], argumentsKernel->getGroupSize()[1]);
+    EXPECT_EQ(argumentsKernelGroupSizeBeforeUpdate[2], argumentsKernel->getGroupSize()[2]);
+
+    EXPECT_EQ(1u, kernel.getGroupSize()[0]);
+    EXPECT_EQ(1u, kernel.getGroupSize()[1]);
+    EXPECT_EQ(1u, kernel.getGroupSize()[2]);
 }
 
 TEST(GraphTestCommandListDestruction, GivenPreallocatedCaptureTargetWhenCommandListIsDestroyedThenGraphIsNotDestroyed) {

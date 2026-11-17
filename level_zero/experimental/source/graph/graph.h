@@ -265,6 +265,10 @@ struct GraphNode : _ze_graph_node_handle_t {
         return this->flags;
     }
 
+    auto getEffectiveFlags() const -> ze_mutable_graph_node_exp_flags_t {
+        return resolveGraphNodeFlags(this->flags);
+    }
+
     auto setGroupCounts(ze_group_count_t *groupCounts) -> void {
         this->groupCounts = groupCounts;
     }
@@ -447,6 +451,7 @@ struct Graph : _ze_graph_handle_t {
     }
 
     auto getNodes(uint32_t *pGraphNodesCount, ze_graph_node_handle_t *phGraphNodes) -> ze_result_t;
+    auto updateNodes(uint32_t numNodes, ze_graph_node_handle_t *phNodes, const void **ppUpdateDescs) -> ze_result_t;
 
     const std::vector<CapturedCommand> &getCapturedCommands() const {
         return recordedApiCommands.commands;
