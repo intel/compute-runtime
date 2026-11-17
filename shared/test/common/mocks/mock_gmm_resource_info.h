@@ -128,6 +128,7 @@ class MockGmmResourceInfo : public GmmResourceInfo {
     using GmmResourceInfo::gmmResourceHandle;
 
     uint64_t driverProtectionBits = 0;
+    uint64_t renderOffset = 0;
     uint32_t getOffsetCalled = 0u;
     uint32_t arrayIndexPassedToGetOffset = 0;
     SurfaceFormatInfo tempSurface{};

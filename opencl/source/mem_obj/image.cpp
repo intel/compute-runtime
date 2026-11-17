@@ -19,6 +19,7 @@
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/image_helper.h"
 #include "shared/source/helpers/preprocessor.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/allocation_properties.h"
@@ -392,7 +393,7 @@ Image *Image::createImageHw(Context *context, const MemoryProperties &memoryProp
     return image;
 }
 
-bool Image::isMultisampleConfigurationSupported(const NEO::Device &device, const ImageInfo &imgInfo,
+bool Image::isMultisampleConfigurationSupported(const NEO::Device &device, const ImageInfo &imgInfo, const GraphicsAllocation &imageAllocation,
                                                 const GraphicsAllocation *mcsAllocation, bool hasUnifiedMcsSurface) {
     const auto &gfxCoreHelper = device.getGfxCoreHelper();
 
@@ -403,7 +404,7 @@ bool Image::isMultisampleConfigurationSupported(const NEO::Device &device, const
 
     constexpr uint32_t maxSampleCountInReducedState = 8u;
     return (imgInfo.imgDesc.numSamples <= maxSampleCountInReducedState) &&
-           (mcsAllocation == nullptr) && !hasUnifiedMcsSurface;
+           ImageHelper::isMultisampleControlSurfaceLayoutSupported(imageAllocation, mcsAllocation, hasUnifiedMcsSurface, imgInfo.offset);
 }
 
 Image *Image::createSharedImage(Context *context, SharingHandler *sharingHandler, const McsSurfaceInfo &mcsSurfaceInfo,
@@ -411,7 +412,8 @@ Image *Image::createSharedImage(Context *context, SharingHandler *sharingHandler
                                 cl_mem_flags flags, cl_mem_flags_intel flagsIntel, const ClSurfaceFormatInfo *surfaceFormat,
                                 ImageInfo &imgInfo, uint32_t cubeFaceIndex, uint32_t baseMipLevel, uint32_t mipCount, bool hasUnifiedMcsSurface,
                                 cl_int *errcodeRet) {
-    if (!isMultisampleConfigurationSupported(context->getDevice(0)->getDevice(), imgInfo, mcsAllocation, hasUnifiedMcsSurface)) {
+    if (!isMultisampleConfigurationSupported(context->getDevice(0)->getDevice(), imgInfo, *multiGraphicsAllocation.getDefaultGraphicsAllocation(),
+                                             mcsAllocation, hasUnifiedMcsSurface)) {
         delete sharingHandler;
         auto memoryManager = context->getMemoryManager();
         for (auto allocation : multiGraphicsAllocation.getGraphicsAllocations()) {

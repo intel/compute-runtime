@@ -100,7 +100,7 @@ class Image : public MemObj {
                                     cl_mem_flags flags, cl_mem_flags_intel flagsIntel, const ClSurfaceFormatInfo *surfaceFormat, ImageInfo &imgInfo, uint32_t cubeFaceIndex, uint32_t baseMipLevel, uint32_t mipCount, bool hasUnifiedMcsSurface,
                                     cl_int *errcodeRet);
 
-    static bool isMultisampleConfigurationSupported(const NEO::Device &device, const ImageInfo &imgInfo,
+    static bool isMultisampleConfigurationSupported(const NEO::Device &device, const ImageInfo &imgInfo, const GraphicsAllocation &imageAllocation,
                                                     const GraphicsAllocation *mcsAllocation, bool hasUnifiedMcsSurface);
 
     static cl_int validate(Context *context,

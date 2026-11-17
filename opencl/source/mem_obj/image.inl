@@ -133,8 +133,10 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
         inputs.compressionFormat = NEO::getSurfaceStateCompressionFormatIfSupported(*surfaceState);
         inputs.isNV12Format = isNV12Image(&this->getImageFormat());
         inputs.isDepthStencilResource = surfaceState->getDepthStencilResource();
-        inputs.multisampleControlSurfacePresent =
-            (inputs.numberOfMultisamples > 0u) && (surfaceState->getAuxiliarySurfaceBaseAddress() != 0u);
+        inputs.multisampleControlSurfaceAddress =
+            (inputs.numberOfMultisamples > 0u)
+                ? ImageHelper::getMultisampleControlSurfaceAddress(*graphicsAllocation, getMcsAllocation(), getIsUnifiedMcsSurface())
+                : 0u;
         inputs.surfaceMinLOD = this->baseMipLevel + mipLevel;
         inputs.mipCountLOD = mipCount;
 

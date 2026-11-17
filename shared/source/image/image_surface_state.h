@@ -40,11 +40,12 @@ struct ImageSurfaceStateInputs {
     uint32_t packedWidth = 0;
     uint32_t packedTileBpp = 0;
 
+    uint64_t multisampleControlSurfaceAddress = 0;
+
     bool isNV12Format = false;
     bool isDepthStencilResource = false;
     bool useChannelSelects = false;
     bool packedFormatOverride = false;
-    bool multisampleControlSurfacePresent = false;
     // Protected-content images carry a decryption bit in the caller-built state that cannot be
     // re-derived from the resource; the caller forwards it here so the encoder can preserve it.
     bool encryptedData = false;

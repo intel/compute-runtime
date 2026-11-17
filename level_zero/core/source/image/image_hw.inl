@@ -14,6 +14,7 @@
 #include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/image_helper.h"
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/image/image_surface_state.h"
 #include "shared/source/memory_manager/allocation_properties.h"
@@ -382,10 +383,10 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
     if (usesReducedSurfaceState && (this->getNumSamples() > 1u)) {
         const bool countTooLarge =
             this->getMcsMultisampleCount() > RENDER_SURFACE_STATE::NUMBER_OF_MULTISAMPLES_MULTISAMPLECOUNT_8;
-        const bool resolvedThroughControlSurface =
-            (this->getMcsAllocation() != nullptr) || this->getIsUnifiedMcsSurface();
+        const bool isControlSurfaceLayoutSupported =
+            NEO::ImageHelper::isMultisampleControlSurfaceLayoutSupported(*this->allocation, this->getMcsAllocation(), this->getIsUnifiedMcsSurface(), surfaceOffsets.offset);
 
-        if (countTooLarge || resolvedThroughControlSurface) {
+        if (countTooLarge || !isControlSurfaceLayoutSupported) {
             return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
     }
@@ -529,9 +530,10 @@ void ImageCoreFamily<gfxCoreFamily>::encodeSurfaceStateReduced(const SurfaceStat
                 ? static_cast<uint32_t>(NUMBER_OF_MULTISAMPLES::NUMBER_OF_MULTISAMPLES_MULTISAMPLECOUNT_1)
                 : static_cast<uint32_t>(this->getMcsMultisampleCount());
 
-        inputs.multisampleControlSurfacePresent =
-            (inputs.numberOfMultisamples > 0u) &&
-            ((this->getMcsAllocation() != nullptr) || this->getIsUnifiedMcsSurface());
+        inputs.multisampleControlSurfaceAddress =
+            (inputs.numberOfMultisamples > 0u)
+                ? NEO::ImageHelper::getMultisampleControlSurfaceAddress(*this->allocation, this->getMcsAllocation(), this->getIsUnifiedMcsSurface())
+                : 0u;
 
         return inputs;
     };

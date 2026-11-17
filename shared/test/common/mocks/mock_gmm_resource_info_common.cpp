@@ -99,6 +99,9 @@ GMM_STATUS MockGmmResourceInfo::getOffset(GMM_REQ_OFFSET_INFO &reqOffsetInfo) {
     if (reqOffsetInfo.MipLevel > 0) {
         reqOffsetInfo.Lock.Offset = 32;
     }
+    if (reqOffsetInfo.ReqRender && (renderOffset != 0u)) {
+        reqOffsetInfo.Render.Offset64 = renderOffset;
+    }
 
     return GMM_SUCCESS;
 }
