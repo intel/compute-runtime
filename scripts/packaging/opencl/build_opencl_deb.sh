@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-# Copyright (C) 2021-2025 Intel Corporation
+# Copyright (C) 2021-2026 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -95,6 +95,7 @@ if [[ "${NEO_LEGACY_PLATFORMS_SUPPORT}" == "TRUE" ]] && [[ ! "${NEO_CURRENT_PLAT
     echo "Building Legacy package"
     export NEO_OCLOC_VERSION_MODE=0
     perl -pi -e "s/^Package: intel-opencl-icd$/Package: intel-opencl-icd-legacy1/" "$BUILD_DIR/debian/control"
+    perl -ni -e 'print unless /^ intel-level-zero-gpu(?=,|$)/' "$BUILD_DIR/debian/control"
 else
     echo "Building Current/Full package"
     export NEO_OCLOC_VERSION_MODE=1

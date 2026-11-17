@@ -46,6 +46,7 @@ BuildRequires:  libigdfcl%{?name_suffix}-devel
 Requires:       libigc%{igc_sover}%{?name_suffix}
 Requires:       libigdfcl%{igc_sover}%{?name_suffix}
 Requires:       libigdgmm%{gmmlib_sover}%{?name_suffix}
+Requires:       intel-level-zero-gpu
 
 %description
 Intel(R) Graphics Compute Runtime for OpenCL(TM) is a open source project to

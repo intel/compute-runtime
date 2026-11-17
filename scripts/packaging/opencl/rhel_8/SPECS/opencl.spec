@@ -31,6 +31,7 @@ Source2: uapi.tar.xz
 
 Requires:      intel-gmmlib
 Requires:      intel-igc-opencl-2
+Requires:      intel-level-zero-gpu
 
 BuildRequires: libva-devel gcc-c++ cmake ninja-build make
 BuildRequires: intel-gmmlib-devel

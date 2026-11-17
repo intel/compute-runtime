@@ -18,6 +18,7 @@ Architecture: amd64 arm64
 Depends:
  ${shlibs:Depends},
  ${misc:Depends},
+ libze-intel-gpu1,
  intel-igc-opencl-2,
  libigdgmm12,
  ocl-icd-libopencl1

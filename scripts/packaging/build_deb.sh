@@ -117,6 +117,7 @@ if [[ "${NEO_LEGACY_PLATFORMS_SUPPORT}" == "TRUE" ]] && [[ ! "${NEO_CURRENT_PLAT
     export NEO_OCLOC_VERSION_MODE=0
     export NEO_LEGACY_VERSION=legacy1
     perl -pi -e "s/^Package: intel-opencl-icd$/Package: intel-opencl-icd-${NEO_LEGACY_VERSION}/" "$BUILD_DIR/debian/control"
+    perl -ni -e 'print unless /^ libze-intel-gpu1(?=,|$)/' "$BUILD_DIR/debian/control"
     mv -v "$BUILD_DIR/debian/intel-opencl-icd.install" "$BUILD_DIR/debian/intel-opencl-icd-${NEO_LEGACY_VERSION}.install"
 
     perl -pi -e "s/^Package: intel-ocloc$/Package: intel-ocloc-${NEO_LEGACY_VERSION}/" "$BUILD_DIR/debian/control"
