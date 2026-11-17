@@ -8,6 +8,7 @@
 #include "shared/source/gmm_helper/cache_settings_helper.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/os_interface/linux/drm_allocation.h"
@@ -16,6 +17,7 @@
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/libult/linux/drm_mock_helper.h"
 #include "shared/test/common/mocks/mock_gfx_partition.h"
+#include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/os_interface/linux/drm_memory_manager_local_memory_fixture.h"
@@ -1083,6 +1085,64 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTestImpl, givenUncacheableFlagWhenCreatingAll
     }
 
     memoryManager->freeGraphicsMemory(graphicsAllocation);
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerTestImpl, givenMultipleSharedHandlesWhenCreatingAllocationThenPatIndexIsQueriedWithMatchingCpuCacheability) {
+    debugManager.flags.EnableLocalMemory.set(1);
+    mock->ioctlExpected.primeFdToHandle = 4;
+    mock->ioctlExpected.gemWait = 2;
+    mock->ioctlExpected.gemClose = 4;
+    mock->vmBindPatIndexProgrammingSupported = true;
+    auto mockClientContext = static_cast<MockGmmClientContextBase *>(mock->getRootDeviceEnvironment().getGmmClientContext());
+
+    std::vector<NEO::osHandle> handles{6, 7};
+    auto freeAllocation = [this](GraphicsAllocation *allocation) { memoryManager->freeGraphicsMemory(allocation); };
+
+    for (const bool uncacheable : {false, true}) {
+        mockClientContext->getPatIndexQueryCalled = 0u;
+        AllocationProperties properties(rootDeviceIndex, true, 128 * MemoryConstants::kiloByte, AllocationType::buffer, false, device->getDeviceBitfield());
+        properties.flags.uncacheable = uncacheable;
+
+        std::unique_ptr<GraphicsAllocation, decltype(freeAllocation)> graphicsAllocation(memoryManager->createGraphicsAllocationFromMultipleSharedHandles(handles, properties, false, false, true, nullptr), freeAllocation);
+        ASSERT_NE(nullptr, graphicsAllocation);
+        auto drmAllocation = static_cast<DrmAllocation *>(graphicsAllocation.get());
+
+        EXPECT_EQ(2u, mockClientContext->getPatIndexQueryCalled);
+        EXPECT_EQ(drmAllocation->getGmm(1)->gmmResourceInfo->peekGmmResourceInfo(), mockClientContext->passedResourceInfoForGetPatIndexQuery);
+        EXPECT_EQ(!uncacheable, mockClientContext->passedCpuCacheableSettingForGetPatIndexQuery);
+        for (auto bo : drmAllocation->getBOs()) {
+            EXPECT_NE(CommonConstants::unsupportedPatIndex, bo->peekPatIndex());
+        }
+    }
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerTestImpl, givenReusedBoWhenImportingMultipleSharedHandlesThenReusedBoKeepsItsPatIndex) {
+    debugManager.flags.EnableLocalMemory.set(1);
+    mock->ioctlExpected.primeFdToHandle = 3;
+    mock->ioctlExpected.gemWait = 2;
+    mock->ioctlExpected.gemClose = 2;
+    mock->vmBindPatIndexProgrammingSupported = true;
+    mock->outputHandle = 100u;
+    mock->incrementOutputHandleAfterCall = true;
+    constexpr uint64_t reusedBoPatIndex = 0x7fu;
+
+    auto freeAllocation = [this](GraphicsAllocation *allocation) { memoryManager->freeGraphicsMemory(allocation); };
+    AllocationProperties properties(rootDeviceIndex, true, 128 * MemoryConstants::kiloByte, AllocationType::buffer, false, device->getDeviceBitfield());
+    std::vector<NEO::osHandle> firstHandles{6};
+    std::unique_ptr<GraphicsAllocation, decltype(freeAllocation)> firstAllocation(memoryManager->createGraphicsAllocationFromMultipleSharedHandles(firstHandles, properties, false, false, true, nullptr), freeAllocation);
+    ASSERT_NE(nullptr, firstAllocation);
+    auto reusedBo = static_cast<DrmAllocation *>(firstAllocation.get())->getBO();
+    reusedBo->setPatIndex(reusedBoPatIndex);
+
+    mock->outputHandle = 100u;
+    std::vector<NEO::osHandle> secondHandles{6, 7};
+    std::unique_ptr<GraphicsAllocation, decltype(freeAllocation)> secondAllocation(memoryManager->createGraphicsAllocationFromMultipleSharedHandles(secondHandles, properties, false, false, true, nullptr), freeAllocation);
+    ASSERT_NE(nullptr, secondAllocation);
+    auto &secondBos = static_cast<DrmAllocation *>(secondAllocation.get())->getBOs();
+
+    EXPECT_EQ(reusedBo, secondBos[0]);
+    EXPECT_EQ(reusedBoPatIndex, reusedBo->peekPatIndex());
+    EXPECT_NE(reusedBoPatIndex, secondBos[1]->peekPatIndex());
 }
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerTestImpl, whenSettingNumHandlesThenTheyAreRetrievedCorrectly) {

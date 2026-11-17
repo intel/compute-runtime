@@ -1614,10 +1614,9 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromMultipleShared
             totalSize += mappedSize;
             totalBoSize += size;
 
-            auto patIndex = drm.getPatIndex(nullptr, properties.allocationType, CacheRegion::defaultRegion, cachePolicy, false, MemoryPoolHelper::isSystemMemoryPool(memoryPool), false);
             auto boHandleWrapper = reuseSharedAllocation ? BufferObjectHandleWrapper{boHandle, properties.rootDeviceIndex} : tryToGetBoHandleWrapperWithSharedOwnership(boHandle, properties.rootDeviceIndex);
 
-            bo = new (std::nothrow) BufferObject(properties.rootDeviceIndex, &drm, patIndex, std::move(boHandleWrapper), size, maxOsContextCount);
+            bo = new (std::nothrow) BufferObject(properties.rootDeviceIndex, &drm, CommonConstants::unsupportedPatIndex, std::move(boHandleWrapper), size, maxOsContextCount);
             i++;
         } else {
             mappedSize = bo->peekSize();
@@ -1662,9 +1661,11 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromMultipleShared
     drmAllocation->storageInfo = allocationData.storageInfo;
     auto gmmHelper = executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getGmmHelper();
     auto &productHelper = gmmHelper->getRootDeviceEnvironment().getHelper<ProductHelper>();
+    const auto usageType = CacheSettingsHelper::getGmmUsageType(properties.allocationType, properties.flags.uncacheable, productHelper, *gmmHelper->getHardwareInfo());
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
+    gmmRequirements.overriderCpuCacheable = {true, !CacheSettingsHelper::isUncachedType(usageType)};
     for (i = 0u; i < handles.size(); i++) {
         auto bo = bos[i];
         StorageInfo limitedStorageInfo = allocationData.storageInfo;
@@ -1674,12 +1675,15 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromMultipleShared
                                                     nullptr,
                                                     bo->peekSize(),
                                                     0u,
-                                                    CacheSettingsHelper::getGmmUsageType(drmAllocation->getAllocationType(), properties.flags.uncacheable, productHelper, *gmmHelper->getHardwareInfo()),
+                                                    usageType,
                                                     allocationData.storageInfo,
                                                     gmmRequirements),
                               i);
 
         if (areBosSharedObjects == false) {
+            if (!bo->peekIsReusableAllocation()) {
+                bo->setPatIndex(drm.getPatIndex(drmAllocation->getGmm(i), properties.allocationType, CacheRegion::defaultRegion, cachePolicy, false, MemoryPoolHelper::isSystemMemoryPool(memoryPool), false));
+            }
             const uint64_t physicalOffset = offsetForHandle(i);
             const size_t boSize = bo->peekSize();
             bo->setAddress(gpuRange);

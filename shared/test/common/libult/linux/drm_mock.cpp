@@ -519,6 +519,9 @@ int DrmMockCustom::ioctl(DrmIoctl request, void *arg) {
         auto *primeToHandleParams = static_cast<NEO::PrimeHandle *>(arg);
         // return BO
         primeToHandleParams->handle = outputHandle;
+        if (incrementOutputHandleAfterCall) {
+            outputHandle++;
+        }
         inputFd = primeToHandleParams->fileDescriptor;
         ioctlCnt.primeFdToHandle++;
         if (failOnSecondPrimeFdToHandle == true) {
