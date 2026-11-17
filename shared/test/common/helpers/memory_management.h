@@ -48,15 +48,15 @@ struct AllocationEvent { // NOLINT(clang-analyzer-optin.performance.Padding)
 static_assert(std::is_trivially_default_constructible_v<AllocationEvent>,
               "a non-trivial default constructor makes the event arrays dynamically initialized");
 
-inline constexpr auto maxEvents = 1024 * 1024;
+inline constexpr size_t maxEvents = 1024 * 1024;
 
 extern AllocationEvent eventsAllocated[maxEvents];
 extern AllocationEvent eventsDeallocated[maxEvents];
 
 extern std::atomic<void *> fastEventsAllocated[maxEvents];
 extern std::atomic<void *> fastEventsDeallocated[maxEvents];
-extern std::atomic<int> fastEventsAllocatedCount;
-extern std::atomic<int> fastEventsDeallocatedCount;
+extern std::atomic<size_t> fastEventsAllocatedCount;
+extern std::atomic<size_t> fastEventsDeallocatedCount;
 extern size_t failingAllocation;
 extern std::atomic<size_t> numAllocations;
 extern std::atomic<size_t> indexAllocation;
@@ -75,6 +75,7 @@ inline constexpr auto invalidLeakIndex = static_cast<size_t>(-1);
 // capture allocations call stacks to print them during memory leak in ULTs
 inline constexpr bool captureCallStacks = false;
 
+bool fastEventsOverflowed();
 int detectLeaks();
 std::string printCallStack(const MemoryManagement::AllocationEvent &event);
 size_t enumerateLeak(size_t indexAllocationTop, size_t indexDeallocationTop, bool lookFromEnd, bool requireCallStack);

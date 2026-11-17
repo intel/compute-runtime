@@ -12,7 +12,6 @@
 #include "gtest/gtest.h"
 
 #include <atomic>
-#include <cassert>
 #include <cinttypes>
 #include <cstdlib>
 #include <cstring>
@@ -53,8 +52,8 @@ AllocationEvent eventsDeallocated[maxEvents];
 
 std::atomic<void *> fastEventsAllocated[maxEvents];
 std::atomic<void *> fastEventsDeallocated[maxEvents];
-std::atomic<int> fastEventsAllocatedCount(0);
-std::atomic<int> fastEventsDeallocatedCount(0);
+std::atomic<size_t> fastEventsAllocatedCount(0);
+std::atomic<size_t> fastEventsDeallocatedCount(0);
 
 size_t breakOnAllocationEvent = -1;
 size_t breakOnDeallocationEvent = -1;
@@ -108,6 +107,17 @@ static void freeSystemMemory(void *memory) {
 
 void (*deleteCallback)(void *) = onDeallocationEvent;
 
+static void recordFastEvent(std::atomic<void *> *fastEvents, std::atomic<size_t> &fastEventsCount, void *memory) {
+    auto currentIndex = fastEventsCount++;
+    if (currentIndex < maxEvents) {
+        fastEvents[currentIndex].store(memory, std::memory_order_relaxed);
+    }
+}
+
+bool fastEventsOverflowed() {
+    return fastEventsAllocatedCount > maxEvents || fastEventsDeallocatedCount > maxEvents;
+}
+
 template <AllocationEvent::EventType typeValid, AllocationEvent::EventType typeFail>
 static void *allocate(size_t size) {
     onAllocationEvent();
@@ -154,9 +164,7 @@ static void *allocate(size_t size) {
     }
 
     if (allocatedMemory) {
-        auto currentIndex = fastEventsAllocatedCount++;
-        fastEventsAllocated[currentIndex].store(allocatedMemory, std::memory_order_relaxed);
-        assert(currentIndex < maxEvents);
+        recordFastEvent(fastEventsAllocated, fastEventsAllocatedCount, allocatedMemory);
     }
 
     return allocatedMemory;
@@ -205,9 +213,7 @@ static void *allocate(size_t size, const std::nothrow_t &) {
     }
 
     if (allocatedMemory) {
-        auto currentIndex = fastEventsAllocatedCount++;
-        fastEventsAllocated[currentIndex].store(allocatedMemory, std::memory_order_relaxed);
-        assert(currentIndex < maxEvents);
+        recordFastEvent(fastEventsAllocated, fastEventsAllocatedCount, allocatedMemory);
     }
 
     return allocatedMemory;
@@ -244,18 +250,16 @@ static void deallocate(void *memory) {
             eventDeallocation.fastLeakDetectionEnabled = fastLeakDetectionEnabled;
         }
 
-        auto currentIndex = fastEventsDeallocatedCount++;
-        fastEventsDeallocated[currentIndex].store(memory, std::memory_order_relaxed);
-        assert(currentIndex < maxEvents);
+        recordFastEvent(fastEventsDeallocated, fastEventsDeallocatedCount, memory);
         freeSystemMemory(memory);
     }
 }
 int detectLeaks() {
     int indexLeak = -1;
 
-    for (int allocationIndex = 0u; allocationIndex < fastEventsAllocatedCount; allocationIndex++) {
+    for (size_t allocationIndex = 0u; allocationIndex < fastEventsAllocatedCount; allocationIndex++) {
         auto eventAllocation = fastEventsAllocated[allocationIndex].load(std::memory_order_relaxed);
-        int deallocationIndex = 0u;
+        size_t deallocationIndex = 0u;
         for (; deallocationIndex < fastEventsDeallocatedCount; deallocationIndex++) {
             if (fastEventsDeallocated[deallocationIndex].load(std::memory_order_relaxed) == nullptr) {
                 continue;
@@ -266,7 +270,7 @@ int detectLeaks() {
             }
         }
         if (deallocationIndex == fastEventsDeallocatedCount) {
-            indexLeak = allocationIndex;
+            indexLeak = static_cast<int>(allocationIndex);
             break;
         }
     }

@@ -8,9 +8,11 @@
 #include "shared/source/memory_manager/compression_selector.h"
 #include "shared/test/common/fixtures/memory_management_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/memory_leak_listener.h"
 #include "shared/test/common/helpers/memory_management.h"
 #include "shared/test/common/helpers/variable_backup.h"
 
+#include "gtest/gtest-spi.h"
 #include "gtest/gtest.h"
 
 using MemoryManagement::AllocationEvent;
@@ -150,6 +152,44 @@ TEST(FastLeakDetectionTest, GivenFastLeakDetectionEnabledWhenAllocatingAndFreein
     EXPECT_EQ(ptr.get(), MemoryManagement::fastEventsAllocated[allocatedCount].load());
     ptr.reset();
     EXPECT_EQ(deallocatedCount + 1, MemoryManagement::fastEventsDeallocatedCount.load());
+}
+
+TEST(FastLeakDetectionTest, GivenFastEventsLimitReachedWhenAllocatingAndFreeingThenEventsAreCountedAndOverflowIsReported) {
+    const auto allocatedCount = MemoryManagement::fastEventsAllocatedCount.load();
+    const auto deallocatedCount = MemoryManagement::fastEventsDeallocatedCount.load();
+    const auto overflowedBelowLimit = MemoryManagement::fastEventsOverflowed();
+
+    MemoryManagement::fastEventsAllocatedCount = MemoryManagement::maxEvents;
+    auto ptr = std::make_unique<char>();
+    const auto allocatedCountBeyondLimit = MemoryManagement::fastEventsAllocatedCount.load();
+    const auto overflowedOnAllocation = MemoryManagement::fastEventsOverflowed();
+    MemoryManagement::fastEventsAllocatedCount = allocatedCount;
+
+    MemoryManagement::fastEventsDeallocatedCount = MemoryManagement::maxEvents;
+    ptr.reset();
+    const auto deallocatedCountBeyondLimit = MemoryManagement::fastEventsDeallocatedCount.load();
+    const auto overflowedOnDeallocation = MemoryManagement::fastEventsOverflowed();
+    MemoryManagement::fastEventsDeallocatedCount = deallocatedCount;
+
+    EXPECT_FALSE(overflowedBelowLimit);
+    EXPECT_EQ(MemoryManagement::maxEvents + 1, allocatedCountBeyondLimit);
+    EXPECT_TRUE(overflowedOnAllocation);
+    EXPECT_EQ(MemoryManagement::maxEvents + 1, deallocatedCountBeyondLimit);
+    EXPECT_TRUE(overflowedOnDeallocation);
+}
+
+struct WhiteboxMemoryLeakListener : public NEO::MemoryLeakListener {
+    using NEO::MemoryLeakListener::OnTestEnd;
+    using NEO::MemoryLeakListener::OnTestStart;
+};
+
+TEST(MemoryLeakListenerTest, GivenFastEventsOverflowedWhenTestEndsThenFailureIsReported) {
+    WhiteboxMemoryLeakListener memoryLeakListener;
+    const auto &currentTestInfo = *::testing::UnitTest::GetInstance()->current_test_info();
+
+    MemoryManagement::fastEventsAllocatedCount = MemoryManagement::maxEvents + 1;
+    EXPECT_NONFATAL_FAILURE(memoryLeakListener.OnTestEnd(currentTestInfo), "tracked allocation events");
+    memoryLeakListener.OnTestStart(currentTestInfo);
 }
 
 #if ENABLE_ME_FOR_LEAK_TESTING
