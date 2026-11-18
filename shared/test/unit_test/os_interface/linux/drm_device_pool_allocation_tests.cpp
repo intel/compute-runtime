@@ -15,6 +15,7 @@
 #include "shared/source/os_interface/linux/allocator_helper.h"
 #include "shared/source/os_interface/linux/drm_allocation.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
+#include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/heap_allocator.h"
 #include "shared/test/common/libult/linux/drm_mock_helper.h"
@@ -666,6 +667,61 @@ TEST_F(DrmMemoryManagerDeferBackingTest, givenInvalidCacheRegionWhenAllocatingWi
     EXPECT_EQ(1u, memoryManager->releaseGpuRangeCalled);
     EXPECT_EQ(1u, munmapCalledCount);
     EXPECT_EQ(MemoryConstants::pageSize64k + MemoryConstants::pageSize2M, unmappedSize);
+}
+
+TEST_F(DrmMemoryManagerLocalMemoryTest, givenForcePinAndInvalidCacheRegionWhenAllocatingWithAlignmentThenBoIsNotPinned) {
+    setUpSingleDeviceMemoryRegion(*mock);
+    TestedDrmMemoryManager pinningMemoryManager(true, true, false, *executionEnvironment);
+    pinningMemoryManager.allRegisteredEngines[rootDeviceIndex] = EngineControlContainer{device->allEngines};
+    for (auto &engine : pinningMemoryManager.getRegisteredEngines(rootDeviceIndex)) {
+        engine.osContext->incRefInternal();
+    }
+    ASSERT_NE(nullptr, pinningMemoryManager.pinBBs[rootDeviceIndex]);
+
+    pinningMemoryManager.mmapFunction = [](void *addr, size_t len, int prot, int flags, int fd, off_t offset) throw() { return addr; };
+    pinningMemoryManager.munmapFunction = [](void *addr, size_t len) throw() { return 0; };
+
+    AllocationData allocationData;
+    allocationData.size = pinningMemoryManager.pinThreshold;
+    allocationData.flags.forcePin = true;
+    allocationData.cacheRegion = static_cast<uint32_t>(CacheRegion::none);
+
+    auto allocation = pinningMemoryManager.createAllocWithAlignment(allocationData, allocationData.size, MemoryConstants::pageSize2M, allocationData.size, 0u);
+
+    EXPECT_EQ(nullptr, allocation);
+    EXPECT_EQ(0, mock->ioctlCount.execbuffer2.load());
+}
+
+TEST_F(DrmMemoryManagerLocalMemoryTest, givenForcePinAndCacheRegionWhenAllocatingWithAlignmentThenBoIsPinnedWithItsPatIndex) {
+    if (defaultHwInfo->caps.numCacheRegions == 0) {
+        GTEST_SKIP();
+    }
+    setUpSingleDeviceMemoryRegion(*mock);
+    mock->setBindAvailable();
+    ioctlHelper->vmBindAvailable = true;
+    setUpCacheRegions();
+
+    TestedDrmMemoryManager pinningMemoryManager(true, true, false, *executionEnvironment);
+    pinningMemoryManager.allRegisteredEngines[rootDeviceIndex] = EngineControlContainer{device->allEngines};
+    for (auto &engine : pinningMemoryManager.getRegisteredEngines(rootDeviceIndex)) {
+        engine.osContext->incRefInternal();
+    }
+    ASSERT_NE(nullptr, pinningMemoryManager.pinBBs[rootDeviceIndex]);
+    pinningMemoryManager.mmapFunction = [](void *addr, size_t len, int prot, int flags, int fd, off_t offset) throw() { return addr; };
+    pinningMemoryManager.munmapFunction = [](void *addr, size_t len) throw() { return 0; };
+
+    AllocationData allocationData;
+    allocationData.size = pinningMemoryManager.pinThreshold;
+    allocationData.flags.forcePin = true;
+    allocationData.cacheRegion = static_cast<uint32_t>(CacheRegion::region1);
+
+    auto allocation = pinningMemoryManager.createAllocWithAlignment(allocationData, allocationData.size, MemoryConstants::pageSize2M, allocationData.size, 0u);
+    ASSERT_NE(nullptr, allocation);
+
+    ASSERT_TRUE(ioctlHelper->receivedVmBind.has_value());
+    EXPECT_EQ(allocation->getBO()->peekPatIndex(), ioctlHelper->receivedVmBind->patIndex);
+    EXPECT_EQ(CacheRegion::region1, allocation->getBO()->peekCacheRegion());
+    pinningMemoryManager.freeGraphicsMemory(allocation);
 }
 
 TEST_F(DrmMemoryManagerDeferBackingTest, givenCacheRegionWhenAllocatingWithAlignmentThenBoIsBoundWithItsPatIndex) {

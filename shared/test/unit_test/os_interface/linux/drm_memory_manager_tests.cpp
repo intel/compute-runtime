@@ -8632,6 +8632,25 @@ HWTEST2_TEMPLATED_F(DrmMemoryManagerTest, givenDrmAllocationWithWithAlignmentFro
     EXPECT_EQ(allocation, nullptr);
 }
 
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenForcePinAndInvalidCacheRegionWhenAllocatingWithAlignmentFromUserptrThenBoIsNotPinned) {
+    mock->ioctlExpected.total = -1;
+
+    auto pinningMemoryManager = std::make_unique<TestedDrmMemoryManager>(false, true, false, *executionEnvironment);
+    pinningMemoryManager->allRegisteredEngines[rootDeviceIndex] = EngineControlContainer{this->device->allEngines};
+    for (auto &engine : pinningMemoryManager->getRegisteredEngines(rootDeviceIndex)) {
+        engine.osContext->incRefInternal();
+    }
+    ASSERT_NE(nullptr, pinningMemoryManager->pinBBs[rootDeviceIndex]);
+
+    allocationData.size = pinningMemoryManager->pinThreshold;
+    allocationData.flags.forcePin = true;
+    allocationData.cacheRegion = 0xFFFF;
+
+    auto allocation = pinningMemoryManager->createAllocWithAlignmentFromUserptr(allocationData, allocationData.size, MemoryConstants::pageSize, 0, 0x1000);
+    EXPECT_EQ(nullptr, allocation);
+    EXPECT_EQ(0, mock->ioctlCnt.execbuffer2.load());
+}
+
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenSvmCpuAllocationWhenAllocatingWithAlignmentFailsThenGpuReservationIsReleased) {
     mock->ioctlExpected.total = -1;
     allocationData.size = MemoryConstants::pageSize;

@@ -643,7 +643,6 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignmentFromUserptr(const Alloc
 
     zeroCpuMemoryIfRequested(allocationData, res, size);
     obtainGpuAddress(allocationData, bo.get(), gpuAddress);
-    emitPinningRequest(bo.get(), allocationData);
 
     auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
     auto canonizedGpuAddress = gmmHelper->canonize(bo->peekAddress());
@@ -654,6 +653,8 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignmentFromUserptr(const Alloc
         alignedFreeWrapper(res);
         return nullptr;
     }
+
+    emitPinningRequest(bo.get(), allocationData);
 
     bo.release();
 
@@ -3818,7 +3819,6 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &
         }
 
         obtainGpuAddress(allocationData, bo.get(), gpuAddress);
-        emitPinningRequest(bo.get(), allocationData);
 
         auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
         auto canonizedGpuAddress = gmmHelper->canonize(bo->peekAddress());
@@ -3829,6 +3829,7 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &
             return nullptr;
         }
 
+        emitPinningRequest(bo.get(), allocationData);
         makeAllocationResidentIfNeeded(allocation.get());
 
         [[maybe_unused]] auto retPtr = ioctlHelper->mmapFunction(*this, cpuPointer, alignedSize, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, drm.getFileDescriptor(), static_cast<off_t>(offset));
