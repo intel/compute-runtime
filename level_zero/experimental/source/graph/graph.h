@@ -248,6 +248,10 @@ struct GraphNode : _ze_graph_node_handle_t {
         return ZE_RESULT_SUCCESS;
     }
 
+    auto getFlags() const -> ze_mutable_graph_node_exp_flags_t {
+        return this->flags;
+    }
+
     auto setGroupCounts(ze_group_count_t *groupCounts) -> void {
         this->groupCounts = groupCounts;
     }
@@ -739,12 +743,18 @@ void registerExternalCbWaitEvents(uint32_t numWaitEvents,
                                   ze_event_handle_t *phWaitEvents,
                                   ClosureInstantiateContext &instantiateContext,
                                   L0::CommandList *executionTarget,
-                                  bool externalWaitEventPresent);
+                                  bool externalWaitEventPresent,
+                                  uint64_t commandId);
 void handleExternalCbWaitEvents(uint32_t numWaitEvents,
                                 ze_event_handle_t *phWaitEvents,
                                 ClosureInstantiateContext &instantiateContext,
                                 L0::CommandList *executionTarget,
                                 bool apiRequiredExternalFlag);
+ze_result_t handleGraphNodeCommandWithExternalCbWaitEvents(ze_graph_node_handle_t graphNodeHandle,
+                                                           uint32_t numWaitEvents,
+                                                           ze_event_handle_t *phWaitEvents,
+                                                           ClosureInstantiateContext &instantiateContext,
+                                                           L0::CommandList *executionTarget);
 
 struct GraphInstatiateSettings {
     GraphInstatiateSettings() = default;
@@ -848,9 +858,11 @@ struct GraphSegmentsCrossSync {
 
 struct ExecutableGraph : _ze_executable_graph_handle_t {
     ExecutableGraph(WeaklyShared<OrderedExecutableSegmentsList> &&orderedSegments,
-                    WeaklyShared<ExternalCbEventInfoContainer> &&externalCbEvent);
+                    WeaklyShared<ExternalCbEventInfoContainer> &&externalCbEvent,
+                    WeaklyShared<ExecutableGraphNodeCommands> &&nodeCommands);
     ExecutableGraph() : ExecutableGraph(WeaklyShared(new OrderedExecutableSegmentsList),
-                                        WeaklyShared(new ExternalCbEventInfoContainer)) {}
+                                        WeaklyShared(new ExternalCbEventInfoContainer),
+                                        WeaklyShared(new ExecutableGraphNodeCommands)) {}
     ExecutableGraph(const ExecutableGraph &) = delete;
     ExecutableGraph &operator=(const ExecutableGraph &) = delete;
     ExecutableGraph(ExecutableGraph &&) = delete;
@@ -905,6 +917,10 @@ struct ExecutableGraph : _ze_executable_graph_handle_t {
         return orderedCommands;
     }
 
+    WeaklyShared<ExecutableGraphNodeCommands> getNodeCommands() {
+        return nodeCommands;
+    }
+
     Graph *getSourceGraph() const {
         return src;
     }
@@ -930,6 +946,7 @@ struct ExecutableGraph : _ze_executable_graph_handle_t {
 
     WeaklyShared<OrderedExecutableSegmentsList> orderedCommands; // shared between graph and subgraphs
     WeaklyShared<ExternalCbEventInfoContainer> externalCbEventStorage;
+    WeaklyShared<ExecutableGraphNodeCommands> nodeCommands;
 
     L0::EventPool *trailingEventsPool = nullptr;
     std::vector<ze_event_handle_t> trailingEvents;

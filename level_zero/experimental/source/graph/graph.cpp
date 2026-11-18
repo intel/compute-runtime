@@ -621,15 +621,15 @@ void registerExternalCbWaitEvents(uint32_t numWaitEvents,
                                   ze_event_handle_t *phWaitEvents,
                                   ClosureInstantiateContext &instantiateContext,
                                   L0::CommandList *executionTarget,
-                                  bool externalWaitEventPresent) {
+                                  bool externalWaitEventPresent,
+                                  uint64_t commandId) {
     if ((false == externalWaitEventPresent) || (nullptr == instantiateContext.cbEventInfoContainer)) {
         return;
     }
 
-    uint64_t commandId = 0;
-    ze_mutable_command_id_ext_desc_t flagsDesc{ZE_STRUCTURE_TYPE_MUTABLE_COMMAND_ID_EXT_DESC};
-    flagsDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_WAIT_EVENTS;
-    static_cast<L0::MCL::MutableCommandList *>(executionTarget->asMutable())->getNextCommandId(&flagsDesc, 0, nullptr, &commandId);
+    if (ExecutableGraphNodeCommand::invalidCommandId == commandId) {
+        static_cast<L0::MCL::MutableCommandList *>(executionTarget->asMutable())->getNextCommandIdForGraphNode(ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_WAIT_EVENTS, 0, nullptr, &commandId);
+    }
 
     instantiateContext.cbEventInfoContainer->addWaitCbEventsInfo(numWaitEvents, phWaitEvents, commandId, executionTarget);
 }
@@ -640,7 +640,29 @@ void handleExternalCbWaitEvents(uint32_t numWaitEvents,
                                 L0::CommandList *executionTarget,
                                 bool apiRequiredExternalFlag) {
     const bool externalWaitEventPresent = isExternalWaitEventPresent(numWaitEvents, phWaitEvents, instantiateContext, apiRequiredExternalFlag);
-    registerExternalCbWaitEvents(numWaitEvents, phWaitEvents, instantiateContext, executionTarget, externalWaitEventPresent);
+    registerExternalCbWaitEvents(numWaitEvents, phWaitEvents, instantiateContext, executionTarget, externalWaitEventPresent, ExecutableGraphNodeCommand::invalidCommandId);
+}
+
+ze_result_t handleGraphNodeCommandWithExternalCbWaitEvents(ze_graph_node_handle_t graphNodeHandle,
+                                                           uint32_t numWaitEvents,
+                                                           ze_event_handle_t *phWaitEvents,
+                                                           ClosureInstantiateContext &instantiateContext,
+                                                           L0::CommandList *executionTarget) {
+    const bool externalWaitEventPresent = isExternalWaitEventPresent(numWaitEvents, phWaitEvents, instantiateContext, false);
+    uint64_t commandId = ExecutableGraphNodeCommand::invalidCommandId;
+    if ((nullptr != graphNodeHandle) && (nullptr != instantiateContext.nodeCommands)) {
+        ze_mutable_graph_node_exp_flags_t nodeFlags = GraphNode::fromHandle(graphNodeHandle)->getFlags();
+        if ((0u != nodeFlags) && externalWaitEventPresent) {
+            nodeFlags |= ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_WAIT_EVENTS;
+        }
+        auto mutableCommandList = static_cast<L0::MCL::MutableCommandList *>(executionTarget->asMutable());
+        if (auto ret = mutableCommandList->getNextCommandIdForGraphNode(nodeFlags, 0, nullptr, &commandId); ZE_RESULT_SUCCESS != ret) {
+            return ret;
+        }
+        (*instantiateContext.nodeCommands)[graphNodeHandle] = {commandId, executionTarget};
+    }
+    registerExternalCbWaitEvents(numWaitEvents, phWaitEvents, instantiateContext, executionTarget, externalWaitEventPresent, commandId);
+    return ZE_RESULT_SUCCESS;
 }
 
 SubstitutedWaitEvents substituteEventList(std::span<const ze_event_handle_t> events, const GraphInternalEvents *internalEvents, bool externalWaitEvents) {
@@ -1306,7 +1328,9 @@ Closure<CaptureApi::zeCommandListAppendLaunchKernelWithParameters>::IndirectArgs
 
 ze_result_t Closure<CaptureApi::zeCommandListAppendLaunchKernelWithParameters>::instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, ClosureInstantiateContext &instantiateContext, std::optional<EventParams> enforcedEvents) const {
     auto eventParams = getEffectiveEventParams<CaptureApi::zeCommandListAppendLaunchKernelWithParameters>(apiArgs, indirectArgs, externalStorage, enforcedEvents, instantiateContext, {false, false});
-    handleExternalCbWaitEvents(eventParams.numWaitEvents, eventParams.phWaitEvents, instantiateContext, executionTarget, false);
+    if (auto ret = handleGraphNodeCommandWithExternalCbWaitEvents(this->indirectArgs.graphNodeHandle, eventParams.numWaitEvents, eventParams.phWaitEvents, instantiateContext, executionTarget); ZE_RESULT_SUCCESS != ret) {
+        return ret;
+    }
     auto *kernelHandle = this->indirectArgs.capturedKernel.get();
     auto result = zeCommandListAppendLaunchKernelWithParameters(resolveExecutionTargetForInstantiate(executionTarget, apiArgs.hCommandList), kernelHandle, &indirectArgs.groupCounts, indirectArgs.clonedPNext, eventParams.hSignalEvent, eventParams.numWaitEvents, eventParams.phWaitEvents);
     handleExternalCbSignalEvent(L0::Event::fromHandle(eventParams.hSignalEvent), instantiateContext);
@@ -1349,7 +1373,9 @@ Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments>::IndirectArgs:
 
 ze_result_t Closure<CaptureApi::zeCommandListAppendLaunchKernelWithArguments>::instantiateTo(L0::CommandList *executionTarget, ClosureExternalStorage &externalStorage, ClosureInstantiateContext &instantiateContext, std::optional<EventParams> enforcedEvents) const {
     auto eventParams = getEffectiveEventParams<CaptureApi::zeCommandListAppendLaunchKernelWithArguments>(apiArgs, indirectArgs, externalStorage, enforcedEvents, instantiateContext, {false, false});
-    handleExternalCbWaitEvents(eventParams.numWaitEvents, eventParams.phWaitEvents, instantiateContext, executionTarget, false);
+    if (auto ret = handleGraphNodeCommandWithExternalCbWaitEvents(this->indirectArgs.graphNodeHandle, eventParams.numWaitEvents, eventParams.phWaitEvents, instantiateContext, executionTarget); ZE_RESULT_SUCCESS != ret) {
+        return ret;
+    }
     auto *kernelHandle = this->indirectArgs.capturedKernel.get();
     auto kernel = static_cast<KernelImp *>(Kernel::fromHandle(kernelHandle));
     auto &explicitArgs = kernel->getKernelDescriptor().payloadMappings.explicitArgs;
@@ -1726,8 +1752,10 @@ ze_result_t Closure<CaptureApi::zeCommandListGetNextCommandIdWithKernelsExt>::in
 }
 
 ExecutableGraph::ExecutableGraph(WeaklyShared<OrderedExecutableSegmentsList> &&orderedCommands,
-                                 WeaklyShared<ExternalCbEventInfoContainer> &&externalCbEvent) : orderedCommands(std::move(orderedCommands)),
-                                                                                                 externalCbEventStorage(std::move(externalCbEvent)) {
+                                 WeaklyShared<ExternalCbEventInfoContainer> &&externalCbEvent,
+                                 WeaklyShared<ExecutableGraphNodeCommands> &&nodeCommands) : orderedCommands(std::move(orderedCommands)),
+                                                                                             externalCbEventStorage(std::move(externalCbEvent)),
+                                                                                             nodeCommands(std::move(nodeCommands)) {
     int32_t overrideDisablePatchingPreamble = NEO::debugManager.flags.ForceDisableGraphPatchPreamble.get();
     if (overrideDisablePatchingPreamble != -1) {
         this->usePatchingPreamble = (overrideDisablePatchingPreamble == 0);
@@ -1765,7 +1793,8 @@ L0::CommandList *ExecutableGraph::allocateAndAddCommandListSubmissionNode(uint32
 
 void prepareExecSubGraphs(const Graph &currLevelSrc, ExecutableGraph &parent, std::unordered_map<const Graph *, ExecSubGraphBuilder> &subgraphs) {
     std::unique_ptr<ExecutableGraph> currLevelDst = std::make_unique<ExecutableGraph>(parent.getOrderedCommands().share(),
-                                                                                      parent.getExternalCbEventInfoContainer().share());
+                                                                                      parent.getExternalCbEventInfoContainer().share(),
+                                                                                      parent.getNodeCommands().share());
     subgraphs[&currLevelSrc] = {currLevelDst.get()};
     for (auto &child : currLevelSrc.getSubgraphs()) {
         prepareExecSubGraphs(*child, *currLevelDst, subgraphs);
@@ -1919,7 +1948,8 @@ ze_result_t ExecutableGraph::instantiateFrom(const OrderedCommandsSegment &segme
 
     ClosureInstantiateContext instantiateContext{this->getExternalCbEventInfoContainer().get(),
                                                  this->executionTarget,
-                                                 &builder.getRootSrc().getInternalEvents()};
+                                                 &builder.getRootSrc().getInternalEvents(),
+                                                 this->getNodeCommands().get()};
 
     if (segment.empty() == false) {
         const auto &allCommands = src->getCapturedCommands();

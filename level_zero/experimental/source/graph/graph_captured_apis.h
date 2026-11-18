@@ -29,6 +29,7 @@
 #include <string>
 #include <tuple>
 #include <type_traits>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -432,10 +433,20 @@ struct StoredCbEventState {
     bool cbEventWithProfiling = false;
 };
 
+struct ExecutableGraphNodeCommand {
+    static constexpr uint64_t invalidCommandId = std::numeric_limits<uint64_t>::max();
+
+    uint64_t commandId = invalidCommandId;
+    L0::CommandList *commandList = nullptr;
+};
+
+using ExecutableGraphNodeCommands = std::unordered_map<ze_graph_node_handle_t, ExecutableGraphNodeCommand>;
+
 struct ClosureInstantiateContext {
     ExternalCbEventInfoContainer *cbEventInfoContainer = nullptr;
     L0::CommandList *executorCommandList = nullptr;
     const GraphInternalEvents *internalEvents = nullptr;
+    ExecutableGraphNodeCommands *nodeCommands = nullptr;
     StoredCbEventState storedCbEventState;
 };
 
