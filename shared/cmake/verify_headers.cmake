@@ -13,7 +13,6 @@ list(APPEND shared_exclude_patterns
 if(UNIX)
   list(APPEND shared_exclude_patterns
        "/mock_ostime_win.h"
-       "/xe_config_fixture.h"
   )
   if(NOT NEO_ENABLE_I915_PRELIM_DETECTION)
     list(APPEND shared_exclude_patterns
