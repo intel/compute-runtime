@@ -3385,6 +3385,11 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
         status = AllocationStatus::Error;
         return nullptr;
     }
+    if (!allocation->setCacheRegion(&getDrm(allocationData.rootDeviceIndex), static_cast<CacheRegion>(allocationData.cacheRegion))) {
+        cleanupBeforeReturn(allocationData, gfxPartition, drmAllocation, gpuAddress, sizeAllocated);
+        status = AllocationStatus::Error;
+        return nullptr;
+    }
     if (allocationData.type == AllocationType::writeCombined) {
         auto cpuAddress = lockResource(allocation.get());
         if (!cpuAddress) {
@@ -3417,12 +3422,6 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
         allocation->setGpuBaseAddress(gmmHelper->canonize(getInternalHeapBaseAddress(allocationData.rootDeviceIndex, true)));
     } else if (heapAssigners[allocationData.rootDeviceIndex]->useExternal32BitHeap(allocationData.type)) {
         allocation->setGpuBaseAddress(gmmHelper->canonize(getExternalHeapBaseAddress(allocationData.rootDeviceIndex, true)));
-    }
-
-    if (!allocation->setCacheRegion(&getDrm(allocationData.rootDeviceIndex), static_cast<CacheRegion>(allocationData.cacheRegion))) {
-        cleanupBeforeReturn(allocationData, gfxPartition, drmAllocation, gpuAddress, sizeAllocated);
-        status = AllocationStatus::Error;
-        return nullptr;
     }
 
     status = AllocationStatus::Success;
@@ -3905,17 +3904,8 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
     const bool deferBacking = ioctlHelper->isDeferBackingEnabledForAllocation(size, allocationData.type);
 
     auto releaseResourcesOnFailure = [&]() {
-        bool unbindFailed = false;
-        if (deferBacking) {
-            for (auto bo : bos) {
-                unbindFailed |= (bo->unbind(this->getDefaultOsContext(allocationData.rootDeviceIndex), 0) != 0);
-            }
-        }
-        // a BO left mapped in the VM keeps its VA range reserved, so the range is never reused
-        if (!unbindFailed) {
-            ioctlHelper->munmapFunction(*this, cpuBasePointer, totalSizeToAlloc);
-            ioctlHelper->releaseGpuRange(*this, reinterpret_cast<void *>(preferredAddress), totalSizeToAlloc, allocationData.rootDeviceIndex, allocationData.type);
-        }
+        ioctlHelper->munmapFunction(*this, cpuBasePointer, totalSizeToAlloc);
+        ioctlHelper->releaseGpuRange(*this, reinterpret_cast<void *>(preferredAddress), totalSizeToAlloc, allocationData.rootDeviceIndex, allocationData.type);
         for (auto bo : bos) {
             this->unreference(bo, true);
         }
@@ -3977,11 +3967,6 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
         bo->setAddress(castToUint64(currentAddress));
 
         bo->setDeferBackingUsed(deferBacking);
-        if (deferBacking) {
-            bo->requireImmediateBinding(true);
-            [[maybe_unused]] auto ret = bo->bind(getDefaultOsContext(allocationData.rootDeviceIndex), 0, false);
-            DEBUG_BREAK_IF(ret != 0);
-        }
 
         ioctlHelper->mmapFunction(*this, currentAddress, currentSize, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, drm.getFileDescriptor(), static_cast<off_t>(offset));
 
@@ -4007,14 +3992,19 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
     allocation->storageInfo.isChunked = useChunking;
     allocation->storageInfo.numOfChunks = numOfChunks;
 
-    if (deferBacking) {
-        auto osContext = getDefaultOsContext(allocationData.rootDeviceIndex);
-        allocation->updateResidencyTaskCount(GraphicsAllocation::objectAlwaysResident, osContext->getContextId());
-    }
-
     if (!allocation->setCacheRegion(&drm, static_cast<CacheRegion>(allocationData.cacheRegion))) {
         releaseResourcesOnFailure();
         return nullptr;
+    }
+
+    if (deferBacking) {
+        auto osContext = this->getDefaultOsContext(allocationData.rootDeviceIndex);
+        for (auto bo : bos) {
+            bo->requireImmediateBinding(true);
+            [[maybe_unused]] auto ret = bo->bind(osContext, 0, false);
+            DEBUG_BREAK_IF(ret != 0);
+        }
+        allocation->updateResidencyTaskCount(GraphicsAllocation::objectAlwaysResident, osContext->getContextId());
     }
 
     PreferredLocation preferredLocation = PreferredLocation::defaultLocation;
@@ -4232,9 +4222,14 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
                      ptrOffset(bo->peekAddress(), bo->peekSize()),
                      bo->peekSize());
 
-        pushSharedBufferObject(bo);
-
         auto drmAllocation = std::make_unique<DrmAllocation>(properties.rootDeviceIndex, 1u /*num gmms*/, properties.allocationType, bo, nullptr, bo->peekAddress(), bo->peekSize(), memoryPool);
+        if (!drmAllocation->setCacheRegion(&drm, static_cast<CacheRegion>(properties.cacheRegion))) {
+            this->munmapFunction(cpuPointer, size);
+            delete bo;
+            return nullptr;
+        }
+
+        pushSharedBufferObject(bo);
 
         makeAllocationResidentIfNeeded(drmAllocation.get());
 
@@ -4242,11 +4237,6 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
         drmAllocation->setMmapPtr(cpuPointer);
         drmAllocation->setMmapSize(size);
         drmAllocation->setReservedAddressRange(reinterpret_cast<void *>(cpuPointer), size);
-        if (!drmAllocation->setCacheRegion(&drm, static_cast<CacheRegion>(properties.cacheRegion))) {
-            this->munmapFunction(cpuPointer, size);
-            delete bo;
-            return nullptr;
-        }
 
         if (!reuseSharedAllocation) {
             registerSharedBoHandleAllocation(drmAllocation.get());

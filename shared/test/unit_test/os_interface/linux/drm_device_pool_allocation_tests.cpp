@@ -608,13 +608,7 @@ static const AllocationType allocation57Bit[] = {
     AllocationType::sharedBuffer,
 };
 
-TEST_F(DrmMemoryManagerLocalMemoryTest, givenInvalidCacheRegionWhenAllocatingWithAlignmentThenBoIsNotBoundAndReservationIsReleased) {
-    setUpSingleDeviceMemoryRegion(*mock);
-    mock->setBindAvailable();
-    ioctlHelper->vmBindAvailable = true;
-    ioctlHelper->deferBackingEnabledForAllocation = true;
-    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, rootDeviceIndex, false);
-
+TEST_F(DrmMemoryManagerDeferBackingTest, givenInvalidCacheRegionWhenAllocatingWithAlignmentThenBoIsNotBoundAndReservationIsReleased) {
     static size_t unmappedSize;
     VariableBackup<uint32_t> munmapCalledCountBackup(&munmapCalledCount, 0u);
     VariableBackup<size_t> unmappedSizeBackup(&unmappedSize, 0u);
@@ -638,25 +632,11 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenInvalidCacheRegionWhenAllocatingWit
     EXPECT_EQ(MemoryConstants::pageSize64k + MemoryConstants::pageSize2M, unmappedSize);
 }
 
-TEST_F(DrmMemoryManagerLocalMemoryTest, givenCacheRegionWhenAllocatingWithAlignmentThenBoIsBoundWithItsPatIndex) {
-    debugManager.flags.ClosEnabled.set(1);
+TEST_F(DrmMemoryManagerDeferBackingTest, givenCacheRegionWhenAllocatingWithAlignmentThenBoIsBoundWithItsPatIndex) {
     if (defaultHwInfo->caps.numCacheRegions == 0) {
         GTEST_SKIP();
     }
-    setUpSingleDeviceMemoryRegion(*mock);
-    mock->setBindAvailable();
-    mock->vmBindPatIndexProgrammingSupported = true;
-    ioctlHelper->vmBindAvailable = true;
-    ioctlHelper->deferBackingEnabledForAllocation = true;
-    ioctlHelper->closSupported = true;
-    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, rootDeviceIndex, false);
-
-    CacheReservationParameters l2CacheParameters{};
-    CacheReservationParameters l3CacheParameters{};
-    l3CacheParameters.maxSize = 64 * MemoryConstants::kiloByte;
-    l3CacheParameters.maxNumRegions = 2;
-    l3CacheParameters.maxNumWays = 32;
-    mock->cacheInfo.reset(new CacheInfo(*ioctlHelper, l2CacheParameters, l3CacheParameters));
+    setUpCacheRegions();
 
     VariableBackup<decltype(memoryManager->mmapFunction)> mmapBackup(&memoryManager->mmapFunction, [](void *addr, size_t len, int prot, int flags, int fd, off_t offset) throw() { return addr; });
     VariableBackup<decltype(memoryManager->munmapFunction)> munmapBackup(&memoryManager->munmapFunction, [](void *addr, size_t len) throw() { return 0; });
@@ -666,6 +646,45 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenCacheRegionWhenAllocatingWithAlignm
     allocationData.cacheRegion = static_cast<uint32_t>(CacheRegion::region1);
 
     auto allocation = memoryManager->createAllocWithAlignment(allocationData, MemoryConstants::pageSize64k, MemoryConstants::pageSize2M, MemoryConstants::pageSize64k, 0u);
+    ASSERT_NE(nullptr, allocation);
+
+    ASSERT_TRUE(ioctlHelper->receivedVmBind.has_value());
+    EXPECT_EQ(allocation->getBO()->peekPatIndex(), ioctlHelper->receivedVmBind->patIndex);
+    EXPECT_EQ(CacheRegion::region1, allocation->getBO()->peekCacheRegion());
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerDeferBackingTest, givenCpuAccessRequiredAndInvalidCacheRegionWhenAllocatingInDevicePoolThenBoIsNotBound) {
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
+    AllocationData allocData{};
+    allocData.size = MemoryConstants::pageSize64k;
+    allocData.flags.requiresCpuAccess = true;
+    allocData.type = AllocationType::buffer;
+    allocData.rootDeviceIndex = rootDeviceIndex;
+    allocData.cacheRegion = static_cast<uint32_t>(CacheRegion::none);
+
+    auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
+
+    EXPECT_EQ(nullptr, allocation);
+    EXPECT_EQ(MemoryManager::AllocationStatus::Error, status);
+    EXPECT_EQ(0u, ioctlHelper->vmBindCalled);
+}
+
+TEST_F(DrmMemoryManagerDeferBackingTest, givenCpuAccessRequiredAndCacheRegionWhenAllocatingInDevicePoolThenBoIsBoundWithItsPatIndex) {
+    if (defaultHwInfo->caps.numCacheRegions == 0) {
+        GTEST_SKIP();
+    }
+    setUpCacheRegions();
+
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
+    AllocationData allocData{};
+    allocData.size = MemoryConstants::pageSize64k;
+    allocData.flags.requiresCpuAccess = true;
+    allocData.type = AllocationType::buffer;
+    allocData.rootDeviceIndex = rootDeviceIndex;
+    allocData.cacheRegion = static_cast<uint32_t>(CacheRegion::region1);
+
+    auto allocation = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status));
     ASSERT_NE(nullptr, allocation);
 
     ASSERT_TRUE(ioctlHelper->receivedVmBind.has_value());

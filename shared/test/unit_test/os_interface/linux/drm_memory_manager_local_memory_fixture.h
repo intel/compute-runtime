@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/os_interface/linux/cache_info.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -96,6 +97,18 @@ class DrmMemoryManagerLocalMemoryTest : public ::testing::Test {
         static_cast<MockIoctlHelperWithCapture *>(drmIoctlHelper)->createGemExtCalls.clear();
     }
 
+    void setUpCacheRegions() {
+        debugManager.flags.ClosEnabled.set(1);
+        mock->vmBindPatIndexProgrammingSupported = true;
+        ioctlHelper->closSupported = true;
+        CacheReservationParameters l2CacheParameters{};
+        CacheReservationParameters l3CacheParameters{};
+        l3CacheParameters.maxSize = 64 * MemoryConstants::kiloByte;
+        l3CacheParameters.maxNumRegions = 2;
+        l3CacheParameters.maxNumWays = 32;
+        mock->cacheInfo.reset(new CacheInfo(*ioctlHelper, l2CacheParameters, l3CacheParameters));
+    }
+
     DrmMock *createDrmForRootDevice(uint32_t index, bool withMemoryInfo) {
         auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[index];
         rootDeviceEnvironment.initGmm();
@@ -133,6 +146,18 @@ class DrmMemoryManagerLocalMemoryMultiTileTest : public DrmMemoryManagerLocalMem
   public:
     void setUpMemoryInfo() override {
         mock->memoryInfo.reset(new MockExtendedMemoryInfo(*mock));
+    }
+};
+
+class DrmMemoryManagerDeferBackingTest : public DrmMemoryManagerLocalMemoryTest {
+  public:
+    void SetUp() override {
+        DrmMemoryManagerLocalMemoryTest::SetUp();
+        setUpSingleDeviceMemoryRegion(*mock);
+        mock->setBindAvailable();
+        ioctlHelper->vmBindAvailable = true;
+        ioctlHelper->deferBackingEnabledForAllocation = true;
+        executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, rootDeviceIndex, false);
     }
 };
 

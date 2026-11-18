@@ -2009,7 +2009,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenDeviceSharedAllocationWhichRequire
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
 
-HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenDeviceSharedAllocationWhenSetCacheRegionFailsThenNullptrIsReturned) {
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenDeviceSharedAllocationWhenSetCacheRegionFailsThenNullptrIsReturnedAndBoIsNotShared) {
     mock->ioctlExpected.primeFdToHandle = 1;
     mock->ioctlExpected.gemWait = 0;
     mock->ioctlExpected.gemClose = 0;
@@ -2030,6 +2030,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenDeviceSharedAllocationWhenSetCache
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, true, false, nullptr);
 
     EXPECT_EQ(nullptr, graphicsAllocation);
+    EXPECT_TRUE(memoryManager->sharingBufferObjects.empty());
 }
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenAllocationWhenFreeingThenSucceeds) {
