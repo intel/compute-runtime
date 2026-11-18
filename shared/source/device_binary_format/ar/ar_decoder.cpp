@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,8 +25,14 @@ Ar decodeAr(const ArrayRef<const uint8_t> binary, std::string &outErrReason, std
     while (decodePos + sizeof(ArFileEntryHeader) <= binary.end()) {
         auto fileEntryHeader = reinterpret_cast<const ArFileEntryHeader *>(decodePos);
         auto fileEntryDataPos = decodePos + sizeof(ArFileEntryHeader);
-        uint64_t fileSize = readDecimal<sizeof(fileEntryHeader->fileSizeInBytes)>(fileEntryHeader->fileSizeInBytes);
-        if (fileSize + (fileEntryDataPos - binary.begin()) > binary.size()) {
+        auto parsedFileSize = readDecimal<sizeof(fileEntryHeader->fileSizeInBytes)>(fileEntryHeader->fileSizeInBytes);
+        if (false == parsedFileSize.has_value()) {
+            outErrReason = "Corrupt AR archive - invalid file size of file entry with identifier '" + std::string(fileEntryHeader->identifier, sizeof(fileEntryHeader->identifier)) + "'";
+            return {};
+        }
+        const uint64_t fileSize = *parsedFileSize;
+        const size_t fileEntryDataOffset = static_cast<size_t>(fileEntryDataPos - binary.begin());
+        if (fileSize > binary.size() - fileEntryDataOffset) {
             outErrReason = "Corrupt AR archive - out of bounds data of file entry with identifier '" + std::string(fileEntryHeader->identifier, sizeof(fileEntryHeader->identifier)) + "'";
             return {};
         }
@@ -51,7 +57,10 @@ Ar decodeAr(const ArrayRef<const uint8_t> binary, std::string &outErrReason, std
         } else {
             if (SpecialFileNames::longFileNamePrefix == fileEntry.fileName[0]) {
                 auto longFileNamePos = readDecimal<sizeof(fileEntryHeader->identifier) - 1>(fileEntryHeader->identifier + 1);
-                fileEntry.fileName = readLongFileName(ConstStringRef(reinterpret_cast<const char *>(ret.longFileNamesEntry.fileData.begin()), ret.longFileNamesEntry.fileData.size()), static_cast<size_t>(longFileNamePos));
+                fileEntry.fileName = {};
+                if (longFileNamePos.has_value()) {
+                    fileEntry.fileName = readLongFileName(ConstStringRef(reinterpret_cast<const char *>(ret.longFileNamesEntry.fileData.begin()), ret.longFileNamesEntry.fileData.size()), static_cast<size_t>(*longFileNamePos));
+                }
                 if (fileEntry.fileName.empty()) {
                     outErrReason = "Corrupt AR archive - long file name entry has broken identifier : '" + std::string(fileEntryHeader->identifier, sizeof(fileEntryHeader->identifier)) + "'";
                     return {};

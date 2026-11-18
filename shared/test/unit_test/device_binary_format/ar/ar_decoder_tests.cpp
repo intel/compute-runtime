@@ -1,12 +1,15 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/device_binary_format/ar/ar_decoder.h"
+#include "shared/source/helpers/string.h"
 #include "shared/test/common/test_macros/test.h"
+
+#include <limits>
 
 using namespace NEO::Ar;
 
@@ -26,13 +29,58 @@ TEST(ArDecoderIsAr, WhenValidArThenReturnsTrue) {
 TEST(ArDecoderReadDecimal, WhenNullOrSpaceIsEncounteredThenParsingStops) {
     const char spaceDelimited[] = "213 123";
     const char nullTerminateDelimited[] = {'4', '5', '6', '\0', '7', '8', '9'};
-    EXPECT_EQ(213U, readDecimal<sizeof(spaceDelimited)>(spaceDelimited));
-    EXPECT_EQ(456U, readDecimal<sizeof(nullTerminateDelimited)>(nullTerminateDelimited));
+    auto spaceDelimitedValue = readDecimal<sizeof(spaceDelimited)>(spaceDelimited);
+    auto nullTerminateDelimitedValue = readDecimal<sizeof(nullTerminateDelimited)>(nullTerminateDelimited);
+    ASSERT_TRUE(spaceDelimitedValue.has_value());
+    ASSERT_TRUE(nullTerminateDelimitedValue.has_value());
+    EXPECT_EQ(213U, *spaceDelimitedValue);
+    EXPECT_EQ(456U, *nullTerminateDelimitedValue);
 }
 
 TEST(ArDecoderReadDecimal, WhenNullOrSpaceIsNotEncounteredThenParsesTillTheEnd) {
     const char noteDelimited[] = "213123";
-    EXPECT_EQ(2131U, readDecimal<4>(noteDelimited));
+    auto value = readDecimal<4>(noteDelimited);
+    ASSERT_TRUE(value.has_value());
+    EXPECT_EQ(2131U, *value);
+}
+
+TEST(ArDecoderReadDecimal, WhenNonDigitCharacterIsEncounteredThenParsingFails) {
+    EXPECT_FALSE(readDecimal<1>("/").has_value());
+    EXPECT_FALSE(readDecimal<2>("/8").has_value());
+    EXPECT_FALSE(readDecimal<2>("8a").has_value());
+    EXPECT_FALSE(readDecimal<3>("1-2").has_value());
+    EXPECT_FALSE(readDecimal<2>("1\n").has_value());
+    EXPECT_FALSE(readDecimal<2>("-1").has_value());
+    EXPECT_FALSE(readDecimal<2>("+8").has_value());
+    EXPECT_FALSE(readDecimal<2>("\t8").has_value());
+    const char highBitCharacter[] = {'1', static_cast<char>(0x80)};
+    EXPECT_FALSE(readDecimal<sizeof(highBitCharacter)>(highBitCharacter).has_value());
+}
+
+TEST(ArDecoderReadDecimal, WhenFieldIsFilledWithMaxDigitsThenValueDoesNotOverflow) {
+    const char maxFileSize[] = {'9', '9', '9', '9', '9', '9', '9', '9', '9', '9'};
+    auto value = readDecimal<sizeof(maxFileSize)>(maxFileSize);
+    ASSERT_TRUE(value.has_value());
+    EXPECT_EQ(9999999999U, *value);
+}
+
+TEST(ArDecoderReadDecimal, WhenValueIsUint64MaxThenParsingSucceeds) {
+    const char maxValue[] = "18446744073709551615";
+    auto value = readDecimal<sizeof(maxValue) - 1>(maxValue);
+    ASSERT_TRUE(value.has_value());
+    EXPECT_EQ(std::numeric_limits<uint64_t>::max(), *value);
+}
+
+TEST(ArDecoderReadDecimal, WhenValueDoesNotFitInUint64ThenParsingFails) {
+    const char tooLarge[] = "18446744073709551616";
+    EXPECT_FALSE(readDecimal<sizeof(tooLarge) - 1>(tooLarge).has_value());
+}
+
+TEST(ArDecoderReadDecimal, WhenFieldIsOnlyPaddingThenReturnsZero) {
+    const char padding[] = "    ";
+    auto value = readDecimal<sizeof(padding) - 1>(padding);
+    ASSERT_TRUE(value.has_value());
+    EXPECT_EQ(0U, *value);
 }
 
 TEST(ArDecoderIsStringPadding, GivenCharacterThenReturnsTrueOnlyIfArStringPaddingCharacter) {
@@ -192,6 +240,48 @@ TEST(ArDecoderDecodeAr, GivenOutOfBoundsFileEntryDataThenFailDecoding) {
     EXPECT_EQ(nullptr, ar.longFileNamesEntry.fullHeader);
     EXPECT_TRUE(decodeWarnings.empty());
     EXPECT_FALSE(decodeErrors.empty());
+    EXPECT_STREQ("Corrupt AR archive - out of bounds data of file entry with identifier 'a/              '", decodeErrors.c_str());
+}
+
+TEST(ArDecoderDecodeAr, GivenFileSizeWithNonDigitCharacterThenFailDecoding) {
+    const uint8_t data[8] = "1234567";
+    for (const auto &fileSize : {"/", "/8", "8/", "8a", "-1"}) {
+        std::vector<uint8_t> arStorage;
+        arStorage.insert(arStorage.end(), reinterpret_cast<const uint8_t *>(arMagic.begin()), reinterpret_cast<const uint8_t *>(arMagic.end()));
+        ArFileEntryHeader fileEntry0;
+        fileEntry0.identifier[0] = 'a';
+        fileEntry0.identifier[1] = '/';
+        memcpy_s(fileEntry0.fileSizeInBytes, sizeof(fileEntry0.fileSizeInBytes), fileSize, strlen(fileSize));
+        arStorage.insert(arStorage.end(), reinterpret_cast<const uint8_t *>(&fileEntry0), reinterpret_cast<const uint8_t *>(&fileEntry0 + 1));
+        arStorage.insert(arStorage.end(), data, data + sizeof(data));
+
+        std::string decodeErrors;
+        std::string decodeWarnings;
+        auto ar = decodeAr(arStorage, decodeErrors, decodeWarnings);
+        EXPECT_EQ(nullptr, ar.magic) << fileSize;
+        EXPECT_EQ(0U, ar.files.size()) << fileSize;
+        EXPECT_TRUE(decodeWarnings.empty()) << fileSize;
+        EXPECT_STREQ("Corrupt AR archive - invalid file size of file entry with identifier 'a/              '", decodeErrors.c_str()) << fileSize;
+    }
+}
+
+TEST(ArDecoderDecodeAr, GivenMaxFileSizeThenFailDecodingWithOutOfBoundsError) {
+    const uint8_t data[8] = "1234567";
+    std::vector<uint8_t> arStorage;
+    arStorage.insert(arStorage.end(), reinterpret_cast<const uint8_t *>(arMagic.begin()), reinterpret_cast<const uint8_t *>(arMagic.end()));
+    ArFileEntryHeader fileEntry0;
+    fileEntry0.identifier[0] = 'a';
+    fileEntry0.identifier[1] = '/';
+    memset(fileEntry0.fileSizeInBytes, '9', sizeof(fileEntry0.fileSizeInBytes));
+    arStorage.insert(arStorage.end(), reinterpret_cast<const uint8_t *>(&fileEntry0), reinterpret_cast<const uint8_t *>(&fileEntry0 + 1));
+    arStorage.insert(arStorage.end(), data, data + sizeof(data));
+
+    std::string decodeErrors;
+    std::string decodeWarnings;
+    auto ar = decodeAr(arStorage, decodeErrors, decodeWarnings);
+    EXPECT_EQ(nullptr, ar.magic);
+    EXPECT_EQ(0U, ar.files.size());
+    EXPECT_TRUE(decodeWarnings.empty());
     EXPECT_STREQ("Corrupt AR archive - out of bounds data of file entry with identifier 'a/              '", decodeErrors.c_str());
 }
 
@@ -424,4 +514,38 @@ TEST(ArDecoderDecodeAr, GivenFilesWithLongFilenamesWhenLongNameIsOutOfBoundsThen
     EXPECT_TRUE(decodeWarnings.empty());
     EXPECT_FALSE(decodeErrors.empty());
     EXPECT_STREQ("Corrupt AR archive - long file name entry has broken identifier : '/100            '", decodeErrors.c_str());
+}
+
+TEST(ArDecoderDecodeAr, GivenFilesWithLongFilenamesWhenLongNameOffsetHasNonDigitCharacterThenDecodingFails) {
+    const uint8_t longNames[] = "my_identifier_is_longer_than_16_charters/";
+    size_t longNamesLen = sizeof(longNames) - 1U;
+    const uint8_t data0[8] = "1234567";
+    std::vector<uint8_t> arStorage;
+    arStorage.insert(arStorage.end(), reinterpret_cast<const uint8_t *>(arMagic.begin()), reinterpret_cast<const uint8_t *>(arMagic.end()));
+
+    ArFileEntryHeader fileEntrySpecial;
+    fileEntrySpecial.identifier[0] = '/';
+    fileEntrySpecial.identifier[1] = '/';
+    fileEntrySpecial.fileSizeInBytes[0] = '4';
+    fileEntrySpecial.fileSizeInBytes[1] = '1';
+    arStorage.insert(arStorage.end(), reinterpret_cast<const uint8_t *>(&fileEntrySpecial), reinterpret_cast<const uint8_t *>(&fileEntrySpecial + 1));
+    arStorage.insert(arStorage.end(), longNames, longNames + longNamesLen);
+    arStorage.push_back('\0');
+
+    ArFileEntryHeader fileEntry0;
+    fileEntry0.identifier[0] = '/';
+    fileEntry0.identifier[1] = '0';
+    fileEntry0.identifier[2] = ':';
+    fileEntry0.fileSizeInBytes[0] = '8';
+    arStorage.insert(arStorage.end(), reinterpret_cast<const uint8_t *>(&fileEntry0), reinterpret_cast<const uint8_t *>(&fileEntry0 + 1));
+    arStorage.insert(arStorage.end(), data0, data0 + sizeof(data0));
+
+    std::string decodeErrors;
+    std::string decodeWarnings;
+    auto ar = decodeAr(arStorage, decodeErrors, decodeWarnings);
+    EXPECT_EQ(nullptr, ar.magic);
+    EXPECT_EQ(0U, ar.files.size());
+    EXPECT_EQ(nullptr, ar.longFileNamesEntry.fullHeader);
+    EXPECT_TRUE(decodeWarnings.empty());
+    EXPECT_STREQ("Corrupt AR archive - long file name entry has broken identifier : '/0:             '", decodeErrors.c_str());
 }

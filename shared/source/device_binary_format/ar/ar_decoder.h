@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Intel Corporation
+ * Copyright (C) 2020-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,10 @@
 #include "shared/source/device_binary_format/ar/ar.h"
 #include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/stackvec.h"
+
+#include <algorithm>
+#include <charconv>
+#include <optional>
 
 namespace NEO {
 namespace Ar {
@@ -33,13 +37,17 @@ inline bool isAr(const ArrayRef<const uint8_t> binary) {
 }
 
 template <uint32_t maxLength>
-inline uint64_t readDecimal(const char *decimalAsString) {
+inline std::optional<uint64_t> readDecimal(const char *decimalAsString) {
+    const char *end = std::find_if(decimalAsString, decimalAsString + maxLength, [](char character) {
+        return ('\0' == character) || (' ' == character);
+    });
     uint64_t ret = 0U;
-    for (uint32_t i = 0; i < maxLength; ++i) {
-        if (('\0' == decimalAsString[i]) || (' ' == decimalAsString[i])) {
-            break;
-        }
-        ret = ret * 10 + (decimalAsString[i] - '0');
+    if (decimalAsString == end) {
+        return ret;
+    }
+    auto result = std::from_chars(decimalAsString, end, ret);
+    if ((std::errc{} != result.ec) || (end != result.ptr)) {
+        return std::nullopt;
     }
     return ret;
 }
