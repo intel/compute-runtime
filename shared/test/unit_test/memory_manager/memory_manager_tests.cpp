@@ -1754,6 +1754,28 @@ TEST(OsAgnosticMemoryManager, givenHostPtrAllocationWithDefaultGmmWhenAllocateGr
     memoryManager.freeGraphicsMemory(imageAllocation);
 }
 
+TEST(OsAgnosticMemoryManager, givenCompressedBuffersSupportedWhenAllocatingLinearImageThenImageGmmReplacesAndFreesBufferGmm) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.RenderCompressedBuffersEnabled.set(1);
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    MockMemoryManager memoryManager(executionEnvironment);
+    ImageDescriptor imgDesc = {};
+    imgDesc.imageType = ImageType::image1D;
+    imgDesc.imageWidth = MemoryConstants::pageSize;
+    auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
+    imgInfo.linearStorage = true;
+
+    AllocationData allocationData;
+    allocationData.imgInfo = &imgInfo;
+    allocationData.flags.preferCompressed = true;
+
+    auto imageAllocation = makeUniqueGraphicsAllocation(&memoryManager, memoryManager.allocateGraphicsMemoryForImage(allocationData));
+    ASSERT_NE(nullptr, imageAllocation);
+    ASSERT_NE(nullptr, imageAllocation->getDefaultGmm());
+    const auto *gmmResourceParams = reinterpret_cast<const GMM_RESCREATE_PARAMS *>(imageAllocation->getDefaultGmm()->resourceParamsData.data());
+    EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_IMAGE, gmmResourceParams->Usage);
+}
+
 TEST(OsAgnosticMemoryManager, givenDestroyedTagAllocationWhenWaitForCompletiionThenWaitForTaskCountIsNotCalled) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     auto memoryManager = new OsAgnosticMemoryManager(executionEnvironment);

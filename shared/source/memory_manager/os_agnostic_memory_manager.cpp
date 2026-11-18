@@ -139,7 +139,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment
                                              CacheSettingsHelper::getGmmUsageType(memoryAllocation->getAllocationType(), !!allocationData.flags.uncacheable, productHelper, *pHwInfo),
                                              allocationData.storageInfo,
                                              gmmRequirements);
-            memoryAllocation->setDefaultGmm(gmm.release());
+            memoryAllocation->setDefaultGmm(std::move(gmm));
         }
     }
     counter++;
@@ -219,7 +219,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemory64kb(const Al
                                              allocationDataAlign.alignment,
                                              CacheSettingsHelper::getGmmUsageType(memoryAllocation->getAllocationType(), !!allocationData.flags.uncacheable, productHelper, *hwInfo),
                                              allocationData.storageInfo, gmmRequirements);
-            memoryAllocation->setDefaultGmm(gmm.release());
+            memoryAllocation->setDefaultGmm(std::move(gmm));
         }
     }
     return memoryAllocation;
@@ -296,8 +296,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::createGraphicsAllocationFromSharedH
     graphicsAllocation->set32BitAllocation(requireSpecificBitness);
 
     if (properties.imgInfo) {
-        Gmm *gmm = new Gmm(executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getGmmHelper(), *properties.imgInfo, createStorageInfoFromProperties(properties), false);
-        graphicsAllocation->setDefaultGmm(gmm);
+        graphicsAllocation->setDefaultGmm(std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getGmmHelper(), *properties.imgInfo, createStorageInfoFromProperties(properties), false));
     }
 
     return graphicsAllocation;
@@ -337,7 +336,7 @@ void OsAgnosticMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllo
         return;
     }
     for (auto handleId = 0u; handleId < gfxAllocation->getNumGmms(); handleId++) {
-        delete gfxAllocation->getGmm(handleId);
+        gfxAllocation->setGmm(std::unique_ptr<Gmm>{}, handleId);
     }
 
     removeAllocationFromDownloadAllocationsInCsr(gfxAllocation);
@@ -513,7 +512,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocatePhysicalLocalDeviceMemory(c
                                           0u, sizeAligned64k, counter.fetch_add(1),
                                           MemoryPool::localMemory, false, allocationData.flags.flushL3, maxOsContextCount);
 
-        allocation->setDefaultGmm(gmm.release());
+        allocation->setDefaultGmm(std::move(gmm));
         allocation->sizeToFree = sizeOfHeapChunk;
     }
 
@@ -547,7 +546,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocatePhysicalDeviceMemory(const 
     }
 
     if (alloc) {
-        alloc->setDefaultGmm(gmm.release());
+        alloc->setDefaultGmm(std::move(gmm));
         status = AllocationStatus::Success;
     }
     return alloc;
@@ -574,7 +573,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocatePhysicalHostMemory(const Al
     }
 
     if (alloc) {
-        alloc->setDefaultGmm(gmm.release());
+        alloc->setDefaultGmm(std::move(gmm));
         status = AllocationStatus::Success;
     }
 
@@ -602,7 +601,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateMemoryByKMD(const Allocatio
     }
 
     if (alloc) {
-        alloc->setDefaultGmm(gmm.release());
+        alloc->setDefaultGmm(std::move(gmm));
     }
 
     return alloc;
@@ -614,7 +613,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryForImageImpl(
     if (allocationData.imgInfo->linearStorage && allocationData.imgInfo->mipCount == 0) {
         alloc = allocateGraphicsMemoryWithAlignment(allocationData);
         if (alloc) {
-            alloc->setDefaultGmm(gmm.release());
+            alloc->setDefaultGmm(std::move(gmm));
         }
         return alloc;
     }
@@ -626,7 +625,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryForImageImpl(
     }
 
     if (alloc) {
-        alloc->setDefaultGmm(gmm.release());
+        alloc->setDefaultGmm(std::move(gmm));
     }
 
     return alloc;
@@ -772,7 +771,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryInDevicePool(
                                              CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, productHelper, *gmmHelper->getHardwareInfo()),
                                              allocationData.storageInfo,
                                              gmmRequirements);
-            allocation->setDefaultGmm(gmm.release());
+            allocation->setDefaultGmm(std::move(gmm));
         }
     } else {
         std::unique_ptr<Gmm> gmm;
@@ -834,7 +833,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryInDevicePool(
                                           canonizedGpuAddress, sizeAligned, counter.fetch_add(1),
                                           MemoryPool::localMemory, false, allocationData.flags.flushL3, maxOsContextCount);
 
-        allocation->setDefaultGmm(gmm.release());
+        allocation->setDefaultGmm(std::move(gmm));
         allocation->sizeToFree = sizeOfHeapChunk;
         if (use32Allocator) {
             allocation->setGpuBaseAddress(gmmHelper->canonize(gfxPartition->getHeapBase(heapIndex)));
