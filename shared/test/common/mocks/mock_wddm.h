@@ -272,6 +272,7 @@ class WddmMock : public Wddm {
     bool callBaseWaitExternalSemaphoresFromGpu = true;
     bool waitExternalSemaphoresFromGpuReturnValue = true;
     bool failReserveGpuVirtualAddress = false;
+    bool failReserveValidAddressRange = false;
     bool failCreateAllocation = false;
 };
 } // namespace NEO

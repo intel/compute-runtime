@@ -357,6 +357,10 @@ void WddmMock::releaseReservedAddress(void *reservedAddress) {
 
 bool WddmMock::reserveValidAddressRange(size_t size, void *&reservedMem) {
     reserveValidAddressRangeResult.called++;
+    if (failReserveValidAddressRange) {
+        reservedMem = nullptr;
+        return false;
+    }
     bool ret = Wddm::reserveValidAddressRange(size, reservedMem);
     if (reservedMem != nullptr) {
         std::unordered_multiset<void *>::iterator it;

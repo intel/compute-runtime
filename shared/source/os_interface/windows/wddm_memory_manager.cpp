@@ -830,11 +830,13 @@ GraphicsAllocation *WddmMemoryManager::createGraphicsAllocationFromSharedHandle(
     // Shared objects are passed without size
     size_t size = allocation->getDefaultGmm()->gmmResourceInfo->getSizeAllocation();
     allocation->setSize(size);
+    this->registerSysMemAlloc(allocation.get());
 
     if (mapPointer == nullptr) {
         if (is32bit) {
             void *ptr = nullptr;
             if (!getWddm(properties.rootDeviceIndex).reserveValidAddressRange(size, ptr)) {
+                freeGraphicsMemoryImpl(allocation.release());
                 return nullptr;
             }
             allocation->setReservedAddressRange(ptr, size);
@@ -843,7 +845,6 @@ GraphicsAllocation *WddmMemoryManager::createGraphicsAllocationFromSharedHandle(
     } else {
         status = mapPhysicalDeviceMemoryToVirtualMemory(allocation.get(), reinterpret_cast<uint64_t>(mapPointer), size, nullptr, static_cast<size_t>(osHandleData.physicalOffset));
     }
-    this->registerSysMemAlloc(allocation.get());
     DEBUG_BREAK_IF(!status);
     if (!status) {
         freeGraphicsMemoryImpl(allocation.release());
@@ -1006,10 +1007,11 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
         residencyController.removeAllocation(evictContainer, gfxAllocation);
     }
 
+    const bool hasGpuVirtualAddress = input->getGpuAddress() != 0u;
     auto defaultGmm = gfxAllocation->getDefaultGmm();
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[gfxAllocation->getRootDeviceIndex()]->getHardwareInfo();
     auto &productHelper = executionEnvironment.rootDeviceEnvironments[gfxAllocation->getRootDeviceIndex()]->getHelper<ProductHelper>();
-    if (gfxAllocation->isCompressionEnabled() && productHelper.isPageTableManagerSupported(*hwInfo)) {
+    if (hasGpuVirtualAddress && gfxAllocation->isCompressionEnabled() && productHelper.isPageTableManagerSupported(*hwInfo)) {
         for (auto &engine : registeredEngines) {
             if (engine.commandStreamReceiver->pageTableManager.get()) {
                 std::unique_lock<CommandStreamReceiver::MutexType> lock;
@@ -1023,7 +1025,7 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
     }
     for (auto handleId = 0u; handleId < gfxAllocation->getNumGmms(); handleId++) {
         auto gmm = gfxAllocation->getGmm(handleId);
-        if (gmm) {
+        if (gmm && hasGpuVirtualAddress) {
             auto gpuAddress = input->getGpuAddress();
             getWddm(gfxAllocation->getRootDeviceIndex()).freeGmmGpuVirtualAddress(gfxAllocation->getGmm(handleId), gpuAddress, input->getAlignedSize());
         }
@@ -1121,7 +1123,7 @@ bool WddmMemoryManager::validateAllocation(WddmAllocation *alloc) {
     if (alloc->isPhysicalMemoryReservation() && !alloc->isMappedPhysicalMemoryReservation()) {
         return true;
     }
-    if (alloc->getGpuAddress() == 0u || (alloc->getDefaultHandle() == 0 && alloc->fragmentsStorage.fragmentCount == 0)) {
+    if (alloc->getDefaultHandle() == 0 && alloc->fragmentsStorage.fragmentCount == 0) {
         return false;
     }
     return true;

@@ -78,6 +78,7 @@ class MockAllocateGraphicsMemoryWithAlignmentWddm : public MemoryManagerCreate<W
         } else {
             mapGpuVirtualAddressWithCpuPtr = false;
         }
+        graphicsAllocation->getGpuAddressToModify() = requiredGpuPtr ? castToUint64(requiredGpuPtr) : MemoryConstants::pageSize64k;
 
         return true;
     }
@@ -1122,6 +1123,28 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenCreateAllocationFromHa
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+TEST_F(WddmMemoryManagerSimpleTest, givenReservingCpuRangeFailsWhenCreatingAllocationFromSharedHandleIn32BitThenNullptrIsReturnedAndOpenedAllocationIsDestroyed) {
+    if constexpr (is64bit) {
+        GTEST_SKIP();
+    }
+    MockWddmMemoryManager::OsHandleData osHandleData{1u};
+    VariableBackup<UINT> numAllocationsBackup(&gdi->getQueryResourceInfoArgOut().NumAllocations, 1u);
+    auto gmm = std::make_unique<Gmm>(rootDeviceEnvironment->getGmmHelper(), nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, GmmRequirements{});
+    D3DDDI_OPENALLOCATIONINFO allocationInfo = {};
+    allocationInfo.pPrivateDriverData = gmm->gmmResourceInfo->peekHandle();
+    allocationInfo.hAllocation = ALLOCATION_HANDLE;
+    allocationInfo.PrivateDriverDataSize = sizeof(GMM_RESOURCE_INFO);
+    VariableBackup<D3DDDI_OPENALLOCATIONINFO *> openResourceBackup(&gdi->getOpenResourceArgOut().pOpenAllocationInfo, &allocationInfo);
+    wddm->failReserveValidAddressRange = true;
+    const auto destroyCalledBefore = wddm->destroyAllocationResult.called;
+    const auto usedSystemMemoryBefore = memoryManager->getUsedSystemMemorySize();
+
+    AllocationProperties properties(0, false, 0, AllocationType::sharedBuffer, false, false, 0);
+    EXPECT_EQ(nullptr, memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr));
+    EXPECT_EQ(destroyCalledBefore + 1u, wddm->destroyAllocationResult.called);
+    EXPECT_EQ(usedSystemMemoryBefore, memoryManager->getUsedSystemMemorySize());
+}
+
 TEST_F(WddmMemoryManagerSimpleTest, givenNameWhenCreatingAllocationFromSharedNameThenHandleOpenedByNameIsImported) {
     wddm->openNTHandleFromNameCallBase = false;
     wddm->openNTHandleFromNameResult = reinterpret_cast<HANDLE>(0x4321);
@@ -1255,6 +1278,18 @@ TEST_F(WddmMemoryManagerSimpleTest, whenCreateAllocationFromHandleAndMapCallFail
     auto allocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandleData, properties, false, false, true, nullptr);
     EXPECT_EQ(nullptr, allocation);
     EXPECT_EQ(1u, memoryManager->freeGraphicsMemoryImplCalled);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenOpenedAllocationWithoutGpuVirtualAddressWhenFreeingItThenGpuVirtualAddressIsNotFreed) {
+    auto allocation = std::make_unique<WddmAllocation>(0u, 1u /*num gmms*/, AllocationType::sharedBuffer, nullptr, 0u, 0u, nullptr, MemoryPool::systemCpuInaccessible, 0u, 1u);
+    allocation->getHandleToModify(0u) = ALLOCATION_HANDLE;
+    allocation->setDefaultGmm(std::make_unique<Gmm>(rootDeviceEnvironment->getGmmHelper(), nullptr, MemoryConstants::pageSize, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, GmmRequirements{}));
+    auto gmmClientContext = static_cast<MockGmmClientContextBase *>(rootDeviceEnvironment->getGmmClientContext());
+    const auto freeGpuVirtualAddressCalledBefore = gmmClientContext->freeGpuVirtualAddressCalled;
+
+    memoryManager->freeGraphicsMemoryImpl(allocation.release());
+
+    EXPECT_EQ(freeGpuVirtualAddressCalledBefore, gmmClientContext->freeGpuVirtualAddressCalled);
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenAllocateGraphicsMemoryForNonSvmHostPtrIsCalledWhenNotAlignedPtrIsPassedAndFlushL3RequiredThenSetCorrectGmmResource) {
@@ -4959,6 +4994,16 @@ TEST_F(MockWddmMemoryManagerTest, givenValidateAllocationFunctionWhenItIsCalledW
 
     auto ptr = reinterpret_cast<void *>(0x1234);
     WddmAllocation allocation{0, 1u /*num gmms*/, AllocationType::commandBuffer, ptr, castToUint64(ptr), 0, nullptr, MemoryPool::system64KBPages, 0u, 1u};
+    allocation.getHandleToModify(0u) = 1;
+
+    EXPECT_TRUE(memoryManager.validateAllocationMock(&allocation));
+}
+
+TEST_F(MockWddmMemoryManagerTest, givenValidateAllocationFunctionWhenItIsCalledWithOpenedAllocationWithoutGpuVirtualAddressThenSuccessIsReturned) {
+    wddm->init();
+    MockWddmMemoryManager memoryManager(executionEnvironment);
+
+    WddmAllocation allocation{0, 1u /*num gmms*/, AllocationType::sharedBuffer, nullptr, 0u, 0, nullptr, MemoryPool::systemCpuInaccessible, 0u, 1u};
     allocation.getHandleToModify(0u) = 1;
 
     EXPECT_TRUE(memoryManager.validateAllocationMock(&allocation));
