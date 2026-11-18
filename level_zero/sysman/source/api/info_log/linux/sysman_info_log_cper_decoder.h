@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <level_zero/zes_intel_gpu_sysman.h>
+#include <level_zero/zes_api.h>
 
 #include <cstddef>
 #include <cstdint>
@@ -23,7 +23,7 @@ class CperDecoder {
         fieldCount
     };
 
-    static ze_result_t getFieldInfo(uint32_t *pCount, zes_intel_info_log_decodable_field_info_exp_t *pFieldInfos);
+    static ze_result_t getFieldInfo(uint32_t *pCount, zes_info_log_decodable_field_info_ext_t *pFieldInfos);
 
     static ze_result_t validateRecords(uint32_t size, uint32_t recordCount, const zes_info_log_metadata_ext_t *pDescriptors);
 

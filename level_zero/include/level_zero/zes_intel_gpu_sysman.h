@@ -842,6 +842,9 @@ ze_result_t ZE_APICALL zesIntelInfoLogInstanceDeleteExp(
 /// @brief Info log signature ID extension name
 #define ZES_INTEL_INFO_LOG_SIG_ID_EXP_NAME "ZES_intel_experimental_info_log_sig_id"
 #endif // ZES_INTEL_INFO_LOG_SIG_ID_EXP_NAME
+/// @deprecated This extension is no longer implemented and all of its functions return
+///             ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE. Use the standard
+///             zesInfoLogDecoderContext*Ext APIs instead.
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Info log signature ID extension Version(s)
@@ -908,6 +911,8 @@ typedef struct _zes_intel_info_log_decodable_field_info_exp_t {
 /// @brief Create a decoder context for an info log
 ///
 /// @details
+///     - Deprecated: no longer implemented, always returns ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE.
+///       Use ::zesInfoLogDecoderContextCreateExt instead.
 ///     - A decoder context decodes the records returned by
 ///       ::zesInfoLogInstanceReadWithMetadataExt or ::zesInfoLogInstancePeekWithMetadataExt
 ///       into named fields, which the application reads one at a time with
@@ -946,6 +951,8 @@ ze_result_t ZE_APICALL zesIntelInfoLogCreateDecoderContextExp(
 /// @brief Get the fields a decoder context can decode from a record
 ///
 /// @details
+///     - Deprecated: no longer implemented, always returns ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE.
+///       Use ::zesInfoLogDecoderContextGetFieldInfoExt instead.
 ///     - The caller should first call this function with the count pointer set to 0 to
 ///       retrieve the number of fields, then allocate that many descriptors and call it
 ///       again.
@@ -996,6 +1003,8 @@ ze_result_t ZE_APICALL zesIntelInfoLogDecoderGetFieldInfoExp(
 /// @brief Decode a batch of info log records into a decoder context
 ///
 /// @details
+///     - Deprecated: no longer implemented, always returns ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE.
+///       Use ::zesInfoLogDecoderContextDecodeStartExt instead.
 ///     - Decodes the records returned by one call to
 ///       ::zesInfoLogInstanceReadWithMetadataExt or
 ///       ::zesInfoLogInstancePeekWithMetadataExt. `size`, `pBuffer`, `recordCount` and
@@ -1055,6 +1064,8 @@ ze_result_t ZE_APICALL zesIntelInfoLogDecoderDecodeStartExp(
 /// @brief Read one field of one record of the batch a decoder context is decoding
 ///
 /// @details
+///     - Deprecated: no longer implemented, always returns ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE.
+///       Use ::zesInfoLogDecoderContextReadFieldExt instead.
 ///     - `fieldId` is the fieldId of a descriptor returned by
 ///       ::zesIntelInfoLogDecoderGetFieldInfoExp, and `recordId` is an index into the
 ///       `pDescriptors` passed to ::zesIntelInfoLogDecoderDecodeStartExp.
@@ -1120,6 +1131,8 @@ ze_result_t ZE_APICALL zesIntelInfoLogDecoderReadFieldExp(
 /// @brief Stop decoding the batch of records a decoder context is decoding
 ///
 /// @details
+///     - Deprecated: no longer implemented, always returns ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE.
+///       Use ::zesInfoLogDecoderContextDecodeStopExt instead.
 ///     - The context drops the `pBuffer` and `pDescriptors` it was passed by
 ///       ::zesIntelInfoLogDecoderDecodeStartExp, which the application is free to release
 ///       or reuse once this function returns. The context may then decode another batch, so
@@ -1145,6 +1158,8 @@ ze_result_t ZE_APICALL zesIntelInfoLogDecoderDecodeStopExp(
 /// @brief Delete a decoder context of an info log
 ///
 /// @details
+///     - Deprecated: no longer implemented, always returns ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE.
+///       Use ::zesInfoLogDecoderContextDeleteExt instead.
 ///     - `hInfoLog` must be the info log the context was created from, which the driver
 ///       verifies.
 ///     - A context which is decoding a batch is deleted, and the batch released, without an
@@ -1309,11 +1324,14 @@ ze_result_t ZE_APICALL zesIntelDriverEventListenExp(
 /// @brief Driver API version extension name
 #define ZES_INTEL_DRIVER_API_VERSION_EXP_NAME "ZES_intel_experimental_driver_api_version"
 #endif // ZES_INTEL_DRIVER_API_VERSION_EXP_NAME
+/// @deprecated This extension is no longer implemented and all of its functions return
+///             ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE. Use the standard zesDriverGetApiVersion
+///             API instead.
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Driver API version extension Version(s)
 typedef enum _zes_intel_driver_api_version_exp_version_t {
-    ZES_INTEL_DRIVER_API_VERSION_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),                            ///< version 1.0
+    ZES_INTEL_DRIVER_API_VERSION_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),                            ///< version 1.0, no longer implemented
     ZES_INTEL_DRIVER_API_VERSION_EXP_VERSION_CURRENT = ZES_INTEL_DRIVER_API_VERSION_EXP_VERSION_1_0, ///< latest known version
     ZES_INTEL_DRIVER_API_VERSION_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
 } zes_intel_driver_api_version_exp_version_t;
@@ -1371,6 +1389,8 @@ typedef enum _zes_intel_api_version_exp_t {
 /// @brief Returns the API version supported by the specified sysman driver
 ///
 /// @details
+///     - Deprecated: no longer implemented, always returns ::ZE_RESULT_ERROR_UNSUPPORTED_FEATURE.
+///       Use ::zesDriverGetApiVersion instead.
 ///     - The application may call this function from simultaneous threads.
 ///     - The implementation of this function should be lock-free.
 ///
@@ -1392,11 +1412,14 @@ ze_result_t ZE_APICALL zesIntelDriverGetApiVersionExp(
 /// @brief Device SOC UID property extension name
 #define ZES_INTEL_DEVICE_SOC_UID_EXP_PROPERTY_NAME "ZES_intel_experimental_device_soc_uid_property"
 #endif // ZES_INTEL_DEVICE_SOC_UID_EXP_PROPERTY_NAME
+/// @deprecated This extension is no longer implemented. Use the standard
+///             ::ZES_DEVICE_SOC_UID_EXT_NAME extension and
+///             ::zes_device_soc_uid_ext_properties_t instead.
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Query device SOC UID extension Version(s)
 typedef enum _zes_intel_device_soc_uid_exp_properties_version_t {
-    ZES_INTEL_DEVICE_SOC_UID_EXP_PROPERTIES_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),                                   ///< version 1.0
+    ZES_INTEL_DEVICE_SOC_UID_EXP_PROPERTIES_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),                                   ///< version 1.0, no longer implemented
     ZES_INTEL_DEVICE_SOC_UID_EXP_PROPERTIES_VERSION_CURRENT = ZES_INTEL_DEVICE_SOC_UID_EXP_PROPERTIES_VERSION_1_0, ///< latest known version
     ZES_INTEL_DEVICE_SOC_UID_EXP_PROPERTIES_VERSION_FORCE_UINT32 = 0x7fffffff
 } zes_intel_device_soc_uid_exp_properties_version_t;
@@ -1404,6 +1427,11 @@ typedef enum _zes_intel_device_soc_uid_exp_properties_version_t {
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Query the SOC UID of a device.
 /// This structure can be passed in the 'pNext' of zes_device_properties_t
+///
+/// @details
+///     - Deprecated: no longer implemented. A ::zesDeviceGetProperties call which passes this
+///       structure in its pNext chain leaves socUid unmodified. Pass
+///       ::zes_device_soc_uid_ext_properties_t instead.
 typedef struct _zes_intel_device_soc_uid_exp_properties_t {
     zes_structure_type_ext_t stype; ///< [in] type of this structure
     void *pNext;                    ///< [in][optional] must be null or a pointer to an extension-specific

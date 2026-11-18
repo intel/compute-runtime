@@ -9,7 +9,6 @@
 
 #include "level_zero/api/sysman/zes_handles_struct.h"
 #include <level_zero/zes_api.h>
-#include <level_zero/zes_intel_gpu_sysman.h>
 
 #include <memory>
 #include <mutex>
@@ -30,8 +29,8 @@ class InfoLog : _zes_info_log_handle_t {
     virtual ze_result_t infoLogCreateInstance(const char *pInstanceName,
                                               zes_info_log_instance_ext_desc_t *pDesc,
                                               zes_info_log_instance_handle_t *phInfoLogInstance) = 0;
-    virtual ze_result_t infoLogCreateDecoderContext(zes_intel_info_log_decoder_context_handle_t *phDecoderContext) = 0;
-    virtual ze_result_t infoLogDeleteDecoderContext(zes_intel_info_log_decoder_context_handle_t *phDecoderContext) = 0;
+    virtual ze_result_t infoLogCreateDecoderContext(zes_info_log_decoder_context_handle_t *phDecoderContext) = 0;
+    virtual ze_result_t infoLogDeleteDecoderContext(zes_info_log_decoder_context_handle_t hDecoderContext) = 0;
     virtual ze_result_t destroyInstance(InfoLogInstance *pInstance) = 0;
     virtual void destroyAllInstances() = 0;
 

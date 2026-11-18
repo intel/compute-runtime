@@ -20,7 +20,7 @@ std::unique_ptr<OsInfoLog> OsInfoLog::create(zes_info_log_format_ext_t format) {
     return std::make_unique<LinuxInfoLogImp>(format);
 }
 
-ze_result_t LinuxInfoLogImp::getFieldInfo(uint32_t *pCount, zes_intel_info_log_decodable_field_info_exp_t *pFieldInfos) {
+ze_result_t LinuxInfoLogImp::getFieldInfo(uint32_t *pCount, zes_info_log_decodable_field_info_ext_t *pFieldInfos) {
     return CperDecoder::getFieldInfo(pCount, pFieldInfos);
 }
 

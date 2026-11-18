@@ -434,11 +434,11 @@ ze_result_t SysmanDriverHandleImp::getDeviceRescan(uint32_t *pCount, zes_device_
     return pOsSysmanDriver->rescanDevices(this, pCount, phDevices);
 }
 
-zes_intel_api_version_exp_t SysmanDriverHandle::getSupportedApiVersion() {
-    return ZES_INTEL_API_VERSION_EXP_1_20;
+zes_api_version_t SysmanDriverHandle::getSupportedApiVersion() {
+    return ZES_API_VERSION_1_21;
 }
 
-ze_result_t SysmanDriverHandleImp::getApiVersion(zes_intel_api_version_exp_t *pVersion) {
+ze_result_t SysmanDriverHandleImp::getApiVersion(zes_api_version_t *pVersion) {
     *pVersion = SysmanDriverHandle::getSupportedApiVersion();
     return ZE_RESULT_SUCCESS;
 }

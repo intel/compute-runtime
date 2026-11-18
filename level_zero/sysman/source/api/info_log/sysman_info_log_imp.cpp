@@ -93,7 +93,7 @@ ze_result_t InfoLogImp::checkDecodeSupported() const {
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t InfoLogImp::infoLogCreateDecoderContext(zes_intel_info_log_decoder_context_handle_t *phDecoderContext) {
+ze_result_t InfoLogImp::infoLogCreateDecoderContext(zes_info_log_decoder_context_handle_t *phDecoderContext) {
     auto result = checkDecodeSupported();
     if (result != ZE_RESULT_SUCCESS) {
         return result;
@@ -108,13 +108,13 @@ ze_result_t InfoLogImp::infoLogCreateDecoderContext(zes_intel_info_log_decoder_c
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t InfoLogImp::infoLogDeleteDecoderContext(zes_intel_info_log_decoder_context_handle_t *phDecoderContext) {
-    if (*phDecoderContext == nullptr) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): *phDecoderContext is nullptr, returning error: 0x%x\n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_INVALID_NULL_HANDLE);
+ze_result_t InfoLogImp::infoLogDeleteDecoderContext(zes_info_log_decoder_context_handle_t hDecoderContext) {
+    if (hDecoderContext == nullptr) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): hDecoderContext is nullptr, returning error: 0x%x\n", NEO_FUNCTION_NAME, ZE_RESULT_ERROR_INVALID_NULL_HANDLE);
         return ZE_RESULT_ERROR_INVALID_NULL_HANDLE;
     }
 
-    auto pDecoderContext = InfoLogDecoderContext::fromHandle(*phDecoderContext);
+    auto pDecoderContext = InfoLogDecoderContext::fromHandle(hDecoderContext);
 
     std::lock_guard<std::mutex> lock(decoderContextsMutex);
 
@@ -126,7 +126,6 @@ ze_result_t InfoLogImp::infoLogDeleteDecoderContext(zes_intel_info_log_decoder_c
     }
 
     decoderContexts.erase(it);
-    *phDecoderContext = nullptr;
 
     return ZE_RESULT_SUCCESS;
 }

@@ -59,10 +59,10 @@ struct MockInfoLog : public InfoLog {
                                       zes_info_log_instance_handle_t *) override {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
-    ze_result_t infoLogCreateDecoderContext(zes_intel_info_log_decoder_context_handle_t *) override {
+    ze_result_t infoLogCreateDecoderContext(zes_info_log_decoder_context_handle_t *) override {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
-    ze_result_t infoLogDeleteDecoderContext(zes_intel_info_log_decoder_context_handle_t *) override {
+    ze_result_t infoLogDeleteDecoderContext(zes_info_log_decoder_context_handle_t) override {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
     ze_result_t destroyInstance(InfoLogInstance *pInstance) override {
@@ -161,7 +161,7 @@ struct MockOsInfoLog : public OsInfoLog {
         }
         return createInstanceResult;
     }
-    ze_result_t getFieldInfo(uint32_t *pCount, zes_intel_info_log_decodable_field_info_exp_t *) override {
+    ze_result_t getFieldInfo(uint32_t *pCount, zes_info_log_decodable_field_info_ext_t *) override {
         getFieldInfoCallCount++;
         if (getFieldInfoResult == ZE_RESULT_SUCCESS && *pCount == 0) {
             *pCount = decodeFieldCount;
@@ -389,7 +389,7 @@ TEST_F(SysmanInfoLogFixture, GivenWddmBackendWhenDecodingRecordsThenUnsupportedF
     WddmInfoLogImp wddmInfoLog;
 
     uint32_t count = 0;
-    zes_intel_info_log_decodable_field_info_exp_t fieldInfo = {ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_DECODABLE_FIELD_INFO_EXP};
+    zes_info_log_decodable_field_info_ext_t fieldInfo = {ZES_STRUCTURE_TYPE_INFO_LOG_DECODABLE_FIELD_INFO_EXT};
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, wddmInfoLog.getFieldInfo(&count, nullptr));
     EXPECT_EQ(0u, count);
 
@@ -531,7 +531,7 @@ TEST_F(SysmanInfoLogFixture, GivenPropertyCaptureFailsWhenCreatingADecoderContex
     auto pInfoLogImp = createInfoLogWithMockOsBackend(&pMockOsInfoLog, true,
                                                       ZES_INFO_LOG_FORMAT_EXT_CPER, ZE_RESULT_ERROR_UNKNOWN);
 
-    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    zes_info_log_decoder_context_handle_t hDecoderContext = nullptr;
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pInfoLogImp->infoLogCreateDecoderContext(&hDecoderContext));
     EXPECT_EQ(nullptr, hDecoderContext);
 }
@@ -541,28 +541,27 @@ TEST_F(SysmanInfoLogFixture, GivenNonCperInfoLogFormatWhenCreatingADecoderContex
     auto nonCperFormat = static_cast<zes_info_log_format_ext_t>(ZES_INFO_LOG_FORMAT_EXT_CPER + 1);
     auto pInfoLogImp = createInfoLogWithMockOsBackend(&pMockOsInfoLog, true, nonCperFormat);
 
-    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    zes_info_log_decoder_context_handle_t hDecoderContext = nullptr;
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pInfoLogImp->infoLogCreateDecoderContext(&hDecoderContext));
     EXPECT_EQ(nullptr, hDecoderContext);
 }
 
-TEST_F(SysmanInfoLogFixture, GivenCperInfoLogFormatWhenCreatingAndDeletingADecoderContextThenAHandleIsReturnedAndClearedOnDelete) {
+TEST_F(SysmanInfoLogFixture, GivenCperInfoLogFormatWhenCreatingAndDeletingADecoderContextThenAHandleIsReturnedAndDeleteSucceeds) {
     MockOsInfoLog *pMockOsInfoLog = nullptr;
     auto pInfoLogImp = createInfoLogWithMockOsBackend(&pMockOsInfoLog);
 
-    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    zes_info_log_decoder_context_handle_t hDecoderContext = nullptr;
     EXPECT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogCreateDecoderContext(&hDecoderContext));
     EXPECT_NE(nullptr, hDecoderContext);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogDeleteDecoderContext(&hDecoderContext));
-    EXPECT_EQ(nullptr, hDecoderContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogDeleteDecoderContext(hDecoderContext));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenADecoderContextWhenCallingItsFunctionsThenTheOsBackendIsCalled) {
     MockOsInfoLog *pMockOsInfoLog = nullptr;
     auto pInfoLogImp = createInfoLogWithMockOsBackend(&pMockOsInfoLog);
 
-    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    zes_info_log_decoder_context_handle_t hDecoderContext = nullptr;
     ASSERT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogCreateDecoderContext(&hDecoderContext));
     auto pDecoderContext = InfoLogDecoderContext::fromHandle(hDecoderContext);
 
@@ -584,7 +583,7 @@ TEST_F(SysmanInfoLogFixture, GivenADecoderContextWhenCallingItsFunctionsThenTheO
     EXPECT_EQ(1u, pMockOsInfoLog->readFieldCallCount);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, pDecoderContext->decodeStop());
-    EXPECT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogDeleteDecoderContext(&hDecoderContext));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogDeleteDecoderContext(hDecoderContext));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenAnOsBackendWhichFailsWhenCallingTheDecoderContextFunctionsThenTheBackendErrorIsReturned) {
@@ -593,7 +592,7 @@ TEST_F(SysmanInfoLogFixture, GivenAnOsBackendWhichFailsWhenCallingTheDecoderCont
     pMockOsInfoLog->getFieldInfoResult = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     pMockOsInfoLog->validateRecordsResult = ZE_RESULT_ERROR_UNKNOWN;
 
-    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    zes_info_log_decoder_context_handle_t hDecoderContext = nullptr;
     ASSERT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogCreateDecoderContext(&hDecoderContext));
     auto pDecoderContext = InfoLogDecoderContext::fromHandle(hDecoderContext);
 
@@ -613,14 +612,14 @@ TEST_F(SysmanInfoLogFixture, GivenAnOsBackendWhichFailsWhenCallingTheDecoderCont
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, pDecoderContext->readField(0, 0, &value, sizeof(value), &bytesCopied));
     EXPECT_EQ(0u, pMockOsInfoLog->readFieldCallCount);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogDeleteDecoderContext(&hDecoderContext));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogDeleteDecoderContext(hDecoderContext));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenADecoderContextWithAnActiveBatchWhenStartingAnotherBatchThenHandleObjectInUseIsReturned) {
     MockOsInfoLog *pMockOsInfoLog = nullptr;
     auto pInfoLogImp = createInfoLogWithMockOsBackend(&pMockOsInfoLog);
 
-    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    zes_info_log_decoder_context_handle_t hDecoderContext = nullptr;
     ASSERT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogCreateDecoderContext(&hDecoderContext));
     auto pDecoderContext = InfoLogDecoderContext::fromHandle(hDecoderContext);
 
@@ -635,14 +634,14 @@ TEST_F(SysmanInfoLogFixture, GivenADecoderContextWithAnActiveBatchWhenStartingAn
     EXPECT_EQ(1u, pMockOsInfoLog->validateRecordsCallCount);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, pDecoderContext->decodeStop());
-    EXPECT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogDeleteDecoderContext(&hDecoderContext));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogDeleteDecoderContext(hDecoderContext));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenZeroRecordsWhenStartingABatchThenSuccessIsReturnedAndNoRecordCanBeRead) {
     MockOsInfoLog *pMockOsInfoLog = nullptr;
     auto pInfoLogImp = createInfoLogWithMockOsBackend(&pMockOsInfoLog);
 
-    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    zes_info_log_decoder_context_handle_t hDecoderContext = nullptr;
     ASSERT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogCreateDecoderContext(&hDecoderContext));
     auto pDecoderContext = InfoLogDecoderContext::fromHandle(hDecoderContext);
 
@@ -655,14 +654,14 @@ TEST_F(SysmanInfoLogFixture, GivenZeroRecordsWhenStartingABatchThenSuccessIsRetu
     EXPECT_EQ(0u, pMockOsInfoLog->readFieldCallCount);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, pDecoderContext->decodeStop());
-    EXPECT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogDeleteDecoderContext(&hDecoderContext));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogDeleteDecoderContext(hDecoderContext));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenRecordsWithoutABufferOrDescriptorsWhenStartingABatchThenInvalidNullPointerIsReturned) {
     MockOsInfoLog *pMockOsInfoLog = nullptr;
     auto pInfoLogImp = createInfoLogWithMockOsBackend(&pMockOsInfoLog);
 
-    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    zes_info_log_decoder_context_handle_t hDecoderContext = nullptr;
     ASSERT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogCreateDecoderContext(&hDecoderContext));
     auto pDecoderContext = InfoLogDecoderContext::fromHandle(hDecoderContext);
 
@@ -679,14 +678,14 @@ TEST_F(SysmanInfoLogFixture, GivenRecordsWithoutABufferOrDescriptorsWhenStarting
     size_t bytesCopied = 0;
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, pDecoderContext->readField(0, 0, &value, sizeof(value), &bytesCopied));
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogDeleteDecoderContext(&hDecoderContext));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogDeleteDecoderContext(hDecoderContext));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenARecordIdBeyondTheBatchWhenReadingAFieldThenInvalidArgumentIsReturned) {
     MockOsInfoLog *pMockOsInfoLog = nullptr;
     auto pInfoLogImp = createInfoLogWithMockOsBackend(&pMockOsInfoLog);
 
-    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    zes_info_log_decoder_context_handle_t hDecoderContext = nullptr;
     ASSERT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogCreateDecoderContext(&hDecoderContext));
     auto pDecoderContext = InfoLogDecoderContext::fromHandle(hDecoderContext);
 
@@ -705,14 +704,14 @@ TEST_F(SysmanInfoLogFixture, GivenARecordIdBeyondTheBatchWhenReadingAFieldThenIn
     EXPECT_EQ(1u, pMockOsInfoLog->readFieldCallCount);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, pDecoderContext->decodeStop());
-    EXPECT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogDeleteDecoderContext(&hDecoderContext));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogDeleteDecoderContext(hDecoderContext));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenADecoderContextWithNoActiveBatchWhenEndingTheBatchThenUninitializedIsReturned) {
     MockOsInfoLog *pMockOsInfoLog = nullptr;
     auto pInfoLogImp = createInfoLogWithMockOsBackend(&pMockOsInfoLog);
 
-    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    zes_info_log_decoder_context_handle_t hDecoderContext = nullptr;
     ASSERT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogCreateDecoderContext(&hDecoderContext));
     auto pDecoderContext = InfoLogDecoderContext::fromHandle(hDecoderContext);
 
@@ -727,16 +726,14 @@ TEST_F(SysmanInfoLogFixture, GivenADecoderContextWithNoActiveBatchWhenEndingTheB
 
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, pDecoderContext->decodeStop());
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogDeleteDecoderContext(&hDecoderContext));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pInfoLogImp->infoLogDeleteDecoderContext(hDecoderContext));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenANullDecoderContextHandleWhenDeletingADecoderContextThenInvalidNullHandleIsReturned) {
     MockOsInfoLog *pMockOsInfoLog = nullptr;
     auto pInfoLogImp = createInfoLogWithMockOsBackend(&pMockOsInfoLog);
 
-    zes_intel_info_log_decoder_context_handle_t hNullContext = nullptr;
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_HANDLE, pInfoLogImp->infoLogDeleteDecoderContext(&hNullContext));
-    EXPECT_EQ(nullptr, hNullContext);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_HANDLE, pInfoLogImp->infoLogDeleteDecoderContext(nullptr));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenADecoderContextOfAnotherInfoLogWhenDeletingItThenInvalidArgumentIsReturned) {
@@ -745,16 +742,13 @@ TEST_F(SysmanInfoLogFixture, GivenADecoderContextOfAnotherInfoLogWhenDeletingItT
     MockOsInfoLog *pOtherMockOsInfoLog = nullptr;
     auto pOtherInfoLogImp = createInfoLogWithMockOsBackend(&pOtherMockOsInfoLog);
 
-    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    zes_info_log_decoder_context_handle_t hDecoderContext = nullptr;
     ASSERT_EQ(ZE_RESULT_SUCCESS, pOwningInfoLogImp->infoLogCreateDecoderContext(&hDecoderContext));
     ASSERT_NE(nullptr, hDecoderContext);
 
-    auto hNotOwned = hDecoderContext;
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, pOtherInfoLogImp->infoLogDeleteDecoderContext(&hNotOwned));
-    EXPECT_EQ(hDecoderContext, hNotOwned);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, pOtherInfoLogImp->infoLogDeleteDecoderContext(hDecoderContext));
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, pOwningInfoLogImp->infoLogDeleteDecoderContext(&hDecoderContext));
-    EXPECT_EQ(nullptr, hDecoderContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pOwningInfoLogImp->infoLogDeleteDecoderContext(hDecoderContext));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenNamedCollectionUnsupportedWhenCreatingNamedInstanceThenUnsupportedFeatureIsReturned) {

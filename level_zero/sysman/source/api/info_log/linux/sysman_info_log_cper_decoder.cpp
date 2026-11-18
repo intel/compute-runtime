@@ -40,7 +40,7 @@ constexpr uint16_t errorHeaderSigIdValidBit = 0x4u;
 struct FieldDescription {
     const char *desc;
     const char *name;
-    zes_intel_info_log_field_type_exp_t type;
+    zes_info_log_field_type_ext_t type;
     size_t requiredBytes;
     size_t elementCount;
     const char *versionString;
@@ -64,9 +64,9 @@ using FieldReader = ze_result_t (*)(const KnownSection &section, void *pOutBuffe
 
 constexpr std::array<FieldDescription, CperDecoder::fieldCount> fields = {{
     {"Signature ID of the event the record describes.",
-     "sig_id", ZES_INTEL_INFO_LOG_FIELD_TYPE_EXP_UINT32, sizeof(uint32_t), 1u, "1.0"},
+     "sig_id", ZES_INFO_LOG_FIELD_TYPE_EXT_UINT32, sizeof(uint32_t), 1u, "1.1"},
     {"UUID reported by the record.",
-     "uuid", ZES_INTEL_INFO_LOG_FIELD_TYPE_EXP_RAW_BYTES, ZES_MAX_UUID_SIZE, ZES_MAX_UUID_SIZE, "1.0"},
+     "uuid", ZES_INFO_LOG_FIELD_TYPE_EXT_RAW_BYTES, ZES_MAX_UUID_SIZE, ZES_MAX_UUID_SIZE, "1.1"},
 }};
 
 // The accelerator section type, in the byte order a section descriptor stores it in. It is shared by
@@ -183,7 +183,7 @@ static ze_result_t readUuid(const KnownSection &section, void *pOutBuffer, size_
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t CperDecoder::getFieldInfo(uint32_t *pCount, zes_intel_info_log_decodable_field_info_exp_t *pFieldInfos) {
+ze_result_t CperDecoder::getFieldInfo(uint32_t *pCount, zes_info_log_decodable_field_info_ext_t *pFieldInfos) {
     if (*pCount == 0) {
         *pCount = fieldCount;
         return ZE_RESULT_SUCCESS;

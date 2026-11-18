@@ -9,6 +9,7 @@
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/sysman/source/api/info_log/sysman_info_log.h"
+#include "level_zero/sysman/source/api/info_log/sysman_info_log_decoder_context.h"
 #include "level_zero/sysman/source/api/info_log/sysman_info_log_instance.h"
 #include "level_zero/sysman/source/device/sysman_device.h"
 #include "level_zero/sysman/source/driver/sysman_driver.h"
@@ -1448,6 +1449,69 @@ ze_result_t ZE_APICALL zesDriverGetPciDeviceProperties(
     return L0::Sysman::dispatchSysmanApi(
         [&]() { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; },
         [&]() { return L0::Sysman::SysmanDriverHandle::fromHandle(hDriver)->getPciDeviceProperties(pCount, pProperties); });
+}
+
+ze_result_t ZE_APICALL zesDriverGetApiVersion(
+    zes_driver_handle_t hDriver,
+    zes_api_version_t *pVersion) {
+    return L0::Sysman::dispatchSysmanApi(
+        [&]() { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; },
+        [&]() { return L0::Sysman::SysmanDriverHandle::fromHandle(hDriver)->getApiVersion(pVersion); });
+}
+
+ze_result_t ZE_APICALL zesInfoLogDecoderContextCreateExt(
+    zes_info_log_handle_t hInfoLog,
+    zes_info_log_decoder_context_handle_t *phDecoderContext) {
+    return L0::Sysman::dispatchSysmanApi(
+        [&]() { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; },
+        [&]() { return L0::Sysman::InfoLog::fromHandle(hInfoLog)->infoLogCreateDecoderContext(phDecoderContext); });
+}
+
+ze_result_t ZE_APICALL zesInfoLogDecoderContextGetFieldInfoExt(
+    zes_info_log_decoder_context_handle_t hDecoderContext,
+    uint32_t *pCount,
+    zes_info_log_decodable_field_info_ext_t *pFieldInfos) {
+    return L0::Sysman::dispatchSysmanApi(
+        [&]() { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; },
+        [&]() { return L0::Sysman::InfoLogDecoderContext::fromHandle(hDecoderContext)->getFieldInfo(pCount, pFieldInfos); });
+}
+
+ze_result_t ZE_APICALL zesInfoLogDecoderContextDecodeStartExt(
+    zes_info_log_decoder_context_handle_t hDecoderContext,
+    uint32_t size,
+    const uint8_t *pBuffer,
+    uint32_t recordCount,
+    const zes_info_log_metadata_ext_t *pDescriptors) {
+    return L0::Sysman::dispatchSysmanApi(
+        [&]() { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; },
+        [&]() { return L0::Sysman::InfoLogDecoderContext::fromHandle(hDecoderContext)->decodeStart(size, pBuffer, recordCount, pDescriptors); });
+}
+
+ze_result_t ZE_APICALL zesInfoLogDecoderContextReadFieldExt(
+    zes_info_log_decoder_context_handle_t hDecoderContext,
+    uint32_t fieldId,
+    uint32_t recordId,
+    void *pOutBuffer,
+    size_t bufferLen,
+    size_t *pBytesCopied) {
+    return L0::Sysman::dispatchSysmanApi(
+        [&]() { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; },
+        [&]() { return L0::Sysman::InfoLogDecoderContext::fromHandle(hDecoderContext)->readField(fieldId, recordId, pOutBuffer, bufferLen, pBytesCopied); });
+}
+
+ze_result_t ZE_APICALL zesInfoLogDecoderContextDecodeStopExt(
+    zes_info_log_decoder_context_handle_t hDecoderContext) {
+    return L0::Sysman::dispatchSysmanApi(
+        [&]() { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; },
+        [&]() { return L0::Sysman::InfoLogDecoderContext::fromHandle(hDecoderContext)->decodeStop(); });
+}
+
+ze_result_t ZE_APICALL zesInfoLogDecoderContextDeleteExt(
+    zes_info_log_handle_t hInfoLog,
+    zes_info_log_decoder_context_handle_t hDecoderContext) {
+    return L0::Sysman::dispatchSysmanApi(
+        [&]() { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; },
+        [&]() { return L0::Sysman::InfoLog::fromHandle(hInfoLog)->infoLogDeleteDecoderContext(hDecoderContext); });
 }
 
 } // namespace L0
@@ -2961,5 +3025,73 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zesDriverGetPciDeviceProperties(
     uint32_t *pCount,
     zes_driver_pci_device_properties_t *pProperties) {
     return L0::zesDriverGetPciDeviceProperties(hDriver, pCount, pProperties);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesDriverGetApiVersion(
+    zes_driver_handle_t hDriver,
+    zes_api_version_t *pVersion) {
+    return L0::zesDriverGetApiVersion(hDriver, pVersion);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesInfoLogDecoderContextCreateExt(
+    zes_info_log_handle_t hInfoLog,
+    zes_info_log_decoder_context_handle_t *phDecoderContext) {
+    return L0::zesInfoLogDecoderContextCreateExt(
+        hInfoLog,
+        phDecoderContext);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesInfoLogDecoderContextGetFieldInfoExt(
+    zes_info_log_decoder_context_handle_t hDecoderContext,
+    uint32_t *pCount,
+    zes_info_log_decodable_field_info_ext_t *pFieldInfos) {
+    return L0::zesInfoLogDecoderContextGetFieldInfoExt(
+        hDecoderContext,
+        pCount,
+        pFieldInfos);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesInfoLogDecoderContextDecodeStartExt(
+    zes_info_log_decoder_context_handle_t hDecoderContext,
+    uint32_t size,
+    const uint8_t *pBuffer,
+    uint32_t recordCount,
+    const zes_info_log_metadata_ext_t *pDescriptors) {
+    return L0::zesInfoLogDecoderContextDecodeStartExt(
+        hDecoderContext,
+        size,
+        pBuffer,
+        recordCount,
+        pDescriptors);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesInfoLogDecoderContextReadFieldExt(
+    zes_info_log_decoder_context_handle_t hDecoderContext,
+    uint32_t fieldId,
+    uint32_t recordId,
+    void *pOutBuffer,
+    size_t bufferLen,
+    size_t *pBytesCopied) {
+    return L0::zesInfoLogDecoderContextReadFieldExt(
+        hDecoderContext,
+        fieldId,
+        recordId,
+        pOutBuffer,
+        bufferLen,
+        pBytesCopied);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesInfoLogDecoderContextDecodeStopExt(
+    zes_info_log_decoder_context_handle_t hDecoderContext) {
+    return L0::zesInfoLogDecoderContextDecodeStopExt(
+        hDecoderContext);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesInfoLogDecoderContextDeleteExt(
+    zes_info_log_handle_t hInfoLog,
+    zes_info_log_decoder_context_handle_t hDecoderContext) {
+    return L0::zesInfoLogDecoderContextDeleteExt(
+        hInfoLog,
+        hDecoderContext);
 }
 }

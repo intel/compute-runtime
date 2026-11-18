@@ -86,6 +86,7 @@ constexpr DdiEntryExpectation entries[] = {
     DDI_ENTRY(pfnEnumInfoLogsExt, ZE_API_VERSION_1_19),
     DDI_ENTRY(pfnGetProperties, ZE_API_VERSION_1_19),
     DDI_ENTRY(pfnGetPciDeviceProperties, ZE_API_VERSION_1_20),
+    DDI_ENTRY(pfnGetApiVersion, ZE_API_VERSION_1_21),
 };
 } // namespace zesDriver
 
@@ -345,6 +346,18 @@ constexpr DdiEntryExpectation entries[] = {
 };
 } // namespace zesInfoLogInstance
 
+namespace zesInfoLogDecoderContext {
+using Table = zes_info_log_decoder_context_dditable_t;
+constexpr DdiEntryExpectation entries[] = {
+    DDI_ENTRY(pfnCreateExt, ZE_API_VERSION_1_21),
+    DDI_ENTRY(pfnGetFieldInfoExt, ZE_API_VERSION_1_21),
+    DDI_ENTRY(pfnDecodeStartExt, ZE_API_VERSION_1_21),
+    DDI_ENTRY(pfnReadFieldExt, ZE_API_VERSION_1_21),
+    DDI_ENTRY(pfnDecodeStopExt, ZE_API_VERSION_1_21),
+    DDI_ENTRY(pfnDeleteExt, ZE_API_VERSION_1_21),
+};
+} // namespace zesInfoLogDecoderContext
+
 constexpr DdiTableExpectation ddiTables[] = {
     DDI_TABLE(zesDevice, zesGetDeviceProcAddrTable),
     DDI_TABLE(zesGlobal, zesGetGlobalProcAddrTable),
@@ -372,6 +385,7 @@ constexpr DdiTableExpectation ddiTables[] = {
     DDI_TABLE(zesOverclock, zesGetOverclockProcAddrTable),
     DDI_TABLE(zesInfoLog, zesGetInfoLogProcAddrTable),
     DDI_TABLE(zesInfoLogInstance, zesGetInfoLogInstanceProcAddrTable),
+    DDI_TABLE(zesInfoLogDecoderContext, zesGetInfoLogDecoderContextProcAddrTable),
 };
 
 } // namespace ZesDdiTableManifest

@@ -173,8 +173,8 @@ ze_result_t GlobalOperationsImp::deviceGetProperties(zes_device_properties_t *pP
             if (result != ZE_RESULT_SUCCESS) {
                 memPageOfflineProperties->maxOfflinePages = 0;
             }
-        } else if (pNext->stype == ZES_INTEL_STRUCTURE_TYPE_DEVICE_SOC_UID_EXP_PROPERTIES) {
-            auto socUidProperties = reinterpret_cast<zes_intel_device_soc_uid_exp_properties_t *>(pNext);
+        } else if (pNext->stype == ZES_STRUCTURE_TYPE_DEVICE_SOC_UID_EXT_PROPERTIES) {
+            auto socUidProperties = reinterpret_cast<zes_device_soc_uid_ext_properties_t *>(pNext);
             socUidProperties->socUid = {};
             pOsGlobalOperations->getSocUid(&socUidProperties->socUid);
         }

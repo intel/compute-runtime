@@ -7,8 +7,6 @@
 
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/sysman/source/api/engine/sysman_engine.h"
-#include "level_zero/sysman/source/api/info_log/sysman_info_log.h"
-#include "level_zero/sysman/source/api/info_log/sysman_info_log_decoder_context.h"
 #include "level_zero/sysman/source/device/sysman_device.h"
 #include "level_zero/sysman/source/driver/sysman_driver.h"
 #include "level_zero/sysman/source/driver/sysman_driver_handle_imp.h"
@@ -70,13 +68,7 @@ ze_result_t ZE_APICALL zesIntelDriverEventListenExp(zes_driver_handle_t hDriver,
 }
 
 ze_result_t ZE_APICALL zesIntelDriverGetApiVersionExp(zes_driver_handle_t hDriver, zes_intel_api_version_exp_t *pVersion) {
-    if (L0::sysmanInitFromCore) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    } else if (L0::Sysman::sysmanOnlyInit) {
-        return L0::Sysman::SysmanDriverHandle::fromHandle(hDriver)->getApiVersion(pVersion);
-    } else {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
-    }
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 ze_result_t ZE_APICALL zesIntelInfoLogGetPropertiesExp(zes_intel_info_log_handle_t hInfoLog, zes_intel_info_log_properties_exp_t *pInfoLogProperties) {
@@ -112,68 +104,32 @@ ze_result_t ZE_APICALL zesIntelInfoLogInstanceDeleteExp(zes_intel_info_log_insta
 
 ze_result_t ZE_APICALL zesIntelInfoLogCreateDecoderContextExp(zes_info_log_handle_t hInfoLog,
                                                               zes_intel_info_log_decoder_context_handle_t *phDecoderContext) {
-    if (L0::sysmanInitFromCore) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    } else if (L0::Sysman::sysmanOnlyInit) {
-        return L0::Sysman::InfoLog::fromHandle(hInfoLog)->infoLogCreateDecoderContext(phDecoderContext);
-    } else {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
-    }
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 ze_result_t ZE_APICALL zesIntelInfoLogDecoderGetFieldInfoExp(zes_intel_info_log_decoder_context_handle_t hDecoderContext, uint32_t *pCount,
                                                              zes_intel_info_log_decodable_field_info_exp_t *pFieldInfos) {
-    if (L0::sysmanInitFromCore) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    } else if (L0::Sysman::sysmanOnlyInit) {
-        return L0::Sysman::InfoLogDecoderContext::fromHandle(hDecoderContext)->getFieldInfo(pCount, pFieldInfos);
-    } else {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
-    }
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 ze_result_t ZE_APICALL zesIntelInfoLogDecoderDecodeStartExp(zes_intel_info_log_decoder_context_handle_t hDecoderContext, uint32_t size,
                                                             const uint8_t *pBuffer, uint32_t recordCount,
                                                             const zes_info_log_metadata_ext_t *pDescriptors) {
-    if (L0::sysmanInitFromCore) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    } else if (L0::Sysman::sysmanOnlyInit) {
-        return L0::Sysman::InfoLogDecoderContext::fromHandle(hDecoderContext)->decodeStart(size, pBuffer, recordCount, pDescriptors);
-    } else {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
-    }
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 ze_result_t ZE_APICALL zesIntelInfoLogDecoderReadFieldExp(zes_intel_info_log_decoder_context_handle_t hDecoderContext, uint32_t fieldId,
                                                           uint32_t recordId, void *pOutBuffer, size_t bufferLen, size_t *pBytesCopied) {
-    if (L0::sysmanInitFromCore) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    } else if (L0::Sysman::sysmanOnlyInit) {
-        return L0::Sysman::InfoLogDecoderContext::fromHandle(hDecoderContext)->readField(fieldId, recordId, pOutBuffer, bufferLen, pBytesCopied);
-    } else {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
-    }
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 ze_result_t ZE_APICALL zesIntelInfoLogDecoderDecodeStopExp(zes_intel_info_log_decoder_context_handle_t hDecoderContext) {
-    if (L0::sysmanInitFromCore) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    } else if (L0::Sysman::sysmanOnlyInit) {
-        return L0::Sysman::InfoLogDecoderContext::fromHandle(hDecoderContext)->decodeStop();
-    } else {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
-    }
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 ze_result_t ZE_APICALL zesIntelInfoLogDeleteDecoderContextExp(zes_info_log_handle_t hInfoLog,
                                                               zes_intel_info_log_decoder_context_handle_t *phDecoderContext) {
-    if (L0::sysmanInitFromCore) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    } else if (L0::Sysman::sysmanOnlyInit) {
-        return L0::Sysman::InfoLog::fromHandle(hInfoLog)->infoLogDeleteDecoderContext(phDecoderContext);
-    } else {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
-    }
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 ze_result_t ZE_APICALL zesIntelEngineStartActivityCollectionExp(zes_engine_handle_t hEngine) {

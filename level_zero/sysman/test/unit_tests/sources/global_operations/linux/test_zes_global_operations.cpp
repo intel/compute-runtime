@@ -2226,7 +2226,7 @@ TEST_F(SysmanGlobalOperationsFixture,
 HWTEST2_F(SysmanGlobalOperationsFixture,
           GivenValidDeviceUidSysfsNodeWhenCallingZesDeviceGetPropertiesForSocUidPropertiesThenValidSocUidIsReturned, IsCRI) {
     zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    zes_intel_device_soc_uid_exp_properties_t socUidProperties = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_SOC_UID_EXP_PROPERTIES};
+    zes_device_soc_uid_ext_properties_t socUidProperties = {ZES_STRUCTURE_TYPE_DEVICE_SOC_UID_EXT_PROPERTIES};
     memset(socUidProperties.socUid.id, 0xff, ZES_MAX_UUID_SIZE);
     properties.pNext = &socUidProperties;
 
@@ -2240,7 +2240,7 @@ HWTEST2_F(SysmanGlobalOperationsFixture,
           GivenDeviceUidSysfsReadFailsWhenCallingZesDeviceGetPropertiesForSocUidPropertiesThenSocUidIsZero, IsCRI) {
     pSysfsAccess->mockSocUidReadResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
     zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    zes_intel_device_soc_uid_exp_properties_t socUidProperties = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_SOC_UID_EXP_PROPERTIES};
+    zes_device_soc_uid_ext_properties_t socUidProperties = {ZES_STRUCTURE_TYPE_DEVICE_SOC_UID_EXT_PROPERTIES};
     memset(socUidProperties.socUid.id, 0xff, ZES_MAX_UUID_SIZE);
     properties.pNext = &socUidProperties;
 
@@ -2253,7 +2253,7 @@ HWTEST2_F(SysmanGlobalOperationsFixture,
 HWTEST2_F(SysmanGlobalOperationsFixture,
           GivenUnsupportedProductWhenCallingZesDeviceGetPropertiesForSocUidPropertiesThenSocUidIsZero, IsNotCRI) {
     zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    zes_intel_device_soc_uid_exp_properties_t socUidProperties = {ZES_INTEL_STRUCTURE_TYPE_DEVICE_SOC_UID_EXP_PROPERTIES};
+    zes_device_soc_uid_ext_properties_t socUidProperties = {ZES_STRUCTURE_TYPE_DEVICE_SOC_UID_EXT_PROPERTIES};
     memset(socUidProperties.socUid.id, 0xff, ZES_MAX_UUID_SIZE);
     properties.pNext = &socUidProperties;
 

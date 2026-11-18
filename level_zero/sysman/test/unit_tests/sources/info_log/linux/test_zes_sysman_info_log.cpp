@@ -3948,9 +3948,9 @@ TEST_F(SysmanInfoLogFixture, GivenLinuxBackendWhenDecodingRecordsThenTheCperDeco
     ASSERT_EQ(ZE_RESULT_SUCCESS, infoLogImp.getFieldInfo(&count, nullptr));
     ASSERT_EQ(2u, count);
 
-    std::vector<zes_intel_info_log_decodable_field_info_exp_t> fieldInfos(count);
+    std::vector<zes_info_log_decodable_field_info_ext_t> fieldInfos(count);
     for (auto &fieldInfo : fieldInfos) {
-        fieldInfo.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_DECODABLE_FIELD_INFO_EXP;
+        fieldInfo.stype = ZES_STRUCTURE_TYPE_INFO_LOG_DECODABLE_FIELD_INFO_EXT;
     }
     ASSERT_EQ(ZE_RESULT_SUCCESS, infoLogImp.getFieldInfo(&count, fieldInfos.data()));
     ASSERT_EQ(2u, count);
@@ -4035,7 +4035,7 @@ TEST_F(SysmanInfoLogFixture, GivenLinuxBackendAndARecordWithoutAFruIdWhenReading
     EXPECT_EQ(0u, bytesCopied);
 }
 
-TEST_F(SysmanInfoLogFixture, GivenValidInfoLogHandleWhenCreatingAndDeletingADecoderContextThenSuccessIsReturnedAndTheHandleIsCleared) {
+TEST_F(SysmanInfoLogFixture, GivenValidInfoLogHandleWhenCreatingAndDeletingADecoderContextThenSuccessIsReturned) {
     VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
         auto mockApi = std::make_unique<PublicTraceFsApi>();
         mockApi->loadEntryPointsFromBase();
@@ -4045,12 +4045,11 @@ TEST_F(SysmanInfoLogFixture, GivenValidInfoLogHandleWhenCreatingAndDeletingADeco
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+    zes_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextCreateExt(infoLogHandles[0], &hDecoderContext));
     ASSERT_NE(nullptr, hDecoderContext);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDeleteDecoderContextExp(infoLogHandles[0], &hDecoderContext));
-    EXPECT_EQ(nullptr, hDecoderContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextDeleteExt(infoLogHandles[0], hDecoderContext));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenADecoderContextWhenGettingFieldInfoThenTheSameFieldsAreReportedBeforeDuringAndAfterABatch) {
@@ -4063,17 +4062,17 @@ TEST_F(SysmanInfoLogFixture, GivenADecoderContextWhenGettingFieldInfoThenTheSame
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+    zes_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextCreateExt(infoLogHandles[0], &hDecoderContext));
 
     auto readFieldNames = [hDecoderContext]() {
         uint32_t count = 0;
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderGetFieldInfoExp(hDecoderContext, &count, nullptr));
-        std::vector<zes_intel_info_log_decodable_field_info_exp_t> fieldInfos(count);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextGetFieldInfoExt(hDecoderContext, &count, nullptr));
+        std::vector<zes_info_log_decodable_field_info_ext_t> fieldInfos(count);
         for (auto &fieldInfo : fieldInfos) {
-            fieldInfo.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_DECODABLE_FIELD_INFO_EXP;
+            fieldInfo.stype = ZES_STRUCTURE_TYPE_INFO_LOG_DECODABLE_FIELD_INFO_EXT;
         }
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderGetFieldInfoExp(hDecoderContext, &count, fieldInfos.data()));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextGetFieldInfoExt(hDecoderContext, &count, fieldInfos.data()));
         std::vector<std::string> names;
         for (const auto &fieldInfo : fieldInfos) {
             names.push_back(fieldInfo.name);
@@ -4088,15 +4087,15 @@ TEST_F(SysmanInfoLogFixture, GivenADecoderContextWhenGettingFieldInfoThenTheSame
     zes_info_log_metadata_ext_t descriptor = {};
     descriptor.stype = ZES_STRUCTURE_TYPE_INFO_LOG_METADATA_EXT;
     descriptor.lengthOfData = static_cast<uint32_t>(record.size());
-    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderDecodeStartExp(hDecoderContext, static_cast<uint32_t>(record.size()), record.data(), 1, &descriptor));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextDecodeStartExt(hDecoderContext, static_cast<uint32_t>(record.size()), record.data(), 1, &descriptor));
     auto duringBatch = readFieldNames();
-    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderDecodeStopExp(hDecoderContext));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextDecodeStopExt(hDecoderContext));
     auto afterBatch = readFieldNames();
 
     EXPECT_EQ(beforeBatch, duringBatch);
     EXPECT_EQ(beforeBatch, afterBatch);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDeleteDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextDeleteExt(infoLogHandles[0], hDecoderContext));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenRecordsReadWithMetadataWhenDecodingThenOneTriplePerRecordIsReturned) {
@@ -4131,31 +4130,31 @@ TEST_F(SysmanInfoLogFixture, GivenRecordsReadWithMetadataWhenDecodingThenOneTrip
     }
     ASSERT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceReadWithMetadataExt(hInstance, noTimeout, &size, buffer.data(), &recordCount, descriptors.data(), nullptr));
 
-    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+    zes_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextCreateExt(infoLogHandles[0], &hDecoderContext));
 
     uint32_t fieldCount = 0;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderGetFieldInfoExp(hDecoderContext, &fieldCount, nullptr));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextGetFieldInfoExt(hDecoderContext, &fieldCount, nullptr));
     ASSERT_EQ(2u, fieldCount);
-    std::vector<zes_intel_info_log_decodable_field_info_exp_t> fieldInfos(fieldCount);
+    std::vector<zes_info_log_decodable_field_info_ext_t> fieldInfos(fieldCount);
     for (auto &fieldInfo : fieldInfos) {
-        fieldInfo.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_DECODABLE_FIELD_INFO_EXP;
+        fieldInfo.stype = ZES_STRUCTURE_TYPE_INFO_LOG_DECODABLE_FIELD_INFO_EXT;
     }
-    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderGetFieldInfoExp(hDecoderContext, &fieldCount, fieldInfos.data()));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextGetFieldInfoExt(hDecoderContext, &fieldCount, fieldInfos.data()));
     ASSERT_STREQ("sig_id", fieldInfos[0].name);
     ASSERT_STREQ("uuid", fieldInfos[1].name);
 
-    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderDecodeStartExp(hDecoderContext, size, buffer.data(), recordCount, descriptors.data()));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextDecodeStartExt(hDecoderContext, size, buffer.data(), recordCount, descriptors.data()));
 
     for (uint32_t r = 0; r < recordCount; r++) {
         uint32_t sigId = 0;
         size_t bytesCopied = 0;
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderReadFieldExp(hDecoderContext, fieldInfos[0].fieldId, r, &sigId, sizeof(sigId), &bytesCopied)) << "record " << r;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextReadFieldExt(hDecoderContext, fieldInfos[0].fieldId, r, &sigId, sizeof(sigId), &bytesCopied)) << "record " << r;
         EXPECT_EQ(mockSampleCperLogSigIds[r], sigId) << "record " << r;
     }
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderDecodeStopExp(hDecoderContext));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDeleteDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextDecodeStopExt(hDecoderContext));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextDeleteExt(infoLogHandles[0], hDecoderContext));
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogInstanceDeleteExt(hInstance));
 }
 
@@ -4169,29 +4168,29 @@ TEST_F(SysmanInfoLogFixture, GivenADecoderContextWhenTheRecordBufferIsLeftUnmodi
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+    zes_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextCreateExt(infoLogHandles[0], &hDecoderContext));
 
     auto record = MockCperRecord::sampleRecord();
     zes_info_log_metadata_ext_t descriptor = {};
     descriptor.stype = ZES_STRUCTURE_TYPE_INFO_LOG_METADATA_EXT;
     descriptor.lengthOfData = static_cast<uint32_t>(record.size());
 
-    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderDecodeStartExp(hDecoderContext, static_cast<uint32_t>(record.size()), record.data(), 1, &descriptor));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextDecodeStartExt(hDecoderContext, static_cast<uint32_t>(record.size()), record.data(), 1, &descriptor));
 
     for (uint32_t attempt = 0; attempt < 3u; attempt++) {
         uint32_t sigId = 0;
         size_t bytesCopied = 0;
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderReadFieldExp(hDecoderContext, CperDecoder::sigIdField, 0, &sigId, sizeof(sigId), &bytesCopied)) << "attempt " << attempt;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextReadFieldExt(hDecoderContext, CperDecoder::sigIdField, 0, &sigId, sizeof(sigId), &bytesCopied)) << "attempt " << attempt;
         EXPECT_EQ(9u, sigId) << "attempt " << attempt;
 
         MockCperRecord::Guid uuid = {};
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderReadFieldExp(hDecoderContext, CperDecoder::uuidField, 0, uuid.data(), uuid.size(), &bytesCopied)) << "attempt " << attempt;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextReadFieldExt(hDecoderContext, CperDecoder::uuidField, 0, uuid.data(), uuid.size(), &bytesCopied)) << "attempt " << attempt;
         EXPECT_EQ(MockCperRecord::sampleFruId, uuid) << "attempt " << attempt;
     }
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderDecodeStopExp(hDecoderContext));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDeleteDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextDecodeStopExt(hDecoderContext));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextDeleteExt(infoLogHandles[0], hDecoderContext));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenADecoderContextWithNoActiveBatchWhenReadingAFieldOrStoppingThenUninitializedIsReturned) {
@@ -4204,25 +4203,25 @@ TEST_F(SysmanInfoLogFixture, GivenADecoderContextWithNoActiveBatchWhenReadingAFi
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+    zes_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextCreateExt(infoLogHandles[0], &hDecoderContext));
 
     uint32_t sigId = 0;
     size_t bytesCopied = 0;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesIntelInfoLogDecoderReadFieldExp(hDecoderContext, CperDecoder::sigIdField, 0, &sigId, sizeof(sigId), &bytesCopied));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesIntelInfoLogDecoderDecodeStopExp(hDecoderContext));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesInfoLogDecoderContextReadFieldExt(hDecoderContext, CperDecoder::sigIdField, 0, &sigId, sizeof(sigId), &bytesCopied));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesInfoLogDecoderContextDecodeStopExt(hDecoderContext));
 
     auto record = MockCperRecord::sampleRecord();
     zes_info_log_metadata_ext_t descriptor = {};
     descriptor.stype = ZES_STRUCTURE_TYPE_INFO_LOG_METADATA_EXT;
     descriptor.lengthOfData = static_cast<uint32_t>(record.size());
-    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderDecodeStartExp(hDecoderContext, static_cast<uint32_t>(record.size()), record.data(), 1, &descriptor));
-    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderDecodeStopExp(hDecoderContext));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextDecodeStartExt(hDecoderContext, static_cast<uint32_t>(record.size()), record.data(), 1, &descriptor));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextDecodeStopExt(hDecoderContext));
 
-    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesIntelInfoLogDecoderReadFieldExp(hDecoderContext, CperDecoder::sigIdField, 0, &sigId, sizeof(sigId), &bytesCopied));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesIntelInfoLogDecoderDecodeStopExp(hDecoderContext));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesInfoLogDecoderContextReadFieldExt(hDecoderContext, CperDecoder::sigIdField, 0, &sigId, sizeof(sigId), &bytesCopied));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesInfoLogDecoderContextDecodeStopExt(hDecoderContext));
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDeleteDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextDeleteExt(infoLogHandles[0], hDecoderContext));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenADecoderContextWithAnActiveBatchWhenStartingAnotherThenHandleObjectInUseIsReturnedAndTheBatchIsKept) {
@@ -4235,25 +4234,25 @@ TEST_F(SysmanInfoLogFixture, GivenADecoderContextWithAnActiveBatchWhenStartingAn
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+    zes_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextCreateExt(infoLogHandles[0], &hDecoderContext));
 
     auto record = MockCperRecord::sampleRecord();
     zes_info_log_metadata_ext_t descriptor = {};
     descriptor.stype = ZES_STRUCTURE_TYPE_INFO_LOG_METADATA_EXT;
     descriptor.lengthOfData = static_cast<uint32_t>(record.size());
-    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderDecodeStartExp(hDecoderContext, static_cast<uint32_t>(record.size()), record.data(), 1, &descriptor));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextDecodeStartExt(hDecoderContext, static_cast<uint32_t>(record.size()), record.data(), 1, &descriptor));
 
     EXPECT_EQ(ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE,
-              zesIntelInfoLogDecoderDecodeStartExp(hDecoderContext, static_cast<uint32_t>(record.size()), record.data(), 1, &descriptor));
+              zesInfoLogDecoderContextDecodeStartExt(hDecoderContext, static_cast<uint32_t>(record.size()), record.data(), 1, &descriptor));
 
     uint32_t sigId = 0;
     size_t bytesCopied = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderReadFieldExp(hDecoderContext, CperDecoder::sigIdField, 0, &sigId, sizeof(sigId), &bytesCopied));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextReadFieldExt(hDecoderContext, CperDecoder::sigIdField, 0, &sigId, sizeof(sigId), &bytesCopied));
     EXPECT_EQ(9u, sigId);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderDecodeStopExp(hDecoderContext));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDeleteDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextDecodeStopExt(hDecoderContext));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextDeleteExt(infoLogHandles[0], hDecoderContext));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenADecoderContextWhenStartingASecondBatchAfterEndingTheFirstThenTheSecondBatchIsDecoded) {
@@ -4266,8 +4265,8 @@ TEST_F(SysmanInfoLogFixture, GivenADecoderContextWhenStartingASecondBatchAfterEn
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+    zes_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextCreateExt(infoLogHandles[0], &hDecoderContext));
 
     MockCperRecord secondBuilder;
     secondBuilder.addSection(MockCperRecord::acceleratorGuid, 64, 20, 31);
@@ -4281,18 +4280,18 @@ TEST_F(SysmanInfoLogFixture, GivenADecoderContextWhenStartingASecondBatchAfterEn
     size_t bytesCopied = 0;
 
     descriptor.lengthOfData = static_cast<uint32_t>(first.size());
-    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderDecodeStartExp(hDecoderContext, static_cast<uint32_t>(first.size()), first.data(), 1, &descriptor));
-    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderReadFieldExp(hDecoderContext, CperDecoder::sigIdField, 0, &sigId, sizeof(sigId), &bytesCopied));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextDecodeStartExt(hDecoderContext, static_cast<uint32_t>(first.size()), first.data(), 1, &descriptor));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextReadFieldExt(hDecoderContext, CperDecoder::sigIdField, 0, &sigId, sizeof(sigId), &bytesCopied));
     EXPECT_EQ(9u, sigId);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderDecodeStopExp(hDecoderContext));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextDecodeStopExt(hDecoderContext));
 
     descriptor.lengthOfData = static_cast<uint32_t>(second.size());
-    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderDecodeStartExp(hDecoderContext, static_cast<uint32_t>(second.size()), second.data(), 1, &descriptor));
-    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderReadFieldExp(hDecoderContext, CperDecoder::sigIdField, 0, &sigId, sizeof(sigId), &bytesCopied));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextDecodeStartExt(hDecoderContext, static_cast<uint32_t>(second.size()), second.data(), 1, &descriptor));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextReadFieldExt(hDecoderContext, CperDecoder::sigIdField, 0, &sigId, sizeof(sigId), &bytesCopied));
     EXPECT_EQ(31u, sigId);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderDecodeStopExp(hDecoderContext));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextDecodeStopExt(hDecoderContext));
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDeleteDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextDeleteExt(infoLogHandles[0], hDecoderContext));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenTwoDecoderContextsOfOneInfoLogWhenEachDecodesABatchThenEachReadsBackItsOwnValues) {
@@ -4305,10 +4304,10 @@ TEST_F(SysmanInfoLogFixture, GivenTwoDecoderContextsOfOneInfoLogWhenEachDecodesA
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_decoder_context_handle_t hFirstContext = nullptr;
-    zes_intel_info_log_decoder_context_handle_t hSecondContext = nullptr;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateDecoderContextExp(infoLogHandles[0], &hFirstContext));
-    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateDecoderContextExp(infoLogHandles[0], &hSecondContext));
+    zes_info_log_decoder_context_handle_t hFirstContext = nullptr;
+    zes_info_log_decoder_context_handle_t hSecondContext = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextCreateExt(infoLogHandles[0], &hFirstContext));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextCreateExt(infoLogHandles[0], &hSecondContext));
     ASSERT_NE(hFirstContext, hSecondContext);
 
     MockCperRecord secondBuilder;
@@ -4323,20 +4322,20 @@ TEST_F(SysmanInfoLogFixture, GivenTwoDecoderContextsOfOneInfoLogWhenEachDecodesA
     secondDescriptor.stype = ZES_STRUCTURE_TYPE_INFO_LOG_METADATA_EXT;
     secondDescriptor.lengthOfData = static_cast<uint32_t>(second.size());
 
-    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderDecodeStartExp(hFirstContext, static_cast<uint32_t>(first.size()), first.data(), 1, &firstDescriptor));
-    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderDecodeStartExp(hSecondContext, static_cast<uint32_t>(second.size()), second.data(), 1, &secondDescriptor));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextDecodeStartExt(hFirstContext, static_cast<uint32_t>(first.size()), first.data(), 1, &firstDescriptor));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextDecodeStartExt(hSecondContext, static_cast<uint32_t>(second.size()), second.data(), 1, &secondDescriptor));
 
     uint32_t sigId = 0;
     size_t bytesCopied = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderReadFieldExp(hFirstContext, CperDecoder::sigIdField, 0, &sigId, sizeof(sigId), &bytesCopied));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextReadFieldExt(hFirstContext, CperDecoder::sigIdField, 0, &sigId, sizeof(sigId), &bytesCopied));
     EXPECT_EQ(9u, sigId);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderReadFieldExp(hSecondContext, CperDecoder::sigIdField, 0, &sigId, sizeof(sigId), &bytesCopied));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextReadFieldExt(hSecondContext, CperDecoder::sigIdField, 0, &sigId, sizeof(sigId), &bytesCopied));
     EXPECT_EQ(31u, sigId);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderDecodeStopExp(hFirstContext));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderDecodeStopExp(hSecondContext));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDeleteDecoderContextExp(infoLogHandles[0], &hFirstContext));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDeleteDecoderContextExp(infoLogHandles[0], &hSecondContext));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextDecodeStopExt(hFirstContext));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextDecodeStopExt(hSecondContext));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextDeleteExt(infoLogHandles[0], hFirstContext));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextDeleteExt(infoLogHandles[0], hSecondContext));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenInvalidDecodeStartArgumentsWhenStartingABatchThenTheArgumentIsRejectedAndNoBatchIsActive) {
@@ -4349,25 +4348,25 @@ TEST_F(SysmanInfoLogFixture, GivenInvalidDecodeStartArgumentsWhenStartingABatchT
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+    zes_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextCreateExt(infoLogHandles[0], &hDecoderContext));
 
     auto record = MockCperRecord::sampleRecord();
     zes_info_log_metadata_ext_t descriptor = {};
     descriptor.stype = ZES_STRUCTURE_TYPE_INFO_LOG_METADATA_EXT;
     descriptor.lengthOfData = static_cast<uint32_t>(record.size());
 
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, zesIntelInfoLogDecoderDecodeStartExp(hDecoderContext, static_cast<uint32_t>(record.size()), nullptr, 1, &descriptor));
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, zesIntelInfoLogDecoderDecodeStartExp(hDecoderContext, static_cast<uint32_t>(record.size()), record.data(), 1, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, zesInfoLogDecoderContextDecodeStartExt(hDecoderContext, static_cast<uint32_t>(record.size()), nullptr, 1, &descriptor));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, zesInfoLogDecoderContextDecodeStartExt(hDecoderContext, static_cast<uint32_t>(record.size()), record.data(), 1, nullptr));
 
     descriptor.lengthOfData = static_cast<uint32_t>(record.size()) + 1u;
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zesIntelInfoLogDecoderDecodeStartExp(hDecoderContext, static_cast<uint32_t>(record.size()), record.data(), 1, &descriptor));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zesInfoLogDecoderContextDecodeStartExt(hDecoderContext, static_cast<uint32_t>(record.size()), record.data(), 1, &descriptor));
 
     uint32_t sigId = 0;
     size_t bytesCopied = 0;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesIntelInfoLogDecoderReadFieldExp(hDecoderContext, CperDecoder::sigIdField, 0, &sigId, sizeof(sigId), &bytesCopied));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesInfoLogDecoderContextReadFieldExt(hDecoderContext, CperDecoder::sigIdField, 0, &sigId, sizeof(sigId), &bytesCopied));
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDeleteDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextDeleteExt(infoLogHandles[0], hDecoderContext));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenZeroRecordsWhenStartingABatchThenSuccessIsReturnedAndEveryReadIsRejected) {
@@ -4380,17 +4379,17 @@ TEST_F(SysmanInfoLogFixture, GivenZeroRecordsWhenStartingABatchThenSuccessIsRetu
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+    zes_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextCreateExt(infoLogHandles[0], &hDecoderContext));
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderDecodeStartExp(hDecoderContext, 0, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextDecodeStartExt(hDecoderContext, 0, nullptr, 0, nullptr));
 
     uint32_t sigId = 0;
     size_t bytesCopied = 0;
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zesIntelInfoLogDecoderReadFieldExp(hDecoderContext, CperDecoder::sigIdField, 0, &sigId, sizeof(sigId), &bytesCopied));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zesInfoLogDecoderContextReadFieldExt(hDecoderContext, CperDecoder::sigIdField, 0, &sigId, sizeof(sigId), &bytesCopied));
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderDecodeStopExp(hDecoderContext));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDeleteDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextDecodeStopExt(hDecoderContext));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextDeleteExt(infoLogHandles[0], hDecoderContext));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenInvalidReadFieldArgumentsWhenReadingAFieldThenTheArgumentIsRejected) {
@@ -4403,23 +4402,23 @@ TEST_F(SysmanInfoLogFixture, GivenInvalidReadFieldArgumentsWhenReadingAFieldThen
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+    zes_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextCreateExt(infoLogHandles[0], &hDecoderContext));
 
     auto record = MockCperRecord::sampleRecord();
     zes_info_log_metadata_ext_t descriptor = {};
     descriptor.stype = ZES_STRUCTURE_TYPE_INFO_LOG_METADATA_EXT;
     descriptor.lengthOfData = static_cast<uint32_t>(record.size());
-    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderDecodeStartExp(hDecoderContext, static_cast<uint32_t>(record.size()), record.data(), 1, &descriptor));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextDecodeStartExt(hDecoderContext, static_cast<uint32_t>(record.size()), record.data(), 1, &descriptor));
 
     uint32_t sigId = 0;
     size_t bytesCopied = 0;
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zesIntelInfoLogDecoderReadFieldExp(hDecoderContext, CperDecoder::sigIdField, 1, &sigId, sizeof(sigId), &bytesCopied));
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zesIntelInfoLogDecoderReadFieldExp(hDecoderContext, CperDecoder::fieldCount, 0, &sigId, sizeof(sigId), &bytesCopied));
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_SIZE, zesIntelInfoLogDecoderReadFieldExp(hDecoderContext, CperDecoder::sigIdField, 0, &sigId, sizeof(sigId) - 1, &bytesCopied));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zesInfoLogDecoderContextReadFieldExt(hDecoderContext, CperDecoder::sigIdField, 1, &sigId, sizeof(sigId), &bytesCopied));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zesInfoLogDecoderContextReadFieldExt(hDecoderContext, CperDecoder::fieldCount, 0, &sigId, sizeof(sigId), &bytesCopied));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_SIZE, zesInfoLogDecoderContextReadFieldExt(hDecoderContext, CperDecoder::sigIdField, 0, &sigId, sizeof(sigId) - 1, &bytesCopied));
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderDecodeStopExp(hDecoderContext));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDeleteDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextDecodeStopExt(hDecoderContext));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextDeleteExt(infoLogHandles[0], hDecoderContext));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenADecoderContextWithAnActiveBatchWhenDeletingItThenSuccessIsReturned) {
@@ -4432,17 +4431,16 @@ TEST_F(SysmanInfoLogFixture, GivenADecoderContextWithAnActiveBatchWhenDeletingIt
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+    zes_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextCreateExt(infoLogHandles[0], &hDecoderContext));
 
     auto record = MockCperRecord::sampleRecord();
     zes_info_log_metadata_ext_t descriptor = {};
     descriptor.stype = ZES_STRUCTURE_TYPE_INFO_LOG_METADATA_EXT;
     descriptor.lengthOfData = static_cast<uint32_t>(record.size());
-    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderDecodeStartExp(hDecoderContext, static_cast<uint32_t>(record.size()), record.data(), 1, &descriptor));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextDecodeStartExt(hDecoderContext, static_cast<uint32_t>(record.size()), record.data(), 1, &descriptor));
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDeleteDecoderContextExp(infoLogHandles[0], &hDecoderContext));
-    EXPECT_EQ(nullptr, hDecoderContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextDeleteExt(infoLogHandles[0], hDecoderContext));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenADecoderContextOfAnotherInfoLogWhenDeletingItThenInvalidArgumentIsReturned) {
@@ -4455,16 +4453,14 @@ TEST_F(SysmanInfoLogFixture, GivenADecoderContextOfAnotherInfoLogWhenDeletingItT
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+    zes_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextCreateExt(infoLogHandles[0], &hDecoderContext));
 
     InfoLogImp otherInfoLog(ZES_INFO_LOG_FORMAT_EXT_CPER);
     otherInfoLog.init();
-    auto hNotOwned = hDecoderContext;
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, otherInfoLog.infoLogDeleteDecoderContext(&hNotOwned));
-    EXPECT_EQ(hDecoderContext, hNotOwned);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, otherInfoLog.infoLogDeleteDecoderContext(hDecoderContext));
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDeleteDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextDeleteExt(infoLogHandles[0], hDecoderContext));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenADecoderContextWhichIsNotDeletedWhenTheInfoLogIsTornDownThenItIsDestroyed) {
@@ -4474,7 +4470,7 @@ TEST_F(SysmanInfoLogFixture, GivenADecoderContextWhichIsNotDeletedWhenTheInfoLog
         return mockApi;
     });
 
-    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    zes_info_log_decoder_context_handle_t hDecoderContext = nullptr;
     {
         InfoLogImp infoLog(ZES_INFO_LOG_FORMAT_EXT_CPER);
         infoLog.init();
@@ -4493,8 +4489,7 @@ TEST_F(SysmanInfoLogFixture, GivenANullDecoderContextHandleWhenDeletingADecoderC
     auto infoLogHandles = getInfoLogHandles(handleCount);
     ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    zes_intel_info_log_decoder_context_handle_t hNull = nullptr;
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_HANDLE, zesIntelInfoLogDeleteDecoderContextExp(infoLogHandles[0], &hNull));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_HANDLE, zesInfoLogDecoderContextDeleteExt(infoLogHandles[0], nullptr));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenNonCperInfoLogFormatWhenCreatingADecoderContextThenUnsupportedFeatureIsReturned) {
@@ -4513,8 +4508,8 @@ TEST_F(SysmanInfoLogFixture, GivenNonCperInfoLogFormatWhenCreatingADecoderContex
     pInfoLogImp->pOsInfoLog = std::move(pMockOsInfoLog);
     pInfoLogImp->init();
 
-    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelInfoLogCreateDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+    zes_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesInfoLogDecoderContextCreateExt(infoLogHandles[0], &hDecoderContext));
     EXPECT_EQ(nullptr, hDecoderContext);
 }
 
@@ -4534,8 +4529,8 @@ TEST_F(SysmanInfoLogFixture, GivenInfoLogPropertiesNotCapturedWhenCreatingADecod
     pInfoLogImp->pOsInfoLog = std::move(pMockOsInfoLog);
     pInfoLogImp->init();
 
-    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogCreateDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+    zes_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesInfoLogDecoderContextCreateExt(infoLogHandles[0], &hDecoderContext));
     EXPECT_EQ(nullptr, hDecoderContext);
 }
 
@@ -4555,27 +4550,27 @@ TEST_F(SysmanInfoLogFixture, GivenADecoderContextWhenCallingItsFunctionsThenTheB
     pInfoLogImp->pOsInfoLog = std::move(pMockOsInfoLog);
     pInfoLogImp->init();
 
-    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+    zes_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextCreateExt(infoLogHandles[0], &hDecoderContext));
 
     uint32_t count = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderGetFieldInfoExp(hDecoderContext, &count, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextGetFieldInfoExt(hDecoderContext, &count, nullptr));
     EXPECT_EQ(1u, pRawMockOsInfoLog->getFieldInfoCallCount);
 
     auto record = MockCperRecord::sampleRecord();
     zes_info_log_metadata_ext_t descriptor = {};
     descriptor.stype = ZES_STRUCTURE_TYPE_INFO_LOG_METADATA_EXT;
     descriptor.lengthOfData = static_cast<uint32_t>(record.size());
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderDecodeStartExp(hDecoderContext, static_cast<uint32_t>(record.size()), record.data(), 1, &descriptor));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextDecodeStartExt(hDecoderContext, static_cast<uint32_t>(record.size()), record.data(), 1, &descriptor));
     EXPECT_EQ(1u, pRawMockOsInfoLog->validateRecordsCallCount);
 
     uint32_t value = 0;
     size_t bytesCopied = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderReadFieldExp(hDecoderContext, 0, 0, &value, sizeof(value), &bytesCopied));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextReadFieldExt(hDecoderContext, 0, 0, &value, sizeof(value), &bytesCopied));
     EXPECT_EQ(1u, pRawMockOsInfoLog->readFieldCallCount);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDecoderDecodeStopExp(hDecoderContext));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDeleteDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextDecodeStopExt(hDecoderContext));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextDeleteExt(infoLogHandles[0], hDecoderContext));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenABackendWhichFailsToDecodeWhenStartingABatchThenTheErrorIsReturnedAndNoBatchIsActive) {
@@ -4594,23 +4589,52 @@ TEST_F(SysmanInfoLogFixture, GivenABackendWhichFailsToDecodeWhenStartingABatchTh
     pInfoLogImp->pOsInfoLog = std::move(pMockOsInfoLog);
     pInfoLogImp->init();
 
-    zes_intel_info_log_decoder_context_handle_t hDecoderContext = nullptr;
-    ASSERT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogCreateDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+    zes_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextCreateExt(infoLogHandles[0], &hDecoderContext));
 
     auto record = MockCperRecord::sampleRecord();
     zes_info_log_metadata_ext_t descriptor = {};
     descriptor.stype = ZES_STRUCTURE_TYPE_INFO_LOG_METADATA_EXT;
     descriptor.lengthOfData = static_cast<uint32_t>(record.size());
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesIntelInfoLogDecoderDecodeStartExp(hDecoderContext, static_cast<uint32_t>(record.size()), record.data(), 1, &descriptor));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesInfoLogDecoderContextDecodeStartExt(hDecoderContext, static_cast<uint32_t>(record.size()), record.data(), 1, &descriptor));
 
     uint32_t value = 0;
     size_t bytesCopied = 0;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesIntelInfoLogDecoderReadFieldExp(hDecoderContext, 0, 0, &value, sizeof(value), &bytesCopied));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesInfoLogDecoderContextReadFieldExt(hDecoderContext, 0, 0, &value, sizeof(value), &bytesCopied));
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesIntelInfoLogDeleteDecoderContextExp(infoLogHandles[0], &hDecoderContext));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextDeleteExt(infoLogHandles[0], hDecoderContext));
 }
 
 TEST_F(SysmanInfoLogFixture, GivenSysmanInitFromCoreOrNoInitWhenCallingTheDecoderEntryPointsThenErrorIsReturned) {
+    auto hInfoLog = reinterpret_cast<zes_info_log_handle_t>(0x1);
+    auto hDecoderContext = reinterpret_cast<zes_info_log_decoder_context_handle_t>(0x2);
+    zes_info_log_decoder_context_handle_t hCreated = nullptr;
+    uint32_t count = 0;
+    uint32_t value = 0;
+    size_t bytesCopied = 0;
+
+    {
+        VariableBackup<bool> sysmanInitFromCoreBackup(&L0::sysmanInitFromCore, true);
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesInfoLogDecoderContextCreateExt(hInfoLog, &hCreated));
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesInfoLogDecoderContextGetFieldInfoExt(hDecoderContext, &count, nullptr));
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesInfoLogDecoderContextDecodeStartExt(hDecoderContext, 0, nullptr, 0, nullptr));
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesInfoLogDecoderContextReadFieldExt(hDecoderContext, 0, 0, &value, sizeof(value), &bytesCopied));
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesInfoLogDecoderContextDecodeStopExt(hDecoderContext));
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesInfoLogDecoderContextDeleteExt(hInfoLog, hDecoderContext));
+    }
+    {
+        VariableBackup<bool> sysmanInitFromCoreBackup(&L0::sysmanInitFromCore, false);
+        VariableBackup<bool> sysmanOnlyInitBackup(&L0::Sysman::sysmanOnlyInit, false);
+        EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesInfoLogDecoderContextCreateExt(hInfoLog, &hCreated));
+        EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesInfoLogDecoderContextGetFieldInfoExt(hDecoderContext, &count, nullptr));
+        EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesInfoLogDecoderContextDecodeStartExt(hDecoderContext, 0, nullptr, 0, nullptr));
+        EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesInfoLogDecoderContextReadFieldExt(hDecoderContext, 0, 0, &value, sizeof(value), &bytesCopied));
+        EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesInfoLogDecoderContextDecodeStopExt(hDecoderContext));
+        EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesInfoLogDecoderContextDeleteExt(hInfoLog, hDecoderContext));
+    }
+}
+
+TEST_F(SysmanInfoLogFixture, GivenExperimentalDecoderEntryPointsWhenCalledThenUnsupportedFeatureIsReturned) {
     auto hInfoLog = reinterpret_cast<zes_info_log_handle_t>(0x1);
     auto hDecoderContext = reinterpret_cast<zes_intel_info_log_decoder_context_handle_t>(0x2);
     zes_intel_info_log_decoder_context_handle_t hCreated = nullptr;
@@ -4618,46 +4642,41 @@ TEST_F(SysmanInfoLogFixture, GivenSysmanInitFromCoreOrNoInitWhenCallingTheDecode
     uint32_t value = 0;
     size_t bytesCopied = 0;
 
-    {
-        VariableBackup<bool> sysmanInitFromCoreBackup(&L0::sysmanInitFromCore, true);
-        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelInfoLogCreateDecoderContextExp(hInfoLog, &hCreated));
-        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelInfoLogDecoderGetFieldInfoExp(hDecoderContext, &count, nullptr));
-        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelInfoLogDecoderDecodeStartExp(hDecoderContext, 0, nullptr, 0, nullptr));
-        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelInfoLogDecoderReadFieldExp(hDecoderContext, 0, 0, &value, sizeof(value), &bytesCopied));
-        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelInfoLogDecoderDecodeStopExp(hDecoderContext));
-        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesIntelInfoLogDeleteDecoderContextExp(hInfoLog, &hDecoderContext));
-    }
-    {
-        VariableBackup<bool> sysmanInitFromCoreBackup(&L0::sysmanInitFromCore, false);
-        VariableBackup<bool> sysmanOnlyInitBackup(&L0::Sysman::sysmanOnlyInit, false);
-        EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesIntelInfoLogCreateDecoderContextExp(hInfoLog, &hCreated));
-        EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesIntelInfoLogDecoderGetFieldInfoExp(hDecoderContext, &count, nullptr));
-        EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesIntelInfoLogDecoderDecodeStartExp(hDecoderContext, 0, nullptr, 0, nullptr));
-        EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesIntelInfoLogDecoderReadFieldExp(hDecoderContext, 0, 0, &value, sizeof(value), &bytesCopied));
-        EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesIntelInfoLogDecoderDecodeStopExp(hDecoderContext));
-        EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesIntelInfoLogDeleteDecoderContextExp(hInfoLog, &hDecoderContext));
-    }
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, ::zesIntelInfoLogCreateDecoderContextExp(hInfoLog, &hCreated));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, ::zesIntelInfoLogDecoderGetFieldInfoExp(hDecoderContext, &count, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, ::zesIntelInfoLogDecoderDecodeStartExp(hDecoderContext, 0, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, ::zesIntelInfoLogDecoderReadFieldExp(hDecoderContext, 0, 0, &value, sizeof(value), &bytesCopied));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, ::zesIntelInfoLogDecoderDecodeStopExp(hDecoderContext));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, ::zesIntelInfoLogDeleteDecoderContextExp(hInfoLog, &hDecoderContext));
+
+    decltype(&::zesIntelInfoLogCreateDecoderContextExp) pfnCreateDecoderContextExp = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelInfoLogCreateDecoderContextExp", reinterpret_cast<void **>(&pfnCreateDecoderContextExp)));
+    ASSERT_NE(nullptr, pfnCreateDecoderContextExp);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pfnCreateDecoderContextExp(hInfoLog, &hCreated));
 }
 
-TEST_F(SysmanInfoLogFixture, GivenDecoderEntryPointNamesWhenGettingExtensionFunctionAddressThenFunctionsAreReturned) {
-    void *funPtr = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelInfoLogCreateDecoderContextExp", &funPtr));
-    EXPECT_EQ(reinterpret_cast<void *>(zesIntelInfoLogCreateDecoderContextExp), funPtr);
+TEST_F(SysmanInfoLogFixture, GivenDecoderContextHandleWhenCheckingItsDdiTableThenSysmanDispatchIsPopulated) {
+    VariableBackup<decltype(LinuxInfoLogImp::createTraceFsApi)> createTraceFsApiBackup(&LinuxInfoLogImp::createTraceFsApi, []() -> std::unique_ptr<TraceFsApi> {
+        auto mockApi = std::make_unique<PublicTraceFsApi>();
+        mockApi->loadEntryPointsFromBase();
+        return mockApi;
+    });
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelInfoLogDecoderGetFieldInfoExp", &funPtr));
-    EXPECT_EQ(reinterpret_cast<void *>(zesIntelInfoLogDecoderGetFieldInfoExp), funPtr);
+    auto infoLogHandles = getInfoLogHandles(handleCount);
+    ASSERT_NE(nullptr, infoLogHandles[0]);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelInfoLogDecoderDecodeStartExp", &funPtr));
-    EXPECT_EQ(reinterpret_cast<void *>(zesIntelInfoLogDecoderDecodeStartExp), funPtr);
+    zes_info_log_decoder_context_handle_t hDecoderContext = nullptr;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextCreateExt(infoLogHandles[0], &hDecoderContext));
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelInfoLogDecoderReadFieldExp", &funPtr));
-    EXPECT_EQ(reinterpret_cast<void *>(zesIntelInfoLogDecoderReadFieldExp), funPtr);
+    auto pDecoderContextDdi = reinterpret_cast<ze_handle_t *>(hDecoderContext);
+    EXPECT_EQ(&L0::globalDriverDispatch.sysman, pDecoderContextDdi->pSysman);
+    EXPECT_NE(nullptr, pDecoderContextDdi->pSysman->InfoLogDecoderContext->pfnGetFieldInfoExt);
+    EXPECT_NE(nullptr, pDecoderContextDdi->pSysman->InfoLogDecoderContext->pfnDecodeStartExt);
+    EXPECT_NE(nullptr, pDecoderContextDdi->pSysman->InfoLogDecoderContext->pfnReadFieldExt);
+    EXPECT_NE(nullptr, pDecoderContextDdi->pSysman->InfoLogDecoderContext->pfnDecodeStopExt);
+    EXPECT_NE(nullptr, pDecoderContextDdi->pSysman->InfoLogDecoderContext->pfnDeleteExt);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelInfoLogDecoderDecodeStopExp", &funPtr));
-    EXPECT_EQ(reinterpret_cast<void *>(zesIntelInfoLogDecoderDecodeStopExp), funPtr);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverGetExtensionFunctionAddress(driverHandle->toHandle(), "zesIntelInfoLogDeleteDecoderContextExp", &funPtr));
-    EXPECT_EQ(reinterpret_cast<void *>(zesIntelInfoLogDeleteDecoderContextExp), funPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesInfoLogDecoderContextDeleteExt(infoLogHandles[0], hDecoderContext));
 }
 
 } // namespace ult

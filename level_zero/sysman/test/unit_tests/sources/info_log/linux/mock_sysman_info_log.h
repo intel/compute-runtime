@@ -986,7 +986,7 @@ class MockOsInfoLog : public OsInfoLog {
     ze_result_t readFieldResult = ZE_RESULT_SUCCESS;
     uint32_t readFieldCallCount = 0;
 
-    ze_result_t getFieldInfo(uint32_t *pCount, zes_intel_info_log_decodable_field_info_exp_t *) override {
+    ze_result_t getFieldInfo(uint32_t *pCount, zes_info_log_decodable_field_info_ext_t *) override {
         getFieldInfoCallCount++;
         if (getFieldInfoResult == ZE_RESULT_SUCCESS && *pCount == 0) {
             *pCount = 1u;

@@ -18,7 +18,7 @@ namespace Sysman {
 InfoLogDecoderContextImp::InfoLogDecoderContextImp(OsInfoLog *pOsInfoLog)
     : pOsInfoLog(pOsInfoLog) {}
 
-ze_result_t InfoLogDecoderContextImp::getFieldInfo(uint32_t *pCount, zes_intel_info_log_decodable_field_info_exp_t *pFieldInfos) {
+ze_result_t InfoLogDecoderContextImp::getFieldInfo(uint32_t *pCount, zes_info_log_decodable_field_info_ext_t *pFieldInfos) {
     return this->pOsInfoLog->getFieldInfo(pCount, pFieldInfos);
 }
 

@@ -8,7 +8,6 @@
 #pragma once
 
 #include <level_zero/zes_api.h>
-#include <level_zero/zes_intel_gpu_sysman.h>
 
 #include <memory>
 #include <vector>
@@ -28,7 +27,7 @@ class OsInfoLog {
                                        zes_info_log_instance_ext_desc_t *pDesc,
                                        std::unique_ptr<OsInfoLogInstance> &pOsInfoLogInstance) = 0;
 
-    virtual ze_result_t getFieldInfo(uint32_t *pCount, zes_intel_info_log_decodable_field_info_exp_t *pFieldInfos) = 0;
+    virtual ze_result_t getFieldInfo(uint32_t *pCount, zes_info_log_decodable_field_info_ext_t *pFieldInfos) = 0;
     virtual ze_result_t validateRecords(uint32_t size, uint32_t recordCount,
                                         const zes_info_log_metadata_ext_t *pDescriptors) = 0;
     virtual ze_result_t readField(uint32_t size, const uint8_t *pBuffer, const zes_info_log_metadata_ext_t *pDescriptors,

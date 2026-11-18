@@ -77,7 +77,7 @@ DriverDispatch::DriverDispatch() {
     this->tools.Debug = &this->toolsDebug;
 
     this->sysman.isValidFlag = true;
-    this->sysman.version = ZE_API_VERSION_1_20;
+    this->sysman.version = ZE_API_VERSION_1_21;
     this->sysman.Global = &this->sysmanGlobal;
     this->sysman.Device = &this->sysmanDevice;
     this->sysman.DeviceExp = &this->sysmanDeviceExp;
@@ -104,6 +104,7 @@ DriverDispatch::DriverDispatch() {
     this->sysman.VFManagementExp = &this->sysmanVFManagementExp;
     this->sysman.InfoLog = &this->sysmanInfoLog;
     this->sysman.InfoLogInstance = &this->sysmanInfoLogInstance;
+    this->sysman.InfoLogDecoderContext = &this->sysmanInfoLogDecoderContext;
 
     this->runtime.isValidFlag = true;
     this->runtime.version = ZE_API_VERSION_1_14;
@@ -509,8 +510,15 @@ DriverDispatch::DriverDispatch() {
     this->sysmanInfoLogInstance.pfnReadWithMetadataExt = L0::zesInfoLogInstanceReadWithMetadataExt;
     this->sysmanInfoLogInstance.pfnPeekWithMetadataExt = L0::zesInfoLogInstancePeekWithMetadataExt;
     this->sysmanInfoLogInstance.pfnDeleteExt = L0::zesInfoLogInstanceDeleteExt;
+    this->sysmanInfoLogDecoderContext.pfnCreateExt = L0::zesInfoLogDecoderContextCreateExt;
+    this->sysmanInfoLogDecoderContext.pfnGetFieldInfoExt = L0::zesInfoLogDecoderContextGetFieldInfoExt;
+    this->sysmanInfoLogDecoderContext.pfnDecodeStartExt = L0::zesInfoLogDecoderContextDecodeStartExt;
+    this->sysmanInfoLogDecoderContext.pfnReadFieldExt = L0::zesInfoLogDecoderContextReadFieldExt;
+    this->sysmanInfoLogDecoderContext.pfnDecodeStopExt = L0::zesInfoLogDecoderContextDecodeStopExt;
+    this->sysmanInfoLogDecoderContext.pfnDeleteExt = L0::zesInfoLogDecoderContextDeleteExt;
     this->sysmanDriver.pfnGetProperties = L0::zesDriverGetProperties;
     this->sysmanDriver.pfnGetPciDeviceProperties = L0::zesDriverGetPciDeviceProperties;
+    this->sysmanDriver.pfnGetApiVersion = L0::zesDriverGetApiVersion;
     this->sysmanDriverExp.pfnGetDeviceByUuidExp = L0::zesDriverGetDeviceByUuidExp;
     this->sysmanOverclock.pfnGetDomainProperties = L0::zesOverclockGetDomainProperties;
     this->sysmanOverclock.pfnGetDomainVFProperties = L0::zesOverclockGetDomainVFProperties;

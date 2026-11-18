@@ -109,6 +109,7 @@ struct DriverDispatch {
     zes_vf_management_exp_dditable_t sysmanVFManagementExp{};
     zes_info_log_dditable_t sysmanInfoLog{};
     zes_info_log_instance_dditable_t sysmanInfoLogInstance{};
+    zes_info_log_decoder_context_dditable_t sysmanInfoLogDecoderContext{};
 
     zer_global_dditable_t runtimeGlobal{};
 };

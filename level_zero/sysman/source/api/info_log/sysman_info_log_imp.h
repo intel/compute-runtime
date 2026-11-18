@@ -29,8 +29,8 @@ class InfoLogImp : public InfoLog {
     ze_result_t infoLogCreateInstance(const char *pInstanceName,
                                       zes_info_log_instance_ext_desc_t *pDesc,
                                       zes_info_log_instance_handle_t *phInfoLogInstance) override;
-    ze_result_t infoLogCreateDecoderContext(zes_intel_info_log_decoder_context_handle_t *phDecoderContext) override;
-    ze_result_t infoLogDeleteDecoderContext(zes_intel_info_log_decoder_context_handle_t *phDecoderContext) override;
+    ze_result_t infoLogCreateDecoderContext(zes_info_log_decoder_context_handle_t *phDecoderContext) override;
+    ze_result_t infoLogDeleteDecoderContext(zes_info_log_decoder_context_handle_t hDecoderContext) override;
     ze_result_t destroyInstance(InfoLogInstance *pInstance) override;
     void destroyAllInstances() override;
 

@@ -38,10 +38,10 @@ struct ReadOutput {
     uint32_t recordCount() const { return static_cast<uint32_t>(descriptors.size()); }
 };
 
-std::vector<zes_intel_info_log_decodable_field_info_exp_t> makeFieldInfos(uint32_t count) {
-    std::vector<zes_intel_info_log_decodable_field_info_exp_t> fieldInfos(count);
+std::vector<zes_info_log_decodable_field_info_ext_t> makeFieldInfos(uint32_t count) {
+    std::vector<zes_info_log_decodable_field_info_ext_t> fieldInfos(count);
     for (auto &fieldInfo : fieldInfos) {
-        fieldInfo.stype = ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_DECODABLE_FIELD_INFO_EXP;
+        fieldInfo.stype = ZES_STRUCTURE_TYPE_INFO_LOG_DECODABLE_FIELD_INFO_EXT;
     }
     return fieldInfos;
 }
@@ -89,19 +89,19 @@ TEST(SysmanInfoLogCperDecoderTest, GivenFullCountWhenGettingFieldInfoThenSigIdAn
 
     EXPECT_STREQ("sig_id", fieldInfos[0].name);
     EXPECT_EQ(CperDecoder::sigIdField, fieldInfos[0].fieldId);
-    EXPECT_EQ(ZES_INTEL_INFO_LOG_FIELD_TYPE_EXP_UINT32, fieldInfos[0].type);
+    EXPECT_EQ(ZES_INFO_LOG_FIELD_TYPE_EXT_UINT32, fieldInfos[0].type);
     EXPECT_EQ(sizeof(uint32_t), fieldInfos[0].requiredBytes);
     EXPECT_EQ(1u, fieldInfos[0].elementCount);
 
     EXPECT_STREQ("uuid", fieldInfos[1].name);
     EXPECT_EQ(CperDecoder::uuidField, fieldInfos[1].fieldId);
-    EXPECT_EQ(ZES_INTEL_INFO_LOG_FIELD_TYPE_EXP_RAW_BYTES, fieldInfos[1].type);
+    EXPECT_EQ(ZES_INFO_LOG_FIELD_TYPE_EXT_RAW_BYTES, fieldInfos[1].type);
     EXPECT_EQ(static_cast<size_t>(ZES_MAX_UUID_SIZE), fieldInfos[1].requiredBytes);
     EXPECT_EQ(static_cast<size_t>(ZES_MAX_UUID_SIZE), fieldInfos[1].elementCount);
 
     for (const auto &fieldInfo : fieldInfos) {
-        EXPECT_EQ(ZES_INTEL_STRUCTURE_TYPE_INFO_LOG_DECODABLE_FIELD_INFO_EXP, fieldInfo.stype);
-        EXPECT_STREQ("1.0", fieldInfo.versionString);
+        EXPECT_EQ(ZES_STRUCTURE_TYPE_INFO_LOG_DECODABLE_FIELD_INFO_EXT, fieldInfo.stype);
+        EXPECT_STREQ("1.1", fieldInfo.versionString);
         EXPECT_LT(0u, strlen(fieldInfo.desc));
     }
 }

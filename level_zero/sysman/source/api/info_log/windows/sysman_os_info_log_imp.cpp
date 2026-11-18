@@ -26,7 +26,7 @@ ze_result_t WddmInfoLogImp::createInstance(const char *pInstanceName,
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t WddmInfoLogImp::getFieldInfo(uint32_t *pCount, zes_intel_info_log_decodable_field_info_exp_t *pFieldInfos) {
+ze_result_t WddmInfoLogImp::getFieldInfo(uint32_t *pCount, zes_info_log_decodable_field_info_ext_t *pFieldInfos) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 

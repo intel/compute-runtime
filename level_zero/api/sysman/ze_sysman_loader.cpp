@@ -104,6 +104,7 @@ zesGetDriverProcAddrTable(
     fillDdiEntry(pDdiTable->pfnEnumInfoLogsExt, L0::globalDriverDispatch.sysmanDriver.pfnEnumInfoLogsExt, version, ZE_API_VERSION_1_19);
     fillDdiEntry(pDdiTable->pfnGetProperties, L0::globalDriverDispatch.sysmanDriver.pfnGetProperties, version, ZE_API_VERSION_1_19);
     fillDdiEntry(pDdiTable->pfnGetPciDeviceProperties, L0::globalDriverDispatch.sysmanDriver.pfnGetPciDeviceProperties, version, ZE_API_VERSION_1_20);
+    fillDdiEntry(pDdiTable->pfnGetApiVersion, L0::globalDriverDispatch.sysmanDriver.pfnGetApiVersion, version, ZE_API_VERSION_1_21);
     return result;
 }
 
@@ -439,6 +440,28 @@ zesGetInfoLogInstanceProcAddrTable(
     fillDdiEntry(pDdiTable->pfnReadWithMetadataExt, L0::globalDriverDispatch.sysmanInfoLogInstance.pfnReadWithMetadataExt, version, ZE_API_VERSION_1_19);
     fillDdiEntry(pDdiTable->pfnPeekWithMetadataExt, L0::globalDriverDispatch.sysmanInfoLogInstance.pfnPeekWithMetadataExt, version, ZE_API_VERSION_1_19);
     fillDdiEntry(pDdiTable->pfnDeleteExt, L0::globalDriverDispatch.sysmanInfoLogInstance.pfnDeleteExt, version, ZE_API_VERSION_1_19);
+
+    return result;
+}
+
+ZE_DLLEXPORT ze_result_t ZE_APICALL
+zesGetInfoLogDecoderContextProcAddrTable(
+    ze_api_version_t version,
+    zes_info_log_decoder_context_dditable_t *pDdiTable) {
+    if (nullptr == pDdiTable) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    if (ZE_MAJOR_VERSION(L0::globalDriverDispatch.sysman.version) != ZE_MAJOR_VERSION(version)) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
+    }
+    ze_result_t result = ZE_RESULT_SUCCESS;
+
+    fillDdiEntry(pDdiTable->pfnCreateExt, L0::globalDriverDispatch.sysmanInfoLogDecoderContext.pfnCreateExt, version, ZE_API_VERSION_1_21);
+    fillDdiEntry(pDdiTable->pfnGetFieldInfoExt, L0::globalDriverDispatch.sysmanInfoLogDecoderContext.pfnGetFieldInfoExt, version, ZE_API_VERSION_1_21);
+    fillDdiEntry(pDdiTable->pfnDecodeStartExt, L0::globalDriverDispatch.sysmanInfoLogDecoderContext.pfnDecodeStartExt, version, ZE_API_VERSION_1_21);
+    fillDdiEntry(pDdiTable->pfnReadFieldExt, L0::globalDriverDispatch.sysmanInfoLogDecoderContext.pfnReadFieldExt, version, ZE_API_VERSION_1_21);
+    fillDdiEntry(pDdiTable->pfnDecodeStopExt, L0::globalDriverDispatch.sysmanInfoLogDecoderContext.pfnDecodeStopExt, version, ZE_API_VERSION_1_21);
+    fillDdiEntry(pDdiTable->pfnDeleteExt, L0::globalDriverDispatch.sysmanInfoLogDecoderContext.pfnDeleteExt, version, ZE_API_VERSION_1_21);
 
     return result;
 }
