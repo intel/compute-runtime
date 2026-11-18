@@ -425,6 +425,8 @@ cl_int Kernel::cloneKernel(Kernel *pSourceKernel) {
                            pSourceKernel->getKernelArgInfo(i).allocId);
             break;
         case BUFFER_OBJ:
+        case IMAGE_OBJ:
+        case SAMPLER_OBJ:
             setArg(i, pSourceKernel->getKernelArgInfo(i).size, &pSourceKernel->getKernelArgInfo(i).object);
             break;
         default:
