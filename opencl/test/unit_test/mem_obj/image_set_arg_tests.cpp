@@ -8,6 +8,7 @@
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/surface.h"
@@ -166,6 +167,21 @@ HWTEST_F(ImageSetArgTest, GivenNormalImageWhenSettingImageArgThenCorrectValueIsS
 
     EXPECT_EQ(srcImage->getImageDesc().image_width, computedWidth);
     EXPECT_EQ(0u, surfaceState.getMIPCountLOD());
+}
+
+HWTEST_F(ImageSetArgTest, givenSurfaceStateMemoryWithStaleContentWhenSettingImageArgThenSurfaceStateIsTheSameAsForZeroedMemory) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    const auto rootDeviceIndex = pClDevice->getRootDeviceIndex();
+    const auto surfaceStateSize = pKernel->getGfxCoreHelper().getRenderSurfaceStateSize(pClDevice->getDevice().getRootDeviceEnvironment());
+
+    RENDER_SURFACE_STATE zeroedSurfaceState{};
+    RENDER_SURFACE_STATE staleSurfaceState;
+    memset(&staleSurfaceState, 0xFF, sizeof(staleSurfaceState));
+
+    srcImage->setImageArg(&zeroedSurfaceState, false, 0, rootDeviceIndex);
+    srcImage->setImageArg(&staleSurfaceState, false, 0, rootDeviceIndex);
+
+    EXPECT_EQ(0, memcmp(&zeroedSurfaceState, &staleSurfaceState, surfaceStateSize));
 }
 
 HWTEST_F(ImageSetArgTest, givenMippedImageWhenSettingMipTailStartLodThenProgramValueFromGmmResourceinfo) {

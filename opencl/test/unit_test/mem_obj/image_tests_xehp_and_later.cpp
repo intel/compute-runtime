@@ -409,15 +409,12 @@ HWTEST2_F(XeHPAndLaterImageTests, givenMediaCompressionWhenAppendingNewAllocatio
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     auto hwInfo = defaultHwInfo.get();
     cl_image_desc imgDesc = Image2dDefaults::imageDesc;
-    imgDesc.num_samples = 8;
     std::unique_ptr<Image> image(Image2dHelperUlt<>::create(&context, &imgDesc));
-    auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
+    RENDER_SURFACE_STATE surfaceState{};
     auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
-    static_cast<MockGmmResourceInfo *>(imageHw->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getDefaultGmm()->gmmResourceInfo.get())->mockResourceCreateParams.Flags.Info.MediaCompressed = true;
-    surfaceState.setAuxiliarySurfaceMode(RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
-
-    EncodeSurfaceState<FamilyType>::setImageAuxParamsForCCS(&surfaceState,
-                                                            imageHw->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getDefaultGmm());
+    auto gmm = imageHw->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getDefaultGmm();
+    static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get())->mockResourceCreateParams.Flags.Info.MediaCompressed = true;
+    gmm->setCompressionEnabled(true);
 
     imageHw->setImageArg(&surfaceState, false, 0, context.getDevice(0)->getRootDeviceIndex());
 

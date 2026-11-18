@@ -124,6 +124,24 @@ HWTEST_F(SamplerSetArgTest, WhenSettingKernelArgSamplerThenSamplerStatesAreCorre
     EXPECT_EQ(0u, surfaces.size());
 }
 
+HWTEST_F(SamplerSetArgTest, givenSamplerStateMemoryWithStaleContentWhenSettingSamplerArgThenSamplerStateIsTheSameAsForZeroedMemoryAndIndirectStatePointerIsKept) {
+    using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
+    constexpr uint32_t indirectStatePointer = 0x1c0;
+    auto sampler = createSampler();
+
+    SAMPLER_STATE zeroedSamplerState{};
+    SAMPLER_STATE staleSamplerState;
+    memset(&staleSamplerState, 0xFF, sizeof(staleSamplerState));
+    zeroedSamplerState.setIndirectStatePointer(indirectStatePointer);
+    staleSamplerState.setIndirectStatePointer(indirectStatePointer);
+
+    sampler->setArg(&zeroedSamplerState, pClDevice->getRootDeviceEnvironment());
+    sampler->setArg(&staleSamplerState, pClDevice->getRootDeviceEnvironment());
+
+    EXPECT_EQ(0, memcmp(&zeroedSamplerState, &staleSamplerState, sizeof(SAMPLER_STATE)));
+    EXPECT_EQ(indirectStatePointer, staleSamplerState.getIndirectStatePointer());
+}
+
 HWTEST_F(SamplerSetArgTest, WhenGettingKernelArgThenSamplerIsReturned) {
     auto sampler = createSampler();
     cl_sampler samplerObj = sampler.get();

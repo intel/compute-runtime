@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,9 @@ template <typename GfxFamily>
 void SamplerHw<GfxFamily>::setArg(void *memory, const RootDeviceEnvironment &rootDeviceEnvironment) {
     using SAMPLER_STATE = typename GfxFamily::SAMPLER_STATE;
     auto samplerState = reinterpret_cast<SAMPLER_STATE *>(memory);
+    const auto indirectStatePointer = static_cast<uint32_t>(samplerState->getIndirectStatePointer());
+    *samplerState = GfxFamily::cmdInitSamplerState;
+    samplerState->setIndirectStatePointer(indirectStatePointer);
     samplerState->setNonNormalizedCoordinateEnable(!this->normalizedCoordinates);
 
     samplerState->setLodPreclampMode(SAMPLER_STATE::LOD_PRECLAMP_MODE::LOD_PRECLAMP_MODE_OGL);

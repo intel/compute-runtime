@@ -33,8 +33,9 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
 
     const bool usesReducedSurfaceState = gfxCoreHelper.isReducedSurfaceStateInUse(rootDeviceEnvironment);
-    RENDER_SURFACE_STATE localSurfaceState = GfxFamily::cmdInitRenderSurfaceState;
+    RENDER_SURFACE_STATE localSurfaceState;
     auto surfaceState = usesReducedSurfaceState ? &localSurfaceState : reinterpret_cast<RENDER_SURFACE_STATE *>(memory);
+    *surfaceState = GfxFamily::cmdInitRenderSurfaceState;
 
     auto graphicsAllocation = multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex);
     auto gmm = graphicsAllocation->getDefaultGmm();
