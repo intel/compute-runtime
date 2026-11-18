@@ -392,14 +392,26 @@ ze_result_t MutableCommandListImp::getNextCommandId(const ze_mutable_command_id_
     return getNextCommandIdImpl(commandIdDesc, numKernels, phKernels, pCommandId);
 }
 
+ze_result_t MutableCommandListImp::getNextCommandIdForGraphNode(ze_mutable_graph_node_exp_flags_t flags, uint32_t numKernels, ze_kernel_handle_t *phKernels, uint64_t *pCommandId) {
+    static_assert(ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_ARGUMENT == MutableFlag::kernelArgument, "ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_ARGUMENT and MutableFlag::kernelArgument must be the same value");
+    static_assert(ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_SIZE == MutableFlag::groupSize, "ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_SIZE and MutableFlag::groupSize must be the same value");
+    static_assert(ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT == MutableFlag::groupCount, "ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT and MutableFlag::groupCount must be the same value");
+    static_assert(ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GLOBAL_OFFSET == MutableFlag::globalOffset, "ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GLOBAL_OFFSET and MutableFlag::globalOffset must be the same value");
+    static_assert(ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_SIGNAL_EVENT == MutableFlag::signalEvent, "ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_SIGNAL_EVENT and MutableFlag::signalEvent must be the same value");
+    static_assert(ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_WAIT_EVENTS == MutableFlag::waitEvents, "ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_WAIT_EVENTS and MutableFlag::waitEvents must be the same value");
+    static_assert(ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_INSTRUCTION == MutableFlag::kernelInstruction, "ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_INSTRUCTION and MutableFlag::kernelInstruction must be the same value");
+
+    PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL getNextCommandIdForGraphNode cmdlist: %p, flags: %u, numKernels: %u\n", this, flags, numKernels);
+
+    MutableCommandIdDescriptor commandIdDesc;
+    commandIdDesc.flags = static_cast<MutableFlags>(flags);
+    return getNextCommandIdImpl(commandIdDesc, numKernels, phKernels, pCommandId);
+}
+
 auto MutableCommandListImp::getNextCommandIdImpl(const MutableCommandIdDescriptor &commandIdDesc, uint32_t numKernels, ze_kernel_handle_t *phKernels, uint64_t *pCommandId) -> ze_result_t {
     AppendKernelMutation nextAppendKernel;
     AppendEventMutation nextAppendEvents;
-    if (commandIdDesc.flags == 0) {
-        this->nextMutationFlags = MutableFlag::all & (~MutableFlag::kernelInstruction);
-    } else {
-        this->nextMutationFlags = commandIdDesc.flags;
-    }
+    this->nextMutationFlags = getEffectiveMutableFlags(commandIdDesc.flags);
     if (kernelInstructionMutationEnabled(this->nextMutationFlags)) {
         if (numKernels == 0) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -521,6 +533,106 @@ ze_result_t MutableCommandListImp::updateMutableCommands(const ze_mutable_comman
     }
 
     return validateCooperativeKernelDispatches();
+}
+
+ze_result_t MutableCommandListImp::updateMutableCommandForGraphNode(uint64_t commandId, ze_mutable_graph_node_exp_flags_t flags, const void *pUpdateDesc) {
+    PRINT_STRING(NEO::debugManager.flags.PrintMclData.get(), stderr, "MCL updateMutableCommandForGraphNode cmdlist: %p commandId: %" PRIu64 " flags: %u\n", this, commandId, flags);
+    const void *next = pUpdateDesc;
+    while (next != nullptr) {
+        ze_result_t result = ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        const ze_base_desc_t *extendedDesc = reinterpret_cast<const ze_base_desc_t *>(next);
+        if (extendedDesc->stype == ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_KERNEL_ARGUMENT_EXP_DESC) {
+            const auto kernelArgumentDesc = reinterpret_cast<const ze_graph_node_update_kernel_argument_exp_desc_t *>(next);
+            result = this->applyMutation(KernelArgumentMutationDescriptor{
+                .commandId = commandId,
+                .argIndex = kernelArgumentDesc->argIndex,
+                .argSize = kernelArgumentDesc->argSize,
+                .argValue = kernelArgumentDesc->pArgValue,
+            });
+        } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_GROUP_COUNT_EXP_DESC) {
+            const auto groupCountDesc = reinterpret_cast<const ze_graph_node_update_group_count_exp_desc_t *>(next);
+            result = this->applyMutation(GroupCountMutationDescriptor{
+                .commandId = commandId,
+                .groupCount = groupCountDesc->groupCount,
+            });
+        } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_GROUP_SIZE_EXP_DESC) {
+            const auto groupSizeDesc = reinterpret_cast<const ze_graph_node_update_group_size_exp_desc_t *>(next);
+            result = this->applyMutation(GroupSizeMutationDescriptor{
+                .commandId = commandId,
+                .groupSize = {groupSizeDesc->groupSize.groupSizeX, groupSizeDesc->groupSize.groupSizeY, groupSizeDesc->groupSize.groupSizeZ},
+            });
+        } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_GLOBAL_OFFSET_EXP_DESC) {
+            const auto globalOffsetDesc = reinterpret_cast<const ze_graph_node_update_global_offset_exp_desc_t *>(next);
+            result = this->applyMutation(GlobalOffsetMutationDescriptor{
+                .commandId = commandId,
+                .globalOffset = {globalOffsetDesc->offsetX, globalOffsetDesc->offsetY, globalOffsetDesc->offsetZ},
+            });
+        } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_SIGNAL_EVENT_EXP_DESC) {
+            const auto signalEventDesc = reinterpret_cast<const ze_graph_node_update_signal_event_exp_desc_t *>(next);
+            result = this->updateMutableCommandSignalEvent(commandId, signalEventDesc->hEvent);
+        } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_WAIT_EVENTS_EXP_DESC) {
+            const auto waitEventsDesc = reinterpret_cast<const ze_graph_node_update_wait_events_exp_desc_t *>(next);
+            result = this->updateMutableCommandWaitEvents(commandId, waitEventsDesc->numEvents, waitEventsDesc->phEvents);
+        } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_LAUNCH_KERNEL_EXP_DESC) {
+            const auto launchKernelDesc = reinterpret_cast<const ze_graph_node_update_launch_kernel_exp_desc_t *>(next);
+            result = this->applyLaunchKernelGraphNodeUpdate(commandId, getEffectiveMutableFlags(static_cast<MutableFlags>(flags)), *launchKernelDesc);
+        }
+        if (result != ZE_RESULT_SUCCESS) {
+            return result;
+        }
+        next = extendedDesc->pNext;
+    }
+
+    return validateCooperativeKernelDispatches();
+}
+
+auto MutableCommandListImp::applyLaunchKernelGraphNodeUpdate(uint64_t commandId, MutableFlags flags, const ze_graph_node_update_launch_kernel_exp_desc_t &updateDesc) -> ze_result_t {
+    if (kernelInstructionMutationEnabled(flags) && (nullptr != updateDesc.hKernel)) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    if (0u != (flags & MutableFlag::kernelArgument)) {
+        const auto &kernelArguments = getVariableDescriptorContainer(this->kernelMutations[(commandId - 1)])->kernelArguments;
+        if ((false == kernelArguments.empty()) && ((nullptr == updateDesc.pArgSizes) || (nullptr == updateDesc.pArgValues))) {
+            return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
+        }
+        for (uint32_t argIndex = 0; argIndex < static_cast<uint32_t>(kernelArguments.size()); ++argIndex) {
+            if (nullptr == kernelArguments[argIndex].kernelArgumentVariable) {
+                continue;
+            }
+            auto result = this->applyMutation(KernelArgumentMutationDescriptor{
+                .commandId = commandId,
+                .argIndex = argIndex,
+                .argSize = updateDesc.pArgSizes[argIndex],
+                .argValue = updateDesc.pArgValues[argIndex],
+            });
+            if (result != ZE_RESULT_SUCCESS) {
+                return result;
+            }
+        }
+    }
+
+    if (0u != (flags & MutableFlag::groupSize)) {
+        auto result = this->applyMutation(GroupSizeMutationDescriptor{
+            .commandId = commandId,
+            .groupSize = {updateDesc.groupSize.groupSizeX, updateDesc.groupSize.groupSizeY, updateDesc.groupSize.groupSizeZ},
+        });
+        if (result != ZE_RESULT_SUCCESS) {
+            return result;
+        }
+    }
+
+    if (0u != (flags & MutableFlag::groupCount)) {
+        auto result = this->applyMutation(GroupCountMutationDescriptor{
+            .commandId = commandId,
+            .groupCount = updateDesc.groupCount,
+        });
+        if (result != ZE_RESULT_SUCCESS) {
+            return result;
+        }
+    }
+
+    return ZE_RESULT_SUCCESS;
 }
 
 auto MutableCommandListImp::applyMutation(const KernelArgumentMutationDescriptor &mutation) -> ze_result_t {

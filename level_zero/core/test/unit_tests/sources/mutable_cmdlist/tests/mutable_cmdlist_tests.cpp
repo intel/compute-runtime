@@ -130,6 +130,368 @@ HWCMDTEST_F(IGFX_XE_HP_CORE,
 
 HWCMDTEST_F(IGFX_XE_HP_CORE,
             MutableCommandListTest,
+            givenMutableCommandListWhenGettingCommandIdForGraphNodeWithFlagsThenMatchingMutableFlagsAreSet) {
+    const ze_mutable_graph_node_exp_flags_t graphNodeFlags = ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_ARGUMENT |
+                                                             ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT |
+                                                             ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_SIZE |
+                                                             ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GLOBAL_OFFSET |
+                                                             ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_SIGNAL_EVENT |
+                                                             ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_WAIT_EVENTS;
+
+    auto result = mutableCommandList->getNextCommandIdForGraphNode(graphNodeFlags, 0, nullptr, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(mutableCommandList->nextCommandId, commandId);
+    EXPECT_TRUE(mutableCommandList->nextAppendKernelMutable);
+
+    const L0::MCL::MutableFlags expectedFlags = L0::MCL::MutableFlag::kernelArgument |
+                                                L0::MCL::MutableFlag::groupCount |
+                                                L0::MCL::MutableFlag::groupSize |
+                                                L0::MCL::MutableFlag::globalOffset |
+                                                L0::MCL::MutableFlag::signalEvent |
+                                                L0::MCL::MutableFlag::waitEvents;
+    EXPECT_EQ(expectedFlags, mutableCommandList->nextMutationFlags);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenMutableCommandListWhenGettingCommandIdForGraphNodeWithZeroFlagsThenAllFlagsExceptKernelInstructionAreSet) {
+    auto result = mutableCommandList->getNextCommandIdForGraphNode(0u, 0, nullptr, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(mutableCommandList->nextCommandId, commandId);
+    EXPECT_TRUE(mutableCommandList->nextAppendKernelMutable);
+
+    const L0::MCL::MutableFlags expectedFlags = L0::MCL::MutableFlag::all & (~L0::MCL::MutableFlag::kernelInstruction);
+    EXPECT_EQ(expectedFlags, mutableCommandList->nextMutationFlags);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenGraphNodeCommandWhenUpdatingWithChainedKernelDispatchGraphNodeDescriptorsThenAllVariablesAreUpdated) {
+    const ze_mutable_graph_node_exp_flags_t graphNodeFlags = ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_ARGUMENT |
+                                                             ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT |
+                                                             ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_SIZE |
+                                                             ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GLOBAL_OFFSET;
+    auto result = mutableCommandList->getNextCommandIdForGraphNode(graphNodeFlags, 0, nullptr, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    auto &mutation = mutableCommandList->kernelMutations[commandId - 1];
+
+    uint32_t value1 = 2;
+    uint32_t value2 = 4;
+    resizeKernelArg(1);
+    prepareKernelArg(0, L0::MCL::VariableType::value, kernelAllMask);
+    result = kernel->setArgImmediate(0, sizeof(value1), &value1);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_graph_node_update_kernel_argument_exp_desc_t kernelArgumentDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_KERNEL_ARGUMENT_EXP_DESC};
+    ze_graph_node_update_group_count_exp_desc_t groupCountDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_GROUP_COUNT_EXP_DESC};
+    ze_graph_node_update_group_size_exp_desc_t groupSizeDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_GROUP_SIZE_EXP_DESC};
+    ze_graph_node_update_global_offset_exp_desc_t globalOffsetDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_GLOBAL_OFFSET_EXP_DESC};
+
+    kernelArgumentDesc.argIndex = 0;
+    kernelArgumentDesc.argSize = sizeof(value2);
+    kernelArgumentDesc.pArgValue = &value2;
+    kernelArgumentDesc.pNext = &groupCountDesc;
+    groupCountDesc.groupCount = {8, 2, 2};
+    groupCountDesc.pNext = &groupSizeDesc;
+    groupSizeDesc.groupSize = {4, 2, 1};
+    groupSizeDesc.pNext = &globalOffsetDesc;
+    globalOffsetDesc.offsetX = 1;
+    globalOffsetDesc.offsetY = 2;
+    globalOffsetDesc.offsetZ = 3;
+
+    result = mutableCommandList->updateMutableCommandForGraphNode(commandId, graphNodeFlags, &kernelArgumentDesc);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto valueVariable = mutation.variables.kernelArguments[0].kernelArgumentVariable;
+    auto immediatePatchFullAddress = reinterpret_cast<void *>(valueVariable->getValueUsages().statelessWithoutOffset[0]);
+    uint32_t valueVariablePatchValue = 0;
+    memcpy(&valueVariablePatchValue, immediatePatchFullAddress, sizeof(uint32_t));
+    EXPECT_EQ(value2, valueVariablePatchValue);
+
+    auto &groupCount = mutation.variables.groupCount->getDesc().kernelDispatch.groupCount;
+    EXPECT_EQ(8u, groupCount[0]);
+    EXPECT_EQ(2u, groupCount[1]);
+    EXPECT_EQ(2u, groupCount[2]);
+
+    auto &groupSize = mutation.variables.groupSize->getDesc().kernelDispatch.groupSize;
+    EXPECT_EQ(4u, groupSize[0]);
+    EXPECT_EQ(2u, groupSize[1]);
+    EXPECT_EQ(1u, groupSize[2]);
+
+    auto &globalOffset = mutation.variables.globalOffset->getDesc().kernelDispatch.globalOffset;
+    EXPECT_EQ(1u, globalOffset[0]);
+    EXPECT_EQ(2u, globalOffset[1]);
+    EXPECT_EQ(3u, globalOffset[2]);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenGraphNodeCommandWhenUpdatingWithChainedEventGraphNodeDescriptorsThenEventVariablesAreUpdated) {
+    auto signalEvent = createTestEvent(false, false, false, false, false);
+    auto signalEventHandle = signalEvent->toHandle();
+    auto waitEvent = createTestEvent(false, false, false, false, false);
+    auto waitEventHandle = waitEvent->toHandle();
+    auto newSignalEvent = createTestEvent(false, false, false, false, false);
+    auto newWaitEvent = createTestEvent(false, false, false, false, false);
+    auto newWaitEventHandle = newWaitEvent->toHandle();
+
+    const ze_mutable_graph_node_exp_flags_t graphNodeFlags = ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_SIGNAL_EVENT |
+                                                             ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_WAIT_EVENTS;
+    auto result = mutableCommandList->getNextCommandIdForGraphNode(graphNodeFlags, 0, nullptr, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, signalEventHandle, 1, &waitEventHandle, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_graph_node_update_signal_event_exp_desc_t signalEventDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_SIGNAL_EVENT_EXP_DESC};
+    ze_graph_node_update_wait_events_exp_desc_t waitEventsDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_WAIT_EVENTS_EXP_DESC};
+    signalEventDesc.hEvent = newSignalEvent->toHandle();
+    signalEventDesc.pNext = &waitEventsDesc;
+    waitEventsDesc.numEvents = 1;
+    waitEventsDesc.phEvents = &newWaitEventHandle;
+
+    result = mutableCommandList->updateMutableCommandForGraphNode(commandId, graphNodeFlags, &signalEventDesc);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto signalEvents = getVariableList(commandId, L0::MCL::VariableType::signalEvent, nullptr);
+    ASSERT_EQ(1u, signalEvents.size());
+    EXPECT_EQ(newSignalEvent, signalEvents[0]->getDesc().eventValue.event);
+
+    auto waitEvents = getVariableList(commandId, L0::MCL::VariableType::waitEvent, nullptr);
+    ASSERT_EQ(1u, waitEvents.size());
+    EXPECT_EQ(newWaitEvent, waitEvents[0]->getDesc().eventValue.event);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenGraphNodeCommandWhenUpdatingWithUnknownDescriptorThenInvalidArgumentIsReturned) {
+    auto result = mutableCommandList->getNextCommandIdForGraphNode(0u, 0, nullptr, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_base_desc_t unknownDesc = {ZE_STRUCTURE_TYPE_FORCE_UINT32};
+
+    result = mutableCommandList->updateMutableCommandForGraphNode(commandId, 0u, &unknownDesc);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenGraphNodeCommandWithZeroFlagsWhenUpdatingWithLaunchKernelDescriptorThenArgumentsGroupSizeAndGroupCountAreUpdatedAndNonMutableArgumentIsSkipped) {
+    auto result = mutableCommandList->getNextCommandIdForGraphNode(0u, 0, nullptr, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    auto &mutation = mutableCommandList->kernelMutations[commandId - 1];
+
+    uint32_t value1 = 2;
+    uint32_t value2 = 4;
+    resizeKernelArg(2);
+    NEO::ArgDescriptor kernelArgImage = {NEO::ArgDescriptor::argTImage};
+    mockKernelImmData->kernelDescriptor->payloadMappings.explicitArgs[0] = kernelArgImage;
+    prepareKernelArg(1, L0::MCL::VariableType::value, kernelAllMask);
+    result = kernel->setArgImmediate(1, sizeof(value1), &value1);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_EQ(2u, mutation.variables.kernelArguments.size());
+    EXPECT_EQ(nullptr, mutation.variables.kernelArguments[0].kernelArgumentVariable);
+
+    const size_t argSizes[] = {sizeof(void *), sizeof(value2)};
+    const void *argValues[] = {nullptr, &value2};
+    ze_graph_node_update_launch_kernel_exp_desc_t launchKernelDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_LAUNCH_KERNEL_EXP_DESC};
+    launchKernelDesc.pArgSizes = argSizes;
+    launchKernelDesc.pArgValues = argValues;
+    launchKernelDesc.groupCount = {8, 2, 2};
+    launchKernelDesc.groupSize = {4, 2, 1};
+
+    result = mutableCommandList->updateMutableCommandForGraphNode(commandId, 0u, &launchKernelDesc);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto valueVariable = mutation.variables.kernelArguments[1].kernelArgumentVariable;
+    auto immediatePatchFullAddress = reinterpret_cast<void *>(valueVariable->getValueUsages().statelessWithoutOffset[0]);
+    uint32_t valueVariablePatchValue = 0;
+    memcpy(&valueVariablePatchValue, immediatePatchFullAddress, sizeof(uint32_t));
+    EXPECT_EQ(value2, valueVariablePatchValue);
+
+    auto &groupCount = mutation.variables.groupCount->getDesc().kernelDispatch.groupCount;
+    EXPECT_EQ(8u, groupCount[0]);
+    EXPECT_EQ(2u, groupCount[1]);
+    EXPECT_EQ(2u, groupCount[2]);
+
+    auto &groupSize = mutation.variables.groupSize->getDesc().kernelDispatch.groupSize;
+    EXPECT_EQ(4u, groupSize[0]);
+    EXPECT_EQ(2u, groupSize[1]);
+    EXPECT_EQ(1u, groupSize[2]);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenGraphNodeCommandWhenUpdatingWithLaunchKernelDescriptorAndSelectedFlagsThenOnlySelectedFieldsAreUpdated) {
+    auto result = mutableCommandList->getNextCommandIdForGraphNode(0u, 0, nullptr, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    auto &mutation = mutableCommandList->kernelMutations[commandId - 1];
+
+    result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_EQ(0u, mutation.variables.kernelArguments.size());
+
+    auto &groupCount = mutation.variables.groupCount->getDesc().kernelDispatch.groupCount;
+    auto &groupSize = mutation.variables.groupSize->getDesc().kernelDispatch.groupSize;
+    const uint32_t initialGroupSize[3] = {groupSize[0], groupSize[1], groupSize[2]};
+
+    ze_graph_node_update_launch_kernel_exp_desc_t launchKernelDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_LAUNCH_KERNEL_EXP_DESC};
+    launchKernelDesc.groupCount = {8, 2, 2};
+    launchKernelDesc.groupSize = {initialGroupSize[0] + 1, initialGroupSize[1], initialGroupSize[2]};
+
+    result = mutableCommandList->updateMutableCommandForGraphNode(commandId, ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_ARGUMENT | ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT, &launchKernelDesc);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(8u, groupCount[0]);
+    EXPECT_EQ(2u, groupCount[1]);
+    EXPECT_EQ(2u, groupCount[2]);
+    EXPECT_EQ(initialGroupSize[0], groupSize[0]);
+    EXPECT_EQ(initialGroupSize[1], groupSize[1]);
+    EXPECT_EQ(initialGroupSize[2], groupSize[2]);
+
+    launchKernelDesc.groupCount = {16, 4, 4};
+
+    result = mutableCommandList->updateMutableCommandForGraphNode(commandId, ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_SIZE, &launchKernelDesc);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(8u, groupCount[0]);
+    EXPECT_EQ(2u, groupCount[1]);
+    EXPECT_EQ(2u, groupCount[2]);
+    EXPECT_EQ(initialGroupSize[0] + 1, groupSize[0]);
+    EXPECT_EQ(initialGroupSize[1], groupSize[1]);
+    EXPECT_EQ(initialGroupSize[2], groupSize[2]);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenGraphNodeCommandWithKernelArgumentsWhenUpdatingWithLaunchKernelDescriptorWithoutArgumentArraysThenInvalidNullPointerIsReturned) {
+    auto result = mutableCommandList->getNextCommandIdForGraphNode(ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_ARGUMENT, 0, nullptr, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    uint32_t value = 2;
+    resizeKernelArg(1);
+    prepareKernelArg(0, L0::MCL::VariableType::value, kernelAllMask);
+    result = kernel->setArgImmediate(0, sizeof(value), &value);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    const size_t argSizes[] = {sizeof(value)};
+    const void *argValues[] = {&value};
+    ze_graph_node_update_launch_kernel_exp_desc_t launchKernelDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_LAUNCH_KERNEL_EXP_DESC};
+
+    launchKernelDesc.pArgSizes = nullptr;
+    launchKernelDesc.pArgValues = argValues;
+    result = mutableCommandList->updateMutableCommandForGraphNode(commandId, ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_ARGUMENT, &launchKernelDesc);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, result);
+
+    launchKernelDesc.pArgSizes = argSizes;
+    launchKernelDesc.pArgValues = nullptr;
+    result = mutableCommandList->updateMutableCommandForGraphNode(commandId, ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_ARGUMENT, &launchKernelDesc);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, result);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenGraphNodeCommandWhenUpdatingWithKernelInstructionFlagAndLaunchKernelDescriptorWithKernelThenUnsupportedFeatureIsReturned) {
+    auto result = mutableCommandList->getNextCommandIdForGraphNode(0u, 0, nullptr, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_graph_node_update_launch_kernel_exp_desc_t launchKernelDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_LAUNCH_KERNEL_EXP_DESC};
+    launchKernelDesc.hKernel = kernel->toHandle();
+    launchKernelDesc.groupCount = {8, 2, 2};
+
+    result = mutableCommandList->updateMutableCommandForGraphNode(commandId, ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_INSTRUCTION | ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT, &launchKernelDesc);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+
+    launchKernelDesc.hKernel = nullptr;
+    result = mutableCommandList->updateMutableCommandForGraphNode(commandId, ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_INSTRUCTION | ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT, &launchKernelDesc);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenGraphNodeCommandWithBufferArgumentWhenUpdatingWithLaunchKernelDescriptorWithInvalidArgumentSizeThenInvalidArgumentIsReturned) {
+    auto result = mutableCommandList->getNextCommandIdForGraphNode(ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_ARGUMENT, 0, nullptr, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    void *usm = allocateUsm(4096);
+    ASSERT_NE(nullptr, usm);
+    resizeKernelArg(1);
+    prepareKernelArg(0, L0::MCL::VariableType::buffer, kernelAllMask);
+    result = kernel->setArgBuffer(0, sizeof(void *), &usm);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    const size_t argSizes[] = {sizeof(uint8_t)};
+    const void *argValues[] = {&usm};
+    ze_graph_node_update_launch_kernel_exp_desc_t launchKernelDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_LAUNCH_KERNEL_EXP_DESC};
+    launchKernelDesc.pArgSizes = argSizes;
+    launchKernelDesc.pArgValues = argValues;
+
+    result = mutableCommandList->updateMutableCommandForGraphNode(commandId, ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_ARGUMENT, &launchKernelDesc);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
+            givenGraphNodeCommandWithoutGroupSizeAndGroupCountVariablesWhenUpdatingWithLaunchKernelDescriptorThenInvalidArgumentIsReturned) {
+    auto result = mutableCommandList->getNextCommandIdForGraphNode(ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_ARGUMENT, 0, nullptr, &commandId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = mutableCommandList->appendLaunchKernel(kernel->toHandle(), this->testGroupCount, nullptr, 0, nullptr, this->testLaunchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = mutableCommandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_graph_node_update_launch_kernel_exp_desc_t launchKernelDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_UPDATE_LAUNCH_KERNEL_EXP_DESC};
+    launchKernelDesc.groupCount = {8, 2, 2};
+    launchKernelDesc.groupSize = {4, 2, 1};
+
+    result = mutableCommandList->updateMutableCommandForGraphNode(commandId, ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_SIZE, &launchKernelDesc);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+
+    result = mutableCommandList->updateMutableCommandForGraphNode(commandId, ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT, &launchKernelDesc);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE,
+            MutableCommandListTest,
             givenMutableCommandListWhenCommandListResetThenZeroContainers) {
     mutableCommandIdDesc.flags = ZE_MUTABLE_COMMAND_EXT_FLAG_KERNEL_ARGUMENTS;
 

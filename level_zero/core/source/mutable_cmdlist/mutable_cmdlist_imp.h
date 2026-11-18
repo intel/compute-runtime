@@ -119,8 +119,10 @@ struct MutableCommandListImp : public MutableCommandList {
 
     ze_result_t getNextCommandId(const ze_mutable_command_id_ext_desc_t *desc, uint32_t numKernels, ze_kernel_handle_t *phKernels, uint64_t *pCommandId) override;
     ze_result_t getNextCommandId(const ze_mutable_command_id_exp_desc_t *desc, uint32_t numKernels, ze_kernel_handle_t *phKernels, uint64_t *pCommandId) override;
+    ze_result_t getNextCommandIdForGraphNode(ze_mutable_graph_node_exp_flags_t flags, uint32_t numKernels, ze_kernel_handle_t *phKernels, uint64_t *pCommandId) override;
     ze_result_t updateMutableCommands(const ze_mutable_commands_ext_desc_t *desc) override;
     ze_result_t updateMutableCommands(const ze_mutable_commands_exp_desc_t *desc) override;
+    ze_result_t updateMutableCommandForGraphNode(uint64_t commandId, ze_mutable_graph_node_exp_flags_t flags, const void *pUpdateDesc) override;
     ze_result_t updateMutableCommandSignalEvent(uint64_t commandId, ze_event_handle_t signalEvent) override;
     ze_result_t updateMutableCommandWaitEvents(uint64_t commandId, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override;
     ze_result_t updateMutableCommandKernels(uint32_t numKernels, uint64_t *pCommandId, ze_kernel_handle_t *phKernels) override;
@@ -170,6 +172,10 @@ struct MutableCommandListImp : public MutableCommandList {
         return (flags & MutableFlag::kernelInstruction) == MutableFlag::kernelInstruction;
     }
 
+    static constexpr auto getEffectiveMutableFlags(MutableFlags flags) -> MutableFlags {
+        return (0u == flags) ? (MutableFlag::all & (~MutableFlag::kernelInstruction)) : flags;
+    }
+
     void addAsyncMutationElement(uint64_t gpuDestination, void *hostSource, size_t size, bool redirectToCopyOffload) override;
 
   protected:
@@ -179,6 +185,7 @@ struct MutableCommandListImp : public MutableCommandList {
     auto applyMutation(const GroupCountMutationDescriptor &mutation) -> ze_result_t;
     auto applyMutation(const GroupSizeMutationDescriptor &mutation) -> ze_result_t;
     auto applyMutation(const GlobalOffsetMutationDescriptor &mutation) -> ze_result_t;
+    auto applyLaunchKernelGraphNodeUpdate(uint64_t commandId, MutableFlags flags, const ze_graph_node_update_launch_kernel_exp_desc_t &updateDesc) -> ze_result_t;
     ze_result_t parseDispatchedKernel(L0::Kernel *kernel, MutableComputeWalker *mutableComputeWalker,
                                       size_t extraHeapSize, NEO::GraphicsAllocation *syncBuffer,
                                       Variable *firstSlmArgumentVariable, bool resetSlmArgumentValues);

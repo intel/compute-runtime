@@ -9,6 +9,7 @@
 #include "level_zero/core/source/cmdlist/cmdlist_signal_event_parameters.h"
 #include "level_zero/core/source/helpers/api_handle_helper.h"
 #include "level_zero/core/source/mutable_cmdlist/mutable_interface_types.h"
+#include "level_zero/driver_experimental/zex_graph.h"
 #include <level_zero/ze_api.h>
 
 namespace NEO {
@@ -206,8 +207,10 @@ struct MutableCommandList {
 
     virtual ze_result_t getNextCommandId(const ze_mutable_command_id_ext_desc_t *desc, uint32_t numKernels, ze_kernel_handle_t *phKernels, uint64_t *pCommandId) = 0;
     virtual ze_result_t getNextCommandId(const ze_mutable_command_id_exp_desc_t *desc, uint32_t numKernels, ze_kernel_handle_t *phKernels, uint64_t *pCommandId) = 0;
+    virtual ze_result_t getNextCommandIdForGraphNode(ze_mutable_graph_node_exp_flags_t flags, uint32_t numKernels, ze_kernel_handle_t *phKernels, uint64_t *pCommandId) = 0;
     virtual ze_result_t updateMutableCommands(const ze_mutable_commands_ext_desc_t *desc) = 0;
     virtual ze_result_t updateMutableCommands(const ze_mutable_commands_exp_desc_t *desc) = 0;
+    virtual ze_result_t updateMutableCommandForGraphNode(uint64_t commandId, ze_mutable_graph_node_exp_flags_t flags, const void *pUpdateDesc) = 0;
     virtual ze_result_t updateMutableCommandSignalEvent(uint64_t commandId, ze_event_handle_t signalEvent) = 0;
     virtual ze_result_t updateMutableCommandWaitEvents(uint64_t commandId, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) = 0;
     virtual ze_result_t updateMutableCommandKernels(uint32_t numKernels, uint64_t *pCommandId, ze_kernel_handle_t *phKernels) = 0;
