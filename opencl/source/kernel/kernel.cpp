@@ -1913,6 +1913,9 @@ cl_int Kernel::checkCorrectImageAccessQualifier(cl_uint argIndex,
         MemObj *pMemObj = nullptr;
         withCastToInternal(mem, &pMemObj);
         if (pMemObj) {
+            if (!castToObject<Image>(mem)) {
+                return CL_INVALID_MEM_OBJECT;
+            }
             auto accessQualifier = arg.getTraits().accessQualifier;
             cl_mem_flags flags = pMemObj->getFlags();
             if ((accessQualifier == KernelArgMetadata::AccessReadOnly && ((flags | CL_MEM_WRITE_ONLY) == flags)) ||

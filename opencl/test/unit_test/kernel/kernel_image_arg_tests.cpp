@@ -221,6 +221,16 @@ TEST_F(KernelImageArgTest, givenInvalidImageWhenSettingArgImageThenInvalidArgVal
     EXPECT_EQ(retVal, CL_INVALID_ARG_VALUE);
 }
 
+TEST_F(KernelImageArgTest, givenBufferWhenSettingImageArgThenInvalidMemObjectErrorIsReturned) {
+    cl_mem buffer = clCreateBuffer(context.get(), CL_MEM_READ_WRITE, sizeof(float), nullptr, &retVal);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clSetKernelArg(pMultiDeviceKernel.get(), 0, sizeof(cl_mem), &buffer);
+    EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
+
+    clReleaseMemObject(buffer);
+}
+
 TEST_F(KernelImageArgTest, givenImageWithReadOnlyAccessAndWriteOnlyArgWhenCheckCorrectImageAccessQualifierIsCalledThenReturnsInvalidArgValue) {
     cl_image_format imgFormat = {CL_RGBA, CL_UNORM_INT8};
     cl_image_desc imgDesc = {};
