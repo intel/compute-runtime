@@ -7,6 +7,7 @@
 
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/unified_memory/unified_memory.h"
@@ -320,6 +321,62 @@ TEST_F(MultiDeviceContextTests,
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(0u, peerRootDevice->peerAllocations.allocations.count(ptr));
     EXPECT_EQ(0u, peerSubDevice->peerAllocations.allocations.count(ptr));
+}
+
+TEST_F(MultiDeviceContextTests,
+       givenInteriorPointerOfDeviceMemoryWhenMakeMemoryResidentCalledOnPeerRootDeviceThenOnePeerAllocationIsImportedAtAllocationBase) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
+    auto &rootDeviceEnvironments = driverHandle->devices[0]->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments;
+    rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<NEO::MockMemoryOperations>();
+    rootDeviceEnvironments[1]->memoryOperationsInterface = std::make_unique<NEO::MockMemoryOperations>();
+
+    L0::Device *ownerRootDevice = driverHandle->devices[0];
+    L0::Device *peerRootDevice = driverHandle->devices[1];
+    const size_t chunkSize = MemoryConstants::pageSize;
+
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(ownerRootDevice->toHandle(), &deviceDesc, 2 * chunkSize, 0, &ptr));
+    void *interiorPtr = ptrOffset(ptr, chunkSize);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->makeMemoryResident(peerRootDevice->toHandle(), interiorPtr, chunkSize));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->makeMemoryResident(peerRootDevice->toHandle(), ptr, chunkSize));
+
+    EXPECT_EQ(0u, peerRootDevice->peerAllocations.allocations.count(interiorPtr));
+    ASSERT_EQ(1u, peerRootDevice->peerAllocations.allocations.count(ptr));
+    auto peerAllocation = peerRootDevice->peerAllocations.allocations.at(ptr).gpuAllocations.getDefaultGraphicsAllocation();
+    ASSERT_NE(nullptr, peerAllocation);
+    EXPECT_EQ(peerRootDevice->getRootDeviceIndex(), peerAllocation->getRootDeviceIndex());
+    EXPECT_EQ(peerAllocation, driverHandle->resolveMemoryAllocation(peerRootDevice, interiorPtr, chunkSize, false));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
+    EXPECT_EQ(0u, peerRootDevice->peerAllocations.allocations.count(ptr));
+    EXPECT_EQ(0u, peerRootDevice->peerAllocations.allocations.count(interiorPtr));
+}
+
+TEST_F(MultiDeviceContextTests,
+       givenDeviceMemoryResidentOnPeerRootDeviceWhenEvictMemoryCalledWithInteriorPointerThenPeerAllocationIsEvicted) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
+    auto &rootDeviceEnvironments = driverHandle->devices[0]->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments;
+    rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<NEO::MockMemoryOperations>();
+    rootDeviceEnvironments[1]->memoryOperationsInterface = std::make_unique<NEO::MockMemoryOperations>();
+
+    L0::Device *ownerRootDevice = driverHandle->devices[0];
+    L0::Device *peerRootDevice = driverHandle->devices[1];
+    const size_t chunkSize = MemoryConstants::pageSize;
+
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(ownerRootDevice->toHandle(), &deviceDesc, 2 * chunkSize, 0, &ptr));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->makeMemoryResident(peerRootDevice->toHandle(), ptr, 2 * chunkSize));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->evictMemory(peerRootDevice->toHandle(), ptrOffset(ptr, chunkSize), chunkSize));
+    auto mockMemIface = static_cast<NEO::MockMemoryOperations *>(rootDeviceEnvironments[1]->memoryOperationsInterface.get());
+    EXPECT_EQ(1, mockMemIface->evictCalledCount.load());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->freeMem(ptr));
 }
 
 TEST_F(MultiDeviceContextTests,

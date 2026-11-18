@@ -885,16 +885,16 @@ NEO::GraphicsAllocation *DriverHandle::resolveMemoryAllocation(Device *device, v
     if (allocation != nullptr) {
         return allocation;
     }
-    allocation = this->findPeerAllocation(device, ptr);
-    if (allocation != nullptr || !allowImport) {
+    NEO::SvmAllocationData *allocData = nullptr;
+    void *basePtr = ptr;
+    if (this->findAllocationDataForRange(ptr, size, allocData)) {
+        basePtr = reinterpret_cast<void *>(allocData->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress());
+    }
+    allocation = this->findPeerAllocation(device, basePtr);
+    if (allocation != nullptr || !allowImport || allocData == nullptr) {
         return allocation;
     }
-    NEO::SvmAllocationData *allocData = nullptr;
-    if (this->findAllocationDataForRange(ptr, size, allocData)) {
-        uintptr_t alignedPtr = reinterpret_cast<uintptr_t>(ptr);
-        allocation = this->getPeerAllocation(device, allocData, ptr, &alignedPtr, nullptr, false);
-    }
-    return allocation;
+    return this->getPeerAllocation(device, allocData, basePtr, nullptr, nullptr, false);
 }
 
 std::pair<NEO::GraphicsAllocation *, void *> DriverHandle::importNTHandle(ze_device_handle_t hDevice, void *handle, const void *name, NEO::ExternalMemoryType type, size_t size, NEO::AllocationType allocationType, bool isHostIpcAllocation, uint32_t parentProcessId, bool compressedMemory, uint64_t physicalOffset) {
