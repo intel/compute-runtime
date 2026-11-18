@@ -63,7 +63,6 @@ uint32_t MemoryManager::maxOsContextCount = 0u;
 MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : executionEnvironment(executionEnvironment), hostPtrManager(std::make_unique<HostPtrManager>()),
                                                                            multiContextResourceDestructor(std::make_unique<DeferredDeleter>()) {
 
-    bool anyLocalMemorySupported = false;
     const auto rootEnvCount = executionEnvironment.rootDeviceEnvironments.size();
 
     defaultEngineIndex.resize(rootEnvCount);
@@ -86,8 +85,6 @@ MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : execu
 
         gfxPartitions.push_back(std::make_unique<GfxPartition>(reservedCpuAddressRange));
 
-        anyLocalMemorySupported |= this->localMemorySupported[rootDeviceIndex];
-
         auto globalHeap = ApiSpecificConfig::getGlobalBindlessHeapConfiguration(*hwInfo);
         heapAssigners.push_back(std::make_unique<HeapAssigner>(globalHeap));
         localMemAllocsSize[rootDeviceIndex].store(0u);
@@ -97,9 +94,7 @@ MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : execu
         initPageFaultManager();
     }
 
-    if (anyLocalMemorySupported) {
-        prefetchManager = PrefetchManager::create();
-    }
+    prefetchManager = PrefetchManager::create();
 
     if (debugManager.flags.EnableMultiStorageResources.get() != -1) {
         supportsMultiStorageResources = !!debugManager.flags.EnableMultiStorageResources.get();

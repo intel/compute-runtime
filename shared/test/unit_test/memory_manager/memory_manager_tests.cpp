@@ -229,6 +229,15 @@ TEST(MemoryManagerTest, WhenCallingIsAllocationTypeToCaptureThenScratchAndPrivat
     EXPECT_TRUE(mockMemoryManager.isAllocationTypeToCapture(AllocationType::internalHeap));
 }
 
+TEST(MemoryManagerTest, givenLocalMemoryDisabledWhenCreatingMemoryManagerThenPrefetchManagerIsCreated) {
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.EnableLocalMemory.set(0);
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    MockMemoryManager memoryManager(executionEnvironment);
+    auto prefetchManager = memoryManager.getPrefetchManager();
+    EXPECT_NE(prefetchManager, nullptr);
+}
+
 TEST(MemoryManagerTest, givenAllocationWithNullCpuPtrThenMemoryCopyToAllocationReturnsFalse) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     MockMemoryManager memoryManager(false, false, executionEnvironment);
