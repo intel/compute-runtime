@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -62,6 +62,7 @@ struct AllocationStorageData {
     size_t fragmentSize = 0;
     const void *cpuPtr = nullptr;
     bool freeTheFragment = false;
+    bool partiallyCoveredByAllocation = false;
     ResidencyData *residency = nullptr;
 };
 

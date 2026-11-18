@@ -154,17 +154,20 @@ GmmResourceUsageType CacheSettingsHelper::getDefaultUsageTypeWithCachingDisabled
 // A GPU-written cacheline shared with CPU-owned data needs 2-way coherency, or must bypass GPU caches
 // when the release has only the app-transient coherent PAT.
 GmmResourceUsageType CacheSettingsHelper::getGmmUsageTypeForUserPtr(bool isCacheFlushRequired, const void *userPtr, size_t size, const HardwareInfo &hwInfo, const ReleaseHelper &releaseHelper) {
+    if (isCacheFlushRequired && !isL3Capable(userPtr, size)) {
+        return getGmmUsageTypeForCachelineMisalignedUserPtr(hwInfo, releaseHelper);
+    }
+    return GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
+}
+
+GmmResourceUsageType CacheSettingsHelper::getGmmUsageTypeForCachelineMisalignedUserPtr(const HardwareInfo &hwInfo, const ReleaseHelper &releaseHelper) {
     if (debugManager.flags.Disable2WayCoherencyOverride.get()) {
         return GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
     }
-
-    const bool isCachelineMisalignedDestination = isCacheFlushRequired && !isL3Capable(userPtr, size);
     if (releaseHelper.isAppTransientCoherentPatRequired()) {
-        return isCachelineMisalignedDestination ? GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED
-                                                : GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
+        return GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED;
     }
-
-    if (isCachelineMisalignedDestination && hwInfo.caps.misalignedUserPtr2WayCoherent) {
+    if (hwInfo.caps.misalignedUserPtr2WayCoherent) {
         return GMM_RESOURCE_USAGE_HW_CONTEXT;
     }
     return GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;

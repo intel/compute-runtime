@@ -20,6 +20,8 @@
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include <vector>
+
 using namespace NEO;
 
 struct HostPtrManagerTest : ::testing::Test {
@@ -900,6 +902,32 @@ TEST_F(HostPtrAllocationTest, whenPrepareOsHandlesForAllocationThenPopulateAsMan
         memoryManager->cleanOsHandles(osStorage, 0);
         EXPECT_EQ(0u, hostPtrManager->getFragmentCount());
     }
+}
+
+TEST_F(HostPtrAllocationTest, givenHostRangeWhenPreparingOsStorageThenOnlyFragmentsNotFullyCoveredByRangeAreMarkedAsPartiallyCovered) {
+    struct HostRange {
+        uintptr_t ptr;
+        size_t size;
+        std::vector<bool> partiallyCoveredFragments;
+    };
+    const HostRange hostRanges[] = {
+        {0x100040, 2 * MemoryConstants::pageSize, {true, false, true}},
+        {0x100000, MemoryConstants::cacheLineSize, {true}},
+        {0x100000, MemoryConstants::pageSize + MemoryConstants::cacheLineSize, {false, true}},
+        {0x100000, 2 * MemoryConstants::pageSize, {false}}};
+
+    auto hostPtrManager = static_cast<MockHostPtrManager *>(memoryManager->getHostPtrManager());
+    const auto rootDeviceIndex = csr->getRootDeviceIndex();
+    for (const auto &hostRange : hostRanges) {
+        auto osStorage = hostPtrManager->prepareOsStorageForAllocation(*memoryManager, hostRange.size, reinterpret_cast<void *>(hostRange.ptr), rootDeviceIndex);
+        ASSERT_EQ(hostRange.partiallyCoveredFragments.size(), osStorage.fragmentCount);
+        for (auto fragmentId = 0u; fragmentId < osStorage.fragmentCount; fragmentId++) {
+            EXPECT_EQ(hostRange.partiallyCoveredFragments[fragmentId], osStorage.fragmentStorageData[fragmentId].partiallyCoveredByAllocation);
+        }
+        hostPtrManager->releaseHandleStorage(rootDeviceIndex, osStorage);
+        memoryManager->cleanOsHandles(osStorage, rootDeviceIndex);
+    }
+    EXPECT_EQ(0u, hostPtrManager->getFragmentCount());
 }
 
 TEST_F(HostPtrAllocationTest, whenOverlappedFragmentIsBiggerThenStoredAndStoredFragmentIsDestroyedDuringSecondCleaningThenCheckForOverlappingReturnsSuccess) {

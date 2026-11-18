@@ -450,8 +450,12 @@ NEO::BufferObject *DrmMemoryManager::allocUserptr(uintptr_t address, size_t size
 
     PRINT_STRING(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "Created new BO with GEM_USERPTR, handle: BO-%d\n", userptr.handle);
 
-    auto patIndex = drm.getPatIndex(nullptr, allocationType, CacheRegion::defaultRegion, CachePolicy::writeBack, false, true,
-                                    ioctlHelper->isUserptrCoherencyRequired());
+    const bool forceCoherent = ioctlHelper->isUserptrCoherencyRequired();
+    const auto usageType = CacheSettingsHelper::getGmmUsageType(allocationType, false, drm.getRootDeviceEnvironment().getProductHelper(), *drm.getHardwareInfo());
+    const bool cpuCacheable = forceCoherent || !CacheSettingsHelper::isUncachedType(usageType);
+    constexpr bool isSystemMemory = true;
+    const auto gmm = drm.isVmBindPatIndexProgrammingSupported() ? drm.createBufferGmm(usageType, cpuCacheable, isSystemMemory, size) : nullptr;
+    auto patIndex = drm.getPatIndex(gmm.get(), allocationType, CacheRegion::defaultRegion, CachePolicy::writeBack, false, isSystemMemory, forceCoherent);
 
     auto res = new (std::nothrow) BufferObject(rootDeviceIndex, &drm, patIndex, userptr.handle, size, maxOsContextCount);
     if (!res) {
@@ -638,6 +642,25 @@ void DrmMemoryManager::obtainGpuAddress(const AllocationData &allocationData, Bu
     }
 }
 
+namespace {
+uint64_t getUserPtrPatIndex(const Drm &drm, GmmResourceUsageType usageType, size_t size) {
+    constexpr bool cpuCacheable = true;
+    constexpr bool isSystemMemory = true;
+    const auto gmm = drm.isVmBindPatIndexProgrammingSupported() ? drm.createBufferGmm(usageType, cpuCacheable, isSystemMemory, size) : nullptr;
+    const auto resourceInfo = gmm ? gmm->gmmResourceInfo->peekGmmResourceInfo() : nullptr;
+    const auto &rootDeviceEnvironment = drm.getRootDeviceEnvironment();
+    const auto patIndex = rootDeviceEnvironment.getGmmClientContext()->cachePolicyGetPATIndex(resourceInfo, usageType, false, cpuCacheable);
+    return rootDeviceEnvironment.getReleaseHelper().overrideSystemMemoryPatIndex(patIndex);
+}
+
+void setUserPtrPatIndex(const Drm &drm, GmmResourceUsageType usageType, BufferObject &bo) {
+    if (usageType == GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER) {
+        return;
+    }
+    bo.setPatIndex(getUserPtrPatIndex(drm, usageType, bo.peekSize()));
+}
+} // namespace
+
 GraphicsAllocation *DrmMemoryManager::allocateUSMHostGraphicsMemory(const AllocationData &allocationData) {
     const bool usmHostPtrFragmentsEnabled = debugManager.flags.EnableUsmHostPtrFragments.get() == 1;
     const bool gpuAddressEqualsHostPtr = !isLimitedRange(allocationData.rootDeviceIndex) && allocationData.type != AllocationType::svmCpu;
@@ -673,6 +696,11 @@ GraphicsAllocation *DrmMemoryManager::allocateUSMHostGraphicsMemory(const Alloca
                                                                          allocationData.rootDeviceIndex));
     if (!bo) {
         return nullptr;
+    }
+    if (usmHostPtrFragmentsEnabled) {
+        const auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex];
+        const auto usageType = CacheSettingsHelper::getGmmUsageTypeForUserPtr(true, allocationData.hostPtr, allocationData.size, *rootDeviceEnvironment.getHardwareInfo(), rootDeviceEnvironment.getReleaseHelper());
+        setUserPtrPatIndex(getDrm(allocationData.rootDeviceIndex), usageType, *bo);
     }
 
     // if limitedRangeAlloction is enabled, memory allocation for bo in the limited Range heap is required
@@ -861,8 +889,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(con
     }
 
     const auto usageType = CacheSettingsHelper::getGmmUsageTypeForUserPtr(allocationData.flags.flushL3, allocationData.hostPtr, allocationData.size, hwInfo, releaseHelper);
-    auto patIndex = rootDeviceEnvironment->getGmmClientContext()->cachePolicyGetPATIndex(nullptr, usageType, false, true);
-    patIndex = static_cast<uint32_t>(releaseHelper.overrideSystemMemoryPatIndex(patIndex));
+    const auto patIndex = static_cast<uint32_t>(getUserPtrPatIndex(getDrm(rootDeviceIndex), usageType, realAllocationSize));
 
     auto bos = createBufferObjectsForNonSvmHostPtr(realAllocationSize, alignedPtr, gpuVirtualAddress, allocationData, rootDeviceIndex, patIndex, alignedSize);
     if (bos.empty()) {
@@ -2485,6 +2512,7 @@ static_assert(NonCopyableAndNonMovable<AllocatedFragmentsReleaseGuard>);
 } // namespace
 
 AllocationStatus DrmMemoryManager::populateOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) {
+    const bool usmHostPtrFragmentsEnabled = debugManager.flags.EnableUsmHostPtrFragments.get() == 1;
     BufferObject *allocatedBos[maxFragmentsCount];
     uint32_t numberOfBosAllocated = 0;
     uint32_t indexesOfAllocatedBos[maxFragmentsCount] = {};
@@ -2503,6 +2531,11 @@ AllocationStatus DrmMemoryManager::populateOsHandles(OsHandleStorage &handleStor
             if (!osHandle->bo) {
                 handleStorage.fragmentStorageData[i].freeTheFragment = true;
                 return AllocationStatus::Error;
+            }
+            if (usmHostPtrFragmentsEnabled && handleStorage.fragmentStorageData[i].partiallyCoveredByAllocation) {
+                const auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex];
+                const auto usageType = CacheSettingsHelper::getGmmUsageTypeForCachelineMisalignedUserPtr(*rootDeviceEnvironment.getHardwareInfo(), rootDeviceEnvironment.getReleaseHelper());
+                setUserPtrPatIndex(getDrm(rootDeviceIndex), usageType, *osHandle->bo);
             }
 
             allocatedBos[numberOfBosAllocated] = osHandle->bo;

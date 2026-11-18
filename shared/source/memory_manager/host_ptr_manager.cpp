@@ -254,6 +254,13 @@ OsHandleStorage HostPtrManager::prepareOsStorageForAllocation(MemoryManager &mem
     auto requirements = HostPtrManager::getAllocationRequirements(rootDeviceIndex, ptr, size);
     UNRECOVERABLE_IF(checkAllocationsForOverlapping(memoryManager, &requirements) == RequirementsStatus::fatal);
     auto osStorage = populateAlreadyAllocatedFragments(requirements);
+    const auto rangeStart = reinterpret_cast<uintptr_t>(ptr);
+    const auto rangeEnd = rangeStart + size;
+    for (auto fragmentId = 0u; fragmentId < osStorage.fragmentCount; fragmentId++) {
+        auto &fragment = osStorage.fragmentStorageData[fragmentId];
+        const auto fragmentStart = reinterpret_cast<uintptr_t>(fragment.cpuPtr);
+        fragment.partiallyCoveredByAllocation = fragmentStart < rangeStart || fragmentStart + fragment.fragmentSize > rangeEnd;
+    }
     if (osStorage.fragmentCount > 0) {
         bool reusedFragments[maxFragmentsCount] = {};
         for (auto fragmentId = 0u; fragmentId < maxFragmentsCount; fragmentId++) {

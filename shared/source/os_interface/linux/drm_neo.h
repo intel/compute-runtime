@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/debugger/linux/debugger_xe.h"
 #include "shared/source/gmm_helper/adapter_bdf.h"
+#include "shared/source/gmm_helper/gmm_resource_usage_type.h"
 #include "shared/source/helpers/driver_model_type.h"
 #include "shared/source/memory_manager/definitions/engine_limits.h"
 #include "shared/source/os_interface/linux/drm_debug.h"
@@ -283,6 +284,7 @@ class Drm : public DriverModel {
     uint64_t getPatIndex(Gmm *gmm, AllocationType allocationType, CacheRegion cacheRegion, CachePolicy cachePolicy, bool closEnabled, bool isSystemMemory, bool forceCoherent) const;
     uint64_t getDecompressPatIndex(Gmm &gmm) const;
     std::unique_ptr<Gmm> createBufferGmm(AllocationType allocationType, CachePolicy cachePolicy, bool isSystemMemory, size_t size) const;
+    std::unique_ptr<Gmm> createBufferGmm(GmmResourceUsageType usageType, bool cpuCacheable, bool isSystemMemory, size_t size) const;
     bool isVmBindPatIndexProgrammingSupported() const { return vmBindPatIndexProgrammingSupported; }
     uint32_t getDeviceMemoryMaxClockRateInMhz(uint32_t tileId) override;
     uint64_t getDeviceMemoryPhysicalSizeInBytes(uint32_t tileId) override;

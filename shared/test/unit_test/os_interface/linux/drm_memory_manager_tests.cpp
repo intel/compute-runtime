@@ -3729,6 +3729,87 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUSMHostAllocationTests,
     alignedFree(hostPtr);
 }
 
+namespace {
+uint64_t getDefaultUserPtrPatIndex(const Drm &drm, AllocationType allocationType) {
+    return drm.getPatIndex(nullptr, allocationType, CacheRegion::defaultRegion, CachePolicy::writeBack, false, true, drm.getIoctlHelper()->isUserptrCoherencyRequired());
+}
+
+uint64_t getCachelineMisalignedUserPtrPatIndex(const Drm &drm, AllocationType allocationType) {
+    const auto &rootDeviceEnvironment = drm.getRootDeviceEnvironment();
+    const auto &releaseHelper = rootDeviceEnvironment.getReleaseHelper();
+    const auto usageType = CacheSettingsHelper::getGmmUsageTypeForCachelineMisalignedUserPtr(*rootDeviceEnvironment.getHardwareInfo(), releaseHelper);
+    if (usageType == GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER) {
+        return getDefaultUserPtrPatIndex(drm, allocationType);
+    }
+    return releaseHelper.overrideSystemMemoryPatIndex(rootDeviceEnvironment.getGmmClientContext()->cachePolicyGetPATIndex(nullptr, usageType, false, true));
+}
+} // namespace
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDefaultSettingsAndPartiallyCoveredFragmentWhenPopulatingOsHandlesThenDefaultUserPtrPatIndexIsUsed) {
+    mock->ioctlExpected.gemUserptr = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
+
+    OsHandleStorage storage;
+    storage.fragmentStorageData[0].cpuPtr = reinterpret_cast<void *>(0x1000);
+    storage.fragmentStorageData[0].fragmentSize = MemoryConstants::pageSize;
+    storage.fragmentStorageData[0].partiallyCoveredByAllocation = true;
+    EXPECT_EQ(MemoryManager::AllocationStatus::Success, memoryManager->populateOsHandles(storage, rootDeviceIndex));
+
+    auto bo = static_cast<OsHandleLinux *>(storage.fragmentStorageData[0].osHandleStorage)->bo;
+    EXPECT_EQ(getDefaultUserPtrPatIndex(memoryManager->getDrm(rootDeviceIndex), AllocationType::externalHostPtr), bo->peekPatIndex());
+
+    memoryManager->getHostPtrManager()->releaseHandleStorage(rootDeviceIndex, storage);
+    memoryManager->cleanOsHandles(storage, rootDeviceIndex);
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenPatIndexProgrammingSupportedWhenAllocatingUserptrThenPatIndexIsQueriedWithResourceInfoOfCacheableBufferGmm) {
+    mock->ioctlExpected.gemUserptr = 1;
+    mock->ioctlExpected.gemClose = 1;
+    mock->vmBindPatIndexProgrammingSupported = true;
+
+    auto &drm = memoryManager->getDrm(rootDeviceIndex);
+    auto mockClientContext = static_cast<MockGmmClientContextBase *>(drm.getRootDeviceEnvironment().getGmmClientContext());
+    mockClientContext->passedResourceInfoForGetPatIndexQuery = nullptr;
+
+    BufferObject *bo = memoryManager->allocUserptr(0x1000, MemoryConstants::pageSize, AllocationType::externalHostPtr, rootDeviceIndex);
+    ASSERT_NE(nullptr, bo);
+
+    EXPECT_NE(nullptr, mockClientContext->passedResourceInfoForGetPatIndexQuery);
+    EXPECT_FALSE(mockClientContext->passedCompressedSettingForGetPatIndexQuery);
+    EXPECT_TRUE(mockClientContext->passedCpuCacheableSettingForGetPatIndexQuery);
+    const auto patIndex = bo->peekPatIndex();
+    EXPECT_EQ(getDefaultUserPtrPatIndex(drm, AllocationType::externalHostPtr), patIndex);
+
+    memoryManager->unreference(bo, false);
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenUserptrCoherencyRequiredAndUncachedUsageWhenAllocatingUserptrThenPatIndexIsQueriedWithCpuCacheableBufferGmm) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ForceUncachedGmmUsageType.set(1llu << (static_cast<int64_t>(AllocationType::externalHostPtr) - 1));
+
+    auto ioctlHelper = new MockIoctlHelper(*mock);
+    ioctlHelper->isUserptrCoherencyRequiredResult = true;
+    mock->ioctlHelper.reset(ioctlHelper);
+    mock->ioctlExpected.gemUserptr = 1;
+    mock->ioctlExpected.gemClose = 1;
+    mock->vmBindPatIndexProgrammingSupported = true;
+
+    auto &drm = memoryManager->getDrm(rootDeviceIndex);
+    auto mockClientContext = static_cast<MockGmmClientContextBase *>(drm.getRootDeviceEnvironment().getGmmClientContext());
+    mockClientContext->passedResourceInfoForGetPatIndexQuery = nullptr;
+
+    BufferObject *bo = memoryManager->allocUserptr(0x1000, MemoryConstants::pageSize, AllocationType::externalHostPtr, rootDeviceIndex);
+    ASSERT_NE(nullptr, bo);
+
+    EXPECT_NE(nullptr, mockClientContext->passedResourceInfoForGetPatIndexQuery);
+    EXPECT_TRUE(mockClientContext->passedCpuCacheableSettingForGetPatIndexQuery);
+    const auto patIndex = bo->peekPatIndex();
+    EXPECT_EQ(getDefaultUserPtrPatIndex(drm, AllocationType::externalHostPtr), patIndex);
+
+    memoryManager->unreference(bo, false);
+}
+
 struct DrmMemoryManagerUsmHostPtrFragmentsFixture : public DrmMemoryManagerFixture {
     template <typename GfxFamily>
     void setUpT() {
@@ -3909,6 +3990,106 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenSvmCpuUsmHostA
     EXPECT_EQ(0x40u, alloc->getAllocationOffset());
     EXPECT_EQ(bo->peekAddress() + 0x40, alloc->getGpuAddress());
     EXPECT_EQ(hostPtr, alloc->getUnderlyingBuffer());
+    EXPECT_EQ(getDefaultUserPtrPatIndex(memoryManager->getDrm(rootDeviceIndex), AllocationType::svmCpu), bo->peekPatIndex());
+
+    memoryManager->freeGraphicsMemoryImpl(alloc);
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenSvmCpuUsmHostAllocationWithCachelineMisalignedExternalHostPtrWhenAllocatingThenItsBufferObjectUsesCachelineMisalignedUserPtrPatIndex) {
+    mock->ioctlExpected.gemUserptr = 1;
+    mock->ioctlExpected.gemClose = 1;
+
+    AllocationData allocationData;
+    allocationData.size = MemoryConstants::pageSize;
+    allocationData.rootDeviceIndex = rootDeviceIndex;
+    allocationData.flags.isUSMHostAllocation = true;
+    allocationData.type = AllocationType::svmCpu;
+    allocationData.hostPtr = ptrOffset(hostPtrBase, 0x41);
+    auto alloc = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemory(allocationData));
+    ASSERT_NE(nullptr, alloc);
+
+    auto bo = alloc->getBO();
+    ASSERT_NE(nullptr, bo);
+    EXPECT_EQ(0x41u, alloc->getAllocationOffset());
+    EXPECT_EQ(getCachelineMisalignedUserPtrPatIndex(memoryManager->getDrm(rootDeviceIndex), AllocationType::svmCpu), bo->peekPatIndex());
+
+    memoryManager->freeGraphicsMemoryImpl(alloc);
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenPartiallyCoveredFragmentWhenPopulatingOsHandlesThenPatIndexIsQueriedWithResourceInfoOfBufferGmm) {
+    mock->ioctlExpected.gemUserptr = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
+    mock->vmBindPatIndexProgrammingSupported = true;
+
+    for (auto &rootDeviceEnvironment : executionEnvironment->rootDeviceEnvironments) {
+        rootDeviceEnvironment->getMutableHardwareInfo()->caps.misalignedUserPtr2WayCoherent = true;
+    }
+    const auto &rootDeviceEnvironment = memoryManager->getDrm(rootDeviceIndex).getRootDeviceEnvironment();
+    const auto usageType = CacheSettingsHelper::getGmmUsageTypeForCachelineMisalignedUserPtr(*rootDeviceEnvironment.getHardwareInfo(), rootDeviceEnvironment.getReleaseHelper());
+    ASSERT_NE(GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER, usageType);
+    auto mockClientContext = static_cast<MockGmmClientContextBase *>(rootDeviceEnvironment.getGmmClientContext());
+
+    OsHandleStorage storage;
+    storage.fragmentStorageData[0].cpuPtr = hostPtrBase;
+    storage.fragmentStorageData[0].fragmentSize = MemoryConstants::pageSize;
+    storage.fragmentStorageData[0].partiallyCoveredByAllocation = true;
+    EXPECT_EQ(MemoryManager::AllocationStatus::Success, memoryManager->populateOsHandles(storage, rootDeviceIndex));
+
+    EXPECT_NE(nullptr, mockClientContext->passedResourceInfoForGetPatIndexQuery);
+    ASSERT_TRUE(mockClientContext->passedUsageTypeForGetPatIndexQuery.has_value());
+    EXPECT_EQ(usageType, mockClientContext->passedUsageTypeForGetPatIndexQuery.value());
+    EXPECT_FALSE(mockClientContext->passedCompressedSettingForGetPatIndexQuery);
+    EXPECT_TRUE(mockClientContext->passedCpuCacheableSettingForGetPatIndexQuery);
+    auto bo = static_cast<OsHandleLinux *>(storage.fragmentStorageData[0].osHandleStorage)->bo;
+    EXPECT_EQ(getCachelineMisalignedUserPtrPatIndex(memoryManager->getDrm(rootDeviceIndex), AllocationType::externalHostPtr), bo->peekPatIndex());
+
+    memoryManager->getHostPtrManager()->releaseHandleStorage(rootDeviceIndex, storage);
+    memoryManager->cleanOsHandles(storage, rootDeviceIndex);
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenUnalignedUsmHostAllocationBackedByFragmentsWhenAllocatingThenOnlyPartiallyCoveredPagesUseCachelineMisalignedUserPtrPatIndex) {
+    mock->ioctlExpected.gemUserptr = 3;
+    mock->ioctlExpected.gemWait = 3;
+    mock->ioctlExpected.gemClose = 3;
+
+    AllocationData allocationData;
+    allocationData.size = 2 * MemoryConstants::pageSize;
+    allocationData.rootDeviceIndex = rootDeviceIndex;
+    allocationData.flags.isUSMHostAllocation = true;
+    allocationData.hostPtr = ptrOffset(hostPtrBase, 0x40);
+    auto alloc = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemory(allocationData));
+    ASSERT_NE(nullptr, alloc);
+    ASSERT_EQ(3u, alloc->fragmentsStorage.fragmentCount);
+
+    const auto &drm = memoryManager->getDrm(rootDeviceIndex);
+    const uint64_t expectedPatIndices[] = {getCachelineMisalignedUserPtrPatIndex(drm, AllocationType::externalHostPtr),
+                                           getDefaultUserPtrPatIndex(drm, AllocationType::externalHostPtr),
+                                           getCachelineMisalignedUserPtrPatIndex(drm, AllocationType::externalHostPtr)};
+    for (auto fragmentId = 0u; fragmentId < 3u; fragmentId++) {
+        auto bo = static_cast<OsHandleLinux *>(alloc->fragmentsStorage.fragmentStorageData[fragmentId].osHandleStorage)->bo;
+        EXPECT_EQ(expectedPatIndices[fragmentId], bo->peekPatIndex());
+    }
+
+    memoryManager->freeGraphicsMemoryImpl(alloc);
+}
+
+HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenCachelineAlignedUsmHostAllocationCoveringPartOfPageWhenAllocatingThenItsFragmentUsesCachelineMisalignedUserPtrPatIndex) {
+    mock->ioctlExpected.gemUserptr = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
+
+    AllocationData allocationData;
+    allocationData.size = 4 * MemoryConstants::cacheLineSize;
+    allocationData.rootDeviceIndex = rootDeviceIndex;
+    allocationData.flags.isUSMHostAllocation = true;
+    allocationData.hostPtr = hostPtrBase;
+    auto alloc = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemory(allocationData));
+    ASSERT_NE(nullptr, alloc);
+    ASSERT_EQ(1u, alloc->fragmentsStorage.fragmentCount);
+
+    auto bo = static_cast<OsHandleLinux *>(alloc->fragmentsStorage.fragmentStorageData[0].osHandleStorage)->bo;
+    EXPECT_EQ(getCachelineMisalignedUserPtrPatIndex(memoryManager->getDrm(rootDeviceIndex), AllocationType::externalHostPtr), bo->peekPatIndex());
 
     memoryManager->freeGraphicsMemoryImpl(alloc);
 }
@@ -4113,6 +4294,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenPageAlignedExt
     EXPECT_EQ(castToUint64(hostPtrBase), bo->peekAddress());
     EXPECT_EQ(2 * MemoryConstants::pageSize, bo->peekSize());
     EXPECT_EQ(castToUint64(hostPtrBase), alloc->getGpuAddress());
+    EXPECT_EQ(getDefaultUserPtrPatIndex(memoryManager->getDrm(rootDeviceIndex), allocationData.type), bo->peekPatIndex());
 
     memoryManager->freeGraphicsMemoryImpl(alloc);
 }
@@ -5451,6 +5633,55 @@ TEST_F(DrmMemoryManagerBasic, givenUnalignedHostPtrWithFlushL3RequiredWhenAlloca
     const auto gmmPatIndex = mockClientContext->cachePolicyGetPATIndex(nullptr, expectedUsage, false, true);
     EXPECT_EQ(releaseHelper.overrideSystemMemoryPatIndex(gmmPatIndex),
               allocation->getBO()->peekPatIndex());
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerBasic, givenUnalignedHostPtrWithFlushL3RequiredWhenAllocatingNonSvmHostPtrThenPatIndexIsQueriedWithResourceInfoOfCacheableBufferGmm) {
+    AllocationData allocationData;
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(false, false, false, executionEnvironment));
+
+    memoryManager->forceLimitedRangeAllocator(MemoryConstants::max48BitAddress);
+    memoryManager->createBufferObjectsForNonSvmHostPtrCallBase = false;
+    static_cast<DrmMock &>(memoryManager->getDrm(rootDeviceIndex)).vmBindPatIndexProgrammingSupported = true;
+
+    auto mockClientContext = static_cast<MockGmmClientContextBase *>(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getGmmClientContext());
+    mockClientContext->passedResourceInfoForGetPatIndexQuery = nullptr;
+
+    allocationData.size = 13;
+    allocationData.hostPtr = reinterpret_cast<const void *>(0x5001);
+    allocationData.rootDeviceIndex = rootDeviceIndex;
+    allocationData.flags.flushL3 = true;
+    auto allocation = memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData);
+    ASSERT_NE(nullptr, allocation);
+
+    EXPECT_NE(nullptr, mockClientContext->passedResourceInfoForGetPatIndexQuery);
+    EXPECT_FALSE(mockClientContext->passedCompressedSettingForGetPatIndexQuery);
+    EXPECT_TRUE(mockClientContext->passedCpuCacheableSettingForGetPatIndexQuery);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerBasic, givenPatIndexProgrammingNotSupportedWhenAllocatingNonSvmHostPtrThenPatIndexIsQueriedWithoutResourceInfo) {
+    AllocationData allocationData;
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(false, false, false, executionEnvironment));
+
+    memoryManager->forceLimitedRangeAllocator(MemoryConstants::max48BitAddress);
+    memoryManager->createBufferObjectsForNonSvmHostPtrCallBase = false;
+    static_cast<DrmMock &>(memoryManager->getDrm(rootDeviceIndex)).vmBindPatIndexProgrammingSupported = false;
+
+    auto mockClientContext = static_cast<MockGmmClientContextBase *>(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getGmmClientContext());
+    mockClientContext->passedResourceInfoForGetPatIndexQuery = reinterpret_cast<GMM_RESOURCE_INFO *>(0x1234);
+    const auto queriesBefore = mockClientContext->getPatIndexQueryCalled;
+
+    allocationData.size = 13;
+    allocationData.hostPtr = reinterpret_cast<const void *>(0x5001);
+    allocationData.rootDeviceIndex = rootDeviceIndex;
+    auto allocation = memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(allocationData);
+    ASSERT_NE(nullptr, allocation);
+
+    EXPECT_EQ(queriesBefore + 1u, mockClientContext->getPatIndexQueryCalled);
+    EXPECT_EQ(nullptr, mockClientContext->passedResourceInfoForGetPatIndexQuery);
 
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -7991,6 +8222,25 @@ TEST_F(DrmAllocationTests, givenPatIndexInputsWhenCreatingBufferGmmThenResourceF
         EXPECT_FALSE(static_cast<bool>(resourceParams->Flags.Info.NotLockable));
         EXPECT_FALSE(gmm->getPreferNoCpuAccess());
         EXPECT_FALSE(gmm->isCompressionEnabled());
+    }
+}
+
+TEST_F(DrmAllocationTests, givenUsageTypeAndCpuCacheableWhenCreatingBufferGmmThenResourceUsesThemInSystemMemory) {
+    auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[0];
+    rootDeviceEnvironment.getMutableHardwareInfo()->featureTable.flags.ftrLocalMemory = true;
+    DrmMock drm(rootDeviceEnvironment);
+
+    for (const GmmResourceUsageType usageType : {GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED, GMM_RESOURCE_USAGE_HW_CONTEXT}) {
+        for (const bool cpuCacheable : {false, true}) {
+            auto gmm = drm.createBufferGmm(usageType, cpuCacheable, true, MemoryConstants::pageSize);
+
+            const auto *resourceParams = reinterpret_cast<const GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
+            EXPECT_EQ(usageType, static_cast<GmmResourceUsageType>(resourceParams->Usage));
+            EXPECT_EQ(cpuCacheable, static_cast<bool>(resourceParams->Flags.Info.Cacheable));
+            EXPECT_TRUE(static_cast<bool>(resourceParams->Flags.Info.NonLocalOnly));
+            EXPECT_FALSE(gmm->getPreferNoCpuAccess());
+            EXPECT_FALSE(gmm->isCompressionEnabled());
+        }
     }
 }
 

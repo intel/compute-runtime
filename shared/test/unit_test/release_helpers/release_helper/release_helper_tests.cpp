@@ -84,6 +84,27 @@ TEST(ReleaseHelperPatIndexTests, givenMisalignedUserPtrDestinationWhenSelectingG
               CacheSettingsHelper::getGmmUsageTypeForUserPtr(true, userPtr, size, hwInfo, releaseHelper));
 }
 
+TEST(ReleaseHelperPatIndexTests, givenCachelineMisalignedUserPtrWhenSelectingGmmUsageThenUse2WayCoherencyIfSupportedOrUncachedIfOnlyAppTransientPatIsAvailable) {
+    DebugManagerStateRestore restore;
+    HardwareInfo hwInfoWith2WayCoherency{};
+    hwInfoWith2WayCoherency.caps.misalignedUserPtr2WayCoherent = true;
+    HardwareInfo hwInfoWithout2WayCoherency{};
+    MockReleaseHelper releaseHelper;
+
+    releaseHelper.isAppTransientCoherentPatRequiredResult = false;
+    EXPECT_EQ(GMM_RESOURCE_USAGE_HW_CONTEXT, CacheSettingsHelper::getGmmUsageTypeForCachelineMisalignedUserPtr(hwInfoWith2WayCoherency, releaseHelper));
+    EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER, CacheSettingsHelper::getGmmUsageTypeForCachelineMisalignedUserPtr(hwInfoWithout2WayCoherency, releaseHelper));
+
+    releaseHelper.isAppTransientCoherentPatRequiredResult = true;
+    EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED, CacheSettingsHelper::getGmmUsageTypeForCachelineMisalignedUserPtr(hwInfoWith2WayCoherency, releaseHelper));
+    EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED, CacheSettingsHelper::getGmmUsageTypeForCachelineMisalignedUserPtr(hwInfoWithout2WayCoherency, releaseHelper));
+
+    debugManager.flags.Disable2WayCoherencyOverride.set(true);
+    EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER, CacheSettingsHelper::getGmmUsageTypeForCachelineMisalignedUserPtr(hwInfoWith2WayCoherency, releaseHelper));
+    releaseHelper.isAppTransientCoherentPatRequiredResult = false;
+    EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER, CacheSettingsHelper::getGmmUsageTypeForCachelineMisalignedUserPtr(hwInfoWith2WayCoherency, releaseHelper));
+}
+
 TEST(ReleaseHelperPatIndexTests, givenOnlyAppTransientPatAvailableWhenUserPtrIsNotMisalignedDestinationThenUseAppTransientUsage) {
     DebugManagerStateRestore restore;
     HardwareInfo hwInfo{};
