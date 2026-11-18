@@ -40,6 +40,7 @@ namespace Sysman {
 class SysmanProductHelper;
 class PmuInterface;
 class FirmwareUtil;
+class FwctlInterface;
 class SysmanKmdInterface;
 class FsAccessInterface;
 class SysFsAccessInterface;
@@ -54,6 +55,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableAndNonMovableClass {
     ze_result_t init() override;
 
     FirmwareUtil *getFwUtilInterface();
+    FwctlInterface *getFwctlInterface();
     PmuInterface *getPmuInterface() { return pPmuInterface; }
     FsAccessInterface &getFsAccess();
     ProcFsAccessInterface &getProcfsAccess();
@@ -119,9 +121,11 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableAndNonMovableClass {
     SysFsAccessInterface *pSysfsAccess = nullptr;
     uint32_t subDeviceCount = 0;
     FirmwareUtil *pFwUtilInterface = nullptr;
+    std::unique_ptr<FwctlInterface> pFwctlInterface;
     PmuInterface *pPmuInterface = nullptr;
     std::string rootPath;
     void releaseFwUtilInterface();
+    void releaseFwctlInterface();
     uint32_t memType = unknownMemoryType;
     std::map<uint32_t, std::unique_ptr<PlatformMonitoringTech::TelemData>> mapOfSubDeviceIdToTelemData;
     std::map<uint32_t, std::string> telemNodesInPciPath;
@@ -144,6 +148,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableAndNonMovableClass {
     ze_result_t restoreHPIE(int fd, uint16_t slotControlPos);
     ze_result_t resizeVfBar(uint8_t size);
     std::mutex fwLock;
+    std::mutex fwctlLock;
     std::string devicePciBdf = "";
     std::string driverName;
 };
