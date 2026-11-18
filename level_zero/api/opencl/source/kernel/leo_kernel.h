@@ -71,6 +71,7 @@ class Kernel : public BaseObject<_cl_kernel> {
     size_t getNumArgs() const { return this->argsSet.size(); };
 
     cl_int setIndirectAccess(cl_kernel_exec_info flag, cl_bool val);
+    cl_int setIndirectAccessForExecInfoPointers();
     cl_int setThreadArbitrationPolicy(uint32_t flag);
     cl_int setKernelExecutionType(cl_execution_info_kernel_type_intel type);
     NEO::KernelExecutionType getExecutionType() const { return this->executionType; }

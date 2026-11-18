@@ -539,6 +539,22 @@ cl_int Kernel::setIndirectAccess(cl_kernel_exec_info flag, cl_bool val) {
     return result;
 }
 
+cl_int Kernel::setIndirectAccessForExecInfoPointers() {
+    auto lock = this->takeOwnership();
+    constexpr ze_kernel_indirect_access_flags_t allIndirectAccessFlags = ZE_KERNEL_INDIRECT_ACCESS_FLAG_DEVICE |
+                                                                         ZE_KERNEL_INDIRECT_ACCESS_FLAG_HOST |
+                                                                         ZE_KERNEL_INDIRECT_ACCESS_FLAG_SHARED;
+    cl_int result = CL_SUCCESS;
+    for (const auto &[rootDeviceIndex, kernelHandle] : this->kernelHandles) {
+        auto ret = L0ToClResultMapper(zeKernelSetIndirectAccess(kernelHandle, allIndirectAccessFlags));
+        if (ret != CL_SUCCESS) {
+            result = ret;
+        }
+        this->getL0Object(rootDeviceIndex)->getPrivateState().kernelHasIndirectAccess = true;
+    }
+    return result;
+}
+
 cl_int Kernel::setThreadArbitrationPolicy(uint32_t flag) {
     auto lock = this->takeOwnership();
     ze_scheduling_hint_exp_desc_t schedulingDesc{ZE_STRUCTURE_TYPE_SCHEDULING_HINT_EXP_DESC, nullptr, NEO::LEO::Kernel::schedulingHintToL0(flag)};

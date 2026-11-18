@@ -435,9 +435,7 @@ cl_int CL_API_CALL clSetKernelExecInfo(cl_kernel kernel,
         }
 
         if (numPointers > 0u) {
-            pKernel->setIndirectAccess(CL_KERNEL_EXEC_INFO_INDIRECT_DEVICE_ACCESS_INTEL, CL_TRUE);
-            pKernel->setIndirectAccess(CL_KERNEL_EXEC_INFO_INDIRECT_HOST_ACCESS_INTEL, CL_TRUE);
-            pKernel->setIndirectAccess(CL_KERNEL_EXEC_INFO_INDIRECT_SHARED_ACCESS_INTEL, CL_TRUE);
+            retVal = pKernel->setIndirectAccessForExecInfoPointers();
         }
         break;
     }

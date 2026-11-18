@@ -639,6 +639,23 @@ TEST_F(SvmKernelValidationFixture, givenSvmPointerSetWithKernelExecInfoSvmPtrsWh
     svmAllocsManager->removeSVMAlloc(allocData);
 }
 
+TEST_F(SvmKernelValidationFixture, givenKernelWithoutDetectedIndirectAccessWhenSetKernelExecInfoSvmPtrsThenIndirectAllocationsAreAllowed) {
+    constexpr uint64_t gpuAddress = 0x1000u;
+    void *svmPtr = reinterpret_cast<void *>(gpuAddress);
+    NEO::MockGraphicsAllocation mockAllocation(svmPtr, gpuAddress, 0x1000u);
+    NEO::SvmAllocationData allocData(0u);
+    allocData.size = 0x1000u;
+    allocData.gpuAllocations.addAllocation(&mockAllocation);
+    context->getL0Object()->getDriverHandle()->getSvmAllocsManager()->insertSVMAlloc(allocData);
+    l0Kernel->privateState.kernelHasIndirectAccess = false;
+
+    auto retVal = clSetKernelExecInfo(kernel.get(), CL_KERNEL_EXEC_INFO_SVM_PTRS, sizeof(void *), &svmPtr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_TRUE(l0Kernel->hasIndirectAllocationsAllowed());
+
+    context->getL0Object()->getDriverHandle()->getSvmAllocsManager()->removeSVMAlloc(allocData);
+}
+
 struct ImmediateArgKernelFixture : public Test<OclFixture> {
     struct PaddedStruct {
         uint32_t a;
