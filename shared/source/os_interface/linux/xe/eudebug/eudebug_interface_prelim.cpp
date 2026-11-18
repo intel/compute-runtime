@@ -8,7 +8,8 @@
 #include "shared/source/os_interface/linux/xe/eudebug/eudebug_interface_prelim.h"
 
 #include "shared/source/helpers/debug_helpers.h"
-#include "shared/source/os_interface/linux/xe/xedrm_prelim.h"
+
+#include "third_party/uapi-eudebug/prelim-v3/xe_drm_prelim.h"
 
 #include <cstring>
 

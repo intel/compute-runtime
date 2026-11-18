@@ -6,8 +6,9 @@
  */
 
 #include "shared/source/os_interface/linux/xe/eudebug/eudebug_interface_prelim.h"
-#include "shared/source/os_interface/linux/xe/xedrm_prelim.h"
 #include "shared/test/common/test_macros/test.h"
+
+#include "third_party/uapi-eudebug/prelim-v3/xe_drm_prelim.h"
 
 using namespace NEO;
 TEST(EuDebugInterfacePrelimTest, whenGettingParamValueThenCorrectValueIsReturned) {

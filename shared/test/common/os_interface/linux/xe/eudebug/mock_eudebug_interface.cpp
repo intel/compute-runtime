@@ -11,7 +11,7 @@
 
 // clang-format off
 #include "third_party/uapi-eudebug/drm/xe_drm.h"
-#include "third_party/uapi/drm-uapi-helper/xe/xe_drm_prelim.h"
+#include "third_party/uapi-eudebug/prelim-v3/xe_drm_prelim.h"
 // clang-format on
 
 #define RETURN_AS_IS(X) \

@@ -12,7 +12,6 @@
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/os_interface/linux/drm_debug.h"
 #include "shared/source/os_interface/linux/engine_info.h"
-#include "shared/source/os_interface/linux/xe/xedrm_prelim.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
 #include "shared/source/sip_external_lib/sip_external_lib.h"
@@ -45,6 +44,7 @@
 #include "level_zero/zet_intel_gpu_debug.h"
 
 #include "StateSaveAreaHeaderWrapper.h"
+#include "third_party/uapi-eudebug/prelim-v3/xe_drm_prelim.h"
 
 #include <fcntl.h>
 #include <fstream>
