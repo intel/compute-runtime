@@ -569,6 +569,67 @@ HWTEST_F(InOrderIpcTests, givenIpcHandleWhenCreatingNewEventThenSetCorrectData) 
     completeHostAddress<FamilyType::gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>(immCmdList2.get());
 }
 
+HWTEST_F(InOrderIpcTests, givenIpcHandleWhenOpeningThenImportedAllocationsAreNotTrackedBySvmManager) {
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+
+    auto pool = createEvents<FamilyType>(1, false);
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
+    enableEventSharing(*events[0]);
+
+    ze_ipc_event_counter_based_handle_t zeIpcData = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedGetIpcHandle(events[0]->toHandle(), &zeIpcData));
+
+    auto svmAllocsManager = device->getDriverHandle()->getSvmAllocsManager();
+    const auto numSvmAllocsBeforeOpen = svmAllocsManager->getNumAllocs();
+
+    ze_event_handle_t newEvent = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedOpenIpcHandle(context->toHandle(), zeIpcData, &newEvent));
+
+    auto &newHelper = Event::fromHandle(newEvent)->getInOrderExecEventHelper();
+    EXPECT_TRUE(newHelper.is2WayIpcSharingEnabled());
+    EXPECT_EQ(numSvmAllocsBeforeOpen, svmAllocsManager->getNumAllocs());
+    EXPECT_EQ(nullptr, svmAllocsManager->getSVMAlloc(reinterpret_cast<void *>(newHelper.getDeviceCounterAllocation()->getGpuAddress())));
+    EXPECT_EQ(nullptr, svmAllocsManager->getSVMAlloc(reinterpret_cast<void *>(newHelper.getHostCounterAllocation()->getGpuAddress())));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCloseIpcHandle(newEvent));
+
+    completeHostAddress<FamilyType::gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>(immCmdList.get());
+}
+
+HWTEST_F(InOrderIpcTests, givenNonOpaqueIpcHandleWhenOpeningThenImportedAllocationIsNotTrackedBySvmManager) {
+    setOpaqueHandleSupport(false);
+
+    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
+
+    auto pool = createEvents<FamilyType>(1, false);
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
+    enableEventSharing(*events[0]);
+
+    if (events[0]->getInOrderExecEventHelper().isHostStorageDuplicated()) {
+        GTEST_SKIP();
+    }
+
+    ze_ipc_event_counter_based_handle_t zeIpcData = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedGetIpcHandle(events[0]->toHandle(), &zeIpcData));
+
+    auto svmAllocsManager = device->getDriverHandle()->getSvmAllocsManager();
+    const auto numSvmAllocsBeforeOpen = svmAllocsManager->getNumAllocs();
+
+    ze_event_handle_t newEvent = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedOpenIpcHandle(context->toHandle(), zeIpcData, &newEvent));
+
+    auto &newHelper = Event::fromHandle(newEvent)->getInOrderExecEventHelper();
+    EXPECT_FALSE(newHelper.is2WayIpcSharingEnabled());
+    EXPECT_EQ(numSvmAllocsBeforeOpen, svmAllocsManager->getNumAllocs());
+    EXPECT_EQ(nullptr, svmAllocsManager->getSVMAlloc(reinterpret_cast<void *>(newHelper.getDeviceCounterAllocation()->getGpuAddress())));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCloseIpcHandle(newEvent));
+
+    completeHostAddress<FamilyType::gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<FamilyType::gfxCoreFamily>>>(immCmdList.get());
+}
+
 HWTEST_F(InOrderIpcTests, givenOpaqueIpcHandleWhenOpeningThenImportCommunicationAndCounterAllocationsAsOpaqueHandles) {
     constexpr uint64_t communicationHandle = 0x1234;
     constexpr uint64_t deviceCounterHandle = 0x2345;
@@ -637,6 +698,55 @@ HWTEST_F(InOrderIpcTests, givenOpaqueIpcHandleWhenOpeningThenImportCommunication
     for (const auto &importCall : trackingContext.importCalls) {
         EXPECT_EQ(exporterProcessId, importCall.processId);
     }
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCloseIpcHandle(importedEventHandle));
+}
+
+HWTEST_F(InOrderIpcTests, givenOpaqueIpcHandleWithoutHostCounterHandleWhenOpeningThenDeviceCounterIsImportedWithHostAccess) {
+    constexpr uint64_t communicationHandle = 0x1234;
+    constexpr uint64_t deviceCounterHandle = 0x2345;
+    constexpr unsigned int exporterProcessId = 0x4567;
+
+    auto memoryManager = device->getNEODevice()->getMemoryManager();
+    auto rootDeviceIndex = device->getRootDeviceIndex();
+
+    auto communicationAllocation = memoryManager->allocateGraphicsMemoryWithProperties(NEO::MockAllocationProperties{rootDeviceIndex, MemoryConstants::pageSize, NEO::InOrderExecEventDataNodeType::getAllocationType()});
+    auto deviceCounterAllocation = memoryManager->allocateGraphicsMemoryWithProperties(NEO::MockAllocationProperties{rootDeviceIndex, MemoryConstants::pageSize, NEO::DeviceAllocNodeType<true>::getAllocationType()});
+
+    ASSERT_NE(nullptr, communicationAllocation);
+    ASSERT_NE(nullptr, deviceCounterAllocation);
+
+    auto eventData = reinterpret_cast<NEO::InOrderExecEventData *>(communicationAllocation->getUnderlyingBuffer());
+    *eventData = {};
+    eventData->deviceAllocIpcHandle = deviceCounterHandle;
+    eventData->counterValue = 1;
+    eventData->devicePartitions = 1;
+    eventData->hostPartitions = 1;
+    eventData->exporterProcessId = exporterProcessId;
+
+    IpcCounterBasedEventData ipcData = {};
+    ipcData.communicationAllocHandle = communicationHandle;
+    ipcData.processId = exporterProcessId;
+    ipcData.counterBasedFlags = ZE_EVENT_COUNTER_BASED_FLAG_IPC;
+    ipcData.signalScopeFlags = ZE_EVENT_SCOPE_FLAG_HOST;
+    ipcData.waitScopeFlags = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    CounterBasedIpcImportTrackingContext trackingContext(driverHandle.get());
+    trackingContext.settings.useOpaqueHandle = OpaqueHandlingType::pidfd;
+    trackingContext.settings.handleType = IpcHandleType::fdHandle;
+    trackingContext.allocations[communicationHandle] = communicationAllocation;
+    trackingContext.allocations[deviceCounterHandle] = deviceCounterAllocation;
+
+    VariableBackup<ze_context_handle_t> defaultContextBackup(&driverHandle->defaultContext, trackingContext.toHandle());
+
+    auto deviceHandle = device->toHandle();
+    ze_event_handle_t importedEventHandle = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, Event::openCounterBasedIpcHandle(ipcData, &importedEventHandle, driverHandle.get(), &trackingContext, 1, &deviceHandle));
+    ASSERT_NE(nullptr, importedEventHandle);
+
+    ASSERT_EQ(2u, trackingContext.importCalls.size());
+    EXPECT_EQ(deviceCounterHandle, trackingContext.importCalls[1].handle);
+    EXPECT_TRUE(trackingContext.importCalls[1].isHostIpcAllocation);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCloseIpcHandle(importedEventHandle));
 }
@@ -781,6 +891,7 @@ HWTEST_F(InOrderIpcTests, given1WayIpcHandleWhenOpeningThenNullReservedHandleDat
     EXPECT_EQ(deviceCounterHandle, trackingContext.importCalls[0].handle);
     EXPECT_FALSE(trackingContext.importCalls[0].isOpaqueHandle);
     EXPECT_FALSE(trackingContext.importCalls[0].hadReservedHandleData);
+    EXPECT_TRUE(trackingContext.importCalls[0].isHostIpcAllocation);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedCloseIpcHandle(importedEventHandle));
 }
@@ -872,72 +983,6 @@ HWTEST_F(InOrderIpcTests, givenCounterBasedEventWhenOpeningIpcHandleThenImported
 
     zeEventCounterBasedCloseIpcHandle(importedEvent);
     zeEventDestroy(exportedEvent);
-}
-
-HWTEST_F(InOrderIpcTests, givenOpaqueIpcHandleWhenOpeningThenCorrectMemoryTypeIsSetBasedOnHostAccess) {
-    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
-    auto pool = createEvents<FamilyType>(1, false);
-
-    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
-    enableEventSharing(*events[0]);
-
-    ze_ipc_event_counter_based_handle_t zeIpcData = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedGetIpcHandle(events[0]->toHandle(), &zeIpcData));
-
-    ze_event_handle_t newEvent = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedOpenIpcHandle(context->toHandle(), zeIpcData, &newEvent));
-    EXPECT_NE(nullptr, newEvent);
-
-    auto newEventMock = static_cast<InOrderFixtureMockEvent *>(Event::fromHandle(newEvent));
-    auto &newHelper = newEventMock->getInOrderExecEventHelper();
-    auto svmManager = device->getDriverHandle()->getSvmAllocsManager();
-
-    auto deviceAllocData = svmManager->getSVMAlloc(reinterpret_cast<void *>(newHelper.getDeviceCounterAllocation()->getGpuAddress()));
-    ASSERT_NE(nullptr, deviceAllocData);
-
-    if (newHelper.isHostStorageDuplicated()) {
-        EXPECT_EQ(InternalMemoryType::deviceUnifiedMemory, deviceAllocData->memoryType);
-
-        auto hostAllocData = svmManager->getSVMAlloc(reinterpret_cast<void *>(newHelper.getHostCounterAllocation()->getGpuAddress()));
-        ASSERT_NE(nullptr, hostAllocData);
-        EXPECT_EQ(InternalMemoryType::hostUnifiedMemory, hostAllocData->memoryType);
-    } else {
-        EXPECT_EQ(InternalMemoryType::hostUnifiedMemory, deviceAllocData->memoryType);
-    }
-
-    zeEventCounterBasedCloseIpcHandle(newEvent);
-}
-
-HWTEST_F(InOrderIpcTests, givenNonOpaqueIpcHandleWhenOpeningThenHostAccessMemoryTypeIsSet) {
-    setOpaqueHandleSupport(false);
-
-    auto immCmdList = createImmCmdList<FamilyType::gfxCoreFamily>();
-    auto pool = createEvents<FamilyType>(1, false);
-
-    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams);
-    enableEventSharing(*events[0]);
-
-    ze_ipc_event_counter_based_handle_t zeIpcData = {};
-
-    if (events[0]->getInOrderExecEventHelper().isHostStorageDuplicated()) {
-        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zeEventCounterBasedGetIpcHandle(events[0]->toHandle(), &zeIpcData));
-    } else {
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedGetIpcHandle(events[0]->toHandle(), &zeIpcData));
-
-        ze_event_handle_t newEvent = nullptr;
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventCounterBasedOpenIpcHandle(context->toHandle(), zeIpcData, &newEvent));
-        EXPECT_NE(nullptr, newEvent);
-
-        auto newEventMock = static_cast<InOrderFixtureMockEvent *>(Event::fromHandle(newEvent));
-        auto &newHelper = newEventMock->getInOrderExecEventHelper();
-        auto svmManager = device->getDriverHandle()->getSvmAllocsManager();
-
-        auto deviceAllocData = svmManager->getSVMAlloc(reinterpret_cast<void *>(newHelper.getDeviceCounterAllocation()->getGpuAddress()));
-        ASSERT_NE(nullptr, deviceAllocData);
-        EXPECT_EQ(InternalMemoryType::hostUnifiedMemory, deviceAllocData->memoryType);
-
-        zeEventCounterBasedCloseIpcHandle(newEvent);
-    }
 }
 
 HWTEST_F(InOrderIpcTests, givenIncorrectParamsWhenUsingIpcApisThenReturnError) {
