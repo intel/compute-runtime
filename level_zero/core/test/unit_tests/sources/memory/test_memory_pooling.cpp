@@ -118,7 +118,7 @@ struct AllocUsmPoolMemoryTest : public ::testing::Test {
 };
 
 using AllocUsmHostDefaultMultiDeviceMemoryTest = AllocUsmPoolMemoryTest<-1, -1, 0, true>;
-TEST_F(AllocUsmHostDefaultMultiDeviceMemoryTest, givenDriverHandleWhenCallingInitHostUsmAllocPoolThenDoNotInit) {
+TEST_F(AllocUsmHostDefaultMultiDeviceMemoryTest, givenDriverHandleWhenCallingInitHostUsmAllocPoolThenInitIfSupportedOnAllDevicesAndNoDebugger) {
     L0UltHelper::cleanupUsmAllocPoolsAndReuse(driverHandle.get());
     mockProductHelpers[0]->isHostUsmPoolAllocatorSupportedResult = false;
     mockProductHelpers[1]->isHostUsmPoolAllocatorSupportedResult = false;
@@ -135,7 +135,8 @@ TEST_F(AllocUsmHostDefaultMultiDeviceMemoryTest, givenDriverHandleWhenCallingIni
     mockProductHelpers[0]->isHostUsmPoolAllocatorSupportedResult = true;
     mockProductHelpers[1]->isHostUsmPoolAllocatorSupportedResult = true;
     driverHandle->initHostUsmAllocPool(true);
-    EXPECT_EQ(nullptr, driverHandle->usmHostMemAllocPoolFacade.getPool());
+    ASSERT_NE(nullptr, driverHandle->usmHostMemAllocPoolFacade.getPool());
+    EXPECT_TRUE(driverHandle->usmHostMemAllocPoolFacade.getPool()->isInitialized());
 
     for (int32_t csrType = 0; csrType < static_cast<int32_t>(CommandStreamReceiverType::typesNum); ++csrType) {
         DebugManagerStateRestore restorer;

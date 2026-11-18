@@ -459,8 +459,7 @@ void DriverHandle::initHostUsmAllocPool(bool multiDevice) {
     for (auto device : this->devices) {
         usmHostAllocPoolingEnabled &= device->getNEODevice()->getProductHelper().isHostUsmPoolAllocatorSupported() &&
                                       nullptr == device->getL0Debugger() &&
-                                      NEO::DeviceFactory::isHwModeSelected() &&
-                                      !multiDevice;
+                                      NEO::DeviceFactory::isHwModeSelected();
     }
     usmHostAllocPoolingEnabled = NEO::UsmMemAllocPoolsFacade::poolingEnabled(InternalMemoryType::hostUnifiedMemory, usmHostAllocPoolingEnabled);
     if (usmHostAllocPoolingEnabled) {
