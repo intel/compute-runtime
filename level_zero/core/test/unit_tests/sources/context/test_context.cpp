@@ -742,6 +742,27 @@ TEST_F(ContextPowerSavingHintTest, givenContextCreatedWithMaxPowerHintWhenAccess
     context->destroy();
 }
 
+TEST_F(ContextPowerSavingHintTest, givenPowerHintExtDescWithMaxHintWhenContextIsCreatedThenMaxPowerHintIsSet) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t ctxtDesc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC};
+    ze_context_power_saving_hint_ext_desc_t powerHintExtDesc = {ZE_STRUCTURE_TYPE_POWER_SAVING_HINT_EXT_DESC};
+    powerHintExtDesc.hint = ZE_POWER_SAVING_HINT_EXT_TYPE_MAX;
+    ctxtDesc.pNext = &powerHintExtDesc;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, driverHandle->createContext(&ctxtDesc, 0u, nullptr, &hContext));
+    L0::Context *context = L0::Context::fromHandle(hContext);
+    EXPECT_EQ(NEO::OsContext::getUmdPowerHintMax(), context->getPowerHint());
+    context->destroy();
+}
+
+TEST_F(ContextPowerSavingHintTest, givenPowerHintExtDescWithHintGreaterThanMaxWhenContextIsCreatedThenErrorIsReturned) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t ctxtDesc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC};
+    ze_context_power_saving_hint_ext_desc_t powerHintExtDesc = {ZE_STRUCTURE_TYPE_POWER_SAVING_HINT_EXT_DESC};
+    powerHintExtDesc.hint = ZE_POWER_SAVING_HINT_EXT_TYPE_MAX + 1;
+    ctxtDesc.pNext = &powerHintExtDesc;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ENUMERATION, driverHandle->createContext(&ctxtDesc, 0u, nullptr, &hContext));
+}
+
 TEST_F(ContextPowerSavingHintTest, givenTwoContextsWhenOneHasMaxPowerHintThenOtherIsUnaffected) {
     ze_context_handle_t hContextWithHint;
     ze_context_desc_t ctxtDescWithHint = {ZE_STRUCTURE_TYPE_CONTEXT_DESC};

@@ -42,6 +42,7 @@
 #include "driver_version.h"
 
 #include <algorithm>
+#include <optional>
 #include <vector>
 
 namespace L0 {
@@ -58,12 +59,16 @@ ze_result_t DriverHandle::createContext(const ze_context_desc_t *desc,
     }
 
     if (desc->pNext) {
-        const ze_base_desc_t *expDesc = reinterpret_cast<const ze_base_desc_t *>(desc->pNext);
-        if (expDesc->stype == ZE_STRUCTURE_TYPE_POWER_SAVING_HINT_EXP_DESC) {
-            const ze_context_power_saving_hint_exp_desc_t *powerHintExpDesc =
-                reinterpret_cast<const ze_context_power_saving_hint_exp_desc_t *>(expDesc);
-            if (powerHintExpDesc->hint <= ZE_POWER_SAVING_HINT_TYPE_MAX) {
-                context->setPowerHint(static_cast<uint8_t>(powerHintExpDesc->hint));
+        const ze_base_desc_t *extendedDesc = reinterpret_cast<const ze_base_desc_t *>(desc->pNext);
+        std::optional<uint32_t> powerHint;
+        if (extendedDesc->stype == ZE_STRUCTURE_TYPE_POWER_SAVING_HINT_EXP_DESC) {
+            powerHint = reinterpret_cast<const ze_context_power_saving_hint_exp_desc_t *>(extendedDesc)->hint;
+        } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_POWER_SAVING_HINT_EXT_DESC) {
+            powerHint = reinterpret_cast<const ze_context_power_saving_hint_ext_desc_t *>(extendedDesc)->hint;
+        }
+        if (powerHint.has_value()) {
+            if (powerHint.value() <= ZE_POWER_SAVING_HINT_TYPE_MAX) {
+                context->setPowerHint(static_cast<uint8_t>(powerHint.value()));
             } else {
                 delete context;
                 return ZE_RESULT_ERROR_INVALID_ENUMERATION;
