@@ -2165,7 +2165,7 @@ HWTEST_F(StagingBuffersExternalDependencyFixture, givenRegularCmdListWithWaitOnE
 
     MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
     initializeCmdList(cmdList, false);
-    cmdList.cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex] = copyOffloadQueue.get();
+    cmdList.cmdQImmediateCopyOffload[DualStreamCopyOffload::copyOffloadReadIndex] = copyOffloadQueue.get();
     cmdList.copyOffloadMode = CopyOffloadModes::dualStream;
 
     auto regularCmdListHandle = regularCmdList->toHandle();
@@ -3257,7 +3257,7 @@ HWTEST2_F(StagingImageBuffersFixture, givenMipMappedImageAndDualStreamCopyOffloa
     MockCommandListImmediateHw<FamilyType::gfxCoreFamily> cmdList;
     cmdList.cmdQImmediate = queue.get();
     cmdList.initialize(device, NEO::EngineGroupType::compute, 0u);
-    cmdList.cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex] = copyOffloadQueue.get();
+    cmdList.cmdQImmediateCopyOffload[DualStreamCopyOffload::copyOffloadReadIndex] = copyOffloadQueue.get();
     cmdList.copyOffloadMode = CopyOffloadModes::dualStream;
 
     ze_image_desc_t imgDesc = {};
@@ -3285,7 +3285,7 @@ HWTEST2_F(StagingImageBuffersFixture, givenMipMappedImageAndDualStreamCopyOffloa
     EXPECT_FALSE(computeUltCsr->waitForTaskCountWithKmdNotifyInputParams.empty());
     EXPECT_TRUE(copyOffloadUltCsr->waitForTaskCountWithKmdNotifyInputParams.empty());
 
-    cmdList.cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex] = nullptr;
+    cmdList.cmdQImmediateCopyOffload[DualStreamCopyOffload::copyOffloadReadIndex] = nullptr;
 }
 
 } // namespace ult

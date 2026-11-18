@@ -130,7 +130,7 @@ TEST_F(ImmediateCmdListDeferredInitializationTest, givenImmediateCmdListWhenCrea
     auto whiteBoxCmdList = CommandList::whiteboxCast(commandList.get());
 
     EXPECT_EQ(nullptr, whiteBoxCmdList->cmdQImmediate);
-    EXPECT_EQ(nullptr, whiteBoxCmdList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex]);
+    EXPECT_EQ(nullptr, whiteBoxCmdList->cmdQImmediateCopyOffload[DualStreamCopyOffload::copyOffloadReadIndex]);
     EXPECT_EQ(nullptr, whiteBoxCmdList->commandContainer.getCommandStream());
     EXPECT_FALSE(whiteBoxCmdList->isInOrderExecutionEnabled());
     EXPECT_EQ(device, whiteBoxCmdList->getDevice());

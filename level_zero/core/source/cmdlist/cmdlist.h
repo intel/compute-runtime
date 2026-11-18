@@ -108,10 +108,6 @@ using AppendedMemAdviseOperations = std::vector<MemAdviseOperation>;
 struct CommandList : _ze_command_list_handle_t {
     static constexpr uint32_t defaultNumIddsPerBlock = 64u;
     static constexpr uint32_t commandListimmediateIddsPerBlock = 1u;
-    static constexpr size_t copyOffloadReadQueueIndex = 0u;
-    static constexpr size_t copyOffloadWriteQueueIndex = 1u;
-    static constexpr size_t numCopyOffloadQueues = copyOffloadWriteQueueIndex + 1;
-    static constexpr uint32_t copyOffloadWriteEngineIndex = 1u;
 
     static bool isUsingSystemAllocation(const NEO::AllocationType &allocType) {
         return ((allocType == NEO::AllocationType::bufferHostMemory) ||
@@ -911,9 +907,9 @@ struct CommandList : _ze_command_list_handle_t {
     NEO::GraphicsAllocation *latesTagGpuAllocation = nullptr;
     ze_context_handle_t hContext = nullptr;
     CommandQueue *cmdQImmediate = nullptr;
-    std::array<CommandQueue *, numCopyOffloadQueues> cmdQImmediateCopyOffload{};
-    size_t activeCopyOffloadQueueIndex = copyOffloadReadQueueIndex;
-    size_t latestCopyOffloadQueueIndex = copyOffloadReadQueueIndex;
+    std::array<CommandQueue *, DualStreamCopyOffload::numCopyOffloadQueues> cmdQImmediateCopyOffload{};
+    size_t activeCopyOffloadQueueIndex = DualStreamCopyOffload::copyOffloadReadIndex;
+    size_t latestCopyOffloadQueueIndex = DualStreamCopyOffload::copyOffloadReadIndex;
     NEO::CommandStreamReceiver *preassignedImmediateCsr = nullptr;
     Device *device = nullptr;
     NEO::ScratchSpaceController *usedScratchController = nullptr;

@@ -305,7 +305,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
             this->cmdList.activeCopyOffloadQueueIndex = this->cmdList.selectCopyOffloadQueueIndex(dstPtr, dstSize, explicitDstAlloc, this->dstSvmAlloc);
         }
         ~CopyOffloadQueueSelectionScope() {
-            this->cmdList.activeCopyOffloadQueueIndex = CommandList::copyOffloadReadQueueIndex;
+            this->cmdList.activeCopyOffloadQueueIndex = DualStreamCopyOffload::copyOffloadReadIndex;
         }
         const std::optional<NEO::SvmAllocationData *> &getDstSvmAlloc() const { return this->dstSvmAlloc; }
 
@@ -367,7 +367,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     bool csrReassignmentSuspended = false;
     bool latestFlushIsHostVisible = false;
     bool keepRelaxedOrderingEnabled = false;
-    std::array<bool, CommandList::numCopyOffloadQueues> copyOffloadTagUpdateRequired{};
+    std::array<bool, DualStreamCopyOffload::numCopyOffloadQueues> copyOffloadTagUpdateRequired{};
 };
 
 } // namespace L0

@@ -914,16 +914,16 @@ void CommandList::enableCopyOperationOffload() {
         return;
     }
 
-    this->cmdQImmediateCopyOffload[copyOffloadReadQueueIndex] = createCopyOffloadCmdQImmediate(copyCsr, ordinal, queueOwnershipTaken);
+    this->cmdQImmediateCopyOffload[DualStreamCopyOffload::copyOffloadReadIndex] = createCopyOffloadCmdQImmediate(copyCsr, ordinal, queueOwnershipTaken);
 
     if (isCopyOffloadWriteEngineAllowed(ordinal)) {
         NEO::CommandStreamReceiver *writeCopyCsr = nullptr;
         bool writeQueueOwnershipTaken = false;
-        device->getCsrForOrdinalAndIndex(&writeCopyCsr, ordinal, copyOffloadWriteEngineIndex, immediateQueuePriority, std::nullopt, this->powerHint, &writeQueueOwnershipTaken);
+        device->getCsrForOrdinalAndIndex(&writeCopyCsr, ordinal, DualStreamCopyOffload::copyOffloadWriteIndex, immediateQueuePriority, std::nullopt, this->powerHint, &writeQueueOwnershipTaken);
         UNRECOVERABLE_IF(!writeCopyCsr);
 
         if (writeCopyCsr->getOsContext().getEngineType() != copyCsr->getOsContext().getEngineType()) {
-            this->cmdQImmediateCopyOffload[copyOffloadWriteQueueIndex] = createCopyOffloadCmdQImmediate(writeCopyCsr, ordinal, writeQueueOwnershipTaken);
+            this->cmdQImmediateCopyOffload[DualStreamCopyOffload::copyOffloadWriteIndex] = createCopyOffloadCmdQImmediate(writeCopyCsr, ordinal, writeQueueOwnershipTaken);
         } else if (writeQueueOwnershipTaken) {
             writeCopyCsr->releaseQueueOwnership();
         }
@@ -939,7 +939,7 @@ bool CommandList::isCopyOffloadWriteEngineAllowed(uint32_t copyEngineOrdinal) co
         return false;
     }
 
-    return device->isQueueGroupOrdinalAndIndexValid(copyEngineOrdinal, copyOffloadWriteEngineIndex);
+    return device->isQueueGroupOrdinalAndIndexValid(copyEngineOrdinal, DualStreamCopyOffload::copyOffloadWriteIndex);
 }
 
 CommandQueue *CommandList::createCopyOffloadCmdQImmediate(NEO::CommandStreamReceiver *copyCsr, uint32_t ordinal, bool queueOwnershipTaken) {

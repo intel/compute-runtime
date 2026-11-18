@@ -1826,7 +1826,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWithDualStreamCopy
     cmdList.cmdQImmediate = mockCmdQ.get();
     mockCmdQ->setTaskCount(1);
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
-    cmdList.cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex] = mockCopyOffloadCmdQ.get();
+    cmdList.cmdQImmediateCopyOffload[DualStreamCopyOffload::copyOffloadReadIndex] = mockCopyOffloadCmdQ.get();
     cmdList.copyOffloadMode = CopyOffloadModes::dualStream;
 
     CmdListWaitEventParameters waitEventsParameters = {
@@ -1846,7 +1846,7 @@ HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWithDualStreamCopy
     EXPECT_EQ(2u, cmdList.executeCommandListImmediateWithFlushTaskCalledCount);
 
     cmdList.copyOffloadMode = CopyOffloadModes::disabled;
-    cmdList.cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex] = nullptr;
+    cmdList.cmdQImmediateCopyOffload[DualStreamCopyOffload::copyOffloadReadIndex] = nullptr;
 }
 
 HWTEST_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenAppendWaitOnEventsThenSetDependenciesPresent) {

@@ -2952,7 +2952,7 @@ HWTEST_F(CommandListCsrReassignmentTests, givenBarrierWithCopyOffloadSynchroniza
     ze_command_queue_handle_t copyOffloadQueueHandle = nullptr;
     ASSERT_EQ(ZE_RESULT_SUCCESS, device->createCommandQueue(&desc, &copyOffloadQueueHandle));
     auto copyOffloadQueue = static_cast<WhiteBox<::L0::CommandQueue> *>(L0::CommandQueue::fromHandle(copyOffloadQueueHandle));
-    commandList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex] = copyOffloadQueue;
+    commandList->cmdQImmediateCopyOffload[DualStreamCopyOffload::copyOffloadReadIndex] = copyOffloadQueue;
     immediateCommandList->copyOffloadMode = CopyOffloadModes::dualStream;
 
     initialCsr->retainQueueOwnership();
@@ -2970,7 +2970,7 @@ HWTEST_F(CommandListCsrReassignmentTests, givenBarrierWithCopyOffloadSynchroniza
     initialUltCsr->onFlushImmediateTask = nullptr;
     initialUltCsr->isTagReachedReturnValue.reset();
     immediateCommandList->copyOffloadMode = CopyOffloadModes::disabled;
-    commandList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex] = nullptr;
+    commandList->cmdQImmediateCopyOffload[DualStreamCopyOffload::copyOffloadReadIndex] = nullptr;
     copyOffloadQueue->destroy();
     initialCsr->releaseQueueOwnership();
     markCsrIdle(initialCsr);
@@ -3127,14 +3127,14 @@ HWTEST_F(CommandListCsrReassignmentTests, givenInOrderCommandListReassignedWhenF
     ASSERT_EQ(initialCsr, immediateCommandList->csrBeforeReassignment);
     immediateCommandList->implicitDependencyOnPreviousCsrPending = false;
 
-    commandList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex] = copyOffloadQueue;
+    commandList->cmdQImmediateCopyOffload[DualStreamCopyOffload::copyOffloadReadIndex] = copyOffloadQueue;
     EXPECT_EQ(ZE_RESULT_SUCCESS, immediateCommandList->executeCommandListImmediateWithFlushTaskImpl(false, false, false, NEO::AppendOperations::nonKernel, false, copyOffloadQueue, nullptr, nullptr));
     EXPECT_EQ(initialCsr, immediateCommandList->csrBeforeReassignment);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, immediateCommandList->executeCommandListImmediateWithFlushTaskImpl(false, false, false, NEO::AppendOperations::nonKernel, false, commandList->cmdQImmediate, nullptr, nullptr));
     EXPECT_EQ(nullptr, immediateCommandList->csrBeforeReassignment);
 
-    commandList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex] = nullptr;
+    commandList->cmdQImmediateCopyOffload[DualStreamCopyOffload::copyOffloadReadIndex] = nullptr;
     copyOffloadQueue->destroy();
     setInOrderCounterMemory(commandList, inOrderExecInfo->getCounterValue());
     initialCsr->releaseQueueOwnership();
@@ -3635,7 +3635,7 @@ HWTEST_F(CommandListCsrReassignmentTests, givenCopyOffloadQueueWithIncompleteWor
     ASSERT_EQ(ZE_RESULT_SUCCESS, device->createCommandQueue(&desc, &copyOffloadQueueHandle));
     auto copyOffloadQueue = static_cast<WhiteBox<::L0::CommandQueue> *>(L0::CommandQueue::fromHandle(copyOffloadQueueHandle));
     copyOffloadQueue->taskCount = std::numeric_limits<TagAddressType>::max();
-    commandList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex] = copyOffloadQueue;
+    commandList->cmdQImmediateCopyOffload[DualStreamCopyOffload::copyOffloadReadIndex] = copyOffloadQueue;
 
     initialCsr->retainQueueOwnership();
     setCsrProgress<FamilyType>(initialCsr, loadedCsrSubmittedTaskCount, 0u);
@@ -3647,7 +3647,7 @@ HWTEST_F(CommandListCsrReassignmentTests, givenCopyOffloadQueueWithIncompleteWor
     EXPECT_EQ(ZE_RESULT_SUCCESS, appendBarrier(commandList));
     EXPECT_NE(initialCsr, commandList->getCsr(false));
 
-    commandList->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex] = nullptr;
+    commandList->cmdQImmediateCopyOffload[DualStreamCopyOffload::copyOffloadReadIndex] = nullptr;
     copyOffloadQueue->destroy();
     initialCsr->releaseQueueOwnership();
     markCsrIdle(initialCsr);

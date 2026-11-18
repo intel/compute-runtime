@@ -905,7 +905,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrier(ze_even
         return ret;
     }
 
-    const auto copyOffloadQueue = this->cmdQImmediateCopyOffload[this->copyOffloadReadQueueIndex];
+    const auto copyOffloadQueue = this->cmdQImmediateCopyOffload[DualStreamCopyOffload::copyOffloadReadIndex];
     const bool dualStreamCopyOffload = isDualStreamCopyOffloadOperation(true) && copyOffloadQueue != nullptr;
 
     bool isStallingOperation = true;
@@ -979,7 +979,7 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::programCrossEngineTaskCountW
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrierWithCopyOffloadSynchronization(ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
                                                                                                        ze_event_handle_t *phWaitEvents, CmdListWaitEventParameters &waitEventsParameters, bool isStallingOperation) {
-    auto copyOffloadQueue = this->cmdQImmediateCopyOffload[this->copyOffloadReadQueueIndex];
+    auto copyOffloadQueue = this->cmdQImmediateCopyOffload[DualStreamCopyOffload::copyOffloadReadIndex];
     auto copyOffloadCsr = copyOffloadQueue->getCsr();
     const auto copyOffloadTaskCount = copyOffloadQueue->getTaskCount();
 
@@ -1760,7 +1760,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
     const bool dualStreamCopyOffload = isDualStreamCopyOffloadOperation(isCopyOffloadEnabled());
     const TaskCountType mainQueueTaskCount = waitQueue->getTaskCount();
 
-    std::array<TaskCountType, CommandList::numCopyOffloadQueues> copyOffloadTaskCounts{};
+    std::array<TaskCountType, DualStreamCopyOffload::numCopyOffloadQueues> copyOffloadTaskCounts{};
     if (dualStreamCopyOffload) {
         for (size_t queueIndex = 0; queueIndex < this->cmdQImmediateCopyOffload.size(); queueIndex++) {
             if (const auto copyOffloadQueue = this->cmdQImmediateCopyOffload[queueIndex]) {
@@ -1768,7 +1768,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
             }
         }
     }
-    const TaskCountType copyOffloadTaskCount = copyOffloadTaskCounts[this->copyOffloadReadQueueIndex];
+    const TaskCountType copyOffloadTaskCount = copyOffloadTaskCounts[DualStreamCopyOffload::copyOffloadReadIndex];
 
     if (!isInOrderExecutionEnabled() && this->lastHostSynchronizeTaskCounts.matches(mainQueueTaskCount, copyOffloadTaskCount)) {
         return ZE_RESULT_SUCCESS;
@@ -1779,7 +1779,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
     NEO::InternalAllocationStorage *mainInternalAllocStorage = mainQueueCsr->getInternalAllocationStorage();
 
     bool mainStorageCleanupNeeded = !mainInternalAllocStorage->getTemporaryAllocations().peekIsEmpty();
-    std::array<bool, CommandList::numCopyOffloadQueues> copyOffloadStorageCleanupNeeded{};
+    std::array<bool, DualStreamCopyOffload::numCopyOffloadQueues> copyOffloadStorageCleanupNeeded{};
 
     auto waitTaskCount = mainQueueTaskCount;
 
@@ -1946,8 +1946,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 size_t CommandListCoreFamilyImmediate<gfxCoreFamily>::selectCopyOffloadQueueIndex(const void *dstPtr, size_t dstSize, const NEO::GraphicsAllocation *explicitDstAlloc, std::optional<NEO::SvmAllocationData *> &dstSvmAlloc) const {
-    if (this->cmdQImmediateCopyOffload[this->copyOffloadWriteQueueIndex] == nullptr) {
-        return this->copyOffloadReadQueueIndex;
+    if (this->cmdQImmediateCopyOffload[DualStreamCopyOffload::copyOffloadWriteIndex] == nullptr) {
+        return DualStreamCopyOffload::copyOffloadReadIndex;
     }
 
     bool writeOutsideOfDevice = false;
@@ -1960,7 +1960,7 @@ size_t CommandListCoreFamilyImmediate<gfxCoreFamily>::selectCopyOffloadQueueInde
         writeOutsideOfDevice = (dstAllocData == nullptr) || this->isDstSystemOrRemoteAlloc(dstAllocData);
     }
 
-    return writeOutsideOfDevice ? this->copyOffloadWriteQueueIndex : this->copyOffloadReadQueueIndex;
+    return writeOutsideOfDevice ? DualStreamCopyOffload::copyOffloadWriteIndex : DualStreamCopyOffload::copyOffloadReadIndex;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -2048,7 +2048,7 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::recordStagingDependency() {
         return;
     }
 
-    const auto copyOffloadQueue = this->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex];
+    const auto copyOffloadQueue = this->cmdQImmediateCopyOffload[DualStreamCopyOffload::copyOffloadReadIndex];
     const bool dualStreamCopyOffload = isDualStreamCopyOffloadOperation(true) && copyOffloadQueue != nullptr;
     this->stagingDependencyTaskCounts.store(this->cmdQImmediate->getTaskCount(),
                                             dualStreamCopyOffload ? copyOffloadQueue->getTaskCount() : 0);
@@ -2077,7 +2077,7 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::hasPendingStagingDependency(
     }
 
     const auto copyOffloadTaskCount = this->stagingDependencyTaskCounts.copyOffload.load();
-    const auto copyOffloadQueue = this->cmdQImmediateCopyOffload[CommandList::copyOffloadReadQueueIndex];
+    const auto copyOffloadQueue = this->cmdQImmediateCopyOffload[DualStreamCopyOffload::copyOffloadReadIndex];
     if (copyOffloadTaskCount != 0 && copyOffloadQueue != nullptr) {
         auto copyOffloadCsr = copyOffloadQueue->getCsr();
         if (!copyOffloadCsr->testTaskCountReady(copyOffloadCsr->getTagAddress(), copyOffloadTaskCount)) {
