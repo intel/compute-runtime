@@ -57,6 +57,7 @@ struct SvmAllocationData : NEO::NonCopyableAndNonMovableClass {
         this->isExportedAllocation = svmAllocData.isExportedAllocation.load();
         this->isInternalAllocation = svmAllocData.isInternalAllocation;
         this->isExternalMemmapAllocation = svmAllocData.isExternalMemmapAllocation;
+        this->isAtomicAccessSet = svmAllocData.isAtomicAccessSet;
         for (auto allocation : svmAllocData.gpuAllocations.getGraphicsAllocations()) {
             if (allocation) {
                 this->gpuAllocations.addAllocation(allocation);
@@ -82,6 +83,7 @@ struct SvmAllocationData : NEO::NonCopyableAndNonMovableClass {
     bool isImportedAllocation = false;
     std::atomic<bool> isExportedAllocation = false;
     bool isExternalMemmapAllocation = false;
+    bool isAtomicAccessSet = false;
     std::vector<MemFreeCallback> memFreeCallbacks;
     void setAllocId(uint32_t id) {
         allocId = id;

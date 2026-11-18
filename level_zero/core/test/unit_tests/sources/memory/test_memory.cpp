@@ -2103,6 +2103,42 @@ TEST_F(MemoryTest, whenCallingGetAtomicAccessAttributeWithAttributeNotSetErrorIs
     result = context->freeMem(ptr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 }
+
+TEST_F(MemoryTest, givenMemoryManagerFailingToSetAtomicAccessWhenCallingSetAtomicAccessAttributeThenErrorIsReturnedAttributeIsNotRecordedAndAllocationIsNotReused) {
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ze_result_t result = context->allocSharedMem(device->toHandle(), &deviceDesc, &hostDesc, size, alignment, &ptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto memoryManager = static_cast<MockMemoryManager *>(neoDevice->getMemoryManager());
+    auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
+    ASSERT_NE(nullptr, allocData);
+
+    memoryManager->failSetAtomicAccess = true;
+    result = context->setAtomicAccessAttribute(device->toHandle(), ptr, size, ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_NO_HOST_ATOMICS);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+    EXPECT_TRUE(allocData->isAtomicAccessSet);
+
+    memoryManager->failSetAtomicAccess = false;
+    result = context->setAtomicAccessAttribute(device->toHandle(), ptr, size, ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_NO_ATOMICS);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    memoryManager->failSetAtomicAccess = true;
+    result = context->setAtomicAccessAttribute(device->toHandle(), ptr, size, ZE_MEMORY_ATOMIC_ATTR_EXP_FLAG_NO_HOST_ATOMICS);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+    memoryManager->failSetAtomicAccess = false;
+
+    ze_memory_atomic_attr_exp_flags_t attrGet = 0;
+    result = context->getAtomicAccessAttribute(device->toHandle(), ptr, size, &attrGet);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+
+    result = context->freeMem(ptr);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
 // XX
 
 struct SVMAllocsManagerAtomicAccessMock : public NEO::SVMAllocsManager {

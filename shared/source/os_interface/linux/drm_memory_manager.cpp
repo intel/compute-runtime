@@ -406,8 +406,30 @@ AtomicAccessMode DrmMemoryManager::getSharedSystemAtomicAccess(const void *ptr, 
 
 bool DrmMemoryManager::setAtomicAccess(GraphicsAllocation *gfxAllocation, size_t size, AtomicAccessMode mode, uint32_t rootDeviceIndex) {
     auto drmAllocation = static_cast<DrmAllocation *>(gfxAllocation);
+    auto &drm = this->getDrm(rootDeviceIndex);
+    auto ioctlHelper = drm.getIoctlHelper();
 
-    return drmAllocation->setAtomicAccess(&this->getDrm(rootDeviceIndex), size, mode);
+    if (gfxAllocation->getAllocationType() != AllocationType::unifiedSharedMemory || ioctlHelper->getVmAdviseAtomicAttribute().has_value()) {
+        return drmAllocation->setAtomicAccess(&drm, size, mode);
+    }
+
+    // xe madvise applies to the VMAs in the range, so the BOs must be bound first
+    auto osContext = getDefaultOsContext(rootDeviceIndex);
+    auto handlerLock = static_cast<DrmMemoryOperationsHandler *>(drm.getRootDeviceEnvironment().memoryOperationsInterface.get())->lockHandlerIfUsed();
+    StackVec<uint32_t, 2> vmIds;
+    const auto &subDeviceBitfield = drmAllocation->storageInfo.subDeviceBitfield;
+    for (auto subDeviceId = 0u; subDeviceId < subDeviceBitfield.size(); subDeviceId++) {
+        if (subDeviceBitfield.test(subDeviceId)) {
+            if (drmAllocation->bindBOs(osContext, subDeviceId, nullptr, true, false) != 0) {
+                return false;
+            }
+            vmIds.push_back(drm.getVmIdForContext(*osContext, subDeviceId));
+        }
+    }
+    // the KMD keeps the mode on the BO, and a VMA bound later starts as UNDEFINED, whose PTE setup matches
+    // GLOBAL; other modes would not survive a rebind, so the modes with host atomics use GLOBAL and the rest the default
+    auto kmdMode = (mode == AtomicAccessMode::system || mode == AtomicAccessMode::host) ? AtomicAccessMode::system : AtomicAccessMode::none;
+    return ioctlHelper->setVmSharedSystemMemAdvise(castToUint64(drmAllocation->getUnderlyingBuffer()), drmAllocation->getUnderlyingBufferSize(), ioctlHelper->getAtomicAdvise(false), ioctlHelper->getAtomicAccess(kmdMode), vmIds, static_cast<uint32_t>(vmIds.size()));
 }
 
 bool DrmMemoryManager::prefetchSharedSystemAlloc(const void *ptr, const size_t size, SubDeviceIdsVec &subDeviceIds, uint32_t rootDeviceIndex) {

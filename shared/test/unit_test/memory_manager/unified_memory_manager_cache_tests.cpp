@@ -239,6 +239,25 @@ TEST(SvmAllocationCacheSimpleTest, givenExportedAllocationWhenInsertingAllocatio
     EXPECT_TRUE(allocationCache.allocations.empty());
 }
 
+TEST(SvmAllocationCacheSimpleTest, givenAllocationWithAtomicAccessSetWhenInsertingAllocationThenDoNotInsert) {
+    SVMAllocsManager::SvmAllocationCache allocationCache;
+    MockMemoryManager memoryManager;
+    MockSVMAllocsManager svmAllocsManager(&memoryManager);
+
+    allocationCache.memoryManager = &memoryManager;
+    allocationCache.svmAllocsManager = &svmAllocsManager;
+    memoryManager.usmReuseInfo.init(1 * MemoryConstants::gigaByte, UsmReuseInfo::notLimited);
+
+    void *ptr = addrToPtr(0xFULL);
+    MockGraphicsAllocation gpuGfxAllocation;
+    SvmAllocationData svmAllocData(mockRootDeviceIndex);
+    svmAllocData.gpuAllocations.addAllocation(&gpuGfxAllocation);
+    svmAllocData.isAtomicAccessSet = true;
+
+    EXPECT_FALSE(allocationCache.insert(1u, ptr, &svmAllocData, FreePolicyType::none));
+    EXPECT_TRUE(allocationCache.allocations.empty());
+}
+
 TEST(SvmAllocationCacheSimpleTest, givenAllocIdAlreadyScannedForIndirectAccessWhenGettingAllocationFromCacheThenAllocationsMapEntriesAreMovedToNewAllocId) {
     SVMAllocsManager::SvmAllocationCache allocationCache;
     MockMemoryManager memoryManager;

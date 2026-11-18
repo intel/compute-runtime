@@ -91,6 +91,7 @@ bool SVMAllocsManager::SvmAllocationCache::insert(size_t size, void *ptr, SvmAll
         svmData->isImportedAllocation ||
         svmData->isExportedAllocation ||
         svmData->isExternalMemmapAllocation ||
+        svmData->isAtomicAccessSet ||
         svmData->allocationFlagsProperty.hostptr != 0u) {
 
         return false;

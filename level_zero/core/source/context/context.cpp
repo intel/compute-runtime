@@ -2108,7 +2108,12 @@ ze_result_t Context::setAtomicAccessAttribute(ze_device_handle_t hDevice, const 
     } else {
         auto memoryManager = device->getDriverHandle()->getMemoryManager();
         auto alloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
-        memoryManager->setAtomicAccess(alloc, size, mode, device->getRootDeviceIndex());
+        // set even if the call fails, since the KMD may already have changed the mode
+        allocData->isAtomicAccessSet = true;
+        if (!memoryManager->setAtomicAccess(alloc, size, mode, device->getRootDeviceIndex())) {
+            device->atomicAccessAllocations.erase(allocData);
+            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
         device->atomicAccessAllocations[allocData] = attr;
     }
 
