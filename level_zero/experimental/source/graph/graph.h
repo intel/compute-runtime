@@ -698,10 +698,19 @@ struct ExecutableGraph;
 using GraphSubmissionSegment = std::variant<L0::CommandList *, ExecutableGraph *>;
 using GraphSubmissionChain = std::vector<GraphSubmissionSegment>;
 
-void handleExternalCbSignalEvent(L0::Event *event, CbExternalEventInstantiateContext &cbEventContext);
+void handleExternalCbSignalEvent(L0::Event *event, ClosureInstantiateContext &instantiateContext);
+bool isExternalWaitEventPresent(uint32_t numWaitEvents,
+                                ze_event_handle_t *phWaitEvents,
+                                const ClosureInstantiateContext &instantiateContext,
+                                bool apiRequiredExternalFlag);
+void registerExternalCbWaitEvents(uint32_t numWaitEvents,
+                                  ze_event_handle_t *phWaitEvents,
+                                  ClosureInstantiateContext &instantiateContext,
+                                  L0::CommandList *executionTarget,
+                                  bool externalWaitEventPresent);
 void handleExternalCbWaitEvents(uint32_t numWaitEvents,
                                 ze_event_handle_t *phWaitEvents,
-                                CbExternalEventInstantiateContext &cbEventContext,
+                                ClosureInstantiateContext &instantiateContext,
                                 L0::CommandList *executionTarget,
                                 bool apiRequiredExternalFlag);
 

@@ -2743,7 +2743,7 @@ TEST_F(GraphTestInstantiationTest, givenEventResetClosureAndEnforcedEventsWhenIn
     ClosureExternalStorage externalStorage;
     ExternalCbEventInfoContainer externalCbEventStorage;
 
-    CbExternalEventInstantiateContext cbEventContext = {&externalCbEventStorage, nullptr};
+    ClosureInstantiateContext instantiateContext = {&externalCbEventStorage, nullptr};
 
     Closure<CaptureApi::zeCommandListAppendEventReset>::ApiArgs apiArgs = {
         sourceCmdList.toHandle(),
@@ -2755,7 +2755,7 @@ TEST_F(GraphTestInstantiationTest, givenEventResetClosureAndEnforcedEventsWhenIn
         0u,
         nullptr};
 
-    auto result = closure.instantiateTo(&executionCmdList, externalStorage, cbEventContext, enforcedEvents);
+    auto result = closure.instantiateTo(&executionCmdList, externalStorage, instantiateContext, enforcedEvents);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(1u, executionCmdList.appendEventResetCalled);
@@ -2914,6 +2914,29 @@ struct GraphInternalEventFixture : public GraphFixture {
 
 using GraphInternalEventTest = Test<GraphInternalEventFixture>;
 
+template <GFXCORE_FAMILY gfxCoreFamily>
+struct CommandIdRecordingCommandList : Mock<CommandList> {
+    struct RecordingMutableCommandList : MutableCommandListCoreFamily<gfxCoreFamily> {
+        ze_result_t getNextCommandId(const ze_mutable_command_id_ext_desc_t *desc, uint32_t numKernels, ze_kernel_handle_t *phKernels, uint64_t *pCommandId) override {
+            recordedFlags.push_back(desc->flags);
+            *pCommandId = ++getNextCommandIdCalled;
+            return ZE_RESULT_SUCCESS;
+        }
+
+        uint64_t getNextCommandIdCalled = 0;
+        std::vector<ze_mutable_command_ext_flags_t> recordedFlags;
+    } mutableCommandList;
+
+    explicit CommandIdRecordingCommandList(L0::Device *device) {
+        this->device = device;
+        this->mutableCommandList.base = this;
+    }
+
+    void *asMutable() override {
+        return static_cast<L0::MCL::MutableCommandList *>(&this->mutableCommandList);
+    }
+};
+
 TEST_F(GraphInternalEventTest, givenSignalOnlyClosuresAndEnforcedExternalWaitWhenInstantiatingThenDoNotRegisterWaits) {
     ze_event_counter_based_desc_t eventDesc = {
         .stype = ZE_STRUCTURE_TYPE_EVENT_COUNTER_BASED_DESC,
@@ -2925,35 +2948,34 @@ TEST_F(GraphInternalEventTest, givenSignalOnlyClosuresAndEnforcedExternalWaitWhe
     Mock<Event> signalEvent;
     ClosureExternalStorage externalStorage;
     ExternalCbEventInfoContainer eventInfo;
-    CbExternalEventInstantiateContext cbEventContext{&eventInfo, nullptr};
+    ClosureInstantiateContext instantiateContext{&eventInfo, nullptr};
     EventParams enforcedEvents{signalEvent.toHandle(), 1u, &hExternalEvent};
 
     Closure<CaptureApi::zeCommandListAppendSignalEvent> signalClosure({executionCmdList.toHandle(), signalEvent.toHandle()}, externalStorage);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, signalClosure.instantiateTo(&executionCmdList, externalStorage, cbEventContext, enforcedEvents));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, signalClosure.instantiateTo(&executionCmdList, externalStorage, instantiateContext, enforcedEvents));
 
     Closure<CaptureApi::zeCommandListAppendSignalEventWithParameters> signalWithParametersClosure({executionCmdList.toHandle(), nullptr, signalEvent.toHandle()}, externalStorage);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, signalWithParametersClosure.instantiateTo(&executionCmdList, externalStorage, cbEventContext, enforcedEvents));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, signalWithParametersClosure.instantiateTo(&executionCmdList, externalStorage, instantiateContext, enforcedEvents));
 
     EXPECT_EQ(2u, executionCmdList.appendSignalEventCalled);
     EXPECT_TRUE(eventInfo.getCbWaitEventInfos().empty());
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeEventDestroy(hExternalEvent));
 }
 
+HWCMDTEST_F(IGFX_XE_HP_CORE, GraphInternalEventTest, givenInstantiateContextWithoutExternalEventContainerWhenRegisteringExternalWaitEventsThenNoCommandIdIsRequested) {
+    CommandIdRecordingCommandList<FamilyType::gfxCoreFamily> executionCmdList(this->device);
+    Mock<Event> waitEvent;
+    ze_event_handle_t hWaitEvent = waitEvent.toHandle();
+    ClosureInstantiateContext instantiateContext{};
+
+    registerExternalCbWaitEvents(1u, &hWaitEvent, instantiateContext, &executionCmdList, true);
+
+    EXPECT_EQ(0u, executionCmdList.mutableCommandList.getNextCommandIdCalled);
+}
+
 HWCMDTEST_F(IGFX_XE_HP_CORE, GraphInternalEventTest, givenTimestampQueriesWhenGraphIsInstantiatedThenQuerySourcesUseInternalEventsWithoutChangingCapturedHandles) {
-    struct QueryRecordingCommandList : Mock<CommandList> {
-        struct WaitRecordingMutableCommandList : MutableCommandListCoreFamily<FamilyType::gfxCoreFamily> {
-            ze_result_t getNextCommandId(const ze_mutable_command_id_ext_desc_t *desc, uint32_t numKernels, ze_kernel_handle_t *phKernels, uint64_t *pCommandId) override {
-                EXPECT_EQ(ZE_MUTABLE_COMMAND_EXT_FLAG_WAIT_EVENTS, desc->flags);
-                *pCommandId = ++getNextCommandIdCalled;
-                return ZE_RESULT_SUCCESS;
-            }
-
-            uint64_t getNextCommandIdCalled = 0;
-        } mutableCommandList;
-
-        void *asMutable() override {
-            return static_cast<L0::MCL::MutableCommandList *>(&mutableCommandList);
-        }
+    struct QueryRecordingCommandList : CommandIdRecordingCommandList<FamilyType::gfxCoreFamily> {
+        using CommandIdRecordingCommandList<FamilyType::gfxCoreFamily>::CommandIdRecordingCommandList;
 
         ze_result_t appendQueryKernelTimestamps(uint32_t numEvents, ze_event_handle_t *phEvents, void *dstptr, const size_t *pOffsets,
                                                 ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
@@ -2965,7 +2987,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, GraphInternalEventTest, givenTimestampQueriesWhenGr
                 waitEvents.assign(phWaitEvents, phWaitEvents + numWaitEvents);
             } else {
                 EXPECT_EQ(nullptr, phWaitEvents);
-                EXPECT_EQ(0u, mutableCommandList.getNextCommandIdCalled);
+                EXPECT_EQ(0u, this->mutableCommandList.getNextCommandIdCalled);
             }
             return ZE_RESULT_SUCCESS;
         }
@@ -3004,9 +3026,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, GraphInternalEventTest, givenTimestampQueriesWhenGr
 
     ExecutableGraph execGraphs[2];
     for (auto &execGraph : execGraphs) {
-        auto *executionCmdList = new QueryRecordingCommandList;
-        executionCmdList->device = this->device;
-        executionCmdList->mutableCommandList.base = executionCmdList;
+        auto *executionCmdList = new QueryRecordingCommandList(this->device);
         ctx.cmdListsToReturn.push_back(executionCmdList);
 
         ASSERT_EQ(ZE_RESULT_SUCCESS, execGraph.instantiateFrom(*srcGraph));
@@ -3022,6 +3042,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, GraphInternalEventTest, givenTimestampQueriesWhenGr
         EXPECT_EQ(executionCmdList, waitInfos[0].executor);
         EXPECT_EQ(1u, waitInfos[0].commandId);
         EXPECT_EQ(1u, executionCmdList->mutableCommandList.getNextCommandIdCalled);
+        EXPECT_EQ((std::vector<ze_mutable_command_ext_flags_t>{ZE_MUTABLE_COMMAND_EXT_FLAG_WAIT_EVENTS}), executionCmdList->mutableCommandList.recordedFlags);
 
         const auto &closure = std::get<Closure<CaptureApi::zeCommandListAppendQueryKernelTimestamps>>(srcGraph->getCapturedCommands().back());
         ASSERT_EQ(2u, closure.indirectArgs.events.size());
