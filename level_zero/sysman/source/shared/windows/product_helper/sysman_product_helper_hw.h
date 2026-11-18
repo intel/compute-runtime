@@ -21,7 +21,7 @@ class SysmanProductHelperHw : public SysmanProductHelper {
     ~SysmanProductHelperHw() override = default;
 
     // Temperature
-    ze_result_t getSensorTemperature(double *pTemperature, zes_temp_sensors_t type, WddmSysmanImp *pWddmSysmanImp) override;
+    ze_result_t getSensorTemperature(double *pTemperature, zes_temp_sensors_t type, uint32_t sensorIndex, WddmSysmanImp *pWddmSysmanImp) override;
     bool isTempModuleSupported(zes_temp_sensors_t type, WddmSysmanImp *pWddmSysmanImp) override;
     void getSupportedSensors(std::map<zes_temp_sensors_t, uint32_t> &supportedSensorTypeMap) override;
 

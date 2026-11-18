@@ -5,6 +5,9 @@
  *
  */
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/preprocessor.h"
+
 #include "level_zero/sysman/source/device/sysman_device.h"
 #include "level_zero/sysman/source/shared/windows/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/source/shared/windows/product_helper/sysman_product_helper_hw.h"
@@ -18,7 +21,7 @@ namespace Sysman {
 #include "level_zero/sysman/source/shared/product_helper/sysman_os_agnostic_product_helper_hw.inl"
 
 template <PRODUCT_FAMILY gfxProduct>
-ze_result_t SysmanProductHelperHw<gfxProduct>::getSensorTemperature(double *pTemperature, zes_temp_sensors_t type, WddmSysmanImp *pWddmSysmanImp) {
+ze_result_t SysmanProductHelperHw<gfxProduct>::getSensorTemperature(double *pTemperature, zes_temp_sensors_t type, uint32_t sensorIndex, WddmSysmanImp *pWddmSysmanImp) {
     ze_result_t status = ZE_RESULT_SUCCESS;
     KmdSysManager *pKmdSysManager = &pWddmSysmanImp->getKmdSysManager();
     KmdSysman::RequestProperty request;

@@ -100,13 +100,13 @@ struct TemperatureKmdSysManager : public MockKmdSysManager {
 
 struct MockSysmanProductHelperTemp : L0::Sysman::SysmanProductHelperHw<IGFX_UNKNOWN> {
     MockSysmanProductHelperTemp() = default;
-    ADDMETHOD_NOBASE(getSensorTemperature, ze_result_t, ZE_RESULT_SUCCESS, (double *pTemperature, zes_temp_sensors_t type, WddmSysmanImp *pWddmSysmanImp));
+    ADDMETHOD_NOBASE(getSensorTemperature, ze_result_t, ZE_RESULT_SUCCESS, (double *pTemperature, zes_temp_sensors_t type, uint32_t sensorIndex, WddmSysmanImp *pWddmSysmanImp));
     ADDMETHOD_NOBASE(isTempModuleSupported, bool, true, (zes_temp_sensors_t type, WddmSysmanImp *pWddmSysmanImp));
 };
 
 class PublicWddmTemperatureImp : public L0::Sysman::WddmTemperatureImp {
   public:
-    PublicWddmTemperatureImp(L0::Sysman::OsSysman *pOsSysman) : L0::Sysman::WddmTemperatureImp(pOsSysman) {}
+    PublicWddmTemperatureImp(L0::Sysman::OsSysman *pOsSysman) : L0::Sysman::WddmTemperatureImp(pOsSysman, false, 0, 0) {}
     using L0::Sysman::WddmTemperatureImp::type;
 };
 

@@ -21,7 +21,7 @@ class WddmTemperatureImp : public OsTemperature, NEO::NonCopyableAndNonMovableCl
     bool isTempModuleSupported() override;
     void reInit() override {}
     void setSensorType(zes_temp_sensors_t sensorType);
-    WddmTemperatureImp(OsSysman *pOsSysman);
+    WddmTemperatureImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, uint32_t sensorIndex);
     WddmTemperatureImp() = default;
     ~WddmTemperatureImp() override = default;
 
@@ -29,6 +29,7 @@ class WddmTemperatureImp : public OsTemperature, NEO::NonCopyableAndNonMovableCl
     WddmSysmanImp *pWddmSysmanImp = nullptr;
     KmdSysManager *pKmdSysManager = nullptr;
     zes_temp_sensors_t type = ZES_TEMP_SENSORS_GLOBAL;
+    uint32_t sensorIndex = 0;
 };
 
 } // namespace Sysman

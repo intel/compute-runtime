@@ -12,6 +12,12 @@
 #include "level_zero/sysman/test/unit_tests/sources/windows/mock_sysman_fixture.h"
 #include "level_zero/sysman/test/unit_tests/sources/windows/pmt/mock_pmt.h"
 
+namespace NEO {
+namespace SysCalls {
+extern DWORD getLastErrorResults[];
+} // namespace SysCalls
+} // namespace NEO
+
 namespace L0 {
 namespace Sysman {
 namespace ult {
@@ -32,6 +38,10 @@ inline static BOOL mockDeviceIoControlSuccess(HANDLE hDevice, DWORD dwIoControlC
     *lpBytesReturned = 4;
     *static_cast<int *>(lpOutBuffer) = 1;
     return true;
+}
+
+inline static BOOL mockDeviceIoControlFailure(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped) {
+    return false;
 }
 
 inline static BOOL mockDeviceIoControlExtendedSuccess(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped) {
@@ -236,6 +246,41 @@ TEST_F(SysmanDevicePmtFixture, GivenValidPmtHandleWhenCallingReadValueWithUint64
     pPmt->keyOffsetMap = dummyKeyOffsetMap;
     EXPECT_EQ(ZE_RESULT_SUCCESS, pPmt->readValue("DUMMY_KEY", val));
     EXPECT_NE(0u, val);
+}
+
+TEST_F(SysmanDevicePmtFixture, GivenDeviceIsNotReadyWhenCallingReadValueWithUint32TypeThenDeviceInLowPowerStateErrorIsReturned) {
+    VariableBackup<DWORD> lastErrorBackup(&NEO::SysCalls::getLastErrorResults[0], ERROR_NOT_READY);
+    pPmt->deviceInterface = L0::Sysman::ult::deviceInterface;
+    pPmt->pcreateFile = mockCreateFileSuccess;
+    pPmt->pdeviceIoControl = mockDeviceIoControlFailure;
+    pPmt->keyOffsetMap = dummyKeyOffsetMap;
+
+    uint32_t val = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_IN_LOW_POWER_STATE, pPmt->readValue("DUMMY_KEY", val));
+}
+
+TEST_F(SysmanDevicePmtFixture, GivenDeviceIsNotReadyWhenCallingReadValueWithUint64TypeThenDeviceInLowPowerStateErrorIsReturned) {
+    VariableBackup<DWORD> lastErrorBackup(&NEO::SysCalls::getLastErrorResults[0], ERROR_NOT_READY);
+    pPmt->deviceInterface = L0::Sysman::ult::deviceInterface;
+    pPmt->pcreateFile = mockCreateFileSuccess;
+    pPmt->pdeviceIoControl = mockDeviceIoControlFailure;
+    pPmt->keyOffsetMap = dummyKeyOffsetMap;
+
+    uint64_t val = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_IN_LOW_POWER_STATE, pPmt->readValue("DUMMY_KEY", val));
+}
+
+TEST_F(SysmanDevicePmtFixture, GivenIoctlFailsWithErrorOtherThanNotReadyWhenCallingReadValueThenUnknownErrorIsReturned) {
+    VariableBackup<DWORD> lastErrorBackup(&NEO::SysCalls::getLastErrorResults[0], ERROR_GEN_FAILURE);
+    pPmt->deviceInterface = L0::Sysman::ult::deviceInterface;
+    pPmt->pcreateFile = mockCreateFileSuccess;
+    pPmt->pdeviceIoControl = mockDeviceIoControlFailure;
+    pPmt->keyOffsetMap = dummyKeyOffsetMap;
+
+    uint32_t val32 = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pPmt->readValue("DUMMY_KEY", val32));
+    uint64_t val64 = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pPmt->readValue("DUMMY_KEY", val64));
 }
 
 TEST_F(SysmanDevicePmtFixture, GivenInvalidPmtInterfaceWhenCallingCreateThenCallReturnsNullPtr) {

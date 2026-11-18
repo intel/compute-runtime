@@ -9,6 +9,7 @@
 
 #include "level_zero/sysman/source/shared/windows/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/source/shared/windows/sysman_kmd_sys_manager.h"
+#include "level_zero/sysman/source/sysman_const.h"
 
 namespace L0 {
 namespace Sysman {
@@ -22,6 +23,7 @@ ze_result_t WddmTemperatureImp::getProperties(zes_temp_properties_t *pProperties
     pProperties->type = this->type;
     pProperties->onSubdevice = false;
     pProperties->subdeviceId = 0;
+    pProperties->maxTemperature = defaultMaxTemperature;
 
     request.commandId = KmdSysman::Command::Get;
     request.componentId = KmdSysman::Component::TemperatureComponent;
@@ -36,6 +38,12 @@ ze_result_t WddmTemperatureImp::getProperties(zes_temp_properties_t *pProperties
     case ZES_TEMP_SENSORS_MEMORY:
         request.paramInfo = KmdSysman::TemperatureDomainsType::TemperatureDomainHBM;
         break;
+    case ZES_TEMP_SENSORS_VOLTAGE_REGULATOR:
+    case ZES_TEMP_SENSORS_GPU_BOARD:
+    case ZES_TEMP_SENSORS_VOLTAGE_REGULATOR_SINGLE:
+    case ZES_TEMP_SENSORS_GPU_BOARD_SINGLE:
+    case ZES_TEMP_SENSORS_COMPOSITE:
+        return ZE_RESULT_SUCCESS;
     default:
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         break;
@@ -81,7 +89,7 @@ ze_result_t WddmTemperatureImp::getProperties(zes_temp_properties_t *pProperties
 
 ze_result_t WddmTemperatureImp::getSensorTemperature(double *pTemperature) {
     auto pSysmanProductHelper = pWddmSysmanImp->getSysmanProductHelper();
-    return pSysmanProductHelper->getSensorTemperature(pTemperature, type, pWddmSysmanImp);
+    return pSysmanProductHelper->getSensorTemperature(pTemperature, type, sensorIndex, pWddmSysmanImp);
 }
 
 bool WddmTemperatureImp::isTempModuleSupported() {
@@ -99,13 +107,14 @@ void OsTemperature::getSupportedSensors(OsSysman *pOsSysman, std::map<zes_temp_s
     pSysmanProductHelper->getSupportedSensors(supportedSensorTypeMap);
 }
 
-WddmTemperatureImp::WddmTemperatureImp(OsSysman *pOsSysman) {
+WddmTemperatureImp::WddmTemperatureImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, uint32_t sensorIndex)
+    : sensorIndex(sensorIndex) {
     pWddmSysmanImp = static_cast<WddmSysmanImp *>(pOsSysman);
     pKmdSysManager = &pWddmSysmanImp->getKmdSysManager();
 }
 
 std::unique_ptr<OsTemperature> OsTemperature::create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_temp_sensors_t sensorType, uint32_t sensorIndex) {
-    std::unique_ptr<WddmTemperatureImp> pWddmTemperatureImp = std::make_unique<WddmTemperatureImp>(pOsSysman);
+    std::unique_ptr<WddmTemperatureImp> pWddmTemperatureImp = std::make_unique<WddmTemperatureImp>(pOsSysman, onSubdevice, subdeviceId, sensorIndex);
     pWddmTemperatureImp->setSensorType(sensorType);
     return std::move(pWddmTemperatureImp);
 }

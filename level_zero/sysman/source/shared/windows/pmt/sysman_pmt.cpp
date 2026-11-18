@@ -35,14 +35,20 @@ ze_result_t PlatformMonitoringTech::readValue(const std::string &key, uint32_t &
 
     auto res = ioctlReadWriteData(deviceInterface, PmtSysman::ioctlPmtGetTelemetryDword, (void *)&readRequest, sizeof(PmtSysman::PmtTelemetryRead), &value, sizeof(uint32_t), &bytesReturned);
 
-    if (res == ZE_RESULT_SUCCESS && bytesReturned != 0) {
-        return ZE_RESULT_SUCCESS;
+    if (res != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Ioctl call failed for register key %s, returning error:0x%x\n", key.c_str(), res);
+        return res;
     }
 
-    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                 "Ioctl call could not return a valid value for register key %s\n", key.c_str());
-    DEBUG_BREAK_IF(true);
-    return ZE_RESULT_ERROR_UNKNOWN;
+    if (bytesReturned == 0) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Ioctl call could not return a valid value for register key %s\n", key.c_str());
+        DEBUG_BREAK_IF(true);
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t PlatformMonitoringTech::readValue(const std::string &key, uint64_t &value) {
@@ -64,14 +70,20 @@ ze_result_t PlatformMonitoringTech::readValue(const std::string &key, uint64_t &
 
     auto res = ioctlReadWriteData(deviceInterface, PmtSysman::ioctlPmtGetTelemetryQword, (void *)&readRequest, sizeof(PmtSysman::PmtTelemetryRead), &value, sizeof(uint64_t), &bytesReturned);
 
-    if (res == ZE_RESULT_SUCCESS && bytesReturned != 0) {
-        return ZE_RESULT_SUCCESS;
+    if (res != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Ioctl call failed for register key %s, returning error:0x%x\n", key.c_str(), res);
+        return res;
     }
 
-    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                 "Ioctl call could not return a valid value for register key %s\n", key.c_str());
-    DEBUG_BREAK_IF(true);
-    return ZE_RESULT_ERROR_UNKNOWN;
+    if (bytesReturned == 0) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                     "Ioctl call could not return a valid value for register key %s\n", key.c_str());
+        DEBUG_BREAK_IF(true);
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t PlatformMonitoringTech::getGuid() {
@@ -395,12 +407,18 @@ ze_result_t PlatformMonitoringTech::ioctlReadWriteData(std::wstring &path, uint3
 
     // Call DeviceIoControl
     status = this->pdeviceIoControl(handle, ioctl, bufferIn, inSize, bufferOut, outSize, reinterpret_cast<unsigned long *>(sizeReturned), NULL);
+    const DWORD lastError = (status == FALSE) ? NEO::SysCalls::getLastError() : ERROR_SUCCESS;
 
     this->pcloseHandle(handle);
 
     if (status == FALSE) {
+        if (lastError == ERROR_NOT_READY) {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                         "deviceIoControl call failed, device is in low power state\n");
+            return ZE_RESULT_ERROR_DEVICE_IN_LOW_POWER_STATE;
+        }
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "deviceIoControl call failed\n");
+                     "deviceIoControl call failed with error:0x%lx\n", lastError);
         DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_UNKNOWN;
     }

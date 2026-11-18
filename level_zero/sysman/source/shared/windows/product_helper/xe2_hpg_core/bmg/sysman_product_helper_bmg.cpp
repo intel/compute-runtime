@@ -1272,7 +1272,7 @@ ze_result_t getMemoryMaxTemperature(PlatformMonitoringTech *pPmt, double *pTempe
 }
 
 template <>
-ze_result_t SysmanProductHelperHw<gfxProduct>::getSensorTemperature(double *pTemperature, zes_temp_sensors_t type, WddmSysmanImp *pWddmSysmanImp) {
+ze_result_t SysmanProductHelperHw<gfxProduct>::getSensorTemperature(double *pTemperature, zes_temp_sensors_t type, uint32_t sensorIndex, WddmSysmanImp *pWddmSysmanImp) {
     ze_result_t status = ZE_RESULT_SUCCESS;
     std::string key;
 

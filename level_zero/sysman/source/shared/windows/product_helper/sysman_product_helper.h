@@ -48,7 +48,7 @@ class SysmanProductHelper {
 
     virtual ~SysmanProductHelper() = default;
     // Temperature
-    virtual ze_result_t getSensorTemperature(double *pTemperature, zes_temp_sensors_t type, WddmSysmanImp *pWddmSysmanImp) = 0;
+    virtual ze_result_t getSensorTemperature(double *pTemperature, zes_temp_sensors_t type, uint32_t sensorIndex, WddmSysmanImp *pWddmSysmanImp) = 0;
     virtual bool isTempModuleSupported(zes_temp_sensors_t type, WddmSysmanImp *pWddmSysmanImp) = 0;
     virtual void getSupportedSensors(std::map<zes_temp_sensors_t, uint32_t> &supportedSensorTypeMap) = 0;
 
