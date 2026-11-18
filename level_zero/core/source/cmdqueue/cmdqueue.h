@@ -155,6 +155,7 @@ struct CommandQueue : _ze_command_queue_handle_t {
     bool getUseKmdWaitFunction() const {
         return useKmdWaitFunction;
     }
+    void setQueueThrottle(NEO::QueueThrottle throttle);
 
     virtual bool getPreemptionCmdProgramming() = 0;
     void printKernelsPrintfOutput(bool hangDetected);
@@ -216,6 +217,7 @@ struct CommandQueue : _ze_command_queue_handle_t {
     std::atomic<NEO::FlushStamp> flushStamp = 0;
     NEO::HeapAddressModel cmdListHeapAddressModel = NEO::HeapAddressModel::privateHeaps;
     NEO::SWTags::CounterContext swTagCounters{};
+    NEO::QueueThrottle queueThrottle = NEO::QueueThrottle::MEDIUM;
 
     uint32_t currentStateChangeIndex = 0;
 

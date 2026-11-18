@@ -28,6 +28,7 @@
 
 #include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_context.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue_cmdlist_execution_internal_options.h"
+#include "level_zero/core/source/cmdqueue/internal_queue_throttle_ext.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/test/unit_tests/fixtures/aub_csr_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture_extended.h"
@@ -282,6 +283,51 @@ HWTEST_F(CommandQueueSynchronizeTest, givenGpuHangWhenCallingSynchronizeThenErro
     EXPECT_FALSE(csr->enableTimeoutSet);
 
     L0::CommandQueue::fromHandle(commandQueue)->destroy();
+}
+
+HWTEST_F(CommandQueueSynchronizeTest, givenLowThrottleHintWhenCallingSynchronizeWithInfiniteTimeoutThenKmdWaitWithLowThrottleIsUsed) {
+    auto csr = std::unique_ptr<SynchronizeCsr<FamilyType>>(new SynchronizeCsr<FamilyType>(*device->getNEODevice()->getExecutionEnvironment(),
+                                                                                          device->getNEODevice()->getDeviceBitfield()));
+    csr->captureWaitForTaskCountWithKmdNotifyInputParams = true;
+
+    L0::ze_queue_throttle_ext_desc_t throttleDesc;
+    throttleDesc.throttle = NEO::QueueThrottle::LOW;
+    ze_command_queue_desc_t desc = {};
+    desc.pNext = &throttleDesc;
+    ze_command_queue_handle_t commandQueue = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->createCommandQueue(device, &desc, &commandQueue));
+
+    auto queue = whiteboxCast(L0::CommandQueue::fromHandle(commandQueue));
+    queue->csr = csr.get();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, queue->synchronize(std::numeric_limits<uint64_t>::max()));
+
+    ASSERT_EQ(1u, csr->waitForTaskCountWithKmdNotifyInputParams.size());
+    EXPECT_EQ(NEO::QueueThrottle::LOW, csr->waitForTaskCountWithKmdNotifyInputParams[0].throttle);
+
+    queue->destroy();
+}
+
+HWTEST_F(CommandQueueSynchronizeTest, givenLowThrottleHintWhenCallingSynchronizeWithFiniteTimeoutThenKmdWaitIsNotUsed) {
+    auto csr = std::unique_ptr<SynchronizeCsr<FamilyType>>(new SynchronizeCsr<FamilyType>(*device->getNEODevice()->getExecutionEnvironment(),
+                                                                                          device->getNEODevice()->getDeviceBitfield()));
+
+    L0::ze_queue_throttle_ext_desc_t throttleDesc;
+    throttleDesc.throttle = NEO::QueueThrottle::LOW;
+    ze_command_queue_desc_t desc = {};
+    desc.pNext = &throttleDesc;
+    ze_command_queue_handle_t commandQueue = {};
+    ASSERT_EQ(ZE_RESULT_SUCCESS, context->createCommandQueue(device, &desc, &commandQueue));
+
+    auto queue = whiteboxCast(L0::CommandQueue::fromHandle(commandQueue));
+    queue->csr = csr.get();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, queue->synchronize(10u));
+
+    EXPECT_EQ(1u, csr->waitForComplitionCalledTimes);
+    EXPECT_EQ(0u, csr->waitForTaskCountWithKmdNotifyFallbackCalled);
+
+    queue->destroy();
 }
 
 HWTEST_F(CommandQueueSynchronizeTest, givenDebugOverrideEnabledAndGpuHangWhenCallingSynchronizeThenErrorIsPropagated) {

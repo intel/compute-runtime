@@ -70,6 +70,11 @@ CommandQueue::CommandQueue(Device *device, NEO::CommandStreamReceiver *csr, cons
     }
 }
 
+void CommandQueue::setQueueThrottle(NEO::QueueThrottle throttle) {
+    this->queueThrottle = throttle;
+    this->useKmdWaitFunction |= (throttle == NEO::QueueThrottle::LOW);
+}
+
 bool CommandQueue::isCsrReassignmentEnabled() const {
     return this->csrReassignmentEnabled && this->csrQueueOwnershipTaken;
 }
@@ -331,7 +336,7 @@ NEO::SubmissionStatus CommandQueue::submitBatchBuffer(size_t offset, void *endin
 ze_result_t CommandQueue::synchronize(uint64_t timeout) {
     if ((timeout == std::numeric_limits<uint64_t>::max()) && useKmdWaitFunction) {
         auto &waitPair = buffers.getCurrentFlushStamp();
-        const auto waitStatus = csr->waitForTaskCountWithKmdNotifyFallback(waitPair.first, waitPair.second, false, NEO::QueueThrottle::MEDIUM);
+        const auto waitStatus = csr->waitForTaskCountWithKmdNotifyFallback(waitPair.first, waitPair.second, false, this->queueThrottle);
         if (waitStatus == NEO::WaitStatus::gpuHang) {
             postSyncOperations(true);
             return ZE_RESULT_ERROR_DEVICE_LOST;

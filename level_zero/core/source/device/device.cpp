@@ -275,6 +275,9 @@ ze_result_t Device::createCommandQueue(const ze_command_queue_desc_t *desc,
 
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     *commandQueue = CommandQueue::create(this, csr, &commandQueueDesc, isCopyOnly, false, false, returnValue);
+    if (*commandQueue != nullptr) {
+        CommandQueue::fromHandle(*commandQueue)->setQueueThrottle(queueProperties.throttle);
+    }
     if (queueOwnershipTaken) {
         if (*commandQueue != nullptr) {
             CommandQueue::fromHandle(*commandQueue)->takeCsrQueueOwnership(queueProperties.priorityLevel, powerHint);

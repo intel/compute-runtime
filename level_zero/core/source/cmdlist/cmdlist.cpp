@@ -835,6 +835,7 @@ ze_result_t CommandList::initializeImmediateResources() {
         return returnValue;
     }
 
+    commandQueue->setQueueThrottle(this->queueThrottle);
     this->cmdQImmediate = commandQueue;
     returnValue = initialize(device, this->engineGroupType, this->flags);
     if (returnValue != ZE_RESULT_SUCCESS) {
@@ -951,6 +952,7 @@ CommandQueue *CommandList::createCopyOffloadCmdQImmediate(NEO::CommandStreamRece
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     auto offloadCommandQueue = CommandQueue::create(device, copyCsr, &copyQueueDesc, true, false, true, returnValue);
     UNRECOVERABLE_IF(!offloadCommandQueue);
+    offloadCommandQueue->setQueueThrottle(this->queueThrottle);
     if (queueOwnershipTaken) {
         offloadCommandQueue->takeCsrQueueOwnership(std::nullopt, this->powerHint);
     }
