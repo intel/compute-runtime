@@ -600,12 +600,18 @@ TEST_F(DeviceGetCapsTest, givenInvalidIgcYamlWhenInitializingSpirvQueriesRepeate
     EXPECT_TRUE(pDevice->getDeviceInfo().spirvExtensions.empty());
 }
 
+struct MockDeviceWithCompilerInterface : public MockDevice {
+    using MockDevice::MockDevice;
+
+    CompilerInterface *getCompilerInterface() const override {
+        return compilerInterfaceReturnValue;
+    }
+
+    CompilerInterface *compilerInterfaceReturnValue = nullptr;
+};
+
 TEST_F(DeviceGetCapsTest, givenNoCompilerWhenInitializingSpirvQueriesThenBaseCapabilitiesAreReported) {
-    struct DeviceWithoutCompiler : MockDevice {
-        using MockDevice::MockDevice;
-        CompilerInterface *getCompilerInterface() const override { return nullptr; }
-    };
-    auto device = std::unique_ptr<DeviceWithoutCompiler>(MockDevice::createWithNewExecutionEnvironment<DeviceWithoutCompiler>(defaultHwInfo.get()));
+    auto device = std::unique_ptr<MockDeviceWithCompilerInterface>(MockDevice::createWithNewExecutionEnvironment<MockDeviceWithCompilerInterface>(defaultHwInfo.get()));
     device->initializeSpirvQueries();
     EXPECT_EQ(device->getSpirvBaseCapabilities(), device->getDeviceInfo().spirvCapabilities);
     EXPECT_TRUE(device->getDeviceInfo().spirvExtensions.empty());
@@ -1746,43 +1752,56 @@ TEST_F(DeviceTests, givenDeviceThreadGroupPreemptionWhenDebuggerDisabledThenStat
     EXPECT_FALSE(device->isStateSipRequired());
 }
 
-TEST_F(DeviceTests, WhenIsStateSipRequiredIsCalledThenCorrectValueIsReturned) {
-    struct MockRootDeviceEnvironment : RootDeviceEnvironment {
-        using RootDeviceEnvironment::RootDeviceEnvironment;
-        CompilerInterface *getCompilerInterface() override {
-            return compilerInterfaceReturnValue;
-        }
-        CompilerInterface *compilerInterfaceReturnValue = nullptr;
-    };
-    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    auto mockRootDeviceEnvironment = new MockRootDeviceEnvironment{*device->executionEnvironment};
-    auto backupenv = device->executionEnvironment->rootDeviceEnvironments[0].release();
-    device->executionEnvironment->rootDeviceEnvironments[0].reset(mockRootDeviceEnvironment);
-    device->executionEnvironment->rootDeviceEnvironments[0]->compilerInterface.release();
-    device->executionEnvironment->rootDeviceEnvironments[0]->debugger.release();
+HWTEST_F(DeviceTests, givenBuiltinsSipSourceWhenIsStateSipRequiredIsCalledThenCompilerInterfaceIsRequired) {
+    auto device = std::unique_ptr<MockDeviceWithCompilerInterface>(MockDevice::createWithNewExecutionEnvironment<MockDeviceWithCompilerInterface>(defaultHwInfo.get()));
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelperHw<FamilyType>> gfxCoreHelperBackup{*device->executionEnvironment->rootDeviceEnvironments[0]};
+    auto debugger = reinterpret_cast<Debugger *>(0x1234);
+    auto compilerInterface = reinterpret_cast<CompilerInterface *>(0x5678);
 
-    std::array<std::tuple<PreemptionMode, Debugger *, CompilerInterface *, bool>, 8> testParameters = {
-        {{PreemptionMode::Disabled, nullptr, nullptr, false},
-         {PreemptionMode::MidThread, nullptr, nullptr, false},
-         {PreemptionMode::Disabled, (Debugger *)0x1234, nullptr, false},
-         {PreemptionMode::MidThread, (Debugger *)0x1234, nullptr, false},
-
-         {PreemptionMode::Disabled, nullptr, (CompilerInterface *)0x1234, false},
-         {PreemptionMode::MidThread, nullptr, (CompilerInterface *)0x1234, true},
-         {PreemptionMode::Disabled, (Debugger *)0x1234, (CompilerInterface *)0x1234, true},
-         {PreemptionMode::MidThread, (Debugger *)0x1234, (CompilerInterface *)0x1234, true}}};
-
-    for (const auto &[preemptionMode, debugger, compilerInterface, expectedResult] : testParameters) {
+    const std::array<std::tuple<PreemptionMode, Debugger *, CompilerInterface *, bool>, 8> testParameters = {{
+        {PreemptionMode::Disabled, nullptr, nullptr, false},
+        {PreemptionMode::MidThread, nullptr, nullptr, false},
+        {PreemptionMode::Disabled, debugger, nullptr, false},
+        {PreemptionMode::MidThread, debugger, nullptr, false},
+        {PreemptionMode::Disabled, nullptr, compilerInterface, false},
+        {PreemptionMode::MidThread, nullptr, compilerInterface, true},
+        {PreemptionMode::Disabled, debugger, compilerInterface, true},
+        {PreemptionMode::MidThread, debugger, compilerInterface, true},
+    }};
+    for (const auto &[preemptionMode, deviceDebugger, deviceCompilerInterface, expectedResult] : testParameters) {
         device->setPreemptionMode(preemptionMode);
-        device->setDebugger(debugger);
-        mockRootDeviceEnvironment->compilerInterfaceReturnValue = compilerInterface;
+        device->setDebugger(deviceDebugger);
+        device->compilerInterfaceReturnValue = deviceCompilerInterface;
 
         EXPECT_EQ(expectedResult, device->isStateSipRequired());
     }
-    device->executionEnvironment->rootDeviceEnvironments[0]->debugger.release();
-    mockRootDeviceEnvironment->compilerInterfaceReturnValue = nullptr;
-    delete device->executionEnvironment->rootDeviceEnvironments[0].release();
-    device->executionEnvironment->rootDeviceEnvironments[0].reset(backupenv);
+    device->setDebugger(nullptr);
+}
+
+HWTEST_F(DeviceTests, givenSipSourceOtherThanBuiltinsWhenIsStateSipRequiredIsCalledThenCompilerInterfaceIsNotRequired) {
+    DebugManagerStateRestore restorer;
+    auto device = std::unique_ptr<MockDeviceWithCompilerInterface>(MockDevice::createWithNewExecutionEnvironment<MockDeviceWithCompilerInterface>(defaultHwInfo.get()));
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelperHw<FamilyType>> gfxCoreHelperBackup{*device->executionEnvironment->rootDeviceEnvironments[0]};
+    auto debugger = reinterpret_cast<Debugger *>(0x1234);
+
+    for (const bool sipExternalLibRequired : {true, false}) {
+        gfxCoreHelperBackup.mockGfxCoreHelper->sipExternalLibRequired = sipExternalLibRequired;
+        debugManager.flags.LoadBinarySipFromFile.set(sipExternalLibRequired ? "unk" : "sip.bin");
+
+        const std::array<std::tuple<PreemptionMode, Debugger *, bool>, 4> testParameters = {{
+            {PreemptionMode::Disabled, nullptr, false},
+            {PreemptionMode::MidThread, nullptr, true},
+            {PreemptionMode::Disabled, debugger, true},
+            {PreemptionMode::MidThread, debugger, true},
+        }};
+        for (const auto &[preemptionMode, deviceDebugger, expectedResult] : testParameters) {
+            device->setPreemptionMode(preemptionMode);
+            device->setDebugger(deviceDebugger);
+
+            EXPECT_EQ(expectedResult, device->isStateSipRequired());
+        }
+    }
+    device->setDebugger(nullptr);
 }
 
 HWTEST2_F(DeviceTests, GivenXeHpAndLaterThenDefaultPreemptionModeIsThreadGroup, IsXeCore) {
@@ -3766,6 +3785,26 @@ TEST_F(DeviceTests, givenDebuggerRequestedByUserAndNotAvailableWhenDeviceIsIniti
 
     EXPECT_EQ(std::string("Debug mode is not enabled in the system.\n"), output);
     EXPECT_EQ(nullptr, device);
+}
+
+TEST_F(DeviceTests, givenDebuggingEnabledAndSipExternalLibRequiredButNotAvailableWhenDeviceIsInitializedThenDeviceIsNullAndDebuggerIsReleasedAndErrorIsPrinted) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.GetSipBinaryFromExternalLib.set(1);
+    debugManager.flags.PrintDebugMessages.set(1);
+    VariableBackup<bool> mockSipBackup(&MockSipData::useMockSip, false);
+    auto executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
+    executionEnvironment->rootDeviceEnvironments[0]->sipExternalLibLookupDone = true;
+    executionEnvironment->incRefInternal();
+    StreamCapture capture;
+    capture.captureStderr();
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 0u));
+
+    EXPECT_EQ(std::string("SIP external library is required but not available.\n"), capture.getCapturedStderr());
+    EXPECT_EQ(nullptr, device);
+    EXPECT_EQ(nullptr, executionEnvironment->rootDeviceEnvironments[0]->debugger);
+    executionEnvironment->decRefInternal();
 }
 
 TEST_F(DeviceTests, givenDebuggerRequestedByUserWhenDeviceWithSubDevicesCreatedThenInitializeDebuggerOncePerRootDevice) {

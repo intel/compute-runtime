@@ -81,7 +81,7 @@ struct RootDeviceEnvironment : NonCopyableClass {
     GmmHelper *getGmmHelper() const;
     GmmClientContext *getGmmClientContext() const;
     MOCKABLE_VIRTUAL CompilerInterface *getCompilerInterface();
-    MOCKABLE_VIRTUAL SipExternalLib *getSipExternalLibInterface();
+    SipExternalLib *getSipExternalLibInterface();
     BuiltIns *getBuiltIns();
     BindlessHeapsHelper *getBindlessHeapsHelper() const;
     AssertHandler *getAssertHandler(Device *neoDevice);
@@ -129,6 +129,7 @@ struct RootDeviceEnvironment : NonCopyableClass {
 
     std::unique_ptr<CompilerInterface> compilerInterface;
     std::unique_ptr<SipExternalLib> sipExternalLib;
+    bool sipExternalLibLookupDone = false;
     std::unique_ptr<BuiltIns> builtins;
     std::unique_ptr<Debugger> debugger;
     std::unique_ptr<SWTagsManager> tagsManager;

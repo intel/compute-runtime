@@ -184,7 +184,7 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
         return reinterpret_cast<SpecializedDeviceT *>(specializedDevice);
     }
     MOCKABLE_VIRTUAL CompilerInterface *getCompilerInterface() const;
-    MOCKABLE_VIRTUAL SipExternalLib *getSipExternalLibInterface() const;
+    SipExternalLib *getSipExternalLibInterface() const;
     BuiltIns *getBuiltIns() const;
     void allocateSyncBufferHandler();
 
@@ -261,9 +261,7 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     MOCKABLE_VIRTUAL void pollForCompletion();
     bool isAnyDirectSubmissionEnabled() const;
     bool isAnyDirectSubmissionLightEnabled() const;
-    bool isStateSipRequired() const {
-        return (getPreemptionMode() == PreemptionMode::MidThread || getDebugger() != nullptr) && getCompilerInterface();
-    }
+    bool isStateSipRequired() const;
 
     MOCKABLE_VIRTUAL EngineControl *getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, std::optional<uint32_t> hwPriority);
     EngineControl *getSecondaryEngineCsrWithoutSharedContextPriorityOverride(EngineTypeUsage engineTypeUsage, std::optional<uint32_t> hwPriority);
@@ -344,6 +342,7 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     template <typename T>
     static T *createDeviceInternals(T *device) {
         if (false == device->createDeviceImpl()) {
+            device->releaseDebuggerOfRootDevice();
             delete device;
             return nullptr;
         }
@@ -351,6 +350,7 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     }
 
     MOCKABLE_VIRTUAL bool createDeviceImpl();
+    void releaseDebuggerOfRootDevice();
     bool initDeviceWithEngines();
     bool initializeCommonResources();
     bool initDeviceFully();

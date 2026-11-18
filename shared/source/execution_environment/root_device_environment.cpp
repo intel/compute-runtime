@@ -183,13 +183,14 @@ CompilerInterface *RootDeviceEnvironment::getCompilerInterface() {
 }
 
 SipExternalLib *RootDeviceEnvironment::getSipExternalLibInterface() {
-    if (sipExternalLib.get() == nullptr) {
-        if (SipKernel::isExternalLibRequired(*gfxCoreHelper)) {
-            std::lock_guard<std::mutex> autolock(this->mtx);
-            sipExternalLib.reset(SipExternalLib::getSipExternalLibInstance());
+    std::lock_guard<std::mutex> autolock(this->mtx);
+    if (!this->sipExternalLibLookupDone && SipKernel::isExternalLibRequired(*gfxCoreHelper)) {
+        this->sipExternalLibLookupDone = true;
+        if (this->sipExternalLib == nullptr) {
+            this->sipExternalLib.reset(SipExternalLib::getSipExternalLibInstance());
         }
     }
-    return sipExternalLib.get();
+    return this->sipExternalLib.get();
 }
 
 void RootDeviceEnvironment::initHelpers() {

@@ -222,6 +222,24 @@ TEST_F(DebugApiLinuxTestXe, GivenDebuggerCreatedWithParamsThenVersionIsSaved) {
     EXPECT_EQ(linuxSession->xeDebuggerVersion, 1u);
 }
 
+TEST_F(DebugApiLinuxSipExternalLibTestXe, GivenDebugSessionInitializationFailsWhenCreatingDebugSessionThenSipExternalLibIsNotUsed) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    VariableBackup<CreateDebugSessionHelperFunc> mockCreateDebugSessionBackup(&L0::ult::createDebugSessionFuncXe, [](const zet_debug_config_t &config, L0::Device *device, int debugFd, void *params) -> DebugSession * {
+        auto session = new MockDebugSessionLinuxXe(config, device, debugFd, params);
+        session->initializeRetVal = ZE_RESULT_ERROR_UNKNOWN;
+        return session;
+    });
+    mockDrm->debuggerOpenRetval = 10;
+
+    auto session = std::unique_ptr<DebugSession>(DebugSession::create(config, device, result, !device->getNEODevice()->isSubDevice()));
+
+    EXPECT_EQ(nullptr, session);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
+    EXPECT_EQ(0u, sipExternalLib->getSipKernelBinaryCalled);
+}
+
 TEST_F(DebugApiLinuxTestXe, GivenDebugSessionWhenClosingConnectionThenSysCallCloseOnFdIsCalled) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
@@ -575,7 +593,7 @@ TEST_F(DebugApiLinuxTestXe, WhenOpenDebuggerFailsThenCorrectErrorIsReturned) {
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
 }
 
-TEST_F(DebugApiLinuxSipExternalLibTestXe, GivenSipExternalLibWithFailingCreateRegisterDescriptorMapWhenCreatingDebugSessionThenNullptrIsReturned) {
+TEST_F(DebugApiLinuxSipExternalLibTestXe, GivenSipExternalLibWithFailingCreateRegisterDescriptorMapWhenCreatingDebugSessionThenNullptrAndNotAvailableAreReturned) {
     sipExternalLib->createRegisterDescriptorMapRetValue = false;
 
     zet_debug_config_t config = {};
@@ -586,18 +604,37 @@ TEST_F(DebugApiLinuxSipExternalLibTestXe, GivenSipExternalLibWithFailingCreateRe
     mockDrm->baseErrno = false;
     mockDrm->errnoRetVal = 0;
 
-    // Mock the createDebugSession helper to successfully create and initialize a session
     VariableBackup<CreateDebugSessionHelperFunc> mockCreateDebugSessionBackup(&L0::ult::createDebugSessionFuncXe, [](const zet_debug_config_t &config, L0::Device *device, int debugFd, void *params) -> DebugSession * {
         auto session = new MockDebugSessionLinuxXe(config, device, debugFd);
         session->initializeRetVal = ZE_RESULT_SUCCESS;
         return session;
     });
 
-    // Attempt to create debug session - should fail due to createRegisterDescriptorMap returning false
     auto session = DebugSession::create(config, device, result, true);
 
-    // Verify that session creation failed and returned nullptr due to createRegisterDescriptorMap failure
     EXPECT_EQ(nullptr, session);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
+}
+
+TEST_F(DebugApiLinuxSipExternalLibTestXe, GivenSipExternalLibFailingToCreateSipKernelBinaryWhenCreatingDebugSessionThenNullptrAndNotAvailableAreReturned) {
+    sipExternalLib->getSipKernelBinaryRetValue = -1;
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    mockDrm->debuggerOpenRetval = 10;
+    mockDrm->baseErrno = false;
+    mockDrm->errnoRetVal = 0;
+    VariableBackup<CreateDebugSessionHelperFunc> mockCreateDebugSessionBackup(&L0::ult::createDebugSessionFuncXe, [](const zet_debug_config_t &config, L0::Device *device, int debugFd, void *params) -> DebugSession * {
+        auto session = new MockDebugSessionLinuxXe(config, device, debugFd);
+        session->initializeRetVal = ZE_RESULT_SUCCESS;
+        return session;
+    });
+
+    auto session = DebugSession::create(config, device, result, true);
+
+    EXPECT_EQ(nullptr, session);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
+    EXPECT_EQ(1u, sipExternalLib->getSipKernelBinaryCalled);
 }
 
 TEST_F(DebugApiLinuxTestXe, GivenDebugSessionWhenPollReturnsZeroThenNotReadyIsReturned) {

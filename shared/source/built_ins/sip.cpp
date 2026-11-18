@@ -218,7 +218,10 @@ bool SipKernel::initSipKernelFromExternalLib(SipKernelType type, Device &device)
     std::vector<char> stateSaveAreaHeader;
 
     SipExternalLib *sipLib = device.getSipExternalLibInterface();
-    UNRECOVERABLE_IF(!sipLib);
+    if (sipLib == nullptr) {
+        PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "SIP external library is required but not available.\n");
+        return false;
+    }
     auto ret = sipLib->getSipKernelBinary(device, type, sipBinary, stateSaveAreaHeader);
     if (ret != 0) {
         return false;

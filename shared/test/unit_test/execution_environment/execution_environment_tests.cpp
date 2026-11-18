@@ -28,19 +28,25 @@
 #include "shared/source/utilities/logger.h"
 #include "shared/test/common/fixtures/mock_aub_center_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/raii_gfx_core_helper.h"
 #include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/mocks/mock_ail_configuration.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_gfx_core_helper.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
+#include "shared/test/common/mocks/mock_sip_external_lib.h"
 #include "shared/test/common/mocks/mock_usm_memory_reuse_cleaner.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/common/utilities/destructor_counted.h"
 
 using namespace NEO;
+
+using RootDeviceEnvironmentSipExternalLibTest = ::testing::Test;
 
 TEST(ExecutionEnvironment, givenDefaultConstructorWhenItIsCalledThenExecutionEnvironmentHasInitialRefCountZero) {
     ExecutionEnvironment environment;
@@ -973,4 +979,26 @@ TEST_F(ExecutionEnvironmentSortTests, givenDisabledPciIdDeviceOrderFlagWhenSorti
         EXPECT_EQ(expectedBusInfos[rootDeviceIndex].pciDevice, pciBusInfo.pciDevice);
         EXPECT_EQ(expectedBusInfos[rootDeviceIndex].pciFunction, pciBusInfo.pciFunction);
     }
+}
+
+TEST(RootDeviceEnvironment, givenInjectedSipExternalLibWhenGettingSipExternalLibInterfaceThenInjectedLibIsReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.GetSipBinaryFromExternalLib.set(1);
+    MockExecutionEnvironment executionEnvironment;
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+    auto sipExternalLib = std::make_unique<MockSipExternalLib>();
+    auto injectedSipExternalLib = sipExternalLib.get();
+    rootDeviceEnvironment.sipExternalLib = std::move(sipExternalLib);
+
+    EXPECT_EQ(injectedSipExternalLib, rootDeviceEnvironment.getSipExternalLibInterface());
+    EXPECT_EQ(injectedSipExternalLib, rootDeviceEnvironment.getSipExternalLibInterface());
+}
+
+HWTEST_F(RootDeviceEnvironmentSipExternalLibTest, givenSipExternalLibNotRequiredWhenGettingSipExternalLibInterfaceThenLookupIsNotDone) {
+    MockExecutionEnvironment executionEnvironment;
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelperHw<FamilyType>> gfxCoreHelperBackup{rootDeviceEnvironment};
+
+    EXPECT_EQ(nullptr, rootDeviceEnvironment.getSipExternalLibInterface());
+    EXPECT_FALSE(rootDeviceEnvironment.sipExternalLibLookupDone);
 }

@@ -12,11 +12,13 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/memory_manager/memory_allocation.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/source/os_interface/os_library.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/fixtures/sip_external_lib_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/raii_gfx_core_helper.h"
+#include "shared/test/common/helpers/stream_capture.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_builtins.h"
 #include "shared/test/common/mocks/mock_compiler_interface.h"
@@ -1179,13 +1181,21 @@ HWTEST_F(DebugExternalLibSipTest, givenGetSipBinaryFromExternalLibSetWhenCheckin
     EXPECT_TRUE(SipKernel::isExternalLibRequired(gfxCoreHelper));
 }
 
-TEST_F(DebugExternalLibSipTest, givenSipExternalLibRequiredAndNotAvailableWhenInitSipKernelThenAbortIsCalled) {
+TEST_F(DebugExternalLibSipTest, givenSipExternalLibRequiredAndNotAvailableWhenInitSipKernelThenFalseIsReturnedAndErrorIsPrinted) {
     DebugManagerStateRestore restorer;
     debugManager.flags.GetSipBinaryFromExternalLib.set(1);
+    debugManager.flags.PrintDebugMessages.set(1);
     VariableBackup<bool> mockSipBackup(&MockSipData::useMockSip, false);
     VariableBackup sipClassBackup(&MockSipKernel::classType);
     pDevice->getRootDeviceEnvironmentRef().sipExternalLib.reset();
-    EXPECT_THROW(SipKernel::initSipKernel(SipKernelType::dbgBindless, *pDevice), std::exception);
+    pDevice->getRootDeviceEnvironmentRef().sipExternalLibLookupDone = true;
+    StreamCapture capture;
+    capture.captureStderr();
+
+    EXPECT_FALSE(SipKernel::initSipKernel(SipKernelType::dbgBindless, *pDevice));
+
+    EXPECT_EQ(std::string("SIP external library is required but not available.\n"), capture.getCapturedStderr());
+    EXPECT_EQ(nullptr, pDevice->getRootDeviceEnvironment().sipKernels[static_cast<uint32_t>(SipKernelType::dbgBindless)]);
 }
 
 struct SipKernelFromSipExternalLibTest : public DebugExternalLibSipTest, public SipExternalLibFixture {
@@ -1295,7 +1305,8 @@ TEST_F(SipKernelFromSipExternalLibTest, givenSipKernelAlreadyInitializedWhenInit
     EXPECT_EQ(0u, sipExternalLib->getSipKernelBinaryCalled);
 }
 
-TEST_F(DebugExternalLibSipTest, givenSipExternalLibRequiredWhenGetSipExternalLibInterfaceIsCalledThenNullptrReturned) {
+TEST_F(DebugExternalLibSipTest, givenSipExternalLibRequiredAndFailingToLoadWhenGetSipExternalLibInterfaceIsCalledThenNullptrReturned) {
+    VariableBackup<decltype(NEO::OsLibrary::loadFunc)> loadFuncBackup{&NEO::OsLibrary::loadFunc, [](const OsLibraryCreateProperties &) -> OsLibrary * { return nullptr; }};
     DebugManagerStateRestore restorer;
     debugManager.flags.GetSipBinaryFromExternalLib.set(1);
     EXPECT_EQ(nullptr, pDevice->getSipExternalLibInterface());

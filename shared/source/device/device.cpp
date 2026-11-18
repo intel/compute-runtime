@@ -238,8 +238,9 @@ bool Device::initializeCommonResources() {
     }
 
     if (this->isStateSipRequired()) {
-        bool ret = SipKernel::initSipKernel(SipKernel::getSipKernelType(*this), *this);
-        UNRECOVERABLE_IF(!ret);
+        if (!SipKernel::initSipKernel(SipKernel::getSipKernelType(*this), *this)) {
+            return false;
+        }
         const bool isDebugSurfaceRequired = getL0Debugger();
         if (isDebugSurfaceRequired) {
             auto debugSurfaceSize = NEO::SipKernel::getSipKernel(*this, nullptr).getStateSaveAreaSize(this);
@@ -1397,6 +1398,18 @@ GmmHelper *Device::getGmmHelper() const {
 
 CompilerInterface *Device::getCompilerInterface() const {
     return executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->getCompilerInterface();
+}
+
+bool Device::isStateSipRequired() const {
+    if (getPreemptionMode() != PreemptionMode::MidThread && getDebugger() == nullptr) {
+        return false;
+    }
+    return getCompilerInterface() != nullptr || SipKernel::selectSipClassType(getGfxCoreHelper()) != SipClassType::builtins;
+}
+
+void Device::releaseDebuggerOfRootDevice() {
+    setDebugger(nullptr);
+    getRootDeviceEnvironmentRef().debugger.reset();
 }
 
 SipExternalLib *Device::getSipExternalLibInterface() const {

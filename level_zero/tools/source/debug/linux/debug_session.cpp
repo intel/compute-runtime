@@ -55,32 +55,24 @@ DebugSession *DebugSession::create(const zet_debug_config_t &config, Device *dev
     if (result != ZE_RESULT_SUCCESS) {
         debugSession->closeConnection();
         delete debugSession;
-        debugSession = nullptr;
-    } else {
-        debugSession->startAsyncThread();
+        return nullptr;
     }
-
     auto neoDevice = device->getNEODevice();
-    if (neoDevice->getSipExternalLibInterface()) {
+    auto sipLibInterface = neoDevice->getSipExternalLibInterface();
+    if (sipLibInterface) {
         std::vector<char> sipBinary;
         std::vector<char> stateSaveAreaHeader;
-        auto sipLibInterface = neoDevice->getSipExternalLibInterface();
 
-        auto ret = sipLibInterface->getSipKernelBinary(*neoDevice, NEO::SipKernelType::dbgHeapless, sipBinary, stateSaveAreaHeader);
-        if (ret != 0) {
+        if (sipLibInterface->getSipKernelBinary(*neoDevice, NEO::SipKernelType::dbgHeapless, sipBinary, stateSaveAreaHeader) != 0 ||
+            !sipLibInterface->createRegisterDescriptorMap()) {
             debugSession->closeConnection();
             delete debugSession;
-            debugSession = nullptr;
-            return debugSession;
-        }
-
-        if (!sipLibInterface->createRegisterDescriptorMap()) {
-            debugSession->closeConnection();
-            delete debugSession;
-            debugSession = nullptr;
+            result = ZE_RESULT_ERROR_NOT_AVAILABLE;
+            return nullptr;
         }
     }
 
+    debugSession->startAsyncThread();
     return debugSession;
 }
 
