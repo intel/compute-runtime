@@ -176,6 +176,9 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
 
     executionEnvironment.setDeviceHierarchyMode(executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>());
     executionEnvironment.parseAffinityMask();
+    if (executionEnvironment.rootDeviceEnvironments.empty()) {
+        return false;
+    }
     if (!executionEnvironment.adjustCcsCount()) {
         return false;
     }
@@ -300,9 +303,8 @@ bool DeviceFactory::prepareDeviceEnvironments(ExecutionEnvironment &executionEnv
     executionEnvironment.setDeviceHierarchyMode(executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>());
     executionEnvironment.sortNeoDevices();
     executionEnvironment.parseAffinityMask();
-    const bool hadDevicesBeforeLeoDrop = !executionEnvironment.rootDeviceEnvironments.empty();
     dropLeoRootDeviceEnvironments(executionEnvironment);
-    if (hadDevicesBeforeLeoDrop && executionEnvironment.rootDeviceEnvironments.empty()) {
+    if (executionEnvironment.rootDeviceEnvironments.empty()) {
         return false;
     }
     executionEnvironment.adjustRootDeviceEnvironments();

@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/product_config_helper.h"
+#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/release_helpers/release_helper/release_helper.h"
@@ -16,6 +17,7 @@
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/raii_gfx_core_helper.h"
 #include "shared/test/common/helpers/stream_capture.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
@@ -55,6 +57,17 @@ TEST_F(DeviceFactoryTests, givenHwIpVersionOverrideWhenPrepareDeviceEnvironments
     EXPECT_TRUE(success);
     EXPECT_EQ(config, executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->ipVersion.value);
     EXPECT_NE(0u, executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->platform.usDeviceID);
+}
+
+TEST_F(DeviceFactoryTests, givenAffinityMaskNotSelectingAnyDeviceWhenPrepareDeviceEnvironmentsForProductFamilyOverrideIsCalledThenFalseIsReturnedAndEnvironmentIsEmpty) {
+    debugManager.flags.ZE_AFFINITY_MASK.set("99");
+
+    VariableBackup<uint32_t> osContextCountBackup(&MemoryManager::maxOsContextCount);
+    ExecutionEnvironment executionEnvironment{};
+    bool success = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment);
+    EXPECT_FALSE(success);
+
+    EXPECT_EQ(0u, executionEnvironment.rootDeviceEnvironments.size());
 }
 
 TEST_F(DeviceFactoryTests, givenHwIpVersionOverrideWhenPrepareDeviceEnvironmentsForProductFamilyOverrideIsCalledWithNumberOfCcsSetToZeroThenFalseIsReturned) {

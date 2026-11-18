@@ -97,7 +97,7 @@ TEST(DeviceFactoryAffinityMaskTest, whenAffinityMaskDoesNotSelectAnyDeviceThenCr
     EXPECT_EQ(nullptr, executionEnvironment.memoryManager.get());
 }
 
-TEST(DeviceFactoryAffinityMaskTest, whenAffinityMaskDoesNotSelectAnyDeviceThenEmptyEnvironmentIsReturned) {
+TEST(DeviceFactoryAffinityMaskTest, whenAffinityMaskDoesNotSelectAnyDeviceThenFalseIsReturnedAndEnvironmentIsEmpty) {
     static const auto numRootDevices = 6;
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
@@ -106,7 +106,7 @@ TEST(DeviceFactoryAffinityMaskTest, whenAffinityMaskDoesNotSelectAnyDeviceThenEm
     VariableBackup<uint32_t> osContextCountBackup(&MemoryManager::maxOsContextCount);
     ExecutionEnvironment executionEnvironment{};
     bool success = DeviceFactory::prepareDeviceEnvironments(executionEnvironment);
-    EXPECT_TRUE(success);
+    EXPECT_FALSE(success);
 
     EXPECT_EQ(0u, executionEnvironment.rootDeviceEnvironments.size());
 }
