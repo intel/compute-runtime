@@ -415,75 +415,78 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandlesWhenGettingPower
     }
 }
 
+constexpr uint32_t punitMockRawEnergyCounter = 0xabcd;
+constexpr uint32_t punitMockXtalFrequency = 0xef;
+constexpr uint64_t punitMockXtalCount = 0x1234abcdef; // Value beyond 32 bits to cover the 64 bit XTAL_COUNT read
+// punitMockRawEnergyCounter in U18.14: 43981 / 2^14 J = 2.68438720703125 J, truncated to microjoules
+constexpr uint64_t punitMockEnergyCounterInMicroJoules = 2684387u;
+// punitMockXtalCount = 78193085935 ticks, punitMockXtalFrequency & 0x3 = 3 selects 25 MHz, truncated to microseconds
+constexpr uint64_t punitMockTimestampInMicroSeconds = 3127723437u;
+constexpr uint64_t punitMockRawMemoryEnergyCounter = 0x12345678abcdef01; // Non-zero upper and lower 32 bits for memory domain
+// Sum of the U18.14 halves: 0xabcdef01 = 175927.73443603516 J and 0x12345678 = 18641.35107421875 J, truncated to microjoules
+constexpr uint64_t punitMockMemoryEnergyCounterInMicroJoules = 194569085510u;
+
+static ssize_t mockPreadPunitEnergyCounters(int fd, void *buf, size_t count, off_t offset) {
+    uint64_t telemOffset = 0;
+    std::string_view validOobmsmGuid = "";
+    std::string_view validPunitGuid = "";
+
+    if (defaultHwInfo->platform.eProductFamily == IGFX_BMG) {
+        validOobmsmGuid = "0x5e2f8211";
+        validPunitGuid = "0x1e2f8200";
+    } else if (defaultHwInfo->platform.eProductFamily == IGFX_CRI) {
+        validOobmsmGuid = "0x5e2fa230";
+        validPunitGuid = "0x1e2fa030";
+    }
+
+    if (fd == 4) {
+        memcpy(buf, &telemOffset, count);
+    } else if (fd == 5) {
+        memcpy(buf, validOobmsmGuid.data(), count);
+    } else if (fd == 6) {
+        memcpy(buf, validPunitGuid.data(), count);
+    } else if (fd == 7) {
+        switch (offset) {
+        case 136:
+        case 140:
+            memcpy(buf, &punitMockRawEnergyCounter, count);
+            break;
+        default:
+            break;
+        }
+    } else if (fd == 8) {
+        switch (offset) {
+        case 4:
+            memcpy(buf, &punitMockXtalFrequency, count);
+            break;
+        case 512:
+        case 1024:
+            memcpy(buf, &punitMockXtalCount, count);
+            break;
+        case 44:
+        case 48:
+        case 52:
+        case 1628:
+        case 1640:
+            memcpy(buf, &punitMockRawEnergyCounter, count);
+            break;
+        case 200: // CRI: 64 bit VRAM energy accumulator container
+            memcpy(buf, &punitMockRawMemoryEnergyCounter, count);
+            break;
+        default:
+            break;
+        }
+    }
+    return count;
+}
+
 HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandlesWhenGettingPowerEnergyCounterThenAllValidValuesAreReturnedFromPunitPath, IsBmgOrCri) {
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
     VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-        uint64_t telemOffset = 0;
-        std::string_view validOobmsmGuid = "";
-        std::string_view validPunitGuid = "";
-        constexpr uint32_t mockEnergyCounter = 0xabcd;
-        constexpr uint64_t mockMemoryEnergyCounter = 0x12345678abcdef01; // Non-zero upper and lower 32 bits for memory domain
-        constexpr uint32_t mockXtalFrequency = 0xef;
-        constexpr uint64_t mockTimestamp = 0x1234abcdef; // Value beyond 32 bits to cover the 64 bit XTAL_COUNT read
-
-        if (defaultHwInfo->platform.eProductFamily == IGFX_BMG) {
-            validOobmsmGuid = "0x5e2f8211";
-            validPunitGuid = "0x1e2f8200";
-        } else if (defaultHwInfo->platform.eProductFamily == IGFX_CRI) {
-            validOobmsmGuid = "0x5e2fa230";
-            validPunitGuid = "0x1e2fa030";
-        }
-
-        if (fd == 4) {
-            memcpy(buf, &telemOffset, count);
-        } else if (fd == 5) {
-            memcpy(buf, validOobmsmGuid.data(), count);
-        } else if (fd == 6) {
-            memcpy(buf, validPunitGuid.data(), count);
-        } else if (fd == 7) {
-            switch (offset) {
-            case 136:
-            case 140:
-                memcpy(buf, &mockEnergyCounter, count);
-                break;
-            default:
-                break;
-            }
-        } else if (fd == 8) {
-            switch (offset) {
-            case 4:
-                memcpy(buf, &mockXtalFrequency, count);
-                break;
-            case 512:
-            case 1024:
-                memcpy(buf, &mockTimestamp, count);
-                break;
-            case 44:
-            case 48:
-            case 52:
-            case 1628:
-            case 1640:
-                memcpy(buf, &mockEnergyCounter, count);
-                break;
-            case 200: // CRI: 64 bit VRAM energy accumulator container
-                memcpy(buf, &mockMemoryEnergyCounter, count);
-                break;
-            default:
-                break;
-            }
-        }
-        return count;
-    });
-
-    constexpr uint32_t mockEnergyCounter = 0xabcd;
-    constexpr uint64_t mockMemoryEnergyCounter = 0x12345678abcdef01; // Non-zero upper and lower 32 bits for memory domain
-    constexpr uint32_t mockXtalFrequency = 0xef;
-    constexpr uint64_t mockTimestamp = 0x1234abcdef; // Value beyond 32 bits to cover the 64 bit XTAL_COUNT read
-    constexpr double indexToXtalClockFrequencyMap[4] = {24, 19.2, 38.4, 25};
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, &mockPreadPunitEnergyCounters);
 
     pFsAccess->isTelemetryDataFilePresent = true;
     auto handles = getPowerHandles();
@@ -508,23 +511,68 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandlesWhenGettingPower
             continue;
         }
 
-        uint64_t expectedEnergyCounter = 0;
-
-        if ((defaultHwInfo->platform.eProductFamily == IGFX_CRI) && (extProperties.domain == ZES_POWER_DOMAIN_MEMORY)) {
-            // VCCDDRQ_ENERGY_ACCUMULATOR: bits [0:31] and VCCDDRQX_ENERGY_ACCUMULATOR: bits [32:63]
-            const double finalValue = convertU18p14(static_cast<uint32_t>(mockMemoryEnergyCounter & 0xFFFFFFFF)) +
-                                      convertU18p14(static_cast<uint32_t>(mockMemoryEnergyCounter >> 32));
-            expectedEnergyCounter = static_cast<uint64_t>((finalValue * convertJouleToMicroJoule));
-        } else {
-            const double finalValue = convertU18p14(mockEnergyCounter);
-            expectedEnergyCounter = static_cast<uint64_t>((finalValue * convertJouleToMicroJoule));
-        }
-
+        const bool isCriMemoryDomain = (defaultHwInfo->platform.eProductFamily == IGFX_CRI) && (extProperties.domain == ZES_POWER_DOMAIN_MEMORY);
+        const uint64_t expectedEnergyCounter = isCriMemoryDomain ? punitMockMemoryEnergyCounterInMicroJoules : punitMockEnergyCounterInMicroJoules;
         EXPECT_EQ(expectedEnergyCounter, energyCounter.energy);
+        EXPECT_EQ(punitMockTimestampInMicroSeconds, energyCounter.timestamp);
+    }
+}
 
-        const double timestamp = mockTimestamp / indexToXtalClockFrequencyMap[mockXtalFrequency & 0x3];
-        const uint64_t expectedTimestamp = static_cast<uint64_t>(timestamp);
-        EXPECT_EQ(expectedTimestamp, energyCounter.timestamp);
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenTelemetryAvailableWhenCreatingPowerHandleForCardAndPackageDomainsThenPmtBasedPowerIsSupportedOnlyIfHwmonEnergyCounterIsNotReadable, IsBmgOrCri) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, &mockPreadPunitEnergyCounters);
+    pFsAccess->isTelemetryDataFilePresent = true;
+
+    for (auto powerDomain : {ZES_POWER_DOMAIN_CARD, ZES_POWER_DOMAIN_PACKAGE}) {
+        pFsAccess->energyCounterReadResult = ZE_RESULT_SUCCESS;
+        auto pPowerImpWithReadableHwmon = std::make_unique<XePublicLinuxPowerImp>(pOsSysman, false, 0, powerDomain);
+        EXPECT_FALSE(pPowerImpWithReadableHwmon->isPmtBasedPowerSupported);
+
+        pFsAccess->energyCounterReadResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+        auto pPowerImpWithUnreadableHwmon = std::make_unique<XePublicLinuxPowerImp>(pOsSysman, false, 0, powerDomain);
+        EXPECT_TRUE(pPowerImpWithUnreadableHwmon->isPmtBasedPowerSupported);
+    }
+}
+
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenHwmonEnergyCounterNotReadableDuringInitWhenGettingPowerEnergyCounterForCardAndPackageDomainsThenValuesAreReadFromPmt, IsBmgOrCri) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, &mockPreadPunitEnergyCounters);
+
+    pFsAccess->isTelemetryDataFilePresent = true;
+    pFsAccess->energyCounterReadResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+
+    for (auto powerDomain : {ZES_POWER_DOMAIN_CARD, ZES_POWER_DOMAIN_PACKAGE}) {
+        auto pLinuxPowerImp = std::make_unique<XePublicLinuxPowerImp>(pOsSysman, false, 0, powerDomain);
+        zes_power_energy_counter_t energyCounter = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxPowerImp->getEnergyCounter(&energyCounter));
+        EXPECT_EQ(punitMockEnergyCounterInMicroJoules, energyCounter.energy);
+        EXPECT_EQ(punitMockTimestampInMicroSeconds, energyCounter.timestamp);
+    }
+}
+
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenHwmonEnergyCounterReadableDuringInitAndReadFailsLaterWhenGettingPowerEnergyCounterForCardAndPackageDomainsThenErrorIsReturnedWithoutSwitchingToPmt, IsBmgOrCri) {
+    for (auto powerDomain : {ZES_POWER_DOMAIN_CARD, ZES_POWER_DOMAIN_PACKAGE}) {
+        pFsAccess->energyCounterReadResult = ZE_RESULT_SUCCESS;
+        auto pLinuxPowerImp = std::make_unique<XePublicLinuxPowerImp>(pOsSysman, false, 0, powerDomain);
+        pFsAccess->energyCounterReadResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+        zes_power_energy_counter_t energyCounter = {};
+        EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pLinuxPowerImp->getEnergyCounter(&energyCounter));
+    }
+}
+
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenHwmonEnergyCounterReadFailsAndPmtBasedPowerNotSupportedWhenGettingPowerEnergyCounterForCardAndPackageDomainsThenErrorIsReturned, IsBmgOrCri) {
+    pFsAccess->energyCounterReadResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+
+    for (auto powerDomain : {ZES_POWER_DOMAIN_CARD, ZES_POWER_DOMAIN_PACKAGE}) {
+        auto pLinuxPowerImp = std::make_unique<XePublicLinuxPowerImp>(pOsSysman, false, 0, powerDomain);
+        zes_power_energy_counter_t energyCounter = {};
+        EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pLinuxPowerImp->getEnergyCounter(&energyCounter));
     }
 }
 
@@ -533,7 +581,6 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandlesWithPmtBasedPowe
     for (const auto &powerDomain : powerDomains) {
         zes_power_energy_counter_t energyCounter = {};
         std::unique_ptr<XePublicLinuxPowerImp> pLinuxPowerImp(new XePublicLinuxPowerImp(pOsSysman, false, 0, powerDomain));
-        pLinuxPowerImp->isPmtBasedPowerSupported = false;
         const uint64_t timeStampInitial = SysmanDevice::getSysmanTimestamp();
         EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxPowerImp->getEnergyCounter(&energyCounter));
         EXPECT_EQ(energyCounter.energy, xeMockEnergyCounter);
@@ -1276,19 +1323,14 @@ HWTEST2_F(SysmanXeProductHelperPowerTest, GivenSysfsReadFailsWithVariousErrorCod
     }
 }
 
-HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidProductHelperHandleWhenCheckingIfPmtBasedPowerIsSupportedThenTrueIsReturnedOnlyForGpuAndMemoryDomains, IsBmgOrCri) {
+HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidProductHelperHandleWhenCheckingIfPmtBasedPowerIsSupportedThenTrueIsReturned, IsBmgOrCri) {
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
-    EXPECT_TRUE(pSysmanProductHelper->isPmtBasedPowerSupported(ZES_POWER_DOMAIN_GPU));
-    EXPECT_TRUE(pSysmanProductHelper->isPmtBasedPowerSupported(ZES_POWER_DOMAIN_MEMORY));
-    EXPECT_FALSE(pSysmanProductHelper->isPmtBasedPowerSupported(ZES_POWER_DOMAIN_CARD));
-    EXPECT_FALSE(pSysmanProductHelper->isPmtBasedPowerSupported(ZES_POWER_DOMAIN_PACKAGE));
+    EXPECT_TRUE(pSysmanProductHelper->isPmtBasedPowerSupported());
 }
 
 HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidProductHelperHandleWhenCheckingIfPmtBasedPowerIsSupportedThenFalseIsReturned, IsNotDg2BmgOrCri) {
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
-    for (auto powerDomain : {ZES_POWER_DOMAIN_CARD, ZES_POWER_DOMAIN_PACKAGE, ZES_POWER_DOMAIN_GPU, ZES_POWER_DOMAIN_MEMORY}) {
-        EXPECT_FALSE(pSysmanProductHelper->isPmtBasedPowerSupported(powerDomain));
-    }
+    EXPECT_FALSE(pSysmanProductHelper->isPmtBasedPowerSupported());
 }
 
 HWTEST2_F(SysmanXeProductHelperPowerTest, GivenValidPowerHandleWhenCallingGetPowerUsageThenUnsupportedFeatureIsReturned, IsNotBmgOrCri) {

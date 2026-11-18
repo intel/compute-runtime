@@ -64,6 +64,7 @@ class LinuxPowerImp : public OsPower, NEO::NonCopyableAndNonMovableClass {
     bool burstPowerLimitFileExists = false;
     bool criticalPowerLimitFileExists = false;
     bool sustainedPowerLimitFileExists = false;
+    bool isHwmonEnergyCounterReadable = false;
     bool canControl = false;
     bool isSubdevice = false;
     uint32_t subdeviceId = 0;
@@ -78,7 +79,9 @@ class LinuxPowerImp : public OsPower, NEO::NonCopyableAndNonMovableClass {
     }
 
     ze_result_t getDefaultLimit(int32_t &defaultLimit);
+    ze_result_t getHwmonEnergyCounter(zes_power_energy_counter_t *pEnergy);
     void init();
+    void initHwmonNodes();
 };
 } // namespace Sysman
 } // namespace L0

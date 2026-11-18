@@ -82,20 +82,22 @@ ze_result_t LinuxPowerImp::getPropertiesExt(zes_power_ext_properties_t *pExtProp
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t LinuxPowerImp::getEnergyCounter(zes_power_energy_counter_t *pEnergy) {
-    ze_result_t result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-
-    if (isPmtBasedPowerSupported) {
-        return pSysmanProductHelper->getPowerEnergyCounter(pEnergy, pLinuxSysmanImp, powerDomain, subdeviceId);
-    }
-
-    if ((result = pFsAccess->read(energyCounterNodeFile, pEnergy->energy)) != ZE_RESULT_SUCCESS) {
+ze_result_t LinuxPowerImp::getHwmonEnergyCounter(zes_power_energy_counter_t *pEnergy) {
+    const ze_result_t result = pFsAccess->read(energyCounterNodeFile, pEnergy->energy);
+    if (result != ZE_RESULT_SUCCESS) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): FsAccess->read() failed to read %s/%s and returning error:0x%x \n", NEO_FUNCTION_NAME, intelGraphicsHwmonDir.c_str(), energyCounterNodeFile.c_str(), getErrorCode(result));
         return result;
     }
 
     pEnergy->timestamp = SysmanDevice::getSysmanTimestamp();
     return result;
+}
+
+ze_result_t LinuxPowerImp::getEnergyCounter(zes_power_energy_counter_t *pEnergy) {
+    if (isPmtBasedPowerSupported) {
+        return pSysmanProductHelper->getPowerEnergyCounter(pEnergy, pLinuxSysmanImp, powerDomain, subdeviceId);
+    }
+    return getHwmonEnergyCounter(pEnergy);
 }
 
 ze_result_t LinuxPowerImp::getLimits(zes_power_sustained_limit_t *pSustained, zes_power_burst_limit_t *pBurst, zes_power_peak_limit_t *pPeak) {
@@ -393,6 +395,7 @@ void LinuxPowerImp::reInit() {
     criticalPowerLimitFile.clear();
     sustainedPowerLimitFile.clear();
     sustainedPowerLimitIntervalFile.clear();
+    isHwmonEnergyCounterReadable = false;
     burstPowerLimitFileExists = false;
     criticalPowerLimitFileExists = false;
     sustainedPowerLimitFileExists = false;
@@ -402,6 +405,11 @@ void LinuxPowerImp::reInit() {
 }
 
 void LinuxPowerImp::init() {
+    initHwmonNodes();
+    isPmtBasedPowerSupported = !isHwmonEnergyCounterReadable && pSysmanProductHelper->isPmtBasedPowerSupported() && PlatformMonitoringTech::isTelemetrySupportAvailable(pLinuxSysmanImp, subdeviceId);
+}
+
+void LinuxPowerImp::initHwmonNodes() {
     if (pSysfsAccess->getDevicePciPath().empty()) {
         PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Device PCI path is empty \n", NEO_FUNCTION_NAME);
         return;
@@ -434,6 +442,8 @@ void LinuxPowerImp::init() {
     std::string fileName = pSysmanKmdInterface->getEnergyCounterNodeFile(powerDomain);
     if (!fileName.empty()) {
         energyCounterNodeFile = intelGraphicsHwmonDir + "/" + fileName;
+        uint64_t energyCounter = 0;
+        isHwmonEnergyCounterReadable = (pFsAccess->read(energyCounterNodeFile, energyCounter) == ZE_RESULT_SUCCESS);
     }
 
     if (isSubdevice) {
@@ -488,7 +498,6 @@ LinuxPowerImp::LinuxPowerImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_
     pSysfsAccess = pSysmanKmdInterface->getSysFsAccess();
     pFsAccess = pSysmanKmdInterface->getFsAccess();
     pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
-    isPmtBasedPowerSupported = pSysmanProductHelper->isPmtBasedPowerSupported(powerDomain) && PlatformMonitoringTech::isTelemetrySupportAvailable(pLinuxSysmanImp, subdeviceId);
     init();
 }
 

@@ -113,7 +113,7 @@ class SysmanProductHelperHw : public SysmanProductHelper {
     bool isNetlinkEventSupported() override;
 
     // Pmt
-    bool isPmtBasedPowerSupported(zes_power_domain_t powerDomain) override;
+    bool isPmtBasedPowerSupported() override;
 
     ~SysmanProductHelperHw() override = default;
 

@@ -136,9 +136,9 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenValidProductHelperHandleWhenCalling
     EXPECT_EQ(expectedPowerUnit, pSysmanProductHelper->getPowerLimitUnit());
 }
 
-HWTEST2_F(SysmanProductHelperPowerTest, GivenValidProductHelperHandleWhenCheckingIfPmtBasedPowerIsSupportedForPackageDomainThenTrueIsReturned, IsDG2) {
+HWTEST2_F(SysmanProductHelperPowerTest, GivenValidProductHelperHandleWhenCheckingIfPmtBasedPowerIsSupportedThenTrueIsReturned, IsDG2) {
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
-    EXPECT_TRUE(pSysmanProductHelper->isPmtBasedPowerSupported(ZES_POWER_DOMAIN_PACKAGE));
+    EXPECT_TRUE(pSysmanProductHelper->isPmtBasedPowerSupported());
 }
 
 HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleForPackageDomainWhenGettingPowerEnergyCounterThenFailureIsReturned, IsNotDG2) {
@@ -149,10 +149,10 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleForPackageDomainWhe
 
 HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleForPackageDomainWithTelemetrySupportNotAvailableAndSysfsNodeReadFailsWhenGettingPowerEnergyCounterThenFailureIsReturned, IsDG2) {
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkFailure);
-    pFsAccess->mockReadValUnsignedLongResult.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
     zes_power_energy_counter_t energyCounter = {};
     std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0, ZES_POWER_DOMAIN_PACKAGE));
     pLinuxPowerImp->isPmtBasedPowerSupported = false;
+    pFsAccess->mockReadValUnsignedLongResult.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pLinuxPowerImp->getEnergyCounter(&energyCounter));
 }
 
@@ -223,27 +223,31 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleForPackageDomainWit
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pLinuxPowerImp->getEnergyCounter(&energyCounter));
 }
 
-HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandlesWithTelemetrySupportAvailableWhenGettingPowerEnergyCounterThenValidPowerReadingsRetrievedFromPmtNode, IsDG2) {
-    static uint64_t setEnergyCounter = 123456u;
+constexpr uint64_t dg2MockPmtRawPackageEnergyCounter = 123456u;
+
+static ssize_t mockPreadDg2PackageEnergyCounter(int fd, void *buf, size_t count, off_t offset) {
+    constexpr uint64_t telem1Offset = 0;
+    constexpr std::string_view validGuid = "0x4f9302";
+
+    if (fd == 4) {
+        memcpy(buf, &telem1Offset, count);
+    } else if (fd == 5) {
+        memcpy(buf, validGuid.data(), count);
+    } else if (fd == 6) {
+        memcpy(buf, &dg2MockPmtRawPackageEnergyCounter, count);
+    }
+    return count;
+}
+
+HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandlesWithTelemetrySupportAvailableAndHwmonEnergyCounterNotReadableDuringInitWhenGettingPowerEnergyCounterThenValidPowerReadingsRetrievedFromPmtNode, IsDG2) {
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
     VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-        constexpr uint64_t telem1Offset = 0;
-        constexpr std::string_view validGuid = "0x4f9302";
-
-        if (fd == 4) {
-            memcpy(buf, &telem1Offset, count);
-        } else if (fd == 5) {
-            memcpy(buf, validGuid.data(), count);
-        } else if (fd == 6) {
-            memcpy(buf, &setEnergyCounter, count);
-        }
-        return count;
-    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, &mockPreadDg2PackageEnergyCounter);
 
     pFsAccess->isTelemetryDataFilePresent = true;
+    pFsAccess->mockReadValUnsignedLongResult.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
     auto handles = getPowerHandles(powerHandleComponentCount);
 
     for (auto handle : handles) {
@@ -264,19 +268,35 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandlesWithTelemetrySuppo
 
         // Calculate output energyCounter value
         constexpr uint64_t fixedPointToJoule = 1048576;
-        uint64_t outputEnergyCounter = static_cast<uint64_t>((setEnergyCounter / fixedPointToJoule) * convertJouleToMicroJoule);
+        uint64_t outputEnergyCounter = static_cast<uint64_t>((dg2MockPmtRawPackageEnergyCounter / fixedPointToJoule) * convertJouleToMicroJoule);
 
         EXPECT_EQ(energyCounter.energy, outputEnergyCounter);
         EXPECT_GE(energyCounter.timestamp, timeStampInitial);
     }
 }
 
+HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleForPackageDomainWithTelemetrySupportAvailableAndHwmonEnergyCounterReadSucceedsWhenGettingPowerEnergyCounterThenValueIsReadFromHwmon, IsDG2) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
+    VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, &mockPreadDg2PackageEnergyCounter);
+    pFsAccess->isTelemetryDataFilePresent = true;
+
+    zes_power_energy_counter_t energyCounter = {};
+    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0, ZES_POWER_DOMAIN_PACKAGE));
+    const uint64_t timeStampInitial = SysmanDevice::getSysmanTimestamp();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxPowerImp->getEnergyCounter(&energyCounter));
+    EXPECT_EQ(expectedEnergyCounter, energyCounter.energy);
+    EXPECT_GE(energyCounter.timestamp, timeStampInitial);
+}
+
 HWTEST2_F(SysmanProductHelperPowerTest, GivenValidSubdevicePowerHandleForPackageDomainWithTelemetrySupportNotAvailableAndSysfsNodeReadFailsWhenGettingPowerEnergyCounterThenFailureIsReturned, IsPVC) {
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkFailure);
-    pFsAccess->mockReadValUnsignedLongResult.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
     zes_power_energy_counter_t energyCounter = {};
     std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, true, 0, ZES_POWER_DOMAIN_PACKAGE));
     pLinuxPowerImp->isPmtBasedPowerSupported = false;
+    pFsAccess->mockReadValUnsignedLongResult.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pLinuxPowerImp->getEnergyCounter(&energyCounter));
 }
 

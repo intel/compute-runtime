@@ -88,6 +88,7 @@ struct MockXePowerFsAccess : public L0::Sysman::FsAccessInterface {
     bool isPackageCriticalPowerLimitFilePresent = true;
     bool isTelemetryDataFilePresent = true;
 
+    ze_result_t energyCounterReadResult = ZE_RESULT_SUCCESS;
     ze_result_t defaultReadResult = ZE_RESULT_SUCCESS;
     ze_result_t sustainedReadResult = ZE_RESULT_SUCCESS;
     ze_result_t sustainedIntervalReadResult = ZE_RESULT_SUCCESS;
@@ -136,6 +137,9 @@ struct MockXePowerFsAccess : public L0::Sysman::FsAccessInterface {
     ze_result_t read(const std::string file, uint64_t &val) override {
         ze_result_t result = ZE_RESULT_SUCCESS;
         if ((file.compare(xeHwmonDir + "/" + xeCardEnergyCounterNode) == 0 || file.compare(xeHwmonDir + "/" + xePackageEnergyCounterNode) == 0)) {
+            if (energyCounterReadResult != ZE_RESULT_SUCCESS) {
+                return energyCounterReadResult;
+            }
             val = xeMockEnergyCounter;
         } else if ((file.compare(xeHwmonDir + "/" + xeCardDefaultLimitNode) == 0 || file.compare(xeHwmonDir + "/" + xePackageDefaultLimitNode) == 0) && defaultReadResult == ZE_RESULT_SUCCESS) {
             val = xeMockDefaultPowerLimitVal;
