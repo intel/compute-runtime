@@ -146,7 +146,7 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCoreWithEnginesCheck, givenOneCcsEnabledWh
 
     size_t numEngines = isBCS0Enabled ? 15 : 14;
     if (isBCSLowPriorityEnabled) {
-        numEngines++;
+        numEngines += isBCS0Enabled ? 8 : 7;
     }
 
     bool renderCommandStreamerEnabled = EngineHelpers::isRcsExposed(device->getRootDeviceEnvironment());
@@ -169,8 +169,10 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCoreWithEnginesCheck, givenOneCcsEnabledWh
         EXPECT_EQ(1u, getEngineCount(aub_stream::ENGINE_CCCS, EngineUsage::regular));
     }
 
+    const uint32_t expectedLowPriorityBcsCount = isBCSLowPriorityEnabled ? 1u : 0u;
     if (isBCS0Enabled) {
         EXPECT_EQ(1u, getEngineCount(aub_stream::ENGINE_BCS, EngineUsage::regular));
+        EXPECT_EQ(expectedLowPriorityBcsCount, getEngineCount(aub_stream::ENGINE_BCS, EngineUsage::lowPriority));
     }
 
     for (uint32_t idx = 1; idx < hwInfo.featureTable.ftrBcsInfo.size(); idx++) {
@@ -178,12 +180,10 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCoreWithEnginesCheck, givenOneCcsEnabledWh
             EXPECT_EQ(1u, getEngineCount(EngineHelpers::getBcsEngineAtIdx(idx), EngineUsage::highPriority));
         } else {
             EXPECT_EQ(1u, getEngineCount(EngineHelpers::getBcsEngineAtIdx(idx), EngineUsage::regular));
+            EXPECT_EQ(expectedLowPriorityBcsCount, getEngineCount(EngineHelpers::getBcsEngineAtIdx(idx), EngineUsage::lowPriority));
         }
     }
     EXPECT_EQ(1u, getEngineCount(productHelper.getDefaultCopyEngine(), EngineUsage::internal));
-    if (gfxCoreHelper.areSecondaryContextsSupported()) {
-        EXPECT_EQ(1u, getEngineCount(productHelper.getDefaultCopyEngine(), EngineUsage::lowPriority));
-    }
 
     EXPECT_EQ(1u, getEngineCount(aub_stream::ENGINE_BCS3, EngineUsage::internal));
     EXPECT_TRUE(allEnginesChecked());
@@ -212,7 +212,7 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCoreWithEnginesCheck, givenNotAllCopyEngin
 
     size_t numEngines = isBCS0Enabled ? 10 : 11;
     if (isBCSLowPriorityEnabled) {
-        numEngines++;
+        numEngines += 4;
     }
 
     bool renderCommandStreamerEnabled = EngineHelpers::isRcsExposed(device->getRootDeviceEnvironment());
@@ -239,7 +239,9 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCoreWithEnginesCheck, givenNotAllCopyEngin
         EXPECT_EQ(1u, getEngineCount(aub_stream::ENGINE_BCS1, EngineUsage::internal));
     }
     if (isBCSLowPriorityEnabled) {
-        EXPECT_EQ(1u, getEngineCount(aub_stream::ENGINE_BCS1, EngineUsage::lowPriority));
+        for (auto lowPriorityBcs : {aub_stream::ENGINE_BCS1, aub_stream::ENGINE_BCS3, aub_stream::ENGINE_BCS4, aub_stream::ENGINE_BCS5}) {
+            EXPECT_EQ(1u, getEngineCount(lowPriorityBcs, EngineUsage::lowPriority));
+        }
     }
 
     EXPECT_EQ(1u, getEngineCount(aub_stream::ENGINE_BCS1, EngineUsage::regular));
@@ -347,7 +349,7 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenDebugFlagDisablingContextGroupW
 }
 
 XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenContextGroupWhenQueryingEnginesThenLowPriorityHighPriorityAndInternalEngineIsReturned) {
-    constexpr size_t numEngines = 9;
+    constexpr size_t numEngines = 10;
 
     DebugManagerStateRestore restore;
     debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
@@ -384,6 +386,7 @@ XE3P_CORETEST_F(GfxCoreHelperTestsXe3pCore, givenContextGroupWhenQueryingEngines
         {aub_stream::ENGINE_BCS, false, false, true, false},
         {aub_stream::ENGINE_BCS, false, true, false, false},
         {aub_stream::ENGINE_BCS1, true, false, false, false},
+        {aub_stream::ENGINE_BCS1, false, true, false, false},
         {aub_stream::ENGINE_BCS1, false, false, true, false},
         {aub_stream::ENGINE_BCS2, false, false, false, true},
     }};

@@ -2050,17 +2050,18 @@ ze_result_t Device::selectCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr
             }
         }
 
+        auto &engines = engineGroups[ordinal].engines;
+        if (index >= engines.size()) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+
         if (contextPriority == NEO::EngineUsage::lowPriority) {
-            auto result = getCsrForLowPriority(csr, copyOnly);
+            auto result = getCsrForLowPriority(csr, engines[index].getEngineType());
             DEBUG_BREAK_IF(result != ZE_RESULT_SUCCESS);
             if (result != ZE_RESULT_SUCCESS) {
                 return result;
             }
         } else {
-            auto &engines = engineGroups[ordinal].engines;
-            if (index >= engines.size()) {
-                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-            }
             *csr = engines[index].commandStreamReceiver;
         }
 
@@ -2072,7 +2073,7 @@ ze_result_t Device::selectCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr
         *csr = this->subDeviceCopyEngineGroups[subDeviceOrdinal].engines[index].commandStreamReceiver;
         selectedDevice = this->subDevices[subDeviceOrdinal];
 
-        if (contextPriority == NEO::EngineUsage::lowPriority && selectedDevice->getCsrForLowPriority(csr, copyOnly) != ZE_RESULT_SUCCESS) {
+        if (contextPriority == NEO::EngineUsage::lowPriority && selectedDevice->getCsrForLowPriority(csr, (*csr)->getOsContext().getEngineType()) != ZE_RESULT_SUCCESS) {
             contextPriority = NEO::EngineUsage::regular;
         }
     }
@@ -2118,13 +2119,27 @@ bool Device::tryAssignSecondaryContext(aub_stream::EngineType engineType, NEO::E
     return false;
 }
 
-ze_result_t Device::getCsrForLowPriority(NEO::CommandStreamReceiver **csr, bool copyOnly) {
+ze_result_t Device::getCsrForLowPriority(NEO::CommandStreamReceiver **csr, aub_stream::EngineType engineType) {
+    const bool copyOnly = NEO::EngineHelpers::isBcs(engineType);
+    NEO::CommandStreamReceiver *lowPriorityCsrOfEngineClass = nullptr;
     for (auto &it : getActiveDevice()->getAllEngines()) {
-        bool engineTypeMatch = NEO::EngineHelpers::isBcs(it.osContext->getEngineType()) == copyOnly;
-        if (it.osContext->isLowPriority() && engineTypeMatch) {
+        auto lowPriorityEngineType = it.osContext->getEngineType();
+        bool engineClassMatch = NEO::EngineHelpers::isBcs(lowPriorityEngineType) == copyOnly;
+        if (!it.osContext->isLowPriority() || !engineClassMatch) {
+            continue;
+        }
+        if (lowPriorityEngineType == engineType) {
             *csr = it.commandStreamReceiver;
             return ZE_RESULT_SUCCESS;
         }
+        if (lowPriorityCsrOfEngineClass == nullptr) {
+            lowPriorityCsrOfEngineClass = it.commandStreamReceiver;
+        }
+    }
+
+    if (lowPriorityCsrOfEngineClass != nullptr) {
+        *csr = lowPriorityCsrOfEngineClass;
+        return ZE_RESULT_SUCCESS;
     }
 
     // if the code falls through, we have no low priority context created by neoDevice.

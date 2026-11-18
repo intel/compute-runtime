@@ -174,7 +174,7 @@ XE3P_CORETEST_F(CommandQueueGroupTest, givenContextGroupSupportAndCCSEngineEnabl
     }
 
     CommandStreamReceiver *lowPriorityCsr = nullptr;
-    ze_result_t res = mockDevice.getCsrForLowPriority(&lowPriorityCsr, false);
+    ze_result_t res = mockDevice.getCsrForLowPriority(&lowPriorityCsr, aub_stream::ENGINE_CCS);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     ASSERT_NE(nullptr, lowPriorityCsr);

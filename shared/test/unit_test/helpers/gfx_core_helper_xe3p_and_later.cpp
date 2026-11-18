@@ -129,7 +129,7 @@ HWTEST2_F(GfxCoreHelperXe3pAndLaterTests, givenAtLeastXe3pWhenEncodeAdditionalTi
     EXPECT_EQ(storeRegMem->getMemoryAddress(), sndAddress + sizeof(uint32_t));
 }
 
-HWTEST2_F(GfxCoreHelperXe3pAndLaterTestsWithEnginesCheck, givenGroupContextWhenCreatingDeviceThenCreateBcsLpContexts, IsAtLeastXe3pCore) {
+HWTEST2_F(GfxCoreHelperXe3pAndLaterTestsWithEnginesCheck, givenGroupContextWhenCreatingDeviceThenCreateBcsLpContextForEachRegularBcs, IsAtLeastXe3pCore) {
     DebugManagerStateRestore restore;
     debugManager.flags.ContextGroupSize.set(2);
 
@@ -148,31 +148,31 @@ HWTEST2_F(GfxCoreHelperXe3pAndLaterTestsWithEnginesCheck, givenGroupContextWhenC
     auto &gfxCoreHelper = device->getGfxCoreHelper();
     auto &engines = gfxCoreHelper.getGpgpuEngineInstances(device->getRootDeviceEnvironment());
 
-    uint32_t bcsLpContextsCount = 0;
+    const std::vector<uint32_t> expectedLowPriorityBcsIndices = {1u, 3u, 4u, 5u};
+
+    std::vector<uint32_t> lowPriorityBcsIndices;
     for (auto &engine : device->getAllEngines()) {
         if (EngineHelpers::isBcs(engine.getEngineType()) && engine.getEngineUsage() == EngineUsage::lowPriority) {
-            EXPECT_EQ(1u, EngineHelpers::getBcsIndex(engine.getEngineType()));
-            bcsLpContextsCount++;
+            lowPriorityBcsIndices.push_back(EngineHelpers::getBcsIndex(engine.getEngineType()));
+            EXPECT_NE(nullptr, device->tryGetEngine(engine.getEngineType(), EngineUsage::regular));
         }
     }
+    EXPECT_EQ(expectedLowPriorityBcsIndices, lowPriorityBcsIndices);
 
-    EXPECT_EQ(1u, bcsLpContextsCount);
-
-    bcsLpContextsCount = 0;
+    lowPriorityBcsIndices.clear();
     for (auto &engine : engines) {
         if (EngineHelpers::isBcs(engine.first) && engine.second == EngineUsage::lowPriority) {
-            EXPECT_EQ(1u, EngineHelpers::getBcsIndex(engine.first));
-            bcsLpContextsCount++;
+            lowPriorityBcsIndices.push_back(EngineHelpers::getBcsIndex(engine.first));
         }
     }
-
-    EXPECT_EQ(1u, bcsLpContextsCount);
+    EXPECT_EQ(expectedLowPriorityBcsIndices, lowPriorityBcsIndices);
 }
 
 HWTEST2_F(GfxCoreHelperXe3pAndLaterTests, givenBcsDisabledWhenGetEnginesCalledThenDontCreateAnyBcs, IsAtLeastXe3pCore) {
     DebugManagerStateRestore restorer;
     debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
-    const size_t numEngines = 6;
+    debugManager.flags.ContextGroupSize.set(8);
+    const size_t numEngines = 9;
 
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.flags.ftrCCSNode = true;
@@ -198,6 +198,9 @@ HWTEST2_F(GfxCoreHelperXe3pAndLaterTests, givenBcsDisabledWhenGetEnginesCalledTh
         {aub_stream::ENGINE_CCS2, true, false},
         {aub_stream::ENGINE_CCS3, true, false},
         {aub_stream::ENGINE_CCS, true, false},
+        {aub_stream::ENGINE_CCS1, true, false},
+        {aub_stream::ENGINE_CCS2, true, false},
+        {aub_stream::ENGINE_CCS3, true, false},
         {aub_stream::ENGINE_CCS, true, false},
     }};
 

@@ -878,7 +878,7 @@ TEST_F(DeviceCreateCommandQueueTest, givenLowPriorityDescWhenCreateCommandQueueI
     EXPECT_NE(commandQueue, nullptr);
     EXPECT_TRUE(commandQueue->getCsr()->getOsContext().isLowPriority());
     NEO::CommandStreamReceiver *csr = nullptr;
-    device->getCsrForLowPriority(&csr, false);
+    device->getCsrForLowPriority(&csr, aub_stream::ENGINE_CCS);
     EXPECT_EQ(commandQueue->getCsr(), csr);
     commandQueue->destroy();
 }
@@ -902,16 +902,14 @@ TEST_F(DeviceCreateCommandQueueTest, givenCopyOrdinalWhenCreateCommandQueueWithL
 
     engineGroups.push_back(NEO::EngineGroupT{});
     engineGroups.back().engineGroupType = EngineGroupType::compute;
-    engineGroups.back().engines.resize(1);
-    engineGroups.back().engines[0].commandStreamReceiver = computeCsr.get();
     EngineControl computeEngine{computeCsr.get(), computeOsContext};
+    engineGroups.back().engines.push_back(computeEngine);
     allEngines.push_back(computeEngine);
 
     engineGroups.push_back(NEO::EngineGroupT{});
     engineGroups.back().engineGroupType = EngineGroupType::copy;
-    engineGroups.back().engines.resize(1);
-    engineGroups.back().engines[0].commandStreamReceiver = copyCsr.get();
     EngineControl copyEngine{copyCsr.get(), copyOsContext};
+    engineGroups.back().engines.push_back(copyEngine);
     allEngines.push_back(copyEngine);
 
     uint32_t count = 0u;
@@ -965,7 +963,7 @@ struct DeferredContextCreationDeviceCreateCommandQueueTest : DeviceCreateCommand
 
 TEST_F(DeferredContextCreationDeviceCreateCommandQueueTest, givenLowPriorityEngineNotInitializedWhenCreateLowPriorityCommandQueueIsCalledThenEngineIsInitialized) {
     NEO::CommandStreamReceiver *lowPriorityCsr = nullptr;
-    device->getCsrForLowPriority(&lowPriorityCsr, false);
+    device->getCsrForLowPriority(&lowPriorityCsr, aub_stream::ENGINE_CCS);
     ASSERT_FALSE(lowPriorityCsr->getOsContext().isInitialized());
 
     ze_command_queue_desc_t desc{};
@@ -997,7 +995,7 @@ TEST_F(DeviceCreateCommandQueueTest, givenLowPriorityDescWhenCreateImmediateComm
     EXPECT_NE(commandList, nullptr);
     EXPECT_TRUE(commandList->getCsr(false)->getOsContext().isLowPriority());
     NEO::CommandStreamReceiver *csr = nullptr;
-    device->getCsrForLowPriority(&csr, false);
+    device->getCsrForLowPriority(&csr, aub_stream::ENGINE_CCS);
     EXPECT_EQ(commandList->getCsr(false), csr);
     commandList->destroy();
 }
@@ -1104,7 +1102,7 @@ TEST_F(MultiDeviceCreateCommandQueueTest, givenLowPriorityDescWhenCreateCommandQ
     EXPECT_NE(commandQueue, nullptr);
     EXPECT_TRUE(commandQueue->getCsr()->getOsContext().isLowPriority());
     NEO::CommandStreamReceiver *csr = nullptr;
-    device->getCsrForLowPriority(&csr, false);
+    device->getCsrForLowPriority(&csr, aub_stream::ENGINE_CCS);
     EXPECT_EQ(commandQueue->getCsr(), csr);
     commandQueue->destroy();
 }

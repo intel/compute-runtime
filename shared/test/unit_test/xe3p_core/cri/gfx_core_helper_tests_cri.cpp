@@ -283,8 +283,8 @@ CRITEST_F(GfxCoreHelperTestsCriWithEnginesCheck, whenGetGpgpuEnginesThenReturnTw
     DebugManagerStateRestore restore;
     debugManager.flags.ExperimentalUseSecondaryContextForInternalEngine.set(0);
 
-    const size_t numEnginesWithCccs = 18;
-    const size_t numEnginesWithoutCccs = 17;
+    const size_t numEnginesWithCccs = 24;
+    const size_t numEnginesWithoutCccs = 26;
 
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.flags.ftrCCSNode = true;
@@ -324,19 +324,24 @@ CRITEST_F(GfxCoreHelperTestsCriWithEnginesCheck, whenGetGpgpuEnginesThenReturnTw
             EXPECT_EQ(1u, getEngineCount(aub_stream::ENGINE_CCCS, EngineUsage::regular));
         }
         EXPECT_EQ(1u, getEngineCount(debugFlag ? aub_stream::ENGINE_CCCS : aub_stream::ENGINE_CCS, EngineUsage::internal));
-        EXPECT_EQ(1u, getEngineCount(debugFlag ? aub_stream::ENGINE_CCCS : aub_stream::ENGINE_CCS, EngineUsage::lowPriority));
+        if (debugFlag) {
+            EXPECT_EQ(1u, getEngineCount(aub_stream::ENGINE_CCCS, EngineUsage::lowPriority));
+        } else {
+            EXPECT_EQ(1u, getEngineCount(aub_stream::ENGINE_CCS, EngineUsage::lowPriority));
+            EXPECT_EQ(1u, getEngineCount(aub_stream::ENGINE_CCS1, EngineUsage::lowPriority));
+            EXPECT_EQ(1u, getEngineCount(aub_stream::ENGINE_CCS2, EngineUsage::lowPriority));
+            EXPECT_EQ(1u, getEngineCount(aub_stream::ENGINE_CCS3, EngineUsage::lowPriority));
+        }
 
         for (uint32_t idx = 1u; idx < hwInfo.featureTable.ftrBcsInfo.size(); idx++) {
             if (idx == 8 && gfxCoreHelper.areSecondaryContextsSupported()) {
                 EXPECT_EQ(1u, getEngineCount(EngineHelpers::getBcsEngineAtIdx(idx), EngineUsage::highPriority));
             } else {
                 EXPECT_EQ(1u, getEngineCount(EngineHelpers::getBcsEngineAtIdx(idx), EngineUsage::regular));
+                EXPECT_EQ(1u, getEngineCount(EngineHelpers::getBcsEngineAtIdx(idx), EngineUsage::lowPriority));
             }
         }
         EXPECT_EQ(1u, getEngineCount(device->getProductHelper().getDefaultCopyEngine(), EngineUsage::internal));
-        if (gfxCoreHelper.areSecondaryContextsSupported()) {
-            EXPECT_EQ(1u, getEngineCount(device->getProductHelper().getDefaultCopyEngine(), EngineUsage::lowPriority));
-        }
         EXPECT_EQ(1u, getEngineCount(aub_stream::ENGINE_BCS3, EngineUsage::internal));
         EXPECT_TRUE(allEnginesChecked());
 
