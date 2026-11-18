@@ -47,32 +47,30 @@ uint8_t Context::isDrmOpaqueHandleSupported(IpcHandleType *handleType) {
                      "Forcing IPC socket fallback instead of pidfd\n");
         return OpaqueHandlingType::sockets;
     }
-    if (NEO::SysCalls::prctl(PR_SET_PTRACER, PR_SET_PTRACER_ANY) == -1) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "prctl Syscall for PR_SET_PTRACER, PR_SET_PTRACER_ANY failed: %s\n", strerror(errno));
+    auto pidfdUnavailable = [](const char *reason) -> uint8_t {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "%s: %s\n", reason, strerror(errno));
         if (NEO::debugManager.flags.EnableIpcSocketFallback.get()) {
             PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                          "pidfd unavailable, but socket fallback is enabled - opaque handles still supported\n");
             return OpaqueHandlingType::sockets;
         }
         return OpaqueHandlingType::none;
-    } else {
-        // Verify pidfdopen and pidfdgetfd syscalls are available
-        int testPidfd = NEO::SysCalls::pidfdopen(-1, 0);
-        if (testPidfd == -1 && errno == ENOSYS) {
-            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                         "pidfd_open syscall not available: %s\n", strerror(errno));
-            if (NEO::debugManager.flags.EnableIpcSocketFallback.get()) {
-                PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                             "pidfd unavailable, but socket fallback is enabled - opaque handles still supported\n");
-                return OpaqueHandlingType::sockets;
-            }
-            return OpaqueHandlingType::none;
-        }
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "pidfd approach for IPC handles is supported\n");
-        initOpaqueHandleResources();
-        return OpaqueHandlingType::pidfd;
+    };
+    if (NEO::SysCalls::prctl(PR_SET_PTRACER, PR_SET_PTRACER_ANY) == -1) {
+        return pidfdUnavailable("prctl Syscall for PR_SET_PTRACER, PR_SET_PTRACER_ANY failed");
     }
+    int testPidfd = NEO::SysCalls::pidfdopen(-1, 0);
+    if (testPidfd == -1 && errno == ENOSYS) {
+        return pidfdUnavailable("pidfd_open syscall not available");
+    }
+    // A reachable pidfd_getfd rejects pidfd -1 with EBADF; seccomp filters (e.g. Docker's default profile) fail it first.
+    if (NEO::SysCalls::pidfdgetfd(-1, -1, 0) != -1 || errno != EBADF) {
+        return pidfdUnavailable("pidfd_getfd syscall not usable");
+    }
+    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                 "pidfd approach for IPC handles is supported\n");
+    initOpaqueHandleResources();
+    return OpaqueHandlingType::pidfd;
 }
 
 Context::OpaqueHandleImportResult Context::importOpaqueHandleWithFallback(uint64_t handle,

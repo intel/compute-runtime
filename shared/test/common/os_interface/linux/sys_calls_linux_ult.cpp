@@ -657,6 +657,10 @@ int pidfdgetfd(int pid, int targetfd, unsigned int flags) {
     if (sysCallsPidfdGetfd != nullptr) {
         return sysCallsPidfdGetfd(pid, targetfd, flags);
     }
+    if (pid < 0) {
+        errno = EBADF;
+        return -1;
+    }
     return targetfd;
 }
 

@@ -1541,6 +1541,87 @@ TEST_F(IsOpaqueHandleSupportedTest, givenDRMDriverAndPidfdOpenSucceedsThenPidfdI
     NEO::SysCalls::sysCallsPidfdOpen = pidfdOpenOrig;
 }
 
+TEST_F(IsOpaqueHandleSupportedTest, givenDRMDriverAndPidfdGetfdBlockedWithEPERMAndSocketFallbackEnabledThenSocketsIsReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableIpcSocketFallback.set(1);
+    debugManager.flags.ForceIpcSocketFallback.set(0);
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPrctl)> prctlBackup{&NEO::SysCalls::sysCallsPrctl, mockPrctl};
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPidfdGetfd)> pidfdGetfdBackup{&NEO::SysCalls::sysCallsPidfdGetfd, [](int, int, unsigned int) -> int {
+                                                                                     errno = EPERM;
+                                                                                     return -1;
+                                                                                 }};
+    VariableBackup<decltype(NEO::SysCalls::pidfdgetfdCalled)> pidfdGetfdCalledBackup{&NEO::SysCalls::pidfdgetfdCalled, 0};
+
+    IpcHandleType handleType;
+    uint8_t result = callIsOpaqueHandleSupported(std::make_unique<NEO::MockDriverModelDRM>(), handleType);
+
+    EXPECT_EQ(OpaqueHandlingType::sockets, result);
+    EXPECT_EQ(IpcHandleType::fdHandle, handleType);
+    EXPECT_EQ(1, NEO::SysCalls::pidfdgetfdCalled);
+}
+
+TEST_F(IsOpaqueHandleSupportedTest, givenDRMDriverAndPidfdGetfdReturnsENOSYSAndSocketFallbackDisabledThenNoneIsReturned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableIpcSocketFallback.set(0);
+    debugManager.flags.ForceIpcSocketFallback.set(0);
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPrctl)> prctlBackup{&NEO::SysCalls::sysCallsPrctl, mockPrctl};
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPidfdGetfd)> pidfdGetfdBackup{&NEO::SysCalls::sysCallsPidfdGetfd, [](int, int, unsigned int) -> int {
+                                                                                     errno = ENOSYS;
+                                                                                     return -1;
+                                                                                 }};
+
+    IpcHandleType handleType;
+    uint8_t result = callIsOpaqueHandleSupported(std::make_unique<NEO::MockDriverModelDRM>(), handleType);
+
+    EXPECT_EQ(OpaqueHandlingType::none, result);
+    EXPECT_EQ(IpcHandleType::fdHandle, handleType);
+}
+
+TEST_F(IsOpaqueHandleSupportedTest, givenDRMDriverAndPidfdGetfdUnexpectedlySucceedsThenPidfdIsNotSelected) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableIpcSocketFallback.set(1);
+    debugManager.flags.ForceIpcSocketFallback.set(0);
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPrctl)> prctlBackup{&NEO::SysCalls::sysCallsPrctl, mockPrctl};
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPidfdGetfd)> pidfdGetfdBackup{&NEO::SysCalls::sysCallsPidfdGetfd, [](int, int, unsigned int) -> int {
+                                                                                     return 0;
+                                                                                 }};
+
+    IpcHandleType handleType;
+    uint8_t result = callIsOpaqueHandleSupported(std::make_unique<NEO::MockDriverModelDRM>(), handleType);
+
+    EXPECT_EQ(OpaqueHandlingType::sockets, result);
+}
+
+TEST_F(IsOpaqueHandleSupportedTest, givenDRMDriverAndPidfdGetfdRejectsInvalidPidfdWithEBADFThenPidfdIsReturnedAndProbeUsesInvalidArguments) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableIpcSocketFallback.set(1);
+    debugManager.flags.ForceIpcSocketFallback.set(0);
+
+    static int probedPidfd = 0;
+    static int probedTargetFd = 0;
+    static unsigned int probedFlags = 1u;
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPrctl)> prctlBackup{&NEO::SysCalls::sysCallsPrctl, mockPrctl};
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPidfdGetfd)> pidfdGetfdBackup{&NEO::SysCalls::sysCallsPidfdGetfd, [](int pidfd, int targetfd, unsigned int flags) -> int {
+                                                                                     probedPidfd = pidfd;
+                                                                                     probedTargetFd = targetfd;
+                                                                                     probedFlags = flags;
+                                                                                     errno = EBADF;
+                                                                                     return -1;
+                                                                                 }};
+
+    IpcHandleType handleType;
+    uint8_t result = callIsOpaqueHandleSupported(std::make_unique<NEO::MockDriverModelDRM>(), handleType);
+
+    EXPECT_EQ(OpaqueHandlingType::pidfd, result);
+    EXPECT_EQ(IpcHandleType::fdHandle, handleType);
+    EXPECT_EQ(-1, probedPidfd);
+    EXPECT_EQ(-1, probedTargetFd);
+    EXPECT_EQ(0u, probedFlags);
+}
+
 TEST_F(GetMemHandlePtrTest, givenProcessIdZeroWhenCallingGetMemHandlePtrThenOpaqueHandlePathIsSkipped) {
     DebugManagerStateRestore restorer;
 
