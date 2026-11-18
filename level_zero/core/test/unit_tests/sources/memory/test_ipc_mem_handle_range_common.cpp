@@ -1064,6 +1064,7 @@ TEST_F(IpcMemHandleRangeCommonTest, givenRangeExportedFromInteriorPtrWhenFreeing
     ASSERT_EQ(1u, rangeContext->ipcRangeTransports.size());
     EXPECT_EQ(2u, rangeContext->ipcRangeTransports[0].refCount);
 
+    reservation->mappedAllocations.clear();
     EXPECT_NE(nullptr, reservation.release());
     EXPECT_EQ(ZE_RESULT_SUCCESS, rangeContext->freeVirtualMem(cachedRangeBase, 2u * MemoryConstants::pageSize));
     installedReservationBase = nullptr;
@@ -1083,6 +1084,7 @@ TEST_F(IpcMemHandleRangeCommonTest, givenReservationAlignedBeyondRequestedSizeWh
     getTwoRangeHandles(pastRequestedSizePtr, &desc, pastRequestedSizePtr, &desc, [] {});
     ASSERT_EQ(1u, rangeContext->ipcRangeTransports.size());
 
+    reservation->mappedAllocations.clear();
     EXPECT_NE(nullptr, reservation.release());
     EXPECT_EQ(ZE_RESULT_SUCCESS, rangeContext->freeVirtualMem(cachedRangeBase, MemoryConstants::pageSize));
     installedReservationBase = nullptr;

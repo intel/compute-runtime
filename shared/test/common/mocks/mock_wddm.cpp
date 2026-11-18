@@ -111,6 +111,9 @@ bool WddmMock::mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTU
 
     auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data());
     mapGpuVirtualAddressResult.alignment = gmmResourceParams->BaseAlignment;
+    if (mapGpuVaFailFromCall != 0u && mapGpuVirtualAddressResult.called >= mapGpuVaFailFromCall) {
+        return mapGpuVirtualAddressResult.success = false;
+    }
     if (callBaseMapGpuVa) {
         return mapGpuVirtualAddressResult.success = Wddm::mapGpuVirtualAddress(gmm, handle, minimumAddress, maximumAddress, preferredAddress, gpuPtr, type, memoryFlags, offsetInPages);
     } else {

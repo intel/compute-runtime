@@ -39,9 +39,10 @@ int WddmAllocation::createInternalHandle(MemoryManager *memoryManager, uint32_t 
     }
     handle = ntSecureHandle;
     if (handle == 0) {
+        auto exportedResourceHandle = mappedPhysicalAllocation ? &static_cast<WddmAllocation *>(mappedPhysicalAllocation)->resourceHandle : &resourceHandle;
         HANDLE ntSharedHandle = NULL;
         WddmMemoryManager *wddmMemoryManager = reinterpret_cast<WddmMemoryManager *>(memoryManager);
-        auto status = wddmMemoryManager->createInternalNTHandle(&resourceHandle, &ntSharedHandle, this->getRootDeviceIndex());
+        auto status = wddmMemoryManager->createInternalNTHandle(exportedResourceHandle, &ntSharedHandle, this->getRootDeviceIndex());
         if (status != STATUS_SUCCESS) {
             return handle == 0;
         }

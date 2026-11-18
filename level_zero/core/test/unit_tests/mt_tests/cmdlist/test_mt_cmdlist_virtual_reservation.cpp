@@ -67,8 +67,6 @@ HWTEST_F(CommandListVirtualReservationMtTest, givenSiblingMappingRemappedWhileRe
         }
     };
 
-    // Map and unmap the sibling sub-range underneath the resolver. The application never references
-    // this range through the command list, so this sequence is legal while an append is in flight.
     auto remapperBody = [&]() {
         while (!started.load()) {
             std::this_thread::yield();

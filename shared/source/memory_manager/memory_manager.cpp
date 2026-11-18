@@ -255,7 +255,9 @@ HeapIndex MemoryManager::selectExternalHeap(bool useLocalMemory) {
 }
 
 inline MemoryManager::AllocationStatus MemoryManager::registerSysMemAlloc(GraphicsAllocation *allocation) {
-    this->sysMemAllocsSize += allocation->getUnderlyingBufferSize();
+    if (!allocation->isSharedPhysicalMemoryMapping()) {
+        this->sysMemAllocsSize += allocation->getUnderlyingBufferSize();
+    }
     return AllocationStatus::Success;
 }
 
@@ -401,6 +403,125 @@ void MemoryManager::setNewResourceBoundOnRegisteredEngines(uint32_t rootDeviceIn
     }
 }
 
+void MemoryManager::registerPhysicalMemoryMapping(GraphicsAllocation &physicalAllocation, GraphicsAllocation &mappedAllocation) {
+    mappedAllocation.setMappedPhysicalAllocation(&physicalAllocation);
+    std::lock_guard lock{physicalMemoryMappingsMutex};
+    physicalAllocation.getPhysicalMappingsInfo().liveMappingsCount++;
+    physicalAllocation.getPhysicalMappingsInfo().handlesSharedWithMappings = true;
+}
+
+MemoryManager::PhysicalMappingRelease MemoryManager::parkPhysicalMemoryMapping(GraphicsAllocation &mappedAllocation, uint64_t gpuRange, size_t size) {
+    PhysicalMappingRelease release{};
+    auto physicalAllocation = mappedAllocation.getMappedPhysicalAllocation();
+    if (physicalAllocation == nullptr) {
+        destroyParkedPhysicalMemoryMapping(mappedAllocation);
+        return release;
+    }
+    std::lock_guard lock{physicalMemoryMappingsMutex};
+    auto &physicalMappingsInfo = physicalAllocation->getPhysicalMappingsInfo();
+    if (physicalMappingsInfo.parkedMappings.empty()) {
+        this->physicalAllocationsWithParkedMappings.push_back(physicalAllocation);
+    }
+    physicalMappingsInfo.parkedMappings.push_back({&mappedAllocation, gpuRange, size});
+    // Read before the count drops: deferReleaseOfMappedPhysicalMemory checks for a zero count without
+    // the lock, so from then on the physical allocation may be freed concurrently.
+    const bool releasePending = physicalMappingsInfo.releasePending;
+    const bool isLastMapping = --physicalMappingsInfo.liveMappingsCount == 0u;
+    if (isLastMapping && releasePending) {
+        release.physicalAllocationToRelease = physicalAllocation;
+    }
+    return release;
+}
+
+// Prefers a mapping parked at the same range and size, but takes any other one, so the parked list never grows
+// past the peak number of live mappings. The caller places a mapping taken from another range at gpuRange.
+GraphicsAllocation *MemoryManager::takeParkedPhysicalMemoryMapping(GraphicsAllocation &physicalAllocation, uint64_t gpuRange, size_t size) {
+    std::lock_guard lock{physicalMemoryMappingsMutex};
+    auto physicalMappingsInfo = physicalAllocation.peekPhysicalMappingsInfo();
+    if (physicalMappingsInfo == nullptr) {
+        return nullptr;
+    }
+    auto &parkedMappings = physicalMappingsInfo->parkedMappings;
+    auto parkedMapping = std::find_if(parkedMappings.begin(), parkedMappings.end(), [&](const auto &parked) {
+        return parked.gpuRange == gpuRange && parked.size == size;
+    });
+    if (parkedMapping == parkedMappings.end()) {
+        parkedMapping = parkedMappings.begin();
+    }
+    if (parkedMapping == parkedMappings.end()) {
+        return nullptr;
+    }
+    auto mappedAllocation = parkedMapping->mappedAllocation;
+    parkedMappings.erase(parkedMapping);
+    if (parkedMappings.empty()) {
+        std::erase(this->physicalAllocationsWithParkedMappings, &physicalAllocation);
+    }
+    physicalMappingsInfo->liveMappingsCount++;
+    return mappedAllocation;
+}
+
+bool MemoryManager::isLastLivePhysicalMemoryMapping(GraphicsAllocation &physicalAllocation) {
+    std::lock_guard lock{physicalMemoryMappingsMutex};
+    return physicalAllocation.getPhysicalMappingsInfo().liveMappingsCount == 1u;
+}
+
+void MemoryManager::destroyParkedPhysicalMemoryMappings(GraphicsAllocation &physicalAllocation) {
+    std::vector<GraphicsAllocation::ParkedPhysicalMemoryMapping> parkedMappings;
+    {
+        std::lock_guard lock{physicalMemoryMappingsMutex};
+        parkedMappings.swap(physicalAllocation.getPhysicalMappingsInfo().parkedMappings);
+        std::erase(this->physicalAllocationsWithParkedMappings, &physicalAllocation);
+    }
+    for (auto &parked : parkedMappings) {
+        destroyParkedPhysicalMemoryMapping(*parked.mappedAllocation);
+    }
+}
+
+void MemoryManager::releaseParkedPhysicalMemoryMappings(uint64_t rangeStart, uint64_t rangeEnd) {
+    std::vector<GraphicsAllocation::ParkedPhysicalMemoryMapping> parkedMappingsInRange;
+    {
+        std::lock_guard lock{physicalMemoryMappingsMutex};
+        auto isInRange = [&](const auto &parked) { return parked.gpuRange >= rangeStart && parked.gpuRange + parked.size <= rangeEnd; };
+        std::erase_if(this->physicalAllocationsWithParkedMappings, [&](GraphicsAllocation *physicalAllocation) {
+            auto &parkedMappings = physicalAllocation->getPhysicalMappingsInfo().parkedMappings;
+            std::copy_if(parkedMappings.begin(), parkedMappings.end(), std::back_inserter(parkedMappingsInRange), isInRange);
+            std::erase_if(parkedMappings, isInRange);
+            return parkedMappings.empty();
+        });
+    }
+    for (auto &parked : parkedMappingsInRange) {
+        destroyParkedPhysicalMemoryMapping(*parked.mappedAllocation);
+    }
+}
+
+void MemoryManager::destroyParkedPhysicalMemoryMapping(GraphicsAllocation &mappedAllocation) {
+    releaseBindlessSlotAndMemoryOperations(mappedAllocation);
+    delete &mappedAllocation;
+}
+
+void MemoryManager::releaseBindlessSlotAndMemoryOperations(GraphicsAllocation &allocation) {
+    if (executionEnvironment.rootDeviceEnvironments.size() == 0) {
+        return;
+    }
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[allocation.getRootDeviceIndex()];
+    if (rootDeviceEnvironment.getBindlessHeapsHelper() != nullptr) {
+        rootDeviceEnvironment.getBindlessHeapsHelper()->releaseSSToReusePool(allocation.getBindlessInfo());
+    }
+    if (rootDeviceEnvironment.memoryOperationsInterface) {
+        rootDeviceEnvironment.memoryOperationsInterface->free(nullptr, allocation);
+    }
+}
+
+bool MemoryManager::deferReleaseOfMappedPhysicalMemory(GraphicsAllocation &physicalAllocation) {
+    auto physicalMappingsInfo = physicalAllocation.peekPhysicalMappingsInfo();
+    if (physicalMappingsInfo == nullptr || physicalMappingsInfo->liveMappingsCount == 0u) {
+        return false;
+    }
+    std::lock_guard lock{physicalMemoryMappingsMutex};
+    physicalMappingsInfo->releasePending = physicalMappingsInfo->liveMappingsCount != 0u;
+    return physicalMappingsInfo->releasePending;
+}
+
 void MemoryManager::freeGraphicsMemory(GraphicsAllocation *gfxAllocation) {
     freeGraphicsMemory(gfxAllocation, false);
 }
@@ -415,18 +536,15 @@ void MemoryManager::freeGraphicsMemory(GraphicsAllocation *gfxAllocation, bool i
         return;
     }
 
-    bool rootEnvAvailable = executionEnvironment.rootDeviceEnvironments.size() > 0;
-    uint32_t rootDevIdx = gfxAllocation->getRootDeviceIndex();
-
-    if (rootEnvAvailable) {
-        if (executionEnvironment.rootDeviceEnvironments[rootDevIdx]->getBindlessHeapsHelper() != nullptr) {
-            executionEnvironment.rootDeviceEnvironments[rootDevIdx]->getBindlessHeapsHelper()->releaseSSToReusePool(gfxAllocation->getBindlessInfo());
-        }
-
-        if (this->peekExecutionEnvironment().rootDeviceEnvironments[rootDevIdx]->memoryOperationsInterface) {
-            this->peekExecutionEnvironment().rootDeviceEnvironments[rootDevIdx]->memoryOperationsInterface->free(nullptr, *gfxAllocation);
-        }
+    if (deferReleaseOfMappedPhysicalMemory(*gfxAllocation)) {
+        return;
     }
+    if (auto physicalMappingsInfo = gfxAllocation->peekPhysicalMappingsInfo(); physicalMappingsInfo != nullptr && !physicalMappingsInfo->parkedMappings.empty()) {
+        destroyParkedPhysicalMemoryMappings(*gfxAllocation);
+    }
+
+    uint32_t rootDevIdx = gfxAllocation->getRootDeviceIndex();
+    releaseBindlessSlotAndMemoryOperations(*gfxAllocation);
 
     const bool hasFragments = gfxAllocation->getFragmentCount() != 0;
     const bool isLocked = gfxAllocation->isLocked();
@@ -441,7 +559,9 @@ void MemoryManager::freeGraphicsMemory(GraphicsAllocation *gfxAllocation, bool i
     DBG_LOG(ResidencyDebugEnable, "Residency:", NEO_FUNCTION_NAME, "Free allocation, gpu address = ", std::hex, gfxAllocation->getGpuAddress());
 
     logFreeAllocation(allocationLoggerInstance(), gfxAllocation);
-    getLocalMemoryUsageBankSelector(gfxAllocation->getAllocationType(), rootDevIdx)->freeOnBanks(gfxAllocation->storageInfo.getMemoryBanks(), gfxAllocation->getUnderlyingBufferSize());
+    if (!gfxAllocation->isSharedPhysicalMemoryMapping()) {
+        getLocalMemoryUsageBankSelector(gfxAllocation->getAllocationType(), rootDevIdx)->freeOnBanks(gfxAllocation->storageInfo.getMemoryBanks(), gfxAllocation->getUnderlyingBufferSize());
+    }
     freeGraphicsMemoryImpl(gfxAllocation, isImportedAllocation);
 }
 

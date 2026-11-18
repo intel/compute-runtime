@@ -204,11 +204,13 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
 
     bool appliesVirtualMemoryAccessFlags(const GraphicsAllocation &physicalAllocation) override { return appliesVirtualMemoryAccessFlagsResult; }
 
-    bool mapPhysicalDeviceMemoryToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryflags, size_t offset) override;
+    bool mapPhysicalDeviceMemoryToVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, const MemoryFlags *memoryflags, size_t offset) override;
+
+    bool supportsPhysicalDeviceMemoryMultiMapping(uint32_t rootDeviceIndex) const override { return mockSupportsPhysicalDeviceMemoryMultiMapping; }
 
     bool mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, size_t offset, bool keepReservationPlaceholder) override;
 
-    bool unMapPhysicalDeviceMemoryFromVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, OsContext *osContext, uint32_t rootDeviceIndex) override;
+    bool unMapPhysicalDeviceMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, OsContext *osContext, uint32_t rootDeviceIndex) override;
 
     bool unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, bool keepReservationPlaceholder) override;
 
@@ -304,6 +306,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     bool appliesVirtualMemoryAccessFlagsResult = false;
     bool failMapPhysicalToVirtualMemory = false;
     bool failUnMapPhysicalToVirtualMemory = false;
+    bool mockSupportsPhysicalDeviceMemoryMultiMapping = true;
     size_t passedMapPhysicalDeviceMemoryOffset = 0u;
     size_t passedMapPhysicalHostMemoryOffset = 0u;
     bool returnMockGAFromDevicePool = false;

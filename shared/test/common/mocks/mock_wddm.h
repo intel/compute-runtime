@@ -250,6 +250,7 @@ class WddmMock : public Wddm {
     bool callBaseVerifyAdapterLuid = false;
     LUID mockAdaperLuid = {0, 0};
     bool mapGpuVaStatus = true;
+    uint32_t mapGpuVaFailFromCall = 0u;
     bool callBaseDestroyAllocations = true;
     bool failOpenSharedHandle = false;
     bool callBaseMapGpuVa = true;
