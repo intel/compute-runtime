@@ -66,8 +66,8 @@ struct VarInfo {
 
 struct KernelDispatchInfo {
     size_t kernelDataId = undefined<size_t>;
-    size_t groupSizeVarId = undefined<size_t>;
-    size_t groupCountVarId = undefined<size_t>;
+    uint16_t groupSizeVarId = undefined<uint16_t>;
+    uint16_t groupCountVarId = undefined<uint16_t>;
 
     MutableIndirectData::Offsets indirectDataOffsets;
     KernelDispatchOffsets dispatchOffsets;

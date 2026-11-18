@@ -71,13 +71,13 @@ bool MclDecoder::decode(const MclDecoderArgs &args) {
         dispatch.kernelData = args.kernelData->at(di.kernelDataId).get();
 
         Variable *groupCount = nullptr;
-        if (di.groupCountVarId != undefined<size_t>) {
+        if (isDefined(di.groupCountVarId)) {
             groupCount = args.variableStorage->at(di.groupCountVarId).get();
             groupCount->getDesc().type = VariableType::groupCount;
         }
 
         Variable *groupSize = nullptr;
-        if (di.groupSizeVarId != undefined<size_t>) {
+        if (isDefined(di.groupSizeVarId)) {
             groupSize = args.variableStorage->at(di.groupSizeVarId).get();
             groupSize->getDesc().type = VariableType::groupSize;
         }

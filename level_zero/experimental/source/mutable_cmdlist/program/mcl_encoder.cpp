@@ -176,6 +176,8 @@ void MclEncoder::parseDispatches(const std::vector<std::unique_ptr<KernelDispatc
 
         Symbols::DispatchSymbolValue value{};
         value.dispatchId = dispatchId;
+        value.groupSizeVarId = undefined<uint16_t>;
+        value.groupCountVarId = undefined<uint16_t>;
 
         auto kernelDataSymbolName = Symbols::SymbolNames::kernelDataPrefix.str() + dispatch.kernelData->kernelName;
         auto &kernelDataSymbol = program.symbols[symbolNameToSymIdx[kernelDataSymbolName]];

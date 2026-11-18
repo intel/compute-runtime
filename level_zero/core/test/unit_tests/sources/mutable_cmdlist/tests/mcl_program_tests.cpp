@@ -33,15 +33,20 @@ struct MockMclDecoder : public Decoder::MclDecoder {
 
 class MclProgramKernelDataTest : public ::testing::Test {
   public:
-    std::vector<uint8_t> encodeKernelData(uint8_t numLocalIdChannels) {
+    std::vector<std::unique_ptr<KernelData>> createKernelDataVec() {
         auto kernelData = std::make_unique<KernelData>();
         kernelData->kernelName = kernelName;
         kernelData->kernelIsa = {kernelIsa.data(), kernelIsa.size()};
         kernelData->simdSize = simdSize;
-        kernelData->numLocalIdChannels = numLocalIdChannels;
 
         std::vector<std::unique_ptr<KernelData>> kernelDataVec;
         kernelDataVec.push_back(std::move(kernelData));
+        return kernelDataVec;
+    }
+
+    std::vector<uint8_t> encodeKernelData(uint8_t numLocalIdChannels) {
+        auto kernelDataVec = createKernelDataVec();
+        kernelDataVec[0]->numLocalIdChannels = numLocalIdChannels;
 
         Encoder::MclEncoder encoder;
         encoder.parseKernelData(kernelDataVec);
@@ -103,6 +108,29 @@ TEST_F(MclProgramKernelDataTest, givenKernelSymbolWithoutNumLocalIdChannelsWhenD
     ASSERT_EQ(1u, decodedKernelData.size());
     EXPECT_EQ(simdSize, decodedKernelData[0].simdSize);
     EXPECT_EQ(KernelData{}.numLocalIdChannels, decodedKernelData[0].numLocalIdChannels);
+}
+
+TEST_F(MclProgramKernelDataTest, givenDispatchWithoutGroupVariablesWhenEncodedAndDecodedThenGroupVariableIdsAreUndefined) {
+    auto kernelDataVec = createKernelDataVec();
+
+    auto dispatch = std::make_unique<KernelDispatch>();
+    dispatch->kernelData = kernelDataVec[0].get();
+    std::vector<std::unique_ptr<KernelDispatch>> dispatches;
+    dispatches.push_back(std::move(dispatch));
+
+    Encoder::MclEncoder encoder;
+    encoder.parseKernelData(kernelDataVec);
+    encoder.parseDispatches(dispatches);
+    auto binary = encoder.encodeProgram();
+
+    Decoder::MclDecoder decoder;
+    ASSERT_TRUE(decoder.decodeElf({binary.data(), binary.size()}));
+    decoder.parseSymbols();
+
+    auto &dispatchInfos = decoder.getKernelDispatchInfos();
+    ASSERT_EQ(1u, dispatchInfos.size());
+    EXPECT_TRUE(isUndefined(dispatchInfos[0].groupCountVarId));
+    EXPECT_TRUE(isUndefined(dispatchInfos[0].groupSizeVarId));
 }
 
 class MclDecoderInstructionHeapTest : public ::testing::Test {
