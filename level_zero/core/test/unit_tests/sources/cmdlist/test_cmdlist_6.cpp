@@ -237,6 +237,42 @@ HWTEST_F(CommandListExecuteImmediate, givenOutOfDeviceMemoryErrorOnFlushWhenExec
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false, NEO::AppendOperations::nonKernel, false, false, nullptr, nullptr));
 }
 
+HWTEST_F(CommandListExecuteImmediate, givenGpuHangDetectedWhenFlushFailsThenDeviceLostIsReturnedAndResidencyContainerIsCleared) {
+    std::unique_ptr<L0::CommandList> commandList;
+    const ze_command_queue_desc_t desc = {};
+    ze_result_t returnValue;
+    commandList.reset(CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
+    auto &commandListImmediate = static_cast<MockCommandListImmediate<FamilyType::gfxCoreFamily> &>(*commandList);
+
+    MockGraphicsAllocation allocation;
+    commandListImmediate.getCmdContainer().addToResidencyContainer(&allocation);
+
+    auto &commandStreamReceiver = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::failed;
+    commandStreamReceiver.isGpuHangDetectedReturnValue = true;
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false, NEO::AppendOperations::nonKernel, false, false, nullptr, nullptr));
+    EXPECT_TRUE(commandListImmediate.getCmdContainer().getResidencyContainer().empty());
+}
+
+HWTEST_F(CommandListExecuteImmediate, givenNoGpuHangWhenFlushFailsThenResidencyContainerIsKeptForNextFlush) {
+    std::unique_ptr<L0::CommandList> commandList;
+    const ze_command_queue_desc_t desc = {};
+    ze_result_t returnValue;
+    commandList.reset(CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
+    auto &commandListImmediate = static_cast<MockCommandListImmediate<FamilyType::gfxCoreFamily> &>(*commandList);
+
+    MockGraphicsAllocation allocation;
+    commandListImmediate.getCmdContainer().addToResidencyContainer(&allocation);
+
+    auto &commandStreamReceiver = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::failed;
+    commandStreamReceiver.isGpuHangDetectedReturnValue = false;
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false, NEO::AppendOperations::nonKernel, false, false, nullptr, nullptr));
+    auto &residencyContainer = commandListImmediate.getCmdContainer().getResidencyContainer();
+    EXPECT_NE(residencyContainer.end(), std::find(residencyContainer.begin(), residencyContainer.end(), &allocation));
+    commandListImmediate.getCmdContainer().clearResidencyContainer();
+}
+
 HWTEST_F(CommandListExecuteImmediate, givenFailedFlushWhenNextFlushSucceedsThenSubmittedCommandsEndWithSingleBatchBufferEnd) {
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
 

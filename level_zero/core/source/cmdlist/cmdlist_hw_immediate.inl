@@ -684,6 +684,10 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
     }
 
     if (completionStamp.taskCount > NEO::CompletionStamp::notReady) {
+        if (csr->isGpuHangDetected()) {
+            this->handlePostSubmissionState();
+            return ZE_RESULT_ERROR_DEVICE_LOST;
+        }
         // unless direct submission already copied them into its ring, commands stay pending for the next flush,
         // which must not run the epilogue of the failed one; it must still program what the failed one requested
         if (epilogueCommandStream->getUsed() > epilogueCommandStreamUsedBeforeFlush) {
