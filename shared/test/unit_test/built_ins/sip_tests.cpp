@@ -83,7 +83,14 @@ struct RawBinarySipFixture : public DeviceWithoutSipFixture {
     std::unique_ptr<VariableBackup<uint32_t>> backupFailAfterNFopenCount;
 };
 
-using RawBinarySipTest = Test<RawBinarySipFixture>;
+struct RawBinarySipTest : public Test<RawBinarySipFixture> {
+    void SetUp() override {
+        Test<RawBinarySipFixture>::SetUp();
+        if (SipKernel::isExternalLibRequired(pDevice->getGfxCoreHelper())) {
+            GTEST_SKIP();
+        }
+    }
+};
 
 TEST_F(RawBinarySipTest, givenRawBinaryFileWhenInitSipKernelThenSipIsLoadedFromFile) {
     bool ret = SipKernel::initSipKernel(SipKernelType::csr, *pDevice);
@@ -109,6 +116,35 @@ TEST_F(RawBinarySipTest, givenRawBinaryFileWhenInitSipKernelThenSipIsLoadedFromF
 
     auto header = SipKernel::getSipKernel(*pDevice, nullptr).getStateSaveAreaHeader();
     EXPECT_NE(0u, header.size());
+
+    SipKernel::freeSipKernels(&pDevice->getRootDeviceEnvironmentRef(), pDevice->getMemoryManager());
+}
+
+TEST_F(RawBinarySipTest, givenRawBinaryFileWithStateSaveAreaHeaderWhenInitCsrSipKernelThenPreemptionSurfaceSizeIsSetFromHeader) {
+    auto fileContent = MockSipData::createStateSaveAreaHeader(3);
+    IoFunctions::mockFtellReturn = static_cast<long int>(fileContent.size());
+    IoFunctions::mockFreadReturn = fileContent.size();
+    VariableBackup<char *> freadBufferBackup{&IoFunctions::mockFreadBuffer, fileContent.data()};
+    pDevice->getRootDeviceEnvironmentRef().getMutableHardwareInfo()->capabilityTable.requiredPreemptionSurfaceSize = 0;
+
+    EXPECT_TRUE(SipKernel::initSipKernel(SipKernelType::csr, *pDevice));
+
+    auto sipKernel = pDevice->getRootDeviceEnvironment().sipKernels[static_cast<uint32_t>(SipKernelType::csr)].get();
+    ASSERT_NE(nullptr, sipKernel);
+    auto expectedSize = sipKernel->getStateSaveAreaSize(pDevice);
+    EXPECT_NE(0u, expectedSize);
+    EXPECT_EQ(expectedSize, pDevice->getHardwareInfo().capabilityTable.requiredPreemptionSurfaceSize);
+
+    SipKernel::freeSipKernels(&pDevice->getRootDeviceEnvironmentRef(), pDevice->getMemoryManager());
+}
+
+TEST_F(RawBinarySipTest, givenRawBinaryFileWithoutStateSaveAreaHeaderWhenInitCsrSipKernelThenPreemptionSurfaceSizeIsNotChanged) {
+    constexpr size_t defaultPreemptionSurfaceSize = 0x1234;
+    pDevice->getRootDeviceEnvironmentRef().getMutableHardwareInfo()->capabilityTable.requiredPreemptionSurfaceSize = defaultPreemptionSurfaceSize;
+
+    EXPECT_TRUE(SipKernel::initSipKernel(SipKernelType::csr, *pDevice));
+
+    EXPECT_EQ(defaultPreemptionSurfaceSize, pDevice->getHardwareInfo().capabilityTable.requiredPreemptionSurfaceSize);
 
     SipKernel::freeSipKernels(&pDevice->getRootDeviceEnvironmentRef(), pDevice->getMemoryManager());
 }
@@ -1102,12 +1138,12 @@ HWTEST_F(DebugExternalLibSipTest, givenSipExternalLibNotRequiredAndGetSipBinaryF
     EXPECT_EQ(SipClassType::externalLib, SipKernel::selectSipClassType(gfxCoreHelper));
 }
 
-HWTEST_F(DebugExternalLibSipTest, givenSipExternalLibRequiredAndLoadBinarySipFromFileSetWhenSelectingSipClassThenRawBinaryFromFileIsSelected) {
+HWTEST_F(DebugExternalLibSipTest, givenSipExternalLibRequiredAndLoadBinarySipFromFileSetWhenSelectingSipClassThenExternalLibIsSelected) {
     DebugManagerStateRestore restorer;
     debugManager.flags.LoadBinarySipFromFile.set("sip.bin");
     MockGfxCoreHelperHw<FamilyType> gfxCoreHelper;
     gfxCoreHelper.sipExternalLibRequired = true;
-    EXPECT_EQ(SipClassType::rawBinaryFromFile, SipKernel::selectSipClassType(gfxCoreHelper));
+    EXPECT_EQ(SipClassType::externalLib, SipKernel::selectSipClassType(gfxCoreHelper));
 }
 
 HWTEST_F(DebugExternalLibSipTest, givenSipExternalLibNotRequiredAndLoadBinarySipFromFileSetWhenSelectingSipClassThenRawBinaryFromFileIsSelected) {
@@ -1117,12 +1153,12 @@ HWTEST_F(DebugExternalLibSipTest, givenSipExternalLibNotRequiredAndLoadBinarySip
     EXPECT_EQ(SipClassType::rawBinaryFromFile, SipKernel::selectSipClassType(gfxCoreHelper));
 }
 
-HWTEST_F(DebugExternalLibSipTest, givenGetSipBinaryFromExternalLibAndLoadBinarySipFromFileSetWhenSelectingSipClassThenRawBinaryFromFileIsSelected) {
+HWTEST_F(DebugExternalLibSipTest, givenGetSipBinaryFromExternalLibAndLoadBinarySipFromFileSetWhenSelectingSipClassThenExternalLibIsSelected) {
     DebugManagerStateRestore restorer;
     debugManager.flags.GetSipBinaryFromExternalLib.set(1);
     debugManager.flags.LoadBinarySipFromFile.set("sip.bin");
     MockGfxCoreHelperHw<FamilyType> gfxCoreHelper;
-    EXPECT_EQ(SipClassType::rawBinaryFromFile, SipKernel::selectSipClassType(gfxCoreHelper));
+    EXPECT_EQ(SipClassType::externalLib, SipKernel::selectSipClassType(gfxCoreHelper));
 }
 
 HWTEST_F(DebugExternalLibSipTest, givenSipExternalLibNotRequiredWhenCheckingIfExternalLibIsRequiredThenFalseIsReturned) {
@@ -1140,14 +1176,6 @@ HWTEST_F(DebugExternalLibSipTest, givenGetSipBinaryFromExternalLibSetWhenCheckin
     DebugManagerStateRestore restorer;
     debugManager.flags.GetSipBinaryFromExternalLib.set(1);
     MockGfxCoreHelperHw<FamilyType> gfxCoreHelper;
-    EXPECT_TRUE(SipKernel::isExternalLibRequired(gfxCoreHelper));
-}
-
-HWTEST_F(DebugExternalLibSipTest, givenSipExternalLibRequiredAndLoadBinarySipFromFileSetWhenCheckingIfExternalLibIsRequiredThenTrueIsReturned) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.LoadBinarySipFromFile.set("sip.bin");
-    MockGfxCoreHelperHw<FamilyType> gfxCoreHelper;
-    gfxCoreHelper.sipExternalLibRequired = true;
     EXPECT_TRUE(SipKernel::isExternalLibRequired(gfxCoreHelper));
 }
 
@@ -1207,6 +1235,32 @@ TEST_F(SipKernelFromSipExternalLibTest, givenCsrSipKernelTypeWhenInitSipKernelTh
     EXPECT_EQ(sipExternalLib->getSipKernelBinaryRetBinary, sipKernel->getBinary());
     EXPECT_EQ(sipExternalLib->getSipKernelBinaryStateSaveAreaHeader, sipKernel->getStateSaveAreaHeader());
     EXPECT_EQ(MemoryConstants::pageSize, pDevice->getHardwareInfo().capabilityTable.requiredPreemptionSurfaceSize);
+}
+
+TEST_F(SipKernelFromSipExternalLibTest, givenLoadBinarySipFromFileWhenInitSipKernelThenSipBinaryIsReplacedFromFileAndRestComesFromSipExternalLib) {
+    char fileBinary[] = {'f', 'i', 'l', 'e', 's', 'i', 'p', '!'};
+    VariableBackup<long int> ftellBackup{&IoFunctions::mockFtellReturn, static_cast<long int>(sizeof(fileBinary))};
+    VariableBackup<size_t> freadBackup{&IoFunctions::mockFreadReturn, sizeof(fileBinary)};
+    VariableBackup<char *> freadBufferBackup{&IoFunctions::mockFreadBuffer, fileBinary};
+    debugManager.flags.LoadBinarySipFromFile.set("sip.bin");
+
+    EXPECT_TRUE(SipKernel::initSipKernel(SipKernelType::csr, *pDevice));
+
+    EXPECT_EQ(SipClassType::externalLib, MockSipKernel::classType);
+    auto sipKernel = getInitializedSipKernel(SipKernelType::csr);
+    ASSERT_NE(nullptr, sipKernel);
+    EXPECT_EQ(std::vector<char>(std::begin(fileBinary), std::end(fileBinary)), sipKernel->getBinary());
+    EXPECT_EQ(0, memcmp(fileBinary, sipKernel->getSipAllocation()->getUnderlyingBuffer(), sizeof(fileBinary)));
+    EXPECT_EQ(sipExternalLib->getSipKernelBinaryStateSaveAreaHeader, sipKernel->getStateSaveAreaHeader());
+    EXPECT_EQ(MemoryConstants::pageSize, pDevice->getHardwareInfo().capabilityTable.requiredPreemptionSurfaceSize);
+}
+
+TEST_F(SipKernelFromSipExternalLibTest, givenLoadBinarySipFromFileThatCannotBeReadWhenInitSipKernelThenFalseIsReturned) {
+    VariableBackup<FILE *> fopenBackup{&IoFunctions::mockFopenReturned, nullptr};
+    debugManager.flags.LoadBinarySipFromFile.set("sip.bin");
+
+    EXPECT_FALSE(SipKernel::initSipKernel(SipKernelType::csr, *pDevice));
+    EXPECT_EQ(nullptr, getInitializedSipKernel(SipKernelType::csr));
 }
 
 TEST_F(SipKernelFromSipExternalLibTest, givenSipExternalLibKernelWithoutStateSaveAreaHeaderWhenInitCsrSipKernelThenAbortIsCalled) {

@@ -116,7 +116,7 @@ DECLARE_DEBUG_VARIABLE(std::string, FilterDeviceId, std::string("unk"), "Device 
 DECLARE_DEBUG_VARIABLE(std::string, FilterBdfPath, std::string("unk"), "Linux-only, BDF path filter, only matching paths will be opened; ignored when unk")
 DECLARE_DEBUG_VARIABLE(std::string, ForceProductFamily, std::string("unk"), "Override product family in adapter info")
 DECLARE_DEBUG_VARIABLE(std::string, ForceCoreFamily, std::string("unk"), "Override core family in adapter info")
-DECLARE_DEBUG_VARIABLE(std::string, LoadBinarySipFromFile, std::string("unk"), "Select binary file to load SIP kernel raw binary; when file named *_header.* exists, it is used as header")
+DECLARE_DEBUG_VARIABLE(std::string, LoadBinarySipFromFile, std::string("unk"), "Select binary file to load SIP kernel raw binary; when file named *_header.* exists, it is used as header. With the external SIP library only the SIP kernel binary is replaced")
 DECLARE_DEBUG_VARIABLE(std::string, DumpSipHeaderFile, std::string("unk"), "Dumps binary file with sip header, value is used as NAME in filename: NAME_header.bin; ignored when unk")
 DECLARE_DEBUG_VARIABLE(std::string, DumpDebugSurfaceFile, std::string("unk"), "Dumps debug surface file; ignored when unk")
 DECLARE_DEBUG_VARIABLE(std::string, InjectInternalBuildOptions, std::string("unk"), "Append provided string to internal build options for user modules; ignored when unk")

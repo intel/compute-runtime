@@ -152,13 +152,21 @@ bool SipKernel::initBuiltinsSipKernel(SipKernelType type, Device &device, OsCont
     return true;
 }
 
+static size_t updateRequiredPreemptionSurfaceSize(const SipKernel &sipKernel, Device &device) {
+    auto preemptionSurfaceSize = sipKernel.getStateSaveAreaSize(&device);
+    if (preemptionSurfaceSize != 0) {
+        device.getRootDeviceEnvironmentRef().getMutableHardwareInfo()->capabilityTable.requiredPreemptionSurfaceSize = preemptionSurfaceSize;
+    }
+    return preemptionSurfaceSize;
+}
+
 bool SipKernel::initRawBinaryFromFileKernel(SipKernelType type, Device &device, const std::string &fileName) {
-    uint32_t sipIndex = static_cast<uint32_t>(type);
     uint32_t rootDeviceIndex = device.getRootDeviceIndex();
 
-    auto &rootDeviceEnvironment = device.getRootDeviceEnvironment();
+    auto &rootDeviceEnvironment = device.getRootDeviceEnvironmentRef();
+    auto &sipKernel = rootDeviceEnvironment.sipKernels[static_cast<uint32_t>(type)];
 
-    if (rootDeviceEnvironment.sipKernels[sipIndex].get() != nullptr) {
+    if (sipKernel != nullptr) {
         return true;
     }
 
@@ -189,8 +197,11 @@ bool SipKernel::initRawBinaryFromFileKernel(SipKernelType type, Device &device, 
 
         std::vector<char> stateSaveAreaHeader = readFile(addSuffixBeforeExtension(fileName, "_header"));
 
-        device.getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->sipKernels[sipIndex] =
-            std::make_unique<SipKernel>(type, sipAllocation, std::move(stateSaveAreaHeader));
+        sipKernel = std::make_unique<SipKernel>(type, sipAllocation, std::move(stateSaveAreaHeader));
+
+        if (type == SipKernelType::csr) {
+            updateRequiredPreemptionSurfaceSize(*sipKernel, device);
+        }
         return true;
     }
     return false;
@@ -213,6 +224,12 @@ bool SipKernel::initSipKernelFromExternalLib(SipKernelType type, Device &device)
         return false;
     }
     UNRECOVERABLE_IF(sipBinary.empty());
+    if (const auto &binaryFileName = debugManager.flags.LoadBinarySipFromFile.get(); binaryFileName != "unk") {
+        sipBinary = readFile(binaryFileName);
+        if (sipBinary.empty()) {
+            return false;
+        }
+    }
     if (!sipLib->createRegisterDescriptorMap()) {
         PRINT_DEBUGGER_ERROR_LOG("SIP external library failed to create register descriptor map\n", "");
         return false;
@@ -234,9 +251,7 @@ bool SipKernel::initSipKernelFromExternalLib(SipKernelType type, Device &device)
     sipKernel = std::make_unique<SipKernel>(type, sipAllocation, std::move(stateSaveAreaHeader), std::move(sipBinary));
 
     if (type == SipKernelType::csr) {
-        auto preemptionSurfaceSize = sipKernel->getStateSaveAreaSize(&device);
-        UNRECOVERABLE_IF(preemptionSurfaceSize == 0);
-        rootDeviceEnvironment.getMutableHardwareInfo()->capabilityTable.requiredPreemptionSurfaceSize = preemptionSurfaceSize;
+        UNRECOVERABLE_IF(updateRequiredPreemptionSurfaceSize(*sipKernel, device) == 0);
     }
     return true;
 }
@@ -246,11 +261,11 @@ bool SipKernel::isExternalLibRequired(const GfxCoreHelper &gfxCoreHelper) {
 }
 
 SipClassType SipKernel::selectSipClassType(const GfxCoreHelper &gfxCoreHelper) {
-    if (debugManager.flags.LoadBinarySipFromFile.get() != "unk") {
-        return SipClassType::rawBinaryFromFile;
-    }
     if (isExternalLibRequired(gfxCoreHelper)) {
         return SipClassType::externalLib;
+    }
+    if (debugManager.flags.LoadBinarySipFromFile.get() != "unk") {
+        return SipClassType::rawBinaryFromFile;
     }
     return SipClassType::builtins;
 }
