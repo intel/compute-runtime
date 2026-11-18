@@ -8594,6 +8594,18 @@ HWTEST2_TEMPLATED_F(DrmMemoryManagerTest, givenDrmAllocationWithWithAlignmentFro
     EXPECT_EQ(allocation, nullptr);
 }
 
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenSvmCpuAllocationWhenAllocatingWithAlignmentFailsThenGpuReservationIsReleased) {
+    mock->ioctlExpected.total = -1;
+    allocationData.size = MemoryConstants::pageSize;
+    allocationData.type = AllocationType::svmCpu;
+    allocationData.cacheRegion = 0xFFFF;
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithAlignment(allocationData);
+
+    EXPECT_EQ(nullptr, allocation);
+    EXPECT_EQ(1u, memoryManager->releaseGpuRangeCalled);
+}
+
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenAffinityMaskDeviceWithBitfieldIndex1SetWhenAllocatingDebugSurfaceThenSingleAllocationWithOneBoIsCreated) {
     NEO::debugManager.flags.CreateMultipleSubDevices.set(2);
 

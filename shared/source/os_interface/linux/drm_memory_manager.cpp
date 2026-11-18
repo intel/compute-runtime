@@ -593,13 +593,16 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithAlignmentImpl(const A
     }
 
     auto drmAllocation = createAllocWithAlignment(allocationData, cSize, mmapAlignment, alignedStorageSize, alignedGpuAddress);
-    if (drmAllocation != nullptr && gpuReservationAddress) {
+    if (drmAllocation == nullptr) {
+        if (gpuReservationAddress) {
+            this->releaseGpuRange(reinterpret_cast<void *>(gpuReservationAddress), alignedVirtualAddressRangeSize, allocationData.rootDeviceIndex);
+        }
+        return nullptr;
+    }
+    if (gpuReservationAddress) {
         drmAllocation->setReservedAddressRange(reinterpret_cast<void *>(gpuReservationAddress), alignedVirtualAddressRangeSize);
     }
-    if (drmAllocation != nullptr) {
-        auto osContextLinux = static_cast<OsContextLinux *>(allocationData.osContext);
-        drmAllocation->setOsContext(osContextLinux);
-    }
+    drmAllocation->setOsContext(static_cast<OsContextLinux *>(allocationData.osContext));
 
     return drmAllocation;
 }
