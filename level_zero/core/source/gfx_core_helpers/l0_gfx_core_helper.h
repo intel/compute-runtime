@@ -73,6 +73,7 @@ class L0GfxCoreHelper : public NEO::ApiGfxCoreHelper {
     static bool useImmediateComputeFlushTask(const NEO::RootDeviceEnvironment &rootDeviceEnvironment);
     static ze_mutable_command_ext_flags_t getCmdListUpdateCapabilities(const NEO::RootDeviceEnvironment &rootDeviceEnvironment);
     static ze_record_replay_graph_ext_flags_t getRecordReplayGraphCapabilities(const NEO::RootDeviceEnvironment &rootDeviceEnvironment);
+    static ze_mutable_graph_node_exp_flags_t getMutableGraphCapabilities(const NEO::RootDeviceEnvironment &rootDeviceEnvironment);
 
     uint64_t getCounterBasedEventMaxValue() const {
         return (getCmdListWaitOnMemoryDataSize() == sizeof(uint64_t)) ? std::numeric_limits<uint64_t>::max()
@@ -106,6 +107,7 @@ class L0GfxCoreHelper : public NEO::ApiGfxCoreHelper {
     virtual uint32_t getImmediateWritePostSyncOffset() const = 0;
     virtual ze_mutable_command_ext_flags_t getPlatformCmdListUpdateCapabilities() const = 0;
     virtual ze_record_replay_graph_ext_flags_t getPlatformRecordReplayGraphCapabilities() const = 0;
+    virtual ze_mutable_graph_node_exp_flags_t getPlatformMutableGraphCapabilities() const = 0;
     virtual std::vector<std::pair<const char *, const char *>> getStallSamplingReportMetrics() const = 0;
     virtual void stallSumIpDataToTypedValues(uint64_t ip, void *sumIpData, std::vector<zet_typed_value_t> &ipDataValues) = 0;
     virtual bool stallIpDataMapUpdateFromData(const uint8_t *pRawIpData, std::map<uint64_t, void *> &stallSumIpDataMap) = 0;
@@ -169,6 +171,7 @@ class L0GfxCoreHelperHw : public L0GfxCoreHelper {
     uint32_t getImmediateWritePostSyncOffset() const override;
     ze_mutable_command_ext_flags_t getPlatformCmdListUpdateCapabilities() const override;
     ze_record_replay_graph_ext_flags_t getPlatformRecordReplayGraphCapabilities() const override;
+    ze_mutable_graph_node_exp_flags_t getPlatformMutableGraphCapabilities() const override;
     std::vector<std::pair<const char *, const char *>> getStallSamplingReportMetrics() const override;
     void stallSumIpDataToTypedValues(uint64_t ip, void *sumIpData, std::vector<zet_typed_value_t> &ipDataValues) override;
     bool stallIpDataMapUpdateFromData(const uint8_t *pRawIpData, std::map<uint64_t, void *> &stallSumIpDataMap) override;

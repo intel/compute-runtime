@@ -1149,6 +1149,9 @@ ze_result_t Device::getProperties(ze_device_properties_t *pDeviceProperties) {
             } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_RECORD_REPLAY_GRAPH_EXT_PROPERTIES) {
                 auto recordReplayGraphProperties = reinterpret_cast<ze_record_replay_graph_ext_properties_t *>(extendedProperties);
                 recordReplayGraphProperties->graphFlags = getL0GfxCoreHelper().getRecordReplayGraphCapabilities(this->getNEODevice()->getRootDeviceEnvironment());
+            } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_MUTABLE_GRAPH_EXP_PROPERTIES) {
+                auto mutableGraphProperties = reinterpret_cast<ze_mutable_graph_exp_properties_t *>(extendedProperties);
+                mutableGraphProperties->flags = getL0GfxCoreHelper().getMutableGraphCapabilities(this->getNEODevice()->getRootDeviceEnvironment());
             } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_INTEL_XE_DEVICE_EXP_PROPERTIES) {
                 getIntelXeDeviceProperties(extendedProperties);
             } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_DEVICE_USABLEMEM_SIZE_EXT_PROPERTIES) {

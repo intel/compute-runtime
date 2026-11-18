@@ -1170,6 +1170,12 @@ HWTEST2_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperOnGenPlatformsWhenGettingReco
     EXPECT_EQ(0u, l0GfxCoreHelper.getPlatformRecordReplayGraphCapabilities());
 }
 
+HWTEST2_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperOnGenPlatformsWhenGettingMutableGraphCapabilityThenReturnZero, IsGen12LP) {
+    MockExecutionEnvironment executionEnvironment;
+    auto &l0GfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0GfxCoreHelper>();
+    EXPECT_EQ(0u, l0GfxCoreHelper.getPlatformMutableGraphCapabilities());
+}
+
 HWTEST_F(L0GfxCoreHelperTest, whenAskingForUnifiedPostSyncAllocLayoutThenCheckImmWriteOffset) {
     MockExecutionEnvironment executionEnvironment;
     auto &l0GfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0GfxCoreHelper>();
@@ -1275,6 +1281,25 @@ TEST_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperWhenGettingDefaultRecordReplayGr
     auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
 
     EXPECT_EQ(l0GfxCoreHelper.getPlatformRecordReplayGraphCapabilities(), L0GfxCoreHelper::getRecordReplayGraphCapabilities(rootDeviceEnvironment));
+}
+
+TEST_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperUsingOverrideDebugKeyWhenGettingMutableGraphCapabilityThenUseDbgKeyValue) {
+    DebugManagerStateRestore restorer;
+    MockExecutionEnvironment executionEnvironment;
+    const auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0].get();
+
+    constexpr uint32_t expectedValue = 2359;
+    debugManager.flags.OverrideMutableGraphCapability.set(static_cast<int32_t>(expectedValue));
+
+    EXPECT_EQ(expectedValue, L0GfxCoreHelper::getMutableGraphCapabilities(rootDeviceEnvironment));
+}
+
+TEST_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperWhenGettingDefaultMutableGraphCapabilityThenUsePlatformDefaultSetting) {
+    MockExecutionEnvironment executionEnvironment;
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0].get();
+    auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
+
+    EXPECT_EQ(l0GfxCoreHelper.getPlatformMutableGraphCapabilities(), L0GfxCoreHelper::getMutableGraphCapabilities(rootDeviceEnvironment));
 }
 
 HWTEST2_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperWhenGettingMaxFillPatternSizeForCopyEngineThenReturnCorrectValue, IsAtMostDg2) {

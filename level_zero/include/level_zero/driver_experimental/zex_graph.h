@@ -122,7 +122,7 @@ typedef struct _ze_graph_node_exp_desc_t {
     const void *pNext;                       ///< [in][optional] must be null or a pointer to an extension-specific
                                              ///< structure (i.e. contains stype and pNext).
     ze_mutable_graph_node_exp_flags_t flags; ///< [in] mutable flags that select which mutations are allowed on this node,
-                                             ///< 0 selects all flags supported by the device except kernel instruction
+                                             ///< 0 selects all flags except kernel instruction
     ze_graph_node_handle_t *phNodeHandle;    ///< [out] pointer to node handle that will be created and initialized by the driver
 } ze_graph_node_exp_desc_t;
 

@@ -148,6 +148,11 @@ uint64_t L0GfxCoreHelperHw<Family>::getSupportedCustomOperations2() const {
 }
 
 template <typename Family>
+ze_mutable_graph_node_exp_flags_t L0GfxCoreHelperHw<Family>::getPlatformMutableGraphCapabilities() const {
+    return 0u;
+}
+
+template <typename Family>
 void L0GfxCoreHelperHw<Family>::adjustBuiltInImageModeToBindful(NEO::BuiltIn::AddressingMode &mode) const {
 }
 

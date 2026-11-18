@@ -2458,6 +2458,8 @@ TEST_F(GraphInstantiationValidation, GivenNotMutableGraphWhenJoiningWithAppendKe
 
 TEST_F(GraphInstantiationValidation, GivenMutableGraphWhenCapturingAppendKernelWithGraphNodeDescriptorInForkedSubgraphThenNodeIsReturnedByRootGraph) {
     GraphsCleanupGuard graphCleanup;
+    DebugManagerStateRestore restorer;
+    debugManager.flags.OverrideMutableGraphCapability.set(static_cast<int32_t>(allMutableGraphNodeFlagsExceptKernelInstruction));
     ContextStubMock ctx;
     MockGraphCmdListWithContext cmdlist{&ctx};
     cmdlist.device = this->device;
@@ -2533,6 +2535,8 @@ TEST_F(GraphInstantiationValidation, GivenFlatCaptureWhenCapturingAppendKernelsW
 
 TEST_F(GraphTestInstantiationTest, GivenMutableGraphWhenCapturingAppendKernelWithGraphNodeDescriptorThenCommandIsRecorded) {
     GraphsCleanupGuard graphCleanup;
+    DebugManagerStateRestore restorer;
+    debugManager.flags.OverrideMutableGraphCapability.set(static_cast<int32_t>(allMutableGraphNodeFlagsExceptKernelInstruction));
 
     MockGraphContextReturningSpecificCmdList ctx;
     Mock<Module> module(this->device, nullptr);
@@ -2563,6 +2567,8 @@ TEST_F(GraphTestInstantiationTest, GivenMutableGraphWhenCapturingAppendKernelWit
 
 TEST_F(GraphTestInstantiationTest, GivenMutableGraphWhenCapturingAppendKernelWithGraphNodeDescriptorWithNullNodeHandlePointerThenInvalidArgumentIsReturned) {
     GraphsCleanupGuard graphCleanup;
+    DebugManagerStateRestore restorer;
+    debugManager.flags.OverrideMutableGraphCapability.set(static_cast<int32_t>(allMutableGraphNodeFlagsExceptKernelInstruction));
 
     MockGraphContextReturningSpecificCmdList ctx;
     Mock<Module> module(this->device, nullptr);
@@ -2587,8 +2593,145 @@ TEST_F(GraphTestInstantiationTest, GivenMutableGraphWhenCapturingAppendKernelWit
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(immCmdListHandle, &srcGraphHandle, nullptr));
 }
 
+TEST_F(GraphTestInstantiationTest, GivenMutableGraphAndGraphNodeDescriptorWithFlagNotSupportedByDeviceWhenCapturingAppendKernelThenUnsupportedFeatureIsReturnedAndCommandIsNotRecorded) {
+    GraphsCleanupGuard graphCleanup;
+    DebugManagerStateRestore restorer;
+    debugManager.flags.OverrideMutableGraphCapability.set(static_cast<int32_t>(ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT));
+
+    MockGraphContextReturningSpecificCmdList ctx;
+    Mock<Module> module(this->device, nullptr);
+    Mock<KernelImp> kernel;
+    kernel.setModule(&module);
+    ze_kernel_handle_t kernelHandle = kernel.toHandle();
+
+    ze_graph_node_handle_t nodeHandle = nullptr;
+    ze_graph_node_exp_desc_t graphNodeDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_EXP_DESC};
+    graphNodeDesc.flags = ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT | ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_SIZE;
+    graphNodeDesc.phNodeHandle = &nodeHandle;
+    ze_group_count_t groupCount = {1, 1, 1};
+    ze_group_size_t groupSize = {1, 1, 1};
+
+    MockGraph srcGraph(&ctx, true, true);
+    auto srcGraphHandle = srcGraph.toHandle();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(immCmdListHandle, srcGraphHandle, nullptr));
+    EXPECT_TRUE(immCmdList->isCapturingGraph());
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zeCommandListAppendLaunchKernelWithParameters(immCmdListHandle, kernelHandle, &groupCount, &graphNodeDesc, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zeCommandListAppendLaunchKernelWithArguments(immCmdListHandle, kernelHandle, groupCount, groupSize, nullptr, &graphNodeDesc, nullptr, 0, nullptr));
+
+    EXPECT_EQ(0u, srcGraph.recordedApiCommands.commands.size());
+    EXPECT_EQ(nullptr, nodeHandle);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(immCmdListHandle, &srcGraphHandle, nullptr));
+}
+
+TEST_F(GraphTestInstantiationTest, GivenMutableGraphAndDeviceWithoutMutableGraphCapabilitiesWhenCapturingAppendKernelWithZeroGraphNodeFlagsThenUnsupportedFeatureIsReturnedAndCommandIsNotRecorded) {
+    GraphsCleanupGuard graphCleanup;
+    DebugManagerStateRestore restorer;
+    debugManager.flags.OverrideMutableGraphCapability.set(0);
+
+    MockGraphContextReturningSpecificCmdList ctx;
+    Mock<Module> module(this->device, nullptr);
+    Mock<KernelImp> kernel;
+    kernel.setModule(&module);
+    ze_kernel_handle_t kernelHandle = kernel.toHandle();
+
+    ze_graph_node_handle_t nodeHandle = nullptr;
+    ze_graph_node_exp_desc_t graphNodeDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_EXP_DESC};
+    graphNodeDesc.flags = 0u;
+    graphNodeDesc.phNodeHandle = &nodeHandle;
+    ze_group_count_t groupCount = {1, 1, 1};
+    ze_group_size_t groupSize = {1, 1, 1};
+
+    MockGraph srcGraph(&ctx, true, true);
+    auto srcGraphHandle = srcGraph.toHandle();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(immCmdListHandle, srcGraphHandle, nullptr));
+    EXPECT_TRUE(immCmdList->isCapturingGraph());
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zeCommandListAppendLaunchKernelWithParameters(immCmdListHandle, kernelHandle, &groupCount, &graphNodeDesc, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zeCommandListAppendLaunchKernelWithArguments(immCmdListHandle, kernelHandle, groupCount, groupSize, nullptr, &graphNodeDesc, nullptr, 0, nullptr));
+
+    EXPECT_EQ(0u, srcGraph.recordedApiCommands.commands.size());
+    EXPECT_EQ(nullptr, nodeHandle);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(immCmdListHandle, &srcGraphHandle, nullptr));
+}
+
+TEST_F(GraphTestInstantiationTest, GivenMutableGraphAndDeviceSupportingOnlyKernelInstructionWhenCapturingAppendKernelWithZeroGraphNodeFlagsThenUnsupportedFeatureIsReturnedAndCommandIsNotRecorded) {
+    GraphsCleanupGuard graphCleanup;
+    DebugManagerStateRestore restorer;
+    debugManager.flags.OverrideMutableGraphCapability.set(static_cast<int32_t>(ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_INSTRUCTION));
+
+    MockGraphContextReturningSpecificCmdList ctx;
+    Mock<Module> module(this->device, nullptr);
+    Mock<KernelImp> kernel;
+    kernel.setModule(&module);
+    ze_kernel_handle_t kernelHandle = kernel.toHandle();
+
+    ze_graph_node_handle_t nodeHandle = nullptr;
+    ze_graph_node_exp_desc_t graphNodeDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_EXP_DESC};
+    graphNodeDesc.flags = 0u;
+    graphNodeDesc.phNodeHandle = &nodeHandle;
+    ze_group_count_t groupCount = {1, 1, 1};
+    ze_group_size_t groupSize = {1, 1, 1};
+
+    MockGraph srcGraph(&ctx, true, true);
+    auto srcGraphHandle = srcGraph.toHandle();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(immCmdListHandle, srcGraphHandle, nullptr));
+    EXPECT_TRUE(immCmdList->isCapturingGraph());
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zeCommandListAppendLaunchKernelWithParameters(immCmdListHandle, kernelHandle, &groupCount, &graphNodeDesc, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zeCommandListAppendLaunchKernelWithArguments(immCmdListHandle, kernelHandle, groupCount, groupSize, nullptr, &graphNodeDesc, nullptr, 0, nullptr));
+
+    EXPECT_EQ(0u, srcGraph.recordedApiCommands.commands.size());
+    EXPECT_EQ(nullptr, nodeHandle);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(immCmdListHandle, &srcGraphHandle, nullptr));
+}
+
+TEST_F(GraphTestInstantiationTest, GivenMutableGraphAndDeviceWithMutableGraphCapabilitiesWhenCapturingAppendKernelWithZeroGraphNodeFlagsThenGraphNodeIsCreated) {
+    GraphsCleanupGuard graphCleanup;
+    DebugManagerStateRestore restorer;
+    debugManager.flags.OverrideMutableGraphCapability.set(static_cast<int32_t>(allMutableGraphNodeFlagsExceptKernelInstruction));
+
+    MockGraphContextReturningSpecificCmdList ctx;
+    Mock<Module> module(this->device, nullptr);
+    Mock<KernelImp> kernel;
+    kernel.setModule(&module);
+    ze_kernel_handle_t kernelHandle = kernel.toHandle();
+
+    ze_graph_node_handle_t parametersNodeHandle = nullptr;
+    ze_graph_node_exp_desc_t parametersNodeDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_EXP_DESC};
+    parametersNodeDesc.flags = 0u;
+    parametersNodeDesc.phNodeHandle = &parametersNodeHandle;
+
+    ze_graph_node_handle_t argumentsNodeHandle = nullptr;
+    ze_graph_node_exp_desc_t argumentsNodeDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_EXP_DESC};
+    argumentsNodeDesc.flags = 0u;
+    argumentsNodeDesc.phNodeHandle = &argumentsNodeHandle;
+
+    ze_group_count_t groupCount = {1, 1, 1};
+    ze_group_size_t groupSize = {1, 1, 1};
+
+    MockGraph srcGraph(&ctx, true, true);
+    auto srcGraphHandle = srcGraph.toHandle();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListBeginCaptureIntoGraphExp(immCmdListHandle, srcGraphHandle, nullptr));
+    EXPECT_TRUE(immCmdList->isCapturingGraph());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernelWithParameters(immCmdListHandle, kernelHandle, &groupCount, &parametersNodeDesc, nullptr, 0, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernelWithArguments(immCmdListHandle, kernelHandle, groupCount, groupSize, nullptr, &argumentsNodeDesc, nullptr, 0, nullptr));
+
+    EXPECT_EQ(2u, srcGraph.recordedApiCommands.commands.size());
+    EXPECT_NE(nullptr, parametersNodeHandle);
+    EXPECT_NE(nullptr, argumentsNodeHandle);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeCommandListEndGraphCaptureExp(immCmdListHandle, &srcGraphHandle, nullptr));
+}
+
 TEST_F(GraphTestInstantiationTest, GivenMutableGraphWhenCapturingAppendKernelsWithGraphNodeDescriptorsThenGraphNodesAreCreatedAndStoredInGraph) {
     GraphsCleanupGuard graphCleanup;
+    DebugManagerStateRestore restorer;
+    debugManager.flags.OverrideMutableGraphCapability.set(static_cast<int32_t>(ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT | ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_ARGUMENT));
 
     MockGraphContextReturningSpecificCmdList ctx;
     Mock<Module> module(this->device, nullptr);
@@ -8960,6 +9103,78 @@ TEST(GraphNodeTest, GivenGraphNodeWithoutFlagsWhenGettingPropertiesThenZeroFlags
     nodeProperties.flags = ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT;
     EXPECT_EQ(ZE_RESULT_SUCCESS, node.getProperties(&nodeProperties));
     EXPECT_EQ(0U, nodeProperties.flags);
+}
+
+TEST(GraphNodeTest, GivenGraphNodeWithGroupCountReferenceWhenUpdatingGroupCountThenReferencedGroupCountIsModifiedAndReturnedAsCurrent) {
+    L0::GraphNode node{ZE_GRAPH_NODE_EXP_TYPE_LAUNCH_KERNEL, ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT};
+    ze_group_count_t capturedGroupCount = {1, 2, 3};
+    node.setGroupCounts(&capturedGroupCount);
+
+    auto currentGroupCount = node.getCurrentGroupCount();
+    EXPECT_EQ(1u, currentGroupCount.groupCountX);
+    EXPECT_EQ(2u, currentGroupCount.groupCountY);
+    EXPECT_EQ(3u, currentGroupCount.groupCountZ);
+
+    const ze_group_count_t newGroupCount = {4, 5, 6};
+    node.updateGroupCount(newGroupCount);
+    EXPECT_EQ(4u, capturedGroupCount.groupCountX);
+    EXPECT_EQ(5u, capturedGroupCount.groupCountY);
+    EXPECT_EQ(6u, capturedGroupCount.groupCountZ);
+
+    currentGroupCount = node.getCurrentGroupCount();
+    EXPECT_EQ(4u, currentGroupCount.groupCountX);
+    EXPECT_EQ(5u, currentGroupCount.groupCountY);
+    EXPECT_EQ(6u, currentGroupCount.groupCountZ);
+}
+
+TEST(GraphNodeTest, GivenGraphNodeWithGroupSizeReferenceWhenUpdatingGroupSizeThenReferencedGroupSizeIsModifiedAndReturnedAsCurrent) {
+    L0::GraphNode node{ZE_GRAPH_NODE_EXP_TYPE_LAUNCH_KERNEL, ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_SIZE};
+    ze_group_size_t capturedGroupSize = {1, 2, 3};
+    node.setGroupSizes(&capturedGroupSize);
+
+    auto currentGroupSize = node.getCurrentGroupSize();
+    EXPECT_EQ(1u, currentGroupSize.groupSizeX);
+    EXPECT_EQ(2u, currentGroupSize.groupSizeY);
+    EXPECT_EQ(3u, currentGroupSize.groupSizeZ);
+
+    const ze_group_size_t newGroupSize = {4, 2, 1};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, node.updateGroupSize(newGroupSize));
+    EXPECT_EQ(4u, capturedGroupSize.groupSizeX);
+    EXPECT_EQ(2u, capturedGroupSize.groupSizeY);
+    EXPECT_EQ(1u, capturedGroupSize.groupSizeZ);
+
+    currentGroupSize = node.getCurrentGroupSize();
+    EXPECT_EQ(4u, currentGroupSize.groupSizeX);
+    EXPECT_EQ(2u, currentGroupSize.groupSizeY);
+    EXPECT_EQ(1u, currentGroupSize.groupSizeZ);
+}
+
+TEST_F(GraphTestApiCaptureWithDevice, GivenGraphNodeWithoutGroupSizeReferenceWhenUpdatingGroupSizeThenKernelGroupSizeIsModifiedAndReturnedAsCurrent) {
+    Mock<Module> module(this->device, nullptr);
+    Mock<KernelImp> kernel;
+    kernel.setModule(&module);
+    kernel.privateState.groupSize[0] = 1U;
+    kernel.privateState.groupSize[1] = 2U;
+    kernel.privateState.groupSize[2] = 3U;
+
+    L0::GraphNode node{ZE_GRAPH_NODE_EXP_TYPE_LAUNCH_KERNEL, ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_SIZE};
+    node.setKernel(&kernel);
+
+    auto currentGroupSize = node.getCurrentGroupSize();
+    EXPECT_EQ(1u, currentGroupSize.groupSizeX);
+    EXPECT_EQ(2u, currentGroupSize.groupSizeY);
+    EXPECT_EQ(3u, currentGroupSize.groupSizeZ);
+
+    const ze_group_size_t newGroupSize = {4, 2, 1};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, node.updateGroupSize(newGroupSize));
+    EXPECT_EQ(4u, kernel.getGroupSize()[0]);
+    EXPECT_EQ(2u, kernel.getGroupSize()[1]);
+    EXPECT_EQ(1u, kernel.getGroupSize()[2]);
+
+    currentGroupSize = node.getCurrentGroupSize();
+    EXPECT_EQ(4u, currentGroupSize.groupSizeX);
+    EXPECT_EQ(2u, currentGroupSize.groupSizeY);
+    EXPECT_EQ(1u, currentGroupSize.groupSizeZ);
 }
 
 TEST(GraphNodeTest, GivenInvalidParametersWhenGettingNodePropertiesThroughApiThenInvalidArgumentIsReturned) {

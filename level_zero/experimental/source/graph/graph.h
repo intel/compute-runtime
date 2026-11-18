@@ -256,6 +256,34 @@ struct GraphNode : _ze_graph_node_handle_t {
         return this->groupCounts;
     }
 
+    auto updateGroupCount(const ze_group_count_t &groupCount) -> void {
+        UNRECOVERABLE_IF(nullptr == this->groupCounts);
+        *this->groupCounts = groupCount;
+    }
+
+    auto getCurrentGroupCount() const -> ze_group_count_t {
+        UNRECOVERABLE_IF(nullptr == this->groupCounts);
+        return *this->groupCounts;
+    }
+
+    auto updateGroupSize(const ze_group_size_t &groupSize) -> ze_result_t {
+        if (nullptr != this->groupSizes) {
+            *this->groupSizes = groupSize;
+            return ZE_RESULT_SUCCESS;
+        }
+        UNRECOVERABLE_IF(nullptr == this->kernel);
+        return this->kernel->setGroupSize(groupSize.groupSizeX, groupSize.groupSizeY, groupSize.groupSizeZ);
+    }
+
+    auto getCurrentGroupSize() const -> ze_group_size_t {
+        if (nullptr != this->groupSizes) {
+            return *this->groupSizes;
+        }
+        UNRECOVERABLE_IF(nullptr == this->kernel);
+        const auto kernelGroupSize = this->kernel->getGroupSize();
+        return {kernelGroupSize[0], kernelGroupSize[1], kernelGroupSize[2]};
+    }
+
     auto setGroupSizes(ze_group_size_t *groupSizes) -> void {
         this->groupSizes = groupSizes;
     }
@@ -640,9 +668,13 @@ ze_result_t captureCommand(L0::CommandList &srcCmdList, Graph *&graphCaptureTarg
         }
     }
     if (isCommandsGraphNodeDescriptorPresent<api>(apiArgs...)) {
-        if (const auto *captureSessionGraph = getCaptureSessionGraph(graphCaptureTarget, eventsWaitList);
-            (nullptr != captureSessionGraph) && (false == captureSessionGraph->isMutableGraph())) {
-            return ZE_RESULT_ERROR_INVALID_OPERATION_EXP;
+        if (const auto *captureSessionGraph = getCaptureSessionGraph(graphCaptureTarget, eventsWaitList); nullptr != captureSessionGraph) {
+            if (false == captureSessionGraph->isMutableGraph()) {
+                return ZE_RESULT_ERROR_INVALID_OPERATION_EXP;
+            }
+            if (false == areCommandsGraphNodeDescriptorFlagsSupported<api>(apiArgs...)) {
+                return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+            }
         }
     }
     if ((false == eventsWaitList.empty()) && ((nullptr == graphCaptureTarget) || (graphCaptureTarget->getRootGraph()->hasUnjoinedForks()))) { // either is not capturing and is potential fork or this can be a join operation (against any unjoined fork in the whole capture session)

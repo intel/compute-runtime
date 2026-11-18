@@ -6611,6 +6611,21 @@ TEST_F(L0DeviceGetCmdlistCreateFunTest, GivenQueryDeviceRecordReplayGraphWhenRet
     EXPECT_EQ(deviceRecordReplayGraphCapability, recordReplayGraphProperties.graphFlags);
 }
 
+TEST_F(L0DeviceGetCmdlistCreateFunTest, GivenQueryDeviceMutableGraphWhenReturnMutableGraphPropertiesThenProvidePerDeviceCapability) {
+    DebugManagerStateRestore restorer;
+    const ze_mutable_graph_node_exp_flags_t expectedMutableGraphCapability = ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT | ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_SIGNAL_EVENT;
+    debugManager.flags.OverrideMutableGraphCapability.set(static_cast<int32_t>(expectedMutableGraphCapability));
+
+    ze_mutable_graph_exp_properties_t mutableGraphProperties{ZE_STRUCTURE_TYPE_MUTABLE_GRAPH_EXP_PROPERTIES};
+
+    ze_device_properties_t deviceProperties{ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    deviceProperties.pNext = &mutableGraphProperties;
+
+    device->getProperties(&deviceProperties);
+    EXPECT_EQ(expectedMutableGraphCapability, mutableGraphProperties.flags);
+    EXPECT_EQ(L0GfxCoreHelper::getMutableGraphCapabilities(device->getNEODevice()->getRootDeviceEnvironment()), mutableGraphProperties.flags);
+}
+
 using MultipleDeviceMemAdviseTests = Test<MultiDeviceFixture>;
 
 TEST_F(MultipleDeviceMemAdviseTests, givenTargetDeviceNotSupportSharedSystemUsmThenExecuteMemAdviseReturnsError) {

@@ -66,6 +66,11 @@ XE_HPG_CORETEST_F(L0GfxCoreHelperTestXeHpg, GivenXeHpgWhenGettingRecordReplayGra
     EXPECT_EQ(0u, l0GfxCoreHelper.getPlatformRecordReplayGraphCapabilities());
 }
 
+XE_HPG_CORETEST_F(L0GfxCoreHelperTestXeHpg, GivenXeHpgWhenGettingMutableGraphCapabilityThenReturnCorrectValue) {
+    const auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    EXPECT_EQ(0u, l0GfxCoreHelper.getPlatformMutableGraphCapabilities());
+}
+
 XE_HPG_CORETEST_F(L0GfxCoreHelperTestXeHpg, GivenL0GfxCoreHelperWhenCheckingMetricsAggregationSupportThenReturnFalse) {
     MockExecutionEnvironment executionEnvironment;
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0].get();

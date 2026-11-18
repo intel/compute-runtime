@@ -723,7 +723,15 @@ template <CaptureApi api>
 concept IsGraphNodeCreatingApi = (api == CaptureApi::zeCommandListAppendLaunchKernelWithParameters) ||
                                  (api == CaptureApi::zeCommandListAppendLaunchKernelWithArguments);
 
+inline constexpr ze_mutable_graph_node_exp_flags_t allMutableGraphNodeFlagsExceptKernelInstruction = ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_KERNEL_ARGUMENT |
+                                                                                                     ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_COUNT |
+                                                                                                     ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GROUP_SIZE |
+                                                                                                     ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_GLOBAL_OFFSET |
+                                                                                                     ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_SIGNAL_EVENT |
+                                                                                                     ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_WAIT_EVENTS;
+
 bool isGraphNodeDescriptorPresent(const void *pNext);
+bool areGraphNodeDescriptorFlagsSupported(ze_command_list_handle_t hCommandList, const void *pNext);
 void updateClonedGraphNodeHandlePointer(void *clonedPNext, ze_graph_node_handle_t *phNodeHandle);
 void updateGraphNodeReferences(ze_graph_node_handle_t graphNodeHandle, ze_group_count_t *groupCounts, ze_group_size_t *groupSizes);
 
@@ -738,6 +746,19 @@ template <CaptureApi api, typename... TArgs>
     requires(false == IsGraphNodeCreatingApi<api>)
 inline bool isCommandsGraphNodeDescriptorPresent(TArgs... args) {
     return false;
+}
+
+template <CaptureApi api, typename... TArgs>
+    requires IsGraphNodeCreatingApi<api>
+inline bool areCommandsGraphNodeDescriptorFlagsSupported(TArgs... args) {
+    typename Closure<api>::ApiArgs structuredApiArgs{args...};
+    return areGraphNodeDescriptorFlagsSupported(structuredApiArgs.hCommandList, structuredApiArgs.pNext);
+}
+
+template <CaptureApi api, typename... TArgs>
+    requires(false == IsGraphNodeCreatingApi<api>)
+inline bool areCommandsGraphNodeDescriptorFlagsSupported(TArgs... args) {
+    return true;
 }
 
 struct IndirectArgsWithWaitEvents {

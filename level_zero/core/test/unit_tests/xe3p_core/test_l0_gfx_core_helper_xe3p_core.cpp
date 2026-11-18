@@ -147,6 +147,11 @@ XE3P_CORETEST_F(L0GfxCoreHelperTestXe3p, GivenXe3pWhenGettingRecordReplayGraphCa
     EXPECT_EQ(1u, l0GfxCoreHelper.getPlatformRecordReplayGraphCapabilities());
 }
 
+XE3P_CORETEST_F(L0GfxCoreHelperTestXe3p, GivenXe3pWhenGettingMutableGraphCapabilityThenReturnCorrectValue) {
+    const auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    EXPECT_EQ(0u, l0GfxCoreHelper.getPlatformMutableGraphCapabilities());
+}
+
 XE3P_CORETEST_F(L0GfxCoreHelperTestXe3p, GivenXe3pWhenCallingThreadResumeRequiresUnlockThenReturnTrue) {
     const auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
     EXPECT_TRUE(l0GfxCoreHelper.threadResumeRequiresUnlock());

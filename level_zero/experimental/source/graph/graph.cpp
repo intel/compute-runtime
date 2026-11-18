@@ -18,6 +18,7 @@
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/event/event.h"
+#include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/helpers/pnext.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
 #include "level_zero/core/source/mutable_cmdlist/mutable_cmdlist.h"
@@ -2377,6 +2378,23 @@ bool getGraphExternalSignalEventFlagFromPNext(const void *pNext) {
 
 bool isGraphNodeDescriptorPresent(const void *pNext) {
     return nullptr != findGraphNodeDescriptor(pNext);
+}
+
+bool areGraphNodeDescriptorFlagsSupported(ze_command_list_handle_t hCommandList, const void *pNext) {
+    auto graphNodeDesc = findGraphNodeDescriptor(pNext);
+    if (nullptr == graphNodeDesc) {
+        return true;
+    }
+    ze_mutable_graph_node_exp_flags_t requestedFlags = 0u;
+    if (0u == graphNodeDesc->flags) {
+        requestedFlags = allMutableGraphNodeFlagsExceptKernelInstruction;
+    } else {
+        requestedFlags = graphNodeDesc->flags;
+    }
+
+    auto &rootDeviceEnvironment = CommandList::fromHandle(hCommandList)->getDevice()->getNEODevice()->getRootDeviceEnvironment();
+    const auto supportedFlags = L0GfxCoreHelper::getMutableGraphCapabilities(rootDeviceEnvironment);
+    return 0u == (requestedFlags & ~supportedFlags);
 }
 
 struct VisitContext {

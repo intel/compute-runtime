@@ -114,6 +114,14 @@ ze_record_replay_graph_ext_flags_t L0GfxCoreHelper::getRecordReplayGraphCapabili
     return l0GfxCoreHelper.getPlatformRecordReplayGraphCapabilities();
 }
 
+ze_mutable_graph_node_exp_flags_t L0GfxCoreHelper::getMutableGraphCapabilities(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) {
+    if (NEO::debugManager.flags.OverrideMutableGraphCapability.get() != -1) {
+        return static_cast<ze_mutable_graph_node_exp_flags_t>(NEO::debugManager.flags.OverrideMutableGraphCapability.get());
+    }
+    auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
+    return l0GfxCoreHelper.getPlatformMutableGraphCapabilities();
+}
+
 void L0GfxCoreHelper::p2pDecompressBufferIfRequired(NEO::GraphicsAllocation *alloc, DriverHandle *driverHandle) const {
 }
 
