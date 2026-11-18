@@ -43,16 +43,12 @@ cl_int CL_API_CALL clGetDeviceIDs(cl_platform_id platform,
                                          CL_DEVICE_TYPE_CUSTOM;
 
     if ((deviceType & validType) == 0) {
-        cl_int tracingRetVal = CL_INVALID_DEVICE_TYPE;
-        TRACING_EXIT(ClGetDeviceIDs, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(CL_INVALID_DEVICE_TYPE);
     }
 
     if ((devices == nullptr && numDevices == nullptr) ||
         (devices && numEntries == 0)) {
-        cl_int tracingRetVal = CL_INVALID_VALUE;
-        TRACING_EXIT(ClGetDeviceIDs, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(CL_INVALID_VALUE);
     }
 
     if ((deviceType & CL_DEVICE_TYPE_ALL) == CL_DEVICE_TYPE_ALL) {
@@ -66,9 +62,7 @@ cl_int CL_API_CALL clGetDeviceIDs(cl_platform_id platform,
         if (numDevices) {
             *numDevices = 0;
         }
-        cl_int tracingRetVal = CL_DEVICE_NOT_FOUND;
-        TRACING_EXIT(ClGetDeviceIDs, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(CL_DEVICE_NOT_FOUND);
     }
 
     const auto numAvailableDevices = allGpusRequested ? static_cast<cl_uint>(pPlatform->getDevices().size()) : 1u;
@@ -83,9 +77,7 @@ cl_int CL_API_CALL clGetDeviceIDs(cl_platform_id platform,
         }
     }
 
-    cl_int tracingRetVal = CL_SUCCESS;
-    TRACING_EXIT(ClGetDeviceIDs, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(CL_SUCCESS);
 }
 
 cl_int CL_API_CALL clGetDeviceInfo(cl_device_id device,
@@ -96,13 +88,10 @@ cl_int CL_API_CALL clGetDeviceInfo(cl_device_id device,
     TRACING_ENTER(ClGetDeviceInfo, &device, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
     auto [retVal, pDevice] = NEO::LEO::validateAndCast(std::make_tuple(device));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClGetDeviceInfo, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
-    cl_int tracingRetVal = pDevice->getDeviceInfo(paramName, paramValueSize, paramValue, paramValueSizeRet);
-    TRACING_EXIT(ClGetDeviceInfo, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(pDevice->getDeviceInfo(paramName, paramValueSize, paramValue, paramValueSizeRet));
 }
 
 cl_int CL_API_CALL clCreateSubDevices(cl_device_id inDevice,
@@ -113,50 +102,40 @@ cl_int CL_API_CALL clCreateSubDevices(cl_device_id inDevice,
     TRACING_ENTER(ClCreateSubDevices, &inDevice, &properties, &numDevices, &outDevices, &numDevicesRet);
     auto pInDevice = NEO::LEO::castToObject<NEO::LEO::ClDevice>(inDevice);
     if (pInDevice == nullptr) [[unlikely]] {
-        cl_int tracingRetVal = CL_INVALID_DEVICE;
-        TRACING_EXIT(ClCreateSubDevices, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(CL_INVALID_DEVICE);
     }
 
     if (numDevicesRet != nullptr) {
         *numDevicesRet = 0;
     }
 
-    cl_int tracingRetVal = CL_DEVICE_PARTITION_FAILED;
-    TRACING_EXIT(ClCreateSubDevices, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(CL_DEVICE_PARTITION_FAILED);
 }
 
 cl_int CL_API_CALL clRetainDevice(cl_device_id device) {
     TRACING_ENTER(ClRetainDevice, &device);
     auto [retVal, pDevice] = NEO::LEO::validateAndCast(std::make_tuple(device));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClRetainDevice, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
     if (pDevice->getIsSubdevice()) [[unlikely]] {
         pDevice->incRefApi();
     }
-    cl_int tracingRetVal = CL_SUCCESS;
-    TRACING_EXIT(ClRetainDevice, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(CL_SUCCESS);
 }
 
 cl_int CL_API_CALL clReleaseDevice(cl_device_id device) {
     TRACING_ENTER(ClReleaseDevice, &device);
     auto [retVal, pDevice] = NEO::LEO::validateAndCast(std::make_tuple(device));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClReleaseDevice, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
     if (pDevice->getIsSubdevice()) [[unlikely]] {
         pDevice->decRefApi();
     }
-    cl_int tracingRetVal = CL_SUCCESS;
-    TRACING_EXIT(ClReleaseDevice, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(CL_SUCCESS);
 }
 
 cl_int CL_API_CALL clGetDeviceAndHostTimer(cl_device_id device,
@@ -165,19 +144,14 @@ cl_int CL_API_CALL clGetDeviceAndHostTimer(cl_device_id device,
     TRACING_ENTER(ClGetDeviceAndHostTimer, &device, &deviceTimestamp, &hostTimestamp);
     auto [retVal, pDevice] = NEO::LEO::validateAndCast(std::make_tuple(device), std::make_tuple(static_cast<void *>(deviceTimestamp), static_cast<void *>(hostTimestamp)));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClGetDeviceAndHostTimer, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
     if (!pDevice->getDeviceAndHostTimer(static_cast<uint64_t *>(deviceTimestamp), static_cast<uint64_t *>(hostTimestamp))) [[unlikely]] {
-        cl_int tracingRetVal = CL_OUT_OF_RESOURCES;
-        TRACING_EXIT(ClGetDeviceAndHostTimer, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(CL_OUT_OF_RESOURCES);
     }
 
-    cl_int tracingRetVal = CL_SUCCESS;
-    TRACING_EXIT(ClGetDeviceAndHostTimer, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(CL_SUCCESS);
 }
 
 cl_int CL_API_CALL clGetHostTimer(cl_device_id device,
@@ -185,19 +159,14 @@ cl_int CL_API_CALL clGetHostTimer(cl_device_id device,
     TRACING_ENTER(ClGetHostTimer, &device, &hostTimestamp);
     auto [retVal, pDevice] = NEO::LEO::validateAndCast(std::make_tuple(device), std::make_tuple(static_cast<void *>(hostTimestamp)));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClGetHostTimer, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
     if (!pDevice->getHostTimer(static_cast<uint64_t *>(hostTimestamp))) [[unlikely]] {
-        cl_int tracingRetVal = CL_OUT_OF_RESOURCES;
-        TRACING_EXIT(ClGetHostTimer, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(CL_OUT_OF_RESOURCES);
     }
 
-    cl_int tracingRetVal = CL_SUCCESS;
-    TRACING_EXIT(ClGetHostTimer, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(CL_SUCCESS);
 }
 
 cl_int CL_API_CALL clAddCommentINTEL(cl_device_id device, const char *comment) {
@@ -206,25 +175,20 @@ cl_int CL_API_CALL clAddCommentINTEL(cl_device_id device, const char *comment) {
         std::make_tuple(device),
         std::make_tuple());
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClAddCommentINTEL, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
     auto aubCenter = pDevice->getL0Object()->getNEODevice()->getRootDeviceEnvironment().aubCenter.get();
 
     if (!comment || (aubCenter && !aubCenter->getAubManager())) {
-        cl_int tracingRetVal = CL_INVALID_VALUE;
-        TRACING_EXIT(ClAddCommentINTEL, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(CL_INVALID_VALUE);
     }
 
     if (aubCenter) {
         aubCenter->getAubManager()->addComment(comment);
     }
 
-    cl_int tracingRetVal = CL_SUCCESS;
-    TRACING_EXIT(ClAddCommentINTEL, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(CL_SUCCESS);
 }
 
 cl_int CL_API_CALL clGetDeviceGlobalVariablePointerINTEL(
@@ -236,15 +200,12 @@ cl_int CL_API_CALL clGetDeviceGlobalVariablePointerINTEL(
     TRACING_ENTER(ClGetDeviceGlobalVariablePointerINTEL, &device, &program, &globalVariableName, &globalVariableSizeRet, &globalVariablePointerRet);
     auto [retVal, pProgram] = NEO::LEO::validateAndCast(std::make_tuple(program));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClGetDeviceGlobalVariablePointerINTEL, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
     auto pDevice = NEO::LEO::castToObject<NEO::LEO::ClDevice>(device);
     auto moduleHandle = pDevice ? pProgram->getModuleHandle(pDevice->getRootDeviceIndex()) : pProgram->getModuleHandle();
-    cl_int tracingRetVal = L0ToClResultMapper(zeModuleGetGlobalPointer(moduleHandle, globalVariableName, globalVariableSizeRet, globalVariablePointerRet));
-    TRACING_EXIT(ClGetDeviceGlobalVariablePointerINTEL, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(L0ToClResultMapper(zeModuleGetGlobalPointer(moduleHandle, globalVariableName, globalVariableSizeRet, globalVariablePointerRet)));
 }
 
 cl_int CL_API_CALL clGetDeviceFunctionPointerINTEL(
@@ -255,15 +216,12 @@ cl_int CL_API_CALL clGetDeviceFunctionPointerINTEL(
     TRACING_ENTER(ClGetDeviceFunctionPointerINTEL, &device, &program, &functionName, &functionPointerRet);
     auto [retVal, pProgram] = NEO::LEO::validateAndCast(std::make_tuple(program));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClGetDeviceFunctionPointerINTEL, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
     auto pDevice = NEO::LEO::castToObject<NEO::LEO::ClDevice>(device);
     auto moduleHandle = pDevice ? pProgram->getModuleHandle(pDevice->getRootDeviceIndex()) : pProgram->getModuleHandle();
-    cl_int tracingRetVal = L0ToClResultMapper(zeModuleGetFunctionPointer(moduleHandle, functionName, reinterpret_cast<void **>(functionPointerRet)));
-    TRACING_EXIT(ClGetDeviceFunctionPointerINTEL, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(L0ToClResultMapper(zeModuleGetFunctionPointer(moduleHandle, functionName, reinterpret_cast<void **>(functionPointerRet))));
 }
 
 CL_API_ENTRY cl_int CL_API_CALL

@@ -59,14 +59,11 @@ cl_int CL_API_CALL clEnqueueReadBuffer(cl_command_queue commandQueue,
         std::make_tuple(commandQueue, NEO::LEO::BufferObj{buffer}),
         std::make_tuple(ptr, NEO::LEO::EventWaitList{eventWaitList, numEventsInWaitList}));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClEnqueueReadBuffer, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
     if (pBuffer->readMemObjFlagsInvalid()) [[unlikely]] {
-        cl_int tracingRetVal = CL_INVALID_OPERATION;
-        TRACING_EXIT(ClEnqueueReadBuffer, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(CL_INVALID_OPERATION);
     }
 
     auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_READ_BUFFER, pCommandQueue);
@@ -83,9 +80,7 @@ cl_int CL_API_CALL clEnqueueReadBuffer(cl_command_queue commandQueue,
         ret = pCommandQueue->hostSynchronize(std::numeric_limits<uint64_t>::max());
     }
 
-    cl_int tracingRetVal = L0ToClResultMapper(ret);
-    TRACING_EXIT(ClEnqueueReadBuffer, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(L0ToClResultMapper(ret));
 }
 
 cl_int CL_API_CALL clEnqueueReadBufferRect(cl_command_queue commandQueue,
@@ -107,14 +102,11 @@ cl_int CL_API_CALL clEnqueueReadBufferRect(cl_command_queue commandQueue,
         std::make_tuple(commandQueue, NEO::LEO::BufferObj{buffer}),
         std::make_tuple(ptr, NEO::LEO::EventWaitList{eventWaitList, numEventsInWaitList}));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClEnqueueReadBufferRect, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
     if (pBuffer->readMemObjFlagsInvalid()) [[unlikely]] {
-        cl_int tracingRetVal = CL_INVALID_OPERATION;
-        TRACING_EXIT(ClEnqueueReadBufferRect, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(CL_INVALID_OPERATION);
     }
 
     auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_READ_BUFFER_RECT, pCommandQueue);
@@ -146,9 +138,7 @@ cl_int CL_API_CALL clEnqueueReadBufferRect(cl_command_queue commandQueue,
         ret = pCommandQueue->hostSynchronize(std::numeric_limits<uint64_t>::max());
     }
 
-    cl_int tracingRetVal = L0ToClResultMapper(ret);
-    TRACING_EXIT(ClEnqueueReadBufferRect, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(L0ToClResultMapper(ret));
 }
 
 cl_int CL_API_CALL clEnqueueWriteBuffer(cl_command_queue commandQueue,
@@ -165,14 +155,11 @@ cl_int CL_API_CALL clEnqueueWriteBuffer(cl_command_queue commandQueue,
         std::make_tuple(commandQueue, NEO::LEO::BufferObj{buffer}),
         std::make_tuple(const_cast<void *>(ptr), NEO::LEO::EventWaitList{eventWaitList, numEventsInWaitList}));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClEnqueueWriteBuffer, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
     if (pBuffer->writeMemObjFlagsInvalid()) [[unlikely]] {
-        cl_int tracingRetVal = CL_INVALID_OPERATION;
-        TRACING_EXIT(ClEnqueueWriteBuffer, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(CL_INVALID_OPERATION);
     }
 
     auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_WRITE_BUFFER, pCommandQueue);
@@ -189,9 +176,7 @@ cl_int CL_API_CALL clEnqueueWriteBuffer(cl_command_queue commandQueue,
         ret = pCommandQueue->hostSynchronize(std::numeric_limits<uint64_t>::max());
     }
 
-    cl_int tracingRetVal = L0ToClResultMapper(ret);
-    TRACING_EXIT(ClEnqueueWriteBuffer, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(L0ToClResultMapper(ret));
 }
 
 cl_int CL_API_CALL clEnqueueWriteBufferRect(cl_command_queue commandQueue,
@@ -213,14 +198,11 @@ cl_int CL_API_CALL clEnqueueWriteBufferRect(cl_command_queue commandQueue,
         std::make_tuple(commandQueue, NEO::LEO::BufferObj{buffer}),
         std::make_tuple(const_cast<void *>(ptr), NEO::LEO::EventWaitList{eventWaitList, numEventsInWaitList}));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClEnqueueWriteBufferRect, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
     if (pBuffer->writeMemObjFlagsInvalid()) [[unlikely]] {
-        cl_int tracingRetVal = CL_INVALID_OPERATION;
-        TRACING_EXIT(ClEnqueueWriteBufferRect, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(CL_INVALID_OPERATION);
     }
 
     auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_WRITE_BUFFER_RECT, pCommandQueue);
@@ -252,9 +234,7 @@ cl_int CL_API_CALL clEnqueueWriteBufferRect(cl_command_queue commandQueue,
         ret = pCommandQueue->hostSynchronize(std::numeric_limits<uint64_t>::max());
     }
 
-    cl_int tracingRetVal = L0ToClResultMapper(ret);
-    TRACING_EXIT(ClEnqueueWriteBufferRect, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(L0ToClResultMapper(ret));
 }
 
 cl_int CL_API_CALL clEnqueueFillBuffer(cl_command_queue commandQueue,
@@ -271,8 +251,7 @@ cl_int CL_API_CALL clEnqueueFillBuffer(cl_command_queue commandQueue,
         std::make_tuple(commandQueue, NEO::LEO::BufferObj{buffer}),
         std::make_tuple(const_cast<void *>(pattern), NEO::LEO::EventWaitList{eventWaitList, numEventsInWaitList}));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClEnqueueFillBuffer, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
     auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_FILL_BUFFER, pCommandQueue);
@@ -286,8 +265,7 @@ cl_int CL_API_CALL clEnqueueFillBuffer(cl_command_queue commandQueue,
                                                                             hSignalEvent,
                                                                             waitEvents.size(),
                                                                             waitEvents.data()));
-    TRACING_EXIT(ClEnqueueFillBuffer, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(tracingRetVal);
 }
 
 cl_int CL_API_CALL clEnqueueCopyBuffer(cl_command_queue commandQueue,
@@ -304,8 +282,7 @@ cl_int CL_API_CALL clEnqueueCopyBuffer(cl_command_queue commandQueue,
         std::make_tuple(commandQueue, NEO::LEO::BufferObj{srcBuffer}, NEO::LEO::BufferObj{dstBuffer}),
         std::make_tuple(NEO::LEO::EventWaitList{eventWaitList, numEventsInWaitList}));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClEnqueueCopyBuffer, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
     auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_COPY_BUFFER, pCommandQueue);
@@ -318,8 +295,7 @@ cl_int CL_API_CALL clEnqueueCopyBuffer(cl_command_queue commandQueue,
                                                                             hSignalEvent,
                                                                             waitEvents.size(),
                                                                             waitEvents.data()));
-    TRACING_EXIT(ClEnqueueCopyBuffer, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(tracingRetVal);
 }
 
 cl_int CL_API_CALL clEnqueueCopyBufferRect(cl_command_queue commandQueue,
@@ -340,8 +316,7 @@ cl_int CL_API_CALL clEnqueueCopyBufferRect(cl_command_queue commandQueue,
         std::make_tuple(commandQueue, NEO::LEO::BufferObj{srcBuffer}, NEO::LEO::BufferObj{dstBuffer}),
         std::make_tuple(NEO::LEO::EventWaitList{eventWaitList, numEventsInWaitList}));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClEnqueueCopyBufferRect, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
     auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_COPY_BUFFER_RECT, pCommandQueue);
@@ -369,9 +344,7 @@ cl_int CL_API_CALL clEnqueueCopyBufferRect(cl_command_queue commandQueue,
                                                           waitEvents.size(),
                                                           waitEvents.data());
 
-    cl_int tracingRetVal = L0ToClResultMapper(ret);
-    TRACING_EXIT(ClEnqueueCopyBufferRect, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(L0ToClResultMapper(ret));
 }
 
 cl_int CL_API_CALL clEnqueueReadImage(cl_command_queue commandQueue,
@@ -390,22 +363,18 @@ cl_int CL_API_CALL clEnqueueReadImage(cl_command_queue commandQueue,
         std::make_tuple(commandQueue, NEO::LEO::ImageObj{image}),
         std::make_tuple(ptr, NEO::LEO::EventWaitList{eventWaitList, numEventsInWaitList}));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClEnqueueReadImage, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
     if (pImage->readMemObjFlagsInvalid()) [[unlikely]] {
-        cl_int tracingRetVal = CL_INVALID_OPERATION;
-        TRACING_EXIT(ClEnqueueReadImage, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(CL_INVALID_OPERATION);
     }
 
     const auto readFormat = pImage->getOriginalFormat();
     if (NEO::LEO::isPackedYuvImage(&readFormat)) {
         retVal = NEO::LEO::validateYuvOperation(origin, region);
         if (retVal != CL_SUCCESS) {
-            TRACING_EXIT(ClEnqueueReadImage, &retVal);
-            return retVal;
+            return tracingScope.exit(retVal);
         }
     }
 
@@ -432,9 +401,7 @@ cl_int CL_API_CALL clEnqueueReadImage(cl_command_queue commandQueue,
         ret = pCommandQueue->hostSynchronize(std::numeric_limits<uint64_t>::max());
     }
 
-    cl_int tracingRetVal = L0ToClResultMapper(ret);
-    TRACING_EXIT(ClEnqueueReadImage, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(L0ToClResultMapper(ret));
 }
 
 cl_int CL_API_CALL clEnqueueWriteImage(cl_command_queue commandQueue,
@@ -453,22 +420,18 @@ cl_int CL_API_CALL clEnqueueWriteImage(cl_command_queue commandQueue,
         std::make_tuple(commandQueue, NEO::LEO::ImageObj{image}),
         std::make_tuple(const_cast<void *>(ptr), NEO::LEO::EventWaitList{eventWaitList, numEventsInWaitList}));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClEnqueueWriteImage, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
     if (pImage->writeMemObjFlagsInvalid()) [[unlikely]] {
-        cl_int tracingRetVal = CL_INVALID_OPERATION;
-        TRACING_EXIT(ClEnqueueWriteImage, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(CL_INVALID_OPERATION);
     }
 
     const auto writeFormat = pImage->getOriginalFormat();
     if (NEO::LEO::isPackedYuvImage(&writeFormat)) {
         retVal = NEO::LEO::validateYuvOperation(origin, region);
         if (retVal != CL_SUCCESS) {
-            TRACING_EXIT(ClEnqueueWriteImage, &retVal);
-            return retVal;
+            return tracingScope.exit(retVal);
         }
     }
 
@@ -495,9 +458,7 @@ cl_int CL_API_CALL clEnqueueWriteImage(cl_command_queue commandQueue,
         ret = pCommandQueue->hostSynchronize(std::numeric_limits<uint64_t>::max());
     }
 
-    cl_int tracingRetVal = L0ToClResultMapper(ret);
-    TRACING_EXIT(ClEnqueueWriteImage, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(L0ToClResultMapper(ret));
 }
 
 cl_int CL_API_CALL clEnqueueFillImage(cl_command_queue commandQueue,
@@ -513,8 +474,7 @@ cl_int CL_API_CALL clEnqueueFillImage(cl_command_queue commandQueue,
         std::make_tuple(commandQueue, NEO::LEO::ImageObj{image}),
         std::make_tuple(const_cast<void *>(fillColor), NEO::LEO::EventWaitList{eventWaitList, numEventsInWaitList}));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClEnqueueFillImage, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
     auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_FILL_IMAGE, pCommandQueue);
@@ -526,9 +486,7 @@ cl_int CL_API_CALL clEnqueueFillImage(cl_command_queue commandQueue,
     ze_result_t ret = pImage->appendFill(pCommandQueue->getL0Handle(), pCommandQueue->getDevice(), fillColor, origin, region,
                                          hSignalEvent, static_cast<uint32_t>(waitEvents.size()), waitEvents.data());
 
-    cl_int tracingRetVal = L0ToClResultMapper(ret);
-    TRACING_EXIT(ClEnqueueFillImage, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(L0ToClResultMapper(ret));
 }
 
 cl_int CL_API_CALL clEnqueueCopyImage(cl_command_queue commandQueue,
@@ -545,14 +503,12 @@ cl_int CL_API_CALL clEnqueueCopyImage(cl_command_queue commandQueue,
         std::make_tuple(commandQueue, NEO::LEO::ImageObj{srcImage}, NEO::LEO::ImageObj{dstImage}),
         std::make_tuple(NEO::LEO::EventWaitList{eventWaitList, numEventsInWaitList}));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClEnqueueCopyImage, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
     retVal = NEO::LEO::validateImageCopy(pSrcImage->getOriginalFormat(), pDstImage->getOriginalFormat(), srcOrigin, dstOrigin, region);
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClEnqueueCopyImage, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
     auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_COPY_IMAGE, pCommandQueue);
@@ -572,9 +528,7 @@ cl_int CL_API_CALL clEnqueueCopyImage(cl_command_queue commandQueue,
                                                          hSignalEvent,
                                                          waitEvents.size(),
                                                          waitEvents.data());
-    cl_int tracingRetVal = L0ToClResultMapper(ret);
-    TRACING_EXIT(ClEnqueueCopyImage, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(L0ToClResultMapper(ret));
 }
 
 cl_int CL_API_CALL clEnqueueCopyImageToBuffer(cl_command_queue commandQueue,
@@ -591,16 +545,14 @@ cl_int CL_API_CALL clEnqueueCopyImageToBuffer(cl_command_queue commandQueue,
         std::make_tuple(commandQueue, NEO::LEO::ImageObj{srcImage}, NEO::LEO::BufferObj{dstBuffer}),
         std::make_tuple(NEO::LEO::EventWaitList{eventWaitList, numEventsInWaitList}));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClEnqueueCopyImageToBuffer, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
     const auto srcFormat = pSrcImage->getOriginalFormat();
     if (NEO::LEO::isPackedYuvImage(&srcFormat)) {
         retVal = NEO::LEO::validateYuvOperation(srcOrigin, region);
         if (retVal != CL_SUCCESS) {
-            TRACING_EXIT(ClEnqueueCopyImageToBuffer, &retVal);
-            return retVal;
+            return tracingScope.exit(retVal);
         }
     }
 
@@ -617,9 +569,7 @@ cl_int CL_API_CALL clEnqueueCopyImageToBuffer(cl_command_queue commandQueue,
                                                              static_cast<uint32_t>(waitEvents.size()),
                                                              waitEvents.data());
 
-    cl_int tracingRetVal = L0ToClResultMapper(ret);
-    TRACING_EXIT(ClEnqueueCopyImageToBuffer, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(L0ToClResultMapper(ret));
 }
 
 cl_int CL_API_CALL clEnqueueCopyBufferToImage(cl_command_queue commandQueue,
@@ -636,16 +586,14 @@ cl_int CL_API_CALL clEnqueueCopyBufferToImage(cl_command_queue commandQueue,
         std::make_tuple(commandQueue, NEO::LEO::BufferObj{srcBuffer}, NEO::LEO::ImageObj{dstImage}),
         std::make_tuple(NEO::LEO::EventWaitList{eventWaitList, numEventsInWaitList}));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClEnqueueCopyBufferToImage, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
     const auto dstFormat = pDstImage->getOriginalFormat();
     if (NEO::LEO::isPackedYuvImage(&dstFormat)) {
         retVal = NEO::LEO::validateYuvOperation(dstOrigin, region);
         if (retVal != CL_SUCCESS) {
-            TRACING_EXIT(ClEnqueueCopyBufferToImage, &retVal);
-            return retVal;
+            return tracingScope.exit(retVal);
         }
     }
 
@@ -662,9 +610,7 @@ cl_int CL_API_CALL clEnqueueCopyBufferToImage(cl_command_queue commandQueue,
                                                              static_cast<uint32_t>(waitEvents.size()),
                                                              waitEvents.data());
 
-    cl_int tracingRetVal = L0ToClResultMapper(ret);
-    TRACING_EXIT(ClEnqueueCopyBufferToImage, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(L0ToClResultMapper(ret));
 }
 
 void *CL_API_CALL clEnqueueMapBuffer(cl_command_queue commandQueue,
@@ -685,25 +631,19 @@ void *CL_API_CALL clEnqueueMapBuffer(cl_command_queue commandQueue,
         std::make_tuple(NEO::LEO::EventWaitList{eventWaitList, numEventsInWaitList}));
     if (retVal != CL_SUCCESS) [[unlikely]] {
         errcodeHelper.set(retVal);
-        void *tracingRetVal = nullptr;
-        TRACING_EXIT(ClEnqueueMapBuffer, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(nullptr);
     }
 
     if (pBuffer->mapMemObjFlagsInvalid(mapFlags)) [[unlikely]] {
         errcodeHelper.set(CL_INVALID_OPERATION);
-        void *tracingRetVal = nullptr;
-        TRACING_EXIT(ClEnqueueMapBuffer, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(nullptr);
     }
 
     if ((pBuffer->getCpuPtr() != pBuffer->getUsmPtr() && !pBuffer->isZeroCopy()) || pBuffer->getUsesSvm()) {
         if (!pBuffer->getCpuPtr()) {
             errcodeHelper.set(pBuffer->createMapAllocation());
             if (errcodeHelper.localErrcode != CL_SUCCESS) {
-                void *tracingRetVal = nullptr;
-                TRACING_EXIT(ClEnqueueMapBuffer, &tracingRetVal);
-                return tracingRetVal;
+                return tracingScope.exit(nullptr);
             }
         }
         if (pBuffer->getUsesSvm()) {
@@ -728,27 +668,21 @@ void *CL_API_CALL clEnqueueMapBuffer(cl_command_queue commandQueue,
     }
 
     if (errcodeHelper.localErrcode != CL_SUCCESS) {
-        void *tracingRetVal = nullptr;
-        TRACING_EXIT(ClEnqueueMapBuffer, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(nullptr);
     }
 
     NEO::LEO::MemObjSizeArray sizes{cb, 0, 0};
     NEO::LEO::MemObjOffsetArray offsets{offset, 0, 0};
     if (!pBuffer->getMapOperationsHandler().add(ptrOffset(pBuffer->getCpuPtr(), offset), cb, mapFlags, sizes, offsets)) {
         errcodeHelper.set(CL_INVALID_OPERATION);
-        void *tracingRetVal = nullptr;
-        TRACING_EXIT(ClEnqueueMapBuffer, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(nullptr);
     }
 
     if (blockingMap) {
         errcodeHelper.set(clFinish(commandQueue));
     }
 
-    void *tracingRetVal = ptrOffset(pBuffer->getCpuPtr(), offset);
-    TRACING_EXIT(ClEnqueueMapBuffer, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(ptrOffset(pBuffer->getCpuPtr(), offset));
 }
 
 void *CL_API_CALL clEnqueueMapImage(cl_command_queue commandQueue,
@@ -771,24 +705,18 @@ void *CL_API_CALL clEnqueueMapImage(cl_command_queue commandQueue,
         std::make_tuple(NEO::LEO::EventWaitList{eventWaitList, numEventsInWaitList}));
     if (retVal != CL_SUCCESS) [[unlikely]] {
         errcodeHelper.set(retVal);
-        void *tracingRetVal = nullptr;
-        TRACING_EXIT(ClEnqueueMapImage, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(nullptr);
     }
 
     if (pImage->mapMemObjFlagsInvalid(mapFlags)) [[unlikely]] {
         errcodeHelper.set(CL_INVALID_OPERATION);
-        void *tracingRetVal = nullptr;
-        TRACING_EXIT(ClEnqueueMapImage, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(nullptr);
     }
 
     const uint32_t mipLevel = getOclMipLevel(pImage, origin);
     if (mipLevel >= std::max(pImage->getL0Object()->getImageInfo().imgDesc.numMipLevels, 1u)) [[unlikely]] {
         errcodeHelper.set(CL_INVALID_MIP_LEVEL);
-        void *tracingRetVal = nullptr;
-        TRACING_EXIT(ClEnqueueMapImage, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(nullptr);
     }
 
     const auto mapFormat = pImage->getOriginalFormat();
@@ -796,9 +724,7 @@ void *CL_API_CALL clEnqueueMapImage(cl_command_queue commandQueue,
         retVal = NEO::LEO::validateYuvOperation(origin, region);
         if (retVal != CL_SUCCESS) {
             errcodeHelper.set(retVal);
-            void *tracingRetVal = nullptr;
-            TRACING_EXIT(ClEnqueueMapImage, &tracingRetVal);
-            return tracingRetVal;
+            return tracingScope.exit(nullptr);
         }
     }
     {
@@ -814,9 +740,7 @@ void *CL_API_CALL clEnqueueMapImage(cl_command_queue commandQueue,
                                                                 &cpuPtr)));
             pImage->setCpuPtr(cpuPtr);
             if (errcodeHelper.localErrcode != CL_SUCCESS) {
-                void *tracingRetVal = nullptr;
-                TRACING_EXIT(ClEnqueueMapImage, &tracingRetVal);
-                return tracingRetVal;
+                return tracingScope.exit(nullptr);
             }
         }
     }
@@ -857,16 +781,12 @@ void *CL_API_CALL clEnqueueMapImage(cl_command_queue commandQueue,
         }
     }
     if (errcodeHelper.localErrcode != CL_SUCCESS) {
-        void *tracingRetVal = nullptr;
-        TRACING_EXIT(ClEnqueueMapImage, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(nullptr);
     }
 
     if (!pImage->getMapOperationsHandler().add(ptrOffset(pImage->getCpuPtr(), offset), size, mapFlags, sizes, offsets, mipLevel)) {
         errcodeHelper.set(CL_INVALID_OPERATION);
-        void *tracingRetVal = nullptr;
-        TRACING_EXIT(ClEnqueueMapImage, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(nullptr);
     }
 
     if (imageRowPitch) {
@@ -877,9 +797,7 @@ void *CL_API_CALL clEnqueueMapImage(cl_command_queue commandQueue,
         *imageSlicePitch = hostSlicePitch;
     }
 
-    void *tracingRetVal = ptrOffset(pImage->getCpuPtr(), offset);
-    TRACING_EXIT(ClEnqueueMapImage, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(ptrOffset(pImage->getCpuPtr(), offset));
 }
 
 cl_int CL_API_CALL clEnqueueUnmapMemObject(cl_command_queue commandQueue,
@@ -893,8 +811,7 @@ cl_int CL_API_CALL clEnqueueUnmapMemObject(cl_command_queue commandQueue,
         std::make_tuple(commandQueue, memObj),
         std::make_tuple(NEO::LEO::EventWaitList{eventWaitList, numEventsInWaitList}));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClEnqueueUnmapMemObject, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
     NEO::LEO::MapInfo mapInfo{};
@@ -905,15 +822,11 @@ cl_int CL_API_CALL clEnqueueUnmapMemObject(cl_command_queue commandQueue,
         // Validate and cast to Image type
         auto pImage = static_cast<NEO::LEO::Image *>(pMemObj);
         if (!pImage) [[unlikely]] {
-            cl_int tracingRetVal = CL_INVALID_MEM_OBJECT;
-            TRACING_EXIT(ClEnqueueUnmapMemObject, &tracingRetVal);
-            return tracingRetVal;
+            return tracingScope.exit(CL_INVALID_MEM_OBJECT);
         }
 
         if (mapInfo.readOnly) {
-            cl_int tracingRetVal = clEnqueueMarkerWithWaitList(commandQueue, numEventsInWaitList, eventWaitList, event);
-            TRACING_EXIT(ClEnqueueUnmapMemObject, &tracingRetVal);
-            return tracingRetVal;
+            return tracingScope.exit(clEnqueueMarkerWithWaitList(commandQueue, numEventsInWaitList, eventWaitList, event));
         }
 
         size_t origin[4] = {mapInfo.offset[0], mapInfo.offset[1], mapInfo.offset[2], 0};
@@ -950,31 +863,22 @@ cl_int CL_API_CALL clEnqueueUnmapMemObject(cl_command_queue commandQueue,
                                                    numEventsInWaitList,
                                                    eventWaitList,
                                                    event);
-        TRACING_EXIT(ClEnqueueUnmapMemObject, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(tracingRetVal);
     } else {
         // Validate and cast to Buffer type
         auto pBuffer = static_cast<NEO::LEO::Buffer *>(pMemObj);
         if (!pBuffer) [[unlikely]] {
-            cl_int tracingRetVal = CL_INVALID_MEM_OBJECT;
-            TRACING_EXIT(ClEnqueueUnmapMemObject, &tracingRetVal);
-            return tracingRetVal;
+            return tracingScope.exit(CL_INVALID_MEM_OBJECT);
         }
 
         if (pBuffer->getUsesSvm()) {
-            cl_int tracingRetVal = clEnqueueSVMUnmap(commandQueue, mappedPtr, numEventsInWaitList, eventWaitList, event);
-            TRACING_EXIT(ClEnqueueUnmapMemObject, &tracingRetVal);
-            return tracingRetVal;
+            return tracingScope.exit(clEnqueueSVMUnmap(commandQueue, mappedPtr, numEventsInWaitList, eventWaitList, event));
         } else if (pBuffer->getCpuPtr() != pBuffer->getUsmPtr() && !pBuffer->isZeroCopy() && !mapInfo.readOnly) {
             auto mappedOffset = mapInfo.offset[0];
             auto mappedSize = mapInfo.ptrLength;
-            cl_int tracingRetVal = clEnqueueWriteBuffer(commandQueue, memObj, false, mappedOffset, mappedSize, mappedPtr, numEventsInWaitList, eventWaitList, event);
-            TRACING_EXIT(ClEnqueueUnmapMemObject, &tracingRetVal);
-            return tracingRetVal;
+            return tracingScope.exit(clEnqueueWriteBuffer(commandQueue, memObj, false, mappedOffset, mappedSize, mappedPtr, numEventsInWaitList, eventWaitList, event));
         } else {
-            cl_int tracingRetVal = clEnqueueMarkerWithWaitList(commandQueue, numEventsInWaitList, eventWaitList, event);
-            TRACING_EXIT(ClEnqueueUnmapMemObject, &tracingRetVal);
-            return tracingRetVal;
+            return tracingScope.exit(clEnqueueMarkerWithWaitList(commandQueue, numEventsInWaitList, eventWaitList, event));
         }
     }
 }
@@ -989,39 +893,30 @@ cl_int CL_API_CALL clEnqueueMigrateMemObjects(cl_command_queue commandQueue,
     TRACING_ENTER(ClEnqueueMigrateMemObjects, &commandQueue, &numMemObjects, &memObjects, &flags, &numEventsInWaitList, &eventWaitList, &event);
     auto [retVal, pCommandQueue] = NEO::LEO::validateAndCast(std::make_tuple(commandQueue), std::make_tuple(NEO::LEO::MemObjList{memObjects, numMemObjects}, NEO::LEO::EventWaitList{eventWaitList, numEventsInWaitList}));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClEnqueueMigrateMemObjects, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
     if (numMemObjects == 0 || memObjects == nullptr) {
-        cl_int tracingRetVal = CL_INVALID_VALUE;
-        TRACING_EXIT(ClEnqueueMigrateMemObjects, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(CL_INVALID_VALUE);
     }
 
     for (cl_uint object = 0; object < numMemObjects; ++object) {
         auto memObject = NEO::LEO::castToObject<NEO::LEO::MemObj>(memObjects[object]);
         if (!memObject) {
-            cl_int tracingRetVal = CL_INVALID_MEM_OBJECT;
-            TRACING_EXIT(ClEnqueueMigrateMemObjects, &tracingRetVal);
-            return tracingRetVal;
+            return tracingScope.exit(CL_INVALID_MEM_OBJECT);
         }
     }
 
     const cl_mem_migration_flags allValidFlags = CL_MIGRATE_MEM_OBJECT_CONTENT_UNDEFINED | CL_MIGRATE_MEM_OBJECT_HOST;
 
     if ((flags & (~allValidFlags)) != 0) [[unlikely]] {
-        cl_int tracingRetVal = CL_INVALID_VALUE;
-        TRACING_EXIT(ClEnqueueMigrateMemObjects, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(CL_INVALID_VALUE);
     }
 
     auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_MIGRATE_MEM_OBJECTS, pCommandQueue);
 
     auto lock = pCommandQueue->takeOwnership();
-    cl_int tracingRetVal = L0ToClResultMapper(zeCommandListAppendBarrier(pCommandQueue->getL0Handle(), hSignalEvent, waitEvents.size(), waitEvents.data()));
-    TRACING_EXIT(ClEnqueueMigrateMemObjects, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(L0ToClResultMapper(zeCommandListAppendBarrier(pCommandQueue->getL0Handle(), hSignalEvent, waitEvents.size(), waitEvents.data())));
 }
 
 cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
@@ -1036,14 +931,11 @@ cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
     TRACING_ENTER(ClEnqueueNdRangeKernel, &commandQueue, &kernel, &workDim, &globalWorkOffset, &globalWorkSize, &localWorkSize, &numEventsInWaitList, &eventWaitList, &event);
     auto [retVal, pCommandQueue, pKernel] = NEO::LEO::validateAndCast(std::make_tuple(commandQueue, kernel), std::make_tuple(NEO::LEO::EventWaitList{eventWaitList, numEventsInWaitList}));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClEnqueueNdRangeKernel, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
     if (0u == workDim || workDim > pCommandQueue->getDevice()->getDeviceInfo().maxWorkItemDimensions) [[unlikely]] {
-        cl_int tracingRetVal = CL_INVALID_WORK_DIMENSION;
-        TRACING_EXIT(ClEnqueueNdRangeKernel, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(CL_INVALID_WORK_DIMENSION);
     }
 
     auto kernelHandle = pKernel->getL0Handle(pCommandQueue->getDevice()->getRootDeviceIndex());
@@ -1052,15 +944,11 @@ cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
     auto kernelLock = pKernel->takeOwnership();
 
     if (!pKernel->areAllArgsSet()) [[unlikely]] {
-        cl_int tracingRetVal = CL_INVALID_KERNEL_ARGS;
-        TRACING_EXIT(ClEnqueueNdRangeKernel, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(CL_INVALID_KERNEL_ARGS);
     }
 
     if (pKernel->getExecutionType() != NEO::KernelExecutionType::defaultType) [[unlikely]] {
-        cl_int tracingRetVal = CL_INVALID_KERNEL;
-        TRACING_EXIT(ClEnqueueNdRangeKernel, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(CL_INVALID_KERNEL);
     }
 
     if (pKernel->isUsingSharedObjArgs()) {
@@ -1073,9 +961,7 @@ cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
         auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_NDRANGE_KERNEL, pCommandQueue);
         kernelLock.unlock();
         auto lock = pCommandQueue->takeOwnership();
-        cl_int tracingRetVal = L0ToClResultMapper(zeCommandListAppendBarrier(cmdlistHandle, hSignalEvent, waitEvents.size(), waitEvents.data()));
-        TRACING_EXIT(ClEnqueueNdRangeKernel, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(L0ToClResultMapper(zeCommandListAppendBarrier(cmdlistHandle, hSignalEvent, waitEvents.size(), waitEvents.data())));
     }
 
     auto lock = pCommandQueue->takeOwnership();
@@ -1084,8 +970,7 @@ cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
     std::optional<L0::CmdListNonUniformLaunchArgs> nonUniformLaunchArgs;
     cl_int setupRetVal = pKernel->setupDispatch(*pCommandQueue->getDevice(), workDim, globalWorkOffset, globalWorkSize, localWorkSize, wgc, &nonUniformLaunchArgs);
     if (setupRetVal != CL_SUCCESS) {
-        TRACING_EXIT(ClEnqueueNdRangeKernel, &setupRetVal);
-        return setupRetVal;
+        return tracingScope.exit(setupRetVal);
     }
 
     auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_NDRANGE_KERNEL, pCommandQueue);
@@ -1112,9 +997,7 @@ cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
     } else {
         ret = zeCommandListAppendLaunchKernel(cmdlistHandle, kernelHandle, &wgc, hSignalEvent, waitEvents.size(), waitEvents.data());
     }
-    cl_int tracingRetVal = L0ToClResultMapper(ret);
-    TRACING_EXIT(ClEnqueueNdRangeKernel, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(L0ToClResultMapper(ret));
 }
 
 cl_int CL_API_CALL clEnqueueWaitForEvents(cl_command_queue commandQueue,
@@ -1123,21 +1006,16 @@ cl_int CL_API_CALL clEnqueueWaitForEvents(cl_command_queue commandQueue,
     TRACING_ENTER(ClEnqueueWaitForEvents, &commandQueue, &numEvents, &eventList);
     auto [retVal, pCommandQueue] = NEO::LEO::validateAndCast(std::make_tuple(commandQueue), std::make_tuple(NEO::LEO::EventWaitList{eventList, numEvents}));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClEnqueueWaitForEvents, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
     if (pCommandQueue->getContext()->isTerminated()) [[unlikely]] {
-        cl_int tracingRetVal = CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST;
-        TRACING_EXIT(ClEnqueueWaitForEvents, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST);
     }
     NEO::LEO::EventHandleSpan waitEvents{numEvents, eventList};
     pCommandQueue->storeDependencies(numEvents, eventList);
     auto lock = pCommandQueue->takeOwnership();
-    cl_int tracingRetVal = L0ToClResultMapper(zeCommandListAppendWaitOnEvents(pCommandQueue->getL0Handle(), waitEvents.size(), waitEvents.data()));
-    TRACING_EXIT(ClEnqueueWaitForEvents, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(L0ToClResultMapper(zeCommandListAppendWaitOnEvents(pCommandQueue->getL0Handle(), waitEvents.size(), waitEvents.data())));
 }
 
 cl_int CL_API_CALL clEnqueueMarkerWithWaitList(cl_command_queue commandQueue,
@@ -1147,39 +1025,30 @@ cl_int CL_API_CALL clEnqueueMarkerWithWaitList(cl_command_queue commandQueue,
     TRACING_ENTER(ClEnqueueMarkerWithWaitList, &commandQueue, &numEventsInWaitList, &eventWaitList, &event);
     auto [retVal, pCommandQueue] = NEO::LEO::validateAndCast(std::make_tuple(commandQueue), std::make_tuple(NEO::LEO::EventWaitList{eventWaitList, numEventsInWaitList}));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClEnqueueMarkerWithWaitList, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
     if ((numEventsInWaitList > 0 && !eventWaitList) ||
         (numEventsInWaitList == 0 && eventWaitList)) {
-        cl_int tracingRetVal = CL_INVALID_EVENT_WAIT_LIST;
-        TRACING_EXIT(ClEnqueueMarkerWithWaitList, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(CL_INVALID_EVENT_WAIT_LIST);
     }
 
     for (cl_uint i = 0; i < numEventsInWaitList; ++i) {
         auto pEvent = NEO::LEO::castToObject<NEO::LEO::Event>(eventWaitList[i]);
 
         if (!pEvent) {
-            cl_int tracingRetVal = CL_INVALID_EVENT_WAIT_LIST;
-            TRACING_EXIT(ClEnqueueMarkerWithWaitList, &tracingRetVal);
-            return tracingRetVal;
+            return tracingScope.exit(CL_INVALID_EVENT_WAIT_LIST);
         }
 
         if (pCommandQueue->getContext() != pEvent->getContext()) {
-            cl_int tracingRetVal = CL_INVALID_CONTEXT;
-            TRACING_EXIT(ClEnqueueMarkerWithWaitList, &tracingRetVal);
-            return tracingRetVal;
+            return tracingScope.exit(CL_INVALID_CONTEXT);
         }
     }
 
     auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_MARKER, pCommandQueue);
 
     auto lock = pCommandQueue->takeOwnership();
-    cl_int tracingRetVal = L0ToClResultMapper(zeCommandListAppendBarrier(pCommandQueue->getL0Handle(), hSignalEvent, waitEvents.size(), waitEvents.data()));
-    TRACING_EXIT(ClEnqueueMarkerWithWaitList, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(L0ToClResultMapper(zeCommandListAppendBarrier(pCommandQueue->getL0Handle(), hSignalEvent, waitEvents.size(), waitEvents.data())));
 }
 
 cl_int CL_API_CALL clEnqueueBarrierWithWaitList(cl_command_queue commandQueue,
@@ -1189,24 +1058,19 @@ cl_int CL_API_CALL clEnqueueBarrierWithWaitList(cl_command_queue commandQueue,
     TRACING_ENTER(ClEnqueueBarrierWithWaitList, &commandQueue, &numEventsInWaitList, &eventWaitList, &event);
     auto [retVal, pCommandQueue] = NEO::LEO::validateAndCast(std::make_tuple(commandQueue), std::make_tuple(NEO::LEO::EventWaitList{eventWaitList, numEventsInWaitList}));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClEnqueueBarrierWithWaitList, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
     if (eventWaitList) {
         if (std::any_of(eventWaitList, eventWaitList + numEventsInWaitList, [pCommandQueue](cl_event event) { return NEO::LEO::castToObject<NEO::LEO::Event>(event)->getContext() != pCommandQueue->getContext(); })) {
-            cl_int tracingRetVal = CL_INVALID_CONTEXT;
-            TRACING_EXIT(ClEnqueueBarrierWithWaitList, &tracingRetVal);
-            return tracingRetVal;
+            return tracingScope.exit(CL_INVALID_CONTEXT);
         }
     }
 
     auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_BARRIER, pCommandQueue);
 
     auto lock = pCommandQueue->takeOwnership();
-    cl_int tracingRetVal = L0ToClResultMapper(zeCommandListAppendBarrier(pCommandQueue->getL0Handle(), hSignalEvent, waitEvents.size(), waitEvents.data()));
-    TRACING_EXIT(ClEnqueueBarrierWithWaitList, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(L0ToClResultMapper(zeCommandListAppendBarrier(pCommandQueue->getL0Handle(), hSignalEvent, waitEvents.size(), waitEvents.data())));
 }
 
 cl_int CL_API_CALL clEnqueueSVMMigrateMem(cl_command_queue commandQueue,
@@ -1220,16 +1084,13 @@ cl_int CL_API_CALL clEnqueueSVMMigrateMem(cl_command_queue commandQueue,
     TRACING_ENTER(ClEnqueueSvmMigrateMem, &commandQueue, &numSvmPointers, &svmPointers, &sizes, &flags, &numEventsInWaitList, &eventWaitList, &event);
     auto [retVal, pCommandQueue] = NEO::LEO::validateAndCast(std::make_tuple(commandQueue), std::make_tuple(NEO::LEO::EventWaitList{eventWaitList, numEventsInWaitList}));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClEnqueueSvmMigrateMem, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
     auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_SVM_MIGRATE_MEM, pCommandQueue);
 
     auto lock = pCommandQueue->takeOwnership();
-    cl_int tracingRetVal = L0ToClResultMapper(zeCommandListAppendBarrier(pCommandQueue->getL0Handle(), hSignalEvent, waitEvents.size(), waitEvents.data()));
-    TRACING_EXIT(ClEnqueueSvmMigrateMem, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(L0ToClResultMapper(zeCommandListAppendBarrier(pCommandQueue->getL0Handle(), hSignalEvent, waitEvents.size(), waitEvents.data())));
 }
 
 cl_int CL_API_CALL clEnqueueSVMFree(cl_command_queue commandQueue,
@@ -1246,14 +1107,11 @@ cl_int CL_API_CALL clEnqueueSVMFree(cl_command_queue commandQueue,
     TRACING_ENTER(ClEnqueueSvmFree, &commandQueue, &numSvmPointers, &svmPointers, &pfnFreeFunc, &userData, &numEventsInWaitList, &eventWaitList, &event);
     auto [retVal, pCommandQueue] = NEO::LEO::validateAndCast(std::make_tuple(commandQueue), std::make_tuple(NEO::LEO::EventWaitList{eventWaitList, numEventsInWaitList}));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClEnqueueSvmFree, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
     if (numSvmPointers == 0 || svmPointers == nullptr) [[unlikely]] {
-        cl_int tracingRetVal = CL_INVALID_VALUE;
-        TRACING_EXIT(ClEnqueueSvmFree, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(CL_INVALID_VALUE);
     }
 
     cl_event evntForCallback = nullptr;
@@ -1265,8 +1123,7 @@ cl_int CL_API_CALL clEnqueueSVMFree(cl_command_queue commandQueue,
 
     retVal = clEnqueueMarkerWithWaitList(commandQueue, numEventsInWaitList, eventWaitList, event);
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClEnqueueSvmFree, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
     // Marker labels the event CL_COMMAND_MARKER; relabel here.
@@ -1309,9 +1166,7 @@ cl_int CL_API_CALL clEnqueueSVMFree(cl_command_queue commandQueue,
         delete clEnqueueSVMFreeUserData;
     };
 
-    cl_int tracingRetVal = clSetEventCallback(*event, CL_COMPLETE, clEnqueueSVMFreeCallbackWrapper, clEnqueueSVMFreeUserData);
-    TRACING_EXIT(ClEnqueueSvmFree, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(clSetEventCallback(*event, CL_COMPLETE, clEnqueueSVMFreeCallbackWrapper, clEnqueueSVMFreeUserData));
 }
 
 CL_API_ENTRY cl_int CL_API_CALL clEnqueueMemsetINTEL(
@@ -1325,8 +1180,7 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueMemsetINTEL(
     TRACING_ENTER(ClEnqueueMemsetINTEL, &commandQueue, &dstPtr, &value, &size, &numEventsInWaitList, &eventWaitList, &event);
     auto [retVal, pCommandQueue] = NEO::LEO::validateAndCast(std::make_tuple(commandQueue), std::make_tuple(dstPtr, NEO::LEO::EventWaitList{eventWaitList, numEventsInWaitList}));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClEnqueueMemsetINTEL, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
     auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_MEMSET_INTEL, pCommandQueue);
@@ -1340,8 +1194,7 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueMemsetINTEL(
                                                                             hSignalEvent,
                                                                             waitEvents.size(),
                                                                             waitEvents.data()));
-    TRACING_EXIT(ClEnqueueMemsetINTEL, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(tracingRetVal);
 }
 
 CL_API_ENTRY cl_int CL_API_CALL clEnqueueMemFillINTEL(
@@ -1356,8 +1209,7 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueMemFillINTEL(
     TRACING_ENTER(ClEnqueueMemFillINTEL, &commandQueue, &dstPtr, &pattern, &patternSize, &size, &numEventsInWaitList, &eventWaitList, &event);
     auto [retVal, pCommandQueue] = NEO::LEO::validateAndCast(std::make_tuple(commandQueue), std::make_tuple(dstPtr, const_cast<void *>(pattern), NEO::LEO::EventWaitList{eventWaitList, numEventsInWaitList}));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClEnqueueMemFillINTEL, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
     auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_MEMFILL_INTEL, pCommandQueue);
@@ -1371,8 +1223,7 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueMemFillINTEL(
                                                                             hSignalEvent,
                                                                             waitEvents.size(),
                                                                             waitEvents.data()));
-    TRACING_EXIT(ClEnqueueMemFillINTEL, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(tracingRetVal);
 }
 
 CL_API_ENTRY cl_int CL_API_CALL clEnqueueMemcpyINTEL(
@@ -1387,16 +1238,13 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueMemcpyINTEL(
     TRACING_ENTER(ClEnqueueMemcpyINTEL, &commandQueue, &blocking, &dstPtr, &srcPtr, &size, &numEventsInWaitList, &eventWaitList, &event);
     auto [retVal, pCommandQueue] = NEO::LEO::validateAndCast(std::make_tuple(commandQueue), std::make_tuple(dstPtr, const_cast<void *>(srcPtr), NEO::LEO::EventWaitList{eventWaitList, numEventsInWaitList}));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClEnqueueMemcpyINTEL, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
     const auto dstStart = reinterpret_cast<uintptr_t>(dstPtr);
     const auto srcStart = reinterpret_cast<uintptr_t>(srcPtr);
     if ((srcStart < dstStart + size) && (dstStart < srcStart + size)) [[unlikely]] {
-        cl_int tracingRetVal = CL_MEM_COPY_OVERLAP;
-        TRACING_EXIT(ClEnqueueMemcpyINTEL, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(CL_MEM_COPY_OVERLAP);
     }
 
     auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_MEMCPY_INTEL, pCommandQueue);
@@ -1413,9 +1261,7 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueMemcpyINTEL(
         ret = pCommandQueue->hostSynchronize(std::numeric_limits<uint64_t>::max());
     }
 
-    cl_int tracingRetVal = L0ToClResultMapper(ret);
-    TRACING_EXIT(ClEnqueueMemcpyINTEL, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(L0ToClResultMapper(ret));
 }
 
 cl_int CL_API_CALL clEnqueueTask(cl_command_queue commandQueue,
@@ -1427,9 +1273,7 @@ cl_int CL_API_CALL clEnqueueTask(cl_command_queue commandQueue,
     size_t globalWorkOffset = 0;
     size_t globalWorkSize = 1u;
     size_t localWorkSize = 1u;
-    cl_int tracingRetVal = clEnqueueNDRangeKernel(commandQueue, kernel, 1, &globalWorkOffset, &globalWorkSize, &localWorkSize, numEventsInWaitList, eventWaitList, event);
-    TRACING_EXIT(ClEnqueueTask, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(clEnqueueNDRangeKernel(commandQueue, kernel, 1, &globalWorkOffset, &globalWorkSize, &localWorkSize, numEventsInWaitList, eventWaitList, event));
 }
 
 cl_int CL_API_CALL clEnqueueNativeKernel(cl_command_queue commandQueue,
@@ -1443,24 +1287,18 @@ cl_int CL_API_CALL clEnqueueNativeKernel(cl_command_queue commandQueue,
                                          const cl_event *eventWaitList,
                                          cl_event *event) {
     TRACING_ENTER(ClEnqueueNativeKernel, &commandQueue, &userFunc, &args, &cbArgs, &numMemObjects, &memList, &argsMemLoc, &numEventsInWaitList, &eventWaitList, &event);
-    cl_int tracingRetVal = CL_INVALID_OPERATION;
-    TRACING_EXIT(ClEnqueueNativeKernel, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(CL_INVALID_OPERATION);
 }
 
 cl_int CL_API_CALL clEnqueueMarker(cl_command_queue commandQueue,
                                    cl_event *event) {
     TRACING_ENTER(ClEnqueueMarker, &commandQueue, &event);
-    cl_int tracingRetVal = clEnqueueMarkerWithWaitList(commandQueue, 0, nullptr, event);
-    TRACING_EXIT(ClEnqueueMarker, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(clEnqueueMarkerWithWaitList(commandQueue, 0, nullptr, event));
 }
 
 cl_int CL_API_CALL clEnqueueBarrier(cl_command_queue commandQueue) {
     TRACING_ENTER(ClEnqueueBarrier, &commandQueue);
-    cl_int tracingRetVal = clEnqueueBarrierWithWaitList(commandQueue, 0, nullptr, nullptr);
-    TRACING_EXIT(ClEnqueueBarrier, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(clEnqueueBarrierWithWaitList(commandQueue, 0, nullptr, nullptr));
 }
 
 cl_int CL_API_CALL clEnqueueSVMMemcpy(cl_command_queue commandQueue,
@@ -1476,8 +1314,7 @@ cl_int CL_API_CALL clEnqueueSVMMemcpy(cl_command_queue commandQueue,
     if (event && ret == CL_SUCCESS) {
         NEO::LEO::castToObject<NEO::LEO::Event>(*event)->updateCommandType(CL_COMMAND_SVM_MEMCPY);
     }
-    TRACING_EXIT(ClEnqueueSvmMemcpy, &ret);
-    return ret;
+    return tracingScope.exit(ret);
 }
 
 cl_int CL_API_CALL clEnqueueSVMMemFill(cl_command_queue commandQueue,
@@ -1493,8 +1330,7 @@ cl_int CL_API_CALL clEnqueueSVMMemFill(cl_command_queue commandQueue,
     if (event && ret == CL_SUCCESS) {
         NEO::LEO::castToObject<NEO::LEO::Event>(*event)->updateCommandType(CL_COMMAND_SVM_MEMFILL);
     }
-    TRACING_EXIT(ClEnqueueSvmMemFill, &ret);
-    return ret;
+    return tracingScope.exit(ret);
 }
 
 cl_int CL_API_CALL clEnqueueSVMMap(cl_command_queue commandQueue,
@@ -1508,8 +1344,7 @@ cl_int CL_API_CALL clEnqueueSVMMap(cl_command_queue commandQueue,
     TRACING_ENTER(ClEnqueueSvmMap, &commandQueue, &blockingMap, &mapFlags, &svmPtr, &size, &numEventsInWaitList, &eventWaitList, &event);
     auto [retVal, pCommandQueue] = NEO::LEO::validateAndCast(std::make_tuple(commandQueue), std::make_tuple(NEO::LEO::EventWaitList{eventWaitList, numEventsInWaitList}));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClEnqueueSvmMap, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
     auto svmAllocsManager = pCommandQueue->getContext()->getL0Object()->getDriverHandle()->getSvmAllocsManager();
@@ -1552,9 +1387,7 @@ cl_int CL_API_CALL clEnqueueSVMMap(cl_command_queue commandQueue,
         ret = pCommandQueue->hostSynchronize(std::numeric_limits<uint64_t>::max());
     }
 
-    cl_int tracingRetVal = L0ToClResultMapper(ret);
-    TRACING_EXIT(ClEnqueueSvmMap, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(L0ToClResultMapper(ret));
 }
 
 cl_int CL_API_CALL clEnqueueSVMUnmap(cl_command_queue commandQueue,
@@ -1565,8 +1398,7 @@ cl_int CL_API_CALL clEnqueueSVMUnmap(cl_command_queue commandQueue,
     TRACING_ENTER(ClEnqueueSvmUnmap, &commandQueue, &svmPtr, &numEventsInWaitList, &eventWaitList, &event);
     auto [retVal, pCommandQueue] = NEO::LEO::validateAndCast(std::make_tuple(commandQueue), std::make_tuple(NEO::LEO::EventWaitList{eventWaitList, numEventsInWaitList}));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClEnqueueSvmUnmap, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
     auto svmAllocsManager = pCommandQueue->getContext()->getL0Object()->getDriverHandle()->getSvmAllocsManager();
@@ -1607,9 +1439,7 @@ cl_int CL_API_CALL clEnqueueSVMUnmap(cl_command_queue commandQueue,
         NEO::LEO::castToObject<NEO::LEO::Event>(*event)->updateCommandType(CL_COMMAND_SVM_UNMAP);
     }
 
-    cl_int tracingRetVal = L0ToClResultMapper(ret);
-    TRACING_EXIT(ClEnqueueSvmUnmap, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(L0ToClResultMapper(ret));
 }
 
 CL_API_ENTRY cl_int CL_API_CALL clEnqueueVerifyMemoryINTEL(
@@ -1621,24 +1451,19 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueVerifyMemoryINTEL(
     TRACING_ENTER(ClEnqueueVerifyMemoryINTEL, &commandQueue, &allocationPtr, &expectedData, &sizeOfComparison, &comparisonMode);
 
     if (sizeOfComparison == 0 || expectedData == nullptr || allocationPtr == nullptr) {
-        cl_int tracingRetVal = CL_INVALID_VALUE;
-        TRACING_EXIT(ClEnqueueVerifyMemoryINTEL, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(CL_INVALID_VALUE);
     }
 
     auto [retVal, pCommandQueue] = NEO::LEO::validateAndCast(
         std::make_tuple(commandQueue),
         std::make_tuple());
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClEnqueueVerifyMemoryINTEL, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
     auto l0CmdList = pCommandQueue->getL0Object();
     auto status = l0CmdList->verifyMemory(allocationPtr, expectedData, sizeOfComparison, comparisonMode);
-    cl_int tracingRetVal = status ? CL_SUCCESS : CL_INVALID_VALUE;
-    TRACING_EXIT(ClEnqueueVerifyMemoryINTEL, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(status ? CL_SUCCESS : CL_INVALID_VALUE);
 }
 
 CL_API_ENTRY cl_int CL_API_CALL clEnqueueMigrateMemINTEL(
@@ -1652,8 +1477,7 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueMigrateMemINTEL(
     TRACING_ENTER(ClEnqueueMigrateMemINTEL, &commandQueue, &ptr, &size, &flags, &numEventsInWaitList, &eventWaitList, &event);
     auto [retVal, pCommandQueue] = NEO::LEO::validateAndCast(std::make_tuple(commandQueue), std::make_tuple(NEO::LEO::EventWaitList{eventWaitList, numEventsInWaitList}));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClEnqueueMigrateMemINTEL, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
     auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_MIGRATEMEM_INTEL, pCommandQueue);
@@ -1665,31 +1489,23 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueMigrateMemINTEL(
     if (waitEvents.size() > 0) {
         ret = zeCommandListAppendWaitOnEvents(cmdlistHandle, waitEvents.size(), waitEvents.data());
         if (ret != ZE_RESULT_SUCCESS) [[unlikely]] {
-            cl_int tracingRetVal = L0ToClResultMapper(ret);
-            TRACING_EXIT(ClEnqueueMigrateMemINTEL, &tracingRetVal);
-            return tracingRetVal;
+            return tracingScope.exit(L0ToClResultMapper(ret));
         }
     }
 
     ret = zeCommandListAppendMemoryPrefetch(cmdlistHandle, ptr, size);
     if (ret != ZE_RESULT_SUCCESS) [[unlikely]] {
-        cl_int tracingRetVal = L0ToClResultMapper(ret);
-        TRACING_EXIT(ClEnqueueMigrateMemINTEL, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(L0ToClResultMapper(ret));
     }
 
     if (hSignalEvent) {
         ret = zeCommandListAppendSignalEvent(cmdlistHandle, hSignalEvent);
         if (ret != ZE_RESULT_SUCCESS) [[unlikely]] {
-            cl_int tracingRetVal = L0ToClResultMapper(ret);
-            TRACING_EXIT(ClEnqueueMigrateMemINTEL, &tracingRetVal);
-            return tracingRetVal;
+            return tracingScope.exit(L0ToClResultMapper(ret));
         }
     }
 
-    cl_int tracingRetVal = CL_SUCCESS;
-    TRACING_EXIT(ClEnqueueMigrateMemINTEL, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(CL_SUCCESS);
 }
 
 CL_API_ENTRY cl_int CL_API_CALL clEnqueueMemAdviseINTEL(
@@ -1703,8 +1519,7 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueMemAdviseINTEL(
     TRACING_ENTER(ClEnqueueMemAdviseINTEL, &commandQueue, &ptr, &size, &advice, &numEventsInWaitList, &eventWaitList, &event);
     auto [retVal, pCommandQueue] = NEO::LEO::validateAndCast(std::make_tuple(commandQueue), std::make_tuple(NEO::LEO::EventWaitList{eventWaitList, numEventsInWaitList}));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClEnqueueMemAdviseINTEL, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
     auto [waitEvents, hSignalEvent] = NEO::LEO::Event::setupEvents(numEventsInWaitList, eventWaitList, event, CL_COMMAND_MEMADVISE_INTEL, pCommandQueue);
@@ -1717,31 +1532,23 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueMemAdviseINTEL(
     if (waitEvents.size() > 0) {
         ret = zeCommandListAppendWaitOnEvents(cmdlistHandle, waitEvents.size(), waitEvents.data());
         if (ret != ZE_RESULT_SUCCESS) {
-            cl_int tracingRetVal = L0ToClResultMapper(ret);
-            TRACING_EXIT(ClEnqueueMemAdviseINTEL, &tracingRetVal);
-            return tracingRetVal;
+            return tracingScope.exit(L0ToClResultMapper(ret));
         }
     }
 
     ret = zeCommandListAppendMemAdvise(cmdlistHandle, deviceHandle, ptr, size, static_cast<ze_memory_advice_t>(advice));
     if (ret != ZE_RESULT_SUCCESS) {
-        cl_int tracingRetVal = L0ToClResultMapper(ret);
-        TRACING_EXIT(ClEnqueueMemAdviseINTEL, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(L0ToClResultMapper(ret));
     }
 
     if (hSignalEvent) {
         ret = zeCommandListAppendSignalEvent(cmdlistHandle, hSignalEvent);
         if (ret != ZE_RESULT_SUCCESS) {
-            cl_int tracingRetVal = L0ToClResultMapper(ret);
-            TRACING_EXIT(ClEnqueueMemAdviseINTEL, &tracingRetVal);
-            return tracingRetVal;
+            return tracingScope.exit(L0ToClResultMapper(ret));
         }
     }
 
-    cl_int tracingRetVal = CL_SUCCESS;
-    TRACING_EXIT(ClEnqueueMemAdviseINTEL, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(CL_SUCCESS);
 }
 
 CL_API_ENTRY cl_int CL_API_CALL clEnqueueNDCountKernelINTEL(
@@ -1757,8 +1564,7 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueNDCountKernelINTEL(
     TRACING_ENTER(ClEnqueueNDCountKernelINTEL, &commandQueue, &kernel, &workDim, &globalWorkOffset, &workgroupCount, &localWorkSize, &numEventsInWaitList, &eventWaitList, &event);
     auto [retVal, pCommandQueue, pKernel] = NEO::LEO::validateAndCast(std::make_tuple(commandQueue, kernel), std::make_tuple(NEO::LEO::EventWaitList{eventWaitList, numEventsInWaitList}));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClEnqueueNDCountKernelINTEL, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
     auto kernelHandle = pKernel->getL0Handle(pCommandQueue->getDevice()->getRootDeviceIndex());
@@ -1766,15 +1572,11 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueNDCountKernelINTEL(
     auto kernelLock = pKernel->takeOwnership();
 
     if (!pKernel->areAllArgsSet()) [[unlikely]] {
-        cl_int tracingRetVal = CL_INVALID_KERNEL_ARGS;
-        TRACING_EXIT(ClEnqueueNDCountKernelINTEL, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(CL_INVALID_KERNEL_ARGS);
     }
 
     if (!workgroupCount) [[unlikely]] {
-        cl_int tracingRetVal = CL_INVALID_VALUE;
-        TRACING_EXIT(ClEnqueueNDCountKernelINTEL, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(CL_INVALID_VALUE);
     }
 
     const bool isConcurrent = pKernel->getExecutionType() == NEO::KernelExecutionType::concurrent;
@@ -1815,17 +1617,13 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueNDCountKernelINTEL(
     } else {
         ret = zeKernelSuggestGroupSize(kernelHandle, wgc.groupCountX, wgc.groupCountY, wgc.groupCountZ, &lws[0], &lws[1], &lws[2]);
         if (ret != ZE_RESULT_SUCCESS) {
-            cl_int tracingRetVal = L0ToClResultMapper(ret);
-            TRACING_EXIT(ClEnqueueNDCountKernelINTEL, &tracingRetVal);
-            return tracingRetVal;
+            return tracingScope.exit(L0ToClResultMapper(ret));
         }
     }
 
     ret = zeKernelSetGroupSize(kernelHandle, lws[0], lws[1], lws[2]);
     if (ret != ZE_RESULT_SUCCESS) [[unlikely]] {
-        cl_int tracingRetVal = L0ToClResultMapper(ret);
-        TRACING_EXIT(ClEnqueueNDCountKernelINTEL, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(L0ToClResultMapper(ret));
     }
 
     if (isConcurrent) {
@@ -1833,18 +1631,14 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueNDCountKernelINTEL(
         size_t maximalNumberOfWorkgroupsAllowed = 0;
         auto countRet = pKernel->getMaxConcurrentWorkGroupCount(workDim, resolvedLws, &maximalNumberOfWorkgroupsAllowed);
         if (countRet != CL_SUCCESS) [[unlikely]] {
-            cl_int tracingRetVal = countRet;
-            TRACING_EXIT(ClEnqueueNDCountKernelINTEL, &tracingRetVal);
-            return tracingRetVal;
+            return tracingScope.exit(countRet);
         }
         size_t requestedNumberOfWorkgroups = 1;
         for (cl_uint i = 0; i < workDim; i++) {
             requestedNumberOfWorkgroups *= workgroupCount[i];
         }
         if (requestedNumberOfWorkgroups > maximalNumberOfWorkgroupsAllowed) [[unlikely]] {
-            cl_int tracingRetVal = CL_INVALID_VALUE;
-            TRACING_EXIT(ClEnqueueNDCountKernelINTEL, &tracingRetVal);
-            return tracingRetVal;
+            return tracingScope.exit(CL_INVALID_VALUE);
         }
     }
 
@@ -1858,9 +1652,7 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueNDCountKernelINTEL(
               ? zeCommandListAppendLaunchCooperativeKernel(cmdlistHandle, kernelHandle, &wgc, hSignalEvent, waitEvents.size(), waitEvents.data())
               : zeCommandListAppendLaunchKernel(cmdlistHandle, kernelHandle, &wgc, hSignalEvent, waitEvents.size(), waitEvents.data());
 
-    cl_int tracingRetVal = L0ToClResultMapper(ret);
-    TRACING_EXIT(ClEnqueueNDCountKernelINTEL, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(L0ToClResultMapper(ret));
 }
 
 CL_API_ENTRY cl_int CL_API_CALL clEnqueueAcquireExternalMemObjectsKHR(
@@ -1871,9 +1663,7 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueAcquireExternalMemObjectsKHR(
     const cl_event *eventWaitList,
     cl_event *event) {
     TRACING_ENTER(ClEnqueueAcquireExternalMemObjectsKHR, &commandQueue, &numMemObjects, &memObjects, &numEventsInWaitList, &eventWaitList, &event);
-    cl_int tracingRetVal = CL_INVALID_OPERATION;
-    TRACING_EXIT(ClEnqueueAcquireExternalMemObjectsKHR, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(CL_INVALID_OPERATION);
 }
 
 CL_API_ENTRY cl_int CL_API_CALL clEnqueueReleaseExternalMemObjectsKHR(
@@ -1884,9 +1674,7 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueReleaseExternalMemObjectsKHR(
     const cl_event *eventWaitList,
     cl_event *event) {
     TRACING_ENTER(ClEnqueueReleaseExternalMemObjectsKHR, &commandQueue, &numMemObjects, &memObjects, &numEventsInWaitList, &eventWaitList, &event);
-    cl_int tracingRetVal = CL_INVALID_OPERATION;
-    TRACING_EXIT(ClEnqueueReleaseExternalMemObjectsKHR, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(CL_INVALID_OPERATION);
 }
 
 CL_API_ENTRY cl_int CL_API_CALL clEnqueueExternalMemObjectsKHR(
@@ -1897,9 +1685,7 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueExternalMemObjectsKHR(
     const cl_event *eventWaitList,
     cl_event *event) {
     TRACING_ENTER(ClEnqueueExternalMemObjectsKHR, &commandQueue, &numMemObjects, &memObjects, &numEventsInWaitList, &eventWaitList, &event);
-    cl_int tracingRetVal = CL_INVALID_OPERATION;
-    TRACING_EXIT(ClEnqueueExternalMemObjectsKHR, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(CL_INVALID_OPERATION);
 }
 
 } // extern "C"

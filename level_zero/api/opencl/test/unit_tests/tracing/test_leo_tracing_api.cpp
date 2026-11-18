@@ -79,12 +79,25 @@ struct TracingCallbackRecorder {
         }
         callback(fid, callbackData, userData);
     }
+
+    static void nestedApiCallingCallback(ClFunctionId fid, cl_callback_data *callbackData, void *userData) {
+        callback(fid, callbackData, userData);
+        if (fid == CL_FUNCTION_clRetainSampler && callbackData->site == CL_CALLBACK_SITE_ENTER) {
+            clReleaseSampler(nullptr);
+        }
+    }
 };
 
 std::array<TracingRecord, TracingCallbackRecorder::capacity> TracingCallbackRecorder::records{};
 size_t TracingCallbackRecorder::count = 0u;
 
 static void emptyTracingCallback(ClFunctionId, cl_callback_data *, void *) {}
+
+static void overwriteReturnValueTracingCallback(ClFunctionId, cl_callback_data *callbackData, void *) {
+    if (callbackData->site == CL_CALLBACK_SITE_EXIT) {
+        *static_cast<cl_int *>(callbackData->functionReturnValue) = CL_OUT_OF_HOST_MEMORY;
+    }
+}
 
 struct TracingFixture : public ::testing::Test {
     void SetUp() override {
@@ -502,6 +515,14 @@ TEST_F(TracingFixture, givenEnabledTracingPointWhenApiIsCalledThenCallbackSeesFu
     EXPECT_EQ(CL_INVALID_SAMPLER, exitRecord.returnValue);
 }
 
+TEST_F(TracingFixture, givenExitCallbackOverwritingReturnValueWhenApiIsCalledThenOverwrittenValueIsReturned) {
+    auto handle = createHandle(&overwriteReturnValueTracingCallback);
+    ASSERT_EQ(CL_SUCCESS, clSetTracingPointINTEL(handle, CL_FUNCTION_clRetainSampler, CL_TRUE));
+    ASSERT_EQ(CL_SUCCESS, clEnableTracingINTEL(handle));
+
+    EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, clRetainSampler(nullptr));
+}
+
 TEST_F(TracingFixture, givenEnabledTracingWhenApiIsCalledThenEnterAndExitShareCorrelationIdAndData) {
     auto handle = createHandle(&TracingCallbackRecorder::writingCallback);
     ASSERT_EQ(CL_SUCCESS, clSetTracingPointINTEL(handle, CL_FUNCTION_clRetainSampler, CL_TRUE));
@@ -566,6 +587,20 @@ TEST_F(TracingFixture, givenTwoEnabledHandlesTracingTheSamePointWhenApiIsCalledT
     EXPECT_EQ(CL_CALLBACK_SITE_ENTER, TracingCallbackRecorder::records[1].site);
     EXPECT_EQ(CL_CALLBACK_SITE_EXIT, TracingCallbackRecorder::records[2].site);
     EXPECT_EQ(CL_CALLBACK_SITE_EXIT, TracingCallbackRecorder::records[3].site);
+}
+
+TEST_F(TracingFixture, givenApiCalledFromTracingCallbackWhenTracedThenNestedCallIsNotTraced) {
+    auto handle = createHandle(&TracingCallbackRecorder::nestedApiCallingCallback);
+    ASSERT_EQ(CL_SUCCESS, clSetTracingPointINTEL(handle, CL_FUNCTION_clRetainSampler, CL_TRUE));
+    ASSERT_EQ(CL_SUCCESS, clSetTracingPointINTEL(handle, CL_FUNCTION_clReleaseSampler, CL_TRUE));
+    ASSERT_EQ(CL_SUCCESS, clEnableTracingINTEL(handle));
+
+    clRetainSampler(nullptr);
+
+    ASSERT_EQ(2u, TracingCallbackRecorder::count);
+    EXPECT_EQ(CL_FUNCTION_clRetainSampler, TracingCallbackRecorder::records[0].fid);
+    EXPECT_EQ(CL_FUNCTION_clRetainSampler, TracingCallbackRecorder::records[1].fid);
+    EXPECT_FALSE(tracingInProgress);
 }
 
 TEST_F(TracingFixture, givenTwoEnabledHandlesWhenOnlyOneTracesThePointThenOnlyItIsNotified) {

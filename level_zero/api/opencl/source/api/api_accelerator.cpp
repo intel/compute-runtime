@@ -20,17 +20,13 @@ cl_accelerator_intel CL_API_CALL clCreateAcceleratorINTEL(
     cl_int *errcodeRet) {
     TRACING_ENTER(ClCreateAcceleratorINTEL, &context, &acceleratorType, &descriptorSize, &descriptor, &errcodeRet);
     ErrorCodeHelper err(errcodeRet, CL_INVALID_OPERATION);
-    cl_accelerator_intel accelerator = nullptr;
-    TRACING_EXIT(ClCreateAcceleratorINTEL, &accelerator);
-    return accelerator;
+    return tracingScope.exit(nullptr);
 }
 
 cl_int CL_API_CALL clRetainAcceleratorINTEL(
     cl_accelerator_intel accelerator) {
     TRACING_ENTER(ClRetainAcceleratorINTEL, &accelerator);
-    cl_int retVal = CL_INVALID_OPERATION;
-    TRACING_EXIT(ClRetainAcceleratorINTEL, &retVal);
-    return retVal;
+    return tracingScope.exit(CL_INVALID_OPERATION);
 }
 
 cl_int CL_API_CALL clGetAcceleratorInfoINTEL(
@@ -40,15 +36,11 @@ cl_int CL_API_CALL clGetAcceleratorInfoINTEL(
     void *paramValue,
     size_t *paramValueSizeRet) {
     TRACING_ENTER(ClGetAcceleratorInfoINTEL, &accelerator, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
-    cl_int retVal = CL_INVALID_OPERATION;
-    TRACING_EXIT(ClGetAcceleratorInfoINTEL, &retVal);
-    return retVal;
+    return tracingScope.exit(CL_INVALID_OPERATION);
 }
 
 cl_int CL_API_CALL clReleaseAcceleratorINTEL(
     cl_accelerator_intel accelerator) {
     TRACING_ENTER(ClReleaseAcceleratorINTEL, &accelerator);
-    cl_int retVal = CL_INVALID_OPERATION;
-    TRACING_EXIT(ClReleaseAcceleratorINTEL, &retVal);
-    return retVal;
+    return tracingScope.exit(CL_INVALID_OPERATION);
 }

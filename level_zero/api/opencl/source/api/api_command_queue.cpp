@@ -32,22 +32,16 @@ cl_command_queue CL_API_CALL clCreateCommandQueue(cl_context context,
     auto [retVal, pContext, pDevice] = NEO::LEO::validateAndCast(std::make_tuple(context, device));
     if (retVal != CL_SUCCESS) [[unlikely]] {
         err.set(retVal);
-        cl_command_queue tracingRetVal = nullptr;
-        TRACING_EXIT(ClCreateCommandQueue, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(nullptr);
     }
 
     if (properties &
         ~(CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE)) [[unlikely]] {
         err.set(CL_INVALID_VALUE);
-        cl_command_queue tracingRetVal = nullptr;
-        TRACING_EXIT(ClCreateCommandQueue, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(nullptr);
     }
     cl_queue_properties queueProperties[3] = {CL_QUEUE_PROPERTIES, properties, 0};
-    cl_command_queue tracingRetVal = clCreateCommandQueueWithProperties(context, device, queueProperties, errcodeRet);
-    TRACING_EXIT(ClCreateCommandQueue, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(clCreateCommandQueueWithProperties(context, device, queueProperties, errcodeRet));
 }
 
 cl_command_queue CL_API_CALL clCreateCommandQueueWithProperties(cl_context context,
@@ -60,9 +54,7 @@ cl_command_queue CL_API_CALL clCreateCommandQueueWithProperties(cl_context conte
     auto [retVal, pContext, pDevice] = NEO::LEO::validateAndCast(std::make_tuple(context, device));
     if (retVal != CL_SUCCESS) [[unlikely]] {
         err.set(retVal);
-        cl_command_queue tracingRetVal = nullptr;
-        TRACING_EXIT(ClCreateCommandQueueWithProperties, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(nullptr);
     }
 
     bool inputCmdList = false;
@@ -85,9 +77,7 @@ cl_command_queue CL_API_CALL clCreateCommandQueueWithProperties(cl_context conte
                 break;
             default:
                 err.set(CL_INVALID_VALUE);
-                cl_command_queue tracingRetVal = nullptr;
-                TRACING_EXIT(ClCreateCommandQueueWithProperties, &tracingRetVal);
-                return tracingRetVal;
+                return tracingScope.exit(nullptr);
             }
             propertiesAddress += 2;
         }
@@ -96,14 +86,10 @@ cl_command_queue CL_API_CALL clCreateCommandQueueWithProperties(cl_context conte
         if (commandQueueProperties & static_cast<cl_command_queue_properties>(CL_QUEUE_ON_DEVICE)) {
             if (!(commandQueueProperties & static_cast<cl_command_queue_properties>(CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE))) {
                 err.set(CL_INVALID_VALUE);
-                cl_command_queue tracingRetVal = nullptr;
-                TRACING_EXIT(ClCreateCommandQueueWithProperties, &tracingRetVal);
-                return tracingRetVal;
+                return tracingScope.exit(nullptr);
             }
             err.set(CL_INVALID_QUEUE_PROPERTIES);
-            cl_command_queue tracingRetVal = nullptr;
-            TRACING_EXIT(ClCreateCommandQueueWithProperties, &tracingRetVal);
-            return tracingRetVal;
+            return tracingScope.exit(nullptr);
         }
     }
 
@@ -114,9 +100,7 @@ cl_command_queue CL_API_CALL clCreateCommandQueueWithProperties(cl_context conte
 
     if (mdapiConfigurationSet && mdapiConfiguration != 0) {
         err.set(CL_INVALID_OPERATION);
-        cl_command_queue tracingRetVal = nullptr;
-        TRACING_EXIT(ClCreateCommandQueueWithProperties, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(nullptr);
     }
 
     cl_command_queue tracingRetVal = nullptr;
@@ -145,8 +129,7 @@ cl_command_queue CL_API_CALL clCreateCommandQueueWithProperties(cl_context conte
         }
     }
 
-    TRACING_EXIT(ClCreateCommandQueueWithProperties, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(tracingRetVal);
 }
 
 cl_command_queue CL_API_CALL clCreateCommandQueueWithPropertiesKHR(cl_context context,
@@ -154,31 +137,25 @@ cl_command_queue CL_API_CALL clCreateCommandQueueWithPropertiesKHR(cl_context co
                                                                    const cl_queue_properties_khr *properties,
                                                                    cl_int *errcodeRet) {
     TRACING_ENTER(ClCreateCommandQueueWithPropertiesKHR, &context, &device, &properties, &errcodeRet);
-    cl_command_queue tracingRetVal = clCreateCommandQueueWithProperties(context, device, properties, errcodeRet);
-    TRACING_EXIT(ClCreateCommandQueueWithPropertiesKHR, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(clCreateCommandQueueWithProperties(context, device, properties, errcodeRet));
 }
 
 cl_int CL_API_CALL clRetainCommandQueue(cl_command_queue commandQueue) {
     TRACING_ENTER(ClRetainCommandQueue, &commandQueue);
     auto [retVal, pCommandQueue] = NEO::LEO::validateAndCast(std::make_tuple(commandQueue));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClRetainCommandQueue, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
     pCommandQueue->incRefApi();
-    cl_int tracingRetVal = CL_SUCCESS;
-    TRACING_EXIT(ClRetainCommandQueue, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(CL_SUCCESS);
 }
 
 cl_int CL_API_CALL clReleaseCommandQueue(cl_command_queue commandQueue) {
     TRACING_ENTER(ClReleaseCommandQueue, &commandQueue);
     auto [retVal, pCommandQueue] = NEO::LEO::validateAndCast(std::make_tuple(commandQueue));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClReleaseCommandQueue, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
     if (pCommandQueue->getReference() == 1 && pCommandQueue->hasDependencies()) {
@@ -186,9 +163,7 @@ cl_int CL_API_CALL clReleaseCommandQueue(cl_command_queue commandQueue) {
     }
 
     pCommandQueue->decRefApi();
-    cl_int tracingRetVal = CL_SUCCESS;
-    TRACING_EXIT(ClReleaseCommandQueue, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(CL_SUCCESS);
 }
 
 cl_int CL_API_CALL clGetCommandQueueInfo(cl_command_queue commandQueue,
@@ -199,13 +174,10 @@ cl_int CL_API_CALL clGetCommandQueueInfo(cl_command_queue commandQueue,
     TRACING_ENTER(ClGetCommandQueueInfo, &commandQueue, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
     auto [retVal, pCommandQueue] = NEO::LEO::validateAndCast(std::make_tuple(commandQueue));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClGetCommandQueueInfo, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
-    cl_int tracingRetVal = pCommandQueue->getCmdQInfo(paramName, paramValueSize, paramValue, paramValueSizeRet);
-    TRACING_EXIT(ClGetCommandQueueInfo, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(pCommandQueue->getCmdQInfo(paramName, paramValueSize, paramValue, paramValueSizeRet));
 }
 
 cl_int CL_API_CALL clSetCommandQueueProperty(cl_command_queue commandQueue,
@@ -213,35 +185,27 @@ cl_int CL_API_CALL clSetCommandQueueProperty(cl_command_queue commandQueue,
                                              cl_bool enable,
                                              cl_command_queue_properties *oldProperties) {
     TRACING_ENTER(ClSetCommandQueueProperty, &commandQueue, &properties, &enable, &oldProperties);
-    cl_int tracingRetVal = CL_INVALID_OPERATION;
-    TRACING_EXIT(ClSetCommandQueueProperty, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(CL_INVALID_OPERATION);
 }
 
 cl_int CL_API_CALL clFlush(cl_command_queue commandQueue) {
     TRACING_ENTER(ClFlush, &commandQueue);
     auto [retVal, pCommandQueue] = NEO::LEO::validateAndCast(std::make_tuple(commandQueue));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClFlush, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
-    cl_int tracingRetVal = CL_SUCCESS;
-    TRACING_EXIT(ClFlush, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(CL_SUCCESS);
 }
 
 cl_int CL_API_CALL clFinish(cl_command_queue commandQueue) {
     TRACING_ENTER(ClFinish, &commandQueue);
     auto [retVal, pCommandQueue] = NEO::LEO::validateAndCast(std::make_tuple(commandQueue));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClFinish, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
-    cl_int tracingRetVal = L0ToClResultMapper(pCommandQueue->hostSynchronize(std::numeric_limits<uint64_t>::max()));
-    TRACING_EXIT(ClFinish, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(L0ToClResultMapper(pCommandQueue->hostSynchronize(std::numeric_limits<uint64_t>::max())));
 }
 
 CL_API_ENTRY cl_command_queue CL_API_CALL

@@ -34,21 +34,15 @@ cl_mem CL_API_CALL clCreateFromGLBuffer(cl_context context, cl_mem_flags flags, 
     auto [retVal, pContext] = validateAndCast(std::make_tuple(context));
     if (retVal != CL_SUCCESS) {
         err.set(retVal);
-        cl_mem tracingRetVal = nullptr;
-        TRACING_EXIT(ClCreateFromGlBuffer, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(nullptr);
     }
 
     if (pContext->getSharing<GLSharingFunctions>() == nullptr) {
         err.set(CL_INVALID_CONTEXT);
-        cl_mem tracingRetVal = nullptr;
-        TRACING_EXIT(ClCreateFromGlBuffer, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(nullptr);
     }
 
-    cl_mem tracingRetVal = GlBuffer::createSharedGlBuffer(pContext, flags, bufobj, errcodeRet);
-    TRACING_EXIT(ClCreateFromGlBuffer, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(GlBuffer::createSharedGlBuffer(pContext, flags, bufobj, errcodeRet));
 }
 
 cl_mem CL_API_CALL clCreateFromGLTexture(cl_context context, cl_mem_flags flags, cl_GLenum target, cl_GLint miplevel,
@@ -59,69 +53,51 @@ cl_mem CL_API_CALL clCreateFromGLTexture(cl_context context, cl_mem_flags flags,
     auto [retVal, pContext] = validateAndCast(std::make_tuple(context));
     if (retVal != CL_SUCCESS) {
         err.set(retVal);
-        cl_mem tracingRetVal = nullptr;
-        TRACING_EXIT(ClCreateFromGlTexture, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(nullptr);
     }
 
     if (pContext->getSharing<GLSharingFunctions>() == nullptr) {
         err.set(CL_INVALID_CONTEXT);
-        cl_mem tracingRetVal = nullptr;
-        TRACING_EXIT(ClCreateFromGlTexture, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(nullptr);
     }
 
-    cl_mem tracingRetVal = GlTexture::createSharedGlTexture(pContext, flags, target, miplevel, texture, errcodeRet);
-    TRACING_EXIT(ClCreateFromGlTexture, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(GlTexture::createSharedGlTexture(pContext, flags, target, miplevel, texture, errcodeRet));
 }
 
 // deprecated OpenCL 1.1
 cl_mem CL_API_CALL clCreateFromGLTexture2D(cl_context context, cl_mem_flags flags, cl_GLenum target, cl_GLint miplevel,
                                            cl_GLuint texture, cl_int *errcodeRet) {
     TRACING_ENTER(ClCreateFromGlTexture2D, &context, &flags, &target, &miplevel, &texture, &errcodeRet);
-    cl_mem tracingRetVal = clCreateFromGLTexture(context, flags, target, miplevel, texture, errcodeRet);
-    TRACING_EXIT(ClCreateFromGlTexture2D, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(clCreateFromGLTexture(context, flags, target, miplevel, texture, errcodeRet));
 }
 
 // deprecated OpenCL 1.1
 cl_mem CL_API_CALL clCreateFromGLTexture3D(cl_context context, cl_mem_flags flags, cl_GLenum target, cl_GLint miplevel,
                                            cl_GLuint texture, cl_int *errcodeRet) {
     TRACING_ENTER(ClCreateFromGlTexture3D, &context, &flags, &target, &miplevel, &texture, &errcodeRet);
-    cl_mem tracingRetVal = clCreateFromGLTexture(context, flags, target, miplevel, texture, errcodeRet);
-    TRACING_EXIT(ClCreateFromGlTexture3D, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(clCreateFromGLTexture(context, flags, target, miplevel, texture, errcodeRet));
 }
 
 cl_mem CL_API_CALL clCreateFromGLRenderbuffer(cl_context context, cl_mem_flags flags, cl_GLuint renderbuffer, cl_int *errcodeRet) {
     TRACING_ENTER(ClCreateFromGlRenderbuffer, &context, &flags, &renderbuffer, &errcodeRet);
-    cl_mem tracingRetVal = clCreateFromGLTexture(context, flags, GL_RENDERBUFFER_EXT, 0, renderbuffer, errcodeRet);
-    TRACING_EXIT(ClCreateFromGlRenderbuffer, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(clCreateFromGLTexture(context, flags, GL_RENDERBUFFER_EXT, 0, renderbuffer, errcodeRet));
 }
 
 cl_int CL_API_CALL clGetGLObjectInfo(cl_mem memobj, cl_gl_object_type *glObjectType, cl_GLuint *glObjectName) {
     TRACING_ENTER(ClGetGlObjectInfo, &memobj, &glObjectType, &glObjectName);
     auto [retVal, pMemObj] = validateAndCast(std::make_tuple(memobj));
     if (retVal != CL_SUCCESS) {
-        cl_int tracingRetVal = CL_INVALID_GL_OBJECT;
-        TRACING_EXIT(ClGetGlObjectInfo, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(CL_INVALID_GL_OBJECT);
     }
 
     auto handler = static_cast<GlSharing *>(pMemObj->peekSharingHandler());
     if (!handler) {
-        cl_int tracingRetVal = CL_INVALID_GL_OBJECT;
-        TRACING_EXIT(ClGetGlObjectInfo, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(CL_INVALID_GL_OBJECT);
     }
 
     handler->getGlObjectInfo(glObjectType, glObjectName);
 
-    cl_int tracingRetVal = CL_SUCCESS;
-    TRACING_EXIT(ClGetGlObjectInfo, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(CL_SUCCESS);
 }
 
 cl_int CL_API_CALL clGetGLTextureInfo(cl_mem memobj, cl_gl_texture_info paramName, size_t paramValueSize, void *paramValue,
@@ -129,21 +105,15 @@ cl_int CL_API_CALL clGetGLTextureInfo(cl_mem memobj, cl_gl_texture_info paramNam
     TRACING_ENTER(ClGetGlTextureInfo, &memobj, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
     auto [retVal, pMemObj] = validateAndCast(std::make_tuple(memobj));
     if (retVal != CL_SUCCESS) {
-        cl_int tracingRetVal = CL_INVALID_GL_OBJECT;
-        TRACING_EXIT(ClGetGlTextureInfo, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(CL_INVALID_GL_OBJECT);
     }
 
     auto handler = static_cast<GlTexture *>(pMemObj->peekSharingHandler());
     if (!handler) {
-        cl_int tracingRetVal = CL_INVALID_GL_OBJECT;
-        TRACING_EXIT(ClGetGlTextureInfo, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(CL_INVALID_GL_OBJECT);
     }
 
-    cl_int tracingRetVal = handler->getGlTextureInfo(paramName, paramValueSize, paramValue, paramValueSizeRet);
-    TRACING_EXIT(ClGetGlTextureInfo, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(handler->getGlTextureInfo(paramName, paramValueSize, paramValue, paramValueSizeRet));
 }
 
 cl_int CL_API_CALL clEnqueueAcquireGLObjects(cl_command_queue commandQueue, cl_uint numObjects, const cl_mem *memObjects,
@@ -151,19 +121,14 @@ cl_int CL_API_CALL clEnqueueAcquireGLObjects(cl_command_queue commandQueue, cl_u
     TRACING_ENTER(ClEnqueueAcquireGlObjects, &commandQueue, &numObjects, &memObjects, &numEventsInWaitList, &eventWaitList, &event);
     auto [retVal, pCommandQueue] = validateAndCast(std::make_tuple(commandQueue));
     if (retVal != CL_SUCCESS) {
-        TRACING_EXIT(ClEnqueueAcquireGlObjects, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
     if (pCommandQueue->getContext()->getSharing<GLSharingFunctions>() == nullptr) {
-        cl_int tracingRetVal = CL_INVALID_CONTEXT;
-        TRACING_EXIT(ClEnqueueAcquireGlObjects, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(CL_INVALID_CONTEXT);
     }
 
-    cl_int tracingRetVal = pCommandQueue->enqueueAcquireSharedObjects(numObjects, memObjects, numEventsInWaitList, eventWaitList, event, CL_COMMAND_ACQUIRE_GL_OBJECTS);
-    TRACING_EXIT(ClEnqueueAcquireGlObjects, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(pCommandQueue->enqueueAcquireSharedObjects(numObjects, memObjects, numEventsInWaitList, eventWaitList, event, CL_COMMAND_ACQUIRE_GL_OBJECTS));
 }
 
 cl_int CL_API_CALL clEnqueueReleaseGLObjects(cl_command_queue commandQueue, cl_uint numObjects, const cl_mem *memObjects,
@@ -171,27 +136,21 @@ cl_int CL_API_CALL clEnqueueReleaseGLObjects(cl_command_queue commandQueue, cl_u
     TRACING_ENTER(ClEnqueueReleaseGlObjects, &commandQueue, &numObjects, &memObjects, &numEventsInWaitList, &eventWaitList, &event);
     auto [retVal, pCommandQueue] = validateAndCast(std::make_tuple(commandQueue));
     if (retVal != CL_SUCCESS) {
-        TRACING_EXIT(ClEnqueueReleaseGlObjects, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
     if (pCommandQueue->getContext()->getSharing<GLSharingFunctions>() == nullptr) {
-        cl_int tracingRetVal = CL_INVALID_CONTEXT;
-        TRACING_EXIT(ClEnqueueReleaseGlObjects, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(CL_INVALID_CONTEXT);
     }
 
     if (CommandQueue::isInPlaceSharingAcquireReleaseEnabled(CL_COMMAND_RELEASE_GL_OBJECTS)) {
         cl_int finishRetVal = clFinish(commandQueue);
         if (finishRetVal != CL_SUCCESS) {
-            TRACING_EXIT(ClEnqueueReleaseGlObjects, &finishRetVal);
-            return finishRetVal;
+            return tracingScope.exit(finishRetVal);
         }
     }
 
-    cl_int tracingRetVal = pCommandQueue->enqueueReleaseSharedObjects(numObjects, memObjects, numEventsInWaitList, eventWaitList, event, CL_COMMAND_RELEASE_GL_OBJECTS);
-    TRACING_EXIT(ClEnqueueReleaseGlObjects, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(pCommandQueue->enqueueReleaseSharedObjects(numObjects, memObjects, numEventsInWaitList, eventWaitList, event, CL_COMMAND_RELEASE_GL_OBJECTS));
 }
 
 cl_event CL_API_CALL clCreateEventFromGLsyncKHR(cl_context context, cl_GLsync sync, cl_int *errcodeRet) {

@@ -24,29 +24,22 @@ cl_int CL_API_CALL clWaitForEvents(cl_uint numEvents,
     TRACING_ENTER(ClWaitForEvents, &numEvents, &eventList);
     auto [retVal] = NEO::LEO::validateAndCast(std::make_tuple(), std::make_tuple(NEO::LEO::EventWaitList{eventList, numEvents}));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClWaitForEvents, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
     for (cl_uint i = 0; i < numEvents; ++i) {
         auto pEvent = NEO::LEO::castToObject<NEO::LEO::Event>(eventList[i]);
         if (pEvent->getContext()->isTerminated()) {
-            cl_int tracingRetVal = CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST;
-            TRACING_EXIT(ClWaitForEvents, &tracingRetVal);
-            return tracingRetVal;
+            return tracingScope.exit(CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST);
         }
 
         auto ret = pEvent->wait();
         if (ret != ZE_RESULT_SUCCESS) {
-            cl_int tracingRetVal = L0ToClResultMapper(ret);
-            TRACING_EXIT(ClWaitForEvents, &tracingRetVal);
-            return tracingRetVal;
+            return tracingScope.exit(L0ToClResultMapper(ret));
         }
         pEvent->updateExecutionStatus();
     }
-    cl_int tracingRetVal = CL_SUCCESS;
-    TRACING_EXIT(ClWaitForEvents, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(CL_SUCCESS);
 }
 
 cl_int CL_API_CALL clGetEventInfo(cl_event event,
@@ -57,13 +50,10 @@ cl_int CL_API_CALL clGetEventInfo(cl_event event,
     TRACING_ENTER(ClGetEventInfo, &event, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
     auto [retVal, pEvent] = NEO::LEO::validateAndCast(std::make_tuple(event));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClGetEventInfo, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
-    cl_int tracingRetVal = pEvent->getEventInfo(paramName, paramValueSize, paramValue, paramValueSizeRet);
-    TRACING_EXIT(ClGetEventInfo, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(pEvent->getEventInfo(paramName, paramValueSize, paramValue, paramValueSizeRet));
 }
 
 cl_event CL_API_CALL clCreateUserEvent(cl_context context,
@@ -74,41 +64,31 @@ cl_event CL_API_CALL clCreateUserEvent(cl_context context,
     auto [retVal, pContext] = NEO::LEO::validateAndCast(std::make_tuple(context));
     if (retVal != CL_SUCCESS) [[unlikely]] {
         err.set(retVal);
-        cl_event tracingRetVal = nullptr;
-        TRACING_EXIT(ClCreateUserEvent, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(nullptr);
     }
-    cl_event tracingRetVal = new NEO::LEO::Event(pContext);
-    TRACING_EXIT(ClCreateUserEvent, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(new NEO::LEO::Event(pContext));
 }
 
 cl_int CL_API_CALL clRetainEvent(cl_event event) {
     TRACING_ENTER(ClRetainEvent, &event);
     auto [retVal, pEvent] = NEO::LEO::validateAndCast(std::make_tuple(event));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClRetainEvent, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
     pEvent->incRefApi();
-    cl_int tracingRetVal = CL_SUCCESS;
-    TRACING_EXIT(ClRetainEvent, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(CL_SUCCESS);
 }
 
 cl_int CL_API_CALL clReleaseEvent(cl_event event) {
     TRACING_ENTER(ClReleaseEvent, &event);
     auto [retVal, pEvent] = NEO::LEO::validateAndCast(std::make_tuple(event));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClReleaseEvent, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
     pEvent->decRefApi();
-    cl_int tracingRetVal = CL_SUCCESS;
-    TRACING_EXIT(ClReleaseEvent, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(CL_SUCCESS);
 }
 
 cl_int CL_API_CALL clSetUserEventStatus(cl_event event,
@@ -116,16 +96,13 @@ cl_int CL_API_CALL clSetUserEventStatus(cl_event event,
     TRACING_ENTER(ClSetUserEventStatus, &event, &executionStatus);
     auto [retVal, pEvent] = NEO::LEO::validateAndCast(std::make_tuple(event));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClSetUserEventStatus, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
     if (executionStatus != CL_COMPLETE) {
         pEvent->getContext()->terminateExecution();
     }
-    cl_int tracingRetVal = L0ToClResultMapper(pEvent->signal(executionStatus));
-    TRACING_EXIT(ClSetUserEventStatus, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(L0ToClResultMapper(pEvent->signal(executionStatus)));
 }
 
 cl_int CL_API_CALL clSetEventCallback(cl_event event,
@@ -135,22 +112,17 @@ cl_int CL_API_CALL clSetEventCallback(cl_event event,
     TRACING_ENTER(ClSetEventCallback, &event, &commandExecCallbackType, &funcNotify, &userData);
     auto [retVal, pEvent] = NEO::LEO::validateAndCast(std::make_tuple(event), std::make_tuple(reinterpret_cast<void *>(funcNotify)));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClSetEventCallback, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
     switch (commandExecCallbackType) {
     default: {
-        cl_int tracingRetVal = CL_INVALID_VALUE;
-        TRACING_EXIT(ClSetEventCallback, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(CL_INVALID_VALUE);
     }
     case CL_QUEUED:
     case CL_SUBMITTED: {
         funcNotify(event, commandExecCallbackType, userData);
-        cl_int tracingRetVal = CL_SUCCESS;
-        TRACING_EXIT(ClSetEventCallback, &tracingRetVal);
-        return tracingRetVal;
+        return tracingScope.exit(CL_SUCCESS);
     }
     case CL_RUNNING:
     case CL_COMPLETE: {
@@ -164,9 +136,7 @@ cl_int CL_API_CALL clSetEventCallback(cl_event event,
         }
     }
     }
-    cl_int tracingRetVal = CL_SUCCESS;
-    TRACING_EXIT(ClSetEventCallback, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(CL_SUCCESS);
 }
 
 cl_int CL_API_CALL clGetEventProfilingInfo(cl_event event,
@@ -177,11 +147,8 @@ cl_int CL_API_CALL clGetEventProfilingInfo(cl_event event,
     TRACING_ENTER(ClGetEventProfilingInfo, &event, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
     auto [retVal, pEvent] = NEO::LEO::validateAndCast(std::make_tuple(event));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClGetEventProfilingInfo, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
-    cl_int tracingRetVal = pEvent->getProfilingInfo(paramName, paramValueSize, paramValue, paramValueSizeRet);
-    TRACING_EXIT(ClGetEventProfilingInfo, &tracingRetVal);
-    return tracingRetVal;
+    return tracingScope.exit(pEvent->getProfilingInfo(paramName, paramValueSize, paramValue, paramValueSizeRet));
 }

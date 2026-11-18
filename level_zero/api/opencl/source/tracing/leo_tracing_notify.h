@@ -14,6 +14,7 @@
 
 #include <atomic>
 #include <thread>
+#include <type_traits>
 
 namespace HostSideTracing {
 
@@ -30,47 +31,8 @@ namespace HostSideTracing {
 
 inline thread_local bool tracingInProgress = false;
 
-class CheckIfExitCalled : NEO::NonCopyableAndNonMovableClass {
-  public:
-    CheckIfExitCalled() = default;
-    ~CheckIfExitCalled() {
-        UNRECOVERABLE_IF(!tracingExited);
-    }
-
-    void exit() {
-        tracingExited = true;
-    }
-
-  private:
-    bool tracingExited = false;
-};
-
-static_assert(NEO::NonCopyableAndNonMovable<CheckIfExitCalled>);
-
-#define TRACING_ENTER(name, ...)                                                                                                                   \
-    bool isHostSideTracingEnabled_##name = false;                                                                                                  \
-    bool currentlyTracedCall = false;                                                                                                              \
-    HostSideTracing::CheckIfExitCalled checkIfExited;                                                                                              \
-    HostSideTracing::name##Tracer tracer_##name;                                                                                                   \
-    if (TRACING_GET_ENABLED_BIT(HostSideTracing::tracingState.load(std::memory_order_acquire)) && (false == HostSideTracing::tracingInProgress)) { \
-        HostSideTracing::tracingInProgress = true;                                                                                                 \
-        currentlyTracedCall = true;                                                                                                                \
-        isHostSideTracingEnabled_##name = HostSideTracing::addTracingClient();                                                                     \
-        if (isHostSideTracingEnabled_##name) {                                                                                                     \
-            tracer_##name.enter(__VA_ARGS__);                                                                                                      \
-        }                                                                                                                                          \
-    }
-
-#define TRACING_EXIT(name, ...)                     \
-    if (currentlyTracedCall) {                      \
-        if (isHostSideTracingEnabled_##name) {      \
-            tracer_##name.exit(__VA_ARGS__);        \
-            HostSideTracing::removeTracingClient(); \
-        }                                           \
-        HostSideTracing::tracingInProgress = false; \
-        currentlyTracedCall = false;                \
-    }                                               \
-    checkIfExited.exit();
+#define TRACING_ENTER(name, ...) \
+    HostSideTracing::TracingScope<HostSideTracing::name##Tracer> tracingScope(__VA_ARGS__)
 
 enum TracingNotifyState {
     TRACING_NOTIFY_STATE_NOTHING_CALLED = 0,
@@ -89,6 +51,70 @@ extern std::atomic<uint32_t> tracingCorrelationId;
 
 bool addTracingClient();
 void removeTracingClient();
+
+template <typename TracerExitT>
+struct TracerReturnType;
+
+template <typename TracerT, typename RetT>
+struct TracerReturnType<void (TracerT::*)(RetT *)> {
+    using Type = RetT;
+};
+
+template <typename TracerT>
+class TracingScope : NEO::NonCopyableAndNonMovableClass {
+    using RetT = typename TracerReturnType<decltype(&TracerT::exit)>::Type;
+    using RetStorageT = std::conditional_t<std::is_void_v<RetT>, std::nullptr_t, RetT>;
+
+  public:
+    template <typename... Params>
+    TracingScope(Params... params) {
+        if (TRACING_GET_ENABLED_BIT(tracingState.load(std::memory_order_acquire)) && (false == tracingInProgress)) {
+            tracingInProgress = true;
+            this->currentlyTracedCall = true;
+            this->isHostSideTracingEnabled = addTracingClient();
+            if (this->isHostSideTracingEnabled) {
+                this->tracer.enter(params...);
+            }
+        }
+    }
+
+    ~TracingScope() {
+        UNRECOVERABLE_IF(!this->exited);
+    }
+
+    template <typename T = RetT>
+        requires(!std::is_void_v<T>)
+    T exit(std::type_identity_t<T> retVal) {
+        this->returnValue = retVal;
+        this->notifyExit(&this->returnValue);
+        return this->returnValue;
+    }
+
+    void exit()
+        requires(std::is_void_v<RetT>)
+    {
+        this->notifyExit(nullptr);
+    }
+
+  private:
+    void notifyExit(RetT *retVal) {
+        if (this->currentlyTracedCall) {
+            if (this->isHostSideTracingEnabled) {
+                this->tracer.exit(retVal);
+                removeTracingClient();
+            }
+            tracingInProgress = false;
+            this->currentlyTracedCall = false;
+        }
+        this->exited = true;
+    }
+
+    TracerT tracer;
+    RetStorageT returnValue{};
+    bool isHostSideTracingEnabled = false;
+    bool currentlyTracedCall = false;
+    bool exited = false;
+};
 
 class AtomicBackoff {
   public:
@@ -11247,5 +11273,7 @@ static_assert(NEO::NonCopyableAndNonMovable<ClEnqueueAcquireGlObjectsTracer>);
 static_assert(NEO::NonCopyableAndNonMovable<ClEnqueueReleaseGlObjectsTracer>);
 static_assert(NEO::NonCopyableAndNonMovable<ClGetGlObjectInfoTracer>);
 static_assert(NEO::NonCopyableAndNonMovable<ClGetGlTextureInfoTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<TracingScope<ClFlushTracer>>);
+static_assert(NEO::NonCopyableAndNonMovable<TracingScope<ClSvmFreeTracer>>);
 
 } // namespace HostSideTracing

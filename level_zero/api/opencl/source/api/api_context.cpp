@@ -40,16 +40,12 @@ cl_context CL_API_CALL clCreateContext(const cl_context_properties *properties,
 
     if (numDevices == 0 || !devices) {
         err.set(CL_INVALID_DEVICE);
-        cl_context retContext = nullptr;
-        TRACING_EXIT(ClCreateContext, &retContext);
-        return retContext;
+        return tracingScope.exit(nullptr);
     }
 
     if (funcNotify == nullptr && userData != nullptr) {
         err.set(CL_INVALID_VALUE);
-        cl_context retContext = nullptr;
-        TRACING_EXIT(ClCreateContext, &retContext);
-        return retContext;
+        return tracingScope.exit(nullptr);
     }
 
     std::vector<ze_device_handle_t> l0Devices(numDevices);
@@ -73,9 +69,7 @@ cl_context CL_API_CALL clCreateContext(const cl_context_properties *properties,
 
     if (ret != CL_SUCCESS) {
         err.set(ret);
-        cl_context retContext = nullptr;
-        TRACING_EXIT(ClCreateContext, &retContext);
-        return retContext;
+        return tracingScope.exit(nullptr);
     }
 
     auto pContext = new NEO::LEO::Context(properties, context, numDevices, devices, inputContext);
@@ -85,14 +79,10 @@ cl_context CL_API_CALL clCreateContext(const cl_context_properties *properties,
 
     if (ret != CL_SUCCESS) {
         delete pContext;
-        cl_context retContext = nullptr;
-        TRACING_EXIT(ClCreateContext, &retContext);
-        return retContext;
+        return tracingScope.exit(nullptr);
     }
 
-    cl_context retContext = pContext;
-    TRACING_EXIT(ClCreateContext, &retContext);
-    return retContext;
+    return tracingScope.exit(pContext);
 }
 
 cl_context CL_API_CALL clCreateContextFromType(const cl_context_properties *properties,
@@ -108,50 +98,38 @@ cl_context CL_API_CALL clCreateContextFromType(const cl_context_properties *prop
     auto retVal = clGetDeviceIDs(nullptr, deviceType, 0, nullptr, &numDevices);
     if (retVal != CL_SUCCESS) {
         err.set(retVal);
-        cl_context retContext = nullptr;
-        TRACING_EXIT(ClCreateContextFromType, &retContext);
-        return retContext;
+        return tracingScope.exit(nullptr);
     }
     std::vector<cl_device_id> devices(numDevices, nullptr);
     retVal = clGetDeviceIDs(nullptr, deviceType, numDevices, devices.data(), nullptr);
     if (retVal != CL_SUCCESS) {
         err.set(retVal);
-        cl_context retContext = nullptr;
-        TRACING_EXIT(ClCreateContextFromType, &retContext);
-        return retContext;
+        return tracingScope.exit(nullptr);
     }
 
-    cl_context retContext = clCreateContext(properties, numDevices, devices.data(), funcNotify, userData, errcodeRet);
-    TRACING_EXIT(ClCreateContextFromType, &retContext);
-    return retContext;
+    return tracingScope.exit(clCreateContext(properties, numDevices, devices.data(), funcNotify, userData, errcodeRet));
 }
 
 cl_int CL_API_CALL clRetainContext(cl_context context) {
     TRACING_ENTER(ClRetainContext, &context);
     auto [retVal, pContext] = NEO::LEO::validateAndCast(std::make_tuple(context));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClRetainContext, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
     pContext->incRefApi();
-    cl_int ret = CL_SUCCESS;
-    TRACING_EXIT(ClRetainContext, &ret);
-    return ret;
+    return tracingScope.exit(CL_SUCCESS);
 }
 
 cl_int CL_API_CALL clReleaseContext(cl_context context) {
     TRACING_ENTER(ClReleaseContext, &context);
     auto [retVal, pContext] = NEO::LEO::validateAndCast(std::make_tuple(context));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClReleaseContext, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
     pContext->decRefApi();
-    cl_int ret = CL_SUCCESS;
-    TRACING_EXIT(ClReleaseContext, &ret);
-    return ret;
+    return tracingScope.exit(CL_SUCCESS);
 }
 
 cl_int CL_API_CALL clGetContextInfo(cl_context context,
@@ -162,13 +140,10 @@ cl_int CL_API_CALL clGetContextInfo(cl_context context,
     TRACING_ENTER(ClGetContextInfo, &context, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
     auto [retVal, pContext] = NEO::LEO::validateAndCast(std::make_tuple(context));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClGetContextInfo, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
 
-    cl_int ret = pContext->getInfo(paramName, paramValueSize, paramValue, paramValueSizeRet);
-    TRACING_EXIT(ClGetContextInfo, &ret);
-    return ret;
+    return tracingScope.exit(pContext->getInfo(paramName, paramValueSize, paramValue, paramValueSizeRet));
 }
 
 cl_int CL_API_CALL clSetContextDestructorCallback(cl_context context,
@@ -177,22 +152,17 @@ cl_int CL_API_CALL clSetContextDestructorCallback(cl_context context,
     TRACING_ENTER(ClSetContextDestructorCallback, &context, &pfnNotify, &userData);
     auto [retVal, pContext] = NEO::LEO::validateAndCast(std::make_tuple(context), std::make_tuple(reinterpret_cast<void *>(pfnNotify)));
     if (retVal != CL_SUCCESS) [[unlikely]] {
-        TRACING_EXIT(ClSetContextDestructorCallback, &retVal);
-        return retVal;
+        return tracingScope.exit(retVal);
     }
     pContext->registerCallback(pfnNotify, userData);
-    cl_int ret = CL_SUCCESS;
-    TRACING_EXIT(ClSetContextDestructorCallback, &ret);
-    return ret;
+    return tracingScope.exit(CL_SUCCESS);
 }
 
 cl_int CL_API_CALL clSetDefaultDeviceCommandQueue(cl_context context,
                                                   cl_device_id device,
                                                   cl_command_queue commandQueue) {
     TRACING_ENTER(ClSetDefaultDeviceCommandQueue, &context, &device, &commandQueue);
-    cl_int retVal = CL_INVALID_OPERATION;
-    TRACING_EXIT(ClSetDefaultDeviceCommandQueue, &retVal);
-    return retVal;
+    return tracingScope.exit(CL_INVALID_OPERATION);
 }
 
 } // extern "C"
