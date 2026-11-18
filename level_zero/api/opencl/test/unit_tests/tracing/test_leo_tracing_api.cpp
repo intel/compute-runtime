@@ -7,6 +7,7 @@
 
 #include "shared/test/common/test_macros/test.h"
 
+#include "level_zero/api/opencl/source/api/leo_api.h"
 #include "level_zero/api/opencl/source/tracing/leo_tracing_api.h"
 #include "level_zero/api/opencl/source/tracing/leo_tracing_handle.h"
 #include "level_zero/api/opencl/source/tracing/leo_tracing_notify.h"
@@ -490,6 +491,23 @@ TEST_F(TracingFixture, givenEnabledTracingPointWhenApiIsCalledThenCallbackIsInvo
     EXPECT_EQ(CL_CALLBACK_SITE_EXIT, TracingCallbackRecorder::records[1].site);
     EXPECT_EQ(&userData, TracingCallbackRecorder::records[0].userData);
     EXPECT_EQ(&userData, TracingCallbackRecorder::records[1].userData);
+}
+
+TEST_F(TracingFixture, givenPeerInfoTracingPointEnabledWhenPeerInfoIsQueriedThenCallbackIsInvokedOnEnterAndExit) {
+    auto handle = createHandle(&TracingCallbackRecorder::writingCallback);
+    ASSERT_EQ(CL_SUCCESS, clSetTracingPointINTEL(handle, CL_FUNCTION_clGetDevicePeerInfoINTEL, CL_TRUE));
+    ASSERT_EQ(CL_SUCCESS, clEnableTracingINTEL(handle));
+
+    EXPECT_EQ(CL_INVALID_DEVICE, clGetDevicePeerInfoINTEL(nullptr, nullptr, CL_DEVICE_PEER_ACCESS_SUPPORTED_INTEL, 0, nullptr, nullptr));
+
+    ASSERT_EQ(2u, TracingCallbackRecorder::count);
+    EXPECT_EQ(CL_FUNCTION_clGetDevicePeerInfoINTEL, TracingCallbackRecorder::records[0].fid);
+    EXPECT_EQ(CL_CALLBACK_SITE_ENTER, TracingCallbackRecorder::records[0].site);
+    EXPECT_STREQ("clGetDevicePeerInfoINTEL", TracingCallbackRecorder::records[0].functionName);
+    EXPECT_EQ(CL_FUNCTION_clGetDevicePeerInfoINTEL, TracingCallbackRecorder::records[1].fid);
+    EXPECT_EQ(CL_CALLBACK_SITE_EXIT, TracingCallbackRecorder::records[1].site);
+    ASSERT_TRUE(TracingCallbackRecorder::records[1].hasReturnValue);
+    EXPECT_EQ(CL_INVALID_DEVICE, TracingCallbackRecorder::records[1].returnValue);
 }
 
 TEST_F(TracingFixture, givenEnabledTracingPointWhenApiIsCalledThenCallbackSeesFunctionNameParamsAndReturnValue) {

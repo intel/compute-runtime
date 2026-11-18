@@ -206,6 +206,9 @@ enum ClFunctionId {
     CL_FUNCTION_clEnqueueAcquireExternalMemObjectsKHR = 156,
     CL_FUNCTION_clEnqueueReleaseExternalMemObjectsKHR = 157,
     CL_FUNCTION_clGetKernelSuggestedLocalWorkSize = 158,
+    // 159 is CL_FUNCTION_clGetDevicePeerInfoINTEL in the LEO tracing types
+    // (level_zero/api/opencl/source/tracing/leo_tracing_types.h), which have no
+    // counterpart here; the next function added here takes 160.
     CL_FUNCTION_COUNT = 159
 };
 

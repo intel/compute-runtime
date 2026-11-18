@@ -9,6 +9,7 @@
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/test_macros/test.h"
 
+#include "level_zero/api/opencl/source/api/leo_api.h"
 #include "level_zero/api/opencl/source/cl_device/leo_cl_device.h"
 #include "level_zero/api/opencl/source/context/leo_context.h"
 #include "level_zero/api/opencl/source/helpers/leo_base_object.h"
@@ -293,6 +294,30 @@ TEST_F(LeoMultiDevicePeerInfoTests, givenLevelZeroQueryFailsWhenQueryingPeerInfo
     EXPECT_EQ(ZE_STRUCTURE_TYPE_DEVICE_P2P_PROPERTIES, P2PPropertiesStub::stypeOnEntry);
     EXPECT_EQ(0u, P2PPropertiesStub::flagsOnEntry);
     EXPECT_EQ(nullptr, P2PPropertiesStub::pNextOnEntry);
+}
+
+TEST_F(LeoMultiDevicePeerInfoTests, givenNullOrInvalidDeviceWhenQueryingPeerInfoThenInvalidDeviceIsReturned) {
+    auto clDevices = getClDeviceIds();
+    cl_bool value = CL_FALSE;
+    auto invalidDevice = reinterpret_cast<cl_device_id>(platform.get());
+
+    EXPECT_EQ(CL_INVALID_DEVICE, clGetDevicePeerInfoINTEL(nullptr, clDevices[0], CL_DEVICE_PEER_ACCESS_SUPPORTED_INTEL, sizeof(value), &value, nullptr));
+    EXPECT_EQ(CL_INVALID_DEVICE, clGetDevicePeerInfoINTEL(clDevices[0], nullptr, CL_DEVICE_PEER_ACCESS_SUPPORTED_INTEL, sizeof(value), &value, nullptr));
+    EXPECT_EQ(CL_INVALID_DEVICE, clGetDevicePeerInfoINTEL(invalidDevice, clDevices[0], CL_DEVICE_PEER_ACCESS_SUPPORTED_INTEL, sizeof(value), &value, nullptr));
+    EXPECT_EQ(CL_INVALID_DEVICE, clGetDevicePeerInfoINTEL(clDevices[0], invalidDevice, CL_DEVICE_PEER_ACCESS_SUPPORTED_INTEL, sizeof(value), &value, nullptr));
+}
+
+TEST_F(LeoMultiDevicePeerInfoTests, givenTwoDevicesWhenQueryingPeerInfoThroughApiThenDeviceAndPeerAreForwardedInOrder) {
+    VariableBackup<decltype(LEO::zeDeviceGetP2PProperties)> entryBackup{&LEO::zeDeviceGetP2PProperties, &P2PPropertiesStub::getP2PProperties};
+    VariableBackup<uint32_t> callsBackup{&P2PPropertiesStub::calls, 0u};
+    VariableBackup<ze_result_t> resultBackup{&P2PPropertiesStub::result, ZE_RESULT_SUCCESS};
+    auto clDevices = getClDeviceIds();
+    cl_bool value = CL_FALSE;
+
+    EXPECT_EQ(CL_SUCCESS, clGetDevicePeerInfoINTEL(clDevices[1], clDevices[0], CL_DEVICE_PEER_ACCESS_SUPPORTED_INTEL, sizeof(value), &value, nullptr));
+    EXPECT_EQ(1u, P2PPropertiesStub::calls);
+    EXPECT_EQ(castToObject<ClDevice>(clDevices[1])->getL0Handle(), P2PPropertiesStub::device);
+    EXPECT_EQ(castToObject<ClDevice>(clDevices[0])->getL0Handle(), P2PPropertiesStub::peerDevice);
 }
 
 } // namespace ult

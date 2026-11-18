@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "level_zero/api/opencl/extensions/public/cl_ext_private.h"
+
 #include "CL/cl.h"
 #include "CL/cl_ext.h"
 #include "CL/cl_gl.h"
@@ -1135,6 +1137,14 @@ cl_int CL_API_CALL clEnqueueReleaseExternalMemObjectsKHR(
     cl_uint numEventsInWaitList,
     const cl_event *eventWaitList,
     cl_event *event);
+
+cl_int CL_API_CALL clGetDevicePeerInfoINTEL(
+    cl_device_id device,
+    cl_device_id peerDevice,
+    cl_device_peer_info_intel paramName,
+    size_t paramValueSize,
+    void *paramValue,
+    size_t *paramValueSizeRet);
 
 #ifdef __cplusplus
 }

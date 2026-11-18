@@ -3531,6 +3531,77 @@ class ClEnqueueReleaseExternalMemObjectsKHRTracer : NEO::NonCopyableAndNonMovabl
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
+class ClGetDevicePeerInfoINTELTracer : NEO::NonCopyableAndNonMovableClass {
+  public:
+    ClGetDevicePeerInfoINTELTracer() {}
+
+    void enter(cl_device_id *device,
+               cl_device_id *peerDevice,
+               cl_uint *paramName,
+               size_t *paramValueSize,
+               void **paramValue,
+               size_t **paramValueSizeRet) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_NOTHING_CALLED);
+
+        params.device = device;
+        params.peerDevice = peerDevice;
+        params.paramName = paramName;
+        params.paramValueSize = paramValueSize;
+        params.paramValue = paramValue;
+        params.paramValueSizeRet = paramValueSizeRet;
+
+        data.site = CL_CALLBACK_SITE_ENTER;
+        data.correlationId = tracingCorrelationId.fetch_add(1, std::memory_order_acq_rel);
+        data.functionName = "clGetDevicePeerInfoINTEL";
+        data.functionParams = static_cast<const void *>(&params);
+        data.functionReturnValue = nullptr;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clGetDevicePeerInfoINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clGetDevicePeerInfoINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_ENTER_CALLED;
+    }
+
+    void exit(cl_int *retVal) {
+        DEBUG_BREAK_IF(state != TRACING_NOTIFY_STATE_ENTER_CALLED);
+        data.site = CL_CALLBACK_SITE_EXIT;
+        data.functionReturnValue = retVal;
+
+        size_t i = 0;
+        DEBUG_BREAK_IF(tracingHandle[0] == nullptr);
+        while (i < tracingMaxHandleCount && tracingHandle[i] != nullptr) {
+            TracingHandle *handle = tracingHandle[i];
+            DEBUG_BREAK_IF(handle == nullptr);
+            if (handle->getTracingPoint(CL_FUNCTION_clGetDevicePeerInfoINTEL)) {
+                data.correlationData = correlationData + i;
+                handle->call(CL_FUNCTION_clGetDevicePeerInfoINTEL, &data);
+            }
+            ++i;
+        }
+
+        state = TRACING_NOTIFY_STATE_EXIT_CALLED;
+    }
+
+    ~ClGetDevicePeerInfoINTELTracer() {
+        DEBUG_BREAK_IF(state == TRACING_NOTIFY_STATE_ENTER_CALLED);
+    }
+
+  private:
+    cl_params_clGetDevicePeerInfoINTEL params{};
+    cl_callback_data data{};
+    uint64_t correlationData[tracingMaxHandleCount];
+    TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
+};
+
 class ClCreateImageTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClCreateImageTracer() {}
@@ -11163,6 +11234,7 @@ static_assert(NEO::NonCopyableAndNonMovable<ClSetContextDestructorCallbackTracer
 static_assert(NEO::NonCopyableAndNonMovable<ClEnqueueExternalMemObjectsKHRTracer>);
 static_assert(NEO::NonCopyableAndNonMovable<ClEnqueueAcquireExternalMemObjectsKHRTracer>);
 static_assert(NEO::NonCopyableAndNonMovable<ClEnqueueReleaseExternalMemObjectsKHRTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClGetDevicePeerInfoINTELTracer>);
 static_assert(NEO::NonCopyableAndNonMovable<ClCreateImageTracer>);
 static_assert(NEO::NonCopyableAndNonMovable<ClCreateImage2DTracer>);
 static_assert(NEO::NonCopyableAndNonMovable<ClCreateImage3DTracer>);

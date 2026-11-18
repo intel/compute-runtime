@@ -224,6 +224,21 @@ cl_int CL_API_CALL clGetDeviceFunctionPointerINTEL(
     return tracingScope.exit(L0ToClResultMapper(zeModuleGetFunctionPointer(moduleHandle, functionName, reinterpret_cast<void **>(functionPointerRet))));
 }
 
+cl_int CL_API_CALL clGetDevicePeerInfoINTEL(cl_device_id device,
+                                            cl_device_id peerDevice,
+                                            cl_device_peer_info_intel paramName,
+                                            size_t paramValueSize,
+                                            void *paramValue,
+                                            size_t *paramValueSizeRet) {
+    TRACING_ENTER(ClGetDevicePeerInfoINTEL, &device, &peerDevice, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
+    auto [retVal, pDevice, pPeerDevice] = NEO::LEO::validateAndCast(std::make_tuple(device, peerDevice));
+    if (retVal != CL_SUCCESS) [[unlikely]] {
+        return tracingScope.exit(retVal);
+    }
+
+    return tracingScope.exit(pDevice->getPeerInfo(*pPeerDevice, paramName, paramValueSize, paramValue, paramValueSizeRet));
+}
+
 CL_API_ENTRY cl_int CL_API_CALL
 clSetPerformanceConfigurationINTEL(
     cl_device_id device,

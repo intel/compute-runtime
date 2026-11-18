@@ -206,7 +206,8 @@ enum ClFunctionId {
     CL_FUNCTION_clEnqueueAcquireExternalMemObjectsKHR = 156,
     CL_FUNCTION_clEnqueueReleaseExternalMemObjectsKHR = 157,
     CL_FUNCTION_clGetKernelSuggestedLocalWorkSize = 158,
-    CL_FUNCTION_COUNT = 159
+    CL_FUNCTION_clGetDevicePeerInfoINTEL = 159,
+    CL_FUNCTION_COUNT = 160
 };
 
 /*!
@@ -610,6 +611,15 @@ typedef struct _cl_params_clEnqueueReleaseExternalMemObjectsKHR {
     const cl_event **eventWaitList;
     cl_event **event;
 } cl_params_clEnqueueReleaseExternalMemObjectsKHR;
+
+typedef struct _cl_params_clGetDevicePeerInfoINTEL {
+    cl_device_id *device;
+    cl_device_id *peerDevice;
+    cl_uint *paramName;
+    size_t *paramValueSize;
+    void **paramValue;
+    size_t **paramValueSizeRet;
+} cl_params_clGetDevicePeerInfoINTEL;
 
 typedef struct _cl_params_clCreateBufferWithProperties {
     cl_context *context;
