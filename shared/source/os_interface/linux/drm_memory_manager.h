@@ -176,6 +176,7 @@ class DrmMemoryManager : public MemoryManager {
     OsContextLinux *getDefaultOsContext(uint32_t rootDeviceIndex) const;
     void makeAllocationResidentInDefaultContext(GraphicsAllocation *allocation);
     void makeAllocationResidentIfNeeded(GraphicsAllocation *allocation);
+    bool evictFromRegisteredContexts(GraphicsAllocation &allocation);
 
     MOCKABLE_VIRTUAL bool getSystemMemoryUsageFromProcMeminfo(uint64_t &totalBytes, uint64_t &freeBytes);
     static bool parseMeminfo(const std::string &content, uint64_t &totalBytes, uint64_t &freeBytes);

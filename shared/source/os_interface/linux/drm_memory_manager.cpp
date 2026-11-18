@@ -955,11 +955,7 @@ bool DrmMemoryManager::unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAll
             freeAssociatedResourceImpl(*allocation);
         }
 
-        auto rootDeviceIndex = allocation->getRootDeviceIndex();
-        auto memoryOperationsInterface = static_cast<DrmMemoryOperationsHandler *>(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface.get());
-        for (auto &engine : getRegisteredEngines(rootDeviceIndex)) {
-            memoryOperationsInterface->evictWithinOsContext(engine.osContext, *allocation);
-        }
+        this->evictFromRegisteredContexts(*allocation);
 
         DrmAllocation *drmAlloc = static_cast<DrmAllocation *>(allocation);
         if (allocation->getRootDeviceIndex() == physicalAllocation->getRootDeviceIndex()) {
@@ -2684,6 +2680,16 @@ void DrmMemoryManager::makeAllocationResidentInDefaultContext(GraphicsAllocation
     DEBUG_BREAK_IF(!ret);
 }
 
+bool DrmMemoryManager::evictFromRegisteredContexts(GraphicsAllocation &allocation) {
+    auto rootDeviceIndex = allocation.getRootDeviceIndex();
+    auto memoryOperationsInterface = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface.get();
+    bool evicted = true;
+    for (auto &engine : this->getRegisteredEngines(rootDeviceIndex)) {
+        evicted &= (memoryOperationsInterface->evictWithinOsContext(engine.osContext, allocation) == MemoryOperationsStatus::success);
+    }
+    return evicted;
+}
+
 void DrmMemoryManager::makeAllocationResidentIfNeeded(GraphicsAllocation *allocation) {
     auto allocType = allocation->getAllocationType();
     if (GraphicsAllocation::isDebugSurfaceAllocationType(allocType) ||
@@ -3342,14 +3348,18 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
                                              uint64_t &gpuAddress,
                                              size_t &sizeAllocated) {
         self->releaseLocalMemoryReservation(*drmAllocation);
+        const bool evicted = self->evictFromRegisteredContexts(*drmAllocation);
         for (auto bo : drmAllocation->getBOs()) {
             delete bo;
         }
         for (auto handleId = 0u; handleId < drmAllocation->getNumGmms(); handleId++) {
             delete drmAllocation->getGmm(handleId);
         }
-        auto gmmHelper = self->getGmmHelper(allocationData.rootDeviceIndex);
-        gfxPartition->freeGpuAddressRange(gmmHelper->decanonize(gpuAddress), sizeAllocated);
+        // a range still mapped in the VM must not be reused
+        if (evicted) {
+            auto gmmHelper = self->getGmmHelper(allocationData.rootDeviceIndex);
+            gfxPartition->freeGpuAddressRange(gmmHelper->decanonize(gpuAddress), sizeAllocated);
+        }
     };
 
     status = AllocationStatus::RetryInNonDevicePool;

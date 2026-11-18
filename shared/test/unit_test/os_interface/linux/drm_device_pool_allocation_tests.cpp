@@ -152,6 +152,42 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenCpuAccessRequiredWhenAllocatingInDe
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+TEST_F(DrmMemoryManagerLocalMemoryTest, givenCpuAccessRequiredAndLockFailsWhenAllocatingInDevicePoolThenBoIsUnboundAndRangeIsFreedOnlyIfUnbound) {
+    setUpSingleDeviceMemoryRegion(*mock);
+    mock->setBindAvailable();
+    ioctlHelper->vmBindAvailable = true;
+    ioctlHelper->deferBackingEnabledForAllocation = true;
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, rootDeviceIndex, false);
+    VariableBackup<decltype(memoryManager->mmapFunction)> mmapBackup(&memoryManager->mmapFunction, [](void *addr, size_t len, int prot, int flags, int fd, off_t offset) throw() { return MAP_FAILED; });
+
+    auto gfxPartition = new MockGfxPartition();
+    gfxPartition->callBasefreeGpuAddressRange = true;
+    gfxPartition->init(defaultHwInfo->capabilityTable.gpuAddressSpace, getSizeToReserve(), 0, 1, false, 0u, defaultHwInfo->capabilityTable.gpuAddressSpace + 1, nullptr);
+    memoryManager->overrideGfxPartition(gfxPartition);
+
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
+    AllocationData allocData{};
+    allocData.size = MemoryConstants::pageSize64k;
+    allocData.flags.requiresCpuAccess = true;
+    allocData.type = AllocationType::buffer;
+    allocData.rootDeviceIndex = rootDeviceIndex;
+
+    for (const bool unbindFails : {false, true}) {
+        ioctlHelper->vmBindCalled = 0u;
+        ioctlHelper->vmUnbindCalled = 0u;
+        ioctlHelper->vmUnbindResult = unbindFails ? -1 : 0;
+        gfxPartition->freeGpuAddressRangeCalled = 0u;
+
+        auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
+
+        EXPECT_EQ(nullptr, allocation);
+        EXPECT_EQ(MemoryManager::AllocationStatus::Error, status);
+        EXPECT_EQ(1u, ioctlHelper->vmBindCalled);
+        EXPECT_NE(0u, ioctlHelper->vmUnbindCalled);
+        EXPECT_EQ(unbindFails ? 0u : 1u, gfxPartition->freeGpuAddressRangeCalled);
+    }
+}
+
 TEST_F(DrmMemoryManagerLocalMemoryTest, givenWriteCombinedAllocationWhenAllocatingInDevicePoolThenAllocationIsLockedAndLockedPtrIsUsedAsGpuAddress) {
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
     AllocationData allocData{};
