@@ -37,6 +37,20 @@
 static_assert(sizeof(NEO::InOrderExecEventData) <= ZE_MAX_IPC_HANDLE_SIZE, "InOrderExecEventData is bigger than ZE_MAX_IPC_HANDLE_SIZE");
 
 namespace L0 {
+namespace {
+NEO::GraphicsAllocation *importCbAllocationForIpc(Context &context, Device &device, uint64_t handle, NEO::AllocationType allocationType, bool isHostIpcAllocation,
+                                                  unsigned int processId, uint64_t cacheId, void *reservedHandleData, bool isOpaqueHandle) {
+    auto allocation = context.getMemHandlePtr(device.toHandle(), handle, allocationType, isHostIpcAllocation, processId, 0, cacheId, reservedHandleData, false, isOpaqueHandle, 0u).first;
+    if (allocation) {
+        auto svmAllocsManager = device.getDriverHandle()->getSvmAllocsManager();
+        if (auto allocData = svmAllocsManager->getSVMAlloc(reinterpret_cast<void *>(allocation->getGpuAddress()))) {
+            svmAllocsManager->removeSVMAlloc(*allocData);
+        }
+    }
+    return allocation;
+}
+} // namespace
+
 template Event *Event::create<uint64_t>(EventPool *, const ze_event_desc_t *, Device *, ze_result_t &);
 template Event *Event::create<uint32_t>(EventPool *, const ze_event_desc_t *, Device *, ze_result_t &);
 template Event *Event::create<uint64_t>(const EventDescriptor &, Device *, ze_result_t &);
@@ -457,9 +471,8 @@ ImportedCbAllocationsForIpc Event::importCbAllocationsForIpcFor2WaySharing(Devic
     const auto hasHostIpcHandle = (importedInOrderExecEventData.hostAllocIpcHandle != 0);
 
     deviceAlloc = NEO::makeUniqueGraphicsAllocation(memoryManager,
-                                                    context->getMemHandlePtr(device.toHandle(), importedInOrderExecEventData.deviceAllocIpcHandle, NEO::DeviceAllocNodeType<true>::getAllocationType(),
-                                                                             !hasHostIpcHandle, importedInOrderExecEventData.exporterProcessId, 0, out.deviceCacheId, nullptr, false, useOpaqueHandle, 0u)
-                                                        .first);
+                                                    importCbAllocationForIpc(*context, device, importedInOrderExecEventData.deviceAllocIpcHandle, NEO::DeviceAllocNodeType<true>::getAllocationType(),
+                                                                             !hasHostIpcHandle, importedInOrderExecEventData.exporterProcessId, out.deviceCacheId, nullptr, useOpaqueHandle));
 
     if (!deviceAlloc) {
         out.result = ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
@@ -473,7 +486,7 @@ ImportedCbAllocationsForIpc Event::importCbAllocationsForIpcFor2WaySharing(Devic
     if (hasHostIpcHandle) {
         out.hostCacheId = Context::computeIpcCacheId(importedInOrderExecEventData.hostAllocIpcHandle, 0, importedInOrderExecEventData.exporterProcessId, static_cast<uint8_t>(context->settings.handleType),
                                                      static_cast<uint8_t>(InternalMemoryType::notSpecified));
-        out.hostAlloc = context->getMemHandlePtr(device.toHandle(), importedInOrderExecEventData.hostAllocIpcHandle, NEO::DeviceAllocNodeType<false>::getAllocationType(), true, importedInOrderExecEventData.exporterProcessId, 0, out.hostCacheId, nullptr, false, useOpaqueHandle, 0u).first;
+        out.hostAlloc = importCbAllocationForIpc(*context, device, importedInOrderExecEventData.hostAllocIpcHandle, NEO::DeviceAllocNodeType<false>::getAllocationType(), true, importedInOrderExecEventData.exporterProcessId, out.hostCacheId, nullptr, useOpaqueHandle);
 
         if (!out.hostAlloc) {
             out.result = ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
@@ -597,7 +610,7 @@ ze_result_t Event::openCounterBasedIpcHandle(const IpcCounterBasedEventData &ipc
 
         auto cacheId = Context::computeIpcCacheId(ipcData.communicationAllocHandle, 0, ipcData.processId, static_cast<uint8_t>(context->settings.handleType), static_cast<uint8_t>(InternalMemoryType::notSpecified));
         communicationAlloc = NEO::makeUniqueGraphicsAllocation(memoryManager,
-                                                               context->getMemHandlePtr(device->toHandle(), ipcData.communicationAllocHandle, NEO::InOrderExecEventDataNodeType::getAllocationType(), true, ipcData.processId, 0, cacheId, reservedHandleData, false, true, 0u).first);
+                                                               importCbAllocationForIpc(*context, *device, ipcData.communicationAllocHandle, NEO::InOrderExecEventDataNodeType::getAllocationType(), true, ipcData.processId, cacheId, reservedHandleData, true));
 
         if (!communicationAlloc) {
             return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
@@ -612,7 +625,7 @@ ze_result_t Event::openCounterBasedIpcHandle(const IpcCounterBasedEventData &ipc
     } else {
         // 1-way path never carries reserved handle data - pass nullptr.
         auto cacheId = Context::computeIpcCacheId(ipcData.oneWayAllocCounterHandle, 0, ipcData.processId, static_cast<uint8_t>(context->settings.handleType), static_cast<uint8_t>(InternalMemoryType::notSpecified));
-        imported.deviceAlloc = context->getMemHandlePtr(device->toHandle(), ipcData.oneWayAllocCounterHandle, NEO::DeviceAllocNodeType<true>::getAllocationType(), true, ipcData.processId, 0, cacheId, nullptr, false, false, 0u).first;
+        imported.deviceAlloc = importCbAllocationForIpc(*context, *device, ipcData.oneWayAllocCounterHandle, NEO::DeviceAllocNodeType<true>::getAllocationType(), true, ipcData.processId, cacheId, nullptr, false);
 
         if (!imported.deviceAlloc) {
             return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
