@@ -721,6 +721,7 @@ CL_API_ENTRY cl_int CL_API_CALL clCommandNDRangeKernelKHR(
         }
         result = pCommandBuffer->appendSyncPointBarrier(numSyncPointsInWaitList);
         if (result == ZE_RESULT_SUCCESS) {
+            pKernel->addExecInfoAllocationsToResidency(pCommandBuffer->getL0Handle(), pDevice->getRootDeviceIndex());
             result = zeCommandListAppendLaunchKernel(pCommandBuffer->getL0Handle(), pKernel->getL0Handle(pDevice->getRootDeviceIndex()),
                                                      &wgc, nullptr, 0u, nullptr);
         }

@@ -16,7 +16,7 @@ uint32_t UnifiedMemoryControls::generateMask() {
         resourceMask |= static_cast<uint32_t>(InternalMemoryType::deviceUnifiedMemory);
     }
     if (this->indirectSharedAllocationsAllowed) {
-        resourceMask |= static_cast<uint32_t>(InternalMemoryType::sharedUnifiedMemory) | static_cast<uint32_t>(InternalMemoryType::svm);
+        resourceMask |= static_cast<uint32_t>(InternalMemoryType::sharedUnifiedMemory);
     }
 
     return resourceMask;

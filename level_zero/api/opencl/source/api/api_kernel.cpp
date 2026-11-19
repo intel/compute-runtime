@@ -364,9 +364,7 @@ cl_int CL_API_CALL clSetKernelExecInfo(cl_kernel kernel,
             }
         }
 
-        if (numPointers > 0u) {
-            retVal = pKernel->setIndirectAccessForExecInfoPointers();
-        }
+        pKernel->setExecInfoAllocations(paramName, svmPointers, numPointers);
         break;
     }
     case CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_INTEL:
