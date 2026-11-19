@@ -126,7 +126,7 @@ HWTEST2_F(Gen12LpPreambleVfeState, givenDefaultPipeControlWhenItIsProgrammedThen
     EXPECT_EQ(1u, pipeControl->getCommandStreamerStallEnable());
 }
 
-HWTEST2_F(Gen12LpPreambleVfeState, givenCfeFusedEuDispatchFlagsWhenprogramAdditionalFieldsInVfeStateIsCalledThenGetDisableSlice0Subslice2ReturnsCorrectValues, IsTGLLP) {
+HWTEST2_F(Gen12LpPreambleVfeState, givenCfeFusedEuDispatchFlagsWhenprogramAdditionalFieldsInVfeStateIsCalledThenFusedEuDispatchIsCorrect, IsTGLLP) {
     using MEDIA_VFE_STATE = typename FamilyType::MEDIA_VFE_STATE;
 
     DebugManagerStateRestore restorer;
@@ -155,7 +155,7 @@ HWTEST2_F(Gen12LpPreambleVfeState, givenCfeFusedEuDispatchFlagsWhenprogramAdditi
         debugManager.flags.CFEFusedEUDispatch.set(debugKeyValue);
 
         PreambleHelper<FamilyType>::appendProgramVFEState(pDevice->getRootDeviceEnvironment(), streamProperties, cmdSpace);
-        EXPECT_EQ(expectedValue, mediaVfeState->getDisableSlice0Subslice2());
+        EXPECT_EQ(expectedValue, MEDIA_VFE_STATE::FUSED_EU_DISPATCH_LEGACY_MODE_THREADS_ARE_NOT_FUSED == mediaVfeState->getFusedEuDispatch());
     }
 }
 
@@ -187,7 +187,7 @@ HWTEST2_F(Gen12LpPreambleVfeState, givenDisableEUFusionWhenProgramAdditionalFiel
     streamProperties.frontEndState.disableEUFusion.value = 1;
 
     PreambleHelper<FamilyType>::appendProgramVFEState(pDevice->getRootDeviceEnvironment(), streamProperties, cmdSpace);
-    EXPECT_TRUE(mediaVfeState->getDisableSlice0Subslice2());
+    EXPECT_EQ(MEDIA_VFE_STATE::FUSED_EU_DISPATCH_LEGACY_MODE_THREADS_ARE_NOT_FUSED, mediaVfeState->getFusedEuDispatch());
 }
 
 HWTEST2_F(Gen12LpPreambleVfeState, givenDisableEUFusionAndCFEFusedEUDispatchWhenProgramAdditionalFieldsInVfeStateThenCorrectFieldIsSet, IsTGLLP) {
@@ -204,7 +204,7 @@ HWTEST2_F(Gen12LpPreambleVfeState, givenDisableEUFusionAndCFEFusedEUDispatchWhen
     streamProperties.frontEndState.disableEUFusion.value = 1;
 
     PreambleHelper<FamilyType>::appendProgramVFEState(pDevice->getRootDeviceEnvironment(), streamProperties, cmdSpace);
-    EXPECT_FALSE(mediaVfeState->getDisableSlice0Subslice2());
+    EXPECT_EQ(MEDIA_VFE_STATE::FUSED_EU_DISPATCH_FUSED_EU_MODE, mediaVfeState->getFusedEuDispatch());
 }
 
 using PreemptionWatermarkGen12Lp = PreambleFixture;

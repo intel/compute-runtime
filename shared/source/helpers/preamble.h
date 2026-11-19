@@ -28,6 +28,8 @@ struct PreambleHelper {
     using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
 
+    static constexpr size_t scratchSpaceBasePointerByteOffset = sizeof(uint32_t);
+
     static void programL3(LinearStream *pCommandStream, uint32_t l3Config, bool isBcs);
     static void programPipelineSelect(LinearStream *pCommandStream,
                                       const PipelineSelectArgs &pipelineSelectArgs,

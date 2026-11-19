@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Intel Corporation
+ * Copyright (C) 2018-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -181,12 +181,9 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, PreambleTest, WhenProgramVFEStateIsCalledThenCorr
     EXPECT_EQ(10u, vfeCmd.getMaximumNumberOfThreads());
     EXPECT_EQ(1u, vfeCmd.getNumberOfUrbEntries());
     EXPECT_EQ(expectedAddress, vfeCmd.getScratchSpaceBasePointer());
-    EXPECT_EQ(0u, vfeCmd.getScratchSpaceBasePointerHigh());
 }
 
 HWCMDTEST_F(IGFX_GEN12LP_CORE, PreambleTest, WhenGetScratchSpaceAddressOffsetForVfeStateIsCalledThenCorrectOffsetIsReturned) {
-    using MEDIA_VFE_STATE = typename FamilyType::MEDIA_VFE_STATE;
-
     char buffer[64];
     MockGraphicsAllocation graphicsAllocation(buffer, sizeof(buffer));
     LinearStream preambleStream(&graphicsAllocation, graphicsAllocation.getUnderlyingBuffer(), graphicsAllocation.getUnderlyingBufferSize());
@@ -200,7 +197,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, PreambleTest, WhenGetScratchSpaceAddressOffsetFor
 
     auto offset = PreambleHelper<FamilyType>::getScratchSpaceAddressOffsetForVfeState(&preambleStream, pVfeCmd);
     EXPECT_NE(0u, offset);
-    EXPECT_EQ(MEDIA_VFE_STATE::PATCH_CONSTANTS::SCRATCHSPACEBASEPOINTER_BYTEOFFSET + reinterpret_cast<uintptr_t>(pVfeCmd),
+    EXPECT_EQ(PreambleHelper<FamilyType>::scratchSpaceBasePointerByteOffset + reinterpret_cast<uintptr_t>(pVfeCmd),
               offset + reinterpret_cast<uintptr_t>(preambleStream.getCpuBase()));
 }
 

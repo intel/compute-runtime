@@ -206,7 +206,7 @@ uint32_t UnitTestHelper<Family>::getDebugModeRegisterOffset() {
 
 template <>
 bool UnitTestHelperWithHeap<Family>::getDisableFusionStateFromFrontEndCommand(const typename Family::FrontEndStateCommand &feCmd) {
-    return feCmd.getDisableSlice0Subslice2();
+    return feCmd.getFusedEuDispatch() == Family::FrontEndStateCommand::FUSED_EU_DISPATCH_LEGACY_MODE_THREADS_ARE_NOT_FUSED;
 }
 
 template <>

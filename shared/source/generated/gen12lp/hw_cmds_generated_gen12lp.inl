@@ -301,13 +301,14 @@ typedef struct tagGPGPU_WALKER {
             uint32_t Reserved_9 : BITFIELD_RANGE(9, 9);
             uint32_t IndirectParameterEnable : BITFIELD_RANGE(10, 10);
             uint32_t Reserved_11 : BITFIELD_RANGE(11, 15);
-            uint32_t Subopcode : BITFIELD_RANGE(16, 23);
+            uint32_t SubOpcode : BITFIELD_RANGE(16, 23);
             uint32_t MediaCommandOpcode : BITFIELD_RANGE(24, 26);
             uint32_t Pipeline : BITFIELD_RANGE(27, 28);
             uint32_t CommandType : BITFIELD_RANGE(29, 31);
             // DWORD 1
             uint32_t InterfaceDescriptorOffset : BITFIELD_RANGE(0, 5);
-            uint32_t Reserved_38 : BITFIELD_RANGE(6, 31);
+            uint32_t Reserved_38 : BITFIELD_RANGE(6, 7);
+            uint32_t DebugObjectId : BITFIELD_RANGE(8, 31);
             // DWORD 2
             uint32_t IndirectDataLength : BITFIELD_RANGE(0, 16);
             uint32_t Reserved_81 : BITFIELD_RANGE(17, 31);
@@ -348,9 +349,9 @@ typedef struct tagGPGPU_WALKER {
     typedef enum tagDWORD_LENGTH {
         DWORD_LENGTH_DWORD_COUNT_N = 0xd,
     } DWORD_LENGTH;
-    typedef enum tagSUBOPCODE {
-        SUBOPCODE_GPGPU_WALKER_SUBOP = 0x5,
-    } SUBOPCODE;
+    typedef enum tagSUB_OPCODE {
+        SUB_OPCODE_GPGPU_WALKER_SUBOP = 0x5,
+    } SUB_OPCODE;
     typedef enum tagMEDIA_COMMAND_OPCODE {
         MEDIA_COMMAND_OPCODE_GPGPU_WALKER = 0x1,
     } MEDIA_COMMAND_OPCODE;
@@ -360,6 +361,10 @@ typedef struct tagGPGPU_WALKER {
     typedef enum tagCOMMAND_TYPE {
         COMMAND_TYPE_GFXPIPE = 0x3,
     } COMMAND_TYPE;
+    typedef enum tagINDIRECTDATASTARTADDRESS {
+        INDIRECTDATASTARTADDRESS_BIT_SHIFT = 0x6,
+        INDIRECTDATASTARTADDRESS_ALIGN_SIZE = 0x40,
+    } INDIRECTDATASTARTADDRESS;
     typedef enum tagSIMD_SIZE {
         SIMD_SIZE_SIMD8 = 0x0,
         SIMD_SIZE_SIMD16 = 0x1,
@@ -368,11 +373,10 @@ typedef struct tagGPGPU_WALKER {
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_DWORD_COUNT_N;
-        TheStructure.Common.Subopcode = SUBOPCODE_GPGPU_WALKER_SUBOP;
+        TheStructure.Common.SubOpcode = SUB_OPCODE_GPGPU_WALKER_SUBOP;
         TheStructure.Common.MediaCommandOpcode = MEDIA_COMMAND_OPCODE_GPGPU_WALKER;
         TheStructure.Common.Pipeline = PIPELINE_MEDIA;
         TheStructure.Common.CommandType = COMMAND_TYPE_GFXPIPE;
-        TheStructure.Common.SimdSize = SIMD_SIZE_SIMD8;
     }
     static tagGPGPU_WALKER sInit() {
         GPGPU_WALKER state;
@@ -380,6 +384,7 @@ typedef struct tagGPGPU_WALKER {
         return state;
     }
     inline uint32_t &getRawData(const uint32_t index) {
+        UNRECOVERABLE_IF(index >= 15);
         return TheStructure.RawData[index];
     }
     inline void setPredicateEnable(const bool value) {
@@ -394,41 +399,73 @@ typedef struct tagGPGPU_WALKER {
     inline bool getIndirectParameterEnable() const {
         return TheStructure.Common.IndirectParameterEnable;
     }
+    inline void setSubOpcode(const SUB_OPCODE value) {
+        TheStructure.Common.SubOpcode = value;
+    }
+    inline SUB_OPCODE getSubOpcode() const {
+        return static_cast<SUB_OPCODE>(TheStructure.Common.SubOpcode);
+    }
+    inline void setMediaCommandOpcode(const MEDIA_COMMAND_OPCODE value) {
+        TheStructure.Common.MediaCommandOpcode = value;
+    }
+    inline MEDIA_COMMAND_OPCODE getMediaCommandOpcode() const {
+        return static_cast<MEDIA_COMMAND_OPCODE>(TheStructure.Common.MediaCommandOpcode);
+    }
+    inline void setPipeline(const PIPELINE value) {
+        TheStructure.Common.Pipeline = value;
+    }
+    inline PIPELINE getPipeline() const {
+        return static_cast<PIPELINE>(TheStructure.Common.Pipeline);
+    }
+    inline void setCommandType(const COMMAND_TYPE value) {
+        TheStructure.Common.CommandType = value;
+    }
+    inline COMMAND_TYPE getCommandType() const {
+        return static_cast<COMMAND_TYPE>(TheStructure.Common.CommandType);
+    }
     inline void setInterfaceDescriptorOffset(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x3fu);
         TheStructure.Common.InterfaceDescriptorOffset = value;
     }
     inline uint32_t getInterfaceDescriptorOffset() const {
         return TheStructure.Common.InterfaceDescriptorOffset;
     }
+    inline void setDebugObjectId(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0xffffffu);
+        TheStructure.Common.DebugObjectId = value;
+    }
+    inline uint32_t getDebugObjectId() const {
+        return TheStructure.Common.DebugObjectId;
+    }
     inline void setIndirectDataLength(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x1ffffu);
         TheStructure.Common.IndirectDataLength = value;
     }
     inline uint32_t getIndirectDataLength() const {
         return TheStructure.Common.IndirectDataLength;
     }
-    typedef enum tagINDIRECTDATASTARTADDRESS {
-        INDIRECTDATASTARTADDRESS_BIT_SHIFT = 0x6,
-        INDIRECTDATASTARTADDRESS_ALIGN_SIZE = 0x40,
-    } INDIRECTDATASTARTADDRESS;
     inline void setIndirectDataStartAddress(const uint32_t value) {
         TheStructure.Common.IndirectDataStartAddress = value >> INDIRECTDATASTARTADDRESS_BIT_SHIFT;
     }
     inline uint32_t getIndirectDataStartAddress() const {
-        return TheStructure.Common.IndirectDataStartAddress << INDIRECTDATASTARTADDRESS_BIT_SHIFT;
+        return static_cast<uint32_t>(TheStructure.Common.IndirectDataStartAddress) << INDIRECTDATASTARTADDRESS_BIT_SHIFT;
     }
     inline void setThreadWidthCounterMaximum(const uint32_t value) {
+        UNRECOVERABLE_IF(value < 1 || value > 0x40u);
         TheStructure.Common.ThreadWidthCounterMaximum = value - 1;
     }
     inline uint32_t getThreadWidthCounterMaximum() const {
         return TheStructure.Common.ThreadWidthCounterMaximum + 1;
     }
     inline void setThreadHeightCounterMaximum(const uint32_t value) {
+        UNRECOVERABLE_IF(value < 1 || value > 0x40u);
         TheStructure.Common.ThreadHeightCounterMaximum = value - 1;
     }
     inline uint32_t getThreadHeightCounterMaximum() const {
         return TheStructure.Common.ThreadHeightCounterMaximum + 1;
     }
     inline void setThreadDepthCounterMaximum(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x3fu);
         TheStructure.Common.ThreadDepthCounterMaximum = value;
     }
     inline uint32_t getThreadDepthCounterMaximum() const {
@@ -488,11 +525,10 @@ typedef struct tagGPGPU_WALKER {
     inline uint32_t getBottomExecutionMask() const {
         return TheStructure.Common.BottomExecutionMask;
     }
-    static constexpr uint32_t getInlineDataSize() { // patched
+    static constexpr uint32_t getInlineDataSize() {
         return 0u;
     }
-    using InterfaceDescriptorType = INTERFACE_DESCRIPTOR_DATA; // patched
-
+    using InterfaceDescriptorType = INTERFACE_DESCRIPTOR_DATA;
 } GPGPU_WALKER;
 STATIC_ASSERT(60 == sizeof(GPGPU_WALKER));
 
@@ -501,7 +537,7 @@ typedef struct tagMEDIA_INTERFACE_DESCRIPTOR_LOAD {
         struct tagCommon {
             // DWORD 0
             uint32_t DwordLength : BITFIELD_RANGE(0, 15);
-            uint32_t Subopcode : BITFIELD_RANGE(16, 23);
+            uint32_t SubOpcode : BITFIELD_RANGE(16, 23);
             uint32_t MediaCommandOpcode : BITFIELD_RANGE(24, 26);
             uint32_t Pipeline : BITFIELD_RANGE(27, 28);
             uint32_t CommandType : BITFIELD_RANGE(29, 31);
@@ -518,9 +554,9 @@ typedef struct tagMEDIA_INTERFACE_DESCRIPTOR_LOAD {
     typedef enum tagDWORD_LENGTH {
         DWORD_LENGTH_DWORD_COUNT_N = 0x2,
     } DWORD_LENGTH;
-    typedef enum tagSUBOPCODE {
-        SUBOPCODE_MEDIA_INTERFACE_DESCRIPTOR_LOAD_SUBOP = 0x2,
-    } SUBOPCODE;
+    typedef enum tagSUB_OPCODE {
+        SUB_OPCODE_MEDIA_INTERFACE_DESCRIPTOR_LOAD_SUBOP = 0x2,
+    } SUB_OPCODE;
     typedef enum tagMEDIA_COMMAND_OPCODE {
         MEDIA_COMMAND_OPCODE_MEDIA_INTERFACE_DESCRIPTOR_LOAD = 0x0,
     } MEDIA_COMMAND_OPCODE;
@@ -537,8 +573,7 @@ typedef struct tagMEDIA_INTERFACE_DESCRIPTOR_LOAD {
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_DWORD_COUNT_N;
-        TheStructure.Common.Subopcode = SUBOPCODE_MEDIA_INTERFACE_DESCRIPTOR_LOAD_SUBOP;
-        TheStructure.Common.MediaCommandOpcode = MEDIA_COMMAND_OPCODE_MEDIA_INTERFACE_DESCRIPTOR_LOAD;
+        TheStructure.Common.SubOpcode = SUB_OPCODE_MEDIA_INTERFACE_DESCRIPTOR_LOAD_SUBOP;
         TheStructure.Common.Pipeline = PIPELINE_MEDIA;
         TheStructure.Common.CommandType = COMMAND_TYPE_GFXPIPE;
     }
@@ -548,9 +583,35 @@ typedef struct tagMEDIA_INTERFACE_DESCRIPTOR_LOAD {
         return state;
     }
     inline uint32_t &getRawData(const uint32_t index) {
+        UNRECOVERABLE_IF(index >= 4);
         return TheStructure.RawData[index];
     }
+    inline void setSubOpcode(const SUB_OPCODE value) {
+        TheStructure.Common.SubOpcode = value;
+    }
+    inline SUB_OPCODE getSubOpcode() const {
+        return static_cast<SUB_OPCODE>(TheStructure.Common.SubOpcode);
+    }
+    inline void setMediaCommandOpcode(const MEDIA_COMMAND_OPCODE value) {
+        TheStructure.Common.MediaCommandOpcode = value;
+    }
+    inline MEDIA_COMMAND_OPCODE getMediaCommandOpcode() const {
+        return static_cast<MEDIA_COMMAND_OPCODE>(TheStructure.Common.MediaCommandOpcode);
+    }
+    inline void setPipeline(const PIPELINE value) {
+        TheStructure.Common.Pipeline = value;
+    }
+    inline PIPELINE getPipeline() const {
+        return static_cast<PIPELINE>(TheStructure.Common.Pipeline);
+    }
+    inline void setCommandType(const COMMAND_TYPE value) {
+        TheStructure.Common.CommandType = value;
+    }
+    inline COMMAND_TYPE getCommandType() const {
+        return static_cast<COMMAND_TYPE>(TheStructure.Common.CommandType);
+    }
     inline void setInterfaceDescriptorTotalLength(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x1ffffu);
         TheStructure.Common.InterfaceDescriptorTotalLength = value;
     }
     inline uint32_t getInterfaceDescriptorTotalLength() const {
@@ -570,7 +631,7 @@ typedef struct tagMEDIA_STATE_FLUSH {
         struct tagCommon {
             // DWORD 0
             uint32_t DwordLength : BITFIELD_RANGE(0, 15);
-            uint32_t Subopcode : BITFIELD_RANGE(16, 23);
+            uint32_t SubOpcode : BITFIELD_RANGE(16, 23);
             uint32_t MediaCommandOpcode : BITFIELD_RANGE(24, 26);
             uint32_t Pipeline : BITFIELD_RANGE(27, 28);
             uint32_t CommandType : BITFIELD_RANGE(29, 31);
@@ -585,9 +646,9 @@ typedef struct tagMEDIA_STATE_FLUSH {
     typedef enum tagDWORD_LENGTH {
         DWORD_LENGTH_DWORD_COUNT_N = 0x0,
     } DWORD_LENGTH;
-    typedef enum tagSUBOPCODE {
-        SUBOPCODE_MEDIA_STATE_FLUSH_SUBOP = 0x4,
-    } SUBOPCODE;
+    typedef enum tagSUB_OPCODE {
+        SUB_OPCODE_MEDIA_STATE_FLUSH_SUBOP = 0x4,
+    } SUB_OPCODE;
     typedef enum tagMEDIA_COMMAND_OPCODE {
         MEDIA_COMMAND_OPCODE_MEDIA_STATE_FLUSH = 0x0,
     } MEDIA_COMMAND_OPCODE;
@@ -599,9 +660,7 @@ typedef struct tagMEDIA_STATE_FLUSH {
     } COMMAND_TYPE;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
-        TheStructure.Common.DwordLength = DWORD_LENGTH_DWORD_COUNT_N;
-        TheStructure.Common.Subopcode = SUBOPCODE_MEDIA_STATE_FLUSH_SUBOP;
-        TheStructure.Common.MediaCommandOpcode = MEDIA_COMMAND_OPCODE_MEDIA_STATE_FLUSH;
+        TheStructure.Common.SubOpcode = SUB_OPCODE_MEDIA_STATE_FLUSH_SUBOP;
         TheStructure.Common.Pipeline = PIPELINE_MEDIA;
         TheStructure.Common.CommandType = COMMAND_TYPE_GFXPIPE;
     }
@@ -611,9 +670,35 @@ typedef struct tagMEDIA_STATE_FLUSH {
         return state;
     }
     inline uint32_t &getRawData(const uint32_t index) {
+        UNRECOVERABLE_IF(index >= 2);
         return TheStructure.RawData[index];
     }
+    inline void setSubOpcode(const SUB_OPCODE value) {
+        TheStructure.Common.SubOpcode = value;
+    }
+    inline SUB_OPCODE getSubOpcode() const {
+        return static_cast<SUB_OPCODE>(TheStructure.Common.SubOpcode);
+    }
+    inline void setMediaCommandOpcode(const MEDIA_COMMAND_OPCODE value) {
+        TheStructure.Common.MediaCommandOpcode = value;
+    }
+    inline MEDIA_COMMAND_OPCODE getMediaCommandOpcode() const {
+        return static_cast<MEDIA_COMMAND_OPCODE>(TheStructure.Common.MediaCommandOpcode);
+    }
+    inline void setPipeline(const PIPELINE value) {
+        TheStructure.Common.Pipeline = value;
+    }
+    inline PIPELINE getPipeline() const {
+        return static_cast<PIPELINE>(TheStructure.Common.Pipeline);
+    }
+    inline void setCommandType(const COMMAND_TYPE value) {
+        TheStructure.Common.CommandType = value;
+    }
+    inline COMMAND_TYPE getCommandType() const {
+        return static_cast<COMMAND_TYPE>(TheStructure.Common.CommandType);
+    }
     inline void setInterfaceDescriptorOffset(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x3fu);
         TheStructure.Common.InterfaceDescriptorOffset = value;
     }
     inline uint32_t getInterfaceDescriptorOffset() const {
@@ -631,30 +716,37 @@ STATIC_ASSERT(8 == sizeof(MEDIA_STATE_FLUSH));
 typedef struct tagMEDIA_VFE_STATE {
     union tagTheStructure {
         struct tagCommon {
+            // DWORD 0
             uint32_t DwordLength : BITFIELD_RANGE(0, 15);
-            uint32_t Subopcode : BITFIELD_RANGE(16, 23);
+            uint32_t SubOpcode : BITFIELD_RANGE(16, 23);
             uint32_t MediaCommandOpcode : BITFIELD_RANGE(24, 26);
             uint32_t Pipeline : BITFIELD_RANGE(27, 28);
             uint32_t CommandType : BITFIELD_RANGE(29, 31);
-            uint32_t PerThreadScratchSpace : BITFIELD_RANGE(0, 3);
-            uint32_t StackSize : BITFIELD_RANGE(4, 7);
-            uint32_t Reserved_40 : BITFIELD_RANGE(8, 9);
-            uint32_t ScratchSpaceBasePointer : BITFIELD_RANGE(10, 31);
-            uint32_t ScratchSpaceBasePointerHigh : BITFIELD_RANGE(0, 15);
-            uint32_t Reserved_80 : BITFIELD_RANGE(16, 31);
-            uint32_t Reserved_96 : BITFIELD_RANGE(0, 1);
+            // DWORD 1-2
+            uint64_t PerThreadScratchSpace : BITFIELD_RANGE(0, 3);
+            uint64_t StackSize : BITFIELD_RANGE(4, 7);
+            uint64_t Reserved_40 : BITFIELD_RANGE(8, 9);
+            uint64_t ScratchSpaceBasePointer : BITFIELD_RANGE(10, 47);
+            uint64_t Reserved_80 : BITFIELD_RANGE(48, 63);
+            // DWORD 3
+            uint32_t DebugCounterControl : BITFIELD_RANGE(0, 1);
             uint32_t DispatchLoadBalance : BITFIELD_RANGE(2, 2);
             uint32_t Reserved_99 : BITFIELD_RANGE(3, 5);
-            uint32_t DisableSlice0Subslice2 : BITFIELD_RANGE(6, 6);
+            uint32_t FusedEuDispatch : BITFIELD_RANGE(6, 6);
             uint32_t Reserved_103 : BITFIELD_RANGE(7, 7);
             uint32_t NumberOfUrbEntries : BITFIELD_RANGE(8, 15);
             uint32_t MaximumNumberOfThreads : BITFIELD_RANGE(16, 31);
-            uint32_t MaximumNumberOfDual_Subslices : BITFIELD_RANGE(0, 7);
-            uint32_t Reserved_136 : BITFIELD_RANGE(8, 31);
+            // DWORD 4
+            uint32_t MaximumNumberOfDualSubslices : BITFIELD_RANGE(0, 7);
+            uint32_t DebugObjectId : BITFIELD_RANGE(8, 31);
+            // DWORD 5
             uint32_t CurbeAllocationSize : BITFIELD_RANGE(0, 15);
             uint32_t UrbEntryAllocationSize : BITFIELD_RANGE(16, 31);
+            // DWORD 6
             uint32_t Reserved_192;
+            // DWORD 7
             uint32_t Reserved_224;
+            // DWORD 8
             uint32_t Reserved_256;
         } Common;
         uint32_t RawData[9];
@@ -662,9 +754,9 @@ typedef struct tagMEDIA_VFE_STATE {
     typedef enum tagDWORD_LENGTH {
         DWORD_LENGTH_DWORD_COUNT_N = 0x7,
     } DWORD_LENGTH;
-    typedef enum tagSUBOPCODE {
-        SUBOPCODE_MEDIA_VFE_STATE_SUBOP = 0x0,
-    } SUBOPCODE;
+    typedef enum tagSUB_OPCODE {
+        SUB_OPCODE_MEDIA_VFE_STATE_SUBOP = 0x0,
+    } SUB_OPCODE;
     typedef enum tagMEDIA_COMMAND_OPCODE {
         MEDIA_COMMAND_OPCODE_MEDIA_VFE_STATE = 0x0,
     } MEDIA_COMMAND_OPCODE;
@@ -674,24 +766,29 @@ typedef struct tagMEDIA_VFE_STATE {
     typedef enum tagCOMMAND_TYPE {
         COMMAND_TYPE_GFXPIPE = 0x3,
     } COMMAND_TYPE;
+    typedef enum tagSCRATCHSPACEBASEPOINTER {
+        SCRATCHSPACEBASEPOINTER_BIT_SHIFT = 0xa,
+        SCRATCHSPACEBASEPOINTER_ALIGN_SIZE = 0x400,
+    } SCRATCHSPACEBASEPOINTER;
+    typedef enum tagDEBUG_COUNTER_CONTROL {
+        DEBUG_COUNTER_CONTROL_FREE_RUNNING_DEBUG_COUNTER = 0x0,
+        DEBUG_COUNTER_CONTROL_FROZEN_DEBUG_COUNTER = 0x1,
+        DEBUG_COUNTER_CONTROL_DEBUG_COUNTER_INITIALIZED_ONCE = 0x2,
+        DEBUG_COUNTER_CONTROL_DEBUG_COUNTER_INITIALIZED_ALWAYS = 0x3,
+    } DEBUG_COUNTER_CONTROL;
     typedef enum tagDISPATCH_LOAD_BALANCE {
         DISPATCH_LOAD_BALANCE_LEAST_LOADED = 0x0,
-        DISPATCH_LOAD_BALANCE_COLOR_LSB = 0x1,
+        DISPATCH_LOAD_BALANCE_COLOR = 0x1,
     } DISPATCH_LOAD_BALANCE;
-    typedef enum tagPATCH_CONSTANTS {
-        SCRATCHSPACEBASEPOINTER_BYTEOFFSET = 0x4,
-        SCRATCHSPACEBASEPOINTER_INDEX = 0x1,
-        SCRATCHSPACEBASEPOINTERHIGH_BYTEOFFSET = 0x8,
-        SCRATCHSPACEBASEPOINTERHIGH_INDEX = 0x2,
-    } PATCH_CONSTANTS;
+    typedef enum tagFUSED_EU_DISPATCH {
+        FUSED_EU_DISPATCH_FUSED_EU_MODE = 0x0,
+        FUSED_EU_DISPATCH_LEGACY_MODE_THREADS_ARE_NOT_FUSED = 0x1,
+    } FUSED_EU_DISPATCH;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_DWORD_COUNT_N;
-        TheStructure.Common.Subopcode = SUBOPCODE_MEDIA_VFE_STATE_SUBOP;
-        TheStructure.Common.MediaCommandOpcode = MEDIA_COMMAND_OPCODE_MEDIA_VFE_STATE;
         TheStructure.Common.Pipeline = PIPELINE_MEDIA;
         TheStructure.Common.CommandType = COMMAND_TYPE_GFXPIPE;
-        TheStructure.Common.DispatchLoadBalance = DISPATCH_LOAD_BALANCE_LEAST_LOADED;
     }
     static tagMEDIA_VFE_STATE sInit() {
         MEDIA_VFE_STATE state;
@@ -699,36 +796,58 @@ typedef struct tagMEDIA_VFE_STATE {
         return state;
     }
     inline uint32_t &getRawData(const uint32_t index) {
-        DEBUG_BREAK_IF(index >= 9);
+        UNRECOVERABLE_IF(index >= 9);
         return TheStructure.RawData[index];
     }
+    inline void setSubOpcode(const SUB_OPCODE value) {
+        TheStructure.Common.SubOpcode = value;
+    }
+    inline SUB_OPCODE getSubOpcode() const {
+        return static_cast<SUB_OPCODE>(TheStructure.Common.SubOpcode);
+    }
+    inline void setMediaCommandOpcode(const MEDIA_COMMAND_OPCODE value) {
+        TheStructure.Common.MediaCommandOpcode = value;
+    }
+    inline MEDIA_COMMAND_OPCODE getMediaCommandOpcode() const {
+        return static_cast<MEDIA_COMMAND_OPCODE>(TheStructure.Common.MediaCommandOpcode);
+    }
+    inline void setPipeline(const PIPELINE value) {
+        TheStructure.Common.Pipeline = value;
+    }
+    inline PIPELINE getPipeline() const {
+        return static_cast<PIPELINE>(TheStructure.Common.Pipeline);
+    }
+    inline void setCommandType(const COMMAND_TYPE value) {
+        TheStructure.Common.CommandType = value;
+    }
+    inline COMMAND_TYPE getCommandType() const {
+        return static_cast<COMMAND_TYPE>(TheStructure.Common.CommandType);
+    }
     inline void setPerThreadScratchSpace(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0xfu);
         TheStructure.Common.PerThreadScratchSpace = value;
     }
     inline uint32_t getPerThreadScratchSpace() const {
-        return (TheStructure.Common.PerThreadScratchSpace);
+        return TheStructure.Common.PerThreadScratchSpace;
     }
     inline void setStackSize(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0xfu);
         TheStructure.Common.StackSize = value;
     }
     inline uint32_t getStackSize() const {
-        return (TheStructure.Common.StackSize);
+        return TheStructure.Common.StackSize;
     }
-    typedef enum tagSCRATCHSPACEBASEPOINTER {
-        SCRATCHSPACEBASEPOINTER_BIT_SHIFT = 0xa,
-        SCRATCHSPACEBASEPOINTER_ALIGN_SIZE = 0x400,
-    } SCRATCHSPACEBASEPOINTER;
-    inline void setScratchSpaceBasePointer(const uint32_t value) {
+    inline void setScratchSpaceBasePointer(const uint64_t value) {
         TheStructure.Common.ScratchSpaceBasePointer = value >> SCRATCHSPACEBASEPOINTER_BIT_SHIFT;
     }
-    inline uint32_t getScratchSpaceBasePointer() const {
-        return (TheStructure.Common.ScratchSpaceBasePointer << SCRATCHSPACEBASEPOINTER_BIT_SHIFT);
+    inline uint64_t getScratchSpaceBasePointer() const {
+        return TheStructure.Common.ScratchSpaceBasePointer << SCRATCHSPACEBASEPOINTER_BIT_SHIFT;
     }
-    inline void setScratchSpaceBasePointerHigh(const uint32_t value) {
-        TheStructure.Common.ScratchSpaceBasePointerHigh = value;
+    inline void setDebugCounterControl(const DEBUG_COUNTER_CONTROL value) {
+        TheStructure.Common.DebugCounterControl = value;
     }
-    inline uint32_t getScratchSpaceBasePointerHigh() const {
-        return (TheStructure.Common.ScratchSpaceBasePointerHigh);
+    inline DEBUG_COUNTER_CONTROL getDebugCounterControl() const {
+        return static_cast<DEBUG_COUNTER_CONTROL>(TheStructure.Common.DebugCounterControl);
     }
     inline void setDispatchLoadBalance(const DISPATCH_LOAD_BALANCE value) {
         TheStructure.Common.DispatchLoadBalance = value;
@@ -736,41 +855,53 @@ typedef struct tagMEDIA_VFE_STATE {
     inline DISPATCH_LOAD_BALANCE getDispatchLoadBalance() const {
         return static_cast<DISPATCH_LOAD_BALANCE>(TheStructure.Common.DispatchLoadBalance);
     }
-    inline void setDisableSlice0Subslice2(const bool value) {
-        TheStructure.Common.DisableSlice0Subslice2 = value;
+    inline void setFusedEuDispatch(const FUSED_EU_DISPATCH value) {
+        TheStructure.Common.FusedEuDispatch = value;
     }
-    inline bool getDisableSlice0Subslice2() const {
-        return (TheStructure.Common.DisableSlice0Subslice2);
+    inline FUSED_EU_DISPATCH getFusedEuDispatch() const {
+        return static_cast<FUSED_EU_DISPATCH>(TheStructure.Common.FusedEuDispatch);
     }
     inline void setNumberOfUrbEntries(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0xffu);
         TheStructure.Common.NumberOfUrbEntries = value;
     }
     inline uint32_t getNumberOfUrbEntries() const {
-        return (TheStructure.Common.NumberOfUrbEntries);
+        return TheStructure.Common.NumberOfUrbEntries;
     }
     inline void setMaximumNumberOfThreads(const uint32_t value) {
+        UNRECOVERABLE_IF(value < 1 || value > 0x10000u);
         TheStructure.Common.MaximumNumberOfThreads = value - 1;
     }
     inline uint32_t getMaximumNumberOfThreads() const {
-        return (TheStructure.Common.MaximumNumberOfThreads + 1);
+        return TheStructure.Common.MaximumNumberOfThreads + 1;
     }
     inline void setMaximumNumberOfDualSubslices(const uint32_t value) {
-        TheStructure.Common.MaximumNumberOfDual_Subslices = value;
+        UNRECOVERABLE_IF(value > 0xffu);
+        TheStructure.Common.MaximumNumberOfDualSubslices = value;
     }
     inline uint32_t getMaximumNumberOfDualSubslices() const {
-        return (TheStructure.Common.MaximumNumberOfDual_Subslices);
+        return TheStructure.Common.MaximumNumberOfDualSubslices;
+    }
+    inline void setDebugObjectId(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0xffffffu);
+        TheStructure.Common.DebugObjectId = value;
+    }
+    inline uint32_t getDebugObjectId() const {
+        return TheStructure.Common.DebugObjectId;
     }
     inline void setCurbeAllocationSize(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0xffffu);
         TheStructure.Common.CurbeAllocationSize = value;
     }
     inline uint32_t getCurbeAllocationSize() const {
-        return (TheStructure.Common.CurbeAllocationSize);
+        return TheStructure.Common.CurbeAllocationSize;
     }
     inline void setUrbEntryAllocationSize(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0xffffu);
         TheStructure.Common.UrbEntryAllocationSize = value;
     }
     inline uint32_t getUrbEntryAllocationSize() const {
-        return (TheStructure.Common.UrbEntryAllocationSize);
+        return TheStructure.Common.UrbEntryAllocationSize;
     }
 } MEDIA_VFE_STATE;
 STATIC_ASSERT(36 == sizeof(MEDIA_VFE_STATE));
@@ -4726,12 +4857,15 @@ typedef struct tagGPGPU_CSR_BASE_ADDRESS {
     typedef enum tagCOMMAND_TYPE {
         COMMAND_TYPE_GFXPIPE = 0x3,
     } COMMAND_TYPE;
+    typedef enum tagGPGPUCSRBASEADDRESS {
+        GPGPUCSRBASEADDRESS_BIT_SHIFT = 0xc,
+        GPGPUCSRBASEADDRESS_ALIGN_SIZE = 0x1000,
+    } GPGPUCSRBASEADDRESS;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_LENGTH_1;
         TheStructure.Common._3DCommandSubOpcode = _3D_COMMAND_SUB_OPCODE_GPGPU_CSR_BASE_ADDRESS;
         TheStructure.Common._3DCommandOpcode = _3D_COMMAND_OPCODE_GFXPIPE_NONPIPELINED;
-        TheStructure.Common.CommandSubtype = COMMAND_SUBTYPE_GFXPIPE_COMMON;
         TheStructure.Common.CommandType = COMMAND_TYPE_GFXPIPE;
     }
     static tagGPGPU_CSR_BASE_ADDRESS sInit() {
@@ -4743,16 +4877,35 @@ typedef struct tagGPGPU_CSR_BASE_ADDRESS {
         UNRECOVERABLE_IF(index >= 3);
         return TheStructure.RawData[index];
     }
-    typedef enum tagGPGPUCSRBASEADDRESS {
-        GPGPUCSRBASEADDRESS_BIT_SHIFT = 0xc,
-        GPGPUCSRBASEADDRESS_ALIGN_SIZE = 0x1000,
-    } GPGPUCSRBASEADDRESS;
+    inline void set3DCommandSubOpcode(const _3D_COMMAND_SUB_OPCODE value) {
+        TheStructure.Common._3DCommandSubOpcode = value;
+    }
+    inline _3D_COMMAND_SUB_OPCODE get3DCommandSubOpcode() const {
+        return static_cast<_3D_COMMAND_SUB_OPCODE>(TheStructure.Common._3DCommandSubOpcode);
+    }
+    inline void set3DCommandOpcode(const _3D_COMMAND_OPCODE value) {
+        TheStructure.Common._3DCommandOpcode = value;
+    }
+    inline _3D_COMMAND_OPCODE get3DCommandOpcode() const {
+        return static_cast<_3D_COMMAND_OPCODE>(TheStructure.Common._3DCommandOpcode);
+    }
+    inline void setCommandSubtype(const COMMAND_SUBTYPE value) {
+        TheStructure.Common.CommandSubtype = value;
+    }
+    inline COMMAND_SUBTYPE getCommandSubtype() const {
+        return static_cast<COMMAND_SUBTYPE>(TheStructure.Common.CommandSubtype);
+    }
+    inline void setCommandType(const COMMAND_TYPE value) {
+        TheStructure.Common.CommandType = value;
+    }
+    inline COMMAND_TYPE getCommandType() const {
+        return static_cast<COMMAND_TYPE>(TheStructure.Common.CommandType);
+    }
     inline void setGpgpuCsrBaseAddress(const uint64_t value) {
-        UNRECOVERABLE_IF(value > 0xffffffffffffffffL);
         TheStructure.Common.GpgpuCsrBaseAddress = value >> GPGPUCSRBASEADDRESS_BIT_SHIFT;
     }
     inline uint64_t getGpgpuCsrBaseAddress() const {
-        return (uint64_t)TheStructure.Common.GpgpuCsrBaseAddress << GPGPUCSRBASEADDRESS_BIT_SHIFT;
+        return TheStructure.Common.GpgpuCsrBaseAddress << GPGPUCSRBASEADDRESS_BIT_SHIFT;
     }
 } GPGPU_CSR_BASE_ADDRESS;
 STATIC_ASSERT(12 == sizeof(GPGPU_CSR_BASE_ADDRESS));

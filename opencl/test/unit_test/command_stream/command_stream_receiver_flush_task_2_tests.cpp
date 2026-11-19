@@ -764,19 +764,13 @@ HWCMDTEST_TEMPLATED_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTestsWith
         EXPECT_EQ((uint64_t)graphicsAllocationScratch->getUnderlyingBuffer(), graphicsAddress);
     }
 
-    uint64_t lowPartGraphicsAddress = (uint64_t)(graphicsAddress & 0xffffffff);
-    uint64_t highPartGraphicsAddress = (uint64_t)((graphicsAddress >> 32) & 0xffffffff);
-
-    uint64_t scratchBaseLowPart = (uint64_t)mediaVfeState->getScratchSpaceBasePointer();
-    uint64_t scratchBaseHighPart = (uint64_t)mediaVfeState->getScratchSpaceBasePointerHigh();
+    uint64_t scratchBase = mediaVfeState->getScratchSpaceBasePointer();
 
     if (is64bit) {
         uint64_t expectedAddress = ScratchSpaceConstants::scratchSpaceOffsetFor64Bit;
-        EXPECT_EQ(expectedAddress, scratchBaseLowPart);
-        EXPECT_EQ(0u, scratchBaseHighPart);
+        EXPECT_EQ(expectedAddress, scratchBase);
     } else {
-        EXPECT_EQ(lowPartGraphicsAddress, scratchBaseLowPart);
-        EXPECT_EQ(highPartGraphicsAddress, scratchBaseHighPart);
+        EXPECT_EQ(graphicsAddress, scratchBase);
     }
 
     if constexpr (is64bit) {
@@ -849,19 +843,12 @@ HWCMDTEST_TEMPLATED_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTestsWith
         EXPECT_EQ((uint64_t)graphicsAllocationScratch->getUnderlyingBuffer(), graphicsAddress);
     }
 
-    uint64_t lowPartGraphicsAddress = (uint64_t)(graphicsAddress & 0xffffffff);
-    uint64_t highPartGraphicsAddress = (uint64_t)((graphicsAddress >> 32) & 0xffffffff);
-
-    uint64_t scratchBaseLowPart = (uint64_t)mediaVfeState->getScratchSpaceBasePointer();
-    uint64_t scratchBaseHighPart = (uint64_t)mediaVfeState->getScratchSpaceBasePointerHigh();
-
+    uint64_t expectedScratchBase = graphicsAddress;
     if (is64bit) {
-        lowPartGraphicsAddress = ScratchSpaceConstants::scratchSpaceOffsetFor64Bit;
-        highPartGraphicsAddress = 0u;
+        expectedScratchBase = ScratchSpaceConstants::scratchSpaceOffsetFor64Bit;
     }
 
-    EXPECT_EQ(lowPartGraphicsAddress, scratchBaseLowPart);
-    EXPECT_EQ(highPartGraphicsAddress, scratchBaseHighPart);
+    EXPECT_EQ(expectedScratchBase, mediaVfeState->getScratchSpaceBasePointer());
 
     if constexpr (is64bit) {
         EXPECT_EQ(graphicsAddress - ScratchSpaceConstants::scratchSpaceOffsetFor64Bit, gsHaddress);

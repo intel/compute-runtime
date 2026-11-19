@@ -1165,7 +1165,7 @@ struct ProfilingCommandsTest : public DispatchWalkerTest, ::testing::WithParamIn
 HWTEST_F(DispatchWalkerTest, WhenKernelRequiresImplicitArgsThenIohRequiresMoreSpace) {
     size_t globalOffsets[3] = {0, 0, 0};
     size_t workItems[3] = {1, 1, 1};
-    size_t workGroupSize[3] = {2, 5, 10};
+    size_t workGroupSize[3] = {2, 4, 8};
     cl_uint dimensions = 1;
 
     auto blockedCommandsData = createBlockedCommandsData(*pCmdQ);
@@ -1230,7 +1230,7 @@ HWTEST_F(DispatchWalkerTest, WhenKernelRequiresImplicitArgsThenIohRequiresMoreSp
 HWTEST_F(DispatchWalkerTest, givenProfilingEnabledWhenProgrammingWalkerThenSetIsWalkerWithProfilingEnqueued) {
     size_t globalOffsets[3] = {0, 0, 0};
     size_t workItems[3] = {1, 1, 1};
-    size_t workGroupSize[3] = {2, 5, 10};
+    size_t workGroupSize[3] = {2, 4, 8};
     cl_uint dimensions = 1;
 
     auto blockedCommandsData = createBlockedCommandsData(*pCmdQ);

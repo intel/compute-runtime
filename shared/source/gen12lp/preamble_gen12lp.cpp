@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Intel Corporation
+ * Copyright (C) 2019-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,10 +49,7 @@ void PreambleHelper<GfxFamily>::programVfeState(void *pVfeState,
     cmd.setUrbEntryAllocationSize(PreambleHelper<GfxFamily>::getUrbEntryAllocationSize());
     cmd.setPerThreadScratchSpace(PreambleHelper<GfxFamily>::getScratchSizeValueToProgramMediaVfeState(scratchSize));
     cmd.setStackSize(PreambleHelper<GfxFamily>::getScratchSizeValueToProgramMediaVfeState(scratchSize));
-    uint32_t lowAddress = static_cast<uint32_t>(0xFFFFFFFF & scratchAddress);
-    uint32_t highAddress = static_cast<uint32_t>(0xFFFFFFFF & (scratchAddress >> 32));
-    cmd.setScratchSpaceBasePointer(lowAddress);
-    cmd.setScratchSpaceBasePointerHigh(highAddress);
+    cmd.setScratchSpaceBasePointer(scratchAddress);
 
     appendProgramVFEState(rootDeviceEnvironment, streamProperties, &cmd);
     *pMediaVfeState = cmd;
@@ -60,10 +57,9 @@ void PreambleHelper<GfxFamily>::programVfeState(void *pVfeState,
 
 template <typename GfxFamily>
 uint64_t PreambleHelper<GfxFamily>::getScratchSpaceAddressOffsetForVfeState(LinearStream *pCommandStream, void *pVfeState) {
-    using MEDIA_VFE_STATE = typename GfxFamily::MEDIA_VFE_STATE;
     return static_cast<uint64_t>(reinterpret_cast<uintptr_t>(pVfeState) -
                                  reinterpret_cast<uintptr_t>(pCommandStream->getCpuBase()) +
-                                 MEDIA_VFE_STATE::PATCH_CONSTANTS::SCRATCHSPACEBASEPOINTER_BYTEOFFSET);
+                                 scratchSpaceBasePointerByteOffset);
 }
 
 template <typename GfxFamily>
@@ -165,7 +161,7 @@ void PreambleHelper<Family>::appendProgramVFEState(const RootDeviceEnvironment &
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     if (!gfxCoreHelper.isFusedEuDispatchEnabled(hwInfo, disableEUFusion)) {
-        mediaVfeState->setDisableSlice0Subslice2(true);
+        mediaVfeState->setFusedEuDispatch(FrontEndStateCommand::FUSED_EU_DISPATCH_LEGACY_MODE_THREADS_ARE_NOT_FUSED);
     }
     if (debugManager.flags.MediaVfeStateMaxSubSlices.get() != -1) {
         mediaVfeState->setMaximumNumberOfDualSubslices(debugManager.flags.MediaVfeStateMaxSubSlices.get());

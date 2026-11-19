@@ -20,7 +20,7 @@ GPGPU_WALKER *genCmdCast<GPGPU_WALKER *>(void *buffer) {
         return GPGPU_WALKER::COMMAND_TYPE_GFXPIPE == header.TheStructure.Common.CommandType &&
                GPGPU_WALKER::PIPELINE_MEDIA == header.TheStructure.Common.Pipeline &&
                GPGPU_WALKER::MEDIA_COMMAND_OPCODE_GPGPU_WALKER == header.TheStructure.Common.MediaCommandOpcode &&
-               GPGPU_WALKER::SUBOPCODE_GPGPU_WALKER_SUBOP == header.TheStructure.Common.Subopcode;
+               GPGPU_WALKER::SUB_OPCODE_GPGPU_WALKER_SUBOP == header.TheStructure.Common.SubOpcode;
     });
 }
 
@@ -30,7 +30,7 @@ MEDIA_INTERFACE_DESCRIPTOR_LOAD *genCmdCast<MEDIA_INTERFACE_DESCRIPTOR_LOAD *>(v
         return MEDIA_INTERFACE_DESCRIPTOR_LOAD::COMMAND_TYPE_GFXPIPE == header.TheStructure.Common.CommandType &&
                MEDIA_INTERFACE_DESCRIPTOR_LOAD::PIPELINE_MEDIA == header.TheStructure.Common.Pipeline &&
                MEDIA_INTERFACE_DESCRIPTOR_LOAD::MEDIA_COMMAND_OPCODE_MEDIA_INTERFACE_DESCRIPTOR_LOAD == header.TheStructure.Common.MediaCommandOpcode &&
-               MEDIA_INTERFACE_DESCRIPTOR_LOAD::SUBOPCODE_MEDIA_INTERFACE_DESCRIPTOR_LOAD_SUBOP == header.TheStructure.Common.Subopcode;
+               MEDIA_INTERFACE_DESCRIPTOR_LOAD::SUB_OPCODE_MEDIA_INTERFACE_DESCRIPTOR_LOAD_SUBOP == header.TheStructure.Common.SubOpcode;
     });
 }
 
@@ -40,7 +40,7 @@ MEDIA_VFE_STATE *genCmdCast<MEDIA_VFE_STATE *>(void *buffer) {
         return MEDIA_VFE_STATE::COMMAND_TYPE_GFXPIPE == header.TheStructure.Common.CommandType &&
                MEDIA_VFE_STATE::PIPELINE_MEDIA == header.TheStructure.Common.Pipeline &&
                MEDIA_VFE_STATE::MEDIA_COMMAND_OPCODE_MEDIA_VFE_STATE == header.TheStructure.Common.MediaCommandOpcode &&
-               MEDIA_VFE_STATE::SUBOPCODE_MEDIA_VFE_STATE_SUBOP == header.TheStructure.Common.Subopcode;
+               MEDIA_VFE_STATE::SUB_OPCODE_MEDIA_VFE_STATE_SUBOP == header.TheStructure.Common.SubOpcode;
     });
 }
 
@@ -50,7 +50,7 @@ MEDIA_STATE_FLUSH *genCmdCast<MEDIA_STATE_FLUSH *>(void *buffer) {
         return MEDIA_STATE_FLUSH::COMMAND_TYPE_GFXPIPE == header.TheStructure.Common.CommandType &&
                MEDIA_STATE_FLUSH::PIPELINE_MEDIA == header.TheStructure.Common.Pipeline &&
                MEDIA_STATE_FLUSH::MEDIA_COMMAND_OPCODE_MEDIA_STATE_FLUSH == header.TheStructure.Common.MediaCommandOpcode &&
-               MEDIA_STATE_FLUSH::SUBOPCODE_MEDIA_STATE_FLUSH_SUBOP == header.TheStructure.Common.Subopcode;
+               MEDIA_STATE_FLUSH::SUB_OPCODE_MEDIA_STATE_FLUSH_SUBOP == header.TheStructure.Common.SubOpcode;
     });
 }
 
