@@ -66,10 +66,6 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
         rootDeviceEnvironment.setHwInfo(hwInfoConst);
 
         rootDeviceEnvironment.initProductHelper();
-        if (isLeoRootDevice(rootDeviceEnvironment)) {
-            executionEnvironment.addLeoPlatformKey(*rootDeviceEnvironment.getHardwareInfo());
-            return false;
-        }
         rootDeviceEnvironment.initGfxCoreHelper();
         rootDeviceEnvironment.initializeGfxCoreHelperFromProductHelper(true);
         rootDeviceEnvironment.initApiGfxCoreHelper();
@@ -118,6 +114,10 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
 
         setHwInfoValuesFromConfig(hwInfoConfig, *hardwareInfo);
         hardwareInfoSetup[hwInfoConst->platform.eProductFamily](hardwareInfo, true);
+        if (isLeoRootDevice(rootDeviceEnvironment)) {
+            executionEnvironment.addLeoPlatformKey(*hardwareInfo);
+            return false;
+        }
 
         if (debugManager.flags.OverrideGpuAddressSpace.get() != -1) {
             hardwareInfo->capabilityTable.gpuAddressSpace = maxNBitValue(static_cast<uint64_t>(debugManager.flags.OverrideGpuAddressSpace.get()));
@@ -366,7 +366,7 @@ bool isLeoRootDevice(const RootDeviceEnvironment &rootDeviceEnvironment) {
         return false;
     }
 
-    return rootDeviceEnvironment.getProductHelper().isLEOSupported();
+    return rootDeviceEnvironment.getHardwareInfo()->caps.leoSupported;
 }
 
 std::vector<std::unique_ptr<Device>> DeviceFactory::createDevices(ExecutionEnvironment &executionEnvironment) {

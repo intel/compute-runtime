@@ -83,6 +83,7 @@ TEST(CapsSetupTest, givenEveryEnabledProductConfigWhenSettingUpCapsThenHwInfoIsI
         EXPECT_EQ(expectedCaps->initBuiltinAsyncSupported, hwInfo.caps.initBuiltinAsyncSupported);
         EXPECT_EQ(expectedCaps->initDeviceWithFirstSubmissionRequired, hwInfo.caps.initDeviceWithFirstSubmissionRequired);
         EXPECT_EQ(expectedCaps->latePreemptionStartSupported, hwInfo.caps.latePreemptionStartSupported);
+        EXPECT_EQ(expectedCaps->leoSupported, hwInfo.caps.leoSupported);
         EXPECT_EQ(expectedCaps->localOnlyAllowed, hwInfo.caps.localOnlyAllowed);
         EXPECT_EQ(expectedCaps->memSetExtendedPayloadSupported, hwInfo.caps.memSetExtendedPayloadSupported);
         EXPECT_EQ(expectedCaps->misalignedUserPtr2WayCoherent, hwInfo.caps.misalignedUserPtr2WayCoherent);
@@ -169,6 +170,7 @@ TEST(CapsTest, givenDefaultCapsThenValuesAreCorrect) {
     EXPECT_FALSE(caps.initBuiltinAsyncSupported);
     EXPECT_FALSE(caps.initDeviceWithFirstSubmissionRequired);
     EXPECT_FALSE(caps.latePreemptionStartSupported);
+    EXPECT_FALSE(caps.leoSupported);
     EXPECT_FALSE(caps.localOnlyAllowed);
     EXPECT_FALSE(caps.memSetExtendedPayloadSupported);
     EXPECT_FALSE(caps.misalignedUserPtr2WayCoherent);

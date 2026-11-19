@@ -11,7 +11,6 @@
 #include "shared/source/device/device_info.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/pin/pin.h"
 
 #include "level_zero/api/opencl/source/helpers/leo_get_info_status_mapper.h"
@@ -168,7 +167,7 @@ bool isLeoExposedDriver(ze_driver_handle_t driverHandle) {
     if (driver == nullptr || driver->devices.empty()) {
         return false;
     }
-    return driver->devices[0]->getProductHelper().isLEOSupported();
+    return driver->devices[0]->getHwInfo().caps.leoSupported;
 }
 
 void Platform::tryNotifyGtpinInit() {

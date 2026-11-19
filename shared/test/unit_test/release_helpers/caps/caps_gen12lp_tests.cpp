@@ -70,6 +70,7 @@ TEST(CapsGen12LpTest, givenTglReleaseWhenMaterializingCapsThenCapabilitiesAreCor
     EXPECT_FALSE(capsTgl.initBuiltinAsyncSupported);
     EXPECT_FALSE(capsTgl.initDeviceWithFirstSubmissionRequired);
     EXPECT_FALSE(capsTgl.latePreemptionStartSupported);
+    EXPECT_FALSE(capsTgl.leoSupported);
     EXPECT_TRUE(capsTgl.localOnlyAllowed);
     EXPECT_FALSE(capsTgl.memSetExtendedPayloadSupported);
     EXPECT_FALSE(capsTgl.misalignedUserPtr2WayCoherent);
@@ -146,6 +147,7 @@ TEST(CapsGen12LpTest, givenRklReleaseWhenMaterializingCapsThenCapabilitiesAreCor
     EXPECT_FALSE(capsRkl.initBuiltinAsyncSupported);
     EXPECT_FALSE(capsRkl.initDeviceWithFirstSubmissionRequired);
     EXPECT_FALSE(capsRkl.latePreemptionStartSupported);
+    EXPECT_FALSE(capsRkl.leoSupported);
     EXPECT_TRUE(capsRkl.localOnlyAllowed);
     EXPECT_FALSE(capsRkl.memSetExtendedPayloadSupported);
     EXPECT_FALSE(capsRkl.misalignedUserPtr2WayCoherent);
@@ -222,6 +224,7 @@ TEST(CapsGen12LpTest, givenAdlSReleaseWhenMaterializingCapsThenCapabilitiesAreCo
     EXPECT_FALSE(capsAdlS.initBuiltinAsyncSupported);
     EXPECT_FALSE(capsAdlS.initDeviceWithFirstSubmissionRequired);
     EXPECT_FALSE(capsAdlS.latePreemptionStartSupported);
+    EXPECT_FALSE(capsAdlS.leoSupported);
     EXPECT_TRUE(capsAdlS.localOnlyAllowed);
     EXPECT_FALSE(capsAdlS.memSetExtendedPayloadSupported);
     EXPECT_FALSE(capsAdlS.misalignedUserPtr2WayCoherent);
@@ -298,6 +301,7 @@ TEST(CapsGen12LpTest, givenAdlPReleaseWhenMaterializingCapsThenCapabilitiesAreCo
     EXPECT_FALSE(capsAdlP.initBuiltinAsyncSupported);
     EXPECT_FALSE(capsAdlP.initDeviceWithFirstSubmissionRequired);
     EXPECT_FALSE(capsAdlP.latePreemptionStartSupported);
+    EXPECT_FALSE(capsAdlP.leoSupported);
     EXPECT_TRUE(capsAdlP.localOnlyAllowed);
     EXPECT_FALSE(capsAdlP.memSetExtendedPayloadSupported);
     EXPECT_FALSE(capsAdlP.misalignedUserPtr2WayCoherent);
@@ -374,6 +378,7 @@ TEST(CapsGen12LpTest, givenAdlNReleaseWhenMaterializingCapsThenCapabilitiesAreCo
     EXPECT_FALSE(capsAdlN.initBuiltinAsyncSupported);
     EXPECT_FALSE(capsAdlN.initDeviceWithFirstSubmissionRequired);
     EXPECT_FALSE(capsAdlN.latePreemptionStartSupported);
+    EXPECT_FALSE(capsAdlN.leoSupported);
     EXPECT_TRUE(capsAdlN.localOnlyAllowed);
     EXPECT_FALSE(capsAdlN.memSetExtendedPayloadSupported);
     EXPECT_FALSE(capsAdlN.misalignedUserPtr2WayCoherent);
@@ -450,6 +455,7 @@ TEST(CapsGen12LpTest, givenDg1ReleaseWhenMaterializingCapsThenCapabilitiesAreCor
     EXPECT_FALSE(capsDg1.initBuiltinAsyncSupported);
     EXPECT_FALSE(capsDg1.initDeviceWithFirstSubmissionRequired);
     EXPECT_FALSE(capsDg1.latePreemptionStartSupported);
+    EXPECT_FALSE(capsDg1.leoSupported);
     EXPECT_TRUE(capsDg1.localOnlyAllowed);
     EXPECT_FALSE(capsDg1.memSetExtendedPayloadSupported);
     EXPECT_FALSE(capsDg1.misalignedUserPtr2WayCoherent);

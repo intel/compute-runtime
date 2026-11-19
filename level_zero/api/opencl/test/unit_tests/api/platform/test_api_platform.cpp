@@ -5,11 +5,10 @@
  *
  */
 
+#include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/helpers/raii_product_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_device.h"
-#include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/api/opencl/source/platform/leo_platform.h"
@@ -109,22 +108,19 @@ struct LeoExposedDriverTests : public Test<OclFixture> {
 };
 
 TEST_F(LeoExposedDriverTests, givenProductSupportingLeoThenDriverIsExposed) {
-    RAIIProductHelperFactory<MockProductHelper> raiiProductHelper{neoDevice->getRootDeviceEnvironmentRef()};
-    raiiProductHelper.mockProductHelper->isLEOSupportedResult = true;
+    neoDevice->getRootDeviceEnvironmentRef().getMutableHardwareInfo()->caps.leoSupported = true;
     EXPECT_TRUE(isLeoExposedDriver(driverHandle->toHandle()));
 }
 
 TEST_F(LeoExposedDriverTests, givenProductNotSupportingLeoThenDriverIsStripped) {
-    RAIIProductHelperFactory<MockProductHelper> raiiProductHelper{neoDevice->getRootDeviceEnvironmentRef()};
-    raiiProductHelper.mockProductHelper->isLEOSupportedResult = false;
+    neoDevice->getRootDeviceEnvironmentRef().getMutableHardwareInfo()->caps.leoSupported = false;
     EXPECT_FALSE(isLeoExposedDriver(driverHandle->toHandle()));
 }
 
 TEST_F(LeoExposedDriverTests, givenEnableLeoForcedOnThenDriverIsExposedEvenWhenProductDoesNotSupportLeo) {
     debugManager.flags.EnableLEO.set(1);
 
-    RAIIProductHelperFactory<MockProductHelper> raiiProductHelper{neoDevice->getRootDeviceEnvironmentRef()};
-    raiiProductHelper.mockProductHelper->isLEOSupportedResult = false;
+    neoDevice->getRootDeviceEnvironmentRef().getMutableHardwareInfo()->caps.leoSupported = false;
     EXPECT_TRUE(isLeoExposedDriver(driverHandle->toHandle()));
 }
 

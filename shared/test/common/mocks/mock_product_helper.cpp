@@ -330,11 +330,6 @@ uint32_t ProductHelperHw<IGFX_UNKNOWN>::getIsaPrefetchSize(uint32_t isaSize) con
     return std::min(isaSize, static_cast<uint32_t>(MemoryConstants::kiloByte));
 }
 
-template <>
-bool ProductHelperHw<IGFX_UNKNOWN>::isLEOSupported() const {
-    return false;
-}
-
 struct UnknownProduct {
     struct FrontEndStateSupport {
         static constexpr bool computeDispatchAllWalker = false;

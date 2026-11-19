@@ -63,6 +63,7 @@ namespace NEO {
     NEO_COPY_CAP_FUNC(initBuiltinAsyncSupported)                                 \
     NEO_COPY_CAP_FUNC(initDeviceWithFirstSubmissionRequired)                     \
     NEO_COPY_CAP_FUNC(latePreemptionStartSupported)                              \
+    NEO_COPY_CAP_FUNC(leoSupported)                                              \
     NEO_COPY_CAP_FUNC(localOnlyAllowed)                                          \
     NEO_COPY_CAP_FUNC(memSetExtendedPayloadSupported)                            \
     NEO_COPY_CAP_FUNC(misalignedUserPtr2WayCoherent)                             \

@@ -8,13 +8,11 @@
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/os_library.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/helpers/raii_product_helper.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_os_library.h"
-#include "shared/test/common/mocks/mock_product_helper.h"
 
 #include "opencl/source/api/leo_forwarding.h"
 #include "opencl/source/context/context.h"
@@ -345,12 +343,6 @@ static void *CL_API_CALL mockLeoClGetExtensionFunctionAddress(const char *funcNa
     return nullptr;
 }
 
-struct MockProductHelperLeoSupported : MockProductHelper {
-    MockProductHelperLeoSupported() {
-        isLEOSupportedResult = true;
-    }
-};
-
 struct ClGetPlatformIDsLeoTest : public ::testing::Test {
     void SetUp() override {
         mockLeoPlatformCount = 1u;
@@ -391,8 +383,7 @@ TEST_F(ClGetPlatformIDsLeoTest, givenAutoEnableLeoWhenProductSupportsLeoThenPlat
     debugManager.flags.EnableLEO.set(-1);
     ultHwConfig.leoDetectionEnabled = true;
 
-    MockExecutionEnvironment mockExecutionEnvironment(defaultHwInfo.get());
-    RAIIProductHelperFactory<MockProductHelperLeoSupported> raiiProductHelper{*mockExecutionEnvironment.rootDeviceEnvironments[0]};
+    VariableBackup<bool> leoSupportedBackup{&defaultHwInfo->caps.leoSupported, true};
 
     cl_platform_id platform = nullptr;
     cl_uint numPlatforms = 0u;
@@ -422,8 +413,7 @@ TEST_F(ClGetPlatformIDsLeoTest, givenLeoForcedOffThenNoLevelZeroPlatformIsReport
     debugManager.flags.EnableLEO.set(0);
     ultHwConfig.leoDetectionEnabled = true;
 
-    MockExecutionEnvironment mockExecutionEnvironment(defaultHwInfo.get());
-    RAIIProductHelperFactory<MockProductHelperLeoSupported> raiiProductHelper{*mockExecutionEnvironment.rootDeviceEnvironments[0]};
+    VariableBackup<bool> leoSupportedBackup{&defaultHwInfo->caps.leoSupported, true};
 
     cl_uint numPlatforms = 0u;
     auto retVal = clGetPlatformIDs(0, nullptr, &numPlatforms);
@@ -458,8 +448,7 @@ TEST_F(ClGetPlatformIDsLeoTest, givenMoreLevelZeroPlatformsThanDetectedLeoProduc
     ultHwConfig.leoDetectionEnabled = true;
     mockLeoPlatformCount = 2u;
 
-    MockExecutionEnvironment mockExecutionEnvironment(defaultHwInfo.get());
-    RAIIProductHelperFactory<MockProductHelperLeoSupported> raiiProductHelper{*mockExecutionEnvironment.rootDeviceEnvironments[0]};
+    VariableBackup<bool> leoSupportedBackup{&defaultHwInfo->caps.leoSupported, true};
 
     cl_platform_id platforms[2] = {};
     cl_uint numPlatforms = 0u;

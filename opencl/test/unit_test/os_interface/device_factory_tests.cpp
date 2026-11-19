@@ -19,7 +19,6 @@
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
-#include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -310,9 +309,7 @@ struct DeviceFactoryLeoTest : public ::testing::Test {
     MockExecutionEnvironment &prepareEnvWithLeoSupport(const std::vector<bool> &leoSupportPerRootDevice) {
         executionEnvironment = std::make_unique<MockExecutionEnvironment>(defaultHwInfo.get(), true, static_cast<uint32_t>(leoSupportPerRootDevice.size()));
         for (size_t i = 0; i < leoSupportPerRootDevice.size(); i++) {
-            auto mockProductHelper = new MockProductHelper;
-            mockProductHelper->isLEOSupportedResult = leoSupportPerRootDevice[i];
-            executionEnvironment->rootDeviceEnvironments[i]->productHelper.reset(mockProductHelper);
+            executionEnvironment->rootDeviceEnvironments[i]->getMutableHardwareInfo()->caps.leoSupported = leoSupportPerRootDevice[i];
         }
         return *executionEnvironment;
     }
@@ -398,6 +395,17 @@ TEST_F(DeviceFactoryLeoTest, givenLeoDetectionDisabledWhenProductSupportsLeoThen
     DeviceFactory::createDevices(executionEnvironment);
     EXPECT_FALSE(executionEnvironment.isLeoRootDeviceDetected());
     EXPECT_EQ(std::vector<uint32_t>{0u}, leoTestCreatedRootDeviceIndices);
+}
+
+TEST_F(DeviceFactoryLeoTest, givenProductFamilyOverrideWhenPreparingDeviceEnvironmentsThenLeoDetectionMatchesProductCaps) {
+    debugManager.flags.OverrideHwIpVersion.set(defaultHwInfo->ipVersion.value);
+    ExecutionEnvironment executionEnvironment{};
+
+    bool success = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment);
+
+    const bool leoSupported = defaultHwInfo->caps.leoSupported;
+    EXPECT_NE(leoSupported, success);
+    EXPECT_EQ(leoSupported, executionEnvironment.isLeoRootDeviceDetected());
 }
 
 TEST(DeviceFactory, givenHwModeSelectedWhenIsHwModeSelectedIsCalledThenTrueIsReturned) {

@@ -61,6 +61,7 @@ struct Caps {
     bool initBuiltinAsyncSupported = false;
     bool initDeviceWithFirstSubmissionRequired = false;
     bool latePreemptionStartSupported = false;
+    bool leoSupported = false;
     bool localOnlyAllowed = false;
     bool memSetExtendedPayloadSupported = false;
     bool misalignedUserPtr2WayCoherent = false;

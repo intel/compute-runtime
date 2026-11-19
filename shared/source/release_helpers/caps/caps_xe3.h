@@ -78,10 +78,12 @@ struct CapsWcl : CapsXe3Core {
 
 struct CapsNvlS : CapsXe3Core {
     static constexpr bool ftrXe2Compression = true;
+    static constexpr bool leoSupported = true;
 };
 
 struct CapsNvlU : CapsXe3Core {
     static constexpr bool ftrXe2Compression = true;
+    static constexpr bool leoSupported = true;
     static constexpr bool rayTracingSupported = true;
 };
 

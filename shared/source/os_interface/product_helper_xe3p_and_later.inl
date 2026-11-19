@@ -27,9 +27,4 @@ uint32_t ProductHelperHw<gfxProduct>::getIsaPrefetchSize(uint32_t isaSize) const
     return isaSize;
 }
 
-template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isLEOSupported() const {
-    return true;
-}
-
 } // namespace NEO

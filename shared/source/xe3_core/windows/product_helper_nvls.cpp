@@ -16,11 +16,6 @@ constexpr static auto gfxProduct = IGFX_NVL_XE3G;
 
 namespace NEO {
 
-template <>
-bool ProductHelperHw<gfxProduct>::isLEOSupported() const {
-    return true;
-}
-
 template class ProductHelperHw<gfxProduct>;
 template struct EnableProductHelper<gfxProduct>;
 

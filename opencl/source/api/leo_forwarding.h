@@ -17,7 +17,7 @@
 namespace NEO {
 
 // LEO (Level Zero Executing OpenCL) lets the Level Zero driver service OpenCL for
-// products that opt in via ProductHelper::isLEOSupported(). The choice is per
+// products that opt in via HardwareInfo::caps.leoSupported. The choice is per
 // platform: one libigdrcl serves every Intel GPU on Linux, so a LEO-capable
 // product sitting next to one that is not has to split.
 //

@@ -60,7 +60,3 @@ NVLSTEST_F(NvlsHwInfoLinux, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
     EXPECT_GT(gtSystemInfo.DualSubSliceCount, 0u);
     EXPECT_GT(gtSystemInfo.MaxDualSubSlicesSupported, 0u);
 }
-
-NVLSTEST_F(NvlsProductHelperLinux, givenProductHelperWhenCheckingIsLEOSupportedThenReturnTrue) {
-    EXPECT_TRUE(productHelper->isLEOSupported());
-}

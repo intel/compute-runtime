@@ -72,7 +72,7 @@ Forwarding is controlled by the `EnableLEO` release variable.
 
 | Value | Meaning |
 |-------|---------|
-| `-1` | Default -- auto-detect: forwards when the product reports `ProductHelper::isLEOSupported()`, otherwise OpenCL is serviced natively |
+| `-1` | Default -- auto-detect: forwards when the product sets `HardwareInfo::caps.leoSupported`, otherwise OpenCL is serviced natively |
 | `0` | Disabled -- `igdrcl` services the OpenCL API directly (native NEO) and no calls are forwarded to `ze_intel_gpu` |
 | `1` | Enabled -- OpenCL entry points are forwarded to the Level Zero backend regardless of product support |
 

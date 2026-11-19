@@ -87,6 +87,7 @@ TEST(CapsXeHpcTest, givenPvcReleaseWhenMaterializingCapsThenCapabilitiesAreCorre
     EXPECT_TRUE(capsPvc.initBuiltinAsyncSupported);
     EXPECT_TRUE(capsPvc.initDeviceWithFirstSubmissionRequired);
     EXPECT_FALSE(capsPvc.latePreemptionStartSupported);
+    EXPECT_FALSE(capsPvc.leoSupported);
     EXPECT_TRUE(capsPvc.localOnlyAllowed);
     EXPECT_FALSE(capsPvc.memSetExtendedPayloadSupported);
     EXPECT_FALSE(capsPvc.misalignedUserPtr2WayCoherent);
@@ -163,6 +164,7 @@ TEST(CapsXeHpcTest, givenPvcVgReleaseWhenMaterializingCapsThenCapabilitiesAreCor
     EXPECT_TRUE(capsPvcVg.initBuiltinAsyncSupported);
     EXPECT_TRUE(capsPvcVg.initDeviceWithFirstSubmissionRequired);
     EXPECT_FALSE(capsPvcVg.latePreemptionStartSupported);
+    EXPECT_FALSE(capsPvcVg.leoSupported);
     EXPECT_TRUE(capsPvcVg.localOnlyAllowed);
     EXPECT_FALSE(capsPvcVg.memSetExtendedPayloadSupported);
     EXPECT_FALSE(capsPvcVg.misalignedUserPtr2WayCoherent);

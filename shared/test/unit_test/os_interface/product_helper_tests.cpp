@@ -39,7 +39,6 @@
 #include "aubstream/stepping_values.h"
 #include "clos_matchers.h"
 #include "gtest/gtest.h"
-#include "leo_matchers.h"
 #include "ocl_igc_shared/indirect_access_detection/version.h"
 #include "test_traits_common.h"
 
@@ -1351,14 +1350,6 @@ HWTEST2_F(ProductHelperTest, givenPatIndexWhenCheckIsCoherentAllocationThenRetur
     for (auto patIndex : listOfNonCoherentPatIndexes) {
         EXPECT_FALSE(productHelper.isCoherentAllocation(patIndex).value());
     }
-}
-
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskingIsLEOSupportedThenFalseReturned, IsNotLeoSupported) {
-    EXPECT_FALSE(productHelper->isLEOSupported());
-}
-
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskingIsLEOSupportedThenTrueReturned, IsLeoSupported) {
-    EXPECT_TRUE(productHelper->isLEOSupported());
 }
 
 HWTEST_F(ProductHelperTest, givenDefaultSettingsWhenAskingIsPostSyncRequiredForAllWalkersThenFalseReturned) {
