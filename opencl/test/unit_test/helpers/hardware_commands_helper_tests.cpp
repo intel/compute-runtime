@@ -780,7 +780,7 @@ HWTEST2_F(HardwareCommandsTest, WhenGettingBindingTableStateThenSurfaceStatePoin
             0,
             *pDevice);
 
-        bti = reinterpret_cast<typename FamilyType::BINDING_TABLE_STATE *>(reinterpret_cast<unsigned char *>(ssh.getCpuBase()) + localSshOffset + btiOffset);
+        bti = static_cast<typename FamilyType::BINDING_TABLE_STATE *>(ptrOffset(ssh.getCpuBase(), localSshOffset + btiOffset));
         for (uint32_t i = 0; i < numSurfaces; ++i) {
             uint32_t expected = localSshOffset + i * sizeof(typename FamilyType::RENDER_SURFACE_STATE);
             EXPECT_EQ(expected, bti[i].getSurfaceStatePointer());

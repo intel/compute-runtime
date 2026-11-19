@@ -705,7 +705,7 @@ TEST_F(HostPtrManagerTest, GivenHostPtrManagerFilledWithBigFragmentWhenAskedForF
     EXPECT_EQ(nullptr, oustideFragment);
 
     // partialOverlap
-    auto ptrPartial = (void *)(((uintptr_t)bigPtr + bigSize) - 100);
+    auto ptrPartial = ptrOffset(bigPtr, bigSize - 100);
     auto partialBigSize = MemoryConstants::pageSize * 100;
 
     auto partialFragment = hostPtrManager.getFragmentAndCheckForOverlaps(rootDeviceIndex, ptrPartial, partialBigSize, overlapStatus);
@@ -732,8 +732,7 @@ TEST_F(HostPtrManagerTest, GivenHostPtrManagerFilledWithFragmentsWhenCheckedForO
     EXPECT_EQ(nullptr, fragment2);
 
     auto ptrNonOverlapingPriorToBigPtrByPage = (void *)0x3000;
-    auto checkMatch = (uintptr_t)ptrNonOverlapingPriorToBigPtrByPage + smallSize;
-    EXPECT_EQ(checkMatch, (uintptr_t)bigPtr);
+    EXPECT_EQ(ptrOffset(ptrNonOverlapingPriorToBigPtrByPage, smallSize), bigPtr);
 
     auto fragment3 = hostPtrManager.getFragmentAndCheckForOverlaps(rootDeviceIndex, ptrNonOverlapingPriorToBigPtrByPage, smallSize, overlapStatus);
     EXPECT_EQ(OverlapStatus::FRAGMENT_NOT_OVERLAPING_WITH_ANY_OTHER, overlapStatus);

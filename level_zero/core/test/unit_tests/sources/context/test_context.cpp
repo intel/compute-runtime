@@ -652,8 +652,7 @@ TEST_F(MultiDeviceContextTests,
         ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE, ZE_MEMORY_ACCESS_ATTRIBUTE_READONLY,
         ZE_MEMORY_ACCESS_ATTRIBUTE_NONE};
 
-    void *offsetAddr =
-        reinterpret_cast<void *>(reinterpret_cast<uint64_t>(ptr) + pagesize);
+    void *offsetAddr = ptrOffset(ptr, pagesize);
 
     for (auto accessFlags : memoryAccessFlags) {
         res = contextImp->mapVirtualMem(ptr, pagesize, mem, offset, accessFlags);
@@ -2408,8 +2407,7 @@ TEST_F(ContextTest, whenMappingSamePhysicalMemoryToMoreThanOneVirtualAddressThen
 
     res = contextImp->reserveVirtualMem(pStart, pagesize * 2, &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    void *secondPtr =
-        reinterpret_cast<void *>(reinterpret_cast<uint64_t>(ptr) + pagesize);
+    void *secondPtr = ptrOffset(ptr, pagesize);
 
     ze_physical_mem_desc_t descMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, nullptr, ZE_PHYSICAL_MEM_FLAG_ALLOCATE_ON_DEVICE, pagesize * 2};
     ze_physical_mem_handle_t mem = {};
@@ -3174,7 +3172,7 @@ TEST_F(ContextFoldPrefixTest, givenDeviceBackedRangeAndReservationRemovedDuringF
 TEST_F(ContextFoldPrefixTest, givenOffsetFoldRequiredWhenMappingHostPhysicalMemoryAwayFromReservationBaseThenInvalidArgumentIsReturned) {
     setUpMock(true);
 
-    void *interiorPtr = reinterpret_cast<void *>(castToUint64(reservedPtr) + pagesize);
+    void *interiorPtr = ptrOffset(reservedPtr, pagesize);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT,
               contextImp->mapVirtualMem(interiorPtr, pagesize, physicalMem, pagesize, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE));
     EXPECT_EQ(0u, memoryManagerMock->reserveExactCalls);
@@ -3239,7 +3237,7 @@ TEST_F(ContextFoldPrefixTest, givenPrefixClaimFailingWhenMappingHostPhysicalMemo
 TEST_F(ContextFoldPrefixTest, givenWindowRelocationSupportedWhenMappingHostPhysicalMemoryWithOffsetThenNoPrefixIsClaimedAndInteriorPointerIsAllowed) {
     setUpMock(false);
 
-    void *interiorPtr = reinterpret_cast<void *>(castToUint64(reservedPtr) + pagesize);
+    void *interiorPtr = ptrOffset(reservedPtr, pagesize);
     EXPECT_EQ(ZE_RESULT_SUCCESS,
               contextImp->mapVirtualMem(interiorPtr, pagesize, physicalMem, pagesize, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE));
     EXPECT_EQ(0u, memoryManagerMock->reserveExactCalls);
@@ -3596,8 +3594,7 @@ TEST_F(ContextTest, whenUsingOffsetsIntoReservedVirtualMemoryThenMappingIsSucces
         ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE, ZE_MEMORY_ACCESS_ATTRIBUTE_READONLY,
         ZE_MEMORY_ACCESS_ATTRIBUTE_NONE};
 
-    void *offsetAddr =
-        reinterpret_cast<void *>(reinterpret_cast<uint64_t>(ptr) + pagesize);
+    void *offsetAddr = ptrOffset(ptr, pagesize);
 
     for (auto accessFlags : memoryAccessFlags) {
         res = contextImp->mapVirtualMem(offsetAddr, pagesize, mem, offset, accessFlags);
@@ -3662,8 +3659,7 @@ TEST_F(ContextTest, whenUsingOffsetsIntoReservedVirtualMemoryWithMultiplePhysica
         ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE, ZE_MEMORY_ACCESS_ATTRIBUTE_READONLY,
         ZE_MEMORY_ACCESS_ATTRIBUTE_NONE};
 
-    void *offsetAddr =
-        reinterpret_cast<void *>(reinterpret_cast<uint64_t>(ptr) + pagesize);
+    void *offsetAddr = ptrOffset(ptr, pagesize);
 
     for (auto accessFlags : memoryAccessFlags) {
         res = contextImp->mapVirtualMem(ptr, pagesize, mem, offset, accessFlags);
@@ -4007,7 +4003,7 @@ TEST_F(ContextTest, whenCallingVirtualMemoryReservationWithOverlappingReservatio
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_NE(nullptr, ptr);
 
-    void *newPStart = addrToPtr(castToUint64(ptr) + pagesize);
+    void *newPStart = ptrOffset(ptr, pagesize);
     void *newPtr = nullptr;
     res = contextImp->reserveVirtualMem(newPStart, pagesize, &newPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -4705,8 +4701,7 @@ TEST_F(ContextTest, whenCallingMapVirtualMemoryWithInvalidValuesThenFailureRetur
     res = contextImp->mapVirtualMem(ptr, pagesize * 4, mem, offset, access);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
 
-    void *offsetAddr =
-        reinterpret_cast<void *>(reinterpret_cast<uint64_t>(ptr) + pagesize);
+    void *offsetAddr = ptrOffset(ptr, pagesize);
     res = contextImp->mapVirtualMem(offsetAddr, pagesize * 2, mem, offset, access);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
 
@@ -6612,7 +6607,7 @@ TEST_F(ContextTest, givenContextWhenChangingVirtualMemAccessAttributeAndPtrNotIn
     res = ctx->reserveVirtualMem(pStart, pageSize * 2, &reservationBase);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    void *secondPagePtr = reinterpret_cast<void *>(reinterpret_cast<uint64_t>(reservationBase) + pageSize);
+    void *secondPagePtr = ptrOffset(reservationBase, pageSize);
     ze_physical_mem_desc_t descMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, nullptr, 0, pageSize};
     ze_physical_mem_handle_t mem = {};
     res = ctx->createPhysicalMem(device, &descMem, &mem);
@@ -8201,8 +8196,8 @@ TEST_F(ContextTest, givenMultipleContiguousMappingsWhenUnmapFullRangeThenAllUnma
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     ze_memory_access_attribute_t access = {ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE};
     size_t offset = 0;
-    void *ptr1 = reinterpret_cast<void *>(reinterpret_cast<uint64_t>(ptr) + pagesize);
-    void *ptr2 = reinterpret_cast<void *>(reinterpret_cast<uint64_t>(ptr) + 2 * pagesize);
+    void *ptr1 = ptrOffset(ptr, pagesize);
+    void *ptr2 = ptrOffset(ptr, 2 * pagesize);
     res = contextImp->mapVirtualMem(ptr, pagesize, mem0, offset, access);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     res = contextImp->mapVirtualMem(ptr1, pagesize, mem1, offset, access);
@@ -8252,7 +8247,7 @@ TEST_F(ContextTest, givenHoleAmidMappingsWhenUnmapRangeThenContainedExtentsRemov
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     ze_memory_access_attribute_t access = {ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE};
     size_t offset = 0;
-    void *ptr2 = reinterpret_cast<void *>(reinterpret_cast<uint64_t>(ptr) + 2 * pagesize);
+    void *ptr2 = ptrOffset(ptr, 2 * pagesize);
     res = contextImp->mapVirtualMem(ptr, pagesize, mem0, offset, access);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     res = contextImp->mapVirtualMem(ptr2, pagesize, mem2, offset, access);
@@ -8340,7 +8335,7 @@ TEST_F(ContextTest, givenStartBoundaryCutWhenUnmapInteriorThenStraddlerSkippedAn
     size_t offset = 0;
     res = contextImp->mapVirtualMem(ptr, pagesize * 2, mem, offset, access);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    void *interiorPtr = reinterpret_cast<void *>(reinterpret_cast<uint64_t>(ptr) + pagesize);
+    void *interiorPtr = ptrOffset(ptr, pagesize);
     res = contextImp->unMapVirtualMem(interiorPtr, pagesize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     auto &vmrMap = driverHandle->getMemoryManager()->getVirtualMemoryReservationMap();
@@ -8405,7 +8400,7 @@ TEST_F(ContextTest, givenMisalignedPtrWhenUnmapThenUnsupportedAlignmentReturned)
     size_t offset = 0;
     res = contextImp->mapVirtualMem(ptr, pagesize, mem, offset, access);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    void *misalignedPtr = reinterpret_cast<void *>(reinterpret_cast<uint64_t>(ptr) + 1);
+    void *misalignedPtr = ptrOffset(ptr, 1);
     res = contextImp->unMapVirtualMem(misalignedPtr, pagesize);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_ALIGNMENT, res);
     res = contextImp->unMapVirtualMem(ptr, pagesize);
@@ -8464,7 +8459,7 @@ TEST_F(ContextTest, givenMisalignedPtrWhenMapThenUnsupportedAlignmentReturned) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     ze_memory_access_attribute_t access = {ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE};
     size_t offset = 0;
-    void *misalignedPtr = reinterpret_cast<void *>(reinterpret_cast<uint64_t>(ptr) + 1);
+    void *misalignedPtr = ptrOffset(ptr, 1);
     res = contextImp->mapVirtualMem(misalignedPtr, pagesize, mem, offset, access);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_ALIGNMENT, res);
     res = contextImp->destroyPhysicalMem(mem);
@@ -8546,7 +8541,7 @@ TEST_F(ContextTest, givenMultipleMappingsWhenIoctlFailsThenAllTeardownsAttempted
 
     ze_memory_access_attribute_t access = {ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE};
     size_t offset = 0;
-    void *ptr1 = reinterpret_cast<void *>(reinterpret_cast<uint64_t>(ptr) + pagesize);
+    void *ptr1 = ptrOffset(ptr, pagesize);
 
     res = contextImp->mapVirtualMem(ptr, pagesize, mem0, offset, access);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);

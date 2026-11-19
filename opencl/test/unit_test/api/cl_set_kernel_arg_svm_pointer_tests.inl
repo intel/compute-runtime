@@ -207,9 +207,9 @@ TEST_F(clSetKernelArgSVMPointerTests, GivenSvmAndPointerWithOffsetWhenSettingKer
         EXPECT_NE(nullptr, ptrSvm);
 
         auto retVal = clSetKernelArgSVMPointer(
-            pMockMultiDeviceKernel, // cl_kernel kernel
-            0,                      // cl_uint arg_index
-            (char *)ptrSvm + offset // const void *arg_value
+            pMockMultiDeviceKernel,   // cl_kernel kernel
+            0,                        // cl_uint arg_index
+            ptrOffset(ptrSvm, offset) // const void *arg_value
         );
         EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -234,9 +234,9 @@ TEST_F(clSetKernelArgSVMPointerTests, GivenSvmAndPointerWithInvalidOffsetWhenSet
         size_t offset = svmAlloc->getUnderlyingBufferSize() + 1;
 
         auto retVal = clSetKernelArgSVMPointer(
-            pMockMultiDeviceKernel, // cl_kernel kernel
-            0,                      // cl_uint arg_index
-            (char *)ptrSvm + offset // const void *arg_value
+            pMockMultiDeviceKernel,   // cl_kernel kernel
+            0,                        // cl_uint arg_index
+            ptrOffset(ptrSvm, offset) // const void *arg_value
         );
         EXPECT_EQ(CL_INVALID_ARG_VALUE, retVal);
 
@@ -261,9 +261,9 @@ TEST_F(clSetKernelArgSVMPointerTests, GivenSvmAndPointerWithInvalidOffsetWhenSet
         size_t offset = svmAlloc->getUnderlyingBufferSize() + 1;
 
         auto retVal = clSetKernelArgSVMPointer(
-            pMockMultiDeviceKernel, // cl_kernel kernel
-            0,                      // cl_uint arg_index
-            (char *)ptrSvm + offset // const void *arg_value
+            pMockMultiDeviceKernel,   // cl_kernel kernel
+            0,                        // cl_uint arg_index
+            ptrOffset(ptrSvm, offset) // const void *arg_value
         );
         EXPECT_EQ(CL_SUCCESS, retVal);
 

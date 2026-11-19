@@ -5923,8 +5923,8 @@ HWTEST_F(MultipleDevicePeerAllocationTest,
 
     // set argument in device 1's list with ptr from device 0 plus offset: no new peer allocation is created
     // since a peer allocation is already available
-    void *ptrOffset = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(ptr) + 4);
-    result = kernel->setArgBuffer(0, sizeof(ptr), &ptrOffset);
+    void *offsetPtr = ptrOffset(ptr, 4);
+    result = kernel->setArgBuffer(0, sizeof(ptr), &offsetPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(static_cast<uint32_t>(l0Device1->peerAllocations.getNumAllocs()), 2u);
 
@@ -6824,7 +6824,7 @@ TEST_F(ContextMemoryTest, whenRetrievingAddressRangeForDeviceAllocationThenRange
 
     void *base = nullptr;
     size_t size = 0u;
-    void *pPtr = reinterpret_cast<void *>(reinterpret_cast<uint64_t>(allocPtr) + 77);
+    void *pPtr = ptrOffset(allocPtr, 77);
     result = context->getMemAddressRange(pPtr, &base, &size);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(base, allocPtr);
@@ -6848,7 +6848,7 @@ TEST_F(ContextMemoryTest, whenRetrievingSizeForDeviceAllocationThenUserSizeIsRet
 
     void *base = nullptr;
     size_t size = 0u;
-    void *pPtr = reinterpret_cast<void *>(reinterpret_cast<uint64_t>(allocPtr) + 77);
+    void *pPtr = ptrOffset(allocPtr, 77);
     result = context->getMemAddressRange(pPtr, &base, &size);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(base, allocPtr);
@@ -6871,7 +6871,7 @@ TEST_F(ContextMemoryTest, whenRetrievingAddressRangeForDeviceAllocationWithNoBas
     EXPECT_NE(nullptr, allocPtr);
 
     size_t size = 0u;
-    void *pPtr = reinterpret_cast<void *>(reinterpret_cast<uint64_t>(allocPtr) + 77);
+    void *pPtr = ptrOffset(allocPtr, 77);
     result = context->getMemAddressRange(pPtr, nullptr, &size);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_GE(size, allocSize);
@@ -6893,7 +6893,7 @@ TEST_F(ContextMemoryTest, whenRetrievingAddressRangeForDeviceAllocationWithNoSiz
     EXPECT_NE(nullptr, allocPtr);
 
     void *base = nullptr;
-    void *pPtr = reinterpret_cast<void *>(reinterpret_cast<uint64_t>(allocPtr) + 77);
+    void *pPtr = ptrOffset(allocPtr, 77);
     result = context->getMemAddressRange(pPtr, &base, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(base, allocPtr);

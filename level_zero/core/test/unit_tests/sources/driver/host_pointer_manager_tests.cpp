@@ -203,7 +203,7 @@ TEST_F(HostPointerManagerTest, givenNoPointerWhenImportAddressThenRegisterNewHos
 
 TEST_F(HostPointerManagerTest, givenNoPointerWhenImportMisalignedAddressThenRegisterNewHostData) {
     void *testPtr = heapPointer;
-    testPtr = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(testPtr) + 0x10);
+    testPtr = ptrOffset(testPtr, 0x10);
     size_t size = 0x10;
 
     void *baseAddress = nullptr;
@@ -234,7 +234,7 @@ TEST_F(HostPointerManagerTest, givenBiggerAddressImportedWhenImportingWithinThen
     auto result = hostDriverHandle->importExternalPointer(testPtr, MemoryConstants::pageSize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    testPtr = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(testPtr) + 0x10);
+    testPtr = ptrOffset(testPtr, 0x10);
     size_t size = 0x10;
 
     result = hostDriverHandle->importExternalPointer(testPtr, size);
@@ -267,7 +267,7 @@ TEST_F(HostPointerManagerTest, givenPointerRegisteredWhenSizeEndsInNoAllocationT
     auto result = hostDriverHandle->importExternalPointer(testPtr, MemoryConstants::pageSize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    testPtr = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(testPtr) + 0x10);
+    testPtr = ptrOffset(testPtr, 0x10);
     size_t size = MemoryConstants::pageSize + 0x10;
 
     result = hostDriverHandle->importExternalPointer(testPtr, size);
@@ -283,13 +283,13 @@ TEST_F(HostPointerManagerTest, givenPointerRegisteredWhenSizeEndsInDifferentAllo
     auto result = hostDriverHandle->importExternalPointer(testPtr, MemoryConstants::pageSize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    testPtr = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(testPtr) + MemoryConstants::pageSize);
+    testPtr = ptrOffset(testPtr, MemoryConstants::pageSize);
     size_t size = MemoryConstants::pageSize;
 
     result = hostDriverHandle->importExternalPointer(testPtr, size);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    void *errorPtr = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(heapPointer) + 0x10);
+    void *errorPtr = ptrOffset(heapPointer, 0x10);
     result = hostDriverHandle->importExternalPointer(errorPtr, size);
     EXPECT_EQ(ZE_RESULT_ERROR_OVERLAPPING_REGIONS, result);
 
@@ -301,12 +301,12 @@ TEST_F(HostPointerManagerTest, givenPointerRegisteredWhenSizeEndsInDifferentAllo
 }
 
 TEST_F(HostPointerManagerTest, givenPointerNotRegisteredWhenSizeEndsInDifferentAllocationThenExpectInvalidSizeError) {
-    void *testPtr = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(heapPointer) + MemoryConstants::pageSize);
+    void *testPtr = ptrOffset(heapPointer, MemoryConstants::pageSize);
 
     auto result = hostDriverHandle->importExternalPointer(testPtr, MemoryConstants::pageSize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    void *errorPtr = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(heapPointer) + 0x10);
+    void *errorPtr = ptrOffset(heapPointer, 0x10);
     size_t size = MemoryConstants::pageSize;
     result = hostDriverHandle->importExternalPointer(errorPtr, size);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_SIZE, result);
@@ -317,7 +317,7 @@ TEST_F(HostPointerManagerTest, givenPointerNotRegisteredWhenSizeEndsInDifferentA
 
 TEST_F(HostPointerManagerTest, givenPointerUsesTwoPagesThenBothPagesAreAvailableAndSizeIsCorrect) {
     void *testPtr = heapPointer;
-    testPtr = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(testPtr) + 0x10);
+    testPtr = ptrOffset(testPtr, 0x10);
     size_t size = MemoryConstants::pageSize;
 
     void *baseAddress = nullptr;
@@ -332,7 +332,7 @@ TEST_F(HostPointerManagerTest, givenPointerUsesTwoPagesThenBothPagesAreAvailable
     ASSERT_NE(nullptr, hostPointerData);
     EXPECT_EQ(size, hostPointerData->size);
 
-    void *testPtr2 = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(testPtr) + MemoryConstants::pageSize);
+    void *testPtr2 = ptrOffset(testPtr, MemoryConstants::pageSize);
     size = 0x010;
 
     result = hostDriverHandle->importExternalPointer(testPtr2, size);
@@ -377,7 +377,7 @@ TEST_F(HostPointerManagerTest, givenPointerNotRegisteredThenReturnNullptrGraphic
     auto result = hostDriverHandle->importExternalPointer(testPtr, MemoryConstants::pageSize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    testPtr = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(testPtr) + MemoryConstants::pageSize);
+    testPtr = ptrOffset(testPtr, MemoryConstants::pageSize);
     auto gfxAllocation = hostDriverHandle->findHostPointerAllocation(testPtr, 0x10u, device->getRootDeviceIndex());
     EXPECT_EQ(nullptr, gfxAllocation);
 
@@ -436,7 +436,7 @@ TEST_F(HostPointerManagerTest, givenHostAllocationImportedWhenMakingResidentAddr
 
 TEST_F(HostPointerManagerTest, givenMisalignedPointerRegisteredWhenGettingRelativeOffsetAddressThenRetrieveMisalignedPointerAsBaseAddress) {
     size_t mainOffset = 0x10;
-    void *testPtr = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(heapPointer) + mainOffset);
+    void *testPtr = ptrOffset(heapPointer, mainOffset);
     size_t size = MemoryConstants::pageSize + 0x10;
 
     auto result = hostDriverHandle->importExternalPointer(testPtr, size);

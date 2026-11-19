@@ -4472,9 +4472,9 @@ TEST_F(WddmMemoryManagerTest, GivenOffsetsWhenAllocatingGpuMemHostThenAllocatedO
 
     size_t baseOffset = 1024;
     // misaligned buffer spanning across 3 pages
-    auto *gpuAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, false, 2 * MemoryConstants::pageSize}, (char *)ptr + baseOffset);
+    auto *gpuAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, false, 2 * MemoryConstants::pageSize}, ptrOffset(ptr, baseOffset));
     // Should be same cpu ptr and gpu ptr
-    EXPECT_EQ((char *)ptr + baseOffset, gpuAllocation->getUnderlyingBuffer());
+    EXPECT_EQ(ptrOffset(ptr, baseOffset), gpuAllocation->getUnderlyingBuffer());
 
     auto hostPtrManager = memoryManager->getHostPtrManager();
 
@@ -4484,12 +4484,12 @@ TEST_F(WddmMemoryManagerTest, GivenOffsetsWhenAllocatingGpuMemHostThenAllocatedO
     EXPECT_NE(fragment->osInternalStorage, nullptr);
 
     // offset by 3 pages, not in boundary
-    auto fragment2 = hostPtrManager->getFragment({reinterpret_cast<char *>(ptr) + 3 * 4096, rootDeviceIndex});
+    auto fragment2 = hostPtrManager->getFragment({ptrOffset(ptr, 3 * MemoryConstants::pageSize), rootDeviceIndex});
 
     EXPECT_EQ(nullptr, fragment2);
 
     // offset by one page, still in boundary
-    void *offsetPtr = ptrOffset(ptr, 4096);
+    void *offsetPtr = ptrOffset(ptr, MemoryConstants::pageSize);
     auto *gpuAllocation2 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, false, MemoryConstants::pageSize}, offsetPtr);
     // Should be same cpu ptr and gpu ptr
     EXPECT_EQ(offsetPtr, gpuAllocation2->getUnderlyingBuffer());

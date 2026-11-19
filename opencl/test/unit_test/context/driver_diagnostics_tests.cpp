@@ -34,11 +34,12 @@ bool containsHint(const char *providedHint, char *userData) {
 }
 
 void CL_CALLBACK callbackFunction(const char *providedHint, const void *flags, size_t size, void *userData) {
+    auto hints = static_cast<char *>(userData);
     int offset = 0;
-    while (((char *)userData + offset)[0] != 0) {
+    while (hints[offset] != 0) {
         offset += DriverDiagnostics::maxHintStringSize;
     }
-    strcpy_s((char *)userData + offset, DriverDiagnostics::maxHintStringSize, providedHint);
+    strcpy_s(hints + offset, DriverDiagnostics::maxHintStringSize, providedHint);
 }
 
 static cl_diagnostic_verbose_level_intel diagnosticsVerboseLevels[] = {

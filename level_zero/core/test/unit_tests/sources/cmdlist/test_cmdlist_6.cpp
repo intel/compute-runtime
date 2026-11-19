@@ -2083,7 +2083,7 @@ HWTEST_F(CommandListTest, givenComputeCommandListWhenMemoryCopyWithReservedDevic
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     res = context->mapVirtualMem(dstBuffer, size, phPhysicalMemory, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    void *offsetAddress = reinterpret_cast<void *>(reinterpret_cast<uint64_t>(dstBuffer) + size);
+    void *offsetAddress = ptrOffset(dstBuffer, size);
     res = context->mapVirtualMem(offsetAddress, size, phPhysicalMemory2, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 

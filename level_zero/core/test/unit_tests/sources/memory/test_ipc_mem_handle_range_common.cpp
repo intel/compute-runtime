@@ -294,7 +294,7 @@ struct IpcMemHandleRangeCommonTest : public MemoryOpenIpcHandleTest {
         auto pool = new NEO::MockUsmMemAllocPool;
         pool->callBaseCleanup = false;
         pool->pool = poolBase;
-        pool->poolEnd = reinterpret_cast<uint8_t *>(poolBase) + poolSize;
+        pool->poolEnd = ptrOffset(poolBase, poolSize);
         pool->allocations.insert(ptr, NEO::MockUsmMemAllocPool::AllocationInfo{reinterpret_cast<uint64_t>(ptr), pooledSize, pooledSize});
         installedPoolFacade = &static_cast<NEO::MockUsmMemAllocPoolsFacade &>(neoDevice->getDeviceUsmMemAllocPoolFacade());
         installedPoolFacade->pool.reset(pool);
@@ -426,7 +426,7 @@ TEST_F(IpcMemHandleRangeCommonTest, givenZeroMaxHandleCountWhenGettingRangeHandl
 TEST_F(IpcMemHandleRangeCommonTest, givenContiguousDeviceMappingsWhenGettingRangeHandleThenRangeTransportIsCreated) {
     void *basePtr = reinterpret_cast<void *>(0x100000);
     const size_t mappingSize = MemoryConstants::pageSize;
-    void *secondPtr = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(basePtr) + mappingSize);
+    void *secondPtr = ptrOffset(basePtr, mappingSize);
 
     NEO::MockGraphicsAllocation alloc0(neoDevice->getRootDeviceIndex(), basePtr, mappingSize);
     NEO::MockGraphicsAllocation alloc1(neoDevice->getRootDeviceIndex(), secondPtr, mappingSize);
@@ -461,7 +461,7 @@ TEST_F(IpcMemHandleRangeCommonTest, givenContiguousDeviceMappingsWhenGettingRang
 TEST_F(IpcMemHandleRangeCommonTest, givenHostAndDeviceMappingsWhenGettingRangeHandleThenInvalidArgumentIsReturned) {
     void *basePtr = reinterpret_cast<void *>(0x200000);
     const size_t mappingSize = MemoryConstants::pageSize;
-    void *secondPtr = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(basePtr) + mappingSize);
+    void *secondPtr = ptrOffset(basePtr, mappingSize);
 
     NEO::MockGraphicsAllocation alloc0(neoDevice->getRootDeviceIndex(), basePtr, mappingSize);
     NEO::MockGraphicsAllocation alloc1(neoDevice->getRootDeviceIndex(), secondPtr, mappingSize);
@@ -494,7 +494,7 @@ TEST_F(IpcMemHandleRangeCommonTest, givenLeadingOffsetWhenOpeningRangeHandleThen
 
     void *ptr = nullptr;
     EXPECT_EQ(ZE_RESULT_SUCCESS, rangeContext->callOpenIpcRangeHandle(device->toHandle(), ipcHandle, ZE_IPC_MEMORY_FLAG_BIAS_UNCACHED, &ptr));
-    EXPECT_EQ(reinterpret_cast<uint8_t *>(&rangeMemoryManager->mergedBaseStorage) + leadingOffset, ptr);
+    EXPECT_EQ(ptrOffset(&rangeMemoryManager->mergedBaseStorage, leadingOffset), ptr);
     EXPECT_TRUE(rangeMemoryManager->lastUncachedBias);
 }
 
@@ -694,7 +694,7 @@ TEST_F(IpcMemHandleRangeCommonTest, givenPooledAllocationWithRangeSizeFittingPoo
     void *poolBase = reinterpret_cast<void *>(0xA00000);
     const size_t poolSize = 8u * MemoryConstants::pageSize;
     const size_t pooledSize = 2u * MemoryConstants::pageSize;
-    void *ptr = reinterpret_cast<uint8_t *>(poolBase) + MemoryConstants::pageSize;
+    void *ptr = ptrOffset(poolBase, MemoryConstants::pageSize);
 
     auto pool = installPooledDeviceAllocation(poolBase, poolSize, ptr, pooledSize);
     ASSERT_EQ(pool, neoDevice->getDeviceUsmMemAllocPoolFacade().getPoolContainingAlloc(ptr).pool);
@@ -710,7 +710,7 @@ TEST_F(IpcMemHandleRangeCommonTest, givenPooledAllocationWithRangeSizeExceedingP
     void *poolBase = reinterpret_cast<void *>(0xB00000);
     const size_t poolSize = 8u * MemoryConstants::pageSize;
     const size_t pooledSize = 2u * MemoryConstants::pageSize;
-    void *ptr = reinterpret_cast<uint8_t *>(poolBase) + MemoryConstants::pageSize;
+    void *ptr = ptrOffset(poolBase, MemoryConstants::pageSize);
 
     auto pool = installPooledDeviceAllocation(poolBase, poolSize, ptr, pooledSize);
     ASSERT_EQ(pool, neoDevice->getDeviceUsmMemAllocPoolFacade().getPoolContainingAlloc(ptr).pool);
@@ -791,7 +791,7 @@ TEST_F(IpcMemHandleRangeCommonTest, givenHostRangeWithSucceedingHostMergeWhenOpe
 TEST_F(IpcMemHandleRangeCommonTest, givenHoleBetweenReservationMappingsWhenGettingRangeHandleThenAddressNotFoundIsReturned) {
     void *basePtr = reinterpret_cast<void *>(0xD00000);
     const size_t mappingSize = MemoryConstants::pageSize;
-    void *thirdPtr = reinterpret_cast<uint8_t *>(basePtr) + 2u * mappingSize;
+    void *thirdPtr = ptrOffset(basePtr, 2u * mappingSize);
 
     NEO::MockGraphicsAllocation alloc0(neoDevice->getRootDeviceIndex(), basePtr, mappingSize);
     NEO::MockGraphicsAllocation alloc2(neoDevice->getRootDeviceIndex(), thirdPtr, mappingSize);
@@ -817,7 +817,7 @@ TEST_F(IpcMemHandleRangeCommonTest, givenHoleBetweenReservationMappingsWhenGetti
 TEST_F(IpcMemHandleRangeCommonTest, givenMappingEndingBeforeRangeStartWhenGettingRangeHandleThenEarlierMappingIsSkippedAndRangeIsExported) {
     void *reservationBase = reinterpret_cast<void *>(0xE00000);
     const size_t mappingSize = MemoryConstants::pageSize;
-    void *secondPtr = reinterpret_cast<uint8_t *>(reservationBase) + mappingSize;
+    void *secondPtr = ptrOffset(reservationBase, mappingSize);
 
     NEO::MockGraphicsAllocation alloc0(neoDevice->getRootDeviceIndex(), reservationBase, mappingSize);
     NEO::MockGraphicsAllocation alloc1(neoDevice->getRootDeviceIndex(), secondPtr, mappingSize);

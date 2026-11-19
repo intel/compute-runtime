@@ -864,7 +864,7 @@ class ImageTransfer : public ::testing::Test {
 
     void createHostPtrs(size_t imageSize) {
         hostPtr = alignedMalloc(imageSize + 100, 4096);
-        unalignedHostPtr = (char *)hostPtr + 4;
+        unalignedHostPtr = ptrOffset(hostPtr, 4);
         memset(hostPtr, 0, imageSize + 100);
         memset(unalignedHostPtr, 1, imageSize);
     }
@@ -900,7 +900,7 @@ TEST_F(ImageTransfer, GivenNonZeroCopyImageWhenDataTransferredFromHostPtrToMemSt
     EXPECT_EQ(0, result);
 
     memset(memoryStorage, 0, memoryStorageSize);
-    memset((char *)unalignedHostPtr + imageSize, 2, 100 - 4);
+    memset(ptrOffset(unalignedHostPtr, imageSize), 2, 100 - 4);
 
     auto &imgDesc = imageNonZeroCopy->getImageDesc();
     MemObjOffsetArray copyOffset = {{0, 0, 0}};
@@ -936,7 +936,7 @@ TEST_F(ImageTransfer, GivenNonZeroCopyNonZeroRowPitchImageWhenDataIsTransferredF
     EXPECT_EQ(0, result);
 
     memset(memoryStorage, 0, memoryStorageSize);
-    memset((char *)unalignedHostPtr + imageSize, 2, 100 - 4);
+    memset(ptrOffset(unalignedHostPtr, imageSize), 2, 100 - 4);
 
     auto &imgDesc = imageNonZeroCopy->getImageDesc();
     MemObjOffsetArray copyOffset = {{0, 0, 0}};

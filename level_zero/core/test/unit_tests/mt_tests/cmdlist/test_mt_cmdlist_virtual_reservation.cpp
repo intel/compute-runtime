@@ -52,7 +52,7 @@ HWTEST_F(CommandListVirtualReservationMtTest, givenSiblingMappingRemappedWhileRe
 
     // The first sub-range stays mapped for the whole test and is the one being appended.
     ASSERT_EQ(ZE_RESULT_SUCCESS, context->mapVirtualMem(reservedBase, size, phPhysicalMemoryResident, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE));
-    void *churnedAddress = reinterpret_cast<void *>(reinterpret_cast<uint64_t>(reservedBase) + size);
+    void *churnedAddress = ptrOffset(reservedBase, size);
 
     constexpr uint32_t iterationCount = 200;
     std::atomic_bool started = false;

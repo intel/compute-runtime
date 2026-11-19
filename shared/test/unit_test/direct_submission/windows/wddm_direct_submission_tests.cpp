@@ -257,7 +257,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenAllocateOsResourcesThenRingBuffe
     wddmDirectSubmission.allocateResources();
     EXPECT_EQ(wddmDirectSubmission.ringBufferEndCompletionTagData.tagAddress, wddmDirectSubmission.completionFenceAllocation->getGpuAddress() + TagAllocationLayout::ringBufferCompletionOffset);
     EXPECT_EQ(wddmDirectSubmission.ringBufferEndCompletionTagData.tagValue, 0u);
-    auto expectedTagAddress = reinterpret_cast<volatile TagAddressType *>(reinterpret_cast<uint8_t *>(wddmDirectSubmission.completionFenceAllocation->getUnderlyingBuffer()) + TagAllocationLayout::ringBufferCompletionOffset);
+    auto expectedTagAddress = static_cast<volatile TagAddressType *>(ptrOffset(wddmDirectSubmission.completionFenceAllocation->getUnderlyingBuffer(), TagAllocationLayout::ringBufferCompletionOffset));
     EXPECT_EQ(wddmDirectSubmission.tagAddress, expectedTagAddress);
 }
 

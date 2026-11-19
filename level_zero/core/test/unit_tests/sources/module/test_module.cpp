@@ -3116,7 +3116,7 @@ HWTEST_F(MultiDeviceModuleSetArgBufferTest,
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
         res = context->mapVirtualMem(ptr, size, phPhysicalMemory, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-        void *offsetAddress = reinterpret_cast<void *>(reinterpret_cast<uint64_t>(ptr) + size);
+        void *offsetAddress = ptrOffset(ptr, size);
         res = context->mapVirtualMem(offsetAddress, size, phPhysicalMemory2, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
@@ -3203,7 +3203,7 @@ HWTEST_F(MultiDeviceModuleSetArgBufferTest,
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
         res = context->mapVirtualMem(ptr, size, phPhysicalMemory, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-        void *offsetAddress = reinterpret_cast<void *>(reinterpret_cast<uint64_t>(ptr) + size);
+        void *offsetAddress = ptrOffset(ptr, size);
         res = context->mapVirtualMem(offsetAddress, size, phPhysicalMemory2, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
@@ -3344,10 +3344,10 @@ HWTEST_F(MultiDeviceModuleSetArgBufferTest,
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
         res = context->mapVirtualMem(ptr, size, phPhysicalMemory, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-        void *offsetAddress = reinterpret_cast<void *>(reinterpret_cast<uint64_t>(ptr) + size);
+        void *offsetAddress = ptrOffset(ptr, size);
         res = context->mapVirtualMem(offsetAddress, size, phPhysicalMemory2, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-        void *offsetAddress2 = reinterpret_cast<void *>(reinterpret_cast<uint64_t>(ptr) + (size * 2));
+        void *offsetAddress2 = ptrOffset(ptr, size * 2);
         res = context->mapVirtualMem(offsetAddress2, size, phPhysicalMemory3, 0, ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 

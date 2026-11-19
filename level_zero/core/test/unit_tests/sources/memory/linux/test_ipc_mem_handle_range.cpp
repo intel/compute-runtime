@@ -423,7 +423,7 @@ TEST_F(IpcMemHandleRangeTest, givenContiguousReservationMappingsWhenGettingRange
     void *basePtr = reinterpret_cast<void *>(0x100000);
     const size_t mappingSize = 4096u;
     const uint32_t numMappings = 2u;
-    void *secondPtr = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(basePtr) + mappingSize);
+    void *secondPtr = ptrOffset(basePtr, mappingSize);
 
     NEO::MockGraphicsAllocation alloc0(neoDevice->getRootDeviceIndex(), basePtr, mappingSize);
     NEO::MockGraphicsAllocation alloc1(neoDevice->getRootDeviceIndex(), secondPtr, mappingSize);
@@ -465,7 +465,7 @@ TEST_F(IpcMemHandleRangeTest, givenExportedRangeHandleWhenPuttingItThenIpcHandle
     void *basePtr = reinterpret_cast<void *>(0x100000);
     const size_t mappingSize = 4096u;
     const uint32_t numMappings = 2u;
-    void *secondPtr = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(basePtr) + mappingSize);
+    void *secondPtr = ptrOffset(basePtr, mappingSize);
 
     FixedHandleAllocation alloc0(neoDevice->getRootDeviceIndex(), basePtr, mappingSize, 101u);
     FixedHandleAllocation alloc1(neoDevice->getRootDeviceIndex(), secondPtr, mappingSize, 102u);
@@ -498,7 +498,7 @@ TEST_F(IpcMemHandleRangeTest, givenExportedRangeHandleWhenChunkAllocationIsRelea
 
     void *basePtr = reinterpret_cast<void *>(0x100000);
     const size_t mappingSize = 4096u;
-    void *secondPtr = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(basePtr) + mappingSize);
+    void *secondPtr = ptrOffset(basePtr, mappingSize);
 
     FixedHandleAllocation alloc0(neoDevice->getRootDeviceIndex(), basePtr, mappingSize, 101u);
     FixedHandleAllocation alloc1(neoDevice->getRootDeviceIndex(), secondPtr, mappingSize, 102u);
@@ -544,8 +544,8 @@ TEST_F(IpcMemHandleRangeTest, givenPtrOffsetIntoReservationWithContiguousMapping
 
     void *reservationBase = reinterpret_cast<void *>(0x400000);
     const size_t mappingSize = 4096u;
-    void *firstPtr = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(reservationBase) + mappingSize);
-    void *secondPtr = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(firstPtr) + mappingSize);
+    void *firstPtr = ptrOffset(reservationBase, mappingSize);
+    void *secondPtr = ptrOffset(firstPtr, mappingSize);
 
     NEO::MockGraphicsAllocation alloc0(neoDevice->getRootDeviceIndex(), firstPtr, mappingSize);
     NEO::MockGraphicsAllocation alloc1(neoDevice->getRootDeviceIndex(), secondPtr, mappingSize);
@@ -583,7 +583,7 @@ TEST_F(IpcMemHandleRangeTest, givenPtrInteriorToMappingWhenGettingRangeHandleThe
     void *reservationBase = reinterpret_cast<void *>(0x400000);
     const size_t mappingSize = 0x2000u;
     const uint64_t interiorDelta = 0x800u;
-    void *interiorPtr = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(reservationBase) + interiorDelta);
+    void *interiorPtr = ptrOffset(reservationBase, interiorDelta);
 
     NEO::MockGraphicsAllocation alloc0(neoDevice->getRootDeviceIndex(), reservationBase, mappingSize);
 
@@ -762,7 +762,7 @@ TEST_F(IpcMemHandleRangeTest, givenChunkCountExceedingMaxHandleCountWhenGettingR
 
     void *basePtr = reinterpret_cast<void *>(0x300000);
     const size_t mappingSize = 4096u;
-    void *secondPtr = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(basePtr) + mappingSize);
+    void *secondPtr = ptrOffset(basePtr, mappingSize);
 
     NEO::MockGraphicsAllocation alloc0(neoDevice->getRootDeviceIndex(), basePtr, mappingSize);
     NEO::MockGraphicsAllocation alloc1(neoDevice->getRootDeviceIndex(), secondPtr, mappingSize);
@@ -819,7 +819,7 @@ TEST_F(IpcMemHandleRangeTest, givenChunkFailingInternalHandleWhenGettingRangeHan
 
     void *basePtr = reinterpret_cast<void *>(0xA00000);
     const size_t mappingSize = 4096u;
-    void *secondPtr = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(basePtr) + mappingSize);
+    void *secondPtr = ptrOffset(basePtr, mappingSize);
 
     NEO::MockGraphicsAllocation alloc0(neoDevice->getRootDeviceIndex(), basePtr, mappingSize);
     MockRangeFailingGraphicsAllocation alloc1(neoDevice->getRootDeviceIndex(), secondPtr, mappingSize);

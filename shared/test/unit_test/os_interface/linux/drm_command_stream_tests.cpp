@@ -405,7 +405,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenFragmentedAllocationsWithR
     auto size = MemoryConstants::pageSize * 10;
     auto graphicsAllocation = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), false, size}, ptr);
 
-    auto offsetedPtr = (void *)((uintptr_t)ptr + size);
+    auto offsetedPtr = ptrOffset(ptr, size);
     auto size2 = MemoryConstants::pageSize - 1;
 
     auto graphicsAllocation2 = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), false, size2}, offsetedPtr);
