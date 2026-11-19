@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2025-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,8 +12,8 @@
 namespace NEO {
 
 MockDrmAllocation::~MockDrmAllocation() {
-    for (uint32_t i = 0; i < getNumGmms(); i++) {
-        delete getGmm(i);
+    for (auto gmm : gmms) {
+        delete gmm;
     }
     gmms.resize(0);
 }

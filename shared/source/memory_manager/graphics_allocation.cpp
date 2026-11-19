@@ -76,9 +76,6 @@ GraphicsAllocation::GraphicsAllocation(GraphicsAllocation *parent, size_t offset
     allocationInfo.flags.shareableHostMemory = false;
     allocationInfo.flags.cantBeReadOnly = false;
     this->storageInfo = parent->storageInfo;
-    for (uint32_t i = 0; i < parent->getNumGmms(); i++) {
-        this->gmms.push_back(parent->getGmm(i));
-    }
 }
 
 GraphicsAllocation *GraphicsAllocation::createView(size_t offsetInParentAllocation, size_t viewSize) {
@@ -115,6 +112,7 @@ void GraphicsAllocation::setDefaultGmm(std::unique_ptr<Gmm> gmm) {
 }
 
 void GraphicsAllocation::setGmm(std::unique_ptr<Gmm> gmm, uint32_t handleId) {
+    UNRECOVERABLE_IF(isView());
     delete this->getGmm(handleId);
     this->setGmm(gmm.release(), handleId);
 }

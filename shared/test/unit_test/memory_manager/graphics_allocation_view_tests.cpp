@@ -6,6 +6,8 @@
  */
 
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 
 #include "gtest/gtest.h"
@@ -225,6 +227,34 @@ TEST_F(GraphicsAllocationViewTest, whenCreatingViewThenViewInheritsPropertiesFro
     EXPECT_EQ(parentAllocation->getNumGmms(), view->getNumGmms());
     EXPECT_EQ(gmm1, view->getGmm(0));
     EXPECT_EQ(gmm2, view->getGmm(1));
+}
+
+TEST_F(GraphicsAllocationViewTest, givenParentGmmReplacedAfterCreatingViewWhenGettingGmmFromViewThenParentCurrentGmmIsReturned) {
+    auto initialGmm = reinterpret_cast<Gmm *>(0x1234);
+    auto replacingGmm = reinterpret_cast<Gmm *>(0x5678);
+    parentAllocation->setGmm(initialGmm, 0);
+
+    std::unique_ptr<GraphicsAllocation> view(parentAllocation->createView(viewOffset, viewSize));
+    parentAllocation->setGmm(replacingGmm, 0);
+
+    EXPECT_EQ(replacingGmm, view->getDefaultGmm());
+}
+
+TEST_F(GraphicsAllocationViewTest, whenSettingGmmsOnViewThenAbortIsThrown) {
+    std::unique_ptr<GraphicsAllocation> view(parentAllocation->createView(viewOffset, viewSize));
+
+    EXPECT_THROW(view->setGmm(nullptr, 0), std::exception);
+    EXPECT_THROW(view->resizeGmms(2), std::exception);
+}
+
+TEST_F(GraphicsAllocationViewTest, whenSettingOwnedGmmOnViewThenAbortIsThrownBeforeParentGmmIsFreed) {
+    MockExecutionEnvironment executionEnvironment;
+    auto parentGmm = std::make_unique<MockGmm>(executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper());
+    parentAllocation->setGmm(parentGmm.get(), 0);
+    std::unique_ptr<GraphicsAllocation> view(parentAllocation->createView(viewOffset, viewSize));
+
+    EXPECT_THROW(view->setGmm(std::unique_ptr<Gmm>{}, 0), std::exception);
+    EXPECT_EQ(parentGmm.get(), parentAllocation->getDefaultGmm());
 }
 
 TEST_F(GraphicsAllocationViewTest, whenGettingResidencyDataOnViewThenParentResidencyDataIsReturned) {

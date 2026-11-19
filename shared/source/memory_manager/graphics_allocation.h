@@ -488,6 +488,9 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
         return getGmm(0u);
     }
     Gmm *getGmm(uint32_t handleId) const {
+        if (parentAllocation) {
+            return parentAllocation->getGmm(handleId);
+        }
         return gmms[handleId];
     }
     void setDefaultGmm(Gmm *gmm) {
@@ -495,14 +498,19 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
     }
     void setDefaultGmm(std::unique_ptr<Gmm> gmm);
     void setGmm(Gmm *gmm, uint32_t handleId) {
+        UNRECOVERABLE_IF(isView());
         gmms[handleId] = gmm;
     }
     void setGmm(std::unique_ptr<Gmm> gmm, uint32_t handleId);
     void resizeGmms(uint32_t size) {
+        UNRECOVERABLE_IF(isView());
         gmms.resize(size);
     }
 
     uint32_t getNumGmms() const {
+        if (parentAllocation) {
+            return parentAllocation->getNumGmms();
+        }
         return static_cast<uint32_t>(gmms.size());
     }
 
