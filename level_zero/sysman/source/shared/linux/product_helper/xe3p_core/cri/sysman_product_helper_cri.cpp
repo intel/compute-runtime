@@ -1093,6 +1093,24 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getCurrentVoltage(LinuxSysmanImp 
     return result;
 }
 
+static ze_result_t readHwmonTemperatureFromSysfs(LinuxSysmanImp *pLinuxSysmanImp, NodeName temperatureNode, uint32_t subdeviceId, double *pTemperature) {
+    const bool isSubdevice = pLinuxSysmanImp->getSubDeviceCount() > 0;
+    const std::string temperatureFile = pLinuxSysmanImp->getIntelGraphicsHwmonFile(subdeviceId, isSubdevice, temperatureNode);
+    if (temperatureFile.empty()) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    int32_t temperature = 0;
+    const ze_result_t result = pLinuxSysmanImp->getSysmanKmdInterface()->getFsAccess()->read(temperatureFile, temperature);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): FsAccess->read() failed to read %s and returning error:0x%x \n", NEO_FUNCTION_NAME, temperatureFile.c_str(), result);
+        return result;
+    }
+
+    *pTemperature = static_cast<double>(temperature) / milliFactor;
+    return ZE_RESULT_SUCCESS;
+}
+
 static ze_result_t readGpuMaxTemperature(const std::map<std::string, uint64_t> &keyOffsetMap, std::unordered_map<std::string, std::string> &keyTelemInfoMap,
                                          double *pTemperature) {
     uint32_t rawGpuMaxTemperature = 0;
@@ -1116,6 +1134,10 @@ static ze_result_t readGpuMaxTemperature(const std::map<std::string, uint64_t> &
 
 template <>
 ze_result_t SysmanProductHelperHw<gfxProduct>::getGpuMaxTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId) {
+    const ze_result_t hwmonResult = readHwmonTemperatureFromSysfs(pLinuxSysmanImp, NodeName::gpuTemperature, subdeviceId, pTemperature);
+    if (hwmonResult != ZE_RESULT_ERROR_UNSUPPORTED_FEATURE) {
+        return hwmonResult;
+    }
 
     std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
     std::map<std::string, uint64_t> keyOffsetMap;
@@ -1326,6 +1348,10 @@ static ze_result_t readMemoryMaxTemperature(const std::map<std::string, uint64_t
 
 template <>
 ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryMaxTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId) {
+    const ze_result_t hwmonResult = readHwmonTemperatureFromSysfs(pLinuxSysmanImp, NodeName::memoryTemperature, subdeviceId, pTemperature);
+    if (hwmonResult != ZE_RESULT_ERROR_UNSUPPORTED_FEATURE) {
+        return hwmonResult;
+    }
 
     std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
     std::map<std::string, uint64_t> keyOffsetMap;

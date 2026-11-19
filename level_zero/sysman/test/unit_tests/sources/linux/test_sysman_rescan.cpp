@@ -224,6 +224,29 @@ TEST_F(SysmanRescanLinuxImpTest, GivenProcfsGetFileNameSucceedsWhenCallingUpdate
     pLinuxSysmanImp->pProcfsAccess = pOrigProcfsAccess;
 }
 
+TEST_F(SysmanRescanLinuxImpTest, GivenCachedHwmonDirectoryWhenCallingUpdateBdfDependentDataThenHwmonDirectoryCacheIsCleared) {
+    auto pMockSysfsAccess = std::make_unique<MockRescanSysfsAccess>();
+    auto pMockProcfsAccess = std::make_unique<MockRescanProcfsAccess>();
+    auto pOrigSysfsAccess = pLinuxSysmanImp->pSysfsAccess;
+    auto pOrigProcfsAccess = pLinuxSysmanImp->pProcfsAccess;
+    pLinuxSysmanImp->pSysfsAccess = pMockSysfsAccess.get();
+    pLinuxSysmanImp->pProcfsAccess = pMockProcfsAccess.get();
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return NEO::SysCalls::fakeFileDescriptor;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClose)> mockClose(&NEO::SysCalls::sysCallsClose, [](int fd) -> int {
+        return 0;
+    });
+
+    pLinuxSysmanImp->hwmonNameToDir["xe"] = "/sys/bus/pci/devices/0000:03:00.0/hwmon/hwmon0";
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxSysmanImp->updateBdfDependentData());
+    EXPECT_TRUE(pLinuxSysmanImp->hwmonNameToDir.empty());
+
+    pLinuxSysmanImp->pSysfsAccess = pOrigSysfsAccess;
+    pLinuxSysmanImp->pProcfsAccess = pOrigProcfsAccess;
+}
+
 TEST_F(SysmanRescanLinuxImpTest, GivenProcfsGetFileNameFailsWhenCallingUpdateBdfDependentDataThenErrorIsReturnedAndSysfsPathIsNotRefreshed) {
     auto pMockSysfsAccess = std::make_unique<MockRescanSysfsAccess>();
     auto pMockProcfsAccess = std::make_unique<MockRescanProcfsAccess>();

@@ -532,6 +532,37 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenDevicePciBdfIsUnresolvableWhenGettin
     EXPECT_TRUE(pFsAccess->listDirectoryPathRequested.empty());
 }
 
+TEST_F(SysmanDeviceTemperatureFixture, GivenHwmonFileFoundWhenLookingUpHwmonFileAgainThenHwmonDirectoryIsNotListedAgain) {
+    setUpHwmonKmdInterfaceXe();
+    pFsAccess->gpuTemperatureExists = true;
+
+    EXPECT_EQ(mockGpuTemperatureHwmonFile0, pLinuxSysmanImp->getIntelGraphicsHwmonFile(0u, false, NodeName::gpuTemperature));
+    EXPECT_EQ(mockGpuTemperatureHwmonFile0, pLinuxSysmanImp->getIntelGraphicsHwmonFile(0u, false, NodeName::gpuTemperature));
+    EXPECT_EQ(1u, pFsAccess->listDirectoryCalled);
+}
+
+TEST_F(SysmanDeviceTemperatureFixture, GivenHwmonDirectoryListingFailsWhenLookingUpHwmonFileAfterListingSucceedsThenHwmonFileIsReturned) {
+    setUpHwmonKmdInterfaceXe();
+    pFsAccess->gpuTemperatureExists = true;
+    pFsAccess->scanResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+
+    EXPECT_TRUE(pLinuxSysmanImp->getIntelGraphicsHwmonFile(0u, false, NodeName::gpuTemperature).empty());
+
+    pFsAccess->scanResult = ZE_RESULT_SUCCESS;
+    EXPECT_EQ(mockGpuTemperatureHwmonFile0, pLinuxSysmanImp->getIntelGraphicsHwmonFile(0u, false, NodeName::gpuTemperature));
+    EXPECT_EQ(2u, pFsAccess->listDirectoryCalled);
+}
+
+TEST_F(SysmanDeviceTemperatureFixture, GivenHwmonFileFoundWhenReleasingSysmanDeviceResourcesThenHwmonDirectoryIsListedAgainOnNextLookup) {
+    setUpHwmonKmdInterfaceXe();
+    pFsAccess->gpuTemperatureExists = true;
+
+    EXPECT_EQ(mockGpuTemperatureHwmonFile0, pLinuxSysmanImp->getIntelGraphicsHwmonFile(0u, false, NodeName::gpuTemperature));
+    pLinuxSysmanImp->releaseSysmanDeviceResources();
+    EXPECT_EQ(mockGpuTemperatureHwmonFile0, pLinuxSysmanImp->getIntelGraphicsHwmonFile(0u, false, NodeName::gpuTemperature));
+    EXPECT_EQ(2u, pFsAccess->listDirectoryCalled);
+}
+
 TEST_F(SysmanDeviceTemperatureFixture, GivenHwmonDirectoryIsSearchedWhenInitializingThenAbsolutePciDevicePathIsUsed) {
     setUpHwmonKmdInterfaceXe();
 
@@ -671,6 +702,7 @@ HWTEST2_F(SysmanDeviceTemperatureFixture, GivenProductWithoutSysfsTemperatureSup
 
     double temperature = 0.0;
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, temperatureImp.getSensorTemperature(&temperature));
+    EXPECT_FALSE(temperatureImp.isTempModuleSupported());
 }
 
 HWTEST2_F(SysmanDeviceTemperatureFixture, GivenNonPrivilegedUserAndHwmonGpuTemperatureNodeWhenGettingGpuTemperatureThenTemperatureIsReadFromSysfs, IsBmgOrCri) {
@@ -791,6 +823,7 @@ HWTEST2_F(SysmanDeviceTemperatureFixture, GivenProductWithoutSysfsTemperatureSup
 
     double temperature = 0.0;
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, temperatureImp.getSensorTemperature(&temperature));
+    EXPECT_FALSE(temperatureImp.isTempModuleSupported());
 }
 
 HWTEST2_F(SysmanDeviceTemperatureFixture, GivenValidPowerHandleAndHandleCountZeroWhenCallingReInitThenValidCountIsReturnedAndVerifyzesDeviceEnumPowerHandleSucceeds, IsPVC) {

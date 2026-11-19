@@ -185,6 +185,62 @@ std::string LinuxSysmanImp::getAlertReasonFilePath() {
     return devicePciPath + "/" + alertReasonFile;
 }
 
+std::string LinuxSysmanImp::getIntelGraphicsHwmonDir(const std::string &hwmonName) {
+    const std::lock_guard<std::mutex> lock(this->hwmonDirLock);
+    if (auto it = this->hwmonNameToDir.find(hwmonName); it != this->hwmonNameToDir.end()) {
+        return it->second;
+    }
+
+    const std::string devicePciPath = this->pSysmanKmdInterface->getSysFsAccess()->getDevicePciPath();
+    if (devicePciPath.empty()) {
+        return {};
+    }
+
+    auto pKmdFsAccess = this->pSysmanKmdInterface->getFsAccess();
+    const std::string hwmonBaseDir = devicePciPath + "/hwmon";
+    std::vector<std::string> listOfAllHwmonDirs = {};
+    if (ZE_RESULT_SUCCESS != pKmdFsAccess->listDirectory(hwmonBaseDir, listOfAllHwmonDirs)) {
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to list directory %s \n", NEO_FUNCTION_NAME, hwmonBaseDir.c_str());
+        return {};
+    }
+
+    for (const auto &hwmonDirEntry : listOfAllHwmonDirs) {
+        const std::string hwmonNameFile = hwmonBaseDir + "/" + hwmonDirEntry + "/name";
+        std::string name;
+        if (ZE_RESULT_SUCCESS != pKmdFsAccess->read(hwmonNameFile, name)) {
+            continue;
+        }
+        if (name == hwmonName) {
+            const std::string hwmonDir = hwmonBaseDir + "/" + hwmonDirEntry;
+            this->hwmonNameToDir[hwmonName] = hwmonDir;
+            return hwmonDir;
+        }
+    }
+
+    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): hwmon directory not found\n", NEO_FUNCTION_NAME);
+    return {};
+}
+
+void LinuxSysmanImp::clearHwmonDirCache() {
+    const std::lock_guard<std::mutex> lock(this->hwmonDirLock);
+    this->hwmonNameToDir.clear();
+}
+
+std::string LinuxSysmanImp::getIntelGraphicsHwmonFile(uint32_t subdeviceId, bool isSubdevice, NodeName nodeName) {
+    const std::string fileName = this->pSysmanKmdInterface->getNodeFileName(nodeName);
+    if (fileName.empty()) {
+        return {};
+    }
+
+    const std::string hwmonDir = this->getIntelGraphicsHwmonDir(this->pSysmanKmdInterface->getHwmonName(subdeviceId, isSubdevice));
+    if (hwmonDir.empty()) {
+        return {};
+    }
+
+    const std::string hwmonFile = hwmonDir + "/" + fileName;
+    return this->pSysmanKmdInterface->getFsAccess()->fileExists(hwmonFile) ? hwmonFile : std::string{};
+}
+
 bool LinuxSysmanImp::isPowerOffPending() {
     if (getAlertReasonFilePath().empty()) {
         return false;
@@ -383,6 +439,7 @@ ze_result_t LinuxSysmanImp::gpuProcessCleanup(ze_bool_t force) {
 }
 
 void LinuxSysmanImp::releaseSysmanDeviceResources() {
+    this->clearHwmonDirCache();
     getSysmanDeviceImp()->pEngineHandleContext->releaseEngines();
     getSysmanDeviceImp()->pRasHandleContext->releaseRasHandles();
     getSysmanDeviceImp()->pMemoryHandleContext->releaseMemoryHandles();
@@ -922,6 +979,7 @@ ze_result_t LinuxSysmanImp::updateBdfDependentData() {
     uuidVec.clear();
     telemNodesInPciPath.clear();
     mapOfSubDeviceIdToTelemData.clear();
+    this->clearHwmonDirCache();
 
     releaseFwUtilInterface();
     reInitSysmanDeviceCache();

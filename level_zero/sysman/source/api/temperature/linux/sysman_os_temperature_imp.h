@@ -15,10 +15,9 @@ namespace Sysman {
 
 class FsAccessInterface;
 class LinuxSysmanImp;
-class SysFsAccessInterface;
-class SysmanKmdInterface;
 class SysmanProductHelper;
 struct OsSysman;
+enum class NodeName;
 
 class LinuxTemperatureImp : public OsTemperature, NEO::NonCopyableAndNonMovableClass {
   public:
@@ -38,25 +37,15 @@ class LinuxTemperatureImp : public OsTemperature, NEO::NonCopyableAndNonMovableC
   private:
     ze_result_t getMaxTemperature(double &temperature);
     const std::string &getMaxTemperatureFile() const;
-    ze_result_t readTemperatureFromSysfs(const std::string &temperatureFile, double *pTemperature);
-    bool isIntelGraphicsHwmonDir(const std::string &name);
-    std::string findIntelGraphicsHwmonDir();
-    bool probeHwmonTemperatureFile(const std::string &hwmonDir, const std::string &fileName, std::string &temperatureFile);
-    std::string probeMaxTemperatureFile(const std::string &hwmonDir, const std::string &fileName);
+    bool isHwmonTemperatureFileAvailable(NodeName temperatureNode);
     void init();
     uint32_t subdeviceId = 0;
     uint32_t sensorIndex = 0;
     ze_bool_t isSubdevice = 0;
-    SysmanKmdInterface *pSysmanKmdInterface = nullptr;
-    SysFsAccessInterface *pSysfsAccess = nullptr;
     FsAccessInterface *pFsAccess = nullptr;
     SysmanProductHelper *pSysmanProductHelper = nullptr;
     std::string packageMaxTemperatureFile = {};
     std::string memoryMaxTemperatureFile = {};
-    std::string memoryTemperatureFile = {};
-    std::string gpuTemperatureFile = {};
-    bool memoryTemperatureFileExists = false;
-    bool gpuTemperatureFileExists = false;
 };
 
 } // namespace Sysman

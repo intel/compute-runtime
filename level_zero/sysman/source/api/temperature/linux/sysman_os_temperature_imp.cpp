@@ -62,18 +62,6 @@ ze_result_t LinuxTemperatureImp::getMaxTemperature(double &temperature) {
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t LinuxTemperatureImp::readTemperatureFromSysfs(const std::string &temperatureFile, double *pTemperature) {
-    int32_t temperature = 0;
-    auto result = pFsAccess->read(temperatureFile, temperature);
-    if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): FsAccess->read() failed to read %s and returning error:0x%x \n", NEO_FUNCTION_NAME, temperatureFile.c_str(), result);
-        return result;
-    }
-
-    *pTemperature = static_cast<double>(temperature) / milliFactor;
-    return ZE_RESULT_SUCCESS;
-}
-
 ze_result_t LinuxTemperatureImp::getSensorTemperature(double *pTemperature) {
     ze_result_t result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 
@@ -82,17 +70,9 @@ ze_result_t LinuxTemperatureImp::getSensorTemperature(double *pTemperature) {
         result = pSysmanProductHelper->getGlobalMaxTemperature(pLinuxSysmanImp, pTemperature, subdeviceId);
         break;
     case ZES_TEMP_SENSORS_GPU:
-        if (gpuTemperatureFileExists) {
-            result = readTemperatureFromSysfs(gpuTemperatureFile, pTemperature);
-            break;
-        }
         result = pSysmanProductHelper->getGpuMaxTemperature(pLinuxSysmanImp, pTemperature, subdeviceId);
         break;
     case ZES_TEMP_SENSORS_MEMORY:
-        if (memoryTemperatureFileExists) {
-            result = readTemperatureFromSysfs(memoryTemperatureFile, pTemperature);
-            break;
-        }
         result = pSysmanProductHelper->getMemoryMaxTemperature(pLinuxSysmanImp, pTemperature, subdeviceId);
         break;
     case ZES_TEMP_SENSORS_VOLTAGE_REGULATOR:
@@ -119,6 +99,11 @@ ze_result_t LinuxTemperatureImp::getSensorTemperature(double *pTemperature) {
     return result;
 }
 
+bool LinuxTemperatureImp::isHwmonTemperatureFileAvailable(NodeName temperatureNode) {
+    return pSysmanProductHelper->isTemperatureReadFromSysfsSupported() &&
+           !pLinuxSysmanImp->getIntelGraphicsHwmonFile(subdeviceId, isSubdevice, temperatureNode).empty();
+}
+
 bool LinuxTemperatureImp::isTempModuleSupported() {
 
     bool result = PlatformMonitoringTech::isTelemetrySupportAvailable(pLinuxSysmanImp, subdeviceId);
@@ -132,10 +117,10 @@ bool LinuxTemperatureImp::isTempModuleSupported() {
     case ZES_TEMP_SENSORS_COMPOSITE:
         break;
     case ZES_TEMP_SENSORS_GPU:
-        result = result || gpuTemperatureFileExists;
+        result = result || isHwmonTemperatureFileAvailable(NodeName::gpuTemperature);
         break;
     case ZES_TEMP_SENSORS_MEMORY:
-        result = (result && pSysmanProductHelper->isMemoryMaxTemperatureSupported()) || memoryTemperatureFileExists;
+        result = (result && pSysmanProductHelper->isMemoryMaxTemperatureSupported()) || isHwmonTemperatureFileAvailable(NodeName::memoryTemperature);
         break;
     default:
         result = false;
@@ -148,86 +133,15 @@ void LinuxTemperatureImp::setSensorType(zes_temp_sensors_t sensorType) {
     type = sensorType;
 }
 
-bool LinuxTemperatureImp::isIntelGraphicsHwmonDir(const std::string &name) {
-    return name == pSysmanKmdInterface->getHwmonName(subdeviceId, isSubdevice);
-}
-
 void LinuxTemperatureImp::reInit() {
     packageMaxTemperatureFile.clear();
     memoryMaxTemperatureFile.clear();
-    memoryTemperatureFile.clear();
-    gpuTemperatureFile.clear();
-    memoryTemperatureFileExists = false;
-    gpuTemperatureFileExists = false;
     init();
 }
 
-std::string LinuxTemperatureImp::findIntelGraphicsHwmonDir() {
-    const std::string hwmonDir = pSysfsAccess->getDevicePciPath() + "/hwmon";
-    std::vector<std::string> listOfAllHwmonDirs = {};
-    if (ZE_RESULT_SUCCESS != pFsAccess->listDirectory(hwmonDir, listOfAllHwmonDirs)) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to list directory %s \n", NEO_FUNCTION_NAME, hwmonDir.c_str());
-        return {};
-    }
-
-    for (const auto &tempHwmonDirEntry : listOfAllHwmonDirs) {
-        const std::string hwmonNameFile = hwmonDir + "/" + tempHwmonDirEntry + "/name";
-        std::string name;
-        if (ZE_RESULT_SUCCESS != pFsAccess->read(hwmonNameFile, name)) {
-            continue;
-        }
-        if (isIntelGraphicsHwmonDir(name)) {
-            return hwmonDir + "/" + tempHwmonDirEntry;
-        }
-    }
-
-    PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): hwmon directory not found\n", NEO_FUNCTION_NAME);
-    return {};
-}
-
-bool LinuxTemperatureImp::probeHwmonTemperatureFile(const std::string &hwmonDir, const std::string &fileName, std::string &temperatureFile) {
-    if (fileName.empty()) {
-        return false;
-    }
-    temperatureFile = hwmonDir + "/" + fileName;
-    return pFsAccess->fileExists(temperatureFile);
-}
-
-std::string LinuxTemperatureImp::probeMaxTemperatureFile(const std::string &hwmonDir, const std::string &fileName) {
-    std::string maxTemperatureFile;
-    if (probeHwmonTemperatureFile(hwmonDir, fileName, maxTemperatureFile)) {
-        return maxTemperatureFile;
-    }
-    return {};
-}
-
 void LinuxTemperatureImp::init() {
-    const auto packageEmergencyFileName = pSysmanKmdInterface->getNodeFileName(NodeName::packageTemperatureEmergency);
-    const auto memoryEmergencyFileName = pSysmanKmdInterface->getNodeFileName(NodeName::memoryTemperatureEmergency);
-    const bool isTemperatureReadFromSysfsSupported = pSysmanProductHelper->isTemperatureReadFromSysfsSupported();
-    const auto memoryTemperatureFileName = isTemperatureReadFromSysfsSupported
-                                               ? pSysmanKmdInterface->getNodeFileName(NodeName::memoryTemperature)
-                                               : std::string{};
-    const auto gpuTemperatureFileName = isTemperatureReadFromSysfsSupported
-                                            ? pSysmanKmdInterface->getNodeFileName(NodeName::gpuTemperature)
-                                            : std::string{};
-    if (packageEmergencyFileName.empty() && memoryEmergencyFileName.empty() && memoryTemperatureFileName.empty() &&
-        gpuTemperatureFileName.empty()) {
-        return;
-    }
-    if (pSysfsAccess->getDevicePciPath().empty()) {
-        return;
-    }
-
-    const std::string intelGraphicsHwmonDir = findIntelGraphicsHwmonDir();
-    if (intelGraphicsHwmonDir.empty()) {
-        return;
-    }
-
-    packageMaxTemperatureFile = probeMaxTemperatureFile(intelGraphicsHwmonDir, packageEmergencyFileName);
-    memoryMaxTemperatureFile = probeMaxTemperatureFile(intelGraphicsHwmonDir, memoryEmergencyFileName);
-    memoryTemperatureFileExists = probeHwmonTemperatureFile(intelGraphicsHwmonDir, memoryTemperatureFileName, memoryTemperatureFile);
-    gpuTemperatureFileExists = probeHwmonTemperatureFile(intelGraphicsHwmonDir, gpuTemperatureFileName, gpuTemperatureFile);
+    packageMaxTemperatureFile = pLinuxSysmanImp->getIntelGraphicsHwmonFile(subdeviceId, isSubdevice, NodeName::packageTemperatureEmergency);
+    memoryMaxTemperatureFile = pLinuxSysmanImp->getIntelGraphicsHwmonFile(subdeviceId, isSubdevice, NodeName::memoryTemperatureEmergency);
 }
 
 void OsTemperature::getSupportedSensors(OsSysman *pOsSysman, std::map<zes_temp_sensors_t, uint32_t> &supportedSensorTypeMap) {
@@ -239,9 +153,7 @@ void OsTemperature::getSupportedSensors(OsSysman *pOsSysman, std::map<zes_temp_s
 LinuxTemperatureImp::LinuxTemperatureImp(OsSysman *pOsSysman, ze_bool_t onSubdevice,
                                          uint32_t subdeviceId, uint32_t sensorIndex) : subdeviceId(subdeviceId), sensorIndex(sensorIndex), isSubdevice(onSubdevice) {
     pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
-    pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
-    pSysfsAccess = pSysmanKmdInterface->getSysFsAccess();
-    pFsAccess = pSysmanKmdInterface->getFsAccess();
+    pFsAccess = pLinuxSysmanImp->getSysmanKmdInterface()->getFsAccess();
     pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
     init();
 }

@@ -45,6 +45,7 @@ class FsAccessInterface;
 class SysFsAccessInterface;
 class ProcFsAccessInterface;
 struct SysmanDeviceImp;
+enum class NodeName;
 
 class LinuxSysmanImp : public OsSysman, NEO::NonCopyableAndNonMovableClass {
   public:
@@ -70,6 +71,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableAndNonMovableClass {
     static NEO::SystemInfo *querySystemInfo(NEO::Drm &drm);
     static std::string getPciRootPortDirectoryPath(std::string realPciPath);
     std::string getAlertReasonFilePath();
+    std::string getIntelGraphicsHwmonFile(uint32_t subdeviceId, bool isSubdevice, NodeName nodeName);
     ze_result_t readPowerOffReasons(zes_intel_device_power_off_reason_exp_flags_t &reasons);
     bool isPowerOffPending();
     PRODUCT_FAMILY getProductFamilyFromDeviceId(uint32_t deviceId);
@@ -125,6 +127,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableAndNonMovableClass {
     uint32_t memType = unknownMemoryType;
     std::map<uint32_t, std::unique_ptr<PlatformMonitoringTech::TelemData>> mapOfSubDeviceIdToTelemData;
     std::map<uint32_t, std::string> telemNodesInPciPath;
+    std::map<std::string, std::string> hwmonNameToDir;
     std::unique_ptr<PlatformMonitoringTech::TelemData> pTelemData = nullptr;
     struct Uuid {
         bool isValid = false;
@@ -143,7 +146,10 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableAndNonMovableClass {
     ze_result_t clearHPIE(int fd, uint16_t slotControlPos, bool &isHotPlugInterruptEnabled);
     ze_result_t restoreHPIE(int fd, uint16_t slotControlPos);
     ze_result_t resizeVfBar(uint8_t size);
+    std::string getIntelGraphicsHwmonDir(const std::string &hwmonName);
+    void clearHwmonDirCache();
     std::mutex fwLock;
+    std::mutex hwmonDirLock;
     std::string devicePciBdf = "";
     std::string driverName;
 };

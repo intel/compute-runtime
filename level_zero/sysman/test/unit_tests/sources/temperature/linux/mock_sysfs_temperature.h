@@ -126,6 +126,7 @@ struct MockTemperatureFsAccess : public L0::Sysman::FsAccessInterface {
     bool gpuTemperatureExists = false;
     bool isRootUserResult = true;
     std::string listDirectoryPathRequested;
+    uint32_t listDirectoryCalled = 0;
 
     ze_result_t read(const std::string file, std::string &val) override {
         if (file == mockTemperatureHwmonNameFile0) {
@@ -173,6 +174,7 @@ struct MockTemperatureFsAccess : public L0::Sysman::FsAccessInterface {
 
     ze_result_t listDirectory(const std::string path, std::vector<std::string> &listOfEntries) override {
         listDirectoryPathRequested = path;
+        listDirectoryCalled++;
         if (scanResult != ZE_RESULT_SUCCESS) {
             return scanResult;
         }
