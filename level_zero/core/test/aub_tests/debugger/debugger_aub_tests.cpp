@@ -7,19 +7,12 @@
 
 #include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
-#include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
-#include "shared/source/helpers/compiler_product_helper.h"
-#include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/memory_manager.h"
-#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
-#include "shared/test/common/helpers/test_files.h"
-#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_device.h"
-#include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
@@ -46,10 +39,6 @@ struct DebuggerAubFixture : AUBFixtureL0 {
     }
 
     ModuleImp *module = nullptr;
-    NEO::GmmHelper *gmmHelper = nullptr;
-    NEO::MemoryManager *memoryManager = nullptr;
-
-    uint32_t rootDeviceIndex = 0;
 };
 
 struct DebuggerSingleAddressSpaceAubFixture : public DebuggerAubFixture {
@@ -57,24 +46,18 @@ struct DebuggerSingleAddressSpaceAubFixture : public DebuggerAubFixture {
         NEO::debugManager.flags.DebuggerForceSbaTrackingMode.set(1);
         DebuggerAubFixture::setUp();
     }
-    void tearDown() {
-        DebuggerAubFixture::tearDown();
-    }
 };
 using DebuggerSingleAddressSpaceAub = Test<DebuggerSingleAddressSpaceAubFixture>;
 
-HWTEST2_F(DebuggerSingleAddressSpaceAub, GivenSingleAddressSpaceWhenCmdListIsExecutedThenSbaAddressesAreTracked, IsDebugSipFromIgc) {
-    if (neoDevice->getCompilerProductHelper().isHeaplessModeEnabled(*defaultHwInfo)) {
-        GTEST_SKIP();
-    }
+HWTEST2_F(DebuggerSingleAddressSpaceAub, GivenSingleAddressSpaceWhenCmdListIsExecutedThenSbaAddressesAreTracked, HeapfulSupportedMatch) {
     constexpr size_t bufferSize = MemoryConstants::pageSize;
     const uint32_t groupSize[] = {32, 1, 1};
     const uint32_t groupCount[] = {bufferSize / 32, 1, 1};
     const uint32_t expectedSizes[] = {bufferSize, 1, 1};
 
-    memoryManager = neoDevice->getMemoryManager();
-    gmmHelper = neoDevice->getGmmHelper();
-    rootDeviceIndex = neoDevice->getRootDeviceIndex();
+    auto memoryManager = neoDevice->getMemoryManager();
+    auto gmmHelper = neoDevice->getGmmHelper();
+    auto rootDeviceIndex = neoDevice->getRootDeviceIndex();
 
     NEO::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory,
                                                          1,
@@ -176,9 +159,6 @@ struct DebuggerSingleAddressSpaceGlobalBindlessAllocatorAubFixture : public Debu
         NEO::debugManager.flags.UseBindlessMode.set(1);
         DebuggerAubFixture::setUp();
     }
-    void tearDown() {
-        DebuggerAubFixture::tearDown();
-    }
 };
 using DebuggerGlobalAllocatorAub = Test<DebuggerSingleAddressSpaceGlobalBindlessAllocatorAubFixture>;
 using PlatformsSupportingGlobalBindless = IsWithinGfxCore<IGFX_XE_HP_CORE, IGFX_XE2_HPG_CORE>;
@@ -192,9 +172,9 @@ HWTEST2_F(DebuggerGlobalAllocatorAub, GivenKernelWithScratchWhenCmdListExecutedT
     const uint32_t groupSize[] = {arraySize, 1, 1};
     const uint32_t groupCount[] = {1, 1, 1};
 
-    memoryManager = neoDevice->getMemoryManager();
-    gmmHelper = neoDevice->getGmmHelper();
-    rootDeviceIndex = neoDevice->getRootDeviceIndex();
+    auto memoryManager = neoDevice->getMemoryManager();
+    auto gmmHelper = neoDevice->getGmmHelper();
+    auto rootDeviceIndex = neoDevice->getRootDeviceIndex();
 
     ASSERT_NE(nullptr, neoDevice->getBindlessHeapsHelper());
 

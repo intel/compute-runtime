@@ -9,7 +9,7 @@
 
 namespace L0 {
 namespace ult {
-HWTEST_EXCLUDE_PRODUCT(DebuggerSingleAddressSpaceAub, GivenSingleAddressSpaceWhenCmdListIsExecutedThenSbaAddressesAreTracked_IsDebugSipFromIgc, IGFX_XE_HPG_CORE);
+HWTEST_EXCLUDE_PRODUCT(DebuggerSingleAddressSpaceAub, GivenSingleAddressSpaceWhenCmdListIsExecutedThenSbaAddressesAreTracked_HeapfulSupportedMatch, IGFX_XE_HPG_CORE);
 
 HWTEST_EXCLUDE_PRODUCT(DebuggerGlobalAllocatorAub, GivenKernelWithScratchWhenCmdListExecutedThenSbaAddressesAreTracked_PlatformsSupportingGlobalBindless, IGFX_XE_HPG_CORE);
 } // namespace ult
