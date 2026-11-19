@@ -74,28 +74,34 @@ TEST_P(EventProfilingHelpersWidthTests, givenBitsAboveValidWidthWhenComputingDel
 
 using EventProfilingHelpersCalcTest = Test<DeviceFixture>;
 
-TEST_F(EventProfilingHelpersCalcTest, givenUnsetCompleteTimestampWhenCalculatingProfilingDataThenCompleteEqualsEndAndOrderingHolds) {
-    auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
+struct EventProfilingHelpersStartTimestampTest : public EventProfilingHelpersCalcTest {
+    void calculate(uint64_t globalStart, uint64_t globalEnd) {
+        const uint32_t kernelTimestampValidBits = pDevice->getHardwareInfo().capabilityTable.kernelTimestampValidBits;
+        calculateProfilingData(pDevice->getGfxCoreHelper(), osTime, resolution, kernelTimestampValidBits,
+                               queue, submit, start, end, complete,
+                               globalStart, globalEnd, &contextComplete, globalStart);
+    }
+
+    void calculate(uint64_t globalStart) {
+        calculate(globalStart, globalStart + 0x100);
+    }
+
     MockOSTime osTime;
     const double resolution = 1.0;
-    const uint32_t kernelTimestampValidBits = pDevice->getHardwareInfo().capabilityTable.kernelTimestampValidBits;
-
     ProfilingInfo queue{};
     ProfilingInfo submit{};
     ProfilingInfo start{};
     ProfilingInfo end{};
     ProfilingInfo complete{};
+    uint64_t contextComplete = 0;
+};
 
+TEST_F(EventProfilingHelpersStartTimestampTest, givenUnsetCompleteTimestampWhenCalculatingProfilingDataThenCompleteEqualsEndAndOrderingHolds) {
     submit.cpuTimeInNs = 100;
     submit.gpuTimeStamp = 0x1000;
 
-    const uint64_t contextStart = 0x1500;
     const uint64_t contextEnd = 0x1800;
-    uint64_t contextComplete = 0;
-
-    calculateProfilingData(gfxCoreHelper, osTime, resolution, kernelTimestampValidBits,
-                           queue, submit, start, end, complete,
-                           contextStart, contextEnd, &contextComplete, contextStart);
+    calculate(0x1500, contextEnd);
 
     EXPECT_GE(start.gpuTimeStamp, submit.gpuTimeStamp);
     EXPECT_GE(end.gpuTimeStamp, start.gpuTimeStamp);
@@ -104,27 +110,67 @@ TEST_F(EventProfilingHelpersCalcTest, givenUnsetCompleteTimestampWhenCalculating
     EXPECT_EQ(end.cpuTimeInNs, complete.cpuTimeInNs);
 }
 
-TEST_F(EventProfilingHelpersCalcTest, givenZeroedSubmitStampWhenCalculatingProfilingDataThenNoUnderflowAndOrderingHolds) {
-    auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
-    MockOSTime osTime;
-    const double resolution = 1.0;
-    const uint32_t kernelTimestampValidBits = pDevice->getHardwareInfo().capabilityTable.kernelTimestampValidBits;
-
-    ProfilingInfo queue{};
-    ProfilingInfo submit{};
-    ProfilingInfo start{};
-    ProfilingInfo end{};
-    ProfilingInfo complete{};
-
-    const uint64_t contextStart = 0x1500;
-    const uint64_t contextEnd = 0x1800;
-    uint64_t contextComplete = 0;
-
-    calculateProfilingData(gfxCoreHelper, osTime, resolution, kernelTimestampValidBits,
-                           queue, submit, start, end, complete,
-                           contextStart, contextEnd, &contextComplete, contextStart);
+TEST_F(EventProfilingHelpersStartTimestampTest, givenZeroedSubmitStampWhenCalculatingProfilingDataThenNoUnderflowAndOrderingHolds) {
+    calculate(0x1500, 0x1800);
 
     EXPECT_GE(start.gpuTimeStamp, submit.gpuTimeStamp);
     EXPECT_GE(end.gpuTimeStamp, start.gpuTimeStamp);
     EXPECT_GE(complete.gpuTimeStamp, start.gpuTimeStamp);
+}
+
+TEST_F(EventProfilingHelpersStartTimestampTest, givenKernelStartBeforeSubmitWithinRefreshTimeoutWhenCalculatingProfilingDataThenSubmitAndQueueAreAlignedBeforeStart) {
+    osTime.deviceTime->refreshTimestamps = false;
+    submit.cpuTimeInNs = 100;
+    submit.gpuTimeStamp = 0x1001;
+
+    calculate(0x1000);
+
+    EXPECT_EQ(0x1000u, start.gpuTimeStamp);
+    EXPECT_EQ(0xFFFu, submit.gpuTimeStamp);
+    EXPECT_EQ(0xFFFu, submit.gpuTimeInNs);
+    EXPECT_EQ(submit.gpuTimeInNs, submit.cpuTimeInNs);
+    EXPECT_EQ(0xFFEu, queue.gpuTimeStamp);
+    EXPECT_EQ(0xFFEu, queue.gpuTimeInNs);
+    EXPECT_TRUE(osTime.deviceTime->refreshTimestamps);
+}
+
+TEST_F(EventProfilingHelpersStartTimestampTest, givenKernelStartBeforeSubmitBeyondRefreshTimeoutWhenCalculatingProfilingDataThenOneTimestampWrapIsAddedToStart) {
+    osTime.deviceTime->refreshTimestamps = false;
+    const uint64_t globalStart = 0x1000;
+    const uint64_t submitGpuTimeStamp = globalStart + osTime.getTimestampRefreshTimeout() + 1;
+    submit.cpuTimeInNs = 100;
+    submit.gpuTimeStamp = submitGpuTimeStamp;
+
+    calculate(globalStart);
+
+    EXPECT_EQ(globalStart + (1ULL << pDevice->getGfxCoreHelper().getGlobalTimeStampBits()), start.gpuTimeStamp);
+    EXPECT_EQ(submitGpuTimeStamp, submit.gpuTimeStamp);
+    EXPECT_EQ(0u, queue.gpuTimeStamp);
+    EXPECT_FALSE(osTime.deviceTime->refreshTimestamps);
+}
+
+TEST_F(EventProfilingHelpersStartTimestampTest, givenStartTimestampAlreadySetOnCpuWhenCalculatingProfilingDataThenStartGpuTimeStampIsNotTakenFromGlobalStart) {
+    submit.cpuTimeInNs = 100;
+    submit.gpuTimeStamp = 0x1000;
+    start.cpuTimeInNs = 555;
+    start.gpuTimeStamp = 0x1200;
+
+    calculate(0x1500);
+
+    EXPECT_EQ(0x1200u, start.gpuTimeStamp);
+    EXPECT_EQ(submit.cpuTimeInNs + 0x200u, start.cpuTimeInNs);
+    EXPECT_EQ(0x1200u, start.gpuTimeInNs);
+}
+
+TEST_F(EventProfilingHelpersStartTimestampTest, givenKernelStartNotAboveTwoTicksAndBeforeSubmitWhenCalculatingProfilingDataThenSubmitAndQueueAreZero) {
+    osTime.deviceTime->refreshTimestamps = false;
+    submit.cpuTimeInNs = 100;
+    submit.gpuTimeStamp = 0x10;
+
+    calculate(2);
+
+    EXPECT_EQ(2u, start.gpuTimeStamp);
+    EXPECT_EQ(0u, submit.gpuTimeStamp);
+    EXPECT_EQ(0u, queue.gpuTimeStamp);
+    EXPECT_TRUE(osTime.deviceTime->refreshTimestamps);
 }
