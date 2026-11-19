@@ -479,7 +479,8 @@ void DriverHandle::initDeviceUsmAllocPool(NEO::Device &device, bool multiDevice)
                                                                      NEO::ApiSpecificConfig::isDeviceUsmPoolingEnabled() &&
                                                                          device.getProductHelper().isDeviceUsmPoolAllocatorSupported() &&
                                                                          nullptr == device.getL0Debugger() &&
-                                                                         NEO::DeviceFactory::isHwModeSelected());
+                                                                         NEO::DeviceFactory::isHwModeSelected() &&
+                                                                         !multiDevice);
 
     if (enabled) {
         const bool uncompressedPool = isAccessedByAnyPeer(this->devices, device);
