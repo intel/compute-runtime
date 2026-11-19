@@ -14,6 +14,7 @@ class MultiGraphicsAllocation;
 struct SvmAllocationData;
 
 namespace LEO {
+struct UnifiedSharingMemoryDescription;
 
 class Buffer : public MemObj {
   public:
@@ -29,6 +30,7 @@ class Buffer : public MemObj {
     static bool isZeroCopyAllowedForHostPtr(const void *hostPtr, size_t size, MemoryManager *memoryManager);
     static void *allocateWithHostPtr(Context *context, void *hostPtr, size_t size, const MemoryProperties &memoryProperties);
     static void *tryImportUserPtr(Context *context, void *hostPtr, size_t size, const MemoryProperties &memoryProperties, bool preferHostMemory);
+    static bool validateHandleType(const MemoryProperties &memoryProperties, UnifiedSharingMemoryDescription &extMem);
 
     cl_mem_object_type getClObjectType() final;
     size_t getApiSize() const final;

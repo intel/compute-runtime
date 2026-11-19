@@ -16,10 +16,12 @@
 #include "level_zero/api/opencl/source/helpers/leo_cl_memory_properties_helpers.h"
 #include "level_zero/api/opencl/source/l0_dispatch/leo_l0_dispatch.h"
 #include "level_zero/api/opencl/source/platform/leo_platform.h"
+#include "level_zero/api/opencl/test/common/fixtures/capturing_context.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture_extended.h"
 
 #include "CL/cl.h"
+#include "CL/cl_ext.h"
 
 #include <limits>
 #include <memory>
@@ -155,6 +157,53 @@ TEST_F(LeoMultiDeviceContextTests, givenSingleDeviceWhenCreatingContextThenItIsS
     EXPECT_TRUE(clContext.isSingleDeviceContext());
     EXPECT_EQ(1u, clContext.getRootDeviceIndices().size());
     EXPECT_EQ(clContext.getClDevices()[0]->getRootDeviceIndex(), clContext.getDefaultRootDeviceIndex());
+}
+
+TEST_F(LeoMultiDevicePlatformTests, givenDeviceListNamingNonDefaultDeviceWhenCreatingExternalMemoryBufferThenHandleIsImportedOnListedDevice) {
+    auto clDeviceIds = getClDeviceIds();
+    ASSERT_LE(2u, clDeviceIds.size());
+    auto listedDevice = castToObject<ClDevice>(clDeviceIds[1]);
+    const cl_mem_properties externalMemoryHandleKey = listedDevice->getDeviceInfo().externalMemorySharing;
+    auto capturingContext = std::make_unique<CapturingContext>(driverHandle.get(), castToObject<ClDevice>(clDeviceIds[0])->getL0Handle());
+    uint64_t importTarget = 0u;
+    capturingContext->allocDeviceMemPtr = &importTarget;
+    auto context = std::make_unique<Context>(nullptr, capturingContext->toHandle(), 2, clDeviceIds.data(), true);
+    cl_mem_properties properties[] = {externalMemoryHandleKey, 0x10,
+                                      CL_MEM_DEVICE_HANDLE_LIST_KHR, reinterpret_cast<cl_mem_properties>(clDeviceIds[1]), CL_MEM_DEVICE_HANDLE_LIST_END_KHR,
+                                      0};
+    cl_int errcode = CL_INVALID_VALUE;
+
+    auto buffer = clCreateBufferWithProperties(context.get(), properties, CL_MEM_READ_WRITE, 64u, nullptr, &errcode);
+
+    ASSERT_EQ(CL_SUCCESS, errcode);
+    ASSERT_EQ(1u, capturingContext->allocDeviceMemArgs.count());
+    EXPECT_EQ(listedDevice->getL0Handle(), capturingContext->allocDeviceMemArgs[0].hDevice);
+    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(buffer));
+}
+
+TEST_F(LeoMultiDevicePlatformTests, givenSizeAboveDefaultDeviceLimitOnlyWhenCreatingExternalMemoryBufferOnListedDeviceThenHandleIsImported) {
+    auto clDeviceIds = getClDeviceIds();
+    ASSERT_LE(2u, clDeviceIds.size());
+    auto listedDevice = castToObject<ClDevice>(clDeviceIds[1]);
+    const cl_mem_properties externalMemoryHandleKey = listedDevice->getDeviceInfo().externalMemorySharing;
+    const size_t size = 128u;
+    static_cast<NEO::MockDevice &>(castToObject<ClDevice>(clDeviceIds[0])->getDevice()).deviceInfo.maxMemAllocSize = size - 1u;
+    ASSERT_LE(size, listedDevice->getSharedDeviceInfo().maxMemAllocSize);
+    auto capturingContext = std::make_unique<CapturingContext>(driverHandle.get(), castToObject<ClDevice>(clDeviceIds[0])->getL0Handle());
+    uint64_t importTarget = 0u;
+    capturingContext->allocDeviceMemPtr = &importTarget;
+    auto context = std::make_unique<Context>(nullptr, capturingContext->toHandle(), 2, clDeviceIds.data(), true);
+    cl_mem_properties properties[] = {externalMemoryHandleKey, 0x10,
+                                      CL_MEM_DEVICE_HANDLE_LIST_KHR, reinterpret_cast<cl_mem_properties>(clDeviceIds[1]), CL_MEM_DEVICE_HANDLE_LIST_END_KHR,
+                                      0};
+    cl_int errcode = CL_INVALID_VALUE;
+
+    auto buffer = clCreateBufferWithProperties(context.get(), properties, CL_MEM_READ_WRITE, size, nullptr, &errcode);
+
+    ASSERT_EQ(CL_SUCCESS, errcode);
+    ASSERT_EQ(1u, capturingContext->allocDeviceMemArgs.count());
+    EXPECT_EQ(listedDevice->getL0Handle(), capturingContext->allocDeviceMemArgs[0].hDevice);
+    EXPECT_EQ(CL_SUCCESS, clReleaseMemObject(buffer));
 }
 
 TEST_F(LeoMultiDevicePlatformTests, givenDeviceHandleListWithDeviceOutsideContextWhenParsingMemoryPropertiesThenReturnsFalse) {

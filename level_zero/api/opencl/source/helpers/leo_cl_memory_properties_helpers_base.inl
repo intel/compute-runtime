@@ -14,6 +14,7 @@
 #include "level_zero/api/opencl/source/context/leo_context.h"
 #include "level_zero/api/opencl/source/helpers/leo_cl_memory_properties_helpers.h"
 #include "level_zero/api/opencl/source/mem_obj/leo_mem_obj.h"
+#include "level_zero/api/opencl/source/sharings/unified/leo_unified_sharing_types.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/device/device.h"
 
@@ -162,7 +163,13 @@ bool ClMemoryPropertiesHelper::parseMemoryProperties(const cl_mem_properties_int
                 break;
             case CL_EXTERNAL_MEMORY_HANDLE_DMA_BUF_KHR:
             case CL_EXTERNAL_MEMORY_HANDLE_OPAQUE_WIN32_KHR:
-                return false;
+                if (objectType != ClMemoryPropertiesHelper::ObjType::buffer) {
+                    return false;
+                }
+                handle = static_cast<uint64_t>(properties[i + 1]);
+                handleType = static_cast<uint64_t>((propertyName == CL_EXTERNAL_MEMORY_HANDLE_DMA_BUF_KHR) ? UnifiedSharingHandleType::linuxFd
+                                                                                                           : UnifiedSharingHandleType::win32Nt);
+                break;
             case CL_MEM_DEVICE_ID_INTEL_DEPRECATED:
             case CL_MEM_DEVICE_ID_INTEL:
                 break;

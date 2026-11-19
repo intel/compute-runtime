@@ -7,6 +7,7 @@
 set(LEO_OS_INTERFACE_WINDOWS_SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/leo_api_win.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/leo_buffer_windows.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/leo_d3d10_11_sharing_functions.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/leo_d3d9_sharing_functions.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/leo_d3d_sharing_functions.h

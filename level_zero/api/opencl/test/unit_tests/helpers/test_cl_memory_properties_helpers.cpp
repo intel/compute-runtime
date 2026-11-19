@@ -12,6 +12,7 @@
 #include "level_zero/api/opencl/source/cl_device/leo_cl_device.h"
 #include "level_zero/api/opencl/source/context/leo_context.h"
 #include "level_zero/api/opencl/source/helpers/leo_cl_memory_properties_helpers.h"
+#include "level_zero/api/opencl/source/sharings/unified/leo_unified_sharing_types.h"
 #include "level_zero/api/opencl/test/common/fixtures/capturing_context.h"
 #include "level_zero/api/opencl/test/common/fixtures/ocl_fixture.h"
 #include "level_zero/core/source/driver/driver_handle.h"
@@ -347,11 +348,25 @@ TEST_F(ParseMemoryPropertiesFixture, givenAcceptedButUnusedPropertiesWhenParsing
     EXPECT_TRUE(memoryProperties.associatedDevices.empty());
 }
 
-TEST_F(ParseMemoryPropertiesFixture, givenExternalMemoryHandleWhenParsingForAnyObjectTypeThenReturnsFalse) {
+TEST_F(ParseMemoryPropertiesFixture, givenExternalMemoryHandleWhenParsingForBufferThenHandleAndItsTypeAreStored) {
+    const std::pair<cl_mem_properties_intel, UnifiedSharingHandleType> handleKeys[] = {{CL_EXTERNAL_MEMORY_HANDLE_DMA_BUF_KHR, UnifiedSharingHandleType::linuxFd},
+                                                                                       {CL_EXTERNAL_MEMORY_HANDLE_OPAQUE_WIN32_KHR, UnifiedSharingHandleType::win32Nt}};
+    for (const auto &[handleKey, handleType] : handleKeys) {
+        cl_mem_properties_intel properties[] = {handleKey, 0x10, 0};
+        memoryProperties = {};
+
+        EXPECT_TRUE(parse(properties));
+
+        EXPECT_EQ(0x10u, memoryProperties.handle);
+        EXPECT_EQ(static_cast<uint64_t>(handleType), memoryProperties.handleType);
+    }
+}
+
+TEST_F(ParseMemoryPropertiesFixture, givenExternalMemoryHandleWhenParsingForImageOrUsmAllocationThenReturnsFalse) {
     cl_mem_properties_intel dmaBufProperties[] = {CL_EXTERNAL_MEMORY_HANDLE_DMA_BUF_KHR, 0x10, 0};
     cl_mem_properties_intel win32Properties[] = {CL_EXTERNAL_MEMORY_HANDLE_OPAQUE_WIN32_KHR, 0x20, 0};
 
-    for (auto objType : {ClMemoryPropertiesHelper::ObjType::buffer, ClMemoryPropertiesHelper::ObjType::image, ClMemoryPropertiesHelper::ObjType::unknown}) {
+    for (auto objType : {ClMemoryPropertiesHelper::ObjType::image, ClMemoryPropertiesHelper::ObjType::unknown}) {
         EXPECT_FALSE(parse(dmaBufProperties, objType));
         EXPECT_FALSE(parse(win32Properties, objType));
     }

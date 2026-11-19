@@ -109,5 +109,7 @@ Querying `CL_DEVICE_VERSION` (for example via `clinfo`) and observing `OpenCL 3.
 - Core compute paths (kernel dispatch, memory operations) are functional.
 - Not all OpenCL extensions and edge cases are fully mapped.
 - `cl_khr_command_buffer` 1.0.0 is on by default; kernels with image or shared object arguments cannot be recorded yet -- see [LEO_COMMAND_BUFFER.md](LEO_COMMAND_BUFFER.md).
-- `cl_khr_external_memory` handles are not imported yet; buffer, image and USM allocation calls reject them.
+- `cl_khr_external_memory` buffers are imported once, as an owned USM allocation, on the first device of `CL_MEM_DEVICE_HANDLE_LIST_KHR` or on the context's default device; other devices in the context reach it through Level Zero peer access.
+  - Importing a file descriptor transfers its ownership to the driver, which closes it; the value returned for `CL_MEM_PROPERTIES` names a descriptor that is no longer open.
+- Images and USM allocations cannot be created from `cl_khr_external_memory` handles yet; those calls reject them.
 - Performance characterization is ongoing.

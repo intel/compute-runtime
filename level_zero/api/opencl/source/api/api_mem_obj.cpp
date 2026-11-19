@@ -24,6 +24,8 @@
 #include "level_zero/api/opencl/source/mem_obj/leo_buffer.h"
 #include "level_zero/api/opencl/source/mem_obj/leo_image.h"
 #include "level_zero/api/opencl/source/mem_obj/leo_mem_obj_helper.h"
+#include "level_zero/api/opencl/source/sharings/unified/leo_unified_buffer.h"
+#include "level_zero/api/opencl/source/sharings/unified/leo_unified_sharing_types.h"
 #include "level_zero/api/opencl/source/tracing/leo_tracing_notify.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/driver/driver_handle.h"
@@ -33,6 +35,8 @@
 #include <level_zero/ze_api.h>
 
 #include "CL/cl.h"
+
+#include <algorithm>
 
 namespace NEO {
 namespace LEO {
@@ -75,6 +79,44 @@ cl_mem CL_API_CALL clCreateBufferWithProperties(cl_context context,
         return tracingScope.exit(nullptr);
     }
 
+    bool inputMemObjFound = false;
+    auto inputMemObjHandle = NEO::LEO::MemObj::getMemObjProperties<uintptr_t>(properties, CL_MEM_L0_HANDLE_INTEL, &inputMemObjFound);
+
+    if (memoryProperties.handleType) {
+        cl_int retVal = CL_INVALID_PROPERTY;
+        cl_mem tracingRetVal = nullptr;
+        NEO::LEO::UnifiedSharingMemoryDescription extMem{};
+        auto pContext = NEO::LEO::castToObject<NEO::LEO::Context>(context);
+        const auto &clDevices = pContext->getClDevices();
+        const bool sizeAboveEveryDeviceLimit = std::all_of(clDevices.begin(), clDevices.end(), [size](const auto *clDevice) {
+            return size > clDevice->getSharedDeviceInfo().maxMemAllocSize;
+        });
+        const auto externalMemoryHandleCount = NEO::LEO::MemObj::getMemObjHandleList(properties, CL_EXTERNAL_MEMORY_HANDLE_DMA_BUF_KHR).size() +
+                                               NEO::LEO::MemObj::getMemObjHandleList(properties, CL_EXTERNAL_MEMORY_HANDLE_OPAQUE_WIN32_KHR).size();
+        if (externalMemoryHandleCount > 1) {
+            retVal = CL_INVALID_PROPERTY;
+        } else if (memoryProperties.flags.useHostPtr || memoryProperties.flags.allocHostPtr || memoryProperties.flags.copyHostPtr) {
+            retVal = CL_INVALID_VALUE;
+        } else if (hostPtr != nullptr) {
+            retVal = CL_INVALID_HOST_PTR;
+        } else if (size == 0 || (!memoryProperties.flags.allowUnrestrictedSize && sizeAboveEveryDeviceLimit)) {
+            retVal = CL_INVALID_BUFFER_SIZE;
+        } else if (!inputMemObjFound && NEO::LEO::Buffer::validateHandleType(memoryProperties, extMem)) {
+            extMem.handle = reinterpret_cast<void *>(memoryProperties.handle);
+            extMem.size = size;
+            auto importDevice = NEO::LEO::UnifiedBuffer::selectExternalMemoryImportDevice(pContext, memoryProperties);
+            auto buffer = NEO::LEO::UnifiedBuffer::importExternalMemoryBuffer(pContext, memoryProperties, flags, extMem, importDevice, &retVal);
+            if (buffer) {
+                buffer->storeProperties(properties);
+                tracingRetVal = buffer;
+            }
+        }
+        if (errcodeRet) {
+            *errcodeRet = retVal;
+        }
+        return tracingScope.exit(tracingRetVal);
+    }
+
     void *ptr = nullptr;
     void *cpuPtr = nullptr;
     ze_result_t ret = ZE_RESULT_SUCCESS;
@@ -84,8 +126,6 @@ cl_mem CL_API_CALL clCreateBufferWithProperties(cl_context context,
     bool usesSvm = false;
     bool zeroCopy = false;
 
-    bool inputMemObjFound = false;
-    auto inputMemObjHandle = NEO::LEO::MemObj::getMemObjProperties<uintptr_t>(properties, CL_MEM_L0_HANDLE_INTEL, &inputMemObjFound);
     if (inputMemObjFound) {
         ptr = reinterpret_cast<void *>(inputMemObjHandle);
     } else {
