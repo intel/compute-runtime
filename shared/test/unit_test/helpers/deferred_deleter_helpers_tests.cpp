@@ -16,12 +16,17 @@ using namespace NEO;
 
 TEST(deferredDeleterHelper, DeferredDeleterIsDisabledWhenCheckIFDeferrDeleterIsEnabledThenCorrectValueReturned) {
     DebugManagerStateRestore dbgRestore;
-    debugManager.flags.EnableDeferredDeleter.set(false);
+    debugManager.flags.EnableDeferredDeleter.set(0);
     EXPECT_FALSE(isDeferredDeleterEnabled());
 }
 TEST(deferredDeleterHelper, DeferredDeleterIsEnabledWhenCheckIFDeferrDeleterIsEnabledThenCorrectValueReturned) {
     DebugManagerStateRestore dbgRestore;
-    debugManager.flags.EnableDeferredDeleter.set(true);
+    debugManager.flags.EnableDeferredDeleter.set(1);
+    EXPECT_TRUE(isDeferredDeleterEnabled());
+}
+TEST(deferredDeleterHelper, givenDefaultDebugFlagWhenCheckIfDeferredDeleterIsEnabledThenTrueIsReturned) {
+    DebugManagerStateRestore dbgRestore;
+    debugManager.flags.EnableDeferredDeleter.set(-1);
     EXPECT_TRUE(isDeferredDeleterEnabled());
 }
 

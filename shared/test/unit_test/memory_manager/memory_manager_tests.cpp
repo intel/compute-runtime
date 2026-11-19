@@ -2344,18 +2344,17 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenItIsCreatedThenAsyncD
 }
 
 TEST(OsAgnosticMemoryManager, givenEnabledAsyncDeleterFlagWhenMemoryManagerIsCreatedThenAsyncDeleterEnabledIsFalseAndDeleterIsNullptr) {
-    bool defaultEnableDeferredDeleterFlag = debugManager.flags.EnableDeferredDeleter.get();
-    debugManager.flags.EnableDeferredDeleter.set(true);
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableDeferredDeleter.set(1);
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     OsAgnosticMemoryManager memoryManager(executionEnvironment);
     EXPECT_FALSE(memoryManager.isAsyncDeleterEnabled());
     EXPECT_EQ(nullptr, memoryManager.getDeferredDeleter());
-    debugManager.flags.EnableDeferredDeleter.set(defaultEnableDeferredDeleterFlag);
 }
 
 TEST(OsAgnosticMemoryManager, givenDisabledAsyncDeleterFlagWhenMemoryManagerIsCreatedThenAsyncDeleterEnabledIsFalseAndDeleterIsNullptr) {
     DebugManagerStateRestore restorer;
-    debugManager.flags.EnableDeferredDeleter.set(false);
+    debugManager.flags.EnableDeferredDeleter.set(0);
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     OsAgnosticMemoryManager memoryManager(executionEnvironment);
     EXPECT_FALSE(memoryManager.isAsyncDeleterEnabled());

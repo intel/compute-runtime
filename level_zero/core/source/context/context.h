@@ -40,6 +40,7 @@ struct _ze_physical_mem_handle_t : BaseHandle {};
 static_assert(IsCompliantWithDdiHandlesExt<_ze_physical_mem_handle_t>);
 
 namespace NEO {
+class DeferredDeleter;
 class GraphicsAllocation;
 class UsmMemAllocPool;
 enum class HeapIndex : uint32_t;
@@ -485,6 +486,7 @@ struct Context : _ze_context_handle_t, NEO::NonCopyableAndNonMovableClass {
     DriverHandle *driverHandle = nullptr;
     uint32_t numDevices = 0;
     ContextExt *contextExt = nullptr;
+    NEO::DeferredDeleter *deferredDeleter = nullptr;
     uint8_t powerHint = 0;
 
   public:

@@ -4716,7 +4716,7 @@ TEST_F(DrmMemoryManagerBasic, givenEnabledAsyncDeleterFlagWhenMemoryManagerIsCre
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.useGemCloseWorker = true;
     DebugManagerStateRestore dbgStateRestore;
-    debugManager.flags.EnableDeferredDeleter.set(true);
+    debugManager.flags.EnableDeferredDeleter.set(1);
     DrmMemoryManager memoryManager(GemCloseWorkerMode::gemCloseWorkerInactive, false, true, executionEnvironment);
     EXPECT_FALSE(memoryManager.isAsyncDeleterEnabled());
     EXPECT_EQ(nullptr, memoryManager.getDeferredDeleter());
@@ -4727,7 +4727,7 @@ TEST_F(DrmMemoryManagerBasic, givenDisabledAsyncDeleterFlagWhenMemoryManagerIsCr
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.useGemCloseWorker = true;
     DebugManagerStateRestore dbgStateRestore;
-    debugManager.flags.EnableDeferredDeleter.set(false);
+    debugManager.flags.EnableDeferredDeleter.set(0);
     DrmMemoryManager memoryManager(GemCloseWorkerMode::gemCloseWorkerInactive, false, true, executionEnvironment);
     EXPECT_FALSE(memoryManager.isAsyncDeleterEnabled());
     EXPECT_EQ(nullptr, memoryManager.getDeferredDeleter());

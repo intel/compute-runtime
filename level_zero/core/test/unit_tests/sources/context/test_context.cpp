@@ -16,6 +16,7 @@
 #include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_cpu_page_fault_manager.h"
+#include "shared/test/common/mocks/mock_deferred_deleter.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
@@ -884,6 +885,28 @@ TEST_F(ContextTest, whenCreatingAndDestroyingContextThenSuccessIsReturned) {
 
     res = L0::Context::fromHandle(hContext)->destroy();
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, givenAsyncDeleterEnabledOrDisabledWhenCreatingAndDestroyingContextThenDeferredDeleterClientIsRegisteredOnlyWhenEnabled) {
+    auto mockMemoryManager = std::make_unique<MockMemoryManager>();
+    auto deleter = new MockDeferredDeleter();
+    mockMemoryManager->setDeferredDeleter(deleter);
+    auto savedMemoryManager = driverHandle->getMemoryManager();
+    driverHandle->setMemoryManager(mockMemoryManager.get());
+
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+    for (bool asyncDeleterEnabled : {false, true}) {
+        mockMemoryManager->overrideAsyncDeleterFlag(asyncDeleterEnabled);
+
+        ze_context_handle_t hContext;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, driverHandle->createContext(&desc, 0u, nullptr, &hContext));
+        EXPECT_EQ(asyncDeleterEnabled ? 1 : 0, deleter->getClientsNum());
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, L0::Context::fromHandle(hContext)->destroy());
+        EXPECT_EQ(0, deleter->getClientsNum());
+    }
+
+    driverHandle->setMemoryManager(savedMemoryManager);
 }
 
 TEST_F(ContextTest, givenEmptyCacheWhenTryGetCachedImportHandleIsCalledThenReturnsFalse) {

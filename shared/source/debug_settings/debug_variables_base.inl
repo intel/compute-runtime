@@ -596,7 +596,7 @@ DECLARE_DEBUG_VARIABLE(int64_t, DirectSubmissionInitialSemaphoreValue, -1, "-1: 
 DECLARE_DEBUG_VARIABLE(bool, RegisterPageFaultHandlerOnMigration, false, "Register handler on migration to GPU when current is not from pagefault manager")
 DECLARE_DEBUG_VARIABLE(bool, EnableNV12, true, "Enables NV12 extension")
 DECLARE_DEBUG_VARIABLE(bool, EnablePackedYuv, true, "Enables cl_packed_yuv extension")
-DECLARE_DEBUG_VARIABLE(bool, EnableDeferredDeleter, true, "Enables async deleter")
+DECLARE_DEBUG_VARIABLE(int32_t, EnableDeferredDeleter, -1, "Enables async deleter: -1: default (enabled in OpenCL, disabled in Level Zero), 0: disable, 1: enable")
 DECLARE_DEBUG_VARIABLE(bool, EnableAsyncDestroyAllocations, true, "Enables async destroying graphics allocations in mem obj destructor")
 DECLARE_DEBUG_VARIABLE(bool, EnableAsyncEventsHandler, true, "Enables async events handler")
 DECLARE_DEBUG_VARIABLE(bool, EnableForcePin, true, "Enables early pinning for memory object")

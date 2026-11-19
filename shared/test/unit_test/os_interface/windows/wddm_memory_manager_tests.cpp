@@ -5236,18 +5236,17 @@ TEST_F(MockWddmMemoryManagerTest, givenDefaultMemoryManagerWhenItIsCreatedThenAs
 
 TEST_F(MockWddmMemoryManagerTest, givenEnabledAsyncDeleterFlagWhenMemoryManagerIsCreatedThenAsyncDeleterEnabledIsTrueAndDeleterIsNotNullptr) {
     wddm->init();
-    bool defaultEnableDeferredDeleterFlag = debugManager.flags.EnableDeferredDeleter.get();
-    debugManager.flags.EnableDeferredDeleter.set(true);
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableDeferredDeleter.set(1);
     WddmMemoryManager memoryManager(executionEnvironment);
     EXPECT_TRUE(memoryManager.isAsyncDeleterEnabled());
     EXPECT_NE(nullptr, memoryManager.getDeferredDeleter());
-    debugManager.flags.EnableDeferredDeleter.set(defaultEnableDeferredDeleterFlag);
 }
 
 TEST_F(MockWddmMemoryManagerTest, givenDisabledAsyncDeleterFlagWhenMemoryManagerIsCreatedThenAsyncDeleterEnabledIsFalseAndDeleterIsNullptr) {
     wddm->init();
     DebugManagerStateRestore restorer;
-    debugManager.flags.EnableDeferredDeleter.set(false);
+    debugManager.flags.EnableDeferredDeleter.set(0);
     WddmMemoryManager memoryManager(executionEnvironment);
     EXPECT_FALSE(memoryManager.isAsyncDeleterEnabled());
     EXPECT_EQ(nullptr, memoryManager.getDeferredDeleter());
@@ -5969,13 +5968,12 @@ TEST(WddmMemoryManagerTest3, givenWmmWhenAsyncDeleterIsEnabledAndWaitForDeletion
     MockExecutionEnvironment executionEnvironment{};
     auto wddm = new WddmMock(*executionEnvironment.rootDeviceEnvironments[0].get());
     wddm->init();
-    bool actualDeleterFlag = debugManager.flags.EnableDeferredDeleter.get();
-    debugManager.flags.EnableDeferredDeleter.set(true);
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableDeferredDeleter.set(1);
     MockWddmMemoryManager memoryManager(executionEnvironment);
     EXPECT_NE(nullptr, memoryManager.getDeferredDeleter());
     memoryManager.waitForDeletions();
     EXPECT_EQ(nullptr, memoryManager.getDeferredDeleter());
-    debugManager.flags.EnableDeferredDeleter.set(actualDeleterFlag);
 }
 
 class WddmMemoryManagerBindlessHeapHelperCustomHeapAllocatorCfgTest : public WddmMemoryManagerSimpleTest {

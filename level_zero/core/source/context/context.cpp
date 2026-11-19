@@ -20,6 +20,7 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/compression_selector.h"
+#include "shared/source/memory_manager/deferred_deleter.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/memory_manager/pool_info.h"
@@ -80,6 +81,12 @@ Context::Context(DriverHandle *driverHandle) {
 
     this->contextExt = createContextExt(driverHandle);
 
+    auto memoryManager = driverHandle->getMemoryManager();
+    if (memoryManager->isAsyncDeleterEnabled()) {
+        this->deferredDeleter = memoryManager->getDeferredDeleter();
+        this->deferredDeleter->addClient();
+    }
+
     // Determine context settings based on device capabilities.
     settings.enableSvmHeapReservation = true;
     for (auto &device : this->driverHandle->devices) {
@@ -101,6 +108,9 @@ Context::Context(DriverHandle *driverHandle) {
 }
 
 Context::~Context() {
+    if (this->deferredDeleter) {
+        this->deferredDeleter->removeClient();
+    }
     destroyContextExt(this->contextExt);
 }
 

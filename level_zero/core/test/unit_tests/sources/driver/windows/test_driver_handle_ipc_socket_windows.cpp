@@ -8,6 +8,7 @@
 #include "shared/source/unified_memory/unified_memory.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/source/context/context.h"
@@ -189,7 +190,9 @@ TEST_F(DriverHandleIpcSocketWindowsTest, givenOpaqueHandleWithFdTypeAndSocketSer
     NEO::debugManager.flags.EnableIpcSocketFallback.set(1);
     NEO::debugManager.flags.ForceIpcSocketFallback.set(1);
 
+    NEO::MockMemoryManager mockMemoryManager;
     MockDriverHandleForIpcSocket mockDriverHandle;
+    mockDriverHandle.setMemoryManager(&mockMemoryManager);
     mockDriverHandle.initializeIpcSocketServerResult = true;
     mockDriverHandle.registerIpcHandleWithServerResult = true;
 
@@ -225,7 +228,9 @@ TEST_F(DriverHandleIpcSocketWindowsTest, givenOpaqueHandleWithFdTypeAndSocketSer
     NEO::debugManager.flags.EnableIpcSocketFallback.set(1);
     NEO::debugManager.flags.ForceIpcSocketFallback.set(1);
 
+    NEO::MockMemoryManager mockMemoryManager;
     MockDriverHandleForIpcSocket mockDriverHandle;
+    mockDriverHandle.setMemoryManager(&mockMemoryManager);
     mockDriverHandle.initializeIpcSocketServerResult = true;
     mockDriverHandle.registerIpcHandleWithServerResult = false;
 
