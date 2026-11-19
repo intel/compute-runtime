@@ -2297,7 +2297,7 @@ void CommandQueueHw<gfxCoreFamily>::programRequiredCacheFlushes(CommandListExecu
 
     if (ctx.stateCacheFlushRequired) {
         auto neoDevice = this->device->getNEODevice();
-        NEO::MemorySynchronizationCommands<GfxFamily>::addStateCacheFlush(commandStream, neoDevice->getRootDeviceEnvironment());
+        NEO::MemorySynchronizationCommands<GfxFamily>::addStateCacheFlush(commandStream, neoDevice->getRootDeviceEnvironment(), this->csr->isTlbFlushRequiredForStateCacheFlush());
         neoDevice->getBindlessHeapsHelper()->clearStateDirtyForContext(this->csr->getOsContext().getContextId());
     }
 }

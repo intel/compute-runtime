@@ -779,6 +779,13 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
         }
     }
 
+    bool isTlbFlushRequiredForStateCacheFlush() override {
+        if (isTlbFlushRequiredForStateCacheFlushReturnValue.has_value()) {
+            return *isTlbFlushRequiredForStateCacheFlushReturnValue;
+        }
+        return BaseClass::isTlbFlushRequiredForStateCacheFlush();
+    }
+
     void allocateUserFence(std::unique_ptr<SyncFence> &mf) override {
         userFenceAllocationAttemptCount++;
 
@@ -852,6 +859,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     std::optional<WaitStatus> waitForTaskCountReturnValue{};
     std::optional<SubmissionStatus> flushReturnValue{};
     std::optional<bool> isGpuHangDetectedReturnValue{};
+    std::optional<bool> isTlbFlushRequiredForStateCacheFlushReturnValue{};
     std::optional<bool> testTaskCountReadyReturnValue{};
     std::optional<bool> isTagReachedReturnValue{};
     CommandStreamReceiverType commandStreamReceiverType = CommandStreamReceiverType::hardware;

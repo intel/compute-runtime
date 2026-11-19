@@ -924,6 +924,25 @@ HWTEST_F(PipeControlHelperTests, WhenProgrammingInstructionCacheFlushThenExpectI
     EXPECT_TRUE(pipeControl->getInstructionCacheInvalidateEnable());
 }
 
+HWTEST_F(PipeControlHelperTests, givenTlbInvalidationRequestedWhenProgrammingStateCacheFlushThenTlbIsInvalidatedTogetherWithStateCache) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    auto buffer = std::make_unique<uint8_t[]>(128);
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+
+    for (const bool tlbInvalidation : {false, true}) {
+        LinearStream stream(buffer.get(), 128);
+        MemorySynchronizationCommands<FamilyType>::addStateCacheFlush(stream, rootDeviceEnvironment, tlbInvalidation);
+        auto pipeControl = genCmdCast<PIPE_CONTROL *>(buffer.get());
+        ASSERT_NE(nullptr, pipeControl);
+
+        EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
+        EXPECT_TRUE(pipeControl->getStateCacheInvalidationEnable());
+        EXPECT_TRUE(pipeControl->getTextureCacheInvalidationEnable());
+        EXPECT_EQ(tlbInvalidation, pipeControl->getTlbInvalidate());
+    }
+}
+
 using ProductHelperCommonTest = Test<DeviceFixture>;
 
 HWTEST_F(ProductHelperCommonTest, givenBlitterPreferenceWhenEnablingBlitterOperationsSupportThenHonorThePreference) {

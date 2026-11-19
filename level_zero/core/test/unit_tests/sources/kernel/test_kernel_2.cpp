@@ -1065,6 +1065,31 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalVarBufferAndBindlessExplic
     }
 }
 
+HWTEST2_F(KernelImmutableDataBindlessTest, givenImplicitArgBindlessSlotReusedFromPoolWhenItsSurfaceStateIsWrittenThenStateCacheIsDirtyForAllContexts, IsHeapfulRequiredAndAtLeastXeCore) {
+    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice, neoDevice->getNumGenericSubDevices() > 1);
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
+    ASSERT_FALSE(bindlessHelper->stateCacheDirtyForContext.empty());
+
+    uint64_t gpuAddress = 0x1200;
+    size_t allocSize = 0x1100;
+    NEO::MockGraphicsAllocation allocation(reinterpret_cast<void *>(gpuAddress), gpuAddress, allocSize);
+    auto ssInHeap = bindlessHelper->allocateSSInHeap(bindlessHelper->surfaceStateSize, &allocation, NEO::BindlessHeapsHelper::globalSsh);
+    ssInHeap.reusedFromPool = true;
+    allocation.setBindlessInfo(ssInHeap);
+
+    std::array<uint8_t, 0x40> crossThreadData{};
+    NEO::ArgDescPointer argDescriptor{};
+    argDescriptor.bindful = NEO::undefined<NEO::SurfaceStateHeapOffset>;
+    argDescriptor.bindless = 0x8;
+    NEO::KernelDescriptor kernelDescriptor{};
+
+    patchImplicitArgBindlessOffsetAndSetSurfaceState(ArrayRef<uint8_t>(crossThreadData), ArrayRef<uint8_t>(), &allocation, argDescriptor, *neoDevice, false,
+                                                     allocation.getBindlessInfo(), kernelDescriptor);
+
+    EXPECT_FALSE(allocation.getBindlessInfo().reusedFromPool);
+    EXPECT_TRUE(std::all_of(bindlessHelper->stateCacheDirtyForContext.begin(), bindlessHelper->stateCacheDirtyForContext.end(), [](auto dirty) { return dirty; }));
+}
+
 HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalConstBufferAndBindlessExplicitAndImplicitArgsAndBindlessHeapsHelperWhenInitializeKernelImmutableDataThenSurfaceStateIsSetAndImplicitArgBindlessOffsetIsPatched, IsHeapfulRequiredAndAtLeastXeCore) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     HardwareInfo hwInfo = *defaultHwInfo;

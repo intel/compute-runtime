@@ -171,6 +171,26 @@ void BindlessHeapsHelper::clearStateDirtyForContext(uint32_t osContextId) {
     stateCacheDirtyForContext.at(contextIdShifted) = false;
 }
 
+void BindlessHeapsHelper::markStateDirtyForAllContexts() {
+    auto lock = this->obtainUniqueOwnership();
+    std::fill(stateCacheDirtyForContext.begin(), stateCacheDirtyForContext.end(), true);
+}
+
+void BindlessHeapsHelper::markStateDirtyAfterReusedSlotWrite(SurfaceStateInHeapInfo &surfaceStateInfo) {
+    if (surfaceStateInfo.reusedFromPool) {
+        surfaceStateInfo.reusedFromPool = false;
+        markStateDirtyForAllContexts();
+    }
+}
+
+void BindlessHeapsHelper::markStateDirtyAfterReusedSlotWrite(GraphicsAllocation &allocation) {
+    if (allocation.getBindlessInfo().reusedFromPool) {
+        auto surfaceStateInfo = allocation.getBindlessInfo();
+        markStateDirtyAfterReusedSlotWrite(surfaceStateInfo);
+        allocation.setBindlessInfo(surfaceStateInfo);
+    }
+}
+
 bool BindlessHeapsHelper::getStateDirtyForContext(uint32_t osContextId) {
     auto lock = this->obtainUniqueOwnership();
 
@@ -191,9 +211,6 @@ SurfaceStateInHeapInfo BindlessHeapsHelper::allocateSSInHeap(size_t ssSize, Grap
 
         if (!allocateFromReusePool) {
             if ((surfaceStateInHeapVectorReuse[releasePoolIndex][0].size() + surfaceStateInHeapVectorReuse[releasePoolIndex][1].size()) > reuseSlotCountThreshold) {
-
-                // invalidate all contexts
-                std::fill(stateCacheDirtyForContext.begin(), stateCacheDirtyForContext.end(), true);
                 allocateFromReusePool = true;
                 allocatePoolIndex = releasePoolIndex;
                 releasePoolIndex = allocatePoolIndex == 0 ? 1 : 0;
@@ -206,6 +223,8 @@ SurfaceStateInHeapInfo BindlessHeapsHelper::allocateSSInHeap(size_t ssSize, Grap
             if (surfaceStateInHeapVectorReuse[allocatePoolIndex][index].size()) {
                 SurfaceStateInHeapInfo surfaceStateFromVector = surfaceStateInHeapVectorReuse[allocatePoolIndex][index].back();
                 surfaceStateInHeapVectorReuse[allocatePoolIndex][index].pop_back();
+                surfaceStateFromVector.reusedFromPool = true;
+                std::fill(stateCacheDirtyForContext.begin(), stateCacheDirtyForContext.end(), true);
 
                 if (surfaceStateInHeapVectorReuse[allocatePoolIndex][index].empty()) {
                     allocateFromReusePool = false;

@@ -540,7 +540,7 @@ size_t GfxCoreHelperHw<GfxFamily>::getSingleTimestampPacketSizeHw() {
 }
 
 template <typename GfxFamily>
-void MemorySynchronizationCommands<GfxFamily>::addStateCacheFlush(LinearStream &commandStream, const RootDeviceEnvironment &rootDeviceEnvironment) {
+void MemorySynchronizationCommands<GfxFamily>::addStateCacheFlush(LinearStream &commandStream, const RootDeviceEnvironment &rootDeviceEnvironment, bool tlbInvalidation) {
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
 
     PIPE_CONTROL cmd = GfxFamily::cmdInitPipeControl;
@@ -548,6 +548,7 @@ void MemorySynchronizationCommands<GfxFamily>::addStateCacheFlush(LinearStream &
     cmd.setRenderTargetCacheFlushEnable(true);
     cmd.setStateCacheInvalidationEnable(true);
     cmd.setTextureCacheInvalidationEnable(true);
+    cmd.setTlbInvalidate(tlbInvalidation);
 
     auto commandsBuffer = commandStream.getSpace(sizeof(PIPE_CONTROL));
     *reinterpret_cast<PIPE_CONTROL *>(commandsBuffer) = cmd;

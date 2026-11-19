@@ -5057,6 +5057,74 @@ HWTEST2_F(ImageCreate, givenMipmappedImageWhenGettingOrInitializingBindlessSlotR
               imageHW->getOrInitializeBindlessSlot(NEO::BindlessImageSlot::redescribedImage, desc.miplevels + 100u, false));
 }
 
+template <typename ImageType>
+void writeMainSlotsAfterStateCacheInvalidation(ImageType &imageHW, MockBindlesHeapsHelper &bindlessHelper) {
+    ASSERT_EQ(ZE_RESULT_SUCCESS, imageHW.allocateBindlessSlot());
+    ASSERT_NE(nullptr, imageHW.getBindlessSlot());
+    ASSERT_FALSE(bindlessHelper.stateCacheDirtyForContext.empty());
+    std::fill(bindlessHelper.stateCacheDirtyForContext.begin(), bindlessHelper.stateCacheDirtyForContext.end(), false);
+
+    ASSERT_NE(nullptr, imageHW.getOrInitializeBindlessSlot(NEO::BindlessImageSlot::image, 0u, false));
+}
+
+HWTEST2_F(ImageCreate, givenMainBindlessSlotReusedFromPoolWhenItsSurfaceStatesAreWrittenAfterStateCacheInvalidationThenStateCacheIsDirtyForAllContexts, ImageSupport) {
+    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice, neoDevice->getNumGenericSubDevices() > 1);
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
+    bindlessHelper->reuseSlotCountThreshold = 1;
+
+    const auto imageSlotSize = NEO::BindlessImageSlot::max * bindlessHelper->surfaceStateSize;
+    NEO::SurfaceStateInHeapInfo releasedSlots[2];
+    for (auto &releasedSlot : releasedSlots) {
+        releasedSlot = bindlessHelper->allocateSSInHeap(imageSlotSize, nullptr, NEO::BindlessHeapsHelper::globalSsh);
+    }
+    for (auto &releasedSlot : releasedSlots) {
+        bindlessHelper->releaseSSToReusePool(releasedSlot);
+    }
+
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.type = ZE_IMAGE_TYPE_2D;
+    desc.width = 16u;
+    desc.height = 16u;
+    desc.depth = 1u;
+    desc.arraylevels = 1u;
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_UINT;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, imageHW->initialize(device, &desc));
+
+    writeMainSlotsAfterStateCacheInvalidation(*imageHW, *bindlessHelper);
+
+    EXPECT_TRUE(imageHW->getAllocation()->getBindlessInfo().reusedFromPool);
+    EXPECT_FALSE(imageHW->getBindlessSlot()->reusedFromPool);
+    EXPECT_TRUE(std::all_of(bindlessHelper->stateCacheDirtyForContext.begin(), bindlessHelper->stateCacheDirtyForContext.end(), [](auto dirty) { return dirty; }));
+}
+
+HWTEST2_F(ImageCreate, givenMainBindlessSlotFromFreshHeapSpaceWhenItsSurfaceStatesAreWrittenThenStateCacheIsNotDirty, ImageSupport) {
+    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice, neoDevice->getNumGenericSubDevices() > 1);
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
+
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.type = ZE_IMAGE_TYPE_2D;
+    desc.width = 16u;
+    desc.height = 16u;
+    desc.depth = 1u;
+    desc.arraylevels = 1u;
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_UINT;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<FamilyType::gfxCoreFamily>>>();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, imageHW->initialize(device, &desc));
+
+    writeMainSlotsAfterStateCacheInvalidation(*imageHW, *bindlessHelper);
+
+    EXPECT_FALSE(imageHW->getAllocation()->getBindlessInfo().reusedFromPool);
+    EXPECT_FALSE(imageHW->getBindlessSlot()->reusedFromPool);
+    EXPECT_TRUE(std::none_of(bindlessHelper->stateCacheDirtyForContext.begin(), bindlessHelper->stateCacheDirtyForContext.end(), [](auto dirty) { return dirty; }));
+}
+
 HWTEST2_F(ImageCreate, givenImageWhenGettingOrInitializingMediaBlockBindlessSlotThenSeparateSlotIsWrittenOnceWithMediaBlockState, ImageSupport) {
     auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice, neoDevice->getNumGenericSubDevices() > 1);
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);

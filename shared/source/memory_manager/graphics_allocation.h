@@ -64,6 +64,7 @@ struct SurfaceStateInHeapInfo {
     uint64_t surfaceStateOffset;
     void *ssPtr;
     size_t ssSize;
+    bool reusedFromPool = false;
 };
 
 class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAndNonMovableClass {

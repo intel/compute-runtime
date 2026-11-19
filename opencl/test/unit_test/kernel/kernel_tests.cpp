@@ -3200,6 +3200,40 @@ HWTEST2_F(KernelTest, givenBindlessHeapsHelperAndBindlessArgBufferWhenPatchWithI
     EXPECT_EQ(bufferAddress, surfaceAddress);
 }
 
+HWTEST2_F(KernelTest, givenBindlessSlotReusedFromPoolWhenPatchWithImplicitSurfaceThenStateCacheIsDirtyForAllContexts, IsHeapfulRequired) {
+    auto device = clUniquePtr(new MockClDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get())));
+    auto &neoDevice = device->getDevice();
+
+    auto bindlessHeapHelper = new MockBindlesHeapsHelper(&neoDevice, false);
+    neoDevice.getExecutionEnvironment()->rootDeviceEnvironments[neoDevice.getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHeapHelper);
+    ASSERT_FALSE(bindlessHeapHelper->stateCacheDirtyForContext.empty());
+
+    MockContext mockCtx(&*device);
+    MockKernelWithInternals kernel(mockCtx);
+
+    uint64_t gpuAddress = 0x1200;
+    const void *cpuPtr = reinterpret_cast<const void *>(gpuAddress);
+    size_t allocSize = 0x1000;
+    MockGraphicsAllocation mockAllocation(const_cast<void *>(cpuPtr), gpuAddress, allocSize);
+
+    kernel.kernelInfo.kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::BindlessAndStateless;
+
+    EXPECT_TRUE(device->getMemoryManager()->allocateBindlessSlot(&mockAllocation));
+    auto ssInHeapInfo = mockAllocation.getBindlessInfo();
+    ssInHeapInfo.reusedFromPool = true;
+    mockAllocation.setBindlessInfo(ssInHeapInfo);
+
+    const CrossThreadDataOffset bindlessOffset = 0x10;
+    kernel.kernelInfo.addArgBuffer(0, 0, sizeof(void *), undefined<CrossThreadDataOffset>, bindlessOffset);
+    kernel.kernelInfo.kernelDescriptor.initBindlessOffsetToSurfaceState();
+
+    uint64_t crossThreadData = 0;
+    kernel.mockKernel->patchWithImplicitSurface(castToUint64(&crossThreadData), mockAllocation, kernel.kernelInfo.argAsPtr(0));
+
+    EXPECT_FALSE(mockAllocation.getBindlessInfo().reusedFromPool);
+    EXPECT_TRUE(std::all_of(bindlessHeapHelper->stateCacheDirtyForContext.begin(), bindlessHeapHelper->stateCacheDirtyForContext.end(), [](auto dirty) { return dirty; }));
+}
+
 TEST(KernelTest, givenDefaultKernelWhenItIsCreatedThenItReportsStatelessWrites) {
     auto device = clUniquePtr(new MockClDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get())));
     MockContext mockCtx(&*device);

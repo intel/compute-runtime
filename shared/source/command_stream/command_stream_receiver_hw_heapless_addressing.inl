@@ -149,7 +149,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTaskHeapless(
 
     if (stateCacheFlushRequired) {
         device.getBindlessHeapsHelper()->clearStateDirtyForContext(getOsContext().getContextId());
-        MemorySynchronizationCommands<GfxFamily>::addStateCacheFlush(commandStreamCSR, device.getRootDeviceEnvironment());
+        MemorySynchronizationCommands<GfxFamily>::addStateCacheFlush(commandStreamCSR, device.getRootDeviceEnvironment(), this->isTlbFlushRequiredForStateCacheFlush());
     }
 
     const bool useSemaphore64bCmd = device.getDeviceInfo().semaphore64bCmdSupport;
@@ -270,7 +270,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushImmediateTaskHeapless(
 
         if (flushData.stateCacheFlushRequired) {
             device.getBindlessHeapsHelper()->clearStateDirtyForContext(getOsContext().getContextId());
-            MemorySynchronizationCommands<GfxFamily>::addStateCacheFlush(csrCommandStream, device.getRootDeviceEnvironment());
+            MemorySynchronizationCommands<GfxFamily>::addStateCacheFlush(csrCommandStream, device.getRootDeviceEnvironment(), this->isTlbFlushRequiredForStateCacheFlush());
         }
 
         if (this->requiresInstructionCacheFlush) {

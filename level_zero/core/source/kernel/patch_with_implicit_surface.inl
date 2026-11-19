@@ -103,6 +103,7 @@ inline void patchImplicitArgBindlessOffsetAndSetSurfaceState(ArrayRef<uint8_t> c
         if (useTempBuffer) {
             memcpy_s(surfaceStateAddress, surfaceStateSize,
                      surfaceState.get(), surfaceStateSize);
+            device.getBindlessHeapsHelper()->markStateDirtyAfterReusedSlotWrite(*allocation);
         }
     }
 }

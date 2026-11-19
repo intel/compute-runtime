@@ -251,6 +251,7 @@ NEO::SurfaceStateInHeapInfo *ImageImp::allocateBindlessSlotCopy(std::unique_ptr<
     for (const auto slot : bindlessSlots) {
         copySurfaceStateToSSH(ptrOffset(surfaceStateInfo.ssPtr, surfaceStateSize * slot), 0u, slot, isMediaBlockArg && slot == NEO::BindlessImageSlot::image, mipLevel);
     }
+    rootDeviceEnvironment.getBindlessHeapsHelper()->markStateDirtyAfterReusedSlotWrite(surfaceStateInfo);
 
     slotCopy = std::make_unique<NEO::SurfaceStateInHeapInfo>(surfaceStateInfo);
     return slotCopy.get();
@@ -290,6 +291,7 @@ void ImageImp::writeMainBindlessSlots() {
     for (const auto slot : {NEO::BindlessImageSlot::image, NEO::BindlessImageSlot::implicitArgs, NEO::BindlessImageSlot::redescribedImage, NEO::BindlessImageSlot::packedImage}) {
         copySurfaceStateToSSH(ptrOffset(this->bindlessInfo->ssPtr, surfaceStateSize * slot), 0u, slot, false, 0u);
     }
+    rootDeviceEnvironment.getBindlessHeapsHelper()->markStateDirtyAfterReusedSlotWrite(*this->bindlessInfo);
     this->mainBindlessSlotsWritten = true;
 }
 

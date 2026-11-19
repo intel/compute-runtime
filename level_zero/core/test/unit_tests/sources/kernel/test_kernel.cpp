@@ -2665,6 +2665,42 @@ HWTEST2_F(KernelImpPatchBindlessTest, GivenKernelImpWhenSetSurfaceStateBindlessT
     EXPECT_FALSE(mockKernel.privateState.usingSurfaceStateHeap[0]);
 }
 
+HWTEST2_F(KernelImpPatchBindlessTest, GivenBindlessSlotReusedFromPoolWhenBufferSurfaceStateIsWrittenThenStateCacheIsDirtyOnlyAfterFirstWrite, IsHeapfulRequired) {
+    ze_kernel_desc_t desc = {};
+    desc.pKernelName = kernelName.c_str();
+
+    WhiteBoxKernelHw<FamilyType::gfxCoreFamily> mockKernel;
+    mockKernel.setModule(module.get());
+    mockKernel.initialize(&desc);
+    auto &arg = const_cast<NEO::ArgDescPointer &>(mockKernel.getDescriptor().payloadMappings.explicitArgs[0].template as<NEO::ArgDescPointer>());
+    arg.bindless = 0x40;
+    arg.bindful = undefined<SurfaceStateHeapOffset>;
+    mockKernel.getDescriptor().kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindlessAndStateless;
+    mockKernel.getDescriptor().kernelAttributes.imageAddressingMode = NEO::KernelDescriptor::Bindless;
+
+    auto bindlessHelper = new MockBindlesHeapsHelper(neoDevice, neoDevice->getNumGenericSubDevices() > 1);
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHelper);
+    ASSERT_FALSE(bindlessHelper->stateCacheDirtyForContext.empty());
+
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    size_t size = gfxCoreHelper.getRenderSurfaceStateSize(device->getNEODevice()->getRootDeviceEnvironment());
+    uint64_t gpuAddress = 0x2000;
+    void *buffer = reinterpret_cast<void *>(gpuAddress);
+
+    NEO::MockGraphicsAllocation mockAllocation(buffer, gpuAddress, size);
+    auto ssInHeap = bindlessHelper->allocateSSInHeap(size, &mockAllocation, NEO::BindlessHeapsHelper::globalSsh);
+    ssInHeap.reusedFromPool = true;
+    mockAllocation.setBindlessInfo(ssInHeap);
+
+    mockKernel.setBufferSurfaceState(0, buffer, &mockAllocation);
+    EXPECT_FALSE(mockAllocation.getBindlessInfo().reusedFromPool);
+    EXPECT_TRUE(std::all_of(bindlessHelper->stateCacheDirtyForContext.begin(), bindlessHelper->stateCacheDirtyForContext.end(), [](auto dirty) { return dirty; }));
+
+    std::fill(bindlessHelper->stateCacheDirtyForContext.begin(), bindlessHelper->stateCacheDirtyForContext.end(), false);
+    mockKernel.setBufferSurfaceState(0, buffer, &mockAllocation);
+    EXPECT_TRUE(std::none_of(bindlessHelper->stateCacheDirtyForContext.begin(), bindlessHelper->stateCacheDirtyForContext.end(), [](auto dirty) { return dirty; }));
+}
+
 template <GFXCORE_FAMILY gfxCoreFamily>
 struct PooledEndOffsetKernelHw : public WhiteBoxKernelHw<gfxCoreFamily> {
     std::optional<size_t> getPooledAllocationEndOffsetForSurfaceState(const void *address, const NEO::GraphicsAllocation *alloc) const override {

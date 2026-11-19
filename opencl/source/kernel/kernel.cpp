@@ -174,6 +174,9 @@ void Kernel::patchWithImplicitSurface(uint64_t ptrToPatchInCrossThreadData, Grap
             if (surfaceState) {
                 Buffer::setSurfaceState(&clDevice.getDevice(), surfaceState, false, false, sizeToPatch, addressToPatch, 0, &allocation, 0, 0,
                                         areMultipleSubDevicesInContext());
+                if (auto bindlessHeapsHelper = clDevice.getDevice().getBindlessHeapsHelper()) {
+                    bindlessHeapsHelper->markStateDirtyAfterReusedSlotWrite(allocation);
+                }
             }
         }
     }

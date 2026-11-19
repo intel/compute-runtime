@@ -10,6 +10,7 @@
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_mapper.h"
@@ -144,6 +145,9 @@ struct KernelHw : public KernelImp {
         gfxCoreHelper.encodeBufferSurfaceState(args);
         UNRECOVERABLE_IF(surfaceStateAddress == nullptr);
         memcpy_s(surfaceStateAddress, surfaceStateSize, &surfaceState, surfaceStateSize);
+        if (usesAllocationOwnedSurfaceStateSlot) {
+            neoDevice->getBindlessHeapsHelper()->markStateDirtyAfterReusedSlotWrite(*alloc);
+        }
     }
 };
 

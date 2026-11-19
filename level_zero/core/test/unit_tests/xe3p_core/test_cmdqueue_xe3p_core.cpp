@@ -307,6 +307,59 @@ XE3P_CORETEST_F(CommandQueueCacheFlushTestsXe3p, givenStateCacheWhenExecuteComma
     commandQueue->destroy();
 }
 
+XE3P_CORETEST_F(CommandQueueCacheFlushTestsXe3p, givenStateCacheDirtyAndTlbFlushRequiredForStateCacheFlushWhenExecuteCommandListsRegularHeaplessThenStateCacheFlushAlsoInvalidatesTlb) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    ze_command_queue_desc_t desc = {};
+    auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(neoDevice->getDefaultEngine().commandStreamReceiver);
+    csr->isTlbFlushRequiredForStateCacheFlushReturnValue = true;
+    auto contextId = csr->getOsContext().getContextId();
+    auto bindlessHeapHelper = new MockBindlesHeapsHelper(neoDevice, false);
+    bindlessHeapHelper->stateCacheDirtyForContext.at(contextId) = true;
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHeapHelper);
+
+    auto commandQueue = new MockCommandQueueHw<FamilyType::gfxCoreFamily>(device, csr, &desc);
+    commandQueue->initialize(false, false, false);
+
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(device, NEO::EngineGroupType::compute, 0u, returnValue, false));
+    commandList->close();
+    auto cmdListHandle = commandList.get()->toHandle();
+
+    CommandListExecutionInternalOptions internalOptions = {};
+    auto ctx = CommandListExecutionContext{&cmdListHandle,
+                                           1,
+                                           csr->getPreemptionMode(),
+                                           device,
+                                           csr->getScratchSpaceController(),
+                                           csr->getGlobalStatelessHeapAllocation(),
+                                           internalOptions,
+                                           false,
+                                           csr->isProgramActivePartitionConfigRequired(),
+                                           false};
+    ctx.hasIndirectAccess = false;
+    ctx.isDispatchTaskCountPostSyncRequired = false;
+    ctx.pipelineCmdsDispatch = false;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandListsRegularHeapless(ctx, 1, &cmdListHandle, nullptr));
+
+    GenCmdList cmdList;
+    FamilyType::Parse::parseCommandBuffer(cmdList, commandQueue->commandStream.getCpuBase(), commandQueue->commandStream.getUsed());
+    auto pipeControls = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+
+    bool stateCacheFlushWithTlbInvalidationFound = false;
+    for (auto &cmd : pipeControls) {
+        auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(*cmd);
+        if (pipeControl->getStateCacheInvalidationEnable() && pipeControl->getTlbInvalidate()) {
+            stateCacheFlushWithTlbInvalidationFound = true;
+        }
+    }
+
+    EXPECT_TRUE(stateCacheFlushWithTlbInvalidationFound);
+    EXPECT_FALSE(bindlessHeapHelper->getStateDirtyForContext(contextId));
+    commandQueue->destroy();
+}
+
 XE3P_CORETEST_F(CommandQueueCacheFlushTestsXe3p, givenBindlessHelperAndStateNotDirtyWhenExecuteCommandListsRegularHeaplessThenPipeControlDoesntContainStateCacheFlush) {
 
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -616,6 +669,41 @@ XE3P_CORETEST_F(CommandListExecuteImmediateXe3p, givenHeaplessAndStateCacheDirty
     }
 
     EXPECT_TRUE(stateCacheFlushFound);
+    EXPECT_FALSE(bindlessHeapHelper->getStateDirtyForContext(contextId));
+}
+
+XE3P_CORETEST_F(CommandListExecuteImmediateXe3p, givenHeaplessAndStateCacheDirtyAndTlbFlushRequiredForStateCacheFlushWhenExecutingCommandListImmediateWithFlushTaskThenStateCacheFlushAlsoInvalidatesTlb) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    std::unique_ptr<L0::CommandList> commandList;
+    const ze_command_queue_desc_t desc = {};
+    ze_result_t returnValue;
+    commandList.reset(CommandList::createImmediate(device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
+    auto &commandListImmediate = static_cast<MockCommandListImmediate<FamilyType::gfxCoreFamily> &>(*commandList);
+
+    auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandListImmediate.getCsr(false));
+    csr->isTlbFlushRequiredForStateCacheFlushReturnValue = true;
+    auto contextId = csr->getOsContext().getContextId();
+    auto bindlessHeapHelper = new MockBindlesHeapsHelper(neoDevice, false);
+    bindlessHeapHelper->stateCacheDirtyForContext.at(contextId) = true;
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHeapHelper);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false, NEO::AppendOperations::kernel, false, false, nullptr, nullptr));
+
+    GenCmdList cmdList;
+    auto &commandStream = csr->getCS();
+    FamilyType::Parse::parseCommandBuffer(cmdList, commandStream.getCpuBase(), commandStream.getUsed());
+    auto pipeControls = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+
+    bool stateCacheFlushWithTlbInvalidationFound = false;
+    for (auto &cmd : pipeControls) {
+        auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(*cmd);
+        if (pipeControl->getStateCacheInvalidationEnable() && pipeControl->getTlbInvalidate()) {
+            stateCacheFlushWithTlbInvalidationFound = true;
+        }
+    }
+
+    EXPECT_TRUE(stateCacheFlushWithTlbInvalidationFound);
     EXPECT_FALSE(bindlessHeapHelper->getStateDirtyForContext(contextId));
 }
 

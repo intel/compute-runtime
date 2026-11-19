@@ -70,6 +70,9 @@ class BindlessHeapsHelper : NEO::NonCopyableAndNonMovableClass {
     }
     bool getStateDirtyForContext(uint32_t osContextId);
     void clearStateDirtyForContext(uint32_t osContextId);
+    void markStateDirtyForAllContexts();
+    void markStateDirtyAfterReusedSlotWrite(SurfaceStateInHeapInfo &surfaceStateInfo);
+    void markStateDirtyAfterReusedSlotWrite(GraphicsAllocation &allocation);
 
   protected:
     [[nodiscard]] MOCKABLE_VIRTUAL std::unique_lock<std::mutex> obtainUniqueOwnership() {

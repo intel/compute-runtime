@@ -1222,7 +1222,7 @@ HWTEST2_F(MemorySynchronizationCommandsTestXe3pAndLater, givenDrainAllQueuesOnCa
     EXPECT_EQ(QueueDrainMode::drainOnlyCurrentQueue, pc->getQueueDrainMode());
     linearStream.replaceBuffer(buffer, sizeof(buffer));
 
-    MemorySynchronizationCommands<FamilyType>::addStateCacheFlush(linearStream, rootDeviceEnvironment);
+    MemorySynchronizationCommands<FamilyType>::addStateCacheFlush(linearStream, rootDeviceEnvironment, false);
     EXPECT_EQ(QueueDrainMode::drainOnlyCurrentQueue, pc->getQueueDrainMode());
 }
 
@@ -1244,7 +1244,7 @@ HWTEST2_F(MemorySynchronizationCommandsTestXe3pAndLater, givenDrainAllQueuesOnCa
     EXPECT_EQ(QueueDrainMode::drainAllQueues, pc->getQueueDrainMode());
     linearStream.replaceBuffer(buffer, sizeof(buffer));
 
-    MemorySynchronizationCommands<FamilyType>::addStateCacheFlush(linearStream, rootDeviceEnvironment);
+    MemorySynchronizationCommands<FamilyType>::addStateCacheFlush(linearStream, rootDeviceEnvironment, false);
     EXPECT_EQ(QueueDrainMode::drainAllQueues, pc->getQueueDrainMode());
 }
 
@@ -1271,7 +1271,7 @@ HWTEST2_F(MemorySynchronizationCommandsTestXe3pAndLater, givenStateCacheFlushWhe
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
 
-    MemorySynchronizationCommands<FamilyType>::addStateCacheFlush(linearStream, rootDeviceEnvironment);
+    MemorySynchronizationCommands<FamilyType>::addStateCacheFlush(linearStream, rootDeviceEnvironment, false);
     EXPECT_TRUE(pc->getStateCacheInvalidationEnable());
     EXPECT_TRUE(pc->getTextureCacheInvalidationEnable());
     EXPECT_EQ(QueueDrainMode::drainAllQueues, pc->getQueueDrainMode());
@@ -1280,13 +1280,13 @@ HWTEST2_F(MemorySynchronizationCommandsTestXe3pAndLater, givenStateCacheFlushWhe
     DebugManagerStateRestore restore;
     debugManager.flags.DrainAllQueuesOnCacheInvalidation.set(1);
 
-    MemorySynchronizationCommands<FamilyType>::addStateCacheFlush(linearStream, rootDeviceEnvironment);
+    MemorySynchronizationCommands<FamilyType>::addStateCacheFlush(linearStream, rootDeviceEnvironment, false);
     EXPECT_EQ(QueueDrainMode::drainAllQueues, pc->getQueueDrainMode());
     linearStream.replaceBuffer(buffer, sizeof(buffer));
 
     debugManager.flags.PcQueueDrainMode.set(1);
 
-    MemorySynchronizationCommands<FamilyType>::addStateCacheFlush(linearStream, rootDeviceEnvironment);
+    MemorySynchronizationCommands<FamilyType>::addStateCacheFlush(linearStream, rootDeviceEnvironment, false);
     EXPECT_EQ(QueueDrainMode::drainOnlyCurrentQueue, pc->getQueueDrainMode());
 }
 
