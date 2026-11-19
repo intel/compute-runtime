@@ -27,15 +27,11 @@ auto const elementSize = 4; // sizeof CL_RGBA * CL_UNORM_INT8
 struct AUBCreateImage
     : public AUBCommandStreamFixture,
       public ::testing::Test {
-    typedef AUBCommandStreamFixture CommandStreamFixture;
-
-    using AUBCommandStreamFixture::setUp;
-
     void SetUp() override {
         if (!(defaultHwInfo->capabilityTable.supportsImages)) {
             GTEST_SKIP();
         }
-        CommandStreamFixture::setUp();
+        AUBCommandStreamFixture::setUp();
 
         imageFormat.image_channel_data_type = CL_UNORM_INT8;
         imageFormat.image_channel_order = CL_RGBA;
@@ -53,29 +49,16 @@ struct AUBCreateImage
     }
 
     void TearDown() override {
-        image.reset();
-        CommandStreamFixture::tearDown();
+        AUBCommandStreamFixture::tearDown();
     }
 
-    std::unique_ptr<Image> image;
     cl_image_format imageFormat;
     cl_image_desc imageDesc;
     cl_int retVal;
     unsigned char pHostPtr[512 * testImageDimensions * elementSize * 4];
 };
 
-struct AUBCreateImageArray : public AUBCreateImage,
-                             public ::testing::WithParamInterface<uint32_t /*cl_mem_object_type*/> {
-    void SetUp() override {
-        if (!(defaultHwInfo->capabilityTable.supportsImages)) {
-            GTEST_SKIP();
-        }
-        AUBCreateImage::SetUp();
-    }
-    void TearDown() override {
-        AUBCreateImage::TearDown();
-    }
-};
+using AUBCreateImageArray = AUBCreateImage;
 
 HWTEST_F(AUBCreateImageArray, Given1DImageArrayThenExpectationsMet) {
     auto &productHelper = pDevice->getProductHelper();
@@ -99,7 +82,7 @@ HWTEST_F(AUBCreateImageArray, Given1DImageArrayThenExpectationsMet) {
         hostPtr[i] = i;
     }
 
-    image.reset(Image::create(
+    std::unique_ptr<Image> image(Image::create(
         context,
         ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
         flags,
@@ -181,7 +164,7 @@ HWTEST_F(AUBCreateImageArray, Given2DImageArrayThenExpectationsMet) {
         hostPtr[i] = i;
     }
 
-    image.reset(Image::create(
+    std::unique_ptr<Image> image(Image::create(
         context,
         ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
         flags,
@@ -244,14 +227,8 @@ HWTEST_F(AUBCreateImageArray, Given2DImageArrayThenExpectationsMet) {
 struct AUBCreateImageHostPtr : public AUBCreateImage,
                                public ::testing::WithParamInterface<uint64_t /*cl_mem_object_type*/> {
     void SetUp() override {
-        if (!(defaultHwInfo->capabilityTable.supportsImages)) {
-            GTEST_SKIP();
-        }
         flags = GetParam();
         AUBCreateImage::SetUp();
-    }
-    void TearDown() override {
-        AUBCreateImage::TearDown();
     }
 
     uint64_t flags;
@@ -312,8 +289,8 @@ HWTEST_P(CopyHostPtrTest, GivenImageWithDoubledRowPitchWhenCreatedWithCopyHostPt
         data += passedRowPitch;
     }
 
-    image.reset(Image::create(context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
-                              flags, 0, surfaceFormat, &imageDesc, pHostPtr, retVal));
+    std::unique_ptr<Image> image(Image::create(context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
+                                               flags, 0, surfaceFormat, &imageDesc, pHostPtr, retVal));
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(image->getImageDesc().image_row_pitch, imgInfo.rowPitch);
     EXPECT_EQ(image->getHostPtrRowPitch(), (size_t)passedRowPitch);
@@ -379,7 +356,7 @@ HWTEST_P(UseHostPtrTest, GivenImageWithRowPitchWhenCreatedWithUseHostPtrFlagThen
 
         data += passedRowPitch;
     }
-    image.reset(Image::create(
+    std::unique_ptr<Image> image(Image::create(
         context,
         ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
         flags,
@@ -450,7 +427,6 @@ HWTEST_P(UseHostPtrTest, GivenImageWithRowPitchWhenCreatedWithUseHostPtrFlagThen
 
     retVal = clEnqueueUnmapMemObject(pCmdQ, image.get(), ptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    image.reset();
 }
 
 HWTEST_F(AUBCreateImage, GivenImage3DCreatedWithDoubledSlicePitchWhenQueriedForDataThenReturnsProperData) {
@@ -479,8 +455,8 @@ HWTEST_F(AUBCreateImage, GivenImage3DCreatedWithDoubledSlicePitchWhenQueriedForD
     }
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
-    image.reset(Image::create(context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
-                              flags, 0, surfaceFormat, &imageDesc, hostMemory.data(), retVal));
+    std::unique_ptr<Image> image(Image::create(context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
+                                               flags, 0, surfaceFormat, &imageDesc, hostMemory.data(), retVal));
 
     depthToCopy = imageDesc.image_depth;
     auto imageStorage = static_cast<uint8_t *>(image->getCpuAddress());
