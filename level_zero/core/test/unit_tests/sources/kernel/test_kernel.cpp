@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
@@ -5668,6 +5669,38 @@ TEST(KernelImmutableDataTest, givenBindlessKernelWhenInitializingImmDataThenSshT
 
         EXPECT_EQ(surfaceStateSize, kernelImmutableData->getSurfaceStateHeapSize());
     }
+}
+
+HWTEST2_F(KernelImmutableDataTests, givenBindlessKernelWithBindlessImageAndBufferArgsWhenInitializingImmDataThenSshTemplateFitsInRequiredSshReservation, IsAtLeastXeCore) {
+    auto kernelInfo = std::make_unique<KernelInfo>();
+    kernelInfo->heapInfo.surfaceStateHeapSize = 0;
+    kernelInfo->heapInfo.pSsh = nullptr;
+    kernelInfo->kernelDescriptor.kernelMetadata.kernelName = ZebinTestData::ValidEmptyProgram<>::kernelName;
+    kernelInfo->kernelDescriptor.kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindlessAndStateless;
+    kernelInfo->kernelDescriptor.kernelAttributes.imageAddressingMode = NEO::KernelDescriptor::Bindless;
+
+    auto imageArg = NEO::ArgDescriptor(NEO::ArgDescriptor::argTImage);
+    imageArg.as<NEO::ArgDescImage>().bindful = NEO::undefined<NEO::SurfaceStateHeapOffset>;
+    imageArg.as<NEO::ArgDescImage>().bindless = 0x0;
+    kernelInfo->kernelDescriptor.payloadMappings.explicitArgs.push_back(imageArg);
+
+    auto bufferArg = NEO::ArgDescriptor(NEO::ArgDescriptor::argTPointer);
+    bufferArg.as<NEO::ArgDescPointer>() = NEO::ArgDescPointer();
+    bufferArg.as<NEO::ArgDescPointer>().bindful = NEO::undefined<NEO::SurfaceStateHeapOffset>;
+    bufferArg.as<NEO::ArgDescPointer>().bindless = 0x8;
+    kernelInfo->kernelDescriptor.payloadMappings.explicitArgs.push_back(bufferArg);
+
+    kernelInfo->kernelDescriptor.kernelAttributes.numArgsStateful = 2;
+    kernelInfo->kernelDescriptor.kernelAttributes.numBindlessImages = 1;
+    kernelInfo->kernelDescriptor.initBindlessOffsetToSurfaceState();
+
+    auto kernelImmutableData = std::make_unique<KernelImmutableData>(device);
+    kernelImmutableData->initialize(kernelInfo.get(), device, nullptr, nullptr);
+
+    const auto &gfxCoreHelper = device->getNEODevice()->getGfxCoreHelper();
+    const auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize(device->getNEODevice()->getRootDeviceEnvironment());
+    EXPECT_EQ(3 * surfaceStateSize, kernelImmutableData->getSurfaceStateHeapSize());
+    EXPECT_LE(kernelImmutableData->getSurfaceStateHeapSize(), NEO::EncodeDispatchKernel<FamilyType>::getSizeRequiredSsh(*kernelInfo));
 }
 
 TEST_F(BindlessKernelTest, givenBindlessKernelWhenPatchingSamplerOffsetsInCrossThreadDataThenCorrectBindlessOffsetsAreWritten) {

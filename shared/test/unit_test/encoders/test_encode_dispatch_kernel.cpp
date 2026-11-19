@@ -1745,6 +1745,19 @@ HWTEST_F(CommandEncodeStatesTest, givenKernelInfoOfBindlessKernelWhenGettingRequ
     EXPECT_EQ(expectedSize, size);
 }
 
+HWTEST_F(CommandEncodeStatesTest, givenKernelInfoOfBindlessKernelWithBindlessImagesWhenGettingRequiredSshSpaceThenImageSurfaceStatesAreIncluded) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    kernelInfo.kernelDescriptor.kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindlessAndStateless;
+    kernelInfo.kernelDescriptor.kernelAttributes.imageAddressingMode = NEO::KernelDescriptor::Bindless;
+    kernelInfo.heapInfo.surfaceStateHeapSize = 0;
+    kernelInfo.kernelDescriptor.kernelAttributes.numArgsStateful = 2;
+    kernelInfo.kernelDescriptor.kernelAttributes.numBindlessImages = 1;
+
+    const size_t expectedSize = alignUp(3 * sizeof(RENDER_SURFACE_STATE), EncodeDispatchKernel<FamilyType>::getDefaultSshAlignment());
+    EXPECT_EQ(expectedSize, EncodeDispatchKernel<FamilyType>::getSizeRequiredSsh(kernelInfo));
+}
+
 HWTEST_F(CommandEncodeStatesTest, givenCommandContainerWhenIsKernelDispatchedFromImmediateCmdListTrueThenGetHeapWithRequiredSizeAndAlignmentCalled) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());

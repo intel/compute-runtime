@@ -94,19 +94,15 @@ ze_result_t KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device 
         crossThreadDataArrayRef = ArrayRef<uint8_t>(this->crossThreadDataTemplate.get(), crossThreadDataSize);
     }
 
+    const auto &gfxCoreHelper = device->getNEODevice()->getGfxCoreHelper();
+    const auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize(device->getNEODevice()->getRootDeviceEnvironment());
+    this->surfaceStateHeapSize = static_cast<uint32_t>(kernelInfo->getSurfaceStateHeapSize(surfaceStateSize));
+
     if (kernelInfo->heapInfo.surfaceStateHeapSize != 0) {
-        this->surfaceStateHeapSize = kernelInfo->heapInfo.surfaceStateHeapSize;
         surfaceStateHeapTemplate = std::make_unique_for_overwrite<uint8_t[]>(surfaceStateHeapSize);
         memcpy_s(surfaceStateHeapTemplate.get(), surfaceStateHeapSize,
                  kernelInfo->heapInfo.pSsh, surfaceStateHeapSize);
     } else if (NEO::KernelDescriptor::isBindlessAddressingKernel(kernelInfo->kernelDescriptor)) {
-        auto &gfxCoreHelper = device->getNEODevice()->getGfxCoreHelper();
-        auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getRenderSurfaceStateSize(device->getNEODevice()->getRootDeviceEnvironment()));
-
-        this->surfaceStateHeapSize = (kernelInfo->kernelDescriptor.kernelAttributes.numArgsStateful +
-                                      kernelInfo->kernelDescriptor.kernelAttributes.numBindlessImages) *
-                                     surfaceStateSize;
-
         DEBUG_BREAK_IF(kernelInfo->kernelDescriptor.kernelAttributes.numArgsStateful != kernelInfo->kernelDescriptor.getBindlessOffsetToSurfaceState().size());
         surfaceStateHeapTemplate = std::make_unique<uint8_t[]>(surfaceStateHeapSize);
     }

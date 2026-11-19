@@ -225,18 +225,14 @@ cl_int Kernel::initialize() {
     }
 
     // allocate our own SSH, if necessary
-    sshLocalSize = heapInfo.surfaceStateHeapSize;
-    if (sshLocalSize) {
+    sshLocalSize = static_cast<uint32_t>(kernelInfo.getSurfaceStateHeapSize(gfxCoreHelper.getRenderSurfaceStateSize(rootDeviceEnvironment)));
+    if (heapInfo.surfaceStateHeapSize) {
         pSshLocal = std::make_unique_for_overwrite<char[]>(sshLocalSize);
 
         // copy the ssh into our local copy
         memcpy_s(pSshLocal.get(), sshLocalSize,
                  heapInfo.pSsh, heapInfo.surfaceStateHeapSize);
     } else if (NEO::KernelDescriptor::isBindlessAddressingKernel(kernelDescriptor)) {
-        auto surfaceStateSize = static_cast<uint32_t>(gfxCoreHelper.getRenderSurfaceStateSize(rootDeviceEnvironment));
-        sshLocalSize = (kernelDescriptor.kernelAttributes.numArgsStateful +
-                        +kernelDescriptor.kernelAttributes.numBindlessImages) *
-                       surfaceStateSize;
         DEBUG_BREAK_IF(kernelDescriptor.kernelAttributes.numArgsStateful != kernelDescriptor.getBindlessOffsetToSurfaceState().size());
         pSshLocal = std::make_unique<char[]>(sshLocalSize);
     }

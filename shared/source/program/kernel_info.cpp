@@ -88,6 +88,17 @@ void KernelInfo::setIsaPerKernelAllocation(GraphicsAllocation *allocation) {
     this->kernelAllocation = allocation;
 }
 
+size_t KernelInfo::getSurfaceStateHeapSize(size_t surfaceStateSize) const {
+    if (this->heapInfo.surfaceStateHeapSize != 0) {
+        return this->heapInfo.surfaceStateHeapSize;
+    }
+    if (KernelDescriptor::isBindlessAddressingKernel(this->kernelDescriptor)) {
+        const auto &kernelAttributes = this->kernelDescriptor.kernelAttributes;
+        return (kernelAttributes.numArgsStateful + kernelAttributes.numBindlessImages) * surfaceStateSize;
+    }
+    return 0;
+}
+
 std::string concatenateKernelNames(ArrayRef<KernelInfo *> kernelInfos) {
     std::string semiColonDelimitedKernelNameStr;
 

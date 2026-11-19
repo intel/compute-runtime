@@ -462,6 +462,24 @@ TEST_F(BindlessKernelTests, GivenBindlessAddressingKernelWhenInitializeThenSurfa
     EXPECT_NE(nullptr, ssHeap);
 }
 
+TEST_F(BindlessKernelTests, GivenBindlessKernelWithBindlessImagesWhenInitializeThenSurfaceStateHeapCountsImageSurfaceStates) {
+    KernelInfo kernelInfo = {};
+    kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 32;
+    kernelInfo.kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::BindlessAndStateless;
+    kernelInfo.kernelDescriptor.kernelAttributes.imageAddressingMode = KernelDescriptor::Bindless;
+    kernelInfo.kernelDescriptor.kernelAttributes.numArgsStateful = 2;
+    kernelInfo.kernelDescriptor.kernelAttributes.numBindlessImages = 1;
+
+    MockKernel kernel(pProgram, kernelInfo, *pClDevice);
+    EXPECT_EQ(CL_SUCCESS, kernel.initialize());
+
+    const auto &gfxCoreHelper = pClDevice->getGfxCoreHelper();
+    const auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize(pClDevice->getDevice().getRootDeviceEnvironment());
+
+    EXPECT_EQ(3 * surfaceStateSize, kernel.getSurfaceStateHeapSize());
+    EXPECT_EQ(kernelInfo.getSurfaceStateHeapSize(surfaceStateSize), kernel.getSurfaceStateHeapSize());
+}
+
 HWTEST2_F(BindlessKernelTests, givenBindlessKernelWhenPatchingCrossThreadDataThenCorrectBindlessOffsetsAreWritten, IsHeapfulRequired) {
     auto argDescriptor = NEO::ArgDescriptor(NEO::ArgDescriptor::argTPointer);
     argDescriptor.as<NEO::ArgDescPointer>() = NEO::ArgDescPointer();

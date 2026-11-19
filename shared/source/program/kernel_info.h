@@ -62,6 +62,7 @@ struct KernelInfo : NEO::NonCopyableAndNonMovableClass {
     uint32_t getIsaSize() const;
     GraphicsAllocation *getIsaGraphicsAllocation() const;
     void setIsaPerKernelAllocation(GraphicsAllocation *allocation);
+    size_t getSurfaceStateHeapSize(size_t surfaceStateSize) const;
 
     inline GraphicsAllocation *getIsaParentAllocation() const {
         return isaParentAllocation;

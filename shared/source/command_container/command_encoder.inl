@@ -859,13 +859,8 @@ size_t EncodeDispatchKernel<Family>::getSizeRequiredDsh(const KernelDescriptor &
 
 template <typename Family>
 size_t EncodeDispatchKernel<Family>::getSizeRequiredSsh(const KernelInfo &kernelInfo) {
-    size_t requiredSshSize = kernelInfo.heapInfo.surfaceStateHeapSize;
-    bool isBindlessKernel = NEO::KernelDescriptor ::isBindlessAddressingKernel(kernelInfo.kernelDescriptor);
-    if (isBindlessKernel) {
-        requiredSshSize = std::max(requiredSshSize, kernelInfo.kernelDescriptor.kernelAttributes.numArgsStateful * sizeof(typename Family::RENDER_SURFACE_STATE));
-    }
-    requiredSshSize = alignUp(requiredSshSize, EncodeDispatchKernel<Family>::getDefaultSshAlignment());
-    return requiredSshSize;
+    const auto requiredSshSize = kernelInfo.getSurfaceStateHeapSize(sizeof(typename Family::RENDER_SURFACE_STATE));
+    return alignUp(requiredSshSize, EncodeDispatchKernel<Family>::getDefaultSshAlignment());
 }
 
 template <typename Family>
