@@ -3,7 +3,7 @@ components:
     branch: master
     dest_dir: aub_stream
     repository: https://github.com/intel/aubstream
-    revision: 758ac03f84296224c6ac494ac5f055c161b21b67
+    revision: e9a3c4e4002ff760d308ce05b54b284a45d33ea3
     type: git
   gmmlib:
     asset_name: gmmlib
@@ -28,7 +28,7 @@ components:
     dest_dir: kernels_bin
     type: git
     branch: kernels_bin
-    revision: 4297-6860
+    revision: 4299-6862
   level_zero:
     asset_name: level_zero
     dest_dir: level_zero
@@ -66,13 +66,13 @@ components:
     dest_dir: wdk
     type: git
     branch: wdk
-    revision: fa437accb781ce373110e08026144778f367175a-4296
+    revision: 175f58c86bda0ee672460ba8142105d1ddc49e89-4299
   wsl:
     branch: wsl
     dest_dir: wsl
     revision: 56430997dac34ca0e9e18c177636234cac26ad54
     type: git
-converter: M-4297
+converter: M-4299
 include:
 - aub_configs.yml
 - infra.yml
