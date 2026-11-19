@@ -81,6 +81,7 @@ const std::string mockTemperatureHwmonDir("/sys/bus/pci/devices/" + mockTemperat
 const std::string mockTemperatureHwmonNameFile0(mockTemperatureHwmonDir + "/hwmon0/name");
 const std::string mockTemperatureHwmonNameFile1(mockTemperatureHwmonDir + "/hwmon1/name");
 const std::string mockTemperatureHwmonTempFile0(mockTemperatureHwmonDir + "/hwmon0/temp2_emergency");
+const std::string mockMemoryEmergencyHwmonFile0(mockTemperatureHwmonDir + "/hwmon0/temp3_emergency");
 const std::string mockMemoryTemperatureHwmonFile0(mockTemperatureHwmonDir + "/hwmon0/temp3_input");
 const std::string mockGpuTemperatureHwmonFile0(mockTemperatureHwmonDir + "/hwmon0/temp2_input");
 const std::string mockTemperatureHwmonSubDir0(mockTemperatureHwmonDir + "/hwmon0/");
@@ -110,14 +111,17 @@ struct MockTemperatureFsAccess : public L0::Sysman::FsAccessInterface {
     ze_result_t hwmonNameReadResult0 = ZE_RESULT_SUCCESS;
     ze_result_t hwmonNameReadResult1 = ZE_RESULT_SUCCESS;
     ze_result_t temp2EmergencyReadResult = ZE_RESULT_SUCCESS;
+    ze_result_t temp3EmergencyReadResult = ZE_RESULT_SUCCESS;
     ze_result_t memoryTemperatureReadResult = ZE_RESULT_SUCCESS;
     ze_result_t gpuTemperatureReadResult = ZE_RESULT_SUCCESS;
     std::string hwmonName0 = "xe";
     std::string hwmonName1 = "dummy";
     int32_t temp2EmergencyValue = 125000;
+    int32_t temp3EmergencyValue = 111000;
     int32_t memoryTemperatureValue = 39000;
     int32_t gpuTemperatureValue = 45000;
     bool temp2EmergencyExists = true;
+    bool temp3EmergencyExists = false;
     bool memoryTemperatureExists = false;
     bool gpuTemperatureExists = false;
     bool isRootUserResult = true;
@@ -145,6 +149,12 @@ struct MockTemperatureFsAccess : public L0::Sysman::FsAccessInterface {
                 val = temp2EmergencyValue;
             }
             return temp2EmergencyReadResult;
+        }
+        if (file == mockMemoryEmergencyHwmonFile0) {
+            if (temp3EmergencyReadResult == ZE_RESULT_SUCCESS) {
+                val = temp3EmergencyValue;
+            }
+            return temp3EmergencyReadResult;
         }
         if (file == mockMemoryTemperatureHwmonFile0) {
             if (memoryTemperatureReadResult == ZE_RESULT_SUCCESS) {
@@ -176,6 +186,9 @@ struct MockTemperatureFsAccess : public L0::Sysman::FsAccessInterface {
     bool fileExists(const std::string file) override {
         if (file == mockTemperatureHwmonTempFile0) {
             return temp2EmergencyExists;
+        }
+        if (file == mockMemoryEmergencyHwmonFile0) {
+            return temp3EmergencyExists;
         }
         if (file == mockMemoryTemperatureHwmonFile0) {
             return memoryTemperatureExists;

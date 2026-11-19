@@ -37,10 +37,12 @@ class LinuxTemperatureImp : public OsTemperature, NEO::NonCopyableAndNonMovableC
 
   private:
     ze_result_t getMaxTemperature(double &temperature);
+    const std::string &getMaxTemperatureFile() const;
     ze_result_t readTemperatureFromSysfs(const std::string &temperatureFile, double *pTemperature);
     bool isIntelGraphicsHwmonDir(const std::string &name);
     std::string findIntelGraphicsHwmonDir();
     bool probeHwmonTemperatureFile(const std::string &hwmonDir, const std::string &fileName, std::string &temperatureFile);
+    std::string probeMaxTemperatureFile(const std::string &hwmonDir, const std::string &fileName);
     void init();
     uint32_t subdeviceId = 0;
     uint32_t sensorIndex = 0;
@@ -49,10 +51,10 @@ class LinuxTemperatureImp : public OsTemperature, NEO::NonCopyableAndNonMovableC
     SysFsAccessInterface *pSysfsAccess = nullptr;
     FsAccessInterface *pFsAccess = nullptr;
     SysmanProductHelper *pSysmanProductHelper = nullptr;
-    std::string temperatureEmergencyFile = {};
+    std::string packageMaxTemperatureFile = {};
+    std::string memoryMaxTemperatureFile = {};
     std::string memoryTemperatureFile = {};
     std::string gpuTemperatureFile = {};
-    bool temperatureEmergencyFileExists = false;
     bool memoryTemperatureFileExists = false;
     bool gpuTemperatureFileExists = false;
 };

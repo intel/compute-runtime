@@ -23,6 +23,8 @@ constexpr uint32_t invalidMaxTemperature = 125;
 constexpr uint32_t invalidMinTemperature = 10;
 constexpr double expectedMemoryTemperature = 39.0;
 constexpr double expectedGpuTemperature = 45.0;
+constexpr double expectedPackageEmergencyTemperature = 125.0;
+constexpr double expectedMemoryEmergencyTemperature = 111.0;
 
 class SysmanMultiDeviceTemperatureFixture : public SysmanMultiDeviceFixture {
   protected:
@@ -336,11 +338,12 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenHwmonTemp2EmergencyFileWhenGettingPr
     EXPECT_EQ(ZES_TEMP_SENSORS_GPU, properties.type);
     EXPECT_FALSE(properties.onSubdevice);
     EXPECT_EQ(0u, properties.subdeviceId);
-    EXPECT_DOUBLE_EQ(125.0, properties.maxTemperature);
+    EXPECT_DOUBLE_EQ(expectedPackageEmergencyTemperature, properties.maxTemperature);
 }
 
 TEST_F(SysmanDeviceTemperatureFixture, GivenSubdeviceHandleWhenGettingPropertiesThenSubdeviceMetadataAndMaxTemperatureAreReturned) {
     setUpHwmonKmdInterfaceXe();
+    pFsAccess->temp3EmergencyExists = true;
 
     PublicLinuxTemperatureImp temperatureImp(pOsSysman, true, 1u, 0u);
     temperatureImp.setSensorType(ZES_TEMP_SENSORS_MEMORY);
@@ -350,7 +353,7 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenSubdeviceHandleWhenGettingProperties
     EXPECT_EQ(ZES_TEMP_SENSORS_MEMORY, properties.type);
     EXPECT_TRUE(properties.onSubdevice);
     EXPECT_EQ(1u, properties.subdeviceId);
-    EXPECT_DOUBLE_EQ(125.0, properties.maxTemperature);
+    EXPECT_DOUBLE_EQ(expectedMemoryEmergencyTemperature, properties.maxTemperature);
 }
 
 TEST_F(SysmanDeviceTemperatureFixture, GivenHwmonScanFailureWhenGettingPropertiesThenDefaultMaxTemperatureIsReturned) {
@@ -402,6 +405,118 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenTemp2EmergencyReadFailureWhenGetting
     zes_temp_properties_t properties = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, temperatureImp.getProperties(&properties));
     EXPECT_DOUBLE_EQ(defaultMaxTemperature, properties.maxTemperature);
+}
+
+TEST_F(SysmanDeviceTemperatureFixture, GivenTemp3EmergencyNodeWhenGettingMemorySensorPropertiesThenMaxTemperatureIsReadFromMemoryChannel) {
+    setUpHwmonKmdInterfaceXe();
+    pFsAccess->temp3EmergencyExists = true;
+
+    PublicLinuxTemperatureImp temperatureImp(pOsSysman, false, 0u, 0u);
+    temperatureImp.setSensorType(ZES_TEMP_SENSORS_MEMORY);
+
+    zes_temp_properties_t properties = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, temperatureImp.getProperties(&properties));
+    EXPECT_EQ(ZES_TEMP_SENSORS_MEMORY, properties.type);
+    EXPECT_DOUBLE_EQ(expectedMemoryEmergencyTemperature, properties.maxTemperature);
+}
+
+TEST_F(SysmanDeviceTemperatureFixture, GivenTemp3EmergencyNodeMissingWhenGettingMemorySensorPropertiesThenDefaultMaxTemperatureIsReturned) {
+    setUpHwmonKmdInterfaceXe();
+    pFsAccess->temp3EmergencyExists = false;
+
+    PublicLinuxTemperatureImp temperatureImp(pOsSysman, false, 0u, 0u);
+    temperatureImp.setSensorType(ZES_TEMP_SENSORS_MEMORY);
+
+    zes_temp_properties_t properties = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, temperatureImp.getProperties(&properties));
+    EXPECT_DOUBLE_EQ(defaultMaxTemperature, properties.maxTemperature);
+}
+
+TEST_F(SysmanDeviceTemperatureFixture, GivenTemp2EmergencyNodeMissingWhenGettingMemorySensorPropertiesThenMaxTemperatureIsStillReadFromTemp3Emergency) {
+    setUpHwmonKmdInterfaceXe();
+    pFsAccess->temp2EmergencyExists = false;
+    pFsAccess->temp3EmergencyExists = true;
+
+    PublicLinuxTemperatureImp temperatureImp(pOsSysman, false, 0u, 0u);
+    temperatureImp.setSensorType(ZES_TEMP_SENSORS_MEMORY);
+
+    zes_temp_properties_t properties = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, temperatureImp.getProperties(&properties));
+    EXPECT_DOUBLE_EQ(expectedMemoryEmergencyTemperature, properties.maxTemperature);
+}
+
+TEST_F(SysmanDeviceTemperatureFixture, GivenTemp3EmergencyReadFailureWhenGettingMemorySensorPropertiesThenDefaultMaxTemperatureIsReturned) {
+    setUpHwmonKmdInterfaceXe();
+    pFsAccess->temp3EmergencyExists = true;
+    pFsAccess->temp3EmergencyReadResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+
+    PublicLinuxTemperatureImp temperatureImp(pOsSysman, false, 0u, 0u);
+    temperatureImp.setSensorType(ZES_TEMP_SENSORS_MEMORY);
+
+    zes_temp_properties_t properties = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, temperatureImp.getProperties(&properties));
+    EXPECT_DOUBLE_EQ(defaultMaxTemperature, properties.maxTemperature);
+}
+
+TEST_F(SysmanDeviceTemperatureFixture, GivenMemoryChannelNodeWhenGettingPropertiesForNonMemorySensorsThenPackageMaxTemperatureIsReturned) {
+    setUpHwmonKmdInterfaceXe();
+    pFsAccess->temp3EmergencyExists = true;
+
+    const std::vector<zes_temp_sensors_t> nonMemorySensorTypes = {ZES_TEMP_SENSORS_GLOBAL, ZES_TEMP_SENSORS_GPU, ZES_TEMP_SENSORS_VOLTAGE_REGULATOR,
+                                                                  ZES_TEMP_SENSORS_GPU_BOARD, ZES_TEMP_SENSORS_VOLTAGE_REGULATOR_SINGLE,
+                                                                  ZES_TEMP_SENSORS_GPU_BOARD_SINGLE, ZES_TEMP_SENSORS_COMPOSITE};
+    for (const auto sensorType : nonMemorySensorTypes) {
+        PublicLinuxTemperatureImp temperatureImp(pOsSysman, false, 0u, 0u);
+        temperatureImp.setSensorType(sensorType);
+
+        zes_temp_properties_t properties = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, temperatureImp.getProperties(&properties));
+        EXPECT_EQ(sensorType, properties.type);
+        EXPECT_DOUBLE_EQ(expectedPackageEmergencyTemperature, properties.maxTemperature);
+    }
+}
+
+HWTEST2_F(SysmanDeviceTemperatureFixture, GivenTemp3EmergencyNodeWhenQueryingTemperaturePropertiesThroughApiThenMemorySensorReportsVramEmergencyTemperature, IsBmgOrCri) {
+    setUpHwmonKmdInterfaceXe();
+    pFsAccess->memoryTemperatureExists = true;
+    pFsAccess->temp3EmergencyExists = true;
+
+    uint32_t count = 0;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumTemperatureSensors(device->toHandle(), &count, nullptr));
+    ASSERT_GT(count, 0u);
+    std::vector<zes_temp_handle_t> handles(count, nullptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumTemperatureSensors(device->toHandle(), &count, handles.data()));
+
+    bool memorySensorFound = false;
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+        zes_temp_properties_t properties = {};
+        ASSERT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetProperties(handle, &properties));
+        if (properties.type == ZES_TEMP_SENSORS_MEMORY) {
+            memorySensorFound = true;
+            EXPECT_DOUBLE_EQ(expectedMemoryEmergencyTemperature, properties.maxTemperature);
+        } else {
+            EXPECT_DOUBLE_EQ(expectedPackageEmergencyTemperature, properties.maxTemperature);
+        }
+    }
+    EXPECT_TRUE(memorySensorFound);
+}
+
+TEST_F(SysmanDeviceTemperatureFixture, GivenTemp3EmergencyNodeAppearingAfterReInitWhenGettingMemorySensorPropertiesThenMemoryChannelMaxTemperatureIsReturned) {
+    setUpHwmonKmdInterfaceXe();
+
+    PublicLinuxTemperatureImp temperatureImp(pOsSysman, false, 0u, 0u);
+    temperatureImp.setSensorType(ZES_TEMP_SENSORS_MEMORY);
+
+    zes_temp_properties_t properties = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, temperatureImp.getProperties(&properties));
+    EXPECT_DOUBLE_EQ(defaultMaxTemperature, properties.maxTemperature);
+
+    pFsAccess->temp3EmergencyExists = true;
+    temperatureImp.reInit();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, temperatureImp.getProperties(&properties));
+    EXPECT_DOUBLE_EQ(expectedMemoryEmergencyTemperature, properties.maxTemperature);
 }
 
 TEST_F(SysmanDeviceTemperatureFixture, GivenDevicePciBdfIsUnresolvableWhenGettingPropertiesThenDefaultMaxTemperatureIsReturned) {

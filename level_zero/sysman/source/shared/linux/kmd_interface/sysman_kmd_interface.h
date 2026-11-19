@@ -121,7 +121,8 @@ enum class SysfsName {
 
 enum class NodeName {
     amcAlertReason,
-    temperatureEmergency,
+    packageTemperatureEmergency,
+    memoryTemperatureEmergency,
     memoryTemperature,
     gpuTemperature,
 };

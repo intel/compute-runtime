@@ -143,7 +143,8 @@ TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceWhenGettingHwMonN
 TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceWhenGettingNodeFileNamesThenEmptyNamesAreReturned) {
     auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
     EXPECT_TRUE(pSysmanKmdInterface->getNodeFileName(NodeName::amcAlertReason).empty());
-    EXPECT_TRUE(pSysmanKmdInterface->getNodeFileName(NodeName::temperatureEmergency).empty());
+    EXPECT_TRUE(pSysmanKmdInterface->getNodeFileName(NodeName::packageTemperatureEmergency).empty());
+    EXPECT_TRUE(pSysmanKmdInterface->getNodeFileName(NodeName::memoryTemperatureEmergency).empty());
     EXPECT_TRUE(pSysmanKmdInterface->getNodeFileName(NodeName::memoryTemperature).empty());
     EXPECT_TRUE(pSysmanKmdInterface->getNodeFileName(NodeName::gpuTemperature).empty());
 }

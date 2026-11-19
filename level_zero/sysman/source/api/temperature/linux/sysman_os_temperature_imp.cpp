@@ -38,15 +38,23 @@ ze_result_t LinuxTemperatureImp::getProperties(zes_temp_properties_t *pPropertie
     return ZE_RESULT_SUCCESS;
 }
 
+const std::string &LinuxTemperatureImp::getMaxTemperatureFile() const {
+    if (type == ZES_TEMP_SENSORS_MEMORY) {
+        return memoryMaxTemperatureFile;
+    }
+    return packageMaxTemperatureFile;
+}
+
 ze_result_t LinuxTemperatureImp::getMaxTemperature(double &temperature) {
-    if (!temperatureEmergencyFileExists) {
+    const std::string &maxTemperatureFile = getMaxTemperatureFile();
+    if (maxTemperatureFile.empty()) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
     int32_t maxTemperature = 0;
-    auto result = pFsAccess->read(temperatureEmergencyFile, maxTemperature);
+    auto result = pFsAccess->read(maxTemperatureFile, maxTemperature);
     if (result != ZE_RESULT_SUCCESS) {
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): FsAccess->read() failed to read %s and returning error:0x%x \n", NEO_FUNCTION_NAME, temperatureEmergencyFile.c_str(), result);
+        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): FsAccess->read() failed to read %s and returning error:0x%x \n", NEO_FUNCTION_NAME, maxTemperatureFile.c_str(), result);
         return result;
     }
 
@@ -145,10 +153,10 @@ bool LinuxTemperatureImp::isIntelGraphicsHwmonDir(const std::string &name) {
 }
 
 void LinuxTemperatureImp::reInit() {
-    temperatureEmergencyFile.clear();
+    packageMaxTemperatureFile.clear();
+    memoryMaxTemperatureFile.clear();
     memoryTemperatureFile.clear();
     gpuTemperatureFile.clear();
-    temperatureEmergencyFileExists = false;
     memoryTemperatureFileExists = false;
     gpuTemperatureFileExists = false;
     init();
@@ -185,8 +193,17 @@ bool LinuxTemperatureImp::probeHwmonTemperatureFile(const std::string &hwmonDir,
     return pFsAccess->fileExists(temperatureFile);
 }
 
+std::string LinuxTemperatureImp::probeMaxTemperatureFile(const std::string &hwmonDir, const std::string &fileName) {
+    std::string maxTemperatureFile;
+    if (probeHwmonTemperatureFile(hwmonDir, fileName, maxTemperatureFile)) {
+        return maxTemperatureFile;
+    }
+    return {};
+}
+
 void LinuxTemperatureImp::init() {
-    const auto temperatureEmergencyFileName = pSysmanKmdInterface->getNodeFileName(NodeName::temperatureEmergency);
+    const auto packageEmergencyFileName = pSysmanKmdInterface->getNodeFileName(NodeName::packageTemperatureEmergency);
+    const auto memoryEmergencyFileName = pSysmanKmdInterface->getNodeFileName(NodeName::memoryTemperatureEmergency);
     const bool isTemperatureReadFromSysfsSupported = pSysmanProductHelper->isTemperatureReadFromSysfsSupported();
     const auto memoryTemperatureFileName = isTemperatureReadFromSysfsSupported
                                                ? pSysmanKmdInterface->getNodeFileName(NodeName::memoryTemperature)
@@ -194,7 +211,8 @@ void LinuxTemperatureImp::init() {
     const auto gpuTemperatureFileName = isTemperatureReadFromSysfsSupported
                                             ? pSysmanKmdInterface->getNodeFileName(NodeName::gpuTemperature)
                                             : std::string{};
-    if (temperatureEmergencyFileName.empty() && memoryTemperatureFileName.empty() && gpuTemperatureFileName.empty()) {
+    if (packageEmergencyFileName.empty() && memoryEmergencyFileName.empty() && memoryTemperatureFileName.empty() &&
+        gpuTemperatureFileName.empty()) {
         return;
     }
     if (pSysfsAccess->getDevicePciPath().empty()) {
@@ -206,7 +224,8 @@ void LinuxTemperatureImp::init() {
         return;
     }
 
-    temperatureEmergencyFileExists = probeHwmonTemperatureFile(intelGraphicsHwmonDir, temperatureEmergencyFileName, temperatureEmergencyFile);
+    packageMaxTemperatureFile = probeMaxTemperatureFile(intelGraphicsHwmonDir, packageEmergencyFileName);
+    memoryMaxTemperatureFile = probeMaxTemperatureFile(intelGraphicsHwmonDir, memoryEmergencyFileName);
     memoryTemperatureFileExists = probeHwmonTemperatureFile(intelGraphicsHwmonDir, memoryTemperatureFileName, memoryTemperatureFile);
     gpuTemperatureFileExists = probeHwmonTemperatureFile(intelGraphicsHwmonDir, gpuTemperatureFileName, gpuTemperatureFile);
 }
