@@ -245,6 +245,16 @@ bool ExecutionEnvironment::getSubDeviceHierarchy(uint32_t index, std::tuple<uint
     }
 }
 
+static bool parseAffinityMaskIndex(const std::string &value, uint32_t &index) {
+    char *endPtr = nullptr;
+    auto parsedValue = std::strtoull(value.c_str(), &endPtr, 0);
+    if (endPtr == value.c_str() || parsedValue > std::numeric_limits<uint32_t>::max()) {
+        return false;
+    }
+    index = static_cast<uint32_t>(parsedValue);
+    return true;
+}
+
 void ExecutionEnvironment::parseAffinityMask() {
     const auto &affinityMaskString = debugManager.flags.ZE_AFFINITY_MASK.get();
 
@@ -287,7 +297,14 @@ void ExecutionEnvironment::parseAffinityMask() {
     uint32_t deviceIndex = 0;
     for (const auto &entry : affinityMaskEntries) {
         auto subEntries = StringHelpers::split(entry, ".");
-        uint32_t entryIndex = StringHelpers::toUint32t(subEntries[0]);
+        uint32_t entryIndex = 0u;
+        uint32_t subDeviceIndex = 0u;
+        if (subEntries.empty() || subEntries.size() > 2 ||
+            !parseAffinityMaskIndex(subEntries[0], entryIndex) ||
+            (subEntries.size() == 2 && !parseAffinityMaskIndex(subEntries[1], subDeviceIndex))) {
+            PRINT_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "Error: Invalid ZE_AFFINITY_MASK format - %s\n", entry.c_str());
+            continue;
+        }
 
         if (entryIndex >= numDevices) {
             continue;
@@ -311,16 +328,10 @@ void ExecutionEnvironment::parseAffinityMask() {
             auto subDevicesCount = GfxCoreHelper::getSubDevicesCount(hwInfo);
 
             if (subEntries.size() > 1) {
-                uint32_t subDeviceIndex = StringHelpers::toUint32t(subEntries[1]);
-
                 if (subDeviceIndex < subDevicesCount) {
-                    if (subEntries.size() == 2) {
-                        // Store the Physical Hierarchy for this SubDevice mapped to the Device Index passed to the user.
-                        mapOfSubDeviceIndices[entryIndex] = std::make_tuple(entryIndex, subDeviceIndex, subDevicesCount);
-                        affinityMaskHelper[entryIndex].enableGenericSubDevice(subDeviceIndex); // Mask: X.Y
-                    } else {
-                        UNRECOVERABLE_IF(subEntries.size() != 3);
-                    }
+                    // Store the Physical Hierarchy for this SubDevice mapped to the Device Index passed to the user.
+                    mapOfSubDeviceIndices[entryIndex] = std::make_tuple(entryIndex, subDeviceIndex, subDevicesCount);
+                    affinityMaskHelper[entryIndex].enableGenericSubDevice(subDeviceIndex); // Mask: X.Y
                 }
             } else {
                 affinityMaskHelper[entryIndex].enableAllGenericSubDevices(subDevicesCount); // Mask: X

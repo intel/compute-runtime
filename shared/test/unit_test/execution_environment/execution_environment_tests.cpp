@@ -633,6 +633,71 @@ TEST(ExecutionEnvironment, givenIncorrectZeAffinityMaskWithFlatOrCombinedHierarc
     }
 }
 
+TEST(ExecutionEnvironment, givenZeAffinityMaskWithInvalidEntriesWhenParsingAffinityMaskThenOnlyValidEntriesSelectDevices) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.CreateMultipleSubDevices.set(2);
+
+    struct TestCase {
+        const char *mask;
+        size_t expectedRootDevicesComposite;
+        size_t expectedRootDevicesFlat;
+    };
+    const TestCase testCases[] = {
+        {"a,1", 1u, 1u},
+        {"0,,1", 2u, 1u},
+        {"99999999999999999999,1", 1u, 1u},
+        {"4294967296,1", 1u, 1u},
+        {"0x1", 1u, 1u},
+        {"0.a,1", 1u, 1u},
+        {"0.4294967296,1", 1u, 1u},
+        {"0.0.0.0,1", 1u, 1u},
+    };
+
+    for (const auto &testCase : testCases) {
+        debugManager.flags.ZE_AFFINITY_MASK.set(testCase.mask);
+        for (auto deviceHierarchyMode : {DeviceHierarchyMode::composite, DeviceHierarchyMode::flat}) {
+            MockExecutionEnvironment executionEnvironment(defaultHwInfo.get(), true, 2u);
+            executionEnvironment.setDeviceHierarchyMode(deviceHierarchyMode);
+
+            executionEnvironment.parseAffinityMask();
+
+            auto expectedRootDevices = deviceHierarchyMode == DeviceHierarchyMode::composite ? testCase.expectedRootDevicesComposite : testCase.expectedRootDevicesFlat;
+            EXPECT_EQ(expectedRootDevices, executionEnvironment.rootDeviceEnvironments.size()) << "Failed for mask: " << testCase.mask << ", hierarchy: " << static_cast<int>(deviceHierarchyMode);
+        }
+    }
+}
+
+TEST(ExecutionEnvironment, givenZeAffinityMaskWithInvalidEntriesWhenParsingAffinityMaskThenErrorIsPrintedForEachInvalidEntryOnlyWithPrintDebugMessages) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.CreateMultipleSubDevices.set(2);
+    debugManager.flags.ZE_AFFINITY_MASK.set("a,,0.b,99.a,0.0.0,0.9.0.0,99999999999999999999,0.99999999999999999999,4294967296,99,0.1,1");
+    const std::string message = "Error: Invalid ZE_AFFINITY_MASK format - ";
+
+    for (auto deviceHierarchyMode : {DeviceHierarchyMode::composite, DeviceHierarchyMode::flat}) {
+        for (bool printDebugMessages : {false, true}) {
+            debugManager.flags.PrintDebugMessages.set(printDebugMessages);
+            MockExecutionEnvironment executionEnvironment(defaultHwInfo.get(), true, 2u);
+            executionEnvironment.setDeviceHierarchyMode(deviceHierarchyMode);
+
+            StreamCapture capture;
+            capture.captureStderr();
+            executionEnvironment.parseAffinityMask();
+            std::string output = capture.getCapturedStderr();
+
+            if (!printDebugMessages) {
+                EXPECT_EQ(std::string::npos, output.find(message));
+                continue;
+            }
+            for (const char *invalidEntry : {"a", "", "0.b", "99.a", "0.0.0", "0.9.0.0", "99999999999999999999", "0.99999999999999999999", "4294967296"}) {
+                EXPECT_NE(std::string::npos, output.find(message + invalidEntry + "\n")) << "Missing message for: " << invalidEntry << ", hierarchy: " << static_cast<int>(deviceHierarchyMode);
+            }
+            for (const char *acceptedEntry : {"99", "0.1", "1"}) {
+                EXPECT_EQ(std::string::npos, output.find(message + acceptedEntry + "\n")) << "Unexpected message for: " << acceptedEntry << ", hierarchy: " << static_cast<int>(deviceHierarchyMode);
+            }
+        }
+    }
+}
+
 TEST(ExecutionEnvironment, givenBuiltinsSetWhenRootDeviceEnvironmentIsReleasedThenBuiltinsIsReset) {
     auto hwInfo = *defaultHwInfo;
     MockExecutionEnvironment executionEnvironment(&hwInfo);
