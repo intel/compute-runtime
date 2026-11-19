@@ -220,7 +220,7 @@ constexpr bool operator!=(ConstStringRef matcher, Token token) {
 }
 
 constexpr bool operator==(Token token, char matcher) {
-    return ((matcher == token.traits.character0) & (token.len = 1U));
+    return ((matcher == token.traits.character0) & (token.len == 1U));
 }
 
 constexpr bool operator==(char matcher, Token token) {
@@ -498,6 +498,9 @@ struct YamlParser {
     }
 
     bool parse(const ConstStringRef text, std::string &outErrReason, std::string &outWarning) {
+        lines.clear();
+        tokens.clear();
+        nodes.clear();
         auto success = NEO::Yaml::tokenize(text, lines, tokens, outErrReason, outWarning);
         success = success && NEO::Yaml::buildTree(lines, tokens, nodes, outErrReason, outWarning);
         if (false == success) {
@@ -778,6 +781,9 @@ inline bool YamlParser::readValueChecked<bool>(const Node &node, bool &outValue)
 
 template <>
 inline bool YamlParser::readValueChecked<std::string>(const Node &node, std::string &outValue) const {
+    if (invalidTokenId == node.value) {
+        return false;
+    }
     const auto &token = tokens[node.value];
     if (Token::Type::literalString != token.traits.type) {
         return false;

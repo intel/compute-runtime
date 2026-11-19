@@ -7,6 +7,8 @@
 
 #include "shared/source/device_binary_format/yaml/yaml_parser.h"
 
+#include <algorithm>
+
 namespace NEO {
 
 namespace Yaml {
@@ -65,18 +67,20 @@ struct TokenizerContext {
 
 bool tokenizeEndLine(ConstStringRef text, LinesCache &outLines, TokensCache &outTokens, std::string &outErrReason, std::string &outWarning, TokenizerContext &context) {
     TokenId lineEnd = static_cast<uint32_t>(outTokens.size());
-    outTokens.push_back(Token(ConstStringRef(context.pos, 1), Token::singleCharacter));
+    const bool isEndOfText = (context.pos >= context.end);
+    const char *errPos = isEndOfText ? context.end - 1 : context.pos;
+    outTokens.push_back(Token(isEndOfText ? ConstStringRef("\n", 1) : ConstStringRef(context.pos, 1), Token::singleCharacter));
     auto lineBegToken = outTokens[context.lineBegin];
     Line::LineType lineType = Line::LineType::empty;
     if (lineEnd != context.lineBegin) {
         switch (lineBegToken.traits.type) {
         default:
-            outErrReason = constructYamlError(outLines.size(), lineBegToken.pos, context.pos, "Internal error - undefined line type");
+            outErrReason = constructYamlError(outLines.size(), lineBegToken.pos, errPos, "Internal error - undefined line type");
             return false;
         case Token::singleCharacter:
             switch (lineBegToken.traits.character0) {
             default:
-                outErrReason = constructYamlError(outLines.size(), lineBegToken.pos, context.pos, (std::string("Unhandled keyword character : ") + lineBegToken.traits.character0).c_str());
+                outErrReason = constructYamlError(outLines.size(), lineBegToken.pos, errPos, (std::string("Unhandled keyword character : ") + lineBegToken.traits.character0).c_str());
                 return false;
             case '#':
                 lineType = Line::LineType::comment;
@@ -98,7 +102,9 @@ bool tokenizeEndLine(ConstStringRef text, LinesCache &outLines, TokensCache &out
         }
     }
     outLines.push_back(Line{lineType, static_cast<uint16_t>(context.lineIndent), context.lineBegin, lineEnd, context.lineTraits});
-    ++context.pos;
+    if (false == isEndOfText) {
+        ++context.pos;
+    }
 
     context.lineIndent = 0U;
     context.lineBegin = static_cast<uint32_t>(outTokens.size());
@@ -109,8 +115,8 @@ bool tokenizeEndLine(ConstStringRef text, LinesCache &outLines, TokensCache &out
 }
 
 bool isValidInlineCollectionFormat(const char *context, const char *contextEnd) {
-    auto consumeAlphaNum = [](const char *&text) {
-        while (isAlphaNumeric(*text)) {
+    auto consumeAlphaNum = [contextEnd](const char *&text) {
+        while ((text < contextEnd) && isAlphaNumeric(*text)) {
             text++;
         }
     };
@@ -121,6 +127,8 @@ bool isValidInlineCollectionFormat(const char *context, const char *contextEnd) 
     while (context < contextEnd && *context != '\n') {
         if (isWhitespace(*context)) {
             context++;
+        } else if (endCollection) {
+            return false;
         } else if (false == endNum) {
             if (*context == ']') {
                 context++;
@@ -131,7 +139,7 @@ bool isValidInlineCollectionFormat(const char *context, const char *contextEnd) 
             } else {
                 return false;
             }
-        } else if (false == endCollection) {
+        } else {
             if (*context == ',') {
                 context++;
                 endNum = false;
@@ -141,8 +149,6 @@ bool isValidInlineCollectionFormat(const char *context, const char *contextEnd) 
             } else {
                 return false;
             }
-        } else {
-            return false;
         }
     }
     return endCollection;
@@ -306,29 +312,34 @@ bool tokenize(ConstStringRef text, LinesCache &outLines, TokensCache &outTokens,
     } else {
         if ('\n' != *outTokens.rbegin()) {
             outWarning.append("NEO::Yaml : text does not end with newline\n");
-            tokenizeEndLine(text, outLines, outTokens, outErrReason, outWarning, context);
+            return tokenizeEndLine(text, outLines, outTokens, outErrReason, outWarning, context);
         }
     }
     return true;
 }
 
-void finalizeNode(NodeId nodeId, const TokensCache &tokens, NodesCache &outNodes, std::string &outErrReason, std::string &outWarning) {
+constexpr bool isEndOfLineContent(const Token &token) {
+    return ('\n' == token) || ('#' == token);
+}
+
+bool finalizeNode(NodeId nodeId, const TokensCache &tokens, NodesCache &outNodes, std::string &outErrReason, std::string &outWarning) {
     auto &node = outNodes[nodeId];
     if (invalidTokenId != node.key) {
-        return;
+        return true;
     }
     if (invalidTokenId == node.value) {
-        return;
+        return true;
     }
-    auto valueTokenIt = node.value + 1;
-    auto colon = invalidTokenId;
-    while ('\n' != tokens[valueTokenIt]) {
-        if (':' == tokens[valueTokenIt]) {
-            colon = valueTokenIt;
+    if ((':' != tokens[node.value + 1]) || isEndOfLineContent(tokens[node.value + 2])) {
+        auto contentEnd = node.value + 1;
+        while (false == isEndOfLineContent(tokens[contentEnd])) {
+            ++contentEnd;
         }
-        ++valueTokenIt;
+        const auto &firstTok = tokens[node.value];
+        const auto &lastTok = tokens[contentEnd - 1];
+        outErrReason = "NEO::Yaml : Could not parse list entry : [" + ConstStringRef(firstTok.pos, lastTok.pos + lastTok.len - firstTok.pos).str() + "]. Reason : Expected single-entry dictionary with a value\n";
+        return false;
     }
-    UNRECOVERABLE_IF((colon == invalidTokenId) || (colon + 1 == valueTokenIt));
     if (invalidNodeID != node.lastChildId) {
         outNodes[node.lastChildId].nextSiblingId = static_cast<NodeId>(outNodes.size());
     } else {
@@ -341,10 +352,11 @@ void finalizeNode(NodeId nodeId, const TokensCache &tokens, NodesCache &outNodes
     newNode.parentId = nodeId;
     node.lastChildId = outNodes.rbegin()->id;
     newNode.key = node.value;
-    newNode.value = colon + 1;
+    newNode.value = node.value + 2;
 
     node.value = invalidTokenId;
     ++node.numChildren;
+    return true;
 }
 
 bool isEmptyVector(const Token &token, size_t lineId, std::string &outError) {
@@ -373,20 +385,24 @@ bool buildTree(const LinesCache &lines, const TokensCache &tokens, NodesCache &o
             continue;
         }
         auto currLineIndent = lines[lineId].indent;
+        const auto &lineFirstTok = tokens[lines[lineId].first];
+        const auto &lastTokBeforeNewline = tokens[lines[lineId].last - 1];
+        const char *lineLastChar = lastTokBeforeNewline.pos + lastTokBeforeNewline.len - 1;
+        const bool isIndentedUnderValue = (Line::LineType::dictionaryEntry == lines[lastUsedLine].lineType) && (currLineIndent > lines[lastUsedLine].indent) && (false == isEndOfLineContent(tokens[lines[lastUsedLine].first + 2]));
 
-        if (currLineIndent == outNodes.rbegin()->indent) {
+        if ((false == isIndentedUnderValue) && (currLineIndent == outNodes.rbegin()->indent)) {
             if (lineId > 0u && false == isEmptyVector(tokens[lines[lastUsedLine].first], lastUsedLine, outErrReason)) {
                 return false;
             }
             reserveBasedOnEstimates(outNodes, static_cast<size_t>(0U), lines.size(), lineId, 2U);
             auto &prev = *outNodes.rbegin();
             auto &parent = outNodes[*nesting.rbegin()];
-            if (invalidNodeID != unfinalizedSingleEntryDictNodeId) {
-                finalizeNode(unfinalizedSingleEntryDictNodeId, tokens, outNodes, outErrReason, outWarning);
+            if ((invalidNodeID != unfinalizedSingleEntryDictNodeId) && (false == finalizeNode(unfinalizedSingleEntryDictNodeId, tokens, outNodes, outErrReason, outWarning))) {
+                return false;
             }
             auto &curr = addNode(outNodes, prev, parent);
             curr.indent = currLineIndent;
-        } else if (currLineIndent > outNodes.rbegin()->indent) {
+        } else if ((false == isIndentedUnderValue) && (currLineIndent > outNodes.rbegin()->indent)) {
             reserveBasedOnEstimates(outNodes, static_cast<size_t>(0U), lines.size(), lineId);
             auto &parent = *outNodes.rbegin();
             auto &curr = addNode(outNodes, parent);
@@ -395,20 +411,22 @@ bool buildTree(const LinesCache &lines, const TokensCache &tokens, NodesCache &o
         } else {
             while (currLineIndent < outNodes[*nesting.rbegin()].indent) {
                 reserveBasedOnEstimates(outNodes, static_cast<size_t>(0U), lines.size(), lineId);
-                finalizeNode(*nesting.rbegin(), tokens, outNodes, outErrReason, outWarning);
+                if (false == finalizeNode(*nesting.rbegin(), tokens, outNodes, outErrReason, outWarning)) {
+                    return false;
+                }
                 UNRECOVERABLE_IF(nesting.empty());
                 nesting.pop_back();
             }
-            bool hasInvalidIndent = (currLineIndent != outNodes[*nesting.rbegin()].indent);
+            bool hasInvalidIndent = (currLineIndent != outNodes[*nesting.rbegin()].indent) || (invalidNodeID == outNodes[*nesting.rbegin()].parentId);
             if (hasInvalidIndent) {
-                outErrReason = constructYamlError(lineId, tokens[lines[lineId].first].pos, tokens[lines[lineId].first].pos + 1, "Invalid indentation");
+                outErrReason = constructYamlError(lineId, lineFirstTok.pos, std::min(lineFirstTok.pos + 1, lineLastChar), "Invalid indentation");
                 return false;
             } else {
                 reserveBasedOnEstimates(outNodes, static_cast<size_t>(0U), lines.size(), lineId, 2U);
                 auto &prev = outNodes[*nesting.rbegin()];
                 auto &parent = outNodes[prev.parentId];
-                if (invalidNodeID != unfinalizedSingleEntryDictNodeId) {
-                    finalizeNode(unfinalizedSingleEntryDictNodeId, tokens, outNodes, outErrReason, outWarning);
+                if ((invalidNodeID != unfinalizedSingleEntryDictNodeId) && (false == finalizeNode(unfinalizedSingleEntryDictNodeId, tokens, outNodes, outErrReason, outWarning))) {
+                    return false;
                 }
                 auto &curr = addNode(outNodes, prev, parent);
                 curr.indent = currLineIndent;
@@ -417,23 +435,28 @@ bool buildTree(const LinesCache &lines, const TokensCache &tokens, NodesCache &o
         unfinalizedSingleEntryDictNodeId = invalidNodeID;
 
         if (Line::LineType::dictionaryEntry == lines[lineId].lineType) {
-            auto numTokensInLine = lines[lineId].last - lines[lineId].first + 1;
             outNodes.rbegin()->key = lines[lineId].first;
-            UNRECOVERABLE_IF(numTokensInLine < 3); // at least key, : and \n
+            if (':' != tokens[lines[lineId].first + 1]) {
+                outErrReason = constructYamlError(lineId, lineFirstTok.pos, lineFirstTok.pos + lineFirstTok.len - 1, "Expected ':' after key");
+                return false;
+            }
 
             if (lines[lineId].traits.hasInlineDataMarkers) {
                 auto collectionBeg = lines[lineId].first + 2;
                 auto collectionEnd = lines[lineId].last - 1;
-                UNRECOVERABLE_IF(tokens[collectionBeg].traits.type != Token::Type::collectionBeg || tokens[collectionEnd].traits.type != Token::Type::collectionEnd);
+                if (Token::Type::collectionBeg != tokens[collectionBeg].traits.type) {
+                    outErrReason = constructYamlError(lineId, lineFirstTok.pos, lineLastChar, "Inline collection must directly follow ':'");
+                    return false;
+                }
 
                 if (collectionEnd - collectionBeg > 1) {
                     auto parentNodeId = outNodes.size() - 1;
                     auto previousSiblingId = std::numeric_limits<size_t>::max();
+                    outNodes.reserve(outNodes.size() + (collectionEnd - collectionBeg) / 2);
 
                     for (auto currTokenId = collectionBeg + 1; currTokenId < collectionEnd; currTokenId += 2) {
                         auto tokenType = tokens[currTokenId].traits.type;
                         UNRECOVERABLE_IF(tokenType != Token::Type::literalNumber && tokenType != Token::Type::literalString);
-                        reserveBasedOnEstimates(outNodes, static_cast<size_t>(0U), lines.size(), lineId);
 
                         auto &parentNode = outNodes[parentNodeId];
                         if (previousSiblingId == std::numeric_limits<size_t>::max()) {
@@ -448,7 +471,7 @@ bool buildTree(const LinesCache &lines, const TokensCache &tokens, NodesCache &o
                     }
                     nesting.push_back(static_cast<NodeId>(parentNodeId));
                 }
-            } else if (('#' != tokens[lines[lineId].first + 2]) && ('\n' != tokens[lines[lineId].first + 2])) {
+            } else if (false == isEndOfLineContent(tokens[lines[lineId].first + 2])) {
                 outNodes.rbegin()->value = lines[lineId].first + 2;
             }
         } else {
@@ -457,9 +480,9 @@ bool buildTree(const LinesCache &lines, const TokensCache &tokens, NodesCache &o
             UNRECOVERABLE_IF(numTokensInLine < 2); // at least : - and \n
             UNRECOVERABLE_IF(Line::LineType::listEntry != lines[lineId].lineType);
             UNRECOVERABLE_IF('-' != tokens[lines[lineId].first]);
-            if (('#' != tokens[lines[lineId].first + 1]) && ('\n' != tokens[lines[lineId].first + 1])) {
+            if (false == isEndOfLineContent(tokens[lines[lineId].first + 1])) {
                 outNodes.rbegin()->value = lines[lineId].first + 1;
-                for (auto valueTokId = outNodes.rbegin()->value; valueTokId != lines[lineId].last; ++valueTokId) {
+                for (auto valueTokId = outNodes.rbegin()->value; false == isEndOfLineContent(tokens[valueTokId]); ++valueTokId) {
                     if (':' == tokens[valueTokId]) {
                         unfinalizedSingleEntryDictNodeId = outNodes.rbegin()->id;
                         break;
@@ -475,7 +498,9 @@ bool buildTree(const LinesCache &lines, const TokensCache &tokens, NodesCache &o
     }
     outNodes.reserve(outNodes.size() + nesting.size());
     while (false == nesting.empty()) {
-        finalizeNode(*nesting.rbegin(), tokens, outNodes, outErrReason, outWarning);
+        if (false == finalizeNode(*nesting.rbegin(), tokens, outNodes, outErrReason, outWarning)) {
+            return false;
+        }
         nesting.pop_back();
     }
     if (1U == outNodes.size()) {

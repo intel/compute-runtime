@@ -297,6 +297,10 @@ TEST(YamlTokenMatchers, WhenTokenIsComparedAgainstCharacterThenReturnTrueOnlyIfM
     EXPECT_FALSE(tokenString == '-');
     EXPECT_TRUE('-' != tokenString);
     EXPECT_TRUE(tokenString != '-');
+
+    NEO::Yaml::Token longerToken{"+x", NEO::Yaml::Token::identifier};
+    EXPECT_FALSE('+' == longerToken);
+    EXPECT_TRUE(longerToken != '+');
 }
 
 TEST(YamlLineTraits, WhenResetThenFlagsGetCleared) {
@@ -3374,4 +3378,202 @@ TEST(YamlParser, GivenManyMixedSiblingListItemsThenAllAreParsed) {
     ASSERT_NE(nullptr, root);
     auto childrenRange = parser.createChildrenRange(*root);
     EXPECT_EQ(items, static_cast<size_t>(std::distance(childrenRange.begin(), childrenRange.end())));
+}
+
+TEST(YamlTokenize, WhenTextDoesNotEndWithNewlineThenSyntheticNewlineDoesNotReferenceTextEnd) {
+    std::string text = "a: 1";
+    NEO::Yaml::LinesCache lines;
+    NEO::Yaml::TokensCache tokens;
+    std::string warnings;
+    std::string errors;
+    bool success = NEO::Yaml::tokenize(ConstStringRef(text.data(), text.size()), lines, tokens, errors, warnings);
+    EXPECT_TRUE(success);
+    ASSERT_EQ(1U, lines.size());
+    ASSERT_EQ(4U, tokens.size());
+    EXPECT_EQ('\n', tokens[3].traits.character0);
+    EXPECT_EQ(1U, tokens[3].len);
+    EXPECT_NE(text.data() + text.size(), tokens[3].pos);
+}
+
+TEST(YamlTokenize, WhenLastLineWithoutNewlineIsInvalidThenTokenizeFails) {
+    std::string text = "a: 1\n:";
+    NEO::Yaml::LinesCache lines;
+    NEO::Yaml::TokensCache tokens;
+    std::string warnings;
+    std::string errors;
+    bool success = NEO::Yaml::tokenize(ConstStringRef(text.data(), text.size()), lines, tokens, errors, warnings);
+    EXPECT_FALSE(success);
+    EXPECT_STREQ("NEO::Yaml : Could not parse line : [1] : [:] <-- parser position on error. Reason : Unhandled keyword character : :\n", errors.c_str());
+}
+
+TEST(YamlIsValidInlineCollectionFormat, WhenElementReachesEndThenStopAtEnd) {
+    const char truncated[] = {'[', 'a'};
+    EXPECT_FALSE(NEO::Yaml::isValidInlineCollectionFormat(truncated, truncated + sizeof(truncated)));
+    const char complete[] = "[ab]";
+    EXPECT_TRUE(NEO::Yaml::isValidInlineCollectionFormat(complete, complete + sizeof(complete) - 1));
+}
+
+TEST(YamlIsValidInlineCollectionFormat, GivenTextAfterClosingBracketThenFormatIsInvalid) {
+    for (ConstStringRef text : {ConstStringRef("[1,]2"), ConstStringRef("[1,]]"), ConstStringRef("[]]")}) {
+        EXPECT_FALSE(NEO::Yaml::isValidInlineCollectionFormat(text.begin(), text.end())) << text.str();
+    }
+}
+
+TEST(YamlParser, GivenTextWithoutTrailingNewlineThenValuesDoNotExtendPastText) {
+    std::string text = "a: 1\nb:";
+    NEO::Yaml::YamlParser parser;
+    std::string errors;
+    std::string warnings;
+    bool success = parser.parse(ConstStringRef(text.data(), text.size()), errors, warnings);
+    ASSERT_TRUE(success) << errors;
+    auto b = parser.getChild(*parser.getRoot(), "b");
+    ASSERT_NE(nullptr, b);
+    EXPECT_EQ(nullptr, parser.getValueToken(*b));
+    EXPECT_TRUE(parser.readValue(*b).empty());
+}
+
+TEST(YamlParser, GivenSingleEntryDictionaryListElementWithoutTrailingNewlineThenParseItCorrectly) {
+    std::string text = "units:\n  - filename: pkg.unit.0";
+    NEO::Yaml::YamlParser parser;
+    std::string errors;
+    std::string warnings;
+    bool success = parser.parse(ConstStringRef(text.data(), text.size()), errors, warnings);
+    ASSERT_TRUE(success) << errors;
+    auto units = parser.getChild(*parser.getRoot(), "units");
+    ASSERT_NE(nullptr, units);
+    ASSERT_EQ(1U, units->numChildren);
+    auto unit0 = parser.createChildrenRange(*units).begin();
+    auto fileNameNd = parser.getChild(*unit0, "filename");
+    ASSERT_NE(nullptr, fileNameNd);
+    EXPECT_EQ(std::string("pkg.unit.0"), parser.readValue(*fileNameNd).str());
+}
+
+static void expectParsingFails(ConstStringRef yaml, ConstStringRef expectedError) {
+    NEO::Yaml::YamlParser parser;
+    std::string errors;
+    std::string warnings;
+    EXPECT_FALSE(parser.parse(yaml, errors, warnings)) << yaml.str();
+    EXPECT_TRUE(parser.empty()) << yaml.str();
+    EXPECT_STREQ(expectedError.data(), errors.c_str()) << yaml.str();
+}
+
+TEST(YamlParser, GivenFirstEntryIndentedAndLaterEntryAtRootLevelThenParsingFails) {
+    expectParsingFails("  a: 1\nb: 2\n", "NEO::Yaml : Could not parse line : [1] : [b:] <-- parser position on error. Reason : Invalid indentation\n");
+    expectParsingFails("  a: [1, 2]\nb: 3\n", "NEO::Yaml : Could not parse line : [1] : [b:] <-- parser position on error. Reason : Invalid indentation\n");
+}
+
+TEST(YamlParser, GivenInvalidIndentationOnLastCharacterOfTextThenErrorDoesNotReadPastText) {
+    expectParsingFails("  a:\n n", "NEO::Yaml : Could not parse line : [1] : [n] <-- parser position on error. Reason : Invalid indentation\n");
+}
+
+TEST(YamlParser, GivenDictionaryEntryWithoutColonThenParsingFails) {
+    std::pair<ConstStringRef, ConstStringRef> cases[] = {
+        {"key\n", "NEO::Yaml : Could not parse line : [0] : [key] <-- parser position on error. Reason : Expected ':' after key\n"},
+        {"key \"x\" 5\n", "NEO::Yaml : Could not parse line : [0] : [key] <-- parser position on error. Reason : Expected ':' after key\n"},
+        {"key \"x\" [1]\n", "NEO::Yaml : Could not parse line : [0] : [key] <-- parser position on error. Reason : Expected ':' after key\n"}};
+    for (const auto &[yaml, expectedError] : cases) {
+        expectParsingFails(yaml, expectedError);
+    }
+}
+
+TEST(YamlParser, GivenListEntryThatIsNotSingleEntryDictionaryWithValueThenParsingFails) {
+    std::pair<ConstStringRef, ConstStringRef> cases[] = {
+        {"- a:\n", "NEO::Yaml : Could not parse list entry : [a:]. Reason : Expected single-entry dictionary with a value\n"},
+        {"- abc\n  x: 1\n", "NEO::Yaml : Could not parse list entry : [abc]. Reason : Expected single-entry dictionary with a value\n"},
+        {"l:\n  - a:\n  - b: 1\n", "NEO::Yaml : Could not parse list entry : [a:]. Reason : Expected single-entry dictionary with a value\n"},
+        {"l:\n  - abc\n    x: 1\nm: 2\n", "NEO::Yaml : Could not parse list entry : [abc]. Reason : Expected single-entry dictionary with a value\n"},
+        {"l:\n  - a:\nm: 2\n", "NEO::Yaml : Could not parse list entry : [a:]. Reason : Expected single-entry dictionary with a value\n"},
+        {"- a: # c\n", "NEO::Yaml : Could not parse list entry : [a:]. Reason : Expected single-entry dictionary with a value\n"},
+        {"- a 'x': 1\n", "NEO::Yaml : Could not parse list entry : [a 'x': 1]. Reason : Expected single-entry dictionary with a value\n"}};
+    for (const auto &[yaml, expectedError] : cases) {
+        expectParsingFails(yaml, expectedError);
+    }
+}
+
+TEST(YamlParser, GivenListEntryWithCommentContainingColonThenCommentIsIgnored) {
+    NEO::Yaml::YamlParser parser;
+    std::string errors;
+    std::string warnings;
+    bool success = parser.parse("l:\n  - abc #:\n  - a: 1 #:\n", errors, warnings);
+    ASSERT_TRUE(success) << errors;
+    auto l = parser.getChild(*parser.getRoot(), "l");
+    ASSERT_NE(nullptr, l);
+    ASSERT_EQ(2U, l->numChildren);
+    auto entries = parser.createChildrenRange(*l).begin();
+    EXPECT_STREQ("abc", parser.readValue(*entries).str().c_str());
+    ++entries;
+    auto a = parser.getChild(*entries, "a");
+    ASSERT_NE(nullptr, a);
+    EXPECT_STREQ("1", parser.readValue(*a).str().c_str());
+}
+
+TEST(YamlParser, GivenInlineCollectionNotDirectlyAfterColonThenParsingFails) {
+    expectParsingFails("key: x [1]\n", "NEO::Yaml : Could not parse line : [0] : [key: x [1]] <-- parser position on error. Reason : Inline collection must directly follow ':'\n");
+}
+
+TEST(YamlParser, GivenLineIndentedUnderDictionaryEntryWithValueThenParsingFails) {
+    for (ConstStringRef yaml : {ConstStringRef("a: 1\n  b: 1\n"), ConstStringRef("a: [1, 2]\n  b: 1\n"), ConstStringRef("a: [1, 2]\n b: 1\n"), ConstStringRef("a: []\n  b: 1\n")}) {
+        expectParsingFails(yaml, "NEO::Yaml : Could not parse line : [1] : [b:] <-- parser position on error. Reason : Invalid indentation\n");
+    }
+}
+
+TEST(YamlParser, GivenDictionaryEntryWithOnlyCommentAfterColonThenIndentedLineIsItsChild) {
+    NEO::Yaml::YamlParser parser;
+    std::string errors;
+    std::string warnings;
+    bool success = parser.parse("a: # c\n  b: 1\n", errors, warnings);
+    ASSERT_TRUE(success) << errors;
+    auto a = parser.getChild(*parser.getRoot(), "a");
+    ASSERT_NE(nullptr, a);
+    auto b = parser.getChild(*a, "b");
+    ASSERT_NE(nullptr, b);
+    EXPECT_STREQ("1", parser.readValue(*b).str().c_str());
+}
+
+TEST(YamlParser, GivenParserUsedTwiceThenSecondParseReplacesFirstTree) {
+    NEO::Yaml::YamlParser parser;
+    std::string errors;
+    std::string warnings;
+    ASSERT_TRUE(parser.parse("k: [a]\n", errors, warnings)) << errors;
+    ASSERT_TRUE(parser.parse("k: [a]\n", errors, warnings)) << errors;
+    EXPECT_EQ(1U, parser.getRoot()->numChildren);
+    auto k = parser.getChild(*parser.getRoot(), "k");
+    ASSERT_NE(nullptr, k);
+    EXPECT_EQ(1U, k->numChildren);
+}
+
+TEST(YamlParser, GivenLargeInlineCollectionOnFirstLineThenAllElementsAreParsed) {
+    constexpr size_t inlineElements = 700U;
+    std::string yaml = "caps: [";
+    for (size_t i = 0; i < inlineElements; ++i) {
+        if (i != 0) {
+            yaml += ", ";
+        }
+        yaml += std::to_string(i);
+    }
+    yaml += "]\n";
+
+    NEO::Yaml::YamlParser parser;
+    std::string errors;
+    std::string warnings;
+    bool success = parser.parse(yaml, errors, warnings);
+    ASSERT_TRUE(success) << errors;
+
+    const auto *capsNode = parser.findNodeWithKeyDfs("caps");
+    ASSERT_NE(nullptr, capsNode);
+    auto childrenRange = parser.createChildrenRange(*capsNode);
+    EXPECT_EQ(inlineElements, static_cast<size_t>(std::distance(childrenRange.begin(), childrenRange.end())));
+}
+
+TEST(YamlParser, GivenNodeWithoutValueWhenReadingStringValueThenReturnFalse) {
+    NEO::Yaml::YamlParser parser;
+    std::string errors;
+    std::string warnings;
+    bool success = parser.parse("a:\n  b: c\n", errors, warnings);
+    ASSERT_TRUE(success) << errors;
+    auto a = parser.getChild(*parser.getRoot(), "a");
+    ASSERT_NE(nullptr, a);
+    std::string value = "untouched";
+    EXPECT_FALSE(parser.readValueChecked(*a, value));
+    EXPECT_STREQ("untouched", value.c_str());
 }
