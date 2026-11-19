@@ -324,8 +324,8 @@ void MemoryManager::cleanGraphicsMemoryCreatedFromHostPtr(GraphicsAllocation *gr
     if (debugManager.flags.EnableUsmHostPtrFragments.get() == 1) {
         hostPtrManagerLock = hostPtrManager->obtainOwnership();
     }
-    hostPtrManager->releaseHandleStorage(graphicsAllocation->getRootDeviceIndex(), graphicsAllocation->fragmentsStorage);
-    cleanOsHandles(graphicsAllocation->fragmentsStorage, graphicsAllocation->getRootDeviceIndex());
+    hostPtrManager->releaseHandleStorage(graphicsAllocation->getRootDeviceIndex(), *graphicsAllocation->fragmentsStorage);
+    cleanOsHandles(*graphicsAllocation->fragmentsStorage, graphicsAllocation->getRootDeviceIndex());
 }
 
 void *MemoryManager::createMultiGraphicsAllocationInSystemMemoryPool(RootDeviceIndicesContainer &rootDeviceIndices, const AllocationProperties &requestedProperties, MultiGraphicsAllocation &multiGraphicsAllocation, void *ptr) {
@@ -422,7 +422,7 @@ void MemoryManager::freeGraphicsMemory(GraphicsAllocation *gfxAllocation, bool i
         }
     }
 
-    const bool hasFragments = gfxAllocation->fragmentsStorage.fragmentCount != 0;
+    const bool hasFragments = gfxAllocation->getFragmentCount() != 0;
     const bool isLocked = gfxAllocation->isLocked();
     DEBUG_BREAK_IF(hasFragments && isLocked);
 

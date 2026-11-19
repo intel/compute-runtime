@@ -351,7 +351,7 @@ void OsAgnosticMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllo
         return;
     }
 
-    if (gfxAllocation->fragmentsStorage.fragmentCount) {
+    if (gfxAllocation->getFragmentCount()) {
         cleanGraphicsMemoryCreatedFromHostPtr(gfxAllocation);
         delete gfxAllocation;
         return;
@@ -392,7 +392,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::createGraphicsAllocation(OsHandleSt
                                              reinterpret_cast<uint64_t>(allocationData.hostPtr), allocationData.size, counter.fetch_add(1),
                                              MemoryPool::system4KBPages, allocationData.rootDeviceIndex, false, allocationData.flags.flushL3, false);
 
-    allocation->fragmentsStorage = handleStorage;
+    allocation->fragmentsStorage = std::make_unique<OsHandleStorage>(handleStorage);
     return allocation;
 }
 

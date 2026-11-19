@@ -1372,7 +1372,7 @@ TEST_F(HostPtrAllocationTest, givenUsmHostPtrFragmentsEnabledWhenFreeingAllocati
         memoryManager->handleFenceCompletionCalled = 0u;
         auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, false, MemoryConstants::pageSize, csr->getOsContext().getDeviceBitfield()}, cpuPtr);
         ASSERT_NE(nullptr, allocation);
-        ASSERT_NE(0u, allocation->fragmentsStorage.fragmentCount);
+        ASSERT_NE(0u, allocation->getFragmentCount());
 
         memoryManager->freeGraphicsMemory(allocation);
         EXPECT_EQ(static_cast<uint32_t>(usmHostPtrFragments), memoryManager->handleFenceCompletionCalled.load());

@@ -113,8 +113,8 @@ bool WddmResidencyController::makeResidentResidencyAllocations(ResidencyContaine
             allocation->getResidencyData().resident[osContextId] = true;
             allocation->getResidencyData().updateCompletionData(currentFence, osContextId);
             DBG_LOG(ResidencyDebugEnable, "Residency:", NEO_FUNCTION_NAME, "allocation, gpu address = ", std::hex, allocation->getGpuAddress(), "fence value to reach for eviction = ", currentFence);
-            for (uint32_t allocationId = 0; allocationId < allocation->fragmentsStorage.fragmentCount; allocationId++) {
-                auto residencyData = allocation->fragmentsStorage.fragmentStorageData[allocationId].residency;
+            for (uint32_t allocationId = 0; allocationId < allocation->getFragmentCount(); allocationId++) {
+                auto residencyData = allocation->fragmentsStorage->fragmentStorageData[allocationId].residency;
                 residencyData->resident[osContextId] = true;
                 residencyData->updateCompletionData(currentFence, osContextId);
             }
@@ -150,15 +150,15 @@ size_t WddmResidencyController::fillHandlesContainer(ResidencyContainer &allocat
         WddmAllocation *allocation = static_cast<WddmAllocation *>(alloc);
         ResidencyData &residencyData = allocation->getResidencyData();
         static constexpr int maxFragments = 3;
-        const auto fragmentCount = allocation->fragmentsStorage.fragmentCount;
+        const auto fragmentCount = allocation->getFragmentCount();
         UNRECOVERABLE_IF(fragmentCount > maxFragments);
 
         DBG_LOG(ResidencyDebugEnable, "Residency:", NEO_FUNCTION_NAME, "allocation, gpu address = ", std::hex, allocation->getGpuAddress(), residencyData.resident[osContextId] ? "resident" : "not resident");
         bool isAlreadyResident = true;
         if (fragmentCount > 0) {
             for (uint32_t allocationId = 0; allocationId < fragmentCount; allocationId++) {
-                if (!allocation->fragmentsStorage.fragmentStorageData[allocationId].residency->resident[osContextId]) {
-                    handlesForResidency.push_back(static_cast<OsHandleWin *>(allocation->fragmentsStorage.fragmentStorageData[allocationId].osHandleStorage)->handle);
+                if (!allocation->fragmentsStorage->fragmentStorageData[allocationId].residency->resident[osContextId]) {
+                    handlesForResidency.push_back(static_cast<OsHandleWin *>(allocation->fragmentsStorage->fragmentStorageData[allocationId].osHandleStorage)->handle);
                     requiresBlockingResidencyHandling |= (allocation->getAllocationType() != AllocationType::buffer && allocation->getAllocationType() != AllocationType::bufferHostMemory);
                     isAlreadyResident = false;
                 }

@@ -250,7 +250,7 @@ TEST_F(BufferWithWddmMemory, GivenMisalignedHostPtrAndMultiplePagesSizeWhenAsked
     auto reqs = MockHostPtrManager::getAllocationRequirements(context.getDevice(0)->getRootDeviceIndex(), ptr, size);
 
     for (int i = 0; i < maxFragmentsCount; i++) {
-        auto osHandle = static_cast<OsHandleWin *>(graphicsAllocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage);
+        auto osHandle = static_cast<OsHandleWin *>(graphicsAllocation->fragmentsStorage->fragmentStorageData[i].osHandleStorage);
         EXPECT_NE(0u, osHandle->handle);
 
         EXPECT_NE(nullptr, osHandle->gmm);
@@ -287,15 +287,15 @@ TEST_F(BufferWithWddmMemory, GivenPointerAndSizeWhenAskedToCreateGrahicsAllocati
     EXPECT_EQ(ptr, allocation->getUnderlyingBuffer());
     EXPECT_EQ(size, allocation->getUnderlyingBufferSize());
 
-    EXPECT_EQ(ptr, allocation->fragmentsStorage.fragmentStorageData[0].cpuPtr);
-    EXPECT_EQ(ptr2, allocation->fragmentsStorage.fragmentStorageData[1].cpuPtr);
-    EXPECT_EQ(nullptr, allocation->fragmentsStorage.fragmentStorageData[2].cpuPtr);
+    EXPECT_EQ(ptr, allocation->fragmentsStorage->fragmentStorageData[0].cpuPtr);
+    EXPECT_EQ(ptr2, allocation->fragmentsStorage->fragmentStorageData[1].cpuPtr);
+    EXPECT_EQ(nullptr, allocation->fragmentsStorage->fragmentStorageData[2].cpuPtr);
 
-    EXPECT_EQ(size, allocation->fragmentsStorage.fragmentStorageData[0].fragmentSize);
-    EXPECT_EQ(size * 2, allocation->fragmentsStorage.fragmentStorageData[1].fragmentSize);
-    EXPECT_EQ(size * 3, allocation->fragmentsStorage.fragmentStorageData[2].fragmentSize);
+    EXPECT_EQ(size, allocation->fragmentsStorage->fragmentStorageData[0].fragmentSize);
+    EXPECT_EQ(size * 2, allocation->fragmentsStorage->fragmentStorageData[1].fragmentSize);
+    EXPECT_EQ(size * 3, allocation->fragmentsStorage->fragmentStorageData[2].fragmentSize);
 
-    EXPECT_NE(&allocation->fragmentsStorage, &handleStorage);
+    EXPECT_NE(allocation->fragmentsStorage.get(), &handleStorage);
     memoryManager->freeGraphicsMemory(allocation);
 }
 

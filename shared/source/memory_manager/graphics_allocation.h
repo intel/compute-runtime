@@ -551,7 +551,11 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
     MOCKABLE_VIRTUAL bool hasAllocationReadOnlyType();
     MOCKABLE_VIRTUAL void checkAllocationTypeReadOnlyRestrictions(const AllocationData &allocData);
 
-    OsHandleStorage fragmentsStorage;
+    uint32_t getFragmentCount() const {
+        return fragmentsStorage ? fragmentsStorage->fragmentCount : 0u;
+    }
+
+    std::unique_ptr<OsHandleStorage> fragmentsStorage;
     StorageInfo storageInfo = {};
 
     uint32_t getHostPtrTaskCountAssignment() const {

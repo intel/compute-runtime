@@ -159,10 +159,10 @@ XE_HPC_CORETEST_F(HostPtrAllocationWithClMemCacheClosTests, givenDrmAllocationWi
 
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, ptr);
     EXPECT_NE(allocation, nullptr);
-    EXPECT_EQ(3u, allocation->fragmentsStorage.fragmentCount);
+    EXPECT_EQ(3u, allocation->getFragmentCount());
 
     for (int i = 0; i < maxFragmentsCount; i++) {
-        auto bo = static_cast<OsHandleLinux *>(allocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage)->bo;
+        auto bo = static_cast<OsHandleLinux *>(allocation->fragmentsStorage->fragmentStorageData[i].osHandleStorage)->bo;
         EXPECT_EQ(CacheRegion::region1, bo->peekCacheRegion());
     }
 

@@ -646,8 +646,8 @@ HWTEST_TEMPLATED_F(WddmCommandStreamTest, givenAddressWithHighestBitSetWhenItIsM
     ASSERT_NE(nullptr, gfxAllocation);
     auto expectedAddress = castToUint64(faultyAddress);
     EXPECT_EQ(gfxAllocation->getGpuAddress(), expectedAddress);
-    ASSERT_EQ(gfxAllocation->fragmentsStorage.fragmentCount, 1u);
-    EXPECT_EQ(expectedAddress, static_cast<OsHandleWin *>(gfxAllocation->fragmentsStorage.fragmentStorageData[0].osHandleStorage)->gpuPtr);
+    ASSERT_EQ(gfxAllocation->getFragmentCount(), 1u);
+    EXPECT_EQ(expectedAddress, static_cast<OsHandleWin *>(gfxAllocation->fragmentsStorage->fragmentStorageData[0].osHandleStorage)->gpuPtr);
 
     memoryManager->freeGraphicsMemory(gfxAllocation);
 }

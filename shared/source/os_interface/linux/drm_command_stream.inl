@@ -294,8 +294,8 @@ void DrmCommandStreamReceiver<GfxFamily>::makeNonResident(GraphicsAllocation &gf
         if (this->residency.size() != 0) {
             this->residency.clear();
         }
-        for (auto fragmentId = 0u; fragmentId < gfxAllocation.fragmentsStorage.fragmentCount; fragmentId++) {
-            gfxAllocation.fragmentsStorage.fragmentStorageData[fragmentId].residency->resident[osContext->getContextId()] = false;
+        for (auto fragmentId = 0u; fragmentId < gfxAllocation.getFragmentCount(); fragmentId++) {
+            gfxAllocation.fragmentsStorage->fragmentStorageData[fragmentId].residency->resident[osContext->getContextId()] = false;
         }
     }
 

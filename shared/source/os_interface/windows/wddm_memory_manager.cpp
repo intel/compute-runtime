@@ -1040,7 +1040,7 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
 
     if (input->peekSharedHandle() == false &&
         input->getDriverAllocatedCpuPtr() == nullptr &&
-        input->fragmentsStorage.fragmentCount > 0) {
+        input->getFragmentCount() > 0) {
         cleanGraphicsMemoryCreatedFromHostPtr(gfxAllocation);
     } else {
         if (input->getResourceHandle() != 0) {
@@ -1123,7 +1123,7 @@ bool WddmMemoryManager::validateAllocation(WddmAllocation *alloc) {
     if (alloc->isPhysicalMemoryReservation() && !alloc->isMappedPhysicalMemoryReservation()) {
         return true;
     }
-    if (alloc->getDefaultHandle() == 0 && alloc->fragmentsStorage.fragmentCount == 0) {
+    if (alloc->getDefaultHandle() == 0 && alloc->getFragmentCount() == 0) {
         return false;
     }
     return true;
@@ -1214,7 +1214,7 @@ GraphicsAllocation *WddmMemoryManager::createGraphicsAllocation(OsHandleStorage 
                                          allocationData.size, nullptr, MemoryPool::system4KBPages,
                                          0u, // shareable
                                          maxOsContextCount);
-    allocation->fragmentsStorage = handleStorage;
+    allocation->fragmentsStorage = std::make_unique<OsHandleStorage>(handleStorage);
     return allocation;
 }
 

@@ -1046,8 +1046,8 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenAllocateGraphicsMemory
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), false, size}, ptr);
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryPool::system4KBPages, allocation->getMemoryPool());
-    for (size_t i = 0; i < allocation->fragmentsStorage.fragmentCount; i++) {
-        auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(static_cast<OsHandleWin *>(allocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage)->gmm->resourceParamsData.data());
+    for (size_t i = 0; i < allocation->getFragmentCount(); i++) {
+        auto *gmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(static_cast<OsHandleWin *>(allocation->fragmentsStorage->fragmentStorageData[i].osHandleStorage)->gmm->resourceParamsData.data());
         EXPECT_EQ(1u, gmmResourceParams->Flags.Info.NonLocalOnly);
     }
     memoryManager->freeGraphicsMemory(allocation);
@@ -4587,7 +4587,7 @@ TEST_F(WddmMemoryManagerTest, GivenNullptrWhenAllocating32BitMemoryThenAddressIs
     EXPECT_LT(gmmHelper->canonize(memoryManager->getGfxPartition(0)->getHeapBase(HeapIndex::heapExternal)), gpuAllocation->getGpuAddress());
     EXPECT_GT(gmmHelper->canonize(memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::heapExternal)), gpuAllocation->getGpuAddress() + gpuAllocation->getUnderlyingBufferSize());
 
-    EXPECT_EQ(0u, gpuAllocation->fragmentsStorage.fragmentCount);
+    EXPECT_EQ(0u, gpuAllocation->getFragmentCount());
     memoryManager->freeGraphicsMemory(gpuAllocation);
 }
 
@@ -4617,7 +4617,7 @@ TEST_F(WddmMemoryManagerTest, GivenMisalignedHostPtrWhenAllocating32BitMemoryThe
     EXPECT_LT(gmmHelper->canonize(memoryManager->getGfxPartition(rootDeviceIndex)->getHeapBase(HeapIndex::heapExternal)), gpuAllocation->getGpuAddress());
     EXPECT_GT(gmmHelper->canonize(memoryManager->getGfxPartition(rootDeviceIndex)->getHeapLimit(HeapIndex::heapExternal)), gpuAllocation->getGpuAddress() + gpuAllocation->getUnderlyingBufferSize());
 
-    EXPECT_EQ(0u, gpuAllocation->fragmentsStorage.fragmentCount);
+    EXPECT_EQ(0u, gpuAllocation->getFragmentCount());
 
     void *alignedPtr = alignDown(misalignedPtr, MemoryConstants::allocationAlignment);
     uint64_t offset = ptrDiff(misalignedPtr, alignedPtr);

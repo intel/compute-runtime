@@ -545,7 +545,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocation(OsHandleStorage &
     auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(hostPtr));
     auto allocation = std::make_unique<DrmAllocation>(allocationData.rootDeviceIndex, 1u /*num gmms*/, allocationData.type, nullptr, hostPtr, canonizedGpuAddress, allocationData.size, MemoryPool::system4KBPages);
-    allocation->fragmentsStorage = handleStorage;
+    allocation->fragmentsStorage = std::make_unique<OsHandleStorage>(handleStorage);
     if (!allocation->setCacheRegion(&this->getDrm(allocationData.rootDeviceIndex), static_cast<CacheRegion>(allocationData.cacheRegion))) {
         return nullptr;
     }
@@ -2242,7 +2242,7 @@ void DrmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation,
         gfxAllocation->setGmm(std::unique_ptr<Gmm>{}, handleId);
     }
 
-    if (gfxAllocation->fragmentsStorage.fragmentCount) {
+    if (gfxAllocation->getFragmentCount()) {
         std::unique_lock<std::recursive_mutex> hostPtrManagerLock;
         if (debugManager.flags.EnableUsmHostPtrFragments.get() == 1) {
             hostPtrManagerLock = hostPtrManager->obtainOwnership();

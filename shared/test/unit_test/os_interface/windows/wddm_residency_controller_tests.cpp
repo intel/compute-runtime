@@ -390,16 +390,16 @@ TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, givenTripleAllocation
     // whole allocation unused since previous trim
     allocationTriple->getResidencyData().updateCompletionData(0, osContextId);
 
-    EXPECT_EQ(3u, allocationTriple->fragmentsStorage.fragmentCount);
+    EXPECT_EQ(3u, allocationTriple->getFragmentCount());
     allocationTriple->getResidencyData().resident[osContextId] = true;
-    allocationTriple->fragmentsStorage.fragmentStorageData[0].residency->updateCompletionData(0, osContextId);
-    allocationTriple->fragmentsStorage.fragmentStorageData[0].residency->resident[osContextId] = true;
+    allocationTriple->fragmentsStorage->fragmentStorageData[0].residency->updateCompletionData(0, osContextId);
+    allocationTriple->fragmentsStorage->fragmentStorageData[0].residency->resident[osContextId] = true;
     // this fragment was used
-    allocationTriple->fragmentsStorage.fragmentStorageData[1].residency->updateCompletionData(11, osContextId);
-    allocationTriple->fragmentsStorage.fragmentStorageData[0].residency->resident[osContextId] = true;
+    allocationTriple->fragmentsStorage->fragmentStorageData[1].residency->updateCompletionData(11, osContextId);
+    allocationTriple->fragmentsStorage->fragmentStorageData[0].residency->resident[osContextId] = true;
 
-    allocationTriple->fragmentsStorage.fragmentStorageData[2].residency->updateCompletionData(0, osContextId);
-    allocationTriple->fragmentsStorage.fragmentStorageData[2].residency->resident[osContextId] = true;
+    allocationTriple->fragmentsStorage->fragmentStorageData[2].residency->updateCompletionData(0, osContextId);
+    allocationTriple->fragmentsStorage->fragmentStorageData[2].residency->resident[osContextId] = true;
 
     // Set last periodic fence value
     *static_cast<OsContextWin *>(osContext)->getMonitoredFence().cpuAddress = 10;
@@ -418,8 +418,8 @@ TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, givenTripleAllocation
     EXPECT_EQ(1u, wddm->evictResult.called);
     EXPECT_EQ(1u, gdi->getEvictArg().Flags.EvictOnlyIfNecessary);
     // marked nonresident
-    EXPECT_FALSE(allocationTriple->fragmentsStorage.fragmentStorageData[0].residency->resident[osContextId]);
-    EXPECT_FALSE(allocationTriple->fragmentsStorage.fragmentStorageData[2].residency->resident[osContextId]);
+    EXPECT_FALSE(allocationTriple->fragmentsStorage->fragmentStorageData[0].residency->resident[osContextId]);
+    EXPECT_FALSE(allocationTriple->fragmentsStorage->fragmentStorageData[2].residency->resident[osContextId]);
 
     memoryManager->freeGraphicsMemory(allocationTriple);
 }
@@ -764,15 +764,15 @@ TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, WhenTrimmingToBudgetT
     allocationTriple->getResidencyData().updateCompletionData(1, osContextId);
     allocationTriple->getResidencyData().resident[osContextId] = true;
 
-    EXPECT_EQ(3u, allocationTriple->fragmentsStorage.fragmentCount);
+    EXPECT_EQ(3u, allocationTriple->getFragmentCount());
 
     for (uint32_t i = 0; i < 3; i++) {
-        allocationTriple->fragmentsStorage.fragmentStorageData[i].residency->updateCompletionData(1, osContextId);
-        allocationTriple->fragmentsStorage.fragmentStorageData[i].residency->resident[osContextId] = true;
+        allocationTriple->fragmentsStorage->fragmentStorageData[i].residency->updateCompletionData(1, osContextId);
+        allocationTriple->fragmentsStorage->fragmentStorageData[i].residency->resident[osContextId] = true;
     }
 
     // This should not be evicted
-    allocationTriple->fragmentsStorage.fragmentStorageData[1].residency->updateCompletionData(2, osContextId);
+    allocationTriple->fragmentsStorage->fragmentStorageData[1].residency->updateCompletionData(2, osContextId);
 
     residencyController->getEvictionAllocations().push_back(&allocation1);
     residencyController->getEvictionAllocations().push_back(allocationTriple);
@@ -789,9 +789,9 @@ TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, WhenTrimmingToBudgetT
 
     EXPECT_EQ(1u, wddm->evictResult.called);
     EXPECT_EQ(0u, gdi->getEvictArg().Flags.EvictOnlyIfNecessary);
-    EXPECT_FALSE(allocationTriple->fragmentsStorage.fragmentStorageData[0].residency->resident[osContextId]);
-    EXPECT_TRUE(allocationTriple->fragmentsStorage.fragmentStorageData[1].residency->resident[osContextId]);
-    EXPECT_FALSE(allocationTriple->fragmentsStorage.fragmentStorageData[2].residency->resident[osContextId]);
+    EXPECT_FALSE(allocationTriple->fragmentsStorage->fragmentStorageData[0].residency->resident[osContextId]);
+    EXPECT_TRUE(allocationTriple->fragmentsStorage->fragmentStorageData[1].residency->resident[osContextId]);
+    EXPECT_FALSE(allocationTriple->fragmentsStorage->fragmentStorageData[2].residency->resident[osContextId]);
 
     memoryManager->freeGraphicsMemory(allocationTriple);
 }
@@ -979,8 +979,8 @@ TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, GivenTripleAllocation
     bool requiresBlockingResidencyHandling = true;
     residencyController->makeResidentResidencyAllocations(residencyPack, requiresBlockingResidencyHandling, csr.get());
 
-    for (uint32_t i = 0; i < allocationTriple->fragmentsStorage.fragmentCount; i++) {
-        EXPECT_TRUE(allocationTriple->fragmentsStorage.fragmentStorageData[i].residency->resident[osContextId]);
+    for (uint32_t i = 0; i < allocationTriple->getFragmentCount(); i++) {
+        EXPECT_TRUE(allocationTriple->fragmentsStorage->fragmentStorageData[i].residency->resident[osContextId]);
     }
 
     EXPECT_EQ(EngineLimits::maxHandleCount + 3 + EngineLimits::maxHandleCount, gdi->getMakeResidentArg().NumAllocations);
@@ -999,8 +999,8 @@ TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, GivenTripleAllocation
     ResidencyContainer residencyPack{&allocation1, allocationTriple, &allocation2};
     residencyController->makeResidentResidencyAllocations(residencyPack, requiresBlockingResidencyHandling, csr.get());
 
-    for (uint32_t i = 0; i < allocationTriple->fragmentsStorage.fragmentCount; i++) {
-        EXPECT_EQ(20u, allocationTriple->fragmentsStorage.fragmentStorageData[i].residency->getFenceValueForContextId(0));
+    for (uint32_t i = 0; i < allocationTriple->getFragmentCount(); i++) {
+        EXPECT_EQ(20u, allocationTriple->fragmentsStorage->fragmentStorageData[i].residency->getFenceValueForContextId(0));
     }
 
     memoryManager->freeGraphicsMemory(allocationTriple);
@@ -1081,8 +1081,8 @@ TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsWhenCallin
 
     EXPECT_FALSE(result);
 
-    for (uint32_t i = 0; i < allocationTriple->fragmentsStorage.fragmentCount; i++) {
-        EXPECT_FALSE(allocationTriple->fragmentsStorage.fragmentStorageData[i].residency->resident[osContextId]);
+    for (uint32_t i = 0; i < allocationTriple->getFragmentCount(); i++) {
+        EXPECT_FALSE(allocationTriple->fragmentsStorage->fragmentStorageData[i].residency->resident[osContextId]);
     }
 
     memoryManager->freeGraphicsMemory(allocationTriple);

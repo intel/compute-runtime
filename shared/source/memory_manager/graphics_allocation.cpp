@@ -179,8 +179,8 @@ uint32_t GraphicsAllocation::getNumHandlesForKmdSharedAllocation(uint32_t numBan
 void GraphicsAllocation::updateCompletionDataForAllocationAndFragments(uint64_t newFenceValue, uint32_t contextId) {
     getResidencyData().updateCompletionData(newFenceValue, contextId);
 
-    for (uint32_t allocationId = 0; allocationId < fragmentsStorage.fragmentCount; allocationId++) {
-        auto residencyData = fragmentsStorage.fragmentStorageData[allocationId].residency;
+    for (uint32_t allocationId = 0; allocationId < getFragmentCount(); allocationId++) {
+        auto residencyData = fragmentsStorage->fragmentStorageData[allocationId].residency;
         residencyData->updateCompletionData(newFenceValue, contextId);
     }
 }

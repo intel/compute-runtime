@@ -1406,9 +1406,9 @@ TEST_F(MemoryAllocatorTest, GivenEmptyMemoryManagerAndMisalingedHostPtrWithHugeS
 
     auto graphicsAllocation = mockMemoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), false, size, device->getDeviceBitfield()}, cpuPtr);
     for (int i = 0; i < maxFragmentsCount; i++) {
-        EXPECT_NE(nullptr, graphicsAllocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage);
-        EXPECT_EQ(reqs.allocationFragments[i].allocationPtr, graphicsAllocation->fragmentsStorage.fragmentStorageData[i].cpuPtr);
-        EXPECT_EQ(reqs.allocationFragments[i].allocationSize, graphicsAllocation->fragmentsStorage.fragmentStorageData[i].fragmentSize);
+        EXPECT_NE(nullptr, graphicsAllocation->fragmentsStorage->fragmentStorageData[i].osHandleStorage);
+        EXPECT_EQ(reqs.allocationFragments[i].allocationPtr, graphicsAllocation->fragmentsStorage->fragmentStorageData[i].cpuPtr);
+        EXPECT_EQ(reqs.allocationFragments[i].allocationSize, graphicsAllocation->fragmentsStorage->fragmentStorageData[i].fragmentSize);
     }
 
     EXPECT_EQ(3u, hostPtrManager->getFragmentCount());
@@ -1439,15 +1439,15 @@ TEST_F(MemoryAllocatorTest, GivenPointerAndSizeWhenAskedToCreateGrahicsAllocatio
     EXPECT_EQ(ptr, allocation->getUnderlyingBuffer());
     EXPECT_EQ(size, allocation->getUnderlyingBufferSize());
 
-    EXPECT_EQ(ptr, allocation->fragmentsStorage.fragmentStorageData[0].cpuPtr);
-    EXPECT_EQ(ptr2, allocation->fragmentsStorage.fragmentStorageData[1].cpuPtr);
-    EXPECT_EQ(nullptr, allocation->fragmentsStorage.fragmentStorageData[2].cpuPtr);
+    EXPECT_EQ(ptr, allocation->fragmentsStorage->fragmentStorageData[0].cpuPtr);
+    EXPECT_EQ(ptr2, allocation->fragmentsStorage->fragmentStorageData[1].cpuPtr);
+    EXPECT_EQ(nullptr, allocation->fragmentsStorage->fragmentStorageData[2].cpuPtr);
 
-    EXPECT_EQ(size, allocation->fragmentsStorage.fragmentStorageData[0].fragmentSize);
-    EXPECT_EQ(size * 2, allocation->fragmentsStorage.fragmentStorageData[1].fragmentSize);
-    EXPECT_EQ(size * 3, allocation->fragmentsStorage.fragmentStorageData[2].fragmentSize);
+    EXPECT_EQ(size, allocation->fragmentsStorage->fragmentStorageData[0].fragmentSize);
+    EXPECT_EQ(size * 2, allocation->fragmentsStorage->fragmentStorageData[1].fragmentSize);
+    EXPECT_EQ(size * 3, allocation->fragmentsStorage->fragmentStorageData[2].fragmentSize);
 
-    EXPECT_NE(&allocation->fragmentsStorage, &handleStorage);
+    EXPECT_NE(allocation->fragmentsStorage.get(), &handleStorage);
 }
 
 TEST_F(MemoryAllocatorTest, givenMemoryManagerWhenAskedFor32bitAllocationThen32bitGraphicsAllocationIsReturned) {
@@ -1498,7 +1498,7 @@ TEST_F(MemoryAllocatorTest, givenAllocationWithFragmentsWhenCallingFreeGraphicsM
     AllocationProperties properties{device->getRootDeviceIndex(), false, size, AllocationType::buffer, false, device->getDeviceBitfield()};
 
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, ptr);
-    EXPECT_EQ(3u, allocation->fragmentsStorage.fragmentCount);
+    EXPECT_EQ(3u, allocation->getFragmentCount());
 
     EXPECT_EQ(0u, memoryManager->handleFenceCompletionCalled);
     memoryManager->freeGraphicsMemory(allocation);
@@ -1523,7 +1523,7 @@ TEST_F(MemoryAllocatorTest, GivenShareableEnabledAndDisabledWhenAskedToCreateGra
 
 TEST_F(MemoryAllocatorTest, givenAllocationWithoutFragmentsWhenCallingFreeGraphicsMemoryThenCallHandleFenceCompletion) {
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), MemoryConstants::pageSize, AllocationType::buffer, device->getDeviceBitfield()});
-    EXPECT_EQ(0u, allocation->fragmentsStorage.fragmentCount);
+    EXPECT_EQ(0u, allocation->getFragmentCount());
 
     EXPECT_EQ(0u, memoryManager->handleFenceCompletionCalled);
     memoryManager->freeGraphicsMemory(allocation);
@@ -2435,7 +2435,7 @@ TEST_P(OsAgnosticMemoryManagerWithParams, givenReducedGpuAddressSpaceWhenAllocat
     properties.flags.flushL3RequiredForRead = properties.flags.flushL3RequiredForWrite = requiresL3Flush;
     auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(properties, hostPtr);
     EXPECT_NE(nullptr, allocation);
-    EXPECT_EQ(0u, allocation->fragmentsStorage.fragmentCount);
+    EXPECT_EQ(0u, allocation->getFragmentCount());
     EXPECT_EQ(requiresL3Flush, allocation->isFlushL3Required());
 
     memoryManager.freeGraphicsMemory(allocation);
@@ -2461,7 +2461,7 @@ TEST_P(OsAgnosticMemoryManagerWithParams, givenDisabledHostPtrTrackingWhenAlloca
     properties.flags.flushL3RequiredForRead = properties.flags.flushL3RequiredForWrite = requiresL3Flush;
     auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(properties, hostPtr);
     EXPECT_NE(nullptr, allocation);
-    EXPECT_EQ(0u, allocation->fragmentsStorage.fragmentCount);
+    EXPECT_EQ(0u, allocation->getFragmentCount());
     EXPECT_EQ(requiresL3Flush, allocation->isFlushL3Required());
 
     memoryManager.freeGraphicsMemory(allocation);
@@ -2719,9 +2719,9 @@ TEST_F(MemoryManagerWithCsrTest, GivenAllocationsInHostPtrManagerWhenBiggerOverl
     EXPECT_NE(nullptr, graphicsAllocation2);
     EXPECT_EQ(nullptr, graphicsAllocation3);
 
-    EXPECT_EQ((uintptr_t)cpuPtr1 & ~MemoryConstants::pageMask, (uintptr_t)graphicsAllocation1->fragmentsStorage.fragmentStorageData[0].cpuPtr);
-    EXPECT_EQ((uintptr_t)cpuPtr2 & ~MemoryConstants::pageMask, (uintptr_t)graphicsAllocation2->fragmentsStorage.fragmentStorageData[0].cpuPtr);
-    EXPECT_EQ(((uintptr_t)cpuPtr2 + MemoryConstants::pageSize) & ~MemoryConstants::pageMask, (uintptr_t)graphicsAllocation2->fragmentsStorage.fragmentStorageData[1].cpuPtr);
+    EXPECT_EQ((uintptr_t)cpuPtr1 & ~MemoryConstants::pageMask, (uintptr_t)graphicsAllocation1->fragmentsStorage->fragmentStorageData[0].cpuPtr);
+    EXPECT_EQ((uintptr_t)cpuPtr2 & ~MemoryConstants::pageMask, (uintptr_t)graphicsAllocation2->fragmentsStorage->fragmentStorageData[0].cpuPtr);
+    EXPECT_EQ(((uintptr_t)cpuPtr2 + MemoryConstants::pageSize) & ~MemoryConstants::pageMask, (uintptr_t)graphicsAllocation2->fragmentsStorage->fragmentStorageData[1].cpuPtr);
 
     memoryManager->freeGraphicsMemory(graphicsAllocation1);
     memoryManager->freeGraphicsMemory(graphicsAllocation2);
@@ -2769,8 +2769,8 @@ TEST_F(MemoryManagerWithCsrTest, GivenAllocationsInHostPtrManagerReadyForCleanin
     EXPECT_NE(nullptr, graphicsAllocation3);
 
     // no more overlapping allocation, previous allocations cleaned
-    EXPECT_EQ(1u, graphicsAllocation3->fragmentsStorage.fragmentCount);
-    EXPECT_EQ(cpuPtr3, graphicsAllocation3->fragmentsStorage.fragmentStorageData[0].cpuPtr);
+    EXPECT_EQ(1u, graphicsAllocation3->getFragmentCount());
+    EXPECT_EQ(cpuPtr3, graphicsAllocation3->fragmentsStorage->fragmentStorageData[0].cpuPtr);
 
     memoryManager->freeGraphicsMemory(graphicsAllocation3);
 }

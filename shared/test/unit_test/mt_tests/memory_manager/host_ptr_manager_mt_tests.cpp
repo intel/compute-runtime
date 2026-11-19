@@ -48,7 +48,7 @@ TEST(HostPtrManagerMtTest, givenUsmHostPtrFragmentsEnabledAndAllocationBackedByF
 
     auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{0u, false, MemoryConstants::pageSize, DeviceBitfield(1)}, cpuPtr);
     ASSERT_NE(nullptr, allocation);
-    ASSERT_NE(0u, allocation->fragmentsStorage.fragmentCount);
+    ASSERT_NE(0u, allocation->getFragmentCount());
 
     memoryManager.freeGraphicsMemory(allocation);
     EXPECT_TRUE(memoryManager.hostPtrManagerLockedDuringCleanup);

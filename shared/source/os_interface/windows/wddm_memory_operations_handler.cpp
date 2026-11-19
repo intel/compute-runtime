@@ -33,10 +33,10 @@ MemoryOperationsStatus WddmMemoryOperationsHandler::makeResident(Device *device,
         WddmAllocation *wddmAllocation = reinterpret_cast<WddmAllocation *>(allocation);
         totalSize += wddmAllocation->getAlignedSize();
 
-        if (wddmAllocation->fragmentsStorage.fragmentCount > 0) {
-            for (uint32_t allocationId = 0; allocationId < wddmAllocation->fragmentsStorage.fragmentCount; allocationId++) {
+        if (wddmAllocation->getFragmentCount() > 0) {
+            for (uint32_t allocationId = 0; allocationId < wddmAllocation->getFragmentCount(); allocationId++) {
                 handlesForResidency[totalHandlesCount++] =
-                    static_cast<OsHandleWin *>(wddmAllocation->fragmentsStorage.fragmentStorageData[allocationId].osHandleStorage)->handle;
+                    static_cast<OsHandleWin *>(wddmAllocation->fragmentsStorage->fragmentStorageData[allocationId].osHandleStorage)->handle;
             }
         } else {
             memcpy_s(&handlesForResidency[totalHandlesCount],
@@ -55,8 +55,8 @@ MemoryOperationsStatus WddmMemoryOperationsHandler::evict(Device *device, Graphi
     StackVec<D3DKMT_HANDLE, stackHandlesCount> handlesForEviction;
     WddmAllocation &wddmAllocation = reinterpret_cast<WddmAllocation &>(gfxAllocation);
     uint32_t totalHandleCount = 0;
-    if (wddmAllocation.fragmentsStorage.fragmentCount > 0) {
-        OsHandleStorage &fragmentStorage = wddmAllocation.fragmentsStorage;
+    if (wddmAllocation.getFragmentCount() > 0) {
+        OsHandleStorage &fragmentStorage = *wddmAllocation.fragmentsStorage;
 
         for (uint32_t allocId = 0; allocId < fragmentStorage.fragmentCount; allocId++) {
             handlesForEviction.push_back(static_cast<OsHandleWin *>(fragmentStorage.fragmentStorageData[allocId].osHandleStorage)->handle);
@@ -76,8 +76,8 @@ MemoryOperationsStatus WddmMemoryOperationsHandler::evict(Device *device, Graphi
 MemoryOperationsStatus WddmMemoryOperationsHandler::isResident(Device *device, GraphicsAllocation &gfxAllocation) {
     WddmAllocation &wddmAllocation = reinterpret_cast<WddmAllocation &>(gfxAllocation);
     D3DKMT_HANDLE defaultHandle = 0u;
-    if (wddmAllocation.fragmentsStorage.fragmentCount > 0) {
-        defaultHandle = static_cast<OsHandleWin *>(wddmAllocation.fragmentsStorage.fragmentStorageData[0].osHandleStorage)->handle;
+    if (wddmAllocation.getFragmentCount() > 0) {
+        defaultHandle = static_cast<OsHandleWin *>(wddmAllocation.fragmentsStorage->fragmentStorageData[0].osHandleStorage)->handle;
     } else {
         defaultHandle = wddmAllocation.getDefaultHandle();
     }
@@ -88,8 +88,8 @@ MemoryOperationsStatus WddmMemoryOperationsHandler::free(Device *device, Graphic
     if (gfxAllocation.isExplicitlyMadeResident()) {
         WddmAllocation &wddmAllocation = reinterpret_cast<WddmAllocation &>(gfxAllocation);
 
-        if (wddmAllocation.fragmentsStorage.fragmentCount > 0) {
-            OsHandleStorage &fragmentStorage = wddmAllocation.fragmentsStorage;
+        if (wddmAllocation.getFragmentCount() > 0) {
+            OsHandleStorage &fragmentStorage = *wddmAllocation.fragmentsStorage;
 
             for (uint32_t allocId = 0; allocId < fragmentStorage.fragmentCount; allocId++) {
                 residentAllocations->removeResource(static_cast<OsHandleWin *>(fragmentStorage.fragmentStorageData[allocId].osHandleStorage)->handle);

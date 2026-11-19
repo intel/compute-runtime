@@ -55,8 +55,8 @@ class DrmAllocation : public GraphicsAllocation {
     std::string getPatIndexInfoString() const override;
 
     BufferObject *getBO() const {
-        if (fragmentsStorage.fragmentCount) {
-            return static_cast<OsHandleLinux *>(fragmentsStorage.fragmentStorageData[0].osHandleStorage)->bo;
+        if (getFragmentCount()) {
+            return static_cast<OsHandleLinux *>(fragmentsStorage->fragmentStorageData[0].osHandleStorage)->bo;
         }
         return this->bufferObjects[0];
     }
@@ -67,7 +67,7 @@ class DrmAllocation : public GraphicsAllocation {
         return this->getBO();
     }
     StackVec<BufferObject *, maxFragmentsCount> getBOsForResidency(uint32_t vmHandleId) const {
-        if (this->fragmentsStorage.fragmentCount > 0) {
+        if (this->getFragmentCount() > 0) {
             return this->getFragmentBOsForResidency(vmHandleId);
         }
         return {this->getBOForVmHandle(vmHandleId)};

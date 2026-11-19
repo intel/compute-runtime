@@ -2613,15 +2613,15 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenPointerAndSizeWhenAskedToCreateGra
     EXPECT_EQ(ptr, allocation->getUnderlyingBuffer());
     EXPECT_EQ(size, allocation->getUnderlyingBufferSize());
 
-    EXPECT_EQ(ptr, allocation->fragmentsStorage.fragmentStorageData[0].cpuPtr);
-    EXPECT_EQ(ptr2, allocation->fragmentsStorage.fragmentStorageData[1].cpuPtr);
-    EXPECT_EQ(nullptr, allocation->fragmentsStorage.fragmentStorageData[2].cpuPtr);
+    EXPECT_EQ(ptr, allocation->fragmentsStorage->fragmentStorageData[0].cpuPtr);
+    EXPECT_EQ(ptr2, allocation->fragmentsStorage->fragmentStorageData[1].cpuPtr);
+    EXPECT_EQ(nullptr, allocation->fragmentsStorage->fragmentStorageData[2].cpuPtr);
 
-    EXPECT_EQ(size, allocation->fragmentsStorage.fragmentStorageData[0].fragmentSize);
-    EXPECT_EQ(size * 2, allocation->fragmentsStorage.fragmentStorageData[1].fragmentSize);
-    EXPECT_EQ(size * 3, allocation->fragmentsStorage.fragmentStorageData[2].fragmentSize);
+    EXPECT_EQ(size, allocation->fragmentsStorage->fragmentStorageData[0].fragmentSize);
+    EXPECT_EQ(size * 2, allocation->fragmentsStorage->fragmentStorageData[1].fragmentSize);
+    EXPECT_EQ(size * 3, allocation->fragmentsStorage->fragmentStorageData[2].fragmentSize);
 
-    EXPECT_NE(&allocation->fragmentsStorage, &handleStorage);
+    EXPECT_NE(allocation->fragmentsStorage.get(), &handleStorage);
 }
 
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenMemoryManagerWhenCreatingGraphicsAllocation64kbThenNullPtrIsReturned) {
@@ -2796,7 +2796,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, GivenMisalignedHostPtrAndMultiplePagesS
     auto reqs = MockHostPtrManager::getAllocationRequirements(rootDeviceIndex, ptr, size);
 
     for (int i = 0; i < maxFragmentsCount; i++) {
-        auto osHandle = static_cast<OsHandleLinux *>(graphicsAllocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage);
+        auto osHandle = static_cast<OsHandleLinux *>(graphicsAllocation->fragmentsStorage->fragmentStorageData[i].osHandleStorage);
         ASSERT_NE(nullptr, osHandle->bo);
         EXPECT_EQ(reqs.allocationFragments[i].allocationSize, osHandle->bo->peekSize());
         EXPECT_EQ(reqs.allocationFragments[i].allocationPtr, reinterpret_cast<void *>(osHandle->bo->peekAddress()));
@@ -3883,7 +3883,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUSMHostAllocationTests, givenDefaultSettingsW
 
     auto bo = alloc->getBO();
     ASSERT_NE(nullptr, bo);
-    EXPECT_EQ(0u, alloc->fragmentsStorage.fragmentCount);
+    EXPECT_EQ(0u, alloc->getFragmentCount());
     EXPECT_EQ(castToUint64(hostPtr), bo->peekAddress());
     EXPECT_EQ(MemoryConstants::pageSize, bo->peekSize());
     EXPECT_EQ(0u, alloc->getAllocationOffset());
@@ -3910,9 +3910,9 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenUnalignedExter
 
     EXPECT_EQ(castToUint64(hostPtr), alloc->getGpuAddress());
     EXPECT_EQ(hostPtr, alloc->getUnderlyingBuffer());
-    ASSERT_EQ(3u, alloc->fragmentsStorage.fragmentCount);
+    ASSERT_EQ(3u, alloc->getFragmentCount());
     for (auto fragmentId = 0u; fragmentId < 3u; fragmentId++) {
-        const auto &fragment = alloc->fragmentsStorage.fragmentStorageData[fragmentId];
+        const auto &fragment = alloc->fragmentsStorage->fragmentStorageData[fragmentId];
         auto bo = static_cast<OsHandleLinux *>(fragment.osHandleStorage)->bo;
         EXPECT_EQ(ptrOffset(hostPtrBase, fragmentId * MemoryConstants::pageSize), fragment.cpuPtr);
         EXPECT_EQ(MemoryConstants::pageSize, fragment.fragmentSize);
@@ -3938,9 +3938,9 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenTwoUsmHostAllo
     ASSERT_NE(nullptr, firstAlloc);
     ASSERT_NE(nullptr, secondAlloc);
 
-    ASSERT_EQ(1u, firstAlloc->fragmentsStorage.fragmentCount);
-    ASSERT_EQ(1u, secondAlloc->fragmentsStorage.fragmentCount);
-    EXPECT_EQ(firstAlloc->fragmentsStorage.fragmentStorageData[0].osHandleStorage, secondAlloc->fragmentsStorage.fragmentStorageData[0].osHandleStorage);
+    ASSERT_EQ(1u, firstAlloc->getFragmentCount());
+    ASSERT_EQ(1u, secondAlloc->getFragmentCount());
+    EXPECT_EQ(firstAlloc->fragmentsStorage->fragmentStorageData[0].osHandleStorage, secondAlloc->fragmentsStorage->fragmentStorageData[0].osHandleStorage);
 
     memoryManager->freeGraphicsMemoryImpl(firstAlloc);
     EXPECT_EQ(0, mock->ioctlCnt.gemClose.load());
@@ -3964,11 +3964,11 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenUsmHostAllocat
     auto secondAlloc = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemory(allocationData));
     ASSERT_NE(nullptr, firstAlloc);
     ASSERT_NE(nullptr, secondAlloc);
-    ASSERT_EQ(1u, firstAlloc->fragmentsStorage.fragmentCount);
-    ASSERT_EQ(2u, secondAlloc->fragmentsStorage.fragmentCount);
-    auto sharedBo = static_cast<OsHandleLinux *>(firstAlloc->fragmentsStorage.fragmentStorageData[0].osHandleStorage)->bo;
-    auto secondPageBo = static_cast<OsHandleLinux *>(secondAlloc->fragmentsStorage.fragmentStorageData[1].osHandleStorage)->bo;
-    ASSERT_EQ(sharedBo, static_cast<OsHandleLinux *>(secondAlloc->fragmentsStorage.fragmentStorageData[0].osHandleStorage)->bo);
+    ASSERT_EQ(1u, firstAlloc->getFragmentCount());
+    ASSERT_EQ(2u, secondAlloc->getFragmentCount());
+    auto sharedBo = static_cast<OsHandleLinux *>(firstAlloc->fragmentsStorage->fragmentStorageData[0].osHandleStorage)->bo;
+    auto secondPageBo = static_cast<OsHandleLinux *>(secondAlloc->fragmentsStorage->fragmentStorageData[1].osHandleStorage)->bo;
+    ASSERT_EQ(sharedBo, static_cast<OsHandleLinux *>(secondAlloc->fragmentsStorage->fragmentStorageData[0].osHandleStorage)->bo);
 
     auto osContext = device->getDefaultEngine().osContext;
     for (auto vmHandleId = 0u; vmHandleId < 2u; vmHandleId++) {
@@ -3995,7 +3995,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenUsmHostAllocat
     allocationData.hostPtr = ptrOffset(hostPtrBase, MemoryConstants::pageSize);
     auto storedAlloc = memoryManager->allocateGraphicsMemoryWithHostPtr(allocationData);
     ASSERT_NE(nullptr, storedAlloc);
-    ASSERT_EQ(1u, storedAlloc->fragmentsStorage.fragmentCount);
+    ASSERT_EQ(1u, storedAlloc->getFragmentCount());
 
     allocationData.size = 4 * MemoryConstants::pageSize - 0x80;
     allocationData.flags.isUSMHostAllocation = true;
@@ -4023,7 +4023,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenSvmCpuUsmHostA
 
     auto bo = alloc->getBO();
     ASSERT_NE(nullptr, bo);
-    EXPECT_EQ(0u, alloc->fragmentsStorage.fragmentCount);
+    EXPECT_EQ(0u, alloc->getFragmentCount());
     EXPECT_EQ(2 * MemoryConstants::pageSize, bo->peekSize());
     EXPECT_EQ(0x40u, alloc->getAllocationOffset());
     EXPECT_EQ(bo->peekAddress() + 0x40, alloc->getGpuAddress());
@@ -4098,14 +4098,14 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenUnalignedUsmHo
     allocationData.hostPtr = ptrOffset(hostPtrBase, 0x40);
     auto alloc = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemory(allocationData));
     ASSERT_NE(nullptr, alloc);
-    ASSERT_EQ(3u, alloc->fragmentsStorage.fragmentCount);
+    ASSERT_EQ(3u, alloc->getFragmentCount());
 
     const auto &drm = memoryManager->getDrm(rootDeviceIndex);
     const uint64_t expectedPatIndices[] = {getCachelineMisalignedUserPtrPatIndex(drm, AllocationType::externalHostPtr),
                                            getDefaultUserPtrPatIndex(drm, AllocationType::externalHostPtr),
                                            getCachelineMisalignedUserPtrPatIndex(drm, AllocationType::externalHostPtr)};
     for (auto fragmentId = 0u; fragmentId < 3u; fragmentId++) {
-        auto bo = static_cast<OsHandleLinux *>(alloc->fragmentsStorage.fragmentStorageData[fragmentId].osHandleStorage)->bo;
+        auto bo = static_cast<OsHandleLinux *>(alloc->fragmentsStorage->fragmentStorageData[fragmentId].osHandleStorage)->bo;
         EXPECT_EQ(expectedPatIndices[fragmentId], bo->peekPatIndex());
     }
 
@@ -4124,9 +4124,9 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenCachelineAlign
     allocationData.hostPtr = hostPtrBase;
     auto alloc = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemory(allocationData));
     ASSERT_NE(nullptr, alloc);
-    ASSERT_EQ(1u, alloc->fragmentsStorage.fragmentCount);
+    ASSERT_EQ(1u, alloc->getFragmentCount());
 
-    auto bo = static_cast<OsHandleLinux *>(alloc->fragmentsStorage.fragmentStorageData[0].osHandleStorage)->bo;
+    auto bo = static_cast<OsHandleLinux *>(alloc->fragmentsStorage->fragmentStorageData[0].osHandleStorage)->bo;
     EXPECT_EQ(getCachelineMisalignedUserPtrPatIndex(memoryManager->getDrm(rootDeviceIndex), AllocationType::externalHostPtr), bo->peekPatIndex());
 
     memoryManager->freeGraphicsMemoryImpl(alloc);
@@ -4144,7 +4144,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenUsmHostAllocat
     allocationData.hostPtr = hostPtrBase;
     auto alloc = memoryManager->allocateGraphicsMemory(allocationData);
     ASSERT_NE(nullptr, alloc);
-    ASSERT_EQ(1u, alloc->fragmentsStorage.fragmentCount);
+    ASSERT_EQ(1u, alloc->getFragmentCount());
 
     uint64_t handle = 0;
     EXPECT_EQ(-1, alloc->peekInternalHandle(memoryManager, handle, nullptr));
@@ -4168,8 +4168,8 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenFourUsmHostAll
         allocationData.hostPtr = ptrOffset(hostPtrBase, offsets[i]);
         allocations[i] = memoryManager->allocateGraphicsMemory(allocationData);
         ASSERT_NE(nullptr, allocations[i]);
-        ASSERT_EQ(1u, allocations[i]->fragmentsStorage.fragmentCount);
-        EXPECT_EQ(allocations[0]->fragmentsStorage.fragmentStorageData[0].osHandleStorage, allocations[i]->fragmentsStorage.fragmentStorageData[0].osHandleStorage);
+        ASSERT_EQ(1u, allocations[i]->getFragmentCount());
+        EXPECT_EQ(allocations[0]->fragmentsStorage->fragmentStorageData[0].osHandleStorage, allocations[i]->fragmentsStorage->fragmentStorageData[0].osHandleStorage);
         EXPECT_EQ(castToUint64(allocationData.hostPtr), allocations[i]->getGpuAddress());
     }
 
@@ -4224,7 +4224,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenUsmHostAllocat
     allocationData.hostPtr = ptrOffset(hostPtrBase, 0x40);
     auto alloc = memoryManager->allocateGraphicsMemory(allocationData);
     ASSERT_NE(nullptr, alloc);
-    ASSERT_EQ(3u, alloc->fragmentsStorage.fragmentCount);
+    ASSERT_EQ(3u, alloc->getFragmentCount());
 
     allocationData.hostPtr = ptrOffset(hostPtrBase, 0x80);
     EXPECT_EQ(nullptr, memoryManager->allocateGraphicsMemory(allocationData));
@@ -4247,7 +4247,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenUsmHostAllocat
     allocationData.hostPtr = ptrOffset(hostPtrBase, 0x40);
     auto alloc = memoryManager->allocateGraphicsMemory(allocationData);
     ASSERT_NE(nullptr, alloc);
-    ASSERT_EQ(3u, alloc->fragmentsStorage.fragmentCount);
+    ASSERT_EQ(3u, alloc->getFragmentCount());
 
     memoryManager->handleFenceCompletion(alloc);
     EXPECT_EQ(3, mock->ioctlCnt.gemWait.load());
@@ -4267,7 +4267,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenLiveAllocation
     allocationData.hostPtr = hostPtrBase;
     auto liveAlloc = memoryManager->allocateGraphicsMemory(allocationData);
     ASSERT_NE(nullptr, liveAlloc);
-    ASSERT_EQ(1u, liveAlloc->fragmentsStorage.fragmentCount);
+    ASSERT_EQ(1u, liveAlloc->getFragmentCount());
 
     DrmMockCustom::IoctlResExt ioctlResExt = {static_cast<int32_t>(mock->ioctlCnt.total.load()), -1};
     mock->ioctlResExt = &ioctlResExt;
@@ -4294,7 +4294,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenCacheRegionReq
     allocationData.hostPtr = ptrOffset(hostPtrBase, 0x40);
     auto liveAlloc = memoryManager->allocateGraphicsMemory(allocationData);
     ASSERT_NE(nullptr, liveAlloc);
-    auto sharedBo = static_cast<OsHandleLinux *>(liveAlloc->fragmentsStorage.fragmentStorageData[0].osHandleStorage)->bo;
+    auto sharedBo = static_cast<OsHandleLinux *>(liveAlloc->fragmentsStorage->fragmentStorageData[0].osHandleStorage)->bo;
     const auto sharedBoPatIndex = sharedBo->peekPatIndex();
 
     allocationData.size = MemoryConstants::pageSize;
@@ -4302,11 +4302,11 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenCacheRegionReq
     allocationData.cacheRegion = static_cast<uint32_t>(CacheRegion::region1);
     auto alloc = memoryManager->allocateGraphicsMemory(allocationData);
     ASSERT_NE(nullptr, alloc);
-    ASSERT_EQ(2u, alloc->fragmentsStorage.fragmentCount);
-    EXPECT_EQ(sharedBo, static_cast<OsHandleLinux *>(alloc->fragmentsStorage.fragmentStorageData[0].osHandleStorage)->bo);
+    ASSERT_EQ(2u, alloc->getFragmentCount());
+    EXPECT_EQ(sharedBo, static_cast<OsHandleLinux *>(alloc->fragmentsStorage->fragmentStorageData[0].osHandleStorage)->bo);
     EXPECT_EQ(sharedBoPatIndex, sharedBo->peekPatIndex());
-    for (auto fragmentId = 0u; fragmentId < alloc->fragmentsStorage.fragmentCount; fragmentId++) {
-        EXPECT_EQ(CacheRegion::defaultRegion, static_cast<OsHandleLinux *>(alloc->fragmentsStorage.fragmentStorageData[fragmentId].osHandleStorage)->bo->peekCacheRegion());
+    for (auto fragmentId = 0u; fragmentId < alloc->getFragmentCount(); fragmentId++) {
+        EXPECT_EQ(CacheRegion::defaultRegion, static_cast<OsHandleLinux *>(alloc->fragmentsStorage->fragmentStorageData[fragmentId].osHandleStorage)->bo->peekCacheRegion());
     }
 
     memoryManager->freeGraphicsMemoryImpl(alloc);
@@ -4327,7 +4327,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenPageAlignedExt
 
     auto bo = alloc->getBO();
     ASSERT_NE(nullptr, bo);
-    EXPECT_EQ(0u, alloc->fragmentsStorage.fragmentCount);
+    EXPECT_EQ(0u, alloc->getFragmentCount());
     EXPECT_EQ(0u, static_cast<MockHostPtrManager *>(memoryManager->getHostPtrManager())->getFragmentCount());
     EXPECT_EQ(castToUint64(hostPtrBase), bo->peekAddress());
     EXPECT_EQ(2 * MemoryConstants::pageSize, bo->peekSize());
@@ -4350,7 +4350,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerUsmHostPtrFragmentsTests, givenReadOnlyUsmHos
 
     auto bo = alloc->getBO();
     ASSERT_NE(nullptr, bo);
-    EXPECT_EQ(0u, alloc->fragmentsStorage.fragmentCount);
+    EXPECT_EQ(0u, alloc->getFragmentCount());
     EXPECT_EQ(castToUint64(hostPtrBase), bo->peekAddress());
     EXPECT_EQ(0u, alloc->getAllocationOffset());
     EXPECT_TRUE(bo->isReadOnlyGpuResource());
@@ -4381,7 +4381,7 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenUsmHostPtrFragmentsEnabledAndForce
     allocationData.flags.forcePin = true;
     auto alloc = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemory(allocationData));
     ASSERT_NE(nullptr, alloc);
-    EXPECT_EQ(3u, alloc->fragmentsStorage.fragmentCount);
+    EXPECT_EQ(3u, alloc->getFragmentCount());
 
     memoryManager->freeGraphicsMemoryImpl(alloc);
 }
@@ -4422,7 +4422,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenUsmHostPtrFragmentsAnd
         allocationData.flags.forcePin = true;
         auto alloc = memoryManager->allocateGraphicsMemory(allocationData);
         ASSERT_NE(nullptr, alloc);
-        EXPECT_EQ(3u, alloc->fragmentsStorage.fragmentCount);
+        EXPECT_EQ(3u, alloc->getFragmentCount());
 
         EXPECT_EQ(3u, pinBB->numberOfBosValidated);
         EXPECT_EQ(vmBindAvailable ? 3u : 0u, memoryManager->emitPinningRequestForBoContainerCalled);
@@ -8590,12 +8590,12 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmAllocationWithHostPtrWhenItIsCr
 
     auto allocation = std::make_unique<DrmAllocation>(rootDeviceIndex, 1u /*num gmms*/, AllocationType::bufferHostMemory,
                                                       nullptr, ptr, castToUint64(ptr), size, MemoryPool::system4KBPages);
-    allocation->fragmentsStorage = storage;
+    allocation->fragmentsStorage = std::make_unique<OsHandleStorage>(storage);
 
     allocation->setCacheAdvice(drm, 1024, CacheRegion::region1, false);
 
     for (uint32_t i = 0; i < storage.fragmentCount; i++) {
-        auto bo = static_cast<OsHandleLinux *>(allocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage)->bo;
+        auto bo = static_cast<OsHandleLinux *>(allocation->fragmentsStorage->fragmentStorageData[i].osHandleStorage)->bo;
         EXPECT_EQ(CacheRegion::region1, bo->peekCacheRegion());
     }
 

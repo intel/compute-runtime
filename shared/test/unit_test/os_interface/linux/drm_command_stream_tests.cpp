@@ -375,23 +375,23 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, GivenFragmentStorageWhenMakingR
     auto reqs = MockHostPtrManager::getAllocationRequirements(csr->getRootDeviceIndex(), ptr, size);
     auto allocation = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), false, size}, ptr);
 
-    ASSERT_EQ(3u, allocation->fragmentsStorage.fragmentCount);
+    ASSERT_EQ(3u, allocation->getFragmentCount());
 
     csr->makeResident(*allocation);
     csr->makeResident(*allocation);
 
     csr->processResidency(csr->getResidencyAllocations(), 0u);
     for (int i = 0; i < maxFragmentsCount; i++) {
-        ASSERT_EQ(allocation->fragmentsStorage.fragmentStorageData[i].cpuPtr,
+        ASSERT_EQ(allocation->fragmentsStorage->fragmentStorageData[i].cpuPtr,
                   reqs.allocationFragments[i].allocationPtr);
-        auto bo = static_cast<OsHandleLinux *>(allocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage)->bo;
+        auto bo = static_cast<OsHandleLinux *>(allocation->fragmentsStorage->fragmentStorageData[i].osHandleStorage)->bo;
         EXPECT_TRUE(isResident<FamilyType>(bo));
         EXPECT_EQ(1u, bo->getRefCount());
     }
 
     csr->makeNonResident(*allocation);
     for (int i = 0; i < maxFragmentsCount; i++) {
-        auto bo = static_cast<OsHandleLinux *>(allocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage)->bo;
+        auto bo = static_cast<OsHandleLinux *>(allocation->fragmentsStorage->fragmentStorageData[i].osHandleStorage)->bo;
         EXPECT_FALSE(isResident<FamilyType>(bo));
         EXPECT_EQ(1u, bo->getRefCount());
     }
@@ -411,7 +411,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenFragmentedAllocationsWithR
     auto graphicsAllocation2 = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), false, size2}, offsetedPtr);
 
     // graphicsAllocation2 reuses one fragment from graphicsAllocation
-    EXPECT_EQ(graphicsAllocation->fragmentsStorage.fragmentStorageData[2].residency, graphicsAllocation2->fragmentsStorage.fragmentStorageData[0].residency);
+    EXPECT_EQ(graphicsAllocation->fragmentsStorage->fragmentStorageData[2].residency, graphicsAllocation2->fragmentsStorage->fragmentStorageData[0].residency);
 
     csr->makeResident(*graphicsAllocation);
     csr->makeResident(*graphicsAllocation2);
@@ -420,10 +420,10 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenFragmentedAllocationsWithR
 
     auto &osContext = csr->getOsContext();
 
-    EXPECT_TRUE(graphicsAllocation->fragmentsStorage.fragmentStorageData[0].residency->resident[osContext.getContextId()]);
-    EXPECT_TRUE(graphicsAllocation->fragmentsStorage.fragmentStorageData[1].residency->resident[osContext.getContextId()]);
-    EXPECT_TRUE(graphicsAllocation->fragmentsStorage.fragmentStorageData[2].residency->resident[osContext.getContextId()]);
-    EXPECT_TRUE(graphicsAllocation2->fragmentsStorage.fragmentStorageData[0].residency->resident[osContext.getContextId()]);
+    EXPECT_TRUE(graphicsAllocation->fragmentsStorage->fragmentStorageData[0].residency->resident[osContext.getContextId()]);
+    EXPECT_TRUE(graphicsAllocation->fragmentsStorage->fragmentStorageData[1].residency->resident[osContext.getContextId()]);
+    EXPECT_TRUE(graphicsAllocation->fragmentsStorage->fragmentStorageData[2].residency->resident[osContext.getContextId()]);
+    EXPECT_TRUE(graphicsAllocation2->fragmentsStorage->fragmentStorageData[0].residency->resident[osContext.getContextId()]);
 
     auto &residency = getResidencyVector<FamilyType>();
 
@@ -432,10 +432,10 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenFragmentedAllocationsWithR
     csr->makeSurfacePackNonResident(csr->getResidencyAllocations(), true);
 
     // check that each packet is not resident
-    EXPECT_FALSE(graphicsAllocation->fragmentsStorage.fragmentStorageData[0].residency->resident[osContext.getContextId()]);
-    EXPECT_FALSE(graphicsAllocation->fragmentsStorage.fragmentStorageData[1].residency->resident[osContext.getContextId()]);
-    EXPECT_FALSE(graphicsAllocation->fragmentsStorage.fragmentStorageData[2].residency->resident[osContext.getContextId()]);
-    EXPECT_FALSE(graphicsAllocation2->fragmentsStorage.fragmentStorageData[0].residency->resident[osContext.getContextId()]);
+    EXPECT_FALSE(graphicsAllocation->fragmentsStorage->fragmentStorageData[0].residency->resident[osContext.getContextId()]);
+    EXPECT_FALSE(graphicsAllocation->fragmentsStorage->fragmentStorageData[1].residency->resident[osContext.getContextId()]);
+    EXPECT_FALSE(graphicsAllocation->fragmentsStorage->fragmentStorageData[2].residency->resident[osContext.getContextId()]);
+    EXPECT_FALSE(graphicsAllocation2->fragmentsStorage->fragmentStorageData[0].residency->resident[osContext.getContextId()]);
 
     EXPECT_EQ(0u, residency.size());
 
@@ -444,10 +444,10 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenFragmentedAllocationsWithR
 
     csr->processResidency(csr->getResidencyAllocations(), 0u);
 
-    EXPECT_TRUE(graphicsAllocation->fragmentsStorage.fragmentStorageData[0].residency->resident[osContext.getContextId()]);
-    EXPECT_TRUE(graphicsAllocation->fragmentsStorage.fragmentStorageData[1].residency->resident[osContext.getContextId()]);
-    EXPECT_TRUE(graphicsAllocation->fragmentsStorage.fragmentStorageData[2].residency->resident[osContext.getContextId()]);
-    EXPECT_TRUE(graphicsAllocation2->fragmentsStorage.fragmentStorageData[0].residency->resident[osContext.getContextId()]);
+    EXPECT_TRUE(graphicsAllocation->fragmentsStorage->fragmentStorageData[0].residency->resident[osContext.getContextId()]);
+    EXPECT_TRUE(graphicsAllocation->fragmentsStorage->fragmentStorageData[1].residency->resident[osContext.getContextId()]);
+    EXPECT_TRUE(graphicsAllocation->fragmentsStorage->fragmentStorageData[2].residency->resident[osContext.getContextId()]);
+    EXPECT_TRUE(graphicsAllocation2->fragmentsStorage->fragmentStorageData[0].residency->resident[osContext.getContextId()]);
 
     EXPECT_EQ(3u, residency.size());
 
@@ -455,10 +455,10 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenFragmentedAllocationsWithR
 
     EXPECT_EQ(0u, residency.size());
 
-    EXPECT_FALSE(graphicsAllocation->fragmentsStorage.fragmentStorageData[0].residency->resident[osContext.getContextId()]);
-    EXPECT_FALSE(graphicsAllocation->fragmentsStorage.fragmentStorageData[1].residency->resident[osContext.getContextId()]);
-    EXPECT_FALSE(graphicsAllocation->fragmentsStorage.fragmentStorageData[2].residency->resident[osContext.getContextId()]);
-    EXPECT_FALSE(graphicsAllocation2->fragmentsStorage.fragmentStorageData[0].residency->resident[osContext.getContextId()]);
+    EXPECT_FALSE(graphicsAllocation->fragmentsStorage->fragmentStorageData[0].residency->resident[osContext.getContextId()]);
+    EXPECT_FALSE(graphicsAllocation->fragmentsStorage->fragmentStorageData[1].residency->resident[osContext.getContextId()]);
+    EXPECT_FALSE(graphicsAllocation->fragmentsStorage->fragmentStorageData[2].residency->resident[osContext.getContextId()]);
+    EXPECT_FALSE(graphicsAllocation2->fragmentsStorage->fragmentStorageData[0].residency->resident[osContext.getContextId()]);
 
     mm->freeGraphicsMemory(graphicsAllocation);
     mm->freeGraphicsMemory(graphicsAllocation2);
@@ -472,21 +472,21 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, GivenAllocationCreatedFromThree
 
     auto allocation = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), false, size}, ptr);
 
-    ASSERT_EQ(3u, allocation->fragmentsStorage.fragmentCount);
+    ASSERT_EQ(3u, allocation->getFragmentCount());
 
     csr->makeResident(*allocation);
     csr->processResidency(csr->getResidencyAllocations(), 0u);
 
     for (int i = 0; i < maxFragmentsCount; i++) {
-        ASSERT_EQ(allocation->fragmentsStorage.fragmentStorageData[i].cpuPtr,
+        ASSERT_EQ(allocation->fragmentsStorage->fragmentStorageData[i].cpuPtr,
                   reqs.allocationFragments[i].allocationPtr);
-        auto bo = static_cast<OsHandleLinux *>(allocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage)->bo;
+        auto bo = static_cast<OsHandleLinux *>(allocation->fragmentsStorage->fragmentStorageData[i].osHandleStorage)->bo;
         EXPECT_TRUE(isResident<FamilyType>(bo));
         EXPECT_EQ(1u, bo->getRefCount());
     }
     csr->makeNonResident(*allocation);
     for (int i = 0; i < maxFragmentsCount; i++) {
-        auto bo = static_cast<OsHandleLinux *>(allocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage)->bo;
+        auto bo = static_cast<OsHandleLinux *>(allocation->fragmentsStorage->fragmentStorageData[i].osHandleStorage)->bo;
         EXPECT_FALSE(isResident<FamilyType>(bo));
         EXPECT_EQ(1u, bo->getRefCount());
     }
@@ -502,22 +502,22 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, GivenAllocationsContainingDiffe
 
     auto allocation = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), false, size}, ptr);
 
-    ASSERT_EQ(2u, allocation->fragmentsStorage.fragmentCount);
+    ASSERT_EQ(2u, allocation->getFragmentCount());
     ASSERT_EQ(2u, reqs.requiredFragmentsCount);
 
     csr->makeResident(*allocation);
     csr->processResidency(csr->getResidencyAllocations(), 0u);
 
     for (unsigned int i = 0; i < reqs.requiredFragmentsCount; i++) {
-        ASSERT_EQ(allocation->fragmentsStorage.fragmentStorageData[i].cpuPtr,
+        ASSERT_EQ(allocation->fragmentsStorage->fragmentStorageData[i].cpuPtr,
                   reqs.allocationFragments[i].allocationPtr);
-        auto bo = static_cast<OsHandleLinux *>(allocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage)->bo;
+        auto bo = static_cast<OsHandleLinux *>(allocation->fragmentsStorage->fragmentStorageData[i].osHandleStorage)->bo;
         EXPECT_TRUE(isResident<FamilyType>(bo));
         EXPECT_EQ(1u, bo->getRefCount());
     }
     csr->makeNonResident(*allocation);
     for (unsigned int i = 0; i < reqs.requiredFragmentsCount; i++) {
-        auto bo = static_cast<OsHandleLinux *>(allocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage)->bo;
+        auto bo = static_cast<OsHandleLinux *>(allocation->fragmentsStorage->fragmentStorageData[i].osHandleStorage)->bo;
         EXPECT_FALSE(isResident<FamilyType>(bo));
         EXPECT_EQ(1u, bo->getRefCount());
     }
@@ -527,22 +527,22 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, GivenAllocationsContainingDiffe
     auto allocation2 = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), false, size2}, ptr);
     reqs = MockHostPtrManager::getAllocationRequirements(csr->getRootDeviceIndex(), ptr, size2);
 
-    ASSERT_EQ(1u, allocation2->fragmentsStorage.fragmentCount);
+    ASSERT_EQ(1u, allocation2->getFragmentCount());
     ASSERT_EQ(1u, reqs.requiredFragmentsCount);
 
     csr->makeResident(*allocation2);
     csr->processResidency(csr->getResidencyAllocations(), 0u);
 
     for (unsigned int i = 0; i < reqs.requiredFragmentsCount; i++) {
-        ASSERT_EQ(allocation2->fragmentsStorage.fragmentStorageData[i].cpuPtr,
+        ASSERT_EQ(allocation2->fragmentsStorage->fragmentStorageData[i].cpuPtr,
                   reqs.allocationFragments[i].allocationPtr);
-        auto bo = static_cast<OsHandleLinux *>(allocation2->fragmentsStorage.fragmentStorageData[i].osHandleStorage)->bo;
+        auto bo = static_cast<OsHandleLinux *>(allocation2->fragmentsStorage->fragmentStorageData[i].osHandleStorage)->bo;
         EXPECT_TRUE(isResident<FamilyType>(bo));
         EXPECT_EQ(1u, bo->getRefCount());
     }
     csr->makeNonResident(*allocation2);
     for (unsigned int i = 0; i < reqs.requiredFragmentsCount; i++) {
-        auto bo = static_cast<OsHandleLinux *>(allocation2->fragmentsStorage.fragmentStorageData[i].osHandleStorage)->bo;
+        auto bo = static_cast<OsHandleLinux *>(allocation2->fragmentsStorage->fragmentStorageData[i].osHandleStorage)->bo;
         EXPECT_FALSE(isResident<FamilyType>(bo));
         EXPECT_EQ(1u, bo->getRefCount());
     }
@@ -870,7 +870,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenBindBOsFailsThenMakeBOsRes
 
     auto res = allocation->makeBOsResident(&csr->getOsContext(), 0, nullptr, true, false);
     EXPECT_NE(res, 0);
-    EXPECT_EQ(allocation->fragmentsStorage.fragmentCount, 0u);
+    EXPECT_EQ(allocation->getFragmentCount(), 0u);
     EXPECT_GT(allocation->bindBOsCalled, 0u);
 
     mm->freeGraphicsMemory(allocation);
@@ -884,7 +884,6 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenFragmentStorageAndBindBOFa
     auto allocation = new MockDrmAllocationBindBO(0, AllocationType::unknown, bos, nullptr, 0u, size, MemoryPool::localMemory);
     allocation->bindBOResult = -1;
 
-    OsHandleStorage prevStorage;
     OsHandleStorage storage;
     OsHandleLinux osHandleStorage;
     ResidencyData *residency = new ResidencyData(1);
@@ -894,15 +893,14 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenFragmentStorageAndBindBOFa
     storage.fragmentStorageData[0].residency = residency;
     storage.fragmentStorageData[0].residency->resident[csr->getOsContext().getContextId()] = false;
 
-    memcpy(&prevStorage, &allocation->fragmentsStorage, sizeof(OsHandleStorage));
-    memcpy(&allocation->fragmentsStorage, &storage, sizeof(OsHandleStorage));
+    allocation->fragmentsStorage = std::make_unique<OsHandleStorage>(storage);
 
     auto res = allocation->makeBOsResident(&csr->getOsContext(), 0, nullptr, true, false);
     EXPECT_NE(res, 0);
-    EXPECT_EQ(allocation->fragmentsStorage.fragmentCount, 1u);
+    EXPECT_EQ(allocation->getFragmentCount(), 1u);
     EXPECT_GT(allocation->bindBOCalled, 0u);
 
-    memcpy(&allocation->fragmentsStorage, &prevStorage, sizeof(OsHandleStorage));
+    allocation->fragmentsStorage.reset();
     mm->freeGraphicsMemory(allocation);
     delete residency;
 }

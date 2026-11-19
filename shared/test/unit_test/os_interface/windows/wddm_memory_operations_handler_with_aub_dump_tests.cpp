@@ -43,11 +43,12 @@ struct WddmMemoryOperationsHandlerWithAubDumpTest : public WddmTest {
         osHandleStorageFirst = std::make_unique<OsHandleWin>();
         osHandleStorageSecond = std::make_unique<OsHandleWin>();
 
-        wddmFragmentedAllocation->fragmentsStorage.fragmentCount = 2;
-        wddmFragmentedAllocation->fragmentsStorage.fragmentStorageData[0].osHandleStorage = osHandleStorageFirst.get();
-        static_cast<OsHandleWin *>(wddmFragmentedAllocation->fragmentsStorage.fragmentStorageData[0].osHandleStorage)->handle = 0x3u;
-        wddmFragmentedAllocation->fragmentsStorage.fragmentStorageData[1].osHandleStorage = osHandleStorageSecond.get();
-        static_cast<OsHandleWin *>(wddmFragmentedAllocation->fragmentsStorage.fragmentStorageData[1].osHandleStorage)->handle = 0x4u;
+        wddmFragmentedAllocation->fragmentsStorage = std::make_unique<OsHandleStorage>();
+        wddmFragmentedAllocation->fragmentsStorage->fragmentCount = 2;
+        wddmFragmentedAllocation->fragmentsStorage->fragmentStorageData[0].osHandleStorage = osHandleStorageFirst.get();
+        static_cast<OsHandleWin *>(wddmFragmentedAllocation->fragmentsStorage->fragmentStorageData[0].osHandleStorage)->handle = 0x3u;
+        wddmFragmentedAllocation->fragmentsStorage->fragmentStorageData[1].osHandleStorage = osHandleStorageSecond.get();
+        static_cast<OsHandleWin *>(wddmFragmentedAllocation->fragmentsStorage->fragmentStorageData[1].osHandleStorage)->handle = 0x4u;
 
         allocationPtr = wddmAllocation.get();
 

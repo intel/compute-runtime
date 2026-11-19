@@ -283,13 +283,15 @@ TEST_F(DrmMemoryOperationsHandlerBaseTestFlushDummyExec, givenUsmHostPtrFragment
     sharedFragmentHandle.bo = &sharedFragmentBo;
     secondFragmentHandle.bo = &secondFragmentBo;
     MockDrmAllocation firstAllocation(0u, AllocationType::bufferHostMemory, MemoryPool::system4KBPages);
-    firstAllocation.fragmentsStorage.fragmentCount = 2;
-    firstAllocation.fragmentsStorage.fragmentStorageData[0].osHandleStorage = &firstFragmentHandle;
-    firstAllocation.fragmentsStorage.fragmentStorageData[1].osHandleStorage = &sharedFragmentHandle;
+    firstAllocation.fragmentsStorage = std::make_unique<OsHandleStorage>();
+    firstAllocation.fragmentsStorage->fragmentCount = 2;
+    firstAllocation.fragmentsStorage->fragmentStorageData[0].osHandleStorage = &firstFragmentHandle;
+    firstAllocation.fragmentsStorage->fragmentStorageData[1].osHandleStorage = &sharedFragmentHandle;
     MockDrmAllocation secondAllocation(0u, AllocationType::bufferHostMemory, MemoryPool::system4KBPages);
-    secondAllocation.fragmentsStorage.fragmentCount = 2;
-    secondAllocation.fragmentsStorage.fragmentStorageData[0].osHandleStorage = &sharedFragmentHandle;
-    secondAllocation.fragmentsStorage.fragmentStorageData[1].osHandleStorage = &secondFragmentHandle;
+    secondAllocation.fragmentsStorage = std::make_unique<OsHandleStorage>();
+    secondAllocation.fragmentsStorage->fragmentCount = 2;
+    secondAllocation.fragmentsStorage->fragmentStorageData[0].osHandleStorage = &sharedFragmentHandle;
+    secondAllocation.fragmentsStorage->fragmentStorageData[1].osHandleStorage = &secondFragmentHandle;
     drmMemoryOperationsHandler->residency = {drmAllocation, &firstAllocation, &secondAllocation};
 
     EXPECT_EQ(MemoryOperationsStatus::success, drmMemoryOperationsHandler->flushDummyExec(device.get(), ArrayRef<GraphicsAllocation *>(&allocationPtr, 1)));
@@ -301,8 +303,8 @@ TEST_F(DrmMemoryOperationsHandlerBaseTestFlushDummyExec, givenUsmHostPtrFragment
     }
 
     drmMemoryOperationsHandler->residency.clear();
-    firstAllocation.fragmentsStorage.fragmentCount = 0;
-    secondAllocation.fragmentsStorage.fragmentCount = 0;
+    firstAllocation.fragmentsStorage->fragmentCount = 0;
+    secondAllocation.fragmentsStorage->fragmentCount = 0;
 }
 
 HWTEST2_F(DrmMemoryOperationsHandlerBaseTestFlushDummyExec, givenDirectSubmissionLightWhenFreeGraphicsMemoryThenStopDirectSubmission, IsXeLpg) {

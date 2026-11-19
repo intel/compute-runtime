@@ -251,9 +251,9 @@ bool DrmAllocation::setCacheAdvice(Drm *drm, size_t regionSize, CacheRegion regi
 
     auto patIndex = drm->getPatIndex(getDefaultGmm(), allocationType, regionIndex, CachePolicy::writeBack, true, isSystemMemoryPool, false);
 
-    if (fragmentsStorage.fragmentCount > 0) {
-        for (uint32_t i = 0; i < fragmentsStorage.fragmentCount; i++) {
-            auto bo = static_cast<OsHandleLinux *>(fragmentsStorage.fragmentStorageData[i].osHandleStorage)->bo;
+    if (getFragmentCount() > 0) {
+        for (uint32_t i = 0; i < getFragmentCount(); i++) {
+            auto bo = static_cast<OsHandleLinux *>(fragmentsStorage->fragmentStorageData[i].osHandleStorage)->bo;
             bo->setCacheRegion(regionIndex);
             bo->setPatIndex(patIndex);
         }
@@ -314,8 +314,8 @@ bool DrmAllocation::prefetchBOWithChunking(Drm *drm) {
 StackVec<BufferObject *, maxFragmentsCount> DrmAllocation::getFragmentBOsForResidency(uint32_t vmHandleId) const {
     StackVec<BufferObject *, maxFragmentsCount> residencyBufferObjects;
     if (debugManager.flags.EnableUsmHostPtrFragments.get() == 1) {
-        for (auto fragmentId = 0u; fragmentId < fragmentsStorage.fragmentCount; fragmentId++) {
-            residencyBufferObjects.push_back(static_cast<OsHandleLinux *>(fragmentsStorage.fragmentStorageData[fragmentId].osHandleStorage)->bo);
+        for (auto fragmentId = 0u; fragmentId < getFragmentCount(); fragmentId++) {
+            residencyBufferObjects.push_back(static_cast<OsHandleLinux *>(fragmentsStorage->fragmentStorageData[fragmentId].osHandleStorage)->bo);
         }
     } else {
         residencyBufferObjects.push_back(getBOForVmHandle(vmHandleId));
@@ -324,16 +324,16 @@ StackVec<BufferObject *, maxFragmentsCount> DrmAllocation::getFragmentBOsForResi
 }
 
 int DrmAllocation::makeBOsResident(OsContext *osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind, const bool forcePagingFence) {
-    if (this->fragmentsStorage.fragmentCount) {
+    if (this->getFragmentCount()) {
         const bool usmHostPtrFragmentsEnabled = debugManager.flags.EnableUsmHostPtrFragments.get() == 1;
         const bool fragmentsBoundInEveryVm = bufferObjects == nullptr && usmHostPtrFragmentsEnabled;
         const bool fragmentsCollectedPerSubmission = bufferObjects != nullptr && usmHostPtrFragmentsEnabled;
-        for (unsigned int f = 0; f < this->fragmentsStorage.fragmentCount; f++) {
+        for (unsigned int f = 0; f < this->getFragmentCount(); f++) {
             if (fragmentsBoundInEveryVm && !bind) {
                 continue;
             }
-            auto bo = static_cast<OsHandleLinux *>(this->fragmentsStorage.fragmentStorageData[f].osHandleStorage)->bo;
-            bool fragmentNeedsBinding = fragmentsBoundInEveryVm || !this->fragmentsStorage.fragmentStorageData[f].residency->resident[osContext->getContextId()];
+            auto bo = static_cast<OsHandleLinux *>(this->fragmentsStorage->fragmentStorageData[f].osHandleStorage)->bo;
+            bool fragmentNeedsBinding = fragmentsBoundInEveryVm || !this->fragmentsStorage->fragmentStorageData[f].residency->resident[osContext->getContextId()];
             if (fragmentsCollectedPerSubmission) {
                 fragmentNeedsBinding = std::find(bufferObjects->begin(), bufferObjects->end(), bo) == bufferObjects->end();
             }
@@ -342,7 +342,7 @@ int DrmAllocation::makeBOsResident(OsContext *osContext, uint32_t vmHandleId, st
                 if (retVal) {
                     return retVal;
                 }
-                this->fragmentsStorage.fragmentStorageData[f].residency->resident[osContext->getContextId()] = true;
+                this->fragmentsStorage->fragmentStorageData[f].residency->resident[osContext->getContextId()] = true;
             }
         }
     } else {

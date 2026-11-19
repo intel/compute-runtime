@@ -2148,7 +2148,7 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenUsmHostAllocationBackedByFragmen
     properties.flags.isUSMHostAllocation = true;
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, ptrOffset(hostPtrBase, 0x40));
     ASSERT_NE(nullptr, allocation);
-    ASSERT_EQ(3u, allocation->fragmentsStorage.fragmentCount);
+    ASSERT_EQ(3u, allocation->getFragmentCount());
 
     EXPECT_EQ(MemoryOperationsStatus::success, operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&allocation, 1), false, false));
     EXPECT_EQ(6u, mock->getMockIoctlHelper()->vmBindCalled);
@@ -2168,12 +2168,12 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenUsmHostAllocationBackedByFragmen
     properties.flags.isUSMHostAllocation = true;
     auto allocation = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(properties, ptrOffset(hostPtrBase, 0x40)));
     ASSERT_NE(nullptr, allocation);
-    ASSERT_EQ(3u, allocation->fragmentsStorage.fragmentCount);
+    ASSERT_EQ(3u, allocation->getFragmentCount());
 
     auto osContext = device->getDefaultEngine().osContext;
     EXPECT_EQ(MemoryOperationsStatus::success, operationHandler->makeResidentAsync(osContext, allocation));
-    for (auto fragmentId = 0u; fragmentId < allocation->fragmentsStorage.fragmentCount; fragmentId++) {
-        auto bo = static_cast<OsHandleLinux *>(allocation->fragmentsStorage.fragmentStorageData[fragmentId].osHandleStorage)->bo;
+    for (auto fragmentId = 0u; fragmentId < allocation->getFragmentCount(); fragmentId++) {
+        auto bo = static_cast<OsHandleLinux *>(allocation->fragmentsStorage->fragmentStorageData[fragmentId].osHandleStorage)->bo;
         EXPECT_TRUE(bo->isAsyncPagingFenceRequired());
     }
     EXPECT_EQ(MemoryOperationsStatus::success, operationHandler->waitForAsyncResidency(osContext, allocation));
