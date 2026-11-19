@@ -10,7 +10,9 @@
 
 #include <gtest/gtest.h>
 
+#include <array>
 #include <limits>
+#include <new>
 
 TEST(Undefined, GivenAnyTypeThenReturnsMaxValue) {
     EXPECT_EQ(std::numeric_limits<uint8_t>::max(), NEO::undefined<uint8_t>);
@@ -111,6 +113,59 @@ TEST(ArgDescValue, WhenDefaultInitializedThenOffsetsAreUndefined) {
 TEST(ArgDescriptor, WhenDefaultInitializedThenTypeIsUnknown) {
     NEO::ArgDescriptor arg;
     EXPECT_EQ(NEO::ArgDescriptor::argTUnknown, arg.type);
+}
+
+TEST(ArgDescriptor, GivenArgTypeWhenConstructedOverNonZeroMemoryThenDescriptorOfThatTypeIsDefaultInitialized) {
+    constexpr uint8_t nonZeroPattern = 0xAB;
+    alignas(NEO::ArgDescriptor) std::array<uint8_t, sizeof(NEO::ArgDescriptor)> storage;
+
+    storage.fill(nonZeroPattern);
+    auto pointerArg = new (storage.data()) NEO::ArgDescriptor(NEO::ArgDescriptor::argTPointer);
+    EXPECT_EQ(NEO::ArgDescriptor::argTPointer, pointerArg->type);
+    const auto &pointer = pointerArg->as<NEO::ArgDescPointer>();
+    EXPECT_TRUE(NEO::isUndefinedOffset(pointer.bindful));
+    EXPECT_TRUE(NEO::isUndefinedOffset(pointer.stateless));
+    EXPECT_TRUE(NEO::isUndefinedOffset(pointer.bindless));
+    EXPECT_TRUE(NEO::isUndefinedOffset(pointer.bufferOffset));
+    EXPECT_TRUE(NEO::isUndefinedOffset(pointer.bufferSize));
+    EXPECT_TRUE(NEO::isUndefinedOffset(pointer.slmOffset));
+    EXPECT_EQ(0U, pointer.requiredSlmAlignment);
+    EXPECT_EQ(0U, pointer.pointerSize);
+    EXPECT_TRUE(pointer.accessedUsingStatelessAddressingMode);
+    pointerArg->~ArgDescriptor();
+
+    storage.fill(nonZeroPattern);
+    auto imageArg = new (storage.data()) NEO::ArgDescriptor(NEO::ArgDescriptor::argTImage);
+    EXPECT_EQ(NEO::ArgDescriptor::argTImage, imageArg->type);
+    const auto &image = imageArg->as<NEO::ArgDescImage>();
+    EXPECT_TRUE(NEO::isUndefinedOffset(image.bindful));
+    EXPECT_TRUE(NEO::isUndefinedOffset(image.bindless));
+    EXPECT_TRUE(NEO::isUndefinedOffset(image.metadataPayload.imgWidth));
+    EXPECT_TRUE(NEO::isUndefinedOffset(image.metadataPayload.numMipLevels));
+    EXPECT_TRUE(NEO::isUndefinedOffset(image.size));
+    imageArg->~ArgDescriptor();
+
+    storage.fill(nonZeroPattern);
+    auto samplerArg = new (storage.data()) NEO::ArgDescriptor(NEO::ArgDescriptor::argTSampler);
+    EXPECT_EQ(NEO::ArgDescriptor::argTSampler, samplerArg->type);
+    const auto &sampler = samplerArg->as<NEO::ArgDescSampler>();
+    EXPECT_EQ(0U, sampler.samplerType);
+    EXPECT_TRUE(NEO::isUndefinedOffset(sampler.bindful));
+    EXPECT_TRUE(NEO::isUndefinedOffset(sampler.bindless));
+    EXPECT_TRUE(NEO::isUndefinedOffset(sampler.metadataPayload.samplerSnapWa));
+    EXPECT_TRUE(NEO::isUndefinedOffset(sampler.index));
+    samplerArg->~ArgDescriptor();
+
+    storage.fill(nonZeroPattern);
+    auto valueArg = new (storage.data()) NEO::ArgDescriptor(NEO::ArgDescriptor::argTValue);
+    EXPECT_EQ(NEO::ArgDescriptor::argTValue, valueArg->type);
+    EXPECT_TRUE(valueArg->as<NEO::ArgDescValue>().elements.empty());
+    valueArg->~ArgDescriptor();
+
+    storage.fill(nonZeroPattern);
+    auto unknownArg = new (storage.data()) NEO::ArgDescriptor(NEO::ArgDescriptor::argTUnknown);
+    EXPECT_EQ(NEO::ArgDescriptor::argTUnknown, unknownArg->type);
+    unknownArg->~ArgDescriptor();
 }
 
 TEST(ArgDescriptorExtendedTypeInfo, WhenDefaultInitializedThenFlagsAreCleared) {

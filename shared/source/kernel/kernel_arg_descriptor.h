@@ -170,7 +170,7 @@ struct ArgDescriptor final {
         };
     };
 
-    ArgDescriptor(ArgType type);
+    ArgDescriptor(ArgType argType);
 
     ArgDescriptor()
         : ArgDescriptor(argTUnknown) {
@@ -367,9 +367,10 @@ inline ArgDescriptor &ArgDescriptor::operator=(const ArgDescriptor &rhs) {
     return *this;
 }
 
-inline ArgDescriptor::ArgDescriptor(ArgType type) : type(type) {
-    switch (type) {
+inline ArgDescriptor::ArgDescriptor(ArgType argType) : type(argTUnknown) {
+    switch (argType) {
     default:
+        this->type = argType;
         break;
     case argTPointer:
         this->as<ArgDescPointer>(true);

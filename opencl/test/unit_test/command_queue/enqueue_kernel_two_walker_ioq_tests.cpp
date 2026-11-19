@@ -74,6 +74,7 @@ HWTEST_F(IOQWithTwoWalkers, GivenTwoCommandQueuesWhenEnqueuingKernelThenOnePipeC
 
 HWTEST_F(IOQWithTwoWalkers, GivenStateCacheInvalidationWaIsRequiredWhenTwoKernelsWithStatefulAccessAreEnqueuedThenPipeControlWithStateCacheInvalidationAndCsStallIsInsertedBetweenWalkers) {
     NEO::ArgDescriptor ptrArg(NEO::ArgDescriptor::argTPointer);
+    ptrArg.as<NEO::ArgDescPointer>().bindful = 0x0;
     auto &explicitArgs = const_cast<KernelDescriptor &>(pKernel->getDescriptor()).payloadMappings.explicitArgs;
     explicitArgs.clear();
     explicitArgs.push_back(ptrArg);
