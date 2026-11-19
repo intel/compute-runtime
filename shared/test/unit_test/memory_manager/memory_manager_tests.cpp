@@ -12,6 +12,7 @@
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/memory_manager/engine_completion_snapshot.h"
 #include "shared/source/memory_manager/memory_banks.h"
+#include "shared/source/memory_manager/residency.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/program/program_initialization.h"

@@ -260,15 +260,6 @@ TEST_F(GraphicsAllocationViewTest, whenSettingOwnedGmmOnViewThenAbortIsThrownBef
     EXPECT_EQ(parentGmm, parentAllocation->getDefaultGmm());
 }
 
-TEST_F(GraphicsAllocationViewTest, whenGettingResidencyDataOnViewThenParentResidencyDataIsReturned) {
-    std::unique_ptr<GraphicsAllocation> view(parentAllocation->createView(viewOffset, viewSize));
-
-    auto &parentResidencyData = parentAllocation->getResidencyData();
-    auto &viewResidencyData = view->getResidencyData();
-
-    EXPECT_EQ(&parentResidencyData, &viewResidencyData);
-}
-
 TEST_F(GraphicsAllocationViewTest, whenSettingInspectionIdOnViewThenParentIsUpdated) {
     std::unique_ptr<GraphicsAllocation> view(parentAllocation->createView(viewOffset, viewSize));
     const uint32_t contextId = 0u;

@@ -29,6 +29,15 @@ std::string WddmAllocation::getHandleInfoString() const {
     return ss.str();
 }
 
+void WddmAllocation::updateCompletionDataForAllocationAndFragments(uint64_t newFenceValue, uint32_t contextId) {
+    getResidencyData().updateCompletionData(newFenceValue, contextId);
+
+    for (uint32_t allocationId = 0; allocationId < getFragmentCount(); allocationId++) {
+        auto residencyData = fragmentsStorage->fragmentStorageData[allocationId].residency;
+        residencyData->updateCompletionData(newFenceValue, contextId);
+    }
+}
+
 GraphicsAllocation *WddmAllocation::createView(size_t offsetInParentAllocation, size_t viewSize) {
     return new WddmAllocation(this, offsetInParentAllocation, viewSize);
 }

@@ -180,6 +180,27 @@ struct WddmResidencyControllerWithGdiAndMemoryManagerTest : ::testing::Test {
     GmmHelper *gmmHelper = nullptr;
 };
 
+TEST(WddmAllocationResidencyDataTest, givenWddmAllocationWithFragmentsWhenUpdatingCompletionDataThenAllocationAndAllFragmentsHaveNewFenceValue) {
+    MockExecutionEnvironment executionEnvironment{};
+    MockWddmAllocation allocation(executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper(), 1u);
+    allocation.fragmentsStorage = std::make_unique<OsHandleStorage>();
+    allocation.fragmentsStorage->fragmentCount = 3;
+
+    ResidencyData fragmentResidencyData[3] = {ResidencyData(3), ResidencyData(3), ResidencyData(3)};
+    for (uint32_t i = 0; i < allocation.getFragmentCount(); i++) {
+        allocation.fragmentsStorage->fragmentStorageData[i].residency = &fragmentResidencyData[i];
+    }
+
+    const uint64_t newFenceValue = 0x54321;
+    const uint32_t contextId = 0u;
+    allocation.updateCompletionDataForAllocationAndFragments(newFenceValue, contextId);
+
+    EXPECT_EQ(newFenceValue, allocation.getResidencyData().getFenceValueForContextId(contextId));
+    for (auto &residencyData : fragmentResidencyData) {
+        EXPECT_EQ(newFenceValue, residencyData.getFenceValueForContextId(contextId));
+    }
+}
+
 TEST(WddmResidencyController, givenWddmResidencyControllerWhenItIsConstructedThenDoNotRegisterTrimCallback) {
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);

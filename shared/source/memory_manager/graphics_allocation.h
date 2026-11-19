@@ -17,7 +17,6 @@
 #include "shared/source/memory_manager/host_ptr_defines.h"
 #include "shared/source/memory_manager/memadvise_flags.h"
 #include "shared/source/memory_manager/memory_pool.h"
-#include "shared/source/memory_manager/residency.h"
 #include "shared/source/utilities/idlist.h"
 #include "shared/source/utilities/mockable_virtual_defaults.h"
 
@@ -559,13 +558,6 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
 
     bool isCompressionEnabled() const;
 
-    ResidencyData &getResidencyData() {
-        if (parentAllocation) {
-            return parentAllocation->getResidencyData();
-        }
-        return residency;
-    }
-
     uint64_t getBindlessOffset() {
         if (bindlessInfo.heapAllocation == nullptr) {
             return std::numeric_limits<uint64_t>::max();
@@ -586,7 +578,6 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
     void setAsCantBeReadOnly(bool cantBeReadOnly) {
         allocationInfo.flags.cantBeReadOnly = cantBeReadOnly;
     }
-    MOCKABLE_VIRTUAL void updateCompletionDataForAllocationAndFragments(uint64_t newFenceValue, uint32_t contextId);
     void setShareableHostMemory(bool shareableHostMemory) { allocationInfo.flags.shareableHostMemory = shareableHostMemory; }
     bool isShareableHostMemory() const { return allocationInfo.flags.shareableHostMemory; }
     MOCKABLE_VIRTUAL bool hasAllocationReadOnlyType();
@@ -679,7 +670,6 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAn
     SurfaceStateInHeapInfo bindlessInfo = {};
     void *lockedPtr = nullptr;
     void *driverAllocatedCpuPointer = nullptr;
-    ResidencyData residency;
     GraphicsAllocation *parentAllocation = nullptr;
     size_t offsetInParent = 0u;
     GraphicsAllocation *mappedPhysicalAllocation = nullptr;

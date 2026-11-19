@@ -25,6 +25,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_os_context_win.h"
+#include "shared/test/common/mocks/windows/mock_wddm_allocation.h"
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/direct_submission/direct_submission_controller_mock.h"
@@ -1011,10 +1012,11 @@ HWTEST_F(WddmDirectSubmissionTest, givenResidencyControllerWhenUpdatingResidency
     MockWddmDirectSubmission<FamilyType, Dispatcher> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
     wddmDirectSubmission.osContextWin = mockOsContextWin.get();
     ResidencyContainer container;
-    NEO::MockGraphicsAllocation mockGa;
-    container.push_back(&mockGa);
+    MockWddmAllocation allocation(device->getGmmHelper(), 1u);
+    container.push_back(&allocation);
+    mockOsContextWin->getMonitoredFence().currentFenceValue = 0x1234u;
     wddmDirectSubmission.updateMonitorFenceValueForResidencyList(&container);
-    EXPECT_EQ(mockGa.updateCompletionDataForAllocationAndFragmentsCalledtimes, 1u);
+    EXPECT_EQ(0x1234u, allocation.getResidencyData().getFenceValueForContextId(mockOsContextWin->getContextId()));
 }
 
 HWTEST_F(WddmDirectSubmissionTest, givenDirectSubmissionWhenSwitchingRingBuffersAndResidencyContainerIsNullThenUpdateResidencyNotCalled) {

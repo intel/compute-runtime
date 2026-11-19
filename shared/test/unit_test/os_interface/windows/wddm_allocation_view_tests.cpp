@@ -62,6 +62,12 @@ TEST_F(WddmAllocationViewTest, whenCreatingViewThenViewHasCorrectAddresses) {
     EXPECT_EQ(viewSize, view->getUnderlyingBufferSize());
 }
 
+TEST_F(WddmAllocationViewTest, whenGettingResidencyDataOnViewThenParentResidencyDataIsReturned) {
+    auto view = std::unique_ptr<WddmAllocation>(static_cast<WddmAllocation *>(parentAllocation->createView(viewOffset, viewSize)));
+
+    EXPECT_EQ(&parentAllocation->getResidencyData(), &view->getResidencyData());
+}
+
 TEST_F(WddmAllocationViewTest, whenPeekInternalHandleOnViewThenDelegatesToParent) {
     auto view = std::unique_ptr<WddmAllocation>(static_cast<WddmAllocation *>(parentAllocation->createView(viewOffset, viewSize)));
 

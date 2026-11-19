@@ -8,6 +8,7 @@
 #pragma once
 #define UMDF_USING_NTSTATUS
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/memory_manager/residency.h"
 #include "shared/source/os_interface/windows/d3dkmthk_wrapper.h"
 #include "shared/source/os_interface/windows/windows_wrapper.h"
 
@@ -32,6 +33,7 @@ class WddmAllocation : public GraphicsAllocation {
     WddmAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, void *cpuPtrIn, uint64_t canonizedAddress, size_t sizeIn,
                    void *reservedAddr, MemoryPool pool, uint32_t shareable, size_t maxOsContextCount)
         : GraphicsAllocation(rootDeviceIndex, numGmms, allocationType, cpuPtrIn, canonizedAddress, 0llu, sizeIn, pool, maxOsContextCount),
+          residency(maxOsContextCount),
           shareable(shareable) {
         reservedAddressRangeInfo.addressPtr = reservedAddr;
         reservedAddressRangeInfo.rangeSize = sizeIn;
@@ -40,13 +42,15 @@ class WddmAllocation : public GraphicsAllocation {
 
     WddmAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, void *cpuPtrIn, size_t sizeIn,
                    osHandle sharedHandle, MemoryPool pool, size_t maxOsContextCount, uint64_t canonizedGpuAddress)
-        : GraphicsAllocation(rootDeviceIndex, numGmms, allocationType, cpuPtrIn, sizeIn, sharedHandle, pool, maxOsContextCount, canonizedGpuAddress) {
+        : GraphicsAllocation(rootDeviceIndex, numGmms, allocationType, cpuPtrIn, sizeIn, sharedHandle, pool, maxOsContextCount, canonizedGpuAddress),
+          residency(maxOsContextCount) {
         handles.resize(gmms.size());
     }
 
   protected:
     WddmAllocation(WddmAllocation *parent, size_t offsetInParentAllocation, size_t viewSize)
         : GraphicsAllocation(parent, offsetInParentAllocation, viewSize),
+          residency(0u),
           handles(parent->handles),
           resourceHandle(parent->resourceHandle),
           shareable(parent->shareable),
@@ -131,6 +135,14 @@ class WddmAllocation : public GraphicsAllocation {
     void *getSectionView() const { return sectionView; }
     void setSectionView(void *sectionView) { this->sectionView = sectionView; }
 
+    ResidencyData &getResidencyData() {
+        if (parentAllocation) {
+            return static_cast<WddmAllocation *>(parentAllocation)->getResidencyData();
+        }
+        return residency;
+    }
+    void updateCompletionDataForAllocationAndFragments(uint64_t newFenceValue, uint32_t contextId);
+
   protected:
     // OS assigned fields
     D3DGPU_VIRTUAL_ADDRESS reservedGpuVirtualAddress = 0u;
@@ -138,6 +150,7 @@ class WddmAllocation : public GraphicsAllocation {
     uint64_t ntSecureHandle = 0u;
     std::string getHandleInfoString() const;
 
+    ResidencyData residency;
     std::vector<D3DKMT_HANDLE> handles;
     D3DKMT_HANDLE resourceHandle = 0u; // used by shared resources
     void *sectionView = nullptr;

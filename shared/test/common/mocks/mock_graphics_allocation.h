@@ -30,7 +30,6 @@ class MockGraphicsAllocation : public MemoryAllocation {
     using MemoryAllocation::memoryPool;
     using MemoryAllocation::objectNotResident;
     using MemoryAllocation::objectNotUsed;
-    using MemoryAllocation::residency;
     using MemoryAllocation::size;
     using MemoryAllocation::usageInfos;
 
@@ -58,14 +57,9 @@ class MockGraphicsAllocation : public MemoryAllocation {
         handle = internalHandle;
         return peekInternalHandleResult;
     }
-    void updateCompletionDataForAllocationAndFragments(uint64_t newFenceValue, uint32_t contextId) override {
-        updateCompletionDataForAllocationAndFragmentsCalledtimes++;
-        MemoryAllocation::updateCompletionDataForAllocationAndFragments(newFenceValue, contextId);
-    }
 
     ADDMETHOD(hasAllocationReadOnlyType, bool, false, false, (), ());
     ADDMETHOD_VOIDRETURN(setAsReadOnly, false, (), ());
-    uint64_t updateCompletionDataForAllocationAndFragmentsCalledtimes = 0;
     int peekInternalHandleResult = 0;
     uint64_t internalHandle = 0;
 };

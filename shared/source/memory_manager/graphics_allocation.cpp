@@ -37,8 +37,7 @@ GraphicsAllocation::GraphicsAllocation(uint32_t rootDeviceIndex, size_t numGmms,
       memoryPool(pool),
       allocationType(allocationType),
       rootDeviceIndex(rootDeviceIndex),
-      inspectionIds(maxOsContextCount),
-      residency(maxOsContextCount) {
+      inspectionIds(maxOsContextCount) {
     gmms.resize(numGmms);
 }
 
@@ -51,8 +50,7 @@ GraphicsAllocation::GraphicsAllocation(uint32_t rootDeviceIndex, size_t numGmms,
       memoryPool(pool),
       allocationType(allocationType),
       rootDeviceIndex(rootDeviceIndex),
-      inspectionIds(maxOsContextCount),
-      residency(maxOsContextCount) {
+      inspectionIds(maxOsContextCount) {
     sharingInfo.sharedHandle = sharedHandleIn;
     gmms.resize(numGmms);
 }
@@ -69,7 +67,6 @@ GraphicsAllocation::GraphicsAllocation(GraphicsAllocation *parent, size_t offset
       rootDeviceIndex(parent->rootDeviceIndex),
       inspectionIds(parent->inspectionIds.size()),
       sharingInfo(parent->sharingInfo),
-      residency(parent->residency.resident.size()),
       parentAllocation(parent),
       offsetInParent(offsetInParentAllocation),
       enabledMemAdviseFlags(parent->getMemAdviseFlags()) {
@@ -172,15 +169,6 @@ void GraphicsAllocation::prepareHostPtrForResidency(CommandStreamReceiver *csr) 
 
 uint32_t GraphicsAllocation::getNumHandlesForKmdSharedAllocation(uint32_t numBanks) {
     return (numBanks > 1) && (debugManager.flags.CreateKmdMigratedSharedAllocationWithMultipleBOs.get() != 0) ? numBanks : 1u;
-}
-
-void GraphicsAllocation::updateCompletionDataForAllocationAndFragments(uint64_t newFenceValue, uint32_t contextId) {
-    getResidencyData().updateCompletionData(newFenceValue, contextId);
-
-    for (uint32_t allocationId = 0; allocationId < getFragmentCount(); allocationId++) {
-        auto residencyData = fragmentsStorage->fragmentStorageData[allocationId].residency;
-        residencyData->updateCompletionData(newFenceValue, contextId);
-    }
 }
 
 bool GraphicsAllocation::hasAllocationReadOnlyType() {
