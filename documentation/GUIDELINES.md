@@ -14,6 +14,7 @@ File to cover guidelines for NEO project.
 * do not use default parameters
 * prefer using over typedef
 * avoid defines for constants, use constexpr
+* avoid preprocessor conditionals (`#if`, `#ifdef`) at all cost; select OS specific code by per-OS files that the build picks (`*_drm`/`*_wddm`, `linux/`/`windows/`), product specific behavior through the hardware abstraction (see [Choosing where a change belongs](../programmers-guide/HARDWARE_ABSTRACTION.md#choosing-where-a-change-belongs)), and debug-only behavior through debug variables or `DEBUG_BREAK_IF`; a new conditional needs strong justification
 * prefer forward declarations in headers
 * avoid includes in headers unless absolutely necessary
 * use of exceptions in driver code needs strong justification
