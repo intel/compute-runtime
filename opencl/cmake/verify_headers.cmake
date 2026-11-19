@@ -4,8 +4,6 @@
 # SPDX-License-Identifier: MIT
 #
 
-list(APPEND opencl_include_dirs ${KHRONOS_GL_HEADERS_DIR})
-
 if(WIN32)
   list(APPEND opencl_include_dirs
        ${NEO_SOURCE_DIR}/opencl/source/os_interface/windows

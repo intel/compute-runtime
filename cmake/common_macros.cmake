@@ -126,6 +126,7 @@ function(create_verify_headers_target folder)
                              ${IGC_OCL_ADAPTOR_DIR}
                              ${NEO__IGC_INCLUDE_DIR}
                              ${KHRONOS_HEADERS_DIR}
+                             ${KHRONOS_GL_HEADERS_DIR}
                              ${VISA_INCLUDE_DIR}
                              ${IGA_INCLUDE_DIR}
                              ${NEO_SOURCE_DIR}/shared/test/common/test_configuration/unit_tests
