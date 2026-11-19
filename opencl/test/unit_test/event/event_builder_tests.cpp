@@ -158,7 +158,7 @@ TEST(EventBuilder, givenVirtualEventWithSubmittedCommandAsParentThenFinalizeNotA
     virtualEvent.eventWithoutCommand = false;
     virtualEvent.submittedCmd.exchange(command.release());
 
-    EventBuilder eventBuilder; // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks), NEO-14033
+    EventBuilder eventBuilder; // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks) - analyzer loses ownership passed to std::atomic
     EXPECT_EQ(nullptr, eventBuilder.getEvent());
 
     constexpr int constrParam1 = 7;

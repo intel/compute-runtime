@@ -197,6 +197,6 @@ class IFRefList : public IFList<IFNodeRef<NodeObjectType>, threadSafe, ownsNodes
         auto up = std::make_unique<IFNodeRef<NodeObjectType>>(&node);
         this->pushFrontOne(*up);
         up.release();
-    } // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+    } // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks) - analyzer loses ownership passed to std::atomic
 };
 } // namespace NEO
