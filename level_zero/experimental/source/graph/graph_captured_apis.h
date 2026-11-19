@@ -440,7 +440,7 @@ struct ExecutableGraphNodeCommand {
     L0::CommandList *commandList = nullptr;
 };
 
-using ExecutableGraphNodeCommands = std::unordered_map<ze_graph_node_handle_t, ExecutableGraphNodeCommand>;
+using ExecutableGraphNodeCommands = std::vector<ExecutableGraphNodeCommand>;
 
 struct ClosureInstantiateContext {
     ExternalCbEventInfoContainer *cbEventInfoContainer = nullptr;

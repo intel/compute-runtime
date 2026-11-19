@@ -2571,6 +2571,61 @@ TEST_F(GraphInstantiationValidation, GivenMutableGraphWhenCapturingAppendKernelW
     EXPECT_EQ(nodeHandle, rootGraphNodeHandle);
 }
 
+TEST_F(GraphInstantiationValidation, GivenMutableGraphWhenCapturingAppendKernelsWithGraphNodeDescriptorsInRootAndForkedSubgraphThenNodesAreIndexedInCaptureOrder) {
+    GraphsCleanupGuard graphCleanup;
+    DebugManagerStateRestore restorer;
+    debugManager.flags.OverrideMutableGraphCapability.set(static_cast<int32_t>(allMutableGraphNodeFlagsExceptKernelInstruction));
+    ContextStubMock ctx;
+    MockGraphCmdListWithContext cmdlist{&ctx};
+    cmdlist.device = this->device;
+    auto cmdListHandle = cmdlist.toHandle();
+    MockGraphCmdListWithContext childCmdlist{&ctx};
+    childCmdlist.device = this->device;
+    Mock<Event> forkEvent;
+    auto forkEventHandle = forkEvent.toHandle();
+    Mock<Event> joinEvent;
+    auto joinEventHandle = joinEvent.toHandle();
+    Mock<Module> module(this->device, nullptr);
+    Mock<KernelImp> kernel;
+    kernel.setModule(&module);
+    ze_group_count_t groupCount = {1, 1, 1};
+
+    ze_graph_node_handle_t firstRootNodeHandle = nullptr;
+    ze_graph_node_exp_desc_t firstRootNodeDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_EXP_DESC};
+    firstRootNodeDesc.phNodeHandle = &firstRootNodeHandle;
+    ze_graph_node_handle_t childNodeHandle = nullptr;
+    ze_graph_node_exp_desc_t childNodeDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_EXP_DESC};
+    childNodeDesc.phNodeHandle = &childNodeHandle;
+    ze_graph_node_handle_t secondRootNodeHandle = nullptr;
+    ze_graph_node_exp_desc_t secondRootNodeDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_EXP_DESC};
+    secondRootNodeDesc.phNodeHandle = &secondRootNodeHandle;
+
+    Graph srcGraph(&ctx, true, true);
+    Graph *srcGraphPtr = &srcGraph;
+    Graph *childGraph = nullptr;
+
+    srcGraph.startCapturingFrom(cmdlist, false);
+    cmdlist.setGraphCaptureTarget(&srcGraph);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::captureCommand<CaptureApi::zeCommandListAppendLaunchKernelWithParameters>(cmdlist, srcGraphPtr, nullptr, cmdListHandle, kernel.toHandle(), &groupCount, &firstRootNodeDesc, nullptr, 0U, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(cmdlist, srcGraphPtr, nullptr, cmdListHandle, forkEventHandle, 0U, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::captureCommand<CaptureApi::zeCommandListAppendLaunchKernelWithParameters>(childCmdlist, childGraph, nullptr, &childCmdlist, kernel.toHandle(), &groupCount, &childNodeDesc, joinEventHandle, 1U, &forkEventHandle));
+    ASSERT_NE(nullptr, childGraph);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(cmdlist, srcGraphPtr, nullptr, cmdListHandle, nullptr, 1U, &joinEventHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::captureCommand<CaptureApi::zeCommandListAppendLaunchKernelWithParameters>(cmdlist, srcGraphPtr, nullptr, cmdListHandle, kernel.toHandle(), &groupCount, &secondRootNodeDesc, nullptr, 0U, nullptr));
+    srcGraph.stopCapturing();
+
+    const std::vector<ze_graph_node_handle_t> expectedNodeHandles = {firstRootNodeHandle, childNodeHandle, secondRootNodeHandle};
+    uint32_t nodesCount = 0U;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, srcGraph.getNodes(&nodesCount, nullptr));
+    ASSERT_EQ(expectedNodeHandles.size(), nodesCount);
+    std::vector<ze_graph_node_handle_t> nodeHandles(nodesCount, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, srcGraph.getNodes(&nodesCount, nodeHandles.data()));
+    for (uint32_t nodeIndex = 0U; nodeIndex < nodesCount; ++nodeIndex) {
+        EXPECT_EQ(expectedNodeHandles[nodeIndex], nodeHandles[nodeIndex]);
+        EXPECT_EQ(nodeIndex, GraphNode::fromHandle(nodeHandles[nodeIndex])->getIndex());
+    }
+}
+
 TEST_F(GraphInstantiationValidation, GivenFlatCaptureWhenCapturingAppendKernelsWithGraphNodeDescriptorThenGraphNodesAreNotCreated) {
     GraphsCleanupGuard graphCleanup;
     processUsesGraphs.store(true);
@@ -3319,7 +3374,7 @@ struct GraphNodeInstantiateFixture : public GraphInternalEventFixture {
     ze_graph_node_handle_t nodeHandle = nullptr;
     ClosureExternalStorage externalStorage;
     ExternalCbEventInfoContainer eventInfo;
-    ExecutableGraphNodeCommands nodeCommands;
+    ExecutableGraphNodeCommands nodeCommands = ExecutableGraphNodeCommands(1u);
 };
 
 using GraphNodeInstantiateTest = Test<GraphNodeInstantiateFixture>;
@@ -3333,10 +3388,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, GraphNodeInstantiateTest, givenGraphNodeAndNoExtern
     EXPECT_EQ(ZE_RESULT_SUCCESS, handleGraphNodeCommandWithExternalCbWaitEvents(nodeHandle, 0u, nullptr, instantiateContext, &executionCmdList));
 
     EXPECT_EQ(std::vector<ze_mutable_graph_node_exp_flags_t>{nodeFlags}, executionCmdList.mutableCommandList.recordedFlags);
-    auto nodeCommandIt = nodeCommands.find(nodeHandle);
-    ASSERT_NE(nodeCommands.end(), nodeCommandIt);
-    EXPECT_EQ(1u, nodeCommandIt->second.commandId);
-    EXPECT_EQ(&executionCmdList, nodeCommandIt->second.commandList);
+    const auto &nodeCommand = nodeCommands[GraphNode::fromHandle(nodeHandle)->getIndex()];
+    EXPECT_EQ(1u, nodeCommand.commandId);
+    EXPECT_EQ(&executionCmdList, nodeCommand.commandList);
     EXPECT_TRUE(eventInfo.getCbWaitEventInfos().empty());
 }
 
@@ -3349,11 +3403,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, GraphNodeInstantiateTest, givenGraphNodeAndExternal
     EXPECT_EQ(ZE_RESULT_SUCCESS, handleGraphNodeCommandWithExternalCbWaitEvents(nodeHandle, 1u, &hExternalEvent, instantiateContext, &executionCmdList));
 
     EXPECT_EQ(std::vector<ze_mutable_graph_node_exp_flags_t>{nodeFlags | ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_WAIT_EVENTS}, executionCmdList.mutableCommandList.recordedFlags);
-    auto nodeCommandIt = nodeCommands.find(nodeHandle);
-    ASSERT_NE(nodeCommands.end(), nodeCommandIt);
+    const auto &nodeCommand = nodeCommands[GraphNode::fromHandle(nodeHandle)->getIndex()];
+    EXPECT_EQ(&executionCmdList, nodeCommand.commandList);
     const auto &waitInfos = eventInfo.getCbWaitEventInfos();
     ASSERT_EQ(1u, waitInfos.size());
-    EXPECT_EQ(nodeCommandIt->second.commandId, waitInfos[0].commandId);
+    EXPECT_EQ(nodeCommand.commandId, waitInfos[0].commandId);
     EXPECT_EQ(&executionCmdList, waitInfos[0].executor);
 }
 
@@ -3366,11 +3420,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, GraphNodeInstantiateTest, givenGraphNodeWithZeroFla
     EXPECT_EQ(ZE_RESULT_SUCCESS, handleGraphNodeCommandWithExternalCbWaitEvents(nodeHandle, 1u, &hExternalEvent, instantiateContext, &executionCmdList));
 
     EXPECT_EQ(std::vector<ze_mutable_graph_node_exp_flags_t>{0u}, executionCmdList.mutableCommandList.recordedFlags);
-    auto nodeCommandIt = nodeCommands.find(nodeHandle);
-    ASSERT_NE(nodeCommands.end(), nodeCommandIt);
+    const auto &nodeCommand = nodeCommands[GraphNode::fromHandle(nodeHandle)->getIndex()];
+    EXPECT_EQ(&executionCmdList, nodeCommand.commandList);
     const auto &waitInfos = eventInfo.getCbWaitEventInfos();
     ASSERT_EQ(1u, waitInfos.size());
-    EXPECT_EQ(nodeCommandIt->second.commandId, waitInfos[0].commandId);
+    EXPECT_EQ(nodeCommand.commandId, waitInfos[0].commandId);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, GraphNodeInstantiateTest, givenGraphNodeCommandIdFailureWhenHandlingGraphNodeCommandThenErrorIsReturnedAndNothingIsStored) {
@@ -3382,7 +3436,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, GraphNodeInstantiateTest, givenGraphNodeCommandIdFa
     ClosureInstantiateContext instantiateContext{&eventInfo, nullptr, nullptr, &nodeCommands};
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, handleGraphNodeCommandWithExternalCbWaitEvents(nodeHandle, 1u, &hExternalEvent, instantiateContext, &executionCmdList));
 
-    EXPECT_TRUE(nodeCommands.empty());
+    EXPECT_EQ(nullptr, nodeCommands[0].commandList);
     EXPECT_TRUE(eventInfo.getCbWaitEventInfos().empty());
 }
 
@@ -3405,7 +3459,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, GraphNodeInstantiateTest, givenNoGraphNodeAndExtern
     EXPECT_EQ(ZE_RESULT_SUCCESS, handleGraphNodeCommandWithExternalCbWaitEvents(nullptr, 1u, &hExternalEvent, instantiateContext, &executionCmdList));
 
     EXPECT_EQ(std::vector<ze_mutable_graph_node_exp_flags_t>{ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_WAIT_EVENTS}, executionCmdList.mutableCommandList.recordedFlags);
-    EXPECT_TRUE(nodeCommands.empty());
+    EXPECT_EQ(nullptr, nodeCommands[0].commandList);
     EXPECT_EQ(1u, eventInfo.getCbWaitEventInfos().size());
 }
 
@@ -3419,11 +3473,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, GraphNodeInstantiateTest, givenKernelWithParameters
     EXPECT_EQ(ZE_RESULT_SUCCESS, closure->instantiateTo(&executionCmdList, externalStorage, instantiateContext, enforcedEvents));
 
     EXPECT_EQ(std::vector<ze_mutable_graph_node_exp_flags_t>{nodeFlags | ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_WAIT_EVENTS}, executionCmdList.mutableCommandList.recordedFlags);
-    auto nodeCommandIt = nodeCommands.find(nodeHandle);
-    ASSERT_NE(nodeCommands.end(), nodeCommandIt);
+    const auto &nodeCommand = nodeCommands[GraphNode::fromHandle(nodeHandle)->getIndex()];
+    EXPECT_EQ(&executionCmdList, nodeCommand.commandList);
     const auto &waitInfos = eventInfo.getCbWaitEventInfos();
     ASSERT_EQ(1u, waitInfos.size());
-    EXPECT_EQ(nodeCommandIt->second.commandId, waitInfos[0].commandId);
+    EXPECT_EQ(nodeCommand.commandId, waitInfos[0].commandId);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, GraphNodeInstantiateTest, givenKernelWithArgumentsClosureWithGraphNodeAndExternalWaitEventWhenInstantiatingThenNodeCommandIsStoredAndSharedWithWaitEvents) {
@@ -3436,11 +3490,58 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, GraphNodeInstantiateTest, givenKernelWithArgumentsC
     EXPECT_EQ(ZE_RESULT_SUCCESS, closure->instantiateTo(&executionCmdList, externalStorage, instantiateContext, enforcedEvents));
 
     EXPECT_EQ(std::vector<ze_mutable_graph_node_exp_flags_t>{nodeFlags | ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_WAIT_EVENTS}, executionCmdList.mutableCommandList.recordedFlags);
-    auto nodeCommandIt = nodeCommands.find(nodeHandle);
-    ASSERT_NE(nodeCommands.end(), nodeCommandIt);
+    const auto &nodeCommand = nodeCommands[GraphNode::fromHandle(nodeHandle)->getIndex()];
+    EXPECT_EQ(&executionCmdList, nodeCommand.commandList);
     const auto &waitInfos = eventInfo.getCbWaitEventInfos();
     ASSERT_EQ(1u, waitInfos.size());
-    EXPECT_EQ(nodeCommandIt->second.commandId, waitInfos[0].commandId);
+    EXPECT_EQ(nodeCommand.commandId, waitInfos[0].commandId);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, GraphInstantiation, GivenMutableGraphWithGraphNodesWhenInstantiatingThenCommandOfEachNodeIsStoredAtNodeIndex) {
+    GraphsCleanupGuard graphCleanup;
+    DebugManagerStateRestore restorer;
+    debugManager.flags.OverrideMutableGraphCapability.set(static_cast<int32_t>(allMutableGraphNodeFlagsExceptKernelInstruction));
+    MockGraphContextReturningSpecificCmdList ctx;
+    MockGraphCmdListWithContext cmdlist{&ctx};
+    cmdlist.device = this->device;
+    auto cmdListHandle = cmdlist.toHandle();
+    Mock<Module> module(this->device, nullptr);
+    Mock<KernelImp> kernel;
+    kernel.setModule(&module);
+    ze_group_count_t groupCount = {1, 1, 1};
+
+    ze_graph_node_handle_t firstNodeHandle = nullptr;
+    ze_graph_node_exp_desc_t firstNodeDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_EXP_DESC};
+    firstNodeDesc.phNodeHandle = &firstNodeHandle;
+    ze_graph_node_handle_t secondNodeHandle = nullptr;
+    ze_graph_node_exp_desc_t secondNodeDesc = {ZE_STRUCTURE_TYPE_GRAPH_NODE_EXP_DESC};
+    secondNodeDesc.phNodeHandle = &secondNodeHandle;
+
+    MockGraph srcGraph(&ctx, true, true);
+    Graph *srcGraphPtr = &srcGraph;
+    srcGraph.startCapturingFrom(cmdlist, false);
+    cmdlist.setGraphCaptureTarget(&srcGraph);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::captureCommand<CaptureApi::zeCommandListAppendLaunchKernelWithParameters>(cmdlist, srcGraphPtr, nullptr, cmdListHandle, kernel.toHandle(), &groupCount, &firstNodeDesc, nullptr, 0U, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::captureCommand<CaptureApi::zeCommandListAppendBarrier>(cmdlist, srcGraphPtr, nullptr, cmdListHandle, nullptr, 0U, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, L0::captureCommand<CaptureApi::zeCommandListAppendLaunchKernelWithParameters>(cmdlist, srcGraphPtr, nullptr, cmdListHandle, kernel.toHandle(), &groupCount, &secondNodeDesc, nullptr, 0U, nullptr));
+    srcGraph.stopCapturing();
+    srcGraph.captureTargetDesc.hDevice = device->toHandle();
+
+    auto executionCmdList = new CommandIdRecordingCommandList<FamilyType::gfxCoreFamily>(this->device);
+    ctx.cmdListsToReturn.push_back(executionCmdList);
+
+    GraphInstatiateSettings instantiateAsFlat(nullptr, false);
+    MockExecutableGraph execGraph;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, execGraph.instantiateFrom(srcGraph, instantiateAsFlat));
+
+    const auto &nodeCommands = *execGraph.getNodeCommands().get();
+    ASSERT_EQ(2u, nodeCommands.size());
+    const auto &firstNodeCommand = nodeCommands[GraphNode::fromHandle(firstNodeHandle)->getIndex()];
+    EXPECT_EQ(1u, firstNodeCommand.commandId);
+    EXPECT_EQ(executionCmdList, firstNodeCommand.commandList);
+    const auto &secondNodeCommand = nodeCommands[GraphNode::fromHandle(secondNodeHandle)->getIndex()];
+    EXPECT_EQ(2u, secondNodeCommand.commandId);
+    EXPECT_EQ(executionCmdList, secondNodeCommand.commandList);
 }
 
 TEST_F(GraphInternalEventTest, givenCounterBasedEventWhenGraphIsInstantiatedThenInternalEventPreservesTimestampMode) {

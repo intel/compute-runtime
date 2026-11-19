@@ -663,7 +663,8 @@ ze_result_t handleGraphNodeCommandWithExternalCbWaitEvents(ze_graph_node_handle_
     const bool externalWaitEventPresent = isExternalWaitEventPresent(numWaitEvents, phWaitEvents, instantiateContext, false);
     uint64_t commandId = ExecutableGraphNodeCommand::invalidCommandId;
     if ((nullptr != graphNodeHandle) && (nullptr != instantiateContext.nodeCommands)) {
-        ze_mutable_graph_node_exp_flags_t nodeFlags = GraphNode::fromHandle(graphNodeHandle)->getFlags();
+        const auto graphNode = GraphNode::fromHandle(graphNodeHandle);
+        ze_mutable_graph_node_exp_flags_t nodeFlags = graphNode->getFlags();
         if ((0u != nodeFlags) && externalWaitEventPresent) {
             nodeFlags |= ZE_MUTABLE_GRAPH_NODE_EXP_FLAG_WAIT_EVENTS;
         }
@@ -671,7 +672,8 @@ ze_result_t handleGraphNodeCommandWithExternalCbWaitEvents(ze_graph_node_handle_
         if (auto ret = mutableCommandList->getNextCommandIdForGraphNode(nodeFlags, 0, nullptr, &commandId); ZE_RESULT_SUCCESS != ret) {
             return ret;
         }
-        (*instantiateContext.nodeCommands)[graphNodeHandle] = {commandId, executionTarget};
+        UNRECOVERABLE_IF(graphNode->getIndex() >= instantiateContext.nodeCommands->size());
+        (*instantiateContext.nodeCommands)[graphNode->getIndex()] = {commandId, executionTarget};
     }
     registerExternalCbWaitEvents(numWaitEvents, phWaitEvents, instantiateContext, executionTarget, externalWaitEventPresent, commandId);
     return ZE_RESULT_SUCCESS;
@@ -1933,12 +1935,16 @@ ze_result_t ExecutableGraph::instantiateFrom(Graph &rootSrc, const GraphInstatia
     this->patchPreambleBarrierSupported = L0::Device::fromHandle(rootSrc.getCaptureTargetDesc().hDevice)->getProductHelper().isGraphPatchPreambleBarrierSupported();
     rootSrc.getInternalEvents().unbindInternalEvents();
     ExecGraphBuilder builder{rootSrc, *this};
+    this->nodeCommands->resize(rootSrc.getGraphNodes().size());
     const auto &allCommands = rootSrc.getOrderedCommands();
     for (const auto &segment : allCommands) {
         auto err = builder.getSubGraphBuilder(segment.subgraph).dst->instantiateFrom(segment, builder, settings);
         if (ZE_RESULT_SUCCESS != err) {
             return err;
         }
+    }
+    for (const auto &nodeCommand : *this->nodeCommands) {
+        UNRECOVERABLE_IF(nullptr == nodeCommand.commandList);
     }
     builder.finalize(settings);
     this->trailingEventsPool = builder.releaseTrailingEventsPool();

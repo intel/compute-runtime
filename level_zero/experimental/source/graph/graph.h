@@ -243,6 +243,14 @@ struct GraphNode : _ze_graph_node_handle_t {
     }
     inline ze_graph_node_handle_t toHandle() { return this; }
 
+    auto setIndex(uint32_t index) -> void {
+        this->index = index;
+    }
+
+    auto getIndex() const -> uint32_t {
+        return this->index;
+    }
+
     auto getProperties(ze_graph_node_exp_properties_t *pProperties) const -> ze_result_t {
         pProperties->type = this->type;
         pProperties->flags = this->flags;
@@ -345,6 +353,7 @@ struct GraphNode : _ze_graph_node_handle_t {
 
     ze_mutable_graph_node_exp_flags_t flags;
     ze_graph_node_exp_type_t type;
+    uint32_t index = 0u;
     ze_group_count_t *groupCounts = nullptr;
     ze_group_size_t *groupSizes = nullptr;
     KernelImp *kernel = nullptr;
@@ -418,6 +427,7 @@ struct Graph : _ze_graph_handle_t {
     auto storeCreatedGraphNode() -> void {
         auto &createdGraphNode = this->recordedApiCommands.externalStorage.graphNode;
         if (createdGraphNode) {
+            createdGraphNode->setIndex(static_cast<uint32_t>(this->graphNodes->size()));
             this->graphNodes->push_back(std::move(createdGraphNode));
         }
     }
@@ -430,6 +440,10 @@ struct Graph : _ze_graph_handle_t {
 
     const StackVec<Graph *, 16> &getSubgraphs() const {
         return subGraphs;
+    }
+
+    auto getGraphNodes() const -> const GraphNodesContainer & {
+        return *this->graphNodes;
     }
 
     const std::unordered_map<L0::CommandList *, ForkJoinInfo> &getJoinedForks() const {
