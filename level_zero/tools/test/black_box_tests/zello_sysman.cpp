@@ -2066,6 +2066,20 @@ void testSysmanMemory(ze_device_handle_t &device, uint32_t bandwidthIterations, 
             std::cout << "The free memory in bytes = " << memoryState.free << std::endl;
         }
 
+        zes_mem_state_t cpuVisibleMemoryState = {};
+        zes_intel_mem_cpu_visible_exp_state_t cpuVisibleState = {};
+        cpuVisibleState.stype = ZES_INTEL_STRUCTURE_TYPE_MEMORY_CPU_VISIBLE_EXP_STATE;
+        cpuVisibleMemoryState.pNext = &cpuVisibleState;
+        ze_result_t cpuVisibleResult = zesMemoryGetState(handle, &cpuVisibleMemoryState);
+        if (verbose) {
+            if (cpuVisibleResult == ZE_RESULT_SUCCESS) {
+                std::cout << "The CPU visible memory size in bytes = " << cpuVisibleState.cpuVisibleSize << std::endl;
+                std::cout << "The CPU visible used memory in bytes = " << cpuVisibleState.cpuVisibleUsed << std::endl;
+            } else {
+                std::cout << "zesMemoryGetState with zes_intel_mem_cpu_visible_exp_state_t failed: " << getErrorString(cpuVisibleResult) << std::endl;
+            }
+        }
+
         printMemoryBandwidthSamples(handle, bandwidthIterations, bandwidthIntervalMs);
     }
 }

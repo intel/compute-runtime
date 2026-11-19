@@ -2154,14 +2154,20 @@ TEST_F(IoctlHelperXeTest, whenCreatingMemoryInfoThenProperMemoryBanksAreDiscover
     EXPECT_EQ(0u, memoryRegions[0].region.memoryInstance);
     EXPECT_EQ(MemoryConstants::gigaByte, memoryRegions[0].probedSize);
     EXPECT_EQ(MemoryConstants::gigaByte - MemoryConstants::kiloByte, memoryRegions[0].unallocatedSize);
+    EXPECT_EQ(MemoryConstants::gigaByte, memoryRegions[0].cpuVisibleSize);
+    EXPECT_EQ(0u, memoryRegions[0].cpuVisibleUsed);
 
     EXPECT_EQ(2u, memoryRegions[2].region.memoryInstance);
     EXPECT_EQ(4 * MemoryConstants::gigaByte, memoryRegions[2].probedSize);
     EXPECT_EQ(3 * MemoryConstants::gigaByte, memoryRegions[2].unallocatedSize);
+    EXPECT_EQ(4 * MemoryConstants::gigaByte, memoryRegions[2].cpuVisibleSize);
+    EXPECT_EQ(256 * MemoryConstants::megaByte, memoryRegions[2].cpuVisibleUsed);
 
     EXPECT_EQ(1u, memoryRegions[1].region.memoryInstance);
     EXPECT_EQ(2 * MemoryConstants::gigaByte, memoryRegions[1].probedSize);
     EXPECT_EQ(2 * MemoryConstants::gigaByte - MemoryConstants::megaByte, memoryRegions[1].unallocatedSize);
+    EXPECT_EQ(2 * MemoryConstants::gigaByte, memoryRegions[1].cpuVisibleSize);
+    EXPECT_EQ(512 * MemoryConstants::kiloByte, memoryRegions[1].cpuVisibleUsed);
 }
 
 TEST_F(IoctlHelperXeTest, givenXeDrmMemoryManagerWhenGetLocalMemorySizeIsCalledThenReturnMemoryRegionSizeCorrectly) {

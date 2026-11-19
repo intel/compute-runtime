@@ -27,12 +27,17 @@ namespace Sysman {
 namespace ult {
 
 static const uint32_t memoryHandleComponentCount = 1u;
+constexpr uint64_t mockCpuVisibleSizeRegionOne = 256 * MemoryConstants::megaByte;
+constexpr uint64_t mockCpuVisibleUsedRegionOne = 64 * MemoryConstants::megaByte;
+constexpr uint64_t mockCpuVisibleSizeRegionFour = 512 * MemoryConstants::megaByte;
+constexpr uint64_t mockCpuVisibleUsedRegionFour = 128 * MemoryConstants::megaByte;
 
 class SysmanMemoryMockIoctlHelper : public NEO::MockIoctlHelper {
 
   public:
     using NEO::MockIoctlHelper::MockIoctlHelper;
     bool returnEmptyMemoryInfo = false;
+    bool returnCpuVisibleMemoryInfo = false;
     int32_t mockErrorNumber = 0;
 
     std::unique_ptr<MemoryInfo> createMemoryInfo() override {
@@ -40,7 +45,16 @@ class SysmanMemoryMockIoctlHelper : public NEO::MockIoctlHelper {
             errno = mockErrorNumber;
             return {};
         }
-        return NEO::MockIoctlHelper::createMemoryInfo();
+        auto memoryInfo = NEO::MockIoctlHelper::createMemoryInfo();
+        if (!returnCpuVisibleMemoryInfo) {
+            return memoryInfo;
+        }
+        auto regionInfo = memoryInfo->getDrmRegionInfos();
+        regionInfo[1].cpuVisibleSize = mockCpuVisibleSizeRegionOne;
+        regionInfo[1].cpuVisibleUsed = mockCpuVisibleUsedRegionOne;
+        regionInfo[2].cpuVisibleSize = mockCpuVisibleSizeRegionFour;
+        regionInfo[2].cpuVisibleUsed = mockCpuVisibleUsedRegionFour;
+        return std::make_unique<MemoryInfo>(regionInfo, this->drm);
     }
 };
 
@@ -161,7 +175,7 @@ TEST_F(SysmanDeviceMemoryFixtureI915, GivenValidMemoryHandleWhenCallingMemoryGet
         return 0;
     });
     auto pLinuxMemoryImp = std::make_unique<PublicLinuxMemoryImp>(pOsSysman, true, 0);
-    zes_mem_state_t state;
+    zes_mem_state_t state = {};
     ze_result_t result = pLinuxMemoryImp->getState(&state);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(state.health, ZES_MEM_HEALTH_UNKNOWN);
@@ -175,7 +189,7 @@ TEST_F(SysmanDeviceMemoryFixtureI915, GivenValidMemoryHandleWhenCallingZesSysman
     auto handles = getMemoryHandles(memoryHandleComponentCount);
     for (auto handle : handles) {
         ASSERT_NE(nullptr, handle);
-        zes_mem_state_t state;
+        zes_mem_state_t state = {};
 
         ze_result_t result = zesMemoryGetState(handle, &state);
 
@@ -193,7 +207,7 @@ TEST_F(SysmanDeviceMemoryFixtureI915, GivenValidMemoryHandleWhenCallingZesSysman
     auto handles = getMemoryHandles(memoryHandleComponentCount);
     for (auto handle : handles) {
         ASSERT_NE(nullptr, handle);
-        zes_mem_state_t state;
+        zes_mem_state_t state = {};
 
         ze_result_t result = zesMemoryGetState(handle, &state);
 
@@ -304,6 +318,84 @@ TEST_F(SysmanDeviceMemoryFixtureI915, GivenUnsupportedExtensionStypeWhenCallingZ
     }
 }
 
+TEST_F(SysmanDeviceMemoryFixtureI915, GivenCpuVisibleExtensionWhenCallingZesMemoryGetStateThenCpuVisibleSizeAndUsedAreReturned) {
+    REQUIRE_DISCRETE_DEVICE_OR_SKIP(*defaultHwInfo);
+    auto ioctlHelper = static_cast<SysmanMemoryMockIoctlHelper *>(pDrm->ioctlHelper.get());
+    ioctlHelper->returnCpuVisibleMemoryInfo = true;
+    auto handles = getMemoryHandles(memoryHandleComponentCount);
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+        zes_intel_mem_cpu_visible_exp_state_t cpuVisibleState = {};
+        cpuVisibleState.stype = ZES_INTEL_STRUCTURE_TYPE_MEMORY_CPU_VISIBLE_EXP_STATE;
+        zes_mem_state_t state = {};
+        state.pNext = &cpuVisibleState;
+
+        EXPECT_EQ(zesMemoryGetState(handle, &state), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(state.pNext, &cpuVisibleState);
+        EXPECT_EQ(state.size, NEO::probedSizeRegionOne);
+        EXPECT_EQ(state.free, NEO::unallocatedSizeRegionOne);
+        EXPECT_EQ(cpuVisibleState.cpuVisibleSize, mockCpuVisibleSizeRegionOne);
+        EXPECT_EQ(cpuVisibleState.cpuVisibleUsed, mockCpuVisibleUsedRegionOne);
+    }
+}
+
+TEST_F(SysmanDeviceMemoryFixtureI915, GivenCpuVisibleExtensionWhenCallingGetStateForSubdeviceThenCpuVisibleValuesOfSubdeviceRegionAreReturned) {
+    REQUIRE_DISCRETE_DEVICE_OR_SKIP(*defaultHwInfo);
+    auto ioctlHelper = static_cast<SysmanMemoryMockIoctlHelper *>(pDrm->ioctlHelper.get());
+    ioctlHelper->returnCpuVisibleMemoryInfo = true;
+    auto pLinuxMemoryImp = std::make_unique<PublicLinuxMemoryImp>(pOsSysman, true, 1);
+
+    zes_intel_mem_cpu_visible_exp_state_t cpuVisibleState = {};
+    cpuVisibleState.stype = ZES_INTEL_STRUCTURE_TYPE_MEMORY_CPU_VISIBLE_EXP_STATE;
+    zes_mem_state_t state = {};
+    state.pNext = &cpuVisibleState;
+
+    EXPECT_EQ(pLinuxMemoryImp->getState(&state), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(state.size, NEO::probedSizeRegionFour);
+    EXPECT_EQ(state.free, NEO::unallocatedSizeRegionFour);
+    EXPECT_EQ(cpuVisibleState.cpuVisibleSize, mockCpuVisibleSizeRegionFour);
+    EXPECT_EQ(cpuVisibleState.cpuVisibleUsed, mockCpuVisibleUsedRegionFour);
+}
+
+TEST_F(SysmanDeviceMemoryFixtureI915, GivenUnsupportedExtensionStypeWhenCallingZesMemoryGetStateThenInvalidArgumentIsReturned) {
+    REQUIRE_DISCRETE_DEVICE_OR_SKIP(*defaultHwInfo);
+    auto handles = getMemoryHandles(memoryHandleComponentCount);
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+        zes_base_state_t unsupportedState = {};
+        unsupportedState.stype = ZES_STRUCTURE_TYPE_MEM_STATE;
+        zes_intel_mem_cpu_visible_exp_state_t cpuVisibleState = {};
+        cpuVisibleState.stype = ZES_INTEL_STRUCTURE_TYPE_MEMORY_CPU_VISIBLE_EXP_STATE;
+        cpuVisibleState.pNext = &unsupportedState;
+        zes_mem_state_t state = {};
+        state.pNext = &cpuVisibleState;
+
+        EXPECT_EQ(zesMemoryGetState(handle, &state), ZE_RESULT_ERROR_INVALID_ARGUMENT);
+    }
+}
+
+TEST_F(SysmanDeviceMemoryFixtureI915, GivenCpuVisibleExtensionAndMemoryInfoCreationFailsWhenCallingZesMemoryGetStateThenCpuVisibleValuesAreZero) {
+    REQUIRE_DISCRETE_DEVICE_OR_SKIP(*defaultHwInfo);
+    auto ioctlHelper = static_cast<SysmanMemoryMockIoctlHelper *>(pDrm->ioctlHelper.get());
+    ioctlHelper->returnEmptyMemoryInfo = true;
+    ioctlHelper->mockErrorNumber = EBUSY;
+    auto handles = getMemoryHandles(memoryHandleComponentCount);
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+        zes_intel_mem_cpu_visible_exp_state_t cpuVisibleState = {};
+        cpuVisibleState.stype = ZES_INTEL_STRUCTURE_TYPE_MEMORY_CPU_VISIBLE_EXP_STATE;
+        cpuVisibleState.cpuVisibleSize = 0xDEADu;
+        cpuVisibleState.cpuVisibleUsed = 0xBEEFu;
+        zes_mem_state_t state = {};
+        state.pNext = &cpuVisibleState;
+
+        EXPECT_EQ(zesMemoryGetState(handle, &state), ZE_RESULT_ERROR_UNKNOWN);
+        EXPECT_EQ(cpuVisibleState.cpuVisibleSize, 0u);
+        EXPECT_EQ(cpuVisibleState.cpuVisibleUsed, 0u);
+    }
+    errno = 0;
+}
+
 class SysmanMultiDeviceMemoryFixture : public SysmanMultiDeviceFixture {
   protected:
     MockMemoryNeoDrm *pDrm = nullptr;
@@ -381,6 +473,32 @@ TEST_F(SysmanMultiDeviceMemoryFixture, GivenMemInfoIsEmptyWhenCallingGetStateThe
     EXPECT_EQ(result, ZE_RESULT_ERROR_UNKNOWN);
     EXPECT_EQ(state.free, 0u);
     EXPECT_EQ(state.size, 0u);
+}
+
+TEST_F(SysmanMultiDeviceMemoryFixture, GivenIntegratedDeviceAndCpuVisibleExtensionWhenCallingGetStateThenCpuVisibleValuesAreZero) {
+    REQUIRE_INTEGRATED_DEVICE_OR_SKIP(*defaultHwInfo);
+    auto handles = getMemoryHandles(pOsSysman->getSubDeviceCount());
+    zes_intel_mem_cpu_visible_exp_state_t cpuVisibleState = {};
+    cpuVisibleState.stype = ZES_INTEL_STRUCTURE_TYPE_MEMORY_CPU_VISIBLE_EXP_STATE;
+    cpuVisibleState.cpuVisibleSize = 0xDEADu;
+    cpuVisibleState.cpuVisibleUsed = 0xBEEFu;
+    zes_mem_state_t state = {};
+    state.pNext = &cpuVisibleState;
+
+    EXPECT_EQ(zesMemoryGetState(handles[0], &state), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(cpuVisibleState.cpuVisibleSize, 0u);
+    EXPECT_EQ(cpuVisibleState.cpuVisibleUsed, 0u);
+}
+
+TEST_F(SysmanMultiDeviceMemoryFixture, GivenIntegratedDeviceAndUnsupportedExtensionStypeWhenCallingGetStateThenInvalidArgumentIsReturned) {
+    REQUIRE_INTEGRATED_DEVICE_OR_SKIP(*defaultHwInfo);
+    auto handles = getMemoryHandles(pOsSysman->getSubDeviceCount());
+    zes_base_state_t unsupportedState = {};
+    unsupportedState.stype = ZES_STRUCTURE_TYPE_MEM_STATE;
+    zes_mem_state_t state = {};
+    state.pNext = &unsupportedState;
+
+    EXPECT_EQ(zesMemoryGetState(handles[0], &state), ZE_RESULT_ERROR_INVALID_ARGUMENT);
 }
 
 } // namespace ult

@@ -47,6 +47,7 @@ class LinuxMemoryImp : public OsMemory, NEO::NonCopyableAndNonMovableClass {
     SysmanKmdInterface *pSysmanKmdInterface = nullptr;
 
   private:
+    static ze_result_t fillCpuVisibleExtensionState(const void *pNext, uint64_t cpuVisibleSize, uint64_t cpuVisibleUsed);
     bool isSubdevice = false;
     uint32_t subdeviceId = 0;
     std::string physicalSizeFile = "";

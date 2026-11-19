@@ -1567,6 +1567,40 @@ ze_result_t ZE_APICALL zesIntelDeviceRasSetCperOnQueryExp(
                                  ///< log record on a RAS error counter query.
 );
 
+///////////////////////////////////////////////////////////////////////////////
+#ifndef ZES_INTEL_MEMORY_CPU_VISIBLE_EXP_STATE_NAME
+/// @brief Memory CPU visible state extension name
+#define ZES_INTEL_MEMORY_CPU_VISIBLE_EXP_STATE_NAME "ZES_intel_experimental_memory_cpu_visible_state"
+#endif // ZES_INTEL_MEMORY_CPU_VISIBLE_EXP_STATE_NAME
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Memory CPU visible state extension Version(s)
+typedef enum _zes_intel_mem_cpu_visible_exp_state_version_t {
+    ZES_INTEL_MEMORY_CPU_VISIBLE_EXP_STATE_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),                                  ///< version 1.0
+    ZES_INTEL_MEMORY_CPU_VISIBLE_EXP_STATE_VERSION_CURRENT = ZES_INTEL_MEMORY_CPU_VISIBLE_EXP_STATE_VERSION_1_0, ///< latest known version
+    ZES_INTEL_MEMORY_CPU_VISIBLE_EXP_STATE_VERSION_FORCE_UINT32 = 0x7fffffff
+} zes_intel_mem_cpu_visible_exp_state_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Query the CPU visible (host accessible through the PCI BAR) portion of
+///        a device local memory (VRAM) module.
+/// This structure can be passed in the 'pNext' of zes_mem_state_t
+///
+/// @details
+///     - On full BAR systems cpuVisibleSize is equal to the size of the memory
+///       region. On small BAR systems it is smaller than the region size.
+///     - Both values are 0 for memory modules that are not device local memory,
+///       or when the kernel driver does not report them.
+///     - cpuVisibleUsed is currently reported only for devices that use the Xe
+///       kernel driver on Linux. On other devices it is 0.
+typedef struct _zes_intel_mem_cpu_visible_exp_state_t {
+    zes_structure_type_ext_t stype; ///< [in] type of this structure. Must be ZES_INTEL_STRUCTURE_TYPE_MEMORY_CPU_VISIBLE_EXP_STATE
+    void *pNext;                    ///< [in][optional] must be null or a pointer to an extension-specific
+                                    ///< structure (i.e. contains stype and pNext).
+    uint64_t cpuVisibleSize;        ///< [out] Size in bytes of the CPU visible portion of the memory module.
+    uint64_t cpuVisibleUsed;        ///< [out] Estimate in bytes of the CPU visible memory currently used.
+} zes_intel_mem_cpu_visible_exp_state_t;
+
 #if defined(__cplusplus)
 } // extern "C"
 #endif

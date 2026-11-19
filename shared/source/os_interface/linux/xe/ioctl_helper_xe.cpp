@@ -472,6 +472,7 @@ inline MemoryRegion createMemoryRegionFromXeMemRegion(const drm_xe_mem_region &x
         .probedSize = xeMemRegion.total_size,
         .unallocatedSize = xeMemRegion.total_size - xeMemRegion.used,
         .cpuVisibleSize = xeMemRegion.cpu_visible_size,
+        .cpuVisibleUsed = xeMemRegion.cpu_visible_used,
         .tilesMask = tilesMask,
     };
 }

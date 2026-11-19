@@ -350,6 +350,7 @@ void DrmMockXe::initInstance() {
         .total_size = 2 * MemoryConstants::gigaByte,
         .used = MemoryConstants::megaByte,
         .cpu_visible_size = 2 * MemoryConstants::gigaByte,
+        .cpu_visible_used = 512 * MemoryConstants::kiloByte,
     };
     xeQueryMemUsage->mem_regions[1] = {
         .mem_class = DRM_XE_MEM_REGION_CLASS_SYSMEM,
@@ -366,6 +367,7 @@ void DrmMockXe::initInstance() {
         .total_size = 4 * MemoryConstants::gigaByte,
         .used = MemoryConstants::gigaByte,
         .cpu_visible_size = 4 * MemoryConstants::gigaByte,
+        .cpu_visible_used = 256 * MemoryConstants::megaByte,
     };
 
     this->queryGtList.resize(1 + (6 * 12)); // 1 qword for num gts and 12 qwords per gt

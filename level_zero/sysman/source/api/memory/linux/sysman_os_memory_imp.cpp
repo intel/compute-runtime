@@ -21,6 +21,7 @@
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
+#include "level_zero/zes_intel_gpu_sysman.h"
 
 #include <map>
 #include <sstream>
@@ -74,9 +75,27 @@ ze_result_t LinuxMemoryImp::getBandwidth(zes_mem_bandwidth_t *pBandwidth) {
     return pSysmanProductHelper->getMemoryBandwidth(pBandwidth, pLinuxSysmanImp, subdeviceId);
 }
 
+ze_result_t LinuxMemoryImp::fillCpuVisibleExtensionState(const void *pNext, uint64_t cpuVisibleSize, uint64_t cpuVisibleUsed) {
+    while (pNext) {
+        auto pExtState = reinterpret_cast<zes_base_state_t *>(const_cast<void *>(pNext));
+        if (pExtState->stype != ZES_INTEL_STRUCTURE_TYPE_MEMORY_CPU_VISIBLE_EXP_STATE) {
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                         "Error@ %s(): Unsupported extension stype:0x%x \n", NEO_FUNCTION_NAME, static_cast<uint32_t>(pExtState->stype));
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+        auto pCpuVisibleState = reinterpret_cast<zes_intel_mem_cpu_visible_exp_state_t *>(pExtState);
+        pCpuVisibleState->cpuVisibleSize = cpuVisibleSize;
+        pCpuVisibleState->cpuVisibleUsed = cpuVisibleUsed;
+        pNext = pExtState->pNext;
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
 ze_result_t LinuxMemoryImp::getState(zes_mem_state_t *pState) {
     ze_result_t status = ZE_RESULT_SUCCESS;
     pState->health = ZES_MEM_HEALTH_UNKNOWN;
+    uint64_t cpuVisibleSize = 0u;
+    uint64_t cpuVisibleUsed = 0u;
 
     if (pLinuxSysmanImp->getHardwareInfo().capabilityTable.isIntegratedDevice) {
         const std::string memFreeKey = "MemFree";
@@ -93,31 +112,33 @@ ze_result_t LinuxMemoryImp::getState(zes_mem_state_t *pState) {
             pState->size = 0;
             status = ZE_RESULT_ERROR_UNKNOWN;
         }
-        return status;
-    }
+    } else {
+        auto pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
+        pSysmanProductHelper->getMemoryHealthIndicator(pLinuxSysmanImp, &pState->health);
 
-    auto pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
-    pSysmanProductHelper->getMemoryHealthIndicator(pLinuxSysmanImp, &pState->health);
-
-    std::unique_ptr<NEO::MemoryInfo> memoryInfo;
-    auto hwDeviceId = pLinuxSysmanImp->getSysmanHwDeviceIdInstance();
-    memoryInfo = pDrm->getIoctlHelper()->createMemoryInfo();
-    if (!memoryInfo) {
-        pState->free = 0;
-        pState->size = 0;
-        status = ZE_RESULT_ERROR_UNKNOWN;
-        if (errno == ENODEV) {
-            status = ZE_RESULT_ERROR_DEVICE_LOST;
+        std::unique_ptr<NEO::MemoryInfo> memoryInfo;
+        auto hwDeviceId = pLinuxSysmanImp->getSysmanHwDeviceIdInstance();
+        memoryInfo = pDrm->getIoctlHelper()->createMemoryInfo();
+        if (memoryInfo) {
+            auto region = memoryInfo->getMemoryRegion(MemoryBanks::getBankForLocalMemory(subdeviceId));
+            pState->free = region.unallocatedSize;
+            pState->size = region.probedSize;
+            cpuVisibleSize = region.cpuVisibleSize;
+            cpuVisibleUsed = region.cpuVisibleUsed;
+        } else {
+            pState->free = 0;
+            pState->size = 0;
+            status = ZE_RESULT_ERROR_UNKNOWN;
+            if (errno == ENODEV) {
+                status = ZE_RESULT_ERROR_DEVICE_LOST;
+            }
+            PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                         "Error@ %s():createMemoryInfo failed errno:%d \n", NEO_FUNCTION_NAME, errno);
         }
-        PRINT_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                     "Error@ %s():createMemoryInfo failed errno:%d \n", NEO_FUNCTION_NAME, errno);
-        return status;
     }
 
-    auto region = memoryInfo->getMemoryRegion(MemoryBanks::getBankForLocalMemory(subdeviceId));
-    pState->free = region.unallocatedSize;
-    pState->size = region.probedSize;
-    return status;
+    ze_result_t extensionStatus = fillCpuVisibleExtensionState(pState->pNext, cpuVisibleSize, cpuVisibleUsed);
+    return (status != ZE_RESULT_SUCCESS) ? status : extensionStatus;
 }
 
 std::unordered_map<std::string, uint64_t> LinuxMemoryImp::readMemInfoValues(FsAccessInterface *pFsAccess, const std::unordered_set<std::string> &keys) {

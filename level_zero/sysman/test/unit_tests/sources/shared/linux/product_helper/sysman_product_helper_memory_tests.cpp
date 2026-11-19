@@ -1078,7 +1078,7 @@ HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCal
     setupMockDrmWithMemoryType(pSysmanDeviceImp, NEO::DeviceBlobConstants::MemoryType::hbm2e);
 
     auto pLinuxMemoryImp = std::make_unique<PublicLinuxMemoryImp>(pOsSysman, true, 0);
-    zes_mem_state_t state;
+    zes_mem_state_t state = {};
     ze_result_t result = pLinuxMemoryImp->getState(&state);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(state.health, ZES_MEM_HEALTH_OK);
@@ -1357,14 +1357,14 @@ HWTEST2_F(SysmanMultiDeviceFixture, GivenValidMemoryHandleWhenCallingZesMemoryGe
 
     auto handles = getMemoryHandles(pSysmanDevice->toHandle());
 
-    zes_mem_state_t state1;
+    zes_mem_state_t state1 = {};
     ze_result_t result = zesMemoryGetState(handles[0], &state1);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(state1.health, ZES_MEM_HEALTH_OK);
     EXPECT_EQ(state1.size, NEO::probedSizeRegionOne);
     EXPECT_EQ(state1.free, NEO::unallocatedSizeRegionOne);
 
-    zes_mem_state_t state2;
+    zes_mem_state_t state2 = {};
     result = zesMemoryGetState(handles[1], &state2);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(state2.health, ZES_MEM_HEALTH_OK);
@@ -1390,7 +1390,7 @@ HWTEST2_F(SysmanMultiDeviceFixture, GivenValidMemoryHandleWhenCallingZesMemoryGe
 
     auto handles = getMemoryHandles(pSysmanDevice->toHandle());
 
-    zes_mem_state_t state1;
+    zes_mem_state_t state1 = {};
     ze_result_t result = zesMemoryGetState(handles[0], &state1);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(state1.health, ZES_MEM_HEALTH_UNKNOWN);
@@ -1402,7 +1402,7 @@ HWTEST2_F(SysmanMultiDeviceFixture, GivenValidMemoryHandleWhenCallingZesMemoryGe
         EXPECT_EQ(state1.free, NEO::unallocatedSizeRegionOne);
     }
 
-    zes_mem_state_t state2;
+    zes_mem_state_t state2 = {};
     result = zesMemoryGetState(handles[1], &state2);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(state2.health, ZES_MEM_HEALTH_UNKNOWN);
