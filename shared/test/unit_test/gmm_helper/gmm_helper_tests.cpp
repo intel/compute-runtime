@@ -14,6 +14,7 @@
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/raii_product_helper.h"
 #include "shared/test/common/helpers/stream_capture.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
@@ -1320,6 +1321,64 @@ TEST_F(MockExecutionEnvironmentGmmFixtureTest, givenGmmOrNoGmmWhenGettingMocsThe
     getGmmHelper()->getMOCS(nullptr, GMM_RESOURCE_USAGE_OCL_BUFFER);
     EXPECT_EQ(nullptr, gmmClientContext->passedResourceInfoForGetMemoryObjectQuery.load());
     EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_BUFFER, gmmClientContext->passedUsageTypeForGetMemoryObjectQuery.load());
+}
+
+struct MocsQueryCapturingGmmClientContext : MockGmmClientContext {
+    MEMORY_OBJECT_CONTROL_STATE cachePolicyGetMemoryObject(GMM_RESOURCE_INFO *pResInfo, GmmResourceUsageType usage) override {
+        auto resourceInfo = reinterpret_cast<MockGmmResourceInfo *>(pResInfo);
+        mocsQueries.push_back({usage, static_cast<GmmResourceUsageType>(resourceInfo ? resourceInfo->getResourceUsage() : GMM_RESOURCE_USAGE_UNKNOWN), resourceInfo && resourceInfo->isCacheable()});
+        return MockGmmClientContext::cachePolicyGetMemoryObject(pResInfo, usage);
+    }
+
+    struct MocsQuery {
+        GmmResourceUsageType usageType;
+        GmmResourceUsageType resourceUsageType;
+        bool resourceCacheable;
+    };
+    std::vector<MocsQuery> mocsQueries;
+};
+
+TEST_F(MockExecutionEnvironmentGmmFixtureTest, givenGmmHelperWhenCreatedThenDefaultMocsAreQueriedWithBufferGmmOfTheirUsage) {
+    RAIIProductHelperFactory<MockProductHelper> productHelper(*executionEnvironment->rootDeviceEnvironments[0]);
+    VariableBackup<decltype(GmmHelper::createGmmContextWrapperFunc)> createGmmContextBackup(&GmmHelper::createGmmContextWrapperFunc, GmmClientContext::create<MocsQueryCapturingGmmClientContext>);
+
+    GmmHelper gmmHelper(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    const auto &mocsQueries = static_cast<MocsQueryCapturingGmmClientContext *>(gmmHelper.getClientContext())->mocsQueries;
+    const GmmResourceUsageType expectedUsageTypes[] = {GMM_RESOURCE_USAGE_OCL_BUFFER_CONST, GMM_RESOURCE_USAGE_OCL_BUFFER, GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED};
+    const bool expectedCacheable[] = {true, true, false};
+    ASSERT_EQ(3u, mocsQueries.size());
+    for (auto i = 0u; i < mocsQueries.size(); i++) {
+        EXPECT_EQ(expectedUsageTypes[i], mocsQueries[i].usageType);
+        EXPECT_EQ(expectedUsageTypes[i], mocsQueries[i].resourceUsageType);
+        EXPECT_EQ(expectedCacheable[i], mocsQueries[i].resourceCacheable);
+    }
+}
+
+TEST_F(MockExecutionEnvironmentGmmFixtureTest, givenAllResourcesUncachedWhenInitializingMocsDefaultsThenUncachedUsageIsQueried) {
+    RAIIProductHelperFactory<MockProductHelper> productHelper(*executionEnvironment->rootDeviceEnvironments[0]);
+    VariableBackup<decltype(GmmHelper::createGmmContextWrapperFunc)> createGmmContextBackup(&GmmHelper::createGmmContextWrapperFunc, GmmClientContext::create<MocsQueryCapturingGmmClientContext>);
+    GmmHelper gmmHelper(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto &mocsQueries = static_cast<MocsQueryCapturingGmmClientContext *>(gmmHelper.getClientContext())->mocsQueries;
+    mocsQueries.clear();
+
+    gmmHelper.forceAllResourcesUncached();
+
+    const GmmResourceUsageType expectedResourceUsageTypes[] = {GMM_RESOURCE_USAGE_OCL_BUFFER_CONST, GMM_RESOURCE_USAGE_OCL_BUFFER, GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED};
+    ASSERT_EQ(3u, mocsQueries.size());
+    for (auto i = 0u; i < mocsQueries.size(); i++) {
+        EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED, mocsQueries[i].usageType);
+        EXPECT_EQ(expectedResourceUsageTypes[i], mocsQueries[i].resourceUsageType);
+    }
+}
+
+TEST_F(MockExecutionEnvironmentGmmFixtureTest, givenMocsDeferredToPatIndexWhenCreatingGmmHelperThenDefaultMocsAreNotQueried) {
+    RAIIProductHelperFactory<MockProductHelper> productHelper(*executionEnvironment->rootDeviceEnvironments[0]);
+    productHelper.mockProductHelper->deferMOCSToPatIndexResult = true;
+
+    GmmHelper gmmHelper(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    EXPECT_EQ(1u, productHelper.mockProductHelper->deferMOCSToPatIndexCalled);
 }
 
 struct GmmCompressionTests : public MockExecutionEnvironmentGmmFixtureTest {

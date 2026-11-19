@@ -44,5 +44,6 @@ struct MockProductHelper : ProductHelperHw<IGFX_UNKNOWN> {
     ADDMETHOD_CONST_NOBASE(isGraphPatchPreambleBarrierSupported, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isL3FlushAfterPostSyncSupported, bool, false, ());
     ADDMETHOD_CONST_NOBASE(useAdditionalBlitProperties, bool, false, (const BlitProperties &blitProperties));
+    ADDMETHOD_CONST_NOBASE(deferMOCSToPatIndex, bool, false, (bool isWddmOnLinux));
 };
 } // namespace NEO

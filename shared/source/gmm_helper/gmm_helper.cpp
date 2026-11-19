@@ -9,13 +9,16 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/gmm_helper/cache_settings_helper.h"
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/memory_manager/definitions/storage_info.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/os_interface/product_helper.h"
 
@@ -36,9 +39,11 @@ const RootDeviceEnvironment &GmmHelper::getRootDeviceEnvironment() const {
 }
 
 void GmmHelper::initMocsDefaults() {
-    mocsL1Enabled = getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST);
-    mocsL3Enabled = getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
-    mocsUncached = getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
+    if (!this->rootDeviceEnvironment.getProductHelper().deferMOCSToPatIndex(this->rootDeviceEnvironment.isWddmOnLinux())) {
+        mocsL1Enabled = this->getDefaultMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST);
+        mocsL3Enabled = this->getDefaultMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
+        mocsUncached = this->getDefaultMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
+    }
     rootDeviceEnvironment.getHelper<GfxCoreHelper>().initCommandLevelMocsDefaults(*this);
 }
 
@@ -59,6 +64,27 @@ uint32_t GmmHelper::getMOCS(const Gmm *gmm, uint32_t type) const {
     MEMORY_OBJECT_CONTROL_STATE mocs = gmmClientContext->cachePolicyGetMemoryObject(resourceInfo, static_cast<GMM_RESOURCE_USAGE_TYPE>(type));
 
     return static_cast<uint32_t>(mocs.DwordValue);
+}
+
+uint32_t GmmHelper::getDefaultMOCS(GmmResourceUsageType usageType) {
+    constexpr bool isSystemMemory = true;
+    const auto queryGmm = this->createBufferGmm(usageType, !CacheSettingsHelper::isUncachedType(usageType), isSystemMemory, MemoryConstants::pageSize);
+    return this->getMOCS(queryGmm.get(), usageType);
+}
+
+std::unique_ptr<Gmm> GmmHelper::createBufferGmm(GmmResourceUsageType usageType, bool cpuCacheable, bool isSystemMemory, size_t size) {
+    StorageInfo storageInfo{};
+    storageInfo.systemMemoryPlacement = isSystemMemory;
+    storageInfo.isLockable = true;
+
+    GmmRequirements gmmRequirements{};
+    gmmRequirements.allowLargePages = true;
+    gmmRequirements.preferCompressed = false;
+    gmmRequirements.overriderCpuCacheable = {true, cpuCacheable};
+    gmmRequirements.overriderPreferNoCpuAccess = {true, false};
+
+    constexpr size_t alignment = 0u;
+    return std::make_unique<Gmm>(this, nullptr, size, alignment, usageType, storageInfo, gmmRequirements);
 }
 
 uint32_t GmmHelper::getL1EnabledMOCS() const {

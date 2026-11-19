@@ -26,7 +26,6 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/helpers/ptr_math.h"
-#include "shared/source/memory_manager/definitions/storage_info.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/external_semaphore.h"
 #include "shared/source/os_interface/linux/cache_info.h"
@@ -1753,18 +1752,7 @@ std::unique_ptr<Gmm> Drm::createBufferGmm(AllocationType allocationType, CachePo
 }
 
 std::unique_ptr<Gmm> Drm::createBufferGmm(GmmResourceUsageType usageType, bool cpuCacheable, bool isSystemMemory, size_t size) const {
-    StorageInfo storageInfo{};
-    storageInfo.systemMemoryPlacement = isSystemMemory;
-    storageInfo.isLockable = true;
-
-    GmmRequirements gmmRequirements{};
-    gmmRequirements.allowLargePages = true;
-    gmmRequirements.preferCompressed = false;
-    gmmRequirements.overriderCpuCacheable = {true, cpuCacheable};
-    gmmRequirements.overriderPreferNoCpuAccess = {true, false};
-
-    constexpr size_t alignment = 0u;
-    return std::make_unique<Gmm>(rootDeviceEnvironment.getGmmHelper(), nullptr, size, alignment, usageType, storageInfo, gmmRequirements);
+    return rootDeviceEnvironment.getGmmHelper()->createBufferGmm(usageType, cpuCacheable, isSystemMemory, size);
 }
 
 void programUserFence(Drm *drm, OsContext *osContext, BufferObject *bo, VmBindExtUserFenceT &vmBindExtUserFence, uint32_t vmHandleId, uint64_t nextExtension, bool isAsyncFence) {

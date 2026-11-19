@@ -6,8 +6,10 @@
  */
 
 #pragma once
+#include "shared/source/gmm_helper/gmm_resource_usage_type.h"
 #include "shared/source/utilities/mockable_virtual_defaults.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 
@@ -30,6 +32,7 @@ class GmmHelper {
     uint32_t getL3EnabledMOCS() const;
     uint32_t getUncachedMOCS() const;
     void initMocsDefaults();
+    std::unique_ptr<Gmm> createBufferGmm(GmmResourceUsageType usageType, bool cpuCacheable, bool isSystemMemory, size_t size);
 
     static void applyMocsEncryptionBit(uint32_t &index);
     void forceAllResourcesUncached();
@@ -52,6 +55,8 @@ class GmmHelper {
     static std::unique_ptr<GmmClientContext> (*createGmmContextWrapperFunc)(const RootDeviceEnvironment &);
 
   protected:
+    uint32_t getDefaultMOCS(GmmResourceUsageType usageType);
+
     const RootDeviceEnvironment &rootDeviceEnvironment;
     std::unique_ptr<GmmClientContext> gmmClientContext;
     uint32_t addressWidth = 0;

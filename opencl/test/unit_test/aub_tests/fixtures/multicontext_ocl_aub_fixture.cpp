@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Intel Corporation
+ * Copyright (C) 2022-2026 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "opencl/test/unit_test/aub_tests/fixtures/multicontext_ocl_aub_fixture.h"
 
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/variable_backup.h"
@@ -27,6 +28,8 @@
 namespace NEO {
 
 void MulticontextOclAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStreamers enabledCommandStreamers, bool enableCompression) {
+    // gmmlib shares its context per adapter, so release the single tile gmm helper of the global platform
+    platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]->gmmHelper.reset();
     MulticontextAubFixture::setUp(numberOfTiles, enabledCommandStreamers, enableCompression);
     debugManager.flags.RenderCompressedBuffersEnabled.set(-1);
     debugManager.flags.RenderCompressedImagesEnabled.set(-1);
