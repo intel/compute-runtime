@@ -36,6 +36,7 @@ XE3P_CORETEST_F(Xe3pDeviceTests, given3CopyEnginesWhenSecondaryContextsCretaedTh
 
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.ContextGroupSize.set(8);
+    debugManager.flags.SkipHpBcsInitialization.set(0);
 
     hwInfo.capabilityTable.blitterOperationsSupported = true;
     // BCS1, BCS2 and BCS3 available

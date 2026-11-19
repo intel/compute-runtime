@@ -265,6 +265,18 @@ CRITEST_F(CriProductHelper, givenCriWhenAskingForCopyOffloadWriteEngineSupportTh
     EXPECT_TRUE(productHelper->isCopyOffloadWriteEngineSupported());
 }
 
+CRITEST_F(CriProductHelper, givenCriWhenAskingForDedicatedHighPriorityCopyEngineSupportThenReturnFalseByDefaultAndRespectDebugFlag) {
+    DebugManagerStateRestore restorer;
+
+    EXPECT_FALSE(productHelper->isDedicatedHighPriorityCopyEngineSupported());
+
+    debugManager.flags.SkipHpBcsInitialization.set(0);
+    EXPECT_TRUE(productHelper->isDedicatedHighPriorityCopyEngineSupported());
+
+    debugManager.flags.SkipHpBcsInitialization.set(1);
+    EXPECT_FALSE(productHelper->isDedicatedHighPriorityCopyEngineSupported());
+}
+
 CRITEST_F(CriProductHelper, givenCriWhenAskingForRegularCmdListDualStreamCopyOffloadSupportThenReturnTrueByDefaultAndRespectDebugFlag) {
     DebugManagerStateRestore restorer;
 
