@@ -1204,8 +1204,6 @@ struct SipKernelFromSipExternalLibTest : public DebugExternalLibSipTest, public 
         MockSipData::useMockSip = false;
         debugManager.flags.GetSipBinaryFromExternalLib.set(1);
         this->injectSipLib(*this->pDevice);
-        this->sipExternalLib->getSipKernelBinaryRetBinary = MockSipKernel::getDummyGenBinary();
-        this->sipExternalLib->getSipKernelBinaryStateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(3);
         this->sipExternalLib->getStateSaveAreaSizeRetValue = MemoryConstants::pageSize;
     }
 
@@ -1312,24 +1310,12 @@ TEST_F(DebugExternalLibSipTest, givenSipExternalLibRequiredAndFailingToLoadWhenG
     EXPECT_EQ(nullptr, pDevice->getSipExternalLibInterface());
 }
 
-struct DebugExternalLibSipWithMockLibFixture : public DeviceFixture, public SipExternalLibFixture {};
-using DebugExternalLibSipWithMockLibTest = Test<DebugExternalLibSipWithMockLibFixture>;
-
-TEST_F(DebugExternalLibSipWithMockLibTest, givenSipExternalLibRequiredWhenGetStateSaveAreaSizeCalledThenSizeIsReturned) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.GetSipBinaryFromExternalLib.set(1);
-    injectSipLib(*pDevice);
+TEST_F(SipKernelFromSipExternalLibTest, givenSipExternalLibRequiredWhenGetStateSaveAreaSizeCalledThenSizeIsReturned) {
     sipExternalLib->getStateSaveAreaSizeRetValue = 17381;
     EXPECT_EQ(alignUp(17381u, MemoryConstants::pageSize), SipKernel::getSipKernel(*pDevice, nullptr).getStateSaveAreaSize(pDevice));
 }
 
-TEST_F(DebugExternalLibSipWithMockLibTest, givenSipExternalLibRequiredAndDebugSipKernelWhenGetStateSaveAreaSizeCalledThenSizeIsReturned) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.GetSipBinaryFromExternalLib.set(1);
-    injectSipLib(*pDevice);
-    sipExternalLib->getSipKernelBinaryRetBinary = std::vector<char>{0x1, 0x2, 0x3, 0x4};
-    sipExternalLib->getSipKernelBinaryStateSaveAreaHeader = std::vector<char>{'t', 's', 's', 'a', 'r', 'e', 'a', 0};
-    sipExternalLib->getSipKernelBinaryRetValue = 0;
+TEST_F(SipKernelFromSipExternalLibTest, givenSipExternalLibRequiredAndDebugSipKernelWhenGetStateSaveAreaSizeCalledThenSizeIsReturned) {
     sipExternalLib->getStateSaveAreaSizeRetValue = 17381;
     EXPECT_EQ(alignUp(17381u, MemoryConstants::pageSize), SipKernel::getDebugSipKernel(*pDevice).getStateSaveAreaSize(pDevice));
 }

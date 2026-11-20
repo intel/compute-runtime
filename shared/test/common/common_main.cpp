@@ -451,6 +451,10 @@ int main(int argc, char **argv) {
             fclDebugVars.binaryToReturn = mockBuiltInIrPlaceholder;
             fclDebugVars.binaryToReturnSize = sizeof(mockBuiltInIrPlaceholder);
 
+            static auto mockSipStateSaveAreaHeader = MockSipData::createStateSaveAreaHeaderV3WithoutHeapless();
+            igcDebugVars.stateSaveAreaHeaderToReturn = mockSipStateSaveAreaHeader.data();
+            igcDebugVars.stateSaveAreaHeaderToReturnSize = mockSipStateSaveAreaHeader.size();
+
             NEO::fclPushDebugVars(fclDebugVars);
             NEO::igcPushDebugVars(igcDebugVars);
             debugVarsPushed = true;

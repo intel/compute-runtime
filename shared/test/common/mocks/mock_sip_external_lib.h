@@ -8,14 +8,15 @@
 #pragma once
 
 #include "shared/source/sip_external_lib/sip_external_lib.h"
+#include "shared/test/common/mocks/mock_sip.h"
 
 #include <map>
 #include <optional>
 
 class MockSipExternalLib : public NEO::SipExternalLib {
   public:
-    std::vector<char> getSipKernelBinaryRetBinary = {'t', 's', 's', 'a', 'r', 'e', 'a'};
-    std::vector<char> getSipKernelBinaryStateSaveAreaHeader;
+    std::vector<char> getSipKernelBinaryRetBinary = NEO::MockSipKernel::getDummyGenBinary();
+    std::vector<char> getSipKernelBinaryStateSaveAreaHeader = NEO::MockSipData::createStateSaveAreaHeaderV3WithoutHeapless();
     int getSipKernelBinaryRetValue = 0;
     uint32_t getSipKernelBinaryCalled = 0;
     std::optional<NEO::SipKernelType> getSipKernelBinaryCapturedType;

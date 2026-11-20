@@ -42,9 +42,7 @@ struct DebugApiFixture : public DeviceFixture, public NEO::SipExternalLibFixture
         this->sipExternalLib->getSipKernelBinaryStateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(5);
     }
     void setUpV3HeaderWithoutHeapless() {
-        mockBuiltins->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(3);
-        auto pStateSaveArea = reinterpret_cast<NEO::StateSaveAreaHeader *>(mockBuiltins->stateSaveAreaHeader.data());
-        pStateSaveArea->regHeaderV3.sip_flags = 0;
+        mockBuiltins->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeaderV3WithoutHeapless();
     }
 
     void tearDown() {

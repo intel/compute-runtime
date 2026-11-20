@@ -26,8 +26,9 @@ class MockSipKernel : public SipKernel {
     ~MockSipKernel() override;
 
     static constexpr char dummyBinaryForSip[] = "12345678";
+    static constexpr size_t dummyBinaryForSipSize = sizeof(dummyBinaryForSip) - 1;
     static std::vector<char> getDummyGenBinary() {
-        return std::vector<char>(dummyBinaryForSip, dummyBinaryForSip + sizeof(dummyBinaryForSip) - 1);
+        return std::vector<char>(dummyBinaryForSip, dummyBinaryForSip + dummyBinaryForSipSize);
     }
 
     GraphicsAllocation *getSipAllocation() const override;
@@ -56,6 +57,7 @@ std::vector<char> createStateSaveAreaHeader(uint32_t version);
 std::vector<char> createStateSaveAreaHeader(uint32_t version, uint16_t grfNum);
 std::vector<char> createStateSaveAreaHeader(uint32_t version, uint16_t grfNum, uint16_t mmeNum);
 std::vector<char> createStateSaveAreaHeaderV3Minor1();
+std::vector<char> createStateSaveAreaHeaderV3WithoutHeapless();
 } // namespace MockSipData
 
 } // namespace NEO

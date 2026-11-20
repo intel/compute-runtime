@@ -120,6 +120,7 @@ set(neo_libult_common_SRCS_LIB_ULT
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/ult_command_stream_receiver.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_gmm_page_table_mngr.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_memory_manager.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_sip_state_save_area_header.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/test_excludes.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/test_excludes.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/test_matcher_registry.cpp

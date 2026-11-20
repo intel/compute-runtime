@@ -3703,7 +3703,6 @@ HWTEST2_F(DebugSessionRegistersAccessTestV3, givenTypeToRegsetDescCalledThenCorr
 TEST_F(DebugSessionRegistersAccessSipExternalLibTestV3, givenDeviceWithMockSipExternalLibInterfaceWhenTypeToRegsetDescCalledThenReturnsRegsetDescFromMap) {
     static SIP::regset_desc testRegsetDesc = {0x100, 128, 16, 32};
     sipExternalLib->mockRegsetDescMap[SipRegisterType::eGRF] = &testRegsetDesc;
-    sipExternalLib->getSipKernelBinaryStateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(3);
 
     auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
 
@@ -6006,8 +6005,6 @@ HWTEST_F(DebugSessionRegistersAccessSipExternalLibTestV3, givenSipExternalLibWhe
 }
 
 TEST_F(DebugSessionRegistersAccessSipExternalLibTestV3, givenHeaplessModeAndSipExternalLibWhenGetRegisterSetPropertiesCalledThenThreadScratchRegsetIncluded) {
-    sipExternalLib->getSipKernelBinaryRetBinary = {5, 6, 7, 8};
-    sipExternalLib->getSipKernelBinaryStateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(3);
 
     uint32_t count = 0;
     auto ret = DebugSession::getRegisterSetProperties(mockDevice.get(), &count, nullptr);
