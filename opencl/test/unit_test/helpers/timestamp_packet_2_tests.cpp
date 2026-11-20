@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
@@ -303,6 +304,93 @@ HWTEST_F(TimestampPacketTests, givenMultiTileConfigWhenProgrammingNonStallingBar
     EXPECT_EQ(csr.activePartitions, barrierNode->getPacketsUsed());
 
     clReleaseEvent(outEvent);
+}
+
+HWTEST2_F(TimestampPacketTests, givenMultiTileConfigWhenProgrammingNonStallingBarrierThenProgramTimestampPartitionOffsetAroundContextEndSignal, IsAtLeastXeCore) {
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+    csr.timestampPacketWriteEnabled = true;
+    csr.activePartitions = 2;
+    csr.activePartitionsConfig = 2;
+    csr.staticWorkPartitioningEnabled = true;
+
+    *ptrOffset(csr.tagAddress, csr.immWritePostSyncWriteOffset) = *csr.tagAddress;
+
+    MockKernelWithInternals mockKernel(*context);
+
+    MockCommandQueueHw<FamilyType> cmdQ(context, device.get(), nullptr);
+
+    cl_event outEvent;
+    cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &outEvent);
+    auto &cmdStream = cmdQ.getCS(0);
+    size_t offset = cmdStream.getUsed();
+
+    cmdQ.enqueueBarrierWithWaitList(1, &outEvent, nullptr);
+
+    auto barrierNode = cmdQ.timestampPacketContainer->peekNodes()[0];
+    EXPECT_EQ(csr.activePartitions, barrierNode->getPacketsUsed());
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(cmdStream, offset);
+
+    auto sdiItor = find<MI_STORE_DATA_IMM *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    ASSERT_NE(hwParser.cmdList.end(), sdiItor);
+    auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
+    EXPECT_EQ(TimestampPacketHelper::getContextEndGpuAddress(*barrierNode), sdiCmd->getAddress());
+    EXPECT_TRUE(sdiCmd->getWorkloadPartitionIdOffsetEnable());
+
+    const auto timestampPostSyncOffset = ImplicitScalingDispatch<FamilyType>::getTimeStampPostSyncOffset();
+    const auto immediateWritePostSyncOffset = ImplicitScalingDispatch<FamilyType>::getImmediateWritePostSyncOffset();
+
+    if (timestampPostSyncOffset == immediateWritePostSyncOffset) {
+        auto lriList = findAll<MI_LOAD_REGISTER_IMM *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+        for (auto &lriItor : lriList) {
+            auto lriCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(*lriItor);
+            EXPECT_NE(static_cast<uint32_t>(PartitionRegisters<FamilyType>::addressOffsetCCSOffset), lriCmd->getRegisterOffset());
+        }
+    } else {
+        ASSERT_NE(hwParser.cmdList.begin(), sdiItor);
+        auto lriBeforeCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(*std::prev(sdiItor));
+        ASSERT_NE(nullptr, lriBeforeCmd);
+        EXPECT_EQ(static_cast<uint32_t>(PartitionRegisters<FamilyType>::addressOffsetCCSOffset), lriBeforeCmd->getRegisterOffset());
+        EXPECT_EQ(timestampPostSyncOffset, lriBeforeCmd->getDataDword());
+
+        auto lriAfterItor = std::next(sdiItor);
+        ASSERT_NE(hwParser.cmdList.end(), lriAfterItor);
+        auto lriAfterCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(*lriAfterItor);
+        ASSERT_NE(nullptr, lriAfterCmd);
+        EXPECT_EQ(static_cast<uint32_t>(PartitionRegisters<FamilyType>::addressOffsetCCSOffset), lriAfterCmd->getRegisterOffset());
+        EXPECT_EQ(immediateWritePostSyncOffset, lriAfterCmd->getDataDword());
+    }
+
+    clReleaseEvent(outEvent);
+}
+
+HWTEST2_F(TimestampPacketTests, givenMultiTileConfigWhenEstimatingNonStallingBarrierSizeThenAddPartitionOffsetRegistersSize, IsAtLeastXeCore) {
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+    csr.timestampPacketWriteEnabled = true;
+
+    MockCommandQueueHw<FamilyType> cmdQ(context, device.get(), nullptr);
+    MultiDispatchInfo multiDispatchInfo;
+
+    auto singleTileSize = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_BARRIER, {}, false, false, false, cmdQ, multiDispatchInfo, false, true, false, nullptr);
+
+    csr.activePartitions = 2;
+    csr.activePartitionsConfig = 2;
+    csr.staticWorkPartitioningEnabled = true;
+
+    *ptrOffset(csr.tagAddress, csr.immWritePostSyncWriteOffset) = *csr.tagAddress;
+
+    auto multiTileSize = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_BARRIER, {}, false, false, false, cmdQ, multiDispatchInfo, false, true, false, nullptr);
+
+    size_t expectedPartitionOffsetRegistersSize = 0;
+    if (ImplicitScalingDispatch<FamilyType>::getTimeStampPostSyncOffset() != ImplicitScalingDispatch<FamilyType>::getImmediateWritePostSyncOffset()) {
+        expectedPartitionOffsetRegistersSize = 2 * sizeof(typename FamilyType::MI_LOAD_REGISTER_IMM);
+    }
+
+    EXPECT_EQ(singleTileSize + expectedPartitionOffsetRegistersSize, multiTileSize);
 }
 
 HWTEST_F(TimestampPacketTests, givenDebugFlagSetWhenEnqueueingBarrierThenRequestPipeControlOnCsrFlush) {

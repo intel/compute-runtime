@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/direct_submission/relaxed_ordering_helper.h"
@@ -343,7 +344,17 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                 node->setPacketsUsed(getGpgpuCommandStreamReceiver().getActivePartitions());
             }
 
+            const bool programPartitionOffset = computeCommandStreamReceiver.isMultiTileOperationEnabled() &&
+                                                (computeCommandStreamReceiver.getTimeStampPostSyncWriteOffset() != computeCommandStreamReceiver.getImmWritePostSyncWriteOffset());
+            if (programPartitionOffset) {
+                ImplicitScalingDispatch<GfxFamily>::dispatchOffsetRegister(commandStream, computeCommandStreamReceiver.getTimeStampPostSyncWriteOffset(), isCopyOnly);
+            }
+
             TimestampPacketHelper::nonStallingContextEndNodeSignal<GfxFamily>(commandStream, *node, getGpgpuCommandStreamReceiver().isMultiTileOperationEnabled());
+
+            if (programPartitionOffset) {
+                ImplicitScalingDispatch<GfxFamily>::dispatchOffsetRegister(commandStream, computeCommandStreamReceiver.getImmWritePostSyncWriteOffset(), isCopyOnly);
+            }
         }
 
         if (isFlushWithPostSyncWrite) {

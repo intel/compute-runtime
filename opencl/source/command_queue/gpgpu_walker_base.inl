@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
@@ -133,6 +134,11 @@ size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, c
 
     if ((CL_COMMAND_BARRIER == eventType) && !commandQueue.isOOQEnabled() && eventsInWaitlist) {
         expectedSizeCS += EncodeStoreMemory<GfxFamily>::getStoreDataImmSize();
+
+        auto &gpgpuCsr = commandQueue.getGpgpuCommandStreamReceiver();
+        if (gpgpuCsr.isMultiTileOperationEnabled() && (gpgpuCsr.getTimeStampPostSyncWriteOffset() != gpgpuCsr.getImmWritePostSyncWriteOffset())) {
+            expectedSizeCS += 2 * ImplicitScalingDispatch<GfxFamily>::getOffsetRegisterSize();
+        }
     }
 
     return expectedSizeCS;
