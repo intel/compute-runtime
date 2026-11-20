@@ -150,7 +150,7 @@ TEST_F(UnifiedSharingImageTestsWithMemoryManager, givenSharedBufferWhenSwappingG
 
     UnifiedImage::swapGmm(&allocation, context.get(), &imgInfo);
 
-    auto gmm = std::unique_ptr<Gmm>(allocation.getDefaultGmm());
+    auto gmm = allocation.getDefaultGmm();
     EXPECT_TRUE(imgInfo.linearStorage);
     ASSERT_FALSE(gmm->resourceParamsData.empty());
     EXPECT_EQ(1u, reinterpret_cast<GMM_RESCREATE_PARAMS *>(gmm->resourceParamsData.data())->Flags.Info.Linear);

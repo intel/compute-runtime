@@ -31,7 +31,7 @@ NVLPTEST_F(NvlpBlitTests, givenNvlpWhenDstAllocationCompressedWhenAppendBlitComm
     gmm->setCompressionEnabled(true);
     MockGraphicsAllocation mockAllocation(0, 1u /*num gmms*/, AllocationType::internalHostMemory, reinterpret_cast<void *>(0x1234),
                                           0x1000, 0, sizeof(uint32_t), MemoryPool::localMemory, MemoryManager::maxOsContextCount);
-    mockAllocation.setGmm(gmm.get(), 0);
+    mockAllocation.setGmm(std::move(gmm), 0);
 
     properties.dstAllocation = &mockAllocation;
     properties.srcAllocation = nullptr;
@@ -47,7 +47,7 @@ NVLPTEST_F(NvlpBlitTests, givenNvlpWhenSrcAllocationCompressedWhenAppendBlitComm
     gmm->setCompressionEnabled(true);
     MockGraphicsAllocation mockAllocation(0, 1u /*num gmms*/, AllocationType::internalHostMemory, reinterpret_cast<void *>(0x1234),
                                           0x1000, 0, sizeof(uint32_t), MemoryPool::localMemory, MemoryManager::maxOsContextCount);
-    mockAllocation.setGmm(gmm.get(), 0);
+    mockAllocation.setGmm(std::move(gmm), 0);
 
     properties.dstAllocation = nullptr;
     properties.srcAllocation = &mockAllocation;
@@ -76,7 +76,7 @@ NVLPTEST_F(NvlpBlitTests, givenNvlpWhenDstAllocationCompressedAndDebugFlagSetWhe
     gmm->setCompressionEnabled(true);
     MockGraphicsAllocation mockAllocation(0, 1u /*num gmms*/, AllocationType::internalHostMemory, reinterpret_cast<void *>(0x1234),
                                           0x1000, 0, sizeof(uint32_t), MemoryPool::localMemory, MemoryManager::maxOsContextCount);
-    mockAllocation.setGmm(gmm.get(), 0);
+    mockAllocation.setGmm(std::move(gmm), 0);
 
     properties.dstAllocation = &mockAllocation;
     properties.srcAllocation = nullptr;
@@ -94,7 +94,7 @@ NVLPTEST_F(NvlpBlitTests, givenNvlpWhenSrcAllocationCompressedWhenAppendBlitComm
     gmm->setCompressionEnabled(true);
     MockGraphicsAllocation mockAllocation(0, 1u /*num gmms*/, AllocationType::internalHostMemory, reinterpret_cast<void *>(0x1234),
                                           0x1000, 0, sizeof(uint32_t), MemoryPool::localMemory, MemoryManager::maxOsContextCount);
-    mockAllocation.setGmm(gmm.get(), 0);
+    mockAllocation.setGmm(std::move(gmm), 0);
 
     properties.srcAllocation = &mockAllocation;
     properties.dstAllocation = nullptr;
@@ -113,7 +113,7 @@ NVLPTEST_F(NvlpBlitTests, givenNvlpWhenDstAllocationCompressedWhenAppendBlitComm
     gmm->setCompressionEnabled(true);
     MockGraphicsAllocation mockAllocation(0, 1u /*num gmms*/, AllocationType::internalHostMemory, reinterpret_cast<void *>(0x1234),
                                           0x1000, 0, sizeof(uint32_t), MemoryPool::localMemory, MemoryManager::maxOsContextCount);
-    mockAllocation.setGmm(gmm.get(), 0);
+    mockAllocation.setGmm(std::move(gmm), 0);
 
     properties.srcAllocation = nullptr;
     properties.dstAllocation = &mockAllocation;
@@ -128,14 +128,15 @@ NVLPTEST_F(NvlpBlitTests, givenNvlpWhenBothAllocationsCompressedWhenAppendBlitCo
     bltCmd.setDestinationY2CoordinateBottom(1);
     BlitProperties properties = {};
 
-    auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
-    gmm->setCompressionEnabled(true);
     MockGraphicsAllocation mockSrcAllocation(0, 1u /*num gmms*/, AllocationType::internalHostMemory, reinterpret_cast<void *>(0x1234),
                                              0x1000, 0, sizeof(uint32_t), MemoryPool::localMemory, MemoryManager::maxOsContextCount);
     MockGraphicsAllocation mockDstAllocation(0, 1u /*num gmms*/, AllocationType::internalHostMemory, reinterpret_cast<void *>(0x2345),
                                              0x1000, 0, sizeof(uint32_t), MemoryPool::localMemory, MemoryManager::maxOsContextCount);
-    mockSrcAllocation.setGmm(gmm.get(), 0);
-    mockDstAllocation.setGmm(gmm.get(), 0);
+    for (auto mockAllocation : {&mockSrcAllocation, &mockDstAllocation}) {
+        auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
+        gmm->setCompressionEnabled(true);
+        mockAllocation->setGmm(std::move(gmm), 0);
+    }
 
     properties.srcAllocation = &mockSrcAllocation;
     properties.dstAllocation = &mockDstAllocation;
@@ -154,14 +155,15 @@ NVLPTEST_F(NvlpBlitTests, givenNvlpWhenBothAllocationsCompressedAndForceBufferCo
     uint32_t debugCompressionFormat = 5u;
     debugManager.flags.ForceBufferCompressionFormat.set(static_cast<int32_t>(debugCompressionFormat));
 
-    auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
-    gmm->setCompressionEnabled(true);
     MockGraphicsAllocation mockSrcAllocation(0, 1u /*num gmms*/, AllocationType::internalHostMemory, reinterpret_cast<void *>(0x1234),
                                              0x1000, 0, sizeof(uint32_t), MemoryPool::localMemory, MemoryManager::maxOsContextCount);
     MockGraphicsAllocation mockDstAllocation(0, 1u /*num gmms*/, AllocationType::internalHostMemory, reinterpret_cast<void *>(0x2345),
                                              0x1000, 0, sizeof(uint32_t), MemoryPool::localMemory, MemoryManager::maxOsContextCount);
-    mockSrcAllocation.setGmm(gmm.get(), 0);
-    mockDstAllocation.setGmm(gmm.get(), 0);
+    for (auto mockAllocation : {&mockSrcAllocation, &mockDstAllocation}) {
+        auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
+        gmm->setCompressionEnabled(true);
+        mockAllocation->setGmm(std::move(gmm), 0);
+    }
 
     properties.srcAllocation = &mockSrcAllocation;
     properties.dstAllocation = &mockDstAllocation;
@@ -181,7 +183,7 @@ NVLPTEST_F(NvlpBlitTests, givenNvlpWhenDstAllocationCompressedWhenDispatchBlitMe
     gmm->setCompressionEnabled(true);
     MockGraphicsAllocation mockAllocation(0, 1u /*num gmms*/, AllocationType::internalHostMemory, reinterpret_cast<void *>(0x1234),
                                           0x1000, 0, sizeof(uint32_t), MemoryPool::localMemory, MemoryManager::maxOsContextCount);
-    mockAllocation.setGmm(gmm.get(), 0);
+    mockAllocation.setGmm(std::move(gmm), 0);
 
     auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&mockAllocation, 0, mockAllocation.getUnderlyingBufferSize(), &pattern, sizeof(uint8_t), 0);
 
@@ -211,7 +213,7 @@ NVLPTEST_F(NvlpBlitTests, givenNvlpWhenDstAllocationCompressedAndDebugFlagSetWhe
     gmm->setCompressionEnabled(true);
     MockGraphicsAllocation mockAllocation(0, 1u /*num gmms*/, AllocationType::internalHostMemory, reinterpret_cast<void *>(0x1234),
                                           0x1000, 0, sizeof(uint32_t), MemoryPool::localMemory, MemoryManager::maxOsContextCount);
-    mockAllocation.setGmm(gmm.get(), 0);
+    mockAllocation.setGmm(std::move(gmm), 0);
 
     auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&mockAllocation, 0, mockAllocation.getUnderlyingBufferSize(), &pattern, sizeof(uint8_t), 0);
 

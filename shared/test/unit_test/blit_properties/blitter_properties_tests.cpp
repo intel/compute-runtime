@@ -21,18 +21,16 @@ class BlitPropertiesTests : public Test<DeviceFixture> {
   public:
     void SetUp() override {
         Test<DeviceFixture>::SetUp();
-        gmmSrc = std::make_unique<MockGmm>(pDevice->getGmmHelper());
-        gmmDst = std::make_unique<MockGmm>(pDevice->getGmmHelper());
-        resourceInfoSrc = static_cast<MockGmmResourceInfo *>(gmmSrc->gmmResourceInfo.get());
-        resourceInfoDst = static_cast<MockGmmResourceInfo *>(gmmSrc->gmmResourceInfo.get());
         mockAllocationSrc = std::make_unique<MockGraphicsAllocation>(0, 1u /*num gmms*/, AllocationType::internalHostMemory,
                                                                      reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                                                      MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
         mockAllocationDst = std::make_unique<MockGraphicsAllocation>(0, 1u /*num gmms*/, AllocationType::internalHostMemory,
                                                                      reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                                                      MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
-        mockAllocationSrc->setGmm(gmmSrc.get(), 0);
-        mockAllocationDst->setGmm(gmmSrc.get(), 0);
+        mockAllocationSrc->setGmm(std::make_unique<MockGmm>(pDevice->getGmmHelper()), 0);
+        mockAllocationDst->setGmm(std::make_unique<MockGmm>(pDevice->getGmmHelper()), 0);
+        resourceInfoSrc = static_cast<MockGmmResourceInfo *>(mockAllocationSrc->getDefaultGmm()->gmmResourceInfo.get());
+        resourceInfoDst = static_cast<MockGmmResourceInfo *>(mockAllocationDst->getDefaultGmm()->gmmResourceInfo.get());
         blitProperties.srcAllocation = mockAllocationSrc.get();
         blitProperties.dstAllocation = mockAllocationDst.get();
         blitProperties.srcSize = size;
@@ -46,8 +44,6 @@ class BlitPropertiesTests : public Test<DeviceFixture> {
     void TearDown() override {
         Test<DeviceFixture>::TearDown();
     }
-    std::unique_ptr<MockGmm> gmmSrc;
-    std::unique_ptr<MockGmm> gmmDst;
     std::unique_ptr<MockGraphicsAllocation> mockAllocationSrc;
     std::unique_ptr<MockGraphicsAllocation> mockAllocationDst;
     MockGmmResourceInfo *resourceInfoSrc;
@@ -156,12 +152,12 @@ TEST_F(BlitPropertiesTests, givenNullDstAllocationWhenCallingIsDst1DTiledArrayTh
 }
 
 TEST_F(BlitPropertiesTests, givenSrcAllocationWithNullGmmWhenCallingIsSrc1DTiledArrayThenFalseIsReturned) {
-    blitProperties.srcAllocation->setGmm(nullptr, 0);
+    blitProperties.srcAllocation->setGmm(std::unique_ptr<Gmm>{}, 0);
     EXPECT_FALSE(blitProperties.isSrc1DTiledArray());
 }
 
 TEST_F(BlitPropertiesTests, givenDstAllocationWithNullGmmWhenCallingIsDst1DTiledArrayThenFalseIsReturned) {
-    blitProperties.dstAllocation->setGmm(nullptr, 0);
+    blitProperties.dstAllocation->setGmm(std::unique_ptr<Gmm>{}, 0);
     EXPECT_FALSE(blitProperties.isDst1DTiledArray());
 }
 } // namespace NEO

@@ -42,6 +42,8 @@ class MockGraphicsAllocation : public MemoryAllocation {
 
     MockGraphicsAllocation(uint32_t rootDeviceIndex, void *buffer, size_t sizeIn);
 
+    ~MockGraphicsAllocation() override;
+
     void resetInspectionIds() {
         for (auto &id : inspectionIds) {
             id = 0u;

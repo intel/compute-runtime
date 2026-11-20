@@ -454,7 +454,7 @@ HWTEST2_F(ImageSurfaceStateTests, givenNotMediaCompressedImageWhenAppendingSurfa
     mockGmm->setCompressionEnabled(true);
 
     MockGraphicsAllocation allocation;
-    allocation.setDefaultGmm(mockGmm.get());
+    allocation.setDefaultGmm(std::move(mockGmm));
 
     auto gmmClientContext = static_cast<MockGmmClientContext *>(pDevice->getGmmHelper()->getClientContext());
 

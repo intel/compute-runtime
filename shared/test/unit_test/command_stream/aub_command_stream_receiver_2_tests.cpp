@@ -273,10 +273,10 @@ HWTEST_F(AubCommandStreamReceiverTests, givenNoCpuPtrAndNotLockableAllocationWhe
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
-    MockGmm mockGmm(aubExecutionEnvironment->executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper(), nullptr, initSize, initSize, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
-    auto *mockGmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(mockGmm.resourceParamsData.data());
+    auto mockGmm = std::make_unique<MockGmm>(aubExecutionEnvironment->executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper(), nullptr, initSize, initSize, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements);
+    auto *mockGmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(mockGmm->resourceParamsData.data());
     mockGmmResourceParams->Flags.Info.NotLockable = true;
-    allocation.setDefaultGmm(&mockGmm);
+    allocation.setDefaultGmm(std::move(mockGmm));
 
     uint64_t gpuAddress{};
     void *cpuAddress{};
@@ -312,10 +312,10 @@ HWTEST_F(AubCommandStreamReceiverTests, givenNoCpuPtrAndLockableAllocationWhenGe
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
-    MockGmm mockGmm(aubExecutionEnvironment->executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper(), nullptr, initSize, initSize, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
-    auto *mockGmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(mockGmm.resourceParamsData.data());
+    auto mockGmm = std::make_unique<MockGmm>(aubExecutionEnvironment->executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper(), nullptr, initSize, initSize, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements);
+    auto *mockGmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(mockGmm->resourceParamsData.data());
     mockGmmResourceParams->Flags.Info.NotLockable = false;
-    allocation.setDefaultGmm(&mockGmm);
+    allocation.setDefaultGmm(std::move(mockGmm));
 
     uint64_t gpuAddress{};
     void *cpuAddress{};

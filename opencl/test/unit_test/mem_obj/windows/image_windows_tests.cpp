@@ -127,8 +127,9 @@ TEST_F(ImageWindowsTests, givenSharedTextureWhenSwappingGmmThenImageTakesLayoutO
     mockGmmResourceInfo->overrideReturnedRenderPitch(512u);
     mockGmmResourceInfo->overrideReturnedQPitch(48u);
 
+    auto textureGmm = gmm.get();
     MockGraphicsAllocation allocation;
-    allocation.setDefaultGmm(gmm.get());
+    allocation.setDefaultGmm(std::move(gmm));
 
     ImageInfo imgInfo = {};
     imgInfo.imgDesc.imageType = ImageType::image2DArray;
@@ -138,7 +139,7 @@ TEST_F(ImageWindowsTests, givenSharedTextureWhenSwappingGmmThenImageTakesLayoutO
 
     UnifiedImage::swapGmm(&allocation, context.get(), &imgInfo);
 
-    EXPECT_EQ(gmm.get(), allocation.getDefaultGmm());
+    EXPECT_EQ(textureGmm, allocation.getDefaultGmm());
     EXPECT_EQ(64u, imgInfo.imgDesc.imageWidth);
     EXPECT_EQ(512u, imgInfo.imgDesc.imageRowPitch);
     EXPECT_EQ(48u, imgInfo.qPitch);

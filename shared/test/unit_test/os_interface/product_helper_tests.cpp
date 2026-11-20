@@ -595,10 +595,10 @@ HWTEST_F(ProductHelperTest, givenNotLockableAllocationWhenGettingIsBlitCopyRequi
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
-    MockGmm mockGmm(gmmHelper, nullptr, 100, 100, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
-    auto *mockGmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(mockGmm.resourceParamsData.data());
+    auto mockGmm = std::make_unique<MockGmm>(gmmHelper, nullptr, 100, 100, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements);
+    auto *mockGmmResourceParams = reinterpret_cast<GMM_RESCREATE_PARAMS *>(mockGmm->resourceParamsData.data());
     mockGmmResourceParams->Flags.Info.NotLockable = true;
-    graphicsAllocation.setDefaultGmm(&mockGmm);
+    graphicsAllocation.setDefaultGmm(std::move(mockGmm));
 
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
 

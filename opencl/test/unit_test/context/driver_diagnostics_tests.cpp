@@ -522,8 +522,6 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenCallF
     std::string output = capture.getCapturedStdout();
     EXPECT_NE(0u, output.size());
     EXPECT_TRUE(containsHint(expectedHint, userData));
-
-    gfxAllocation.setDefaultGmm(std::unique_ptr<Gmm>{});
 }
 
 TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenKernelObjectWithGraphicsAllocationAccessedStatefullyOnlyThenDontReportAnyHint) {
@@ -558,8 +556,6 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenKerne
 
     std::string output = capture.getCapturedStdout();
     EXPECT_EQ(0u, output.size());
-
-    gfxAllocation.setDefaultGmm(std::unique_ptr<Gmm>{});
 }
 
 TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeDisabledWhenCallFillWithKernelObjsForAuxTranslationOnGfxAllocationThenDontReportAnyHint) {
@@ -589,8 +585,6 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeDisabledWhenCall
 
     std::string output = capture.getCapturedStdout();
     EXPECT_EQ(0u, output.size());
-
-    gfxAllocation.setDefaultGmm(std::unique_ptr<Gmm>{});
 }
 
 TEST_F(PerformanceHintTest, whenCallingFillWithKernelObjsForAuxTranslationOnNullGfxAllocationThenDontReportAnyHint) {

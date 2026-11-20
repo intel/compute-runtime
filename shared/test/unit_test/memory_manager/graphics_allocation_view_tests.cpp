@@ -26,6 +26,8 @@ struct GraphicsAllocationViewTest : public ::testing::Test {
     const uint64_t gpuAddress = 0x1000000u;
     void *cpuPtr = reinterpret_cast<void *>(0x2000000u);
 
+    MockExecutionEnvironment executionEnvironment;
+    GmmHelper *gmmHelper = executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper();
     std::unique_ptr<MockGraphicsAllocation> parentAllocation;
 };
 
@@ -190,9 +192,6 @@ TEST_F(GraphicsAllocationViewTest, whenSettingIsImportedOnViewThenParentIsUpdate
 }
 
 TEST_F(GraphicsAllocationViewTest, whenCreatingViewThenViewInheritsPropertiesFromParent) {
-    auto gmm1 = reinterpret_cast<Gmm *>(0x1234);
-    auto gmm2 = reinterpret_cast<Gmm *>(0x5678);
-
     parentAllocation->setCoherent(true);
     parentAllocation->setEvictable(false);
     parentAllocation->setFlushL3Required(false);
@@ -202,8 +201,12 @@ TEST_F(GraphicsAllocationViewTest, whenCreatingViewThenViewInheritsPropertiesFro
     parentAllocation->setQualifiesFor2MBPages(true);
     parentAllocation->storageInfo.memoryBanks = 0x3u;
     parentAllocation->resizeGmms(2);
-    parentAllocation->setGmm(gmm1, 0);
-    parentAllocation->setGmm(gmm2, 1);
+    auto ownedGmm1 = std::make_unique<MockGmm>(gmmHelper);
+    auto ownedGmm2 = std::make_unique<MockGmm>(gmmHelper);
+    auto gmm1 = ownedGmm1.get();
+    auto gmm2 = ownedGmm2.get();
+    parentAllocation->setGmm(std::move(ownedGmm1), 0);
+    parentAllocation->setGmm(std::move(ownedGmm2), 1);
 
     std::unique_ptr<GraphicsAllocation> view(parentAllocation->createView(viewOffset, viewSize));
 
@@ -230,12 +233,12 @@ TEST_F(GraphicsAllocationViewTest, whenCreatingViewThenViewInheritsPropertiesFro
 }
 
 TEST_F(GraphicsAllocationViewTest, givenParentGmmReplacedAfterCreatingViewWhenGettingGmmFromViewThenParentCurrentGmmIsReturned) {
-    auto initialGmm = reinterpret_cast<Gmm *>(0x1234);
-    auto replacingGmm = reinterpret_cast<Gmm *>(0x5678);
-    parentAllocation->setGmm(initialGmm, 0);
+    parentAllocation->setGmm(std::make_unique<MockGmm>(gmmHelper), 0);
 
     std::unique_ptr<GraphicsAllocation> view(parentAllocation->createView(viewOffset, viewSize));
-    parentAllocation->setGmm(replacingGmm, 0);
+    auto ownedReplacingGmm = std::make_unique<MockGmm>(gmmHelper);
+    auto replacingGmm = ownedReplacingGmm.get();
+    parentAllocation->setGmm(std::move(ownedReplacingGmm), 0);
 
     EXPECT_EQ(replacingGmm, view->getDefaultGmm());
 }
@@ -248,13 +251,13 @@ TEST_F(GraphicsAllocationViewTest, whenSettingGmmsOnViewThenAbortIsThrown) {
 }
 
 TEST_F(GraphicsAllocationViewTest, whenSettingOwnedGmmOnViewThenAbortIsThrownBeforeParentGmmIsFreed) {
-    MockExecutionEnvironment executionEnvironment;
-    auto parentGmm = std::make_unique<MockGmm>(executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper());
-    parentAllocation->setGmm(parentGmm.get(), 0);
+    auto ownedParentGmm = std::make_unique<MockGmm>(gmmHelper);
+    auto parentGmm = ownedParentGmm.get();
+    parentAllocation->setGmm(std::move(ownedParentGmm), 0);
     std::unique_ptr<GraphicsAllocation> view(parentAllocation->createView(viewOffset, viewSize));
 
     EXPECT_THROW(view->setGmm(std::unique_ptr<Gmm>{}, 0), std::exception);
-    EXPECT_EQ(parentGmm.get(), parentAllocation->getDefaultGmm());
+    EXPECT_EQ(parentGmm, parentAllocation->getDefaultGmm());
 }
 
 TEST_F(GraphicsAllocationViewTest, whenGettingResidencyDataOnViewThenParentResidencyDataIsReturned) {

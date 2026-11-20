@@ -2232,9 +2232,9 @@ HWTEST_F(TbxAllocationMemorySharingTests, givenLocalMemoryAllocationWithoutClone
 HWTEST_F(TbxAllocationMemorySharingTests, givenCompressedLocalMemoryAllocationWhenSharingAllocationMemoryThenNothingIsMapped) {
     auto tbxCsr = createCsrSharingAllocationMemory<FamilyType>();
     auto allocation = createAllocation(cpuMemory, cpuMemory, gpuAddress, MemoryConstants::pageSize64k, MemoryPool::localMemory);
-    MockGmm gmm(pDevice->getGmmHelper());
-    gmm.setCompressionEnabled(true);
-    allocation->setDefaultGmm(&gmm);
+    auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
+    gmm->setCompressionEnabled(true);
+    allocation->setDefaultGmm(std::move(gmm));
 
     EXPECT_FALSE(tbxCsr->shareAllocationMemoryWithSimulator(*allocation));
 
@@ -2389,9 +2389,9 @@ HWTEST_F(TbxAllocationMemorySharingTests, givenAllocationWhichCannotShareMemoryW
     EXPECT_FALSE(tbxCsr->shareAllocationMemoryWithSimulator(*emptyAllocation));
 
     auto compressedAllocation = createAllocation(cpuMemory, cpuMemory, gpuAddress, MemoryConstants::pageSize64k, MemoryPool::system4KBPages);
-    MockGmm gmm(pDevice->getGmmHelper());
-    gmm.setCompressionEnabled(true);
-    compressedAllocation->setDefaultGmm(&gmm);
+    auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
+    gmm->setCompressionEnabled(true);
+    compressedAllocation->setDefaultGmm(std::move(gmm));
     EXPECT_FALSE(tbxCsr->shareAllocationMemoryWithSimulator(*compressedAllocation));
 
     EXPECT_EQ(0u, aubManager->reserveOnlyPhysicalSpaceCalled);

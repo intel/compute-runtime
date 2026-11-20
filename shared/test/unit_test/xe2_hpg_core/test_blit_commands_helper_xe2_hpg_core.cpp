@@ -173,7 +173,7 @@ HWTEST2_F(BlitTests, givenGmmWithEnabledCompresionWhenAppendBlitCommandsForFillB
     MockGraphicsAllocation mockAllocation(0, 1u /*num gmms*/, AllocationType::internalHostMemory,
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                           MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
-    mockAllocation.setGmm(gmm.get(), 0u);
+    mockAllocation.setGmm(std::move(gmm), 0u);
     auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironmentRef();
     auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&mockAllocation, 0, mockAllocation.getUnderlyingBufferSize(), &pattern, sizeof(uint8_t), 0);
 
@@ -276,7 +276,7 @@ HWTEST2_F(BlitTests, givenCompressionInfoWhenAppendImageCommandsThenCorrectPrope
         MockGraphicsAllocation mockAllocationSrc(0, 1u /*num gmms*/, AllocationType::internalHostMemory,
                                                  reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                                  MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
-        mockAllocationSrc.setGmm(gmmSrc.get(), 0);
+        mockAllocationSrc.setGmm(std::move(gmmSrc), 0);
         properties.srcAllocation = &mockAllocationSrc;
 
         for (auto &[mediaCompressedDst, renderCompressedDst] : params) {
@@ -288,7 +288,7 @@ HWTEST2_F(BlitTests, givenCompressionInfoWhenAppendImageCommandsThenCorrectPrope
             MockGraphicsAllocation mockAllocationDst(0, 1u /*num gmms*/, AllocationType::internalHostMemory,
                                                      reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                                      MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
-            mockAllocationDst.setGmm(gmmDst.get(), 0);
+            mockAllocationDst.setGmm(std::move(gmmDst), 0);
             properties.dstAllocation = &mockAllocationDst;
             auto bltCmd = FamilyType::cmdInitXyBlockCopyBlt;
             BlitCommandsHelper<FamilyType>::appendBlitCommandsForImages(properties, bltCmd, pDevice->getRootDeviceEnvironment(),
@@ -399,9 +399,8 @@ HWTEST2_F(BlitTests, givenSurfaceTypeAndSliceIndexWhenAppendBaseAddressOffsetIsC
     using XY_BLOCK_COPY_BLT = typename FamilyType::XY_BLOCK_COPY_BLT;
     MockGraphicsAllocation mockAllocationSrc(reinterpret_cast<void *>(0x1234), 0x1000, sizeof(uint32_t));
     MockGraphicsAllocation mockAllocationDst(reinterpret_cast<void *>(0x1234), 0x1000, sizeof(uint32_t));
-    auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
-    mockAllocationSrc.setGmm(gmm.get(), 0u);
-    mockAllocationDst.setGmm(gmm.get(), 0u);
+    mockAllocationSrc.setGmm(std::make_unique<MockGmm>(pDevice->getGmmHelper()), 0u);
+    mockAllocationDst.setGmm(std::make_unique<MockGmm>(pDevice->getGmmHelper()), 0u);
     BlitProperties properties{};
     properties.srcAllocation = &mockAllocationSrc;
     properties.dstAllocation = &mockAllocationDst;

@@ -577,8 +577,6 @@ HWTEST2_F(AuxBuiltInTests, givenKernelWithAuxTranslationRequiredWhenEnqueueCalle
         mockKernel.kernelInfo.addArgBuffer(0, 0, sizeof(void *));
         mockKernel.mockKernel->initialize();
 
-        std::unique_ptr<Gmm> gmm;
-
         MockKernelObjForAuxTranslation mockKernelObjForAuxTranslation(kernelObjType);
         if (kernelObjType == KernelObjForAuxTranslation::Type::memObj) {
             MockBuffer::setAllocationType(mockKernelObjForAuxTranslation.mockBuffer->getGraphicsAllocation(0), pDevice->getRootDeviceEnvironment().getGmmHelper(), true);
@@ -592,8 +590,6 @@ HWTEST2_F(AuxBuiltInTests, givenKernelWithAuxTranslationRequiredWhenEnqueueCalle
 
             auto ptr = reinterpret_cast<void *>(gfxAllocation->getGpuAddressToPatch());
             mockKernel.mockKernel->setArgSvmAlloc(0, ptr, gfxAllocation, 0u);
-
-            gmm.reset(gfxAllocation->getDefaultGmm());
         }
 
         mockKernel.mockKernel->auxTranslationRequired = false;
@@ -714,7 +710,7 @@ HWTEST2_F(AuxBuiltInTests, givenAuxToNonAuxTranslationWhenSettingSurfaceStateThe
             kernelObjsForAuxTranslation->insert({KernelObjForAuxTranslation::Type::memObj, buffer.get()});
         } else {
             gfxAllocation.reset(new MockGraphicsAllocation(nullptr, MemoryConstants::pageSize));
-            gfxAllocation->setDefaultGmm(gmm.get());
+            gfxAllocation->setDefaultGmm(std::move(gmm));
 
             kernelObjsForAuxTranslation->insert({KernelObjForAuxTranslation::Type::gfxAlloc, gfxAllocation.get()});
         }
@@ -768,7 +764,7 @@ HWTEST2_F(AuxBuiltInTests, givenNonAuxToAuxTranslationWhenSettingSurfaceStateThe
         if (kernelObjType == MockKernelObjForAuxTranslation::Type::memObj) {
             mockKernelObjForAuxTranslation.mockBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->setDefaultGmm(std::move(gmm));
         } else {
-            mockKernelObjForAuxTranslation.mockGraphicsAllocation->setDefaultGmm(gmm.get());
+            mockKernelObjForAuxTranslation.mockGraphicsAllocation->setDefaultGmm(std::move(gmm));
         }
         auto kernelObjsForAuxTranslation = std::make_unique<KernelObjsForAuxTranslation>();
         kernelObjsForAuxTranslation->insert(mockKernelObjForAuxTranslation);

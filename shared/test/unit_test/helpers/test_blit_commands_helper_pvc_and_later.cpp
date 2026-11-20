@@ -116,7 +116,7 @@ HWTEST2_F(BlitTests, givenGmmWithDisabledCompresionWhenAppendBlitCommandsForFill
                                           MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
 
     auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&mockAllocation, 0, mockAllocation.getUnderlyingBufferSize(), &pattern, sizeof(uint8_t), 0);
-    mockAllocation.setGmm(gmm.get(), 0u);
+    mockAllocation.setGmm(std::move(gmm), 0u);
     BlitCommandsHelper<FamilyType>::dispatchBlitMemoryFill(blitProperties, stream, pDevice->getRootDeviceEnvironmentRef());
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -140,7 +140,7 @@ HWTEST2_F(BlitTests, givenGmmWithEnabledCompresionWhenAppendBlitCommandsForFillB
     MockGraphicsAllocation mockAllocation(0, 1u /*num gmms*/, AllocationType::internalHostMemory,
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                           MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
-    mockAllocation.setGmm(gmm.get(), 0u);
+    mockAllocation.setGmm(std::move(gmm), 0u);
     auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironmentRef();
 
     auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&mockAllocation, 0, mockAllocation.getUnderlyingBufferSize(), &pattern, sizeof(uint8_t), 0);
@@ -155,7 +155,7 @@ HWTEST2_F(BlitTests, givenGmmWithEnabledCompresionWhenAppendBlitCommandsForFillB
         auto blitCmd = genCmdCast<MEM_SET *>(*itor);
         EXPECT_EQ(blitCmd->getDestinationCompressible(), MEM_SET::DESTINATION_COMPRESSIBLE::DESTINATION_COMPRESSIBLE_COMPRESSIBLE);
 
-        auto resourceFormat = gmm->gmmResourceInfo->getResourceFormat();
+        auto resourceFormat = mockAllocation.getDefaultGmm()->gmmResourceInfo->getResourceFormat();
         auto compressionFormat = rootDeviceEnvironment.getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
         EXPECT_EQ(compressionFormat, blitCmd->getCompressionFormat());
     }

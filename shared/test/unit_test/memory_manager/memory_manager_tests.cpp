@@ -3716,9 +3716,9 @@ HWTEST_F(PageTableManagerTest, givenPageTableManagerWhenMapAuxGpuVaThenForAllEng
     memoryManager->getRegisteredEngines(1)[1].commandStreamReceiver->pageTableManager.reset(mockMngr2);
 
     MockGraphicsAllocation allocation(1u, 1u /*num gmms*/, AllocationType::unknown, nullptr, 0, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount, 0llu);
-    MockGmm gmm(executionEnvironment.rootDeviceEnvironments[allocation.getRootDeviceIndex()]->getGmmHelper());
-    gmm.setCompressionEnabled(true);
-    allocation.setDefaultGmm(&gmm);
+    auto gmm = std::make_unique<MockGmm>(executionEnvironment.rootDeviceEnvironments[allocation.getRootDeviceIndex()]->getGmmHelper());
+    gmm->setCompressionEnabled(true);
+    allocation.setDefaultGmm(std::move(gmm));
     GMM_DDI_UPDATEAUXTABLE expectedDdiUpdateAuxTable = {};
     expectedDdiUpdateAuxTable.BaseGpuVA = allocation.getGpuAddress();
     expectedDdiUpdateAuxTable.BaseResInfo = allocation.getDefaultGmm()->gmmResourceInfo->peekGmmResourceInfo();
@@ -3765,9 +3765,9 @@ HWTEST_F(PageTableManagerTest, givenPageTableManagerWhenUpdateAuxTableGmmErrorTh
     memoryManager->getRegisteredEngines(1)[0].commandStreamReceiver->pageTableManager.reset(mockMngr);
 
     MockGraphicsAllocation allocation(1u, 1u /*num gmms*/, AllocationType::unknown, nullptr, 0, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount, 0llu);
-    MockGmm gmm(executionEnvironment.rootDeviceEnvironments[allocation.getRootDeviceIndex()]->getGmmHelper());
-    gmm.setCompressionEnabled(true);
-    allocation.setDefaultGmm(&gmm);
+    auto gmm = std::make_unique<MockGmm>(executionEnvironment.rootDeviceEnvironments[allocation.getRootDeviceIndex()]->getGmmHelper());
+    gmm->setCompressionEnabled(true);
+    allocation.setDefaultGmm(std::move(gmm));
 
     bool result = memoryManager->mapAuxGpuVA(&allocation);
     EXPECT_FALSE(result);
@@ -3797,9 +3797,9 @@ HWTEST_F(PageTableManagerTest, givenNullPageTableManagerWhenMapAuxGpuVaThenNoThr
     memoryManager->getRegisteredEngines(1)[0].commandStreamReceiver->pageTableManager.reset(nullptr);
 
     MockGraphicsAllocation allocation(1u, 1u /*num gmms*/, AllocationType::unknown, nullptr, 0, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount, 0llu);
-    MockGmm gmm(executionEnvironment.rootDeviceEnvironments[allocation.getRootDeviceIndex()]->getGmmHelper());
-    gmm.setCompressionEnabled(true);
-    allocation.setDefaultGmm(&gmm);
+    auto gmm = std::make_unique<MockGmm>(executionEnvironment.rootDeviceEnvironments[allocation.getRootDeviceIndex()]->getGmmHelper());
+    gmm->setCompressionEnabled(true);
+    allocation.setDefaultGmm(std::move(gmm));
 
     EXPECT_NO_THROW(memoryManager->mapAuxGpuVA(&allocation));
 }
@@ -3842,8 +3842,7 @@ HWTEST_F(PageTableManagerTest, givenMemoryManagerThatSupportsPageTableManagerWhe
     auto memoryManager = new MockMemoryManager(false, false, executionEnvironment);
     executionEnvironment.memoryManager.reset(memoryManager);
     MockGraphicsAllocation allocation(1u, 1u /*num gmms*/, AllocationType::unknown, nullptr, 0, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount, 0llu);
-    MockGmm gmm(executionEnvironment.rootDeviceEnvironments[allocation.getRootDeviceIndex()]->getGmmHelper());
-    allocation.setDefaultGmm(&gmm);
+    allocation.setDefaultGmm(std::make_unique<MockGmm>(executionEnvironment.rootDeviceEnvironments[allocation.getRootDeviceIndex()]->getGmmHelper()));
     bool mapped = memoryManager->mapAuxGpuVA(&allocation);
     auto &hwInfo = *executionEnvironment.rootDeviceEnvironments[allocation.getRootDeviceIndex()]->getHardwareInfo();
     auto &productHelper = executionEnvironment.rootDeviceEnvironments[allocation.getRootDeviceIndex()]->getHelper<ProductHelper>();

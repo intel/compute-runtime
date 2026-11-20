@@ -49,7 +49,7 @@ HWTEST2_F(BlitTests, givenXe3pCoreWhenDstGraphicAlloctionWhenAppendBlitCommandsM
     gmm->setCompressionEnabled(true);
     MockGraphicsAllocation mockAllocation(0, 1u /*num gmms*/, AllocationType::internalHostMemory, reinterpret_cast<void *>(0x1234),
                                           0x1000, 0, sizeof(uint32_t), MemoryPool::localMemory, MemoryManager::maxOsContextCount);
-    mockAllocation.setGmm(gmm.get(), 0);
+    mockAllocation.setGmm(std::move(gmm), 0);
 
     properties.dstAllocation = &mockAllocation;
     properties.srcAllocation = nullptr;
@@ -71,7 +71,7 @@ HWTEST2_F(BlitTests, givenXe3pCoreWhenDstGraphicAlloctionAndStatelessFlagSetWhen
     gmm->setCompressionEnabled(true);
     MockGraphicsAllocation mockAllocation(0, 1u /*num gmms*/, AllocationType::internalHostMemory, reinterpret_cast<void *>(0x1234),
                                           0x1000, 0, sizeof(uint32_t), MemoryPool::localMemory, MemoryManager::maxOsContextCount);
-    mockAllocation.setGmm(gmm.get(), 0);
+    mockAllocation.setGmm(std::move(gmm), 0);
 
     properties.dstAllocation = &mockAllocation;
     properties.srcAllocation = nullptr;
@@ -91,7 +91,7 @@ HWTEST2_F(BlitTests, givenXe3pCoreWhenDstGraphicAlloctionAndStatelessFlagSetAndS
     gmm->setCompressionEnabled(true);
     MockGraphicsAllocation mockAllocation(0, 1u /*num gmms*/, AllocationType::internalHostMemory, reinterpret_cast<void *>(0x1234),
                                           0x1000, 0, sizeof(uint32_t), MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
-    mockAllocation.setGmm(gmm.get(), 0);
+    mockAllocation.setGmm(std::move(gmm), 0);
 
     properties.dstAllocation = &mockAllocation;
     properties.srcAllocation = nullptr;
@@ -111,7 +111,7 @@ HWTEST2_F(BlitTests, givenXe3pCoreWhenSrcGraphicAlloctionWhenAppendBlitCommandsM
     gmm->setCompressionEnabled(true);
     MockGraphicsAllocation mockAllocation(0, 1u /*num gmms*/, AllocationType::internalHostMemory, reinterpret_cast<void *>(0x1234),
                                           0x1000, 0, sizeof(uint32_t), MemoryPool::localMemory, MemoryManager::maxOsContextCount);
-    mockAllocation.setGmm(gmm.get(), 0);
+    mockAllocation.setGmm(std::move(gmm), 0);
 
     properties.dstAllocation = nullptr;
     properties.srcAllocation = &mockAllocation;
@@ -131,7 +131,7 @@ HWTEST2_F(BlitTests, givenXe3pCoreWhenSrcGraphicAlloctionAndStatelessFlagSetWhen
     gmm->setCompressionEnabled(true);
     MockGraphicsAllocation mockAllocation(0, 1u /*num gmms*/, AllocationType::internalHostMemory, reinterpret_cast<void *>(0x1234),
                                           0x1000, 0, sizeof(uint32_t), MemoryPool::localMemory, MemoryManager::maxOsContextCount);
-    mockAllocation.setGmm(gmm.get(), 0);
+    mockAllocation.setGmm(std::move(gmm), 0);
 
     properties.dstAllocation = nullptr;
     properties.srcAllocation = &mockAllocation;
@@ -151,7 +151,7 @@ HWTEST2_F(BlitTests, givenXe3pCoreWhenSrcGraphicAlloctionAndStatelessFlagSetAndS
     gmm->setCompressionEnabled(true);
     MockGraphicsAllocation mockAllocation(0, 1u /*num gmms*/, AllocationType::internalHostMemory, reinterpret_cast<void *>(0x1234),
                                           0x1000, 0, sizeof(uint32_t), MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
-    mockAllocation.setGmm(gmm.get(), 0);
+    mockAllocation.setGmm(std::move(gmm), 0);
 
     properties.dstAllocation = nullptr;
     properties.srcAllocation = &mockAllocation;

@@ -1298,12 +1298,6 @@ HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListWhenTiled1DArrayImagePassed
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
 
-    auto gmmSrc = std::make_unique<MockGmm>(device->getNEODevice()->getGmmHelper());
-    auto resourceInfoSrc = static_cast<MockGmmResourceInfo *>(gmmSrc->gmmResourceInfo.get());
-    resourceInfoSrc->mockResourceCreateParams.Flags.Info.Tile64 = 1;
-    resourceInfoSrc->mockResourceCreateParams.Type = GMM_RESOURCE_TYPE::RESOURCE_1D;
-    resourceInfoSrc->mockResourceCreateParams.ArraySize = 8;
-
     NEO::MockGraphicsAllocation mockAllocationSrc(0, 1u /*num gmms*/, NEO::AllocationType::internalHostMemory,
                                                   reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                                   MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
@@ -1311,8 +1305,14 @@ HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListWhenTiled1DArrayImagePassed
                                                   reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                                   MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
 
-    mockAllocationSrc.setGmm(gmmSrc.get(), 0);
-    mockAllocationDst.setGmm(gmmSrc.get(), 0);
+    for (auto mockAllocation : {&mockAllocationSrc, &mockAllocationDst}) {
+        auto gmm = std::make_unique<MockGmm>(device->getNEODevice()->getGmmHelper());
+        auto resourceInfo = static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
+        resourceInfo->mockResourceCreateParams.Flags.Info.Tile64 = 1;
+        resourceInfo->mockResourceCreateParams.Type = GMM_RESOURCE_TYPE::RESOURCE_1D;
+        resourceInfo->mockResourceCreateParams.ArraySize = 8;
+        mockAllocation->setGmm(std::move(gmm), 0);
+    }
 
     size_t arrayLevels = 8;
     size_t depth = 1;
@@ -1333,12 +1333,6 @@ HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListWhenNotTiled1DArrayImagePas
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<FamilyType::gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
 
-    auto gmmSrc = std::make_unique<MockGmm>(device->getNEODevice()->getGmmHelper());
-    auto resourceInfoSrc = static_cast<MockGmmResourceInfo *>(gmmSrc->gmmResourceInfo.get());
-    resourceInfoSrc->mockResourceCreateParams.Flags.Info.Tile64 = 0;
-    resourceInfoSrc->mockResourceCreateParams.Type = GMM_RESOURCE_TYPE::RESOURCE_1D;
-    resourceInfoSrc->mockResourceCreateParams.ArraySize = 8;
-
     NEO::MockGraphicsAllocation mockAllocationSrc(0, 1u /*num gmms*/, NEO::AllocationType::internalHostMemory,
                                                   reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                                   MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
@@ -1346,8 +1340,14 @@ HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListWhenNotTiled1DArrayImagePas
                                                   reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                                   MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
 
-    mockAllocationSrc.setGmm(gmmSrc.get(), 0);
-    mockAllocationDst.setGmm(gmmSrc.get(), 0);
+    for (auto mockAllocation : {&mockAllocationSrc, &mockAllocationDst}) {
+        auto gmm = std::make_unique<MockGmm>(device->getNEODevice()->getGmmHelper());
+        auto resourceInfo = static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
+        resourceInfo->mockResourceCreateParams.Flags.Info.Tile64 = 0;
+        resourceInfo->mockResourceCreateParams.Type = GMM_RESOURCE_TYPE::RESOURCE_1D;
+        resourceInfo->mockResourceCreateParams.ArraySize = 8;
+        mockAllocation->setGmm(std::move(gmm), 0);
+    }
 
     size_t arrayLevels = 8;
     size_t depth = 1;
